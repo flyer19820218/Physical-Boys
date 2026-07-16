@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>火箭升空與墜落｜運動學模擬器</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root{
+    --board:#1c3d34;
+    --board-dark:#15302a;
+    --chalk:#f2ecd9;
+    --chalk-dim:#c9c2ab;
+    --chalk-yellow:#f2d675;
+    --x-color:#5fb0ff;
+    --v-color:#ef6a5a;
+    --up-fill:#f2d675;
+    --down-fill:#ef8a7a;
+    --frame:#5c4a33;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:var(--board-dark);
+    color:var(--chalk);
+    font-family:'Noto Sans TC', sans-serif;
+    padding:24px 14px 60px;
+  }
+
+  .wrap{max-width:980px;margin:0 auto;}
+
+  header{text-align:center;margin-bottom:28px;}
+  header .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.75rem;
+    letter-spacing:0.2em;
+    color:var(--chalk-dim);
+    text-transform:uppercase;
+  }
+  h1{
+    font-family:'Kalam', cursive;
+    font-size:2.1rem;
+    font-weight:700;
+    margin:6px 0 10px;
+    text-shadow:0 0 14px rgba(242,236,217,0.15);
+  }
+  header p{
+    color:var(--chalk-dim);
+    max-width:640px;
+    margin:0 auto;
+    line-height:1.7;
+    font-size:0.95rem;
+  }
+
+  .board{
+    background:var(--board);
+    border:10px solid var(--frame);
+    border-radius:6px;
+    box-shadow:0 18px 40px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.25);
+    padding:22px 18px 26px;
+    margin-bottom:22px;
+    position:relative;
+  }
+  .board::before{
+    content:'';
+    position:absolute; inset:0;
+    background-image:radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size:5px 5px;
+    pointer-events:none;
+    border-radius:6px;
+  }
+
+  .board h2{
+    font-family:'Kalam', cursive;
+    font-size:1.3rem;
+    margin:0 0 16px;
+    color:var(--chalk-yellow);
+  }
+
+  .controls{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(210px,1fr));
+    gap:18px;
+    margin-bottom:8px;
+  }
+  .control label{
+    display:flex; justify-content:space-between;
+    font-size:0.88rem; color:var(--chalk-dim);
+    margin-bottom:6px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .control label span.val{color:var(--chalk-yellow); font-weight:600;}
+  input[type=range]{
+    width:100%;
+    accent-color:var(--chalk-yellow);
+    height:4px;
+    background:transparent;
+  }
+  .presets{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;}
+  .presets button{
+    font-family:'Noto Sans TC', sans-serif;
+    background:transparent;
+    border:1.5px dashed var(--chalk-dim);
+    color:var(--chalk);
+    padding:7px 14px;
+    border-radius:20px;
+    font-size:0.82rem;
+    cursor:pointer;
+    transition:all .15s;
+  }
+  .presets button:hover, .presets button.active{
+    border-color:var(--chalk-yellow);
+    color:var(--chalk-yellow);
+    background:rgba(242,214,117,0.08);
+  }
+
+  .playbar{
+    display:flex; align-items:center; gap:14px;
+    margin-top:18px;
+  }
+  #playBtn{
+    background:var(--chalk-yellow);
+    color:var(--board-dark);
+    border:none;
+    font-weight:700;
+    padding:10px 22px;
+    border-radius:24px;
+    cursor:pointer;
+    font-family:'Noto Sans TC', sans-serif;
+    font-size:0.9rem;
+    transition:transform .15s;
+  }
+  #playBtn:hover{transform:scale(1.04);}
+  .progress-track{
+    flex:1; height:3px; background:rgba(242,236,217,0.15); border-radius:2px; position:relative;
+  }
+  .progress-fill{
+    position:absolute; left:0; top:0; height:100%;
+    background:var(--chalk-yellow); border-radius:2px; width:0%;
+  }
+
+  .graph-card{
+    background:rgba(0,0,0,0.15);
+    border-radius:8px;
+    padding:14px 14px 8px;
+    margin:20px 0 6px;
+  }
+  .graph-card h3{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.8rem;
+    color:var(--chalk-dim);
+    margin:0 0 6px;
+    letter-spacing:0.05em;
+  }
+  .legend{
+    display:flex; gap:20px; margin-bottom:8px; font-size:0.82rem;
+    font-family:'JetBrains Mono', monospace; color:var(--chalk-dim);
+  }
+  .legend span{display:flex; align-items:center; gap:6px;}
+  .legend i{width:14px; height:3px; display:inline-block; border-radius:2px;}
+  svg{width:100%; height:auto; display:block; overflow:visible;}
+  .axis-line{stroke:var(--chalk-dim); stroke-width:1; opacity:0.6;}
+  .grid-line{stroke:var(--chalk-dim); stroke-width:0.5; opacity:0.18;}
+  .curve-x{fill:none; stroke:var(--x-color); stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round;}
+  .curve-v{fill:none; stroke:var(--v-color); stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round;}
+  .fill-up{fill:var(--up-fill); opacity:0.22;}
+  .fill-down{fill:var(--down-fill); opacity:0.22;}
+  .marker-line{stroke:var(--chalk-dim); stroke-width:1; stroke-dasharray:3 4; opacity:0.7;}
+  .marker-label{font-family:'JetBrains Mono', monospace; font-size:9.5px; fill:var(--chalk-dim);}
+  .axis-label-x{font-family:'JetBrains Mono', monospace; font-size:10px; fill:var(--x-color); font-weight:600;}
+  .axis-label-v{font-family:'JetBrains Mono', monospace; font-size:10px; fill:var(--v-color); font-weight:600;}
+  .dot-x{fill:var(--x-color); filter:drop-shadow(0 0 4px rgba(95,176,255,0.9));}
+  .dot-v{fill:var(--v-color); filter:drop-shadow(0 0 4px rgba(239,106,90,0.9));}
+
+  .compare{
+    margin-top:18px;
+    background:rgba(0,0,0,0.15);
+    border-radius:8px;
+    padding:16px 18px 18px;
+  }
+  .compare h3{
+    font-family:'Kalam', cursive;
+    color:var(--chalk-yellow);
+    margin:0 0 14px;
+    font-size:1.05rem;
+  }
+  .bar-row{margin-bottom:12px;}
+  .bar-row .bar-label{
+    display:flex; justify-content:space-between;
+    font-size:0.82rem; color:var(--chalk-dim);
+    margin-bottom:5px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .bar-track{height:16px; background:rgba(242,236,217,0.08); border-radius:8px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:8px; transition:width .2s;}
+  .bar-fill.up{background:linear-gradient(90deg, var(--chalk-yellow), #d9b95a);}
+  .bar-fill.down{background:linear-gradient(90deg, var(--down-fill), #d9695a);}
+
+  .verdict{
+    margin-top:14px;
+    font-family:'Kalam', cursive;
+    font-size:1.1rem;
+    color:var(--chalk);
+    text-align:center;
+    padding:10px;
+    border-top:1px dashed rgba(242,236,217,0.25);
+  }
+  .verdict b{color:var(--chalk-yellow);}
+
+  .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    gap:10px;
+    margin-top:16px;
+  }
+  .stat{
+    background:rgba(0,0,0,0.18);
+    border-radius:8px;
+    padding:10px 8px;
+    text-align:center;
+  }
+  .stat .k{font-family:'JetBrains Mono', monospace; font-size:0.72rem; color:var(--chalk-dim);}
+  .stat .v{font-family:'JetBrains Mono', monospace; font-size:1.05rem; color:var(--chalk-yellow); font-weight:600; margin-top:2px;}
+
+  footer{
+    text-align:center; color:var(--chalk-dim); font-size:0.78rem; margin-top:30px;
+    font-family:'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Kinematics Lab · 運動學模擬器</div>
+    <h1>火箭升空與墜落，為什麼不是對稱的？</h1>
+    <p>拉動下面的滑桿，親眼看見「上升位移＝下降位移」的鐵律，以及為什麼自由落下永遠比減速上升花更久的時間、摔得比出發時更快。</p>
+  </header>
+
+  <div class="board">
+    <h2>① 設定火箭的起始條件</h2>
+    <div class="controls">
+      <div class="control">
+        <label>燃燒時間 <span class="val" id="t1val">3.0 s</span></label>
+        <input type="range" id="t1" min="0.5" max="8" step="0.1" value="3">
+      </div>
+      <div class="control">
+        <label>燃盡瞬間速度 <span class="val" id="v1val">150 m/s</span></label>
+        <input type="range" id="v1" min="20" max="300" step="5" value="150">
+      </div>
+      <div class="control">
+        <label>重力加速度 g <span class="val" id="gval">9.8 m/s²</span></label>
+        <input type="range" id="g" min="1" max="25" step="0.1" value="9.8">
+      </div>
+    </div>
+    <div class="presets">
+      <button data-g="9.8">🌍 地球 9.8</button>
+      <button data-g="1.62">🌕 月球 1.62</button>
+      <button data-g="3.71">🔴 火星 3.71</button>
+      <button data-g="24.8">☀️ 太陽表面 24.8（極端示範）</button>
+    </div>
+    <div class="playbar">
+      <button id="playBtn">▶ 播放飛行過程</button>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </div>
+
+  <div class="board">
+    <h2>② x-t 與 v-t 合併圖（雙軸）</h2>
+    <div class="graph-card">
+      <div class="legend">
+        <span><i style="background:var(--x-color)"></i>藍色：x-t（高度，左軸）</span>
+        <span><i style="background:var(--v-color)"></i>紅色：v-t（速度，右軸）</span>
+      </div>
+      <svg id="combinedSvg" viewBox="0 0 640 320"></svg>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat"><div class="k">t₁ 燃盡</div><div class="v" id="s_t1">-</div></div>
+      <div class="stat"><div class="k">t₂ 最高點</div><div class="v" id="s_t2">-</div></div>
+      <div class="stat"><div class="k">t₃ 落地</div><div class="v" id="s_t3">-</div></div>
+      <div class="stat"><div class="k">最大高度</div><div class="v" id="s_xmax">-</div></div>
+      <div class="stat"><div class="k">撞擊速度</div><div class="v" id="s_vimpact">-</div></div>
+    </div>
+  </div>
+
+  <div class="board">
+    <div class="compare">
+      <h3>③ 時間長度一翻兩瞪眼</h3>
+      <div class="bar-row">
+        <div class="bar-label"><span>減速上升（燃盡 → 最高點）</span><span id="upTimeLabel">- s</span></div>
+        <div class="bar-track"><div class="bar-fill up" id="upBar" style="width:0%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"><span>自由落下（最高點 → 地面）</span><span id="downTimeLabel">- s</span></div>
+        <div class="bar-track"><div class="bar-fill down" id="downBar" style="width:0%"></div></div>
+      </div>
+      <div class="verdict" id="verdictText"></div>
+    </div>
+  </div>
+
+  <footer>斜率恆為 −g · 上下面積永遠相等 · 落下的時間永遠比較長</footer>
+</div>
+
+<script>
+(function(){
+  const t1Input = document.getElementById('t1');
+  const v1Input = document.getElementById('v1');
+  const gInput = document.getElementById('g');
+  const t1val = document.getElementById('t1val');
+  const v1val = document.getElementById('v1val');
+  const gval = document.getElementById('gval');
+
+  const svg = document.getElementById('combinedSvg');
+
+  const W = 640, H = 320;
+  const margin = {top:16, right:46, bottom:32, left:46};
+  const plotW = W - margin.left - margin.right;
+  const plotH = H - margin.top - margin.bottom;
+
+  let state = {};
+  let animId = null;
+  let animStart = null;
+  const ANIM_DURATION = 4200;
+
+  function svgns(tag){ return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+  function compute(){
+    const t1 = parseFloat(t1Input.value);
+    const v1 = parseFloat(v1Input.value);
+    const g = parseFloat(gInput.value);
+
+    const x1 = 0.5 * v1 * t1;
+    const coastTime = v1 / g;
+    const t2 = t1 + coastTime;
+    const xMax = x1 + (v1*v1)/(2*g);
+    const fallTime = Math.sqrt(2*xMax/g);
+    const t3 = t2 + fallTime;
+    const vImpact = g * fallTime;
+
+    return {t1, v1, g, x1, t2, xMax, t3, vImpact, coastTime, fallTime};
+  }
+
+  function xPos(t, tMax){ return margin.left + (t/tMax)*plotW; }
+  // 左軸：高度 x，從底部0到頂部xMax
+  function yPosX(x, xMax){ return margin.top + plotH - (x/xMax)*plotH; }
+  // 右軸：速度 v，從底部-vAbsMax到頂部+vAbsMax（獨立座標，與左軸共用像素高度）
+  function yPosV(v, vAbsMax){ return margin.top + plotH - ((v+vAbsMax)/(2*vAbsMax))*plotH; }
+
+  function clearSvg(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+
+  function render(s){
+    clearSvg();
+    const tMax = s.t3 * 1.06;
+    const xMaxScaled = s.xMax * 1.12;
+    const vAbsMax = Math.max(s.v1, s.vImpact) * 1.15;
+
+    // 垂直格線
+    for(let i=0;i<=4;i++){
+      const gx = margin.left + (i/4)*plotW;
+      const l = svgns('line');
+      l.setAttribute('x1', gx); l.setAttribute('x2', gx);
+      l.setAttribute('y1', margin.top); l.setAttribute('y2', margin.top+plotH);
+      l.setAttribute('class','grid-line');
+      svg.appendChild(l);
+    }
+
+    // 底軸（x軸=時間, 對齊左軸x=0）
+    const baseline = svgns('line');
+    baseline.setAttribute('x1', margin.left); baseline.setAttribute('x2', margin.left+plotW);
+    baseline.setAttribute('y1', margin.top+plotH); baseline.setAttribute('y2', margin.top+plotH);
+    baseline.setAttribute('class','axis-line');
+    svg.appendChild(baseline);
+
+    // v=0 中線（給v-t參考用，淡化處理）
+    const zeroVY = yPosV(0, vAbsMax);
+    const zeroLine = svgns('line');
+    zeroLine.setAttribute('x1', margin.left); zeroLine.setAttribute('x2', margin.left+plotW);
+    zeroLine.setAttribute('y1', zeroVY); zeroLine.setAttribute('y2', zeroVY);
+    zeroLine.setAttribute('class','grid-line');
+    svg.appendChild(zeroLine);
+
+    // 左軸線
+    const leftAxis = svgns('line');
+    leftAxis.setAttribute('x1', margin.left); leftAxis.setAttribute('x2', margin.left);
+    leftAxis.setAttribute('y1', margin.top); leftAxis.setAttribute('y2', margin.top+plotH);
+    leftAxis.setAttribute('class','axis-line');
+    svg.appendChild(leftAxis);
+
+    // 右軸線
+    const rightAxis = svgns('line');
+    rightAxis.setAttribute('x1', margin.left+plotW); rightAxis.setAttribute('x2', margin.left+plotW);
+    rightAxis.setAttribute('y1', margin.top); rightAxis.setAttribute('y2', margin.top+plotH);
+    rightAxis.setAttribute('class','axis-line');
+    svg.appendChild(rightAxis);
+
+    // ---- v-t 面積(紅色系) ----
+    const p0 = [xPos(0,tMax), yPosV(0,vAbsMax)];
+    const p1 = [xPos(s.t1,tMax), yPosV(s.v1,vAbsMax)];
+    const p2 = [xPos(s.t2,tMax), yPosV(0,vAbsMax)];
+    const p3 = [xPos(s.t3,tMax), yPosV(-s.vImpact,vAbsMax)];
+
+    const upPoly = svgns('polygon');
+    upPoly.setAttribute('points', `${p0[0]},${p0[1]} ${p1[0]},${p1[1]} ${p2[0]},${p2[1]}`);
+    upPoly.setAttribute('class','fill-up');
+    svg.appendChild(upPoly);
+
+    const downPoly = svgns('polygon');
+    downPoly.setAttribute('points', `${p2[0]},${p2[1]} ${p3[0]},${p3[1]} ${p3[0]},${zeroVY}`);
+    downPoly.setAttribute('class','fill-down');
+    svg.appendChild(downPoly);
+
+    // ---- v-t 曲線(紅) ----
+    const vPath = svgns('polyline');
+    vPath.setAttribute('points', `${p0[0]},${p0[1]} ${p1[0]},${p1[1]} ${p2[0]},${p2[1]} ${p3[0]},${p3[1]}`);
+    vPath.setAttribute('class','curve-v');
+    svg.appendChild(vPath);
+
+    // ---- x-t 曲線(藍) ----
+    const pts = [];
+    const N = 24;
+    for(let i=0;i<=N;i++){
+      const t = (i/N)*s.t1;
+      const x = 0.5*(s.v1/s.t1)*t*t;
+      pts.push([t,x]);
+    }
+    for(let i=0;i<=N;i++){
+      const t = s.t1 + (i/N)*s.coastTime;
+      const dt = t - s.t1;
+      const x = s.x1 + s.v1*dt - 0.5*s.g*dt*dt;
+      pts.push([t,x]);
+    }
+    for(let i=0;i<=N;i++){
+      const t = s.t2 + (i/N)*s.fallTime;
+      const dt = t - s.t2;
+      const x = s.xMax - 0.5*s.g*dt*dt;
+      pts.push([t,x]);
+    }
+    const svgPts = pts.map(([t,x]) => `${xPos(t,tMax)},${yPosX(Math.max(x,0),xMaxScaled)}`).join(' ');
+    const xPath = svgns('polyline');
+    xPath.setAttribute('points', svgPts);
+    xPath.setAttribute('class','curve-x');
+    svg.appendChild(xPath);
+
+    // 標記時間點 t1 t2 t3
+    [[s.t1,'t1'],[s.t2,'t2'],[s.t3,'t3']].forEach(([t,label])=>{
+      const mx = xPos(t,tMax);
+      const l = svgns('line');
+      l.setAttribute('x1',mx); l.setAttribute('x2',mx);
+      l.setAttribute('y1',margin.top); l.setAttribute('y2',margin.top+plotH);
+      l.setAttribute('class','marker-line');
+      svg.appendChild(l);
+      const txt = svgns('text');
+      txt.setAttribute('x',mx); txt.setAttribute('y', margin.top+plotH+14);
+      txt.setAttribute('text-anchor','middle');
+      txt.setAttribute('class','marker-label');
+      txt.textContent = label;
+      svg.appendChild(txt);
+    });
+
+    // 軸標籤
+    const xl = svgns('text');
+    xl.setAttribute('x', 2); xl.setAttribute('y', margin.top-2);
+    xl.setAttribute('class','axis-label-x'); xl.textContent = 'x(m)';
+    svg.appendChild(xl);
+
+    const vl = svgns('text');
+    vl.setAttribute('x', margin.left+plotW-4); vl.setAttribute('y', margin.top-2);
+    vl.setAttribute('text-anchor','end');
+    vl.setAttribute('class','axis-label-v'); vl.textContent = 'v(m/s)';
+    svg.appendChild(vl);
+
+    // 移動光點（動畫用）
+    const dotX = svgns('circle');
+    dotX.setAttribute('r', 5); dotX.setAttribute('class','dot-x'); dotX.setAttribute('id','dotX');
+    dotX.setAttribute('cx', xPos(0,tMax)); dotX.setAttribute('cy', yPosX(0,xMaxScaled));
+    dotX.style.display='none';
+    svg.appendChild(dotX);
+
+    const dotV = svgns('circle');
+    dotV.setAttribute('r', 5); dotV.setAttribute('class','dot-v'); dotV.setAttribute('id','dotV');
+    dotV.setAttribute('cx', p0[0]); dotV.setAttribute('cy', p0[1]);
+    dotV.style.display='none';
+    svg.appendChild(dotV);
+
+    return {tMax, xMaxScaled, vAbsMax};
+  }
+
+  function fmt(n){ return (Math.round(n*100)/100).toString(); }
+
+  function update(){
+    if(animId) return;
+    state = compute();
+    t1val.textContent = state.t1.toFixed(1)+' s';
+    v1val.textContent = state.v1.toFixed(0)+' m/s';
+    gval.textContent = state.g.toFixed(2)+' m/s²';
+
+    state._scale = render(state);
+
+    document.getElementById('s_t1').textContent = state.t1.toFixed(2)+' s';
+    document.getElementById('s_t2').textContent = state.t2.toFixed(2)+' s';
+    document.getElementById('s_t3').textContent = state.t3.toFixed(2)+' s';
+    document.getElementById('s_xmax').textContent = fmt(state.xMax)+' m';
+    document.getElementById('s_vimpact').textContent = fmt(state.vImpact)+' m/s';
+
+    const maxBarTime = Math.max(state.coastTime, state.fallTime);
+    document.getElementById('upBar').style.width = (state.coastTime/maxBarTime*100)+'%';
+    document.getElementById('downBar').style.width = (state.fallTime/maxBarTime*100)+'%';
+    document.getElementById('upTimeLabel').textContent = state.coastTime.toFixed(2)+' s';
+    document.getElementById('downTimeLabel').textContent = state.fallTime.toFixed(2)+' s';
+
+    const ratio = state.fallTime/state.coastTime;
+    document.getElementById('verdictText').innerHTML =
+      `落下花的時間是減速上升的 <b>${ratio.toFixed(2)} 倍</b>，撞擊速度比燃盡速度多了 <b>${(state.vImpact-state.v1).toFixed(1)} m/s</b>`;
+  }
+
+  function animate(ts){
+    if(!animStart) animStart = ts;
+    const elapsed = ts - animStart;
+    const frac = Math.min(elapsed/ANIM_DURATION, 1);
+    const t = frac * state.t3;
+
+    document.getElementById('progressFill').style.width = (frac*100)+'%';
+
+    let v;
+    if(t <= state.t1) v = (state.v1/state.t1)*t;
+    else if(t <= state.t2) v = state.v1 - state.g*(t-state.t1);
+    else v = -state.g*(t-state.t2);
+
+    let x;
+    if(t <= state.t1) x = 0.5*(state.v1/state.t1)*t*t;
+    else if(t <= state.t2){ const dt=t-state.t1; x = state.x1 + state.v1*dt - 0.5*state.g*dt*dt; }
+    else { const dt=t-state.t2; x = state.xMax - 0.5*state.g*dt*dt; }
+    x = Math.max(x,0);
+
+    const dotX = document.getElementById('dotX');
+    dotX.style.display='block';
+    dotX.setAttribute('cx', xPos(t, state._scale.tMax));
+    dotX.setAttribute('cy', yPosX(x, state._scale.xMaxScaled));
+
+    const dotV = document.getElementById('dotV');
+    dotV.style.display='block';
+    dotV.setAttribute('cx', xPos(t, state._scale.tMax));
+    dotV.setAttribute('cy', yPosV(v, state._scale.vAbsMax));
+
+    if(frac < 1){
+      animId = requestAnimationFrame(animate);
+    } else {
+      animId = null;
+      animStart = null;
+      document.getElementById('playBtn').textContent = '▶ 播放飛行過程';
+      setTimeout(()=>{
+        document.getElementById('progressFill').style.width='0%';
+        const dx = document.getElementById('dotX'); if(dx) dx.style.display='none';
+        const dv = document.getElementById('dotV'); if(dv) dv.style.display='none';
+      }, 500);
+    }
+  }
+
+  document.getElementById('playBtn').addEventListener('click', ()=>{
+    if(animId){
+      cancelAnimationFrame(animId);
+      animId = null; animStart = null;
+      document.getElementById('playBtn').textContent = '▶ 播放飛行過程';
+      return;
+    }
+    document.getElementById('playBtn').textContent = '⏸ 播放中…';
+    animId = requestAnimationFrame(animate);
+  });
+
+  [t1Input, v1Input, gInput].forEach(inp => inp.addEventListener('input', update));
+
+  document.querySelectorAll('.presets button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      gInput.value = btn.dataset.g;
+      document.querySelectorAll('.presets button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      update();
+    });
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>
