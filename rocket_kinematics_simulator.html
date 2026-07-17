@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>火箭升空與墜落｜運動學模擬器</title>
+<title>火箭升空與墜落｜運動學模擬器 (雙視窗實體聯動版)</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -30,7 +30,7 @@
     padding:24px 14px 60px;
   }
 
-  .wrap{max-width:980px;margin:0 auto;}
+  .wrap{max-width:1080px;margin:0 auto;}
 
   header{text-align:center;margin-bottom:28px;}
   header .eyebrow{
@@ -42,14 +42,14 @@
   }
   h1{
     font-family:'Kalam', cursive;
-    font-size:2.1rem;
+    font-size:2.2rem;
     font-weight:700;
     margin:6px 0 10px;
     text-shadow:0 0 14px rgba(242,236,217,0.15);
   }
   header p{
     color:var(--chalk-dim);
-    max-width:640px;
+    max-width:680px;
     margin:0 auto;
     line-height:1.7;
     font-size:0.95rem;
@@ -98,6 +98,7 @@
     accent-color:var(--chalk-yellow);
     height:4px;
     background:transparent;
+    cursor:pointer;
   }
   .presets{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;}
   .presets button{
@@ -126,41 +127,60 @@
     color:var(--board-dark);
     border:none;
     font-weight:700;
-    padding:10px 22px;
+    padding:10px 24px;
     border-radius:24px;
     cursor:pointer;
     font-family:'Noto Sans TC', sans-serif;
-    font-size:0.9rem;
-    transition:transform .15s;
+    font-size:0.95rem;
+    transition:transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 12px rgba(242,214,117,0.3);
   }
-  #playBtn:hover{transform:scale(1.04);}
+  #playBtn:hover{transform:scale(1.04); box-shadow: 0 6px 16px rgba(242,214,117,0.4);}
   .progress-track{
-    flex:1; height:3px; background:rgba(242,236,217,0.15); border-radius:2px; position:relative;
+    flex:1; height:4px; background:rgba(242,236,217,0.15); border-radius:2px; position:relative;
   }
   .progress-fill{
     position:absolute; left:0; top:0; height:100%;
     background:var(--chalk-yellow); border-radius:2px; width:0%;
   }
 
+  /* 雙視窗佈局：左側圖表 + 右側火箭軌道 */
+  .dual-view{
+    display:flex;
+    gap:16px;
+    margin:10px 0 6px;
+    align-items:stretch;
+  }
   .graph-card{
-    background:rgba(0,0,0,0.15);
+    flex:1;
+    min-width:0;
+    background:rgba(0,0,0,0.18);
     border-radius:8px;
     padding:14px 14px 8px;
-    margin:20px 0 6px;
+    display:flex;
+    flex-direction:column;
   }
-  .graph-card h3{
-    font-family:'JetBrains Mono', monospace;
-    font-size:0.8rem;
-    color:var(--chalk-dim);
-    margin:0 0 6px;
-    letter-spacing:0.05em;
+  .rocket-card{
+    width:180px;
+    background:rgba(0,0,0,0.25);
+    border:1px solid rgba(242,236,217,0.1);
+    border-radius:8px;
+    padding:14px 10px 8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    position:relative;
+    overflow:hidden;
   }
+
   .legend{
-    display:flex; gap:20px; margin-bottom:8px; font-size:0.82rem;
+    display:flex; gap:16px; margin-bottom:8px; font-size:0.82rem;
     font-family:'JetBrains Mono', monospace; color:var(--chalk-dim);
+    flex-wrap:wrap;
   }
   .legend span{display:flex; align-items:center; gap:6px;}
   .legend i{width:14px; height:3px; display:inline-block; border-radius:2px;}
+  
   svg{width:100%; height:auto; display:block; overflow:visible;}
   .axis-line{stroke:var(--chalk-dim); stroke-width:1; opacity:0.6;}
   .grid-line{stroke:var(--chalk-dim); stroke-width:0.5; opacity:0.18;}
@@ -174,6 +194,39 @@
   .axis-label-v{font-family:'JetBrains Mono', monospace; font-size:10px; fill:var(--v-color); font-weight:600;}
   .dot-x{fill:var(--x-color); filter:drop-shadow(0 0 4px rgba(95,176,255,0.9));}
   .dot-v{fill:var(--v-color); filter:drop-shadow(0 0 4px rgba(239,106,90,0.9));}
+
+  /* 火箭軌道視覺樣式 */
+  .phase-badge{
+    font-size:0.75rem;
+    font-family:'Noto Sans TC', sans-serif;
+    font-weight:700;
+    padding:4px 10px;
+    border-radius:12px;
+    background:rgba(255,255,255,0.1);
+    color:var(--chalk);
+    text-align:center;
+    width:100%;
+    margin-bottom:8px;
+    transition:all .2s;
+    white-space:nowrap;
+  }
+  .phase-badge.phase1{background:rgba(95,176,255,0.25); color:#8fd0ff; border:1px solid #5fb0ff;}
+  .phase-badge.phase2{background:rgba(242,214,117,0.25); color:#ffe680; border:1px solid #f2d675;}
+  .phase-badge.phase3{background:rgba(239,106,90,0.25); color:#ff9485; border:1px solid #ef6a5a;}
+
+  #rocketTrackSvg{flex:1; width:100%; min-height:280px;}
+  .ground-pad{fill:#382c1e; stroke:#5c4a33; stroke-width:2;}
+  .track-line{stroke:var(--chalk-dim); stroke-width:1; stroke-dasharray:2 4; opacity:0.3;}
+  
+  /* 火箭火焰閃爍特效 */
+  @keyframes flicker{
+    0%, 100% { transform: scaleY(1) scaleX(1); opacity: 0.9; }
+    50% { transform: scaleY(1.3) scaleX(0.85); opacity: 1; }
+  }
+  #rocketFlame{ transform-origin: 0px 18px; animation: flicker 0.15s infinite; }
+
+  /* 視覺導覽對齊虛線 */
+  .guide-line{stroke:var(--chalk-yellow); stroke-width:1.2; stroke-dasharray:4 4; opacity:0.6; fill:none;}
 
   .compare{
     margin-top:18px;
@@ -229,6 +282,11 @@
     text-align:center; color:var(--chalk-dim); font-size:0.78rem; margin-top:30px;
     font-family:'JetBrains Mono', monospace;
   }
+
+  @media(max-width:768px){
+    .dual-view{flex-direction:column;}
+    .rocket-card{width:100%; height:220px;}
+  }
 </style>
 </head>
 <body>
@@ -237,7 +295,7 @@
   <header>
     <div class="eyebrow">Kinematics Lab · 運動學模擬器</div>
     <h1>火箭升空與墜落，為什麼不是對稱的？</h1>
-    <p>拉動下面的滑桿，親眼看見「上升位移＝下降位移」的鐵律，以及為什麼自由落下永遠比減速上升花更久的時間、摔得比出發時更快。</p>
+    <p>拉動滑桿並按下播放，觀察左側抽象的 $x-t$ / $v-t$ 圖形，如何透過虛線與右側「真實火箭的高度與姿態」完全同步聯動！</p>
   </header>
 
   <div class="board">
@@ -257,10 +315,10 @@
       </div>
     </div>
     <div class="presets">
-      <button data-g="9.8">🌍 地球 9.8</button>
+      <button data-g="9.8" class="active">🌍 地球 9.8</button>
       <button data-g="1.62">🌕 月球 1.62</button>
       <button data-g="3.71">🔴 火星 3.71</button>
-      <button data-g="24.8">☀️ 太陽表面 24.8（極端示範）</button>
+      <button data-g="24.8">☀️ 太陽表面 24.8</button>
     </div>
     <div class="playbar">
       <button id="playBtn">▶ 播放飛行過程</button>
@@ -269,13 +327,37 @@
   </div>
 
   <div class="board">
-    <h2>② x-t 與 v-t 合併圖（雙軸）</h2>
-    <div class="graph-card">
-      <div class="legend">
-        <span><i style="background:var(--x-color)"></i>藍色：x-t（高度，左軸）</span>
-        <span><i style="background:var(--v-color)"></i>紅色：v-t（速度，右軸）</span>
+    <h2>② 圖形與實體運動同步聯動</h2>
+    <div class="dual-view">
+      <div class="graph-card">
+        <div class="legend">
+          <span><i style="background:var(--x-color)"></i>藍色：x-t（高度，左軸）</span>
+          <span><i style="background:var(--v-color)"></i>紅色：v-t（速度，右軸）</span>
+        </div>
+        <svg id="combinedSvg" viewBox="0 0 640 320"></svg>
       </div>
-      <svg id="combinedSvg" viewBox="0 0 640 320"></svg>
+
+      <div class="rocket-card">
+        <div class="phase-badge phase1" id="phaseBadge">準備發射</div>
+        <svg id="rocketTrackSvg" viewBox="0 0 140 320">
+          <line x1="70" y1="16" x2="70" y2="288" class="track-line" />
+          <line id="trackMaxLine" x1="20" y1="16" x2="120" y2="16" stroke="#f2d675" stroke-width="1" stroke-dasharray="2 2" opacity="0.5" />
+          <text id="trackMaxText" x="70" y="12" fill="#f2d675" font-size="10" font-family="JetBrains Mono" text-anchor="middle" opacity="0.8">Max Height</text>
+          
+          <rect x="20" y="288" width="100" height="12" rx="3" class="ground-pad" />
+          <line x1="10" y1="288" x2="130" y2="288" stroke="#f2ecd9" stroke-width="1.5" opacity="0.6" />
+
+          <g id="rocketGroup" transform="translate(70, 288)">
+            <polygon id="rocketFlame" points="-6,16 0,34 6,16 0,22" fill="#f2d675" stroke="#ef6a5a" stroke-width="1.5" />
+            <path d="M -8,6 L -15,16 L -7,16 Z" fill="#ef6a5a" />
+            <path d="M 8,6 L 15,16 L 7,16 Z" fill="#ef6a5a" />
+            <rect x="-8" y="-12" width="16" height="28" rx="4" fill="#f2ecd9" stroke="#1c3d34" stroke-width="1.5" />
+            <path d="M -8,-12 L 0,-26 L 8,-12 Z" fill="#ef6a5a" stroke="#1c3d34" stroke-width="1.5" />
+            <circle cx="0" cy="-3" r="4" fill="#1c3d34" />
+            <circle cx="0" cy="-3" r="2.5" fill="#5fb0ff" />
+          </g>
+        </svg>
+      </div>
     </div>
 
     <div class="stats-grid">
@@ -302,7 +384,7 @@
     </div>
   </div>
 
-  <footer>斜率恆為 −g · 上下面積永遠相等 · 落下的時間永遠比較長</footer>
+  <footer>斜率恆為 −g · 上下面積永遠相等 · 落下的時間永遠比較長 · 物理視覺化互動教學</footer>
 </div>
 
 <script>
@@ -315,11 +397,18 @@
   const gval = document.getElementById('gval');
 
   const svg = document.getElementById('combinedSvg');
+  const rocketGroup = document.getElementById('rocketGroup');
+  const rocketFlame = document.getElementById('rocketFlame');
+  const phaseBadge = document.getElementById('phaseBadge');
 
   const W = 640, H = 320;
   const margin = {top:16, right:46, bottom:32, left:46};
   const plotW = W - margin.left - margin.right;
   const plotH = H - margin.top - margin.bottom;
+
+  // 右側火箭發射井的垂直高度 mapping (與左側 yPosX 對齊)
+  const trackTop = margin.top;
+  const trackBottom = margin.top + plotH; // 288px
 
   let state = {};
   let animId = null;
@@ -345,9 +434,7 @@
   }
 
   function xPos(t, tMax){ return margin.left + (t/tMax)*plotW; }
-  // 左軸：高度 x，從底部0到頂部xMax
   function yPosX(x, xMax){ return margin.top + plotH - (x/xMax)*plotH; }
-  // 右軸：速度 v，從底部-vAbsMax到頂部+vAbsMax（獨立座標，與左軸共用像素高度）
   function yPosV(v, vAbsMax){ return margin.top + plotH - ((v+vAbsMax)/(2*vAbsMax))*plotH; }
 
   function clearSvg(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
@@ -368,14 +455,14 @@
       svg.appendChild(l);
     }
 
-    // 底軸（x軸=時間, 對齊左軸x=0）
+    // 底軸
     const baseline = svgns('line');
     baseline.setAttribute('x1', margin.left); baseline.setAttribute('x2', margin.left+plotW);
     baseline.setAttribute('y1', margin.top+plotH); baseline.setAttribute('y2', margin.top+plotH);
     baseline.setAttribute('class','axis-line');
     svg.appendChild(baseline);
 
-    // v=0 中線（給v-t參考用，淡化處理）
+    // v=0 中線
     const zeroVY = yPosV(0, vAbsMax);
     const zeroLine = svgns('line');
     zeroLine.setAttribute('x1', margin.left); zeroLine.setAttribute('x2', margin.left+plotW);
@@ -397,7 +484,7 @@
     rightAxis.setAttribute('class','axis-line');
     svg.appendChild(rightAxis);
 
-    // ---- v-t 面積(紅色系) ----
+    // ---- v-t 面積 ----
     const p0 = [xPos(0,tMax), yPosV(0,vAbsMax)];
     const p1 = [xPos(s.t1,tMax), yPosV(s.v1,vAbsMax)];
     const p2 = [xPos(s.t2,tMax), yPosV(0,vAbsMax)];
@@ -413,13 +500,13 @@
     downPoly.setAttribute('class','fill-down');
     svg.appendChild(downPoly);
 
-    // ---- v-t 曲線(紅) ----
+    // ---- v-t 曲線 ----
     const vPath = svgns('polyline');
     vPath.setAttribute('points', `${p0[0]},${p0[1]} ${p1[0]},${p1[1]} ${p2[0]},${p2[1]} ${p3[0]},${p3[1]}`);
     vPath.setAttribute('class','curve-v');
     svg.appendChild(vPath);
 
-    // ---- x-t 曲線(藍) ----
+    // ---- x-t 曲線 ----
     const pts = [];
     const N = 24;
     for(let i=0;i<=N;i++){
@@ -473,23 +560,62 @@
     vl.setAttribute('class','axis-label-v'); vl.textContent = 'v(m/s)';
     svg.appendChild(vl);
 
-    // 移動光點（動畫用）
+    // 動畫光點與橫向視覺橋樑虛線
+    const guideLine = svgns('line');
+    guideLine.setAttribute('class', 'guide-line');
+    guideLine.setAttribute('id', 'guideLine');
+    guideLine.style.display = 'none';
+    svg.appendChild(guideLine);
+
     const dotX = svgns('circle');
     dotX.setAttribute('r', 5); dotX.setAttribute('class','dot-x'); dotX.setAttribute('id','dotX');
-    dotX.setAttribute('cx', xPos(0,tMax)); dotX.setAttribute('cy', yPosX(0,xMaxScaled));
     dotX.style.display='none';
     svg.appendChild(dotX);
 
     const dotV = svgns('circle');
     dotV.setAttribute('r', 5); dotV.setAttribute('class','dot-v'); dotV.setAttribute('id','dotV');
-    dotV.setAttribute('cx', p0[0]); dotV.setAttribute('cy', p0[1]);
     dotV.style.display='none';
     svg.appendChild(dotV);
+
+    // 更新右側火箭最高點標示線的位置
+    const maxRocketY = yPosX(s.xMax, xMaxScaled);
+    document.getElementById('trackMaxLine').setAttribute('y1', maxRocketY);
+    document.getElementById('trackMaxLine').setAttribute('y2', maxRocketY);
+    document.getElementById('trackMaxText').setAttribute('y', maxRocketY - 6);
 
     return {tMax, xMaxScaled, vAbsMax};
   }
 
   function fmt(n){ return (Math.round(n*100)/100).toString(); }
+
+  // 更新火箭與狀態徽章
+  function updateRocketVisual(t, x, v, s){
+    const yPx = yPosX(x, s._scale.xMaxScaled);
+    
+    // 判斷階段狀態
+    if(t === 0 || t === undefined){
+      rocketFlame.style.display = 'none';
+      rocketGroup.setAttribute('transform', `translate(70, ${trackBottom}) rotate(0)`);
+      phaseBadge.className = 'phase-badge phase1';
+      phaseBadge.textContent = '🚀 準備點火';
+    } else if(t <= s.t1){
+      rocketFlame.style.display = 'block';
+      rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(0)`);
+      phaseBadge.className = 'phase-badge phase1';
+      phaseBadge.textContent = '🟢 階段一：點火加速';
+    } else if(t <= s.t2){
+      rocketFlame.style.display = 'none';
+      rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(0)`);
+      phaseBadge.className = 'phase-badge phase2';
+      phaseBadge.textContent = '🟠 階段二：慣性減速';
+    } else {
+      rocketFlame.style.display = 'none';
+      // 達到最高點後，轉向 180 度機頭朝下下落
+      rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(180)`);
+      phaseBadge.className = 'phase-badge phase3';
+      phaseBadge.textContent = '🔴 階段三：自由落體';
+    }
+  }
 
   function update(){
     if(animId) return;
@@ -515,6 +641,8 @@
     const ratio = state.fallTime/state.coastTime;
     document.getElementById('verdictText').innerHTML =
       `落下花的時間是減速上升的 <b>${ratio.toFixed(2)} 倍</b>，撞擊速度比燃盡速度多了 <b>${(state.vImpact-state.v1).toFixed(1)} m/s</b>`;
+
+    updateRocketVisual(0, 0, 0, state);
   }
 
   function animate(ts){
@@ -536,15 +664,30 @@
     else { const dt=t-state.t2; x = state.xMax - 0.5*state.g*dt*dt; }
     x = Math.max(x,0);
 
+    const curXPos = xPos(t, state._scale.tMax);
+    const curYPosX = yPosX(x, state._scale.xMaxScaled);
+    const curYPosV = yPosV(v, state._scale.vAbsMax);
+
     const dotX = document.getElementById('dotX');
     dotX.style.display='block';
-    dotX.setAttribute('cx', xPos(t, state._scale.tMax));
-    dotX.setAttribute('cy', yPosX(x, state._scale.xMaxScaled));
+    dotX.setAttribute('cx', curXPos);
+    dotX.setAttribute('cy', curYPosX);
 
     const dotV = document.getElementById('dotV');
     dotV.style.display='block';
-    dotV.setAttribute('cx', xPos(t, state._scale.tMax));
-    dotV.setAttribute('cy', yPosV(v, state._scale.vAbsMax));
+    dotV.setAttribute('cx', curXPos);
+    dotV.setAttribute('cy', curYPosV);
+
+    // 連結 x-t 圖曲線到右側火箭的視覺導覽線
+    const guideLine = document.getElementById('guideLine');
+    guideLine.style.display='block';
+    guideLine.setAttribute('x1', curXPos);
+    guideLine.setAttribute('y1', curYPosX);
+    guideLine.setAttribute('x2', W); // 延伸至右側邊緣連接實體火箭
+    guideLine.setAttribute('y2', curYPosX);
+
+    // 聯動右側火箭與狀態燈號
+    updateRocketVisual(t, x, v, state);
 
     if(frac < 1){
       animId = requestAnimationFrame(animate);
@@ -556,7 +699,9 @@
         document.getElementById('progressFill').style.width='0%';
         const dx = document.getElementById('dotX'); if(dx) dx.style.display='none';
         const dv = document.getElementById('dotV'); if(dv) dv.style.display='none';
-      }, 500);
+        const gl = document.getElementById('guideLine'); if(gl) gl.style.display='none';
+        updateRocketVisual(0, 0, 0, state);
+      }, 800);
     }
   }
 
