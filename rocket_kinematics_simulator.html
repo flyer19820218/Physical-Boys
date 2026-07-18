@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>火箭升空與墜落｜運動學模擬器 (雙視窗實體聯動版)</title>
+<title>運動學模擬器｜自由落體・上拋・火箭升空（雙視窗實體聯動版）</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -80,12 +80,21 @@
     color:var(--chalk-yellow);
   }
 
+  .mode-switch{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;}
+  .mode-switch button{
+    font-family:'Noto Sans TC', sans-serif; font-size:0.92rem; font-weight:700;
+    background:rgba(0,0,0,0.2); color:var(--chalk-dim); border:1.5px solid rgba(242,236,217,0.2);
+    padding:10px 18px; border-radius:10px; cursor:pointer; transition:all .15s;
+  }
+  .mode-switch button.active{background:var(--chalk-yellow); color:var(--board-dark); border-color:var(--chalk-yellow);}
+
   .controls{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(210px,1fr));
     gap:18px;
     margin-bottom:8px;
   }
+  .control.hidden{display:none;}
   .control label{
     display:flex; justify-content:space-between;
     font-size:0.88rem; color:var(--chalk-dim);
@@ -112,7 +121,7 @@
     cursor:pointer;
     transition:all .15s;
   }
-  .presets button:hover, .presets button.active{
+  .presets button:hover, .presets button.active-g{
     border-color:var(--chalk-yellow);
     color:var(--chalk-yellow);
     background:rgba(242,214,117,0.08);
@@ -144,7 +153,6 @@
     background:var(--chalk-yellow); border-radius:2px; width:0%;
   }
 
-  /* 雙視窗佈局：左側圖表 + 右側火箭軌道 */
   .dual-view{
     display:flex;
     gap:16px;
@@ -195,7 +203,6 @@
   .dot-x{fill:var(--x-color); filter:drop-shadow(0 0 4px rgba(95,176,255,0.9));}
   .dot-v{fill:var(--v-color); filter:drop-shadow(0 0 4px rgba(239,106,90,0.9));}
 
-  /* 火箭軌道視覺樣式 */
   .phase-badge{
     font-size:0.75rem;
     font-family:'Noto Sans TC', sans-serif;
@@ -217,15 +224,13 @@
   #rocketTrackSvg{flex:1; width:100%; min-height:280px;}
   .ground-pad{fill:#382c1e; stroke:#5c4a33; stroke-width:2;}
   .track-line{stroke:var(--chalk-dim); stroke-width:1; stroke-dasharray:2 4; opacity:0.3;}
-  
-  /* 火箭火焰閃爍特效 */
+
   @keyframes flicker{
     0%, 100% { transform: scaleY(1) scaleX(1); opacity: 0.9; }
     50% { transform: scaleY(1.3) scaleX(0.85); opacity: 1; }
   }
   #rocketFlame{ transform-origin: 0px 18px; animation: flicker 0.15s infinite; }
 
-  /* 視覺導覽對齊虛線 */
   .guide-line{stroke:var(--chalk-yellow); stroke-width:1.2; stroke-dasharray:4 4; opacity:0.6; fill:none;}
 
   .compare{
@@ -241,6 +246,7 @@
     font-size:1.05rem;
   }
   .bar-row{margin-bottom:12px;}
+  .bar-row.hidden{display:none;}
   .bar-row .bar-label{
     display:flex; justify-content:space-between;
     font-size:0.82rem; color:var(--chalk-dim);
@@ -294,20 +300,29 @@
 
   <header>
     <div class="eyebrow">Kinematics Lab · 運動學模擬器</div>
-    <h1>火箭升空與墜落，為什麼不是對稱的？</h1>
-    <p>拉動滑桿並按下播放，觀察左側抽象的 $x-t$ / $v-t$ 圖形，如何透過虛線與右側「真實火箭的高度與姿態」完全同步聯動！</p>
+    <h1>自由落體・上拋・火箭升空，三種情境一次看懂</h1>
+    <p>切換情境、拉滑桿並按下播放，觀察左側抽象的 x-t / v-t 圖形，如何透過虛線與右側「實體物件的高度與姿態」完全同步聯動！</p>
   </header>
 
   <div class="board">
-    <h2>① 設定火箭的起始條件</h2>
+    <h2>① 選擇情境並設定條件</h2>
+    <div class="mode-switch">
+      <button class="active" data-mode="freefall">🪨 自由落體</button>
+      <button data-mode="throw">⚪ 上拋運動</button>
+      <button data-mode="rocket">🚀 火箭升空與墜落</button>
+    </div>
     <div class="controls">
-      <div class="control">
+      <div class="control" id="control-t1">
         <label>燃燒時間 <span class="val" id="t1val">3.0 s</span></label>
         <input type="range" id="t1" min="0.5" max="8" step="0.1" value="3">
       </div>
-      <div class="control">
-        <label>燃盡瞬間速度 <span class="val" id="v1val">150 m/s</span></label>
+      <div class="control" id="control-v1">
+        <label id="v1label">拋出初速度 <span class="val" id="v1val">150 m/s</span></label>
         <input type="range" id="v1" min="20" max="300" step="5" value="150">
+      </div>
+      <div class="control" id="control-h">
+        <label>初始高度 H <span class="val" id="hval">100 m</span></label>
+        <input type="range" id="h" min="5" max="500" step="5" value="100">
       </div>
       <div class="control">
         <label>重力加速度 g <span class="val" id="gval">9.8 m/s²</span></label>
@@ -315,13 +330,13 @@
       </div>
     </div>
     <div class="presets">
-      <button data-g="9.8" class="active">🌍 地球 9.8</button>
+      <button data-g="9.8" class="active-g">🌍 地球 9.8</button>
       <button data-g="1.62">🌕 月球 1.62</button>
       <button data-g="3.71">🔴 火星 3.71</button>
       <button data-g="24.8">☀️ 太陽表面 24.8</button>
     </div>
     <div class="playbar">
-      <button id="playBtn">▶ 播放飛行過程</button>
+      <button id="playBtn">▶ 播放</button>
       <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     </div>
   </div>
@@ -338,30 +353,40 @@
       </div>
 
       <div class="rocket-card">
-        <div class="phase-badge phase1" id="phaseBadge">準備發射</div>
+        <div class="phase-badge phase1" id="phaseBadge">準備開始</div>
         <svg id="rocketTrackSvg" viewBox="0 0 140 320">
           <line x1="70" y1="16" x2="70" y2="288" class="track-line" />
           <line id="trackMaxLine" x1="20" y1="16" x2="120" y2="16" stroke="#f2d675" stroke-width="1" stroke-dasharray="2 2" opacity="0.5" />
           <text id="trackMaxText" x="70" y="12" fill="#f2d675" font-size="10" font-family="JetBrains Mono" text-anchor="middle" opacity="0.8">Max Height</text>
-          
+
           <rect x="20" y="288" width="100" height="12" rx="3" class="ground-pad" />
           <line x1="10" y1="288" x2="130" y2="288" stroke="#f2ecd9" stroke-width="1.5" opacity="0.6" />
 
           <g id="rocketGroup" transform="translate(70, 288)">
-            <polygon id="rocketFlame" points="-6,16 0,34 6,16 0,22" fill="#f2d675" stroke="#ef6a5a" stroke-width="1.5" />
-            <path d="M -8,6 L -15,16 L -7,16 Z" fill="#ef6a5a" />
-            <path d="M 8,6 L 15,16 L 7,16 Z" fill="#ef6a5a" />
-            <rect x="-8" y="-12" width="16" height="28" rx="4" fill="#f2ecd9" stroke="#1c3d34" stroke-width="1.5" />
-            <path d="M -8,-12 L 0,-26 L 8,-12 Z" fill="#ef6a5a" stroke="#1c3d34" stroke-width="1.5" />
-            <circle cx="0" cy="-3" r="4" fill="#1c3d34" />
-            <circle cx="0" cy="-3" r="2.5" fill="#5fb0ff" />
+            <g id="iconRocket">
+              <polygon id="rocketFlame" points="-6,16 0,34 6,16 0,22" fill="#f2d675" stroke="#ef6a5a" stroke-width="1.5" />
+              <path d="M -8,6 L -15,16 L -7,16 Z" fill="#ef6a5a" />
+              <path d="M 8,6 L 15,16 L 7,16 Z" fill="#ef6a5a" />
+              <rect x="-8" y="-12" width="16" height="28" rx="4" fill="#f2ecd9" stroke="#1c3d34" stroke-width="1.5" />
+              <path d="M -8,-12 L 0,-26 L 8,-12 Z" fill="#ef6a5a" stroke="#1c3d34" stroke-width="1.5" />
+              <circle cx="0" cy="-3" r="4" fill="#1c3d34" />
+              <circle cx="0" cy="-3" r="2.5" fill="#5fb0ff" />
+            </g>
+            <g id="iconBall" style="display:none">
+              <circle cx="0" cy="0" r="10" fill="#f2d675" stroke="#1c3d34" stroke-width="1.5" />
+              <circle cx="-3" cy="-3" r="2.5" fill="rgba(255,255,255,0.6)" />
+            </g>
+            <g id="iconRock" style="display:none">
+              <path d="M0,-11 L9,-4 L6,9 L-6,9 L-9,-4 Z" fill="#8f8a80" stroke="#1c3d34" stroke-width="1.5" />
+              <path d="M-2,-5 L4,-2 L1,4 L-4,2 Z" fill="#a8a29a" opacity="0.6" />
+            </g>
           </g>
         </svg>
       </div>
     </div>
 
     <div class="stats-grid">
-      <div class="stat"><div class="k">t₁ 燃盡</div><div class="v" id="s_t1">-</div></div>
+      <div class="stat"><div class="k">t₁</div><div class="v" id="s_t1">-</div></div>
       <div class="stat"><div class="k">t₂ 最高點</div><div class="v" id="s_t2">-</div></div>
       <div class="stat"><div class="k">t₃ 落地</div><div class="v" id="s_t3">-</div></div>
       <div class="stat"><div class="k">最大高度</div><div class="v" id="s_xmax">-</div></div>
@@ -372,19 +397,19 @@
   <div class="board">
     <div class="compare">
       <h3>③ 時間長度一翻兩瞪眼</h3>
-      <div class="bar-row">
-        <div class="bar-label"><span>減速上升（燃盡 → 最高點）</span><span id="upTimeLabel">- s</span></div>
+      <div class="bar-row" id="upBarRow">
+        <div class="bar-label"><span id="upLabelText">減速上升（燃盡 → 最高點）</span><span id="upTimeLabel">- s</span></div>
         <div class="bar-track"><div class="bar-fill up" id="upBar" style="width:0%"></div></div>
       </div>
       <div class="bar-row">
-        <div class="bar-label"><span>自由落下（最高點 → 地面）</span><span id="downTimeLabel">- s</span></div>
+        <div class="bar-label"><span id="downLabelText">自由落下（最高點 → 地面）</span><span id="downTimeLabel">- s</span></div>
         <div class="bar-track"><div class="bar-fill down" id="downBar" style="width:0%"></div></div>
       </div>
       <div class="verdict" id="verdictText"></div>
     </div>
   </div>
 
-  <footer>斜率恆為 −g · 上下面積永遠相等 · 落下的時間永遠比較長 · 物理視覺化互動教學</footer>
+  <footer>斜率恆為 −g · 上下面積永遠相等 · 火箭落下較久，上拋恰好對稱 · 物理視覺化互動教學</footer>
 </div>
 
 <script>
@@ -392,24 +417,29 @@
   const t1Input = document.getElementById('t1');
   const v1Input = document.getElementById('v1');
   const gInput = document.getElementById('g');
+  const hInput = document.getElementById('h');
   const t1val = document.getElementById('t1val');
   const v1val = document.getElementById('v1val');
   const gval = document.getElementById('gval');
+  const hval = document.getElementById('hval');
+  const v1label = document.getElementById('v1label');
 
   const svg = document.getElementById('combinedSvg');
   const rocketGroup = document.getElementById('rocketGroup');
   const rocketFlame = document.getElementById('rocketFlame');
   const phaseBadge = document.getElementById('phaseBadge');
+  const iconRocket = document.getElementById('iconRocket');
+  const iconBall = document.getElementById('iconBall');
+  const iconRock = document.getElementById('iconRock');
 
   const W = 640, H = 320;
   const margin = {top:16, right:46, bottom:32, left:46};
   const plotW = W - margin.left - margin.right;
   const plotH = H - margin.top - margin.bottom;
 
-  // 右側火箭發射井的垂直高度 mapping (與左側 yPosX 對齊)
-  const trackTop = margin.top;
-  const trackBottom = margin.top + plotH; // 288px
+  const trackBottom = margin.top + plotH;
 
+  let mode = 'freefall';
   let state = {};
   let animId = null;
   let animStart = null;
@@ -418,11 +448,22 @@
   function svgns(tag){ return document.createElementNS('http://www.w3.org/2000/svg', tag); }
 
   function compute(){
-    const t1 = parseFloat(t1Input.value);
-    const v1 = parseFloat(v1Input.value);
     const g = parseFloat(gInput.value);
+    let t1, v1, x1;
 
-    const x1 = 0.5 * v1 * t1;
+    if(mode === 'rocket'){
+      t1 = parseFloat(t1Input.value);
+      v1 = parseFloat(v1Input.value);
+      x1 = 0.5 * v1 * t1;
+    } else if(mode === 'freefall'){
+      t1 = 0; v1 = 0;
+      x1 = parseFloat(hInput.value);
+    } else {
+      t1 = 0;
+      v1 = parseFloat(v1Input.value);
+      x1 = 0;
+    }
+
     const coastTime = v1 / g;
     const t2 = t1 + coastTime;
     const xMax = x1 + (v1*v1)/(2*g);
@@ -441,11 +482,10 @@
 
   function render(s){
     clearSvg();
-    const tMax = s.t3 * 1.06;
-    const xMaxScaled = s.xMax * 1.12;
-    const vAbsMax = Math.max(s.v1, s.vImpact) * 1.15;
+    const tMax = Math.max(s.t3 * 1.06, 0.5);
+    const xMaxScaled = Math.max(s.xMax * 1.12, 1);
+    const vAbsMax = Math.max(Math.max(s.v1, s.vImpact) * 1.15, 1);
 
-    // 垂直格線
     for(let i=0;i<=4;i++){
       const gx = margin.left + (i/4)*plotW;
       const l = svgns('line');
@@ -455,14 +495,12 @@
       svg.appendChild(l);
     }
 
-    // 底軸
     const baseline = svgns('line');
     baseline.setAttribute('x1', margin.left); baseline.setAttribute('x2', margin.left+plotW);
     baseline.setAttribute('y1', margin.top+plotH); baseline.setAttribute('y2', margin.top+plotH);
     baseline.setAttribute('class','axis-line');
     svg.appendChild(baseline);
 
-    // v=0 中線
     const zeroVY = yPosV(0, vAbsMax);
     const zeroLine = svgns('line');
     zeroLine.setAttribute('x1', margin.left); zeroLine.setAttribute('x2', margin.left+plotW);
@@ -470,21 +508,18 @@
     zeroLine.setAttribute('class','grid-line');
     svg.appendChild(zeroLine);
 
-    // 左軸線
     const leftAxis = svgns('line');
     leftAxis.setAttribute('x1', margin.left); leftAxis.setAttribute('x2', margin.left);
     leftAxis.setAttribute('y1', margin.top); leftAxis.setAttribute('y2', margin.top+plotH);
     leftAxis.setAttribute('class','axis-line');
     svg.appendChild(leftAxis);
 
-    // 右軸線
     const rightAxis = svgns('line');
     rightAxis.setAttribute('x1', margin.left+plotW); rightAxis.setAttribute('x2', margin.left+plotW);
     rightAxis.setAttribute('y1', margin.top); rightAxis.setAttribute('y2', margin.top+plotH);
     rightAxis.setAttribute('class','axis-line');
     svg.appendChild(rightAxis);
 
-    // ---- v-t 面積 ----
     const p0 = [xPos(0,tMax), yPosV(0,vAbsMax)];
     const p1 = [xPos(s.t1,tMax), yPosV(s.v1,vAbsMax)];
     const p2 = [xPos(s.t2,tMax), yPosV(0,vAbsMax)];
@@ -500,19 +535,21 @@
     downPoly.setAttribute('class','fill-down');
     svg.appendChild(downPoly);
 
-    // ---- v-t 曲線 ----
     const vPath = svgns('polyline');
     vPath.setAttribute('points', `${p0[0]},${p0[1]} ${p1[0]},${p1[1]} ${p2[0]},${p2[1]} ${p3[0]},${p3[1]}`);
     vPath.setAttribute('class','curve-v');
     svg.appendChild(vPath);
 
-    // ---- x-t 曲線 ----
     const pts = [];
     const N = 24;
-    for(let i=0;i<=N;i++){
-      const t = (i/N)*s.t1;
-      const x = 0.5*(s.v1/s.t1)*t*t;
-      pts.push([t,x]);
+    if(s.t1 > 0){
+      for(let i=0;i<=N;i++){
+        const t = (i/N)*s.t1;
+        const x = 0.5*(s.v1/s.t1)*t*t;
+        pts.push([t,x]);
+      }
+    } else {
+      pts.push([0, s.x1]);
     }
     for(let i=0;i<=N;i++){
       const t = s.t1 + (i/N)*s.coastTime;
@@ -532,8 +569,8 @@
     xPath.setAttribute('class','curve-x');
     svg.appendChild(xPath);
 
-    // 標記時間點 t1 t2 t3
-    [[s.t1,'t1'],[s.t2,'t2'],[s.t3,'t3']].forEach(([t,label])=>{
+    const markers = s.t1 > 0.01 ? [[s.t1,'t1'],[s.t2,'t2'],[s.t3,'t3']] : [[s.t2,'t2'],[s.t3,'t3']];
+    markers.forEach(([t,label])=>{
       const mx = xPos(t,tMax);
       const l = svgns('line');
       l.setAttribute('x1',mx); l.setAttribute('x2',mx);
@@ -548,7 +585,6 @@
       svg.appendChild(txt);
     });
 
-    // 軸標籤
     const xl = svgns('text');
     xl.setAttribute('x', 2); xl.setAttribute('y', margin.top-2);
     xl.setAttribute('class','axis-label-x'); xl.textContent = 'x(m)';
@@ -560,7 +596,6 @@
     vl.setAttribute('class','axis-label-v'); vl.textContent = 'v(m/s)';
     svg.appendChild(vl);
 
-    // 動畫光點與橫向視覺橋樑虛線
     const guideLine = svgns('line');
     guideLine.setAttribute('class', 'guide-line');
     guideLine.setAttribute('id', 'guideLine');
@@ -577,7 +612,6 @@
     dotV.style.display='none';
     svg.appendChild(dotV);
 
-    // 更新右側火箭最高點標示線的位置
     const maxRocketY = yPosX(s.xMax, xMaxScaled);
     document.getElementById('trackMaxLine').setAttribute('y1', maxRocketY);
     document.getElementById('trackMaxLine').setAttribute('y2', maxRocketY);
@@ -588,33 +622,67 @@
 
   function fmt(n){ return (Math.round(n*100)/100).toString(); }
 
-  // 更新火箭與狀態徽章
+  function setIcon(){
+    iconRocket.style.display = (mode === 'rocket') ? 'block' : 'none';
+    iconBall.style.display = (mode === 'throw') ? 'block' : 'none';
+    iconRock.style.display = (mode === 'freefall') ? 'block' : 'none';
+  }
+
   function updateRocketVisual(t, x, v, s){
     const yPx = yPosX(x, s._scale.xMaxScaled);
-    
-    // 判斷階段狀態
-    if(t === 0 || t === undefined){
-      rocketFlame.style.display = 'none';
-      rocketGroup.setAttribute('transform', `translate(70, ${trackBottom}) rotate(0)`);
-      phaseBadge.className = 'phase-badge phase1';
-      phaseBadge.textContent = '🚀 準備點火';
-    } else if(t <= s.t1){
-      rocketFlame.style.display = 'block';
+
+    if(mode === 'rocket'){
+      if(t === 0 || t === undefined){
+        rocketFlame.style.display = 'none';
+        rocketGroup.setAttribute('transform', `translate(70, ${trackBottom}) rotate(0)`);
+        phaseBadge.className = 'phase-badge phase1';
+        phaseBadge.textContent = '🚀 準備點火';
+      } else if(t <= s.t1){
+        rocketFlame.style.display = 'block';
+        rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(0)`);
+        phaseBadge.className = 'phase-badge phase1';
+        phaseBadge.textContent = '🟢 階段一：點火加速';
+      } else if(t <= s.t2){
+        rocketFlame.style.display = 'none';
+        rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(0)`);
+        phaseBadge.className = 'phase-badge phase2';
+        phaseBadge.textContent = '🟠 階段二：慣性減速';
+      } else {
+        rocketFlame.style.display = 'none';
+        rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(180)`);
+        phaseBadge.className = 'phase-badge phase3';
+        phaseBadge.textContent = '🔴 階段三：自由落體';
+      }
+    } else if(mode === 'freefall'){
       rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(0)`);
-      phaseBadge.className = 'phase-badge phase1';
-      phaseBadge.textContent = '🟢 階段一：點火加速';
-    } else if(t <= s.t2){
-      rocketFlame.style.display = 'none';
-      rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(0)`);
-      phaseBadge.className = 'phase-badge phase2';
-      phaseBadge.textContent = '🟠 階段二：慣性減速';
+      if(t === 0 || t === undefined){
+        phaseBadge.className = 'phase-badge phase1';
+        phaseBadge.textContent = '🪨 準備釋放';
+      } else {
+        phaseBadge.className = 'phase-badge phase3';
+        phaseBadge.textContent = '🔴 自由落體中';
+      }
     } else {
-      rocketFlame.style.display = 'none';
-      // 達到最高點後，轉向 180 度機頭朝下下落
-      rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(180)`);
-      phaseBadge.className = 'phase-badge phase3';
-      phaseBadge.textContent = '🔴 階段三：自由落體';
+      rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(0)`);
+      if(t === 0 || t === undefined){
+        phaseBadge.className = 'phase-badge phase1';
+        phaseBadge.textContent = '⚪ 準備拋出';
+      } else if(t <= s.t2){
+        phaseBadge.className = 'phase-badge phase2';
+        phaseBadge.textContent = '🟠 上升減速中';
+      } else {
+        phaseBadge.className = 'phase-badge phase3';
+        phaseBadge.textContent = '🔴 自由落體下降';
+      }
     }
+  }
+
+  function updateControlVisibility(){
+    document.getElementById('control-t1').classList.toggle('hidden', mode !== 'rocket');
+    document.getElementById('control-h').classList.toggle('hidden', mode !== 'freefall');
+    document.getElementById('control-v1').classList.toggle('hidden', mode === 'freefall');
+    v1label.childNodes[0].textContent = (mode === 'rocket') ? '燃盡瞬間速度 ' : '拋出初速度 ';
+    setIcon();
   }
 
   function update(){
@@ -623,6 +691,7 @@
     t1val.textContent = state.t1.toFixed(1)+' s';
     v1val.textContent = state.v1.toFixed(0)+' m/s';
     gval.textContent = state.g.toFixed(2)+' m/s²';
+    hval.textContent = hInput.value+' m';
 
     state._scale = render(state);
 
@@ -632,17 +701,35 @@
     document.getElementById('s_xmax').textContent = fmt(state.xMax)+' m';
     document.getElementById('s_vimpact').textContent = fmt(state.vImpact)+' m/s';
 
-    const maxBarTime = Math.max(state.coastTime, state.fallTime);
-    document.getElementById('upBar').style.width = (state.coastTime/maxBarTime*100)+'%';
-    document.getElementById('downBar').style.width = (state.fallTime/maxBarTime*100)+'%';
-    document.getElementById('upTimeLabel').textContent = state.coastTime.toFixed(2)+' s';
-    document.getElementById('downTimeLabel').textContent = state.fallTime.toFixed(2)+' s';
+    const upBarRow = document.getElementById('upBarRow');
+    if(mode === 'freefall'){
+      upBarRow.classList.add('hidden');
+      document.getElementById('downLabelText').textContent = '自由落下（只有這一段）';
+      document.getElementById('downTimeLabel').textContent = state.fallTime.toFixed(2)+' s';
+      document.getElementById('downBar').style.width = '100%';
+      document.getElementById('verdictText').innerHTML =
+        `自由落體沒有上升階段，從靜止直接加速墜落，撞擊速度 <b>${fmt(state.vImpact)} m/s</b>`;
+    } else {
+      upBarRow.classList.remove('hidden');
+      document.getElementById('upLabelText').textContent = (mode==='rocket') ? '減速上升（燃盡 → 最高點）' : '上升時間（拋出 → 最高點）';
+      document.getElementById('downLabelText').textContent = (mode==='rocket') ? '自由落下（最高點 → 地面）' : '下降時間（最高點 → 地面）';
+      const maxBarTime = Math.max(state.coastTime, state.fallTime);
+      document.getElementById('upBar').style.width = (state.coastTime/maxBarTime*100)+'%';
+      document.getElementById('downBar').style.width = (state.fallTime/maxBarTime*100)+'%';
+      document.getElementById('upTimeLabel').textContent = state.coastTime.toFixed(2)+' s';
+      document.getElementById('downTimeLabel').textContent = state.fallTime.toFixed(2)+' s';
 
-    const ratio = state.fallTime/state.coastTime;
-    document.getElementById('verdictText').innerHTML =
-      `落下花的時間是減速上升的 <b>${ratio.toFixed(2)} 倍</b>，撞擊速度比燃盡速度多了 <b>${(state.vImpact-state.v1).toFixed(1)} m/s</b>`;
+      const ratio = state.fallTime/state.coastTime;
+      if(mode === 'rocket'){
+        document.getElementById('verdictText').innerHTML =
+          `落下花的時間是減速上升的 <b>${ratio.toFixed(2)} 倍</b>，撞擊速度比燃盡速度多了 <b>${(state.vImpact-state.v1).toFixed(1)} m/s</b>`;
+      } else {
+        document.getElementById('verdictText').innerHTML =
+          `上升與下降時間比值 <b>${ratio.toFixed(2)}</b> —— 上拋運動完全對稱，撞擊速度等於拋出速度 <b>${fmt(state.vImpact)} m/s</b>`;
+      }
+    }
 
-    updateRocketVisual(0, 0, 0, state);
+    updateRocketVisual(0, mode==='freefall' ? state.x1 : 0, 0, state);
   }
 
   function animate(ts){
@@ -654,12 +741,12 @@
     document.getElementById('progressFill').style.width = (frac*100)+'%';
 
     let v;
-    if(t <= state.t1) v = (state.v1/state.t1)*t;
+    if(t <= state.t1 && state.t1>0) v = (state.v1/state.t1)*t;
     else if(t <= state.t2) v = state.v1 - state.g*(t-state.t1);
     else v = -state.g*(t-state.t2);
 
     let x;
-    if(t <= state.t1) x = 0.5*(state.v1/state.t1)*t*t;
+    if(t <= state.t1 && state.t1>0) x = 0.5*(state.v1/state.t1)*t*t;
     else if(t <= state.t2){ const dt=t-state.t1; x = state.x1 + state.v1*dt - 0.5*state.g*dt*dt; }
     else { const dt=t-state.t2; x = state.xMax - 0.5*state.g*dt*dt; }
     x = Math.max(x,0);
@@ -678,15 +765,13 @@
     dotV.setAttribute('cx', curXPos);
     dotV.setAttribute('cy', curYPosV);
 
-    // 連結 x-t 圖曲線到右側火箭的視覺導覽線
     const guideLine = document.getElementById('guideLine');
     guideLine.style.display='block';
     guideLine.setAttribute('x1', curXPos);
     guideLine.setAttribute('y1', curYPosX);
-    guideLine.setAttribute('x2', W); // 延伸至右側邊緣連接實體火箭
+    guideLine.setAttribute('x2', W);
     guideLine.setAttribute('y2', curYPosX);
 
-    // 聯動右側火箭與狀態燈號
     updateRocketVisual(t, x, v, state);
 
     if(frac < 1){
@@ -694,13 +779,13 @@
     } else {
       animId = null;
       animStart = null;
-      document.getElementById('playBtn').textContent = '▶ 播放飛行過程';
+      document.getElementById('playBtn').textContent = '▶ 播放';
       setTimeout(()=>{
         document.getElementById('progressFill').style.width='0%';
         const dx = document.getElementById('dotX'); if(dx) dx.style.display='none';
         const dv = document.getElementById('dotV'); if(dv) dv.style.display='none';
         const gl = document.getElementById('guideLine'); if(gl) gl.style.display='none';
-        updateRocketVisual(0, 0, 0, state);
+        updateRocketVisual(0, mode==='freefall' ? state.x1 : 0, 0, state);
       }, 800);
     }
   }
@@ -709,24 +794,35 @@
     if(animId){
       cancelAnimationFrame(animId);
       animId = null; animStart = null;
-      document.getElementById('playBtn').textContent = '▶ 播放飛行過程';
+      document.getElementById('playBtn').textContent = '▶ 播放';
       return;
     }
     document.getElementById('playBtn').textContent = '⏸ 播放中…';
     animId = requestAnimationFrame(animate);
   });
 
-  [t1Input, v1Input, gInput].forEach(inp => inp.addEventListener('input', update));
+  [t1Input, v1Input, gInput, hInput].forEach(inp => inp.addEventListener('input', update));
 
   document.querySelectorAll('.presets button').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       gInput.value = btn.dataset.g;
-      document.querySelectorAll('.presets button').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
+      document.querySelectorAll('.presets button').forEach(b=>b.classList.remove('active-g'));
+      btn.classList.add('active-g');
       update();
     });
   });
 
+  document.querySelectorAll('.mode-switch button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      mode = btn.dataset.mode;
+      document.querySelectorAll('.mode-switch button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      updateControlVisibility();
+      update();
+    });
+  });
+
+  updateControlVisibility();
   update();
 })();
 </script>
