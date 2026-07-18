@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>02. 平均速率、速度與 V-T 圖位移</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #16241f;
+    --bg-panel: #1e2f27;
+    --bg-panel-hover: #24382f;
+    --chalk: #f6f3ea;
+    --chalk-dim: #9fb0a8;
+    --chalk-yellow: #f2d675;
+    --chalk-teal: #7fc8c4;
+    --chalk-coral: #f0955c;
+    --chalk-blue: #6fa8f2;
+    --chalk-green: #8fe885;
+    --rule-color: rgba(246, 243, 234, 0.14);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; padding: 0;
+    background-color: var(--bg-base);
+    background-image: 
+      radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 4px 4px, 8px 8px;
+    color: var(--chalk);
+    font-family: 'Noto Sans TC', sans-serif;
+    line-height: 1.6;
+    padding-bottom: 60px;
+  }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 30px 20px; }
+
+  /* 導航 header */
+  .top-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 2px dashed var(--rule-color); padding-bottom: 15px; margin-bottom: 30px;
+  }
+  .back-btn {
+    background: var(--bg-panel); color: var(--chalk-yellow);
+    text-decoration: none; padding: 8px 16px; border-radius: 6px;
+    border: 1px solid var(--chalk-yellow); font-weight: bold; transition: 0.2s;
+  }
+  .back-btn:hover { background: var(--chalk-yellow); color: var(--bg-base); }
+  
+  .slide-container {
+    background: var(--bg-panel); border: 2px solid var(--rule-color);
+    border-radius: 16px; padding: 35px; min-height: 580px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    position: relative;
+  }
+
+  .slide { display: none; animation: fadeIn 0.4s ease; }
+  .slide.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  h1, h2, h3 { font-family: 'Kalam', cursive, 'Noto Sans TC'; margin-top: 0; }
+  h2 { color: var(--chalk-yellow); font-size: 26px; border-bottom: 1px solid var(--rule-color); padding-bottom: 10px; }
+  
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-family: 'JetBrains Mono', monospace;
+    background: rgba(242, 214, 117, 0.15); color: var(--chalk-yellow); margin-bottom: 10px;
+  }
+
+  /* 對照表格與對話框 */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+  .box {
+    background: rgba(0,0,0,0.2); border: 1px.5 dashed var(--rule-color);
+    border-radius: 10px; padding: 18px;
+  }
+  .box.blue { border-color: var(--chalk-blue); }
+  .box.coral { border-color: var(--chalk-coral); }
+  .box.teal { border-color: var(--chalk-teal); }
+  .box.green { border-color: var(--chalk-green); }
+
+  .formula {
+    font-family: 'JetBrains Mono', monospace; font-size: 18px;
+    background: #111d19; padding: 10px 15px; border-radius: 6px;
+    color: var(--chalk-yellow); text-align: center; margin: 10px 0;
+  }
+
+  .teacher-talk {
+    background: rgba(127, 200, 196, 0.1); border-left: 4px solid var(--chalk-teal);
+    padding: 12px 18px; border-radius: 0 8px 8px 0; margin-top: 20px;
+    font-size: 15px;
+  }
+
+  /* 互動模擬器控制區 */
+  .sim-box {
+    background: #111d19; border: 2px solid var(--chalk-teal);
+    border-radius: 12px; padding: 20px; margin-top: 15px;
+  }
+  .controls { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 15px; }
+  .btn {
+    background: var(--chalk-teal); color: #111; border: none;
+    padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;
+  }
+  .btn:hover { background: var(--chalk-white); }
+  .btn.reset { background: var(--chalk-coral); color: white; }
+  
+  canvas { background: #182822; border: 1px solid var(--rule-color); border-radius: 8px; width: 100%; height: 260px; }
+
+  /* 底部切換器 */
+  .controls-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--rule-color);
+  }
+  .page-indicator { font-family: 'JetBrains Mono', monospace; color: var(--chalk-dim); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top-nav">
+    <span style="font-family:'Kalam'; font-size:20px; color:var(--chalk-teal);">⚡ KINEMATICS PART 02</span>
+    <a href="index.html" class="back-btn">➔ 返回課程目錄</a>
+  </div>
+
+  <div class="slide-container">
+    
+    <!-- ================= 頁面 1：國小的快與慢 ================= -->
+    <div class="slide active" id="slide-1">
+      <span class="badge">PART 1 · 速度的基本概念</span>
+      <h2>🏃‍♂️ 國小的印象：「快」與「慢」是怎麼比的？</h2>
+      
+      <p>在國小的時候，我們要比較兩個人誰跑得比較快，通常有兩種最直覺的方法：</p>
+
+      <div class="grid-2">
+        <div class="box blue">
+          <h3 style="color: var(--chalk-blue);">方法一：固定距離，比「時間」</h3>
+          <p>🏁 <strong>情境：百米賽跑</strong></p>
+          <p>大家都跑 100 公尺，誰花的時間<strong>越少</strong>，誰就越快！</p>
+          <div class="formula">時間越短 ➔ 跑得越快</div>
+        </div>
+        <div class="box coral">
+          <h3 style="color: var(--chalk-coral);">方法二：固定時間，比「距離」</h3>
+          <p>⏱️ <strong>情境：一分鐘折返跑</strong></p>
+          <p>大家都跑 60 秒，誰跑出的距離<strong>越長</strong>，誰就越快！</p>
+          <div class="formula">距離越長 ➔ 跑得越快</div>
+        </div>
+      </div>
+
+      <div class="teacher-talk">
+        <strong>👩‍🏫 曉臻老師的話：</strong><br>
+        如果距離跟時間都不一樣怎麼辦？（例如：阿建跑 100 公尺花 12 秒，阿偉跑 60 公尺花 8 秒）<br>
+        這時候我們就要除一下，算出<strong>「一秒鐘跑幾公尺」</strong>，這就是國中物理的核心——<strong>速率與速度</strong>！
+      </div>
+    </div>
+
+    <!-- ================= 頁面 2：平均速率 vs 平均速度 ================= -->
+    <div class="slide" id="slide-2">
+      <span class="badge">PART 1 · 觀念升級</span>
+      <h2>⚖️ 平均「速率」與平均「速度」的差異</h2>
+      
+      <p>上一堂課我們學了「路徑長」與「位移」，現在把它們分別除以時間，就變成了兩個新主角：</p>
+
+      <div class="grid-2">
+        <div class="box green">
+          <h3 style="color: var(--chalk-green);">🟢 平均速率 (Average Speed)</h3>
+          <p>看的是<strong>「實際上走過的總路程」</strong>有多快。它<strong>沒有方向性</strong>，只有大小（純量）。</p>
+          <div class="formula">平均速率 = 路徑長 ÷ 經歷時間</div>
+          <p style="font-size: 13px; color: var(--chalk-dim);">💡 例：跑操場一圈 400m 花 80 秒 ➔ 平均速率 = 5 m/s</p>
+        </div>
+        <div class="box teal">
+          <h3 style="color: var(--chalk-teal);">🔵 平均速度 (Average Velocity)</h3>
+          <p>看的是<strong>「位置改變了多少」</strong>有多快。因為位移有方向，所以<strong>速度也有方向</strong>（向量）！</p>
+          <div class="formula">平均速度 = 位移 ÷ 經歷時間</div>
+          <p style="font-size: 13px; color: var(--chalk-dim);">💡 例：跑操場一圈回到原點，位移是 0 ➔ 平均速度 = 0 m/s</p>
+        </div>
+      </div>
+
+      <div class="teacher-talk">
+        <strong>⚡ 隨堂小秘訣：</strong> 記得看清楚題目問的是「速<strong>率</strong>」還是「速<strong>度</strong>」！<br>
+        只要是曲線運動，或者有折返的運動，因為 <strong>路徑長 ＞ 位移大小</strong>，所以 <strong>平均速率 ＞ 平均速度大小</strong> 喔！
+      </div>
+    </div>
+
+    <!-- ================= 頁面 3：瞬時速率與速度 ================= -->
+    <div class="slide" id="slide-3">
+      <span class="badge">PART 1 · 生活物理</span>
+      <h2>📸 瞬時速率與瞬時速度：那一瞬間到底有多快？</h2>
+      
+      <p>「平均速度」只是算一段時間內的總帳，但開車時不會永遠都等速。我們常說的「現在時速多少」，其實是指<strong>「瞬時」</strong>：</p>
+
+      <div class="grid-2">
+        <div class="box coral">
+          <h3 style="color: var(--chalk-coral);">🏎️ 車上的時速表</h3>
+          <p>指針指著 80 km/h，這代表車子<strong>現在這一瞬間</strong>的快慢。因為時速表不會標示你往東還往西開，所以它顯示的是——<strong>瞬時速率</strong>！</p>
+        </div>
+        <div class="box yellow" style="border-color: var(--chalk-yellow);">
+          <h3 style="color: var(--chalk-yellow);">🚓 國道超速測速照相</h3>
+          <p>雷達在 0.01 秒內偵測你的快慢。如果我再加上地圖導航說：「正以 100 km/h 的速度<strong>往北</strong>行駛」，有了方向，這就是——<strong>瞬時速度</strong>！</p>
+        </div>
+      </div>
+
+      <div class="teacher-talk" style="border-color: var(--chalk-yellow); background: rgba(242,214,117,0.1);">
+        <strong>🔥 考試超級重點：</strong><br>
+        在「瞬時」（極短時間內）因為來不及轉彎或折返，一瞬間的軌跡根本就是一直線！<br>
+        所以：<strong>瞬時速度的「大小」必定等於「瞬時速率」！</strong>（我們平常口語講「速度」，通常就是在講這個瞬時值）
+      </div>
+    </div>
+
+    <!-- ================= 頁面 4：等速度運動 x-t 與 v-t 意義 ================= -->
+    <div class="slide" id="slide-4">
+      <span class="badge">PART 2 · 核心圖形解析</span>
+      <h2>📈 等速度運動：x-t 圖 與 v-t 圖的秘密</h2>
+      
+      <p>如果一台車從頭到尾都保持<strong>「快慢不變、方向也不變」</strong>，我們就稱它為<strong>等速度運動</strong>。在物理圖形上，長這個樣子：</p>
+
+      <div class="grid-2">
+        <div class="box teal">
+          <h3 style="color: var(--chalk-teal);">📍 x-t 圖（位置-時間）</h3>
+          <p>因為每一秒前進的距離都一樣，所以在位置圖上，會是一條<strong>斜直線</strong>！</p>
+          <div style="font-size:14px; background:#111; padding:8px; border-radius:4px; text-align:center;">
+            🔺 斜率（傾斜程度）越大 ➔ 代表速度越快<br>
+            📉 斜線往右下傾斜 ➔ 代表往負方向走（倒退）
+          </div>
+        </div>
+        <div class="box blue">
+          <h3 style="color: var(--chalk-blue);">🚀 v-t 圖（速度-時間）</h3>
+          <p>因為速度由始至終都沒有改變，所以在速度圖上，會是一條<strong>水平線</strong>！</p>
+          <div style="font-size:14px; background:#111; padding:8px; border-radius:4px; text-align:center;">
+            ⬆️ 水平線在 t 軸上方 ➔ 正方向運動（v > 0）<br>
+            ⬇️ 水平線在 t 軸下方 ➔ 負方向運動（v < 0）
+          </div>
+        </div>
+      </div>
+
+      <div class="teacher-talk">
+        <strong>🔑 關鍵轉換：</strong> x-t 圖看起來「斜斜的」，而在 v-t 圖中卻變成「平平的」！下一頁我們親自用手調速度來驗證！
+      </div>
+    </div>
+
+    <!-- ================= 頁面 5：互動實驗室（面積＝位移） ================= -->
+    <div class="slide" id="slide-5">
+      <span class="badge">PART 2 · 互動實驗室</span>
+      <h2>🧪 V-T 圖的重頭戲：圖形下的「面積就是位移」！</h2>
+      
+      <p style="font-size: 14px; margin-bottom:10px;">請調整下方滑桿改變車輛速度，然後按下「啟動」，觀察 v-t 圖中<strong>黃色長方形面積</strong>與車子<strong>位移</strong>的完美對應關係！</p>
+      
+      <div class="sim-box">
+        <div class="controls">
+          <label>🚗 設定等速度 (v): <span id="v-val" style="color:var(--chalk-yellow); font-weight:bold;">5</span> m/s</label>
+          <input type="range" id="v-slider" min="-10" max="10" value="5" step="1" style="width: 150px;">
+          <button class="btn" id="btn-start">▶️ 啟動模擬</button>
+          <button class="btn reset" id="btn-reset">🔄 重置</button>
+          <span style="margin-left:auto; font-family:'JetBrains Mono';">時間 t: <span id="t-val" style="color:var(--chalk-teal);">0.0</span> s | 位移: <span id="x-val" style="color:var(--chalk-yellow); font-weight:bold;">0.0</span> m</span>
+        </div>
+        
+        <canvas id="simCanvas" width="880" height="260"></canvas>
+      </div>
+
+      <div class="formula" style="margin-top: 15px;">
+        長方形面積 ＝ 長（時間 t） × 寬（速度 v） ＝ 位移 (Δx)
+      </div>
+    </div>
+
+    <!-- 底部切換控制按鈕 -->
+    <div class="controls-footer">
+      <button class="btn" id="prev-btn" onclick="changeSlide(-1)" style="display:none;">⬅️ 上一頁</button>
+      <span class="page-indicator">PAGE <span id="page-num">1</span> / 5</span>
+      <button class="btn" id="next-btn" onclick="changeSlide(1)">下一頁 ➔</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ================= 簡報分頁邏輯 =================
+  let currentSlide = 1;
+  const totalSlides = 5;
+
+  function changeSlide(dir) {
+    document.getElementById(`slide-${currentSlide}`).classList.remove('active');
+    currentSlide += dir;
+    if (currentSlide < 1) currentSlide = 1;
+    if (currentSlide > totalSlides) currentSlide = totalSlides;
+    
+    document.getElementById(`slide-${currentSlide}`).classList.add('active');
+    document.getElementById('page-num').innerText = currentSlide;
+    
+    document.getElementById('prev-btn').style.display = currentSlide === 1 ? 'none' : 'inline-block';
+    document.getElementById('next-btn').style.display = currentSlide === totalSlides ? 'none' : 'inline-block';
+    if(currentSlide === totalSlides) {
+      document.getElementById('next-btn').innerText = '🎉 學習完成';
+      document.getElementById('next-btn').disabled = true;
+    } else {
+      document.getElementById('next-btn').innerText = '下一頁 ➔';
+      document.getElementById('next-btn').disabled = false;
+    }
+  }
+
+  // ================= v-t 圖與位移模擬器邏輯 =================
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  const vSlider = document.getElementById('v-slider');
+  const vVal = document.getElementById('v-val');
+  const tVal = document.getElementById('t-val');
+  const xVal = document.getElementById('x-val');
+  const btnStart = document.getElementById('btn-start');
+  const btnReset = document.getElementById('btn-reset');
+
+  let v = 5;
+  let t = 0;
+  let isRunning = false;
+  let animId = null;
+
+  vSlider.addEventListener('input', (e) => {
+    v = parseInt(e.target.value);
+    vVal.innerText = v;
+    if(!isRunning && t === 0) draw();
+  });
+
+  btnStart.addEventListener('click', () => {
+    if (!isRunning && t < 10) {
+      isRunning = true;
+      btnStart.innerText = "⏸️ 暫停";
+      lastTime = performance.now();
+      animId = requestAnimationFrame(loop);
+    } else if (isRunning) {
+      isRunning = false;
+      btnStart.innerText = "▶️ 繼續";
+      cancelAnimationFrame(animId);
+    }
+  });
+
+  btnReset.addEventListener('click', () => {
+    isRunning = false;
+    cancelAnimationFrame(animId);
+    btnStart.innerText = "▶️ 啟動模擬";
+    t = 0;
+    tVal.innerText = "0.0";
+    xVal.innerText = "0.0";
+    draw();
+  });
+
+  let lastTime = 0;
+  function loop(now) {
+    if (!isRunning) return;
+    const dt = (now - lastTime) / 1000;
+    lastTime = now;
+    
+    t += dt;
+    if (t >= 10) {
+      t = 10;
+      isRunning = false;
+      btnStart.innerText = "🔁 完結";
+    }
+    
+    tVal.innerText = t.toFixed(1);
+    xVal.innerText = (v * t).toFixed(1);
+    draw();
+    
+    if (isRunning) animId = requestAnimationFrame(loop);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 1. 上半部：車子模擬軌道區 (Height: 0 ~ 80)
+    ctx.fillStyle = "#111d19";
+    ctx.fillRect(0, 0, canvas.width, 80);
+    ctx.strokeStyle = "#444";
+    ctx.beginPath(); ctx.moveTo(0, 55); ctx.lineTo(canvas.width, 55); ctx.stroke();
+    
+    // 刻度線
+    ctx.fillStyle = "#8fd0ff";
+    ctx.font = "11px JetBrains Mono";
+    const originX = canvas.width / 2;
+    for(let i = -100; i <= 100; i += 20) {
+      let px = originX + i * 4;
+      ctx.fillRect(px, 50, 1, 10);
+      if(i % 40 === 0) ctx.fillText(`${i}m`, px - 10, 72);
+    }
+    
+    // 畫車子 (位移 x = v * t)
+    let curX = originX + (v * t) * 4;
+    ctx.fillStyle = "#f0955c";
+    ctx.fillRect(curX - 15, 30, 30, 20);
+    ctx.fillStyle = "#fff";
+    ctx.font = "12px Noto Sans TC";
+    ctx.fillText("🚗", curX - 8, 45);
+
+    // 2. 下半部：v-t 圖形區 (Height: 80 ~ 260)
+    const graphTop = 90, graphBottom = 240, graphLeft = 60, graphRight = 840;
+    const originY = (graphTop + graphBottom) / 2; // 速度為 0 的軸線
+    
+    // 坐標軸
+    ctx.strokeStyle = "#9fb0a8";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(graphLeft, graphTop); ctx.lineTo(graphLeft, graphBottom); // v 軸
+    ctx.moveTo(graphLeft, originY); ctx.lineTo(graphRight, originY); // t 軸
+    ctx.stroke();
+    
+    // t 軸刻度 (0 ~ 10秒)
+    ctx.fillStyle = "#9fb0a8";
+    for(let i = 0; i <= 10; i += 2) {
+      let tx = graphLeft + (i / 10) * (graphRight - graphLeft);
+      ctx.fillText(`${i}s`, tx - 5, originY + 15);
+      ctx.fillRect(tx, originY - 3, 1, 6);
+    }
+    
+    // v 軸刻度 (-10 ~ 10)
+    ctx.fillText("v (m/s)", graphLeft - 45, graphTop + 10);
+    ctx.fillText("10", graphLeft - 25, graphTop + 15);
+    ctx.fillText("-10", graphLeft - 30, graphBottom - 5);
+    
+    // 畫 V-T 圖的「面積」（長方形）
+    let curTimeX = graphLeft + (t / 10) * (graphRight - graphLeft);
+    let vY = originY - (v / 10) * ((originY - graphTop) * 0.85);
+    
+    if (t > 0 && v !== 0) {
+      ctx.fillStyle = v > 0 ? "rgba(242, 214, 117, 0.3)" : "rgba(111, 168, 242, 0.3)";
+      ctx.fillRect(graphLeft, Math.min(originY, vY), curTimeX - graphLeft, Math.abs(vY - originY));
+    }
+    
+    // 畫等速度水平線
+    ctx.strokeStyle = v > 0 ? "#f2d675" : (v < 0 ? "#6fa8f2" : "#fff");
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(graphLeft, vY);
+    ctx.lineTo(curTimeX, vY);
+    ctx.stroke();
+    
+    // 標示面積文字
+    if (t > 1 && v !== 0) {
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 14px Noto Sans TC";
+      let areaText = `面積 = 位移 = ${(v * t).toFixed(1)} m`;
+      ctx.fillText(areaText, graphLeft + (curTimeX - graphLeft)/2 - 50, (originY + vY)/2 + 5);
+    }
+  }
+
+  // 初始化畫布
+  draw();
+</script>
+</body>
+</html>
