@@ -61,7 +61,7 @@
   /* 雙視窗與模擬區 */
   .dual-view{display:flex; gap:16px; margin:12px 0 8px; align-items:stretch;}
   .graph-card{flex:1; min-width:0; background:rgba(0,0,0,0.22); border-radius:8px; padding:14px; display:flex; flex-direction:column;}
-  .visual-card{width:300px; background:rgba(0,0,0,0.28); border:1px solid rgba(242,236,217,0.12); border-radius:8px; padding:14px 10px 10px; display:flex; flex-direction:column; align-items:center; position:relative;}
+  .visual-card{width:310px; background:rgba(0,0,0,0.28); border:1px solid rgba(242,236,217,0.12); border-radius:8px; padding:14px 10px 10px; display:flex; flex-direction:column; align-items:center; position:relative;}
 
   .legend{display:flex; gap:14px; margin-bottom:8px; font-size:0.8rem; font-family:'JetBrains Mono',monospace; color:var(--chalk-dim); flex-wrap:wrap;}
   .legend span{display:flex; align-items:center; gap:5px;}
@@ -133,7 +133,7 @@
     <p>專為國中會考量身打造！徹底破解「打點計時器點序方向」迷思、直觀演示伽利略斜面、精簡公式解與圖形切分面積，讓物理概念不再抽象！</p>
   </header>
 
-  <!-- ① 模組選擇 (順序對調：公式解與自由落體對調) -->
+  <!-- ① 模組選擇 -->
   <div class="board">
     <h2>① 選擇 1-4 實驗模組</h2>
     <div class="mode-switch">
@@ -182,10 +182,10 @@
         <svg id="combinedSvg" viewBox="0 0 640 300"></svg>
       </div>
 
-      <!-- 右側：具象模擬 (包含考卷紙帶放大特寫區) -->
+      <!-- 右側：具象模擬 -->
       <div class="visual-card">
         <div class="phase-badge blue" id="phaseBadge">準備就緒</div>
-        <svg id="visualSvg" viewBox="0 0 280 280"></svg>
+        <svg id="visualSvg" viewBox="0 0 290 280"></svg>
       </div>
     </div>
 
@@ -365,7 +365,7 @@
     }
   }
 
-  // --- 2. 物理計算核心 (幾何參數直接綁定 phys 防止卡死) ---
+  // --- 2. 物理計算核心 ---
   function calculatePhysics(){
     const m = currentMode;
     const p = params[m];
@@ -430,8 +430,6 @@
   // --- 3. 繪圖與動態聯動 ---
   function updateSimulation(){
     const phys = calculatePhysics();
-    
-    // 公式解模式「減負」：隱藏 x-t 圖線與圖例
     if(currentMode === 'area'){
       legendX.style.display = 'none';
     } else {
@@ -556,15 +554,14 @@
 
     if(m === 'ticker'){
       // 【上半部：動態拉車模擬】
-      const desk = createSvg('rect'); desk.setAttribute('x', 10); desk.setAttribute('y', 110); desk.setAttribute('width', 260); desk.setAttribute('height', 40); desk.setAttribute('fill', '#382c1e'); desk.setAttribute('rx', 4); visualSvg.appendChild(desk);
+      const desk = createSvg('rect'); desk.setAttribute('x', 10); desk.setAttribute('y', 110); desk.setAttribute('width', 270); desk.setAttribute('height', 40); desk.setAttribute('fill', '#382c1e'); desk.setAttribute('rx', 4); visualSvg.appendChild(desk);
       
       const timer = createSvg('rect'); timer.setAttribute('x', 15); timer.setAttribute('y', 95); timer.setAttribute('width', 30); timer.setAttribute('height', 30); timer.setAttribute('fill', '#8f8a80'); timer.setAttribute('rx', 3); visualSvg.appendChild(timer);
       const needle = createSvg('circle'); needle.setAttribute('cx', 35); needle.setAttribute('cy', 110); needle.setAttribute('r', 3); needle.setAttribute('fill', '#ef6a5a'); visualSvg.appendChild(needle);
       
-      const labelL = createSvg('text'); labelL.setAttribute('x', 30); labelL.setAttribute('y', 85); labelL.setAttribute('font-size', '9'); labelL.setAttribute('fill', 'var(--v-color)'); labelL.setAttribute('text-anchor', 'middle'); labelL.setAttribute('font-weight', 'bold'); labelL.textContent = '⬅️最後一筆(新點)'; visualSvg.appendChild(labelL);
-      const labelR = createSvg('text'); labelR.setAttribute('x', 220); labelR.setAttribute('y', 85); labelR.setAttribute('font-size', '9'); labelR.setAttribute('fill', 'var(--chalk-yellow)'); labelR.setAttribute('text-anchor', 'middle'); labelR.setAttribute('font-weight', 'bold'); labelR.textContent = '第一筆(舊點,t=0)➡️'; visualSvg.appendChild(labelR);
+      const labelL = createSvg('text'); labelL.setAttribute('x', 30); labelL.setAttribute('y', 85); labelL.setAttribute('font-size', '9'); labelL.setAttribute('fill', 'var(--v-color)'); labelL.setAttribute('text-anchor', 'middle'); labelL.setAttribute('font-weight', 'bold'); labelL.textContent = '⬅️最後一筆(最新)'; visualSvg.appendChild(labelL);
+      const labelR = createSvg('text'); labelR.setAttribute('x', 230); labelR.setAttribute('y', 85); labelR.setAttribute('font-size', '9'); labelR.setAttribute('fill', 'var(--chalk-yellow)'); labelR.setAttribute('text-anchor', 'middle'); labelR.setAttribute('font-weight', 'bold'); labelR.textContent = '第一筆(舊點,t=0)➡️'; visualSvg.appendChild(labelR);
 
-      // 動態紙帶軌跡群組
       const tapeGroup = createSvg('g'); tapeGroup.setAttribute('id', 'tapeGroup'); visualSvg.appendChild(tapeGroup);
 
       const car = createSvg('g'); car.setAttribute('id', 'simObject');
@@ -577,19 +574,18 @@
       visualSvg.appendChild(car);
 
       // 【下半部：靜態考卷紙帶放大檢視區】
-      const zoomBox = createSvg('rect'); zoomBox.setAttribute('x', 10); zoomBox.setAttribute('y', 170); zoomBox.setAttribute('width', 260); zoomBox.setAttribute('height', 95); zoomBox.setAttribute('fill', 'rgba(0,0,0,0.4)'); zoomBox.setAttribute('stroke', 'rgba(242,236,217,0.2)'); zoomBox.setAttribute('rx', 6); visualSvg.appendChild(zoomBox);
-      const zoomTitle = createSvg('text'); zoomTitle.setAttribute('x', 20); zoomTitle.setAttribute('y', 188); zoomTitle.setAttribute('font-size', '11'); zoomTitle.setAttribute('fill', 'var(--chalk-yellow)'); zoomTitle.setAttribute('font-weight', 'bold'); zoomTitle.textContent = '🔍 【考卷紙帶放大特寫】(全段展開檢視)：'; visualSvg.appendChild(zoomTitle);
+      const zoomBox = createSvg('rect'); zoomBox.setAttribute('x', 10); zoomBox.setAttribute('y', 170); zoomBox.setAttribute('width', 270); zoomBox.setAttribute('height', 95); zoomBox.setAttribute('fill', 'rgba(0,0,0,0.4)'); zoomBox.setAttribute('stroke', 'rgba(242,236,217,0.2)'); zoomBox.setAttribute('rx', 6); visualSvg.appendChild(zoomBox);
+      const zoomTitle = createSvg('text'); zoomTitle.setAttribute('x', 20); zoomTitle.setAttribute('y', 188); zoomTitle.setAttribute('font-size', '11'); zoomTitle.setAttribute('fill', 'var(--chalk-yellow)'); zoomTitle.setAttribute('font-weight', 'bold'); zoomTitle.textContent = '🔍 【考卷紙帶放大特寫】(靜態展開檢視)：'; visualSvg.appendChild(zoomTitle);
 
-      // 靜態實體白紙帶
-      const staticTape = createSvg('rect'); staticTape.setAttribute('x', 20); staticTape.setAttribute('y', 205); staticTape.setAttribute('width', 240); staticTape.setAttribute('height', 24); staticTape.setAttribute('fill', '#ffffff'); staticTape.setAttribute('stroke', '#a39d93'); staticTape.setAttribute('stroke-width', '1.5'); staticTape.setAttribute('rx', '2'); visualSvg.appendChild(staticTape);
+      const staticTape = createSvg('rect'); staticTape.setAttribute('x', 20); staticTape.setAttribute('y', 205); staticTape.setAttribute('width', 250); staticTape.setAttribute('height', 24); staticTape.setAttribute('fill', '#ffffff'); staticTape.setAttribute('stroke', '#a39d93'); staticTape.setAttribute('stroke-width', '1.5'); staticTape.setAttribute('rx', '2'); visualSvg.appendChild(staticTape);
       
-      const zL = createSvg('text'); zL.setAttribute('x', 20); zL.setAttribute('y', 245); zL.setAttribute('font-size', '9'); zL.setAttribute('fill', 'var(--chalk-dim)'); zL.textContent = '計時器端(後打)'; visualSvg.appendChild(zL);
-      const zR = createSvg('text'); zR.setAttribute('x', 260); zR.setAttribute('y', 245); zR.setAttribute('font-size', '9'); zR.setAttribute('fill', 'var(--chalk-yellow)'); zR.setAttribute('text-anchor', 'end'); zR.setAttribute('font-weight', 'bold'); zR.textContent = '拉車端(先打,第一點) ➔'; visualSvg.appendChild(zR);
+      const zL = createSvg('text'); zL.setAttribute('x', 20); zL.setAttribute('y', 245); zL.setAttribute('font-size', '9'); zL.setAttribute('fill', 'var(--chalk-dim)'); zL.textContent = '計時器端(最新)'; visualSvg.appendChild(zL);
+      const zR = createSvg('text'); zR.setAttribute('x', 270); zR.setAttribute('y', 245); zR.setAttribute('font-size', '9'); zR.setAttribute('fill', 'var(--chalk-yellow)'); zR.setAttribute('text-anchor', 'end'); zR.setAttribute('font-weight', 'bold'); zR.textContent = '拉車端(第一點,t=0) ➔'; visualSvg.appendChild(zR);
 
-      // 畫上靜態黑白打點
+      // 畫上靜態黑白打點：讓第1點(t=0)固定在最右邊 x=250，後續點依序往左
       phys.dots.forEach((d, idx) => {
-        const dotX = 260 - (d.x / phys.xMax) * 230; // 從右往左排列
-        if(dotX >= 25 && dotX <= 255){
+        const dotX = 250 - (d.x / phys.xMax) * 220; 
+        if(dotX >= 25 && dotX <= 265){
           const dOut = createSvg('circle'); dOut.setAttribute('cx', dotX); dOut.setAttribute('cy', 217); dOut.setAttribute('r', 4); dOut.setAttribute('fill', '#111111'); visualSvg.appendChild(dOut);
           const dIn = createSvg('circle'); dIn.setAttribute('cx', dotX); dIn.setAttribute('cy', 217); dIn.setAttribute('r', 1.5); dIn.setAttribute('fill', '#ffffff'); visualSvg.appendChild(dIn);
           
@@ -598,7 +594,7 @@
           }
         }
       });
-      const zInfo = createSvg('text'); zInfo.setAttribute('x', 140); zInfo.setAttribute('y', 260); zInfo.setAttribute('font-size', '10'); zInfo.setAttribute('fill', 'var(--x-color)'); zInfo.setAttribute('text-anchor', 'middle'); zInfo.textContent = phys.quiz===1?'👉 點距往右越來越大 ➔ 加速運動':(phys.quiz===2?'👉 點距往右越來越小 ➔ 減速運動':(phys.quiz===3?'👉 點距均勻相等 ➔ 等速運動':'👉 點距先變大後變小 ➔ 先加後減')); visualSvg.appendChild(zInfo);
+      const zInfo = createSvg('text'); zInfo.setAttribute('x', 145); zInfo.setAttribute('y', 260); zInfo.setAttribute('font-size', '10'); zInfo.setAttribute('fill', 'var(--x-color)'); zInfo.setAttribute('text-anchor', 'middle'); zInfo.textContent = phys.quiz===1?'👉 往左看點距越來越大 ➔ 加速運動':(phys.quiz===2?'👉 往左看點距越來越小 ➔ 減速運動':(phys.quiz===3?'👉 全程點距均勻相等 ➔ 等速運動':'👉 點距先變大後變小 ➔ 先加後減')); visualSvg.appendChild(zInfo);
 
     } else if(m === 'incline'){
       const r = phys._ramp;
@@ -615,35 +611,35 @@
       ball.innerHTML = `<circle cx="0" cy="-12" r="12" fill="#ef6a5a" stroke="#f2ecd9" stroke-width="1.5"/><circle cx="-3" cy="-15" r="3" fill="rgba(255,255,255,0.7)"/>`;
       visualSvg.appendChild(ball);
     } else if(m === 'area' || (m === 'special' && phys.sub === 'brake')){
-      const road = createSvg('rect'); road.setAttribute('x', 10); road.setAttribute('y', 130); road.setAttribute('width', 260); road.setAttribute('height', 40); road.setAttribute('fill', '#382c1e'); road.setAttribute('rx', 4); visualSvg.appendChild(road);
-      const line = createSvg('line'); line.setAttribute('x1', 10); line.setAttribute('y1', 150); line.setAttribute('x2', 270); line.setAttribute('y2', 150); line.setAttribute('stroke', '#f2ecd9'); line.setAttribute('stroke-dasharray', '10 10'); visualSvg.appendChild(line);
+      const road = createSvg('rect'); road.setAttribute('x', 10); road.setAttribute('y', 130); road.setAttribute('width', 270); road.setAttribute('height', 40); road.setAttribute('fill', '#382c1e'); road.setAttribute('rx', 4); visualSvg.appendChild(road);
+      const line = createSvg('line'); line.setAttribute('x1', 10); line.setAttribute('y1', 150); line.setAttribute('x2', 280); line.setAttribute('y2', 150); line.setAttribute('stroke', '#f2ecd9'); line.setAttribute('stroke-dasharray', '10 10'); visualSvg.appendChild(line);
 
       const car = createSvg('g'); car.setAttribute('id', 'simObject');
       car.innerHTML = `<rect x="-20" y="132" width="40" height="22" fill="#4cd964" rx="4"/><circle cx="-10" cy="154" r="5" fill="#000"/><circle cx="10" cy="154" r="5" fill="#000"/><polygon points="20,138 28,143 20,148" fill="#f2d675"/>`;
       visualSvg.appendChild(car);
     } else if(m === 'freefall'){
-      const tube = createSvg('rect'); tube.setAttribute('x', 70); tube.setAttribute('y', 20); tube.setAttribute('width', 140); tube.setAttribute('height', 230); tube.setAttribute('fill', 'rgba(255,255,255,0.03)'); tube.setAttribute('stroke', 'var(--x-color)'); tube.setAttribute('stroke-width', 2); tube.setAttribute('rx', 10); visualSvg.appendChild(tube);
-      const pad = createSvg('rect'); pad.setAttribute('x', 65); pad.setAttribute('y', 250); pad.setAttribute('width', 150); pad.setAttribute('height', 10); pad.setAttribute('fill', '#5c4a33'); pad.setAttribute('rx', 3); visualSvg.appendChild(pad);
+      const tube = createSvg('rect'); tube.setAttribute('x', 75); tube.setAttribute('y', 20); tube.setAttribute('width', 140); tube.setAttribute('height', 230); tube.setAttribute('fill', 'rgba(255,255,255,0.03)'); tube.setAttribute('stroke', 'var(--x-color)'); tube.setAttribute('stroke-width', 2); tube.setAttribute('rx', 10); visualSvg.appendChild(tube);
+      const pad = createSvg('rect'); pad.setAttribute('x', 70); pad.setAttribute('y', 250); pad.setAttribute('width', 150); pad.setAttribute('height', 10); pad.setAttribute('fill', '#5c4a33'); pad.setAttribute('rx', 3); visualSvg.appendChild(pad);
 
       const obj = createSvg('g'); obj.setAttribute('id', 'simObject');
       obj.innerHTML = `
-        <g id="ironBall" transform="translate(105, 0)">
+        <g id="ironBall" transform="translate(110, 0)">
           <circle cx="0" cy="0" r="14" fill="#8f8a80" stroke="#fff" stroke-width="1"/><text x="0" y="4" font-size="10" fill="#fff" text-anchor="middle" font-weight="bold">鐵</text>
         </g>
-        <g id="feather" transform="translate(175, 0)">
+        <g id="feather" transform="translate(180, 0)">
           <path d="M0,-12 C10,-5 10,5 0,12 C-10,5 -10,-5 0,-12 Z" fill="#f2d675" opacity="0.9"/>
           <line x1="0" y1="-14" x2="0" y2="16" stroke="#fff" stroke-width="1.5"/>
         </g>
       `;
       visualSvg.appendChild(obj);
     } else if(m === 'special'){
-      const line = createSvg('line'); line.setAttribute('x1', 140); line.setAttribute('y1', 20); line.setAttribute('x2', 140); line.setAttribute('y2', 250); line.setAttribute('stroke', 'var(--chalk-dim)'); line.setAttribute('stroke-dasharray', '2 4'); visualSvg.appendChild(line);
-      const pad = createSvg('rect'); pad.setAttribute('x', 110); pad.setAttribute('y', 250); pad.setAttribute('width', 60); pad.setAttribute('height', 10); pad.setAttribute('fill', '#5c4a33'); visualSvg.appendChild(pad);
+      const line = createSvg('line'); line.setAttribute('x1', 145); line.setAttribute('y1', 20); line.setAttribute('x2', 145); line.setAttribute('y2', 250); line.setAttribute('stroke', 'var(--chalk-dim)'); line.setAttribute('stroke-dasharray', '2 4'); visualSvg.appendChild(line);
+      const pad = createSvg('rect'); pad.setAttribute('x', 115); pad.setAttribute('y', 250); pad.setAttribute('width', 60); pad.setAttribute('height', 10); pad.setAttribute('fill', '#5c4a33'); visualSvg.appendChild(pad);
 
       const obj = createSvg('g'); obj.setAttribute('id', 'simObject');
-      if(phys.sub === 'throw') obj.innerHTML = `<circle cx="140" cy="0" r="12" fill="#f2d675" stroke="#ef6a5a" stroke-width="2"/>`;
+      if(phys.sub === 'throw') obj.innerHTML = `<circle cx="145" cy="0" r="12" fill="#f2d675" stroke="#ef6a5a" stroke-width="2"/>`;
       else obj.innerHTML = `
-        <g transform="translate(140, 0)">
+        <g transform="translate(145, 0)">
           <polygon id="flame" points="-6,16 0,34 6,16 0,22" fill="#f2d675" stroke="#ef6a5a" stroke-width="1.5" style="display:none;"/>
           <rect x="-8" y="-14" width="16" height="30" fill="#f2ecd9" rx="4"/><polygon points="-8,-14 0,-26 8,-14" fill="#ef6a5a"/><circle cx="0" cy="-2" r="4" fill="#5fb0ff"/>
         </g>
@@ -652,7 +648,7 @@
     }
   }
 
-  // --- 4. 幀渲染 (實現純白紙帶與高對比黑白靶心點) ---
+  // --- 4. 幀渲染 (100%修正點的物理位置與移動方向！) ---
   function renderFrame(t, phys){
     const m = currentMode;
     let x = 0, v = 0;
@@ -691,6 +687,7 @@
     if(simObj){
       const ratio = Math.min(1, Math.max(0, x / (phys.xMax || 1)));
       if(m === 'ticker'){
+        // 小車從 x=50 向右衝到 x=240
         const px = 50 + ratio * 190;
         simObj.setAttribute('transform', `translate(${px}, 0)`);
         
@@ -698,22 +695,25 @@
         const tapeGroup = document.getElementById('tapeGroup');
         if(tapeGroup){
           tapeGroup.innerHTML = '';
-          // 實體白色紙帶
+          // 實體白色紙帶 (從針頭 x=35 連接到車尾 x=px)
           const whiteTape = createSvg('rect');
           whiteTape.setAttribute('x', 35); whiteTape.setAttribute('y', 102);
           whiteTape.setAttribute('width', Math.max(0, px - 35)); whiteTape.setAttribute('height', 16);
           whiteTape.setAttribute('fill', '#ffffff'); whiteTape.setAttribute('stroke', '#a39d93'); whiteTape.setAttribute('stroke-width', '1');
           tapeGroup.appendChild(whiteTape);
 
-          // 印點：黑白靶心三層結構
+          // 印點：由於計時器在左邊 (x=35) 固定不動，
+          // 每個點在 t = d.t 誕生瞬間，必定出現在 x=35（針頭下方）！
+          // 隨著時間 t 增加，紙帶被往右拉了 (x - d.x) 的距離，所以點也跟著往右移動！
           phys.dots.forEach((d, idx) => {
             if(d.t <= t){
-              const dotPx = px - ((x - d.x) / phys.xMax) * 190;
-              if(dotPx >= 35){
+              const dotPx = 35 + ((x - d.x) / phys.xMax) * 190;
+              if(dotPx >= 35 && dotPx <= px){
                 const dOut = createSvg('circle'); dOut.setAttribute('cx', dotPx); dOut.setAttribute('cy', 110); dOut.setAttribute('r', 4); dOut.setAttribute('fill', '#111111'); tapeGroup.appendChild(dOut);
                 const dIn = createSvg('circle'); dIn.setAttribute('cx', dotPx); dIn.setAttribute('cy', 110); dIn.setAttribute('r', 1.5); dIn.setAttribute('fill', '#ffffff'); tapeGroup.appendChild(dIn);
                 
                 if(idx === 0){
+                  // 第一個點 (t=0) 加上紅色鎖定標記
                   const mark = createSvg('circle'); mark.setAttribute('cx', dotPx); mark.setAttribute('cy', 110); mark.setAttribute('r', 7); mark.setAttribute('fill', 'none'); mark.setAttribute('stroke', '#ef6a5a'); mark.setAttribute('stroke-width', '1.5'); tapeGroup.appendChild(mark);
                 }
               }
@@ -731,9 +731,9 @@
         const py = 35 + ratio * 200;
         const iron = document.getElementById('ironBall'), feather = document.getElementById('feather');
         if(iron && feather){
-          iron.setAttribute('transform', `translate(105, ${py})`);
+          iron.setAttribute('transform', `translate(110, ${py})`);
           const fy = 35 + (phys.air ? (ratio * 0.6) : ratio) * 200;
-          feather.setAttribute('transform', `translate(175, ${fy}) rotate(${phys.air ? Math.sin(t*10)*15 : 0})`);
+          feather.setAttribute('transform', `translate(180, ${fy}) rotate(${phys.air ? Math.sin(t*10)*15 : 0})`);
         }
       } else if(m === 'special'){
         const py = 250 - ratio * 210; simObj.setAttribute('transform', `translate(0, ${py})`);
@@ -772,8 +772,8 @@
       
       explainBox.innerHTML = `
         <h3>💡 老師精闢解析：打點計時器判斷「三大黃金法則」</h3>
-        <p>1. <b>找第一個點（時間起點）</b>：考卷紙帶向右拉時，離拉車端最近的（最右邊）是舊點（第一點，$t=0$）；離計時器端最近的（最左邊）是新點（最後打下）。<br>
-           2. <b>判斷加減速看間隔</b>：從<b>第一點往最後一點</b>看過去，點跟點的距離若<b>「越來越大」就是等加速運動</b>；若<b>「越來越密」就是等減速運動</b>！<br>
+        <p>1. <b>找第一個點（時間起點）</b>：考卷紙帶向右拉時，離拉車端最近的（最右邊）是舊點（第一點，$t=0$）；離計時器端最近的（最左邊）是新點（最新打下）。<br>
+           2. <b>判斷加減速看間隔</b>：從<b>第一點（最右邊）往後打的點（最左邊）</b>看過去，點跟點的距離若<b>「越來越大」就是等加速運動</b>；若<b>「越來越小」就是等減速運動</b>！<br>
            3. <b>相鄰點距比例</b>：由靜止開始的等加速運動，在相同時間差 $\\Delta t$ 下，相鄰位移比恆為 <span class="formula-highlight">1 : 3 : 5 : 7 : 9</span>！</p>
       `;
     } else if(m === 'incline'){
