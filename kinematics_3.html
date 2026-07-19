@@ -251,7 +251,7 @@
         <div class="footer-nav"><button class="nav-page-btn" onclick="switchSlide(1)">⬅ 上一頁</button><button class="nav-page-btn" onclick="switchSlide(3)" style="background: var(--chalk-green); color: black;">下一頁：v-t 圖斜率 ➔</button></div>
     </div>
 
-    <!-- ==================== 投影片 4 (NEW)：v-t 圖斜率 ==================== -->
+    <!-- ==================== 投影片 4：v-t 圖斜率 ==================== -->
     <div id="slide-3" class="slide">
         <div class="card">
             <h2>第四部分：v-t 圖的另一層意義「斜率就是加速度」</h2>
@@ -262,8 +262,8 @@
             </div>
 
             <div class="sub-card">
-                <h3 style="color: var(--chalk-yellow);">🏎️ 雙車飆速對照實驗室</h3>
-                <p>觀察下方動畫，紅車的加速度較大，藍車的加速度較小。看看它們在右邊 v-t 圖上畫出的線條有什麼差別？</p>
+                <h3 style="color: var(--chalk-yellow);">🏎️ 雙車飆速對照實驗室（含打點軌跡）</h3>
+                <p>觀察下方動畫，紅車的加速度較大，藍車較小。注意車子後方殘留的「每秒打點軌跡」，點和點的距離拉開得越快，代表加速度越大！</p>
                 <div class="controls" style="margin-bottom: 10px;">
                     <button class="action-btn" id="btnPlaySlope" onclick="toggleSimSlope()" style="background: var(--chalk-green); color: black;">▶️ 播放加速賽</button>
                     <button class="reset-btn" onclick="resetSimSlope()">↺ 重置</button>
@@ -446,7 +446,7 @@
         el.innerHTML = "<b>解：</b> 初速度 V<sub>0</sub> = 0 ，末速度 V<sub>末</sub> = 100<br>加速度 a = (100 - 0) &divide; 20 = <b style='font-size:1.2em;'>5 m/s<sup>2</sup></b>";
     }
 
-    // ==================== 第四部分 (NEW)：v-t圖斜率 ====================
+    // ==================== 第四部分：v-t圖斜率與打點軌跡 ====================
     const cvsSlope = document.getElementById('canvasSlope'); const ctxSlope = cvsSlope ? cvsSlope.getContext('2d') : null;
     let animIdSlope = null, playSlope = false, tSlope = 0, lastTSlope = 0;
 
@@ -467,20 +467,26 @@
     function drawSimSlope() {
         if(!ctxSlope) return; ctxSlope.clearRect(0, 0, cvsSlope.width, cvsSlope.height);
         
-        // 分割為上下半部：上半部跑道(Y: 0~100)，下半部 v-t 圖(Y: 120~310)
-        
         // --- 1. 上半部跑道區 ---
         ctxSlope.fillStyle = "#0d1f16"; ctxSlope.fillRect(10, 10, 880, 100);
         ctxSlope.strokeStyle = "#475569"; ctxSlope.lineWidth = 2; 
         ctxSlope.beginPath(); ctxSlope.moveTo(30, 60); ctxSlope.lineTo(870, 60); ctxSlope.stroke(); // 跑道中線
 
-        // 紅車 a=4, 藍車 a=2. 位移 X = 0.5 * a * t^2
-        // Max t = 5. Red max X = 0.5 * 4 * 25 = 50. Blue max X = 0.5 * 2 * 25 = 25.
-        // 對應畫布寬度 (800px / 50m = 16px/m)
-        let scaleX = 16;
+        let scaleX = 16; // 位移轉換比例
         let red_x = 40 + (0.5 * 4 * tSlope * tSlope) * scaleX;
         let blue_x = 40 + (0.5 * 2 * tSlope * tSlope) * scaleX;
         
+        // 畫打點軌跡 (每 1 秒打一個點)
+        for (let step = 0; step <= tSlope; step++) {
+            let dot_red_x = 40 + (0.5 * 4 * step * step) * scaleX;
+            ctxSlope.fillStyle = "rgba(239, 68, 68, 0.6)"; 
+            ctxSlope.beginPath(); ctxSlope.arc(dot_red_x, 34, 4, 0, Math.PI*2); ctxSlope.fill();
+            
+            let dot_blue_x = 40 + (0.5 * 2 * step * step) * scaleX;
+            ctxSlope.fillStyle = "rgba(56, 189, 248, 0.6)"; 
+            ctxSlope.beginPath(); ctxSlope.arc(dot_blue_x, 84, 4, 0, Math.PI*2); ctxSlope.fill();
+        }
+
         // 畫紅車
         ctxSlope.fillStyle = "#ef4444"; ctxSlope.fillRect(red_x - 12, 25, 24, 18);
         ctxSlope.fillStyle = "#fff"; ctxSlope.font = "12px sans-serif";
@@ -498,11 +504,10 @@
 
         // --- 2. 下半部 v-t 圖區 ---
         const gX0 = 60, gY0 = 290, gW = 500, gH = 160;
-        // 畫座標軸
         ctxSlope.strokeStyle = "#94a3b8"; ctxSlope.lineWidth = 2; 
         ctxSlope.beginPath(); 
-        ctxSlope.moveTo(gX0, gY0 - gH - 10); ctxSlope.lineTo(gX0, gY0); // Y軸 (v)
-        ctxSlope.lineTo(gX0 + gW, gY0); // X軸 (t)
+        ctxSlope.moveTo(gX0, gY0 - gH - 10); ctxSlope.lineTo(gX0, gY0); // Y軸
+        ctxSlope.lineTo(gX0 + gW, gY0); // X軸
         ctxSlope.stroke();
         
         ctxSlope.fillStyle = "#fff"; ctxSlope.font = "14px sans-serif";
@@ -510,9 +515,8 @@
         ctxSlope.fillText("時間 t", gX0 + gW + 10, gY0 + 5);
         ctxSlope.fillText("0", gX0 - 15, gY0 + 15);
         
-        // Max v for red = 4 * 5 = 20.  Max v for blue = 2 * 5 = 10.
-        let scaleTv = (gW - 20) / 5;   // t=5 對應的寬度
-        let scaleVv = gH / 22;         // v=22 對應的高度
+        let scaleTv = (gW - 20) / 5;   
+        let scaleVv = gH / 22;         
 
         // 畫 v-t 曲線軌跡
         ctxSlope.lineWidth = 3;
@@ -529,7 +533,6 @@
         ctxSlope.lineTo(gX0 + tSlope * scaleTv, gY0 - (2 * tSlope) * scaleVv);
         ctxSlope.stroke();
 
-        // 圖形文字註解
         if (tSlope > 1) {
             ctxSlope.fillStyle = "#ef4444"; ctxSlope.font = "bold 15px sans-serif";
             ctxSlope.fillText("紅線較陡：斜率大 ➔ 加速度大！", gX0 + 30, gY0 - 110);
