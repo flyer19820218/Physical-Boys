@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -602,13 +603,47 @@
       ramp.setAttribute('points', `${r.xTop},${r.yTop} ${r.xBot},${r.yBot} ${r.xTop},${r.yBot}`);
       ramp.setAttribute('fill', 'rgba(242,214,117,0.15)'); ramp.setAttribute('stroke', 'var(--chalk-yellow)'); ramp.setAttribute('stroke-width', 2); visualSvg.appendChild(ramp);
 
-      for(let i=0; i<=5; i++){
-        const dist = (i/5) * r.rampLen;
+      // ★ 修正：標記點改為「等時間間隔」的物理位置，
+      // 相鄰標記間距自然呈現 1:3:5:7:9 的等差數列比例
+      const segRatios = [1,3,5,7,9];
+      const totalUnits = segRatios.reduce((a,b)=>a+b,0); // 25
+      const markerFracs = [0];
+      let cum = 0;
+      segRatios.forEach(u => { cum += u; markerFracs.push(cum/totalUnits); });
+
+      markerFracs.forEach((frac, idx) => {
+        const dist = frac * r.rampLen;
         const tx = r.xTop + dist * Math.cos(r.rad), ty = r.yTop + dist * Math.sin(r.rad);
-        const l = createSvg('circle'); l.setAttribute('cx', tx); l.setAttribute('cy', ty); l.setAttribute('r', 2); l.setAttribute('fill', 'var(--chalk-dim)'); visualSvg.appendChild(l);
+        const l = createSvg('circle');
+        l.setAttribute('cx', tx); l.setAttribute('cy', ty);
+        l.setAttribute('r', (idx===0 || idx===markerFracs.length-1) ? 4 : 3);
+        l.setAttribute('fill', idx===0 ? 'var(--v-color)' : 'var(--chalk-yellow)');
+        visualSvg.appendChild(l);
+      });
+
+      for(let i=0; i<segRatios.length; i++){
+        const dist1 = markerFracs[i]*r.rampLen, dist2 = markerFracs[i+1]*r.rampLen;
+        const midDist = (dist1+dist2)/2;
+        const mx = r.xTop + midDist*Math.cos(r.rad), my = r.yTop + midDist*Math.sin(r.rad);
+        const lx = mx + 13*Math.sin(r.rad), ly = my - 13*Math.cos(r.rad);
+        const t = createSvg('text');
+        t.setAttribute('x', lx); t.setAttribute('y', ly);
+        t.setAttribute('font-size','10'); t.setAttribute('fill','var(--chalk-yellow)');
+        t.setAttribute('text-anchor','middle'); t.setAttribute('font-weight','bold');
+        t.textContent = segRatios[i];
+        visualSvg.appendChild(t);
       }
+
+      const caption = createSvg('text');
+      caption.setAttribute('x', 145); caption.setAttribute('y', 14);
+      caption.setAttribute('font-size', '10'); caption.setAttribute('fill', 'var(--chalk-dim)');
+      caption.setAttribute('text-anchor', 'middle');
+      caption.textContent = '每格為等時間間隔，位移比 = 1:3:5:7:9';
+      visualSvg.appendChild(caption);
+
+      // ★ 修正：球體改以自身中心為圓心繪製，避免旋轉時繞著偏移點畫出大圈亂跑
       const ball = createSvg('g'); ball.setAttribute('id', 'simObject');
-      ball.innerHTML = `<circle cx="0" cy="-12" r="12" fill="#ef6a5a" stroke="#f2ecd9" stroke-width="1.5"/><circle cx="-3" cy="-15" r="3" fill="rgba(255,255,255,0.7)"/>`;
+      ball.innerHTML = `<circle cx="0" cy="0" r="12" fill="#ef6a5a" stroke="#f2ecd9" stroke-width="1.5"/><circle cx="-3" cy="-3" r="3" fill="rgba(255,255,255,0.7)"/>`;
       visualSvg.appendChild(ball);
     } else if(m === 'area' || (m === 'special' && phys.sub === 'brake')){
       const road = createSvg('rect'); road.setAttribute('x', 10); road.setAttribute('y', 130); road.setAttribute('width', 270); road.setAttribute('height', 40); road.setAttribute('fill', '#382c1e'); road.setAttribute('rx', 4); visualSvg.appendChild(road);
@@ -723,8 +758,12 @@
       } else if(m === 'incline' && phys._ramp){
         const r = phys._ramp;
         const dist = ratio * r.rampLen;
-        const tx = r.xTop + dist * Math.cos(r.rad), ty = r.yTop + dist * Math.sin(r.rad);
-        simObj.setAttribute('transform', `translate(${tx}, ${ty}) rotate(${dist * 2})`);
+        // ★ 修正：計算球體在斜面上的中心點，並沿垂直於斜面的方向偏移半徑距離，
+        // 讓球「貼」在斜面表面上；旋轉現在是繞球心自轉，不會再偏移亂跑
+        const ballR = 12;
+        const px = r.xTop + dist * Math.cos(r.rad) + ballR * Math.sin(r.rad);
+        const py = r.yTop + dist * Math.sin(r.rad) - ballR * Math.cos(r.rad);
+        simObj.setAttribute('transform', `translate(${px}, ${py}) rotate(${dist * 2})`);
       } else if(m === 'area' || (m === 'special' && phys.sub === 'brake')){
         const px = 30 + ratio * 200; simObj.setAttribute('transform', `translate(${px}, 0)`);
       } else if(m === 'freefall'){
@@ -781,7 +820,7 @@
       addStat('下滑加速度 a', `${phys.a.toFixed(2)} m/s²`);
       addStat('下滑總時間', `${phys.tMax.toFixed(2)} s`);
       addStat('到達底端速度', `${phys.vMax.toFixed(2)} m/s`);
-      explainBox.innerHTML = `<h3>💡 觀念總結：伽利略「稀釋重力」實驗</h3><p>古代沒有精確計時器，伽利略利用斜面將重力加速度「稀釋」為 <span class="formula-highlight">a = g × sinθ</span>。當傾斜角度 $\\theta = 90^\\circ$ 時，$\\sin 90^\\circ = 1$，小球滾動加速度就完全等於重力加速度 $g$，轉化為純粹的自由落體！</p>`;
+      explainBox.innerHTML = `<h3>💡 觀念總結：伽利略「稀釋重力」實驗</h3><p>古代沒有精確計時器，伽利略利用斜面將重力加速度「稀釋」為 <span class="formula-highlight">a = g × sinθ</span>。當傾斜角度 $\\theta = 90^\\circ$ 時，$\\sin 90^\\circ = 1$，小球滾動加速度就完全等於重力加速度 $g$，轉化為純粹的自由落體！斜面上標示的 5 個等時間間隔標記點，正是驗證等加速度運動的關鍵：把總時間平分成 5 段相等的時距，各段內滾過的距離會呈現 <span class="formula-highlight">1 : 3 : 5 : 7 : 9</span> 的等差比例，這正是課本上「相鄰位移比」的由來！</p>`;
     } else if(m === 'area'){
       addStat('矩形位移 (v₀t)', `${phys.areaRect.toFixed(1)} m`);
       addStat('三角形位移 (½at²)', `${phys.areaTri.toFixed(1)} m`);
