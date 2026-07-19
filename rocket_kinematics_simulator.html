@@ -3,21 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>運動學模擬器｜自由落體・上拋・火箭升空（雙視窗實體聯動版）</title>
+<title>國中自然 1-4 等加速度運動旗艦模擬器｜黑板實體聯動教學版</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
   :root{
-    --board:#1c3d34;
-    --board-dark:#15302a;
-    --chalk:#f2ecd9;
-    --chalk-dim:#c9c2ab;
-    --chalk-yellow:#f2d675;
-    --x-color:#5fb0ff;
-    --v-color:#ef6a5a;
-    --up-fill:#f2d675;
-    --down-fill:#ef8a7a;
-    --frame:#5c4a33;
+    --board: #1c3d34;
+    --board-dark: #15302a;
+    --chalk: #f2ecd9;
+    --chalk-dim: #c9c2ab;
+    --chalk-yellow: #f2d675;
+    --x-color: #5fb0ff;
+    --v-color: #ef6a5a;
+    --a-color: #4cd964;
+    --up-fill: #f2d675;
+    --down-fill: #ef8a7a;
+    --frame: #5c4a33;
   }
 
   *{box-sizing:border-box;}
@@ -27,12 +28,12 @@
     background:var(--board-dark);
     color:var(--chalk);
     font-family:'Noto Sans TC', sans-serif;
-    padding:24px 14px 60px;
+    padding:20px 14px 60px;
   }
 
-  .wrap{max-width:1080px;margin:0 auto;}
+  .wrap{max-width:1140px;margin:0 auto;}
 
-  header{text-align:center;margin-bottom:28px;}
+  header{text-align:center;margin-bottom:24px;}
   header .eyebrow{
     font-family:'JetBrains Mono', monospace;
     font-size:0.75rem;
@@ -42,16 +43,16 @@
   }
   h1{
     font-family:'Kalam', cursive;
-    font-size:2.2rem;
+    font-size:2.1rem;
     font-weight:700;
     margin:6px 0 10px;
     text-shadow:0 0 14px rgba(242,236,217,0.15);
   }
   header p{
     color:var(--chalk-dim);
-    max-width:680px;
+    max-width:760px;
     margin:0 auto;
-    line-height:1.7;
+    line-height:1.6;
     font-size:0.95rem;
   }
 
@@ -60,8 +61,8 @@
     border:10px solid var(--frame);
     border-radius:6px;
     box-shadow:0 18px 40px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.25);
-    padding:22px 18px 26px;
-    margin-bottom:22px;
+    padding:20px 18px 24px;
+    margin-bottom:20px;
     position:relative;
   }
   .board::before{
@@ -75,155 +76,128 @@
 
   .board h2{
     font-family:'Kalam', cursive;
-    font-size:1.3rem;
-    margin:0 0 16px;
+    font-size:1.25rem;
+    margin:0 0 14px;
     color:var(--chalk-yellow);
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;
   }
 
-  .mode-switch{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;}
+  /* 五大模組導覽列 */
+  .mode-switch{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+    gap:10px;
+    margin-bottom:20px;
+  }
   .mode-switch button{
     font-family:'Noto Sans TC', sans-serif; font-size:0.92rem; font-weight:700;
-    background:rgba(0,0,0,0.2); color:var(--chalk-dim); border:1.5px solid rgba(242,236,217,0.2);
-    padding:10px 18px; border-radius:10px; cursor:pointer; transition:all .15s;
+    background:rgba(0,0,0,0.25); color:var(--chalk-dim); border:1.5px solid rgba(242,236,217,0.18);
+    padding:12px 14px; border-radius:10px; cursor:pointer; transition:all .15s;
+    text-align:left; display:flex; flex-direction:column; gap:4px;
   }
-  .mode-switch button.active{background:var(--chalk-yellow); color:var(--board-dark); border-color:var(--chalk-yellow);}
+  .mode-switch button span.sub{font-size:0.75rem; font-weight:400; opacity:0.7;}
+  .mode-switch button:hover{background:rgba(255,255,255,0.05); border-color:rgba(242,236,217,0.4);}
+  .mode-switch button.active{background:var(--chalk-yellow); color:var(--board-dark); border-color:var(--chalk-yellow); box-shadow:0 4px 12px rgba(242,214,117,0.25);}
+  .mode-switch button.active span.sub{color:var(--board-dark); opacity:0.85; font-weight:600;}
 
+  /* 控制參數列 */
   .controls{
     display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(210px,1fr));
-    gap:18px;
-    margin-bottom:8px;
+    grid-template-columns:repeat(auto-fit, minmax(200px,1fr));
+    gap:16px;
+    margin-bottom:10px;
+    background:rgba(0,0,0,0.15);
+    padding:14px;
+    border-radius:8px;
   }
   .control.hidden{display:none;}
   .control label{
     display:flex; justify-content:space-between;
-    font-size:0.88rem; color:var(--chalk-dim);
+    font-size:0.85rem; color:var(--chalk-dim);
     margin-bottom:6px;
     font-family:'JetBrains Mono', monospace;
   }
   .control label span.val{color:var(--chalk-yellow); font-weight:600;}
   input[type=range]{
-    width:100%;
-    accent-color:var(--chalk-yellow);
-    height:4px;
-    background:transparent;
-    cursor:pointer;
-  }
-  .presets{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;}
-  .presets button{
-    font-family:'Noto Sans TC', sans-serif;
-    background:transparent;
-    border:1.5px dashed var(--chalk-dim);
-    color:var(--chalk);
-    padding:7px 14px;
-    border-radius:20px;
-    font-size:0.82rem;
-    cursor:pointer;
-    transition:all .15s;
-  }
-  .presets button:hover, .presets button.active-g{
-    border-color:var(--chalk-yellow);
-    color:var(--chalk-yellow);
-    background:rgba(242,214,117,0.08);
+    width:100%; accent-color:var(--chalk-yellow); height:5px; background:transparent; cursor:pointer;
   }
 
-  .playbar{
-    display:flex; align-items:center; gap:14px;
-    margin-top:18px;
+  .presets{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; align-items:center;}
+  .presets span{font-size:0.8rem; color:var(--chalk-dim); margin-right:4px;}
+  .presets button{
+    font-family:'Noto Sans TC', sans-serif; background:transparent;
+    border:1px dashed var(--chalk-dim); color:var(--chalk);
+    padding:6px 12px; border-radius:18px; font-size:0.8rem;
+    cursor:pointer; transition:all .15s;
   }
+  .presets button:hover, .presets button.active-p{
+    border-color:var(--chalk-yellow); color:var(--chalk-yellow); background:rgba(242,214,117,0.1);
+  }
+
+  .playbar{display:flex; align-items:center; gap:14px; margin-top:16px;}
   #playBtn{
-    background:var(--chalk-yellow);
-    color:var(--board-dark);
-    border:none;
-    font-weight:700;
-    padding:10px 24px;
-    border-radius:24px;
-    cursor:pointer;
-    font-family:'Noto Sans TC', sans-serif;
-    font-size:0.95rem;
-    transition:transform .15s, box-shadow .15s;
-    box-shadow: 0 4px 12px rgba(242,214,117,0.3);
+    background:var(--chalk-yellow); color:var(--board-dark); border:none; font-weight:700;
+    padding:10px 24px; border-radius:24px; cursor:pointer; font-family:'Noto Sans TC', sans-serif;
+    font-size:0.95rem; transition:transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 12px rgba(242,214,117,0.3); min-width:110px;
   }
   #playBtn:hover{transform:scale(1.04); box-shadow: 0 6px 16px rgba(242,214,117,0.4);}
-  .progress-track{
-    flex:1; height:4px; background:rgba(242,236,217,0.15); border-radius:2px; position:relative;
-  }
-  .progress-fill{
-    position:absolute; left:0; top:0; height:100%;
-    background:var(--chalk-yellow); border-radius:2px; width:0%;
-  }
+  .progress-track{flex:1; height:6px; background:rgba(242,236,217,0.15); border-radius:3px; position:relative; overflow:hidden;}
+  .progress-fill{position:absolute; left:0; top:0; height:100%; background:var(--chalk-yellow); border-radius:3px; width:0%; transition:width 0.05s linear;}
 
+  /* 雙視窗佈局 */
   .dual-view{
-    display:flex;
-    gap:16px;
-    margin:10px 0 6px;
-    align-items:stretch;
+    display:flex; gap:16px; margin:12px 0 8px; align-items:stretch;
   }
   .graph-card{
-    flex:1;
-    min-width:0;
-    background:rgba(0,0,0,0.18);
-    border-radius:8px;
-    padding:14px 14px 8px;
-    display:flex;
-    flex-direction:column;
+    flex:1; min-width:0; background:rgba(0,0,0,0.22); border-radius:8px; padding:14px;
+    display:flex; flex-direction:column;
   }
-  .rocket-card{
-    width:180px;
-    background:rgba(0,0,0,0.25);
-    border:1px solid rgba(242,236,217,0.1);
-    border-radius:8px;
-    padding:14px 10px 8px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    position:relative;
-    overflow:hidden;
+  .visual-card{
+    width:240px; background:rgba(0,0,0,0.28); border:1px solid rgba(242,236,217,0.12);
+    border-radius:8px; padding:14px 10px 10px; display:flex; flex-direction:column;
+    align-items:center; position:relative; overflow:hidden;
   }
 
   .legend{
-    display:flex; gap:16px; margin-bottom:8px; font-size:0.82rem;
-    font-family:'JetBrains Mono', monospace; color:var(--chalk-dim);
-    flex-wrap:wrap;
+    display:flex; gap:14px; margin-bottom:8px; font-size:0.8rem;
+    font-family:'JetBrains Mono', monospace; color:var(--chalk-dim); flex-wrap:wrap;
   }
-  .legend span{display:flex; align-items:center; gap:6px;}
-  .legend i{width:14px; height:3px; display:inline-block; border-radius:2px;}
+  .legend span{display:flex; align-items:center; gap:5px;}
+  .legend i{width:12px; height:3px; display:inline-block; border-radius:2px;}
   
   svg{width:100%; height:auto; display:block; overflow:visible;}
   .axis-line{stroke:var(--chalk-dim); stroke-width:1; opacity:0.6;}
-  .grid-line{stroke:var(--chalk-dim); stroke-width:0.5; opacity:0.18;}
-  .curve-x{fill:none; stroke:var(--x-color); stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round;}
-  .curve-v{fill:none; stroke:var(--v-color); stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round;}
+  .grid-line{stroke:var(--chalk-dim); stroke-width:0.5; stroke-dasharray:3 3; opacity:0.2;}
+  .curve-x{fill:none; stroke:var(--x-color); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round;}
+  .curve-v{fill:none; stroke:var(--v-color); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round;}
+  .curve-a{fill:none; stroke:var(--a-color); stroke-width:2; stroke-dasharray:4 4;}
+  
+  .fill-rect{fill:var(--x-color); opacity:0.18;}
+  .fill-tri{fill:var(--chalk-yellow); opacity:0.25;}
   .fill-up{fill:var(--up-fill); opacity:0.22;}
   .fill-down{fill:var(--down-fill); opacity:0.22;}
-  .marker-line{stroke:var(--chalk-dim); stroke-width:1; stroke-dasharray:3 4; opacity:0.7;}
-  .marker-label{font-family:'JetBrains Mono', monospace; font-size:9.5px; fill:var(--chalk-dim);}
-  .axis-label-x{font-family:'JetBrains Mono', monospace; font-size:10px; fill:var(--x-color); font-weight:600;}
-  .axis-label-v{font-family:'JetBrains Mono', monospace; font-size:10px; fill:var(--v-color); font-weight:600;}
+  
+  .marker-line{stroke:var(--chalk-dim); stroke-width:1; stroke-dasharray:3 3; opacity:0.6;}
+  .marker-label{font-family:'JetBrains Mono', monospace; font-size:10px; fill:var(--chalk-dim); text-anchor:middle;}
+  .axis-label{font-family:'JetBrains Mono', monospace; font-size:10px; font-weight:600;}
   .dot-x{fill:var(--x-color); filter:drop-shadow(0 0 4px rgba(95,176,255,0.9));}
   .dot-v{fill:var(--v-color); filter:drop-shadow(0 0 4px rgba(239,106,90,0.9));}
 
   .phase-badge{
-    font-size:0.75rem;
-    font-family:'Noto Sans TC', sans-serif;
-    font-weight:700;
-    padding:4px 10px;
-    border-radius:12px;
-    background:rgba(255,255,255,0.1);
-    color:var(--chalk);
-    text-align:center;
-    width:100%;
-    margin-bottom:8px;
-    transition:all .2s;
-    white-space:nowrap;
+    font-size:0.78rem; font-family:'Noto Sans TC', sans-serif; font-weight:700;
+    padding:5px 12px; border-radius:14px; background:rgba(255,255,255,0.1); color:var(--chalk);
+    text-align:center; width:100%; margin-bottom:10px; transition:all .2s; white-space:nowrap;
   }
-  .phase-badge.phase1{background:rgba(95,176,255,0.25); color:#8fd0ff; border:1px solid #5fb0ff;}
-  .phase-badge.phase2{background:rgba(242,214,117,0.25); color:#ffe680; border:1px solid #f2d675;}
-  .phase-badge.phase3{background:rgba(239,106,90,0.25); color:#ff9485; border:1px solid #ef6a5a;}
+  .phase-badge.blue{background:rgba(95,176,255,0.2); color:#8fd0ff; border:1px solid #5fb0ff;}
+  .phase-badge.yellow{background:rgba(242,214,117,0.2); color:#ffe680; border:1px solid #f2d675;}
+  .phase-badge.red{background:rgba(239,106,90,0.2); color:#ff9485; border:1px solid #ef6a5a;}
+  .phase-badge.green{background:rgba(76,217,100,0.2); color:#85ff99; border:1px solid #4cd964;}
 
-  #rocketTrackSvg{flex:1; width:100%; min-height:280px;}
+  #visualSvg{flex:1; width:100%; min-height:260px;}
   .ground-pad{fill:#382c1e; stroke:#5c4a33; stroke-width:2;}
   .track-line{stroke:var(--chalk-dim); stroke-width:1; stroke-dasharray:2 4; opacity:0.3;}
+  .guide-line{stroke:var(--chalk-yellow); stroke-width:1.2; stroke-dasharray:4 4; opacity:0.6; fill:none;}
 
   @keyframes flicker{
     0%, 100% { transform: scaleY(1) scaleX(1); opacity: 0.9; }
@@ -231,67 +205,40 @@
   }
   #rocketFlame{ transform-origin: 0px 18px; animation: flicker 0.15s infinite; }
 
-  .guide-line{stroke:var(--chalk-yellow); stroke-width:1.2; stroke-dasharray:4 4; opacity:0.6; fill:none;}
-
-  .compare{
-    margin-top:18px;
-    background:rgba(0,0,0,0.15);
-    border-radius:8px;
-    padding:16px 18px 18px;
-  }
-  .compare h3{
-    font-family:'Kalam', cursive;
-    color:var(--chalk-yellow);
-    margin:0 0 14px;
-    font-size:1.05rem;
-  }
-  .bar-row{margin-bottom:12px;}
-  .bar-row.hidden{display:none;}
-  .bar-row .bar-label{
-    display:flex; justify-content:space-between;
-    font-size:0.82rem; color:var(--chalk-dim);
-    margin-bottom:5px;
-    font-family:'JetBrains Mono', monospace;
-  }
-  .bar-track{height:16px; background:rgba(242,236,217,0.08); border-radius:8px; overflow:hidden;}
-  .bar-fill{height:100%; border-radius:8px; transition:width .2s;}
-  .bar-fill.up{background:linear-gradient(90deg, var(--chalk-yellow), #d9b95a);}
-  .bar-fill.down{background:linear-gradient(90deg, var(--down-fill), #d9695a);}
-
-  .verdict{
-    margin-top:14px;
-    font-family:'Kalam', cursive;
-    font-size:1.1rem;
-    color:var(--chalk);
-    text-align:center;
-    padding:10px;
-    border-top:1px dashed rgba(242,236,217,0.25);
-  }
-  .verdict b{color:var(--chalk-yellow);}
-
+  /* 數據統計與公式區 */
   .stats-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-    gap:10px;
-    margin-top:16px;
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+    gap:10px; margin-top:14px;
   }
   .stat{
-    background:rgba(0,0,0,0.18);
-    border-radius:8px;
-    padding:10px 8px;
-    text-align:center;
+    background:rgba(0,0,0,0.2); border-radius:8px; padding:10px 8px; text-align:center;
+    border:1px solid rgba(255,255,255,0.04);
   }
-  .stat .k{font-family:'JetBrains Mono', monospace; font-size:0.72rem; color:var(--chalk-dim);}
-  .stat .v{font-family:'JetBrains Mono', monospace; font-size:1.05rem; color:var(--chalk-yellow); font-weight:600; margin-top:2px;}
+  .stat .k{font-family:'JetBrains Mono', monospace; font-size:0.75rem; color:var(--chalk-dim);}
+  .stat .v{font-family:'JetBrains Mono', monospace; font-size:1.1rem; color:var(--chalk-yellow); font-weight:600; margin-top:3px;}
+
+  /* 觀念解說卡片 */
+  .explain-box{
+    margin-top:18px; background:rgba(0,0,0,0.18); border-left:4px solid var(--chalk-yellow);
+    border-radius:0 8px 8px 0; padding:14px 18px;
+  }
+  .explain-box h3{
+    font-family:'Kalam', cursive; color:var(--chalk-yellow); margin:0 0 8px; font-size:1.1rem;
+  }
+  .explain-box p{margin:0; font-size:0.9rem; line-height:1.6; color:var(--chalk);}
+  .explain-box .formula-highlight{
+    font-family:'JetBrains Mono', monospace; background:rgba(242,214,117,0.15);
+    padding:2px 8px; border-radius:4px; color:var(--chalk-yellow); font-weight:600; display:inline-block; margin:4px 0;
+  }
 
   footer{
-    text-align:center; color:var(--chalk-dim); font-size:0.78rem; margin-top:30px;
-    font-family:'JetBrains Mono', monospace;
+    text-align:center; color:var(--chalk-dim); font-size:0.8rem; margin-top:28px;
+    font-family:'JetBrains Mono', monospace; opacity:0.7;
   }
 
   @media(max-width:768px){
     .dual-view{flex-direction:column;}
-    .rocket-card{width:100%; height:220px;}
+    .visual-card{width:100%; height:240px;}
   }
 </style>
 </head>
@@ -299,531 +246,781 @@
 <div class="wrap">
 
   <header>
-    <div class="eyebrow">Kinematics Lab · 運動學模擬器</div>
-    <h1>自由落體・上拋・火箭升空，三種情境一次看懂</h1>
-    <p>切換情境、拉滑桿並按下播放，觀察左側抽象的 x-t / v-t 圖形，如何透過虛線與右側「實體物件的高度與姿態」完全同步聯動！</p>
+    <div class="eyebrow">Taiwan Middle School Science · Chapter 1-4 Kinematics</div>
+    <h1>1-4 等加速度運動：從斜面、落體到公式解</h1>
+    <p>透過五大互動實驗模組，深入探討速度變化、軌跡打點、重力加速與 v-t 圖面積幾何意義，化抽象公式為直觀物理動態！</p>
   </header>
 
+  <!-- ① 模組選擇 -->
   <div class="board">
-    <h2>① 選擇情境並設定條件</h2>
+    <h2>① 選擇 1-4 實驗模組</h2>
     <div class="mode-switch">
-      <button class="active" data-mode="freefall">🪨 自由落體</button>
-      <button data-mode="throw">⚪ 上拋運動</button>
-      <button data-mode="rocket">🚀 火箭升空與墜落</button>
+      <button class="active" data-mode="ticker">
+        <span>⏱️ 1. 打點計時器動畫</span>
+        <span class="sub">軌跡分析與加速度推算</span>
+      </button>
+      <button data-mode="incline">
+        <span>📐 2. 伽利略斜面運動</span>
+        <span class="sub">1:3:5:7:9 距離比驗證</span>
+      </button>
+      <button data-mode="freefall">
+        <span>🪨 3. 自由落體與真空管</span>
+        <span class="sub">空氣阻力與 g 值探究</span>
+      </button>
+      <button data-mode="area">
+        <span>📊 4. 公式解與圖形面積</span>
+        <span class="sub">矩形+三角形位移剖析</span>
+      </button>
+      <button data-mode="special">
+        <span>🚀 5. 特殊與進階考題</span>
+        <span class="sub">上拋、火箭與煞車問題</span>
+      </button>
     </div>
-    <div class="controls">
-      <div class="control" id="control-t1">
-        <label>燃燒時間 <span class="val" id="t1val">3.0 s</span></label>
-        <input type="range" id="t1" min="0.5" max="8" step="0.1" value="3">
-      </div>
-      <div class="control" id="control-v1">
-        <label id="v1label">拋出初速度 <span class="val" id="v1val">150 m/s</span></label>
-        <input type="range" id="v1" min="20" max="300" step="5" value="150">
-      </div>
-      <div class="control" id="control-h">
-        <label>初始高度 H <span class="val" id="hval">100 m</span></label>
-        <input type="range" id="h" min="5" max="500" step="5" value="100">
-      </div>
-      <div class="control">
-        <label>重力加速度 g <span class="val" id="gval">9.8 m/s²</span></label>
-        <input type="range" id="g" min="1" max="25" step="0.1" value="9.8">
-      </div>
+
+    <!-- 參數控制面板 -->
+    <div class="controls" id="controlsBox">
+      <!-- 動態生成控制項 -->
     </div>
-    <div class="presets">
-      <button data-g="9.8" class="active-g">🌍 地球 9.8</button>
-      <button data-g="1.62">🌕 月球 1.62</button>
-      <button data-g="3.71">🔴 火星 3.71</button>
-      <button data-g="24.8">☀️ 太陽表面 24.8</button>
+    
+    <!-- 快速情境預設 -->
+    <div class="presets" id="presetsBox">
+      <!-- 動態生成預設按鈕 -->
     </div>
+
     <div class="playbar">
-      <button id="playBtn">▶ 播放</button>
+      <button id="playBtn">▶ 開始實驗</button>
       <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     </div>
   </div>
 
+  <!-- ② 實體與圖形聯動 -->
   <div class="board">
-    <h2>② 圖形與實體運動同步聯動</h2>
+    <h2>② 物理動態與運動學圖形聯動 <span style="font-size:0.8rem; font-family:'JetBrains Mono'; color:var(--chalk-dim); font-weight:normal;">[虛線為即時對應點]</span></h2>
     <div class="dual-view">
+      <!-- 左側：抽象關係圖 -->
       <div class="graph-card">
-        <div class="legend">
-          <span><i style="background:var(--x-color)"></i>藍色：x-t（高度，左軸）</span>
-          <span><i style="background:var(--v-color)"></i>紅色：v-t（速度，右軸）</span>
+        <div class="legend" id="graphLegend">
+          <span><i style="background:var(--x-color)"></i>藍線：x-t（位置/位移）</span>
+          <span><i style="background:var(--v-color)"></i>紅線：v-t（速度）</span>
+          <span><i style="background:var(--a-color); border:1px dashed var(--a-color)"></i>綠虛線：a-t（加速度）</span>
         </div>
-        <svg id="combinedSvg" viewBox="0 0 640 320"></svg>
+        <svg id="combinedSvg" viewBox="0 0 640 300"></svg>
       </div>
 
-      <div class="rocket-card">
-        <div class="phase-badge phase1" id="phaseBadge">準備開始</div>
-        <svg id="rocketTrackSvg" viewBox="0 0 140 320">
-          <line x1="70" y1="16" x2="70" y2="288" class="track-line" />
-          <line id="trackMaxLine" x1="20" y1="16" x2="120" y2="16" stroke="#f2d675" stroke-width="1" stroke-dasharray="2 2" opacity="0.5" />
-          <text id="trackMaxText" x="70" y="12" fill="#f2d675" font-size="10" font-family="JetBrains Mono" text-anchor="middle" opacity="0.8">Max Height</text>
-
-          <rect x="20" y="288" width="100" height="12" rx="3" class="ground-pad" />
-          <line x1="10" y1="288" x2="130" y2="288" stroke="#f2ecd9" stroke-width="1.5" opacity="0.6" />
-
-          <g id="rocketGroup" transform="translate(70, 288)">
-            <g id="iconRocket">
-              <polygon id="rocketFlame" points="-6,16 0,34 6,16 0,22" fill="#f2d675" stroke="#ef6a5a" stroke-width="1.5" />
-              <path d="M -8,6 L -15,16 L -7,16 Z" fill="#ef6a5a" />
-              <path d="M 8,6 L 15,16 L 7,16 Z" fill="#ef6a5a" />
-              <rect x="-8" y="-12" width="16" height="28" rx="4" fill="#f2ecd9" stroke="#1c3d34" stroke-width="1.5" />
-              <path d="M -8,-12 L 0,-26 L 8,-12 Z" fill="#ef6a5a" stroke="#1c3d34" stroke-width="1.5" />
-              <circle cx="0" cy="-3" r="4" fill="#1c3d34" />
-              <circle cx="0" cy="-3" r="2.5" fill="#5fb0ff" />
-            </g>
-            <g id="iconBall" style="display:none">
-              <circle cx="0" cy="0" r="10" fill="#f2d675" stroke="#1c3d34" stroke-width="1.5" />
-              <circle cx="-3" cy="-3" r="2.5" fill="rgba(255,255,255,0.6)" />
-            </g>
-            <g id="iconRock" style="display:none">
-              <path d="M0,-11 L9,-4 L6,9 L-6,9 L-9,-4 Z" fill="#8f8a80" stroke="#1c3d34" stroke-width="1.5" />
-              <path d="M-2,-5 L4,-2 L1,4 L-4,2 Z" fill="#a8a29a" opacity="0.6" />
-            </g>
-          </g>
+      <!-- 右側：具象物理模擬 -->
+      <div class="visual-card">
+        <div class="phase-badge blue" id="phaseBadge">準備就緒</div>
+        <svg id="visualSvg" viewBox="0 0 200 300">
+          <!-- 內部元件由 JS 動態繪製與切換 -->
         </svg>
       </div>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat"><div class="k">t₁</div><div class="v" id="s_t1">-</div></div>
-      <div class="stat"><div class="k">t₂ 最高點</div><div class="v" id="s_t2">-</div></div>
-      <div class="stat"><div class="k">t₃ 落地</div><div class="v" id="s_t3">-</div></div>
-      <div class="stat"><div class="k">最大高度</div><div class="v" id="s_xmax">-</div></div>
-      <div class="stat"><div class="k">撞擊速度</div><div class="v" id="s_vimpact">-</div></div>
+    <!-- 即時數據儀表板 -->
+    <div class="stats-grid" id="statsGrid">
+      <!-- 動態填充計算結果 -->
     </div>
   </div>
 
+  <!-- ③ 觀念總結與公式解密 -->
   <div class="board">
-    <div class="compare">
-      <h3>③ 時間長度一翻兩瞪眼</h3>
-      <div class="bar-row" id="upBarRow">
-        <div class="bar-label"><span id="upLabelText">減速上升（燃盡 → 最高點）</span><span id="upTimeLabel">- s</span></div>
-        <div class="bar-track"><div class="bar-fill up" id="upBar" style="width:0%"></div></div>
-      </div>
-      <div class="bar-row">
-        <div class="bar-label"><span id="downLabelText">自由落下（最高點 → 地面）</span><span id="downTimeLabel">- s</span></div>
-        <div class="bar-track"><div class="bar-fill down" id="downBar" style="width:0%"></div></div>
-      </div>
-      <div class="verdict" id="verdictText"></div>
+    <h2>③ 課堂重點與物理概念剖析</h2>
+    <div class="explain-box" id="explainBox">
+      <!-- 動態載入教學解析 -->
     </div>
   </div>
 
-  <footer>斜率恆為 −g · 上下面積永遠相等 · 火箭落下較久，上拋恰好對稱 · 物理視覺化互動教學</footer>
+  <footer>國中理化 1-4 等加速度運動 · 視覺化互動教學教材 · 讓自然科學變得直觀又有趣！</footer>
 </div>
 
 <script>
 (function(){
-  const t1Input = document.getElementById('t1');
-  const v1Input = document.getElementById('v1');
-  const gInput = document.getElementById('g');
-  const hInput = document.getElementById('h');
-  const t1val = document.getElementById('t1val');
-  const v1val = document.getElementById('v1val');
-  const gval = document.getElementById('gval');
-  const hval = document.getElementById('hval');
-  const v1label = document.getElementById('v1label');
-
-  const svg = document.getElementById('combinedSvg');
-  const rocketGroup = document.getElementById('rocketGroup');
-  const rocketFlame = document.getElementById('rocketFlame');
+  // DOM 元素註冊
+  const controlsBox = document.getElementById('controlsBox');
+  const presetsBox = document.getElementById('presetsBox');
+  const playBtn = document.getElementById('playBtn');
+  const progressFill = document.getElementById('progressFill');
+  const combinedSvg = document.getElementById('combinedSvg');
+  const visualSvg = document.getElementById('visualSvg');
   const phaseBadge = document.getElementById('phaseBadge');
-  const iconRocket = document.getElementById('iconRocket');
-  const iconBall = document.getElementById('iconBall');
-  const iconRock = document.getElementById('iconRock');
+  const statsGrid = document.getElementById('statsGrid');
+  const explainBox = document.getElementById('explainBox');
+  const graphLegend = document.getElementById('graphLegend');
 
-  const W = 640, H = 320;
-  const margin = {top:16, right:46, bottom:32, left:46};
-  const plotW = W - margin.left - margin.right;
-  const plotH = H - margin.top - margin.bottom;
-
-  const trackBottom = margin.top + plotH;
-
-  let mode = 'freefall';
-  let state = {};
+  // 全域變數與實驗狀態
+  let currentMode = 'ticker';
   let animId = null;
-  let animStart = null;
-  const ANIM_DURATION = 4200;
+  let animStartTime = null;
+  const ANIM_DURATION = 4000; // 4秒完整播放一循環
+  
+  // 參數字典 (各模組獨立儲存參數)
+  const params = {
+    ticker:   { f: 10, a: 2.0, v0: 0.5 },    // f:頻率(Hz), a:加速度, v0:初速
+    incline:  { angle: 30, g: 9.8, L: 5.0 }, // angle:斜面角度, g:重力, L:斜面長
+    freefall: { h: 80, g: 9.8, air: 0 },     // h:高度, g:重力, air:有無空氣阻力(0無, 1有)
+    area:     { v0: 10, a: 4.0, t: 5.0 },    // v0:初速, a:加速度, t:運動時間
+    special:  { sub: 'throw', v0: 25, g: 9.8, a_brake: 5.0 } // sub: throw(上拋)|rocket(火箭)|brake(煞車)
+  };
 
-  function svgns(tag){ return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  function createSvg(tag){ return document.createElementNS(SVG_NS, tag); }
 
-  function compute(){
-    const g = parseFloat(gInput.value);
-    let t1, v1, x1;
-
-    if(mode === 'rocket'){
-      t1 = parseFloat(t1Input.value);
-      v1 = parseFloat(v1Input.value);
-      x1 = 0.5 * v1 * t1;
-    } else if(mode === 'freefall'){
-      t1 = 0; v1 = 0;
-      x1 = parseFloat(hInput.value);
-    } else {
-      t1 = 0;
-      v1 = parseFloat(v1Input.value);
-      x1 = 0;
-    }
-
-    const coastTime = v1 / g;
-    const t2 = t1 + coastTime;
-    const xMax = x1 + (v1*v1)/(2*g);
-    const fallTime = Math.sqrt(2*xMax/g);
-    const t3 = t2 + fallTime;
-    const vImpact = g * fallTime;
-
-    return {t1, v1, g, x1, t2, xMax, t3, vImpact, coastTime, fallTime};
+  // --- 1. 模組配置與 UI 渲染 ---
+  function initUI(){
+    renderControls();
+    renderPresets();
+    updateSimulation();
   }
 
-  function xPos(t, tMax){ return margin.left + (t/tMax)*plotW; }
-  function yPosX(x, xMax){ return margin.top + plotH - (x/xMax)*plotH; }
-  function yPosV(v, vAbsMax){ return margin.top + plotH - ((v+vAbsMax)/(2*vAbsMax))*plotH; }
+  function renderControls(){
+    controlsBox.innerHTML = '';
+    const m = currentMode;
+    const p = params[m];
 
-  function clearSvg(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+    const addSlider = (id, label, min, max, step, val, unit, onChange) => {
+      const div = document.createElement('div');
+      div.className = 'control';
+      div.innerHTML = `
+        <label>${label} <span class="val" id="val_${id}">${val} ${unit}</span></label>
+        <input type="range" id="inp_${id}" min="${min}" max="${max}" step="${step}" value="${val}">
+      `;
+      controlsBox.appendChild(div);
+      div.querySelector('input').addEventListener('input', (e)=>{
+        const newVal = parseFloat(e.target.value);
+        document.getElementById(`val_${id}`).textContent = `${newVal} ${unit}`;
+        onChange(newVal);
+        updateSimulation();
+      });
+    };
 
-  function render(s){
-    clearSvg();
-    const tMax = Math.max(s.t3 * 1.06, 0.5);
-    const xMaxScaled = Math.max(s.xMax * 1.12, 1);
-    const vAbsMax = Math.max(Math.max(s.v1, s.vImpact) * 1.15, 1);
+    if(m === 'ticker'){
+      addSlider('f', '打點計時頻率 f', 5, 20, 5, p.f, 'Hz (次/秒)', v => p.f = v);
+      addSlider('a', '推車加速度 a', 0.5, 5.0, 0.5, p.a, 'm/s²', v => p.a = v);
+      addSlider('v0', '推車初速度 v₀', 0.0, 3.0, 0.5, p.v0, 'm/s', v => p.v0 = v);
+    } else if(m === 'incline'){
+      addSlider('angle', '斜面傾斜角度 θ', 10, 90, 5, p.angle, '度 (°)', v => p.angle = v);
+      addSlider('L', '斜面總長度 L', 2.0, 10.0, 0.5, p.L, 'm', v => p.L = v);
+      addSlider('g', '重力加速度 g', 1.6, 20.0, 0.2, p.g, 'm/s²', v => p.g = v);
+    } else if(m === 'freefall'){
+      addSlider('h', '釋放高度 H', 20, 200, 10, p.h, 'm', v => p.h = v);
+      addSlider('g', '重力加速度 g', 1.6, 25.0, 0.2, p.g, 'm/s²', v => p.g = v);
+      // 空氣阻力切換按鈕
+      const div = document.createElement('div');
+      div.className = 'control';
+      div.innerHTML = `
+        <label>環境狀態 <span class="val" id="val_air">${p.air?'💨 大氣層 (有阻力)':'🌌 抽真空 (無阻力)'}</span></label>
+        <div style="display:flex; gap:8px; margin-top:4px;">
+          <button type="button" class="air-btn ${p.air===0?'active-p':''}" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.air===0?'var(--chalk-yellow)':'transparent'}; color:${p.air===0?'var(--board-dark)':'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setAir(0)">抽真空</button>
+          <button type="button" class="air-btn ${p.air===1?'active-p':''}" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.air===1?'var(--chalk-yellow)':'transparent'}; color:${p.air===1?'var(--board-dark)':'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setAir(1)">有空氣</button>
+        </div>
+      `;
+      controlsBox.appendChild(div);
+      window.setAir = (val) => {
+        p.air = val;
+        renderControls();
+        updateSimulation();
+      };
+    } else if(m === 'area'){
+      addSlider('v0', '初速度 v₀', 0, 20, 1, p.v0, 'm/s', v => p.v0 = v);
+      addSlider('a', '等加速度 a', 1.0, 8.0, 0.5, p.a, 'm/s²', v => p.a = v);
+      addSlider('t', '觀察時間 t', 2.0, 10.0, 0.5, p.t, 's', v => p.t = v);
+    } else if(m === 'special'){
+      // 子模式選擇
+      const div = document.createElement('div');
+      div.className = 'control';
+      div.innerHTML = `
+        <label>經典題型 <span class="val">${p.sub==='throw'?'⚪ 鉛直上拋':(p.sub==='rocket'?'🚀 火箭升空':'🛑 緊急煞車')}</span></label>
+        <div style="display:flex; gap:6px; margin-top:4px;">
+          <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.sub==='throw'?'var(--chalk-yellow)':'transparent'}; color:${p.sub==='throw'?'var(--board-dark)':'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setSub('throw')">上拋</button>
+          <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.sub==='rocket'?'var(--chalk-yellow)':'transparent'}; color:${p.sub==='rocket'?'var(--board-dark)':'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setSub('rocket')">火箭</button>
+          <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.sub==='brake'?'var(--chalk-yellow)':'transparent'}; color:${p.sub==='brake'?'var(--board-dark)':'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setSub('brake')">煞車</button>
+        </div>
+      `;
+      controlsBox.appendChild(div);
+      window.setSub = (val) => { p.sub = val; renderControls(); updateSimulation(); };
 
-    for(let i=0;i<=4;i++){
-      const gx = margin.left + (i/4)*plotW;
-      const l = svgns('line');
-      l.setAttribute('x1', gx); l.setAttribute('x2', gx);
-      l.setAttribute('y1', margin.top); l.setAttribute('y2', margin.top+plotH);
-      l.setAttribute('class','grid-line');
-      svg.appendChild(l);
-    }
-
-    const baseline = svgns('line');
-    baseline.setAttribute('x1', margin.left); baseline.setAttribute('x2', margin.left+plotW);
-    baseline.setAttribute('y1', margin.top+plotH); baseline.setAttribute('y2', margin.top+plotH);
-    baseline.setAttribute('class','axis-line');
-    svg.appendChild(baseline);
-
-    const zeroVY = yPosV(0, vAbsMax);
-    const zeroLine = svgns('line');
-    zeroLine.setAttribute('x1', margin.left); zeroLine.setAttribute('x2', margin.left+plotW);
-    zeroLine.setAttribute('y1', zeroVY); zeroLine.setAttribute('y2', zeroVY);
-    zeroLine.setAttribute('class','grid-line');
-    svg.appendChild(zeroLine);
-
-    const leftAxis = svgns('line');
-    leftAxis.setAttribute('x1', margin.left); leftAxis.setAttribute('x2', margin.left);
-    leftAxis.setAttribute('y1', margin.top); leftAxis.setAttribute('y2', margin.top+plotH);
-    leftAxis.setAttribute('class','axis-line');
-    svg.appendChild(leftAxis);
-
-    const rightAxis = svgns('line');
-    rightAxis.setAttribute('x1', margin.left+plotW); rightAxis.setAttribute('x2', margin.left+plotW);
-    rightAxis.setAttribute('y1', margin.top); rightAxis.setAttribute('y2', margin.top+plotH);
-    rightAxis.setAttribute('class','axis-line');
-    svg.appendChild(rightAxis);
-
-    const p0 = [xPos(0,tMax), yPosV(0,vAbsMax)];
-    const p1 = [xPos(s.t1,tMax), yPosV(s.v1,vAbsMax)];
-    const p2 = [xPos(s.t2,tMax), yPosV(0,vAbsMax)];
-    const p3 = [xPos(s.t3,tMax), yPosV(-s.vImpact,vAbsMax)];
-
-    const upPoly = svgns('polygon');
-    upPoly.setAttribute('points', `${p0[0]},${p0[1]} ${p1[0]},${p1[1]} ${p2[0]},${p2[1]}`);
-    upPoly.setAttribute('class','fill-up');
-    svg.appendChild(upPoly);
-
-    const downPoly = svgns('polygon');
-    downPoly.setAttribute('points', `${p2[0]},${p2[1]} ${p3[0]},${p3[1]} ${p3[0]},${zeroVY}`);
-    downPoly.setAttribute('class','fill-down');
-    svg.appendChild(downPoly);
-
-    const vPath = svgns('polyline');
-    vPath.setAttribute('points', `${p0[0]},${p0[1]} ${p1[0]},${p1[1]} ${p2[0]},${p2[1]} ${p3[0]},${p3[1]}`);
-    vPath.setAttribute('class','curve-v');
-    svg.appendChild(vPath);
-
-    const pts = [];
-    const N = 24;
-    if(s.t1 > 0){
-      for(let i=0;i<=N;i++){
-        const t = (i/N)*s.t1;
-        const x = 0.5*(s.v1/s.t1)*t*t;
-        pts.push([t,x]);
-      }
-    } else {
-      pts.push([0, s.x1]);
-    }
-    for(let i=0;i<=N;i++){
-      const t = s.t1 + (i/N)*s.coastTime;
-      const dt = t - s.t1;
-      const x = s.x1 + s.v1*dt - 0.5*s.g*dt*dt;
-      pts.push([t,x]);
-    }
-    for(let i=0;i<=N;i++){
-      const t = s.t2 + (i/N)*s.fallTime;
-      const dt = t - s.t2;
-      const x = s.xMax - 0.5*s.g*dt*dt;
-      pts.push([t,x]);
-    }
-    const svgPts = pts.map(([t,x]) => `${xPos(t,tMax)},${yPosX(Math.max(x,0),xMaxScaled)}`).join(' ');
-    const xPath = svgns('polyline');
-    xPath.setAttribute('points', svgPts);
-    xPath.setAttribute('class','curve-x');
-    svg.appendChild(xPath);
-
-    const markers = s.t1 > 0.01 ? [[s.t1,'t1'],[s.t2,'t2'],[s.t3,'t3']] : [[s.t2,'t2'],[s.t3,'t3']];
-    markers.forEach(([t,label])=>{
-      const mx = xPos(t,tMax);
-      const l = svgns('line');
-      l.setAttribute('x1',mx); l.setAttribute('x2',mx);
-      l.setAttribute('y1',margin.top); l.setAttribute('y2',margin.top+plotH);
-      l.setAttribute('class','marker-line');
-      svg.appendChild(l);
-      const txt = svgns('text');
-      txt.setAttribute('x',mx); txt.setAttribute('y', margin.top+plotH+14);
-      txt.setAttribute('text-anchor','middle');
-      txt.setAttribute('class','marker-label');
-      txt.textContent = label;
-      svg.appendChild(txt);
-    });
-
-    const xl = svgns('text');
-    xl.setAttribute('x', 2); xl.setAttribute('y', margin.top-2);
-    xl.setAttribute('class','axis-label-x'); xl.textContent = 'x(m)';
-    svg.appendChild(xl);
-
-    const vl = svgns('text');
-    vl.setAttribute('x', margin.left+plotW-4); vl.setAttribute('y', margin.top-2);
-    vl.setAttribute('text-anchor','end');
-    vl.setAttribute('class','axis-label-v'); vl.textContent = 'v(m/s)';
-    svg.appendChild(vl);
-
-    const guideLine = svgns('line');
-    guideLine.setAttribute('class', 'guide-line');
-    guideLine.setAttribute('id', 'guideLine');
-    guideLine.style.display = 'none';
-    svg.appendChild(guideLine);
-
-    const dotX = svgns('circle');
-    dotX.setAttribute('r', 5); dotX.setAttribute('class','dot-x'); dotX.setAttribute('id','dotX');
-    dotX.style.display='none';
-    svg.appendChild(dotX);
-
-    const dotV = svgns('circle');
-    dotV.setAttribute('r', 5); dotV.setAttribute('class','dot-v'); dotV.setAttribute('id','dotV');
-    dotV.style.display='none';
-    svg.appendChild(dotV);
-
-    const maxRocketY = yPosX(s.xMax, xMaxScaled);
-    document.getElementById('trackMaxLine').setAttribute('y1', maxRocketY);
-    document.getElementById('trackMaxLine').setAttribute('y2', maxRocketY);
-    document.getElementById('trackMaxText').setAttribute('y', maxRocketY - 6);
-
-    return {tMax, xMaxScaled, vAbsMax};
-  }
-
-  function fmt(n){ return (Math.round(n*100)/100).toString(); }
-
-  function setIcon(){
-    iconRocket.style.display = (mode === 'rocket') ? 'block' : 'none';
-    iconBall.style.display = (mode === 'throw') ? 'block' : 'none';
-    iconRock.style.display = (mode === 'freefall') ? 'block' : 'none';
-  }
-
-  function updateRocketVisual(t, x, v, s){
-    const yPx = yPosX(x, s._scale.xMaxScaled);
-
-    if(mode === 'rocket'){
-      if(t === 0 || t === undefined){
-        rocketFlame.style.display = 'none';
-        rocketGroup.setAttribute('transform', `translate(70, ${trackBottom}) rotate(0)`);
-        phaseBadge.className = 'phase-badge phase1';
-        phaseBadge.textContent = '🚀 準備點火';
-      } else if(t <= s.t1){
-        rocketFlame.style.display = 'block';
-        rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(0)`);
-        phaseBadge.className = 'phase-badge phase1';
-        phaseBadge.textContent = '🟢 階段一：點火加速';
-      } else if(t <= s.t2){
-        rocketFlame.style.display = 'none';
-        rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(0)`);
-        phaseBadge.className = 'phase-badge phase2';
-        phaseBadge.textContent = '🟠 階段二：慣性減速';
+      if(p.sub === 'throw'){
+        addSlider('v0', '上拋初速度 v₀', 10, 40, 2, p.v0, 'm/s', v => p.v0 = v);
+        addSlider('g', '重力加速度 g', 5.0, 15.0, 0.2, p.g, 'm/s²', v => p.g = v);
+      } else if(p.sub === 'rocket'){
+        addSlider('v0', '燃盡瞬間速度 v₁', 50, 200, 10, p.v0, 'm/s', v => p.v0 = v);
+        addSlider('g', '重力加速度 g', 5.0, 15.0, 0.2, p.g, 'm/s²', v => p.g = v);
       } else {
-        rocketFlame.style.display = 'none';
-        rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(180)`);
-        phaseBadge.className = 'phase-badge phase3';
-        phaseBadge.textContent = '🔴 階段三：自由落體';
-      }
-    } else if(mode === 'freefall'){
-      rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(0)`);
-      if(t === 0 || t === undefined){
-        phaseBadge.className = 'phase-badge phase1';
-        phaseBadge.textContent = '🪨 準備釋放';
-      } else {
-        phaseBadge.className = 'phase-badge phase3';
-        phaseBadge.textContent = '🔴 自由落體中';
-      }
-    } else {
-      rocketGroup.setAttribute('transform', `translate(70, ${yPx}) rotate(0)`);
-      if(t === 0 || t === undefined){
-        phaseBadge.className = 'phase-badge phase1';
-        phaseBadge.textContent = '⚪ 準備拋出';
-      } else if(t <= s.t2){
-        phaseBadge.className = 'phase-badge phase2';
-        phaseBadge.textContent = '🟠 上升減速中';
-      } else {
-        phaseBadge.className = 'phase-badge phase3';
-        phaseBadge.textContent = '🔴 自由落體下降';
+        addSlider('v0', '行駛初速度 v₀', 10, 40, 2, p.v0, 'm/s', v => p.v0 = v);
+        addSlider('a_brake', '煞車減速度 a', 2.0, 10.0, 0.5, p.a_brake, 'm/s²', v => p.a_brake = v);
       }
     }
   }
 
-  function updateControlVisibility(){
-    document.getElementById('control-t1').classList.toggle('hidden', mode !== 'rocket');
-    document.getElementById('control-h').classList.toggle('hidden', mode !== 'freefall');
-    document.getElementById('control-v1').classList.toggle('hidden', mode === 'freefall');
-    v1label.childNodes[0].textContent = (mode === 'rocket') ? '燃盡瞬間速度 ' : '拋出初速度 ';
-    setIcon();
+  function renderPresets(){
+    presetsBox.innerHTML = '<span>⚡ 快速預設：</span>';
+    const m = currentMode;
+    const addBtn = (label, action) => {
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.onclick = () => { action(); renderControls(); updateSimulation(); };
+      presetsBox.appendChild(b);
+    };
+
+    if(m === 'ticker'){
+      addBtn('國中標準 10Hz/2m/s²', () => { params.ticker.f = 10; params.ticker.a = 2.0; params.ticker.v0 = 0; });
+      addBtn('高頻密打點 20Hz', () => { params.ticker.f = 20; params.ticker.a = 4.0; params.ticker.v0 = 0.5; });
+    } else if(m === 'incline'){
+      addBtn('伽利略經典 30° (1:3:5:7:9)', () => { params.incline.angle = 30; params.incline.L = 5.0; params.incline.g = 9.8; });
+      addBtn('自由落體極限 90°', () => { params.incline.angle = 90; params.incline.L = 8.0; params.incline.g = 9.8; });
+      addBtn('緩坡緩衝 15°', () => { params.incline.angle = 15; params.incline.L = 4.0; params.incline.g = 9.8; });
+    } else if(m === 'freefall'){
+      addBtn('🌍 地球真空 (g=9.8)', () => { params.freefall.g = 9.8; params.freefall.air = 0; });
+      addBtn('🌍 地球有空氣 (羽毛vs鐵球)', () => { params.freefall.g = 9.8; params.freefall.air = 1; });
+      addBtn('🌕 月球漫步 (g=1.62)', () => { params.freefall.g = 1.62; params.freefall.air = 0; });
+      addBtn('📐 課本好算版 (g=10)', () => { params.freefall.g = 10.0; params.freefall.air = 0; });
+    } else if(m === 'area'){
+      addBtn('由靜止啟動 (純三角形)', () => { params.area.v0 = 0; params.area.a = 4.0; params.area.t = 5.0; });
+      addBtn('梯形面積 (矩形+三角形)', () => { params.area.v0 = 10; params.area.a = 3.0; params.area.t = 6.0; });
+      addBtn('等速度運動 (純矩形 a=0)', () => { params.area.v0 = 15; params.area.a = 0.0; params.area.t = 5.0; });
+    } else if(m === 'special'){
+      if(params.special.sub === 'throw') addBtn('初速 29.4 m/s (滯空6秒)', () => { params.special.v0 = 29.4; params.special.g = 9.8; });
+      else if(params.special.sub === 'rocket') addBtn('標準火箭衝刺', () => { params.special.v0 = 100; params.special.g = 9.8; });
+      else addBtn('國道安全煞車距離', () => { params.special.v0 = 30; params.special.a_brake = 6.0; });
+    }
   }
 
-  function update(){
-    if(animId) return;
-    state = compute();
-    t1val.textContent = state.t1.toFixed(1)+' s';
-    v1val.textContent = state.v1.toFixed(0)+' m/s';
-    gval.textContent = state.g.toFixed(2)+' m/s²';
-    hval.textContent = hInput.value+' m';
+  // --- 2. 物理計算核心 ---
+  function calculatePhysics(){
+    const m = currentMode;
+    const p = params[m];
+    let res = {};
 
-    state._scale = render(state);
-
-    document.getElementById('s_t1').textContent = state.t1.toFixed(2)+' s';
-    document.getElementById('s_t2').textContent = state.t2.toFixed(2)+' s';
-    document.getElementById('s_t3').textContent = state.t3.toFixed(2)+' s';
-    document.getElementById('s_xmax').textContent = fmt(state.xMax)+' m';
-    document.getElementById('s_vimpact').textContent = fmt(state.vImpact)+' m/s';
-
-    const upBarRow = document.getElementById('upBarRow');
-    if(mode === 'freefall'){
-      upBarRow.classList.add('hidden');
-      document.getElementById('downLabelText').textContent = '自由落下（只有這一段）';
-      document.getElementById('downTimeLabel').textContent = state.fallTime.toFixed(2)+' s';
-      document.getElementById('downBar').style.width = '100%';
-      document.getElementById('verdictText').innerHTML =
-        `自由落體沒有上升階段，從靜止直接加速墜落，撞擊速度 <b>${fmt(state.vImpact)} m/s</b>`;
-    } else {
-      upBarRow.classList.remove('hidden');
-      document.getElementById('upLabelText').textContent = (mode==='rocket') ? '減速上升（燃盡 → 最高點）' : '上升時間（拋出 → 最高點）';
-      document.getElementById('downLabelText').textContent = (mode==='rocket') ? '自由落下（最高點 → 地面）' : '下降時間（最高點 → 地面）';
-      const maxBarTime = Math.max(state.coastTime, state.fallTime);
-      document.getElementById('upBar').style.width = (state.coastTime/maxBarTime*100)+'%';
-      document.getElementById('downBar').style.width = (state.fallTime/maxBarTime*100)+'%';
-      document.getElementById('upTimeLabel').textContent = state.coastTime.toFixed(2)+' s';
-      document.getElementById('downTimeLabel').textContent = state.fallTime.toFixed(2)+' s';
-
-      const ratio = state.fallTime/state.coastTime;
-      if(mode === 'rocket'){
-        document.getElementById('verdictText').innerHTML =
-          `落下花的時間是減速上升的 <b>${ratio.toFixed(2)} 倍</b>，撞擊速度比燃盡速度多了 <b>${(state.vImpact-state.v1).toFixed(1)} m/s</b>`;
+    if(m === 'ticker'){
+      const dt = 1 / p.f; // 兩點時間差
+      const totalTime = 1.5; // 模擬 1.5 秒
+      const dots = [];
+      for(let t=0; t<=totalTime; t+=dt){
+        const x = p.v0 * t + 0.5 * p.a * t * t;
+        const v = p.v0 + p.a * t;
+        dots.push({t, x, v});
+      }
+      res = { tMax: totalTime, xMax: dots[dots.length-1].x, vMax: p.v0 + p.a * totalTime, dots, dt };
+    } else if(m === 'incline'){
+      const rad = p.angle * Math.PI / 180;
+      const a = p.g * Math.sin(rad);
+      const tMax = Math.sqrt(2 * p.L / a);
+      const vMax = a * tMax;
+      res = { tMax, xMax: p.L, vMax, a };
+    } else if(m === 'freefall'){
+      const tMax = Math.sqrt(2 * p.h / p.g);
+      const vMax = p.g * tMax;
+      res = { tMax, xMax: p.h, vMax, g: p.g, air: p.air };
+    } else if(m === 'area'){
+      const tMax = p.t;
+      const vMax = p.v0 + p.a * tMax;
+      const xMax = p.v0 * tMax + 0.5 * p.a * tMax * tMax;
+      const areaRect = p.v0 * tMax;
+      const areaTri = 0.5 * p.a * tMax * tMax;
+      res = { tMax, xMax, vMax, areaRect, areaTri };
+    } else if(m === 'special'){
+      if(p.sub === 'throw'){
+        const tTop = p.v0 / p.g;
+        const hMax = (p.v0 * p.v0) / (2 * p.g);
+        const tMax = tTop * 2;
+        res = { tMax, xMax: hMax, vMax: p.v0, tTop, sub: 'throw' };
+      } else if(p.sub === 'rocket'){
+        const t1 = 2.0; // 假定燃燒 2s
+        const x1 = 0.5 * p.v0 * t1;
+        const t2 = t1 + (p.v0 / p.g);
+        const hMax = x1 + (p.v0 * p.v0) / (2 * p.g);
+        const tFall = Math.sqrt(2 * hMax / p.g);
+        const tMax = t2 + tFall;
+        const vImpact = p.g * tFall;
+        res = { tMax, xMax: hMax, vMax: Math.max(p.v0, vImpact), t1, t2, sub: 'rocket' };
       } else {
-        document.getElementById('verdictText').innerHTML =
-          `上升與下降時間比值 <b>${ratio.toFixed(2)}</b> —— 上拋運動完全對稱，撞擊速度等於拋出速度 <b>${fmt(state.vImpact)} m/s</b>`;
+        const tMax = p.v0 / p.a_brake;
+        const xMax = (p.v0 * p.v0) / (2 * p.a_brake);
+        res = { tMax, xMax, vMax: p.v0, sub: 'brake' };
+      }
+    }
+    return res;
+  }
+
+  // --- 3. SVG 繪圖與動態聯動 ---
+  function updateSimulation(){
+    const phys = calculatePhysics();
+    drawGraph(phys);
+    drawVisualBackground(phys);
+    updateStatsAndExplain(phys);
+    // 靜止狀態停在 t=0
+    renderFrame(0, phys);
+  }
+
+  // 繪製左側抽象圖表
+  function drawGraph(phys){
+    combinedSvg.innerHTML = '';
+    const W = 640, H = 300;
+    const margin = {top:20, right:50, bottom:35, left:50};
+    const pW = W - margin.left - margin.right;
+    const pH = H - margin.top - margin.bottom;
+
+    // 座標軸線
+    const addLine = (x1,y1,x2,y2,cls) => {
+      const l = createSvg('line');
+      l.setAttribute('x1',x1); l.setAttribute('y1',y1); l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+      l.setAttribute('class', cls); combinedSvg.appendChild(l);
+    };
+    addLine(margin.left, margin.top+pH, margin.left+pW, margin.top+pH, 'axis-line'); // X軸
+    addLine(margin.left, margin.top, margin.left, margin.top+pH, 'axis-line'); // 左Y軸 (位置)
+    addLine(margin.left+pW, margin.top, margin.left+pW, margin.top+pH, 'axis-line'); // 右Y軸 (速度)
+
+    // 網格線
+    for(let i=1; i<=4; i++){
+      const gx = margin.left + (i/4)*pW;
+      const gy = margin.top + (i/4)*pH;
+      addLine(gx, margin.top, gx, margin.top+pH, 'grid-line');
+      addLine(margin.left, gy, margin.left+pW, gy, 'grid-line');
+    }
+
+    // 軸標籤
+    const addText = (x,y,txt,anchor,color,cls='axis-label') => {
+      const t = createSvg('text'); t.setAttribute('x',x); t.setAttribute('y',y);
+      t.setAttribute('text-anchor',anchor); t.setAttribute('class',cls);
+      if(color) t.setAttribute('fill',color); t.textContent = txt; combinedSvg.appendChild(t);
+    };
+    addText(margin.left-10, margin.top-5, '位置 x (m)', 'start', 'var(--x-color)');
+    addText(margin.left+pW+10, margin.top-5, '速度 v (m/s)', 'end', 'var(--v-color)');
+    addText(margin.left+pW/2, H-5, '運動時間 t (s)', 'middle', 'var(--chalk-dim)');
+
+    // 座標映射函數
+    const getX = t => margin.left + (t / phys.tMax) * pW;
+    const getY_x = x => margin.top + pH - (x / (phys.xMax * 1.1 || 1)) * pH;
+    const getY_v = v => {
+      const maxV = phys.vMax * 1.1 || 1;
+      // 若有負速度（例如上拋、火箭落回），原點置中
+      if(currentMode === 'special' && phys.sub !== 'brake'){
+        return margin.top + pH/2 - (v / maxV) * (pH/2);
+      }
+      return margin.top + pH - (v / maxV) * pH;
+    };
+
+    // 零速度水平線 (針對上拋與火箭)
+    if(currentMode === 'special' && phys.sub !== 'brake'){
+      addLine(margin.left, margin.top+pH/2, margin.left+pW, margin.top+pH/2, 'axis-line');
+    }
+
+    // 繪製模組特有圖形
+    if(currentMode === 'area'){
+      // 繪製矩形與三角形填色區域
+      const p0_v = getY_v(0), p1_v = getY_v(params.area.v0), p2_v = getY_v(phys.vMax);
+      const xEnd = getX(phys.tMax);
+      
+      const rect = createSvg('polygon');
+      rect.setAttribute('points', `${margin.left},${p0_v} ${xEnd},${p0_v} ${xEnd},${p1_v} ${margin.left},${p1_v}`);
+      rect.setAttribute('class', 'fill-rect'); combinedSvg.appendChild(rect);
+
+      const tri = createSvg('polygon');
+      tri.setAttribute('points', `${margin.left},${p1_v} ${xEnd},${p1_v} ${xEnd},${p2_v}`);
+      tri.setAttribute('class', 'fill-tri'); combinedSvg.appendChild(tri);
+
+      // 面積文字標註
+      addText(margin.left + pW/2, (p0_v + p1_v)/2 + 4, `矩形位移 = ${phys.areaRect.toFixed(1)} m`, 'middle', 'var(--x-color)');
+      addText(margin.left + pW/2, (p1_v + p2_v)/2 + 4, `三角形位移 = ${phys.areaTri.toFixed(1)} m`, 'middle', 'var(--chalk-yellow)');
+    }
+
+    // 產生取樣軌跡點
+    let ptsX = [], ptsV = [];
+    const steps = 50;
+    for(let i=0; i<=steps; i++){
+      const t = (i/steps) * phys.tMax;
+      let x=0, v=0;
+      if(currentMode === 'ticker'){
+        x = params.ticker.v0 * t + 0.5 * params.ticker.a * t * t;
+        v = params.ticker.v0 + params.ticker.a * t;
+      } else if(currentMode === 'incline'){
+        x = 0.5 * phys.a * t * t; v = phys.a * t;
+      } else if(currentMode === 'freefall'){
+        x = 0.5 * phys.g * t * t; v = phys.g * t;
+      } else if(currentMode === 'area'){
+        x = params.area.v0 * t + 0.5 * params.area.a * t * t;
+        v = params.area.v0 + params.area.a * t;
+      } else if(currentMode === 'special'){
+        if(phys.sub === 'throw'){
+          x = params.special.v0 * t - 0.5 * params.special.g * t * t;
+          v = params.special.v0 - params.special.g * t;
+        } else if(phys.sub === 'rocket'){
+          if(t <= phys.t1){
+            x = 0.5 * (params.special.v0 / phys.t1) * t * t;
+            v = (params.special.v0 / phys.t1) * t;
+          } else if(t <= phys.t2){
+            const dt = t - phys.t1;
+            const x1 = 0.5 * params.special.v0 * phys.t1;
+            x = x1 + params.special.v0 * dt - 0.5 * params.special.g * dt * dt;
+            v = params.special.v0 - params.special.g * dt;
+          } else {
+            const dt = t - phys.t2;
+            x = phys.xMax - 0.5 * params.special.g * dt * dt;
+            v = -params.special.g * dt;
+          }
+        } else {
+          x = params.special.v0 * t - 0.5 * params.special.a_brake * t * t;
+          v = params.special.v0 - params.special.a_brake * t;
+        }
+      }
+      ptsX.push(`${getX(t)},${getY_x(Math.max(0,x))}`);
+      ptsV.push(`${getX(t)},${getY_v(v)}`);
+    }
+
+    const pathX = createSvg('polyline'); pathX.setAttribute('points', ptsX.join(' ')); pathX.setAttribute('class', 'curve-x'); combinedSvg.appendChild(pathX);
+    const pathV = createSvg('polyline'); pathV.setAttribute('points', ptsV.join(' ')); pathV.setAttribute('class', 'curve-v'); combinedSvg.appendChild(pathV);
+
+    // 打點計時器特別繪製在圖表上的點
+    if(currentMode === 'ticker'){
+      phys.dots.forEach((d, idx) => {
+        const cx = getX(d.t), cy = getY_x(d.x);
+        const circle = createSvg('circle');
+        circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); circle.setAttribute('r', 4);
+        circle.setAttribute('fill', 'var(--chalk-yellow)'); combinedSvg.appendChild(circle);
+        if(idx > 0 && idx < 6){
+          addText(cx, cy - 8, `點${idx}`, 'middle', 'var(--chalk-dim)', 'marker-label');
+        }
+      });
+    }
+
+    // 動態追蹤指針與引引線 (保留給 renderFrame 更新位置)
+    const guide = createSvg('line'); guide.setAttribute('id', 'svgGuide'); guide.setAttribute('class', 'guide-line'); combinedSvg.appendChild(guide);
+    const dotX = createSvg('circle'); dotX.setAttribute('id', 'svgDotX'); dotX.setAttribute('r', 6); dotX.setAttribute('class', 'dot-x'); combinedSvg.appendChild(dotX);
+    const dotV = createSvg('circle'); dotV.setAttribute('id', 'svgDotV'); dotV.setAttribute('r', 6); dotV.setAttribute('class', 'dot-v'); combinedSvg.appendChild(dotV);
+
+    phys._getX = getX; phys._getY_x = getY_x; phys._getY_v = getY_v;
+  }
+
+  // 繪製右側具象物理模擬器背景
+  function drawVisualBackground(phys){
+    visualSvg.innerHTML = '';
+    const W = 200, H = 300;
+    const m = currentMode;
+
+    if(m === 'ticker'){
+      // 繪製軌道與打點計時器結構
+      const track = createSvg('rect'); track.setAttribute('x', 40); track.setAttribute('y', 20); track.setAttribute('width', 20); track.setAttribute('height', 260); track.setAttribute('fill', 'rgba(255,255,255,0.1)'); visualSvg.appendChild(track);
+      const timer = createSvg('rect'); timer.setAttribute('x', 30); timer.setAttribute('y', 15); timer.setAttribute('width', 40); timer.setAttribute('height', 25); timer.setAttribute('fill', '#8f8a80'); timer.setAttribute('rx', 4); visualSvg.appendChild(timer);
+      
+      // 動態軌跡紙帶容器
+      const tapeGroup = createSvg('g'); tapeGroup.setAttribute('id', 'tapeGroup'); visualSvg.appendChild(tapeGroup);
+      
+      // 運動滑車
+      const car = createSvg('g'); car.setAttribute('id', 'simObject');
+      car.innerHTML = `<rect x="32" y="0" width="36" height="24" fill="#5fb0ff" rx="3"/><circle cx="38" cy="20" r="5" fill="#1c3d34"/><circle cx="58" cy="20" r="5" fill="#1c3d34"/>`;
+      visualSvg.appendChild(car);
+    } else if(m === 'incline'){
+      // 斜面角度計算
+      const rad = params.incline.angle * Math.PI / 180;
+      const xTop = 30, yTop = 50;
+      const rampLen = 220;
+      const xBot = xTop + rampLen * Math.cos(rad);
+      const yBot = yTop + rampLen * Math.sin(rad);
+
+      const ramp = createSvg('polygon');
+      ramp.setAttribute('points', `${xTop},${yTop} ${xBot},${yBot} ${xTop},${yBot}`);
+      ramp.setAttribute('fill', 'rgba(242,214,117,0.15)'); ramp.setAttribute('stroke', 'var(--chalk-yellow)'); ramp.setAttribute('stroke-width', 2);
+      visualSvg.appendChild(ramp);
+
+      // 刻度尺
+      for(let i=0; i<=5; i++){
+        const r = (i/5) * rampLen;
+        const tx = xTop + r * Math.cos(rad), ty = yTop + r * Math.sin(rad);
+        const l = createSvg('circle'); l.setAttribute('cx', tx); l.setAttribute('cy', ty); l.setAttribute('r', 2); l.setAttribute('fill', 'var(--chalk-dim)'); visualSvg.appendChild(l);
+      }
+
+      const ball = createSvg('g'); ball.setAttribute('id', 'simObject');
+      ball.innerHTML = `<circle cx="0" cy="-12" r="12" fill="#ef6a5a" stroke="#f2ecd9" stroke-width="1.5"/><circle cx="-3" cy="-15" r="3" fill="rgba(255,255,255,0.7)"/>`;
+      visualSvg.appendChild(ball);
+      phys._ramp = { xTop, yTop, rad, rampLen };
+    } else if(m === 'freefall'){
+      // 真空管容器
+      const tube = createSvg('rect'); tube.setAttribute('x', 40); tube.setAttribute('y', 20); tube.setAttribute('width', 120); tube.setAttribute('height', 250); tube.setAttribute('fill', 'rgba(255,255,255,0.03)'); tube.setAttribute('stroke', 'var(--x-color)'); tube.setAttribute('stroke-width', 2); tube.setAttribute('rx', 10); visualSvg.appendChild(tube);
+      
+      // 底部墊圈
+      const pad = createSvg('rect'); pad.setAttribute('x', 35); pad.setAttribute('y', 270); pad.setAttribute('width', 130); pad.setAttribute('height', 10); pad.setAttribute('fill', '#5c4a33'); pad.setAttribute('rx', 3); visualSvg.appendChild(pad);
+
+      // 鐵球與羽毛
+      const obj = createSvg('g'); obj.setAttribute('id', 'simObject');
+      obj.innerHTML = `
+        <g id="ironBall" transform="translate(70, 0)">
+          <circle cx="0" cy="0" r="14" fill="#8f8a80" stroke="#fff" stroke-width="1"/><text x="0" y="4" font-size="10" fill="#fff" text-anchor="middle" font-weight="bold">鐵</text>
+        </g>
+        <g id="feather" transform="translate(130, 0)">
+          <path d="M0,-12 C10,-5 10,5 0,12 C-10,5 -10,-5 0,-12 Z" fill="#f2d675" opacity="0.9"/>
+          <line x1="0" y1="-14" x2="0" y2="16" stroke="#fff" stroke-width="1.5"/>
+        </g>
+      `;
+      visualSvg.appendChild(obj);
+    } else if(m === 'area' || (m === 'special' && phys.sub === 'brake')){
+      // 水平道路
+      const road = createSvg('rect'); road.setAttribute('x', 10); road.setAttribute('y', 130); road.setAttribute('width', 180); road.setAttribute('height', 40); road.setAttribute('fill', '#382c1e'); road.setAttribute('rx', 4); visualSvg.appendChild(road);
+      const line = createSvg('line'); line.setAttribute('x1', 10); line.setAttribute('y1', 150); line.setAttribute('x2', 190); line.setAttribute('y2', 150); line.setAttribute('stroke', '#f2ecd9'); line.setAttribute('stroke-dasharray', '10 10'); visualSvg.appendChild(line);
+
+      const car = createSvg('g'); car.setAttribute('id', 'simObject');
+      car.innerHTML = `<rect x="-20" y="132" width="40" height="22" fill="#4cd964" rx="4"/><circle cx="-10" cy="154" r="5" fill="#000"/><circle cx="10" cy="154" r="5" fill="#000"/><polygon points="20,138 28,143 20,148" fill="#f2d675"/>`;
+      visualSvg.appendChild(car);
+    } else if(m === 'special'){
+      // 上拋與火箭軌道
+      const line = createSvg('line'); line.setAttribute('x1', 100); line.setAttribute('y1', 20); line.setAttribute('x2', 100); line.setAttribute('y2', 270); line.setAttribute('class', 'track-line'); visualSvg.appendChild(line);
+      const pad = createSvg('rect'); pad.setAttribute('x', 70); pad.setAttribute('y', 270); pad.setAttribute('width', 60); pad.setAttribute('height', 10); pad.setAttribute('fill', '#5c4a33'); visualSvg.appendChild(pad);
+
+      const obj = createSvg('g'); obj.setAttribute('id', 'simObject');
+      if(phys.sub === 'throw'){
+        obj.innerHTML = `<circle cx="100" cy="0" r="12" fill="#f2d675" stroke="#ef6a5a" stroke-width="2"/>`;
+      } else {
+        obj.innerHTML = `
+          <g transform="translate(100, 0)">
+            <polygon id="flame" points="-6,16 0,34 6,16 0,22" fill="#f2d675" stroke="#ef6a5a" stroke-width="1.5" style="display:none;"/>
+            <rect x="-8" y="-14" width="16" height="30" fill="#f2ecd9" rx="4"/><polygon points="-8,-14 0,-26 8,-14" fill="#ef6a5a"/><circle cx="0" cy="-2" r="4" fill="#5fb0ff"/>
+          </g>
+        `;
+      }
+      visualSvg.appendChild(obj);
+    }
+  }
+
+  // --- 4. 動態幀渲染 (根據時間 t 更新物理位置與 UI) ---
+  function renderFrame(t, phys){
+    const m = currentMode;
+    let x = 0, v = 0;
+
+    // 計算當前瞬間的 x 與 v
+    if(m === 'ticker'){
+      x = params.ticker.v0 * t + 0.5 * params.ticker.a * t * t;
+      v = params.ticker.v0 + params.ticker.a * t;
+    } else if(m === 'incline'){
+      x = 0.5 * phys.a * t * t; v = phys.a * t;
+    } else if(m === 'freefall'){
+      x = 0.5 * phys.g * t * t; v = phys.g * t;
+    } else if(m === 'area'){
+      x = params.area.v0 * t + 0.5 * params.area.a * t * t;
+      v = params.area.v0 + params.area.a * t;
+    } else if(m === 'special'){
+      if(phys.sub === 'throw'){
+        x = params.special.v0 * t - 0.5 * params.special.g * t * t;
+        v = params.special.v0 - params.special.g * t;
+      } else if(phys.sub === 'rocket'){
+        if(t <= phys.t1){
+          x = 0.5 * (params.special.v0 / phys.t1) * t * t;
+          v = (params.special.v0 / phys.t1) * t;
+        } else if(t <= phys.t2){
+          const dt = t - phys.t1;
+          const x1 = 0.5 * params.special.v0 * phys.t1;
+          x = x1 + params.special.v0 * dt - 0.5 * params.special.g * dt * dt;
+          v = params.special.v0 - params.special.g * dt;
+        } else {
+          const dt = t - phys.t2;
+          x = phys.xMax - 0.5 * params.special.g * dt * dt;
+          v = -params.special.g * dt;
+        }
+      } else {
+        x = params.special.v0 * t - 0.5 * params.special.a_brake * t * t;
+        v = params.special.v0 - params.special.a_brake * t;
       }
     }
 
-    updateRocketVisual(0, mode==='freefall' ? state.x1 : 0, 0, state);
+    // 更新 SVG 圖表聯動點
+    if(phys._getX){
+      const cx = phys._getX(t);
+      const cy_x = phys._getY_x(Math.max(0, x));
+      const cy_v = phys._getY_v(v);
+
+      const dotX = document.getElementById('svgDotX');
+      const dotV = document.getElementById('svgDotV');
+      const guide = document.getElementById('svgGuide');
+      
+      if(dotX && dotV && guide){
+        dotX.setAttribute('cx', cx); dotX.setAttribute('cy', cy_x);
+        dotV.setAttribute('cx', cx); dotV.setAttribute('cy', cy_v);
+        guide.setAttribute('x1', cx); guide.setAttribute('y1', 20);
+        guide.setAttribute('x2', cx); guide.setAttribute('y2', 265);
+      }
+    }
+
+    // 更新右側物理模擬實體位置
+    const simObj = document.getElementById('simObject');
+    if(simObj){
+      const ratio = Math.min(1, Math.max(0, x / (phys.xMax || 1)));
+      
+      if(m === 'ticker'){
+        const py = 40 + ratio * 200;
+        simObj.setAttribute('transform', `translate(0, ${py})`);
+        // 動態印出打點計時器的點
+        const tapeGroup = document.getElementById('tapeGroup');
+        if(tapeGroup){
+          tapeGroup.innerHTML = '';
+          phys.dots.forEach(d => {
+            if(d.t <= t){
+              const dy = 40 + (d.x / phys.xMax) * 200;
+              const dot = createSvg('circle'); dot.setAttribute('cx', 50); dot.setAttribute('cy', dy + 10); dot.setAttribute('r', 3); dot.setAttribute('fill', '#ef6a5a'); tapeGroup.appendChild(dot);
+            }
+          });
+        }
+      } else if(m === 'incline'){
+        const r = phys._ramp;
+        const dist = ratio * r.rampLen;
+        const tx = r.xTop + dist * Math.cos(r.rad);
+        const ty = r.yTop + dist * Math.sin(r.rad);
+        simObj.setAttribute('transform', `translate(${tx}, ${ty}) rotate(${dist * 2})`);
+      } else if(m === 'freefall'){
+        const py = 40 + ratio * 210;
+        const iron = document.getElementById('ironBall');
+        const feather = document.getElementById('feather');
+        if(iron && feather){
+          iron.setAttribute('transform', `translate(70, ${py})`);
+          // 若有空氣阻力，羽毛落下減緩 40%
+          const fRatio = phys.air ? (ratio * 0.6) : ratio;
+          const fy = 40 + fRatio * 210;
+          feather.setAttribute('transform', `translate(130, ${fy}) rotate(${phys.air ? Math.sin(t*10)*15 : 0})`);
+        }
+      } else if(m === 'area' || (m === 'special' && phys.sub === 'brake')){
+        const px = 20 + ratio * 140;
+        simObj.setAttribute('transform', `translate(${px}, 0)`);
+      } else if(m === 'special'){
+        const py = 270 - ratio * 230;
+        simObj.setAttribute('transform', `translate(0, ${py})`);
+        const flame = document.getElementById('flame');
+        if(flame) flame.style.display = (phys.sub === 'rocket' && t <= phys.t1) ? 'block' : 'none';
+      }
+    }
+
+    // 更新狀態徽章
+    if(m === 'special'){
+      if(phys.sub === 'throw'){
+        phaseBadge.className = v > 0 ? 'phase-badge yellow' : 'phase-badge red';
+        phaseBadge.textContent = v > 0 ? '🟡 上升減速中 (v > 0)' : '🔴 下降加速中 (v < 0)';
+      } else if(phys.sub === 'rocket'){
+        if(t <= phys.t1){ phaseBadge.className='phase-badge blue'; phaseBadge.textContent='🔵 階段一：點火加速'; }
+        else if(t <= phys.t2){ phaseBadge.className='phase-badge yellow'; phaseBadge.textContent='🟡 階段二：慣性減速上升'; }
+        else { phaseBadge.className='phase-badge red'; phaseBadge.textContent='🔴 階段三：自由落體墜落'; }
+      } else {
+        phaseBadge.className = v > 0 ? 'phase-badge yellow' : 'phase-badge green';
+        phaseBadge.textContent = v > 0 ? '🟡 煞車減速中...' : '🟢 完全靜止';
+      }
+    } else {
+      phaseBadge.className = 'phase-badge blue';
+      phaseBadge.textContent = `⏱️ 實驗進行中：t = ${t.toFixed(2)} s`;
+    }
   }
 
+  // --- 5. 數據面板與重點教學文字 ---
+  function updateStatsAndExplain(phys){
+    statsGrid.innerHTML = '';
+    const addStat = (k, v) => {
+      const d = document.createElement('div'); d.className = 'stat';
+      d.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div>`; statsGrid.appendChild(d);
+    };
+
+    const m = currentMode;
+    if(m === 'ticker'){
+      addStat('總打點數', `${phys.dots.length} 點`);
+      addStat('時間差 Δt', `${phys.dt.toFixed(2)} s`);
+      addStat('設定加速度 a', `${params.ticker.a} m/s²`);
+      addStat('末端速度', `${phys.vMax.toFixed(2)} m/s`);
+      
+      explainBox.innerHTML = `
+        <h3>💡 觀念總結：打點計時器的「奇數比定律」</h3>
+        <p>當物體由靜止開始作等加速度運動時，在相同時間間隔 $\\Delta t$ 內，相鄰兩點間的位移 $\\Delta x_1 : \\Delta x_2 : \\Delta x_3 \\dots$ 將嚴格呈現 <span class="formula-highlight">1 : 3 : 5 : 7 : 9</span> 的等差數列關係！透過測量紙帶上的點距，即可利用公式 $a = \\frac{\\Delta v}{\\Delta t}$ 反推物體的加速度。</p>
+      `;
+    } else if(m === 'incline'){
+      addStat('斜面角度 θ', `${params.incline.angle}°`);
+      addStat('下滑加速度 a', `${phys.a.toFixed(2)} m/s²`);
+      addStat('下滑總時間', `${phys.tMax.toFixed(2)} s`);
+      addStat('到達底端速度', `${phys.vMax.toFixed(2)} m/s`);
+
+      explainBox.innerHTML = `
+        <h3>💡 觀念總結：伽利略斜面實驗與重力稀釋</h3>
+        <p>伽利略因為古代沒有精確時鐘，巧妙利用斜面「稀釋」重力。物體沿斜面下滑的加速度為 <span class="formula-highlight">a = g × sinθ</span>。當傾斜角度 $\\theta = 90^\\circ$ 時，$\\sin 90^\\circ = 1$，斜面運動就完美轉換為完美的**自由落體**！</p>
+      `;
+    } else if(m === 'freefall'){
+      addStat('釋放高度 H', `${params.freefall.h} m`);
+      addStat('重力加速度 g', `${phys.g} m/s²`);
+      addStat('落地總時間', `${phys.tMax.toFixed(2)} s`);
+      addStat('落地瞬時速度', `${phys.vMax.toFixed(2)} m/s`);
+
+      explainBox.innerHTML = `
+        <h3>💡 觀念總結：自由落體與波以耳真空管實驗</h3>
+        <p>在沒有空氣阻力的真空狀態下，任何物體（無論是重的鐵球還是輕的羽毛）下落的加速度皆完全相同！落體位移公式為 <span class="formula-highlight">H = ½gt²</span>，落地速度則為 <span class="formula-highlight">v = gt = √(2gH)</span>。這打破了亞里斯多德「越重落越快」的千秋迷思！</p>
+      `;
+    } else if(m === 'area'){
+      addStat('矩形位移 (v₀t)', `${phys.areaRect.toFixed(1)} m`);
+      addStat('三角形位移 (½at²)', `${phys.areaTri.toFixed(1)} m`);
+      addStat('總位移 Δx', `${phys.xMax.toFixed(1)} m`);
+      addStat('末速度 v', `${phys.vMax.toFixed(1)} m/s`);
+
+      explainBox.innerHTML = `
+        <h3>💡 觀念總結：v-t 圖形下的面積 = 物體位移！</h3>
+        <p>不要死記複雜的公式！在 v-t 圖中，位移 $\\Delta x$ 就是曲線下的梯形面積。我們可以將其幾何切割為：底部的**矩形面積 (等速部分 $v_0 t$)** 加上頂部的**三角形面積 (加速增量 $\\frac{1}{2}at^2$)**。兩者相加就是最經典的運動學核心公式 <span class="formula-highlight">Δx = v₀t + ½at²</span>！</p>
+      `;
+    } else if(m === 'special'){
+      if(phys.sub === 'throw'){
+        addStat('最高點高度', `${phys.xMax.toFixed(1)} m`);
+        addStat('登頂時間', `${phys.tTop.toFixed(2)} s`);
+        addStat('空中總時間', `${phys.tMax.toFixed(2)} s`);
+        addStat('接回速度', `${phys.vMax.toFixed(1)} m/s`);
+        explainBox.innerHTML = `<h3>💡 觀念總結：鉛直上拋的「絕對對稱性」</h3><p>上拋運動到達最高點時，瞬時速度為 <span class="formula-highlight">v = 0</span>，但此時重力加速度 $g$ 依然持續向下作用！整個運動過程呈現極致的對稱：**上升時間 = 下降時間**，且回到拋出點時的**落地速率 = 拋出初速率**！</p>`;
+      } else if(phys.sub === 'rocket'){
+        addStat('最高點高度', `${phys.xMax.toFixed(0)} m`);
+        addStat('燃盡最高速 v₁', `${params.special.v0} m/s`);
+        addStat('登頂時間 t₂', `${phys.t2.toFixed(1)} s`);
+        addStat('墜地撞擊速度', `${phys.vMax.toFixed(0)} m/s`);
+        explainBox.innerHTML = `<h3>💡 觀念總結：多階段等加速度運動分解</h3><p>處理火箭題型的秘訣在於「分段破解」：第 1 階段為**向上的等加速度**（引擎點火）；燃盡瞬間達到最大速度，進入第 2 階段**慣性減速上升**；到達最高點後，進入第 3 階段**自由落體墜落**！</p>`;
+      } else {
+        addStat('初速度 v₀', `${params.special.v0} m/s`);
+        addStat('煞車減速度 a', `-${params.special.a_brake} m/s²`);
+        addStat('煞車停止時間', `${phys.tMax.toFixed(2)} s`);
+        addStat('安全煞車距離', `${phys.xMax.toFixed(1)} m`);
+        explainBox.innerHTML = `<h3>💡 觀念總結：緊急煞車與安全車距</h3><p>當車子緊急煞車時，加速度方向與速度方向相反（數值為負）。由公式 <span class="formula-highlight">v² = v₀² + 2aΔx</span> 可知，當車速提高為 2 倍時，所需的煞車距離將會以平方倍激增為 **4 倍**！這就是為什麼高速公路必須保持更長安全距離的物理科學基礎！</p>`;
+      }
+    }
+  }
+
+  // --- 6. 動畫迴圈控制 ---
   function animate(ts){
-    if(!animStart) animStart = ts;
-    const elapsed = ts - animStart;
-    const frac = Math.min(elapsed/ANIM_DURATION, 1);
-    const t = frac * state.t3;
+    if(!animStartTime) animStartTime = ts;
+    const elapsed = ts - animStartTime;
+    const phys = calculatePhysics();
+    const frac = Math.min(1, elapsed / ANIM_DURATION);
+    const curTime = frac * phys.tMax;
 
-    document.getElementById('progressFill').style.width = (frac*100)+'%';
-
-    let v;
-    if(t <= state.t1 && state.t1>0) v = (state.v1/state.t1)*t;
-    else if(t <= state.t2) v = state.v1 - state.g*(t-state.t1);
-    else v = -state.g*(t-state.t2);
-
-    let x;
-    if(t <= state.t1 && state.t1>0) x = 0.5*(state.v1/state.t1)*t*t;
-    else if(t <= state.t2){ const dt=t-state.t1; x = state.x1 + state.v1*dt - 0.5*state.g*dt*dt; }
-    else { const dt=t-state.t2; x = state.xMax - 0.5*state.g*dt*dt; }
-    x = Math.max(x,0);
-
-    const curXPos = xPos(t, state._scale.tMax);
-    const curYPosX = yPosX(x, state._scale.xMaxScaled);
-    const curYPosV = yPosV(v, state._scale.vAbsMax);
-
-    const dotX = document.getElementById('dotX');
-    dotX.style.display='block';
-    dotX.setAttribute('cx', curXPos);
-    dotX.setAttribute('cy', curYPosX);
-
-    const dotV = document.getElementById('dotV');
-    dotV.style.display='block';
-    dotV.setAttribute('cx', curXPos);
-    dotV.setAttribute('cy', curYPosV);
-
-    const guideLine = document.getElementById('guideLine');
-    guideLine.style.display='block';
-    guideLine.setAttribute('x1', curXPos);
-    guideLine.setAttribute('y1', curYPosX);
-    guideLine.setAttribute('x2', W);
-    guideLine.setAttribute('y2', curYPosX);
-
-    updateRocketVisual(t, x, v, state);
+    progressFill.style.width = `${frac * 100}%`;
+    renderFrame(curTime, phys);
 
     if(frac < 1){
       animId = requestAnimationFrame(animate);
     } else {
-      animId = null;
-      animStart = null;
-      document.getElementById('playBtn').textContent = '▶ 播放';
-      setTimeout(()=>{
-        document.getElementById('progressFill').style.width='0%';
-        const dx = document.getElementById('dotX'); if(dx) dx.style.display='none';
-        const dv = document.getElementById('dotV'); if(dv) dv.style.display='none';
-        const gl = document.getElementById('guideLine'); if(gl) gl.style.display='none';
-        updateRocketVisual(0, mode==='freefall' ? state.x1 : 0, 0, state);
-      }, 800);
+      animId = null; animStartTime = null;
+      playBtn.textContent = '🔄 再次播放';
     }
   }
 
-  document.getElementById('playBtn').addEventListener('click', ()=>{
+  playBtn.addEventListener('click', () => {
     if(animId){
       cancelAnimationFrame(animId);
-      animId = null; animStart = null;
-      document.getElementById('playBtn').textContent = '▶ 播放';
-      return;
+      animId = null; animStartTime = null;
+      playBtn.textContent = '▶ 繼續播放';
+    } else {
+      playBtn.textContent = '⏸ 暫停播放';
+      animId = requestAnimationFrame(animate);
     }
-    document.getElementById('playBtn').textContent = '⏸ 播放中…';
-    animId = requestAnimationFrame(animate);
   });
 
-  [t1Input, v1Input, gInput, hInput].forEach(inp => inp.addEventListener('input', update));
-
-  document.querySelectorAll('.presets button').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      gInput.value = btn.dataset.g;
-      document.querySelectorAll('.presets button').forEach(b=>b.classList.remove('active-g'));
-      btn.classList.add('active-g');
-      update();
-    });
-  });
-
-  document.querySelectorAll('.mode-switch button').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      mode = btn.dataset.mode;
-      document.querySelectorAll('.mode-switch button').forEach(b=>b.classList.remove('active'));
+  // 模組按鈕切換監聽
+  document.querySelectorAll('.mode-switch button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-switch button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      updateControlVisibility();
-      update();
+      currentMode = btn.dataset.mode;
+      if(animId){ cancelAnimationFrame(animId); animId = null; animStartTime = null; }
+      playBtn.textContent = '▶ 開始實驗';
+      progressFill.style.width = '0%';
+      initUI();
     });
   });
 
-  updateControlVisibility();
-  update();
+  // 啟動初始化
+  initUI();
 })();
 </script>
 </body>
