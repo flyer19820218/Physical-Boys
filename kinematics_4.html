@@ -127,13 +127,18 @@
 
     /* 表格推導專屬 CSS */
     #derivationTableContainer { width: 100%; display: none; flex-direction: column; height: 100%; justify-content: center;}
-    .deriv-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; text-align: center; background: rgba(0,0,0,0.2); border: 2px solid var(--chalk-dim); }
-    .deriv-table th, .deriv-table td { border: 1px solid rgba(242, 236, 217, 0.3); padding: 8px 4px; }
-    .deriv-table th { background: rgba(242, 214, 117, 0.15); color: var(--chalk-yellow); font-family: 'Noto Sans TC', sans-serif; font-weight: 700; white-space: nowrap;}
-    .deriv-table .val-cell { color: var(--chalk); min-width: 40px; }
+    .deriv-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; text-align: center; background: rgba(0,0,0,0.2); border: 1.5px solid var(--chalk-dim); table-layout: fixed; }
+    .deriv-table th, .deriv-table td { border: 1px solid rgba(242, 236, 217, 0.3); padding: 8px 0; }
+    .deriv-table th { background: rgba(242, 214, 117, 0.15); color: var(--chalk-yellow); font-family: 'Noto Sans TC', sans-serif; font-weight: 700; white-space: nowrap; }
+    .deriv-table .val-cell { color: var(--chalk); }
     .deriv-table .calc-row { background: rgba(95, 176, 255, 0.1); color: #8fd0ff; }
     .deriv-table .acc-row { background: rgba(239, 106, 90, 0.15); color: #ff9485; font-weight: bold; }
-    .deriv-table .empty-cell { background: repeating-linear-gradient( 45deg, rgba(255,255,255,0.03), rgba(255,255,255,0.03) 5px, rgba(0,0,0,0.1) 5px, rgba(0,0,0,0.1) 10px ); }
+    
+    /* 畫出如同講義中的對角線空白格 */
+    .slash-cell {
+      background: linear-gradient(to bottom right, transparent 48%, rgba(242, 236, 217, 0.4) 49%, rgba(242, 236, 217, 0.4) 51%, transparent 52%);
+    }
+
     .deriv-btn-group { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;}
     .deriv-btn { flex: 1; padding: 8px; font-family: 'Noto Sans TC'; font-weight: bold; font-size: 0.85rem; border-radius: 6px; cursor: pointer; border: 1px solid var(--chalk-yellow); background: transparent; color: var(--chalk-yellow); transition: all 0.2s;}
     .deriv-btn.active { background: var(--chalk-yellow); color: var(--board-dark); }
@@ -186,21 +191,22 @@
           <span>📐 2. 伽利略斜面運動</span>
           <span class="sub">1:3:5:7:9 距離比驗證</span>
         </button>
+        <!-- 移至第三順位 -->
+        <button data-mode="table_deriv">
+          <span>📝 3. 表格推導與中間時刻</span>
+          <span class="sub">破解 v-t 算加速度的魔王題</span>
+        </button>
         <button data-mode="area">
-          <span>📊 3. 公式解與圖形面積</span>
+          <span>📊 4. 公式解與圖形面積</span>
           <span class="sub">純 v-t 圖幾何位移剖析</span>
         </button>
         <button data-mode="freefall">
-          <span>🪨 4. 自由落體與真空管</span>
+          <span>🪨 5. 自由落體與真空管</span>
           <span class="sub">嚴格定義與大氣阻力比對</span>
         </button>
         <button data-mode="special">
-          <span>🚀 5. 特殊與進階考題</span>
+          <span>🚀 6. 特殊與進階考題</span>
           <span class="sub">上拋、火箭與煞車問題</span>
-        </button>
-        <button data-mode="table_deriv">
-          <span>📝 6. 表格推導與中間時刻</span>
-          <span class="sub">破解 v-t 算加速度的魔王題</span>
         </button>
       </div>
 
@@ -284,10 +290,10 @@
       const params = {
         ticker:   { quiz: 1, f: 10, a: 3.5, v0: 0.2 },
         incline:  { angle: 30, g: 9.8, L: 5.0 },
+        table_deriv: { step: 0 }, // 0:原始, 1:位移, 2:平均速度, 3:中間點, 4:加速度
         area:     { v0: 6, a: 4.0, t: 5.0 },
         freefall: { h: 80, g: 9.8, air: 0 },
-        special:  { sub: 'throw', v0: 25, g: 9.8, a_brake: 5.0 },
-        table_deriv: { step: 0 } // 0:原始, 1:位移, 2:平均速度, 3:中間點, 4:加速度
+        special:  { sub: 'throw', v0: 25, g: 9.8, a_brake: 5.0 }
       };
 
       const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -307,14 +313,12 @@
       }
 
       function initUI() {
-        // Toggle view elements based on mode
         if (currentMode === 'table_deriv') {
           visualSvg.style.display = 'none';
           phaseBadge.style.display = 'none';
           playbarContainer.style.display = 'none';
           derivationTableContainer.style.display = 'flex';
           
-          // Setup Table Derivation Listeners
           for (let i = 0; i <= 4; i++) {
             const btn = document.getElementById(`btnDeriv${i}`);
             btn.onclick = () => {
@@ -389,6 +393,11 @@
           addSlider('angle', '斜面傾斜角度 θ', 10, 90, 5, p.angle, '度 (°)', v => p.angle = v);
           addSlider('L', '斜面總長度 L', 2.0, 10.0, 0.5, p.L, 'm', v => p.L = v);
           addSlider('g', '重力加速度 g', 1.6, 20.0, 0.2, p.g, 'm/s²', v => p.g = v);
+        } else if (m === 'table_deriv') {
+           const div = document.createElement('div');
+           div.style.gridColumn = '1 / -1';
+           div.innerHTML = `<p style="margin:0; font-size:0.9rem; color:var(--chalk-dim);">✨ 請依序點擊右側的 <b>Step 按鈕</b>，觀察從「位移」推導至「加速度」的交錯表格填寫過程。留意 v-t 圖上的對應變化！</p>`;
+           controlsBox.appendChild(div);
         } else if (m === 'area') {
           addSlider('v0', '初速度 v₀', 0, 15, 1, p.v0, 'm/s', v => p.v0 = v);
           addSlider('a', '等加速度 a', 1.0, 6.0, 0.5, p.a, 'm/s²', v => p.a = v);
@@ -431,11 +440,6 @@
             addSlider('v0', '行駛初速度 v₀', 10, 40, 2, p.v0, 'm/s', v => p.v0 = v);
             addSlider('a_brake', '煞車減速度 a', 2.0, 10.0, 0.5, p.a_brake, 'm/s²', v => p.a_brake = v);
           }
-        } else if (m === 'table_deriv') {
-           const div = document.createElement('div');
-           div.style.gridColumn = '1 / -1';
-           div.innerHTML = `<p style="margin:0; font-size:0.9rem; color:var(--chalk-dim);">✨ 請依序點擊右側的 <b>Step 按鈕</b>，觀察從「位移」推導至「加速度」的完整過程。留意 v-t 圖上的對應變化！</p>`;
-           controlsBox.appendChild(div);
         }
       }
 
@@ -506,6 +510,19 @@
           const xBot = xTop + rampLen * Math.cos(rad);
           const yBot = yTop + rampLen * Math.sin(rad);
           res = { tMax, xMax: p.L, vMax, a, _ramp: { xTop, yTop, rad, rampLen, xBot, yBot } };
+        } else if (m === 'table_deriv') {
+          const times = [0, 1, 2, 3, 4, 5];
+          const positions = [0, 0.2, 0.8, 1.8, 3.2, 5.0];
+          const displacements = [0.2, 0.6, 1.0, 1.4, 1.8]; 
+          const avgVelocities = [0.2, 0.6, 1.0, 1.4, 1.8]; 
+          const midTimes = [0.5, 1.5, 2.5, 3.5, 4.5];      
+          const accelerations = [0.4, 0.4, 0.4, 0.4];      
+          
+          res = {
+            tMax: 5, xMax: 5.0, vMax: 2.0, 
+            times, positions, displacements, avgVelocities, midTimes, accelerations,
+            step: p.step
+          };
         } else if (m === 'area') {
           const tMax = p.t;
           const vMax = p.v0 + p.a * tMax;
@@ -535,20 +552,6 @@
             const xMax = (p.v0 * p.v0) / (2 * p.a_brake);
             res = { tMax, xMax, vMax: p.v0, sub: 'brake' };
           }
-        } else if (m === 'table_deriv') {
-          // 固定數據來自講義範例
-          const times = [0, 1, 2, 3, 4, 5];
-          const positions = [0, 0.2, 0.8, 1.8, 3.2, 5.0];
-          const displacements = [0.2, 0.6, 1.0, 1.4, 1.8]; // 位移
-          const avgVelocities = [0.2, 0.6, 1.0, 1.4, 1.8]; // 平均速度 (dt=1)
-          const midTimes = [0.5, 1.5, 2.5, 3.5, 4.5];      // 中間時刻
-          const accelerations = [0.4, 0.4, 0.4, 0.4];      // 加速度
-          
-          res = {
-            tMax: 5, xMax: 5.0, vMax: 2.0, // vMax 設為 2.0 讓圖形空間充裕
-            times, positions, displacements, avgVelocities, midTimes, accelerations,
-            step: p.step
-          };
         }
         return res;
       }
@@ -564,7 +567,7 @@
           drawDerivationTable(phys);
         } else {
           drawVisualBackground(phys);
-          renderFrame(0, phys); // Reset visual position
+          renderFrame(0, phys); 
         }
         
         updateStatsAndExplain(phys);
@@ -650,16 +653,19 @@
         
         // ==== 表格推導專屬的繪圖邏輯 ====
         if (currentMode === 'table_deriv') {
-          // X軸時間標記
           phys.times.forEach(t => {
             addLine(getX(t), margin.top+pH, getX(t), margin.top+pH+5, 'axis-line');
             addTextToSvg(combinedSvg, getX(t), margin.top+pH+15, t, 'middle', 'var(--chalk-dim)', 10);
           });
-          // Y軸速度標記
+          
           [0.5, 1.0, 1.5, 2.0].forEach(v => {
             addLine(margin.left-5, getY_v(v), margin.left, getY_v(v), 'axis-line');
             addTextToSvg(combinedSvg, margin.left-10, getY_v(v)+4, v, 'end', 'var(--v-color)', 10);
           });
+
+          // 無論 Step 幾，等加速度的斜直線始終存在 (這是一切的核心)
+          const pts = phys.times.map(t => `${getX(t)},${getY_v(0.4 * t)}`).join(' ');
+          combinedSvg.appendChild(createSvgEl('polyline', { points: pts, class: 'curve-v', style: 'stroke-width: 2.5; opacity: 0.7;' }));
 
           // Step 2 & 3: 畫出各時間區段的平均速度 (水平階梯線)
           if (phys.step >= 2) {
@@ -678,23 +684,19 @@
              });
           }
 
-          // Step 3: 中間時刻抓取點
+          // Step 3: 中間時刻抓取點 (證明階梯的中點就在紅線上！)
           if (phys.step >= 3) {
              phys.midTimes.forEach((mt, i) => {
                 const y = getY_v(phys.avgVelocities[i]);
                 const cx = getX(mt);
                 // 中間時刻虛線向下
-                addLine(cx, y, cx, margin.top+pH, '', {'stroke': 'var(--chalk-yellow)', 'stroke-dasharray': '4 4', 'stroke-width': 1});
-                combinedSvg.appendChild(createSvgEl('circle', { cx: cx, cy: y, r: 5, fill: 'var(--chalk-yellow)' }));
+                addLine(cx, y, cx, margin.top+pH, '', {'stroke': 'var(--chalk-yellow)', 'stroke-dasharray': '4 4', 'stroke-width': 1.5});
+                combinedSvg.appendChild(createSvgEl('circle', { cx: cx, cy: y, r: 6, fill: 'var(--chalk-yellow)', stroke: '#000', 'stroke-width': 1.5 }));
              });
           }
 
-          // Step 4: 連線求斜率(加速度)
+          // Step 4: 畫出輔助的斜率三角形
           if (phys.step >= 4) {
-             const pts = phys.midTimes.map((mt, i) => `${getX(mt)},${getY_v(phys.avgVelocities[i])}`).join(' ');
-             combinedSvg.appendChild(createSvgEl('polyline', { points: pts, class: 'curve-v', style: 'stroke-width: 3;' }));
-             
-             // 畫一個輔助直角三角形標示斜率
              if (phys.midTimes.length >= 2) {
                 const x1 = getX(phys.midTimes[0]);
                 const y1 = getY_v(phys.avgVelocities[0]);
@@ -705,15 +707,14 @@
                   points: `${x1},${y1} ${x2},${y1} ${x2},${y2}`,
                   fill: 'rgba(239, 106, 90, 0.2)'
                 }));
+                addLine(x2, y1, x2, y2, '', {'stroke': 'var(--v-color)', 'stroke-width': 2, 'stroke-dasharray': '2 2'});
                 addTextToSvg(combinedSvg, (x1+x2)/2, y1+12, 'Δt=1s', 'middle', 'var(--chalk-dim)', 10);
                 addTextToSvg(combinedSvg, x2+15, (y1+y2)/2+4, 'Δv=0.4', 'start', '#ff9485', 10, 'bold');
              }
           }
-          return; // 提早結束，不執行後面普通的繪製邏輯
+          return; 
         }
-        // ===================================
 
-        // 正常模式繪圖 (ticker, incline, area, freefall, special)
         let ptsX = [], ptsV = [];
         const steps = 60;
         for (let i = 0; i <= steps; i++) {
@@ -760,55 +761,51 @@
         phys._getX = getX; phys._getY_x = getY_x; phys._getY_v = getY_v;
       }
       
+      // 繪製交錯排版的推導表格
       function drawDerivationTable(phys) {
          let html = `
            <tr>
-             <th style="width: 20%;">時間 (秒)</th>
-             ${phys.times.map(t => `<td class="val-cell">${t}</td>`).join('')}
+             <th style="width: 17%;">時間 (秒)</th>
+             ${phys.times.map(t => `<td colspan="2" class="val-cell">${t}</td>`).join('')}
            </tr>
            <tr>
              <th>位置 (公尺)</th>
-             ${phys.positions.map(p => `<td class="val-cell">${p.toFixed(1)}</td>`).join('')}
+             ${phys.positions.map(p => `<td colspan="2" class="val-cell">${p.toFixed(1)}</td>`).join('')}
            </tr>
          `;
          
-         // 步驟 1：位移
+         // 步驟 1：位移 (精準置中於兩個時間點之間)
          let dispHtml = '';
          if (phys.step >= 1) {
-            dispHtml = `<td class="empty-cell"></td>`;
-            phys.displacements.forEach(d => {
-              dispHtml += `<td class="val-cell calc-row" colspan="1">${d.toFixed(1)}</td>`;
-            });
+            dispHtml = `<td class="slash-cell"></td>`;
+            phys.displacements.forEach(d => { dispHtml += `<td colspan="2" class="val-cell calc-row">${d.toFixed(1)}</td>`; });
+            dispHtml += `<td class="slash-cell"></td>`;
          } else {
-            dispHtml = `<td class="empty-cell" colspan="${phys.times.length}"></td>`;
+            dispHtml = `<td colspan="${phys.times.length * 2}"></td>`;
          }
          html += `<tr><th>位移 (公尺)</th>${dispHtml}</tr>`;
 
-         // 步驟 2：平均速度
+         // 步驟 2：平均速度 (精準置中於兩個時間點之間)
          let avgHtml = '';
          if (phys.step >= 2) {
-            avgHtml = `<td class="empty-cell"></td>`;
-            phys.avgVelocities.forEach(v => {
-              avgHtml += `<td class="val-cell calc-row" colspan="1" style="font-weight:bold;">${v.toFixed(1)}</td>`;
-            });
+            avgHtml = `<td class="slash-cell"></td>`;
+            phys.avgVelocities.forEach(v => { avgHtml += `<td colspan="2" class="val-cell calc-row" style="font-weight:bold;">${v.toFixed(1)}</td>`; });
+            avgHtml += `<td class="slash-cell"></td>`;
          } else {
-            avgHtml = `<td class="empty-cell" colspan="${phys.times.length}"></td>`;
+            avgHtml = `<td colspan="${phys.times.length * 2}"></td>`;
          }
          html += `<tr><th style="font-size:0.8rem; line-height:1.2;">平均速度<br>(公尺/秒)</th>${avgHtml}</tr>`;
 
-         // 步驟 4：加速度 (速度變化)
+         // 步驟 4：加速度/速度變化 (置中於兩個平均速度之間，剛好對應整數時間點)
          let accHtml = '';
          if (phys.step >= 4) {
-            accHtml = `<td class="empty-cell" colspan="1"></td>`; // 第一格時間中點前無差值
-            phys.accelerations.forEach(a => {
-              // 跨越兩個區間格子的邊界
-              accHtml += `<td class="val-cell acc-row" colspan="1">${a.toFixed(1)}</td>`;
-            });
-            accHtml += `<td class="empty-cell" colspan="1"></td>`;
+            accHtml = `<td colspan="2" class="slash-cell"></td>`;
+            phys.accelerations.forEach(a => { accHtml += `<td colspan="2" class="val-cell acc-row">${a.toFixed(1)}</td>`; });
+            accHtml += `<td colspan="2" class="slash-cell"></td>`;
          } else {
-            accHtml = `<td class="empty-cell" colspan="${phys.times.length}"></td>`;
+            accHtml = `<td colspan="${phys.times.length * 2}"></td>`;
          }
-         html += `<tr><th style="font-size:0.8rem; line-height:1.2;">速度變化<br>(公尺/秒²)</th>${accHtml}</tr>`;
+         html += `<tr><th style="font-size:0.8rem; line-height:1.2;">速度變化<br>(公尺/秒)</th>${accHtml}</tr>`;
 
          derivTable.innerHTML = html;
       }
@@ -921,7 +918,7 @@
 
       function renderFrame(t, phys) {
         const m = currentMode;
-        if (m === 'table_deriv') return; // 表格推導沒有動畫模擬球
+        if (m === 'table_deriv') return; 
 
         let x = 0, v = 0;
         if (m === 'ticker') {
@@ -1039,11 +1036,11 @@
           if(phys.step >= 4) addStat('加速度 a', `0.4 m/s²`);
           
           let stepExplain = '';
-          if (phys.step === 0) stepExplain = '這是一個物體運動的位置-時間紀錄表，我們無法直接從這裡看出加速度。請點擊 <b>Step 1</b>。';
+          if (phys.step === 0) stepExplain = '這是一個物體運動的位置-時間紀錄表。請點擊 <b>Step 1</b>，我們一步步推導加速度。';
           else if (phys.step === 1) stepExplain = '先算出每個時間區段的<b>位移</b> ($x_2 - x_1$)。你會發現每段位移都不一樣，但相鄰位移的「差值」是固定的！';
           else if (phys.step === 2) stepExplain = '利用公式 $v = \\frac{\\Delta X}{\\Delta t}$，算出每段區間的<b>平均速度</b>。請看左側的 v-t 圖，此時速度會變成一段一段的「水平階梯」！';
-          else if (phys.step === 3) stepExplain = '這就是破題關鍵！這段平均速度，其實就等於這段時間<b>正中間那一瞬間的「瞬時速度」</b>。你看 v-t 圖上，代表平均速度的水平線正中央，出現了代表瞬時速度的黃色點點！';
-          else if (phys.step === 4) stepExplain = '最後，利用公式 $a = \\frac{\\Delta v}{\\Delta t}$，把相鄰的中間時刻速度相減除以時間。你看！當我們把 v-t 圖上的點連起來，這就是一條完美的斜直線，而它的斜率，就是我們要找的<b>加速度</b>！';
+          else if (phys.step === 3) stepExplain = '這就是破題關鍵！這段平均速度，其實就等於這段時間<b>正中間那一瞬間的「瞬時速度」</b>。你看 v-t 圖上，階梯的正中央出現了代表瞬時速度的黃色點點，並且完美落在等加速的斜直線上！';
+          else if (phys.step === 4) stepExplain = '最後，利用公式 $a = \\frac{\\Delta v}{\\Delta t}$，把相鄰的中間時刻速度相減除以時間。你看！這條完美的斜直線，它的斜率就是我們要找的<b>加速度</b>！';
 
           explainBox.innerHTML = `
             <h3>💡 觀念總結：為什麼表格可以求加速度？</h3>
