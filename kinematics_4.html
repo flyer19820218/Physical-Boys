@@ -125,7 +125,6 @@
     #visualSvg { width: 100%; min-height: 340px; }
     .guide-line { stroke: var(--chalk-yellow); stroke-width: 1.2; stroke-dasharray: 4 4; opacity: 0.6; fill: none; }
 
-    /* 表格推導專屬 CSS */
     #derivationTableContainer { width: 100%; display: none; flex-direction: column; height: 100%; justify-content: center;}
     .deriv-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; text-align: center; background: rgba(0,0,0,0.2); border: 1.5px solid var(--chalk-dim); table-layout: fixed; }
     .deriv-table th, .deriv-table td { border: 1px solid rgba(242, 236, 217, 0.3); padding: 8px 0; }
@@ -480,7 +479,6 @@
           const totalTime = 1.4;
           const dots = [];
           
-          // 計算強制鎖死的煞停時間 (如果減速且會煞停)，避免車子倒車造成紙帶異常
           let stopTime = Infinity;
           const calcPos = (t_val) => {
             if (p.quiz === 4) {
@@ -605,10 +603,15 @@
 
         const getX = t => margin.left + (t / phys.tMax) * pW;
         
-        // 【修復上拋火箭的 Y 軸投影比例】
+        // 【修復：讓 x-t 圖形的最大高度精準對應物理上的 xMax（最高點），使曲線頂點與右側動畫 100% 同步】
         const getY_x = x_val => {
-          const maxScale = (currentMode === 'special' && phys.sub !== 'brake') ? 1.0 : 1.05;
-          return margin.top + pH - (x_val / (phys.xMax * maxScale || 1)) * pH;
+          let peakX = phys.xMax;
+          if (currentMode === 'special' && phys.sub === 'rocket') {
+             peakX = phys.xMax; // 火箭最高點
+          } else if (currentMode === 'special' && phys.sub === 'throw') {
+             peakX = phys.xMax; // 上拋最高點
+          }
+          return margin.top + pH - (x_val / (peakX || 1)) * pH;
         };
 
         const getY_v = v_val => {
@@ -796,7 +799,6 @@
         const m = currentMode;
 
         if (m === 'ticker') {
-          // 固定打點計時器的絕對位置 x=20
           visualSvg.appendChild(createSvgEl('rect', { x: 5, y: 115, width: 26, height: 30, fill: '#8f8a80', rx: 3 }));
           visualSvg.appendChild(createSvgEl('circle', { cx: 20, cy: 130, r: 3, fill: '#ef6a5a' }));
           addTextToSvg(visualSvg, 20, 105, '⬅️新點(最後)', 'middle', 'var(--v-color)', 9, 'bold');
@@ -914,7 +916,7 @@
           if (phys.sub === 'throw') { x = params.special.v0 * t - 0.5 * params.special.g * t * t; v = params.special.v0 - params.special.g * t; }
           else if (phys.sub === 'rocket') {
             if (t <= phys.t1) { x = 0.5 * (params.special.v0 / phys.t1) * t * t; v = (params.special.v0 / phys.t1) * t; }
-            else if (t <= phys.t2) { const dt = t - phys.t1; x = 0.5 * params.special.v0 * phys.t1 + params.special.v0 * dt - 0.5 * params.special.g * dt * dt; v = params.special.v0 - params.special.g * dt; }
+            else if (phys.t2 && t <= phys.t2) { const dt = t - phys.t1; x = 0.5 * params.special.v0 * phys.t1 + params.special.v0 * dt - 0.5 * params.special.g * dt * dt; v = params.special.v0 - params.special.g * dt; }
             else { const dt = t - phys.t2; x = phys.xMax - 0.5 * params.special.g * dt * dt; v = -params.special.g * dt; }
           } else { x = params.special.v0 * t - 0.5 * params.special.a_brake * t * t; v = params.special.v0 - params.special.a_brake * t; }
         }
@@ -933,7 +935,6 @@
         if (simObj) {
           const ratio = Math.min(1, Math.max(0, x / (phys.xMax || 1)));
           if (m === 'ticker') {
-            // 【修復幾何同步連動】讓點與紙帶絕對咬合車尾
             const px = 40 + ratio * 150;
             simObj.setAttribute('transform', `translate(${px}, 0)`);
             const tapeGroup = document.getElementById('tapeGroup');
@@ -943,7 +944,6 @@
               if (tapeEnd > 20) {
                 tapeGroup.appendChild(createSvgEl('rect', { x: 20, y: 122, width: tapeEnd - 20, height: 16, fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1 }));
               }
-              // 車子停了就不會生出新的點，且點固定在紙帶絕對位置上
               phys.dots.forEach((d, idx) => {
                 if (d.t <= t) {
                   const dotPx = 20 + ((x - d.x) / phys.xMax) * 150;
@@ -974,8 +974,8 @@
               feather.setAttribute('transform', `translate(140, ${fy}) rotate(${phys.air ? Math.sin(t * 10) * 15 : 0})`);
             }
           } else if (m === 'special') {
-            // 【修復上拋火箭的 Y 軸投影比例】
-            const py = phys._getY_x(Math.max(0, x));
+            // 【修復：讓右側動畫的垂直位移完全對應左側圖形的 Y 軸區間 (y 從 30 到 310)】
+            const py = 300 - ratio * 270;
             simObj.setAttribute('transform', `translate(0, ${py})`);
             const flame = document.getElementById('flame');
             if (flame) flame.style.display = (phys.sub === 'rocket' && t <= phys.t1) ? 'block' : 'none';
