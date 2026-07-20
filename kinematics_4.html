@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -412,7 +411,7 @@
     #visualSvg {
       flex: 1;
       width: 100%;
-      min-height: 280px;
+      min-height: 340px; /* 大幅度升級高度至340px，讓火箭等垂直運動更具魄力與準確對齊！ */
     }
 
     .guide-line {
@@ -581,7 +580,7 @@
       }
       .visual-card {
         width: 100%;
-        min-height: 340px;
+        min-height: 360px;
       }
     }
   </style>
@@ -638,12 +637,12 @@
             <span id="legendX"><i style="background:var(--x-color)"></i>藍線：x-t（位置/位移）</span>
             <span id="legendV"><i style="background:var(--v-color)"></i>紅線：v-t（速度）</span>
           </div>
-          <svg id="combinedSvg" viewBox="0 0 640 300"></svg>
+          <svg id="combinedSvg" viewBox="0 0 640 340"></svg>
         </div>
 
         <div class="visual-card">
           <div class="phase-badge blue" id="phaseBadge">準備就緒</div>
-          <svg id="visualSvg" viewBox="0 0 290 280"></svg>
+          <svg id="visualSvg" viewBox="0 0 290 340"></svg>
         </div>
       </div>
 
@@ -866,7 +865,7 @@
           const a = p.g * Math.sin(rad);
           const tMax = Math.sqrt(2 * p.L / a);
           const vMax = a * tMax;
-          const xTop = 30, yTop = 40, rampLen = 200;
+          const xTop = 30, yTop = 50, rampLen = 230; // 配合340px高度將斜面長度升級
           const xBot = xTop + rampLen * Math.cos(rad);
           const yBot = yTop + rampLen * Math.sin(rad);
           res = { tMax, xMax: p.L, vMax, a, _ramp: { xTop, yTop, rad, rampLen, xBot, yBot } };
@@ -917,8 +916,8 @@
 
       function drawGraph(phys) {
         combinedSvg.innerHTML = '';
-        const W = 640, H = 300;
-        const margin = { top: 20, right: 50, bottom: 35, left: 50 };
+        const W = 640, H = 340; // 將圖表高度同步升級至 340px
+        const margin = { top: 25, right: 50, bottom: 40, left: 50 };
         const pW = W - margin.left - margin.right;
         const pH = H - margin.top - margin.bottom;
 
@@ -936,21 +935,22 @@
           addLine(margin.left, gy, margin.left + pW, gy, 'grid-line');
         }
 
-        const addText = (x, y, txt, anchor, color, cls = 'axis-label') => {
+        const addText = (x, y, txt, anchor, color, cls = 'axis-label', fontSize) => {
           const t = createSvgEl('text', { x, y, 'text-anchor': anchor, class: cls });
           if (color) t.setAttribute('fill', color);
+          if (fontSize) t.setAttribute('font-size', fontSize);
           t.textContent = txt;
           combinedSvg.appendChild(t);
         };
 
-        if (currentMode !== 'area') addText(margin.left - 10, margin.top - 5, '位置 x (m)', 'start', 'var(--x-color)');
-        addText(margin.left + pW + 10, margin.top - 5, '速度 v (m/s)', 'end', 'var(--v-color)');
-        addText(margin.left + pW / 2, H - 5, '運動時間 t (s)', 'middle', 'var(--chalk-dim)');
+        if (currentMode !== 'area') addText(margin.left - 10, margin.top - 8, '位置 x (m)', 'start', 'var(--x-color)');
+        addText(margin.left + pW + 10, margin.top - 8, '速度 v (m/s)', 'end', 'var(--v-color)');
+        addText(margin.left + pW / 2, H - 10, '運動時間 t (s)', 'middle', 'var(--chalk-dim)');
 
         const getX = t => margin.left + (t / phys.tMax) * pW;
-        const getY_x = x => margin.top + pH - (x / (phys.xMax * 1.1 || 1)) * pH;
+        const getY_x = x => margin.top + pH - (x / (phys.xMax * 1.05 || 1)) * pH;
         const getY_v = v => {
-          const maxV = phys.vMax * 1.1 || 1;
+          const maxV = phys.vMax * 1.05 || 1;
           if (currentMode === 'special' && phys.sub !== 'brake') {
             return margin.top + pH / 2 - (v / maxV) * (pH / 2);
           }
@@ -972,8 +972,16 @@
             points: `${margin.left},${p1_v} ${xEnd},${p1_v} ${xEnd},${p2_v}`,
             class: 'fill-tri'
           }));
-          addText(margin.left + pW / 2, (p0_v + p1_v) / 2 + 4, `矩形位移 = ${phys.areaRect.toFixed(1)} m`, 'middle', 'var(--x-color)');
-          addText(margin.left + pW / 2, (p1_v + p2_v) / 2 + 4, `三角形位移 = ${phys.areaTri.toFixed(1)} m`, 'middle', 'var(--chalk-yellow)');
+          
+          // (2) 公式解的面積：將 v0t 和 1/2at2 大字標明放在圖形中心區！
+          if (params.area.v0 > 0) {
+            addText(margin.left + pW / 2, (p0_v + p1_v) / 2 - 4, 'v₀ t', 'middle', '#8fd0ff', 'axis-label', '16px');
+            addText(margin.left + pW / 2, (p0_v + p1_v) / 2 + 12, `(矩形位移 = ${phys.areaRect.toFixed(1)} m)`, 'middle', 'var(--x-color)', 'axis-label', '11px');
+          }
+          if (params.area.a > 0) {
+            addText(margin.left + pW / 2, (p1_v + p2_v) / 2 - 4, '½ a t²', 'middle', '#ffe680', 'axis-label', '16px');
+            addText(margin.left + pW / 2, (p1_v + p2_v) / 2 + 12, `(三角形位移 = ${phys.areaTri.toFixed(1)} m)`, 'middle', 'var(--chalk-yellow)', 'axis-label', '11px');
+          }
         }
 
         let ptsX = [], ptsV = [];
@@ -1031,53 +1039,53 @@
         const m = currentMode;
 
         if (m === 'ticker') {
-          visualSvg.appendChild(createSvgEl('rect', { x: 10, y: 110, width: 270, height: 40, fill: '#382c1e', rx: 4 }));
-          visualSvg.appendChild(createSvgEl('rect', { x: 15, y: 95, width: 30, height: 30, fill: '#8f8a80', rx: 3 }));
-          visualSvg.appendChild(createSvgEl('circle', { cx: 35, cy: 110, r: 3, fill: '#ef6a5a' }));
+          visualSvg.appendChild(createSvgEl('rect', { x: 10, y: 130, width: 270, height: 40, fill: '#382c1e', rx: 4 }));
+          visualSvg.appendChild(createSvgEl('rect', { x: 15, y: 115, width: 30, height: 30, fill: '#8f8a80', rx: 3 }));
+          visualSvg.appendChild(createSvgEl('circle', { cx: 35, cy: 130, r: 3, fill: '#ef6a5a' }));
 
-          const labelL = createSvgEl('text', { x: 30, y: 85, 'font-size': 9, fill: 'var(--v-color)', 'text-anchor': 'middle', 'font-weight': 'bold' });
+          const labelL = createSvgEl('text', { x: 30, y: 105, 'font-size': 9, fill: 'var(--v-color)', 'text-anchor': 'middle', 'font-weight': 'bold' });
           labelL.textContent = '⬅️最後一筆(最新)';
           visualSvg.appendChild(labelL);
 
-          const labelR = createSvgEl('text', { x: 230, y: 85, 'font-size': 9, fill: 'var(--chalk-yellow)', 'text-anchor': 'middle', 'font-weight': 'bold' });
+          const labelR = createSvgEl('text', { x: 230, y: 105, 'font-size': 9, fill: 'var(--chalk-yellow)', 'text-anchor': 'middle', 'font-weight': 'bold' });
           labelR.textContent = '第一筆(舊點,t=0)➡️';
           visualSvg.appendChild(labelR);
 
           visualSvg.appendChild(createSvgEl('g', { id: 'tapeGroup' }));
 
           const car = createSvgEl('g', { id: 'simObject' });
-          car.appendChild(createSvgEl('rect', { x: -20, y: 95, width: 36, height: 20, fill: '#5fb0ff', rx: 3 }));
-          car.appendChild(createSvgEl('circle', { cx: -12, cy: 115, r: 5, fill: '#000' }));
-          car.appendChild(createSvgEl('circle', { cx: 8, cy: 115, r: 5, fill: '#000' }));
-          car.appendChild(createSvgEl('polygon', { points: '16,100 24,105 16,110', fill: '#f2d675' }));
+          car.appendChild(createSvgEl('rect', { x: -20, y: 115, width: 36, height: 20, fill: '#5fb0ff', rx: 3 }));
+          car.appendChild(createSvgEl('circle', { cx: -12, cy: 135, r: 5, fill: '#000' }));
+          car.appendChild(createSvgEl('circle', { cx: 8, cy: 135, r: 5, fill: '#000' }));
+          car.appendChild(createSvgEl('polygon', { points: '16,120 24,125 16,130', fill: '#f2d675' }));
           visualSvg.appendChild(car);
 
-          visualSvg.appendChild(createSvgEl('rect', { x: 10, y: 170, width: 270, height: 95, fill: 'rgba(0,0,0,0.4)', stroke: 'rgba(242,236,217,0.2)', rx: 6 }));
-          const zoomTitle = createSvgEl('text', { x: 20, y: 188, 'font-size': 11, fill: 'var(--chalk-yellow)', 'font-weight': 'bold' });
+          visualSvg.appendChild(createSvgEl('rect', { x: 10, y: 200, width: 270, height: 115, fill: 'rgba(0,0,0,0.4)', stroke: 'rgba(242,236,217,0.2)', rx: 6 }));
+          const zoomTitle = createSvgEl('text', { x: 20, y: 222, 'font-size': 11, fill: 'var(--chalk-yellow)', 'font-weight': 'bold' });
           zoomTitle.textContent = '🔍 【考卷紙帶放大特寫】(靜態展開檢視)：';
           visualSvg.appendChild(zoomTitle);
 
-          visualSvg.appendChild(createSvgEl('rect', { x: 20, y: 205, width: 250, height: 24, fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1.5, rx: 2 }));
-          const zL = createSvgEl('text', { x: 20, y: 245, 'font-size': 9, fill: 'var(--chalk-dim)' });
+          visualSvg.appendChild(createSvgEl('rect', { x: 20, y: 240, width: 250, height: 28, fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1.5, rx: 2 }));
+          const zL = createSvgEl('text', { x: 20, y: 285, 'font-size': 9, fill: 'var(--chalk-dim)' });
           zL.textContent = '計時器端(最新)';
           visualSvg.appendChild(zL);
 
-          const zR = createSvgEl('text', { x: 270, y: 245, 'font-size': 9, fill: 'var(--chalk-yellow)', 'text-anchor': 'end', 'font-weight': 'bold' });
+          const zR = createSvgEl('text', { x: 270, y: 285, 'font-size': 9, fill: 'var(--chalk-yellow)', 'text-anchor': 'end', 'font-weight': 'bold' });
           zR.textContent = '拉車端(第一點,t=0) ➔';
           visualSvg.appendChild(zR);
 
           phys.dots.forEach((d, idx) => {
             const dotX = 250 - (d.x / phys.xMax) * 220;
             if (dotX >= 25 && dotX <= 265) {
-              visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 217, r: 4, fill: '#111111' }));
-              visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 217, r: 1.5, fill: '#ffffff' }));
+              visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 4.5, fill: '#111111' }));
+              visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 1.5, fill: '#ffffff' }));
               if (idx === 0) {
-                visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 217, r: 7, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.5 }));
+                visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 8, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.8 }));
               }
             }
           });
 
-          const zInfo = createSvgEl('text', { x: 145, y: 260, 'font-size': 10, fill: 'var(--x-color)', 'text-anchor': 'middle' });
+          const zInfo = createSvgEl('text', { x: 145, y: 305, 'font-size': 10, fill: 'var(--x-color)', 'text-anchor': 'middle' });
           zInfo.textContent = phys.quiz === 1 ? '👉 往左看點距越來越大 ➔ 加速運動' : (phys.quiz === 2 ? '👉 往左看點距越來越小 ➔ 減速運動' : (phys.quiz === 3 ? '👉 全程點距均勻相等 ➔ 等速運動' : '👉 點距先變大後變小 ➔ 先加後減'));
           visualSvg.appendChild(zInfo);
 
@@ -1113,7 +1121,7 @@
             visualSvg.appendChild(t);
           }
 
-          const caption = createSvgEl('text', { x: 145, y: 14, 'font-size': 10, fill: 'var(--chalk-dim)', 'text-anchor': 'middle' });
+          const caption = createSvgEl('text', { x: 145, y: 20, 'font-size': 11, fill: 'var(--chalk-dim)', 'text-anchor': 'middle' });
           caption.textContent = '每格為等時間間隔，位移比 = 1:3:5:7:9';
           visualSvg.appendChild(caption);
 
@@ -1123,19 +1131,19 @@
           visualSvg.appendChild(ball);
 
         } else if (m === 'area' || (m === 'special' && phys.sub === 'brake')) {
-          visualSvg.appendChild(createSvgEl('rect', { x: 10, y: 130, width: 270, height: 40, fill: '#382c1e', rx: 4 }));
-          visualSvg.appendChild(createSvgEl('line', { x1: 10, y1: 150, x2: 280, y2: 150, stroke: '#f2ecd9', 'stroke-dasharray': '10 10' }));
+          visualSvg.appendChild(createSvgEl('rect', { x: 10, y: 150, width: 270, height: 40, fill: '#382c1e', rx: 4 }));
+          visualSvg.appendChild(createSvgEl('line', { x1: 10, y1: 170, x2: 280, y2: 170, stroke: '#f2ecd9', 'stroke-dasharray': '10 10' }));
 
           const car = createSvgEl('g', { id: 'simObject' });
-          car.appendChild(createSvgEl('rect', { x: -20, y: 132, width: 40, height: 22, fill: '#4cd964', rx: 4 }));
-          car.appendChild(createSvgEl('circle', { cx: -10, cy: 154, r: 5, fill: '#000' }));
-          car.appendChild(createSvgEl('circle', { cx: 10, cy: 154, r: 5, fill: '#000' }));
-          car.appendChild(createSvgEl('polygon', { points: '20,138 28,143 20,148', fill: '#f2d675' }));
+          car.appendChild(createSvgEl('rect', { x: -20, y: 152, width: 40, height: 22, fill: '#4cd964', rx: 4 }));
+          car.appendChild(createSvgEl('circle', { cx: -10, cy: 174, r: 5, fill: '#000' }));
+          car.appendChild(createSvgEl('circle', { cx: 10, cy: 174, r: 5, fill: '#000' }));
+          car.appendChild(createSvgEl('polygon', { points: '20,158 28,163 20,168', fill: '#f2d675' }));
           visualSvg.appendChild(car);
 
         } else if (m === 'freefall') {
-          visualSvg.appendChild(createSvgEl('rect', { x: 75, y: 20, width: 140, height: 230, fill: 'rgba(255,255,255,0.03)', stroke: 'var(--x-color)', 'stroke-width': 2, rx: 10 }));
-          visualSvg.appendChild(createSvgEl('rect', { x: 70, y: 250, width: 150, height: 10, fill: '#5c4a33', rx: 3 }));
+          visualSvg.appendChild(createSvgEl('rect', { x: 75, y: 25, width: 140, height: 270, fill: 'rgba(255,255,255,0.03)', stroke: 'var(--x-color)', 'stroke-width': 2, rx: 10 }));
+          visualSvg.appendChild(createSvgEl('rect', { x: 70, y: 295, width: 150, height: 12, fill: '#5c4a33', rx: 3 }));
 
           const obj = createSvgEl('g', { id: 'simObject' });
 
@@ -1154,12 +1162,13 @@
           visualSvg.appendChild(obj);
 
         } else if (m === 'special') {
-          visualSvg.appendChild(createSvgEl('line', { x1: 145, y1: 20, x2: 145, y2: 250, stroke: 'var(--chalk-dim)', 'stroke-dasharray': '2 4' }));
-          visualSvg.appendChild(createSvgEl('rect', { x: 115, y: 250, width: 60, height: 10, fill: '#5c4a33' }));
+          // (3) 垂直高度與座標完美對齊！設定上方與底部的界限值
+          visualSvg.appendChild(createSvgEl('line', { x1: 145, y1: 25, x2: 145, y2: 300, stroke: 'var(--chalk-dim)', 'stroke-dasharray': '2 4' }));
+          visualSvg.appendChild(createSvgEl('rect', { x: 115, y: 300, width: 60, height: 12, fill: '#5c4a33', rx: 2 }));
 
           const obj = createSvgEl('g', { id: 'simObject' });
           if (phys.sub === 'throw') {
-            obj.appendChild(createSvgEl('circle', { cx: 145, cy: 0, r: 12, fill: '#f2d675', stroke: '#ef6a5a', 'stroke-width': 2 }));
+            obj.appendChild(createSvgEl('circle', { cx: 145, cy: 0, r: 13, fill: '#f2d675', stroke: '#ef6a5a', 'stroke-width': 2.5 }));
           } else {
             const rocketG = createSvgEl('g', { transform: 'translate(145, 0)' });
             rocketG.appendChild(createSvgEl('polygon', { id: 'flame', points: '-6,16 0,34 6,16 0,22', fill: '#f2d675', stroke: '#ef6a5a', 'stroke-width': 1.5, style: 'display:none;' }));
@@ -1202,7 +1211,7 @@
           if (dotX && dotV && guide) {
             dotX.setAttribute('cx', cx); dotX.setAttribute('cy', cy_x);
             dotV.setAttribute('cx', cx); dotV.setAttribute('cy', cy_v);
-            guide.setAttribute('x1', cx); guide.setAttribute('y1', 20); guide.setAttribute('x2', cx); guide.setAttribute('y2', 265);
+            guide.setAttribute('x1', cx); guide.setAttribute('y1', 20); guide.setAttribute('x2', cx); guide.setAttribute('y2', 315);
           }
         }
 
@@ -1216,19 +1225,23 @@
             const tapeGroup = document.getElementById('tapeGroup');
             if (tapeGroup) {
               tapeGroup.innerHTML = '';
-              tapeGroup.appendChild(createSvgEl('rect', {
-                x: 35, y: 102, width: Math.max(0, px - 35), height: 16,
-                fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1
-              }));
+              // (1) 車子停下來，紙帶也跟著一起停：以車尾 absolute x (px - 25) 裁切紙帶！
+              const tapeEnd = Math.max(0, px - 25);
+              if (tapeEnd > 0) {
+                tapeGroup.appendChild(createSvgEl('rect', {
+                  x: 35, y: 122, width: tapeEnd, height: 16,
+                  fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1
+                }));
+              }
 
               phys.dots.forEach((d, idx) => {
                 if (d.t <= t) {
                   const dotPx = 35 + ((x - d.x) / phys.xMax) * 190;
-                  if (dotPx >= 35 && dotPx <= px) {
-                    tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 110, r: 4, fill: '#111111' }));
-                    tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 110, r: 1.5, fill: '#ffffff' }));
+                  if (dotPx >= 35 && dotPx <= px - 5) {
+                    tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 4, fill: '#111111' }));
+                    tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 1.5, fill: '#ffffff' }));
                     if (idx === 0) {
-                      tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 110, r: 7, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.5 }));
+                      tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 7.5, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.5 }));
                     }
                   }
                 }
@@ -1245,15 +1258,16 @@
             const px = 30 + ratio * 200;
             simObj.setAttribute('transform', `translate(${px}, 0)`);
           } else if (m === 'freefall') {
-            const py = 35 + ratio * 200;
+            const py = 40 + ratio * 240;
             const iron = document.getElementById('ironBall'), feather = document.getElementById('feather');
             if (iron && feather) {
               iron.setAttribute('transform', `translate(110, ${py})`);
-              const fy = 35 + (phys.air ? (ratio * 0.6) : ratio) * 200;
+              const fy = 40 + (phys.air ? (ratio * 0.6) : ratio) * 240;
               feather.setAttribute('transform', `translate(180, ${fy}) rotate(${phys.air ? Math.sin(t * 10) * 15 : 0})`);
             }
           } else if (m === 'special') {
-            const py = 250 - ratio * 210;
+            // (3) 使火箭和上拋的上下移動長度，精準對照 340px 視窗的座標變化
+            const py = 300 - ratio * 270;
             simObj.setAttribute('transform', `translate(0, ${py})`);
             const flame = document.getElementById('flame');
             if (flame) flame.style.display = (phys.sub === 'rocket' && t <= phys.t1) ? 'block' : 'none';
