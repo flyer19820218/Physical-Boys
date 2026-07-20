@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國中自然 等加速度運動｜物理考題與黑板模擬器 (3:1黃金比例版)</title>
+  <title>國中自然 等加速度運動｜物理考題與黑板模擬器 </title>
   
   <!-- 引入 MathJax 解決數學公式渲染問題，確保 LaTeX 絕不亂碼 -->
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -98,10 +98,14 @@
     .progress-track { flex: 1; height: 6px; background: rgba(242, 236, 217, 0.15); border-radius: 3px; position: relative; overflow: hidden; }
     .progress-fill { position: absolute; left: 0; top: 0; height: 100%; background: var(--chalk-yellow); border-radius: 3px; width: 0%; }
 
-    /* 【修改點】：正式改為 3:1 黃金視覺比例，徹底消除左右高度不均的落差！ */
+    /* 【修改點】：預設第二分頁動態與運動學圖形比例改為 2:1 */
     .dual-view { display: flex; gap: 16px; margin: 12px 0 8px; align-items: stretch; }
-    .graph-card { flex: 3; min-width: 0; background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; }
+    .graph-card { flex: 2; min-width: 0; background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; }
     .visual-card { flex: 1; min-width: 220px; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; }
+
+    /* 【修改點】：當在第三分頁（表格推導等加速）時，透過加上 class 將比例切換為 1:1 */
+    .dual-view.mode-table-deriv .graph-card { flex: 1; }
+    .dual-view.mode-table-deriv .visual-card { flex: 1; }
 
     .legend { display: flex; gap: 14px; margin-bottom: 8px; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: var(--chalk-dim); flex-wrap: wrap; }
     .legend span { display: flex; align-items: center; gap: 5px; }
@@ -165,15 +169,20 @@
     .def-card ul { margin: 0; padding-left: 20px; font-size: 0.88rem; line-height: 1.6; color: var(--chalk); }
     .def-card ul li span { color: var(--chalk-yellow); font-weight: bold; }
 
+    /* 【修改點】：第一分頁（打點計時器）考題模組：將原本的均分改成左邊 2 份、右邊 1 份的 2:1 比例 */
     .tape-quiz-box { background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(242, 236, 217, 0.2); border-radius: 8px; padding: 12px; margin-top: 10px; }
     .tape-quiz-title { font-size: 0.85rem; color: var(--chalk-yellow); font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .tape-btn-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .tape-btn-group { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
     .tape-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--chalk-dim); color: var(--chalk); padding: 8px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; text-align: left; transition: all .15s; }
     .tape-btn:hover, .tape-btn.active { background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow); font-weight: bold; }
 
     footer { text-align: center; color: var(--chalk-dim); font-size: 0.8rem; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; }
 
-    @media (max-width: 768px) { .dual-view { flex-direction: column; } .visual-card { width: 100%; min-height: 340px; } }
+    @media (max-width: 768px) { 
+      .dual-view, .dual-view.mode-table-deriv { flex-direction: column; } 
+      .visual-card { width: 100%; min-height: 340px; } 
+      .tape-btn-group { grid-template-columns: 1fr; } 
+    }
   </style>
 </head>
 <body>
@@ -225,8 +234,8 @@
     </div>
 
     <div class="board">
-      <h2>② 物理動態與運動學圖形聯動 (3:1視覺比例)</h2>
-      <div class="dual-view">
+      <h2>② 物理動態與運動學圖形聯動 </h2>
+      <div class="dual-view" id="dualViewContainer">
         <div class="graph-card">
           <div class="legend" id="graphLegend">
             <span id="legendX"><i style="background:var(--x-color)"></i>藍線：x-t（位置/位移）</span>
@@ -263,7 +272,7 @@
       <div class="explain-box" id="explainBox"></div>
     </div>
 
-    <footer>國中理化 1-4 等加速度運動 · 視覺化互動教學教材 · 讓自然科學變得直觀又有趣！</footer>
+    <footer>國中理化 * 等加速度運動 · 視覺化互動教學教材 · 讓自然科學變得直觀又有趣！</footer>
   </div>
 
   <script>
@@ -282,6 +291,7 @@
       const legendX = document.getElementById('legendX');
       const derivationTableContainer = document.getElementById('derivationTableContainer');
       const derivTable = document.getElementById('derivTable');
+      const dualViewContainer = document.getElementById('dualViewContainer');
 
       let currentMode = 'ticker';
       let animId = null;
@@ -315,7 +325,9 @@
       }
 
       function initUI() {
+        /* 【修改點】：如果是第三分頁，將 dual-view 容器加上 mode-table-deriv 類別，呈現 1:1 比例；若是其他分頁則移除類別，維持 2:1 比例 */
         if (currentMode === 'table_deriv') {
+          dualViewContainer.classList.add('mode-table-deriv');
           visualSvg.style.display = 'none';
           phaseBadge.style.display = 'none';
           playbarContainer.style.display = 'none';
@@ -331,6 +343,7 @@
             };
           }
         } else {
+          dualViewContainer.classList.remove('mode-table-deriv');
           visualSvg.style.display = 'block';
           phaseBadge.style.display = 'block';
           playbarContainer.style.display = 'flex';
