@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國中自然 等加速度運動｜物理考題與黑板模擬器 (3:1大螢幕版)</title>
+  <title>國中自然 等加速度運動｜物理考題與黑板模擬器 (4:1極致比例版)</title>
+  
+  <!-- 引入 MathJax 解決數學公式渲染問題，確保 LaTeX 絕不亂碼 -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -29,7 +34,7 @@
       padding: 20px 14px 60px;
     }
 
-    .wrap { max-width: 1300px; margin: 0 auto; }
+    .wrap { max-width: 1400px; margin: 0 auto; }
 
     header { text-align: center; margin-bottom: 24px; }
     header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.2em; color: var(--chalk-dim); text-transform: uppercase; }
@@ -93,9 +98,10 @@
     .progress-track { flex: 1; height: 6px; background: rgba(242, 236, 217, 0.15); border-radius: 3px; position: relative; overflow: hidden; }
     .progress-fill { position: absolute; left: 0; top: 0; height: 100%; background: var(--chalk-yellow); border-radius: 3px; width: 0%; }
 
+    /* 【修改點 1】：將比例正式改為 4:1 (左側數據 4，右側動畫 1) */
     .dual-view { display: flex; gap: 16px; margin: 12px 0 8px; align-items: stretch; }
-    .graph-card { flex: 3; min-width: 0; background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; }
-    .visual-card { flex: 2; min-width: 0; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; }
+    .graph-card { flex: 4; min-width: 0; background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; }
+    .visual-card { flex: 1; min-width: 220px; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; }
 
     .legend { display: flex; gap: 14px; margin-bottom: 8px; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: var(--chalk-dim); flex-wrap: wrap; }
     .legend span { display: flex; align-items: center; gap: 5px; }
@@ -219,7 +225,7 @@
     </div>
 
     <div class="board">
-      <h2>② 物理動態與運動學圖形聯動</h2>
+      <h2>② 物理動態與運動學圖形聯動 (4:1視覺比例)</h2>
       <div class="dual-view">
         <div class="graph-card">
           <div class="legend" id="graphLegend">
@@ -520,8 +526,8 @@
           const positions = [0, 0.2, 0.8, 1.8, 3.2, 5.0];
           const displacements = [0.2, 0.6, 1.0, 1.4, 1.8]; 
           const avgVelocities = [0.2, 0.6, 1.0, 1.4, 1.8]; 
-          const midTimes = [0.5, 1.5, 2.5, 3.5, 4.5];      
-          const accelerations = [0.4, 0.4, 0.4, 0.4];      
+          const midTimes = [0.5, 1.5, 2.5, 3.5, 4.5];     
+          const accelerations = [0.4, 0.4, 0.4, 0.4];     
           
           res = {
             tMax: 5, xMax: 5.0, vMax: 2.0, 
@@ -576,12 +582,17 @@
         }
         
         updateStatsAndExplain(phys);
+        
+        // 呼叫 MathJax 重新渲染，確保動態產生的數學公式正確呈現
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          window.MathJax.typesetPromise([explainBox]);
+        }
       }
 
       function drawGraph(phys) {
         combinedSvg.innerHTML = '';
         const W = 680, H = 340;
-        const margin = { top: 25, right: 50, bottom: 40, left: 50 };
+        const margin = { top: 30, right: 50, bottom: 30, left: 50 };
         const pW = W - margin.left - margin.right;
         const pH = H - margin.top - margin.bottom;
 
@@ -603,15 +614,11 @@
 
         const getX = t => margin.left + (t / phys.tMax) * pW;
         
-        // 【修復：讓 x-t 圖形的最大高度精準對應物理上的 xMax（最高點），使曲線頂點與右側動畫 100% 同步】
+        /* 【修改點 2】：完美讓 x-t 圖與右側火箭、上拋軌道等長對準
+           使左圖 x-t 曲線最高點和右邊動畫的升空最高點，在視覺高度 Y 上完全一致 (從 30px 到 310px) */
         const getY_x = x_val => {
-          let peakX = phys.xMax;
-          if (currentMode === 'special' && phys.sub === 'rocket') {
-             peakX = phys.xMax; // 火箭最高點
-          } else if (currentMode === 'special' && phys.sub === 'throw') {
-             peakX = phys.xMax; // 上拋最高點
-          }
-          return margin.top + pH - (x_val / (peakX || 1)) * pH;
+          let peakX = phys.xMax || 1;
+          return margin.top + pH - (x_val / peakX) * pH;
         };
 
         const getY_v = v_val => {
@@ -631,7 +638,7 @@
            addTextToSvg(combinedSvg, margin.left - 10, margin.top - 8, '位置 x', 'start', 'var(--x-color)', 10);
         }
         addTextToSvg(combinedSvg, margin.left + pW + 10, margin.top - 8, '速度 v', 'end', 'var(--v-color)', 10);
-        addTextToSvg(combinedSvg, margin.left + pW / 2, H - 10, '運動時間 t (s)', 'middle', 'var(--chalk-dim)', 10);
+        addTextToSvg(combinedSvg, margin.left + pW / 2, H - 8, '運動時間 t (s)', 'middle', 'var(--chalk-dim)', 10);
 
         if (currentMode === 'special' && phys.sub === 'rocket') {
           const zeroY = margin.top + pH / 2;
@@ -884,8 +891,9 @@
           visualSvg.appendChild(obj);
 
         } else if (m === 'special') {
-          visualSvg.appendChild(createSvgEl('line', { x1: 110, y1: 25, x2: 110, y2: 300, stroke: 'var(--chalk-dim)', 'stroke-dasharray': '2 4' }));
-          visualSvg.appendChild(createSvgEl('rect', { x: 80, y: 300, width: 60, height: 12, fill: '#5c4a33', rx: 2 }));
+          /* 【修改點 2】：讓垂直參考虛線剛好從頂部 30px 到地表 310px，與左圖 Y 軸範圍完全相符 */
+          visualSvg.appendChild(createSvgEl('line', { x1: 110, y1: 30, x2: 110, y2: 310, stroke: 'var(--chalk-dim)', 'stroke-dasharray': '2 4' }));
+          visualSvg.appendChild(createSvgEl('rect', { x: 80, y: 310, width: 60, height: 12, fill: '#5c4a33', rx: 2 }));
           const obj = createSvgEl('g', { id: 'simObject' });
           if (phys.sub === 'throw') {
             obj.appendChild(createSvgEl('circle', { cx: 110, cy: 0, r: 13, fill: '#f2d675', stroke: '#ef6a5a', 'stroke-width': 2.5 }));
@@ -974,8 +982,9 @@
               feather.setAttribute('transform', `translate(140, ${fy}) rotate(${phys.air ? Math.sin(t * 10) * 15 : 0})`);
             }
           } else if (m === 'special') {
-            // 【修復：讓右側動畫的垂直位移完全對應左側圖形的 Y 軸區間 (y 從 30 到 310)】
-            const py = 300 - ratio * 270;
+            /* 【修改點 2】：完美對齊垂直座標！從底線 310px 出發，到達頂點 30px (總位移 280px)
+               此行程完全等於左圖 x-t 曲線最高點和最低點的垂直距離！ */
+            const py = 310 - ratio * 280;
             simObj.setAttribute('transform', `translate(0, ${py})`);
             const flame = document.getElementById('flame');
             if (flame) flame.style.display = (phys.sub === 'rocket' && t <= phys.t1) ? 'block' : 'none';
@@ -1021,12 +1030,13 @@
           if(phys.step >= 1) addStat('位移差 ΔX', `+0.4 m`);
           if(phys.step >= 4) addStat('加速度 a', `0.4 m/s²`);
           
+          /* 【修改點 3】：優化了這裡的數學公式寫法與 MathJax 的相容性，徹底擺脫 \frac 亂碼 */
           let stepExplain = '';
           if (phys.step === 0) stepExplain = '這是一個物體運動的位置-時間紀錄表。請點擊 <b>Step 1</b>，我們一步步推導加速度。';
-          else if (phys.step === 1) stepExplain = '先算出每個時間區段的<b>位移</b> ($x_2 - x_1$)。你會發現每段位移都不一樣，但相鄰位移的「差值」是固定的！';
-          else if (phys.step === 2) stepExplain = '利用公式 $v = \\frac{\\Delta X}{\\Delta t}$，算出每段區間的<b>平均速度</b>。請看左側的 v-t 圖，此時速度會變成一段一段的「水平階梯」！';
+          else if (phys.step === 1) stepExplain = '先算出每個時間區段的<b>位移</b> (X₂ - X₁)。你會發現每段位移都不一樣，但相鄰位移的「差值」是固定的！';
+          else if (phys.step === 2) stepExplain = '利用公式 <span class="formula-highlight">v = ΔX / Δt</span>，算出每段區間的<b>平均速度</b>。請看左側的 v-t 圖，此時速度會變成一段一段的「水平階梯」！';
           else if (phys.step === 3) stepExplain = '這就是破題關鍵！這段平均速度，其實就等於這段時間<b>正中間那一瞬間的「瞬時速度」</b>。你看 v-t 圖上，階梯的正中央出現了代表瞬時速度的黃色點點，並且完美落在等加速的斜直線上！';
-          else if (phys.step === 4) stepExplain = '最後，利用公式 $a = \\frac{\\Delta v}{\\Delta t}$，把相鄰的中間時刻速度相減除以時間。你看！這條完美的斜直線，它的斜率就是我們要找的<b>加速度</b>！';
+          else if (phys.step === 4) stepExplain = '最後，利用公式 <span class="formula-highlight">a = Δv / Δt</span>（相鄰速度差 ÷ 時間），求出線段斜率。你看！這條完美的斜直線，它的斜率正是我們要找的<b>加速度 a = 0.4 m/s²</b>！';
 
           explainBox.innerHTML = `
             <h3>💡 觀念總結：為什麼表格可以求加速度？</h3>
