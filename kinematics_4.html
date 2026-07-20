@@ -158,7 +158,7 @@
     <header>
       <div class="eyebrow">Taiwan Middle School Science · Chapter 1-4 Kinematics</div>
       <h1>等加速度運動：水平考題與黑板模擬器</h1>
-      <p>專為國中會考量身打造！徹底破解「打點計時器點序方向」迷思、直觀演示伽利略斜面、精簡公式解與圖形切分面積，讓物理概念不再抽象！</p>
+      <p>專為國中會考量身打造！徹底破解「打點計時器點序方向」迷思、直觀演示等差數列、精簡公式解與圖形切分面積，讓物理概念不再抽象！</p>
     </header>
 
     <div class="board">
@@ -183,6 +183,10 @@
         <button data-mode="special">
           <span>🚀 5. 特殊與進階考題</span>
           <span class="sub">上拋、火箭與煞車問題</span>
+        </button>
+        <button data-mode="seq">
+          <span>📏 6. 打點等差數列</span>
+          <span class="sub">位移差求加速度</span>
         </button>
       </div>
 
@@ -251,7 +255,8 @@
         incline:  { angle: 30, g: 9.8, L: 5.0 },
         area:     { v0: 6, a: 4.0, t: 5.0 },
         freefall: { h: 80, g: 9.8, air: 0 },
-        special:  { sub: 'throw', v0: 25, g: 9.8, a_brake: 5.0 }
+        special:  { sub: 'throw', v0: 25, g: 9.8, a_brake: 5.0 },
+        seq:      { v0: 10, a: 100, dt: 0.1, intervals: 5 } // 等差數列參數
       };
 
       const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -262,6 +267,12 @@
           for (let key in attrs) el.setAttribute(key, attrs[key]);
         }
         return el;
+      }
+
+      function addTextToSvg(parent, x, y, txt, anchor, color, size, weight='normal') {
+          const t = createSvgEl('text', { x, y, 'text-anchor': anchor, fill: color, 'font-size': size, 'font-weight': weight });
+          t.textContent = txt;
+          parent.appendChild(t);
       }
 
       function initUI() {
@@ -365,6 +376,9 @@
             addSlider('v0', '行駛初速度 v₀', 10, 40, 2, p.v0, 'm/s', v => p.v0 = v);
             addSlider('a_brake', '煞車減速度 a', 2.0, 10.0, 0.5, p.a_brake, 'm/s²', v => p.a_brake = v);
           }
+        } else if (m === 'seq') {
+          addSlider('dt', '時間間隔 Δt', 0.05, 0.2, 0.05, p.dt, 's', v => p.dt = v);
+          addSlider('a', '加速度 a', 50, 200, 10, p.a, 'cm/s²', v => p.a = v);
         }
       }
 
@@ -395,6 +409,8 @@
           if (params.special.sub === 'throw') addBtn('初速 29.4 m/s (滯空6秒)', () => { params.special.v0 = 29.4; params.special.g = 9.8; });
           else if (params.special.sub === 'rocket') addBtn('標準火箭衝刺', () => { params.special.v0 = 100; params.special.g = 9.8; });
           else addBtn('國道安全煞車距離', () => { params.special.v0 = 30; params.special.a_brake = 6.0; });
+        } else if (m === 'seq') {
+          addBtn('講義範例 (a=100, dt=0.1)', () => { params.seq.a = 100; params.seq.dt = 0.1; });
         }
       }
 
@@ -450,17 +466,30 @@
             const hMax = (p.v0 * p.v0) / (2 * p.g);
             res = { tMax: tTop * 2, xMax: hMax, vMax: p.v0, tTop, sub: 'throw' };
           } else if (p.sub === 'rocket') {
-            const t1 = 2.0;
-            const x1 = 0.5 * p.v0 * t1;
-            const t2 = t1 + (p.v0 / p.g);
-            const hMax = x1 + (p.v0 * p.v0) / (2 * p.g);
+            const t1 = 2.0; // 引擎啟動時間
+            const vMax = p.v0; // 燃料耗盡時達到最大速度
+            const x1 = 0.5 * vMax * t1;
+            const t2 = t1 + (vMax / p.g); // 到達最高點時間
+            const hMax = x1 + (vMax * vMax) / (2 * p.g);
             const tFall = Math.sqrt(2 * hMax / p.g);
-            res = { tMax: t2 + tFall, xMax: hMax, vMax: Math.max(p.v0, p.g * tFall), t1, t2, sub: 'rocket' };
+            const tMax = t2 + tFall;
+            const vEnd = p.g * tFall; // 落地位末速
+            res = { tMax, xMax: hMax, vMax, vEnd, t1, t2, sub: 'rocket' };
           } else {
             const tMax = p.v0 / p.a_brake;
             const xMax = (p.v0 * p.v0) / (2 * p.a_brake);
             res = { tMax, xMax, vMax: p.v0, sub: 'brake' };
           }
+        } else if (m === 'seq') {
+          const tMax = p.intervals * p.dt;
+          const dots = [];
+          for (let i = 0; i <= p.intervals; i++) {
+            const t = i * p.dt;
+            const x = p.v0 * t + 0.5 * p.a * t * t;
+            const v = p.v0 + p.a * t;
+            dots.push({ t, x, v });
+          }
+          res = { tMax, xMax: dots[dots.length - 1].x, vMax: dots[dots.length - 1].v, dots, dt: p.dt, a: p.a, v0: p.v0 };
         }
         return res;
       }
@@ -497,37 +526,51 @@
           addLine(margin.left, gy, margin.left + pW, gy, 'grid-line');
         }
 
-        const addText = (x, y, txt, anchor, color, cls = 'axis-label', fontSize) => {
-          const t = createSvgEl('text', { x, y, 'text-anchor': anchor, class: cls });
-          if (color) t.setAttribute('fill', color);
-          if (fontSize) t.setAttribute('font-size', fontSize);
-          t.textContent = txt;
-          combinedSvg.appendChild(t);
-        };
-
-        if (currentMode !== 'area') addText(margin.left - 10, margin.top - 8, '位置 x (m)', 'start', 'var(--x-color)');
-        addText(margin.left + pW + 10, margin.top - 8, '速度 v (m/s)', 'end', 'var(--v-color)');
-        addText(margin.left + pW / 2, H - 10, '運動時間 t (s)', 'middle', 'var(--chalk-dim)');
-
         const getX = t => margin.left + (t / phys.tMax) * pW;
         
         const getY_x = x => {
           const maxScale = (currentMode === 'special' && phys.sub !== 'brake') ? 1.0 : 1.05;
           return margin.top + pH - (x / (phys.xMax * maxScale || 1)) * pH;
         };
-        const getY_v = v => {
-          const maxV = phys.vMax * 1.05 || 1;
-          if (currentMode === 'special' && phys.sub !== 'brake') {
-            return margin.top + pH / 2 - (v / maxV) * (pH / 2);
-          }
-          return margin.top + pH - (v / maxV) * pH;
-        };
 
-        if (currentMode === 'special' && phys.sub !== 'brake') {
-          addLine(margin.left, margin.top + pH / 2, margin.left + pW, margin.top + pH / 2, 'axis-line');
+        // 【修正火箭 v-t 圖與所有模式的 Y 軸投影比例】
+        let vRange = phys.vMax * 1.05 || 1;
+        let vMin = 0;
+        if (currentMode === 'special' && phys.sub === 'rocket') {
+          vRange = phys.vMax + phys.vEnd;
+          vMin = -phys.vEnd;
+        } else if (currentMode === 'special' && phys.sub === 'throw') {
+          vRange = phys.vMax * 2;
+          vMin = -phys.vMax;
         }
 
-        /* 【問題(2)修正：在圖形面積中清晰標示完整公式與各塊面積代表意思】 */
+        const getY_v = v => {
+          if ((currentMode === 'special' && phys.sub === 'rocket') || (currentMode === 'special' && phys.sub === 'throw')) {
+            return margin.top + pH - ((v - vMin) / vRange) * pH;
+          }
+          return margin.top + pH - (v / vRange) * pH;
+        };
+
+        if ((currentMode === 'special' && phys.sub === 'rocket') || (currentMode === 'special' && phys.sub === 'throw')) {
+          const zeroY = getY_v(0);
+          addLine(margin.left, zeroY, margin.left + pW, zeroY, 'axis-line');
+          addTextToSvg(combinedSvg, margin.left - 10, zeroY + 4, '0', 'end', 'var(--chalk-dim)', 10);
+        }
+
+        if (currentMode !== 'area') addTextToSvg(combinedSvg, margin.left - 10, margin.top - 8, '位置 x', 'start', 'var(--x-color)', 10);
+        addTextToSvg(combinedSvg, margin.left + pW + 10, margin.top - 8, '速度 v', 'end', 'var(--v-color)', 10);
+        addTextToSvg(combinedSvg, margin.left + pW / 2, H - 10, '運動時間 t (s)', 'middle', 'var(--chalk-dim)', 10);
+
+        // 【火箭 v-t 圖面積著色】
+        if (currentMode === 'special' && phys.sub === 'rocket') {
+          const zeroY = getY_v(0);
+          const x1 = getX(phys.t1), x2 = getX(phys.t2), xMax = getX(phys.tMax);
+          const yMax = getY_v(phys.vMax), yMin = getY_v(-phys.vEnd);
+          combinedSvg.appendChild(createSvgEl('polygon', { points: `${margin.left},${zeroY} ${x1},${yMax} ${x1},${zeroY}`, fill: 'rgba(95, 176, 255, 0.2)' }));
+          combinedSvg.appendChild(createSvgEl('polygon', { points: `${x1},${zeroY} ${x1},${yMax} ${x2},${zeroY}`, fill: 'rgba(242, 214, 117, 0.2)' }));
+          combinedSvg.appendChild(createSvgEl('polygon', { points: `${x2},${zeroY} ${xMax},${yMin} ${xMax},${zeroY}`, fill: 'rgba(239, 106, 90, 0.2)' }));
+        }
+
         if (currentMode === 'area') {
           const p0_v = getY_v(0), p1_v = getY_v(params.area.v0), p2_v = getY_v(phys.vMax);
           const xEnd = getX(phys.tMax);
@@ -541,22 +584,19 @@
           }));
 
           const midX = margin.left + pW / 2;
-          
           if (params.area.v0 > 0) {
             const rectMidY = (p0_v + p1_v) / 2;
-            addText(midX, rectMidY + 4, '矩形面積 = v₀t', 'middle', 'var(--x-color)', '', '13px');
+            addTextToSvg(combinedSvg, midX, rectMidY + 4, '矩形面積 = v₀t', 'middle', 'var(--x-color)', 13);
           }
-          
           if (params.area.a > 0) {
             const triMidY = (p1_v + p2_v) / 2 + 8;
-            addText(midX, triMidY, '三角形面積 = ½at²', 'middle', 'var(--chalk-yellow)', '', '13px');
+            addTextToSvg(combinedSvg, midX, triMidY, '三角形面積 = ½at²', 'middle', 'var(--chalk-yellow)', 13);
           }
-
-          addText(midX, margin.top + 18, '總位移 Δx = v₀t + ½at²', 'middle', 'var(--chalk)', '', '14px');
+          addTextToSvg(combinedSvg, midX, margin.top + 18, '總位移 Δx = v₀t + ½at²', 'middle', 'var(--chalk)', 14);
         }
 
         let ptsX = [], ptsV = [];
-        const steps = 50;
+        const steps = 60;
         for (let i = 0; i <= steps; i++) {
           const t = (i / steps) * phys.tMax;
           let x = 0, v = 0;
@@ -571,6 +611,7 @@
           } else if (currentMode === 'incline') { x = 0.5 * phys.a * t * t; v = phys.a * t; }
           else if (currentMode === 'area') { x = params.area.v0 * t + 0.5 * params.area.a * t * t; v = params.area.v0 + params.area.a * t; }
           else if (currentMode === 'freefall') { x = 0.5 * phys.g * t * t; v = phys.g * t; }
+          else if (currentMode === 'seq') { x = params.seq.v0 * t + 0.5 * params.seq.a * t * t; v = params.seq.v0 + params.seq.a * t; }
           else if (currentMode === 'special') {
             if (phys.sub === 'throw') { x = params.special.v0 * t - 0.5 * params.special.g * t * t; v = params.special.v0 - params.special.g * t; }
             else if (phys.sub === 'rocket') {
@@ -588,7 +629,7 @@
         }
         combinedSvg.appendChild(createSvgEl('polyline', { points: ptsV.join(' '), class: 'curve-v' }));
 
-        if (currentMode === 'ticker') {
+        if (currentMode === 'ticker' || currentMode === 'seq') {
           phys.dots.forEach(d => {
             combinedSvg.appendChild(createSvgEl('circle', {
               cx: getX(d.t), cy: getY_v(d.v), r: 4, fill: 'var(--chalk-yellow)'
@@ -613,17 +654,9 @@
           visualSvg.appendChild(createSvgEl('rect', { x: 5, y: 130, width: 210, height: 40, fill: '#382c1e', rx: 4 }));
           visualSvg.appendChild(createSvgEl('rect', { x: 10, y: 115, width: 26, height: 30, fill: '#8f8a80', rx: 3 }));
           visualSvg.appendChild(createSvgEl('circle', { cx: 23, cy: 130, r: 3, fill: '#ef6a5a' }));
-
-          const labelL = createSvgEl('text', { x: 23, y: 105, 'font-size': 9, fill: 'var(--v-color)', 'text-anchor': 'middle', 'font-weight': 'bold' });
-          labelL.textContent = '⬅️新點(最後)';
-          visualSvg.appendChild(labelL);
-
-          const labelR = createSvgEl('text', { x: 180, y: 105, 'font-size': 9, fill: 'var(--chalk-yellow)', 'text-anchor': 'middle', 'font-weight': 'bold' });
-          labelR.textContent = '舊點(第一點,t=0)➡️';
-          visualSvg.appendChild(labelR);
-
+          addTextToSvg(visualSvg, 23, 105, '⬅️新點(最後)', 'middle', 'var(--v-color)', 9, 'bold');
+          addTextToSvg(visualSvg, 180, 105, '舊點(第一點,t=0)➡️', 'middle', 'var(--chalk-yellow)', 9, 'bold');
           visualSvg.appendChild(createSvgEl('g', { id: 'tapeGroup' }));
-
           const car = createSvgEl('g', { id: 'simObject' });
           car.appendChild(createSvgEl('rect', { x: -16, y: 115, width: 32, height: 20, fill: '#5fb0ff', rx: 3 }));
           car.appendChild(createSvgEl('circle', { cx: -10, cy: 135, r: 4.5, fill: '#000' }));
@@ -632,33 +665,68 @@
           visualSvg.appendChild(car);
 
           visualSvg.appendChild(createSvgEl('rect', { x: 5, y: 200, width: 210, height: 115, fill: 'rgba(0,0,0,0.4)', stroke: 'rgba(242,236,217,0.2)', rx: 6 }));
-          const zoomTitle = createSvgEl('text', { x: 15, y: 222, 'font-size': 10, fill: 'var(--chalk-yellow)', 'font-weight': 'bold' });
-          zoomTitle.textContent = '🔍 【考卷紙帶放大特寫】：';
-          visualSvg.appendChild(zoomTitle);
-
+          addTextToSvg(visualSvg, 15, 222, '🔍 【考卷紙帶放大特寫】：', 'start', 'var(--chalk-yellow)', 10, 'bold');
           visualSvg.appendChild(createSvgEl('rect', { x: 15, y: 240, width: 190, height: 28, fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1.5, rx: 2 }));
-          const zL = createSvgEl('text', { x: 15, y: 285, 'font-size': 8.5, fill: 'var(--chalk-dim)' });
-          zL.textContent = '計時器端(最新)';
-          visualSvg.appendChild(zL);
-
-          const zR = createSvgEl('text', { x: 205, y: 285, 'font-size': 8.5, fill: 'var(--chalk-yellow)', 'text-anchor': 'end', 'font-weight': 'bold' });
-          zR.textContent = '拉車端(第一點,t=0) ➔';
-          visualSvg.appendChild(zR);
+          addTextToSvg(visualSvg, 15, 285, '計時器端(最新)', 'start', 'var(--chalk-dim)', 8.5);
+          addTextToSvg(visualSvg, 205, 285, '拉車端(第一點,t=0) ➔', 'end', 'var(--chalk-yellow)', 8.5, 'bold');
 
           phys.dots.forEach((d, idx) => {
             const dotX = 195 - (d.x / phys.xMax) * 170;
             if (dotX >= 18 && dotX <= 202) {
               visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 4, fill: '#111111' }));
               visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 1.5, fill: '#ffffff' }));
-              if (idx === 0) {
-                visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 7.5, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.8 }));
-              }
+              if (idx === 0) visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 7.5, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.8 }));
             }
           });
 
-          const zInfo = createSvgEl('text', { x: 110, y: 305, 'font-size': 9.5, fill: 'var(--x-color)', 'text-anchor': 'middle' });
-          zInfo.textContent = phys.quiz === 1 ? '👉 往左看點距越來越大 ➔ 加速運動' : (phys.quiz === 2 ? '👉 往左看點距越來越小 ➔ 減速運動' : (phys.quiz === 3 ? '👉 全程點距均勻相等 ➔ 等速運動' : '👉 點距先變大後變小 ➔ 先加後減'));
-          visualSvg.appendChild(zInfo);
+          const hint = phys.quiz === 1 ? '👉 往左看點距越來越大 ➔ 加速運動' : (phys.quiz === 2 ? '👉 往左看點距越來越小 ➔ 減速運動' : (phys.quiz === 3 ? '👉 全程點距均勻相等 ➔ 等速運動' : '👉 點距先變大後變小 ➔ 先加後減'));
+          addTextToSvg(visualSvg, 110, 305, hint, 'middle', 'var(--x-color)', 9.5);
+
+        } else if (m === 'seq') {
+          // 【等差數列專屬視覺圖】
+          visualSvg.appendChild(createSvgEl('line', { x1: 20, y1: 80, x2: 200, y2: 80, stroke: 'var(--chalk-dim)', 'stroke-width': 1.5 }));
+          
+          const yDot = 80;
+          const pW_vis = 160;
+          
+          // 畫點與時間
+          phys.dots.forEach((d) => {
+            const cx = 20 + (d.x / phys.xMax) * pW_vis;
+            visualSvg.appendChild(createSvgEl('circle', { cx, cy: yDot, r: 4.5, fill: 'var(--chalk-yellow)' }));
+            addTextToSvg(visualSvg, cx, yDot - 12, `${(d.t).toFixed(1)}s`, 'middle', 'var(--chalk-dim)', 9);
+          });
+
+          // 畫第一層位移 (ΔX)
+          phys.dots.slice(1).forEach((d, i) => {
+            const prev = phys.dots[i];
+            const cx1 = 20 + (prev.x / phys.xMax) * pW_vis;
+            const cx2 = 20 + (d.x / phys.xMax) * pW_vis;
+            const midX = (cx1 + cx2) / 2;
+            visualSvg.appendChild(createSvgEl('line', { x1: cx1, y1: yDot+15, x2: cx2, y2: yDot+15, stroke: 'var(--x-color)'}));
+            visualSvg.appendChild(createSvgEl('line', { x1: cx1, y1: yDot+10, x2: cx1, y2: yDot+20, stroke: 'var(--x-color)'}));
+            visualSvg.appendChild(createSvgEl('line', { x1: cx2, y1: yDot+10, x2: cx2, y2: yDot+20, stroke: 'var(--x-color)'}));
+            const dx = d.x - prev.x;
+            addTextToSvg(visualSvg, midX, yDot + 30, `${dx.toFixed(1)}`, 'middle', 'var(--x-color)', 9, 'bold');
+          });
+
+          // 畫第二層位移差 Δ(ΔX)
+          const diffs = [];
+          for(let i=1; i<phys.dots.length; i++) diffs.push(phys.dots[i].x - phys.dots[i-1].x);
+          
+          for(let i=1; i<diffs.length; i++) {
+            const cx1 = 20 + ((phys.dots[i-1].x + phys.dots[i].x)/2 / phys.xMax) * pW_vis;
+            const cx2 = 20 + ((phys.dots[i].x + phys.dots[i+1].x)/2 / phys.xMax) * pW_vis;
+            const midX = (cx1 + cx2) / 2;
+            visualSvg.appendChild(createSvgEl('line', { x1: cx1, y1: yDot+48, x2: cx2, y2: yDot+48, stroke: 'var(--v-color)', 'stroke-dasharray': '2 2'}));
+            const ddx = diffs[i] - diffs[i-1];
+            addTextToSvg(visualSvg, midX, yDot + 62, `Δ=${ddx.toFixed(1)}`, 'middle', 'var(--v-color)', 10, 'bold');
+          }
+
+          addTextToSvg(visualSvg, 110, 160, '單位：cm', 'middle', 'var(--chalk-dim)', 9);
+
+          const simObj = createSvgEl('g', { id: 'simObject' });
+          simObj.appendChild(createSvgEl('circle', { cx: 0, cy: yDot, r: 7, fill: 'var(--x-color)', stroke: '#fff', 'stroke-width': 1.5 }));
+          visualSvg.appendChild(simObj);
 
         } else if (m === 'incline') {
           const r = phys._ramp;
@@ -676,10 +744,7 @@
           markerFracs.forEach((frac, idx) => {
             const dist = frac * r.rampLen;
             const tx = r.xTop + dist * Math.cos(r.rad), ty = r.yTop + dist * Math.sin(r.rad);
-            visualSvg.appendChild(createSvgEl('circle', {
-              cx: tx, cy: ty, r: (idx === 0 || idx === markerFracs.length - 1) ? 4 : 3,
-              fill: idx === 0 ? 'var(--v-color)' : 'var(--chalk-yellow)'
-            }));
+            visualSvg.appendChild(createSvgEl('circle', { cx: tx, cy: ty, r: (idx === 0 || idx === markerFracs.length - 1) ? 4 : 3, fill: idx === 0 ? 'var(--v-color)' : 'var(--chalk-yellow)' }));
           });
 
           for (let i = 0; i < segRatios.length; i++) {
@@ -687,14 +752,10 @@
             const midDist = (dist1 + dist2) / 2;
             const mx = r.xTop + midDist * Math.cos(r.rad), my = r.yTop + midDist * Math.sin(r.rad);
             const lx = mx + 12 * Math.sin(r.rad), ly = my - 12 * Math.cos(r.rad);
-            const t = createSvgEl('text', { x: lx, y: ly, 'font-size': 10, fill: 'var(--chalk-yellow)', 'text-anchor': 'middle', 'font-weight': 'bold' });
-            t.textContent = segRatios[i];
-            visualSvg.appendChild(t);
+            addTextToSvg(visualSvg, lx, ly, segRatios[i], 'middle', 'var(--chalk-yellow)', 10, 'bold');
           }
 
-          const caption = createSvgEl('text', { x: 110, y: 20, 'font-size': 10.5, fill: 'var(--chalk-dim)', 'text-anchor': 'middle' });
-          caption.textContent = '等時間間隔，位移差比 = 1:3:5:7:9';
-          visualSvg.appendChild(caption);
+          addTextToSvg(visualSvg, 110, 20, '等時間間隔，位移差比 = 1:3:5:7:9', 'middle', 'var(--chalk-dim)', 10.5);
 
           const ball = createSvgEl('g', { id: 'simObject' });
           ball.appendChild(createSvgEl('circle', { cx: 0, cy: 0, r: 11, fill: '#ef6a5a', stroke: '#f2ecd9', 'stroke-width': 1.5 }));
@@ -704,7 +765,6 @@
         } else if (m === 'area' || (m === 'special' && phys.sub === 'brake')) {
           visualSvg.appendChild(createSvgEl('rect', { x: 5, y: 150, width: 210, height: 40, fill: '#382c1e', rx: 4 }));
           visualSvg.appendChild(createSvgEl('line', { x1: 5, y1: 170, x2: 215, y2: 170, stroke: '#f2ecd9', 'stroke-dasharray': '8 8' }));
-
           const car = createSvgEl('g', { id: 'simObject' });
           car.appendChild(createSvgEl('rect', { x: -18, y: 152, width: 36, height: 22, fill: '#4cd964', rx: 4 }));
           car.appendChild(createSvgEl('circle', { cx: -9, cy: 174, r: 4.5, fill: '#000' }));
@@ -715,27 +775,20 @@
         } else if (m === 'freefall') {
           visualSvg.appendChild(createSvgEl('rect', { x: 45, y: 25, width: 130, height: 275, fill: 'rgba(255,255,255,0.03)', stroke: 'var(--x-color)', 'stroke-width': 2, rx: 10 }));
           visualSvg.appendChild(createSvgEl('rect', { x: 40, y: 300, width: 140, height: 12, fill: '#5c4a33', rx: 3 }));
-
           const obj = createSvgEl('g', { id: 'simObject' });
-
           const iron = createSvgEl('g', { id: 'ironBall', transform: 'translate(80, 0)' });
           iron.appendChild(createSvgEl('circle', { cx: 0, cy: 0, r: 13, fill: '#8f8a80', stroke: '#fff', 'stroke-width': 1 }));
-          const ironTxt = createSvgEl('text', { x: 0, y: 4, 'font-size': 9.5, fill: '#fff', 'text-anchor': 'middle', 'font-weight': 'bold' });
-          ironTxt.textContent = '鐵';
-          iron.appendChild(ironTxt);
+          addTextToSvg(iron, 0, 4, '鐵', 'middle', '#fff', 9.5, 'bold');
           obj.appendChild(iron);
-
           const feather = createSvgEl('g', { id: 'feather', transform: 'translate(140, 0)' });
           feather.appendChild(createSvgEl('path', { d: 'M0,-11 C9,-5 9,5 0,11 C-9,5 -9,-5 0,-11 Z', fill: '#f2d675', opacity: 0.9 }));
           feather.appendChild(createSvgEl('line', { x1: 0, y1: -13, x2: 0, y2: 15, stroke: '#fff', 'stroke-width': 1.5 }));
           obj.appendChild(feather);
-
           visualSvg.appendChild(obj);
 
         } else if (m === 'special') {
           visualSvg.appendChild(createSvgEl('line', { x1: 110, y1: 25, x2: 110, y2: 300, stroke: 'var(--chalk-dim)', 'stroke-dasharray': '2 4' }));
           visualSvg.appendChild(createSvgEl('rect', { x: 80, y: 300, width: 60, height: 12, fill: '#5c4a33', rx: 2 }));
-
           const obj = createSvgEl('g', { id: 'simObject' });
           if (phys.sub === 'throw') {
             obj.appendChild(createSvgEl('circle', { cx: 110, cy: 0, r: 13, fill: '#f2d675', stroke: '#ef6a5a', 'stroke-width': 2.5 }));
@@ -766,6 +819,7 @@
         } else if (m === 'incline') { x = 0.5 * phys.a * t * t; v = phys.a * t; }
         else if (m === 'area') { x = params.area.v0 * t + 0.5 * params.area.a * t * t; v = params.area.v0 + params.area.a * t; }
         else if (m === 'freefall') { x = 0.5 * phys.g * t * t; v = phys.g * t; }
+        else if (m === 'seq') { x = params.seq.v0 * t + 0.5 * params.seq.a * t * t; v = params.seq.v0 + params.seq.a * t; }
         else if (m === 'special') {
           if (phys.sub === 'throw') { x = params.special.v0 * t - 0.5 * params.special.g * t * t; v = params.special.v0 - params.special.g * t; }
           else if (phys.sub === 'rocket') {
@@ -791,32 +845,27 @@
           if (m === 'ticker') {
             const px = 35 + ratio * 160;
             simObj.setAttribute('transform', `translate(${px}, 0)`);
-
             const tapeGroup = document.getElementById('tapeGroup');
             if (tapeGroup) {
               tapeGroup.innerHTML = '';
-              /* 【問題(1)修正：紙帶與打點完全綁定到車尾 (px - 18)，保證車子停了紙帶與點同時停，絕不超車】 */
               const tapeEnd = px - 18;
               if (tapeEnd > 23) {
-                tapeGroup.appendChild(createSvgEl('rect', {
-                  x: 23, y: 122, width: tapeEnd - 23, height: 16,
-                  fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1
-                }));
+                tapeGroup.appendChild(createSvgEl('rect', { x: 23, y: 122, width: tapeEnd - 23, height: 16, fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1 }));
               }
-
               phys.dots.forEach((d, idx) => {
                 if (d.t <= t) {
                   const dotPx = 23 + ((x - d.x) / phys.xMax) * 160;
                   if (dotPx >= 23 && dotPx <= tapeEnd) {
                     tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 3.5, fill: '#111111' }));
                     tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 1.2, fill: '#ffffff' }));
-                    if (idx === 0) {
-                      tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 6.5, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.5 }));
-                    }
+                    if (idx === 0) tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 6.5, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.5 }));
                   }
                 }
               });
             }
+          } else if (m === 'seq') {
+            const px = 20 + ratio * 160;
+            simObj.setAttribute('transform', `translate(${px}, 0)`);
           } else if (m === 'incline' && phys._ramp) {
             const r = phys._ramp;
             const dist = ratio * r.rampLen;
@@ -848,9 +897,9 @@
             phaseBadge.className = v > 0 ? 'phase-badge yellow' : 'phase-badge red';
             phaseBadge.textContent = v > 0 ? '🟡 上升減速中 (v > 0)' : '🔴 下降加速中 (v < 0)';
           } else if (phys.sub === 'rocket') {
-            if (t <= phys.t1) { phaseBadge.className = 'phase-badge blue'; phaseBadge.textContent = '🔵 點火衝刺上升'; }
-            else if (t <= phys.t2) { phaseBadge.className = 'phase-badge yellow'; phaseBadge.textContent = '🟡 引擎熄火，慣性減速上升'; }
-            else { phaseBadge.className = 'phase-badge red'; phaseBadge.textContent = '🔴 自由落體下墜'; }
+            if (t <= phys.t1) { phaseBadge.className = 'phase-badge blue'; phaseBadge.textContent = '🔵 點火衝刺上升 (正面積)'; }
+            else if (t <= phys.t2) { phaseBadge.className = 'phase-badge yellow'; phaseBadge.textContent = '🟡 慣性減速上升 (正面積)'; }
+            else { phaseBadge.className = 'phase-badge red'; phaseBadge.textContent = '🔴 自由下墜 (負面積)'; }
           } else {
             phaseBadge.className = v > 0 ? 'phase-badge yellow' : 'phase-badge green';
             phaseBadge.textContent = v > 0 ? '🟡 煞車減速中...' : '🟢 完全靜止';
@@ -873,7 +922,7 @@
           addStat('打點頻率 f', `${params.ticker.f} Hz`);
           addStat('時間差 Δt', `${phys.dt.toFixed(3)} s`);
           addStat('紙帶總點數', `${phys.dots.length} 點`);
-          addStat('運動狀態', phys.quiz === 1 ? '越來越快 (等加速)' : (phys.quiz === 2 ? '越來越慢 (等減速)' : (phys.quiz === 3 ? '快等速運動' : '先加速後減速')));
+          addStat('運動狀態', phys.quiz === 1 ? '越來越快' : (phys.quiz === 2 ? '越來越慢' : (phys.quiz === 3 ? '等速' : '先加後減')));
 
           explainBox.innerHTML = `
             <h3>💡 老師精闢解析：打點計時器判斷「三大黃金法則」</h3>
@@ -881,46 +930,36 @@
                2. <b>判斷加減速看間隔</b>：從<b>第一點（最右邊）往後打的點（最左邊）</b>看過去，點跟點的距離若<b>「越來越大」就是等加速運動</b>；若<b>「越來越小」就是等減速運動</b>！<br>
                3. <b>相鄰點距比例</b>：由靜止開始的等加速運動，在相同時間差 <span class="math-sym">Δt</span> 下，相鄰位移比恆為 <span class="formula-highlight">1 : 3 : 5 : 7 : 9</span>！</p>
           `;
+        } else if (m === 'seq') {
+          addStat('時間間隔 Δt', `${params.seq.dt.toFixed(2)} s`);
+          addStat('設定加速度 a', `${params.seq.a} cm/s²`);
+          addStat('末速 v', `${phys.vMax.toFixed(0)} cm/s`);
+          addStat('總位移 ΔX', `${phys.xMax.toFixed(1)} cm`);
+          
+          explainBox.innerHTML = `
+            <h3>💡 觀念總結：打點計時器與等差數列求加速度</h3>
+            <p>根據講義，當物體作等加速度運動時，相同時間間隔（<span class="math-sym">Δt</span>）內的位移（<span class="math-sym">ΔX</span>）會形成<b>等差數列</b>！<br>
+            這個位移的「差的差」（<span class="math-sym">Δ(ΔX)</span>）必定是一個常數。我們可以利用公式 <span class="formula-highlight">a = Δ(ΔX) / (Δt)²</span> 快速求出真正的加速度。以上方設定為例：位移差恆定不變，代表這是一個標準的等加速度運動！</p>
+          `;
         } else if (m === 'incline') {
-          addStat('斜面角度 θ', `${params.incline.angle}°`);
-          addStat('下滑加速度 a', `${phys.a.toFixed(2)} m/s²`);
-          addStat('下滑總時間', `${phys.tMax.toFixed(2)} s`);
-          addStat('底端速度', `${phys.vMax.toFixed(2)} m/s`);
+          addStat('斜面角度 θ', `${params.incline.angle}°`); addStat('下滑加速度 a', `${phys.a.toFixed(2)} m/s²`); addStat('下滑總時間', `${phys.tMax.toFixed(2)} s`); addStat('底端速度', `${phys.vMax.toFixed(2)} m/s`);
           explainBox.innerHTML = `<h3>💡 觀念總結：伽利略「稀釋重力」實驗</h3><p>古代沒有精確計時器，伽利略利用斜面將重力加速度「稀釋」為 <span class="formula-highlight">a = g × sinθ</span>。當傾斜角度 <span class="math-sym">θ = 90°</span> 時，<span class="math-sym">sin 90° = 1</span>，加速度就完全等於重力加速度 <span class="math-sym">g</span>，轉化為自由落體！斜面上標示的 5 個等時間標記點，證明了把總時間平分成 5 段後，各段滾進距離會呈現 <span class="formula-highlight">1 : 3 : 5 : 7 : 9</span> 的等差比例！</p>`;
         } else if (m === 'area') {
-          addStat('矩形位移 (v₀t)', `${phys.areaRect.toFixed(1)} m`);
-          addStat('三角形位移 (½at²)', `${phys.areaTri.toFixed(1)} m`);
-          addStat('總位移 Δx', `${phys.xMax.toFixed(1)} m`);
-          addStat('末速度 v', `${phys.vMax.toFixed(1)} m/s`);
+          addStat('矩形位移', `${phys.areaRect.toFixed(1)} m`); addStat('三角形位移', `${phys.areaTri.toFixed(1)} m`); addStat('總位移 Δx', `${phys.xMax.toFixed(1)} m`); addStat('末速度 v', `${phys.vMax.toFixed(1)} m/s`);
           explainBox.innerHTML = `<h3>💡 觀念總結：v-t 圖形切分面積 = 絕對位移！</h3><p>忘掉冗長的代數推導！在 v-t 圖中，位移 <span class="math-sym">Δx</span> 就是曲線下的幾何面積。當物體有初速 <span class="math-sym">v₀</span> 時，梯形面積可完美切分為：底部的<b>矩形面積（等速前進 <span class="math-sym">v₀t</span>）</b> 加上頂部的<b>三角形面積（加速增量 <span class="math-sym">½at²</span>）</b>，相加就是黃金公式 <span class="formula-highlight">Δx = v₀t + ½at²</span>！</p>`;
         } else if (m === 'freefall') {
-          addStat('釋放高度 H', `${params.freefall.h} m`);
-          addStat('重力加速度 g', `${phys.g} m/s²`);
-          addStat('落地時間 t', `${phys.tMax.toFixed(2)} s`);
-          addStat('落地瞬速', `${phys.vMax.toFixed(2)} m/s`);
-
-          extraDefBox.innerHTML = `
-            <div class="def-card">
-              <h4>🪨 必考！【自由落體】嚴格物理四大定義：</h4>
-              <ul>
-                <li>① <b>初速度必須為零</b>：<span class="math-sym">v₀ = 0</span>（由靜止直接放開，絕非用力丟下）。</li>
-                <li>② <b>僅受重力作用</b>：在真空或空氣阻力完全可忽略的環境中進行。</li>
-                <li>③ <b>等加速度運動</b>：加速度恆定為重力加速度 <span class="math-sym">g</span>（地表約為 <span>9.8 m/s²</span>，方向永遠垂直向球心/正下方）。</li>
-                <li>④ <b>與質量完全無關</b>：無論重的鐵球還是輕的羽毛，下落加速度、速率變化及落地時間<span>皆完全相同</span>！</li>
-              </ul>
-            </div>
-          `;
+          addStat('釋放高度 H', `${params.freefall.h} m`); addStat('重力加速度 g', `${phys.g} m/s²`); addStat('落地時間 t', `${phys.tMax.toFixed(2)} s`); addStat('落地瞬速', `${phys.vMax.toFixed(2)} m/s`);
           explainBox.innerHTML = `<h3>💡 觀念總結：公式簡化與大氣阻力</h3><p>因為初速度 <span class="math-sym">v₀ = 0</span>，原本的運動公式大幅簡化為 <span class="formula-highlight">H = ½gt²</span> 以及 <span class="formula-highlight">v = gt = √(2gH)</span>。若在日常大氣層中有空氣阻力，輕薄面積大的「羽毛」會因為阻力抵消重力而落得慢；但只要抽真空，鐵球與羽毛必定同時落地！</p>`;
         } else if (m === 'special') {
           if (phys.sub === 'throw') {
             addStat('最高點高度', `${phys.xMax.toFixed(1)} m`); addStat('滯空總時間', `${phys.tMax.toFixed(2)} s`); addStat('登頂時間', `${phys.tTop.toFixed(2)} s`); addStat('回原點速度', `${phys.vMax.toFixed(1)} m/s`);
             explainBox.innerHTML = `<h3>💡 觀念總結：鉛直上拋的「極致對稱性」</h3><p>到達最高點瞬間，速度雖為 <span class="formula-highlight">v = 0</span>，但重力加速度 <span class="math-sym">g</span> 依舊向下作用（加速度絕不為零）！全體歷程具有對稱之美：<b>上升時間 = 下降時間</b>，且落回拋出點的速度大小恆等於初速度！</p>`;
           } else if (phys.sub === 'rocket') {
-            addStat('最高點高度', `${phys.xMax.toFixed(0)} m`); addStat('燃盡最高速 v₁', `${params.special.v0} m/s`); addStat('登頂時間 t₂', `${phys.t2.toFixed(1)} s`); addStat('墜地速度', `${phys.vMax.toFixed(0)} m/s`);
-            explainBox.innerHTML = `<h3>💡 觀念總結：火箭多階段破題秘技</h3><p>必考陷阱：<b>「燃料用盡瞬間，火箭不是在最高點！」</b> 燃料用盡時速度達到正向最大；隨後火箭因慣性繼續向上作等減速上升（階段二），直到速度減為 0 才到達真正最高點；之後才反向作自由落體下墜（階段三）。</p>`;
+            addStat('最高點高度', `${phys.xMax.toFixed(0)} m`); addStat('燃盡最高速 v₁', `${params.special.v0} m/s`); addStat('登頂時間 t₂', `${phys.t2.toFixed(1)} s`); addStat('墜地速度', `${phys.vEnd.toFixed(0)} m/s`);
+            explainBox.innerHTML = `<h3>💡 觀念總結：火箭多階段破題秘技</h3><p>必考陷阱：<b>「燃料用盡瞬間，火箭不是在最高點！」</b> 燃料用盡時速度達到正向最大；隨後火箭因慣性繼續向上作等減速上升（階段二），直到速度減為 0 才到達真正最高點；之後才反向作自由落體下墜（階段三）。圖形上，跨過 X 軸（速度由正轉負）的那一瞬間，就是最高點！</p>`;
           } else {
             addStat('行駛初速 v₀', `${params.special.v0} m/s`); addStat('煞車減速度 a', `-${params.special.a_brake} m/s²`); addStat('停止時間', `${phys.tMax.toFixed(2)} s`); addStat('煞車距離', `${phys.xMax.toFixed(1)} m`);
-            explainBox.innerHTML = `<h3>💡 觀念總結：緊急煞車與車距平方定律</h3><p>緊急煞車時加速度方向與車速相反。由 <span class="formula-highlight">v² = v₀² + 2aΔx</span> 可推知，當車速提高為 2 倍時，在相同的煞車減速度下，所需的煞車距離將激增為平方倍數—也就是 <b>4 倍 distance</b>！這也是高速公路超速極危險的物理核心。</p>`;
+            explainBox.innerHTML = `<h3>💡 觀念總結：緊急煞車與車距平方定律</h3><p>緊急煞車時加速度方向與車速相反。由 <span class="formula-highlight">v² = v₀² + 2aΔx</span> 可推知，當車速提高為 2 倍時，在相同的煞車減速度下，所需的煞車距離將激增為平方倍數—也就是 <b>4 倍 distance</b>！</p>`;
           }
         }
       }
