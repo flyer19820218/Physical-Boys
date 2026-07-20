@@ -191,7 +191,7 @@
           <span>📐 2. 伽利略斜面運動</span>
           <span class="sub">1:3:5:7:9 距離比驗證</span>
         </button>
-        <!-- 修改標題：更有 Fu 的破題法 -->
+        <!-- 老師要求的超有Fu標題 -->
         <button data-mode="table_deriv">
           <span>📝 3. 等差數列破解等加速</span>
           <span class="sub">表格推導與中間時刻</span>
@@ -483,10 +483,20 @@
           const totalTime = 1.4;
           const dots = [];
           
-          let lastValidX = 0;
-          let stopped = false;
-          
+          // 精準計算煞停時間 (如果減速且會煞停)，避免車子倒車造成紙帶異常
+          let stopTime = Infinity;
+          let stopX = 0;
+          if (p.quiz === 4) {
+             stopTime = 0.7 + (3.5 / 4.0); // t=0.7 時 v=3.5, 減速 a=4.0
+             stopX = 1.225 + 3.5 * (3.5/4.0) - 0.5 * 4.0 * (3.5/4.0)*(3.5/4.0);
+          } else if (p.a < 0) {
+             stopTime = -p.v0 / p.a;
+             stopX = p.v0 * stopTime + 0.5 * p.a * stopTime * stopTime;
+          }
+
           for (let t = 0; t <= totalTime; t += dt) {
+            if (t > stopTime) continue; // 車子停了就不再打出新點
+            
             let x = 0, v = 0;
             if (p.quiz === 4) {
               if (t <= 0.7) { x = 0.5 * 5.0 * t * t; v = 5.0 * t; }
@@ -499,22 +509,14 @@
               x = p.v0 * t + 0.5 * p.a * t * t;
               v = p.v0 + p.a * t;
             }
-            
-            // 【修復打點同步邏輯】當速度減到 0 以下時，強制煞車不倒退
-            if (v < 0) { 
-                v = 0; 
-                if (!stopped) { lastValidX = Math.max(0, x); stopped = true; }
-                x = lastValidX;
-            }
-            
-            // 只要車子停了 (v=0)，就不再打新點
-            if (!stopped || v > 0) {
-                dots.push({ t, x: Math.max(0, x), v });
-            }
+            dots.push({ t, x: Math.max(0, x), v: Math.max(0, v) });
           }
           
-          const xMax = dots.length > 0 ? dots[dots.length - 1].x || 1 : 1;
-          res = { tMax: totalTime, xMax, vMax: Math.max(...dots.map(d => d.v)), dots, dt, quiz: p.quiz };
+          let xMax = stopTime <= totalTime ? stopX : (dots.length > 0 ? dots[dots.length - 1].x : 1);
+          xMax = Math.max(xMax, 0.1); 
+          const maxV = Math.max(...dots.map(d => d.v));
+          res = { tMax: totalTime, xMax, vMax: maxV !== -Infinity ? Math.max(maxV, 0.1) : 0.1, dots, dt, quiz: p.quiz, stopTime, stopX };
+          
         } else if (m === 'incline') {
           const rad = p.angle * Math.PI / 180;
           const a = p.g * Math.sin(rad);
@@ -677,11 +679,11 @@
             addTextToSvg(combinedSvg, margin.left-10, getY_v(v)+4, v, 'end', 'var(--v-color)', 10);
           });
 
-          // 無論 Step 幾，等加速度的斜直線始終存在 (這是一切的核心)
+          // 無論 Step 幾，等加速度的斜直線始終存在
           const pts = phys.times.map(t => `${getX(t)},${getY_v(0.4 * t)}`).join(' ');
           combinedSvg.appendChild(createSvgEl('polyline', { points: pts, class: 'curve-v', style: 'stroke-width: 2.5; opacity: 0.7;' }));
 
-          // Step 2 & 3: 畫出各時間區段的平均速度 (水平階梯線)
+          // Step 2 & 3: 畫出各時間區段的平均速度
           if (phys.step >= 2) {
              phys.avgVelocities.forEach((v, i) => {
                 const x1 = getX(phys.times[i]);
@@ -693,17 +695,15 @@
                    x: x1, y: y, width: (x2-x1), height: (margin.top+pH - y),
                    fill: 'rgba(95, 176, 255, 0.05)', stroke: 'rgba(95, 176, 255, 0.3)', 'stroke-dasharray': '2 4'
                 }));
-                // 水平代表平均速度
                 addLine(x1, y, x2, y, '', {'stroke': 'var(--x-color)', 'stroke-width': 3});
              });
           }
 
-          // Step 3: 中間時刻抓取點 (證明階梯的中點就在紅線上！)
+          // Step 3: 中間時刻抓取點
           if (phys.step >= 3) {
              phys.midTimes.forEach((mt, i) => {
                 const y = getY_v(phys.avgVelocities[i]);
                 const cx = getX(mt);
-                // 中間時刻虛線向下
                 addLine(cx, y, cx, margin.top+pH, '', {'stroke': 'var(--chalk-yellow)', 'stroke-dasharray': '4 4', 'stroke-width': 1.5});
                 combinedSvg.appendChild(createSvgEl('circle', { cx: cx, cy: y, r: 6, fill: 'var(--chalk-yellow)', stroke: '#000', 'stroke-width': 1.5 }));
              });
@@ -735,14 +735,18 @@
           const t = (i / steps) * phys.tMax;
           let x = 0, v = 0;
           if (currentMode === 'ticker') {
-            if (params.ticker.quiz === 4) {
-              if (t <= 0.7) { x = 0.5 * 5.0 * t * t; v = 5.0 * t; }
-              else { const dt2 = t - 0.7; x = 1.225 + 3.5 * dt2 - 0.5 * 4.0 * dt2 * dt2; v = 3.5 - 4.0 * dt2; }
-            } else {
-              x = params.ticker.v0 * t + 0.5 * params.ticker.a * t * t;
-              v = params.ticker.v0 + params.ticker.a * t;
-            }
-            if (v < 0) v = 0; // 反映在圖形上也停止往下畫
+             if (t >= phys.stopTime) {
+                 x = phys.stopX;
+                 v = 0;
+             } else {
+                 if (params.ticker.quiz === 4) {
+                    if (t <= 0.7) { x = 0.5 * 5.0 * t * t; v = 5.0 * t; }
+                    else { const dt2 = t - 0.7; x = 1.225 + 3.5 * dt2 - 0.5 * 4.0 * dt2 * dt2; v = 3.5 - 4.0 * dt2; }
+                 } else {
+                    x = params.ticker.v0 * t + 0.5 * params.ticker.a * t * t;
+                    v = params.ticker.v0 + params.ticker.a * t;
+                 }
+             }
           } else if (currentMode === 'incline') { x = 0.5 * phys.a * t * t; v = phys.a * t; }
           else if (currentMode === 'area') { x = params.area.v0 * t + 0.5 * params.area.a * t * t; v = params.area.v0 + params.area.a * t; }
           else if (currentMode === 'freefall') { x = 0.5 * phys.g * t * t; v = phys.g * t; }
@@ -830,12 +834,14 @@
         const m = currentMode;
 
         if (m === 'ticker') {
-          visualSvg.appendChild(createSvgEl('rect', { x: 5, y: 130, width: 210, height: 40, fill: '#382c1e', rx: 4 }));
-          visualSvg.appendChild(createSvgEl('rect', { x: 10, y: 115, width: 26, height: 30, fill: '#8f8a80', rx: 3 }));
-          visualSvg.appendChild(createSvgEl('circle', { cx: 23, cy: 130, r: 3, fill: '#ef6a5a' }));
-          addTextToSvg(visualSvg, 23, 105, '⬅️新點(最後)', 'middle', 'var(--v-color)', 9, 'bold');
+          // 固定在 x=20 的打點計時器
+          visualSvg.appendChild(createSvgEl('rect', { x: 5, y: 115, width: 26, height: 30, fill: '#8f8a80', rx: 3 }));
+          visualSvg.appendChild(createSvgEl('circle', { cx: 20, cy: 130, r: 3, fill: '#ef6a5a' }));
+          addTextToSvg(visualSvg, 20, 105, '⬅️新點(最後)', 'middle', 'var(--v-color)', 9, 'bold');
           addTextToSvg(visualSvg, 180, 105, '舊點(第一點,t=0)➡️', 'middle', 'var(--chalk-yellow)', 9, 'bold');
+          
           visualSvg.appendChild(createSvgEl('g', { id: 'tapeGroup' }));
+          
           const car = createSvgEl('g', { id: 'simObject' });
           car.appendChild(createSvgEl('rect', { x: -16, y: 115, width: 32, height: 20, fill: '#5fb0ff', rx: 3 }));
           car.appendChild(createSvgEl('circle', { cx: -10, cy: 135, r: 4.5, fill: '#000' }));
@@ -937,22 +943,18 @@
 
         let x = 0, v = 0;
         if (m === 'ticker') {
-          let stopped = false;
-          let dt_sim = 1 / params.ticker.f;
-          let current_t = 0;
-          let last_x = 0;
-          // 重算到目前的時間點 t
-          while(current_t <= t) {
-              if (params.ticker.quiz === 4) {
-                if (current_t <= 0.7) { x = 0.5 * 5.0 * current_t * current_t; v = 5.0 * current_t; }
-                else { const dt2 = current_t - 0.7; x = 1.225 + 3.5 * dt2 - 0.5 * 4.0 * dt2 * dt2; v = 3.5 - 4.0 * dt2; }
-              } else {
-                x = params.ticker.v0 * current_t + 0.5 * params.ticker.a * current_t * current_t;
-                v = params.ticker.v0 + params.ticker.a * current_t;
-              }
-              if (v < 0) { v = 0; if(!stopped) { last_x = x; stopped = true; } x = last_x; }
-              current_t += 0.016; // fine steps for animation
-          }
+           if (t >= phys.stopTime) {
+               x = phys.stopX;
+               v = 0;
+           } else {
+               if (params.ticker.quiz === 4) {
+                  if (t <= 0.7) { x = 0.5 * 5.0 * t * t; v = 5.0 * t; }
+                  else { const dt2 = t - 0.7; x = 1.225 + 3.5 * dt2 - 0.5 * 4.0 * dt2 * dt2; v = 3.5 - 4.0 * dt2; }
+               } else {
+                  x = params.ticker.v0 * t + 0.5 * params.ticker.a * t * t;
+                  v = params.ticker.v0 + params.ticker.a * t;
+               }
+           }
         } else if (m === 'incline') { x = 0.5 * phys.a * t * t; v = phys.a * t; }
         else if (m === 'area') { x = params.area.v0 * t + 0.5 * params.area.a * t * t; v = params.area.v0 + params.area.a * t; }
         else if (m === 'freefall') { x = 0.5 * phys.g * t * t; v = phys.g * t; }
@@ -979,20 +981,21 @@
         if (simObj) {
           const ratio = Math.min(1, Math.max(0, x / (phys.xMax || 1)));
           if (m === 'ticker') {
-            const px = 35 + ratio * 160;
+            // 【修復幾何同步連動】讓點與紙帶絕對咬合車尾
+            const px = 40 + ratio * 150;
             simObj.setAttribute('transform', `translate(${px}, 0)`);
             const tapeGroup = document.getElementById('tapeGroup');
             if (tapeGroup) {
               tapeGroup.innerHTML = '';
-              const tapeEnd = px - 18;
-              if (tapeEnd > 23) {
-                tapeGroup.appendChild(createSvgEl('rect', { x: 23, y: 122, width: tapeEnd - 23, height: 16, fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1 }));
+              const tapeEnd = px - 16;
+              if (tapeEnd > 20) {
+                tapeGroup.appendChild(createSvgEl('rect', { x: 20, y: 122, width: tapeEnd - 20, height: 16, fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1 }));
               }
-              // 繪製在時間 t 以前打下的點 (車子停了就不會生出新的點，且固定在紙帶絕對位置上)
               phys.dots.forEach((d, idx) => {
                 if (d.t <= t) {
-                  const dotPx = 23 + ((x - d.x) / phys.xMax) * 160;
-                  if (dotPx >= 23 && dotPx <= tapeEnd) {
+                  // 點永遠固定在相對車尾的絕對距離上
+                  const dotPx = 20 + ((x - d.x) / phys.xMax) * 150;
+                  if (dotPx >= 20 && dotPx <= tapeEnd + 4) {
                     tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 3.5, fill: '#111111' }));
                     tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 1.2, fill: '#ffffff' }));
                     if (idx === 0) tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 6.5, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.5 }));
@@ -1039,9 +1042,9 @@
             phaseBadge.textContent = v > 0 ? '🟡 煞車減速中...' : '🟢 完全靜止';
           }
         } else {
-          if (m === 'ticker' && v === 0 && t > 0) {
+          if (m === 'ticker' && t >= phys.stopTime) {
               phaseBadge.className = 'phase-badge green';
-              phaseBadge.textContent = `🟢 車子已靜止：t = ${t.toFixed(2)} s`;
+              phaseBadge.textContent = `🟢 車輛已靜止：t = ${t.toFixed(2)} s`;
           } else {
               phaseBadge.className = 'phase-badge blue';
               phaseBadge.textContent = `⏱️ 實驗進行中：t = ${t.toFixed(2)} s`;
@@ -1103,7 +1106,7 @@
         if (!animStartTime) animStartTime = ts;
         const elapsed = ts - animStartTime;
         const phys = currentPhys;
-        const frac = Math.min(1, elapsed / ANIM_DURATION);
+        const frac = Math.min(1, Math.max(0, elapsed / ANIM_DURATION));
         const curTime = frac * phys.tMax;
 
         progressFill.style.width = `${frac * 100}%`;
@@ -1114,6 +1117,7 @@
         } else {
           animId = null; animStartTime = null;
           playBtn.textContent = '🔄 再次播放';
+          renderFrame(phys.tMax, phys); // 確保停在最後一幀
         }
       }
 
