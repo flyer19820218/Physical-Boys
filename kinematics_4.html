@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -97,7 +98,6 @@
       gap: 8px;
     }
 
-    /* 導覽列 */
     .mode-switch {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -146,7 +146,6 @@
       font-weight: 600;
     }
 
-    /* 控制區 */
     .controls {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -258,7 +257,6 @@
       width: 0%;
     }
 
-    /* 雙視窗與模擬區 1:1 完美等寬配置 */
     .dual-view {
       display: flex;
       gap: 16px;
@@ -454,7 +452,6 @@
       margin-top: 3px;
     }
 
-    /* 解析與特殊框 */
     .explain-box {
       margin-top: 18px;
       background: rgba(0, 0, 0, 0.18);
@@ -495,7 +492,6 @@
       padding: 0 3px;
     }
 
-    /* 自由落體嚴格定義卡片 */
     .def-card {
       background: rgba(239, 106, 90, 0.15);
       border: 1px solid rgba(239, 106, 90, 0.4);
@@ -526,7 +522,6 @@
       font-weight: bold;
     }
 
-    /* 4大考題選擇區 */
     .tape-quiz-box {
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid rgba(242, 236, 217, 0.2);
@@ -599,7 +594,6 @@
       <p>專為國中會考量身打造！徹底破解「打點計時器點序方向」迷思、直觀演示伽利略斜面、精簡公式解與圖形切分面積，讓物理概念不再抽象！</p>
     </header>
 
-    <!-- ① 模組選擇 -->
     <div class="board">
       <h2>① 選擇 1-4 實驗模組</h2>
       <div class="mode-switch">
@@ -625,7 +619,6 @@
         </button>
       </div>
 
-      <!-- 參數控制與考題選擇 -->
       <div class="controls" id="controlsBox"></div>
       <div class="presets" id="presetsBox"></div>
 
@@ -637,11 +630,9 @@
       </div>
     </div>
 
-    <!-- ② 實體與圖形聯動 -->
     <div class="board">
       <h2>② 物理動態與運動學圖形聯動 <span style="font-size:0.8rem; font-family:'JetBrains Mono'; color:var(--chalk-dim); font-weight:normal;">[1:1 大螢幕配置 · 虛線為即時對應點]</span></h2>
       <div class="dual-view">
-        <!-- 左側：圖表 -->
         <div class="graph-card">
           <div class="legend" id="graphLegend">
             <span id="legendX"><i style="background:var(--x-color)"></i>藍線：x-t（位置/位移）</span>
@@ -650,18 +641,15 @@
           <svg id="combinedSvg" viewBox="0 0 640 300"></svg>
         </div>
 
-        <!-- 右側：具象模擬 -->
         <div class="visual-card">
           <div class="phase-badge blue" id="phaseBadge">準備就緒</div>
           <svg id="visualSvg" viewBox="0 0 290 280"></svg>
         </div>
       </div>
 
-      <!-- 即時數據 -->
       <div class="stats-grid" id="statsGrid"></div>
     </div>
 
-    <!-- ③ 觀念總結與課堂重點 -->
     <div class="board">
       <h2>③ 課堂重點與物理概念剖析</h2>
       <div id="extraDefBox"></div>
@@ -688,6 +676,7 @@
       let currentMode = 'ticker';
       let animId = null;
       let animStartTime = null;
+      let currentPhys = null;
       const ANIM_DURATION = 4000;
 
       const params = {
@@ -700,7 +689,6 @@
 
       const SVG_NS = 'http://www.w3.org/2000/svg';
 
-      // 嚴格 DOM SVG 元素創建工具（絕不使用 innerHTML，杜絕死圖！）
       function createSvgEl(tag, attrs) {
         const el = document.createElementNS(SVG_NS, tag);
         if (attrs) {
@@ -717,7 +705,6 @@
         updateSimulation();
       }
 
-      // --- 1. 控制項渲染 ---
       function renderControls() {
         controlsBox.innerHTML = '';
         const m = currentMode;
@@ -846,7 +833,6 @@
         }
       }
 
-      // --- 2. 物理計算核心 ---
       function calculatePhysics() {
         const m = currentMode;
         const p = params[m];
@@ -914,9 +900,9 @@
         return res;
       }
 
-      // --- 3. 繪圖與動態聯動 ---
       function updateSimulation() {
         const phys = calculatePhysics();
+        currentPhys = phys;
         if (currentMode === 'area') {
           legendX.style.display = 'none';
         } else {
@@ -1040,7 +1026,6 @@
         phys._getX = getX; phys._getY_x = getY_x; phys._getY_v = getY_v;
       }
 
-      // 嚴格 DOM 構建具象物理模擬 (包含打點計時器、斜面、真空管、火箭)
       function drawVisualBackground(phys) {
         visualSvg.innerHTML = '';
         const m = currentMode;
@@ -1153,7 +1138,7 @@
           visualSvg.appendChild(createSvgEl('rect', { x: 70, y: 250, width: 150, height: 10, fill: '#5c4a33', rx: 3 }));
 
           const obj = createSvgEl('g', { id: 'simObject' });
-          
+
           const iron = createSvgEl('g', { id: 'ironBall', transform: 'translate(110, 0)' });
           iron.appendChild(createSvgEl('circle', { cx: 0, cy: 0, r: 14, fill: '#8f8a80', stroke: '#fff', 'stroke-width': 1 }));
           const ironTxt = createSvgEl('text', { x: 0, y: 4, 'font-size': 10, fill: '#fff', 'text-anchor': 'middle', 'font-weight': 'bold' });
@@ -1187,7 +1172,6 @@
         }
       }
 
-      // --- 4. 幀渲染 ---
       function renderFrame(t, phys) {
         const m = currentMode;
         let x = 0, v = 0;
@@ -1294,7 +1278,6 @@
         }
       }
 
-      // --- 5. 數據面板與觀念解說 ---
       function updateStatsAndExplain(phys) {
         statsGrid.innerHTML = ''; extraDefBox.innerHTML = '';
         const addStat = (k, v) => {
@@ -1359,11 +1342,10 @@
         }
       }
 
-      // --- 6. 動畫迴圈 ---
       function animate(ts) {
         if (!animStartTime) animStartTime = ts;
         const elapsed = ts - animStartTime;
-        const phys = calculatePhysics();
+        const phys = currentPhys;
         const frac = Math.min(1, elapsed / ANIM_DURATION);
         const curTime = frac * phys.tMax;
 
