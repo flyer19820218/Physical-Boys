@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國中自然 光學｜平面鏡成像與反射定律 黑板模擬器</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    :root {
+      --board: #1c3d34;
+      --board-dark: #15302a;
+      --chalk: #f2ecd9;
+      --chalk-dim: #c9c2ab;
+      --chalk-yellow: #f2d675;
+      --x-color: #5fb0ff;
+      --v-color: #ef6a5a;
+      --frame: #5c4a33;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--board-dark);
+      color: var(--chalk);
+      font-family: 'Noto Sans TC', sans-serif;
+      padding: 20px 14px 60px;
+    }
+
+    .wrap { max-width: 1300px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 24px; }
+    header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.2em; color: var(--chalk-dim); text-transform: uppercase; }
+    h1 { font-family: 'Kalam', cursive; font-size: 2.1rem; font-weight: 700; margin: 6px 0 10px; text-shadow: 0 0 14px rgba(242, 236, 217, 0.15); }
+    header p { color: var(--chalk-dim); max-width: 780px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem; }
+
+    .board {
+      background: var(--board);
+      border: 10px solid var(--frame);
+      border-radius: 6px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4), inset 0 0 60px rgba(0, 0, 0, 0.25);
+      padding: 20px 18px 24px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .board::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 5px 5px; pointer-events: none; border-radius: 6px;
+    }
+
+    .board h2 {
+      font-family: 'Kalam', cursive; font-size: 1.25rem; margin: 0 0 14px;
+      color: var(--chalk-yellow); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+    }
+
+    .mode-switch { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .mode-switch button {
+      font-family: 'Noto Sans TC', sans-serif; font-size: 0.92rem; font-weight: 700;
+      background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 1.5px solid rgba(242, 236, 217, 0.18);
+      padding: 12px 14px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; display: flex; flex-direction: column; gap: 4px;
+    }
+    .mode-switch button span.sub { font-size: 0.75rem; font-weight: 400; opacity: 0.7; }
+    .mode-switch button:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(242, 236, 217, 0.4); }
+    .mode-switch button.active {
+      background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow);
+      box-shadow: 0 4px 12px rgba(242, 214, 117, 0.25);
+    }
+    .mode-switch button.active span.sub { color: var(--board-dark); opacity: 0.85; font-weight: 600; }
+
+    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.15); padding: 14px; border-radius: 8px; }
+    .control label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--chalk-dim); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
+    .control label span.val { color: var(--chalk-yellow); font-weight: 600; }
+    input[type=range] { width: 100%; accent-color: var(--chalk-yellow); height: 5px; background: transparent; cursor: pointer; }
+
+    .presets { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+    .presets span { font-size: 0.8rem; color: var(--chalk-dim); margin-right: 4px; }
+    .presets button {
+      font-family: 'Noto Sans TC', sans-serif; background: transparent; border: 1px dashed var(--chalk-dim);
+      color: var(--chalk); padding: 6px 12px; border-radius: 18px; font-size: 0.8rem; cursor: pointer; transition: all .15s;
+    }
+    .presets button:hover { border-color: var(--chalk-yellow); color: var(--chalk-yellow); background: rgba(242, 214, 117, 0.1); }
+
+    .visual-card { width: 100%; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; margin-top: 10px; }
+    svg { width: 100%; height: auto; display: block; overflow: visible; }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 14px; }
+    .stat { background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 10px 8px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.04); }
+    .stat .k { font-family: 'Noto Sans TC', sans-serif; font-size: 0.85rem; color: var(--chalk-dim); }
+    .stat .v { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--chalk-yellow); font-weight: 600; margin-top: 3px; }
+
+    .explain-box { margin-top: 18px; background: rgba(0, 0, 0, 0.18); border-left: 4px solid var(--chalk-yellow); border-radius: 0 8px 8px 0; padding: 14px 18px; }
+    .explain-box h3 { font-family: 'Kalam', cursive; color: var(--chalk-yellow); margin: 0 0 8px; font-size: 1.1rem; }
+    .explain-box p { margin: 0; font-size: 0.95rem; line-height: 1.6; color: var(--chalk); }
+    .formula-highlight { font-family: 'JetBrains Mono', monospace; background: rgba(242, 214, 117, 0.15); padding: 2px 8px; border-radius: 4px; color: var(--chalk-yellow); font-weight: 600; display: inline-block; margin: 4px 0; font-style: italic; }
+
+    .quiz-box { background: rgba(95, 176, 255, 0.1); border: 1px dashed var(--x-color); border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+    .quiz-box h4 { margin: 0 0 8px 0; color: var(--x-color); font-size: 1rem; }
+    .quiz-box p { margin: 4px 0; font-size: 0.9rem; }
+    
+    footer { text-align: center; color: var(--chalk-dim); font-size: 0.8rem; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">Optics Chapter 4-2</div>
+      <h1>光學二：平面鏡成像與反射定律</h1>
+      <p>雷射槍驗證反射角、眼見為憑的光路圖，再到曲面鏡的視野變化。拖拉滑桿，秒懂反射定律的完美對稱性！</p>
+    </header>
+
+    <div class="board">
+      <h2>① 選擇互動教學模式</h2>
+      <div class="mode-switch">
+        <button class="active" data-mode="reflection">
+          <span>📐 1. 反射定律雷射槍</span>
+          <span class="sub">永遠相等的入射角與反射角</span>
+        </button>
+        <button data-mode="plane_mirror">
+          <span>🪞 2. 平面鏡光路找虛像</span>
+          <span class="sub">物距＝像距、左右相反</span>
+        </button>
+        <button data-mode="curved_mirror">
+          <span>🥣 3. 曲面鏡與視野</span>
+          <span class="sub">凸面鏡發散 vs 凹面鏡會聚</span>
+        </button>
+        <button data-mode="quiz">
+          <span>🏆 4. 經典試題挑戰</span>
+          <span class="sub">人與鏡子的相對運動</span>
+        </button>
+      </div>
+
+      <div class="controls" id="controlsBox"></div>
+      <div class="presets" id="presetsBox"></div>
+      <div class="visual-card">
+        <svg id="visualSvg" viewBox="-300 -160 600 320"></svg>
+      </div>
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+
+    <div class="board">
+      <h2>② 課堂重點與原理解析</h2>
+      <div id="quizContainer"></div>
+      <div class="explain-box" id="explainBox"></div>
+    </div>
+
+    <footer>國中理化 光學單元 · 視覺化互動教學教材 · 設計：彥君老師</footer>
+  </div>
+
+  <script>
+    (function() {
+      const controlsBox = document.getElementById('controlsBox');
+      const presetsBox = document.getElementById('presetsBox');
+      const visualSvg = document.getElementById('visualSvg');
+      const statsGrid = document.getElementById('statsGrid');
+      const explainBox = document.getElementById('explainBox');
+      const quizContainer = document.getElementById('quizContainer');
+
+      let currentMode = 'reflection';
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+
+      const params = {
+        reflection: { angle: 45 },
+        plane_mirror: { objX: -100 },
+        curved_mirror: { curve: 0 }, // -1 (凸) 到 1 (凹)
+        quiz: { objX: -200 }
+      };
+
+      function createSvgEl(tag, attrs) {
+        const el = document.createElementNS(SVG_NS, tag);
+        if (attrs) { for (let key in attrs) el.setAttribute(key, attrs[key]); }
+        return el;
+      }
+
+      function addText(parent, x, y, txt, anchor, color, size, weight='normal') {
+          const t = createSvgEl('text', { x, y, 'text-anchor': anchor, fill: color, 'font-size': size, 'font-weight': weight, 'font-family': 'Noto Sans TC' });
+          t.innerHTML = txt; 
+          parent.appendChild(t);
+      }
+
+      function initUI() {
+        quizContainer.innerHTML = '';
+        renderControls();
+        renderPresets();
+        updateSimulation();
+      }
+
+      function renderControls() {
+        controlsBox.innerHTML = '';
+        presetsBox.innerHTML = '';
+        const m = currentMode;
+        const p = params[m];
+
+        const addSlider = (id, label, min, max, step, val, unit, onChange) => {
+          const div = document.createElement('div');
+          div.className = 'control';
+          div.innerHTML = `
+            <label>${label} <span class="val" id="val_${id}">${val} ${unit}</span></label>
+            <input type="range" id="inp_${id}" min="${min}" max="${max}" step="${step}" value="${val}">
+          `;
+          controlsBox.appendChild(div);
+          div.querySelector('input').addEventListener('input', (e) => {
+            let newVal = parseFloat(e.target.value);
+            newVal = onChange(newVal);
+            e.target.value = newVal;
+            document.getElementById(`val_${id}`).textContent = `${newVal} ${unit}`;
+            updateSimulation();
+          });
+        };
+
+        if (m === 'reflection') {
+          addSlider('angle', '拖拉雷射槍 (改變入射角)', 10, 80, 1, p.angle, '度', v => { p.angle = v; return v; });
+        } else if (m === 'plane_mirror') {
+          addSlider('objX', '拖拉物體 (改變物距)', -200, -30, 5, p.objX, 'cm', v => { p.objX = v; return v; });
+        } else if (m === 'curved_mirror') {
+          addSlider('curve', '改變鏡面曲率 (凸面 ↔ 凹面)', -50, 50, 5, p.curve, '', v => { p.curve = v; return v; });
+        } else if (m === 'quiz') {
+          addSlider('objX', '人遠離鏡子 (後退測驗)', -300, -100, 10, p.objX, 'cm', v => { p.objX = v; return v; });
+          quizContainer.innerHTML = `
+            <div class="quiz-box">
+              <h4>📖 經典試題挑戰 (配合上方互動圖即時顯示)</h4>
+              <p><b>小明原本站在平面鏡前 2 公尺（200 cm）處。</b></p>
+              <p><b>Q1：</b>如果他向後退 1 公尺，請問現在他與他的「像」相距多少公尺？</p>
+              <p><b>Q2：</b>在後退的過程中，鏡子裡的像會變小嗎？</p>
+            </div>
+          `;
+        }
+      }
+
+      function renderPresets() {
+        const m = currentMode;
+        if(m === 'curved_mirror') {
+            presetsBox.innerHTML = '<span>⚡ 快速切換：</span>';
+            const p = params.curved_mirror;
+            const addBtn = (label, action) => {
+            const b = document.createElement('button');
+            b.textContent = label;
+            b.onclick = () => { action(); renderControls(); updateSimulation(); };
+            presetsBox.appendChild(b);
+            };
+            addBtn('凸面鏡 (發散)', () => { p.curve = -40; });
+            addBtn('平面鏡', () => { p.curve = 0; });
+            addBtn('凹面鏡 (會聚)', () => { p.curve = 40; });
+        }
+      }
+
+      function updateSimulation() {
+        visualSvg.innerHTML = '';
+        statsGrid.innerHTML = '';
+        const m = currentMode;
+        
+        const addStat = (k, v) => {
+          const d = document.createElement('div'); d.className = 'stat';
+          d.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div>`; statsGrid.appendChild(d);
+        };
+
+        if (m === 'reflection') {
+          const angleDeg = params.reflection.angle;
+          const angleRad = angleDeg * Math.PI / 180;
+          const L = 160; // 射線長度
+
+          // 畫鏡子 (水平)
+          visualSvg.appendChild(createSvgEl('line', { x1: -250, y1: 50, x2: 250, y2: 50, stroke: '#8f8a80', 'stroke-width': 6 }));
+          // 鏡子背面的斜線
+          for(let i=-240; i<=240; i+=20) {
+              visualSvg.appendChild(createSvgEl('line', { x1: i, y1: 53, x2: i-10, y2: 65, stroke: '#8f8a80', 'stroke-width': 2 }));
+          }
+          addText(visualSvg, -230, 40, '平面鏡', 'start', '#8f8a80', 14, 'bold');
+
+          // 畫法線
+          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: 50, x2: 0, y2: -140, stroke: 'var(--chalk-dim)', 'stroke-width': 2, 'stroke-dasharray': '5 5' }));
+          addText(visualSvg, 0, -150, '法線', 'middle', 'var(--chalk-dim)', 14);
+
+          // 計算光線座標
+          const incX = -L * Math.sin(angleRad);
+          const incY = 50 - L * Math.cos(angleRad);
+          const refX = L * Math.sin(angleRad);
+          const refY = 50 - L * Math.cos(angleRad);
+
+          // 入射線
+          visualSvg.appendChild(createSvgEl('line', { x1: incX, y1: incY, x2: 0, y2: 50, stroke: '#ef6a5a', 'stroke-width': 3 }));
+          visualSvg.appendChild(createSvgEl('polygon', { points: `${incX/2},${incY/2+5} ${incX/2+10},${incY/2-5} ${incX/2-5},${incY/2-5}`, fill: '#ef6a5a', transform: `rotate(${90-angleDeg}, ${incX/2}, ${incY/2})` }));
+          
+          // 雷射槍
+          visualSvg.appendChild(createSvgEl('rect', { x: incX-15, y: incY-10, width: 30, height: 20, fill: '#5fb0ff', rx: 3, transform: `rotate(${90-angleDeg}, ${incX}, ${incY})` }));
+
+          // 反射線
+          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: 50, x2: refX, y2: refY, stroke: '#f2d675', 'stroke-width': 3 }));
+          visualSvg.appendChild(createSvgEl('polygon', { points: `${refX/2},${refY/2-5} ${refX/2-10},${refY/2+5} ${refX/2+5},${refY/2+5}`, fill: '#f2d675', transform: `rotate(${angleDeg-90}, ${refX/2}, ${refY/2})` }));
+
+          // 畫角度弧線
+          const arcR = 40;
+          const arcIncX = -arcR * Math.sin(angleRad);
+          const arcIncY = 50 - arcR * Math.cos(angleRad);
+          visualSvg.appendChild(createSvgEl('path', { d: `M 0,${50-arcR} A ${arcR} ${arcR} 0 0 0 ${arcIncX} ${arcIncY}`, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 2 }));
+          
+          const arcRefX = arcR * Math.sin(angleRad);
+          visualSvg.appendChild(createSvgEl('path', { d: `M 0,${50-arcR} A ${arcR} ${arcR} 0 0 1 ${arcRefX} ${arcIncY}`, fill: 'none', stroke: '#f2d675', 'stroke-width': 2 }));
+
+          // 標示角度文字
+          addText(visualSvg, -arcR/2 - 10, 50 - arcR/2 - 10, `入射角 ${angleDeg}°`, 'end', '#ef6a5a', 14, 'bold');
+          addText(visualSvg, arcR/2 + 10, 50 - arcR/2 - 10, `反射角 ${angleDeg}°`, 'start', '#f2d675', 14, 'bold');
+
+          // 更新數據
+          addStat('入射角 <i>θ<sub>i</sub></i>', `${angleDeg}°`);
+          addStat('反射角 <i>θ<sub>r</sub></i>', `${angleDeg}°`);
+          addStat('光線與鏡面夾角', `${90 - angleDeg}°`);
+
+          explainBox.innerHTML = `
+            <h3>💡 老師精闢解析：反射定律的對稱美學</h3>
+            <p>1. <b>入射角＝反射角</b>：光線碰到不透明物體反彈，永遠遵守這個黃金準則。<br>
+            2. <b>法線是基準</b>：考試最愛考的陷阱！角度一定要找光線與「法線」的夾角，絕對不是光線跟「鏡面」的夾角喔！</p>
+          `;
+          
+        } else if (m === 'plane_mirror') {
+          const p = -params.plane_mirror.objX; // 物距 (正值)
+          const objX = -p;
+          const imgX = p;
+          const h = 50; // 物高
+
+          // 畫鏡子 (垂直)
+          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: -120, x2: 0, y2: 120, stroke: '#8f8a80', 'stroke-width': 6 }));
+          for(let i=-110; i<=110; i+=20) {
+              visualSvg.appendChild(createSvgEl('line', { x1: 3, y1: i, x2: 15, y2: i-10, stroke: '#8f8a80', 'stroke-width': 2 }));
+          }
+          addText(visualSvg, 0, -135, '平面鏡', 'middle', '#8f8a80', 14, 'bold');
+          visualSvg.appendChild(createSvgEl('line', { x1: -280, y1: 80, x2: 280, y2: 80, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
+
+          // 畫眼睛 (在左下角)
+          const eyeX = -200, eyeY = -40;
+          visualSvg.appendChild(createSvgEl('path', { d: `M ${eyeX-15} ${eyeY} Q ${eyeX} ${eyeY-15} ${eyeX+15} ${eyeY} Q ${eyeX} ${eyeY+15} ${eyeX-15} ${eyeY}`, fill: 'none', stroke: '#fff', 'stroke-width': 2 }));
+          visualSvg.appendChild(createSvgEl('circle', { cx: eyeX, cy: eyeY, r: 5, fill: '#5fb0ff' }));
+
+          // 畫物體 (箭頭)
+          visualSvg.appendChild(createSvgEl('line', { x1: objX, y1: 80, x2: objX, y2: 80-h, stroke: '#ef6a5a', 'stroke-width': 6 }));
+          visualSvg.appendChild(createSvgEl('polygon', { points: `${objX},${80-h-8} ${objX-6},${80-h+2} ${objX+6},${80-h+2}`, fill: '#ef6a5a' }));
+          addText(visualSvg, objX, 80-h-15, '真實物體', 'middle', '#ef6a5a', 12, 'bold');
+
+          // 畫虛像 (虛線箭頭)
+          visualSvg.appendChild(createSvgEl('line', { x1: imgX, y1: 80, x2: imgX, y2: 80-h, stroke: '#5fb0ff', 'stroke-width': 4, 'stroke-dasharray': '6 4' }));
+          visualSvg.appendChild(createSvgEl('polygon', { points: `${imgX},${80-h-8} ${imgX-6},${80-h+2} ${imgX+6},${80-h+2}`, fill: '#5fb0ff' }));
+          addText(visualSvg, imgX, 80-h-15, '正立虛像', 'middle', '#5fb0ff', 12, 'bold');
+
+          // 光路圖計算 (從物體頂端發出，打到鏡子，反射到眼睛)
+          // 相當於從「虛像頂端」連直線到眼睛，交點就是鏡子上的反射點
+          const imgTopY = 80-h;
+          const slope = (eyeY - imgTopY) / (eyeX - imgX);
+          const hitY = imgTopY + slope * (0 - imgX);
+
+          // 實線 (反射入眼)
+          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: hitY, x2: eyeX, y2: eyeY, stroke: '#f2d675', 'stroke-width': 2 }));
+          // 實線 (物到鏡)
+          visualSvg.appendChild(createSvgEl('line', { x1: objX, y1: imgTopY, x2: 0, y2: hitY, stroke: '#ef6a5a', 'stroke-width': 2 }));
+          // 虛線 (鏡後延伸)
+          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: hitY, x2: imgX, y2: imgTopY, stroke: '#5fb0ff', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
+
+          // 標示距離
+          visualSvg.appendChild(createSvgEl('path', { d: `M ${objX},100 L 0,100`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
+          visualSvg.appendChild(createSvgEl('path', { d: `M 0,100 L ${imgX},100`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
+          
+          addText(visualSvg, objX/2, 120, `物距 = ${p} cm`, 'middle', '#ef6a5a', 13, 'bold');
+          addText(visualSvg, imgX/2, 120, `像距 = ${p} cm`, 'middle', '#5fb0ff', 13, 'bold');
+
+          visualSvg.innerHTML += `
+            <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                <path d="M 0 2 L 10 5 L 0 8 z" fill="var(--chalk-dim)" />
+                </marker>
+            </defs>
+          `;
+
+          addStat('物距', `${p} cm`);
+          addStat('像距', `${p} cm`);
+          addStat('成像性質', `正立虛像`);
+
+          explainBox.innerHTML = `
+            <h3>💡 老師精闢解析：平面鏡的「對稱魔法」</h3>
+            <p>1. <b>物距恆等於像距</b>：物體退後，像也會等速退後。<br>
+            2. <b>成像性質</b>：大小相等、左右相反的正立「虛像」。<br>
+            3. 光路圖的畫法捷徑：眼睛看鏡子裡的像，光線就像是從「虛像」筆直發射過來的一樣！</p>
+          `;
+          
+        } else if (m === 'curved_mirror') {
+          const c = params.curved_mirror.curve; // -50 to 50
+          
+          // 畫主光軸
+          visualSvg.appendChild(createSvgEl('line', { x1: -280, y1: 0, x2: 280, y2: 0, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
+
+          // 畫曲面鏡 (用二次貝茲曲線)
+          // 鏡子端點固定在 y=100, y=-100，中心控制點在 x = c
+          visualSvg.appendChild(createSvgEl('path', { d: `M 0,-100 Q ${c*2},0 0,100`, fill: 'none', stroke: '#8f8a80', 'stroke-width': 6 }));
+          
+          let title = "平面鏡", sub = "平行反射";
+          if (c > 0) { title = "凹面鏡"; sub = "會聚光線，視野較小"; }
+          if (c < 0) { title = "凸面鏡"; sub = "發散光線，視野較廣"; }
+          addText(visualSvg, 0, -120, title, 'middle', '#fff', 16, 'bold');
+
+          // 計算焦點 (約略值，僅供視覺演示)
+          const f = c === 0 ? Infinity : (c > 0 ? 1500 / c : 1500 / c);
+
+          // 畫平行光線與反射
+          const rayYs = [-60, -30, 0, 30, 60];
+          rayYs.forEach(y => {
+              // 找出打到鏡面的 X 座標
+              // 貝茲曲線 x(t) = (1-t)^2 * 0 + 2t(1-t) * 2c + t^2 * 0 = 4c * t * (1-t)
+              // y(t) = (1-t)^2 * (-100) + 2t(1-t) * 0 + t^2 * 100
+              // 為了簡化視覺，我們用拋物線近似：x = a * y^2 + b
+              // 頂點在 (c/2, 0)，端點在 (0, 100)
+              const mirrorX = (c/2) * (1 - (y*y)/(100*100));
+
+              // 入射平行光
+              visualSvg.appendChild(createSvgEl('line', { x1: -280, y1: y, x2: mirrorX, y2: y, stroke: '#ef6a5a', 'stroke-width': 2 }));
+
+              if (c === 0) {
+                 // 平面鏡，平行反彈
+                 visualSvg.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: -280, y2: y, stroke: '#f2d675', 'stroke-width': 2 }));
+              } else {
+                 // 曲面鏡，連向或背向焦點
+                 const slope = (0 - y) / (f - mirrorX);
+                 const destX = -280;
+                 const destY = y + slope * (destX - mirrorX);
+                 
+                 visualSvg.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: destX, y2: destY, stroke: '#f2d675', 'stroke-width': 2 }));
+
+                 // 虛線畫出焦點
+                 visualSvg.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: f, y2: 0, stroke: '#5fb0ff', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
+              }
+          });
+
+          if (c !== 0) {
+              visualSvg.appendChild(createSvgEl('circle', { cx: f, cy: 0, r: 4, fill: '#5fb0ff' }));
+              addText(visualSvg, f, 20, c > 0 ? '真實焦點' : '虛焦點', 'middle', '#5fb0ff', 12, 'bold');
+          }
+
+          addStat('鏡面種類', title);
+          if(c !== 0) addStat('焦距位置', c > 0 ? '鏡前 (實)' : '鏡後 (虛)');
+
+          let usage = '日常照鏡子';
+          if (c > 0) usage = '手電筒、太陽能集熱器';
+          if (c < 0) usage = '路口反光鏡、汽車後照鏡';
+          addStat('生活應用', usage);
+
+          explainBox.innerHTML = `
+            <h3>💡 老師精闢解析：曲面鏡的功能</h3>
+            <p><b>凸面鏡</b>（向外凸）：會將光線發散，讓照後鏡或路口反射鏡可以容納更寬廣的畫面（<b>視野變大</b>），成像是正立縮小虛像。<br>
+            <b>凹面鏡</b>（向內凹）：會將光線會聚到一點，適合用在探照燈把光打遠，或是太陽能鍋爐<b>集中能量</b>喔！</p>
+          `;
+          
+        } else if (m === 'quiz') {
+          const objP = Math.abs(params.quiz.objX); // 距離，如 200, 300
+          
+          // 畫鏡子
+          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: -120, x2: 0, y2: 120, stroke: '#8f8a80', 'stroke-width': 6 }));
+          addText(visualSvg, 0, -135, '平面鏡', 'middle', '#8f8a80', 14, 'bold');
+          visualSvg.appendChild(createSvgEl('line', { x1: -320, y1: 80, x2: 320, y2: 80, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
+
+          // 畫人
+          const drawPerson = (x, color, label) => {
+              visualSvg.appendChild(createSvgEl('circle', { cx: x, cy: -20, r: 15, fill: color }));
+              visualSvg.appendChild(createSvgEl('line', { x1: x, y1: -5, x2: x, y2: 40, stroke: color, 'stroke-width': 4 }));
+              visualSvg.appendChild(createSvgEl('line', { x1: x, y1: 40, x2: x-10, y2: 80, stroke: color, 'stroke-width': 4 }));
+              visualSvg.appendChild(createSvgEl('line', { x1: x, y1: 40, x2: x+10, y2: 80, stroke: color, 'stroke-width': 4 }));
+              addText(visualSvg, x, -45, label, 'middle', color, 12, 'bold');
+          };
+
+          drawPerson(-objP, '#ef6a5a', '小明');
+          drawPerson(objP, '#5fb0ff', '鏡中像');
+
+          // 距離標示
+          visualSvg.appendChild(createSvgEl('path', { d: `M ${-objP},100 L 0,100`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
+          visualSvg.appendChild(createSvgEl('path', { d: `M 0,100 L ${objP},100`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
+          
+          addText(visualSvg, -objP/2, 120, `物距 = ${objP/100} m`, 'middle', '#ef6a5a', 13, 'bold');
+          addText(visualSvg, objP/2, 120, `像距 = ${objP/100} m`, 'middle', '#5fb0ff', 13, 'bold');
+
+          visualSvg.appendChild(createSvgEl('path', { d: `M ${-objP},140 L ${objP},140`, stroke: 'var(--chalk-yellow)', 'stroke-width': 2, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
+          addText(visualSvg, 0, 155, `總距離 = ${objP*2/100} m`, 'middle', 'var(--chalk-yellow)', 14, 'bold');
+
+          visualSvg.innerHTML += `
+            <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                <path d="M 0 2 L 10 5 L 0 8 z" fill="var(--chalk-dim)" />
+                </marker>
+            </defs>
+          `;
+
+          addStat('目前物距', `${objP/100} m`);
+          addStat('目前總距', `${objP*2/100} m`);
+          addStat('成像大小', `始終與物體相同`);
+
+          explainBox.innerHTML = `
+            <h3>💡 經典試題挑戰解答與解析</h3>
+            <p><b>[解析 Q1]</b> 平面鏡最大的特色就是「物距＝像距」。小明原本距鏡 2m，後退 1m 後，現在的物距變成 <b>3m</b>。因為像也會跟著退後，所以像距也是 <b>3m</b>。總距離＝物距＋像距＝3＋3＝<span class="formula-highlight"><b> 6 公尺 </b></span>！（直接拉動上方滑桿到 300cm 驗證吧）</p>
+            <p><b>[解析 Q2]</b> 這也是超經典陷阱題！不管小明退得多遠，平面鏡的成像<b>「大小永遠與原物體相等」</b>，絕對不會變小！人會覺得看起來變小，單純是因為「視角變小」的視覺錯覺，不是成像真的變小喔！</p>
+          `;
+        }
+      }
+
+      document.querySelectorAll('.mode-switch button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.mode-switch button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentMode = btn.dataset.mode;
+          initUI();
+        });
+      });
+
+      initUI();
+    })();
+  </script>
+</body>
+</html>
