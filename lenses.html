@@ -219,7 +219,7 @@
     }
   }
 
-  // 強制使用純硬編碼 Hex 亮色，100% 杜絕變數解析成黑色的問題
+  // 100% 亮彩粉筆風格箭頭繪製
   function drawArrow(x, yFrom, yTo, color, isDashed = false, labelText = "") {
     ctx.save();
     ctx.strokeStyle = color; 
@@ -239,7 +239,7 @@
     if (labelText) {
       ctx.font = "bold 16px 'Noto Sans TC', sans-serif";
       ctx.textAlign = "center";
-      ctx.fillStyle = "#ffffff"; // 絕對硬編碼純白
+      ctx.fillStyle = "#ffffff"; // 強制純白粉筆標籤
       ctx.fillText(labelText, x, yTo < yFrom ? yTo - 14 : yTo + 26);
     }
     ctx.restore();
@@ -263,7 +263,7 @@
       ctx.quadraticCurveTo(cx - w*1.8, cy, cx, cy - h - 10);
       ctx.closePath(); ctx.fill(); ctx.stroke();
     }
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
     ctx.beginPath(); ctx.moveTo(cx, cy - h - 15); ctx.lineTo(cx, cy + h + 15); ctx.stroke();
     ctx.restore();
   }
@@ -310,7 +310,7 @@
   function renderIntro() {
     const cy1 = 110;
     ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,0.25)"; ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(20, cy1); ctx.lineTo(V_WIDTH-20, cy1); ctx.stroke();
 
     drawCustomLensSection(100, cy1, 'bi-convex', '雙凸透鏡');
@@ -331,12 +331,12 @@
     ctx.fillText("實焦點 F", 850, cy1 + 28);
     ctx.fillStyle = "#ff8040"; ctx.beginPath(); ctx.arc(880, cy1, 6, 0, Math.PI*2); ctx.fill();
 
-    ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.lineWidth = 2; ctx.setLineDash([8, 8]);
+    ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 2; ctx.setLineDash([8, 8]);
     ctx.beginPath(); ctx.moveTo(30, 240); ctx.lineTo(V_WIDTH-30, 240); ctx.stroke();
     ctx.setLineDash([]);
 
     const cy2 = 360;
-    ctx.strokeStyle = "rgba(255,255,255,0.25)"; ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(20, cy2); ctx.lineTo(V_WIDTH-20, cy2); ctx.stroke();
 
     drawCustomLensSection(100, cy2, 'bi-concave', '雙凹透鏡');
@@ -354,7 +354,8 @@
       const slope = offset / 110;
       ctx.beginPath(); ctx.moveTo(650, y); ctx.lineTo(880, cy2 + slope * 230); ctx.stroke();
       if (offset !== 0) {
-        ctx.setLineDash([4, 4]); ctx.lineWidth = 1.8;
+        ctx.strokeStyle = "#4dd2ff"; ctx.lineWidth = 1.8;
+        ctx.setLineDash([4, 4]);
         ctx.beginPath(); ctx.moveTo(650, y); ctx.lineTo(540, cy2); ctx.stroke();
         ctx.setLineDash([]);
       }
@@ -367,7 +368,8 @@
 
   function renderOptics(val) {
     ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 1.5;
+    // 繪製白色光軸
+    ctx.strokeStyle = "rgba(255,255,255,0.6)"; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(20, CY); ctx.lineTo(V_WIDTH - 20, CY); ctx.stroke();
 
     const u_ratio = 3 - (val / 259) * 2.5;
@@ -383,18 +385,18 @@
     markers.forEach(mk => {
       const x = CX - mk.ratio * F_LEN;
       ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(x, CY - 6); ctx.lineTo(x, CY + 6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, CY - 8); ctx.lineTo(x, CY + 8); ctx.stroke();
       
       if (currentTab === 'convex') {
         ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.fillText(mk.name, x, CY - 15);
       }
-      if (mk.sub) { ctx.fillStyle = "#ff8040"; ctx.textAlign = "center"; ctx.fillText(mk.sub, x, CY + 25); }
+      if (mk.sub) { ctx.fillStyle = "#ffe066"; ctx.textAlign = "center"; ctx.fillText(mk.sub, x, CY + 25); }
     });
     ['f', '2f'].forEach((sub, idx) => {
       const x = CX + (idx + 1) * F_LEN;
       ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(x, CY - 6); ctx.lineTo(x, CY + 6); ctx.stroke();
-      ctx.fillStyle = "#ff8040"; ctx.textAlign = "center"; ctx.fillText(sub, x, CY + 25);
+      ctx.beginPath(); ctx.moveTo(x, CY - 8); ctx.lineTo(x, CY + 8); ctx.stroke();
+      ctx.fillStyle = "#ffe066"; ctx.textAlign = "center"; ctx.fillText(sub, x, CY + 25);
     });
     ctx.restore();
 
@@ -409,19 +411,26 @@
       document.getElementById('val-m').textContent = `${m.toFixed(2)} 倍`;
       document.getElementById('val-type').textContent = "正立縮小虛像";
 
-      ctx.save(); ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.5;
+      // 第一條光線：平行主光軸，折射後向外發散（橘色光線）
+      ctx.save(); 
+      ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.8;
       ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(CX, obj_top_y); ctx.stroke();
       const slope1 = (obj_top_y - CY) / (CX - (CX - F_LEN));
       ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(V_WIDTH - 40, obj_top_y + slope1 * (V_WIDTH - 40 - CX)); ctx.stroke();
-      ctx.lineWidth = 1.8; ctx.setLineDash([5, 5]);
-      ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(CX - F_LEN, CY); ctx.stroke(); ctx.restore();
+      
+      // 第一條光線的反向虛線延長線（藍色虛線）
+      ctx.strokeStyle = "#4dd2ff"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+      ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(CX - F_LEN, CY); ctx.stroke(); 
+      ctx.restore();
 
-      ctx.save(); ctx.strokeStyle = "#33cc99"; ctx.lineWidth = 2.5;
+      // 第二條光線：過鏡心直進（鮮綠色光線）
+      ctx.save(); 
+      ctx.strokeStyle = "#33cc99"; ctx.lineWidth = 2.8;
       const slope2 = (CY - obj_top_y) / (CX - obj_x);
       ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(V_WIDTH - 40, CY + slope2 * (V_WIDTH - 40 - CX)); ctx.stroke();
-      ctx.lineWidth = 1.8; ctx.setLineDash([5, 5]);
-      ctx.beginPath(); ctx.moveTo(CX, CY); ctx.lineTo(img_x, img_top_y); ctx.stroke(); ctx.restore();
+      ctx.restore();
 
+      // 畫透鏡與物件
       drawLens(CX, CY, 150, 18, 'concave');
       drawArrow(obj_x, CY, obj_top_y, "#ffe066", false, "物體");
       drawArrow(img_x, CY, img_top_y, "#4dd2ff", true, "虛像");
@@ -437,7 +446,7 @@
         document.getElementById('val-m').textContent = "無法計算";
         document.getElementById('val-type').textContent = "平行光折射，不成像";
 
-        ctx.save(); ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.5;
+        ctx.save(); ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.8;
         ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(CX, obj_top_y); ctx.stroke();
         const slope1 = (CY - obj_top_y) / F_LEN;
         ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(V_WIDTH - 20, obj_top_y + slope1 * (V_WIDTH - 20 - CX)); ctx.stroke();
@@ -459,7 +468,7 @@
         else if (m < 0.95) document.getElementById('val-type').textContent = "倒立縮小實像";
         else document.getElementById('val-type').textContent = "倒立等大實像 (2f處)";
 
-        ctx.save(); ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.5;
+        ctx.save(); ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.8;
         ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(CX, obj_top_y); ctx.stroke();
         const slope1 = (CY - obj_top_y) / F_LEN;
         ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(Math.min(V_WIDTH - 20, img_x + 100), obj_top_y + slope1 * (Math.min(V_WIDTH - 20, img_x + 100) - CX)); ctx.stroke();
@@ -482,17 +491,17 @@
         document.getElementById('val-m').textContent = `${m.toFixed(2)} 倍`;
         document.getElementById('val-type').textContent = "正立放大虛像 (放大鏡)";
 
-        ctx.save(); ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.5;
+        ctx.save(); ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.8;
         ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(CX, obj_top_y); ctx.stroke();
         const slope1 = (CY - obj_top_y) / F_LEN;
         ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(V_WIDTH - 20, obj_top_y + slope1 * (V_WIDTH - 20 - CX)); ctx.stroke();
-        ctx.setLineDash([5, 5]); ctx.lineWidth = 1.8;
+        ctx.strokeStyle = "#4dd2ff"; ctx.setLineDash([5, 5]); ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(Math.max(20, img_x), obj_top_y + slope1 * (Math.max(20, img_x) - CX)); ctx.stroke();
 
-        ctx.strokeStyle = "#33cc99"; ctx.lineWidth = 2.5; ctx.setLineDash([]);
+        ctx.strokeStyle = "#33cc99"; ctx.lineWidth = 2.8; ctx.setLineDash([]);
         const slope2 = (CY - obj_top_y) / (CX - obj_x);
         ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(V_WIDTH - 20, CY + slope2 * (V_WIDTH - 20 - CX)); ctx.stroke();
-        ctx.setLineDash([5, 5]); ctx.lineWidth = 1.8;
+        ctx.strokeStyle = "#4dd2ff"; ctx.setLineDash([5, 5]); ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(Math.max(20, img_x), CY + slope2 * (Math.max(20, img_x) - CX)); ctx.stroke();
         ctx.restore();
 
@@ -512,7 +521,7 @@
     const GLASSES_X = 280;
 
     ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "rgba(255,255,255,0.6)"; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(20, CY); ctx.lineTo(V_WIDTH - 20, CY); ctx.stroke();
 
     ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3;
