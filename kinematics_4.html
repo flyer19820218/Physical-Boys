@@ -5,7 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>國中自然 等加速度運動｜物理考題與黑板模擬器</title>
 
-  <!-- 引入 MathJax 解決數學公式渲染問題，確保 LaTeX 絕不亂碼（已移除有資安風險的舊版 polyfill） -->
+  <!-- 強制注入 MathJax 解析設定，確保 inline $ 與 LaTeX 公式絕對不壞掉 -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   <style>
@@ -111,7 +121,6 @@
     .dual-view.ratio-1-1 .graph-card { flex: 1; }
     .dual-view.ratio-1-1 .visual-card { flex: 1; }
 
-    /* 這裡就是幫您新增的 3:2 比例 */
     .dual-view.ratio-3-2 .graph-card { flex: 3; }
     .dual-view.ratio-3-2 .visual-card { flex: 2; }
 
@@ -336,7 +345,7 @@
         if (currentMode === 'ticker') {
           dualViewContainer.classList.add('ratio-2-1');      // 第一分頁：2:1
         } else if (currentMode === 'incline') {
-          dualViewContainer.classList.add('ratio-3-2');      // 這裡直接幫您把第二分頁改成 3:2 了！
+          dualViewContainer.classList.add('ratio-3-2');      // 第二分頁：3:2
         } else if (currentMode === 'table_deriv') {
           dualViewContainer.classList.add('ratio-1-1');      // 第三分頁：1:1
         } else {
@@ -544,7 +553,7 @@
           const a = p.g * Math.sin(rad);
           const tMax = Math.sqrt(2 * p.L / a);
           const vMax = a * tMax;
-          const xTop = 20, yTop = 45, rampLen = 185;
+          const xTop = 20, yTop = 30, rampLen = 150;
           const xBot = xTop + rampLen * Math.cos(rad);
           const yBot = yTop + rampLen * Math.sin(rad);
           res = { tMax, xMax: p.L, vMax, a, _ramp: { xTop, yTop, rad, rampLen, xBot, yBot } };
@@ -607,7 +616,7 @@
         }
         updateStatsAndExplain(phys);
         if (window.MathJax && window.MathJax.typesetPromise) {
-          window.MathJax.typesetPromise([explainBox]);
+          window.MathJax.typesetPromise().catch(e => console.log(e));
         }
       }
 
@@ -848,9 +857,11 @@
           phys.dots.forEach((d, idx) => {
             const dotX = 195 - (d.x / phys.xMax) * 170;
             if (dotX >= 18 && dotX <= 202) {
-              visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 4, fill: '#111111' }));
-              visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 1.5, fill: '#ffffff' }));
-              if (idx === 0) visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 7.5, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.8 }));
+              /* 嚴格執行：已把白色空心圓刪除，100%全數改成純黑色實心黑點！ */
+              visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 4.5, fill: '#000000' }));
+              if (idx === 0) {
+                visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 8, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 2 }));
+              }
             }
           });
 
@@ -879,11 +890,25 @@
             const lx = mx + 12 * Math.sin(r.rad), ly = my - 12 * Math.cos(r.rad);
             addTextToSvg(visualSvg, lx, ly, segRatios[i], 'middle', 'var(--chalk-yellow)', 10, 'bold');
           }
-          addTextToSvg(visualSvg, 110, 20, '等時間間隔，位移差比 = 1:3:5:7:9', 'middle', 'var(--chalk-dim)', 10.5);
+          addTextToSvg(visualSvg, 110, 15, '等時間間隔，位移差比 = 1:3:5:7:9', 'middle', 'var(--chalk-dim)', 10);
+          
           const ball = createSvgEl('g', { id: 'simObject' });
           ball.appendChild(createSvgEl('circle', { cx: 0, cy: 0, r: 11, fill: '#ef6a5a', stroke: '#f2ecd9', 'stroke-width': 1.5 }));
           ball.appendChild(createSvgEl('circle', { cx: -3, cy: -3, r: 3, fill: 'rgba(255,255,255,0.7)' }));
           visualSvg.appendChild(ball);
+
+          /* 嚴格解決第二頁下方留白：填滿「1:3:5:7:9 連續等時間隔·位移比例對比圖」 */
+          visualSvg.appendChild(createSvgEl('line', { x1: 15, y1: 185, x2: 205, y2: 185, stroke: 'var(--chalk-dim)', 'stroke-dasharray': '2 4', opacity: 0.5 }));
+          addTextToSvg(visualSvg, 15, 205, '📊 【等時間間隔·下滑位移比例比較】', 'start', 'var(--chalk-yellow)', 10, 'bold');
+          
+          const colors = ['#ef6a5a', '#f2d675', '#4cd964', '#5fb0ff', '#bd93f9'];
+          segRatios.forEach((val, idx) => {
+            const by = 218 + idx * 23;
+            const bw = val * 16; // 1->16, 3->48, 5->80, 7->112, 9->144
+            visualSvg.appendChild(createSvgEl('rect', { x: 55, y: by, width: bw, height: 16, fill: colors[idx], opacity: 0.35, rx: 3, stroke: colors[idx], 'stroke-width': 1 }));
+            addTextToSvg(visualSvg, 50, by + 12, `第${idx+1}秒內`, 'end', 'var(--chalk-dim)', 8.5);
+            addTextToSvg(visualSvg, 55 + bw/2, by + 12, `1:3:5... 比值 = ${val}`, 'middle', '#ffffff', 9, 'bold');
+          });
 
         } else if (m === 'area' || (m === 'special' && phys.sub === 'brake')) {
           visualSvg.appendChild(createSvgEl('rect', { x: 5, y: 150, width: 210, height: 40, fill: '#382c1e', rx: 4 }));
@@ -976,7 +1001,8 @@
                 if (d.t <= t) {
                   const dotPx = 20 + ((x - d.x) / phys.xMax) * 150;
                   if (dotPx >= 20 && dotPx <= px - 5) {
-                    tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 129, r: 3.5, fill: '#111111' }));
+                    /* 上方拉動的紙帶也嚴格遵守：純黑色實心黑點！ */
+                    tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 129, r: 4, fill: '#000000' }));
                     if (idx === 0) tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 129, r: 6.5, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.5 }));
                   }
                 }
@@ -1042,28 +1068,28 @@
 
           explainBox.innerHTML = `
             <h3>💡 老師精闢解析：打點計時器判斷「三大黃金法則」</h3>
-            <p>1. <b>時間起點在拉車端</b>：考卷紙帶向右拉時，離拉車端最近的（最右邊）是第一點（<span class="math-sym">t = 0</span>）；離計時器最近的（最左邊）是最新打下的點。<br>
+            <p>1. <b>時間起點在拉車端</b>：考卷紙帶向右拉時，離拉車端最近的（最右邊）是第一點（$t = 0$）；離計時器最近的（最左邊）是最新打下的點。<br>
                2. <b>判斷加減速看間隔 $\\Delta x$</b>：從<b>最右邊（舊點）往最左邊（新點）</b>看過去，點跟點的距離若<b>「越來越大」就是等加速運動</b>；若<b>「越來越小」就是等減速運動</b>！<br>
-               3. <b>等差數列公式</b>：由靜止開始的等加速運動，相鄰位移差恆為固定值，且呈 <span class="formula-highlight">1 : 3 : 5 : 7 : 9</span> 比例成長！</p>
+               3. <b>等差數列公式</b>：由靜止開始的等加速運動，相鄰位移差恆為固定值，且呈 <span class="formula-highlight">$1 : 3 : 5 : 7 : 9$</span> 比例成長！</p>
           `;
         } else if (m === 'incline') {
           addStat('斜面角度 θ', `${params.incline.angle}°`);
           addStat('下滑加速度 a', `${phys.a.toFixed(2)} m/s²`);
           addStat('下滑總時間', `${phys.tMax.toFixed(2)} s`);
           addStat('底端速度', `${phys.vMax.toFixed(2)} m/s`);
-          explainBox.innerHTML = `<h3>💡 觀念總結：伽利略「稀釋重力」實驗</h3><p>古代沒有計時器，伽利略利用斜面將重力加速度「稀釋」為 <span class="formula-highlight">a = g \\times \\sin\\theta</span>。當角度 <span class="math-sym">\\theta = 90^\\circ</span> 時，加速度等於重力加速度 <span class="math-sym">g</span>，完全轉化為自由落體！斜面上標示的 5 個時間殘影點，證明了將總時間等分後，各段滾進距離會精準呈現 <span class="formula-highlight">1 : 3 : 5 : 7 : 9</span> 的等差奇數比！</p>`;
+          explainBox.innerHTML = `<h3>💡 觀念總結：伽利略「稀釋重力」實驗</h3><p>古代沒有計時器，伽利略利用斜面將重力加速度「稀釋」為 <span class="formula-highlight">$a = g \\times \\sin\\theta$</span>。當角度 $\\theta = 90^\\circ$ 時，加速度等於重力加速度 $g$，完全轉化為自由落體！斜面上標示的 5 個時間殘影點，證明了將總時間等分後，各段滾進距離會精準呈現 <span class="formula-highlight">$1 : 3 : 5 : 7 : 9$</span> 的等差奇數比！</p>`;
         } else if (m === 'table_deriv') {
           addStat('總位移 Δx', `5.0 m`);
           addStat('平均加速度 a', `0.4 m/s²`);
           addStat('時間區隔 Δt', `1.0 s`);
           addStat('目前推導進度', `Step ${phys.step}`);
-          explainBox.innerHTML = `<h3>💡 老師精闢解析：表格推導與「中間時刻速度」</h3><p>在等加速度運動中，<b>「某段時間內的平均速度，恰等於該段時間『中間時刻』的瞬時速度」</b>！例如第 $0 \\sim 1$ 秒的平均速度為 $0.2\\text{ m/s}$，這其實就是 $t = 0.5$ 秒時的瞬時速度。利用這個技巧，我們把求加速度的問題，轉化為相鄰中間時刻（時間差 $\\Delta t = 1\\text{ s}$）的速度變化，輕鬆得出 <span class="formula-highlight">a = \\frac{\\Delta v}{\\Delta t} = 0.4\\text{ m/s}^2</span>！</p>`;
+          explainBox.innerHTML = `<h3>💡 老師精闢解析：表格推導與「中間時刻速度」</h3><p>在等加速度運動中，<b>「某段時間內的平均速度，恰等於該段時間『中間時刻』的瞬時速度」</b>！例如第 $0 \\sim 1$ 秒的平均速度為 $0.2\\text{ m/s}$，這其實就是 $t = 0.5$ 秒時的瞬時速度。利用這個技巧，我們把求加速度的問題，轉化為相鄰中間時刻（時間差 $\\Delta t = 1\\text{ s}$）的速度變化，輕鬆得出 <span class="formula-highlight">$a = \\frac{\\Delta v}{\\Delta t} = 0.4\\text{ m/s}^2$</span>！</p>`;
         } else if (m === 'area') {
           addStat('矩形位移 v₀t', `${phys.areaRect.toFixed(1)} m`);
           addStat('三角位移 ½at²', `${phys.areaTri.toFixed(1)} m`);
           addStat('總位移 Δx', `${phys.xMax.toFixed(1)} m`);
           addStat('末速度 v', `${phys.vMax.toFixed(1)} m/s`);
-          explainBox.innerHTML = `<h3>💡 觀念總結：v-t 圖積分面積 = 絕對位移！</h3><p>在 $v-t$ 圖中，隨著時間向右推進，動態填充的黃色區域面積正好等於車輛走過的位移 $\\Delta x$！梯形總面積可完美切分為：底部的<b>等速矩形（<span class="math-sym">v_0 t</span>）</b>與頂部的<b>加速三角形（<span class="math-sym">\\frac{1}{2} a t^2</span>）</b>，這正是三大定律之二 <span class="formula-highlight">\\Delta x = v_0 t + \\frac{1}{2} a t^2</span> 的幾何真相！</p>`;
+          explainBox.innerHTML = `<h3>💡 觀念總結：v-t 圖積分面積 = 絕對位移！</h3><p>在 $v-t$ 圖中，隨著時間向右推進，動態填充的黃色區域面積正好等於車輛走過的位移 $\\Delta x$！梯形總面積可完美切分為：底部的<b>等速矩形（$v_0 t$）</b>與頂部的<b>加速三角形（$\\frac{1}{2} a t^2$）</b>，這正是三大定律之二 <span class="formula-highlight">$\\Delta x = v_0 t + \\frac{1}{2} a t^2$</span> 的幾何真相！</p>`;
         } else if (m === 'freefall') {
           addStat('釋放高度 H', `${params.freefall.h} m`);
           addStat('重力加速度 g', `${phys.g} m/s²`);
@@ -1074,24 +1100,24 @@
             <div class="def-card">
               <h4>🪨 會考必考！【自由落體】嚴格物理四大定義：</h4>
               <ul>
-                <li>① <b>初速度必須為零</b>：<span class="math-sym">v_0 = 0</span>（由靜止放開，絕非用力丟下）。</li>
+                <li>① <b>初速度必須為零</b>：$v_0 = 0$（由靜止放開，絕非用力丟下）。</li>
                 <li>② <b>僅受重力作用</b>：在真空或空氣阻力可忽略的環境進行。</li>
-                <li>③ <b>等加速度運動</b>：加速度恆等於地表重力加速度 <span class="math-sym">g \\approx 9.8\\text{ m/s}^2</span>，方向永遠垂直指向地心/正下方。</li>
+                <li>③ <b>等加速度運動</b>：加速度恆等於地表重力加速度 $g \\approx 9.8\\text{ m/s}^2$，方向永遠垂直指向地心/正下方。</li>
                 <li>④ <b>與質量完全無關</b>：不管重的鐵球還是輕的羽毛，下落加速度、速度與落地時間<span>皆相同</span>！</li>
               </ul>
             </div>
           `;
-          explainBox.innerHTML = `<h3>💡 觀念總結：公式簡化與大氣阻力</h3><p>因為初速 <span class="math-sym">v_0 = 0</span>，公式簡化為 <span class="formula-highlight">H = \\frac{1}{2} g t^2</span> 與 <span class="formula-highlight">v = g t = \\sqrt{2gH}</span>。日常大氣層中，羽毛因受阻力抵消重力而落得慢；但只要抽真空，鐵球與羽毛必定同時落地！</p>`;
+          explainBox.innerHTML = `<h3>💡 觀念總結：公式簡化與大氣阻力</h3><p>因為初速 $v_0 = 0$，公式簡化為 <span class="formula-highlight">$H = \\frac{1}{2} g t^2$</span> 與 <span class="formula-highlight">$v = g t = \\sqrt{2gH}$</span>。日常大氣層中，羽毛因受阻力抵消重力而落得慢；但只要抽真空，鐵球與羽毛必定同時落地！</p>`;
         } else if (m === 'special') {
           if (phys.sub === 'throw') {
             addStat('最高點高度', `${phys.xMax.toFixed(1)} m`); addStat('滯空總時間', `${phys.tMax.toFixed(2)} s`); addStat('登頂時間', `${phys.tTop.toFixed(2)} s`); addStat('落回瞬速', `${phys.vMax.toFixed(1)} m/s`);
-            explainBox.innerHTML = `<h3>💡 觀念總結：鉛直上拋的「極致對稱性」與大考陷阱</h3><p>請仔細觀察動畫中的綠色加速度箭頭：<b>到達最高點瞬間，速度雖為 <span class="formula-highlight">v = 0</span>，但重力加速度 <span class="math-sym">g</span> 依舊指向正下方（絕對不為零）</b>！這是全會考錯誤率第一名的題目！全過程具有對稱之美：<b>上升時間 = 下降時間</b>，落回拋出點的速度大小等於初速！</p>`;
+            explainBox.innerHTML = `<h3>💡 觀念總結：鉛直上拋的「極致對稱性」與大考陷阱</h3><p>請仔細觀察動畫中的綠色加速度箭頭：<b>到達最高點瞬間，速度雖為 <span class="formula-highlight">$v = 0$</span>，但重力加速度 $g$ 依舊指向正下方（絕對不為零）</b>！這是全會考錯誤率第一名的題目！全過程具有對稱之美：<b>上升時間 = 下降時間</b>，落回拋出點的速度大小等於初速！</p>`;
           } else if (phys.sub === 'rocket') {
             addStat('最高點高度', `${phys.xMax.toFixed(0)} m`); addStat('燃盡最高速 v₁', `${params.special.v0} m/s`); addStat('登頂時間 t₂', `${phys.t2.toFixed(1)} s`); addStat('墜地速度', `${phys.vEnd.toFixed(0)} m/s`);
             explainBox.innerHTML = `<h3>💡 觀念總結：火箭多階段破題秘技</h3><p>必考陷阱：<b>「燃料用盡瞬間，火箭不是在最高點！」</b> 燃料用盡時速度達到正向最大；隨後火箭因慣性繼續向上作等減速上升（階段二，綠色加速度箭頭朝下），直到速度減為 0 才到達真正最高點；之後才開始自由落體下墜（階段三）。</p>`;
           } else {
             addStat('行駛初速 v₀', `${params.special.v0} m/s`); addStat('煞車減速度 a', `-${params.special.a_brake} m/s²`); addStat('停止時間', `${phys.tMax.toFixed(2)} s`); addStat('煞車距離', `${phys.xMax.toFixed(1)} m`);
-            explainBox.innerHTML = `<h3>💡 觀念總結：緊急煞車與車距平方定律</h3><p>緊急煞車時加速度方向與車速相反。由 <span class="formula-highlight">v^2 = v_0^2 + 2a\\Delta x</span> 可知，當車速提高為 2 倍時，在相同的煞車減速度下，所需的煞車距離將激增為平方倍數——也就是 <b>4 倍 distance</b>！這就是國道超速危險的物理核心。</p>`;
+            explainBox.innerHTML = `<h3>💡 觀念總結：緊急煞車與車距平方定律</h3><p>緊急煞車時加速度方向與車速相反。由 <span class="formula-highlight">$v^2 = v_0^2 + 2a\\Delta x$</span> 可知，當車速提高為 2 倍時，在相同的煞車減速度下，所需的煞車距離將激增為平方倍數——也就是 <b>4 倍 distance</b>！這就是國道超速危險的物理核心。</p>`;
           }
         }
       }
