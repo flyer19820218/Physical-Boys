@@ -74,6 +74,14 @@
     .control label span.val { color: var(--chalk-yellow); font-weight: 600; }
     input[type=range] { width: 100%; accent-color: var(--chalk-yellow); height: 5px; background: transparent; cursor: pointer; }
 
+    .presets { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+    .presets span { font-size: 0.8rem; color: var(--chalk-dim); margin-right: 4px; }
+    .presets button {
+      font-family: 'Noto Sans TC', sans-serif; background: transparent; border: 1px dashed var(--chalk-dim);
+      color: var(--chalk); padding: 6px 12px; border-radius: 18px; font-size: 0.8rem; cursor: pointer; transition: all .15s;
+    }
+    .presets button:hover { border-color: var(--chalk-yellow); color: var(--chalk-yellow); background: rgba(242, 214, 117, 0.1); }
+
     .visual-card { width: 100%; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; margin-top: 10px; }
     svg { width: 100%; height: auto; display: block; overflow: visible; }
     
@@ -99,7 +107,7 @@
     <header>
       <div class="eyebrow">Optics Chapter 1-1 & 1-2</div>
       <h1>光學一：光的直進與針孔成像</h1>
-      <p>從影子的形成，到針孔的縮放與移動。拖拉滑桿，帶領學生視覺化破解考卷上的經典題型！</p>
+      <p>從影子的形成，到針孔的光學滑軌模擬器。拖拉滑桿自由決定物體、針孔、屏幕的相對位置，帶領學生視覺化破解考卷上的經典題型！</p>
     </header>
 
     <div class="board">
@@ -109,21 +117,18 @@
           <span>🌑 1. 光的直進與影子</span>
           <span class="sub">光線到不了的地方</span>
         </button>
-        <button data-mode="pinhole_basic">
-          <span>🕯️ 2. 針孔成像原理</span>
-          <span class="sub">物距與像距的正比關係</span>
+        <button data-mode="pinhole">
+          <span>🎛️ 2. 針孔光學滑軌模擬</span>
+          <span class="sub">自由移動物體、針孔與屏幕</span>
         </button>
-        <button data-mode="pinhole_move">
-          <span>🕳️ 3. 考題：針孔的移動</span>
-          <span class="sub">固定物與屏，單獨移動孔</span>
-        </button>
-        <button data-mode="quiz_pdf">
-          <span>📝 4. 講義實戰演練</span>
+        <button data-mode="quiz">
+          <span>🏆 3. 考題大挑戰</span>
           <span class="sub">講義 Ex1 與 Ex2 隨堂測驗</span>
         </button>
       </div>
 
       <div class="controls" id="controlsBox"></div>
+      <div class="presets" id="presetsBox"></div>
       <div class="visual-card">
         <svg id="visualSvg" viewBox="-300 -160 600 320"></svg>
       </div>
@@ -142,6 +147,7 @@
   <script>
     (function() {
       const controlsBox = document.getElementById('controlsBox');
+      const presetsBox = document.getElementById('presetsBox');
       const visualSvg = document.getElementById('visualSvg');
       const statsGrid = document.getElementById('statsGrid');
       const explainBox = document.getElementById('explainBox');
@@ -152,9 +158,8 @@
 
       const params = {
         shadow: { lightSize: 5, objHeight: 60, dist: 100 },
-        pinhole_basic: { p: 100, q: 100, h: 40, holes: '1' },
-        pinhole_move: { totalL: 200, pinholeX: 0, h: 40 },
-        quiz_pdf: { pinholeX: -100 } // 對應講義題目的動態針孔位置
+        pinhole: { objX: -100, holeX: 0, screenX: 100, h: 40, holes: '1' },
+        quiz: { holeX: -50 } // 初始對應 p=10 (比例放大後的位置)
       };
 
       function createSvgEl(tag, attrs) {
@@ -172,11 +177,13 @@
       function initUI() {
         quizContainer.innerHTML = '';
         renderControls();
+        renderPresets();
         updateSimulation();
       }
 
       function renderControls() {
         controlsBox.innerHTML = '';
+        presetsBox.innerHTML = '';
         const m = currentMode;
         const p = params[m];
 
@@ -189,46 +196,80 @@
           `;
           controlsBox.appendChild(div);
           div.querySelector('input').addEventListener('input', (e) => {
-            const newVal = parseFloat(e.target.value);
+            let newVal = parseFloat(e.target.value);
+            // 將新值傳給 onChange，並拿回修正後的值(用來防止交叉)
+            newVal = onChange(newVal);
+            e.target.value = newVal;
             document.getElementById(`val_${id}`).textContent = `${newVal} ${unit}`;
-            onChange(newVal);
             updateSimulation();
           });
         };
 
         if (m === 'shadow') {
-          addSlider('lightSize', '光源大小 (點光源 ↔ 擴展光源)', 2, 40, 2, p.lightSize, 'cm', v => p.lightSize = v);
-          addSlider('objHeight', '障礙物大小', 20, 100, 5, p.objHeight, 'cm', v => p.objHeight = v);
-        } else if (m === 'pinhole_basic') {
-          addSlider('p', '物距 (物體到針孔)', 40, 200, 10, p.p, 'cm', v => p.p = v);
-          addSlider('q', '像距 (屏幕到針孔)', 40, 200, 10, p.q, 'cm', v => p.q = v);
+          addSlider('lightSize', '光源大小 (點光源 ↔ 擴展光源)', 2, 40, 2, p.lightSize, 'cm', v => { p.lightSize = v; return v; });
+          addSlider('objHeight', '障礙物大小', 20, 100, 5, p.objHeight, 'cm', v => { p.objHeight = v; return v; });
+        } else if (m === 'pinhole') {
+          addSlider('objX', '物體位置 (左側)', -250, -20, 5, p.objX, '座標', v => {
+            p.objX = v;
+            // 防呆：推動物體時若碰到針孔，針孔也跟著退
+            if(p.holeX <= p.objX + 10) { p.holeX = p.objX + 10; document.getElementById('inp_holeX').value = p.holeX; document.getElementById('val_holeX').textContent = p.holeX + ' 座標'; }
+            return v;
+          });
+          addSlider('holeX', '針孔位置 (移動測試)', -200, 200, 5, p.holeX, '座標', v => {
+            // 防呆：針孔不能穿透物體或屏幕
+            let val = v;
+            if(val <= p.objX + 10) val = p.objX + 10;
+            if(val >= p.screenX - 10) val = p.screenX - 10;
+            p.holeX = val; return val;
+          });
+          addSlider('screenX', '屏幕位置 (右側)', 20, 250, 5, p.screenX, '座標', v => {
+            p.screenX = v;
+            if(p.holeX >= p.screenX - 10) { p.holeX = p.screenX - 10; document.getElementById('inp_holeX').value = p.holeX; document.getElementById('val_holeX').textContent = p.holeX + ' 座標'; }
+            return v;
+          });
           
           const div = document.createElement('div');
           div.className = 'control';
           div.innerHTML = `
-            <label>考題情境：紙板孔洞 <span class="val">點擊切換</span></label>
+            <label>紙板孔洞 <span class="val">點擊切換</span></label>
             <div style="display:flex; gap:6px; margin-top:4px;">
-              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holes === '1' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holes === '1' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer;" onclick="setHole('1')">1洞</button>
-              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holes === '2' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holes === '2' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer;" onclick="setHole('2')">2洞</button>
-              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holes === '3' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holes === '3' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer;" onclick="setHole('3')">3洞</button>
-              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holes === 'large' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holes === 'large' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer;" onclick="setHole('large')">大洞</button>
+              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holes === '1' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holes === '1' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setHole('1')">1洞</button>
+              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holes === '2' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holes === '2' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setHole('2')">2洞</button>
+              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holes === '3' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holes === '3' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setHole('3')">3洞</button>
+              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holes === 'large' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holes === 'large' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setHole('large')">大洞</button>
             </div>
           `;
           controlsBox.appendChild(div);
           window.setHole = (val) => { p.holes = val; renderControls(); updateSimulation(); };
-        } else if (m === 'pinhole_move') {
-          addSlider('pinholeX', '移動針孔 (左 ↔ 右)', -120, 120, 5, p.pinholeX, 'cm', v => p.pinholeX = v);
-        } else if (m === 'quiz_pdf') {
-          addSlider('pinholeX', '拖拉針孔驗證解答', -120, 80, 2, p.quiz_pdf?.pinholeX || -100, 'cm', v => p.quiz_pdf.pinholeX = v);
+        } else if (m === 'quiz') {
+          // 在大挑戰模式，嚴格限制拖拉範圍避免壞掉
+          // 內部設定：objX = -100, screenX = 100, scale = 5.
+          // range: -90 to 90
+          addSlider('holeX', '拖拉針孔驗證解答', -90, 90, 2, p.holeX, '刻度', v => { p.holeX = v; return v; });
           
           quizContainer.innerHTML = `
             <div class="quiz-box">
-              <h4>📖 講義實戰題 (配合上方互動驗證)</h4>
+              <h4>📖 考題大挑戰</h4>
               <p><b>Ex1：</b>針孔成像的實驗中，原本物體長 8cm，距離小孔 10cm。請問把屏幕放在另一側距離針孔多少距離時，成像大小會變成 24cm？</p>
-              <p><b>Ex2：</b>承上題請問你，針孔要如何移動，成像的大小會變成物體的 4 倍大？</p>
+              <p><b>Ex2：</b>呈上題請問你，針孔要如何移動，成像的大小會變成物體的 4 倍大？</p>
             </div>
           `;
         }
+      }
+
+      function renderPresets() {
+        if(currentMode !== 'pinhole') return;
+        presetsBox.innerHTML = '<span>⚡ 考題情境捷徑：</span>';
+        const p = params.pinhole;
+        const addBtn = (label, action) => {
+          const b = document.createElement('button');
+          b.textContent = label;
+          b.onclick = () => { action(); renderControls(); updateSimulation(); };
+          presetsBox.appendChild(b);
+        };
+        addBtn('物距=像距 (1:1)', () => { p.objX = -100; p.holeX = 0; p.screenX = 100; });
+        addBtn('針孔靠近物體 (放大)', () => { p.objX = -100; p.holeX = -50; p.screenX = 100; });
+        addBtn('針孔靠近屏幕 (縮小)', () => { p.objX = -100; p.holeX = 50; p.screenX = 100; });
       }
 
       function updateSimulation() {
@@ -259,11 +300,10 @@
           // 屏幕
           visualSvg.appendChild(createSvgEl('line', { x1: screenX, y1: -140, x2: screenX, y2: 140, stroke: '#ffffff', 'stroke-width': 6 }));
           
-          // 計算邊界射線 (交叉與外側)
+          // 計算邊界射線
           const topLight = -p.lightSize, botLight = p.lightSize;
           const topObj = -p.objHeight/2, botObj = p.objHeight/2;
           
-          // 光線繪製
           const drawRay = (y1, y2, opacity) => {
             const slope = (y2 - y1) / (objX - lightX);
             const yAtScreen = y1 + slope * (screenX - lightX);
@@ -276,7 +316,7 @@
           const s3 = drawRay(topLight, botObj, 0.4); // 上對下 (交叉)
           const s4 = drawRay(botLight, topObj, 0.4); // 下對上 (交叉)
 
-          // 本影區 (Umbra) - 兩邊光線都照不到
+          // 本影區 (Umbra)
           const umbraTop = Math.max(s1, s4);
           const umbraBot = Math.min(s2, s3);
           
@@ -291,30 +331,25 @@
             當光源越大（擴展光源），除了完全黑暗的「本影區」，邊緣還會產生部分光線能到達的灰色地帶，稱為「半影區」[cite: 1]。</p>
           `;
           
-        } else if (m === 'pinhole_basic' || m === 'pinhole_move' || m === 'quiz_pdf') {
+        } else if (m === 'pinhole' || m === 'quiz') {
           
           let pVal, qVal, objH, holePositions = [0], isLargeHole = false;
           let objX, screenX, holeX;
 
-          if (m === 'pinhole_basic') {
-            pVal = params.pinhole_basic.p; qVal = params.pinhole_basic.q; objH = params.pinhole_basic.h;
-            objX = -pVal; holeX = 0; screenX = qVal;
-            const hType = params.pinhole_basic.holes;
+          if (m === 'pinhole') {
+            const p = params.pinhole;
+            objX = p.objX; holeX = p.holeX; screenX = p.screenX; objH = p.h;
+            pVal = holeX - objX; qVal = screenX - holeX;
+            const hType = p.holes;
             if (hType === '2') holePositions = [-25, 25];
             else if (hType === '3') holePositions = [-30, 0, 30];
             else if (hType === 'large') { isLargeHole = true; holePositions = [-15, -10, -5, 0, 5, 10, 15]; }
-          } else if (m === 'pinhole_move') {
-            const p = params.pinhole_move;
-            objX = -150; screenX = 150; holeX = p.pinholeX;
-            pVal = holeX - objX; qVal = screenX - holeX; objH = p.h;
-          } else if (m === 'quiz_pdf') {
-            const p = params.quiz_pdf;
-            // 講義題意設定：物屏總距固定，物體長 8cm。
-            // EX1: p=10, 像=24 (放大3倍) -> q=30。總距離 = 40。
-            // 我們把比例放大 4 倍畫在畫面上 (總距 160)
-            const SCALE = 4;
+          } else if (m === 'quiz') {
+            const p = params.quiz;
+            // 講義題意設定：物屏總距 40，比例放大 5 倍 = 200
+            const SCALE = 5;
             objH = 8 * SCALE; 
-            objX = -80; screenX = 80; holeX = p.pinholeX; // Total L = 160 (對應真實 40cm)
+            objX = -100; screenX = 100; holeX = p.holeX; // Total L = 200
             pVal = holeX - objX; qVal = screenX - holeX;
           }
 
@@ -328,6 +363,7 @@
 
           // 畫屏幕
           visualSvg.appendChild(createSvgEl('line', { x1: screenX, y1: -140, x2: screenX, y2: 140, stroke: '#ffffff', 'stroke-width': 6, opacity: 0.9 }));
+          addText(visualSvg, screenX + 10, -120, '屏幕', 'start', '#ffffff', 12, 'bold');
           
           // 畫物體
           visualSvg.appendChild(createSvgEl('line', { x1: objX, y1: 0, x2: objX, y2: -objH, stroke: '#ef6a5a', 'stroke-width': 6, 'stroke-linecap': 'round' }));
@@ -357,12 +393,12 @@
           visualSvg.appendChild(createSvgEl('path', { d: `M ${holeX},130 L ${screenX},130`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
           
           let trueP = pVal, trueQ = qVal, trueObjH = objH, trueImgH = mainImgH;
-          if (m === 'quiz_pdf') {
-             trueP = pVal / 4; trueQ = qVal / 4; trueObjH = 8; trueImgH = mainImgH / 4;
+          if (m === 'quiz') {
+             trueP = pVal / 5; trueQ = qVal / 5; trueObjH = 8; trueImgH = mainImgH / 5;
           }
 
-          addText(visualSvg, (objX+holeX)/2, 145, `物距 p = ${trueP.toFixed(1)}`, 'middle', 'var(--chalk-dim)', 11);
-          addText(visualSvg, (holeX+screenX)/2, 145, `像距 q = ${trueQ.toFixed(1)}`, 'middle', 'var(--chalk-dim)', 11);
+          addText(visualSvg, (objX+holeX)/2, 145, `p = ${trueP.toFixed(1)}`, 'middle', 'var(--chalk-dim)', 11);
+          addText(visualSvg, (holeX+screenX)/2, 145, `q = ${trueQ.toFixed(1)}`, 'middle', 'var(--chalk-dim)', 11);
 
           visualSvg.innerHTML += `
             <defs>
@@ -372,7 +408,7 @@
             </defs>
           `;
 
-          // 更新數據板與解析
+          // 更新數據板
           const mag = (trueQ / trueP).toFixed(2);
           addStat('物距 p', `${trueP.toFixed(1)} cm`);
           addStat('像距 q', `${trueQ.toFixed(1)} cm`);
@@ -380,25 +416,25 @@
           addStat('像高 $h_i$', `${trueImgH.toFixed(1)} cm`);
           addStat('倍率 M', `${mag} 倍`);
 
-          if (m === 'pinhole_basic') {
+          if (m === 'pinhole') {
+            let extra = '';
+            if (params.pinhole.holes === '2') extra = '兩個針孔會形成<b>「兩個獨立的倒立實像」</b>，彼此位置會因為孔距而錯開。';
+            else if (params.pinhole.holes === '3') extra = '三個針孔就會形成<b>「三個獨立的倒立實像」</b>，排列方式與孔洞的相對位置完全相反（因為上下顛倒）。';
+            else if (params.pinhole.holes === 'large') extra = '大洞可以看成是「無數個小洞」的集合。無數個倒立實像交疊在一起，會導致<b>成像邊緣模糊</b>，最終形狀甚至會變成孔洞本身的形狀，且亮度增加！';
+
             explainBox.innerHTML = `
-              <h3>💡 老師精闢解析：物距與像距</h3>
+              <h3>💡 老師精闢解析：考卷最愛考的「孔洞變化與移動」</h3>
               <p>利用相似三角形，我們得到必考公式：<span class="formula-highlight"> $\\frac{h_i}{h_o} = \\frac{q}{p}$ </span>。<br>
-              切換不同孔洞時請注意：「多個孔就會形成多個像」，而大孔洞因為光線無限重疊交錯，會導致成像<b>模糊且明亮</b>！</p>
+              若固定物與屏，把針孔「往物體推（p 變小、q 變大）」，成像倍率就會急速上升而放大！<br>
+              ${extra ? '<br>'+extra : ''}</p>
             `;
-          } else if (m === 'pinhole_move') {
+          } else if (m === 'quiz') {
             explainBox.innerHTML = `
-              <h3>💡 老師精闢解析：考卷最愛考的「移動針孔」</h3>
-              <p>當物體與屏幕的距離固定時，<b>把針孔「往物體推（p 變小、q 變大）」</b>，成像倍率 $\\frac{q}{p}$ 就會急速上升，成像變大！<br>
-              相反地，針孔靠近屏幕時，成像就會縮小。拉動滑桿感受一下這個動態變化！</p>
-            `;
-          } else if (m === 'quiz_pdf') {
-            explainBox.innerHTML = `
-              <h3>💡 講義解答與解析</h3>
+              <h3>💡 考題大挑戰解答與解析</h3>
               <p><b>[解析 Ex1]</b> 根據公式 $\\frac{h_i}{h_o} = \\frac{q}{p}$，已知物長 $h_o=8$，物距 $p=10$，要求像長 $h_i=24$ 時的像距 $q$[cite: 1]。代入得 $\\frac{24}{8} = \\frac{q}{10}$，所以 <span class="formula-highlight"> $q = 30$ cm </span>[cite: 1]。</p>
               <p><b>[解析 Ex2]</b> 承上題，物屏總距離為 $p+q = 10+30 = 40$ cm[cite: 1]。若要成像為 4 倍大，代表 $q = 4p$[cite: 1]。<br>
               代入總長度：$p + 4p = 40 \\Rightarrow 5p = 40 \\Rightarrow$ <span class="formula-highlight"> $p = 8$ cm </span>。<br>
-              原本 $p=10$，現在 $p=8$，所以<b>針孔要向物體移動 2 cm</b>[cite: 1]！(可將上方滑桿拉至物距 $p=8$ 驗證)</p>
+              原本 $p=10$，現在 $p=8$，所以<b>針孔要向物體移動 2 cm</b>[cite: 1]！(可將上方滑桿拉至 p=8 驗證)</p>
             `;
           }
         }
