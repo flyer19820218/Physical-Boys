@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國中自然 光學｜光的直進與針孔成像 黑板模擬器</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    :root {
+      --board: #1c3d34;
+      --board-dark: #15302a;
+      --chalk: #f2ecd9;
+      --chalk-dim: #c9c2ab;
+      --chalk-yellow: #f2d675;
+      --x-color: #5fb0ff;
+      --v-color: #ef6a5a;
+      --a-color: #4cd964;
+      --frame: #5c4a33;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--board-dark);
+      color: var(--chalk);
+      font-family: 'Noto Sans TC', sans-serif;
+      padding: 20px 14px 60px;
+    }
+
+    .wrap { max-width: 1300px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 24px; }
+    header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.2em; color: var(--chalk-dim); text-transform: uppercase; }
+    h1 { font-family: 'Kalam', cursive; font-size: 2.1rem; font-weight: 700; margin: 6px 0 10px; text-shadow: 0 0 14px rgba(242, 236, 217, 0.15); }
+    header p { color: var(--chalk-dim); max-width: 780px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem; }
+
+    .board {
+      background: var(--board);
+      border: 10px solid var(--frame);
+      border-radius: 6px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4), inset 0 0 60px rgba(0, 0, 0, 0.25);
+      padding: 20px 18px 24px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .board::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 5px 5px; pointer-events: none; border-radius: 6px;
+    }
+
+    .board h2 {
+      font-family: 'Kalam', cursive; font-size: 1.25rem; margin: 0 0 14px;
+      color: var(--chalk-yellow); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+    }
+
+    .mode-switch { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .mode-switch button {
+      font-family: 'Noto Sans TC', sans-serif; font-size: 0.92rem; font-weight: 700;
+      background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 1.5px solid rgba(242, 236, 217, 0.18);
+      padding: 12px 14px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; display: flex; flex-direction: column; gap: 4px;
+    }
+    .mode-switch button span.sub { font-size: 0.75rem; font-weight: 400; opacity: 0.7; }
+    .mode-switch button:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(242, 236, 217, 0.4); }
+    .mode-switch button.active {
+      background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow);
+      box-shadow: 0 4px 12px rgba(242, 214, 117, 0.25);
+    }
+    .mode-switch button.active span.sub { color: var(--board-dark); opacity: 0.85; font-weight: 600; }
+
+    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.15); padding: 14px; border-radius: 8px; }
+    .control label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--chalk-dim); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
+    .control label span.val { color: var(--chalk-yellow); font-weight: 600; }
+    input[type=range] { width: 100%; accent-color: var(--chalk-yellow); height: 5px; background: transparent; cursor: pointer; }
+
+    .presets { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+    .presets span { font-size: 0.8rem; color: var(--chalk-dim); margin-right: 4px; }
+    .presets button {
+      font-family: 'Noto Sans TC', sans-serif; background: transparent; border: 1px dashed var(--chalk-dim);
+      color: var(--chalk); padding: 6px 12px; border-radius: 18px; font-size: 0.8rem; cursor: pointer; transition: all .15s;
+    }
+    .presets button:hover { border-color: var(--chalk-yellow); color: var(--chalk-yellow); background: rgba(242, 214, 117, 0.1); }
+
+    .dual-view { display: flex; gap: 16px; margin: 12px 0 8px; align-items: stretch; }
+    .visual-card { flex: 1; width: 100%; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; }
+
+    svg { width: 100%; height: auto; display: block; overflow: visible; }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 14px; }
+    .stat { background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 10px 8px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.04); }
+    .stat .k { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--chalk-dim); }
+    .stat .v { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--chalk-yellow); font-weight: 600; margin-top: 3px; }
+
+    .explain-box { margin-top: 18px; background: rgba(0, 0, 0, 0.18); border-left: 4px solid var(--chalk-yellow); border-radius: 0 8px 8px 0; padding: 14px 18px; }
+    .explain-box h3 { font-family: 'Kalam', cursive; color: var(--chalk-yellow); margin: 0 0 8px; font-size: 1.1rem; }
+    .explain-box p { margin: 0; font-size: 0.9rem; line-height: 1.6; color: var(--chalk); }
+    .formula-highlight { font-family: 'JetBrains Mono', monospace; background: rgba(242, 214, 117, 0.15); padding: 2px 8px; border-radius: 4px; color: var(--chalk-yellow); font-weight: 600; display: inline-block; margin: 4px 0; }
+    .math-sym { font-family: 'JetBrains Mono', monospace; color: var(--chalk-yellow); font-weight: 600; padding: 0 3px; }
+
+    footer { text-align: center; color: var(--chalk-dim); font-size: 0.8rem; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">Optics Chapter 1-1 & 1-2</div>
+      <h1>光學一：光的直進與針孔成像</h1>
+      <p>拖拉滑桿改變光源物距、屏幕像距，即時演示放大縮小。切換不同孔洞模式，破解考試常出的「多孔成像」與「大洞模糊」迷思！</p>
+    </header>
+
+    <div class="board">
+      <h2>① 選擇實驗情境</h2>
+      <div class="mode-switch">
+        <button class="active" data-mode="basic">
+          <span>🕯️ 1-1 光的直進與針孔成像</span>
+          <span class="sub">正比關係：物距與像距實驗</span>
+        </button>
+        <button data-mode="quiz">
+          <span>🕳️ 1-2 針孔考題變化練習</span>
+          <span class="sub">一個洞、兩個洞、三個洞與大洞</span>
+        </button>
+      </div>
+
+      <div class="controls" id="controlsBox"></div>
+      <div class="presets" id="presetsBox"></div>
+    </div>
+
+    <div class="board">
+      <h2>② 互動式黑板演示區</h2>
+      <div class="dual-view">
+        <div class="visual-card">
+          <svg id="visualSvg" viewBox="-300 -150 600 300"></svg>
+        </div>
+      </div>
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+
+    <div class="board">
+      <h2>③ 課堂重點與物理概念剖析</h2>
+      <div class="explain-box" id="explainBox"></div>
+    </div>
+
+    <footer>國中理化 光學單元 · 視覺化互動教學教材 · 讓自然科學變得直觀又有趣！</footer>
+  </div>
+
+  <script>
+    (function() {
+      const controlsBox = document.getElementById('controlsBox');
+      const presetsBox = document.getElementById('presetsBox');
+      const visualSvg = document.getElementById('visualSvg');
+      const statsGrid = document.getElementById('statsGrid');
+      const explainBox = document.getElementById('explainBox');
+
+      let currentMode = 'basic';
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+
+      const params = {
+        basic: { p: 100, q: 100, h: 40 },
+        quiz: { p: 120, q: 100, h: 40, holeType: '1' } 
+      };
+
+      function createSvgEl(tag, attrs) {
+        const el = document.createElementNS(SVG_NS, tag);
+        if (attrs) {
+          for (let key in attrs) el.setAttribute(key, attrs[key]);
+        }
+        return el;
+      }
+
+      function addTextToSvg(parent, x, y, txt, anchor, color, size, weight='normal') {
+          const t = createSvgEl('text', { x, y, 'text-anchor': anchor, fill: color, 'font-size': size, 'font-weight': weight, 'font-family': 'Noto Sans TC' });
+          t.textContent = txt;
+          parent.appendChild(t);
+      }
+
+      function initUI() {
+        renderControls();
+        renderPresets();
+        updateSimulation();
+      }
+
+      function renderControls() {
+        controlsBox.innerHTML = '';
+        const m = currentMode;
+        const p = params[m];
+
+        const addSlider = (id, label, min, max, step, val, unit, onChange) => {
+          const div = document.createElement('div');
+          div.className = 'control';
+          div.innerHTML = `
+            <label>${label} <span class="val" id="val_${id}">${val} ${unit}</span></label>
+            <input type="range" id="inp_${id}" min="${min}" max="${max}" step="${step}" value="${val}">
+          `;
+          controlsBox.appendChild(div);
+          div.querySelector('input').addEventListener('input', (e) => {
+            const newVal = parseFloat(e.target.value);
+            document.getElementById(`val_${id}`).textContent = `${newVal} ${unit}`;
+            onChange(newVal);
+            updateSimulation();
+          });
+        };
+
+        if (m === 'basic') {
+          addSlider('p', '物距 (物體到針孔)', 40, 200, 10, p.p, 'cm', v => p.p = v);
+          addSlider('q', '像距 (屏幕到針孔)', 40, 200, 10, p.q, 'cm', v => p.q = v);
+          addSlider('h', '物體大小 (高度)', 20, 80, 5, p.h, 'cm', v => p.h = v);
+        } else if (m === 'quiz') {
+          addSlider('p', '物距 (拉動物體)', 50, 180, 10, p.p, 'cm', v => p.p = v);
+          addSlider('q', '像距 (拉動屏幕)', 50, 180, 10, p.q, 'cm', v => p.q = v);
+          
+          const div = document.createElement('div');
+          div.className = 'control';
+          div.innerHTML = `
+            <label>考題情境：紙板孔洞 <span class="val">點擊切換</span></label>
+            <div style="display:flex; gap:6px; margin-top:4px;">
+              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holeType === '1' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holeType === '1' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setHole('1')">1 個洞</button>
+              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holeType === '2' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holeType === '2' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setHole('2')">2 個洞</button>
+              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holeType === '3' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holeType === '3' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setHole('3')">3 個洞</button>
+              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.holeType === 'large' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.holeType === 'large' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setHole('large')">大洞</button>
+            </div>
+          `;
+          controlsBox.appendChild(div);
+          window.setHole = (val) => { p.holeType = val; renderControls(); updateSimulation(); };
+        }
+      }
+
+      function renderPresets() {
+        presetsBox.innerHTML = '<span>⚡ 快速情境：</span>';
+        const m = currentMode;
+        const addBtn = (label, action) => {
+          const b = document.createElement('button');
+          b.textContent = label;
+          b.onclick = () => { action(); renderControls(); updateSimulation(); };
+          presetsBox.appendChild(b);
+        };
+
+        if (m === 'basic') {
+          addBtn('物距 = 像距 (成像 1:1)', () => { params.basic.p = 100; params.basic.q = 100; });
+          addBtn('像距為 2 倍 (成像放大)', () => { params.basic.p = 70; params.basic.q = 140; });
+          addBtn('物距遠 (成像縮小)', () => { params.basic.p = 150; params.basic.q = 75; });
+        }
+      }
+
+      function updateSimulation() {
+        visualSvg.innerHTML = '';
+        const m = currentMode;
+        const p = params[m];
+        
+        // 畫主光軸
+        visualSvg.appendChild(createSvgEl('line', { x1: -280, y1: 0, x2: 280, y2: 0, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5', opacity: 0.5 }));
+        
+        // 畫針孔紙板 (X = 0)
+        let holePositions = [0];
+        let isLargeHole = false;
+        
+        if (m === 'quiz') {
+            if (p.holeType === '2') holePositions = [-25, 25];
+            else if (p.holeType === '3') holePositions = [-30, 0, 30];
+            else if (p.holeType === 'large') {
+                isLargeHole = true;
+                // 大洞由多個密集的小洞組成來模擬模糊效果
+                holePositions = [-15, -10, -5, 0, 5, 10, 15]; 
+            }
+        }
+        
+        // 畫擋板
+        visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: -140, x2: 0, y2: 140, stroke: '#8f8a80', 'stroke-width': 4 }));
+        // 挖洞
+        holePositions.forEach(hy => {
+            const holeSize = isLargeHole ? 35 : 12;
+            visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: hy - holeSize/2, x2: 0, y2: hy + holeSize/2, stroke: 'var(--board-dark)', 'stroke-width': 6 }));
+        });
+        addTextToSvg(visualSvg, -5, -120, '針孔紙板', 'end', '#8f8a80', 12, 'bold');
+
+        // 畫屏幕 (X = q)
+        visualSvg.appendChild(createSvgEl('line', { x1: p.q, y1: -140, x2: p.q, y2: 140, stroke: '#ffffff', 'stroke-width': 6, opacity: 0.9 }));
+        addTextToSvg(visualSvg, p.q + 10, -120, '屏幕', 'start', '#ffffff', 12, 'bold');
+        
+        // 畫物體 (X = -p)
+        const objBaseX = -p.p;
+        const objH = p.h;
+        visualSvg.appendChild(createSvgEl('line', { x1: objBaseX, y1: 0, x2: objBaseX, y2: -objH, stroke: '#ef6a5a', 'stroke-width': 6, 'stroke-linecap': 'round' }));
+        // 箭頭
+        visualSvg.appendChild(createSvgEl('polygon', { points: `${objBaseX},- ${objH+8} ${objBaseX-6},-${objH-2} ${objBaseX+6},-${objH-2}`, fill: '#ef6a5a' }));
+        addTextToSvg(visualSvg, objBaseX, 20, '光源物體', 'middle', '#ef6a5a', 12, 'bold');
+
+        // 計算與畫射線及成像
+        let mainImgH = 0;
+        
+        holePositions.forEach((hy, idx) => {
+            const opacity = isLargeHole ? 0.15 : 0.6;
+            
+            // 頂部發出的光
+            const topSlope = (hy - (-objH)) / (0 - objBaseX);
+            const topImgY = hy + topSlope * p.q;
+            visualSvg.appendChild(createSvgEl('line', { x1: objBaseX, y1: -objH, x2: p.q, y2: topImgY, stroke: '#f2d675', 'stroke-width': 1.5, opacity: opacity }));
+
+            // 底部發出的光
+            const botSlope = (hy - 0) / (0 - objBaseX);
+            const botImgY = hy + botSlope * p.q;
+            visualSvg.appendChild(createSvgEl('line', { x1: objBaseX, y1: 0, x2: p.q, y2: botImgY, stroke: '#f2d675', 'stroke-width': 1.5, opacity: opacity }));
+
+            // 畫成像
+            const imgColor = isLargeHole ? 'rgba(95, 176, 255, 0.2)' : '#5fb0ff';
+            visualSvg.appendChild(createSvgEl('line', { x1: p.q, y1: botImgY, x2: p.q, y2: topImgY, stroke: imgColor, 'stroke-width': 6, 'stroke-linecap': 'round' }));
+            // 倒立箭頭
+            visualSvg.appendChild(createSvgEl('polygon', { points: `${p.q},${topImgY+8} ${p.q-6},${topImgY-2} ${p.q+6},${topImgY-2}`, fill: imgColor }));
+            
+            if (hy === 0 || (m === 'quiz' && idx === 0)) {
+                mainImgH = Math.abs(topImgY - botImgY);
+            }
+        });
+
+        // 標示距離
+        visualSvg.appendChild(createSvgEl('path', { d: `M 0,130 L ${p.q},130`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
+        visualSvg.appendChild(createSvgEl('path', { d: `M ${objBaseX},130 L 0,130`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
+        addTextToSvg(visualSvg, objBaseX/2, 145, `物距 = ${p.p} cm`, 'middle', 'var(--chalk-dim)', 12);
+        addTextToSvg(visualSvg, p.q/2, 145, `像距 = ${p.q} cm`, 'middle', 'var(--chalk-dim)', 12);
+
+        // 定義箭頭 marker
+        visualSvg.innerHTML += `
+            <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                <path d="M 0 2 L 10 5 L 0 8 z" fill="var(--chalk-dim)" />
+                </marker>
+            </defs>
+        `;
+
+        updateStatsAndExplain(p, mainImgH, isLargeHole);
+      }
+
+      function updateStatsAndExplain(p, imgH, isLargeHole) {
+        statsGrid.innerHTML = ''; 
+        const m = currentMode;
+        
+        const addStat = (k, v) => {
+          const d = document.createElement('div'); d.className = 'stat';
+          d.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div>`; statsGrid.appendChild(d);
+        };
+
+        const mag = (p.q / p.p).toFixed(2);
+
+        addStat('物體大小', `${p.h.toFixed(1)} cm`);
+        addStat('單一成像大小', `${imgH.toFixed(1)} cm`);
+        addStat('放大倍率', `${mag} 倍`);
+
+        if (m === 'basic') {
+          explainBox.innerHTML = `
+            <h3>💡 老師精闢解析：針孔成像的「正比關係」</h3>
+            <p>1. <b>直線前進定律</b>：因為光是直線前進的，所以穿過針孔後會形成一個<b>「上下顛倒、左右相反」</b>的實像。<br>
+            2. <b>幾何相似形</b>：利用相似三角形原理，<span class="formula-highlight">物體大小 : 成像大小 = 物距 : 像距</span>。當你把屏幕往後拉（像距變大），成像就會跟著放大喔！</p>
+          `;
+        } else if (m === 'quiz') {
+          let extra = '';
+          if (p.holeType === '1') extra = '一個針孔對應一個倒立實像，最基礎的題型。';
+          else if (p.holeType === '2') extra = '兩個針孔會形成<b>「兩個獨立的倒立實像」</b>，彼此位置會因為孔距而錯開。';
+          else if (p.holeType === '3') extra = '三個針孔就會形成<b>「三個獨立的倒立實像」</b>，排列方式與孔洞的相對位置完全相反（因為上下顛倒）。';
+          else if (p.holeType === 'large') extra = '大洞可以看成是「無數個小洞」的集合。無數個倒立實像交疊在一起，會導致<b>成像邊緣模糊</b>，最終形狀甚至會變成孔洞本身的形狀，且亮度增加！';
+
+          explainBox.innerHTML = `
+            <h3>💡 觀念總結：多孔與大洞成像陷阱</h3>
+            <p>${extra}<br><br>
+            考試常考的口訣：<b>「小孔成物像（清晰倒立），大孔成孔像（模糊明亮）」</b>！</p>
+          `;
+        }
+      }
+
+      document.querySelectorAll('.mode-switch button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.mode-switch button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentMode = btn.dataset.mode;
+          initUI();
+        });
+      });
+
+      initUI();
+    })();
+  </script>
+</body>
+</html>
