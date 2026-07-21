@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -112,11 +113,14 @@
     .graph-card { min-width: 0; background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; }
     .visual-card { min-width: 220px; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; }
 
-    .dual-view.ratio-2-1 .graph-card { flex: 2; }
-    .dual-view.ratio-2-1 .visual-card { flex: 1; }
+    /* flex 比例改成跟兩個 SVG 的 viewBox 寬度比例一致 (680:220)，
+       這樣 combinedSvg 與 visualSvg 渲染出來的實際高度會自動相等，
+       不需要再各自調整內部座標或留白撐版面。 */
+    .dual-view.ratio-2-1 .graph-card { flex: 680; }
+    .dual-view.ratio-2-1 .visual-card { flex: 220; }
 
-    .dual-view.ratio-3-2 .graph-card { flex: 3; }
-    .dual-view.ratio-3-2 .visual-card { flex: 2; }
+    .dual-view.ratio-3-2 .graph-card { flex: 680; }
+    .dual-view.ratio-3-2 .visual-card { flex: 220; }
 
     .dual-view.ratio-1-1 .graph-card { flex: 1; }
     .dual-view.ratio-1-1 .visual-card { flex: 1; }
@@ -465,7 +469,20 @@
           const tMax = 5.0; // 固定為 1~5 秒，好讀好算！
           const vMax = a * tMax;
           const xMax = 0.5 * a * tMax * tMax;
-          const xTop = 20, yTop = 30, rampLen = 190;
+
+          // 讓斜面視覺化的長度隨角度自動調整，填滿可視區域的「寬 × 高」邊界，
+          // 避免角度太小（斜面很扁）或太大（斜面很陡）時留下大片空白。
+          const xTop = 20;
+          const targetW = 175; // 斜面允許使用的最大水平範圍
+          const targetH = 245; // 斜面允許使用的最大垂直範圍
+          const rampLen = Math.min(targetW / Math.cos(rad), targetH / Math.sin(rad));
+
+          // 角度較小時，斜面會被「寬度」這個上限卡住，實際垂直高度遠小於 targetH，
+          // 所以改成在可用的垂直範圍內置中，讓留白平均分配在上下，不會整片擠在下方。
+          const availableTop = 45, availableBottom = 300;
+          const actualVSpan = rampLen * Math.sin(rad);
+          const yTop = availableTop + ((availableBottom - availableTop) - actualVSpan) / 2;
+
           const xBot = xTop + rampLen * Math.cos(rad);
           const yBot = yTop + rampLen * Math.sin(rad);
           res = { tMax, xMax, vMax, a, _ramp: { xTop, yTop, rad, rampLen, xBot, yBot } };
@@ -760,7 +777,6 @@
           addTextToSvg(visualSvg, 110, 305, hint, 'middle', 'var(--x-color)', 9.5);
 
         } else if (m === 'incline') {
-          /* 專注保留斜面與 1:3:5:7:9，移除底下重疊文字的長條圖 */
           const r = phys._ramp;
           visualSvg.appendChild(createSvgEl('polygon', {
             points: `${r.xTop},${r.yTop} ${r.xBot},${r.yBot} ${r.xTop},${r.yBot}`,
@@ -777,16 +793,18 @@
             visualSvg.appendChild(createSvgEl('circle', { cx: tx, cy: ty, r: (idx === 0 || idx === markerFracs.length - 1) ? 5 : 4, fill: idx === 0 ? 'var(--v-color)' : 'var(--chalk-yellow)' }));
           });
           
+          // 比例數字標籤改畫在斜面「下方」（球所在那一側的對面），
+          // 這樣無論球滾到哪裡，都不會擋住或蓋住任何一個數字標籤
           for (let i = 0; i < segRatios.length; i++) {
             const dist1 = markerFracs[i] * r.rampLen, dist2 = markerFracs[i + 1] * r.rampLen;
             const midDist = (dist1 + dist2) / 2;
             const mx = r.xTop + midDist * Math.cos(r.rad), my = r.yTop + midDist * Math.sin(r.rad);
-            const lx = mx + 16 * Math.sin(r.rad), ly = my - 16 * Math.cos(r.rad);
+            const labelOffset = 15;
+            const lx = mx - labelOffset * Math.sin(r.rad), ly = my + labelOffset * Math.cos(r.rad);
             addTextToSvg(visualSvg, lx, ly, segRatios[i], 'middle', 'var(--chalk-yellow)', 13, 'bold');
           }
           
           addTextToSvg(visualSvg, 110, 18, '等時間間隔，位移差比 = 1:3:5:7:9', 'middle', 'var(--chalk-dim)', 11, 'bold');
-          addTextToSvg(visualSvg, 110, 290, '👈 搭配左圖 v-t 階梯觀察位移面積', 'middle', 'var(--x-color)', 11);
           
           const ball = createSvgEl('g', { id: 'simObject' });
           ball.appendChild(createSvgEl('circle', { cx: 0, cy: 0, r: 12, fill: '#ef6a5a', stroke: '#f2ecd9', 'stroke-width': 1.5 }));
