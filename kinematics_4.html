@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>國中自然 等加速度運動 (上)｜打點計時、斜面與等差數列</title>
 
-  <!-- 強制注入 MathJax 解析設定，確保 inline $ 與 LaTeX 公式絕對不壞掉 -->
+  <!-- 強制注入 MathJax 解析設定 -->
   <script>
     window.MathJax = {
       tex: {
@@ -111,7 +111,6 @@
     .graph-card { min-width: 0; background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; }
     .visual-card { min-width: 220px; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; }
 
-    /* 嚴格控制上半部三大分頁「左圖表 : 右模擬器」的寬度比例 */
     .dual-view.ratio-2-1 .graph-card { flex: 2; }
     .dual-view.ratio-2-1 .visual-card { flex: 1; }
 
@@ -130,7 +129,6 @@
     .grid-line { stroke: var(--chalk-dim); stroke-width: 0.5; stroke-dasharray: 3 3; opacity: 0.2; }
     .curve-x { fill: none; stroke: var(--x-color); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
     .curve-v { fill: none; stroke: var(--v-color); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-    .axis-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; }
     .dot-x { fill: var(--x-color); filter: drop-shadow(0 0 4px rgba(95, 176, 255, 0.9)); }
     .dot-v { fill: var(--v-color); filter: drop-shadow(0 0 4px rgba(239, 106, 90, 0.9)); }
 
@@ -151,9 +149,7 @@
     .deriv-table .val-cell { color: var(--chalk); }
     .deriv-table .calc-row { background: rgba(95, 176, 255, 0.1); color: #8fd0ff; }
     .deriv-table .acc-row { background: rgba(239, 106, 90, 0.15); color: #ff9485; font-weight: bold; }
-    .slash-cell {
-      background: linear-gradient(to bottom right, transparent 48%, rgba(242, 236, 217, 0.4) 49%, rgba(242, 236, 217, 0.4) 51%, transparent 52%);
-    }
+    .slash-cell { background: linear-gradient(to bottom right, transparent 48%, rgba(242, 236, 217, 0.4) 49%, rgba(242, 236, 217, 0.4) 51%, transparent 52%); }
 
     .deriv-btn-group { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
     .deriv-btn { flex: 1; padding: 8px; font-family: 'Noto Sans TC'; font-weight: bold; font-size: 0.85rem; border-radius: 6px; cursor: pointer; border: 1px solid var(--chalk-yellow); background: transparent; color: var(--chalk-yellow); transition: all 0.2s; }
@@ -203,7 +199,7 @@
         </button>
         <button data-mode="incline">
           <span>📐 2. 伽利略斜面運動</span>
-          <span class="sub">1:3:5:7:9 距離比驗證</span>
+          <span class="sub">1:3:5:7:9 距離比與長條圖</span>
         </button>
         <button data-mode="table_deriv">
           <span>📝 3. 等差數列破解等加速</span>
@@ -276,6 +272,7 @@
       const statsGrid = document.getElementById('statsGrid');
       const explainBox = document.getElementById('explainBox');
       const legendX = document.getElementById('legendX');
+      const legendV = document.getElementById('legendV');
       const derivationTableContainer = document.getElementById('derivationTableContainer');
       const derivTable = document.getElementById('derivTable');
       const dualViewContainer = document.getElementById('dualViewContainer');
@@ -288,7 +285,7 @@
 
       const params = {
         ticker:      { quiz: 1, f: 10, a: 3.5, v0: 0.2 },
-        incline:     { angle: 30, g: 9.8, L: 5.0 },
+        incline:     { angle: 30, g: 10.0, L: 5.0 },
         table_deriv: { step: 0 }
       };
 
@@ -309,7 +306,6 @@
       }
 
       function initUI() {
-        /* 嚴格控制上半部三大分頁比例：2:1、3:2、1:1 */
         dualViewContainer.classList.remove('ratio-2-1', 'ratio-3-2', 'ratio-1-1');
         if (currentMode === 'ticker') {
           dualViewContainer.classList.add('ratio-2-1');
@@ -421,8 +417,8 @@
           addBtn('標準打點 10Hz', () => { params.ticker.f = 10; });
           addBtn('密打點 20Hz', () => { params.ticker.f = 20; });
         } else if (m === 'incline') {
-          addBtn('經典 30° (1:3:5:7:9)', () => { params.incline.angle = 30; params.incline.L = 5.0; params.incline.g = 9.8; });
-          addBtn('極限 90° (等於落體)', () => { params.incline.angle = 90; params.incline.L = 8.0; params.incline.g = 9.8; });
+          addBtn('經典 30° (1:3:5:7:9)', () => { params.incline.angle = 30; params.incline.L = 5.0; params.incline.g = 10.0; });
+          addBtn('極限 90° (等於落體)', () => { params.incline.angle = 90; params.incline.L = 8.0; params.incline.g = 10.0; });
         }
       }
 
@@ -465,13 +461,13 @@
         } else if (m === 'incline') {
           const rad = p.angle * Math.PI / 180;
           const a = p.g * Math.sin(rad);
-          const tMax = Math.sqrt(2 * p.L / a);
+          const tMax = 5.0; // 固定為 1~5 秒，好讀好算！
           const vMax = a * tMax;
-          /* 維持加長的斜面視覺長度與起點調整 */
-          const xTop = 15, yTop = 20, rampLen = 160;
+          const xMax = 0.5 * a * tMax * tMax;
+          const xTop = 20, yTop = 30, rampLen = 190;
           const xBot = xTop + rampLen * Math.cos(rad);
           const yBot = yTop + rampLen * Math.sin(rad);
-          res = { tMax, xMax: p.L, vMax, a, _ramp: { xTop, yTop, rad, rampLen, xBot, yBot } };
+          res = { tMax, xMax, vMax, a, _ramp: { xTop, yTop, rad, rampLen, xBot, yBot } };
         } else if (m === 'table_deriv') {
           const times = [0, 1, 2, 3, 4, 5];
           const positions = [0, 0.2, 0.8, 1.8, 3.2, 5.0];
@@ -491,7 +487,16 @@
       function updateSimulation() {
         const phys = calculatePhysics();
         currentPhys = phys;
-        legendX.style.display = (currentMode === 'table_deriv') ? 'none' : 'inline-flex';
+        if (currentMode === 'table_deriv') {
+          legendX.style.display = 'none';
+          legendV.innerHTML = '<i style="background:var(--v-color)"></i>紅線：v-t（速度）';
+        } else if (currentMode === 'incline') {
+          legendX.style.display = 'none';
+          legendV.innerHTML = '<i style="background:#f2ecd9"></i>黑線：v-t 斜直線 ｜ 四色階梯：等時間段位移長條';
+        } else {
+          legendX.style.display = 'inline-flex';
+          legendV.innerHTML = '<i style="background:var(--v-color)"></i>紅線：v-t（速度）';
+        }
 
         drawGraph(phys);
         if (currentMode === 'table_deriv') {
@@ -509,7 +514,7 @@
       function drawGraph(phys) {
         combinedSvg.innerHTML = '';
         const W = 680, H = 340;
-        const margin = { top: 30, right: 50, bottom: 30, left: 50 };
+        const margin = { top: 30, right: 50, bottom: 40, left: 50 };
         const pW = W - margin.left - margin.right;
         const pH = H - margin.top - margin.bottom;
 
@@ -523,9 +528,12 @@
         addLine(margin.left, margin.top, margin.left, margin.top + pH, 'axis-line');
         addLine(margin.left + pW, margin.top, margin.left + pW, margin.top + pH, 'axis-line');
 
-        for (let i = 1; i <= 4; i++) {
-          const gx = margin.left + (i / 4) * pW, gy = margin.top + (i / 4) * pH;
+        for (let i = 1; i <= 5; i++) {
+          const gx = margin.left + (i / 5) * pW;
           addLine(gx, margin.top, gx, margin.top + pH, 'grid-line');
+        }
+        for (let i = 1; i <= 5; i++) {
+          const gy = margin.top + (i / 5) * pH;
           addLine(margin.left, gy, margin.left + pW, gy, 'grid-line');
         }
 
@@ -539,6 +547,42 @@
           const maxV = phys.vMax * 1.05 || 1;
           return margin.top + pH - (v_val / maxV) * pH;
         };
+
+        /* ================== 斜面專用：左側 v-t 階梯長條圖 ================== */
+        if (currentMode === 'incline') {
+          const colors = ['#5fb0ff', '#f2d675', '#ef6a5a', '#bd93f9'];
+          for (let i = 0; i < 4; i++) {
+            const x1 = getX(i + 1);
+            const x2 = getX(i + 2);
+            const yVal = getY_v((i + 1) * (phys.vMax / 5));
+            combinedSvg.appendChild(createSvgEl('rect', {
+              x: x1, y: yVal, width: x2 - x1, height: margin.top + pH - yVal,
+              fill: colors[i], stroke: '#000', 'stroke-width': 1.5, opacity: 0.9
+            }));
+          }
+
+          addLine(margin.left, margin.top + pH, getX(5.5), getY_v(phys.vMax * 1.1), '', {
+            'stroke': '#f2ecd9', 'stroke-width': 3.5, 'stroke-linecap': 'round'
+          });
+
+          addTextToSvg(combinedSvg, margin.left - 10, margin.top - 8, '速度 v', 'start', '#f2ecd9', 12, 'bold');
+          addTextToSvg(combinedSvg, margin.left + pW / 2, H - 10, '運動時間 t (s)', 'middle', 'var(--chalk-dim)', 11);
+
+          for (let i = 1; i <= 5; i++) {
+            const tx = getX(i);
+            addLine(tx, margin.top + pH, tx, margin.top + pH + 5, 'axis-line');
+            addTextToSvg(combinedSvg, tx, margin.top + pH + 18, `${i}`, 'middle', 'var(--chalk-yellow)', 12, 'bold');
+            
+            const vy = getY_v(i * (phys.vMax / 5));
+            addLine(margin.left - 5, vy, margin.left, vy, 'axis-line');
+            addTextToSvg(combinedSvg, margin.left - 10, vy + 4, `${i * 10}`, 'end', '#f2ecd9', 11);
+          }
+
+          combinedSvg.appendChild(createSvgEl('line', { id: 'svgGuide', class: 'guide-line' }));
+          combinedSvg.appendChild(createSvgEl('circle', { id: 'svgDotV', r: 6, class: 'dot-v', fill: '#f2ecd9' }));
+          phys._getX = getX; phys._getY_v = getY_v;
+          return;
+        }
 
         if (currentMode !== 'table_deriv') {
           addTextToSvg(combinedSvg, margin.left - 10, margin.top - 8, '位置 x', 'start', 'var(--x-color)', 10);
@@ -609,8 +653,7 @@
           if (currentMode === 'ticker') {
             const state = phys.calcPos(Math.min(t, phys.stopTime));
             x = state.x; v = state.v;
-          } else if (currentMode === 'incline') { x = 0.5 * phys.a * t * t; v = phys.a * t; }
-          
+          }
           ptsX.push(`${getX(t)},${getY_x(Math.max(0, x))}`);
           ptsV.push(`${getX(t)},${getY_v(v)}`);
         }
@@ -705,7 +748,6 @@
           phys.dots.forEach((d, idx) => {
             const dotX = 195 - (d.x / phys.xMax) * 170;
             if (dotX >= 18 && dotX <= 202) {
-              /* 100% 維持：純黑色實心黑點！ */
               visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 4.5, fill: '#000000' }));
               if (idx === 0) {
                 visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 8, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 2 }));
@@ -717,46 +759,38 @@
           addTextToSvg(visualSvg, 110, 305, hint, 'middle', 'var(--x-color)', 9.5);
 
         } else if (m === 'incline') {
+          /* 專注保留斜面與 1:3:5:7:9，移除底下重疊文字的長條圖 */
           const r = phys._ramp;
           visualSvg.appendChild(createSvgEl('polygon', {
             points: `${r.xTop},${r.yTop} ${r.xBot},${r.yBot} ${r.xTop},${r.yBot}`,
-            fill: 'rgba(242,214,117,0.15)', stroke: 'var(--chalk-yellow)', 'stroke-width': 2
+            fill: 'rgba(242,214,117,0.15)', stroke: 'var(--chalk-yellow)', 'stroke-width': 2.5
           }));
           const segRatios = [1, 3, 5, 7, 9];
           const totalUnits = segRatios.reduce((a, b) => a + b, 0);
           const markerFracs = [0]; let cum = 0;
           segRatios.forEach(u => { cum += u; markerFracs.push(cum / totalUnits); });
+          
           markerFracs.forEach((frac, idx) => {
             const dist = frac * r.rampLen;
             const tx = r.xTop + dist * Math.cos(r.rad), ty = r.yTop + dist * Math.sin(r.rad);
-            visualSvg.appendChild(createSvgEl('circle', { cx: tx, cy: ty, r: (idx === 0 || idx === markerFracs.length - 1) ? 4 : 3, fill: idx === 0 ? 'var(--v-color)' : 'var(--chalk-yellow)' }));
+            visualSvg.appendChild(createSvgEl('circle', { cx: tx, cy: ty, r: (idx === 0 || idx === markerFracs.length - 1) ? 5 : 4, fill: idx === 0 ? 'var(--v-color)' : 'var(--chalk-yellow)' }));
           });
+          
           for (let i = 0; i < segRatios.length; i++) {
             const dist1 = markerFracs[i] * r.rampLen, dist2 = markerFracs[i + 1] * r.rampLen;
             const midDist = (dist1 + dist2) / 2;
             const mx = r.xTop + midDist * Math.cos(r.rad), my = r.yTop + midDist * Math.sin(r.rad);
-            const lx = mx + 12 * Math.sin(r.rad), ly = my - 12 * Math.cos(r.rad);
-            addTextToSvg(visualSvg, lx, ly, segRatios[i], 'middle', 'var(--chalk-yellow)', 10, 'bold');
+            const lx = mx + 16 * Math.sin(r.rad), ly = my - 16 * Math.cos(r.rad);
+            addTextToSvg(visualSvg, lx, ly, segRatios[i], 'middle', 'var(--chalk-yellow)', 13, 'bold');
           }
-          addTextToSvg(visualSvg, 110, 15, '等時間間隔，位移差比 = 1:3:5:7:9', 'middle', 'var(--chalk-dim)', 10);
+          
+          addTextToSvg(visualSvg, 110, 18, '等時間間隔，位移差比 = 1:3:5:7:9', 'middle', 'var(--chalk-dim)', 11, 'bold');
+          addTextToSvg(visualSvg, 110, 290, '👈 搭配左圖 v-t 階梯觀察位移面積', 'middle', 'var(--x-color)', 11);
           
           const ball = createSvgEl('g', { id: 'simObject' });
-          ball.appendChild(createSvgEl('circle', { cx: 0, cy: 0, r: 11, fill: '#ef6a5a', stroke: '#f2ecd9', 'stroke-width': 1.5 }));
+          ball.appendChild(createSvgEl('circle', { cx: 0, cy: 0, r: 12, fill: '#ef6a5a', stroke: '#f2ecd9', 'stroke-width': 1.5 }));
           ball.appendChild(createSvgEl('circle', { cx: -3, cy: -3, r: 3, fill: 'rgba(255,255,255,0.7)' }));
           visualSvg.appendChild(ball);
-
-          /* 填滿「1:3:5:7:9 連續等時間隔·位移比例對比圖」 */
-          visualSvg.appendChild(createSvgEl('line', { x1: 15, y1: 185, x2: 205, y2: 185, stroke: 'var(--chalk-dim)', 'stroke-dasharray': '2 4', opacity: 0.5 }));
-          addTextToSvg(visualSvg, 15, 205, '📊 【等時間間隔·下滑位移比例比較】', 'start', 'var(--chalk-yellow)', 10, 'bold');
-          
-          const colors = ['#ef6a5a', '#f2d675', '#4cd964', '#5fb0ff', '#bd93f9'];
-          segRatios.forEach((val, idx) => {
-            const by = 218 + idx * 23;
-            const bw = val * 16;
-            visualSvg.appendChild(createSvgEl('rect', { x: 55, y: by, width: bw, height: 16, fill: colors[idx], opacity: 0.35, rx: 3, stroke: colors[idx], 'stroke-width': 1 }));
-            addTextToSvg(visualSvg, 50, by + 12, `第${idx+1}秒內`, 'end', 'var(--chalk-dim)', 8.5);
-            addTextToSvg(visualSvg, 55 + bw/2, by + 12, `1:3:5... 比值 = ${val}`, 'middle', '#ffffff', 9, 'bold');
-          });
         }
       }
 
@@ -771,13 +805,24 @@
         } else if (m === 'incline') { x = 0.5 * phys.a * t * t; v = phys.a * t; }
 
         if (phys._getX) {
-          const cx = phys._getX(t), cy_x = phys._getY_x(Math.max(0, x)), cy_v = phys._getY_v(v);
-          const dotX = document.getElementById('svgDotX'), dotV = document.getElementById('svgDotV'), guide = document.getElementById('svgGuide');
-          if (dotX && dotV && guide) {
-            dotX.setAttribute('cx', cx); dotX.setAttribute('cy', cy_x);
-            dotV.setAttribute('cx', cx); dotV.setAttribute('cy', cy_v);
+          const cx = phys._getX(t);
+          const guide = document.getElementById('svgGuide');
+          if (guide) {
             guide.setAttribute('x1', cx); guide.setAttribute('y1', 20);
             guide.setAttribute('x2', cx); guide.setAttribute('y2', 320);
+          }
+          if (m === 'incline') {
+            const dotV = document.getElementById('svgDotV');
+            if (dotV) {
+              dotV.setAttribute('cx', cx);
+              dotV.setAttribute('cy', phys._getY_v(v));
+            }
+          } else if (phys._getY_x && phys._getY_v) {
+            const dotX = document.getElementById('svgDotX'), dotV = document.getElementById('svgDotV');
+            if (dotX && dotV) {
+              dotX.setAttribute('cx', cx); dotX.setAttribute('cy', phys._getY_x(Math.max(0, x)));
+              dotV.setAttribute('cx', cx); dotV.setAttribute('cy', phys._getY_v(v));
+            }
           }
         }
 
@@ -808,7 +853,7 @@
           } else if (m === 'incline' && phys._ramp) {
             const r = phys._ramp;
             const dist = ratio * r.rampLen;
-            const ballR = 11;
+            const ballR = 12;
             const px = r.xTop + dist * Math.cos(r.rad) + ballR * Math.sin(r.rad);
             const py = r.yTop + dist * Math.sin(r.rad) - ballR * Math.cos(r.rad);
             simObj.setAttribute('transform', `translate(${px}, ${py}) rotate(${dist * 2})`);
@@ -840,11 +885,11 @@
                3. <b>等差數列公式</b>：由靜止開始的等加速運動，相鄰位移差恆為固定值，且呈 <span class="formula-highlight">$1 : 3 : 5 : 7 : 9$</span> 比例成長！</p>
           `;
         } else if (m === 'incline') {
+          addStat('時間軸刻度', `1, 2, 3, 4, 5 s`);
           addStat('斜面角度 θ', `${params.incline.angle}°`);
           addStat('下滑加速度 a', `${phys.a.toFixed(2)} m/s²`);
-          addStat('下滑總時間', `${phys.tMax.toFixed(2)} s`);
-          addStat('底端速度', `${phys.vMax.toFixed(2)} m/s`);
-          explainBox.innerHTML = `<h3>💡 觀念總結：伽利略「稀釋重力」實驗</h3><p>古代沒有計時器，伽利略利用斜面將重力加速度「稀釋」為 <span class="formula-highlight">$a = g \\times \\sin\\theta$</span>。當角度 $\\theta = 90^\\circ$ 時，加速度等於重力加速度 $g$，完全轉化為自由落體！斜面上標示的 5 個時間殘影點，證明了將總時間等分後，各段滾進距離會精準呈現 <span class="formula-highlight">$1 : 3 : 5 : 7 : 9$</span> 的等差奇數比！</p>`;
+          addStat('位移奇數比', `1 : 3 : 5 : 7 : 9`);
+          explainBox.innerHTML = `<h3>💡 觀念總結：伽利略斜面與 v-t 圖階梯長條</h3><p>由靜止出發的等加速下滑，將時間以 <span class="formula-highlight">$1, 2, 3, 4, 5\\text{ 秒}$</span> 等分後，對應到的速度呈現正比遞增！左邊圖表的<b>四色階梯長條圖</b>，明確顯示在連續等間隔時間內，位移面積的遞增比必定是奇數等差數列 <span class="formula-highlight">$1 : 3 : 5 : 7 : 9$</span>！這不僅是伽利略斜面實驗的核心，更是會考秒殺解題的關鍵公式！</p>`;
         } else if (m === 'table_deriv') {
           addStat('總位移 Δx', `5.0 m`);
           addStat('平均加速度 a', `0.4 m/s²`);
