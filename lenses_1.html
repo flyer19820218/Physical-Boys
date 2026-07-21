@@ -87,13 +87,13 @@
     
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 14px; }
     .stat { background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 10px 8px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.04); }
-    .stat .k { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--chalk-dim); }
+    .stat .k { font-family: 'Noto Sans TC', sans-serif; font-size: 0.85rem; color: var(--chalk-dim); }
     .stat .v { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--chalk-yellow); font-weight: 600; margin-top: 3px; }
 
     .explain-box { margin-top: 18px; background: rgba(0, 0, 0, 0.18); border-left: 4px solid var(--chalk-yellow); border-radius: 0 8px 8px 0; padding: 14px 18px; }
     .explain-box h3 { font-family: 'Kalam', cursive; color: var(--chalk-yellow); margin: 0 0 8px; font-size: 1.1rem; }
     .explain-box p { margin: 0; font-size: 0.95rem; line-height: 1.6; color: var(--chalk); }
-    .formula-highlight { font-family: 'JetBrains Mono', monospace; background: rgba(242, 214, 117, 0.15); padding: 2px 8px; border-radius: 4px; color: var(--chalk-yellow); font-weight: 600; display: inline-block; margin: 4px 0; }
+    .formula-highlight { font-family: 'JetBrains Mono', monospace; background: rgba(242, 214, 117, 0.15); padding: 2px 8px; border-radius: 4px; color: var(--chalk-yellow); font-weight: 600; display: inline-block; margin: 4px 0; font-style: italic; }
 
     .quiz-box { background: rgba(95, 176, 255, 0.1); border: 1px dashed var(--x-color); border-radius: 8px; padding: 14px; margin-bottom: 14px; }
     .quiz-box h4 { margin: 0 0 8px 0; color: var(--x-color); font-size: 1rem; }
@@ -123,7 +123,7 @@
         </button>
         <button data-mode="quiz">
           <span>🏆 3. 考題大挑戰</span>
-          <span class="sub">講義 Ex1 與 Ex2 隨堂測驗</span>
+          <span class="sub">經典試題隨堂測驗</span>
         </button>
       </div>
 
@@ -170,7 +170,7 @@
 
       function addText(parent, x, y, txt, anchor, color, size, weight='normal') {
           const t = createSvgEl('text', { x, y, 'text-anchor': anchor, fill: color, 'font-size': size, 'font-weight': weight, 'font-family': 'Noto Sans TC' });
-          t.textContent = txt;
+          t.innerHTML = txt; // Allow simple HTML tags like <sub>
           parent.appendChild(t);
       }
 
@@ -197,7 +197,6 @@
           controlsBox.appendChild(div);
           div.querySelector('input').addEventListener('input', (e) => {
             let newVal = parseFloat(e.target.value);
-            // 將新值傳給 onChange，並拿回修正後的值(用來防止交叉)
             newVal = onChange(newVal);
             e.target.value = newVal;
             document.getElementById(`val_${id}`).textContent = `${newVal} ${unit}`;
@@ -211,12 +210,10 @@
         } else if (m === 'pinhole') {
           addSlider('objX', '物體位置 (左側)', -250, -20, 5, p.objX, '座標', v => {
             p.objX = v;
-            // 防呆：推動物體時若碰到針孔，針孔也跟著退
             if(p.holeX <= p.objX + 10) { p.holeX = p.objX + 10; document.getElementById('inp_holeX').value = p.holeX; document.getElementById('val_holeX').textContent = p.holeX + ' 座標'; }
             return v;
           });
           addSlider('holeX', '針孔位置 (移動測試)', -200, 200, 5, p.holeX, '座標', v => {
-            // 防呆：針孔不能穿透物體或屏幕
             let val = v;
             if(val <= p.objX + 10) val = p.objX + 10;
             if(val >= p.screenX - 10) val = p.screenX - 10;
@@ -242,14 +239,11 @@
           controlsBox.appendChild(div);
           window.setHole = (val) => { p.holes = val; renderControls(); updateSimulation(); };
         } else if (m === 'quiz') {
-          // 在大挑戰模式，嚴格限制拖拉範圍避免壞掉
-          // 內部設定：objX = -100, screenX = 100, scale = 5.
-          // range: -90 to 90
           addSlider('holeX', '拖拉針孔驗證解答', -90, 90, 2, p.holeX, '刻度', v => { p.holeX = v; return v; });
           
           quizContainer.innerHTML = `
             <div class="quiz-box">
-              <h4>📖 考題大挑戰</h4>
+              <h4>📖 經典試題挑戰 (配合上方互動圖即時顯示)</h4>
               <p><b>Ex1：</b>針孔成像的實驗中，原本物體長 8cm，距離小孔 10cm。請問把屏幕放在另一側距離針孔多少距離時，成像大小會變成 24cm？</p>
               <p><b>Ex2：</b>呈上題請問你，針孔要如何移動，成像的大小會變成物體的 4 倍大？</p>
             </div>
@@ -289,18 +283,14 @@
           const p = params.shadow;
           const lightX = -200, objX = -50, screenX = 200;
           
-          // 光源
           visualSvg.appendChild(createSvgEl('circle', { cx: lightX, cy: 0, r: p.lightSize, fill: '#f2d675', filter: 'drop-shadow(0 0 10px rgba(242, 214, 117, 0.8))' }));
           addText(visualSvg, lightX, p.lightSize + 20, '光源', 'middle', '#f2d675', 12, 'bold');
           
-          // 障礙物
           visualSvg.appendChild(createSvgEl('rect', { x: objX - 10, y: -p.objHeight/2, width: 20, height: p.objHeight, fill: '#5c4a33' }));
           addText(visualSvg, objX, p.objHeight/2 + 20, '不透明物體', 'middle', '#c9c2ab', 12);
           
-          // 屏幕
           visualSvg.appendChild(createSvgEl('line', { x1: screenX, y1: -140, x2: screenX, y2: 140, stroke: '#ffffff', 'stroke-width': 6 }));
           
-          // 計算邊界射線
           const topLight = -p.lightSize, botLight = p.lightSize;
           const topObj = -p.objHeight/2, botObj = p.objHeight/2;
           
@@ -311,12 +301,11 @@
             return yAtScreen;
           };
 
-          const s1 = drawRay(topLight, topObj, 0.4); // 上對上
-          const s2 = drawRay(botLight, botObj, 0.4); // 下對下
-          const s3 = drawRay(topLight, botObj, 0.4); // 上對下 (交叉)
-          const s4 = drawRay(botLight, topObj, 0.4); // 下對上 (交叉)
+          const s1 = drawRay(topLight, topObj, 0.4); 
+          const s2 = drawRay(botLight, botObj, 0.4); 
+          const s3 = drawRay(topLight, botObj, 0.4); 
+          const s4 = drawRay(botLight, topObj, 0.4); 
 
-          // 本影區 (Umbra)
           const umbraTop = Math.max(s1, s4);
           const umbraBot = Math.min(s2, s3);
           
@@ -327,8 +316,8 @@
           
           explainBox.innerHTML = `
             <h3>💡 老師精闢解析：影子的形成</h3>
-            <p>影子：眼睛看不到光線的區域，這是<b>光直線前進的最好例子</b>[cite: 1]。<br>
-            當光源越大（擴展光源），除了完全黑暗的「本影區」，邊緣還會產生部分光線能到達的灰色地帶，稱為「半影區」[cite: 1]。</p>
+            <p>影子：眼睛看不到光線的區域，這是<b>光直線前進的最好例子</b>。<br>
+            當光源越大（擴展光源），除了完全黑暗的「本影區」，邊緣還會產生部分光線能到達的灰色地帶，稱為「半影區」。</p>
           `;
           
         } else if (m === 'pinhole' || m === 'quiz') {
@@ -346,10 +335,9 @@
             else if (hType === 'large') { isLargeHole = true; holePositions = [-15, -10, -5, 0, 5, 10, 15]; }
           } else if (m === 'quiz') {
             const p = params.quiz;
-            // 講義題意設定：物屏總距 40，比例放大 5 倍 = 200
             const SCALE = 5;
             objH = 8 * SCALE; 
-            objX = -100; screenX = 100; holeX = p.holeX; // Total L = 200
+            objX = -100; screenX = 100; holeX = p.holeX;
             pVal = holeX - objX; qVal = screenX - holeX;
           }
 
@@ -371,6 +359,10 @@
           
           // 成像繪製
           let mainImgH = 0;
+          let topImgY_master = 0;
+          let botImgY_master = 0;
+          let imgColorMaster = '';
+
           holePositions.forEach((hy, idx) => {
               const opacity = isLargeHole ? 0.15 : 0.6;
               const topSlope = (hy - (-objH)) / (holeX - objX);
@@ -385,7 +377,12 @@
               visualSvg.appendChild(createSvgEl('line', { x1: screenX, y1: botImgY, x2: screenX, y2: topImgY, stroke: imgColor, 'stroke-width': 6, 'stroke-linecap': 'round' }));
               visualSvg.appendChild(createSvgEl('polygon', { points: `${screenX},${topImgY+8} ${screenX-6},${topImgY-2} ${screenX+6},${topImgY-2}`, fill: imgColor }));
               
-              if (hy === 0 || idx === 0) mainImgH = Math.abs(topImgY - botImgY);
+              if (hy === 0 || idx === 0) {
+                mainImgH = Math.abs(topImgY - botImgY);
+                topImgY_master = topImgY;
+                botImgY_master = botImgY;
+                imgColorMaster = isLargeHole ? '#5fb0ff' : imgColor; // 強制文字用較亮的顏色
+              }
           });
 
           // 距離標示
@@ -400,6 +397,12 @@
           addText(visualSvg, (objX+holeX)/2, 145, `p = ${trueP.toFixed(1)}`, 'middle', 'var(--chalk-dim)', 11);
           addText(visualSvg, (holeX+screenX)/2, 145, `q = ${trueQ.toFixed(1)}`, 'middle', 'var(--chalk-dim)', 11);
 
+          // 🌟 在圖上直接標示物體與成像大小 🌟
+          addText(visualSvg, objX - 15, -objH/2 + 4, `${trueObjH.toFixed(1)} cm`, 'end', '#ef6a5a', 13, 'bold');
+          if (mainImgH > 0 && !isLargeHole) {
+              addText(visualSvg, screenX + 15, (topImgY_master + botImgY_master)/2 + 4, `${trueImgH.toFixed(1)} cm`, 'start', imgColorMaster, 13, 'bold');
+          }
+
           visualSvg.innerHTML += `
             <defs>
                 <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
@@ -410,12 +413,13 @@
 
           // 更新數據板
           const mag = (trueQ / trueP).toFixed(2);
-          addStat('物距 p', `${trueP.toFixed(1)} cm`);
-          addStat('像距 q', `${trueQ.toFixed(1)} cm`);
-          addStat('物高 $h_o$', `${trueObjH.toFixed(1)} cm`);
-          addStat('像高 $h_i$', `${trueImgH.toFixed(1)} cm`);
-          addStat('倍率 M', `${mag} 倍`);
+          addStat('物距 <i>p</i>', `${trueP.toFixed(1)} cm`);
+          addStat('像距 <i>q</i>', `${trueQ.toFixed(1)} cm`);
+          addStat('物高 <i>h<sub>o</sub></i>', `${trueObjH.toFixed(1)} cm`);
+          addStat('像高 <i>h<sub>i</sub></i>', `${trueImgH.toFixed(1)} cm`);
+          addStat('倍率 <i>M</i>', `${mag} 倍`);
 
+          // 修正為 HTML 的說明文字
           if (m === 'pinhole') {
             let extra = '';
             if (params.pinhole.holes === '2') extra = '兩個針孔會形成<b>「兩個獨立的倒立實像」</b>，彼此位置會因為孔距而錯開。';
@@ -424,17 +428,17 @@
 
             explainBox.innerHTML = `
               <h3>💡 老師精闢解析：考卷最愛考的「孔洞變化與移動」</h3>
-              <p>利用相似三角形，我們得到必考公式：<span class="formula-highlight"> $\\frac{h_i}{h_o} = \\frac{q}{p}$ </span>。<br>
-              若固定物與屏，把針孔「往物體推（p 變小、q 變大）」，成像倍率就會急速上升而放大！<br>
+              <p>利用相似三角形，我們得到必考公式：<span class="formula-highlight"><i>h<sub>i</sub></i> / <i>h<sub>o</sub></i> = <i>q</i> / <i>p</i></span>。<br>
+              若固定物與屏，把針孔「往物體推（<i>p</i> 變小、<i>q</i> 變大）」，成像倍率就會急速上升而放大！<br>
               ${extra ? '<br>'+extra : ''}</p>
             `;
           } else if (m === 'quiz') {
             explainBox.innerHTML = `
-              <h3>💡 考題大挑戰解答與解析</h3>
-              <p><b>[解析 Ex1]</b> 根據公式 $\\frac{h_i}{h_o} = \\frac{q}{p}$，已知物長 $h_o=8$，物距 $p=10$，要求像長 $h_i=24$ 時的像距 $q$[cite: 1]。代入得 $\\frac{24}{8} = \\frac{q}{10}$，所以 <span class="formula-highlight"> $q = 30$ cm </span>[cite: 1]。</p>
-              <p><b>[解析 Ex2]</b> 承上題，物屏總距離為 $p+q = 10+30 = 40$ cm[cite: 1]。若要成像為 4 倍大，代表 $q = 4p$[cite: 1]。<br>
-              代入總長度：$p + 4p = 40 \\Rightarrow 5p = 40 \\Rightarrow$ <span class="formula-highlight"> $p = 8$ cm </span>。<br>
-              原本 $p=10$，現在 $p=8$，所以<b>針孔要向物體移動 2 cm</b>[cite: 1]！(可將上方滑桿拉至 p=8 驗證)</p>
+              <h3>💡 經典試題挑戰解答與解析</h3>
+              <p><b>[解析 Ex1]</b> 根據公式 <span class="formula-highlight"><i>h<sub>i</sub></i> / <i>h<sub>o</sub></i> = <i>q</i> / <i>p</i></span>，已知物長 <i>h<sub>o</sub></i> = 8，物距 <i>p</i> = 10，要求像長 <i>h<sub>i</sub></i> = 24 時的像距 <i>q</i>。代入得 24 / 8 = <i>q</i> / 10，所以 <b><i>q</i> = 30 cm</b>。</p>
+              <p><b>[解析 Ex2]</b> 承上題，物屏總距離為 <i>p</i> + <i>q</i> = 10 + 30 = 40 cm。若要成像為 4 倍大，代表 <i>q</i> = 4<i>p</i>。<br>
+              代入總長度：<i>p</i> + 4<i>p</i> = 40 ➔ 5<i>p</i> = 40 ➔ <b><i>p</i> = 8 cm</b>。<br>
+              原本 <i>p</i> = 10，現在 <i>p</i> = 8，所以<b>針孔要向物體移動 2 cm</b>！(請直接拉動上方滑桿，當物高顯示 8.0 cm、像高顯示 32.0 cm 時，即可驗證 <i>p</i> = 8.0)</p>
             `;
           }
         }
