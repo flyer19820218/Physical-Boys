@@ -1,16 +1,27 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國中自然 等加速度運動｜物理考題與黑板模擬器（上集）</title>
-  
-  <!-- 引入 MathJax 解決數學公式渲染問題，確保 LaTeX 絕不亂碼 -->
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <title>國中自然 等加速度運動 (上)｜打點計時、斜面與等差數列</title>
+
+  <!-- 強制注入 MathJax 解析設定 -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
     :root {
       --board: #1c3d34;
       --board-dark: #15302a;
@@ -22,7 +33,9 @@
       --a-color: #4cd964;
       --frame: #5c4a33;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       background: var(--board-dark);
@@ -30,7 +43,9 @@
       font-family: 'Noto Sans TC', sans-serif;
       padding: 20px 14px 60px;
     }
+
     .wrap { max-width: 1400px; margin: 0 auto; }
+
     header { text-align: center; margin-bottom: 24px; }
     header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.2em; color: var(--chalk-dim); text-transform: uppercase; }
     h1 { font-family: 'Kalam', cursive; font-size: 2.1rem; font-weight: 700; margin: 6px 0 10px; text-shadow: 0 0 14px rgba(242, 236, 217, 0.15); }
@@ -50,19 +65,19 @@
       background-image: radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
       background-size: 5px 5px; pointer-events: none; border-radius: 6px;
     }
+
     .board h2 {
       font-family: 'Kalam', cursive; font-size: 1.25rem; margin: 0 0 14px;
       color: var(--chalk-yellow); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
     }
 
-    /* 上集專屬的三大投影片模組切換 */
-    .mode-switch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .mode-switch { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .mode-switch button {
-      font-family: 'Noto Sans TC', sans-serif; font-size: 1rem; font-weight: 700;
+      font-family: 'Noto Sans TC', sans-serif; font-size: 0.95rem; font-weight: 700;
       background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 1.5px solid rgba(242, 236, 217, 0.18);
       padding: 14px 16px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; display: flex; flex-direction: column; gap: 4px;
     }
-    .mode-switch button span.sub { font-size: 0.8rem; font-weight: 400; opacity: 0.7; }
+    .mode-switch button span.sub { font-size: 0.78rem; font-weight: 400; opacity: 0.7; }
     .mode-switch button:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(242, 236, 217, 0.4); }
     .mode-switch button.active {
       background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow);
@@ -97,12 +112,14 @@
     .graph-card { min-width: 0; background: rgba(0, 0, 0, 0.22); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; }
     .visual-card { min-width: 220px; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; }
 
-    /* 嚴格控制三張投影片的比例配置，第二張與第三張皆統一採用 3:2 比例 */
     .dual-view.ratio-2-1 .graph-card { flex: 2; }
     .dual-view.ratio-2-1 .visual-card { flex: 1; }
-    
+
     .dual-view.ratio-3-2 .graph-card { flex: 3; }
     .dual-view.ratio-3-2 .visual-card { flex: 2; }
+
+    .dual-view.ratio-1-1 .graph-card { flex: 1; }
+    .dual-view.ratio-1-1 .visual-card { flex: 1; }
 
     .legend { display: flex; gap: 14px; margin-bottom: 8px; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: var(--chalk-dim); flex-wrap: wrap; }
     .legend span { display: flex; align-items: center; gap: 5px; }
@@ -113,9 +130,6 @@
     .grid-line { stroke: var(--chalk-dim); stroke-width: 0.5; stroke-dasharray: 3 3; opacity: 0.2; }
     .curve-x { fill: none; stroke: var(--x-color); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
     .curve-v { fill: none; stroke: var(--v-color); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-    .fill-rect { fill: var(--x-color); opacity: 0.18; }
-    .fill-tri { fill: var(--chalk-yellow); opacity: 0.25; }
-    .axis-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; }
     .dot-x { fill: var(--x-color); filter: drop-shadow(0 0 4px rgba(95, 176, 255, 0.9)); }
     .dot-v { fill: var(--v-color); filter: drop-shadow(0 0 4px rgba(239, 106, 90, 0.9)); }
 
@@ -124,28 +138,22 @@
       color: var(--chalk); text-align: center; width: 100%; margin-bottom: 10px; white-space: nowrap;
     }
     .phase-badge.blue { background: rgba(95, 176, 255, 0.2); color: #8fd0ff; border: 1px solid #5fb0ff; }
-    .phase-badge.yellow { background: rgba(242, 214, 117, 0.2); color: #ffe680; border: 1px solid #f2d675; }
-    .phase-badge.red { background: rgba(239, 106, 90, 0.2); color: #ff9485; border: 1px solid #ef6a5a; }
-    .phase-badge.green { background: rgba(76, 217, 100, 0.2); color: #85ff99; border: 1px solid #4cd964; }
 
     #combinedSvg { width: 100%; min-height: 340px; }
     #visualSvg { width: 100%; min-height: 340px; }
     .guide-line { stroke: var(--chalk-yellow); stroke-width: 1.2; stroke-dasharray: 4 4; opacity: 0.6; fill: none; }
 
-    #derivationTableContainer { width: 100%; display: none; flex-direction: column; height: 100%; justify-content: center;}
+    #derivationTableContainer { width: 100%; display: none; flex-direction: column; height: 100%; justify-content: center; }
     .deriv-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; text-align: center; background: rgba(0,0,0,0.2); border: 1.5px solid var(--chalk-dim); table-layout: fixed; }
     .deriv-table th, .deriv-table td { border: 1px solid rgba(242, 236, 217, 0.3); padding: 8px 0; }
     .deriv-table th { background: rgba(242, 214, 117, 0.15); color: var(--chalk-yellow); font-family: 'Noto Sans TC', sans-serif; font-weight: 700; white-space: nowrap; }
     .deriv-table .val-cell { color: var(--chalk); }
     .deriv-table .calc-row { background: rgba(95, 176, 255, 0.1); color: #8fd0ff; }
     .deriv-table .acc-row { background: rgba(239, 106, 90, 0.15); color: #ff9485; font-weight: bold; }
-    
-    .slash-cell {
-      background: linear-gradient(to bottom right, transparent 48%, rgba(242, 236, 217, 0.4) 49%, rgba(242, 236, 217, 0.4) 51%, transparent 52%);
-    }
+    .slash-cell { background: linear-gradient(to bottom right, transparent 48%, rgba(242, 236, 217, 0.4) 49%, rgba(242, 236, 217, 0.4) 51%, transparent 52%); }
 
-    .deriv-btn-group { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;}
-    .deriv-btn { flex: 1; padding: 8px; font-family: 'Noto Sans TC'; font-weight: bold; font-size: 0.85rem; border-radius: 6px; cursor: pointer; border: 1px solid var(--chalk-yellow); background: transparent; color: var(--chalk-yellow); transition: all 0.2s;}
+    .deriv-btn-group { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .deriv-btn { flex: 1; padding: 8px; font-family: 'Noto Sans TC'; font-weight: bold; font-size: 0.85rem; border-radius: 6px; cursor: pointer; border: 1px solid var(--chalk-yellow); background: transparent; color: var(--chalk-yellow); transition: all 0.2s; }
     .deriv-btn.active { background: var(--chalk-yellow); color: var(--board-dark); }
     .deriv-btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: var(--chalk-dim); color: var(--chalk-dim); }
 
@@ -159,7 +167,6 @@
     .explain-box p { margin: 0; font-size: 0.9rem; line-height: 1.6; color: var(--chalk); }
 
     .formula-highlight { font-family: 'JetBrains Mono', monospace; background: rgba(242, 214, 117, 0.15); padding: 2px 8px; border-radius: 4px; color: var(--chalk-yellow); font-weight: 600; display: inline-block; margin: 4px 0; }
-    .math-sym { font-family: 'JetBrains Mono', monospace; color: var(--chalk-yellow); font-weight: 600; padding: 0 3px; }
 
     .tape-quiz-box { background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(242, 236, 217, 0.2); border-radius: 8px; padding: 12px; margin-top: 10px; }
     .tape-quiz-title { font-size: 0.85rem; color: var(--chalk-yellow); font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
@@ -169,37 +176,35 @@
 
     footer { text-align: center; color: var(--chalk-dim); font-size: 0.8rem; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; }
 
-    @media (max-width: 768px) { 
-      .mode-switch { grid-template-columns: 1fr; }
-      .dual-view { flex-direction: column; } 
-      .visual-card { width: 100%; min-height: 340px; } 
-      .tape-btn-group { grid-template-columns: 1fr; } 
+    @media (max-width: 768px) {
+      .dual-view { flex-direction: column; }
+      .visual-card { width: 100%; min-height: 340px; }
+      .tape-btn-group { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="eyebrow">Taiwan Middle School Science · Chapter 1-4 Kinematics</div>
-      <h1>等加速度運動：物理考題與黑板模擬器（上集）</h1>
-      <p>專為國中會考量身打造！徹底破解「打點計時器點序方向」迷思、直觀演示等差數列推導與中間時刻、精簡圖像切分面積，讓物理概念不再抽象！</p>
+      <div class="eyebrow">Taiwan Middle School Science · Chapter 1-4 Kinematics (Part 1)</div>
+      <h1>等加速度運動（上）：打點計時、斜面與等差數列</h1>
+      <p>專為國中會考量身打造！徹底破解「打點計時器點序方向」迷思、直觀演示伽利略斜面俯衝比例，並以表格一步步推導中間時刻與平均速度的奧秘！</p>
     </header>
 
     <div class="board">
-      <h2>① 選擇學習與考題模組</h2>
-      <!-- 只有三張投影片：上集結構 -->
+      <h2>① 選擇基礎實驗與考題模組</h2>
       <div class="mode-switch">
         <button class="active" data-mode="ticker">
-          <span>⏱️ 1. 物理現象與考卷紙帶</span>
-          <span class="sub">水平打點計時器與典型題型</span>
+          <span>⏱️ 1. 水平打點計時器</span>
+          <span class="sub">4大考題練習與紙帶打點</span>
+        </button>
+        <button data-mode="incline">
+          <span>📐 2. 伽利略斜面運動</span>
+          <span class="sub">1:3:5:7:9 距離比與長條圖</span>
         </button>
         <button data-mode="table_deriv">
-          <span>📝 2. 從紙帶到表格推導</span>
-          <span class="sub">等差數列推導與中間時刻</span>
-        </button>
-        <button data-mode="area">
-          <span>📊 3. 公式與圖像解法</span>
-          <span class="sub">純 v-t 圖幾何位移與面積剖析</span>
+          <span>📝 3. 等差數列破解等加速</span>
+          <span class="sub">表格推導與中間時刻</span>
         </button>
       </div>
 
@@ -207,7 +212,8 @@
       <div class="presets" id="presetsBox"></div>
 
       <div class="playbar" id="playbarContainer">
-        <button id="playBtn">▶ 開始實驗</button>        <div class="progress-track">
+        <button id="playBtn">▶ 開始實驗</button>
+        <div class="progress-track">
           <div class="progress-fill" id="progressFill"></div>
         </div>
       </div>
@@ -231,8 +237,9 @@
           <div id="derivationTableContainer">
             <div class="deriv-btn-group">
               <button class="deriv-btn active" id="btnDeriv0">Step 0: 原始數據</button>
-              <button class="deriv-btn" id="btnDeriv1">Step 1: 算位移</button>              <button class="deriv-btn" id="btnDeriv2">Step 2: 算平均速度</button>
-              <button class="deriv-btn" id="btnDeriv3">Step 3: 找中間時刻</button>
+              <button class="deriv-btn" id="btnDeriv1">Step 1: 算位移</button>              
+              <button class="deriv-btn" id="btnDeriv2">Step 2: 算平均速度</button>              
+              <button class="deriv-btn" id="btnDeriv3">Step 3: 找中間時刻</button>              
               <button class="deriv-btn" id="btnDeriv4">Step 4: 求加速度</button>
             </div>
             <table class="deriv-table" id="derivTable">
@@ -247,26 +254,26 @@
 
     <div class="board">
       <h2>③ 課堂重點與物理概念剖析</h2>
-      <div id="extraDefBox"></div>
       <div class="explain-box" id="explainBox"></div>
     </div>
 
-    <footer>國中理化 * 等加速度運動（上集） · 視覺化互動教學教材 · 讓自然科學變得直觀又有趣！</footer>
+    <footer>國中理化 · 等加速度運動（上篇） · 視覺化互動教學教材 · 基礎概念徹底破解！</footer>
   </div>
 
   <script>
     (function() {
       const controlsBox = document.getElementById('controlsBox');
       const presetsBox = document.getElementById('presetsBox');
-      const playBtn = document.getElementById('playBtn');      const progressFill = document.getElementById('progressFill');
+      const playBtn = document.getElementById('playBtn');
+      const progressFill = document.getElementById('progressFill');
       const playbarContainer = document.getElementById('playbarContainer');
       const combinedSvg = document.getElementById('combinedSvg');
       const visualSvg = document.getElementById('visualSvg');
       const phaseBadge = document.getElementById('phaseBadge');
       const statsGrid = document.getElementById('statsGrid');
       const explainBox = document.getElementById('explainBox');
-      const extraDefBox = document.getElementById('extraDefBox');
       const legendX = document.getElementById('legendX');
+      const legendV = document.getElementById('legendV');
       const derivationTableContainer = document.getElementById('derivationTableContainer');
       const derivTable = document.getElementById('derivTable');
       const dualViewContainer = document.getElementById('dualViewContainer');
@@ -277,11 +284,10 @@
       let currentPhys = null;
       const ANIM_DURATION = 4000;
 
-      // 只保留上集的三大單元設定
       const params = {
-        ticker:   { quiz: 1, f: 10, a: 3.5, v0: 0.2 },
-        table_deriv: { step: 0 }, 
-        area:     { v0: 6, a: 4.0, t: 5.0 }
+        ticker:      { quiz: 1, f: 10, a: 3.5, v0: 0.2 },
+        incline:     { angle: 30, g: 10.0, L: 5.0 },
+        table_deriv: { step: 0 }
       };
 
       const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -301,12 +307,13 @@
       }
 
       function initUI() {
-        /* 第一張 2:1；第二張與第三張皆採用 3:2 的框架比例 */
-        dualViewContainer.classList.remove('ratio-2-1', 'ratio-3-2');
+        dualViewContainer.classList.remove('ratio-2-1', 'ratio-3-2', 'ratio-1-1');
         if (currentMode === 'ticker') {
           dualViewContainer.classList.add('ratio-2-1');
-        } else {
-          dualViewContainer.classList.add('ratio-3-2'); // 第二張與第三張都套用第三張的 3:2 框架比例
+        } else if (currentMode === 'incline') {
+          dualViewContainer.classList.add('ratio-3-2');
+        } else if (currentMode === 'table_deriv') {
+          dualViewContainer.classList.add('ratio-1-1');
         }
 
         if (currentMode === 'table_deriv') {
@@ -385,15 +392,15 @@
             updateSimulation();
           };
           addSlider('f', '打點計時頻率 f', 5, 20, 5, p.f, 'Hz', v => p.f = v);
-        } else if (m === 'table_deriv') { 
-           const div = document.createElement('div');
-           div.style.gridColumn = '1 / -1';
-           div.innerHTML = `<p style="margin:0; font-size:0.9rem; color:var(--chalk-dim);">✨ 請依序點擊右側的 <b>Step 按鈕</b>，觀察從「位移」推導至「加速度」的交錯表格填寫過程。留意左側 v-t 圖上的對應連動變化！</p>`;
-           controlsBox.appendChild(div);
-        } else if (m === 'area') {
-          addSlider('v0', '初速度 v₀', 0, 15, 1, p.v0, 'm/s', v => p.v0 = v);
-          addSlider('a', '等加速度 a', 1.0, 6.0, 0.5, p.a, 'm/s²', v => p.a = v);
-          addSlider('t', '觀察時間 t', 2.0, 10.0, 0.5, p.t, 's', v => p.t = v);
+        } else if (m === 'incline') {
+          addSlider('angle', '斜面傾斜角度 θ', 10, 90, 5, p.angle, '度 (°)', v => p.angle = v);
+          addSlider('L', '斜面總長度 L', 2.0, 10.0, 0.5, p.L, 'm', v => p.L = v);
+          addSlider('g', '重力加速度 g', 1.6, 20.0, 0.2, p.g, 'm/s²', v => p.g = v);
+        } else if (m === 'table_deriv') {
+          const div = document.createElement('div');
+          div.style.gridColumn = '1 / -1';
+          div.innerHTML = `<p style="margin:0; font-size:0.9rem; color:var(--chalk-dim);">✨ 請依序點擊右側的 <b>Step 按鈕</b>，觀察從「位移」推導至「加速度」的交錯表格填寫過程。留意 v-t 圖上的對應變化！</p>`;
+          controlsBox.appendChild(div);
         }
       }
 
@@ -410,10 +417,9 @@
         if (m === 'ticker') {
           addBtn('標準打點 10Hz', () => { params.ticker.f = 10; });
           addBtn('密打點 20Hz', () => { params.ticker.f = 20; });
-        } else if (m === 'area') {
-          addBtn('由靜止啟動 (純三角形)', () => { params.area.v0 = 0; params.area.a = 4.0; params.area.t = 5.0; });
-          addBtn('梯形面積 (矩形+三角形)', () => { params.area.v0 = 6; params.area.a = 3.0; params.area.t = 6.0; });
-          addBtn('等速度運動 (純矩形 a=0)', () => { params.area.v0 = 12; params.area.a = 0.0; params.area.t = 5.0; });
+        } else if (m === 'incline') {
+          addBtn('經典 30° (1:3:5:7:9)', () => { params.incline.angle = 30; params.incline.L = 5.0; params.incline.g = 10.0; });
+          addBtn('極限 90° (等於落體)', () => { params.incline.angle = 90; params.incline.L = 8.0; params.incline.g = 10.0; });
         }
       }
 
@@ -452,25 +458,29 @@
           const endState = calcPos(Math.min(totalTime, stopTime));
           const xMax = Math.max(0.1, endState.x);
           const maxV = Math.max(...dots.map(d => d.v));
-          res = { tMax: totalTime, xMax, vMax: maxV !== -Infinity ? Math.max(maxV, 0.1) : 0.1, dots, dt, quiz: p.quiz, stopTime, calcPos };
-        
+          res = { tMax: totalTime, xMax, vMax: maxV !== -Infinity ? Math.max(maxV, 0.1) : 0.1, dots, dt, quiz: p.quiz, stopTime, calcPos };        
+        } else if (m === 'incline') {
+          const rad = p.angle * Math.PI / 180;
+          const a = p.g * Math.sin(rad);
+          const tMax = 5.0; // 固定為 1~5 秒，好讀好算！
+          const vMax = a * tMax;
+          const xMax = 0.5 * a * tMax * tMax;
+          const xTop = 20, yTop = 30, rampLen = 190;
+          const xBot = xTop + rampLen * Math.cos(rad);
+          const yBot = yTop + rampLen * Math.sin(rad);
+          res = { tMax, xMax, vMax, a, _ramp: { xTop, yTop, rad, rampLen, xBot, yBot } };
         } else if (m === 'table_deriv') {
           const times = [0, 1, 2, 3, 4, 5];
           const positions = [0, 0.2, 0.8, 1.8, 3.2, 5.0];
           const displacements = [0.2, 0.6, 1.0, 1.4, 1.8]; 
           const avgVelocities = [0.2, 0.6, 1.0, 1.4, 1.8]; 
           const midTimes = [0.5, 1.5, 2.5, 3.5, 4.5];       
-          const accelerations = [0.4, 0.4, 0.4, 0.4];                 
+          const accelerations = [0.4, 0.4, 0.4, 0.4];                  
           res = {
             tMax: 5, xMax: 5.0, vMax: 2.0, 
             times, positions, displacements, avgVelocities, midTimes, accelerations,
             step: p.step
           };
-        } else if (m === 'area') {
-          const tMax = p.t;
-          const vMax = p.v0 + p.a * tMax;
-          const xMax = p.v0 * tMax + 0.5 * p.a * tMax * tMax;
-          res = { tMax, xMax, vMax, areaRect: p.v0 * tMax, areaTri: 0.5 * p.a * tMax * tMax };
         }
         return res;
       }
@@ -478,27 +488,34 @@
       function updateSimulation() {
         const phys = calculatePhysics();
         currentPhys = phys;
-        legendX.style.display = (currentMode === 'area' || currentMode === 'table_deriv') ? 'none' : 'inline-flex';
+        if (currentMode === 'table_deriv') {
+          legendX.style.display = 'none';
+          legendV.innerHTML = '<i style="background:var(--v-color)"></i>紅線：v-t（速度）';
+        } else if (currentMode === 'incline') {
+          legendX.style.display = 'none';
+          legendV.innerHTML = '<i style="background:#f2ecd9"></i>黑線：v-t 斜直線 ｜ 四色階梯：等時間段位移長條';
+        } else {
+          legendX.style.display = 'inline-flex';
+          legendV.innerHTML = '<i style="background:var(--v-color)"></i>紅線：v-t（速度）';
+        }
 
-        drawGraph(phys);        
+        drawGraph(phys);
         if (currentMode === 'table_deriv') {
           drawDerivationTable(phys);
         } else {
           drawVisualBackground(phys);
-          renderFrame(0, phys); 
+          renderFrame(0, phys);
         }
-        
         updateStatsAndExplain(phys);
-        
         if (window.MathJax && window.MathJax.typesetPromise) {
-          window.MathJax.typesetPromise([explainBox]);
+          window.MathJax.typesetPromise().catch(e => console.log(e));
         }
       }
 
       function drawGraph(phys) {
         combinedSvg.innerHTML = '';
         const W = 680, H = 340;
-        const margin = { top: 30, right: 50, bottom: 30, left: 50 };
+        const margin = { top: 30, right: 50, bottom: 40, left: 50 };
         const pW = W - margin.left - margin.right;
         const pH = H - margin.top - margin.bottom;
 
@@ -512,9 +529,12 @@
         addLine(margin.left, margin.top, margin.left, margin.top + pH, 'axis-line');
         addLine(margin.left + pW, margin.top, margin.left + pW, margin.top + pH, 'axis-line');
 
-        for (let i = 1; i <= 4; i++) {
-          const gx = margin.left + (i / 4) * pW, gy = margin.top + (i / 4) * pH;
+        for (let i = 1; i <= 5; i++) {
+          const gx = margin.left + (i / 5) * pW;
           addLine(gx, margin.top, gx, margin.top + pH, 'grid-line');
+        }
+        for (let i = 1; i <= 5; i++) {
+          const gy = margin.top + (i / 5) * pH;
           addLine(margin.left, gy, margin.left + pW, gy, 'grid-line');
         }
 
@@ -529,22 +549,48 @@
           return margin.top + pH - (v_val / maxV) * pH;
         };
 
-        if (currentMode !== 'area' && currentMode !== 'table_deriv') { 
-           addTextToSvg(combinedSvg, margin.left - 10, margin.top - 8, '位置 x', 'start', 'var(--x-color)', 10);
+        /* ================== 斜面專用：左側 v-t 階梯長條圖 ================== */
+        if (currentMode === 'incline') {
+          const colors = ['#5fb0ff', '#f2d675', '#ef6a5a', '#bd93f9'];
+          for (let i = 0; i < 4; i++) {
+            const x1 = getX(i + 1);
+            const x2 = getX(i + 2);
+            const yVal = getY_v((i + 1) * (phys.vMax / 5));
+            combinedSvg.appendChild(createSvgEl('rect', {
+              x: x1, y: yVal, width: x2 - x1, height: margin.top + pH - yVal,
+              fill: colors[i], stroke: '#000', 'stroke-width': 1.5, opacity: 0.9
+            }));
+          }
+
+          addLine(margin.left, margin.top + pH, getX(5.5), getY_v(phys.vMax * 1.1), '', {
+            'stroke': '#f2ecd9', 'stroke-width': 3.5, 'stroke-linecap': 'round'
+          });
+
+          addTextToSvg(combinedSvg, margin.left - 10, margin.top - 8, '速度 v', 'start', '#f2ecd9', 12, 'bold');
+          addTextToSvg(combinedSvg, margin.left + pW / 2, H - 10, '運動時間 t (s)', 'middle', 'var(--chalk-dim)', 11);
+
+          for (let i = 1; i <= 5; i++) {
+            const tx = getX(i);
+            addLine(tx, margin.top + pH, tx, margin.top + pH + 5, 'axis-line');
+            addTextToSvg(combinedSvg, tx, margin.top + pH + 18, `${i}`, 'middle', 'var(--chalk-yellow)', 12, 'bold');
+            
+            const vy = getY_v(i * (phys.vMax / 5));
+            addLine(margin.left - 5, vy, margin.left, vy, 'axis-line');
+            addTextToSvg(combinedSvg, margin.left - 10, vy + 4, `${i * 10}`, 'end', '#f2ecd9', 11);
+          }
+
+          combinedSvg.appendChild(createSvgEl('line', { id: 'svgGuide', class: 'guide-line' }));
+          combinedSvg.appendChild(createSvgEl('circle', { id: 'svgDotV', r: 6, class: 'dot-v', fill: '#f2ecd9' }));
+          phys._getX = getX; phys._getY_v = getY_v;
+          return;
+        }
+
+        if (currentMode !== 'table_deriv') {
+          addTextToSvg(combinedSvg, margin.left - 10, margin.top - 8, '位置 x', 'start', 'var(--x-color)', 10);
         }
         addTextToSvg(combinedSvg, margin.left + pW + 10, margin.top - 8, '速度 v', 'end', 'var(--v-color)', 10);
         addTextToSvg(combinedSvg, margin.left + pW / 2, H - 8, '運動時間 t (s)', 'middle', 'var(--chalk-dim)', 10);
 
-        if (currentMode === 'area') {
-          const p0_v = getY_v(0), p1_v = getY_v(params.area.v0), p2_v = getY_v(phys.vMax);
-          const xEnd = getX(phys.tMax);
-          combinedSvg.appendChild(createSvgEl('polygon', { points: `${margin.left},${p0_v} ${xEnd},${p0_v} ${xEnd},${p1_v} ${margin.left},${p1_v}`, class: 'fill-rect' }));
-          combinedSvg.appendChild(createSvgEl('polygon', { points: `${margin.left},${p1_v} ${xEnd},${p1_v} ${xEnd},${p2_v}`, class: 'fill-tri' }));
-          const midX = margin.left + pW / 2;
-          if (params.area.v0 > 0) addTextToSvg(combinedSvg, midX, (p0_v + p1_v) / 2 + 4, '矩形面積 = v₀t', 'middle', 'var(--x-color)', 13);
-          if (params.area.a > 0) addTextToSvg(combinedSvg, midX, (p1_v + p2_v) / 2 + 8, '三角形面積 = ½at²', 'middle', 'var(--chalk-yellow)', 13);
-        }        
-        
         if (currentMode === 'table_deriv') {
           phys.times.forEach(t => {
             addLine(getX(t), margin.top+pH, getX(t), margin.top+pH+5, 'axis-line');
@@ -559,45 +605,45 @@
           const pts = phys.times.map(t => `${getX(t)},${getY_v(0.4 * t)}`).join(' ');
           combinedSvg.appendChild(createSvgEl('polyline', { points: pts, class: 'curve-v', style: 'stroke-width: 2.5; opacity: 0.7;' }));
 
-          if (phys.step >= 2) { 
-             phys.avgVelocities.forEach((v, i) => {
-                const x1 = getX(phys.times[i]);
-                const x2 = getX(phys.times[i+1]);
-                const y = getY_v(v);
-                combinedSvg.appendChild(createSvgEl('rect', { 
-                   x: x1, y: y, width: (x2-x1), height: (margin.top+pH - y), 
-                   fill: 'rgba(95, 176, 255, 0.05)', stroke: 'rgba(95, 176, 255, 0.3)', 'stroke-dasharray': '2 4'
-                }));
-                addLine(x1, y, x2, y, '', {'stroke': 'var(--x-color)', 'stroke-width': 3});
-             });
+          if (phys.step >= 2) {
+            phys.avgVelocities.forEach((v, i) => {
+              const x1 = getX(phys.times[i]);
+              const x2 = getX(phys.times[i+1]);
+              const y = getY_v(v);
+              combinedSvg.appendChild(createSvgEl('rect', {
+                x: x1, y: y, width: (x2-x1), height: (margin.top+pH - y),
+                fill: 'rgba(95, 176, 255, 0.05)', stroke: 'rgba(95, 176, 255, 0.3)', 'stroke-dasharray': '2 4'
+              }));
+              addLine(x1, y, x2, y, '', {'stroke': 'var(--x-color)', 'stroke-width': 3});
+            });
           }
 
-          if (phys.step >= 3) { 
-             phys.midTimes.forEach((mt, i) => {
-                const y = getY_v(phys.avgVelocities[i]);
-                const cx = getX(mt);
-                addLine(cx, y, cx, margin.top+pH, '', {'stroke': 'var(--chalk-yellow)', 'stroke-dasharray': '4 4', 'stroke-width': 1.5});
-                combinedSvg.appendChild(createSvgEl('circle', { cx: cx, cy: y, r: 6, fill: 'var(--chalk-yellow)', stroke: '#000', 'stroke-width': 1.5 }));
-             });
+          if (phys.step >= 3) {
+            phys.midTimes.forEach((mt, i) => {
+              const y = getY_v(phys.avgVelocities[i]);
+              const cx = getX(mt);
+              addLine(cx, y, cx, margin.top+pH, '', {'stroke': 'var(--chalk-yellow)', 'stroke-dasharray': '4 4', 'stroke-width': 1.5});
+              combinedSvg.appendChild(createSvgEl('circle', { cx: cx, cy: y, r: 6, fill: 'var(--chalk-yellow)', stroke: '#000', 'stroke-width': 1.5 }));
+            });
           }
 
-          if (phys.step >= 4) { 
-             if (phys.midTimes.length >= 2) {
-                const x1 = getX(phys.midTimes[0]);
-                const y1 = getY_v(phys.avgVelocities[0]);
-                const x2 = getX(phys.midTimes[1]);
-                const y2 = getY_v(phys.avgVelocities[1]);
-                
-                combinedSvg.appendChild(createSvgEl('polygon', {
-                  points: `${x1},${y1} ${x2},${y1} ${x2},${y2}`,
-                  fill: 'rgba(239, 106, 90, 0.2)'
-                }));
-                addLine(x2, y1, x2, y2, '', {'stroke': 'var(--v-color)', 'stroke-width': 2, 'stroke-dasharray': '2 2'});
-                addTextToSvg(combinedSvg, (x1+x2)/2, y1+12, 'Δt=1s', 'middle', 'var(--chalk-dim)', 10);
-                addTextToSvg(combinedSvg, x2+15, (y1+y2)/2+4, 'Δv=0.4', 'start', '#ff9485', 10, 'bold');
-             }
+          if (phys.step >= 4) {
+            if (phys.midTimes.length >= 2) {
+              const x1 = getX(phys.midTimes[0]);
+              const y1 = getY_v(phys.avgVelocities[0]);
+              const x2 = getX(phys.midTimes[1]);
+              const y2 = getY_v(phys.avgVelocities[1]);
+              
+              combinedSvg.appendChild(createSvgEl('polygon', {
+                points: `${x1},${y1} ${x2},${y1} ${x2},${y2}`,
+                fill: 'rgba(239, 106, 90, 0.2)'
+              }));
+              addLine(x2, y1, x2, y2, '', {'stroke': 'var(--v-color)', 'stroke-width': 2, 'stroke-dasharray': '2 2'});
+              addTextToSvg(combinedSvg, (x1+x2)/2, y1+12, 'Δt=1s', 'middle', 'var(--chalk-dim)', 10);
+              addTextToSvg(combinedSvg, x2+15, (y1+y2)/2+4, 'Δv=0.4', 'start', '#ff9485', 10, 'bold');
+            }
           }
-          return; 
+          return;
         }
 
         let ptsX = [], ptsV = [];
@@ -605,16 +651,15 @@
         for (let i = 0; i <= steps; i++) {
           const t = (i / steps) * phys.tMax;
           let x = 0, v = 0;
-          if (currentMode === 'ticker') { 
-             const state = phys.calcPos(Math.min(t, phys.stopTime)); 
-             x = state.x; v = state.v;
-          } else if (currentMode === 'area') { x = params.area.v0 * t + 0.5 * params.area.a * t * t; v = params.area.v0 + params.area.a * t; }
-          
-          if (currentMode !== 'area') ptsX.push(`${getX(t)},${getY_x(Math.max(0, x))}`);
+          if (currentMode === 'ticker') {
+            const state = phys.calcPos(Math.min(t, phys.stopTime));
+            x = state.x; v = state.v;
+          }
+          ptsX.push(`${getX(t)},${getY_x(Math.max(0, x))}`);
           ptsV.push(`${getX(t)},${getY_v(v)}`);
         }
 
-        if (currentMode !== 'area') combinedSvg.appendChild(createSvgEl('polyline', { points: ptsX.join(' '), class: 'curve-x' }));
+        combinedSvg.appendChild(createSvgEl('polyline', { points: ptsX.join(' '), class: 'curve-x' }));
         combinedSvg.appendChild(createSvgEl('polyline', { points: ptsV.join(' '), class: 'curve-v' }));
 
         if (currentMode === 'ticker') {
@@ -625,56 +670,55 @@
 
         combinedSvg.appendChild(createSvgEl('line', { id: 'svgGuide', class: 'guide-line' }));
         const dotX = createSvgEl('circle', { id: 'svgDotX', r: 6, class: 'dot-x' });
-        if (currentMode === 'area') dotX.style.display = 'none';
         combinedSvg.appendChild(dotX);
         combinedSvg.appendChild(createSvgEl('circle', { id: 'svgDotV', r: 6, class: 'dot-v' }));
 
         phys._getX = getX; phys._getY_x = getY_x; phys._getY_v = getY_v;
       }
       
-      function drawDerivationTable(phys) { 
-         let html = `
-           <tr>
-             <th style="width: 17%;">時間 (秒)</th>
-             ${phys.times.map(t => `<td colspan="2" class="val-cell">${t}</td>`).join('')}
-           </tr>
-           <tr>
-             <th>位置 (公尺)</th>
-             ${phys.positions.map(p => `<td colspan="2" class="val-cell">${p.toFixed(1)}</td>`).join('')}
-           </tr>
-         `;
-         
-         let dispHtml = '';
-         if (phys.step >= 1) {
-            dispHtml = `<td class="slash-cell"></td>`;
-            phys.displacements.forEach(d => { dispHtml += `<td colspan="2" class="val-cell calc-row">${d.toFixed(1)}</td>`; });
-            dispHtml += `<td class="slash-cell"></td>`;
-         } else {
-            dispHtml = `<td colspan="${phys.times.length * 2}"></td>`;
-         }
-         html += `<tr><th>位移 (公尺)</th>${dispHtml}</tr>`;
+      function drawDerivationTable(phys) {
+        let html = `
+          <tr>
+            <th style="width: 17%;">時間 (秒)</th>
+            ${phys.times.map(t => `<td colspan="2" class="val-cell">${t}</td>`).join('')}
+          </tr>
+          <tr>
+            <th>位置 (公尺)</th>
+            ${phys.positions.map(p => `<td colspan="2" class="val-cell">${p.toFixed(1)}</td>`).join('')}
+          </tr>
+        `;
+        
+        let dispHtml = '';
+        if (phys.step >= 1) {
+          dispHtml = `<td class="slash-cell"></td>`;
+          phys.displacements.forEach(d => { dispHtml += `<td colspan="2" class="val-cell calc-row">${d.toFixed(1)}</td>`; });
+          dispHtml += `<td class="slash-cell"></td>`;
+        } else {
+          dispHtml = `<td colspan="${phys.times.length * 2}"></td>`;
+        }
+        html += `<tr><th>位移 (公尺)</th>${dispHtml}</tr>`;
 
-         let avgHtml = '';
-         if (phys.step >= 2) {
-            avgHtml = `<td class="slash-cell"></td>`;
-            phys.avgVelocities.forEach(v => { avgHtml += `<td colspan="2" class="val-cell calc-row" style="font-weight:bold;">${v.toFixed(1)}</td>`; });
-            avgHtml += `<td class="slash-cell"></td>`;
-         } else {
-            avgHtml = `<td colspan="${phys.times.length * 2}"></td>`;
-         }
-         html += `<tr><th style="font-size:0.8rem; line-height:1.2;">平均速度<br>(公尺/秒)</th>${avgHtml}</tr>`;
+        let avgHtml = '';
+        if (phys.step >= 2) {
+          avgHtml = `<td class="slash-cell"></td>`;
+          phys.avgVelocities.forEach(v => { avgHtml += `<td colspan="2" class="val-cell calc-row" style="font-weight:bold;">${v.toFixed(1)}</td>`; });
+          avgHtml += `<td class="slash-cell"></td>`;
+        } else {
+          avgHtml = `<td colspan="${phys.times.length * 2}"></td>`;
+        }
+        html += `<tr><th style="font-size:0.8rem; line-height:1.2;">平均速度<br>(公尺/秒)</th>${avgHtml}</tr>`;
 
-         let accHtml = '';
-         if (phys.step >= 4) {
-            accHtml = `<td colspan="2" class="slash-cell"></td>`;
-            phys.accelerations.forEach(a => { accHtml += `<td colspan="2" class="val-cell acc-row">${a.toFixed(1)}</td>`; });
-            accHtml += `<td colspan="2" class="slash-cell"></td>`;
-         } else {
-            accHtml = `<td colspan="${phys.times.length * 2}"></td>`;
-         }
-         html += `<tr><th style="font-size:0.8rem; line-height:1.2;">速度變化<br>(公尺/秒²)</th>${accHtml}</tr>`;
+        let accHtml = '';
+        if (phys.step >= 4) {
+          accHtml = `<td colspan="2" class="slash-cell"></td>`;
+          phys.accelerations.forEach(a => { accHtml += `<td colspan="2" class="val-cell acc-row">${a.toFixed(1)}</td>`; });
+          accHtml += `<td colspan="2" class="slash-cell"></td>`;
+        } else {
+          accHtml = `<td colspan="${phys.times.length * 2}"></td>`;
+        }
+        html += `<tr><th style="font-size:0.8rem; line-height:1.2;">速度變化<br>(公尺/秒²)</th>${accHtml}</tr>`;
 
-         derivTable.innerHTML = html;
+        derivTable.innerHTML = html;
       }
 
       function drawVisualBackground(phys) {
@@ -705,24 +749,49 @@
           phys.dots.forEach((d, idx) => {
             const dotX = 195 - (d.x / phys.xMax) * 170;
             if (dotX >= 18 && dotX <= 202) {
-              visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 4, fill: '#111111' }));
-              visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 1.5, fill: '#ffffff' }));
-              if (idx === 0) visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 7.5, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.8 }));
+              visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 4.5, fill: '#000000' }));
+              if (idx === 0) {
+                visualSvg.appendChild(createSvgEl('circle', { cx: dotX, cy: 254, r: 8, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 2 }));
+              }
             }
           });
 
           const hint = phys.quiz === 1 ? '👉 往左看點距越來越大 ➔ 加速運動' : (phys.quiz === 2 ? '👉 往左看點距越來越小 ➔ 減速運動' : (phys.quiz === 3 ? '👉 全程點距均勻相等 ➔ 等速運動' : '👉 點距先變大後變小 ➔ 先加後減'));
           addTextToSvg(visualSvg, 110, 305, hint, 'middle', 'var(--x-color)', 9.5);
 
-        } else if (m === 'area') {
-          visualSvg.appendChild(createSvgEl('rect', { x: 5, y: 150, width: 210, height: 40, fill: '#382c1e', rx: 4 }));
-          visualSvg.appendChild(createSvgEl('line', { x1: 5, y1: 170, x2: 215, y2: 170, stroke: '#f2ecd9', 'stroke-dasharray': '8 8' }));
-          const car = createSvgEl('g', { id: 'simObject' });
-          car.appendChild(createSvgEl('rect', { x: -18, y: 152, width: 36, height: 22, fill: '#4cd964', rx: 4 }));
-          car.appendChild(createSvgEl('circle', { cx: -9, cy: 174, r: 4.5, fill: '#000' }));
-          car.appendChild(createSvgEl('circle', { cx: 9, cy: 174, r: 4.5, fill: '#000' }));
-          car.appendChild(createSvgEl('polygon', { points: '18,158 24,163 18,168', fill: '#f2d675' }));
-          visualSvg.appendChild(car);
+        } else if (m === 'incline') {
+          /* 專注保留斜面與 1:3:5:7:9，移除底下重疊文字的長條圖 */
+          const r = phys._ramp;
+          visualSvg.appendChild(createSvgEl('polygon', {
+            points: `${r.xTop},${r.yTop} ${r.xBot},${r.yBot} ${r.xTop},${r.yBot}`,
+            fill: 'rgba(242,214,117,0.15)', stroke: 'var(--chalk-yellow)', 'stroke-width': 2.5
+          }));
+          const segRatios = [1, 3, 5, 7, 9];
+          const totalUnits = segRatios.reduce((a, b) => a + b, 0);
+          const markerFracs = [0]; let cum = 0;
+          segRatios.forEach(u => { cum += u; markerFracs.push(cum / totalUnits); });
+          
+          markerFracs.forEach((frac, idx) => {
+            const dist = frac * r.rampLen;
+            const tx = r.xTop + dist * Math.cos(r.rad), ty = r.yTop + dist * Math.sin(r.rad);
+            visualSvg.appendChild(createSvgEl('circle', { cx: tx, cy: ty, r: (idx === 0 || idx === markerFracs.length - 1) ? 5 : 4, fill: idx === 0 ? 'var(--v-color)' : 'var(--chalk-yellow)' }));
+          });
+          
+          for (let i = 0; i < segRatios.length; i++) {
+            const dist1 = markerFracs[i] * r.rampLen, dist2 = markerFracs[i + 1] * r.rampLen;
+            const midDist = (dist1 + dist2) / 2;
+            const mx = r.xTop + midDist * Math.cos(r.rad), my = r.yTop + midDist * Math.sin(r.rad);
+            const lx = mx + 16 * Math.sin(r.rad), ly = my - 16 * Math.cos(r.rad);
+            addTextToSvg(visualSvg, lx, ly, segRatios[i], 'middle', 'var(--chalk-yellow)', 13, 'bold');
+          }
+          
+          addTextToSvg(visualSvg, 110, 18, '等時間間隔，位移差比 = 1:3:5:7:9', 'middle', 'var(--chalk-dim)', 11, 'bold');
+          addTextToSvg(visualSvg, 110, 290, '👈 搭配左圖 v-t 階梯觀察位移面積', 'middle', 'var(--x-color)', 11);
+          
+          const ball = createSvgEl('g', { id: 'simObject' });
+          ball.appendChild(createSvgEl('circle', { cx: 0, cy: 0, r: 12, fill: '#ef6a5a', stroke: '#f2ecd9', 'stroke-width': 1.5 }));
+          ball.appendChild(createSvgEl('circle', { cx: -3, cy: -3, r: 3, fill: 'rgba(255,255,255,0.7)' }));
+          visualSvg.appendChild(ball);
         }
       }
 
@@ -731,62 +800,73 @@
         if (m === 'table_deriv') return; 
 
         let x = 0, v = 0;
-        if (m === 'ticker') { 
-           const state = phys.calcPos(Math.min(t, phys.stopTime)); 
-           x = state.x; v = state.v;
-        } else if (m === 'area') { x = params.area.v0 * t + 0.5 * params.area.a * t * t; v = params.area.v0 + params.area.a * t; }
+        if (m === 'ticker') {
+          const state = phys.calcPos(Math.min(t, phys.stopTime));
+          x = state.x; v = state.v;
+        } else if (m === 'incline') { x = 0.5 * phys.a * t * t; v = phys.a * t; }
 
         if (phys._getX) {
-          const cx = phys._getX(t), cy_x = phys._getY_x(Math.max(0, x)), cy_v = phys._getY_v(v);
-          const dotX = document.getElementById('svgDotX'), dotV = document.getElementById('svgDotV'), guide = document.getElementById('svgGuide');
-          if (dotX && dotV && guide) {
-            dotX.setAttribute('cx', cx); dotX.setAttribute('cy', cy_x);
-            dotV.setAttribute('cx', cx); dotV.setAttribute('cy', cy_v);
-            guide.setAttribute('x1', cx); guide.setAttribute('y1', 20); guide.setAttribute('x2', cx); guide.setAttribute('y2', 315);
+          const cx = phys._getX(t);
+          const guide = document.getElementById('svgGuide');
+          if (guide) {
+            guide.setAttribute('x1', cx); guide.setAttribute('y1', 20);
+            guide.setAttribute('x2', cx); guide.setAttribute('y2', 320);
+          }
+          if (m === 'incline') {
+            const dotV = document.getElementById('svgDotV');
+            if (dotV) {
+              dotV.setAttribute('cx', cx);
+              dotV.setAttribute('cy', phys._getY_v(v));
+            }
+          } else if (phys._getY_x && phys._getY_v) {
+            const dotX = document.getElementById('svgDotX'), dotV = document.getElementById('svgDotV');
+            if (dotX && dotV) {
+              dotX.setAttribute('cx', cx); dotX.setAttribute('cy', phys._getY_x(Math.max(0, x)));
+              dotV.setAttribute('cx', cx); dotV.setAttribute('cy', phys._getY_v(v));
+            }
           }
         }
 
         const simObj = document.getElementById('simObject');
+        const ratio = Math.min(1, Math.max(0, x / (phys.xMax || 1)));
+
         if (simObj) {
-          const ratio = Math.min(1, Math.max(0, x / (phys.xMax || 1)));
           if (m === 'ticker') {
-            const px = 40 + ratio * 150;
+            const px = 30 + ratio * 150;
             simObj.setAttribute('transform', `translate(${px}, 0)`);
             const tapeGroup = document.getElementById('tapeGroup');
             if (tapeGroup) {
               tapeGroup.innerHTML = '';
-              const tapeEnd = px - 16;
-              if (tapeEnd > 20) {
-                tapeGroup.appendChild(createSvgEl('rect', { x: 20, y: 122, width: tapeEnd - 20, height: 16, fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1 }));
+              const tapeWidth = Math.max(0, (px - 10) - 20);
+              if (tapeWidth > 0) {
+                tapeGroup.appendChild(createSvgEl('rect', { x: 20, y: 122, width: tapeWidth, height: 14, fill: '#ffffff', stroke: '#a39d93', 'stroke-width': 1 }));
               }
               phys.dots.forEach((d, idx) => {
                 if (d.t <= t) {
                   const dotPx = 20 + ((x - d.x) / phys.xMax) * 150;
-                  if (dotPx >= 20 && dotPx <= tapeEnd + 4) {
-                    tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 3.5, fill: '#111111' }));
-                    tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 1.2, fill: '#ffffff' }));
-                    if (idx === 0) tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 130, r: 6.5, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.5 }));
+                  if (dotPx >= 20 && dotPx <= px - 5) {
+                    tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 129, r: 4, fill: '#000000' }));
+                    if (idx === 0) tapeGroup.appendChild(createSvgEl('circle', { cx: dotPx, cy: 129, r: 6.5, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 1.5 }));
                   }
                 }
               });
             }
-          } else if (m === 'area') {
-            const px = 25 + ratio * 160;
-            simObj.setAttribute('transform', `translate(${px}, 0)`);
+          } else if (m === 'incline' && phys._ramp) {
+            const r = phys._ramp;
+            const dist = ratio * r.rampLen;
+            const ballR = 12;
+            const px = r.xTop + dist * Math.cos(r.rad) + ballR * Math.sin(r.rad);
+            const py = r.yTop + dist * Math.sin(r.rad) - ballR * Math.cos(r.rad);
+            simObj.setAttribute('transform', `translate(${px}, ${py}) rotate(${dist * 2})`);
           }
         }
 
-        if (m === 'ticker' && t >= phys.stopTime) {
-            phaseBadge.className = 'phase-badge green';
-            phaseBadge.textContent = `🟢 車輛已靜止：t = ${t.toFixed(2)} s`;
-        } else {
-            phaseBadge.className = 'phase-badge blue';
-            phaseBadge.textContent = `⏱️ 實驗進行中：t = ${t.toFixed(2)} s`;
-        }
+        phaseBadge.className = 'phase-badge blue';
+        phaseBadge.textContent = `⏱️ 實驗進行中：t = ${t.toFixed(2)} s`;
       }
 
       function updateStatsAndExplain(phys) {
-        statsGrid.innerHTML = ''; extraDefBox.innerHTML = '';
+        statsGrid.innerHTML = '';
         const addStat = (k, v) => {
           const d = document.createElement('div'); d.className = 'stat';
           d.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div>`; statsGrid.appendChild(d);
@@ -794,27 +874,29 @@
 
         const m = currentMode;
         if (m === 'ticker') {
-          addStat('打點頻率 f', `${params.ticker.f} Hz`); addStat('時間差 Δt', `${phys.dt.toFixed(3)} s`); addStat('紙帶總點數', `${phys.dots.length} 點`);
-          explainBox.innerHTML = `<h3>💡 老師精闢解析：打點計時器判斷「三大黃金法則」</h3><p>1. <b>時間起點在拉車端</b>：考卷紙帶向右拉時，離拉車端最近的（最右邊）是舊點（第一點，<span class="math-sym">t = 0</span>）；離計時器最近的（最左邊）是最新打下的新點。<br>2. <b>判斷加減速看間隔</b>：從<b>第一點往後打的點</b>看過去，點距若<b>「越來越大」就是等加速運動</b>！</p>`;
-        } else if (m === 'table_deriv') {
-          addStat('時間間隔 Δt', `1 s`);
-          if(phys.step >= 1) addStat('位移差 ΔX', `+0.4 m`);
-          if(phys.step >= 4) addStat('加速度 a', `0.4 m/s²`);
-          
-          let stepExplain = '';
-          if (phys.step === 0) stepExplain = '這是一個物體運動的位置-時間紀錄表。請點擊 <b>Step 1</b>，我們一步步推導加速度。';
-          else if (phys.step === 1) stepExplain = '先算出每個時間區段的<b>位移</b> (X₂ - X₁)。你會發現每段位移都不一樣，但相鄰位移的「差值」是固定的！';
-          else if (phys.step === 2) stepExplain = '利用公式 <span class="formula-highlight">v = ΔX / Δt</span>，算出每段區間的<b>平均速度</b>。請看左側的 v-t 圖，此時速度會變成一段一段的「水平階梯」！';
-          else if (phys.step === 3) stepExplain = '這就是破題關鍵！這段平均速度，其實就等於這段時間<b>正中間那一瞬間的「瞬時速度」</b>。你看 v-t 圖上，階梯的正中央出現了代表瞬時速度的黃色點點，並且完美落在等加速的斜直線上！';
-          else if (phys.step === 4) stepExplain = '最後，利用公式 <span class="formula-highlight">a = Δv / Δt</span>（相鄰速度差 ÷ 時間），求出線段斜率。你看！這條完美的斜直線，它的斜率正是我們要找的<b>加速度 a = 0.4 m/s²</b>！';
+          addStat('打點頻率 f', `${params.ticker.f} Hz`);
+          addStat('時間差 Δt', `${phys.dt.toFixed(3)} s`);
+          addStat('紙帶總點數', `${phys.dots.length} 點`);
+          addStat('運動狀態', phys.quiz === 1 ? '等加速 (越來越快)' : (phys.quiz === 2 ? '等減速 (越來越慢)' : (phys.quiz === 3 ? '等速運動' : '先加速後減速')));
 
           explainBox.innerHTML = `
-            <h3>💡 觀念總結：為什麼表格可以求加速度？</h3>
-            <p>${stepExplain}</p>
+            <h3>💡 老師精闢解析：打點計時器判斷「三大黃金法則」</h3>
+            <p>1. <b>時間起點在拉車端</b>：考卷紙帶向右拉時，離拉車端最近的（最右邊）是第一點（$t = 0$）；離計時器最近的（最左邊）是最新打下的點。<br>
+               2. <b>判斷加減速看間隔 $\\Delta x$</b>：從<b>最右邊（舊點）往最左邊（新點）</b>看過去，點跟點的距離若<b>「越來越大」就是等加速運動</b>；若<b>「越來越小」就是等減速運動</b>！<br>
+               3. <b>等差數列公式</b>：由靜止開始的等加速運動，相鄰位移差恆為固定值，且呈 <span class="formula-highlight">$1 : 3 : 5 : 7 : 9$</span> 比例成長！</p>
           `;
-        } else if (m === 'area') {
-          addStat('總位移 Δx', `${phys.xMax.toFixed(1)} m`); addStat('末速度 v', `${phys.vMax.toFixed(1)} m/s`);
-          explainBox.innerHTML = `<h3>💡 觀念總結：v-t 圖形切分面積 = 絕對位移！</h3><p>在 v-t 圖中，位移 <span class="math-sym">Δx</span> 就是曲線下的幾何面積。梯形面積可完美切分為：底部的<b>矩形面積（<span class="math-sym">v₀t</span>）</b> 加上頂部的<b>三角形面積（<span class="math-sym">½at²</span>）</b>。</p>`;
+        } else if (m === 'incline') {
+          addStat('時間軸刻度', `1, 2, 3, 4, 5 s`);
+          addStat('斜面角度 θ', `${params.incline.angle}°`);
+          addStat('下滑加速度 a', `${phys.a.toFixed(2)} m/s²`);
+          addStat('位移奇數比', `1 : 3 : 5 : 7 : 9`);
+          explainBox.innerHTML = `<h3>💡 觀念總結：伽利略斜面與 v-t 圖階梯長條</h3><p>由靜止出發的等加速下滑，將時間以 <span class="formula-highlight">$1, 2, 3, 4, 5\\text{ 秒}$</span> 等分後，對應到的速度呈現正比遞增！左邊圖表的<b>四色階梯長條圖</b>，明確顯示在連續等間隔時間內，位移面積的遞增比必定是奇數等差數列 <span class="formula-highlight">$1 : 3 : 5 : 7 : 9$</span>！這不僅是伽利略斜面實驗的核心，更是會考秒殺解題的關鍵公式！</p>`;
+        } else if (m === 'table_deriv') {
+          addStat('總位移 Δx', `5.0 m`);
+          addStat('平均加速度 a', `0.4 m/s²`);
+          addStat('時間區隔 Δt', `1.0 s`);
+          addStat('目前推導進度', `Step ${phys.step}`);
+          explainBox.innerHTML = `<h3>💡 老師精闢解析：表格推導與「中間時刻速度」</h3><p>在等加速度運動中，<b>「某段時間內的平均速度，恰等於該段時間『中間時刻』的瞬時速度」</b>！例如第 $0 \\sim 1$ 秒的平均速度為 $0.2\\text{ m/s}$，這其實就是 $t = 0.5$ 秒時的瞬時速度。利用這個技巧，我們把求加速度的問題，轉化為相鄰中間時刻（時間差 $\\Delta t = 1\\text{ s}$）的速度變化，輕鬆得出 <span class="formula-highlight">$a = \\frac{\\Delta v}{\\Delta t} = 0.4\\text{ m/s}^2$</span>！</p>`;
         }
       }
 
@@ -822,7 +904,7 @@
         if (!animStartTime) animStartTime = ts;
         const elapsed = ts - animStartTime;
         const phys = currentPhys;
-        const frac = Math.min(1, Math.max(0, elapsed / ANIM_DURATION));
+        const frac = Math.min(1, elapsed / ANIM_DURATION);
         const curTime = frac * phys.tMax;
 
         progressFill.style.width = `${frac * 100}%`;
@@ -833,7 +915,6 @@
         } else {
           animId = null; animStartTime = null;
           playBtn.textContent = '🔄 再次播放';
-          renderFrame(phys.tMax, phys); 
         }
       }
 
