@@ -317,7 +317,8 @@
           if (c < 0) { title = "凸面鏡"; sub = "發散光線，視野較廣"; }
           addText(visualSvg, 0, -120, title, 'middle', '#fff', 16, 'bold');
 
-          const f = c === 0 ? Infinity : (c > 0 ? 1500 / c : 1500 / c);
+          // 【修正區】：凹面鏡(c>0)焦點為負數(在鏡前)，凸面鏡(c<0)焦點為正數(在鏡後)
+          const f = c === 0 ? Infinity : -1500 / c; 
 
           const rayYs = [-60, -30, 0, 30, 60];
           rayYs.forEach(y => {
@@ -332,7 +333,11 @@
                  const destX = -280;
                  const destY = y + slope * (destX - mirrorX);
                  visualSvg.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: destX, y2: destY, stroke: '#f2d675', 'stroke-width': 2 }));
-                 visualSvg.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: f, y2: 0, stroke: '#5fb0ff', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
+                 
+                 // 【修正區】：只有當焦點在鏡後（凸面鏡，c<0）時，才畫出穿透鏡子的延伸虛線，避免凹面鏡時虛線跟實線重疊
+                 if (c < 0) {
+                     visualSvg.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: f, y2: 0, stroke: '#5fb0ff', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
+                 }
               }
           });
 
