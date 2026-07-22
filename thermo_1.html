@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5-1 溫度與溫度計：長度比例計算</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 40px;
+            max-width: 900px;
+            width: 100%;
+        }
+        .visual-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .thermometer-container {
+            position: relative;
+            width: 60px;
+            height: 300px;
+            background: #e0e0e0;
+            border-radius: 30px;
+            border: 4px solid #ccc;
+            margin-top: 20px;
+            display: flex;
+            align-items: flex-end;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        .liquid {
+            width: 100%;
+            background: linear-gradient(to top, #ff4b4b, #ff7676);
+            border-radius: 20px;
+            transition: height 0.3s ease;
+        }
+        .bulb {
+            width: 80px;
+            height: 80px;
+            background: #ff4b4b;
+            border-radius: 50%;
+            position: absolute;
+            bottom: -40px;
+            left: -14px;
+            border: 4px solid #ccc;
+            z-index: 2;
+        }
+        .marks {
+            position: absolute;
+            left: 70px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-weight: bold;
+            color: #555;
+        }
+        .mark-high { position: absolute; top: 10%; }
+        .mark-low { position: absolute; bottom: 10%; }
+        .mark-current { position: absolute; color: #d32f2f; transition: bottom 0.3s ease; display: flex; align-items: center;}
+        .mark-current::before {
+            content: '◄';
+            margin-right: 5px;
+        }
+        .control-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        .calculation-box {
+            background: #f9f9f9;
+            padding: 15px;
+            border-left: 5px solid #3498db;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 1.1em;
+            line-height: 1.8;
+        }
+        .formula {
+            font-family: 'Courier New', Courier, monospace;
+            background: #e8f4f8;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        .highlight { color: #d32f2f; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="visual-panel">
+        <h3>自製溫度計</h3>
+        <div class="thermometer-container">
+            <div class="liquid" id="liquid" style="height: 60%;"></div>
+            <div class="bulb"></div>
+            <div class="marks">
+                <div class="mark-high">60°C<br>(12cm)</div>
+                <div class="mark-current" id="mark-current" style="bottom: 60%;">?°C<br>(8cm)</div>
+                <div class="mark-low">10°C<br>(2cm)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <h2>🌡️ 溫度與長度比例計算</h2>
+        <p>利用物質熱脹冷縮的特性，體積（或長度）的變化量與溫度的變化量成正比。</p>
+        
+        <div class="input-group">
+            <label for="lengthSlider">拖曳改變液面高度 (cm): <span id="lengthDisplay" class="highlight">8</span> cm</label>
+            <input type="range" id="lengthSlider" min="2" max="12" step="0.5" value="8">
+        </div>
+
+        <div class="calculation-box">
+            <strong>比例公式推導：</strong>
+            <div class="formula">
+                (未知溫度 - 低溫) / (高溫 - 低溫) = (未知長度 - 低長度) / (高長度 - 低長度)
+            </div>
+            <div id="calc-steps">
+                <!-- 計算步驟會由 JavaScript 動態生成 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const slider = document.getElementById('lengthSlider');
+    const lengthDisplay = document.getElementById('lengthDisplay');
+    const liquid = document.getElementById('liquid');
+    const markCurrent = document.getElementById('mark-current');
+    const calcSteps = document.getElementById('calc-steps');
+
+    // 已知條件 (依照投影片設定)
+    const T_high = 60;
+    const L_high = 12;
+    const T_low = 10;
+    const L_low = 2;
+
+    function updateThermometer() {
+        const currentLength = parseFloat(slider.value);
+        lengthDisplay.textContent = currentLength;
+
+        // 計算溫度 (交叉相乘)
+        // (T - 10) / (60 - 10) = (L - 2) / (12 - 2)
+        const lengthRatio = (currentLength - L_low) / (L_high - L_low);
+        const currentTemp = T_low + lengthRatio * (T_high - T_low);
+
+        // 更新視覺高度 (轉換為百分比，2cm為10%，12cm為90%)
+        const visualPercentage = 10 + (lengthRatio * 80); 
+        liquid.style.height = `${visualPercentage}%`;
+        markCurrent.style.bottom = `${visualPercentage}%`;
+        markCurrent.innerHTML = `<span class="highlight">${currentTemp.toFixed(1)}°C</span><br>(${currentLength}cm)`;
+
+        // 更新計算步驟
+        calcSteps.innerHTML = `
+            1. 代入已知數字：<br>
+            &nbsp;&nbsp;&nbsp;<code>(T - ${T_low}) / (${T_high} - ${T_low}) = (${currentLength} - ${L_low}) / (${L_high} - ${L_low})</code><br>
+            2. 整理分母：<br>
+            &nbsp;&nbsp;&nbsp;<code>(T - 10) / 50 = ${(currentLength - L_low).toFixed(1)} / 10</code><br>
+            3. 交叉相乘並求解：<br>
+            &nbsp;&nbsp;&nbsp;<code>T - 10 = 50 × ${((currentLength - L_low) / 10).toFixed(2)}</code><br>
+            &nbsp;&nbsp;&nbsp;<code>T = ${currentTemp.toFixed(1)} °C</code>
+        `;
+    }
+
+    // 監聽滑桿變動
+    slider.addEventListener('input', updateThermometer);
+    
+    // 初始化
+    updateThermometer();
+</script>
+
+</body>
+</html>
