@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聲音的三要素 - 互動模擬</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f8f9fa; 
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+        }
+        h1 { 
+            text-align: center; 
+            color: #2c3e50; 
+            margin-top: 0;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        canvas { 
+            display: block; 
+            margin: 20px auto; 
+            background: #2c3e50; 
+            border-radius: 8px; 
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .controls { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 20px; 
+            margin-top: 20px;
+        }
+        .control-group { 
+            background: #f1f2f6; 
+            padding: 15px; 
+            border-radius: 8px;
+            display: flex; 
+            flex-direction: column; 
+        }
+        label { 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+            color: #2c3e50; 
+            display: flex;
+            justify-content: space-between;
+        }
+        input[type="range"] { 
+            width: 100%; 
+            cursor: pointer; 
+        }
+        select { 
+            padding: 10px; 
+            font-size: 16px; 
+            border-radius: 5px; 
+            border: 1px solid #bdc3c7; 
+            background-color: white;
+            cursor: pointer;
+        }
+        .description {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>聲音的三要素：響度、音調、音色</h1>
+        
+        <!-- 動態波形顯示區 -->
+        <canvas id="waveCanvas" width="740" height="250"></canvas>
+        
+        <div class="controls">
+            <!-- 響度 (振幅) 控制 -->
+            <div class="control-group">
+                <label for="amplitude">
+                    <span>響度 (振幅 Amplitude)</span>
+                    <span id="ampVal">中等</span>
+                </label>
+                <input type="range" id="amplitude" min="10" max="110" value="60">
+                <div class="description">💡 振幅越大，代表聲音攜帶的能量越多，響度越大（聲音越大聲）。</div>
+            </div>
+
+            <!-- 音調 (頻率) 控制 -->
+            <div class="control-group">
+                <label for="frequency">
+                    <span>音調 (頻率 Frequency)</span>
+                    <span id="freqVal">中等</span>
+                </label>
+                <input type="range" id="frequency" min="1" max="15" value="5">
+                <div class="description">💡 相同時間內振動次數越多（頻率越高），波形越密集，音調越高。</div>
+            </div>
+
+            <!-- 音色 (波形) 控制 -->
+            <div class="control-group">
+                <label for="waveform">音色 (波形 Waveform)</label>
+                <select id="waveform">
+                    <option value="sine">音叉 (正弦波 - 單純的聲音)</option>
+                    <option value="square">電子合成音 (方波)</option>
+                    <option value="sawtooth">弦樂器 (鋸齒波 - 豐富的泛音)</option>
+                </select>
+                <div class="description">💡 發音體的材質與構造不同，會產生不同的波形，這就是我們能分辨不同樂器或人聲的原因。</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        const ampSlider = document.getElementById('amplitude');
+        const freqSlider = document.getElementById('frequency');
+        const waveSelect = document.getElementById('waveform');
+        const ampVal = document.getElementById('ampVal');
+        const freqVal = document.getElementById('freqVal');
+
+        let phase = 0;
+
+        function updateLabels() {
+            const amp = parseInt(ampSlider.value);
+            if (amp < 40) ampVal.textContent = '小聲 (小振幅)';
+            else if (amp > 80) ampVal.textContent = '大聲 (大振幅)';
+            else ampVal.textContent = '中等';
+
+            const freq = parseInt(freqSlider.value);
+            if (freq < 4) freqVal.textContent = '低音 (低頻率)';
+            else if (freq > 10) freqVal.textContent = '高音 (高頻率)';
+            else freqVal.textContent = '中等';
+        }
+
+        function drawWave() {
+            // 清空畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 畫中央基準線 (平衡位置)
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.strokeStyle = '#7f8c8d';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 取得當前控制參數
+            const amplitude = parseInt(ampSlider.value);
+            const frequency = parseInt(freqSlider.value);
+            const waveType = waveSelect.value;
+            
+            updateLabels();
+
+            // 設定波形樣式
+            ctx.beginPath();
+            ctx.strokeStyle = '#00d2d3'; // 螢光藍綠色，在深色背景很顯眼
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#00d2d3';
+
+            // 繪製波形
+            for (let x = 0; x < canvas.width; x++) {
+                // 將 x 軸標準化為角度 t
+                const t = (x / canvas.width) * Math.PI * 2 * frequency + phase;
+                let y = 0;
+
+                // 根據波形公式計算 y 座標
+                if (waveType === 'sine') {
+                    y = Math.sin(t);
+                } else if (waveType === 'square') {
+                    y = Math.sign(Math.sin(t));
+                } else if (waveType === 'sawtooth') {
+                    // 鋸齒波公式
+                    y = 2 * (t / (2 * Math.PI) - Math.floor(t / (2 * Math.PI) + 0.5));
+                }
+
+                // 計算畫布上的實際垂直位置
+                const yPos = canvas.height / 2 - y * amplitude;
+
+                if (x === 0) {
+                    ctx.moveTo(x, yPos);
+                } else {
+                    ctx.lineTo(x, yPos);
+                }
+            }
+            ctx.stroke();
+
+            // 關閉陰影以免影響下一幀
+            ctx.shadowBlur = 0;
+
+            // 產生波動動畫效果
+            phase -= 0.08; 
+            
+            // 持續重繪
+            requestAnimationFrame(drawWave);
+        }
+
+        // 啟動動畫
+        drawWave();
+    </script>
+</body>
+</html>
