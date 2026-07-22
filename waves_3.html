@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>波動與聲音的世界：回聲與超聲波</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg-base: #111e19;
+    --bg-panel: #172a23;
+    --bg-panel-hover: #1f382f;
+    --chalk-white: #ffffff;
+    --chalk-yellow: #ffe066;
+    --chalk-teal: #4dd2ff;
+    --chalk-coral: #ff8040;
+    --chalk-green: #33cc99;
+    --rule-color: rgba(255, 255, 255, 0.25);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif;
+    background-color: var(--bg-base);
+    color: var(--chalk-white);
+    font-size: 18px; 
+  }
+  .wrap { max-width: 1140px; margin: 20px auto; padding: 0 16px 40px; }
+  
+  header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed var(--rule-color); padding-bottom: 16px; }
+  h1 { font-size: 40px; margin: 0 0 10px 0; color: var(--chalk-yellow); letter-spacing: 2px; font-weight: 900; }
+  header p { margin: 0; color: #e0e0e0; font-size: 18px; font-weight: bold; }
+
+  /* 導覽列 */
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn {
+    flex: 1; min-width: 160px;
+    padding: 14px 10px; font-size: 18px; font-weight: bold;
+    background: rgba(255,255,255,0.08); color: #c0d0c8;
+    border: 2px dashed var(--rule-color); border-radius: 10px;
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .tab-btn:hover { background: var(--bg-panel-hover); color: #ffffff; }
+  .tab-btn.active { background: #223e34; color: var(--chalk-yellow); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 12px rgba(255, 224, 102, 0.3); }
+
+  /* 面板 */
+  .panel { background: var(--bg-panel); border: 2px solid var(--rule-color); border-radius: 14px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px dashed var(--rule-color); padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  h2 { margin: 0; font-size: 26px; color: #ffffff; letter-spacing: 1px; }
+  .sub-tag { font-size: 16px; color: #000000; background: var(--chalk-yellow); padding: 6px 16px; border-radius: 999px; font-weight: 800; }
+
+  /* 控制區 */
+  .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; background: rgba(0,0,0,0.4); padding: 16px 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); min-height: 60px; }
+  .control-group { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 280px; }
+  input[type=range] { flex: 1; height: 8px; accent-color: var(--chalk-yellow); cursor: pointer; }
+  button.action-btn {
+    padding: 10px 20px; border: 2px solid var(--chalk-green);
+    background: #111e19; color: var(--chalk-green);
+    border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; transition: 0.2s;
+  }
+  button.action-btn:hover { background: var(--chalk-green); color: #000000; }
+  
+  .readout-badge { font-weight: bold; color: #000000; background: var(--chalk-yellow); padding: 8px 16px; border-radius: 8px; min-width: 100px; text-align: center; font-size: 18px; }
+
+  /* 畫布 */
+  #stage-container { width: 100%; border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; overflow: hidden; background: #0c1612; box-shadow: inset 0 0 25px rgba(0,0,0,0.7); position: relative;}
+  canvas { display: block; width: 100%; height: auto; }
+  
+  .stats { display: flex; gap: 24px; font-size: 20px; font-weight: bold; color: #ffffff; margin-top: 16px; background: rgba(0,0,0,0.5); padding: 16px 20px; border-radius: 10px; border: 1px dashed var(--rule-color); flex-wrap: wrap; }
+  .stats b { color: var(--chalk-yellow); margin-left: 6px; font-size: 24px; }
+  
+  .note { font-size: 18px; color: #ffffff; margin-top: 16px; line-height: 1.8; background: rgba(255,255,255,0.08); padding: 18px 24px; border-radius: 10px; border-left: 6px solid var(--chalk-yellow); }
+  
+  /* 應用圖卡區 */
+  .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 16px; }
+  .app-card { background: rgba(77, 210, 255, 0.1); border: 2px solid var(--chalk-teal); border-radius: 10px; padding: 16px; text-align: center; transition: 0.3s; }
+  .app-card:hover { background: rgba(77, 210, 255, 0.2); transform: translateY(-3px); }
+  .app-card h3 { color: var(--chalk-teal); margin: 0 0 10px 0; font-size: 22px; }
+  .app-card p { margin: 0; font-size: 16px; line-height: 1.5; }
+  .app-icon { font-size: 40px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>波動與聲音的世界</h1>
+    <p>國中自然科核心概念：回聲原理、兩山經典計算與超聲波應用</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab-btn active" onclick="switchTab('tab1')">一、回聲與原聲的差別</div>
+    <div class="tab-btn" onclick="switchTab('tab2')">二、經典試題：兩山之間</div>
+    <div class="tab-btn" onclick="switchTab('tab3')">三、超聲波與生活應用</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2 id="panel-title">一、回聲與原聲的差別</h2>
+      <span id="panel-badge" class="sub-tag" style="background:#ffe066;">基本概念</span>
+    </div>
+
+    <!-- 控制區 Tab 2 -->
+    <div class="controls" id="controls-tab2" style="display:none;">
+      <div class="control-group">
+        <label style="color:var(--chalk-teal); font-weight:bold;">左山距離 (D1)：</label>
+        <input id="rng-d1" type="range" min="170" max="340" step="17" value="170" />
+        <span id="val-d1" class="readout-badge" style="background:var(--chalk-teal);">170 m</span>
+      </div>
+      <div class="control-group">
+        <label style="color:var(--chalk-coral); font-weight:bold;">右山距離 (D2)：</label>
+        <input id="rng-d2" type="range" min="170" max="510" step="17" value="340" />
+        <span id="val-d2" class="readout-badge" style="background:var(--chalk-coral);">340 m</span>
+      </div>
+      <button class="action-btn" onclick="shout()">📣 大聲喊叫</button>
+    </div>
+
+    <div id="stage-container">
+      <canvas id="stage"></canvas>
+    </div>
+
+    <!-- 數據顯示區 Tab 2 -->
+    <div class="stats" id="stats-tab2" style="display:none;">
+      <span>聲速：<b>340 m/s</b></span>
+      <span id="stat-echo1" style="color:var(--chalk-teal);">第一次回聲 (左)：<b>-- 秒</b></span>
+      <span id="stat-echo2" style="color:var(--chalk-coral);">第二次回聲 (右)：<b>-- 秒</b></span>
+    </div>
+
+    <!-- 應用展示區 Tab 3 -->
+    <div class="app-grid" id="app-section" style="display:none;">
+      <div class="app-card">
+        <div class="app-icon">🚢</div>
+        <h3>漁船聲納</h3>
+        <p>利用超聲波探測魚群位置或海底深度[cite: 1]。</p>
+      </div>
+      <div class="app-card">
+        <div class="app-icon">🦇</div>
+        <h3>蝙蝠飛行</h3>
+        <p>蝙蝠可發出超聲波(10~100000Hz)來判別與障礙物的相對距離[cite: 1]。</p>
+      </div>
+      <div class="app-card">
+        <div class="app-icon">👓</div>
+        <h3>超音波清洗機</h3>
+        <p>利用超聲波的高頻率振動，清洗浸在溶劑中的機具(如眼鏡)[cite: 1]。</p>
+      </div>
+      <div class="app-card">
+        <div class="app-icon">👶</div>
+        <h3>超音波掃描</h3>
+        <p>檢查病患體內情況或孕婦體內的胎兒影像[cite: 1]。</p>
+      </div>
+    </div>
+
+    <!-- 重點筆記區 -->
+    <div class="note" id="note-text">
+      <!-- 內容會由 JS 動態切換 -->
+    </div>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  
+  const V_WIDTH = 1000;
+  const V_HEIGHT = 350;
+  
+  let currentTab = 'tab1';
+  let aniFrame;
+
+  // Tab 1 動畫變數
+  let tab1Time = 0;
+
+  // Tab 2 動畫變數
+  const rngD1 = document.getElementById('rng-d1');
+  const rngD2 = document.getElementById('rng-d2');
+  const valD1 = document.getElementById('val-d1');
+  const valD2 = document.getElementById('val-d2');
+  let isShouting = false;
+  let shoutStartTime = 0;
+  let t1_hit = false, t2_hit = false;
+  let t1_return = false, t2_return = false;
+
+  function initCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = V_WIDTH * dpr;
+    canvas.height = V_HEIGHT * dpr;
+    ctx.scale(dpr, dpr);
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    cancelAnimationFrame(aniFrame);
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+    
+    document.getElementById('controls-tab2').style.display = 'none';
+    document.getElementById('stats-tab2').style.display = 'none';
+    document.getElementById('app-section').style.display = 'none';
+    document.getElementById('stage-container').style.display = 'block';
+    
+    const title = document.getElementById('panel-title');
+    const badge = document.getElementById('panel-badge');
+    const note = document.getElementById('note-text');
+
+    if (tab === 'tab1') {
+      title.textContent = '一、回聲與原聲的差別';
+      badge.textContent = '回聲原理';
+      badge.style.background = '#ffe066';
+      
+      note.innerHTML = `💡 <b>黑板重點：</b><br>
+      • <b>回聲的產生：</b>聲波傳遞出去時，遇到障礙物反射回來的現象[cite: 1]。<br>
+      • <b>聽見回聲的條件：</b>人耳需要 0.1 秒來分辨聲音，所以距離障礙物至少要 <b>17 公尺</b> 以上才聽得見回聲！ (340 × 0.1 ÷ 2 = 17)[cite: 1]<br>
+      • <b>回聲和原聲的差異：</b>反射後能量會散失，所以只有<b>大小聲 (振幅)</b> 改變[cite: 1]。其他的<b>頻率、週期、波長、波速皆相同</b>[cite: 1]！`;
+      
+      tab1Time = 0;
+      animateTab1();
+    } 
+    else if (tab === 'tab2') {
+      document.getElementById('controls-tab2').style.display = 'flex';
+      document.getElementById('stats-tab2').style.display = 'flex';
+      title.textContent = '二、經典試題：兩山之間聽見兩次回聲';
+      badge.textContent = '動態計算題';
+      badge.style.background = '#4dd2ff';
+      
+      isShouting = false;
+      document.getElementById('stat-echo1').innerHTML = `第一次回聲 (左)：<b>-- 秒</b>`;
+      document.getElementById('stat-echo2').innerHTML = `第二次回聲 (右)：<b>-- 秒</b>`;
+      
+      note.innerHTML = `💡 <b>黑板重點：</b><br>
+      • <b>解題心法：</b>聲音是「來回」跑的！撞到左邊的山，跑了 $D_1 \times 2$ 的距離；撞到右邊的山，跑了 $D_2 \times 2$ 的距離。<br>
+      • 左山回聲時間：<b>$t_1 = (D_1 \times 2) \div 340$</b><br>
+      • 右山回聲時間：<b>$t_2 = (D_2 \times 2) \div 340$</b><br>
+      • 點擊上方「大聲喊叫」按鈕，觀察聲波來回的時間差！`;
+      
+      updateTab2Stats();
+      animateTab2();
+    }
+    else if (tab === 'tab3') {
+      document.getElementById('stage-container').style.display = 'none'; // 隱藏畫布
+      document.getElementById('app-section').style.display = 'grid'; // 顯示卡片
+      
+      title.textContent = '三、超聲波與生活應用';
+      badge.textContent = '聽不見的聲音';
+      badge.style.background = '#33cc99';
+      
+      note.innerHTML = `💡 <b>黑板重點：</b><br>
+      • <b>人類聽覺範圍：</b>人耳僅能聽見 <b>20 ~ 20000 Hz</b> 的聲音[cite: 1]。<br>
+      • <b>什麼是超聲波？</b>頻率超過 <b>20000 Hz</b> (人耳聽不到的高頻聲波) 即稱為超聲波[cite: 1]。<br>
+      • <b>什麼是次聲波？</b>頻率低於 20 Hz 的聲音[cite: 1]。<br>
+      • 因為超聲波頻率高、能量集中、不易散失，非常適合用來「探測距離」與「震動清洗」！`;
+    }
+  }
+
+  // ==== TAB 1: 回聲與原聲 ====
+  function animateTab1() {
+    ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
+    tab1Time += 0.05;
+
+    // 畫牆壁
+    ctx.fillStyle = "#666";
+    ctx.fillRect(800, 50, 40, 250);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillText("障礙物", 820, 40);
+
+    // 畫人
+    ctx.font = "40px sans-serif";
+    ctx.fillText("🗣️", 150, 200);
+    
+    // 原聲 (向右傳遞)
+    let wavePos = (tab1Time * 100) % 1400; // 0 ~ 1400
+    if (wavePos < 650) {
+      // 撞牆前
+      ctx.strokeStyle = "#ffe066";
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(180, 180, wavePos, -Math.PI/6, Math.PI/6); ctx.stroke();
+      ctx.beginPath(); ctx.arc(180, 180, wavePos - 30 > 0 ? wavePos-30 : 0, -Math.PI/6, Math.PI/6); ctx.stroke();
+      
+      ctx.fillStyle = "#ffe066";
+      ctx.font = "18px sans-serif";
+      ctx.fillText("原聲 (振幅大)", 180 + wavePos, 130);
+    } 
+    else if (wavePos >= 650 && wavePos < 1300) {
+      // 撞牆後 (反射向左)
+      let returnPos = wavePos - 650;
+      ctx.strokeStyle = "rgba(77, 210, 255, 0.6)"; // 回聲透明度降低、顏色改變代表振幅變小
+      ctx.lineWidth = 2; // 線條變細代表振幅變小
+      ctx.beginPath(); ctx.arc(800, 180, returnPos, Math.PI - Math.PI/6, Math.PI + Math.PI/6); ctx.stroke();
+      ctx.beginPath(); ctx.arc(800, 180, returnPos - 30 > 0 ? returnPos-30 : 0, Math.PI - Math.PI/6, Math.PI + Math.PI/6); ctx.stroke();
+      
+      ctx.fillStyle = "rgba(77, 210, 255, 0.8)";
+      ctx.font = "18px sans-serif";
+      ctx.fillText("回聲 (振幅變小)", 800 - returnPos - 50, 130);
+    }
+
+    // 重點文字標示
+    ctx.fillStyle = "#33cc99";
+    ctx.font = "bold 22px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("波速、波長、頻率 👉 完全不變！", V_WIDTH/2, 300);
+
+    aniFrame = requestAnimationFrame(animateTab1);
+  }
+
+  // ==== TAB 2: 兩山之間 ====
+  function updateTab2Stats() {
+    valD1.textContent = `${rngD1.value} m`;
+    valD2.textContent = `${rngD2.value} m`;
+  }
+
+  rngD1.addEventListener('input', () => { updateTab2Stats(); isShouting = false; });
+  rngD2.addEventListener('input', () => { updateTab2Stats(); isShouting = false; });
+
+  function shout() {
+    isShouting = true;
+    shoutStartTime = Date.now();
+    t1_hit = false; t2_hit = false;
+    t1_return = false; t2_return = false;
+    document.getElementById('stat-echo1').innerHTML = `第一次回聲 (左)：<b>-- 秒</b>`;
+    document.getElementById('stat-echo2').innerHTML = `第二次回聲 (右)：<b>-- 秒</b>`;
+  }
+
+  function animateTab2() {
+    ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
+    const d1 = parseInt(rngD1.value);
+    const d2 = parseInt(rngD2.value);
+    const center = 500;
+    
+    // 畫山
+    // 比例尺：1 pixel = 1 meter
+    const leftMountainX = center - d1;
+    const rightMountainX = center + d2;
+    
+    // 左山
+    ctx.fillStyle = "#5c4033";
+    ctx.beginPath(); ctx.moveTo(leftMountainX - 50, 250); ctx.lineTo(leftMountainX + 20, 250); ctx.lineTo(leftMountainX - 15, 100); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "16px sans-serif"; ctx.textAlign="center"; ctx.fillText("山 A", leftMountainX - 15, 90);
+    
+    // 右山
+    ctx.fillStyle = "#5c4033";
+    ctx.beginPath(); ctx.moveTo(rightMountainX - 20, 250); ctx.lineTo(rightMountainX + 50, 250); ctx.lineTo(rightMountainX + 15, 80); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "16px sans-serif"; ctx.textAlign="center"; ctx.fillText("山 B", rightMountainX + 15, 70);
+
+    // 畫人
+    ctx.font = "30px sans-serif";
+    ctx.fillText("🧍", center, 240);
+
+    // 畫距離標示線
+    ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(leftMountainX, 280); ctx.lineTo(center, 280); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(center, 280); ctx.lineTo(rightMountainX, 280); ctx.stroke();
+    ctx.fillStyle = "#4dd2ff"; ctx.fillText(`${d1} m`, (leftMountainX + center)/2, 275);
+    ctx.fillStyle = "#ff8040"; ctx.fillText(`${d2} m`, (rightMountainX + center)/2, 275);
+
+    if (isShouting) {
+      let elapsed = (Date.now() - shoutStartTime) / 1000; // 經過秒數 (真實時間)
+      // 為了動畫好看，我們讓時間過得快一點：動畫 1秒 = 真實 1秒的模擬
+      // 聲音前進距離：
+      let waveDistance = 340 * elapsed;
+      
+      // 計算理論時間
+      let targetT1 = (d1 * 2) / 340;
+      let targetT2 = (d2 * 2) / 340;
+
+      // 左邊聲波邏輯
+      if (waveDistance < d1) {
+        // 去程
+        ctx.strokeStyle = "#4dd2ff"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(center, 220, waveDistance, Math.PI - 0.5, Math.PI + 0.5); ctx.stroke();
+      } else if (elapsed < targetT1) {
+        // 回程
+        let returnDist = waveDistance - d1;
+        ctx.strokeStyle = "rgba(77, 210, 255, 0.5)"; ctx.lineWidth = 2; ctx.setLineDash([5,5]);
+        ctx.beginPath(); ctx.arc(leftMountainX, 220, returnDist, -0.5, 0.5); ctx.stroke();
+        ctx.setLineDash([]);
+      } else {
+        if (!t1_return) {
+          t1_return = true;
+          document.getElementById('stat-echo1').innerHTML = `第一次回聲 (左)：<b>${targetT1.toFixed(1)} 秒</b>`;
+        }
+      }
+
+      // 右邊聲波邏輯
+      if (waveDistance < d2) {
+        // 去程
+        ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(center, 220, waveDistance, -0.5, 0.5); ctx.stroke();
+      } else if (elapsed < targetT2) {
+        // 回程
+        let returnDist = waveDistance - d2;
+        ctx.strokeStyle = "rgba(255, 128, 64, 0.5)"; ctx.lineWidth = 2; ctx.setLineDash([5,5]);
+        ctx.beginPath(); ctx.arc(rightMountainX, 220, returnDist, Math.PI - 0.5, Math.PI + 0.5); ctx.stroke();
+        ctx.setLineDash([]);
+      } else {
+        if (!t2_return) {
+          t2_return = true;
+          document.getElementById('stat-echo2').innerHTML = `第二次回聲 (右)：<b>${targetT2.toFixed(1)} 秒</b>`;
+        }
+      }
+      
+      // 顯示碼表
+      ctx.fillStyle = "#ffe066";
+      ctx.font = "bold 24px sans-serif";
+      let displayTime = Math.min(elapsed, Math.max(targetT1, targetT2) + 0.5);
+      ctx.fillText(`⏱️ 經過時間：${displayTime.toFixed(1)} 秒`, center, 50);
+    }
+
+    aniFrame = requestAnimationFrame(animateTab2);
+  }
+
+  // Init
+  initCanvas();
+  window.addEventListener('resize', initCanvas);
+  switchTab('tab1');
+
+</script>
+</body>
+</html>
