@@ -23,27 +23,31 @@
   header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed var(--rule-color); padding-bottom: 16px; }
   h1 { font-size: 36px; margin: 0 0 8px; color: var(--chalk-yellow); }
   
-  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .tab-btn {
-    flex: 1; padding: 12px 10px; font-size: 16px; font-weight: bold;
+    flex: 1; min-width: 200px; padding: 12px 10px; font-size: 16px; font-weight: bold;
     background: rgba(255,255,255,0.08); border: 1.5px dashed var(--rule-color); border-radius: 10px;
-    cursor: pointer; text-align: center; color: #c0d0c8;
+    cursor: pointer; text-align: center; color: #c0d0c8; transition: all 0.2s;
   }
-  .tab-btn.active { background: #223e34; color: var(--chalk-yellow); border: 2px solid var(--chalk-yellow); }
+  .tab-btn:hover { background: var(--bg-panel-hover); }
+  .tab-btn.active { background: #223e34; color: var(--chalk-yellow); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 10px rgba(255,224,102,0.2); }
 
   .panel { background: var(--bg-panel); border: 2px solid var(--rule-color); border-radius: 14px; padding: 20px; }
   .panel-header { margin-bottom: 16px; border-bottom: 1px dashed var(--rule-color); padding-bottom: 12px; }
   h2 { margin: 0; font-size: 22px; }
 
-  .controls { display: flex; gap: 10px; margin-bottom: 16px; background: rgba(0,0,0,0.35); padding: 12px 16px; border-radius: 10px; min-height: 56px; }
-  button.action-btn { padding: 8px 16px; border: 1px solid var(--rule-color); background: #111e19; color: #fff; border-radius: 6px; cursor: pointer; font-weight: bold; }
-  button.action-btn.active-btn { background: var(--chalk-coral); border-color: var(--chalk-coral); }
+  .controls { display: flex; gap: 10px; margin-bottom: 16px; background: rgba(0,0,0,0.35); padding: 12px 16px; border-radius: 10px; min-height: 56px; align-items: center;}
+  button.action-btn { padding: 8px 16px; border: 1px solid var(--rule-color); background: #111e19; color: #fff; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+  button.action-btn:hover { border-color: var(--chalk-yellow); }
+  button.action-btn.active-btn { background: var(--chalk-coral); border-color: var(--chalk-coral); box-shadow: 0 0 8px var(--chalk-coral); }
   
   #stage-container { width: 100%; border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; background: #0c1612; }
   canvas { display: block; width: 100%; height: auto; }
   
-  .note { font-size: 15px; margin-top: 14px; background: rgba(255,255,255,0.05); padding: 14px 18px; border-radius: 8px; border-left: 5px solid var(--chalk-yellow); }
+  .note { font-size: 16px; margin-top: 14px; background: rgba(255,255,255,0.05); padding: 16px 20px; border-radius: 8px; border-left: 5px solid var(--chalk-yellow); line-height: 1.6; }
   .highlight { color: var(--chalk-coral); font-weight: bold; }
+  .highlight-t { color: var(--chalk-teal); font-weight: bold; }
+  .highlight-p { color: var(--chalk-pink); font-weight: bold; }
 </style>
 </head>
 <body>
@@ -53,18 +57,18 @@
   </header>
 
   <div class="tabs">
-    <div class="tab-btn active" onclick="switchTab('transverse')">第一頁：橫波解剖</div>
-    <div class="tab-btn" onclick="switchTab('longitudinal')">第二頁：縱波解剖</div>
-    <div class="tab-btn" onclick="switchTab('wip3')">第三頁：(準備中)</div>
-    <div class="tab-btn" onclick="switchTab('wip4')">第四頁：(準備中)</div>
+    <div class="tab-btn active" onclick="switchTab('intro')">第一頁：波的分類</div>
+    <div class="tab-btn" onclick="switchTab('transverse')">第二頁：橫波名詞解釋</div>
+    <div class="tab-btn" onclick="switchTab('longitudinal')">第三頁：縱波名詞解釋</div>
+    <div class="tab-btn" onclick="switchTab('propagation')">第四頁：波形前進概念</div>
   </div>
 
   <div class="panel">
     <div class="panel-header">
-      <h2 id="panel-title">第一頁：橫波 (高低波) 的名詞解剖</h2>
+      <h2 id="panel-title">第一頁：波的分類 (力學波與非力學波)</h2>
     </div>
 
-    <!-- 橫波與縱波共用的按鈕區 -->
+    <!-- 控制區 -->
     <div class="controls" id="btn-group">
       <!-- 內容由 JS 動態切換 -->
     </div>
@@ -83,7 +87,7 @@
   const V_WIDTH = 1000;
   const V_HEIGHT = 450;
   
-  let currentTab = 'transverse';
+  let currentTab = 'intro';
   let highlightState = 'none';
 
   function initCanvas() {
@@ -95,7 +99,9 @@
   function setHighlight(state) {
     highlightState = state;
     document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active-btn'));
-    event.target.classList.add('active-btn');
+    if(event && event.target) {
+        event.target.classList.add('active-btn');
+    }
     drawFrame();
   }
 
@@ -123,7 +129,44 @@
 
   function drawFrame() {
     drawGrid();
-    if (currentTab === 'transverse') {
+    
+    if (currentTab === 'intro') {
+      const cy1 = 130;
+      const cy2 = 320;
+      
+      // 標題
+      ctx.fillStyle = "var(--chalk-yellow)"; ctx.font = "bold 24px sans-serif";
+      ctx.fillText("1. 橫波 (高低波)", 40, cy1 - 70);
+      ctx.fillText("2. 縱波 (疏密波)", 40, cy2 - 70);
+
+      // 橫波圖示
+      ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.setLineDash([5,5]);
+      ctx.beginPath(); ctx.moveTo(250, cy1); ctx.lineTo(V_WIDTH-100, cy1); ctx.stroke(); ctx.setLineDash([]);
+      
+      ctx.strokeStyle = "var(--chalk-yellow)"; ctx.lineWidth = 4;
+      ctx.beginPath();
+      for(let x = 250; x <= V_WIDTH-100; x++) {
+          ctx.lineTo(x, cy1 - 50 * Math.sin((x-250)*2*Math.PI/200));
+      }
+      ctx.stroke();
+      
+      drawChalkArrow(V_WIDTH-200, cy1 - 80, V_WIDTH-80, cy1 - 80, "var(--chalk-pink)", "波前進方向", -15);
+      drawChalkArrow(350, cy1 - 10, 350, cy1 - 80, "var(--chalk-teal)", "", 0);
+      drawChalkArrow(350, cy1 + 10, 350, cy1 + 80, "var(--chalk-teal)", "介質振動 (垂直)", 20);
+
+      // 縱波圖示
+      ctx.strokeStyle = "var(--chalk-teal)"; ctx.lineWidth = 3;
+      for(let i = 0; i <= 100; i++) {
+          let x0 = 250 + i * ((V_WIDTH-350)/100);
+          let dx = 30 * Math.sin(x0 * 2 * Math.PI / 200);
+          ctx.beginPath(); ctx.moveTo(x0 + dx, cy2 - 40); ctx.lineTo(x0 + dx, cy2 + 40); ctx.stroke();
+      }
+      
+      drawChalkArrow(V_WIDTH-200, cy2 - 80, V_WIDTH-80, cy2 - 80, "var(--chalk-pink)", "波前進方向", -15);
+      drawChalkArrow(400, cy2 + 70, 500, cy2 + 70, "var(--chalk-coral)", "介質振動 (平行)", 20);
+      drawChalkArrow(500, cy2 + 70, 400, cy2 + 70, "var(--chalk-coral)", "", 0); // 畫雙向箭頭
+    }
+    else if (currentTab === 'transverse') {
       const cy = V_HEIGHT / 2;
       const amp = 100;
       const waveLen = 300;
@@ -131,6 +174,7 @@
 
       ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.setLineDash([5,5]); ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(V_WIDTH, cy); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#fff"; ctx.font = "16px sans-serif"; ctx.fillText("平衡位置", 20, cy - 10);
       
       ctx.strokeStyle = "var(--chalk-yellow)"; ctx.lineWidth = 4;
       ctx.beginPath();
@@ -150,10 +194,12 @@
         ctx.fillStyle = "var(--chalk-teal)"; ctx.beginPath(); ctx.arc(v1x, v1y, 8, 0, Math.PI*2); ctx.fill();
         ctx.fillText("波谷", v1x-20, v1y+30);
       } else if (highlightState === 'amplitude') {
-        drawChalkArrow(p1x, cy, p1x, p1y, "var(--chalk-coral)", "振幅", -30);
-        drawChalkArrow(v1x, cy, v1x, v1y, "var(--chalk-teal)", "振幅", 45);
+        drawChalkArrow(p1x, cy, p1x, p1y, "var(--chalk-coral)", "振幅 (A)", -30);
+        drawChalkArrow(v1x, cy, v1x, v1y, "var(--chalk-teal)", "振幅 (A)", 45);
       } else if (highlightState === 'wavelength') {
         drawChalkArrow(p1x, p1y-40, p2x, p2y-40, "var(--chalk-pink)", "波長 (λ)", -15);
+        ctx.strokeStyle="var(--chalk-pink)"; ctx.setLineDash([4,4]); ctx.beginPath();
+        ctx.moveTo(p1x, p1y); ctx.lineTo(p1x, p1y-50); ctx.moveTo(p2x, p2y); ctx.lineTo(p2x, p2y-50); ctx.stroke(); ctx.setLineDash([]);
       }
     } 
     else if (currentTab === 'longitudinal') {
@@ -179,11 +225,81 @@
         ctx.fillStyle = "var(--chalk-yellow)"; ctx.font = "bold 20px sans-serif"; ctx.fillText("疏部", sparse1 - 20, cy - 100);
       } else if (highlightState === 'wavelength') {
         drawChalkArrow(dense1, cy-120, dense2, cy-120, "var(--chalk-pink)", "波長 (λ)", -15);
+        ctx.strokeStyle="var(--chalk-pink)"; ctx.setLineDash([4,4]); ctx.beginPath();
+        ctx.moveTo(dense1, cy-80); ctx.lineTo(dense1, cy-130); ctx.moveTo(dense2, cy-80); ctx.lineTo(dense2, cy-130); ctx.stroke(); ctx.setLineDash([]);
       }
     }
-    else {
-      ctx.fillStyle = "#fff"; ctx.font = "24px sans-serif";
-      ctx.fillText("第三、四分頁細節打磨中，敬請期待！", V_WIDTH/2 - 200, V_HEIGHT/2);
+    else if (currentTab === 'propagation') {
+      const slider = document.getElementById('timeSlider');
+      if (!slider) return; // 確保 slider 已載入
+      
+      let phase = parseInt(slider.value); // 0 到 720 度
+      let t_T = phase / 360; // 經過幾個週期 T
+
+      const cy = V_HEIGHT / 2;
+      const amp = 100;
+      const waveLen = 400; // 在這裡定義較長的波長以利觀察
+
+      // 畫平衡線與刻度
+      ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.setLineDash([5,5]); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(V_WIDTH, cy); ctx.stroke(); ctx.setLineDash([]);
+      
+      ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "14px sans-serif";
+      ctx.fillText("0", 0, cy + 20);
+      ctx.fillText("1 個波長 (λ)", waveLen - 40, cy + 20);
+      ctx.fillText("2 個波長 (2λ)", waveLen*2 - 45, cy + 20);
+
+      // 畫波形 (只畫到前進到的位置)
+      const frontX = t_T * waveLen;
+      ctx.strokeStyle = "var(--chalk-yellow)"; ctx.lineWidth = 4;
+      ctx.beginPath();
+      for (let x = 0; x <= frontX && x <= V_WIDTH; x++) {
+        // 波方程式概念：往右傳遞
+        const y = cy - amp * Math.sin( 2 * Math.PI * (t_T - x / waveLen) );
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // 波源質點 (x=0)
+      const sourceY = cy - amp * Math.sin( 2 * Math.PI * t_T );
+      ctx.fillStyle = "var(--chalk-coral)";
+      ctx.beginPath(); ctx.arc(0, sourceY, 12, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 16px sans-serif";
+      ctx.fillText("波源", 15, sourceY - 15);
+      
+      // 畫波源的振動軌跡
+      ctx.strokeStyle = "rgba(255, 128, 64, 0.5)"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, cy - amp); ctx.lineTo(0, cy + amp); ctx.stroke();
+
+      // 介質質點示範 (x=λ/2)
+      if (frontX >= waveLen / 2) {
+        const pY = cy - amp * Math.sin( 2 * Math.PI * (t_T - 0.5) );
+        ctx.fillStyle = "var(--chalk-teal)";
+        ctx.beginPath(); ctx.arc(waveLen/2, pY, 10, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.font = "14px sans-serif";
+        ctx.fillText("介質點", waveLen/2 + 15, pY - 10);
+      }
+
+      // 當完成一個週期時，特別標示距離
+      if (t_T >= 1) {
+         drawChalkArrow(0, cy - amp - 40, waveLen, cy - amp - 40, "var(--chalk-pink)", "經過 1T，波前進了 1λ 的距離！", -15);
+         ctx.strokeStyle="var(--chalk-pink)"; ctx.beginPath();
+         ctx.moveTo(waveLen, cy); ctx.lineTo(waveLen, cy - amp - 45); ctx.stroke();
+      }
+
+      // 更新 UI 數據顯示
+      let timeStr = "";
+      if(t_T === 0) timeStr = "0";
+      else if(t_T === 0.25) timeStr = "1/4 T";
+      else if(t_T === 0.5) timeStr = "1/2 T";
+      else if(t_T === 0.75) timeStr = "3/4 T";
+      else if(t_T === 1) timeStr = "1 T (完整週期)";
+      else if(t_T === 1.25) timeStr = "1又 1/4 T";
+      else if(t_T === 1.5) timeStr = "1.5 T";
+      else if(t_T === 2) timeStr = "2 T (完成兩次)";
+      else timeStr = t_T.toFixed(2) + " T";
+      
+      document.getElementById('timeReadout').textContent = `經過時間 t = ${timeStr}`;
     }
   }
 
@@ -193,7 +309,7 @@
     
     document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
       btn.classList.remove('active');
-      const tabsOrder = ['transverse', 'longitudinal', 'wip3', 'wip4'];
+      const tabsOrder = ['intro', 'transverse', 'longitudinal', 'propagation'];
       if (tabsOrder[idx] === tab) btn.classList.add('active');
     });
 
@@ -201,39 +317,71 @@
     const noteText = document.getElementById('note-text');
     const btnGroup = document.getElementById('btn-group');
 
-    if (tab === 'transverse') {
-      panelTitle.textContent = '第一頁：橫波 (高低波) 的名詞解剖';
+    if (tab === 'intro') {
+      panelTitle.textContent = '第一頁：波的分類 (力學波與非力學波)';
+      btnGroup.style.display = 'none'; // 首頁不需要按鈕
+      noteText.innerHTML = '💡 <b>黑板重點：</b><br><br>波傳遞的是<b>「能量」</b>與<b>「波形」</b>，介質本身<span class="highlight">不會</span>跟著波一起前進，只會在原地振動。<br>● <span class="highlight-p">橫波</span>：介質振動方向與波前進方向<b>垂直</b>。<br>● <span class="highlight-t">縱波</span>：介質振動方向與波前進方向<b>平行</b>。';
+    }
+    else if (tab === 'transverse') {
+      panelTitle.textContent = '第二頁：橫波 (高低波) 的解剖與名詞解釋';
       btnGroup.style.display = 'flex';
       btnGroup.innerHTML = `
         <button class="action-btn active-btn" onclick="setHighlight('none')">顯示原圖</button>
         <button class="action-btn" onclick="setHighlight('peaks')">標示 波峰/波谷</button>
-        <button class="action-btn" onclick="setHighlight('amplitude')">標示 振幅</button>
-        <button class="action-btn" onclick="setHighlight('wavelength')">標示 波長</button>
+        <button class="action-btn" onclick="setHighlight('amplitude')">標示 振幅 (A)</button>
+        <button class="action-btn" onclick="setHighlight('wavelength')">標示 波長 (λ)</button>
       `;
-      noteText.innerHTML = '💡 <b>黑板重點：</b>橫波由波峰與波谷組成。<br>● <span class="highlight">振幅</span>：介質離開平衡位置的最大距離（代表能量大小）。';
+      noteText.innerHTML = `💡 <b>橫波名詞解釋：</b>
+        <ul style="margin-top:8px; margin-bottom:0; padding-left:24px; line-height:1.8;">
+          <li><span class="highlight-t">平衡位置：</span>介質在沒有波通過時，靜止不動的中央位置。</li>
+          <li><span class="highlight">波峰 / 波谷：</span>介質振動離開平衡位置的最高點與最低點。</li>
+          <li><span class="highlight">振幅 (A)：</span>波峰或波谷到平衡位置的垂直距離。<b>振幅越大，代表波攜帶的能量越強！</b></li>
+          <li><span class="highlight-p">波長 (λ)：</span>相鄰兩個波峰（或波谷）之間的水平距離，也就是「一個完整波」的長度。</li>
+        </ul>`;
     } 
     else if (tab === 'longitudinal') {
-      panelTitle.textContent = '第二頁：縱波 (疏密波) 的名詞解剖';
+      panelTitle.textContent = '第三頁：縱波 (疏密波) 的解剖與名詞解釋';
       btnGroup.style.display = 'flex';
       btnGroup.innerHTML = `
         <button class="action-btn active-btn" onclick="setHighlight('none')">顯示原圖</button>
         <button class="action-btn" onclick="setHighlight('dense')">標示 密部</button>
         <button class="action-btn" onclick="setHighlight('sparse')">標示 疏部</button>
-        <button class="action-btn" onclick="setHighlight('wavelength')">標示 波長</button>
+        <button class="action-btn" onclick="setHighlight('wavelength')">標示 波長 (λ)</button>
       `;
-      noteText.innerHTML = '💡 <b>黑板重點：</b>縱波（如聲波）由密部與疏部組成。<br>● <span class="highlight">密部/疏部</span>：介質分佈最密集與最稀疏的區域。';
+      noteText.innerHTML = `💡 <b>縱波名詞解釋：</b>
+        <ul style="margin-top:8px; margin-bottom:0; padding-left:24px; line-height:1.8;">
+          <li><span class="highlight">密部：</span>介質分佈最密集、壓力最大的區域。</li>
+          <li><span class="highlight-t">疏部：</span>介質分佈最稀疏、壓力最小的區域。</li>
+          <li><span class="highlight-p">波長 (λ)：</span>相鄰兩個密部中心（或相鄰兩個疏部中心）之間的水平距離。</li>
+        </ul>`;
     } 
-    else {
-      panelTitle.textContent = tab === 'wip3' ? '第三頁：保留區塊' : '第四頁：保留區塊';
-      btnGroup.style.display = 'none';
-      noteText.innerHTML = '此分頁尚未實作，準備一步一步慢慢完成。';
+    else if (tab === 'propagation') {
+      panelTitle.textContent = '第四頁：波形前進的重要概念 (週期、頻率、波長)';
+      btnGroup.style.display = 'flex';
+      
+      // 建立手動時間拖曳軸，step=45度 代表 1/8 個週期
+      btnGroup.innerHTML = `
+        <label style="color:#fff; font-weight:bold; display:flex; align-items:center; width:100%; gap:15px; font-size:16px;">
+          請向右拖曳時間 (t)：
+          <input type="range" id="timeSlider" min="0" max="720" step="45" value="0" style="flex:1; cursor:pointer;" oninput="drawFrame()">
+          <span id="timeReadout" style="color:#000; background:var(--chalk-yellow); padding:6px 14px; border-radius:6px; min-width:140px; text-align:center;">t = 0</span>
+        </label>
+      `;
+      noteText.innerHTML = `💡 <b>最難的觀念突破：時間與空間的關聯</b>
+        <ul style="margin-top:8px; margin-bottom:0; padding-left:24px; line-height:1.8;">
+          <li><span class="highlight">週期 (T)：</span>波源完成「一次完整振動」所需的時間。（注意波源橘點的上下移動）</li>
+          <li><span class="highlight-t">頻率 (f)：</span>波源在「一秒鐘」內完成振動的次數。頻率與週期互為倒數 <b>( f = 1/T )</b>。</li>
+          <li><span class="highlight-p">核心重點：</span>請拖曳滑桿到 <b>t = 1 T</b>。您可以清楚看到：<b>當波源振動一次 (耗時 1T)，波形剛好向前傳遞了 1 個波長 (λ) 的距離！</b></li>
+        </ul>`;
     }
+    
+    // UI建立完成後呼叫繪圖
     drawFrame();
   }
 
   window.addEventListener('resize', initCanvas);
   initCanvas();
-  switchTab('transverse');
+  switchTab('intro'); // 預設顯示首頁
 </script>
 </body>
 </html>
