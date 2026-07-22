@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<title>聲音的三要素：響度、音調、音色</title>
+<title>聲音的三要素與共振</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root {
@@ -31,10 +31,10 @@
   header p { margin: 0; color: #e0e0e0; font-size: 18px; font-weight: bold; }
 
   /* 導覽列 */
-  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; justify-content: center; }
   .tab-btn {
-    flex: 1; min-width: 160px;
-    padding: 14px 10px; font-size: 18px; font-weight: bold;
+    flex: 1; min-width: 150px; max-width: 200px;
+    padding: 12px 8px; font-size: 18px; font-weight: bold;
     background: rgba(255,255,255,0.08); color: #c0d0c8;
     border: 2px dashed var(--rule-color); border-radius: 10px;
     cursor: pointer; transition: all 0.2s; text-align: center;
@@ -53,12 +53,12 @@
   canvas { display: block; width: 100%; height: auto; }
   
   /* 控制區 */
-  .interactive-box { background: rgba(0,0,0,0.4); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); margin-bottom: 16px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .interactive-box { background: rgba(0,0,0,0.4); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); margin-bottom: 16px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; justify-content: center; }
   .slider-container { flex: 1; min-width: 250px; }
   .slider-label { font-size: 20px; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between;}
   input[type=range] { width: 100%; cursor: pointer; accent-color: var(--chalk-yellow); }
   
-  .btn-group { display: flex; gap: 10px; }
+  .btn-group { display: flex; gap: 10px; justify-content: center; }
   button.tool-btn { padding: 10px 18px; border: 2px solid var(--chalk-teal); background: transparent; color: var(--chalk-teal); border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
   button.tool-btn:hover, button.tool-btn.active { background: var(--chalk-teal); color: #000; }
 
@@ -79,14 +79,16 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>聲音的世界：三要素</h1>
-    <p>國中自然科核心概念：響度、音調、音色與發音體的性質</p>
+    <h1>聲音的世界：三要素與共振</h1>
+    <p>國中自然科核心概念：響度、音調、音色、水杯考題與共振現象</p>
   </header>
 
   <div class="tabs">
-    <div class="tab-btn active" onclick="switchTab('tab1')">一、響度 (分貝)</div>
-    <div class="tab-btn" onclick="switchTab('tab2')">二、音調 (高低)</div>
-    <div class="tab-btn" onclick="switchTab('tab3')">三、音色與結論</div>
+    <div class="tab-btn active" onclick="switchTab('tab1')">一、響度</div>
+    <div class="tab-btn" onclick="switchTab('tab2')">二、音調</div>
+    <div class="tab-btn" onclick="switchTab('tab3')">三、音色</div>
+    <div class="tab-btn" onclick="switchTab('tab4')">四、水杯魔王題</div>
+    <div class="tab-btn" onclick="switchTab('tab5')">五、共振現象</div>
   </div>
 
   <div class="panel">
@@ -124,16 +126,23 @@
   const ctx = canvas.getContext('2d');
   
   const V_WIDTH = 1050;
-  const V_HEIGHT = 300;
+  const V_HEIGHT = 320;
   
   let currentTab = 'tab1';
   let aniFrame;
   let time = 0;
 
-  // 物理參數狀態
-  let waveAmp = 50;  // 振幅
-  let waveFreq = 2;  // 頻率 (波數)
-  let waveType = 'sine'; // 波形 (sine, piano, violin)
+  // 物理參數狀態 (Tab 1~3)
+  let waveAmp = 50;
+  let waveFreq = 2;
+  let waveType = 'sine';
+  
+  // Tab 4 (水杯) 狀態
+  let waterAction = 'none'; // 'none', 'knock', 'blow'
+  
+  // Tab 5 (共振) 狀態
+  let forkVibrating = false;
+  let forkTime = 0;
 
   function initCanvas() {
     const dpr = window.devicePixelRatio || 1;
@@ -158,6 +167,18 @@
     btn.classList.add('active');
   }
 
+  function setWaterAction(action, btn) {
+    waterAction = action;
+    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    time = 0; // 重置動畫時間
+  }
+
+  function triggerResonance() {
+    forkVibrating = true;
+    forkTime = 0;
+  }
+
   function switchTab(tab) {
     currentTab = tab;
     cancelAnimationFrame(aniFrame);
@@ -173,15 +194,14 @@
     const conclusion = document.getElementById('conclusion-section');
     
     conclusion.style.display = 'none';
+    control.style.display = 'flex';
 
     if (tab === 'tab1') {
       title.textContent = '一、響度 (聲音的大小/音量)';
       badge.textContent = '振幅決定';
       badge.style.background = '#ffe066';
       
-      waveAmp = 50;
-      waveFreq = 2;
-      waveType = 'sine';
+      waveAmp = 50; waveFreq = 2; waveType = 'sine';
 
       control.innerHTML = `
         <div class="slider-container">
@@ -195,15 +215,14 @@
       • <b>測量單位：</b><b>分貝 (dB)</b>。<br>
       • <b>生活常識：</b>0 分貝是人耳能聽見的最小音量。分貝數每增加 10，聲音能量會增加 10 倍。`;
       
+      animateWave();
     } 
     else if (tab === 'tab2') {
       title.textContent = '二、音調 (聲音的高低)';
       badge.textContent = '頻率決定';
       badge.style.background = '#4dd2ff';
       
-      waveAmp = 40;
-      waveFreq = 2;
-      waveType = 'sine';
+      waveAmp = 40; waveFreq = 2; waveType = 'sine';
 
       control.innerHTML = `
         <div class="slider-container">
@@ -221,27 +240,26 @@
           <th>狀態</th><th>物體特性</th><th>震動難易</th><th>頻率</th><th>音調</th>
         </tr>
         <tr>
-          <td><b style="color:var(--chalk-coral)">輕、薄、短、小、緊</b></td>
+          <td><b style="color:var(--chalk-coral)">輕、薄、短、小、細、緊</b></td>
           <td>質量小</td><td>容易震動</td><td>高</td><td><b style="color:var(--chalk-coral)">高音</b></td>
         </tr>
         <tr>
-          <td><b style="color:var(--chalk-teal)">重、厚、長、大、鬆</b></td>
+          <td><b style="color:var(--chalk-teal)">重、厚、長、大、粗、鬆</b></td>
           <td>質量大</td><td>不易震動</td><td>低</td><td><b style="color:var(--chalk-teal)">低音</b></td>
         </tr>
       </table>`;
+      animateWave();
     }
     else if (tab === 'tab3') {
       title.textContent = '三、音色 (發音體的特色)';
       badge.textContent = '波形決定';
       badge.style.background = '#ff8040';
       
-      waveAmp = 50;
-      waveFreq = 2.5;
-      waveType = 'sine';
+      waveAmp = 50; waveFreq = 2.5; waveType = 'sine';
 
       control.innerHTML = `
-        <div class="slider-label" style="width:100%;">切換不同樂器的波形 (相同音量與音調下)：</div>
-        <div class="btn-group">
+        <div class="slider-label" style="width:100%; text-align:center;">切換不同樂器的波形 (相同音量與音調下)：</div>
+        <div class="btn-group" style="width:100%;">
           <button class="tool-btn active" onclick="updateTimbre('sine', this)">音叉 (單一頻率)</button>
           <button class="tool-btn" onclick="updateTimbre('piano', this)">鋼琴</button>
           <button class="tool-btn" onclick="updateTimbre('violin', this)">小提琴</button>
@@ -254,11 +272,49 @@
       • <b>決定因素：</b>由聲波的 <b>波形</b> 決定。<br>
       • <b>辨識功能：</b>就算不同樂器發出相同大小聲 (響度同)、相同音階 (音調同) 的聲音，我們還是能分辨出是哪種樂器，這就是因為「音色 (波形)」不同！<br>
       • 音叉發出的是最單純的波，稱為「純音」。大多數樂器發出的都是複合波。`;
+      animateWave();
     }
+    else if (tab === 'tab4') {
+      title.textContent = '四、經典魔王試題：水杯的敲與吹';
+      badge.textContent = '找對發音體！';
+      badge.style.background = '#ff4d4d';
+      waterAction = 'none';
 
-    animate();
+      control.innerHTML = `
+        <div class="slider-label" style="width:100%; text-align:center;">點擊觀察不同動作時的「發音體」是誰：</div>
+        <div class="btn-group" style="width:100%;">
+          <button class="tool-btn" onclick="setWaterAction('knock', this)">🔨 敲打杯身</button>
+          <button class="tool-btn" onclick="setWaterAction('blow', this)">💨 吹氣(杯口)</button>
+        </div>
+      `;
+      
+      note.innerHTML = `💡 <b>黑板重點：</b><br>
+      • <b>敲打杯子時：</b>發音體是 <b style="color:var(--chalk-teal)">「水 + 杯子」</b>。水越多，質量越大越難震動，音調越<b>低</b>。<br>
+      • <b>對杯口吹氣時：</b>發音體是杯內的 <b style="color:var(--chalk-yellow)">「空氣柱」</b>。水越多，空氣柱越短，質量越小越容易震動，音調越<b>高</b>。<br>
+      ⚠️ <b>解題秘訣：</b>先確認題目是「敲」還是「吹」，找出「發音體是誰」，再套用「輕薄短小細緊」的規則！`;
+      animateWaterGlass();
+    }
+    else if (tab === 'tab5') {
+      title.textContent = '五、共振 (共鳴) 現象';
+      badge.textContent = '頻率相同';
+      badge.style.background = '#33cc99';
+      forkVibrating = false;
+
+      control.innerHTML = `
+        <div class="btn-group" style="width:100%;">
+          <button class="tool-btn" style="border-color:var(--chalk-green); color:var(--chalk-green);" onclick="triggerResonance()">🔨 敲擊左側音叉</button>
+        </div>
+      `;
+      
+      note.innerHTML = `💡 <b>黑板重點：</b><br>
+      • <b>發生條件：</b>兩個發音體的 <b>自然頻率完全相同</b> 時，敲擊其中一個，另一個也會跟著震動發聲。<br>
+      • <b>生活應用：</b>木吉他、提琴的木箱稱為「共鳴箱」，可以藉由共振加強聲音的響度 (變大聲)。<br>
+      ⚠️ <b>考試注意：</b>共振的先決條件就是「頻率必須一樣」，大小聲(振幅)不一樣沒關係。`;
+      animateResonance();
+    }
   }
 
+  // ============== TAB 1~3: 波形繪製 ==============
   function drawWaveform(timeOffset, amp, freq, type, color) {
     ctx.beginPath();
     ctx.strokeStyle = color;
@@ -266,85 +322,209 @@
     ctx.lineJoin = 'round';
     
     for (let x = 0; x < V_WIDTH; x++) {
-      // 將 x 軸映射到物理角度
       let angle = (x / V_WIDTH) * Math.PI * 2 * freq - timeOffset;
       let y = 0;
-
       if (type === 'sine') {
-        // 單一純音 (音叉)
         y = Math.sin(angle);
-      } 
-      else if (type === 'piano') {
-        // 鋼琴波形 (近似偶次諧波豐富)
+      } else if (type === 'piano') {
         y = 0.7 * Math.sin(angle) + 0.3 * Math.sin(2 * angle - 0.5) + 0.1 * Math.cos(3 * angle);
-      } 
-      else if (type === 'violin') {
-        // 小提琴波形 (鋸齒波特徵，奇次諧波豐富)
+      } else if (type === 'violin') {
         y = 0.6 * Math.sin(angle) - 0.3 * Math.sin(3 * angle) + 0.2 * Math.sin(5 * angle) - 0.1 * Math.cos(7 * angle);
       }
-      
-      // 縮放振幅並平移到畫布中間
       let plotY = (V_HEIGHT / 2) - (y * amp);
-      
-      if (x === 0) ctx.moveTo(x, plotY);
-      else ctx.lineTo(x, plotY);
+      if (x === 0) ctx.moveTo(x, plotY); else ctx.lineTo(x, plotY);
     }
     ctx.stroke();
   }
 
-  function animate() {
+  function animateWave() {
+    if(currentTab !== 'tab1' && currentTab !== 'tab2' && currentTab !== 'tab3') return;
     ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
     time += 0.08;
 
-    // 畫中心基準線
     ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
-    ctx.beginPath();
-    ctx.moveTo(0, V_HEIGHT / 2);
-    ctx.lineTo(V_WIDTH, V_HEIGHT / 2);
-    ctx.stroke();
+    ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(0, V_HEIGHT / 2); ctx.lineTo(V_WIDTH, V_HEIGHT / 2); ctx.stroke();
     ctx.setLineDash([]);
 
-    // 決定波的顏色
     let waveColor = "#ffe066";
     if (currentTab === 'tab2') waveColor = "#4dd2ff";
     if (currentTab === 'tab3') waveColor = "#ff8040";
 
-    // 繪製波形
     drawWaveform(time, waveAmp, waveFreq, waveType, waveColor);
 
-    // 標示文字
-    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.font = "16px sans-serif";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)"; ctx.font = "16px sans-serif";
     ctx.fillText("靜止位置", 10, V_HEIGHT / 2 - 10);
 
-    // 標示振幅箭頭 (僅在 Tab 1 顯示)
     if (currentTab === 'tab1') {
       let midX = V_WIDTH / 2;
-      ctx.strokeStyle = "#ff8040";
-      ctx.beginPath();
-      ctx.moveTo(midX, V_HEIGHT / 2);
-      ctx.lineTo(midX, V_HEIGHT / 2 - waveAmp);
-      ctx.stroke();
-      
-      // 箭頭
+      ctx.strokeStyle = "#ff8040"; ctx.beginPath(); ctx.moveTo(midX, V_HEIGHT / 2); ctx.lineTo(midX, V_HEIGHT / 2 - waveAmp); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(midX - 5, V_HEIGHT / 2 - waveAmp + 5); ctx.lineTo(midX, V_HEIGHT / 2 - waveAmp); ctx.lineTo(midX + 5, V_HEIGHT / 2 - waveAmp + 5); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(midX - 5, V_HEIGHT / 2 - 5); ctx.lineTo(midX, V_HEIGHT / 2); ctx.lineTo(midX + 5, V_HEIGHT / 2 - 5); ctx.stroke();
-
-      ctx.fillStyle = "#ff8040";
-      ctx.font = "bold 18px sans-serif";
-      ctx.fillText("振幅", midX + 10, V_HEIGHT / 2 - waveAmp / 2 + 5);
+      ctx.fillStyle = "#ff8040"; ctx.font = "bold 18px sans-serif"; ctx.fillText("振幅", midX + 10, V_HEIGHT / 2 - waveAmp / 2 + 5);
     }
     
-    // 標示波長/頻率 (僅在 Tab 2 顯示)
     if (currentTab === 'tab2') {
-      ctx.fillStyle = "rgba(77, 210, 255, 0.5)";
-      ctx.font = "16px sans-serif";
+      ctx.fillStyle = "rgba(77, 210, 255, 0.5)"; ctx.font = "16px sans-serif";
       ctx.fillText(`目前畫面中有 ${waveFreq} 個全波`, 10, 30);
     }
+    aniFrame = requestAnimationFrame(animateWave);
+  }
 
-    aniFrame = requestAnimationFrame(animate);
+  // ============== TAB 4: 水杯魔王題 ==============
+  function drawGlass(x, y, waterHeight, label) {
+    const w = 80; const h = 150;
+    // 畫水
+    ctx.fillStyle = "rgba(77, 210, 255, 0.6)";
+    ctx.fillRect(x, y + h - waterHeight, w, waterHeight);
+    // 畫杯子外框
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y); ctx.stroke();
+    // 標籤
+    ctx.fillStyle = "#fff"; ctx.font = "bold 20px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(label, x + w/2, y + h + 30);
+    ctx.textAlign = "left"; // reset
+  }
+
+  function animateWaterGlass() {
+    if(currentTab !== 'tab4') return;
+    ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
+    time += 0.1;
+
+    let g1_x = 250, g1_y = 80, g1_wLevel = 30; // 少水
+    let g2_x = 700, g2_y = 80, g2_wLevel = 110; // 多水
+    let g_h = 150, g_w = 80;
+
+    drawGlass(g1_x, g1_y, g1_wLevel, "杯子 A (水少)");
+    drawGlass(g2_x, g2_y, g2_wLevel, "杯子 B (水多)");
+
+    if (waterAction === 'knock') {
+      // 敲擊動畫 (槌子在右側)
+      let hammerOffset = Math.sin(time*2)*10;
+      ctx.font = "30px sans-serif";
+      ctx.fillText("🔨", g1_x + g_w + 10 + hammerOffset, g1_y + g_h - 20);
+      ctx.fillText("🔨", g2_x + g_w + 10 + hammerOffset, g2_y + g_h - 20);
+      
+      // 標示發音體：水+杯
+      ctx.fillStyle = "rgba(255, 224, 102, 0.3)";
+      ctx.fillRect(g1_x-5, g1_y + g_h - g1_wLevel, g_w+10, g1_wLevel+5);
+      ctx.fillRect(g2_x-5, g2_y + g_h - g2_wLevel, g_w+10, g2_wLevel+5);
+
+      ctx.fillStyle = "#ffe066"; ctx.font = "bold 18px sans-serif";
+      ctx.fillText("發音體：水+杯 (質量小)", g1_x - 40, g1_y - 20);
+      ctx.fillText("發音體：水+杯 (質量大)", g2_x - 40, g2_y - 20);
+      
+      ctx.fillStyle = "#ff8040"; ctx.font = "bold 22px sans-serif";
+      ctx.fillText("👉 音調 高 (容易震動)", g1_x - 30, g1_y + 280);
+      ctx.fillText("👉 音調 低 (難以震動)", g2_x - 30, g2_y + 280);
+      
+      // 音符
+      if(Math.floor(time)%2===0) { ctx.font = "24px sans-serif"; ctx.fillText("🎵", g1_x-20, g1_y+50); ctx.fillText("🎵", g2_x-20, g2_y+50); }
+
+    } else if (waterAction === 'blow') {
+      // 吹氣動畫 (箭頭在上方)
+      let windOffset = (time*30)%40;
+      ctx.strokeStyle = "#4dd2ff"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(g1_x - 30 + windOffset, g1_y - 15); ctx.lineTo(g1_x + g_w + 10, g1_y - 15); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(g2_x - 30 + windOffset, g2_y - 15); ctx.lineTo(g2_x + g_w + 10, g2_y - 15); ctx.stroke();
+      ctx.font = "30px sans-serif"; ctx.fillText("💨", g1_x - 60, g1_y - 5); ctx.fillText("💨", g2_x - 60, g2_y - 5);
+
+      // 標示發音體：空氣柱
+      let a1_h = g_h - g1_wLevel;
+      let a2_h = g_h - g2_wLevel;
+      ctx.fillStyle = "rgba(255, 128, 64, 0.4)";
+      ctx.fillRect(g1_x+2, g1_y, g_w-4, a1_h);
+      ctx.fillRect(g2_x+2, g2_y, g_w-4, a2_h);
+
+      ctx.fillStyle = "#ff8040"; ctx.font = "bold 18px sans-serif";
+      ctx.fillText("發音體：空氣柱 (長/重)", g1_x - 40, g1_y - 45);
+      ctx.fillText("發音體：空氣柱 (短/輕)", g2_x - 40, g2_y - 45);
+      
+      ctx.fillStyle = "#4dd2ff"; ctx.font = "bold 22px sans-serif";
+      ctx.fillText("👉 音調 低 (難以震動)", g1_x - 30, g1_y + 280);
+      ctx.fillText("👉 音調 高 (容易震動)", g2_x - 30, g2_y + 280);
+      
+      if(Math.floor(time)%2===0) { ctx.font = "24px sans-serif"; ctx.fillText("🎵", g1_x+30, g1_y+20); ctx.fillText("🎵", g2_x+30, g2_y+20); }
+    }
+
+    aniFrame = requestAnimationFrame(animateWaterGlass);
+  }
+
+  // ============== TAB 5: 共振現象 ==============
+  function drawTuningFork(x, y, isVibrating) {
+    ctx.strokeStyle = "#c0d0c8"; ctx.lineWidth = 8; ctx.lineJoin = 'round';
+    
+    let spread = 20;
+    if (isVibrating) {
+      spread = 20 + Math.sin(forkTime * 20) * 3;
+    }
+
+    // U型叉
+    ctx.beginPath();
+    ctx.moveTo(x - spread, y - 60); ctx.lineTo(x - spread, y);
+    ctx.arc(x, y, spread, Math.PI, 0, true);
+    ctx.lineTo(x + spread, y - 60); ctx.stroke();
+    // 握柄
+    ctx.beginPath(); ctx.moveTo(x, y + spread); ctx.lineTo(x, y + spread + 40); ctx.stroke();
+    // 共鳴箱
+    ctx.fillStyle = "#8b5a2b";
+    ctx.fillRect(x - 40, y + spread + 40, 80, 50);
+    ctx.strokeStyle = "#5c3a21"; ctx.lineWidth=2; ctx.strokeRect(x - 40, y + spread + 40, 80, 50);
+    ctx.beginPath(); ctx.arc(x+20, y + spread + 65, 10, 0, Math.PI*2); ctx.fillStyle="#000"; ctx.fill();
+  }
+
+  function animateResonance() {
+    if(currentTab !== 'tab5') return;
+    ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
+    
+    let f1_x = 250, f1_y = 150;
+    let f2_x = 750, f2_y = 150;
+
+    if (forkVibrating) {
+      forkTime += 0.05;
+      
+      // 左側音叉震動
+      drawTuningFork(f1_x, f1_y, true);
+      
+      // 聲波傳遞
+      let waveDist = (forkTime * 200) % 600;
+      if (waveDist < (f2_x - f1_x)) {
+        ctx.strokeStyle = "rgba(51, 204, 153, 0.6)"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(f1_x, f1_y-30, waveDist, -Math.PI/4, Math.PI/4); ctx.stroke();
+        if(waveDist>40) { ctx.beginPath(); ctx.arc(f1_x, f1_y-30, waveDist-40, -Math.PI/4, Math.PI/4); ctx.stroke(); }
+        
+        // 右側音叉靜止
+        drawTuningFork(f2_x, f2_y, false);
+      } else {
+        // 聲波抵達，右側開始共振
+        drawTuningFork(f2_x, f2_y, true);
+        
+        ctx.fillStyle = "#ffe066"; ctx.font = "bold 20px sans-serif";
+        ctx.fillText("✨ 吸收能量，產生共振！", f2_x - 100, f2_y - 90);
+        ctx.font = "30px sans-serif";
+        ctx.fillText("🎵", f2_x - 30, f2_y - 120 + Math.sin(forkTime*10)*10);
+        ctx.fillText("🎵", f2_x + 10, f2_y - 100 + Math.sin(forkTime*10+2)*10);
+      }
+      
+      // 槌子敲擊瞬間
+      if (forkTime < 0.2) {
+        ctx.font = "40px sans-serif";
+        ctx.fillText("🔨", f1_x - 70 + (forkTime*100), f1_y - 30);
+      }
+    } else {
+      drawTuningFork(f1_x, f1_y, false);
+      drawTuningFork(f2_x, f2_y, false);
+    }
+
+    // 標籤
+    ctx.fillStyle = "#fff"; ctx.font = "18px sans-serif"; ctx.textAlign="center";
+    ctx.fillText("音叉 A (256 Hz)", f1_x, f1_y + 140);
+    ctx.fillText("音叉 B (256 Hz)", f2_x, f2_y + 140);
+    ctx.fillStyle = "#33cc99"; ctx.font = "bold 22px sans-serif";
+    ctx.fillText("兩者自然頻率相同，符合共振條件", V_WIDTH/2, 280);
+    ctx.textAlign="left";
+
+    aniFrame = requestAnimationFrame(animateResonance);
   }
 
   // Init
