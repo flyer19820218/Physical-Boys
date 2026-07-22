@@ -134,7 +134,6 @@
       <div class="controls" id="controlsBox"></div>
       <div class="presets" id="presetsBox"></div>
       <div class="visual-card">
-        <!-- 加大 viewBox 高度確保三面鏡所有像都不被裁切 -->
         <svg id="visualSvg" viewBox="-300 -200 600 400"></svg>
       </div>
       <div class="stats-grid" id="statsGrid"></div>
@@ -254,7 +253,6 @@
           const imgX = p;
           const h = 50; 
 
-          // 畫鏡子
           visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: -120, x2: 0, y2: 120, stroke: '#8f8a80', 'stroke-width': 6 }));
           for(let i=-110; i<=110; i+=20) {
               visualSvg.appendChild(createSvgEl('line', { x1: 3, y1: i, x2: 15, y2: i-10, stroke: '#8f8a80', 'stroke-width': 2 }));
@@ -262,22 +260,18 @@
           addText(visualSvg, 0, -135, '平面鏡', 'middle', '#8f8a80', 14, 'bold');
           visualSvg.appendChild(createSvgEl('line', { x1: -280, y1: 80, x2: 280, y2: 80, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
 
-          // 畫眼睛
           const eyeX = -200, eyeY = -40;
           visualSvg.appendChild(createSvgEl('path', { d: `M ${eyeX-15} ${eyeY} Q ${eyeX} ${eyeY-15} ${eyeX+15} ${eyeY} Q ${eyeX} ${eyeY+15} ${eyeX-15} ${eyeY}`, fill: 'none', stroke: '#fff', 'stroke-width': 2 }));
           visualSvg.appendChild(createSvgEl('circle', { cx: eyeX, cy: eyeY, r: 5, fill: '#5fb0ff' }));
 
-          // 畫物體
           visualSvg.appendChild(createSvgEl('line', { x1: objX, y1: 80, x2: objX, y2: 80-h, stroke: '#ef6a5a', 'stroke-width': 6 }));
           visualSvg.appendChild(createSvgEl('polygon', { points: `${objX},${80-h-8} ${objX-6},${80-h+2} ${objX+6},${80-h+2}`, fill: '#ef6a5a' }));
           addText(visualSvg, objX, 80-h-15, '真實物體', 'middle', '#ef6a5a', 12, 'bold');
 
-          // 畫虛像
           visualSvg.appendChild(createSvgEl('line', { x1: imgX, y1: 80, x2: imgX, y2: 80-h, stroke: '#5fb0ff', 'stroke-width': 4, 'stroke-dasharray': '6 4' }));
           visualSvg.appendChild(createSvgEl('polygon', { points: `${imgX},${80-h-8} ${imgX-6},${80-h+2} ${imgX+6},${80-h+2}`, fill: '#5fb0ff' }));
           addText(visualSvg, imgX, 80-h-15, '正立虛像', 'middle', '#5fb0ff', 12, 'bold');
 
-          // 光路圖
           const imgTopY = 80-h;
           const slope = (eyeY - imgTopY) / (eyeX - imgX);
           const hitY = imgTopY + slope * (0 - imgX);
@@ -308,8 +302,6 @@
           const c = params.curved_mirror.curve; 
           
           visualSvg.appendChild(createSvgEl('line', { x1: -280, y1: 0, x2: 280, y2: 0, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
-
-          // 畫曲面鏡 (二次貝茲曲線)
           visualSvg.appendChild(createSvgEl('path', { d: `M 0,-100 Q ${c*2},0 0,100`, fill: 'none', stroke: '#8f8a80', 'stroke-width': 6 }));
           
           let title = "平面鏡", sub = "平行反射";
@@ -317,7 +309,6 @@
           if (c < 0) { title = "凸面鏡"; sub = "發散光線，視野較廣"; }
           addText(visualSvg, 0, -120, title, 'middle', '#fff', 16, 'bold');
 
-          // 【修正區】：凹面鏡(c>0)焦點為負數(在鏡前)，凸面鏡(c<0)焦點為正數(在鏡後)
           const f = c === 0 ? Infinity : -1500 / c; 
 
           const rayYs = [-60, -30, 0, 30, 60];
@@ -334,7 +325,6 @@
                  const destY = y + slope * (destX - mirrorX);
                  visualSvg.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: destX, y2: destY, stroke: '#f2d675', 'stroke-width': 2 }));
                  
-                 // 【修正區】：只有當焦點在鏡後（凸面鏡，c<0）時，才畫出穿透鏡子的延伸虛線，避免凹面鏡時虛線跟實線重疊
                  if (c < 0) {
                      visualSvg.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: f, y2: 0, stroke: '#5fb0ff', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
                  }
@@ -379,13 +369,43 @@
           const refX = L * Math.sin(angleRad);
           const refY = 50 - L * Math.cos(angleRad);
 
+          // ----------------------------------------------------
+          // 【重大修正區】：使用 Math.atan2 取得絕對向量角度，確保箭頭完美貼合光束
+          // ----------------------------------------------------
+
+          // 1. 入射光 (紅)
           visualSvg.appendChild(createSvgEl('line', { x1: incX, y1: incY, x2: 0, y2: 50, stroke: '#ef6a5a', 'stroke-width': 3 }));
-          visualSvg.appendChild(createSvgEl('polygon', { points: `${incX/2},${incY/2+5} ${incX/2+10},${incY/2-5} ${incX/2-5},${incY/2-5}`, fill: '#ef6a5a', transform: `rotate(${90-angleDeg}, ${incX/2}, ${incY/2})` }));
+          
+          const midIncX = incX / 2;
+          const midIncY = (incY + 50) / 2;
+          // 計算入射向量角度 (目標點 - 起始點)
+          const angleInc = Math.atan2(50 - incY, 0 - incX) * 180 / Math.PI + 90; 
+          
+          visualSvg.appendChild(createSvgEl('polygon', {
+              points: `${midIncX},${midIncY-7} ${midIncX-6},${midIncY+5} ${midIncX+6},${midIncY+5}`,
+              fill: '#ef6a5a',
+              transform: `rotate(${angleInc}, ${midIncX}, ${midIncY})`
+          }));
+
+          // 畫雷射槍
           visualSvg.appendChild(createSvgEl('rect', { x: incX-15, y: incY-10, width: 30, height: 20, fill: '#5fb0ff', rx: 3, transform: `rotate(${90-angleDeg}, ${incX}, ${incY})` }));
 
+          // 2. 反射光 (黃)
           visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: 50, x2: refX, y2: refY, stroke: '#f2d675', 'stroke-width': 3 }));
-          visualSvg.appendChild(createSvgEl('polygon', { points: `${refX/2},${refY/2-5} ${refX/2-10},${refY/2+5} ${refX/2+5},${refY/2+5}`, fill: '#f2d675', transform: `rotate(${angleDeg-90}, ${refX/2}, ${refY/2})` }));
+          
+          const midRefX = refX / 2;
+          const midRefY = (refY + 50) / 2;
+          // 計算反射向量角度
+          const angleRef = Math.atan2(refY - 50, refX - 0) * 180 / Math.PI + 90;
+          
+          visualSvg.appendChild(createSvgEl('polygon', {
+              points: `${midRefX},${midRefY-7} ${midRefX-6},${midRefY+5} ${midRefX+6},${midRefY+5}`,
+              fill: '#f2d675',
+              transform: `rotate(${angleRef}, ${midRefX}, ${midRefY})`
+          }));
 
+
+          // 角度標示弧線
           const arcR = 40;
           const arcIncX = -arcR * Math.sin(angleRad);
           const arcIncY = 50 - arcR * Math.cos(angleRad);
@@ -463,17 +483,14 @@
           
         } else if (m === 'three_mirrors') {
           const ballX = params.three_mirrors.ballX; 
-          const ballY = 60; // 將球的位置往下移一點，讓前方鏡子的像(-140)能清楚顯示在 viewBox(-200) 內
+          const ballY = 60; 
           
-          // 前方鏡子 y = -40 (長度 240, 從 -120 到 120)
           visualSvg.appendChild(createSvgEl('line', { x1: -120, y1: -40, x2: 120, y2: -40, stroke: '#8f8a80', 'stroke-width': 6 }));
           addText(visualSvg, 0, -55, '前方鏡子', 'middle', '#8f8a80', 12, 'bold');
           
-          // 左方鏡子 x = -150 
           visualSvg.appendChild(createSvgEl('line', { x1: -150, y1: -40, x2: -150, y2: 160, stroke: '#8f8a80', 'stroke-width': 6 }));
           addText(visualSvg, -165, 60, '左方鏡', 'middle', '#8f8a80', 12, 'bold', 'writing-mode: vertical-lr; text-orientation: upright;');
 
-          // 右方鏡子 x = 150
           visualSvg.appendChild(createSvgEl('line', { x1: 150, y1: -40, x2: 150, y2: 160, stroke: '#8f8a80', 'stroke-width': 6 }));
           addText(visualSvg, 165, 60, '右方鏡', 'middle', '#8f8a80', 12, 'bold', 'writing-mode: vertical-lr; text-orientation: upright;');
 
@@ -489,24 +506,20 @@
              addText(visualSvg, (x+endX)/2, y - 8, label, 'middle', color, 12, 'bold');
           };
 
-          // 畫實體球
           visualSvg.appendChild(createSvgEl('circle', { cx: ballX, cy: ballY, r: 12, fill: '#ef6a5a' }));
           drawVector(ballX, ballY, 'right', '#ef6a5a', '物體速度 <i>v</i>');
           addText(visualSvg, ballX, ballY + 25, '真實物體', 'middle', '#ef6a5a', 12, 'bold');
 
-          // 1. 前方虛像 (對 y=-40 對稱) => imgY = -40 - (ballY - (-40)) = -40 - (60 + 40) = -140
           const topImgY = -140;
           visualSvg.appendChild(createSvgEl('circle', { cx: ballX, cy: topImgY, r: 12, fill: '#5fb0ff', opacity: 0.6 }));
           drawVector(ballX, topImgY, 'right', '#5fb0ff', '像 1 (同向)');
           visualSvg.appendChild(createSvgEl('line', { x1: ballX, y1: ballY, x2: ballX, y2: topImgY, stroke: '#5fb0ff', 'stroke-width': 1, 'stroke-dasharray': '4 4', opacity: 0.5 }));
 
-          // 2. 左方虛像 (對 x=-150 對稱) => imgX = -150 - (ballX - (-150)) = -300 - ballX
           const leftImgX = -300 - ballX;
           visualSvg.appendChild(createSvgEl('circle', { cx: leftImgX, cy: ballY, r: 12, fill: '#4cd964', opacity: 0.6 }));
           drawVector(leftImgX, ballY, 'left', '#4cd964', '像 2 (反向)');
           visualSvg.appendChild(createSvgEl('line', { x1: ballX, y1: ballY, x2: leftImgX, y2: ballY, stroke: '#4cd964', 'stroke-width': 1, 'stroke-dasharray': '4 4', opacity: 0.5 }));
 
-          // 3. 右方虛像 (對 x=150 對稱) => imgX = 150 + (150 - ballX) = 300 - ballX
           const rightImgX = 300 - ballX;
           visualSvg.appendChild(createSvgEl('circle', { cx: rightImgX, cy: ballY, r: 12, fill: '#f2d675', opacity: 0.6 }));
           drawVector(rightImgX, ballY, 'left', '#f2d675', '像 3 (反向)');
