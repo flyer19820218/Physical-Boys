@@ -209,7 +209,7 @@
           addSlider('v1', '介質甲 光速', 10, 30, 1, p.v1, '萬公里/s', v => { p.v1 = v; return v; });
           addSlider('v2', '介質乙 光速', 10, 30, 1, p.v2, '萬公里/s', v => { p.v2 = v; return v; });
         } else if (m === 'coin_water') {
-          addSlider('waterLevel', '加水進杯子 (水位高度)', 0, 120, 2, p.waterLevel, 'cm', v => { p.waterLevel = v; return v; });
+          addSlider('waterLevel', '加水進碗裡 (水位高度)', 0, 80, 2, p.waterLevel, 'cm', v => { p.waterLevel = v; return v; });
         } else if (m === 'fish_human') {
           const div = document.createElement('div');
           div.className = 'control';
@@ -393,16 +393,16 @@
           `;
 
         } else if (m === 'coin_water') {
-          const wLevel = params.coin_water.waterLevel; // 0 to 120
-          const cupWidth = 140, cupHeight = 120;
-          const cupY = 100; // 杯底 y
+          const wLevel = params.coin_water.waterLevel; // 0 to 80
+          const cupWidth = 180, cupHeight = 80; // 調整為寬矮的碗
+          const cupY = 100; // 碗底 y
           
           // 畫眼睛 (右上)
-          const eyeX = 220, eyeY = -80;
+          const eyeX = 220, eyeY = -60;
           visualSvg.appendChild(createSvgEl('path', { d: `M ${eyeX-15} ${eyeY} Q ${eyeX} ${eyeY-15} ${eyeX+15} ${eyeY} Q ${eyeX} ${eyeY+15} ${eyeX-15} ${eyeY}`, fill: 'none', stroke: '#fff', 'stroke-width': 2 }));
           visualSvg.appendChild(createSvgEl('circle', { cx: eyeX, cy: eyeY, r: 5, fill: '#5fb0ff' }));
 
-          // 畫杯子
+          // 畫碗
           visualSvg.appendChild(createSvgEl('path', { d: `M ${-cupWidth/2},${cupY-cupHeight} L ${-cupWidth/2},${cupY} L ${cupWidth/2},${cupY} L ${cupWidth/2},${cupY-cupHeight}`, fill: 'none', stroke: 'rgba(255,255,255,0.8)', 'stroke-width': 4 }));
           
           // 畫水
@@ -411,30 +411,29 @@
               visualSvg.appendChild(createSvgEl('line', { x1: -cupWidth/2+2, y1: cupY-wLevel, x2: cupWidth/2-2, y2: cupY-wLevel, stroke: '#5fb0ff', 'stroke-width': 2 }));
           }
 
-          // 畫硬幣 (杯底中心偏左一點點)
-          const coinX = -30, coinY = cupY - 5;
+          // 畫硬幣 (放在碗底偏左，剛好讓無水視線被碗緣擋住)
+          const coinX = -45, coinY = cupY - 5;
           visualSvg.appendChild(createSvgEl('ellipse', { cx: coinX, cy: coinY, rx: 20, ry: 6, fill: '#f2d675' }));
           addText(visualSvg, coinX - 30, coinY + 4, '硬幣', 'end', '#f2d675', 12, 'bold');
 
-          const blockLineY = cupY - cupHeight; // 杯口邊緣高度
-          const blockLineX = cupWidth/2; // 杯口右邊緣
+          const blockLineY = cupY - cupHeight; // 碗口邊緣高度
+          const blockLineX = cupWidth/2; // 碗口右邊緣
 
           // 光路計算 (從硬幣出發到眼睛)
           if (wLevel === 0) {
              // 沒水：直線前進
              visualSvg.appendChild(createSvgEl('line', { x1: coinX, y1: coinY, x2: eyeX, y2: eyeY, stroke: '#ef6a5a', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
-             // 判斷是否被杯子擋住
+             // 判斷是否被碗壁擋住
              const slope = (eyeY - coinY) / (eyeX - coinX);
              const yAtCupEdge = coinY + slope * (blockLineX - coinX);
              if (yAtCupEdge > blockLineY) {
-                 // 被杯壁擋住
-                 addText(visualSvg, 0, -40, '光線被杯壁擋住，看不見硬幣！', 'middle', 'var(--v-color)', 16, 'bold');
+                 // 被碗壁擋住
+                 addText(visualSvg, 0, -40, '光線被碗壁擋住，看不見硬幣！', 'middle', 'var(--v-color)', 16, 'bold');
              } else {
                  addText(visualSvg, 0, -40, '直線看見硬幣！', 'middle', 'var(--chalk-yellow)', 16, 'bold');
              }
           } else {
              // 有水：折射
-             // 水面 y = cupY - wLevel
              const surfaceY = cupY - wLevel;
              
              // 簡化尋找打在水面上的 X 座標 (使用二分法逼近 Snell's law)
@@ -455,10 +454,10 @@
              const yAtCupEdge = surfaceY + slopeAir * (blockLineX - hitX);
 
              if (yAtCupEdge > blockLineY && hitX < blockLineX) {
-                 // 折射後仍被杯壁擋住
+                 // 折射後仍被碗壁擋住
                  visualSvg.appendChild(createSvgEl('line', { x1: coinX, y1: coinY, x2: hitX, y2: surfaceY, stroke: '#ef6a5a', 'stroke-width': 2 }));
                  visualSvg.appendChild(createSvgEl('line', { x1: hitX, y1: surfaceY, x2: eyeX, y2: eyeY, stroke: '#ef6a5a', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
-                 addText(visualSvg, 0, -40, '光線折射，但仍被杯壁擋住', 'middle', 'var(--v-color)', 16, 'bold');
+                 addText(visualSvg, 0, -40, '光線折射，但仍被碗壁擋住', 'middle', 'var(--v-color)', 16, 'bold');
              } else {
                  // 成功折射入眼
                  visualSvg.appendChild(createSvgEl('line', { x1: coinX, y1: coinY, x2: hitX, y2: surfaceY, stroke: '#ef6a5a', 'stroke-width': 2 }));
@@ -489,7 +488,7 @@
 
           explainBox.innerHTML = `
             <h3>💡 生活實例：若隱若現的銅板</h3>
-            <p>將硬幣放在杯底，挪開一點距離讓自己剛好從側面看不到硬幣。接著緩緩倒入水，漸漸地硬幣又出現了！為什麼？<br>
+            <p>將硬幣放在碗底，挪開一點距離讓自己剛好從側面看不到硬幣。接著緩緩倒入水，漸漸地硬幣又出現了！為什麼？<br>
             光在不同介質傳遞速率不同，當硬幣的光線從水（慢）進入空氣（快）時，產生折射偏折（偏離法線），進入了我們的眼睛。<br>
             簡單來說：<span class="formula-highlight">折射現象讓我們看水裡的東西都變「淺」了！</span></p>
           `;
