@@ -1,209 +1,357 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
+<!doctype html>
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>聲音的三要素 - 互動模擬</title>
-    <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #f8f9fa; 
-            margin: 0; 
-            padding: 20px; 
-            color: #333; 
-        }
-        .container { 
-            max-width: 800px; 
-            margin: 0 auto; 
-            background: white; 
-            padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-        }
-        h1 { 
-            text-align: center; 
-            color: #2c3e50; 
-            margin-top: 0;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-        }
-        canvas { 
-            display: block; 
-            margin: 20px auto; 
-            background: #2c3e50; 
-            border-radius: 8px; 
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-        }
-        .controls { 
-            display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 20px; 
-            margin-top: 20px;
-        }
-        .control-group { 
-            background: #f1f2f6; 
-            padding: 15px; 
-            border-radius: 8px;
-            display: flex; 
-            flex-direction: column; 
-        }
-        label { 
-            font-weight: bold; 
-            margin-bottom: 10px; 
-            color: #2c3e50; 
-            display: flex;
-            justify-content: space-between;
-        }
-        input[type="range"] { 
-            width: 100%; 
-            cursor: pointer; 
-        }
-        select { 
-            padding: 10px; 
-            font-size: 16px; 
-            border-radius: 5px; 
-            border: 1px solid #bdc3c7; 
-            background-color: white;
-            cursor: pointer;
-        }
-        .description {
-            font-size: 0.9em;
-            color: #7f8c8d;
-            margin-top: 5px;
-        }
-    </style>
+<meta charset="utf-8">
+<title>聲音的三要素：響度、音調、音色</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg-base: #111e19;
+    --bg-panel: #172a23;
+    --bg-panel-hover: #1f382f;
+    --chalk-white: #ffffff;
+    --chalk-yellow: #ffe066;
+    --chalk-teal: #4dd2ff;
+    --chalk-coral: #ff8040;
+    --chalk-green: #33cc99;
+    --rule-color: rgba(255, 255, 255, 0.25);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif;
+    background-color: var(--bg-base);
+    color: var(--chalk-white);
+    font-size: 18px; 
+  }
+  .wrap { max-width: 1140px; margin: 20px auto; padding: 0 16px 40px; }
+  
+  header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed var(--rule-color); padding-bottom: 16px; }
+  h1 { font-size: 40px; margin: 0 0 10px 0; color: var(--chalk-yellow); letter-spacing: 2px; font-weight: 900; }
+  header p { margin: 0; color: #e0e0e0; font-size: 18px; font-weight: bold; }
+
+  /* 導覽列 */
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn {
+    flex: 1; min-width: 160px;
+    padding: 14px 10px; font-size: 18px; font-weight: bold;
+    background: rgba(255,255,255,0.08); color: #c0d0c8;
+    border: 2px dashed var(--rule-color); border-radius: 10px;
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .tab-btn:hover { background: var(--bg-panel-hover); color: #ffffff; }
+  .tab-btn.active { background: #223e34; color: var(--chalk-yellow); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 12px rgba(255, 224, 102, 0.3); }
+
+  /* 面板 */
+  .panel { background: var(--bg-panel); border: 2px solid var(--rule-color); border-radius: 14px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px dashed var(--rule-color); padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  h2 { margin: 0; font-size: 26px; color: #ffffff; letter-spacing: 1px; }
+  .sub-tag { font-size: 16px; color: #000000; padding: 6px 16px; border-radius: 999px; font-weight: 800; }
+
+  /* 畫布 */
+  #stage-container { width: 100%; border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; overflow: hidden; background: #0c1612; box-shadow: inset 0 0 25px rgba(0,0,0,0.7); position: relative; margin-bottom: 16px;}
+  canvas { display: block; width: 100%; height: auto; }
+  
+  /* 控制區 */
+  .interactive-box { background: rgba(0,0,0,0.4); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); margin-bottom: 16px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .slider-container { flex: 1; min-width: 250px; }
+  .slider-label { font-size: 20px; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between;}
+  input[type=range] { width: 100%; cursor: pointer; accent-color: var(--chalk-yellow); }
+  
+  .btn-group { display: flex; gap: 10px; }
+  button.tool-btn { padding: 10px 18px; border: 2px solid var(--chalk-teal); background: transparent; color: var(--chalk-teal); border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+  button.tool-btn:hover, button.tool-btn.active { background: var(--chalk-teal); color: #000; }
+
+  .note { font-size: 18px; color: #ffffff; margin-top: 16px; line-height: 1.8; background: rgba(255,255,255,0.08); padding: 18px 24px; border-radius: 10px; border-left: 6px solid var(--chalk-yellow); }
+  
+  /* 結論特別區塊 */
+  .conclusion-box { background: rgba(255, 128, 64, 0.15); border: 2px solid var(--chalk-coral); padding: 20px; margin-top: 20px; border-radius: 10px; box-shadow: 0 0 15px rgba(255,128,64,0.2); }
+  .conclusion-box h3 { color: var(--chalk-coral); margin: 0 0 10px 0; font-size: 24px; display: flex; align-items: center; gap: 8px;}
+  .conclusion-box p { margin: 0 0 10px 0; font-size: 20px; line-height: 1.6;}
+  
+  /* 發音體性質表格 */
+  .prop-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden; }
+  .prop-table th, .prop-table td { padding: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+  .prop-table th { background: rgba(77, 210, 255, 0.2); color: var(--chalk-teal); font-size: 20px;}
+  .prop-table td { font-size: 18px; font-weight: bold; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>聲音的三要素：響度、音調、音色</h1>
-        
-        <!-- 動態波形顯示區 -->
-        <canvas id="waveCanvas" width="740" height="250"></canvas>
-        
-        <div class="controls">
-            <!-- 響度 (振幅) 控制 -->
-            <div class="control-group">
-                <label for="amplitude">
-                    <span>響度 (振幅 Amplitude)</span>
-                    <span id="ampVal">中等</span>
-                </label>
-                <input type="range" id="amplitude" min="10" max="110" value="60">
-                <div class="description">💡 振幅越大，代表聲音攜帶的能量越多，響度越大（聲音越大聲）。</div>
-            </div>
+<div class="wrap">
+  <header>
+    <h1>聲音的世界：三要素</h1>
+    <p>國中自然科核心概念：響度、音調、音色與發音體的性質</p>
+  </header>
 
-            <!-- 音調 (頻率) 控制 -->
-            <div class="control-group">
-                <label for="frequency">
-                    <span>音調 (頻率 Frequency)</span>
-                    <span id="freqVal">中等</span>
-                </label>
-                <input type="range" id="frequency" min="1" max="15" value="5">
-                <div class="description">💡 相同時間內振動次數越多（頻率越高），波形越密集，音調越高。</div>
-            </div>
+  <div class="tabs">
+    <div class="tab-btn active" onclick="switchTab('tab1')">一、響度 (分貝)</div>
+    <div class="tab-btn" onclick="switchTab('tab2')">二、音調 (高低)</div>
+    <div class="tab-btn" onclick="switchTab('tab3')">三、音色與結論</div>
+  </div>
 
-            <!-- 音色 (波形) 控制 -->
-            <div class="control-group">
-                <label for="waveform">音色 (波形 Waveform)</label>
-                <select id="waveform">
-                    <option value="sine">音叉 (正弦波 - 單純的聲音)</option>
-                    <option value="square">電子合成音 (方波)</option>
-                    <option value="sawtooth">弦樂器 (鋸齒波 - 豐富的泛音)</option>
-                </select>
-                <div class="description">💡 發音體的材質與構造不同，會產生不同的波形，這就是我們能分辨不同樂器或人聲的原因。</div>
-            </div>
-        </div>
+  <div class="panel">
+    <div class="panel-header">
+      <h2 id="panel-title">一、響度 (音量大小)</h2>
+      <span id="panel-badge" class="sub-tag" style="background:#ffe066;">波的振幅</span>
     </div>
 
-    <script>
-        const canvas = document.getElementById('waveCanvas');
-        const ctx = canvas.getContext('2d');
-        const ampSlider = document.getElementById('amplitude');
-        const freqSlider = document.getElementById('frequency');
-        const waveSelect = document.getElementById('waveform');
-        const ampVal = document.getElementById('ampVal');
-        const freqVal = document.getElementById('freqVal');
+    <!-- 動畫畫布 -->
+    <div id="stage-container">
+      <canvas id="stage"></canvas>
+    </div>
 
-        let phase = 0;
+    <!-- 互動控制區 -->
+    <div class="interactive-box" id="control-box">
+      <!-- 內容由 JS 動態替換 -->
+    </div>
 
-        function updateLabels() {
-            const amp = parseInt(ampSlider.value);
-            if (amp < 40) ampVal.textContent = '小聲 (小振幅)';
-            else if (amp > 80) ampVal.textContent = '大聲 (大振幅)';
-            else ampVal.textContent = '中等';
+    <!-- 結論區 (僅在 Tab 3 顯示) -->
+    <div class="conclusion-box" id="conclusion-section" style="display:none;">
+      <h3>⚠️ 必考大結論：三要素互不影響！</h3>
+      <p><b>頻率改變了，振幅不一定會變；波形改變了，頻率也不一定會變。</b></p>
+      <p style="color: var(--chalk-yellow);">👉 <b>舉例：</b>鋼琴可以彈出很小聲的低音；小提琴也可以拉出很大聲的高音！</p>
+    </div>
 
-            const freq = parseInt(freqSlider.value);
-            if (freq < 4) freqVal.textContent = '低音 (低頻率)';
-            else if (freq > 10) freqVal.textContent = '高音 (高頻率)';
-            else freqVal.textContent = '中等';
-        }
+    <!-- 重點筆記區 -->
+    <div class="note" id="note-text">
+      <!-- 內容由 JS 動態替換 -->
+    </div>
+  </div>
+</div>
 
-        function drawWave() {
-            // 清空畫布
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // 畫中央基準線 (平衡位置)
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2);
-            ctx.lineTo(canvas.width, canvas.height / 2);
-            ctx.strokeStyle = '#7f8c8d';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 5]);
-            ctx.stroke();
-            ctx.setLineDash([]);
+<script>
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  
+  const V_WIDTH = 1050;
+  const V_HEIGHT = 300;
+  
+  let currentTab = 'tab1';
+  let aniFrame;
+  let time = 0;
 
-            // 取得當前控制參數
-            const amplitude = parseInt(ampSlider.value);
-            const frequency = parseInt(freqSlider.value);
-            const waveType = waveSelect.value;
-            
-            updateLabels();
+  // 物理參數狀態
+  let waveAmp = 50;  // 振幅
+  let waveFreq = 2;  // 頻率 (波數)
+  let waveType = 'sine'; // 波形 (sine, piano, violin)
 
-            // 設定波形樣式
-            ctx.beginPath();
-            ctx.strokeStyle = '#00d2d3'; // 螢光藍綠色，在深色背景很顯眼
-            ctx.lineWidth = 3;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#00d2d3';
+  function initCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = V_WIDTH * dpr;
+    canvas.height = V_HEIGHT * dpr;
+    ctx.scale(dpr, dpr);
+  }
 
-            // 繪製波形
-            for (let x = 0; x < canvas.width; x++) {
-                // 將 x 軸標準化為角度 t
-                const t = (x / canvas.width) * Math.PI * 2 * frequency + phase;
-                let y = 0;
+  function updateAmp(val) {
+    waveAmp = parseInt(val);
+    document.getElementById('amp-val').innerText = (waveAmp * 1.2).toFixed(0) + ' dB';
+  }
 
-                // 根據波形公式計算 y 座標
-                if (waveType === 'sine') {
-                    y = Math.sin(t);
-                } else if (waveType === 'square') {
-                    y = Math.sign(Math.sin(t));
-                } else if (waveType === 'sawtooth') {
-                    // 鋸齒波公式
-                    y = 2 * (t / (2 * Math.PI) - Math.floor(t / (2 * Math.PI) + 0.5));
-                }
+  function updateFreq(val) {
+    waveFreq = parseFloat(val);
+    document.getElementById('freq-val').innerText = (waveFreq * 100).toFixed(0) + ' Hz';
+  }
 
-                // 計算畫布上的實際垂直位置
-                const yPos = canvas.height / 2 - y * amplitude;
+  function updateTimbre(type, btn) {
+    waveType = type;
+    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
 
-                if (x === 0) {
-                    ctx.moveTo(x, yPos);
-                } else {
-                    ctx.lineTo(x, yPos);
-                }
-            }
-            ctx.stroke();
+  function switchTab(tab) {
+    currentTab = tab;
+    cancelAnimationFrame(aniFrame);
+    time = 0;
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+    
+    const title = document.getElementById('panel-title');
+    const badge = document.getElementById('panel-badge');
+    const note = document.getElementById('note-text');
+    const control = document.getElementById('control-box');
+    const conclusion = document.getElementById('conclusion-section');
+    
+    conclusion.style.display = 'none';
 
-            // 關閉陰影以免影響下一幀
-            ctx.shadowBlur = 0;
+    if (tab === 'tab1') {
+      title.textContent = '一、響度 (聲音的大小/音量)';
+      badge.textContent = '振幅決定';
+      badge.style.background = '#ffe066';
+      
+      waveAmp = 50;
+      waveFreq = 2;
+      waveType = 'sine';
 
-            // 產生波動動畫效果
-            phase -= 0.08; 
-            
-            // 持續重繪
-            requestAnimationFrame(drawWave);
-        }
+      control.innerHTML = `
+        <div class="slider-container">
+          <div class="slider-label"><span>調整用力程度 (振幅)：</span> <span id="amp-val" style="color:var(--chalk-yellow)">60 dB</span></div>
+          <input type="range" min="10" max="100" value="50" oninput="updateAmp(this.value)">
+        </div>
+      `;
+      
+      note.innerHTML = `💡 <b>黑板重點：</b><br>
+      • <b>決定因素：</b>由聲波的 <b>振幅</b> 決定。敲擊的力量越大，振幅越大，聲音就越大。<br>
+      • <b>測量單位：</b><b>分貝 (dB)</b>。<br>
+      • <b>生活常識：</b>0 分貝是人耳能聽見的最小音量。分貝數每增加 10，聲音能量會增加 10 倍。`;
+      
+    } 
+    else if (tab === 'tab2') {
+      title.textContent = '二、音調 (聲音的高低)';
+      badge.textContent = '頻率決定';
+      badge.style.background = '#4dd2ff';
+      
+      waveAmp = 40;
+      waveFreq = 2;
+      waveType = 'sine';
 
-        // 啟動動畫
-        drawWave();
-    </script>
+      control.innerHTML = `
+        <div class="slider-container">
+          <div class="slider-label"><span>調整震動快慢 (頻率)：</span> <span id="freq-val" style="color:var(--chalk-teal)">200 Hz</span></div>
+          <input type="range" min="1" max="6" value="2" step="0.5" oninput="updateFreq(this.value)">
+        </div>
+      `;
+      
+      note.innerHTML = `💡 <b>黑板重點：</b><br>
+      • <b>決定因素：</b>由聲波的 <b>頻率</b> 決定。物體震動越快，頻率越大，音調就越高。<br>
+      • <b>測量單位：</b><b>赫茲 (Hz)</b> (每秒震動的次數)。<br>
+      • <b>發音體的性質規律：</b>
+      <table class="prop-table">
+        <tr>
+          <th>狀態</th><th>物體特性</th><th>震動難易</th><th>頻率</th><th>音調</th>
+        </tr>
+        <tr>
+          <td><b style="color:var(--chalk-coral)">輕、薄、短、小、緊</b></td>
+          <td>質量小</td><td>容易震動</td><td>高</td><td><b style="color:var(--chalk-coral)">高音</b></td>
+        </tr>
+        <tr>
+          <td><b style="color:var(--chalk-teal)">重、厚、長、大、鬆</b></td>
+          <td>質量大</td><td>不易震動</td><td>低</td><td><b style="color:var(--chalk-teal)">低音</b></td>
+        </tr>
+      </table>`;
+    }
+    else if (tab === 'tab3') {
+      title.textContent = '三、音色 (發音體的特色)';
+      badge.textContent = '波形決定';
+      badge.style.background = '#ff8040';
+      
+      waveAmp = 50;
+      waveFreq = 2.5;
+      waveType = 'sine';
+
+      control.innerHTML = `
+        <div class="slider-label" style="width:100%;">切換不同樂器的波形 (相同音量與音調下)：</div>
+        <div class="btn-group">
+          <button class="tool-btn active" onclick="updateTimbre('sine', this)">音叉 (單一頻率)</button>
+          <button class="tool-btn" onclick="updateTimbre('piano', this)">鋼琴</button>
+          <button class="tool-btn" onclick="updateTimbre('violin', this)">小提琴</button>
+        </div>
+      `;
+      
+      conclusion.style.display = 'block';
+
+      note.innerHTML = `💡 <b>黑板重點：</b><br>
+      • <b>決定因素：</b>由聲波的 <b>波形</b> 決定。<br>
+      • <b>辨識功能：</b>就算不同樂器發出相同大小聲 (響度同)、相同音階 (音調同) 的聲音，我們還是能分辨出是哪種樂器，這就是因為「音色 (波形)」不同！<br>
+      • 音叉發出的是最單純的波，稱為「純音」。大多數樂器發出的都是複合波。`;
+    }
+
+    animate();
+  }
+
+  function drawWaveform(timeOffset, amp, freq, type, color) {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
+    ctx.lineJoin = 'round';
+    
+    for (let x = 0; x < V_WIDTH; x++) {
+      // 將 x 軸映射到物理角度
+      let angle = (x / V_WIDTH) * Math.PI * 2 * freq - timeOffset;
+      let y = 0;
+
+      if (type === 'sine') {
+        // 單一純音 (音叉)
+        y = Math.sin(angle);
+      } 
+      else if (type === 'piano') {
+        // 鋼琴波形 (近似偶次諧波豐富)
+        y = 0.7 * Math.sin(angle) + 0.3 * Math.sin(2 * angle - 0.5) + 0.1 * Math.cos(3 * angle);
+      } 
+      else if (type === 'violin') {
+        // 小提琴波形 (鋸齒波特徵，奇次諧波豐富)
+        y = 0.6 * Math.sin(angle) - 0.3 * Math.sin(3 * angle) + 0.2 * Math.sin(5 * angle) - 0.1 * Math.cos(7 * angle);
+      }
+      
+      // 縮放振幅並平移到畫布中間
+      let plotY = (V_HEIGHT / 2) - (y * amp);
+      
+      if (x === 0) ctx.moveTo(x, plotY);
+      else ctx.lineTo(x, plotY);
+    }
+    ctx.stroke();
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
+    time += 0.08;
+
+    // 畫中心基準線
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(0, V_HEIGHT / 2);
+    ctx.lineTo(V_WIDTH, V_HEIGHT / 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 決定波的顏色
+    let waveColor = "#ffe066";
+    if (currentTab === 'tab2') waveColor = "#4dd2ff";
+    if (currentTab === 'tab3') waveColor = "#ff8040";
+
+    // 繪製波形
+    drawWaveform(time, waveAmp, waveFreq, waveType, waveColor);
+
+    // 標示文字
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.font = "16px sans-serif";
+    ctx.fillText("靜止位置", 10, V_HEIGHT / 2 - 10);
+
+    // 標示振幅箭頭 (僅在 Tab 1 顯示)
+    if (currentTab === 'tab1') {
+      let midX = V_WIDTH / 2;
+      ctx.strokeStyle = "#ff8040";
+      ctx.beginPath();
+      ctx.moveTo(midX, V_HEIGHT / 2);
+      ctx.lineTo(midX, V_HEIGHT / 2 - waveAmp);
+      ctx.stroke();
+      
+      // 箭頭
+      ctx.beginPath(); ctx.moveTo(midX - 5, V_HEIGHT / 2 - waveAmp + 5); ctx.lineTo(midX, V_HEIGHT / 2 - waveAmp); ctx.lineTo(midX + 5, V_HEIGHT / 2 - waveAmp + 5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(midX - 5, V_HEIGHT / 2 - 5); ctx.lineTo(midX, V_HEIGHT / 2); ctx.lineTo(midX + 5, V_HEIGHT / 2 - 5); ctx.stroke();
+
+      ctx.fillStyle = "#ff8040";
+      ctx.font = "bold 18px sans-serif";
+      ctx.fillText("振幅", midX + 10, V_HEIGHT / 2 - waveAmp / 2 + 5);
+    }
+    
+    // 標示波長/頻率 (僅在 Tab 2 顯示)
+    if (currentTab === 'tab2') {
+      ctx.fillStyle = "rgba(77, 210, 255, 0.5)";
+      ctx.font = "16px sans-serif";
+      ctx.fillText(`目前畫面中有 ${waveFreq} 個全波`, 10, 30);
+    }
+
+    aniFrame = requestAnimationFrame(animate);
+  }
+
+  // Init
+  initCanvas();
+  window.addEventListener('resize', initCanvas);
+  switchTab('tab1');
+
+</script>
 </body>
 </html>
