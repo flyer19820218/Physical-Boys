@@ -22,7 +22,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif;
     background-color: var(--bg-base);
     color: var(--chalk-white);
-    font-size: 18px; /* 全局字體放大 */
+    font-size: 18px; 
   }
   .wrap { max-width: 1140px; margin: 20px auto; padding: 0 16px 40px; }
   
@@ -70,7 +70,7 @@
   
   .note { font-size: 18px; color: #ffffff; margin-top: 16px; line-height: 1.8; background: rgba(255,255,255,0.08); padding: 18px 24px; border-radius: 10px; border-left: 6px solid var(--chalk-yellow); }
   
-  /* 測驗區 (字體放大) */
+  /* 測驗區 */
   .quiz-box { background: rgba(255, 128, 64, 0.15); border: 2px solid var(--chalk-coral); border-radius: 10px; padding: 20px; margin-top: 20px; }
   .quiz-box h3 { margin: 0 0 12px 0; color: var(--chalk-coral); font-size: 22px; }
   .quiz-box p { margin: 8px 0; font-size: 18px; line-height: 1.6; }
@@ -117,7 +117,7 @@
     <div class="controls" id="controls-tab2" style="display:none;">
       <button class="action-btn" onclick="startRace()">▶ 點擊發射聲波測試</button>
       <button class="action-btn" style="border-color:#ff8040; color:#ff8040;" onclick="resetRace()">↺ 重置</button>
-      <span style="color:#ffffff; font-weight:bold; margin-left:15px; font-size: 18px;">觀察左方不同介質中的傳遞速度，與右方的真實聲波(球面波)！</span>
+      <span style="color:#ffffff; font-weight:bold; margin-left:15px; font-size: 18px;">觀察右方橘色分子，證明介質只在原地來回振動！</span>
     </div>
 
     <!-- 控制區 Tab 3 -->
@@ -160,7 +160,7 @@
     <!-- 測驗區 Tab 3 (聲速計算) -->
     <div class="quiz-box" id="quiz-section-tab3" style="display:none;">
       <h3>🎯 聲速計算小測驗</h3>
-      <p>根據上方設定的溫度 <b id="quiz-temp" style="color:var(--chalk-green);">15°C</b>，請利用公式 <b>v = 331 + 0.6t</b> 計算聲速：</p>
+      <p>根據上方設定的溫度 <b id="quiz-temp" style="color:var(--chalk-green);">15°C</b>，請利用公式 <b>v = 331 + 0.6 × t</b> 計算聲速：</p>
       <p>👉 答：<input type="number" id="quiz-ans" class="quiz-input" placeholder="數字"> m/s
          <button class="quiz-btn" onclick="checkAnswer()">送出答案</button>
          <span id="quiz-result" class="quiz-result"></span>
@@ -186,7 +186,7 @@
   
   let currentTab = 'tab1';
   let aniFrame;
-  let frameCounter = 0; // 用於第二分頁的音叉動畫
+  let frameCounter = 0; 
 
   // Tab 1
   const rngFreq = document.getElementById('rng-freq');
@@ -198,7 +198,27 @@
   let raceProgress = { air: 0, water: 0, steel: 0 };
   let isRacing = false;
   const speeds = { air: 34.3, water: 149.0, steel: 520.0 }; 
-  let sphericalRings = []; // 儲存球面波的半徑
+  let particles = []; // 空氣分子陣列
+
+  // 初始化空氣分子
+  function initParticles() {
+    particles = [];
+    // 放入一顆特別的「橘色追蹤粒子」方便學生觀察原地振動
+    particles.push({ bx: 70, by: 0, r: 70, angle: 0, isTarget: true });
+
+    // 隨機產生 400 顆一般空氣分子
+    for(let i = 0; i < 400; i++) {
+      let r = Math.random() * 130 + 15; // 避開正中央
+      let angle = Math.random() * Math.PI * 2;
+      particles.push({
+        bx: Math.cos(angle) * r,
+        by: Math.sin(angle) * r,
+        r: r,
+        angle: angle,
+        isTarget: false
+      });
+    }
+  }
 
   // Tab 3
   const rngTemp = document.getElementById('rng-temp');
@@ -239,28 +259,28 @@
       stats.style.display = 'flex';
       
       note.innerHTML = `💡 <b>黑板重點：</b><br>
-      • <b>波速 (v) 的定義：</b>波形每秒鐘前進的距離[cite: 1]。<br>
-      • <b>公式推導：</b>因為 1 秒內會產生 f 個波 (頻率)[cite: 1]，而每個波的長度是 λ (波長)[cite: 1]，所以全部排在一起的總長度就是 f × λ。<br>
-      • 結論：<b>波速 (v) = 頻率 (f) × 波長 (λ)</b>[cite: 1]。波速只和「介質」有關[cite: 1]（相同的介質波速相同[cite: 1]）！`;
+      • <b>波速 (v) 的定義：</b>波形每秒鐘前進的距離。<br>
+      • <b>公式推導：</b>因為 1 秒內會產生 f 個波 (頻率)，而每個波的長度是 λ (波長)，所以全部排在一起的總長度就是 f × λ。<br>
+      • 結論：<b>波速 (v) = 頻率 (f) × 波長 (λ)</b>。波速只和「介質」有關（相同的介質波速相同）！`;
       
       updateTab1Stats();
     } 
     else if (tab === 'tab2') {
       document.getElementById('controls-tab2').style.display = 'flex';
       title.textContent = '二、聲波的傳播與介質';
-      badge.textContent = '介質賽跑與真實聲波';
+      badge.textContent = '介質賽跑與分子振動';
       badge.style.background = '#4dd2ff';
       stats.style.display = 'none';
       
       resetRace();
-      sphericalRings = [];
+      initParticles();
       frameCounter = 0;
       
       note.innerHTML = `💡 <b>黑板重點：</b><br>
-      • 聲音是由於物體快速振動所產生的[cite: 1]，是一種縱波(疏密波)[cite: 1]（如右方動畫，波傳遞方向與介質振動平行[cite: 1]）。<br>
-      • 聲音傳遞需要物質幫忙，該物質稱為介質[cite: 1]。若處於真空狀態，則無法傳播[cite: 1]。<br>
-      • 介質排列地愈緊密，則速度愈快[cite: 1]。<br>
-      • 聲音的傳播速度：<b>固體 > 液體 > 氣體</b>[cite: 1]。例如：鋼(5200m/s) > 水(1490m/s) > 空氣(343m/s)[cite: 1]。`;
+      • 聲音是由於物體快速振動所產生的，是一種<b>縱波(疏密波)</b>（請觀察右方橘色粒子，波往外傳遞，但介質只在原地平行振動！）。<br>
+      • 聲音傳遞需要物質幫忙，該物質稱為介質。若處於真空狀態，則無法傳播。<br>
+      • 介質排列地愈緊密，則速度愈快。<br>
+      • 聲音的傳播速度：<b>固體 > 液體 > 氣體</b>。例如：鋼(5200m/s) > 水(1490m/s) > 空氣(343m/s)。`;
       
       animateTab2();
     }
@@ -273,9 +293,9 @@
       stats.style.display = 'none';
       
       note.innerHTML = `💡 <b>黑板重點：</b><br>
-      • <b>溫度：</b>溫度愈高，聲速愈快。公式：<b>v = 331 + 0.6t</b>[cite: 1]。<br>
-      • <b>濕度：</b>濕度愈大波速愈快[cite: 1]。<br>
-      • <b>風向：</b>順風會加速聲音傳遞[cite: 1]。<br>
+      • <b>溫度：</b>溫度愈高，聲速愈快。公式：<b>v = 331 + 0.6 × t</b>。<br>
+      • <b>濕度：</b>濕度愈大波速愈快。<br>
+      • <b>風向：</b>順風會加速聲音傳遞。<br>
       • <b>注意：</b>聲音的大小(響度)和高低(音調) <b>不會</b> 影響聲音的傳播速度喔！`;
       
       updateTab3Stats();
@@ -370,7 +390,7 @@
     else { res.style.color = "#ff8040"; res.textContent = "❌ 錯囉，提示：先算出頻率 f = ?"; }
   }
 
-  // ==== TAB 2: 介質賽跑 與 真實聲波 (球面波) ====
+  // ==== TAB 2: 介質賽跑 與 空氣分子振動 ====
   function startRace() {
     if(!isRacing) {
       isRacing = true;
@@ -385,7 +405,7 @@
   function drawTrack(y, label, progress, color, speedText) {
     ctx.strokeStyle = "rgba(255,255,255,0.3)";
     ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(120, y); ctx.lineTo(650, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(120, y); ctx.lineTo(600, y); ctx.stroke();
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 20px sans-serif";
@@ -411,7 +431,7 @@
     frameCounter++;
 
     // --- 左側：介質賽跑 ---
-    const target = 650 - 120; // 賽道長度 530
+    const target = 600 - 120; // 賽道長度 480
     if(isRacing) {
       if(raceProgress.steel < target) raceProgress.steel += speeds.steel * 0.04;
       if(raceProgress.water < target) raceProgress.water += speeds.water * 0.04;
@@ -429,60 +449,66 @@
     ctx.fillStyle = "#33cc99";
     ctx.font = "bold 22px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("終點", 650, 45);
+    ctx.fillText("終點", 600, 45);
     ctx.strokeStyle = "#33cc99";
     ctx.setLineDash([5, 5]);
-    ctx.beginPath(); ctx.moveTo(650, 55); ctx.lineTo(650, V_HEIGHT - 30); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(600, 55); ctx.lineTo(600, V_HEIGHT - 30); ctx.stroke();
     ctx.setLineDash([]);
 
-    // --- 右側：真實聲波 (球面疏密波) ---
-    const cx = 850, cy = 180;
+    // --- 右側：真實聲波 (分子振動) ---
+    const cx = 820, cy = 180;
     
     ctx.fillStyle = "#ffe066";
-    ctx.font = "bold 22px sans-serif";
-    ctx.fillText("真實聲波 (球面波)", cx, 45);
-
-    // 每 20 個 frame 產生一個新波紋
-    if (frameCounter % 20 === 0) {
-      sphericalRings.push(0);
-    }
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillText("縱波模擬 (空氣分子推擠)", cx, 45);
 
     ctx.save();
-    // 繪製擴散的同心圓
-    for (let i = 0; i < sphericalRings.length; i++) {
-      sphericalRings[i] += 1.5; // 波的擴散速度
-      const r = sphericalRings[i];
-      const maxR = 140;
+    
+    // 計算每一顆粒子的位移
+    let waveSpeed = 0.8; // 波往外傳遞的速度
+    let waveFreq = 0.12; // 波的頻率 (決定疏密寬度)
+    let maxAmplitude = 8; // 粒子最大震幅
+
+    particles.forEach(p => {
+      // 核心物理引擎：粒子的位移 (Sin函數) 取決於它距離中心的距離(r)與時間(frame)
+      let phase = (p.r - frameCounter * waveSpeed) * waveFreq;
+      let displacement = Math.sin(phase) * maxAmplitude;
       
-      // 半徑越大，透明度越低 (能量散失)
-      let alpha = Math.max(0, 1 - (r / maxR));
-      
-      // 用粗線條模擬「疏密波」的「密部」
-      ctx.strokeStyle = `rgba(77, 210, 255, ${alpha})`;
-      ctx.lineWidth = 4;
-      ctx.beginPath(); 
-      ctx.arc(cx, cy, r, 0, Math.PI * 2); 
-      ctx.stroke();
-    }
-    // 移除超出範圍的波紋
-    sphericalRings = sphericalRings.filter(r => r < 140);
+      // 讓太靠近音叉的粒子不要動太大，避免蓋住音叉
+      let damp = Math.min((p.r - 10) / 20, 1);
+      if (damp < 0) damp = 0;
+
+      // 縱波特性：粒子位移方向與波傳遞方向 (徑向) 平行
+      let currentX = cx + p.bx + Math.cos(p.angle) * displacement * damp;
+      let currentY = cy + p.by + Math.sin(p.angle) * displacement * damp;
+
+      if (p.isTarget) {
+        // 橘色追蹤粒子：特別放大並塗橘色
+        ctx.fillStyle = "#ff8040"; 
+        ctx.beginPath(); ctx.arc(currentX, currentY, 6, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else {
+        // 一般空氣分子
+        ctx.fillStyle = "rgba(77, 210, 255, 0.7)";
+        ctx.beginPath(); ctx.arc(currentX, currentY, 2.5, 0, Math.PI*2); ctx.fill();
+      }
+    });
 
     // 繪製中間的音叉 (震動源)
-    // 讓音叉有點震動效果
-    const vibrate = Math.sin(frameCounter * 0.5) * 2;
+    const vibrate = Math.sin(frameCounter * 0.4) * 2;
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 5;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     
     ctx.beginPath();
-    // 音叉柄
-    ctx.moveTo(cx, cy + 20); ctx.lineTo(cx, cy + 5);
-    // 音叉U型
-    ctx.moveTo(cx - 8 - vibrate, cy - 15);
-    ctx.lineTo(cx - 8, cy + 5);
-    ctx.lineTo(cx + 8, cy + 5);
-    ctx.lineTo(cx + 8 + vibrate, cy - 15);
+    ctx.moveTo(cx, cy + 25); ctx.lineTo(cx, cy + 5);
+    ctx.moveTo(cx - 10 - vibrate, cy - 20);
+    ctx.lineTo(cx - 10, cy + 5);
+    ctx.lineTo(cx + 10, cy + 5);
+    ctx.lineTo(cx + 10 + vibrate, cy - 20);
     ctx.stroke();
 
     ctx.restore();
@@ -496,7 +522,6 @@
     valTemp.textContent = `${t} °C`;
     document.getElementById('quiz-temp').textContent = `${t}°C`;
     
-    // 清空上次作答
     document.getElementById('quiz-ans').value = "";
     document.getElementById('quiz-result').textContent = "";
     
