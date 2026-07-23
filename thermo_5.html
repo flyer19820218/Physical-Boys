@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第5節：熱對物質的影響與化學反應 (終極會考必勝版)</title>
+    <title>第5節：熱對物質的影響與化學反應 (終極封神投影版)</title>
     <style>
         :root {
             --bg-board: #18221d;      /* 傳統黑板深黛綠 - 吸光護眼 */
@@ -280,17 +280,17 @@
             </ul>
         </div>
 
-        <!-- NEW 互動實驗 1：為什麼水結冰會變大？微觀冰晶結構解密 -->
+        <!-- 互動實驗 1：為什麼水結冰會變大？微觀氫鍵結構解密 -->
         <div class="interactive-area" style="margin-top:35px; border-color:var(--chalk-yellow);">
-            <h3>❄️ 微觀解密：為什麼水結冰體積反而變大？</h3>
-            <p>點擊切換狀態，觀察水分子在「液態」與「結冰」時的排列差異，秒懂體積變大的秘密！</p>
+            <h3>❄️ 微觀解密：為什麼水結冰體積反而變大？(4個 vs. 6個氫鍵結構)</h3>
+            <p>點擊切換狀態，觀察水分子在「液態底部群聚」與「結冰向外撐開成環」的根本差異！</p>
             
             <div class="btn-group">
-                <button class="action-btn btn-blue" onclick="switchIceExp('liquid')">💧 液態水 (分子緊密堆積，自由游動)</button>
-                <button class="action-btn btn-red" onclick="switchIceExp('ice')">❄️ 固態冰 (形成六角冰晶，出現大空隙！)</button>
+                <button class="action-btn btn-blue" onclick="switchIceExp('liquid')">💧 液態水 (底部4~5個緊密群聚，互相滑移)</button>
+                <button class="action-btn btn-red" onclick="switchIceExp('ice')">❄️ 固態冰 (嚴格6個一組結成六角冰晶，撐開大空隙)</button>
             </div>
             
-            <canvas id="iceCanvas" width="750" height="360"></canvas>
+            <canvas id="iceCanvas" width="750" height="380"></canvas>
             <div id="iceText" class="status-text">請選擇狀態，觀察水分子的排列與中空結構</div>
         </div>
 
@@ -374,7 +374,7 @@
             🔥 <span class="hl-yellow">進階觀念：</span>將水變成水蒸氣所需克服的引力，遠大於將冰融化成水！水的<strong class="hl-red">「汽化熱 (540 cal/g)」約為「熔化熱 (80 cal/g)」的近 7 倍！</strong>因此在加熱曲線上，<strong class="hl-blue">100°C 的水平線段會比 0°C 的水平線段長非常多！（本實驗室設定為 3 倍長度，清楚展現長久不升溫的物理事實）</strong>
         </div>
 
-        <!-- 互動實驗：水的三態加熱曲線實時模擬 (改版 3倍沸騰長度) -->
+        <!-- 互動實驗：水的三態加熱曲線實時模擬 -->
         <div class="interactive-area" style="margin-top:35px;">
             <h3>📈 互動實作：標準大氣壓下，冰塊加熱曲線動態模擬 (3倍長效沸騰版)</h3>
             <p>點擊「開始持續加熱」，觀察溫度曲線如何爬升，請緊盯 <strong class="hl-yellow">100°C 氣液共存水平段</strong>，體驗「久煮不升溫」的漫長汽化過程！</p>
@@ -417,7 +417,7 @@
     }
 
     // ==========================================
-    // 2. 第一分頁 (新增)：微觀解密水結冰為什麼變大
+    // 2. 第一分頁：微觀解密水結冰為什麼變大 (封神修正版)
     // ==========================================
     const iCanvas = document.getElementById('iceCanvas');
     const iCtx = iCanvas.getContext('2d');
@@ -428,51 +428,77 @@
     class Molecule {
         constructor(id) {
             this.id = id;
-            // 建立 12 個分子，結冰時可以剛好圍成兩個完美的六角冰晶環
+            // 固態冰：設定 12 個分子嚴格形成「左右兩個 6 分子六角環」
             this.targetIceX = 0;
             this.targetIceY = 0;
             this.setIceTargets();
-            this.x = 200 + Math.random() * 350;
-            this.y = 80 + Math.random() * 200;
-            this.vx = (Math.random() - 0.5) * 3;
-            this.vy = (Math.random() - 0.5) * 3;
+
+            // 液態水：嚴格設定在「容器底部」形成 3 個約 4 分子緊密群聚 (不亂飛！)
+            this.targetLiqX = 0;
+            this.targetLiqY = 0;
+            this.setLiquidTargets();
+
+            this.x = this.targetLiqX + (Math.random() - 0.5) * 10;
+            this.y = this.targetLiqY + (Math.random() - 0.5) * 10;
+            this.vx = (Math.random() - 0.5) * 1.5;
+            this.vy = (Math.random() - 0.5) * 1.5;
             this.angle = Math.random() * Math.PI * 2;
         }
+
         setIceTargets() {
-            // 左邊六角環中心 (270, 180)，半徑 75
-            // 右邊六角環中心 (480, 180)，半徑 75
+            // 冰晶狀態：向上、向外撐開至 Y=160 處，六角半徑 75
             if (this.id < 6) {
                 let a = (this.id * 60) * Math.PI / 180;
-                this.targetIceX = 270 + Math.cos(a) * 75;
-                this.targetIceY = 180 + Math.sin(a) * 75;
+                this.targetIceX = 260 + Math.cos(a) * 75;
+                this.targetIceY = 160 + Math.sin(a) * 75;
             } else {
                 let a = ((this.id - 6) * 60) * Math.PI / 180;
-                this.targetIceX = 480 + Math.cos(a) * 75;
-                this.targetIceY = 180 + Math.sin(a) * 75;
+                this.targetIceX = 490 + Math.cos(a) * 75;
+                this.targetIceY = 160 + Math.sin(a) * 75;
             }
         }
+
+        setLiquidTargets() {
+            // 液態狀態：沉在底部 Y=280 左右，4 個鄰居圍在一起互相填補空隙
+            let clusterIdx = Math.floor(this.id / 4); // 分成 3 堆 (4個一組)
+            let subIdx = this.id % 4;
+            let centerX = 230 + clusterIdx * 145; // 3個群聚中心
+            let centerY = 275;                    // 乖乖呆在容器底部
+            
+            let a = (subIdx * 90 + 45) * Math.PI / 180;
+            this.targetLiqX = centerX + Math.cos(a) * 28; // 緊密靠攏，半徑僅 28！
+            this.targetLiqY = centerY + Math.sin(a) * 22;
+        }
+
         update() {
             if (iceMode === 'liquid') {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.angle += 0.05;
-                if (this.x < 150 || this.x > 600) { this.vx *= -1; this.x = Math.max(150, Math.min(600, this.x)); }
-                if (this.y < 50 || this.y > 310) { this.vy *= -1; this.y = Math.max(50, Math.min(310, this.y)); }
+                // 液態水：在底部 4 分子群聚附近緊密振動、互相滑移摩擦，絕不往空中飛！
+                this.vx += (this.targetLiqX - this.x) * 0.05;
+                this.vy += (this.targetLiqY - this.y) * 0.05;
+                this.vx *= 0.85;
+                this.vy *= 0.85;
+                this.x += this.vx + (Math.random() - 0.5) * 1.8;
+                this.y += this.vy + (Math.random() - 0.5) * 1.5;
+                this.angle += 0.03;
+                // 限制絕不超出水面(Y=210)與底座
+                if (this.y < 230) this.y = 230;
+                if (this.y > 310) this.y = 310;
             } else {
-                // 結冰時，緩慢吸附到六角晶格定點 (冰晶骨架)
+                // 固態冰：被 6 分子氫鍵拉扯，向上向外撐開至六角晶格定點
                 this.x += (this.targetIceX - this.x) * 0.08;
                 this.y += (this.targetIceY - this.y) * 0.08;
                 this.angle += (0 - this.angle) * 0.1;
             }
         }
+
         draw() {
             iCtx.save();
             iCtx.translate(this.x, this.y);
             iCtx.rotate(this.angle);
-            // 畫氧原子 (紅)
+            // 氧原子 (紅)
             iCtx.fillStyle = '#ff5e4d';
             iCtx.beginPath(); iCtx.arc(0, 0, 14, 0, Math.PI*2); iCtx.fill();
-            // 畫兩顆氫原子 (白)
+            // 氫原子 (白)
             iCtx.fillStyle = '#ffffff';
             iCtx.beginPath(); iCtx.arc(-10, -10, 7, 0, Math.PI*2); iCtx.fill();
             iCtx.beginPath(); iCtx.arc(10, -10, 7, 0, Math.PI*2); iCtx.fill();
@@ -480,28 +506,44 @@
         }
     }
 
-    // 初始化分子
     for (let i = 0; i < 12; i++) waterMolecules.push(new Molecule(i));
 
     function drawIceExp() {
         if (!iCtx) return;
         iCtx.clearRect(0, 0, iCanvas.width, iCanvas.height);
 
-        // 畫容器邊框
+        // 畫容器邊框與底座
         iCtx.strokeStyle = '#58d68d'; iCtx.lineWidth = 4;
-        iCtx.strokeRect(130, 30, 490, 300);
+        iCtx.strokeRect(130, 40, 490, 300);
 
-        if (iceMode === 'ice') {
-            // 畫出晶格虛線與中空警示
-            iCtx.strokeStyle = 'rgba(77, 166, 255, 0.6)'; iCtx.lineWidth = 3; iCtx.setLineDash([6, 6]);
-            // 左環
+        if (iceMode === 'liquid') {
+            // 標示液面高低 (較低，體積小)
+            iCtx.strokeStyle = '#4da6ff'; iCtx.lineWidth = 3;
+            iCtx.beginPath(); iCtx.moveTo(133, 215); iCtx.lineTo(617, 215); iCtx.stroke();
+            iCtx.fillStyle = 'rgba(77, 166, 255, 0.15)';
+            iCtx.fillRect(133, 215, 484, 122);
+            
+            iCtx.font = 'bold 20px Microsoft JhengHei'; iCtx.fillStyle = '#4da6ff';
+            iCtx.fillText("⬇️ 液體體積較小（平均約 4 個一組緊密靠攏填補空隙）", 155, 195);
+        } else {
+            // 標示固態冰面高低 (向上膨脹撐高，體積大)
+            iCtx.strokeStyle = '#ff5e4d'; iCtx.lineWidth = 3;
+            iCtx.beginPath(); iCtx.moveTo(133, 70); iCtx.lineTo(617, 70); iCtx.stroke();
+            iCtx.fillStyle = 'rgba(255, 94, 77, 0.1)';
+            iCtx.fillRect(133, 70, 484, 267);
+
+            iCtx.font = 'bold 20px Microsoft JhengHei'; iCtx.fillStyle = '#ff5e4d';
+            iCtx.fillText("⬆️ 結冰體積向上膨脹！（嚴格 6 個一組撐開大晶格）", 155, 60);
+
+            // 畫出 6 分子六角氫鍵虛線
+            iCtx.strokeStyle = 'rgba(255, 255, 255, 0.7)'; iCtx.lineWidth = 3; iCtx.setLineDash([6, 6]);
             iCtx.beginPath();
             for (let i = 0; i < 6; i++) {
                 let m = waterMolecules[i];
                 if (i === 0) iCtx.moveTo(m.x, m.y); else iCtx.lineTo(m.x, m.y);
             }
             iCtx.closePath(); iCtx.stroke();
-            // 右環
+
             iCtx.beginPath();
             for (let i = 6; i < 12; i++) {
                 let m = waterMolecules[i];
@@ -510,20 +552,18 @@
             iCtx.closePath(); iCtx.stroke();
             iCtx.setLineDash([]);
 
-            // 中空區域發光標示
-            iCtx.fillStyle = 'rgba(255, 223, 0, 0.2)';
-            iCtx.beginPath(); iCtx.arc(270, 180, 50, 0, Math.PI*2); iCtx.fill();
-            iCtx.beginPath(); iCtx.arc(480, 180, 50, 0, Math.PI*2); iCtx.fill();
+            // 標示中央大空隙
+            iCtx.fillStyle = 'rgba(255, 223, 0, 0.25)';
+            iCtx.beginPath(); iCtx.arc(260, 160, 48, 0, Math.PI*2); iCtx.fill();
+            iCtx.beginPath(); iCtx.arc(490, 160, 48, 0, Math.PI*2); iCtx.fill();
             
-            iCtx.font = 'bold 20px Microsoft JhengHei'; iCtx.fillStyle = '#ffdf00'; iCtx.textAlign = 'center';
-            iCtx.fillText("⚠️ 巨大的中空空隙！", 270, 185);
-            iCtx.fillText("⚠️ 巨大的中空空隙！", 480, 185);
+            iCtx.font = 'bold 18px Microsoft JhengHei'; iCtx.fillStyle = '#ffdf00'; iCtx.textAlign = 'center';
+            iCtx.fillText("⚠️ 巨大中空區", 260, 165);
+            iCtx.fillText("⚠️ 巨大中空區", 490, 165);
             iCtx.textAlign = 'left';
         }
 
-        // 繪製分子
         waterMolecules.forEach(m => { m.update(); m.draw(); });
-
         iFrameId = requestAnimationFrame(drawIceExp);
     }
 
@@ -531,14 +571,10 @@
         iceMode = mode;
         let textEl = document.getElementById('iceText');
         if (mode === 'liquid') {
-            textEl.innerText = "💧 【液態水】：水分子彼此靠得很近，能夠自由游動滑移，密度大、體積較小！";
+            textEl.innerText = "💧 【液態水】：水分子沉在底部，透過短暫氫鍵「約4個一組」緊密靠攏、互相填補空隙，密度大、體積收縮！";
             textEl.style.color = "#4da6ff";
-            waterMolecules.forEach(m => {
-                m.vx = (Math.random() - 0.5) * 3;
-                m.vy = (Math.random() - 0.5) * 3;
-            });
         } else {
-            textEl.innerText = "❄️ 【固態冰】：水分子透過氫鍵形成「整齊的六角冰晶」！晶格中央出現了極大的「中空空隙」，導致體積膨脹、密度變小！";
+            textEl.innerText = "❄️ 【固態冰】：氫鍵鎖死！嚴格規定「6個一組」結成六角環狀冰晶，把中央強力撐開大空隙，導致體積膨脹、密度驟降！";
             textEl.style.color = "#ff5e4d";
         }
     }
@@ -702,22 +738,15 @@
     }
 
     // ==========================================
-    // 5. 第三分頁：加熱曲線圖即時模擬 (修改：沸騰水平段為熔化的3倍時間)
+    // 5. 第三分頁：加熱曲線圖即時模擬 (3倍長效沸騰版)
     // ==========================================
     const pCanvas = document.getElementById('curveCanvas');
     const pCtx = pCanvas.getContext('2d');
-    let heatTime = 0;      // 總時間增加至 400 刻度
+    let heatTime = 0;      
     let heatRunning = false;
     let pFrameId;
 
-    // 計算當前時間對應的溫度與物理狀態 (長效沸騰 3倍版)
     function getCurveData(t) {
-        // 總時間 400 刻度分配：
-        // t: 0~40 (-20°C -> 0°C, 固態升溫)
-        // t: 40~100 (0°C, 固液共存熔化水平段, 長度=60)
-        // t: 100~180 (0°C -> 100°C, 液態升溫)
-        // t: 180~360 (100°C, 氣液共存沸騰水平段, 長度=180 ➡️ 剛好是熔化的3倍！)
-        // t: 360~400 (100°C -> 120°C, 氣態升溫)
         let temp = -20;
         let state = "固態 (冰)";
         let color = "#4da6ff";
@@ -756,13 +785,11 @@
         if (!pCtx) return;
         pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
 
-        // 1. 畫座標軸
         pCtx.strokeStyle = '#fff'; pCtx.lineWidth = 3;
         pCtx.beginPath();
         pCtx.moveTo(70, 20); pCtx.lineTo(70, 320); pCtx.lineTo(720, 320);
         pCtx.stroke();
 
-        // 2. 畫 Y軸刻度與參考格線
         pCtx.font = '18px Microsoft JhengHei'; pCtx.fillStyle = '#aaa'; pCtx.textAlign = 'right';
         let y100 = 320 - ((100 - (-20)) / 140) * 280;
         let y0 = 320 - ((0 - (-20)) / 140) * 280;
@@ -777,7 +804,6 @@
         pCtx.fillText("-20°C", 65, 320);
         pCtx.setLineDash([]); pCtx.textAlign = 'left';
 
-        // 3. 畫加熱曲線軌跡 (總刻度改為 400)
         pCtx.lineWidth = 5;
         for (let i = 1; i <= heatTime; i++) {
             let dPrev = getCurveData(i - 1);
@@ -792,7 +818,6 @@
             pCtx.beginPath(); pCtx.moveTo(x1, y1); pCtx.lineTo(x2, y2); pCtx.stroke();
         }
 
-        // 4. 畫當前時間紅點與資訊
         let dNow = getCurveData(heatTime);
         let nowX = 70 + (heatTime / 400) * 630;
         let nowY = 320 - ((dNow.temp - (-20)) / 140) * 280;
@@ -831,7 +856,6 @@
         heatRunning = false; cancelAnimationFrame(pFrameId); heatTime = 0; drawCurve();
     }
 
-    // 初始進入系統渲染
     window.onload = function() {
         drawIceExp();
         drawChemExp();
