@@ -24,21 +24,12 @@
   header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed var(--rule-color); padding-bottom: 16px; }
   h1 { font-size: 36px; margin: 0 0 8px; color: var(--chalk-yellow); }
   
-  /* 導覽列：強制單排不換行，支援橫向滑動 */
-  .tabs { 
-    display: flex; gap: 8px; margin-bottom: 16px; 
-    flex-wrap: nowrap; overflow-x: auto; 
-    -webkit-overflow-scrolling: touch;
-  }
-  /* 隱藏捲軸讓畫面更乾淨 */
-  .tabs::-webkit-scrollbar { display: none; }
-  .tabs { -ms-overflow-style: none; scrollbar-width: none; }
-
+  /* 導覽列：恢復原本的 wrap 設定，利用拔除數字省下的空間自動排版 */
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .tab-btn {
-    flex: 1; min-width: 120px; padding: 12px 10px; font-size: 15px; font-weight: bold;
+    flex: 1; min-width: 130px; padding: 12px 10px; font-size: 15px; font-weight: bold;
     background: rgba(255,255,255,0.08); border: 1.5px dashed var(--rule-color); border-radius: 10px;
     cursor: pointer; text-align: center; color: #c0d0c8; transition: all 0.2s;
-    white-space: nowrap; /* 防止文字斷行 */
   }
   .tab-btn:hover { background: var(--bg-panel-hover); }
   .tab-btn.active { background: #223e34; color: var(--chalk-yellow); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 10px rgba(255,224,102,0.2); }
@@ -79,7 +70,7 @@
     <h1>第一單元：波的種類與性質</h1>
   </header>
 
-  <!-- 將 12345 移除，保留純文字，讓畫面更清爽 -->
+  <!-- 移除編號，保留純文字，讓畫面更清爽且能自動排版 -->
   <div class="tabs">
     <div class="tab-btn active" onclick="switchTab('intro')">種類與動畫</div>
     <div class="tab-btn" onclick="switchTab('transverse')">橫波解剖</div>
@@ -351,24 +342,40 @@
         ctx.beginPath(); ctx.moveTo(x, cy - 80); ctx.lineTo(x, cy + 80); ctx.stroke();
       }
 
-      const dense1 = waveLen/2, sparse1 = waveLen, dense2 = waveLen*1.5;
+      // 縱波重要座標計算：密部與疏部中心點
+      const dense1 = waveLen/2, sparse1 = waveLen, dense2 = waveLen*1.5, sparse2 = waveLen*2;
 
       if (highlightState === 'dense') {
         ctx.fillStyle = "rgba(255, 128, 64, 0.4)";
         ctx.fillRect(dense1 - 30, cy - 90, 60, 180);
-        ctx.fillStyle = "var(--chalk-coral)"; ctx.font = "bold 20px sans-serif"; ctx.fillText("密部", dense1 - 20, cy - 100);
+        ctx.fillRect(dense2 - 30, cy - 90, 60, 180);
+        ctx.fillStyle = "var(--chalk-coral)"; ctx.font = "bold 20px sans-serif"; 
+        ctx.fillText("密部", dense1 - 20, cy - 100);
+        ctx.fillText("密部", dense2 - 20, cy - 100);
       } else if (highlightState === 'sparse') {
         ctx.fillStyle = "rgba(255, 224, 102, 0.3)";
         ctx.fillRect(sparse1 - 40, cy - 90, 80, 180);
-        ctx.fillStyle = "var(--chalk-yellow)"; ctx.font = "bold 20px sans-serif"; ctx.fillText("疏部", sparse1 - 20, cy - 100);
+        ctx.fillRect(sparse2 - 40, cy - 90, 80, 180);
+        ctx.fillStyle = "var(--chalk-yellow)"; ctx.font = "bold 20px sans-serif"; 
+        ctx.fillText("疏部", sparse1 - 20, cy - 100);
+        ctx.fillText("疏部", sparse2 - 20, cy - 100);
       } else if (highlightState === 'wavelength') {
-        drawChalkArrow(dense1, cy-120, dense2, cy-120, "var(--chalk-pink)", "波長 (λ)", -15);
+        // 多波長標示：密部到密部
+        drawChalkArrow(dense1, cy - 120, dense2, cy - 120, "var(--chalk-pink)", "波長 (密部到密部)", -15);
         ctx.strokeStyle="var(--chalk-pink)"; ctx.setLineDash([4,4]); ctx.beginPath();
-        ctx.moveTo(dense1, cy-80); ctx.lineTo(dense1, cy-130); ctx.moveTo(dense2, cy-80); ctx.lineTo(dense2, cy-130); ctx.stroke(); ctx.setLineDash([]);
+        ctx.moveTo(dense1, cy - 80); ctx.lineTo(dense1, cy - 130); 
+        ctx.moveTo(dense2, cy - 80); ctx.lineTo(dense2, cy - 130); 
+        ctx.stroke(); 
+
+        // 多波長標示：疏部到疏部
+        drawChalkArrow(sparse1, cy + 120, sparse2, cy + 120, "var(--chalk-yellow)", "波長 (疏部到疏部)", 25);
+        ctx.strokeStyle="var(--chalk-yellow)"; ctx.beginPath();
+        ctx.moveTo(sparse1, cy + 80); ctx.lineTo(sparse1, cy + 130); 
+        ctx.moveTo(sparse2, cy + 80); ctx.lineTo(sparse2, cy + 130); 
+        ctx.stroke(); ctx.setLineDash([]);
       }
     }
     else if (currentTab === 'propagation') {
-      // 確保 manualPhase 最大為 8，對應 0, 0.25, 0.5, ... 2.0 T
       let t_T = manualPhase / 4; 
       const cy = V_HEIGHT / 2;
       const amp = 100;
@@ -538,7 +545,7 @@
         <button class="action-btn active-btn" onclick="setHighlight('none')">顯示原圖</button>
         <button class="action-btn" onclick="setHighlight('dense')">標示 密部</button>
         <button class="action-btn" onclick="setHighlight('sparse')">標示 疏部</button>
-        <button class="action-btn" onclick="setHighlight('wavelength')">標示 波長 (λ)</button>
+        <button class="action-btn" onclick="setHighlight('wavelength')">標示 多種波長 (λ)</button>
       `;
       noteText.innerHTML = `💡 <b>縱波名詞解釋：</b>
         <ul style="margin-top:8px; margin-bottom:0; padding-left:24px; line-height:1.8;">
@@ -553,7 +560,7 @@
       
       btnGroup.innerHTML = `
         <label style="color:#fff; font-weight:bold; display:flex; align-items:center; width:100%; gap:15px; font-size:16px;">
-          請向右拖曳時間 (t)：每格為 1/4 週期 (共可按8次)
+          請向右拖曳時間 (t)：每格為 1/4 週期 (共可按 8 次)
           <input type="range" id="timeSlider" min="0" max="8" step="1" value="${manualPhase}" style="flex:1; cursor:pointer;" oninput="updateManualPhase()">
           <span id="timeReadout" style="color:#000; background:var(--chalk-yellow); padding:6px 14px; border-radius:6px; min-width:140px; text-align:center;">t = 0</span>
         </label>
