@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>熱的傳遞與卡 - 黑板互動教學</title>
+    <title>熱的傳遞與熱平衡 - 黑板互動教學</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Chilanka&family=Noto+Sans+TC:wght@400;700&display=swap');
 
@@ -22,8 +22,8 @@
         }
 
         .blackboard {
-            width: 950px;
-            height: 650px;
+            width: 1000px; /* 稍微加寬以容納四個分頁標籤 */
+            height: 680px;
             border: 12px solid #5d4037;
             border-radius: 10px;
             padding: 20px;
@@ -36,7 +36,7 @@
         .tabs {
             display: flex;
             gap: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border-bottom: 2px dashed #a5d6a7;
             padding-bottom: 10px;
         }
@@ -44,7 +44,7 @@
             background: transparent;
             color: #a5d6a7;
             border: 2px solid #a5d6a7;
-            padding: 8px 15px;
+            padding: 8px 12px;
             border-radius: 5px;
             cursor: pointer;
             font-size: 1.1em;
@@ -71,18 +71,18 @@
         .chalk-yellow { color: #ffe082; }
         .chalk-red { color: #ff5252; text-shadow: 0 0 5px rgba(255,82,82,0.3); }
         .chalk-blue { color: #40c4ff; text-shadow: 0 0 5px rgba(64,196,255,0.3); }
-        .chalk-green { color: #69f0ae; font-weight: bold; }
+        .chalk-green { color: #69f0ae; font-weight: bold; text-shadow: 0 0 5px rgba(105,240,174,0.4); }
         .chalk-white { color: #ffffff; }
 
         .chalk-box {
             border: 2px solid rgba(255,255,255,0.3);
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             background: rgba(0,0,0,0.15);
             margin-top: 15px;
         }
 
-        /* 第一分頁：熱傳遞視覺設計 (完全重現參考圖) */
+        /* 第一分頁：熱傳遞視覺設計 */
         .heat-transfer-graphic {
             position: relative;
             width: 80%;
@@ -119,7 +119,6 @@
             background: #0000ff;
             clip-path: polygon(0 25%, 60% 25%, 60% 0, 100% 50%, 60% 100%, 60% 75%, 0 75%);
         }
-
         .callout {
             position: absolute;
             top: 100%;
@@ -135,32 +134,8 @@
             font-size: 1.5em;
             margin-top: 10px;
         }
-        .callout::before {
-            content: '';
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 0 10px 20px 10px;
-            border-style: solid;
-            border-color: transparent transparent #000 transparent;
-        }
-        .callout::after {
-            content: '';
-            position: absolute;
-            top: -16px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 0 8px 18px 8px;
-            border-style: solid;
-            border-color: transparent transparent #f3b09d transparent;
-        }
 
-        /* 項目符號字體放大 */
-        .content-list { font-size: 1.5em; line-height: 1.6; margin-top: 10px; }
-        .content-list li { margin-bottom: 15px; list-style-type: square; }
-
-        /* 滑桿設計 */
+        /* 滑桿與排版 */
         input[type="range"] { width: 100%; cursor: pointer; accent-color: #69f0ae; }
         .math-display {
             display: flex;
@@ -170,6 +145,28 @@
             margin: 15px 0;
             font-family: 'Times New Roman', Times, serif;
         }
+
+        /* 第四分頁專用：圖表區 */
+        .eq-container { display: flex; gap: 20px; height: 100%; }
+        .eq-controls { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .eq-graph-area { flex: 1.2; position: relative; padding: 20px 20px 20px 50px; }
+        
+        .graph-box {
+            width: 100%;
+            height: 350px;
+            border-left: 3px solid #fdf6e3;
+            border-bottom: 3px solid #fdf6e3;
+            position: relative;
+            margin-top: 20px;
+        }
+        .axis-y { position: absolute; top: -20px; left: -60px; font-weight: bold; }
+        .axis-x { position: absolute; bottom: -30px; right: 0; font-weight: bold; }
+        
+        svg { width: 100%; height: 100%; overflow: visible; }
+        .hot-line { stroke: #ff5252; stroke-width: 4; fill: none; stroke-linecap: round; transition: d 0.3s ease; }
+        .cold-line { stroke: #40c4ff; stroke-width: 4; fill: none; stroke-linecap: round; transition: d 0.3s ease; }
+        .eq-line { stroke: #69f0ae; stroke-width: 2; stroke-dasharray: 8,8; transition: all 0.3s ease; }
+        .graph-label { position: absolute; font-size: 1.3em; font-weight: bold; transition: all 0.3s ease; left: -45px; }
 
     </style>
 </head>
@@ -181,31 +178,24 @@
         <button class="tab-btn active" onclick="switchTab('tab1')">1. 熱的傳遞方向</button>
         <button class="tab-btn" onclick="switchTab('tab2')">2. 熱量與卡的定義</button>
         <button class="tab-btn" onclick="switchTab('tab3')">3. 水的吸放熱計算</button>
+        <button class="tab-btn" onclick="switchTab('tab4')">4. 互動：熱平衡與圖表</button>
     </div>
 
     <!-- 分頁 1: 熱的傳遞方向 -->
     <div id="tab1" class="tab-content active">
         <h1 class="chalk-white" style="margin: 0 0 10px 0;">熱的傳遞方向</h1>
-        <ul class="content-list">
+        <ul style="font-size: 1.5em; line-height: 1.6;">
             <li>若將溫度較高的物體接觸溫度較低的物體，則<br>
                 <span class="chalk-red">能量大都由溫度較高的物體傳遞向溫度較低的物體。</span>
             </li>
             <li>這些傳遞的能量稱為「<span class="chalk-red" style="font-size: 1.2em; font-weight:bold;">熱量</span>」。</li>
         </ul>
-
-        <!-- 經典視覺圖 (重現您提供的圖片) -->
         <div class="heat-transfer-graphic">
-            <div class="block-hot">
-                <span class="block-text-hot">溫度較高</span>
-            </div>
-            <div class="block-cold">
-                <span class="block-text-cold">溫度較低</span>
-            </div>
+            <div class="block-hot"><span class="block-text-hot">溫度較高</span></div>
+            <div class="block-cold"><span class="block-text-cold">溫度較低</span></div>
             <div class="blue-arrow"></div>
-            
             <div class="callout">
-                熱量的傳遞方向<br>
-                <span style="color: blue; font-size: 1.2em;">高溫 ➔ 低溫</span>
+                熱量的傳遞方向<br><span style="color: blue; font-size: 1.2em;">高溫 ➔ 低溫</span>
             </div>
         </div>
     </div>
@@ -213,15 +203,13 @@
     <!-- 分頁 2: 卡的定義 -->
     <div id="tab2" class="tab-content">
         <h1 class="chalk-white" style="margin: 0 0 10px 0;">熱量的單位：卡 (cal)</h1>
-        
         <div class="chalk-box" style="margin-top: 30px;">
-            <ul class="content-list">
+            <ul style="font-size: 1.5em; line-height: 1.6;">
                 <li><strong class="chalk-yellow" style="font-size: 1.2em;">1 卡 (cal) 的定義：</strong><br>
                     使 <span class="chalk-blue" style="font-weight: bold; border-bottom: 2px solid;">1 公克</span> 的水，
                     溫度升高（或降低） <span class="chalk-red" style="font-weight: bold; border-bottom: 2px solid;">1 °C</span> 
                     所吸收（或放出）的熱量。
-                </li>
-                <br>
+                </li><br>
                 <li><strong class="chalk-yellow" style="font-size: 1.2em;">大卡 (kcal)：</strong><br>
                     食品包裝上常見的熱量單位。<br>
                     <span class="chalk-green">1 千卡 (kcal) = 1000 卡 (cal)</span>
@@ -230,11 +218,10 @@
         </div>
     </div>
 
-    <!-- 分頁 3: 水的吸放熱計算 (完全沒有比熱S) -->
+    <!-- 分頁 3: 水的吸放熱計算 -->
     <div id="tab3" class="tab-content">
         <h1 class="chalk-white" style="margin: 0 0 10px 0;">水的吸放熱計算</h1>
         <p class="chalk-yellow" style="font-size: 1.3em;">因為 1克的水上升 1°C 需要 1卡，所以對於「水」來說，熱量的計算非常簡單！</p>
-        
         <div class="chalk-box" style="text-align: center;">
             <div class="math-display chalk-white">
                 <span class="chalk-green">熱量變化 (ΔH)</span> &nbsp;=&nbsp; 
@@ -243,21 +230,77 @@
             </div>
             <p class="chalk-white" style="font-size: 1.2em;">公式：<strong class="chalk-green">ΔH = M × ΔT</strong></p>
         </div>
-
         <div style="display: flex; gap: 40px; margin-top: 20px;">
             <div style="flex: 1; border-right: 2px dashed #555; padding-right: 20px;">
-                <label style="font-size: 1.3em;">💧 調整水量 (M)：<span id="massVal" class="chalk-blue">100</span> g</label>
-                <input type="range" id="massSlider" min="10" max="500" step="10" value="100" oninput="calcWaterHeat()">
-                
-                <label style="font-size: 1.3em; margin-top: 20px; display: block;">🌡️ 調整溫差 (ΔT)：<span id="tempVal" class="chalk-red">20</span> °C</label>
-                <input type="range" id="tempSlider" min="1" max="100" value="20" oninput="calcWaterHeat()">
+                <label style="font-size: 1.3em;">💧 調整水量 (M)：<span id="massVal3" class="chalk-blue">100</span> g</label>
+                <input type="range" id="massSlider3" min="10" max="500" step="10" value="100" oninput="calcWaterHeat()">
+                <label style="font-size: 1.3em; margin-top: 20px; display: block;">🌡️ 調整溫差 (ΔT)：<span id="tempVal3" class="chalk-red">20</span> °C</label>
+                <input type="range" id="tempSlider3" min="1" max="100" value="20" oninput="calcWaterHeat()">
             </div>
-            
             <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                 <div style="font-size: 1.5em; text-align: center;">
                     總熱量 = <br><br>
-                    <span class="chalk-blue" id="m_disp">100</span> (g) × <span class="chalk-red" id="t_disp">20</span> (°C)<br><br>
+                    <span class="chalk-blue" id="m_disp3">100</span> (g) × <span class="chalk-red" id="t_disp3">20</span> (°C)<br><br>
                     = <strong class="chalk-green" style="font-size: 1.8em;"><span id="heatResult">2000</span> cal</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分頁 4: 互動熱平衡 (無比熱版本) -->
+    <div id="tab4" class="tab-content" style="display: none;">
+        <h1 class="chalk-white" style="margin: 0 0 5px 0;">⚖️ 熱平衡：高低溫水混合</h1>
+        <p class="chalk-yellow" style="font-size: 1.3em; margin-top:0;">
+            核心觀念：<span class="chalk-green" style="border-bottom: 2px solid #69f0ae;">平衡溫度 (Te) 永遠介於高溫與低溫之間！</span>
+        </p>
+
+        <div class="eq-container">
+            <!-- 左側控制面板 -->
+            <div class="eq-controls">
+                <div class="chalk-box" style="border-color: #ff5252;">
+                    <h3 class="chalk-red" style="margin: 0 0 10px 0;">🔥 高溫水</h3>
+                    <label>溫度：<span id="thVal" class="chalk-red">80</span> °C</label>
+                    <input type="range" id="thSlider" min="50" max="100" value="80" oninput="updateEqGraph()">
+                    <label style="display:block; margin-top:10px;">質量：<span id="mhVal" class="chalk-yellow">100</span> g</label>
+                    <input type="range" id="mhSlider" min="10" max="300" step="10" value="100" oninput="updateEqGraph()">
+                </div>
+                
+                <div class="chalk-box" style="border-color: #40c4ff;">
+                    <h3 class="chalk-blue" style="margin: 0 0 10px 0;">❄️ 低溫水</h3>
+                    <label>溫度：<span id="tcVal" class="chalk-blue">20</span> °C</label>
+                    <input type="range" id="tcSlider" min="0" max="40" value="20" oninput="updateEqGraph()">
+                    <label style="display:block; margin-top:10px;">質量：<span id="mcVal" class="chalk-yellow">100</span> g</label>
+                    <input type="range" id="mcSlider" min="10" max="300" step="10" value="100" oninput="updateEqGraph()">
+                </div>
+
+                <div style="text-align: center; margin-top: 10px;">
+                    <span style="font-size: 1.2em;">最終熱平衡溫度：</span><br>
+                    <strong class="chalk-green" style="font-size: 2.5em;" id="teResult">50.0 °C</strong>
+                </div>
+            </div>
+
+            <!-- 右側 T-t 圖 -->
+            <div class="eq-graph-area">
+                <div class="graph-box">
+                    <div class="axis-y chalk-white">溫度(°C)</div>
+                    <div class="axis-x chalk-white">時間(t)</div>
+                    
+                    <!-- 動態標籤 -->
+                    <div id="lbl-th" class="graph-label chalk-red">80</div>
+                    <div id="lbl-tc" class="graph-label chalk-blue">20</div>
+                    <div id="lbl-te" class="graph-label chalk-green" style="left: -55px; background: rgba(0,0,0,0.5); padding: 0 5px; border-radius: 5px;">50.0</div>
+                    
+                    <svg id="eqGraph" viewBox="0 0 400 350" preserveAspectRatio="none">
+                        <!-- 虛線 (熱平衡溫度) -->
+                        <line id="line-te" class="eq-line" x1="0" y1="175" x2="400" y2="175" />
+                        <!-- 高溫降溫曲線 -->
+                        <path id="path-hot" class="hot-line" d="M 0,70 Q 150,70 350,175 L 400,175" />
+                        <!-- 低溫升溫曲線 -->
+                        <path id="path-cold" class="cold-line" d="M 0,280 Q 150,280 350,175 L 400,175" />
+                    </svg>
+                </div>
+                <div id="weight-hint" class="chalk-yellow" style="text-align: center; margin-top: 15px; font-size: 1.1em;">
+                    (質量一樣，平衡溫度在正中間！)
                 </div>
             </div>
         </div>
@@ -265,30 +308,90 @@
 </div>
 
 <script>
-    // 分頁切換邏輯
     function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
+        document.getElementById(tabId).style.display = 'flex';
         event.target.classList.add('active');
+        
+        // 修正切換分頁時的圖表重繪
+        if(tabId === 'tab4') updateEqGraph(); 
     }
 
-    // 分頁 3：單純水的熱量計算 (H = M * ΔT)
+    // 分頁 3：水的吸放熱計算
     function calcWaterHeat() {
-        let m = document.getElementById('massSlider').value;
-        let t = document.getElementById('tempSlider').value;
+        let m = document.getElementById('massSlider3').value;
+        let t = document.getElementById('tempSlider3').value;
         
-        document.getElementById('massVal').innerText = m;
-        document.getElementById('tempVal').innerText = t;
-        document.getElementById('m_disp').innerText = m;
-        document.getElementById('t_disp').innerText = t;
-        
-        // 單純相乘，不出現比熱 S
+        document.getElementById('massVal3').innerText = m;
+        document.getElementById('tempVal3').innerText = t;
+        document.getElementById('m_disp3').innerText = m;
+        document.getElementById('t_disp3').innerText = t;
         document.getElementById('heatResult').innerText = m * t;
     }
 
-    // 初始化
+    // 分頁 4：熱平衡計算與 T-t 圖
+    function updateEqGraph() {
+        let th = parseFloat(document.getElementById('thSlider').value);
+        let tc = parseFloat(document.getElementById('tcSlider').value);
+        let mh = parseFloat(document.getElementById('mhSlider').value);
+        let mc = parseFloat(document.getElementById('mcSlider').value);
+        
+        // 防呆：確保高溫大於低溫
+        if (tc >= th) {
+            tc = th - 1;
+            document.getElementById('tcSlider').value = tc;
+        }
+
+        // 熱平衡計算公式 (無熱量散失)：Mh * (Th - Te) = Mc * (Te - Tc)
+        // => Te = (Mh*Th + Mc*Tc) / (Mh + Mc)
+        let te = (mh * th + mc * tc) / (mh + mc);
+        
+        // 更新文字顯示
+        document.getElementById('thVal').innerText = th;
+        document.getElementById('tcVal').innerText = tc;
+        document.getElementById('mhVal').innerText = mh;
+        document.getElementById('mcVal').innerText = mc;
+        document.getElementById('teResult').innerText = te.toFixed(1) + " °C";
+
+        // 動態文字提示
+        let hint = document.getElementById('weight-hint');
+        if (mh === mc) {
+            hint.innerHTML = "👀 兩杯水質量相同，平衡溫度剛好在<strong class='chalk-green'>正中間</strong>！";
+        } else if (mh > mc) {
+            hint.innerHTML = "👀 高溫水質量較大，平衡溫度會偏向<strong class='chalk-red'>高溫</strong>那邊！";
+        } else {
+            hint.innerHTML = "👀 低溫水質量較大，平衡溫度會偏向<strong class='chalk-blue'>低溫</strong>那邊！";
+        }
+
+        // 轉換為 SVG 座標 (Y軸 0~100°C 映射到 350px~0px)
+        let mapY = (temp) => 350 - (temp * 3.5);
+        let y_h = mapY(th);
+        let y_c = mapY(tc);
+        let y_e = mapY(te);
+
+        // 更新標籤位置
+        document.getElementById('lbl-th').innerText = th;
+        document.getElementById('lbl-th').style.top = (y_h - 12) + "px";
+        
+        document.getElementById('lbl-tc').innerText = tc;
+        document.getElementById('lbl-tc').style.top = (y_c - 12) + "px";
+        
+        document.getElementById('lbl-te').innerText = te.toFixed(1);
+        document.getElementById('lbl-te').style.top = (y_e - 12) + "px";
+
+        // 更新 SVG 曲線
+        document.getElementById('line-te').setAttribute('y1', y_e);
+        document.getElementById('line-te').setAttribute('y2', y_e);
+        
+        // Q: 控制點, 控制曲線弧度
+        document.getElementById('path-hot').setAttribute('d', `M 0,${y_h} Q 150,${y_h} 320,${y_e} L 400,${y_e}`);
+        document.getElementById('path-cold').setAttribute('d', `M 0,${y_c} Q 150,${y_c} 320,${y_e} L 400,${y_e}`);
+    }
+
+    // 初始化執行
     calcWaterHeat();
+    // (分頁4圖表在切換時會自動更新，避免 display:none 造成尺寸抓取異常)
 </script>
 
 </body>
