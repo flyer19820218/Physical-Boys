@@ -198,17 +198,14 @@
   let raceProgress = { air: 0, water: 0, steel: 0 };
   let isRacing = false;
   const speeds = { air: 34.3, water: 149.0, steel: 520.0 }; 
-  let particles = []; // 空氣分子陣列
+  let particles = [];
 
-  // 初始化空氣分子
   function initParticles() {
     particles = [];
-    // 放入一顆特別的「橘色追蹤粒子」方便學生觀察原地振動
     particles.push({ bx: 70, by: 0, r: 70, angle: 0, isTarget: true });
 
-    // 隨機產生 400 顆一般空氣分子
     for(let i = 0; i < 400; i++) {
-      let r = Math.random() * 130 + 15; // 避開正中央
+      let r = Math.random() * 130 + 15;
       let angle = Math.random() * Math.PI * 2;
       particles.push({
         bx: Math.cos(angle) * r,
@@ -224,11 +221,34 @@
   const rngTemp = document.getElementById('rng-temp');
   const valTemp = document.getElementById('val-temp');
 
+  // 🌟 通用安全繪製圓角矩形（徹底解決 WebKit / iPad 相容性 BUG）
+  function drawRoundRect(c, x, y, w, h, r, color) {
+    c.save();
+    c.fillStyle = color;
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.lineTo(x + w - r, y);
+    c.quadraticCurveTo(x + w, y, x + w, y + r);
+    c.lineTo(x + w, y + h - r);
+    c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    c.lineTo(x + r, y + h);
+    c.quadraticCurveTo(x, y + h, x, y + h - r);
+    c.lineTo(x, y + r);
+    c.quadraticCurveTo(x, y, x + r, y);
+    c.fill();
+    c.restore();
+  }
+
+  // 🌟 畫面初始化：徹底適應 iPad Retina 高 DPR
   function initCanvas() {
     const dpr = window.devicePixelRatio || 1;
     canvas.width = V_WIDTH * dpr;
     canvas.height = V_HEIGHT * dpr;
     ctx.scale(dpr, dpr);
+    
+    // 平板螢幕轉向或尺寸改變時，自動重新補畫
+    if (currentTab === 'tab1') updateTab1Stats();
+    else if (currentTab === 'tab3') updateTab3Stats();
   }
 
   function switchTab(tab) {
@@ -357,15 +377,14 @@
 
     ctx.strokeStyle = "#ffe066";
     ctx.lineWidth = 5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.beginPath();
-    for(let i = 0; i <= f; i++) {
-      for(let p = 0; p <= waveVisualLength; p+=2) {
-        const x = boxStart + i * waveVisualLength + p;
-        if (x > boxEnd) break;
-        const y = cy - Math.sin((p / waveVisualLength) * Math.PI * 2) * amp;
-        if(i === 0 && p === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
+    for(let x = boxStart; x <= boxEnd; x += 2) {
+      const progress = (x - boxStart) / (boxEnd - boxStart);
+      const y = cy - Math.sin(progress * f * Math.PI * 2) * amp;
+      if (x === boxStart) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     }
     ctx.stroke();
 
@@ -385,7 +404,6 @@
     const ans = parseFloat(document.getElementById('ans-ex2').value);
     const res = document.getElementById('res-ex2');
     if (isNaN(ans)) { res.style.color = "#ffe066"; res.textContent = "請輸入數字！"; return; }
-    // 週期 T = 1/4 秒，所以頻率 f = 4 Hz。波長 = 120 / 4 = 30 cm
     if (ans === 30) { res.style.color = "#33cc99"; res.textContent = "🎉 答對了！(f = 4, λ = 120 ÷ 4)"; }
     else { res.style.color = "#ff8040"; res.textContent = "❌ 錯囉，提示：先算出頻率 f = ?"; }
   }
@@ -430,8 +448,7 @@
     ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
     frameCounter++;
 
-    // --- 左側：介質賽跑 ---
-    const target = 600 - 120; // 賽道長度 480
+    const target = 600 - 120;
     if(isRacing) {
       if(raceProgress.steel < target) raceProgress.steel += speeds.steel * 0.04;
       if(raceProgress.water < target) raceProgress.water += speeds.water * 0.04;
@@ -455,7 +472,6 @@
     ctx.beginPath(); ctx.moveTo(600, 55); ctx.lineTo(600, V_HEIGHT - 30); ctx.stroke();
     ctx.setLineDash([]);
 
-    // --- 右側：真實聲波 (分子振動) ---
     const cx = 820, cy = 180;
     
     ctx.fillStyle = "#ffe066";
@@ -464,39 +480,32 @@
 
     ctx.save();
     
-    // 計算每一顆粒子的位移
-    let waveSpeed = 0.8; // 波往外傳遞的速度
-    let waveFreq = 0.12; // 波的頻率 (決定疏密寬度)
-    let maxAmplitude = 8; // 粒子最大震幅
+    let waveSpeed = 0.8;
+    let waveFreq = 0.12;
+    let maxAmplitude = 8;
 
     particles.forEach(p => {
-      // 核心物理引擎：粒子的位移 (Sin函數) 取決於它距離中心的距離(r)與時間(frame)
       let phase = (p.r - frameCounter * waveSpeed) * waveFreq;
       let displacement = Math.sin(phase) * maxAmplitude;
       
-      // 讓太靠近音叉的粒子不要動太大，避免蓋住音叉
       let damp = Math.min((p.r - 10) / 20, 1);
       if (damp < 0) damp = 0;
 
-      // 縱波特性：粒子位移方向與波傳遞方向 (徑向) 平行
       let currentX = cx + p.bx + Math.cos(p.angle) * displacement * damp;
       let currentY = cy + p.by + Math.sin(p.angle) * displacement * damp;
 
       if (p.isTarget) {
-        // 橘色追蹤粒子：特別放大並塗橘色
         ctx.fillStyle = "#ff8040"; 
         ctx.beginPath(); ctx.arc(currentX, currentY, 6, 0, Math.PI*2); ctx.fill();
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 2;
         ctx.stroke();
       } else {
-        // 一般空氣分子
         ctx.fillStyle = "rgba(77, 210, 255, 0.7)";
         ctx.beginPath(); ctx.arc(currentX, currentY, 2.5, 0, Math.PI*2); ctx.fill();
       }
     });
 
-    // 繪製中間的音叉 (震動源)
     const vibrate = Math.sin(frameCounter * 0.4) * 2;
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 5;
@@ -516,14 +525,11 @@
     aniFrame = requestAnimationFrame(animateTab2);
   }
 
-  // ==== TAB 3: 溫度與測驗 ====
+  // ==== TAB 3: 溫度與測驗 (🌟 完全重構相容性) ====
   function updateTab3Stats() {
     const t = parseInt(rngTemp.value);
     valTemp.textContent = `${t} °C`;
     document.getElementById('quiz-temp').textContent = `${t}°C`;
-    
-    document.getElementById('quiz-ans').value = "";
-    document.getElementById('quiz-result').textContent = "";
     
     renderTab3Static(t);
   }
@@ -535,24 +541,18 @@
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 26px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(`當前氣溫：${t} °C`, V_WIDTH/2, 100);
+    ctx.fillText(`當前氣溫：${t} °C`, V_WIDTH/2, 90);
     
-    ctx.fillStyle = "rgba(255,255,255,0.2)";
-    ctx.fillRoundRect = function(x, y, w, h, r) {
-      this.beginPath(); this.moveTo(x+r, y); this.lineTo(x+w-r, y); this.quadraticCurveTo(x+w, y, x+w, y+r);
-      this.lineTo(x+w, y+h-r); this.quadraticCurveTo(x+w, y+h, x+w-r, y+h); this.lineTo(x+r, y+h);
-      this.quadraticCurveTo(x, y+h, x, y+h-r); this.lineTo(x, y+r); this.quadraticCurveTo(x, y, x+r, y); this.fill();
-    };
-    ctx.fillRoundRect(V_WIDTH/2 - 180, 130, 360, 60, 30);
+    // 🌟 採用獨立相容函式，不掛載到 ctx，iPad 100% 穩定呈現！
+    drawRoundRect(ctx, V_WIDTH/2 - 180, 120, 360, 60, 30, "rgba(255,255,255,0.2)");
     
-    // 內部液柱長度隨溫度變化 (0~40)
-    const fillWidth = 40 + (t / 40) * 300;
-    ctx.fillStyle = "#ff8040";
-    ctx.fillRoundRect(V_WIDTH/2 - 175, 135, fillWidth, 50, 25);
+    // 內部溫度計紅柱
+    const fillWidth = 40 + (t / 40) * 310;
+    drawRoundRect(ctx, V_WIDTH/2 - 175, 125, fillWidth, 50, 25, "#ff8040");
     
     ctx.fillStyle = "#ffffff";
-    ctx.font = "20px sans-serif";
-    ctx.fillText("公式：v = 331 + 0.6 × 溫度", V_WIDTH/2, 240);
+    ctx.font = "bold 22px sans-serif";
+    ctx.fillText(`計算聲速：v = 331 + 0.6 × ${t} = ${v.toFixed(1)} m/s`, V_WIDTH/2, 230);
   }
 
   function checkAnswer() {
@@ -576,16 +576,17 @@
     }
   }
 
-  // Event Listeners
-  rngFreq.addEventListener('input', updateTab1Stats);
-  rngWave.addEventListener('input', updateTab1Stats);
-  rngTemp.addEventListener('input', updateTab3Stats);
+  // 🌟 綁定事件：全面適應平板觸控
+  ['input', 'change'].forEach(evt => {
+    rngFreq.addEventListener(evt, updateTab1Stats);
+    rngWave.addEventListener(evt, updateTab1Stats);
+    rngTemp.addEventListener(evt, updateTab3Stats);
+  });
 
   // Init
   initCanvas();
   window.addEventListener('resize', initCanvas);
   switchTab('tab1');
-
 </script>
 </body>
 </html>
