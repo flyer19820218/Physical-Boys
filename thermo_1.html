@@ -8,7 +8,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Chilanka&family=Noto+Sans+TC:wght@400;700&display=swap');
 
         body {
-            /* 模擬黑板材質與顏色 */
             background-color: #213c2c;
             background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
             background-size: 20px 20px;
@@ -23,9 +22,9 @@
         }
 
         .blackboard {
-            width: 900px;
-            height: 600px;
-            border: 12px solid #5d4037; /* 木頭邊框 */
+            width: 950px;
+            height: 650px;
+            border: 12px solid #5d4037;
             border-radius: 10px;
             padding: 20px;
             box-shadow: 10px 10px 20px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.3);
@@ -34,7 +33,6 @@
             position: relative;
         }
 
-        /* 頂部分頁籤 */
         .tabs {
             display: flex;
             gap: 15px;
@@ -50,7 +48,6 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 1.1em;
-            font-family: inherit;
             font-weight: bold;
             transition: all 0.2s;
         }
@@ -60,7 +57,6 @@
             color: #213c2c;
         }
 
-        /* 內容區 */
         .tab-content {
             display: none;
             flex: 1;
@@ -73,15 +69,13 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* 粉筆顏色定義 */
         .chalk-yellow { color: #ffe082; }
         .chalk-red { color: #ff8a80; }
         .chalk-blue { color: #81d4fa; }
         
-        /* 版面配置 */
-        .left-panel, .right-panel { flex: 1; }
+        .left-panel { flex: 1.2; display: flex; flex-direction: column; justify-content: center;}
+        .right-panel { flex: 0.8; display: flex; justify-content: center; align-items: center;}
         
-        /* 儀表與滑桿 */
         input[type="range"] {
             width: 100%;
             cursor: pointer;
@@ -94,113 +88,205 @@
             margin-top: 15px;
         }
 
-        /* 溫度計共用 */
-        .thermometer-wrapper {
-            display: flex;
-            justify-content: space-around;
-            align-items: flex-end;
-            height: 300px;
-            margin-top: 40px;
-        }
-        .thermo-bar {
-            width: 40px;
-            height: 250px;
+        /* 溫度計視覺設計 (比照 image_b44aa0.png) */
+        .thermo-container {
+            position: relative;
+            width: 45px;
+            height: 380px;
             background: rgba(255,255,255,0.1);
             border: 2px solid #fdf6e3;
-            border-radius: 20px;
-            position: relative;
+            border-radius: 25px;
             display: flex;
             align-items: flex-end;
             padding: 3px;
         }
         .thermo-fill {
             width: 100%;
-            background: #ff8a80;
-            border-radius: 15px;
-            transition: height 0.2s ease;
+            background: linear-gradient(to top, #ff3333, #ff9999);
+            border-radius: 20px;
+            transition: height 0.3s ease;
         }
-        .thermo-label {
+        
+        /* 刻度標示系統 */
+        .scale-mark {
             position: absolute;
-            top: -35px;
-            width: 100%;
-            text-align: center;
-            font-weight: bold;
+            width: 320px;
+            left: -137px; /* 置中計算 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: none;
         }
-        .thermo-value {
+        .scale-mark .dashed-line {
+            flex: 1;
+            border-bottom: 1px dashed rgba(255,255,255,0.7);
+            margin: 0 10px;
+        }
+        .scale-mark .text-left { width: 100px; text-align: right; font-size: 1.2em; font-weight: bold; }
+        .scale-mark .text-right { width: 100px; text-align: left; font-size: 1.2em; font-weight: bold; }
+
+        /* 動態指標 */
+        .current-pointer {
             position: absolute;
-            bottom: -35px;
-            width: 100%;
-            text-align: center;
-            font-size: 1.2em;
+            width: 320px;
+            left: -137px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: bottom 0.3s ease;
+            z-index: 10;
         }
+        .current-pointer .arrow-line {
+            flex: 1;
+            border-bottom: 2px solid #ffe082;
+            margin: 0 5px;
+            position: relative;
+        }
+        .current-pointer .arrow-line::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: -5px;
+            border-width: 5px 0 5px 6px;
+            border-style: solid;
+            border-color: transparent transparent transparent #ffe082;
+        }
+        .current-pointer .arrow-line::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: -5px;
+            border-width: 5px 6px 5px 0;
+            border-style: solid;
+            border-color: transparent #ffe082 transparent transparent;
+        }
+
+        /* 數學分數格式 */
+        .math-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em; /* 放大字體 */
+            margin: 20px 0;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 10px;
+        }
+        .fraction .numerator {
+            border-bottom: 3px solid currentColor;
+            padding: 0 8px;
+        }
+        .fraction .denominator {
+            padding: 0 8px;
+        }
+
     </style>
 </head>
 <body>
 
 <div class="blackboard">
-    <!-- 分頁按鈕 -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('tab1')">1. 溫度計與溫標</button>
+        <button class="tab-btn active" onclick="switchTab('tab1')">1. 攝氏 vs 華氏</button>
         <button class="tab-btn" onclick="switchTab('tab2')">2. 自製水溫度計</button>
-        <button class="tab-btn" onclick="switchTab('tab3')">3. 補充：凱氏溫標</button>
+        <button class="tab-btn" onclick="switchTab('tab3')">3. 絕對溫度 (凱氏)</button>
     </div>
 
-    <!-- 分頁 1: 溫度計大觀園與攝氏華氏 -->
+    <!-- 分頁 1: 攝氏 vs 華氏 -->
     <div id="tab1" class="tab-content active">
         <div class="left-panel">
             <h2 class="chalk-yellow">🔍 溫度計大觀園</h2>
             <ul>
                 <li><span class="chalk-blue">水銀溫度計</span>：高沸點，適合測高溫。</li>
-                <li><span class="chalk-red">酒精溫度計</span>：低凝固點，適合測低溫（通常染紅）。</li>
-                <li><strong class="chalk-yellow">紅外線溫度計</strong>：利用物體發出的<span class="chalk-red">熱輻射</span>測溫，<strong>不需接觸</strong>即可測量！（應用：耳溫槍、額溫槍）。</li>
-                <li><span class="chalk-blue">液晶溫度計</span>：隨溫度變色，常貼於魚缸或額頭。</li>
+                <li><strong class="chalk-yellow">紅外線溫度計</strong>：利用物體發出<span class="chalk-red">熱輻射</span>，<strong>不需接觸</strong>！（如：耳溫槍）。</li>
             </ul>
             <div class="chalk-box">
-                <h3 class="chalk-yellow">🔄 攝氏 vs 華氏 轉換</h3>
-                <label>拖曳改變溫度 (°C)：<span id="cValueDisplay" class="chalk-red">25</span> °C</label>
+                <h3 class="chalk-yellow">🔄 攝氏 / 華氏 轉換</h3>
+                <label>拖曳改變溫度：</label>
                 <input type="range" id="cSlider" min="0" max="100" value="25" oninput="updateCF()">
-                <p>換算公式：<br>
-                <span class="chalk-blue">°F = (°C × 9/5) + 32</span></p>
+                
+                <div class="math-display chalk-blue" style="font-size: 1.5em;">
+                    <span>°F = °C ×</span>
+                    <div class="fraction">
+                        <span class="numerator">9</span>
+                        <span class="denominator">5</span>
+                    </div>
+                    <span>+ 32</span>
+                </div>
             </div>
         </div>
         <div class="right-panel">
-            <div class="thermometer-wrapper">
-                <div class="thermo-bar">
-                    <div class="thermo-label">攝氏 (°C)</div>
-                    <div class="thermo-fill" id="cFill" style="height: 25%;"></div>
-                    <div class="thermo-value chalk-blue" id="cLabel">25°C</div>
+            <div class="thermo-container">
+                <div class="thermo-fill" id="cFill" style="height: 25%;"></div>
+                
+                <!-- 固定刻度 -->
+                <div class="scale-mark" style="bottom: 95%;">
+                    <div class="text-left">100°C</div>
+                    <div class="dashed-line"></div>
+                    <div class="text-right">212°F</div>
                 </div>
-                <div class="thermo-bar">
-                    <div class="thermo-label">華氏 (°F)</div>
-                    <div class="thermo-fill" id="fFill" style="height: 25%;"></div>
-                    <div class="thermo-value chalk-red" id="fLabel">77°F</div>
+                <div class="scale-mark" style="bottom: 15%;">
+                    <div class="text-left">0°C</div>
+                    <div class="dashed-line"></div>
+                    <div class="text-right">32°F</div>
+                </div>
+
+                <!-- 動態指標 -->
+                <div class="current-pointer" id="cPointer" style="bottom: 35%;">
+                    <div class="text-left chalk-yellow" id="cValText">25°C</div>
+                    <div class="arrow-line"></div>
+                    <div class="text-right chalk-yellow" id="fValText">77°F</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 分頁 2: 傳統水溫度計 (長度比) -->
+    <!-- 分頁 2: 傳統水溫度計 -->
     <div id="tab2" class="tab-content">
         <div class="left-panel">
             <h2 class="chalk-yellow">🧪 自製溫度計（長度比例）</h2>
-            <p>利用物質<span class="chalk-red">熱脹冷縮</span>特性。體積(或長度)變化量與溫度變化量成正比。</p>
             <div class="chalk-box">
-                <label>拖曳改變液面高度 (cm)：<span id="lengthDisplay" class="chalk-yellow">8</span> cm</label>
+                <label>拖曳改變液面高度：<span id="lengthDisplay" class="chalk-yellow">8</span> cm</label>
                 <input type="range" id="lengthSlider" min="2" max="12" step="0.5" value="8" oninput="updateWater()">
-                <p>未知溫度計算公式：</p>
-                <p class="chalk-blue">(T - 10) / (60 - 10) = (L - 2) / (12 - 2)</p>
-                <div id="calc-steps" style="line-height: 1.5;"></div>
+                
+                <!-- 大字體分數算式 -->
+                <div class="math-display chalk-blue">
+                    <div class="fraction">
+                        <span class="numerator">T - 10</span>
+                        <span class="denominator">60 - 10</span>
+                    </div>
+                    <span>=</span>
+                    <div class="fraction">
+                        <span class="numerator" id="mathL_top">8 - 2</span>
+                        <span class="denominator">12 - 2</span>
+                    </div>
+                </div>
+                
+                <div id="calc-steps" style="font-size: 1.3em; text-align: center;"></div>
             </div>
         </div>
         <div class="right-panel">
-            <div class="thermometer-wrapper">
-                <div class="thermo-bar" style="height: 300px; width: 60px;">
-                    <div class="thermo-label">未標示刻度</div>
-                    <div class="thermo-fill" id="waterFill" style="height: 60%;"></div>
-                    <!-- 刻度標示 -->
-                    <div style="position: absolute; left: 70px; top: 10%; width: 100px;">60°C (12cm)</div>
-                    <div id="waterCurrent" class="chalk-red" style="position: absolute; left: 70px; bottom: 60%; width: 100px; transition: bottom 0.2s;">?°C (8cm)</div>
-                    <div style="position: absolute; left: 70px; bottom: 10%; width: 100px;">10°C (2cm)</div>
+            <div class="thermo-container">
+                <div class="thermo-fill" id="waterFill" style="height: 60%;"></div>
+                
+                <div class="scale-mark" style="bottom: 90%;">
+                    <div class="text-left">60°C</div>
+                    <div class="dashed-line"></div>
+                    <div class="text-right">12cm</div>
+                </div>
+                <div class="scale-mark" style="bottom: 10%;">
+                    <div class="text-left">10°C</div>
+                    <div class="dashed-line"></div>
+                    <div class="text-right">2cm</div>
+                </div>
+
+                <div class="current-pointer" id="waterPointer" style="bottom: 60%;">
+                    <div class="text-left chalk-yellow" id="waterT">?°C</div>
+                    <div class="arrow-line"></div>
+                    <div class="text-right chalk-yellow" id="waterL">8cm</div>
                 </div>
             </div>
         </div>
@@ -209,40 +295,49 @@
     <!-- 分頁 3: 凱氏溫標 -->
     <div id="tab3" class="tab-content">
         <div class="left-panel">
-            <h2 class="chalk-yellow">❄️ 補充：絕對溫度 (凱氏溫標)</h2>
-            <p>科學家發現，宇宙中溫度的下限是 <strong class="chalk-blue">-273.15°C</strong>，此時粒子幾乎停止熱運動。</p>
-            <p>為了科學計算方便，將這個最低溫定義為 <strong>零度</strong>，這就是<span class="chalk-yellow">凱氏溫標 (K)</span>。</p>
+            <h2 class="chalk-yellow">❄️ 補充：絕對溫度 (K)</h2>
+            <p>粒子幾乎停止熱運動的最低極限為 <strong class="chalk-blue">-273.15°C</strong>，將此定義為 <strong>0K (絕對零度)</strong>。</p>
             
-            <div class="chalk-box">
-                <h3 class="chalk-red">絕對零度 = 0 K = -273.15 °C</h3>
-                <p>換算公式：<br>
-                <span class="chalk-yellow">K = °C + 273.15</span></p>
-            </div>
             <div class="chalk-box" style="margin-top: 15px;">
-                <label>拖曳觀察變化 (°C)：<span id="k_cValue" class="chalk-blue">0</span> °C</label>
+                <label>拖曳觀察變化：</label>
                 <input type="range" id="kSlider" min="-273" max="100" value="0" oninput="updateK()">
+                <div class="math-display chalk-red">
+                    <span>K = °C + 273.15</span>
+                </div>
             </div>
         </div>
         <div class="right-panel">
-             <div class="thermometer-wrapper">
-                <div class="thermo-bar" style="height: 250px;">
-                    <div class="thermo-label">°C</div>
-                    <div class="thermo-fill" id="k_cFill" style="height: 73%;"></div>
-                    <div class="thermo-value chalk-blue" id="k_cLabel">0°C</div>
+             <div class="thermo-container">
+                <div class="thermo-fill" id="kFill" style="height: 73%;"></div>
+                
+                <!-- 嚴格參照提供圖片的刻度 -->
+                <div class="scale-mark" style="bottom: 90%;">
+                    <div class="text-left">100°C</div>
+                    <div class="dashed-line"></div>
+                    <div class="text-right">373.15K</div>
                 </div>
-                <div class="thermo-bar" style="height: 250px;">
-                    <div class="thermo-label">K</div>
-                    <div class="thermo-fill" id="k_kFill" style="height: 73%;"></div>
-                    <div class="thermo-value chalk-yellow" id="k_kLabel">273.15 K</div>
+                <div class="scale-mark" style="bottom: 65%;">
+                    <div class="text-left">0°C</div>
+                    <div class="dashed-line"></div>
+                    <div class="text-right">273.15K</div>
+                </div>
+                <div class="scale-mark" style="bottom: 5%;">
+                    <div class="text-left">-273.15°C</div>
+                    <div class="dashed-line"></div>
+                    <div class="text-right">0K</div>
+                </div>
+
+                <div class="current-pointer" id="kPointer" style="bottom: 65%;">
+                    <div class="text-left chalk-yellow" id="k_cVal">0°C</div>
+                    <div class="arrow-line"></div>
+                    <div class="text-right chalk-yellow" id="k_kVal">273.15K</div>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
 
 <script>
-    // 分頁切換邏輯
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -250,60 +345,56 @@
         event.target.classList.add('active');
     }
 
-    // 分頁 1: 攝氏與華氏計算
+    // 分頁 1: 攝氏與華氏 (範圍 0~100對應視覺 15%~95%)
     function updateCF() {
         let c = parseFloat(document.getElementById('cSlider').value);
         let f = (c * 9/5) + 32;
         
-        document.getElementById('cValueDisplay').innerText = c;
-        document.getElementById('cLabel').innerText = c + "°C";
-        document.getElementById('fLabel').innerText = f.toFixed(1) + "°F";
+        document.getElementById('cValText').innerText = c + "°C";
+        document.getElementById('fValText').innerText = f.toFixed(1) + "°F";
         
-        // 視覺高度百分比 (以 0~100°C 基準)
-        document.getElementById('cFill').style.height = c + "%";
-        document.getElementById('fFill').style.height = c + "%"; // 同步比例升降
+        let percent = 15 + (c / 100) * 80; 
+        document.getElementById('cFill').style.height = percent + "%";
+        document.getElementById('cPointer').style.bottom = percent + "%";
     }
 
     // 分頁 2: 水溫度計 (長度比例)
-    const T_low = 10, L_low = 2, T_high = 60, L_high = 12;
     function updateWater() {
         let L = parseFloat(document.getElementById('lengthSlider').value);
         document.getElementById('lengthDisplay').innerText = L;
         
-        // 比例計算
-        let ratio = (L - L_low) / (L_high - L_low);
-        let T = T_low + ratio * (T_high - T_low);
+        let ratio = (L - 2) / 10;
+        let T = 10 + ratio * 50;
         
-        // 視覺更新 (2cm=10%, 12cm=90%)
+        // 視覺對應：2cm=10%, 12cm=90%
         let percent = 10 + (ratio * 80);
         document.getElementById('waterFill').style.height = percent + "%";
-        document.getElementById('waterCurrent').style.bottom = percent + "%";
-        document.getElementById('waterCurrent').innerText = T.toFixed(1) + "°C (" + L + "cm)";
+        document.getElementById('waterPointer').style.bottom = percent + "%";
+        document.getElementById('waterT').innerText = T.toFixed(1) + "°C";
+        document.getElementById('waterL').innerText = L + "cm";
         
-        // 計算步驟更新
+        // 更新分數算式
+        document.getElementById('mathL_top').innerText = L + " - 2";
+        
         document.getElementById('calc-steps').innerHTML = `
-            1. (T - 10) / 50 = ${(L - 2).toFixed(1)} / 10<br>
-            2. 交叉相乘：T - 10 = 50 × ${((L - 2) / 10).toFixed(2)}<br>
-            3. 得出 <span class="chalk-yellow">T = ${T.toFixed(1)} °C</span>
+            👉 交叉相乘：T - 10 = 50 × ${ratio.toFixed(2)}<br>
+            <span class="chalk-yellow" style="font-size:1.2em; font-weight:bold;">T = ${T.toFixed(1)} °C</span>
         `;
     }
 
-    // 分頁 3: 凱氏溫標計算
+    // 分頁 3: 凱氏溫標 (-273.15~100 對應視覺 5%~90%)
     function updateK() {
         let c = parseFloat(document.getElementById('kSlider').value);
         let k = c + 273.15;
         
-        document.getElementById('k_cValue').innerText = c;
-        document.getElementById('k_cLabel').innerText = c + "°C";
-        document.getElementById('k_kLabel').innerText = k.toFixed(2) + " K";
+        document.getElementById('k_cVal').innerText = c + "°C";
+        document.getElementById('k_kVal').innerText = k.toFixed(2) + " K";
         
-        // 視覺高度 (-273 ~ 100 對應 0% ~ 100%)
-        let percent = ((c + 273) / 373) * 100;
-        document.getElementById('k_cFill').style.height = percent + "%";
-        document.getElementById('k_kFill').style.height = percent + "%";
+        let percent = 5 + ((c + 273.15) / 373.15) * 85;
+        document.getElementById('kFill').style.height = percent + "%";
+        document.getElementById('kPointer').style.bottom = percent + "%";
     }
 
-    // 初始化執行一次
     updateCF();
     updateWater();
     updateK();
