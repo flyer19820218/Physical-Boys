@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>熱量與熱平衡 - 黑板互動教學</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chilanka&family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        body {
+            background-color: #1a3322;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #fdf6e3;
+            font-family: 'Noto Sans TC', 'Chilanka', cursive, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .blackboard {
+            width: 950px;
+            height: 650px;
+            border: 12px solid #5d4037;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 10px 10px 20px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            border-bottom: 2px dashed #a5d6a7;
+            padding-bottom: 10px;
+        }
+        .tab-btn {
+            background: transparent;
+            color: #a5d6a7;
+            border: 2px solid #a5d6a7;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { background: rgba(165, 214, 167, 0.2); }
+        .tab-btn.active {
+            background: #a5d6a7;
+            color: #1a3322;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            animation: fadeIn 0.4s ease;
+        }
+        .tab-content.active { display: flex; gap: 30px; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 鮮豔的粉筆顏色 */
+        .chalk-yellow { color: #ffe082; }
+        .chalk-red { color: #ff5252; text-shadow: 0 0 5px rgba(255,82,82,0.3); }
+        .chalk-blue { color: #40c4ff; }
+        .chalk-green { color: #69f0ae; font-weight: bold; text-shadow: 0 0 5px rgba(105,240,174,0.4); } /* 螢光綠重點 */
+        .chalk-white { color: #ffffff; }
+
+        .left-panel { flex: 1.1; display: flex; flex-direction: column; justify-content: center;}
+        .right-panel { flex: 0.9; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+        
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: #69f0ae; }
+        
+        .chalk-box {
+            border: 2px solid rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            background: rgba(0,0,0,0.1);
+        }
+
+        /* 大字體數學公式 */
+        .math-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6em;
+            margin: 15px 0;
+            font-family: 'Times New Roman', Times, serif;
+            letter-spacing: 2px;
+        }
+        .math-display i { font-style: italic; }
+
+        /* 熱平衡圖表區域 */
+        .graph-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            border-left: 3px solid #fdf6e3;
+            border-bottom: 3px solid #fdf6e3;
+            margin-top: 20px;
+        }
+        .axis-label-y { position: absolute; top: -10px; left: -50px; font-weight: bold; }
+        .axis-label-x { position: absolute; bottom: -30px; right: 0; font-weight: bold; }
+        
+        /* 曲線 SVG */
+        svg { width: 100%; height: 100%; overflow: visible; }
+        .hot-line { stroke: #ff5252; stroke-width: 4; fill: none; stroke-linecap: round; transition: d 0.3s ease; }
+        .cold-line { stroke: #40c4ff; stroke-width: 4; fill: none; stroke-linecap: round; transition: d 0.3s ease; }
+        .eq-line { stroke: #69f0ae; stroke-width: 2; stroke-dasharray: 6,6; transition: all 0.3s ease; }
+        
+        /* 標籤 */
+        .graph-label { position: absolute; font-size: 1.2em; font-weight: bold; transition: all 0.3s ease; }
+
+        ul li { margin-bottom: 10px; line-height: 1.5; font-size: 1.1em; }
+    </style>
+</head>
+<body>
+
+<div class="blackboard">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab1')">1. 熱量與卡的定義</button>
+        <button class="tab-btn" onclick="switchTab('tab2')">2. 熱平衡 (T-t經典圖)</button>
+    </div>
+
+    <!-- 分頁 1: 卡的定義 -->
+    <div id="tab1" class="tab-content active">
+        <div class="left-panel">
+            <h2 class="chalk-yellow">🔥 熱量的定義 (卡路里)</h2>
+            <ul>
+                <li>熱量是一種<span class="chalk-green">能量</span>的形式，會從高溫傳向低溫。</li>
+                <li><strong class="chalk-yellow">1 卡 (cal) 的定義：</strong><br>
+                    使 <span class="chalk-blue">1 公克</span>的水，溫度升高 <span class="chalk-red">1 °C</span> 所吸收的熱量。</li>
+                <li>公式口訣：<span class="chalk-green">熱量 = 質量 × 比熱 × 溫度變化</span></li>
+            </ul>
+            
+            <div class="chalk-box">
+                <div class="math-display chalk-white">
+                    <span class="chalk-green">Δ<i>H</i></span> = 
+                    <span class="chalk-blue"><i>M</i></span> × 
+                    <span class="chalk-yellow"><i>S</i></span> × 
+                    <span class="chalk-red">Δ<i>T</i></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 15px;">
+                    <span class="chalk-green">熱量(cal)</span>
+                    <span class="chalk-blue">質量(g)</span>
+                    <span class="chalk-yellow">比熱</span>
+                    <span class="chalk-red">溫差(°C)</span>
+                </div>
+            </div>
+        </div>
+        <div class="right-panel">
+            <div class="chalk-box" style="width: 80%;">
+                <h3 class="chalk-yellow" style="margin-top:0;">💦 水的加熱試算 (S=1)</h3>
+                <label>水量 M：<span id="massVal" class="chalk-blue">100</span> g</label>
+                <input type="range" id="massSlider" min="10" max="500" step="10" value="100" oninput="calcHeat()">
+                
+                <label style="margin-top: 15px; display: block;">溫差 ΔT：<span id="tempVal" class="chalk-red">20</span> °C</label>
+                <input type="range" id="tempSlider" min="1" max="100" value="20" oninput="calcHeat()">
+                
+                <div style="margin-top: 25px; text-align: center; font-size: 1.3em;">
+                    總需熱量 = <br>
+                    <span class="chalk-blue" id="m_disp">100</span> × <span class="chalk-yellow">1</span> × <span class="chalk-red" id="t_disp">20</span> = 
+                    <strong class="chalk-green" style="font-size: 1.5em;"><span id="heatResult">2000</span> cal</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分頁 2: 熱平衡經典圖 -->
+    <div id="tab2" class="tab-content">
+        <div class="left-panel">
+            <h2 class="chalk-yellow">⚖️ 熱平衡 (Thermal Equilibrium)</h2>
+            <p>將冷熱兩物體混合，熱量會由<span class="chalk-red">高溫</span>傳向<span class="chalk-blue">低溫</span>，直到<span class="chalk-green">兩者溫度相等</span>為止。</p>
+            
+            <div class="chalk-box">
+                <h3 class="chalk-white" style="margin-top:0;">(假設無熱量散失)</h3>
+                <div class="math-display">
+                    <span class="chalk-red">高溫放熱</span> = <span class="chalk-blue">低溫吸熱</span>
+                </div>
+                
+                <label style="margin-top: 15px; display: block;">🔥 調整高溫水初溫：<span id="thVal" class="chalk-red">80</span> °C</label>
+                <input type="range" id="thSlider" min="50" max="100" value="80" oninput="updateGraph()">
+                
+                <label style="margin-top: 15px; display: block;">❄️ 調整低溫水初溫：<span id="tcVal" class="chalk-blue">20</span> °C</label>
+                <input type="range" id="tcSlider" min="0" max="40" value="20" oninput="updateGraph()">
+                
+                <p style="margin-top: 20px; font-size: 1.2em;">
+                    (假設兩者質量相等)<br>
+                    最終熱平衡溫度 <span class="chalk-green">Te</span> = <strong class="chalk-green" id="teResult">50</strong> °C
+                </p>
+            </div>
+        </div>
+        <div class="right-panel">
+            <!-- 經典 T-t 圖 -->
+            <div class="graph-container">
+                <div class="axis-label-y chalk-white">溫度(°C)</div>
+                <div class="axis-label-x chalk-white">時間(t)</div>
+                
+                <!-- 動態標籤 -->
+                <div id="lbl-th" class="graph-label chalk-red" style="left: -40px;">80</div>
+                <div id="lbl-tc" class="graph-label chalk-blue" style="left: -40px;">20</div>
+                <div id="lbl-te" class="graph-label chalk-green" style="left: -40px;">50</div>
+                
+                <svg id="heatGraph" viewBox="0 0 350 350">
+                    <!-- 虛線 (熱平衡溫度) -->
+                    <line id="line-te" class="eq-line" x1="0" y1="175" x2="350" y2="175" />
+                    <!-- 高溫降溫曲線 -->
+                    <path id="path-hot" class="hot-line" d="M 0,70 Q 150,70 300,175" />
+                    <!-- 低溫升溫曲線 -->
+                    <path id="path-cold" class="cold-line" d="M 0,280 Q 150,280 300,175" />
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    // 分頁 1 計算
+    function calcHeat() {
+        let m = document.getElementById('massSlider').value;
+        let t = document.getElementById('tempSlider').value;
+        
+        document.getElementById('massVal').innerText = m;
+        document.getElementById('tempVal').innerText = t;
+        document.getElementById('m_disp').innerText = m;
+        document.getElementById('t_disp').innerText = t;
+        
+        document.getElementById('heatResult').innerText = m * 1 * t;
+    }
+
+    // 分頁 2 T-t 圖表更新
+    function updateGraph() {
+        let th = parseFloat(document.getElementById('thSlider').value);
+        let tc = parseFloat(document.getElementById('tcSlider').value);
+        
+        // 防呆：高溫必須大於低溫 (雖然 input range 有限制，但確保邏輯正確)
+        if (tc >= th) {
+            tc = th - 1;
+            document.getElementById('tcSlider').value = tc;
+        }
+
+        // 假設質量相同，Te 為兩者平均
+        let te = (th + tc) / 2;
+        
+        document.getElementById('thVal').innerText = th;
+        document.getElementById('tcVal').innerText = tc;
+        document.getElementById('teResult').innerText = te;
+
+        // 轉換為 SVG 座標 (Y軸向下，所以要反轉)
+        // 假設 SVG 高度 350 對應溫度 0~100度
+        // Y = 350 - (T / 100 * 350)
+        let y_h = 350 - (th * 3.5);
+        let y_c = 350 - (tc * 3.5);
+        let y_e = 350 - (te * 3.5);
+
+        // 更新標籤位置
+        document.getElementById('lbl-th').innerText = th;
+        document.getElementById('lbl-th').style.top = (y_h - 10) + "px";
+        
+        document.getElementById('lbl-tc').innerText = tc;
+        document.getElementById('lbl-tc').style.top = (y_c - 10) + "px";
+        
+        document.getElementById('lbl-te').innerText = te;
+        document.getElementById('lbl-te').style.top = (y_e - 10) + "px";
+
+        // 更新 SVG 曲線 (貝茲曲線製造漸進平衡的視覺感)
+        document.getElementById('line-te').setAttribute('y1', y_e);
+        document.getElementById('line-te').setAttribute('y2', y_e);
+        
+        document.getElementById('path-hot').setAttribute('d', `M 0,${y_h} Q 100,${y_h} 300,${y_e} L 350,${y_e}`);
+        document.getElementById('path-cold').setAttribute('d', `M 0,${y_c} Q 100,${y_c} 300,${y_e} L 350,${y_e}`);
+    }
+
+    // 初始化
+    calcHeat();
+    updateGraph();
+</script>
+
+</body>
+</html>
