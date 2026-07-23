@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物質的基本結構 - 互動式黑板課程</title>
+<style>
+  :root {
+    --bg-blackboard: #13221a;
+    --bg-panel: #1b3024;
+    --bg-panel-hover: #233e2f;
+    --chalk-white: #f4f1ea;
+    --chalk-yellow: #f2e078;
+    --chalk-cyan: #7cd4cc;
+    --chalk-orange: #f29c6b;
+    --chalk-pink: #e8a2b8;
+    --chalk-green: #9de2b8;
+    --chalk-dim: #8fa498;
+    --chalk-line: rgba(244, 241, 234, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 20px 10px 60px;
+    background-color: var(--bg-blackboard);
+    background-image: 
+      radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0),
+      radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0);
+    background-size: 24px 24px, 16px 16px;
+    background-position: 0 0, 8px 8px;
+    color: var(--chalk-white);
+    font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 20px;
+    line-height: 1.6;
+  }
+
+  .wrap {
+    max-width: 1050px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 2px dashed var(--chalk-line);
+  }
+
+  h1 {
+    font-size: 38px;
+    color: var(--chalk-yellow);
+    margin: 0 0 8px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(242, 224, 120, 0.2);
+  }
+
+  .subtitle {
+    font-size: 20px;
+    color: var(--chalk-dim);
+  }
+
+  /* 導覽分頁按鈕 */
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    flex: 1;
+    min-width: 200px;
+    padding: 14px 16px;
+    font-size: 20px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--chalk-dim);
+    border: 2px dashed var(--chalk-line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+
+  .tab-btn:hover {
+    background: var(--bg-panel-hover);
+    color: var(--chalk-white);
+    border-color: var(--chalk-white);
+  }
+
+  .tab-btn.active {
+    background: var(--bg-panel);
+    color: var(--chalk-yellow);
+    border: 2px solid var(--chalk-yellow);
+    box-shadow: 0 0 15px rgba(242, 224, 120, 0.25);
+  }
+
+  /* 面板與內容 */
+  .panel {
+    display: none;
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-line);
+    border-radius: 14px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  .panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2 {
+    font-size: 28px;
+    color: var(--chalk-cyan);
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--chalk-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .tag {
+    font-size: 16px;
+    background: var(--chalk-yellow);
+    color: #111;
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-weight: bold;
+  }
+
+  h3 {
+    font-size: 24px;
+    color: var(--chalk-yellow);
+    margin: 24px 0 12px;
+  }
+
+  /* 化學式與數學文字排版 */
+  .chem, .math {
+    font-family: "Consolas", "Courier New", monospace;
+    font-weight: bold;
+    color: var(--chalk-yellow);
+  }
+
+  /* 比較表格 */
+  .chalk-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 20px;
+  }
+
+  .chalk-table th, .chalk-table td {
+    padding: 14px;
+    border: 1px solid var(--chalk-line);
+    text-align: left;
+  }
+
+  .chalk-table th {
+    background: rgba(124, 212, 204, 0.15);
+    color: var(--chalk-cyan);
+  }
+
+  .chalk-table tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  /* 互動實驗區 */
+  .interactive-box {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px dashed var(--chalk-cyan);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    text-align: center;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+
+  .action-btn {
+    padding: 10px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    background: transparent;
+    color: var(--chalk-cyan);
+    border: 2px solid var(--chalk-cyan);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .action-btn:hover, .action-btn.active {
+    background: var(--chalk-cyan);
+    color: #111;
+  }
+
+  /* 畫布 */
+  canvas {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--chalk-line);
+    border-radius: 8px;
+    margin: 16px auto;
+    display: block;
+    max-width: 100%;
+  }
+
+  /* 卡片網格 */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid var(--chalk-line);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .card h4 {
+    margin: 0 0 10px;
+    color: var(--chalk-orange);
+    font-size: 22px;
+  }
+
+  .note-box {
+    background: rgba(242, 224, 120, 0.08);
+    border-left: 5px solid var(--chalk-yellow);
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+  }
+
+  ul { margin: 10px 0; padding-left: 24px; }
+  li { margin-bottom: 8px; }
+
+  @media (max-width: 600px) {
+    body { font-size: 18px; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 24px; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .tab-btn { min-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>物質的基本結構</h1>
+    <div class="subtitle">國中化學核心課程：從巨觀物質分類到微觀原子世界</div>
+  </header>
+
+  <!-- 導覽分頁 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(0)">純物質與元素分類</button>
+    <button class="tab-btn" onclick="switchTab(1)">原子模型科學史</button>
+    <button class="tab-btn" onclick="switchTab(2)">原子結構與同位素</button>
+    <button class="tab-btn" onclick="switchTab(3)">物質構成與化學式</button>
+  </div>
+
+  <!-- ================= 分頁 1：純物質與元素分類 ================= -->
+  <div class="panel active">
+    <h2>純物質與元素分類 <span class="tag">巨觀到微觀</span></h2>
+    
+    <p>物質依據組成與化學反應的特性，可層層分類為混合物、化合物與元素。拉瓦節利用通電與加熱等實驗，確認了無法用一般化學方法再分解的純物質為「元素」。</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>元素 <span class="chem">(Element)</span></h4>
+        <p>由<b>同種原子</b>組成，無法經由一般化學反應再分解為更簡單的物質。</p>
+        <p>例：氧氣 (<span class="chem">O<sub>2</sub></span>)、金金屬 (<span class="chem">Au</span>)、碳 (<span class="chem">C</span>)。</p>
+      </div>
+      <div class="card">
+        <h4>化合物 <span class="chem">(Compound)</span></h4>
+        <p>由<b>兩名以上不同元素</b>以固定比例結合而成，可經由化學反應分解。</p>
+        <p>例：水 (<span class="chem">H<sub>2</sub>O</span>)、二氧化碳 (<span class="chem">CO<sub>2</sub></span>)、氯化鈉 (<span class="chem">NaCl</span>)。</p>
+      </div>
+    </div>
+
+    <h3>常溫常壓下的金屬與非金屬元素比較</h3>
+    <table class="chalk-table">
+      <thead>
+        <tr>
+          <th>比較項目</th>
+          <th>金屬元素</th>
+          <th>非金屬元素</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>狀態與外觀</b></td>
+          <td>多為銀白或灰白固體（銅呈紅色、金呈黃色）。<br>⚠️ 唯一常溫液態：<b>汞 (<span class="chem">Hg</span>)</b></td>
+          <td>顏色狀態多變：固態（碳、硫、磷）、氣態（氧、氫、氮）。<br>⚠️ 唯一常溫液態：<b>溴 (<span class="chem">Br<sub>2</sub></span>)</b></td>
+        </tr>
+        <tr>
+          <td><b>導電與導熱性</b></td>
+          <td>優良。導電性前三名：<b>銀 &gt; 銅 &gt; 金</b>。</td>
+          <td>不良。<br>⚠️ 唯一常溫可導電的非金屬固體：<b>石墨（碳，<span class="chem">C</span>）</b></td>
+        </tr>
+        <tr>
+          <td><b>延展性</b></td>
+          <td>具有延展性，受力可拉絲或打薄而不破裂。<br>延展性最佳：<b>金 (<span class="chem">Au</span>)</b></td>
+          <td>無延展性，固體敲擊易碎。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ================= 分頁 2：原子模型科學史 ================= -->
+  <div class="panel">
+    <h2>原子模型科學史 <span class="tag">模型的演進</span></h2>
+    
+    <p>隨著實驗工具與證據的增加，科學家對原子內部結構的認知不斷修正，這正是科學演進的歷程。</p>
+
+    <div class="interactive-box">
+      <div style="font-weight: bold; color: var(--chalk-yellow); margin-bottom: 10px;">點擊模型，觀察科學史實驗與原子結構的突破：</div>
+      <div class="btn-group">
+        <button class="action-btn active" onclick="showModel('dalton', this)">1803 道耳吞</button>
+        <button class="action-btn" onclick="showModel('thomson', this)">1897 湯姆森</button>
+        <button class="action-btn" onclick="showModel('rutherford', this)">1911 拉塞福</button>
+        <button class="action-btn" onclick="showModel('chadwick', this)">1932 查兌克</button>
+      </div>
+      <canvas id="modelCanvas" width="600" height="280"></canvas>
+      <div id="modelDesc" style="min-height: 80px; padding: 0 20px; text-align: left;"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 3：原子結構與同位素 ================= -->
+  <div class="panel">
+    <h2>原子結構與同位素 <span class="tag">質量數與原子序</span></h2>
+
+    <p>現代原子是由中心帶正電的<b>原子核</b>（包含<b>質子</b>與<b>中子</b>）與外圍高速運動的<b>電子</b>所構成。</p>
+    
+    <div class="note-box">
+      <b>原子的三大平衡定律：</b>
+      <ul>
+        <li><b>原子序</b> ＝ <b>質子數</b> ＝ <b>中性原子的電子數</b>（決定元素種類與化學性質）</li>
+        <li><b>質量數</b> ＝ <b>質子數</b> ＋ <b>中子數</b>（因電子質量極小，約為質子的 $\frac{1}{1836}$，故忽略不計）</li>
+        <li><b>原子核大小</b>極小，僅占原子體積的十萬分之一，但集中了幾乎整個原子的質量。</li>
+      </ul>
+    </div>
+
+    <h3>同位素 <span class="chem">(Isotopes)</span> vs 同素異形體 <span class="chem">(Allotropes)</span></h3>
+    <table class="chalk-table">
+      <thead>
+        <tr>
+          <th>名詞</th>
+          <th>定義說明</th>
+          <th>經典實例</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b style="color:var(--chalk-orange)">同位素</b></td>
+          <td><b>質子數相同，但中子數不同</b>的同一種元素原子。<br>化學性質相同，質量數不同。</td>
+          <td>氫的同位素：<br>
+            氫 (<span class="chem"><sup>1</sup><sub>1</sub>H</span>，0中子)、<br>
+            氘 (<span class="chem"><sup>2</sup><sub>1</sub>H</span>，1中子)、<br>
+            氚 (<span class="chem"><sup>3</sup><sub>1</sub>H</span>，2中子)
+          </td>
+        </tr>
+        <tr>
+          <td><b style="color:var(--chalk-green)">同素異形體</b></td>
+          <td>由<b>同一種元素組成，但結構與結合排列方式不同</b>的巨觀純物質。<br>物理性質與外觀差異極大。</td>
+          <td>碳 (<span class="chem">C</span>) 的同素異形體：<br>
+            鑽石（堅硬透明、不導電）、<br>
+            石墨（黑灰質軟、可導電）、<br>
+            芙 (<span class="chem">C<sub>60</sub></span>，巴克球)
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ================= 分頁 4：物質構成與化學式 ================= -->
+  <div class="panel">
+    <h2>物質構成與化學式 <span class="tag">化學語言</span></h2>
+
+    <p>化學式是用元素符號與數字來表達物質組成的世界通用語言。依據物質在自然界的存在型態，書寫規則也有所不同。</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>分子化合物 <span class="chem">(Molecular)</span></h4>
+        <p>由非金屬與非金屬結合，形成獨立存在的粒子單位。</p>
+        <p><b>書寫特徵：</b>右下角數字代表分子中實際的原子個數。</p>
+        <p>例：水 (<span class="chem">H<sub>2</sub>O</span>)、二氧化碳 (<span class="chem">CO<sub>2</sub></span>)、葡萄糖 (<span class="chem">C<sub>6</sub>H<sub>12</sub>O<sub>6</sub></span>)。</p>
+      </div>
+      <div class="card">
+        <h4>離子化合物 <span class="chem">(Ionic)</span></h4>
+        <p>由金屬（陽離子）與非金屬或原子團（陰離子）以極大數目堆疊而成。</p>
+        <p><b>書寫特徵：</b>寫出正負電荷平衡的最簡整數比（實驗式/簡式）。</p>
+        <p>例：氯化鈉 (<span class="chem">NaCl</span>，比例 1:1)、碳酸鈣 (<span class="chem">CaCO<sub>3</sub></span>)。</p>
+      </div>
+    </div>
+
+    <h3>中文名稱與化學式的轉譯規則</h3>
+    <div class="note-box">
+      <b>「先唸後寫，後唸先寫」原則：</b><br>
+      化學式的書寫順序為<b>「陽離子／金屬在前，陰離子／非金屬在後」</b>；中文命名讀法則是從後往前讀作「某化某」或「某酸某」。
+      <ul>
+        <li><span class="chem">NaCl</span> 讀作：氯化鈉（鈉在前，氯在後）</li>
+        <li><span class="chem">MgO</span> 讀作：氧化鎂（氧在後讀作氧化）</li>
+        <li><span class="chem">CuSO<sub>4</sub></span> 讀作：硫酸銅（原子團 <span class="chem">SO<sub>4</sub><sup>2-</sup></span> 為陰離子寫在後）</li>
+        <li>⚠️ <b>有機化合物例外：</b>通常依據 <span class="chem">C</span>、<span class="chem">H</span>、<span class="chem">O</span> 的順序書寫，如乙醇 <span class="chem">C<sub>2</sub>H<sub>5</sub>OH</span>。</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // 分頁切換邏輯
+  function switchTab(idx) {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.panel');
+    
+    tabs.forEach((tab, i) => {
+      if (i === idx) {
+        tab.classList.add('active');
+        panels[i].classList.add('active');
+      } else {
+        tab.classList.remove('active');
+        panels[i].classList.remove('active');
+      }
+    });
+
+    // 如果切換到第二頁，重新繪製模型
+    if (idx === 1) {
+      showModel('dalton', document.querySelector('.btn-group .action-btn'));
+    }
+  }
+
+  // 原子模型繪製邏輯
+  const canvas = document.getElementById('modelCanvas');
+  const ctx = canvas ? canvas.getContext('2d') : null;
+  const descEl = document.getElementById('modelDesc');
+
+  function showModel(type, btn) {
+    if (!ctx) return;
+    document.querySelectorAll('.btn-group .action-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    if (type === 'dalton') {
+      // 實心球
+      ctx.beginPath();
+      ctx.arc(cx, cy, 70, 0, Math.PI * 2);
+      ctx.fillStyle = "#f2e078";
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      descEl.innerHTML = `
+        <b style="color:var(--chalk-yellow)">原子說（實心球模型）：</b><br>
+        提出物質由不可分割的微小粒子「原子」組成。同種元素的原子質量與性質相同，化學反應僅是原子的重新排列，原子本身不會產生或消失。
+      `;
+    } 
+    else if (type === 'thomson') {
+      // 帶正電球體 + 電子
+      ctx.beginPath();
+      ctx.arc(cx, cy, 80, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(232, 162, 184, 0.25)";
+      ctx.fill();
+      ctx.strokeStyle = "#e8a2b8";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // 畫電子 (負電荷)
+      const electrons = [
+        [-30, -30], [40, -20], [-10, 40], [30, 30], [-50, 10], [10, -50], [50, 0]
+      ];
+      electrons.forEach(pos => {
+        ctx.beginPath();
+        ctx.arc(cx + pos[0], cy + pos[1], 10, 0, Math.PI * 2);
+        ctx.fillStyle = "#7cd4cc";
+        ctx.fill();
+        ctx.fillStyle = "#111";
+        ctx.font = "bold 14px Consolas";
+        ctx.fillText("-", cx + pos[0] - 4, cy + pos[1] + 4);
+      });
+
+      descEl.innerHTML = `
+        <b style="color:var(--chalk-pink)">西瓜模型／葡萄乾布丁模型：</b><br>
+        透過<b>陰極射線實驗</b>發現了帶負電的「<b>電子</b>」，打破原子不可分的觀念。認為原子是一個帶正電的均勻球體，電子如西瓜子般鑲嵌在其中。
+      `;
+    } 
+    else if (type === 'rutherford') {
+      // 軌道虛線
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 6]);
+      
+      // 橢圓軌道 1
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 180, 50, -Math.PI / 6, 0, Math.PI * 2);
+      ctx.stroke();
+      // 橢圓軌道 2
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 180, 50, Math.PI / 3, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 原子核 (質子)
+      ctx.beginPath();
+      ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+      ctx.fillStyle = "#f29c6b";
+      ctx.fill();
+      ctx.fillStyle = "#111";
+      ctx.font = "bold 14px Consolas";
+      ctx.fillText("+", cx - 4, cy + 5);
+
+      // 電子
+      ctx.beginPath(); ctx.arc(cx + 155, cy - 90, 8, 0, Math.PI * 2); ctx.fillStyle = "#7cd4cc"; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx - 90, cy + 155, 8, 0, Math.PI * 2); ctx.fillStyle = "#7cd4cc"; ctx.fill();
+
+      descEl.innerHTML = `
+        <b style="color:var(--chalk-orange)">行星式模型（發現原子核與質子）：</b><br>
+        透過 <b>$\alpha$ 粒子撞擊金箔實驗</b>，發現絕大多數粒子直接穿透，極少數發生大角度偏折。推論原子內部大部分是空曠的，質量極大且帶正電的「<b>原子核</b>（質子）」位於中心，電子在外圍環繞。
+      `;
+    } 
+    else if (type === 'chadwick') {
+      // 軌道虛線
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.arc(cx, cy, 110, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 複合原子核 (質子 + 中子)
+      const nucleus = [
+        [0, 0, "#f29c6b", "+"], [-8, -8, "#9de2b8", ""], [8, -6, "#f29c6b", "+"], 
+        [-6, 8, "#f29c6b", "+"], [8, 8, "#9de2b8", ""], [0, -12, "#9de2b8", ""]
+      ];
+      nucleus.forEach(n => {
+        ctx.beginPath();
+        ctx.arc(cx + n[0], cy + n[1], 9, 0, Math.PI * 2);
+        ctx.fillStyle = n[2];
+        ctx.fill();
+        ctx.strokeStyle = "#13221a";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        if(n[3]) {
+          ctx.fillStyle = "#111";
+          ctx.font = "bold 12px Consolas";
+          ctx.fillText(n[3], cx + n[0] - 3, cy + n[1] + 4);
+        }
+      });
+
+      // 電子
+      ctx.beginPath(); ctx.arc(cx + 110, cy, 8, 0, Math.PI * 2); ctx.fillStyle = "#7cd4cc"; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx - 55, cy + 95, 8, 0, Math.PI * 2); ctx.fillStyle = "#7cd4cc"; ctx.fill();
+
+      descEl.innerHTML = `
+        <b style="color:var(--chalk-green)">現代原子核模型（發現中子）：</b><br>
+        拉塞福發現質子後，質子質量與實際原子質量不符。拉塞福的學生<b>查兌克</b>於實驗中發現了不帶電但質量與質子相近的「<b>中子</b>」，與質子共同組成原子核，確立了現代基礎原子結構。
+      `;
+    }
+  }
+
+  // 預設顯示第一頁
+  switchTab(0);
+</script>
+
+</body>
+</html>
