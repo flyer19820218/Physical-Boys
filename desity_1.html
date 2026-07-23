@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第一節：實驗室安全與測量 (護眼黑板大字互動版)</title>
+    <style>
+        :root {
+            --bg-board: #132a1e;       /* 傳統黑板深綠 - 吸光護眼 */
+            --bg-card: #1c3b2b;        /* 粉筆盒/卡片底色 */
+            --bg-darker: #0f2318;      /* 深邃背景 */
+            --chalk-white: #f1f5f9;    /* 粉筆特白 (取代黑色線條與文字) */
+            --chalk-yellow: #fde047;   /* 重點黃 */
+            --chalk-green: #4ade80;    /* 概念綠 */
+            --chalk-pink: #f472b6;     /* 警告/估計紅 */
+            --chalk-blue: #38bdf8;     /* 單位/冷靜藍 */
+            --chalk-orange: #fb923c;   /* 溫熱橘 */
+            --border-style: 2px dashed rgba(241, 245, 249, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+        }
+
+        /* 嚴格堅持 20px 基礎字體，照顧後排學生 */
+        html {
+            font-size: 20px;
+        }
+
+        body {
+            background-color: var(--bg-darker);
+            color: var(--chalk-white);
+            line-height: 1.8;
+            padding-bottom: 50px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f2318, #183827);
+            border-bottom: 3px solid var(--chalk-green);
+            padding: 1.2rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--chalk-yellow);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+            margin-bottom: 0.3rem;
+            letter-spacing: 2px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--chalk-green);
+            font-weight: bold;
+        }
+
+        /* 導覽列：不使用 sticky，往下捲動自動釋放畫面空間 */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            background-color: #0d1f15;
+            padding: 0.6rem;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            border-bottom: 2px solid rgba(241,245,249,0.2);
+        }
+
+        .tab-btn {
+            padding: 0.7rem 1.4rem;
+            border: 2px solid transparent;
+            background-color: transparent;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #94a3b8;
+            cursor: pointer;
+            border-radius: 0.6rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background-color: var(--bg-card);
+            color: var(--chalk-white);
+        }
+
+        .tab-btn.active {
+            background-color: var(--bg-card);
+            color: var(--chalk-yellow);
+            border: 2px solid var(--chalk-yellow);
+            box-shadow: 0 0 15px rgba(253, 224, 71, 0.3);
+        }
+
+        /* 內容區域 */
+        .container {
+            max-width: 1150px;
+            margin: 1.5rem auto;
+            padding: 0 1.2rem;
+        }
+
+        .tab-content {
+            display: none;
+            background-color: var(--bg-board);
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 2px solid rgba(241,245,249,0.25);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: var(--chalk-yellow);
+            border-bottom: 3px solid var(--chalk-orange);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.2rem;
+            font-size: 1.6rem;
+        }
+
+        h3 {
+            color: var(--chalk-blue);
+            margin: 1.5rem 0 0.8rem 0;
+            font-size: 1.3rem;
+        }
+
+        .concept-box {
+            background-color: var(--bg-card);
+            border-left: 6px solid var(--chalk-green);
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0 0.6rem 0.6rem 0;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+            font-size: 1.1rem;
+        }
+
+        .interactive-area {
+            background-color: rgba(0, 0, 0, 0.35);
+            border: var(--border-style);
+            padding: 1.5rem;
+            border-radius: 0.8rem;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .btn {
+            background-color: var(--chalk-orange);
+            color: #000;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0.4rem 0.6rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .btn:hover {
+            background-color: #ea580c;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .btn-blue { background-color: var(--chalk-blue); color: #000; }
+        .btn-blue:hover { background-color: #0284c7; color: #fff; }
+        
+        .btn-green { background-color: var(--chalk-green); color: #000; }
+        .btn-green:hover { background-color: #16a34a; color: #fff; }
+
+        /* 重點文字配色 */
+        .hl-yellow { color: var(--chalk-yellow); font-weight: bold; }
+        .hl-green { color: var(--chalk-green); font-weight: bold; }
+        .hl-pink { color: var(--chalk-pink); font-weight: bold; }
+        .hl-blue { color: var(--chalk-blue); font-weight: bold; }
+
+        /* 表格：絕對禁止黑色線條，改用亮白色/黃色虛線框 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background-color: rgba(0,0,0,0.25);
+            font-size: 1.1rem;
+        }
+
+        th, td {
+            border: 2px solid rgba(241,245,249,0.3);
+            padding: 0.8rem;
+            text-align: center;
+        }
+
+        th {
+            background-color: var(--bg-card);
+            color: var(--chalk-yellow);
+            font-size: 1.2rem;
+        }
+
+        /* 畫布：絕對禁止黑色線條 */
+        canvas {
+            background-color: #0d1a13;
+            border: 2px solid var(--chalk-yellow);
+            border-radius: 0.6rem;
+            max-width: 100%;
+            margin: 1rem auto;
+            display: block;
+            box-shadow: 0 0 15px rgba(0,0,0,0.6);
+        }
+
+        .data-box {
+            display: inline-block;
+            background: rgba(255,255,255,0.08);
+            border: 2px solid var(--chalk-white);
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .data-box:hover {
+            background: rgba(244, 114, 182, 0.3);
+            border-color: var(--chalk-pink);
+        }
+
+        .data-box.deleted {
+            text-decoration: line-through;
+            opacity: 0.3;
+            border-color: #64748b;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🔬 國中自然黑板教室：實驗室安全與測量</h1>
+        <p>🌿 堅持 20px 大字體 × 絕對零黑線護眼粉筆風 ｜ 奠定科學探究基石</p>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('tab1')">1. 為什麼要測量與 SI 單位</button>
+        <button class="tab-btn" onclick="switchTab('tab2')">2. 測量結果：準確與估計</button>
+        <button class="tab-btn" onclick="switchTab('tab3')">3. 虛擬尺刻度實戰大挑戰</button>
+        <button class="tab-btn" onclick="switchTab('tab4')">4. 減少誤差與平均值計算</button>
+    </nav>
+
+    <div class="container">
+        <!-- ================= 第一分頁：為什麼要測量與 SI 單位 ================= -->
+        <section id="tab1" class="tab-content active">
+            <h2>🌍 為什麼要測量？克服感官錯覺與國際單位制 (SI)</h2>
+            <div class="concept-box">
+                💡 <strong class="hl-yellow">單靠「眼睛看」與「皮膚感覺」可靠嗎？</strong><br>
+                在古時候，人們用「布手知尺、布指知寸」，或是中秋夜尋找鞋碼「22 號、34 號、66 號」的姑娘！結果發現各國標準不一樣，只報數字會找錯人！<br>
+                👉 科學探究為了取得精確的數字，必須依賴<span class="hl-green">「公認的測量工具與統一的標準單位」</span>，這就是 <strong class="hl-blue">國際單位制 (SI 制)</strong>！
+            </div>
+
+            <h3>📐 國際單位制 (SI) 核心物理量與常用長度換算</h3>
+            <table>
+                <tr>
+                    <th>物理量</th>
+                    <th>國際單位 (SI 制)</th>
+                    <th>中文名稱</th>
+                    <th>常用換算關係[cite: 2]</th>
+                </tr>
+                <tr>
+                    <td class="hl-yellow">長度 (Length)[cite: 2]</td>
+                    <td class="hl-white"><strong>m</strong>[cite: 2]</td>
+                    <td>公尺 (米)[cite: 2]</td>
+                    <td>1 km = 1000 m[cite: 2] <br> 1 m = 100 cm = 1000 mm[cite: 2] <br> 1 mm = 1000 μm (微米) = 10⁶ nm (奈米)[cite: 2]</td>
+                </tr>
+                <tr>
+                    <td class="hl-green">質量 (Mass)[cite: 2]</td>
+                    <td class="hl-white"><strong>kg</strong>[cite: 2]</td>
+                    <td>公斤 (仟克)[cite: 2]</td>
+                    <td>1 kg = 1000 g (公克)[cite: 2] <br> 1 g = 1000 mg (毫克)[cite: 2]</td>
+                </tr>
+                <tr>
+                    <td class="hl-blue">時間 (Time)[cite: 2]</td>
+                    <td class="hl-white"><strong>s</strong>[cite: 2]</td>
+                    <td>秒[cite: 2]</td>
+                    <td>1 min (分) = 60 s <br> 1 h (時) = 3600 s</td>
+                </tr>
+            </table>
+
+            <div class="interactive-area">
+                <h3 style="margin-top:0;">👀 互動黑板實驗：眼見真能為憑嗎？(錯視大考驗)[cite: 2]</h3>
+                <p>請用眼睛觀察下方兩條粉筆線（甲線與乙線），哪一條看起來比較長？再點擊「用直尺測量」！</p>
+                <canvas id="illusionCanvas" width="700" height="220"></canvas>
+                <button class="btn btn-blue" onclick="toggleRuler()">📏 拿入直尺測量對比</button>
+                <p id="illusionText" class="hl-yellow" style="margin-top:10px;">請先用眼睛猜猜看，再按按鈕驗證！</p>
+            </div>
+        </section>
+
+        <!-- ================= 第二分頁：測量結果的組成 ================= -->
+        <section id="tab2" class="tab-content">
+            <h2>📝 測量結果的完整組成：數字 ＋ 單位[cite: 2]</h2>
+            <div class="concept-box">
+                🚨 <strong class="hl-yellow">測量結果的鐵則：</strong> <br>
+                一個準確且有科學意義的測量結果，必須同時包含 <strong class="hl-blue">「數字」</strong> 與 <strong class="hl-green">「單位」</strong> 兩大部分[cite: 2]！<br>
+                其中，數字的部分又必須拆解為：<span class="hl-yellow">「一組準確值」 ＋ 「一位估計值」</span>[cite: 2]！
+            </div>
+
+            <div style="background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 1rem; border: 2px solid var(--chalk-yellow); text-align: center; font-size: 1.4rem; margin: 1.5rem 0;">
+                📏 測量結果[cite: 2] ＝ <span class="hl-green">準確值 (最小刻度所在位數)[cite: 2]</span> ＋ <span class="hl-pink">估計值 (最後一位數字)[cite: 2]</span> ＋ <span class="hl-blue">單位[cite: 2]</span>
+            </div>
+
+            <h3>🧠 為什麼一定要有一位「估計值」？[cite: 2]</h3>
+            <p>因為所有的測量儀器都有<strong class="hl-yellow">「最小刻度」</strong>[cite: 2]！當物體的長度剛好落在兩個刻度線之間時（例如介於 8.6 cm ~ 8.7 cm 之間），我們就必須憑視覺去「估計」最後一位數字（例如記作 <strong class="hl-pink">8.69 cm</strong>）[cite: 2]！</p>
+            <p style="margin-top: 10px;">👉 <span class="hl-pink">最後一位數字必然是估計值[cite: 2]，而倒數第二位數字就是該尺的「最小刻度」所在[cite: 2]！</span>凡是測量必有誤差，這誤差就來自估計值[cite: 2]！</p>
+
+            <div class="interactive-area">
+                <h3 style="margin-top:0;">🔍 數字解剖台：觀察測量數值的奧秘[cite: 2]</h3>
+                <p>點擊下方不同同學記錄的測量數字，黑板自動幫你解剖它的「最小刻度」與「估計值」[cite: 2]！</p>
+                <div style="margin: 15px 0;">
+                    <button class="btn" onclick="analyzeNumber('15.638', 'cm', '0.01 cm (0.1 mm)', '8 (0.008 cm)', '15.63 cm')">原子筆長度：15.638 cm[cite: 2]</button>
+                    <button class="btn btn-blue" onclick="analyzeNumber('8.69', 'cm', '0.1 cm (1 mm)', '9 (0.09 cm)', '8.6 cm')">鋼釘長度：8.69 cm[cite: 2]</button>
+                    <button class="btn btn-green" onclick="analyzeNumber('25.0', 'cm', '1 cm', '0 (0.0 cm)', '25 cm')">課本寬度：25.0 cm[cite: 2]</button>
+                </div>
+                <div id="analysisBox" style="background: var(--bg-card); padding: 1.2rem; border-radius: 0.8rem; border: 2px dashed var(--chalk-white); text-align: left; max-width: 600px; margin: 0 auto;">
+                    👉 請點擊上方數值，觀看解剖報告...
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 第三分頁：虛擬尺刻度實戰 ================= -->
+        <section id="tab3" class="tab-content">
+            <h2>🎯 虛擬刻度尺實戰大挑戰：同一根鋼釘，不同的尺！[cite: 2]</h2>
+            <div class="concept-box">
+                💡 <strong class="hl-yellow">使用不同刻度的直尺測量同一物體時，紀錄為何會不同？[cite: 2]</strong><br>
+                請記住：<span class="hl-green">「最小刻度愈精密（刻度線愈密），測量結果的小數點位數就愈多、愈準確！」[cite: 2]</span><br>
+                👉 讀取刻度時，永遠要讀到 <strong class="hl-pink">「最小刻度的下一位（估計值）」[cite: 2]</strong>！
+            </div>
+
+            <div class="interactive-area">
+                <h3 style="margin-top:0;">📏 虛擬實驗室：對照 A 尺與 B 尺的精確度[cite: 2]</h3>
+                <p>現在我們要測量一根黃色鉛筆的長度，請切換不同的尺，觀察讀數該如何記錄[cite: 2]！</p>
+                
+                <div style="margin: 15px 0;">
+                    <button class="btn btn-blue" onclick="switchRuler('A')">切換為 A 尺 (最小刻度：1 cm)[cite: 2]</button>
+                    <button class="btn btn-green" onclick="switchRuler('B')">切換為 B 尺 (最小刻度：0.1 cm / 1 mm)[cite: 2]</button>
+                </div>
+
+                <canvas id="rulerCanvas" width="750" height="240"></canvas>
+                
+                <div id="rulerText" style="background: var(--bg-card); padding: 1rem; border-radius: 0.6rem; border: 2px solid var(--chalk-yellow); margin-top: 10px; font-size: 1.2rem;">
+                    請點擊上方按鈕切換刻度尺...
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 第四分頁：減少誤差與平均值 ================= -->
+        <section id="tab4" class="tab-content">
+            <h2>⚖️ 減少誤差的秘訣：求算平均值與「捨棄不合理數據」[cite: 2]</h2>
+            <div class="concept-box">
+                💡 <strong class="hl-yellow">為什麼要測量好幾次？</strong><br>
+                因為人為操作與估計總是會有誤差！透過<span class="hl-green">「多次測量並求平均值」</span>[cite: 2]，可以有效提高準確性[cite: 2]！<br>
+                🚨 <strong class="hl-pink">段考必考最大陷阱：</strong> 在算平均值之前，<span class="hl-yellow">必須先剔除（刪除）明顯操作錯誤、不合理的離群數據</span>[cite: 2]！而且求出的平均值，小數點位數必須與原測量值的估計位數一致（四捨五入）[cite: 2]！
+            </div>
+
+            <div class="interactive-area">
+                <h3 style="margin-top:0;">🧮 黑板平均值計算機：實戰自然課本寬度[cite: 2]</h3>
+                <p>五位同學用相同的尺測量同一本課本寬度，數據如下[cite: 2]。<strong class="hl-pink">請先點擊「剔除」有問題的不合理數據[cite: 2]，再求正確平均值！</strong></p>
+                
+                <div style="margin: 20px 0;">
+                    <div class="data-box" id="d1" onclick="toggleData(1, 19.13)">甲同學：19.13 cm[cite: 2]</div>
+                    <div class="data-box" id="d2" onclick="toggleData(2, 19.15)">乙同學：19.15 cm[cite: 2]</div>
+                    <div class="data-box" id="d3" onclick="toggleData(3, 19.17)">丙同學：19.17 cm[cite: 2]</div>
+                    <div class="data-box" id="d4" onclick="toggleData(4, 29.00)">丁同學：29.00 cm[cite: 2] ⚠️</div>
+                    <div class="data-box" id="d5" onclick="toggleData(5, 19.18)">戊同學：19.18 cm[cite: 2]</div>
+                </div>
+
+                <button class="btn btn-green" onclick="calculateAvg()" style="font-size: 1.3rem;">📊 計算黑板平均值[cite: 2]</button>
+                <button class="btn" onclick="resetData()">🔄 重置數據</button>
+
+                <div id="avgResult" style="margin-top: 20px; font-size: 1.3rem; background: var(--bg-card); padding: 1.2rem; border-radius: 0.8rem; border: 2px dashed var(--chalk-green); text-align: left;">
+                    👉 點擊上方數據進行剔除，完成後按下計算！
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // --- 1. 分頁切換 ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            if(tabId === 'tab1') drawIllusion(false);
+            if(tabId === 'tab3') switchRuler('A');
+        }
+
+        // --- 2. 第一分頁：錯視畫布 (嚴格禁止黑色線條，改用粉筆亮色) ---
+        let rulerShown = false;
+        function drawIllusion(showRuler) {
+            const canvas = document.getElementById('illusionCanvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 畫線條：全部採用粉筆特白與黃色，絕無黑色
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = '#f1f5f9'; // 粉筆白
+            ctx.lineCap = 'round';
+
+            // 甲線條 (箭頭向外，感覺較長)
+            ctx.beginPath();
+            ctx.moveTo(200, 60); ctx.lineTo(500, 60); ctx.stroke();
+            // 箭頭
+            ctx.beginPath();
+            ctx.moveTo(160, 30); ctx.lineTo(200, 60); ctx.lineTo(160, 90); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(540, 30); ctx.lineTo(500, 60); ctx.lineTo(540, 90); ctx.stroke();
+            ctx.fillStyle = '#fde047'; ctx.font = 'bold 22px PingFang TC';
+            ctx.fillText("甲線條", 80, 65);
+
+            // 乙線條 (箭頭向內，感覺較短)
+            ctx.beginPath();
+            ctx.moveTo(200, 160); ctx.lineTo(500, 160); ctx.stroke();
+            // 箭頭
+            ctx.beginPath();
+            ctx.moveTo(240, 130); ctx.lineTo(200, 160); ctx.lineTo(240, 190); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(460, 130); ctx.lineTo(500, 160); ctx.lineTo(460, 190); ctx.stroke();
+            ctx.fillText("乙線條", 80, 165);
+
+            // 當點擊尺時，畫出亮黃色對齊虛線與直尺
+            if(showRuler) {
+                ctx.strokeStyle = '#4ade80'; // 亮綠色
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 8]);
+                ctx.beginPath();
+                ctx.moveTo(200, 20); ctx.lineTo(200, 200); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(500, 20); ctx.lineTo(500, 200); ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = '#f472b6';
+                ctx.fillText("長度完全一樣！ (皆為 300 單位長)", 200, 215);
+            }
+        }
+
+        function toggleRuler() {
+            rulerShown = !rulerShown;
+            drawIllusion(rulerShown);
+            const text = document.getElementById('illusionText');
+            if(rulerShown) {
+                text.innerHTML = "✨ 驚人真相：<span class="hl-green">甲、乙線條其實『一模一樣長』！</span> 單靠眼睛看極易產生錯覺，這就是為什麼科學需要準確的『測量工具』！";
+            } else {
+                text.innerHTML = "請先用眼睛猜猜看，再按按鈕驗證！";
+            }
+        }
+
+        // --- 3. 第二分頁：數字解剖台 ---
+        function analyzeNumber(val, unit, minScale, estDigit, accVal) {
+            const box = document.getElementById('analysisBox');
+            box.innerHTML = `
+                <div style="font-size: 1.4rem; color: var(--chalk-yellow); font-weight: bold; margin-bottom: 8px;">
+                    數值紀錄：${val} ${unit}
+                </div>
+                <ul style="list-style-type: none; line-height: 2;">
+                    <li>🎯 <strong class="hl-green">準確值：</strong> ${accVal}</li>
+                    <li>🔍 <strong class="hl-pink">估計值 (最後一位)：</strong> ${estDigit}</li>
+                    <li>📏 <strong class="hl-blue">該儀器最小刻度：</strong> ${minScale} (即倒數第二位數字所在位置)</li>
+                </ul>
+            `;
+        }
+
+        // --- 4. 第三分頁：虛擬尺實戰 (絕無黑色線條) ---
+        function switchRuler(type) {
+            const canvas = document.getElementById('rulerCanvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 畫黃色鉛筆 (長度設定在 5.7 cm ~ 5.8 cm 之間，偏向 5.75)
+            const pencilLength = 100 + 5.75 * 80; // 0點在 x=100, 每cm 80px -> 560px
+            ctx.fillStyle = '#fb923c'; // 筆身橘黃
+            ctx.fillRect(100, 40, pencilLength - 100, 30);
+            // 筆尖
+            ctx.fillStyle = '#f1f5f9'; // 筆頭削開白
+            ctx.beginPath();
+            ctx.moveTo(pencilLength, 55); ctx.lineTo(pencilLength - 25, 40); ctx.lineTo(pencilLength - 25, 70); ctx.fill();
+            // 筆芯
+            ctx.fillStyle = '#64748b';
+            ctx.beginPath();
+            ctx.moveTo(pencilLength, 55); ctx.lineTo(pencilLength - 10, 49); ctx.lineTo(pencilLength - 10, 61); ctx.fill();
+
+            // 2. 畫粉筆風直尺 (無黑色！改用灰白與亮青色)
+            ctx.fillStyle = '#1e293b'; // 尺本體深灰藍
+            ctx.fillRect(80, 80, 600, 90);
+            ctx.strokeStyle = '#38bdf8'; // 尺邊框亮藍
+            ctx.lineWidth = 3;
+            ctx.strokeRect(80, 80, 600, 90);
+
+            // 3. 畫刻度 (無黑線！改用純白與亮綠)
+            ctx.fillStyle = '#f1f5f9';
+            ctx.strokeStyle = '#f1f5f9';
+            ctx.font = 'bold 18px PingFang TC';
+            
+            for(let i=0; i<=6; i++) {
+                let x = 100 + i * 80;
+                // 大刻度 (cm)
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(x, 80); ctx.lineTo(x, 115); ctx.stroke();
+                ctx.fillText(i, x - 5, 140);
+
+                // 如果是 B 尺，畫出 mm 小刻度 (0.1 cm)
+                if(type === 'B' && i < 6) {
+                    ctx.lineWidth = 1.5;
+                    for(let j=1; j<10; j++) {
+                        let sx = x + j * 8;
+                        let h = (j === 5) ? 105 : 98; // 0.5 cm 刻度稍微長一點
+                        ctx.beginPath(); ctx.moveTo(sx, 80); ctx.lineTo(sx, h); ctx.stroke();
+                    }
+                }
+            }
+
+            // 4. 畫對齊紅線與解說
+            ctx.strokeStyle = '#f472b6'; // 亮粉紅對齊線
+            ctx.lineWidth = 3;
+            ctx.setLineDash([6, 6]);
+            ctx.beginPath(); ctx.moveTo(pencilLength, 30); ctx.lineTo(pencilLength, 200); ctx.stroke();
+            ctx.setLineDash([]);
+
+            const textEl = document.getElementById('rulerText');
+            if(type === 'A') {
+                ctx.fillStyle = '#f472b6'; ctx.font = 'bold 20px PingFang TC';
+                ctx.fillText("▲ 介於 5 cm 與 6 cm 之間，目視約 5.8 cm", pencilLength - 150, 215);
+                textEl.innerHTML = `
+                    🎯 <strong class="hl-yellow">A 尺測量報告 (最小刻度：1 cm)：</strong><br>
+                    物體介於 5 cm ~ 6 cm 之間。準確值為 <strong class="hl-green">5 cm</strong>，必須往前估計一位小數！<br>
+                    👉 正確紀錄結果應為：<span class="hl-pink">5.8 cm</span> (或 5.7 cm)，其中小數點後第一位 8 就是估計值！
+                `;
+            } else {
+                ctx.fillStyle = '#f472b6'; ctx.font = 'bold 20px PingFang TC';
+                ctx.fillText("▲ 介於 5.7 與 5.8 cm 之間，約 5.75 cm", pencilLength - 150, 215);
+                textEl.innerHTML = `
+                    🎯 <strong class="hl-yellow">B 尺測量報告 (最小刻度：0.1 cm / 1 mm)：</strong><br>
+                    物體介於 5.7 cm ~ 5.8 cm 之間。準確值為 <strong class="hl-green">5.7 cm</strong>，必須再往下估計一位！<br>
+                    👉 正確紀錄結果應為：<span class="hl-pink">5.75 cm</span> (或 5.76 cm)，準確到了小數點第二位，比 A 尺準確太多了！
+                `;
+            }
+        }
+
+        // --- 5. 第四分頁：平均值計算與剔除離群值 ---
+        let validData = [true, true, true, true, true]; // 對應 1~5 數據
+        const values = [0, 19.13, 19.15, 19.17, 29.00, 19.18];
+
+        function toggleData(idx, val) {
+            validData[idx-1] = !validData[idx-1];
+            const el = document.getElementById('d' + idx);
+            if(!validData[idx-1]) {
+                el.classList.add('deleted');
+            } else {
+                el.classList.remove('deleted');
+            }
+        }
+
+        function calculateAvg() {
+            let sum = 0;
+            let count = 0;
+            for(let i=0; i<5; i++) {
+                if(validData[i]) {
+                    sum += values[i+1];
+                    count++;
+                }
+            }
+
+            const resEl = document.getElementById('avgResult');
+            if(count === 0) {
+                resEl.innerHTML = "⚠️ 錯誤：你把所有數據都剔除了，無法計算平均值！";
+                resEl.style.borderColor = "#ef4444";
+                return;
+            }
+
+            // 檢查是否忘了刪除 29.00 (第4筆)
+            if(validData[3]) {
+                let badAvg = (sum / count).toFixed(2);
+                resEl.innerHTML = `
+                    🚨 <strong class="hl-pink">段考嚴重警告！你忘了剔除不合理的數據！</strong><br>
+                    丁同學測出的 <strong class="hl-yellow">29.00 cm</strong> 明顯跟其他人相差大約 10 公分，這是人為大失誤（看錯尺或抄錯）！<br>
+                    如果不剔除就算平均，會算錯成 <span style="color:#ef4444; font-weight:bold;">${badAvg} cm</span>！請點擊「丁同學」將其劃掉再重新計算！
+                `;
+                resEl.style.borderColor = "#f472b6";
+            } else {
+                let goodAvg = (sum / count).toFixed(4); // 先算細一點
+                let roundedAvg = (sum / count).toFixed(2); // 記錄到與原數據相同的估計位 (小數第二位)
+                resEl.innerHTML = `
+                    🎉 <strong class="hl-green">恭喜你！完美的數據篩選與計算！</strong><br>
+                    ✔ 已正確剔除不合理離群值 (29.00 cm)，剩餘 ${count} 筆合理測量值。<br>
+                    ✔ 總和＝${sum.toFixed(2)} cm，除以 ${count} ＝ ${goodAvg} cm。<br>
+                    👉 依規定「紀錄位數應與原測量值估計位數相同」（四捨五入至小數第二位），最標準的平均值為：<strong class="hl-yellow" style="font-size:1.6rem;">${roundedAvg} cm</strong>！
+                `;
+                resEl.style.borderColor = "#4ade80";
+            }
+        }
+
+        function resetData() {
+            validData = [true, true, true, true, true];
+            for(let i=1; i<=5; i++) {
+                document.getElementById('d' + i).classList.remove('deleted');
+            }
+            document.getElementById('avgResult').innerHTML = "👉 點擊上方數據進行剔除，完成後按下計算！";
+            document.getElementById('avgResult').style.borderColor = "#4ade80";
+        }
+
+        // 初始渲染
+        window.onload = function() {
+            drawIllusion(false);
+        };
+    </script>
+</body>
+</html>
