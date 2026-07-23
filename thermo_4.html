@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國中理化：熱學核心互動教具 (黑板不傷眼模式)</title>
+    <style>
+        :root {
+            --bg-board: #1a2621;      /* 深黑板綠 - 吸光不刺眼 */
+            --box-bg: #23332c;        /* 粉筆盒背景 */
+            --text-main: #e8ecef;     /* 粉筆白 */
+            --chalk-yellow: #fcd53f;  /* 重點黃 */
+            --chalk-green: #58d68d;   /* 概念綠 */
+            --chalk-orange: #f39c12;  /* 警告/溫熱橘 */
+            --chalk-red: #e74c3c;     /* 火焰紅 */
+            --chalk-blue: #5dade2;    /* 冷流藍 */
+        }
+
+        body {
+            background-color: var(--bg-board);
+            color: var(--text-main);
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px dashed var(--chalk-green);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            color: var(--chalk-yellow);
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 2px;
+        }
+
+        /* 導航分頁籤 */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            background-color: var(--box-bg);
+            color: var(--text-main);
+            border: 2px solid var(--chalk-green);
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover, .tab-btn.active {
+            background-color: var(--chalk-green);
+            color: var(--bg-board);
+            box-shadow: 0 0 10px rgba(88, 214, 141, 0.5);
+        }
+
+        .section-content {
+            display: none;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+
+        /* 內容卡片 */
+        .card {
+            background-color: var(--box-bg);
+            border-left: 5px solid var(--chalk-yellow);
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            color: var(--chalk-green);
+            margin-top: 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+        }
+
+        h3 {
+            color: var(--chalk-yellow);
+        }
+
+        /* 互動畫布與控件 */
+        .interactive-area {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        canvas {
+            background-color: #111a16;
+            border: 2px solid var(--chalk-yellow);
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            max-width: 100%;
+        }
+
+        .btn-group {
+            margin: 15px 0;
+        }
+
+        .action-btn {
+            background-color: transparent;
+            color: var(--chalk-yellow);
+            border: 2px solid var(--chalk-yellow);
+            padding: 8px 18px;
+            margin: 0 5px;
+            font-size: 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: var(--chalk-yellow);
+            color: var(--bg-board);
+        }
+
+        .action-btn.btn-red { border-color: var(--chalk-red); color: var(--chalk-red); }
+        .action-btn.btn-red:hover { background-color: var(--chalk-red); color: #fff; }
+        .action-btn.btn-blue { border-color: var(--chalk-blue); color: var(--chalk-blue); }
+        .action-btn.btn-blue:hover { background-color: var(--chalk-blue); color: #fff; }
+
+        /* 表格樣式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: rgba(88, 214, 141, 0.2);
+            color: var(--chalk-green);
+        }
+
+        /* 避坑指南折疊選單 */
+        .tip-box {
+            background: rgba(231, 76, 60, 0.15);
+            border: 1px dashed var(--chalk-red);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .tip-title {
+            color: var(--chalk-red);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        /* 溫度滑桿 */
+        .slider-container {
+            margin: 20px 0;
+        }
+        input[type=range] {
+            width: 80%;
+            accent-color: var(--chalk-green);
+        }
+        .temp-display {
+            font-size: 24px;
+            color: var(--chalk-yellow);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>國中自然科核心概念：熱學互動教室</h1>
+    <p>黑板不傷眼護眼模式 ｜ 講桌投影與學生自學專用</p>
+</header>
+
+<div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('ch4')">第4節：熱的傳播</button>
+    <button class="tab-btn" onclick="switchTab('ch5')">第5節：熱對物質的影響</button>
+</div>
+
+<!-- ================= 第 4 節：熱的傳播 ================= -->
+<div id="ch4" class="section-content active">
+    <div class="card">
+        <h2>🔥 傳播三大途徑與介質關係</h2>
+        <p>熱量的傳播永遠遵守一個鐵則：<strong style="color:var(--chalk-yellow);">由高溫處傳向低溫處</strong>，直到自然達到了熱平衡為止。不同的物質狀態，主力傳播方式也不同！</p>
+        
+        <table>
+            <tr>
+                <th>傳播方式</th>
+                <th>主要發生介質</th>
+                <th>微觀機制</th>
+                <th>生活實例與防護</th>
+            </tr>
+            <tr>
+                <td style="color:var(--chalk-yellow); font-weight:bold;">傳導 (Conduction)</td>
+                <td>固體為主<br>(金屬最快，氣體最慢)</td>
+                <td>粒子原地振動、互相碰撞傳能<br><strong>(物質本身不流動)</strong></td>
+                <td>鍋底用銅/鋁製造<br>鍋把用木頭/塑膠隔熱</td>
+            </tr>
+            <tr>
+                <td style="color:var(--chalk-blue); font-weight:bold;">對流 (Convection)</td>
+                <td>流體 (液體、氣體)</td>
+                <td>受熱體積膨脹、密度小上升<br>冷流體下沉補充<strong>(物質產生循環)</strong></td>
+                <td>冷氣安裝在高處<br>電暖器放置在地面</td>
+            </tr>
+            <tr>
+                <td style="color:var(--chalk-orange); font-weight:bold;">輻射 (Radiation)</td>
+                <td><strong>不需要任何介質！</strong><br>(真空即可傳播)</td>
+                <td>以光（電磁波/紅外線）的形式發散<br>傳播速度等於光速</td>
+                <td>太陽熱能傳達地球<br>白色衣服夏季涼爽、保溫瓶真空層</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 互動實驗：對流模擬器 -->
+    <div class="card">
+        <h2>🌀 互動實驗室：房間內的空氣對流</h2>
+        <p>點擊下方按鈕，觀察為什麼「冷氣裝高處、暖氣裝低處」才能形成最完美的空氣循環！</p>
+        
+        <div class="interactive-area">
+            <div class="btn-group">
+                <button class="action-btn btn-blue" onclick="startConvection('ac')">❄️ 開啟冷氣 (高處釋放冷流)</button>
+                <button class="action-btn btn-red" onclick="startConvection('heater')">🔥 開啟暖氣 (低處釋放熱流)</button>
+                <button class="action-btn" onclick="startConvection('stop')">⏹️ 停止氣流</button>
+            </div>
+            <canvas id="convectionCanvas" width="600" height="300"></canvas>
+            <p id="convectionText" style="color:var(--chalk-yellow); font-weight:bold;">請點擊上方按鈕開啟氣流測試</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🌈 輻射與物體表面性質</h2>
+        <p>任何有溫度的物體都會發出熱輻射！表面的「顏色」與「粗糙度」決定了它面對熱輻射時的態度：</p>
+        <ul>
+            <li><strong style="color:var(--chalk-yellow);">深色、粗糙表面：</strong>熱量的「暴食者與揮霍者」👉 <strong>容易吸收，也容易放出</strong>熱輻射。（例如：散熱片刷黑、太陽能熱水器吸熱板）</li>
+            <li><strong style="color:var(--chalk-blue);">淺色、光滑（銀白）表面：</strong>熱量的「守財奴與拒絕者」👉 <strong>不易吸收，也不易放出</strong>熱輻射，且容易反射。（例如：消防隊員防火衣、保溫瓶內壁鍍銀）</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ================= 第 5 節：熱對物質的影響 ================= -->
+<div id="ch5" class="section-content">
+    <div class="card">
+        <h2>📏 體積的變化：熱脹冷縮與例外</h2>
+        <p>一般而言，物質受熱時粒子運動變劇烈，粒子間距離變大，表現出「熱脹冷縮」。膨脹程度通常為：<strong style="color:var(--chalk-yellow);">氣體 > 液體 > 固體</strong>。</p>
+        
+        <!-- 互動實驗：水的特異性格 -->
+        <div class="interactive-area" style="border: 1px dashed var(--chalk-blue);">
+            <h3>💧 水的特異性格：4°C 的秘密</h3>
+            <p>一般物質都是「熱脹冷縮」，但水在 <strong style="color:var(--chalk-yellow);">0°C ~ 4°C 之間卻是「熱縮冷脹」</strong>！拉動下方滑桿觀察：</p>
+            
+            <div class="slider-container">
+                <input type="range" id="tempSlider" min="0" max="10" step="0.5" value="4" oninput="updateWaterData(this.value)">
+                <br>目前水溫：<span id="tempValue" class="temp-display">4.0</span> <span class="temp-display">°C</span>
+            </div>
+
+            <div style="display:flex; justify-content:space-around; font-size:18px;">
+                <div>體積狀態：<strong id="volState" style="color:var(--chalk-yellow);">最小</strong></div>
+                <div>密度狀態：<strong id="densityState" style="color:var(--chalk-green);">最大 (1.00 g/cm³)</strong></div>
+            </div>
+            <p style="margin-top:15px; color:var(--chalk-blue); text-align:left; padding:0 20px;">
+                💡 <strong>生存奇蹟：</strong>因為 4°C 的水密度最大會沉到湖底，冬天嚴寒時，湖面最先降至 0°C 結冰，但湖底仍能維持約 4°C，讓魚兒等水生生物能在冰層下安全過冬！
+            </p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🌡️ 狀態的變化與加熱曲線</h2>
+        <p>當物質從一種狀態變成另一種狀態（三態變化）時，伴隨著熱量的吸收或放出：</p>
+        <ul>
+            <li><strong style="color:var(--chalk-red);">吸熱過程：</strong>熔化 (固→液)、汽化 (液→氣)、昇華 (固→氣)。</li>
+            <li><strong style="color:var(--chalk-blue);">放熱過程：</strong>凝固 (液→固)、凝結 (氣→液)、凝華 (氣→固)。</li>
+        </ul>
+
+        <div class="tip-box">
+            <div class="tip-title">⚠️ 考試易錯避坑指南：吸熱一定會升溫嗎？</div>
+            <p><strong>大錯特錯！</strong>在「純物質」發生形態轉換（例如：冰水共存的 0°C、沸騰中的 100°C）時，雖持續加熱，但<strong style="color:var(--chalk-yellow);">溫度會保持不變！</strong><br>
+            這時候吸入的熱量（潛熱）不是用來讓粒子跑更快（升溫），而是用來<strong style="color:var(--chalk-green);">切斷粒子之間的引力束縛</strong>，讓物質順利轉變狀態。</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>👀 眼見為憑？那些你看到的「白煙」究竟是什麼？</h2>
+        <p>國中理化常考題！請記住一個絕對原則：<strong style="color:var(--chalk-yellow);">「氣態的水蒸氣與二氧化碳，用肉眼是絕對看不見的！」</strong></p>
+        <table>
+            <tr>
+                <th>生活現象</th>
+                <th>白煙/白霧的真正成分</th>
+                <th>微觀科學原理</th>
+            </tr>
+            <tr>
+                <td>熱水茶壺嘴冒出的白煙</td>
+                <td style="color:var(--chalk-blue); font-weight:bold;">液態小水滴 💧</td>
+                <td>壺內的氣態水蒸氣噴出後，遇冷空氣<strong>凝結</strong>成的細小水滴。</td>
+            </tr>
+            <tr>
+                <td>舞台上乾冰製造的白霧</td>
+                <td style="color:var(--chalk-blue); font-weight:bold;">液態小水滴 💧</td>
+                <td>乾冰昇華吸熱使周圍大幅降溫，空氣中的水蒸氣遇冷<strong>凝結</strong>成小水滴。（不是二氧化碳氣體！）</td>
+            </tr>
+            <tr>
+                <td>冬天說話時口中吐出的白氣</td>
+                <td style="color:var(--chalk-blue); font-weight:bold;">液態小水滴 💧</td>
+                <td>肺部呼出的溫暖水蒸氣，遇外界冷空氣<strong>凝結</strong>而成。</td>
+            </tr>
+            <tr>
+                <td>天空中飄浮的雲或山嵐</td>
+                <td style="color:var(--chalk-blue); font-weight:bold;">液態小水滴 💧 或 固態冰晶 ❄️</td>
+                <td>地面水蒸氣高升後，遇冷高空凝結或凝華的產物。</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<script>
+    // --- 分頁切換邏輯 ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    // --- 水的溫度與密度互動滑桿 ---
+    function updateWaterData(val) {
+        let temp = parseFloat(val);
+        document.getElementById('tempValue').innerText = temp.toFixed(1);
+        
+        let volEl = document.getElementById('volState');
+        let denEl = document.getElementById('densityState');
+        
+        if (temp === 4.0) {
+            volEl.innerText = "最小 ★★★";
+            volEl.style.color = "#fcd53f";
+            denEl.innerText = "最大 (約 1.000 g/cm³) ★★★";
+            denEl.style.color = "#58d68d";
+        } else if (temp < 4.0) {
+            volEl.innerText = "熱縮冷脹 (體積膨脹中)";
+            volEl.style.color = "#5dade2";
+            denEl.innerText = "變小 (密度小於 1 g/cm³)";
+            denEl.style.color = "#e8ecef";
+        } else {
+            volEl.innerText = "熱脹冷縮 (體積膨脹中)";
+            volEl.style.color = "#e74c3c";
+            denEl.innerText = "變小 (密度小於 1 g/cm³)";
+            denEl.style.color = "#e8ecef";
+        }
+    }
+
+    // --- 對流互動 Canvas 動畫 ---
+    const canvas = document.getElementById('convectionCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let animationFrameId;
+    let currentMode = 'stop';
+
+    class Particle {
+        constructor(type) {
+            this.type = type; // 'ac' (冷, 藍) or 'heater' (熱, 紅)
+            this.reset();
+        }
+
+        reset() {
+            if (this.type === 'ac') {
+                this.x = 520 + Math.random() * 40; // 右上角冷氣機出風口
+                this.y = 40;
+                this.vx = -1 - Math.random() * 2;
+                this.vy = 1 + Math.random() * 2; // 冷氣下沉
+                this.color = '#5dade2';
+            } else {
+                this.x = 40 + Math.random() * 40;  // 左下角暖氣機出風口
+                this.y = 260;
+                this.vx = 1 + Math.random() * 2;
+                this.vy = -1 - Math.random() * 2; // 熱氣上升
+                this.color = '#e74c3c';
+            }
+            this.radius = 4 + Math.random() * 4;
+            this.life = 0;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.life++;
+
+            // 模擬房間內的氣流循環引力
+            if (this.type === 'ac') {
+                if (this.y > 240) { this.vy *= 0.8; this.vx -= 0.1; } // 到底部往左移
+                if (this.x < 60) { this.vx *= 0.8; this.vy -= 0.1; }  // 到左牆往上擠
+            } else {
+                if (this.y < 60) { this.vy *= 0.8; this.vx += 0.1; }  // 到天花板往右移
+                if (this.x > 540) { this.vx *= 0.8; this.vy += 0.1; } // 到右牆往下沉
+            }
+
+            // 邊界重置
+            if (this.x < 0 || this.x > 600 || this.y < 0 || this.y > 300 || this.life > 250) {
+                this.reset();
+            }
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = this.color;
+            ctx.fill();
+            ctx.closePath();
+            ctx.shadowBlur = 0; // 重置陰影
+        }
+    }
+
+    function drawRoom() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 畫房間結構
+        ctx.strokeStyle = '#58d68d';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+
+        // 畫冷氣機 (右上)
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(500, 15, 80, 35);
+        ctx.fillStyle = '#5dade2';
+        ctx.font = '14px Microsoft JhengHei';
+        ctx.fillText("❄️冷氣", 515, 38);
+
+        // 畫電暖器 (左下)
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(20, 245, 80, 40);
+        ctx.fillStyle = '#e74c3c';
+        ctx.font = '14px Microsoft JhengHei';
+        ctx.fillText("🔥暖氣", 35, 270);
+    }
+
+    function animate() {
+        drawRoom();
+        particles.forEach(p => {
+            p.update();
+            p.draw();
+        });
+        animationFrameId = requestAnimationFrame(animate);
+    }
+
+    function startConvection(mode) {
+        currentMode = mode;
+        particles = [];
+        cancelAnimationFrame(animationFrameId);
+        
+        let textEl = document.getElementById('convectionText');
+
+        if (mode === 'ac') {
+            textEl.innerText = "❄️ 冷空氣密度大，由高處往下沉，底部溫空氣被擠壓上升，形成順時針全屋對流！";
+            textEl.style.color = "#5dade2";
+            for (let i = 0; i < 40; i++) particles.push(new Particle('ac'));
+            animate();
+        } else if (mode === 'heater') {
+            textEl.innerText = "🔥 熱空氣密度小，由低處往上升，頂部冷空氣被推擠下沉，形成順時針溫暖對流！";
+            textEl.style.color = "#e74c3c";
+            for (let i = 0; i < 40; i++) particles.push(new Particle('heater'));
+            animate();
+        } else {
+            textEl.innerText = "⏹️ 氣流已停止。請點擊上方按鈕測試。";
+            textEl.style.color = "#fcd53f";
+            drawRoom();
+        }
+    }
+
+    // 初始化畫布
+    drawRoom();
+</script>
+
+</body>
+</html>
