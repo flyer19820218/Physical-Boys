@@ -221,7 +221,7 @@
   const rngTemp = document.getElementById('rng-temp');
   const valTemp = document.getElementById('val-temp');
 
-  // 🌟 通用安全繪製圓角矩形（徹底解決 WebKit / iPad 相容性 BUG）
+  // 通用安全繪製圓角矩形
   function drawRoundRect(c, x, y, w, h, r, color) {
     c.save();
     c.fillStyle = color;
@@ -239,14 +239,13 @@
     c.restore();
   }
 
-  // 🌟 畫面初始化：徹底適應 iPad Retina 高 DPR
+  // 畫面初始化：適應 Retina 高 DPR
   function initCanvas() {
     const dpr = window.devicePixelRatio || 1;
     canvas.width = V_WIDTH * dpr;
     canvas.height = V_HEIGHT * dpr;
     ctx.scale(dpr, dpr);
     
-    // 平板螢幕轉向或尺寸改變時，自動重新補畫
     if (currentTab === 'tab1') updateTab1Stats();
     else if (currentTab === 'tab3') updateTab3Stats();
   }
@@ -331,7 +330,7 @@
     ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x1+10, y-6); ctx.lineTo(x1+10, y+6); ctx.fill();
     ctx.beginPath(); ctx.moveTo(x2, y); ctx.lineTo(x2-10, y-6); ctx.lineTo(x2-10, y+6); ctx.fill();
-    ctx.font = "bold 20px sans-serif";
+    ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(label, (x1+x2)/2, y - 12);
     ctx.restore();
@@ -371,7 +370,7 @@
     ctx.beginPath(); ctx.moveTo(boxEnd, 40); ctx.lineTo(boxEnd, V_HEIGHT - 30); ctx.stroke();
     
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 24px sans-serif";
+    ctx.font = "bold 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("【 經 過 1 秒 鐘 的 距 離 】", (boxStart + boxEnd)/2, 35);
 
@@ -426,12 +425,12 @@
     ctx.beginPath(); ctx.moveTo(120, y); ctx.lineTo(600, y); ctx.stroke();
 
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 20px sans-serif";
+    ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(label, 100, y + 6);
     
     ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.font = "16px sans-serif";
+    ctx.font = "16px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.fillText(speedText, 100, y + 26);
 
     const x = 120 + progress;
@@ -464,7 +463,7 @@
     drawTrack(300, "固體 (鋼)", raceProgress.steel, "#ff8040", "5200 m/s");
 
     ctx.fillStyle = "#33cc99";
-    ctx.font = "bold 22px sans-serif";
+    ctx.font = "bold 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("終點", 600, 45);
     ctx.strokeStyle = "#33cc99";
@@ -475,7 +474,7 @@
     const cx = 820, cy = 180;
     
     ctx.fillStyle = "#ffe066";
-    ctx.font = "bold 20px sans-serif";
+    ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.fillText("縱波模擬 (空氣分子推擠)", cx, 45);
 
     ctx.save();
@@ -525,7 +524,7 @@
     aniFrame = requestAnimationFrame(animateTab2);
   }
 
-  // ==== TAB 3: 溫度與測驗 (🌟 完全重構相容性) ====
+  // ==== TAB 3: 溫度與測驗 (🌟 100分神級優化：上下代入變數換上與黃呈完美互補的「極光亮紫色 #e64dff」) ====
   function updateTab3Stats() {
     const t = parseInt(rngTemp.value);
     valTemp.textContent = `${t} °C`;
@@ -538,21 +537,53 @@
     ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
     const v = 331 + 0.6 * t;
     
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 26px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(`當前氣溫：${t} °C`, V_WIDTH/2, 90);
+    function drawCenteredSegments(segments, y, defaultFont) {
+      ctx.save();
+      let totalWidth = 0;
+      segments.forEach(seg => {
+        ctx.font = seg.font || defaultFont;
+        seg.width = ctx.measureText(seg.text).width;
+        totalWidth += seg.width;
+      });
+      
+      let currentX = (V_WIDTH - totalWidth) / 2;
+      segments.forEach(seg => {
+        ctx.font = seg.font || defaultFont;
+        ctx.fillStyle = seg.color;
+        ctx.textAlign = "left";
+        ctx.fillText(seg.text, currentX, y);
+        currentX += seg.width;
+      });
+      ctx.restore();
+    }
+
+    // 1. 當前氣溫標示 (將變數數字 t 換成超亮眼的互補色「極光亮紫色 #e64dff」)
+    const topFont = "bold 26px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    drawCenteredSegments([
+      { text: "當前氣溫：", color: "#ffffff" },
+      { text: `${t}`, color: "#e64dff" },
+      { text: " °C", color: "#ffffff" }
+    ], 70, topFont);
     
-    // 🌟 採用獨立相容函式，不掛載到 ctx，iPad 100% 穩定呈現！
-    drawRoundRect(ctx, V_WIDTH/2 - 180, 120, 360, 60, 30, "rgba(255,255,255,0.2)");
-    
-    // 內部溫度計紅柱
+    // 2. 溫度計 (100% 保持完美比例：360x60)
+    drawRoundRect(ctx, V_WIDTH/2 - 180, 100, 360, 60, 30, "rgba(255,255,255,0.2)");
     const fillWidth = 40 + (t / 40) * 310;
-    drawRoundRect(ctx, V_WIDTH/2 - 175, 125, fillWidth, 50, 25, "#ff8040");
+    drawRoundRect(ctx, V_WIDTH/2 - 175, 105, fillWidth, 50, 25, "#ff8040");
     
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 22px sans-serif";
-    ctx.fillText(`計算聲速：v = 331 + 0.6 × ${t} = ${v.toFixed(1)} m/s`, V_WIDTH/2, 230);
+    // 3. 公式主角化 (同步把代入的變數數字 t 換成「極光亮紫色 #e64dff」，與黃色產生超強大視覺跳對對！)
+    ctx.save();
+    const eqFont = "bold 40px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    
+    drawCenteredSegments([
+      { text: "計算聲速：v = 331 + 0.6 × ", color: "#ffe066" },
+      { text: `${t}`, color: "#e64dff" },
+      { text: ` = ${v.toFixed(1)} m/s`, color: "#ffe066" }
+    ], 250, eqFont);
+    ctx.restore();
   }
 
   function checkAnswer() {
@@ -576,7 +607,7 @@
     }
   }
 
-  // 🌟 綁定事件：全面適應平板觸控
+  // 綁定事件
   ['input', 'change'].forEach(evt => {
     rngFreq.addEventListener(evt, updateTab1Stats);
     rngWave.addEventListener(evt, updateTab1Stats);
