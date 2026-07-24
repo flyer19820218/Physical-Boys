@@ -348,7 +348,7 @@
     text-align: center;
   }
 
-  /* 🌟 全新升級：18x7 教科書標準週期表格子地圖 */
+  /* 🌟 全新修正：18x7 教科書標準週期表格子地圖 */
   .period-map-wrapper {
     overflow-x: auto;
     margin: 20px 0;
@@ -388,6 +388,7 @@
 
   .map-cell.empty { border: none; background: transparent; }
   .map-cell.dark { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.05); color: var(--chalk-dim); }
+  .map-cell.a-group { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); color: var(--chalk-white); }
 
   /* 顏色分類 */
   .cell-alkali { background: rgba(242, 224, 120, 0.25); border-color: var(--chalk-yellow); color: var(--chalk-yellow); }
@@ -676,7 +677,7 @@
 
       descEl.innerHTML = `
         <b style="color:var(--chalk-pink)">1897 湯姆森 - 西瓜模型 (布丁模型)：</b><br>
-        透過<b>陰極射線實驗</b>發現了帶負電的「<b>電子</b>」，打破原子不可分的觀念。認為原子是帶正電的球體，電子如西瓜子般鑲嵌在其中。
+        透過<b>陰極射線實驗</b>發現了帶負電的「<b>電子</b>」，打破原子不可分的觀念。認為原子是一個帶正電的均勻球體，電子如西瓜子般鑲嵌在其中。
       `;
     } 
     else if (type === 'rutherford') {
@@ -717,19 +718,16 @@
     }
   }
 
-  // 🌟 產生 18x7 標準週期表地圖輪廓
+  // 🌟 修正版：18x7 週期表地圖 (嚴格將 1~2, 13~18 族標為 A 族，3~12 族標為 B 族)
   function renderPeriodMap() {
     const map = document.getElementById('periodMap');
     map.innerHTML = '';
     
-    // 左上角留白
     map.appendChild(createCell('empty', ''));
-    // 上方 1~18 族標頭
     for (let c = 1; c <= 18; c++) {
       map.appendChild(createCell('header', c));
     }
 
-    // A族關鍵必背元素 (row, col, num, sym, name, type)
     const keyElements = [
       [1, 1, 1, 'H', '氫', 'other'], [1, 18, 2, 'He', '氦', 'noble'],
       [2, 1, 3, 'Li', '鋰', 'alkali'], [2, 2, 4, 'Be', '鈹', 'earth'], [2, 13, 5, 'B', '硼', 'other'], [2, 14, 6, 'C', '碳', 'other'], [2, 15, 7, 'N', '氮', 'other'], [2, 16, 8, 'O', '氧', 'other'], [2, 17, 9, 'F', '氟', 'halogen'], [2, 18, 10, 'Ne', '氖', 'noble'],
@@ -741,11 +739,9 @@
     ];
 
     for (let r = 1; r <= 7; r++) {
-      // 左側 1~7 週期標頭
       map.appendChild(createCell('header', r));
 
       for (let c = 1; c <= 18; c++) {
-        // 判斷第1~3週期的過渡區留白
         if ((r === 1 && c > 1 && c < 18) || (r === 2 && c > 2 && c < 13) || (r === 3 && c > 2 && c < 13)) {
           map.appendChild(createCell('empty', ''));
           continue;
@@ -760,12 +756,17 @@
           cell.innerHTML = `<span class="map-num">${el[2]}</span><span class="map-sym">${el[3]}</span><span class="map-name">${el[4]}</span>`;
           map.appendChild(cell);
         } else {
-          // B族過渡金屬區與下半部，用暗色格子畫出輪廓！
+          // 🌟 嚴格區分：3~12 族才是 B 族過渡金屬；13~18 族如果沒有被標出的元素，通通是 A 族！
           const cell = document.createElement('div');
-          cell.className = `map-cell dark`;
+          if (c >= 3 && c <= 12) {
+            cell.className = `map-cell dark`;
+            cell.innerHTML = `<span style="font-size:11px;">B族</span>`;
+          } else {
+            cell.className = `map-cell a-group`;
+            cell.innerHTML = `<span style="font-size:11px; color:var(--chalk-dim);">A族</span>`;
+          }
           cell.dataset.row = r;
           cell.dataset.col = c;
-          cell.innerHTML = `<span style="font-size:11px;">B族</span>`;
           map.appendChild(cell);
         }
       }
@@ -782,7 +783,6 @@
     return div;
   }
 
-  // 由左而右 vs 由上而下 規律連動與發光特效
   function highlightMap(mode, btn) {
     document.querySelectorAll('#directionBoard ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
@@ -791,10 +791,10 @@
     cells.forEach(c => {
       c.classList.remove('highlight-row', 'highlight-col', 'dimmed');
       if (mode === 'row') {
-        if (c.dataset.row === "3") c.classList.add('highlight-row'); // 點亮第3週期
+        if (c.dataset.row === "3") c.classList.add('highlight-row');
         else c.classList.add('dimmed');
       } else if (mode === 'col') {
-        if (c.dataset.col === "1" || c.dataset.col === "17") c.classList.add('highlight-col'); // 點亮鹼金與鹵素族
+        if (c.dataset.col === "1" || c.dataset.col === "17") c.classList.add('highlight-col');
         else c.classList.add('dimmed');
       }
     });
@@ -803,8 +803,8 @@
     if (mode === 'all') {
       board.innerHTML = `
         <div class="detail-title" style="color:var(--chalk-yellow)">🌐 週期表大樓地圖：7 個週期 × 18 個族</div>
-        <p>• 看！中間暗色凹下去的一大塊叫做「過渡元素（B族）」，大多是堅硬的金屬。</p>
-        <p>• 左右兩邊高起來的叫「主要元素（A族）」，這就是國中會考的出題特區！</p>
+        <p>• 看！中間暗色凹下去的一大塊（第 3～12 族）叫做「過渡元素（B族）」，大多是堅硬的金屬。</p>
+        <p>• 左右兩邊高起來的（第 1～2、13～18 族）叫「主要元素（A族）」，這就是國中會考的核心出題特區！</p>
       `;
       board.style.borderColor = "var(--chalk-yellow)";
     } else if (mode === 'row') {
