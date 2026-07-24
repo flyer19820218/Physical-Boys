@@ -24,7 +24,7 @@
   header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed var(--rule-color); padding-bottom: 16px; }
   h1 { font-size: 36px; margin: 0 0 8px; color: var(--chalk-yellow); }
   
-  /* 導覽列：恢復原本的 wrap 設定，利用拔除數字省下的空間自動排版 */
+  /* 導覽列 */
   .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .tab-btn {
     flex: 1; min-width: 130px; padding: 12px 10px; font-size: 15px; font-weight: bold;
@@ -70,7 +70,6 @@
     <h1>第一單元：波的種類與性質</h1>
   </header>
 
-  <!-- 移除編號，保留純文字，讓畫面更清爽且能自動排版 -->
   <div class="tabs">
     <div class="tab-btn active" onclick="switchTab('intro')">種類與動畫</div>
     <div class="tab-btn" onclick="switchTab('transverse')">橫波解剖</div>
@@ -79,7 +78,6 @@
     <div class="tab-btn" onclick="switchTab('example')">例題實戰 ✏️</div>
   </div>
 
-  <!-- 第一頁靜態文字分類區 -->
   <div id="tab1-content">
     <h2 style="color:var(--chalk-teal); margin-bottom: 12px; border-left: 4px solid var(--chalk-teal); padding-left: 10px;">一、波的種類</h2>
     <div class="card-grid">
@@ -112,15 +110,12 @@
     </div>
   </div>
 
-  <!-- 畫布與控制面板區 -->
   <div class="panel">
     <div class="panel-header">
       <h2 id="panel-title">波形與介質運動模擬</h2>
     </div>
 
-    <div class="controls" id="btn-group">
-      <!-- 內容由 JS 動態切換 -->
-    </div>
+    <div class="controls" id="btn-group"></div>
 
     <div id="stage-container">
       <canvas id="stage"></canvas>
@@ -139,12 +134,9 @@
   let currentTab = 'intro';
   let highlightState = 'none';
   
-  // 動畫全域變數 (第一頁專用)
   let isPlaying = true;
   let animSpeed = 1.0;
   let animTime = 0;
-
-  // 手動拖曳變數 (第四頁專用：限制 0 ~ 8 刻度)
   let manualPhase = 0; 
 
   function initCanvas() {
@@ -153,7 +145,6 @@
     requestAnimationFrame(animationLoop);
   }
 
-  // 第一頁按鈕功能
   function changeSpeed(delta) {
     animSpeed = Math.max(0.2, Math.min(2.0, animSpeed + delta));
     document.getElementById('speed-readout').textContent = `波速: ${animSpeed.toFixed(1)} x`;
@@ -162,7 +153,6 @@
     isPlaying = !isPlaying;
   }
 
-  // 跨頁共用按鈕功能
   function setHighlight(state) {
     highlightState = state;
     document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active-btn'));
@@ -171,7 +161,6 @@
     }
   }
 
-  // 第四頁滑桿功能
   function updateManualPhase() {
     const slider = document.getElementById('timeSlider');
     if(slider) {
@@ -179,7 +168,6 @@
     }
   }
 
-  // 主動畫迴圈 (全域控管重繪)
   function animationLoop() {
     if (currentTab === 'intro' && isPlaying) {
       animTime += 0.05 * animSpeed;
@@ -188,7 +176,6 @@
     requestAnimationFrame(animationLoop);
   }
 
-  // 繪製格線
   function drawGrid() {
     ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
     ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
@@ -196,22 +183,34 @@
     for (let i = 0; i < V_HEIGHT; i += 50) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(V_WIDTH, i); ctx.stroke(); }
   }
 
-  function drawChalkArrow(x1, y1, x2, y2, color, text, offset=0, align="center") {
-    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 3;
+  // 修改：加入 lineWidth 與 fontSize 參數，讓波長箭頭可以特化粗度與大小
+  function drawChalkArrow(x1, y1, x2, y2, color, text, offset=0, align="center", customWidth=3, customFontSize=16) {
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = customWidth;
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
     const angle = Math.atan2(y2 - y1, x2 - x1);
-    const headlen = 10;
+    const headlen = Math.max(10, customWidth * 2.2); // 箭頭依線條粗細自動變大
     ctx.beginPath(); ctx.moveTo(x2, y2);
     ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
     ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
     ctx.fill();
     if (text) {
-      ctx.font = "bold 16px sans-serif";
+      ctx.font = `bold ${customFontSize}px -apple-system, "Segoe UI", Roboto, sans-serif`;
       let tw = ctx.measureText(text).width;
       let tx = (x1+x2)/2 - tw/2;
       if(align === "left") tx = x1;
       else if(align === "right") tx = x2 - tw;
+      
+      // 文字加上深黑色陰影，讓鮮豔顏色在深黑板上更清晰好讀
+      ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
       ctx.fillText(text, tx, (y1+y2)/2 + offset);
+      // 清除陰影設定，避免影響其他繪圖
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
     }
   }
 
@@ -222,13 +221,11 @@
       const cy1 = 120;
       const cy2 = 320;
       
-      // 標題
       ctx.fillStyle = "var(--chalk-pink)"; ctx.font = "bold 20px sans-serif";
       ctx.fillText("1. 橫波 (高低波)", 40, cy1 - 70);
       ctx.fillStyle = "var(--chalk-teal)";
       ctx.fillText("2. 縱波 (疏密波)", 40, cy2 - 70);
 
-      // --- 繪製橫波 (離散點) ---
       ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.setLineDash([5,5]);
       ctx.beginPath(); ctx.moveTo(40, cy1); ctx.lineTo(V_WIDTH-40, cy1); ctx.stroke(); ctx.setLineDash([]);
       
@@ -241,7 +238,6 @@
         ctx.beginPath();
         ctx.arc(x, y, 6, 0, Math.PI*2);
         
-        // 設定唯一的紅色追蹤點，其餘為純白色
         if (i === 25) { 
           ctx.fillStyle = "#ff4444"; 
           ctx.fill();
@@ -252,7 +248,6 @@
         }
       }
 
-      // --- 繪製縱波 (離散點與線段) ---
       ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.setLineDash([5,5]);
       ctx.beginPath(); ctx.moveTo(40, cy2); ctx.lineTo(V_WIDTH-40, cy2); ctx.stroke(); ctx.setLineDash([]);
 
@@ -310,25 +305,30 @@
         ctx.fillStyle = "var(--chalk-teal)"; ctx.beginPath(); ctx.arc(v1x, v1y, 8, 0, Math.PI*2); ctx.fill();
         ctx.fillText("波谷", v1x-20, v1y+30);
       } else if (highlightState === 'amplitude') {
-        drawChalkArrow(p1x, cy, p1x, p1y, "var(--chalk-coral)", "振幅 (A)", -30);
-        drawChalkArrow(v1x, cy, v1x, v1y, "var(--chalk-teal)", "振幅 (A)", 45);
+        drawChalkArrow(p1x, cy, p1x, p1y, "var(--chalk-coral)", "振幅 (A)", -30, "center", 4, 17);
+        drawChalkArrow(v1x, cy, v1x, v1y, "var(--chalk-teal)", "振幅 (A)", 45, "center", 4, 17);
       } else if (highlightState === 'wavelength') {
-        ctx.strokeStyle="rgba(255, 102, 178, 0.4)"; ctx.setLineDash([4,4]); ctx.beginPath();
+        // --- 🌟 橫波：波長極度強化版 (線粗6px, 字體19px, 超鮮豔顏色) ---
         
-        // 波峰到波峰
-        drawChalkArrow(p1x, p1y-40, p2x, p2y-40, "var(--chalk-pink)", "波長 (波峰到波峰)", -15);
-        ctx.moveTo(p1x, p1y); ctx.lineTo(p1x, p1y-50); ctx.moveTo(p2x, p2y); ctx.lineTo(p2x, p2y-50); 
+        // 1. 波峰到波峰 (螢光高亮桃紅 #ff1a8c)
+        drawChalkArrow(p1x, p1y-45, p2x, p2y-45, "#ff1a8c", "波長 (波峰到波峰)", -18, "center", 6, 19);
+        ctx.strokeStyle="#ff1a8c"; ctx.lineWidth = 4; ctx.setLineDash([6,6]); ctx.beginPath();
+        ctx.moveTo(p1x, p1y); ctx.lineTo(p1x, p1y-55); ctx.moveTo(p2x, p2y); ctx.lineTo(p2x, p2y-55); 
+        ctx.stroke();
         
-        // 波谷到波谷
-        drawChalkArrow(v1x, v1y+40, v2x, v2y+40, "var(--chalk-teal)", "波長 (波谷到波谷)", 25);
-        ctx.moveTo(v1x, v1y); ctx.lineTo(v1x, v1y+50); ctx.moveTo(v2x, v2y); ctx.lineTo(v2x, v2y+50);
+        // 2. 波谷到波谷 (雷射螢光藍 #00f0ff)
+        drawChalkArrow(v1x, v1y+45, v2x, v2y+45, "#00f0ff", "波長 (波谷到波谷)", 28, "center", 6, 19);
+        ctx.strokeStyle="#00f0ff"; ctx.lineWidth = 4; ctx.beginPath();
+        ctx.moveTo(v1x, v1y); ctx.lineTo(v1x, v1y+55); ctx.moveTo(v2x, v2y); ctx.lineTo(v2x, v2y+55);
+        ctx.stroke();
 
-        // 平衡點到平衡點 (同相位)
-        drawChalkArrow(waveLen/2, cy, waveLen*1.5, cy, "var(--chalk-yellow)", "波長 (對應點到對應點)", -15);
-        ctx.fillStyle = "var(--chalk-yellow)"; ctx.beginPath(); ctx.arc(waveLen/2, cy, 6, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(waveLen*1.5, cy, 6, 0, Math.PI*2); ctx.fill();
-
-        ctx.stroke(); ctx.setLineDash([]);
+        // 3. 平衡點到平衡點 (純高亮黃 #ffff00)
+        drawChalkArrow(waveLen/2, cy, waveLen*1.5, cy, "#ffff00", "波長 (對應點到對應點)", -18, "center", 6, 19);
+        ctx.fillStyle = "#ffff00"; ctx.beginPath(); ctx.arc(waveLen/2, cy, 9, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(waveLen*1.5, cy, 9, 0, Math.PI*2); ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = "#000"; ctx.stroke();
+        
+        ctx.setLineDash([]);
       }
     } 
     else if (currentTab === 'longitudinal') {
@@ -342,7 +342,6 @@
         ctx.beginPath(); ctx.moveTo(x, cy - 80); ctx.lineTo(x, cy + 80); ctx.stroke();
       }
 
-      // 縱波重要座標計算：密部與疏部中心點
       const dense1 = waveLen/2, sparse1 = waveLen, dense2 = waveLen*1.5, sparse2 = waveLen*2;
 
       if (highlightState === 'dense') {
@@ -360,21 +359,23 @@
         ctx.fillText("疏部", sparse1 - 20, cy - 100);
         ctx.fillText("疏部", sparse2 - 20, cy - 100);
       } else if (highlightState === 'wavelength') {
-        // 多波長標示：密部到密部
-        drawChalkArrow(dense1, cy - 120, dense2, cy - 120, "var(--chalk-pink)", "波長 (密部到密部)", -15);
-        ctx.strokeStyle="var(--chalk-pink)"; ctx.setLineDash([4,4]); ctx.beginPath();
-        ctx.moveTo(dense1, cy - 80); ctx.lineTo(dense1, cy - 130); 
-        ctx.moveTo(dense2, cy - 80); ctx.lineTo(dense2, cy - 130); 
+        // --- 🌟 縱波：波長極度強化版 (線粗7px, 字體19px, 超鮮豔顏色) ---
+        
+        // 1. 密部到密部 (螢光高亮桃紅 #ff1a8c)
+        drawChalkArrow(dense1, cy - 130, dense2, cy - 130, "#ff1a8c", "波長 (密部中心到密部中心)", -18, "center", 7, 19);
+        ctx.strokeStyle="#ff1a8c"; ctx.lineWidth = 4; ctx.setLineDash([6,6]); ctx.beginPath();
+        ctx.moveTo(dense1, cy - 80); ctx.lineTo(dense1, cy - 140); 
+        ctx.moveTo(dense2, cy - 80); ctx.lineTo(dense2, cy - 140); 
         ctx.stroke(); 
 
-        // 多波長標示：疏部到疏部
-        drawChalkArrow(sparse1, cy + 120, sparse2, cy + 120, "var(--chalk-yellow)", "波長 (疏部到疏部)", 25);
-        ctx.strokeStyle="var(--chalk-yellow)"; ctx.beginPath();
-        ctx.moveTo(sparse1, cy + 80); ctx.lineTo(sparse1, cy + 130); 
-        ctx.moveTo(sparse2, cy + 80); ctx.lineTo(sparse2, cy + 130); 
+        // 2. 疏部到疏部 (雷射螢光藍 #00f0ff)
+        drawChalkArrow(sparse1, cy + 130, sparse2, cy + 130, "#00f0ff", "波長 (疏部中心到疏部中心)", 28, "center", 7, 19);
+        ctx.strokeStyle="#00f0ff"; ctx.lineWidth = 4; ctx.beginPath();
+        ctx.moveTo(sparse1, cy + 80); ctx.lineTo(sparse1, cy + 140); 
+        ctx.moveTo(sparse2, cy + 80); ctx.lineTo(sparse2, cy + 140); 
         ctx.stroke(); ctx.setLineDash([]);
       }
-    }
+    } 
     else if (currentTab === 'propagation') {
       let t_T = manualPhase / 4; 
       const cy = V_HEIGHT / 2;
@@ -416,8 +417,9 @@
       }
 
       if (t_T >= 1) {
-         drawChalkArrow(0, cy - amp - 40, waveLen, cy - amp - 40, "var(--chalk-pink)", "經過 1T，波前進了 1λ 的距離！", -15);
-         ctx.strokeStyle="var(--chalk-pink)"; ctx.beginPath();
+         // --- 🌟 前進波長標示：同樣升級為高亮桃紅、線粗5px ---
+         drawChalkArrow(0, cy - amp - 40, waveLen, cy - amp - 40, "#ff1a8c", "經過 1T，波前進了 1λ 的距離！", -18, "center", 5, 18);
+         ctx.strokeStyle="#ff1a8c"; ctx.lineWidth = 3; ctx.beginPath();
          ctx.moveTo(waveLen, cy); ctx.lineTo(waveLen, cy - amp - 45); ctx.stroke();
       }
 
@@ -434,16 +436,13 @@
       const amp = 110;
       const waveLen = 400;
       const k = (2 * Math.PI) / waveLen;
-      const shift = 40; // 波向右移動一點點
+      const shift = 40;
 
-      // 大方向箭頭
-      drawChalkArrow(V_WIDTH - 200, 80, V_WIDTH - 50, 80, "var(--chalk-yellow)", "波前進方向", -15);
+      drawChalkArrow(V_WIDTH - 200, 80, V_WIDTH - 50, 80, "var(--chalk-yellow)", "波前進方向", -15, "center", 4, 16);
       
-      // 平衡線
       ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.setLineDash([5,5]); ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(V_WIDTH, cy); ctx.stroke(); ctx.setLineDash([]);
 
-      // 步驟 1: 畫出原本的波 (實線)
       ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 4;
       ctx.beginPath();
       for (let x = 0; x <= V_WIDTH; x++) {
@@ -452,10 +451,8 @@
       }
       ctx.stroke();
 
-      // 介質點位置設定 (波峰、下坡、波谷、上坡)
       const pts = [waveLen/4, waveLen*0.45, waveLen*0.75, waveLen*0.95, waveLen*1.25];
       
-      // 繪製原介質點
       pts.forEach((x, i) => {
         const y = cy - amp * Math.sin(k * x);
         ctx.fillStyle = "var(--chalk-coral)"; ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2); ctx.fill();
@@ -463,7 +460,6 @@
         ctx.fillText(["A","B","C","D","E"][i], x - 25, y - 10);
       });
 
-      // 步驟 2: 畫出未來的波 (虛線)
       if (highlightState === 'step2' || highlightState === 'step3') {
         ctx.strokeStyle = "var(--chalk-teal)"; ctx.lineWidth = 3; ctx.setLineDash([8,8]);
         ctx.beginPath();
@@ -477,15 +473,13 @@
         ctx.fillText("下一瞬間的波形", V_WIDTH - 200, 110);
       }
 
-      // 步驟 3: 畫出介質運動方向 (垂直箭頭)
       if (highlightState === 'step3') {
         pts.forEach(x => {
           const y_orig = cy - amp * Math.sin(k * x);
           const y_new = cy - amp * Math.sin(k * (x - shift));
           
-          // 如果距離太近就不畫箭頭，避免太擠
           if(Math.abs(y_new - y_orig) > 5) {
-             drawChalkArrow(x, y_orig, x, y_new, "var(--chalk-pink)", "", 0);
+             drawChalkArrow(x, y_orig, x, y_new, "var(--chalk-pink)", "", 0, "center", 4, 16);
           }
         });
       }
