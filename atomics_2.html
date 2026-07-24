@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>化學第二單元 第二節：科學史與元素週期表</title>
+<title>化學第二單元 第二節：原子模型與元素週期表</title>
 <style>
   :root {
     --bg-blackboard: #13221a;
@@ -186,6 +186,7 @@
     border-radius: 12px;
     padding: 24px;
     margin: 24px 0;
+    text-align: center;
   }
 
   .btn-group {
@@ -213,6 +214,16 @@
     color: #111;
   }
 
+  /* 畫布 */
+  canvas {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--chalk-line);
+    border-radius: 8px;
+    margin: 16px auto;
+    display: block;
+    max-width: 100%;
+  }
+
   /* 網格與卡片 */
   .grid-2 {
     display: grid;
@@ -235,6 +246,7 @@
     padding: 20px;
     cursor: pointer;
     transition: 0.2s;
+    text-align: left;
   }
 
   .card:hover {
@@ -255,6 +267,7 @@
     padding: 18px 22px;
     margin: 20px 0;
     border-radius: 0 10px 10px 0;
+    text-align: left;
   }
 
   /* 詳細展示看板 */
@@ -265,6 +278,7 @@
     padding: 24px;
     margin-top: 20px;
     min-height: 140px;
+    text-align: left;
   }
 
   .detail-title {
@@ -276,46 +290,63 @@
     gap: 12px;
   }
 
-  /* 模擬週期表樣式 */
-  .table-grid {
-    display: grid;
-    grid-template-columns: repeat(18, 1fr);
-    gap: 4px;
+  /* 模擬會考單一元素格子 */
+  .exam-cell-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
     margin: 20px 0;
-    overflow-x: auto;
-    padding-bottom: 10px;
+    background: rgba(0,0,0,0.4);
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid var(--chalk-line);
   }
 
-  .element-cell {
-    aspect-ratio: 1;
-    min-width: 40px;
+  .exam-cell {
+    width: 180px;
+    height: 180px;
+    border: 3px solid var(--chalk-white);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    border: 1px solid var(--chalk-line);
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 12px;
+    box-shadow: 0 0 15px rgba(255,255,255,0.1);
+    position: relative;
+  }
+
+  .exam-num { font-size: 24px; font-weight: bold; color: var(--chalk-yellow); align-self: flex-start; line-height: 1; }
+  .exam-sym { font-size: 48px; font-family: Consolas, monospace; font-weight: bold; color: var(--chalk-white); line-height: 1; margin: 4px 0; }
+  .exam-name { font-size: 20px; color: var(--chalk-cyan); line-height: 1; }
+  .exam-weight { font-size: 18px; color: var(--chalk-orange); font-family: Consolas, monospace; line-height: 1; }
+
+  .cell-arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+  }
+
+  .arrow-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+  }
+
+  .arrow-badge {
+    background: var(--chalk-line);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-family: Consolas, monospace;
     font-weight: bold;
-    background: rgba(0,0,0,0.3);
-    cursor: pointer;
-    transition: 0.2s;
+    min-width: 110px;
+    text-align: center;
   }
-
-  .element-cell:hover {
-    transform: scale(1.15);
-    z-index: 2;
-    border-color: var(--chalk-white);
-  }
-
-  .cell-num { font-size: 10px; color: var(--chalk-dim); }
-  .cell-sym { font-size: 16px; font-family: Consolas, monospace; }
-
-  /* 元素分類顏色 */
-  .bg-metal { background: rgba(124, 212, 204, 0.25); color: var(--chalk-cyan); }
-  .bg-nonmetal { background: rgba(242, 156, 107, 0.25); color: var(--chalk-orange); }
-  .bg-noble { background: rgba(232, 162, 184, 0.25); color: var(--chalk-pink); }
-  .bg-alkali { background: rgba(242, 224, 120, 0.25); color: var(--chalk-yellow); border: 1px solid var(--chalk-yellow); }
 
   ul { margin: 10px 0; padding-left: 24px; }
   li { margin-bottom: 8px; }
@@ -325,6 +356,7 @@
     h1 { font-size: 32px; }
     h2 { font-size: 24px; flex-direction: column; align-items: flex-start; gap: 8px; }
     .tab-btn { min-width: 100%; }
+    .exam-cell-container { flex-direction: column; }
   }
 </style>
 </head>
@@ -332,155 +364,191 @@
 
 <div class="wrap">
   <header>
-    <h1>化學第二單元 第二節：科學史與元素週期表</h1>
-    <div class="subtitle">從尋找元素的規律，到掌握化學家族的必考祕笈</div>
+    <h1>化學第二單元 第二節：原子模型與元素週期表</h1>
+    <div class="subtitle">從微觀的原子結構演進，到掌握會考週期表格子大密碼</div>
   </header>
 
   <!-- 導覽分頁 (簡明扼要，無一二三四) -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab(0)">週期表演進史</button>
-    <button class="tab-btn" onclick="switchTab(1)">週期表架構解析</button>
-    <button class="tab-btn" onclick="switchTab(2)">四大化學家族</button>
+    <button class="tab-btn active" onclick="switchTab(0)">原子模型演進</button>
+    <button class="tab-btn" onclick="switchTab(1)">週期表歷史</button>
+    <button class="tab-btn" onclick="switchTab(2)">格子意義與規律</button>
+    <button class="tab-btn" onclick="switchTab(3)">四大化學家族</button>
   </div>
 
-  <!-- ================= 分頁 1：週期表演進史 ================= -->
+  <!-- ================= 分頁 1：原子模型演進 ================= -->
   <div class="panel active">
-    <h2>週期表演進史 <span class="tag">尋找大自然的規律</span></h2>
+    <h2>原子模型的演進 <span class="tag">微觀科學史</span></h2>
     
-    <p>自從科學家陸續發現各種元素後，大家開始思考：這些元素之間有沒有什麼排列規律？從19世紀到20世紀初，經歷了四位關鍵科學家的重大突破。</p>
+    <p>古希臘哲學家認為萬物是由不可分割的「原子」構成。直到近兩百年，科學家才透過精彩的實驗，一步步揭開了原子內部的神祕面紗。</p>
 
     <div class="interactive-box">
-      <div style="font-weight: bold; color: var(--chalk-yellow); font-size: 22px; margin-bottom: 12px;">點擊科學家，觀看週期表排版的歷史演進：</div>
+      <div style="font-weight: bold; color: var(--chalk-yellow); font-size: 22px; margin-bottom: 12px;">點擊科學家，觀察原子內部結構是怎麼被發現的：</div>
       <div class="btn-group">
-        <button class="action-btn active" onclick="showHistory('dobereiner', this)">1829 德貝萊納</button>
-        <button class="action-btn" onclick="showHistory('newlands', this)">1865 紐蘭德</button>
-        <button class="action-btn" onclick="showHistory('mendeleev', this)">1869 門得列夫</button>
-        <button class="action-btn" onclick="showHistory('moseley', this)">1913 莫色勒</button>
+        <button class="action-btn active" onclick="showModel('dalton', this)">1803 道耳吞</button>
+        <button class="action-btn" onclick="showModel('thomson', this)">1897 湯姆森</button>
+        <button class="action-btn" onclick="showModel('rutherford', this)">1911 拉塞福</button>
+        <button class="action-btn" onclick="showModel('chadwick', this)">1932 查兌克</button>
       </div>
-      <div class="detail-board" id="historyBoard">
-        <!-- 內容由 JS 動態載入 -->
-      </div>
+      <canvas id="modelCanvas" width="600" height="280"></canvas>
+      <div id="modelDesc" style="min-height: 100px; padding: 12px 20px; text-align: left; background: rgba(0,0,0,0.4); border-radius: 8px;"></div>
     </div>
 
-    <h3>⚠️ 國中理化必考：新舊週期表大PK</h3>
+    <h3>🏆 國中必考：四大科學家重大突破快易通</h3>
     <table class="chalk-table">
       <thead>
         <tr>
-          <th>比較項目</th>
-          <th>門得列夫 (週期表之父)</th>
-          <th>莫色勒 (現代週期表之父)</th>
+          <th>科學家與年代</th>
+          <th>提出的模型名稱</th>
+          <th>實驗工具與關鍵發現 (必考重點)</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td><b>排列依據</b></td>
-          <td>依照<b>「原子量」</b>大小由小到大排列。</td>
-          <td>依照<b>「原子序」（質子數）</b>由小到大排列。</td>
+          <td><b style="color:var(--chalk-yellow)">道耳吞 (1803)</b></td>
+          <td><b>實心球模型 (原子說)</b></td>
+          <td>認為原子是一個極小、不可再分割的實心球。化學反應只是原子的重新排列，原子本身不會產生或消失。</td>
         </tr>
         <tr>
-          <td><b>歷史貢獻</b></td>
-          <td>1. 發現元素性質有週期性重複的規律。<br>2. 大膽為當時「尚未發現」的元素<b>預留空位</b>，並準確預測其性質（如鍺、鎵）。</td>
-          <td>1. 利用 X 射線測定出各元素的質子數（原子序）。<br>2. 修正了少數原子量與化學性質不吻合的順序問題（如碘與碲），確立<b>現代週期表</b>基礎。</td>
+          <td><b style="color:var(--chalk-pink)">湯姆森 (1897)</b></td>
+          <td><b>西瓜模型 (布丁模型)</b></td>
+          <td>透過<b>陰極射線實驗</b>，發現了帶負電的「<b>電子</b>」！打破原子不可分的迷思。認為原子是帶正電的球體，電子如西瓜子般鑲嵌在其中。</td>
         </tr>
         <tr>
-          <td><b>考題陷阱</b></td>
-          <td>當時<b>尚未發現鈍氣（惰性氣體）</b>，因為它們太安定、不反應，直到很久以後才被加入週期表最右列。</td>
-          <td>現代週期表的「周期性」完全取決於<b>原子序（質子數）</b>與核外電子排列，而不是原子量！</td>
+          <td><b style="color:var(--chalk-orange)">拉塞福 (1911)</b></td>
+          <td><b>行星式模型</b></td>
+          <td>利用 <b>&alpha; 粒子撞擊金箔</b>，發現多數粒子直接穿透，極少數產生大角度偏折！證明原子內部大多是空曠的，質量極大且帶正電的「<b>原子核</b>（及<b>質子</b>）」位在中心，電子在外圍環繞。</td>
+        </tr>
+        <tr>
+          <td><b style="color:var(--chalk-green)">查兌克 (1932)</b></td>
+          <td><b>現代原子核模型</b></td>
+          <td>拉塞福的學生。發現了原子核內還有不帶電、但質量與質子相近的「<b>中子</b>」，與質子共同組成原子核，確立了現代原子結構基礎。</td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <!-- ================= 分頁 2：週期表架構解析 ================= -->
+  <!-- ================= 分頁 2：週期表歷史 ================= -->
   <div class="panel">
-    <h2>週期表架構解析 <span class="tag">地圖導覽</span></h2>
+    <h2>週期表歷史 <span class="tag">從原子量到原子序</span></h2>
     
-    <p>現代週期表就像是化學元素的大樓地圖，只要知道元素住在「哪一列、哪一排」，就能立刻知道它的個性和化學反應！</p>
+    <p>隨著發現的元素越來越多，科學家嘗試將這些元素做成表格。其中有兩位科學家的貢獻最為關鍵，也是考試的絕對重點！</p>
 
     <div class="grid-2">
-      <div class="card" style="cursor: default; border-color: var(--chalk-yellow);">
-        <h4 style="color: var(--chalk-yellow);">橫列 ＝ 週期 (Periods)</h4>
-        <p>• 週期表共有 <b>7 個橫列</b>，稱為 7 個週期。</p>
-        <p>• <b>第 1 週期最短</b>，只有 2 個元素（氫 <span class="chem">H</span>、氦 <span class="chem">He</span>）。</p>
-        <p>• 同一週期的元素，由左至右原子序逐漸增加，金屬性逐漸減弱，非金屬性逐漸增強。</p>
+      <div class="card" style="cursor: default; border-color: var(--chalk-orange);">
+        <h4 style="color: var(--chalk-orange);">1869 門得列夫 (週期表之父)</h4>
+        <p>• <b>排列依據：</b>將已知元素依照<b>「原子量」</b>由小到大排列，把性質相似的元素排在同一縱列。</p>
+        <p>• <b>神級預言：</b>遇到排不進去的地方，極度大膽地<b>「留下空白位置」</b>，預言是尚未發現的元素，並準確預測了它們的質量與密度（如鍺、鎵）！</p>
+        <p>• <b>歷史局限：</b>當時<b>尚未發現鈍氣（惰性氣體）</b>；且少數元素依原子量排會與化學性質衝突（如碘與碲位置倒反）。</p>
       </div>
       <div class="card" style="cursor: default; border-color: var(--chalk-cyan);">
-        <h4 style="color: var(--chalk-cyan);">縱列 ＝ 族 (Groups / Families)</h4>
-        <p>• 週期表共有 <b>18 個縱列</b>，稱為 18 族。</p>
-        <p>• <b>重點必背：同一族的元素，化學性質極為相似！</b>因為最外層的電子數目相同，就像同一個家族的兄弟姊妹。</p>
-        <p>• 考題最愛考第 1、2、17、18 族。</p>
+        <h4 style="color: var(--chalk-cyan);">1913 莫色勒 (現代週期表之父)</h4>
+        <p>• <b>重大突破：</b>利用 X 射線研究原子，測定出各元素的<b>「質子數」（即原子序）</b>。</p>
+        <p>• <b>核心修正：</b>提出元素的週期性規律應該是依照<b>「原子序（質子數）」</b>由小到大排列，而不是原子量！</p>
+        <p>• <b>科學貢獻：</b>完美解決了門得列夫時期少數元素倒置的矛盾，正式確立了我們今天教科書上的<b>現代元素週期表</b>！</p>
       </div>
     </div>
 
-    <h3>金屬與非金屬的地圖分界線</h3>
     <div class="note-box">
-      <b>階梯式分界：</b>在週期表右側有一條從「硼、矽、砷、碲、砈」劃下的斜線階梯。
-      <ul>
-        <li><b style="color:var(--chalk-cyan)">金屬元素（約佔總數 4/3）：</b>位於分界線的<b>左方與下方</b>（氫 <span class="chem">H</span> 例外，它住在左上角卻是非金屬）。</li>
-        <li><b style="color:var(--chalk-orange)">非金屬元素：</b>位於分界線的<b>右方與上方</b>。</li>
-        <li><b style="color:var(--chalk-yellow)">類金屬（半金屬）：</b>正好緊鄰在分界階梯兩側的元素（如矽 <span class="chem">Si</span>、鍺 <span class="chem">Ge</span>），性質介於金屬與非金屬之間，是製造<b>半導體晶片</b>的核心原料。</li>
-      </ul>
-    </div>
-
-    <h3>點擊上方分類，亮起下方簡化版週期表：</h3>
-    <div class="btn-group">
-      <button class="action-btn active" onclick="highlightTable('all', this)">顯示全部</button>
-      <button class="action-btn" onclick="highlightTable('metal', this)">金屬元素 (左半部)</button>
-      <button class="action-btn" onclick="highlightTable('nonmetal', this)">非金屬元素 (右半部)</button>
-      <button class="action-btn" onclick="highlightTable('noble', this)">第 18 族：鈍氣</button>
-    </div>
-
-    <!-- 簡化版互動週期表 (僅示範前三週期與重要元素) -->
-    <div class="table-grid" id="miniTable">
-      <!-- 內容由 JS 產生 -->
+      <b>⚠️ 會考陷阱大破解：</b><br>
+      1. <b>排列依據：</b>門得列夫看<b>「原子量」</b>；現代莫色勒看<b>「原子序 (質子數)」</b>。<br>
+      2. <b>為什麼門得列夫的表沒有最右邊第 18 族？</b>因為當時鈍氣（氦、氖、氬）太過於安定、幾乎不與其他物質反應，尚未被科學家發現！
     </div>
   </div>
 
-  <!-- ================= 分頁 3：四大化學家族 ================= -->
+  <!-- ================= 分頁 3：格子意義與規律 ================= -->
   <div class="panel">
-    <h2>四大化學家族 <span class="tag">會考特區</span></h2>
+    <h2>格子意義與規律 <span class="tag">會考密碼大破解</span></h2>
     
-    <p>週期表中有四個縱列家族個性極為鮮明，是國中理化段考與會考出題率最高的「四大名門」：</p>
+    <p>會考題本最後面都會附上一張元素週期表。能不能看懂「每一格代表的秘密」，以及「往右走、往下走」的物理意義，是拿分關鍵！</p>
+
+    <h3>🎯 第一關：會考標準「單一格子」解讀</h3>
+    <p>隨便指著週期表上的一格（以「碳」為例），裡面的數字與文字分別代表什麼意義？</p>
+
+    <div class="exam-cell-container">
+      <div class="exam-cell">
+        <span class="exam-num">6</span>
+        <span class="exam-sym">C</span>
+        <span class="exam-name">碳</span>
+        <span class="exam-weight">12.011</span>
+      </div>
+      <div class="cell-arrows">
+        <div class="arrow-item">
+          <span class="arrow-badge" style="color:var(--chalk-yellow);">正上方 6</span>
+          <span>＝ <b>原子序</b> ＝ <b>質子數</b> ＝ 中性原子的<b>電子數</b>！</span>
+        </div>
+        <div class="arrow-item">
+          <span class="arrow-badge" style="color:var(--chalk-white);">中央 C</span>
+          <span>＝ <b>英文元素符號</b>（第一字大寫，第二字小寫）。</span>
+        </div>
+        <div class="arrow-item">
+          <span class="arrow-badge" style="color:var(--chalk-cyan);">中下 碳</span>
+          <span>＝ <b>中文名稱</b>（看部首可知常溫狀態：金、石、水、气）。</span>
+        </div>
+        <div class="arrow-item">
+          <span class="arrow-badge" style="color:var(--chalk-orange);">正下方 12.0</span>
+          <span>＝ <b>原子量</b>（未標註單位；四捨五入約等於<b>質量數＝質子＋中子</b>）。</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>🧭 第二關：「由左而右 vs 由上而下」的規律羅盤</h3>
+    <p>在週期表中，橫的叫做<b>「週期」</b>，直的叫做<b>「族」</b>。點擊下方羅盤，看懂往右跟往下到底有什麼差別：</p>
 
     <div class="interactive-box">
-      <div style="font-weight: bold; color: var(--chalk-yellow); font-size: 22px; margin-bottom: 12px;">點擊家族名稱，解密家族成員與必考反應：</div>
+      <div style="font-weight: bold; color: var(--chalk-yellow); font-size: 22px; margin-bottom: 12px;">點擊移動方向，揭開週期表排列鐵律：</div>
       <div class="btn-group">
-        <button class="action-btn active" onclick="showFamily('alkali', this)">第 1 族：鹼金族</button>
-        <button class="action-btn" onclick="showFamily('earth', this)">第 2 族：鹼土金族</button>
-        <button class="action-btn" onclick="showFamily('halogen', this)">第 17 族：鹵素</button>
-        <button class="action-btn" onclick="showFamily('noble', this)">第 18 族：鈍氣</button>
+        <button class="action-btn active" onclick="showDirection('right', this)">➡️ 由左而右 (同一週期 / 橫列)</button>
+        <button class="action-btn" onclick="showDirection('down', this)">⬇️ 由上而下 (同一族 / 縱列)</button>
       </div>
-      <div class="detail-board" id="familyBoard" style="border-color: var(--chalk-orange);">
+      <div class="detail-board" id="directionBoard" style="border-color: var(--chalk-cyan);">
         <!-- 內容由 JS 動態載入 -->
       </div>
     </div>
 
-    <h3>💡 四大家族記憶快易通</h3>
+    <div class="note-box">
+      <b>🔥 老師的會考必勝口訣：</b><br>
+      • <b>橫看（同週期）：</b>是在「同一個電子樓層」填電子，<b>原子序＋1，最外層電子數也＋1</b>。性格從「活潑金屬」漸變到「安定鈍氣」。<br>
+      • <b>直看（同族）：</b>雖然原子序大跳躍，但<b>最外層電子數完全一模一樣！</b>所以同一族的兄弟姊妹<b>「化學性質極為相似」</b>！
+    </div>
+  </div>
+
+  <!-- ================= 分頁 4：四大化學家族 ================= -->
+  <div class="panel">
+    <h2>四大化學家族 <span class="tag">名門特區</span></h2>
+    
+    <p>週期表中有四個縱列家族個性極為鮮明，是國中理化段考與會考出題率最高的「四大名門」：</p>
+
     <div class="grid-4">
-      <div class="card" onclick="showFamily('alkali', document.querySelectorAll('#familyBoard ~ * .action-btn')[0])">
+      <div class="card" onclick="showFamily('alkali', this)">
         <h4 style="color:var(--chalk-yellow)">鹼金族 (第1族)</h4>
         <p>• 鋰 <span class="chem">Li</span>、鈉 <span class="chem">Na</span>、鉀 <span class="chem">K</span></p>
         <p>• 遇水爆炸、生氫氣</p>
         <p>• 藏在礦物油中</p>
       </div>
-      <div class="card" onclick="showFamily('earth', document.querySelectorAll('#familyBoard ~ * .action-btn')[1])">
+      <div class="card" onclick="showFamily('earth', this)">
         <h4 style="color:var(--chalk-green)">鹼土金族 (第2族)</h4>
         <p>• 鈹 <span class="chem">Be</span>、鎂 <span class="chem">Mg</span>、鈣 <span class="chem">Ca</span></p>
         <p>• 氧化物溶水呈鹼性</p>
         <p>• 遇碳酸根產生沉澱</p>
       </div>
-      <div class="card" onclick="showFamily('halogen', document.querySelectorAll('#familyBoard ~ * .action-btn')[2])">
+      <div class="card" onclick="showFamily('halogen', this)">
         <h4 style="color:var(--chalk-pink)">鹵素 (第17族)</h4>
         <p>• 氟 <span class="chem">F</span>、氯 <span class="chem">Cl</span>、溴 <span class="chem">Br</span>、碘 <span class="chem">I</span></p>
         <p>• 顏色多變、有毒氣味</p>
         <p>• 殺菌消毒漂白高手</p>
       </div>
-      <div class="card" onclick="showFamily('noble', document.querySelectorAll('#familyBoard ~ * .action-btn')[3])">
+      <div class="card" onclick="showFamily('noble', this)">
         <h4 style="color:var(--chalk-cyan)">鈍氣 (第18族)</h4>
         <p>• 氦 <span class="chem">He</span>、氖 <span class="chem">Ne</span>、氬 <span class="chem">Ar</span></p>
         <p>• 極端安定、不反應</p>
         <p>• 氣球、霓虹燈、焊接</p>
       </div>
+    </div>
+
+    <div class="detail-board" id="familyBoard" style="border-color: var(--chalk-orange);">
+      <div class="detail-title" style="color: var(--chalk-orange);">👈 請上方點擊任一化學家族卡片，顯示詳細教學重點</div>
+      <p style="color: var(--chalk-dim);">此處將顯示該化學家族在國中會考中的經典物理性質與化學反應。</p>
     </div>
   </div>
 
@@ -501,57 +569,128 @@
         panels[i].classList.remove('active');
       }
     });
+
+    // 如果切換到第一頁，重新繪製模型
+    if (idx === 0) {
+      showModel('dalton', document.querySelector('.btn-group .action-btn'));
+    }
   }
 
-  // 演進史展示邏輯
-  function showHistory(type, btn) {
-    document.querySelectorAll('#historyBoard ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+  // 原子模型繪製邏輯
+  const canvas = document.getElementById('modelCanvas');
+  const ctx = canvas ? canvas.getContext('2d') : null;
+  const descEl = document.getElementById('modelDesc');
+
+  function showModel(type, btn) {
+    if (!ctx) return;
+    document.querySelectorAll('.panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
-    
-    const board = document.getElementById('historyBoard');
-    if (type === 'dobereiner') {
-      board.innerHTML = `
-        <div class="detail-title" style="color:var(--chalk-yellow)">1829 德貝萊納：三元素組 (Triads)</div>
-        <p>• <b>歷史發現：</b>發現某些化學性質相似的元素，如果三個一組排在一起，<b>中間元素的原子量，剛好是前後兩個元素的平均值！</b></p>
-        <p>• <b>經典實例：</b>鋰 (<span class="chem">Li</span>，原子量7)、鈉 (<span class="chem">Na</span>，原子量23)、鉀 (<span class="chem">K</span>，原子量39)。其中 $7 + 39 = 46$，除以 2 正好就是鈉的 23！</p>
-        <p>• <b>科學意義：</b>這是人類第一次注意到「元素的重量（原子量）」和「化學性質」之間有神祕的數學連結。</p>
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    if (type === 'dalton') {
+      ctx.beginPath(); ctx.arc(cx, cy, 70, 0, Math.PI * 2); ctx.fillStyle = "#f2e078"; ctx.fill();
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+
+      descEl.innerHTML = `
+        <b style="color:var(--chalk-yellow)">1803 道耳吞 - 實心球模型 (原子說)：</b><br>
+        提出物質由不可分割的微小粒子「原子」組成。同種元素的原子質量與性質相同，化學反應僅是原子的重新排列，原子本身不會產生或消失。
       `;
-    } else if (type === 'newlands') {
-      board.innerHTML = `
-        <div class="detail-title" style="color:var(--chalk-green)">1865 紐蘭德：八音律 (Law of Octaves)</div>
-        <p>• <b>歷史發現：</b>將當時已知的元素依照「原子量」由小到大排列，發現<b>每隔 7 個元素，第 8 個元素的化學性質就會和第 1 個重複</b>！</p>
-        <p>• <b>經典比喻：</b>就像音樂鍵盤上的音階（Do, Re, Mi, Fa, Sol, La, Ti），到了高八度的 Do 又會回到相同的音調，故稱為「八音律」。</p>
-        <p>• <b>科學意義：</b>「週期性（重複出現）」的概念正式誕生！但因為當時許多元素尚未發現，排到後面規律就亂掉了，當時還被科學界嘲笑。</p>
+    } 
+    else if (type === 'thomson') {
+      ctx.beginPath(); ctx.arc(cx, cy, 80, 0, Math.PI * 2); ctx.fillStyle = "rgba(232, 162, 184, 0.25)"; ctx.fill();
+      ctx.strokeStyle = "#e8a2b8"; ctx.lineWidth = 3; ctx.stroke();
+
+      const electrons = [[-30, -30], [40, -20], [-10, 40], [30, 30], [-50, 10], [10, -50], [50, 0]];
+      electrons.forEach(pos => {
+        ctx.beginPath(); ctx.arc(cx + pos[0], cy + pos[1], 10, 0, Math.PI * 2); ctx.fillStyle = "#7cd4cc"; ctx.fill();
+        ctx.fillStyle = "#111"; ctx.font = "bold 14px Consolas"; ctx.fillText("-", cx + pos[0] - 4, cy + pos[1] + 4);
+      });
+
+      descEl.innerHTML = `
+        <b style="color:var(--chalk-pink)">1897 湯姆森 - 西瓜模型 (布丁模型)：</b><br>
+        透過<b>陰極射線實驗</b>發現了帶負電的「<b>電子</b>」，打破原子不可分的觀念。認為原子是一個帶正電的均勻球體，電子如西瓜子般鑲嵌在其中。
       `;
-    } else if (type === 'mendeleev') {
-      board.innerHTML = `
-        <div class="detail-title" style="color:var(--chalk-orange)">1869 門得列夫：第一張化學元素週期表 (週期表之父)</div>
-        <p>• <b>歷史貢獻：</b>將 60 多種已知元素依照<b>「原子量」</b>由小到大做成表格，將性質相似的元素排在同一縱列。</p>
-        <p>• <b>神級預言：</b>遇到排不進去的地方，他極度大膽地<b>「留下空白位置」</b>，斷定是當時尚未發現的元素，並準確預言了那些未知元素的原子量與密度（後來的鍺與鎵完全吻合）！</p>
-        <p>• <b>小遺憾：</b>由於純粹依照「原子量」排，有少數元素（如碘和碲）的位置會倒反；且當時還不知鈍氣的存在。</p>
+    } 
+    else if (type === 'rutherford') {
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"; ctx.lineWidth = 1.5; ctx.setLineDash([6, 6]);
+      ctx.beginPath(); ctx.ellipse(cx, cy, 180, 50, -Math.PI / 6, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(cx, cy, 180, 50, Math.PI / 3, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI * 2); ctx.fillStyle = "#f29c6b"; ctx.fill();
+      ctx.fillStyle = "#111"; ctx.font = "bold 14px Consolas"; ctx.fillText("+", cx - 4, cy + 5);
+
+      ctx.beginPath(); ctx.arc(cx + 155, cy - 90, 8, 0, Math.PI * 2); ctx.fillStyle = "#7cd4cc"; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx - 90, cy + 155, 8, 0, Math.PI * 2); ctx.fillStyle = "#7cd4cc"; ctx.fill();
+
+      descEl.innerHTML = `
+        <b style="color:var(--chalk-orange)">1911 拉塞福 - 行星式模型 (發現原子核與質子)：</b><br>
+        透過 <b>&alpha; 粒子撞擊金箔實驗</b>，發現絕大多數粒子直接穿透，極少數發生大角度偏折。推論原子內部大部分是空曠的，質量極大且帶正電的「<b>原子核</b>（質子）」位於中心，電子在外圍環繞。
       `;
-    } else if (type === 'moseley') {
-      board.innerHTML = `
-        <div class="detail-title" style="color:var(--chalk-cyan)">1913 莫色勒：現代週期表定版 (現代週期表之父)</div>
-        <p>• <b>重大突破：</b>利用 X 射線研究原子，發現了每個元素核內的<b>「質子數」（即原子序）</b>。</p>
-        <p>• <b>修正錯誤：</b>提出元素週期表的規律應該是依照<b>「原子序（質子數）」</b>由小到大排列，而不是原子量！</p>
-        <p>• <b>科學意義：</b>完美解決了門得列夫時期少數元素倒置的矛盾，正式確立了我們今天教科書上使用的<b>現代元素週期表</b>！</p>
+    } 
+    else if (type === 'chadwick') {
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.arc(cx, cy, 110, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+
+      const nucleus = [[0, 0, "#f29c6b", "+"], [-8, -8, "#9de2b8", ""], [8, -6, "#f29c6b", "+"], [-6, 8, "#f29c6b", "+"], [8, 8, "#9de2b8", ""], [0, -12, "#9de2b8", ""]];
+      nucleus.forEach(n => {
+        ctx.beginPath(); ctx.arc(cx + n[0], cy + n[1], 9, 0, Math.PI * 2); ctx.fillStyle = n[2]; ctx.fill();
+        ctx.strokeStyle = "#13221a"; ctx.lineWidth = 1; ctx.stroke();
+        if(n[3]) { ctx.fillStyle = "#111"; ctx.font = "bold 12px Consolas"; ctx.fillText(n[3], cx + n[0] - 3, cy + n[1] + 4); }
+      });
+
+      ctx.beginPath(); ctx.arc(cx + 110, cy, 8, 0, Math.PI * 2); ctx.fillStyle = "#7cd4cc"; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx - 55, cy + 95, 8, 0, Math.PI * 2); ctx.fillStyle = "#7cd4cc"; ctx.fill();
+
+      descEl.innerHTML = `
+        <b style="color:var(--chalk-green)">1932 查兌克 - 現代原子核模型 (發現中子)：</b><br>
+        拉塞福發現質子後，質子質量與實際原子質量不符。拉塞福的學生<b>查兌克</b>於實驗中發現了不帶電但質量與質子相近的「<b>中子</b>」，與質子共同組成原子核，確立了現代基礎原子結構。
       `;
     }
   }
 
-  // 四大家族展示邏輯
-  function showFamily(type, btn) {
-    document.querySelectorAll('#familyBoard ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+  // 由左而右 vs 由上而下 規律解密
+  function showDirection(dir, btn) {
+    document.querySelectorAll('#directionBoard ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
+
+    const board = document.getElementById('directionBoard');
+    if (dir === 'right') {
+      board.innerHTML = `
+        <div class="detail-title" style="color:var(--chalk-cyan)">➡️ 由左而右 (同一週期 / 橫列)：電子在同樓層增加</div>
+        <p>• <b>原子序（質子數）：</b>連續遞增（如第2週期：<span class="chem">Li(3) &rarr; Be(4) &rarr; B(5) &rarr; C(6) &rarr; N(7) &rarr; O(8) &rarr; F(9) &rarr; Ne(10)</span>）。</p>
+        <p>• <b>最外層電子數：</b>逐漸增加（從最左邊 1 個，一直填到最右邊 8 個全滿）。</p>
+        <p>• <b>化學性質變化：</b>因為最外層電子數一直在變，所以<b>「化學性質逐漸改變」</b>！</p>
+        <p>• <b>金屬與非金屬性：</b>最左側是超活潑的「金屬」，越往右金屬性越弱，過了階梯分界線變成「非金屬」，最右側則是極度安定的「鈍氣」。</p>
+      `;
+      board.style.borderColor = "var(--chalk-cyan)";
+    } else if (dir === 'down') {
+      board.innerHTML = `
+        <div class="detail-title" style="color:var(--chalk-orange)">⬇️ 由上而下 (同一族 / 縱列)：電子增加新樓層</div>
+        <p>• <b>原子序（質子數）：</b>跳躍式遞增（如第一族：<span class="chem">Li(3) &rarr; Na(11) &rarr; K(19)</span>，每次加一個週期的容量 8、8、18...）。</p>
+        <p>• <b>最外層電子數：</b><b>完全相同！</b>（這就是會考最重要的核心觀念：因為最外層電子數一樣，所以他們是同一個家族）。</p>
+        <p>• <b>化學性質變化：</b>因為最外層電子數一模一樣，所以同一族由上而下的元素<b>「化學性質極為相似」</b>！</p>
+        <p>• <b>原子體積與活潑性：</b>由上而下，電子的軌道樓層一圈一圈往外加，所以<b>「原子體積通常越往下越大」</b>！對於金屬家族（如第一族）來說，越下方的原子越容易把外層電子丟掉，所以<b>反應活性越往下越劇烈</b>（如鉀遇水比鈉更狂暴）！</p>
+      `;
+      board.style.borderColor = "var(--chalk-orange)";
+    }
+  }
+
+  // 四大家族展示邏輯
+  function showFamily(type, cardEl) {
+    document.querySelectorAll('.grid-4 .card').forEach(c => c.style.borderColor = 'var(--chalk-line)');
+    if (cardEl && cardEl.style) cardEl.style.borderColor = 'var(--chalk-yellow)';
 
     const board = document.getElementById('familyBoard');
     if (type === 'alkali') {
       board.innerHTML = `
         <div class="detail-title" style="color:var(--chalk-yellow)">第一族：鹼金族 (Alkali Metals) - 遇水狂戰士</div>
         <p>• <b>家族成員：</b>鋰 (<span class="chem">Li</span>)、鈉 (<span class="chem">Na</span>)、鉀 (<span class="chem">K</span>)、銣 (<span class="chem">Rb</span>)、銫 (<span class="chem">Cs</span>)、鍅 (<span class="chem">Fr</span>)。<br>
-           ⚠️ <b>注意：氫 (<span class="chem">H</span>) 雖然排在第 1 族最上面，但它是氣態非金屬，不屬於鹼金族！</b></p>
-        <p>• <b>物理性質：</b>質地柔軟（可以用小刀切割）、熔點低、密度小（鋰、鈉、鉀的密度比水小，會浮在水上）。</p>
+           ⚠️ <b>會考大陷阱：氫 (<span class="chem">H</span>) 雖然排在第 1 族最上面，但它是氣態非金屬，絕對不屬於鹼金族！</b></p>
+        <p>• <b>物理性質：</b>質地柔軟（可以用小刀切割）、熔點低、密度小（鋰、鈉、鉀的密度比水小，會浮在水面上）。</p>
         <p>• <b>化學活性：</b>活性超級大！在空氣中極易失去光澤；<b>投入水中會劇烈反應，產生可燃的「氫氣 (<span class="chem">H<sub>2</sub></span>)」與大熱量</b>，鉀甚至會起火爆炸！反應後的濃液呈<b>鹼性</b>。</p>
         <p>• <b>保存方式：</b>因為太容易和空氣中的水與氧反應，必須嚴格保存在<b>「礦物油（石油、煤油）」</b>中隔絕空氣！</p>
       `;
@@ -568,7 +707,7 @@
         <div class="detail-title" style="color:var(--chalk-pink)">第十七族：鹵素 (Halogens) - 變色毒氣殺手</div>
         <p>• <b>家族成員：</b>氟 (<span class="chem">F</span>)、氯 (<span class="chem">Cl</span>)、溴 (<span class="chem">Br</span>)、碘 (<span class="chem">I</span>)、砈 (<span class="chem">At</span>)。</p>
         <p>• <b>狀態與顏色變幻：</b>常溫下常以雙原子分子存在，隨著原子序增加，顏色變深、熔沸點升高！<br>
-           1. 氟 (<span class="chem">F<sub>2</sub></span>)：淡黃色有毒<b>氣體</b>（牙膏含氟化合物防蛀牙）。<br>
+           1. 氟 (<span class="chem">F<sub>2</sub></span>)：淡黃色有毒<b>氣體</b>（牙膏含氟防蛀牙）。<br>
            2. 氯 (<span class="chem">Cl<sub>2</sub></span>)：黃綠色刺鼻有毒<b>氣體</b>（自來水消毒、漂白水原料）。<br>
            3. 溴 (<span class="chem">Br<sub>2</sub></span>)：暗紅色刺鼻有毒<b>液體</b>（常溫唯一液態非金屬！）。<br>
            4. 碘 (<span class="chem">I<sub>2</sub></span>)：紫黑色有毒<b>固體</b>，加熱易「昇華」成紫紅色碘蒸氣（優碘消毒水、檢驗澱粉）。</p>
@@ -583,71 +722,15 @@
         <p>• <b>生活必考用途：</b><br>
            1. <b>氦氣 (<span class="chem">He</span>)：</b>密度僅次於氫氣，極輕且<b>完全不會燃燒爆炸</b>，取代危險的氫氣用於安全氣球與飛船。<br>
            2. <b>氖氣 (<span class="chem">Ne</span>)：</b>通入高壓電會發出透穿力極強的紅橙色光，用於廣告<b>「霓虹燈」</b>。<br>
-           3. <b>氬氣 (<span class="chem">Ar</span>)：</b>空氣中<b>含量第三多</b>的氣體（僅次於氮與氧，佔 0.9%！）；常充入白熾燈泡防止鎢絲氧化，或在金屬高溫焊接時作為「隔絕空氣的保護氣」。</p>
+           3. <b>氬氣 (<span class="chem">Ar</span>)：</b>空氣中<b>含量第三多</b>的氣體（佔 0.9%！）；常充入白熾燈泡防止鎢絲氧化，或在金屬高溫焊接時作為「隔絕空氣的保護氣」。</p>
       `;
     }
   }
 
-  // 產生互動小週期表 (前3週期 + 第1族 + 第18族示範)
-  function renderMiniTable() {
-    const grid = document.getElementById('miniTable');
-    grid.innerHTML = '';
-    
-    // 簡單佈局對映 (row, col, num, sym, type, name)
-    const elements = [
-      [1, 1, 1, 'H', 'nonmetal', '氫'], [1, 18, 2, 'He', 'noble', '氦'],
-      [2, 1, 3, 'Li', 'alkali', '鋰'], [2, 2, 4, 'Be', 'metal', '鈹'], [2, 13, 5, 'B', 'nonmetal', '硼'], [2, 14, 6, 'C', 'nonmetal', '碳'], [2, 15, 7, 'N', 'nonmetal', '氮'], [2, 16, 8, 'O', 'nonmetal', '氧'], [2, 17, 9, 'F', 'nonmetal', '氟'], [2, 18, 10, 'Ne', 'noble', '氖'],
-      [3, 1, 11, 'Na', 'alkali', '鈉'], [3, 2, 12, 'Mg', 'metal', '鎂'], [3, 13, 13, 'Al', 'metal', '鋁'], [3, 14, 14, 'Si', 'nonmetal', '矽'], [3, 15, 15, 'P', 'nonmetal', '磷'], [3, 16, 16, 'S', 'nonmetal', '硫'], [3, 17, 17, 'Cl', 'nonmetal', '氯'], [3, 18, 18, 'Ar', 'noble', '氬'],
-      [4, 1, 19, 'K', 'alkali', '鉀'], [4, 2, 20, 'Ca', 'metal', '鈣'], [4, 17, 35, 'Br', 'nonmetal', '溴'], [4, 18, 36, 'Kr', 'noble', '氪']
-    ];
-
-    // 建立 4x18 網格空胞
-    for (let r = 1; r <= 4; r++) {
-      for (let c = 1; c <= 18; c++) {
-        const el = elements.find(e => e[0] === r && e[1] === c);
-        const cell = document.createElement('div');
-        if (el) {
-          cell.className = `element-cell bg-${el[4]}`;
-          cell.dataset.type = el[4];
-          cell.innerHTML = `<span class="cell-num">${el[2]}</span><span class="cell-sym">${el[3]}</span><span style="font-size:11px;">${el[5]}</span>`;
-        } else {
-          cell.style.border = 'none'; // 空白地帶
-        }
-        grid.appendChild(cell);
-      }
-    }
-  }
-
-  function highlightTable(filter, btn) {
-    document.querySelectorAll('#miniTable ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-
-    const cells = document.querySelectorAll('.element-cell');
-    cells.forEach(cell => {
-      const type = cell.dataset.type;
-      if (filter === 'all') {
-        cell.style.opacity = '1';
-        cell.style.transform = 'scale(1)';
-      } else if (filter === 'metal' && (type === 'metal' || type === 'alkali')) {
-        cell.style.opacity = '1';
-        cell.style.transform = 'scale(1.08)';
-      } else if (filter === 'nonmetal' && type === 'nonmetal') {
-        cell.style.opacity = '1';
-        cell.style.transform = 'scale(1.08)';
-      } else if (filter === 'noble' && type === 'noble') {
-        cell.style.opacity = '1';
-        cell.style.transform = 'scale(1.08)';
-      } else {
-        cell.style.opacity = '0.2';
-        cell.style.transform = 'scale(0.95)';
-      }
-    });
-  }
-
-  // 初始化
-  showHistory('dobereiner', document.querySelector('.btn-group .action-btn'));
-  showFamily('alkali', document.querySelectorAll('#familyBoard ~ * .action-btn')[0]);
-  renderMiniTable();
+  // 初始化載入
+  switchTab(0);
+  showDirection('right', document.querySelector('#directionBoard ~ * .action-btn'));
+  showFamily('alkali', document.querySelectorAll('.grid-4 .card')[0]);
 </script>
 
 </body>
