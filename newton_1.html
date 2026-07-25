@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國中自然｜牛頓第一運動定律（慣性定律）</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+    :root {
+      --board: #1c3d34;
+      --board-dark: #15302a;
+      --chalk: #f2ecd9;
+      --chalk-dim: #c9c2ab;
+      --chalk-yellow: #ffe066;
+      --chalk-teal: #4dd2ff;
+      --chalk-coral: #ff8040;
+      --chalk-green: #33cc99;
+      --chalk-pink: #ff66b2;
+      --frame: #5c4a33;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--board-dark);
+      color: var(--chalk);
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 20px;
+      padding: 20px 14px 60px;
+    }
+
+    .wrap { max-width: 1250px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 24px; border-bottom: 2px dashed rgba(255,255,255,0.2); padding-bottom: 16px; }
+    header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; letter-spacing: 0.15em; color: var(--chalk-dim); text-transform: uppercase; }
+    h1 { font-size: 2.3rem; font-weight: 700; margin: 8px 0 10px; color: var(--chalk-yellow); letter-spacing: 2px; text-shadow: 0 0 14px rgba(255, 224, 102, 0.2); }
+    header p { color: var(--chalk-dim); max-width: 850px; margin: 0 auto; line-height: 1.6; font-size: 1rem; }
+
+    /* 導覽列：不加數字編號、簡明扼要 */
+    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .tab-btn {
+      font-family: 'Noto Sans TC', sans-serif; font-size: 1.1rem; font-weight: 700;
+      background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 2px dashed rgba(242, 236, 217, 0.25);
+      padding: 14px 10px; border-radius: 10px; cursor: pointer; transition: all .2s; text-align: center;
+    }
+    .tab-btn:hover { background: rgba(255, 255, 255, 0.08); color: var(--chalk); border-color: var(--chalk-teal); }
+    .tab-btn.active {
+      background: var(--chalk-yellow); color: var(--board-dark); border: 2px solid var(--chalk-yellow);
+      box-shadow: 0 0 16px rgba(255, 224, 102, 0.4); font-weight: 700;
+    }
+
+    /* 黑板主面板 */
+    .board {
+      background: var(--board);
+      border: 10px solid var(--frame);
+      border-radius: 8px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5), inset 0 0 50px rgba(0, 0, 0, 0.3);
+      padding: 24px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .board::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 6px 6px; pointer-events: none; border-radius: 6px;
+    }
+
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px dashed rgba(255,255,255,0.25); padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+    h2 { margin: 0; font-size: 1.4rem; color: var(--chalk-yellow); font-weight: 700; }
+    .sub-tag { font-size: 0.85rem; color: var(--board-dark); background: var(--chalk-green); padding: 4px 14px; border-radius: 999px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+    /* 控制操作區 */
+    .controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; background: rgba(0, 0, 0, 0.25); padding: 16px 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
+    .control-group { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 280px; }
+    .control-group label { font-size: 0.95rem; color: var(--chalk-teal); font-weight: 700; }
+    input[type=range] { flex: 1; height: 8px; accent-color: var(--chalk-yellow); cursor: pointer; }
+    
+    button.action-btn {
+      padding: 10px 20px; border: 2px solid var(--chalk-coral);
+      background: var(--board-dark); color: var(--chalk-coral);
+      border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 700; transition: 0.2s;
+    }
+    button.action-btn:hover { background: var(--chalk-coral); color: var(--board-dark); transform: translateY(-2px); }
+    button.btn-teal { border-color: var(--chalk-teal); color: var(--chalk-teal); }
+    button.btn-teal:hover { background: var(--chalk-teal); color: var(--board-dark); }
+    button.btn-green { border-color: var(--chalk-green); color: var(--chalk-green); }
+    button.btn-green:hover { background: var(--chalk-green); color: var(--board-dark); }
+    button.btn-yellow { border-color: var(--chalk-yellow); color: var(--chalk-yellow); }
+    button.btn-yellow:hover { background: var(--chalk-yellow); color: var(--board-dark); }
+
+    .readout-badge { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--board-dark); background: var(--chalk-yellow); padding: 6px 14px; border-radius: 6px; min-width: 100px; text-align: center; font-size: 0.95rem; }
+
+    /* 畫布與視覺化（絕對禁止黑色線條） */
+    #stage-container { width: 100%; border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; overflow: hidden; background: #122620; box-shadow: inset 0 0 25px rgba(0,0,0,0.6); position: relative; }
+    canvas { display: block; width: 100%; height: auto; }
+
+    /* 重點筆記與公式排版 */
+    .note { font-size: 1rem; color: var(--chalk); margin-top: 18px; line-height: 1.8; background: rgba(0, 0, 0, 0.2); padding: 18px 24px; border-radius: 10px; border-left: 6px solid var(--chalk-yellow); }
+    .note b { color: var(--chalk-yellow); }
+    .formula-box { font-family: 'JetBrains Mono', monospace; background: rgba(255, 224, 102, 0.15); border: 1px dashed var(--chalk-yellow); padding: 4px 12px; border-radius: 6px; color: var(--chalk-yellow); font-weight: 700; display: inline-block; margin: 4px 0; }
+
+    /* 測驗區 */
+    .quiz-card { background: rgba(255, 255, 255, 0.05); border: 2px dashed var(--chalk-teal); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .quiz-card h3 { margin: 0 0 12px 0; color: var(--chalk-teal); font-size: 1.15rem; display: flex; align-items: center; gap: 8px; }
+    .quiz-card p { margin: 8px 0; font-size: 1rem; line-height: 1.6; }
+    .quiz-options { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .quiz-btn { padding: 8px 18px; font-size: 0.95rem; font-weight: 700; background: transparent; color: var(--chalk); border: 2px solid var(--chalk-dim); border-radius: 6px; cursor: pointer; transition: 0.2s; }
+    .quiz-btn:hover { border-color: var(--chalk-yellow); color: var(--chalk-yellow); }
+    .quiz-result { margin-top: 12px; font-weight: 700; font-size: 1rem; padding: 10px 14px; border-radius: 6px; display: none; }
+
+    footer { text-align: center; color: var(--chalk-dim); font-size: 0.85rem; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">Newton's First Law of Motion</div>
+      <h1>牛頓第一運動定律（慣性定律）</h1>
+      <p>從伽利略的理想斜面推導，到生活中的公車起步與煞車。視覺化見證物體「靜者恆靜、動者恆等速運動」的核心物理本質！</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('tab1')">伽利略斜面</button>
+      <button class="tab-btn" onclick="switchTab('tab2')">靜止慣性</button>
+      <button class="tab-btn" onclick="switchTab('tab3')">運動慣性</button>
+      <button class="tab-btn" onclick="switchTab('tab4')">考題實戰</button>
+    </div>
+
+    <!-- 面板 1：伽利略斜面 -->
+    <div class="board" id="panel-tab1">
+      <div class="panel-header">
+        <h2>伽利略理想斜面實驗（慣性定律起源）</h2>
+        <span class="sub-tag" style="background:var(--chalk-yellow);">Thought Experiment</span>
+      </div>
+      <div class="controls">
+        <div class="control-group">
+          <label>右側斜面角度 θ：</label>
+          <input id="rng-angle" type="range" min="0" max="45" step="15" value="30" />
+          <span id="val-angle" class="readout-badge">30°</span>
+        </div>
+        <button class="action-btn btn-green" onclick="startGalileo()">▶ 釋放小球</button>
+        <button class="action-btn btn-teal" onclick="resetGalileo()">↺ 重置角度與位置</button>
+      </div>
+      <div id="stage-container">
+        <canvas id="canvas-tab1" width="1000" height="350"></canvas>
+      </div>
+      <div class="note">
+        💡 <b>黑板重點：</b><br>
+        • <b>伽利略的發現：</b>在沒有摩擦力的理想狀況下，小球從左側斜面滑下，無論右側斜面角度多平緩，小球永遠會試圖爬升到<b>與起始點相同的高度 (h)</b>。<br>
+        • <b>終極推論 (水平面 θ = 0°)：</b>若將右側斜面放平為水平面，小球因為永遠找不到原本的高度，將會以固定的速度<b>永遠維持等速度直線運動</b>！<br>
+        • <b>力與運動的革命：</b>打破亞里斯多德「要有力才能維持運動」的迷思！力不是維持運動的原因，<b>力是改變物體運動狀態（速度）的原因</b>。
+      </div>
+    </div>
+
+    <!-- 面板 2：靜止慣性 -->
+    <div class="board" id="panel-tab2" style="display:none;">
+      <div class="panel-header">
+        <h2>生活中的靜止慣性（硬幣與杯子實驗）</h2>
+        <span class="sub-tag" style="background:var(--chalk-teal);">Static Inertia</span>
+      </div>
+      <div class="controls">
+        <button class="action-btn btn-yellow" onclick="flickCard(true)">⚡ 快速彈開卡片（展示慣性）</button>
+        <button class="action-btn" onclick="flickCard(false)">🐢 慢慢拉動卡片（摩擦力帶動）</button>
+        <button class="action-btn btn-teal" onclick="resetCoin()">↺ 重置實驗</button>
+        <span style="color:var(--chalk-dim); font-size:0.95rem; margin-left:8px;">觀察硬幣是否留在原本的水平位置！</span>
+      </div>
+      <div id="stage-container">
+        <canvas id="canvas-tab2" width="1000" height="350"></canvas>
+      </div>
+      <div class="note">
+        💡 <b>黑板重點：</b><br>
+        • <b>靜者恆靜：</b>原本靜止的物體，在合力為零（不受外力或受力極短時間來不及反應）時，會維持原本的<b>靜止狀態</b>。<br>
+        • <b>實驗解析：</b>當快速彈開卡片時，卡片與硬幣之間的接觸時間極短，摩擦力來不及改變硬幣的水平運動狀態，硬幣因<b>水平慣性</b>留在原地，隨後因重力垂直掉入杯中！<br>
+        • <b>生活經典例子：</b>猛力抽走餐桌布而餐具不倒、用手拍打棉被上的灰塵、地震時建築物搖晃而懸掛物擺動。
+      </div>
+    </div>
+
+    <!-- 面板 3：運動慣性 -->
+    <div class="board" id="panel-tab3" style="display:none;">
+      <div class="panel-header">
+        <h2>生活中的運動慣性（公車乘客的傾倒）</h2>
+        <span class="sub-tag" style="background:var(--chalk-coral);">Dynamic Inertia</span>
+      </div>
+      <div class="controls">
+        <button class="action-btn btn-teal" onclick="setBusState('constant')">🚌 等速度行駛 (v = const)</button>
+        <button class="action-btn btn-green" onclick="setBusState('accel')">⚡ 突然急加速 (起步)</button>
+        <button class="action-btn" onclick="setBusState('brake')">🛑 緊急煞車 (減速)</button>
+      </div>
+      <div id="stage-container">
+        <canvas id="canvas-tab3" width="1000" height="350"></canvas>
+      </div>
+      <div class="note">
+        💡 <b>黑板重點：</b><br>
+        • <b>動者恆動：</b>原本運動中的物體，若不受外力（合力為零），將永遠以原本的方向與速率作<b>等速度直線運動</b>。<span class="formula-box">ΣF = 0 ➔ v = const</span><br>
+        • <b>突然起步（急加速）：</b>公車往前急衝，乘客雙腳隨地板向前，但<b>上半身因慣性想留在原本靜止的位置</b>，因此身體向<b>後（行駛反方向）</b>傾倒！<br>
+        • <b>緊急煞車（急減速）：</b>公車急速停止，乘客雙腳隨地板停止，但<b>上半身因慣性想繼續向前衝</b>，因此身體向<b>前（行駛同方向）</b>傾倒！<br>
+        • <b>生活經典例子：</b>賽跑到達終點無法立刻停下、洗手後甩手將水滴甩出、鐵鎚柄撞擊地面使鎚頭套緊。
+      </div>
+    </div>
+
+    <!-- 面板 4：考題實戰 -->
+    <div class="board" id="panel-tab4" style="display:none;">
+      <div class="panel-header">
+        <h2>牛頓第一運動定律｜觀念實戰挑戰</h2>
+        <span class="sub-tag" style="background:var(--chalk-green);">Quiz & Practice</span>
+      </div>
+
+      <!-- 題目 1 -->
+      <div class="quiz-card">
+        <h3>📝 觀念題 01｜等速度運動與受力關係</h3>
+        <p>一艘太空船在深邃無摩擦力的真空中，以 <b>1000 m/s</b> 的速度向東作等速度直線行駛。請問此時太空船引擎需要提供多少推力，才能維持這個速度永遠行駛下去？</p>
+        <div class="quiz-options">
+          <button class="quiz-btn" onclick="checkQuiz(1, 'A')">(A) 必須提供極大的持續推力</button>
+          <button class="quiz-btn" onclick="checkQuiz(1, 'B')">(B) 必須提供 1000 N 的推力</button>
+          <button class="quiz-btn" onclick="checkQuiz(1, 'C')">(C) 不需要提供任何推力 (0 N)</button>
+        </div>
+        <div id="res-1" class="quiz-result"></div>
+      </div>
+
+      <!-- 題目 2 -->
+      <div class="quiz-card">
+        <h3>📝 觀念題 02｜火車煞車時的物體定向</h3>
+        <p>一列向<b>北方</b>高速行駛的火車，鐵軌上方的小桌面上放著一杯水。當火車突然發生<b>緊急煞車</b>時，杯子裡的水面會向哪一個方向濺出？</p>
+        <div class="quiz-options">
+          <button class="quiz-btn" onclick="checkQuiz(2, 'A')">(A) 向北（火車行駛的方向）</button>
+          <button class="quiz-btn" onclick="checkQuiz(2, 'B')">(B) 向南（火車行駛的反方向）</button>
+          <button class="quiz-btn" onclick="checkQuiz(2, 'C')">(C) 垂直向上濺出</button>
+        </div>
+        <div id="res-2" class="quiz-result"></div>
+      </div>
+
+      <!-- 題目 3 -->
+      <div class="quiz-card">
+        <h3>📝 觀念題 03｜慣性大小的決定因素</h3>
+        <p>國中運動會中，鉛球選手與乒乓球選手同時全力將球擲出。已知在空中飛行時，如果要用手去攔截並讓球完全停止，攔截哪一顆球需要克服較大的「慣性」？其決定慣性大小的唯一物理量是什麼？</p>
+        <div class="quiz-options">
+          <button class="quiz-btn" onclick="checkQuiz(3, 'A')">(A) 乒乓球，因為速度較快；由速度決定</button>
+          <button class="quiz-btn" onclick="checkQuiz(3, 'B')">(B) 鉛球，因為質量較大；由質量決定</button>
+          <button class="quiz-btn" onclick="checkQuiz(3, 'C')">(C) 兩者相同，因為都是在相同的空氣中飛行</button>
+        </div>
+        <div id="res-3" class="quiz-result"></div>
+      </div>
+    </div>
+
+    <footer>國中理化力學單元 · 視覺化黑板互動教材 · 符合後排視線與傳統粉筆黑板規範</footer>
+  </div>
+
+  <script>
+    // --- 全域變數與切換分頁 ---
+    let currentTab = 'tab1';
+    let aniFrame1, aniFrame2, aniFrame3;
+
+    function switchTab(tab) {
+      currentTab = tab;
+      cancelAnimationFrame(aniFrame1);
+      cancelAnimationFrame(aniFrame2);
+      cancelAnimationFrame(aniFrame3);
+
+      document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        btn.classList.remove('active');
+        if (`tab${idx + 1}` === tab) btn.classList.add('active');
+      });
+
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById(`panel-tab${i}`).style.display = (`tab${i}` === tab) ? 'block' : 'none';
+      }
+
+      if (tab === 'tab1') { resetGalileo(); animateTab1(); }
+      else if (tab === 'tab2') { resetCoin(); animateTab2(); }
+      else if (tab === 'tab3') { setBusState('constant'); animateTab3(); }
+    }
+
+    // --- 輔助畫箭頭函數（絕不使用黑色，採用粉筆色彩） ---
+    function drawChalkArrow(ctx, x1, y1, x2, y2, color, text, lineWidth = 4) {
+      const headlen = 14;
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const angle = Math.atan2(dy, dx);
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
+      ctx.stroke();
+      if (text) {
+        ctx.font = 'bold 18px "Noto Sans TC", sans-serif';
+        ctx.fillText(text, (x1 + x2) / 2 - 20, (y1 + y2) / 2 - 12);
+      }
+      ctx.restore();
+    }
+
+    // --- TAB 1：伽利略斜面模擬 ---
+    const canvas1 = document.getElementById('canvas-tab1');
+    const ctx1 = canvas1.getContext('2d');
+    const rngAngle = document.getElementById('rng-angle');
+    const valAngle = document.getElementById('val-angle');
+
+    let ball1 = { x: 150, y: 80, vx: 0, vy: 0, state: 'idle' }; // state: idle, down, flat, up, forever
+    let rightAngle = 30;
+
+    rngAngle.addEventListener('input', (e) => {
+      rightAngle = parseInt(e.target.value);
+      valAngle.textContent = `${rightAngle}°`;
+      resetGalileo();
+    });
+
+    function resetGalileo() {
+      ball1 = { x: 150, y: 80, vx: 0, vy: 0, state: 'idle' };
+    }
+
+    function startGalileo() {
+      if (ball1.state === 'idle') ball1.state = 'down';
+    }
+
+    function animateTab1() {
+      ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+
+      const leftTop = { x: 150, y: 80 };
+      const leftBot = { x: 350, y: 260 };
+      const rightBot = { x: 480, y: 260 };
+      let rightTop = { x: 800, y: 260 }; // default horizontal
+
+      if (rightAngle > 0) {
+        const rad = rightAngle * Math.PI / 180;
+        const dx = (260 - 80) / Math.tan(rad);
+        rightTop = { x: rightBot.x + dx, y: 80 };
+      } else {
+        rightTop = { x: 960, y: 260 };
+      }
+
+      // 繪製等高虛線 (高度 h)
+      ctx1.save();
+      ctx1.strokeStyle = 'rgba(255, 224, 102, 0.4)';
+      ctx1.lineWidth = 2;
+      ctx1.setLineDash([8, 6]);
+      ctx1.beginPath();
+      ctx1.moveTo(100, 80);
+      ctx1.lineTo(950, 80);
+      ctx1.stroke();
+      ctx1.fillStyle = 'var(--chalk-yellow)';
+      ctx1.font = 'bold 18px JetBrains Mono';
+      ctx1.fillText('起始高度 h (等高線)', 120, 70);
+      ctx1.restore();
+
+      // 繪製斜面軌道 (使用純白與深青粉筆色彩，絕無黑色線條)
+      ctx1.save();
+      ctx1.strokeStyle = '#ffffff';
+      ctx1.lineWidth = 6;
+      ctx1.lineCap = 'round';
+      ctx1.lineJoin = 'round';
+      ctx1.beginPath();
+      ctx1.moveTo(leftTop.x, leftTop.y);
+      ctx1.lineTo(leftBot.x, leftBot.y);
+      ctx1.lineTo(rightBot.x, rightBot.y);
+      ctx1.lineTo(rightTop.x, rightTop.y);
+      ctx1.stroke();
+      ctx1.restore();
+
+      // 物理狀態更新
+      const speed = 7;
+      if (ball1.state === 'down') {
+        const dx = leftBot.x - leftTop.x;
+        const dy = leftBot.y - leftTop.y;
+        const dist = Math.hypot(dx, dy);
+        ball1.x += (dx / dist) * speed;
+        ball1.y += (dy / dist) * speed;
+        if (ball1.x >= leftBot.x) { ball1.x = leftBot.x; ball1.y = leftBot.y; ball1.state = 'flat'; }
+      } else if (ball1.state === 'flat') {
+        ball1.x += speed;
+        if (ball1.x >= rightBot.x) {
+          ball1.x = rightBot.x;
+          ball1.state = (rightAngle === 0) ? 'forever' : 'up';
+        }
+      } else if (ball1.state === 'up') {
+        const dx = rightTop.x - rightBot.x;
+        const dy = rightTop.y - rightBot.y;
+        const dist = Math.hypot(dx, dy);
+        ball1.x += (dx / dist) * speed;
+        ball1.y += (dy / dist) * speed;
+        if (ball1.y <= 80) { ball1.y = 80; ball1.state = 'done'; }
+      } else if (ball1.state === 'forever') {
+        ball1.x += speed;
+        if (ball1.x > 950) ball1.x = 350; // 水平永遠等速循環
+      }
+
+      // 繪製小球與動態箭頭
+      ctx1.save();
+      ctx1.fillStyle = 'var(--chalk-coral)';
+      ctx1.beginPath();
+      ctx1.arc(ball1.x, ball1.y - 15, 15, 0, Math.PI * 2);
+      ctx1.fill();
+      ctx1.lineWidth = 3;
+      ctx1.strokeStyle = '#ffffff';
+      ctx1.stroke();
+      ctx1.restore();
+
+      if (ball1.state !== 'idle' && ball1.state !== 'done') {
+        let vx = speed, vy = 0;
+        if (ball1.state === 'down') { vx = 6; vy = 4; }
+        else if (ball1.state === 'up') { vx = 6; vy = -4; }
+        drawChalkArrow(ctx1, ball1.x, ball1.y - 15, ball1.x + vx * 6, ball1.y - 15 + vy * 6, 'var(--chalk-yellow)', '');
+      }
+
+      // 狀態說明文字
+      ctx1.fillStyle = 'var(--chalk)';
+      ctx1.font = 'bold 20px "Noto Sans TC"';
+      if (ball1.state === 'idle') ctx1.fillText('👉 點擊「釋放小球」觀察等高爬升', 380, 150);
+      else if (ball1.state === 'forever') {
+        ctx1.fillStyle = 'var(--chalk-yellow)';
+        ctx1.fillText('🌟 阻力為零、無斜面阻擋：小球以等速度永遠運動！ v = const', 300, 150);
+      } else if (ball1.state === 'done') {
+        ctx1.fillStyle = 'var(--chalk-green)';
+        ctx1.fillText('✔ 小球成功爬升回到原本的起始高度 h！', 380, 150);
+      }
+
+      if (currentTab === 'tab1') aniFrame1 = requestAnimationFrame(animateTab1);
+    }
+
+    // --- TAB 2：靜止慣性（硬幣與杯子） ---
+    const canvas2 = document.getElementById('canvas-tab2');
+    const ctx2 = canvas2.getContext('2d');
+    let coin2 = { x: 480, y: 140, vy: 0, state: 'idle' }; // idle, fast, slow, dropped, away
+    let card2 = { x: 430, y: 165, vx: 0 };
+
+    function resetCoin() {
+      coin2 = { x: 480, y: 140, vy: 0, state: 'idle' };
+      card2 = { x: 430, y: 165, vx: 0 };
+    }
+
+    function flickCard(isFast) {
+      if (coin2.state === 'idle') {
+        coin2.state = isFast ? 'fast' : 'slow';
+        card2.vx = isFast ? 35 : 5;
+      }
+    }
+
+    function animateTab2() {
+      ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+
+      // 繪製杯子（深青與白色粉筆線條）
+      ctx2.save();
+      ctx2.strokeStyle = '#ffffff';
+      ctx2.lineWidth = 5;
+      ctx2.beginPath();
+      ctx2.moveTo(420, 175);
+      ctx2.lineTo(440, 310);
+      ctx2.lineTo(560, 310);
+      ctx2.lineTo(580, 175);
+      ctx2.stroke();
+      ctx2.fillStyle = 'rgba(77, 210, 255, 0.15)';
+      ctx2.fill();
+      ctx2.restore();
+
+      // 更新卡片與硬幣位置
+      if (coin2.state === 'fast') {
+        card2.x += card2.vx;
+        if (card2.x > 580) coin2.state = 'dropped';
+      } else if (coin2.state === 'slow') {
+        card2.x += card2.vx;
+        coin2.x += card2.vx; // 摩擦力帶動硬幣
+        if (card2.x > 650) coin2.state = 'away';
+      } else if (coin2.state === 'dropped') {
+        card2.x += 35;
+        coin2.vy += 0.8;
+        coin2.y += coin2.vy;
+        if (coin2.y >= 285) { coin2.y = 285; coin2.state = 'done-fast'; }
+      } else if (coin2.state === 'away') {
+        card2.x += 5;
+        coin2.vy += 0.8;
+        coin2.y += coin2.vy;
+        coin2.x += 2;
+        if (coin2.y >= 300) { coin2.y = 300; coin2.state = 'done-slow'; }
+      }
+
+      // 繪製卡片
+      ctx2.save();
+      ctx2.fillStyle = 'var(--chalk-teal)';
+      ctx2.fillRect(card2.x, card2.y, 140, 10);
+      ctx2.strokeStyle = '#ffffff';
+      ctx2.lineWidth = 2;
+      ctx2.strokeRect(card2.x, card2.y, 140, 10);
+      ctx2.restore();
+
+      // 繪製硬幣（黃色粉筆）
+      ctx2.save();
+      ctx2.fillStyle = 'var(--chalk-yellow)';
+      ctx2.beginPath();
+      ctx2.ellipse(coin2.x, coin2.y, 25, 12, 0, 0, Math.PI * 2);
+      ctx2.fill();
+      ctx2.lineWidth = 3;
+      ctx2.strokeStyle = '#ffffff';
+      ctx2.stroke();
+      ctx2.fillStyle = 'var(--board-dark)';
+      ctx2.font = 'bold 14px JetBrains Mono';
+      ctx2.textAlign = 'center';
+      ctx2.fillText('10元', coin2.x, coin2.y + 5);
+      ctx2.restore();
+
+      // 文字解說
+      ctx2.fillStyle = 'var(--chalk)';
+      ctx2.font = 'bold 20px "Noto Sans TC"';
+      if (coin2.state === 'idle') {
+        ctx2.fillText('👉 請選擇上方按鈕，測試硬幣的靜止慣性', 320, 60);
+      } else if (coin2.state === 'done-fast') {
+        ctx2.fillStyle = 'var(--chalk-yellow)';
+        ctx2.fillText('🌟 快速彈開：接觸時間極短，硬幣保持水平靜止慣性，垂直掉入杯中！', 180, 60);
+      } else if (coin2.state === 'done-slow') {
+        ctx2.fillStyle = 'var(--chalk-coral)';
+        ctx2.fillText('⚠️ 慢慢拉動：摩擦力有足夠時間施作，硬幣被迫跟著卡片一起移動掉落！', 180, 60);
+      }
+
+      if (currentTab === 'tab2') aniFrame2 = requestAnimationFrame(animateTab2);
+    }
+
+    // --- TAB 3：運動慣性（行駛中的公車） ---
+    const canvas3 = document.getElementById('canvas-tab3');
+    const ctx3 = canvas3.getContext('2d');
+    let bus3 = { state: 'constant', roadOffset: 0, speed: 8, leanAngle: 0 }; // constant, accel, brake
+
+    function setBusState(st) {
+      bus3.state = st;
+      if (st === 'constant') { bus3.speed = 8; bus3.leanAngle = 0; }
+      else if (st === 'accel') { bus3.speed = 14; bus3.leanAngle = -28; }
+      else if (st === 'brake') { bus3.speed = 2; bus3.leanAngle = 28; }
+    }
+
+    function animateTab3() {
+      ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
+
+      // 道路移動
+      bus3.roadOffset = (bus3.roadOffset + bus3.speed) % 60;
+
+      // 繪製地面虛線
+      ctx3.save();
+      ctx3.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx3.lineWidth = 4;
+      ctx3.setLineDash([30, 30]);
+      ctx3.lineDashOffset = -bus3.roadOffset;
+      ctx3.beginPath();
+      ctx3.moveTo(0, 280);
+      ctx3.lineTo(1000, 280);
+      ctx3.stroke();
+      ctx3.restore();
+
+      // 繪製公車車體（粉筆配色，無黑色線條）
+      const bx = 300, by = 110, bw = 400, bh = 150;
+      ctx3.save();
+      ctx3.strokeStyle = '#ffffff';
+      ctx3.lineWidth = 6;
+      ctx3.strokeRect(bx, by, bw, bh);
+      ctx3.fillStyle = 'rgba(255, 128, 64, 0.15)';
+      ctx3.fillRect(bx, by, bw, bh);
+      
+      // 車窗
+      ctx3.strokeStyle = 'var(--chalk-teal)';
+      ctx3.lineWidth = 3;
+      for (let i = 0; i < 3; i++) {
+        ctx3.strokeRect(bx + 30 + i * 120, by + 20, 100, 70);
+      }
+
+      // 車輪
+      ctx3.fillStyle = 'var(--chalk)';
+      ctx3.beginPath(); ctx3.arc(bx + 80, by + bh, 22, 0, Math.PI * 2); ctx3.fill();
+      ctx3.beginPath(); ctx.arc(bx + bw - 80, by + bh, 22, 0, Math.PI * 2); ctx3.fill();
+      ctx3.restore();
+
+      // 繪製火柴人乘客 (在中央車窗)
+      const px = bx + 230, py = by + 130;
+      ctx3.save();
+      ctx3.translate(px, py);
+      ctx3.rotate(bus3.leanAngle * Math.PI / 180);
+      
+      ctx3.strokeStyle = 'var(--chalk-yellow)';
+      ctx3.lineWidth = 5;
+      ctx3.lineCap = 'round';
+      // 身體
+      ctx3.beginPath(); ctx3.moveTo(0, 0); ctx3.lineTo(0, -55); ctx3.stroke();
+      // 雙手拉扶手
+      ctx3.beginPath(); ctx3.moveTo(0, -40); ctx3.lineTo(20, -65); ctx3.stroke();
+      // 雙腳
+      ctx3.beginPath(); ctx3.moveTo(0, 0); ctx3.lineTo(-12, 20); ctx3.moveTo(0, 0); ctx3.lineTo(12, 20); ctx3.stroke();
+      // 頭部
+      ctx3.fillStyle = 'var(--chalk-yellow)';
+      ctx3.beginPath(); ctx3.arc(0, -68, 14, 0, Math.PI * 2); ctx3.fill();
+      ctx3.restore();
+
+      // 行駛速度箭頭與說明
+      ctx3.fillStyle = 'var(--chalk)';
+      ctx3.font = 'bold 22px "Noto Sans TC"';
+      if (bus3.state === 'constant') {
+        drawChalkArrow(ctx3, bx + bw + 20, by + 50, bx + bw + 120, by + 50, 'var(--chalk-teal)', '');
+        ctx3.fillText('🚌 等速度行駛：合力為零，乘客直立穩定！', 280, 50);
+      } else if (bus3.state === 'accel') {
+        drawChalkArrow(ctx3, bx + bw + 20, by + 50, bx + bw + 160, by + 50, 'var(--chalk-green)', '急加速');
+        drawChalkArrow(ctx3, px - 20, py - 60, px - 110, py - 60, 'var(--chalk-coral)', '慣性向後');
+        ctx3.fillStyle = 'var(--chalk-yellow)';
+        ctx3.fillText('⚡ 突然急起步：腳隨車向前，上半身因慣性想留在原地 ➔ 向後倒！', 180, 50);
+      } else if (bus3.state === 'brake') {
+        drawChalkArrow(ctx3, bx + bw + 100, by + 50, bx + bw + 20, by + 50, 'var(--chalk-coral)', '急煞車');
+        drawChalkArrow(ctx3, px + 20, py - 60, px + 110, py - 60, 'var(--chalk-yellow)', '慣性向前');
+        ctx3.fillStyle = 'var(--chalk-coral)';
+        ctx3.fillText('🛑 緊急煞車：腳隨車停止，上半身因慣性想繼續前衝 ➔ 向前倒！', 180, 50);
+      }
+
+      if (currentTab === 'tab3') aniFrame3 = requestAnimationFrame(animateTab3);
+    }
+
+    // --- TAB 4：考題實戰邏輯 ---
+    function checkQuiz(qNum, ans) {
+      const resEl = document.getElementById(`res-${qNum}`);
+      resEl.style.display = 'block';
+      if (qNum === 1) {
+        if (ans === 'C') {
+          resEl.style.background = 'rgba(51, 204, 153, 0.2)';
+          resEl.style.color = 'var(--chalk-green)';
+          resEl.innerHTML = '🎉 <b>完全正確！</b> 根據牛頓第一運動定律，沒有摩擦力的真空中，物體不需要任何外力即可「永遠維持等速度直線行駛」。推力是為了克服地球上的摩擦力，而非維持運動本身！';
+        } else {
+          resEl.style.background = 'rgba(255, 128, 64, 0.2)';
+          resEl.style.color = 'var(--chalk-coral)';
+          resEl.innerHTML = '❌ <b>答錯了，請再想一想！</b> 這是亞里斯多德的舊迷思。在沒有阻力的真空中，維持速度不需要提供任何力 (0 N)。';
+        }
+      } else if (qNum === 2) {
+        if (ans === 'A') {
+          resEl.style.background = 'rgba(51, 204, 153, 0.2)';
+          resEl.style.color = 'var(--chalk-green)';
+          resEl.innerHTML = '🎉 <b>完全正確！</b> 緊急煞車時，杯子底部隨火車減速停止，但杯中的水因為「慣性」，會繼續維持原本向北方運動的速度與方向，因此水會向北（前方）潑濺而出！';
+        } else {
+          resEl.style.background = 'rgba(255, 128, 64, 0.2)';
+          resEl.style.color = 'var(--chalk-coral)';
+          resEl.innerHTML = '❌ <b>答錯了！</b> 請聯想公車煞車時，乘客是向前倒還是向後倒？水同樣會因為慣性繼續向原本的行駛方向衝出喔！';
+        }
+      } else if (qNum === 3) {
+        if (ans === 'B') {
+          resEl.style.background = 'rgba(51, 204, 153, 0.2)';
+          resEl.style.color = 'var(--chalk-green)';
+          resEl.innerHTML = '🎉 <b>完全正確！</b> 物理學中，「質量」是物體慣性大小的唯一量度！質量越大的物體，其運動狀態越難被改變（靜者越難推動、動者越難停止），與物體運動的速度快慢完全無關。';
+        } else {
+          resEl.style.background = 'rgba(255, 128, 64, 0.2)';
+          resEl.style.color = 'var(--chalk-coral)';
+          resEl.innerHTML = '❌ <b>答錯了！</b> 速度雖然影響衝擊力（動量），但「慣性（維持原狀態的頑固程度）」在物理學上僅由一個物理量決定，那就是「質量」！';
+        }
+      }
+    }
+
+    // 初始化啟動
+    switchTab('tab1');
+  </script>
+</body>
+</html>
