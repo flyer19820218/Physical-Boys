@@ -96,6 +96,7 @@
     button.btn-green:hover { background: var(--chalk-green); color: var(--board-dark); }
     button.btn-yellow { border-color: var(--chalk-yellow); color: var(--chalk-yellow); }
     button.btn-yellow:hover { background: var(--chalk-yellow); color: var(--board-dark); }
+    button.btn-active { background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow); }
 
     .readout-badge { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--board-dark); background: var(--chalk-yellow); padding: 6px 16px; border-radius: 6px; min-width: 120px; text-align: center; font-size: 22px; }
 
@@ -105,7 +106,12 @@
 
     /* 防斷字與公式特選字體綁定 */
     .nowrap-term { white-space: nowrap; display: inline-block; font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif; font-weight: 700; }
-    .formula-box { font-family: 'JetBrains Mono', monospace; background: rgba(255, 224, 102, 0.15); border: 2px dashed var(--chalk-yellow); padding: 4px 14px; border-radius: 6px; color: var(--chalk-yellow); font-weight: 700; display: inline-block; margin: 4px 2px; white-space: nowrap; }
+    .formula-box { font-family: 'JetBrains Mono', monospace; background: rgba(255, 224, 102, 0.15); border: 2px dashed var(--chalk-yellow); padding: 6px 16px; border-radius: 6px; color: var(--chalk-yellow); font-weight: 700; display: inline-block; margin: 4px 2px; white-space: nowrap; }
+
+    /* 理化專用標準上下分式 (取代斜槓 /) */
+    .fraction { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; padding: 0 4px; font-family: 'JetBrains Mono', monospace; }
+    .numerator { border-bottom: 2px solid var(--chalk-yellow); padding-bottom: 2px; font-weight: 700; }
+    .denominator { padding-top: 2px; font-weight: 700; }
 
     /* 重點筆記 */
     .note { font-size: 22px; color: var(--chalk-white); margin-top: 20px; line-height: 1.8; background: rgba(0, 0, 0, 0.35); padding: 20px 26px; border-radius: 10px; border-left: 8px solid var(--chalk-yellow); }
@@ -143,7 +149,7 @@
     <header>
       <div class="eyebrow">Kinematics Final Unit</div>
       <h1>圓周運動與萬有引力</h1>
-      <p>從向心加速度、轉彎斜坡受力分析，到地心距離平方反比定律。視覺化見證宇宙與日常的力學規律！</p>
+      <p>從向心加速度、轉彎斜坡受力猜想，到地心距離平方反比定律。視覺化見證宇宙與日常的力學規律！</p>
     </header>
 
     <!-- 4 個簡明分頁，無數字編號 -->
@@ -190,10 +196,11 @@
         </div>
         <div class="control-group">
           <label>軌道半徑 <span class="nowrap-term"><i>r</i></span>：</label>
-          <input id="rng-radius1" type="range" min="100" max="180" step="20" value="140" />
+          <input id="rng-radius1" type="range" min="110" max="170" step="15" value="140" />
           <span id="val-radius1" class="readout-badge">140</span>
         </div>
-        <button class="action-btn btn-teal" onclick="toggleVectors1()">📐 顯示/隱藏切線與向心向量</button>
+        <button class="action-btn btn-yellow" onclick="cutString1()">✂️ 剪斷牽引繩 (失去向心力)</button>
+        <button class="action-btn btn-teal" onclick="resetBall1()">↺ 重置圓周運動</button>
       </div>
 
       <div class="stage-container">
@@ -201,51 +208,52 @@
       </div>
 
       <div class="note">
-        💡 <b>黑板重點：</b><br>
-        • <b>常見的向心力來源：</b>太陽吸引地球的<b>萬有引力</b>、繩子拉著金屬球旋轉的<b>拉力</b>、月球繞地球的<b>引力</b>。<br>
-        • <b>若向心力突然消失：</b>物體會因為慣性，瞬間沿著該點的<span class="nowrap-term" style="color:var(--chalk-teal);"><b>「切線方向」</b></span>直線飛出（如：雨傘旋轉飛出的水滴、旋轉鏈球放手瞬間）。
+        💡 <b>黑板重點（結合牛頓第一定律）：</b><br>
+        • <b>常見的向心力來源：</b>太陽吸引地球的<b>萬有引力</b>、牽引金屬球旋轉的<b>繩子拉力</b>、月球繞地球的<b>引力</b>。<br>
+        • <b>失去向心力後（牛一慣性表現）：</b>若牽引繩突然斷裂，向心力瞬間消失 (<span class="nowrap-term">合力 = 0</span>)，金屬球不會向外飛、也不會向內掉！它會遵循<b>慣性定律</b>，順著斷裂瞬間的<span class="nowrap-term" style="color:var(--chalk-teal);"><b>「切線方向」</b></span>等速度直線飛出！
       </div>
     </div>
 
-    <!-- 面板 2：轉彎斜坡與向心力 -->
+    <!-- 面板 2：轉彎斜坡與向心力 (刪除頂部冗餘字串 + 圓心高度精準對齊，幾何直線極致平整！) -->
     <div class="board" id="panel-tab2" style="display:none;">
       <div class="panel-header">
-        <h2>轉彎斜坡設計與向心力來源分析</h2>
+        <h2>轉彎斜坡設計與向心力猜猜看 (台灣道路版)</h2>
         <span class="sub-tag" style="background:var(--chalk-teal);">Banked Curves</span>
       </div>
 
       <div class="problem-box">
-        <h3>📝 經典生活物理挑戰</h3>
-        <p>高速公路出口的匝道或是高速賽車場的彎道，路面通常會設計成<b>「外側高、內側低」的傾斜路面</b>。請問工程師這樣設計的核心物理目的為何？轉彎時所需的向心力是由什麼力來提供？</p>
+        <h3>📝 經典生活物理猜測挑戰</h3>
+        <p>台灣高速公路交流道的左彎匝道，路面工程會嚴格鋪設成<b>「外側抬高、內側俯衝（右高左低）」的傾斜路面</b>。請問當汽車駛入此傾斜彎道時，支撐力分解出來、能幫助汽車轉彎的<b>「向心力方向」</b>應該是圖中的哪一個箭頭？</p>
       </div>
 
       <div class="controls">
         <div class="control-group">
           <label>路面傾斜角 <span class="nowrap-term">θ</span>：</label>
-          <input id="rng-angle2" type="range" min="10" max="35" step="5" value="20" />
-          <span id="val-angle2" class="readout-badge">20°</span>
+          <input id="rng-angle2" type="range" min="20" max="40" step="4" value="28" />
+          <span id="val-angle2" class="readout-badge">28°</span>
         </div>
-        <button class="action-btn btn-green" onclick="resetCar2()">▶ 啟動轉彎模擬</button>
-        <button class="action-btn" onclick="toggleStep(2)">📝 顯示/隱藏名師受力解析</button>
+        <button class="action-btn btn-yellow" id="btn-show-ans2" onclick="showAnswer2()">💡 顯示名師受力解析與向心力</button>
+        <button class="action-btn btn-teal" onclick="resetCar2()">↺ 重置題目 (隱藏解答)</button>
+        <button class="action-btn" onclick="toggleStep(2)">📝 顯示/隱藏名師受力說明</button>
       </div>
 
       <div class="stage-container">
-        <canvas id="canvas-tab2" width="1000" height="400"></canvas>
+        <canvas id="canvas-tab2" width="1000" height="420"></canvas>
       </div>
 
       <div class="step-box" id="step-box-2">
-        <div class="title"><span>📝 轉彎路面向心力解析</span></div>
+        <div class="title"><span>📝 轉彎路面向心力名師解析</span></div>
         <div class="content" id="step-content2">
-          1. <b>平地轉彎的風險：</b>若路面是平的，汽車轉彎所需的向心力<b>完全仰賴輪胎與地面的側向摩擦力</b>。一旦車速過快或下雨路滑，摩擦力不足就會打滑失控！<br>
-          2. <b>斜坡路面的受力分量：</b>當路面傾斜時，汽車受到向下的重力 <span class="nowrap-term"><i>W</i></span> 與垂直路面的支撐力 <span class="nowrap-term"><i>N</i></span>。支撐力可以分解為「垂直向上的分量」與「<b>水平指向彎道內側（圓心）的分量</b>」。<br>
-          3. <b>得出結論：</b>水平指向內側的支撐力分量，直接提供了汽車轉彎所需的<b>向心力 <span class="nowrap-term"><i>F</i><sub>c</sub></span></b>！傾斜角度越大，能提供的向心力越大，高速過彎更安全！
+          1. <b>平地轉彎的風險：</b>若路面是平的，汽車轉彎所需的向心力<b>完全仰賴輪胎與地面的側向摩擦力</b>。一旦車速過快或下雨路滑，摩擦力不足就會向外側打滑失控！<br>
+          2. <b>右高左低斜坡受力分量：</b>當車輛靠右行駛向左過彎時，斜坡設計為「右高左低」。汽車受到向下的重力 <span class="nowrap-term"><i>W</i></span> 與垂直路面向左上斜開的支撐力 <span class="nowrap-term"><i>N</i></span>。支撐力可分解為「垂直向上的分量」與「<b>水平指向正左方（彎道內側圓心）的分量</b>」。<br>
+          3. <b>得出正確解答：</b>水平指向左方內側的支撐力分量，直接提供了汽車轉彎所需的<b>向心力（即圖中的【乙】方向）</b>！傾斜角度越大，能提供的向心力越大，過彎穩定不打滑！
         </div>
       </div>
 
       <div class="note">
-        💡 <b>黑板重點：</b><br>
-        • <b>火車鐵軌彎道：</b>火車轉彎時，外側鐵軌也會鋪設得比內側高，利用鐵軌對車輪的側向支撐力分量來提供向心力，減少輪胎磨損。<br>
-        • <b>受力焦點：</b>向心力<b>不是</b>一個無中生有新產生出來的力！它是物體受到的重力、支撐力或摩擦力相加後的<b>「合力」</b>。
+        💡 <b>黑板重點（突破思考盲點）：</b><br>
+        • <b>為什麼不能選【丙】（沿斜面向下）？</b>請看開獎後畫面上亮起的<span class="nowrap-term" style="color:var(--chalk-green);"><b>「水平旋轉虛線軌跡」</b></span>！這台車不是在靜止順著斜坡下滑，而是在地面上繞著一個水平圓圈高速轉彎！<br>
+        • <b>圓心在哪裡？</b>彎道的圓心在<b>「正左方的水平軌跡中心」</b>，因此支撐力分解出來的向心力必定是水平向左的<b>【乙】</b>！
       </div>
     </div>
 
@@ -261,16 +269,22 @@
           <h3>牛頓萬有引力定律</h3>
           <p>宇宙間任兩個具有質量的物體，彼此間都存在著相互吸引的力：</p>
           <ul>
-            <li><b>正反比關係：</b>引力大小與兩物體的<span class="nowrap-term">質量乘積成正比 (<span class="formula-box"><i>F</i> ∝ <i>M</i><sub>1</sub><i>M</i><sub>2</sub></span>)</span>；與兩物體間的<span class="nowrap-term"><b>距離平方成反比 (<span class="formula-box"><i>F</i> ∝ 1/<i>R</i>²</span>)</b></span>。</li>
+            <li><b>正反比關係：</b>引力大小與兩物體的<span class="nowrap-term">質量乘積成正比</span>；與兩物體間的<span class="nowrap-term"><b>距離平方成反比</b></span>。</li>
             <li><b>作用與反作用：</b>兩物體間的引力為一對作用力與反作用力，<b>大小絕對相等、方向相反</b>。</li>
           </ul>
         </div>
 
         <div class="card">
           <h3>為什麼對坐在旁邊的同學沒感覺？</h3>
-          <p>定律公式中包含一個極小的常數：</p>
-          <div style="background:rgba(255,255,255,0.08); padding:12px; border-radius:8px; text-align:center; margin:10px 0;">
-            <span class="formula-box" style="font-size:28px;"><i>F</i> = <i>G</i> (<i>M</i><sub>1</sub><i>M</i><sub>2</sub>) / <i>R</i>²</span>
+          <p>請觀察理化專用的標準定律公式：</p>
+          <div style="background:rgba(255,255,255,0.08); padding:16px; border-radius:8px; text-align:center; margin:14px 0;">
+            <span class="formula-box" style="font-size:28px;">
+              <i>F</i> = <i>G</i> ×
+              <span class="fraction">
+                <span class="numerator"><i>M</i><sub>1</sub><i>M</i><sub>2</sub></span>
+                <span class="denominator"><i>R</i>²</span>
+              </span>
+            </span>
           </div>
           <p>因為萬有引力常數 <span class="nowrap-term"><i>G</i> = 6.67 × 10⁻¹¹</span> 極度微小，一般日常物體的質量乘積不夠大，產生的引力小到完全無法察覺。只有像<b>地球、月球、太陽</b>這種星球等級的龐大質量，引力才會顯著！</p>
         </div>
@@ -308,7 +322,7 @@
       <!-- 題目 1 -->
       <div class="quiz-card">
         <h3>📝 實戰考題 01｜圓周運動的運動狀態分析</h3>
-        <p>一個金屬球在水平桌面上，被繩子牽引著作「等速率圓周運動」。請問關於此金屬球在運動過程中的物理量變化，下列敘述何者正確？</p>
+        <p>一個金屬球在水平桌面上，被牽引繩拉著作「等速率圓周運動」。請問關於此金屬球在運動過程中的物理量變化，下列敘述何者正確？</p>
         <div class="quiz-options">
           <button class="quiz-btn" onclick="checkQuiz(1, 'A')">(A) 因為速率維持不變，所以是等速度直線運動</button>
           <button class="quiz-btn" onclick="checkQuiz(1, 'B')">(B) 金屬球受到的合力等於零，才能維持固定速率</button>
@@ -320,9 +334,9 @@
       <!-- 題目 2 -->
       <div class="quiz-card">
         <h3>📝 實戰考題 02｜轉彎路面的設計原理</h3>
-        <p>高速公路交流道的轉彎路面，常會施工鋪設成「外側較高、內側較低」的傾斜斜坡。關於這樣的道路工程設計，最主要的原因為何？</p>
+        <p>台灣高速公路交流道的左彎匝道，路面會嚴格施工鋪設成「右側較高、左側較低」的傾斜斜坡。關於這樣的道路工程設計，最主要的原因為何？</p>
         <div class="quiz-options">
-          <button class="quiz-btn" onclick="checkQuiz(2, 'A')">(A) 利用路面支撐力的水平分量來提供向心力，增加過彎安全性</button>
+          <button class="quiz-btn" onclick="checkQuiz(2, 'A')">(A) 利用路面支撐力向左的水平分量來提供向心力，增加過彎安全性</button>
           <button class="quiz-btn" onclick="checkQuiz(2, 'B')">(B) 為了增加汽車所受到的地球引力</button>
           <button class="quiz-btn" onclick="checkQuiz(2, 'C')">(C) 為了減少雨天時輪胎排水的空氣阻力</button>
         </div>
@@ -425,31 +439,44 @@
     const rngRadius1 = document.getElementById('rng-radius1');
     const valRadius1 = document.getElementById('val-radius1');
 
-    let ball1 = { angle: 0, speed: 3, radius: 140, showVectors: true };
+    let ball1 = { angle: 0, speed: 3, radius: 140, state: 'circle', vx: 0, vy: 0, x: 0, y: 0 };
 
     if (rngSpeed1 && rngRadius1) {
       rngSpeed1.addEventListener('input', (e) => {
         ball1.speed = parseInt(e.target.value);
         const labels = ['', '極慢旋轉', '慢速旋轉', '中速旋轉', '快速旋轉', '高速飆轉'];
         valSpeed1.textContent = labels[ball1.speed];
+        if (ball1.state === 'fly') resetBall1();
       });
       rngRadius1.addEventListener('input', (e) => {
         ball1.radius = parseInt(e.target.value);
         valRadius1.textContent = ball1.radius;
+        if (ball1.state === 'fly') resetBall1();
       });
     }
 
-    function toggleVectors1() {
-      ball1.showVectors = !ball1.showVectors;
+    function cutString1() {
+      if (ball1.state === 'circle') {
+        ball1.state = 'fly';
+        const cx = 500, cy = 210;
+        ball1.x = cx + ball1.radius * Math.cos(ball1.angle);
+        ball1.y = cy + ball1.radius * Math.sin(ball1.angle);
+        const tangA = ball1.angle + Math.PI / 2;
+        const flySpeed = ball1.speed * 4.5;
+        ball1.vx = flySpeed * Math.cos(tangA);
+        ball1.vy = flySpeed * Math.sin(tangA);
+      }
+    }
+
+    function resetBall1() {
+      ball1.state = 'circle';
+      ball1.angle = 0;
     }
 
     function animateTab1() {
       ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
       const cx = 500, cy = 210;
 
-      ball1.angle += ball1.speed * 0.015;
-
-      // 畫軌道圓
       ctx1.save();
       ctx1.strokeStyle = 'rgba(51, 204, 153, 0.4)';
       ctx1.lineWidth = 4;
@@ -457,7 +484,6 @@
       ctx1.beginPath(); ctx1.arc(cx, cy, ball1.radius, 0, Math.PI * 2); ctx1.stroke();
       ctx1.restore();
 
-      // 圓心與半徑線
       ctx1.save();
       ctx1.fillStyle = '#ffffff';
       ctx1.beginPath(); ctx1.arc(cx, cy, 8, 0, Math.PI * 2); ctx1.fill();
@@ -465,66 +491,82 @@
       ctx1.fillText('圓心', cx - 20, cy + 30);
       ctx1.restore();
 
-      // 金屬球位置
-      const bx = cx + ball1.radius * Math.cos(ball1.angle);
-      const by = cy + ball1.radius * Math.sin(ball1.angle);
+      let bx, by;
+      if (ball1.state === 'circle') {
+        ball1.angle += ball1.speed * 0.015;
+        bx = cx + ball1.radius * Math.cos(ball1.angle);
+        by = cy + ball1.radius * Math.sin(ball1.angle);
 
-      // 畫牽引繩
-      ctx1.save();
-      ctx1.strokeStyle = '#ffffff'; ctx1.lineWidth = 4;
-      ctx1.beginPath(); ctx1.moveTo(cx, cy); ctx1.lineTo(bx, by); ctx1.stroke();
-      ctx1.restore();
+        ctx1.save();
+        ctx1.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx1.lineWidth = 3;
+        ctx1.setLineDash([6, 6]);
+        ctx1.beginPath(); ctx1.moveTo(cx, cy); ctx1.lineTo(bx, by); ctx1.stroke();
+        ctx1.restore();
 
-      // 畫球
+        const lenF = ball1.radius * 0.65;
+        const fx = bx - lenF * Math.cos(ball1.angle);
+        const fy = by - lenF * Math.sin(ball1.angle);
+        drawChalkArrow(ctx1, bx, by, fx, fy, '#ff8040', '向心力 Fc', 7, 'bottom');
+
+        const tangA = ball1.angle + Math.PI / 2;
+        const lenV = ball1.speed * 28;
+        const vx = bx + lenV * Math.cos(tangA);
+        const vy = by + lenV * Math.sin(tangA);
+        drawChalkArrow(ctx1, bx, by, vx, vy, '#4dd2ff', '切線速度 v', 5, 'top');
+      } else {
+        ball1.x += ball1.vx;
+        ball1.y += ball1.vy;
+        bx = ball1.x;
+        by = ball1.y;
+
+        const rx = cx + ball1.radius * Math.cos(ball1.angle);
+        const ry = cy + ball1.radius * Math.sin(ball1.angle);
+        ctx1.save();
+        ctx1.strokeStyle = 'rgba(255,255,255,0.3)'; ctx1.lineWidth = 3; ctx1.setLineDash([6, 6]);
+        ctx1.beginPath(); ctx1.moveTo(cx, cy); ctx1.lineTo(rx, ry); ctx1.stroke();
+        ctx1.restore();
+
+        drawChalkArrow(ctx1, bx, by, bx + ball1.vx * 8, by + ball1.vy * 8, '#33cc99', '等速度直線前進 (合力 = 0)', 6, 'top');
+        if (bx < -50 || bx > 1050 || by < -50 || by > 470) resetBall1();
+      }
+
       ctx1.save();
-      ctx1.fillStyle = '#ffe066';
+      ctx1.fillStyle = (ball1.state === 'circle') ? '#ffe066' : '#33cc99';
       ctx1.beginPath(); ctx1.arc(bx, by, 22, 0, Math.PI * 2); ctx1.fill();
       ctx1.lineWidth = 3; ctx1.strokeStyle = '#ffffff'; ctx1.stroke();
       ctx1.restore();
 
-      // 畫向量 (速度切線與向心力)
-      if (ball1.showVectors) {
-        // 切線速度 (逆時針方向，角度為 angle + PI/2)
-        const tangA = ball1.angle + Math.PI / 2;
-        const lenV = ball1.speed * 25;
-        const vx = bx + lenV * Math.cos(tangA);
-        const vy = by + lenV * Math.sin(tangA);
-        drawChalkArrow(ctx1, bx, by, vx, vy, '#4dd2ff', '切線速度 v', 5, 'top');
-
-        // 向心力 (指向圓心 cx, cy)
-        const fcMag = (ball1.speed * ball1.speed * 80) / ball1.radius;
-        const lenF = Math.min(fcMag * 3, ball1.radius - 20);
-        const fx = bx - lenF * Math.cos(ball1.angle);
-        const fy = by - lenF * Math.sin(ball1.angle);
-        drawChalkArrow(ctx1, bx, by, fx, fy, '#ff8040', '向心力 Fc', 6, 'left');
-      }
-
-      // 數值面板
       const fcVal = (ball1.speed * ball1.speed * 100) / ball1.radius;
       ctx1.save();
-      ctx1.fillStyle = 'rgba(0,0,0,0.5)'; ctx1.fillRect(20, 20, 260, 90);
-      ctx1.strokeStyle = '#ffe066'; ctx1.lineWidth = 2; ctx1.strokeRect(20, 20, 260, 90);
+      ctx1.fillStyle = 'rgba(0,0,0,0.6)'; ctx1.fillRect(20, 20, 280, 90);
+      ctx1.strokeStyle = '#ffe066'; ctx1.lineWidth = 2; ctx1.strokeRect(20, 20, 280, 90);
       ctx1.fillStyle = '#ffe066'; ctx1.font = 'bold 20px "Noto Sans TC"';
-      ctx1.fillText('向心力數值監測', 40, 50);
-      ctx1.font = 'bold 30px JetBrains Mono';
-      ctx1.fillStyle = '#ff8040';
-      ctx1.fillText(`Fc ≈ ${fcVal.toFixed(1)} N`, 40, 90);
+      ctx1.fillText('向心力與運動狀態監測', 40, 50);
+      ctx1.font = 'bold 28px JetBrains Mono';
+      ctx1.fillStyle = (ball1.state === 'circle') ? '#ff8040' : '#33cc99';
+      ctx1.fillText((ball1.state === 'circle') ? `Fc ≈ ${fcVal.toFixed(1)} N` : 'Fc = 0 (慣性飛行)', 40, 90);
       ctx1.restore();
 
       ctx1.font = 'bold 24px "Noto Sans TC"';
       ctx1.fillStyle = '#ffffff';
-      ctx1.fillText('👉 調整速度與半徑：速度越快、轉彎越急（半徑小），需要的向心力越大！', 320, 40);
+      if (ball1.state === 'circle') {
+        ctx1.fillText('👉 點擊「✂️ 剪斷牽引繩」：見證金屬球失去向心力後的牛頓第一定律慣性飛行！', 280, 40);
+      } else {
+        ctx1.fillStyle = '#33cc99';
+        ctx1.fillText('🚀 牽引繩斷裂！向心力消失，金屬球順著【切線方向】等速度直線飛出！', 280, 40);
+      }
 
       if (currentTab === 'tab1') aniFrame1 = requestAnimationFrame(animateTab1);
     }
 
-    // --- TAB 2：轉彎斜坡與向心力 ---
+    // --- TAB 2：轉彎斜坡與向心力 (移除頂部文字 + 軌跡與圓心高度精準對齊，幾何直線極緻水平！) ---
     const canvas2 = document.getElementById('canvas-tab2');
     const ctx2 = canvas2.getContext('2d');
     const rngAngle2 = document.getElementById('rng-angle2');
     const valAngle2 = document.getElementById('val-angle2');
 
-    let slopeAngle = 20;
+    let slopeAngle = 28;
+    let showAnswer = false;
 
     if (rngAngle2) {
       rngAngle2.addEventListener('input', (e) => {
@@ -533,89 +575,125 @@
       });
     }
 
+    function showAnswer2() {
+      showAnswer = true;
+      document.getElementById('btn-show-ans2').className = 'action-btn btn-active';
+    }
+
     function resetCar2() {
-      slopeAngle = 20;
-      if (rngAngle2) rngAngle2.value = 20;
-      valAngle2.textContent = '20°';
+      showAnswer = false;
+      document.getElementById('btn-show-ans2').className = 'action-btn btn-yellow';
     }
 
     function animateTab2() {
       ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
 
-      const cx = 500, cy = 300;
+      const cx = 550, cy = 300;
       const rad = slopeAngle * Math.PI / 180;
 
-      // 畫水平線與角度
+      // 1. 水平基准線
       ctx2.save();
       ctx2.strokeStyle = 'rgba(255,255,255,0.4)'; ctx2.lineWidth = 4;
-      ctx2.beginPath(); ctx2.moveTo(100, cy); ctx2.lineTo(900, cy); ctx2.stroke();
+      ctx2.beginPath(); ctx2.moveTo(100, cy); ctx2.lineTo(950, cy); ctx2.stroke();
       ctx2.restore();
 
-      // 畫傾斜路面
-      const slopeLen = 400;
-      const sx = cx - slopeLen * Math.cos(rad);
-      const sy = cy - slopeLen * Math.sin(rad);
+      // 2. 「右高左低」傾斜路面 (白線 4px，乾淨俐落！)
+      const slopeLen = 420;
+      const startX = cx - 200;
+      const startY = cy;
+      const endX = startX + slopeLen * Math.cos(rad);
+      const endY = startY - slopeLen * Math.sin(rad);
+
       ctx2.save();
-      ctx2.strokeStyle = '#ffffff'; ctx2.lineWidth = 8;
-      ctx2.beginPath(); ctx2.moveTo(cx + 150, cy); ctx2.lineTo(sx + 100, sy); ctx2.stroke();
-      // 斜坡填充
+      ctx2.strokeStyle = '#ffffff'; ctx2.lineWidth = 4;
+      ctx2.beginPath(); ctx2.moveTo(startX - 50, startY); ctx2.lineTo(endX + 50, endY - 50 * Math.tan(rad)); ctx2.stroke();
       ctx2.fillStyle = 'rgba(255, 255, 255, 0.1)';
-      ctx2.beginPath(); ctx2.moveTo(cx + 150, cy); ctx2.lineTo(sx + 100, sy); ctx2.lineTo(sx + 100, cy); ctx2.closePath(); ctx2.fill();
+      ctx2.beginPath(); ctx2.moveTo(startX - 50, startY); ctx2.lineTo(endX + 50, endY - 50 * Math.tan(rad)); ctx2.lineTo(endX + 50, startY); ctx2.closePath(); ctx2.fill();
       ctx2.restore();
 
-      // 標示角度 θ
       ctx2.save();
       ctx2.fillStyle = '#ffe066'; ctx2.font = 'bold 24px JetBrains Mono';
-      ctx2.fillText(`θ = ${slopeAngle}°`, cx + 20, cy - 15);
+      ctx2.fillText(`θ = ${slopeAngle}°`, startX + 60, startY - 15);
       ctx2.restore();
 
-      // 汽車位置 (在斜坡中間)
-      const carDist = 180;
-      const carX = cx - carDist * Math.cos(rad);
-      const carY = cy - carDist * Math.sin(rad);
+      // 汽車重心與受力起點 (carY - 25 為核心力學錨點)
+      const carDist = 220;
+      const carX = startX + carDist * Math.cos(rad);
+      const carY = startY - carDist * Math.sin(rad) - 4;
 
-      // 畫汽車背視圖 (轉正到斜坡方向)
+      // 3. 繪製水平轉彎軌跡虛線與彎道圓心 (僅在「開獎」時出現，且 Y 座標嚴格對齊 carY - 25！)
+      const trackCenterX = carX - 280;
+      const trackCenterY = carY - 25; // 絕對關鍵：與汽車力學受力點處於同一水平面上！
+      
+      if (showAnswer) {
+        ctx2.save();
+        ctx2.strokeStyle = '#33cc99';
+        ctx2.lineWidth = 4;
+        ctx2.setLineDash([10, 10]);
+        ctx2.beginPath();
+        // 繪製水平旋轉透視橢圓軌道 (圓心在 trackCenterX, trackCenterY)
+        ctx2.ellipse(trackCenterX, trackCenterY, 280, 55, 0, 0, Math.PI * 2);
+        ctx2.stroke();
+        ctx2.restore();
+
+        // 彎道圓心點 (高度完美平齊！)
+        ctx2.save();
+        ctx2.fillStyle = '#ffffff';
+        ctx2.beginPath(); ctx2.arc(trackCenterX, trackCenterY, 8, 0, Math.PI * 2); ctx2.fill();
+        ctx2.font = 'bold 22px "Noto Sans TC"';
+        ctx2.fillStyle = '#33cc99';
+        ctx2.textAlign = 'center';
+        ctx2.fillText('彎道圓心', trackCenterX, trackCenterY - 18);
+        ctx2.restore();
+      }
+
+      // 4. 畫汽車背視圖
       ctx2.save();
       ctx2.translate(carX, carY);
       ctx2.rotate(-rad);
       ctx2.fillStyle = '#4dd2ff';
-      ctx2.fillRect(-45, -50, 90, 45); // 車身
+      ctx2.fillRect(-45, -50, 90, 45);
       ctx2.fillStyle = '#11261f';
-      ctx2.fillRect(-35, -42, 70, 20); // 後擋風玻璃
+      ctx2.fillRect(-35, -42, 70, 20);
       ctx2.fillStyle = '#ff8040';
-      ctx2.fillRect(-42, -15, 15, 10); // 尾燈
+      ctx2.fillRect(-42, -15, 15, 10);
       ctx2.fillRect(27, -15, 15, 10);
-      // 輪胎
       ctx2.fillStyle = '#ffffff';
       ctx2.fillRect(-42, -5, 16, 10);
       ctx2.fillRect(26, -5, 16, 10);
       ctx2.restore();
 
-      // 畫受力向量與向心力分量
-      const lenW = 100;
-      const lenN = lenW * Math.cos(rad) + 40;
-      const lenFc = lenN * Math.sin(rad) * 1.8;
+      // 5. 猜測方向或正確開獎
+      if (!showAnswer) {
+        const len = 130;
+        drawChalkArrow(ctx2, carX, carY - 25, carX + len * Math.cos(rad), carY - 25 - len * Math.sin(rad), '#4dd2ff', '【甲】斜上', 5, 'right');
+        drawChalkArrow(ctx2, carX, carY - 25, carX - 160, carY - 25, '#ffe066', '【乙】水平向左', 6, 'top');
+        drawChalkArrow(ctx2, carX, carY - 25, carX - len * Math.cos(rad), carY - 25 + len * Math.sin(rad), '#ff66b2', '【丙】斜下', 5, 'bottom');
+        drawChalkArrow(ctx2, carX, carY - 25, carX, carY - 25 + len, '#ffffff', '【丁】鉛直向下', 5, 'right');
 
-      // 重力 W (鉛直向下)
-      drawChalkArrow(ctx2, carX, carY - 25, carX, carY - 25 + lenW, '#ffe066', '重力 W', 5, 'left');
+        ctx2.font = 'bold 26px "Noto Sans TC"';
+        ctx2.fillStyle = '#ffe066';
+        ctx2.fillText('❓ 課堂提問：請同學看斜坡與車身，猜猜看能幫助汽車過彎的【向心力方向】是哪一個？', 500, 40);
+      } else {
+        const lenW = 100;
+        const lenN = lenW * Math.cos(rad) + 40;
+        const lenFc = lenN * Math.sin(rad);
 
-      // 支撐力 N (垂直斜坡向上)
-      const nx = carX + lenN * Math.sin(rad);
-      const ny = carY - 25 - lenN * Math.cos(rad);
-      drawChalkArrow(ctx2, carX, carY - 25, nx, ny, '#33cc99', '路面支撐力 N', 6, 'right');
+        drawChalkArrow(ctx2, carX, carY - 25, carX, carY - 25 + 110, '#ffe066', '重力 W', 5, 'right');
+        const nx = carX - lenN * Math.sin(rad);
+        const ny = carY - 25 - lenN * Math.cos(rad);
+        drawChalkArrow(ctx2, carX, carY - 25, nx, ny, '#33cc99', '路面支撐力 N', 6, 'left');
+        // 向心力 Fc 順著半徑，筆直指向同一高度的左方彎道圓心！
+        drawChalkArrow(ctx2, carX, carY - 25, carX - lenFc, carY - 25, '#ff8040', '向心力 Fc (即【乙】方向！)', 8, 'bottom');
 
-      // 水平向心力分量 Fc (指向水平內側，右方)
-      drawChalkArrow(ctx2, carX, carY - 25, carX + lenFc, carY - 25, '#ff8040', '向心力分量 Fc', 7, 'bottom');
-
-      // 輔助虛線
-      ctx2.save();
-      ctx2.strokeStyle = 'rgba(255, 128, 64, 0.5)'; ctx2.lineWidth = 3; ctx2.setLineDash([8, 8]);
-      ctx2.beginPath(); ctx2.moveTo(nx, ny); ctx2.lineTo(carX + lenFc, carY - 25); ctx2.stroke();
-      ctx2.restore();
-
-      ctx2.font = 'bold 24px "Noto Sans TC"';
-      ctx2.fillStyle = '#ffffff';
-      ctx2.fillText('👉 路面傾斜角 θ 越大：支撐力分解出來的【水平向心力 Fc】就越大，高速過彎更安全！', 500, 40);
+        ctx2.save();
+        ctx2.strokeStyle = 'rgba(255, 128, 64, 0.6)'; ctx2.lineWidth = 3; ctx2.setLineDash([8, 8]);
+        ctx2.beginPath(); ctx2.moveTo(nx, ny); ctx2.lineTo(carX - lenFc, carY - 25); ctx2.stroke();
+        // 連接至圓心的水平半徑虛線 (因為高度完全平齊，這條線是絕對水平的直線！)
+        ctx2.strokeStyle = '#33cc99'; ctx2.lineWidth = 2; ctx2.setLineDash([6, 6]);
+        ctx2.beginPath(); ctx2.moveTo(carX - lenFc, carY - 25); ctx2.lineTo(trackCenterX, trackCenterY); ctx2.stroke();
+        ctx2.restore();
+      }
 
       if (currentTab === 'tab2') aniFrame2 = requestAnimationFrame(animateTab2);
     }
@@ -627,7 +705,7 @@
     const valDist3 = document.getElementById('val-dist3');
     const valWeight3 = document.getElementById('val-weight3');
 
-    let distMult = 1; // 1 to 4
+    let distMult = 1;
 
     if (rngDist3) {
       rngDist3.addEventListener('input', (e) => {
@@ -643,7 +721,6 @@
 
       const earthX = 180, earthY = 220, rEarth = 70;
 
-      // 畫同心距離軌道 (1Re to 4Re)
       ctx3.save();
       for (let i = 1; i <= 4; i++) {
         ctx3.strokeStyle = (i === distMult) ? '#ff8040' : 'rgba(255,255,255,0.2)';
@@ -655,7 +732,6 @@
       }
       ctx3.restore();
 
-      // 畫地球
       ctx3.save();
       ctx3.fillStyle = '#4dd2ff';
       ctx3.beginPath(); ctx3.arc(earthX, earthY, rEarth, 0, Math.PI * 2); ctx3.fill();
@@ -664,7 +740,6 @@
       ctx3.fillText('地球', earthX, earthY + 8);
       ctx3.restore();
 
-      // 畫蘋果/衛星位置
       const appleX = earthX + rEarth * distMult;
       const appleY = earthY;
 
@@ -673,14 +748,12 @@
       ctx3.beginPath(); ctx3.arc(appleX, appleY, 20, 0, Math.PI * 2); ctx3.fill();
       ctx3.lineWidth = 3; ctx3.strokeStyle = '#ffffff'; ctx3.stroke();
       ctx3.fillStyle = '#33cc99';
-      ctx3.beginPath(); ctx3.arc(appleX + 4, appleY - 18, 8, 0, Math.PI); ctx3.fill(); // 葉子
+      ctx3.beginPath(); ctx3.arc(appleX + 4, appleY - 18, 8, 0, Math.PI); ctx3.fill();
       ctx3.restore();
 
-      // 畫引力箭頭 (指向地心)
       const forceLen = 120 / (distMult * distMult) + 20;
       drawChalkArrow(ctx3, appleX - 25, appleY, appleX - 25 - forceLen, appleY, '#ffe066', `引力 F = W/${distMult*distMult}`, 6, 'top');
 
-      // 距離標示線
       ctx3.save();
       ctx3.strokeStyle = '#33cc99'; ctx3.lineWidth = 3;
       ctx3.beginPath(); ctx3.moveTo(earthX, earthY + 110); ctx3.lineTo(appleX, earthY + 110); ctx3.stroke();
