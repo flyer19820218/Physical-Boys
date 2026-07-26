@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物理黑板教室：功的定義與正負功</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-blackboard: #11261f;
+    --bg-panel: #18332a;
+    --bg-panel-hover: #204236;
+    --chalk-white: #f4f1ea;
+    --chalk-yellow: #fde047;
+    --chalk-cyan: #67e8f9;
+    --chalk-orange: #fb923c;
+    --chalk-green: #4ade80;
+    --chalk-pink: #f472b6;
+    --chalk-dim: #94a3b8;
+    --chalk-line: rgba(244, 241, 234, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 20px 15px 60px;
+    background-color: var(--bg-blackboard);
+    background-image: 
+      radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0),
+      radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0);
+    background-size: 24px 24px, 16px 16px;
+    background-position: 0 0, 8px 8px;
+    color: var(--chalk-white);
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 20px;
+    line-height: 1.8;
+  }
+
+  .wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--chalk-green);
+  }
+
+  h1 {
+    font-size: 36px;
+    color: var(--chalk-yellow);
+    margin: 0 0 8px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(253, 224, 71, 0.2);
+  }
+
+  .subtitle {
+    font-size: 22px;
+    color: var(--chalk-cyan);
+    font-weight: bold;
+  }
+
+  /* 導覽分頁按鈕 */
+  .nav-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .tab-btn {
+    padding: 12px 24px;
+    font-size: 20px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--chalk-dim);
+    border: 2px dashed var(--chalk-line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover {
+    background: var(--bg-panel-hover);
+    color: var(--chalk-white);
+    border-color: var(--chalk-white);
+  }
+
+  .tab-btn.active {
+    background: var(--bg-panel);
+    color: var(--chalk-yellow);
+    border: 2px solid var(--chalk-yellow);
+    box-shadow: 0 0 15px rgba(253, 224, 71, 0.25);
+  }
+
+  /* 面板與內容 */
+  .panel {
+    display: none;
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-line);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  .panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2 {
+    font-size: 28px;
+    color: var(--chalk-cyan);
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--chalk-line);
+  }
+
+  h3 {
+    font-size: 24px;
+    color: var(--chalk-yellow);
+    margin: 20px 0 10px;
+  }
+
+  /* 嚴格雙欄排版：iPad 滿版與大螢幕適配 */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    margin: 20px 0;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid var(--chalk-line);
+    border-radius: 12px;
+    padding: 22px;
+    transition: 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--chalk-yellow);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .card-title {
+    font-size: 24px;
+    color: var(--chalk-orange);
+    margin-bottom: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* 數學代數與 JetBrains Mono */
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: bold;
+    color: var(--chalk-yellow);
+  }
+
+  /* 防斷字綁定 */
+  .nw {
+    white-space: nowrap;
+  }
+
+  /* 理化專用標準上下分式 */
+  .fraction {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    padding: 0 8px;
+    margin: 0 4px;
+  }
+
+  .fraction .num {
+    border-bottom: 2px solid var(--chalk-white);
+    padding-bottom: 2px;
+    line-height: 1.2;
+  }
+
+  .fraction .den {
+    padding-top: 4px;
+    line-height: 1.2;
+  }
+
+  /* 概念引言盒 */
+  .concept-box {
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 6px solid var(--chalk-green);
+    padding: 16px 20px;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 20px;
+  }
+
+  /* 互動實驗區 */
+  .interactive-area {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px dashed var(--chalk-cyan);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    text-align: center;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+
+  .action-btn {
+    padding: 10px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    background: transparent;
+    color: var(--chalk-cyan);
+    border: 2px solid var(--chalk-cyan);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .action-btn:hover, .action-btn.active {
+    background: var(--chalk-cyan);
+    color: #111;
+  }
+
+  .btn-orange { color: var(--chalk-orange); border-color: var(--chalk-orange); }
+  .btn-orange:hover, .btn-orange.active { background: var(--chalk-orange); color: #111; }
+
+  .btn-pink { color: var(--chalk-pink); border-color: var(--chalk-pink); }
+  .btn-pink:hover, .btn-pink.active { background: var(--chalk-pink); color: #111; }
+
+  .btn-green { color: var(--chalk-green); border-color: var(--chalk-green); }
+  .btn-green:hover, .btn-green.active { background: var(--chalk-green); color: #111; }
+
+  /* 畫布與零黑色原則 */
+  canvas {
+    background-color: #0d1f18;
+    border: 2px solid var(--chalk-yellow);
+    border-radius: 8px;
+    margin: 16px auto;
+    display: block;
+    max-width: 100%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .explain-box {
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-white);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: left;
+    max-width: 800px;
+    margin: 10px auto 0;
+    font-size: 20px;
+  }
+
+  /* 顏色標示 */
+  .hl-yellow { color: var(--chalk-yellow); font-weight: bold; }
+  .hl-green { color: var(--chalk-green); font-weight: bold; }
+  .hl-cyan { color: var(--chalk-cyan); font-weight: bold; }
+  .hl-orange { color: var(--chalk-orange); font-weight: bold; }
+  .hl-pink { color: var(--chalk-pink); font-weight: bold; }
+
+  ul { margin: 10px 0; padding-left: 24px; }
+  li { margin-bottom: 8px; }
+
+  @media (max-width: 860px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    h1 { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>🎯 第一單元：功的定義與正負功</h1>
+    <div class="subtitle">國中物理核心概念 ｜ 能量轉換的關鍵前導</div>
+  </header>
+
+  <!-- 導覽列：乾淨俐落，無數字符號前綴 -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab(0)">功的物理意義</button>
+    <button class="tab-btn" onclick="switchTab(1)">正功與負功</button>
+    <button class="tab-btn" onclick="switchTab(2)">不作功的三種情境</button>
+    <button class="tab-btn" onclick="switchTab(3)">課堂實戰演練</button>
+  </nav>
+
+  <!-- ================= 分頁 1：功的物理意義 ================= -->
+  <div class="panel active">
+    <h2>功的物理意義 <span class="hl-yellow" style="font-size: 20px; float: right;">能量轉換的橋樑</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">什麼是「功」<span class="mono nw">(Work)</span>？</strong><br>
+      在物理學中，功是對物體施力，並且使物體在<span class="hl-green">「力的方向上產生位移」</span>的過程。作功就是<span class="hl-cyan">施力使物體的能量增加或減少</span>的現象。
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-yellow);">
+        <div class="card-title" style="color: var(--chalk-yellow);">📐 功的定義公式</div>
+        <p>當作用力與位移同方向時，功等於作用力與位移的乘積：</p>
+        <div style="text-align: center; font-size: 30px; margin: 20px 0; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px;">
+          <span class="mono nw">W = F × S</span>
+        </div>
+        <ul>
+          <li><span class="mono nw">W</span> <strong class="hl-yellow">(Work)</strong>：作功，單位為焦耳 <span class="mono nw">(J)</span>。</li>
+          <li><span class="mono nw">F</span> <strong class="hl-cyan">(Force)</strong>：作用力，單位為牛頓 <span class="mono nw">(N)</span>。</li>
+          <li><span class="mono nw">S</span> <strong class="hl-green">(Displacement)</strong>：沿施力方向的位移，單位為公尺 <span class="mono nw">(m)</span>。</li>
+        </ul>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-cyan);">
+        <div class="card-title" style="color: var(--chalk-cyan);">🔍 焦耳與純量特性</div>
+        <p>👉 <strong class="hl-yellow">單位的定義：</strong><br>
+        施以 <span class="mono nw">1 N</span> 的作用力，使物體在力的方向上移動 <span class="mono nw">1 m</span>，所作的功即為 <span class="mono nw">1 J</span>。</p>
+        <div style="text-align: center; font-size: 24px; margin: 15px 0;">
+          <span class="mono nw">1 J = 1 N × 1 m</span>
+        </div>
+        <p>👉 <strong class="hl-green">沒有方向的純量：</strong><br>
+        雖然「作用力 <span class="mono nw">F</span>」與「位移 <span class="mono nw">S</span>」都有方向（向量），但它們相乘得到的「功 <span class="mono nw">W</span>」是<span class="hl-orange">只有大小、沒有方向的純量</span>！正負號代表的是「能量增加或減少」。</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px; border-color: var(--chalk-green);">
+      <div class="card-title" style="color: var(--chalk-green);">⚙️ 能量與作功的關係</div>
+      <p>作功是能量轉換的過程。若你推動木箱施力作功了 <span class="mono nw">400 J</span>，代表你消耗了自己體內 <span class="mono nw">400 J</span> 的化學能，並將這份能量轉換為木箱的動能或對抗摩擦力產生的熱能。</p>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 2：正功與負功 ================= -->
+  <div class="panel">
+    <h2>正功與負功 <span class="hl-yellow" style="font-size: 20px; float: right;">能量的進與出</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">如何判斷作正功還是負功？</strong><br>
+      關鍵在於<span class="hl-cyan">「施力方向」</span>與<span class="hl-green">「位移方向」</span>的夾角關係！正負號絕對不是指方向往右或往左，而是代表物體正在<span class="hl-yellow">獲得能量</span>還是<span class="hl-pink">失去能量</span>。
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-green);">
+        <div class="card-title" style="color: var(--chalk-green);">🟢 作正功 <span class="mono nw">(W > 0)</span></div>
+        <p>👉 <strong class="hl-yellow">條件：</strong> 施力方向與位移方向<span class="hl-green">相同</span>。</p>
+        <p>👉 <strong class="hl-yellow">物理意義：</strong> 施力對物體<strong class="hl-green">輸入能量</strong>，物體的能量（動能或位能）會<span class="hl-green">增加</span>。</p>
+        <p>👉 <strong class="hl-yellow">生活實例：</strong><br>
+        1. 施力 <span class="mono nw">20 N</span> 向前推木箱，木箱向前移動 <span class="mono nw">10 m</span>。<br>
+        2. 自由落體下落時，<span class="hl-green">「重力」對物體作正功</span>，速度越來越快。</p>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-pink);">
+        <div class="card-title" style="color: var(--chalk-pink);">🔴 作負功 <span class="mono nw">(W < 0)</span></div>
+        <p>👉 <strong class="hl-yellow">條件：</strong> 施力方向與位移方向<span class="hl-pink">相反</span>。</p>
+        <p>👉 <strong class="hl-yellow">物理意義：</strong> 施力將物體的<strong class="hl-pink">能量移出</strong>，物體的能量會<span class="hl-pink">減少</span>（通常轉為熱能）。</p>
+        <p>👉 <strong class="hl-yellow">生活實例：</strong><br>
+        1. 汽車煞車時，<span class="hl-pink">「摩擦力」對車子作負功</span>，車速減慢直到停止。<br>
+        2. 向上拋出球時，在上升過程中，<span class="hl-pink">「重力」對球作負功</span>。</p>
+      </div>
+    </div>
+
+    <!-- 互動繪圖區：絕對零黑色 -->
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">🔬 互動實驗區：正功與負功微觀對照</h3>
+      <p>點擊按鈕，觀察作用力方向 <span class="mono nw">F</span> 與位移方向 <span class="mono nw">S</span> 如何決定能量變化：</p>
+      <div class="btn-group">
+        <button class="action-btn btn-green active" onclick="drawWorkScene('pos', this)">🟢 向前推車 (作正功)</button>
+        <button class="action-btn btn-pink" onclick="drawWorkScene('neg', this)">🔴 摩擦力煞車 (作負功)</button>
+      </div>
+      <canvas id="workCanvas" width="760" height="260"></canvas>
+      <div id="workExplain" class="explain-box"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 3：不作功的三種情境 ================= -->
+  <div class="panel">
+    <h2>不作功的三種情境 <span class="hl-yellow" style="font-size: 20px; float: right;">有施力不代表有作功</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">什麼時候施力了卻「不作功」<span class="mono nw">(W = 0)</span>？</strong><br>
+      依據公式 <span class="mono nw">W = F × S</span>，只要<span class="hl-orange">沒有力</span>、<span class="hl-orange">沒有沿施力方向的位移</span>，或是<span class="hl-orange">施力與位移方向垂直</span>，該作用力對物體所作的功就是零！
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-orange);">
+        <div class="card-title" style="color: var(--chalk-orange);">1️⃣ 施力與位移垂直 <span class="mono nw">(F ⊥ S)</span></div>
+        <p>這是考題中出境率最高的情境！當作用力方向與物體運動方向維持垂直時，該力<span class="hl-orange">不會改變物體的速率</span>，故不作功。</p>
+        <p>👉 <strong class="hl-yellow">經典實例：</strong><br>
+        • 手提書包在<span class="hl-green">水平路面</span>等速走動（手施力向上，位移向前，垂直不作功）。<br>
+        • 人造衛星繞地球作等速率圓周運動（<span class="hl-cyan">「向心力/萬有引力」</span>永遠垂直切線速度，對衛星不作功）。</p>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-cyan);">
+        <div class="card-title" style="color: var(--chalk-cyan);">2️⃣ 施而不動 <span class="mono nw">(S = 0)</span></div>
+        <p>有施加作用力，但物體靜止在原地，完全沒有產生任何位移。</p>
+        <p>👉 <strong class="hl-yellow">經典實例：</strong><br>
+        • 用盡全力去推一面水泥牆，牆壁紋絲不動。<br>
+        • 舉重選手成功把槓鈴舉過頭頂後，<span class="hl-cyan">「靜止站立站穩的 3 秒鐘」</span>內，選手對槓鈴施力不作功（但舉起過程中具有向上位移，有作正功）。</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px; border-color: var(--chalk-green);">
+      <div class="card-title" style="color: var(--chalk-green);">3️⃣ 慣性運動 <span class="mono nw">(F = 0)</span></div>
+      <p>物體不受外力或合力為零，僅依靠<span class="hl-green">「慣性」</span>在光滑水平冰面上維持等速度直線運動。此時雖然有位移 <span class="mono nw">S</span>，但沒有施力 <span class="mono nw">F</span>，因此沒有作功。</p>
+    </div>
+
+    <!-- 互動實驗區：手提書包走樓梯與平路 -->
+    <div class="interactive-area" style="margin-top: 24px;">
+      <h3 style="margin-top: 0;">🚶 互動檢驗：手提書包走在不同路面上</h3>
+      <p>手提書包的施力方向永遠是<span class="hl-yellow">「垂直向上」</span>。點擊切換運動路線，看誰有作功：</p>
+      <div class="btn-group">
+        <button class="action-btn btn-orange active" onclick="drawBagScene('flat', this)">1. 水平平路走動 (F ⊥ S)</button>
+        <button class="action-btn btn-green" onclick="drawBagScene('up', this)">2. 爬樓梯上樓 (有平行分量)</button>
+      </div>
+      <canvas id="bagCanvas" width="760" height="260"></canvas>
+      <div id="bagExplain" class="explain-box"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 4：課堂實戰演練 ================= -->
+  <div class="panel">
+    <h2>課堂實戰演練 <span class="hl-yellow" style="font-size: 20px; float: right;">觀念檢驗與計算</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">名師解題核心步驟：</strong><br>
+      1. 先找出<span class="hl-cyan">「施力方向 <span class="mono nw">F</span>」</span>往哪裡指。<br>
+      2. 再找出<span class="hl-green">「位移方向 <span class="mono nw">S</span>」</span>往哪裡指。<br>
+      3. 判斷兩者關係：同向算正功、反向算負功、垂直直接寫零！
+    </div>
+
+    <div class="grid-2">
+      <!-- 經典例題 1 -->
+      <div class="card" style="border-color: var(--chalk-yellow);">
+        <div class="card-title" style="color: var(--chalk-yellow);">📝 實戰演練一：推動木箱計算</div>
+        <p>洛娜以水平方向施力 <span class="mono nw">20 N</span>，推動質量 <span class="mono nw">40 kg</span> 的木箱，一起以等速度在前進 <span class="mono nw">10 m</span>。假設地面摩擦力為 <span class="mono nw">4 N</span>，請問：<br>
+        (1) 洛娜對木箱作功多少焦耳？<br>
+        (2) 摩擦力對木箱作功多少焦耳？</p>
+        
+        <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 8px; margin-top: 14px; border: 1px dashed var(--chalk-white);">
+          <strong class="hl-green">【黑板推導與解析】</strong><br>
+          👉 (1) 洛娜施力與位移同方向（作正功）：<br>
+          <span class="mono nw" style="font-size: 22px; color: var(--chalk-yellow);">W = F × S = 20 N × 10 m = 200 J</span><br><br>
+          👉 (2) 摩擦力與位移反方向（作負功）：<br>
+          <span class="mono nw" style="font-size: 22px; color: var(--chalk-pink);">W = -F × S = -4 N × 10 m = -40 J</span><br>
+          <small style="color: var(--chalk-dim);">注意：題目中的質量 <span class="mono nw">40 kg</span> 在水平推動計算中屬於干擾資訊，因為重力垂直位移不作功！</small>
+        </div>
+      </div>
+
+      <!-- 經典例題 2 -->
+      <div class="card" style="border-color: var(--chalk-cyan);">
+        <div class="card-title" style="color: var(--chalk-cyan);">📝 實戰演練二：斜面搬運與重力作功</div>
+        <p>將一個重量為 <span class="mono nw">50 N</span> 的貨物，沿著長度 <span class="mono nw">5 m</span>、垂直高度 <span class="mono nw">3 m</span> 的光滑斜面，以平行斜面的作用力緩慢推至頂端。請問<span class="hl-cyan">「抗重力至少需作多少功」</span>？</p>
+
+        <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 8px; margin-top: 14px; border: 1px dashed var(--chalk-white);">
+          <strong class="hl-green">【黑板推導與解析】</strong><br>
+          對抗重力作功，只需要考慮<span class="hl-yellow">「在重力方向上的垂直位移」</span>！水平方向移動多遠都不影響重力作功。<br><br>
+          👉 垂直向上的對抗力等於物重 <span class="mono nw">F = 50 N</span><br>
+          👉 垂直向上位移高度 <span class="mono nw">h = 3 m</span><br>
+          <span class="mono nw" style="font-size: 22px; color: var(--chalk-cyan);">W = F × h = 50 N × 3 m = 150 J</span><br><br>
+          <small style="color: var(--chalk-dim);">斜面原理驗證：若用平行斜面力 <span class="mono nw">F'</span> 推動，施力 <span class="mono nw">30 N × 5 m</span> 同樣等於 <span class="mono nw">150 J</span>！這就是「省力但不省功」。</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // --- 分頁切換 ---
+  function switchTab(idx) {
+    document.querySelectorAll('.tab-content, .panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    document.querySelectorAll('.panel')[idx].classList.add('active');
+    document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+
+    if(idx === 1) drawWorkScene('pos', document.querySelector('.btn-group .btn-green'));
+    if(idx === 2) drawBagScene('flat', document.querySelectorAll('.interactive-area .btn-group button')[0]);
+  }
+
+  // --- 分頁二：正負功互動畫布 (嚴格零黑色) ---
+  function drawWorkScene(type, btn) {
+    if(btn) {
+      document.querySelectorAll('#workCanvas ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    const canvas = document.getElementById('workCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const exp = document.getElementById('workExplain');
+
+    // 畫地面 (亮黃虛線)
+    ctx.strokeStyle = '#fde047';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(50, 200);
+    ctx.lineTo(710, 200);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 畫木箱 (亮青色框，深青底)
+    ctx.fillStyle = 'rgba(103, 232, 249, 0.2)';
+    ctx.strokeStyle = '#67e8f9';
+    ctx.lineWidth = 4;
+    ctx.fillRect(300, 110, 120, 90);
+    ctx.strokeRect(300, 110, 120, 90);
+    
+    ctx.fillStyle = '#f4f1ea';
+    ctx.font = 'bold 22px "Noto Sans TC"';
+    ctx.fillText("木箱", 335, 162);
+
+    // 畫位移方向 S (永遠向右，草綠色)
+    drawArrow(ctx, 330, 80, 430, 80, '#4ade80', 4);
+    ctx.fillStyle = '#4ade80';
+    ctx.font = 'bold 22px "JetBrains Mono"';
+    ctx.fillText("S (位移方向)", 340, 65);
+
+    if(type === 'pos') {
+      // 施力 F 向右 (亮黃色)
+      drawArrow(ctx, 160, 155, 290, 155, '#fde047', 5);
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 24px "JetBrains Mono"';
+      ctx.fillText("F (施力 20 N)", 130, 140);
+
+      exp.innerHTML = `
+        <strong class="hl-green">🟢 狀態判定：作正功 <span class="mono nw">(W > 0)</span></strong><br>
+        施力方向 <span class="mono nw">F</span> 向右，位移方向 <span class="mono nw">S</span> 也向右，兩者<strong class="hl-yellow">方向相同</strong>。<br>
+        👉 <strong class="hl-cyan">能量效果：</strong> 你對木箱輸入能量，木箱向前加速運動，動能越來越大！
+      `;
+      exp.style.borderColor = 'var(--chalk-green)';
+    } else {
+      // 摩擦力 f 向左 (亮粉紅)
+      drawArrow(ctx, 420, 195, 290, 195, '#f472b6', 5);
+      ctx.fillStyle = '#f472b6';
+      ctx.font = 'bold 24px "JetBrains Mono"';
+      ctx.fillText("f (摩擦力 4 N)", 430, 190);
+
+      exp.innerHTML = `
+        <strong class="hl-pink">🔴 狀態判定：作負功 <span class="mono nw">(W < 0)</span></strong><br>
+        摩擦力 <span class="mono nw">f</span> 向左阻止滑動，但木箱位移 <span class="mono nw">S</span> 向右，兩者<strong class="hl-yellow">方向相反</strong>。<br>
+        👉 <strong class="hl-cyan">能量效果：</strong> 摩擦力在阻止木箱，將木箱的動能移出並轉換為地板的<span class="hl-orange">熱能</span>，木箱變慢。
+      `;
+      exp.style.borderColor = 'var(--chalk-pink)';
+    }
+  }
+
+  // --- 分頁三：手提書包走動畫布 (嚴格零黑色) ---
+  function drawBagScene(type, btn) {
+    if(btn) {
+      document.querySelectorAll('#bagCanvas ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    const canvas = document.getElementById('bagCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const exp = document.getElementById('bagExplain');
+
+    if(type === 'flat') {
+      // 畫水平地面
+      ctx.strokeStyle = '#fde047'; ctx.lineWidth = 3; ctx.setLineDash([8, 8]);
+      ctx.beginPath(); ctx.moveTo(50, 210); ctx.lineTo(710, 210); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 畫書包 (亮橘色)
+      ctx.fillStyle = 'rgba(251, 146, 60, 0.25)';
+      ctx.strokeStyle = '#fb923c';
+      ctx.lineWidth = 4;
+      ctx.fillRect(330, 130, 80, 70);
+      ctx.strokeRect(330, 130, 80, 70);
+      ctx.fillStyle = '#f4f1ea'; ctx.font = 'bold 20px "Noto Sans TC"';
+      ctx.fillText("書包", 348, 172);
+
+      // 施力向上 (亮青色)
+      drawArrow(ctx, 370, 130, 370, 40, '#67e8f9', 5);
+      ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 22px "JetBrains Mono"';
+      ctx.fillText("F (提力向上)", 385, 80);
+
+      // 位移向右 (草綠色)
+      drawArrow(ctx, 420, 165, 560, 165, '#4ade80', 5);
+      ctx.fillStyle = '#4ade80'; ctx.font = 'bold 22px "JetBrains Mono"';
+      ctx.fillText("S (水平位移)", 440, 150);
+
+      // 直角標記
+      ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2;
+      ctx.strokeRect(370, 145, 20, -20);
+      ctx.fillStyle = '#fde047'; ctx.font = 'bold 20px "JetBrains Mono"';
+      ctx.fillText("90° (垂直)", 270, 135);
+
+      exp.innerHTML = `
+        <strong class="hl-orange">🟧 狀態判定：不作功 <span class="mono nw">(W = 0)</span></strong><br>
+        手提書包的力 <span class="mono nw">F</span> 垂直向上，但在水平平路上前進的位移 <span class="mono nw">S</span> 是水平向前，夾角為 <span class="mono nw">90°</span>。<br>
+        👉 <strong class="hl-yellow">考試必記：</strong> 在施力的垂直方向上沒有任何移動距離，因此<span class="hl-orange">提力對書包作功為零</span>！
+      `;
+      exp.style.borderColor = 'var(--chalk-orange)';
+    } else {
+      // 畫樓梯
+      ctx.strokeStyle = '#fde047'; ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(100, 220); ctx.lineTo(300, 220); ctx.lineTo(300, 140);
+      ctx.lineTo(500, 140); ctx.lineTo(500, 60); ctx.lineTo(700, 60);
+      ctx.stroke();
+
+      // 畫書包在樓梯上
+      ctx.fillStyle = 'rgba(251, 146, 60, 0.25)';
+      ctx.strokeStyle = '#fb923c';
+      ctx.lineWidth = 4;
+      ctx.fillRect(320, 60, 80, 70);
+      ctx.strokeRect(320, 60, 80, 70);
+      ctx.fillStyle = '#f4f1ea'; ctx.font = 'bold 20px "Noto Sans TC"';
+      ctx.fillText("書包", 338, 102);
+
+      // 施力向上
+      drawArrow(ctx, 360, 60, 360, 10, '#67e8f9', 5);
+      ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 20px "JetBrains Mono"';
+      ctx.fillText("F (向上)", 265, 35);
+
+      // 實際位移往右上 (斜向)
+      drawArrow(ctx, 200, 180, 320, 95, '#fde047', 3);
+      ctx.fillStyle = '#fde047'; ctx.font = 'bold 18px "JetBrains Mono"';
+      ctx.fillText("實際斜向位移", 150, 135);
+
+      // 垂直分量位移 (草綠色)
+      drawArrow(ctx, 420, 220, 420, 140, '#4ade80', 5);
+      ctx.fillStyle = '#4ade80'; ctx.font = 'bold 22px "JetBrains Mono"';
+      ctx.fillText("h (垂直向上位移)", 435, 185);
+
+      exp.innerHTML = `
+        <strong class="hl-green">🟢 狀態判定：有作正功 <span class="mono nw">(W > 0)</span></strong><br>
+        爬樓梯時，書包除了向前移動，也伴隨著<strong class="hl-green">「垂直向上的位移 <span class="mono nw">h</span>」</strong>。<br>
+        👉 <strong class="hl-yellow">考試必記：</strong> 提力向上 <span class="mono nw">F</span> 與垂直高度位移 <span class="mono nw">h</span> 同方向，因此<span class="hl-green">手對書包作了正功 <span class="mono nw">W = F × h</span></span>（轉為書包的重力位能）！
+      `;
+      exp.style.borderColor = 'var(--chalk-green)';
+    }
+  }
+
+  // 輔助畫箭頭函數 (絕對零黑色)
+  function drawArrow(ctx, fromX, fromY, toX, toY, color, width) {
+    const headLen = 14;
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = width;
+    
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(toX, toY);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(toX - headLen * Math.cos(angle - Math.PI / 6), toY - headLen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(toX - headLen * Math.cos(angle + Math.PI / 6), toY - headLen * Math.sin(angle + Math.PI / 6));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // 初始化繪製
+  window.onload = function() {
+    drawWorkScene('pos', null);
+    drawBagScene('flat', null);
+  };
+</script>
+</body>
+</html>
