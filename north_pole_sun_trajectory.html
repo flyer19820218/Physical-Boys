@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物理黑板教室：北極點太陽軌跡與 24 小時永晝</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-blackboard: #11261f;
+    --bg-panel: #18332a;
+    --bg-panel-hover: #204236;
+    --chalk-white: #FFFFFF;
+    --chalk-yellow: #FFE600;
+    --chalk-cyan: #00E5FF;
+    --chalk-orange: #FF9900;
+    --chalk-green: #00FF66;
+    --chalk-pink: #FF3399;
+    --chalk-dim: #A0B3C6; 
+    --chalk-line: rgba(255, 255, 255, 0.4);
+    --shadow-dark: rgba(9, 20, 16, 0.9);
+    --shadow-light: rgba(9, 20, 16, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 20px 15px 60px;
+    background-color: var(--bg-blackboard);
+    background-image: 
+      radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0),
+      radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+    background-size: 24px 24px, 16px 16px;
+    background-position: 0 0, 8px 8px;
+    color: var(--chalk-white);
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 20px; /* 嚴格字體地板 20px */
+    line-height: 1.8;
+  }
+
+  .wrap { max-width: 1280px; margin: 0 auto; }
+
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--chalk-green);
+  }
+
+  h1 {
+    font-size: 32px;
+    color: var(--chalk-yellow);
+    margin: 0 0 8px;
+    letter-spacing: 2px;
+  }
+
+  .subtitle {
+    font-size: 22px;
+    color: var(--chalk-cyan);
+    font-weight: bold;
+  }
+
+  .nav-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    padding-bottom: 8px;
+  }
+
+  .tab-btn {
+    padding: 12px 24px;
+    font-size: 20px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--chalk-dim);
+    border: 2px dashed var(--chalk-line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover {
+    background: var(--bg-panel-hover);
+    color: var(--chalk-white);
+    border-color: var(--chalk-white);
+  }
+
+  .tab-btn.active {
+    background: var(--bg-panel);
+    color: var(--chalk-yellow);
+    border: 2px solid var(--chalk-yellow);
+    box-shadow: 0 0 15px rgba(255, 230, 0, 0.3);
+  }
+
+  .panel {
+    display: none;
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-line);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 10px 30px var(--shadow-dark);
+  }
+
+  .panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2 {
+    font-size: 28px;
+    color: var(--chalk-cyan);
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--chalk-line);
+  }
+
+  /* 嚴格雙欄排版 */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    margin: 20px 0;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px solid var(--chalk-line);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .card-title {
+    font-size: 24px;
+    color: var(--chalk-orange);
+    margin-bottom: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: bold;
+    color: var(--chalk-yellow);
+  }
+  .nw { white-space: nowrap; }
+
+  .concept-box {
+    background: rgba(255, 255, 255, 0.06);
+    border-left: 6px solid var(--chalk-green);
+    padding: 16px 20px;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 20px;
+  }
+
+  .diagram-area, .interactive-area {
+    background: var(--shadow-light);
+    border: 2px dashed var(--chalk-line);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    text-align: center;
+  }
+  .interactive-area { border-color: var(--chalk-cyan); }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+
+  .action-btn {
+    padding: 10px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    background: transparent;
+    color: var(--chalk-cyan);
+    border: 2px solid var(--chalk-cyan);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .action-btn:hover, .action-btn.active {
+    background: var(--chalk-cyan);
+    color: var(--bg-blackboard);
+  }
+  .btn-orange { color: var(--chalk-orange); border-color: var(--chalk-orange); }
+  .btn-orange:hover, .btn-orange.active { background: var(--chalk-orange); color: var(--bg-blackboard); }
+  .btn-pink { color: var(--chalk-pink); border-color: var(--chalk-pink); }
+  .btn-pink:hover, .btn-pink.active { background: var(--chalk-pink); color: var(--bg-blackboard); }
+  .btn-green { color: var(--chalk-green); border-color: var(--chalk-green); }
+  .btn-green:hover, .btn-green.active { background: var(--chalk-green); color: var(--bg-blackboard); }
+  .btn-yellow { color: var(--chalk-yellow); border-color: var(--chalk-yellow); }
+  .btn-yellow:hover, .btn-yellow.active { background: var(--chalk-yellow); color: var(--bg-blackboard); }
+
+  canvas {
+    background-color: var(--bg-blackboard);
+    border: 2px solid var(--chalk-yellow);
+    border-radius: 8px;
+    margin: 16px auto;
+    display: block;
+    max-width: 100%;
+    box-shadow: 0 4px 15px var(--shadow-dark);
+  }
+
+  .explain-box {
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-white);
+    border-radius: 8px;
+    padding: 18px;
+    text-align: left;
+    max-width: 860px;
+    margin: 14px auto 0;
+    font-size: 20px;
+  }
+
+  .slider-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 16px 0;
+    font-weight: bold;
+    font-size: 20px;
+  }
+
+  .slider-box input[type=range] {
+    flex: 1;
+    max-width: 400px;
+    cursor: pointer;
+  }
+
+  .hl-yellow { color: var(--chalk-yellow); font-weight: bold; }
+  .hl-green { color: var(--chalk-green); font-weight: bold; }
+  .hl-cyan { color: var(--chalk-cyan); font-weight: bold; }
+  .hl-orange { color: var(--chalk-orange); font-weight: bold; }
+  .hl-pink { color: var(--chalk-pink); font-weight: bold; }
+  .hl-dim { color: var(--chalk-dim); font-weight: bold; }
+
+  ul { margin: 10px 0; padding-left: 24px; }
+  li { margin-bottom: 8px; }
+
+  @media (max-width: 860px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>🎯 天文物理：北極點太陽軌跡</h1>
+    <div class="subtitle">國中理化與地科核心概念 ｜ 三維空間幾何與 24 小時永晝解析</div>
+  </header>
+
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab(0)">北極點空間幾何</button>
+    <button class="tab-btn" onclick="switchTab(1)">夏至 24 小時永晝</button>
+    <button class="tab-btn" onclick="switchTab(2)">四季仰角演變</button>
+    <button class="tab-btn" onclick="switchTab(3)">雙視角實時對照</button>
+  </nav>
+
+  <!-- ================= 分頁 1：北極點空間幾何 ================= -->
+  <div class="panel active">
+    <h2>北極點空間幾何 <span class="hl-yellow" style="font-size: 20px; float: right;">地平線與赤道的重合</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">為什麼學生會搞混？</strong><br>
+      我們習慣在中緯度觀察天空，太陽會「東升西落、斜向爬升」。但站在<span class="hl-cyan">北極點 <span class="mono nw">(N = 90°)</span></span> 時，幾何結構發生了根本改變：<br>
+      👉 <strong class="hl-green">地平線平行赤道：</strong> 北極點觀察者的地平圈，完全平行於地球赤道面。<br>
+      👉 <strong class="hl-pink">自轉軸指向天頂：</strong> 地球自轉軸直指觀察者的正頭頂（天頂）。天體只能繞著天頂水平打轉，絕對不會傾斜升降！
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-yellow);">
+        <div class="card-title" style="color: var(--chalk-yellow);">📐 極點仰角定理</div>
+        <p>太陽在北極點的天空仰角 <span class="mono nw">h</span>，完全等於太陽當天的赤緯角 <span class="mono nw">δ</span>：</p>
+        <div style="text-align: center; font-size: 26px; margin: 16px 0; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+          <span class="mono nw">h = 90° - 緯度 + 赤緯</span><br>
+          <span class="mono nw">h = 90° - 90° + δ = δ</span>
+        </div>
+        <p>因此：<strong class="hl-green">太陽直射哪裡（赤緯 δ），北極點看到的仰角就是多少！</strong></p>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-cyan);">
+        <div class="card-title" style="color: var(--chalk-cyan);">🌐 太空視角幾何關係</div>
+        <ul>
+          <li><span class="hl-yellow">黃赤交角：</span> 地球自轉軸傾斜 <span class="mono nw">23.5°</span>。</li>
+          <li><span class="hl-pink">夏至太陽光：</span> 直射北回歸線（赤緯 <span class="mono nw">δ = +23.5°</span>）。</li>
+          <li><span class="hl-cyan">北極點地平線：</span> 與太陽光夾角恰為 <span class="mono nw">23.5°</span>，24 小時保持不變。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="diagram-area">
+      <h3 style="margin-top: 0; color: var(--chalk-green);">🧑‍🏫 幾何圖解：地球傾角與北極點地平線</h3>
+      <p>觀察下方太空切面圖，黃色自轉軸指向正上方，綠色地平線完全水平：</p>
+      <canvas id="geoCanvas" width="760" height="340"></canvas>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 2：夏至 24 小時永晝 ================= -->
+  <div class="panel">
+    <h2>夏至 24 小時永晝 <span class="hl-yellow" style="font-size: 20px; float: right;">水平畫圓不落山</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">夏至極點觀測現象：</strong><br>
+      夏至當天，太陽直射北回歸線（赤緯 <span class="mono nw">δ = +23.5°</span>）。<br>
+      因為地球在自轉，北極點觀察者會看到太陽在距離地平線<span class="hl-cyan">仰角 23.5°</span> 的高度，<strong class="hl-pink">沿著水平方向 360 度轉圈</strong>，整天都不會升起也不會落山！
+    </div>
+
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">🎥 模擬演示：夏至當天 24 小時太陽運行軌跡</h3>
+      <p>點擊按鈕切換時間，觀察太陽在天球半頂上「高度恆定為 <span class="mono nw">23.5°</span>」的水平繞圈：</p>
+      <div class="btn-group">
+        <button class="action-btn btn-green active" id="playSolsticeBtn" onclick="toggleSolsticePlay()">▶️ 啟動 24 小時旋轉動畫</button>
+        <button class="action-btn btn-yellow" onclick="setSolsticeTime(0)">00:00 (子夜)</button>
+        <button class="action-btn btn-cyan" onclick="setSolsticeTime(6)">06:00 (清晨)</button>
+        <button class="action-btn btn-orange" onclick="setSolsticeTime(12)">12:00 (正午)</button>
+        <button class="action-btn btn-pink" onclick="setSolsticeTime(18)">18:00 (傍晚)</button>
+      </div>
+      <canvas id="solsticeCanvas" width="760" height="380"></canvas>
+      <div id="solsticeExplain" class="explain-box">
+        👉 太陽時刻掛在仰角 <span class="mono nw">23.5°</span>，無論幾點，離地平線高度完全相同！
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 3：四季仰角演變 ================= -->
+  <div class="panel">
+    <h2>四季仰角演變 <span class="hl-yellow" style="font-size: 20px; float: right;">從半年永晝到半年永夜</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">北極點的一年只有「一天」：</strong><br>
+      隨著地球公轉，太陽直射點在南北回歸線之間移動。北極點的太陽仰角 <span class="mono nw">h</span> 會在半年間由 <span class="mono nw">0°</span> 爬升至 <span class="mono nw">23.5°</span>，再降回 <span class="mono nw">0°</span>：<br>
+      👉 <span class="hl-green">春分 (3/21)：</span> 太陽沿地平線 <span class="mono nw">(h = 0°)</span> 繞圈，永晝開始。<br>
+      👉 <span class="hl-yellow">夏至 (6/22)：</span> 仰角達最高峰 <span class="mono nw">(h = 23.5°)</span>。<br>
+      👉 <span class="hl-orange">秋分 (9/23)：</span> 太陽回到地平線 <span class="mono nw">(h = 0°)</span>，落入地平線下。<br>
+      👉 <span class="hl-pink">冬至 (12/22)：</span> 太陽在地下 <span class="mono nw">h = -23.5°</span> 旋轉，進入半年的永夜！
+    </div>
+
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">🗓️ 節氣切換：觀察太陽軌跡圓圈的上下升降</h3>
+      <p>點擊不同節氣，觀察天球畫布中太陽軌跡圓圈的高低變化：</p>
+      <div class="btn-group">
+        <button class="action-btn btn-green" onclick="setSeason('spring', this)">🌸 春分 (h = 0° 地平線)</button>
+        <button class="action-btn btn-yellow active" onclick="setSeason('summer', this)">☀️ 夏至 (h = +23.5° 頂峰)</button>
+        <button class="action-btn btn-orange" onclick="setSeason('autumn', this)">🍁 秋分 (h = 0° 沒入地平)</button>
+        <button class="action-btn btn-pink" onclick="setSeason('winter', this)">❄️ 冬至 (h = -23.5° 永夜)</button>
+      </div>
+      <canvas id="seasonsCanvas" width="760" height="380"></canvas>
+      <div id="seasonsExplain" class="explain-box"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 4：雙視角實時對照 ================= -->
+  <div class="panel">
+    <h2>雙視角實時對照 <span class="hl-yellow" style="font-size: 20px; float: right;">太空視角 vs 地表第一人稱</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">破解盲區：不是太陽在動，是人和地球在轉！</strong><br>
+      👈 <strong class="hl-cyan">左圖 (太空北極俯視)：</strong> 太陽光固定來自右側。地表小人的<span class="hl-pink">視線向量（粉紅箭頭）隨地球逆時針旋轉</span>！<br>
+      👉 <strong class="hl-green">右圖 (地表第一人稱視角)：</strong> 觀察者面向<strong class="hl-green">「台灣方向 / 南方 S」固定不動</strong>。隨著地球自轉，太陽在天空作相對的 <span class="mono nw">360°</span> 水平環繞！
+    </div>
+
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">🌐 雙視角 60FPS 相對運動實時對照</h3>
+      <div class="btn-group">
+        <button class="action-btn btn-green active" id="dualPlayBtn" onclick="toggleDualPlay()">⏸️ 暫停雙視角動畫</button>
+      </div>
+
+      <div class="slider-box">
+        <span>⏰ 24 小時時間進度：</span>
+        <input type="range" id="dualSlider" min="0" max="24" step="0.1" value="12" oninput="onDualSliderInput(this.value)">
+        <span id="dualTimeText" class="mono hl-yellow" style="min-width: 140px;">12:00 (正午)</span>
+      </div>
+
+      <canvas id="dualCanvas" width="760" height="380"></canvas>
+      
+      <div id="dualExplain" class="explain-box">
+        👉 <strong class="hl-yellow">教學對照關鍵：</strong><br>
+        在右圖中，我們將觀察者的前方視線（粉紅向上箭頭）定義為<strong class="hl-green">「朝著台灣的方向看（四周皆為南方 S）」</strong>。當地球自轉時，我們雖然覺得自己沒動，但太陽相對於我們的固定視線在天空中繞了一大圈！
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // --- 全域變數與清理 ---
+  let solsticeAnimId = null;
+  let dualAnimId = null;
+  let isSolsticePlaying = false;
+  let isDualPlaying = false;
+
+  function stopAllAnimations() {
+    if (solsticeAnimId) { cancelAnimationFrame(solsticeAnimId); solsticeAnimId = null; }
+    if (dualAnimId) { cancelAnimationFrame(dualAnimId); dualAnimId = null; }
+    isSolsticePlaying = false;
+    isDualPlaying = false;
+
+    const btn1 = document.getElementById('playSolsticeBtn');
+    if(btn1) { btn1.textContent = "▶️ 啟動 24 小時旋轉動畫"; btn1.classList.remove('active'); }
+    const btn2 = document.getElementById('dualPlayBtn');
+    if(btn2) { btn2.textContent = "▶️ 啟動雙視角實時旋轉"; btn2.classList.remove('active'); }
+  }
+
+  function switchTab(idx) {
+    stopAllAnimations();
+
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    
+    document.querySelectorAll('.panel')[idx].classList.add('active');
+    document.querySelectorAll('.nav-tabs .tab-btn')[idx].classList.add('active');
+
+    if(idx === 0) drawGeoScene();
+    if(idx === 1) drawSolsticeFrame();
+    if(idx === 2) setSeason('summer', document.querySelectorAll('.panel:nth-child(5) .btn-group button')[1]);
+    if(idx === 3) startDualAnim();
+  }
+
+  // 共用帶箭頭向量 (純色碼，零黑色)
+  function drawArrow(ctx, x1, y1, x2, y2, color, text, offset=0, align="center") {
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const headlen = 14;
+    ctx.beginPath(); ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.fill();
+    
+    if (text) {
+      ctx.font = "bold 20px 'JetBrains Mono', sans-serif";
+      let tw = ctx.measureText(text).width;
+      let midX = (x1 + x2) / 2;
+      let midY = (y1 + y2) / 2;
+      let tx = midX - tw / 2;
+      if (align === "left") tx = midX - tw - 15;
+      else if (align === "right") tx = midX + 15;
+      ctx.fillText(text, tx, midY + offset);
+    }
+  }
+
+  // 共用高相容性 3D 橢圓渲染
+  function drawEllipse(ctx, cx, cy, rx, ry, color, isDashed = false, lineWidth = 3) {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    if (isDashed) ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.translate(cx, cy);
+    ctx.scale(1, ry / rx);
+    ctx.arc(0, 0, rx, 0, Math.PI * 2);
+    ctx.restore();
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // --- 畫布 0：北極點空間幾何切面圖 ---
+  function drawGeoScene() {
+    const canvas = document.getElementById('geoCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = 380, cy = 180, r = 100;
+    const tilt = 23.5 * Math.PI / 180;
+
+    // 地球體
+    ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+
+    // 自轉軸
+    const axisX1 = cx - (r + 40) * Math.sin(tilt);
+    const axisY1 = cy + (r + 40) * Math.cos(tilt);
+    const axisX2 = cx + (r + 40) * Math.sin(tilt);
+    const axisY2 = cy - (r + 40) * Math.cos(tilt);
+    ctx.strokeStyle = '#FFE600'; ctx.lineWidth = 4; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(axisX1, axisY1); ctx.lineTo(axisX2, axisY2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#FFE600'; ctx.font = "bold 20px 'Noto Sans TC'";
+    ctx.fillText("自轉軸 (指向天頂)", axisX2 - 40, axisY2 - 15);
+
+    // 北極點觀察者
+    const npX = cx + r * Math.sin(tilt);
+    const npY = cy - r * Math.cos(tilt);
+    ctx.fillStyle = '#FF3399'; ctx.beginPath(); ctx.arc(npX, npY, 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FF3399'; ctx.font = "bold 20px 'Noto Sans TC'";
+    ctx.fillText("北極點 (N = 90°)", npX + 15, npY + 5);
+
+    // 地平線
+    const horizLen = 160;
+    const hx1 = npX - horizLen * Math.cos(tilt);
+    const hy1 = npY - horizLen * Math.sin(tilt);
+    const hx2 = npX + horizLen * Math.cos(tilt);
+    const hy2 = npY + horizLen * Math.sin(tilt);
+    ctx.strokeStyle = '#00FF66'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(hx1, hy1); ctx.lineTo(hx2, hy2); ctx.stroke();
+    ctx.fillStyle = '#00FF66'; ctx.fillText("北極點地平線 (平行赤道)", hx1 - 180, hy1 + 10);
+
+    // 平行入射太陽光
+    for(let i = -1; i <= 1; i++) {
+      let sy = npY + i * 40;
+      drawArrow(ctx, 720, sy, npX + 120, sy, '#FF9900', i === 0 ? "夏至太陽光 (δ = +23.5°)" : "", -15, "center");
+    }
+
+    // 仰角 23.5度
+    ctx.strokeStyle = '#FFE600'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(npX, npY, 60, -tilt, 0); ctx.stroke();
+    ctx.fillStyle = '#FFE600'; ctx.font = "bold 22px 'JetBrains Mono'";
+    ctx.fillText("仰角 h = 23.5°", npX + 70, npY - 10);
+  }
+
+  // --- 畫布 1：夏至 24 小時永晝動畫 ---
+  let solsticeTime = 12; // 0 ~ 24h
+
+  function toggleSolsticePlay() {
+    isSolsticePlaying = !isSolsticePlaying;
+    const btn = document.getElementById('playSolsticeBtn');
+    if(isSolsticePlaying) {
+      btn.textContent = "⏸️ 暫停動畫";
+      btn.classList.add('active');
+      animateSolstice();
+    } else {
+      btn.textContent = "▶️ 啟動 24 小時旋轉動畫";
+      btn.classList.remove('active');
+      if(solsticeAnimId) cancelAnimationFrame(solsticeAnimId);
+    }
+  }
+
+  function setSolsticeTime(t) {
+    solsticeTime = t;
+    if(isSolsticePlaying) toggleSolsticePlay();
+    drawSolsticeFrame();
+  }
+
+  function animateSolstice() {
+    if(isSolsticePlaying) {
+      solsticeTime = (solsticeTime + 0.08) % 24;
+      drawSolsticeFrame();
+      solsticeAnimId = requestAnimationFrame(animateSolstice);
+    }
+  }
+
+  function drawSolsticeFrame() {
+    const canvas = document.getElementById('solsticeCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = 380, cy = 290;
+    const rx = 260, ry = 180;
+
+    // 天球半頂
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.arc(cx, cy, rx, Math.PI, 0); ctx.stroke(); ctx.setLineDash([]);
+
+    // 地平線
+    ctx.strokeStyle = '#00FF66'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(cx - rx - 40, cy); ctx.lineTo(cx + rx + 40, cy); ctx.stroke();
+    ctx.fillStyle = '#00FF66'; ctx.font = "bold 20px 'Noto Sans TC'";
+    ctx.fillText("地平線 (四周全為南方 S)", cx + rx - 80, cy + 30);
+
+    // 觀察者
+    ctx.fillStyle = '#00E5FF'; ctx.beginPath(); ctx.arc(cx, cy - 25, 10, 0, Math.PI*2); ctx.fill();
+    ctx.fillRect(cx - 3, cy - 15, 6, 15);
+    ctx.fillStyle = '#FFFFFF'; ctx.fillText("北極點觀察者", cx - 60, cy + 30);
+
+    // 天頂虛線
+    ctx.strokeStyle = '#FFE600'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - ry - 20); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#FFE600'; ctx.fillText("天頂 (Z)", cx - 35, cy - ry - 30);
+
+    // 太陽 23.5 度軌跡圓
+    const sunAltH = 23.5;
+    const pathY = cy - ry * Math.sin(sunAltH * Math.PI / 180);
+    const pathRx = rx * Math.cos(sunAltH * Math.PI / 180);
+    const pathRy = 45;
+
+    drawEllipse(ctx, cx, pathY, pathRx, pathRy, '#FF9900', true, 3);
+
+    // 計算太陽位置
+    const angle = (solsticeTime / 24) * Math.PI * 2 - Math.PI/2;
+    const sunX = cx + pathRx * Math.cos(angle);
+    const sunY = pathY + pathRy * Math.sin(angle);
+
+    // 畫太陽
+    ctx.fillStyle = '#FFE600'; ctx.beginPath(); ctx.arc(sunX, sunY, 16, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#FF9900'; ctx.lineWidth = 4; ctx.stroke();
+
+    // 仰角線
+    ctx.strokeStyle = '#FF3399'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(sunX, cy); ctx.lineTo(sunX, sunY); ctx.stroke();
+    ctx.fillStyle = '#FF3399'; ctx.font = "bold 20px 'JetBrains Mono'";
+    ctx.fillText(`h = 23.5°`, sunX + 20, (cy + sunY)/2);
+
+    // 文字
+    const exp = document.getElementById('solsticeExplain');
+    const hh = String(Math.floor(solsticeTime)).padStart(2, '0');
+    const mm = String(Math.floor((solsticeTime % 1) * 60)).padStart(2, '0');
+    exp.innerHTML = `
+      <strong class="hl-yellow">時間：${hh}:${mm}</strong> ｜ 
+      太陽位置：<span class="mono nw">仰角 h = 23.5°</span><br>
+      👉 太陽沿著黃色虛線作<strong class="hl-green">完全水平的 360 度旋轉</strong>。24 小時內絕不落入地平線下，形成著名的<strong class="hl-pink">永晝現象</strong>！
+    `;
+  }
+
+  // --- 畫布 2：四季仰角演變 ---
+  let seasonMode = 'summer';
+
+  function setSeason(mode, btn) {
+    seasonMode = mode;
+    document.querySelectorAll('.panel:nth-child(5) .btn-group button').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+
+    drawSeasonsFrame();
+
+    const exp = document.getElementById('seasonsExplain');
+    if(mode === 'spring') {
+      exp.innerHTML = `<strong class="hl-green">🌸 春分 (3/21)：太陽赤緯 δ = 0°</strong><br>太陽貼著地平線 <span class="mono nw">(仰角 h = 0°)</span> 繞行一圈，北極點結束長達半年的永夜，迎來曙光！`;
+      exp.style.borderColor = 'var(--chalk-green)';
+    } else if(mode === 'summer') {
+      exp.innerHTML = `<strong class="hl-yellow">☀️ 夏至 (6/22)：太陽赤緯 δ = +23.5°</strong><br>太陽到達一年中最高位置 <span class="mono nw">(仰角 h = 23.5°)</span>，24 小時掛在天上作水平圓週運動。`;
+      exp.style.borderColor = 'var(--chalk-yellow)';
+    } else if(mode === 'autumn') {
+      exp.innerHTML = `<strong class="hl-orange">🍁 秋分 (9/23)：太陽赤緯 δ = 0°</strong><br>太陽再次貼齊地平線 <span class="mono nw">(仰角 h = 0°)</span> 轉圈。此日過後，太陽將沒入地平線以下，開啟半年永夜。`;
+      exp.style.borderColor = 'var(--chalk-orange)';
+    } else if(mode === 'winter') {
+      exp.innerHTML = `<strong class="hl-pink">❄️ 冬至 (12/22)：太陽赤緯 δ = -23.5° (永夜)</strong><br>太陽位於地平線下方 <span class="mono nw">23.5°</span> 處運轉，地面上整天完全看不到太陽，呈現<strong class="hl-pink">極夜 (永夜) 現象</strong>！`;
+      exp.style.borderColor = 'var(--chalk-pink)';
+    }
+  }
+
+  function drawSeasonsFrame() {
+    const canvas = document.getElementById('seasonsCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = 380, cy = 260;
+    const rx = 240, ry = 160;
+
+    // 天球
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.arc(cx, cy, rx, Math.PI, 0); ctx.stroke(); ctx.setLineDash([]);
+
+    // 地平線
+    ctx.strokeStyle = '#00FF66'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(cx - rx - 30, cy); ctx.lineTo(cx + rx + 30, cy); ctx.stroke();
+
+    let altDeg = 0;
+    let color = '#00FF66';
+    if(seasonMode === 'spring') { altDeg = 0; color = '#00FF66'; }
+    if(seasonMode === 'summer') { altDeg = 23.5; color = '#FFE600'; }
+    if(seasonMode === 'autumn') { altDeg = 0; color = '#FF9900'; }
+    if(seasonMode === 'winter') { altDeg = -23.5; color = '#FF3399'; }
+
+    const pathY = cy - ry * Math.sin(altDeg * Math.PI / 180);
+    const pathRx = rx * Math.cos(Math.abs(altDeg) * Math.PI / 180);
+
+    drawEllipse(ctx, cx, pathY, pathRx, 35, color, altDeg < 0, 4);
+
+    // 畫太陽
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(cx + pathRx*0.7, pathY - 15, 14, 0, Math.PI*2); ctx.fill();
+
+    // 標示文字
+    ctx.font = "bold 22px 'JetBrains Mono'"; ctx.fillStyle = color;
+    ctx.fillText(`h = ${altDeg}°`, cx + pathRx*0.7 + 25, pathY - 15);
+  }
+
+  // --- 畫布 3：雙視角實時對照 (終極完成版：固定視線向上箭頭，對應台灣方向) ---
+  let dualHour = 12; // 0 ~ 24h
+
+  function toggleDualPlay() {
+    isDualPlaying = !isDualPlaying;
+    const btn = document.getElementById('dualPlayBtn');
+    if(isDualPlaying) {
+      btn.textContent = "⏸️ 暫停雙視角動畫";
+      btn.classList.add('active');
+      animateDual();
+    } else {
+      btn.textContent = "▶️ 啟動雙視角實時旋轉";
+      btn.classList.remove('active');
+      if(dualAnimId) { cancelAnimationFrame(dualAnimId); dualAnimId = null; }
+    }
+  }
+
+  function onDualSliderInput(val) {
+    dualHour = parseFloat(val);
+    drawDualFrame();
+  }
+
+  function startDualAnim() {
+    isDualPlaying = true;
+    const btn = document.getElementById('dualPlayBtn');
+    if(btn) { btn.textContent = "⏸️ 暫停雙視角動畫"; btn.classList.add('active'); }
+    animateDual();
+  }
+
+  function animateDual() {
+    if(isDualPlaying) {
+      dualHour = (dualHour + 0.06) % 24;
+      const slider = document.getElementById('dualSlider');
+      if(slider) slider.value = dualHour.toFixed(1);
+      drawDualFrame();
+      dualAnimId = requestAnimationFrame(animateDual);
+    }
+  }
+
+  function drawDualFrame() {
+    const canvas = document.getElementById('dualCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const rotAngle = (dualHour / 24) * Math.PI * 2;
+
+    // 中間分隔虛線
+    ctx.strokeStyle = '#A0B3C6'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(380, 20); ctx.lineTo(380, 360); ctx.stroke(); ctx.setLineDash([]);
+
+    // ==========================================
+    // === 左視角：太空北極點俯視圖 (地球自轉) ===
+    // ==========================================
+    const lcx = 190, lcy = 200, lr = 80;
+    ctx.fillStyle = '#00E5FF'; ctx.font = "bold 20px 'Noto Sans TC'";
+    ctx.fillText("【太空視角：北極點俯視】", lcx - 105, 35);
+
+    // 1. 固定太陽光
+    for(let i = -2; i <= 2; i++) {
+      let sy = lcy + i * 30;
+      drawArrow(ctx, 360, sy, lcx + lr + 10, sy, '#FF9900', i === -2 ? "太陽光" : "", -10, "center");
+    }
+
+    // 2. 地球外圈
+    ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI*2); ctx.stroke();
+
+    // 3. 旋轉網格
+    ctx.save();
+    ctx.translate(lcx, lcy);
+    ctx.rotate(-rotAngle);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    for(let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+      ctx.beginPath();
+      ctx.moveTo(-lr * Math.cos(a), -lr * Math.sin(a));
+      ctx.lineTo(lr * Math.cos(a), lr * Math.sin(a));
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    // 4. 北極點
+    ctx.fillStyle = '#00FF66'; ctx.beginPath(); ctx.arc(lcx, lcy, 8, 0, Math.PI*2); ctx.fill();
+
+    // 5. 觀察者面向視線
+    const personFacingAngle = -rotAngle;
+    const viewLen = 65;
+    const vx = lcx + viewLen * Math.cos(personFacingAngle);
+    const vy = lcy + viewLen * Math.sin(personFacingAngle);
+    drawArrow(ctx, lcx, lcy, vx, vy, '#FF3399', '視線', -10, "center");
+
+    // ==========================================
+    // === 右視角：地表第一人稱 (視線固定，太陽相對運動) ===
+    // ==========================================
+    const rcx = 570, rcy = 260, r_dome = 130;
+    ctx.fillStyle = '#00FF66'; ctx.font = "bold 20px 'Noto Sans TC'";
+    ctx.fillText("【地表第一人稱：太陽相對環繞】", rcx - 130, 35);
+
+    // 1. 半球天球罩與地平線
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.arc(rcx, rcy, r_dome, Math.PI, 0); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = '#00FF66'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(rcx - r_dome - 20, rcy); ctx.lineTo(rcx + r_dome + 20, rcy); ctx.stroke();
+
+    // 方位標示
+    ctx.fillStyle = '#00FF66'; ctx.font = "bold 18px 'Noto Sans TC'";
+    ctx.fillText("南 (S)", rcx - r_dome - 30, rcy + 25);
+    ctx.fillText("南 (S)", rcx + r_dome + 5, rcy + 25);
+    ctx.fillText("地平線 (四周皆為南方)", rcx - 90, rcy + 30);
+
+    // 2. 地表觀察者小人
+    const personHeadY = rcy - 22;
+    ctx.fillStyle = '#FF3399'; 
+    ctx.beginPath(); ctx.arc(rcx, personHeadY, 10, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#FF3399'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(rcx, personHeadY + 10); ctx.lineTo(rcx, rcy); ctx.stroke();
+
+    // 3. 固定向上的「前方視線箭頭」 (定義為朝著台灣方向看，永遠直指上方固定不動)
+    const fixTopX = rcx;
+    const fixTopY = rcy - r_dome + 15;
+    drawArrow(ctx, rcx, personHeadY, fixTopX, fixTopY, '#FF3399', '面向：台灣方向 (南 S)', -12, "right");
+
+    // 4. 太陽 23.5° 水平軌跡圓
+    const pathY = rcy - r_dome * Math.sin(23.5 * Math.PI / 180);
+    const pathRx = r_dome * Math.cos(23.5 * Math.PI / 180);
+    const pathRy = 35;
+
+    drawEllipse(ctx, rcx, pathY, pathRx, pathRy, '#FF9900', true, 3);
+
+    // 5. 太陽相對運動位置
+    const relativeSunAngle = rotAngle - Math.PI / 2; 
+    const sunX = rcx + pathRx * Math.cos(relativeSunAngle);
+    const sunY = pathY + pathRy * Math.sin(relativeSunAngle);
+
+    // 6. 觀察者的固定視線與太陽的相對連線
+    ctx.strokeStyle = 'rgba(255, 230, 0, 0.6)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(rcx, personHeadY); ctx.lineTo(sunX, sunY); ctx.stroke();
+
+    // 7. 畫太陽
+    ctx.fillStyle = '#FFE600'; ctx.beginPath(); ctx.arc(sunX, sunY, 14, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#FF9900'; ctx.lineWidth = 4; ctx.stroke();
+
+    // 更新時間文字
+    const hh = String(Math.floor(dualHour)).padStart(2, '0');
+    const mm = String(Math.floor((dualHour % 1) * 60)).padStart(2, '0');
+    const timeText = document.getElementById('dualTimeText');
+    if(timeText) timeText.textContent = `${hh}:${mm} (24h 永晝中)`;
+  }
+
+  // 初始化
+  window.onload = function() {
+    switchTab(0);
+  };
+</script>
+</body>
+</html>
