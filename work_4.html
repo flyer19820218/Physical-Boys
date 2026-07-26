@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>能量與簡單機械：HTML5 互動式黑板教學</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #11261f;
+    --bg-panel: #17332a;
+    --bg-panel-hover: #1f4236;
+    --chalk-white: #f6f3ea;
+    --chalk-muted: #a3b8b0;
+    --chalk-yellow: #ffe066;
+    --chalk-teal: #4dd2ff;
+    --chalk-coral: #ff8040;
+    --chalk-green: #33cc99;
+    --chalk-purple: #d4a5a5;
+    --rule-color: rgba(246, 243, 234, 0.22);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background-color: var(--bg-base);
+    color: var(--chalk-white);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 20px;
+    line-height: 1.65;
+    padding: 24px 0 80px;
+  }
+
+  .wrap {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+    border-bottom: 2px dashed var(--rule-color);
+    padding-bottom: 20px;
+  }
+
+  h1 {
+    font-size: 34px;
+    margin: 0 0 10px 0;
+    color: var(--chalk-yellow);
+    letter-spacing: 1.5px;
+    font-weight: 700;
+  }
+
+  header p {
+    margin: 0;
+    color: var(--chalk-muted);
+    font-size: 20px;
+  }
+
+  /* 乾淨俐落的分頁導覽列 (無數字前綴) */
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    flex: 1;
+    min-width: 200px;
+    padding: 16px 14px;
+    font-size: 20px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--chalk-muted);
+    border: 2px dashed var(--rule-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+
+  .tab-btn:hover {
+    background: var(--bg-panel-hover);
+    color: var(--chalk-white);
+  }
+
+  .tab-btn.active {
+    background: #1f4236;
+    color: var(--chalk-yellow);
+    border: 2px solid var(--chalk-yellow);
+    box-shadow: 0 0 16px rgba(255, 224, 102, 0.25);
+  }
+
+  /* 嚴格雙欄排版 Grid */
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    align-items: start;
+  }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 2px solid var(--rule-color);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px dashed var(--rule-color);
+    padding-bottom: 14px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 28px;
+    color: var(--chalk-white);
+  }
+
+  .sub-tag {
+    font-size: 18px;
+    color: var(--bg-base);
+    background: var(--chalk-yellow);
+    padding: 4px 16px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+
+  /* 畫布區域：嚴禁黑色底與黑色線條 */
+  .stage-container {
+    width: 100%;
+    border: 2px solid var(--rule-color);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0d201a;
+    position: relative;
+    margin-bottom: 18px;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* 控制與數據顯示區 */
+  .controls {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--rule-color);
+    margin-bottom: 18px;
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .control-group:last-child {
+    margin-bottom: 0;
+  }
+
+  label {
+    font-weight: 700;
+    color: var(--chalk-teal);
+  }
+
+  input[type=range] {
+    flex: 1;
+    height: 10px;
+    accent-color: var(--chalk-yellow);
+    cursor: pointer;
+  }
+
+  .readout-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--bg-base);
+    background: var(--chalk-yellow);
+    padding: 4px 14px;
+    border-radius: 8px;
+    min-width: 95px;
+    text-align: center;
+    font-size: 18px;
+  }
+
+  .stats {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--chalk-white);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px dashed var(--rule-color);
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stats b {
+    color: var(--chalk-yellow);
+  }
+
+  .note {
+    font-size: 20px;
+    color: var(--chalk-white);
+    line-height: 1.75;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 22px;
+    border-radius: 12px;
+    border-left: 6px solid var(--chalk-yellow);
+  }
+
+  .note ul {
+    margin: 8px 0 0 0;
+    padding-left: 24px;
+  }
+
+  .note li {
+    margin-bottom: 8px;
+  }
+
+  /* 理化專用標準上下分式規範 */
+  .fraction {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    margin: 0 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .fraction .numerator {
+    border-bottom: 2px solid var(--chalk-white);
+    padding-bottom: 2px;
+    font-size: 0.9em;
+  }
+
+  .fraction .denominator {
+    padding-top: 2px;
+    font-size: 0.9em;
+  }
+
+  .formula-box {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 14px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--rule-color);
+    margin: 14px 0;
+    text-align: center;
+    font-size: 22px;
+    color: var(--chalk-teal);
+  }
+
+  .btn-switch {
+    padding: 10px 18px;
+    border: 2px solid var(--chalk-teal);
+    background: transparent;
+    color: var(--chalk-teal);
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .btn-switch:hover, .btn-switch.active {
+    background: var(--chalk-teal);
+    color: var(--bg-base);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>能量與簡單機械</h1>
+    <p>國中自然科核心講義：功與功率、位能與動能、能量守恆與簡單機械原理</p>
+  </header>
+
+  <!-- 乾淨命名：不使用一、二、三數字前綴 -->
+  <div class="tabs">
+    <div class="tab-btn active" onclick="switchTab('tab1')">功與功率計算</div>
+    <div class="tab-btn" onclick="switchTab('tab2')">動能與位能轉換</div>
+    <div class="tab-btn" onclick="switchTab('tab3')">力學能與能量守恆</div>
+    <div class="tab-btn" onclick="switchTab('tab4')">槓桿與輪軸原理</div>
+    <div class="tab-btn" onclick="switchTab('tab5')">滑輪斜面與螺旋</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2 id="panel-title">功的定義與功率計算</h2>
+      <span id="panel-badge" class="sub-tag">能量基礎</span>
+    </div>
+
+    <!-- 嚴格雙欄排版 -->
+    <div class="grid-container">
+      <!-- 左欄：動態畫布與控制區 -->
+      <div>
+        <div class="stage-container">
+          <canvas id="stage" width="600" height="360"></canvas>
+        </div>
+        <div class="controls" id="dynamic-controls">
+          <!-- 內容由 JS 動態生成 -->
+        </div>
+      </div>
+
+      <!-- 右欄：即時物理數據與授課重點 -->
+      <div>
+        <div class="stats" id="dynamic-stats">
+          <!-- 數據由 JS 動態生成 -->
+        </div>
+        <div class="note" id="note-text">
+          <!-- 授課筆記由 JS 動態生成 -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  
+  let currentTab = 'tab1';
+  let animationFrame;
+  let animTime = 0;
+
+  // 物理操作變數
+  let f_val = 50, s_val = 10, t_val = 5;
+  let pe_mass = 2, pe_height = 4, ke_speed = 0;
+  let sub_mode = 'inclined'; // tab5 模式切換
+
+  const dynamicControls = document.getElementById('dynamic-controls');
+  const dynamicStats = document.getElementById('dynamic-stats');
+
+  function switchTab(tab) {
+    currentTab = tab;
+    cancelAnimationFrame(animationFrame);
+    animTime = 0;
+
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    const title = document.getElementById('panel-title');
+    const badge = document.getElementById('panel-badge');
+    const note = document.getElementById('note-text');
+
+    if (tab === 'tab1') {
+      title.textContent = '功的定義與功率計算';
+      badge.textContent = '能量基礎';
+      
+      dynamicControls.innerHTML = `
+        <div class="control-group">
+          <label>水平推力 (<span style="white-space: nowrap;">$F$</span>)：</label>
+          <input id="rng-f" type="range" min="10" max="200" step="10" value="50">
+          <span id="val-f" class="readout-badge">50 N</span>
+        </div>
+        <div class="control-group">
+          <label>移動位移 (<span style="white-space: nowrap;">$S$</span>)：</label>
+          <input id="rng-s" type="range" min="2" max="20" step="1" value="10">
+          <span id="val-s" class="readout-badge">10 m</span>
+        </div>
+        <div class="control-group">
+          <label>作功時間 (<span style="white-space: nowrap;">$t$</span>)：</label>
+          <input id="rng-t" type="range" min="1" max="10" step="1" value="5">
+          <span id="val-t" class="readout-badge">5 s</span>
+        </div>
+      `;
+
+      note.innerHTML = `
+        💡 <b>黑板重點：</b>
+        <ul>
+          <li><b>作功定義：</b>施力使物體的能量增加或減少。只有大小多寡，沒有方向性（純量）。
+            <div class="formula-box">
+              <span style="white-space: nowrap;">$W = F \times S$</span> （單位：<span style="white-space: nowrap;">焦耳 J</span>）
+            </div>
+          </li>
+          <li><b>作正功：</b>施力與位移同向，物體能量增加（如推桌子前進）。</li>
+          <li><b>作負功：</b>施力與位移反向，物體能量減少（如煞車阻力、拉火車減速）。</li>
+          <li><b>不作功：</b>施力與位移<b>垂直</b>（如提包包水平走、圓周運動向心力）或無位移。</li>
+          <li><b>功率 (<span style="white-space: nowrap;">$P$</span>)：</b>每秒鐘作功的效率。
+            <div class="formula-box">
+              <span style="white-space: nowrap;">$P =$ <div class="fraction"><span class="numerator">$W$</span><span class="denominator">$t$</span></div></span> （單位：<span style="white-space: nowrap;">瓦特 W</span>）
+            </div>
+          </li>
+        </ul>
+      `;
+
+      document.getElementById('rng-f').addEventListener('input', e => { f_val = parseFloat(e.target.value); document.getElementById('val-f').textContent = f_val + ' N'; updateTab1(); });
+      document.getElementById('rng-s').addEventListener('input', e => { s_val = parseFloat(e.target.value); document.getElementById('val-s').textContent = s_val + ' m'; updateTab1(); });
+      document.getElementById('rng-t').addEventListener('input', e => { t_val = parseFloat(e.target.value); document.getElementById('val-t').textContent = t_val + ' s'; updateTab1(); });
+      
+      updateTab1();
+      animateTab1();
+    }
+    else if (tab === 'tab2') {
+      title.textContent = '動能與位能轉換';
+      badge.textContent = '能量形式';
+      
+      dynamicControls.innerHTML = `
+        <div class="control-group">
+          <label>球體質量 (<span style="white-space: nowrap;">$m$</span>)：</label>
+          <input id="rng-m" type="range" min="1" max="10" step="0.5" value="2">
+          <span id="val-m" class="readout-badge">2.0 kg</span>
+        </div>
+        <div class="control-group">
+          <label>初始高度 (<span style="white-space: nowrap;">$h$</span>)：</label>
+          <input id="rng-h" type="range" min="1" max="5" step="0.5" value="4">
+          <span id="val-h" class="readout-badge">4.0 m</span>
+        </div>
+      `;
+
+      note.innerHTML = `
+        💡 <b>黑板重點：</b>
+        <ul>
+          <li><b>重力位能 (<span style="white-space: nowrap;">$U$</span>)：</b>物體因位置高低而儲存的能量，高度愈高、質量愈大，位能愈多。
+            <div class="formula-box">
+              <span style="white-space: nowrap;">$U = m \times g \times h$</span> （重力加速度 <span style="white-space: nowrap;">$g = 9.8 \text{ m/s}^2$</span>）
+            </div>
+          </li>
+          <li><b>彈力位能：</b>彈簧被壓縮或拉長時儲存的能量，形變量 (<span style="white-space: nowrap;">$x$</span>) 愈大位能愈多。</li>
+          <li><b>動能 (<span style="white-space: nowrap;">$K$</span>)：</b>物體運動時具有的能量，與質量成正比，與<b>速率的平方</b>成正比。
+            <div class="formula-box">
+              <span style="white-space: nowrap;">$K =$ <div class="fraction"><span class="numerator">$1$</span><span class="denominator">$2$</span></div> $m \times v^2$</span>
+            </div>
+          </li>
+          <li><b>簡諧運動：</b>彈簧振盪過程中，在端點位能最大，在平衡位置動能與速率最大。</li>
+        </ul>
+      `;
+
+      document.getElementById('rng-m').addEventListener('input', e => { pe_mass = parseFloat(e.target.value); document.getElementById('val-m').textContent = pe_mass.toFixed(1) + ' kg'; });
+      document.getElementById('rng-h').addEventListener('input', e => { pe_height = parseFloat(e.target.value); document.getElementById('val-h').textContent = pe_height.toFixed(1) + ' m'; });
+
+      animateTab2();
+    }
+    else if (tab === 'tab3') {
+      title.textContent = '力學能與能量守恆定律';
+      badge.textContent = '守恆定律';
+      
+      dynamicControls.innerHTML = `
+        <div style="text-align: center; color: var(--chalk-yellow); font-weight: 700;">
+          觀察單擺運動過程中，動能與位能的消長與總和守恆
+        </div>
+      `;
+
+      note.innerHTML = `
+        💡 <b>黑板重點：</b>
+        <ul>
+          <li><b>力學能守恆：</b>只受重力或彈力作用，毫無阻力與摩擦力時，動能與位能的總和恆為定值。
+            <div class="formula-box">
+              <span style="white-space: nowrap;">$K_1 + U_1 = K_2 + U_2 =$ 定值</span>
+            </div>
+          </li>
+          <li><b>自由落體與單擺：</b>最高點位能最大（動能為零），最低點動能最大（位能為零），底部最大速度 <span style="white-space: nowrap;">$v = \sqrt{2 \times g \times h}$</span>。</li>
+          <li><b>焦耳實驗與能量守恆：</b>西元 1843 年，焦耳藉由重錘下降攪動水流，證明力學能可轉換為熱能。宇宙總能量恆等！
+            <div class="formula-box">
+              <span style="white-space: nowrap;">$1 \text{ cal} = 4.2 \text{ J}$</span> ， <span style="white-space: nowrap;">$1 \text{ J} = 0.24 \text{ cal}$</span>
+            </div>
+          </li>
+        </ul>
+      `;
+
+      animateTab3();
+    }
+    else if (tab === 'tab4') {
+      title.textContent = '槓桿與輪軸原理';
+      badge.textContent = '簡單機械';
+      
+      dynamicControls.innerHTML = `
+        <div class="control-group">
+          <label>輪軸大輪半徑 (<span style="white-space: nowrap;">$R$</span>)：</label>
+          <input id="rng-r" type="range" min="20" max="60" step="5" value="40">
+          <span id="val-r" class="readout-badge">40 cm</span>
+        </div>
+        <div class="control-group">
+          <label>輪軸小軸半徑 (<span style="white-space: nowrap;">$r$</span>)：</label>
+          <input id="rng-r-small" type="range" min="10" max="30" step="5" value="15">
+          <span id="val-r-small" class="readout-badge">15 cm</span>
+        </div>
+      `;
+
+      note.innerHTML = `
+        💡 <b>黑板重點：</b>
+        <ul>
+          <li><b>使用簡單機械目的：</b>省力、省時或操作方便。<b>絕對無法省功！</b></li>
+          <li><b>槓桿分類：</b>
+            <br>① 支點在中間（剪刀、翹蹺板）：可能省力或費力。
+            <br>② 抗力在中間（開瓶器、裁紙刀）：施力臂大於抗力臂，<b>恆省力費時</b>。
+            <br>③ 施力在中間（筷子、釣魚竿）：抗力臂大於施力臂，<b>恆費力省時</b>。
+          </li>
+          <li><b>輪軸原理：</b>同軸轉動的兩個圓輪。
+            <div class="formula-box">
+              <span style="white-space: nowrap;">$F \times R = W \times r$</span> （<span style="white-space: nowrap;">施力在輪：省力</span>；<span style="white-space: nowrap;">在軸：費力</span>）
+            </div>
+          </li>
+        </ul>
+      `;
+
+      document.getElementById('rng-r').addEventListener('input', e => { document.getElementById('val-r').textContent = e.target.value + ' cm'; updateTab4(); });
+      document.getElementById('rng-r-small').addEventListener('input', e => { document.getElementById('val-r-small').textContent = e.target.value + ' cm'; updateTab4(); });
+
+      updateTab4();
+      animateTab4();
+    }
+    else if (tab === 'tab5') {
+      title.textContent = '滑輪、斜面與螺旋';
+      badge.textContent = '距離換取力';
+      
+      dynamicControls.innerHTML = `
+        <div style="display:flex; justify-content:center; gap:12px; margin-bottom:14px;">
+          <button class="btn-switch active" onclick="setTab5Mode('inclined', this)">斜面與螺旋原理</button>
+          <button class="btn-switch" onclick="setTab5Mode('pulley', this)">定滑輪與動滑輪</button>
+        </div>
+        <div id="tab5-sliders">
+          <div class="control-group">
+            <label>斜面長度 (<span style="white-space: nowrap;">$L$</span>)：</label>
+            <input id="rng-l" type="range" min="3" max="10" step="1" value="6">
+            <span id="val-l" class="readout-badge">6.0 m</span>
+          </div>
+          <div class="control-group">
+            <label>斜面高度 (<span style="white-space: nowrap;">$h$</span>)：</label>
+            <input id="rng-h-inc" type="range" min="1" max="4" step="0.5" value="2">
+            <span id="val-h-inc" class="readout-badge">2.0 m</span>
+          </div>
+        </div>
+      `;
+
+      note.innerHTML = `
+        💡 <b>黑板重點：</b>
+        <ul>
+          <li><b>定滑輪：</b>等臂槓桿，不省力也不費力，用途是<b>改變施力方向</b>（如升旗）。</li>
+          <li><b>動滑輪：</b>力臂為抗力臂兩倍，<b>省一半力 (<span style="white-space: nowrap;">$F = \frac{W}{2}$</span>)</b>，但施力拉動距離需加倍 (<span style="white-space: nowrap;">$S = 2 \times h$</span>)。</li>
+          <li><b>斜面與功的原理：</b>無摩擦時，沿斜面推力作功等於直接垂直抬起重物作功。
+            <div class="formula-box">
+              <span style="white-space: nowrap;">$F \times L = W \times h \implies F =$ <div class="fraction"><span class="numerator">$W \times h$</span><span class="denominator">$L$</span></div></span>
+            </div>
+            斜面愈平緩（長度 <span style="white-space: nowrap;">$L$</span> 愈大）愈省力！
+          </li>
+          <li><b>螺旋：</b>斜面捲繞在圓柱上的應用。螺距 (<span style="white-space: nowrap;">$d$</span>) 愈小、螺紋愈密，代表斜面愈平緩，旋入時愈省力（如螺絲釘、千斤頂）。</li>
+        </ul>
+      `;
+
+      document.getElementById('rng-l').addEventListener('input', e => { document.getElementById('val-l').textContent = parseFloat(e.target.value).toFixed(1) + ' m'; updateTab5(); });
+      document.getElementById('rng-h-inc').addEventListener('input', e => { document.getElementById('val-h-inc').textContent = parseFloat(e.target.value).toFixed(1) + ' m'; updateTab5(); });
+
+      updateTab5();
+      animateTab5();
+    }
+  }
+
+  // ============== 分頁一：功與功率 ==============
+  function updateTab1() {
+    let w_val = f_val * s_val;
+    let p_val = w_val / t_val;
+    dynamicStats.innerHTML = `
+      <span>水平推力 <span style="white-space: nowrap;">$F$</span> = <b>${f_val} N</b></span>
+      <span>移動位移 <span style="white-space: nowrap;">$S$</span> = <b>${s_val} m</b></span>
+      <span>累積作功 <span style="white-space: nowrap;">$W = F \times S$</span> = <b style="color:var(--chalk-teal);">${w_val} J</b></span>
+      <span>輸出功率 <span style="white-space: nowrap;">$P =$ <div class="fraction"><span class="numerator">$W$</span><span class="denominator">$t$</span></div></span> = <b style="color:var(--chalk-yellow);">${p_val.toFixed(1)} W</b></span>
+    `;
+  }
+
+  function animateTab1() {
+    if (currentTab !== 'tab1') return;
+    ctx.clearRect(0, 0, 600, 360);
+    animTime += 0.02;
+
+    let progress = (animTime % 2) / 2;
+    let boxX = 80 + progress * 360;
+
+    // 繪製黑板地面 (嚴禁黑色)
+    ctx.strokeStyle = '#a3b8b0';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(40, 260);
+    ctx.lineTo(560, 260);
+    ctx.stroke();
+
+    // 繪製位移標示線
+    ctx.strokeStyle = '#ffe066';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(120, 290);
+    ctx.lineTo(480, 290);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#ffe066';
+    ctx.font = 'bold 18px JetBrains Mono';
+    ctx.fillText(`位移 S = ${s_val} m`, 260, 315);
+
+    // 繪製被推動的木箱
+    ctx.fillStyle = '#4dd2ff';
+    ctx.fillRect(boxX, 180, 80, 80);
+    ctx.strokeStyle = '#f6f3ea';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(boxX, 180, 80, 80);
+    ctx.fillStyle = '#11261f';
+    ctx.font = 'bold 20px Noto Sans TC';
+    ctx.fillText('木箱', boxX + 18, 226);
+
+    // 繪製推力箭頭
+    ctx.strokeStyle = '#ff8040';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(boxX - 70, 220);
+    ctx.lineTo(boxX - 10, 220);
+    ctx.stroke();
+    ctx.fillStyle = '#ff8040';
+    ctx.beginPath();
+    ctx.moveTo(boxX - 10, 212);
+    ctx.lineTo(boxX + 6, 220);
+    ctx.lineTo(boxX - 10, 228);
+    ctx.fill();
+    ctx.font = 'bold 20px JetBrains Mono';
+    ctx.fillText(`F = ${f_val} N`, boxX - 70, 200);
+
+    // 頂部進度展示
+    ctx.fillStyle = '#f6f3ea';
+    ctx.font = 'bold 22px Noto Sans TC';
+    ctx.fillText('起重機與推箱作功模擬：能量隨位移累積', 80, 50);
+
+    animationFrame = requestAnimationFrame(animateTab1);
+  }
+
+  // ============== 分頁二：動能與位能 ==============
+  function animateTab2() {
+    if (currentTab !== 'tab2') return;
+    ctx.clearRect(0, 0, 600, 360);
+    animTime += 0.025;
+
+    let g = 9.8;
+    let u_max = pe_mass * g * pe_height;
+    
+    // 模擬U型軌道運動 (簡諧/力學能轉換)
+    let angle = animTime * 2;
+    let height_ratio = (1 - Math.cos(angle)) / 2; // 0 ~ 1
+    let current_h = pe_height * height_ratio;
+    let current_u = pe_mass * g * current_h;
+    let current_k = u_max - current_u;
+    let current_v = Math.sqrt((2 * current_k) / pe_mass);
+
+    dynamicStats.innerHTML = `
+      <span>球體質量 <span style="white-space: nowrap;">$m$</span> = <b>${pe_mass.toFixed(1)} kg</b></span>
+      <span>目前高度 <span style="white-space: nowrap;">$h$</span> = <b>${current_h.toFixed(2)} m</b></span>
+      <span>目前速率 <span style="white-space: nowrap;">$v$</span> = <b style="color:var(--chalk-teal);">${current_v.toFixed(2)} m/s</b></span>
+      <span>重力位能 <span style="white-space: nowrap;">$U = mgh$</span> = <b style="color:var(--chalk-yellow);">${current_u.toFixed(1)} J</b></span>
+      <span>動能 <span style="white-space: nowrap;">$K = \frac{1}{2}mv^2$</span> = <b style="color:var(--chalk-green);">${current_k.toFixed(1)} J</b></span>
+    `;
+
+    // 繪製 U 型軌道
+    ctx.strokeStyle = '#a3b8b0';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(300, 100, 180, 0, Math.PI, false);
+    ctx.stroke();
+
+    // 計算球體座標
+    let ball_angle = Math.PI/2 + (Math.cos(angle) * Math.PI/3);
+    let ball_x = 300 + 180 * Math.cos(ball_angle);
+    let ball_y = 100 + 180 * Math.sin(ball_angle);
+
+    // 繪製運動球體
+    ctx.fillStyle = '#ffe066';
+    ctx.beginPath();
+    ctx.arc(ball_x, ball_y, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#f6f3ea';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 繪製長條能量圖
+    ctx.fillStyle = '#ffe066';
+    ctx.fillRect(80, 310, (current_u / u_max) * 440, 20);
+    ctx.fillStyle = '#33cc99';
+    ctx.fillRect(80 + (current_u / u_max) * 440, 310, (current_k / u_max) * 440, 20);
+    ctx.strokeStyle = '#f6f3ea';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(80, 310, 440, 20);
+
+    ctx.fillStyle = '#f6f3ea';
+    ctx.font = 'bold 18px Noto Sans TC';
+    ctx.fillText('位能 (黃)', 80, 300);
+    ctx.fillText('動能 (綠)', 430, 300);
+    ctx.font = 'bold 22px Noto Sans TC';
+    ctx.fillText('U 型軌道：動能與位能的即時互換', 120, 45);
+
+    animationFrame = requestAnimationFrame(animateTab2);
+  }
+
+  // ============== 分頁三：力學能守恆 ==============
+  function animateTab3() {
+    if (currentTab !== 'tab3') return;
+    ctx.clearRect(0, 0, 600, 360);
+    animTime += 0.03;
+
+    // 模擬單擺運動
+    let theta = 0.6 * Math.sin(animTime);
+    let originX = 300, originY = 60;
+    let length = 220;
+    let bobX = originX + length * Math.sin(theta);
+    let bobY = originY + length * Math.cos(theta);
+
+    let max_h = length * (1 - Math.cos(0.6));
+    let cur_h = length * (1 - Math.cos(theta));
+    let pe_ratio = cur_h / max_h;
+    let ke_ratio = 1 - pe_ratio;
+
+    dynamicStats.innerHTML = `
+      <span>力學能總和 <span style="white-space: nowrap;">$E = K + U$</span> = <b style="color:var(--chalk-coral);">100 J (守恆)</b></span>
+      <span>即時重力位能 <span style="white-space: nowrap;">$U$</span> = <b style="color:var(--chalk-yellow);">${(pe_ratio*100).toFixed(1)} J</b></span>
+      <span>即時動能 <span style="white-space: nowrap;">$K$</span> = <b style="color:var(--chalk-green);">${(ke_ratio*100).toFixed(1)} J</b></span>
+      <span style="font-size:17px; color:var(--chalk-muted);">最高點速率為零；最低點平衡位置速率最快！</span>
+    `;
+
+    // 繪製天花板
+    ctx.strokeStyle = '#a3b8b0';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(200, 60); ctx.lineTo(400, 60);
+    ctx.stroke();
+
+    // 繪製擺繩
+    ctx.strokeStyle = '#f6f3ea';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(originX, originY); ctx.lineTo(bobX, bobY);
+    ctx.stroke();
+
+    // 繪製擺錘
+    ctx.fillStyle = '#ff8040';
+    ctx.beginPath();
+    ctx.arc(bobX, bobY, 22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#f6f3ea';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 繪製最低基準線
+    ctx.strokeStyle = '#4dd2ff';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(100, originY + length); ctx.lineTo(500, originY + length);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#4dd2ff';
+    ctx.font = '16px Noto Sans TC';
+    ctx.fillText('位能零位面 (h = 0)', 380, originY + length - 8);
+
+    ctx.fillStyle = '#f6f3ea';
+    ctx.font = 'bold 22px Noto Sans TC';
+    ctx.fillText('單擺力學能守恆：毫無阻力時總和固定', 100, 35);
+
+    animationFrame = requestAnimationFrame(animateTab3);
+  }
+
+  // ============== 分頁四：槓桿與輪軸 ==============
+  function updateTab4() {
+    let r_big = parseFloat(document.getElementById('rng-r').value);
+    let r_small = parseFloat(document.getElementById('rng-r-small').value);
+    let weight = 120; // 負荷 120N
+    let force_wheel = (weight * r_small) / r_big;
+
+    dynamicStats.innerHTML = `
+      <span>物體負重 <span style="white-space: nowrap;">$W$</span> = <b>120 N</b> （掛在小軸）</span>
+      <span>大輪力臂 <span style="white-space: nowrap;">$R$</span> = <b style="color:var(--chalk-teal);">${r_big} cm</b></span>
+      <span>小軸力臂 <span style="white-space: nowrap;">$r$</span> = <b style="color:var(--chalk-coral);">${r_small} cm</b></span>
+      <span>大輪所需施力 <span style="white-space: nowrap;">$F =$ <div class="fraction"><span class="numerator">$W \times r$</span><span class="denominator">$R$</span></div></span> = <b style="color:var(--chalk-yellow);">${force_wheel.toFixed(1)} N</b></span>
+      <span style="font-size:17px; color:var(--chalk-green);">結論：大輪半徑為小軸幾倍，施力就縮減為幾分之一！</span>
+    `;
+  }
+
+  function animateTab4() {
+    if (currentTab !== 'tab4') return;
+    ctx.clearRect(0, 0, 600, 360);
+    animTime += 0.02;
+
+    let r_big = parseFloat(document.getElementById('rng-r').value) * 2.2;
+    let r_small = parseFloat(document.getElementById('rng-r-small').value) * 2.2;
+    let cx = 300, cy = 180;
+
+    // 繪製大輪
+    ctx.strokeStyle = '#4dd2ff';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r_big, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(77, 210, 255, 0.1)';
+    ctx.fill();
+
+    // 繪製小軸
+    ctx.strokeStyle = '#ff8040';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r_small, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255, 128, 64, 0.2)';
+    ctx.fill();
+
+    // 繪製軸心與半徑標示
+    ctx.fillStyle = '#f6f3ea';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffe066';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy); ctx.lineTo(cx + r_big * Math.cos(animTime), cy + r_big * Math.sin(animTime));
+    ctx.stroke();
+
+    ctx.fillStyle = '#f6f3ea';
+    ctx.font = 'bold 20px Noto Sans TC';
+    ctx.fillText('大輪 (省力拉繩端)', cx - 80, cy - r_big - 15);
+    ctx.fillText('小軸 (掛載重物端)', cx - 80, cy + r_small + 25);
+    ctx.font = 'bold 22px Noto Sans TC';
+    ctx.fillText('輪軸原理模擬：同軸轉動的連續槓桿', 110, 40);
+
+    animationFrame = requestAnimationFrame(animateTab4);
+  }
+
+  // ============== 分頁五：滑輪、斜面與螺旋 ==============
+  function setTab5Mode(mode, btn) {
+    sub_mode = mode;
+    document.querySelectorAll('.btn-switch').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    const sliders = document.getElementById('tab5-sliders');
+    if (mode === 'inclined') {
+      sliders.style.display = 'block';
+    } else {
+      sliders.style.display = 'none';
+    }
+    updateTab5();
+  }
+
+  function updateTab5() {
+    if (sub_mode === 'inclined') {
+      let l_val = parseFloat(document.getElementById('rng-l').value);
+      let h_val = parseFloat(document.getElementById('rng-h-inc').value);
+      let w_val = 150; // 重物 150N
+      let f_push = (w_val * h_val) / l_val;
+
+      dynamicStats.innerHTML = `
+        <span>物體重量 <span style="white-space: nowrap;">$W$</span> = <b>150 N</b></span>
+        <span>斜面長度 <span style="white-space: nowrap;">$L$</span> = <b>${l_val.toFixed(1)} m</b> ， 高度 <span style="white-space: nowrap;">$h$</span> = <b>${h_val.toFixed(1)} m</b></span>
+        <span>沿斜面推力 <span style="white-space: nowrap;">$F =$ <div class="fraction"><span class="numerator">$W \times h$</span><span class="denominator">$L$</span></div></span> = <b style="color:var(--chalk-yellow);">${f_push.toFixed(1)} N</b></span>
+        <span style="font-size:17px; color:var(--chalk-teal);">斜面愈長愈平緩，推力愈小！螺旋螺紋愈密也是相同道理。</span>
+      `;
+    } else {
+      dynamicStats.innerHTML = `
+        <span>重物重量 <span style="white-space: nowrap;">$W$</span> = <b>100 N</b> （上升高度 <span style="white-space: nowrap;">$h = 1 \text{ m}$</span>）</span>
+        <span><b>定滑輪：</b>拉力 <span style="white-space: nowrap;">$F = 100 \text{ N}$</span> ，拉繩長度 <span style="white-space: nowrap;">$S = 1 \text{ m}$</span> （僅改方向）</span>
+        <span><b>動滑輪：</b>拉力 <span style="white-space: nowrap;">$F = 50 \text{ N}$</span> （省一半力），拉繩長度 <span style="white-space: nowrap;">$S = 2 \text{ m}$</span></span>
+        <span style="font-size:17px; color:var(--chalk-coral);">功的原理鐵律：兩者作功皆為 100 J，省力必定費距離！</span>
+      `;
+    }
+  }
+
+  function animateTab5() {
+    if (currentTab !== 'tab5') return;
+    ctx.clearRect(0, 0, 600, 360);
+    animTime += 0.02;
+
+    if (sub_mode === 'inclined') {
+      let l_val = parseFloat(document.getElementById('rng-l').value);
+      let h_val = parseFloat(document.getElementById('rng-h-inc').value);
+      
+      // 繪製斜面直角三角形
+      let base_x = 100, base_y = 280;
+      let slope_w = 360;
+      let slope_h = (h_val / 4) * 160;
+
+      ctx.strokeStyle = '#ffe066';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(base_x, base_y);
+      ctx.lineTo(base_x + slope_w, base_y);
+      ctx.lineTo(base_x + slope_w, base_y - slope_h);
+      ctx.closePath();
+      ctx.stroke();
+
+      // 標示 L 與 h
+      ctx.fillStyle = '#f6f3ea';
+      ctx.font = 'bold 18px JetBrains Mono';
+      ctx.fillText(`高度 h = ${h_val}m`, base_x + slope_w + 15, base_y - slope_h/2);
+      ctx.fillText(`斜面長 L = ${l_val}m`, base_x + slope_w/2 - 50, base_y - slope_h/2 - 20);
+
+      // 繪製斜面上的木塊
+      let progress = (Math.sin(animTime) + 1) / 2;
+      let cur_x = base_x + progress * slope_w;
+      let cur_y = base_y - progress * slope_h;
+
+      ctx.fillStyle = '#4dd2ff';
+      ctx.fillRect(cur_x - 20, cur_y - 35, 40, 35);
+      ctx.strokeStyle = '#f6f3ea';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cur_x - 20, cur_y - 35, 40, 35);
+
+      ctx.fillStyle = '#f6f3ea';
+      ctx.font = 'bold 22px Noto Sans TC';
+      ctx.fillText('斜面與螺旋：用平緩距離換取輕鬆省力', 100, 40);
+    } else {
+      // 繪製滑輪對照
+      ctx.fillStyle = '#f6f3ea';
+      ctx.font = 'bold 22px Noto Sans TC';
+      ctx.fillText('定滑輪 vs 動滑輪：施力與拉繩距離對照', 100, 40);
+
+      // 定滑輪 (左)
+      ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(180, 100, 30, 0, Math.PI*2); ctx.stroke();
+      ctx.fillStyle = '#ff8040'; ctx.fillRect(135, 180, 30, 35);
+      ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(150, 100); ctx.lineTo(150, 180); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(210, 100); ctx.lineTo(210, 200 + Math.sin(animTime)*30); ctx.stroke();
+      ctx.fillStyle = '#ffe066'; ctx.font = '18px Noto Sans TC'; ctx.fillText('定滑輪：不省力', 110, 260);
+
+      // 動滑輪 (右)
+      let pulley_y = 160 - Math.sin(animTime)*20;
+      ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(420, pulley_y, 30, 0, Math.PI*2); ctx.stroke();
+      ctx.fillStyle = '#ff8040'; ctx.fillRect(405, pulley_y + 35, 30, 35);
+      ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(390, 70); ctx.lineTo(390, pulley_y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(450, pulley_y); ctx.lineTo(450, 70 - Math.sin(animTime)*40); ctx.stroke();
+      ctx.fillStyle = '#33cc99'; ctx.fillText('動滑輪：省一半力', 350, 260);
+    }
+
+    animationFrame = requestAnimationFrame(animateTab5);
+  }
+
+  // 初始啟動
+  switchTab('tab1');
+</script>
+</body>
+</html>
