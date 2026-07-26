@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物理黑板教室：動能與位能</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-blackboard: #11261f;
+    --bg-panel: #18332a;
+    --bg-panel-hover: #204236;
+    --chalk-white: #f4f1ea;
+    --chalk-yellow: #fde047;
+    --chalk-cyan: #67e8f9;
+    --chalk-orange: #fb923c;
+    --chalk-green: #4ade80;
+    --chalk-pink: #f472b6;
+    --chalk-dim: #94a3b8;
+    --chalk-line: rgba(244, 241, 234, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 20px 15px 60px;
+    background-color: var(--bg-blackboard);
+    background-image: 
+      radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0),
+      radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0);
+    background-size: 24px 24px, 16px 16px;
+    background-position: 0 0, 8px 8px;
+    color: var(--chalk-white);
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 20px;
+    line-height: 1.8;
+  }
+
+  .wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--chalk-green);
+  }
+
+  h1 {
+    font-size: 36px;
+    color: var(--chalk-yellow);
+    margin: 0 0 8px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(253, 224, 71, 0.2);
+  }
+
+  .subtitle {
+    font-size: 22px;
+    color: var(--chalk-cyan);
+    font-weight: bold;
+  }
+
+  /* 導覽分頁按鈕 */
+  .nav-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .tab-btn {
+    padding: 12px 24px;
+    font-size: 20px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--chalk-dim);
+    border: 2px dashed var(--chalk-line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover {
+    background: var(--bg-panel-hover);
+    color: var(--chalk-white);
+    border-color: var(--chalk-white);
+  }
+
+  .tab-btn.active {
+    background: var(--bg-panel);
+    color: var(--chalk-yellow);
+    border: 2px solid var(--chalk-yellow);
+    box-shadow: 0 0 15px rgba(253, 224, 71, 0.25);
+  }
+
+  /* 面板與內容 */
+  .panel {
+    display: none;
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-line);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  .panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2 {
+    font-size: 28px;
+    color: var(--chalk-cyan);
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--chalk-line);
+  }
+
+  h3 {
+    font-size: 24px;
+    color: var(--chalk-yellow);
+    margin: 20px 0 10px;
+  }
+
+  /* 嚴格雙欄排版：iPad 滿版與大螢幕適配 */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    margin: 20px 0;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid var(--chalk-line);
+    border-radius: 12px;
+    padding: 22px;
+    transition: 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--chalk-yellow);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .card-title {
+    font-size: 24px;
+    color: var(--chalk-orange);
+    margin-bottom: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* 數學代數與 JetBrains Mono */
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: bold;
+    color: var(--chalk-yellow);
+  }
+
+  /* 防斷字綁定 */
+  .nw {
+    white-space: nowrap;
+  }
+
+  /* 理化專用標準上下分式 */
+  .fraction {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    padding: 0 8px;
+    margin: 0 4px;
+  }
+
+  .fraction .num {
+    border-bottom: 2px solid var(--chalk-white);
+    padding-bottom: 2px;
+    line-height: 1.2;
+  }
+
+  .fraction .den {
+    padding-top: 4px;
+    line-height: 1.2;
+  }
+
+  /* 概念引言盒 */
+  .concept-box {
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 6px solid var(--chalk-green);
+    padding: 16px 20px;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 20px;
+  }
+
+  /* 互動實驗區 */
+  .interactive-area {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px dashed var(--chalk-cyan);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    text-align: center;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+
+  .action-btn {
+    padding: 10px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    background: transparent;
+    color: var(--chalk-cyan);
+    border: 2px solid var(--chalk-cyan);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .action-btn:hover, .action-btn.active {
+    background: var(--chalk-cyan);
+    color: #111;
+  }
+
+  .btn-orange { color: var(--chalk-orange); border-color: var(--chalk-orange); }
+  .btn-orange:hover, .btn-orange.active { background: var(--chalk-orange); color: #111; }
+
+  .btn-pink { color: var(--chalk-pink); border-color: var(--chalk-pink); }
+  .btn-pink:hover, .btn-pink.active { background: var(--chalk-pink); color: #111; }
+
+  .btn-green { color: var(--chalk-green); border-color: var(--chalk-green); }
+  .btn-green:hover, .btn-green.active { background: var(--chalk-green); color: #111; }
+
+  /* 畫布與零黑色原則 */
+  canvas {
+    background-color: #0d1f18;
+    border: 2px solid var(--chalk-yellow);
+    border-radius: 8px;
+    margin: 16px auto;
+    display: block;
+    max-width: 100%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .explain-box {
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-white);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: left;
+    max-width: 800px;
+    margin: 10px auto 0;
+    font-size: 20px;
+  }
+
+  /* 顏色標示 */
+  .hl-yellow { color: var(--chalk-yellow); font-weight: bold; }
+  .hl-green { color: var(--chalk-green); font-weight: bold; }
+  .hl-cyan { color: var(--chalk-cyan); font-weight: bold; }
+  .hl-orange { color: var(--chalk-orange); font-weight: bold; }
+  .hl-pink { color: var(--chalk-pink); font-weight: bold; }
+
+  ul { margin: 10px 0; padding-left: 24px; }
+  li { margin-bottom: 8px; }
+
+  @media (max-width: 860px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    h1 { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>🎯 第二單元：動能與位能</h1>
+    <div class="subtitle">國中物理核心概念 ｜ 運動狀態與位置的能量儲存</div>
+  </header>
+
+  <!-- 導覽列：乾淨俐落，無數字符號前綴 -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab(0)">動能的定義與特性</button>
+    <button class="tab-btn" onclick="switchTab(1)">重力位能與高度</button>
+    <button class="tab-btn" onclick="switchTab(2)">彈力位能與形變</button>
+    <button class="tab-btn" onclick="switchTab(3)">課堂實戰演練</button>
+  </nav>
+
+  <!-- ================= 分頁 1：動能的定義與特性 ================= -->
+  <div class="panel active">
+    <h2>動能的定義與特性 <span class="hl-yellow" style="font-size: 20px; float: right;">運動中的能量</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">什麼是「動能」<span class="mono nw">(Kinetic Energy)</span>？</strong><br>
+      任何<span class="hl-green">「正在運動中的物體」</span>所具有的能量，就稱為動能。物體運動的速度越快、質量越大，所具有的動能就越強。
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-yellow);">
+        <div class="card-title" style="color: var(--chalk-yellow);">📐 動能標準計算公式</div>
+        <p>動能等於物體質量與速率平方乘積的一半：</p>
+        
+        <!-- 理化標準垂直分式 -->
+        <div style="text-align: center; font-size: 28px; margin: 24px 0; background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px;">
+          <span class="mono nw">K = </span>
+          <span class="fraction">
+            <span class="num mono">1</span>
+            <span class="den mono">2</span>
+          </span>
+          <span class="mono nw"> × m × v²</span>
+        </div>
+
+        <ul>
+          <li><span class="mono nw">K</span> <strong class="hl-yellow">(Kinetic Energy)</strong>：動能，標準國際單位為焦耳 <span class="mono nw">(J)</span>。</li>
+          <li><span class="mono nw">m</span> <strong class="hl-cyan">(Mass)</strong>：物體質量，標準國際單位為公斤 <span class="mono nw">(kg)</span>。</li>
+          <li><span class="mono nw">v</span> <strong class="hl-green">(Velocity)</strong>：物體運動速率，單位為公尺/秒 <span class="mono nw">(m/s)</span>。</li>
+        </ul>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-cyan);">
+        <div class="card-title" style="color: var(--chalk-cyan);">⚠️ 速率平方的關鍵影響</div>
+        <p>👉 <strong class="hl-yellow">質量成正比：</strong><br>
+        在相同速率下，大卡車與小腳踏車相撞，大卡車質量大，動能也成正比增大。</p>
+        
+        <p>👉 <strong class="hl-pink">速率平方成正比（段考必考）：</strong><br>
+        由於公式中速率是<span class="hl-orange">平方項 <span class="mono nw">(v²)</span></span>，當車速從 <span class="mono nw">20 km/h</span> 提高到 <span class="mono nw">40 km/h</span>（速率變為 <span class="mono nw">2</span> 倍）時，動能會暴增為 <span class="mono nw">2² = 4</span> 倍！</p>
+        
+        <div style="background: rgba(244, 114, 182, 0.1); border-left: 4px solid var(--chalk-pink); padding: 12px; margin-top: 14px;">
+          <span class="hl-pink">行車安全警示：</span>高速行駛時煞車距離會大幅拉長，正是因為動能隨著速率平方劇烈增加！
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 2：重力位能與高度 ================= -->
+  <div class="panel">
+    <h2>重力位能與高度 <span class="hl-yellow" style="font-size: 20px; float: right;">位置儲存的能量</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">什麼是「重力位能」<span class="mono nw">(Gravitational Potential Energy)</span>？</strong><br>
+      物體因為<span class="hl-cyan">「抵抗重力移至高處」</span>所儲存的能量，稱為重力位能。位能是看不見的，必須在物體下落轉換為動能時才會釋放出來。
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-green);">
+        <div class="card-title" style="color: var(--chalk-green);">📐 重力位能標準公式</div>
+        <p>重力位能等於物體質量、重力加速度與垂直高度的乘積：</p>
+        
+        <div style="text-align: center; font-size: 30px; margin: 24px 0; background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px;">
+          <span class="mono nw">U = m × g × h</span>
+        </div>
+
+        <ul>
+          <li><span class="mono nw">U</span> <strong class="hl-green">(Potential Energy)</strong>：重力位能，單位為焦耳 <span class="mono nw">(J)</span>。</li>
+          <li><span class="mono nw">m</span> <strong class="hl-cyan">(Mass)</strong>：質量，單位必須為公斤 <span class="mono nw">(kg)</span>。</li>
+          <li><span class="mono nw">g</span> <strong class="hl-yellow">(Gravity)</strong>：重力加速度，通常取 <span class="mono nw">9.8 m/s²</span> 或 <span class="mono nw">10 m/s²</span>。</li>
+          <li><span class="mono nw">h</span> <strong class="hl-orange">(Height)</strong>：垂直於參考面的高度差，單位為公尺 <span class="mono nw">(m)</span>。</li>
+        </ul>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-orange);">
+        <div class="card-title" style="color: var(--chalk-orange);">🔍 零位能面與相對高度</div>
+        <p>👉 <strong class="hl-yellow">高度與路徑無關：</strong><br>
+        重力位能只看<span class="hl-green">「垂直高度差 <span class="mono nw">h</span>」</span>。不論你是搭電梯垂直上升，還是沿著蜿蜒斜坡爬山，只要起點與終點的高度差相同，增加的重力位能就完全相等。</p>
+        
+        <p>👉 <strong class="hl-cyan">零位能面可以自訂：</strong><br>
+        一般以「地面」或「桌面」作為重力位能為零的參考面。處於參考面以上的物體具有正的重力位能。</p>
+      </div>
+    </div>
+
+    <!-- 互動繪圖區：絕對零黑色 -->
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">🔬 互動實驗區：重力作功與位能轉換</h3>
+      <p>點擊按鈕，觀察物體在上升與下落過程中，重力作功與位能的消長關係：</p>
+      <div class="btn-group">
+        <button class="action-btn btn-green active" onclick="drawGravityScene('lift', this)">🟢 向上抬升書包 (儲存位能)</button>
+        <button class="action-btn btn-pink" onclick="drawGravityScene('drop', this)">🔴 高處自由下落 (釋放位能)</button>
+      </div>
+      <canvas id="gravityCanvas" width="760" height="260"></canvas>
+      <div id="gravityExplain" class="explain-box"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 3：彈力位能與形變 ================= -->
+  <div class="panel">
+    <h2>彈力位能與形變 <span class="hl-yellow" style="font-size: 20px; float: right;">形變儲存的能量</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">什麼是「彈力位能」<span class="mono nw">(Elastic Potential Energy)</span>？</strong><br>
+      當彈性物體（如彈簧、橡皮筋、彈弓）發生<span class="hl-orange">「壓縮或拉長等形變」</span>時，內部所儲存的能量稱為彈力位能。
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-orange);">
+        <div class="card-title" style="color: var(--chalk-orange);">🏹 形變量與彈力位能</div>
+        <p>👉 <strong class="hl-yellow">形變越長，威力越大：</strong><br>
+        拉開彈弓或壓縮彈簧時，手克服彈力作正功，將能量轉換為彈力位能儲存。</p>
+        <p>👉 <strong class="hl-green">平衡位置 <span class="mono nw">(x = 0)</span>：</strong><br>
+        彈簧處於自然長度（不受到壓縮也無拉伸）時，彈力位能為零。</p>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-cyan);">
+        <div class="card-title" style="color: var(--chalk-cyan);">⚡ 能量轉換循環</div>
+        <p>當手放開壓縮的彈簧時，彈簧釋放彈力位能，對前端的木塊作正功，將位能轉化為木塊向前滑行的<span class="hl-yellow">動能</span>。</p>
+        <p style="color: var(--chalk-dim);">此過程說明了位能可以隨時轉化為運動的動能，維持著能量的流動。</p>
+      </div>
+    </div>
+
+    <!-- 互動繪圖區：彈簧壓縮與釋放 -->
+    <div class="interactive-area" style="margin-top: 24px;">
+      <h3 style="margin-top: 0;">⚙️ 互動演示：彈簧壓縮與釋放推動木塊</h3>
+      <p>點擊切換彈簧狀態，觀察形變量 <span class="mono nw">x</span> 與能量狀態：</p>
+      <div class="btn-group">
+        <button class="action-btn btn-orange active" onclick="drawSpringScene('compress', this)">1. 施力向左壓縮 (儲存彈力位能)</button>
+        <button class="action-btn btn-green" onclick="drawSpringScene('release', this)">2. 釋放推動木塊 (轉化為動能)</button>
+      </div>
+      <canvas id="springCanvas" width="760" height="260"></canvas>
+      <div id="springExplain" class="explain-box"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 4：課堂實戰演練 ================= -->
+  <div class="panel">
+    <h2>課堂實戰演練 <span class="hl-yellow" style="font-size: 20px; float: right;">經典試題解析</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">名師計算防錯提醒：</strong><br>
+      1. 檢查質量單位：題目若給公克 <span class="mono nw">(g)</span>，必須先除以 <span class="mono nw">1000</span> 換算為公斤 <span class="mono nw">(kg)</span>！<br>
+      2. 檢查高度單位：公分 <span class="mono nw">(cm)</span> 必須換算為公尺 <span class="mono nw">(m)</span>。<br>
+      3. 動能記得除以 <span class="mono nw">2</span> 且速率要平方！
+    </div>
+
+    <div class="grid-2">
+      <!-- 練習題 1 -->
+      <div class="card" style="border-color: var(--chalk-yellow);">
+        <div class="card-title" style="color: var(--chalk-yellow);">📝 演練一：小球動能計算</div>
+        <p>一顆質量為 <span class="mono nw">100 g</span> 的小球，以 <span class="mono nw">5 m/s</span> 的等速率向前滾動，請問此小球具有多少焦耳的動能？</p>
+        
+        <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 8px; margin-top: 14px; border: 1px dashed var(--chalk-white);">
+          <strong class="hl-green">【標準分式板書推導】</strong><br>
+          👉 步驟一：單位換算為標準公斤<br>
+          <span class="mono nw" style="color: var(--chalk-cyan);">m = 100 g = 0.1 kg</span><br><br>
+          
+          👉 步驟二：代入動能公式（速率記得平方）<br>
+          <div style="font-size: 22px; margin-top: 8px;">
+            <span class="mono nw">K = </span>
+            <span class="fraction">
+              <span class="num mono">1</span>
+              <span class="den mono">2</span>
+            </span>
+            <span class="mono nw"> × m × v²</span><br><br>
+            <span class="mono nw">  = </span>
+            <span class="fraction">
+              <span class="num mono">1</span>
+              <span class="den mono">2</span>
+            </span>
+            <span class="mono nw"> × 0.1 kg × (5 m/s)²</span><br><br>
+            <span class="mono nw" style="color: var(--chalk-yellow);">  = 0.05 × 25 = 1.25 J</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 練習題 2 -->
+      <div class="card" style="border-color: var(--chalk-green);">
+        <div class="card-title" style="color: var(--chalk-green);">📝 演練二：玩偶重力位能計算</div>
+        <p>將一個質量為 <span class="mono nw">200 g</span> 的海綿玩偶，放置在距離地板垂直高度為 <span class="mono nw">250 cm</span> 的書架上，請問它具有多少重力位能？（重力加速度取 <span class="mono nw">g = 9.8 m/s²</span>）</p>
+
+        <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 8px; margin-top: 14px; border: 1px dashed var(--chalk-white);">
+          <strong class="hl-green">【標準分式板書推導】</strong><br>
+          👉 步驟一：嚴格執行單位換算<br>
+          <span class="mono nw" style="color: var(--chalk-cyan);">m = 200 g = 0.2 kg</span><br>
+          <span class="mono nw" style="color: var(--chalk-orange);">h = 250 cm = 2.5 m</span><br><br>
+          
+          👉 步驟二：代入重力位能公式<br>
+          <div style="font-size: 22px; margin-top: 8px;">
+            <span class="mono nw">U = m × g × h</span><br>
+            <span class="mono nw">  = 0.2 kg × 9.8 m/s² × 2.5 m</span><br>
+            <span class="mono nw" style="color: var(--chalk-green);">  = 4.9 J</span>
+          </div>
+          <small style="color: var(--chalk-dim); display: block; margin-top: 10px;">💡 若學校段考約定 <span class="mono nw">g = 10 m/s²</span>，則位能為 <span class="mono nw">0.2 × 10 × 2.5 = 5 J</span>。</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // --- 分頁切換 ---
+  function switchTab(idx) {
+    document.querySelectorAll('.tab-content, .panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    document.querySelectorAll('.panel')[idx].classList.add('active');
+    document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+
+    if(idx === 1) drawGravityScene('lift', document.querySelector('.btn-group .btn-green'));
+    if(idx === 2) drawSpringScene('compress', document.querySelectorAll('.interactive-area .btn-group button')[0]);
+  }
+
+  // --- 分頁二：重力位能互動畫布 (嚴格零黑色) ---
+  function drawGravityScene(type, btn) {
+    if(btn) {
+      document.querySelectorAll('#gravityCanvas ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    const canvas = document.getElementById('gravityCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const exp = document.getElementById('gravityExplain');
+
+    // 地面與參考面 (亮黃虛線)
+    ctx.strokeStyle = '#fde047';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(50, 210);
+    ctx.lineTo(710, 210);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fde047';
+    ctx.font = 'bold 20px "Noto Sans TC"';
+    ctx.fillText("零位能參考面 (地面 U = 0)", 430, 235);
+
+    if(type === 'lift') {
+      // 畫高處書包 (亮青色框)
+      ctx.fillStyle = 'rgba(103, 232, 249, 0.2)';
+      ctx.strokeStyle = '#67e8f9';
+      ctx.lineWidth = 4;
+      ctx.fillRect(320, 60, 90, 70);
+      ctx.strokeRect(320, 60, 80, 70);
+      ctx.fillStyle = '#f4f1ea';
+      ctx.font = 'bold 20px "Noto Sans TC"';
+      ctx.fillText("書包", 338, 102);
+
+      // 施力與垂直位移向上
+      drawArrow(ctx, 360, 180, 360, 140, '#4ade80', 5);
+      ctx.fillStyle = '#4ade80';
+      ctx.font = 'bold 22px "JetBrains Mono"';
+      ctx.fillText("F (抬升施力)", 220, 165);
+
+      // 高度差標記
+      drawArrow(ctx, 450, 210, 450, 60, '#fde047', 3);
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 22px "JetBrains Mono"';
+      ctx.fillText("h = 2 m", 465, 140);
+
+      exp.innerHTML = `
+        <strong class="hl-green">🟢 狀態：克服重力作正功，儲存重力位能</strong><br>
+        手施力 <span class="mono nw">F</span> 向上，書包的垂直位移 <span class="mono nw">h</span> 也向上。施力對書包作了正功 <span class="mono nw">W = F × h</span>。<br>
+        👉 <strong class="hl-yellow">能量轉化：</strong> 這份功以<strong class="hl-green">「重力位能 <span class="mono nw">(U = mgh)</span>」</strong>的形式儲存在書包與地球系統中。
+      `;
+      exp.style.borderColor = 'var(--chalk-green)';
+    } else {
+      // 畫正在下落的書包
+      ctx.fillStyle = 'rgba(244, 114, 182, 0.2)';
+      ctx.strokeStyle = '#f472b6';
+      ctx.lineWidth = 4;
+      ctx.fillRect(320, 110, 80, 70);
+      ctx.strokeRect(320, 110, 80, 70);
+      ctx.fillStyle = '#f4f1ea';
+      ctx.font = 'bold 20px "Noto Sans TC"';
+      ctx.fillText("書包", 338, 152);
+
+      // 重力向下與速度向下
+      drawArrow(ctx, 360, 60, 360, 100, '#fb923c', 5);
+      ctx.fillStyle = '#fb923c';
+      ctx.font = 'bold 22px "JetBrains Mono"';
+      ctx.fillText("mg (重力)", 250, 85);
+
+      drawArrow(ctx, 430, 130, 430, 190, '#67e8f9', 5);
+      ctx.fillStyle = '#67e8f9';
+      ctx.font = 'bold 22px "JetBrains Mono"';
+      ctx.fillText("v (速度變快)", 445, 170);
+
+      exp.innerHTML = `
+        <strong class="hl-pink">🔴 狀態：重力作正功，釋放位能轉化為動能</strong><br>
+        當手放開後，書包在高度差 <span class="mono nw">h</span> 中自由下落，此時高度降低，重力位能 <span class="mono nw">U</span> <span class="hl-pink">迅速減少</span>。<br>
+        👉 <strong class="hl-cyan">能量轉化：</strong> 減少的重力位能並沒有消失！它轉化為書包運動加速的<strong class="hl-cyan">「動能 <span class="mono nw">(K)</span>」</strong>！
+      `;
+      exp.style.borderColor = 'var(--chalk-pink)';
+    }
+  }
+
+  // --- 分頁三：彈簧壓縮與釋放畫布 (嚴格零黑色) ---
+  function drawSpringScene(type, btn) {
+    if(btn) {
+      document.querySelectorAll('#springCanvas ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    const canvas = document.getElementById('springCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const exp = document.getElementById('springExplain');
+
+    // 水平光滑桌台
+    ctx.strokeStyle = '#fde047'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(50, 200); ctx.lineTo(710, 200); ctx.stroke();
+    // 左側擋牆
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.strokeStyle = '#f4f1ea'; ctx.lineWidth = 4;
+    ctx.fillRect(50, 100, 30, 100); ctx.strokeRect(50, 100, 30, 100);
+
+    // 自然平衡位置虛線
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(420, 80); ctx.lineTo(420, 210); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#4ade80'; ctx.font = 'bold 20px "JetBrains Mono"';
+    ctx.fillText("自然平衡位置 (x = 0)", 330, 70);
+
+    if(type === 'compress') {
+      // 畫壓縮彈簧 (線圈密)
+      ctx.strokeStyle = '#fb923c'; ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(80, 150);
+      for(let i=1; i<=10; i++) {
+        ctx.lineTo(80 + i * 16 - 8, i%2===0 ? 130 : 170);
+        ctx.lineTo(80 + i * 16, 150);
+      }
+      ctx.stroke();
+
+      // 木塊在 x 位置 (向左)
+      ctx.fillStyle = 'rgba(251, 146, 60, 0.25)';
+      ctx.strokeStyle = '#fb923c'; ctx.lineWidth = 4;
+      ctx.fillRect(240, 130, 70, 70); ctx.strokeRect(240, 130, 70, 70);
+      ctx.fillStyle = '#f4f1ea'; ctx.font = 'bold 20px "Noto Sans TC"';
+      ctx.fillText("木塊", 255, 172);
+
+      // 形變量 x
+      drawArrow(ctx, 420, 110, 310, 110, '#fde047', 3);
+      ctx.fillStyle = '#fde047'; ctx.font = 'bold 22px "JetBrains Mono"';
+      ctx.fillText("壓縮量 x", 330, 100);
+
+      // 施力向左
+      drawArrow(ctx, 380, 165, 320, 165, '#67e8f9', 5);
+      ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 22px "JetBrains Mono"';
+      ctx.fillText("F (外力推壓)", 385, 170);
+
+      exp.innerHTML = `
+        <strong class="hl-orange">🟧 狀態：克服彈力向左壓縮，儲存最大彈力位能</strong><br>
+        施力將木塊向左推離平衡位置，彈簧發生壓縮形變量 <span class="mono nw">x</span>。<br>
+        👉 <strong class="hl-yellow">能量特性：</strong> 此時木塊靜止 <span class="mono nw">(v = 0)</span>，動能為零；但系統內部儲存了<strong class="hl-orange">「最大量的彈力位能」</strong>。
+      `;
+      exp.style.borderColor = 'var(--chalk-orange)';
+    } else {
+      // 畫自然長度彈簧
+      ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(80, 150);
+      for(let i=1; i<=10; i++) {
+        ctx.lineTo(80 + i * 33 - 16, i%2===0 ? 130 : 170);
+        ctx.lineTo(80 + i * 33, 150);
+      }
+      ctx.stroke();
+
+      // 木塊到達平衡位置
+      ctx.fillStyle = 'rgba(74, 222, 128, 0.25)';
+      ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 4;
+      ctx.fillRect(410, 130, 70, 70); ctx.strokeRect(410, 130, 70, 70);
+      ctx.fillStyle = '#f4f1ea'; ctx.font = 'bold 20px "Noto Sans TC"';
+      ctx.fillText("木塊", 425, 172);
+
+      // 彈力作功推動速度 v
+      drawArrow(ctx, 490, 165, 590, 165, '#67e8f9', 5);
+      ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 24px "JetBrains Mono"';
+      ctx.fillText("v (獲得最大動能)", 490, 150);
+
+      exp.innerHTML = `
+        <strong class="hl-green">🟢 狀態：放手釋放，彈力位能全部轉化為木塊動能</strong><br>
+        彈簧伸展對木塊作正功，木塊被加速向前推。當木塊到達平衡位置 <span class="mono nw">(x = 0)</span> 時，形變消失，彈力位能歸零。<br>
+        👉 <strong class="hl-cyan">能量特性：</strong> 儲存的彈力位能已<strong class="hl-cyan">100% 轉化為木塊滑行的動能 <span class="mono nw">(K)</span></strong>，此時速率最快！
+      `;
+      exp.style.borderColor = 'var(--chalk-green)';
+    }
+  }
+
+  // 輔助畫箭頭函數 (嚴格零黑色)
+  function drawArrow(ctx, fromX, fromY, toX, toY, color, width) {
+    const headLen = 14;
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = width;
+    
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(toX, toY);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(toX - headLen * Math.cos(angle - Math.PI / 6), toY - headLen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(toX - headLen * Math.cos(angle + Math.PI / 6), toY - headLen * Math.sin(angle + Math.PI / 6));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // 初始化繪製
+  window.onload = function() {
+    drawGravityScene('lift', null);
+    drawSpringScene('compress', null);
+  };
+</script>
+</body>
+</html>
