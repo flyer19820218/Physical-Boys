@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物理黑板教室：力矩與靜力平衡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-blackboard: #11261f;
+    --bg-panel: #18332a;
+    --bg-panel-hover: #204236;
+    --chalk-white: #FFFFFF;
+    --chalk-yellow: #FFE600;
+    --chalk-cyan: #00E5FF;
+    --chalk-orange: #FF9900;
+    --chalk-green: #00FF66;
+    --chalk-pink: #FF3399;
+    --chalk-dim: #A0B3C6;
+    --chalk-line: rgba(255, 255, 255, 0.3);
+    /* 絕對零黑：陰影改用極深綠色 */
+    --shadow-dark: rgba(9, 20, 16, 0.9);
+    --shadow-light: rgba(9, 20, 16, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 20px 15px 60px;
+    background-color: var(--bg-blackboard);
+    background-image: 
+      radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0),
+      radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+    background-size: 24px 24px, 16px 16px;
+    background-position: 0 0, 8px 8px;
+    color: var(--chalk-white);
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 20px; /* 嚴格字體地板 */
+    line-height: 1.8;
+  }
+
+  .wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--chalk-green);
+  }
+
+  h1 {
+    font-size: 32px;
+    color: var(--chalk-yellow);
+    margin: 0 0 8px;
+    letter-spacing: 2px;
+  }
+
+  .subtitle {
+    font-size: 22px;
+    color: var(--chalk-cyan);
+    font-weight: bold;
+  }
+
+  /* 導覽列：簡明命名，無數字 */
+  .nav-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    padding-bottom: 8px;
+  }
+
+  .tab-btn {
+    padding: 12px 24px;
+    font-size: 20px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--chalk-dim);
+    border: 2px dashed var(--chalk-line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover {
+    background: var(--bg-panel-hover);
+    color: var(--chalk-white);
+    border-color: var(--chalk-white);
+  }
+
+  .tab-btn.active {
+    background: var(--bg-panel);
+    color: var(--chalk-yellow);
+    border: 2px solid var(--chalk-yellow);
+    box-shadow: 0 0 15px rgba(255, 230, 0, 0.3);
+  }
+
+  /* 面板與內容 */
+  .panel {
+    display: none;
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-line);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 10px 30px var(--shadow-dark);
+  }
+
+  .panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2 {
+    font-size: 28px;
+    color: var(--chalk-cyan);
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--chalk-line);
+  }
+
+  /* 嚴格雙欄排版 */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    margin: 20px 0;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px solid var(--chalk-line);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .card-title {
+    font-size: 24px;
+    color: var(--chalk-orange);
+    margin-bottom: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* 數學代數與防斷字綁定 */
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: bold;
+    color: var(--chalk-yellow);
+  }
+  .nw {
+    white-space: nowrap;
+  }
+
+  /* 理化專用標準上下分式 */
+  .fraction {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    padding: 0 8px;
+    margin: 0 4px;
+  }
+  .fraction .num {
+    border-bottom: 2px solid var(--chalk-white);
+    padding-bottom: 2px;
+    line-height: 1.2;
+  }
+  .fraction .den {
+    padding-top: 4px;
+    line-height: 1.2;
+  }
+
+  /* 概念引言盒 */
+  .concept-box {
+    background: rgba(255, 255, 255, 0.06);
+    border-left: 6px solid var(--chalk-green);
+    padding: 16px 20px;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 20px;
+  }
+
+  /* 互動實驗區 */
+  .interactive-area {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px dashed var(--chalk-cyan);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    text-align: center;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+
+  .action-btn {
+    padding: 10px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    background: transparent;
+    color: var(--chalk-cyan);
+    border: 2px solid var(--chalk-cyan);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  /* 雙向色彩映射：Active 時字體使用黑板底色，絕無黑色 */
+  .action-btn:hover, .action-btn.active {
+    background: var(--chalk-cyan);
+    color: var(--bg-blackboard);
+  }
+  .btn-orange { color: var(--chalk-orange); border-color: var(--chalk-orange); }
+  .btn-orange:hover, .btn-orange.active { background: var(--chalk-orange); color: var(--bg-blackboard); }
+  .btn-pink { color: var(--chalk-pink); border-color: var(--chalk-pink); }
+  .btn-pink:hover, .btn-pink.active { background: var(--chalk-pink); color: var(--bg-blackboard); }
+  .btn-green { color: var(--chalk-green); border-color: var(--chalk-green); }
+  .btn-green:hover, .btn-green.active { background: var(--chalk-green); color: var(--bg-blackboard); }
+  .btn-yellow { color: var(--chalk-yellow); border-color: var(--chalk-yellow); }
+  .btn-yellow:hover, .btn-yellow.active { background: var(--chalk-yellow); color: var(--bg-blackboard); }
+
+  /* 畫布與零黑色原則 */
+  canvas {
+    background-color: var(--bg-blackboard);
+    border: 2px solid var(--chalk-yellow);
+    border-radius: 8px;
+    margin: 16px auto;
+    display: block;
+    max-width: 100%;
+    box-shadow: 0 4px 15px var(--shadow-dark);
+  }
+
+  .explain-box {
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-white);
+    border-radius: 8px;
+    padding: 18px;
+    text-align: left;
+    max-width: 820px;
+    margin: 14px auto 0;
+    font-size: 20px;
+  }
+
+  /* 顏色標示 */
+  .hl-yellow { color: var(--chalk-yellow); font-weight: bold; }
+  .hl-green { color: var(--chalk-green); font-weight: bold; }
+  .hl-cyan { color: var(--chalk-cyan); font-weight: bold; }
+  .hl-orange { color: var(--chalk-orange); font-weight: bold; }
+  .hl-pink { color: var(--chalk-pink); font-weight: bold; }
+
+  ul { margin: 10px 0; padding-left: 24px; }
+  li { margin-bottom: 8px; }
+
+  @media (max-width: 860px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>🎯 力矩與靜力平衡</h1>
+    <div class="subtitle">國中物理核心概念 ｜ 轉動效應與力臂剖析</div>
+  </header>
+
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab(0)">力矩與力臂定義</button>
+    <button class="tab-btn" onclick="switchTab(1)">力矩的方向</button>
+    <button class="tab-btn" onclick="switchTab(2)">圓球上階梯</button>
+    <button class="tab-btn" onclick="switchTab(3)">靜力平衡條件</button>
+  </nav>
+
+  <!-- ================= 分頁 1：力矩與力臂定義 ================= -->
+  <div class="panel active">
+    <h2>力矩與力臂定義 <span class="hl-yellow" style="font-size: 20px; float: right;">轉動的核心物理量</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">力對物體的兩大作用效應：</strong><br>
+      1. 移動：產生加速度。由<span class="hl-cyan">「作用力 <span class="mono nw">(F)</span>」</span>決定。作用力越大，越容易移動物體。<br>
+      2. 轉動：產生旋轉（角加速度）。由<span class="hl-green">「力矩 <span class="mono nw">(τ)</span>」</span>決定。力矩越大，物體越容易旋轉。
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-yellow);">
+        <div class="card-title" style="color: var(--chalk-yellow);">📐 力矩的定義與公式</div>
+        <p>力矩的大小取決於「施力」與「力臂」的乘積：</p>
+        <div style="text-align: center; font-size: 26px; margin: 16px 0; background: var(--shadow-light); padding: 12px; border-radius: 8px;">
+          <span class="mono nw">力矩 = 施力 × 力臂</span><br>
+          <span class="mono nw">τ = F × d</span>
+        </div>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-cyan);">
+        <div class="card-title" style="color: var(--chalk-cyan);">📏 什麼是力臂？</div>
+        <p>這是一般學生最容易出錯的地方！</p>
+        <ul>
+          <li><span class="hl-pink">施力線：</span> 沿著施力方向無限延伸的假想直線。</li>
+          <li><strong class="hl-cyan">力臂 <span class="mono nw">(d)</span>：</strong> 從<strong class="hl-yellow">支點</strong>到<strong class="hl-pink">施力線</strong>的<strong class="hl-green">垂直距離</strong>。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">🎯 實戰測驗：尋找正確的力臂</h3>
+      <p>如圖所示，施力 <span class="mono nw">F</span> 作用於木尺右端。請點擊按鈕，選出哪一條線段才是真正的「力臂」？</p>
+      <div class="btn-group">
+        <button class="action-btn btn-pink" onclick="checkLeverArm('A', this)">選擇 A 線段</button>
+        <button class="action-btn btn-green" onclick="checkLeverArm('B', this)">選擇 B 線段</button>
+        <button class="action-btn btn-orange" onclick="checkLeverArm('C', this)">選擇 C 線段</button>
+      </div>
+      <canvas id="leverArmCanvas" width="760" height="340"></canvas>
+      <div id="leverArmExplain" class="explain-box">
+        👉 請點擊上方按鈕作答，觀看力臂解析。
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 2：力矩的方向 ================= -->
+  <div class="panel">
+    <h2>力矩的方向 <span class="hl-yellow" style="font-size: 20px; float: right;">順時針與逆時針</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">力矩是一種向量：</strong><br>
+      力矩不僅有大小，還有方向。在國中階段，我們將力矩的方向簡化為兩種旋轉趨勢：<br>
+      👉 <span class="hl-cyan">順時針力矩：</span> 讓物體產生順時針旋轉趨勢的能力。<br>
+      👉 <span class="hl-green">逆時針力矩：</span> 讓物體產生逆時針旋轉趨勢的能力。
+    </div>
+
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">⚖️ 互動演示：施力與旋轉方向</h3>
+      <p>點擊下方按鈕，在木尺的不同位置施加向下力 <span class="mono nw">F</span>，觀察其產生的力矩方向：</p>
+      <div class="btn-group">
+        <button class="action-btn btn-green" onclick="applyTorque('left', this)">在左側施加向下力</button>
+        <button class="action-btn btn-cyan" onclick="applyTorque('right', this)">在右側施加向下力</button>
+        <button class="action-btn btn-yellow" onclick="applyTorque('center', this)">在支點施加向下力</button>
+      </div>
+      <canvas id="torqueDirCanvas" width="760" height="280"></canvas>
+      <div id="torqueDirExplain" class="explain-box">
+        👉 請點擊按鈕施力。
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 3：圓球上階梯 ================= -->
+  <div class="panel">
+    <h2>圓球上階梯 <span class="hl-yellow" style="font-size: 20px; float: right;">尋找極限力臂</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">最省力策略物理分析：</strong><br>
+      要將圓球推上階梯，階梯的尖角即為<span class="hl-orange">「支點」</span>。<br>
+      根據公式 <span class="mono nw">τ = F × d</span>，若要施力 <span class="mono nw">F</span> 最小，就必須尋找<span class="hl-pink">最長的力臂 <span class="mono nw">d</span></span>。
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-cyan);">
+        <div class="card-title" style="color: var(--chalk-cyan);">🔍 哪一個推力最省力？</div>
+        <p>如下圖所示，有四個不同方向的推力 <span class="mono nw">F₁</span> 到 <span class="mono nw">F₄</span>。</p>
+        <p>👉 通過支點的「圓的直徑」即為空間中的<strong class="hl-yellow">極限最大力臂</strong>。<br>
+        👉 因此，<strong class="hl-green">垂直於此直徑的施力方向，將最省力！</strong></p>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-orange);">
+        <div class="card-title" style="color: var(--chalk-orange);">⚠️ 錯誤施力方向</div>
+        <p>若施力線恰好<strong class="hl-pink">通過支點</strong>（例如朝著支點硬推），此時力臂 <span class="mono nw">d = 0</span>。<br>
+        無論施加多大的力，力矩皆為零，圓球絕對無法轉動上階梯。</p>
+      </div>
+    </div>
+
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">⚽ 實體解析：尋找最大力臂</h3>
+      <p>點擊下方不同施力，觀察其對應的力臂長度，找出最省力的推法：</p>
+      <div class="btn-group">
+        <button class="action-btn btn-cyan" onclick="checkStepForce('F1', this)">F₁ (朝向支點)</button>
+        <button class="action-btn btn-orange" onclick="checkStepForce('F2', this)">F₂ (水平推中心)</button>
+        <button class="action-btn btn-green" onclick="checkStepForce('F3', this)">F₃ (垂直直徑)</button>
+        <button class="action-btn btn-pink" onclick="checkStepForce('F4', this)">F₄ (水平推頂端)</button>
+      </div>
+      <canvas id="stepCanvas" width="760" height="340"></canvas>
+      <div id="stepExplain" class="explain-box">
+        👉 點擊上方按鈕，檢視施力對應的力臂分析。
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 4：靜力平衡條件 ================= -->
+  <div class="panel">
+    <h2>靜力平衡條件 <span class="hl-yellow" style="font-size: 20px; float: right;">移動與轉動的雙重限制</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">完全靜止的兩大條件：</strong><br>
+      當物體處於「靜止不動」的狀態時（靜力平衡），必須同時滿足：<br>
+      1. <strong class="hl-cyan">移動平衡：</strong> <span class="mono nw">合力 = 0</span>（向上力 ＝ 向下力；向左力 ＝ 向右力）。<br>
+      2. <strong class="hl-green">轉動平衡：</strong> <span class="mono nw">合力矩 = 0</span>（順時針力矩總和 ＝ 逆時針力矩總和）。
+    </div>
+
+    <div class="grid-2">
+      <!-- 練習題 1：蹺蹺板 -->
+      <div class="card" style="border-color: var(--chalk-green);">
+        <div class="card-title" style="color: var(--chalk-green);">📝 實戰演練：蹺蹺板平衡</div>
+        <p>媽媽體重 <span class="mono nw">60 kgw</span>，坐在距離支點 <span class="mono nw">2 m</span> 處。妹妹坐在距離支點 <span class="mono nw">5 m</span> 處。<br>
+        請問妹妹至少需要施力多少 <span class="mono nw">kgw</span>，才能將媽媽抬起並維持平衡？</p>
+        
+        <div style="background: var(--shadow-light); padding: 16px; border-radius: 8px; margin-top: 14px; border: 1px dashed var(--chalk-white);">
+          <strong class="hl-yellow">【標準等式推導】</strong><br>
+          👉 建立轉動平衡條件：順時針力矩 ＝ 逆時針力矩<br>
+          <div style="font-size: 22px; margin: 8px 0;">
+            <span class="mono nw" style="color: var(--chalk-cyan);">F × 5 = 60 × 2</span><br>
+            <span class="mono nw">5F = 120</span><br>
+            <span class="mono nw" style="color: var(--chalk-green);">F = 24 kgw</span>
+          </div>
+          <small style="color: var(--chalk-dim);">💡 結論：妹妹利用較長的力臂，成功省力撐起媽媽。</small>
+        </div>
+      </div>
+
+      <!-- 練習題 2：肩膀扛重物 -->
+      <div class="card" style="border-color: var(--chalk-pink);">
+        <div class="card-title" style="color: var(--chalk-pink);">🔥 進階演練：肩膀扛重物</div>
+        <p>小婷用均勻木棒，兩端懸掛 <span class="mono nw">4 kg</span> 及 <span class="mono nw">6 kg</span> 重物，肩膀位於中央（距兩端各 <span class="mono nw">90 cm</span>），手在肩膀左側 <span class="mono nw">30 cm</span> 處向下拉。<br>
+        (1) 手向下的施力 <span class="mono nw">F</span> 為何？<br>
+        (2) 肩膀向上的支撐力為何？</p>
+
+        <div style="background: var(--shadow-light); padding: 16px; border-radius: 8px; margin-top: 14px; border: 1px dashed var(--chalk-white);">
+          <strong class="hl-yellow">【雙重平衡推導】</strong><br>
+          👉 (1) 轉動平衡（以肩為支點）：<br>
+          <div style="font-size: 20px; margin: 6px 0;">
+            <span class="mono nw">左側逆時針 = 右側順時針</span><br>
+            <span class="mono nw" style="color: var(--chalk-cyan);">(4 × 90) + (F × 30) = (6 × 90)</span><br>
+            <span class="mono nw">360 + 30F = 540 ➔ F = 6 kgw</span>
+          </div>
+          👉 (2) 移動平衡（合力為零）：<br>
+          <div style="font-size: 20px; margin: 6px 0;">
+            <span class="mono nw">向上力 = 向下力總和</span><br>
+            <span class="mono nw" style="color: var(--chalk-green);">F<sub>肩</sub> = 4 + 6(手) + 6 = 16 kgw</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // --- 主分頁切換 ---
+  function switchTab(idx) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    
+    document.querySelectorAll('.panel')[idx].classList.add('active');
+    document.querySelectorAll('.nav-tabs .tab-btn')[idx].classList.add('active');
+
+    if(idx === 0) drawLeverArmTask('none');
+    if(idx === 1) drawTorqueDir('none');
+    if(idx === 2) checkStepForce('none', null);
+  }
+
+  // 共用繪圖工具：箭頭
+  function drawArrow(ctx, x1, y1, x2, y2, color, text, offset=0, align="center") {
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const headlen = 12;
+    ctx.beginPath(); ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.fill();
+    if (text) {
+      ctx.font = "bold 20px 'JetBrains Mono', sans-serif";
+      let tw = ctx.measureText(text).width;
+      let tx = (x1+x2)/2 - tw/2;
+      if(align === "left") tx = x1 - 10;
+      else if(align === "right") tx = x2 + 10;
+      ctx.fillText(text, tx, (y1+y2)/2 + offset);
+    }
+  }
+
+  // --- 畫布 1：尋找力臂 ---
+  function drawLeverArmTask(selection) {
+    const canvas = document.getElementById('leverArmCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const fulcrumX = 200, fulcrumY = 220;
+    const endX = 550, endY = 220;
+    const forceAngle = -45 * Math.PI / 180;
+    const lineOfActionLength = 400;
+
+    // 支點
+    ctx.fillStyle = 'var(--chalk-yellow)';
+    ctx.beginPath(); ctx.moveTo(fulcrumX, fulcrumY); ctx.lineTo(fulcrumX - 20, fulcrumY + 40); ctx.lineTo(fulcrumX + 20, fulcrumY + 40); ctx.fill();
+    ctx.font = "bold 18px sans-serif"; ctx.fillText("支點", fulcrumX - 20, fulcrumY + 60);
+
+    // 槓桿
+    ctx.strokeStyle = 'var(--chalk-white)'; ctx.lineWidth = 10; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(fulcrumX, fulcrumY); ctx.lineTo(endX, endY); ctx.stroke();
+
+    // 施力 F
+    drawArrow(ctx, endX, endY, endX + 100*Math.cos(forceAngle), endY + 100*Math.sin(forceAngle), 'var(--chalk-orange)', '施力 F', -15, "right");
+
+    // 施力線 (虛線)
+    ctx.strokeStyle = 'var(--chalk-pink)'; ctx.lineWidth = 2; ctx.setLineDash([8, 8]);
+    ctx.beginPath(); 
+    ctx.moveTo(endX - lineOfActionLength*Math.cos(forceAngle), endY - lineOfActionLength*Math.sin(forceAngle));
+    ctx.lineTo(endX + 150*Math.cos(forceAngle), endY + 150*Math.sin(forceAngle));
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = 'var(--chalk-pink)'; ctx.fillText("施力線", endX + 100, endY - 120);
+
+    // 選項 A: 支點到施力點 (水平)
+    const colorA = selection === 'A' ? 'var(--chalk-cyan)' : 'rgba(255,255,255,0.3)';
+    ctx.strokeStyle = colorA; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(fulcrumX, fulcrumY); ctx.lineTo(endX, endY); ctx.stroke();
+    ctx.fillStyle = colorA; ctx.fillText("A", (fulcrumX + endX)/2, fulcrumY + 25);
+
+    // 選項 B: 支點到施力線的垂直距離
+    const perpX = fulcrumX + (endX - fulcrumX) * Math.pow(Math.cos(forceAngle), 2);
+    const perpY = fulcrumY + (endX - fulcrumX) * Math.sin(forceAngle) * Math.cos(forceAngle);
+    const colorB = selection === 'B' ? 'var(--chalk-green)' : 'rgba(255,255,255,0.3)';
+    ctx.strokeStyle = colorB; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(fulcrumX, fulcrumY); ctx.lineTo(perpX, perpY); ctx.stroke();
+    // 畫直角記號
+    ctx.beginPath(); ctx.moveTo(perpX - 10*Math.cos(forceAngle), perpY - 10*Math.sin(forceAngle));
+    ctx.lineTo(perpX - 10*Math.cos(forceAngle) - 10*Math.sin(forceAngle), perpY - 10*Math.sin(forceAngle) + 10*Math.cos(forceAngle));
+    ctx.lineTo(perpX - 10*Math.sin(forceAngle), perpY + 10*Math.cos(forceAngle)); ctx.stroke();
+    ctx.fillStyle = colorB; ctx.fillText("B", (fulcrumX + perpX)/2 - 20, (fulcrumY + perpY)/2 - 10);
+
+    // 選項 C: 垂直高度
+    const colorC = selection === 'C' ? 'var(--chalk-yellow)' : 'rgba(255,255,255,0.3)';
+    ctx.strokeStyle = colorC; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(endX, fulcrumY); ctx.lineTo(endX, perpY); ctx.stroke();
+    ctx.fillStyle = colorC; ctx.fillText("C", endX + 15, (fulcrumY + perpY)/2);
+  }
+
+  function checkLeverArm(ans, btn) {
+    document.querySelectorAll('#leverArmCanvas ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    drawLeverArmTask(ans);
+
+    const exp = document.getElementById('leverArmExplain');
+    if(ans === 'A') {
+      exp.innerHTML = `<strong class="hl-cyan">❌ 選擇 A 錯誤！</strong><br>這是支點到「施力點」的直線距離，而非垂直距離。若施力未與木尺垂直，此段並非力臂。`;
+      exp.style.borderColor = 'var(--chalk-cyan)';
+    } else if(ans === 'B') {
+      exp.innerHTML = `<strong class="hl-green">✅ 選擇 B 完全正確！</strong><br>力臂的定義嚴格為<strong class="hl-green">「支點到施力線的垂直距離」</strong>。請永遠先畫出施力線，再從支點尋找垂直線段！`;
+      exp.style.borderColor = 'var(--chalk-green)';
+    } else if(ans === 'C') {
+      exp.innerHTML = `<strong class="hl-yellow">❌ 選擇 C 錯誤！</strong><br>這只是單純的幾何垂直高度，完全不符合力臂的物理定義。`;
+      exp.style.borderColor = 'var(--chalk-yellow)';
+    }
+  }
+
+  // --- 畫布 2：力矩方向 ---
+  function drawTorqueDir(state) {
+    const canvas = document.getElementById('torqueDirCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = 380, cy = 140;
+
+    // 支點
+    ctx.fillStyle = 'var(--chalk-yellow)';
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx - 20, cy + 40); ctx.lineTo(cx + 20, cy + 40); ctx.fill();
+
+    // 槓桿
+    ctx.strokeStyle = 'var(--chalk-white)'; ctx.lineWidth = 10; ctx.lineCap = 'round';
+    
+    if(state === 'none' || state === 'center') {
+      ctx.beginPath(); ctx.moveTo(cx - 150, cy); ctx.lineTo(cx + 150, cy); ctx.stroke();
+    } else if(state === 'left') {
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(-15 * Math.PI / 180);
+      ctx.beginPath(); ctx.moveTo(-150, 0); ctx.lineTo(150, 0); ctx.stroke(); ctx.restore();
+    } else if(state === 'right') {
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(15 * Math.PI / 180);
+      ctx.beginPath(); ctx.moveTo(-150, 0); ctx.lineTo(150, 0); ctx.stroke(); ctx.restore();
+    }
+
+    if(state === 'left') {
+      drawArrow(ctx, cx - 145, cy - 80, cx - 145, cy - 20, 'var(--chalk-green)', 'F');
+      ctx.strokeStyle = 'var(--chalk-green)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(cx, cy, 60, Math.PI, Math.PI*1.5); ctx.stroke();
+      drawArrow(ctx, cx - 10, cy - 60, cx - 20, cy - 60, 'var(--chalk-green)', '');
+    } else if(state === 'right') {
+      drawArrow(ctx, cx + 145, cy - 80, cx + 145, cy - 20, 'var(--chalk-cyan)', 'F');
+      ctx.strokeStyle = 'var(--chalk-cyan)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(cx, cy, 60, Math.PI*1.5, Math.PI*2); ctx.stroke();
+      drawArrow(ctx, cx + 60, cy - 10, cx + 60, cy - 20, 'var(--chalk-cyan)', '');
+    } else if(state === 'center') {
+      drawArrow(ctx, cx, cy - 80, cx, cy - 20, 'var(--chalk-yellow)', 'F');
+    }
+  }
+
+  function applyTorque(dir, btn) {
+    document.querySelectorAll('#torqueDirCanvas ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    drawTorqueDir(dir);
+
+    const exp = document.getElementById('torqueDirExplain');
+    if(dir === 'left') {
+      exp.innerHTML = `<strong class="hl-green">🔄 逆時針力矩</strong><br>施力在支點左側向下，造成木尺逆時針旋轉趨勢。`;
+      exp.style.borderColor = 'var(--chalk-green)';
+    } else if(dir === 'right') {
+      exp.innerHTML = `<strong class="hl-cyan">🔃 順時針力矩</strong><br>施力在支點右側向下，造成木尺順時針旋轉趨勢。`;
+      exp.style.borderColor = 'var(--chalk-cyan)';
+    } else if(dir === 'center') {
+      exp.innerHTML = `<strong class="hl-yellow">❌ 無力矩產生</strong><br>施力線直接通過支點，力臂為零 (<span class="mono nw">d = 0</span>)，因此不產生任何旋轉效應。`;
+      exp.style.borderColor = 'var(--chalk-yellow)';
+    }
+  }
+
+  // --- 畫布 3：推球上階梯 ---
+  function drawStepScene(activeForce) {
+    const canvas = document.getElementById('stepCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = 420, cy = 180, r = 80;
+    const stepX = cx + 60, stepY = cy + Math.sqrt(r*r - 60*60); 
+
+    // 地面與階梯
+    ctx.strokeStyle = 'var(--chalk-white)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(100, cy + r); ctx.lineTo(stepX, cy + r); 
+    ctx.lineTo(stepX, stepY); ctx.lineTo(700, stepY); ctx.stroke();
+
+    // 圓球
+    ctx.strokeStyle = 'var(--chalk-yellow)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+
+    // 支點
+    ctx.fillStyle = 'var(--chalk-pink)';
+    ctx.beginPath(); ctx.arc(stepX, stepY, 8, 0, Math.PI*2); ctx.fill();
+
+    const angle = Math.atan2(cy - stepY, cx - stepX);
+    const topX = stepX + 2*r * Math.cos(angle);
+    const topY = stepY + 2*r * Math.sin(angle);
+
+    // 定義各力
+    const fAngle3 = angle + Math.PI/2;
+    const forces = {
+      'F1': { x1: cx - 100*Math.cos(angle), y1: cy - 100*Math.sin(angle), x2: cx, y2: cy, color: 'var(--chalk-cyan)', text: 'F₁' },
+      'F2': { x1: cx - 100, y1: cy, x2: cx, y2: cy, color: 'var(--chalk-orange)', text: 'F₂' },
+      'F3': { x1: topX, y1: topY, x2: topX + 80*Math.cos(fAngle3), y2: topY + 80*Math.sin(fAngle3), color: 'var(--chalk-green)', text: 'F₃' },
+      'F4': { x1: cx, y1: cy - r, x2: cx + 80, y2: cy - r, color: 'var(--chalk-pink)', text: 'F₄' }
+    };
+
+    // 繪製非作動的力 (半透明)
+    for(let key in forces) {
+      if(key !== activeForce && activeForce !== 'none') {
+        let f = forces[key];
+        drawArrow(ctx, f.x1, f.y1, f.x2, f.y2, 'rgba(255,255,255,0.2)', f.text);
+      }
+    }
+
+    // 繪製作動的力與力臂
+    if(activeForce !== 'none' && forces[activeForce]) {
+      let f = forces[activeForce];
+      drawArrow(ctx, f.x1, f.y1, f.x2, f.y2, f.color, f.text, -20);
+      
+      // 繪製力臂
+      ctx.strokeStyle = f.color; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+      if(activeForce === 'F1') {
+        // F1力臂 = 0
+      } else if(activeForce === 'F2') {
+        ctx.beginPath(); ctx.moveTo(stepX, stepY); ctx.lineTo(stepX, cy); ctx.stroke();
+      } else if(activeForce === 'F3') {
+        ctx.beginPath(); ctx.moveTo(stepX, stepY); ctx.lineTo(topX, topY); ctx.stroke();
+      } else if(activeForce === 'F4') {
+        ctx.beginPath(); ctx.moveTo(stepX, stepY); ctx.lineTo(stepX, cy - r); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    } else {
+      // 全繪製
+      for(let key in forces) {
+        let f = forces[key];
+        drawArrow(ctx, f.x1, f.y1, f.x2, f.y2, f.color, f.text);
+      }
+    }
+  }
+
+  function checkStepForce(force, btn) {
+    if(btn) {
+      document.querySelectorAll('#stepCanvas ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+    drawStepScene(force);
+
+    const exp = document.getElementById('stepExplain');
+    if(force === 'F1') {
+      exp.innerHTML = `<strong class="hl-cyan">❌ F₁ (朝向支點)</strong><br>施力線直接通過階梯角點，<strong class="hl-cyan">力臂為零</strong>。力矩為零，完全推不上去！`;
+      exp.style.borderColor = 'var(--chalk-cyan)';
+    } else if(force === 'F2') {
+      exp.innerHTML = `<strong class="hl-orange">⚠️ F₂ (水平推中心)</strong><br>施力線通過球心，力臂為階梯角點到水平中線的垂直高度。可以推動，但非最省力。`;
+      exp.style.borderColor = 'var(--chalk-orange)';
+    } else if(force === 'F3') {
+      exp.innerHTML = `<strong class="hl-green">✅ F₃ (垂直於直徑)</strong><br>這條施力線對應的力臂，剛好等於支點出發的「圓直徑 <span class="mono nw">2R</span>」。這在幾何上是<strong class="hl-green">最大極限力臂</strong>，因此推力 <span class="mono nw">F</span> 最小，最省力！`;
+      exp.style.borderColor = 'var(--chalk-green)';
+    } else if(force === 'F4') {
+      exp.innerHTML = `<strong class="hl-pink">⚠️ F₄ (水平推頂端)</strong><br>力臂長度為階梯角點到頂端的垂直距離。雖然力臂比 <span class="mono nw">F₂</span> 長，但仍比直徑短，所以次省力。`;
+      exp.style.borderColor = 'var(--chalk-pink)';
+    }
+  }
+
+  // 初始化
+  window.onload = function() {
+    switchTab(0);
+  };
+</script>
+</body>
+</html>
