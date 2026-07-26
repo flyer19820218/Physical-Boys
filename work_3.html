@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物理黑板教室：力學能守恆與能量守恆定律</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-blackboard: #11261f;
+    --bg-panel: #18332a;
+    --bg-panel-hover: #204236;
+    --chalk-white: #f4f1ea;
+    --chalk-yellow: #fde047;
+    --chalk-cyan: #67e8f9;
+    --chalk-orange: #fb923c;
+    --chalk-green: #4ade80;
+    --chalk-pink: #f472b6;
+    --chalk-dim: #94a3b8;
+    --chalk-line: rgba(244, 241, 234, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 20px 15px 60px;
+    background-color: var(--bg-blackboard);
+    background-image: 
+      radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0),
+      radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0);
+    background-size: 24px 24px, 16px 16px;
+    background-position: 0 0, 8px 8px;
+    color: var(--chalk-white);
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 20px;
+    line-height: 1.8;
+  }
+
+  .wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--chalk-green);
+  }
+
+  h1 {
+    font-size: 36px;
+    color: var(--chalk-yellow);
+    margin: 0 0 8px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(253, 224, 71, 0.2);
+  }
+
+  .subtitle {
+    font-size: 22px;
+    color: var(--chalk-cyan);
+    font-weight: bold;
+  }
+
+  /* 導覽分頁按鈕：一排不換行，適配 iPad */
+  .nav-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .tab-btn {
+    padding: 12px 20px;
+    font-size: 19px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--chalk-dim);
+    border: 2px dashed var(--chalk-line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover {
+    background: var(--bg-panel-hover);
+    color: var(--chalk-white);
+    border-color: var(--chalk-white);
+  }
+
+  .tab-btn.active {
+    background: var(--bg-panel);
+    color: var(--chalk-yellow);
+    border: 2px solid var(--chalk-yellow);
+    box-shadow: 0 0 15px rgba(253, 224, 71, 0.25);
+  }
+
+  /* 面板與內容 */
+  .panel {
+    display: none;
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-line);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  .panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2 {
+    font-size: 28px;
+    color: var(--chalk-cyan);
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--chalk-line);
+  }
+
+  h3 {
+    font-size: 24px;
+    color: var(--chalk-yellow);
+    margin: 20px 0 10px;
+  }
+
+  /* 嚴格雙欄排版：iPad 滿版與大螢幕適配 */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    margin: 20px 0;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid var(--chalk-line);
+    border-radius: 12px;
+    padding: 22px;
+    transition: 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--chalk-yellow);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .card-title {
+    font-size: 24px;
+    color: var(--chalk-orange);
+    margin-bottom: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* 數學代數與 JetBrains Mono */
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: bold;
+    color: var(--chalk-yellow);
+  }
+
+  /* 防斷字綁定 */
+  .nw {
+    white-space: nowrap;
+  }
+
+  /* 理化專用標準上下分式 */
+  .fraction {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    padding: 0 8px;
+    margin: 0 4px;
+  }
+
+  .fraction .num {
+    border-bottom: 2px solid var(--chalk-white);
+    padding-bottom: 2px;
+    line-height: 1.2;
+  }
+
+  .fraction .den {
+    padding-top: 4px;
+    line-height: 1.2;
+  }
+
+  /* 概念引言盒 */
+  .concept-box {
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 6px solid var(--chalk-green);
+    padding: 16px 20px;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 20px;
+  }
+
+  /* 互動實驗區 */
+  .interactive-area {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px dashed var(--chalk-cyan);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    text-align: center;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+
+  .action-btn {
+    padding: 10px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    background: transparent;
+    color: var(--chalk-cyan);
+    border: 2px solid var(--chalk-cyan);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .action-btn:hover, .action-btn.active {
+    background: var(--chalk-cyan);
+    color: #111;
+  }
+
+  .btn-orange { color: var(--chalk-orange); border-color: var(--chalk-orange); }
+  .btn-orange:hover, .btn-orange.active { background: var(--chalk-orange); color: #111; }
+
+  .btn-pink { color: var(--chalk-pink); border-color: var(--chalk-pink); }
+  .btn-pink:hover, .btn-pink.active { background: var(--chalk-pink); color: #111; }
+
+  .btn-green { color: var(--chalk-green); border-color: var(--chalk-green); }
+  .btn-green:hover, .btn-green.active { background: var(--chalk-green); color: #111; }
+
+  /* 畫布與零黑色原則 */
+  canvas {
+    background-color: #0d1f18;
+    border: 2px solid var(--chalk-yellow);
+    border-radius: 8px;
+    margin: 16px auto;
+    display: block;
+    max-width: 100%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+
+  .explain-box {
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-white);
+    border-radius: 8px;
+    padding: 18px;
+    text-align: left;
+    max-width: 820px;
+    margin: 14px auto 0;
+    font-size: 20px;
+  }
+
+  /* 顏色標示 */
+  .hl-yellow { color: var(--chalk-yellow); font-weight: bold; }
+  .hl-green { color: var(--chalk-green); font-weight: bold; }
+  .hl-cyan { color: var(--chalk-cyan); font-weight: bold; }
+  .hl-orange { color: var(--chalk-orange); font-weight: bold; }
+  .hl-pink { color: var(--chalk-pink); font-weight: bold; }
+
+  ul { margin: 10px 0; padding-left: 24px; }
+  li { margin-bottom: 8px; }
+
+  @media (max-width: 860px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    h1 { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>🎯 第三單元：力學能守恆與能量守恆定律</h1>
+    <div class="subtitle">國中物理核心概念 ｜ 能量的轉換、守恆與損耗剖析</div>
+  </header>
+
+  <!-- 導覽列：乾淨俐落，直擊概念，無數字前綴 -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab(0)">力學能守恆與雙斜面</button>
+    <button class="tab-btn" onclick="switchTab(1)">彈簧簡諧運動守恆</button>
+    <button class="tab-btn" onclick="switchTab(2)">摩天輪與非守恆情境</button>
+    <button class="tab-btn" onclick="switchTab(3)">能量守恆與焦耳實驗</button>
+    <button class="tab-btn" onclick="switchTab(4)">課堂實戰演練</button>
+  </nav>
+
+  <!-- ================= 分頁 1：力學能守恆與雙斜面 ================= -->
+  <div class="panel active">
+    <h2>力學能守恆與雙斜面 <span class="hl-yellow" style="font-size: 20px; float: right;">伽利略的理想實驗</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">什麼是「力學能」<span class="mono nw">(Mechanical Energy)</span>？</strong><br>
+      在物理學中，物體所具有的<span class="hl-cyan">「動能 <span class="mono nw">(K)</span>」</span>與<span class="hl-green">「位能 <span class="mono nw">(U)</span>」</span>的總和，就稱為力學能。<br>
+      👉 <strong class="hl-yellow">守恆核心條件：</strong> 當物體在運動過程中，<span class="hl-green">只受重力或彈力作功</span>，而<span class="hl-pink">沒有摩擦力、空氣阻力等外力消耗能量</span>時，動能與位能會互相轉換，但其總和永遠保持不變！
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-yellow);">
+        <div class="card-title" style="color: var(--chalk-yellow);">📐 力學能守恆關係式</div>
+        <p>動能與位能此消彼長，任意時刻的總和皆為定值：</p>
+        
+        <div style="text-align: center; font-size: 28px; margin: 24px 0; background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px;">
+          <span class="mono nw">E = K + U = 定值</span>
+        </div>
+
+        <p>若比較運動過程中的起點 <span class="mono nw">(1)</span> 與終點 <span class="mono nw">(2)</span>：</p>
+        <div style="text-align: center; font-size: 24px; margin: 16px 0;">
+          <span class="mono nw">K₁ + U₁ = K₂ + U₂</span>
+        </div>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-cyan);">
+        <div class="card-title" style="color: var(--chalk-cyan);">🔍 伽利略雙斜面實驗</div>
+        <p>👉 <strong class="hl-yellow">高度永遠一致：</strong><br>
+        將小球從光滑（無摩擦）斜面左側高度 <span class="mono nw">h</span> 處靜止釋放，小球滾下後滑上右側斜面。不論右側斜面的傾角如何改變，小球<span class="hl-green">最終到達的垂直高度永遠等於最初的釋放高度 <span class="mono nw">h</span></span>！</p>
+        <p>👉 <strong class="hl-cyan">能量轉化本質：</strong><br>
+        最高點（只有重力位能 <span class="mono nw">U</span>） $\rightarrow$ 谷底（全部轉為動能 <span class="mono nw">K</span>） $\rightarrow$ 另一側最高點（動能再次全數轉回位能 <span class="mono nw">U</span>）。</p>
+      </div>
+    </div>
+
+    <!-- 互動實驗區：雙斜面力學能守恆 (絕對零黑色) -->
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">🔬 互動實驗區：光滑雙斜面滾球測試</h3>
+      <p>點擊切換右側斜面坡度，觀察小球到達的最高點垂直高度差 <span class="mono nw">h</span>：</p>
+      <div class="btn-group">
+        <button class="action-btn btn-green active" onclick="drawInclineScene(45, this)">🟢 右坡傾角 45° (對稱斜面)</button>
+        <button class="action-btn btn-orange" onclick="drawInclineScene(25, this)">🟠 右坡傾角 25° (平緩斜面)</button>
+        <button class="action-btn btn-pink" onclick="drawInclineScene(65, this)">🔴 右坡傾角 65° (陡峭斜面)</button>
+      </div>
+      <canvas id="inclineCanvas" width="760" height="260"></canvas>
+      <div id="inclineExplain" class="explain-box"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 2：彈簧簡諧運動守恆 ================= -->
+  <div class="panel">
+    <h2>彈簧簡諧運動守恆 <span class="hl-yellow" style="font-size: 20px; float: right;">彈力位能與動能交替</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">什麼是「彈簧簡諧運動 <span class="mono nw">(S.H.M.)</span>」？</strong><br>
+      將木塊拴在水平光滑桌面的彈簧端點，拉開後放手，木塊會在端點 <span class="mono nw">+x</span> 與 <span class="mono nw">-x</span> 之間作來回振盪。<br>
+      👉 <strong class="hl-green">守恆特性：</strong> 在沒有摩擦力的情況下，<span class="hl-orange">「彈力位能 <span class="mono nw">(U)</span>」</span>與<span class="hl-cyan">「動能 <span class="mono nw">(K)</span>」</span>隨時間不斷交替互換，但系統的總力學能 <span class="mono nw">E = K + U</span> 永遠保持定值！
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-orange);">
+        <div class="card-title" style="color: var(--chalk-orange);">⏸️ 兩端轉折點 <span class="mono nw">(+x, -x)</span></div>
+        <p>👉 <strong class="hl-yellow">速度歸零 <span class="mono nw">(v = 0)</span>：</strong><br>
+        木塊在端點瞬間折返，此時動能為零 <span class="mono nw">(K = 0)</span>。</p>
+        <p>👉 <strong class="hl-orange">形變最大：</strong><br>
+        彈簧被拉到最長或壓縮到最短，儲存了<span class="hl-orange">100% 的彈力位能 <span class="mono nw">(U = max)</span></span>。此時 <span class="mono nw">E = U</span>。</p>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-cyan);">
+        <div class="card-title" style="color: var(--chalk-cyan);">⚡ 自然平衡點 <span class="mono nw">(x = 0)</span></div>
+        <p>👉 <strong class="hl-green">形變歸零 <span class="mono nw">(x = 0)</span>：</strong><br>
+        木塊通過彈簧自然長度位置，彈力位能全數釋放 <span class="mono nw">(U = 0)</span>。</p>
+        <p>👉 <strong class="hl-cyan">速度最快 <span class="mono nw">(v = max)</span>：</strong><br>
+        所有能量轉化為木塊衝刺的動能，此時<span class="hl-cyan">動能達到極大值 <span class="mono nw">(K = max)</span></span>。此時 <span class="mono nw">E = K</span>。</p>
+      </div>
+    </div>
+
+    <!-- 互動繪圖區：彈簧 S.H.M. 與動態能量條 -->
+    <div class="interactive-area" style="margin-top: 24px;">
+      <h3 style="margin-top: 0;">⚙️ 互動演示：簡諧運動與即時能量柱狀圖</h3>
+      <p>點擊切換運動狀態，觀察下方 <span class="mono nw">K</span>、<span class="mono nw">U</span> 與總力學能 <span class="mono nw">E</span> 的長條變化：</p>
+      <div class="btn-group">
+        <button class="action-btn btn-green active" onclick="setShmState('play', this)">▶️ 啟動連續振盪動畫</button>
+        <button class="action-btn btn-orange" onclick="setShmState('end', this)">⏸️ 暫停於：右端轉折點 (+x)</button>
+        <button class="action-btn btn-cyan" onclick="setShmState('center', this)" style="color:var(--chalk-cyan); border-color:var(--chalk-cyan);">⏸️ 暫停於：平衡沖刺點 (x = 0)</button>
+      </div>
+      <canvas id="shmCanvas" width="760" height="280"></canvas>
+      <div id="shmExplain" class="explain-box"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 3：摩天輪與非守恆情境 ================= -->
+  <div class="panel">
+    <h2>摩天輪與非守恆情境 <span class="hl-yellow" style="font-size: 20px; float: right;">段考陷阱大破解</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">經典高難度考題：</strong><br>
+      「當小明搭乘等速率旋轉的摩天輪（等速率圓周運動）隨座艙緩慢升空時，他的<span class="hl-pink">力學能是否守恆？</span>」<br>
+      👉 <strong class="hl-pink">正確解答：絕對不守恆！</strong> 很多人以為定速運動就守恆，這大錯特錯！讓我們從基本定義逐一解剖。
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-pink);">
+        <div class="card-title" style="color: var(--chalk-pink);">🚫 為什麼摩天輪不守恆？</div>
+        <p>👉 <strong class="hl-cyan">動能不變 <span class="mono nw">(K = 定值)</span>：</strong><br>
+        因為是「等速率」旋轉，速率 <span class="mono nw">v</span> 固定，所以小明的動能保持不變。</p>
+        <p>👉 <strong class="hl-orange">位能持續增加 <span class="mono nw">(U ↗)</span>：</strong><br>
+        隨座艙升空時，高度 <span class="mono nw">h</span> 不斷增加，重力位能越來越大。</p>
+        <div style="background: rgba(244,114,182,0.15); padding: 12px; border-radius: 8px; margin-top: 12px;">
+          <strong class="hl-yellow">總力學能判定：</strong><br>
+          <span class="mono nw">E = K (不變) + U (增加) = 持續增加！</span><br>
+          因為總和變大了，故力學能<span class="hl-pink">不守恆</span>！
+        </div>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-yellow);">
+        <div class="card-title" style="color: var(--chalk-yellow);">⚡ 誰在背後作功？</div>
+        <p>👉 <strong class="hl-green">外力介入作功：</strong><br>
+        力學能要守恆，前提是「不能有重力與彈力以外的力作功」。</p>
+        <p>在摩天輪或等速電梯中，是<span class="hl-yellow">「馬達驅動的座椅支撐力（法向力）」</span>在對小明作正功，源源不絕地將電能轉化輸入為小明的重力位能，因此打破了守恆條件！</p>
+      </div>
+    </div>
+
+    <!-- 互動對照：守恆與不守恆判定 -->
+    <div class="interactive-area" style="margin-top: 24px;">
+      <h3 style="margin-top: 0;">🚶 課堂觀念 PK：哪一個情境「力學能守恆」？</h3>
+      <p>點擊情境，看名師剖析是誰在作功、能量總和是否變動：</p>
+      <div class="btn-group">
+        <button class="action-btn btn-green active" onclick="checkEnergyCase('drop', this)">1. 光滑雲霄飛車俯衝</button>
+        <button class="action-btn btn-pink" onclick="checkEnergyCase('wheel', this)">2. 等速率摩天輪升空</button>
+        <button class="action-btn btn-orange" onclick="checkEnergyCase('fall', this)">3. 降落傘等速張開下降</button>
+      </div>
+      <div id="caseExplain" class="explain-box" style="border-color: var(--chalk-green);"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 4：能量守恆與焦耳實驗 ================= -->
+  <div class="panel">
+    <h2>能量守恆與焦耳實驗 <span class="hl-yellow" style="font-size: 20px; float: right;">宇宙總能量不滅</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">「力學能不守恆」，不代表能量消失了！</strong><br>
+      當摩擦力作負功時，力學能會減少，但這些能量並沒有憑空消滅，而是轉化成了<span class="hl-orange">「熱能、聲能或光能」</span>。如果把宇宙中所有的能量型態全部加總，總量是永遠不變的！這就是<span class="hl-green">能量守恆定律</span>。
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="border-color: var(--chalk-yellow);">
+        <div class="card-title" style="color: var(--chalk-yellow);">🔬 1843年 焦耳熱功當量實驗</div>
+        <p>英國科學家焦耳設計了重鎚帶動水中葉片的實驗，證實了<span class="hl-cyan">力學能與熱能的等價轉換關係</span>：</p>
+        <ul>
+          <li>重鎚緩慢下落，失去<strong class="hl-orange">重力位能</strong>。</li>
+          <li>帶動容器內的葉片旋轉，攪動水流產生摩擦。</li>
+          <li>力學能 <span class="mono nw">100%</span> 轉化為<strong class="hl-yellow">熱能</strong>，使水溫精密上升！</li>
+        </ul>
+      </div>
+
+      <div class="card" style="border-color: var(--chalk-green);">
+        <div class="card-title" style="color: var(--chalk-green);">📐 熱功當量標準換算</div>
+        <p>焦耳測出了「卡路里 <span class="mono nw">(cal)</span>」與「焦耳 <span class="mono nw">(J)</span>」的絕對換算比例：</p>
+        
+        <div style="text-align: center; font-size: 26px; margin: 20px 0; background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; line-height: 1.8;">
+          <span class="mono nw">1 cal ≈ 4.2 J</span><br>
+          <span class="mono nw">1 J ≈ 0.24 cal</span>
+        </div>
+        <p style="color: var(--chalk-dim);">👉 這項偉大發現正式將物理學與熱學統一，確立了能量守恆定律的基礎。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 5：課堂實戰演練 ================= -->
+  <div class="panel">
+    <h2>課堂實戰演練 <span class="hl-yellow" style="font-size: 20px; float: right;">嚴格標準分式解答</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-yellow">名師解題祕籍：</strong><br>
+      1. 遇到力學能守恆題：起點總能 <span class="mono nw">mgh₁ + ½mv₁²</span> ＝ 終點總能 <span class="mono nw">mgh₂ + ½mv₂²</span>。等號兩邊都有質量 <span class="mono nw">m</span> 時，可以<span class="hl-green">直接約分消掉</span>！<br>
+      2. 遇到電熱轉換題：先用功率算總焦耳 <span class="mono nw">E = P × t</span>，再乘以 <span class="mono nw">0.24</span> 換算成卡路里 <span class="mono nw">(cal)</span>！
+    </div>
+
+    <div class="grid-2">
+      <!-- 練習題 1 -->
+      <div class="card" style="border-color: var(--chalk-green);">
+        <div class="card-title" style="color: var(--chalk-green);">📝 演練一：雲霄飛車谷底速率</div>
+        <p>將一個小球從離地高度 <span class="mono nw">h = 5 m</span> 的光滑軌道頂端由靜止釋放，下滑至地端谷底 <span class="mono nw">(h = 0)</span> 時，小球的速度 <span class="mono nw">v</span> 為多少？（<span class="mono nw">g = 10 m/s²</span>）</p>
+        
+        <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 8px; margin-top: 14px; border: 1px dashed var(--chalk-white);">
+          <strong class="hl-yellow">【標準分式板書推導】</strong><br>
+          👉 頂端重力位能 ＝ 谷底動能：<br>
+          <div style="font-size: 22px; margin: 8px 0;">
+            <span class="mono nw">m × g × h = </span>
+            <span class="fraction">
+              <span class="num mono">1</span>
+              <span class="den mono">2</span>
+            </span>
+            <span class="mono nw"> × m × v²</span>
+          </div>
+          👉 兩邊約掉質量 <span class="mono nw">m</span>，移項得速度：<br>
+          <div style="font-size: 22px; margin: 8px 0;">
+            <span class="mono nw">v² = 2 × g × h = 2 × 10 × 5 = 100</span><br><br>
+            <span class="mono nw" style="color: var(--chalk-green);">v  = √100 = 10 m/s</span>
+          </div>
+          <small style="color: var(--chalk-dim);">💡 結論：末速度與球的重輕完全無關！大球小球滑下來一樣快！</small>
+        </div>
+      </div>
+
+      <!-- 練習題 2 -->
+      <div class="card" style="border-color: var(--chalk-orange);">
+        <div class="card-title" style="color: var(--chalk-orange);">📝 演練二：電熱器水溫計算</div>
+        <p>一個功率為 <span class="mono nw">700 W</span> 的電熱器，連續加熱 <span class="mono nw">100 s</span>。若產生的熱能完全被 <span class="mono nw">500 g</span> 的水吸收，水溫會上升多少 <span class="mono nw">°C</span>？（<span class="mono nw">1 cal = 4.2 J</span>）</p>
+
+        <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 8px; margin-top: 14px; border: 1px dashed var(--chalk-white);">
+          <strong class="hl-yellow">【標準分式板書推導】</strong><br>
+          👉 步驟一：電能輸出總焦耳 <span class="mono nw">W</span><br>
+          <span class="mono nw">W = P × t = 700 W × 100 s = 70000 J</span><br><br>
+          
+          👉 步驟二：換算為吸熱卡路里 <span class="mono nw">H</span><br>
+          <div style="font-size: 20px; margin: 6px 0;">
+            <span class="mono nw">H = </span>
+            <span class="fraction">
+              <span class="num mono">70000 J</span>
+              <span class="den mono">4.2 J/cal</span>
+            </span>
+            <span class="mono nw"> ≈ 16666.7 cal</span>
+          </div>
+          
+          👉 步驟三：由 <span class="mono nw">H = m × s × ΔT</span> 求溫升：<br>
+          <div style="font-size: 20px; margin: 6px 0;">
+            <span class="mono nw">ΔT = </span>
+            <span class="fraction">
+              <span class="num mono">16666.7 cal</span>
+              <span class="den mono">500 g × 1</span>
+            </span>
+            <span class="mono nw" style="color: var(--chalk-orange);"> ≈ 33.3 °C</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // --- 分頁切換 ---
+  function switchTab(idx) {
+    document.querySelectorAll('.tab-content, .panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    document.querySelectorAll('.panel')[idx].classList.add('active');
+    document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+
+    if(idx === 0) drawInclineScene(45, document.querySelector('.btn-group .btn-green'));
+    if(idx === 1) setShmState('play', document.querySelectorAll('.interactive-area .btn-group button')[0]);
+    if(idx === 2) checkEnergyCase('drop', document.querySelectorAll('.panel:nth-child(4) .btn-group button')[0]);
+  }
+
+  // --- 分頁一：雙斜面畫布 (嚴格零黑色) ---
+  function drawInclineScene(angleDeg, btn) {
+    if(btn) {
+      document.querySelectorAll('#inclineCanvas ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    const canvas = document.getElementById('inclineCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const exp = document.getElementById('inclineExplain');
+
+    const startX = 80, bottomX = 350, bottomY = 210, heightY = 60;
+    const heightH = bottomY - heightY; // 150 px
+
+    // 計算右坡頂點
+    const angleRad = angleDeg * Math.PI / 180;
+    const rightSpan = heightH / Math.tan(angleRad);
+    const endX = bottomX + rightSpan;
+
+    // 畫參考高線 (亮黃虛線)
+    ctx.strokeStyle = '#fde047';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(40, heightY);
+    ctx.lineTo(720, heightY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fde047';
+    ctx.font = 'bold 18px "JetBrains Mono"';
+    ctx.fillText("高度等位線 (h = 1.5 m)", 480, heightY - 12);
+
+    // 畫地面與軌道 (草綠色)
+    ctx.strokeStyle = '#4ade80';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(startX, heightY);
+    ctx.lineTo(bottomX, bottomY);
+    ctx.lineTo(endX, heightY);
+    ctx.stroke();
+
+    // 畫左起點球 (亮青色)
+    ctx.fillStyle = '#67e8f9';
+    ctx.beginPath();
+    ctx.arc(startX + 15, heightY - 12, 15, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#f4f1ea';
+    ctx.font = 'bold 16px "Noto Sans TC"';
+    ctx.fillText("靜止釋放", startX - 25, heightY - 30);
+
+    // 畫右終點球 (亮橘色)
+    ctx.fillStyle = '#fb923c';
+    ctx.beginPath();
+    ctx.arc(endX - 15, heightY - 12, 15, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#f4f1ea';
+    ctx.fillText("最高折返點", endX - 35, heightY - 30);
+
+    // 標示角度
+    ctx.fillStyle = '#f472b6';
+    ctx.font = 'bold 20px "JetBrains Mono"';
+    ctx.fillText(`θ = ${angleDeg}°`, bottomX + 40, bottomY - 15);
+
+    exp.innerHTML = `
+      <strong class="hl-green">🟢 伽利略推論驗證：右側坡度為 ${angleDeg}°</strong><br>
+      不論斜面變平緩或陡峭，小球滑上右側斜面時，動能 <span class="mono nw">(K)</span> 隨速度減慢不斷轉換為重力位能 <span class="mono nw">(U)</span>。<br>
+      👉 <strong class="hl-yellow">絕對守恆：</strong> 當動能全數用盡歸零時，小球到達的垂直高度<strong class="hl-orange">永遠精準等於最初釋放的高度 <span class="mono nw">h</span></strong>！
+    `;
+    exp.style.borderColor = 'var(--chalk-green)';
+  }
+
+  // --- 分頁二：彈簧簡諧運動畫布與動態能量條 ---
+  let shmState = 'play';
+  let shmTime = 0;
+  let animId = null;
+
+  function setShmState(state, btn) {
+    if(btn) {
+      document.querySelectorAll('#shmCanvas ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+    shmState = state;
+    if(animId) cancelAnimationFrame(animId);
+
+    const exp = document.getElementById('shmExplain');
+
+    if(state === 'end') {
+      shmTime = 0; // cos(0) = 1 -> 右端 +A
+      drawShmFrame();
+      exp.innerHTML = `
+        <strong class="hl-orange">⏸️ 狀態分析：右端轉折點 (+x)</strong><br>
+        木塊在最右端瞬間停止 <span class="mono nw">(v = 0)</span>，動能條歸零 <span class="mono nw">(K = 0)</span>。<br>
+        👉 <strong class="hl-yellow">能量分佈：</strong> 彈簧被拉到最長，彈力位能達到頂峰 <span class="mono nw">(U = 100%)</span>，此時 <span class="mono nw">E = U</span>。
+      `;
+      exp.style.borderColor = 'var(--chalk-orange)';
+    } else if(state === 'center') {
+      shmTime = Math.PI / 2; // cos(PI/2) = 0 -> 平衡點 0
+      drawShmFrame();
+      exp.innerHTML = `
+        <strong class="hl-cyan">⏸️ 狀態分析：平衡沖刺點 (x = 0)</strong><br>
+        木塊通過彈簧自然長度，沒有任何形變 <span class="mono nw">(x = 0)</span>，彈力位能歸零 <span class="mono nw">(U = 0)</span>。<br>
+        👉 <strong class="hl-yellow">能量分佈：</strong> 速度達到最高峰 <span class="mono nw">(v = max)</span>，動能達到頂峰 <span class="mono nw">(K = 100%)</span>，此時 <span class="mono nw">E = K</span>。
+      `;
+      exp.style.borderColor = 'var(--chalk-cyan)';
+    } else if(state === 'play') {
+      exp.innerHTML = `
+        <strong class="hl-green">▶️ 連續振盪中：動能與位能此消彼長</strong><br>
+        觀察下方長條圖：當黃色動能 <span class="mono nw">(K)</span> 縮短時，橘色位能 <span class="mono nw">(U)</span> 便增長！<br>
+        👉 <strong class="hl-yellow">守恆驗證：</strong> 兩者相加的<strong class="hl-green">綠色總力學能 <span class="mono nw">(E)</span> 永遠是滿格定值</strong>！
+      `;
+      exp.style.borderColor = 'var(--chalk-green)';
+      animateShm();
+    }
+  }
+
+  function animateShm() {
+    if(shmState === 'play') {
+      shmTime += 0.04;
+      drawShmFrame();
+      animId = requestAnimationFrame(animateShm);
+    }
+  }
+
+  function drawShmFrame() {
+    const canvas = document.getElementById('shmCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const centerX = 350, amp = 140;
+    const currentX = centerX + amp * Math.cos(shmTime);
+
+    // 畫水平桌面 (Y=160)
+    ctx.strokeStyle = '#fde047'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(40, 160); ctx.lineTo(660, 160); ctx.stroke();
+
+    // 左側擋牆
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.strokeStyle = '#f4f1ea'; ctx.lineWidth = 4;
+    ctx.fillRect(40, 60, 20, 100); ctx.strokeRect(40, 60, 20, 100);
+
+    // 平衡線 (X=350)
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(centerX, 30); ctx.lineTo(centerX, 170); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#4ade80'; ctx.font = 'bold 16px "JetBrains Mono"';
+    ctx.fillText("x = 0", centerX - 25, 25);
+
+    // 畫彈簧
+    ctx.strokeStyle = '#67e8f9'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(60, 110);
+    let coils = 12;
+    let step = (currentX - 60) / coils;
+    for(let i=1; i<=coils; i++) {
+      ctx.lineTo(60 + i * step - step/2, i%2===0 ? 90 : 130);
+      ctx.lineTo(60 + i * step, 110);
+    }
+    ctx.stroke();
+
+    // 畫木塊
+    ctx.fillStyle = 'rgba(251, 146, 60, 0.3)';
+    ctx.strokeStyle = '#fb923c'; ctx.lineWidth = 4;
+    ctx.fillRect(currentX, 90, 60, 70); ctx.strokeRect(currentX, 90, 60, 70);
+    ctx.fillStyle = '#f4f1ea'; ctx.font = 'bold 18px "Noto Sans TC"';
+    ctx.fillText("木塊", currentX + 10, 130);
+
+    // 計算能量比例 (K proportional to sin^2, U proportional to cos^2)
+    const ratioU = Math.pow(Math.cos(shmTime), 2);
+    const ratioK = Math.pow(Math.sin(shmTime), 2);
+    const maxBar = 200;
+
+    // 畫下方動態能量長條圖 (Y=190~260)
+    ctx.font = 'bold 16px "JetBrains Mono"';
+    
+    // K 動能 (亮黃)
+    ctx.fillStyle = '#fde047';
+    ctx.fillText("動能 K", 60, 205);
+    ctx.fillRect(140, 190, maxBar * ratioK, 18);
+    ctx.strokeStyle = '#fde047'; ctx.strokeRect(140, 190, maxBar, 18);
+
+    // U 位能 (亮橘)
+    ctx.fillStyle = '#fb923c';
+    ctx.fillText("位能 U", 60, 235);
+    ctx.fillRect(140, 220, maxBar * ratioU, 18);
+    ctx.strokeStyle = '#fb923c'; ctx.strokeRect(140, 220, maxBar, 18);
+
+    // E 總能 (草綠)
+    ctx.fillStyle = '#4ade80';
+    ctx.fillText("總能 E", 400, 220);
+    ctx.fillRect(470, 205, maxBar, 26);
+    ctx.fillStyle = '#11261f';
+    ctx.fillText("E = K + U (守恆不變)", 480, 223);
+  }
+
+  // --- 分頁三：摩天輪情境判定 ---
+  function checkEnergyCase(type, btn) {
+    if(btn) {
+      document.querySelectorAll('#caseExplain ~ * .action-btn, .panel.active .btn-group .action-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+    const exp = document.getElementById('caseExplain');
+
+    if(type === 'drop') {
+      exp.innerHTML = `
+        <strong class="hl-green">🟢 判定：力學能守恆！</strong><br>
+        雲霄飛車在光滑軌道上俯衝，雖然速度越來越快、高度越來越低，但過程中<strong class="hl-yellow">只有重力在作功</strong>。<br>
+        👉 減少的重力位能 <span class="mono nw">100%</span> 轉化為動能，總和 <span class="mono nw">E = K + U</span> 保持定值！
+      `;
+      exp.style.borderColor = 'var(--chalk-green)';
+    } else if(type === 'wheel') {
+      exp.innerHTML = `
+        <strong class="hl-pink">🔴 判定：力學能不守恆！</strong><br>
+        摩天輪隨座艙等速率上升時，速度不變所以動能 <span class="mono nw">K</span> 固定，但高度增加使位能 <span class="mono nw">U</span> 持續上升。<br>
+        👉 <strong class="hl-yellow">原因：</strong> 馬達驅動的座椅對人作了正功，總和 <span class="mono nw">E</span> 不斷變大，打破守恆！
+      `;
+      exp.style.borderColor = 'var(--chalk-pink)';
+    } else if(type === 'fall') {
+      exp.innerHTML = `
+        <strong class="hl-pink">🔴 判定：力學能不守恆！</strong><br>
+        降落傘張開後等等速率下降，速度不變 <span class="mono nw">(K 固定)</span>，但高度持續降低 <span class="mono nw">(U 減少)</span>，總和 <span class="mono nw">E</span> 越來越小！<br>
+        👉 <strong class="hl-yellow">去哪了？</strong> 空氣阻力對降落傘作了負功，將力學能消耗轉化為了空氣的熱能與聲能！
+      `;
+      exp.style.borderColor = 'var(--chalk-pink)';
+    }
+  }
+
+  // 初始化繪製
+  window.onload = function() {
+    drawInclineScene(45, null);
+    setShmState('play', null);
+    checkEnergyCase('drop', null);
+  };
+</script>
+</body>
+</html>
