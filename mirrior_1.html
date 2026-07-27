@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全度數平面鏡成像模擬器：HTML5 互動黑板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #11261f;
+    --bg-panel: #17332a;
+    --bg-panel-hover: #1f4236;
+    --chalk-white: #f6f3ea;
+    --chalk-muted: #a3b8b0;
+    --chalk-yellow: #ffe066;
+    --chalk-teal: #4dd2ff;
+    --chalk-coral: #ff8040;
+    --chalk-green: #33cc99;
+    --chalk-purple: #d4a5a5;
+    --rule-color: rgba(246, 243, 234, 0.22);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background-color: var(--bg-base);
+    color: var(--chalk-white);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 20px;
+    line-height: 1.65;
+    padding: 24px 0 80px;
+  }
+
+  .wrap {
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+    border-bottom: 2px dashed var(--rule-color);
+    padding-bottom: 20px;
+  }
+
+  h1 {
+    font-size: 34px;
+    margin: 0 0 10px 0;
+    color: var(--chalk-yellow);
+    letter-spacing: 1.5px;
+    font-weight: 700;
+  }
+
+  header p {
+    margin: 0;
+    color: var(--chalk-muted);
+    font-size: 20px;
+  }
+
+  /* 乾淨導覽列 (嚴禁數字標籤前綴) */
+  .tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    flex: 1;
+    min-width: 200px;
+    padding: 16px 14px;
+    font-size: 20px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--chalk-muted);
+    border: 2px dashed var(--rule-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+
+  .tab-btn:hover {
+    background: var(--bg-panel-hover);
+    color: var(--chalk-white);
+  }
+
+  .tab-btn.active {
+    background: #1f4236;
+    color: var(--chalk-yellow);
+    border: 2px solid var(--chalk-yellow);
+    box-shadow: 0 0 16px rgba(255, 224, 102, 0.25);
+  }
+
+  /* 嚴格雙欄排版 Grid */
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    align-items: start;
+  }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 2px solid var(--rule-color);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px dashed var(--rule-color);
+    padding-bottom: 14px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 28px;
+    color: var(--chalk-white);
+  }
+
+  .sub-tag {
+    font-size: 18px;
+    color: var(--bg-base);
+    background: var(--chalk-yellow);
+    padding: 4px 16px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+
+  /* 畫布區域：絕對零黑色原則 */
+  .stage-container {
+    width: 100%;
+    border: 2px solid var(--rule-color);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0d201a;
+    position: relative;
+    margin-bottom: 18px;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .controls {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--rule-color);
+    margin-bottom: 18px;
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  label {
+    font-weight: 700;
+    color: var(--chalk-teal);
+  }
+
+  input[type=range] {
+    flex: 1;
+    height: 10px;
+    accent-color: var(--chalk-yellow);
+    cursor: pointer;
+  }
+
+  .readout-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--bg-base);
+    background: var(--chalk-yellow);
+    padding: 4px 14px;
+    border-radius: 8px;
+    min-width: 95px;
+    text-align: center;
+    font-size: 18px;
+  }
+
+  .stats {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--chalk-white);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px dashed var(--rule-color);
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stats b {
+    color: var(--chalk-yellow);
+  }
+
+  .note {
+    font-size: 20px;
+    color: var(--chalk-white);
+    line-height: 1.75;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 22px;
+    border-radius: 12px;
+    border-left: 6px solid var(--chalk-yellow);
+  }
+
+  .note ul {
+    margin: 8px 0 0 0;
+    padding-left: 24px;
+  }
+
+  .note li {
+    margin-bottom: 8px;
+  }
+
+  /* 理化專用標準上下垂直分式規範 */
+  .fraction {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    margin: 0 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .fraction .numerator {
+    border-bottom: 2px solid var(--chalk-white);
+    padding-bottom: 2px;
+    font-size: 0.9em;
+  }
+
+  .fraction .denominator {
+    padding-top: 2px;
+    font-size: 0.9em;
+  }
+
+  .formula-box {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 14px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--rule-color);
+    margin: 14px 0;
+    text-align: center;
+    font-size: 22px;
+    color: var(--chalk-teal);
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 12px;
+  }
+
+  .btn-angle {
+    padding: 8px 14px;
+    border: 2px solid var(--chalk-teal);
+    background: transparent;
+    color: var(--chalk-teal);
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .btn-angle:hover, .btn-angle.active {
+    background: var(--chalk-teal);
+    color: var(--bg-base);
+  }
+
+  .btn-special {
+    border-color: var(--chalk-coral);
+    color: var(--chalk-coral);
+  }
+
+  .btn-special:hover, .btn-special.active {
+    background: var(--chalk-coral);
+    color: var(--bg-base);
+  }
+
+  .prop-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .prop-table th, .prop-table td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid var(--rule-color);
+    font-size: 19px;
+  }
+  .prop-table th {
+    background: rgba(77, 210, 255, 0.15);
+    color: var(--chalk-teal);
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>全度數平面鏡成像模擬器</h1>
+    <p>國中自然科進階示範：解密 <span style="white-space: nowrap;">31°</span> 空間破缺、重疊像分離與無條件捨去鐵律</p>
+  </header>
+
+  <!-- 嚴格落實分頁規範：直擊科學概念，無數字前綴 -->
+  <div class="tabs">
+    <div class="tab-btn active" onclick="switchTab('tab1')">任意度數模擬</div>
+    <div class="tab-btn" onclick="switchTab('tab2')">31度破缺解密</div>
+    <div class="tab-btn" onclick="switchTab('tab3')">秒解考題鐵律</div>
+    <div class="tab-btn" onclick="switchTab('tab4')">光路映射原理</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2 id="panel-title">連續度數動態對稱映射試驗</h2>
+      <span id="panel-badge" class="sub-tag">1° 精準度</span>
+    </div>
+
+    <!-- 嚴格雙欄排版 Grid -->
+    <div class="grid-container">
+      <!-- 左欄：互動畫布與角度控制 -->
+      <div>
+        <div class="stage-container">
+          <canvas id="stage" width="600" height="500"></canvas>
+        </div>
+        <div class="controls" id="controls-area">
+          <div class="control-group">
+            <label>鏡面夾角 (<span style="white-space: nowrap;">θ</span>)：</label>
+            <input id="rng-angle" type="range" min="15" max="180" step="1" value="31">
+            <span id="val-angle" class="readout-badge">31 °</span>
+          </div>
+          <div style="text-align:center; color:var(--chalk-muted); font-size:18px; margin-top:10px;">
+            ⚡ 點擊一鍵比較「整數重疊」與「31度破缺」：
+          </div>
+          <div class="btn-group">
+            <button class="btn-angle" onclick="setAngle(30)">30° (整數重疊)</button>
+            <button class="btn-angle btn-special active" onclick="setAngle(31)">31° (分裂破缺)</button>
+            <button class="btn-angle" onclick="setAngle(45)">45° (7像)</button>
+            <button class="btn-angle" onclick="setAngle(50)">50° (7像)</button>
+            <button class="btn-angle" onclick="setAngle(60)">60° (5像)</button>
+            <button class="btn-angle" onclick="setAngle(73)">73° (4像)</button>
+            <button class="btn-angle" onclick="setAngle(90)">90° (3像)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右欄：即時物理數據與授課重點 -->
+      <div>
+        <div class="stats" id="dynamic-stats">
+          <!-- 數據由 JS 動態生成 -->
+        </div>
+        <div class="note" id="note-text">
+          <!-- 筆記由 JS 動態生成 -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  
+  let currentTab = 'tab1';
+  let currentAngle = 31;
+  const rngAngle = document.getElementById('rng-angle');
+  const valAngle = document.getElementById('val-angle');
+  const dynamicStats = document.getElementById('dynamic-stats');
+  const noteText = document.getElementById('note-text');
+
+  function setAngle(ang) {
+    currentAngle = ang;
+    if (rngAngle) {
+      rngAngle.value = ang;
+      valAngle.textContent = ang + ' °';
+    }
+    document.querySelectorAll('.btn-angle').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.textContent) === ang);
+    });
+    updatePage();
+  }
+
+  if (rngAngle) {
+    rngAngle.addEventListener('input', e => {
+      currentAngle = parseInt(e.target.value);
+      valAngle.textContent = currentAngle + ' °';
+      document.querySelectorAll('.btn-angle').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.textContent) === currentAngle);
+      });
+      updatePage();
+    });
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    const title = document.getElementById('panel-title');
+    const badge = document.getElementById('panel-badge');
+    const controls = document.getElementById('controls-area');
+
+    if (tab === 'tab1') {
+      title.textContent = '連續度數動態對稱映射試驗';
+      badge.textContent = '1° 精準度';
+      controls.style.display = 'block';
+    } else if (tab === 'tab2') {
+      title.textContent = '31度破缺解密：重疊像分離現象';
+      badge.textContent = '破缺分析';
+      controls.style.display = 'block';
+      setAngle(31);
+    } else if (tab === 'tab3') {
+      title.textContent = '秒解考題鐵律：無條件捨去法';
+      badge.textContent = '考場必勝';
+      controls.style.display = 'none';
+    } else if (tab === 'tab4') {
+      title.textContent = '多重反射光路與非反射盲區';
+      badge.textContent = '物理本質';
+      controls.style.display = 'none';
+    }
+    updatePage();
+  }
+
+  function updatePage() {
+    let exactDiv = 360 / currentAngle;
+    let floorVal = Math.floor(exactDiv);
+    let isEvenDiv = (360 % currentAngle === 0 && floorVal % 2 === 0);
+    let imageCount = isEvenDiv ? (floorVal - 1) : floorVal;
+
+    if (currentTab === 'tab1' || currentTab === 'tab2') {
+      dynamicStats.innerHTML = `
+        <span>鏡面夾角 <span style="white-space: nowrap;">θ = <b>${currentAngle} °</b></span></span>
+        <span>空間除法 <span style="white-space: nowrap;">360° ÷ ${currentAngle}° = <b>${exactDiv.toFixed(2)}</b></span></span>
+        <span>秒解鐵律 <span style="white-space: nowrap;">無條件捨去小數點 ➔ <b>${floorVal}</b></span></span>
+        <span>實際看到 <span style="white-space: nowrap;">N = <b>${imageCount} 個虛像</b></span></span>
+        <span style="font-size:18px; color:${isEvenDiv ? 'var(--chalk-green)' : 'var(--chalk-coral)'};">
+          ${isEvenDiv ? '✨ 完美對稱：左右反射鏈在背面正中央精準重疊 (金色大點)！' : '⚡ 空間破缺：最後的虛像在背面分離錯開，且落入灰色非反射盲區！'}
+        </span>
+      `;
+
+      if (currentTab === 'tab1') {
+        noteText.innerHTML = `
+          💡 <b>黑板重點：</b>
+          <ul>
+            <li><b>左反射鏈 (青色)：</b>光線先射向鏡面 A，再依序反射生成之虛像。</li>
+            <li><b>右反射鏈 (橘色)：</b>光線先射向鏡面 B，再依序反射生成之虛像。</li>
+            <li><b>重疊判定：</b>當夾角能整除 <span style="white-space: nowrap;">360°</span> 且為偶數區塊時，青色與橘色的最後一個像會完美重合，形成一個金色發光像。</li>
+          </ul>
+        `;
+      } else {
+        noteText.innerHTML = `
+          💡 <b>為什麼 31° 是 11 個像？</b>
+          <ul>
+            <li><b>對稱破缺：</b><span style="white-space: nowrap;">360° ÷ 31° = 11.61</span>，圓周無法被平分。觀察上方畫布最高點，青色與橘色的像<b>明顯左右錯開</b>！</li>
+            <li><b>進入盲區：</b>錯開的最後這對虛像，已經落入鏡子背面的灰色虛線「非反射盲區」。</li>
+            <li><b>反射終止：</b>落入盲區代表光線無法再照射到任何鏡面前方，多重反射鏈就此中止，因此看到的總數就是捨去小數點後的 <span style="white-space: nowrap;"><b>11 個</b></span>！</li>
+          </ul>
+        `;
+      }
+    } else if (currentTab === 'tab3') {
+      dynamicStats.innerHTML = `
+        <span><b>考場必勝記憶口訣：</b></span>
+        <span style="color:var(--chalk-yellow); font-size:22px;">👉 遇到除不盡，小數點直接無條件捨去！</span>
+        <span>毫無例外，直接取整數即為正確答案！</span>
+      `;
+      noteText.innerHTML = `
+        💡 <b>名師考題速解對照表：</b>
+        <table class="prop-table">
+          <tr><th>鏡面夾角 (θ)</th><th>360° ÷ θ 實算值</th><th>秒解動作</th><th>虛像數量 (N)</th></tr>
+          <tr><td><b style="color:var(--chalk-coral);">31°</b></td><td>11.61</td><td>無條件捨去</td><td><b style="color:var(--chalk-yellow);">11 個</b></td></tr>
+          <tr><td><b style="color:var(--chalk-teal);">50°</b></td><td>7.20</td><td>無條件捨去</td><td><b style="color:var(--chalk-yellow);">7 個</b></td></tr>
+          <tr><td><b style="color:var(--chalk-green);">70°</b></td><td>5.14</td><td>無條件捨去</td><td><b style="color:var(--chalk-yellow);">5 個</b></td></tr>
+          <tr><td><b style="color:var(--chalk-purple);">100°</b></td><td>3.60</td><td>無條件捨去</td><td><b style="color:var(--chalk-yellow);">3 個</b></td></tr>
+        </table>
+        <div class="formula-box">
+          秒解通用式：<span style="white-space: nowrap;">N = ⌊ <div class="fraction"><span class="numerator">360°</span><span class="denominator">θ</span></div> ⌋</span> （⌊ ⌋ 為無條件捨去符號）
+        </div>
+      `;
+    } else if (currentTab === 'tab4') {
+      dynamicStats.innerHTML = `
+        <span><b>什麼是非反射盲區？</b></span>
+        <span>兩面鏡子夾角的背後（灰色網底區塊），屬於光線無法觸及的背光面。</span>
+        <span style="color:var(--chalk-teal);">一旦虛像落入此區，即無法再擔當下一輪反射的虛物！</span>
+      `;
+      noteText.innerHTML = `
+        💡 <b>物理本質深度剖析：</b>
+        <ul>
+          <li><b>虛物成虛像：</b>多重成像的本質，是第 <span style="white-space: nowrap;">1 次</span>反射的虛像，被另一面鏡子看作「虛物」，再度進行第 <span style="white-space: nowrap;">2 次</span>反射。</li>
+          <li><b>終止條件：</b>只要新生成的虛像位置，跨過了鏡面的延長線（進入鏡子背面），下一面鏡子就「看不見」它了，反射序列隨之結束。</li>
+          <li>這就是為什麼除不盡的時候，不是四捨五入，而是絕對的<b>無條件捨去</b>！</li>
+        </ul>
+      `;
+    }
+    drawScene();
+  }
+
+  function drawScene() {
+    ctx.clearRect(0, 0, 600, 500);
+
+    let cx = 300, cy = 260; 
+    let radius = 170;       
+
+    // 1. 畫灰色網底：背面的非反射盲區
+    let halfRad = (currentAngle / 2) * (Math.PI / 180);
+    let mirrorA_rad = Math.PI / 2 - halfRad;
+    let mirrorB_rad = Math.PI / 2 + halfRad;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius + 40, mirrorB_rad, mirrorA_rad + Math.PI * 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // 盲區邊界虛線
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy); ctx.lineTo(cx + (radius+30) * Math.cos(mirrorA_rad + Math.PI), cy + (radius+30) * Math.sin(mirrorA_rad + Math.PI));
+    ctx.moveTo(cx, cy); ctx.lineTo(cx + (radius+30) * Math.cos(mirrorB_rad + Math.PI), cy + (radius+30) * Math.sin(mirrorB_rad + Math.PI));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.font = '16px Noto Sans TC';
+    ctx.fillText('非反射盲區 (反光停止)', cx - 80, cy - 80);
+
+    // 2. 畫等距圓形軌道
+    ctx.strokeStyle = '#a3b8b0';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 3. 畫平面鏡 A 與 B
+    let mirrorLen = 230;
+    ctx.strokeStyle = '#4dd2ff';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy); ctx.lineTo(cx + mirrorLen * Math.cos(mirrorA_rad), cy + mirrorLen * Math.sin(mirrorA_rad));
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy); ctx.lineTo(cx + mirrorLen * Math.cos(mirrorB_rad), cy + mirrorLen * Math.sin(mirrorB_rad));
+    ctx.stroke();
+
+    ctx.fillStyle = '#4dd2ff';
+    ctx.font = 'bold 20px Noto Sans TC';
+    ctx.fillText('鏡面 A', cx + mirrorLen * Math.cos(mirrorA_rad) + 10, cy + mirrorLen * Math.sin(mirrorA_rad));
+    ctx.fillText('鏡面 B', cx + mirrorLen * Math.cos(mirrorB_rad) - 80, cy + mirrorLen * Math.sin(mirrorB_rad));
+
+    // 4. 畫角平分線與真物理角度計算
+    ctx.fillStyle = '#33cc99';
+    ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fill();
+
+    // 5. 繪製真實物體與所有反射虛像
+    // 真正物理模擬：左右反射序列
+    let imagesLeft = [];
+    let imagesRight = [];
+
+    let stepRad = currentAngle * (Math.PI / 180);
+    // 產生序列直到轉過 180 度 (Math.PI)
+    for (let k = 1; k * currentAngle <= 180.001; k++) {
+      imagesLeft.push(Math.PI / 2 - k * stepRad);  // 左鏈 (逆時針/順時針交替在圓周的絕對映射)
+      imagesRight.push(Math.PI / 2 + k * stepRad); // 右鏈
+    }
+
+    // 檢查最後一個點是否合體重疊 (差異小於 0.5 度視為重疊)
+    let isMerged = false;
+    if (imagesLeft.length > 0 && imagesRight.length > 0) {
+      let lastL = imagesLeft[imagesLeft.length - 1];
+      let lastR = imagesRight[imagesRight.length - 1];
+      // 在圓周上，相差 2*PI 或重合於 -Math.PI/2 (即頂點)
+      if (Math.abs(lastL - (-Math.PI/2)) < 0.01 && Math.abs(lastR - (3*Math.PI/2)) < 0.01 || Math.abs(Math.sin(lastL) - Math.sin(lastR)) < 0.01 && Math.cos(lastL) < 0) {
+        isMerged = true;
+      }
+    }
+
+    // 畫左鏈虛像 (青色)
+    imagesLeft.forEach((rad, idx) => {
+      if (isMerged && idx === imagesLeft.length - 1) return; // 重疊點留到後面畫金色
+      let ix = cx + radius * Math.cos(rad);
+      let iy = cy + radius * Math.sin(rad);
+      ctx.fillStyle = '#4dd2ff';
+      ctx.beginPath(); ctx.arc(ix, iy, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = '#f6f3ea'; ctx.font = '15px JetBrains Mono';
+      ctx.fillText(`左${idx+1}`, ix - 25, iy - 12);
+    });
+
+    // 畫右鏈虛像 (橘色)
+    imagesRight.forEach((rad, idx) => {
+      if (isMerged && idx === imagesRight.length - 1) return;
+      let ix = cx + radius * Math.cos(rad);
+      let iy = cy + radius * Math.sin(rad);
+      ctx.fillStyle = '#ff8040';
+      ctx.beginPath(); ctx.arc(ix, iy, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = '#f6f3ea'; ctx.font = '15px JetBrains Mono';
+      ctx.fillText(`右${idx+1}`, ix + 8, iy - 12);
+    });
+
+    // 如果合體重疊，在頂點畫金色發光大圓
+    if (isMerged) {
+      let ix = cx + radius * Math.cos(-Math.PI/2);
+      let iy = cy + radius * Math.sin(-Math.PI/2);
+      ctx.fillStyle = '#ffe066';
+      ctx.beginPath(); ctx.arc(ix, iy, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 3; ctx.stroke();
+      ctx.fillStyle = '#ffe066'; ctx.font = 'bold 18px Noto Sans TC';
+      ctx.fillText('✨完美重疊像', ix - 50, iy - 22);
+    } else if (currentAngle === 31) {
+      // 針對 31 度特別在頂點標示「錯開分裂」
+      ctx.fillStyle = '#ffe066';
+      ctx.font = 'bold 18px Noto Sans TC';
+      ctx.fillText('⚡頂點明顯錯開，無重疊！', cx - 110, cy - radius - 20);
+    }
+
+    // 畫真實物體 (🍎 置於最下方 Math.PI/2)
+    let objX = cx + radius * Math.cos(Math.PI/2);
+    let objY = cy + radius * Math.sin(Math.PI/2);
+    ctx.fillStyle = '#ffe066';
+    ctx.beginPath(); ctx.arc(objX, objY, 15, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#ffe066'; ctx.font = 'bold 20px Noto Sans TC';
+    ctx.fillText('🍎 真實物體', objX - 55, objY + 38);
+
+    // 頂部狀態列
+    ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 22px Noto Sans TC';
+    let totalCount = imagesLeft.length + imagesRight.length - (isMerged ? 1 : 0);
+    ctx.fillText(`夾角 θ = ${currentAngle}° ➔ 視覺虛像總數 N = ${totalCount} 個`, 60, 35);
+  }
+
+  // 初始化
+  switchTab('tab1');
+</script>
+</body>
+</html>
