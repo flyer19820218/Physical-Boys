@@ -167,9 +167,9 @@
 
   <div class="concept-box">
     💡 <strong>教學重點：觀察相對運動的轉換</strong><br>
-    👉 <strong>太空視角：</strong> 太陽光固定來自右側。地球逆時針自轉，觀測者(粉紅點)轉進向陽面即為日出。<br>
+    👉 <strong>太空視角：</strong> 太陽光固定水平照射。地球傾斜且逆時針自轉，觀測者轉進向陽面即為日出。<br>
     👉 <strong>剖面視角：</strong> 視角固定於觀測者，太陽在天球軌道上順時針運行。地平線(綠線)會因緯度而傾斜。<br>
-    👉 <strong>地表視角：</strong> 將剖面圖的幾何關係轉換為立體天空，呈現出與緯度對應的傾斜軌跡與天赤道。
+    👉 <strong>地表視角：</strong> 將剖面圖的幾何轉換為立體天空，呈現出與緯度對應的傾斜軌跡與天赤道。
   </div>
 
   <div class="control-panel">
@@ -201,7 +201,7 @@
 
   <div class="grid-3">
     <div class="canvas-container">
-      <h3 style="color: var(--chalk-dim);">【太空視角】地球自轉</h3>
+      <h3 style="color: var(--chalk-dim);">【太空視角】地球傾斜與自轉</h3>
       <canvas id="heliosCanvas" width="450" height="450"></canvas>
       <div class="explain-box" id="heliosExplain"></div>
     </div>
@@ -305,7 +305,7 @@
   }
 
   // ==========================================
-  // === 圖1: 太空視角 ===
+  // === 圖1: 太空視角 (真正修正為逆時針自轉) ===
   // ==========================================
   function drawHeliosCanvas() {
       const canvas = document.getElementById('heliosCanvas');
@@ -318,42 +318,54 @@
       const phi_rad = lat_deg * Math.PI / 180;
       const delta_rad = DELTA_MAP[season] * Math.PI / 180;
 
+      // 1. 太陽光線 (水平，永遠從正中央射入)
+      drawArrow(ctx, cx + R + 70, cy, cx + R + 10, cy, COLOR_MAP[season], '太陽光', -12, "center", 4);
+
+      // 2. 畫地球底層與陰影 (陰影固定在左半邊)
       ctx.fillStyle = '#11261f'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.fill();
       ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.stroke();
       
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
       ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI/2, 3*Math.PI/2); ctx.fill();
 
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
-      ctx.beginPath(); ctx.moveTo(cx, cy - R - 15); ctx.lineTo(cx, cy + R + 15); ctx.stroke(); 
-      ctx.beginPath(); ctx.moveTo(cx - R - 15, cy); ctx.lineTo(cx + R + 15, cy); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = '#FFFFFF'; ctx.font = "14px sans-serif"; ctx.fillText("N", cx - 5, cy - R - 20);
+      // 3. 旋轉畫布，產生隨季節改變的 23.5 度傾角
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(delta_rad); // 夏至轉右，冬至轉左
 
-      const latY = cy - R * Math.sin(phi_rad);
+      // 地軸與赤道
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(0, -R - 15); ctx.lineTo(0, R + 15); ctx.stroke(); 
+      ctx.beginPath(); ctx.moveTo(-R - 15, 0); ctx.lineTo(R + 15, 0); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#FFFFFF'; ctx.font = "14px sans-serif"; ctx.fillText("N", -5, -R - 20);
+
+      // 緯度軌道
+      const latY = -R * Math.sin(phi_rad);
       const latR = R * Math.cos(phi_rad);
       ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(cx - latR, latY); ctx.lineTo(cx + latR, latY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-latR, latY); ctx.lineTo(latR, latY); ctx.stroke();
 
+      // 觀測者位置 
+      // ✅ 修正：移除負號，確保為正確的逆時針自轉 (West to East)
       const t_rad = getTimeAngle(timeHour); 
-      const ox = cx + latR * Math.cos(t_rad);
-      const oz = -latR * Math.sin(t_rad); 
+      const ox = latR * Math.cos(t_rad);
+      const oz = latR * Math.sin(t_rad); // oz <= 0 代表前方
 
-      if (oz <= 0) { 
+      if (oz <= 0) { // 正面 (前半球)
           ctx.fillStyle = '#FF3399'; ctx.beginPath(); ctx.arc(ox, latY, 5, 0, Math.PI*2); ctx.fill();
           const zx = Math.cos(phi_rad) * Math.cos(t_rad);
           const zy = Math.sin(phi_rad);
           drawArrow(ctx, ox, latY, ox + zx*30, latY - zy*30, '#FF3399', '');
-      } else { 
+      } else { // 背面 (後半球)
           ctx.fillStyle = 'rgba(255,51,153,0.3)'; ctx.beginPath(); ctx.arc(ox, latY, 4, 0, Math.PI*2); ctx.fill();
       }
 
-      const rayY = cy - R * Math.sin(delta_rad);
-      drawArrow(ctx, cx + R + 80, rayY, cx + R + 10, rayY, COLOR_MAP[season], '太陽光', -12, "center", 4);
+      ctx.restore();
 
       const exp = document.getElementById('heliosExplain');
       const hh = String(Math.floor(timeHour)).padStart(2,'0');
       const mm = String(Math.floor((timeHour%1)*60)).padStart(2,'0');
-      exp.innerHTML = `時間：<span class="mono hl-cyan">${hh}:${mm}</span><br>地球逆時針自轉。觀測者(粉紅點)轉至向陽面即為日出。`;
+      exp.innerHTML = `時間：<span class="mono hl-cyan">${hh}:${mm}</span><br>地軸隨季節傾斜。亮暗區固定，地球逆時針轉動產生晝夜。`;
   }
 
   // ==========================================
@@ -415,17 +427,10 @@
       ctx.fillStyle = '#11261f'; ctx.beginPath(); ctx.arc(cx, cy, R_earth, 0, Math.PI*2); ctx.fill();
       ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R_earth, 0, Math.PI*2); ctx.stroke();
       
-      // 縮小版地球的地軸與赤道圓弧
+      // 小地球的直線基準
       ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
-      ctx.beginPath(); ctx.moveTo(cx, cy - R_earth - 10); ctx.lineTo(cx, cy + R_earth + 10); ctx.stroke(); // 地軸
-      ctx.beginPath();
-      for(let h = -Math.PI; h <= Math.PI; h+=0.05) { // 赤道
-          let x = cx + R_earth * Math.cos(h);
-          let z = R_earth * Math.sin(h);
-          let y = cy + z * 0.35; 
-          if(h===-Math.PI) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-      }
-      ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(cx, cy - R_earth - 10); ctx.lineTo(cx, cy + R_earth + 10); ctx.stroke(); 
+      ctx.beginPath(); ctx.moveTo(cx - R_earth - 10, cy); ctx.lineTo(cx + R_earth + 10, cy); ctx.stroke(); ctx.setLineDash([]);
 
       // 地平線與天頂
       const hx1 = cx + R_sky * Math.cos(angleNorth);
