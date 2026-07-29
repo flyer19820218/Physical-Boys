@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物理黑板教室：台灣四季太陽軌跡與 3D 視角</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-blackboard: #11261f;
+    --bg-panel: #18332a;
+    --bg-panel-hover: #204236;
+    --chalk-white: #FFFFFF;
+    --chalk-yellow: #FFE600;
+    --chalk-cyan: #00E5FF;
+    --chalk-orange: #FF9900;
+    --chalk-green: #00FF66;
+    --chalk-pink: #FF3399;
+    --chalk-dim: #A0B3C6; 
+    --chalk-line: rgba(255, 255, 255, 0.4);
+    --shadow-dark: rgba(9, 20, 16, 0.9);
+    --shadow-light: rgba(9, 20, 16, 0.4);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 20px 15px 60px;
+    background-color: var(--bg-blackboard);
+    background-image: 
+      radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0),
+      radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+    background-size: 24px 24px, 16px 16px;
+    background-position: 0 0, 8px 8px;
+    color: var(--chalk-white);
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 20px; 
+    line-height: 1.8;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--chalk-orange);
+  }
+  h1 {
+    font-size: 32px;
+    color: var(--chalk-orange);
+    margin: 0 0 8px;
+    letter-spacing: 2px;
+  }
+  .subtitle {
+    font-size: 22px;
+    color: var(--chalk-cyan);
+    font-weight: bold;
+  }
+  .nav-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    padding-bottom: 8px;
+  }
+  .tab-btn {
+    padding: 12px 24px;
+    font-size: 20px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--chalk-dim);
+    border: 2px dashed var(--chalk-line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .tab-btn:hover {
+    background: var(--bg-panel-hover);
+    color: var(--chalk-white);
+    border-color: var(--chalk-white);
+  }
+  .tab-btn.active {
+    background: var(--bg-panel);
+    color: var(--chalk-orange);
+    border: 2px solid var(--chalk-orange);
+    box-shadow: 0 0 15px rgba(255, 153, 0, 0.3);
+  }
+  .panel {
+    display: none;
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-line);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 10px 30px var(--shadow-dark);
+  }
+  .panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  h2 {
+    font-size: 28px;
+    color: var(--chalk-cyan);
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--chalk-line);
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    margin: 20px 0;
+  }
+  .card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px solid var(--chalk-line);
+    border-radius: 12px;
+    padding: 22px;
+  }
+  .card-title {
+    font-size: 24px;
+    color: var(--chalk-yellow);
+    margin-bottom: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: bold;
+    color: var(--chalk-yellow);
+  }
+  .nw { white-space: nowrap; }
+  .concept-box {
+    background: rgba(255, 255, 255, 0.06);
+    border-left: 6px solid var(--chalk-orange);
+    padding: 16px 20px;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 20px;
+  }
+  .diagram-area, .interactive-area {
+    background: var(--shadow-light);
+    border: 2px dashed var(--chalk-line);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    text-align: center;
+    overflow-x: auto;
+  }
+  .interactive-area { border-color: var(--chalk-cyan); }
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  .action-btn {
+    padding: 10px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    background: transparent;
+    color: var(--chalk-cyan);
+    border: 2px solid var(--chalk-cyan);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .action-btn:hover, .action-btn.active {
+    background: var(--chalk-cyan);
+    color: var(--bg-blackboard);
+  }
+  .btn-orange { color: var(--chalk-orange); border-color: var(--chalk-orange); }
+  .btn-orange:hover, .btn-orange.active { background: var(--chalk-orange); color: var(--bg-blackboard); }
+  .btn-pink { color: var(--chalk-pink); border-color: var(--chalk-pink); }
+  .btn-pink:hover, .btn-pink.active { background: var(--chalk-pink); color: var(--bg-blackboard); }
+  .btn-green { color: var(--chalk-green); border-color: var(--chalk-green); }
+  .btn-green:hover, .btn-green.active { background: var(--chalk-green); color: var(--bg-blackboard); }
+  .btn-yellow { color: var(--chalk-yellow); border-color: var(--chalk-yellow); }
+  .btn-yellow:hover, .btn-yellow.active { background: var(--chalk-yellow); color: var(--bg-blackboard); }
+  canvas {
+    background-color: var(--bg-blackboard);
+    border: 2px solid var(--chalk-orange);
+    border-radius: 8px;
+    margin: 16px auto;
+    display: block;
+    max-width: 100%;
+    box-shadow: 0 4px 15px var(--shadow-dark);
+  }
+  .canvas-wide {
+    max-width: none; 
+    width: 1140px;
+  }
+  .explain-box {
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-white);
+    border-radius: 8px;
+    padding: 18px;
+    text-align: left;
+    max-width: 1140px;
+    margin: 14px auto 0;
+    font-size: 20px;
+  }
+  .slider-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 16px 0;
+    font-weight: bold;
+    font-size: 20px;
+  }
+  .slider-box input[type=range] {
+    flex: 1;
+    max-width: 400px;
+    cursor: pointer;
+  }
+  .hl-yellow { color: var(--chalk-yellow); font-weight: bold; }
+  .hl-green { color: var(--chalk-green); font-weight: bold; }
+  .hl-cyan { color: var(--chalk-cyan); font-weight: bold; }
+  .hl-orange { color: var(--chalk-orange); font-weight: bold; }
+  .hl-pink { color: var(--chalk-pink); font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>🎯 天文物理：台灣 (23.5°N) 太陽軌跡</h1>
+    <div class="subtitle">夏至日正當中 ｜ 四季晝夜長短 ｜ 終極相對運動 3D 解析</div>
+  </header>
+
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab(0)">台灣的空間幾何</button>
+    <button class="tab-btn" onclick="switchTab(1)">夏至日正當中</button>
+    <button class="tab-btn" onclick="switchTab(2)">四季軌跡大PK</button>
+    <button class="tab-btn" onclick="switchTab(3)">終極三視角對照</button>
+  </nav>
+
+  <!-- ================= 分頁 1：台灣的空間幾何 ================= -->
+  <div class="panel active">
+    <h2>台灣的空間幾何 <span class="hl-orange" style="font-size: 20px; float: right;">直射北回歸線的秘密</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-orange">台灣得天獨厚的地理位置：</strong><br>
+      台灣位於北緯 23.5°（北回歸線）。當地平線與天頂畫出來後，你會發現：<br>
+      👉 夏至時，太陽的直射光線剛好與台灣的<strong class="hl-green">天頂（頭頂正上方）</strong>完全重合！<br>
+      👉 這就是為什麼夏至正午時，站在嘉義北回歸線紀念碑下，會發現「影子完全消失」的幾何原理！
+    </div>
+
+    <div class="interactive-area">
+      <h3 style="margin-top: 0; color: var(--chalk-orange);">🧑‍🏫 幾何圖解：太陽直射點與台灣天頂的完美交疊</h3>
+      <div class="btn-group" id="tab1-btns">
+        <button class="action-btn btn-yellow active" onclick="setGeoSeason('summer', this)">☀️ 夏至 (直射北回歸線)</button>
+        <button class="action-btn btn-green" onclick="setGeoSeason('equinox', this)">🌸 春秋分 (直射赤道)</button>
+        <button class="action-btn btn-cyan" onclick="setGeoSeason('winter', this)">❄️ 冬至 (直射南回歸線)</button>
+      </div>
+      <canvas id="geoCanvas" width="800" height="420"></canvas>
+      <div id="geoExplain" class="explain-box"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 2：夏至日正當中 ================= -->
+  <div class="panel">
+    <h2>夏至日正當中 <span class="hl-orange" style="font-size: 20px; float: right;">直穿天頂的太陽</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-orange">夏至極端觀測現象：</strong><br>
+      夏至當天，太陽從<strong class="hl-yellow">東偏北</strong>升起，在正午 12:00 完美抵達天球的最高點（天頂），然後在傍晚從<strong class="hl-yellow">西偏北</strong>落下。<br>
+      日照時間超過 12 小時，是一年當中白天最長的一天！
+    </div>
+
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">🎥 模擬演示：台灣夏至 24 小時太陽天球軌跡</h3>
+      <div class="btn-group">
+        <button class="action-btn btn-green active" id="playSolsticeBtn" onclick="toggleSolsticePlay()">▶️ 啟動 24 小時旋轉動畫</button>
+        <button class="action-btn btn-pink" onclick="setSolsticeTime(0)">子夜 (00:00)</button>
+        <button class="action-btn btn-cyan" onclick="setSolsticeTime(6)">清晨 (偏東)</button>
+        <button class="action-btn btn-orange" onclick="setSolsticeTime(12)">正午 (天頂)</button>
+      </div>
+      <canvas id="solsticeCanvas" width="760" height="420"></canvas>
+      <div id="solsticeExplain" class="explain-box"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 3：四季軌跡大PK ================= -->
+  <div class="panel">
+    <h2>四季軌跡大PK <span class="hl-orange" style="font-size: 20px; float: right;">軌跡傾斜與晝夜長短</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-orange">三條平行線的奧秘：</strong><br>
+      因為台灣位於北緯 23.5°，我們看太陽的軌跡總是向南方傾斜。<br>
+      👉 <span class="hl-yellow">夏至 (6/22)：</span> 日出東偏北，正午仰角 90° (天頂)，晝長夜短。<br>
+      👉 <span class="hl-green">春秋分 (3/21, 9/23)：</span> 日出正東，正午仰角 66.5°，晝夜平分。<br>
+      👉 <span class="hl-cyan">冬至 (12/22)：</span> 日出東偏南，正午仰角最低 (43°)，晝短夜長。
+    </div>
+
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">🗓️ 節氣切換：觀察軌跡的高低與日出方位的偏移</h3>
+      <div class="btn-group">
+        <button class="action-btn btn-yellow active" onclick="setSeason('summer', this)">☀️ 夏至軌跡</button>
+        <button class="action-btn btn-green" onclick="setSeason('equinox', this)">🌸 春秋分軌跡</button>
+        <button class="action-btn btn-cyan" onclick="setSeason('winter', this)">❄️ 冬至軌跡</button>
+      </div>
+      <canvas id="seasonsCanvas" width="800" height="420"></canvas>
+      <div id="seasonsExplain" class="explain-box"></div>
+    </div>
+  </div>
+
+  <!-- ================= 分頁 4：終極三視角對照 ================= -->
+  <div class="panel">
+    <h2>終極三視角對照 <span class="hl-orange" style="font-size: 20px; float: right;">3D球體與相對運動實境</span></h2>
+    
+    <div class="concept-box">
+      💡 <strong class="hl-orange">破解盲區：看懂相對運動！</strong><br>
+      👉 <strong class="hl-cyan">左/中圖 (太空視角)：</strong> 太陽光固定來自右側。地球在 3D 空間中<strong class="hl-yellow">由西向東自轉</strong>，台灣跟著十字座標從左側(半夜) ➔ 轉到正面(清晨) ➔ 再轉到右側面光(正午)！<br>
+      👉 <strong class="hl-green">右圖 (教科書標準天球)：</strong> 我們面向南方（左南右北，前東後西）。因為地球自轉，我們看天上的太陽就會產生完美的「東升西落」相對運動！
+    </div>
+
+    <div class="interactive-area">
+      <h3 style="margin-top: 0;">🌐 台灣專屬：三視角 60FPS 3D聯動模擬器</h3>
+      
+      <div class="btn-group" id="tab4-season-btns">
+        <button class="action-btn btn-yellow active" onclick="setTripleSeason('summer', this)">☀️ 夏至 (直射北迴歸線)</button>
+        <button class="action-btn btn-green" onclick="setTripleSeason('equinox', this)">🌸 春秋分 (直射赤道)</button>
+        <button class="action-btn btn-cyan" onclick="setTripleSeason('winter', this)">❄️ 冬至 (直射南迴歸線)</button>
+      </div>
+
+      <div class="btn-group">
+        <button class="action-btn btn-green active" id="triplePlayBtn" onclick="toggleTriplePlay()">⏸️ 暫停三視角動畫</button>
+        <button class="action-btn btn-pink" onclick="setTripleTime(0)">00:00 (子夜)</button>
+        <button class="action-btn btn-cyan" onclick="setTripleTime(6)">06:00 (清晨)</button>
+        <button class="action-btn btn-orange" onclick="setTripleTime(12)">12:00 (正午)</button>
+      </div>
+
+      <div class="slider-box">
+        <span>⏰ 24 小時時間進度：</span>
+        <input type="range" id="tripleSlider" min="0" max="24" step="0.1" value="12" oninput="onTripleSliderInput(this.value)">
+        <span id="tripleTimeText" class="mono hl-yellow" style="min-width: 140px;">12:00 (正午)</span>
+      </div>
+
+      <canvas id="tripleCanvas" width="1140" height="420" class="canvas-wide"></canvas>
+      <div id="tripleExplain" class="explain-box"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let solsticeAnimId = null;
+  let tripleAnimId = null;
+  let isSolsticePlaying = false;
+  let isTriplePlaying = false;
+  let geoSeasonMode = 'summer';    
+  let seasonMode = 'summer';       
+  let tripleSeasonMode = 'summer'; 
+
+  const TAIWAN_LAT = 23.5 * Math.PI / 180; 
+
+  function stopAllAnimations() {
+    if (solsticeAnimId) { cancelAnimationFrame(solsticeAnimId); solsticeAnimId = null; }
+    if (tripleAnimId) { cancelAnimationFrame(tripleAnimId); tripleAnimId = null; }
+    isSolsticePlaying = false;
+    isTriplePlaying = false;
+
+    const btn1 = document.getElementById('playSolsticeBtn');
+    if(btn1) { btn1.textContent = "▶️ 啟動 24 小時旋轉動畫"; btn1.classList.remove('active'); }
+    const btn2 = document.getElementById('triplePlayBtn');
+    if(btn2) { btn2.textContent = "▶️ 啟動三視角實時旋轉"; btn2.classList.remove('active'); }
+  }
+
+  function switchTab(idx) {
+    stopAllAnimations();
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel')[idx].classList.add('active');
+    document.querySelectorAll('.nav-tabs .tab-btn')[idx].classList.add('active');
+
+    if(idx === 0) drawGeoScene();
+    if(idx === 1) drawSolsticeFrame();
+    if(idx === 2) drawSeasonsFrame();
+    if(idx === 3) { drawTripleFrame(); startTripleAnim(); }
+  }
+
+  function setGeoSeason(mode, btn) {
+    geoSeasonMode = mode;
+    document.querySelectorAll('#tab1-btns .action-btn').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    drawGeoScene();
+  }
+
+  function setSeason(mode, btn) {
+    seasonMode = mode;
+    document.querySelectorAll('.panel:nth-child(5) .btn-group button').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    drawSeasonsFrame();
+  }
+
+  function setTripleSeason(mode, btn) {
+    tripleSeasonMode = mode;
+    document.querySelectorAll('#tab4-season-btns .action-btn').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    drawTripleFrame();
+  }
+
+  function drawArrow(ctx, x1, y1, x2, y2, color, text, offset=0, align="center", isDashed=false) {
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 4;
+    if(isDashed) ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.setLineDash([]);
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const headlen = 14;
+    ctx.beginPath(); ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.fill();
+    
+    if (text) {
+      ctx.font = "bold 18px 'JetBrains Mono', sans-serif";
+      let tw = ctx.measureText(text).width;
+      let midX = (x1 + x2) / 2;
+      let midY = (y1 + y2) / 2;
+      let tx = midX - tw / 2;
+      if (align === "left") tx = midX - tw - 10;
+      else if (align === "right") tx = midX + 15;
+      ctx.fillText(text, tx, midY + offset);
+    }
+  }
+
+  // ✅ 核心 3D 基礎點位計算 (未傾斜)
+  // X:右(東), Y:上(北), Z:前(出螢幕)
+  function getPoint3D(lat_rad, t_rad, R) {
+      return {
+          x: R * Math.cos(lat_rad) * Math.cos(t_rad),
+          y: R * Math.sin(lat_rad),
+          z: R * Math.cos(lat_rad) * Math.sin(-t_rad) // -t_rad 讓 06:00(-90deg) 出現在前方 +Z
+      };
+  }
+
+  // 取得該點在地表的正北向量
+  function getNorth3D(lat_rad, t_rad) {
+      return {
+          x: -Math.sin(lat_rad) * Math.cos(t_rad),
+          y: Math.cos(lat_rad),
+          z: -Math.sin(lat_rad) * Math.sin(-t_rad)
+      };
+  }
+
+  // 取得該點在地表的正東向量
+  function getEast3D(t_rad) {
+      return {
+          x: -Math.sin(t_rad),
+          y: 0,
+          z: Math.cos(-t_rad) // 修正：東方為順著旋轉方向
+      };
+  }
+
+  // 將 3D 座標套用地球自轉軸傾角 (向右傾斜)
+  function applyTilt(pt, tilt_rad) {
+      return {
+          x: pt.x * Math.cos(tilt_rad) + pt.y * Math.sin(tilt_rad),
+          y: -pt.x * Math.sin(tilt_rad) + pt.y * Math.cos(tilt_rad),
+          z: pt.z
+      };
+  }
+
+  // 最終投影至 Canvas (帶有深度透視)
+  function projToCanvas(pt, cx, cy) {
+      return {
+          x: cx + pt.x,
+          y: cy - pt.y + pt.z * 0.35, // Z往前(大於0)時，Y座標往下沉(產生俯視立體感)
+          z: pt.z
+      };
+  }
+
+  // ✅ 教科書級天球座標轉換：面向南 (左南, 右北, 前東, 後西)
+  function getSkyPos(H_rad, delta_rad, phi_rad, R) {
+      const x_q = R * Math.cos(delta_rad) * Math.sin(H_rad); 
+      const y_q = R * Math.cos(delta_rad) * Math.cos(H_rad); 
+      const z_q = R * Math.sin(delta_rad);                   
+
+      const theta = Math.PI / 2 - phi_rad;
+      const x_h = x_q; // West
+      const y_h = y_q * Math.cos(theta) - z_q * Math.sin(theta); // South
+      const z_h = y_q * Math.sin(theta) + z_q * Math.cos(theta); // Zenith
+
+      // 完美對齊教科書：南在左(-X), 北在右(+X), 東在前(+Z), 西在後(-Z)
+      return { 
+          x: -y_h,   // +X is North, -X is South
+          y: z_h,    // +Y is Zenith
+          z: -x_h    // +Z is East
+      };
+  }
+
+  function projectSkyToCanvas(pos, cx, cy, depth_scale) {
+      return {
+          x: cx + pos.x, // South is Left
+          y: cy - pos.y + pos.z * depth_scale, // East is Front (lower Y)
+          z: pos.z 
+      };
+  }
+
+  // 繪製 3D 緯線軌道
+  function drawOrbit(ctx, cx, cy, tilt, latDeg, color, r) {
+    ctx.strokeStyle = color; 
+    
+    // 畫背景虛線
+    ctx.beginPath(); ctx.lineWidth = 2; ctx.setLineDash([4,4]);
+    for(let t = 0; t <= Math.PI; t += 0.05) {
+        let p = getPoint3D(latDeg * Math.PI/180, t, r);
+        p = applyTilt(p, tilt);
+        let cp = projToCanvas(p, cx, cy);
+        if(t===0) ctx.moveTo(cp.x, cp.y); else ctx.lineTo(cp.x, cp.y);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+    
+    // 畫前景實線
+    ctx.beginPath(); ctx.lineWidth = 2;
+    for(let t = Math.PI; t <= Math.PI*2; t += 0.05) {
+        let p = getPoint3D(latDeg * Math.PI/180, t - Math.PI*2, r); // 負角度在前方
+        p = applyTilt(p, tilt);
+        let cp = projToCanvas(p, cx, cy);
+        if(t===Math.PI) ctx.moveTo(cp.x, cp.y); else ctx.lineTo(cp.x, cp.y);
+    }
+    ctx.stroke();
+  }
+
+  // ✅ 繪製教科書標準天球基底 (南在左, 北在右)
+  function drawCelestialSphere(ctx, cx, cy, r, depth_scale) {
+      ctx.fillStyle = 'rgba(0, 255, 102, 0.1)';
+      ctx.beginPath(); ctx.ellipse(cx, cy, r+20, r*depth_scale, 0, 0, 2*Math.PI); ctx.fill();
+      ctx.strokeStyle = '#00FF66'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.ellipse(cx, cy, r+20, r*depth_scale, 0, 0, 2*Math.PI); ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(0, 162, 255, 0.8)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(cx, cy, r+20, Math.PI, 0); ctx.stroke();
+      ctx.fillStyle = 'rgba(0, 162, 255, 0.1)';
+      ctx.beginPath(); ctx.arc(cx, cy, r+20, Math.PI, 0); ctx.fill();
+
+      ctx.fillStyle = '#00FF66'; ctx.font = "bold 18px 'Noto Sans TC'";
+      ctx.fillText("南 (S)", cx - r - 60, cy + 5);
+      ctx.fillText("北 (N)", cx + r + 25, cy + 5);
+      ctx.fillText("東 (E)", cx - 25, cy + r*depth_scale + 25);
+      ctx.fillStyle = 'rgba(0, 255, 102, 0.6)';
+      ctx.fillText("西 (W)", cx - 25, cy - r*depth_scale - 10);
+
+      const personHeadY = cy - 10;
+      ctx.fillStyle = '#FF3399'; 
+      ctx.beginPath(); ctx.arc(cx, personHeadY, 8, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#FF3399'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(cx, personHeadY + 8); ctx.lineTo(cx, cy+5); ctx.stroke();
+      
+      ctx.strokeStyle = '#FFE600'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - r - 40); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#FFE600'; ctx.fillText("天頂", cx - 20, cy - r - 50);
+
+      // 天北極點 (在右側)
+      const ncpPos = getSkyPos(Math.PI, 90*Math.PI/180, TAIWAN_LAT, r+20);
+      const ncpP = projectSkyToCanvas(ncpPos, cx, cy, depth_scale);
+      ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ncpP.x, ncpP.y); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(ncpP.x, ncpP.y, 5, 0, Math.PI*2); ctx.fill();
+      ctx.fillText("天北極", ncpP.x + 10, ncpP.y + 5);
+  }
+
+  function drawSunTrack(ctx, cx, cy, r, depth_scale, delta_deg, color) {
+      const delta = delta_deg * Math.PI / 180;
+      let firstFront = true, firstBack = true;
+      
+      // 隱藏的背面 (Z < 0，虛線) -> 西方
+      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash([4,4]);
+      ctx.beginPath();
+      for(let h = -Math.PI; h <= Math.PI; h += 0.05) {
+          let pos = getSkyPos(h, delta, TAIWAN_LAT, r);
+          let p = projectSkyToCanvas(pos, cx, cy, depth_scale);
+          if (pos.y >= 0 && pos.z < 0) {
+              if(firstBack) { ctx.moveTo(p.x, p.y); firstBack = false; }
+              else { ctx.lineTo(p.x, p.y); }
+          }
+      }
+      ctx.stroke(); ctx.setLineDash([]);
+
+      // 正面的軌跡 (Z >= 0，實線) -> 東方
+      ctx.strokeStyle = color; ctx.lineWidth = 4;
+      ctx.beginPath();
+      for(let h = -Math.PI; h <= Math.PI; h += 0.05) {
+          let pos = getSkyPos(h, delta, TAIWAN_LAT, r);
+          let p = projectSkyToCanvas(pos, cx, cy, depth_scale);
+          if (pos.y >= 0 && pos.z >= 0) {
+              if(firstFront) { ctx.moveTo(p.x, p.y); firstFront = false; }
+              else { ctx.lineTo(p.x, p.y); }
+          }
+      }
+      ctx.stroke();
+  }
+
+  // --- 畫布 0 ---
+  function drawGeoScene() {
+    const canvas = document.getElementById('geoCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = 350, cy = 220, r = 130;
+    const tilt = geoSeasonMode === 'summer' ? 23.5 * Math.PI / 180 : (geoSeasonMode === 'winter' ? -23.5 * Math.PI / 180 : 0);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI/2, Math.PI*1.5); ctx.fill();
+    ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+
+    drawOrbit(ctx, cx, cy, tilt, 0, '#00FF66', r); 
+    drawOrbit(ctx, cx, cy, tilt, 23.5, '#FF9900', r); 
+    const arcColor = 'rgba(0, 229, 255, 0.8)';
+    drawOrbit(ctx, cx, cy, tilt, 66.5, arcColor, r); 
+
+    ctx.fillStyle = '#00FF66'; ctx.font = "bold 14px 'Noto Sans TC'";
+    ctx.fillText("赤道 (0°)", cx - 130, cy + 30);
+    ctx.fillStyle = '#FF9900'; 
+    ctx.fillText("北回歸線 (23.5°)", cx - 140, cy - 35);
+
+    const np_base = getPoint3D(90*Math.PI/180, 0, r);
+    const np_tilt = applyTilt(np_base, tilt);
+    const np = projToCanvas(np_tilt, cx, cy);
+
+    ctx.strokeStyle = '#FFE600'; ctx.lineWidth = 4; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(cx - np.x + cx, cy - (np.y - cy)); ctx.lineTo(np.x + (np.x-cx)*0.4, np.y + (np.y-cy)*0.4); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#FFE600'; ctx.font = "bold 20px 'Noto Sans TC'";
+    ctx.fillText("自轉軸", np.x + 10, np.y - 15);
+
+    ctx.fillStyle = '#FF0000'; ctx.beginPath(); ctx.arc(np.x, np.y, 6, 0, Math.PI*2); ctx.fill();
+
+    // 台灣位置 (12:00 -> t=0)
+    const t_rad = 0;
+    const tw_base = getPoint3D(TAIWAN_LAT, t_rad, r);
+    const tw_tilt = applyTilt(tw_base, tilt);
+    const twScreen = projToCanvas(tw_tilt, cx, cy);
+
+    ctx.fillStyle = '#FF9900'; ctx.beginPath(); ctx.arc(twScreen.x, twScreen.y, 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FFFFFF'; ctx.fillText("台灣 (23.5°N)", twScreen.x - 40, twScreen.y - 20);
+
+    const hx1 = twScreen.x - 100;
+    const hy1 = twScreen.y + 100 * Math.tan(tilt); 
+    const hx2 = twScreen.x + 30;
+    const hy2 = twScreen.y - 30 * Math.tan(tilt);
+    
+    ctx.strokeStyle = '#00FF66'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(hx1, hy1); ctx.lineTo(hx2, hy2); ctx.stroke();
+    ctx.fillStyle = '#00FF66'; ctx.fillText("台灣地平線", hx1 - 10, hy1 + 25);
+
+    drawArrow(ctx, twScreen.x, twScreen.y, twScreen.x + 100, twScreen.y, '#FF3399', "");
+    ctx.fillStyle = '#FF3399'; ctx.fillText("天頂 (Z)", twScreen.x + 110, twScreen.y + 6);
+
+    let rayLabelTarget = "直射赤道";
+    let rayY = cy;
+    if(geoSeasonMode === 'summer') { rayLabelTarget = "夏至直射北迴"; rayY = cy - r * Math.sin(23.5 * Math.PI / 180) * Math.cos(tilt); }
+    else if(geoSeasonMode === 'winter') { rayLabelTarget = "冬至直射南迴"; rayY = cy + r * Math.sin(23.5 * Math.PI / 180) * Math.cos(tilt); }
+
+    const raysGeo = [
+      { y: cy - r*0.7, label: "" },
+      { y: rayY, label: rayLabelTarget }, 
+      { y: cy + r*0.7, label: "" }
+    ];
+    
+    raysGeo.forEach(ray => {
+        let dy = Math.abs(ray.y - cy);
+        let surfaceX = cx + Math.sqrt(Math.max(0, r*r - dy*dy)) + 20;
+        drawArrow(ctx, 750, ray.y, surfaceX, ray.y, '#FF9900', "");
+        if (ray.label) {
+            ctx.fillStyle = '#FFE600'; ctx.font = "bold 20px 'Noto Sans TC'";
+            ctx.fillText(ray.label, 740 - ctx.measureText(ray.label).width, ray.y - 12);
+        }
+    });
+
+    if (geoSeasonMode === 'summer') {
+        ctx.strokeStyle = '#FFE600'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(twScreen.x + 25, twScreen.y); ctx.lineTo(twScreen.x + 25, twScreen.y + 25 * Math.tan(tilt)); ctx.lineTo(twScreen.x, twScreen.y + 25 * Math.tan(tilt)); ctx.stroke();
+    }
+
+    const exp = document.getElementById('geoExplain');
+    if (geoSeasonMode === 'summer') {
+      exp.innerHTML = `👉 <strong class="hl-yellow">夏至：</strong>太陽直射北回歸線，直射光線（橘色箭頭）完美切入台灣的<strong class="hl-pink">正上方天頂</strong>，此時仰角為 90°，形成「立竿無影」的奇景！`;
+    } else if (geoSeasonMode === 'equinox') {
+      exp.innerHTML = `👉 <strong class="hl-green">春秋分：</strong>太陽直射赤道，光線打在台灣時，與天頂產生 <span class="mono">23.5°</span> 的夾角，正午太陽仰角為 <span class="mono">66.5°</span>。`;
+    } else {
+      exp.innerHTML = `👉 <strong class="hl-cyan">冬至：</strong>太陽直射南回歸線，與台灣天頂夾角達到最大 <span class="mono">47°</span>，正午仰角為全年最低 <span class="mono">43°</span>，影子拉到最長！`;
+    }
+  }
+
+  // --- 畫布 1 ---
+  let solsticeTime = 12;
+
+  function toggleSolsticePlay() {
+    isSolsticePlaying = !isSolsticePlaying;
+    const btn = document.getElementById('playSolsticeBtn');
+    if(isSolsticePlaying) {
+      btn.textContent = "⏸️ 暫停動畫";
+      btn.classList.add('active');
+      animateSolstice();
+    } else {
+      btn.textContent = "▶️ 啟動 24 小時旋轉動畫";
+      btn.classList.remove('active');
+      if(solsticeAnimId) cancelAnimationFrame(solsticeAnimId);
+    }
+  }
+
+  function setSolsticeTime(t) {
+    solsticeTime = t;
+    if(isSolsticePlaying) toggleSolsticePlay();
+    drawSolsticeFrame();
+  }
+
+  function animateSolstice() {
+    if(isSolsticePlaying) {
+      solsticeTime = (solsticeTime + 0.08) % 24;
+      drawSolsticeFrame();
+      solsticeAnimId = requestAnimationFrame(animateSolstice);
+    }
+  }
+
+  function drawSolsticeFrame() {
+    const canvas = document.getElementById('solsticeCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = 380, cy = 260, r = 180, depth_scale = 0.35;
+
+    drawCelestialSphere(ctx, cx, cy, r, depth_scale);
+    drawSunTrack(ctx, cx, cy, r+20, depth_scale, 23.5, '#FFE600');
+
+    const H_sun = (solsticeTime - 12) / 24 * Math.PI * 2;
+    const sunPos = getSkyPos(H_sun, 23.5 * Math.PI/180, TAIWAN_LAT, r+20);
+    const sunP = projectSkyToCanvas(sunPos, cx, cy, depth_scale);
+
+    if (sunPos.y >= 0) { 
+        ctx.strokeStyle = 'rgba(255, 230, 0, 0.6)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(cx, cy-10); ctx.lineTo(sunP.x, sunP.y); ctx.stroke();
+        ctx.fillStyle = '#FFE600'; ctx.beginPath(); ctx.arc(sunP.x, sunP.y, 16, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
+    } else {
+        ctx.fillStyle = 'rgba(255, 230, 0, 0.3)'; ctx.beginPath(); ctx.arc(sunP.x, sunP.y, 10, 0, Math.PI*2); ctx.fill();
+    }
+
+    const hh = String(Math.floor(solsticeTime)).padStart(2, '0');
+    const mm = String(Math.floor((solsticeTime % 1) * 60)).padStart(2, '0');
+    let desc = "日照中";
+    if (sunPos.y < 0) desc = "夜晚 (太陽在地平線下)";
+    else if (solsticeTime >= 5 && solsticeTime < 7) desc = "日出 (太陽在東偏北/畫面前方)";
+    else if (solsticeTime >= 11 && solsticeTime <= 13) desc = "正午 (日正當中，仰角 90°)";
+    else if (solsticeTime >= 17 && solsticeTime < 19) desc = "日落 (太陽在西偏北/畫面後方)";
+
+    const exp = document.getElementById('solsticeExplain');
+    exp.innerHTML = `
+      <strong class="hl-yellow">時間：${hh}:${mm}</strong> ｜ 狀態：${desc}<br>
+      👉 夏至正午 12:00，太陽會完美的來到<strong class="hl-pink">天頂 (正上方)</strong>。且因為晝長夜短，日出與日落的位置都會明顯偏向北方 (畫面右側)！
+    `;
+  }
+
+  // --- 畫布 2 ---
+  function drawSeasonsFrame() {
+    const canvas = document.getElementById('seasonsCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = 400, cy = 260, r = 180, depth_scale = 0.35;
+    drawCelestialSphere(ctx, cx, cy, r, depth_scale);
+
+    const tracks = [
+        { delta: 23.5, color: '#FFE600', label: "夏至", id: 'summer' },
+        { delta: 0, color: '#00FF66', label: "春秋分", id: 'equinox' },
+        { delta: -23.5, color: '#00E5FF', label: "冬至", id: 'winter' }
+    ];
+
+    tracks.forEach(trk => {
+        if(seasonMode === trk.id) drawSunTrack(ctx, cx, cy, r+20, depth_scale, trk.delta, trk.color);
+        else drawSunTrack(ctx, cx, cy, r+20, depth_scale, trk.delta, 'rgba(255,255,255,0.2)');
+
+        const noonPos = getSkyPos(0, trk.delta * Math.PI/180, TAIWAN_LAT, r+20);
+        const nP = projectSkyToCanvas(noonPos, cx, cy, depth_scale);
+        
+        ctx.fillStyle = (seasonMode === trk.id) ? trk.color : 'rgba(255,255,255,0.3)'; 
+        ctx.beginPath(); ctx.arc(nP.x, nP.y, 12, 0, Math.PI*2); ctx.fill();
+        if(seasonMode === trk.id) {
+            ctx.fillStyle = '#FFFFFF'; ctx.fillText(trk.label, nP.x + 15, nP.y + 5);
+        }
+    });
+
+    const exp = document.getElementById('seasonsExplain');
+    if(seasonMode === 'summer') {
+      exp.innerHTML = `☀️ <strong class="hl-yellow">夏至：</strong>軌道最長（晝最長），日出東偏北，正午直逼天頂 (90°)。`;
+    } else if(seasonMode === 'equinox') {
+      exp.innerHTML = `🌸 <strong class="hl-green">春秋分：</strong>日出正東，日落正西。正午仰角為 66.5° (90°-23.5°)。`;
+    } else {
+      exp.innerHTML = `❄️ <strong class="hl-cyan">冬至：</strong>軌道最短（晝最短），日出東偏南，正午仰角最低，只有 43°。`;
+    }
+  }
+
+  // --- 畫布 3：三視角實時對照 ---
+  let tripleHour = 12; 
+
+  function toggleTriplePlay() {
+    isTriplePlaying = !isTriplePlaying;
+    const btn = document.getElementById('triplePlayBtn');
+    if(isTriplePlaying) {
+      btn.textContent = "⏸️ 暫停三視角動畫";
+      btn.classList.add('active');
+      animateTriple();
+    } else {
+      btn.textContent = "▶️ 啟動聯動旋轉";
+      btn.classList.remove('active');
+      if(tripleAnimId) { cancelAnimationFrame(tripleAnimId); tripleAnimId = null; }
+    }
+  }
+
+  function onTripleSliderInput(val) {
+    tripleHour = parseFloat(val);
+    drawTripleFrame();
+  }
+
+  function setTripleTime(t) {
+    tripleHour = t;
+    if(isTriplePlaying) toggleTriplePlay();
+    const slider = document.getElementById('tripleSlider');
+    if(slider) slider.value = tripleHour.toFixed(1);
+    drawTripleFrame();
+  }
+
+  function startTripleAnim() {
+    isTriplePlaying = true;
+    const btn = document.getElementById('triplePlayBtn');
+    if(btn) { btn.textContent = "⏸️ 暫停動畫"; btn.classList.add('active'); }
+    animateTriple();
+  }
+
+  function animateTriple() {
+    if(isTriplePlaying) {
+      tripleHour = (tripleHour + 0.05) % 24;
+      const slider = document.getElementById('tripleSlider');
+      if(slider) slider.value = tripleHour.toFixed(1);
+      drawTripleFrame();
+      tripleAnimId = requestAnimationFrame(animateTriple);
+    }
+  }
+
+  function drawTripleFrame() {
+    const canvas = document.getElementById('tripleCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // ✅ 地球自轉角度 (由西向東轉)
+    // 00:00 -> -PI (背側)
+    // 06:00 -> -PI/2 (面向觀測者, 前方)
+    // 12:00 -> 0 (右側, 面向太陽)
+    // 18:00 -> PI/2 (背向觀測者, 後方)
+    const t_rad = ((tripleHour - 12) / 24) * Math.PI * 2; 
+
+    ctx.strokeStyle = '#A0B3C6'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(380, 20); ctx.lineTo(380, 400); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(760, 20); ctx.lineTo(760, 400); ctx.stroke();
+    ctx.setLineDash([]);
+
+    const tilt_deg = tripleSeasonMode === 'summer' ? 23.5 : (tripleSeasonMode === 'winter' ? -23.5 : 0);
+    const tilt = tilt_deg * Math.PI / 180;
+
+    // ==========================================
+    // === 左視角：太空側切面 (帶全方位十字動態連動) ===
+    // ==========================================
+    const lcx = 190, lcy = 220, lr = 90;
+    ctx.fillStyle = '#00E5FF'; ctx.font = "bold 18px 'Noto Sans TC'";
+    ctx.fillText("【太空視角：側切面】", lcx - 95, 35);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.beginPath(); ctx.arc(lcx, lcy, lr, Math.PI/2, Math.PI*1.5); ctx.fill();
+    ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(lcx, lcy, lr, 0, Math.PI*2); ctx.stroke();
+
+    const np_base = getPoint3D(90*Math.PI/180, 0, lr);
+    const np_tilt = applyTilt(np_base, tilt);
+    const np = projToCanvas(np_tilt, lcx, lcy);
+    
+    ctx.strokeStyle = '#FFE600'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(lcx - np.x + lcx, lcy - (np.y - lcy)); ctx.lineTo(np.x + (np.x-lcx)*0.4, np.y + (np.y-lcy)*0.4); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#FFE600'; ctx.font = "bold 16px 'Noto Sans TC'";
+    ctx.fillText("自轉軸", np.x + 10, np.y - 10);
+    
+    drawOrbit(ctx, lcx, lcy, tilt, 0, '#00FF66', lr); 
+    drawOrbit(ctx, lcx, lcy, tilt, 23.5, '#FF9900', lr); 
+    drawOrbit(ctx, lcx, lcy, tilt, 66.5, 'rgba(0, 229, 255, 0.8)', lr);
+
+    // ✅ 台灣點位與地平十字 (永不消失，完美展示3D旋轉)
+    const tw_base = getPoint3D(TAIWAN_LAT, t_rad, lr);
+    const tw_tilt = applyTilt(tw_base, tilt);
+    const pt_tw = projToCanvas(tw_tilt, lcx, lcy);
+
+    // 隨時都畫台灣 (就算在背面也畫，讓學生看懂旋轉)
+    ctx.fillStyle = '#FF9900'; ctx.beginPath(); ctx.arc(pt_tw.x, pt_tw.y, 7, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FFFFFF'; ctx.font = "bold 16px 'Noto Sans TC'"; ctx.fillText("台灣", pt_tw.x + 10, pt_tw.y + 15);
+
+    // 建立地平面十字與法線
+    const L = 25;
+    const N_vec = getNorth3D(TAIWAN_LAT, t_rad);
+    const E_vec = getEast3D(t_rad);
+    
+    const pt_N = projToCanvas(applyTilt({x: tw_base.x + N_vec.x*L, y: tw_base.y + N_vec.y*L, z: tw_base.z + N_vec.z*L}, tilt), lcx, lcy);
+    const pt_S = projToCanvas(applyTilt({x: tw_base.x - N_vec.x*L, y: tw_base.y - N_vec.y*L, z: tw_base.z - N_vec.z*L}, tilt), lcx, lcy);
+    const pt_E = projToCanvas(applyTilt({x: tw_base.x + E_vec.x*L, y: tw_base.y + E_vec.y*L, z: tw_base.z + E_vec.z*L}, tilt), lcx, lcy);
+    const pt_W = projToCanvas(applyTilt({x: tw_base.x - E_vec.x*L, y: tw_base.y - E_vec.y*L, z: tw_base.z - E_vec.z*L}, tilt), lcx, lcy);
+
+    ctx.strokeStyle = 'rgba(0, 255, 102, 0.9)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(pt_W.x, pt_W.y); ctx.lineTo(pt_E.x, pt_E.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pt_tw.x, pt_tw.y); ctx.lineTo(pt_S.x, pt_S.y); ctx.stroke();
+    drawArrow(ctx, pt_tw.x, pt_tw.y, pt_N.x, pt_N.y, '#00FF66', 'N', -12, 'right');
+
+    ctx.fillStyle = '#FF0000'; ctx.beginPath(); ctx.arc(np.x, np.y, 6, 0, Math.PI*2); ctx.fill();
+
+    let rayLabelTarget = "直射赤道";
+    let rayY = lcy;
+    if (tripleSeasonMode === 'summer') { rayLabelTarget = "直射北迴"; rayY = lcy - lr * Math.sin(23.5 * Math.PI / 180) * Math.cos(tilt); }
+    else if (tripleSeasonMode === 'winter') { rayLabelTarget = "直射南迴"; rayY = lcy + lr * Math.sin(23.5 * Math.PI / 180) * Math.cos(tilt); }
+
+    const raysTriple = [
+      { y: lcy - lr*0.6, label: "" },
+      { y: rayY, label: rayLabelTarget },
+      { y: lcy + lr*0.6, label: "" }
+    ];
+    raysTriple.forEach(ray => {
+        let dy = Math.abs(ray.y - lcy);
+        let surfaceX = lcx + Math.sqrt(Math.max(0, lr*lr - dy*dy)) + 10;
+        drawArrow(ctx, 365, ray.y, surfaceX, ray.y, '#FF9900', "");
+        if (ray.label) {
+            ctx.fillStyle = '#FF9900'; ctx.font = "bold 16px 'Noto Sans TC'";
+            ctx.fillText(ray.label, 360 - ctx.measureText(ray.label).width, ray.y - 8);
+        }
+    });
+
+    // ==========================================
+    // === 中視角：太空北極俯視圖 (地球逆時針轉) ===
+    // ==========================================
+    const mcx = 570, mcy = 220, mr = 90;
+    ctx.fillStyle = '#00E5FF'; ctx.font = "bold 18px 'Noto Sans TC'";
+    ctx.fillText("【太空視角：北極點俯視】", mcx - 105, 35);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.beginPath(); ctx.arc(mcx, mcy, mr, 0, Math.PI*2); ctx.fill();
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.beginPath(); 
+    ctx.arc(mcx, mcy, mr, Math.PI/2, Math.PI*1.5); 
+    if (tilt !== 0) {
+        const b = mr * Math.sin(tilt); 
+        ctx.ellipse(mcx, mcy, Math.abs(b), mr, 0, Math.PI*1.5, Math.PI/2, tilt > 0);
+    }
+    ctx.fill();
+
+    ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(mcx, mcy, mr, 0, Math.PI*2); ctx.stroke();
+
+    ctx.save(); ctx.translate(mcx, mcy); ctx.rotate(-t_rad);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    for(let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(mr * Math.cos(a), mr * Math.sin(a)); ctx.stroke();
+    }
+    ctx.setLineDash([]); ctx.restore();
+
+    for(let i = -1; i <= 1; i++) {
+      let sy = mcy + i * 25;
+      drawArrow(ctx, 740, sy, mcx + mr + 10, sy, '#FF9900', "", 0, "center");
+    }
+
+    const twDist = mr * Math.cos(TAIWAN_LAT); 
+    ctx.strokeStyle = '#FF9900'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.arc(mcx, mcy, twDist, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+
+    const acDist = mr * Math.cos(66.5 * Math.PI / 180); 
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.8)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.arc(mcx, mcy, acDist, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+
+    const twMidX = mcx + twDist * Math.cos(t_rad);
+    const twMidY = mcy - twDist * Math.sin(t_rad); 
+    ctx.fillStyle = '#FF9900'; ctx.beginPath(); ctx.arc(twMidX, twMidY, 7, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FFFFFF'; ctx.fillText("台灣", twMidX + 10, twMidY + 5);
+
+    ctx.fillStyle = '#FF0000'; ctx.beginPath(); ctx.arc(mcx, mcy, 6, 0, Math.PI*2); ctx.fill();
+    drawArrow(ctx, mcx, mcy, twMidX, twMidY, '#FF3399', '視線', -12, "center", true);
+
+    // ==========================================
+    // === 右視角：教科書標準連動天球 (左南 右北 前東 後西) ===
+    // ==========================================
+    const rcx = 950, rcy = 240, r_dome = 110, depth = 0.35;
+    ctx.fillStyle = '#00FF66'; ctx.font = "bold 18px 'Noto Sans TC'";
+    ctx.fillText("【地表視角：天球 24h 繞圈】", rcx - 110, 35);
+
+    drawCelestialSphere(ctx, rcx, rcy, r_dome, depth);
+    drawSunTrack(ctx, rcx, rcy, r_dome+20, depth, tilt_deg, '#FF9900');
+
+    // ✅ 完美的相對相位：地球自轉 t_rad，太陽視運動為 -t_rad
+    // 06:00 (t_rad = -PI/2) -> 太陽在東 (+Z 畫面前方)
+    // 12:00 (t_rad = 0) -> 太陽在南 (-X 畫面左方) 
+    // 18:00 (t_rad = PI/2) -> 太陽在西 (-Z 畫面後方)
+    const H_sun = t_rad;
+    const sunPos3D = getSkyPos(H_sun, tilt, TAIWAN_LAT, r_dome+20);
+    const sunP = projectSkyToCanvas(sunPos3D, rcx, rcy, depth);
+
+    const personHeadY = rcy - 10;
+    if (sunPos3D.y >= -2) { // 位於地平線上
+        ctx.strokeStyle = 'rgba(255, 230, 0, 0.6)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(rcx, personHeadY); ctx.lineTo(sunP.x, sunP.y); ctx.stroke();
+        ctx.fillStyle = '#FFE600'; ctx.beginPath(); ctx.arc(sunP.x, sunP.y, 14, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
+    } else { // 位於地平線下
+        ctx.fillStyle = 'rgba(255, 230, 0, 0.3)'; ctx.beginPath(); ctx.arc(sunP.x, sunP.y, 10, 0, Math.PI*2); ctx.fill();
+    }
+
+    // 面向南方的箭頭 (南在左側 -X)
+    drawArrow(ctx, rcx, personHeadY, rcx - 60, personHeadY, '#FF3399', '', 0, "center");
+    ctx.fillStyle = '#FF3399'; ctx.font = "bold 16px 'Noto Sans TC'";
+    ctx.fillText("面向南 (S)", rcx - 90, personHeadY + 25);
+
+    // 更新時間文字與解說
+    const hh = String(Math.floor(tripleHour)).padStart(2, '0');
+    const mm = String(Math.floor((tripleHour % 1) * 60)).padStart(2, '0');
+    let timeDesc = "日照中";
+    if (sunPos3D.y < 0) timeDesc = "夜晚 (太陽在地平線下)";
+    else if (tripleHour >= 5 && tripleHour <= 7) timeDesc = "日出 (太陽在東方/畫面前方)";
+    else if (tripleHour >= 11 && tripleHour <= 13) timeDesc = "正午 (太陽在南方/畫面左側)";
+    else if (tripleHour >= 17 && tripleHour <= 19) timeDesc = "日落 (太陽在西方/畫面深處)";
+
+    const timeText = document.getElementById('tripleTimeText');
+    if(timeText) timeText.textContent = `${hh}:${mm} (${timeDesc})`;
+
+    const expT = document.getElementById('tripleExplain');
+    if (tripleSeasonMode === 'summer') {
+       expT.innerHTML = `👉 <strong class="hl-yellow">夏至正午 12:00：</strong>台灣轉到地球最右側迎接直射光。右側天球中，太陽會完美的來到<strong class="hl-pink">正上方天頂 (90°)</strong>，三圖完美同步！`;
+    } else if (tripleSeasonMode === 'equinox') {
+       expT.innerHTML = `👉 <strong class="hl-green">春秋分正午 12:00：</strong>太陽直射赤道，右側天球中，太陽最高只會到達左方 (南方) 仰角 <span class="mono">66.5°</span> 處。`;
+    } else {
+       expT.innerHTML = `👉 <strong class="hl-cyan">冬至正午 12:00：</strong>太陽直射南回歸線，右側天球中，正午太陽最低，仰角只有 <span class="mono">43°</span>！`;
+    }
+  }
+
+  window.onload = function() {
+    switchTab(0);
+  };
+</script>
+</body>
+</html>
