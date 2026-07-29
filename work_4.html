@@ -96,7 +96,7 @@
     box-shadow: 0 0 16px rgba(255, 224, 102, 0.25);
   }
 
-  /* 嚴格單一版面 Grid (一大格垂直堆疊，投影最適配) */
+  /* 嚴格單一版面 Grid */
   .grid-container {
     display: grid;
     grid-template-columns: 1fr;
@@ -135,7 +135,6 @@
     font-weight: 700;
   }
 
-  /* 畫布區域：嚴格零黑色原則，滿版大視野 */
   .stage-container {
     width: 100%;
     border: 2px solid var(--rule-color);
@@ -198,30 +197,61 @@
   }
 
   .stats {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 21px;
-    font-weight: 700;
-    color: var(--chalk-white);
-    background: rgba(255, 255, 255, 0.04);
-    padding: 22px;
-    border-radius: 12px;
-    border: 1px dashed var(--rule-color);
+    background: transparent;
     margin-bottom: 20px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: space-around;
+    flex-direction: column;
+    gap: 12px;
   }
 
-  .stats span {
-    background: rgba(0, 0, 0, 0.2);
+  /* 🌟 全新升級：教科書級徽章數據與數學分式排版 */
+  .stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    flex-wrap: wrap;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--rule-color);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 21px;
+    font-weight: 700;
+  }
+  
+  .val-badge {
+    background: #11261f;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     padding: 8px 16px;
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--chalk-white);
+    display: inline-flex;
+    align-items: center;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
   }
 
-  .stats b {
-    color: var(--chalk-yellow);
+  .hl-yellow { color: var(--chalk-yellow) !important; }
+  .hl-teal { color: var(--chalk-teal) !important; }
+
+  .math-fraction {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 10px;
+    line-height: 1.3;
+  }
+
+  .math-fraction .num {
+    border-bottom: 2px solid var(--chalk-white);
+    padding: 0 8px 4px;
+  }
+
+  .math-fraction .den {
+    padding: 4px 8px 0;
   }
 
   .note {
@@ -243,27 +273,6 @@
     margin-bottom: 10px;
   }
 
-  /* 理化專用標準上下垂直分式規範 */
-  .fraction {
-    display: inline-flex;
-    flex-direction: column;
-    vertical-align: middle;
-    text-align: center;
-    margin: 0 6px;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .fraction .numerator {
-    border-bottom: 2px solid var(--chalk-white);
-    padding-bottom: 2px;
-    font-size: 0.9em;
-  }
-
-  .fraction .denominator {
-    padding-top: 2px;
-    font-size: 0.9em;
-  }
-
   .formula-box {
     font-family: 'JetBrains Mono', monospace;
     background: rgba(255, 255, 255, 0.06);
@@ -274,6 +283,9 @@
     text-align: center;
     font-size: 23px;
     color: var(--chalk-teal);
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .btn-switch {
@@ -321,7 +333,6 @@
     <p>國中自然科核心單元：功的黃金鐵律、銳角拔釘演練、輪軸實例解剖與斜面螺旋</p>
   </header>
 
-  <!-- 嚴格分頁規範：乾淨命名直擊概念，嚴禁數字前綴 -->
   <div class="tabs">
     <div class="tab-btn active" onclick="switchTab('tab1')">簡單機械與功</div>
     <div class="tab-btn" onclick="switchTab('tab2')">槓桿與拔釘演練</div>
@@ -335,27 +346,17 @@
       <span id="panel-badge" class="sub-tag">能量守恆</span>
     </div>
 
-    <!-- 嚴格單一版面 Grid：一大格垂直堆疊配置，視線最聚焦 -->
     <div class="grid-container">
-      <!-- 1. 動態畫布 (滿版大視野) -->
       <div class="stage-container">
         <canvas id="stage" width="960" height="440"></canvas>
       </div>
 
-      <!-- 2. 控制列與物理數據顯示 -->
       <div>
-        <div class="controls" id="dynamic-controls">
-          <!-- 內容由 JS 動態生成 -->
-        </div>
-        <div class="stats" id="dynamic-stats">
-          <!-- 數據由 JS 動態生成 -->
-        </div>
+        <div class="controls" id="dynamic-controls"></div>
+        <div class="stats" id="dynamic-stats"></div>
       </div>
 
-      <!-- 3. 名師授課筆記 -->
-      <div class="note" id="note-text">
-        <!-- 授課筆記由 JS 動態生成 -->
-      </div>
+      <div class="note" id="note-text"></div>
     </div>
   </div>
 </div>
@@ -368,10 +369,9 @@
   let animationFrame;
   let animTime = 0;
 
-  // 物理互動操作與狀態變數
+  // 物理互動操作變數
   let t1_f = 50, t1_s = 4;
   let t2_arm_eff = 30, t2_arm_res = 5, t2_res_force = 600;
-  let t2_show_arm = false;
   let t3_mode = 'wheel';
   let t3_wheel_item = 'pencil';
   let t4_mode = 'inclined', t4_len = 6, t4_h = 2;
@@ -439,9 +439,6 @@
       badge.textContent = '實戰試題';
       
       dynamicControls.innerHTML = `
-        <div style="display:flex; justify-content:center; margin-bottom:18px;">
-          <button class="btn-switch ${t2_show_arm?'active':''}" style="border-color:var(--chalk-yellow); color:${t2_show_arm?'var(--bg-base)':'var(--chalk-yellow)'}; background:${t2_show_arm?'var(--chalk-yellow)':'transparent'};" onclick="toggleLeverArm(this)">📐 考考你：顯示垂直力臂與省力倍率</button>
-        </div>
         <div class="control-group">
           <label>握柄施力臂 (<span style="white-space: nowrap;">L施</span>)：</label>
           <input id="rng-eff" type="range" min="15" max="45" step="5" value="${t2_arm_eff}">
@@ -473,9 +470,6 @@
           <li><b>銳角鐵撬拔釘幾何解析 (對齊經典實例)：</b>
             <br>👉 <span style="white-space: nowrap;"><b>丁 (支點)</b></span>：羊角轉折凸點接觸木板表面； <span style="white-space: nowrap;"><b>甲 (施力點)</b></span>：長柄握把端。
             <br>👉 <span style="white-space: nowrap;"><b>乙 (施力臂)</b></span>：長邊桿身； <span style="white-space: nowrap;"><b>丙 (抗力點)</b></span>：短邊分叉處扣住金屬平頭鐵釘。
-            <div class="formula-box">
-              <span style="white-space: nowrap;">F施 = <div class="fraction"><span class="numerator">F抗 × L抗</span><span class="denominator">L施</span></div></span> （長柄往「右上角」拉起產生順時針力矩，輕鬆拔出鐵釘！）
-            </div>
           </li>
         </ul>
       `;
@@ -581,9 +575,13 @@
   function updateTab1() {
     let work = t1_f * t1_s;
     dynamicStats.innerHTML = `
-      <span>施力大小 <span style="white-space: nowrap;">F = <b>${t1_f} N</b></span></span>
-      <span>作用距離 <span style="white-space: nowrap;">S = <b>${t1_s} m</b></span></span>
-      <span>輸入總功 <span style="white-space: nowrap;">W = F × S = <b style="color:var(--chalk-yellow);">${work} J</b></span></span>
+      <div class="stat-row">
+        <span>施力大小</span><div class="val-badge">F = <span class="hl-yellow" style="margin-left:6px;">${t1_f} N</span></div>
+        <span>作用距離</span><div class="val-badge">S = <span class="hl-yellow" style="margin-left:6px;">${t1_s} m</span></div>
+      </div>
+      <div class="stat-row">
+        <span>輸入總功</span><div class="val-badge">W = F × S = <span class="hl-yellow" style="margin-left:6px;">${work} J</span></div>
+      </div>
     `;
   }
 
@@ -620,39 +618,41 @@
     animationFrame = requestAnimationFrame(animateTab1);
   }
 
-  // ============== 分頁二：槓桿與銳角拔釘演練 (60度銳角、統一橘色、金屬平頭鐵釘、右上角拉起施力) ==============
-  function toggleLeverArm(btn) {
-    t2_show_arm = !t2_show_arm;
-    btn.classList.toggle('active', t2_show_arm);
-    btn.style.color = t2_show_arm ? 'var(--bg-base)' : 'var(--chalk-yellow)';
-    btn.style.background = t2_show_arm ? 'var(--chalk-yellow)' : 'transparent';
-    updateTab2();
-  }
-
+  // ============== 分頁二：槓桿與銳角拔釘演練 (完美升級版) ==============
   function updateTab2() {
     let f_eff = (t2_res_force * t2_arm_res) / t2_arm_eff;
     let adv = t2_arm_eff / t2_arm_res;
 
-    if (t2_show_arm) {
-      dynamicStats.innerHTML = `
-        <div style="width:100%; background:rgba(255, 224, 102, 0.15); border:2px solid var(--chalk-yellow); padding:16px; border-radius:10px;">
-          <span style="color:var(--chalk-yellow); font-size:23px;">📐 【經典命題：垂直力臂與力矩推導】</span><br>
-          👉 <b>轉動支點 <span style="white-space: nowrap;">【丁】</span></b>：羊角凸點與木板之接觸點。<br>
-          👉 <b>握柄施力臂 <span style="white-space: nowrap;">L施 = ${t2_arm_eff} cm</span></b> （自支點向左邊施力作用線之垂直水平長度）。<br>
-          👉 <b>拔釘抗力臂 <span style="white-space: nowrap;">L抗 = ${t2_arm_res} cm</span></b> （自支點向右邊鐵釘阻力線之垂直水平長度）。<br>
-          <div style="margin-top:10px; font-size:22px; color:var(--chalk-white);">
-            💡 <b>力矩平衡等式：</b> <span style="white-space: nowrap;">F施 × ${t2_arm_eff} = ${t2_res_force} × ${t2_arm_res} 👉 <b style="color:var(--chalk-yellow);">F施 = ${f_eff.toFixed(1)} N</b></span> （輕鬆省力 <b style="color:var(--chalk-green);">${adv.toFixed(1)} 倍</b>！）
+    dynamicStats.innerHTML = `
+      <div class="stat-row">
+        <span>鐵釘阻力</span>
+        <div class="val-badge">F抗 = <span class="hl-yellow" style="margin-left:6px;">${t2_res_force} N</span></div>
+        <span>（位於 丙 處）</span>
+      </div>
+      <div class="stat-row">
+        <span>握柄施力臂</span>
+        <div class="val-badge">L施 = <span class="hl-yellow" style="margin-left:6px;">${t2_arm_eff} cm</span></div>
+        <span>（乙區長度）， 抗力臂</span>
+        <div class="val-badge">L抗 = <span class="hl-yellow" style="margin-left:6px;">${t2_arm_res} cm</span></div>
+      </div>
+      <div class="stat-row">
+        <span>所需省力拔除</span>
+        <div class="val-badge">
+          F施 =
+          <div class="math-fraction">
+            <span class="num">${t2_res_force} × ${t2_arm_res}</span>
+            <span class="den">${t2_arm_eff}</span>
           </div>
+          = <span class="hl-yellow" style="margin-left:8px;">${f_eff.toFixed(1)} N</span>
         </div>
-      `;
-    } else {
-      dynamicStats.innerHTML = `
-        <span>鐵釘阻力 <span style="white-space: nowrap;">F抗 = <b>${t2_res_force} N</b></span> （位於 丙 處）</span>
-        <span>握柄施力臂 <span style="white-space: nowrap;">L施 = <b>${t2_arm_eff} cm</b></span> （乙區長度）， 抗力臂 <span style="white-space: nowrap;">L抗 = <b>${t2_arm_res} cm</b></span></span>
-        <span>所需省力拔除 <span style="white-space: nowrap;">F施 = <div class="fraction"><span class="numerator">${t2_res_force} × ${t2_arm_res}</span><span class="denominator">${t2_arm_eff}</span></div> = <b style="color:var(--chalk-yellow);">${f_eff.toFixed(1)} N</b></span> （位於 甲 處）</span>
-        <span style="color:var(--chalk-teal);">👉 省力倍率：施力僅需阻力的 <span style="white-space: nowrap;">1 / ${adv.toFixed(1)}</span> ！長柄愈長愈輕鬆。</span>
-      `;
-    }
+        <span>（位於 甲 處）</span>
+      </div>
+      <div class="stat-row" style="background: rgba(77, 210, 255, 0.1); padding: 8px 16px; border-radius: 8px; border: 1px solid var(--chalk-teal);">
+        <span style="color: var(--chalk-teal);">👉 省力倍率：施力僅需阻力的</span>
+        <div class="val-badge" style="color: var(--chalk-teal); border-color: var(--chalk-teal);">1 / ${adv.toFixed(1)}</div>
+        <span style="color: var(--chalk-teal);">！長柄愈長愈輕鬆。</span>
+      </div>
+    `;
   }
 
   function animateTab2() {
@@ -673,15 +673,17 @@
     ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 22px Noto Sans TC';
     ctx.fillText('丁 (支點)', cx - 45, cy + 35);
 
-    // 3. 銳角羊角鐵撬模擬 (夾角 60 度銳角，整支統一亮橘色 #ff8040)
-    let tilt = (1 - Math.cos(animTime)) * 0.06; // 0 ~ 0.12 (往順時針旋轉！長柄右上抬，爪子往上拔)
+    // 3. 銳角羊角鐵撬模擬 (夾角 60 度銳角，整支統一橘色 #ff8040)
+    let tilt = (1 - Math.cos(animTime)) * 0.06; 
     ctx.save();
     ctx.translate(cx, cy); 
     ctx.rotate(tilt);
 
-    // 握柄往左上 (-140度)，拔釘爪往左 (-175度)，夾角相差約 35~60 度銳角！統一繪製為亮橘色！
-    let hx = 230 * Math.cos(-140 * Math.PI / 180);
-    let hy = 230 * Math.sin(-140 * Math.PI / 180);
+    // 握柄往左上 (-140度)，拔釘爪往左 (-175度)，統一繪製為亮橘色！
+    let handleAng = -140 * Math.PI / 180;
+    let hx = 230 * Math.cos(handleAng);
+    let hy = 230 * Math.sin(handleAng);
+    
     let cx_tip = 85 * Math.cos(-175 * Math.PI / 180);
     let cy_tip = 85 * Math.sin(-175 * Math.PI / 180);
 
@@ -693,29 +695,47 @@
     ctx.stroke();
 
     ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 20px Noto Sans TC';
-    ctx.fillText('乙 (施力臂 L施)', -180, -45);
+    ctx.fillText('乙 (施力臂 L施)', -160, -25);
     ctx.fillStyle = '#ffe066'; ctx.font = 'bold 22px Noto Sans TC';
-    ctx.fillText('甲 (施力點)', -260, -165);
+    ctx.fillText('甲 (施力點)', -290, -150);
     ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 20px Noto Sans TC';
     ctx.fillText('丙 (抗力點)', -105, -30);
 
-    // 🌟 鐵釘連動拔出：特大厚度 50px×12px 的金屬平頭鐵釘
+    // 🌟 鐵釘連動拔出：高對比金屬平頭鐵釘 + 尖銳釘身
     ctx.save();
     ctx.translate(cx_tip, cy_tip);
     ctx.rotate(-tilt); 
-    ctx.fillStyle = '#f6f3ea'; 
-    ctx.fillRect(-9, 0, 18, 70); // 18px 粗壯實心釘身
-    ctx.fillRect(-25, -12, 50, 12); // 🌟 50px寬、12px厚之特大金屬平頭！
+    
+    // 金屬平頭釘帽 (厚 12px、寬 50px)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.strokeStyle = '#00E5FF';
+    ctx.lineWidth = 3;
+    ctx.fillRect(-25, -12, 50, 12);
+    ctx.strokeRect(-25, -12, 50, 12);
+
+    // 釘身與下端尖銳釘尖
+    ctx.beginPath();
+    ctx.moveTo(-9, 0);
+    ctx.lineTo(9, 0);
+    ctx.lineTo(9, 50);
+    ctx.lineTo(0, 75);  // 尖銳底部頂點
+    ctx.lineTo(-9, 50);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
     ctx.restore();
 
-    // 🌟 施力 F 箭頭：嚴格由手柄端指向「右上角」(往上拉起)！
+    // 🌟 施力 F 箭頭：嚴格垂直於握柄，指向「右上角」(往上拉起)！
+    let fAng = handleAng + Math.PI / 2; // -140 + 90 = -50度 (右上)
+    let fLen = 90;
     let fx1 = hx, fy1 = hy;
-    let fx2 = hx + 85, fy2 = hy - 65; // 指向右上角 (+X, -Y)
+    let fx2 = hx + fLen * Math.cos(fAng);
+    let fy2 = hy + fLen * Math.sin(fAng);
+    
     ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 6; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(fx1, fy1); ctx.lineTo(fx2, fy2); ctx.stroke();
     
     // 完美對稱黃色箭頭
-    let fAng = Math.atan2(fy2 - fy1, fx2 - fx1);
     let headLen = 22;
     ctx.fillStyle = '#ffe066'; 
     ctx.beginPath(); 
@@ -728,27 +748,21 @@
     ctx.font = 'bold 22px JetBrains Mono'; 
     ctx.fillText('F施 (往上拉)', fx2 + 15, fy2 - 5);
 
+    // 📐 直角記號證明 F 垂直於握柄
+    let cornerSize = 25;
+    let ux1 = Math.cos(handleAng + Math.PI); // 朝向支點方向
+    let uy1 = Math.sin(handleAng + Math.PI);
+    let ux2 = Math.cos(fAng); // 施力方向
+    let uy2 = Math.sin(fAng);
+    
+    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 4; ctx.lineJoin = 'miter';
+    ctx.beginPath();
+    ctx.moveTo(hx + cornerSize*ux1, hy + cornerSize*uy1);
+    ctx.lineTo(hx + cornerSize*ux1 + cornerSize*ux2, hy + cornerSize*uy1 + cornerSize*uy2);
+    ctx.lineTo(hx + cornerSize*ux2, hy + cornerSize*uy2);
+    ctx.stroke();
+
     ctx.restore();
-
-    // 🌟 互動考題：顯示垂直力臂水平線段
-    if (t2_show_arm) {
-      let hx_global = cx + hx * Math.cos(tilt) - hy * Math.sin(tilt);
-      let tip_x_global = cx + cx_tip * Math.cos(tilt) - cy_tip * Math.sin(tilt);
-
-      ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 4; ctx.setLineDash([8, 8]);
-      ctx.beginPath(); ctx.moveTo(cx, cy - 80); ctx.lineTo(hx_global, cy - 80); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(hx_global, cy - 80); ctx.lineTo(hx_global, cy + hx * Math.sin(tilt) + hy * Math.cos(tilt)); ctx.stroke();
-      
-      ctx.strokeStyle = '#4dd2ff';
-      ctx.beginPath(); ctx.moveTo(cx, cy - 40); ctx.lineTo(tip_x_global, cy - 40); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(tip_x_global, cy - 40); ctx.lineTo(tip_x_global, cy + cx_tip * Math.sin(tilt) + cy_tip * Math.cos(tilt)); ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = '#ffe066'; ctx.font = 'bold 21px JetBrains Mono';
-      ctx.fillText(`L施 = ${t2_arm_eff}cm`, (cx + hx_global)/2 - 50, cy - 90);
-      ctx.fillStyle = '#4dd2ff';
-      ctx.fillText(`L抗 = ${t2_arm_res}cm`, (cx + tip_x_global)/2 - 40, cy - 50);
-    }
 
     ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 26px Noto Sans TC';
     ctx.fillText('銳角鐵撬拔釘幾何還原：往「右上角」施力上拉產生順時針力矩拔出鐵釘', 80, 45);
@@ -756,7 +770,7 @@
     animationFrame = requestAnimationFrame(animateTab2);
   }
 
-  // ============== 分頁三：輪軸與滑輪 (移除虛線、文字上下置中排版) ==============
+  // ============== 分頁三：輪軸與滑輪 ==============
   function setTab3Mode(mode, btn) {
     t3_mode = mode;
     document.querySelectorAll('.btn-switch').forEach(b => b.classList.remove('active'));
@@ -775,18 +789,28 @@
   function updateTab3() {
     if (t3_mode === 'pulley') {
       dynamicStats.innerHTML = `
-        <span><b>定滑輪：</b>等臂槓桿（<span style="white-space: nowrap;">L施 = L抗 = R</span>），施力 <span style="white-space: nowrap;">F = W</span>。<b>不省力、僅改方向</b>。</span>
-        <span><b>動滑輪：</b>力臂倍增（<span style="white-space: nowrap;">L施 = 2R</span> ， <span style="white-space: nowrap;">L抗 = R</span>），施力 <span style="white-space: nowrap;">F = <div class="fraction"><span class="numerator">W</span><span class="denominator">2</span></div></span>。<b>省一半力、費一倍距離</b>。</span>
+        <div class="stat-row">
+          <span><b>定滑輪：</b>等臂槓桿（L施 = L抗 = R），施力 F = W。<b>不省力、僅改方向</b>。</span>
+        </div>
+        <div class="stat-row">
+          <span><b>動滑輪：</b>力臂倍增（L施 = 2R，L抗 = R），施力 F = W/2。<b>省一半力、費一倍距離</b>。</span>
+        </div>
       `;
     } else {
       let info = '';
-      if (t3_wheel_item === 'copter') info = '<span><b>🚁 竹蜻蜓／擀麵棍解剖：</b>雙手搓動之細長桿為【軸 (<span style="white-space: nowrap;">r</span>)】，上方旋轉飛舞之寬大葉片為【輪 (<span style="white-space: nowrap;">R</span>)】。<b style="color:var(--chalk-coral);">施力於小軸，雖然費力，但能極度省時省距離，讓扇葉快速飛揚！</b></span>';
-      if (t3_wheel_item === 'pencil') info = '<span><b>✏️ 削鉛筆機解剖：</b>手搖長柄旋轉大圓軌跡為【輪 (<span style="white-space: nowrap;">R</span>)】，內部旋轉切削滾口為【軸 (<span style="white-space: nowrap;">r</span>)】。<b style="color:var(--chalk-yellow);">手搖長臂省力削筆！</b></span>';
-      if (t3_wheel_item === 'faucet') info = '<span><b>🚰 水龍頭解剖：</b>上方水平寬大十字柄為【輪 (<span style="white-space: nowrap;">R</span>)】，中心直立旋轉控制閥桿為【軸 (<span style="white-space: nowrap;">r</span>)】。<b style="color:var(--chalk-yellow);">手握大輪旋轉，極致省力！</b></span>';
-      if (t3_wheel_item === 'doorknob') info = '<span><b>🚪 喇叭門把解剖：</b>外表大圓球握把為【輪 (<span style="white-space: nowrap;">R</span>)】，內部貫穿木門連動鎖舌之金屬軸為【軸 (<span style="white-space: nowrap;">r</span>)】。<b style="color:var(--chalk-yellow);">轉動大輪開門，輕鬆省力！</b></span>';
-      if (t3_wheel_item === 'screwdriver') info = '<span><b>🪛 螺絲起子解剖：</b>塑膠粗手柄為【輪 (<span style="white-space: nowrap;">R</span>)】，金屬細長桿端為【軸 (<span style="white-space: nowrap;">r</span>)】。<b style="color:var(--chalk-yellow);">握粗柄轉動，以大臂克服螺絲強大阻力！</b></span>';
-      if (t3_wheel_item === 'wheel') info = '<span><b>☸️ 汽車方向盤解剖：</b>外圍大握圈為【輪 (<span style="white-space: nowrap;">R</span>)】，中心轉向金屬柱為【軸 (<span style="white-space: nowrap;">r</span>)】。<b style="color:var(--chalk-yellow);">以小施力轉動方向盤，帶動笨重車輪轉向！</b></span>';
-      dynamicStats.innerHTML = info + '<span><b>物理平衡鐵律：</b> <span style="white-space: nowrap;">F × R = W × r 👉 F = <div class="fraction"><span class="numerator">r</span><span class="denominator">R</span></div> × W</span> （施力在輪恆省力；施力在軸恆費力）</span>';
+      if (t3_wheel_item === 'copter') info = '<b>🚁 竹蜻蜓／擀麵棍解剖：</b>雙手搓動之細長桿為【軸 (r)】，上方旋轉飛舞之寬大葉片為【輪 (R)】。<b style="color:var(--chalk-coral);">施力於小軸，費力，極度省時！</b>';
+      if (t3_wheel_item === 'pencil') info = '<b>✏️ 削鉛筆機解剖：</b>手搖長柄旋轉大圓軌跡為【輪 (R)】，內部旋轉切削滾口為【軸 (r)】。<b style="color:var(--chalk-yellow);">手搖長臂極致省力！</b>';
+      if (t3_wheel_item === 'faucet') info = '<b>🚰 水龍頭解剖：</b>上方水平寬大十字柄為【輪 (R)】，中心直立旋轉控制閥桿為【軸 (r)】。<b style="color:var(--chalk-yellow);">手握大輪旋轉，極致省力！</b>';
+      if (t3_wheel_item === 'doorknob') info = '<b>🚪 喇叭門把解剖：</b>外表大圓球握把為【輪 (R)】，內部貫穿木門連動鎖舌之金屬軸為【軸 (r)】。<b style="color:var(--chalk-yellow);">轉動大輪開門，輕鬆省力！</b>';
+      if (t3_wheel_item === 'screwdriver') info = '<b>🪛 螺絲起子解剖：</b>塑膠粗手柄為【輪 (R)】，金屬細長桿端為【軸 (r)】。<b style="color:var(--chalk-yellow);">握粗柄轉動，克服強大阻力！</b>';
+      if (t3_wheel_item === 'wheel') info = '<b>☸️ 汽車方向盤解剖：</b>外圍大握圈為【輪 (R)】，中心轉向金屬柱為【軸 (r)】。<b style="color:var(--chalk-yellow);">以小施力帶動笨重車輪轉向！</b>';
+      dynamicStats.innerHTML = `
+        <div class="stat-row" style="padding:10px 20px;"><span>${info}</span></div>
+        <div class="stat-row">
+          <span><b>物理平衡鐵律：</b> F × R = W × r 👉 </span>
+          <div class="val-badge">F = <div class="math-fraction"><span class="num">r</span><span class="den">R</span></div> × W</div>
+        </div>
+      `;
     }
   }
 
@@ -860,7 +884,7 @@
       ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 25px Noto Sans TC';
       ctx.fillText('輪軸靜態結構解剖：亮青色為【大輪 R】 vs 亮橘色為【小軸 r】', 140, 40);
 
-      // === 左區：基礎同心圓幾何模型 ===
+      // === 左區：基礎同心圓 ===
       let cx = 260, cy = 240;
       ctx.strokeStyle = '#4dd2ff'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, 110, 0, Math.PI*2); ctx.stroke();
       ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, 45, 0, Math.PI*2); ctx.stroke();
@@ -875,28 +899,24 @@
       ctx.fillStyle = '#ff8040'; ctx.fillText('小軸 (半徑 r)', cx + 15, cy - 25);
       ctx.fillStyle = '#a3b8b0'; ctx.font = '18px Noto Sans TC'; ctx.fillText('▲ 同心旋轉幾何模型', cx - 90, cy + 150);
 
-      // === 右區：100% 靜態實例工整剖面繪圖 (🌟 移除所有虛線，文字上下置中絕不重疊) ===
+      // === 右區：100% 靜態實例工整剖面繪圖 ===
       let rx = 700, ry = 240;
       ctx.save();
       ctx.translate(rx, ry);
 
-      // 🌟 採用 textAlign='center' 保證文字在物件上方下方垂直對齊、零重疊
       ctx.textAlign = 'center';
 
       if (t3_wheel_item === 'copter') {
-        // 1. 竹蜻蜓 (純淨無虛線版)
         ctx.fillStyle = '#ff8040'; ctx.fillRect(-10, -10, 20, 130);
         ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.strokeRect(-10, -10, 20, 130);
 
         ctx.fillStyle = '#4dd2ff'; ctx.fillRect(-130, -32, 260, 22);
         ctx.strokeStyle = '#f6f3ea'; ctx.strokeRect(-130, -32, 260, 22);
 
-        // 🌟 垂直置中標示，徹底告別排版重疊！
         ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px Noto Sans TC'; ctx.fillText('寬長葉片為【大輪 R】(極省時！)', 0, -60);
         ctx.fillStyle = '#ff8040'; ctx.fillText('手搓細桿為【小軸 r】(費力)', 0, 155);
       }
       else if (t3_wheel_item === 'pencil') {
-        // 2. 削鉛筆機 (純淨無虛線版)
         ctx.fillStyle = '#ffe066'; ctx.fillRect(-170, -15, 80, 24);
         ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.strokeRect(-170, -15, 80, 24);
         ctx.fillStyle = '#ff8040'; ctx.beginPath(); ctx.moveTo(-90, -15); ctx.lineTo(-70, -3); ctx.lineTo(-90, 9); ctx.fill();
@@ -920,7 +940,6 @@
         ctx.fillStyle = '#ff8040'; ctx.fillText('中心滾刀為【小軸 r】', -20, 115);
       }
       else if (t3_wheel_item === 'faucet') {
-        // 3. 水龍頭 (純淨無虛線版)
         ctx.fillStyle = '#a3b8b0'; ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 3;
         ctx.fillRect(-35, 80, 70, 20); ctx.strokeRect(-35, 80, 70, 20);
         ctx.fillRect(-25, -10, 50, 90); ctx.strokeRect(-25, -10, 50, 90);
@@ -944,7 +963,6 @@
         ctx.fillStyle = '#ff8040'; ctx.fillText('閥桿中心為【小軸 r】', 0, 135);
       }
       else if (t3_wheel_item === 'doorknob') {
-        // 4. 喇叭門把 (純淨無虛線版)
         ctx.fillStyle = '#1e382b'; ctx.fillRect(-30, -110, 50, 230);
         ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 3; ctx.strokeRect(-30, -110, 50, 230);
         ctx.strokeStyle = 'rgba(163, 184, 160, 0.3)'; ctx.lineWidth = 2;
@@ -966,7 +984,6 @@
         ctx.fillStyle = '#ff8040'; ctx.fillText('內部鎖舌為【小軸 r】', 45, 55);
       }
       else if (t3_wheel_item === 'screwdriver') {
-        // 5. 螺絲起子 (純淨無虛線版)
         ctx.fillStyle = '#ff8040'; ctx.fillRect(20, -14, 140, 28);
         ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.strokeRect(20, -14, 140, 28);
         ctx.beginPath(); ctx.moveTo(160, -14); ctx.lineTo(185, -6); ctx.lineTo(185, 6); ctx.lineTo(160, 14); ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -982,7 +999,6 @@
         ctx.fillStyle = '#ff8040'; ctx.fillText('細金屬為【小軸 r】', 90, 55);
       }
       else if (t3_wheel_item === 'wheel') {
-        // 6. 方向盤 (純淨無虛線版)
         ctx.fillStyle = '#ff8040'; ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI*2); ctx.fill();
         ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.stroke();
 
@@ -1002,7 +1018,7 @@
     animationFrame = requestAnimationFrame(animateTab3);
   }
 
-  // ============== 分頁四：斜面與自轉捲動螺旋模擬 (右上左下、由上往下依序生成) ==============
+  // ============== 分頁四：斜面推力計算與螺旋自轉捲動 ==============
   function setTab4Mode(mode, btn) {
     t4_mode = mode;
     document.querySelectorAll('.btn-switch').forEach(b => b.classList.remove('active'));
@@ -1017,13 +1033,22 @@
       let w_val = 120;
       let f_inc = (w_val * t4_h) / t4_len;
       dynamicStats.innerHTML = `
-        <span>物體重量 <span style="white-space: nowrap;">W = 120 N</span> ， 斜面長度 <span style="white-space: nowrap;">L = ${t4_len} m</span> ， 高度 <span style="white-space: nowrap;">h = ${t4_h} m</span></span>
-        <span>沿斜面平衡推力 <span style="white-space: nowrap;">F = <div class="fraction"><span class="numerator">W × h</span><span class="denominator">L</span></div> = <b style="color:var(--chalk-teal);">${f_inc.toFixed(1)} N</b></span></span>
+        <div class="stat-row">
+          <span>物體重 <span style="white-space: nowrap;">W = <b>120 N</b></span>，高度 <span style="white-space: nowrap;">h = <b>${t4_h} m</b></span>，長度 <span style="white-space: nowrap;">L = <b>${t4_len} m</b></span></span>
+        </div>
+        <div class="stat-row">
+          <span>沿斜面平衡推力</span>
+          <div class="val-badge">
+            F = <div class="math-fraction"><span class="num">W × h</span><span class="den">L</span></div> = <span class="hl-teal" style="margin-left:6px;">${f_inc.toFixed(1)} N</span>
+          </div>
+        </div>
       `;
     } else {
       dynamicStats.innerHTML = `
-        <span><b>上列 (緩斜面自轉捲動)：</b>斜面長 <span style="white-space: nowrap;">L</span> 超長、坡度平緩 👉 捲動圈數多，螺紋密集（<b>螺距 <span style="white-space: nowrap;">d</span> 小</b>），旋入時<b style="color:var(--chalk-yellow);">極致省力，但費距離（費時）</b>！</span>
-        <span><b>下列 (陡斜面自轉捲動)：</b>斜面長 <span style="white-space: nowrap;">L</span> 短、坡度陡峭 👉 捲動圈數少，螺紋稀疏（<b>螺距 <span style="white-space: nowrap;">d</span> 大</b>），旋入時<b style="color:var(--chalk-coral);">較為費力，但省距離（省時）</b>！</span>
+        <div class="stat-row" style="flex-direction:column; align-items:flex-start; font-size:19px;">
+          <span>👉 <b>上列 (緩斜面)：</b>捲動圈數多，螺紋密集（<b>螺距 d 小</b>）➔ <b style="color:var(--chalk-yellow);">極致省力，但費距離！</b></span>
+          <span style="margin-top:8px;">👉 <b>下列 (陡斜面)：</b>捲動圈數少，螺紋稀疏（<b>螺距 d 大</b>）➔ <b style="color:var(--chalk-coral);">較為費力，但省距離！</b></span>
+        </div>
       `;
     }
   }
@@ -1103,13 +1128,13 @@
         ctx.fillStyle = 'rgba(255, 224, 102, 0.15)'; ctx.fill();
       }
 
-      // 🌟 嚴格修正：100% 由頂端「上方開始往下方」烙印生成「右上左下」傾斜螺紋！
+      // 🌟 嚴格由上方往下，印出「右上左下」傾斜螺紋
       ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 5;
       let count2 = Math.floor(roll_prog * 6) + 1;
       for(let i = 0; i < count2; i++) {
-        let y_top = (r_y - cyl_h) + 6 + i * 16; // 由最頂端依序往下滑動
+        let y_top = (r_y - cyl_h) + 6 + i * 16;
         if (y_top <= r_y - 6) {
-          ctx.beginPath(); ctx.moveTo(cyl_r_x + cyl_w, y_top); ctx.lineTo(cyl_r_x, y_top + 10); ctx.stroke(); // 嚴格右上左下！
+          ctx.beginPath(); ctx.moveTo(cyl_r_x + cyl_w, y_top); ctx.lineTo(cyl_r_x, y_top + 10); ctx.stroke();
         }
       }
       ctx.fillStyle = '#ffe066'; ctx.font = 'bold 21px Noto Sans TC';
@@ -1149,13 +1174,13 @@
         ctx.fillStyle = 'rgba(255, 128, 64, 0.15)'; ctx.fill();
       }
 
-      // 🌟 嚴格修正：100% 由頂端「上方開始往下方」烙印生成「右上左下」傾斜螺紋！
+      // 🌟 嚴格由上方往下，印出「右上左下」傾斜螺紋
       ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 5;
       let count1 = Math.floor(roll_prog * 2.5) + 1;
       for(let i = 0; i < count1; i++) {
-        let y_top = (l_y - cyl_h) + 10 + i * 36; // 由最頂端依序往下滑動
+        let y_top = (l_y - cyl_h) + 10 + i * 36;
         if (y_top <= l_y - 6) {
-          ctx.beginPath(); ctx.moveTo(cyl_r_x + cyl_w, y_top); ctx.lineTo(cyl_r_x, y_top + 20); ctx.stroke(); // 嚴格右上左下！
+          ctx.beginPath(); ctx.moveTo(cyl_r_x + cyl_w, y_top); ctx.lineTo(cyl_r_x, y_top + 20); ctx.stroke();
         }
       }
       ctx.fillStyle = '#ff8040'; ctx.font = 'bold 21px Noto Sans TC';
