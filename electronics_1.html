@@ -15,8 +15,8 @@
     --chalk-white: #f6f3ea;
     --chalk-muted: #a3b8b0;
     --chalk-yellow: #ffe066;
-    --chalk-teal: #4dd2ff;
-    --chalk-coral: #ff8040;
+    --chalk-teal: #4dd2ff;  /* 負電荷代表色 */
+    --chalk-coral: #ff8040; /* 正電荷代表色 */
     --chalk-green: #33cc99;
     --rule-color: rgba(246, 243, 234, 0.22);
   }
@@ -69,7 +69,7 @@
 
   .tab-btn {
     flex: 1;
-    min-width: 180px;
+    min-width: 160px;
     padding: 14px 10px;
     font-size: 20px;
     font-weight: 700;
@@ -94,9 +94,34 @@
     box-shadow: 0 0 16px rgba(255, 224, 102, 0.25);
   }
 
+  /* 🌟 新增資優禁區按鈕專屬樣式 */
+  .tab-btn.danger-tab {
+    color: var(--chalk-coral);
+    border-color: rgba(255, 128, 64, 0.5);
+    background: rgba(255, 128, 64, 0.05);
+  }
+  .tab-btn.danger-tab:hover {
+    background: rgba(255, 128, 64, 0.15);
+    color: #ffaa80;
+  }
+  .tab-btn.danger-tab.active {
+    background: #4a2511;
+    color: var(--chalk-coral);
+    border: 2px solid var(--chalk-coral);
+    box-shadow: 0 0 20px rgba(255, 128, 64, 0.4);
+  }
+
   .grid-2 {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+
+  /* 單欄大畫面佈局 */
+  .grid-1 {
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 24px;
     margin-bottom: 20px;
   }
@@ -272,6 +297,9 @@
     accent-color: var(--chalk-yellow);
     cursor: pointer;
   }
+
+  /* 特製滑桿 */
+  input[type=range].danger-slider { accent-color: var(--chalk-coral); }
 </style>
 </head>
 <body>
@@ -287,6 +315,8 @@
     <div class="tab-btn" onclick="switchTab('tab3')">感應起電步驟</div>
     <div class="tab-btn" onclick="switchTab('tab4')">接觸起電與驗電器</div>
     <div class="tab-btn" onclick="switchTab('tab5')">庫侖定律與靜電力</div>
+    <!-- 🌟 第六分頁：資優挑戰 -->
+    <div class="tab-btn danger-tab" onclick="switchTab('tab6')">⚠️【禁區】資優：驗電器力場全解析</div>
   </div>
 
   <!-- 分頁一：原子結構與自由電子 -->
@@ -393,8 +423,8 @@
     <div class="grid-2">
       <div class="content-box">
         <div style="display:flex; justify-content:center; gap:16px; margin-bottom:16px;">
-          <button class="action-btn active" id="btn-sub-contact" onclick="setTab4Mode('contact')">接觸起電原理</button>
-          <button class="action-btn" id="btn-sub-electro" onclick="setTab4Mode('electro')">驗電器檢驗</button>
+          <button class="action-btn active" id="btn-sub-contact" onclick="setTab4Mode('contact')">金屬塊接觸起電</button>
+          <button class="action-btn" id="btn-sub-electro" onclick="setTab4Mode('electro')">驗電器感應起電</button>
         </div>
         <div class="canvas-container">
           <canvas id="cvs-tab4" width="500" height="280"></canvas>
@@ -403,18 +433,28 @@
         <div class="controls" id="ctrl-contact" style="text-align: center;">
           <label>選擇導體帶電棒觸碰金屬塊：</label>
           <div class="btn-group">
-            <button class="action-btn btn-blue" onclick="operateContact(-1)">使用負電棒接觸</button>
-            <button class="action-btn btn-orange" onclick="operateContact(1)">使用正電棒接觸</button>
+            <button class="action-btn btn-blue" onclick="operateContact(-1)">負電棒接觸</button>
+            <button class="action-btn btn-orange" onclick="operateContact(1)">正電棒接觸</button>
             <button class="action-btn" onclick="operateContact(0)">復原</button>
           </div>
         </div>
 
         <div class="controls" id="ctrl-electro" style="text-align: center; display: none;">
-          <label>操作帶負電棒：</label>
+          <div style="margin-bottom: 10px; font-weight: bold;">
+            準備階段：請先選擇帶電棒電性
+          </div>
           <div class="btn-group">
-            <button class="action-btn btn-blue" id="btn-e-near" onclick="operateElectroscope('near')">感應靠近</button>
-            <button class="action-btn btn-blue" id="btn-e-touch" onclick="operateElectroscope('touch')">直接接觸</button>
-            <button class="action-btn" id="btn-e-reset" onclick="operateElectroscope('reset')">復原遠離</button>
+            <button class="action-btn btn-blue active" id="btn-e-rod-neg" onclick="initElectroscope(-1)">使用負帶電棒</button>
+            <button class="action-btn btn-orange" id="btn-e-rod-pos" onclick="initElectroscope(1)">使用正帶電棒</button>
+          </div>
+          <div style="margin-top: 10px; font-weight: bold; border-top: 1px dashed var(--rule-color); padding-top: 10px;">
+            操作階段：驗電器感應起電
+          </div>
+          <div class="btn-group">
+            <button class="action-btn" id="btn-e-step1" onclick="doElectroscopeStep(1)" disabled>1. 靠近</button>
+            <button class="action-btn" id="btn-e-step2" onclick="doElectroscopeStep(2)" disabled>2. 接地</button>
+            <button class="action-btn" id="btn-e-step3" onclick="doElectroscopeStep(3)" disabled>3. 移手</button>
+            <button class="action-btn" id="btn-e-step4" onclick="doElectroscopeStep(4)" disabled>4. 移棒</button>
           </div>
         </div>
         
@@ -424,14 +464,26 @@
       </div>
       <div class="content-box">
         <h2>💡 教學黑板</h2>
-        <ul class="note-ul">
-          <li><b>接觸起電：</b><span style="white-space: nowrap;">導體</span>帶電棒直接觸碰不帶電的金屬體，發生真實的<span style="white-space: nowrap;">電子流動轉移</span>。最終兩者帶有<span style="white-space: nowrap;"><b>相同電性</b></span>的電荷。</li>
-          <li><b>驗電器構造：</b>金屬頂盤、金屬導桿與下方的兩片輕薄金屬箔片。用於檢驗物體是否帶電。</li>
-          <li><b>物理機制分析：</b>
-            <br>👉 <span style="white-space: nowrap;"><b>感應靠近時</b></span>：同性電子被排斥至下方箔片，使兩片箔片帶同性電，產生靜電排斥力而<span style="white-space: nowrap;">「張開」</span>。移開帶電棒即恢復原狀。
-            <br>👉 <span style="white-space: nowrap;"><b>接觸起電後</b></span>：電子真實轉移進入驗電器，整個驗電器帶同種淨電荷。即使移開帶電棒，箔片依然保持<span style="white-space: nowrap;">「張開狀態」</span>。
-          </li>
-        </ul>
+        <div id="t4-note-contact">
+          <ul class="note-ul">
+            <li><b>接觸起電：</b><span style="white-space: nowrap;">導體</span>帶電棒直接觸碰不帶電的金屬體，發生真實的<span style="white-space: nowrap;">電子流動轉移</span>。最終兩者帶有<span style="white-space: nowrap;"><b>相同電性</b></span>的電荷。</li>
+            <li><b>微觀原理解析：</b>
+              <br>👉 <span style="white-space: nowrap;"><b>負電棒接觸</b></span>：棒內過剩的電子相互排斥，順著接觸點<span style="white-space: nowrap;">流入</span>金屬塊，使金屬塊也帶負電。
+              <br>👉 <span style="white-space: nowrap;"><b>正電棒接觸</b></span>：金屬塊內的自由電子被強大正電荷吸引，<span style="white-space: nowrap;">流出</span>至帶電棒，使金屬塊失去電子而帶正電。
+            </li>
+          </ul>
+        </div>
+        <div id="t4-note-electro" style="display: none;">
+          <ul class="note-ul">
+            <li><b>驗電器構造：</b>金屬頂盤、導電桿與下方兩片金屬箔片，用於檢驗物體是否帶電。</li>
+            <li><b>感應起電的四段式張角變化：</b>
+              <br>👉 <span style="white-space: nowrap;"><b>1. 靠近</b></span>：頂盤感應出異性電，同性電被排斥至箔片，箔片<span style="white-space: nowrap;"><b>張開</b></span>。
+              <br>👉 <span style="white-space: nowrap;"><b>2. 接地</b></span>：手指觸碰頂盤，電子受排斥流入地下（或受吸引流入）。此時箔片變為電中性，<span style="white-space: nowrap;"><b>閉合</b></span>。
+              <br>👉 <span style="white-space: nowrap;"><b>3. 移開手</b></span>：切斷電子通道，驗電器已帶有淨電荷，但電子仍受上方帶電棒牽制，箔片維持<span style="white-space: nowrap;"><b>閉合</b></span>。
+              <br>👉 <span style="white-space: nowrap;"><b>4. 移開棒</b></span>：外部電場消失，淨電荷均勻分布至箔片，箔片帶同性電，再次<span style="white-space: nowrap;"><b>張開</b></span>！
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -490,6 +542,54 @@
       </div>
     </div>
   </div>
+
+  <!-- 🌟 分頁六：資優延伸大畫面！ -->
+  <div id="tab6" class="panel">
+    <div class="grid-1">
+      <div class="content-box" style="border-color: var(--chalk-coral);">
+        <h2 style="color: var(--chalk-coral); border-color: rgba(255, 128, 64, 0.3);">⚠️ 深度解析：驗電器微觀力場全動態模擬</h2>
+        
+        <div class="canvas-container" style="background: #08120e;">
+          <canvas id="cvs-tab6" width="900" height="420"></canvas>
+        </div>
+
+        <div class="controls" style="display: flex; gap: 40px; align-items: center; justify-content: center; background: rgba(255, 128, 64, 0.05); border-color: rgba(255, 128, 64, 0.3);">
+          
+          <div style="flex: 1; max-width: 250px;">
+            <div style="text-align: center; margin-bottom: 8px; font-weight: bold; color: var(--chalk-white);">1. 選擇感應棒電性</div>
+            <div class="btn-group">
+              <button class="action-btn btn-blue active" id="btn-t6-rod-neg" onclick="setT6Rod(-1)">帶負電棒</button>
+              <button class="action-btn btn-orange" id="btn-t6-rod-pos" onclick="setT6Rod(1)">帶正電棒</button>
+            </div>
+          </div>
+
+          <div style="flex: 2;">
+            <div style="text-align: center; margin-bottom: 8px; font-weight: bold; color: var(--chalk-white);">2. 調整帶電棒距離 (距離越近，感應越強)</div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+              <span style="color: var(--chalk-muted);">遠</span>
+              <input type="range" id="rng-t6-dist" class="danger-slider" min="0" max="100" value="0" style="flex: 1; height: 8px;">
+              <span style="color: var(--chalk-coral); font-weight: bold;">近</span>
+            </div>
+          </div>
+
+          <div style="flex: 1; max-width: 150px; text-align: center;">
+            <div style="text-align: center; margin-bottom: 8px; font-weight: bold; color: var(--chalk-white);">3. 接地開關</div>
+            <button class="action-btn" id="btn-t6-ground" onclick="toggleT6Ground()" style="width: 100%; border-color: var(--chalk-yellow); color: var(--chalk-yellow);">👆 點擊接地</button>
+          </div>
+
+        </div>
+
+        <div style="padding: 0 20px;">
+          <ul class="note-ul" style="font-size: 21px;">
+            <li><b style="color: var(--chalk-coral);">紅色十字為質子 (正電)</b>：深植於金屬晶格中，<b>絕對不會移動</b>。所有的電性變化皆來自於電子的游移。</li>
+            <li><b style="color: var(--chalk-teal);">藍色一字為自由電子 (負電)</b>：在導體內自由游移。受到帶電棒的排斥或吸引，會在金屬頂盤與下方金屬箔片間產生數量差異。</li>
+            <li><b>動態接地現象</b>：當按下接地時，電子會根據帶電棒的力場，從地下抽入或排入地下，此時金屬箔片會因為中和而瞬間<b>閉合</b>！</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -524,6 +624,7 @@
     if (tabId === 'tab3') { initTab3(); }
     if (tabId === 'tab4') { initTab4(); }
     if (tabId === 'tab5') initTab5();
+    if (tabId === 'tab6') { initTab6(); } // 🌟 啟動第六分頁引擎
   }
 
   function drawArrow(ctx, x1, y1, x2, y2, color, lineWidth = 4, headLen = 14) {
@@ -714,11 +815,11 @@
     render();
   }
 
-  // --- TAB 3: Induction 4 Steps (🌟 增加接地電子引流特效) ---
+  // --- TAB 3: Induction 4 Steps ---
   let t3_rodType = -1; 
   let t3_step = 0; 
   let t3_electrons = [];
-  let t3_flowAnimFrames = []; // 接地時的電子流動特效
+  let t3_flowAnimFrames = []; 
 
   function initTab3() {
     initInduction(-1);
@@ -763,9 +864,8 @@
     const cx = 250, cy = 150;
     
     if (step === 2) {
-      t3_flowAnimFrames = []; // 開始接地引流特效
+      t3_flowAnimFrames = []; 
       if (t3_rodType === -1) {
-        // 負電棒：排出 4 顆電子
         let removed = 0;
         while (t3_electrons.length > 2) {
           t3_electrons.pop();
@@ -773,13 +873,11 @@
           removed++;
         }
       } else {
-        // 正電棒：吸入 4 顆電子
         for(let i=0; i<4; i++) {
           t3_flowAnimFrames.push({ type: 'in', x: cx + 120, y: cy + 100, delay: i * 20, done: false });
         }
       }
     } else if (step === 3 || step === 4) {
-      // 確保畫面電子數量準確
       t3_flowAnimFrames = [];
       let targetCount = (t3_rodType === -1) ? 2 : 10;
       while (t3_electrons.length > targetCount) t3_electrons.pop();
@@ -868,7 +966,6 @@
     });
 
     if (t3_step === 2) {
-      // Draw Ground Wire
       ctx.strokeStyle = COLOR_DIM;
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -881,17 +978,15 @@
       ctx.textAlign = 'left';
       ctx.fillText('接地', cx + 125, cy + 100);
 
-      // 🌟 將箭頭與文字大幅拉高至 cy - 20 (原先在 cy - 10)
       ctx.textAlign = 'center';
       if (t3_rodType === -1) {
-        drawArrow(ctx, cx + 70, cy - 20, cx + 110, cy - 20, COLOR_NEG, 3, 10);
-        ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流出', cx + 90, cy - 40);
+        drawArrow(ctx, cx + 70, cy - 55, cx + 110, cy - 55, COLOR_NEG, 3, 10);
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流出', cx + 90, cy - 75);
       } else {
-        drawArrow(ctx, cx + 110, cy - 20, cx + 70, cy - 20, COLOR_NEG, 3, 10);
-        ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流入', cx + 90, cy - 40);
+        drawArrow(ctx, cx + 110, cy - 55, cx + 70, cy - 55, COLOR_NEG, 3, 10);
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流入', cx + 90, cy - 75);
       }
 
-      // 🌟 執行流動特效動畫
       ctx.font = 'bold 24px JetBrains Mono';
       t3_flowAnimFrames.forEach((p) => {
         if (p.delay > 0) { p.delay--; return; }
@@ -927,14 +1022,15 @@
     ctx.fillText(msg, 50, 40);
   }
 
-  // --- TAB 4: Contact & Electroscope (🌟 自動 1 秒跨界流動 + 標示完美防疊) ---
+  // --- TAB 4: Contact & Electroscope ---
   let t4_mode = 'contact'; 
   let t4_contactState = 0; 
-  let t4_electroState = 'reset';
   let t4_blockElectrons = [];
   let t4_rodElectrons = []; 
   let t4_migratingElectrons = []; 
   let t4_contactFrame = 0; 
+  let t4_e_rodType = -1;
+  let t4_e_step = 0;
 
   function initTab4() {
     t4_blockElectrons = [];
@@ -969,11 +1065,13 @@
     
     document.getElementById('ctrl-contact').style.display = (mode === 'contact') ? 'block' : 'none';
     document.getElementById('ctrl-electro').style.display = (mode === 'electro') ? 'block' : 'none';
-    
+    document.getElementById('t4-note-contact').style.display = (mode === 'contact') ? 'block' : 'none';
+    document.getElementById('t4-note-electro').style.display = (mode === 'electro') ? 'block' : 'none';
+
     if (mode === 'contact') {
       operateContact(0);
     } else {
-      operateElectroscope('reset');
+      initElectroscope(-1);
     }
   }
 
@@ -1047,7 +1145,6 @@
         ctx.fillText('+', rodX + 55, rodY + 2); ctx.fillText('+', rodX + 70, rodY + 2);
       }
 
-      // 🌟 倒數 1 秒 (60 幀)，觸發 1 顆電子流動
       t4_contactFrame++;
       if (t4_contactFrame === 60) {
         if (t4_contactState === -1 && t4_rodElectrons.length > 0) {
@@ -1059,14 +1156,13 @@
         }
       }
 
-      // 🌟 將箭頭與文字大幅拉高至 cy - 55 (原金屬塊頂端為 cy - 40)，完全防疊！
       ctx.textAlign = 'center';
       if (t4_contactState === -1) {
-        drawArrow(ctx, cx - 100, cy - 55, cx - 20, cy - 55, COLOR_NEG, 3, 10);
-        ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流入', cx - 60, cy - 75);
+        drawArrow(ctx, cx - 100, cy - 65, cx - 20, cy - 65, COLOR_NEG, 3, 10);
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流入', cx - 60, cy - 85);
       } else {
-        drawArrow(ctx, cx - 20, cy - 55, cx - 100, cy - 55, COLOR_NEG, 3, 10);
-        ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流出', cx - 60, cy - 75);
+        drawArrow(ctx, cx - 20, cy - 65, cx - 100, cy - 65, COLOR_NEG, 3, 10);
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流出', cx - 60, cy - 85);
       }
     }
 
@@ -1117,12 +1213,34 @@
     }
   }
 
-  function operateElectroscope(action) {
-    t4_electroState = action;
+  function initElectroscope(type) {
+    t4_e_rodType = type;
+    t4_e_step = 0;
+    
+    document.getElementById('btn-e-rod-neg').classList.toggle('active', type === -1);
+    document.getElementById('btn-e-rod-pos').classList.toggle('active', type === 1);
+    
+    let btns = [1,2,3,4].map(i => document.getElementById('btn-e-step'+i));
+    btns.forEach(b => { b.disabled = true; b.classList.remove('active'); });
+    btns[0].disabled = false;
+    
     let stText = document.getElementById('t4-status');
-    if(action === 'reset') { stText.textContent = "復原狀態：箔片閉合"; stText.style.color = COLOR_DIM; }
-    if(action === 'near') { stText.textContent = "感應起電：電子下移，下方同性相斥張開"; stText.style.color = COLOR_YELLOW; }
-    if(action === 'touch') { stText.textContent = "接觸起電：真實電子轉移，全體帶負電張開"; stText.style.color = COLOR_NEG; }
+    stText.textContent = "驗電器電中性狀態：箔片閉合"; stText.style.color = COLOR_DIM;
+  }
+
+  function doElectroscopeStep(step) {
+    t4_e_step = step;
+    let btns = [1,2,3,4].map(i => document.getElementById('btn-e-step'+i));
+    btns.forEach((b, i) => {
+      b.classList.toggle('active', i+1 === step);
+      b.disabled = (i+1 > step + 1);
+    });
+
+    let stText = document.getElementById('t4-status');
+    if(step===1) { stText.textContent = "1. 靠近：同性電被排斥至下方，箔片張開"; stText.style.color = COLOR_YELLOW; }
+    if(step===2) { stText.textContent = "2. 接地：下方電子流入地下(或從地下流入)，箔片閉合"; stText.style.color = COLOR_NEG; }
+    if(step===3) { stText.textContent = "3. 移手：淨電荷仍受牽制，箔片維持閉合"; stText.style.color = COLOR_DIM; }
+    if(step===4) { stText.textContent = `4. 移棒：淨 ${t4_e_rodType===-1?'正':'負'} 電荷均勻分布，箔片再次張開！`; stText.style.color = COLOR_YELLOW; }
   }
 
   function renderTab4Electroscope() {
@@ -1149,37 +1267,75 @@
     ctx.beginPath(); ctx.ellipse(cx, cy, 30, 8, 0, 0, Math.PI*2); ctx.fill();
 
     let leafAngle = 0;
-    if (t4_electroState === 'near' || t4_electroState === 'touch') { leafAngle = Math.PI / 8; }
+    if (t4_e_step === 1 || t4_e_step === 4) { leafAngle = Math.PI / 6; }
 
     ctx.strokeStyle = COLOR_YELLOW;
     ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(cx, cy + 100); ctx.lineTo(cx - 40 * Math.sin(leafAngle), cy + 100 + 40 * Math.cos(leafAngle)); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(cx, cy + 100); ctx.lineTo(cx + 40 * Math.sin(leafAngle), cy + 100 + 40 * Math.cos(leafAngle)); ctx.stroke();
 
-    let rodX = cx - 180, rodY = cy - 40;
-    if (t4_electroState === 'near') { rodX = cx - 90; rodY = cy - 20; }
-    if (t4_electroState === 'touch') { rodX = cx - 60; rodY = cy; } 
+    let rodX = cx - 210, rodY = cy - 40; 
+    if (t4_e_step >= 1 && t4_e_step <= 3) { rodX = cx - 120; rodY = cy - 20; } 
 
-    if (t4_electroState !== 'reset') {
+    if (t4_e_step < 4) {
       ctx.fillStyle = COLOR_ROD;
       ctx.beginPath(); ctx.roundRect(rodX, rodY - 15, 80, 30, 15); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = COLOR_NEG;
+      
       ctx.font = 'bold 24px JetBrains Mono';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('-', rodX + 25, rodY + 8);
-      ctx.fillText('-', rodX + 55, rodY + 8);
+      if (t4_e_rodType === -1) {
+        ctx.fillStyle = COLOR_POS; ctx.fillText('+', rodX + 30, rodY + 2); ctx.fillText('+', rodX + 50, rodY + 2);
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('-', rodX + 15, rodY - 6); ctx.fillText('-', rodX + 65, rodY - 6);
+        ctx.fillText('-', rodX + 15, rodY + 8); ctx.fillText('-', rodX + 65, rodY + 8);
+      } else {
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('-', rodX + 30, rodY + 2); ctx.fillText('-', rodX + 50, rodY + 2);
+        ctx.fillStyle = COLOR_POS; ctx.fillText('+', rodX + 15, rodY - 6); ctx.fillText('+', rodX + 65, rodY - 6);
+        ctx.fillText('+', rodX + 15, rodY + 8); ctx.fillText('+', rodX + 65, rodY + 8);
+      }
     }
 
     ctx.font = 'bold 20px JetBrains Mono';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    if (t4_electroState === 'near') {
-      ctx.fillStyle = COLOR_POS; ctx.fillText('+', cx - 15, cy - 5); ctx.fillText('+', cx + 15, cy - 5);
-      ctx.fillStyle = COLOR_NEG; ctx.fillText('-', cx - 20, cy + 120); ctx.fillText('-', cx + 20, cy + 120);
-    } else if (t4_electroState === 'touch') {
-      ctx.fillStyle = COLOR_NEG;
-      ctx.fillText('-', cx - 15, cy - 5); ctx.fillText('-', cx + 15, cy - 5);
-      ctx.fillText('-', cx - 20, cy + 120); ctx.fillText('-', cx + 20, cy + 120);
-      drawArrow(ctx, rodX + 80, rodY, cx - 35, cy, COLOR_NEG, 3, 10);
+    
+    if (t4_e_step === 1) {
+      if (t4_e_rodType === -1) {
+        ctx.fillStyle = COLOR_POS; ctx.fillText('+', cx - 15, cy - 5); ctx.fillText('+', cx + 15, cy - 5);
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('-', cx - 20, cy + 120); ctx.fillText('-', cx + 20, cy + 120);
+      } else {
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('-', cx - 15, cy - 5); ctx.fillText('-', cx + 15, cy - 5);
+        ctx.fillStyle = COLOR_POS; ctx.fillText('+', cx - 20, cy + 120); ctx.fillText('+', cx + 20, cy + 120);
+      }
+    } else if (t4_e_step === 2) {
+      ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(cx + 40, cy); ctx.lineTo(cx + 100, cy); ctx.lineTo(cx + 100, cy + 100); ctx.stroke();
+      ctx.fillStyle = COLOR_WHITE; ctx.font = '16px Noto Sans TC'; ctx.textAlign = 'left'; ctx.fillText('接地', cx + 105, cy + 115);
+      
+      ctx.font = 'bold 20px JetBrains Mono'; ctx.textAlign = 'center';
+      if (t4_e_rodType === -1) {
+        ctx.fillStyle = COLOR_POS; ctx.fillText('+', cx - 15, cy - 5); ctx.fillText('+', cx + 15, cy - 5);
+        drawArrow(ctx, cx + 50, cy - 30, cx + 90, cy - 30, COLOR_NEG, 3, 10);
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流出', cx + 70, cy - 50);
+      } else {
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('-', cx - 15, cy - 5); ctx.fillText('-', cx + 15, cy - 5);
+        drawArrow(ctx, cx + 90, cy - 30, cx + 50, cy - 30, COLOR_NEG, 3, 10);
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流入', cx + 70, cy - 50);
+      }
+    } else if (t4_e_step === 3) {
+      if (t4_e_rodType === -1) {
+        ctx.fillStyle = COLOR_POS; ctx.fillText('+', cx - 15, cy - 5); ctx.fillText('+', cx + 15, cy - 5);
+      } else {
+        ctx.fillStyle = COLOR_NEG; ctx.fillText('-', cx - 15, cy - 5); ctx.fillText('-', cx + 15, cy - 5);
+      }
+    } else if (t4_e_step === 4) {
+      if (t4_e_rodType === -1) {
+        ctx.fillStyle = COLOR_POS;
+        ctx.fillText('+', cx - 15, cy - 5); 
+        ctx.fillText('+', cx - 20, cy + 120); ctx.fillText('+', cx + 20, cy + 120);
+      } else {
+        ctx.fillStyle = COLOR_NEG;
+        ctx.fillText('-', cx - 15, cy - 5);
+        ctx.fillText('-', cx - 20, cy + 120); ctx.fillText('-', cx + 20, cy + 120);
+      }
     }
   }
 
@@ -1276,6 +1432,235 @@
       animFrames['tab5'] = requestAnimationFrame(loop);
     }
     loop();
+  }
+
+  // --- 🌟 TAB 6: 資優禁區大挑戰 ---
+  let t6_rodType = -1;
+  let t6_dist = 0; // 0 (far) to 100 (near)
+  let t6_isGrounded = false;
+  let t6_electrons = [];
+  let t6_flowElectrons = [];
+  let t6_baseTotalE = 28; 
+  // Protons: Plate=12, Leaves=16. Total=28.
+
+  function initTab6() {
+    const cx = 400, cy = 200; // Large canvas 800x420
+    t6_electrons = [];
+    t6_flowElectrons = [];
+    t6_baseTotalE = 28;
+    t6_isGrounded = false;
+    document.getElementById('btn-t6-ground').textContent = "👆 點擊接地";
+    document.getElementById('btn-t6-ground').style.color = "var(--chalk-yellow)";
+    document.getElementById('btn-t6-ground').style.borderColor = "var(--chalk-yellow)";
+    document.getElementById('rng-t6-dist').value = 0;
+    t6_dist = 0;
+    
+    setT6Rod(-1);
+
+    // Initial neutral state (28 electrons)
+    for(let i=0; i<28; i++) {
+      let r = (i < 12) ? 0 : 1; // 0=plate, 1=leaves/stem
+      t6_electrons.push(createT6Electron(r, cx, cy));
+    }
+
+    function loop() {
+      if(currentTab !== 'tab6') return;
+      renderTab6();
+      animFrames['tab6'] = requestAnimationFrame(loop);
+    }
+    loop();
+  }
+
+  function setT6Rod(type) {
+    t6_rodType = type;
+    document.getElementById('btn-t6-rod-neg').classList.toggle('active', type === -1);
+    document.getElementById('btn-t6-rod-pos').classList.toggle('active', type === 1);
+  }
+
+  function toggleT6Ground() {
+    t6_isGrounded = !t6_isGrounded;
+    let btn = document.getElementById('btn-t6-ground');
+    if (t6_isGrounded) {
+      btn.textContent = "⚡ 解除接地";
+      btn.style.color = "var(--chalk-white)";
+      btn.style.borderColor = "var(--chalk-white)";
+      btn.style.background = "rgba(255,255,255,0.1)";
+    } else {
+      btn.textContent = "👆 點擊接地";
+      btn.style.color = "var(--chalk-yellow)";
+      btn.style.borderColor = "var(--chalk-yellow)";
+      btn.style.background = "transparent";
+      // Lock current total electrons
+      t6_baseTotalE = t6_electrons.length;
+    }
+  }
+
+  document.getElementById('rng-t6-dist').addEventListener('input', function(e) {
+    t6_dist = parseInt(e.target.value);
+  });
+
+  function createT6Electron(region, cx, cy) {
+    let ex, ey;
+    if (region === 0) { // Plate
+      ex = cx + (Math.random()-0.5)*120;
+      ey = cy - 45 + (Math.random()-0.5)*20;
+    } else { // Stem/Leaves
+      ex = cx + (Math.random()-0.5)*20;
+      ey = cy + 40 + Math.random()*120;
+    }
+    return {
+      x: ex, y: ey,
+      vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4,
+      region: region
+    };
+  }
+
+  function renderTab6() {
+    const cvs = document.getElementById('cvs-tab6');
+    const ctx = cvs.getContext('2d');
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+    const cx = 400, cy = 180;
+
+    // --- Physics Engine ---
+    let force = t6_rodType * (t6_dist / 100); 
+    let targetPlateE = 0;
+    let targetLeafE = 0;
+    let targetTotalE = t6_baseTotalE;
+
+    if (!t6_isGrounded) {
+      targetPlateE = (targetTotalE * (12/28)) + force * 10;
+      targetPlateE = Math.max(0, Math.min(targetPlateE, targetTotalE));
+      targetLeafE = targetTotalE - targetPlateE;
+    } else {
+      // Grounded: leaves are neutral (16e for 16p)
+      targetLeafE = 16;
+      targetPlateE = 12 + force * 14; 
+      targetTotalE = targetPlateE + targetLeafE;
+    }
+
+    let plateE = t6_electrons.filter(e => e.region === 0).length;
+    let leafE = t6_electrons.filter(e => e.region === 1).length;
+
+    // Handle Ground Flow
+    if (t6_isGrounded) {
+      if (t6_electrons.length > targetTotalE && Math.random() < 0.2) {
+        // Lose electron to ground
+        let eIdx = t6_electrons.findIndex(e => e.region === 1);
+        if (eIdx === -1) eIdx = 0;
+        let e = t6_electrons.splice(eIdx, 1)[0];
+        t6_flowElectrons.push({x: e.x, y: e.y, targetY: cy + 180, isOut: true});
+      } else if (t6_electrons.length < targetTotalE && Math.random() < 0.2) {
+        // Gain electron from ground
+        t6_flowElectrons.push({x: cx + 150, y: cy + 180, targetY: cy, isOut: false});
+      }
+    }
+
+    // Balance internally (Plate <-> Leaves)
+    if (Math.random() < 0.2) {
+      if (plateE < targetPlateE && leafE > 0) {
+        let e = t6_electrons.find(e => e.region === 1);
+        if(e) { e.region = 0; e.y = cy; } // Teleport to boundary to flow up
+      } else if (leafE < targetLeafE && plateE > 0) {
+        let e = t6_electrons.find(e => e.region === 0);
+        if(e) { e.region = 1; e.y = cy - 20; }
+      }
+    }
+
+    // --- Drawing ---
+    // Glass Flask
+    ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(cx - 60, cy + 20); ctx.lineTo(cx - 120, cy + 200);
+    ctx.lineTo(cx + 120, cy + 200); ctx.lineTo(cx + 60, cy + 20);
+    ctx.closePath(); ctx.stroke();
+
+    // Top Plate
+    ctx.fillStyle = '#2d3a33'; ctx.strokeStyle = COLOR_WHITE; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(cx, cy - 45, 70, 20, 0, 0, Math.PI*2);
+    ctx.fill(); ctx.stroke();
+    
+    // Stem
+    ctx.fillStyle = COLOR_WHITE;
+    ctx.fillRect(cx - 3, cy - 25, 6, 140);
+
+    // Ground Wire
+    if (t6_isGrounded) {
+      ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(cx + 70, cy - 45); ctx.lineTo(cx + 150, cy - 45);
+      ctx.lineTo(cx + 150, cy + 180); ctx.stroke();
+      ctx.fillStyle = COLOR_WHITE; ctx.font = '20px Noto Sans TC'; ctx.textAlign = 'center';
+      ctx.fillText('接地線', cx + 150, cy + 205);
+    }
+
+    // Leaf Angle (Depends on net charge in leaves/stem = 16 protons)
+    let netLeafQ = Math.abs(leafE - 16);
+    let leafAngle = (netLeafQ / 16) * (Math.PI / 3); // Max angle 60 deg
+
+    ctx.strokeStyle = COLOR_YELLOW; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(cx, cy + 115); ctx.lineTo(cx - 70 * Math.sin(leafAngle), cy + 115 + 70 * Math.cos(leafAngle)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy + 115); ctx.lineTo(cx + 70 * Math.sin(leafAngle), cy + 115 + 70 * Math.cos(leafAngle)); ctx.stroke();
+
+    // Charged Rod (Approaching from left)
+    let rodX = cx - 350 + (t6_dist / 100) * 150; // Max reach is cx - 200
+    ctx.fillStyle = COLOR_ROD;
+    ctx.beginPath(); ctx.roundRect(rodX, cy - 65, 120, 40, 20); ctx.fill(); ctx.stroke();
+    ctx.font = 'bold 30px JetBrains Mono'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (t6_rodType === -1) {
+      ctx.fillStyle = COLOR_POS; ctx.fillText('+', rodX + 40, cy - 45); ctx.fillText('+', rodX + 80, cy - 45);
+      ctx.fillStyle = COLOR_NEG; ctx.fillText('-', rodX + 20, cy - 55); ctx.fillText('-', rodX + 100, cy - 55);
+      ctx.fillText('-', rodX + 20, cy - 35); ctx.fillText('-', rodX + 100, cy - 35);
+    } else {
+      ctx.fillStyle = COLOR_NEG; ctx.fillText('-', rodX + 40, cy - 45); ctx.fillText('-', rodX + 80, cy - 45);
+      ctx.fillStyle = COLOR_POS; ctx.fillText('+', rodX + 20, cy - 55); ctx.fillText('+', rodX + 100, cy - 55);
+      ctx.fillText('+', rodX + 20, cy - 35); ctx.fillText('+', rodX + 100, cy - 35);
+    }
+
+    // Draw Protons (Fixed Grid)
+    ctx.font = 'bold 24px JetBrains Mono'; ctx.fillStyle = COLOR_POS;
+    // Plate (12)
+    for(let i=0; i<4; i++) {
+      for(let j=0; j<3; j++) { ctx.fillText('+', cx - 45 + i*30, cy - 55 + j*10); }
+    }
+    // Stem/Leaves (16)
+    for(let i=0; i<8; i++) {
+      ctx.fillText('+', cx - 15, cy + i*20); ctx.fillText('+', cx + 15, cy + i*20);
+    }
+
+    // Update & Draw Electrons
+    ctx.fillStyle = COLOR_NEG;
+    t6_electrons.forEach(e => {
+      e.x += e.vx; e.y += e.vy;
+      let minX, maxX, minY, maxY;
+      if (e.region === 0) { // Plate
+        minX = cx - 60; maxX = cx + 60; minY = cy - 60; maxY = cy - 30;
+      } else { // Stem/Leaves
+        minX = cx - 30; maxX = cx + 30; minY = cy - 25; maxY = cy + 180;
+      }
+      if (e.x < minX) { e.x = minX; e.vx = Math.abs(e.vx); }
+      if (e.x > maxX) { e.x = maxX; e.vx = -Math.abs(e.vx); }
+      if (e.y < minY) { e.y = minY; e.vy = Math.abs(e.vy); }
+      if (e.y > maxY) { e.y = maxY; e.vy = -Math.abs(e.vy); }
+      ctx.fillText('-', e.x, e.y);
+    });
+
+    // Draw Flowing Electrons (Ground wire)
+    for (let i = t6_flowElectrons.length - 1; i >= 0; i--) {
+      let fe = t6_flowElectrons[i];
+      if (fe.isOut) {
+        if (fe.x < cx + 150 && fe.y < cy - 45) { fe.x += 8; fe.y = cy - 45; }
+        else if (fe.y < cy + 180) { fe.x = cx + 150; fe.y += 8; }
+        else { t6_flowElectrons.splice(i, 1); continue; }
+      } else {
+        if (fe.y > cy - 45) { fe.x = cx + 150; fe.y -= 8; }
+        else if (fe.x > cx + 60) { fe.y = cy - 45; fe.x -= 8; }
+        else {
+          t6_electrons.push({ x: cx + 60, y: cy - 45, vx: -2, vy: 2, region: 0 });
+          t6_flowElectrons.splice(i, 1); continue;
+        }
+      }
+      ctx.fillText('-', fe.x, fe.y);
+    }
   }
 
   // Init
