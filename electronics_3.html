@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>串並聯電路與電流：互動黑板教學</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #11261f;
+    --bg-panel: #16332a;
+    --bg-panel-hover: #1f4236;
+    --chalk-white: #f6f3ea;
+    --chalk-muted: #a3b8b0;
+    --chalk-yellow: #ffe066;
+    --chalk-teal: #4dd2ff;
+    --chalk-coral: #ff8040;
+    --chalk-green: #33cc99;
+    --chalk-red: #ff4d4d;
+    --rule-color: rgba(246, 243, 234, 0.22);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; background-color: var(--bg-base); color: var(--chalk-white);
+    font-family: 'Noto Sans TC', sans-serif; font-size: 20px; line-height: 1.65; padding: 24px 0 80px;
+  }
+
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+  header { text-align: center; margin-bottom: 28px; border-bottom: 2px dashed var(--rule-color); padding-bottom: 20px; }
+  h1 { font-size: 32px; margin: 0 0 10px 0; color: var(--chalk-yellow); letter-spacing: 2px; font-weight: 700; }
+  header p { margin: 0; color: var(--chalk-muted); font-size: 20px; }
+
+  .tabs { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .tab-btn {
+    flex: 1; min-width: 180px; padding: 14px 10px; font-size: 20px; font-weight: 700;
+    background: rgba(255, 255, 255, 0.05); color: var(--chalk-muted);
+    border: 2px dashed var(--rule-color); border-radius: 12px; cursor: pointer; transition: all 0.2s ease; text-align: center;
+  }
+  .tab-btn:hover { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .tab-btn.active { background: #1f4236; color: var(--chalk-yellow); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 16px rgba(255, 224, 102, 0.25); }
+
+  .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; margin-bottom: 20px; }
+
+  .panel { display: none; animation: fadeIn 0.3s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .content-box {
+    background: var(--bg-panel); border: 2px solid var(--rule-color);
+    border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); display: flex; flex-direction: column;
+  }
+
+  h2 { margin: 0 0 16px 0; font-size: 26px; color: var(--chalk-green); border-bottom: 1px dashed var(--rule-color); padding-bottom: 12px; }
+
+  .canvas-container { width: 100%; border: 2px solid var(--chalk-white); border-radius: 12px; overflow: hidden; background: #0b1a15; position: relative; margin-bottom: 16px; }
+  canvas { display: block; width: 100%; height: auto; }
+
+  .controls { background: rgba(255, 255, 255, 0.04); padding: 16px 20px; border-radius: 12px; border: 1px solid var(--rule-color); margin-bottom: 16px; text-align: center; }
+  .btn-group { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
+
+  .action-btn {
+    padding: 10px 18px; border: 2px solid var(--chalk-white); background: transparent; color: var(--chalk-white);
+    border-radius: 8px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s;
+  }
+  .action-btn:hover:not(:disabled) { background: var(--chalk-white); color: var(--bg-base); }
+  .action-btn.active { background: var(--chalk-yellow); border-color: var(--chalk-yellow); color: var(--bg-base); }
+
+  .math-fraction { display: inline-flex; flex-direction: column; justify-content: center; align-items: center; vertical-align: middle; margin: 0 4px; line-height: 1.2; font-family: 'JetBrains Mono', monospace; }
+  .math-fraction .num { border-bottom: 2px solid var(--chalk-white); padding: 0 4px 2px; }
+  .math-fraction .den { padding: 2px 4px 0; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--chalk-yellow); }
+
+  .note-ul { margin: 0; padding-left: 28px; }
+  .note-ul li { margin-bottom: 12px; }
+
+  .formula-box { font-family: 'JetBrains Mono', monospace; background: rgba(255, 255, 255, 0.06); padding: 16px 24px; border-radius: 10px; border: 1px solid var(--rule-color); margin: 16px 0; text-align: center; font-size: 24px; color: var(--chalk-teal); }
+
+  .data-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .data-card { background: rgba(0,0,0,0.3); border: 1px solid var(--rule-color); border-radius: 8px; padding: 12px; text-align: center; }
+  .data-title { font-size: 18px; color: var(--chalk-muted); margin-bottom: 4px; }
+  .data-value { font-size: 28px; font-family: 'JetBrains Mono', monospace; color: var(--chalk-white); font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>⚡ 串並聯電路與電流</h1>
+    <p>電流定義、測量規範與串並聯電路數值解析</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab-btn active" onclick="switchTab('tab1')">電流定義與單位</div>
+    <div class="tab-btn" onclick="switchTab('tab2')">電表測量規範</div>
+    <div class="tab-btn" onclick="switchTab('tab3')">串聯電路定律</div>
+    <div class="tab-btn" onclick="switchTab('tab4')">並聯電路定律</div>
+    <div class="tab-btn" onclick="switchTab('tab5')" style="color: var(--chalk-coral); border-color: rgba(255,128,64,0.5);">綜合電路切換比較</div>
+  </div>
+
+  <!-- 分頁一：電流定義與單位 -->
+  <div id="tab1" class="panel active">
+    <div class="grid-layout">
+      <div class="content-box">
+        <h2>電流微觀模型</h2>
+        <div class="canvas-container">
+          <canvas id="cvs-tab1" width="600" height="350"></canvas>
+        </div>
+      </div>
+      <div class="content-box">
+        <h2>💡 觀念解析</h2>
+        <ul class="note-ul">
+          <li><b>電流的本質：</b>在導體中受電壓驅使而做定向移動的自由電子。</li>
+          <li><b>電流定義 <span class="mono" style="white-space: nowrap;">(I)</span>：</b>單位時間內通過導線某截面積的總電量。</li>
+          <li><b>核心公式：</b>
+             <div class="formula-box">
+              <span style="white-space: nowrap;">
+                I = 
+                <span class="math-fraction">
+                  <span class="num">Q (電量)</span>
+                  <span class="den">t (時間)</span>
+                </span>
+              </span>
+            </div>
+          </li>
+          <li><b>電流單位：</b>安培 <span class="mono" style="white-space: nowrap;">(A)</span>。
+            <br>當 <span class="mono" style="white-space: nowrap;">1 秒</span>內有 <span class="mono" style="white-space: nowrap;">1 庫侖</span>的電量通過截面積時，電流即為 <span class="mono" style="white-space: nowrap;">1 A</span>。
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分頁二：電表測量規範 -->
+  <div id="tab2" class="panel">
+    <div class="grid-layout">
+      <div class="content-box">
+        <h2>測量接線示範</h2>
+        <div class="canvas-container">
+          <canvas id="cvs-tab2" width="600" height="350"></canvas>
+        </div>
+        <div class="controls">
+          <div class="btn-group">
+            <button class="action-btn active" id="btn-t2-ammeter" onclick="setT2Meter('ammeter')">安培計接法</button>
+            <button class="action-btn" id="btn-t2-voltmeter" onclick="setT2Meter('voltmeter')">伏特計接法</button>
+          </div>
+        </div>
+      </div>
+      <div class="content-box">
+        <h2>💡 觀念解析</h2>
+        <ul class="note-ul">
+          <li><b>安培計 <span class="mono" style="white-space: nowrap;">(A)</span>：</b>用於測量電流大小。
+            <br>👉 必須與待測電器<span style="white-space: nowrap; color: var(--chalk-yellow); font-weight: bold;">串聯</span>，讓電子流穿過儀表。
+            <br>👉 內部電阻極小，嚴禁直接接在電源兩端，否則會產生極大電流導致短路燒毀。
+          </li>
+          <li><b>伏特計 <span class="mono" style="white-space: nowrap;">(V)</span>：</b>用於測量兩點間的電位差（電壓）。
+            <br>👉 必須與待測電器<span style="white-space: nowrap; color: var(--chalk-yellow); font-weight: bold;">並聯</span>，跨接於元件的兩側。
+            <br>👉 內部電阻極大，可直接接在電源兩端測量電池電壓。
+          </li>
+          <li><b>接線原則：</b>皆需遵守<span style="white-space: nowrap;">「正極接正極、負極接負極」</span>，並由大範圍的測量檔位開始測試。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分頁三：串聯電路定律 -->
+  <div id="tab3" class="panel">
+    <div class="grid-layout">
+      <div class="content-box">
+        <h2>串聯電路流動模型</h2>
+        <div class="canvas-container">
+          <canvas id="cvs-tab3" width="600" height="350"></canvas>
+        </div>
+      </div>
+      <div class="content-box">
+        <h2>💡 觀念解析</h2>
+        <ul class="note-ul">
+          <li><b>路徑特徵：</b>電子只有單一傳導路徑，依序經過每一個元件。</li>
+          <li><b>電流定律：</b>在串聯電路中，無論測量哪一個位置，電流大小處處相等。
+            <div class="formula-box">
+              <span style="white-space: nowrap;" class="mono">I = I₁ = I₂</span>
+            </div>
+          </li>
+          <li><b>電壓定律：</b>總電壓（電源提供）會被串聯的各元件依比例分擔消耗。總電壓等於各元件電壓之和。
+            <div class="formula-box">
+              <span style="white-space: nowrap;" class="mono">V = V₁ + V₂</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分頁四：並聯電路定律 -->
+  <div id="tab4" class="panel">
+    <div class="grid-layout">
+      <div class="content-box">
+        <h2>並聯電路流動模型</h2>
+        <div class="canvas-container">
+          <canvas id="cvs-tab4" width="600" height="350"></canvas>
+        </div>
+      </div>
+      <div class="content-box">
+        <h2>💡 觀念解析</h2>
+        <ul class="note-ul">
+          <li><b>路徑特徵：</b>導線發生分岔，電子可選擇不同路徑（分支）前進，最後再匯流。</li>
+          <li><b>電壓定律：</b>在並聯電路中，每一條分支皆各自獨立與電源相連，故各分支的電壓皆等於總電壓。
+            <div class="formula-box">
+              <span style="white-space: nowrap;" class="mono">V = V₁ = V₂</span>
+            </div>
+          </li>
+          <li><b>電流定律：</b>總電流在分岔處分流，匯流處會合。總電流等於各分支電流之和。
+            <div class="formula-box">
+              <span style="white-space: nowrap;" class="mono">I = I₁ + I₂</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分頁五：綜合電路切換比較 -->
+  <div id="tab5" class="panel">
+    <div class="grid-layout">
+      <div class="content-box" style="border-color: var(--chalk-coral);">
+        <h2 style="color: var(--chalk-coral); border-color: rgba(255, 128, 64, 0.3);">動態儀表與電路切換</h2>
+        <div class="canvas-container">
+          <canvas id="cvs-tab5" width="600" height="360"></canvas>
+        </div>
+        <div class="controls" style="margin-bottom: 0;">
+          <div class="btn-group">
+            <button class="action-btn active" id="btn-t5-series" onclick="setT5Mode('series')">切換至：燈泡串聯</button>
+            <button class="action-btn" id="btn-t5-parallel" onclick="setT5Mode('parallel')">切換至：燈泡並聯</button>
+          </div>
+        </div>
+      </div>
+      <div class="content-box">
+        <h2>實時測量數據面板</h2>
+        <div style="color: var(--chalk-muted); margin-bottom: 12px;">電池總電壓設定為 <span class="mono" style="white-space: nowrap;">3.0 V</span>，兩燈泡規格相同。</div>
+        
+        <div style="font-weight: bold; color: var(--chalk-yellow); margin-top: 10px;">電壓讀數 (V)</div>
+        <div class="data-dashboard">
+          <div class="data-card">
+            <div class="data-title">總電壓 <span class="mono" style="white-space: nowrap;">V</span></div>
+            <div class="data-value" id="t5-v-total" style="color: var(--chalk-yellow);">3.0 V</div>
+          </div>
+          <div class="data-card">
+            <div class="data-title">分壓 <span class="mono" style="white-space: nowrap;">V₁ / V₂</span></div>
+            <div class="data-value" id="t5-v-branch" style="color: var(--chalk-yellow);">1.5 V</div>
+          </div>
+        </div>
+
+        <div style="font-weight: bold; color: var(--chalk-teal); margin-top: 24px;">電流讀數 (A)</div>
+        <div class="data-dashboard">
+          <div class="data-card">
+            <div class="data-title">總電流 <span class="mono" style="white-space: nowrap;">I</span></div>
+            <div class="data-value" id="t5-i-total" style="color: var(--chalk-teal);">1.0 A</div>
+          </div>
+          <div class="data-card">
+            <div class="data-title">分流 <span class="mono" style="white-space: nowrap;">I₁ / I₂</span></div>
+            <div class="data-value" id="t5-i-branch" style="color: var(--chalk-teal);">1.0 A</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let currentTab = 'tab1';
+  let animFrames = {};
+
+  const COLOR_BG = '#0b1a15';
+  const COLOR_WHITE = '#f6f3ea';
+  const COLOR_DIM = '#a3b8b0';
+  const COLOR_YELLOW = '#ffe066';
+  const COLOR_TEAL = '#4dd2ff';
+  const COLOR_ORANGE = '#ff8040';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+
+    for (let id in animFrames) { cancelAnimationFrame(animFrames[id]); }
+
+    if (tabId === 'tab1') initTab1();
+    if (tabId === 'tab2') initTab2();
+    if (tabId === 'tab3') initTab3();
+    if (tabId === 'tab4') initTab4();
+    if (tabId === 'tab5') initTab5();
+  }
+
+  // --- 共用繪圖引擎 ---
+  function drawBatterySymbol(ctx, x, y, size = 1, vertical = false) {
+    ctx.lineWidth = 3;
+    let gap = 8 * size; 
+    ctx.fillStyle = COLOR_BG;
+    if (!vertical) { ctx.fillRect(x - 12*size, y - 22*size, 24*size, 44*size); } 
+    else { ctx.fillRect(x - 22*size, y - 12*size, 44*size, 24*size); }
+
+    if (!vertical) {
+      ctx.strokeStyle = COLOR_WHITE; ctx.beginPath(); ctx.moveTo(x - 30*size, y); ctx.lineTo(x - gap, y); ctx.stroke();
+      ctx.strokeStyle = COLOR_ORANGE; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x - gap, y - 18*size); ctx.lineTo(x - gap, y + 18*size); ctx.stroke();
+      ctx.strokeStyle = COLOR_TEAL; ctx.lineWidth = 10; ctx.beginPath(); ctx.moveTo(x + gap, y - 10*size); ctx.lineTo(x + gap, y + 10*size); ctx.stroke();
+      ctx.strokeStyle = COLOR_WHITE; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + gap, y); ctx.lineTo(x + 30*size, y); ctx.stroke();
+    } else {
+      ctx.strokeStyle = COLOR_WHITE; ctx.beginPath(); ctx.moveTo(x, y - 30*size); ctx.lineTo(x, y - gap); ctx.stroke();
+      ctx.strokeStyle = COLOR_ORANGE; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x - 18*size, y - gap); ctx.lineTo(x + 18*size, y - gap); ctx.stroke();
+      ctx.strokeStyle = COLOR_TEAL; ctx.lineWidth = 10; ctx.beginPath(); ctx.moveTo(x - 10*size, y + gap); ctx.lineTo(x + 10*size, y + gap); ctx.stroke();
+      ctx.strokeStyle = COLOR_WHITE; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, y + gap); ctx.lineTo(x, y + 30*size); ctx.stroke();
+    }
+  }
+
+  function drawBulbSymbol(ctx, x, y, size = 1, isLit = false, vertical = false) {
+    ctx.strokeStyle = COLOR_WHITE; ctx.lineWidth = 3; ctx.fillStyle = COLOR_BG;
+    ctx.beginPath(); ctx.arc(x, y, 18*size, 0, Math.PI*2); ctx.fill();
+
+    if (!vertical) {
+      ctx.beginPath(); ctx.moveTo(x - 30*size, y); ctx.lineTo(x - 18*size, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + 18*size, y); ctx.lineTo(x + 30*size, y); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, 18*size, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - 18*size, y); 
+      ctx.bezierCurveTo(x - 10*size, y - 16*size, x - 2*size, y + 12*size, x, y);
+      ctx.bezierCurveTo(x + 2*size, y - 16*size, x + 10*size, y + 12*size, x + 18*size, y);
+      ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(x, y - 30*size); ctx.lineTo(x, y - 18*size); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y + 18*size); ctx.lineTo(x, y + 30*size); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, 18*size, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y - 18*size); 
+      ctx.bezierCurveTo(x - 16*size, y - 10*size, x + 12*size, y - 2*size, x, y);
+      ctx.bezierCurveTo(x - 16*size, y + 2*size, x + 12*size, y + 10*size, x, y + 18*size);
+      ctx.stroke();
+    }
+    if (isLit) {
+      ctx.fillStyle = "rgba(255, 224, 102, 0.35)";
+      ctx.beginPath(); ctx.arc(x, y, 28*size, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  function drawMeterSymbol(ctx, x, y, text, vertical = false) {
+    ctx.strokeStyle = COLOR_WHITE; ctx.lineWidth = 3; ctx.fillStyle = COLOR_BG;
+    if (vertical) {
+      ctx.beginPath(); ctx.moveTo(x, y - 35); ctx.lineTo(x, y - 20); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y + 20); ctx.lineTo(x, y + 35); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(x - 35, y); ctx.lineTo(x - 20, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + 20, y); ctx.lineTo(x + 35, y); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 22px JetBrains Mono'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, x, y);
+  }
+
+  function drawElectron(ctx, x, y) {
+    ctx.fillStyle = COLOR_TEAL; 
+    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2); ctx.fill();
+  }
+
+  function getPosOnPath(path, progress) {
+    let totalLen = 0; let segs = [];
+    for(let i=0; i<path.length-1; i++) {
+      let dx = path[i+1].x - path[i].x; let dy = path[i+1].y - path[i].y;
+      let len = Math.sqrt(dx*dx + dy*dy); segs.push({len:len, dx:dx, dy:dy, x:path[i].x, y:path[i].y}); totalLen += len;
+    }
+    let targetLen = (progress % 1.0) * totalLen;
+    for(let i=0; i<segs.length; i++) {
+      if(targetLen <= segs[i].len) { let r = targetLen / segs[i].len; return { x: segs[i].x + segs[i].dx * r, y: segs[i].y + segs[i].dy * r }; }
+      targetLen -= segs[i].len;
+    }
+    return path[0];
+  }
+
+  // --- TAB 1: 電流定義與單位 ---
+  function initTab1() {
+    const cvs = document.getElementById('cvs-tab1'); const ctx = cvs.getContext('2d');
+    let particles = []; for(let i=0; i<30; i++) particles.push({ x: Math.random()*500 + 50, y: 150 + Math.random()*50, v: 2 + Math.random() });
+    
+    function render() {
+      if(currentTab !== 'tab1') return;
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+      
+      // Wire cylinder
+      ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(50, 140); ctx.lineTo(550, 140); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(50, 210); ctx.lineTo(550, 210); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(50, 175, 15, 35, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(550, 175, 15, 35, 0, 0, Math.PI*2); ctx.stroke();
+      
+      // Cross section
+      ctx.fillStyle = "rgba(77, 210, 255, 0.2)";
+      ctx.beginPath(); ctx.ellipse(300, 175, 15, 35, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      
+      ctx.fillStyle = COLOR_YELLOW; ctx.font = '18px Noto Sans TC'; ctx.textAlign = 'center';
+      ctx.fillText('單位時間內通過此截面積的電量 (Q)', 300, 100);
+      ctx.beginPath(); ctx.moveTo(300, 110); ctx.lineTo(300, 135); ctx.stroke();
+
+      particles.forEach(p => {
+        p.x -= p.v; // electron moves left
+        if (p.x < 50) p.x = 550;
+        drawElectron(ctx, p.x, p.y);
+        ctx.fillStyle = COLOR_BG; ctx.font='10px JetBrains Mono'; ctx.fillText('-', p.x, p.y+3);
+      });
+      
+      animFrames['tab1'] = requestAnimationFrame(render);
+    }
+    render();
+  }
+
+  // --- TAB 2: 電表測量規範 ---
+  let t2_mode = 'ammeter';
+  function setT2Meter(mode) {
+    t2_mode = mode;
+    document.getElementById('btn-t2-ammeter').classList.toggle('active', mode === 'ammeter');
+    document.getElementById('btn-t2-voltmeter').classList.toggle('active', mode === 'voltmeter');
+  }
+
+  function initTab2() {
+    const cvs = document.getElementById('cvs-tab2'); const ctx = cvs.getContext('2d');
+    setT2Meter('ammeter');
+    let particles = []; for(let i=0; i<10; i++) particles.push({ p: i/10 });
+    const pathSeries = [ {x:450, y:280}, {x:450, y:120}, {x:150, y:120}, {x:150, y:280}, {x:450, y:280} ];
+
+    function render() {
+      if(currentTab !== 'tab2') return;
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+      
+      ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(450, 280); ctx.lineTo(450, 120); ctx.lineTo(150, 120); ctx.lineTo(150, 280); ctx.lineTo(450, 280); ctx.stroke();
+      
+      drawBatterySymbol(ctx, 300, 280, 1.2, false);
+      drawBulbSymbol(ctx, 300, 120, 1.2, true, false);
+
+      if (t2_mode === 'ammeter') {
+        drawMeterSymbol(ctx, 150, 200, 'A', true);
+        ctx.fillStyle = COLOR_YELLOW; ctx.font = '20px Noto Sans TC'; ctx.textAlign = 'center'; ctx.fillText('串聯於電路中', 150, 150);
+      } else {
+        ctx.beginPath(); ctx.moveTo(220, 120); ctx.lineTo(220, 60); ctx.lineTo(380, 60); ctx.lineTo(380, 120); ctx.stroke();
+        drawMeterSymbol(ctx, 300, 60, 'V', false);
+        ctx.fillStyle = COLOR_YELLOW; ctx.font = '20px Noto Sans TC'; ctx.textAlign = 'center'; ctx.fillText('跨接於元件兩側 (並聯)', 300, 30);
+      }
+
+      particles.forEach(p => {
+        p.p += 0.005; if(p.p > 1) p.p -= 1;
+        let pos = getPosOnPath(pathSeries, p.p);
+        drawElectron(ctx, pos.x, pos.y);
+      });
+      
+      animFrames['tab2'] = requestAnimationFrame(render);
+    }
+    render();
+  }
+
+  // --- TAB 3: 串聯電路定律 ---
+  function initTab3() {
+    const cvs = document.getElementById('cvs-tab3'); const ctx = cvs.getContext('2d');
+    let particles = []; for(let i=0; i<12; i++) particles.push({ p: i/12 });
+    const path = [ {x:450, y:280}, {x:450, y:100}, {x:150, y:100}, {x:150, y:280}, {x:450, y:280} ];
+
+    function render() {
+      if(currentTab !== 'tab3') return;
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+      
+      ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(450, 280); ctx.lineTo(450, 100); ctx.lineTo(150, 100); ctx.lineTo(150, 280); ctx.lineTo(450, 280); ctx.stroke();
+      
+      drawBatterySymbol(ctx, 300, 280, 1.2, false);
+      drawBulbSymbol(ctx, 220, 100, 1.2, true, false);
+      drawBulbSymbol(ctx, 380, 100, 1.2, true, false);
+
+      ctx.fillStyle = COLOR_TEAL; ctx.font = 'bold 20px JetBrains Mono'; ctx.textAlign = 'center';
+      ctx.fillText('I = 1.0A', 150, 180);
+      ctx.fillText('I = 1.0A', 450, 180);
+      ctx.fillText('I = 1.0A', 300, 70);
+      
+      ctx.fillStyle = COLOR_YELLOW;
+      ctx.fillText('1.5V', 220, 150);
+      ctx.fillText('1.5V', 380, 150);
+      ctx.fillText('總 3.0V', 300, 330);
+
+      particles.forEach(p => {
+        p.p += 0.005; if(p.p > 1) p.p -= 1;
+        let pos = getPosOnPath(path, p.p);
+        drawElectron(ctx, pos.x, pos.y);
+      });
+      animFrames['tab3'] = requestAnimationFrame(render);
+    }
+    render();
+  }
+
+  // --- TAB 4: 並聯電路定律 ---
+  function initTab4() {
+    const cvs = document.getElementById('cvs-tab4'); const ctx = cvs.getContext('2d');
+    let particles = []; 
+    for(let i=0; i<6; i++) { particles.push({ p: i/6, path: 1 }); particles.push({ p: i/6, path: 2 }); }
+    
+    const path1 = [ {x:450, y:280}, {x:450, y:70}, {x:150, y:70}, {x:150, y:280}, {x:450, y:280} ];
+    const path2 = [ {x:450, y:280}, {x:450, y:170}, {x:150, y:170}, {x:150, y:280}, {x:450, y:280} ];
+
+    function render() {
+      if(currentTab !== 'tab4') return;
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+      
+      ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(450, 280); ctx.lineTo(450, 70); ctx.lineTo(150, 70); ctx.lineTo(150, 280); ctx.lineTo(450, 280); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(450, 170); ctx.lineTo(150, 170); ctx.stroke();
+      
+      drawBatterySymbol(ctx, 300, 280, 1.2, false);
+      drawBulbSymbol(ctx, 300, 70, 1.2, true, false);
+      drawBulbSymbol(ctx, 300, 170, 1.2, true, false);
+
+      ctx.fillStyle = COLOR_TEAL; ctx.font = 'bold 20px JetBrains Mono'; ctx.textAlign = 'center';
+      ctx.fillText('總 I = 2.0A', 150, 240);
+      ctx.fillText('總 I = 2.0A', 450, 240);
+      ctx.fillText('I₁=1.0A', 200, 50);
+      ctx.fillText('I₂=1.0A', 200, 150);
+      
+      ctx.fillStyle = COLOR_YELLOW;
+      ctx.fillText('3.0V', 300, 120);
+      ctx.fillText('3.0V', 300, 220);
+      ctx.fillText('總 3.0V', 300, 330);
+
+      particles.forEach(p => {
+        let speed = 0.005;
+        let cPath = (p.path === 1) ? path1 : path2;
+        let pos = getPosOnPath(cPath, p.p);
+        
+        // 分流點減半速率，主線加倍
+        if (pos.y > 170) speed = 0.01;
+        p.p += speed; if(p.p > 1) p.p -= 1;
+        
+        drawElectron(ctx, pos.x, pos.y);
+      });
+      animFrames['tab4'] = requestAnimationFrame(render);
+    }
+    render();
+  }
+
+  // --- TAB 5: 綜合電路切換比較 ---
+  let t5_mode = 'series'; // series, parallel
+  let t5_particles = [];
+
+  function setT5Mode(mode) {
+    t5_mode = mode;
+    document.getElementById('btn-t5-series').classList.toggle('active', mode === 'series');
+    document.getElementById('btn-t5-parallel').classList.toggle('active', mode === 'parallel');
+    
+    if (mode === 'series') {
+      document.getElementById('t5-v-total').textContent = "3.0 V";
+      document.getElementById('t5-v-branch').textContent = "1.5 V";
+      document.getElementById('t5-i-total').textContent = "1.0 A";
+      document.getElementById('t5-i-branch').textContent = "1.0 A";
+    } else {
+      document.getElementById('t5-v-total').textContent = "3.0 V";
+      document.getElementById('t5-v-branch').textContent = "3.0 V";
+      document.getElementById('t5-i-total').textContent = "2.0 A";
+      document.getElementById('t5-i-branch').textContent = "1.0 A";
+    }
+    
+    t5_particles = [];
+    if (mode === 'series') {
+      for(let i=0; i<12; i++) t5_particles.push({ p: i/12, path: 1 });
+    } else {
+      for(let i=0; i<8; i++) { t5_particles.push({ p: i/8, path: 1 }); t5_particles.push({ p: i/8, path: 2 }); }
+    }
+  }
+
+  function initTab5() {
+    const cvs = document.getElementById('cvs-tab5'); const ctx = cvs.getContext('2d');
+    setT5Mode('series');
+    
+    const pathS = [ {x:480, y:280}, {x:480, y:100}, {x:120, y:100}, {x:120, y:280}, {x:480, y:280} ];
+    const pathP1 = [ {x:480, y:280}, {x:480, y:70}, {x:120, y:70}, {x:120, y:280}, {x:480, y:280} ];
+    const pathP2 = [ {x:480, y:280}, {x:480, y:180}, {x:120, y:180}, {x:120, y:280}, {x:480, y:280} ];
+
+    function render() {
+      if(currentTab !== 'tab5') return;
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+      ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4;
+      
+      if (t5_mode === 'series') {
+        ctx.beginPath(); ctx.moveTo(480, 280); ctx.lineTo(480, 100); ctx.lineTo(120, 100); ctx.lineTo(120, 280); ctx.lineTo(480, 280); ctx.stroke();
+        drawBatterySymbol(ctx, 300, 280, 1.2, false);
+        drawBulbSymbol(ctx, 220, 100, 1.2, true, false);
+        drawBulbSymbol(ctx, 380, 100, 1.2, true, false);
+        
+        drawMeterSymbol(ctx, 120, 190, 'A', true);
+        
+        // Voltmeter on bulb 1
+        ctx.beginPath(); ctx.moveTo(170, 100); ctx.lineTo(170, 40); ctx.lineTo(270, 40); ctx.lineTo(270, 100); ctx.stroke();
+        drawMeterSymbol(ctx, 220, 40, 'V', false);
+        
+      } else {
+        ctx.beginPath(); ctx.moveTo(480, 280); ctx.lineTo(480, 70); ctx.lineTo(120, 70); ctx.lineTo(120, 280); ctx.lineTo(480, 280); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(480, 180); ctx.lineTo(120, 180); ctx.stroke();
+        
+        drawBatterySymbol(ctx, 300, 280, 1.2, false);
+        drawBulbSymbol(ctx, 300, 70, 1.2, true, false);
+        drawBulbSymbol(ctx, 300, 180, 1.2, true, false);
+        
+        drawMeterSymbol(ctx, 120, 230, 'A', true); // Main Ammeter
+        drawMeterSymbol(ctx, 190, 70, 'A', false); // Branch 1 Ammeter
+        
+        // Voltmeter on branch 2
+        ctx.beginPath(); ctx.moveTo(230, 180); ctx.lineTo(230, 130); ctx.lineTo(370, 130); ctx.lineTo(370, 180); ctx.stroke();
+        drawMeterSymbol(ctx, 300, 130, 'V', false);
+      }
+
+      t5_particles.forEach(p => {
+        let speed = (t5_mode === 'series') ? 0.005 : 0.005;
+        let cPath = pathS;
+        if (t5_mode === 'parallel') {
+          cPath = (p.path === 1) ? pathP1 : pathP2;
+          let pos = getPosOnPath(cPath, p.p);
+          if (pos.y > 180) speed = 0.01; // Main line faster
+        }
+        
+        p.p += speed; if(p.p > 1) p.p -= 1;
+        let pos = getPosOnPath(cPath, p.p);
+        drawElectron(ctx, pos.x, pos.y);
+      });
+
+      animFrames['tab5'] = requestAnimationFrame(render);
+    }
+    render();
+  }
+
+  switchTab('tab1');
+</script>
+</body>
+</html>
