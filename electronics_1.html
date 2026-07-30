@@ -163,7 +163,7 @@
   .control-group input[type=range] { flex: 1; height: 12px; accent-color: var(--chalk-yellow); cursor: pointer; }
   input[type=range].danger-slider { accent-color: var(--chalk-red); }
 
-  /* 🌟 第六分頁學習單專屬樣式 */
+  /* 第六分頁學習單專屬樣式 */
   .status-badge-t6 { display: inline-block; padding: 4px 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-weight: bold; background: #000; min-width: 120px; text-align: center; }
   .task-card { background: rgba(0, 0, 0, 0.25); border-left: 6px solid var(--chalk-yellow); padding: 24px; border-radius: 0 16px 16px 0; flex: 1; display: flex; flex-direction: column; justify-content: center; animation: fadeIn 0.4s ease; }
   .task-card.danger { border-left-color: var(--chalk-red); }
@@ -194,7 +194,6 @@
     <div class="tab-btn" onclick="switchTab('tab3')">感應起電步驟</div>
     <div class="tab-btn" onclick="switchTab('tab4')">接觸起電與驗電器</div>
     <div class="tab-btn" onclick="switchTab('tab5')">庫侖定律與靜電力</div>
-    <!-- 🌟 第六分頁接在這裡 -->
     <div class="tab-btn danger-tab" onclick="switchTab('tab6')">🌟 資優補充：驗電器探討</div>
   </div>
 
@@ -224,7 +223,7 @@
     </div>
   </div>
 
-  <!-- 分頁二：摩擦起電模擬 -->
+  <!-- 🌟 分頁二：摩擦起電模擬 (極致修復版：確保電荷不跑出框界，修復當機) -->
   <div id="tab2" class="panel">
     <div class="grid-2">
       <div class="content-box">
@@ -233,18 +232,25 @@
           <canvas id="cvs-tab2" width="500" height="280"></canvas>
         </div>
         <div class="controls" style="text-align: center;">
-          <button class="action-btn btn-orange" id="btn-rub" onclick="startRubbing()">🔄 開始摩擦 (約 2 秒)</button>
+          <div class="control-row" style="justify-content: center; gap: 10px; margin-bottom: 15px;">
+            <button class="action-btn active" id="btn-mat-plastic" onclick="setT2Material('plastic')">毛皮與塑膠尺</button>
+            <button class="action-btn" id="btn-mat-glass" onclick="setT2Material('glass')">玻棒與絲絹</button>
+          </div>
+          <button class="action-btn btn-orange" id="btn-rub" onclick="startRubbing()">🔄 開始摩擦 (約 3 秒)</button>
         </div>
-        <div id="t2-result" style="font-size: 21px; text-align: center; opacity: 0; transition: opacity 0.5s;">
-          毛皮失去 3 個電子帶 <span class="color-pos">正電</span><br>
-          塑膠尺獲得 3 個電子帶 <span class="color-neg">負電</span>
+        <div id="t2-result" style="font-size: 21px; text-align: center; opacity: 0; transition: opacity 0.5s; font-weight: bold; color: var(--chalk-yellow); min-height: 60px;">
+          毛皮失去 4 個電子帶 <span class="color-pos">正電</span><br>
+          塑膠尺獲得 4 個電子帶 <span class="color-neg">負電</span>
         </div>
       </div>
       <div class="content-box">
         <h2>💡 教學黑板</h2>
         <ul class="note-ul">
           <li><b>摩擦起電的條件：</b>必須是兩種<span style="white-space: nowrap;">「不同材質的絕緣體」</span>互相摩擦。</li>
-          <li><b>物理機制：</b>摩擦提供能量，使對於電子束縛力較弱的一方（如毛皮），將表面的電子強行轉移給另一方（如塑膠尺）。</li>
+          <li style="color: var(--chalk-yellow);"><b>18世紀富蘭克林定義：</b>
+            <br>👉 <span style="white-space: nowrap;"><b>玻棒與絲絹：</b></span>玻棒帶正電、絲絹帶負電。
+            <br>👉 <span style="white-space: nowrap;"><b>毛皮和塑膠尺：</b></span>毛皮帶正電、塑膠尺帶負電。
+          </li>
           <li><b>電荷守恆定律：</b>
             <br>起電的本質是<span style="white-space: nowrap;">「電子的轉移」</span>，並非創造出新電荷。（起電前皆為<span style="white-space: nowrap;">電中性</span>）。
             <br>失去電子的物體會帶<span class="color-pos">正電</span>，得到電子的物體會帶等量的<span class="color-neg">負電</span>。摩擦後兩者電量大小相等、電性相反。
@@ -501,6 +507,7 @@
   let currentTab = 'tab1';
   let animFrames = {};
 
+  // 🌟 確保所有需要用到的顏色變數都已經定義！
   const COLOR_POS = '#ff8040'; 
   const COLOR_NEG = '#4dd2ff'; 
   const COLOR_WHITE = '#f6f3ea';
@@ -508,6 +515,10 @@
   const COLOR_BG = '#0d201a';
   const COLOR_YELLOW = '#ffe066';
   const COLOR_ROD = '#3b4d44'; 
+  const COLOR_TEAL = '#4dd2ff';
+  const COLOR_ORANGE = '#ff8040';
+  const COLOR_RED = '#ff4d4d';
+  const COLOR_GREEN = '#33cc99';
 
   function switchTab(tabId) {
     currentTab = tabId;
@@ -520,15 +531,14 @@
 
     if (tabId === 'tab1') initTab1();
     if (tabId === 'tab2') {
-      t2_rubbing = false; t2_done = false;
-      document.getElementById('btn-rub').disabled = false;
-      document.getElementById('t2-result').style.opacity = 0;
+      t2_materialMode = 'plastic';
+      setT2Material('plastic'); // 確保初始狀態為塑膠
       initTab2();
     }
     if (tabId === 'tab3') initTab3(); 
     if (tabId === 'tab4') initTab4(); 
     if (tabId === 'tab5') initTab5();
-    if (tabId === 'tab6') initTab6(); // 🌟 啟動第六分頁引擎
+    if (tabId === 'tab6') initTab6(); 
   }
 
   function drawArrow(ctx, x1, y1, x2, y2, color, lineWidth = 4, headLen = 14) {
@@ -578,42 +588,142 @@
     render();
   }
 
-  // --- TAB 2: Friction Charging ---
-  let t2_rubbing = false, t2_done = false, t2_startTime = 0;
-  function startRubbing() { t2_rubbing = true; t2_done = false; t2_startTime = Date.now(); document.getElementById('btn-rub').disabled = true; document.getElementById('t2-result').style.opacity = 0; }
+  // --- 🌟 TAB 2: Friction Charging (極致修復版：正負電上下排，避免跑出框) ---
+  let t2_animPhase = 'idle'; // 'idle', 'animating', 'done'
+  let t2_startTime = 0;
+  let t2_materialMode = 'plastic'; // 'plastic' or 'glass'
+
+  function setT2Material(mode) {
+    t2_materialMode = mode;
+    document.getElementById('btn-mat-plastic').classList.toggle('active', mode === 'plastic');
+    document.getElementById('btn-mat-glass').classList.toggle('active', mode === 'glass');
+    t2_animPhase = 'idle';
+    document.getElementById('btn-rub').disabled = false;
+    document.getElementById('t2-result').style.opacity = 0;
+  }
+
+  function startRubbing() { 
+    t2_animPhase = 'animating';
+    t2_startTime = Date.now(); 
+    document.getElementById('btn-rub').disabled = true; 
+    document.getElementById('t2-result').style.opacity = 0; 
+  }
+
   function initTab2() {
     const cvs = document.getElementById('cvs-tab2'); const ctx = cvs.getContext('2d');
+    
     function render() {
       if(currentTab !== 'tab2') return;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
-      let offset = 0;
-      if (t2_rubbing) {
+      
+      let isPlastic = (t2_materialMode === 'plastic');
+      let rx = 90; // Default far left position
+      let transfer = false;
+
+      // Animation State Machine
+      if (t2_animPhase === 'animating') {
         let elapsed = Date.now() - t2_startTime;
-        if (elapsed > 2000) { t2_rubbing = false; t2_done = true; document.getElementById('btn-rub').disabled = false; document.getElementById('t2-result').style.opacity = 1; } 
-        else { offset = Math.sin(elapsed / 40) * 45; }
-      } else if (t2_done) { offset = 180; }
+        if (elapsed < 500) {
+          // Phase 1: Move right
+          rx = 90 + (180 * (elapsed / 500));
+        } else if (elapsed < 2500) {
+          // Phase 2: Rubbing
+          rx = 270 + Math.sin((elapsed - 500) / 40) * 20; 
+        } else if (elapsed < 3000) {
+          // Phase 3: Move left
+          rx = 270 - (180 * ((elapsed - 2500) / 500)); 
+          transfer = true; // Show transfer when moving away
+        } else {
+          // Phase 4: Done
+          t2_animPhase = 'done';
+          transfer = true;
+          document.getElementById('btn-rub').disabled = false;
+          let resBox = document.getElementById('t2-result');
+          if (isPlastic) {
+              resBox.innerHTML = `毛皮失去 4 個電子帶 <span class="color-pos">正電</span><br>塑膠尺獲得 4 個電子帶 <span class="color-neg">負電</span>`;
+          } else {
+              resBox.innerHTML = `玻棒失去 4 個電子帶 <span class="color-pos">正電</span><br>絲絹獲得 4 個電子帶 <span class="color-neg">負電</span>`;
+          }
+          resBox.style.opacity = 1; 
+        }
+      } else if (t2_animPhase === 'done') {
+        rx = 90;
+        transfer = true;
+      }
 
-      ctx.fillStyle = '#4a3b32'; ctx.beginPath(); ctx.ellipse(350, 140, 60, 100, 0, 0, Math.PI*2); ctx.fill();
+      // Draw Right Object (Fur / Silk)
+      ctx.fillStyle = isPlastic ? '#4a3b32' : '#6b4c6a'; 
+      ctx.beginPath(); ctx.ellipse(350, 140, 60, 100, 0, 0, Math.PI*2); ctx.fill();
       ctx.strokeStyle = COLOR_WHITE; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 20px Noto Sans TC'; ctx.textAlign = 'center'; ctx.fillText('毛皮', 350, 270);
+      ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 20px Noto Sans TC'; ctx.textAlign = 'center'; 
+      ctx.fillText(isPlastic ? '毛皮' : '絲絹', 350, 270);
 
-      let rx = 270 - offset;
-      ctx.fillStyle = '#2c4053'; ctx.fillRect(rx, 90, 160, 30);
-      ctx.strokeStyle = COLOR_WHITE; ctx.strokeRect(rx, 90, 160, 30);
-      ctx.fillStyle = COLOR_WHITE; ctx.fillText('塑膠尺', rx + 80, 70);
+      // Draw Left Object (Ruler / Glass Rod)
+      // 🌟 加厚高度 (h:50)，確保上下排列有足夠空間
+      ctx.fillStyle = isPlastic ? '#2c4053' : 'rgba(255, 255, 255, 0.15)'; 
+      ctx.fillRect(rx, 80, 160, 50);
+      ctx.strokeStyle = isPlastic ? COLOR_WHITE : COLOR_TEAL; 
+      ctx.strokeRect(rx, 80, 160, 50);
+      ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 20px Noto Sans TC'; ctx.fillText(isPlastic ? '塑膠尺' : '玻棒', rx + 80, 65);
 
+      // --- Draw Charges ---
       ctx.font = 'bold 24px JetBrains Mono'; ctx.textBaseline = 'middle';
-      let transfer = t2_done;
-      for(let i=0; i<6; i++) {
-        let cx = 320 + (i%2)*60; let cy = 80 + Math.floor(i/2)*40;
-        ctx.fillStyle = COLOR_POS; ctx.fillText('+', cx, cy);
-        if (!transfer || i % 2 === 0) { ctx.fillStyle = COLOR_NEG; ctx.fillText('-', cx + 16, cy - 12); }
+
+      // 1. Right Object Charges (8 pairs)
+      for(let i=0; i<8; i++) {
+        let cx = 315 + (i%2)*70; // 315, 385 
+        let cy = 75 + Math.floor(i/2)*40; // 75, 115, 155, 195
+        
+        ctx.fillStyle = COLOR_POS; 
+        ctx.fillText('+', cx, cy - 8); // 正電在上
+        
+        let hasElectron = true;
+        // Plastic mode: Fur loses 4 electrons (lose the right column)
+        if (transfer && isPlastic && i % 2 !== 0) hasElectron = false; 
+        
+        if (hasElectron) { 
+            ctx.fillStyle = COLOR_NEG; 
+            ctx.fillText('-', cx, cy + 8); // 🌟 負電垂直對齊，放在下方
+        }
       }
-      for(let i=0; i<3; i++) {
-        ctx.fillStyle = COLOR_POS; ctx.fillText('+', rx + 30 + i*50, 105);
-        ctx.fillStyle = COLOR_NEG; ctx.fillText('-', rx + 45 + i*50, 95);
+      
+      // Glass mode: Silk gains 4 electrons
+      if (transfer && !isPlastic) { 
+        ctx.fillStyle = COLOR_NEG;
+        for(let i=0; i<4; i++) { 
+            let cy = 75 + i*40;
+            // 🌟 搶來的電子，放在兩直排正電荷的正中間，非常清晰
+            ctx.fillText('-', 350, cy); 
+        }
       }
-      if (transfer) { ctx.fillStyle = COLOR_NEG; for(let i=0; i<3; i++) { ctx.fillText('-', rx + 30 + i*50, 115); } }
+
+      // 2. Left Object Charges (4 pairs)
+      for(let i=0; i<4; i++) {
+        let cx = rx + 28 + i*34; 
+        
+        ctx.fillStyle = COLOR_POS; 
+        ctx.fillText('+', cx, 105 - 8); // 正電在上
+        
+        let hasElectron = true;
+        // Glass mode: Glass rod loses 4 electrons
+        if (transfer && !isPlastic) hasElectron = false; 
+        
+        if (hasElectron) { 
+            ctx.fillStyle = COLOR_NEG; 
+            ctx.fillText('-', cx, 105 + 8); // 🌟 負電垂直對齊，放在下方
+        }
+      }
+      
+      // Plastic mode: Ruler gains 4 electrons
+      if (transfer && isPlastic) { 
+        ctx.fillStyle = COLOR_NEG; 
+        for(let i=0; i<4; i++) { 
+            let cx = rx + 45 + i*34;
+            // 🌟 搶來的電子，精準安排在相鄰兩組電荷的中間，不會超出右側邊緣
+            ctx.fillText('-', cx, 105); 
+        }
+      }
+
       animFrames['tab2'] = requestAnimationFrame(render);
     }
     render();
@@ -935,7 +1045,7 @@
   ];
 
   let t6_currentTaskIdx = 0;
-  let t6_rodType = -1;             
+  let t6_rodType = -1;              
   let t6_dist = 0;                 
   let t6_isGrounded = false;       
   let t6_electroscope_net_Q = 0;   
