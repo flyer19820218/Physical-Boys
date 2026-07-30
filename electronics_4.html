@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>電阻與歐姆定律：互動黑板教學</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #11261f;
+    --bg-panel: #16332a;
+    --bg-panel-hover: #1f4236;
+    --chalk-white: #f6f3ea;
+    --chalk-muted: #a3b8b0;
+    --chalk-yellow: #ffe066;
+    --chalk-teal: #4dd2ff;
+    --chalk-coral: #ff8040;
+    --chalk-green: #33cc99;
+    --chalk-red: #ff4d4d;
+    --rule-color: rgba(246, 243, 234, 0.22);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; background-color: var(--bg-base); color: var(--chalk-white);
+    font-family: 'Noto Sans TC', sans-serif; font-size: 20px; line-height: 1.65; padding: 24px 0 80px;
+  }
+
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+  header { text-align: center; margin-bottom: 28px; border-bottom: 2px dashed var(--rule-color); padding-bottom: 20px; }
+  h1 { font-size: 32px; margin: 0 0 10px 0; color: var(--chalk-yellow); letter-spacing: 2px; font-weight: 700; }
+  header p { margin: 0; color: var(--chalk-muted); font-size: 20px; }
+
+  .tabs { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .tab-btn {
+    flex: 1; min-width: 180px; padding: 14px 10px; font-size: 20px; font-weight: 700;
+    background: rgba(255, 255, 255, 0.05); color: var(--chalk-muted);
+    border: 2px dashed var(--rule-color); border-radius: 12px; cursor: pointer; transition: all 0.2s ease; text-align: center;
+  }
+  .tab-btn:hover { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .tab-btn.active { background: #1f4236; color: var(--chalk-yellow); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 16px rgba(255, 224, 102, 0.25); }
+
+  /* 嚴格雙欄排版與滿版適配 */
+  .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; margin-bottom: 20px; align-items: stretch; }
+
+  .panel { display: none; animation: fadeIn 0.3s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .content-box {
+    background: var(--bg-panel); border: 2px solid var(--rule-color);
+    border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); display: flex; flex-direction: column;
+  }
+
+  h2 { margin: 0 0 16px 0; font-size: 26px; color: var(--chalk-green); border-bottom: 1px dashed var(--rule-color); padding-bottom: 12px; }
+
+  .canvas-container { width: 100%; border: 2px solid var(--chalk-white); border-radius: 12px; overflow: hidden; background: #0b1a15; position: relative; margin-bottom: 16px; }
+  canvas { display: block; width: 100%; height: auto; }
+
+  .controls { background: rgba(255, 255, 255, 0.04); padding: 16px 20px; border-radius: 12px; border: 1px solid var(--rule-color); margin-bottom: 16px; }
+  .control-row { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px; }
+  .btn-group { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
+
+  .action-btn {
+    padding: 8px 16px; border: 2px solid var(--chalk-white); background: transparent; color: var(--chalk-white);
+    border-radius: 8px; font-size: 18px; font-weight: 700; cursor: pointer; transition: 0.2s;
+  }
+  .action-btn:hover:not(:disabled) { background: var(--chalk-white); color: var(--bg-base); }
+  .action-btn.active { background: var(--chalk-yellow); border-color: var(--chalk-yellow); color: var(--bg-base); }
+  .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* 理化分式排版規範 */
+  .math-fraction { display: inline-flex; flex-direction: column; justify-content: center; align-items: center; vertical-align: middle; margin: 0 6px; line-height: 1.2; font-family: 'JetBrains Mono', monospace; }
+  .math-fraction .num { border-bottom: 2px solid currentColor; padding: 0 4px 2px; }
+  .math-fraction .den { padding: 2px 4px 0; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+  .note-ul { margin: 0; padding-left: 28px; }
+  .note-ul li { margin-bottom: 12px; }
+  
+  .formula-box { background: rgba(255, 255, 255, 0.06); padding: 16px 24px; border-radius: 10px; border: 1px solid var(--rule-color); margin: 16px 0; text-align: center; font-size: 26px; color: var(--chalk-yellow); font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+  input[type=range] { flex: 1; height: 8px; cursor: pointer; accent-color: var(--chalk-yellow); }
+
+  /* 學習單卡片樣式 */
+  .task-card { background: rgba(255, 255, 255, 0.03); border-left: 6px solid var(--chalk-yellow); padding: 24px; border-radius: 0 16px 16px 0; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .task-title { font-weight: 700; color: var(--chalk-yellow); font-size: 24px; margin-bottom: 16px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 12px; }
+  .poe-block { background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255, 255, 255, 0.1); }
+  .poe-header { font-weight: 700; margin-bottom: 6px; font-size: 20px; }
+  .poe-content { color: var(--chalk-white); font-size: 20px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>⚡ 電阻與歐姆定律</h1>
+    <p>微觀阻礙因素、歐姆定律計算與 V-I 關係圖分析</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab-btn active" onclick="switchTab('tab1')">電阻本質與影響變數</div>
+    <div class="tab-btn" onclick="switchTab('tab2')">歐姆定律與反比關係</div>
+    <div class="tab-btn" onclick="switchTab('tab3')">歐姆式導體 V-I 圖</div>
+    <div class="tab-btn" onclick="switchTab('tab4')">非歐姆式導體現象</div>
+    <div class="tab-btn" onclick="switchTab('tab5')">電阻測量與學習單</div>
+  </div>
+
+  <!-- 分頁一：電阻本質與影響變數 -->
+  <div id="tab1" class="panel active">
+    <div class="grid-layout">
+      <div class="content-box">
+        <h2>微觀碰撞與電阻因素</h2>
+        <div class="canvas-container">
+          <canvas id="cvs-tab1" width="600" height="300"></canvas>
+        </div>
+        <div class="controls">
+          <div class="control-row">
+            <div style="width: 120px; font-weight: 700;">材質：</div>
+            <div class="btn-group" style="margin-top: 0;">
+              <button class="action-btn active" id="btn-mat-ag" onclick="setT1Material('ag', 1)">銀 (Ag)</button>
+              <button class="action-btn" id="btn-mat-cu" onclick="setT1Material('cu', 1.5)">銅 (Cu)</button>
+              <button class="action-btn" id="btn-mat-fe" onclick="setT1Material('fe', 4)">鐵 (Fe)</button>
+            </div>
+          </div>
+          <div class="control-row">
+            <div style="width: 120px; font-weight: 700;">截面積 <span class="mono">(A)</span>：</div>
+            <input type="range" id="t1-area" min="1" max="3" value="2" step="0.1">
+          </div>
+          <div class="control-row">
+            <div style="width: 120px; font-weight: 700;">導線長度 <span class="mono">(L)</span>：</div>
+            <input type="range" id="t1-length" min="1" max="3" value="2" step="0.1">
+          </div>
+          <div class="control-row">
+            <div style="width: 120px; font-weight: 700;">環境溫度 <span class="mono">(T)</span>：</div>
+            <input type="range" id="t1-temp" min="0" max="100" value="20" step="1">
+          </div>
+        </div>
+      </div>
+      <div class="content-box">
+        <h2>💡 觀念解析</h2>
+        <ul class="note-ul">
+          <li><b>電阻的定義：</b>電子在導線中流動時，受到阻礙的大小程度。單位為<span style="white-space: nowrap; color: var(--chalk-yellow);">歐姆 (Ω)</span>。</li>
+          <li><b>微觀原理解析：</b>自由電子在移動過程中，會不斷與導體內部的<span style="white-space: nowrap; color: var(--chalk-coral);">原子核（正離子）</span>發生碰撞。碰撞會導致能量損失，並轉換為熱能（導線發熱）。</li>
+          <li><b>影響電阻的四大變數：</b>
+            <br>👉 <span style="white-space: nowrap;"><b>材質：</b></span>不同金屬內部的原子排列與束縛力不同，導電性最佳為銀 <span class="mono">(Ag)</span>。
+            <br>👉 <span style="white-space: nowrap;"><b>長度 (L)：</b></span>導線愈長，電子遇到的碰撞次數愈多，電阻<span style="white-space: nowrap; color: var(--chalk-yellow);">愈大</span>。
+            <br>👉 <span style="white-space: nowrap;"><b>截面積 (A)：</b></span>導線愈粗（道路愈寬廣），電子愈容易通過，電阻<span style="white-space: nowrap; color: var(--chalk-teal);">愈小</span>。
+            <br>👉 <span style="white-space: nowrap;"><b>溫度 (T)：</b></span>一般金屬溫度愈高，原子振動幅度愈大，增加電子碰撞機率，電阻<span style="white-space: nowrap; color: var(--chalk-yellow);">愈大</span>。
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分頁二：歐姆定律與反比關係 -->
+  <div id="tab2" class="panel">
+    <div class="grid-layout">
+      <div class="content-box">
+        <h2>歐姆定律電路觀察</h2>
+        <div class="canvas-container">
+          <canvas id="cvs-tab2" width="600" height="300"></canvas>
+        </div>
+        <div class="controls">
+          <div class="control-row">
+            <div style="width: 140px; font-weight: 700; color: var(--chalk-teal);">電壓 <span class="mono">(V)</span>：</div>
+            <input type="range" id="t2-v" min="1" max="10" value="6" step="1">
+            <div class="mono" style="width: 60px; text-align: right;" id="t2-v-val">6 V</div>
+          </div>
+          <div class="control-row">
+            <div style="width: 140px; font-weight: 700; color: var(--chalk-coral);">電阻 <span class="mono">(R)</span>：</div>
+            <input type="range" id="t2-r" min="1" max="10" value="3" step="1">
+            <div class="mono" style="width: 60px; text-align: right;" id="t2-r-val">3 Ω</div>
+          </div>
+        </div>
+      </div>
+      <div class="content-box">
+        <h2>💡 歐姆定律核心公式</h2>
+        <div class="formula-box">
+          <span style="white-space: nowrap;">V = I × R</span>
+        </div>
+        <div style="display: flex; justify-content: space-around; margin-bottom: 16px;">
+          <div style="text-align: center; color: var(--chalk-yellow); font-size: 22px;">
+            <span class="mono">I =</span>
+            <span class="math-fraction">
+              <span class="num mono">V</span>
+              <span class="den mono">R</span>
+            </span>
+            <br><br>
+            <span id="t2-calc-i" class="mono">2.0 A</span>
+          </div>
+          <div style="text-align: center; color: var(--chalk-muted); font-size: 22px;">
+            <span class="mono">R =</span>
+            <span class="math-fraction">
+              <span class="num mono">V</span>
+              <span class="den mono">I</span>
+            </span>
+          </div>
+        </div>
+        <ul class="note-ul">
+          <li><b>電壓與電流：</b>當電阻 <span class="mono">(R)</span> 固定時，電壓 <span class="mono">(V)</span> 與電流 <span class="mono">(I)</span> 呈現<span style="white-space: nowrap; color: var(--chalk-yellow); font-weight: bold;">正比關係</span>。推力越強，電流越大。</li>
+          <li><b>電阻與電流：</b>當電壓 <span class="mono">(V)</span> 固定時，電阻 <span class="mono">(R)</span> 與電流 <span class="mono">(I)</span> 呈現<span style="white-space: nowrap; color: var(--chalk-teal); font-weight: bold;">反比關係</span>。阻礙越大（如天堂路），能通過的電流就越小。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分頁三：歐姆式導體 V-I 圖 -->
+  <div id="tab3" class="panel">
+    <div class="grid-layout">
+      <div class="content-box">
+        <h2>測量電路與變壓控制</h2>
+        <div class="canvas-container">
+          <canvas id="cvs-tab3-circuit" width="600" height="280"></canvas>
+        </div>
+        <div class="controls">
+          <div class="control-row">
+            <div style="font-weight: 700;">選擇電阻元件：</div>
+            <div class="btn-group" style="margin-top: 0;">
+              <button class="action-btn active" id="btn-t3-r1" onclick="setT3Resistor(2)">小電阻 <span class="mono">(2Ω)</span></button>
+              <button class="action-btn" id="btn-t3-r2" onclick="setT3Resistor(4)">大電阻 <span class="mono">(4Ω)</span></button>
+            </div>
+          </div>
+          <div class="control-row" style="margin-top: 16px;">
+            <div style="width: 140px; font-weight: 700;">增加電壓：</div>
+            <input type="range" id="t3-v" min="0" max="10" value="0" step="0.5">
+          </div>
+        </div>
+      </div>
+      <div class="content-box">
+        <h2>電壓 - 電流 關係圖 (V-I 圖)</h2>
+        <div class="canvas-container" style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px;">
+          <canvas id="cvs-tab3-graph" width="500" height="400"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分頁四：非歐姆式導體現象 -->
+  <div id="tab4" class="panel">
+    <div class="grid-layout">
+      <div class="content-box">
+        <h2>發光二極體 (LED) 電路</h2>
+        <div class="canvas-container">
+          <canvas id="cvs-tab4-circuit" width="600" height="280"></canvas>
+        </div>
+        <div class="controls">
+          <div class="control-row">
+            <div style="width: 140px; font-weight: 700;">增加電壓：</div>
+            <input type="range" id="t4-v" min="0" max="4" value="0" step="0.1">
+          </div>
+        </div>
+        <div style="color: var(--chalk-muted); font-size: 18px; margin-top: 10px;">
+          💡 觀察：當電壓很低時，LED 會亮嗎？電流有等比例增加嗎？
+        </div>
+      </div>
+      <div class="content-box">
+        <h2>非歐姆式 V-I 圖特徵</h2>
+        <div class="canvas-container" style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px;">
+          <canvas id="cvs-tab4-graph" width="500" height="400"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分頁五：電阻測量與學習單 -->
+  <div id="tab5" class="panel">
+    <div class="grid-layout">
+      <div class="content-box">
+        <h2>未知電阻測量實戰</h2>
+        <div class="canvas-container">
+          <canvas id="cvs-tab5" width="600" height="350"></canvas>
+        </div>
+        <div class="controls">
+          <button class="action-btn" onclick="generateT5Problem()">🔄 重新測量一組新數據</button>
+        </div>
+      </div>
+      <div class="content-box" style="border-color: var(--chalk-yellow); padding: 0;">
+        <div class="task-card" style="border: none; background: transparent;">
+          <div class="task-title">📝 歐姆定律計算任務</div>
+          <div class="poe-block">
+            <div class="poe-header" style="color: var(--chalk-yellow);">👉 1. 讀取儀表數據</div>
+            <div class="poe-content" style="display: flex; gap: 20px;">
+              <div>伏特計讀數：<span id="t5-val-v" class="mono" style="color: var(--chalk-teal); font-weight: bold;">-- V</span></div>
+              <div>安培計讀數：<span id="t5-val-i" class="mono" style="color: var(--chalk-coral); font-weight: bold;">-- A</span></div>
+            </div>
+          </div>
+          <div class="poe-block">
+            <div class="poe-header" style="color: var(--chalk-green);">⚙️ 2. 代入公式計算</div>
+            <div class="poe-content" style="display: flex; align-items: center; gap: 10px;">
+              <span class="mono">R = </span>
+              <span class="math-fraction">
+                <span class="num mono">V</span>
+                <span class="den mono">I</span>
+              </span>
+              <span class="mono"> = </span>
+              <span class="math-fraction">
+                <span class="num mono" id="t5-calc-v">--</span>
+                <span class="den mono" id="t5-calc-i">--</span>
+              </span>
+              <span class="mono"> = </span>
+              <span class="mono" id="t5-calc-ans" style="color: var(--chalk-yellow); font-size: 26px;">? Ω</span>
+            </div>
+          </div>
+          <div style="text-align: right; margin-top: 16px;">
+            <button class="action-btn" id="btn-t5-solve" onclick="solveT5Problem()" style="border-color: var(--chalk-green); color: var(--chalk-green);">揭曉解答</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let currentTab = 'tab1';
+  let animFrames = {};
+
+  const COLOR_BG = '#0b1a15'; const COLOR_WHITE = '#f6f3ea'; const COLOR_DIM = '#a3b8b0';
+  const COLOR_YELLOW = '#ffe066'; const COLOR_TEAL = '#4dd2ff'; const COLOR_ORANGE = '#ff8040';
+  const COLOR_RED = '#ff4d4d'; const COLOR_GREEN = '#33cc99';
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+
+    for (let id in animFrames) { cancelAnimationFrame(animFrames[id]); }
+
+    if (tabId === 'tab1') initTab1();
+    if (tabId === 'tab2') initTab2();
+    if (tabId === 'tab3') initTab3();
+    if (tabId === 'tab4') initTab4();
+    if (tabId === 'tab5') initTab5();
+  }
+
+  // 共用繪圖組件
+  function drawBattery(ctx, x, y, size=1) {
+    ctx.lineWidth = 3; let gap = 8*size;
+    ctx.fillStyle = COLOR_BG; ctx.fillRect(x - 12*size, y - 22*size, 24*size, 44*size);
+    ctx.strokeStyle = COLOR_WHITE; ctx.beginPath(); ctx.moveTo(x - 30*size, y); ctx.lineTo(x - gap, y); ctx.stroke();
+    ctx.strokeStyle = COLOR_ORANGE; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x - gap, y - 18*size); ctx.lineTo(x - gap, y + 18*size); ctx.stroke();
+    ctx.strokeStyle = COLOR_TEAL; ctx.lineWidth = 10; ctx.beginPath(); ctx.moveTo(x + gap, y - 10*size); ctx.lineTo(x + gap, y + 10*size); ctx.stroke();
+    ctx.strokeStyle = COLOR_WHITE; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + gap, y); ctx.lineTo(x + 30*size, y); ctx.stroke();
+  }
+
+  function drawResistor(ctx, x, y, size=1) {
+    ctx.strokeStyle = COLOR_WHITE; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x - 30*size, y); ctx.lineTo(x - 15*size, y); 
+    ctx.lineTo(x - 7.5*size, y - 10*size); ctx.lineTo(x + 7.5*size, y + 10*size); 
+    ctx.lineTo(x + 15*size, y); ctx.lineTo(x + 30*size, y); ctx.stroke();
+  }
+
+  function drawMeter(ctx, x, y, text, vertical=false) {
+    ctx.strokeStyle = COLOR_WHITE; ctx.lineWidth = 3; ctx.fillStyle = COLOR_BG;
+    if (vertical) {
+      ctx.beginPath(); ctx.moveTo(x, y - 35); ctx.lineTo(x, y - 20); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y + 20); ctx.lineTo(x, y + 35); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(x - 35, y); ctx.lineTo(x - 20, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + 20, y); ctx.lineTo(x + 35, y); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 22px JetBrains Mono'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, x, y);
+  }
+
+  function drawElectron(ctx, x, y, speed) {
+    ctx.fillStyle = COLOR_TEAL; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2); ctx.fill();
+    if(speed > 0.005) { // draw tail if fast
+      ctx.fillStyle = "rgba(77, 210, 255, 0.4)";
+      ctx.beginPath(); ctx.arc(x + 8, y, 3, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // --- TAB 1: 微觀電阻本質 ---
+  let t1_matCoef = 1;
+  function setT1Material(mat, coef) {
+    t1_matCoef = coef;
+    document.getElementById('btn-mat-ag').classList.toggle('active', mat === 'ag');
+    document.getElementById('btn-mat-cu').classList.toggle('active', mat === 'cu');
+    document.getElementById('btn-mat-fe').classList.toggle('active', mat === 'fe');
+  }
+
+  function initTab1() {
+    const cvs = document.getElementById('cvs-tab1'); const ctx = cvs.getContext('2d');
+    let atoms = []; let electrons = [];
+    for(let i=0; i<15; i++) electrons.push({x: Math.random()*500+50, y: 150+Math.random()*40, v:0});
+
+    function render() {
+      if(currentTab !== 'tab1') return;
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+      let lenScale = parseFloat(document.getElementById('t1-length').value);
+      let areaScale = parseFloat(document.getElementById('t1-area').value);
+      let temp = parseFloat(document.getElementById('t1-temp').value);
+
+      let wireW = 150 * lenScale; let wireH = 20 * areaScale;
+      let startX = 300 - wireW/2; let startY = 150 - wireH/2;
+
+      // Draw wire
+      ctx.fillStyle = "rgba(246, 243, 234, 0.05)"; ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 3;
+      ctx.fillRect(startX, startY, wireW, wireH); ctx.strokeRect(startX, startY, wireW, wireH);
+
+      // Resistance logic
+      let resistance = (t1_matCoef * lenScale / areaScale) * (1 + temp*0.02);
+      let speed = 8 / resistance; // I = V/R, assume constant V
+
+      // Draw atoms (vibrating based on temp)
+      ctx.fillStyle = COLOR_ORANGE;
+      let cols = Math.floor(lenScale * 4); let rows = Math.floor(areaScale * 2);
+      for(let i=0; i<cols; i++) {
+        for(let j=0; j<rows; j++) {
+          let ax = startX + (i+0.5)*(wireW/cols) + (Math.random()-0.5)*temp*0.1;
+          let ay = startY + (j+0.5)*(wireH/rows) + (Math.random()-0.5)*temp*0.1;
+          ctx.beginPath(); ctx.arc(ax, ay, 6, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = COLOR_BG; ctx.font = '10px JetBrains Mono'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('+', ax, ay); ctx.fillStyle = COLOR_ORANGE;
+        }
+      }
+
+      // Draw electrons
+      ctx.fillStyle = COLOR_TEAL;
+      electrons.forEach(e => {
+        e.x -= speed;
+        if(e.x < startX) { e.x = startX + wireW; e.y = startY + Math.random()*wireH; }
+        
+        // Check collision visual
+        if(Math.random() < temp*0.001) {
+          ctx.fillStyle = "rgba(255, 77, 77, 0.6)"; ctx.beginPath(); ctx.arc(e.x, e.y, 12, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = COLOR_TEAL;
+        }
+        ctx.beginPath(); ctx.arc(e.x, e.y, 4, 0, Math.PI*2); ctx.fill();
+      });
+
+      // Overlay text
+      ctx.fillStyle = COLOR_YELLOW; ctx.font = 'bold 22px JetBrains Mono'; ctx.textAlign = 'center';
+      ctx.fillText(`阻礙程度 (R) = ${resistance.toFixed(1)} Ω`, 300, 280);
+
+      animFrames['tab1'] = requestAnimationFrame(render);
+    }
+    render();
+  }
+
+  // --- TAB 2: 歐姆定律與反比關係 ---
+  function initTab2() {
+    const cvs = document.getElementById('cvs-tab2'); const ctx = cvs.getContext('2d');
+    let particles = []; for(let i=0; i<12; i++) particles.push({ p: i/12 });
+
+    const path = [ {x:400, y:220}, {x:400, y:80}, {x:200, y:80}, {x:200, y:220}, {x:400, y:220} ];
+    function getPosOnPath(progress) {
+      let totalLen = 680; let targetLen = (progress % 1.0) * totalLen;
+      if (targetLen <= 140) return {x: 400, y: 220 - targetLen};
+      targetLen -= 140; if (targetLen <= 200) return {x: 400 - targetLen, y: 80};
+      targetLen -= 200; if (targetLen <= 140) return {x: 200, y: 80 + targetLen};
+      targetLen -= 140; return {x: 200 + targetLen, y: 220};
+    }
+
+    function render() {
+      if(currentTab !== 'tab2') return;
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+      let v = parseInt(document.getElementById('t2-v').value);
+      let r = parseInt(document.getElementById('t2-r').value);
+      let i = v / r;
+
+      document.getElementById('t2-v-val').textContent = v + ' V';
+      document.getElementById('t2-r-val').textContent = r + ' Ω';
+      document.getElementById('t2-calc-i').textContent = i.toFixed(1) + ' A';
+
+      let speed = i * 0.003;
+
+      ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(400, 220); ctx.lineTo(400, 80); ctx.lineTo(200, 80); ctx.lineTo(200, 220); ctx.lineTo(400, 220); ctx.stroke();
+
+      drawBattery(ctx, 300, 220);
+      drawResistor(ctx, 300, 80);
+      drawMeter(ctx, 200, 150, 'A', true);
+
+      // Draw resistor details based on R size
+      ctx.fillStyle = COLOR_ORANGE; ctx.font = '16px JetBrains Mono'; ctx.textAlign='center';
+      ctx.fillText(`${r}Ω`, 300, 50);
+
+      particles.forEach(p => {
+        p.p += speed; if(p.p > 1) p.p -= 1;
+        let pos = getPosOnPath(p.p);
+        drawElectron(ctx, pos.x, pos.y, speed);
+      });
+
+      animFrames['tab2'] = requestAnimationFrame(render);
+    }
+    render();
+  }
+
+  // --- TAB 3: 歐姆式導體 V-I 圖 ---
+  let t3_r = 2; let t3_history = {2:[], 4:[]};
+  function setT3Resistor(r) { t3_r = r; document.getElementById('btn-t3-r1').classList.toggle('active', r === 2); document.getElementById('btn-t3-r2').classList.toggle('active', r === 4); document.getElementById('t3-v').value = 0; }
+  
+  function initTab3() {
+    t3_history = {2:[], 4:[]}; document.getElementById('t3-v').value = 0;
+    const cvsC = document.getElementById('cvs-tab3-circuit'); const ctxC = cvsC.getContext('2d');
+    const cvsG = document.getElementById('cvs-tab3-graph'); const ctxG = cvsG.getContext('2d');
+    let particles = []; for(let i=0; i<12; i++) particles.push({ p: i/12 });
+    
+    function render() {
+      if(currentTab !== 'tab3') return;
+      ctxC.clearRect(0, 0, cvsC.width, cvsC.height); ctxG.clearRect(0, 0, cvsG.width, cvsG.height);
+      
+      let v = parseFloat(document.getElementById('t3-v').value); let i = v / t3_r;
+      if (t3_history[t3_r].filter(pt => pt.v === v).length === 0) t3_history[t3_r].push({v: v, i: i});
+      
+      // Circuit
+      ctxC.strokeStyle = COLOR_DIM; ctxC.lineWidth = 4;
+      ctxC.beginPath(); ctxC.moveTo(450, 200); ctxC.lineTo(450, 80); ctxC.lineTo(150, 80); ctxC.lineTo(150, 200); ctxC.lineTo(450, 200); ctxC.stroke();
+      drawBattery(ctxC, 300, 200); drawResistor(ctxC, 300, 80); drawMeter(ctxC, 150, 140, 'A', true);
+      
+      ctxC.fillStyle = COLOR_YELLOW; ctxC.font = '18px JetBrains Mono'; ctxC.textAlign='center'; ctxC.fillText(`V = ${v.toFixed(1)}V`, 300, 250);
+      ctxC.fillStyle = COLOR_ORANGE; ctxC.fillText(`R = ${t3_r}Ω`, 300, 50);
+      ctxC.fillStyle = COLOR_TEAL; ctxC.fillText(`I = ${i.toFixed(1)}A`, 150, 100);
+
+      // Graph Axis
+      ctxG.strokeStyle = COLOR_WHITE; ctxG.lineWidth = 2;
+      ctxG.beginPath(); ctxG.moveTo(50, 350); ctxG.lineTo(450, 350); ctxG.stroke(); // X
+      ctxG.beginPath(); ctxG.moveTo(50, 350); ctxG.lineTo(50, 50); ctxG.stroke(); // Y
+      ctxG.fillStyle = COLOR_WHITE; ctxG.font = '16px Noto Sans TC'; ctxG.textAlign='right'; ctxG.fillText('電壓 (V)', 450, 380); ctxG.textAlign='center'; ctxG.fillText('電流 (A)', 50, 30);
+      
+      // Grid
+      ctxG.strokeStyle = 'rgba(246, 243, 234, 0.1)'; ctxG.lineWidth = 1;
+      for(let x=1; x<=10; x++) { ctxG.beginPath(); ctxG.moveTo(50 + x*35, 350); ctxG.lineTo(50 + x*35, 50); ctxG.stroke(); }
+      for(let y=1; y<=5; y++) { ctxG.beginPath(); ctxG.moveTo(50, 350 - y*50); ctxG.lineTo(450, 350 - y*50); ctxG.stroke(); }
+
+      // Traces
+      [4, 2].forEach(res => { // draw larger R first (lower slope)
+        if(t3_history[res].length > 0) {
+          ctxG.strokeStyle = (res === t3_r) ? COLOR_YELLOW : COLOR_DIM; ctxG.lineWidth = 3;
+          ctxG.beginPath(); ctxG.moveTo(50, 350);
+          t3_history[res].forEach(pt => { ctxG.lineTo(50 + pt.v*35, 350 - pt.i*50); });
+          ctxG.stroke();
+          
+          let last = t3_history[res][t3_history[res].length-1];
+          ctxG.fillStyle = (res === t3_r) ? COLOR_YELLOW : COLOR_DIM;
+          ctxG.beginPath(); ctxG.arc(50 + last.v*35, 350 - last.i*50, 6, 0, Math.PI*2); ctxG.fill();
+        }
+      });
+
+      animFrames['tab3'] = requestAnimationFrame(render);
+    }
+    render();
+  }
+
+  // --- TAB 4: 非歐姆式 V-I 圖 ---
+  function initTab4() {
+    const cvsC = document.getElementById('cvs-tab4-circuit'); const ctxC = cvsC.getContext('2d');
+    const cvsG = document.getElementById('cvs-tab4-graph'); const ctxG = cvsG.getContext('2d');
+    document.getElementById('t4-v').value = 0; let history = [];
+    
+    function render() {
+      if(currentTab !== 'tab4') return;
+      ctxC.clearRect(0, 0, cvsC.width, cvsC.height); ctxG.clearRect(0, 0, cvsG.width, cvsG.height);
+      
+      let v = parseFloat(document.getElementById('t4-v').value); 
+      // LED math model: roughly 0 until 1.8V, then steep curve
+      let i = (v < 1.8) ? 0 : Math.pow(v - 1.8, 2) * 10;
+      if (i > 50) i = 50; // cap for display
+      if (history.filter(pt => pt.v === v).length === 0) history.push({v: v, i: i});
+      
+      // Circuit
+      ctxC.strokeStyle = COLOR_DIM; ctxC.lineWidth = 4;
+      ctxC.beginPath(); ctxC.moveTo(450, 200); ctxC.lineTo(450, 80); ctxC.lineTo(150, 80); ctxC.lineTo(150, 200); ctxC.lineTo(450, 200); ctxC.stroke();
+      drawBattery(ctxC, 300, 200); 
+      
+      // LED symbol
+      ctxC.strokeStyle = COLOR_WHITE; ctxC.lineWidth = 3;
+      ctxC.beginPath(); ctxC.moveTo(270, 80); ctxC.lineTo(330, 80); ctxC.stroke();
+      ctxC.beginPath(); ctxC.moveTo(290, 65); ctxC.lineTo(290, 95); ctxC.stroke();
+      ctxC.beginPath(); ctxC.moveTo(290, 65); ctxC.lineTo(310, 80); ctxC.lineTo(290, 95); ctxC.stroke();
+      ctxC.beginPath(); ctxC.moveTo(310, 65); ctxC.lineTo(310, 95); ctxC.stroke();
+      if (i > 0) { ctxC.fillStyle = "rgba(77, 210, 255, 0.5)"; ctxC.beginPath(); ctxC.arc(300, 80, 25 + i/2, 0, Math.PI*2); ctxC.fill(); }
+
+      drawMeter(ctxC, 150, 140, 'A', true);
+      
+      ctxC.fillStyle = COLOR_YELLOW; ctxC.font = '18px JetBrains Mono'; ctxC.textAlign='center'; ctxC.fillText(`V = ${v.toFixed(1)}V`, 300, 250);
+      ctxC.fillStyle = COLOR_TEAL; ctxC.fillText(`I = ${i.toFixed(1)}mA`, 150, 100);
+
+      // Graph Axis
+      ctxG.strokeStyle = COLOR_WHITE; ctxG.lineWidth = 2;
+      ctxG.beginPath(); ctxG.moveTo(50, 350); ctxG.lineTo(450, 350); ctxG.stroke(); // X
+      ctxG.beginPath(); ctxG.moveTo(50, 350); ctxG.lineTo(50, 50); ctxG.stroke(); // Y
+      ctxG.fillStyle = COLOR_WHITE; ctxG.font = '16px Noto Sans TC'; ctxG.textAlign='right'; ctxG.fillText('電壓 (V)', 450, 380); ctxG.textAlign='center'; ctxG.fillText('電流 (mA)', 50, 30);
+      
+      ctxG.strokeStyle = 'rgba(246, 243, 234, 0.1)'; ctxG.lineWidth = 1;
+      for(let x=1; x<=8; x++) { ctxG.beginPath(); ctxG.moveTo(50 + x*45, 350); ctxG.lineTo(50 + x*45, 50); ctxG.stroke(); }
+      for(let y=1; y<=5; y++) { ctxG.beginPath(); ctxG.moveTo(50, 350 - y*50); ctxG.lineTo(450, 350 - y*50); ctxG.stroke(); }
+
+      // Trace
+      if(history.length > 0) {
+        ctxG.strokeStyle = COLOR_TEAL; ctxG.lineWidth = 3;
+        ctxG.beginPath(); ctxG.moveTo(50, 350);
+        history.forEach(pt => { ctxG.lineTo(50 + (pt.v/4)*360, 350 - (pt.i/50)*250); });
+        ctxG.stroke();
+        
+        let last = history[history.length-1];
+        ctxG.fillStyle = COLOR_TEAL;
+        ctxG.beginPath(); ctxG.arc(50 + (last.v/4)*360, 350 - (last.i/50)*250, 6, 0, Math.PI*2); ctxG.fill();
+      }
+
+      animFrames['tab4'] = requestAnimationFrame(render);
+    }
+    render();
+  }
+
+  // --- TAB 5: 測量與學習單 ---
+  let t5_prob_v = 0; let t5_prob_i = 0; let t5_prob_r = 0; let t5_solved = false;
+  
+  function generateT5Problem() {
+    let r_options = [5, 10, 15, 20];
+    t5_prob_r = r_options[Math.floor(Math.random()*r_options.length)];
+    t5_prob_i = (Math.floor(Math.random()*5) + 1) * 0.2; // 0.2, 0.4, ... 1.0 A
+    t5_prob_v = t5_prob_i * t5_prob_r;
+    t5_solved = false;
+    
+    document.getElementById('t5-val-v').textContent = t5_prob_v.toFixed(1) + ' V';
+    document.getElementById('t5-val-i').textContent = t5_prob_i.toFixed(1) + ' A';
+    document.getElementById('t5-calc-v').textContent = '--';
+    document.getElementById('t5-calc-i').textContent = '--';
+    document.getElementById('t5-calc-ans').textContent = '? Ω';
+    document.getElementById('t5-calc-ans').style.color = 'var(--chalk-yellow)';
+    document.getElementById('btn-t5-solve').disabled = false;
+  }
+
+  function solveT5Problem() {
+    document.getElementById('t5-calc-v').textContent = t5_prob_v.toFixed(1);
+    document.getElementById('t5-calc-i').textContent = t5_prob_i.toFixed(1);
+    document.getElementById('t5-calc-ans').textContent = t5_prob_r + ' Ω';
+    document.getElementById('t5-calc-ans').style.color = 'var(--chalk-green)';
+    document.getElementById('btn-t5-solve').disabled = true;
+    t5_solved = true;
+  }
+
+  function initTab5() {
+    generateT5Problem();
+    const cvs = document.getElementById('cvs-tab5'); const ctx = cvs.getContext('2d');
+    
+    function render() {
+      if(currentTab !== 'tab5') return;
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+      
+      ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(450, 280); ctx.lineTo(450, 120); ctx.lineTo(150, 120); ctx.lineTo(150, 280); ctx.lineTo(450, 280); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(250, 120); ctx.lineTo(250, 50); ctx.lineTo(350, 50); ctx.lineTo(350, 120); ctx.stroke();
+      
+      drawBattery(ctx, 300, 280);
+      drawResistor(ctx, 300, 120);
+      drawMeter(ctx, 150, 200, 'A', true);
+      drawMeter(ctx, 300, 50, 'V', false);
+
+      ctx.fillStyle = COLOR_TEAL; ctx.font = 'bold 18px JetBrains Mono'; ctx.textAlign='left'; ctx.fillText(t5_prob_i.toFixed(1)+'A', 90, 200);
+      ctx.fillStyle = COLOR_YELLOW; ctx.textAlign='center'; ctx.fillText(t5_prob_v.toFixed(1)+'V', 300, 20);
+
+      if (t5_solved) {
+        ctx.fillStyle = COLOR_GREEN; ctx.font = 'bold 24px JetBrains Mono';
+        ctx.fillText(`R = ${t5_prob_r}Ω`, 300, 160);
+      } else {
+        ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 24px JetBrains Mono';
+        ctx.fillText(`R = ?`, 300, 160);
+      }
+      animFrames['tab5'] = requestAnimationFrame(render);
+    }
+    render();
+  }
+
+  // Init
+  switchTab('tab1');
+</script>
+</body>
+</html>
