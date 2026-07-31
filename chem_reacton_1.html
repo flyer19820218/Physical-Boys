@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第一單元 化學反應與質量守恆</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+    body {
+        background-color: #16332a;
+        color: #FFFFFF;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 20px;
+        margin: 0;
+        padding: 20px;
+        line-height: 1.6;
+    }
+
+    * {
+        box-sizing: border-box;
+        border-color: #FFFFFF;
+    }
+
+    h1, h2, h3 {
+        font-size: 28px; 
+        color: #FFFF00;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        gap: 30px;
+        margin-top: 20px;
+    }
+
+    .panel {
+        border: 2px solid #00FFFF;
+        border-radius: 8px;
+        padding: 25px;
+        background-color: #11261f;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .math-text {
+        font-family: 'JetBrains Mono', monospace;
+        color: #FFA500;
+    }
+
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    .tab-container {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        border-bottom: 2px solid #7CFC00;
+        padding-bottom: 10px;
+    }
+
+    .tab-button {
+        background-color: transparent;
+        color: #FFFFFF;
+        border: 2px solid transparent;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 22px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .tab-button.active, .tab-button:hover {
+        background-color: #7CFC00;
+        color: #11261f;
+        font-weight: bold;
+    }
+
+    .tab-content {
+        display: none;
+    }
+    .tab-content.active {
+        display: block;
+    }
+
+    /* 子分頁架構設計 (用於練習題) */
+    .sub-tab-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #00FFFF;
+        padding-bottom: 10px;
+    }
+
+    .sub-tab-button {
+        background-color: transparent;
+        color: #FFFFFF;
+        border: 2px solid transparent;
+        border-radius: 5px;
+        padding: 5px 15px;
+        font-size: 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .sub-tab-button.active, .sub-tab-button:hover {
+        background-color: #00FFFF;
+        color: #11261f;
+        font-weight: bold;
+    }
+
+    .sub-tab-content {
+        display: none;
+    }
+
+    .step-box {
+        margin-top: 15px;
+        padding: 15px;
+        border-radius: 0 8px 8px 0;
+        background-color: rgba(255, 255, 255, 0.05);
+        display: none; 
+    }
+    .hint-box { border-left: 4px dashed #FFFF00; color: #FFFF00; }
+    .ans-box { border-left: 4px solid #7CFC00; color: #7CFC00; }
+    
+    .ctrl-btn {
+        background-color: #11261f;
+        color: #FFFFFF;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 20px;
+        cursor: pointer;
+        margin-right: 10px;
+        margin-top: 15px;
+    }
+    .ctrl-btn.play { border: 2px solid #7CFC00; color: #7CFC00; }
+    .ctrl-btn.reset { border: 2px solid #FFA500; color: #FFA500; }
+    .ctrl-btn.hint { border: 2px dashed #FFFF00; color: #FFFF00; padding: 8px 16px; font-size: 18px; margin-top: 10px;}
+    .ctrl-btn.ans { border: 2px solid #7CFC00; color: #7CFC00; padding: 8px 16px; font-size: 18px; margin-top: 10px;}
+    .ctrl-btn:hover { background-color: #16332a; }
+    
+    canvas {
+        border: 2px dashed #FFFF00; 
+        background-color: #16332a; 
+        max-width: 100%; 
+        width: 100%; 
+        height: auto;
+        border-radius: 8px;
+    }
+    
+    ul { padding-left: 25px; margin-top: 10px; }
+    li { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div class="tab-container">
+    <button class="tab-button active" onclick="openTab('common-reactions')">常見化學反應</button>
+    <button class="tab-button" onclick="openTab('reaction-concept')">物質變化本質</button>
+    <button class="tab-button" onclick="openTab('mass-conservation')">質量守恆定律</button>
+    <button class="tab-button" onclick="openTab('precipitation-exp')">密閉系統實驗</button>
+</div>
+
+<!-- 分頁一：常見化學反應 (升級版彩色煙火) -->
+<div id="common-reactions" class="tab-content active">
+    <div class="grid-container">
+        <div class="panel">
+            <h2>化學反應的四大現象</h2>
+            <p>在日常生活中，我們常透過觀察以下四種外在現象，來判斷物質是否發生了<span class="nowrap">化學變化</span>：</p>
+            <ul>
+                <li><strong style="color: #00FFFF;">顏色改變</strong>：例如酸鹼指示劑滴入溶液，或是切開的蘋果氧化變色。</li>
+                <li><strong style="color: #00FFFF;">產生氣體</strong>：例如雙氧水消毒傷口冒出氣泡，或大理石接觸鹽酸。</li>
+                <li><strong style="color: #00FFFF;">產生沉澱</strong>：例如將<span class="nowrap">二氧化碳</span>吹入澄清石灰水使其變混濁。</li>
+                <li><strong style="color: #00FFFF;">溫度與光能變化</strong>：例如電池發熱、木材燃燒，或是絢麗的<span class="nowrap">煙火秀</span>。</li>
+            </ul>
+        </div>
+        <div class="panel" style="text-align: center;">
+            <h2 style="color: #7CFC00;">能量轉換現象：煙火秀</h2>
+            <p>煙火是火藥發生劇烈化學反應的結果，過程中將<span class="nowrap">化學能</span>轉換為<span class="nowrap">光能</span>與<span class="nowrap">熱能</span>釋放。</p>
+            <!-- 採用「午夜黛綠」作為背景，避免純黑違規同時保持極高對比 -->
+            <canvas id="fwCanvas" width="500" height="300" style="background-color: #081310;"></canvas>
+            <div>
+                <button class="ctrl-btn play" onclick="fireworksAnim.start()">▶ 點燃煙火</button>
+                <button class="ctrl-btn reset" onclick="fireworksAnim.reset()">⟲ 清理夜空</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 分頁二：物質變化本質 -->
+<div id="reaction-concept" class="tab-content">
+    <div class="grid-container">
+        <div class="panel" style="text-align: center;">
+            <h2 style="color: #7CFC00;">微觀視角：碳燃燒產生氣體</h2>
+            <p>觀察<span class="nowrap">氧氣</span>分子（<span class="nowrap math-text" style="color: #00FFFF;">O<sub>2</sub></span>）撞擊固態<span class="nowrap">碳顆粒</span>（<span class="nowrap math-text" style="color: #FFA500;">C</span>），重組為<span class="nowrap">二氧化碳</span>氣體（<span class="nowrap math-text">CO<sub>2</sub></span>）的過程。</p>
+            <canvas id="reactionCanvas" width="500" height="300"></canvas>
+            <div>
+                <button class="ctrl-btn play" onclick="carbonAnim.start()">▶ 播放動畫</button>
+                <button class="ctrl-btn reset" onclick="carbonAnim.reset()">⟲ 重置畫面</button>
+            </div>
+        </div>
+        <div class="panel">
+            <h2>原子重新排列的動態過程</h2>
+            <p><span class="nowrap">化學變化</span>的本質是必定產生新物質。與僅改變分子間距離的<span class="nowrap">物理變化</span>不同，化學反應是<span class="nowrap" style="color: #FFFF00;">原子重新排列</span>的結果。</p>
+            <p>反應方程式：<br>
+                <span class="nowrap math-text" style="font-size: 26px;">C + O<sub>2</sub> &rarr; CO<sub>2</sub></span>
+            </p>
+            <h3 style="margin-top: 20px;">視覺映射說明</h3>
+            <ul>
+                <li><strong>固態碳顆粒</strong>：由多層<span style="color: #FFA500;">亮橘色</span>碳原子緊密堆疊。</li>
+                <li><strong>氧氣分子</strong>：由兩顆<span style="color: #00FFFF;">亮青色</span>氧原子相連組成。</li>
+                <li><strong>二氧化碳氣體</strong>：反應發生後，舊化學鍵斷裂並形成全新分子，脫離固體表面向外逸散。</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 分頁三：質量守恆定律 -->
+<div id="mass-conservation" class="tab-content">
+    <div class="grid-container">
+        <div class="panel">
+            <h2>開放系統的錯覺與密閉容器</h2>
+            <p>根據<span class="nowrap">道耳頓原子說</span>，反應前後原子的種類、數目與質量不變，因此總質量必定相等。但在開放空間中常產生錯覺：</p>
+            <ul>
+                <li><strong>質量看似變輕</strong>：例如<span class="nowrap">木炭燃燒</span>，是因為生成的氣體逸散到了空氣中。</li>
+                <li><strong>質量看似變重</strong>：例如<span class="nowrap">鐵釘生鏽</span>，是因為空氣中的氣體參與了反應。</li>
+            </ul>
+            <p><strong>破解關鍵：</strong>要精確驗證，必須將反應移至<span class="nowrap" style="color: #FFFF00;">密閉容器</span>內進行，確保無氣體進出，測得的總質量必定完美守恆。</p>
+        </div>
+        
+        <div class="panel">
+            <h2>質量守恆：計算實戰演練</h2>
+            
+            <div class="sub-tab-container">
+                <button class="sub-tab-button active" onclick="openSubTab('q1', event)">第一題</button>
+                <button class="sub-tab-button" onclick="openSubTab('q2', event)">第二題</button>
+                <button class="sub-tab-button" onclick="openSubTab('q3', event)">第三題</button>
+            </div>
+
+            <div id="q1" class="sub-tab-content" style="display: block;">
+                <p><strong>【密閉空間燃燒】</strong><br>木材 <span class="nowrap math-text">10 g</span> 在<span class="nowrap">密閉容器</span>中完全燃燒，生成<span class="nowrap">二氧化碳</span> <span class="nowrap math-text">11 g</span> 與<span class="nowrap">水蒸氣</span> <span class="nowrap math-text">18 g</span>，則反應消耗掉的<span class="nowrap">氧氣</span>為多少克？</p>
+                <button class="ctrl-btn hint" onclick="reveal('hint1')">💡 提示</button>
+                <button class="ctrl-btn ans" onclick="reveal('ans1')">✅ 解答</button>
+                <div id="hint1" class="step-box hint-box">
+                    <strong>思考方向：</strong>請找出所有的「反應物」與所有的「生成物」，建立等式。
+                </div>
+                <div id="ans1" class="step-box ans-box">
+                    <strong>詳細解答：</strong><br>
+                    反應前（木材 ＋ 氧氣）＝ 反應後（二氧化碳 ＋ 水蒸氣）。<br>
+                    <span class="nowrap math-text">10 + 氧氣 = 11 + 18</span><br>
+                    因此消耗<span class="nowrap">氧氣</span>為 <span class="nowrap math-text">19 g</span>。
+                </div>
+            </div>
+
+            <div id="q2" class="sub-tab-content">
+                <p><strong>【氣體化合產生】</strong><br>木炭 <span class="nowrap math-text">6 g</span> 和<span class="nowrap">氧氣</span> <span class="nowrap math-text">16 g</span> 在密閉容器內完全反應，沒有剩下任何物質，可生成<span class="nowrap">二氧化碳</span>多少克？</p>
+                <button class="ctrl-btn hint" onclick="reveal('hint2')">💡 提示</button>
+                <button class="ctrl-btn ans" onclick="reveal('ans2')">✅ 解答</button>
+                <div id="hint2" class="step-box hint-box">
+                    <strong>思考方向：</strong>題目強調「沒有剩下任何物質」，代表所有反應物皆轉化為生成物。
+                </div>
+                <div id="ans2" class="step-box ans-box">
+                    <strong>詳細解答：</strong><br>
+                    反應物全數轉化為生成物。<br>
+                    <span class="nowrap math-text">6 + 16 = 二氧化碳</span><br>
+                    生成 <span class="nowrap math-text">22 g</span> 的<span class="nowrap">二氧化碳</span>。
+                </div>
+            </div>
+
+            <div id="q3" class="sub-tab-content">
+                <p><strong>【未知物質反應】</strong><br>若化學反應方程式為 <span class="nowrap math-text">2A + B &rarr; 3C</span>。<span class="nowrap math-text">8 g</span> 的 A 和 <span class="nowrap math-text">20 g</span> 的 B 可以完全反應，則生成 C 的質量為多少克？</p>
+                <button class="ctrl-btn hint" onclick="reveal('hint3')">💡 提示</button>
+                <button class="ctrl-btn ans" onclick="reveal('ans3')">✅ 解答</button>
+                <div id="hint3" class="step-box hint-box">
+                    <strong>思考方向：</strong>方程式前面的係數會不會影響質量守恆的加法計算？
+                </div>
+                <div id="ans3" class="step-box ans-box">
+                    <strong>詳細解答：</strong><br>
+                    不會影響。質量守恆看的是實際總質量，不受方程式係數干擾。<br>
+                    直接將參與反應的質量相加：<span class="nowrap math-text">8 + 20 = 28</span><br>
+                    生成物 C 為 <span class="nowrap math-text">28 g</span>。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 分頁四：密閉系統實驗 -->
+<div id="precipitation-exp" class="tab-content">
+    <div class="grid-container">
+        <!-- 左欄：大天平動畫 -->
+        <div class="panel" style="text-align: center;">
+            <h2 style="color: #7CFC00;">天平與密閉容器沉澱實驗</h2>
+            <p>觀察將密閉的<span class="nowrap">三角錐瓶</span>倒置後，內部溶液混合產生沉澱時的天平狀態。</p>
+            <canvas id="balanceCanvas" width="600" height="420"></canvas>
+            <div>
+                <button class="ctrl-btn play" onclick="balanceAnim.start()">▼ 倒置混合反應</button>
+                <button class="ctrl-btn reset" onclick="balanceAnim.reset()">⟲ 重置實驗</button>
+            </div>
+        </div>
+
+        <!-- 右欄：原理解說 -->
+        <div class="panel">
+            <h2>密閉系統的完美守恆</h2>
+            <p>為了確保沒有物質逸散，反應物皆置於塞緊橡皮塞的<span class="nowrap">三角錐瓶</span>中。</p>
+            <ul>
+                <li><strong>容器配置</strong>：瓶內裝有<span class="nowrap" style="color: #00FFFF;">碳酸鈉溶液</span>，小試管裝有<span class="nowrap" style="color: #00FFFF;">氯化鈣溶液</span>。</li>
+                <li><strong>天平配平</strong>：實驗開始前，於天平右端放上砝碼使指針歸零。</li>
+            </ul>
+            <h3 style="margin-top: 20px;">反應發生與觀察</h3>
+            <p>化學方程式：<br>
+                <span class="nowrap math-text" style="font-size: 22px;">CaCl<sub>2</sub> + Na<sub>2</sub>CO<sub>3</sub> &rarr; CaCO<sub>3</sub>&darr; + 2NaCl</span>
+            </p>
+            <p>將<span class="nowrap">三角錐瓶</span>倒置後，溶液混合產生<span class="nowrap" style="color: #FFFFFF;">白色混濁</span>的<span class="nowrap">碳酸鈣</span>沉澱。<br>
+            <span class="nowrap" style="color: #FFFF00;">觀察重點：</span>由於系統密閉，不論內部反應如何進行，天平皆<span class="nowrap">保持不動</span>，徹底印證<span class="nowrap">質量守恆定律</span>。</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 頁籤切換邏輯 ---
+    function openTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    function openSubTab(subTabId, event) {
+        document.querySelectorAll('.sub-tab-content').forEach(tab => tab.style.display = 'none');
+        document.querySelectorAll('.sub-tab-button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(subTabId).style.display = 'block';
+        event.currentTarget.classList.add('active');
+    }
+
+    function reveal(id) {
+        document.getElementById(id).style.display = 'block';
+    }
+
+    // --- 動畫 1：彩色煙火特效 (升級版) ---
+    const fireworksAnim = {
+        canvas: document.getElementById('fwCanvas'),
+        ctx: document.getElementById('fwCanvas').getContext('2d'),
+        particles: [],
+        rockets: [],
+        isPlaying: false,
+        animId: null,
+        // 嚴格遵守高對比粉筆色彩映射
+        colorSets: [
+            ['#FFFF00', '#FFA500'], // 亮黃 + 亮橘
+            ['#00FFFF', '#7CFC00'], // 亮青 + 草綠
+            ['#FFFFFF', '#FFFF00'], // 純白 + 亮黃
+            ['#FFA500', '#00FFFF']  // 亮橘 + 亮青
+        ],
+        
+        init: function() {
+            // 午夜黛綠背景
+            this.ctx.fillStyle = '#081310';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.particles = [];
+            this.rockets = [];
+        },
+        launch: function() {
+            const colors = this.colorSets[Math.floor(Math.random() * this.colorSets.length)];
+            this.rockets.push({
+                x: this.canvas.width / 2 + (Math.random() - 0.5) * 250,
+                y: this.canvas.height,
+                vy: -7 - Math.random() * 4,
+                colors: colors
+            });
+        },
+        explode: function(x, y, colors) {
+            // 粒子數量倍增至 120 顆
+            for(let i = 0; i < 120; i++) { 
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 1;
+                this.particles.push({
+                    x: x, y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1,
+                    decay: Math.random() * 0.02 + 0.01
+                });
+            }
+        },
+        update: function() {
+            if(!this.isPlaying) return;
+            
+            // 軌跡殘影：使用極度深綠色覆蓋，保持護眼且無黑色
+            this.ctx.fillStyle = 'rgba(8, 19, 16, 0.3)'; 
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+            // 多管齊發：提高發射機率與數量上限
+            if(Math.random() < 0.06 && this.rockets.length < 8) this.launch();
+
+            for(let i = this.rockets.length - 1; i >= 0; i--) {
+                let r = this.rockets[i];
+                r.y += r.vy;
+                r.vy += 0.08; 
+                this.ctx.fillStyle = r.colors[0];
+                this.ctx.beginPath();
+                this.ctx.arc(r.x, r.y, 3, 0, Math.PI*2);
+                this.ctx.fill();
+
+                if(r.vy >= -1 || r.y < 40) {
+                    this.explode(r.x, r.y, r.colors);
+                    this.rockets.splice(i, 1);
+                }
+            }
+
+            for(let i = this.particles.length - 1; i >= 0; i--) {
+                let p = this.particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.05; 
+                p.alpha -= p.decay;
+
+                this.ctx.globalAlpha = Math.max(0, p.alpha);
+                this.ctx.fillStyle = p.color;
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, 2, 0, Math.PI*2);
+                this.ctx.fill();
+
+                if(p.alpha <= 0) this.particles.splice(i, 1);
+            }
+            this.ctx.globalAlpha = 1.0;
+
+            this.animId = requestAnimationFrame(() => this.update());
+        },
+        start: function() {
+            if(!this.isPlaying) {
+                this.isPlaying = true;
+                this.update();
+            }
+        },
+        reset: function() {
+            this.isPlaying = false;
+            cancelAnimationFrame(this.animId);
+            this.init();
+        }
+    };
+
+    // --- 動畫 2：碳燃燒 ---
+    const carbonAnim = {
+        canvas: document.getElementById('reactionCanvas'),
+        ctx: document.getElementById('reactionCanvas').getContext('2d'),
+        isPlaying: false,
+        animationId: null,
+        particlesC: [], particlesO2: [], particlesCO2: [],
+        radiusC: 8, radiusO: 6,
+        
+        init: function() {
+            this.particlesC = []; this.particlesO2 = []; this.particlesCO2 = [];
+            const rows = 5; const cols = 20; const spacingX = 16; const spacingY = 13.8;
+            const startX = (this.canvas.width - ((cols - 1) * spacingX)) / 2;
+            const startY = 270 - ((rows - 1) * spacingY);
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const offsetX = (r % 2 === 0) ? 0 : (spacingX / 2);
+                    this.particlesC.push({ x: startX + c * spacingX + offsetX, y: startY + r * spacingY, active: true });
+                }
+            }
+            this.drawFrame();
+        },
+        drawC: function(x, y) {
+            this.ctx.beginPath(); this.ctx.arc(x, y, this.radiusC, 0, Math.PI * 2);
+            this.ctx.fillStyle = '#FFA500'; this.ctx.fill();
+            this.ctx.lineWidth = 1; this.ctx.strokeStyle = '#FFFFFF'; this.ctx.stroke();
+        },
+        drawO2: function(x, y) {
+            const offset = this.radiusO * 0.9;
+            for (let dx of [-offset, offset]) {
+                this.ctx.beginPath(); this.ctx.arc(x + dx, y, this.radiusO, 0, Math.PI * 2);
+                this.ctx.fillStyle = 'rgba(0, 255, 255, 0.4)'; this.ctx.fill();
+                this.ctx.lineWidth = 1; this.ctx.strokeStyle = '#00FFFF'; this.ctx.stroke();
+            }
+        },
+        drawCO2: function(x, y) {
+            const offset = this.radiusC + (this.radiusO * 0.5);
+            for (let dx of [-offset, offset]) {
+                this.ctx.beginPath(); this.ctx.arc(x + dx, y, this.radiusO, 0, Math.PI * 2); 
+                this.ctx.fillStyle = 'rgba(0, 255, 255, 0.4)'; this.ctx.fill(); 
+                this.ctx.lineWidth = 1; this.ctx.strokeStyle = '#00FFFF'; this.ctx.stroke();
+            }
+            this.drawC(x, y);
+        },
+        drawFrame: function() {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.particlesC.forEach(c => { if (c.active) this.drawC(c.x, c.y); });
+            this.particlesO2.forEach(o2 => { if (o2.active) this.drawO2(o2.x, o2.y); });
+            this.particlesCO2.forEach(co2 => { this.drawCO2(co2.x, co2.y); });
+        },
+        update: function() {
+            if (!this.isPlaying) return;
+            if (Math.random() < 0.15 && this.particlesC.some(c => c.active)) {
+                this.particlesO2.push({ x: 20 + Math.random() * (this.canvas.width - 40), y: -10, vx: (Math.random() - 0.5) * 2, vy: 2 + Math.random() * 2, active: true });
+            }
+            this.particlesO2.forEach(o2 => {
+                if (!o2.active) return;
+                o2.x += o2.vx; o2.y += o2.vy;
+                for (let i = 0; i < this.particlesC.length; i++) {
+                    let c = this.particlesC[i];
+                    if (c.active && o2.active) {
+                        if (Math.sqrt(Math.pow(o2.x - c.x, 2) + Math.pow(o2.y - c.y, 2)) < this.radiusC + this.radiusO) {
+                            c.active = false; o2.active = false;
+                            this.particlesCO2.push({ x: c.x, y: c.y, vx: (Math.random() - 0.5) * 2, vy: -1.5 - Math.random() });
+                            break; 
+                        }
+                    }
+                }
+            });
+            this.particlesO2 = this.particlesO2.filter(o2 => o2.active && o2.y < this.canvas.height);
+            this.particlesCO2.forEach(co2 => { co2.x += co2.vx; co2.y += co2.vy; });
+            this.particlesCO2 = this.particlesCO2.filter(co2 => co2.y > -30);
+            this.drawFrame();
+            if (!this.particlesC.some(c => c.active) && this.particlesO2.length === 0 && this.particlesCO2.length === 0) this.isPlaying = false;
+            if (this.isPlaying) this.animationId = requestAnimationFrame(() => this.update());
+        },
+        start: function() {
+            if (!this.isPlaying) {
+                this.isPlaying = true;
+                if (!this.particlesC.some(c => c.active)) this.init();
+                this.update();
+            }
+        },
+        reset: function() {
+            this.isPlaying = false; cancelAnimationFrame(this.animationId); this.init();
+        }
+    };
+
+    // --- 動畫 3：大天平與三角錐瓶 ---
+    const balanceAnim = {
+        canvas: document.getElementById('balanceCanvas'),
+        ctx: document.getElementById('balanceCanvas').getContext('2d'),
+        isPlaying: false,
+        animationId: null,
+        progress: 0, 
+        
+        init: function() {
+            this.progress = 0;
+            this.drawFrame();
+        },
+        
+        drawBalance: function() {
+            const ctx = this.ctx;
+            // 支柱
+            ctx.fillStyle = '#11261f';
+            ctx.beginPath(); ctx.moveTo(300, 100); ctx.lineTo(280, 360); ctx.lineTo(320, 360); ctx.fill();
+            ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 3; ctx.stroke();
+            
+            // 橫梁
+            ctx.beginPath(); ctx.moveTo(100, 100); ctx.lineTo(500, 100);
+            ctx.strokeStyle = '#FFFF00'; ctx.lineWidth = 6; ctx.stroke();
+            
+            // 左右懸線與秤盤
+            ctx.beginPath(); ctx.moveTo(100, 100); ctx.lineTo(40, 320); ctx.moveTo(100, 100); ctx.lineTo(160, 320);
+            ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.fillStyle = '#A0A0A0'; ctx.fillRect(40, 320, 120, 10);
+            
+            ctx.beginPath(); ctx.moveTo(500, 100); ctx.lineTo(440, 320); ctx.moveTo(500, 100); ctx.lineTo(560, 320); ctx.stroke();
+            ctx.fillRect(440, 320, 120, 10);
+            
+            // 砝碼
+            ctx.fillStyle = '#FFA500'; ctx.fillRect(480, 270, 40, 50); ctx.strokeRect(480, 270, 40, 50);
+            ctx.fillStyle = '#11261f'; ctx.font = 'bold 16px "JetBrains Mono"';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText("砝碼", 500, 295);
+        },
+        
+        drawFlaskAndLiquid: function(x, y, angle) {
+            const ctx = this.ctx;
+            ctx.save();
+            ctx.translate(x, y); 
+            ctx.rotate(angle);
+            
+            // 橡皮塞
+            ctx.fillStyle = '#FF4500';
+            ctx.fillRect(-16, -75, 32, 20); 
+            
+            ctx.beginPath();
+            ctx.moveTo(-18, -55); 
+            ctx.lineTo(-18, -25); 
+            ctx.lineTo(-55, 55);  
+            ctx.lineTo(55, 55);   
+            ctx.lineTo(18, -25);  
+            ctx.lineTo(18, -55);  
+            ctx.closePath();
+            
+            ctx.save();
+            ctx.clip();
+            
+            if (this.progress < 0.5) {
+                ctx.fillStyle = '#FFFFFF'; ctx.lineWidth = 1; ctx.strokeRect(-25, -15, 16, 65);
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.4)'; ctx.fillRect(-24, 15, 14, 34);
+            } else {
+                ctx.save();
+                ctx.translate(0, -15); ctx.rotate(Math.PI / 6);
+                ctx.lineWidth = 1; ctx.strokeRect(-10, -40, 16, 65);
+                ctx.restore();
+            }
+
+            ctx.rotate(-angle); 
+            
+            if (this.progress < 0.5) {
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.2)';
+                ctx.fillRect(-60, 15, 120, 50); 
+            } else {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.fillRect(-60, -10, 120, 70); 
+                
+                ctx.fillStyle = '#FFFFFF';
+                for(let i = 0; i < 40; i++){
+                    ctx.beginPath();
+                    ctx.arc(-40 + Math.random() * 80, 0 + Math.random() * 45, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            ctx.restore(); 
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.stroke();
+            ctx.restore(); 
+        },
+        
+        drawFrame: function() {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.drawBalance();
+            
+            const angle = Math.PI * this.progress;
+            const y_upright = 320 - 55;  
+            const y_inverted = 320 - 75; 
+            const current_y = y_upright + (y_inverted - y_upright) * this.progress;
+            
+            this.drawFlaskAndLiquid(100, current_y, angle);
+        },
+        
+        update: function() {
+            if (!this.isPlaying) return;
+            
+            this.progress += 0.015;
+            if (this.progress >= 1) {
+                this.progress = 1;
+                this.isPlaying = false;
+            }
+            
+            this.drawFrame();
+            
+            if (this.isPlaying) {
+                this.animationId = requestAnimationFrame(() => this.update());
+            }
+        },
+        
+        start: function() {
+            if (!this.isPlaying && this.progress === 0) {
+                this.isPlaying = true;
+                this.update();
+            }
+        },
+        
+        reset: function() {
+            this.isPlaying = false;
+            cancelAnimationFrame(this.animationId);
+            this.progress = 0;
+            this.drawFrame();
+        }
+    };
+
+    window.onload = function() {
+        fireworksAnim.init();
+        carbonAnim.init();
+        balanceAnim.init();
+    };
+</script>
+</body>
+</html>
