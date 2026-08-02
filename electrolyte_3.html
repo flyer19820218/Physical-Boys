@@ -138,7 +138,7 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* 子分頁架構 (問題/提示/解答) */
+    /* 子分頁架構 */
     .sub-tab-container {
         display: flex;
         gap: 15px;
@@ -228,12 +228,16 @@
         justify-content: center;
         align-items: center;
         margin-bottom: 15px;
+        position: relative;
     }
     canvas {
         display: block;
         width: 100%;
-        max-width: 450px;
-        height: 420px; 
+        max-width: 500px; /* 加大寬度確保公式有空間 */
+        height: 340px; 
+    }
+    .large-canvas {
+        height: 420px;
     }
 </style>
 </head>
@@ -263,34 +267,35 @@
         <button class="sub-tab-btn pro" onclick="openSubTab('mol', 'mol-ex3', this)">資優挑戰</button>
     </div>
 
-    <!-- 核心觀念 -->
+    <!-- 核心觀念 (標準配製程序與動態對位) -->
     <div id="mol-concept" class="sub-tab-content active">
         <div class="grid-container">
+            <!-- 左欄：文字說明與防呆鐵律 -->
             <div class="panel">
-                <h2>從奶茶甜度看濃度</h2>
-                <p>去飲料店點一杯 700cc 的奶茶，「全糖」和「半糖」的差別在哪？</p>
-                <ul>
-                    <li>相同點：整杯飲料的「總體積」都是 700cc。</li>
-                    <li>相異點：裡面含有的「果糖數量」不同。糖越多，甜度越高，也就是<strong style="color: #FFFF00;">濃度越高</strong>。</li>
-                </ul>
-                <p>在化學中，我們用<strong style="color: #00FFFF;">「莫耳數」</strong>來計算溶質的數量，用<strong style="color: #00FFFF;">「公升」</strong>來計算溶液的體積。</p>
-            </div>
-            <div class="panel">
+                <h2>標準溶液配製與濃度</h2>
+                <p>化學中配製溶液有極其嚴格的操作標準。濃度代表單位體積內所含的溶質數量。我們用<strong style="color: #00FFFF;">「莫耳數」</strong>來計算溶質，用<strong style="color: #00FFFF;">「公升」</strong>來計算溶液總體積。</p>
+                
                 <h2>體積莫耳濃度 (<span class="math-text nowrap">M</span>)</h2>
-                <p>定義：單位體積內所含溶質的莫耳數 <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>。</p>
-                <div class="equation-display" style="background-color: rgba(255, 255, 255, 0.05); border: 2px dashed #00FFFF; border-radius: 8px; padding: 25px; text-align: center; margin-bottom: 15px;">
-                    <span class="math-text" style="font-size: 26px;">
-                        莫耳濃度 (M) = 
-                        <span class="fraction" style="font-size: 24px;">
-                            <span class="numerator">溶質莫耳數 (mol)</span>
-                            <span class="denominator">溶液體積 (L)</span>
-                        </span>
-                    </span>
-                    <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>
-                </div>
-                <div class="highlight-box">
+                <p>定義：每 1 公升的溶液中，所含溶質的莫耳數。請操作右側動畫，觀察標準的三步驟配製法：</p>
+                
+                <div class="highlight-box" style="margin-top: auto;">
                     <h3 style="color: #7CFC00; margin-top: 0; font-size: 20px;">⚠️ 配製溶液的防呆鐵律</h3>
-                    <p style="margin-bottom: 0;">配製 <span class="math-text">1 L</span> 溶液時，是先將溶質加入少許水中攪拌溶解，最後再<strong style="color: #FFA500;">加水直到總體積達到 1 L 刻度</strong>。絕對不是直接把溶質丟進 1 公升的水裡！</p>
+                    <p style="margin-bottom: 0;">配製 <span class="math-text">1 L</span> 溶液時，是先將溶質加入<strong style="color: #FFFF00;">少量水</strong>中攪拌完全溶解，最後再<strong style="color: #FFA500;">加水直到總體積達到 1 L 刻度</strong>。絕對不是直接把溶質丟進 1 公升的水裡（因為溶質本身也會佔據體積）！</p>
+                </div>
+            </div>
+            
+            <!-- 右欄：動態概念儀表板 -->
+            <div class="panel" style="border-color: #FFA500;">
+                <h2>配製程序儀表板</h2>
+                <div class="lab-controls" style="margin-bottom: 10px;">
+                    <button class="action-btn" id="btn-concept-solute" onclick="triggerConcept('solute')" style="border-color: #FFA500; color: #FFA500;">1. 加入溶質</button>
+                    <button class="action-btn" id="btn-concept-stir" onclick="triggerConcept('stir')" style="border-color: #FF69B4; color: #FF69B4;" disabled>2. 少量水攪拌</button>
+                    <button class="action-btn" id="btn-concept-water" onclick="triggerConcept('water')" style="border-color: #00FFFF; color: #00FFFF;" disabled>3. 加水至刻度</button>
+                    <button class="action-btn" onclick="triggerConcept('reset')" style="border-color: #9fb0a8; color: #9fb0a8;">🔄 重置</button>
+                </div>
+                
+                <div class="canvas-container" style="border-color: #7CFC00; background-color: #0b1813; flex-grow: 1; margin-bottom: 0;">
+                    <canvas id="conceptCanvas"></canvas>
                 </div>
             </div>
         </div>
@@ -300,7 +305,7 @@
     <div id="mol-ex1" class="sub-tab-content">
         <div class="panel panel-full" style="border-color: #00FFFF;">
             <h3 style="color: #00FFFF;">基礎演練：定義代入</h3>
-            <p style="font-size: 24px;">將 <span class="math-text nowrap">2 mol</span> 的氯化氫氣體 (<span class="math-text nowrap">HCl</span>) 溶於水中，配製成 <span class="math-text nowrap">4000 mL</span> 的水溶液，請問該鹽酸的體積莫耳濃度為多少 <span class="math-text nowrap">M</span> <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>？</p>
+            <p style="font-size: 24px;">將 <span class="math-text nowrap">2 mol</span> 的氯化氫氣體 (<span class="math-text nowrap">HCl</span>) 溶於水中，配製成 <span class="math-text nowrap">4000 mL</span> 的水溶液，請問該鹽酸的體積莫耳濃度為多少 <span class="math-text nowrap">M</span>？</p>
             
             <div>
                 <button class="action-btn" onclick="toggleReveal('mol-ex1-hint')" style="border-color: #FFA500; color: #FFA500;">💡 破解提示</button>
@@ -308,7 +313,7 @@
             </div>
 
             <div id="mol-ex1-hint" class="reveal-box" style="border-color: #FFA500; background-color: rgba(255, 165, 0, 0.08);">
-                <strong style="color: #FFA500;">提示：</strong><br>注意體積的單位！公式中的體積必須使用「公升 (<span class="math-text nowrap">L</span>)」。<span class="math-text nowrap">4000 mL</span> 等於幾公升？
+                <strong style="color: #FFA500;">提示：</strong><br>注意體積的單位！公式中的分母必須使用「公升 (<span class="math-text nowrap">L</span>)」。<span class="math-text nowrap">4000 mL</span> 等於幾公升？
             </div>
             <div id="mol-ex1-ans" class="reveal-box" style="border-color: #7CFC00; background-color: rgba(124, 252, 0, 0.08);">
                 <strong style="color: #7CFC00;">解答解析：</strong><br>
@@ -323,7 +328,7 @@
     <div id="mol-ex2" class="sub-tab-content">
         <div class="panel panel-full" style="border-color: #00FFFF;">
             <h3 style="color: #00FFFF;">進階推演：質量轉莫耳</h3>
-            <p style="font-size: 24px;">取 <span class="math-text nowrap">58.5 g</span> 的食鹽 (<span class="math-text nowrap">NaCl</span>) 完全溶於水中，配製成 <span class="math-text nowrap">100 mL</span> 的食鹽水溶液。請問該溶液的體積莫耳濃度為多少 <span class="math-text nowrap">M</span> <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>？<br><span style="font-size: 20px; color: #9fb0a8;">（原子量：<span class="math-text nowrap">Na=23</span>, <span class="math-text nowrap">Cl=35.5</span>）</span></p>
+            <p style="font-size: 24px;">取 <span class="math-text nowrap">58.5 g</span> 的食鹽 (<span class="math-text nowrap">NaCl</span>) 完全溶於水中，配製成 <span class="math-text nowrap">100 mL</span> 的食鹽水溶液。請問該溶液的體積莫耳濃度為多少 <span class="math-text nowrap">M</span>？<br><span style="font-size: 20px; color: #9fb0a8;">（原子量：<span class="math-text nowrap">Na=23</span>, <span class="math-text nowrap">Cl=35.5</span>）</span></p>
             
             <div>
                 <button class="action-btn" onclick="toggleReveal('mol-ex2-hint')" style="border-color: #FFA500; color: #FFA500;">💡 破解提示</button>
@@ -348,7 +353,7 @@
     <div id="mol-ex3" class="sub-tab-content">
         <div class="panel panel-full" style="border-color: #FF69B4;">
             <h3 style="color: #FF69B4;">資優挑戰：反向推導質量</h3>
-            <p style="font-size: 24px;">一杯標示為 <span class="math-text nowrap">2 M</span>、體積 <span class="math-text nowrap">100 mL</span> 的氫氧化鈉 (<span class="math-text nowrap">NaOH</span>) 水溶液，裡面含有多少公克的氫氧化鈉溶質 <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>？<br><span style="font-size: 20px; color: #9fb0a8;">（原子量：<span class="math-text nowrap">Na=23</span>, <span class="math-text nowrap">O=16</span>, <span class="math-text nowrap">H=1</span>）</span></p>
+            <p style="font-size: 24px;">一杯標示為 <span class="math-text nowrap">2 M</span>、體積 <span class="math-text nowrap">100 mL</span> 的氫氧化鈉 (<span class="math-text nowrap">NaOH</span>) 水溶液，裡面含有多少公克的氫氧化鈉溶質？<br><span style="font-size: 20px; color: #9fb0a8;">（原子量：<span class="math-text nowrap">Na=23</span>, <span class="math-text nowrap">O=16</span>, <span class="math-text nowrap">H=1</span>）</span></p>
             
             <div>
                 <button class="action-btn" onclick="toggleReveal('mol-ex3-hint')" style="border-color: #FFA500; color: #FFA500;">💡 破解提示</button>
@@ -391,15 +396,15 @@
                     <li><strong style="color: #FFA500;">核心觀念：</strong> 加水只會改變溶液的總體積，<strong style="color: #FFFF00;">溶質的莫耳數絕對不會增加或減少！</strong></li>
                 </ul>
                 <div class="equation-display" style="background-color: rgba(255, 165, 0, 0.1); border: 2px dashed #FFA500; border-radius: 8px; padding: 20px; text-align: center;">
-                    <span class="math-text" style="font-size: 22px; color: #FFFFFF;">稀釋前莫耳數 = 稀釋後莫耳數 <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span></span><br><br>
-                    <span class="math-text" style="font-size: 26px; color: #FFA500;">M<sub>1</sub> &times; V<sub>1</sub> = M<sub>2</sub> &times; V<sub>2</sub> <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span></span>
+                    <span class="math-text" style="font-size: 22px; color: #FFFFFF;">稀釋前莫耳數 = 稀釋後莫耳數</span><br><br>
+                    <span class="math-text" style="font-size: 26px; color: #FFA500;">M<sub>1</sub> &times; V<sub>1</sub> = M<sub>2</sub> &times; V<sub>2</sub></span>
                 </div>
             </div>
             <div class="panel">
                 <h2>兩溶液的混合</h2>
                 <p>將兩杯不同濃度的同種類溶液倒在一起。</p>
                 <ul>
-                    <li><strong style="color: #00FFFF;">核心觀念：</strong> 混合溶液的莫耳濃度等於溶質總莫耳數除以溶液總體積 <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>。</li>
+                    <li><strong style="color: #00FFFF;">核心觀念：</strong> 混合溶液的莫耳濃度等於溶質總莫耳數除以溶液總體積。</li>
                 </ul>
                 <div class="equation-display" style="background-color: rgba(0, 255, 255, 0.1); border: 2px dashed #00FFFF; border-radius: 8px; padding: 20px; text-align: center;">
                     <span class="math-text" style="font-size: 26px; color: #00FFFF;">
@@ -409,7 +414,6 @@
                             <span class="denominator">V<sub>1</sub> + V<sub>2</sub></span>
                         </span>
                     </span>
-                    <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>
                 </div>
             </div>
         </div>
@@ -419,7 +423,7 @@
     <div id="dil-ex1" class="sub-tab-content">
         <div class="panel panel-full" style="border-color: #00FFFF;">
             <h3 style="color: #00FFFF;">基礎演練：單純加水稀釋</h3>
-            <p style="font-size: 24px;">濃度 <span class="math-text nowrap">2 M</span> 的鹽酸水溶液 <span class="math-text nowrap">2 L</span>，加入 <span class="math-text nowrap">3 L</span> 的純水稀釋，請問稀釋後的鹽酸濃度是多少 <span class="math-text nowrap">M</span> <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>？</p>
+            <p style="font-size: 24px;">濃度 <span class="math-text nowrap">2 M</span> 的鹽酸水溶液 <span class="math-text nowrap">2 L</span>，加入 <span class="math-text nowrap">3 L</span> 的純水稀釋，請問稀釋後的鹽酸濃度是多少 <span class="math-text nowrap">M</span>？</p>
             
             <div>
                 <button class="action-btn" onclick="toggleReveal('dil-ex1-hint')" style="border-color: #FFA500; color: #FFA500;">💡 破解提示</button>
@@ -443,7 +447,7 @@
     <div id="dil-ex2" class="sub-tab-content">
         <div class="panel panel-full" style="border-color: #00FFFF;">
             <h3 style="color: #00FFFF;">進階推演：單位陷阱稀釋</h3>
-            <p style="font-size: 24px;">將 <span class="math-text nowrap">6 M</span>、<span class="math-text nowrap">500 mL</span> 的食鹽水溶液，加入 <span class="math-text nowrap">2500 mL</span> 的水稀釋。請問稀釋後的濃度是多少 <span class="math-text nowrap">M</span> <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>？</p>
+            <p style="font-size: 24px;">將 <span class="math-text nowrap">6 M</span>、<span class="math-text nowrap">500 mL</span> 的食鹽水溶液，加入 <span class="math-text nowrap">2500 mL</span> 的水稀釋。請問稀釋後的濃度是多少 <span class="math-text nowrap">M</span>？</p>
             
             <div>
                 <button class="action-btn" onclick="toggleReveal('dil-ex2-hint')" style="border-color: #FFA500; color: #FFA500;">💡 破解提示</button>
@@ -481,18 +485,18 @@
         <div class="grid-container">
             <div class="panel">
                 <h2>水的微弱解離</h2>
-                <p>中性的水溶液中其實含有極微量的離子： <span class="math-text">[H<sup>+</sup>] = 10<sup>-7</sup> M</span> <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>。</p>
+                <p>中性的水溶液中其實含有極微量的離子： <span class="math-text">[H<sup>+</sup>] = 10<sup>-7</sup> M</span>。</p>
                 <p style="text-align: center;"><span class="math-text" style="font-size: 24px;">H<sub>2</sub>O &rarr; H<sup>+</sup> + OH<sup>-</sup></span></p>
-                <p>在正常的情況下 (25&deg;C, 1atm)，水溶液中氫離子與氫氧根離子乘積為一個常數 <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>：</p>
+                <p>在正常的情況下 (25&deg;C, 1atm)，水溶液中氫離子與氫氧根離子乘積為一個常數：</p>
                 <div class="highlight-box" style="text-align: center;">
-                    <span class="math-text" style="font-size: 24px; color: #FFFF00;">[H<sup>+</sup>] &times; [OH<sup>-</sup>] = 10<sup>-14</sup></span>
+                    <span class="math-text" style="font-size: 24px; color: #FFFF00;">[H<sup>+</sup>] &times; [OH<sup>-</sup>] = 10<sup>-14</sup> M<sup>2</sup></span>
                 </div>
                 <p style="text-align: center; margin-top: 10px; color: #9fb0a8;">※ 中括號 <span class="math-text">[ ]</span> 代表該離子的莫耳濃度。</p>
             </div>
             <div class="panel">
                 <h2>pH 值的意義</h2>
-                <p>pH 數值愈小代表愈酸，數值愈大代表愈鹼 <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>：</p>
-                <p style="text-align: center; font-size: 22px;">若 <span class="math-text">[H<sup>+</sup>] = 10<sup>-a</sup> M</span> ，則 <span class="math-text" style="color: #7CFC00;">pH = a</span> <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span></p>
+                <p>pH 數值愈小代表愈酸，數值愈大代表愈鹼：</p>
+                <p style="text-align: center; font-size: 22px;">若 <span class="math-text">[H<sup>+</sup>] = 10<sup>-a</sup> M</span> ，則 <span class="math-text" style="color: #7CFC00;">pH = a</span></p>
                 <table>
                     <tr>
                         <th style="width: 25%;">酸鹼性</th>
@@ -523,7 +527,7 @@
     <div id="ph-ex1" class="sub-tab-content">
         <div class="panel panel-full" style="border-color: #00FFFF;">
             <h3 style="color: #00FFFF;">基礎演練：pH 值的直覺判定</h3>
-            <p style="font-size: 24px;">某杯水溶液的氫離子濃度為 <span class="math-text nowrap">[H<sup>+</sup>] = 10<sup>-3</sup> M</span>，請問此水溶液的 pH 值為何？呈酸性還是鹼性 <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>？</p>
+            <p style="font-size: 24px;">某杯水溶液的氫離子濃度為 <span class="math-text nowrap">[H<sup>+</sup>] = 10<sup>-3</sup> M</span>，請問此水溶液的 pH 值為何？呈酸性還是鹼性？</p>
             
             <div>
                 <button class="action-btn" onclick="toggleReveal('ph-ex1-hint')" style="border-color: #FFA500; color: #FFA500;">💡 破解提示</button>
@@ -547,7 +551,7 @@
     <div id="ph-ex2" class="sub-tab-content">
         <div class="panel panel-full" style="border-color: #00FFFF;">
             <h3 style="color: #00FFFF;">進階推演：鹼性溶液的反向計算</h3>
-            <p style="font-size: 24px;">某杯氫氧化鈉 (<span class="math-text nowrap">NaOH</span>) 水溶液的濃度為 <span class="math-text nowrap">0.1 M</span>，請問該溶液的 pH 值為何 <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>？</p>
+            <p style="font-size: 24px;">某杯氫氧化鈉 (<span class="math-text nowrap">NaOH</span>) 水溶液的濃度為 <span class="math-text nowrap">0.1 M</span>，請問該溶液的 pH 值為何？</p>
             
             <div>
                 <button class="action-btn" onclick="toggleReveal('ph-ex2-hint')" style="border-color: #FFA500; color: #FFA500;">💡 破解提示</button>
@@ -571,7 +575,7 @@
     <div id="ph-ex3" class="sub-tab-content">
         <div class="panel panel-full" style="border-color: #FF69B4;">
             <h3 style="color: #FF69B4;">大魔王資優挑戰：極端酸鹼中和與負數 pH 值</h3>
-            <p style="font-size: 24px;">將 <span class="math-text nowrap">2 M</span> 的硫酸 (<span class="math-text nowrap">H<sub>2</sub>SO<sub>4</sub></span>) <span class="math-text nowrap">3 L</span>，與 <span class="math-text nowrap">1 M</span> 的氫氧化鈉 (<span class="math-text nowrap">NaOH</span>) <span class="math-text nowrap">2 L</span> 混合。完全中和後，溶液殘存的 <span class="math-text nowrap">[H<sup>+</sup>]</span> 為何？最終 pH 值大約落在哪個範圍 <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>？</p>
+            <p style="font-size: 24px;">將 <span class="math-text nowrap">2 M</span> 的硫酸 (<span class="math-text nowrap">H<sub>2</sub>SO<sub>4</sub></span>) <span class="math-text nowrap">3 L</span>，與 <span class="math-text nowrap">1 M</span> 的氫氧化鈉 (<span class="math-text nowrap">NaOH</span>) <span class="math-text nowrap">2 L</span> 混合。完全中和後，溶液殘存的 <span class="math-text nowrap">[H<sup>+</sup>]</span> 為何？最終 pH 值大約落在哪個範圍？</p>
             
             <div>
                 <button class="action-btn" onclick="toggleReveal('ph-ex3-hint')" style="border-color: #FFA500; color: #FFA500;">💡 破解提示</button>
@@ -582,7 +586,7 @@
                 <strong style="color: #FFA500;">提示：</strong><br>第一步：分別算出 <span class="math-text nowrap">H<sup>+</sup></span> 與 <span class="math-text nowrap">OH<sup>-</sup></span> 的「總莫耳數」。（注意！1 個硫酸分子會解離出 2 個 <span class="math-text nowrap">H<sup>+</sup></span>）。<br>第二步：將兩者互相抵銷（中和），看誰剩下多少莫耳。<br>第三步：除以「總體積」算出殘留離子的濃度，再推估 pH 範圍。
             </div>
             <div id="ph-ex3-ans" class="reveal-box" style="border-color: #7CFC00; background-color: rgba(124, 252, 0, 0.08);">
-                <strong style="color: #7CFC00;">神級解答解析：</strong><br>
+                <strong style="color: #7CFC00;">解答解析：</strong><br>
                 1. 酸的解離：<span class="math-text nowrap">H<sup>+</sup></span> 莫耳數 = <span class="math-text nowrap">2 M &times; 3 L &times; 2 = 12 mol</span>。<br>
                 2. 鹼的解離：<span class="math-text nowrap">OH<sup>-</sup></span> 莫耳數 = <span class="math-text nowrap">1 M &times; 2 L &times; 1 = 2 mol</span>。<br>
                 3. 完全中和後，<span class="math-text nowrap">H<sup>+</sup></span> 剩下 <span class="math-text nowrap">12 - 2 = 10 mol</span>。<br>
@@ -602,7 +606,7 @@
     <div class="grid-container">
         <div class="panel">
             <h2>實驗室人造指示劑</h2>
-            <p>不同的指示劑有不同的變色範圍，常用來快速檢驗溶液的酸鹼性 <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>：</p>
+            <p>不同的指示劑有不同的變色範圍，常用來快速檢驗溶液的酸鹼性：</p>
             <table>
                 <tr>
                     <th style="width: 25%;">指示劑</th>
@@ -632,7 +636,7 @@
         </div>
         <div class="panel">
             <h2>大自然的酸鹼密碼</h2>
-            <p>許多植物的汁液中含有花青素，這些天然色素會隨著環境的 pH 值改變顏色，是大自然最棒的指示劑 <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>：</p>
+            <p>許多植物的汁液中含有花青素，這些天然色素會隨著環境的 pH 值改變顏色，是大自然最棒的指示劑：</p>
             <ul>
                 <li><strong style="color: #d4a5a5;">紫甘藍 (紫色高麗菜)：</strong> 切碎後泡熱水萃取出的紫色汁液，遇酸變偏紅色，遇鹼變偏藍綠色。</li>
                 <li><strong style="color: #FFA500;">紅鳳菜：</strong> 炒菜時流出的紫紅色湯汁，滴入檸檬汁（酸）會變鮮紅，滴入小蘇打水（鹼）會變藍綠。</li>
@@ -657,7 +661,7 @@
                 <button class="action-btn" id="btn-reset" onclick="triggerMixLab('reset')" style="border-color: #FFFFFF; color: #FFFFFF; margin-top: 0;">🔄 清空燒杯</button>
             </div>
             <div class="canvas-container" style="margin-bottom: 0;">
-                <canvas id="mixCanvas"></canvas>
+                <canvas id="mixCanvas" class="large-canvas"></canvas>
             </div>
         </div>
 
@@ -671,12 +675,12 @@
 
             <!-- 問題區 -->
             <div id="mix-q" class="sub-tab-content active">
-                <h2 style="color: #FF69B4;">經典混合濃度計算</h2>
+                <h2 style="color: #FF69B4;">經典混合濃度模擬</h2>
                 <p>抽象的數字運算，透過視覺化傾倒累積，一切都會變得清晰無比！請操作左側實驗台。</p>
                 <div class="highlight-box" style="border-color: #FF69B4; background-color: rgba(255, 105, 180, 0.08);">
                     <p style="margin: 0; font-size: 22px; color: #FFFFFF;">
                         <strong>資優挑戰：</strong><br>
-                        取 <span class="math-text nowrap">100 mL</span> 濃度為 <span class="math-text nowrap">3 M</span> 的鹽酸，與 <span class="math-text nowrap">300 mL</span> 濃度為 <span class="math-text nowrap">1 M</span> 的鹽酸混合後，請問混合溶液的最終濃度為多少 <span class="math-text nowrap">M</span> <span style="font-size: 14px; color: #9fb0a8;">[cite: 1]</span>？
+                        取 <span class="math-text nowrap">100 mL</span> 濃度為 <span class="math-text nowrap">3 M</span> 的鹽酸，與 <span class="math-text nowrap">300 mL</span> 濃度為 <span class="math-text nowrap">1 M</span> 的鹽酸混合後，請問混合溶液的最終濃度為多少 <span class="math-text nowrap">M</span>？
                     </p>
                 </div>
             </div>
@@ -735,9 +739,12 @@
         document.getElementById(tabId).classList.add('active');
         event.currentTarget.classList.add('active');
         
-        if (tabId === 'lab') {
+        if (tabId === 'molarity') {
+            initConceptLab();
+        } else if (tabId === 'lab') {
             initMixLab();
         } else {
+            cancelAnimationFrame(conceptAnimId);
             cancelAnimationFrame(mixAnimId);
         }
     }
@@ -763,7 +770,217 @@
     }
 
     // ==========================================
-    // 濃度混合實驗室 Canvas
+    // 第一分頁：標準溶液配製儀表板 Canvas
+    // ==========================================
+    const conceptCanvas = document.getElementById('conceptCanvas');
+    const conceptCtx = conceptCanvas ? conceptCanvas.getContext('2d') : null;
+    let conceptAnimId;
+    let conceptState = 0; // 0: idle, 1: solute added, 2: little water+stir, 3: full water
+    let conceptFrame = 0;
+    
+    let conceptParticles = [];
+    let conceptWaterLevel = 0;
+
+    function initConceptLab() {
+        if (!conceptCanvas) return;
+        conceptCanvas.width = conceptCanvas.parentElement.clientWidth;
+        conceptCanvas.height = 340;
+        triggerConcept('idle');
+    }
+
+    function triggerConcept(action) {
+        conceptFrame = 0;
+        if (action === 'idle' || action === 'reset') {
+            conceptState = 0;
+            conceptParticles = [];
+            conceptWaterLevel = 0;
+            document.getElementById('btn-concept-solute').disabled = false;
+            document.getElementById('btn-concept-solute').classList.remove('active');
+            document.getElementById('btn-concept-stir').disabled = true;
+            document.getElementById('btn-concept-stir').classList.remove('active');
+            document.getElementById('btn-concept-water').disabled = true;
+            document.getElementById('btn-concept-water').classList.remove('active');
+        } else if (action === 'solute') {
+            conceptState = 1;
+            document.getElementById('btn-concept-solute').disabled = true;
+            document.getElementById('btn-concept-solute').classList.add('active');
+            document.getElementById('btn-concept-stir').disabled = false;
+            
+            // 產生掉落的溶質晶體
+            for(let i=0; i<30; i++) {
+                conceptParticles.push({
+                    x: (conceptCanvas.width/2 - 100) + (Math.random()-0.5)*50,
+                    y: 40 + Math.random()*40,
+                    vx: (Math.random()-0.5)*2,
+                    vy: Math.random()*2 + 2,
+                    size: 4
+                });
+            }
+        } else if (action === 'stir') {
+            conceptState = 2;
+            document.getElementById('btn-concept-stir').disabled = true;
+            document.getElementById('btn-concept-stir').classList.add('active');
+            document.getElementById('btn-concept-water').disabled = false;
+        } else if (action === 'water') {
+            conceptState = 3;
+            document.getElementById('btn-concept-water').disabled = true;
+            document.getElementById('btn-concept-water').classList.add('active');
+        }
+
+        cancelAnimationFrame(conceptAnimId);
+        conceptAnimId = requestAnimationFrame(animateConceptLab);
+    }
+
+    function animateConceptLab() {
+        if (!conceptCtx) return;
+        conceptFrame++;
+        conceptCtx.fillStyle = '#0b1813';
+        conceptCtx.fillRect(0, 0, conceptCanvas.width, conceptCanvas.height);
+        
+        let cx = conceptCanvas.width / 2;
+        let cy = conceptCanvas.height / 2;
+        
+        // --- 畫左側的杯子 (移向左邊) ---
+        let cupX = cx - 100;
+        let cupY = cy + 20;
+        
+        // 水位邏輯
+        if (conceptState === 2 && conceptWaterLevel < 30) {
+            conceptWaterLevel += 1; // 加少量水
+        } else if (conceptState === 3 && conceptWaterLevel < 120) {
+            conceptWaterLevel += 2; // 加水至刻度
+        }
+
+        if (conceptWaterLevel > 0) {
+            conceptCtx.fillStyle = 'rgba(0, 255, 255, 0.4)'; 
+            conceptCtx.fillRect(cupX - 35, cupY + 60 - conceptWaterLevel, 70, conceptWaterLevel);
+        }
+
+        // 畫杯子外框
+        conceptCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        conceptCtx.lineWidth = 4;
+        conceptCtx.beginPath();
+        conceptCtx.moveTo(cupX - 40, cupY - 80);
+        conceptCtx.lineTo(cupX - 30, cupY + 60);
+        conceptCtx.lineTo(cupX + 30, cupY + 60);
+        conceptCtx.lineTo(cupX + 40, cupY - 80);
+        conceptCtx.stroke();
+
+        // 刻度線
+        conceptCtx.strokeStyle = '#00FFFF';
+        conceptCtx.lineWidth = 2;
+        conceptCtx.beginPath();
+        conceptCtx.moveTo(cupX - 50, cupY - 60);
+        conceptCtx.lineTo(cupX - 35, cupY - 60);
+        conceptCtx.stroke();
+        conceptCtx.fillStyle = '#00FFFF';
+        conceptCtx.font = '14px Verdana';
+        conceptCtx.textAlign = 'right';
+        conceptCtx.fillText('1L', cupX - 55, cupY - 55);
+
+        // 攪拌溶解邏輯 (狀態2)
+        if (conceptState >= 2) {
+            for (let i = conceptParticles.length-1; i >= 0; i--) {
+                let p = conceptParticles[i];
+                if (p.size > 0) {
+                    p.x += (Math.random()-0.5)*2; // 抖動
+                    p.y += (Math.random()-0.5)*2;
+                    p.size -= 0.05; // 逐漸溶解變小
+                }
+            }
+            if (conceptState === 2 && conceptWaterLevel >= 30 && conceptParticles.length > 0 && conceptParticles[0].size > 0) {
+                conceptCtx.fillStyle = '#FF69B4';
+                conceptCtx.textAlign = 'center';
+                conceptCtx.fillText('攪拌溶解中...', cupX, cupY + 90);
+            }
+        }
+
+        // 畫溶質晶體
+        conceptCtx.fillStyle = '#FFA500';
+        for (let p of conceptParticles) {
+            if (p.size > 0) {
+                if (p.y < cupY + 50) {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.2; // 重力
+                }
+                conceptCtx.beginPath();
+                conceptCtx.arc(p.x, p.y, Math.max(p.size, 0), 0, Math.PI*2);
+                conceptCtx.fill();
+            }
+        }
+
+        // --- 畫右側的大公式 ---
+        let formX = cx + 40;
+        let formY = cy - 20;
+        
+        conceptCtx.font = 'bold 24px Verdana';
+        conceptCtx.fillStyle = '#FFFFFF';
+        conceptCtx.textAlign = 'left';
+        conceptCtx.fillText('M = ', formX, formY + 8);
+
+        // 分子 (溶質)
+        conceptCtx.textAlign = 'center';
+        if (conceptState >= 1) {
+            conceptCtx.fillStyle = '#FFA500';
+            conceptCtx.fillText('溶質 (mol)', formX + 122, formY - 15);
+            // 飛入動畫
+            if (conceptState === 1 && conceptFrame < 30) {
+                conceptCtx.globalAlpha = 1 - (conceptFrame/30);
+                conceptCtx.fillText('溶質 (mol)', formX + 122 - (30-conceptFrame)*2, formY - 15);
+                conceptCtx.globalAlpha = 1.0;
+            }
+        } else {
+            conceptCtx.fillStyle = '#9fb0a8';
+            conceptCtx.fillText('溶質 (mol)', formX + 122, formY - 15);
+        }
+
+        // 分數線
+        conceptCtx.strokeStyle = '#FFFFFF';
+        conceptCtx.lineWidth = 3;
+        conceptCtx.beginPath();
+        conceptCtx.moveTo(formX + 55, formY);
+        conceptCtx.lineTo(formX + 190, formY);
+        conceptCtx.stroke();
+
+        // 分母 (溶液體積)
+        if (conceptState >= 3) {
+            conceptCtx.fillStyle = '#00FFFF';
+            conceptCtx.fillText('溶液體積 (L)', formX + 122, formY + 30);
+            if (conceptState === 3 && conceptWaterLevel < 120) {
+                conceptCtx.globalAlpha = (conceptWaterLevel - 30)/90;
+                conceptCtx.fillText('溶液體積 (L)', formX + 122, formY + 30);
+                conceptCtx.globalAlpha = 1.0;
+            }
+        } else {
+            conceptCtx.fillStyle = '#9fb0a8';
+            conceptCtx.fillText('溶液體積 (L)', formX + 122, formY + 30);
+        }
+
+        // 畫連結虛線
+        conceptCtx.setLineDash([5, 5]);
+        conceptCtx.lineWidth = 2;
+        if (conceptState >= 1) {
+            conceptCtx.strokeStyle = 'rgba(255, 165, 0, 0.5)';
+            conceptCtx.beginPath();
+            conceptCtx.moveTo(cupX + 30, cupY + 40); 
+            conceptCtx.lineTo(formX + 122, formY - 5); 
+            conceptCtx.stroke();
+        }
+        if (conceptState >= 3 && conceptWaterLevel >= 120) {
+            conceptCtx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+            conceptCtx.beginPath();
+            conceptCtx.moveTo(cupX + 35, cupY - 60); 
+            conceptCtx.lineTo(formX + 122, formY + 35); 
+            conceptCtx.stroke();
+        }
+        conceptCtx.setLineDash([]);
+
+        conceptAnimId = requestAnimationFrame(animateConceptLab);
+    }
+
+    // ==========================================
+    // 第五分頁：濃度混合實驗室 Canvas
     // ==========================================
     const mixCanvas = document.getElementById('mixCanvas');
     const mixCtx = mixCanvas ? mixCanvas.getContext('2d') : null;
@@ -910,7 +1127,7 @@
             mixCtx.fillRect(px - 5, py, 10, 130);
             
             if (mixFrame % 15 === 0) {
-                floatTexts.push({x: px + 30, y: py + 50, text: '+ 3M', color: '#FF69B4', life: 1});
+                floatTexts.push({x: px + 30, y: py + 50, text: '+ 0.3 mol', color: '#FF69B4', life: 1});
             }
         } else if (mixState === 'pour2' && mixFrame < 160) {
             let px = cx + 40; let py = cy - 180;
@@ -920,7 +1137,7 @@
             mixCtx.fillRect(px - 5, py, 10, 180 - (currentVol/500)*180);
 
             if (mixFrame % 25 === 0) {
-                floatTexts.push({x: px - 60, y: py + 80, text: '+ 1M', color: '#7CFC00', life: 1});
+                floatTexts.push({x: px - 60, y: py + 80, text: '+ 0.3 mol', color: '#7CFC00', life: 1});
             }
         }
 
@@ -946,11 +1163,12 @@
     }
 
     window.addEventListener('resize', () => {
+        if (document.getElementById('molarity').classList.contains('active')) initConceptLab();
         if (document.getElementById('lab').classList.contains('active')) initMixLab();
     });
 
     // 啟動預設
-    initMixLab();
+    initConceptLab();
 </script>
 </body>
 </html>
