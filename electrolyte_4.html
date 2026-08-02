@@ -177,6 +177,12 @@
         border-color: #00FFFF;
         background-color: rgba(0, 255, 255, 0.1);
     }
+    .sub-tab-btn.pro { color: #FF69B4; }
+    .sub-tab-btn.pro.active, .sub-tab-btn.pro:hover {
+        border-color: #FF69B4;
+        background-color: rgba(255, 105, 180, 0.1);
+    }
+
     .sub-tab-content { display: none; }
     .sub-tab-content.active { display: block; animation: fadeIn 0.3s ease; }
 
@@ -278,7 +284,7 @@
                 </div>
                 <ul style="margin-top: 15px;">
                     <li><strong style="color: #FF69B4;">放熱反應：</strong> 中和反應必為放熱反應，混合後水溶液的溫度會<strong style="color: #FF69B4;">上升</strong>。</li>
-                    <li><strong style="color: #7CFC00;">鹽類形成：</strong> 剩下的金屬陽離子（如 <span class="math-text nowrap">Na<sup>+</sup></span>）與非金屬陰離子（如 <span class="math-text nowrap">Cl<sup>-</sup></span>）在蒸乾水分後，會結合形成鹽類晶體。</li>
+                    <li><strong style="color: #7CFC00;">鹽類形成：</strong> 剩下的金屬陽離子與非金屬陰離子在蒸乾水分後，會結合形成鹽類晶體。</li>
                 </ul>
             </div>
         </div>
@@ -296,7 +302,7 @@
             </div>
 
             <div id="neut-ex1-hint" class="reveal-box" style="border-color: #FFA500; background-color: rgba(255, 165, 0, 0.08);">
-                <strong style="color: #FFA500;">提示：</strong><br>遵循「酸 + 鹼 &rarr; 水 + 鹽」的規律。硫酸根離子 (<span class="math-text nowrap">SO<sub>4</sub><sup>2-</sup></span>) 會與鈣離子 (<span class="math-text nowrap">Ca<sup>2+</sup></span>) 結合成硫酸鈣。此外，中和必定是放熱反應。
+                <strong style="color: #FFA500;">提示：</strong><br>遵循「酸 + 鹼 &rarr; 水 + 鹽」的規律。硫酸根離子會與鈣離子結合成硫酸鈣。此外，中和必定是放熱反應。
             </div>
             <div id="neut-ex1-ans" class="reveal-box" style="border-color: #7CFC00; background-color: rgba(124, 252, 0, 0.08);">
                 <strong style="color: #7CFC00;">解答解析：</strong><br>
@@ -312,34 +318,98 @@
 <!-- 分頁二：酸鹼滴定實驗 -->
 <!-- ========================================== -->
 <div id="titration" class="tab-content">
-    <div class="grid-container">
-        <!-- 左欄：動態模擬器 -->
-        <div class="panel" style="border-color: #FFA500;">
-            <h2>滴定變色模擬器</h2>
-            <div class="lab-controls">
-                <button class="action-btn" onclick="dropNaOH()" style="border-color: #00FFFF; color: #00FFFF;">💧 滴入 NaOH</button>
-                <button class="action-btn" onclick="resetTitration()" style="border-color: #9fb0a8; color: #9fb0a8;">🔄 重新實驗</button>
-            </div>
-            <div class="canvas-container">
-                <canvas id="titrationCanvas"></canvas>
-            </div>
-            <p id="titration-status" style="text-align: center; margin: 0; color: #7CFC00; font-weight: bold;">目前狀態：酸性 (無色)</p>
-        </div>
+    
+    <div class="sub-tab-container">
+        <button class="sub-tab-btn active" onclick="openSubTab('tit', 'tit-anim', this)">自動滴定實驗</button>
+        <button class="sub-tab-btn pro" onclick="openSubTab('tit', 'tit-pro1', this)">資優挑戰：滴定計算(例題)</button>
+        <button class="sub-tab-btn pro" onclick="openSubTab('tit', 'tit-pro2', this)">資優挑戰：未知濃度(演練)</button>
+    </div>
 
-        <!-- 右欄：原理說明 -->
-        <div class="panel">
-            <h2>標準滴定裝置</h2>
-            <ul>
-                <li><strong style="color: #00FFFF;">滴定管 (上方)：</strong> 裝入已知濃度的鹼性溶液（如 <span class="math-text nowrap">1 M</span> 氫氧化鈉）。</li>
-                <li><strong style="color: #00FFFF;">錐形瓶 (下方)：</strong> 裝入未知濃度的酸性溶液（如鹽酸），並滴入數滴<strong style="color: #FFFF00;">酚酞指示劑</strong>。</li>
-            </ul>
-            
-            <div class="highlight-box" style="margin-top: 10px;">
-                <h3 style="color: #7CFC00; margin-top: 0;">變色瞬間 (滴定終點)</h3>
-                <p style="margin-bottom: 0;">滴定前，錐形瓶內的酸性溶液加了酚酞呈<strong style="color: #FFFFFF;">無色</strong>。隨著氫氧化鈉不斷滴入，當溶液中的 <span class="math-text nowrap">H<sup>+</sup></span> 被完全中和，只要再多滴一滴鹼，溶液就會瞬間變成<strong style="color: #FF69B4;">粉紅色</strong>，此時應立即停止滴定，並讀取消耗的體積！</p>
+    <!-- 自動滴定動畫 -->
+    <div id="tit-anim" class="sub-tab-content active">
+        <div class="grid-container">
+            <!-- 左欄：動態自動模擬器 -->
+            <div class="panel" style="border-color: #FFA500;">
+                <h2>自動滴定實驗機</h2>
+                <div class="lab-controls">
+                    <button class="action-btn" id="btn-start-tit" onclick="startAutoTitration()" style="border-color: #7CFC00; color: #7CFC00;">▶ 開始自動滴定</button>
+                    <button class="action-btn" onclick="resetTitration()" style="border-color: #9fb0a8; color: #9fb0a8;">🔄 重置</button>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="titrationCanvas"></canvas>
+                </div>
+                <p id="titration-status" style="text-align: center; margin: 0; color: #7CFC00; font-weight: bold;">目前狀態：等待開始...</p>
+            </div>
+
+            <!-- 右欄：原理說明 -->
+            <div class="panel">
+                <h2>滴定實驗三回合觀察</h2>
+                <ul>
+                    <li><strong style="color: #FFA500;">第 1~2 回合：</strong> 滴入鹼液後搖晃，雖然局部接觸會短暫出現粉紅色，但迅速被酸中和而消失，整瓶保持無色。</li>
+                    <li><strong style="color: #FF69B4;">第 3 回合 (滴定終點)：</strong> 當酸被完全中和的瞬間，多加一滴鹼就會讓整瓶指示劑呈現<strong style="color: #FF69B4;">均勻的淡粉紅色</strong>，此時實驗成功！</li>
+                </ul>
+                <div class="highlight-box" style="margin-top: auto;">
+                    <h3 style="color: #7CFC00; margin-top: 0; font-size: 20px;">💡 滴定計算核心公式</h3>
+                    <p style="text-align: center; margin-bottom: 0;">
+                        <span class="math-text" style="font-size: 22px; color: #FFFF00;">
+                            n &times; M<sub>1</sub> &times; V<sub>1</sub> = n' &times; M<sub>2</sub> &times; V<sub>2</sub>
+                        </span>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- 資優挑戰 1：例題講解 -->
+    <div id="tit-pro1" class="sub-tab-content">
+        <div class="panel panel-full" style="border-color: #FF69B4;">
+            <h3 style="color: #FF69B4;">資優班專屬：已知滴定未知濃度 (觀念講解)</h3>
+            <p style="font-size: 22px;"><strong>【題目】</strong>取 <span class="math-text nowrap">20 mL</span>、濃度未知之氫氧化鈉 (<span class="math-text nowrap">NaOH</span>) 水溶液，以 <span class="math-text nowrap">0.5 M</span> 的鹽酸 (<span class="math-text nowrap">HCl</span>) 進行滴定。當達到滴定終點時，剛好消耗了 <span class="math-text nowrap">40 mL</span> 的鹽酸。請問該氫氧化鈉溶液的濃度為多少 <span class="math-text nowrap">M</span>？</p>
+            
+            <div>
+                <button class="action-btn" onclick="toggleReveal('tit-p1-hint')" style="border-color: #FFA500; color: #FFA500;">💡 解題提示 (提示)</button>
+                <button class="action-btn" onclick="toggleReveal('tit-p1-ans')" style="border-color: #7CFC00; color: #7CFC00;">📝 完整解答 (解答)</button>
+            </div>
+
+            <div id="tit-p1-hint" class="reveal-box" style="border-color: #FFA500; background-color: rgba(255, 165, 0, 0.08);">
+                <strong style="color: #FFA500;">提示：</strong><br>中和的本質是「酸提供的 <span class="math-text nowrap">H<sup>+</sup> 莫耳數</span> = 鹼提供的 <span class="math-text nowrap">OH<sup>-</sup> 莫耳數</span>」。<br>代入公式：<span class="math-text nowrap">酸的濃度 &times; 體積 &times; 價數 = 鹼的濃度 &times; 體積 &times; 價數</span>。
+            </div>
+            <div id="tit-p1-ans" class="reveal-box" style="border-color: #7CFC00; background-color: rgba(124, 252, 0, 0.08);">
+                <strong style="color: #7CFC00;">解答解析：</strong><br>
+                1. 鹽酸 (<span class="math-text nowrap">HCl</span>) 為單質子酸（1價），氫氧化鈉 (<span class="math-text nowrap">NaOH</span>) 為單酸性鹼（1價）。<br>
+                2. 設未知濃度為 <span class="math-text nowrap">X M</span>。<br>
+                3. 列式計算：<span class="math-text nowrap">0.5 M &times; 40 mL &times; 1 = X M &times; 20 mL &times; 1</span>。<br>
+                4. 解得 <span class="math-text nowrap">X = 1.0 M</span>。<br>
+                <strong style="color: #FFFF00;">答：1.0 M</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- 資優挑戰 2：學生演練 -->
+    <div id="tit-pro2" class="sub-tab-content">
+        <div class="panel panel-full" style="border-color: #FF69B4;">
+            <h3 style="color: #FF69B4;">資優班專屬：雙價酸的中和計算 (學生演練)</h3>
+            <p style="font-size: 22px;"><strong>【題目】</strong>取 <span class="math-text nowrap">50 mL</span> 濃度未知之硫酸 (<span class="math-text nowrap">H<sub>2</sub>SO<sub>4</sub></span>) 水溶液，以 <span class="math-text nowrap">2 M</span> 的氫氧化鈉 (<span class="math-text nowrap">NaOH</span>) 溶液進行滴定。當達到滴定終點時，總共消耗了 <span class="math-text nowrap">100 mL</span> 的氫氧化鈉溶液。請問該硫酸的體積莫耳濃度為多少 <span class="math-text nowrap">M</span>？</p>
+            
+            <div>
+                <button class="action-btn" onclick="toggleReveal('tit-p2-hint')" style="border-color: #FFA500; color: #FFA500;">💡 解題提示 (提示)</button>
+                <button class="action-btn" onclick="toggleReveal('tit-p2-ans')" style="border-color: #7CFC00; color: #7CFC00;">📝 完整解答 (解答)</button>
+            </div>
+
+            <div id="tit-p2-hint" class="reveal-box" style="border-color: #FFA500; background-color: rgba(255, 165, 0, 0.08);">
+                <strong style="color: #FFA500;">提示：</strong><br>千萬別忘記「價數」！硫酸是<strong style="color: #FFFF00;">雙價酸</strong>（每個分子可解離出 2 個 <span class="math-text nowrap">H<sup>+</sup></span>），計算莫耳數時記得乘上 2 喔！
+            </div>
+            <div id="tit-p2-ans" class="reveal-box" style="border-color: #7CFC00; background-color: rgba(124, 252, 0, 0.08);">
+                <strong style="color: #7CFC00;">解答解析：</strong><br>
+                1. 硫酸為 2 價酸，氫氧化鈉為 1 價鹼。<br>
+                2. 設硫酸濃度為 <span class="math-text nowrap">Y M</span>。<br>
+                3. 列式計算：<span class="math-text nowrap">Y M &times; 50 mL &times; 2 = 2 M &times; 100 mL &times; 1</span>。<br>
+                4. 化簡得：<span class="math-text nowrap">100 &times; Y = 200</span>，解得 <span class="math-text nowrap">Y = 2.0 M</span>。<br>
+                <strong style="color: #FFFF00;">答：2.0 M</strong>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <!-- ========================================== -->
@@ -435,7 +505,7 @@
             
             <div style="margin-bottom: 15px;">
                 <h3 style="color: #7CFC00; margin-bottom: 5px;">💊 胃酸與制酸劑 (胃藥)</h3>
-                <p style="margin-top: 0;">人體胃液中含有強酸（鹽酸），幫助消化。當胃酸分泌過多引起不適時，醫生開立的胃藥（制酸劑）成分多為弱鹼性的物質（如碳酸鈣、碳酸氫鈉），以中和過多的胃酸。</p>
+                <p style="margin-top: 0;">人體胃液中含有強酸（鹽酸），幫助消化。當胃酸分泌過多引起不適時，醫生開立的胃藥（制酸劑）成分多為弱鹼性的物質（如碳酸鈣, 碳酸氫鈉），以中和過多的胃酸。</p>
             </div>
 
             <div style="margin-bottom: 15px;">
@@ -487,116 +557,147 @@
     }
 
     // ==========================================
-    // 滴定變色模擬器 Canvas
+    // 自動滴定實驗機 Canvas (完美內部路徑裁剪)
     // ==========================================
     const titCanvas = document.getElementById('titrationCanvas');
     const titCtx = titCanvas ? titCanvas.getContext('2d') : null;
     let titrationAnimId;
     
-    let dropsCount = 0;
-    const maxDrops = 10; // 第10滴變色
-    let fallingDrops = [];
-    let currentColor = 'rgba(200, 200, 200, 0.1)'; // 無色(稍微透白)
+    let titState = 'idle'; 
+    let roundCount = 1; 
+    let titFrame = 0;
+    let currentColor = 'rgba(200, 200, 200, 0.1)'; 
+    let shakeOffset = 0;
 
     function initTitration() {
         if (!titCanvas) return;
         titCanvas.width = titCanvas.parentElement.clientWidth;
         titCanvas.height = 380;
         resetTitration();
-        animateTitration();
     }
 
     function resetTitration() {
-        dropsCount = 0;
-        fallingDrops = [];
+        titState = 'idle';
+        roundCount = 1;
+        titFrame = 0;
         currentColor = 'rgba(200, 200, 200, 0.1)';
-        document.getElementById('titration-status').innerText = '目前狀態：酸性 (無色)';
-        document.getElementById('titration-status').style.color = '#FFFFFF';
+        shakeOffset = 0;
+        document.getElementById('titration-status').innerText = '目前狀態：第 1 回合滴定準備中...';
+        document.getElementById('titration-status').style.color = '#7CFC00';
+        cancelAnimationFrame(titrationAnimId);
+        animateTitration();
     }
 
-    function dropNaOH() {
-        if (dropsCount > maxDrops) return;
-        
-        // 產生一滴液體
-        let cx = titCanvas.width / 2;
-        fallingDrops.push({x: cx, y: 80, vy: 5});
-        dropsCount++;
+    function startAutoTitration() {
+        if (titState === 'dropping' || titState === 'shaking') return;
+        titState = 'dropping';
+        titFrame = 0;
+        document.getElementById('titration-status').innerText = `目前狀態：第 ${roundCount} 回合 - 滴入鹼液中...`;
     }
 
-    function drawFlask(cx, cy, liquidColor) {
-        // 液體
-        titCtx.fillStyle = liquidColor;
+    function drawFlask(cx, cy, liquidColor, offset) {
+        titCtx.save();
+        titCtx.translate(offset, 0); // 搖晃偏移量
+
+        // 1. 定義錐形瓶內壁裁剪遮罩 (確保液體絕不外露)
+        titCtx.save();
         titCtx.beginPath();
-        titCtx.moveTo(cx - 35, cy + 30);
-        titCtx.lineTo(cx - 70, cy + 120);
-        titCtx.lineTo(cx + 70, cy + 120);
-        titCtx.lineTo(cx + 35, cy + 30);
-        titCtx.fill();
+        titCtx.moveTo(cx - 18, cy + 12);
+        titCtx.lineTo(cx - 72, cy + 126);
+        titCtx.lineTo(cx + 72, cy + 126);
+        titCtx.lineTo(cx + 18, cy + 12);
+        titCtx.closePath();
+        titCtx.clip();
 
-        // 錐形瓶外框
-        titCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        // 2. 填充內部液體
+        titCtx.fillStyle = liquidColor;
+        titCtx.fillRect(cx - 100, cy + 35, 200, 100);
+        titCtx.restore(); // 結束裁剪
+
+        // 3. 繪製錐形瓶外框玻璃
+        titCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
         titCtx.lineWidth = 4;
         titCtx.beginPath();
-        titCtx.moveTo(cx - 20, cy - 20); // 瓶口
-        titCtx.lineTo(cx - 20, cy + 10); // 瓶頸
-        titCtx.lineTo(cx - 75, cy + 130); // 瓶身左
-        titCtx.lineTo(cx + 75, cy + 130); // 瓶底
-        titCtx.lineTo(cx + 20, cy + 10); // 瓶身右
-        titCtx.lineTo(cx + 20, cy - 20); // 瓶口右
+        titCtx.moveTo(cx - 20, cy - 25); 
+        titCtx.lineTo(cx - 20, cy + 12); 
+        titCtx.lineTo(cx - 75, cy + 128); 
+        titCtx.lineTo(cx + 75, cy + 128); 
+        titCtx.lineTo(cx + 20, cy + 12); 
+        titCtx.lineTo(cx + 20, cy - 25); 
         titCtx.stroke();
+
+        titCtx.restore();
     }
 
     function animateTitration() {
         if (!titCtx) return;
+        titFrame++;
         titCtx.fillStyle = '#0b1813';
         titCtx.fillRect(0, 0, titCanvas.width, titCanvas.height);
         
         let cx = titCanvas.width / 2;
-        let cy = 180; // 錐形瓶中心參考點
+        let cy = 180; 
 
         // 畫上方滴定管
         titCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
         titCtx.lineWidth = 3;
         titCtx.strokeRect(cx - 8, 20, 16, 100);
-        // 滴定管內的鹼液
         titCtx.fillStyle = 'rgba(0, 255, 255, 0.4)';
         titCtx.fillRect(cx - 6, 22, 12, 96);
-        // 活塞
         titCtx.fillStyle = '#AAAAAA';
         titCtx.fillRect(cx - 15, 100, 30, 8);
 
-        // 更新落下的水滴
-        titCtx.fillStyle = 'rgba(0, 255, 255, 0.8)';
-        for (let i = fallingDrops.length - 1; i >= 0; i--) {
-            let d = fallingDrops[i];
-            d.y += d.vy;
+        // 自動滴定邏輯
+        if (titState === 'dropping') {
+            titCtx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+            let dropY = 120 + (titFrame % 30) * 3;
             titCtx.beginPath();
-            titCtx.arc(d.x, d.y, 4, 0, Math.PI*2);
+            titCtx.arc(cx, dropY, 4, 0, Math.PI*2);
             titCtx.fill();
 
-            // 落入液面
-            if (d.y > cy + 40) {
-                fallingDrops.splice(i, 1);
-                
-                // 變色判定
-                if (dropsCount >= maxDrops) {
-                    currentColor = 'rgba(255, 105, 180, 0.7)'; // 變成粉紅
-                    document.getElementById('titration-status').innerText = '到達終點：瞬間變粉紅色！';
+            if (titFrame > 90) { 
+                titState = 'shaking';
+                titFrame = 0;
+                document.getElementById('titration-status').innerText = `目前狀態：第 ${roundCount} 回合 - 搖晃錐形瓶中...`;
+                document.getElementById('titration-status').style.color = '#FFA500';
+            }
+        } else if (titState === 'shaking') {
+            shakeOffset = Math.sin(titFrame * 0.3) * 6;
+
+            if (roundCount < 3) {
+                if (titFrame < 40) {
+                    currentColor = 'rgba(255, 105, 180, 0.4)'; 
+                } else {
+                    currentColor = 'rgba(200, 200, 200, 0.1)'; 
+                }
+            } else {
+                currentColor = 'rgba(255, 105, 180, 0.7)';
+            }
+
+            if (titFrame > 70) { 
+                shakeOffset = 0;
+                if (roundCount < 3) {
+                    roundCount++;
+                    titState = 'dropping';
+                    titFrame = 0;
+                    document.getElementById('titration-status').innerText = `目前狀態：第 ${roundCount} 回合 - 繼續滴定...`;
+                    document.getElementById('titration-status').style.color = '#7CFC00';
+                } else {
+                    titState = 'done';
+                    document.getElementById('titration-status').innerText = '🎉 滴定成功！第 3 回合到達終點（粉紅色）！';
                     document.getElementById('titration-status').style.color = '#FF69B4';
                 }
             }
         }
 
         // 畫下方錐形瓶
-        drawFlask(cx, cy, currentColor);
+        drawFlask(cx, cy, currentColor, shakeOffset);
 
         titrationAnimId = requestAnimationFrame(animateTitration);
     }
 
-    window.addEventListener('resize', () => {
-        if (document.getElementById('titration').classList.contains('active')) initTitration();
-    });
-
+    // 啟動預設
+    initTitration();
 </script>
 </body>
 </html>
