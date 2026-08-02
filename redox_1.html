@@ -378,7 +378,7 @@
                 </tr>
                 <tr>
                     <td class="math-text" style="border: 1px solid #7CFC00; padding: 8px; color: #00FFFF; text-align: center;">Mg</td>
-                    <td style="border: 1px solid #7CFC00; padding: 8px; text-align: center;">刺眼強烈白光</td>
+                    <td style="border: 1px solid #7CFC00; padding: 8px; text-align: center;">0.3秒極速爆燃強光</td>
                     <td style="border: 1px solid #7CFC00; padding: 8px; color: #8a2be2; font-weight: bold; text-align: center;">藍紫色 (鹼性)</td>
                 </tr>
                 <tr>
@@ -485,7 +485,7 @@
         'Mg': { 
             name: '鎂 (Mg)', 
             initDesc: '準備將鎂粉放入燃燒匙中加熱。請點擊「🔥 點火燃燒」。',
-            burnDesc: '【極致星芒特效】鎂帶發生劇烈燃燒，向四周噴射出細小且刺眼的<strong style="color:#FFFFFF;">閃爍白光火花</strong>！燃燒結束後，在燃燒匙留下白色的氧化鎂粉末。', 
+            burnDesc: '【閃光爆彈】短短 0.3 秒的劇烈爆燃！向四周噴射出刺眼強光，並在桌面上<strong style="color:#FFFFFF;">灑滿白色的氧化鎂粉末</strong>！', 
             testDesc: '氧化鎂微溶於水。滴入廣用指示劑後，水溶液呈現<strong style="color:#8a2be2;">藍紫色 (鹼性)</strong>。',
             burnEq: '<span class="nowrap math-text">2 Mg + O<sub>2</sub> &rarr; 2 MgO</span>',
             testEq: '<span class="nowrap math-text">MgO + H<sub>2</sub>O &rarr; Mg(OH)<sub>2</sub></span>',
@@ -547,11 +547,14 @@
     let frameCount = 0;
     let burnTimer = 0;
     let pokeCount = 0; 
-    const BURN_DURATION = 180; 
+    
+    // 鎂 20 幀 (0.3秒)，其他 180 幀 (3秒)
+    const getBurnDuration = (el) => el === 'Mg' ? 20 : 180;
 
     let particles = [];
     let smokeParticles = [];
     let sparks = []; 
+    let groundPowder = []; // 落地粉末陣列
 
     function resizeCanvas() {
         if (!canvas) return;
@@ -576,6 +579,7 @@
         if(currentState === 'burning' || currentState === 'testing') return; 
         currentElement = el;
         pokeCount = 0;
+        groundPowder = []; // 切換元素時清空滿地粉末
         document.querySelectorAll('.element-btn').forEach(btn => btn.classList.remove('active'));
         event.currentTarget.classList.add('active');
         
@@ -617,6 +621,7 @@
 
         if (action === 'burn') {
             burnTimer = 0;
+            groundPowder = []; // 點燃時清空上次粉末
             currentState = 'burning';
             btnBurn.disabled = true;
             btnTest.disabled = true; 
@@ -668,6 +673,7 @@
         document.getElementById('btn-test').disabled = true;
         document.getElementById('btn-poke').style.display = 'none';
         pokeCount = 0;
+        groundPowder = []; // 重置時清空滿地粉末
         
         if(ctx) {
             ctx.globalCompositeOperation = 'source-over';
@@ -739,7 +745,6 @@
         }
     }
 
-    // 四角星芒繪圖函數 (專為鎂帶極致強光設計)
     function drawSparkle(ctx, x, y, size, alpha) {
         ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
         ctx.beginPath();
@@ -753,6 +758,16 @@
         ctx.quadraticCurveTo(x, y, x - size*0.1, y - size*0.1);
         ctx.closePath();
         ctx.fill();
+    }
+
+    function drawGroundPowder() {
+        if (!ctx || groundPowder.length === 0) return;
+        ctx.fillStyle = '#FFFFFF';
+        for(let p of groundPowder) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+            ctx.fill();
+        }
     }
 
     function getInitialPowderColor() {
@@ -816,54 +831,85 @@
         
         frameCount++;
         let isAnimating = false;
+        let duration = getBurnDuration(currentElement);
 
         if (currentState === 'burning') {
             isAnimating = true;
             burnTimer++;
 
-            // === 環境爆閃特效 (專屬鎂) ===
             if (currentElement === 'Mg') {
                 ctx.globalCompositeOperation = 'lighter';
-                if (Math.random() > 0.6) {
-                    ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.15})`;
+                if (Math.random() > 0.4) {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.3})`;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
             }
 
             drawLamp(true);
             drawSpoon(getInitialPowderColor());
+            drawGroundPowder(); // 畫累積在底部的粉末
 
             let spoonX = canvas.width/2;
             let spoonY = canvas.height - 155; 
 
-            // 1. 鎂 (Mg) 視覺極致強化引擎
+            // 1. 鎂 (Mg) 0.3秒極速閃光彈
             if (currentElement === 'Mg') {
                 ctx.globalCompositeOperation = 'lighter';
                 
-                // 大量產生極速火花
-                for(let i=0; i<15; i++) { 
-                    sparks.push({
-                        x: spoonX,
-                        y: spoonY, 
-                        vx: (Math.random() - 0.5) * 45, 
-                        vy: (Math.random() - 1.2) * 40, 
-                        life: 1.0,
-                        decay: Math.random() * 0.05 + 0.02,
-                        size: Math.random() * 2 + 1 
-                    });
+                // 只有在前 20 幀內狂噴火花
+                if (burnTimer <= duration) {
+                    for(let i=0; i<60; i++) { 
+                        sparks.push({
+                            x: spoonX,
+                            y: spoonY, 
+                            vx: (Math.random() - 0.5) * 80, // 初速大幅提升
+                            vy: (Math.random() - 1.2) * 60, 
+                            life: 1.0,
+                            decay: Math.random() * 0.08 + 0.04,
+                            size: Math.random() * 3 + 1 
+                        });
+                    }
+                    
+                    // 核心八角強光
+                    let intensity = Math.abs(Math.sin(frameCount * 0.5));
+                    let coreSize = 90 + intensity * 50; 
+                    
+                    ctx.shadowColor = '#FFFFFF';
+                    ctx.shadowBlur = 60; 
+                    drawSparkle(ctx, spoonX, spoonY, coreSize, 1.0);
+                    
+                    ctx.save();
+                    ctx.translate(spoonX, spoonY);
+                    ctx.rotate(Math.PI / 4);
+                    drawSparkle(ctx, 0, 0, coreSize * 0.8, 0.8);
+                    ctx.restore();
+
+                    // 中心純白高光核
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.arc(spoonX, spoonY, 20 + intensity * 8, 0, Math.PI*2);
+                    ctx.fill();
                 }
 
-                // 畫火花 (套用強光暈)
+                // 更新火花與落地轉換
                 ctx.shadowColor = '#FFFFFF';
-                ctx.shadowBlur = 10;
+                ctx.shadowBlur = 10; 
                 for(let i = sparks.length - 1; i >= 0; i--) {
                     let s = sparks[i];
                     s.x += s.vx;
                     s.y += s.vy;
-                    s.vy += 0.8; 
+                    s.vy += 3.0; // 強重力
                     s.life -= s.decay;
 
-                    if(s.life <= 0) {
+                    if(s.y >= canvas.height - 5) {
+                        // 撞到底部，變成粉末留存
+                        groundPowder.push({
+                            x: Math.max(10, Math.min(canvas.width - 10, s.x)),
+                            y: canvas.height - Math.random() * 10,
+                            size: s.size * 1.5
+                        });
+                        sparks.splice(i, 1);
+                    } else if(s.life <= 0) {
                         sparks.splice(i, 1);
                     } else {
                         ctx.fillStyle = `rgba(255, 255, 255, ${s.life})`;
@@ -872,29 +918,7 @@
                         ctx.fill();
                     }
                 }
-                ctx.shadowBlur = 0; // 重置光暈以免影響其他元素
-                
-                // 畫巨大核心星芒與極致發光
-                let intensity = Math.abs(Math.sin(frameCount * 0.5));
-                let coreSize = 70 + intensity * 40; 
-                
-                ctx.shadowColor = '#FFFFFF';
-                ctx.shadowBlur = 50; 
-                drawSparkle(ctx, spoonX, spoonY, coreSize, 1.0);
-                
-                ctx.save();
-                ctx.translate(spoonX, spoonY);
-                ctx.rotate(Math.PI / 4);
-                drawSparkle(ctx, 0, 0, coreSize * 0.8, 0.8);
-                ctx.restore();
-
-                // 中心純白高光核
-                ctx.fillStyle = '#FFFFFF';
-                ctx.beginPath();
-                ctx.arc(spoonX, spoonY, 18 + intensity * 5, 0, Math.PI*2);
-                ctx.fill();
                 ctx.shadowBlur = 0; 
-
                 ctx.globalCompositeOperation = 'source-over';
             } 
             
@@ -960,7 +984,7 @@
                 ctx.globalAlpha = 1;
             }
 
-            if (burnTimer > BURN_DURATION) {
+            if (burnTimer > duration) {
                 currentState = 'burned';
                 document.getElementById('btn-test').disabled = false;
                 if(currentElement === 'Zn' && pokeCount === 0) {
@@ -971,20 +995,60 @@
         } else if (currentState === 'burned') {
             drawLamp(false); 
             drawSpoon(getBurnedPowderColor()); 
-            
-            ctx.fillStyle = '#7CFC00';
-            ctx.font = 'bold 20px Verdana';
-            ctx.textAlign = 'center';
-            if(currentElement === 'Zn' && pokeCount === 0) {
-                ctx.fillText('燃燒停止，表面形成保護膜。可點擊「🪡 探針翻開」', canvas.width/2, 40);
-            } else {
-                ctx.fillText('燃燒結束，請點擊「💧 溶於水測試」', canvas.width/2, 40);
+            drawGroundPowder();
+
+            let hasActiveSparks = sparks.length > 0;
+            if (hasActiveSparks) isAnimating = true;
+
+            // 讓鎂燃燒後的火花繼續落地
+            if (currentElement === 'Mg' && hasActiveSparks) {
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.shadowColor = '#FFFFFF';
+                ctx.shadowBlur = 10; 
+                for(let i = sparks.length - 1; i >= 0; i--) {
+                    let s = sparks[i];
+                    s.x += s.vx;
+                    s.y += s.vy;
+                    s.vy += 3.0; 
+                    s.life -= s.decay;
+
+                    if(s.y >= canvas.height - 5) {
+                        groundPowder.push({
+                            x: Math.max(10, Math.min(canvas.width - 10, s.x)),
+                            y: canvas.height - Math.random() * 10,
+                            size: s.size * 1.5
+                        });
+                        sparks.splice(i, 1);
+                    } else if(s.life <= 0) {
+                        sparks.splice(i, 1);
+                    } else {
+                        ctx.fillStyle = `rgba(255, 255, 255, ${s.life})`;
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                }
+                ctx.shadowBlur = 0; 
+                ctx.globalCompositeOperation = 'source-over';
+            }
+
+            if (!hasActiveSparks) {
+                ctx.fillStyle = '#7CFC00';
+                ctx.font = 'bold 20px Verdana';
+                ctx.textAlign = 'center';
+                if(currentElement === 'Zn' && pokeCount === 0) {
+                    ctx.fillText('燃燒停止，表面形成保護膜。可點擊「🪡 探針翻開」', canvas.width/2, 40);
+                } else {
+                    ctx.fillText('燃燒結束，請點擊「💧 溶於水測試」', canvas.width/2, 40);
+                }
             }
 
         } else if (currentState === 'testing') {
             isAnimating = true;
             let progress = Math.min(frameCount / 100, 1); 
             
+            drawGroundPowder(); // 水測試時粉末依然在
+
             let targetHex = '#7CFC00'; 
             if(currentElement === 'Mg') targetHex = '#8a2be2'; 
             if(currentElement === 'S') targetHex = '#FF0000'; 
