@@ -78,11 +78,7 @@
         white-space: nowrap;
     }
 
-    .nowrap {
-        white-space: nowrap;
-    }
-
-    /* 分頁架構 (無數字符號前綴) */
+    /* 分頁架構 */
     .tab-container {
         display: flex;
         justify-content: center;
@@ -111,6 +107,34 @@
         from { opacity: 0; transform: translateY(5px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    /* 子分頁架構 */
+    .sub-tab-container {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        border-bottom: 2px dashed rgba(255, 255, 255, 0.2);
+        padding-bottom: 10px;
+        justify-content: center;
+    }
+    .sub-tab-btn {
+        background-color: transparent;
+        color: #9fb0a8;
+        border: 2px solid transparent;
+        padding: 8px 16px;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+    .sub-tab-btn.active, .sub-tab-btn:hover {
+        color: #FFA500;
+        border-color: #FFA500;
+        background-color: rgba(255, 165, 0, 0.1);
+    }
+    .sub-tab-content { display: none; }
+    .sub-tab-content.active { display: block; animation: fadeIn 0.3s ease; }
 
     .highlight-box {
         border: 2px dashed #7CFC00;
@@ -177,6 +201,11 @@
         align-items: center;
         justify-content: center;
     }
+
+    /* 表格樣式 */
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #7CFC00; padding: 12px; text-align: center; }
+    th { color: #7CFC00; background-color: rgba(124, 252, 0, 0.1); }
 </style>
 </head>
 <body>
@@ -187,7 +216,7 @@
 
 <div class="tab-container">
     <button class="tab-button active" onclick="openTab('materials')">煉鐵四大原料</button>
-    <button class="tab-button" style="border-color: #FFA500; color: #FFA500;" onclick="openTab('furnace')">🔥 高爐化學交響曲</button>
+    <button class="tab-button" style="border-color: #FFA500; color: #FFA500;" onclick="openTab('furnace')">🔥 高爐與鐵的合金</button>
     <button class="tab-button" onclick="openTab('oxidizers')">生活中的氧化劑</button>
     <button class="tab-button" onclick="openTab('reducers')">生活中的還原劑</button>
 </div>
@@ -212,36 +241,86 @@
                 <li><strong style="color: #00FFFF;">鐵礦：</strong> 主要成分為赤鐵礦（<span class="math-text">Fe<sub>2</sub>O<sub>3</sub></span>），提供鐵元素的來源，在此扮演<strong style="color: #FFA500;">氧化劑</strong>。</li>
                 <li><strong style="color: #00FFFF;">煤焦 (<span class="math-text">C</span>)：</strong> 燃燒提供高溫熱量，並產生一氧化碳 (<span class="math-text">CO</span>) 作為主要的<strong style="color: #FFA500;">還原劑</strong>。</li>
                 <li><strong style="color: #00FFFF;">熱空氣：</strong> 鼓入爐內，提供充足氧氣幫助煤焦燃燒。</li>
-                <li><strong style="color: #00FFFF;">灰石 (<span class="math-text">CaCO<sub>3</sub></span>)：</strong> 作為熔劑，負責與礦石中的泥沙雜質反應，生成容易分離的「熔渣」。</li>
+                <li><strong style="color: #00FFFF;">灰石 (<span class="math-text">CaCO<sub>3</sub></span>)：</strong> 作為熔劑，負責與礦石中的泥沙（<span class="math-text">SiO<sub>2</sub></span>）雜質反應，生成容易分離的「熔渣」。<strong style="color: #FFFF00;">熔渣能浮於鐵水表面防止鐵再度被氧化，且冷卻後可作為水泥與肥料的原料。</strong></li>
             </ul>
         </div>
     </div>
 </div>
 
-<!-- 分頁二：高爐化學交響曲 -->
+<!-- 分頁二：高爐化學交響曲 & 生鐵鋼熟鐵 -->
 <div id="furnace" class="tab-content">
-    <div class="grid-container">
-        <!-- 左欄：動態步驟控制 -->
-        <div class="panel" style="border-color: #FFA500;">
-            <h2>高爐內的化學交響曲</h2>
-            <div class="lab-controls">
-                <button class="action-btn" id="btn-step1" onclick="triggerStep(1)" style="border-color: #FFA500; color: #FFA500;">步驟一：產生還原劑</button>
-                <button class="action-btn" id="btn-step2" onclick="triggerStep(2)" disabled>步驟二：還原鐵礦</button>
-                <button class="action-btn" id="btn-step3" onclick="triggerStep(3)" disabled>步驟三：形成保護熔渣</button>
-                <button class="action-btn" id="btn-reset" onclick="triggerStep(0)" style="border-color: #9fb0a8; color: #9fb0a8; text-align: center; margin-top: 10px;">🔄 重置高爐</button>
+    
+    <!-- 子分頁導覽列 -->
+    <div class="sub-tab-container">
+        <button class="sub-tab-btn active" onclick="openSubTab('sub-anim', this)">高爐冶煉模擬器</button>
+        <button class="sub-tab-btn" onclick="openSubTab('sub-alloys', this)">含碳量與鐵的合金</button>
+    </div>
+
+    <!-- 子分頁 A：高爐動畫 -->
+    <div id="sub-anim" class="sub-tab-content active">
+        <div class="grid-container">
+            <div class="panel" style="border-color: #FFA500;">
+                <h2>高爐內的化學交響曲</h2>
+                <div class="lab-controls">
+                    <button class="action-btn" id="btn-step1" onclick="triggerStep(1)" style="border-color: #FFA500; color: #FFA500;">步驟一：產生還原劑</button>
+                    <button class="action-btn" id="btn-step2" onclick="triggerStep(2)" disabled>步驟二：還原鐵礦</button>
+                    <button class="action-btn" id="btn-step3" onclick="triggerStep(3)" disabled>步驟三：形成保護熔渣</button>
+                    <button class="action-btn" id="btn-reset" onclick="triggerStep(0)" style="border-color: #9fb0a8; color: #9fb0a8; text-align: center; margin-top: 10px;">🔄 重置高爐</button>
+                </div>
+                <div class="equation-display" id="furnace-eq">
+                    <span style="color: #9fb0a8; font-size: 18px;">請依序點擊上方步驟，原料將持續傾瀉入爐</span>
+                </div>
+                <div class="highlight-box" style="margin-top: 15px; padding: 15px;" id="furnace-desc">
+                    高爐已準備就緒。泥沙與雜質混雜在鐵礦中，等待處理。
+                </div>
             </div>
-            <div class="equation-display" id="furnace-eq">
-                <span style="color: #9fb0a8; font-size: 18px;">請依序點擊上方步驟進行冶煉</span>
-            </div>
-            <div class="highlight-box" style="margin-top: 15px; padding: 15px;" id="furnace-desc">
-                高爐已準備就緒。泥沙與雜質混雜在鐵礦中，等待處理。
+
+            <div class="panel" style="padding: 15px;">
+                <div class="canvas-container">
+                    <canvas id="furnaceCanvas"></canvas>
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- 右欄：Canvas 高爐模擬器 -->
-        <div class="panel" style="padding: 15px;">
-            <div class="canvas-container">
-                <canvas id="furnaceCanvas"></canvas>
+    <!-- 子分頁 B：生鐵、鋼、熟鐵 -->
+    <div id="sub-alloys" class="sub-tab-content">
+        <div class="grid-container" style="grid-template-columns: 1fr;">
+            <div class="panel">
+                <h2>生鐵、鋼與熟鐵的差異</h2>
+                <p>剛從高爐底部流出來的液態鐵稱為<strong style="color: #00FFFF;">生鐵</strong>。生鐵裡面含有較多的碳與雜質，後續透過降低含碳量，可以將其冶煉成不同硬度與用途的鐵合金：</p>
+                <div class="highlight-box" style="margin: 10px 0; padding: 15px; border-color: #FFA500; background-color: rgba(255, 165, 0, 0.08);">
+                    <p style="margin: 0; color: #FFFFFF; text-align: center;">
+                        <strong style="color: #FFA500;">🧪 核心觀念：</strong><br>
+                        含碳量決定了鐵的硬度與脆度。<strong style="color: #FFFF00;">含碳量越高，質地越硬但越脆；含碳量越低，延展性越好。</strong>
+                    </p>
+                </div>
+                <table>
+                    <tr>
+                        <th>鐵的種類</th>
+                        <th>含碳量</th>
+                        <th>物理特性</th>
+                        <th>主要用途</th>
+                    </tr>
+                    <tr>
+                        <td style="color: #00FFFF; font-weight: bold;">生鐵 (鑄鐵)</td>
+                        <td style="color: #FFA500;">最高 (&gt; 2%)</td>
+                        <td>質地硬、極脆缺乏延展性、熔點較低。</td>
+                        <td>適合鎔化後灌入模具「鑄造」，如水溝蓋、鑄鐵鍋。</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #00FFFF; font-weight: bold;">鋼</td>
+                        <td style="color: #FFA500;">居中 (0.2% ~ 2%)</td>
+                        <td>兼具硬度與韌性、延展性佳、可鍛打。</td>
+                        <td>建築鋼筋、橋樑結構、車體板金、鋼鐵製品。</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #00FFFF; font-weight: bold;">熟鐵 (鍛鐵)</td>
+                        <td style="color: #FFA500;">最低 (&lt; 0.2%)</td>
+                        <td>純度最高、質地軟、富極佳延展性。</td>
+                        <td>適合高溫「鍛打」與焊接，如鐵絲、鐵釘、鐵藝欄杆。</td>
+                    </tr>
+                </table>
             </div>
         </div>
     </div>
@@ -302,7 +381,7 @@
 </div>
 
 <script>
-    // 分頁切換邏輯
+    // 主分頁切換
     function openTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
@@ -311,7 +390,28 @@
         
         if (tabId === 'furnace') {
             resizeCanvas();
-            renderFurnace(); // 確保切換回來時有畫面
+            renderFurnace();
+            // 預設回到高爐動畫子分頁
+            openSubTab('sub-anim', document.querySelector('.sub-tab-btn'));
+        } else {
+            cancelAnimationFrame(animId);
+        }
+    }
+
+    // 子分頁切換
+    function openSubTab(subTabId, btnElement) {
+        document.querySelectorAll('.sub-tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(subTabId).classList.add('active');
+        btnElement.classList.add('active');
+
+        if (subTabId === 'sub-anim') {
+            resizeCanvas();
+            if (currentStep > 0) {
+                animId = requestAnimationFrame(animateFurnace);
+            } else {
+                renderFurnace();
+            }
         } else {
             cancelAnimationFrame(animId);
         }
@@ -321,36 +421,35 @@
     const canvas = document.getElementById('furnaceCanvas');
     const ctx = canvas ? canvas.getContext('2d') : null;
     let animId;
-    let currentStep = 0; // 0:idle, 1:CO, 2:Fe, 3:Slag
+    let currentStep = 0; 
     let frameCount = 0;
     
     // 動態液面高度控制
-    let targetIronHeight = 0;
     let currentIronHeight = 0;
-    let targetSlagHeight = 0;
     let currentSlagHeight = 0;
 
     // 粒子陣列
     let gasParticles = []; // CO 氣體
     let ironDrops = [];    // 鐵水滴
     let slagDrops = [];    // 熔渣滴
+    let rawMaterials = []; // 從頂部掉落的固體原料
 
     const descriptions = {
         0: {
-            eq: '<span style="color: #9fb0a8; font-size: 18px;">請依序點擊上方步驟進行冶煉</span>',
+            eq: '<span style="color: #9fb0a8; font-size: 18px;">請依序點擊上方步驟，原料將持續傾瀉入爐</span>',
             desc: '高爐已準備就緒。泥沙與雜質混雜在鐵礦中，等待處理。'
         },
         1: {
             eq: '<span class="math-text" style="color: #FFA500;">2 C + O<sub>2</sub> &rarr; 2 CO</span>',
-            desc: '煤焦 (<span class="math-text">C</span>) 遇到熱空氣，發生不完全燃燒，產生大量的一氧化碳 (<span class="math-text">CO</span>) 氣體向上竄升。'
+            desc: '固體原料掉入爐內。底部煤焦 (<span class="math-text">C</span>) 遇到熱空氣，發生不完全燃燒，產生大量的一氧化碳 (<span class="math-text">CO</span>) 氣體向上竄升。'
         },
         2: {
             eq: '<span class="math-text" style="color: #00FFFF;">Fe<sub>2</sub>O<sub>3</sub> + 3 CO &rarr; 2 Fe + 3 CO<sub>2</sub></span>',
-            desc: '一氧化碳將赤鐵礦還原，生成<strong style="color: #FFA500;">液態生鐵</strong>，高溫鐵水滴落並沉積於爐底。'
+            desc: '一氧化碳將赤鐵礦還原。生成<strong style="color: #FFA500;">液態生鐵</strong>，高溫鐵水不斷滴落，並於底部緩慢累積。'
         },
         3: {
             eq: '<span class="math-text" style="color: #7CFC00;">CaO + SiO<sub>2</sub> &rarr; CaSiO<sub>3</sub></span>',
-            desc: '灰石分解出的氧化鈣與泥沙結合形成<strong style="color: #7CFC00;">偏矽酸鈣（熔渣）</strong>。<br>因熔渣密度較小，<strong style="color: #FFFF00;">浮於鐵水上方完美隔絕空氣</strong>，防止鐵塊再度被氧化！'
+            desc: '灰石分解出的氧化鈣與泥沙結合形成<strong style="color: #7CFC00;">偏矽酸鈣（熔渣）</strong>。<br>因熔渣密度較小，<strong style="color: #FFFF00;">浮於鐵水上方完美隔絕空氣</strong>，防止鐵塊再度被氧化！冷卻後的熔渣也可回收作為水泥與肥料的原料。'
         }
     };
 
@@ -361,7 +460,8 @@
         canvas.height = 420;
     }
     window.addEventListener('resize', () => {
-        if (document.getElementById('furnace').classList.contains('active')) {
+        if (document.getElementById('furnace').classList.contains('active') && 
+            document.getElementById('sub-anim').classList.contains('active')) {
             resizeCanvas();
             renderFurnace();
         }
@@ -370,7 +470,6 @@
     function triggerStep(step) {
         currentStep = step;
         
-        // 更新按鈕狀態
         document.getElementById('btn-step1').disabled = (step !== 0);
         document.getElementById('btn-step2').disabled = (step !== 1);
         document.getElementById('btn-step3').disabled = (step !== 2);
@@ -378,63 +477,66 @@
         document.getElementById('btn-step1').classList.remove('active');
         document.getElementById('btn-step2').classList.remove('active');
         document.getElementById('btn-step3').classList.remove('active');
-        
         if(step > 0) document.getElementById(`btn-step${step}`).classList.add('active');
 
-        // 更新解說與公式
         document.getElementById('furnace-eq').innerHTML = descriptions[step].eq;
         document.getElementById('furnace-desc').innerHTML = descriptions[step].desc;
 
-        // 設定物理目標
         if (step === 0) {
-            targetIronHeight = 0;
-            targetSlagHeight = 0;
+            currentIronHeight = 0;
+            currentSlagHeight = 0;
             gasParticles = [];
             ironDrops = [];
             slagDrops = [];
+            rawMaterials = [];
             cancelAnimationFrame(animId);
             renderFurnace();
         } else if (step === 1) {
             cancelAnimationFrame(animId);
             animId = requestAnimationFrame(animateFurnace);
-        } else if (step === 2) {
-            targetIronHeight = 60; // 鐵水累積高度
-        } else if (step === 3) {
-            targetSlagHeight = 25; // 熔渣累積高度
         }
+    }
+
+    function setFurnaceClip(ctx, cx, cy) {
+        ctx.beginPath();
+        ctx.moveTo(cx - 50, 40); 
+        ctx.lineTo(cx + 50, 40); 
+        ctx.lineTo(cx + 120, cy - 100); 
+        ctx.lineTo(cx + 120, cy); 
+        ctx.lineTo(cx - 120, cy); 
+        ctx.lineTo(cx - 120, cy - 100); 
+        ctx.closePath();
+        ctx.clip();
     }
 
     function drawStaticFurnace() {
         let cx = canvas.width / 2;
-        let cy = canvas.height - 40; // 爐底
+        let cy = canvas.height - 40; 
         
-        // 畫高爐外殼 (厚重工業感)
         ctx.strokeStyle = '#9fb0a8';
         ctx.lineWidth = 12;
         ctx.lineJoin = 'round';
         ctx.beginPath();
-        ctx.moveTo(cx - 50, 40); // 爐頂左
-        ctx.lineTo(cx + 50, 40); // 爐頂右
-        ctx.lineTo(cx + 120, cy - 100); // 爐腰右
-        ctx.lineTo(cx + 120, cy); // 爐底右
-        ctx.lineTo(cx - 120, cy); // 爐底左
-        ctx.lineTo(cx - 120, cy - 100); // 爐腰左
+        ctx.moveTo(cx - 50, 40); 
+        ctx.lineTo(cx + 50, 40); 
+        ctx.lineTo(cx + 120, cy - 100); 
+        ctx.lineTo(cx + 120, cy); 
+        ctx.lineTo(cx - 120, cy); 
+        ctx.lineTo(cx - 120, cy - 100); 
         ctx.closePath();
         ctx.stroke();
 
-        // 爐底出鐵口與出渣口標示
         ctx.fillStyle = '#16332a';
-        ctx.fillRect(cx + 114, cy - 25, 20, 15); // 出鐵口
-        ctx.fillRect(cx - 134, cy - 60, 20, 15); // 出渣口
+        ctx.fillRect(cx + 114, cy - 25, 20, 15); 
+        ctx.fillRect(cx - 134, cy - 60, 20, 15); 
         
         ctx.fillStyle = '#FFFFFF';
         ctx.font = '14px Verdana';
         ctx.textAlign = 'left';
-        ctx.fillText('出鐵口 &rarr;', cx + 135, cy - 15);
+        ctx.fillText('出鐵口 \u2192', cx + 135, cy - 15); 
         ctx.textAlign = 'right';
-        ctx.fillText('&larr; 出渣口', cx - 135, cy - 50);
+        ctx.fillText('\u2190 出渣口', cx - 135, cy - 50); 
 
-        // 頂部投入口標示
         ctx.textAlign = 'center';
         ctx.fillStyle = '#00FFFF';
         ctx.fillText('鐵礦 / 煤焦 / 灰石', cx, 25);
@@ -442,22 +544,24 @@
 
     function drawLiquids() {
         let cx = canvas.width / 2;
-        let cy = canvas.height - 46; // 修正爐底內緣
-        let width = 220; // 爐底內部寬度
+        let cy = canvas.height - 46; 
+        let width = 240; 
 
-        // 漸近更新液面高度
-        currentIronHeight += (targetIronHeight - currentIronHeight) * 0.05;
-        currentSlagHeight += (targetSlagHeight - currentSlagHeight) * 0.05;
+        // 隨步驟等速緩慢累積高度
+        if (currentStep >= 2 && currentIronHeight < 60) {
+            currentIronHeight += 0.15; // 緩慢上升取代暴漲
+        }
+        if (currentStep >= 3 && currentSlagHeight < 25) {
+            currentSlagHeight += 0.1; // 緩慢上升
+        }
 
-        // 畫鐵水 (沉在最底)
         if (currentIronHeight > 1) {
-            ctx.fillStyle = 'rgba(255, 69, 0, 0.9)'; // 熔融鐵水紅橘色
+            ctx.fillStyle = 'rgba(255, 69, 0, 0.9)'; 
             ctx.fillRect(cx - width/2, cy - currentIronHeight, width, currentIronHeight);
         }
 
-        // 畫熔渣 (浮在鐵水上方)
         if (currentSlagHeight > 1) {
-            ctx.fillStyle = 'rgba(124, 252, 0, 0.8)'; // 熔渣偏綠色
+            ctx.fillStyle = 'rgba(124, 252, 0, 0.8)'; 
             ctx.fillRect(cx - width/2, cy - currentIronHeight - currentSlagHeight, width, currentSlagHeight);
         }
     }
@@ -472,25 +576,58 @@
         let cx = canvas.width / 2;
         let cy = canvas.height - 40;
 
-        // === 步驟一：產生 CO 氣體 ===
+        ctx.save();
+        setFurnaceClip(ctx, cx, cy);
+
+        // === 全局：原料持續從頂部掉落 ===
         if (currentStep >= 1) {
-            // 從底部兩側鼓風口產生氣泡
+            if (frameCount % 4 === 0) {
+                let mType = Math.random();
+                let mColor = mType < 0.33 ? '#333333' : (mType < 0.66 ? '#b87333' : '#DDDDDD');
+                rawMaterials.push({
+                    x: cx + (Math.random() - 0.5) * 80,
+                    y: 40,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: Math.random() * 2 + 3,
+                    size: Math.random() * 5 + 3,
+                    color: mColor
+                });
+            }
+        }
+
+        for (let i = rawMaterials.length - 1; i >= 0; i--) {
+            let m = rawMaterials[i];
+            m.x += m.vx;
+            m.y += m.vy;
+            m.vy += 0.15; // 重力
+            if (m.y > cy - currentIronHeight - currentSlagHeight - 10) {
+                rawMaterials.splice(i, 1); 
+            } else {
+                ctx.fillStyle = m.color;
+                ctx.beginPath();
+                ctx.arc(m.x, m.y, m.size, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        // === 步驟一：產生 CO 氣泡 ===
+        if (currentStep >= 1) {
             if (frameCount % 3 === 0) {
                 gasParticles.push({
                     x: cx + (Math.random() > 0.5 ? 90 : -90) + (Math.random() - 0.5)*20,
-                    y: cy - 10,
+                    y: cy - 20,
                     vx: (Math.random() - 0.5) * 2,
                     vy: -Math.random() * 4 - 2,
                     size: Math.random() * 6 + 4
                 });
             }
 
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.4)'; // 金黃色 CO 氣體
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.4)'; 
             for (let i = gasParticles.length - 1; i >= 0; i--) {
                 let p = gasParticles[i];
                 p.x += p.vx;
                 p.y += p.vy;
-                p.x += Math.sin(p.y * 0.05); // S型上升
+                p.x += Math.sin(p.y * 0.05); 
                 
                 if (p.y < 50) {
                     gasParticles.splice(i, 1);
@@ -502,25 +639,25 @@
             }
         }
 
-        // === 步驟二：還原鐵水滴落 ===
+        // === 步驟二：還原鐵水，從爐身中段滴落 ===
         if (currentStep >= 2) {
-            if (frameCount % 8 === 0 && targetIronHeight > currentIronHeight + 2) {
+            if (frameCount % 4 === 0 && currentIronHeight < 60) {
                 ironDrops.push({
-                    x: cx + (Math.random() - 0.5) * 160,
-                    y: 100 + Math.random() * 50,
-                    vy: Math.random() * 2 + 2,
+                    x: cx + (Math.random() - 0.5) * 120,
+                    y: cy - 140 + Math.random() * 40, // 從中段產生
+                    vy: Math.random() * 3 + 2,
                     size: Math.random() * 4 + 3
                 });
             }
 
-            ctx.fillStyle = '#FF4500'; // 鐵水滴
+            ctx.fillStyle = '#FF4500'; 
             for (let i = ironDrops.length - 1; i >= 0; i--) {
                 let d = ironDrops[i];
                 d.y += d.vy;
-                d.vy += 0.1; // 重力加速
+                d.vy += 0.15; 
 
                 if (d.y > cy - currentIronHeight) {
-                    ironDrops.splice(i, 1); // 融入池中
+                    ironDrops.splice(i, 1); 
                 } else {
                     ctx.beginPath();
                     ctx.arc(d.x, d.y, d.size, 0, Math.PI*2);
@@ -529,22 +666,22 @@
             }
         }
 
-        // === 步驟三：熔渣滴落 ===
+        // === 步驟三：熔渣從爐身中段滴落 ===
         if (currentStep >= 3) {
-            if (frameCount % 12 === 0 && targetSlagHeight > currentSlagHeight + 2) {
+            if (frameCount % 6 === 0 && currentSlagHeight < 25) {
                 slagDrops.push({
-                    x: cx + (Math.random() - 0.5) * 160,
-                    y: 100 + Math.random() * 50,
-                    vy: Math.random() * 1.5 + 1.5,
+                    x: cx + (Math.random() - 0.5) * 120,
+                    y: cy - 140 + Math.random() * 40,
+                    vy: Math.random() * 2 + 1.5,
                     size: Math.random() * 5 + 4
                 });
             }
 
-            ctx.fillStyle = '#7CFC00'; // 熔渣滴
+            ctx.fillStyle = '#7CFC00'; 
             for (let i = slagDrops.length - 1; i >= 0; i--) {
                 let d = slagDrops[i];
                 d.y += d.vy;
-                d.vy += 0.08;
+                d.vy += 0.12;
 
                 if (d.y > cy - currentIronHeight - currentSlagHeight) {
                     slagDrops.splice(i, 1);
@@ -556,8 +693,8 @@
             }
         }
 
-        // 畫液面與爐體 (蓋在粒子上方)
         drawLiquids();
+        ctx.restore();
         drawStaticFurnace();
 
         if (currentStep > 0) {
@@ -569,11 +706,18 @@
         if (!ctx) return;
         ctx.fillStyle = '#0b1813';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        let cx = canvas.width / 2;
+        let cy = canvas.height - 40;
+
+        ctx.save();
+        setFurnaceClip(ctx, cx, cy);
         drawLiquids();
+        ctx.restore();
+        
         drawStaticFurnace();
     }
 
-    // 初始化
     if (document.getElementById('furnaceCanvas')) {
         resizeCanvas();
         renderFurnace();
