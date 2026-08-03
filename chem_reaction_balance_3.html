@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<!-- 允許自由縮放，解除強制鎖定，適配平板與手機 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>化學反應與平衡：可逆反應與動態平衡</title>
+<style>
+    /* 採用高辨識度字體綁定 */
+    @import url('https://fonts.googleapis.com/css2?family=Verdana:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap');
+
+    /* 黑板視覺與零黑色原則 */
+    body {
+        background-color: #11261f;
+        color: #FFFFFF;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 20px; /* 字體地板 20px */
+        margin: 0;
+        padding: 30px;
+        line-height: 1.8;
+        /* 鎖定最小寬度，強制進入等比例縮放模式，避免破壞排版，可用手指自由縮放 */
+        min-width: 1200px;
+        overflow-x: auto;
+    }
+
+    * {
+        box-sizing: border-box;
+        border-color: #FFFFFF;
+    }
+
+    /* 頂部標題列風格 */
+    .header-container {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #7CFC00;
+    }
+
+    .header-container h1 {
+        font-size: 32px; 
+        color: #00FFFF;
+        margin: 0;
+        letter-spacing: 2px;
+    }
+
+    h2 {
+        font-size: 26px; 
+        color: #FFFF00;
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 2px dashed rgba(255, 255, 0, 0.4);
+        padding-bottom: 10px;
+    }
+    
+    h3 {
+        font-size: 24px;
+        margin-top: 0;
+        margin-bottom: 12px;
+    }
+
+    /* 預設多欄排版 */
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px;
+        margin-top: 20px;
+        align-items: stretch;
+    }
+
+    /* 專屬 2x2 雙欄排版 */
+    .grid-2x2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* 強制兩欄，形成上下四格 */
+        gap: 35px;
+        margin-top: 20px;
+        align-items: stretch;
+    }
+
+    .panel {
+        border: 2px solid #00FFFF;
+        border-radius: 12px;
+        padding: 30px;
+        background-color: #16332a;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 15px;
+        box-shadow: 0 4px 15px rgba(0, 255, 255, 0.1);
+    }
+
+    /* 防斷字與字體綁定 */
+    .math-text {
+        font-family: 'JetBrains Mono', Verdana, monospace;
+        color: #FFA500;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    /* 標準理化上下分式 */
+    .fraction {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        vertical-align: middle;
+        margin: 0 6px;
+        font-family: 'JetBrains Mono', Verdana, monospace;
+        color: #FFA500;
+        font-weight: bold;
+    }
+    .fraction span.numerator { border-bottom: 2px solid #FFA500; padding: 0 4px; line-height: 1.2; }
+    .fraction span.denominator { padding: 0 4px; line-height: 1.2; }
+
+    /* 分頁架構 */
+    .tab-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 35px;
+        flex-wrap: wrap;
+    }
+
+    .tab-button {
+        background-color: transparent;
+        color: #FFFFFF;
+        border: 2px solid #7CFC00;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 22px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .tab-button.active, .tab-button:hover { background-color: #7CFC00; color: #11261f; font-weight: bold; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .highlight-box {
+        border: 2px dashed #7CFC00;
+        padding: 20px;
+        border-radius: 10px;
+        background-color: rgba(124, 252, 0, 0.08);
+    }
+
+    ul, ol { padding-left: 28px; margin-top: 5px; margin-bottom: 5px; }
+    li { margin-bottom: 12px; }
+
+    /* 按鈕樣式 */
+    .action-btn {
+        background-color: #11261f;
+        color: #FFFFFF;
+        border: 2px solid #00FFFF;
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: bold;
+        transition: all 0.2s;
+        margin-top: 10px;
+        margin-right: 10px;
+    }
+    .action-btn:hover { background-color: #00FFFF; color: #11261f; }
+    
+    /* Canvas 容器 */
+    .canvas-container {
+        width: 100%;
+        background-color: #0b1813;
+        border: 2px dashed #FFA500;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    .rect-canvas {
+        display: block;
+        width: 100%;
+        height: 280px; 
+    }
+</style>
+</head>
+<body>
+
+<div class="header-container">
+    <h1>化學反應與平衡：可逆反應與動態平衡</h1>
+</div>
+
+<div class="tab-container">
+    <button class="tab-button active" onclick="openTab('reversible')">不可逆與可逆反應</button>
+    <button class="tab-button" onclick="openTab('equilibrium')">動態化學平衡</button>
+    <button class="tab-button" onclick="openTab('concentration')">破壞平衡：濃度</button>
+    <button class="tab-button" onclick="openTab('temp-pressure')">破壞平衡：溫度與壓力</button>
+    <button class="tab-button" onclick="openTab('nature')">大自然的可逆反應</button>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁 1：不可逆 vs 可逆反應 -->
+<!-- ========================================== -->
+<div id="reversible" class="tab-content active">
+    <div class="grid-container">
+        <div class="panel" style="border-color: #00FFFF;">
+            <h2 style="color: #00FFFF;">不可逆反應</h2>
+            <p>不可逆反應是指反應<strong style="color: #FFFF00;">只會往右（生成物）進行，沒有逆反應</strong>。</p>
+            <ul>
+                <li><strong style="color: #FF69B4;">木材燃燒：</strong> 木材燒成灰燼與二氧化碳後，無法自發性地變回木材。</li>
+                <li><strong style="color: #00FFFF;">開放空間的水蒸發：</strong> 水蒸發成水蒸氣飄散到空氣中，無法在原容器內凝結成水。</li>
+            </ul>
+        </div>
+
+        <div class="panel" style="border-color: #FFA500;">
+            <h2 style="color: #FFA500;">可逆反應</h2>
+            <p>可逆反應是指<strong style="color: #FFFF00;">正反應與逆反應可以同時進行</strong>的反應。</p>
+            <div class="highlight-box" style="border-color: #FFA500; background-color: rgba(255, 165, 0, 0.08);">
+                <p style="margin: 0;">在<strong style="color: #FFA500;">密閉的寶特瓶</strong>內，水蒸發成水氣的正反應，與水氣凝結成水的逆反應會<strong style="color: #FFFF00;">同時發生</strong>，使得容器內的總水分子數量保持不變。</p>
+            </div>
+        </div>
+
+        <div class="panel" style="border-color: #7CFC00;">
+            <h2 style="color: #7CFC00;">【動畫解析】密閉容器的水蒸發</h2>
+            <div class="lab-controls" style="text-align: center; margin-bottom: 10px;">
+                <button class="action-btn" onclick="setBottleState('open')" style="border-color: #FF69B4; color: #FF69B4;">🔓 打開瓶蓋 (不可逆)</button>
+                <button class="action-btn" onclick="setBottleState('closed')" style="border-color: #00FFFF; color: #00FFFF;">🔒 關閉瓶蓋 (可逆平衡)</button>
+            </div>
+            <div class="canvas-container" style="border-color: #7CFC00;">
+                <canvas id="bottleCanvas" class="rect-canvas" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁 2：什麼是動態化學平衡？ -->
+<!-- ========================================== -->
+<div id="equilibrium" class="tab-content">
+    <div class="grid-2x2">
+        <div class="panel" style="border-color: #00FFFF;">
+            <h2 style="color: #00FFFF;">動態化學平衡</h2>
+            <p>當化學反應達到平衡時，巨觀與微觀有著截然不同的現象：</p>
+            <ul>
+                <li><strong style="color: #FFFF00;">巨觀上：</strong> 所有物質的濃度不再改變，看起來像是反應停止了。</li>
+                <li><strong style="color: #FF69B4;">微觀上：</strong> 反應並未停止，而是<strong style="color: #FF69B4;">正反應速率等於逆反應速率</strong> (<span class="math-text">R<sub>正</sub> = R<sub>逆</sub></span>)。</li>
+            </ul>
+        </div>
+
+        <div class="panel" style="border-color: #FFA500;">
+            <h2 style="color: #FFA500;">平衡濃度的迷思</h2>
+            <div class="highlight-box" style="border-color: #FFA500; background-color: rgba(255, 165, 0, 0.08);">
+                <p style="margin: 0; font-size: 22px;">達到平衡時，反應物與生成物的「濃度比」，<strong style="color: #FFFF00;">並不一定等於</strong>化學反應式的「係數比」！</p>
+            </div>
+            <p style="margin-top: 15px;">※ 係數比只代表「反應過程中消耗與生成的莫耳數比例」，不代表最終留下的濃度比例。</p>
+        </div>
+
+        <div class="panel" style="border-color: #FF69B4;">
+            <h2 style="color: #FF69B4;">破壞平衡的勒沙特列原理</h2>
+            <p>若系統原本處於平衡狀態，一旦遭受外力（如濃度、溫度、壓力）破壞平衡：</p>
+            <div class="highlight-box" style="border-color: #FF69B4; background-color: rgba(255, 105, 180, 0.08);">
+                <p style="margin: 0;">正逆反應速率會產生變化，系統會朝著<strong style="color: #FFFF00;">「抵消這個外力干擾」</strong>的方向進行，直到再次達到新的平衡。</p>
+            </div>
+        </div>
+
+        <div class="panel" style="border-color: #7CFC00;">
+            <h3 style="color: #7CFC00; margin-top: 0;">【圖形解析】速率與時間</h3>
+            <div class="lab-controls" style="text-align: center; margin-bottom: 10px;">
+                <button class="action-btn" onclick="startEqGraph()" style="border-color: #FFFF00; color: #FFFF00;">▶️ 播放達標過程</button>
+            </div>
+            <div class="canvas-container" style="border-color: #7CFC00; margin-bottom: 0;">
+                <canvas id="eqGraphCanvas" class="rect-canvas" style="height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁 3：破壞平衡的殺手（一）：濃度 -->
+<!-- ========================================== -->
+<div id="concentration" class="tab-content">
+    <div class="grid-container">
+        <div class="panel" style="border-color: #00FFFF;">
+            <h2 style="color: #00FFFF;">經典實驗：鉻酸根的變色</h2>
+            <div class="highlight-box" style="text-align: center; border-color: #00FFFF; padding: 15px;">
+                <span class="math-text" style="font-size: 22px;">2CrO<sub>4</sub><sup>2-</sup>(黃) + 2H<sup>+</sup> ⇌ Cr<sub>2</sub>O<sub>7</sub><sup>2-</sup>(橘紅) + H<sub>2</sub>O</span>
+            </div>
+            <ul>
+                <li><strong style="color: #FF69B4;">加入酸：</strong> 氫離子 (<span class="math-text nowrap">H<sup>+</sup></span>) 濃度變大，促使正反應加快，平衡向右移動，溶液變為<strong style="color: #FFA500;">橘紅色</strong>。</li>
+                <li><strong style="color: #00FFFF;">加入鹼：</strong> 鹼會中和氫離子使其濃度變小，正反應減速而逆反應不變，平衡向左移動，溶液變為<strong style="color: #FFFF00;">黃色</strong>。</li>
+            </ul>
+        </div>
+
+        <div class="panel" style="border-color: #7CFC00;">
+            <h3 style="color: #7CFC00; margin-top: 0;">【互動模擬】鉻酸鉀溶液的變色</h3>
+            <div class="lab-controls" style="text-align: center; margin-bottom: 10px;">
+                <button class="action-btn" onclick="addChemical('acid')" style="border-color: #FF69B4; color: #FF69B4;">🧪 滴入酸 (H⁺)</button>
+                <button class="action-btn" onclick="addChemical('base')" style="border-color: #00FFFF; color: #00FFFF;">🧪 滴入鹼 (OH⁻)</button>
+            </div>
+            <div class="canvas-container" style="border-color: #7CFC00;">
+                <canvas id="beakerCanvas" class="rect-canvas" style="height: 260px;"></canvas>
+            </div>
+        </div>
+
+        <div class="panel" style="border-color: #FFA500;">
+            <h2 style="color: #FFA500;">補充：溴水的平衡</h2>
+            <div class="highlight-box" style="text-align: center; border-color: #FFA500; padding: 15px;">
+                <span class="math-text" style="font-size: 20px;">Br<sub>2</sub>(暗紅) + H<sub>2</sub>O ⇌ H<sup>+</sup> + Br<sup>-</sup>(無色) + HBrO(無色)</span>
+            </div>
+            <p>若在溴水中加入<strong style="color: #FFFF00;">氫氧化鈉 (<span class="math-text nowrap">NaOH</span>)</strong>，會中和掉右側的氫離子，促使平衡向右移動，暗紅色將會<strong style="color: #FFFF00;">變淡甚至變無色</strong>。</p>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁 4：破壞平衡的殺手（二）：溫度與壓力 -->
+<!-- ========================================== -->
+<div id="temp-pressure" class="tab-content">
+    <div class="grid-2x2">
+        <!-- 溫度 -->
+        <div class="panel" style="border-color: #FF69B4;">
+            <h2 style="color: #FF69B4;">溫度對平衡的影響</h2>
+            <div class="highlight-box" style="text-align: center; border-color: #FF69B4; padding: 10px;">
+                <span class="math-text" style="font-size: 22px;">2NO<sub>2</sub>(紅棕) ⇌ N<sub>2</sub>O<sub>4</sub>(無色) + 熱量</span>
+            </div>
+            <ul style="margin-top: 10px;">
+                <li><strong style="color: #FF69B4;">溫度上升：</strong> 系統為了抵消熱量，會使吸熱方向（向左）的反應速率增加較多，紅棕色的二氧化氮顏色<strong style="color: #FF69B4;">變深</strong>。</li>
+                <li><strong style="color: #00FFFF;">溫度下降：</strong> 吸熱反應速率下降較快，平衡向右（放熱方向）進行，紅棕色<strong style="color: #FFFF00;">變淡</strong>。</li>
+            </ul>
+        </div>
+
+        <!-- 壓力 -->
+        <div class="panel" style="border-color: #00FFFF;">
+            <h2 style="color: #00FFFF;">壓力對平衡的影響</h2>
+            <p>壓力主要對氣體的濃度產生影響：</p>
+            <div class="highlight-box" style="border-color: #00FFFF; background-color: rgba(0, 255, 255, 0.08);">
+                <p style="margin: 0;">加壓會使系統體積變小，為了減輕壓力，平衡會向<strong style="color: #FFFF00;">氣體總體積（莫耳數）較小</strong>的方向移動。</p>
+            </div>
+            <p style="margin-bottom: 0; color: #9fb0a8;">※ 例如上方反應：左邊 2 體積，右邊 1 體積。壓縮時，平衡向右移動。</p>
+        </div>
+
+        <!-- 動畫 -->
+        <div class="panel panel-full" style="border-color: #7CFC00; flex-direction: row; gap: 30px;">
+            <div style="flex: 1;">
+                <h3 style="color: #7CFC00; margin-top: 0;">【互動模擬】NO₂ 氣體密閉針筒</h3>
+                <div class="lab-controls" style="margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;">
+                    <div>
+                        <button class="action-btn" onclick="triggerSyringe('heat')" style="border-color: #FF69B4; color: #FF69B4;">🔥 升高溫度</button>
+                        <button class="action-btn" onclick="triggerSyringe('cool')" style="border-color: #00FFFF; color: #00FFFF;">❄️ 降低溫度</button>
+                    </div>
+                    <div>
+                        <button class="action-btn" onclick="triggerSyringe('compress')" style="border-color: #FFFF00; color: #FFFF00;">⏬ 壓縮體積 (難題演示)</button>
+                        <button class="action-btn" onclick="triggerSyringe('reset')" style="border-color: #9fb0a8; color: #9fb0a8;">🔄 重置</button>
+                    </div>
+                </div>
+                <p id="syringe-status" style="color: #FF69B4; font-weight: bold; min-height: 50px;">觀察區：請點擊按鈕</p>
+            </div>
+            <div class="canvas-container" style="border-color: #7CFC00; flex: 1; margin: 0;">
+                <canvas id="syringeCanvas" class="rect-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁 5：大自然的可逆反應：鐘乳石 -->
+<!-- ========================================== -->
+<div id="nature" class="tab-content">
+    <div class="grid-container">
+        <div class="panel" style="border-color: #00FFFF;">
+            <h2 style="color: #00FFFF;">大自然的鬼斧神工</h2>
+            <p>鐘乳石與石筍的形成是經年累月的大自然可逆反應。</p>
+            <div class="highlight-box" style="text-align: center; border-color: #00FFFF; padding: 15px;">
+                <span class="math-text" style="font-size: 20px;">CaCO<sub>3</sub>(固) + H<sub>2</sub>O + CO<sub>2</sub> ⇌ Ca(HCO<sub>3</sub>)<sub>2</sub>(水溶液)</span>
+            </div>
+            <ul>
+                <li><strong style="color: #FF69B4;">向右反應（溶蝕）：</strong> 雨水溶有二氧化碳，將石灰岩（碳酸鈣）溶解成碳酸氫鈣水溶液，形成鐘乳石洞。</li>
+                <li><strong style="color: #7CFC00;">向左反應（沉積）：</strong> 當水溶液滴下，水分蒸發與二氧化碳逸散，碳酸鈣重新沉澱，形成鐘乳石與石筍。</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 頁籤切換與 iOS Canvas 動畫喚醒防護
+    // ==========================================
+    function openTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        // 停止所有動畫
+        cancelAnimationFrame(bottleAnimId);
+        cancelAnimationFrame(eqGraphAnimId);
+        cancelAnimationFrame(beakerAnimId);
+        cancelAnimationFrame(syringeAnimId);
+        
+        // 延遲喚醒 Canvas，強制重繪
+        setTimeout(() => {
+            if (tabId === 'reversible') {
+                initBottle();
+            } else if (tabId === 'equilibrium') {
+                initEqGraph();
+            } else if (tabId === 'concentration') {
+                initBeaker();
+            } else if (tabId === 'temp-pressure') {
+                initSyringe();
+            }
+        }, 60);
+    }
+
+    // ==========================================
+    // Canvas 1：密閉容器的水蒸發 (不可逆 vs 可逆)
+    // ==========================================
+    let bottleAnimId;
+    let bottleState = 'open'; // 'open' 或 'closed'
+    let waterLevel = 100;
+    let particles = [];
+
+    function initBottle() {
+        const cvs = document.getElementById('bottleCanvas');
+        if (!cvs) return;
+        cvs.width = cvs.parentElement.clientWidth;
+        cvs.height = 300;
+        waterLevel = 100;
+        particles = [];
+        bottleState = 'open';
+        cancelAnimationFrame(bottleAnimId);
+        animateBottle();
+    }
+
+    function setBottleState(state) {
+        bottleState = state;
+    }
+
+    function drawBottleScene() {
+        const cvs = document.getElementById('bottleCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        let w = cvs.width, h = cvs.height;
+        let cx = w / 2;
+
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, w, h);
+
+        // 畫瓶子輪廓
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(cx - 30, 40); // 左瓶口
+        ctx.lineTo(cx - 30, 80);
+        ctx.lineTo(cx - 80, 120);
+        ctx.lineTo(cx - 80, 260); // 瓶底左
+        ctx.lineTo(cx + 80, 260); // 瓶底右
+        ctx.lineTo(cx + 80, 120);
+        ctx.lineTo(cx + 30, 80);
+        ctx.lineTo(cx + 30, 40); // 右瓶口
+        ctx.stroke();
+
+        // 畫瓶蓋
+        if (bottleState === 'closed') {
+            ctx.fillStyle = '#FF69B4';
+            ctx.fillRect(cx - 35, 25, 70, 15);
+            ctx.fillStyle = '#FF69B4';
+            ctx.font = '16px sans-serif';
+            ctx.fillText('密閉系統 (可逆平衡)', cx + 50, 35);
+        } else {
+            ctx.fillStyle = '#00FFFF';
+            ctx.font = '16px sans-serif';
+            ctx.fillText('開放空間 (不可逆散失)', cx + 50, 35);
+        }
+
+        // 畫水
+        let waterY = 260 - waterLevel;
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
+        ctx.fillRect(cx - 78, waterY, 156, waterLevel);
+        
+        ctx.strokeStyle = '#00FFFF';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 78, waterY);
+        ctx.lineTo(cx + 78, waterY);
+        ctx.stroke();
+
+        // 畫水分子粒子
+        ctx.fillStyle = '#00FFFF';
+        for (let p of particles) {
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+    }
+
+    function animateBottle() {
+        const cvs = document.getElementById('bottleCanvas');
+        if (!cvs) return;
+        let cx = cvs.width / 2;
+
+        // 產生蒸發粒子
+        if (Math.random() < 0.2 && waterLevel > 10) {
+            particles.push({
+                x: cx - 70 + Math.random() * 140,
+                y: 260 - waterLevel,
+                vy: -1 - Math.random() * 1.5,
+                alpha: 1.0,
+                state: 'up' // up (蒸發) 或 down (凝結)
+            });
+            if (bottleState === 'open') {
+                waterLevel -= 0.1; // 水減少
+            }
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.y += p.vy;
+
+            if (p.state === 'up') {
+                if (bottleState === 'open') {
+                    // 飄出瓶口消失
+                    if (p.y < 30) p.alpha -= 0.05;
+                    if (p.alpha <= 0) particles.splice(i, 1);
+                } else {
+                    // 撞到瓶蓋凝結
+                    if (p.y < 45) {
+                        p.vy = 0;
+                        if (Math.random() < 0.05) {
+                            p.state = 'down'; // 變成水滴掉落
+                            p.vy = 2 + Math.random();
+                        }
+                    }
+                }
+            } else if (p.state === 'down') {
+                // 掉入水中
+                if (p.y >= 260 - waterLevel) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        drawBottleScene();
+        bottleAnimId = requestAnimationFrame(animateBottle);
+    }
+
+    // ==========================================
+    // Canvas 2：動態化學平衡 速率與時間圖
+    // ==========================================
+    let eqGraphAnimId;
+    let eqGraphProgress = 0;
+
+    function initEqGraph() {
+        const cvs = document.getElementById('eqGraphCanvas');
+        if (!cvs) return;
+        cvs.width = cvs.parentElement.clientWidth;
+        cvs.height = 250;
+        eqGraphProgress = 0;
+        cancelAnimationFrame(eqGraphAnimId);
+        drawEqGraph();
+    }
+
+    function startEqGraph() {
+        eqGraphProgress = 0;
+        cancelAnimationFrame(eqGraphAnimId);
+        animateEqGraph();
+    }
+
+    function animateEqGraph() {
+        eqGraphProgress += 0.008;
+        if (eqGraphProgress > 1.0) eqGraphProgress = 1.0;
+        drawEqGraph();
+        if (eqGraphProgress < 1.0) eqGraphAnimId = requestAnimationFrame(animateEqGraph);
+    }
+
+    function drawEqGraph() {
+        const cvs = document.getElementById('eqGraphCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        let w = cvs.width, h = cvs.height;
+        let padX = 50, padY = 30;
+
+        ctx.fillStyle = '#0b1813'; ctx.fillRect(0,0,w,h);
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(padX, padY); ctx.lineTo(padX, h-padY); ctx.lineTo(w-padX+15, h-padY); ctx.stroke();
+        ctx.fillStyle = '#FFFFFF'; ctx.font = '14px "JetBrains Mono", sans-serif';
+        ctx.fillText('反應速率', 10, padY - 10); ctx.fillText('時間', w-padX-15, h-padY+18);
+
+        let targetY = h/2; // 平衡線
+        let startY_f = padY + 10;
+        let startY_r = h - padY - 10;
+        let currentX = padX + (w - padX * 2 - 20) * eqGraphProgress;
+        
+        ctx.lineWidth = 4;
+        // 正反應速率
+        ctx.beginPath(); ctx.strokeStyle = '#00FFFF'; ctx.moveTo(padX, startY_f);
+        for(let x = padX; x <= currentX; x+=2) {
+            let t = (x - padX) / 50; 
+            let y = targetY - (targetY - startY_f) * Math.exp(-t);
+            ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        // 逆反應速率
+        ctx.beginPath(); ctx.strokeStyle = '#FF69B4'; ctx.moveTo(padX, startY_r);
+        for(let x = padX; x <= currentX; x+=2) {
+            let t = (x - padX) / 50; 
+            let y = targetY + (startY_r - targetY) * Math.exp(-t);
+            ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        
+        ctx.fillStyle = '#00FFFF'; ctx.fillText('正反應速率', padX+10, startY_f+10);
+        ctx.fillStyle = '#FF69B4'; ctx.fillText('逆反應速率', padX+10, startY_r-5);
+
+        if (eqGraphProgress >= 1.0) {
+            let meetX = padX + 200; 
+            ctx.beginPath(); ctx.setLineDash([5,5]); ctx.strokeStyle = '#FFFF00';
+            ctx.moveTo(meetX, padY); ctx.lineTo(meetX, h-padY); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 16px sans-serif';
+            ctx.fillText('達到動態平衡 (R正 = R逆)', meetX + 10, targetY - 15);
+        }
+    }
+
+    // ==========================================
+    // Canvas 3：燒杯滴定與顏色漸變 (鉻酸根)
+    // ==========================================
+    let beakerAnimId;
+    let targetRatio = 0.5; // 0=純黃, 1=橘紅
+    let currentRatio = 0.5;
+    let drops = [];
+
+    function initBeaker() {
+        const cvs = document.getElementById('beakerCanvas');
+        if (!cvs) return;
+        cvs.width = cvs.parentElement.clientWidth;
+        cvs.height = 260;
+        targetRatio = 0.5;
+        currentRatio = 0.5;
+        drops = [];
+        cancelAnimationFrame(beakerAnimId);
+        animateBeaker();
+    }
+
+    function addChemical(type) {
+        if (type === 'acid') {
+            targetRatio = Math.min(targetRatio + 0.35, 1.0); // 往橘紅移動
+            drops.push({x: 200, y: 10, vy: 5, color: '#FF69B4', label: 'H⁺'});
+        } else {
+            targetRatio = Math.max(targetRatio - 0.35, 0.0); // 往黃色移動
+            drops.push({x: 200, y: 10, vy: 5, color: '#00FFFF', label: 'OH⁻'});
+        }
+    }
+
+    function interpolateColor(color1, color2, factor) {
+        let result = color1.slice(1).match(/.{2}/g).map(hex => parseInt(hex, 16));
+        let result2 = color2.slice(1).match(/.{2}/g).map(hex => parseInt(hex, 16));
+        let r = Math.round(result[0] + factor * (result2[0] - result[0]));
+        let g = Math.round(result[1] + factor * (result2[1] - result[1]));
+        let b = Math.round(result[2] + factor * (result2[2] - result[2]));
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function drawBeakerScene() {
+        const cvs = document.getElementById('beakerCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        let w = cvs.width, h = cvs.height;
+        let cx = w / 2;
+
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, w, h);
+
+        // 畫水滴
+        for (let d of drops) {
+            ctx.fillStyle = d.color;
+            ctx.beginPath();
+            ctx.arc(d.x, d.y, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = '12px sans-serif';
+            ctx.fillText(d.label, d.x + 10, d.y + 5);
+        }
+
+        // 畫燒杯與溶液
+        let currentColor = interpolateColor('#FFFF00', '#FF4500', currentRatio); // 黃 到 橘紅
+        ctx.fillStyle = currentColor;
+        ctx.fillRect(cx - 60, h - 130, 120, 100);
+
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(cx - 60, h - 160);
+        ctx.lineTo(cx - 60, h - 30);
+        ctx.lineTo(cx + 60, h - 30);
+        ctx.lineTo(cx + 60, h - 160);
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        if (currentRatio > 0.7) {
+            ctx.fillText('二鉻酸根 (橘紅)', cx, h - 15);
+        } else if (currentRatio < 0.3) {
+            ctx.fillText('鉻酸根 (黃)', cx, h - 15);
+        } else {
+            ctx.fillText('兩者混合 (漸變)', cx, h - 15);
+        }
+        ctx.textAlign = 'left';
+    }
+
+    function animateBeaker() {
+        const cvs = document.getElementById('beakerCanvas');
+        if (!cvs) return;
+
+        // 平滑顏色漸變
+        currentRatio += (targetRatio - currentRatio) * 0.05;
+
+        // 水滴掉落邏輯
+        for (let i = drops.length - 1; i >= 0; i--) {
+            drops[i].y += drops[i].vy;
+            if (drops[i].y > cvs.height - 130) {
+                drops.splice(i, 1); // 碰到水面消失
+            }
+        }
+
+        drawBeakerScene();
+        beakerAnimId = requestAnimationFrame(animateBeaker);
+    }
+
+    // ==========================================
+    // Canvas 4：NO2 氣體密閉針筒 (溫度與壓力雙重判定)
+    // ==========================================
+    let syringeAnimId;
+    let syrVolume = 1.0; // 1.0 (正常) 到 0.5 (壓縮)
+    let targetSyrVolume = 1.0;
+    let no2Moles = 0.5; // 莫耳數 (0.0=無色, 1.0=極深)
+    let targetNo2Moles = 0.5;
+    let tempLevel = 25; // 模擬溫度
+
+    function initSyringe() {
+        const cvs = document.getElementById('syringeCanvas');
+        if (!cvs) return;
+        cvs.width = cvs.parentElement.clientWidth;
+        cvs.height = 250;
+        syrVolume = 1.0; targetSyrVolume = 1.0;
+        no2Moles = 0.5; targetNo2Moles = 0.5;
+        tempLevel = 25;
+        updateSyringeStatus();
+        cancelAnimationFrame(syringeAnimId);
+        animateSyringe();
+    }
+
+    function triggerSyringe(action) {
+        if (action === 'heat') {
+            tempLevel += 20;
+            targetNo2Moles = Math.min(targetNo2Moles + 0.3, 1.0); // 溫度上升向左移 (深色)
+            updateSyringeStatus('🔥 溫度上升，平衡向左移動 (吸收熱量)，顏色變深！');
+        } else if (action === 'cool') {
+            tempLevel -= 20;
+            targetNo2Moles = Math.max(targetNo2Moles - 0.3, 0.0); // 溫度下降向右移 (淡色)
+            updateSyringeStatus('❄️ 溫度下降，平衡向右移動 (放出熱量)，顏色變淡！');
+        } else if (action === 'compress') {
+            if(targetSyrVolume > 0.6) {
+                targetSyrVolume = 0.5; // 體積瞬間減半
+                // Le Chatelier: 壓力變大，平衡向分子數少(右)移動，所以 NO2 莫耳數會減少
+                targetNo2Moles = Math.max(targetNo2Moles - 0.2, 0.1); 
+                updateSyringeStatus('⏬ 體積減半，瞬間濃度加倍變極深！隨後平衡向右移動，顏色微降！');
+            }
+        } else if (action === 'reset') {
+            targetSyrVolume = 1.0;
+            targetNo2Moles = 0.5;
+            tempLevel = 25;
+            updateSyringeStatus('🔄 系統重置回原始平衡。');
+        }
+    }
+
+    function updateSyringeStatus(msg) {
+        const statusEl = document.getElementById('syringe-status');
+        if (statusEl && msg) statusEl.innerText = msg;
+    }
+
+    function drawSyringeScene() {
+        const cvs = document.getElementById('syringeCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        let w = cvs.width, h = cvs.height;
+        let cx = w / 2;
+
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, w, h);
+
+        // 計算實際濃度 (莫耳數 / 體積) 來決定顏色深淺
+        let concentration = no2Moles / syrVolume;
+        // 限制最大透明度為 0.95
+        let alpha = Math.min(concentration * 0.8, 0.95);
+        let gasColor = `rgba(255, 69, 0, ${alpha})`; // 紅棕色 rgba
+
+        // 畫氣體筒身
+        let chamberHeight = 160 * syrVolume;
+        let chamberY = h - 20 - chamberHeight;
+        
+        ctx.fillStyle = gasColor;
+        ctx.fillRect(cx - 40, chamberY, 80, chamberHeight);
+
+        // 畫針筒外殼
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(cx - 40, h - 200); // 頂端
+        ctx.lineTo(cx - 40, h - 20);
+        ctx.lineTo(cx + 40, h - 20);
+        ctx.lineTo(cx + 40, h - 200);
+        ctx.stroke();
+
+        // 畫活塞 (隨體積移動)
+        ctx.fillStyle = '#9fb0a8';
+        ctx.fillRect(cx - 38, chamberY - 15, 76, 15);
+        ctx.fillRect(cx - 5, chamberY - 60, 10, 45); // 壓桿
+
+        // 標示溫度
+        ctx.fillStyle = '#FFFF00';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText(`溫度: ${tempLevel}°C`, cx + 60, h - 100);
+    }
+
+    function animateSyringe() {
+        const cvs = document.getElementById('syringeCanvas');
+        if (!cvs) return;
+
+        // 體積快速變化 (瞬間壓縮)
+        syrVolume += (targetSyrVolume - syrVolume) * 0.15;
+        // 莫耳數緩慢變化 (代表化學平衡慢慢移動)
+        no2Moles += (targetNo2Moles - no2Moles) * 0.03;
+
+        drawSyringeScene();
+        syringeAnimId = requestAnimationFrame(animateSyringe);
+    }
+
+    // 啟動預設首頁動畫
+    setTimeout(() => { openTab('reversible'); }, 100);
+
+</script>
+</body>
+</html>
