@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>化學反應與平衡：反應速率與碰撞學說</title>
+<style>
+    /* 採用高辨識度字體綁定 */
+    @import url('https://fonts.googleapis.com/css2?family=Verdana:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap');
+
+    /* 黑板視覺與零黑色原則 */
+    body {
+        background-color: #11261f;
+        color: #FFFFFF;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 20px;
+        margin: 0;
+        padding: 30px;
+        line-height: 1.8;
+    }
+
+    * {
+        box-sizing: border-box;
+        border-color: #FFFFFF;
+    }
+
+    /* 頂部標題列風格 */
+    .header-container {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #7CFC00;
+    }
+
+    .header-container h1 {
+        font-size: 30px; 
+        color: #00FFFF;
+        margin: 0;
+        letter-spacing: 2px;
+    }
+
+    h2 {
+        font-size: 26px; 
+        color: #FFFF00;
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 2px dashed rgba(255, 255, 0, 0.4);
+        padding-bottom: 10px;
+    }
+    
+    h3 {
+        font-size: 24px;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+
+    /* 嚴格雙欄排版與大螢幕適配 */
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        gap: 35px;
+        margin-top: 20px;
+        align-items: stretch;
+    }
+
+    .panel {
+        border: 2px solid #00FFFF;
+        border-radius: 12px;
+        padding: 30px;
+        background-color: #16332a;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 15px;
+        box-shadow: 0 4px 15px rgba(0, 255, 255, 0.1);
+    }
+
+    .panel-full {
+        grid-column: 1 / -1;
+    }
+
+    /* 防斷字與字體綁定 */
+    .math-text {
+        font-family: 'JetBrains Mono', Verdana, monospace;
+        color: #FFA500;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    /* 標準理化上下分式 */
+    .fraction {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        vertical-align: middle;
+        margin: 0 6px;
+        font-family: 'JetBrains Mono', Verdana, monospace;
+        color: #FFA500;
+        font-weight: bold;
+    }
+    .fraction span.numerator { border-bottom: 2px solid #FFA500; padding: 0 4px; line-height: 1.2; }
+    .fraction span.denominator { padding: 0 4px; line-height: 1.2; }
+
+    /* 分頁架構 */
+    .tab-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 35px;
+        flex-wrap: wrap;
+    }
+
+    .tab-button {
+        background-color: transparent;
+        color: #FFFFFF;
+        border: 2px solid #7CFC00;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 22px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .tab-button.active, .tab-button:hover { background-color: #7CFC00; color: #11261f; font-weight: bold; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .highlight-box {
+        border: 2px dashed #7CFC00;
+        padding: 20px;
+        border-radius: 10px;
+        background-color: rgba(124, 252, 0, 0.08);
+    }
+
+    ul, ol { padding-left: 28px; margin-top: 5px; margin-bottom: 5px; }
+    li { margin-bottom: 12px; }
+
+    /* 按鈕樣式 */
+    .action-btn {
+        background-color: #11261f;
+        color: #FFFFFF;
+        border: 2px solid #00FFFF;
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: bold;
+        transition: all 0.2s;
+        margin-right: 10px;
+        margin-top: 10px;
+    }
+    .action-btn:hover { background-color: #00FFFF; color: #11261f; }
+    .action-btn.active { background-color: #00FFFF; color: #11261f; }
+    .action-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: #9fb0a8 !important; color: #9fb0a8 !important; background-color: transparent !important; }
+
+    /* Canvas 容器 */
+    .canvas-container {
+        width: 100%;
+        background-color: #0b1813;
+        border: 2px dashed #FFA500;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    canvas {
+        display: block;
+        width: 100%;
+        max-width: 450px;
+        height: 360px; 
+    }
+</style>
+</head>
+<body>
+
+<div class="header-container">
+    <h1>反應速率與碰撞學說</h1>
+</div>
+
+<div class="tab-container">
+    <button class="tab-button active" onclick="openTab('concept')">反應速率觀察</button>
+    <button class="tab-button" onclick="openTab('collision')">微觀碰撞學說</button>
+    <button class="tab-button" onclick="openTab('factors-1')">本性與表面積</button>
+    <button class="tab-button" onclick="openTab('factors-2')">溫度與濃度</button>
+    <button class="tab-button" style="border-color: #FF69B4; color: #FF69B4;" onclick="openTab('experiment')">硫代硫酸鈉實驗</button>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁一：反應速率觀察 -->
+<!-- ========================================== -->
+<div id="concept" class="tab-content active">
+    <div class="grid-container">
+        <div class="panel">
+            <h2>化學反應的快與慢</h2>
+            <p>生活中的化學反應進行的時間長短不一，有的瞬間完成，有的卻需要百年：</p>
+            <ul>
+                <li><strong style="color: #FF69B4;">極快：</strong> 燃放鞭炮、炸藥爆炸，只需數秒鐘。</li>
+                <li><strong style="color: #FFA500;">中等：</strong> 銅像表面生成銅綠、鐵釘生鏽，需要數月至數十年。</li>
+                <li><strong style="color: #7CFC00;">極慢：</strong> 石灰岩洞中的鐘乳石與石筍成形，需要數百年以上的時間。</li>
+            </ul>
+        </div>
+        <div class="panel">
+            <h2>反應速率的定義</h2>
+            <p>化學反應的快慢，我們稱為「反應速率」。在實驗室中，我們通常藉由觀察<strong style="color: #00FFFF;">氣體的產生、顏色的變化，或是沉澱物的生成</strong>來判斷反應進行的程度。</p>
+            
+            <div class="highlight-box" style="text-align: center;">
+                <span class="math-text" style="font-size: 26px;">
+                    反應速率 = 
+                    <span class="fraction" style="font-size: 22px;">
+                        <span class="numerator">反應物減少量 或 生成物增加量</span>
+                        <span class="denominator">經歷的時間</span>
+                    </span>
+                </span>
+            </div>
+            <p style="margin-top: 15px; color: #9fb0a8;">※ 時間的單位可依反應快慢使用 秒 (<span class="math-text nowrap">s</span>)、分 (<span class="math-text nowrap">min</span>) 或 小時 (<span class="math-text nowrap">hr</span>)。</p>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁二：微觀碰撞學說 -->
+<!-- ========================================== -->
+<div id="collision" class="tab-content">
+    <div class="grid-container">
+        <!-- 左欄：動態模擬器 -->
+        <div class="panel" style="border-color: #FFA500;">
+            <h2>分子碰撞模擬器</h2>
+            <div class="lab-controls">
+                <button class="action-btn" onclick="startCollision('low')" style="border-color: #00FFFF; color: #00FFFF;">❄️ 低能量碰撞 (無效)</button>
+                <button class="action-btn" onclick="startCollision('high')" style="border-color: #FF69B4; color: #FF69B4;">🔥 高能量碰撞 (有效)</button>
+            </div>
+            <div class="canvas-container">
+                <canvas id="colCanvas"></canvas>
+            </div>
+            <p id="col-status" style="text-align: center; margin: 0; color: #7CFC00; font-weight: bold;">請點擊按鈕開始模擬</p>
+        </div>
+
+        <!-- 右欄：原理說明 -->
+        <div class="panel">
+            <h2>有效碰撞的兩大要件</h2>
+            <p>分子必須互相碰撞才「有機會」發生化學反應。但不是每次碰撞都會成功，只有滿足以下兩個條件的碰撞，才被稱為<strong style="color: #FF69B4;">有效碰撞</strong>：</p>
+            
+            <div class="highlight-box">
+                <h3 style="color: #00FFFF; margin-top: 0;">1. 正確的碰撞方向</h3>
+                <p style="margin-bottom: 0;">就像拼圖一樣，分子必須以特定的角度與方位互相撞擊，原來的化學鍵才容易斷裂，並形成新的化學鍵。</p>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 15px; border-color: #FF69B4; background-color: rgba(255, 105, 180, 0.08);">
+                <h3 style="color: #FF69B4; margin-top: 0;">2. 足夠的能量 (活化能)</h3>
+                <p style="margin-bottom: 0;">如果碰撞的力道太弱，分子只會像撞球一樣彈開。必須具備足夠的動能，才能突破反應的能量門檻（活化能）。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁三：本性與表面積 -->
+<!-- ========================================== -->
+<div id="factors-1" class="tab-content">
+    <div class="grid-container">
+        <div class="panel">
+            <h2>因素一：物質的本性 (活性)</h2>
+            <p>物質本身的化學性質，是決定反應快慢的根本原因。活性越大的物質，發生反應所需的活化能較少，越容易進行反應。</p>
+            <ul>
+                <li><strong style="color: #FF69B4;">活性大 (反應快)：</strong> 金屬鈉 (<span class="math-text nowrap">Na</span>) 或鉀 (<span class="math-text nowrap">K</span>) 一丟入水中，會立刻產生劇烈反應甚至爆炸。</li>
+                <li><strong style="color: #00FFFF;">活性小 (反應極慢)：</strong> 黃金 (<span class="math-text nowrap">Au</span>) 或白金放入水中，即使過了一百年也不會發生任何反應。</li>
+            </ul>
+        </div>
+        <div class="panel">
+            <h2>因素二：表面積大小</h2>
+            <p>當固體參與反應時，<strong style="color: #FFFF00;">接觸面積越大，反應速率越快</strong>。例如將竹筷削成火媒棒，因為接觸空氣的面積變大，變得非常容易點燃。</p>
+            
+            <div class="highlight-box" style="border-color: #FFA500; background-color: rgba(255, 165, 0, 0.08);">
+                <h3 style="color: #FFA500; margin-top: 0;">📐 表面積的切割數學</h3>
+                <p>假設有一個大正方體，將其每邊長切為原來的 <span class="fraction"><span class="numerator">1</span><span class="denominator">3</span></span>：</p>
+                <ul style="margin-bottom: 0;">
+                    <li>總共會切出 <span class="math-text nowrap">3 &times; 3 &times; 3 = 27</span> 塊小正方體。</li>
+                    <li>這 27 塊小正方體的「總表面積」，會精準地變成原來大正方體的 <strong style="color: #FFFF00;">3 倍</strong>！</li>
+                    <li>結論：<strong style="color: #7CFC00;">邊長切成 n 等分，總表面積變為 n 倍。</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁四：溫度與濃度 -->
+<!-- ========================================== -->
+<div id="factors-2" class="tab-content">
+    <div class="grid-container">
+        <div class="panel" style="border-color: #FF69B4;">
+            <h2 style="color: #FF69B4;">因素三：溫度的影響</h2>
+            <p>溫度升高，是加快反應速率最有效的方法之一。</p>
+            <ul>
+                <li><strong style="color: #FFFF00;">動能增加：</strong> 溫度愈高，分子的平均動能愈高，有更多分子能跨越「活化能」的門檻，產生有效碰撞。</li>
+                <li><strong style="color: #00FFFF;">頻率增加：</strong> 分子運動速率變快，碰撞的總次數也隨之增加。</li>
+            </ul>
+            <p style="color: #9fb0a8;">※ 經驗法則：在室溫附近，溫度每升高 10&deg;C，許多化學反應的速率大約會增加為原來的 2 倍。</p>
+        </div>
+        <div class="panel" style="border-color: #00FFFF;">
+            <h2 style="color: #00FFFF;">因素四：濃度與壓力的影響</h2>
+            <p>空間中粒子的擁擠程度，直接決定了碰撞的機率。</p>
+            <ul>
+                <li><strong style="color: #FFA500;">水溶液濃度：</strong> 鹽酸濃度越高，單位體積內的 <span class="math-text nowrap">H<sup>+</sup></span> 離子數越多，與金屬碰撞產生氫氣的速率就越快。</li>
+                <li><strong style="color: #7CFC00;">氣體壓力：</strong> 對於氣體而言，增加壓力就等於縮小體積，也就是「提高了氣體的濃度」，分子變得更擁擠，反應速率自然加快。</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁五：硫代硫酸鈉實驗 -->
+<!-- ========================================== -->
+<div id="experiment" class="tab-content">
+    <div class="grid-container">
+        <!-- 左欄：實驗模擬器 -->
+        <div class="panel" style="border-color: #FFFF00;">
+            <h2>硫代硫酸鈉 遮蔽十字實驗</h2>
+            <div class="lab-controls">
+                <button class="action-btn" id="btn-30c" onclick="startThio(30)" style="border-color: #00FFFF; color: #00FFFF;">💧 30&deg;C 實驗</button>
+                <button class="action-btn" id="btn-50c" onclick="startThio(50)" style="border-color: #FFA500; color: #FFA500;">🔥 50&deg;C 實驗</button>
+                <button class="action-btn" onclick="resetThio()" style="border-color: #9fb0a8; color: #9fb0a8;">🔄 重置錐形瓶</button>
+            </div>
+            <div class="canvas-container">
+                <canvas id="thioCanvas"></canvas>
+            </div>
+            <p id="thio-status" style="text-align: center; margin: 0; color: #7CFC00; font-weight: bold; font-family: 'JetBrains Mono';">計時器: 0.0 s</p>
+        </div>
+
+        <!-- 右欄：原理與圖形 -->
+        <div class="panel">
+            <h2>實驗原理與化學式</h2>
+            <p>將硫代硫酸鈉水溶液與鹽酸混合，會產生<strong style="color: #FFFF00;">黃色的硫固體沉澱</strong>，使溶液變得混濁。</p>
+            <div class="equation-display" style="background-color: rgba(255, 255, 255, 0.05); border: 2px dashed #00FFFF; border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 15px;">
+                <span class="math-text" style="font-size: 18px;">Na<sub>2</sub>S<sub>2</sub>O<sub>3</sub> + 2HCl &rarr; 2NaCl + H<sub>2</sub>O + SO<sub>2</sub> + S&darr;(黃色)</span>
+            </div>
+            
+            <div class="highlight-box">
+                <h3 style="color: #7CFC00; margin-top: 0; font-size: 20px;">📈 速率與時間的關係</h3>
+                <p style="margin-bottom: 0;">我們藉由觀察瓶底的「十字」被黃色沉澱完全遮住所需的「時間 (t)」來判斷快慢。因為反應產生的硫質量皆相同，故：</p>
+                <p style="text-align: center; margin-bottom: 0;">
+                    <span class="math-text" style="font-size: 24px; color: #FFFF00;">反應速率 (R) &prop; <span class="fraction"><span class="numerator">1</span><span class="denominator">t</span></span></span>
+                </p>
+            </div>
+            <p style="font-size: 18px; color: #9fb0a8;">※ 若以「溫度」為橫坐標，「時間倒數 (1/t)」為縱坐標，會繪製出一條向右上方翹起的曲線，證明溫度越高，速率越快。</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 主分頁切換
+    function openTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        if (tabId === 'collision') {
+            initCollision();
+        } else {
+            cancelAnimationFrame(colAnimId);
+        }
+
+        if (tabId === 'experiment') {
+            initThio();
+        } else {
+            cancelAnimationFrame(thioAnimId);
+        }
+    }
+
+    // ==========================================
+    // 微觀碰撞模擬器 Canvas
+    // ==========================================
+    const colCanvas = document.getElementById('colCanvas');
+    const colCtx = colCanvas ? colCanvas.getContext('2d') : null;
+    let colAnimId;
+    let particles = [];
+    let colState = 'idle'; // idle, low, high
+
+    function initCollision() {
+        if (!colCanvas) return;
+        colCanvas.width = colCanvas.parentElement.clientWidth;
+        colCanvas.height = 360;
+        resetCollision();
+        animateCollision();
+    }
+
+    function resetCollision() {
+        particles = [];
+        colState = 'idle';
+        document.getElementById('col-status').innerText = '請點擊按鈕開始模擬';
+        document.getElementById('col-status').style.color = '#7CFC00';
+    }
+
+    function startCollision(energyLevel) {
+        colState = energyLevel;
+        particles = [];
+        let speedMult = energyLevel === 'high' ? 4.0 : 1.5;
+        let pCount = 20;
+
+        // 產生 A 粒子 (青色) 與 B 粒子 (橘色)
+        for (let i = 0; i < pCount; i++) {
+            particles.push({
+                x: Math.random() * (colCanvas.width - 40) + 20,
+                y: Math.random() * (colCanvas.height - 40) + 20,
+                vx: (Math.random() - 0.5) * speedMult,
+                vy: (Math.random() - 0.5) * speedMult,
+                r: 10,
+                type: i % 2 === 0 ? 'A' : 'B',
+                color: i % 2 === 0 ? '#00FFFF' : '#FFA500',
+                reacted: false
+            });
+        }
+        
+        if (energyLevel === 'high') {
+            document.getElementById('col-status').innerText = '🔥 高溫高動能：頻繁產生有效碰撞！';
+            document.getElementById('col-status').style.color = '#FF69B4';
+        } else {
+            document.getElementById('col-status').innerText = '❄️ 低溫低動能：大部分都是無效碰撞彈開。';
+            document.getElementById('col-status').style.color = '#00FFFF';
+        }
+    }
+
+    function animateCollision() {
+        if (!colCtx) return;
+        colCtx.fillStyle = '#0b1813';
+        colCtx.fillRect(0, 0, colCanvas.width, colCanvas.height);
+
+        // 移動與邊界反彈
+        for (let p of particles) {
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if (p.x - p.r < 0 || p.x + p.r > colCanvas.width) p.vx *= -1;
+            if (p.y - p.r < 0 || p.y + p.r > colCanvas.height) p.vy *= -1;
+        }
+
+        // 碰撞偵測
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                let p1 = particles[i];
+                let p2 = particles[j];
+
+                // 已經結合的就不再獨立碰撞
+                if (p1.reacted || p2.reacted) continue;
+
+                let dx = p2.x - p1.x;
+                let dy = p2.y - p1.y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < p1.r + p2.r) {
+                    // 發生碰撞
+                    if (colState === 'high' && p1.type !== p2.type) {
+                        // 有效碰撞：結合成大粒子 (粉紅色)
+                        p1.reacted = true;
+                        p2.reacted = true;
+                        p1.color = '#FF69B4';
+                        p1.r = 15;
+                        p1.vx = (p1.vx + p2.vx) * 0.5;
+                        p1.vy = (p1.vy + p2.vy) * 0.5;
+                        // 把 p2 移出畫面
+                        p2.x = -100; p2.y = -100; p2.vx = 0; p2.vy = 0;
+                    } else {
+                        // 無效碰撞：彈性碰撞 (簡化版反轉速度)
+                        let tempVx = p1.vx;
+                        let tempVy = p1.vy;
+                        p1.vx = p2.vx;
+                        p1.vy = p2.vy;
+                        p2.vx = tempVx;
+                        p2.vy = tempVy;
+                        
+                        // 強制分開避免黏住
+                        p1.x += p1.vx; p1.y += p1.vy;
+                        p2.x += p2.vx; p2.y += p2.vy;
+                    }
+                }
+            }
+        }
+
+        // 繪製粒子
+        for (let p of particles) {
+            if (p.x < 0) continue; // 已被合併隱藏的
+            colCtx.fillStyle = p.color;
+            colCtx.beginPath();
+            colCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            colCtx.fill();
+            
+            // 畫個小光暈
+            if (p.reacted) {
+                colCtx.strokeStyle = 'rgba(255, 105, 180, 0.5)';
+                colCtx.lineWidth = 3;
+                colCtx.beginPath();
+                colCtx.arc(p.x, p.y, p.r + 4, 0, Math.PI * 2);
+                colCtx.stroke();
+            }
+        }
+
+        colAnimId = requestAnimationFrame(animateCollision);
+    }
+
+    // ==========================================
+    // 硫代硫酸鈉實驗 Canvas
+    // ==========================================
+    const thioCanvas = document.getElementById('thioCanvas');
+    const thioCtx = thioCanvas ? thioCanvas.getContext('2d') : null;
+    let thioAnimId;
+    let thioState = 'idle'; // idle, running, done
+    let thioTimer = 0;
+    let thioAlpha = 0;
+    let thioRate = 0; // 透明度增加速率
+    let lastTime = 0;
+
+    function initThio() {
+        if (!thioCanvas) return;
+        thioCanvas.width = thioCanvas.parentElement.clientWidth;
+        thioCanvas.height = 360;
+        resetThio();
+    }
+
+    function resetThio() {
+        thioState = 'idle';
+        thioTimer = 0;
+        thioAlpha = 0;
+        document.getElementById('thio-status').innerText = '計時器: 0.0 s';
+        document.getElementById('thio-status').style.color = '#7CFC00';
+        document.getElementById('btn-30c').disabled = false;
+        document.getElementById('btn-50c').disabled = false;
+        cancelAnimationFrame(thioAnimId);
+        drawThioScene();
+    }
+
+    function startThio(temp) {
+        if (thioState === 'running') return;
+        
+        document.getElementById('btn-30c').disabled = true;
+        document.getElementById('btn-50c').disabled = true;
+        
+        thioState = 'running';
+        thioTimer = 0;
+        thioAlpha = 0;
+        lastTime = performance.now();
+        
+        // 溫度越高，速率越快。假設 30度約要 40秒(模擬中用較快速度)，50度只要 10秒。
+        // 設定 alpha 從 0 跑到 1 的速率
+        if (temp === 30) {
+            thioRate = 1 / 15.0; // 模擬 15秒遮蔽
+        } else {
+            thioRate = 1 / 4.0;  // 模擬 4秒遮蔽
+        }
+
+        thioAnimId = requestAnimationFrame(animateThio);
+    }
+
+    function drawThioScene() {
+        if (!thioCtx) return;
+        thioCtx.fillStyle = '#0b1813'; // 桌面背景
+        thioCtx.fillRect(0, 0, thioCanvas.width, thioCanvas.height);
+
+        let cx = thioCanvas.width / 2;
+        let cy = thioCanvas.height / 2;
+
+        // 畫底部的白紙與青色十字 (避免使用黑色)
+        thioCtx.fillStyle = '#FFFFFF';
+        thioCtx.fillRect(cx - 80, cy - 80, 160, 160);
+        
+        thioCtx.strokeStyle = '#00FFFF';
+        thioCtx.lineWidth = 8;
+        thioCtx.beginPath();
+        thioCtx.moveTo(cx - 40, cy);
+        thioCtx.lineTo(cx + 40, cy);
+        thioCtx.moveTo(cx, cy - 40);
+        thioCtx.lineTo(cx, cy + 40);
+        thioCtx.stroke();
+
+        // 畫錐形瓶的俯視玻璃邊緣
+        thioCtx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        thioCtx.lineWidth = 10;
+        thioCtx.beginPath();
+        thioCtx.arc(cx, cy, 70, 0, Math.PI * 2);
+        thioCtx.stroke();
+
+        // 畫黃色沉澱疊加層 (根據 thioAlpha)
+        if (thioAlpha > 0) {
+            thioCtx.fillStyle = `rgba(255, 255, 0, ${thioAlpha})`;
+            thioCtx.beginPath();
+            thioCtx.arc(cx, cy, 65, 0, Math.PI * 2);
+            thioCtx.fill();
+        }
+    }
+
+    function animateThio(currentTime) {
+        if (thioState !== 'running') return;
+
+        let deltaTime = (currentTime - lastTime) / 1000.0; // 秒
+        lastTime = currentTime;
+
+        thioTimer += deltaTime;
+        thioAlpha += thioRate * deltaTime;
+
+        if (thioAlpha >= 1.0) {
+            thioAlpha = 1.0;
+            thioState = 'done';
+            document.getElementById('thio-status').innerText = `十字完全遮蔽！時間: ${thioTimer.toFixed(1)} s`;
+            document.getElementById('thio-status').style.color = '#FFA500';
+            drawThioScene();
+            return; // 結束動畫
+        }
+
+        document.getElementById('thio-status').innerText = `計時器: ${thioTimer.toFixed(1)} s`;
+        drawThioScene();
+
+        thioAnimId = requestAnimationFrame(animateThio);
+    }
+
+    window.addEventListener('resize', () => {
+        if (document.getElementById('collision').classList.contains('active')) initCollision();
+        if (document.getElementById('experiment').classList.contains('active')) initThio();
+    });
+
+</script>
+</body>
+</html>
