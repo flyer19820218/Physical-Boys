@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<!-- 允許自由縮放，解除強制鎖定，適配平板與手機 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>化學反應與平衡：活化能與催化劑</title>
+<style>
+    /* 採用高辨識度字體綁定 */
+    @import url('https://fonts.googleapis.com/css2?family=Verdana:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap');
+
+    /* 黑板視覺與零黑色原則 */
+    body {
+        background-color: #11261f;
+        color: #FFFFFF;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 20px; /* 字體地板 20px */
+        margin: 0;
+        padding: 30px;
+        line-height: 1.8;
+        /* 鎖定最小寬度，強制進入等比例縮放模式，避免破壞三欄排版 */
+        min-width: 1200px;
+        overflow-x: auto;
+    }
+
+    * {
+        box-sizing: border-box;
+        border-color: #FFFFFF;
+    }
+
+    /* 頂部標題列風格 */
+    .header-container {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #7CFC00;
+    }
+
+    .header-container h1 {
+        font-size: 30px; 
+        color: #00FFFF;
+        margin: 0;
+        letter-spacing: 2px;
+    }
+
+    h2 {
+        font-size: 26px; 
+        color: #FFFF00;
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 2px dashed rgba(255, 255, 0, 0.4);
+        padding-bottom: 10px;
+    }
+
+    /* 嚴格多欄排版與大螢幕適配 */
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px;
+        margin-top: 20px;
+        align-items: stretch;
+    }
+
+    .panel {
+        border: 2px solid #00FFFF;
+        border-radius: 12px;
+        padding: 25px;
+        background-color: #16332a;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 15px;
+        box-shadow: 0 4px 15px rgba(0, 255, 255, 0.1);
+    }
+
+    /* 防斷字與字體綁定 */
+    .math-text {
+        font-family: 'JetBrains Mono', Verdana, monospace;
+        color: #FFA500;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    /* 標準理化上下分式 */
+    .fraction {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        vertical-align: middle;
+        margin: 0 6px;
+        font-family: 'JetBrains Mono', Verdana, monospace;
+        color: #FFA500;
+        font-weight: bold;
+    }
+    .fraction span.numerator { border-bottom: 2px solid #FFA500; padding: 0 4px; line-height: 1.2; }
+    .fraction span.denominator { padding: 0 4px; line-height: 1.2; }
+
+    /* 分頁架構 */
+    .tab-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 35px;
+        flex-wrap: wrap;
+    }
+
+    .tab-button {
+        background-color: transparent;
+        color: #FFFFFF;
+        border: 2px solid #7CFC00;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 22px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .tab-button.active, .tab-button:hover { background-color: #7CFC00; color: #11261f; font-weight: bold; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .highlight-box {
+        border: 2px dashed #7CFC00;
+        padding: 20px;
+        border-radius: 10px;
+        background-color: rgba(124, 252, 0, 0.08);
+    }
+
+    ul, ol { padding-left: 28px; margin-top: 5px; margin-bottom: 5px; }
+    li { margin-bottom: 12px; }
+
+    /* 按鈕樣式 */
+    .action-btn {
+        background-color: #11261f;
+        color: #FFFFFF;
+        border: 2px solid #00FFFF;
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: bold;
+        transition: all 0.2s;
+        margin-top: 10px;
+    }
+    .action-btn:hover { background-color: #00FFFF; color: #11261f; }
+    
+    /* Canvas 容器 */
+    .canvas-container {
+        width: 100%;
+        background-color: #0b1813;
+        border: 2px dashed #FFA500;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    .rect-canvas {
+        display: block;
+        width: 100%;
+        height: 280px; 
+    }
+</style>
+</head>
+<body>
+
+<div class="header-container">
+    <h1>化學反應與平衡：活化能與催化劑</h1>
+</div>
+
+<div class="tab-container">
+    <button class="tab-button active" onclick="openTab('activation')">活化能概念</button>
+    <button class="tab-button" onclick="openTab('catalyst')">催化劑原理</button>
+    <button class="tab-button" onclick="openTab('characteristics')">特性與誤區</button>
+    <button class="tab-button" onclick="openTab('applications')">生活與工業應用</button>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁一：跨越反應的門檻——活化能 -->
+<!-- ========================================== -->
+<div id="activation" class="tab-content active">
+    <div class="grid-container">
+        <div class="panel" style="border-color: #00FFFF;">
+            <h2 style="color: #00FFFF;">活化能的定義</h2>
+            <p>化學反應發生所需要的<strong style="color: #FFFF00;">最低能量</strong>稱為「活化能」。</p>
+            <div class="highlight-box" style="border-color: #00FFFF; background-color: rgba(0, 255, 255, 0.08);">
+                <p style="margin: 0;">分子之間必須發生碰撞，且碰撞時的動能必須大於或等於活化能，才能順利打破原有的化學鍵，結合成新的分子。</p>
+            </div>
+        </div>
+
+        <div class="panel" style="border-color: #FFA500;">
+            <h2 style="color: #FFA500;">溫度與活化能的關係</h2>
+            <ul>
+                <li><strong style="color: #FF69B4;">吸熱反應：</strong> 吸熱反應發生時，增加溫度會使可跨越活化能的分子數<strong style="color: #FF69B4;">大幅上升</strong>。</li>
+                <li><strong style="color: #7CFC00;">放熱反應：</strong> 放熱反應的活化能通常較低，溫度升高時可反應的分子數只有小幅增加。</li>
+            </ul>
+        </div>
+
+        <div class="panel" style="border-color: #7CFC00;">
+            <h2 style="color: #7CFC00;">【圖形解析】位能圖</h2>
+            <div class="lab-controls" style="text-align: center; margin-bottom: 10px;">
+                <button class="action-btn" onclick="drawEnergyProfile('endo')" style="border-color: #FF69B4; color: #FF69B4;">📈 顯示吸熱反應</button>
+                <button class="action-btn" onclick="drawEnergyProfile('exo')" style="border-color: #00FFFF; color: #00FFFF;">📉 顯示放熱反應</button>
+            </div>
+            <div class="canvas-container" style="border-color: #7CFC00;">
+                <canvas id="energyCanvas" class="rect-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁二：催化劑的魔法 -->
+<!-- ========================================== -->
+<div id="catalyst" class="tab-content">
+    <div class="grid-container">
+        <div class="panel" style="border-color: #00FFFF;">
+            <h2 style="color: #00FFFF;">催化劑的功能</h2>
+            <p>催化劑的功能是<strong style="color: #FFFF00;">降低或增加反應時所需要的活化能</strong>，讓反應更容易或更難進行。</p>
+            <ul>
+                <li>它為化學反應提供了一條全新的反應途徑。</li>
+                <li><strong style="color: #FF69B4;">專一性（選擇性）：</strong> 催化劑具有高度專一性，只能催化特定的化學反應。</li>
+            </ul>
+        </div>
+
+        <div class="panel" style="border-color: #FFA500;">
+            <h2 style="color: #FFA500;">催化劑與化學平衡</h2>
+            <p>這是最常出現的考試陷阱，請務必釐清：</p>
+            <div class="highlight-box" style="border-color: #FF69B4; background-color: rgba(255, 105, 180, 0.08);">
+                <p style="margin: 0; color: #FFFFFF;">催化劑同時增加正、逆反應速率，但<strong style="color: #FFFF00;">不會影響化學平衡</strong>，也<strong style="color: #FF69B4;">絕對不會改變</strong>反應物與生成物的最終濃度及產量！</p>
+            </div>
+            <p style="margin-bottom: 0;">※ 它只能讓你「更快」達到終點，但不能讓你得到「更多」產物。</p>
+        </div>
+
+        <div class="panel" style="border-color: #7CFC00;">
+            <h2 style="color: #7CFC00;">【圖形解析】活化能捷徑</h2>
+            <div class="lab-controls" style="text-align: center; margin-bottom: 10px;">
+                <button class="action-btn" onclick="startTunnelAnimation()" style="border-color: #FFFF00; color: #FFFF00;">▶️ 執行模擬</button>
+            </div>
+            <div class="canvas-container" style="border-color: #7CFC00;">
+                <canvas id="tunnelCanvas" class="rect-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁三：催化劑的特性與誤區 -->
+<!-- ========================================== -->
+<div id="characteristics" class="tab-content">
+    <div class="grid-container">
+        <div class="panel" style="border-color: #00FFFF;">
+            <h2 style="color: #00FFFF;">加速與減慢</h2>
+            <p>催化劑並非只能加速反應：</p>
+            <ul>
+                <li><strong style="color: #FF69B4;">加速反應 (正催化劑)：</strong> 例如雙氧水加入<strong style="color: #FFFF00;">二氧化錳</strong>，會使分解速率大幅加快。</li>
+                <li><strong style="color: #00FFFF;">減慢反應 (負催化劑)：</strong> 例如雙氧水加入甘油，反而會抑制並減慢反應的進行。</li>
+            </ul>
+        </div>
+
+        <div class="panel" style="border-color: #FFA500;">
+            <h2 style="color: #FFA500;">質量守恆與重複性</h2>
+            <p>催化劑只負責「幫助」反應進行，本身並不消耗：</p>
+            <div class="highlight-box" style="border-color: #FFA500; background-color: rgba(255, 165, 0, 0.08);">
+                <p style="margin: 0;">其本身的質量與化學性質在反應前後<strong style="color: #FFFF00;">不會減少、不會改變</strong>，且可以重複使用數千次以上。</p>
+            </div>
+        </div>
+
+        <div class="panel" style="border-color: #7CFC00;">
+            <h2 style="color: #7CFC00;">微量高效原則</h2>
+            <p>由於催化劑可以不斷重複參與反應的循環，因此：</p>
+            <ul>
+                <li>只需要<strong style="color: #FFFF00;">極少量</strong>的催化劑即可發揮龐大的催化反應效果。</li>
+                <li>加入更多的催化劑，雖然能提供更多反應接觸點，但若反應物濃度不足，速率仍有其上限。</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 分頁四：生活與工業中的催化劑 -->
+<!-- ========================================== -->
+<div id="applications" class="tab-content">
+    <div class="grid-container">
+        <div class="panel" style="border-color: #00FFFF;">
+            <h2 style="color: #00FFFF;">工業製氨 (哈柏法)</h2>
+            <p>在工業上，為了在合理的時間內製造氨氣，必須使用催化劑：</p>
+            <div class="highlight-box" style="text-align: center; border-color: #00FFFF;">
+                <span class="math-text" style="font-size: 22px;">N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub></span>
+            </div>
+            <p>※ 使用<strong style="color: #FFFF00;">鐵粉</strong>或<strong style="color: #FFFF00;">氧化鐵粉</strong>作為催化劑，搭配高溫高壓環境，可有效提升合成效率。</p>
+        </div>
+
+        <div class="panel" style="border-color: #FFA500;">
+            <h2 style="color: #FFA500;">汽機車廢氣處理</h2>
+            <p>現代汽機車的排氣管中皆裝有「觸媒轉化器」。</p>
+            <ul>
+                <li><strong style="color: #FF69B4;">成分：</strong> 內部含有鉑 (<span class="math-text nowrap">Pt</span>)、鈀 (<span class="math-text nowrap">Pd</span>) 等貴金屬。</li>
+                <li><strong style="color: #00FFFF;">功能：</strong> 能催化廢氣中的一氧化碳與氮氧化物，將其快速轉換為二氧化碳、水與氮氣等無毒氣體。</li>
+            </ul>
+        </div>
+
+        <div class="panel" style="border-color: #7CFC00;">
+            <h2 style="color: #7CFC00;">生物體內的酵素</h2>
+            <p>生物體內進行的化學反應，多仰賴「酶（酵素）」來催化：</p>
+            <ul>
+                <li><strong style="color: #FF69B4;">消化作用：</strong> 消化液含有的唾液澱粉酶，可以將澱粉分解。</li>
+                <li><strong style="color: #00FFFF;">消毒作用：</strong> 血液中的酵素能催化雙氧水快速分解產生氧氣，發揮消毒作用。</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 頁籤切換與 iOS Canvas 動畫喚醒防護
+    // ==========================================
+    function openTab(tabId) {
+        // 隱藏所有分頁
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        
+        // 顯示選擇的分頁
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        // 停止所有動畫迴圈以節省資源
+        cancelAnimationFrame(tunnelAnimId);
+        
+        // 延遲喚醒 Canvas，解決 iOS display:none 切換時的破圖問題
+        setTimeout(() => {
+            if (tabId === 'activation') {
+                drawEnergyProfile('endo'); // 預設顯示吸熱
+            } else if (tabId === 'catalyst') {
+                initTunnelAnimation();
+            }
+        }, 80);
+    }
+
+    // ==========================================
+    // Canvas 1：位能圖 (吸熱與放熱反應)
+    // ==========================================
+    function drawEnergyProfile(type) {
+        const cvs = document.getElementById('energyCanvas');
+        if (!cvs) return;
+        
+        // 讀取真實寬高
+        cvs.width = cvs.parentElement.clientWidth;
+        cvs.height = 280;
+        let ctx = cvs.getContext('2d');
+        let w = cvs.width, h = cvs.height;
+        let padX = 50, padY = 30;
+
+        // 背景
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, w, h);
+
+        // 座標軸
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(padX, padY);
+        ctx.lineTo(padX, h - padY);
+        ctx.lineTo(w - padX + 20, h - padY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '16px "JetBrains Mono", sans-serif';
+        ctx.fillText('位能', 10, padY - 10);
+        ctx.fillText('反應途徑', w - padX - 30, h - padY + 25);
+
+        // 設定起點(反應物)與終點(生成物)
+        let rx1 = padX + 20, rx2 = padX + 70, ry = h / 2; // 反應物
+        let px1 = w - padX - 80, px2 = w - padX - 20, py; // 生成物
+        
+        let curveColor = '';
+        let eaPeakY = padY + 20;
+
+        if (type === 'endo') {
+            py = padY + 60; // 生成物位能高 (吸熱)
+            curveColor = '#FF69B4'; // 粉紅色
+        } else {
+            py = h - padY - 40; // 生成物位能低 (放熱)
+            curveColor = '#00FFFF'; // 青色
+        }
+
+        // 畫反應物與生成物水平線
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(rx1, ry); ctx.lineTo(rx2, ry);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(px1, py); ctx.lineTo(px2, py);
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '14px sans-serif';
+        ctx.fillText('反應物', rx1, ry + 20);
+        ctx.fillText('生成物', px1, py + 20);
+
+        // 畫反應路徑曲線
+        ctx.strokeStyle = curveColor;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(rx2, ry);
+        let midX = (rx2 + px1) / 2;
+        // 貝茲曲線模擬山峰
+        ctx.bezierCurveTo(rx2 + 30, ry, midX - 20, eaPeakY, midX, eaPeakY);
+        ctx.bezierCurveTo(midX + 20, eaPeakY, px1 - 30, py, px1, py);
+        ctx.stroke();
+
+        // 畫活化能 (Ea) 標示
+        ctx.strokeStyle = '#FFFF00';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(rx2, ry); ctx.lineTo(midX + 30, ry); // 基準線延伸
+        ctx.moveTo(midX, eaPeakY); ctx.lineTo(midX, ry); // Ea 垂直線
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#FFFF00';
+        ctx.font = 'bold 16px "JetBrains Mono", sans-serif';
+        ctx.fillText('活化能 Ea', midX + 10, (eaPeakY + ry) / 2);
+    }
+
+    // ==========================================
+    // Canvas 2：催化劑捷徑模擬動畫
+    // ==========================================
+    let tunnelAnimId;
+    let particleX = 0;
+    let tunnelActive = false;
+
+    function initTunnelAnimation() {
+        const cvs = document.getElementById('tunnelCanvas');
+        if (!cvs) return;
+        cvs.width = cvs.parentElement.clientWidth;
+        cvs.height = 280;
+        particleX = 50; 
+        tunnelActive = false;
+        drawTunnelScene();
+    }
+
+    function startTunnelAnimation() {
+        tunnelActive = true;
+        particleX = 50; // 重置粒子位置
+        cancelAnimationFrame(tunnelAnimId);
+        animateTunnel();
+    }
+
+    function drawTunnelScene() {
+        const cvs = document.getElementById('tunnelCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        let w = cvs.width, h = cvs.height;
+        let padX = 30, padY = 30;
+
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, w, h);
+
+        let rx = padX, ry = h - padY - 20; 
+        let px = w - padX, py = h - padY - 20;
+        let midX = w / 2;
+
+        // 畫未加催化劑的高山 (白色虛線)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.bezierCurveTo(rx + 50, ry, midX - 40, padY + 20, midX, padY + 20);
+        ctx.bezierCurveTo(midX + 40, padY + 20, px - 50, py, px, py);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.font = '14px sans-serif';
+        ctx.fillText('未加催化劑 (活化能高)', midX - 60, padY + 15);
+
+        // 畫加入催化劑的捷徑 (青色實線)
+        let catPeakY = h / 2 + 10;
+        ctx.strokeStyle = '#00FFFF';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.bezierCurveTo(rx + 50, ry, midX - 30, catPeakY, midX, catPeakY);
+        ctx.bezierCurveTo(midX + 30, catPeakY, px - 50, py, px, py);
+        ctx.stroke();
+
+        ctx.fillStyle = '#00FFFF';
+        ctx.fillText('加入催化劑 (全新捷徑)', midX - 60, catPeakY - 15);
+
+        // 畫移動的分子 (黃色圓球)
+        if (particleX > 0) {
+            // 計算 Y 座標 (延著青色曲線移動)
+            // 這裡用簡單的正弦波來對應青色捷徑的高度
+            let progress = (particleX - rx) / (px - rx);
+            if(progress > 1) progress = 1;
+            
+            // 使用 sin 函數模擬 bezier 曲線的高度
+            let currentY = ry - Math.sin(progress * Math.PI) * (ry - catPeakY);
+
+            ctx.fillStyle = '#FFFF00';
+            ctx.beginPath();
+            ctx.arc(particleX, currentY, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 加上尾跡特效
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+            ctx.beginPath();
+            ctx.arc(particleX - 8, currentY, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function animateTunnel() {
+        const cvs = document.getElementById('tunnelCanvas');
+        if (!cvs) return;
+        
+        // 粒子移動速度
+        particleX += 6; 
+        
+        let w = cvs.width;
+        let padX = 30;
+        let px = w - padX;
+
+        drawTunnelScene();
+
+        if (particleX < px) {
+            tunnelAnimId = requestAnimationFrame(animateTunnel);
+        } else {
+            // 到達終點
+            particleX = px;
+            drawTunnelScene();
+            tunnelActive = false;
+        }
+    }
+
+    // 啟動預設首頁的動畫
+    setTimeout(() => { openTab('activation'); }, 100);
+
+</script>
+</body>
+</html>
