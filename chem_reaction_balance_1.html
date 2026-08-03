@@ -55,11 +55,11 @@
         margin-bottom: 15px;
     }
 
-    /* 嚴格雙欄排版與大螢幕適配 */
+    /* 嚴格雙欄排版與大螢幕適配 (優化 minmax 讓三格完美並排) */
     .grid-container {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-        gap: 35px;
+        grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+        gap: 30px;
         margin-top: 20px;
         align-items: stretch;
     }
@@ -203,7 +203,7 @@
     .action-btn.active { background-color: #00FFFF; color: #11261f; }
     .action-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: #9fb0a8 !important; color: #9fb0a8 !important; background-color: transparent !important; }
 
-    /* Banana 技術指導：防變形絕對正方形 Canvas 容器 */
+    /* Canvas 容器 */
     .canvas-container {
         width: 100%;
         background-color: #0b1813;
@@ -275,11 +275,12 @@
 <!-- ========================================== -->
 <div id="collision" class="tab-content">
     <div class="grid-container">
+        <!-- 左欄：動態模擬器 -->
         <div class="panel" style="border-color: #FFA500;">
-            <h2>分子碰撞模擬器</h2>
+            <h2>分子碰撞模擬器 <span style="font-size:16px; color:#9fb0a8;">(真實動能分布)</span></h2>
             <div class="lab-controls">
-                <button class="action-btn" onclick="startCollision('low')" style="border-color: #00FFFF; color: #00FFFF;">❄️ 低溫低動能</button>
-                <button class="action-btn" onclick="startCollision('high')" style="border-color: #FF69B4; color: #FF69B4;">🔥 高溫高動能</button>
+                <button class="action-btn" onclick="startCollision('low')" style="border-color: #00FFFF; color: #00FFFF;">❄️ 低溫 (少量高能分子)</button>
+                <button class="action-btn" onclick="startCollision('high')" style="border-color: #FF69B4; color: #FF69B4;">🔥 高溫 (大量高能分子)</button>
             </div>
             <div class="canvas-container" style="padding: 15px;">
                 <canvas id="colCanvas" class="square-canvas"></canvas>
@@ -287,18 +288,19 @@
             <p id="col-status" style="text-align: center; margin: 0; color: #7CFC00; font-weight: bold;">請點擊按鈕開始模擬</p>
         </div>
 
+        <!-- 右欄：原理說明 -->
         <div class="panel">
             <h2>有效碰撞的兩大要件</h2>
-            <p>分子必須互相碰撞才「有機會」發生反應。化學反應的本質是<strong style="color: #FFFF00;">原子的重新排列組合</strong>，只有滿足以下條件的碰撞，原子才能結合成新分子：</p>
+            <p>化學反應的本質是<strong style="color: #FFFF00;">原子的重新排列組合</strong>。粒子之間必須發生碰撞，且滿足以下「兩個嚴苛條件」，才能打破舊鍵、結合成新分子：</p>
             
             <div class="highlight-box">
-                <h3 style="color: #00FFFF; margin-top: 0;">1. 正確的碰撞方向 (機率問題)</h3>
-                <p style="margin-bottom: 0;">就像拼圖一樣，分子必須以特定的方位互相撞擊才有效。在左側動畫中，即使能量足夠，也設定了<strong style="color: #00FFFF;">只有約 1/3 的機率是方向正確的</strong>，剩下的撞錯角度依然會彈開！</p>
+                <h3 style="color: #00FFFF; margin-top: 0;">1. 正確的碰撞方向 (機率 1/3)</h3>
+                <p style="margin-bottom: 0;">就像拼圖一樣，分子必須以特定的方位互相撞擊才有效。在左側的物理引擎中，即使能量達標，也只有約 <strong style="color: #00FFFF;">33% (1/3) 的機率是方向正確的</strong>，剩下的撞錯角度依然會無效彈開！</p>
             </div>
 
             <div class="highlight-box" style="margin-top: 15px; border-color: #FF69B4; background-color: rgba(255, 105, 180, 0.08);">
-                <h3 style="color: #FF69B4; margin-top: 0;">2. 足夠的能量 (活化能)</h3>
-                <p style="margin-bottom: 0;">如果碰撞的力道太弱，分子只會像撞球一樣彈開。必須具備足夠的動能，才能突破反應的能量門檻（活化能）。</p>
+                <h3 style="color: #FF69B4; margin-top: 0;">2. 足夠的能量 (超越活化能)</h3>
+                <p style="margin-bottom: 0;">粒子的能量呈現**常態分布**。在低溫時，絕大多數粒子能量不足，但仍有**極少部分**的高能粒子能跨越門檻發生反應。當溫度升高時，能跨越活化能門檻的高能粒子數量會**大幅暴增**！</p>
             </div>
         </div>
     </div>
@@ -312,8 +314,9 @@
     <div class="sub-tab-container">
         <button class="sub-tab-btn active" onclick="openSubTab('factors', 'factor-nature', this)">1. 物質本性</button>
         <button class="sub-tab-btn" onclick="openSubTab('factors', 'factor-surface', this)">2. 表面積</button>
-        <button class="sub-tab-btn" onclick="openSubTab('factors', 'factor-temp', this)">3. 溫度</button>
-        <button class="sub-tab-btn" onclick="openSubTab('factors', 'factor-conc', this)">4. 濃度與壓力</button>
+        <button class="sub-tab-btn" onclick="openSubTab('factors', 'factor-temp', this)">3. 溫度影響</button>
+        <button class="sub-tab-btn" onclick="openSubTab('factors', 'factor-distribution', this)" style="border-color: #FFA500; color: #FFA500;">4. 動能分布曲線</button>
+        <button class="sub-tab-btn" onclick="openSubTab('factors', 'factor-conc', this)">5. 濃度與壓力</button>
     </div>
 
     <!-- 子分頁 1：物質本性 -->
@@ -357,7 +360,7 @@
                     <p>烤肉時生火的木炭與木材：</p>
                     <ul>
                         <li><strong style="color: #9fb0a8;">整塊大木頭：</strong> 接觸空氣的表面積小，非常難以點燃。</li>
-                        <li><strong style="color: #FF69B4;">削成火媒棒或木屑：</strong> 大幅增加了與空氣（氧氣）接觸的表面積，只要一點火花就能瞬間引燃，劇烈燃燒。</li>
+                        <li><strong style="color: #FF69B4;">削成火媒棒或木屑：</strong> 大幅增加了與空氣接觸的表面積，只要一點火花就能瞬間引燃。</li>
                     </ul>
                 </div>
             </div>
@@ -379,7 +382,6 @@
                     <div class="canvas-container" style="border-color: #00FFFF; background-color: #0b1813; margin-bottom: 0;">
                         <canvas id="cubeCanvas" class="square-canvas"></canvas>
                     </div>
-                    <p style="text-align: center; margin: 10px 0 0 0; color: #FF69B4; font-size: 16px;">※ 觀察暴露出的「粉紅色全新內部表面」</p>
                 </div>
 
                 <div id="surface-ans" class="reveal-box" style="border-color: #7CFC00; background-color: rgba(124, 252, 0, 0.08);">
@@ -397,17 +399,17 @@
                             </span>
                         </li>
                     </ul>
-                    <p style="margin-top: 15px; margin-bottom: 5px; border-top: 1px dashed rgba(124, 252, 0, 0.3); padding-top: 10px;">經過嚴謹計算，新表面積精準變成原來的 <strong style="color: #FFFF00;">3 倍</strong>！</p>
-                    <p style="margin-top: 5px; margin-bottom: 5px;">結論規律：<strong style="color: #7CFC00;">邊長切成 n 等分，總表面積變為 n 倍。</strong></p>
+                    <p style="margin-top: 5px;">結論規律：<strong style="color: #7CFC00;">邊長切成 n 等分，總表面積變為 n 倍。</strong></p>
                     <strong style="color: #FFFF00; font-size: 26px;">答：3 倍</strong>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 子分頁 3：溫度 -->
+    <!-- 子分頁 3：溫度影響 (改版：絕美三格並排版面) -->
     <div id="factor-temp" class="sub-tab-content">
         <div class="grid-container">
+            <!-- 第一格：原因 -->
             <div class="panel" style="border-color: #00FFFF;">
                 <h2 style="color: #00FFFF;">原理機制 (原因)</h2>
                 <p>溫度是粒子平均動能的指標。溫度升高時，不只粒子移動變快（增加了碰撞總頻率），更致命的是：</p>
@@ -415,6 +417,8 @@
                     <p style="margin: 0;"><strong>「擁有足夠動能，能跨越活化能門檻的粒子數」會呈指數級別暴增！</strong>因此產生有效碰撞的機率大幅提升。</p>
                 </div>
             </div>
+
+            <!-- 第二格：例子 -->
             <div class="panel" style="border-color: #FFA500;">
                 <h2 style="color: #FFA500;">生活實例 (例子)</h2>
                 <p>食物的保存與腐敗：</p>
@@ -422,12 +426,53 @@
                     <li><strong style="color: #FF69B4;">夏天室溫 (高溫)：</strong> 細菌代謝與化學反應速度快，食物放在桌上半天就會發出酸敗的味道。</li>
                     <li><strong style="color: #00FFFF;">放進冰箱 (低溫)：</strong> 降低了食物內部化學反應與細菌繁殖的速率，大幅延長保鮮期。</li>
                 </ul>
-                <p style="color: #9fb0a8;">※ 經驗法則：在室溫附近，溫度每升高 10&deg;C，反應速率大約會變為原來的 2 倍。</p>
+            </div>
+            
+            <!-- 第三格：經典圖形解析 -->
+            <div class="panel" style="border-color: #7CFC00;">
+                <h3 style="color: #7CFC00; margin-top: 0; font-size: 22px;">【圖形解析】溫度與反應速率</h3>
+                <div class="canvas-container" style="background-color: #0b1813; border-color: #7CFC00; margin-bottom: 0;">
+                    <canvas id="rateTempCanvas" style="width: 100%; height: 240px;"></canvas>
+                </div>
+                <p style="text-align: center; margin: 10px 0 0 0; color: #9fb0a8; font-size: 16px;">※ 室溫附近，溫度每升 10&deg;C 速率約加倍。圖形呈經典的<strong style="color:#7CFC00;">「二次/指數曲線上揚」</strong>。</p>
             </div>
         </div>
     </div>
 
-    <!-- 子分頁 4：濃度與壓力 -->
+    <!-- 子分頁 4：動能分布曲線 -->
+    <div id="factor-distribution" class="sub-tab-content">
+        <div class="grid-container">
+            <div class="panel" style="border-color: #FFA500;">
+                <h2 style="color: #FFA500;">常態分布與活化能 (Ea)</h2>
+                <p>在同一個空間中，分子的總數固定（也就是<strong style="color: #FFFF00;">兩條曲線下方的總面積必須完全相等</strong>）。</p>
+                <ul>
+                    <li><strong style="color: #00FFFF;">低溫 (T1)：</strong> 曲線高聳而狹窄，平均動能低。但最右側仍有極少數分子越過門檻。</li>
+                    <li><strong style="color: #FF69B4;">高溫 (T2)：</strong> 曲線變扁平且往右方（高能區）偏移。</li>
+                </ul>
+                <div class="highlight-box" style="border-color: #FF69B4; background-color: rgba(255, 105, 180, 0.08);">
+                    <p style="margin: 0;"><strong>點擊右方按鈕觀察：</strong> 溫度升高時，跨越活化能門檻的分子總數（虛線面積）會<strong style="color: #FF69B4;">呈現幾十倍的大幅暴增</strong>！</p>
+                </div>
+            </div>
+
+            <div class="panel" style="border-color: #00FFFF; padding: 15px;">
+                <div class="lab-controls" style="text-align: center; margin-bottom: 10px;">
+                    <button class="action-btn" onclick="setDistHighlight('low')" style="border-color: #00FFFF; color: #00FFFF; margin-top: 0; padding: 6px 12px; font-size: 16px;">❄️ 顯示低溫反應佔比</button>
+                    <button class="action-btn" onclick="setDistHighlight('high')" style="border-color: #FF69B4; color: #FF69B4; margin-top: 0; padding: 6px 12px; font-size: 16px;">🔥 顯示高溫反應佔比</button>
+                    <button class="action-btn" onclick="setDistHighlight('none')" style="border-color: #9fb0a8; color: #9fb0a8; margin-top: 0; padding: 6px 12px; font-size: 16px;">🔄 重置</button>
+                </div>
+                <div class="canvas-container" style="background-color: #0b1813; border-color: #00FFFF; margin-bottom: 5px;">
+                    <canvas id="distCanvas" style="display: block; width: 100%; height: 280px;"></canvas>
+                </div>
+                <div style="display: flex; justify-content: space-around; font-size: 18px; margin-top: 5px;">
+                    <span style="color: #00FFFF;">── 低溫 (T1)</span>
+                    <span style="color: #FF69B4;">── 高溫 (T2)</span>
+                    <span style="color: #FFFF00; border-bottom: 2px dashed #FFFF00;">活化能門檻 (Ea)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 子分頁 5：濃度與壓力 -->
     <div id="factor-conc" class="sub-tab-content">
         <div class="grid-container">
             <div class="panel" style="border-color: #00FFFF;">
@@ -451,11 +496,10 @@
 </div>
 
 <!-- ========================================== -->
-<!-- 分頁五：硫代硫酸鈉實驗 (Banana 指導：黑十字對比 + 滿版巨大化) -->
+<!-- 分頁五：硫代硫酸鈉實驗 -->
 <!-- ========================================== -->
 <div id="experiment" class="tab-content">
     <div class="grid-container">
-        <!-- 左欄：實驗模擬器 -->
         <div class="panel" style="border-color: #FFFF00;">
             <h2>硫代硫酸鈉 遮蔽十字實驗</h2>
             <div class="lab-controls">
@@ -469,7 +513,6 @@
             <p id="thio-status" style="text-align: center; margin: 0; color: #7CFC00; font-weight: bold; font-family: 'JetBrains Mono'; font-size: 26px;">計時器: 0.0 s</p>
         </div>
 
-        <!-- 右欄：原理與圖形 -->
         <div class="panel">
             <h2>實驗原理與化學式</h2>
             <p>將硫代硫酸鈉水溶液與鹽酸混合，會產生<strong style="color: #FFFF00;">黃色的硫固體沉澱</strong>，使溶液變得混濁。</p>
@@ -484,7 +527,6 @@
                     <span class="math-text" style="font-size: 24px; color: #FFFF00;">反應速率 (R) &prop; <span class="fraction"><span class="numerator">1</span><span class="denominator">t</span></span></span>
                 </p>
             </div>
-            <p style="font-size: 18px; color: #9fb0a8;">※ 若以「溫度」為橫坐標，「時間倒數 (1/t)」為縱坐標，會繪製出一條向右上方翹起的曲線，證明溫度越高，速率越快。</p>
         </div>
     </div>
 </div>
@@ -498,6 +540,7 @@
         if (el.style.display === 'none' || el.style.display === '') {
             el.style.display = 'block';
             el.style.animation = 'fadeIn 0.4s ease';
+            if (id === 'surface-hint') setTimeout(initCube, 50);
         } else {
             el.style.display = 'none';
             if (id === 'surface-hint') cancelAnimationFrame(cubeAnimId);
@@ -519,7 +562,13 @@
         if (tabId === 'experiment') initThio();
         else cancelAnimationFrame(thioAnimId);
         
-        if (tabId !== 'factors') cancelAnimationFrame(cubeAnimId);
+        if (tabId === 'factors') {
+            if (document.getElementById('factor-surface').classList.contains('active') && document.getElementById('surface-hint').style.display === 'block') setTimeout(initCube, 50);
+            if (document.getElementById('factor-temp').classList.contains('active')) setTimeout(initRateTempCurve, 50);
+            if (document.getElementById('factor-distribution').classList.contains('active')) setTimeout(initDistCurve, 50);
+        } else {
+            cancelAnimationFrame(cubeAnimId);
+        }
     }
 
     // ==========================================
@@ -532,7 +581,64 @@
         document.getElementById(subTabId).classList.add('active');
         btnElement.classList.add('active');
         
-        if (subTabId !== 'factor-surface') cancelAnimationFrame(cubeAnimId);
+        if (subTabId === 'factor-surface' && document.getElementById('surface-hint').style.display === 'block') setTimeout(initCube, 50);
+        else cancelAnimationFrame(cubeAnimId);
+
+        if (subTabId === 'factor-temp') setTimeout(initRateTempCurve, 50);
+        if (subTabId === 'factor-distribution') setTimeout(initDistCurve, 50);
+    }
+
+    // ==========================================
+    // 反應速率與溫度的關係圖 (經典二次曲線)
+    // ==========================================
+    function initRateTempCurve() {
+        const canvas = document.getElementById('rateTempCanvas');
+        if (!canvas) return;
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = 240; 
+        let ctx = canvas.getContext('2d');
+        let w = canvas.width, h = canvas.height;
+        let padX = 50, padY = 30; 
+
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(padX, padY);
+        ctx.lineTo(padX, h - padY);
+        ctx.lineTo(w - padX + 20, h - padY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '14px "JetBrains Mono", sans-serif';
+        ctx.fillText('時間倒數 (1/s)', 10, padY - 15);
+        ctx.fillText('溫度 (°C)', w - padX - 30, h - padY + 20);
+
+        // 畫經典上揚曲線 (y = x^2.5)
+        ctx.beginPath();
+        ctx.strokeStyle = '#7CFC00';
+        ctx.lineWidth = 4;
+        let startX = padX;
+        ctx.moveTo(startX, h - padY);
+        for(let x = startX; x <= w - padX; x += 2) {
+            let normX = (x - startX) / (w - padX * 2); 
+            let normY = Math.pow(normX, 2.5); 
+            let py = (h - padY) - normY * (h - padY * 2);
+            ctx.lineTo(x, py);
+        }
+        ctx.stroke();
+    }
+
+    // ==========================================
+    // 常態分布亂數產生器
+    // ==========================================
+    function randomGaussian(mean = 0, stdev = 1) {
+        let u = 1 - Math.random(); 
+        let v = Math.random();
+        let z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+        return z * stdev + mean;
     }
 
     // ==========================================
@@ -554,37 +660,28 @@
     }
 
     function resetCollision() {
-        particles = [];
-        molecules = [];
-        colState = 'idle';
+        particles = []; molecules = []; colState = 'idle';
         document.getElementById('col-status').innerText = '請點擊按鈕開始模擬';
         document.getElementById('col-status').style.color = '#7CFC00';
     }
 
     function startCollision(energyLevel) {
         colState = energyLevel;
-        particles = [];
-        molecules = [];
-        let speedMult = energyLevel === 'high' ? 5.0 : 2.0;
-        let pCount = 24; 
-
+        particles = []; molecules = [];
+        let stdev = energyLevel === 'high' ? 3.0 : 1.2;
+        let pCount = 30; 
         for (let i = 0; i < pCount; i++) {
             particles.push({
-                x: Math.random() * 320 + 40,
-                y: Math.random() * 320 + 40,
-                vx: (Math.random() - 0.5) * speedMult,
-                vy: (Math.random() - 0.5) * speedMult,
-                r: 12, 
-                type: i % 2 === 0 ? 'A' : 'B',
-                color: i % 2 === 0 ? '#00FFFF' : '#FFA500'
+                x: Math.random() * 320 + 40, y: Math.random() * 320 + 40,
+                vx: randomGaussian(0, stdev), vy: randomGaussian(0, stdev),
+                r: 10, type: i % 2 === 0 ? 'A' : 'B', color: i % 2 === 0 ? '#00FFFF' : '#FFA500'
             });
         }
-        
         if (energyLevel === 'high') {
-            document.getElementById('col-status').innerText = '🔥 能量足夠！方向正確的碰撞 (約1/3機率) 將形成新分子！';
+            document.getElementById('col-status').innerText = '🔥 高溫：整體分布偏向高能，達標且撞對方向的分子暴增！';
             document.getElementById('col-status').style.color = '#FF69B4';
         } else {
-            document.getElementById('col-status').innerText = '❄️ 低溫低動能：所有碰撞都會因能量不足而彈開。';
+            document.getElementById('col-status').innerText = '❄️ 低溫：少數狂飆分子(尾端機率)若撞對方向，依然能發生反應。';
             document.getElementById('col-status').style.color = '#00FFFF';
         }
     }
@@ -608,18 +705,22 @@
         }
 
         let toRemove = []; 
+        let Ea_threshold = 4.8; 
 
         for (let i = 0; i < particles.length; i++) {
             if (toRemove.includes(i)) continue;
             for (let j = i + 1; j < particles.length; j++) {
                 if (toRemove.includes(j)) continue;
 
-                let p1 = particles[i];
-                let p2 = particles[j];
+                let p1 = particles[i]; let p2 = particles[j];
                 let dist = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
 
                 if (dist < p1.r + p2.r) {
-                    if (colState === 'high' && p1.type !== p2.type && Math.random() < 0.33) {
+                    let relSpeed = Math.hypot(p1.vx - p2.vx, p1.vy - p2.vy);
+                    let energySufficient = (relSpeed > Ea_threshold);
+                    let directionCorrect = (Math.random() < 0.33); 
+
+                    if (p1.type !== p2.type && energySufficient && directionCorrect) {
                         toRemove.push(i, j);
                         molecules.push({
                             x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2,
@@ -649,23 +750,18 @@
             colCtx.save();
             colCtx.translate(m.x, m.y);
             colCtx.rotate(m.angle);
-
             colCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
             colCtx.lineWidth = 4;
             colCtx.beginPath(); colCtx.moveTo(-m.r, 0); colCtx.lineTo(m.r, 0); colCtx.stroke();
-
             colCtx.fillStyle = '#00FFFF';
             colCtx.beginPath(); colCtx.arc(-m.r, 0, m.r, 0, Math.PI * 2); colCtx.fill();
-
             colCtx.fillStyle = '#FFA500';
             colCtx.beginPath(); colCtx.arc(m.r, 0, m.r, 0, Math.PI * 2); colCtx.fill();
-
             colCtx.strokeStyle = 'rgba(255, 105, 180, 0.5)';
             colCtx.lineWidth = 3;
             colCtx.beginPath(); colCtx.arc(0, 0, m.r * 2.2, 0, Math.PI * 2); colCtx.stroke();
             colCtx.restore();
         }
-
         colAnimId = requestAnimationFrame(animateCollision);
     }
 
@@ -674,80 +770,44 @@
     // ==========================================
     const cubeCanvas = document.getElementById('cubeCanvas');
     const cubeCtx = cubeCanvas ? cubeCanvas.getContext('2d') : null;
-    let cubeAnimId;
-    let cubeGap = 0;
-    let targetGap = 0;
+    let cubeAnimId, cubeGap = 0, targetGap = 0;
 
     function initCube() {
         if (!cubeCanvas) return;
-        cubeCanvas.width = 400;
-        cubeCanvas.height = 400; 
-        cubeGap = 0;
-        targetGap = 0;
-        cancelAnimationFrame(cubeAnimId);
-        drawCubes();
+        cubeCanvas.width = 400; cubeCanvas.height = 400; 
+        cubeGap = 0; targetGap = 0;
+        cancelAnimationFrame(cubeAnimId); drawCubes();
     }
-
     function toggleCubeSplit() {
         targetGap = targetGap === 0 ? 16 : 0; 
-        cancelAnimationFrame(cubeAnimId);
-        animateCube();
+        cancelAnimationFrame(cubeAnimId); animateCube();
     }
-
     function drawSingleCube(ctx, x, y, size, c) {
-        let dx = size * 0.866;
-        let dy = size * 0.5;
-
-        let isTopExt = (c.j === 1);
-        let isLeftExt = (c.k === 1);
-        let isRightExt = (c.i === 1);
-
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.lineWidth = 1;
-
+        let dx = size * 0.866, dy = size * 0.5;
+        let isTopExt = (c.j === 1), isLeftExt = (c.k === 1), isRightExt = (c.i === 1);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'; ctx.lineWidth = 1;
         ctx.fillStyle = isTopExt ? 'rgba(0, 255, 255, 0.8)' : 'rgba(255, 105, 180, 0.8)';
-        ctx.beginPath();
-        ctx.moveTo(x, y - size); ctx.lineTo(x + dx, y - dy);
-        ctx.lineTo(x, y); ctx.lineTo(x - dx, y - dy);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
-
+        ctx.beginPath(); ctx.moveTo(x, y - size); ctx.lineTo(x + dx, y - dy); ctx.lineTo(x, y); ctx.lineTo(x - dx, y - dy); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.fillStyle = isLeftExt ? 'rgba(0, 255, 255, 0.4)' : 'rgba(255, 105, 180, 0.5)';
-        ctx.beginPath();
-        ctx.moveTo(x - dx, y - dy); ctx.lineTo(x, y);
-        ctx.lineTo(x, y + size); ctx.lineTo(x - dx, y + dy);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
-
+        ctx.beginPath(); ctx.moveTo(x - dx, y - dy); ctx.lineTo(x, y); ctx.lineTo(x, y + size); ctx.lineTo(x - dx, y + dy); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.fillStyle = isRightExt ? 'rgba(0, 255, 255, 0.15)' : 'rgba(255, 105, 180, 0.2)';
-        ctx.beginPath();
-        ctx.moveTo(x, y); ctx.lineTo(x + dx, y - dy);
-        ctx.lineTo(x + dx, y + dy); ctx.lineTo(x, y + size);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx, y - dy); ctx.lineTo(x + dx, y + dy); ctx.lineTo(x, y + size); ctx.closePath(); ctx.fill(); ctx.stroke();
     }
-
     function animateCube() {
         if (!cubeCtx) return;
-        cubeGap += (targetGap - cubeGap) * 0.12;
-        drawCubes();
+        cubeGap += (targetGap - cubeGap) * 0.12; drawCubes();
         if (Math.abs(targetGap - cubeGap) > 0.1) cubeAnimId = requestAnimationFrame(animateCube);
         else { cubeGap = targetGap; drawCubes(); }
     }
-
     function drawCubes() {
         if (!cubeCtx) return;
-        cubeCtx.fillStyle = '#0b1813';
-        cubeCtx.fillRect(0, 0, 400, 400);
-
+        cubeCtx.fillStyle = '#0b1813'; cubeCtx.fillRect(0, 0, 400, 400);
         let cx = 200, cy = 215, size = 26; 
         let dx = size * 0.866, dy = size * 0.5;
-
         let cubes = [];
-        for(let i = -1; i <= 1; i++)
-            for(let j = -1; j <= 1; j++)
-                for(let k = -1; k <= 1; k++) cubes.push({i, j, k});
-
+        for(let i = -1; i <= 1; i++) for(let j = -1; j <= 1; j++) for(let k = -1; k <= 1; k++) cubes.push({i, j, k});
         cubes.sort((a, b) => (a.i + a.j + a.k) - (b.i + b.j + b.k));
         cubeCtx.lineJoin = 'round';
-
         for(let c of cubes) {
             let uX = dx + cubeGap * 0.866, uY = dy + cubeGap * 0.5;
             let vX = 0, vY = -size - cubeGap;
@@ -759,193 +819,183 @@
     }
 
     // ==========================================
-    // 硫代硫酸鈉實驗 Canvas (滿版巨大化 + 高對比純黑十字)
+    // 動能分布曲線 Canvas (恆定面積 + 虛線上色引擎)
     // ==========================================
-    const thioCanvas = document.getElementById('thioCanvas');
-    const thioCtx = thioCanvas ? thioCanvas.getContext('2d') : null;
-    let thioAnimId;
-    let thioState = 'idle'; 
-    let thioTimer = 0;
-    let thioHazeAlpha = 0;
-    let thioTargetTime = 10; 
-    let thioParticles = [];
-    let currentTemp = 30;
-    let lastTime = 0;
+    let distHighlightState = 'none';
 
-    // 巨大化參數與位置調整
-    const FLASK_RADIUS = 180; 
-    const PAPER_SIZE = 320; 
-    const CROSS_SIZE = 100;
-    const NECK_RADIUS = 40;
-
-    function initThio() {
-        if (!thioCanvas) return;
-        thioCanvas.width = 400; 
-        thioCanvas.height = 400; 
-        resetThio();
+    function setDistHighlight(state) {
+        distHighlightState = state;
+        initDistCurve();
     }
 
-    function resetThio() {
-        thioState = 'idle';
-        thioTimer = 0;
-        thioHazeAlpha = 0;
-        thioParticles = [];
-        document.getElementById('thio-status').innerText = '計時器: 0.0 s';
-        document.getElementById('thio-status').style.color = '#7CFC00';
-        document.getElementById('btn-30c').disabled = false;
-        document.getElementById('btn-50c').disabled = false;
-        cancelAnimationFrame(thioAnimId);
-        drawThioScene();
-    }
-
-    function startThio(temp) {
-        if (thioState === 'running') return;
+    function initDistCurve() {
+        const dCanvas = document.getElementById('distCanvas');
+        if (!dCanvas) return;
+        dCanvas.width = dCanvas.parentElement.clientWidth;
+        dCanvas.height = 280;
+        let ctx = dCanvas.getContext('2d');
+        let w = dCanvas.width, h = dCanvas.height;
+        let padX = 50, padY = 40;
         
-        document.getElementById('btn-30c').disabled = true;
-        document.getElementById('btn-50c').disabled = true;
-        
-        currentTemp = temp;
-        thioState = 'running';
-        thioTimer = 0;
-        thioHazeAlpha = 0;
-        thioParticles = [];
-        lastTime = performance.now();
-        thioTargetTime = (temp === 30) ? 15.0 : 4.0;
-        thioAnimId = requestAnimationFrame(animateThio);
-    }
+        let Ea_x = padX + (w - padX * 2) * 0.33; 
 
-    function drawThioScene() {
-        if (!thioCtx) return;
-        let cx = 200, cy = 200;
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, w, h);
 
-        // 1. 深色實驗桌背景
-        thioCtx.fillStyle = '#0b1813'; 
-        thioCtx.fillRect(0, 0, 400, 400);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(padX, padY);
+        ctx.lineTo(padX, h - padY);
+        ctx.lineTo(w - padX + 20, h - padY);
+        ctx.stroke();
 
-        // 2. 超大滿版正方形白紙
-        thioCtx.fillStyle = '#FFFFFF';
-        thioCtx.fillRect(cx - PAPER_SIZE/2, cy - PAPER_SIZE/2, PAPER_SIZE, PAPER_SIZE);
-        
-        // 3. 高對比黑色粗十字 (還原實驗室真實場景)
-        thioCtx.strokeStyle = '#000000'; 
-        thioCtx.lineWidth = 20;
-        thioCtx.lineCap = 'round';
-        thioCtx.beginPath();
-        thioCtx.moveTo(cx - CROSS_SIZE, cy); thioCtx.lineTo(cx + CROSS_SIZE, cy);
-        thioCtx.moveTo(cx, cy - CROSS_SIZE); thioCtx.lineTo(cx, cy + CROSS_SIZE);
-        thioCtx.stroke();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '16px "JetBrains Mono", sans-serif';
+        ctx.fillText('分子數目', 10, padY - 15);
+        ctx.fillText('動能 (Energy)', w - padX - 40, h - padY + 25);
 
-        // 4. 黃色混濁液 (嚴格限制在玻璃瓶半徑內)
-        if (thioHazeAlpha > 0) {
-            let grd = thioCtx.createRadialGradient(cx, cy, 0, cx, cy, FLASK_RADIUS);
-            grd.addColorStop(0, `rgba(255, 255, 150, ${thioHazeAlpha * 0.98})`);
-            grd.addColorStop(1, `rgba(240, 240, 100, ${thioHazeAlpha * 0.90})`);
-            thioCtx.fillStyle = grd;
-            thioCtx.beginPath();
-            thioCtx.arc(cx, cy, FLASK_RADIUS - 1, 0, Math.PI * 2);
-            thioCtx.fill();
+        function drawHatchFill(pathPoints, color) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(pathPoints[0].x, h - padY);
+            for(let pt of pathPoints) ctx.lineTo(pt.x, pt.y);
+            ctx.lineTo(pathPoints[pathPoints.length-1].x, h - padY);
+            ctx.closePath();
+            ctx.clip(); 
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.setLineDash([8, 6]);
+            for(let i = -w; i < w*2; i+=12) {
+                ctx.beginPath();
+                ctx.moveTo(i, h);
+                ctx.lineTo(i + h, 0);
+                ctx.stroke();
+            }
+            ctx.restore();
         }
 
-        // 5. 滿版硫顆粒沉澱
-        thioCtx.fillStyle = '#FFFF00';
-        for (let p of thioParticles) {
-            thioCtx.globalAlpha = p.alpha;
-            thioCtx.beginPath();
-            thioCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            thioCtx.fill();
-        }
-        thioCtx.globalAlpha = 1.0; 
+        function drawCurve(T, color, type) {
+            ctx.beginPath();
+            ctx.moveTo(padX, h - padY);
+            let points = [];
+            for (let x = padX; x <= w - padX + 20; x += 2) {
+                let sx = (x - padX) / 75; 
+                let y = (sx / T) * Math.exp(-sx * sx / T) * 600;
+                let py = h - padY - y;
+                if(py > h - padY) py = h - padY; 
+                points.push({x: x, y: py});
+                ctx.lineTo(x, py);
+            }
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.stroke();
 
-        // 6. 玻璃錐形瓶的「極細灰色立體透視網格」(在最上層)
-        thioCtx.strokeStyle = 'rgba(180, 180, 180, 0.5)';
-        
-        // 瓶底外圈
-        thioCtx.lineWidth = 1.5;
-        thioCtx.beginPath();
-        thioCtx.arc(cx, cy, FLASK_RADIUS, 0, Math.PI * 2);
-        thioCtx.stroke();
-
-        // 瓶頸內圈 (口徑)
-        thioCtx.lineWidth = 1;
-        thioCtx.beginPath();
-        thioCtx.arc(cx, cy, NECK_RADIUS, 0, Math.PI * 2);
-        thioCtx.stroke();
-
-        // 瓶頸厚度 (lip)
-        thioCtx.lineWidth = 2.5;
-        thioCtx.beginPath();
-        thioCtx.arc(cx, cy, NECK_RADIUS + 8, 0, Math.PI * 2);
-        thioCtx.stroke();
-
-        // 放射狀透視線 (展現錐形瓶的斜坡)
-        thioCtx.lineWidth = 0.5;
-        for(let i=0; i<16; i++) {
-            let angle = (i * Math.PI * 2) / 16;
-            thioCtx.beginPath();
-            thioCtx.moveTo(cx + (NECK_RADIUS+8) * Math.cos(angle), cy + (NECK_RADIUS+8) * Math.sin(angle));
-            thioCtx.lineTo(cx + FLASK_RADIUS * Math.cos(angle), cy + FLASK_RADIUS * Math.sin(angle));
-            thioCtx.stroke();
-        }
-
-        // 玻璃大高光 (左上方)
-        thioCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-        thioCtx.lineWidth = 8;
-        thioCtx.lineCap = 'round';
-        thioCtx.beginPath();
-        thioCtx.arc(cx, cy, FLASK_RADIUS - 6, Math.PI * 1.1, Math.PI * 1.4);
-        thioCtx.stroke();
-
-        // 玻璃小高光 (左上方)
-        thioCtx.lineWidth = 5;
-        thioCtx.beginPath();
-        thioCtx.arc(cx, cy, NECK_RADIUS + 16, Math.PI * 1.15, Math.PI * 1.45);
-        thioCtx.stroke();
-    }
-
-    function animateThio(currentTime) {
-        if (thioState !== 'running') return;
-
-        let deltaTime = (currentTime - lastTime) / 1000.0;
-        lastTime = currentTime;
-
-        thioTimer += deltaTime;
-        let progress = thioTimer / thioTargetTime;
-
-        thioHazeAlpha = Math.min(progress, 1.0);
-
-        let cx = 200, cy = 200;
-
-        // 滿版噴發顆粒
-        let spawnRate = (currentTemp === 50) ? 60 : 20;
-        for (let i = 0; i < spawnRate; i++) {
-            if (Math.random() > progress * 0.8) { 
-                let angle = Math.random() * Math.PI * 2;
-                let rad = Math.sqrt(Math.random()) * (FLASK_RADIUS - 6); 
-                thioParticles.push({
-                    x: cx + rad * Math.cos(angle),
-                    y: cy + rad * Math.sin(angle),
-                    size: Math.random() * 4.0 + 1.5, // 顆粒變大更清楚
-                    alpha: 0.1
-                });
+            if (distHighlightState === type) {
+                let eaPoints = points.filter(p => p.x >= Ea_x);
+                if (eaPoints.length > 0) {
+                    drawHatchFill(eaPoints, color);
+                    
+                    ctx.fillStyle = color;
+                    ctx.font = 'bold 24px "JetBrains Mono", sans-serif';
+                    let pctText = type === 'low' ? '約 5% (低溫能反應)' : '高達 32% (高溫暴增)';
+                    ctx.fillText(`反應分子佔比: ${pctText}`, Ea_x + 15, padY + 30);
+                }
             }
         }
 
-        for (let p of thioParticles) {
-            if (p.alpha < 0.9) p.alpha += deltaTime * 1.5;
-        }
+        drawCurve(3.5, '#FF69B4', 'high');
+        drawCurve(1.2, '#00FFFF', 'low');
 
-        if (progress >= 1.0) {
-            thioState = 'done';
-            document.getElementById('thio-status').innerText = `十字完全遮蔽！時間: ${thioTimer.toFixed(1)} s`;
-            document.getElementById('thio-status').style.color = '#FFA500';
-            drawThioScene();
-            return;
-        }
+        ctx.beginPath();
+        ctx.setLineDash([6, 6]);
+        ctx.moveTo(Ea_x, padY);
+        ctx.lineTo(Ea_x, h - padY);
+        ctx.strokeStyle = '#FFFF00';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        ctx.fillStyle = '#FFFF00';
+        ctx.font = 'bold 18px "JetBrains Mono", sans-serif';
+        ctx.fillText('活化能 Ea', Ea_x - 45, padY - 10);
+    }
 
-        document.getElementById('thio-status').innerText = `計時器: ${thioTimer.toFixed(1)} s`;
-        drawThioScene();
+    // ==========================================
+    // 硫代硫酸鈉實驗 Canvas
+    // ==========================================
+    const thioCanvas = document.getElementById('thioCanvas');
+    const thioCtx = thioCanvas ? thioCanvas.getContext('2d') : null;
+    let thioAnimId, thioState = 'idle', thioTimer = 0, thioHazeAlpha = 0, thioTargetTime = 10, thioParticles = [], currentTemp = 30, lastTime = 0;
+    const FLASK_RADIUS = 180, PAPER_SIZE = 320, CROSS_SIZE = 100, NECK_RADIUS = 40;
 
+    function initThio() {
+        if (!thioCanvas) return;
+        thioCanvas.width = 400; thioCanvas.height = 400; resetThio();
+    }
+    function resetThio() {
+        thioState = 'idle'; thioTimer = 0; thioHazeAlpha = 0; thioParticles = [];
+        document.getElementById('thio-status').innerText = '計時器: 0.0 s';
+        document.getElementById('thio-status').style.color = '#7CFC00';
+        document.getElementById('btn-30c').disabled = false; document.getElementById('btn-50c').disabled = false;
+        cancelAnimationFrame(thioAnimId); drawThioScene();
+    }
+    function startThio(temp) {
+        if (thioState === 'running') return;
+        document.getElementById('btn-30c').disabled = true; document.getElementById('btn-50c').disabled = true;
+        currentTemp = temp; thioState = 'running'; thioTimer = 0; thioHazeAlpha = 0; thioParticles = [];
+        lastTime = performance.now(); thioTargetTime = (temp === 30) ? 15.0 : 4.0;
         thioAnimId = requestAnimationFrame(animateThio);
+    }
+    function drawThioScene() {
+        if (!thioCtx) return;
+        let cx = 200, cy = 200;
+        thioCtx.fillStyle = '#0b1813'; thioCtx.fillRect(0, 0, 400, 400);
+        thioCtx.fillStyle = '#FFFFFF'; thioCtx.fillRect(cx - PAPER_SIZE/2, cy - PAPER_SIZE/2, PAPER_SIZE, PAPER_SIZE);
+        thioCtx.strokeStyle = '#000000'; thioCtx.lineWidth = 20; thioCtx.lineCap = 'round';
+        thioCtx.beginPath(); thioCtx.moveTo(cx - CROSS_SIZE, cy); thioCtx.lineTo(cx + CROSS_SIZE, cy); thioCtx.moveTo(cx, cy - CROSS_SIZE); thioCtx.lineTo(cx, cy + CROSS_SIZE); thioCtx.stroke();
+
+        if (thioHazeAlpha > 0) {
+            let grd = thioCtx.createRadialGradient(cx, cy, 0, cx, cy, FLASK_RADIUS);
+            grd.addColorStop(0, `rgba(255, 255, 150, ${thioHazeAlpha * 0.98})`); grd.addColorStop(1, `rgba(240, 240, 100, ${thioHazeAlpha * 0.90})`);
+            thioCtx.fillStyle = grd; thioCtx.beginPath(); thioCtx.arc(cx, cy, FLASK_RADIUS - 1, 0, Math.PI * 2); thioCtx.fill();
+        }
+        thioCtx.fillStyle = '#FFFF00';
+        for (let p of thioParticles) { thioCtx.globalAlpha = p.alpha; thioCtx.beginPath(); thioCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2); thioCtx.fill(); }
+        thioCtx.globalAlpha = 1.0; 
+
+        thioCtx.strokeStyle = 'rgba(180, 180, 180, 0.5)'; thioCtx.lineWidth = 1.5; thioCtx.beginPath(); thioCtx.arc(cx, cy, FLASK_RADIUS, 0, Math.PI * 2); thioCtx.stroke();
+        thioCtx.lineWidth = 1; thioCtx.beginPath(); thioCtx.arc(cx, cy, NECK_RADIUS, 0, Math.PI * 2); thioCtx.stroke();
+        thioCtx.lineWidth = 2.5; thioCtx.beginPath(); thioCtx.arc(cx, cy, NECK_RADIUS + 8, 0, Math.PI * 2); thioCtx.stroke();
+        thioCtx.lineWidth = 0.5;
+        for(let i=0; i<16; i++) {
+            let angle = (i * Math.PI * 2) / 16;
+            thioCtx.beginPath(); thioCtx.moveTo(cx + (NECK_RADIUS+8) * Math.cos(angle), cy + (NECK_RADIUS+8) * Math.sin(angle)); thioCtx.lineTo(cx + FLASK_RADIUS * Math.cos(angle), cy + FLASK_RADIUS * Math.sin(angle)); thioCtx.stroke();
+        }
+        thioCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; thioCtx.lineWidth = 8; thioCtx.lineCap = 'round'; thioCtx.beginPath(); thioCtx.arc(cx, cy, FLASK_RADIUS - 6, Math.PI * 1.1, Math.PI * 1.4); thioCtx.stroke();
+        thioCtx.lineWidth = 5; thioCtx.beginPath(); thioCtx.arc(cx, cy, NECK_RADIUS + 16, Math.PI * 1.15, Math.PI * 1.45); thioCtx.stroke();
+    }
+    function animateThio(currentTime) {
+        if (thioState !== 'running') return;
+        let deltaTime = (currentTime - lastTime) / 1000.0; lastTime = currentTime;
+        thioTimer += deltaTime; let progress = thioTimer / thioTargetTime;
+        thioHazeAlpha = Math.min(progress, 1.0);
+        let cx = 200, cy = 200;
+        let spawnRate = (currentTemp === 50) ? 60 : 20;
+        for (let i = 0; i < spawnRate; i++) {
+            if (Math.random() > progress * 0.8) { 
+                let angle = Math.random() * Math.PI * 2; let rad = Math.sqrt(Math.random()) * (FLASK_RADIUS - 6); 
+                thioParticles.push({x: cx + rad * Math.cos(angle), y: cy + rad * Math.sin(angle), size: Math.random() * 4.0 + 1.5, alpha: 0.1});
+            }
+        }
+        for (let p of thioParticles) { if (p.alpha < 0.9) p.alpha += deltaTime * 1.5; }
+        if (progress >= 1.0) {
+            thioState = 'done'; document.getElementById('thio-status').innerText = `十字完全遮蔽！時間: ${thioTimer.toFixed(1)} s`; document.getElementById('thio-status').style.color = '#FFA500';
+            drawThioScene(); return;
+        }
+        document.getElementById('thio-status').innerText = `計時器: ${thioTimer.toFixed(1)} s`;
+        drawThioScene(); thioAnimId = requestAnimationFrame(animateThio);
     }
 
     // 啟動預設首頁的動畫
