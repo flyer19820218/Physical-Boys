@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基礎力學：力的合成、分解與平衡</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+    /* 黑板視覺與零黑色原則 */
+    :root {
+        --bg-base: #11261f;
+        --bg-panel: #16332a;
+        --chalk-white: #FFFFFF;
+        --chalk-yellow: #FFFF00;
+        --chalk-orange: #FFA500;
+        --chalk-pink: #FF69B4;
+        --chalk-cyan: #00FFFF;
+        --chalk-green: #7CFC00;
+        --chalk-muted: #9fb0a8;
+        --bg-canvas: #0b1813;
+    }
+
+    body {
+        background-color: var(--bg-base);
+        background-image:
+            radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+            radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+        background-size: 3px 3px, 7px 7px;
+        background-position: 0 0, 2px 3px;
+        color: var(--chalk-white);
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 24px; 
+        margin: 0;
+        padding: 40px 0 80px; 
+        line-height: 1.8;
+        overflow-x: hidden; 
+    }
+
+    * { box-sizing: border-box; }
+
+    /* 響應式排版 */
+    .wrap {
+        width: 100%;
+        max-width: 1080px; 
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .header-container {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid var(--chalk-green);
+    }
+
+    .header-container h1 {
+        font-size: 44px; 
+        color: var(--chalk-cyan);
+        margin: 0;
+        letter-spacing: 3px;
+    }
+
+    h2 {
+        font-size: 32px; 
+        color: var(--chalk-yellow);
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 2px dashed rgba(255, 255, 0, 0.4);
+        padding-bottom: 12px;
+    }
+
+    h3 {
+        font-size: 28px; 
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: var(--chalk-pink);
+    }
+
+    /* 絕對雙欄引擎 */
+    .grid-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px; 
+        margin-top: 20px;
+        align-items: stretch;
+    }
+
+    @media (max-width: 768px) {
+        .grid-2col { grid-template-columns: 1fr; }
+        .header-container h1 { font-size: 32px; }
+        .panel { padding: 20px; }
+        body { font-size: 20px; }
+    }
+
+    .panel {
+        border: 2px solid var(--chalk-cyan);
+        border-radius: 12px;
+        padding: 24px 30px; 
+        background-color: var(--bg-panel);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); 
+    }
+
+    /* 巨無霸字體與防斷字 */
+    .math-text {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--chalk-orange);
+        font-weight: bold;
+    }
+    .nowrap { white-space: nowrap; }
+
+    .tab-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .tab-button {
+        background-color: transparent;
+        color: var(--chalk-white);
+        border: 3px solid var(--chalk-green);
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-size: 24px; 
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .tab-button.active, .tab-button:hover { 
+        background-color: var(--chalk-green); 
+        color: var(--bg-base); 
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .highlight-box {
+        border: 2px dashed var(--chalk-green);
+        padding: 16px 20px;
+        border-radius: 10px;
+        background-color: rgba(124, 252, 0, 0.08);
+        margin-bottom: 20px;
+    }
+
+    ul { padding-left: 30px; margin-top: 5px; margin-bottom: 20px; }
+    li { margin-bottom: 12px; }
+
+    /* 互動區真等比縮放 1000x900 */
+    .canvas-wrap {
+        width: 100%;
+        border: 3px solid var(--chalk-muted);
+        border-radius: 8px;
+        background-color: var(--bg-canvas);
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        touch-action: none;
+    }
+    
+    .rect-canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 10 / 9;
+    }
+
+    .slider-container {
+        width: 90%;
+        margin: 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        justify-content: center;
+    }
+    .slider-container input[type=range] {
+        flex: 1;
+        accent-color: var(--chalk-orange);
+        height: 8px;
+    }
+    .slider-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: bold;
+        font-size: 26px;
+        color: var(--chalk-orange);
+        min-width: 80px;
+    }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="header-container">
+        <h1>基礎力學：力的合成、分解與平衡</h1>
+    </div>
+
+    <!-- 主分頁導覽 -->
+    <div class="tab-container">
+        <button class="tab-button active" onclick="openTab('tab-tug', this)">力圖與合力計算</button>
+        <button class="tab-button" onclick="openTab('tab-eq', this)" style="border-color: var(--chalk-pink);">靜力平衡</button>
+        <button class="tab-button" onclick="openTab('tab-vector', this)" style="border-color: var(--chalk-orange);">向量夾角合成</button>
+        <button class="tab-button" onclick="openTab('tab-incline', this)" style="border-color: var(--chalk-cyan);">斜面受力分解</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁一：力圖與合力計算 -->
+    <!-- ========================================== -->
+    <div id="tab-tug" class="tab-content active">
+        <div class="grid-2col">
+            <div class="panel" style="border-color: var(--chalk-cyan);">
+                <h2 style="color: var(--chalk-cyan);">力圖的畫法</h2>
+                <p>在物理學中，我們用「<strong style="color: var(--chalk-yellow);">帶有箭頭的線段</strong>」來表示力，包含三大要素：</p>
+                <ul>
+                    <li><strong class="nowrap" style="color: var(--chalk-yellow);">作用點：</strong> 力的起點 (通常畫在物體中心或接觸面上)。</li>
+                    <li><strong class="nowrap" style="color: var(--chalk-yellow);">方向：</strong> 箭頭所指的方向。</li>
+                    <li><strong class="nowrap" style="color: var(--chalk-yellow);">大小：</strong> 線段的長度 (越長代表力越大)。</li>
+                </ul>
+
+                <div class="highlight-box" style="border-color: var(--chalk-cyan);">
+                    <h3 style="color: var(--chalk-orange); margin-top: 0;">合力計算 (一直線上)</h3>
+                    <p style="margin: 0;">
+                        1. <strong style="color: var(--chalk-cyan);">同向相加：</strong> 兩個力方向相同，合力即為兩者相加。<br>
+                        2. <strong style="color: var(--chalk-pink);">反向相減：</strong> 兩個力方向相反，合力為大減小，方向朝向大力的方向。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="panel" style="border-color: var(--chalk-yellow);">
+                <h2 style="color: var(--chalk-yellow); text-align: center;">【互動】向量拔河賽</h2>
+                <p style="text-align: center; color: var(--chalk-muted);">調整兩側小人的拉力，觀察紅色「合力」的變化！</p>
+                
+                <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
+                    <canvas id="tugCanvas" class="rect-canvas" width="1000" height="900"></canvas>
+                    
+                    <div class="slider-container">
+                        <span style="font-weight: bold; color: var(--chalk-cyan);">左側拉力：</span>
+                        <input type="range" id="tugL" min="0" max="100" value="30" step="10" oninput="updateTug()">
+                        <span class="slider-value" style="color: var(--chalk-cyan);" id="tugLVal">30 gw</span>
+                    </div>
+                    <div class="slider-container">
+                        <span style="font-weight: bold; color: var(--chalk-pink);">右側拉力：</span>
+                        <input type="range" id="tugR" min="0" max="100" value="80" step="10" oninput="updateTug()">
+                        <span class="slider-value" style="color: var(--chalk-pink);" id="tugRVal">80 gw</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁二：兩力平衡與三力平衡 -->
+    <!-- ========================================== -->
+    <div id="tab-eq" class="tab-content">
+        <div class="grid-2col">
+            <div class="panel" style="border-color: var(--chalk-pink);">
+                <h2 style="color: var(--chalk-pink);">靜力平衡條件</h2>
+                <p>當物體受到外力作用，卻仍保持「<strong style="color: var(--chalk-yellow);">靜止不動</strong>」的狀態，就稱為靜力平衡 (合力為零)。</p>
+                
+                <div class="highlight-box" style="border-color: var(--chalk-green); background-color: rgba(124, 252, 0, 0.08);">
+                    <h3 style="color: var(--chalk-green); margin-top: 0;">兩力平衡條件</h3>
+                    <p style="margin: 0;">必須同時滿足三個條件，缺一不可：<br>
+                    1. <strong style="color: var(--chalk-yellow);">大小相等</strong><br>
+                    2. <strong style="color: var(--chalk-yellow);">方向相反</strong><br>
+                    3. <strong style="color: var(--chalk-yellow);">作用於同一直線上</strong></p>
+                </div>
+
+                <div class="highlight-box" style="border-color: var(--chalk-orange); background-color: rgba(255, 165, 0, 0.08);">
+                    <h3 style="color: var(--chalk-orange); margin-top: 0;">三力平衡條件</h3>
+                    <p style="margin: 0;">若物體受三個力而平衡，則<strong style="color: var(--chalk-cyan);">任意兩力合成的「合力」</strong>，必定與第三個力達成「兩力平衡」！</p>
+                </div>
+            </div>
+
+            <div class="panel" style="border-color: var(--chalk-cyan);">
+                <h2 style="color: var(--chalk-cyan); text-align: center;">【互動】靜力平衡檯</h2>
+                <p style="text-align: center; color: var(--chalk-muted);">改變書本重力，你必須同步調整桌面支撐力才不會失衡！</p>
+                
+                <div class="canvas-wrap" style="border-color: var(--chalk-cyan);">
+                    <canvas id="eqCanvas" class="rect-canvas" width="1000" height="900"></canvas>
+                    
+                    <div class="slider-container">
+                        <span style="font-weight: bold; color: var(--chalk-yellow);">書本重力 (向下)：</span>
+                        <input type="range" id="eqW" min="10" max="100" value="50" step="10" oninput="updateEq()">
+                        <span class="slider-value" style="color: var(--chalk-yellow);" id="eqWVal">50 gw</span>
+                    </div>
+                    <div class="slider-container">
+                        <span style="font-weight: bold; color: var(--chalk-green);">桌面支撐 (向上)：</span>
+                        <input type="range" id="eqN" min="10" max="100" value="50" step="10" oninput="updateEq()">
+                        <span class="slider-value" style="color: var(--chalk-green);" id="eqNVal">50 gw</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁三：平行四邊形與頭尾相連法 -->
+    <!-- ========================================== -->
+    <div id="tab-vector" class="tab-content">
+        <div class="grid-2col">
+            <div class="panel" style="border-color: var(--chalk-orange);">
+                <h2 style="color: var(--chalk-orange);">不在一直線上的力</h2>
+                <p>當兩個力不在同一條直線上時，我們必須使用幾何作圖法來求出合力：</p>
+                <ul>
+                    <li><strong class="nowrap" style="color: var(--chalk-cyan);">平行四邊形法：</strong> 以兩力為鄰邊，畫出一個平行四邊形，<strong style="color: var(--chalk-yellow);">對角線即為合力</strong>。</li>
+                </ul>
+
+                <div class="highlight-box" style="border-color: var(--chalk-orange);">
+                    <h3 style="color: var(--chalk-yellow); margin-top: 0;">🚨 夾角與合力的必考規律：</h3>
+                    <p style="margin: 0;">當兩個力大小固定時，夾角越小，合力越大！<br><br>
+                    ▶ 夾角 <span class="math-text">0&deg;</span>：同向，合力<strong style="color: var(--chalk-green);">最大</strong> (相加)<br>
+                    ▶ 夾角變大：合力逐漸變小<br>
+                    ▶ 夾角 <span class="math-text">180&deg;</span>：反向，合力<strong style="color: var(--chalk-pink);">最小</strong> (相減)
+                    </p>
+                </div>
+            </div>
+
+            <div class="panel" style="border-color: var(--chalk-yellow);">
+                <h2 style="color: var(--chalk-yellow); text-align: center;">【互動】向量夾角雷達</h2>
+                <p style="text-align: center; color: var(--chalk-muted);">滑動改變夾角，直觀感受平行四邊形與合力對角線的變化！</p>
+                
+                <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
+                    <canvas id="radarCanvas" class="rect-canvas" width="1000" height="900"></canvas>
+                    
+                    <div class="slider-container">
+                        <span style="font-weight: bold; color: var(--chalk-white);">兩力夾角：</span>
+                        <input type="range" id="radarAngle" min="0" max="180" value="60" step="1" oninput="updateRadar()">
+                        <span class="slider-value" id="radarAngleVal">60&deg;</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁四：力的分解（斜面力學） -->
+    <!-- ========================================== -->
+    <div id="tab-incline" class="tab-content">
+        <div class="grid-2col">
+            <div class="panel" style="border-color: var(--chalk-cyan);">
+                <h2 style="color: var(--chalk-cyan);">斜面上的力學分解</h2>
+                <p>放在斜面上的物體，向下的地心引力（重力）會被斜面分解成兩個互相垂直的作用力：</p>
+                
+                <div class="highlight-box" style="border-color: var(--chalk-pink);">
+                    <h3 style="color: var(--chalk-pink); margin-top: 0;">1. 下滑力 (平行斜面)</h3>
+                    <p style="margin: 0;">
+                        將物體往斜面下方拉扯的力。斜面<strong style="color: var(--chalk-yellow);">越陡</strong>，這個力就<strong style="color: var(--chalk-orange);">越大</strong>，物體越容易滑落。
+                    </p>
+                </div>
+
+                <div class="highlight-box" style="border-color: var(--chalk-green);">
+                    <h3 style="color: var(--chalk-green); margin-top: 0;">2. 正向力 (垂直斜面壓迫)</h3>
+                    <p style="margin: 0;">
+                        將物體壓在斜面上的力。斜面<strong style="color: var(--chalk-yellow);">越陡</strong>，這個力反而<strong style="color: var(--chalk-cyan);">越小</strong> (極端情況是垂直牆壁，正向壓迫力為 0)。
+                    </p>
+                </div>
+            </div>
+
+            <div class="panel" style="border-color: var(--chalk-green);">
+                <h2 style="color: var(--chalk-green); text-align: center;">【互動】斜面滑塊解析</h2>
+                <p style="text-align: center; color: var(--chalk-muted);">調整斜面坡度，觀察重力如何被分解成「下滑力」與「正向力」！</p>
+                
+                <div class="canvas-wrap" style="border-color: var(--chalk-green);">
+                    <canvas id="inclineCanvas" class="rect-canvas" width="1000" height="900"></canvas>
+                    
+                    <div class="slider-container">
+                        <span style="font-weight: bold; color: var(--chalk-white);">斜面坡度：</span>
+                        <input type="range" id="inclineAngle" min="0" max="75" value="30" step="1" oninput="updateIncline()">
+                        <span class="slider-value" id="inclineAngleVal">30&deg;</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ==========================================
+    // 頁籤切換控制
+    // ==========================================
+    function openTab(tabId, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.backgroundColor = 'transparent';
+            btn.style.color = 'var(--chalk-white)';
+        });
+        
+        document.getElementById(tabId).classList.add('active');
+        
+        if (btnElement) {
+            btnElement.classList.add('active');
+            if (tabId === 'tab-tug') {
+                btnElement.style.backgroundColor = 'var(--chalk-green)';
+                updateTug();
+            } else if (tabId === 'tab-eq') {
+                btnElement.style.backgroundColor = 'var(--chalk-pink)';
+                updateEq();
+            } else if (tabId === 'tab-vector') {
+                btnElement.style.backgroundColor = 'var(--chalk-orange)';
+                updateRadar();
+            } else if (tabId === 'tab-incline') {
+                btnElement.style.backgroundColor = 'var(--chalk-cyan)';
+                updateIncline();
+            }
+            btnElement.style.color = 'var(--bg-base)';
+        }
+    }
+
+    // 箭頭繪製輔助函數 (共用)
+    function drawArrow(ctx, fromX, fromY, toX, toY, color, width) {
+        if(fromX === toX && fromY === toY) return;
+        let headlen = width * 3; 
+        let dx = toX - fromX;
+        let dy = toY - fromY;
+        let angle = Math.atan2(dy, dx);
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // ==========================================
+    // Canvas 1：向量拔河賽 (1000x900)
+    // ==========================================
+    let tugAnimId;
+    function updateTug() {
+        cancelAnimationFrame(tugAnimId);
+        let fL = parseInt(document.getElementById('tugL').value);
+        let fR = parseInt(document.getElementById('tugR').value);
+        document.getElementById('tugLVal').innerText = fL + " gw";
+        document.getElementById('tugRVal').innerText = fR + " gw";
+        drawTugScene(fL, fR);
+    }
+
+    function drawTugScene(fL, fR) {
+        const cvs = document.getElementById('tugCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        let cx = 500, cy = 450;
+        let blockSize = 140;
+
+        // 畫木塊
+        ctx.fillStyle = '#9fb0a8';
+        ctx.fillRect(cx - blockSize/2, cy - blockSize/2, blockSize, blockSize);
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 4;
+        ctx.strokeRect(cx - blockSize/2, cy - blockSize/2, blockSize, blockSize);
+        ctx.fillStyle = '#11261f'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('木塊', cx, cy + 10);
+
+        // 畫左右拉扯的小人與繩子
+        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(cx - blockSize/2, cy); ctx.lineTo(150, cy); ctx.stroke(); // 左繩
+        ctx.beginPath(); ctx.moveTo(cx + blockSize/2, cy); ctx.lineTo(850, cy); ctx.stroke(); // 右繩
+
+        // 簡化火柴人
+        ctx.fillStyle = '#00FFFF'; ctx.beginPath(); ctx.arc(120, cy - 40, 25, 0, Math.PI*2); ctx.fill(); // 左頭
+        ctx.fillRect(110, cy-15, 20, 60); ctx.beginPath(); ctx.moveTo(120, cy+45); ctx.lineTo(90, cy+100); ctx.lineTo(150, cy+100); ctx.stroke(); // 身體與腳
+        
+        ctx.fillStyle = '#FF69B4'; ctx.beginPath(); ctx.arc(880, cy - 40, 25, 0, Math.PI*2); ctx.fill(); // 右頭
+        ctx.fillRect(870, cy-15, 20, 60); ctx.beginPath(); ctx.moveTo(880, cy+45); ctx.lineTo(850, cy+100); ctx.lineTo(910, cy+100); ctx.stroke(); 
+
+        // 畫拉力向量箭頭 (從中心點出發，向上偏移以免重疊)
+        let scale = 3; // 1 gw = 3 px
+        let yOffset = -120;
+        drawArrow(ctx, cx, cy + yOffset, cx - fL * scale, cy + yOffset, '#00FFFF', 8); // 左拉力
+        drawArrow(ctx, cx, cy + yOffset + 30, cx + fR * scale, cy + yOffset + 30, '#FF69B4', 8); // 右拉力
+
+        ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 24px "JetBrains Mono"';
+        ctx.fillText(`F左 = ${fL}`, cx - fL*scale/2, cy + yOffset - 15);
+        ctx.fillStyle = '#FF69B4'; 
+        ctx.fillText(`F右 = ${fR}`, cx + fR*scale/2, cy + yOffset + 65);
+
+        // 畫紅色合力向量箭頭 (向下偏移)
+        let resY = 160;
+        let netF = fR - fL;
+        let absNet = Math.abs(netF);
+        
+        ctx.fillStyle = '#FFA500'; ctx.font = 'bold 36px sans-serif';
+        ctx.fillText('合力計算結果：', cx, cy + resY - 40);
+
+        if (absNet === 0) {
+            ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 48px sans-serif';
+            ctx.fillText('合力為 0 (靜力平衡)', cx, cy + resY + 40);
+        } else {
+            drawArrow(ctx, cx, cy + resY + 20, cx + netF * scale, cy + resY + 20, '#FF0000', 12);
+            ctx.fillStyle = '#FF0000'; ctx.font = 'bold 36px "JetBrains Mono"';
+            let dirTxt = netF > 0 ? '向右' : '向左';
+            ctx.fillText(`合力 = ${absNet} gw (${dirTxt})`, cx, cy + resY + 90);
+        }
+
+        ctx.textAlign = 'left';
+    }
+
+    // ==========================================
+    // Canvas 2：靜力平衡檯 (1000x900)
+    // ==========================================
+    let eqAnimId;
+    let bookY = 460; 
+    let bookV = 0;
+
+    function updateEq() {
+        let w = parseInt(document.getElementById('eqW').value);
+        let n = parseInt(document.getElementById('eqN').value);
+        document.getElementById('eqWVal').innerText = w + " gw";
+        document.getElementById('eqNVal').innerText = n + " gw";
+        if(!eqAnimId) runEqLoop();
+    }
+
+    function runEqLoop() {
+        const cvs = document.getElementById('eqCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        let w = parseInt(document.getElementById('eqW').value);
+        let n = parseInt(document.getElementById('eqN').value);
+
+        // 物理邏輯
+        let tableY = 550;
+        let net = w - n;
+        
+        // 簡單動力學
+        bookY += net * 0.4;
+        
+        // 碰撞偵測 (極限邊界防呆)
+        if (bookY > 800) bookY = 800; // 掉落極限
+        if (bookY < 150) bookY = 150; // 飛天極限
+
+        // 如果相等，且在合理範圍，緩慢拉回桌面平衡
+        if (net === 0) {
+            bookY += (460 - bookY) * 0.1; 
+        }
+
+        let cx = 500;
+
+        // 畫桌子
+        ctx.fillStyle = '#5b7a6b';
+        ctx.beginPath(); ctx.moveTo(200, tableY); ctx.lineTo(800, tableY); ctx.lineTo(900, tableY+100); ctx.lineTo(1000, tableY+100); ctx.lineTo(0, tableY+100); ctx.lineTo(100, tableY); ctx.fill();
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(200, tableY); ctx.lineTo(800, tableY); ctx.stroke();
+
+        // 畫書本
+        ctx.fillStyle = '#FF69B4';
+        ctx.fillRect(cx - 120, bookY, 240, 40);
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 3;
+        ctx.strokeRect(cx - 120, bookY, 240, 40);
+        ctx.fillStyle = '#11261f'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('理化課本', cx, bookY + 28);
+
+        // 畫力向量 (從書本中心出發)
+        let scale = 3;
+        let centerY = bookY + 20;
+
+        // 重力 W (向下黃色)
+        drawArrow(ctx, cx - 40, centerY, cx - 40, centerY + w * scale, '#FFFF00', 8);
+        ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 24px "JetBrains Mono"';
+        ctx.fillText(`W = ${w}`, cx - 90, centerY + w * scale + 30);
+
+        // 支撐力 N (向上綠色)
+        drawArrow(ctx, cx + 40, centerY, cx + 40, centerY - n * scale, '#7CFC00', 8);
+        ctx.fillStyle = '#7CFC00';
+        ctx.fillText(`N = ${n}`, cx + 90, centerY - n * scale - 15);
+
+        // 狀態文字
+        if (net === 0 && Math.abs(bookY - 460) < 5) {
+            ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 48px sans-serif';
+            ctx.fillText('✅ 【靜力平衡】合力為零', cx, 120);
+        } else if (net > 0) {
+            ctx.fillStyle = '#FF0000'; ctx.font = 'bold 40px sans-serif';
+            ctx.fillText('❌ 支撐力不足，書本掉落！', cx, 120);
+        } else if (net < 0) {
+            ctx.fillStyle = '#FFA500'; ctx.font = 'bold 40px sans-serif';
+            ctx.fillText('❌ 支撐力過大，書本彈飛！', cx, 120);
+        }
+
+        ctx.textAlign = 'left';
+        eqAnimId = requestAnimationFrame(runEqLoop);
+    }
+
+    // ==========================================
+    // Canvas 3：向量夾角雷達 (1000x900)
+    // ==========================================
+    let radarAnimId;
+    function updateRadar() {
+        cancelAnimationFrame(radarAnimId);
+        let angleDeg = parseInt(document.getElementById('radarAngle').value);
+        document.getElementById('radarAngleVal').innerHTML = angleDeg + "&deg;";
+        drawRadarScene(angleDeg);
+    }
+
+    function drawRadarScene(angleDeg) {
+        const cvs = document.getElementById('radarCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        let cx = 350, cy = 600; // 原點
+        let f1Len = 300, f2Len = 300; 
+        let angleRad = angleDeg * Math.PI / 180;
+
+        // 計算向量
+        // F1 固定向右
+        let f1x = f1Len, f1y = 0;
+        // F2 逆時針旋轉 (Canvas Y朝下，所以用 -sin)
+        let f2x = f2Len * Math.cos(angleRad);
+        let f2y = -f2Len * Math.sin(angleRad);
+
+        // 合力 R
+        let rx = f1x + f2x;
+        let ry = f1y + f2y;
+        let rLen = Math.sqrt(rx*rx + ry*ry);
+
+        // 畫座標軸輔助線
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+        ctx.beginPath(); ctx.moveTo(cx-100, cy); ctx.lineTo(cx+800, cy); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 畫平行四邊形虛線
+        if(angleDeg > 0 && angleDeg < 180) {
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)'; ctx.lineWidth = 3; ctx.setLineDash([8, 8]);
+            ctx.beginPath();
+            ctx.moveTo(cx + f1x, cy + f1y); ctx.lineTo(cx + rx, cy + ry); // 右上虛線
+            ctx.moveTo(cx + f2x, cy + f2y); ctx.lineTo(cx + rx, cy + ry); // 左上虛線
+            ctx.stroke(); ctx.setLineDash([]);
+        }
+
+        // 畫 F1 (Cyan)
+        drawArrow(ctx, cx, cy, cx + f1x, cy + f1y, '#00FFFF', 8);
+        ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 28px "JetBrains Mono"';
+        ctx.fillText('F1', cx + f1x + 10, cy + 30);
+
+        // 畫 F2 (Pink)
+        drawArrow(ctx, cx, cy, cx + f2x, cy + f2y, '#FF69B4', 8);
+        ctx.fillStyle = '#FF69B4'; 
+        ctx.fillText('F2', cx + f2x - 40, cy + f2y - 20);
+
+        // 畫合力 R (Red)
+        if(rLen > 5) {
+            drawArrow(ctx, cx, cy, cx + rx, cy + ry, '#FF0000', 10);
+            ctx.fillStyle = '#FF0000'; 
+            ctx.fillText('合力 R', cx + rx + 15, cy + ry - 15);
+        }
+
+        // 畫夾角扇形
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, 60, -angleRad, 0);
+        ctx.fill();
+        ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 24px sans-serif';
+        ctx.fillText(`${angleDeg}°`, cx + 70, cy - 20);
+
+        // 資訊面板
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.fillRect(50, 50, 450, 160);
+        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.strokeRect(50, 50, 450, 160);
+        
+        ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 28px sans-serif';
+        ctx.fillText(`設定：F1 = 100, F2 = 100`, 80, 100);
+        ctx.fillStyle = '#FF0000'; ctx.font = 'bold 36px "JetBrains Mono"';
+        // R長度等比例縮放為數字 (300px = 100)
+        let rVal = (rLen / 3).toFixed(1);
+        ctx.fillText(`合力大小 = ${rVal}`, 80, 160);
+    }
+
+    // ==========================================
+    // Canvas 4：斜面滑塊解析 (1000x900)
+    // ==========================================
+    let inclineAnimId;
+    function updateIncline() {
+        cancelAnimationFrame(inclineAnimId);
+        let angleDeg = parseInt(document.getElementById('inclineAngle').value);
+        document.getElementById('inclineAngleVal').innerHTML = angleDeg + "&deg;";
+        drawInclineScene(angleDeg);
+    }
+
+    function drawInclineScene(angleDeg) {
+        const cvs = document.getElementById('inclineCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        let cx = 500, cy = 750; // 斜面底端中心
+        let angleRad = angleDeg * Math.PI / 180;
+        let baseLen = 700; 
+
+        // 計算斜面三角形頂點
+        let x1 = 150, y1 = cy; // 左下
+        let x2 = 850, y2 = cy; // 右下
+        let h = Math.tan(angleRad) * baseLen;
+        let x3 = 150, y3 = cy - h; // 左上
+
+        // 防呆：角度過大導致高度超出畫布
+        if (y3 < 100) {
+            h = cy - 100;
+            baseLen = h / Math.tan(angleRad);
+            x2 = 150 + baseLen;
+        }
+
+        // 畫斜面 (實心多邊形)
+        ctx.fillStyle = '#2c3e35';
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3); ctx.fill();
+        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // 標示斜面角度
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+        ctx.beginPath(); ctx.moveTo(x2, y2); ctx.arc(x2, y2, 80, Math.PI, Math.PI + angleRad); ctx.fill();
+        ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 28px sans-serif';
+        ctx.fillText(`${angleDeg}°`, x2 - 130, y2 - 20);
+
+        // 畫物體 (位於斜面中央)
+        let midHyp = Math.sqrt(baseLen*baseLen + h*h) / 2; // 斜邊一半長度
+        // 木塊中心點座標
+        let blockCx = x2 - midHyp * Math.cos(angleRad);
+        let blockCy = y2 - midHyp * Math.sin(angleRad);
+
+        let bw = 120, bh = 80;
+
+        ctx.save();
+        ctx.translate(blockCx, blockCy);
+        ctx.rotate(angleRad); // 讓系統跟著斜面旋轉，繪圖更直覺
+
+        // 畫木塊 (物體中心即為 0,0)
+        // 因為座標系統旋轉了，所以 X 軸平貼斜面向左上，Y 軸垂直斜面向左下
+        // 為了直觀，我們讓 X 沿著斜面向下，Y 垂直斜面向上
+        ctx.rotate(-Math.PI); // 修正方向，使得 +X 沿斜面向下，-Y 垂直斜面向上
+
+        // 調整物體繪製使底部貼齊斜面線
+        ctx.translate(0, -bh/2); 
+
+        ctx.fillStyle = '#FFA500';
+        ctx.fillRect(-bw/2, -bh/2, bw, bh);
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 3;
+        ctx.strokeRect(-bw/2, -bh/2, bw, bh);
+
+        // 力圖繪製：
+        let W = 300; // 重力總長度
+        let W_parallel = W * Math.sin(angleRad); // 下滑力
+        let W_perp = W * Math.cos(angleRad);     // 垂直下壓力
+        let N = W_perp;                          // 正向力
+
+        // 畫虛線輔助分解
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+        ctx.beginPath(); 
+        // W 到 W_parallel 的垂直線
+        let wX = W_parallel;
+        let wY = W_perp;
+        ctx.moveTo(wX, wY); ctx.lineTo(wX, 0); 
+        ctx.moveTo(wX, wY); ctx.lineTo(0, wY); 
+        ctx.stroke(); ctx.setLineDash([]);
+
+        // 1. 重力 W (絕對向下，在旋轉座標中為 wX, wY)
+        drawArrow(ctx, 0, 0, wX, wY, '#FFFF00', 8);
+        ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 24px "JetBrains Mono"'; ctx.fillText('重力 W', wX + 15, wY + 20);
+
+        // 2. 下滑力 W_parallel (+X)
+        if(W_parallel > 5) {
+            drawArrow(ctx, 0, 0, W_parallel, 0, '#FF0000', 8);
+            ctx.fillStyle = '#FF0000'; ctx.fillText('下滑力', W_parallel + 10, -10);
+        }
+
+        // 3. 垂直下壓力 W_perp (+Y)
+        if(W_perp > 5) {
+            drawArrow(ctx, 0, 0, 0, W_perp, '#FF69B4', 8);
+            ctx.fillStyle = '#FF69B4'; ctx.fillText('壓迫力', 10, W_perp + 25);
+        }
+
+        // 4. 正向力 N (-Y)
+        if(N > 5) {
+            drawArrow(ctx, 0, 0, 0, -N, '#00FFFF', 8);
+            ctx.fillStyle = '#00FFFF'; ctx.fillText('正向力 N', 10, -N - 10);
+        }
+
+        ctx.restore();
+    }
+
+    // 初始化啟動
+    setTimeout(() => { 
+        openTab('tab-tug', document.querySelector('.tab-button'));
+    }, 100);
+
+</script>
+</body>
+</html>
