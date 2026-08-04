@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- 允許自由縮放，適配各裝置旋轉 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基礎力學：力的本質與彈簧</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+    /* 1. 黑板視覺與零黑色原則 */
+    :root {
+        --bg-base: #11261f;
+        --bg-panel: #16332a;
+        --chalk-white: #FFFFFF;
+        --chalk-yellow: #FFFF00;
+        --chalk-orange: #FFA500;
+        --chalk-pink: #FF69B4;
+        --chalk-cyan: #00FFFF;
+        --chalk-green: #7CFC00;
+        --chalk-muted: #9fb0a8;
+        --bg-canvas: #0b1813;
+    }
+
+    body {
+        background-color: var(--bg-base);
+        /* 護眼點狀網格背景 */
+        background-image:
+            radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+            radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+        background-size: 3px 3px, 7px 7px;
+        background-position: 0 0, 2px 3px;
+        color: var(--chalk-white);
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 24px; 
+        margin: 0;
+        padding: 40px 0 80px; 
+        line-height: 1.8;
+        overflow-x: hidden; 
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    /* 2. 響應式排版 (同步首頁 1080px) */
+    .wrap {
+        width: 100%;
+        max-width: 1080px; 
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .header-container {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid var(--chalk-green);
+    }
+
+    .header-container h1 {
+        font-size: 44px; 
+        color: var(--chalk-cyan);
+        margin: 0;
+        letter-spacing: 3px;
+    }
+
+    h2 {
+        font-size: 32px; 
+        color: var(--chalk-yellow);
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 2px dashed rgba(255, 255, 0, 0.4);
+        padding-bottom: 12px;
+    }
+
+    h3 {
+        font-size: 28px; 
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: var(--chalk-pink);
+    }
+
+    /* 絕對雙欄引擎 */
+    .grid-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px; 
+        margin-top: 20px;
+        align-items: stretch;
+    }
+
+    /* 智慧斷點：手機直放時才變單欄 */
+    @media (max-width: 768px) {
+        .grid-2col { grid-template-columns: 1fr; }
+        .header-container h1 { font-size: 32px; }
+        .panel { padding: 20px; }
+        body { font-size: 20px; }
+    }
+
+    .panel {
+        border: 2px solid var(--chalk-cyan);
+        border-radius: 12px;
+        padding: 24px 30px; 
+        background-color: var(--bg-panel);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); 
+        position: relative;
+    }
+
+    /* 3. 巨無霸字體與防斷字 */
+    .math-text {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--chalk-orange);
+        font-weight: bold;
+    }
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    /* 理化標準上下分式 */
+    .fraction {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        vertical-align: middle;
+        margin: 0 6px;
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--chalk-orange);
+        font-weight: bold;
+        line-height: 1.2;
+    }
+    .fraction .numerator { 
+        border-bottom: 2px solid var(--chalk-orange); 
+        padding: 0 6px; 
+    }
+    .fraction .denominator { 
+        padding: 0 6px; 
+    }
+
+    .tab-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .tab-button {
+        background-color: transparent;
+        color: var(--chalk-white);
+        border: 3px solid var(--chalk-green);
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-size: 24px; 
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .tab-button.active, .tab-button:hover { 
+        background-color: var(--chalk-green); 
+        color: var(--bg-base); 
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .highlight-box {
+        border: 2px dashed var(--chalk-green);
+        padding: 16px 20px;
+        border-radius: 10px;
+        background-color: rgba(124, 252, 0, 0.08);
+        margin-bottom: 20px;
+    }
+
+    ul { padding-left: 30px; margin-top: 5px; margin-bottom: 20px; }
+    li { margin-bottom: 12px; }
+
+    .action-btn {
+        background-color: var(--bg-base);
+        color: var(--chalk-white);
+        border: 2px solid var(--chalk-cyan);
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 22px; 
+        font-weight: bold;
+        transition: all 0.2s;
+        margin: 8px;
+        display: inline-block;
+    }
+    
+    .action-btn:hover:not(:disabled) { 
+        background-color: rgba(255,255,255,0.1); 
+        transform: translateY(-2px);
+    }
+    .action-btn:disabled {
+        opacity: 0.3; cursor: not-allowed;
+    }
+
+    /* 4. 互動區真・等比例縮放 */
+    .canvas-wrap {
+        width: 100%;
+        border: 3px solid var(--chalk-muted);
+        border-radius: 8px;
+        background-color: var(--bg-canvas);
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        touch-action: none;
+    }
+    
+    .rect-canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 10 / 8; /* 鎖定比例 1000x800 */
+    }
+
+    .lab-controls {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .slider-container {
+        width: 90%;
+        margin: 15px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        justify-content: center;
+    }
+    .slider-container input[type=range] {
+        flex: 1;
+        accent-color: var(--chalk-orange);
+        height: 8px;
+    }
+    .slider-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: bold;
+        font-size: 26px;
+        color: var(--chalk-orange);
+        min-width: 80px;
+    }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="header-container">
+        <h1>基礎力學：力的本質與彈簧</h1>
+    </div>
+
+    <!-- 主分頁導覽 -->
+    <div class="tab-container">
+        <button class="tab-button active" onclick="openTab('tab-force', this)">力的效應與種類</button>
+        <button class="tab-button" onclick="openTab('tab-mass', this)" style="border-color: var(--chalk-pink);">質量 vs 重量</button>
+        <button class="tab-button" onclick="openTab('tab-hooke', this)" style="border-color: var(--chalk-orange);">虎克定律</button>
+        <button class="tab-button" onclick="openTab('tab-spring', this)" style="border-color: var(--chalk-cyan);">彈簧串並聯</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁一：力的效應與種類 -->
+    <!-- ========================================== -->
+    <div id="tab-force" class="tab-content active">
+        <div class="grid-2col">
+            <div class="panel" style="border-color: var(--chalk-cyan);">
+                <h2 style="color: var(--chalk-cyan);">力是物質嗎？</h2>
+                <p>力<strong style="color: var(--chalk-pink);">非物質</strong>[cite: 1]：無質量、無體積，它是和能量有關的抽象概念[cite: 1]。</p>
+                
+                <h2 style="color: var(--chalk-green); margin-top: 15px;">力的效應</h2>
+                <p>有力的作用時，可以觀察到兩種現象[cite: 1]：</p>
+                <ul>
+                    <li><strong class="nowrap" style="color: var(--chalk-yellow);">改變運動狀態：</strong> 例如打出全壘打、踢足球[cite: 1]。</li>
+                    <li><strong class="nowrap" style="color: var(--chalk-yellow);">改變形狀：</strong> 例如射箭拉弓、捏黏土[cite: 1]。</li>
+                </ul>
+
+                <div class="highlight-box" style="border-color: var(--chalk-cyan);">
+                    <h3 style="color: var(--chalk-orange); margin-top: 0;">力的種類</h3>
+                    <p style="margin: 0;">
+                        1. <strong style="color: var(--chalk-cyan);">接觸力：</strong> 需接觸到物體才能產生效應 (如踢球、拉彈簧)[cite: 1]。<br>
+                        2. <strong style="color: var(--chalk-cyan);">超距力 (非接觸力)：</strong> 不需接觸就能產生效應 (如地球引力、磁力)[cite: 1]。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="panel" style="border-color: var(--chalk-yellow);">
+                <h2 style="color: var(--chalk-yellow); text-align: center;">【觀測站】看見力的作用</h2>
+                <p style="text-align: center; color: var(--chalk-muted);">點擊按鈕，觀察力的效應與種類！</p>
+                
+                <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
+                    <canvas id="forceCanvas" class="rect-canvas" width="1000" height="800"></canvas>
+                </div>
+                <div class="lab-controls">
+                    <button class="action-btn" onclick="triggerForce(1)" style="border-color: var(--chalk-green);">⚽ 踢足球</button>
+                    <button class="action-btn" onclick="triggerForce(2)" style="border-color: var(--chalk-pink);">🖐️ 捏黏土</button>
+                    <button class="action-btn" onclick="triggerForce(3)" style="border-color: var(--chalk-cyan);">🧲 磁鐵吸鐵</button>
+                    <button class="action-btn" onclick="initForceSim()" style="border-color: var(--chalk-white); color: var(--chalk-white);">🔄 重置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁二：質量 vs 重量 -->
+    <!-- ========================================== -->
+    <div id="tab-mass" class="tab-content">
+        <div class="grid-2col">
+            <div class="panel" style="border-color: var(--chalk-pink);">
+                <h2 style="color: var(--chalk-pink);">質量與重量</h2>
+                <p>這是國中最容易混淆的觀念，請牢記：</p>
+                
+                <div class="highlight-box" style="border-color: var(--chalk-green); background-color: rgba(124, 252, 0, 0.08);">
+                    <h3 style="color: var(--chalk-green); margin-top: 0;">質量 (Mass)</h3>
+                    <p style="margin: 0;">代表物質的含量[cite: 1]。<br>
+                    特性：<strong style="color: var(--chalk-yellow);">不隨地點而改變</strong>[cite: 1]。<br>
+                    測量工具：天平。 單位：<span class="math-text">kg, g</span>[cite: 1]。</p>
+                </div>
+
+                <div class="highlight-box" style="border-color: var(--chalk-orange); background-color: rgba(255, 165, 0, 0.08);">
+                    <h3 style="color: var(--chalk-orange); margin-top: 0;">重量 (Weight)</h3>
+                    <p style="margin: 0;">一種<strong style="color: var(--chalk-cyan);">超距力</strong>，和重力場的強弱有關[cite: 1]。<br>
+                    特性：<strong style="color: var(--chalk-yellow);">會隨地點改變</strong>。<br>
+                    測量工具：彈簧秤。 單位：<span class="math-text">kgw, gw</span>[cite: 1]。</p>
+                </div>
+                
+                <p style="color: var(--chalk-pink); font-weight: bold; margin-bottom: 0;">🚨 經典範例：</p>
+                <p style="margin-top: 5px;">同樣質量是 <span class="math-text">6kg</span> 的物體，在地球上有 <span class="math-text">6kgw</span>，但是在月球上只有 <span class="math-text">1kgw</span> (因為月球引力只有地球的 1/6)[cite: 1]。</p>
+            </div>
+
+            <div class="panel" style="border-color: var(--chalk-cyan);">
+                <h2 style="color: var(--chalk-cyan); text-align: center;">【實驗室】星際體重計</h2>
+                <p style="text-align: center; color: var(--chalk-muted);">將 6kg 鐵塊放置於不同星球，觀察讀數差異！</p>
+                
+                <div class="canvas-wrap" style="border-color: var(--chalk-cyan);">
+                    <canvas id="gravityCanvas" class="rect-canvas" width="1000" height="800"></canvas>
+                </div>
+                <div class="lab-controls">
+                    <button class="action-btn" onclick="setPlanet('earth')" style="border-color: var(--chalk-blue); color: var(--chalk-blue);">🌍 放置於地球</button>
+                    <button class="action-btn" onclick="setPlanet('moon')" style="border-color: var(--chalk-yellow); color: var(--chalk-yellow);">🌕 放置於月球</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁三：虎克定律 -->
+    <!-- ========================================== -->
+    <div id="tab-hooke" class="tab-content">
+        <div class="grid-2col">
+            <div class="panel" style="border-color: var(--chalk-orange);">
+                <h2 style="color: var(--chalk-orange);">虎克定律</h2>
+                <p>力的測量：力作用在彈性的物質上會有規則性的形變[cite: 1]。</p>
+                <ul>
+                    <li><strong class="nowrap" style="color: var(--chalk-cyan);">核心概念：</strong> 施力於彈簧上時，彈簧的<strong style="color: var(--chalk-yellow);">「伸長量」</strong>會和所施的外力<strong style="color: var(--chalk-pink);">成正比</strong>關係[cite: 1]。</li>
+                    <li><strong class="nowrap" style="color: var(--chalk-cyan);">前提條件：</strong> 必須在「彈性極限」內 (超過會產生永久形變)[cite: 1]。</li>
+                </ul>
+
+                <div class="highlight-box" style="border-color: var(--chalk-orange); text-align: center;">
+                    <p style="margin: 0; font-size: 26px; color: var(--chalk-yellow); font-weight: bold;">公式化表示：</p>
+                    <div style="margin-top: 15px;">
+                        <div class="fraction">
+                            <span class="numerator">F<sub style="font-size:16px">1</sub></span>
+                            <span class="denominator">X<sub style="font-size:16px">1</sub></span>
+                        </div>
+                        <span class="math-text" style="font-size: 32px; vertical-align: middle; margin: 0 10px;">=</span>
+                        <div class="fraction">
+                            <span class="numerator">F<sub style="font-size:16px">2</sub></span>
+                            <span class="denominator">X<sub style="font-size:16px">2</sub></span>
+                        </div>
+                        <span class="math-text" style="font-size: 32px; vertical-align: middle; margin: 0 10px;">= 定值 (k)</span>
+                    </div>
+                </div>
+                
+                <p style="color: var(--chalk-pink); font-weight: bold; margin-bottom: 0;">🚨 陷阱警告：</p>
+                <p style="margin-top: 5px;">圖表若以「彈簧總長度」為 Y 軸，直線<strong style="color: var(--chalk-orange);">不會過原點</strong> (起點為原長)；若以「伸長量」為 Y 軸，直線<strong style="color: var(--chalk-yellow);">必過原點</strong>[cite: 1]！</p>
+            </div>
+
+            <div class="panel" style="border-color: var(--chalk-yellow);">
+                <h2 style="color: var(--chalk-yellow); text-align: center;">【實驗室】虛擬彈簧與座標圖</h2>
+                <p style="text-align: center; color: var(--chalk-muted);">原長 10cm。掛上砝碼，觀察右側 F-X 圖形變化！</p>
+                
+                <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
+                    <canvas id="hookeCanvas" class="rect-canvas" width="1000" height="800"></canvas>
+                </div>
+                <div class="lab-controls">
+                    <button class="action-btn" onclick="changeWeight(20)" style="border-color: var(--chalk-green);">➕ 掛上砝碼 (+20gw)</button>
+                    <button class="action-btn" onclick="initHookeSim()" style="border-color: var(--chalk-white); color: var(--chalk-white);">🔄 全部取下</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁四：彈簧的串聯與並聯 -->
+    <!-- ========================================== -->
+    <div id="tab-spring" class="tab-content">
+        <div class="grid-2col">
+            <div class="panel" style="border-color: var(--chalk-cyan);">
+                <h2 style="color: var(--chalk-cyan);">張力與彈簧串並聯</h2>
+                <p>張力是一種<strong style="color: var(--chalk-yellow);">向外側拉開的力</strong>，在整個系統（直線上所有的物體）同時都會受到相同的力作用[cite: 1]。</p>
+                
+                <div class="highlight-box" style="border-color: var(--chalk-cyan);">
+                    <h3 style="color: var(--chalk-orange); margin-top: 0;">彈簧串聯 (頭尾相連)</h3>
+                    <p style="margin: 0;">
+                        將數個彈簧串起來變成同一個系統。於是無論接上幾個彈簧，<strong style="color: var(--chalk-pink);">受力的情形都一樣</strong>（同時向外），總伸長量會相加[cite: 1]。
+                    </p>
+                </div>
+
+                <div class="highlight-box" style="border-color: var(--chalk-green);">
+                    <h3 style="color: var(--chalk-green); margin-top: 0;">彈簧並聯 (平行並列)</h3>
+                    <p style="margin: 0;">
+                        並聯的彈簧把總拉力<strong style="color: var(--chalk-yellow);">分散承擔</strong>。若兩條相同彈簧並聯，每條只承受一半的力，因此伸長量只有串聯的一半[cite: 1]。
+                    </p>
+                </div>
+            </div>
+
+            <div class="panel" style="border-color: var(--chalk-green);">
+                <h2 style="color: var(--chalk-green); text-align: center;">【實驗室】彈簧陣列拉力賽</h2>
+                <p style="text-align: center; color: var(--chalk-muted);">拉動滑桿施力，對比內部張力與總伸長量！</p>
+                
+                <div class="canvas-wrap" style="border-color: var(--chalk-green);">
+                    <canvas id="arrayCanvas" class="rect-canvas" width="1000" height="800"></canvas>
+                    <div class="slider-container">
+                        <span style="font-weight: bold; color: var(--chalk-white);">施加總拉力：</span>
+                        <input type="range" id="forceSlider" min="0" max="100" value="0" step="10" oninput="updateArrayForce()">
+                        <span class="slider-value" id="forceDisplay">0 gw</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ==========================================
+    // 頁籤切換與安全渲染保護 (防 iOS 崩潰)
+    // ==========================================
+    function openTab(tabId, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.backgroundColor = 'transparent';
+            btn.style.color = 'var(--chalk-white)';
+        });
+        
+        document.getElementById(tabId).classList.add('active');
+        
+        if (btnElement) {
+            btnElement.classList.add('active');
+            if (tabId === 'tab-force') {
+                btnElement.style.backgroundColor = 'var(--chalk-green)';
+                initForceSim();
+            } else if (tabId === 'tab-mass') {
+                btnElement.style.backgroundColor = 'var(--chalk-pink)';
+                initGravitySim();
+            } else if (tabId === 'tab-hooke') {
+                btnElement.style.backgroundColor = 'var(--chalk-orange)';
+                initHookeSim();
+            } else if (tabId === 'tab-spring') {
+                btnElement.style.backgroundColor = 'var(--chalk-cyan)';
+                updateArrayForce();
+            }
+            btnElement.style.color = 'var(--bg-base)';
+        }
+    }
+
+    // ==========================================
+    // Canvas 1：力的效應與種類 (1000x800)
+    // ==========================================
+    let forceAnimId;
+    let forceState = 0; // 0:idle, 1:football, 2:clay, 3:magnet
+    let forceTimer = 0;
+
+    function initForceSim() {
+        cancelAnimationFrame(forceAnimId);
+        forceState = 0;
+        forceTimer = 0;
+        drawForceScene();
+    }
+
+    function triggerForce(type) {
+        forceState = type;
+        forceTimer = 0;
+    }
+
+    function drawForceScene() {
+        const cvs = document.getElementById('forceCanvas');
+        if (!cvs || cvs.clientWidth === 0) {
+            forceAnimId = requestAnimationFrame(drawForceScene);
+            return;
+        }
+
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        forceTimer++;
+        ctx.textAlign = 'center';
+
+        if (forceState === 0) {
+            ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 36px sans-serif';
+            ctx.fillText('請選擇下方按鈕進行力學觀測', 500, 400);
+        } else if (forceState === 1) {
+            // 踢足球：運動狀態改變 (接觸力)
+            ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 40px sans-serif';
+            ctx.fillText('【接觸力】改變運動狀態 (產生速度)', 500, 150);
+
+            let ballX = 300 + Math.min(forceTimer * 8, 500); // 球飛走
+            let ballY = 500 - Math.sin(Math.min(forceTimer, 60) * 0.05) * 100; // 拋物線
+
+            // 腳 (固定在左側踢一下)
+            ctx.fillStyle = '#FFA500';
+            ctx.beginPath();
+            let footX = 200 + (forceTimer < 15 ? forceTimer * 5 : (forceTimer < 30 ? (30-forceTimer)*5 : 0));
+            ctx.moveTo(footX - 50, 550); ctx.lineTo(footX + 80, 550); 
+            ctx.lineTo(footX + 40, 480); ctx.lineTo(footX - 50, 480); ctx.fill();
+
+            // 足球
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath(); ctx.arc(ballX, ballY, 40, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#111';
+            ctx.beginPath(); ctx.arc(ballX, ballY, 15, 0, Math.PI*2); ctx.fill();
+            
+            // 力箭頭
+            if(forceTimer < 20) {
+                drawArrow(ctx, footX + 80, 510, footX + 180, 510, '#FF0000', 8);
+                ctx.fillStyle = '#FF0000'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('施力 F', footX + 130, 490);
+            }
+
+        } else if (forceState === 2) {
+            // 捏黏土：形狀改變 (接觸力)
+            ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 40px sans-serif';
+            ctx.fillText('【接觸力】改變物體形狀 (形變)', 500, 150);
+
+            let squash = Math.min(forceTimer * 1.5, 60); // 壓縮程度
+            
+            // 黏土
+            ctx.fillStyle = '#FF69B4';
+            ctx.beginPath();
+            ctx.ellipse(500, 500 + squash/2, 100 + squash, 100 - squash/2, 0, 0, Math.PI*2);
+            ctx.fill();
+
+            // 手 (上下壓)
+            ctx.fillStyle = '#FFA500';
+            ctx.fillRect(400, 350 + squash, 200, 40); // 上方壓
+            ctx.fillRect(400, 610 - squash/2, 200, 40); // 下方平台
+
+            // 力箭頭
+            drawArrow(ctx, 500, 300, 500, 350 + squash, '#FF0000', 8);
+            ctx.fillStyle = '#FF0000'; ctx.font = 'bold 28px sans-serif'; ctx.fillText('施力 F', 560, 330);
+
+        } else if (forceState === 3) {
+            // 磁鐵吸鐵：超距力
+            ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 40px sans-serif';
+            ctx.fillText('【超距力】不需接觸即可施力', 500, 150);
+
+            // 磁鐵在左邊
+            ctx.fillStyle = '#FF0000'; ctx.fillRect(200, 400, 80, 60);
+            ctx.fillStyle = '#0000FF'; ctx.fillRect(200, 500, 80, 60);
+            ctx.fillStyle = '#888'; ctx.fillRect(150, 400, 50, 160);
+            ctx.fillStyle = '#FFF'; ctx.font = 'bold 32px sans-serif'; ctx.fillText('N', 240, 440); ctx.fillText('S', 240, 540);
+
+            // 鐵塊被吸過來
+            let ironX = 700 - Math.min(forceTimer * 4, 380);
+            ctx.fillStyle = '#A9A9A9';
+            ctx.fillRect(ironX, 430, 80, 100);
+            ctx.fillStyle = '#11261f'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('鐵塊', ironX + 40, 485);
+
+            // 磁場線 (虛線)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 4; ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            for(let i=0; i<3; i++) {
+                ctx.moveTo(300, 430 + i*50); ctx.lineTo(ironX, 430 + i*50);
+            }
+            ctx.stroke(); ctx.setLineDash([]);
+
+            // 磁力箭頭
+            if (ironX > 320) {
+                drawArrow(ctx, ironX, 480, ironX - 100, 480, '#FF0000', 8);
+                ctx.fillStyle = '#FF0000'; ctx.font = 'bold 28px sans-serif'; ctx.fillText('磁力 F', ironX - 50, 460);
+            }
+        }
+
+        ctx.textAlign = 'left';
+        forceAnimId = requestAnimationFrame(drawForceScene);
+    }
+
+    // ==========================================
+    // Canvas 2：質量 vs 重量 (1000x800)
+    // ==========================================
+    let gravAnimId;
+    let currentPlanet = 'earth';
+
+    function initGravitySim() {
+        cancelAnimationFrame(gravAnimId);
+        currentPlanet = 'earth';
+        drawGravityScene();
+    }
+
+    function setPlanet(p) {
+        currentPlanet = p;
+    }
+
+    function drawGravityScene() {
+        const cvs = document.getElementById('gravityCanvas');
+        if (!cvs || cvs.clientWidth === 0) {
+            gravAnimId = requestAnimationFrame(drawGravityScene);
+            return;
+        }
+
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        // 參數設定
+        let isEarth = (currentPlanet === 'earth');
+        let planetName = isEarth ? '地球 (重力場 1G)' : '月球 (重力場 1/6 G)';
+        let pColor = isEarth ? '#00FFFF' : '#FFFF00';
+        let weightVal = isEarth ? '6' : '1';
+        let massVal = '6';
+
+        // 標題
+        ctx.textAlign = 'center';
+        ctx.fillStyle = pColor; ctx.font = 'bold 44px sans-serif';
+        ctx.fillText(`目前位置：${planetName}`, 500, 100);
+
+        // 分隔線
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 4; ctx.setLineDash([10, 10]);
+        ctx.beginPath(); ctx.moveTo(500, 180); ctx.lineTo(500, 750); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // =============== 左半部：天平 (測質量) ===============
+        ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 36px sans-serif';
+        ctx.fillText('天平 (測質量)', 250, 200);
+
+        let balX = 250, balY = 600;
+        // 底座
+        ctx.fillStyle = '#888';
+        ctx.beginPath(); ctx.moveTo(balX, balY - 200); ctx.lineTo(balX - 40, balY); ctx.lineTo(balX + 40, balY); ctx.fill();
+        // 橫梁 (永遠水平，因為質量不變)
+        ctx.strokeStyle = '#CCC'; ctx.lineWidth = 10;
+        ctx.beginPath(); ctx.moveTo(balX - 120, balY - 200); ctx.lineTo(balX + 120, balY - 200); ctx.stroke();
+        // 秤盤線
+        ctx.lineWidth = 2;
+        ctx.beginPath(); 
+        ctx.moveTo(balX - 120, balY - 200); ctx.lineTo(balX - 160, balY - 100); ctx.lineTo(balX - 80, balY - 100); ctx.lineTo(balX - 120, balY - 200);
+        ctx.moveTo(balX + 120, balY - 200); ctx.lineTo(balX + 160, balY - 100); ctx.lineTo(balX + 80, balY - 100); ctx.lineTo(balX + 120, balY - 200);
+        ctx.stroke();
+        // 秤盤
+        ctx.fillStyle = '#555';
+        ctx.fillRect(balX - 170, balY - 100, 100, 10);
+        ctx.fillRect(balX + 70, balY - 100, 100, 10);
+
+        // 砝碼 (左盤)
+        ctx.fillStyle = '#FFA500';
+        ctx.fillRect(balX - 140, balY - 150, 40, 50);
+        ctx.fillStyle = '#111'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('6kg', balX - 120, balY - 120);
+
+        // 鐵塊 (右盤)
+        ctx.fillStyle = '#A9A9A9';
+        ctx.fillRect(balX + 90, balY - 150, 60, 50);
+        ctx.fillStyle = '#111'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('鐵塊', balX + 120, balY - 120);
+
+        // 讀數顯示
+        ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 36px "JetBrains Mono", sans-serif';
+        ctx.fillText(`質量 = ${massVal} kg`, 250, 700);
+        ctx.fillStyle = '#FFF'; ctx.font = '24px sans-serif';
+        ctx.fillText('(不隨地點改變)', 250, 740);
+
+
+        // =============== 右半部：彈簧秤 (測重量) ===============
+        ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 36px sans-serif';
+        ctx.fillText('彈簧秤 (測重量)', 750, 200);
+
+        let spX = 750, spY = 250;
+        // 秤體
+        ctx.fillStyle = '#DDDDDD';
+        ctx.fillRect(spX - 20, spY, 40, 200);
+        ctx.fillStyle = '#111';
+        ctx.fillRect(spX - 15, spY + 10, 10, 180); // 刻度槽
+
+        // 彈簧伸長量 (地球伸長到底，月球伸長 1/6)
+        let stretch = isEarth ? 160 : 160 / 6;
+        
+        // 彈簧線
+        ctx.strokeStyle = '#555'; ctx.lineWidth = 4;
+        ctx.beginPath();
+        for(let i=0; i<20; i++) {
+            let y = spY + 10 + (stretch/20)*i;
+            let x = spX + (i%2 === 0 ? 10 : 20);
+            if(i===0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // 指針
+        ctx.fillStyle = '#FF0000';
+        ctx.beginPath(); ctx.moveTo(spX - 5, spY + 10 + stretch); ctx.lineTo(spX - 25, spY + 10 + stretch - 10); ctx.lineTo(spX - 25, spY + 10 + stretch + 10); ctx.fill();
+
+        // 吊鉤與鐵塊
+        ctx.strokeStyle = '#CCC'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(spX, spY + 10 + stretch); ctx.lineTo(spX, spY + 230 + stretch); ctx.stroke();
+
+        ctx.fillStyle = '#A9A9A9';
+        ctx.fillRect(spX - 40, spY + 230 + stretch, 80, 70);
+        ctx.fillStyle = '#111'; ctx.font = 'bold 20px sans-serif'; ctx.fillText('鐵塊', spX, spY + 270 + stretch);
+
+        // 重力箭頭
+        drawArrow(ctx, spX + 60, spY + 260 + stretch, spX + 60, spY + 260 + stretch + (isEarth?100:30), '#FF69B4', 8);
+        ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('地球引力', spX + 130, spY + 290 + stretch);
+
+        // 讀數顯示
+        ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 36px "JetBrains Mono", sans-serif';
+        ctx.fillText(`重量 = ${weightVal} kgw`, 750, 700);
+        ctx.fillStyle = '#FFF'; ctx.font = '24px sans-serif';
+        ctx.fillText('(隨重力場強弱改變)', 750, 740);
+
+        ctx.textAlign = 'left';
+        gravAnimId = requestAnimationFrame(drawGravityScene);
+    }
+
+    // ==========================================
+    // Canvas 3：虎克定律 (1000x800)
+    // ==========================================
+    let hookeAnimId;
+    let hookeWeight = 0; // 0, 20, 40, 60, 80
+
+    function initHookeSim() {
+        cancelAnimationFrame(hookeAnimId);
+        hookeWeight = 0;
+        drawHookeScene();
+    }
+
+    function changeWeight(dw) {
+        if(hookeWeight + dw <= 80) hookeWeight += dw;
+    }
+
+    function drawHookeScene() {
+        const cvs = document.getElementById('hookeCanvas');
+        if (!cvs || cvs.clientWidth === 0) {
+            hookeAnimId = requestAnimationFrame(drawHookeScene);
+            return;
+        }
+
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        // 左半部：實體彈簧
+        let sX = 250, sY = 150;
+        let baseLen = 150;
+        let k = 3; // 3px / gw
+        let ext = hookeWeight * k;
+        let totalLen = baseLen + ext;
+
+        // 天花板
+        ctx.fillStyle = '#555'; ctx.fillRect(sX - 100, sY - 30, 200, 30);
+
+        // 彈簧 (畫出圈數，長度自動拉伸)
+        ctx.strokeStyle = '#7CFC00'; ctx.lineWidth = 6; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        let coils = 15;
+        for(let i=0; i<=coils; i++) {
+            let y = sY + (totalLen/coils)*i;
+            let x = sX + (i%2===0 ? -30 : 30);
+            if(i===0) ctx.moveTo(sX, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.lineTo(sX, sY + totalLen);
+        ctx.stroke();
+
+        // 標示原長與伸長量
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+        ctx.beginPath(); ctx.moveTo(sX + 40, sY + baseLen); ctx.lineTo(sX + 150, sY + baseLen); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#FFF'; ctx.font = '20px sans-serif'; ctx.fillText('原長 10cm', sX + 160, sY + baseLen + 5);
+
+        if (ext > 0) {
+            drawArrow(ctx, sX + 120, sY + baseLen, sX + 120, sY + totalLen, '#FFFF00', 4);
+            ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 24px sans-serif';
+            ctx.fillText(`伸長量 \u0394X`, sX + 140, sY + baseLen + ext/2 + 8);
+        }
+
+        // 畫砝碼
+        let hookY = sY + totalLen;
+        for(let i=0; i<hookeWeight/20; i++) {
+            ctx.fillStyle = '#FFA500'; ctx.fillRect(sX - 30, hookY + i*40, 60, 40);
+            ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.strokeRect(sX - 30, hookY + i*40, 60, 40);
+            ctx.fillStyle = '#111'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('20', sX - 10, hookY + i*40 + 25);
+        }
+
+        ctx.fillStyle = '#FFA500'; ctx.font = 'bold 36px "JetBrains Mono", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`外力 F = ${hookeWeight} gw`, sX, 650);
+        ctx.fillStyle = '#FFFF00';
+        ctx.fillText(`伸長 \u0394X = ${hookeWeight * 0.2} cm`, sX, 700); // 假定 k=0.2 cm/gw
+
+        // ================= 右半部：F-X 圖表 =================
+        let gX = 600, gY = 650;
+        let gW = 300, gH = 400;
+
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 4;
+        // 軸
+        drawArrow(ctx, gX, gY, gX + gW + 40, gY, '#FFFFFF', 6); // F軸 (X)
+        drawArrow(ctx, gX, gY, gX, gY - gH - 40, '#FFFFFF', 6); // X軸 (Y)
+        
+        ctx.fillStyle = '#FFA500'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('外力 F (gw)', gX + gW + 20, gY + 40);
+        ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('伸長量 \u0394X (cm)', gX, gY - gH - 60);
+
+        // 網格與座標
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = 2;
+        ctx.fillStyle = '#FFF'; ctx.font = '18px "JetBrains Mono"';
+        ctx.fillText('0', gX - 15, gY + 20);
+
+        for(let w=20; w<=80; w+=20) {
+            let px = gX + (w/80) * gW;
+            ctx.beginPath(); ctx.moveTo(px, gY); ctx.lineTo(px, gY - gH); ctx.stroke();
+            ctx.fillText(w, px, gY + 25);
+        }
+        for(let x=4; x<=16; x+=4) {
+            let py = gY - (x/16) * gH;
+            ctx.beginPath(); ctx.moveTo(gX, py); ctx.lineTo(gX + gW, py); ctx.stroke();
+            ctx.fillText(x, gX - 30, py + 6);
+        }
+
+        // 畫點與線
+        ctx.strokeStyle = '#FF69B4'; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.moveTo(gX, gY);
+        for(let w=20; w<=hookeWeight; w+=20) {
+            let px = gX + (w/80) * gW;
+            let extVal = w * 0.2; // 對應的 X
+            let py = gY - (extVal/16) * gH;
+            ctx.lineTo(px, py);
+            
+            // 畫點
+            ctx.fillStyle = '#00FFFF';
+            ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        hookeAnimId = requestAnimationFrame(drawHookeScene);
+    }
+
+    // ==========================================
+    // Canvas 4：彈簧的串聯與並聯 (1000x800)
+    // ==========================================
+    let arrayAnimId;
+    let arrayForce = 0;
+
+    function updateArrayForce() {
+        arrayForce = parseInt(document.getElementById('forceSlider').value);
+        document.getElementById('forceDisplay').innerText = arrayForce + " gw";
+        drawArrayScene(); // 若無 requestAnimationFrame 循環可直接呼叫
+    }
+
+    function drawSpring(ctx, startX, y, len, color) {
+        ctx.strokeStyle = color; ctx.lineWidth = 8; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        let coils = 10;
+        let pX = startX;
+        for(let i=0; i<=coils; i++) {
+            let pY = y + (i%2===0 ? -20 : 20);
+            pX = startX + (len/coils)*i;
+            if(i===0) ctx.moveTo(startX, y);
+            else ctx.lineTo(pX, pY);
+        }
+        ctx.lineTo(pX, y);
+        ctx.stroke();
+    }
+
+    function drawArrayScene() {
+        const cvs = document.getElementById('arrayCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        let k = 1.5; // px / gw
+        let baseLen = 100; // 單條彈簧原長
+
+        // ================= 上半部：串聯 =================
+        let topY = 200;
+        ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 36px sans-serif';
+        ctx.fillText('【串聯】張力貫穿，各承受 F', 50, 100);
+
+        // 牆壁
+        ctx.fillStyle = '#555'; ctx.fillRect(20, topY - 60, 30, 120);
+
+        // 串聯邏輯：F 傳遞，每條伸長 k*F
+        let ext_series = arrayForce * k;
+        let len1 = baseLen + ext_series;
+        let len2 = baseLen + ext_series;
+
+        drawSpring(ctx, 50, topY, len1, '#7CFC00');
+        ctx.fillStyle = '#FFF'; ctx.fillRect(50 + len1, topY - 10, 20, 20); // 連結環
+        drawSpring(ctx, 50 + len1 + 20, topY, len2, '#7CFC00');
+
+        let endX_S = 50 + len1 + 20 + len2;
+        // 拉力手
+        ctx.fillStyle = '#FFA500'; ctx.fillRect(endX_S, topY - 15, 60, 30);
+        drawArrow(ctx, endX_S + 60, topY, endX_S + 160, topY, '#FF0000', 8);
+        ctx.fillStyle = '#FF0000'; ctx.font = 'bold 28px sans-serif'; ctx.fillText(`F = ${arrayForce} gw`, endX_S + 180, topY + 10);
+
+        // 內部數據標示
+        ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 24px "JetBrains Mono", sans-serif';
+        ctx.fillText(`彈簧1受力: ${arrayForce}gw`, 80, topY + 60);
+        ctx.fillText(`伸長: ${arrayForce*0.1}cm`, 80, topY + 90);
+        ctx.fillText(`彈簧2受力: ${arrayForce}gw`, 50 + len1 + 50, topY + 60);
+        ctx.fillText(`伸長: ${arrayForce*0.1}cm`, 50 + len1 + 50, topY + 90);
+        
+        ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 28px sans-serif';
+        ctx.fillText(`總伸長量 = ${(arrayForce*0.2).toFixed(1)} cm`, 80, topY + 140);
+
+
+        // ================= 下半部：並聯 =================
+        let botY = 550;
+        ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 36px sans-serif';
+        ctx.fillText('【並聯】分散受力，各承受 F / 2', 50, 430);
+
+        ctx.fillStyle = '#555'; ctx.fillRect(20, botY - 80, 30, 160);
+
+        // 並聯邏輯：F 分散，每條受 F/2，伸長 k*(F/2)
+        let force_P = arrayForce / 2;
+        let ext_parallel = force_P * k;
+        let lenP = baseLen + ext_parallel;
+
+        // 畫支架
+        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.moveTo(50, botY - 50); ctx.lineTo(50, botY + 50); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(50 + lenP, botY - 50); ctx.lineTo(50 + lenP, botY + 50); ctx.stroke();
+
+        drawSpring(ctx, 50, botY - 50, lenP, '#FFFF00');
+        drawSpring(ctx, 50, botY + 50, lenP, '#FFFF00');
+
+        let endX_P = 50 + lenP;
+        ctx.fillStyle = '#FFA500'; ctx.fillRect(endX_P, botY - 15, 60, 30);
+        drawArrow(ctx, endX_P + 60, botY, endX_P + 160, botY, '#FF0000', 8);
+        ctx.fillStyle = '#FF0000'; ctx.font = 'bold 28px sans-serif'; ctx.fillText(`F = ${arrayForce} gw`, endX_P + 180, botY + 10);
+
+        // 內部數據標示
+        ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 24px "JetBrains Mono", sans-serif';
+        ctx.fillText(`各受力: ${force_P}gw`, endX_P + 20, botY - 60);
+        ctx.fillText(`各伸長: ${(force_P*0.1).toFixed(1)}cm`, endX_P + 20, botY - 30);
+        
+        ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 28px sans-serif';
+        ctx.fillText(`總伸長量 = ${(force_P*0.1).toFixed(1)} cm`, 80, botY + 140);
+    }
+
+    // 箭頭繪製輔助函數
+    function drawArrow(ctx, fromX, fromY, toX, toY, color, width) {
+        let headlen = width * 3; 
+        let dx = toX - fromX;
+        let dy = toY - fromY;
+        let angle = Math.atan2(dy, dx);
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // 啟動首頁
+    setTimeout(() => { 
+        openTab('tab-force', document.querySelector('.tab-button'));
+    }, 100);
+
+</script>
+</body>
+</html>
