@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- 允許自由縮放，適配各裝置旋轉 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>化學：聚合物與衣料纖維</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+    /* 1. 黑板視覺與零黑色原則 */
+    :root {
+        --bg-base: #11261f;
+        --bg-panel: #16332a;
+        --chalk-white: #FFFFFF;
+        --chalk-yellow: #FFFF00;
+        --chalk-orange: #FFA500;
+        --chalk-pink: #FF69B4;
+        --chalk-cyan: #00FFFF;
+        --chalk-green: #7CFC00;
+        --chalk-muted: #9fb0a8;
+        --bg-canvas: #0b1813;
+    }
+
+    body {
+        background-color: var(--bg-base);
+        /* 護眼點狀網格背景 */
+        background-image:
+            radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+            radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+        background-size: 3px 3px, 7px 7px;
+        background-position: 0 0, 2px 3px;
+        color: var(--chalk-white);
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 22px; 
+        margin: 0;
+        padding: 40px 0 80px; 
+        line-height: 1.8;
+        overflow-x: hidden; 
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    /* 2. 響應式排版 (同步首頁 1080px) */
+    .wrap {
+        width: 100%;
+        max-width: 1080px; 
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .header-container {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid var(--chalk-green);
+    }
+
+    .header-container h1 {
+        font-size: 42px; 
+        color: var(--chalk-cyan);
+        margin: 0;
+        letter-spacing: 3px;
+    }
+
+    h2 {
+        font-size: 30px; 
+        color: var(--chalk-yellow);
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 2px dashed rgba(255, 255, 0, 0.4);
+        padding-bottom: 12px;
+    }
+
+    h3 {
+        font-size: 26px; 
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: var(--chalk-pink);
+    }
+
+    /* 絕對雙欄引擎 */
+    .grid-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px; 
+        margin-top: 20px;
+        align-items: stretch;
+    }
+
+    /* 智慧斷點：手機直放時才變單欄 */
+    @media (max-width: 768px) {
+        .grid-2col { grid-template-columns: 1fr; }
+        .header-container h1 { font-size: 32px; }
+        .panel { padding: 20px; }
+    }
+
+    .panel {
+        border: 2px solid var(--chalk-cyan);
+        border-radius: 12px;
+        padding: 24px 30px; 
+        background-color: var(--bg-panel);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); 
+        position: relative;
+    }
+
+    /* 3. 巨無霸字體與防斷字 */
+    .math-text {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--chalk-orange);
+        font-weight: bold;
+    }
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    .tab-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .tab-button {
+        background-color: transparent;
+        color: var(--chalk-white);
+        border: 3px solid var(--chalk-green);
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-size: 24px; 
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .tab-button.active, .tab-button:hover { 
+        background-color: var(--chalk-green); 
+        color: var(--bg-base); 
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .highlight-box {
+        border: 2px dashed var(--chalk-green);
+        padding: 16px 20px;
+        border-radius: 10px;
+        background-color: rgba(124, 252, 0, 0.08);
+        margin-bottom: 20px;
+    }
+
+    ul { padding-left: 30px; margin-top: 5px; margin-bottom: 20px; }
+    li { margin-bottom: 12px; }
+
+    .action-btn {
+        background-color: var(--bg-base);
+        color: var(--chalk-white);
+        border: 2px solid var(--chalk-cyan);
+        padding: 10px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 24px; 
+        font-weight: bold;
+        transition: all 0.2s;
+        margin: 10px auto;
+        display: block;
+    }
+    
+    .action-btn:hover:not(:disabled) { 
+        background-color: rgba(255,255,255,0.1); 
+        transform: translateY(-2px);
+    }
+
+    /* 4. 互動區真・等比例縮放 */
+    .canvas-wrap {
+        width: 100%;
+        border: 2px solid var(--chalk-muted);
+        border-radius: 8px;
+        background-color: var(--bg-canvas);
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 5px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        /* 防止 iPad 拖曳時畫面滑動 */
+        touch-action: none; 
+    }
+    
+    .rect-canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 10 / 8;
+    }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="header-container">
+        <h1>化學：聚合物與衣料纖維</h1>
+    </div>
+
+    <!-- 主分頁導覽 -->
+    <div class="tab-container">
+        <button class="tab-button active" onclick="openTab('tab-polymer', this)">微觀聚合物</button>
+        <button class="tab-button" onclick="openTab('tab-plastics', this)" style="border-color: var(--chalk-orange);">塑膠的熱性質</button>
+        <button class="tab-button" onclick="openTab('tab-fibers', this)" style="border-color: var(--chalk-pink);">衣料纖維解密</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁一：聚合物的微觀定義 -->
+    <!-- ========================================== -->
+    <div id="tab-polymer" class="tab-content active">
+        <div class="grid-2col">
+            <!-- 左欄：觀念文字 -->
+            <div class="panel" style="border-color: var(--chalk-cyan);">
+                <h2 style="color: var(--chalk-cyan);">什麼是聚合物？</h2>
+                <p>聚合物（巨大分子）是由數千到數十萬個<strong style="color: var(--chalk-yellow);">「單體（小分子）」</strong>互相連結而成的巨型分子。</p>
+                <div class="highlight-box">
+                    <h3 style="color: var(--chalk-green); margin-top: 0;">常見的天然聚合物：</h3>
+                    <ul style="margin-bottom: 0;">
+                        <li><strong class="nowrap" style="color: var(--chalk-yellow);">澱粉 / 纖維素：</strong> 單體為 <span class="math-text nowrap">葡萄糖</span>。</li>
+                        <li><strong class="nowrap" style="color: var(--chalk-yellow);">蛋白質：</strong> 單體為 <span class="math-text nowrap">胺基酸</span>。</li>
+                    </ul>
+                </div>
+                <p style="color: var(--chalk-pink); font-weight: bold; margin-bottom: 0;">🚨 易錯提醒：</p>
+                <p style="margin-top: 5px;">水、二氧化碳、葡萄糖、胺基酸都是「小分子」，<strong class="nowrap" style="color: var(--chalk-orange);">絕對不是聚合物！</strong></p>
+            </div>
+            
+            <!-- 右欄：Canvas 動畫 -->
+            <div class="panel" style="border-color: var(--chalk-green);">
+                <h2 style="color: var(--chalk-green); text-align: center;">【互動】單體鎖鏈製造機</h2>
+                <p style="text-align: center;">單體就像迴紋針，透過化學鍵可以串成長鏈！</p>
+                
+                <div class="canvas-wrap" style="border-color: var(--chalk-green);">
+                    <canvas id="polymerCanvas" class="rect-canvas" width="1000" height="800"></canvas>
+                </div>
+                <button class="action-btn" onclick="startPolymerization()" style="border-color: var(--chalk-yellow); color: var(--chalk-yellow);">⚡ 按此合成聚合物</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁二：塑膠的宿命：熱塑性 vs 熱固性 -->
+    <!-- ========================================== -->
+    <div id="tab-plastics" class="tab-content">
+        <div class="grid-2col">
+            <!-- 左欄：文字說明 -->
+            <div class="panel" style="border-color: var(--chalk-orange);">
+                <h2 style="color: var(--chalk-orange);">合成聚合物的分類</h2>
+                <p>人造塑膠依據微觀結構，決定了它們受熱時的命運：</p>
+                
+                <ul>
+                    <li>
+                        <strong class="nowrap" style="color: var(--chalk-yellow);">鏈狀聚合物 (熱塑性)：</strong><br>
+                        分子像一把麵條。加熱會熔化變軟，冷卻後變硬，<strong style="color: var(--chalk-cyan);">具有可回收性</strong>。<br>
+                        <span style="color: var(--chalk-muted);">(如：保鮮膜 PE、寶特瓶 PET)</span>
+                    </li>
+                    <li style="margin-top: 15px;">
+                        <strong class="nowrap" style="color: var(--chalk-pink);">網狀聚合物 (熱固性)：</strong><br>
+                        分子間有立體鍵結，像烤熟的餅乾。加熱<strong style="color: var(--chalk-orange);">不會熔化</strong>，溫度過高只會碳化燒焦，<strong style="color: var(--chalk-pink);">不可回收</strong>。<br>
+                        <span style="color: var(--chalk-muted);">(如：輪胎、尿素甲醛樹脂)</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 右欄：Canvas 雙面對比動畫 -->
+            <div class="panel" style="border-color: var(--chalk-yellow);">
+                <h2 style="color: var(--chalk-yellow); text-align: center;">【互動】極限加熱挑戰</h2>
+                <p style="text-align: center;">長鏈 vs 網狀結構，加熱結果大不同！</p>
+                <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
+                    <canvas id="heatCanvas" class="rect-canvas" width="1000" height="800"></canvas>
+                </div>
+                <button class="action-btn" id="heatBtn" onpointerdown="toggleHeat(true)" onpointerup="toggleHeat(false)" onpointerleave="toggleHeat(false)" style="border-color: var(--chalk-orange); color: var(--chalk-orange);">🔥 長按進行極限加熱</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁三：衣料纖維大解密 -->
+    <!-- ========================================== -->
+    <div id="tab-fibers" class="tab-content">
+        <div class="grid-2col">
+            <!-- 左欄：衣料觀念 -->
+            <div class="panel" style="border-color: var(--chalk-pink);">
+                <h2 style="color: var(--chalk-pink);">衣料纖維的燃燒檢驗</h2>
+                <p>我們通常透過燃燒時的<strong style="color: var(--chalk-yellow);">「氣味」</strong>與<strong style="color: var(--chalk-cyan);">「灰燼」</strong>來分辨纖維：</p>
+                
+                <ul>
+                    <li>
+                        <strong class="nowrap" style="color: var(--chalk-green);">植物纖維 (棉/麻) & 再生纖維：</strong><br>
+                        成分皆為纖維素。燃燒有<strong style="color: var(--chalk-yellow);">燒紙味</strong>，灰燼呈<strong style="color: var(--chalk-muted);">灰色易碎粉末</strong>。
+                    </li>
+                    <li style="margin-top: 15px;">
+                        <strong class="nowrap" style="color: var(--chalk-orange);">動物纖維 (蠶絲/羊毛)：</strong><br>
+                        成分為蛋白質。燃燒有<strong style="color: var(--chalk-yellow);">燒焦羽毛味</strong>，灰燼一捏就碎。
+                    </li>
+                    <li style="margin-top: 15px;">
+                        <strong class="nowrap" style="color: var(--chalk-cyan);">合成纖維 (耐綸/聚酯)：</strong><br>
+                        由石化原料合成。燃燒時末端會<strong style="color: var(--chalk-pink);">熔化捲縮</strong>，形成<strong class="nowrap" style="color: var(--chalk-yellow);">堅硬的黑色小球</strong>。
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 右欄：DOM 互動拼圖 -->
+            <div class="panel" style="border-color: var(--chalk-cyan);">
+                <h2 style="color: var(--chalk-cyan); text-align: center;">【互動】鑑識科燃燒實驗室</h2>
+                <p style="text-align: center; color: var(--chalk-muted);">手指拖曳打火機到布料下方燃燒！</p>
+                
+                <div class="canvas-wrap" style="border-color: var(--chalk-cyan);">
+                    <canvas id="burnCanvas" class="rect-canvas" width="1000" height="800"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ==========================================
+    // 頁籤切換與安全渲染保護 (防 iOS 崩潰)
+    // ==========================================
+    function openTab(tabId, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.backgroundColor = 'transparent';
+            btn.style.color = 'var(--chalk-white)';
+        });
+        
+        document.getElementById(tabId).classList.add('active');
+        
+        if (btnElement) {
+            btnElement.classList.add('active');
+            if (tabId === 'tab-polymer') {
+                btnElement.style.backgroundColor = 'var(--chalk-green)';
+                initPolymerization();
+            } else if (tabId === 'tab-plastics') {
+                btnElement.style.backgroundColor = 'var(--chalk-orange)';
+                initHeating();
+            } else if (tabId === 'tab-fibers') {
+                btnElement.style.backgroundColor = 'var(--chalk-pink)';
+                initBurnLab();
+            }
+            btnElement.style.color = 'var(--bg-base)';
+        }
+    }
+
+    // ==========================================
+    // Canvas 1：單體鎖鏈製造機
+    // ==========================================
+    let polyAnimId;
+    let monomers = [];
+    let polyState = 0; // 0: scattered, 1: moving, 2: linked
+    let polyTimer = 0;
+
+    function initPolymerization() {
+        const cvs = document.getElementById('polymerCanvas');
+        if (!cvs || cvs.clientWidth === 0) {
+            polyAnimId = requestAnimationFrame(initPolymerization);
+            return;
+        }
+        cancelAnimationFrame(polyAnimId);
+        
+        monomers = [];
+        polyState = 0;
+        polyTimer = 0;
+        
+        // 產生 30 顆散落的葡萄糖單體
+        for(let i=0; i<30; i++){
+            monomers.push({
+                x: 100 + Math.random() * 800,
+                y: 100 + Math.random() * 600,
+                targetX: 100 + i * 27, // 最終鎖鏈的位置
+                targetY: 400 + Math.sin(i * 0.8) * 30, // 稍微帶點波浪
+                color: '#00FFFF'
+            });
+        }
+        drawPolymerScene();
+    }
+
+    function startPolymerization() {
+        if(polyState === 0) polyState = 1;
+    }
+
+    function drawPolymerScene() {
+        const cvs = document.getElementById('polymerCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        // 標題與說明
+        ctx.textAlign = 'center';
+        if(polyState === 0) {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 36px sans-serif';
+            ctx.fillText('尚未聚合：散落的「葡萄糖單體」', 500, 80);
+        } else if(polyState === 1) {
+            ctx.fillStyle = '#FFFF00';
+            ctx.font = 'bold 36px sans-serif';
+            ctx.fillText('脫水聚合中... 形成化學鍵！', 500, 80);
+        } else {
+            ctx.fillStyle = '#7CFC00';
+            ctx.font = 'bold 42px sans-serif';
+            ctx.fillText('完成聚合：巨大的「澱粉聚合物」', 500, 80);
+        }
+        ctx.textAlign = 'left';
+
+        // 畫化學鍵 (鎖鏈)
+        if (polyState === 2) {
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(monomers[0].x, monomers[0].y);
+            for(let i=1; i<monomers.length; i++) {
+                ctx.lineTo(monomers[i].x, monomers[i].y);
+            }
+            ctx.stroke();
+        }
+
+        // 動畫邏輯與畫單體
+        let allArrived = true;
+        monomers.forEach(m => {
+            if (polyState === 1) {
+                let dx = m.targetX - m.x;
+                let dy = m.targetY - m.y;
+                m.x += dx * 0.05;
+                m.y += dy * 0.05;
+                if (Math.abs(dx) > 2 || Math.abs(dy) > 2) allArrived = false;
+            }
+            
+            // 畫六角形代表葡萄糖
+            ctx.fillStyle = (polyState === 2) ? '#7CFC00' : m.color;
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#11261f';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        });
+
+        if (polyState === 1 && allArrived) {
+            polyState = 2;
+        }
+
+        polyAnimId = requestAnimationFrame(drawPolymerScene);
+    }
+
+    // ==========================================
+    // Canvas 2：極限加熱挑戰 (熱塑 vs 熱固)
+    // ==========================================
+    let heatAnimId;
+    let isHeating = false;
+    let heatLevel = 0; // 0 to 100
+    let chainYOffset = []; // 紀錄每條鏈的下墜程度
+
+    function initHeating() {
+        const cvs = document.getElementById('heatCanvas');
+        if (!cvs || cvs.clientWidth === 0) {
+            heatAnimId = requestAnimationFrame(initHeating);
+            return;
+        }
+        cancelAnimationFrame(heatAnimId);
+        
+        isHeating = false;
+        heatLevel = 0;
+        chainYOffset = [0, 0, 0, 0, 0];
+        
+        drawHeatScene();
+    }
+
+    function toggleHeat(state) {
+        isHeating = state;
+        let btn = document.getElementById('heatBtn');
+        if(state) {
+            btn.style.backgroundColor = '#FFA500';
+            btn.style.color = '#11261f';
+            btn.innerText = '🔥 加熱中...';
+        } else {
+            btn.style.backgroundColor = 'transparent';
+            btn.style.color = 'var(--chalk-orange)';
+            btn.innerText = '🔥 長按進行極限加熱';
+        }
+    }
+
+    function drawHeatScene() {
+        const cvs = document.getElementById('heatCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        // 加熱邏輯
+        if (isHeating && heatLevel < 100) heatLevel += 0.5;
+        if (!isHeating && heatLevel > 0 && heatLevel < 100) heatLevel -= 0.5; // 冷卻 (若未碳化)
+        if (heatLevel >= 100) heatLevel = 100; // 鎖死在碳化狀態
+
+        // 畫面分隔線
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([15, 15]);
+        ctx.beginPath();
+        ctx.moveTo(500, 50); ctx.lineTo(500, 750);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // ================= 左側：鏈狀 (熱塑性) =================
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#00FFFF';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.fillText('鏈狀聚合物 (熱塑性)', 250, 80);
+        
+        // 狀態文字
+        if (heatLevel < 30) {
+            ctx.fillStyle = '#FFFFFF'; ctx.font = '24px sans-serif'; ctx.fillText('常溫固態', 250, 130);
+        } else {
+            ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 28px sans-serif'; ctx.fillText('分子間滑動 → 熔化變軟！', 250, 130);
+        }
+
+        // 畫 5 條水平聚合物鏈
+        ctx.lineWidth = 12;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        for(let i=0; i<5; i++) {
+            // 受熱滑動下墜邏輯
+            if (heatLevel > 30) chainYOffset[i] += (Math.random() * 0.5);
+            if (!isHeating && chainYOffset[i] > 0 && heatLevel < 100) chainYOffset[i] -= 0.2; // 降溫恢復硬度
+            
+            let baseY = 250 + i * 80 + chainYOffset[i];
+            let waveAmp = heatLevel * 0.5; // 受熱變波浪
+
+            ctx.strokeStyle = '#00FFFF';
+            ctx.beginPath();
+            for(let x=50; x<=450; x+=20) {
+                let y = baseY + Math.sin(x * 0.05 + heatLevel * 0.1 + i) * waveAmp;
+                if(x===50) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+
+        // ================= 右側：網狀 (熱固性) =================
+        ctx.fillStyle = '#FFFF00';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.fillText('網狀聚合物 (熱固性)', 750, 80);
+        
+        // 狀態文字
+        if (heatLevel < 80) {
+            ctx.fillStyle = '#FFFFFF'; ctx.font = '24px sans-serif'; ctx.fillText('立體網狀結構穩固', 750, 130);
+        } else {
+            ctx.fillStyle = '#FFA500'; ctx.font = 'bold 28px sans-serif'; ctx.fillText('無法熔化 → 直接碳化斷裂！', 750, 130);
+        }
+
+        // 畫網狀結構 (立體鍵結)
+        let vib = (heatLevel > 0 && heatLevel < 80) ? (Math.random() * 4 - 2) : 0; // 震動
+        let isCarbonized = heatLevel >= 80;
+        
+        ctx.lineWidth = 10;
+        let netColor = isCarbonized ? '#4a3b32' : '#FFFF00'; // 嚴格遵守零黑色，使用深灰棕色當作碳化
+        ctx.strokeStyle = netColor;
+
+        for(let row=0; row<4; row++) {
+            let baseY = 250 + row * 100 + vib;
+            // 橫向鏈
+            ctx.beginPath();
+            for(let x=550; x<=950; x+=40) {
+                if(isCarbonized && Math.random() < 0.3) {
+                    ctx.stroke(); ctx.beginPath(); // 碳化斷裂
+                } else {
+                    if(x===550) ctx.moveTo(x + vib, baseY);
+                    else ctx.lineTo(x + vib, baseY);
+                }
+            }
+            ctx.stroke();
+
+            // 直向交聯鍵 (Cross-links)
+            if(row < 3) {
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = isCarbonized ? '#4a3b32' : '#FF69B4'; // 交聯鍵顏色
+                for(let lx=600; lx<=900; lx+=80) {
+                    if(!(isCarbonized && Math.random() < 0.6)) {
+                        ctx.beginPath();
+                        ctx.moveTo(lx + vib, baseY);
+                        ctx.lineTo(lx + vib, baseY + 100);
+                        ctx.stroke();
+                    }
+                }
+                ctx.lineWidth = 10;
+                ctx.strokeStyle = netColor;
+            }
+        }
+
+        // 畫火焰特效 (底部)
+        if (isHeating) {
+            ctx.fillStyle = '#FFA500';
+            ctx.globalAlpha = 0.6 + Math.random()*0.4;
+            ctx.beginPath();
+            ctx.arc(500, 850, 120 + Math.random()*20, Math.PI, 0);
+            ctx.fill();
+            ctx.fillStyle = '#FFFF00';
+            ctx.beginPath();
+            ctx.arc(500, 850, 80 + Math.random()*20, Math.PI, 0);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+
+        heatAnimId = requestAnimationFrame(drawHeatScene);
+    }
+
+    // ==========================================
+    // Canvas 3：鑑識科燃燒實驗室 (觸控拖曳打火機)
+    // ==========================================
+    let burnAnimId;
+    let lighter = { x: 500, y: 650, w: 60, h: 100, isDragging: false };
+    
+    // 布料設定：A=棉(植物), B=羊毛(動物), C=耐綸(合成)
+    let fabrics = [
+        { id: 'A', name: '植物纖維 (棉)', x: 180, y: 100, w: 140, h: 300, color: '#7CFC00', burn: 0, text: '燒紙味\n灰色易碎灰燼' },
+        { id: 'B', name: '動物纖維 (羊毛)', x: 500, y: 100, w: 140, h: 300, color: '#FF69B4', burn: 0, text: '燒焦羽毛味\n灰燼一捏就碎' },
+        { id: 'C', name: '合成纖維 (耐綸)', x: 820, y: 100, w: 140, h: 300, color: '#00FFFF', burn: 0, text: '末端熔化捲縮\n堅硬黑色小球' }
+    ];
+    let ashParticles = [];
+
+    function initBurnLab() {
+        const cvs = document.getElementById('burnCanvas');
+        if (!cvs || cvs.clientWidth === 0) {
+            burnAnimId = requestAnimationFrame(initBurnLab);
+            return;
+        }
+        cancelAnimationFrame(burnAnimId);
+        
+        fabrics.forEach(f => f.burn = 0);
+        ashParticles = [];
+        lighter.x = 500; lighter.y = 650;
+        
+        // 綁定 Canvas 內部的 pointer 拖曳事件
+        cvs.addEventListener('pointerdown', lighterDown);
+        cvs.addEventListener('pointermove', lighterMove);
+        cvs.addEventListener('pointerup', lighterUp);
+        cvs.addEventListener('pointerleave', lighterUp);
+
+        drawBurnScene();
+    }
+
+    function lighterDown(e) {
+        const cvs = document.getElementById('burnCanvas');
+        const rect = cvs.getBoundingClientRect();
+        const scaleX = cvs.width / rect.width;
+        const scaleY = cvs.height / rect.height;
+        const mouseX = (e.clientX - rect.left) * scaleX;
+        const mouseY = (e.clientY - rect.top) * scaleY;
+
+        // 判定是否點擊到打火機區域 (放寬判定區)
+        if(mouseX > lighter.x - 50 && mouseX < lighter.x + lighter.w + 50 &&
+           mouseY > lighter.y - 50 && mouseY < lighter.y + lighter.h + 50) {
+            lighter.isDragging = true;
+            cvs.setPointerCapture(e.pointerId);
+        }
+    }
+
+    function lighterMove(e) {
+        if (!lighter.isDragging) return;
+        const cvs = document.getElementById('burnCanvas');
+        const rect = cvs.getBoundingClientRect();
+        const scaleX = cvs.width / rect.width;
+        const scaleY = cvs.height / rect.height;
+        lighter.x = (e.clientX - rect.left) * scaleX - lighter.w/2;
+        lighter.y = (e.clientY - rect.top) * scaleY - lighter.h/2;
+    }
+
+    function lighterUp(e) {
+        lighter.isDragging = false;
+    }
+
+    function drawBurnScene() {
+        const cvs = document.getElementById('burnCanvas');
+        if (!cvs) return;
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        // 火焰感測點 (打火機頂部)
+        let flameX = lighter.x + lighter.w/2;
+        let flameY = lighter.y - 20;
+
+        ctx.textAlign = 'center';
+        
+        // 繪製三塊布料
+        fabrics.forEach(f => {
+            let cx = f.x;
+            
+            // 判定是否被燒到
+            if (lighter.isDragging && Math.abs(flameX - cx) < f.w/2 && flameY < f.y + f.h && flameY > f.y) {
+                if (f.burn < 1) f.burn += 0.005;
+                
+                // 產生灰燼粒子 (僅植物纖維)
+                if (f.id === 'A' && Math.random() < 0.3) {
+                    ashParticles.push({ x: cx + (Math.random()-0.5)*f.w, y: f.y + f.h - f.burn*f.h, vy: 2 });
+                }
+            }
+
+            // 繪製布料
+            ctx.fillStyle = f.color;
+            let currentH = f.h;
+            
+            if (f.id === 'A' || f.id === 'B') {
+                // 植物/動物：燒掉的部分變短，邊緣焦黑 (深灰棕色)
+                currentH = f.h * (1 - f.burn);
+                ctx.fillRect(cx - f.w/2, f.y, f.w, currentH);
+                
+                if(f.burn > 0) {
+                    ctx.fillStyle = '#4a3b32'; // 焦黑邊緣
+                    ctx.fillRect(cx - f.w/2, f.y + currentH - 10, f.w, 10);
+                }
+            } else if (f.id === 'C') {
+                // 合成纖維：縮短並捲縮成小黑球
+                currentH = f.h * (1 - f.burn * 0.8); // 縮短但不會全不見
+                ctx.fillRect(cx - f.w/2, f.y, f.w, currentH);
+                
+                if(f.burn > 0) {
+                    ctx.fillStyle = '#222222'; // 堅硬深色小球 (非純黑)
+                    ctx.beginPath();
+                    ctx.arc(cx, f.y + currentH, 15 + f.burn * 10, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
+
+            // 頂部夾子
+            ctx.fillStyle = '#9fb0a8';
+            ctx.fillRect(cx - 30, f.y - 20, 60, 20);
+
+            // 顯示文字
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 28px sans-serif';
+            ctx.fillText(f.name, cx, 60);
+
+            // 燒過顯示特徵文字
+            if (f.burn > 0.2) {
+                ctx.fillStyle = f.color;
+                let lines = f.text.split('\n');
+                ctx.font = 'bold 24px sans-serif';
+                ctx.fillText(lines[0], cx, f.y + f.h + 40);
+                ctx.fillText(lines[1], cx, f.y + f.h + 80);
+            }
+        });
+
+        // 繪製掉落的灰燼
+        ctx.fillStyle = '#888888';
+        for(let i = ashParticles.length - 1; i >= 0; i--) {
+            let p = ashParticles[i];
+            p.y += p.vy;
+            ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+            if(p.y > 800) ashParticles.splice(i, 1);
+        }
+
+        // 繪製打火機
+        ctx.fillStyle = '#FFA500';
+        ctx.fillRect(lighter.x, lighter.y, lighter.w, lighter.h);
+        ctx.fillStyle = '#AAAAAA';
+        ctx.fillRect(lighter.x + 10, lighter.y - 15, 40, 15);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.fillText('拖曳', lighter.x + lighter.w/2, lighter.y + 50);
+
+        // 火焰 (拖曳時顯示)
+        if (lighter.isDragging) {
+            ctx.fillStyle = '#FFFF00';
+            ctx.beginPath();
+            ctx.arc(flameX, flameY, 20 + Math.random()*5, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#00FFFF';
+            ctx.beginPath();
+            ctx.arc(flameX, flameY + 5, 10, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        ctx.textAlign = 'left';
+        burnAnimId = requestAnimationFrame(drawBurnScene);
+    }
+
+    // 初始化啟動第一個分頁
+    setTimeout(() => { 
+        openTab('tab-polymer', document.querySelector('.tab-button'));
+    }, 100);
+
+</script>
+</body>
+</html>
