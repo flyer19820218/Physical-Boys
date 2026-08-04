@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- 允許自由縮放，適配各裝置旋轉 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>化學：常見有機物 (烴、醇、酸、酯)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+    /* 1. 黑板視覺與零黑色原則 */
+    :root {
+        --bg-base: #11261f;
+        --bg-panel: #16332a;
+        --chalk-white: #FFFFFF;
+        --chalk-yellow: #FFFF00;
+        --chalk-orange: #FFA500;
+        --chalk-pink: #FF69B4;
+        --chalk-cyan: #00FFFF;
+        --chalk-green: #7CFC00;
+        --chalk-muted: #9fb0a8;
+        --bg-canvas: #0b1813;
+    }
+
+    body {
+        background-color: var(--bg-base);
+        /* 同步首頁：加入護眼點狀網格背景 */
+        background-image:
+            radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+            radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+        background-size: 3px 3px, 7px 7px;
+        background-position: 0 0, 2px 3px;
+        color: var(--chalk-white);
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 22px; 
+        margin: 0;
+        padding: 40px 0 80px; 
+        line-height: 1.8;
+        overflow-x: hidden; 
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    /* 2. 響應式排版 (同步首頁 1080px) */
+    .wrap {
+        width: 100%;
+        max-width: 1080px; 
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .header-container {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid var(--chalk-green);
+    }
+
+    .header-container h1 {
+        font-size: 42px; 
+        color: var(--chalk-cyan);
+        margin: 0;
+        letter-spacing: 3px;
+    }
+
+    h2 {
+        font-size: 30px; 
+        color: var(--chalk-yellow);
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 2px dashed rgba(255, 255, 0, 0.4);
+        padding-bottom: 12px;
+    }
+
+    h3 {
+        font-size: 26px; 
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: var(--chalk-pink);
+    }
+
+    /* 絕對雙欄引擎 */
+    .grid-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px; 
+        margin-top: 20px;
+        align-items: stretch;
+    }
+
+    /* 智慧斷點：手機直放時才變單欄 */
+    @media (max-width: 768px) {
+        .grid-2col { grid-template-columns: 1fr; }
+        .header-container h1 { font-size: 32px; }
+        .panel { padding: 20px; }
+    }
+
+    .panel {
+        border: 2px solid var(--chalk-cyan);
+        border-radius: 12px;
+        padding: 24px 30px; 
+        background-color: var(--bg-panel);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); 
+        position: relative;
+    }
+
+    /* 3. 巨無霸字體與防斷字 */
+    .math-text {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--chalk-orange);
+        font-weight: bold;
+    }
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    /* 理化標準上下分式 */
+    .fraction {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        vertical-align: middle;
+        margin: 0 6px;
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--chalk-orange);
+        font-weight: bold;
+    }
+    .fraction span.numerator { border-bottom: 2px solid var(--chalk-orange); padding: 0 4px; line-height: 1.2; }
+    .fraction span.denominator { padding: 0 4px; line-height: 1.2; }
+
+    .tab-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .tab-button {
+        background-color: transparent;
+        color: var(--chalk-white);
+        border: 3px solid var(--chalk-green);
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-size: 24px; 
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .tab-button.active, .tab-button:hover { 
+        background-color: var(--chalk-green); 
+        color: var(--bg-base); 
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .highlight-box {
+        border: 2px dashed var(--chalk-green);
+        padding: 16px 20px;
+        border-radius: 10px;
+        background-color: rgba(124, 252, 0, 0.08);
+        margin-bottom: 20px;
+    }
+
+    ul { padding-left: 30px; margin-top: 5px; margin-bottom: 20px; }
+    li { margin-bottom: 12px; }
+
+    /* 4. 互動區真・等比例縮放 */
+    .canvas-wrap {
+        width: 100%;
+        border: 1.5px solid var(--chalk-muted);
+        border-radius: 8px;
+        background-color: var(--bg-canvas);
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 5px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .rect-canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 10 / 8;
+    }
+
+    /* =========================================
+       分頁三：酯化反應 DOM 互動區 (等比縮放)
+       ========================================= */
+    .ester-stage {
+        width: 100%;
+        aspect-ratio: 10 / 8;
+        background-color: rgba(0,0,0,0.2);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        position: relative;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    
+    #ester-wrap {
+        width: 1000px;
+        height: 800px; 
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        margin-left: -500px;
+        margin-top: -400px;
+        transform-origin: center center;
+    }
+
+    .molecule-part {
+        position: absolute;
+        display: flex; 
+        justify-content: center; 
+        align-items: center;
+        font-family: 'JetBrains Mono', monospace; 
+        font-weight: bold;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .draggable-part {
+        cursor: grab;
+        border: 3px dashed var(--chalk-cyan);
+        touch-action: none;
+        z-index: 20;
+    }
+    .draggable-part.dragging {
+        z-index: 100;
+        transform: scale(1.1);
+        box-shadow: 0 10px 20px rgba(0,255,255,0.4);
+    }
+
+    .acid-body { background-color: var(--chalk-pink); color: var(--chalk-white); font-size: 40px; padding: 10px 20px; }
+    .acid-oh { background-color: var(--chalk-cyan); color: var(--bg-base); font-size: 40px; padding: 10px 20px; }
+    
+    .alc-h { background-color: var(--chalk-yellow); color: var(--bg-base); font-size: 40px; padding: 10px 20px; }
+    .alc-body { background-color: var(--chalk-green); color: var(--bg-base); font-size: 40px; padding: 10px 20px; }
+
+    .water-zone {
+        position: absolute;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 320px;
+        height: 120px;
+        border: 4px dashed var(--chalk-cyan);
+        border-radius: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 28px;
+        font-weight: bold;
+        color: var(--chalk-cyan);
+        background-color: rgba(0, 255, 255, 0.1);
+        z-index: 5;
+    }
+
+    .banana-icon {
+        position: absolute;
+        font-size: 100px;
+        opacity: 0;
+        transition: opacity 0.5s, transform 1s ease-out;
+        pointer-events: none;
+        z-index: 50;
+    }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="header-container">
+        <h1>化學：常見有機物 (烴、醇、酸、酯)</h1>
+    </div>
+
+    <!-- 主分頁導覽 -->
+    <div class="tab-container">
+        <button class="tab-button active" onclick="openTab('tab-hydrocarbon', this)">烴類與燃料</button>
+        <button class="tab-button" onclick="openTab('tab-alcohol-acid', this)" style="border-color: var(--chalk-pink);">醇類與有機酸</button>
+        <button class="tab-button" onclick="openTab('tab-ester', this)" style="border-color: var(--chalk-orange);">酯類與脂肪</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁一：烴類與化石燃料 -->
+    <!-- ========================================== -->
+    <div id="tab-hydrocarbon" class="tab-content active">
+        <div class="grid-2col">
+            <!-- 左欄：觀念文字 -->
+            <div class="panel" style="border-color: var(--chalk-cyan);">
+                <h2 style="color: var(--chalk-cyan);">烴類的定義與分類</h2>
+                <p>烴 (音同：聽) 類是僅含 <span class="math-text nowrap">碳(C)</span> 與 <span class="math-text nowrap">氫(H)</span> 兩種元素的有機化合物。</p>
+                <ul>
+                    <li><strong style="color: var(--chalk-yellow);">物理性質：</strong> <strong style="color: var(--chalk-pink);">難溶於水</strong>，密度多半比水小。</li>
+                    <li><strong style="color: var(--chalk-yellow);">化學性質：</strong> 具有<strong style="color: var(--chalk-orange);">可燃性</strong>，完全燃燒必產生 <span class="math-text nowrap">CO<sub>2</sub></span> 與 <span class="math-text nowrap">H<sub>2</sub>O</span>。</li>
+                </ul>
+                <div class="highlight-box">
+                    <p style="margin: 0; font-weight: bold; color: var(--chalk-green);">常見化石燃料比較：</p>
+                    <ul style="margin-bottom: 0;">
+                        <li>天然氣：主要成分為 <span class="math-text nowrap">甲烷(CH<sub>4</sub>)</span>，常溫下為氣體，管線輸送。</li>
+                        <li>液化石油氣(LPG)：主要成分為 <span class="math-text nowrap">丙烷(C<sub>3</sub>H<sub>8</sub>)</span> 與 <span class="math-text nowrap">丁烷(C<sub>4</sub>H<sub>10</sub>)</span>，加壓成液態裝鋼瓶。</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 右欄：Canvas 動畫 -->
+            <div class="panel" style="border-color: var(--chalk-orange);">
+                <h2 style="color: var(--chalk-orange); text-align: center;">【互動】石油分餾塔</h2>
+                <p style="text-align: center;">原油利用成分的<strong style="color: var(--chalk-cyan);">「沸點不同」</strong>進行物理分離。</p>
+                
+                <div class="canvas-wrap" style="border-color: var(--chalk-orange); border-width: 3px;">
+                    <!-- Canvas 解析度鎖定 1000x800 -->
+                    <canvas id="towerCanvas" class="rect-canvas" width="1000" height="800"></canvas>
+                </div>
+                <!-- ★ 依要求新增在底下的文字 ★ -->
+                <p style="text-align: center; color: var(--chalk-pink); font-weight: bold; font-size: 26px; margin-top: 15px; margin-bottom: 0; letter-spacing: 2px;">※ 產物皆為混合物</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁二：醇類與有機酸 -->
+    <!-- ========================================== -->
+    <div id="tab-alcohol-acid" class="tab-content">
+        <div class="grid-2col">
+            <!-- 左欄：將醇與酸的觀念合併在一個版塊 -->
+            <div class="panel" style="border-color: var(--chalk-pink);">
+                <h2 style="color: var(--chalk-pink);">醇類 (-OH) 特性</h2>
+                <p>含有氫氧根官能基 <span class="math-text nowrap">-OH</span>，<strong style="color: var(--chalk-yellow);">不會解離</strong>，水溶液呈<strong style="color: var(--chalk-green);">中性</strong>。</p>
+                <ul>
+                    <li><strong style="color: var(--chalk-cyan);">甲醇 <span class="math-text nowrap">CH<sub>3</sub>OH</span>：</strong> 俗稱木精，有毒，會添加在工業酒精中。</li>
+                    <li><strong style="color: var(--chalk-cyan);">乙醇 <span class="math-text nowrap">C<sub>2</sub>H<sub>5</sub>OH</span>：</strong> <strong style="color: var(--chalk-orange);">75% 濃度的水溶液</strong>具有最佳殺菌效果。</li>
+                </ul>
+
+                <h2 style="color: var(--chalk-cyan); margin-top: 10px;">有機酸 (-COOH) 特性</h2>
+                <p>含有羧基 <span class="math-text nowrap">-COOH</span>，在水中會微量解離釋放 <span class="math-text nowrap">H<sup>+</sup></span>，呈<strong style="color: var(--chalk-pink);">弱酸性</strong>。</p>
+                <ul>
+                    <li><strong style="color: var(--chalk-yellow);">甲酸 <span class="math-text nowrap">HCOOH</span>：</strong> 俗稱蟻酸，存在於螞蟻毒液中。</li>
+                    <li><strong style="color: var(--chalk-yellow);">乙酸 <span class="math-text nowrap">CH<sub>3</sub>COOH</span>：</strong> 純乙酸 16.7°C 結冰，稱「冰醋酸」。</li>
+                </ul>
+            </div>
+
+            <!-- 右欄：Canvas 動畫 -->
+            <div class="panel" style="border-color: var(--chalk-yellow);">
+                <h2 style="color: var(--chalk-yellow); text-align: center;">【微觀】官能基解離</h2>
+                <p style="text-align: center;">酸類的 <span class="math-text nowrap">-COOH</span> 末端氫原子會發生微弱斷裂。</p>
+                <div class="canvas-wrap" style="border-color: var(--chalk-yellow); border-width: 3px;">
+                    <canvas id="acidCanvas" class="rect-canvas" width="1000" height="800"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁三：酯類與脂肪 -->
+    <!-- ========================================== -->
+    <div id="tab-ester" class="tab-content">
+        <div class="grid-2col">
+            <!-- 左欄：酯化反應與脂肪觀念 -->
+            <div class="panel" style="border-color: var(--chalk-orange);">
+                <h2 style="color: var(--chalk-orange);">酯化反應方程式</h2>
+                <div class="highlight-box" style="text-align: center;">
+                    <p class="math-text" style="font-size: 26px; margin: 5px 0;">有機酸 + 醇類 ⇌ 酯類 + 水</p>
+                </div>
+                <ul>
+                    <li><strong style="color: var(--chalk-pink);">催化劑：</strong> 加入<strong style="color: var(--chalk-yellow);">濃硫酸</strong>，扮演催化與<strong style="color: var(--chalk-cyan);">脫水劑</strong>。</li>
+                    <li><strong style="color: var(--chalk-pink);">特徵：</strong> 具花果香，密度比水小，且<strong style="color: var(--chalk-green);">不溶於水</strong>。</li>
+                </ul>
+
+                <h2 style="color: var(--chalk-green); margin-top: 10px;">動物與植物脂肪</h2>
+                <p>生物體內的油脂，其實就是一種大分子的酯類！</p>
+                <ul>
+                    <li><strong style="color: var(--chalk-cyan);">動物性脂肪：</strong> 富含飽和脂肪酸，室溫下呈<strong style="color: var(--chalk-yellow);">固態</strong>。</li>
+                    <li><strong style="color: var(--chalk-cyan);">植物性脂肪：</strong> 富含不飽和脂肪酸，室溫下呈<strong style="color: var(--chalk-yellow);">液態</strong>。</li>
+                </ul>
+            </div>
+
+            <!-- 右欄：DOM 互動拼圖 -->
+            <div class="panel" style="border-color: var(--chalk-cyan);">
+                <h2 style="color: var(--chalk-cyan); text-align: center;">【互動】果香調香師</h2>
+                <p style="text-align: center;">將酸的 <span class="math-text nowrap">-OH</span> 與醇的 <span class="math-text nowrap">-H</span> 拖曳到下方脫水區！</p>
+                
+                <div class="ester-stage" id="ester-stage" style="border-width: 3px;">
+                    <div id="ester-wrap">
+                        <div class="water-zone" id="dropZone">💧 脫水區 (濃硫酸)</div>
+                        
+                        <!-- 乙酸分子 -->
+                        <div class="molecule-part acid-body" id="acidB" style="left: 80px; top: 220px;">CH<sub>3</sub>CO</div>
+                        <div class="molecule-part draggable-part acid-oh" id="acidOH" data-type="oh" style="left: 290px; top: 220px;">-OH</div>
+                        <div id="acidLabel" style="position: absolute; left: 120px; top: 310px; font-weight: bold; color: var(--chalk-pink); font-size: 26px;">乙酸 (提供-OH)</div>
+
+                        <!-- 戊醇分子 -->
+                        <div class="molecule-part draggable-part alc-h" id="alcH" data-type="h" style="left: 540px; top: 220px;">H-</div>
+                        <div class="molecule-part alc-body" id="alcB" style="left: 650px; top: 220px;">OC<sub>5</sub>H<sub>11</sub></div>
+                        <div id="alcLabel" style="position: absolute; left: 630px; top: 310px; font-weight: bold; color: var(--chalk-green); font-size: 26px;">戊醇 (提供-H)</div>
+                        
+                        <!-- 香蕉特效 -->
+                        <div class="banana-icon" id="banana">🍌</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ==========================================
+    // 頁籤切換與安全渲染保護
+    // ==========================================
+    function openTab(tabId, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.backgroundColor = 'transparent';
+            btn.style.color = 'var(--chalk-white)';
+        });
+        
+        document.getElementById(tabId).classList.add('active');
+        
+        if (btnElement) {
+            btnElement.classList.add('active');
+            if (tabId === 'tab-hydrocarbon') {
+                btnElement.style.backgroundColor = 'var(--chalk-green)';
+            } else if (tabId === 'tab-alcohol-acid') {
+                btnElement.style.backgroundColor = 'var(--chalk-pink)';
+            } else if (tabId === 'tab-ester') {
+                btnElement.style.backgroundColor = 'var(--chalk-orange)';
+                setTimeout(initEsterPuzzle, 50);
+            }
+            btnElement.style.color = 'var(--bg-base)';
+        }
+    }
+
+    window.addEventListener('resize', () => {
+        if (document.getElementById('tab-ester').classList.contains('active')) {
+            updateEsterScale();
+        }
+    });
+
+    // ==========================================
+    // Canvas 1：石油分餾塔 (四色混合物進料、精準層板凝結)
+    // ==========================================
+    let towerAnimId;
+    let towerParticles = [];
+
+    // 繪製帶有泡罩缺口的工業層板
+    function drawTray(ctx, x, y, width) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 4;
+        let gap = 35; 
+        let seg = (width - 2 * gap) / 3; 
+        
+        ctx.beginPath();
+        ctx.moveTo(x, y); ctx.lineTo(x + seg, y);
+        ctx.moveTo(x + seg + gap, y); ctx.lineTo(x + 2*seg + gap, y);
+        ctx.moveTo(x + 2*seg + 2*gap, y); ctx.lineTo(x + width, y);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.beginPath();
+        ctx.arc(x + seg + gap/2, y - 5, gap/2 + 5, Math.PI, 0);
+        ctx.arc(x + 2*seg + gap*1.5, y - 5, gap/2 + 5, Math.PI, 0);
+        ctx.stroke();
+    }
+
+    function drawTowerScene() {
+        const cvs = document.getElementById('towerCanvas');
+        if (!cvs || cvs.clientWidth === 0) {
+            towerAnimId = requestAnimationFrame(drawTowerScene);
+            return;
+        }
+
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        // 分餾塔主體
+        const tx = 380; 
+        const ty = 100;
+        const tw = 180;
+        const th = 620; // 塔底抵達 y=720
+        
+        ctx.fillStyle = '#2c3e35';
+        ctx.fillRect(tx, ty, tw, th);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(tx, ty, tw, th);
+        
+        // 塔頂
+        ctx.beginPath();
+        ctx.arc(tx + tw/2, ty, tw/2, Math.PI, 0);
+        ctx.fill();
+        ctx.stroke();
+
+        // 畫三道工業層板 (隔開不同沸點產物)
+        drawTray(ctx, tx, 260, tw); 
+        drawTray(ctx, tx, 440, tw); 
+        drawTray(ctx, tx, 620, tw); 
+
+        // ★ 原油加熱進料管 (完全貼齊塔底 y=720)
+        ctx.fillStyle = '#FFA500';
+        ctx.fillRect(80, 660, 300, 60); 
+        ctx.strokeRect(80, 660, 300, 60);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 28px sans-serif';
+        ctx.fillText('原油加熱進料 (氣化)', 90, 698); 
+
+        // 定義四個出料口 (位置與目標 y 座標)
+        const exits = [
+            { y: 120, targetY: 140, name: '石油氣 (<20°C)', color: '#00FFFF' },   // 頂層
+            { y: 300, targetY: 320, name: '汽油 (70~120°C)', color: '#FFFF00' },  // 中上
+            { y: 480, targetY: 500, name: '柴油 (200~300°C)', color: '#7CFC00' },  // 中下
+            { y: 660, targetY: 690, name: '瀝青 (>350°C)', color: '#FF69B4' }      // 底層貼地
+        ];
+
+        // 畫出料口
+        exits.forEach((exit) => {
+            ctx.fillStyle = '#2c3e35';
+            ctx.fillRect(tx + tw, exit.y, 80, 40);
+            if (exit.name.includes('瀝青')) {
+                ctx.fillRect(tx + tw, exit.y, 80, 60); // 瀝青出口特別大
+            }
+            ctx.strokeRect(tx + tw, exit.y, 80, exit.name.includes('瀝青') ? 60 : 40);
+            
+            ctx.fillStyle = exit.color;
+            ctx.font = 'bold 26px "JetBrains Mono", sans-serif';
+            ctx.fillText(exit.name, tx + tw + 100, exit.y + 30); 
+        });
+
+        // ==========================================
+        // 核心動畫邏輯：四色混合物進料與凝結分離
+        // ==========================================
+        
+        // 不斷產生新的混合物粒子 (全自動運作)
+        if (Math.random() < 0.6) {
+            let typeIndex = Math.floor(Math.random() * 4);
+            towerParticles.push({
+                x: 80, // 從進料管最左邊開始
+                y: 670 + Math.random() * 40, // 在管子內部隨機高度
+                vx: 3 + Math.random() * 2,
+                vy: 0,
+                typeInfo: exits[typeIndex],
+                state: 'feeding' // 狀態：進料中
+            });
+        }
+
+        for (let i = towerParticles.length - 1; i >= 0; i--) {
+            let p = towerParticles[i];
+            
+            if (p.state === 'feeding') {
+                p.x += p.vx;
+                // 當粒子進入分餾塔中央區域時，準備轉向
+                if (p.x > tx + tw / 2 + (Math.random() * 60 - 30)) {
+                    if (p.typeInfo.name.includes('瀝青')) {
+                        // 瀝青最重不氣化，直接留在底部並流出
+                        p.state = 'exiting';
+                        p.vx = 2 + Math.random() * 2;
+                        p.vy = 0;
+                    } else {
+                        // 其他氣體開始往上竄
+                        p.state = 'rising';
+                        p.vx = (Math.random() - 0.5) * 3; // 輕微左右飄移
+                        p.vy = - (3 + Math.random() * 3); // 向上爬升
+                    }
+                }
+            } else if (p.state === 'rising') {
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                // 碰到塔壁會反彈，營造氣體亂竄的感覺
+                if (p.x < tx + 15) p.vx *= -1;
+                if (p.x > tx + tw - 15) p.vx *= -1;
+                
+                // 到達自己沸點所對應的凝結層 (targetY)
+                if (p.y <= p.typeInfo.targetY) {
+                    p.y = p.typeInfo.targetY + (Math.random() * 10 - 5);
+                    p.state = 'exiting'; // 轉為流出狀態
+                    p.vx = 3 + Math.random() * 2;
+                    p.vy = 0;
+                }
+            } else if (p.state === 'exiting') {
+                p.x += p.vx;
+                // 流出畫面後刪除粒子
+                if (p.x > 1000) {
+                    towerParticles.splice(i, 1);
+                    continue;
+                }
+            }
+
+            // 畫粒子
+            ctx.fillStyle = p.typeInfo.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        towerAnimId = requestAnimationFrame(drawTowerScene);
+    }
+    
+    requestAnimationFrame(drawTowerScene);
+
+
+    // ==========================================
+    // Canvas 2：微觀解離觀測 (等比放大為 1000x800)
+    // ==========================================
+    let acidAnimId;
+    let acidFrame = 0;
+
+    function drawAcidScene() {
+        const cvs = document.getElementById('acidCanvas');
+        if (!cvs || cvs.clientWidth === 0) {
+            acidAnimId = requestAnimationFrame(drawAcidScene);
+            return;
+        }
+
+        let ctx = cvs.getContext('2d');
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = '#0b1813';
+        ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+        acidFrame++;
+
+        // 上下分割
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        ctx.moveTo(50, 400); ctx.lineTo(950, 400);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 上半部：甲醇
+        ctx.fillStyle = '#00FFFF';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.fillText('醇類：甲醇 (中性)', 60, 80);
+        
+        ctx.fillStyle = '#7CFC00';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.fillText('水溶液中：-OH 緊密結合不解離', 60, 130);
+
+        let mX = 400, mY = 220;
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(mX, mY); ctx.lineTo(mX - 60, mY - 60); 
+        ctx.moveTo(mX, mY); ctx.lineTo(mX - 80, mY + 30); 
+        ctx.moveTo(mX, mY); ctx.lineTo(mX - 30, mY + 90); 
+        ctx.moveTo(mX, mY); ctx.lineTo(mX + 100, mY);      
+        ctx.moveTo(mX + 100, mY); ctx.lineTo(mX + 160, mY + 40); 
+        ctx.stroke();
+        
+        drawAtom(ctx, mX - 60, mY - 60, 24, '#00FFFF', 'H');
+        drawAtom(ctx, mX - 80, mY + 30, 24, '#00FFFF', 'H');
+        drawAtom(ctx, mX - 30, mY + 90, 24, '#00FFFF', 'H');
+        drawAtom(ctx, mX, mY, 48, '#9fb0a8', 'C');
+        drawAtom(ctx, mX + 100, mY, 42, '#FF69B4', 'O');
+        
+        ctx.shadowColor = '#7CFC00';
+        ctx.shadowBlur = 25;
+        drawAtom(ctx, mX + 160, mY + 40, 24, '#00FFFF', 'H');
+        ctx.shadowBlur = 0;
+
+
+        // 下半部：乙酸
+        ctx.fillStyle = '#FF69B4';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.fillText('有機酸：乙酸 (弱酸)', 60, 480);
+        
+        ctx.fillStyle = '#FF69B4';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.fillText('水溶液中：極少量 H⁺ 會發生斷裂', 60, 530);
+
+        let aX = 400, aY = 620;
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(aX, aY); ctx.lineTo(aX - 60, aY - 60); 
+        ctx.moveTo(aX, aY); ctx.lineTo(aX - 80, aY + 30); 
+        ctx.moveTo(aX, aY); ctx.lineTo(aX - 30, aY + 90); 
+        ctx.moveTo(aX, aY); ctx.lineTo(aX + 100, aY);      
+        ctx.moveTo(aX + 100, aY); ctx.lineTo(aX + 130, aY - 70); 
+        ctx.moveTo(aX + 100, aY); ctx.lineTo(aX + 170, aY + 40); 
+        ctx.stroke();
+
+        drawAtom(ctx, aX - 60, aY - 60, 24, '#00FFFF', 'H');
+        drawAtom(ctx, aX - 80, aY + 30, 24, '#00FFFF', 'H');
+        drawAtom(ctx, aX - 30, aY + 90, 24, '#00FFFF', 'H');
+        drawAtom(ctx, aX, aY, 48, '#9fb0a8', 'C');
+        drawAtom(ctx, aX + 100, aY, 48, '#9fb0a8', 'C');
+        drawAtom(ctx, aX + 130, aY - 70, 42, '#FF69B4', 'O');
+        drawAtom(ctx, aX + 170, aY + 40, 42, '#FF69B4', 'O');
+
+        let isDetached = (acidFrame % 180) > 90; 
+        let floatH_X = aX + 230;
+        let floatH_Y = aY + 40;
+
+        if (isDetached) {
+            floatH_X += Math.sin(acidFrame * 0.05) * 35 + 35;
+            floatH_Y += Math.cos(acidFrame * 0.05) * 35 - 35;
+            
+            ctx.shadowColor = '#FF0000';
+            ctx.shadowBlur = 30;
+            drawAtom(ctx, floatH_X, floatH_Y, 24, '#FFFF00', 'H⁺');
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = '#FF69B4';
+            ctx.font = 'bold 24px sans-serif';
+            ctx.fillText('解離出 H⁺', floatH_X + 30, floatH_Y);
+        } else {
+            ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(aX + 170, aY + 40); ctx.lineTo(floatH_X, floatH_Y);
+            ctx.stroke();
+            drawAtom(ctx, floatH_X, floatH_Y, 24, '#00FFFF', 'H');
+        }
+
+        acidAnimId = requestAnimationFrame(drawAcidScene);
+    }
+
+    function drawAtom(ctx, x, y, r, color, label) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#11261f';
+        ctx.font = `bold ${r}px "JetBrains Mono", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, x, y + 2);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+    }
+
+    requestAnimationFrame(drawAcidScene);
+
+
+    // ==========================================
+    // 分頁三：酯化反應 DOM 互動區 (等比縮放 1000x800)
+    // ==========================================
+    let waterFormed = 0;
+    
+    function updateEsterScale() {
+        const stage = document.getElementById('ester-stage');
+        const wrap = document.getElementById('ester-wrap');
+        if(!stage || !wrap) return;
+        const scale = stage.clientWidth / 1000;
+        wrap.style.transform = `scale(${scale})`;
+    }
+
+    function initEsterPuzzle() {
+        updateEsterScale();
+        
+        let acidOH = document.getElementById('acidOH');
+        let alcH = document.getElementById('alcH');
+        let dropZone = document.getElementById('dropZone');
+        let acidB = document.getElementById('acidB');
+        let alcB = document.getElementById('alcB');
+        let banana = document.getElementById('banana');
+        let acidLabel = document.getElementById('acidLabel');
+        let alcLabel = document.getElementById('alcLabel');
+
+        acidOH.style.left = '320px'; acidOH.style.top = '220px'; acidOH.style.opacity = '1';
+        alcH.style.left = '560px'; alcH.style.top = '220px'; alcH.style.opacity = '1';
+        acidB.style.left = '110px';
+        alcB.style.left = '670px';
+        banana.style.opacity = '0';
+        banana.style.transform = 'translateY(0) scale(0.5)';
+        
+        acidLabel.style.opacity = '1';
+        alcLabel.style.opacity = '1';
+
+        dropZone.innerHTML = '💧 脫水區 (濃硫酸)';
+        dropZone.style.backgroundColor = 'rgba(0, 255, 255, 0.1)';
+        waterFormed = 0;
+
+        makeDraggableEster(acidOH, dropZone);
+        makeDraggableEster(alcH, dropZone);
+    }
+
+    function makeDraggableEster(item, dropZone) {
+        let active = false;
+        let startX, startY, initLeft, initTop;
+
+        let newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+        item = newItem;
+
+        item.addEventListener('pointerdown', (e) => {
+            if (waterFormed >= 2 && item.style.opacity === '0') return;
+            active = true;
+            item.classList.add('dragging');
+            startX = e.clientX;
+            startY = e.clientY;
+            initLeft = parseInt(item.style.left, 10);
+            initTop = parseInt(item.style.top, 10);
+            item.setPointerCapture(e.pointerId);
+        });
+
+        item.addEventListener('pointermove', (e) => {
+            if (!active) return;
+            const stage = document.getElementById('ester-stage');
+            const scale = stage.clientWidth / 1000;
+            
+            const dx = (e.clientX - startX) / scale;
+            const dy = (e.clientY - startY) / scale;
+            
+            item.style.left = (initLeft + dx) + 'px';
+            item.style.top = (initTop + dy) + 'px';
+        });
+
+        item.addEventListener('pointerup', (e) => {
+            if (!active) return;
+            active = false;
+            item.classList.remove('dragging');
+            item.releasePointerCapture(e.pointerId);
+
+            const itemRect = item.getBoundingClientRect();
+            const zoneRect = dropZone.getBoundingClientRect();
+
+            const iCx = itemRect.left + itemRect.width/2;
+            const iCy = itemRect.top + itemRect.height/2;
+
+            if (iCx >= zoneRect.left && iCx <= zoneRect.right && iCy >= zoneRect.top && iCy <= zoneRect.bottom) {
+                item.style.opacity = '0';
+                waterFormed++;
+                
+                if(waterFormed === 1) {
+                    dropZone.innerHTML = '💧 還差一個...';
+                } else if(waterFormed === 2) {
+                    dropZone.innerHTML = '🌊 產生水 (H₂O)！';
+                    dropZone.style.backgroundColor = 'rgba(0, 255, 255, 0.4)';
+                    
+                    setTimeout(() => {
+                        let acidB = document.getElementById('acidB');
+                        let alcB = document.getElementById('alcB');
+                        let banana = document.getElementById('banana');
+                        let acidLabel = document.getElementById('acidLabel');
+                        let alcLabel = document.getElementById('alcLabel');
+                        
+                        acidLabel.style.opacity = '0';
+                        alcLabel.style.opacity = '0';
+
+                        acidB.style.left = '330px';
+                        alcB.style.left = '465px'; 
+                        
+                        setTimeout(() => {
+                            banana.style.left = '450px';
+                            banana.style.top = '60px';
+                            banana.style.opacity = '1';
+                            banana.style.transform = 'translateY(-30px) scale(1)';
+                        }, 500);
+                    }, 300);
+                }
+            } else {
+                item.style.left = initLeft + 'px';
+                item.style.top = initTop + 'px';
+            }
+        });
+    }
+
+    setTimeout(() => { 
+        openTab('tab-hydrocarbon', document.querySelector('.tab-button'));
+    }, 100);
+
+</script>
+</body>
+</html>
