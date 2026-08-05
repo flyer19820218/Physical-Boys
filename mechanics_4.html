@@ -2,18 +2,20 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<!-- 允許自由縮放，適配各裝置旋轉 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>基礎力學：壓力與液體壓力</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@500;700&display=swap" rel="stylesheet">
 <style>
-    /* 1. 黑板視覺與零黑色原則 */
+    /* ========================================== */
+    /* 1. 黑板視覺與高對比原則 (絕對零黑色)       */
+    /* ========================================== */
     :root {
-        --bg-base: #11261f;
-        --bg-panel: #16332a;
+        --bg-base: #11261f;      
+        --bg-panel: #16332a;     
+        --bg-canvas: #0b1813;    
         --chalk-white: #FFFFFF;
         --chalk-yellow: #FFFF00;
         --chalk-orange: #FFA500;
@@ -22,39 +24,39 @@
         --chalk-green: #7CFC00;
         --chalk-purple: #E066FF; 
         --chalk-muted: #9fb0a8;
-        --bg-canvas: #0b1813;
     }
 
     body {
         background-color: var(--bg-base);
-        /* 護眼點狀網格背景 */
         background-image:
-            radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+            radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
             radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
         background-size: 3px 3px, 7px 7px;
         background-position: 0 0, 2px 3px;
         color: var(--chalk-white);
         font-family: 'Noto Sans TC', sans-serif;
-        font-size: 20px; /* ★ 內文字體鎖定為 20px */
+        font-size: 20px; 
         margin: 0;
-        padding: 40px 0 80px; 
+        padding: 30px 0 80px; 
         line-height: 1.8;
         overflow-x: hidden; 
     }
 
     * { box-sizing: border-box; }
 
-    /* 2. 響應式排版 (同步首頁 1080px) */
+    /* ========================================== */
+    /* 2. 響應式排版 (同步首頁 1080px & 彈性 Grid)*/
+    /* ========================================== */
     .wrap {
         width: 100%;
         max-width: 1080px; 
         margin: 0 auto;
-        padding: 0 24px;
+        padding: 0 20px;
     }
 
     .header-container {
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 25px;
         padding-bottom: 15px;
         border-bottom: 3px solid var(--chalk-green);
     }
@@ -82,33 +84,32 @@
         color: var(--chalk-pink);
     }
 
-    /* 絕對雙欄引擎 */
     .grid-2col {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 24px; 
+        gap: 20px; 
         margin-top: 20px;
-        align-items: stretch;
+        align-items: start;
     }
 
     @media (max-width: 768px) {
         .grid-2col { grid-template-columns: 1fr; }
         .header-container h1 { font-size: 32px; }
-        .panel { padding: 20px; }
     }
 
     .panel {
-        border: 2px solid var(--chalk-cyan);
+        border: 2px solid var(--chalk-muted);
         border-radius: 12px;
-        padding: 24px 30px; 
+        padding: 20px 24px; 
         background-color: var(--bg-panel);
         display: flex;
         flex-direction: column;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); 
-        position: relative;
     }
 
-    /* 3. 巨無霸字體與防斷字 */
+    /* ========================================== */
+    /* 3. 巨無霸字體與防斷字 (公式與名詞)         */
+    /* ========================================== */
     .math-text {
         font-family: 'JetBrains Mono', monospace;
         color: var(--chalk-orange);
@@ -116,142 +117,135 @@
     }
     .nowrap { white-space: nowrap; }
 
-    .tab-container, .subtab-container {
+    /* CSS 垂直分式結構 */
+    .fraction {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        vertical-align: middle;
+        margin: 0 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: bold;
+    }
+    .fraction > span { padding: 0 4px; line-height: 1.2; }
+    .fraction .numerator {
+        border-bottom: 2px solid currentColor;
+    }
+
+    ul { padding-left: 28px; margin-top: 5px; margin-bottom: 15px; }
+    li { margin-bottom: 10px; }
+
+    .tab-container {
         display: flex;
         justify-content: center;
         gap: 12px;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         flex-wrap: wrap;
     }
+    .tab-button {
+        background-color: transparent;
+        color: var(--chalk-white);
+        border: 3px solid var(--chalk-muted);
+        border-radius: 10px;
+        padding: 8px 20px;
+        font-size: 22px; 
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .tab-button.active { 
+        background-color: var(--chalk-green); 
+        color: var(--bg-base); 
+        border-color: var(--chalk-green);
+    }
+    .tab-content { display: none; animation: fadeIn 0.4s ease; }
+    .tab-content.active { display: block; }
 
     .subtab-container {
+        display: flex;
         justify-content: flex-start;
+        gap: 10px;
         margin-bottom: 15px;
         border-bottom: 2px dashed var(--chalk-muted);
         padding-bottom: 10px;
     }
-
-    .tab-button, .subtab-button {
+    .subtab-button {
         background-color: transparent;
         color: var(--chalk-white);
-        border: 3px solid var(--chalk-green);
-        border-radius: 10px;
-        padding: 6px 18px;
-        font-size: 20px; 
+        border: 2px solid var(--chalk-cyan);
+        border-radius: 8px;
+        padding: 6px 16px;
+        font-size: 18px; 
         font-weight: bold;
         cursor: pointer;
-        transition: all 0.3s ease;
-        font-family: inherit;
     }
-
-    .subtab-button {
-        border-color: var(--chalk-cyan);
-        font-size: 18px;
-    }
-
-    .tab-button.active, .tab-button:hover,
-    .subtab-button.active, .subtab-button:hover { 
-        background-color: var(--chalk-green); 
-        color: var(--bg-base); 
-    }
-    .subtab-button.active, .subtab-button:hover {
+    .subtab-button.active {
         background-color: var(--chalk-cyan);
+        color: var(--bg-base);
     }
-
-    .tab-content, .subtab-content { display: none; }
-    .tab-content.active, .subtab-content.active { display: block; animation: fadeIn 0.4s ease; }
+    .subtab-content { display: none; animation: fadeIn 0.3s ease; }
+    .subtab-content.active { display: block; }
 
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
-    .highlight-box {
-        border: 2px dashed var(--chalk-green);
-        padding: 16px 20px;
-        border-radius: 10px;
-        background-color: rgba(124, 252, 0, 0.08);
-        margin-bottom: 20px;
-    }
-
-    /* 終極陷阱專用樣式 */
     .trap-box {
-        border: 4px dashed var(--chalk-green);
-        padding: 16px 20px;
-        border-radius: 15px;
-        background-color: var(--bg-canvas);
-        margin-bottom: 20px;
-        font-size: 22px;
-        text-align: center;
+        border: 3px dashed var(--chalk-pink);
+        padding: 12px 18px;
+        border-radius: 12px;
+        background-color: rgba(255, 105, 180, 0.05);
+        margin-bottom: 15px;
     }
 
-    ul { padding-left: 30px; margin-top: 5px; margin-bottom: 20px; }
-    li { margin-bottom: 12px; }
-
-    /* 按鈕瘦身 */
     .action-btn {
         background-color: var(--bg-base);
         color: var(--chalk-white);
         border: 2px solid var(--chalk-cyan);
-        padding: 8px 16px; 
+        padding: 6px 14px; 
         border-radius: 8px;
         cursor: pointer;
         font-size: 18px; 
         font-weight: bold;
-        transition: all 0.2s;
         margin: 4px;
-        display: inline-block;
-        font-family: inherit;
+        transition: all 0.2s;
     }
-    
-    .action-btn:hover:not(:disabled) { 
-        background-color: rgba(255,255,255,0.1); 
-        transform: translateY(-2px);
-    }
-    .action-btn.active-btn {
-        background-color: var(--chalk-cyan);
-        color: var(--bg-base);
-    }
+    .action-btn:hover { background-color: rgba(255,255,255,0.1); transform: translateY(-2px); }
+    .action-btn.active-btn { background-color: var(--chalk-cyan); color: var(--bg-base); }
 
-    /* 4. 互動區真等比縮放 */
+    .step-text { display: none; animation: fadeIn 0.3s ease; margin-top: 15px; }
+    .step-text.active { display: block; }
+
+    /* ========================================== */
+    /* 4. 互動區真等比例縮放 (鎖定 10 / 6)        */
+    /* ========================================== */
     .canvas-wrap {
         width: 100%;
         border: 3px solid var(--chalk-muted);
         border-radius: 8px;
         background-color: var(--bg-canvas);
         overflow: hidden;
-        position: relative;
-        margin-bottom: 5px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        touch-action: none;
+        margin-bottom: 10px;
     }
     
     .rect-canvas {
         display: block;
         width: 100%;
         height: auto;
+        aspect-ratio: 10 / 6; 
     }
 
     .lab-controls {
         display: flex;
         justify-content: center;
-        gap: 8px; 
+        gap: 6px; 
         flex-wrap: wrap;
         width: 100%;
-        margin-top: 5px;
-    }
-
-    /* 問題步驟解說樣式 (融入單元內) */
-    .step-text { display: none; animation: fadeIn 0.3s ease; }
-    .step-text.active { display: block; }
-    .prob-panel {
-        margin-top: 15px;
-        border: 3px solid var(--chalk-purple);
-        border-radius: 10px;
-        background-color: rgba(224, 102, 255, 0.05);
-        padding: 15px;
+        margin-top: 8px;
     }
 </style>
 </head>
@@ -262,90 +256,93 @@
         <h1>基礎力學：壓力與液體壓力</h1>
     </div>
 
-    <!-- 主分頁導覽 -->
+    <!-- 主分頁列 -->
     <div class="tab-container">
         <button class="tab-button active" onclick="openTab('tab-solid', this)">固體壓力</button>
-        <button class="tab-button" onclick="openTab('tab-liquid', this)" style="border-color: var(--chalk-pink);">液體壓力</button>
-        <button class="tab-button" onclick="openTab('tab-pascal', this)" style="border-color: var(--chalk-cyan);">帕斯卡原理</button>
+        <button class="tab-button" onclick="openTab('tab-liquid', this)">液體壓力</button>
+        <button class="tab-button" onclick="openTab('tab-vessel', this)">連通管原理</button>
+        <button class="tab-button" onclick="openTab('tab-pascal', this)">帕斯卡原理</button>
     </div>
 
     <!-- ========================================== -->
-    <!-- ★ 分頁一：固體壓力 (內建練習) ★ -->
+    <!-- 分頁 1：固體壓力 -->
     <!-- ========================================== -->
     <div id="tab-solid" class="tab-content active">
-        <!-- 子頁籤控制 -->
         <div class="subtab-container">
             <button class="subtab-button active" onclick="openSubTab('solid', 'teach', this)">📖 核心概念</button>
-            <button class="subtab-button" onclick="openSubTab('solid', 'practice', this)">🧱 磚塊練習 (問題➡️解答)</button>
+            <button class="subtab-button" onclick="openSubTab('solid', 'practice', this)">🧱 磚塊挑戰</button>
         </div>
 
-        <!-- 子分頁1: 教學 -->
         <div id="solid-teach" class="subtab-content active">
             <div class="grid-2col">
                 <div class="panel" style="border-color: var(--chalk-cyan);">
-                    <h2 style="color: var(--chalk-cyan);">什麼是壓力？</h2>
-                    <p>壓力<strong style="color: var(--chalk-pink);">不是力</strong>！它是用來描述「力量集中的程度」。</p>
+                    <h2 style="color: var(--chalk-cyan);">壓力的定義</h2>
+                    <p>壓力<strong style="color: var(--chalk-pink);">不是力</strong>！它描述的是「力量集中的程度」。</p>
                     <ul>
-                        <li><strong class="nowrap" style="color: var(--chalk-yellow);">定義：</strong> 單位面積上所受到的<strong style="color: var(--chalk-orange);">垂直</strong>作用力。</li>
+                        <li><strong class="nowrap" style="color: var(--chalk-yellow);">定義：</strong> 單位面積上所受到的垂直作用力。</li>
                     </ul>
+                    
+                    <div style="font-size: 24px; text-align: center; margin: 20px 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; flex-wrap: nowrap;">
+                        <span style="color: var(--chalk-cyan);">壓力 P = </span>
+                        <div class="fraction" style="color: var(--chalk-orange); margin-left: 10px;">
+                            <span class="numerator">垂直作用力 F</span>
+                            <span class="denominator">受力面積 A</span>
+                        </div>
+                    </div>
 
                     <div class="trap-box">
-                        <p style="margin: 0; color: var(--chalk-green); font-weight: bold;">🚨 圖釘觀念破解：</p>
-                        <p style="margin: 5px 0;">接觸面積<strong style="color: var(--chalk-pink);">越小</strong>，壓力<strong style="color: var(--chalk-orange);">越大</strong>（容易刺穿）。反之，面積越大，壓力越小。</p>
+                        <p style="margin: 0; color: var(--chalk-pink); font-weight: bold;">🚨 圖釘觀念破解：</p>
+                        <p style="margin: 5px 0;">相同的力道下，接觸面積<strong style="color: var(--chalk-green);">越小</strong>，壓力<strong style="color: var(--chalk-orange);">越大</strong>（容易刺穿氣球）。面積越大，壓力越分散。</p>
                     </div>
                 </div>
                 
                 <div class="panel" style="border-color: var(--chalk-yellow);">
-                    <h2 style="color: var(--chalk-yellow); text-align: center;">【互動】圖釘與氣球挑戰</h2>
+                    <h2 style="color: var(--chalk-yellow); text-align: center;">【互動】氣球圖釘挑戰</h2>
                     <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
-                        <canvas id="solidCanvas" class="rect-canvas" style="aspect-ratio: 10 / 10;" width="1000" height="1000"></canvas>
-                        
-                        <div class="lab-controls">
-                            <button class="action-btn" onclick="triggerSolid('single')" style="border-color: var(--chalk-pink);">📌 單一根釘子</button>
-                            <button class="action-btn" onclick="triggerSolid('bed')" style="border-color: var(--chalk-green);">🛏️ 密集釘床 (20根)</button>
-                            <button class="action-btn" onclick="initSolidSim()" style="border-color: var(--chalk-white);">🔄 換新氣球</button>
-                        </div>
+                        <canvas id="solidCanvas" class="rect-canvas" width="1000" height="600"></canvas>
+                    </div>
+                    <div class="lab-controls">
+                        <button class="action-btn" onclick="triggerSolid('single')" style="border-color: var(--chalk-pink);">📌 單一根釘子</button>
+                        <button class="action-btn" onclick="triggerSolid('bed')" style="border-color: var(--chalk-green);">🛏️ 密集釘板</button>
+                        <button class="action-btn" onclick="initSolidSim()" style="border-color: var(--chalk-white);">🔄 換新氣球</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 子分頁2: 磚塊練習 (防凍結) -->
         <div id="solid-practice" class="subtab-content">
             <div class="grid-2col">
                 <div class="panel" style="border-color: var(--chalk-purple);">
                     <h2 style="color: var(--chalk-purple);">磚塊翻轉練習</h2>
-                    <!-- 練習步驟按鈕 -->
-                    <div class="lab-controls" style="justify-content: flex-start; margin-bottom: 10px;">
-                        <button class="action-btn active-btn" id="btnBStep0" onclick="setBrickStep(0)">❓ 1. 問題</button>
-                        <button class="action-btn" id="btnBStep1" onclick="setBrickStep(1)">💡 2. 提示</button>
-                        <button class="action-btn" id="btnBStep2" onclick="setBrickStep(2)">✅ 3. 解答</button>
+                    <div class="lab-controls" style="justify-content: flex-start;">
+                        <button class="action-btn active-btn" id="btnSolidP0" onclick="setSolidStep(0)">❓ 問題</button>
+                        <button class="action-btn" id="btnSolidP1" onclick="setSolidStep(1)">💡 提示</button>
+                        <button class="action-btn" id="btnSolidP2" onclick="setSolidStep(2)">✅ 解答</button>
                     </div>
 
-                    <!-- 磚塊題文字區 -->
-                    <div id="b-step0" class="step-text active">
+                    <div id="solid-step0" class="step-text active">
                         <h3 style="color: var(--chalk-cyan);">❓ 問題：</h3>
-                        <p>一塊均勻的磚塊，總重量為 <span class="math-text">1000gw</span>。已知其各面邊長如右圖。</p>
-                        <p>請問它能產生的「最小壓力」為多少 <span class="math-text">gw/cm&sup2;</span>？</p>
+                        <p>一塊均勻的磚塊，總重量為 <span class="math-text">1200gw</span>。已知其各面邊長如右圖。</p>
+                        <p>請問它平放與立放時，能產生的「最大壓力」與「最小壓力」各為多少 <span class="math-text">gw/cm&sup2;</span>？</p>
                     </div>
-                    <div id="b-step1" class="step-text">
-                        <h3 style="color: var(--chalk-yellow);">💡 提示 (尋找最大面積)：</h3>
-                        <p>1. 公式 <span class="math-text">P = F / A</span>，下壓力 <span class="math-text">F = 1000gw</span> 不變。</p>
-                        <p>2. 要產生<strong style="color: var(--chalk-pink);">最小壓力</strong>，必須找面積<strong style="color: var(--chalk-green);">最大</strong>的那一面著地 (平躺)！</p>
-                        <p>3. 此磚塊最大的接觸面積是邊長 <span class="math-text">20cm × 10cm</span> 的一面。</p>
+                    <div id="solid-step1" class="step-text">
+                        <h3 style="color: var(--chalk-yellow);">💡 提示：</h3>
+                        <p>1. 重量 <span class="math-text">F = 1200gw</span> 永遠不變。</p>
+                        <p>2. <strong style="color: var(--chalk-pink);">最大壓力</strong> ➡️ 找面積<strong style="color: var(--chalk-green);">最小</strong>的那一面著地（立放）。</p>
+                        <p>3. <strong style="color: var(--chalk-cyan);">最小壓力</strong> ➡️ 找面積<strong style="color: var(--chalk-orange);">最大</strong>的那一面著地（平放）。</p>
                     </div>
-                    <div id="b-step2" class="step-text">
+                    <div id="solid-step2" class="step-text">
                         <h3 style="color: var(--chalk-pink);">✅ 解答：</h3>
-                        <p>最大接觸面積 <span class="math-text">A<sub>max</sub> = 20 × 10 = 200 cm&sup2;</span></p>
-                        <p style="font-size: 26px; color: var(--chalk-orange); font-weight: bold; margin-top: 15px;">
-                            最小壓力 P = 1000 / 200 = 5 gw/cm&sup2;！
-                        </p>
+                        <p>最小面積 = 10 × 5 = 50 cm&sup2;<br>
+                           <strong style="color: var(--chalk-pink);">最大壓力</strong> = 1200 / 50 = <span class="math-text">24 gw/cm&sup2;</span></p>
+                        <p>最大面積 = 20 × 10 = 200 cm&sup2;<br>
+                           <strong style="color: var(--chalk-cyan);">最小壓力</strong> = 1200 / 200 = <span class="math-text">6 gw/cm&sup2;</span></p>
                     </div>
                 </div>
 
                 <div class="panel" style="border-color: var(--chalk-yellow);">
                     <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
-                        <canvas id="brickCanvas" class="rect-canvas" style="aspect-ratio: 10 / 10;" width="1000" height="1000"></canvas>
+                        <canvas id="brickCanvas" class="rect-canvas" width="1000" height="600"></canvas>
                     </div>
                 </div>
             </div>
@@ -353,83 +350,78 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- ★ 分頁二：液體壓力 (內建練習 & 修正水柱) ★ -->
+    <!-- 分頁 2：液體壓力 -->
     <!-- ========================================== -->
     <div id="tab-liquid" class="tab-content">
-        <!-- 子頁籤控制 -->
         <div class="subtab-container">
-            <button class="subtab-button active" onclick="openSubTab('liquid', 'teach', this)">💧 清水/鹽水漏水實驗</button>
-            <button class="subtab-button" onclick="openSubTab('liquid', 'practice', this)">🏢 異形管練習 (形狀無關)</button>
+            <button class="subtab-button active" onclick="openSubTab('liquid', 'teach', this)">💧 深度漏水實驗</button>
+            <button class="subtab-button" onclick="openSubTab('liquid', 'practice', this)">🏢 異形杯深度挑戰</button>
         </div>
 
-        <!-- 子分頁1: 教學 & 漏水實驗 (修正密度影響軌跡) -->
         <div id="liquid-teach" class="subtab-content active">
             <div class="grid-2col">
                 <div class="panel" style="border-color: var(--chalk-pink);">
-                    <h2 style="color: var(--chalk-pink);">液體壓力</h2>
+                    <h2 style="color: var(--chalk-pink);">液體壓力的奧秘</h2>
                     <ul>
-                        <li><strong class="nowrap" style="color: var(--chalk-cyan);">核心公式：P = h × D</strong></li>
-                        <li><strong style="color: var(--chalk-orange);">深度 (h)：</strong> 從表面垂直往下算的距離。越深水壓越大。</li>
-                        <li><strong style="color: var(--chalk-orange);">密度 (D)：</strong> 液體越濃 (密度大)，壓力越大！</li>
+                        <li><strong class="nowrap" style="color: var(--chalk-cyan);">公式：</strong> 
+                            <span class="nowrap" style="color: var(--chalk-orange); font-family: 'JetBrains Mono';">P = h × D</span>
+                        </li>
+                        <li><strong style="color: var(--chalk-yellow);">垂直深度 (h)：</strong> 從「自由液面」垂直往下算的距離。越深水壓越大。</li>
+                        <li><strong style="color: var(--chalk-yellow);">液體密度 (D)：</strong> 液體越濃，產生的壓力越大。</li>
                     </ul>
                     
-                    <div class="trap-box" style="margin-top: 15px; text-align: left;">
-                        <p style="margin: 0; color: var(--chalk-yellow); font-weight: bold; text-align: center;">💡 觀念破解 (密度影響軌跡)：</p>
-                        <p style="margin: 5px 0;">當裝入<strong style="color: var(--chalk-cyan);">密度越大</strong>的液體（如濃鹽水），在相同深度產生的<strong style="color: var(--chalk-pink);">水壓更大</strong>。水壓是造成水噴出去的動力，因此相同深度的鹽水洞，噴出的速度更快，軌跡也更遠！</p>
+                    <div class="trap-box">
+                        <p style="margin: 0; color: var(--chalk-cyan); font-weight: bold;">💡 觀念破解：</p>
+                        <p style="margin: 5px 0;">寶特瓶底部的洞最深，水壓最強，因此水柱噴射的動力最大，軌跡飛得最遠！若換成高密度的鹽水，整體噴射距離會更遠。</p>
                     </div>
                 </div>
 
                 <div class="panel" style="border-color: var(--chalk-cyan);">
                     <div class="canvas-wrap" style="border-color: var(--chalk-cyan);">
-                        <canvas id="liquidCanvas" class="rect-canvas" style="aspect-ratio: 10 / 10;" width="1000" height="1000"></canvas>
-                        
-                        <div class="lab-controls">
-                            <button class="action-btn active-btn" id="btnLiqWater" onclick="setLiquid('water')" style="border-color: var(--chalk-cyan);">💧 清水 (D=1.0)</button>
-                            <button class="action-btn" id="btnLiqOil" onclick="setLiquid('oil')" style="border-color: var(--chalk-orange);">🛢️ 沙拉油 (D=0.8)</button>
-                            <button class="action-btn" id="btnLiqBrine" onclick="setLiquid('brine')" style="border-color: var(--chalk-muted);">🧂 濃鹽水 (D=1.2)</button>
-                        </div>
+                        <canvas id="liquidCanvas" class="rect-canvas" width="1000" height="600"></canvas>
+                    </div>
+                    <div class="lab-controls">
+                        <button class="action-btn active-btn" id="btnLiqWater" onclick="setLiquid('water')">💧 清水 (D=1.0)</button>
+                        <button class="action-btn" id="btnLiqBrine" onclick="setLiquid('brine')">🧂 濃鹽水 (D=1.2)</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 子分頁2: 形狀無關練習 (異形管) -->
         <div id="liquid-practice" class="subtab-content">
             <div class="grid-2col">
                 <div class="panel" style="border-color: var(--chalk-purple);">
-                    <h2 style="color: var(--chalk-purple);">「形狀無關」練習題</h2>
-                    <!-- 練習步驟按鈕 -->
-                    <div class="lab-controls" style="justify-content: flex-start; margin-bottom: 10px;">
-                        <button class="action-btn active-btn" id="btnUStep0" onclick="setUtubeStep(0)">❓ 1. 問題</button>
-                        <button class="action-btn" id="btnUStep1" onclick="setUtubeStep(1)">💡 2. 提示</button>
-                        <button class="action-btn" id="btnUStep2" onclick="setUtubeStep(2)">✅ 3. 解答</button>
+                    <h2 style="color: var(--chalk-purple);">不同形狀的杯子</h2>
+                    <div class="lab-controls" style="justify-content: flex-start;">
+                        <button class="action-btn active-btn" id="btnCupP0" onclick="setCupStep(0)">❓ 問題</button>
+                        <button class="action-btn" id="btnCupP1" onclick="setCupStep(1)">💡 提示</button>
+                        <button class="action-btn" id="btnCupP2" onclick="setCupStep(2)">✅ 解答</button>
                     </div>
 
-                    <!-- 異形管文字區 -->
-                    <div id="u-step0" class="step-text active">
+                    <div id="cup-step0" class="step-text active">
                         <h3 style="color: var(--chalk-cyan);">❓ 問題：</h3>
-                        <p>底部相通的連通管如右圖，靜止時裝入相同的清水。</p>
-                        <p>請問圖中底部 A、B、C 三點所受的液體壓力大小關係為何？</p>
+                        <p>桌上有三個形狀不同、裝水量也不同的杯子（甲、乙、丙）。</p>
+                        <p>若三個杯子裝滿清水，且「水面高度」完全一致，請問杯底 A、B、C 三點的水壓大小關係為何？</p>
                     </div>
-                    <div id="u-step1" class="step-text">
-                        <h3 style="color: var(--chalk-yellow);">💡 提示 (深度決定一切)：</h3>
-                        <p>1. 公式 <span class="math-text">P = h × D</span>，相同的液體，<span class="math-text">D</span> 相同。</p>
-                        <p>2. 液體壓力<strong style="color: var(--chalk-pink);">只跟深度 (h) 有關</strong>！</p>
-                        <p>3. 雖然容器形狀不同、胖瘦不同，但三點都在同一個底部水平線上，距離自由液面的垂直深度是相同的！</p>
+                    <div id="cup-step1" class="step-text">
+                        <h3 style="color: var(--chalk-yellow);">💡 提示：</h3>
+                        <p>1. 液體壓力公式為 <span class="math-text">P = h × D</span>。</p>
+                        <p>2. 杯子裝的都是清水，密度 <span class="math-text">D</span> 相同。</p>
+                        <p>3. 觀察這三點距離「水面」的垂直深度 <span class="math-text">h</span> 是否相同？</p>
                     </div>
-                    <div id="u-step2" class="step-text">
+                    <div id="cup-step2" class="step-text">
                         <h3 style="color: var(--chalk-pink);">✅ 解答：</h3>
-                        <p>h<sub>A</sub> = h<sub>B</sub> = h<sub>C</sub></p>
-                        <p style="font-size: 28px; color: var(--chalk-orange); font-weight: bold; margin-top: 15px;">
-                            結論：壓力大小 P<sub>A</sub> = P<sub>B</sub> = P<sub>C</sub> ！
+                        <p>因為三點距離水面的<strong style="color: var(--chalk-yellow);">垂直深度 h 皆相同</strong>！</p>
+                        <p style="font-size: 26px; color: var(--chalk-orange); font-weight: bold; margin-top: 15px;">
+                            結論：P<sub>甲</sub> = P<sub>乙</sub> = P<sub>丙</sub>
                         </p>
-                        <p>這證實了液壓與容器形狀、水量皆無關！</p>
+                        <p>液體壓力與容器形狀、水量多寡皆<strong style="color: var(--chalk-pink);">無關</strong>！</p>
                     </div>
                 </div>
 
                 <div class="panel" style="border-color: var(--chalk-yellow);">
                     <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
-                        <canvas id="liquidShapeCanvas" class="rect-canvas" style="aspect-ratio: 10 / 10;" width="1000" height="1000"></canvas>
+                        <canvas id="cupCanvas" class="rect-canvas" width="1000" height="600"></canvas>
                     </div>
                 </div>
             </div>
@@ -437,45 +429,70 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- ★ 分頁三：帕斯卡原理 (重疊 & 分式修正) ★ -->
+    <!-- 分頁 3：連通管原理 -->
+    <!-- ========================================== -->
+    <div id="tab-vessel" class="tab-content">
+        <div class="grid-2col">
+            <div class="panel" style="border-color: var(--chalk-cyan);">
+                <h2 style="color: var(--chalk-cyan);">連通管原理</h2>
+                <p>當底部互相連通的容器裝入同一種液體，在靜止狀態下，各容器的「液面必定會維持在同一水平高度」。</p>
+                <ul>
+                    <li><strong class="nowrap" style="color: var(--chalk-yellow);">原因：</strong> 為了讓底部相通處的液體壓力達到平衡。</li>
+                    <li><strong class="nowrap" style="color: var(--chalk-green);">生活應用：</strong> 熱水瓶的水位視窗、自來水廠的水塔供水系統、茶壺。</li>
+                </ul>
+                <div class="trap-box">
+                    <p style="margin: 0; color: var(--chalk-orange); font-weight: bold;">💡 動態平衡：</p>
+                    <p style="margin: 5px 0;">無論容器形狀多麼奇特、管徑多麼粗細，只要底部連通，大自然的水壓就會自動把它們推平！</p>
+                </div>
+            </div>
+
+            <div class="panel" style="border-color: var(--chalk-purple);">
+                <div class="canvas-wrap" style="border-color: var(--chalk-purple);">
+                    <canvas id="vesselCanvas" class="rect-canvas" width="1000" height="600"></canvas>
+                </div>
+                <div class="lab-controls">
+                    <button class="action-btn" onclick="animateVessel(1)" style="border-color: var(--chalk-cyan);">🚰 從左側注水</button>
+                    <button class="action-btn" onclick="animateVessel(-1)" style="border-color: var(--chalk-pink);">🕳️ 從左側排水</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 分頁 4：帕斯卡原理 -->
     <!-- ========================================== -->
     <div id="tab-pascal" class="tab-content">
         <div class="grid-2col">
             <div class="panel" style="border-color: var(--chalk-cyan);">
                 <h2 style="color: var(--chalk-cyan);">帕斯卡原理 (以小搏大)</h2>
-                <p>對「密閉容器」內的流體施加壓力時，壓力會大小不變地傳遞到各角落。</p>
+                <p>對「密閉容器」內的流體施加壓力時，該壓力會大小不變地傳遞到流體的每一個角落。</p>
                 
                 <div class="trap-box" style="margin: 15px 0;">
-                    <p style="margin: 0; color: var(--chalk-cyan); font-weight: bold; text-align: center;">🔧 實際應用：液壓千斤頂</p>
-                    <p style="margin: 5px 0;">只要把右邊活塞的面積做成左邊的 10 倍，你在左邊壓 10kgw，右邊就能產生 100kgw 的向上推力！</p>
+                    <p style="margin: 0; color: var(--chalk-cyan); font-weight: bold;">🔧 液壓千斤頂應用：</p>
+                    <p style="margin: 5px 0;">把右邊活塞的面積做成左邊的 10 倍。你在左邊壓 10kgw，右邊就能產生 100kgw 的向上推力，這就是機具煞車與千斤頂的魔法！</p>
                 </div>
 
-                <div class="highlight-box" style="border-color: var(--chalk-muted); text-align: center;">
-                    <h3 style="color: var(--chalk-muted); margin-top: 0; text-align: center;">(視覺專用) 垂直分式結構咧！</h3>
-                    <!-- HTML 分式 (CSS 寫法，但 Canvas 才是 user 重點) -->
-                    <div style="font-size: 28px; margin-top: 10px;">
-                        <span class="math-text">P =</span>
-                        <div style="display:inline-flex; flex-direction:column; vertical-align:middle;">
-                            <span style="border-bottom:2px solid var(--chalk-white); color:var(--chalk-white);">施力 F<sub>小</sub></span>
-                            <span style="color:var(--chalk-white);">面積 A<sub>小</sub></span>
-                        </div>
-                        <span class="math-text"> = </span>
-                        <div style="display:inline-flex; flex-direction:column; vertical-align:middle;">
-                            <span style="border-bottom:2px solid var(--chalk-green); color:var(--chalk-green);">推力 F<sub>大</sub></span>
-                            <span style="color:var(--chalk-green);">面積 A<sub>大</sub></span>
-                        </div>
+                <div style="font-size: 22px; text-align: center; margin: 15px 0; display: flex; justify-content: center; align-items: center; white-space: nowrap; flex-wrap: nowrap;">
+                    <span style="color: var(--chalk-white);">壓力傳遞：</span>
+                    <div class="fraction" style="color: var(--chalk-white); margin: 0 8px;">
+                        <span class="numerator">F<sub>小</sub>(施力)</span>
+                        <span class="denominator">A<sub>小</sub></span>
+                    </div>
+                    <span class="math-text" style="color: var(--chalk-orange); margin: 0 8px;"> = </span>
+                    <div class="fraction" style="color: var(--chalk-green); margin: 0 8px;">
+                        <span class="numerator">F<sub>大</sub>(推力)</span>
+                        <span class="denominator">A<sub>大</sub></span>
                     </div>
                 </div>
             </div>
 
             <div class="panel" style="border-color: var(--chalk-purple);">
                 <div class="canvas-wrap" style="border-color: var(--chalk-purple);">
-                    <canvas id="pascalCanvas" class="rect-canvas" style="aspect-ratio: 10 / 10;" width="1000" height="1000"></canvas>
-                    
-                    <div class="lab-controls">
-                        <button class="action-btn" onclick="pushPascal()" style="border-color: var(--chalk-orange);">🏋️ 放下 10kgw 砝碼</button>
-                        <button class="action-btn" onclick="resetPascal()" style="border-color: var(--chalk-white);">🔄 取下砝碼</button>
-                    </div>
+                    <canvas id="pascalCanvas" class="rect-canvas" width="1000" height="600"></canvas>
+                </div>
+                <div class="lab-controls">
+                    <button class="action-btn" onclick="pushPascal()" style="border-color: var(--chalk-orange);">🏋️ 左側施加 10kgw</button>
+                    <button class="action-btn" onclick="resetPascal()" style="border-color: var(--chalk-white);">🔄 復原</button>
                 </div>
             </div>
         </div>
@@ -485,436 +502,537 @@
 
 <script>
     // ==========================================
-    // 頁籤控制 (融入凍結保護机制)
+    // 全域控制與防撞機制
     // ==========================================
-    function openTab(tabId, btnElement) {
-        // 1. 徹底停止所有畫布動畫，reset 狀態
-        killAllSims();
+    function safeGetContext(id) {
+        const cvs = document.getElementById(id);
+        if (!cvs || cvs.clientWidth === 0) return null;
+        return cvs.getContext('2d');
+    }
 
-        // 2. 切換頁籤
+    function killAllSims() {
+        if (window.solidAnim) cancelAnimationFrame(window.solidAnim);
+        if (window.liqAnim) cancelAnimationFrame(window.liqAnim);
+        if (window.vesselAnim) cancelAnimationFrame(window.vesselAnim);
+        if (window.pascalAnim) cancelAnimationFrame(window.pascalAnim);
+    }
+
+    function openTab(tabId, btnElement) {
+        killAllSims();
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-button').forEach(btn => {
-            btn.classList.remove('active');
-            btn.style.backgroundColor = 'transparent';
-            btn.style.color = 'var(--chalk-white)';
-        });
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
         
         document.getElementById(tabId).classList.add('active');
-        
-        if (btnElement) {
-            btnElement.classList.add('active');
-            btnElement.style.backgroundColor = 'var(--chalk-green)';
-            btnElement.style.color = 'var(--bg-base)';
-        }
+        if (btnElement) btnElement.classList.add('active');
 
-        // 3. 啟動當前分頁的子頁籤1 (教學)
-        if (tabId === 'tab-solid') { openSubTab('solid', 'teach', document.querySelector('#tab-solid .subtab-button:nth-child(1)')); }
-        if (tabId === 'tab-liquid') { openSubTab('liquid', 'teach', document.querySelector('#tab-liquid .subtab-button:nth-child(1)')); }
-        if (tabId === 'tab-pascal') { resetPascal(); }
+        if (tabId === 'tab-solid') openSubTab('solid', 'teach', document.querySelector('#tab-solid .subtab-button:nth-child(1)'));
+        if (tabId === 'tab-liquid') openSubTab('liquid', 'teach', document.querySelector('#tab-liquid .subtab-button:nth-child(1)'));
+        if (tabId === 'tab-vessel') initVesselSim();
+        if (tabId === 'tab-pascal') initPascalSim();
     }
 
     function openSubTab(unit, subMode, btnElement) {
-        killAllSims(); // 切換子頁籤也徹底 reset
-
-        // 切換子分頁內容
+        killAllSims(); 
         document.querySelectorAll(`#tab-${unit} .subtab-content`).forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll(`#tab-${unit} .subtab-button`).forEach(btn => btn.classList.remove('active'));
         
         document.getElementById(`${unit}-${subMode}`).classList.add('active');
-        btnElement.classList.add('active');
+        if (btnElement) btnElement.classList.add('active');
 
-        // 啟動當前子分頁的模擬
         if (unit === 'solid') {
             if (subMode === 'teach') initSolidSim();
-            if (subMode === 'practice') setBrickStep(0);
+            if (subMode === 'practice') setSolidStep(0);
         }
         if (unit === 'liquid') {
             if (subMode === 'teach') setLiquid('water');
-            if (subMode === 'practice') setUtubeStep(0);
+            if (subMode === 'practice') setCupStep(0);
         }
     }
 
-    // 徹底 reset 所有動畫與狀態
-    function killAllSims() {
-        if (solidAnimId) cancelAnimationFrame(solidAnimId);
-        if (liqAnimId) cancelAnimationFrame(liqAnimId);
-        if (pascalAnimId) cancelAnimationFrame(pascalAnimId);
-        solidState = 0; // Reset Popping state
-        liqTime = 0;
-    }
-
-    // ★ 垂直分式繪製 helper (實裝，不使用斜槓)
-    function drawFraction(ctx, numeratorText, denominatorText, x, centerY, textColor) {
-        ctx.textAlign = 'center';
-        ctx.fillStyle = textColor;
-        ctx.font = 'bold 24px "JetBrains Mono"';
-
-        // 1. 繪製分子
-        ctx.fillText(numeratorText, x, centerY - 15);
-
-        // 2. 繪製分數線 (依照分子分母長度決定)
-        let numLen = ctx.measureText(numeratorText).width;
-        let denLen = ctx.measureText(denominatorText).width;
-        let lineLen = Math.max(numLen, denLen) + 15;
-        
-        ctx.strokeStyle = textColor; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(x - lineLen/2, centerY - 5); ctx.lineTo(x + lineLen/2, centerY - 5); ctx.stroke();
-
-        // 3. 繪製分母
-        ctx.fillText(denominatorText, x, centerY + 25);
-    }
-
-    // ==========================================
-    // Canvas Helper Functions
-    // ==========================================
-    // Isometric drawing helper for the brick
-    function drawCube(ctx, x, y, wx, wy, h, colorFront, colorTop, colorSide) {
-        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
-        // Top face
-        ctx.fillStyle = colorTop;
-        ctx.beginPath(); ctx.moveTo(x, y - h); ctx.lineTo(x - wx, y - h - wx * 0.5); ctx.lineTo(x - wx + wy, y - h - (wx + wy) * 0.5); ctx.lineTo(x + wy, y - h - wy * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
-        // Front face (Left)
-        ctx.fillStyle = colorFront;
-        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - wx, y - wx * 0.5); ctx.lineTo(x - wx, y - h - wx * 0.5); ctx.lineTo(x, y - h); ctx.closePath(); ctx.fill(); ctx.stroke();
-        // Side face (Right)
-        ctx.fillStyle = colorSide;
-        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + wy, y - wy * 0.5); ctx.lineTo(x + wy, y - h - wy * 0.5); ctx.lineTo(x, y - h); ctx.closePath(); ctx.fill(); ctx.stroke();
-    }
-
-    // 箭頭繪製函數
     function drawArrow(ctx, fromX, fromY, toX, toY, color, width) {
-        if(Math.abs(fromX - toX) < 1 && Math.abs(fromY - toY) < 1) return;
-        let headlen = width * 2.5; 
-        let dx = toX - fromX;
-        let dy = toY - fromY;
-        let angle = Math.atan2(dy, dx);
+        let headlen = width * 2; 
+        let angle = Math.atan2(toY - fromY, toX - fromX);
         ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
         ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY); ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(toX, toY);
         ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
         ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
-        ctx.closePath(); ctx.fill();
+        ctx.fill();
+    }
+
+    function drawFractionCanvas(ctx, numText, denText, x, y, color, fontSize) {
+        ctx.textAlign = 'center'; ctx.fillStyle = color; ctx.strokeStyle = color;
+        ctx.font = `bold ${fontSize}px "JetBrains Mono"`;
+        ctx.fillText(numText, x, y - 10);
+        let w1 = ctx.measureText(numText).width;
+        let w2 = ctx.measureText(denText).width;
+        let lineW = Math.max(w1, w2) + 10;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x - lineW/2, y); ctx.lineTo(x + lineW/2, y); ctx.stroke();
+        ctx.fillText(denText, x, y + fontSize + 5);
+    }
+
+    // Canvas 下標文字專用繪製函數
+    function drawSubTextCentered(ctx, t1, sub, t2, cx, y, color) {
+        ctx.fillStyle = color;
+        ctx.textAlign = 'left';
+        let mainF = 'bold 22px "JetBrains Mono", sans-serif';
+        let subF = 'bold 16px "Noto Sans TC", sans-serif';
+
+        ctx.font = mainF; let w1 = ctx.measureText(t1).width; let w3 = ctx.measureText(t2).width;
+        ctx.font = subF;  let w2 = ctx.measureText(sub).width;
+
+        let startX = cx - (w1 + w2 + w3) / 2;
+
+        ctx.font = mainF; ctx.fillText(t1, startX, y);
+        ctx.font = subF;  ctx.fillText(sub, startX + w1, y + 6); // 向下偏移製造下標效果
+        ctx.font = mainF; ctx.fillText(t2, startX + w1 + w2, y);
     }
 
     // ==========================================
-    // Canvas 1: 固體壓力教學 (防凍結修正)
+    // 1. 固體壓力：氣球圖釘 
     // ==========================================
-    let solidAnimId;
-    let solidState = 0; // 0:idle, 1:single down, 2:popped, 3:bed down, 4:safe
-    let pinY = 150;
+    let solidState = 0; 
+    let pinY = 50;
+    let popParticles = [];
     
     function initSolidSim() {
-        if (solidAnimId) cancelAnimationFrame(solidAnimId);
-        solidState = 0;
-        pinY = 150;
-        drawSolidScene(); // 手動繪製第一幀，確保不凍結
+        solidState = 0; pinY = 50; popParticles = [];
+        drawSolidScene();
     }
-
     function triggerSolid(type) {
-        if (solidAnimId) cancelAnimationFrame(solidAnimId); // 先殺
-        if (type === 'single') solidState = 1;
-        if (type === 'bed') solidState = 3;
-        pinY = 150;
-        solidAnimId = requestAnimationFrame(drawSolidScene); // 再開
+        popParticles = []; solidState = (type === 'single') ? 1 : 3; pinY = 50;
+        if (window.solidAnim) cancelAnimationFrame(window.solidAnim);
+        drawSolidScene();
     }
 
     function drawSolidScene() {
-        const cvs = document.getElementById('solidCanvas');
-        if (!cvs || !cvs.classList.contains('active-sim-target')) { // 防凍結檢查
-            if (!cvs.classList.contains('active-sim-target')) cvs.classList.add('active-sim-target'); 
-        }
-        let ctx = cvs.getContext('2d');
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-        ctx.fillStyle = '#0b1813'; ctx.fillRect(0, 0, cvs.width, cvs.height);
+        let ctx = safeGetContext('solidCanvas'); if(!ctx) return;
+        ctx.clearRect(0, 0, 1000, 600);
+        ctx.fillStyle = '#0b1813'; ctx.fillRect(0, 0, 1000, 600);
 
-        let cx = 500;
+        let cx = 500, groundY = 500, balloonY = 380;
         
-        // 畫氣球與地板
-        let balloonBaseY = 800;
-        ctx.fillStyle = '#FF69B4'; // 完整的氣球
-        let squash = (solidState === 4) ? 50 : ( (solidState === 3 && pinY > 500) ? Math.min(60, (pinY-500)/2) : 0); // 釘床壓迫的形變
-        ctx.beginPath(); ctx.ellipse(cx, 650 + squash/2, 150 + squash, 150 - squash, 0, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(cx-10, 800); ctx.lineTo(cx+10, 800); ctx.lineTo(cx, 830); ctx.fill();
-        
-        // 刺破特效
-        if (solidState === 2) {
-            ctx.fillStyle = '#0b1813'; ctx.beginPath(); ctx.ellipse(cx, 650, 160, 160, 0, 0, Math.PI*2); ctx.fill(); // 蓋掉完整的氣球
-            ctx.fillStyle = '#FF69B4'; // 碎片
-            for(let i=0; i<8; i++) {
-                let a = i * Math.PI/4 + (pinY-500)*0.01;
-                ctx.fillRect(cx + Math.cos(a)*100, 650 + Math.sin(a)*100, 20, 20);
+        if (solidState === 1 && pinY > 250) {
+            solidState = 2;
+            for(let i=0; i<30; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                let speed = Math.random() * 15 + 5;
+                popParticles.push({
+                    x: cx + Math.cos(angle)*60, y: balloonY + Math.sin(angle)*60,
+                    vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed - 5,
+                    size: Math.random() * 12 + 6, rot: 0, vrot: (Math.random()-0.5)*0.5
+                });
             }
         }
+        
+        ctx.fillStyle = '#FF69B4'; ctx.beginPath(); ctx.moveTo(cx-10, groundY); ctx.lineTo(cx+10, groundY); ctx.lineTo(cx, groundY+30); ctx.fill();
 
-        // 畫釘子與壓板
-        ctx.fillStyle = '#A9A9A9'; ctx.fillRect(cx - 150, pinY - 100, 300, 80); // 壓板
+        if (solidState !== 2) {
+            let squash = (solidState === 4) ? 30 : ((solidState === 3 && pinY > 250) ? (pinY-250) : 0);
+            ctx.beginPath(); ctx.ellipse(cx, balloonY + squash/2, 100 + squash*0.8, 120 - squash*0.5, 0, 0, Math.PI*2); ctx.fill();
+        } else {
+            ctx.fillStyle = '#FF69B4';
+            popParticles.forEach(p => {
+                p.x += p.vx; p.y += p.vy; p.vy += 0.8; p.rot += p.vrot;
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+                ctx.beginPath(); ctx.rect(-p.size/2, -p.size/2, p.size, p.size); ctx.fill();
+                ctx.restore();
+            });
+            ctx.fillStyle = '#FF0000'; ctx.font = 'bold 48px sans-serif'; ctx.textAlign='center'; ctx.fillText('💥 面積小，壓力大！氣球破了', 500, 250);
+        }
+
+        ctx.fillStyle = '#A9A9A9'; ctx.fillRect(cx - 120, pinY - 40, 240, 40); 
         ctx.fillStyle = '#DDDDDD';
         if (solidState < 3) {
-            ctx.beginPath(); ctx.moveTo(cx-5, pinY-20); ctx.lineTo(cx+5, pinY-20); ctx.lineTo(cx, pinY+50); ctx.fill(); // 單釘
+            ctx.beginPath(); ctx.moveTo(cx-4, pinY); ctx.lineTo(cx+4, pinY); ctx.lineTo(cx, pinY+80); ctx.fill(); 
         } else {
-            for(let i=0; i<20; i++) { let px = cx - 140 + i*15; ctx.beginPath(); ctx.moveTo(px-3, pinY-20); ctx.lineTo(px+3, pinY-20); ctx.lineTo(px, pinY+50); ctx.fill(); } // 釘床
+            for(let i=0; i<20; i++) {
+                let px = cx - 110 + i*11.5;
+                ctx.beginPath(); ctx.moveTo(px-2, pinY); ctx.lineTo(px+2, pinY); ctx.lineTo(px, pinY+80); ctx.fill();
+            }
         }
 
-        // 動畫進度更新
-        if (solidState === 1) {
-            pinY += 20; if (pinY > 500) { solidState = 2; cancelAnimationFrame(solidAnimId); solidAnimId=0; } // 刺破即停
-        } else if (solidState === 3) {
-            pinY += 20; if (pinY > 550) { pinY = 550; solidState = 4; cancelAnimationFrame(solidAnimId); solidAnimId=0; } // 安全即停
-        }
-
-        if (solidState === 2) { ctx.fillStyle = '#FF0000'; ctx.font = 'bold 60px sans-serif'; ctx.fillText('💥 碰！氣球破了！', 250, 450); }
-        if (solidState === 4) { ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 50px sans-serif'; ctx.fillText('✅ 釘床安全！', 300, 450); }
-
-        if (solidState === 1 || solidState === 3) { solidAnimId = requestAnimationFrame(drawSolidScene); }
+        if (solidState === 1 || solidState === 3) pinY += 10;
+        if (solidState === 3 && pinY > 280) solidState = 4;
+        if (solidState === 4) { ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 40px sans-serif'; ctx.textAlign='center'; ctx.fillText('✅ 面積大，壓力小，釘板安全', 500, 200); }
+        if (solidState > 0 && solidState < 4) window.solidAnim = requestAnimationFrame(drawSolidScene);
     }
 
-    // ==========================================
-    // Canvas 1 Practice: 磚塊翻轉練習
-    // ==========================================
-    function setBrickStep(step) {
-        document.querySelectorAll('#tab-solid-practice .action-btn').forEach(b => b.classList.remove('active-btn'));
-        document.getElementById(`btnBStep${step}`).classList.add('active-btn');
-        document.querySelectorAll('#tab-solid-practice .step-text').forEach(t => t.classList.remove('active'));
-        document.getElementById(`b-step${step}`).classList.add('active');
-        drawBrickPracticeScene(step);
-    }
-
-    function drawBrickPracticeScene(step) {
-        const cvs = document.getElementById('brickCanvas');
-        if (!cvs) return;
-        let ctx = cvs.getContext('2d');
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-        ctx.fillStyle = '#0b1813'; ctx.fillRect(0, 0, cvs.width, cvs.height);
+    function setSolidStep(step) {
+        document.querySelectorAll('#solid-practice .action-btn').forEach(b => b.classList.remove('active-btn'));
+        document.getElementById(`btnSolidP${step}`).classList.add('active-btn');
+        document.querySelectorAll('#solid-practice .step-text').forEach(t => t.classList.remove('active'));
+        document.getElementById(`solid-step${step}`).classList.add('active');
         
-        ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 36px sans-serif'; ctx.fillText('🧱 均勻磚塊 (1000gw)', 300, 100);
+        let ctx = safeGetContext('brickCanvas'); if(!ctx) return;
+        ctx.clearRect(0, 0, 1000, 600); ctx.fillStyle = '#0b1813'; ctx.fillRect(0, 0, 1000, 600);
+        ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign='center'; ctx.fillText('🧱 均勻磚塊 (1200gw)', 500, 80);
+
+        let drawBlock = (x, y, w, h, d) => {
+            ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+            ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+w,y); ctx.lineTo(x+w+d,y-d); ctx.lineTo(x+d,y-d); ctx.fill(); ctx.stroke(); 
+            ctx.fillStyle = '#FF8C00'; ctx.fillRect(x, y, w, h); ctx.strokeRect(x,y,w,h); 
+            ctx.fillStyle = '#FFA500'; ctx.beginPath(); ctx.moveTo(x+w,y); ctx.lineTo(x+w+d,y-d); ctx.lineTo(x+w+d,y-d+h); ctx.lineTo(x+w,y+h); ctx.fill(); ctx.stroke(); 
+        };
 
         if (step < 2) {
-            // 平放展示 (找最大面積)
-            drawCube(ctx, 500, 700, 200, 100, 50, '#FF8C00', '#FFA500', '#FFD700');
-            ctx.fillStyle = '#FFF'; ctx.font = 'bold 24px "JetBrains Mono"';
-            ctx.fillText('20 cm', 280, 660); ctx.fillText('10 cm', 540, 680); ctx.fillText('5 cm', 520, 600);
-            
-            if (step === 1) { ctx.fillStyle = 'rgba(124, 252, 0, 0.4)'; ctx.beginPath(); ctx.moveTo(500, 700); ctx.lineTo(500-200, 700-100); ctx.lineTo(500-200+100, 700-100-50); ctx.lineTo(500+100, 700-50); ctx.fill(); }
+            drawBlock(350, 350, 240, 60, 120);
+            ctx.fillStyle = '#FFF'; ctx.font = 'bold 22px "JetBrains Mono"';
+            ctx.fillText('20 cm', 470, 440); ctx.fillText('10 cm', 630, 440); ctx.fillText('5 cm', 300, 380);
         } else {
-            // 立放展示 (解答用)
-            drawCube(ctx, 500, 700, 100, 50, 200, '#FF8C00', '#FFA500', '#FFD700');
-            ctx.fillStyle = '#FFF'; ctx.font = 'bold 24px "JetBrains Mono"';
-            ctx.fillText('10 cm', 380, 680); ctx.fillText('5 cm', 520, 690); ctx.fillText('20 cm', 520, 500);
-            ctx.fillStyle = 'rgba(255, 105, 180, 0.4)'; ctx.beginPath(); ctx.moveTo(500, 700); ctx.lineTo(500-100, 700-50); ctx.lineTo(500-100+50, 700-50-25); ctx.lineTo(500+50, 700-25); ctx.fill();
+            drawBlock(200, 200, 120, 240, 60); 
+            drawBlock(600, 380, 240, 60, 120); 
+            ctx.fillStyle = '#FF69B4'; ctx.fillText('最大壓力 (立)', 260, 160);
+            ctx.fillStyle = '#00FFFF'; ctx.fillText('最小壓力 (平)', 720, 340);
         }
     }
 
     // ==========================================
-    // Canvas 2: 液體壓力 (漏水實驗 & 修正密度軌跡)
+    // 2. 液體壓力：深度實驗 
     // ==========================================
-    let liqAnimId;
-    let liqTime = 0;
-    let liqDensity = 1.0;
-    let liqColor = 'rgba(0, 191, 255, 0.6)';
-
+    let liqDensity = 1.0, liqTime = 0, liqColor = 'rgba(0, 191, 255, 0.6)';
     function setLiquid(type) {
-        if (liqAnimId) cancelAnimationFrame(liqAnimId);
-        document.querySelectorAll('#btnLiqWater, #btnLiqBrine, #btnLiqOil').forEach(b => b.classList.remove('active-btn'));
-        
+        killAllSims();
+        document.querySelectorAll('#liquid-teach .action-btn').forEach(b => b.classList.remove('active-btn'));
         if(type === 'water') { liqDensity = 1.0; liqColor = 'rgba(0, 191, 255, 0.6)'; document.getElementById('btnLiqWater').classList.add('active-btn'); }
         if(type === 'brine') { liqDensity = 1.2; liqColor = 'rgba(255, 255, 255, 0.7)'; document.getElementById('btnLiqBrine').classList.add('active-btn'); }
-        if(type === 'oil') { liqDensity = 0.8; liqColor = 'rgba(255, 215, 0, 0.6)'; document.getElementById('btnLiqOil').classList.add('active-btn'); }
-        
-        liqAnimId = requestAnimationFrame(runLiqLoop);
+        window.liqAnim = requestAnimationFrame(runLiqLoop);
     }
-
     function runLiqLoop() {
-        const cvs = document.getElementById('liquidCanvas');
-        if (!cvs) return;
-        let ctx = cvs.getContext('2d');
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-        ctx.fillStyle = '#0b1813'; ctx.fillRect(0, 0, cvs.width, cvs.height);
+        let ctx = safeGetContext('liquidCanvas'); if(!ctx) return;
+        ctx.clearRect(0,0,1000,600); ctx.fillStyle='#0b1813'; ctx.fillRect(0,0,1000,600);
         liqTime += 0.05;
 
-        // 寶特瓶 (高度與洞)
-        ctx.fillStyle = liqColor; ctx.fillRect(200, 200, 160, 600); // 瓶內液體
-        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(200, 200); ctx.lineTo(200, 800); ctx.lineTo(360, 800); ctx.lineTo(360, 200); ctx.stroke(); // 瓶子
+        let bx = 120, by = 100, bw = 120, bh = 400, gY = 550;
+        ctx.fillStyle = liqColor; ctx.fillRect(bx, by, bw, bh); 
+        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 4; ctx.strokeRect(bx, by, bw, bh);
+        
+        ctx.strokeStyle = '#00FFFF'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(50, by); ctx.lineTo(300, by); ctx.stroke();
+        ctx.fillStyle='#00FFFF'; ctx.font='bold 20px sans-serif'; ctx.textAlign='left'; ctx.fillText('自由液面 (h=0)', 50, by - 10);
+        
+        let holes_cm = [10, 20, 30]; 
+        let holes_px = [120, 240, 360]; 
 
-        // 三個洞 (深度與軌跡)
-        let holes = [150, 300, 450]; // 深度 h
-        ctx.strokeStyle = '#00FFFF'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(150, 200); ctx.lineTo(410, 200); ctx.stroke(); ctx.fillStyle='#00FFFF'; ctx.fillText('自由液面 (h=0)', 50, 205);
-
-        for (let i = 0; i < holes.length; i++) {
-            let h = holes[i];
-            let holeY = 200 + h;
+        for(let i=0; i<3; i++) {
+            let h_cm = holes_cm[i], holeY = by + holes_px[i];
+            let pressure = h_cm * liqDensity;
             
-            // 畫深度與公式
-            ctx.fillStyle = liqColor; ctx.beginPath(); ctx.arc(360, holeY, 15, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 24px "JetBrains Mono"';
-            let pressure = h * liqDensity;
-            ctx.fillText(`P = ${h} × ${liqDensity.toFixed(1)} = ${pressure.toFixed(0)} gw/cm²`, 400, holeY + 8);
+            ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 20px "JetBrains Mono"';
+            ctx.fillText(`h=${h_cm}, P=${pressure.toFixed(0)}`, bx + bw + 20, holeY - 15);
             
-            // ★ 水柱軌跡 (修正：受密度影響遠近)
-            // 公式：速度 v = sqrt(2gh) ➡️ v = k * sqrt(P) = k * sqrt(h * D)。 密度越大，噴越遠！
-            let vx = Math.sqrt(h * liqDensity) * 1.5; // 軌跡因子
-            let vy = (liqDensity === 0.8) ? 0.05 : ( (liqDensity === 1.2) ? 0.08 : 0.06); // 簡化模擬沙拉油稠度
-
-            ctx.strokeStyle = liqColor; ctx.lineWidth = 10; ctx.lineCap='round';
+            let vx = Math.sqrt(pressure) * 3.5; 
+            let vy = 0.06; 
+            ctx.strokeStyle = liqColor; ctx.lineWidth = 8; ctx.lineCap='round';
             ctx.beginPath();
-            for (let t = 0; t < 25; t+=0.5) {
-                let px = 360 + vx * t;
-                let py = holeY + 0.5 * 10 * vy * t * t; // 拋物線重力
-                if (py > 800) break; // 碰到地板
-                if (t===0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            let endX = bx+bw;
+            for(let t=0; t<50; t+=0.5) {
+                let px = bx+bw + vx*t, py = holeY + 0.5*10*vy*t*t;
+                if(py > gY) { endX = px; break; }
+                if(t===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
             }
             ctx.stroke();
-            
-            // 水波紋
-            let endX = 360 + vx * Math.sqrt((800 - holeY));
-            ctx.fillStyle = liqColor; ctx.beginPath(); ctx.ellipse(endX, 800, 20 + Math.sin(liqTime+i)*10, 5, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = liqColor; ctx.beginPath(); ctx.ellipse(endX, gY, 15+Math.sin(liqTime+i)*8, 4, 0, 0, Math.PI*2); ctx.fill();
         }
 
-        ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.moveTo(50, 800); ctx.lineTo(950, 800); ctx.stroke(); // 地板
-        ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 36px sans-serif'; ctx.fillText('👉 密度越大，相同深度水壓越大，水噴得越遠！', 100, 900);
-
-        liqAnimId = requestAnimationFrame(runLiqLoop);
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.moveTo(20, gY); ctx.lineTo(980, gY); ctx.stroke();
+        window.liqAnim = requestAnimationFrame(runLiqLoop);
     }
 
-    // ==========================================
-    // Canvas 2 Practice: 異形管 (形狀無關)
-    // ==========================================
-    function setUtubeStep(step) {
-        document.querySelectorAll('#tab-liquid-practice .action-btn').forEach(b => b.classList.remove('active-btn'));
-        document.getElementById(`btnUStep${step}`).classList.add('active-btn');
-        document.querySelectorAll('#tab-liquid-practice .step-text').forEach(t => t.classList.remove('active'));
-        document.getElementById(`u-step${step}`).classList.add('active');
-        drawShapePracticeScene(step);
-    }
-
-    function drawShapePracticeScene(step) {
-        const cvs = document.getElementById('liquidShapeCanvas');
-        if (!cvs) return;
-        let ctx = cvs.getContext('2d');
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-        ctx.fillStyle = '#0b1813'; ctx.fillRect(0, 0, cvs.width, cvs.height);
+    function setCupStep(step) {
+        document.querySelectorAll('#liquid-practice .action-btn').forEach(b => b.classList.remove('active-btn'));
+        document.getElementById(`btnCupP${step}`).classList.add('active-btn');
+        document.querySelectorAll('#liquid-practice .step-text').forEach(t => t.classList.remove('active'));
+        document.getElementById(`cup-step${step}`).classList.add('active');
         
-        ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 36px sans-serif'; ctx.fillText('🏢 裝滿清水的異形管 (底部連通)', 150, 100);
+        let ctx = safeGetContext('cupCanvas'); if(!ctx) return;
+        ctx.clearRect(0,0,1000,600); ctx.fillStyle='#0b1813'; ctx.fillRect(0,0,1000,600);
+        ctx.textAlign = 'center'; ctx.font = 'bold 28px sans-serif';
 
-        // U 管與異形管幾何
-        let waterTopY = 300, baseTubeY = 700;
-        let gap = 160, w=80;
-
-        // 畫水 (利用 clipping 遮罩填滿管子內部)
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(cx - gap/2 - w, waterTopY); ctx.lineTo(cx - gap/2 - w, baseTubeY); ctx.lineTo(cx + gap/2 + w, baseTubeY); ctx.lineTo(cx + gap/2 + w, waterTopY); ctx.lineTo(cx+gap/2, waterTopY); ctx.lineTo(cx+gap/2, baseTubeY-w); ctx.lineTo(cx-gap/2, baseTubeY-w); ctx.lineTo(cx-gap/2, waterTopY); ctx.closePath();
-        ctx.clip(); // 限制繪製在管內
-        ctx.fillStyle = 'rgba(0, 191, 255, 0.7)'; ctx.fillRect(0, 300, 1000, 500); // 填滿水平線以下
-        ctx.restore();
-
-        // 畫玻璃管框
-        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 6; ctx.lineJoin = 'round';
-        ctx.beginPath();
-        // 左直管與異形管
-        ctx.moveTo(100, waterTopY); ctx.lineTo(100, baseTubeY); ctx.lineTo(260, baseTubeY); ctx.lineTo(260, baseTubeY-w); ctx.lineTo(200, baseTubeY-w); ctx.lineTo(200, waterTopY); ctx.lineTo(100, waterTopY);
-        // 右歪管
-        ctx.moveTo(350, waterTopY); ctx.lineTo(510, baseTubeY); ctx.lineTo(590, baseTubeY); ctx.lineTo(430, waterTopY); ctx.lineTo(350, waterTopY);
-        // 中間底連通管
-        ctx.moveTo(260, baseTubeY); ctx.lineTo(510, baseTubeY); ctx.stroke();
+        let waterY = 200, bottomY = 500;
         
-        ctx.moveTo(200, baseTubeY-w); ctx.lineTo(430, waterTopY); // 蓋子斜
-        ctx.stroke();
+        let drawCup = (name, cx, pathPts) => {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(cx + pathPts[0][0], waterY); ctx.lineTo(cx + pathPts[1][0], bottomY);
+            ctx.lineTo(cx + pathPts[2][0], bottomY); ctx.lineTo(cx + pathPts[3][0], waterY);
+            ctx.closePath();
+            ctx.clip();
+            ctx.fillStyle = 'rgba(0, 191, 255, 0.6)'; ctx.fillRect(0, waterY, 1000, bottomY-waterY);
+            ctx.restore();
+            
+            ctx.strokeStyle = '#FFF'; ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(cx + pathPts[0][0], waterY - 30); ctx.lineTo(cx + pathPts[0][0], waterY);
+            ctx.lineTo(cx + pathPts[1][0], bottomY); ctx.lineTo(cx + pathPts[2][0], bottomY);
+            ctx.lineTo(cx + pathPts[3][0], waterY); ctx.lineTo(cx + pathPts[3][0], waterY - 30);
+            ctx.stroke();
 
-        // A、B、C 點
-        let pA = {x: 150, y: baseTubeY}, pB = {x: 430, y: baseTubeY}, pC = {x: 550, y: baseTubeY};
-        ctx.fillStyle='#FFFF00'; ctx.beginPath(); ctx.arc(pA.x, pA.y, 10, 0, Math.PI*2); ctx.fill(); ctx.fillText('A', pA.x - 10, pA.y + 40);
-        ctx.beginPath(); ctx.arc(pB.x, pB.y, 10, 0, Math.PI*2); ctx.fill(); ctx.fillText('B', pB.x - 10, pB.y + 40);
-        ctx.beginPath(); ctx.arc(pC.x, pC.y, 10, 0, Math.PI*2); ctx.fill(); ctx.fillText('C', pC.x - 10, pC.y + 40);
+            ctx.fillStyle = '#FFFF00'; ctx.beginPath(); ctx.arc(cx, bottomY, 8, 0, Math.PI*2); ctx.fill();
+            ctx.fillText(name, cx, bottomY + 40);
+        };
+
+        drawCup('甲 (A點)', 200, [[-60], [-60], [60], [60]]);
+        drawCup('乙 (B點)', 500, [[-100], [-40], [40], [100]]);
+        drawCup('丙 (C點)', 800, [[-40], [-100], [100], [40]]);
 
         if (step >= 1) {
-            // 提示：畫等高線 (深度線)
-            ctx.strokeStyle = '#00FFFF'; ctx.lineWidth = 3; ctx.setLineDash([15, 10]);
-            ctx.beginPath(); ctx.moveTo(50, waterTopY); ctx.lineTo(950, waterTopY); ctx.stroke(); ctx.setLineDash([]);
+            ctx.strokeStyle = '#00FFFF'; ctx.setLineDash([10,10]); ctx.lineWidth=2;
+            ctx.beginPath(); ctx.moveTo(50, waterY); ctx.lineTo(950, waterY); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(50, bottomY); ctx.lineTo(950, bottomY); ctx.stroke(); ctx.setLineDash([]);
             
-            ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 32px sans-serif'; ctx.fillText('h (深度) 都一樣！', 200, waterTopY - 20);
-            
-            if (step === 2) { ctx.fillStyle = '#7CFC00'; ctx.fillText('結論：形狀無關，P 都一樣！', 200, 800); }
+            drawArrow(ctx, 200, waterY, 200, bottomY-15, '#00FFFF', 4);
+            drawArrow(ctx, 500, waterY, 500, bottomY-15, '#00FFFF', 4);
+            drawArrow(ctx, 800, waterY, 800, bottomY-15, '#00FFFF', 4);
+            ctx.fillStyle='#00FFFF'; ctx.fillText('垂直深度 h 全部相等！', 500, waterY - 30);
         }
     }
 
     // ==========================================
-    // Canvas 3: 帕斯卡原理 (重疊修正 & 實裝垂直分式)
+    // 3. 連通管原理 ★ 物理流動水波引擎 ★
     // ==========================================
-    let pascalAnimId;
-    let pushDepth = 0; // 0 到 100
+    let vesselLevels = [500, 500, 500, 500]; // 紀錄 4 個管區的水位 (Y軸：數值越小水位越高)
+    let targetLevel = 500;
+    let isVesselInjecting = false;
+    let isVesselDraining = false;
 
-    function pushPascal() { if (pascalAnimId) cancelAnimationFrame(pascalAnimId); pascalAnimId = requestAnimationFrame(() => runPascalLoop(true)); }
-    function resetPascal() { if (pascalAnimId) cancelAnimationFrame(pascalAnimId); pascalAnimId = requestAnimationFrame(() => runPascalLoop(false)); }
+    function initVesselSim() { 
+        vesselLevels = [500, 500, 500, 500]; 
+        targetLevel = 500; 
+        drawVessel(); 
+    }
 
+    function animateVessel(dir) {
+        if(dir > 0) {
+            targetLevel = Math.max(120, targetLevel - 190);
+            isVesselInjecting = true; isVesselDraining = false;
+        } else if(dir < 0) {
+            targetLevel = Math.min(500, targetLevel + 190);
+            isVesselInjecting = false; isVesselDraining = true;
+        }
+        if(!window.vesselAnim) runVesselLoop();
+    }
+
+    function runVesselLoop() {
+        let maxDiff = 0;
+        for(let i=0; i<4; i++) {
+            maxDiff = Math.max(maxDiff, Math.abs(vesselLevels[i] - targetLevel));
+        }
+
+        if (maxDiff < 1 && !isVesselInjecting && !isVesselDraining) {
+            for(let i=0; i<4; i++) vesselLevels[i] = targetLevel;
+            drawVessel();
+            window.vesselAnim = null;
+            return;
+        }
+
+        vesselLevels[0] += (targetLevel - vesselLevels[0]) * 0.12;
+
+        for(let i=0; i<3; i++) {
+            let diff = vesselLevels[i] - vesselLevels[i+1];
+            let flow = diff * 0.15; 
+            vesselLevels[i] -= flow;
+            vesselLevels[i+1] += flow;
+        }
+
+        if (Math.abs(vesselLevels[0] - targetLevel) < 15) {
+            isVesselInjecting = false;
+            isVesselDraining = false;
+        }
+
+        drawVessel();
+        window.vesselAnim = requestAnimationFrame(runVesselLoop);
+    }
+    
+    function defineVesselClosedPath(ctx) {
+        ctx.beginPath();
+        ctx.moveTo(100, 100);
+        ctx.lineTo(100, 500); 
+        ctx.lineTo(900, 500); 
+        ctx.lineTo(900, 100); 
+        
+        ctx.lineTo(700, 100); 
+        ctx.lineTo(760, 450); 
+        
+        ctx.lineTo(540, 450); 
+        
+        ctx.lineTo(540, 330);
+        ctx.lineTo(580, 270);
+        ctx.lineTo(540, 210);
+        ctx.lineTo(540, 100);
+        
+        ctx.lineTo(460, 100);
+        ctx.lineTo(460, 210);
+        ctx.lineTo(420, 270);
+        ctx.lineTo(460, 330);
+        ctx.lineTo(460, 450);
+        
+        ctx.lineTo(340, 450); 
+        
+        ctx.lineTo(340, 350);
+        ctx.lineTo(380, 250);
+        ctx.lineTo(340, 150);
+        ctx.lineTo(340, 100);
+        
+        ctx.lineTo(260, 100);
+        ctx.lineTo(260, 150);
+        ctx.lineTo(300, 250);
+        ctx.lineTo(260, 350);
+        ctx.lineTo(260, 450);
+        
+        ctx.lineTo(160, 450); 
+        
+        ctx.lineTo(160, 100);
+        ctx.closePath();
+    }
+
+    function drawVessel() {
+        let ctx = safeGetContext('vesselCanvas'); if(!ctx) return;
+        ctx.clearRect(0,0,1000,600); ctx.fillStyle='#0b1813'; ctx.fillRect(0,0,1000,600);
+
+        ctx.save();
+        defineVesselClosedPath(ctx);
+        ctx.clip(); 
+        
+        ctx.fillStyle = 'rgba(0, 191, 255, 0.6)';
+        ctx.beginPath();
+        ctx.moveTo(0, 600);
+        ctx.lineTo(0, vesselLevels[0]);      
+        ctx.lineTo(210, vesselLevels[0]);    
+        ctx.lineTo(210, vesselLevels[1]);    
+        ctx.lineTo(400, vesselLevels[1]);    
+        ctx.lineTo(400, vesselLevels[2]);    
+        ctx.lineTo(620, vesselLevels[2]);    
+        ctx.lineTo(620, vesselLevels[3]);    
+        ctx.lineTo(1000, vesselLevels[3]);   
+        ctx.lineTo(1000, 600);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 6;
+        ctx.lineJoin = 'round';
+        
+        ctx.beginPath(); ctx.moveTo(100, 100); ctx.lineTo(100, 500); ctx.lineTo(900, 500); ctx.lineTo(900, 100); ctx.stroke();
+        
+        ctx.beginPath(); ctx.moveTo(700, 100); ctx.lineTo(760, 450); ctx.lineTo(540, 450); 
+        ctx.lineTo(540, 330); ctx.lineTo(580, 270); ctx.lineTo(540, 210); ctx.lineTo(540, 100); ctx.stroke();
+        
+        ctx.beginPath(); ctx.moveTo(460, 100); ctx.lineTo(460, 210); ctx.lineTo(420, 270); ctx.lineTo(460, 330); ctx.lineTo(460, 450);
+        ctx.lineTo(340, 450); 
+        ctx.lineTo(340, 350); ctx.lineTo(380, 250); ctx.lineTo(340, 150); ctx.lineTo(340, 100); ctx.stroke();
+        
+        ctx.beginPath(); ctx.moveTo(260, 100); ctx.lineTo(260, 150); ctx.lineTo(300, 250); ctx.lineTo(260, 350); ctx.lineTo(260, 450);
+        ctx.lineTo(160, 450); ctx.lineTo(160, 100); ctx.stroke();
+
+        if (isVesselInjecting) {
+            ctx.fillStyle = 'rgba(0, 191, 255, 0.8)';
+            ctx.fillRect(115, 80, 30, vesselLevels[0] - 80); 
+            ctx.fillStyle = '#A9A9A9';
+            ctx.fillRect(90, 60, 80, 20); 
+            ctx.fillRect(115, 80, 30, 10);
+        }
+
+        let maxDiff = 0;
+        for(let i=0; i<3; i++) maxDiff = Math.max(maxDiff, Math.abs(vesselLevels[i] - vesselLevels[i+1]));
+        
+        ctx.textAlign = 'center';
+        if (maxDiff > 2) {
+            ctx.fillStyle = '#FFA500'; 
+            ctx.font = 'bold 28px sans-serif'; 
+            ctx.fillText('🌊 水壓不平衡，高壓流向低壓', 500, 60);
+        } else if (vesselLevels[0] < 490) { 
+            ctx.strokeStyle = '#00FFFF'; ctx.setLineDash([10,10]); ctx.lineWidth=3;
+            ctx.beginPath(); ctx.moveTo(30, vesselLevels[0]); ctx.lineTo(970, vesselLevels[0]); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 28px sans-serif'; 
+            ctx.fillText('✅ 靜止液面必等高 (壓力平衡)', 500, vesselLevels[0] - 15);
+        }
+    }
+
+    // ==========================================
+    // 4. 帕斯卡原理 (加入小車與下標文字渲染器)
+    // ==========================================
+    let pascalDepth = 0;
+    function initPascalSim() { pascalDepth = 0; drawPascal(false); }
+    function pushPascal() { if (window.pascalAnim) cancelAnimationFrame(window.pascalAnim); window.pascalAnim = requestAnimationFrame(() => runPascalLoop(true)); }
+    function resetPascal() { if (window.pascalAnim) cancelAnimationFrame(window.pascalAnim); window.pascalAnim = requestAnimationFrame(() => runPascalLoop(false)); }
+    
     function runPascalLoop(isPushing) {
-        const cvs = document.getElementById('pascalCanvas');
-        if (!cvs) return;
-        let ctx = cvs.getContext('2d');
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-        ctx.fillStyle = '#0b1813'; ctx.fillRect(0, 0, cvs.width, cvs.height);
-
-        if (isPushing && pushDepth < 150) pushDepth += 8;
-        if (!isPushing && pushDepth > 0) pushDepth -= 8;
-
-        // 幾何尺寸 & 座標 (修正重疊：大幅拉開)
-        let leftX = 150, leftW = 80;  // 大幅移向左
-        let rightX = 550, rightW = 350; // 大幅移向右
-        let baseTubeY = 850;
-        
-        let leftPistonY = 400 + pushDepth; 
-        let rightPistonY = 650 - (pushDepth * 0.1); // 上升一點
-
-        // 畫水
-        ctx.fillStyle = 'rgba(0, 191, 255, 0.7)';
-        ctx.fillRect(leftX, leftPistonY, leftW, baseTubeY - leftPistonY + 60); 
-        ctx.fillRect(rightX, rightPistonY, rightW, baseTubeY - rightPistonY + 60); 
-        ctx.fillRect(leftX, baseTubeY, rightX - leftX + rightW, 60); // 底管
-
-        // 畫容器與活塞
-        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 6; ctx.strokeRect(leftX, 200, leftW, baseTubeY-200+60); ctx.strokeRect(rightX, 200, rightW, baseTubeY-200+60); // 管
-        ctx.fillStyle='#888'; ctx.fillRect(leftX + 2, leftPistonY - 20, leftW - 4, 20); ctx.fillRect(rightX + 2, rightPistonY - 20, rightW - 4, 20); // 活塞
-
-        // 左活塞與砝碼 (修正座標：拉開)
-        ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 24px "JetBrains Mono"';
-        ctx.fillText('面積 A_小 = 10 cm²', leftX - 120, 280); // 標示移向左上
-
-        if (pushDepth > 0 || solidState === 1) { // 如果有重量
-            ctx.fillStyle = '#FFA500'; ctx.fillRect(leftX - 10, leftPistonY - 80, 80, 60); // 砝碼
-            ctx.fillStyle = '#111'; ctx.font = 'bold 20px sans-serif'; ctx.fillText('10kgw', leftX - 2, leftPistonY - 45);
-            drawArrow(ctx, leftX + 100, leftPistonY - 50, leftX + 100, leftPistonY + 10, '#FFFF00', 8); // 壓力傳遞方向 (修正箭頭)
-            
-            // ★ 左側垂直分式 $\frac{10}{10}$ (修正重疊：置中於砝碼下方)
-            drawFraction(ctx, '10 gw', '10 cm²', leftX + 40, leftPistonY + 120, '#FFFF00');
+        if (isPushing && pascalDepth < 80) pascalDepth += 4;
+        if (!isPushing && pascalDepth > 0) pascalDepth -= 4;
+        drawPascal(isPushing);
+        if ((isPushing && pascalDepth < 80) || (!isPushing && pascalDepth > 0)) {
+            window.pascalAnim = requestAnimationFrame(() => runPascalLoop(isPushing));
         }
-
-        // 右活塞與汽車 (修正座標：拉開)
-        ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 24px "JetBrains Mono"';
-        ctx.fillText('面積 A_大 = 100 cm²', rightX + 100, 280); // 標示移向右上
-        
-        ctx.fillStyle = '#FF69B4'; ctx.fillRect(rightX + 50, rightPistonY - 100, 200, 60); // 汽車幾何
-        ctx.fillStyle = '#FFF'; ctx.font = 'bold 28px sans-serif'; ctx.fillText('100kgw 汽車', rightX + 70, rightPistonY - 60);
-        
-        if (pushDepth > 0 || solidState === 1) { // 重量傳遞
-            drawArrow(ctx, rightX + rightW/2, baseTubeY + 30, rightX + rightW/2, rightPistonY + 20, '#7CFC00', 12); // 反作用力
-            
-            // ★ 右側垂直分式 $\frac{100}{100}$ (修正重疊：置中於汽車下方)
-            drawFraction(ctx, '100 gw', '100 cm²', rightX + rightW/2, rightPistonY + 120, '#FFFF00');
-        }
-
-        // 中央標題 (修正重疊：上移)
-        ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 40px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('帕斯卡原理：密閉液體壓力傳遞相等', 500, 150);
-        
-        // ★ 中央核心公式 實裝垂直分式 $\frac{F_小}{A_小} = \frac{F_大}{A_大}$ (修正斜槓為垂直分式)
-        ctx.font = 'bold 36px "JetBrains Mono"';
-        ctx.fillText('= P傳遞相等 =', 500, 500); // 中央文字
-        
-        if ((isPushing && pushDepth < 150) || (!isPushing && pushDepth > 0)) { pascalAnimId = requestAnimationFrame(() => runPascalLoop(isPushing)); }
     }
 
-    // 初始化啟動
-    openTab('tab-solid', document.querySelector('.tab-button:nth-child(1)'));
+    function drawPascal(isPushing) {
+        let ctx = safeGetContext('pascalCanvas'); if(!ctx) return;
+        ctx.clearRect(0,0,1000,600); ctx.fillStyle='#0b1813'; ctx.fillRect(0,0,1000,600);
+
+        let lx = 150, lw = 80;   
+        let rx = 550, rw = 300; 
+        let baseTubeY = 500;
+        
+        let lpY = 250 + pascalDepth; 
+        let rpY = 400 - (pascalDepth * (lw/rw)); 
+
+        ctx.fillStyle = 'rgba(0, 191, 255, 0.7)';
+        ctx.fillRect(lx, lpY, lw, baseTubeY - lpY + 40); 
+        ctx.fillRect(rx, rpY, rw, baseTubeY - rpY + 40); 
+        ctx.fillRect(lx, baseTubeY, rx - lx + rw, 40); 
+
+        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 6; 
+        ctx.strokeRect(lx, 150, lw, baseTubeY-150+40); 
+        ctx.strokeRect(rx, 150, rw, baseTubeY-150+40); 
+        ctx.fillStyle='#888'; ctx.fillRect(lx + 2, lpY - 15, lw - 4, 15); ctx.fillRect(rx + 2, rpY - 15, rw - 4, 15); 
+
+        // ★ 呼叫全新下標文字渲染器 ★
+        drawSubTextCentered(ctx, 'A', '小', ' = 10 cm²', lx + lw/2, 120, '#00FFFF');
+        drawSubTextCentered(ctx, 'A', '大', ' = 100 cm²', rx + rw/2, 120, '#7CFC00');
+        
+        let carBaseY = rpY - 15;
+        let cx = rx + rw/2;
+        
+        ctx.fillStyle = '#9fb0a8'; 
+        ctx.beginPath(); ctx.arc(cx - 80, carBaseY - 20, 20, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 80, carBaseY - 20, 20, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#FFF'; 
+        ctx.beginPath(); ctx.arc(cx - 80, carBaseY - 20, 8, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 80, carBaseY - 20, 8, 0, Math.PI*2); ctx.fill();
+        
+        ctx.fillStyle = '#FF69B4'; 
+        ctx.beginPath(); ctx.moveTo(cx - 120, carBaseY - 20); ctx.lineTo(cx + 120, carBaseY - 20);
+        ctx.lineTo(cx + 120, carBaseY - 50); ctx.lineTo(cx - 120, carBaseY - 50); ctx.fill(); 
+        
+        ctx.beginPath(); ctx.moveTo(cx - 70, carBaseY - 50); ctx.lineTo(cx - 40, carBaseY - 90);
+        ctx.lineTo(cx + 40, carBaseY - 90); ctx.lineTo(cx + 90, carBaseY - 50); ctx.fill();
+        
+        ctx.fillStyle = '#00FFFF';
+        ctx.beginPath(); ctx.moveTo(cx - 60, carBaseY - 50); ctx.lineTo(cx - 35, carBaseY - 80);
+        ctx.lineTo(cx - 5, carBaseY - 80); ctx.lineTo(cx - 5, carBaseY - 50); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx + 5, carBaseY - 50); ctx.lineTo(cx + 5, carBaseY - 80);
+        ctx.lineTo(cx + 35, carBaseY - 80); ctx.lineTo(cx + 80, carBaseY - 50); ctx.fill();
+        
+        ctx.fillStyle = '#11261f'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('100kgw', cx, carBaseY - 25);
+
+        if (pascalDepth > 0) { 
+            ctx.fillStyle = '#FFA500'; ctx.fillRect(lx - 10, lpY - 65, 100, 50); 
+            ctx.fillStyle = '#11261f'; ctx.font = 'bold 20px sans-serif'; ctx.fillText('10kgw', lx + lw/2, lpY - 35);
+            drawArrow(ctx, lx - 40, lpY - 40, lx - 40, lpY + 10, '#FFFF00', 6); 
+            drawArrow(ctx, rx + rw + 30, baseTubeY, rx + rw + 30, rpY + 20, '#7CFC00', 8); 
+            drawFractionCanvas(ctx, '10 gw', '10 cm²', lx - 70, lpY + 60, '#FFFF00', 20);
+            drawFractionCanvas(ctx, '100 gw', '100 cm²', rx + rw + 70, rpY + 80, '#FFFF00', 20);
+        }
+
+        ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('帕斯卡原理：密閉流體壓力傳遞均等', 500, 60);
+    }
+
+    // 啟動首頁
+    window.onload = () => { openTab('tab-solid', document.querySelector('.tab-button:nth-child(1)')); };
 </script>
 </body>
 </html>
