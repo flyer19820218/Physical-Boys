@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="國中自然科互動教材：內外營力、風化作用、河流作用，以及冰川、風與海浪塑造的地貌。">
+<title>地球科學互動實驗室｜外營力雕刻家</title>
+<!-- 專案檔名：earth_landforms_2.html（地貌的改變與平衡，第 2 單元） -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --bg-base: #11261f;
+    --bg-panel: #17352b;
+    --bg-panel-soft: #1b3d32;
+    --bg-canvas: #0d2a31;
+    --chalk-white: #ffffff;
+    --chalk-yellow: #fff36a;
+    --chalk-orange: #ffb347;
+    --chalk-pink: #ff78b7;
+    --chalk-cyan: #55e9ff;
+    --chalk-green: #9af06f;
+    --chalk-purple: #dd8cff;
+    --chalk-coral: #ff8d78;
+    --chalk-red: #ff646c;
+    --chalk-muted: #a9bdb4;
+    --earth-brown: #805735;
+    --earth-light: #ad7748;
+    --rock-gray: #879098;
+    --water-blue: #1783ac;
+    --sand: #d5b96f;
+    --line: rgba(255,255,255,.17);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    margin: 0;
+    padding: 24px 0 80px;
+    color: var(--chalk-white);
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 20px;
+    line-height: 1.75;
+    background-color: var(--bg-base);
+    background-image:
+        radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        radial-gradient(rgba(255,255,255,.02) 1px, transparent 1px);
+    background-size: 4px 4px, 9px 9px;
+    overflow-x: hidden;
+}
+button, input { font: inherit; }
+button:focus-visible, input:focus-visible, summary:focus-visible {
+    outline: 4px solid var(--chalk-yellow);
+    outline-offset: 3px;
+}
+
+.wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 18px; }
+.header-container {
+    text-align: center;
+    padding: 10px 0 22px;
+    border-bottom: 3px solid var(--chalk-green);
+    margin-bottom: 18px;
+}
+.header-kicker { color: var(--chalk-green); font-weight: 900; letter-spacing: 2px; }
+h1 { margin: 4px 0 6px; color: var(--chalk-cyan); font-size: clamp(32px, 5vw, 48px); letter-spacing: 2px; line-height: 1.3; }
+.header-container p { margin: 0; color: var(--chalk-muted); }
+h2 { margin: 0 0 12px; color: var(--chalk-yellow); font-size: clamp(27px, 3vw, 34px); line-height: 1.35; }
+h3 { margin: 0 0 8px; color: var(--chalk-pink); font-size: 23px; }
+p { margin: 8px 0 14px; }
+ul { padding-left: 1.4em; margin: 8px 0 14px; }
+li { margin-bottom: 7px; }
+strong { font-weight: 900; }
+.nowrap { white-space: nowrap; }
+.math-text { font-family: "JetBrains Mono", monospace; color: var(--chalk-orange); font-weight: 900; }
+
+.tab-container {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 10px;
+    margin: 0 0 20px;
+    background: rgba(17,38,31,.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.11);
+    border-radius: 14px;
+}
+.tab-button, .action-btn, .choice-btn, .practice-btn {
+    border: 2px solid var(--chalk-muted);
+    border-radius: 10px;
+    color: var(--chalk-white);
+    background: transparent;
+    padding: 8px 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform .15s ease, background .2s ease, border-color .2s ease;
+}
+.tab-button:hover, .action-btn:hover, .choice-btn:hover, .practice-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,.08);
+}
+.tab-button.active { background: var(--chalk-green); color: var(--bg-base); border-color: var(--chalk-green); }
+.action-btn.primary { border-color: var(--chalk-cyan); }
+.action-btn.warning { border-color: var(--chalk-pink); }
+.action-btn.success { border-color: var(--chalk-green); }
+.action-btn.orange { border-color: var(--chalk-orange); }
+.action-btn.purple { border-color: var(--chalk-purple); }
+.action-btn.active-btn, .choice-btn.selected, .practice-btn.active {
+    background: var(--chalk-cyan);
+    color: var(--bg-base);
+    border-color: var(--chalk-cyan);
+}
+.action-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+.tab-content { display: none; animation: fadeIn .35s ease; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.mission-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.mission-step {
+    text-align: center;
+    border: 1px dashed var(--chalk-muted);
+    border-radius: 10px;
+    padding: 7px 5px;
+    color: var(--chalk-muted);
+    font-size: 15px;
+    font-weight: 900;
+}
+.mission-step b { color: var(--chalk-yellow); }
+
+.panel {
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-muted);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 22px rgba(6,27,20,.34);
+}
+.panel + .panel { margin-top: 16px; }
+.grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, .75fr); gap: 18px; align-items: start; }
+.concept-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; }
+.metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
+.metric {
+    min-width: 0;
+    padding: 11px;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 12px;
+    background: rgba(6,27,20,.28);
+    text-align: center;
+}
+.metric-label { display: block; color: var(--chalk-muted); font-size: 14px; }
+.metric-value { display: block; color: var(--chalk-cyan); font-family: "JetBrains Mono", monospace; font-size: 25px; font-weight: 900; }
+
+.canvas-wrap {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    border: 3px solid var(--chalk-muted);
+    border-radius: 14px;
+    background: var(--bg-canvas);
+}
+.rect-canvas { display: block; width: 100%; height: auto; aspect-ratio: 10 / 6; touch-action: none; }
+.canvas-caption {
+    position: absolute;
+    left: 12px;
+    bottom: 10px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(6,27,20,.86);
+    color: var(--chalk-yellow);
+    font-size: 14px;
+    font-weight: 900;
+    pointer-events: none;
+}
+
+.lab-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.lab-controls.center { justify-content: center; }
+.control-stack { display: grid; gap: 10px; }
+.slider-row { display: grid; grid-template-columns: 150px minmax(150px, 1fr) 72px; gap: 10px; align-items: center; margin: 12px 0; }
+.slider-label { color: var(--chalk-white); font-weight: 900; }
+.slider-value { color: var(--chalk-cyan); font-family: "JetBrains Mono", monospace; font-weight: 900; text-align: right; }
+input[type="range"] { width: 100%; accent-color: var(--chalk-cyan); }
+
+.task-card {
+    padding: 14px;
+    border: 2px dashed var(--chalk-yellow);
+    border-radius: 12px;
+    background: rgba(255,243,106,.055);
+}
+.task-card h3 { color: var(--chalk-yellow); }
+.result-box, .trap-box, .checkpoint {
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-top: 12px;
+}
+.result-box { border: 2px solid var(--chalk-cyan); background: rgba(85,233,255,.06); }
+.trap-box { border: 2px dashed var(--chalk-pink); background: rgba(255,120,183,.05); }
+.checkpoint { border-left: 6px solid var(--chalk-green); background: rgba(154,240,111,.07); }
+.small-note { color: var(--chalk-muted); font-size: 15px; }
+
+.process-chain {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 14px 0;
+}
+.process-node {
+    text-align: center;
+    padding: 10px 6px;
+    border: 2px solid var(--chalk-muted);
+    border-radius: 12px;
+    font-weight: 900;
+    color: var(--chalk-muted);
+}
+.process-node.active { border-color: var(--chalk-cyan); color: var(--chalk-cyan); background: rgba(85,233,255,.07); }
+
+.practice-box {
+    margin-top: 16px;
+    padding: 16px;
+    border: 2px solid var(--chalk-purple);
+    border-radius: 14px;
+    background: rgba(221,140,255,.045);
+}
+.practice-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.practice-btn { border-color: var(--chalk-purple); }
+.practice-step { display: none; }
+.practice-step.active { display: block; animation: fadeIn .25s ease; }
+.practice-step h3 { margin-bottom: 6px; }
+
+.choice-list { display: grid; gap: 8px; margin-top: 10px; }
+.choice-btn { text-align: left; }
+.choice-btn.correct { background: rgba(154,240,111,.18); border-color: var(--chalk-green); }
+.choice-btn.wrong { background: rgba(255,100,108,.16); border-color: var(--chalk-red); }
+.quiz-feedback { min-height: 32px; margin-top: 10px; font-weight: 900; }
+
+.gallery-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+}
+.gallery-chip {
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,.17);
+    border-radius: 10px;
+    text-align: center;
+}
+.gallery-chip b { display: block; color: var(--chalk-yellow); }
+
+.teacher-note { margin-top: 16px; border: 1px solid rgba(255,255,255,.18); border-radius: 12px; background: rgba(6,27,20,.24); }
+.teacher-note summary { cursor: pointer; padding: 10px 14px; color: var(--chalk-orange); font-weight: 900; }
+.teacher-note > div { padding: 0 14px 12px; color: var(--chalk-muted); }
+
+@media (max-width: 900px) {
+    .hero-grid, .grid-2col, .concept-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    .wrap { padding: 0 10px; }
+    .panel { padding: 14px; }
+    .tab-container { position: static; }
+    .tab-button { flex: 1 1 45%; padding: 8px; font-size: 17px; }
+    .mission-strip { grid-template-columns: repeat(2, 1fr); }
+    .metric-grid, .gallery-info { grid-template-columns: 1fr; }
+    .slider-row { grid-template-columns: 1fr; }
+    .slider-value { text-align: left; }
+    .process-chain { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+    <header class="header-container">
+        <div class="header-kicker">國中自然科互動探究</div>
+        <h1>地球科學：外營力雕刻家</h1>
+        <p>地貌不是一張靜止照片，而是內營力與外營力長時間角力的結果。</p>
+    </header>
+
+    <nav class="tab-container" aria-label="單元分頁">
+        <button type="button" class="tab-button active" data-tab="tab-force">⛰️ 內營力 vs 外營力</button>
+        <button type="button" class="tab-button" data-tab="tab-weathering">🪨 風化實驗室</button>
+        <button type="button" class="tab-button" data-tab="tab-river">🏞️ 河流剖面旅行</button>
+        <button type="button" class="tab-button" data-tab="tab-gallery">🧊 冰、風與海浪</button>
+    </nav>
+
+    <!-- 內營力 vs 外營力 -->
+    <section id="tab-force" class="tab-content active">
+        <div class="mission-strip">
+            <div class="mission-step"><b>① 辨認</b><br>能量從哪裡來</div>
+            <div class="mission-step"><b>② 操作</b><br>調整兩股力量</div>
+            <div class="mission-step"><b>③ 觀察</b><br>地勢高低改變</div>
+            <div class="mission-step"><b>④ 解釋</b><br>判斷地貌趨勢</div>
+        </div>
+
+        <div class="panel" style="border-color:var(--chalk-cyan);">
+            <div class="hero-grid">
+                <div>
+                    <h2>【互動】地貌拉鋸戰</h2>
+                    <div class="canvas-wrap" style="border-color:var(--chalk-cyan);">
+                        <canvas id="forceCanvas" class="rect-canvas" width="1000" height="600" aria-label="內營力抬升山脈，外營力風化侵蝕並降低地勢的互動圖。">你的瀏覽器不支援 Canvas。</canvas>
+                        <div class="canvas-caption">調整兩個滑桿，觀察山脈高度與地表起伏</div>
+                    </div>
+                    <div class="slider-row">
+                        <label class="slider-label nowrap" for="internalSlider">🔥 內營力</label>
+                        <input id="internalSlider" type="range" min="0" max="100" value="65">
+                        <output id="internalValue" class="slider-value">65</output>
+                    </div>
+                    <div class="slider-row">
+                        <label class="slider-label nowrap" for="externalSlider">🌧️ 外營力</label>
+                        <input id="externalSlider" type="range" min="0" max="100" value="45">
+                        <output id="externalValue" class="slider-value">45</output>
+                    </div>
+                    <div class="lab-controls center">
+                        <button type="button" class="action-btn warning force-scene" data-scene="uplift">🔥 造山旺盛</button>
+                        <button type="button" class="action-btn success force-scene" data-scene="balance">⚖️ 動態平衡</button>
+                        <button type="button" class="action-btn primary force-scene" data-scene="erosion">🌧️ 侵蝕旺盛</button>
+                    </div>
+                </div>
+
+                <aside class="control-stack">
+                    <div class="task-card">
+                        <h3>🎯 核心任務</h3>
+                        <p>找出三種情況：山脈繼續升高、地貌近乎平衡、山脈逐漸被夷平。</p>
+                    </div>
+                    <div class="metric-grid">
+                        <div class="metric"><span class="metric-label">地勢起伏</span><span class="metric-value" id="reliefMetric">高</span></div>
+                        <div class="metric"><span class="metric-label">主導力量</span><span class="metric-value" id="forceMetric" style="font-size:18px;">內營力</span></div>
+                        <div class="metric"><span class="metric-label">地貌趨勢</span><span class="metric-value" id="trendMetric" style="font-size:18px;">升高</span></div>
+                    </div>
+                    <div id="forceResult" class="result-box" aria-live="polite"></div>
+                    <div class="trap-box">
+                        <strong style="color:var(--chalk-pink);">重要：</strong>「平衡」不是完全沒有作用，而是兩股力量仍持續進行，只是造成的總變化接近零。
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <div class="concept-grid">
+            <article class="panel" style="border-color:var(--chalk-orange); margin-top:0;">
+                <h2>內營力：把高低差做大</h2>
+                <ul>
+                    <li>能量主要來自<strong style="color:var(--chalk-orange);">地球內部</strong>。</li>
+                    <li>板塊運動、岩漿活動與斷層錯動，可形成山脈、火山與海溝。</li>
+                    <li>整體效果通常是<strong style="color:var(--chalk-yellow);">增加地表高低落差</strong>。</li>
+                </ul>
+            </article>
+            <article class="panel" style="border-color:var(--chalk-cyan); margin-top:0;">
+                <h2>外營力：把高低差縮小</h2>
+                <ul>
+                    <li>能量多由<strong style="color:var(--chalk-cyan);">太陽熱能</strong>驅動水循環、風與冰川。</li>
+                    <li>風化、侵蝕、搬運與沉積會削低高處、填補低處。</li>
+                    <li>整體效果通常是<strong style="color:var(--chalk-green);">減少地表高低落差</strong>。</li>
+                </ul>
+            </article>
+        </div>
+
+        <div class="practice-box" data-practice="force">
+            <div class="practice-tabs">
+                <button type="button" class="practice-btn active" data-step="question">❓ 問題</button>
+                <button type="button" class="practice-btn" data-step="hint">💡 提示</button>
+                <button type="button" class="practice-btn" data-step="answer">✅ 解答</button>
+            </div>
+            <div class="practice-step active" data-content="question"><h3>問題</h3><p>某山區持續隆起，但山峰高度多年來沒有明顯增加。這代表山區沒有受到內營力作用嗎？</p></div>
+            <div class="practice-step" data-content="hint"><h3>提示</h3><p>山峰高度取決於「抬升量」與「風化侵蝕量」的共同結果。</p></div>
+            <div class="practice-step" data-content="answer"><h3>解答</h3><p><strong style="color:var(--chalk-green);">不代表沒有內營力。</strong>可能是內營力持續抬升，而外營力同時削低山峰，兩者效果接近，形成動態平衡。</p></div>
+        </div>
+    </section>
+
+    <!-- 風化實驗室 -->
+    <section id="tab-weathering" class="tab-content">
+        <div class="mission-strip">
+            <div class="mission-step"><b>① 選因子</b><br>日曬、水、空氣、生物</div>
+            <div class="mission-step"><b>② 重複作用</b><br>累積長時間效果</div>
+            <div class="mission-step"><b>③ 比較</b><br>物理或化學</div>
+            <div class="mission-step"><b>④ 定義</b><br>原地崩解或變質</div>
+        </div>
+
+        <div class="panel" style="border-color:var(--chalk-yellow);">
+            <div class="hero-grid">
+                <div>
+                    <h2>【互動】讓巨岩在原地慢慢碎裂</h2>
+                    <div class="canvas-wrap" style="border-color:var(--chalk-yellow);">
+                        <canvas id="weatherCanvas" class="rect-canvas" width="1000" height="600" aria-label="陽光、凍融、氧化與植物根系造成岩石風化的模擬。">你的瀏覽器不支援 Canvas。</canvas>
+                        <div class="canvas-caption">每按一次代表許多次日夜、季節或多年累積</div>
+                    </div>
+                    <div class="lab-controls center">
+                        <button type="button" class="action-btn orange weather-action" data-action="heat">☀️ 日曬冷卻</button>
+                        <button type="button" class="action-btn primary weather-action" data-action="freeze">🧊 進水結冰</button>
+                        <button type="button" class="action-btn warning weather-action" data-action="oxidation">🟠 空氣氧化</button>
+                        <button type="button" class="action-btn success weather-action" data-action="roots">🌱 根系生長</button>
+                        <button type="button" class="action-btn" id="weatherReset">↺ 換一塊新岩石</button>
+                    </div>
+                </div>
+
+                <aside class="control-stack">
+                    <div class="task-card">
+                        <h3>🎯 判斷規則</h3>
+                        <p>岩石若仍留在原地，只是碎裂或成分改變，就是<strong style="color:var(--chalk-yellow);">風化</strong>；被外力帶離原處才是侵蝕。</p>
+                    </div>
+                    <div class="metric-grid">
+                        <div class="metric"><span class="metric-label">裂隙程度</span><span class="metric-value" id="crackMetric">0%</span></div>
+                        <div class="metric"><span class="metric-label">氧化程度</span><span class="metric-value" id="rustMetric">0%</span></div>
+                        <div class="metric"><span class="metric-label">土壤生成</span><span class="metric-value" id="soilMetric">少</span></div>
+                    </div>
+                    <div id="weatherResult" class="result-box" aria-live="polite">選擇一種風化因子，觀察岩石哪裡先發生變化。</div>
+                </aside>
+            </div>
+        </div>
+
+        <div class="process-chain" aria-label="外營力作用順序">
+            <div class="process-node active">風化<br><span class="small-note">原地碎裂／變質</span></div>
+            <div class="process-node">侵蝕<br><span class="small-note">從原處剝離</span></div>
+            <div class="process-node">搬運<br><span class="small-note">移到其他地方</span></div>
+            <div class="process-node">沉積<br><span class="small-note">堆積下來</span></div>
+        </div>
+
+        <div class="concept-grid">
+            <article class="panel" style="border-color:var(--chalk-cyan); margin-top:0;">
+                <h2>物理風化：成分不變</h2>
+                <ul>
+                    <li>反覆熱脹冷縮，使裂隙逐漸擴大。</li>
+                    <li>水進入裂隙後結冰膨脹，像楔子撐開岩石。</li>
+                    <li>植物根系生長，也能從裂隙向外施力。</li>
+                </ul>
+            </article>
+            <article class="panel" style="border-color:var(--chalk-orange); margin-top:0;">
+                <h2>化學風化：成分改變</h2>
+                <ul>
+                    <li>含鐵礦物與氧氣、水反應，形成褐色氧化鐵。</li>
+                    <li>岩石的化學組成或礦物種類發生改變。</li>
+                    <li>物理風化與化學風化常同時發生、互相加速。</li>
+                </ul>
+            </article>
+        </div>
+
+        <div class="practice-box" data-practice="weather">
+            <div class="practice-tabs">
+                <button type="button" class="practice-btn active" data-step="question">❓ 問題</button>
+                <button type="button" class="practice-btn" data-step="hint">💡 提示</button>
+                <button type="button" class="practice-btn" data-step="answer">✅ 解答</button>
+            </div>
+            <div class="practice-step active" data-content="question"><h3>問題</h3><p>岩石表面的含鐵礦物逐漸變成褐色，但岩石仍留在原處。這是侵蝕作用嗎？</p></div>
+            <div class="practice-step" data-content="hint"><h3>提示</h3><p>先判斷岩石有沒有被帶離原處，再判斷成分是否發生改變。</p></div>
+            <div class="practice-step" data-content="answer"><h3>解答</h3><p>不是侵蝕，而是<strong style="color:var(--chalk-orange);">化學風化</strong>。岩石仍在原處，但含鐵礦物與氧氣、水反應，形成氧化鐵。</p></div>
+        </div>
+    </section>
+
+    <!-- 河流剖面旅行 -->
+    <section id="tab-river" class="tab-content">
+        <div class="mission-strip">
+            <div class="mission-step"><b>① 出發</b><br>從上游開始</div>
+            <div class="mission-step"><b>② 移動</b><br>拖曳到中下游</div>
+            <div class="mission-step"><b>③ 比較</b><br>谷形與顆粒</div>
+            <div class="mission-step"><b>④ 統整</b><br>侵蝕搬運沉積</div>
+        </div>
+
+        <div class="panel" style="border-color:var(--chalk-green);">
+            <div class="hero-grid">
+                <div>
+                    <h2>【互動】沿著河流從山區走向平原</h2>
+                    <div class="canvas-wrap" style="border-color:var(--chalk-green);">
+                        <canvas id="riverCanvas" class="rect-canvas" width="1000" height="600" aria-label="從河流上游、中游到下游，谷地、流速與沉積物變化的互動剖面。">你的瀏覽器不支援 Canvas。</canvas>
+                        <div class="canvas-caption">滑桿向右：上游 → 中游 → 下游</div>
+                    </div>
+                    <div class="slider-row">
+                        <label class="slider-label" for="riverSlider">🏞️ 河段位置</label>
+                        <input id="riverSlider" type="range" min="0" max="100" value="0">
+                        <output id="riverValue" class="slider-value">上游</output>
+                    </div>
+                    <div class="lab-controls center">
+                        <button type="button" class="action-btn primary river-scene" data-position="0">⛰️ 上游</button>
+                        <button type="button" class="action-btn success river-scene" data-position="50">🪨 中游</button>
+                        <button type="button" class="action-btn orange river-scene" data-position="100">🏝️ 下游</button>
+                    </div>
+                </div>
+
+                <aside class="control-stack">
+                    <div class="task-card">
+                        <h3>🎯 觀察三件事</h3>
+                        <p>谷地形狀、河水流速與河床沉積物，三者會沿河流方向一起改變。</p>
+                    </div>
+                    <div class="metric-grid">
+                        <div class="metric"><span class="metric-label">河谷形狀</span><span class="metric-value" id="valleyMetric" style="font-size:18px;">V 形谷</span></div>
+                        <div class="metric"><span class="metric-label">主要作用</span><span class="metric-value" id="riverProcessMetric" style="font-size:18px;">向下侵蝕</span></div>
+                        <div class="metric"><span class="metric-label">河床顆粒</span><span class="metric-value" id="sedimentMetric" style="font-size:18px;">巨大礫石</span></div>
+                    </div>
+                    <div id="riverResult" class="result-box" aria-live="polite"></div>
+                </aside>
+            </div>
+        </div>
+
+        <div class="process-chain" id="riverProcessChain">
+            <div class="process-node active" data-process="erosion">侵蝕<br><span class="small-note">上游最明顯</span></div>
+            <div class="process-node" data-process="transport">搬運<br><span class="small-note">沿途碰撞磨圓</span></div>
+            <div class="process-node" data-process="deposition">沉積<br><span class="small-note">流速降低後堆積</span></div>
+            <div class="process-node" data-process="sorting">分選<br><span class="small-note">大顆粒先沉、小顆粒後沉</span></div>
+        </div>
+
+        <div class="concept-grid">
+            <article class="panel" style="border-color:var(--chalk-cyan); margin-top:0;">
+                <h2>上游：切出 V 形谷</h2>
+                <p>坡度大、流速快，河流向下侵蝕強烈。河床常見有稜有角的大礫石。</p>
+            </article>
+            <article class="panel" style="border-color:var(--chalk-orange); margin-top:0;">
+                <h2>中下游：磨圓、搬運與沉積</h2>
+                <p>岩石在搬運途中滾動、碰撞與摩擦，逐漸變成鵝卵石與細沙；進入平原後流速減慢，泥沙沉積。</p>
+            </article>
+        </div>
+
+        <div class="practice-box" data-practice="river">
+            <div class="practice-tabs">
+                <button type="button" class="practice-btn active" data-step="question">❓ 問題</button>
+                <button type="button" class="practice-btn" data-step="hint">💡 提示</button>
+                <button type="button" class="practice-btn" data-step="answer">✅ 解答</button>
+            </div>
+            <div class="practice-step active" data-content="question"><h3>問題</h3><p>為什麼河流中游常見圓潤的鵝卵石，而上游礫石通常較有稜角？</p></div>
+            <div class="practice-step" data-content="hint"><h3>提示</h3><p>想一想岩石在被河水搬運的路途中，會和河床及其他石塊發生什麼事。</p></div>
+            <div class="practice-step" data-content="answer"><h3>解答</h3><p>岩石在搬運途中反覆<strong style="color:var(--chalk-cyan);">滾動、碰撞與摩擦</strong>，稜角逐漸被磨掉，因此越往下游通常越圓、越小。</p></div>
+        </div>
+    </section>
+
+    <!-- 冰、風與海浪 -->
+    <section id="tab-gallery" class="tab-content">
+        <div class="mission-strip">
+            <div class="mission-step"><b>① 觀圖</b><br>辨認形狀與顆粒</div>
+            <div class="mission-step"><b>② 找線索</b><br>刮磨、吹積或拍擊</div>
+            <div class="mission-step"><b>③ 配對</b><br>選擇地貌雕刻家</div>
+            <div class="mission-step"><b>④ 說理由</b><br>用特徵支持答案</div>
+        </div>
+
+        <div class="panel" style="border-color:var(--chalk-purple);">
+            <div class="hero-grid">
+                <div>
+                    <h2>【互動】地形配對挑戰</h2>
+                    <div class="canvas-wrap" style="border-color:var(--chalk-purple);">
+                        <canvas id="galleryCanvas" class="rect-canvas" width="1000" height="600" aria-label="隨機顯示冰川、風或海浪塑造的地形，讓學生判斷形成外營力。">你的瀏覽器不支援 Canvas。</canvas>
+                        <div class="canvas-caption" id="galleryCaption">觀察圖中線索，再選擇形成地貌的力量</div>
+                    </div>
+                    <div class="lab-controls center">
+                        <button type="button" class="choice-btn gallery-choice" data-force="ice">🧊 冰川</button>
+                        <button type="button" class="choice-btn gallery-choice" data-force="wind">🌬️ 風</button>
+                        <button type="button" class="choice-btn gallery-choice" data-force="wave">🌊 海浪</button>
+                        <button type="button" class="action-btn purple" id="galleryNext">下一個地形 →</button>
+                        <button type="button" class="action-btn" id="galleryReset">↺ 分數歸零</button>
+                    </div>
+                </div>
+
+                <aside class="control-stack">
+                    <div class="task-card">
+                        <h3>🎯 判斷方法</h3>
+                        <p>不要只背名稱。先找「谷形、顆粒是否混雜、沙粒方向、海岸凹洞或堆積」等證據。</p>
+                    </div>
+                    <div class="metric-grid">
+                        <div class="metric"><span class="metric-label">目前題號</span><span class="metric-value" id="galleryRound">1</span></div>
+                        <div class="metric"><span class="metric-label">答對題數</span><span class="metric-value" id="galleryScore">0</span></div>
+                        <div class="metric"><span class="metric-label">連續答對</span><span class="metric-value" id="galleryStreak">0</span></div>
+                    </div>
+                    <div id="galleryFeedback" class="result-box" aria-live="polite">先仔細觀察圖中的地形，再選擇冰川、風或海浪。</div>
+                </aside>
+            </div>
+        </div>
+
+        <div class="gallery-info">
+            <div class="gallery-chip"><b>🧊 冰川</b>刮磨形成 U 形谷；融化後留下大小混雜的冰磧物。</div>
+            <div class="gallery-chip"><b>🌬️ 風</b>搬動沙粒形成沙丘；挾沙磨蝕岩石形成風稜石。</div>
+            <div class="gallery-chip"><b>🌊 海浪</b>拍擊海岸形成海蝕洞、海拱與海蝕平臺；沉積形成沙灘、沙洲。</div>
+        </div>
+
+        <div class="practice-box" data-practice="gallery">
+            <div class="practice-tabs">
+                <button type="button" class="practice-btn active" data-step="question">❓ 問題</button>
+                <button type="button" class="practice-btn" data-step="hint">💡 提示</button>
+                <button type="button" class="practice-btn" data-step="answer">✅ 解答</button>
+            </div>
+            <div class="practice-step active" data-content="question"><h3>問題</h3><p>一個谷地底部寬廣、兩側陡峭，剖面像英文字母 U，谷中沉積物大小混雜。最可能由哪種外營力形成？</p></div>
+            <div class="practice-step" data-content="hint"><h3>提示</h3><p>流水常向下切出 V 形谷；哪一種巨大固體會整片刮磨谷壁與谷底？</p></div>
+            <div class="practice-step" data-content="answer"><h3>解答</h3><p>最可能是<strong style="color:var(--chalk-cyan);">冰川</strong>。冰川移動時整片刮磨谷地，形成 U 形谷；融化後留下大小顆粒混雜的沉積物。</p></div>
+        </div>
+
+        <details class="teacher-note">
+            <summary>👩‍🏫 課堂操作建議</summary>
+            <div>先要求學生只說「看見什麼」，例如谷底寬、沙粒排列或岩壁有洞，再要求選擇形成力量。這樣能避免只靠背誦名稱猜答案。</div>
+        </details>
+    </section>
+</div>
+
+<script>
+"use strict";
+
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const lerp = (a, b, t) => a + (b - a) * t;
+
+const state = {
+    activeTab: "tab-force",
+    time: 0,
+    force: { internal: 65, external: 45, mountainHeight: 235 },
+    weather: { heat: 0, freeze: 0, oxidation: 0, roots: 0, lastAction: "" },
+    river: { position: 0 },
+    gallery: { index: 0, round: 1, score: 0, streak: 0, answered: false }
+};
+
+function ctxOf(id) {
+    const canvas = document.getElementById(id);
+    if (!canvas || canvas.clientWidth <= 0 || canvas.clientHeight <= 0) return null;
+    return canvas.getContext("2d");
+}
+
+function line(ctx, points, stroke, width = 3, dash = []) {
+    if (!points.length) return;
+    ctx.save();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = width;
+    ctx.setLineDash(dash);
+    ctx.beginPath();
+    ctx.moveTo(points[0][0], points[0][1]);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function arrow(ctx, x1, y1, x2, y2, color, width = 5) {
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const head = 14 + width;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - head * Math.cos(angle - Math.PI / 6), y2 - head * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(x2 - head * Math.cos(angle + Math.PI / 6), y2 - head * Math.sin(angle + Math.PI / 6));
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+}
+
+function label(ctx, text, x, y, color = "#ffffff", align = "center", size = 21) {
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.font = `900 ${size}px "Noto Sans TC", sans-serif`;
+    ctx.textAlign = align;
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, x, y);
+    ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke = null, lineWidth = 2) {
+    const rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth; ctx.stroke(); }
+}
+
+function switchTab(tabId) {
+    state.activeTab = tabId;
+    $$(".tab-content").forEach(section => section.classList.toggle("active", section.id === tabId));
+    $$(".tab-button").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tabId));
+    window.setTimeout(drawActive, 70);
+}
+
+// -------------------- 內營力 vs 外營力 --------------------
+function forceTargetHeight() {
+    const difference = state.force.internal - state.force.external;
+    return clamp(205 + difference * 2.15, 115, 335);
+}
+
+function forceDescription() {
+    const difference = state.force.internal - state.force.external;
+    if (difference > 12) {
+        return {
+            relief: "增大",
+            force: "內營力",
+            trend: "持續隆起",
+            html: `內營力明顯較強，山地抬升速度大於外營力削低速度，因此地表高低落差會<strong style="color:var(--chalk-orange);">逐漸增加</strong>。`
+        };
+    }
+    if (difference < -12) {
+        return {
+            relief: "減小",
+            force: "外營力",
+            trend: "逐漸夷平",
+            html: `外營力明顯較強，風化、侵蝕與搬運的削低效果大於抬升，因此山地會<strong style="color:var(--chalk-cyan);">逐漸被夷平</strong>。`
+        };
+    }
+    return {
+        relief: "近乎穩定",
+        force: "勢均力敵",
+        trend: "動態平衡",
+        html: `兩股力量的效果接近。地貌看起來變化不大，但內、外營力仍持續作用，這叫做<strong style="color:var(--chalk-green);">動態平衡</strong>。`
+    };
+}
+
+function updateForceUI() {
+    $("#internalValue").textContent = state.force.internal;
+    $("#externalValue").textContent = state.force.external;
+    const info = forceDescription();
+    $("#reliefMetric").textContent = info.relief;
+    $("#forceMetric").textContent = info.force;
+    $("#trendMetric").textContent = info.trend;
+    $("#forceResult").innerHTML = info.html;
+}
+
+function drawForce() {
+    const ctx = ctxOf("forceCanvas");
+    if (!ctx) return;
+    const target = forceTargetHeight();
+    state.force.mountainHeight += (target - state.force.mountainHeight) * 0.06;
+    const h = state.force.mountainHeight;
+    const internal = state.force.internal / 100;
+    const external = state.force.external / 100;
+
+    ctx.clearRect(0, 0, 1000, 600);
+    ctx.fillStyle = "#10323a";
+    ctx.fillRect(0, 0, 1000, 600);
+
+    // 天空、太陽、雲雨
+    ctx.fillStyle = "#ffd95c";
+    ctx.beginPath(); ctx.arc(100, 90, 38, 0, Math.PI * 2); ctx.fill();
+    label(ctx, "太陽熱能驅動外營力", 165, 92, "#fff36a", "left", 19);
+
+    ctx.fillStyle = "rgba(255,255,255,.84)";
+    ctx.beginPath();
+    ctx.arc(760, 95, 28, Math.PI, Math.PI * 2);
+    ctx.arc(800, 82, 38, Math.PI, Math.PI * 2);
+    ctx.arc(845, 98, 30, Math.PI, Math.PI * 2);
+    ctx.lineTo(730, 100); ctx.closePath(); ctx.fill();
+    const rainCount = Math.round(2 + external * 9);
+    for (let i = 0; i < rainCount; i++) {
+        const x = 748 + i * 12;
+        const offset = (state.time * (3 + external * 5) + i * 24) % 115;
+        line(ctx, [[x, 118 + offset], [x - 7, 135 + offset]], "#55e9ff", 3);
+    }
+
+    // 地層與山脈
+    const peakY = 470 - h;
+    const ridge = [
+        [0, 390], [120, 375], [230, 345], [340, 305], [430, peakY + 70],
+        [500, peakY], [565, peakY + 68], [660, 310], [760, 350], [880, 382], [1000, 395]
+    ];
+    ctx.beginPath();
+    ctx.moveTo(ridge[0][0], ridge[0][1]);
+    ridge.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+    ctx.lineTo(1000, 600); ctx.lineTo(0, 600); ctx.closePath();
+    ctx.fillStyle = "#805735"; ctx.fill();
+
+    // 彎曲地層
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(ridge[0][0], ridge[0][1]);
+    ridge.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+    ctx.lineTo(1000, 600); ctx.lineTo(0, 600); ctx.closePath();
+    ctx.clip();
+    for (let band = 0; band < 5; band++) {
+        const base = 430 + band * 34;
+        ctx.strokeStyle = band % 2 ? "rgba(255,179,71,.45)" : "rgba(255,255,255,.20)";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(0, base);
+        ctx.bezierCurveTo(300, base - 8, 390, base - 50 - h * .08, 500, base - 72 - h * .14);
+        ctx.bezierCurveTo(610, base - 50 - h * .08, 720, base - 8, 1000, base);
+        ctx.stroke();
+    }
+    ctx.restore();
+
+    // 地表綠線
+    line(ctx, ridge, "#9af06f", 5);
+
+    // 岩漿室與內營力箭頭
+    ctx.fillStyle = "rgba(255,100,108,.75)";
+    ctx.beginPath();
+    ctx.ellipse(500, 545, 120, 34 + internal * 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    label(ctx, "地球內部能量", 500, 548, "#fff36a", "center", 18);
+    const arrowLength = 55 + internal * 105;
+    arrow(ctx, 430, 510, 430, 510 - arrowLength, "#ff8d78", 8);
+    arrow(ctx, 500, 505, 500, 505 - arrowLength - 16, "#ff8d78", 10);
+    arrow(ctx, 570, 510, 570, 510 - arrowLength, "#ff8d78", 8);
+
+    // 外營力沿坡箭頭、河流與搬運顆粒
+    arrow(ctx, 430, peakY + 50, 305, 330, "#55e9ff", 6);
+    arrow(ctx, 570, peakY + 60, 710, 340, "#55e9ff", 6);
+    const riverY = 350 + external * 14;
+    ctx.strokeStyle = "#55e9ff";
+    ctx.lineWidth = 8 + external * 8;
+    ctx.beginPath();
+    ctx.moveTo(520, peakY + 82);
+    ctx.bezierCurveTo(590, 300, 620, 335, 700, riverY);
+    ctx.bezierCurveTo(780, riverY + 12, 850, 390, 1000, 404);
+    ctx.stroke();
+
+    const particleCount = Math.round(external * 12);
+    for (let i = 0; i < particleCount; i++) {
+        const t = ((state.time * .004 * (1 + external * 2)) + i / Math.max(1, particleCount)) % 1;
+        const x = 565 + t * 390;
+        const y = 315 + t * 90 + Math.sin(t * Math.PI) * 14;
+        ctx.fillStyle = i % 2 ? "#ffb347" : "#ffffff";
+        ctx.beginPath(); ctx.arc(x, y, 3 + (i % 3), 0, Math.PI * 2); ctx.fill();
+    }
+
+    // 上方比較尺
+    roundRect(ctx, 285, 25, 430, 58, 12, "rgba(6,27,20,.72)", "rgba(255,255,255,.32)", 2);
+    const diff = state.force.internal - state.force.external;
+    const pointerX = 500 + clamp(diff, -100, 100) * 1.75;
+    line(ctx, [[325, 57], [675, 57]], "#ffffff", 4);
+    ctx.fillStyle = diff > 12 ? "#ff8d78" : diff < -12 ? "#55e9ff" : "#9af06f";
+    ctx.beginPath(); ctx.arc(pointerX, 57, 13, 0, Math.PI * 2); ctx.fill();
+    label(ctx, "外營力", 300, 57, "#55e9ff", "right", 17);
+    label(ctx, "內營力", 700, 57, "#ff8d78", "left", 17);
+
+    label(ctx, "抬升、造山", 500, Math.max(120, peakY - 32), "#ff8d78", "center", 21);
+    label(ctx, "風化 → 侵蝕 → 搬運 → 沉積", 765, 245, "#55e9ff", "center", 19);
+}
+
+// -------------------- 風化實驗室 --------------------
+function weatherTotals() {
+    const physical = clamp(state.weather.heat * 7 + state.weather.freeze * 12 + state.weather.roots * 10, 0, 100);
+    const chemical = clamp(state.weather.oxidation * 16, 0, 100);
+    const soil = clamp(Math.round((physical * .55 + chemical * .45)), 0, 100);
+    return { physical, chemical, soil };
+}
+
+function updateWeatherUI() {
+    const totals = weatherTotals();
+    $("#crackMetric").textContent = `${totals.physical}%`;
+    $("#rustMetric").textContent = `${totals.chemical}%`;
+    $("#soilMetric").textContent = totals.soil < 25 ? "少" : totals.soil < 60 ? "增加中" : "明顯";
+    const map = {
+        heat: "日夜反覆加熱與冷卻，使岩石不同部位熱脹冷縮，裂隙逐漸擴大。這是物理風化。",
+        freeze: "水進入裂隙後結冰膨脹，像楔子把裂縫撐得更開。這是物理風化。",
+        oxidation: "岩石中的鐵質與氧氣、水反應，產生褐色氧化鐵。這是化學風化。",
+        roots: "植物根系沿裂隙生長並向外施力，使岩石逐漸破裂。這是生物造成的物理風化。"
+    };
+    $("#weatherResult").textContent = state.weather.lastAction ? map[state.weather.lastAction] : "選擇一種風化因子，觀察岩石哪裡先發生變化。";
+}
+
+function drawWeather() {
+    const ctx = ctxOf("weatherCanvas");
+    if (!ctx) return;
+    const totals = weatherTotals();
+    const crackCount = Math.floor(totals.physical / 11);
+
+    ctx.clearRect(0, 0, 1000, 600);
+    ctx.fillStyle = "#10323a"; ctx.fillRect(0, 0, 1000, 600);
+
+    // 山坡與土壤
+    ctx.fillStyle = "#805735";
+    ctx.beginPath(); ctx.moveTo(0, 470); ctx.quadraticCurveTo(500, 420, 1000, 470); ctx.lineTo(1000, 600); ctx.lineTo(0, 600); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#9af06f"; ctx.fillRect(0, 462, 1000, 9);
+
+    // 太陽與雲
+    ctx.fillStyle = "#ffd95c"; ctx.beginPath(); ctx.arc(105, 95, 42, 0, Math.PI * 2); ctx.fill();
+    const heatWaves = state.weather.heat;
+    for (let i = 0; i < heatWaves; i++) {
+        const y = 155 + i * 16;
+        ctx.strokeStyle = "rgba(255,179,71,.72)"; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(62, y); ctx.bezierCurveTo(85, y - 10, 105, y + 10, 130, y); ctx.stroke();
+    }
+
+    // 岩石主體
+    const rock = [[315,425],[280,335],[330,235],[430,185],[570,205],[670,270],[700,390],[635,460],[430,470]];
+    ctx.beginPath(); ctx.moveTo(rock[0][0], rock[0][1]); rock.slice(1).forEach(p => ctx.lineTo(p[0],p[1])); ctx.closePath();
+    ctx.fillStyle = "#879098"; ctx.fill();
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 5; ctx.stroke();
+
+    // 氧化斑塊
+    const rustSpots = Math.min(12, state.weather.oxidation * 2);
+    for (let i = 0; i < rustSpots; i++) {
+        const x = 360 + (i * 73) % 280;
+        const y = 250 + (i * 47) % 150;
+        ctx.fillStyle = `rgba(193,100,49,${.26 + state.weather.oxidation * .08})`;
+        ctx.beginPath(); ctx.ellipse(x, y, 25 + (i % 3) * 8, 14 + (i % 2) * 9, .3, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // 預設裂縫路徑
+    const cracks = [
+        [[485,195],[470,245],[500,286],[474,338],[500,390],[485,463]],
+        [[350,250],[405,285],[390,337],[435,365]],
+        [[620,247],[566,288],[590,335],[535,370]],
+        [[315,350],[380,364],[405,420]],
+        [[690,350],[630,365],[610,420]],
+        [[430,185],[438,235],[410,270]],
+        [[570,205],[550,250],[575,278]],
+        [[420,470],[445,415],[405,382]],
+        [[635,460],[590,420],[560,390]]
+    ];
+    for (let i = 0; i < Math.min(crackCount, cracks.length); i++) {
+        line(ctx, cracks[i], "#17352b", 5 + (i % 2));
+        if (state.weather.freeze > 0 && i < state.weather.freeze + 2) {
+            ctx.fillStyle = "rgba(85,233,255,.85)";
+            const p = cracks[i][1];
+            ctx.beginPath();
+            ctx.moveTo(p[0] - 8, p[1] - 12); ctx.lineTo(p[0] + 12, p[1]); ctx.lineTo(p[0] - 5, p[1] + 18); ctx.closePath(); ctx.fill();
+        }
+    }
+
+    // 植物與根系
+    if (state.weather.roots > 0) {
+        ctx.strokeStyle = "#9af06f"; ctx.lineWidth = 8;
+        ctx.beginPath(); ctx.moveTo(515, 205); ctx.lineTo(515, 150); ctx.stroke();
+        ctx.fillStyle = "#9af06f";
+        ctx.beginPath(); ctx.ellipse(490, 155, 28, 13, -.45, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(540, 145, 28, 13, .45, 0, Math.PI * 2); ctx.fill();
+        const rootDepth = 40 + state.weather.roots * 30;
+        ctx.strokeStyle = "#ffb347"; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(515, 205); ctx.bezierCurveTo(500, 250, 540, 275, 500, 205 + rootDepth); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(515, 228); ctx.bezierCurveTo(470, 260, 462, 290, 445, 315 + state.weather.roots * 12); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(520, 235); ctx.bezierCurveTo(555, 270, 570, 305, 585, 325 + state.weather.roots * 10); ctx.stroke();
+    }
+
+    // 岩屑與土壤
+    const debris = Math.round(totals.soil / 7);
+    for (let i = 0; i < debris; i++) {
+        const x = 285 + (i * 57) % 430;
+        const y = 462 + (i % 3) * 12;
+        ctx.fillStyle = i % 3 === 0 ? "#d5b96f" : i % 3 === 1 ? "#ad7748" : "#a9bdb4";
+        ctx.beginPath();
+        ctx.moveTo(x - 8, y + 7); ctx.lineTo(x - 3, y - 7); ctx.lineTo(x + 9, y - 3); ctx.lineTo(x + 7, y + 8); ctx.closePath(); ctx.fill();
+    }
+
+    // 說明區
+    roundRect(ctx, 730, 40, 235, 185, 14, "rgba(6,27,20,.78)", "rgba(255,255,255,.28)", 2);
+    label(ctx, "岩石仍在原地", 847, 72, "#fff36a", "center", 21);
+    label(ctx, "物理裂隙", 765, 118, "#55e9ff", "left", 18);
+    label(ctx, `${totals.physical}%`, 930, 118, "#55e9ff", "right", 20);
+    label(ctx, "化學改變", 765, 158, "#ffb347", "left", 18);
+    label(ctx, `${totals.chemical}%`, 930, 158, "#ffb347", "right", 20);
+    label(ctx, "＝ 風化作用", 847, 198, "#9af06f", "center", 22);
+
+    if (state.weather.lastAction === "freeze") label(ctx, "裂隙中的水結冰膨脹", 475, 110, "#55e9ff", "center", 20);
+    if (state.weather.lastAction === "oxidation") label(ctx, "含鐵礦物逐漸氧化", 475, 110, "#ffb347", "center", 20);
+    if (state.weather.lastAction === "heat") label(ctx, "反覆熱脹冷縮", 475, 110, "#fff36a", "center", 20);
+    if (state.weather.lastAction === "roots") label(ctx, "根系沿裂隙向外施力", 475, 110, "#9af06f", "center", 20);
+}
+
+// -------------------- 河流剖面旅行 --------------------
+function riverStage() {
+    const p = state.river.position;
+    if (p < 34) return "up";
+    if (p < 67) return "mid";
+    return "down";
+}
+
+function updateRiverUI() {
+    const stage = riverStage();
+    const data = {
+        up: {
+            label: "上游", valley: "V 形谷", process: "向下侵蝕", sediment: "巨大礫石",
+            result: "上游坡度大、流速快，河水向下切割河床，形成狹窄而深的 V 形谷。河床常見有稜有角的大礫石。"
+        },
+        mid: {
+            label: "中游", valley: "谷地變寬", process: "搬運、磨圓", sediment: "鵝卵石",
+            result: "中游坡度較緩，岩石在搬運途中滾動、碰撞與摩擦，稜角逐漸磨掉，常形成圓潤的鵝卵石。"
+        },
+        down: {
+            label: "下游", valley: "寬廣平原", process: "沉積為主", sediment: "細沙、泥",
+            result: "下游進入平原，坡度與流速降低，搬運能力變弱，細沙與泥逐漸沉積，河道也較寬。"
+        }
+    }[stage];
+    $("#riverValue").textContent = data.label;
+    $("#valleyMetric").textContent = data.valley;
+    $("#riverProcessMetric").textContent = data.process;
+    $("#sedimentMetric").textContent = data.sediment;
+    $("#riverResult").textContent = data.result;
+    $$("#riverProcessChain .process-node").forEach(node => {
+        const process = node.dataset.process;
+        const active = stage === "up" ? process === "erosion" : stage === "mid" ? process === "transport" : (process === "deposition" || process === "sorting");
+        node.classList.toggle("active", active);
+    });
+}
+
+function drawAngularRock(ctx, x, y, r, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x - r, y + r * .5);
+    ctx.lineTo(x - r * .65, y - r * .7);
+    ctx.lineTo(x + r * .15, y - r);
+    ctx.lineTo(x + r, y - r * .25);
+    ctx.lineTo(x + r * .65, y + r * .85);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.lineWidth = 2; ctx.stroke();
+}
+
+function drawRiver() {
+    const ctx = ctxOf("riverCanvas");
+    if (!ctx) return;
+    const p = state.river.position / 100;
+    const stage = riverStage();
+    ctx.clearRect(0,0,1000,600);
+    ctx.fillStyle = "#10323a"; ctx.fillRect(0,0,1000,600);
+
+    // 遠景
+    ctx.fillStyle = "rgba(169,189,180,.25)";
+    ctx.beginPath(); ctx.moveTo(0,230); ctx.lineTo(120,130); ctx.lineTo(220,215); ctx.lineTo(340,105); ctx.lineTo(470,230); ctx.lineTo(600,145); ctx.lineTo(730,230); ctx.lineTo(1000,180); ctx.lineTo(1000,330); ctx.lineTo(0,330); ctx.closePath(); ctx.fill();
+
+    // 河谷橫剖面：V 形逐漸變成寬廣平原
+    const plateauY = lerp(210, 300, p);
+    const depth = lerp(290, 145, p);
+    const sigma = lerp(95, 305, p);
+    const groundY = x => plateauY + depth * Math.exp(-Math.pow(x - 500, 2) / (2 * sigma * sigma));
+
+    ctx.beginPath(); ctx.moveTo(0, groundY(0));
+    for (let x=0; x<=1000; x+=8) ctx.lineTo(x, groundY(x));
+    ctx.lineTo(1000,600); ctx.lineTo(0,600); ctx.closePath();
+    ctx.fillStyle = "#805735"; ctx.fill();
+
+    // 地層紋理
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(0, groundY(0));
+    for (let x=0; x<=1000; x+=8) ctx.lineTo(x, groundY(x));
+    ctx.lineTo(1000,600); ctx.lineTo(0,600); ctx.closePath(); ctx.clip();
+    for (let y=350; y<600; y+=35) line(ctx, [[0,y],[1000,y]], "rgba(255,255,255,.14)", 2);
+    ctx.restore();
+    line(ctx, Array.from({length:101},(_,i)=>[i*10,groundY(i*10)]), "#9af06f", 5);
+
+    // 河水
+    const riverWidth = lerp(80, 355, p);
+    const centerBottom = groundY(500);
+    const waterY = centerBottom - lerp(35, 22, p);
+    ctx.fillStyle = "rgba(23,131,172,.93)";
+    ctx.beginPath();
+    ctx.ellipse(500, waterY + 12, riverWidth/2, lerp(34,20,p), 0, 0, Math.PI*2);
+    ctx.fill();
+    line(ctx, [[500-riverWidth/2,waterY],[500+riverWidth/2,waterY]], "#55e9ff", 5);
+
+    // 流動箭頭
+    const arrows = stage === "up" ? 5 : stage === "mid" ? 4 : 3;
+    for (let i=0;i<arrows;i++) {
+        const y=120+i*42;
+        const length=stage === "up" ? 100 : stage === "mid" ? 75 : 50;
+        arrow(ctx, 760, y, 760+length, y, "#55e9ff", stage === "up" ? 6 : 4);
+    }
+    label(ctx, stage === "up" ? "流速快" : stage === "mid" ? "流速中等" : "流速較慢", 835, 95, "#55e9ff", "center", 20);
+
+    // 河床沉積物
+    if (stage === "up") {
+        for (let i=0;i<6;i++) drawAngularRock(ctx, 405+i*38, waterY+18+(i%2)*10, 19+(i%3)*5, i%2?"#a9bdb4":"#d5b96f");
+        label(ctx, "有稜角的大礫石", 500, 555, "#fff36a", "center", 21);
+    } else if (stage === "mid") {
+        for (let i=0;i<10;i++) {
+            ctx.fillStyle = i%2?"#a9bdb4":"#d5b96f";
+            ctx.beginPath(); ctx.ellipse(350+i*34, waterY+20+(i%3)*8, 16, 11, 0,0,Math.PI*2); ctx.fill();
+        }
+        label(ctx, "碰撞、摩擦後變成鵝卵石", 500, 555, "#fff36a", "center", 21);
+    } else {
+        for (let i=0;i<55;i++) {
+            const x=330+(i*29)%350;
+            const y=waterY+12+(i%5)*6;
+            ctx.fillStyle=i%3===0?"#ffb347":"#d5b96f";
+            ctx.beginPath(); ctx.arc(x,y,2+(i%3),0,Math.PI*2); ctx.fill();
+        }
+        label(ctx, "細沙與泥在平原沉積", 500, 555, "#fff36a", "center", 21);
+    }
+
+    // 谷形標示
+    if (stage === "up") {
+        label(ctx, "V 形谷", 500, 185, "#ff78b7", "center", 28);
+        arrow(ctx, 440,250,485,420,"#ff78b7",5);
+        arrow(ctx, 560,250,515,420,"#ff78b7",5);
+        label(ctx, "向下侵蝕", 500, 245, "#ff78b7", "center", 19);
+    } else if (stage === "mid") {
+        label(ctx, "谷地逐漸變寬", 500, 200, "#ff78b7", "center", 25);
+        arrow(ctx, 420,315,360,315,"#ff78b7",5);
+        arrow(ctx, 580,315,640,315,"#ff78b7",5);
+    } else {
+        label(ctx, "寬廣河谷與沖積平原", 500, 230, "#ff78b7", "center", 24);
+        ctx.fillStyle="rgba(213,185,111,.72)";
+        ctx.fillRect(220,groundY(220)-7,560,14);
+    }
+
+    // 河段軸
+    roundRect(ctx, 40,35,520,56,12,"rgba(6,27,20,.78)","rgba(255,255,255,.28)",2);
+    line(ctx,[[90,64],[510,64]],"#ffffff",4);
+    const px=90+p*420;
+    ctx.fillStyle="#55e9ff"; ctx.beginPath(); ctx.arc(px,64,13,0,Math.PI*2); ctx.fill();
+    label(ctx,"上游",70,64,"#ffffff","right",17);
+    label(ctx,"中游",300,64,"#ffffff","center",17);
+    label(ctx,"下游",530,64,"#ffffff","left",17);
+}
+
+// -------------------- 冰、風與海浪配對 --------------------
+const galleryItems = [
+    { name:"U 形谷", force:"ice", clue:"谷底寬廣、兩側陡峭，是冰川整片刮磨的結果。", draw:drawUValley },
+    { name:"冰磧物", force:"ice", clue:"冰川融化後留下未經良好分選、大小顆粒混雜的沉積物。", draw:drawTill },
+    { name:"沙丘", force:"wind", clue:"風搬運沙粒，在風速降低處堆積成具有迎風坡與背風坡的沙丘。", draw:drawDune },
+    { name:"風稜石", force:"wind", clue:"風挾帶沙粒長期磨蝕岩石表面，形成稜面與尖角。", draw:drawVentifact },
+    { name:"海蝕洞與海拱", force:"wave", clue:"海浪反覆拍擊岩壁弱處，洞穴逐漸擴大並可能貫穿成海拱。", draw:drawSeaArch },
+    { name:"沙灘與沙洲", force:"wave", clue:"海水搬運的泥沙在能量降低處沉積，形成沙灘或狹長沙洲。", draw:drawBeach }
+];
+
+function galleryColors(force) {
+    return force === "ice" ? "#55e9ff" : force === "wind" ? "#ffb347" : "#dd8cff";
+}
+
+function drawGalleryBase(ctx, title) {
+    ctx.clearRect(0,0,1000,600);
+    ctx.fillStyle="#10323a"; ctx.fillRect(0,0,1000,600);
+    roundRect(ctx,30,25,940,62,14,"rgba(6,27,20,.72)","rgba(255,255,255,.28)",2);
+    label(ctx,`神祕地形：${title}`,500,56,"#fff36a","center",28);
+}
+
+function drawUValley(ctx) {
+    drawGalleryBase(ctx,"U 形谷");
+    ctx.fillStyle="#805735";
+    ctx.beginPath(); ctx.moveTo(0,180); ctx.lineTo(185,210); ctx.bezierCurveTo(250,520,380,525,500,525); ctx.bezierCurveTo(620,525,750,520,815,210); ctx.lineTo(1000,180); ctx.lineTo(1000,600); ctx.lineTo(0,600); ctx.closePath(); ctx.fill();
+    line(ctx,[[0,180],[185,210]],"#9af06f",5);
+    ctx.strokeStyle="#9af06f";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(185,210);ctx.bezierCurveTo(250,520,380,525,500,525);ctx.bezierCurveTo(620,525,750,520,815,210);ctx.stroke();
+    line(ctx,[[815,210],[1000,180]],"#9af06f",5);
+    ctx.fillStyle="rgba(233,255,255,.86)";ctx.beginPath();ctx.moveTo(315,155);ctx.lineTo(390,250);ctx.lineTo(500,280);ctx.lineTo(610,250);ctx.lineTo(685,155);ctx.lineTo(650,330);ctx.bezierCurveTo(600,400,400,400,350,330);ctx.closePath();ctx.fill();
+    label(ctx,"谷底寬、兩側陡",500,470,"#ffffff","center",24);
+}
+
+function drawTill(ctx) {
+    drawGalleryBase(ctx,"大小混雜的沉積物");
+    ctx.fillStyle="#805735";ctx.fillRect(0,430,1000,170);
+    ctx.fillStyle="rgba(233,255,255,.9)";ctx.beginPath();ctx.moveTo(0,210);ctx.lineTo(610,255);ctx.lineTo(720,420);ctx.lineTo(0,420);ctx.closePath();ctx.fill();
+    line(ctx,[[0,420],[720,420]],"#55e9ff",5);
+    for(let i=0;i<38;i++){
+        const x=580+(i*41)%360;const y=420+(i%5)*28;const r=3+(i*7)%20;
+        ctx.fillStyle=i%3===0?"#ffffff":i%3===1?"#d5b96f":"#879098";
+        if(r>12) drawAngularRock(ctx,x,y,r,ctx.fillStyle); else {ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+    }
+    label(ctx,"沒有依顆粒大小排列",780,360,"#fff36a","center",22);
+}
+
+function drawDune(ctx) {
+    drawGalleryBase(ctx,"沙丘");
+    ctx.fillStyle="#d5b96f";ctx.fillRect(0,430,1000,170);
+    ctx.beginPath();ctx.moveTo(0,430);ctx.bezierCurveTo(170,410,225,245,390,430);ctx.bezierCurveTo(560,410,650,190,850,430);ctx.lineTo(1000,430);ctx.lineTo(1000,600);ctx.lineTo(0,600);ctx.closePath();ctx.fillStyle="#d5b96f";ctx.fill();
+    for(let i=0;i<5;i++) arrow(ctx,80,150+i*45,300,150+i*45,"#ffb347",5);
+    label(ctx,"迎風坡較緩",250,390,"#ffffff","center",19);
+    label(ctx,"背風坡較陡",440,360,"#ffffff","center",19);
+    label(ctx,"風吹動沙粒並堆積",735,135,"#ffb347","center",24);
+}
+
+function drawVentifact(ctx) {
+    drawGalleryBase(ctx,"風稜石");
+    ctx.fillStyle="#d5b96f";ctx.fillRect(0,440,1000,160);
+    ctx.fillStyle="#879098";ctx.beginPath();ctx.moveTo(390,440);ctx.lineTo(355,320);ctx.lineTo(440,210);ctx.lineTo(610,245);ctx.lineTo(680,370);ctx.lineTo(625,440);ctx.closePath();ctx.fill();ctx.strokeStyle="#ffffff";ctx.lineWidth=5;ctx.stroke();
+    line(ctx,[[440,210],[480,340],[390,440]],"rgba(255,255,255,.65)",4);
+    line(ctx,[[440,210],[575,345],[680,370]],"rgba(255,255,255,.65)",4);
+    for(let i=0;i<7;i++) arrow(ctx,40,180+i*38,330,200+i*32,"#ffb347",4);
+    for(let i=0;i<70;i++){const x=180+(i*37)%260;const y=180+(i*23)%250;ctx.fillStyle="#fff36a";ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill();}
+    label(ctx,"挾沙的風反覆磨蝕",730,175,"#ffb347","center",24);
+}
+
+function drawSeaArch(ctx) {
+    drawGalleryBase(ctx,"海蝕洞與海拱");
+    ctx.fillStyle="#1783ac";ctx.fillRect(0,400,1000,200);
+    for(let y=420;y<590;y+=35) line(ctx,[[0,y],[1000,y]],"rgba(85,233,255,.32)",3);
+    ctx.fillStyle="#805735";ctx.beginPath();ctx.moveTo(470,155);ctx.lineTo(1000,145);ctx.lineTo(1000,475);ctx.lineTo(520,475);ctx.lineTo(455,390);ctx.closePath();ctx.fill();
+    // 海拱洞
+    ctx.fillStyle="#10323a";ctx.beginPath();ctx.moveTo(620,420);ctx.bezierCurveTo(620,275,735,255,790,420);ctx.lineTo(790,475);ctx.lineTo(620,475);ctx.closePath();ctx.fill();
+    for(let i=0;i<5;i++) arrow(ctx,70,330+i*28,430,345+i*20,"#55e9ff",5);
+    label(ctx,"弱處先形成海蝕洞",735,230,"#ffffff","center",22);
+    label(ctx,"洞穴貫穿後形成海拱",735,520,"#fff36a","center",22);
+}
+
+function drawBeach(ctx) {
+    drawGalleryBase(ctx,"沙灘與沙洲");
+    ctx.fillStyle="#805735";ctx.beginPath();ctx.moveTo(0,240);ctx.lineTo(300,275);ctx.lineTo(470,410);ctx.lineTo(0,410);ctx.closePath();ctx.fill();
+    ctx.fillStyle="#1783ac";ctx.fillRect(0,410,1000,190);
+    ctx.fillStyle="#d5b96f";ctx.beginPath();ctx.moveTo(250,325);ctx.bezierCurveTo(400,360,520,420,650,475);ctx.bezierCurveTo(760,520,850,490,1000,470);ctx.lineTo(1000,560);ctx.bezierCurveTo(830,585,690,560,580,525);ctx.bezierCurveTo(410,470,320,420,220,390);ctx.closePath();ctx.fill();
+    ctx.fillStyle="#d5b96f";ctx.beginPath();ctx.ellipse(670,420,190,22,-.12,0,Math.PI*2);ctx.fill();
+    for(let i=0;i<4;i++) arrow(ctx,510,235+i*35,790,265+i*25,"#55e9ff",4);
+    label(ctx,"泥沙在能量降低處沉積",650,185,"#fff36a","center",24);
+    label(ctx,"狹長沙洲",680,380,"#ffffff","center",20);
+}
+
+function drawGallery() {
+    const ctx=ctxOf("galleryCanvas");
+    if(!ctx)return;
+    galleryItems[state.gallery.index].draw(ctx);
+}
+
+function updateGalleryUI() {
+    $("#galleryRound").textContent=state.gallery.round;
+    $("#galleryScore").textContent=state.gallery.score;
+    $("#galleryStreak").textContent=state.gallery.streak;
+    $$(".gallery-choice").forEach(btn=>{
+        btn.classList.remove("selected","correct","wrong");
+        btn.disabled=state.gallery.answered;
+    });
+}
+
+function answerGallery(force) {
+    if(state.gallery.answered)return;
+    state.gallery.answered=true;
+    const item=galleryItems[state.gallery.index];
+    const correct=force===item.force;
+    if(correct){state.gallery.score++;state.gallery.streak++;}
+    else{state.gallery.streak=0;}
+    $$(".gallery-choice").forEach(btn=>{
+        btn.disabled=true;
+        if(btn.dataset.force===item.force)btn.classList.add("correct");
+        else if(btn.dataset.force===force)btn.classList.add("wrong");
+    });
+    const color=galleryColors(item.force);
+    $("#galleryFeedback").innerHTML=correct
+        ? `<strong style="color:var(--chalk-green);">答對！</strong> ${item.clue}`
+        : `<strong style="color:var(--chalk-pink);">再看一次線索：</strong>正確答案是 <strong style="color:${color};">${item.force==="ice"?"冰川":item.force==="wind"?"風":"海浪"}</strong>。${item.clue}`;
+    updateGalleryUI();
+}
+
+function nextGallery() {
+    let next=state.gallery.index;
+    while(next===state.gallery.index) next=Math.floor(Math.random()*galleryItems.length);
+    state.gallery.index=next;
+    state.gallery.round++;
+    state.gallery.answered=false;
+    $("#galleryFeedback").textContent="先仔細觀察圖中的地形，再選擇冰川、風或海浪。";
+    updateGalleryUI();
+    drawGallery();
+}
+
+// -------------------- 共用控制 --------------------
+function setupPractice() {
+    $$(".practice-box").forEach(box=>{
+        const buttons=$$(".practice-btn",box);
+        const steps=$$(".practice-step",box);
+        buttons.forEach(btn=>btn.addEventListener("click",()=>{
+            buttons.forEach(b=>b.classList.toggle("active",b===btn));
+            steps.forEach(step=>step.classList.toggle("active",step.dataset.content===btn.dataset.step));
+        }));
+    });
+}
+
+function drawActive() {
+    if(state.activeTab==="tab-force")drawForce();
+    if(state.activeTab==="tab-weathering")drawWeather();
+    if(state.activeTab==="tab-river")drawRiver();
+    if(state.activeTab==="tab-gallery")drawGallery();
+}
+
+function animationLoop(timestamp) {
+    state.time=timestamp;
+    drawActive();
+    window.requestAnimationFrame(animationLoop);
+}
+
+function bindEvents() {
+    $$(".tab-button").forEach(btn=>btn.addEventListener("click",()=>switchTab(btn.dataset.tab)));
+
+    $("#internalSlider").addEventListener("input",e=>{state.force.internal=Number(e.target.value);updateForceUI();});
+    $("#externalSlider").addEventListener("input",e=>{state.force.external=Number(e.target.value);updateForceUI();});
+    $$(".force-scene").forEach(btn=>btn.addEventListener("click",()=>{
+        const scenes={uplift:[88,28],balance:[62,58],erosion:[30,88]};
+        [state.force.internal,state.force.external]=scenes[btn.dataset.scene];
+        $("#internalSlider").value=state.force.internal;
+        $("#externalSlider").value=state.force.external;
+        updateForceUI();
+    }));
+
+    $$(".weather-action").forEach(btn=>btn.addEventListener("click",()=>{
+        const action=btn.dataset.action;
+        state.weather[action]=Math.min(6,state.weather[action]+1);
+        state.weather.lastAction=action;
+        updateWeatherUI();
+        drawWeather();
+    }));
+    $("#weatherReset").addEventListener("click",()=>{
+        state.weather={heat:0,freeze:0,oxidation:0,roots:0,lastAction:""};
+        updateWeatherUI();drawWeather();
+    });
+
+    $("#riverSlider").addEventListener("input",e=>{state.river.position=Number(e.target.value);updateRiverUI();drawRiver();});
+    $$(".river-scene").forEach(btn=>btn.addEventListener("click",()=>{
+        state.river.position=Number(btn.dataset.position);
+        $("#riverSlider").value=state.river.position;
+        updateRiverUI();drawRiver();
+    }));
+
+    $$(".gallery-choice").forEach(btn=>btn.addEventListener("click",()=>answerGallery(btn.dataset.force)));
+    $("#galleryNext").addEventListener("click",nextGallery);
+    $("#galleryReset").addEventListener("click",()=>{
+        state.gallery={index:0,round:1,score:0,streak:0,answered:false};
+        $("#galleryFeedback").textContent="先仔細觀察圖中的地形，再選擇冰川、風或海浪。";
+        updateGalleryUI();drawGallery();
+    });
+
+    window.addEventListener("resize",()=>window.setTimeout(drawActive,80));
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden)window.setTimeout(drawActive,80);});
+}
+
+window.addEventListener("DOMContentLoaded",()=>{
+    bindEvents();
+    setupPractice();
+    updateForceUI();
+    updateWeatherUI();
+    updateRiverUI();
+    updateGalleryUI();
+    window.setTimeout(()=>{
+        drawActive();
+        window.requestAnimationFrame(animationLoop);
+    },120);
+});
+</script>
+</body>
+</html>
