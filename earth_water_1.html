@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="國中自然科互動教材：藍色行星、冰川與海平面、地下水面、地層下陷。">
+<title>地球科學互動實驗室｜水循環與地下水</title>
+<!-- 專案檔名：earth_water_1.html（地球上的水，第 1 單元） -->
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://unpkg.com/topojson-client@3"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --bg-base: #10261f;
+    --bg-panel: #17352b;
+    --bg-panel-soft: #1b3d32;
+    --bg-canvas: #091812;
+    --chalk-white: #ffffff;
+    --chalk-yellow: #fff36a;
+    --chalk-orange: #ffb347;
+    --chalk-pink: #ff78b7;
+    --chalk-cyan: #55e9ff;
+    --chalk-green: #9af06f;
+    --chalk-purple: #dd8cff;
+    --chalk-coral: #ff8d78;
+    --chalk-red: #ff5f67;
+    --chalk-muted: #a7bbb2;
+    --ocean: #116f9b;
+    --land: #55a66f;
+    --line: rgba(255,255,255,.16);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    margin: 0;
+    padding: 24px 0 80px;
+    color: var(--chalk-white);
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 20px;
+    line-height: 1.75;
+    background-color: var(--bg-base);
+    background-image:
+        radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        radial-gradient(rgba(255,255,255,.02) 1px, transparent 1px);
+    background-size: 4px 4px, 9px 9px;
+    overflow-x: hidden;
+}
+button, input { font: inherit; }
+button:focus-visible, input:focus-visible, summary:focus-visible {
+    outline: 4px solid var(--chalk-yellow);
+    outline-offset: 3px;
+}
+
+.wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 18px; }
+.header-container {
+    text-align: center;
+    padding: 10px 0 22px;
+    border-bottom: 3px solid var(--chalk-green);
+    margin-bottom: 18px;
+}
+.header-kicker { color: var(--chalk-green); font-weight: 900; letter-spacing: 2px; }
+h1 { margin: 4px 0 6px; color: var(--chalk-cyan); font-size: clamp(30px, 5vw, 48px); letter-spacing: 2px; }
+.header-container p { margin: 0; color: var(--chalk-muted); }
+h2 { margin: 0 0 12px; color: var(--chalk-yellow); font-size: clamp(25px, 3vw, 32px); line-height: 1.35; }
+h3 { margin: 0 0 8px; color: var(--chalk-pink); font-size: 22px; }
+p { margin: 8px 0 14px; }
+ul { padding-left: 1.4em; margin: 8px 0 14px; }
+li { margin-bottom: 7px; }
+strong { font-weight: 900; }
+
+.tab-container {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 10px;
+    margin: 0 0 20px;
+    background: rgba(16,38,31,.94);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 14px;
+}
+.tab-button, .action-btn, .choice-btn {
+    border: 2px solid var(--chalk-muted);
+    border-radius: 10px;
+    color: var(--chalk-white);
+    background: transparent;
+    padding: 8px 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform .15s ease, background .2s ease, border-color .2s ease;
+}
+.tab-button:hover, .action-btn:hover, .choice-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,.08); }
+.tab-button.active { background: var(--chalk-green); color: var(--bg-base); border-color: var(--chalk-green); }
+.action-btn.primary { border-color: var(--chalk-cyan); }
+.action-btn.warning { border-color: var(--chalk-pink); }
+.action-btn.success { border-color: var(--chalk-green); }
+.action-btn.active-btn, .choice-btn.selected { background: var(--chalk-cyan); color: var(--bg-base); border-color: var(--chalk-cyan); }
+.action-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+.tab-content { display: none; animation: fadeIn .35s ease; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.mission-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.mission-step {
+    text-align: center;
+    border: 1px dashed var(--chalk-muted);
+    border-radius: 10px;
+    padding: 7px 5px;
+    color: var(--chalk-muted);
+    font-size: 15px;
+    font-weight: 900;
+}
+.mission-step b { color: var(--chalk-yellow); }
+
+.panel {
+    background: var(--bg-panel);
+    border: 2px solid var(--chalk-muted);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 22px rgba(5,24,17,.34);
+}
+.panel + .panel { margin-top: 16px; }
+.grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(290px, .7fr); gap: 18px; align-items: stretch; }
+.concept-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; }
+.metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
+.metric {
+    min-width: 0;
+    padding: 11px;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 12px;
+    background: rgba(5,24,17,.28);
+    text-align: center;
+}
+.metric-label { display: block; color: var(--chalk-muted); font-size: 14px; }
+.metric-value { display: block; color: var(--chalk-cyan); font-family: "JetBrains Mono", monospace; font-size: 25px; font-weight: 900; }
+
+.canvas-wrap {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    border: 3px solid var(--chalk-muted);
+    border-radius: 14px;
+    background: var(--bg-canvas);
+}
+.rect-canvas { display: block; width: 100%; height: auto; aspect-ratio: 10 / 6; touch-action: none; }
+.globe-hint {
+    position: absolute;
+    left: 12px;
+    bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(5,24,17,.84);
+    color: var(--chalk-yellow);
+    font-size: 14px;
+    font-weight: 900;
+    pointer-events: none;
+}
+
+.lab-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.lab-controls.center { justify-content: center; }
+.control-stack { display: grid; gap: 10px; }
+.slider-row { display: grid; grid-template-columns: auto minmax(130px, 1fr) auto; gap: 10px; align-items: center; margin: 12px 0; }
+input[type="range"] { width: 100%; accent-color: var(--chalk-cyan); }
+
+.task-card {
+    padding: 14px;
+    border: 2px dashed var(--chalk-yellow);
+    border-radius: 12px;
+    background: rgba(255,243,106,.055);
+}
+.task-card h3 { color: var(--chalk-yellow); }
+.result-box, .trap-box, .checkpoint {
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-top: 12px;
+}
+.result-box { border: 2px solid var(--chalk-cyan); background: rgba(85,233,255,.06); }
+.trap-box { border: 2px dashed var(--chalk-pink); background: rgba(255,120,183,.05); }
+.checkpoint { border-left: 6px solid var(--chalk-green); background: rgba(154,240,111,.07); }
+.small-note { color: var(--chalk-muted); font-size: 15px; }
+.hidden { display: none !important; }
+.cycle-flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.cycle-node { padding: 7px 11px; border: 2px solid var(--chalk-cyan); border-radius: 999px; font-weight: 900; }
+.cycle-arrow { color: var(--chalk-yellow); font-weight: 900; }
+.nowrap { white-space: nowrap; }
+.math-text { font-family: "JetBrains Mono", monospace; color: var(--chalk-orange); font-weight: 900; }
+
+.coverage-bar, .composition-bar {
+    display: flex;
+    height: 34px;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,.5);
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+    margin: 10px 0;
+}
+.coverage-ocean { width: 71%; background: var(--ocean); display: grid; place-items: center; font-weight: 900; }
+.coverage-land { width: 29%; background: var(--land); display: grid; place-items: center; font-weight: 900; }
+.composition-sea { width: 97%; background: var(--chalk-cyan); color: var(--bg-base); }
+.composition-ice { width: 2%; min-width: 9px; background: var(--chalk-white); }
+.composition-fresh { width: 1%; min-width: 7px; background: var(--chalk-green); }
+.legend-row { display: flex; flex-wrap: wrap; gap: 12px; font-size: 15px; }
+.legend-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 5px; }
+
+.sample-log {
+    min-height: 72px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.16);
+    background: rgba(5,24,17,.30);
+    padding: 10px;
+}
+.sample-log.ocean { border-color: var(--chalk-cyan); }
+.sample-log.land { border-color: var(--chalk-green); }
+
+.subtab-container { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 14px; }
+.subtab-button { border: 2px solid var(--chalk-purple); border-radius: 9px; color: var(--chalk-white); background: transparent; padding: 7px 14px; font-weight: 900; cursor: pointer; }
+.subtab-button.active { background: var(--chalk-purple); color: var(--bg-base); }
+.subtab-content { display: none; }
+.subtab-content.active { display: block; }
+
+.quiz-question { padding: 16px; border: 1px solid rgba(255,255,255,.15); border-radius: 12px; margin-top: 12px; }
+.choice-list { display: grid; gap: 8px; margin-top: 10px; }
+.choice-btn { text-align: left; }
+.choice-btn.correct { background: rgba(154,240,111,.18); border-color: var(--chalk-green); }
+.choice-btn.wrong { background: rgba(255,95,103,.16); border-color: var(--chalk-red); }
+.quiz-feedback { min-height: 32px; margin-top: 10px; font-weight: 900; }
+
+.teacher-note { margin-top: 16px; border: 1px solid rgba(255,255,255,.18); border-radius: 12px; background: rgba(5,24,17,.24); }
+.teacher-note summary { cursor: pointer; padding: 10px 14px; color: var(--chalk-orange); font-weight: 900; }
+.teacher-note > div { padding: 0 14px 12px; color: var(--chalk-muted); }
+
+.status-pill { display: inline-block; padding: 3px 9px; border: 1px solid currentColor; border-radius: 999px; font-size: 14px; font-weight: 900; }
+.pulse { animation: pulse 1.8s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .55; } }
+
+@media (max-width: 900px) {
+    .hero-grid, .grid-2col, .concept-grid { grid-template-columns: 1fr; }
+    .metric-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 620px) {
+    body { font-size: 17px; padding-top: 10px; }
+    .wrap { padding: 0 10px; }
+    .panel { padding: 14px; }
+    .tab-container { position: static; }
+    .tab-button { flex: 1 1 45%; padding: 7px 8px; font-size: 15px; }
+    .mission-strip { grid-template-columns: repeat(2, 1fr); }
+    .metric-grid { grid-template-columns: 1fr; }
+    .slider-row { grid-template-columns: 1fr; }
+    .coverage-bar { height: 44px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+    <header class="header-container">
+        <div class="header-kicker">國中自然科互動探究</div>
+        <h1>地球科學：水循環與地下水</h1>
+        <p>不是先背答案，而是先觀察、預測、操作，再用證據解釋。</p>
+    </header>
+
+    <nav class="tab-container" aria-label="單元分頁">
+        <button type="button" class="tab-button active" data-tab="tab-sphere">🌍 1 藍色行星</button>
+        <button type="button" class="tab-button" data-tab="tab-ice">🧊 2 冰融海升</button>
+        <button type="button" class="tab-button" data-tab="tab-ground">💧 3 地下水面</button>
+        <button type="button" class="tab-button" data-tab="tab-crisis">🏚️ 4 地層下陷</button>
+    </nav>
+
+    <!-- 分頁一：藍色行星 -->
+    <section id="tab-sphere" class="tab-content active">
+        <div class="mission-strip" aria-label="探究步驟">
+            <div class="mission-step"><b>① 觀察</b><br>轉動地球</div>
+            <div class="mission-step"><b>② 預測</b><br>海多還是陸多</div>
+            <div class="mission-step"><b>③ 實驗</b><br>隨機投水滴</div>
+            <div class="mission-step"><b>④ 解釋</b><br>分清 71% 與 97%</div>
+        </div>
+
+        <div class="panel" style="border-color: var(--chalk-cyan);">
+            <div class="hero-grid">
+                <div>
+                    <h2>第一站：把地球轉起來</h2>
+                    <p>拖曳地球儀，從不同方向觀察。你會發現：不論轉到哪一面，藍色海洋常常占了很大的範圍。</p>
+                    <div class="canvas-wrap" style="border-color: var(--chalk-cyan); cursor: grab;">
+                        <canvas id="sphereCanvas" class="rect-canvas" width="1000" height="620" aria-label="可拖曳旋轉的地球儀，綠色代表陸地，藍色代表海洋。">你的瀏覽器不支援 Canvas。</canvas>
+                        <div class="globe-hint">👆 滑鼠或手指拖曳旋轉</div>
+                    </div>
+                    <div class="lab-controls center">
+                        <button type="button" class="action-btn primary" id="toggleSpinBtn">⏸ 暫停自轉</button>
+                        <button type="button" class="action-btn success" id="dropOneBtn">💧 隨機投 1 滴</button>
+                        <button type="button" class="action-btn primary" id="dropTenBtn">💦 連續投 10 滴</button>
+                        <button type="button" class="action-btn" id="resetSampleBtn">↺ 重置實驗</button>
+                    </div>
+                </div>
+
+                <aside class="control-stack">
+                    <div class="task-card">
+                        <h3>🎯 探究任務</h3>
+                        <p>每一滴水會隨機落在地球表面。記錄它落在「海洋」或「陸地」，看看做很多次後，哪一種比較常出現。</p>
+                    </div>
+                    <div class="metric-grid">
+                        <div class="metric"><span class="metric-label">海洋</span><span class="metric-value" id="oceanCount">0</span></div>
+                        <div class="metric"><span class="metric-label">陸地</span><span class="metric-value" id="landCount">0</span></div>
+                        <div class="metric"><span class="metric-label">海洋比例</span><span class="metric-value" id="observedRate">—</span></div>
+                    </div>
+                    <div id="sampleLog" class="sample-log" aria-live="polite">先轉一轉地球，再投下第一滴水。</div>
+                    <button type="button" class="action-btn primary" id="reveal71Btn" disabled>🔍 做滿 10 滴後揭曉</button>
+                    <div class="result-box hidden" id="truth71">
+                        <strong style="color:var(--chalk-yellow);">真實答案：</strong>
+                        地球表面約 <strong style="color:var(--chalk-cyan); font-size:1.35em;">71%</strong> 被水覆蓋，陸地約 29%。少量隨機實驗會有誤差，次數越多通常越接近。
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <div class="concept-grid">
+            <article class="panel" style="border-color: var(--chalk-cyan); margin-top:0;">
+                <h2>問題 A：地球「表面」看見什麼？</h2>
+                <div class="coverage-bar" aria-label="地球表面約百分之七十一是海洋，百分之二十九是陸地">
+                    <div class="coverage-ocean">海洋 71%</div>
+                    <div class="coverage-land">陸地 29%</div>
+                </div>
+                <p>這個比例是在比較<strong style="color:var(--chalk-yellow);">地球表面積</strong>。所以地球從太空看起來像一顆「藍色行星」。</p>
+            </article>
+
+            <article class="panel" style="border-color: var(--chalk-green); margin-top:0;">
+                <h2>問題 B：地球「所有水」放在哪裡？</h2>
+                <div class="composition-bar" aria-label="全球水量約百分之九十七為海水，約百分之二為冰，約百分之一為其他淡水">
+                    <div class="composition-sea"></div><div class="composition-ice"></div><div class="composition-fresh"></div>
+                </div>
+                <div class="legend-row">
+                    <span><i class="legend-dot" style="background:var(--chalk-cyan)"></i>海水約 97%</span>
+                    <span><i class="legend-dot" style="background:var(--chalk-white)"></i>冰約 2%</span>
+                    <span><i class="legend-dot" style="background:var(--chalk-green)"></i>其他淡水約 1%</span>
+                </div>
+                <p>這個比例是在比較<strong style="color:var(--chalk-yellow);">全球水量</strong>。淡水之中，能被人類方便取用的部分又更少。</p>
+            </article>
+        </div>
+
+        <div class="trap-box">
+            <strong style="color:var(--chalk-pink);">⚠ 最常混淆：</strong>
+            <span class="math-text">71%</span> 回答「地表有多少被水覆蓋」；<span class="math-text">97%</span> 回答「全球水量中有多少是海水」。兩個分母不同，不能互換。
+        </div>
+
+        <div class="panel" style="border-color: var(--chalk-purple);">
+            <h2>四大層圈不是四個分開的盒子</h2>
+            <div class="grid-2col">
+                <div>
+                    <ul>
+                        <li><strong style="color:var(--chalk-cyan);">大氣圈：</strong>水蒸氣、雲與降水所在。</li>
+                        <li><strong style="color:var(--chalk-green);">水圈：</strong>海洋、河流、湖泊、冰川與地下水。</li>
+                        <li><strong style="color:var(--chalk-orange);">岩石圈：</strong>水會滲入岩層孔隙，也會侵蝕與搬運物質。</li>
+                        <li><strong style="color:var(--chalk-pink);">生物圈：</strong>生物吸收、利用並排出水分。</li>
+                    </ul>
+                    <div class="checkpoint">
+                        <strong>一句話說證據：</strong><br>
+                        「我投了＿＿滴，其中＿＿滴落在海洋，所以我觀察到海洋出現得比較頻繁；這支持地球表面大部分被水覆蓋。」
+                    </div>
+                </div>
+                <div>
+                    <h3 style="color:var(--chalk-cyan);">水在層圈之間旅行</h3>
+                    <div class="cycle-flow" aria-label="水循環流程">
+                        <span class="cycle-node">蒸發／蒸散</span><span class="cycle-arrow">→</span>
+                        <span class="cycle-node">凝結成雲</span><span class="cycle-arrow">→</span>
+                        <span class="cycle-node">降水</span><span class="cycle-arrow">→</span>
+                        <span class="cycle-node">逕流／下滲</span><span class="cycle-arrow">→</span>
+                        <span class="cycle-node">回到海洋</span>
+                    </div>
+                    <p class="small-note">水循環把大氣圈、水圈、岩石圈與生物圈連接起來；水會移動與改變狀態，但地球上的總水量大致守恆。</p>
+                    <details class="teacher-note" style="margin-top:10px;">
+                        <summary>🌊 延伸：海水為什麼鹹？</summary>
+                        <div>海水平均鹽度約 <span class="math-text">35‰</span>。陸地岩石風化後的離子會被河川帶入海洋，海底熱液等作用也會提供溶解物；水分蒸發時鹽分留下，長期累積形成海水鹽分。</div>
+                    </details>
+                </div>
+            </div>
+        </div>
+
+        <details class="teacher-note">
+            <summary>👩‍🏫 教師引導建議</summary>
+            <div>先不要公布 71%。讓全班各投 1 滴並加總，再問：「為什麼班級樣本和 71% 不會完全一樣？」藉此帶入隨機抽樣、樣本數與誤差。</div>
+        </details>
+    </section>
+
+    <!-- 分頁二：冰川與海平面 -->
+    <section id="tab-ice" class="tab-content">
+        <div class="mission-strip">
+            <div class="mission-step"><b>① 分類</b><br>海冰或陸冰</div>
+            <div class="mission-step"><b>② 預測</b><br>海面會不會升</div>
+            <div class="mission-step"><b>③ 加熱</b><br>拖動升溫</div>
+            <div class="mission-step"><b>④ 比較</b><br>找出關鍵差異</div>
+        </div>
+
+        <div class="grid-2col">
+            <article class="panel" style="border-color: var(--chalk-pink); margin-top:0;">
+                <h2>先分清楚：海冰與陸冰</h2>
+                <p><strong style="color:var(--chalk-cyan);">海冰</strong>原本就浮在海水中；<strong style="color:var(--chalk-white);">陸冰</strong>位在陸地上，融化後的水才會流入海洋。</p>
+                <div class="task-card">
+                    <h3>先預測</h3>
+                    <p>哪一種冰融化後，會明顯增加海洋中的水量？</p>
+                    <div class="lab-controls">
+                        <button type="button" class="choice-btn ice-predict" data-answer="sea">海冰</button>
+                        <button type="button" class="choice-btn ice-predict" data-answer="land">陸冰</button>
+                        <button type="button" class="choice-btn ice-predict" data-answer="both">兩者一樣</button>
+                    </div>
+                    <div id="icePredictionFeedback" class="quiz-feedback" aria-live="polite"></div>
+                </div>
+                <ul>
+                    <li>浮冰融化時，原本排開的水量與融化後增加的水量大致相當，所以海面不會因這件事明顯上升。</li>
+                    <li>陸冰融化後流入海洋，會增加海水總量，使海面上升；高山冰融水也可補充河水或地下水。</li>
+                    <li>海水升溫還會<strong style="color:var(--chalk-green);">熱膨脹</strong>，也是海平面上升的重要原因。</li>
+                </ul>
+                <div class="trap-box"><strong>不要說成：</strong>「所有冰融化都會讓海平面上升。」一定要先判斷冰原本在海上還是在陸地上。</div>
+            </article>
+
+            <article class="panel" style="border-color: var(--chalk-cyan); margin-top:0;">
+                <h2>【互動】海冰／陸冰比較實驗</h2>
+                <div class="canvas-wrap" style="border-color: var(--chalk-cyan);">
+                    <canvas id="glacierCanvas" class="rect-canvas" width="1000" height="600" aria-label="比較海冰與陸冰融化對海平面的影響。">你的瀏覽器不支援 Canvas。</canvas>
+                </div>
+                <div class="lab-controls center">
+                    <button type="button" class="action-btn active-btn" id="seaIceBtn">🌊 海冰模式</button>
+                    <button type="button" class="action-btn" id="landIceBtn">🏔️ 陸冰模式</button>
+                </div>
+                <div class="slider-row">
+                    <span>❄️ 低溫</span>
+                    <input type="range" id="tempSlider" min="0" max="100" value="0" aria-label="升溫程度">
+                    <span>🔥 升溫</span>
+                </div>
+                <label style="display:flex; gap:9px; align-items:center; margin-top:8px;">
+                    <input type="checkbox" id="thermalExpansionCheck">
+                    加入「海水熱膨脹」效果
+                </label>
+                <div class="metric-grid">
+                    <div class="metric"><span class="metric-label">實驗模式</span><span class="metric-value" id="iceModeMetric" style="font-size:19px;">海冰</span></div>
+                    <div class="metric"><span class="metric-label">融化程度</span><span class="metric-value" id="meltMetric">0%</span></div>
+                    <div class="metric"><span class="metric-label">模型海面</span><span class="metric-value" id="seaRiseMetric">0 格</span></div>
+                </div>
+                <div id="iceResult" class="result-box" aria-live="polite">拖動升溫滑桿，觀察海面基準線是否改變。</div>
+            </article>
+        </div>
+
+        <details class="teacher-note">
+            <summary>👩‍🏫 教師引導建議</summary>
+            <div>先固定不勾熱膨脹，只比較海冰與陸冰；學生說出差異後，再勾選熱膨脹，補充真實世界的海平面上升不只一個機制。</div>
+        </details>
+    </section>
+
+    <!-- 分頁三：地下水面 -->
+    <section id="tab-ground" class="tab-content">
+        <div class="mission-strip">
+            <div class="mission-step"><b>① 看剖面</b><br>辨認地層</div>
+            <div class="mission-step"><b>② 改氣候</b><br>雨季或乾旱</div>
+            <div class="mission-step"><b>③ 調井深</b><br>找得到水嗎</div>
+            <div class="mission-step"><b>④ 推論</b><br>井與泉的條件</div>
+        </div>
+
+        <div class="grid-2col">
+            <article class="panel" style="border-color: var(--chalk-yellow); margin-top:0;">
+                <h2>地下水藏在哪裡？</h2>
+                <p>雨水下滲後，會進入土壤與岩層的孔隙。孔隙都被水填滿的區域叫做<strong style="color:var(--chalk-cyan);">飽和帶</strong>，它的上界就是<strong style="color:var(--chalk-yellow);">地下水面</strong>。</p>
+                <ul>
+                    <li><strong style="color:var(--chalk-green);">透水層：</strong>孔隙互相連通，水較容易通過，例如砂、礫石或部分砂岩。</li>
+                    <li><strong style="color:var(--chalk-pink);">相對不透水層：</strong>水通過得很慢，例如緻密黏土層或頁岩。</li>
+                    <li>地下水面通常會大致跟隨地形起伏，但變化較平緩，並會隨補注與抽取而升降；只有與地表相交處，才會形成泉水或補注湖河。</li>
+                </ul>
+                <div class="task-card">
+                    <h3>判斷規則</h3>
+                    <p>井底必須低於當地地下水面，井中才可能有水；地下水面與地表相交時，水可能自然湧出形成泉。</p>
+                </div>
+                <div class="checkpoint"><strong>觀察句型：</strong>「在＿＿季，地下水面＿＿，所以水井＿＿、泉水＿＿。」</div>
+            </article>
+
+            <article class="panel" style="border-color: var(--chalk-green); margin-top:0;">
+                <h2>【互動】地下水氣候觀測站</h2>
+                <div class="canvas-wrap" style="border-color: var(--chalk-green);">
+                    <canvas id="waterTableCanvas" class="rect-canvas" width="1000" height="600" aria-label="切換雨季、正常季、乾旱，並調整井深，觀察地下水面、井水與泉水。">你的瀏覽器不支援 Canvas。</canvas>
+                </div>
+                <div class="lab-controls center">
+                    <button type="button" class="action-btn weather-btn" data-weather="rain">🌧️ 雨季</button>
+                    <button type="button" class="action-btn weather-btn active-btn" data-weather="normal">⛅ 正常季</button>
+                    <button type="button" class="action-btn weather-btn" data-weather="drought">☀️ 乾旱</button>
+                </div>
+                <div class="slider-row">
+                    <span>淺井</span>
+                    <input type="range" id="wellDepthSlider" min="80" max="310" value="210" aria-label="水井深度">
+                    <span>深井</span>
+                </div>
+                <div class="metric-grid">
+                    <div class="metric"><span class="metric-label">氣候</span><span class="metric-value" id="weatherMetric" style="font-size:19px;">正常季</span></div>
+                    <div class="metric"><span class="metric-label">水井狀態</span><span class="metric-value" id="wellMetric" style="font-size:19px;">有水</span></div>
+                    <div class="metric"><span class="metric-label">泉水狀態</span><span class="metric-value" id="springMetric" style="font-size:19px;">湧出</span></div>
+                </div>
+                <div id="groundResult" class="result-box" aria-live="polite">切換氣候並調整井深，找出水井乾涸與恢復的條件。</div>
+            </article>
+        </div>
+
+        <details class="teacher-note">
+            <summary>👩‍🏫 教師引導建議</summary>
+            <div>讓學生先固定井深，只改氣候；再固定氣候，只改井深。一次只改一個變因，才能清楚判斷因果。</div>
+        </details>
+    </section>
+
+    <!-- 分頁四：地層下陷 -->
+    <section id="tab-crisis" class="tab-content">
+        <div class="subtab-container" role="tablist" aria-label="地層下陷內容模式">
+            <button type="button" class="subtab-button active" data-subtab="crisis-teach">🔬 災難模擬室</button>
+            <button type="button" class="subtab-button" data-subtab="crisis-practice">📝 觀念挑戰</button>
+        </div>
+
+        <div id="crisis-teach" class="subtab-content active">
+            <div class="grid-2col">
+                <article class="panel" style="border-color: var(--chalk-coral); margin-top:0;">
+                    <h2>真正的因果鏈：水壓下降 → 地層壓密</h2>
+                    <p>大量抽取地下水會降低孔隙水壓，使土粒與岩粒承受更大的有效壓力。鬆散沉積層的孔隙因此被壓縮，地面便可能下陷。</p>
+                    <ol>
+                        <li><strong style="color:var(--chalk-cyan);">抽水：</strong>井附近形成地下水位下降漏斗。</li>
+                        <li><strong style="color:var(--chalk-yellow);">失去支撐：</strong>孔隙水壓降低，顆粒承受的壓力增加。</li>
+                        <li><strong style="color:var(--chalk-pink);">壓密下陷：</strong>沉積層變薄，地表整體下降。</li>
+                    </ol>
+                    <div class="trap-box">
+                        <strong>課本因果：</strong>超抽地下水使孔隙失去水的支撐，上方土石的重量會壓縮岩層孔隙；若地表還有較重建築物，局部沉降可能更明顯，但核心起點仍是地下水位下降。
+                    </div>
+                    <div class="checkpoint"><strong>不可逆的意思：</strong>之後即使水位回升，被永久壓密的孔隙也不一定能恢復原來厚度。</div>
+                </article>
+
+                <article class="panel" style="border-color: var(--chalk-purple); margin-top:0;">
+                    <h2>【互動】抽水、補注與不可逆下陷</h2>
+                    <div class="canvas-wrap" style="border-color: var(--chalk-purple);">
+                        <canvas id="crisisCanvas" class="rect-canvas" width="1000" height="600" aria-label="抽取地下水造成水位下降與地層壓密；補注後水位回升，但永久下陷仍保留。">你的瀏覽器不支援 Canvas。</canvas>
+                    </div>
+                    <div class="lab-controls center">
+                        <button type="button" class="action-btn warning" id="pumpOnceBtn">🚰 抽水一次</button>
+                        <button type="button" class="action-btn warning" id="pumpFiveBtn">⚠ 連續超抽 ×5</button>
+                        <button type="button" class="action-btn success" id="rechargeBtn">🌧 停抽並補注</button>
+                        <button type="button" class="action-btn" id="resetCrisisBtn">↺ 重新開始</button>
+                    </div>
+                    <div class="metric-grid">
+                        <div class="metric"><span class="metric-label">地下水位下降</span><span class="metric-value" id="drawdownMetric">0</span></div>
+                        <div class="metric"><span class="metric-label">累積永久下陷</span><span class="metric-value" id="subsidenceMetric">0</span></div>
+                        <div class="metric"><span class="metric-label">目前階段</span><span class="metric-value" id="crisisStageMetric" style="font-size:17px;">穩定</span></div>
+                    </div>
+                    <div id="crisisResult" class="result-box" aria-live="polite">先抽水幾次，再按「停抽並補注」，比較水位與地表是否都回到原位。</div>
+                </article>
+            </div>
+
+            <details class="teacher-note">
+                <summary>👩‍🏫 教師引導建議</summary>
+                <div>先讓學生只看「水位」是否回升，再看粉紅色原地表基準線。要求學生說出：「恢復的是水位，不一定是地層厚度。」</div>
+            </details>
+        </div>
+
+        <div id="crisis-practice" class="subtab-content">
+            <div class="panel" style="border-color: var(--chalk-yellow); max-width: 860px; margin: 0 auto;">
+                <h2>會考觀念挑戰</h2>
+                <div class="quiz-question">
+                    <h3>第 1 題</h3>
+                    <p>某地長期超抽地下水而發生地層下陷。後來全面停抽並連續降雨，最合理的結果是什麼？</p>
+                    <div class="choice-list" data-quiz="q1">
+                        <button type="button" class="choice-btn" data-correct="false">A. 地下水位與地表高度都一定完全恢復</button>
+                        <button type="button" class="choice-btn" data-correct="true">B. 地下水位可能回升，但永久壓密造成的下陷未必恢復</button>
+                        <button type="button" class="choice-btn" data-correct="false">C. 只要拆除房屋，地層就會立刻彈回</button>
+                        <button type="button" class="choice-btn" data-correct="false">D. 降雨會讓地層下陷速度必然加快</button>
+                    </div>
+                    <div class="quiz-feedback" id="q1Feedback" aria-live="polite"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h3>第 2 題</h3>
+                    <p>下列哪一項最能說明超抽地下水造成地層下陷的核心機制？</p>
+                    <div class="choice-list" data-quiz="q2">
+                        <button type="button" class="choice-btn" data-correct="false">A. 地下水變成水蒸氣，把地層向下拉</button>
+                        <button type="button" class="choice-btn" data-correct="false">B. 房屋重量把整個地區的岩層壓碎</button>
+                        <button type="button" class="choice-btn" data-correct="true">C. 孔隙水壓降低，使沉積物承受更大壓力並壓密</button>
+                        <button type="button" class="choice-btn" data-correct="false">D. 海水鹽度增加，使土壤突然收縮</button>
+                    </div>
+                    <div class="quiz-feedback" id="q2Feedback" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+(() => {
+    "use strict";
+
+    const state = {
+        activeTab: "tab-sphere",
+        worldLand: null,
+        mapReady: false,
+        globeProjection: null,
+        globePath: null,
+        globeRotation: [-135, -18, 0],
+        globeSpinning: true,
+        globeDragging: false,
+        sample: { ocean: 0, land: 0, marker: null, timer: null },
+        iceMode: "sea",
+        temperature: 0,
+        thermalExpansion: false,
+        weather: "normal",
+        groundwaterY: 230,
+        wellDepth: 210,
+        rainDrops: [],
+        crisis: { targetDrawdown: 0, drawdown: 0, subsidence: 0, recharging: false }
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => [...document.querySelectorAll(selector)];
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+    function ctxOf(id) {
+        const canvas = document.getElementById(id);
+        return canvas ? canvas.getContext("2d") : null;
+    }
+
+    function openTab(tabId) {
+        state.activeTab = tabId;
+        $$(".tab-content").forEach(el => el.classList.toggle("active", el.id === tabId));
+        $$(".tab-button").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tabId));
+        if (tabId === "tab-sphere") drawGlobe();
+        if (tabId === "tab-ice") drawIce();
+        if (tabId === "tab-ground") drawGroundwater();
+        if (tabId === "tab-crisis") drawCrisis();
+    }
+
+    function openSubTab(id) {
+        $$(".subtab-content").forEach(el => el.classList.toggle("active", el.id === id));
+        $$(".subtab-button").forEach(btn => btn.classList.toggle("active", btn.dataset.subtab === id));
+    }
+
+    // ---------- 1. 可旋轉地球儀與隨機落點 ----------
+    function setupGlobe() {
+        if (typeof d3 === "undefined" || typeof topojson === "undefined") {
+            $("#sampleLog").textContent = "地圖程式庫尚未載入，請檢查網路連線。";
+            return;
+        }
+
+        state.globeProjection = d3.geoOrthographic()
+            .scale(245)
+            .translate([500, 295])
+            .clipAngle(90)
+            .precision(.4)
+            .rotate(state.globeRotation);
+
+        state.globePath = d3.geoPath(state.globeProjection).context(ctxOf("sphereCanvas"));
+
+        d3.select("#sphereCanvas").call(
+            d3.drag()
+                .on("start", () => {
+                    state.globeDragging = true;
+                    state.globeSpinning = false;
+                    updateSpinButton();
+                })
+                .on("drag", (event) => {
+                    const r = state.globeProjection.rotate();
+                    const sensitivity = 75 / state.globeProjection.scale();
+                    state.globeRotation = [
+                        r[0] + event.dx * sensitivity,
+                        clamp(r[1] - event.dy * sensitivity, -80, 80),
+                        0
+                    ];
+                    state.globeProjection.rotate(state.globeRotation);
+                })
+                .on("end", () => { state.globeDragging = false; })
+        );
+
+        fetch("https://unpkg.com/world-atlas@2.0.2/countries-110m.json")
+            .then(response => {
+                if (!response.ok) throw new Error("地圖資料載入失敗");
+                return response.json();
+            })
+            .then(world => {
+                state.worldLand = topojson.feature(world, world.objects.countries);
+                state.mapReady = true;
+                $("#sampleLog").textContent = "地球儀已就緒。先拖曳觀察，再投下第一滴水。";
+                drawGlobe();
+            })
+            .catch(error => {
+                console.error(error);
+                state.mapReady = false;
+                $("#sampleLog").textContent = "無法載入真實海岸線；請確認網路後重新整理。";
+                drawGlobe();
+            });
+    }
+
+    function isFrontHemisphere(coords) {
+        if (!state.globeProjection) return false;
+        const center = [-state.globeProjection.rotate()[0], -state.globeProjection.rotate()[1]];
+        return d3.geoDistance(coords, center) < Math.PI / 2;
+    }
+
+    function drawGlobe() {
+        const ctx = ctxOf("sphereCanvas");
+        if (!ctx) return;
+        ctx.clearRect(0, 0, 1000, 620);
+        ctx.fillStyle = "#091812";
+        ctx.fillRect(0, 0, 1000, 620);
+
+        // 星空點綴
+        ctx.fillStyle = "rgba(255,255,255,.45)";
+        for (let i = 0; i < 70; i++) {
+            const x = (i * 149) % 1000;
+            const y = (i * 83) % 620;
+            const r = i % 7 === 0 ? 1.8 : 1;
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        }
+
+        if (!state.globeProjection || !state.globePath) {
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 28px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("正在準備地球儀…", 500, 310);
+            return;
+        }
+
+        state.globeProjection.rotate(state.globeRotation);
+        const path = state.globePath;
+
+        // 大氣暈光
+        const glow = ctx.createRadialGradient(500, 295, 230, 500, 295, 285);
+        glow.addColorStop(0, "rgba(85,233,255,.18)");
+        glow.addColorStop(1, "rgba(85,233,255,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath(); ctx.arc(500, 295, 285, 0, Math.PI * 2); ctx.fill();
+
+        // 海洋球體
+        ctx.fillStyle = "#116f9b";
+        ctx.beginPath(); path({ type: "Sphere" }); ctx.fill();
+
+        // 經緯線
+        ctx.strokeStyle = "rgba(255,255,255,.20)";
+        ctx.lineWidth = 1;
+        ctx.beginPath(); path(d3.geoGraticule10()); ctx.stroke();
+
+        if (state.mapReady && state.worldLand) {
+            ctx.fillStyle = "#55a66f";
+            ctx.strokeStyle = "#244f36";
+            ctx.lineWidth = 1.2;
+            ctx.beginPath(); path(state.worldLand); ctx.fill(); ctx.stroke();
+        } else {
+            // 只在資料未載入時顯示簡單提示，不假裝是真實海岸線
+            ctx.fillStyle = "rgba(255,255,255,.86)";
+            ctx.font = "bold 20px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("海岸線資料載入中…", 500, 300);
+        }
+
+        ctx.strokeStyle = "rgba(255,255,255,.9)";
+        ctx.lineWidth = 4;
+        ctx.beginPath(); path({ type: "Sphere" }); ctx.stroke();
+
+        // 臺灣定位點
+        const taiwan = [120.96, 23.7];
+        if (isFrontHemisphere(taiwan)) {
+            const p = state.globeProjection(taiwan);
+            ctx.fillStyle = "#fff36a";
+            ctx.beginPath(); ctx.arc(p[0], p[1], 7, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = "#10261f"; ctx.lineWidth = 3; ctx.stroke();
+            ctx.fillStyle = "#ffffff"; ctx.font = "bold 18px sans-serif"; ctx.textAlign = "left";
+            ctx.fillText("臺灣", p[0] + 11, p[1] + 6);
+        }
+
+        // 隨機落點
+        const marker = state.sample.marker;
+        if (marker && isFrontHemisphere(marker.coords)) {
+            const p = state.globeProjection(marker.coords);
+            ctx.fillStyle = marker.isLand ? "#9af06f" : "#55e9ff";
+            ctx.beginPath(); ctx.arc(p[0], p[1], 11, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3; ctx.stroke();
+            ctx.fillStyle = "#ffffff"; ctx.font = "bold 21px sans-serif"; ctx.textAlign = "left";
+            ctx.fillText(marker.isLand ? "落在陸地" : "落在海洋", p[0] + 16, p[1] + 7);
+        }
+
+        ctx.fillStyle = "#55e9ff";
+        ctx.font = "900 30px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("藍色＝海洋　綠色＝陸地", 500, 588);
+    }
+
+    function randomSpherePoint() {
+        const lon = Math.random() * 360 - 180;
+        const lat = Math.asin(Math.random() * 2 - 1) * 180 / Math.PI;
+        return [lon, lat];
+    }
+
+    function addSample() {
+        if (!state.mapReady || !state.worldLand) {
+            $("#sampleLog").textContent = "地圖資料尚未就緒，暫時不能進行真實落點判定。";
+            return;
+        }
+        const coords = randomSpherePoint();
+        const isLand = d3.geoContains(state.worldLand, coords);
+        if (isLand) state.sample.land += 1;
+        else state.sample.ocean += 1;
+
+        state.sample.marker = { coords, isLand };
+        state.globeSpinning = false;
+        state.globeRotation = [-coords[0], -coords[1], 0];
+        state.globeProjection.rotate(state.globeRotation);
+        updateSpinButton();
+        updateSampleUI(isLand);
+        drawGlobe();
+    }
+
+    function updateSampleUI(lastIsLand = null) {
+        const total = state.sample.ocean + state.sample.land;
+        $("#oceanCount").textContent = state.sample.ocean;
+        $("#landCount").textContent = state.sample.land;
+        $("#observedRate").textContent = total ? `${Math.round(state.sample.ocean / total * 100)}%` : "—";
+        const revealBtn = $("#reveal71Btn");
+        revealBtn.disabled = total < 10;
+        revealBtn.textContent = total < 10 ? `🔍 再做 ${10 - total} 滴後揭曉` : "🔍 揭曉真實比例";
+        const log = $("#sampleLog");
+        log.classList.remove("ocean", "land");
+        if (lastIsLand === null) {
+            log.textContent = "先轉一轉地球，再投下第一滴水。";
+        } else if (lastIsLand) {
+            log.classList.add("land");
+            log.innerHTML = `第 ${total} 滴落在 <strong style="color:var(--chalk-green);">陸地</strong>。目前海洋出現率 ${Math.round(state.sample.ocean / total * 100)}%。`;
+        } else {
+            log.classList.add("ocean");
+            log.innerHTML = `第 ${total} 滴落在 <strong style="color:var(--chalk-cyan);">海洋</strong>。目前海洋出現率 ${Math.round(state.sample.ocean / total * 100)}%。`;
+        }
+    }
+
+    function runTenSamples() {
+        if (state.sample.timer) return;
+        let remaining = 10;
+        $("#dropTenBtn").disabled = true;
+        state.sample.timer = window.setInterval(() => {
+            addSample();
+            remaining -= 1;
+            if (remaining <= 0) {
+                clearInterval(state.sample.timer);
+                state.sample.timer = null;
+                $("#dropTenBtn").disabled = false;
+            }
+        }, 260);
+    }
+
+    function resetSamples() {
+        if (state.sample.timer) clearInterval(state.sample.timer);
+        state.sample = { ocean: 0, land: 0, marker: null, timer: null };
+        $("#dropTenBtn").disabled = false;
+        $("#truth71").classList.add("hidden");
+        state.globeRotation = [-135, -18, 0];
+        state.globeSpinning = true;
+        updateSpinButton();
+        updateSampleUI();
+    }
+
+    function updateSpinButton() {
+        $("#toggleSpinBtn").textContent = state.globeSpinning ? "⏸ 暫停自轉" : "▶ 繼續自轉";
+    }
+
+    // ---------- 2. 海冰與陸冰 ----------
+    function setIceMode(mode) {
+        state.iceMode = mode;
+        $("#seaIceBtn").classList.toggle("active-btn", mode === "sea");
+        $("#landIceBtn").classList.toggle("active-btn", mode === "land");
+        updateIceUI();
+        drawIce();
+    }
+
+    function iceSeaRise() {
+        const melt = state.temperature / 100;
+        // 這是概念模型，不把海平面畫到誇張淹沒整座城市。
+        // 陸冰融水與熱膨脹都限制在較小、清楚且不易失真的視覺範圍。
+        const landContribution = state.iceMode === "land" ? 42 * melt : 0;
+        const thermalContribution = state.thermalExpansion ? 18 * melt : 0;
+        return landContribution + thermalContribution;
+    }
+
+    function updateIceUI() {
+        const melt = state.temperature;
+        const rise = iceSeaRise();
+        $("#iceModeMetric").textContent = state.iceMode === "sea" ? "海冰" : "陸冰";
+        $("#meltMetric").textContent = `${melt}%`;
+        $("#seaRiseMetric").textContent = `${Math.round(rise / 5)} 格`;
+        const expansionText = state.thermalExpansion ? "，另外還加入海水熱膨脹" : "";
+        if (state.iceMode === "sea") {
+            $("#iceResult").innerHTML = `海冰只做小幅變薄，最大升溫時仍保留主要冰體；它原本已排開海水，因此不造成明顯海面上升${expansionText}。`;
+        } else {
+            $("#iceResult").innerHTML = `陸冰只做有限度的頂部降低與前緣退縮，底部始終貼住陸地；融水流入海洋後，使水平海面上升${expansionText}。`;
+        }
+    }
+
+    function drawIce() {
+        const ctx = ctxOf("glacierCanvas");
+        if (!ctx) return;
+        const melt = state.temperature / 100;
+        const rise = iceSeaRise();
+        const initialSeaY = 430;
+        const seaY = initialSeaY - rise;
+
+        const terrainY = (x) => {
+            if (x <= 380) return 345 + x * 0.10;
+            if (x <= 590) return 383 + (x - 380) * 0.52;
+            if (x <= 760) return 492 - (x - 590) * 0.365;
+            return 430;
+        };
+
+        ctx.clearRect(0, 0, 1000, 600);
+        ctx.fillStyle = "#12313a";
+        ctx.fillRect(0, 0, 1000, 600);
+
+        // 太陽與升溫值
+        ctx.fillStyle = `rgba(255, ${Math.round(235 - melt * 120)}, 80, .96)`;
+        ctx.beginPath();
+        ctx.arc(95, 88, 38 + melt * 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 23px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(`升溫 ${state.temperature}%`, 150, 95);
+
+        // 連續陸地與海床：左側山地、海盆、右側沿海平原是一整塊地殼。
+        ctx.beginPath();
+        ctx.moveTo(0, terrainY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, terrainY(x));
+        ctx.lineTo(1000, 600);
+        ctx.lineTo(0, 600);
+        ctx.closePath();
+        ctx.fillStyle = "#7b5231";
+        ctx.fill();
+
+        // 地層紋理
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(0, terrainY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, terrainY(x));
+        ctx.lineTo(1000, 600);
+        ctx.lineTo(0, 600);
+        ctx.closePath();
+        ctx.clip();
+        for (let y = 470; y <= 590; y += 28) {
+            ctx.strokeStyle = "rgba(255,255,255,.12)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(1000, y);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // 城市固定在沿海平原上；水位升高時，海水會覆蓋建築下部。
+        const cityBase = terrainY(840);
+        ctx.fillStyle = "#cbb56c";
+        ctx.fillRect(790, cityBase - 150, 62, 150);
+        ctx.fillRect(875, cityBase - 105, 82, 105);
+        ctx.fillStyle = "#ff8d78";
+        ctx.beginPath();
+        ctx.moveTo(776, cityBase - 150);
+        ctx.lineTo(821, cityBase - 192);
+        ctx.lineTo(866, cityBase - 150);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#17352b";
+        ctx.fillRect(811, cityBase - 65, 22, 65);
+
+        // 海水只存在於海盆與低於海面的沿海地區，不會穿透陸地。
+        let coastX = 0;
+        for (let x = 0; x <= 1000; x += 2) {
+            if (terrainY(x) >= seaY) { coastX = x; break; }
+        }
+        ctx.beginPath();
+        ctx.moveTo(coastX, seaY);
+        ctx.lineTo(1000, seaY);
+        for (let x = 1000; x >= coastX; x -= 8) ctx.lineTo(x, terrainY(x));
+        ctx.closePath();
+        ctx.fillStyle = "rgba(17,111,155,.90)";
+        ctx.fill();
+        ctx.save();
+        ctx.clip();
+        for (let y = seaY + 18; y < 600; y += 32) {
+            ctx.strokeStyle = "rgba(85,233,255,.22)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(coastX, y);
+            ctx.lineTo(1000, y);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // 靜止且彼此連通的海水，其自由液面必須保持水平；升高時向兩側低地平鋪。
+        ctx.strokeStyle = "#55e9ff";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(coastX, seaY);
+        ctx.lineTo(1000, seaY);
+        ctx.stroke();
+        if (rise > 2) {
+            ctx.fillStyle = "#55e9ff";
+            ctx.font = "900 18px sans-serif";
+            ctx.textAlign = "left";
+            ctx.fillText("目前海面：水平向低地平鋪", Math.min(720, Math.max(coastX + 28, 560)), seaY - 15);
+        }
+
+        // 初始海平面基準線
+        ctx.strokeStyle = "#fff36a";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([10, 8]);
+        ctx.beginPath();
+        ctx.moveTo(430, initialSeaY);
+        ctx.lineTo(1000, initialSeaY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#fff36a";
+        ctx.font = "900 18px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText("初始海平面", 970, initialSeaY - 12);
+
+        // 冰體的最大與最小外形刻意縮小差距。
+        // 即使滑桿到 0% 或 100%，也不會出現「巨大冰山」或「冰完全消失」的失真畫面。
+        const lerp = (start, end, t) => start + (end - start) * t;
+
+        if (state.iceMode === "sea") {
+            // 海冰：只做小幅變薄與縮窄，中心位置及海面交界固定。
+            const cx = 600;
+            const halfW = lerp(112, 82, melt);
+            const topH = lerp(38, 28, melt);
+            const bottomH = lerp(74, 56, melt);
+
+            ctx.fillStyle = "#e9ffff";
+            ctx.beginPath();
+            ctx.moveTo(cx - halfW, seaY + 2);
+            ctx.lineTo(cx - halfW * 0.58, seaY - topH);
+            ctx.lineTo(cx - halfW * 0.10, seaY - topH * 0.72);
+            ctx.lineTo(cx + halfW * 0.35, seaY - topH * 0.92);
+            ctx.lineTo(cx + halfW, seaY + 2);
+            ctx.lineTo(cx + halfW * 0.62, seaY + bottomH);
+            ctx.lineTo(cx - halfW * 0.48, seaY + bottomH * 0.88);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "900 21px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("海冰：主要冰體仍保留", cx, seaY - topH - 28);
+
+            ctx.strokeStyle = "rgba(255,255,255,.55)";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([7, 6]);
+            ctx.beginPath();
+            ctx.moveTo(cx - halfW - 18, seaY);
+            ctx.lineTo(cx + halfW + 18, seaY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        } else {
+            // 陸冰：底部沿著山坡描繪，頂部與前緣只做有限度退縮。
+            const leftX = lerp(72, 100, melt);
+            const rightX = lerp(352, 315, melt);
+            const leftBase = terrainY(leftX) - 2;
+            const rightBase = terrainY(rightX) - 2;
+
+            const peak1X = lerp(118, 134, melt);
+            const peak1Y = lerp(236, 260, melt);
+            const valleyX = lerp(188, 192, melt);
+            const valleyY = lerp(286, 299, melt);
+            const peak2X = lerp(266, 252, melt);
+            const peak2Y = lerp(207, 242, melt);
+
+            ctx.fillStyle = "#e9ffff";
+            ctx.beginPath();
+            ctx.moveTo(leftX, leftBase);
+            ctx.lineTo(peak1X, peak1Y);
+            ctx.lineTo(valleyX, valleyY);
+            ctx.lineTo(peak2X, peak2Y);
+            ctx.lineTo(rightX, rightBase);
+            // 沿實際地形反向封底，確保冰川永遠貼地，不會懸空。
+            for (let x = rightX; x >= leftX; x -= 8) {
+                ctx.lineTo(x, terrainY(x) - 2);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "900 20px sans-serif";
+            ctx.textAlign = "left";
+            ctx.fillText("陸冰：底部沿山坡貼地", 58, 198);
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(228, 204);
+            ctx.lineTo(210, terrainY(210) - 13);
+            ctx.stroke();
+
+            if (melt > 0.04) {
+                const streamStartX = rightX - 10;
+                ctx.strokeStyle = "#55e9ff";
+                ctx.lineWidth = 7;
+                ctx.beginPath();
+                ctx.moveTo(streamStartX, terrainY(streamStartX) - 5);
+                ctx.quadraticCurveTo(392, 402, coastX + 30, seaY + 5);
+                ctx.stroke();
+                ctx.fillStyle = "#55e9ff";
+                ctx.font = "900 18px sans-serif";
+                ctx.textAlign = "left";
+                ctx.fillText("融水流入海洋", 292, Math.min(336, seaY - 32));
+            }
+        }
+
+        // 重畫地表輪廓，讓陸地連續關係清楚。
+        ctx.strokeStyle = "#9af06f";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(0, terrainY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, terrainY(x));
+        ctx.stroke();
+
+        if (rise > 18) {
+            ctx.fillStyle = "#ff5f67";
+            ctx.font = "900 26px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("沿海淹水風險增加", 835, 170);
+        }
+    }
+
+    // ---------- 3. 地下水面 ----------
+    function groundY(x) {
+        const slope = 175 + 0.12 * x;
+        const highland = -52 * Math.exp(-Math.pow(x - 260, 2) / 42000);
+        const springValley = 52 * Math.exp(-Math.pow(x - 700, 2) / 26000);
+        return slope + highland + springValley;
+    }
+
+    function waterY(x) {
+        const g = groundY(x);
+        const baseDepth = state.weather === "rain" ? 38 : state.weather === "drought" ? 122 : 72;
+        const gentleWave = 14 * Math.sin((x / 1000) * Math.PI);
+        const springLift = state.weather === "rain" ? 118 : state.weather === "drought" ? 36 : 92;
+        const dischargeRise = springLift * Math.exp(-Math.pow(x - 700, 2) / 24000);
+        const raw = g + baseDepth + gentleWave - dischargeRise;
+        // 地下水面只能位於地表以下；雨季在泉口可逼近地表，但絕不穿出陸地。
+        return clamp(raw, g + 4, 458);
+    }
+
+    function setWeather(weather) {
+        state.weather = weather;
+        $$(".weather-btn").forEach(btn => btn.classList.toggle("active-btn", btn.dataset.weather === weather));
+        updateGroundUI();
+    }
+
+    function updateGroundUI() {
+        const labels = { rain: "雨季", normal: "正常季", drought: "乾旱" };
+        $("#weatherMetric").textContent = labels[state.weather];
+        const wellX = 265;
+        const wellBottom = Math.min(570, groundY(wellX) + state.wellDepth);
+        const wellHasWater = wellBottom > waterY(wellX);
+        const springX = 700;
+        const springFlows = waterY(springX) <= groundY(springX) + 6;
+        $("#wellMetric").textContent = wellHasWater ? "有水" : "乾涸";
+        $("#springMetric").textContent = springFlows ? "湧出" : "枯竭";
+        $("#groundResult").innerHTML = `目前是<strong>${labels[state.weather]}</strong>；井底${wellHasWater ? "已低於" : "仍高於"}地下水面，所以水井<strong style="color:${wellHasWater ? "var(--chalk-cyan)" : "var(--chalk-red)"};">${wellHasWater ? "有水" : "乾涸"}</strong>。`;
+    }
+
+    function drawGroundwater() {
+        const ctx = ctxOf("waterTableCanvas");
+        if (!ctx) return;
+        const target = state.weather === "rain" ? 185 : state.weather === "drought" ? 390 : 230;
+        state.groundwaterY += (target - state.groundwaterY) * .045;
+
+        if (state.weather === "rain" && Math.random() < .35) {
+            state.rainDrops.push({ x: Math.random() * 1000, y: -10, speed: 10 + Math.random() * 8 });
+        }
+
+        ctx.clearRect(0, 0, 1000, 600);
+        ctx.fillStyle = "#122d38"; ctx.fillRect(0, 0, 1000, 600);
+
+        // 雨滴
+        ctx.strokeStyle = "rgba(85,233,255,.8)"; ctx.lineWidth = 3;
+        for (let i = state.rainDrops.length - 1; i >= 0; i--) {
+            const drop = state.rainDrops[i];
+            ctx.beginPath(); ctx.moveTo(drop.x, drop.y); ctx.lineTo(drop.x - 3, drop.y + 16); ctx.stroke();
+            drop.y += drop.speed;
+            if (drop.y > groundY(drop.x) || state.weather !== "rain") state.rainDrops.splice(i, 1);
+        }
+
+        // 地層裁切
+        ctx.save();
+        ctx.beginPath(); ctx.moveTo(0, groundY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, groundY(x));
+        ctx.lineTo(1000, 600); ctx.lineTo(0, 600); ctx.closePath(); ctx.clip();
+
+        ctx.fillStyle = "#c58b52"; ctx.fillRect(0, 0, 1000, 465);
+
+        // 飽和帶
+        ctx.beginPath(); ctx.moveTo(0, waterY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, waterY(x));
+        ctx.lineTo(1000, 465); ctx.lineTo(0, 465); ctx.closePath();
+        ctx.fillStyle = "rgba(17,111,155,.78)"; ctx.fill();
+
+        // 相對不透水層
+        ctx.fillStyle = "#53535a"; ctx.fillRect(0, 465, 1000, 135);
+        for (let y = 480; y < 590; y += 22) {
+            ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1000, y); ctx.stroke();
+        }
+        ctx.restore();
+
+        // 地表
+        ctx.strokeStyle = "#9af06f"; ctx.lineWidth = 7;
+        ctx.beginPath(); ctx.moveTo(0, groundY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, groundY(x)); ctx.stroke();
+
+        // 地下水面虛線：同樣裁切在地層內，避免線條跑到陸地外。
+        ctx.save();
+        ctx.beginPath(); ctx.moveTo(0, groundY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, groundY(x));
+        ctx.lineTo(1000, 600); ctx.lineTo(0, 600); ctx.closePath(); ctx.clip();
+        ctx.strokeStyle = "#55e9ff"; ctx.lineWidth = 4; ctx.setLineDash([10, 8]);
+        ctx.beginPath(); ctx.moveTo(0, waterY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, waterY(x));
+        ctx.stroke(); ctx.setLineDash([]);
+        ctx.restore();
+
+        // 水井
+        const wellX = 265;
+        const wellTop = groundY(wellX) - 30;
+        const wellBottom = Math.min(570, groundY(wellX) + state.wellDepth);
+        const localWater = waterY(wellX);
+        ctx.fillStyle = "#8b8f94"; ctx.fillRect(wellX - 20, wellTop, 40, wellBottom - wellTop);
+        ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3; ctx.strokeRect(wellX - 20, wellTop, 40, wellBottom - wellTop);
+        if (wellBottom > localWater) {
+            ctx.fillStyle = "#55e9ff"; ctx.fillRect(wellX - 16, localWater, 32, wellBottom - localWater);
+        }
+        ctx.fillStyle = wellBottom > localWater ? "#55e9ff" : "#ff5f67";
+        ctx.font = "900 22px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(wellBottom > localWater ? "井中有水" : "井已乾涸", wellX, wellTop - 18);
+
+        // 泉水
+        const springX = 700;
+        const springGround = groundY(springX);
+        const springFlows = waterY(springX) <= springGround + 6;
+        if (springFlows) {
+            ctx.fillStyle = "#55e9ff"; ctx.beginPath(); ctx.arc(springX, springGround, 17, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = "#55e9ff"; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(springX, springGround); ctx.quadraticCurveTo(760, springGround + 20, 820, springGround + 5); ctx.stroke();
+        }
+        ctx.fillStyle = springFlows ? "#55e9ff" : "#ff5f67";
+        ctx.fillText(springFlows ? "泉水湧出" : "泉水枯竭", springX, springGround - 30);
+
+        // 標籤
+        ctx.textAlign = "left"; ctx.font = "bold 20px sans-serif";
+        ctx.fillStyle = "#ffffff"; ctx.fillText("未飽和帶／透水層", 35, 350);
+        ctx.fillStyle = "#55e9ff"; ctx.fillText("地下水面", 35, waterY(35) - 12);
+        ctx.fillStyle = "#ffffff"; ctx.fillText("相對不透水層", 35, 535);
+
+        updateGroundUI();
+    }
+
+    // ---------- 4. 地層下陷 ----------
+    function pumpWater(times = 1) {
+        state.crisis.recharging = false;
+        for (let i = 0; i < times; i++) {
+            state.crisis.targetDrawdown = clamp(state.crisis.targetDrawdown + 15, 0, 180);
+            if (state.crisis.targetDrawdown > 45) {
+                const increment = 2.5 + (state.crisis.targetDrawdown - 45) * .018;
+                state.crisis.subsidence = clamp(state.crisis.subsidence + increment, 0, 78);
+            }
+        }
+        updateCrisisUI();
+    }
+
+    function rechargeGroundwater() {
+        state.crisis.targetDrawdown = 0;
+        state.crisis.recharging = true;
+        updateCrisisUI();
+    }
+
+    function resetCrisis() {
+        state.crisis = { targetDrawdown: 0, drawdown: 0, subsidence: 0, recharging: false };
+        updateCrisisUI();
+        drawCrisis();
+    }
+
+    function crisisWaterY(x) {
+        return 350 + state.crisis.drawdown * Math.exp(-Math.pow(x - 500, 2) / 60000);
+    }
+
+    function crisisGroundY(x) {
+        // 區域性壓密較廣但較淺：抽水井附近會下陷，卻不應比重建築物正下方更深。
+        const regionalCompaction = state.crisis.subsidence * 0.35
+            * Math.exp(-Math.pow(x - 560, 2) / 130000);
+        const pumpingAreaSettlement = state.crisis.subsidence * 0.12
+            * Math.exp(-Math.pow(x - 500, 2) / 52000);
+
+        // 建築物荷重造成局部附加應力，讓房屋正下方形成更窄、更深的沉陷槽。
+        const buildingLoadSettlement = state.crisis.subsidence * 0.95
+            * Math.exp(-Math.pow(x - 740, 2) / 8500);
+
+        return 235 + regionalCompaction + pumpingAreaSettlement + buildingLoadSettlement;
+    }
+
+    function updateCrisisUI() {
+        $("#drawdownMetric").textContent = Math.round(state.crisis.drawdown);
+        $("#subsidenceMetric").textContent = Math.round(state.crisis.subsidence);
+        let stage = "穩定";
+        if (state.crisis.recharging && state.crisis.drawdown > 4) stage = "水位回升中";
+        else if (state.crisis.recharging && state.crisis.subsidence > 1) stage = "留下永久下陷";
+        else if (state.crisis.targetDrawdown > 100) stage = "嚴重超抽";
+        else if (state.crisis.targetDrawdown > 0) stage = "抽水中";
+        $("#crisisStageMetric").textContent = stage;
+
+        if (state.crisis.recharging && state.crisis.drawdown < 5 && state.crisis.subsidence > 1) {
+            $("#crisisResult").innerHTML = `地下水位已接近恢復，但仍留下約 <strong style="color:var(--chalk-pink);">${Math.round(state.crisis.subsidence)} 格</strong>永久下陷：恢復水量，不等於恢復地層厚度。`;
+        } else if (state.crisis.recharging) {
+            $("#crisisResult").innerHTML = `停止抽水並補注後，地下水位正在回升；請比較粉紅色原地表線，觀察地面是否同步回到原位。`;
+        } else if (state.crisis.targetDrawdown > 0) {
+            $("#crisisResult").innerHTML = `抽水使井附近形成下降漏斗；當水位降得夠多，沉積層開始壓密，累積下陷不會在停抽後自動歸零。`;
+        } else {
+            $("#crisisResult").textContent = "先抽水幾次，再按「停抽並補注」，比較水位與地表是否都回到原位。";
+        }
+    }
+
+    function drawCrisis() {
+        const ctx = ctxOf("crisisCanvas");
+        if (!ctx) return;
+        state.crisis.drawdown += (state.crisis.targetDrawdown - state.crisis.drawdown) * .055;
+
+        ctx.clearRect(0, 0, 1000, 600);
+        ctx.fillStyle = "#16323a"; ctx.fillRect(0, 0, 1000, 600);
+
+        // 原地表基準線
+        ctx.strokeStyle = "#ff78b7"; ctx.lineWidth = 3; ctx.setLineDash([12, 9]);
+        ctx.beginPath(); ctx.moveTo(0, 235); ctx.lineTo(1000, 235); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = "#ff78b7"; ctx.font = "bold 18px sans-serif"; ctx.textAlign = "right";
+        ctx.fillText("原本地表高度", 975, 222);
+
+        // 地層區域裁切
+        ctx.save();
+        ctx.beginPath(); ctx.moveTo(0, crisisGroundY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, crisisGroundY(x));
+        ctx.lineTo(1000, 600); ctx.lineTo(0, 600); ctx.closePath(); ctx.clip();
+
+        // 乾燥沉積層
+        ctx.fillStyle = "#b36e45"; ctx.fillRect(0, 0, 1000, 600);
+
+        // 壓密層紋理：下陷處層線間距變小
+        for (let baseY = 285; baseY < 590; baseY += 42) {
+            ctx.strokeStyle = "rgba(255,255,255,.20)";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let x = 0; x <= 1000; x += 10) {
+                const settlement = crisisGroundY(x) - 235;
+                const depthRatio = clamp((baseY - 235) / 365, 0, 1);
+                // 上部沉積層移動較多、深部較少，層線間距因此縮小，呈現壓密而非整塊平移。
+                const y = baseY + settlement * (1 - depthRatio);
+                if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        // 飽和區
+        ctx.beginPath(); ctx.moveTo(0, crisisWaterY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, crisisWaterY(x));
+        ctx.lineTo(1000, 600); ctx.lineTo(0, 600); ctx.closePath();
+        ctx.fillStyle = "rgba(17,111,155,.72)"; ctx.fill();
+        ctx.restore();
+
+        // 地表線
+        ctx.strokeStyle = "#9af06f"; ctx.lineWidth = 7;
+        ctx.beginPath(); ctx.moveTo(0, crisisGroundY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, crisisGroundY(x)); ctx.stroke();
+
+        // 地下水面
+        ctx.strokeStyle = "#55e9ff"; ctx.lineWidth = 4; ctx.setLineDash([10, 8]);
+        ctx.beginPath(); ctx.moveTo(0, crisisWaterY(0));
+        for (let x = 0; x <= 1000; x += 10) ctx.lineTo(x, crisisWaterY(x)); ctx.stroke(); ctx.setLineDash([]);
+
+        // 抽水井
+        const wellX = 500;
+        const gWell = crisisGroundY(wellX);
+        ctx.fillStyle = "#8b8f94"; ctx.fillRect(wellX - 22, gWell - 75, 44, 470 - gWell + 75);
+        ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3; ctx.strokeRect(wellX - 22, gWell - 75, 44, 470 - gWell + 75);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 20px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("抽水井", wellX, gWell - 92);
+        if (state.crisis.subsidence > 4) {
+            ctx.font = "900 16px sans-serif";
+            ctx.fillText(`井區下陷 ${Math.round(gWell - 235)} 格`, wellX, gWell - 116);
+        }
+
+        // 房屋與基礎：地區性下陷之外，較大的地表載重讓局部沉降更明顯。
+        const houseX = 740;
+        const houseGroundY = crisisGroundY(houseX);
+        const extraEmbed = 8 + state.crisis.subsidence * 0.08;
+        const houseBaseY = houseGroundY + extraEmbed;
+        ctx.fillStyle = "#8b8f94";
+        ctx.fillRect(houseX - 52, houseGroundY - 2, 104, 48 + extraEmbed);
+        ctx.fillStyle = "#f5d16d";
+        ctx.fillRect(houseX - 65, houseBaseY - 112, 130, 112);
+        ctx.fillStyle = "#ff6d67";
+        ctx.beginPath();
+        ctx.moveTo(houseX - 82, houseBaseY - 112);
+        ctx.lineTo(houseX, houseBaseY - 174);
+        ctx.lineTo(houseX + 82, houseBaseY - 112);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#17352b";
+        ctx.fillRect(houseX - 17, houseBaseY - 62, 34, 62);
+        // 地表線蓋過房屋底部，呈現房屋與基礎已更深陷入地面。
+        ctx.strokeStyle = "#9af06f";
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(houseX - 95, crisisGroundY(houseX - 95));
+        for (let x = houseX - 95; x <= houseX + 95; x += 8) ctx.lineTo(x, crisisGroundY(x));
+        ctx.stroke();
+        ctx.fillStyle = "#fff36a";
+        ctx.font = "900 18px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText("建築荷重", 955, 112);
+        ctx.fillText(`房屋區下陷 ${Math.round(houseGroundY - 235)} 格`, 955, 148);
+        ctx.strokeStyle = "#fff36a";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(875, 158);
+        ctx.lineTo(houseX + 35, houseGroundY + 6);
+        ctx.stroke();
+
+        // 因果標籤
+        ctx.textAlign = "left"; ctx.font = "900 20px sans-serif";
+        ctx.fillStyle = "#55e9ff"; ctx.fillText("地下水位下降漏斗", 45, crisisWaterY(90) - 14);
+        if (state.crisis.subsidence > 2) {
+            ctx.fillStyle = "#ff78b7"; ctx.fillText("孔隙失去水的支撐＋上方重量 → 壓密下陷", 275, 545);
+        }
+        if (state.crisis.targetDrawdown > 110) {
+            ctx.fillStyle = "#ff5f67"; ctx.font = "900 27px sans-serif"; ctx.textAlign = "center";
+            ctx.fillText("⚠ 超抽地下水：水位下降，孔隙逐漸壓密", 500, 62);
+        }
+
+        updateCrisisUI();
+    }
+
+    // ---------- 共同事件 ----------
+    function bindEvents() {
+        $$(".tab-button").forEach(btn => btn.addEventListener("click", () => openTab(btn.dataset.tab)));
+        $$(".subtab-button").forEach(btn => btn.addEventListener("click", () => openSubTab(btn.dataset.subtab)));
+
+        $("#toggleSpinBtn").addEventListener("click", () => {
+            state.globeSpinning = !state.globeSpinning;
+            updateSpinButton();
+        });
+        $("#dropOneBtn").addEventListener("click", addSample);
+        $("#dropTenBtn").addEventListener("click", runTenSamples);
+        $("#resetSampleBtn").addEventListener("click", resetSamples);
+        $("#reveal71Btn").addEventListener("click", () => {
+            $("#truth71").classList.remove("hidden");
+            $("#reveal71Btn").textContent = "✅ 已揭曉";
+        });
+
+        $$(".ice-predict").forEach(btn => btn.addEventListener("click", () => {
+            $$(".ice-predict").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+            const correct = btn.dataset.answer === "land";
+            $("#icePredictionFeedback").innerHTML = correct
+                ? `<span style="color:var(--chalk-green);">答對：陸冰融水會從陸地流入海洋。</span>`
+                : `<span style="color:var(--chalk-yellow);">先保留答案，切換兩種模式做實驗再判斷。</span>`;
+        }));
+        $("#seaIceBtn").addEventListener("click", () => setIceMode("sea"));
+        $("#landIceBtn").addEventListener("click", () => setIceMode("land"));
+        $("#tempSlider").addEventListener("input", event => {
+            state.temperature = Number(event.target.value);
+            updateIceUI(); drawIce();
+        });
+        $("#thermalExpansionCheck").addEventListener("change", event => {
+            state.thermalExpansion = event.target.checked;
+            updateIceUI(); drawIce();
+        });
+
+        $$(".weather-btn").forEach(btn => btn.addEventListener("click", () => setWeather(btn.dataset.weather)));
+        $("#wellDepthSlider").addEventListener("input", event => {
+            state.wellDepth = Number(event.target.value);
+            updateGroundUI(); drawGroundwater();
+        });
+
+        $("#pumpOnceBtn").addEventListener("click", () => pumpWater(1));
+        $("#pumpFiveBtn").addEventListener("click", () => pumpWater(5));
+        $("#rechargeBtn").addEventListener("click", rechargeGroundwater);
+        $("#resetCrisisBtn").addEventListener("click", resetCrisis);
+
+        $$(".choice-list").forEach(list => {
+            list.querySelectorAll(".choice-btn").forEach(btn => btn.addEventListener("click", () => {
+                const feedback = document.getElementById(`${list.dataset.quiz}Feedback`);
+                list.querySelectorAll(".choice-btn").forEach(b => b.classList.remove("correct", "wrong"));
+                if (btn.dataset.correct === "true") {
+                    btn.classList.add("correct");
+                    feedback.innerHTML = `<span style="color:var(--chalk-green);">答對。重點是孔隙壓密可能不可逆，或核心機制是孔隙水壓降低。</span>`;
+                } else {
+                    btn.classList.add("wrong");
+                    feedback.innerHTML = `<span style="color:var(--chalk-yellow);">再想一次：水位可以回升，但被永久壓密的地層不一定恢復。</span>`;
+                }
+            }));
+        });
+    }
+
+    function animationLoop() {
+        if (state.activeTab === "tab-sphere") {
+            if (state.globeSpinning && state.globeProjection) {
+                state.globeRotation[0] += .08;
+                state.globeProjection.rotate(state.globeRotation);
+            }
+            drawGlobe();
+        } else if (state.activeTab === "tab-ground") {
+            drawGroundwater();
+        } else if (state.activeTab === "tab-crisis" && $("#crisis-teach").classList.contains("active")) {
+            drawCrisis();
+        }
+        requestAnimationFrame(animationLoop);
+    }
+
+    window.addEventListener("load", () => {
+        bindEvents();
+        setupGlobe();
+        updateIceUI();
+        updateGroundUI();
+        updateCrisisUI();
+        drawIce();
+        drawGroundwater();
+        drawCrisis();
+        requestAnimationFrame(animationLoop);
+    });
+})();
+</script>
+<!-- 黎明國中自然互動網站：水與陸地重繪版 2026-08 -->
+</body>
+</html>
