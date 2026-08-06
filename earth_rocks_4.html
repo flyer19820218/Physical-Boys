@@ -82,6 +82,7 @@ strong { font-weight: 900; }
 .action-btn.warning { border-color: var(--chalk-pink); }
 .action-btn.success { border-color: var(--chalk-green); }
 .action-btn.orange { border-color: var(--chalk-orange); }
+.action-btn.purple { border-color: var(--chalk-purple); }
 .action-btn.active-btn, .practice-btn.active { background: var(--chalk-cyan); color: var(--bg-base); border-color: var(--chalk-cyan); }
 .action-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; background: transparent; color: var(--chalk-muted); border-color: var(--chalk-muted); }
 
@@ -274,6 +275,8 @@ strong { font-weight: 900; }
                     <button type="button" class="action-btn primary" onclick="triggerCycle('weather')">🌧️ 風化侵蝕</button>
                     <button type="button" class="action-btn success" onclick="triggerCycle('compact')">⬇️ 壓密膠結</button>
                     <button type="button" class="action-btn purple" onclick="triggerCycle('meta')">⚒️ 高溫高壓</button>
+                    <!-- ★ 加入重置按鈕 ★ -->
+                    <button type="button" class="action-btn" onclick="resetCycle()">↺ 重新探索</button>
                 </div>
             </article>
         </div>
@@ -332,16 +335,6 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke, lw=2) {
     if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=lw; ctx.stroke(); }
 }
 
-function arrow(ctx, x1, y1, x2, y2, color, width=5, headSize=16) {
-    const a = Math.atan2(y2-y1, x2-x1);
-    ctx.save(); ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=width;
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x2, y2);
-    ctx.lineTo(x2 - headSize*Math.cos(a-0.5), y2 - headSize*Math.sin(a-0.5));
-    ctx.lineTo(x2 - headSize*Math.cos(a+0.5), y2 - headSize*Math.sin(a+0.5));
-    ctx.closePath(); ctx.fill(); ctx.restore();
-}
-
 // ---------------- 分頁 1：礦物鑑定 ----------------
 function testAction(act) {
     state.mineral.action = act;
@@ -394,7 +387,7 @@ function drawMineral() {
         if (state.mineral.timer > 20) {
             // 方解石冒泡
             for(let i=0; i<15; i++) {
-                const bx = 700 + Math.random()*60;
+                const bx = 700 + Math.random()*60 - 30;
                 const by = 300 - Math.random() * (state.mineral.timer - 20) * 2;
                 if (by > 100) {
                     ctx.strokeStyle = '#fff'; ctx.lineWidth=2;
@@ -425,7 +418,7 @@ function drawMineral() {
     }
 }
 
-// ---------------- 分頁 2：火成岩 ----------------
+// ---------------- 分頁 2：火成岩 (岩漿通道修正版) ----------------
 function triggerIgneous(mode) {
     state.igneous.mode = mode;
     state.igneous.progress = 0;
@@ -439,31 +432,58 @@ function drawIgneous() {
     ctx.clearRect(0,0,1000,600);
     ctx.fillStyle = '#0a192f'; ctx.fillRect(0,0,1000,600);
 
-    // 火山剖面
+    // 火山剖面 (左右緩坡)
     ctx.fillStyle = '#3a2a18';
-    ctx.beginPath(); ctx.moveTo(0,600); ctx.lineTo(400,200); ctx.lineTo(600,200); ctx.lineTo(1000,600); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0,600); ctx.lineTo(350,200); ctx.lineTo(650,200); ctx.lineTo(1000,600); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#5c4326'; ctx.fillRect(0, 450, 1000, 150); // 地底深處
 
-    // 原始岩漿庫與通道
-    ctx.fillStyle = '#ff4500';
-    ctx.beginPath(); ctx.ellipse(500, 520, 150, 60, 0, 0, Math.PI*2); ctx.fill(); // 庫
-    ctx.fillRect(470, 200, 60, 300); // 通道
+    // ★ 岩漿庫高溫發光特效 ★
+    let magmaGrad = ctx.createRadialGradient(500, 520, 20, 500, 520, 150);
+    magmaGrad.addColorStop(0, '#fff36a'); // 核心極高溫
+    magmaGrad.addColorStop(0.4, '#ff4500'); // 中間高溫橘
+    magmaGrad.addColorStop(1, '#800000'); // 邊緣冷卻暗紅
+
+    ctx.fillStyle = magmaGrad;
+    ctx.beginPath(); ctx.ellipse(500, 520, 160, 70, 0, 0, Math.PI*2); ctx.fill(); // 庫
+
+    // ★ 裂縫下大上小 (真實火山通道) ★
+    ctx.beginPath(); 
+    ctx.moveTo(480, 200); // 頂部窄
+    ctx.lineTo(520, 200); 
+    ctx.lineTo(550, 480); // 底部寬大，與岩漿庫相連
+    ctx.lineTo(450, 480); 
+    ctx.closePath(); 
+    ctx.fill();
+
+    // ★ 岩漿氣泡翻騰動畫 ★
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    for(let i=0; i<20; i++){
+        let bx = 400 + (i * 23) % 200;
+        let by = 550 - ((state.time * 0.05 + i * 37) % 80);
+        let br = 2 + (i % 4);
+        ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI*2); ctx.fill();
+    }
+
     label(ctx, "高溫岩漿", 500, 520, "#fff", "center", 24);
 
     if (state.igneous.mode === 'fast') {
         state.igneous.progress = Math.min(state.igneous.progress + 0.02, 1);
         const p = state.igneous.progress;
         
-        // 噴發岩漿
+        // 噴發岩漿流出地表
         ctx.fillStyle = '#ff6347';
-        ctx.beginPath(); ctx.moveTo(470, 200); ctx.lineTo(300, 200 + p*150); ctx.lineTo(400, 200 + p*150); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(530, 200); ctx.lineTo(700, 200 + p*150); ctx.lineTo(600, 200 + p*150); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(480, 200); ctx.lineTo(250, 200 + p*150); ctx.lineTo(380, 200 + p*150); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(520, 200); ctx.lineTo(750, 200 + p*150); ctx.lineTo(620, 200 + p*150); ctx.closePath(); ctx.fill();
         
+        // 噴發火光
+        ctx.fillStyle = `rgba(255, 243, 106, ${1-p})`;
+        ctx.beginPath(); ctx.moveTo(470,200); ctx.lineTo(500, 50 - p*50); ctx.lineTo(530,200); ctx.fill();
+
         // 煙霧
-        ctx.fillStyle = `rgba(169,189,180, ${p})`;
-        ctx.beginPath(); ctx.arc(500, 120, 60+p*20, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(450, 150, 40+p*10, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(550, 150, 40+p*10, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = `rgba(169,189,180, ${p * 0.8})`;
+        ctx.beginPath(); ctx.arc(500, 120 - p*20, 60+p*40, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(430, 150 - p*15, 50+p*20, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(570, 150 - p*15, 50+p*20, 0, Math.PI*2); ctx.fill();
 
         label(ctx, "火山岩 (如安山岩)", 250, 300, "#fff36a");
         
@@ -474,12 +494,12 @@ function drawIgneous() {
         state.igneous.progress = Math.min(state.igneous.progress + 0.01, 1);
         const p = state.igneous.progress;
         
-        // 地底深處岩漿庫逐漸冷卻變色
-        const r = Math.round(255 - p * (255 - 150));
-        const g = Math.round(69 - p * (69 - 150));
-        const b = Math.round(0 + p * 150);
+        // 地底深處岩漿庫逐漸冷卻變色 (紅色漸變為灰色系)
+        const r = Math.round(255 - p * (255 - 120));
+        const g = Math.round(69 - p * (69 - 120));
+        const b = Math.round(0 + p * 120);
         ctx.fillStyle = `rgb(${r},${g},${b})`;
-        ctx.beginPath(); ctx.ellipse(500, 520, 150, 60, 0, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(500, 520, 160, 70, 0, 0, Math.PI*2); ctx.fill();
         
         label(ctx, "深成岩 (如花岡岩)", 750, 520, "#fff36a");
 
@@ -493,7 +513,6 @@ function drawMagnifier(ctx, x, y, progress, mode) {
     ctx.beginPath(); ctx.arc(x, y, 90, 0, Math.PI*2); ctx.clip();
     ctx.fillStyle = '#a9bdb4'; ctx.fillRect(x-100, y-100, 200, 200);
 
-    // 畫結晶
     if (mode === 'fast') {
         // 結晶極小且多
         const count = Math.floor(progress * 150);
@@ -515,13 +534,13 @@ function drawMagnifier(ctx, x, y, progress, mode) {
         ctx.translate(x, y); ctx.scale(scale, scale);
         
         // 畫三個大結晶 (石英、長石、黑雲母)
-        ctx.fillStyle = '#f0f4f8'; // 石英
+        ctx.fillStyle = '#f0f4f8'; 
         ctx.beginPath(); ctx.moveTo(-40, -40); ctx.lineTo(-10, -60); ctx.lineTo(20, -30); ctx.lineTo(-20, 0); ctx.fill(); ctx.stroke();
         
-        ctx.fillStyle = '#ffb347'; // 長石
+        ctx.fillStyle = '#ffb347'; 
         ctx.beginPath(); ctx.moveTo(10, 10); ctx.lineTo(60, 0); ctx.lineTo(50, 50); ctx.lineTo(0, 40); ctx.fill(); ctx.stroke();
         
-        ctx.fillStyle = '#111'; // 黑雲母
+        ctx.fillStyle = '#111'; 
         ctx.beginPath(); ctx.moveTo(-30, 20); ctx.lineTo(0, 30); ctx.lineTo(-10, 60); ctx.lineTo(-50, 40); ctx.fill(); ctx.stroke();
         
         ctx.scale(1/scale, 1/scale); ctx.translate(-x, -y);
@@ -530,7 +549,6 @@ function drawMagnifier(ctx, x, y, progress, mode) {
     ctx.restore();
     ctx.strokeStyle = '#55e9ff'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(x, y, 90, 0, Math.PI*2); ctx.stroke();
     
-    // 標籤
     const text = mode === 'fast' ? "冷卻快：結晶細小 (常有孔洞)" : "冷卻慢：結晶粗大明顯";
     label(ctx, text, x, y + 120, "#55e9ff", "center", 20);
 }
@@ -557,7 +575,6 @@ function drawCompress() {
     ctx.fillStyle = '#2a3b45'; ctx.fillRect(300, 100, 400, 450);
     ctx.fillStyle = '#17242d'; ctx.fillRect(350, 150, 300, 350); // 內槽
 
-    // 計算活塞高度與動畫
     if (state.compress.stage > 0) {
         state.compress.progress = Math.min(state.compress.progress + 0.02, 1);
     }
@@ -579,7 +596,6 @@ function drawCompress() {
         rockHeight = 250 - state.compress.progress * 50;
     }
 
-    // 畫岩石內容物
     ctx.save();
     ctx.beginPath(); ctx.rect(350, rockY, 300, rockHeight); ctx.clip();
     
@@ -626,18 +642,16 @@ function drawCompress() {
     }
     ctx.restore();
 
-    // 畫活塞
     ctx.fillStyle = '#879098';
     ctx.fillRect(450, 0, 100, pistonY); // 桿子
     ctx.fillRect(350, pistonY-20, 300, 20); // 壓板
     
-    // 狀態指示燈與文字
     label(ctx, "地質壓力機", 500, 50, "#fff", "center", 24);
     if (state.compress.stage === 1) {
-        arrow(ctx, 400, 80, 400, 130, "#55e9ff", 6); arrow(ctx, 600, 80, 600, 130, "#55e9ff", 6);
+        arrow(ctx, 400, 80, 400, 130, "#55e9ff", 6, 12); arrow(ctx, 600, 80, 600, 130, "#55e9ff", 6, 12);
         label(ctx, "壓密、膠結作用", 200, 250, "#55e9ff", "center", 24);
     } else if (state.compress.stage === 2) {
-        arrow(ctx, 400, 80, 400, 130, "#ff78b7", 8); arrow(ctx, 600, 80, 600, 130, "#ff78b7", 8);
+        arrow(ctx, 400, 80, 400, 130, "#ff78b7", 8, 12); arrow(ctx, 600, 80, 600, 130, "#ff78b7", 8, 12);
         label(ctx, "高溫、高壓變質作用", 180, 300, "#ff78b7", "center", 24);
     }
 }
@@ -648,12 +662,16 @@ function triggerCycle(action) {
         state.cycle.activeArrows.push(action);
     }
 }
+// ★ 新增的循環圖重置按鈕 ★
+function resetCycle() {
+    state.cycle.activeArrows = [];
+}
+
 function drawCycle() {
     const ctx = ctxOf('cycleCanvas'); if(!ctx) return;
     ctx.clearRect(0,0,1000,600);
     ctx.fillStyle = '#10323a'; ctx.fillRect(0,0,1000,600);
 
-    // 節點座標
     const nodes = {
         magma: {x: 500, y: 500, label: "岩漿", color: "#ff4500"},
         igneous: {x: 250, y: 350, label: "火成岩", color: "#ffb347"},
@@ -662,39 +680,33 @@ function drawCycle() {
         meta: {x: 500, y: 350, label: "變質岩", color: "#dd8cff"}
     };
 
-    // 畫箭頭函數 (帶動畫)
     const drawAnimArrow = (from, to, color, labelStr, act) => {
         if (!state.cycle.activeArrows.includes(act)) return;
         const p1 = nodes[from]; const p2 = nodes[to];
         
-        // 計算縮短的起迄點(避免蓋住圓圈)
         const dx = p2.x - p1.x; const dy = p2.y - p1.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
         const shrink = 50;
         const startX = p1.x + (dx/dist)*shrink; const startY = p1.y + (dy/dist)*shrink;
         const endX = p2.x - (dx/dist)*shrink; const endY = p2.y - (dy/dist)*shrink;
 
-        // 虛線流動特效
         const offset = -state.time * 0.05;
         ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 6;
         ctx.setLineDash([15, 10]); ctx.lineDashOffset = offset;
         ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke();
         ctx.restore();
 
-        // 箭頭頭部
         const a = Math.atan2(dy, dx);
         ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(endX, endY);
         ctx.lineTo(endX - 20*Math.cos(a-0.5), endY - 20*Math.sin(a-0.5));
         ctx.lineTo(endX - 20*Math.cos(a+0.5), endY - 20*Math.sin(a+0.5));
         ctx.fill();
 
-        // 文字標籤
         const mx = (startX + endX)/2; const my = (startY + endY)/2 - 15;
-        ctx.fillStyle = '#10323a'; ctx.fillRect(mx - 40, my - 15, 80, 30); // 背景遮罩
+        ctx.fillStyle = '#10323a'; ctx.fillRect(mx - 40, my - 15, 80, 30);
         label(ctx, labelStr, mx, my, color, "center", 18);
     };
 
-    // 依序畫出被啟動的箭頭
     drawAnimArrow('magma', 'igneous', '#fff36a', "冷卻結晶", 'cool');
     
     drawAnimArrow('igneous', 'sediment', '#55e9ff', "風化侵蝕", 'weather');
@@ -710,7 +722,6 @@ function drawCycle() {
     drawAnimArrow('sedimentary', 'magma', '#ff78b7', "熔融", 'melt');
     drawAnimArrow('meta', 'magma', '#ff78b7', "熔融", 'melt');
 
-    // 畫節點
     Object.values(nodes).forEach(n => {
         ctx.fillStyle = '#17352b'; ctx.beginPath(); ctx.arc(n.x, n.y, 45, 0, Math.PI*2); ctx.fill();
         ctx.strokeStyle = n.color; ctx.lineWidth = 4; ctx.stroke();
