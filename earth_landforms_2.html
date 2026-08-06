@@ -305,7 +305,7 @@ input[type="range"] { width: 100%; accent-color: var(--chalk-cyan); }
         <div class="panel" style="border-color:var(--chalk-cyan);">
             <div class="hero-grid">
                 <div>
-                    <h2>【互動】地貌拉鋸戰</h2>
+                    <h2>【互動】地貌拉鋸戰 <span style="font-size:15px;color:var(--chalk-green);white-space:nowrap;">修正版 21:18</span></h2>
                     <div class="canvas-wrap" style="border-color:var(--chalk-cyan);">
                         <canvas id="forceCanvas" class="rect-canvas" width="1000" height="600" aria-label="內營力抬升山脈，外營力風化侵蝕並降低地勢的互動圖。">你的瀏覽器不支援 Canvas。</canvas>
                         <div class="canvas-caption">調整兩個滑桿，觀察山脈高度與地表起伏</div>
@@ -605,7 +605,7 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const state = {
     activeTab: "tab-force",
     time: 0,
-    force: { internal: 65, external: 45, mountainHeight: 235 },
+    force: { internal: 65, external: 45, mountainHeight: 138 },
     weather: { heat: 0, freeze: 0, oxidation: 0, roots: 0, lastAction: "" },
     river: { position: 0 },
     gallery: { index: 0, round: 1, score: 0, streak: 0, answered: false }
@@ -682,8 +682,8 @@ function switchTab(tabId) {
 
 // -------------------- 內營力 vs 外營力 --------------------
 function forceTargetHeight() {
-    const difference = state.force.internal - state.force.external;
-    return clamp(205 + difference * 2.15, 115, 335);
+    // 山體高度只會「升高或削低」，不會因外營力變成中央凹陷。
+    return clamp(105 + state.force.internal * 1.25 - state.force.external * 0.95, 34, 205);
 }
 
 function forceDescription() {
@@ -725,19 +725,24 @@ function updateForceUI() {
 function drawForce() {
     const ctx = ctxOf("forceCanvas");
     if (!ctx) return;
+
     const target = forceTargetHeight();
-    state.force.mountainHeight += (target - state.force.mountainHeight) * 0.06;
-    const h = state.force.mountainHeight;
+    state.force.mountainHeight += (target - state.force.mountainHeight) * 0.08;
+
+    const mountainHeight = state.force.mountainHeight;
     const internal = state.force.internal / 100;
     const external = state.force.external / 100;
+    const difference = state.force.internal - state.force.external;
 
     ctx.clearRect(0, 0, 1000, 600);
     ctx.fillStyle = "#10323a";
     ctx.fillRect(0, 0, 1000, 600);
 
-    // 天空、太陽、雲雨
+    // 太陽與降雨
     ctx.fillStyle = "#ffd95c";
-    ctx.beginPath(); ctx.arc(100, 90, 38, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(100, 90, 38, 0, Math.PI * 2);
+    ctx.fill();
     label(ctx, "太陽熱能驅動外營力", 165, 92, "#fff36a", "left", 19);
 
     ctx.fillStyle = "rgba(255,255,255,.84)";
@@ -745,7 +750,10 @@ function drawForce() {
     ctx.arc(760, 95, 28, Math.PI, Math.PI * 2);
     ctx.arc(800, 82, 38, Math.PI, Math.PI * 2);
     ctx.arc(845, 98, 30, Math.PI, Math.PI * 2);
-    ctx.lineTo(730, 100); ctx.closePath(); ctx.fill();
+    ctx.lineTo(730, 100);
+    ctx.closePath();
+    ctx.fill();
+
     const rainCount = Math.round(2 + external * 9);
     for (let i = 0; i < rainCount; i++) {
         const x = 748 + i * 12;
@@ -753,83 +761,127 @@ function drawForce() {
         line(ctx, [[x, 118 + offset], [x - 7, 135 + offset]], "#55e9ff", 3);
     }
 
-    // 地層與山脈
-    const peakY = 470 - h;
-    const ridge = [
-        [0, 390], [120, 375], [230, 345], [340, 305], [430, peakY + 70],
-        [500, peakY], [565, peakY + 68], [660, 310], [760, 350], [880, 382], [1000, 395]
-    ];
+    // 山體幾何：永遠維持「中央最高、左右降低」。
+    // 外營力增加時，只降低高度並放寬山體，不會把中央畫成凹谷。
+    const baseY = 410;
+    const centerX = 500;
+    const width = 185 + external * 95;
+    const ridge = [];
+    for (let x = 0; x <= 1000; x += 10) {
+        const normalized = (x - centerX) / width;
+        const hill = mountainHeight * Math.exp(-0.5 * normalized * normalized);
+        const broadShoulder = 18 * Math.exp(-0.5 * Math.pow((x - centerX) / 360, 2));
+        ridge.push([x, baseY - hill - broadShoulder]);
+    }
+
     ctx.beginPath();
     ctx.moveTo(ridge[0][0], ridge[0][1]);
-    ridge.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
-    ctx.lineTo(1000, 600); ctx.lineTo(0, 600); ctx.closePath();
-    ctx.fillStyle = "#805735"; ctx.fill();
+    ridge.slice(1).forEach(point => ctx.lineTo(point[0], point[1]));
+    ctx.lineTo(1000, 600);
+    ctx.lineTo(0, 600);
+    ctx.closePath();
+    ctx.fillStyle = "#805735";
+    ctx.fill();
 
-    // 彎曲地層
+    // 地層紋理也跟著山體彎曲，但不向中央下陷。
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(ridge[0][0], ridge[0][1]);
-    ridge.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
-    ctx.lineTo(1000, 600); ctx.lineTo(0, 600); ctx.closePath();
+    ridge.slice(1).forEach(point => ctx.lineTo(point[0], point[1]));
+    ctx.lineTo(1000, 600);
+    ctx.lineTo(0, 600);
+    ctx.closePath();
     ctx.clip();
+
     for (let band = 0; band < 5; band++) {
-        const base = 430 + band * 34;
+        const offsetY = 42 + band * 34;
         ctx.strokeStyle = band % 2 ? "rgba(255,179,71,.45)" : "rgba(255,255,255,.20)";
         ctx.lineWidth = 5;
         ctx.beginPath();
-        ctx.moveTo(0, base);
-        ctx.bezierCurveTo(300, base - 8, 390, base - 50 - h * .08, 500, base - 72 - h * .14);
-        ctx.bezierCurveTo(610, base - 50 - h * .08, 720, base - 8, 1000, base);
+        ridge.forEach((point, index) => {
+            const y = point[1] + offsetY + band * 3;
+            if (index === 0) ctx.moveTo(point[0], y);
+            else ctx.lineTo(point[0], y);
+        });
         ctx.stroke();
     }
     ctx.restore();
 
-    // 地表綠線
+    // 外營力旺盛時顯示「削低前」的原山峰，讓學生直接看出是變平，不是陷下去。
+    if (difference < -12) {
+        const originalHeight = 180;
+        const originalWidth = 185;
+        ctx.strokeStyle = "#ff78b7";
+        ctx.lineWidth = 4;
+        ctx.setLineDash([10, 8]);
+        ctx.beginPath();
+        for (let x = 80; x <= 920; x += 10) {
+            const y = baseY - originalHeight * Math.exp(-0.5 * Math.pow((x - centerX) / originalWidth, 2)) - 18 * Math.exp(-0.5 * Math.pow((x - centerX) / 360, 2));
+            if (x === 80) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        label(ctx, "粉紅虛線：削低前的山峰", 500, 188, "#ff78b7", "center", 18);
+    }
+
     line(ctx, ridge, "#9af06f", 5);
 
-    // 岩漿室與內營力箭頭
+    // 地球內部能量與向上抬升箭頭
     ctx.fillStyle = "rgba(255,100,108,.75)";
     ctx.beginPath();
     ctx.ellipse(500, 545, 120, 34 + internal * 12, 0, 0, Math.PI * 2);
     ctx.fill();
     label(ctx, "地球內部能量", 500, 548, "#fff36a", "center", 18);
-    const arrowLength = 55 + internal * 105;
-    arrow(ctx, 430, 510, 430, 510 - arrowLength, "#ff8d78", 8);
-    arrow(ctx, 500, 505, 500, 505 - arrowLength - 16, "#ff8d78", 10);
-    arrow(ctx, 570, 510, 570, 510 - arrowLength, "#ff8d78", 8);
 
-    // 外營力沿坡箭頭、河流與搬運顆粒
-    arrow(ctx, 430, peakY + 50, 305, 330, "#55e9ff", 6);
-    arrow(ctx, 570, peakY + 60, 710, 340, "#55e9ff", 6);
-    const riverY = 350 + external * 14;
+    const surfaceAt = x => {
+        const index = clamp(Math.round(x / 10), 0, ridge.length - 1);
+        return ridge[index][1];
+    };
+
+    [430, 500, 570].forEach((x, index) => {
+        const topY = surfaceAt(x) + 10;
+        arrow(ctx, x, 510, x, topY, "#ff8d78", index === 1 ? 10 : 8);
+    });
+
+    // 外營力沿山坡削低、搬運到低處
+    arrow(ctx, 455, surfaceAt(455) + 5, 315, surfaceAt(315) + 18, "#55e9ff", 6);
+    arrow(ctx, 545, surfaceAt(545) + 5, 720, surfaceAt(720) + 18, "#55e9ff", 6);
+
+    // 河流沿右坡向低處流，不跨成拱橋。
     ctx.strokeStyle = "#55e9ff";
     ctx.lineWidth = 8 + external * 8;
     ctx.beginPath();
-    ctx.moveTo(520, peakY + 82);
-    ctx.bezierCurveTo(590, 300, 620, 335, 700, riverY);
-    ctx.bezierCurveTo(780, riverY + 12, 850, 390, 1000, 404);
+    ctx.moveTo(520, surfaceAt(520) - 2);
+    for (let x = 540; x <= 1000; x += 20) {
+        ctx.lineTo(x, surfaceAt(x) + 3);
+    }
     ctx.stroke();
 
     const particleCount = Math.round(external * 12);
     for (let i = 0; i < particleCount; i++) {
         const t = ((state.time * .004 * (1 + external * 2)) + i / Math.max(1, particleCount)) % 1;
-        const x = 565 + t * 390;
-        const y = 315 + t * 90 + Math.sin(t * Math.PI) * 14;
+        const x = 560 + t * 410;
+        const y = surfaceAt(x) - 4;
         ctx.fillStyle = i % 2 ? "#ffb347" : "#ffffff";
-        ctx.beginPath(); ctx.arc(x, y, 3 + (i % 3), 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, y, 3 + (i % 3), 0, Math.PI * 2);
+        ctx.fill();
     }
 
     // 上方比較尺
     roundRect(ctx, 285, 25, 430, 58, 12, "rgba(6,27,20,.72)", "rgba(255,255,255,.32)", 2);
-    const diff = state.force.internal - state.force.external;
-    const pointerX = 500 + clamp(diff, -100, 100) * 1.75;
+    const pointerX = 500 + clamp(difference, -100, 100) * 1.75;
     line(ctx, [[325, 57], [675, 57]], "#ffffff", 4);
-    ctx.fillStyle = diff > 12 ? "#ff8d78" : diff < -12 ? "#55e9ff" : "#9af06f";
-    ctx.beginPath(); ctx.arc(pointerX, 57, 13, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = difference > 12 ? "#ff8d78" : difference < -12 ? "#55e9ff" : "#9af06f";
+    ctx.beginPath();
+    ctx.arc(pointerX, 57, 13, 0, Math.PI * 2);
+    ctx.fill();
     label(ctx, "外營力", 300, 57, "#55e9ff", "right", 17);
     label(ctx, "內營力", 700, 57, "#ff8d78", "left", 17);
 
-    label(ctx, "抬升、造山", 500, Math.max(120, peakY - 32), "#ff8d78", "center", 21);
+    const peakY = surfaceAt(500);
+    label(ctx, difference < -12 ? "削低、夷平" : "抬升、造山", 500, Math.max(118, peakY - 34), difference < -12 ? "#55e9ff" : "#ff8d78", "center", 21);
     label(ctx, "風化 → 侵蝕 → 搬運 → 沉積", 765, 245, "#55e9ff", "center", 19);
 }
 
@@ -1127,7 +1179,17 @@ function drawUValley(ctx) {
     line(ctx,[[0,180],[185,210]],"#9af06f",5);
     ctx.strokeStyle="#9af06f";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(185,210);ctx.bezierCurveTo(250,520,380,525,500,525);ctx.bezierCurveTo(620,525,750,520,815,210);ctx.stroke();
     line(ctx,[[815,210],[1000,180]],"#9af06f",5);
-    ctx.fillStyle="rgba(233,255,255,.86)";ctx.beginPath();ctx.moveTo(315,155);ctx.lineTo(390,250);ctx.lineTo(500,280);ctx.lineTo(610,250);ctx.lineTo(685,155);ctx.lineTo(650,330);ctx.bezierCurveTo(600,400,400,400,350,330);ctx.closePath();ctx.fill();
+    // 移除中央懸空冰體，只保留 U 形谷本身，避免誤解成「飛起來的冰山」。
+    ctx.strokeStyle="rgba(85,233,255,.85)";
+    ctx.lineWidth=5;
+    ctx.setLineDash([10,8]);
+    ctx.beginPath();
+    ctx.moveTo(290,240);
+    ctx.bezierCurveTo(340,360,420,395,500,398);
+    ctx.bezierCurveTo(580,395,660,360,710,240);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    label(ctx,"冰川刮磨路徑",500,220,"#55e9ff","center",21);
     label(ctx,"谷底寬、兩側陡",500,470,"#ffffff","center",24);
 }
 
