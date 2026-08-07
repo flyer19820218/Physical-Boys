@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>臺灣與地震</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#11261f;--panel:#173b31;--canvas:#10343c;--white:#ffffff;--yellow:#fff36a;--cyan:#55e9ff;
+  --orange:#ffb347;--green:#9af06f;--pink:#ff78b7;--purple:#dd8cff;--red:#ff6f76;--muted:#b8c9c1;
+  --sea:#2f87a9;--land:#d7bd83;--rock:#9b6852;--mantle:#d96749;--dark:#163a34;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  margin:0;color:var(--white);font-family:'Noto Sans TC',system-ui,sans-serif;font-size:20px;line-height:1.65;
+  background:radial-gradient(circle at 1px 1px,rgba(255,255,255,.045) 1px,transparent 1.3px) 0 0/6px 6px,var(--bg)
+}
+button,input{font:inherit}
+.app{max-width:1080px;margin:auto;padding:22px 18px 70px}
+.hero{text-align:center;padding:18px 10px 14px}
+h1{font-size:46px;line-height:1.15;margin:0;color:var(--yellow);font-weight:900;letter-spacing:1px}
+.subtitle{color:var(--muted);font-weight:700;margin:14px 0 0}
+.tab-container{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:18px 0 22px}
+.tab-button,.action-btn,.practice-btn,.choice-btn{
+  border:2px solid var(--muted);background:#102d26;color:var(--white);border-radius:14px;padding:12px 18px;
+  font-weight:900;cursor:pointer;transition:.18s transform,.18s background,.18s border-color
+}
+.tab-button:hover,.action-btn:hover,.practice-btn:hover,.choice-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.08)}
+.tab-button.active,.active-btn{background:var(--cyan)!important;color:#0b2b2e!important;border-color:var(--cyan)!important}
+.tab-content{display:none;animation:fade .2s ease}.tab-content.active{display:block}@keyframes fade{from{opacity:.35}to{opacity:1}}
+.mission-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 18px}
+.mission-step{border:2px dashed #a6bab1;border-radius:14px;text-align:center;padding:10px 8px;background:rgba(11,43,46,.18);font-size:17px;color:var(--muted)}
+.mission-step b{color:var(--yellow);font-size:18px}
+.grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.panel{background:rgba(22,58,47,.95);border:2px solid var(--cyan);border-radius:22px;padding:18px;min-width:0}
+.panel h2{margin:0 0 12px;color:var(--yellow);font-size:30px;line-height:1.25}
+.panel p{margin:8px 0}.panel ul{margin:8px 0;padding-left:1.35em}.panel li{margin:7px 0}
+.key-box,.result-box{border:2px solid var(--cyan);border-radius:14px;padding:13px 15px;margin-top:14px;background:rgba(85,233,255,.05);font-weight:700}
+.canvas-wrap{background:#10343c;border:3px solid var(--cyan);border-radius:20px;overflow:hidden;padding:0}
+.rect-canvas{display:block;width:100%;height:auto;aspect-ratio:10/6}
+.controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.action-btn{padding:10px 16px}.action-btn.success{border-color:var(--green)}.action-btn.warning{border-color:var(--orange)}
+.slider-block{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;margin:13px 0;font-weight:900}
+.slider-block input{width:100%;accent-color:var(--cyan)}.slider-value{color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:23px;white-space:nowrap}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.metric{border:1px solid #46685d;border-radius:13px;padding:10px;text-align:center;background:rgba(11,43,46,.22)}
+.metric-label{display:block;color:var(--muted);font-size:16px}.metric-value{display:block;color:var(--cyan);font-weight:900;font-size:23px;margin-top:3px;white-space:nowrap}
+.practice-box{margin-top:18px;border:2px solid #58736a;border-radius:18px;padding:14px;background:rgba(11,43,46,.22)}
+.practice-tabs{display:flex;gap:8px;flex-wrap:wrap}.practice-btn{padding:8px 14px}.practice-btn.active{background:var(--yellow);color:#21362f;border-color:var(--yellow)}
+.practice-step{display:none;padding:12px 4px 2px}.practice-step.active{display:block}.practice-step h3{color:var(--yellow);margin:0 0 7px;font-size:24px}.practice-step p{margin:0}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.compare-card{border:2px solid #58736a;border-radius:16px;padding:14px;background:#102f27}
+.compare-card strong{display:block;font-size:25px;color:var(--yellow);margin-bottom:8px}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:12px}
+.scale div{border:1px solid #58736a;border-radius:10px;padding:9px 4px;text-align:center;font-weight:900;font-size:15px}
+.scenario-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.scenario{border:2px solid #58736a;border-radius:15px;padding:13px;background:#102f27;text-align:center}
+.scenario h3{margin:0 0 8px;color:var(--yellow);font-size:22px}
+.good{color:var(--green)}.bad{color:var(--red)}.accent-cyan{color:var(--cyan)}.accent-orange{color:var(--orange)}.accent-pink{color:var(--pink)}
+@media(max-width:768px){
+  body{font-size:18px}.app{padding:12px 8px 50px}h1{font-size:34px}.grid-2col{grid-template-columns:1fr}
+  .mission-row{grid-template-columns:1fr 1fr}.panel{padding:13px}.panel h2{font-size:25px}
+  .tab-container{display:grid;grid-template-columns:1fr 1fr}.tab-button{padding:9px 6px;font-size:17px}
+  .metrics,.compare-grid,.scenario-grid{grid-template-columns:1fr}.scale{grid-template-columns:repeat(2,1fr)}
+}
+@media(min-width:769px) and (max-width:1100px){.app{padding-left:14px;padding-right:14px}.panel h2{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+  <h1>臺灣與地震</h1>
+  <p class="subtitle">從兩大板塊的推擠，讀懂臺灣的山脈、地震，以及真正重要的防災判斷。</p>
+</header>
+
+<nav class="tab-container" aria-label="單元分頁">
+  <button type="button" class="tab-button active" data-tab="tab-taiwan">🇹🇼 臺灣島形成</button>
+  <button type="button" class="tab-button" data-tab="tab-active">⛰️ 多山多震</button>
+  <button type="button" class="tab-button" data-tab="tab-focus">🎯 震源與震央</button>
+  <button type="button" class="tab-button" data-tab="tab-mag">📊 規模 vs 震度</button>
+  <button type="button" class="tab-button" data-tab="tab-safety">🛡️ 地震防災</button>
+</nav>
+
+<section id="tab-taiwan" class="tab-content active">
+  <div class="mission-row">
+    <div class="mission-step"><b>① 找兩板塊</b><br>歐亞＋菲律賓海</div>
+    <div class="mission-step"><b>② 看方向</b><br>互相推擠</div>
+    <div class="mission-step"><b>③ 看結果</b><br>抬升造山</div>
+    <div class="mission-step"><b>④ 看今天</b><br>仍持續作用</div>
+  </div>
+  <div class="grid-2col">
+    <article class="panel">
+      <h2>臺灣島是「推」出來的</h2>
+      <p>臺灣島大約在<strong class="accent-cyan">600 萬年前</strong>露出海面，是<strong class="accent-orange">歐亞板塊</strong>與<strong class="accent-pink">菲律賓海板塊</strong>互相推擠、抬升形成。</p>
+      <ul>
+        <li>造山運動形成<strong>中央山脈</strong>。</li>
+        <li><strong>花東縱谷</strong>是兩板塊交界的一部分。</li>
+        <li>兩板塊至今仍在聚合推擠，因此臺灣仍持續抬升。</li>
+      </ul>
+      <div class="key-box"><strong>課本數字：</strong>板塊相對運動約 <span class="accent-cyan">7～8 公分／年</span>。這是長時間累積的地質作用，不是肉眼可直接看到的快速位移。</div>
+    </article>
+    <article class="panel">
+      <h2>【圖解】兩板塊夾出臺灣</h2>
+      <div class="canvas-wrap"><canvas id="taiwanCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
+      <div class="controls">
+        <button type="button" class="action-btn active-btn plate-view" data-view="plates">板塊關係</button>
+        <button type="button" class="action-btn plate-view" data-view="landform">臺灣地形</button>
+      </div>
+      <div id="taiwanResult" class="result-box">西側是歐亞板塊，東側是菲律賓海板塊；兩者互相推擠，使臺灣抬升造山。</div>
+    </article>
+  </div>
+  <div class="practice-box">
+    <div class="practice-tabs"><button class="practice-btn active" data-step="question">❓ 問題</button><button class="practice-btn" data-step="hint">💡 提示</button><button class="practice-btn" data-step="answer">✅ 解答</button></div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>臺灣島主要是由哪兩個板塊互相推擠形成？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>一個在臺灣西側，一個在東側。</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-cyan">歐亞板塊與菲律賓海板塊。</strong></p></div>
+  </div>
+</section>
+
+<section id="tab-active" class="tab-content">
+  <div class="mission-row">
+    <div class="mission-step"><b>① 板塊推擠</b><br>壓縮地殼</div>
+    <div class="mission-step"><b>② 山脈隆起</b><br>多呈南北向</div>
+    <div class="mission-step"><b>③ 岩層錯動</b><br>斷層活動</div>
+    <div class="mission-step"><b>④ 能量釋放</b><br>地震頻繁</div>
+  </div>
+  <div class="grid-2col">
+    <article class="panel">
+      <h2>為什麼臺灣多山、也多地震？</h2>
+      <p>兩板塊推擠方向接近<strong class="accent-cyan">西北－東南向</strong>，因此臺灣的山脈、岩石與主要斷層，大致呈<strong class="accent-orange">南北縱向</strong>排列。</p>
+      <ul>
+        <li>持續推擠 → 地殼變形、抬升 → 山脈。</li>
+        <li>岩層受力、斷裂、錯動 → 地震。</li>
+        <li>臺灣位在環太平洋地震帶上，因此地震頻繁。</li>
+      </ul>
+      <div class="key-box"><strong>不要背成兩件事：</strong>「山很多」和「地震很多」其實都是<strong class="accent-cyan">板塊持續作用</strong>的結果。</div>
+    </article>
+    <article class="panel">
+      <h2>【圖解】臺灣三個地震密集區</h2>
+      <div class="canvas-wrap"><canvas id="activeCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
+      <div class="controls">
+        <button class="action-btn zone-btn active-btn" data-zone="all" type="button">全部</button>
+        <button class="action-btn zone-btn" data-zone="west" type="button">西部</button>
+        <button class="action-btn zone-btn" data-zone="east" type="button">東部</button>
+        <button class="action-btn zone-btn" data-zone="ne" type="button">東北部</button>
+      </div>
+      <div id="zoneResult" class="result-box">臺灣主要地震密集區可概分西部、東部、東北部；其中西部震源較淺，雖次數較少，仍可能造成嚴重災情。</div>
+    </article>
+  </div>
+  <div class="practice-box">
+    <div class="practice-tabs"><button class="practice-btn active" data-step="question">❓ 問題</button><button class="practice-btn" data-step="hint">💡 提示</button><button class="practice-btn" data-step="answer">✅ 解答</button></div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>臺灣山脈大致呈南北縱向，和板塊的哪個特徵有關？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>看兩板塊推擠的大致方向。</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>與兩板塊大致呈<strong class="accent-cyan">西北－東南向推擠</strong>有關。</p></div>
+  </div>
+</section>
+
+<section id="tab-focus" class="tab-content">
+  <div class="mission-row">
+    <div class="mission-step"><b>① 地下起點</b><br>震源</div>
+    <div class="mission-step"><b>② 垂直到地表</b><br>震央</div>
+    <div class="mission-step"><b>③ 量垂直距離</b><br>震源深度</div>
+    <div class="mission-step"><b>④ 別搞混</b><br>不是斜線距離</div>
+  </div>
+  <div class="grid-2col">
+    <article class="panel">
+      <h2>地震從哪裡開始？</h2>
+      <p><strong class="accent-pink">震源</strong>：岩層最先斷裂錯動而引發地震的位置。</p>
+      <p><strong class="accent-orange">震央</strong>：從震源<strong>垂直向上</strong>延伸到地表的位置。</p>
+      <p><strong class="accent-cyan">震源深度</strong>：震源與震央之間的<strong>垂直距離</strong>。</p>
+      <div class="key-box"><strong>最常錯：</strong>震央不是「搖最強的地方」；它是由震源垂直投影到地表的那一點。</div>
+    </article>
+    <article class="panel">
+      <h2>【互動】把震源移深一點</h2>
+      <div class="canvas-wrap"><canvas id="focusCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
+      <div class="slider-block"><label for="depthRange">震源深度</label><input id="depthRange" type="range" min="25" max="85" value="45"><span id="depthValue" class="slider-value">45 km</span></div>
+      <div class="metrics">
+        <div class="metric"><span class="metric-label">地下起點</span><span class="metric-value">震源</span></div>
+        <div class="metric"><span class="metric-label">地表投影</span><span class="metric-value">震央</span></div>
+        <div class="metric"><span class="metric-label">垂直距離</span><span class="metric-value">震源深度</span></div>
+      </div>
+    </article>
+  </div>
+  <div class="practice-box">
+    <div class="practice-tabs"><button class="practice-btn active" data-step="question">❓ 問題</button><button class="practice-btn" data-step="hint">💡 提示</button><button class="practice-btn" data-step="answer">✅ 解答</button></div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>震源深度是「震源到某測站的距離」嗎？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>看圖中震源到震央的線是什麼方向。</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-pink">不是。</strong>震源深度是震源到震央的垂直距離。</p></div>
+  </div>
+</section>
+
+<section id="tab-mag" class="tab-content">
+  <div class="mission-row">
+    <div class="mission-step"><b>① 規模</b><br>能量大小</div>
+    <div class="mission-step"><b>② 同一地震</b><br>只有一個</div>
+    <div class="mission-step"><b>③ 震度</b><br>各地搖晃程度</div>
+    <div class="mission-step"><b>④ 看距離</b><br>通常越遠越小</div>
+  </div>
+  <div class="grid-2col">
+    <article class="panel">
+      <h2>規模與震度完全不是同一件事</h2>
+      <div class="compare-grid">
+        <div class="compare-card">
+          <strong>地震規模</strong>
+          代表震源釋放的能量多寡。<br>
+          同一次地震<strong class="accent-cyan">只有一個規模</strong>。<br>
+          以含小數點的數值呈現，無單位。
+        </div>
+        <div class="compare-card">
+          <strong>地震震度</strong>
+          代表各地搖晃或受損程度。<br>
+          同一次地震<strong class="accent-orange">各地可以不同</strong>。<br>
+          中央氣象署分十等級：0～7級。
+        </div>
+      </div>
+      <div class="key-box"><strong>新聞抓錯字：</strong>「規模 6.4級」是錯的；應說<strong>規模 6.4</strong>。震度才使用「級」。</div>
+    </article>
+    <article class="panel">
+      <h2>【互動】同一地震，不同地方</h2>
+      <div class="canvas-wrap"><canvas id="magCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
+      <div class="slider-block"><label for="stationRange">測站距離</label><input id="stationRange" type="range" min="20" max="380" value="120"><span id="stationValue" class="slider-value">120 km</span></div>
+      <div class="metrics">
+        <div class="metric"><span class="metric-label">地震規模</span><span id="magnitudeMetric" class="metric-value">6.4</span></div>
+        <div class="metric"><span class="metric-label">測站震度</span><span id="intensityMetric" class="metric-value">4級</span></div>
+        <div class="metric"><span class="metric-label">是否改變規模</span><span class="metric-value">不會</span></div>
+      </div>
+      <div class="scale">
+        <div>0級</div><div>1級</div><div>2級</div><div>3級</div><div>4級</div>
+        <div>5弱</div><div>5強</div><div>6弱</div><div>6強</div><div>7級</div>
+      </div>
+    </article>
+  </div>
+  <div class="practice-box">
+    <div class="practice-tabs"><button class="practice-btn active" data-step="question">❓ 問題</button><button class="practice-btn" data-step="hint">💡 提示</button><button class="practice-btn" data-step="answer">✅ 解答</button></div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>同一場規模 6.4 的地震，臺北和高雄測到的規模會不同嗎？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>規模描述的是震源釋放能量，不是某地搖多大。</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-cyan">不會。</strong>同一次地震規模相同；不同地點的震度才可能不同。</p></div>
+  </div>
+</section>
+
+<section id="tab-safety" class="tab-content">
+  <div class="mission-row">
+    <div class="mission-step"><b>① 先防備</b><br>避難包、耐震</div>
+    <div class="mission-step"><b>② 地震發生</b><br>保護頭頸</div>
+    <div class="mission-step"><b>③ 三步驟</b><br>趴下掩護穩住</div>
+    <div class="mission-step"><b>④ 別信預言</b><br>目前無法精準預測</div>
+  </div>
+  <div class="grid-2col">
+    <article class="panel">
+      <h2>地震不能精準預測，所以防災才重要</h2>
+      <p>目前科學仍無法準確預測地震發生的<strong>時間、地點或規模</strong>。地震警報是地震已發生後的快速提醒，不是事前預言。</p>
+      <ul>
+        <li>家中準備緊急避難包。</li>
+        <li>建築物注意耐震設計，不任意更動主要結構。</li>
+        <li>避難包準備約 1～3 天份食物、飲水、藥品、保暖、通訊與照明設備。</li>
+      </ul>
+      <div class="key-box"><strong>最重要：</strong>地震當下保護<strong class="accent-cyan">頭部與頸部</strong>，立即「趴下、掩護、穩住」。</div>
+    </article>
+    <article class="panel">
+      <h2>【情境判斷】現在該怎麼做？</h2>
+      <div class="scenario-grid">
+        <div class="scenario"><h3>① 趴下</h3><p>降低重心，避免被震倒。</p></div>
+        <div class="scenario"><h3>② 掩護</h3><p>桌下最好；沒有桌子就保護頭頸並遠離危險物。</p></div>
+        <div class="scenario"><h3>③ 穩住</h3><p>抓穩桌腳，避免掩護物移動。</p></div>
+      </div>
+      <div class="controls">
+        <button class="choice-btn safety-btn" data-choice="window" type="button">跑去窗邊看</button>
+        <button class="choice-btn safety-btn" data-choice="desk" type="button">躲桌下抓桌腳</button>
+        <button class="choice-btn safety-btn" data-choice="elevator" type="button">立刻搭電梯</button>
+      </div>
+      <div id="safetyResult" class="result-box">選一個行動，看看是否正確。</div>
+    </article>
+  </div>
+  <div class="practice-box">
+    <div class="practice-tabs"><button class="practice-btn active" data-step="question">❓ 問題</button><button class="practice-btn" data-step="hint">💡 提示</button><button class="practice-btn" data-step="answer">✅ 解答</button></div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>手機收到地震警報，代表科學家幾天前就預測到這場地震嗎？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>「預測」與「地震發生後的快速偵測、警報」不同。</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-pink">不是。</strong>目前仍無法精準預測地震發生的時間、地點和規模。</p></div>
+  </div>
+</section>
+</div>
+
+<script>
+const C={white:'#ffffff',yellow:'#fff36a',cyan:'#55e9ff',orange:'#ffb347',green:'#9af06f',pink:'#ff78b7',purple:'#dd8cff',red:'#ff6f76',muted:'#b8c9c1',canvas:'#10343c',sea:'#2f87a9',land:'#d7bd83',rock:'#9b6852',mantle:'#d96749'};
+const TAU=Math.PI*2;
+function ctxOf(id){const c=document.getElementById(id);return c?{c,ctx:c.getContext('2d')}:null}
+function safeDraw(id,fn){const o=ctxOf(id);if(!o)return;const run=()=>{const w=o.c.parentElement?.getBoundingClientRect().width||0;if(w<=0){setTimeout(run,80);return}fn(o.ctx)};setTimeout(run,25)}
+function clear(ctx){ctx.fillStyle=C.canvas;ctx.fillRect(0,0,1000,600)}
+function line(ctx,pts,color=C.white,width=4,dash=[]){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();ctx.restore()}
+function label(ctx,t,x,y,color=C.white,align='center',size=20){ctx.save();ctx.fillStyle=color;ctx.font=`900 ${size}px 'Noto Sans TC',sans-serif`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(t,x,y,900);ctx.restore()}
+function arrow(ctx,x1,y1,x2,y2,color=C.cyan,width=7){const a=Math.atan2(y2-y1,x2-x1),h=18;line(ctx,[[x1,y1],[x2,y2]],color,width);ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-h*Math.cos(a-.55),y2-h*Math.sin(a-.55));ctx.lineTo(x2-h*Math.cos(a+.55),y2-h*Math.sin(a+.55));ctx.closePath();ctx.fill()}
+function dot(ctx,x,y,r,color){ctx.save();ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.restore()}
+
+const plateState={view:'plates'};
+function taiwanShape(ctx,x=500,y=310,s=1){
+  const pts=[[0,-180],[35,-132],[30,-88],[58,-38],[42,12],[18,62],[8,118],[-18,180],[-46,122],[-56,74],[-68,18],[-52,-38],[-38,-92],[-20,-145]];
+  ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(x+p[0]*s,y+p[1]*s):ctx.moveTo(x+p[0]*s,y+p[1]*s));ctx.closePath();ctx.fillStyle=C.land;ctx.fill();ctx.strokeStyle=C.green;ctx.lineWidth=5;ctx.stroke();
+}
+function drawTaiwan(ctx){
+  clear(ctx);ctx.fillStyle='#173b43';ctx.fillRect(0,0,1000,88);
+  label(ctx,plateState.view==='plates'?'歐亞板塊 ＋ 菲律賓海板塊 → 臺灣':'板塊推擠留下的地形線索',500,43,C.yellow,'center',26);
+  ctx.fillStyle=C.sea;ctx.fillRect(0,88,1000,512);
+  taiwanShape(ctx,500,330,1.12);
+  if(plateState.view==='plates'){
+    label(ctx,'歐亞板塊',190,170,C.orange,'center',27);label(ctx,'菲律賓海板塊',815,170,C.pink,'center',27);
+    arrow(ctx,155,290,405,330,C.orange,12);arrow(ctx,845,350,595,320,C.pink,12);
+    label(ctx,'約 7～8 公分／年',500,515,C.cyan,'center',23);
+    line(ctx,[[535,165],[548,215],[548,270],[540,330],[552,390],[545,455]],C.cyan,6,[12,8]);
+    label(ctx,'花東縱谷：板塊交界的一部分',620,460,C.cyan,'left',18);
+  }else{
+    ctx.fillStyle='#6d8f56';ctx.beginPath();ctx.moveTo(466,445);ctx.lineTo(480,385);ctx.lineTo(475,330);ctx.lineTo(488,275);ctx.lineTo(495,215);ctx.lineTo(510,170);ctx.lineTo(522,220);ctx.lineTo(520,280);ctx.lineTo(528,340);ctx.lineTo(520,405);ctx.lineTo(510,470);ctx.closePath();ctx.fill();
+    line(ctx,[[552,185],[558,240],[555,300],[562,360],[558,420]],C.cyan,6,[10,8]);
+    label(ctx,'中央山脈',410,300,C.yellow,'right',22);label(ctx,'花東縱谷',590,310,C.cyan,'left',22);label(ctx,'海岸山脈',610,360,C.green,'left',22);
+    arrow(ctx,250,500,430,500,C.orange,8);arrow(ctx,750,500,570,500,C.pink,8);label(ctx,'推擠 → 抬升造山',500,540,C.white,'center',20);
+  }
+}
+function updateTaiwan(){
+  safeDraw('taiwanCanvas',drawTaiwan);
+  document.getElementById('taiwanResult').textContent=plateState.view==='plates'
+    ?'西側是歐亞板塊，東側是菲律賓海板塊；兩者互相推擠，使臺灣抬升造山。'
+    :'中央山脈、花東縱谷、海岸山脈大致呈南北方向，與板塊推擠及交界構造有關。';
+}
+
+const zoneState={zone:'all'};
+const zones={
+  west:[[430,185],[420,225],[425,265],[415,315],[425,355],[430,405]],
+  east:[[555,175],[565,215],[570,255],[568,300],[572,345],[565,390],[560,435]],
+  ne:[[590,150],[630,135],[675,125],[705,145],[650,165]]
+};
+function drawActiveMap(ctx){
+  clear(ctx);ctx.fillStyle='#173b43';ctx.fillRect(0,0,1000,88);label(ctx,'臺灣地震密集區（概念圖）',500,43,C.yellow,'center',26);
+  ctx.fillStyle=C.sea;ctx.fillRect(0,88,1000,512);taiwanShape(ctx,500,330,1.15);
+  const colors={west:C.orange,east:C.pink,ne:C.cyan};
+  Object.entries(zones).forEach(([name,pts])=>{
+    if(zoneState.zone!=='all'&&zoneState.zone!==name)return;
+    pts.forEach((p,i)=>dot(ctx,p[0],p[1],7+(i%2),colors[name]));
+  });
+  label(ctx,'西部',330,330,C.orange,'right',22);label(ctx,'東部',650,330,C.pink,'left',22);label(ctx,'東北部',705,120,C.cyan,'left',22);
+  label(ctx,'示意位置：用來比較三個主要密集區，不代表每一個實際震央。',500,565,C.white,'center',17);
+}
+function updateZones(){
+  safeDraw('activeCanvas',drawActiveMap);
+  const msg={
+    all:'臺灣主要地震密集區可概分西部、東部、東北部；其中西部震源較淺，雖次數較少，仍可能造成嚴重災情。',
+    west:'西部地震帶：地震次數較少，但餘震頻繁、震源淺，較容易引起嚴重災情。',
+    east:'東部地震帶：地震次數多，而且震源通常比西部深。',
+    ne:'東北部地震帶：屬淺層震源活動帶。'
+  };
+  document.getElementById('zoneResult').textContent=msg[zoneState.zone];
+}
+
+const focusState={depth:45};
+function drawFocus(ctx){
+  clear(ctx);ctx.fillStyle='#173b43';ctx.fillRect(0,0,1000,88);label(ctx,'震源、震央、震源深度',500,43,C.yellow,'center',26);
+  const groundY=185;ctx.fillStyle='#6a8f5d';ctx.fillRect(0,groundY-18,1000,18);ctx.fillStyle=C.rock;ctx.fillRect(0,groundY,1000,415);
+  line(ctx,[[0,groundY],[1000,groundY]],C.green,5);
+  const fx=520,fy=groundY+focusState.depth*4.1;
+  line(ctx,[[350,520],[620,225]],C.pink,8);
+  dot(ctx,fx,fy,13,C.pink);label(ctx,'震源',fx+28,fy,C.pink,'left',22);
+  dot(ctx,fx,groundY,10,C.orange);label(ctx,'震央',fx,145,C.orange,'center',22);
+  line(ctx,[[fx,groundY],[fx,fy]],C.cyan,5,[12,8]);
+  arrow(ctx,570,groundY+5,570,fy-5,C.cyan,4);arrow(ctx,570,fy-5,570,groundY+5,C.cyan,4);
+  label(ctx,`震源深度 ${focusState.depth} km`,600,(groundY+fy)/2,C.cyan,'left',20);
+  for(let r=45;r<=150;r+=35){ctx.save();ctx.strokeStyle='rgba(255,255,255,.22)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(fx,fy,r,Math.PI*1.08,Math.PI*1.92);ctx.stroke();ctx.restore()}
+  label(ctx,'地表',120,150,C.green,'center',18);label(ctx,'斷層',320,445,C.pink,'center',20);
+}
+function updateFocus(){
+  document.getElementById('depthValue').textContent=focusState.depth+' km';
+  safeDraw('focusCanvas',drawFocus);
+}
+
+const magState={distance:120,magnitude:6.4};
+function intensityFromDistance(d){
+  if(d<45)return '6強';
+  if(d<80)return '6弱';
+  if(d<120)return '5強';
+  if(d<170)return '5弱';
+  if(d<230)return '4級';
+  if(d<300)return '3級';
+  if(d<350)return '2級';
+  return '1級';
+}
+function drawMag(ctx){
+  clear(ctx);ctx.fillStyle='#173b43';ctx.fillRect(0,0,1000,88);label(ctx,'同一次地震：規模不變，震度可不同',500,43,C.yellow,'center',25);
+  const epiX=200,groundY=330;ctx.fillStyle='#52705d';ctx.fillRect(0,groundY,1000,270);line(ctx,[[0,groundY],[1000,groundY]],C.green,5);
+  dot(ctx,epiX,groundY,13,C.orange);label(ctx,'震央',epiX,290,C.orange,'center',20);
+  const stationX=Math.min(900,epiX+magState.distance*1.75);
+  ctx.fillStyle=C.land;ctx.fillRect(stationX-32,groundY-68,64,68);ctx.fillStyle=C.yellow;ctx.fillRect(stationX-12,groundY-40,24,40);
+  label(ctx,'測站',stationX,groundY-95,C.white,'center',20);
+  line(ctx,[[epiX,390],[stationX,390]],C.cyan,4,[12,8]);
+  label(ctx,`${magState.distance} km`,(epiX+stationX)/2,418,C.cyan,'center',20);
+  label(ctx,'規模 6.4',200,500,C.yellow,'center',28);
+  label(ctx,'同一地震：規模不因測站遠近改變',500,555,C.white,'center',18);
+  const inten=intensityFromDistance(magState.distance);
+  label(ctx,`此測站震度：${inten}`,stationX,235,C.orange,'center',22);
+}
+function updateMag(){
+  const inten=intensityFromDistance(magState.distance);
+  document.getElementById('stationValue').textContent=magState.distance+' km';
+  document.getElementById('magnitudeMetric').textContent=magState.magnitude.toFixed(1);
+  document.getElementById('intensityMetric').textContent=inten;
+  safeDraw('magCanvas',drawMag);
+}
+
+function drawActive(){
+  const id=document.querySelector('.tab-content.active')?.id;
+  if(id==='tab-taiwan')updateTaiwan();
+  if(id==='tab-active')updateZones();
+  if(id==='tab-focus')updateFocus();
+  if(id==='tab-mag')updateMag();
+}
+document.querySelectorAll('.tab-button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab-button').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');document.getElementById(b.dataset.tab)?.classList.add('active');setTimeout(drawActive,60);
+}));
+document.querySelectorAll('.practice-box').forEach(box=>box.querySelectorAll('.practice-btn').forEach(b=>b.addEventListener('click',()=>{
+  box.querySelectorAll('.practice-btn').forEach(x=>x.classList.remove('active'));
+  box.querySelectorAll('.practice-step').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');box.querySelector(`[data-content="${b.dataset.step}"]`)?.classList.add('active');
+})));
+document.querySelectorAll('.plate-view').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.plate-view').forEach(x=>x.classList.remove('active-btn'));b.classList.add('active-btn');plateState.view=b.dataset.view;updateTaiwan();
+}));
+document.querySelectorAll('.zone-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.zone-btn').forEach(x=>x.classList.remove('active-btn'));b.classList.add('active-btn');zoneState.zone=b.dataset.zone;updateZones();
+}));
+document.getElementById('depthRange').addEventListener('input',e=>{focusState.depth=+e.target.value;updateFocus()});
+document.getElementById('stationRange').addEventListener('input',e=>{magState.distance=+e.target.value;updateMag()});
+document.querySelectorAll('.safety-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.safety-btn').forEach(x=>x.classList.remove('active-btn'));b.classList.add('active-btn');
+  const map={
+    window:'❌ 不建議。地震時應遠離玻璃窗、吊燈、吊扇與可能倒下的大型家具。',
+    desk:'✅ 正確。立即趴下、到桌下掩護並抓穩桌腳，保護頭部與頸部。',
+    elevator:'❌ 不建議。地震搖晃時不要急著搭電梯，先就地保護自己。'
+  };
+  document.getElementById('safetyResult').textContent=map[b.dataset.choice];
+}));
+window.addEventListener('resize',()=>setTimeout(drawActive,100),{passive:true});
+window.addEventListener('orientationchange',()=>setTimeout(drawActive,180),{passive:true});
+window.addEventListener('load',()=>setTimeout(()=>{updateTaiwan();updateZones();updateFocus();updateMag()},100));
+</script>
+</body>
+</html>
