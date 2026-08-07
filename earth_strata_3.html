@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>岩層密碼與地球歷史</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#11261f;--panel:#173b31;--canvas:#10343c;--white:#fff;--yellow:#fff36a;--cyan:#55e9ff;
+  --orange:#ffb347;--green:#9af06f;--pink:#ff78b7;--purple:#dd8cff;--red:#ff6f76;--muted:#b8c9c1;
+  --line:#4d6b61;--rock1:#e7c56d;--rock2:#c78658;--rock3:#9c654d;--rock4:#6f5146;--mantle:#d96749;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--white);font-family:'Noto Sans TC',system-ui,sans-serif;font-size:20px;line-height:1.65;background:
+radial-gradient(circle at 1px 1px,rgba(255,255,255,.045) 1px,transparent 1.3px) 0 0/6px 6px,var(--bg)}
+button,input{font:inherit}
+.app{max-width:1080px;margin:auto;padding:22px 18px 70px}
+.hero{text-align:center;padding:18px 10px 14px}
+h1{font-size:46px;line-height:1.15;margin:0;color:var(--yellow);font-weight:900;letter-spacing:1px}
+.subtitle{color:var(--muted);font-weight:700;margin:14px 0 0}
+.tab-container{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:18px 0 22px}
+.tab-button,.action-btn,.practice-btn,.choice-btn{border:2px solid var(--muted);background:#102d26;color:var(--white);border-radius:14px;padding:12px 18px;font-weight:900;cursor:pointer;transition:.18s transform,.18s background,.18s border-color}
+.tab-button:hover,.action-btn:hover,.practice-btn:hover,.choice-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.08)}
+.tab-button.active,.active-btn{background:var(--cyan)!important;color:#0b2b2e!important;border-color:var(--cyan)!important}
+.tab-content{display:none;animation:fade .2s ease}.tab-content.active{display:block}@keyframes fade{from{opacity:.35}to{opacity:1}}
+.mission-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 18px}
+.mission-step{border:2px dashed #a6bab1;border-radius:14px;text-align:center;padding:10px 8px;background:rgba(0,0,0,.08);font-size:17px;color:var(--muted)}
+.mission-step b{color:var(--yellow);font-size:18px}
+.grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.panel{background:rgba(22,58,47,.95);border:2px solid var(--cyan);border-radius:22px;padding:18px;min-width:0}
+.panel h2{margin:0 0 12px;color:var(--yellow);font-size:30px;line-height:1.25}
+.panel p{margin:8px 0}.panel ul{margin:8px 0;padding-left:1.35em}.panel li{margin:7px 0}
+.key-box,.result-box{border:2px solid var(--cyan);border-radius:14px;padding:13px 15px;margin-top:14px;background:rgba(85,233,255,.05);font-weight:700}
+.canvas-wrap{background:#0f343c;border:3px solid var(--cyan);border-radius:20px;overflow:hidden;padding:0}
+.rect-canvas{display:block;width:100%;height:auto;aspect-ratio:10/6}
+.controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.action-btn{padding:10px 16px}.action-btn.success{border-color:var(--green)}.action-btn.warning{border-color:var(--orange)}
+.slider-block{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;margin:13px 0;font-weight:900}
+.slider-block input{width:100%;accent-color:var(--cyan)}.slider-value{color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:23px;white-space:nowrap}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.metric{border:1px solid #46685d;border-radius:13px;padding:10px;text-align:center;background:rgba(0,0,0,.12)}
+.metric-label{display:block;color:var(--muted);font-size:16px}.metric-value{display:block;color:var(--cyan);font-weight:900;font-size:23px;margin-top:3px;white-space:nowrap}
+.practice-box{margin-top:18px;border:2px solid #58736a;border-radius:18px;padding:14px;background:rgba(0,0,0,.12)}
+.practice-tabs{display:flex;gap:8px;flex-wrap:wrap}.practice-btn{padding:8px 14px}.practice-btn.active{background:var(--yellow);color:#21362f;border-color:var(--yellow)}
+.practice-step{display:none;padding:12px 4px 2px}.practice-step.active{display:block}.practice-step h3{color:var(--yellow);margin:0 0 7px;font-size:24px}.practice-step p{margin:0}
+.nowrap{white-space:nowrap}.mono{font-family:'JetBrains Mono',monospace}.accent-cyan{color:var(--cyan)}.accent-orange{color:var(--orange)}.accent-green{color:var(--green)}.accent-pink{color:var(--pink)}
+.sequence-board{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}.sequence-status{min-height:54px;color:var(--cyan);font-weight:900;text-align:center;padding:8px}
+.card-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}.info-card{border:2px solid #5b766d;border-radius:15px;padding:12px;text-align:center;background:#102f27}.info-card strong{color:var(--yellow);display:block;margin-bottom:5px}
+.fossil-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:10px}.fossil-col{border:2px solid #58736a;border-radius:14px;padding:10px;background:#102f27}.stratum{height:58px;margin:6px 0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#173228}.stratum:nth-child(2){background:#e4c46d}.stratum:nth-child(3){background:#c78658}.stratum:nth-child(4){background:#9af06f}.stratum:nth-child(5){background:#dd8cff}
+@media(max-width:768px){body{font-size:18px}.app{padding:12px 8px 50px}h1{font-size:34px}.grid-2col{grid-template-columns:1fr}.mission-row{grid-template-columns:1fr 1fr}.panel{padding:13px}.panel h2{font-size:25px}.tab-container{display:grid;grid-template-columns:1fr 1fr}.tab-button{padding:9px 6px;font-size:17px}.metrics,.card-row,.fossil-grid{grid-template-columns:1fr}.rect-canvas{aspect-ratio:10/6}}
+@media(min-width:769px) and (max-width:1100px){.app{padding-left:14px;padding-right:14px}.panel h2{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+  <h1>岩層密碼與地球歷史</h1>
+  <p class="subtitle">岩層不是一疊石頭；它保存了擠壓、斷裂、沉積、侵蝕與生物留下的時間紀錄。</p>
+</header>
+<nav class="tab-container" aria-label="單元分頁">
+  <button type="button" class="tab-button active" data-tab="tab-fold">〰️ 褶皺紀錄</button>
+  <button type="button" class="tab-button" data-tab="tab-fault">⚡ 斷層錯動</button>
+  <button type="button" class="tab-button" data-tab="tab-order">🕵️ 事件排序(倒帶)</button>
+  <button type="button" class="tab-button" data-tab="tab-env">🏞️ 古環境</button>
+  <button type="button" class="tab-button" data-tab="tab-fossil">🐚 化石年代</button>
+</nav>
+
+<!-- 褶皺區塊 -->
+<section id="tab-fold" class="tab-content active">
+  <div class="mission-row">
+    <div class="mission-step"><b>① 看原始岩層</b><br>先找水平層</div><div class="mission-step"><b>② 加擠壓</b><br>左右推近</div><div class="mission-step"><b>③ 看彎曲</b><br>形成褶皺</div><div class="mission-step"><b>④ 判讀</b><br>岩層沒有消失</div>
+  </div>
+  <div class="grid-2col">
+    <article class="panel" style="border-color:var(--chalk-green)">
+      <h2>褶皺留下的擠壓紀錄</h2>
+      <p>原本近水平的岩層受到長時間的<strong class="accent-cyan">水平擠壓</strong>，不一定立刻斷掉，而可能先發生彎曲，形成褶皺。</p>
+      <ul><li>向上拱起：常稱為<strong class="accent-orange">背斜</strong>。</li><li>向下凹陷：常稱為<strong class="accent-green">向斜</strong>。</li><li>判讀時要追同一層岩層的連續性，不要只看山形。</li></ul>
+      <div class="key-box"><strong>核心：</strong>褶皺代表岩層曾受到<strong class="accent-cyan">擠壓</strong>；地表高低不一定和岩層彎曲完全相同。</div>
+    </article>
+    <article class="panel" style="border-color:var(--green)">
+      <h2>【互動】把岩層壓皺</h2>
+      <div class="canvas-wrap"><canvas id="foldCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
+      <div class="slider-block"><label for="foldRange">擠壓程度</label><input id="foldRange" type="range" min="0" max="100" value="18"><span id="foldValue" class="slider-value">18%</span></div>
+      <div class="controls"><button id="foldPlay" class="action-btn success" type="button">▶️ 自動擠壓</button><button id="foldReset" class="action-btn" type="button">↻ 重置</button></div>
+      <div class="metrics"><div class="metric"><span class="metric-label">作用力</span><span class="metric-value">擠壓</span></div><div class="metric"><span class="metric-label">岩層</span><span id="foldState" class="metric-value">輕微彎曲</span></div><div class="metric"><span class="metric-label">主要構造</span><span class="metric-value">褶皺</span></div></div>
+    </article>
+  </div>
+  <div class="practice-box"><div class="practice-tabs"><button class="practice-btn active" data-step="question">❓ 問題</button><button class="practice-btn" data-step="hint">💡 提示</button><button class="practice-btn" data-step="answer">✅ 解答</button></div><div class="practice-step active" data-content="question"><h3>問題</h3><p>看到一整套岩層被彎成波浪狀，最可能曾受哪種方向的作用力？</p></div><div class="practice-step" data-content="hint"><h3>提示</h3><p>觀察互動圖左右兩側的箭頭。</p></div><div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-cyan">水平擠壓。</strong>岩層在長期受力下彎曲，形成褶皺。</p></div></div>
+</section>
+
+<!-- 斷層區塊 -->
+<section id="tab-fault" class="tab-content">
+  <div class="mission-row"><div class="mission-step"><b>① 找斷面</b><br>岩層突然中斷</div><div class="mission-step"><b>② 看兩側</b><br>是否錯開</div><div class="mission-step"><b>③ 判方向</b><br>拉張或擠壓</div><div class="mission-step"><b>④ 連結地震</b><br>突然錯動</div></div>
+  <div class="grid-2col">
+    <article class="panel" style="border-color:var(--pink)"><h2>斷層＝岩層破裂後發生位移</h2><p>當岩石承受的力量超過能負荷的程度，岩層會破裂；若破裂面兩側發生相對位移，就形成<strong class="accent-pink">斷層</strong>。</p><ul><li><strong>正斷層：</strong>受拉張力，上磐相對下降。</li><li><strong>逆斷層：</strong>受擠壓力，上磐相對上升。</li><li><strong>平移斷層：</strong>兩側主要做水平水平錯動。</li></ul><div class="key-box"><strong>考試重點：</strong>先找出傾斜的斷層面，壓在斜面上方的就是「上磐」。</div></article>
+    <article class="panel" style="border-color:var(--pink)"><h2>【互動】斷層錯動實驗室</h2><div class="canvas-wrap"><canvas id="faultCanvas" class="rect-canvas" width="1000" height="600"></canvas></div><div class="controls"><button class="action-btn fault-btn active-btn" data-fault="normal" type="button">↘ 正斷層</button><button class="action-btn fault-btn" data-fault="reverse" type="button">↗ 逆斷層</button><button class="action-btn fault-btn" data-fault="strike" type="button">↔ 平移斷層</button></div><div class="slider-block"><label for="faultRange">錯動程度</label><input id="faultRange" type="range" min="0" max="100" value="45"><span id="faultValue" class="slider-value">45%</span></div><div id="faultResult" class="result-box">正斷層：岩層受拉張力，上磐沿著斷層面相對下磐「下降」。</div></article>
+  </div>
+  <div class="practice-box"><div class="practice-tabs"><button class="practice-btn active" data-step="question">❓ 問題</button><button class="practice-btn" data-step="hint">💡 提示</button><button class="practice-btn" data-step="answer">✅ 解答</button></div><div class="practice-step active" data-content="question"><h3>問題</h3><p>岩層被拉開後，其中一側沿斷面相對下降，這最接近哪一類斷層？</p></div><div class="practice-step" data-content="hint"><h3>提示</h3><p>切換「正斷層」，看兩側箭頭與位移。</p></div><div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-pink">正斷層。</strong>常見於拉張環境。</p></div></div>
+</section>
+
+<!-- 事件排序區塊 (動畫版) -->
+<section id="tab-order" class="tab-content">
+  <div class="mission-row">
+    <div class="mission-step"><b>① 最新事件</b><br>找切穿所有的</div>
+    <div class="mission-step"><b>② 次新事件</b><br>還原後找切割</div>
+    <div class="mission-step"><b>③ 疊覆定律</b><br>上新下老</div>
+    <div class="mission-step"><b>④ 最老事件</b><br>找最底層沉積</div>
+  </div>
+  <div class="grid-2col">
+    <article class="panel">
+      <h2>地質史必須「倒著看」</h2>
+      <p>這是解題最重要的邏輯：<strong class="accent-pink">先找最晚發生的事！</strong></p>
+      <ul>
+        <li><strong class="accent-pink">切割者最年輕：</strong>就像切蛋糕，蛋糕必須先存在，才能被刀子切開。</li>
+        <li>所以我們不能從最老的開始猜，必須從現在的剖面圖，一層一層<strong class="accent-cyan">把事件「還原倒帶」</strong>。</li>
+      </ul>
+      <div class="key-box"><strong>教學重點：</strong>從「最新」的事件往回推，找出每個事件發生的先後順序。</div>
+    </article>
+    <article class="panel">
+      <h2>【動畫互動】時光機倒帶分析</h2>
+      <div class="canvas-wrap"><canvas id="orderCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
+      <div class="slider-block">
+        <label for="orderRange">⏪ 時光軸</label>
+        <input id="orderRange" type="range" min="0" max="400" value="400">
+        <span id="orderValue" class="slider-value">現在</span>
+      </div>
+      <div class="controls">
+        <button id="orderAuto" class="action-btn success" type="button">⏪ 開始倒帶分析</button>
+      </div>
+      <div id="orderAnalysis" class="result-box" style="margin-top:15px; border-color:var(--pink);">
+        <!-- 動態文字區 -->
+      </div>
+    </article>
+  </div>
+  <div class="practice-box"><div class="practice-tabs"><button class="practice-btn active" data-step="question">❓ 問題</button><button class="practice-btn" data-step="hint">💡 提示</button><button class="practice-btn" data-step="answer">✅ 解答</button></div><div class="practice-step active" data-content="question"><h3>問題</h3><p>一條岩脈切穿三層沉積岩，岩脈和三層沉積岩相比，誰比較晚形成？</p></div><div class="practice-step" data-content="hint"><h3>提示</h3><p>能「切過」其他構造，代表它出現時其他構造已經存在。</p></div><div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-pink">岩脈比較晚。</strong>這就是截切定律。</p></div></div>
+</section>
+
+<!-- 古環境區塊 -->
+<section id="tab-env" class="tab-content">
+  <div class="mission-row"><div class="mission-step"><b>① 看顆粒</b><br>大或小</div><div class="mission-step"><b>② 想水流</b><br>快或慢</div><div class="mission-step"><b>③ 找環境</b><br>河流、海岸、深海</div><div class="mission-step"><b>④ 回推古環境</b><br>用岩石當證據</div></div>
+  <div class="grid-2col">
+    <article class="panel" style="border-color:var(--orange)"><h2>沉積物會透露古環境</h2><p>搬運介質的能量越強，越能搬動較大的顆粒；能量降低時，顆粒會依大小逐漸沉積。</p><div class="card-row"><div class="info-card"><strong>高能量</strong>礫石、粗砂</div><div class="info-card"><strong>中能量</strong>砂</div><div class="info-card"><strong>低能量</strong>泥、細顆粒</div></div><div class="key-box"><strong>不是只背岩名：</strong>看到沉積物顆粒，要反推當時的水流與環境。</div></article>
+    <article class="panel" style="border-color:var(--orange)"><h2>【互動】古環境探測器</h2><div class="canvas-wrap"><canvas id="envCanvas" class="rect-canvas" width="1000" height="600"></canvas></div><div class="slider-block"><label for="energyRange">搬運能量</label><input id="energyRange" type="range" min="0" max="100" value="55"><span id="energyValue" class="slider-value">55%</span></div><div class="controls"><button class="action-btn env-btn" data-env="river" type="button">🏔️ 河流上游</button><button class="action-btn env-btn active-btn" data-env="beach" type="button">🏖️ 海岸</button><button class="action-btn env-btn" data-env="deep" type="button">🌊 深海</button></div><div id="envResult" class="result-box">海岸：常見砂質沉積，顆粒大小中等。</div></article>
+  </div>
+  <div class="practice-box"><div class="practice-tabs"><button class="practice-btn active" data-step="question">❓ 問題</button><button class="practice-btn" data-step="hint">💡 提示</button><button class="practice-btn" data-step="answer">✅ 解答</button></div><div class="practice-step active" data-content="question"><h3>問題</h3><p>某古老岩層含大量粗大礫石，較可能代表低能量深海，還是高能量流水環境？</p></div><div class="practice-step" data-content="hint"><h3>提示</h3><p>搬動大顆粒需要較強的力量。</p></div><div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-orange">較高能量的流水環境。</strong></p></div></div>
+</section>
+
+<!-- 化石區塊 (加入地質年代子分頁) -->
+<section id="tab-fossil" class="tab-content">
+  <!-- 頂部子切換 -->
+  <div class="practice-tabs" style="justify-content:center; margin-bottom:20px;">
+    <button class="practice-btn active fossil-tab-btn" data-sub="fossil-era">⏳ 地質年代簡圖</button>
+    <button class="practice-btn fossil-tab-btn" data-sub="fossil-compare">🌍 跨地區對比</button>
+  </div>
+
+  <!-- 子分頁 1：地質年代簡圖 (全新製作) -->
+  <div id="fossil-era" class="fossil-sub-content">
+    <div class="grid-2col">
+      <article class="panel" style="border-color:var(--yellow)">
+        <h2>標準化石與地質年代</h2>
+        <p>地球歷史分為四個主要時代。科學家利用<strong class="accent-cyan">標準化石</strong>來劃分這些地質年代。</p>
+        <ul>
+          <li><strong class="accent-cyan">標準化石條件：</strong>生存時間短、演化快、分布廣、數量多。</li>
+          <li><strong class="accent-orange">代表性生物：</strong>某個時代特別繁盛的生物類群。</li>
+        </ul>
+        <div class="key-box"><strong>解題口訣：</strong>前寒(藍綠菌) → 古生(三葉蟲) → 中生(恐龍/菊石) → 新生(哺乳類/長毛象)</div>
+      </article>
+      
+      <article class="panel" style="border-color:var(--yellow); text-align:center;">
+        <h2 style="font-size:24px; margin-bottom:12px;">地層疊覆簡圖 (老 → 新)</h2>
+        <div style="display:flex; flex-direction:column; gap:8px; font-weight:900;">
+          <div style="background:#e4c46d; color:#11261f; padding:12px 18px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+             <span style="font-size:22px;">新生代</span>
+             <span style="text-align:right; font-size:16px; line-height:1.4;">代表：哺乳類、鳥類<br><span style="color:#a83e0c">⭐ 標準化石：長毛象</span></span>
+          </div>
+          <div style="background:#c78658; color:#fff; padding:12px 18px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+             <span style="font-size:22px;">中生代</span>
+             <span style="text-align:right; font-size:16px; line-height:1.4;">代表：爬蟲類、裸子植物<br><span style="color:#fff36a">⭐ 標準化石：恐龍、菊石</span></span>
+          </div>
+          <div style="background:#9c654d; color:#fff; padding:12px 18px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+             <span style="font-size:22px;">古生代</span>
+             <span style="text-align:right; font-size:16px; line-height:1.4;">代表：魚類、兩生類、蕨類<br><span style="color:#9af06f">⭐ 標準化石：三葉蟲</span></span>
+          </div>
+          <div style="background:#6f5146; color:#fff; padding:12px 18px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+             <span style="font-size:22px;">前寒武紀</span>
+             <span style="text-align:right; font-size:16px; line-height:1.4;">代表：單細胞、無脊椎<br><span style="color:#55e9ff">⭐ 標準化石：疊層石(藍綠菌)</span></span>
+          </div>
+        </div>
+        <div style="margin-top:12px; color:var(--muted); font-size:16px; font-weight:bold;">⬇️ 越往下層，年代越古老 (疊覆定律)</div>
+      </article>
+    </div>
+  </div>
+
+  <!-- 子分頁 2：跨地區對比 (保留原本內容) -->
+  <div id="fossil-compare" class="fossil-sub-content" style="display:none;">
+    <div class="mission-row"><div class="mission-step"><b>① 看化石</b><br>辨認相同種類</div><div class="mission-step"><b>② 對岩層</b><br>跨地區比對</div><div class="mission-step"><b>③ 判相對年代</b><br>找共同時間</div><div class="mission-step"><b>④ 建地球史</b><br>把事件串起來</div></div>
+    <div class="grid-2col">
+      <article class="panel" style="border-color:var(--purple)"><h2>化石是岩層的時間線索</h2><p>不同地區的岩層若含有相同、具有代表性的化石，可以協助判斷它們可能形成於相近的時期。</p><ul><li>化石能提供<strong class="accent-cyan">生物演化</strong>與<strong class="accent-orange">古環境</strong>資訊。</li><li>地質年代不是只靠一塊石頭決定，而是整合岩層、化石與其他證據。</li></ul><div class="key-box"><strong>判讀：</strong>同種重要化石出現在不同地點，是岩層比對的重要線索。</div></article>
+      <article class="panel" style="border-color:var(--purple)"><h2>【互動】跨地區岩層對比</h2><div class="fossil-grid"><div class="fossil-col"><strong>A 地</strong><div class="stratum">🪨</div><div class="stratum">🐚</div><div class="stratum">🌿</div><div class="stratum">🦐</div></div><div class="fossil-col"><strong>B 地</strong><div class="stratum">🌿</div><div class="stratum">🐚</div><div class="stratum">🪨</div><div class="stratum">🦐</div></div><div class="fossil-col"><strong>C 地</strong><div class="stratum">🪨</div><div class="stratum">🐚</div><div class="stratum">🦐</div><div class="stratum">🌿</div></div></div><div class="controls"><button class="action-btn fossil-btn" data-fossil="shell" type="button">🐚 對比貝類</button><button class="action-btn fossil-btn" data-fossil="plant" type="button">🌿 對比植物</button><button class="action-btn fossil-btn" data-fossil="tri" type="button">🦐 對比古生物</button></div><div id="fossilResult" class="result-box">請選一種化石，找出三地可能對應的岩層。</div></article>
+    </div>
+    <div class="practice-box"><div class="practice-tabs"><button class="practice-btn active" data-step="question">❓ 問題</button><button class="practice-btn" data-step="hint">💡 提示</button><button class="practice-btn" data-step="answer">✅ 解答</button></div><div class="practice-step active" data-content="question"><h3>問題</h3><p>相距很遠的兩地岩層都找到同一種具代表性的化石，最合理的用途是什麼？</p></div><div class="practice-step" data-content="hint"><h3>提示</h3><p>想想化石除了告訴你「有生物」，還能不能協助比較時間。</p></div><div class="practice-step" data-content="answer"><h3>解答</h3><p>可用來<strong class="accent-cyan">比對岩層的相對年代</strong>，判斷兩層可能形成於相近時期。</p></div></div>
+  </div>
+</section>
+</div>
+
+<script>
+// --- 共用與工具函數 ---
+const C={white:'#fff',yellow:'#fff36a',cyan:'#55e9ff',orange:'#ffb347',green:'#9af06f',pink:'#ff78b7',purple:'#dd8cff',red:'#ff6f76',muted:'#b8c9c1',canvas:'#10343c',r1:'#e7c56d',r2:'#c78658',r3:'#9c654d',r4:'#6f5146',mantle:'#d96749',sea:'#2f87a9'};
+const TAU=Math.PI*2;
+function ctxOf(id){const c=document.getElementById(id);return c?{c,ctx:c.getContext('2d')}:null}
+function safeDraw(id,fn){const o=ctxOf(id);if(!o)return;const run=()=>{const w=o.c.parentElement?.getBoundingClientRect().width||0;if(w<=0){setTimeout(run,80);return}fn(o.ctx)};setTimeout(run,25)}
+function clear(ctx){ctx.fillStyle=C.canvas;ctx.fillRect(0,0,1000,600)}
+function line(ctx,pts,color=C.white,width=4,dash=[]){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();ctx.restore()}
+function label(ctx,t,x,y,color=C.white,align='center',size=20){ctx.save();ctx.fillStyle=color;ctx.font=`900 ${size}px 'Noto Sans TC',sans-serif`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(t,x,y,900);ctx.restore()}
+function arrow(ctx,x1,y1,x2,y2,color=C.cyan,width=7){const a=Math.atan2(y2-y1,x2-x1),h=18;line(ctx,[[x1,y1],[x2,y2]],color,width);ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-h*Math.cos(a-.55),y2-h*Math.sin(a-.55));ctx.lineTo(x2-h*Math.cos(a+.55),y2-h*Math.sin(a+.55));ctx.closePath();ctx.fill()}
+function poly(ctx,pts,fill,stroke=null,width=2){ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke()}}
+
+// --- 褶皺 ---
+const fold={amount:18,running:false,raf:0,last:0};
+function foldY(x,base,a,phase=0){const k=a/100;return base - Math.sin((x-100)/150*Math.PI+phase)*95*k*Math.exp(-Math.pow((x-500)/420,4))}
+function drawFold(ctx){clear(ctx);ctx.fillStyle='#173b43';ctx.fillRect(0,0,1000,100);label(ctx,'水平擠壓 → 岩層彎曲',500,48,C.yellow,'center',27);arrow(ctx,80,150,300,150,C.cyan,9);arrow(ctx,920,150,700,150,C.cyan,9);const a=fold.amount;const colors=[C.r1,C.r2,C.r3,C.r4];for(let j=0;j<4;j++){const top=[],bot=[];for(let x=90;x<=910;x+=10){top.push([x,foldY(x,280+j*55,a,j*.05)]);bot.unshift([x,foldY(x,328+j*55,a,j*.05)])}poly(ctx,top.concat(bot),colors[j],'rgba(255,255,255,.16)',2)}label(ctx,'背斜',390,210,C.orange,'center',21);label(ctx,'向斜',620,390,C.green,'center',21);label(ctx,'同一套岩層被彎曲，不是新長出一座山。',500,565,C.white,'center',19)}
+function updateFold(){safeDraw('foldCanvas',drawFold);document.getElementById('foldValue').textContent=Math.round(fold.amount)+'%';document.getElementById('foldState').textContent=fold.amount<30?'輕微彎曲':fold.amount<70?'明顯褶皺':'強烈褶皺'}
+function animFold(ts){if(!fold.running)return;if(!fold.last)fold.last=ts;const dt=Math.min(40,ts-fold.last);fold.last=ts;fold.amount=Math.min(100,fold.amount+dt*.025);document.getElementById('foldRange').value=Math.round(fold.amount);updateFold();if(fold.amount>=100){fold.running=false;document.getElementById('foldPlay').textContent='▶️ 自動擠壓';return}fold.raf=requestAnimationFrame(animFold)}
+
+// --- 斷層 (傾斜與滑動) ---
+const fault={type:'normal',amount:45};
+function drawFault(ctx) {
+    clear(ctx);
+    ctx.fillStyle = '#173b43';
+    ctx.fillRect(0, 0, 1000, 100);
+    const title = fault.type === 'normal' ? '正斷層：拉張 (上磐相對下降)' : 
+                  fault.type === 'reverse' ? '逆斷層：擠壓 (上磐相對上升)' : 
+                  '平移斷層：水平錯動 (俯視圖)';
+    label(ctx, title, 500, 48, C.yellow, 'center', 27);
+    const a = fault.amount / 100;
+    const colors = [C.r1, C.r2, C.r3, C.r4];
+
+    if (fault.type === 'strike') {
+        const shift = 120 * a;
+        ctx.fillStyle = '#2c5943';
+        ctx.fillRect(100, 150, 396, 350);
+        ctx.fillRect(504, 150, 396, 350);
+        ctx.fillStyle = '#6b7d75'; 
+        ctx.fillRect(100, 280 + shift / 2, 396, 60);
+        ctx.fillRect(504, 280 - shift / 2, 396, 60);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([20, 20]);
+        ctx.beginPath();
+        ctx.moveTo(100, 310 + shift / 2); ctx.lineTo(496, 310 + shift / 2);
+        ctx.moveTo(504, 310 - shift / 2); ctx.lineTo(900, 310 - shift / 2);
+        ctx.stroke();
+        ctx.setLineDash([]); 
+        line(ctx, [[500, 120], [500, 550]], C.pink, 8, [15, 10]);
+        arrow(ctx, 430, 430, 430, 500, C.cyan, 8); 
+        arrow(ctx, 570, 220, 570, 150, C.cyan, 8); 
+        label(ctx, '俯視概念圖 (馬路被斷層錯開)', 500, 565, C.white, 'center', 18);
+        return;
+    }
+
+    const offset = (fault.type === 'normal' ? 1 : -1) * 110 * a;
+    const getX = (y) => 450 + (y - 250) * 0.4;
+
+    for (let j = 0; j < 4; j++) {
+        const y1 = 250 + j * 62, y2 = 312 + j * 62;
+        poly(ctx, [[100, y1], [getX(y1), y1], [getX(y2), y2], [100, y2]], colors[j], 'rgba(0,0,0,0.15)', 2);
+    }
+    for (let j = 0; j < 4; j++) {
+        const y1 = 250 + j * 62 + offset, y2 = 312 + j * 62 + offset;
+        poly(ctx, [[getX(y1), y1], [900, y1], [900, y2], [getX(y2), y2]], colors[j], 'rgba(0,0,0,0.15)', 2);
+    }
+
+    const minY = Math.min(250, 250 + offset) - 30;
+    const maxY = Math.max(498, 498 + offset) + 30;
+    line(ctx, [[getX(minY), minY], [getX(maxY), maxY]], C.pink, 7);
+
+    if (fault.type === 'normal') { 
+        arrow(ctx, 300, 190, 150, 190, C.cyan, 8);
+        arrow(ctx, 700, 190, 850, 190, C.cyan, 8);
+        label(ctx, '下磐', 220, 220, C.white, 'center', 24);
+        label(ctx, '上磐', 800, 220 + offset, C.white, 'center', 24);
+        arrow(ctx, 800, 250 + offset, 800, 310 + offset, C.pink, 6);
+        arrow(ctx, 220, 310, 220, 250, C.pink, 6);
+    } else { 
+        arrow(ctx, 150, 190, 300, 190, C.cyan, 8);
+        arrow(ctx, 850, 190, 700, 190, C.cyan, 8);
+        label(ctx, '下磐', 220, 220, C.white, 'center', 24);
+        label(ctx, '上磐', 800, 220 + offset, C.white, 'center', 24);
+        arrow(ctx, 800, 310 + offset, 800, 250 + offset, C.pink, 6);
+        arrow(ctx, 220, 250, 220, 310, C.pink, 6);
+    }
+    label(ctx, '傾斜的斷層面', getX(540) + 15, 540, C.pink, 'left', 18);
+}
+function updateFault(){
+    safeDraw('faultCanvas', drawFault);
+    document.getElementById('faultValue').textContent = Math.round(fault.amount) + '%';
+    const map = {
+        normal: '正斷層：岩層受拉張力，上磐沿著斷層面相對下磐「下降」。',
+        reverse: '逆斷層：岩層受擠壓力，上磐沿著斷層面相對下磐「上升」。',
+        strike: '平移斷層：兩側岩層沿斷層面發生水平錯動 (常見於馬路或河流錯開)。'
+    };
+    document.getElementById('faultResult').textContent = map[fault.type];
+}
+
+// --- 事件排序 (時光機倒帶動畫) ---
+const orderAnim = { t: 400, running: false, raf: 0, last: 0 };
+function drawOrder(ctx) {
+    if(!ctx) return;
+    clear(ctx);
+    ctx.fillStyle = '#173b43'; ctx.fillRect(0, 0, 1000, 85);
+    label(ctx, '地質事件剖面 (請找截切關係)', 500, 43, C.yellow, 'center', 26);
+
+    const t = orderAnim.t / 100;
+
+    const fx1 = 300, fy1 = 140, fx2 = 650, fy2 = 520;
+    const m = (fy2 - fy1) / (fx2 - fx1);
+    const getX = (y) => fx1 + (y - fy1) / m;
+    const topX = getX(85), botX = getX(600);
+
+    const alphaA = Math.max(0, Math.min(1, t));       
+    const alphaB = Math.max(0, Math.min(1, t - 1));   
+    const alphaC = Math.max(0, Math.min(1, t - 2));   
+    const faultOffset = Math.max(0, Math.min(1, t - 3)) * 45; 
+    const alphaD = Math.max(0, Math.min(1, (t - 3) * 2)); 
+
+    const drawScene = () => {
+        ctx.fillStyle = C.canvas; ctx.fillRect(0, 85, 1000, 600);
+        
+        if (alphaA > 0) {
+            ctx.globalAlpha = alphaA;
+            ctx.fillStyle = C.r3; ctx.fillRect(80, 380, 840, 120);
+        }
+        if (alphaB > 0) {
+            ctx.globalAlpha = alphaB;
+            ctx.fillStyle = C.r1; ctx.fillRect(80, 280, 840, 100);
+            ctx.fillStyle = '#b88a62'; ctx.fillRect(80, 190, 840, 90);
+        }
+        if (alphaC > 0) {
+            ctx.globalAlpha = alphaC;
+            ctx.fillStyle = C.orange;
+            ctx.beginPath(); ctx.moveTo(430, 600); ctx.lineTo(485, 85);
+            ctx.lineTo(550, 85); ctx.lineTo(495, 600); ctx.closePath(); ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+    };
+
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(0, 85); ctx.lineTo(topX, 85);
+    ctx.lineTo(botX, 600); ctx.lineTo(0, 600); ctx.closePath();
+    ctx.clip();
+    drawScene();
+    ctx.restore();
+
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(topX, 85); ctx.lineTo(1000, 85);
+    ctx.lineTo(1000, 600); ctx.lineTo(botX, 600); ctx.closePath();
+    ctx.clip();
+    ctx.translate(0, faultOffset);
+    drawScene();
+    ctx.restore();
+
+    if (alphaD > 0) {
+        ctx.globalAlpha = alphaD;
+        line(ctx, [[topX, 85], [botX, 600]], C.pink, 8);
+        label(ctx, 'D 斷層', botX + 20, 540 + faultOffset, C.pink, 'left', 18);
+        ctx.globalAlpha = 1.0;
+    }
+
+    if (alphaA > 0) { ctx.globalAlpha = alphaA; label(ctx, 'A 褐色層', 100, 435, C.white, 'left', 18); }
+    if (alphaB > 0) { ctx.globalAlpha = alphaB; label(ctx, 'B 黃色層', 100, 330, C.yellow, 'left', 18); }
+    if (alphaC > 0) { ctx.globalAlpha = alphaC; label(ctx, 'C 岩脈', 485, 120, C.orange, 'left', 18); }
+    ctx.globalAlpha = 1.0;
+}
+
+function updateOrderText() {
+    const t = orderAnim.t / 100;
+    const box = document.getElementById('orderAnalysis');
+    const val = document.getElementById('orderValue');
+    if(!box || !val) return;
+    
+    if (t > 3.01) {
+        box.innerHTML = '<strong>【第 1 步：找最晚發生的】</strong><br>看這張剖面圖，<strong><span style="color:var(--pink)">斷層 D</span></strong> 切穿了所有的地層與岩脈。這代表斷層發生時，其他東西都必須已經存在了。所以 <strong>斷層 D 是最新發生的</strong>。';
+        box.style.borderColor = C.pink;
+        val.textContent = '現在 (D)';
+    } else if (t > 2.01) {
+        box.innerHTML = '<strong>【第 2 步：還原斷層，繼續找切割】</strong><br>把斷層錯動癒合後，發現 <strong><span style="color:var(--orange)">岩脈 C</span></strong> 切穿了黃、褐兩層沉積岩。也就是說，岩脈入侵時地層已經存在。所以 <strong>岩脈 C 比地層晚</strong>。';
+        box.style.borderColor = C.orange;
+        val.textContent = '復原 D (C)';
+    } else if (t > 1.01) {
+        box.innerHTML = '<strong>【第 3 步：移除岩脈，看疊覆】</strong><br>岩脈還沒入侵前，只有水平沉積的岩層。根據「疊覆定律」，越在上面的地層越晚形成。所以 <strong><span style="color:var(--yellow)">黃色層 B</span> 比較晚</strong>。';
+        box.style.borderColor = C.yellow;
+        val.textContent = '復原 C (B)';
+    } else {
+        box.innerHTML = '<strong>【第 4 步：最老的事件】</strong><br>最底下的 <strong><span style="color:var(--muted)">褐色層 A</span></strong> 是最早沉積的。整理最終順序 (老到新)：<br><strong style="font-size:22px; color:var(--cyan)">A 褐色層 → B 黃色層 → C 岩脈 → D 斷層</strong>';
+        box.style.borderColor = C.cyan;
+        val.textContent = '遠古 (A)';
+    }
+}
+
+function animOrder(ts) {
+    if (!orderAnim.running) return;
+    if (!orderAnim.last) orderAnim.last = ts;
+    const dt = Math.min(40, ts - orderAnim.last);
+    orderAnim.last = ts;
+    
+    orderAnim.t -= dt * 0.08; 
+    
+    if (orderAnim.t <= 0) {
+        orderAnim.t = 0;
+        orderAnim.running = false;
+        document.getElementById('orderAuto').textContent = '🔄 恢復現在剖面';
+    }
+    
+    document.getElementById('orderRange').value = orderAnim.t;
+    const o = ctxOf('orderCanvas');
+    if(o) drawOrder(o.ctx);
+    updateOrderText();
+    
+    if (orderAnim.running) {
+        orderAnim.raf = requestAnimationFrame(animOrder);
+    }
+}
+
+// --- 古環境 ---
+const env={type:'beach',energy:55};
+function drawEnv(ctx){clear(ctx);ctx.fillStyle='#173b43';ctx.fillRect(0,0,1000,85);label(ctx,'沉積物顆粒 × 搬運能量',500,43,C.yellow,'center',26);ctx.fillStyle='#d7eff6';ctx.fillRect(0,85,1000,230);ctx.fillStyle=C.sea;ctx.fillRect(0,180,1000,135);poly(ctx,[[0,315],[220,270],[410,335],[650,360],[1000,385],[1000,600],[0,600]],'#8b623e');let n=env.type==='river'?24:env.type==='beach'?46:80;let baseR=env.type==='river'?12:env.type==='beach'?7:3;for(let i=0;i<n;i++){const x=80+(i*83)%840,y=340+((i*47)%180);ctx.fillStyle=i%2?C.r1:C.r2;ctx.beginPath();ctx.arc(x,y,baseR+(i%3),0,TAU);ctx.fill()}const name=env.type==='river'?'河流上游：粗顆粒':env.type==='beach'?'海岸：砂質為主':'深海：細泥為主';label(ctx,name,500,120,C.yellow,'center',24);arrow(ctx,120,220,350,220,C.cyan,7);label(ctx,'搬運能量',235,195,C.cyan,'center',18);label(ctx,'能量降低 → 顆粒逐漸沉積',500,565,C.white,'center',18)}
+function updateEnv(){safeDraw('envCanvas',drawEnv);document.getElementById('energyValue').textContent=Math.round(env.energy)+'%';const map={river:'河流上游：水流能量高，常能搬動較大的礫石與粗砂。',beach:'海岸：常見砂質沉積，顆粒大小中等。',deep:'深海：能量低，較細的泥與微小顆粒才容易沉積。'};document.getElementById('envResult').textContent=map[env.type]}
+
+// --- 統整渲染與事件監聽 ---
+function drawActive(){
+    const id=document.querySelector('.tab-content.active')?.id;
+    if(id==='tab-fold') updateFold();
+    if(id==='tab-fault') updateFault();
+    if(id==='tab-order') {
+        const o = ctxOf('orderCanvas');
+        if(o) drawOrder(o.ctx);
+        updateOrderText();
+    }
+    if(id==='tab-env') updateEnv();
+}
+function stopAnim(){
+    fold.running=false;
+    if(fold.raf)cancelAnimationFrame(fold.raf);
+    fold.last=0;
+    const b=document.getElementById('foldPlay');
+    if(b)b.textContent='▶️ 自動擠壓';
+    
+    orderAnim.running=false;
+    if(orderAnim.raf)cancelAnimationFrame(orderAnim.raf);
+    orderAnim.last=0;
+    const oBtn = document.getElementById('orderAuto');
+    if(oBtn && orderAnim.t > 0) oBtn.textContent='⏪ 開始倒帶分析';
+}
+
+// 頁籤切換
+document.querySelectorAll('.tab-button').forEach(b=>b.addEventListener('click',()=>{
+    stopAnim();
+    document.querySelectorAll('.tab-button').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById(b.dataset.tab)?.classList.add('active');
+    setTimeout(drawActive,60);
+}));
+
+// 問題提示切換
+document.querySelectorAll('.practice-box').forEach(box=>box.querySelectorAll('.practice-btn').forEach(b=>b.addEventListener('click',()=>{
+    // 若為化石子分頁按鈕則不在此處理
+    if(b.classList.contains('fossil-tab-btn')) return;
+    box.querySelectorAll('.practice-btn').forEach(x=>x.classList.remove('active'));
+    box.querySelectorAll('.practice-step').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    box.querySelector(`[data-content="${b.dataset.step}"]`)?.classList.add('active');
+})));
+
+// 褶皺事件
+document.getElementById('foldRange').addEventListener('input',e=>{fold.amount=+e.target.value;updateFold()});
+document.getElementById('foldPlay').addEventListener('click',()=>{
+    fold.running=!fold.running;
+    document.getElementById('foldPlay').textContent=fold.running?'⏸ 暫停':'▶️ 自動擠壓';
+    if(fold.running){fold.last=0;fold.raf=requestAnimationFrame(animFold)}
+});
+document.getElementById('foldReset').addEventListener('click',()=>{
+    fold.running=false;if(fold.raf)cancelAnimationFrame(fold.raf);
+    fold.amount=18;fold.last=0;document.getElementById('foldRange').value=18;
+    document.getElementById('foldPlay').textContent='▶️ 自動擠壓';updateFold();
+});
+
+// 斷層事件
+document.querySelectorAll('.fault-btn').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.fault-btn').forEach(x=>x.classList.remove('active-btn'));
+    b.classList.add('active-btn');fault.type=b.dataset.fault;updateFault();
+}));
+document.getElementById('faultRange').addEventListener('input',e=>{fault.amount=+e.target.value;updateFault()});
+
+// 排序動畫事件
+document.getElementById('orderAuto')?.addEventListener('click', () => {
+    if (orderAnim.t <= 0) {
+        orderAnim.t = 400;
+        document.getElementById('orderRange').value = 400;
+        const o = ctxOf('orderCanvas'); if(o) drawOrder(o.ctx);
+        updateOrderText();
+        document.getElementById('orderAuto').textContent = '⏪ 開始倒帶分析';
+        return;
+    }
+    orderAnim.running = !orderAnim.running;
+    document.getElementById('orderAuto').textContent = orderAnim.running ? '⏸ 暫停分析' : '⏪ 繼續倒帶';
+    if (orderAnim.running) {
+        orderAnim.last = 0;
+        orderAnim.raf = requestAnimationFrame(animOrder);
+    }
+});
+document.getElementById('orderRange')?.addEventListener('input', e => {
+    orderAnim.running = false; 
+    document.getElementById('orderAuto').textContent = orderAnim.t <= 0 ? '🔄 恢復現在剖面' : '⏪ 開始倒帶分析';
+    orderAnim.t = +e.target.value;
+    const o = ctxOf('orderCanvas'); if(o) drawOrder(o.ctx);
+    updateOrderText();
+});
+
+// 古環境事件
+document.querySelectorAll('.env-btn').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.env-btn').forEach(x=>x.classList.remove('active-btn'));
+    b.classList.add('active-btn');env.type=b.dataset.env;
+    env.energy=env.type==='river'?88:env.type==='beach'?55:20;
+    document.getElementById('energyRange').value=env.energy;updateEnv();
+}));
+document.getElementById('energyRange').addEventListener('input',e=>{
+    env.energy=+e.target.value;
+    document.getElementById('energyValue').textContent=Math.round(env.energy)+'%';
+});
+
+// ★ 新增：化石大分頁裡的「子分頁」切換事件
+document.querySelectorAll('.fossil-tab-btn').forEach(b => {
+    b.addEventListener('click', () => {
+        document.querySelectorAll('.fossil-tab-btn').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.fossil-sub-content').forEach(x => x.style.display = 'none');
+        b.classList.add('active');
+        document.getElementById(b.dataset.sub).style.display = 'block';
+    });
+});
+
+// 化石(跨地區對比)按鈕事件
+document.querySelectorAll('.fossil-btn').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.fossil-btn').forEach(x=>x.classList.remove('active-btn'));
+    b.classList.add('active-btn');
+    const map={
+        shell:'🐚 貝類化石出現在三地不同高度，可作跨地區岩層對比的線索。',
+        plant:'🌿 植物化石除了可比對年代，也能提供陸地或鄰近陸地環境的線索。',
+        tri:'🦐 若這種古生物存在時間短、分布廣，作為年代對比線索會特別有用。'
+    };
+    document.getElementById('fossilResult').textContent=map[b.dataset.fossil];
+}));
+
+// 畫面與初始載入
+window.addEventListener('resize',()=>setTimeout(drawActive,100),{passive:true});
+window.addEventListener('orientationchange',()=>setTimeout(drawActive,180),{passive:true});
+window.addEventListener('load',()=>setTimeout(()=>{
+    updateFold();
+    updateFault();
+    const o = ctxOf('orderCanvas');
+    if(o) drawOrder(o.ctx);
+    updateOrderText();
+    updateEnv();
+},100));
+</script>
+</body>
+</html>
