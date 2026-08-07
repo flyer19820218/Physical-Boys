@@ -309,8 +309,8 @@ input[type=range]{width:100%;accent-color:var(--chalk-cyan)}
         <h2>地球熱能與板塊運動</h2>
         <p>地球越往深處溫度越高，內部受熱不均會產生極緩慢的物質運動。課本以<strong style="color:var(--chalk-orange)">地函熱對流簡化模型</strong>說明：軟流圈的緩慢移動會影響上方板塊。</p>
         <ul>
-          <li>中央上升流：上方板塊可向兩側分離。</li>
-          <li>中央下降流：上方板塊可彼此靠近。</li>
+          <li>中央熱物質上升後，會在上方分流，帶動板塊向兩側分離。</li>
+          <li>較冷物質在兩側下沉，再沿深部回流，形成左右兩個閉合對流胞。</li>
           <li>阻力越大，同樣溫差下板塊移動越慢。</li>
         </ul>
         <div class="key-box"><strong>模型限制：</strong>真實板塊運動受到多種力量共同影響；本頁只呈現國中課程所使用的簡化熱對流概念。</div>
@@ -319,8 +319,8 @@ input[type=range]{width:100%;accent-color:var(--chalk-cyan)}
         <h2>【互動】地函熱對流槽</h2>
         <div class="canvas-wrap"><canvas id="convectionCanvas" class="rect-canvas" width="1000" height="600" aria-label="地函熱對流帶動板塊分離或推擠"></canvas></div>
         <div class="controls">
-          <button type="button" class="action-btn convection-mode active-btn" data-mode="diverge">↔️ 中央上升：分離</button>
-          <button type="button" class="action-btn convection-mode" data-mode="converge">→← 中央下降：推擠</button>
+          <button type="button" class="action-btn convection-mode active-btn" data-mode="diverge">↔️ 中央上升、兩側下沉</button>
+          <button type="button" class="action-btn convection-mode" data-mode="converge">→← 兩側上升、中央下沉</button>
         </div>
         <div class="slider-block"><label for="heatRange">內部溫差</label><input id="heatRange" type="range" min="0" max="100" value="55"><span id="heatValue" class="slider-value">55%</span></div>
         <div class="slider-block"><label for="frictionRange">移動阻力</label><input id="frictionRange" type="range" min="0" max="100" value="35"><span id="frictionValue" class="slider-value">35%</span></div>
@@ -361,6 +361,12 @@ function label(ctx,text,x,y,color=COLORS.white,align='center',size=22,weight=900
 function mono(ctx,text,x,y,color=COLORS.cyan,align='center',size=22){ctx.save();ctx.fillStyle=color;ctx.font=`700 ${size}px 'JetBrains Mono',monospace`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(text,x,y);ctx.restore()}
 function roundRect(ctx,x,y,w,h,r,fill,stroke=null,lw=2){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke()}ctx.restore()}
 function arrow(ctx,x1,y1,x2,y2,color=COLORS.cyan,width=6){ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1);const s=15+width;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-s*Math.cos(a-.45),y2-s*Math.sin(a-.45));ctx.lineTo(x2-s*Math.cos(a+.45),y2-s*Math.sin(a+.45));ctx.closePath();ctx.fill();ctx.restore()}
+function bezierArrow(ctx,x1,y1,c1x,c1y,c2x,c2y,x2,y2,color=COLORS.white,width=6){
+  ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.bezierCurveTo(c1x,c1y,c2x,c2y,x2,y2);ctx.stroke();
+  const a=Math.atan2(y2-c2y,x2-c2x),head=15+width;
+  ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-head*Math.cos(a-.45),y2-head*Math.sin(a-.45));ctx.lineTo(x2-head*Math.cos(a+.45),y2-head*Math.sin(a+.45));ctx.closePath();ctx.fill();ctx.restore();
+}
 function safeDraw(id,drawFn){
   const item=canvasContext(id);if(!item)return;
   const run=()=>{const rect=item.canvas.getBoundingClientRect();if(rect.width>0){drawFn(item.ctx)}else{setTimeout(run,80)}};
@@ -369,20 +375,38 @@ function safeDraw(id,drawFn){
 function activateButton(selector,current){document.querySelectorAll(selector).forEach(btn=>btn.classList.toggle('active-btn',btn===current))}
 
 const waveState={view:'section',wave:'p',depth:1200};
-function waveLayer(depth){if(depth<40)return {key:'crust',name:'地殼',speed:'較慢',infer:'外層薄'};if(depth<2900)return {key:'mantle',name:'地函',speed:'較快',infer:'物質改變'};return {key:'core',name:'地核',speed:depth<5150?'明顯改變':'再度改變',infer:'金屬為主'}}
+function waveLayer(depth){
+  if(depth<40)return {key:'crust',name:'地殼',speed:'較慢',infer:'最外層極薄'};
+  if(depth<2900)return {key:'mantle',name:'地函',speed:'較快',infer:'主要厚層'};
+  return {key:'core',name:'地核',speed:'明顯改變',infer:'鐵、鎳為主'};
+}
 function relativeSpeed(depth,wave){
-  if(wave==='p'){if(depth<40)return .38;if(depth<2900)return .68;if(depth<5150)return .48;return .72}
-  if(depth<40)return .28;if(depth<2900)return .54;if(depth<5150)return 0;return .34;
+  if(wave==='p'){
+    if(depth<40)return .38;
+    if(depth<2900)return .68;
+    return .50;
+  }
+  if(depth<40)return .28;
+  if(depth<2900)return .54;
+  return 0;
 }
 function drawEarthSection(ctx){
-  clearCanvas(ctx);const cx=340,cy=306,R=226,mR=221,cR=122,icR=62;
-  ctx.fillStyle=COLORS.crust;ctx.beginPath();ctx.arc(cx,cy,R,0,TAU);ctx.fill();
-  ctx.fillStyle=COLORS.mantle;ctx.beginPath();ctx.arc(cx,cy,mR,0,TAU);ctx.fill();
-  ctx.fillStyle=COLORS.deep;ctx.beginPath();ctx.arc(cx,cy,cR,0,TAU);ctx.fill();
-  ctx.fillStyle=COLORS.core;ctx.beginPath();ctx.arc(cx,cy,icR,0,TAU);ctx.fill();
-  ctx.strokeStyle='rgba(255,255,255,.48)';ctx.lineWidth=2;[R,mR,cR,icR].forEach(r=>{ctx.beginPath();ctx.arc(cx,cy,r,0,TAU);ctx.stroke()});
-  const r=R*(waveState.depth/6370);const angle=-.58;const px=cx+Math.cos(angle)*r,py=cy+Math.sin(angle)*r;
-  line(ctx,[[cx,cy],[cx+Math.cos(angle)*R,cy+Math.sin(angle)*R]],'rgba(255,255,255,.35)',3,[9,8]);
+  clearCanvas(ctx);
+  const cx=340,cy=306,R=226,crustPx=4,coreR=122;
+
+  // 國中主模型只保留地殼、地函、地核三層。
+  ctx.fillStyle=COLORS.mantle;ctx.beginPath();ctx.arc(cx,cy,R-crustPx,0,TAU);ctx.fill();
+  ctx.fillStyle=COLORS.core;ctx.beginPath();ctx.arc(cx,cy,coreR,0,TAU);ctx.fill();
+  ctx.strokeStyle=COLORS.crust;ctx.lineWidth=crustPx*2;ctx.beginPath();ctx.arc(cx,cy,R-crustPx/2,0,TAU);ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.45)';ctx.lineWidth=2;[R-crustPx,coreR].forEach(r=>{ctx.beginPath();ctx.arc(cx,cy,r,0,TAU);ctx.stroke()});
+
+  // 掃描深度以『地表往地心』計算：0 km 在地表，6370 km 接近地心。
+  const angle=-.58;
+  const surfaceX=cx+Math.cos(angle)*R;
+  const surfaceY=cy+Math.sin(angle)*R;
+  const r=R*(1-waveState.depth/6370);
+  const px=cx+Math.cos(angle)*r,py=cy+Math.sin(angle)*r;
+  line(ctx,[[surfaceX,surfaceY],[cx,cy]],'rgba(255,255,255,.35)',3,[9,8]);
   ctx.fillStyle=COLORS.cyan;ctx.beginPath();ctx.arc(px,py,10,0,TAU);ctx.fill();
   const layer=waveLayer(waveState.depth);
   label(ctx,'掃描位置',px+18,py-28,COLORS.cyan,'left',18);
@@ -394,120 +418,282 @@ function drawEarthSection(ctx){
   label(ctx,`${waveState.wave.toUpperCase()} 波相對速度`,590,254,COLORS.white,'left',19);
   roundRect(ctx,590,280,220,26,13,'rgba(255,255,255,.12)');
   roundRect(ctx,590,280,220*speed,26,13,waveState.wave==='p'?COLORS.cyan:COLORS.pink);
-  if(speed===0)label(ctx,'液態外核中無法傳遞',700,334,COLORS.red,'center',19);else label(ctx,'進入不同層時速度會改變',700,334,COLORS.green,'center',18);
-  label(ctx,'速度突變 → 推測分層',700,374,COLORS.orange,'center',20);
-  label(ctx,'地殼',340,62,COLORS.yellow,'center',18);line(ctx,[[340,80],[340,92]],COLORS.yellow,3);
-  label(ctx,'地函',185,303,COLORS.white,'center',20);
+  if(speed===0)label(ctx,'進入地核後，S 波曲線停止',700,334,COLORS.red,'center',18);
+  else label(ctx,'進入不同層時速度會改變',700,334,COLORS.green,'center',18);
+  label(ctx,'速度突變 → 推測三層構造',700,374,COLORS.orange,'center',19);
+
+  // 地殼實際最厚約 40 km，相對地球半徑極薄；圖中僅加粗便於看見。
+  label(ctx,'地殼（最厚約 40 km）',340,55,COLORS.yellow,'center',17);
+  line(ctx,[[340,72],[340,82]],COLORS.yellow,3);
+  label(ctx,'地函',190,305,COLORS.white,'center',20);
   label(ctx,'地核',340,306,COLORS.white,'center',20);
-  label(ctx,'示意圖未依實際比例繪製',975,574,COLORS.muted,'right',15,700);
+  label(ctx,'只呈現地殼、地函、地核；地殼線條已加粗便於觀察。',975,574,COLORS.muted,'right',14,700);
 }
 function drawWaveGraph(ctx){
   clearCanvas(ctx);const x0=110,x1=895,y0=500,y1=80;
   line(ctx,[[x0,y1],[x0,y0],[x1,y0]],COLORS.white,3);
   label(ctx,'相對波速',36,92,COLORS.white,'left',18);label(ctx,'深度（km）',895,548,COLORS.white,'right',18);
   [0,1000,2000,3000,4000,5000,6000].forEach(d=>{const x=x0+(d/6370)*(x1-x0);line(ctx,[[x,y0],[x,y0+8]],COLORS.muted,2);mono(ctx,String(d),x,y0+28,COLORS.muted,'center',14)});
-  const b1=x0+(40/6370)*(x1-x0),b2=x0+(2900/6370)*(x1-x0),b3=x0+(5150/6370)*(x1-x0);
-  [b1,b2,b3].forEach(x=>line(ctx,[[x,y1],[x,y0]],'rgba(255,255,255,.25)',2,[8,8]));
-  label(ctx,'地殼',145,110,COLORS.yellow,'left',16);label(ctx,'地函',(b1+b2)/2,110,COLORS.orange,'center',17);label(ctx,'地核',(b2+x1)/2,110,COLORS.pink,'center',17);
+  const b1=x0+(40/6370)*(x1-x0),b2=x0+(2900/6370)*(x1-x0);
+  [b1,b2].forEach(x=>line(ctx,[[x,y1],[x,y0]],'rgba(255,255,255,.25)',2,[8,8]));
+  label(ctx,'地殼',140,110,COLORS.yellow,'left',16);label(ctx,'地函',(b1+b2)/2,110,COLORS.orange,'center',17);label(ctx,'地核',(b2+x1)/2,110,COLORS.pink,'center',17);
   function sy(v){return y0-v*(y0-y1)}
-  const p=[[0,.35],[40,.42],[500,.58],[1500,.68],[2890,.73],[2900,.48],[4000,.55],[5140,.62],[5150,.70],[6370,.74]];
-  const s=[[0,.24],[40,.30],[500,.43],[1500,.53],[2890,.58],[2900,0],[5140,0],[5150,.30],[6370,.38]];
+  const p=[[0,.35],[40,.42],[500,.58],[1500,.68],[2890,.73],[2900,.48],[4200,.55],[6370,.60]];
+  const s=[[0,.24],[40,.30],[500,.43],[1500,.53],[2890,.58],[2900,0]];
   function drawCurve(arr,color){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=6;ctx.lineJoin='round';ctx.beginPath();arr.forEach(([d,v],i)=>{const x=x0+(d/6370)*(x1-x0),y=sy(v);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.restore()}
   drawCurve(p,COLORS.cyan);drawCurve(s,COLORS.pink);
-  label(ctx,'P 波',814,174,COLORS.cyan,'left',20);label(ctx,'S 波',814,354,COLORS.pink,'left',20);
+  label(ctx,'P 波',814,205,COLORS.cyan,'left',20);label(ctx,'S 波',650,344,COLORS.pink,'left',20);
+  label(ctx,'地核內部不再細分',760,420,COLORS.muted,'center',16,700);
   const sx=x0+(waveState.depth/6370)*(x1-x0);line(ctx,[[sx,y1],[sx,y0]],COLORS.yellow,4,[9,7]);mono(ctx,`${waveState.depth} km`,sx,55,COLORS.yellow,'center',18);
-  const sp=relativeSpeed(waveState.depth,waveState.wave);ctx.fillStyle=waveState.wave==='p'?COLORS.cyan:COLORS.pink;ctx.beginPath();ctx.arc(sx,sy(sp),10,0,TAU);ctx.fill();
-  label(ctx,'曲線為國中概念化示意，重點是交界處的明顯變化。',500,575,COLORS.muted,'center',16,700);
+  const sp=relativeSpeed(waveState.depth,waveState.wave);
+  if(!(waveState.wave==='s'&&waveState.depth>=2900)){ctx.fillStyle=waveState.wave==='p'?COLORS.cyan:COLORS.pink;ctx.beginPath();ctx.arc(sx,sy(sp),10,0,TAU);ctx.fill()}
+  label(ctx,'國中重點：在交界處出現明顯變化，可推測地球具有三層構造。',500,575,COLORS.muted,'center',15,700);
 }
-function drawWave(){safeDraw('waveCanvas',ctx=>waveState.view==='section'?drawEarthSection(ctx):drawWaveGraph(ctx));const layer=waveLayer(waveState.depth);document.getElementById('waveLayerMetric').textContent=layer.name;document.getElementById('waveSpeedMetric').textContent=waveState.wave==='s'&&relativeSpeed(waveState.depth,'s')===0?'無法傳遞':layer.speed;document.getElementById('waveInferenceMetric').textContent=layer.infer;let text=`掃描到 ${waveState.depth} km，位於${layer.name}。`;if(waveState.wave==='s'&&relativeSpeed(waveState.depth,'s')===0)text+='此深度位於液態外核範圍，S 波無法通過。';else text+='波速或路徑的變化，可作為判斷地下物質不同的證據。';document.getElementById('waveResult').textContent=text}
+function drawWave(){
+  safeDraw('waveCanvas',ctx=>waveState.view==='section'?drawEarthSection(ctx):drawWaveGraph(ctx));
+  const layer=waveLayer(waveState.depth);
+  document.getElementById('waveLayerMetric').textContent=layer.name;
+  document.getElementById('waveSpeedMetric').textContent=waveState.wave==='s'&&waveState.depth>=2900?'曲線停止':layer.speed;
+  document.getElementById('waveInferenceMetric').textContent=layer.infer;
+  let text=`掃描到 ${waveState.depth} km，位於${layer.name}。`;
+  if(waveState.wave==='s'&&waveState.depth>=2900)text+='國中階段不細分地核內部，只觀察 S 波在地函與地核交界出現明顯改變。';
+  else text+='波速或路徑的變化，可作為判斷地下物質不同的證據。';
+  document.getElementById('waveResult').textContent=text;
+}
 
 const layerOrder=['crust','mantle','core'];
 const layerInfo={crust:{name:'地殼',target:'最外層',material:'岩石',color:COLORS.crust},mantle:{name:'地函',target:'中間層',material:'岩石',color:COLORS.mantle},core:{name:'地核',target:'最內層',material:'鐵、鎳',color:COLORS.core}};
 const layersState={index:0,solved:new Set(),reveal:0,feedback:''};
 function drawLayers(ctx){
-  clearCanvas(ctx);const cx=430,cy=310,R=235,mR=224,cR=120;
-  ctx.fillStyle=COLORS.crust;ctx.beginPath();ctx.arc(cx,cy,R,0,TAU);ctx.fill();
-  ctx.fillStyle=COLORS.mantle;ctx.beginPath();ctx.arc(cx,cy,mR,0,TAU);ctx.fill();
-  ctx.fillStyle=COLORS.core;ctx.beginPath();ctx.arc(cx,cy,cR,0,TAU);ctx.fill();
-  const target=layerOrder[layersState.index];ctx.save();ctx.strokeStyle=COLORS.cyan;ctx.lineWidth=10;ctx.shadowColor=COLORS.cyan;ctx.shadowBlur=22;
-  if(target==='crust'){ctx.beginPath();ctx.arc(cx,cy,R-5,0,TAU);ctx.stroke()}
-  if(target==='mantle'){ctx.beginPath();ctx.arc(cx,cy,(mR+cR)/2,0,TAU);ctx.stroke()}
-  if(target==='core'){ctx.beginPath();ctx.arc(cx,cy,cR-5,0,TAU);ctx.stroke()}
+  clearCanvas(ctx);const cx=430,cy=310,R=235,crustPx=4,coreR=120;
+  ctx.fillStyle=COLORS.mantle;ctx.beginPath();ctx.arc(cx,cy,R-crustPx,0,TAU);ctx.fill();
+  ctx.fillStyle=COLORS.core;ctx.beginPath();ctx.arc(cx,cy,coreR,0,TAU);ctx.fill();
+  ctx.strokeStyle=COLORS.crust;ctx.lineWidth=crustPx*2;ctx.beginPath();ctx.arc(cx,cy,R-crustPx/2,0,TAU);ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.42)';ctx.lineWidth=2;[R-crustPx,coreR].forEach(r=>{ctx.beginPath();ctx.arc(cx,cy,r,0,TAU);ctx.stroke()});
+
+  const target=layerOrder[layersState.index];ctx.save();ctx.strokeStyle=COLORS.cyan;ctx.shadowColor=COLORS.cyan;ctx.shadowBlur=22;
+  if(target==='crust'){ctx.lineWidth=12;ctx.beginPath();ctx.arc(cx,cy,R-3,0,TAU);ctx.stroke()}
+  if(target==='mantle'){ctx.lineWidth=10;ctx.beginPath();ctx.arc(cx,cy,(R+coreR)/2,0,TAU);ctx.stroke()}
+  if(target==='core'){ctx.lineWidth=10;ctx.beginPath();ctx.arc(cx,cy,coreR-5,0,TAU);ctx.stroke()}
   ctx.restore();
-  const names=layersState.reveal>0?['地殼','地函','地核']:['？','？','？'];
-  if(layersState.reveal>0){label(ctx,names[0],430,62,COLORS.yellow,'center',18);label(ctx,names[1],286,310,COLORS.white,'center',22);label(ctx,names[2],430,310,COLORS.white,'center',22)}
+  if(layersState.reveal>0){
+    label(ctx,'地殼（最厚約 40 km）',430,62,COLORS.yellow,'center',17);
+    label(ctx,'地函',286,310,COLORS.white,'center',22);
+    label(ctx,'地核',430,310,COLORS.white,'center',22);
+  }
   roundRect(ctx,700,105,235,355,16,'rgba(8,35,28,.72)',COLORS.orange,2);
   label(ctx,'組成與特徵',817,140,COLORS.yellow,'center',23);
-  const rows=[['地殼','岩石','密度最小'],['地函','岩石','中間'],['地核','鐵、鎳','密度最大']];
+  const rows=[['地殼','岩石','最薄'],['地函','岩石','厚約 2900 km'],['地核','鐵、鎳','密度最大']];
   rows.forEach((r,i)=>{const y=202+i*92;label(ctx,r[0],735,y,r[0]==='地殼'?COLORS.yellow:r[0]==='地函'?COLORS.orange:COLORS.pink,'left',20);label(ctx,r[1],735,y+27,COLORS.white,'left',17);label(ctx,r[2],735,y+52,COLORS.muted,'left',16)});
-  label(ctx,`請找：${layerInfo[target].target}`,430,564,COLORS.cyan,'center',24);
-  label(ctx,'示意圖未依實際比例繪製',975,575,COLORS.muted,'right',15,700);
+  label(ctx,`請找：${layerInfo[target].target}`,430,525,COLORS.cyan,'center',24);
+  label(ctx,'地殼依實際比例幾乎看不見，圖中僅加粗標示；地核不細分。',975,577,COLORS.muted,'right',14,700);
 }
 function updateLayers(){safeDraw('layersCanvas',drawLayers);const target=layerOrder[layersState.index];document.getElementById('layerTargetMetric').textContent=layerInfo[target].target;document.getElementById('layerProgressMetric').textContent=`${layersState.solved.size}／3`;document.getElementById('densityMetric').textContent=layersState.solved.size===3?'核＞函＞殼':'待完成';document.getElementById('layersResult').textContent=layersState.feedback||'請判斷畫面中發亮的區域是哪一層。'}
 
 const crustState={mode:'thickness'};
 function drawCrust(ctx){
-  clearCanvas(ctx);ctx.fillStyle='#72cfea';ctx.fillRect(0,0,1000,190);ctx.fillStyle='#276e89';ctx.fillRect(500,145,500,45);
-  ctx.fillStyle='#5b3f31';ctx.fillRect(0,430,1000,170);label(ctx,'地函',500,530,COLORS.white,'center',23);
-  ctx.fillStyle=COLORS.crust;ctx.beginPath();ctx.moveTo(0,160);ctx.lineTo(230,110);ctx.lineTo(500,160);ctx.lineTo(500,370);ctx.lineTo(0,370);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#445766';ctx.beginPath();ctx.moveTo(500,190);ctx.lineTo(1000,190);ctx.lineTo(1000,245);ctx.lineTo(500,245);ctx.closePath();ctx.fill();
-  label(ctx,'大陸地殼',250,80,COLORS.yellow,'center',25);label(ctx,'海洋地殼',750,120,COLORS.cyan,'center',25);
+  clearCanvas(ctx);
+  const seaY=165,seaFloorY=250;
+
+  // 天空與水平海面。海水直接標在水體內，減少學生視線來回搜尋。
+  ctx.fillStyle='#173b43';ctx.fillRect(0,0,1000,seaY);
+  ctx.fillStyle='#276e89';ctx.fillRect(500,seaY,500,seaFloorY-seaY);
+  line(ctx,[[500,seaY],[1000,seaY]],COLORS.cyan,5);
+  label(ctx,'海水',750,205,COLORS.white,'center',22);
+
+  // 地函：本頁只比較大陸地殼與海洋地殼，因此統一用單一顏色。
+  // 不在這裡額外暗示岩石圈／軟流圈分界，避免增加學生認知負荷。
+  ctx.fillStyle='#9a503d';ctx.fillRect(0,305,1000,295);
+  label(ctx,'地函',500,500,COLORS.white,'center',23);
+
+  // 大陸地殼：地表隆起，海岸在水平海面處相接。
+  ctx.fillStyle=COLORS.crust;ctx.beginPath();ctx.moveTo(0,160);ctx.lineTo(230,105);ctx.lineTo(420,135);ctx.lineTo(500,seaY);ctx.lineTo(500,370);ctx.lineTo(0,370);ctx.closePath();ctx.fill();
+  line(ctx,[[0,160],[230,105],[420,135],[500,seaY]],COLORS.green,4);
+
+  // 海洋地殼位在水平海水下方，厚度較薄；名稱直接放在地殼色帶內。
+  ctx.fillStyle='#445766';ctx.fillRect(500,seaFloorY,500,55);
+  line(ctx,[[500,seaFloorY],[1000,seaFloorY]],COLORS.muted,3);
+
+  label(ctx,'大陸地殼',250,72,COLORS.yellow,'center',24);
+  label(ctx,'海洋地殼',750,279,COLORS.white,'center',18);
   if(crustState.mode==='thickness'){
     arrow(ctx,110,170,110,365,COLORS.yellow,5);arrow(ctx,110,365,110,170,COLORS.yellow,5);mono(ctx,'約 40 km',145,268,COLORS.yellow,'left',23);
-    arrow(ctx,885,195,885,242,COLORS.cyan,5);arrow(ctx,885,242,885,195,COLORS.cyan,5);mono(ctx,'約 7 km',850,275,COLORS.cyan,'center',23);
+    arrow(ctx,885,253,885,302,COLORS.cyan,5);arrow(ctx,885,302,885,253,COLORS.cyan,5);mono(ctx,'約 7 km',850,335,COLORS.cyan,'center',23);
     label(ctx,'厚度比較：大陸地殼平均較厚',500,470,COLORS.white,'center',24);
   }else if(crustState.mode==='density'){
-    const y1=330,y2=230;roundRect(ctx,155,y1,190,55,10,'rgba(255,243,106,.18)',COLORS.yellow,3);roundRect(ctx,655,y2,190,55,10,'rgba(85,233,255,.18)',COLORS.cyan,3);
+    const y1=330,y2=320;roundRect(ctx,155,y1,190,55,10,'rgba(255,243,106,.18)',COLORS.yellow,3);roundRect(ctx,655,y2,190,55,10,'rgba(85,233,255,.18)',COLORS.cyan,3);
     label(ctx,'平均密度較小',250,y1+28,COLORS.yellow,'center',20);label(ctx,'平均密度較大',750,y2+28,COLORS.cyan,'center',20);
-    arrow(ctx,750,310,750,395,COLORS.cyan,7);label(ctx,'較容易向下隱沒',750,430,COLORS.cyan,'center',21);
+    arrow(ctx,750,390,750,425,COLORS.cyan,7);label(ctx,'較容易向下隱沒',750,462,COLORS.cyan,'center',21);
   }else{
     ctx.fillStyle='#f0c882';for(let i=0;i<35;i++){ctx.beginPath();ctx.arc(120+(i%7)*45,205+Math.floor(i/7)*34,8+(i%3)*3,0,TAU);ctx.fill()}
-    ctx.fillStyle='#3b4650';for(let i=0;i<45;i++){ctx.beginPath();ctx.arc(575+(i%9)*42,200+Math.floor(i/9)*25,5+(i%2)*2,0,TAU);ctx.fill()}
-    label(ctx,'主要出露：花岡岩',250,410,COLORS.yellow,'center',23);label(ctx,'主要為：玄武岩',750,310,COLORS.cyan,'center',23);
+    ctx.fillStyle='#3b4650';for(let i=0;i<45;i++){ctx.beginPath();ctx.arc(575+(i%9)*42,260+Math.floor(i/9)*8,5+(i%2)*2,0,TAU);ctx.fill()}
+    label(ctx,'主要出露：花岡岩',250,410,COLORS.yellow,'center',23);label(ctx,'主要為：玄武岩',750,335,COLORS.cyan,'center',23);
   }
-  label(ctx,'示意圖為教學比例，厚度差異已放大。',975,575,COLORS.muted,'right',15,700);
+  label(ctx,'本頁只比較地殼；地函統一單色，不顯示岩石圈／軟流圈分界。',975,575,COLORS.muted,'right',15,700);
 }
 function updateCrust(){safeDraw('crustCanvas',drawCrust);const data={thickness:['約 40 km','約 7 km','大陸較厚','大陸地殼平均厚度約 40 km，海洋地殼約 7 km。'],density:['平均較小','平均較大','海洋較密','海洋地殼平均密度較大，因此推擠時通常較容易向下隱沒。'],rock:['花岡岩','玄武岩','岩石不同','大陸地殼主要出露花岡岩；海洋地殼主要為玄武岩。']}[crustState.mode];document.getElementById('continentMetric').textContent=data[0];document.getElementById('oceanMetric').textContent=data[1];document.getElementById('crustConclusionMetric').textContent=data[2];document.getElementById('crustResult').textContent=data[3]}
 
 const rheologyState={focus:'compare',time:0};
 function drawRheology(ctx){
-  clearCanvas(ctx);const shift=rheologyState.time*0.6;ctx.fillStyle='#6db5d1';ctx.fillRect(0,0,1000,90);label(ctx,'地表',45,45,COLORS.white,'left',18);
-  ctx.save();ctx.translate(shift,0);ctx.fillStyle=COLORS.crust;ctx.fillRect(-80,90,1080,80);ctx.fillStyle='#b85d43';ctx.fillRect(-80,170,1080,100);ctx.restore();
-  ctx.fillStyle='#d95a48';ctx.beginPath();ctx.moveTo(0,270);for(let x=0;x<=1000;x+=20){const y=300+Math.sin((x+shift*2)/95)*20+Math.sin((x-shift)/47)*7;ctx.lineTo(x,y)}ctx.lineTo(1000,600);ctx.lineTo(0,600);ctx.closePath();ctx.fill();
-  for(let y=335;y<575;y+=55){ctx.strokeStyle='rgba(255,179,71,.38)';ctx.lineWidth=3;ctx.beginPath();for(let x=0;x<=1000;x+=20){const yy=y+Math.sin((x+shift*1.5)/100)*12;ctx.lineTo(x,yy)}ctx.stroke()}
+  clearCanvas(ctx);const shift=rheologyState.time*0.6;
+  function lerp(a,b,t){return a+(b-a)*t}
+  function drawGlowDot(x,y,r,color,alpha=0.95){
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.shadowColor=color;
+    ctx.shadowBlur=24;
+    ctx.fillStyle=color;
+    ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.arc(x-r*0.25,y-r*0.25,r*0.34,0,TAU);ctx.fill();
+    ctx.restore();
+  }
+  function plotSegments(segments,t){
+    const n=segments.length; const pos=(t%n+n)%n; const i=Math.floor(pos); const local=pos-i;
+    const a=segments[i],b=segments[(i+1)%n];
+    return [lerp(a[0],b[0],local),lerp(a[1],b[1],local)];
+  }
+  function drawFlowDots(segments,colors,phaseShift=0){
+    for(let i=0;i<6;i++){
+      const t=(rheologyState.time*0.055+phaseShift+i*0.78)%segments.length;
+      const [x,y]=plotSegments(segments,t);
+      drawGlowDot(x,y,10+i%2*2,colors[i%colors.length],0.9-i*0.07);
+    }
+  }
+
+  ctx.fillStyle='#173b43';ctx.fillRect(0,0,1000,90);label(ctx,'地表',45,45,COLORS.white,'left',18);
+  ctx.save();ctx.translate(shift,0);ctx.fillStyle=COLORS.crust;ctx.fillRect(-80,90,1080,42);ctx.fillStyle='#b85d43';ctx.fillRect(-80,132,1080,138);ctx.restore();
+  ctx.fillStyle='#d95a48';ctx.fillRect(0,270,1000,330);
+  for(let y=330;y<575;y+=55){ctx.strokeStyle='rgba(255,179,71,.28)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(1000,y);ctx.stroke()}
+
   const dim=rheologyState.focus;
-  if(dim==='lithosphere'||dim==='compare'){ctx.strokeStyle=COLORS.yellow;ctx.lineWidth=7;ctx.strokeRect(10,92,980,174);label(ctx,'岩石圈：地殼＋地函最上部',500,210,COLORS.yellow,'center',25)}
-  if(dim==='asthenosphere'||dim==='compare'){ctx.strokeStyle=COLORS.pink;ctx.lineWidth=7;ctx.strokeRect(10,278,980,305);label(ctx,'軟流圈：固態、可塑、極緩慢形變',500,430,COLORS.white,'center',24)}
-  arrow(ctx,150,135,260,135,COLORS.cyan,6);arrow(ctx,850,135,960,135,COLORS.cyan,6);
-  mono(ctx,`${Math.round(rheologyState.time*3)} cm`,500,535,COLORS.cyan,'center',25);label(ctx,'以每年數公分作概念化顯示；畫面位移已誇張。',500,570,COLORS.muted,'center',16,700);
+  if(dim==='lithosphere'||dim==='compare'){ctx.strokeStyle=COLORS.yellow;ctx.lineWidth=7;ctx.strokeRect(10,92,980,174);label(ctx,'岩石圈：極薄地殼＋地函最上部',500,210,COLORS.yellow,'center',23)}
+  if(dim==='asthenosphere'||dim==='compare'){ctx.strokeStyle=COLORS.pink;ctx.lineWidth=7;ctx.strokeRect(10,278,980,305);label(ctx,'軟流圈：固態、可塑，內部有極緩慢熱對流',500,305,COLORS.white,'center',21)}
+
+  // 與對流槽統一風格：粗箭頭＋大顆發光流團，清楚顯示兩個閉合對流胞。
+  const flow='rgba(255,255,255,.92)',lw=7;
+  bezierArrow(ctx,475,520,470,455,470,385,475,335,flow,lw);
+  bezierArrow(ctx,460,345,370,350,245,360,150,385,flow,lw);
+  bezierArrow(ctx,150,395,135,435,135,485,155,525,flow,lw);
+  bezierArrow(ctx,170,535,260,548,365,548,450,530,flow,lw);
+  bezierArrow(ctx,525,520,530,455,530,385,525,335,flow,lw);
+  bezierArrow(ctx,540,345,630,350,755,360,850,385,flow,lw);
+  bezierArrow(ctx,850,395,865,435,865,485,845,525,flow,lw);
+  bezierArrow(ctx,830,535,740,548,635,548,550,530,flow,lw);
+
+  const leftSegs=[[480,520],[480,455],[480,385],[478,340],[410,346],[320,356],[235,365],[155,390],[138,450],[155,520],[230,540],[320,548],[405,546],[460,532]];
+  const rightSegs=[[520,520],[520,455],[520,385],[522,340],[590,346],[680,356],[765,365],[845,390],[862,450],[845,520],[770,540],[680,548],[595,546],[540,532]];
+  drawFlowDots(leftSegs,[COLORS.yellow,COLORS.orange],0);
+  drawFlowDots(rightSegs,[COLORS.yellow,COLORS.orange],0.45);
+
+  label(ctx,'熱物質上升',500,328,COLORS.yellow,'center',18);
+  label(ctx,'冷卻後下沉',94,452,COLORS.cyan,'center',16);label(ctx,'冷卻後下沉',906,452,COLORS.cyan,'center',16);
+
+  // 岩石圈箭頭同步套用對流槽風格：左板塊向左、右板塊向右。
+  arrow(ctx,260,135,125,135,COLORS.cyan,10);arrow(ctx,740,135,875,135,COLORS.cyan,10);
+  drawGlowDot(230-Math.sin(rheologyState.time*0.07)*55,135,8,COLORS.cyan,.95);
+  drawGlowDot(770+Math.sin(rheologyState.time*0.07)*55,135,8,COLORS.cyan,.95);
+  label(ctx,'上方岩石圈被慢慢帶動',500,116,COLORS.cyan,'center',20);
+  label(ctx,'為了讓流向更清楚，流團大小與速度已教學放大。',500,570,COLORS.muted,'center',14,700);
 }
-function updateRheology(){safeDraw('rheologyCanvas',drawRheology);document.getElementById('timeValue').textContent=`${rheologyState.time} 年`;document.getElementById('rheologyShiftMetric').textContent=`${rheologyState.time*3} cm`;document.getElementById('rheologyResult').textContent=rheologyState.time===0?'向右推進時間，觀察軟流圈在長時間下產生非常緩慢的形變。':`經過 ${rheologyState.time} 年，模型顯示約 ${rheologyState.time*3} cm 的緩慢位移。軟流圈仍是固態，只是在長時間下可產生塑性形變。`}
+function updateRheology(){safeDraw('rheologyCanvas',drawRheology);document.getElementById('timeValue').textContent=`${rheologyState.time} 年`;document.getElementById('rheologyShiftMetric').textContent=`${rheologyState.time*3} cm`;document.getElementById('rheologyResult').textContent=rheologyState.time===0?'向右推進時間，觀察岩石圈與軟流圈的相對運動。這裡把流團大小與動畫速度教學化放大，方便學生看懂熱對流方向。':`經過 ${rheologyState.time} 年，模型顯示約 ${rheologyState.time*3} cm 的緩慢位移。軟流圈仍是固態，只是在長時間下可產生塑性形變；畫面中的流團與速度已教學放大。`}
 
 const convectionState={mode:'diverge',heat:55,friction:35,running:false,phase:0,raf:0,last:0};
 function convectionStrength(){return Math.max(0,convectionState.heat*(1-convectionState.friction/130))}
 function drawConvection(ctx){
-  clearCanvas(ctx);const strength=convectionStrength(),amp=18+strength*.34;ctx.fillStyle='#5d3f32';ctx.fillRect(0,160,1000,440);ctx.fillStyle='#e46b45';ctx.fillRect(0,235,1000,365);
-  const gap=convectionState.mode==='diverge'?22:4;ctx.fillStyle='#7e6a55';ctx.fillRect(0,90,500-gap,110);ctx.fillRect(500+gap,90,500-gap,110);
-  ctx.fillStyle=COLORS.crust;ctx.fillRect(0,85,500-gap,22);ctx.fillRect(500+gap,85,500-gap,22);
-  const speed=strength*.004;const offset=Math.sin(convectionState.phase)*amp;
-  ctx.save();ctx.strokeStyle=COLORS.orange;ctx.lineWidth=10;ctx.lineCap='round';
-  if(convectionState.mode==='diverge'){
-    ctx.beginPath();ctx.moveTo(500,540);ctx.bezierCurveTo(500+offset,430,500-offset,330,500,235);ctx.stroke();
-    arrow(ctx,500,520,500,260,COLORS.yellow,7);arrow(ctx,450,195,250,195,COLORS.cyan,7);arrow(ctx,550,195,750,195,COLORS.cyan,7);
-    ctx.beginPath();ctx.moveTo(500,245);ctx.bezierCurveTo(335,280,210,350,185,510);ctx.stroke();ctx.beginPath();ctx.moveTo(500,245);ctx.bezierCurveTo(665,280,790,350,815,510);ctx.stroke();
-  }else{
-    ctx.beginPath();ctx.moveTo(180,520);ctx.bezierCurveTo(210,360,335,275,500,245);ctx.stroke();ctx.beginPath();ctx.moveTo(820,520);ctx.bezierCurveTo(790,360,665,275,500,245);ctx.stroke();
-    arrow(ctx,250,195,455,195,COLORS.cyan,7);arrow(ctx,750,195,545,195,COLORS.cyan,7);arrow(ctx,500,260,500,520,COLORS.yellow,7);
+  clearCanvas(ctx);
+  const strength=convectionStrength();
+  const pulse=convectionState.running?1+Math.sin(convectionState.phase*2)*0.08:1;
+  const gap=convectionState.mode==='diverge'?26:6;
+
+  function lerp(a,b,t){return a+(b-a)*t}
+  function drawGlowDot(x,y,r,color,alpha=0.95){
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.shadowColor=color;
+    ctx.shadowBlur=24;
+    ctx.fillStyle=color;
+    ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.85)';
+    ctx.beginPath();ctx.arc(x-r*0.25,y-r*0.25,r*0.34,0,TAU);ctx.fill();
+    ctx.restore();
   }
-  ctx.restore();
-  for(let i=0;i<22;i++){const a=(i/22)*TAU+convectionState.phase*.6;const x=500+Math.cos(a)*(250+Math.sin(a*2)*80),y=405+Math.sin(a)*125;ctx.fillStyle=i%2?COLORS.yellow:COLORS.pink;ctx.globalAlpha=.75;ctx.beginPath();ctx.arc(x,y,5,0,TAU);ctx.fill()}ctx.globalAlpha=1;
-  label(ctx,convectionState.mode==='diverge'?'板塊互相分離':'板塊互相推擠',500,48,COLORS.yellow,'center',28);
-  label(ctx,'岩石圈板塊',180,135,COLORS.white,'center',19);label(ctx,'岩石圈板塊',820,135,COLORS.white,'center',19);
-  label(ctx,'軟流圈的極緩慢運動（簡化模型）',500,570,COLORS.white,'center',20);
-  mono(ctx,`相對速度 ${speed.toFixed(2)}`,865,545,COLORS.cyan,'center',17);
+  function plotSegments(segments,t){
+    const n=segments.length;
+    const pos=(t%n+n)%n;
+    const i=Math.floor(pos);
+    const local=pos-i;
+    const a=segments[i],b=segments[(i+1)%n];
+    return [lerp(a[0],b[0],local),lerp(a[1],b[1],local)];
+  }
+  function drawFlowDots(segments,colors,phaseShift=0){
+    for(let i=0;i<6;i++){
+      const t=(convectionState.phase*1.2+phaseShift+i*0.78)%segments.length;
+      const [x,y]=plotSegments(segments,t);
+      drawGlowDot(x,y,10+i%2*2,colors[i%colors.length],0.9-i*0.07);
+    }
+  }
+
+  // 岩石圈板塊
+  ctx.fillStyle='#173b43';ctx.fillRect(0,0,1000,82);
+  ctx.fillStyle='#7e6a55';ctx.fillRect(0,92,500-gap,105);ctx.fillRect(500+gap,92,500-gap,105);
+  ctx.fillStyle=COLORS.crust;ctx.fillRect(0,86,500-gap,12);ctx.fillRect(500+gap,86,500-gap,12);
+  ctx.fillStyle='#e46b45';ctx.fillRect(0,197,1000,403);
+  line(ctx,[[0,197],[1000,197]],COLORS.pink,4);
+
+  const flow='rgba(255,255,255,.92)',lw=7*pulse;
+  if(convectionState.mode==='diverge'){
+    // 對流主路徑：中央上升、上方向外、兩側下沉、底部回中央
+    bezierArrow(ctx,482,530,478,440,478,320,482,225,flow,lw);
+    bezierArrow(ctx,465,238,380,238,250,248,145,282,flow,lw);
+    bezierArrow(ctx,145,292,125,360,125,455,150,530,flow,lw);
+    bezierArrow(ctx,170,545,265,560,375,558,455,535,flow,lw);
+    bezierArrow(ctx,518,530,522,440,522,320,518,225,flow,lw);
+    bezierArrow(ctx,535,238,620,238,750,248,855,282,flow,lw);
+    bezierArrow(ctx,855,292,875,360,875,455,850,530,flow,lw);
+    bezierArrow(ctx,830,545,735,560,625,558,545,535,flow,lw);
+
+    // 大顆發光流團：為了教學清楚，故意放大並加快，不代表真實速度。
+    const leftSegs=[[480,525],[480,455],[480,385],[480,315],[480,245],[410,240],[320,242],[235,250],[155,285],[135,360],[138,450],[155,520],[230,540],[320,548],[405,546],[460,532]];
+    const rightSegs=[[520,525],[520,455],[520,385],[520,315],[520,245],[590,240],[680,242],[765,250],[845,285],[865,360],[862,450],[845,520],[770,540],[680,548],[595,546],[540,532]];
+    drawFlowDots(leftSegs,[COLORS.yellow,COLORS.orange],0);
+    drawFlowDots(rightSegs,[COLORS.yellow,COLORS.orange],0.4);
+
+    // 板塊上方用較粗、較亮的箭頭，模仿你電流動畫那種一眼看懂的移動感。
+    arrow(ctx,450,145,225,145,COLORS.cyan,10);arrow(ctx,550,145,775,145,COLORS.cyan,10);
+    drawGlowDot(355+Math.sin(convectionState.phase*4)*70,145,8,COLORS.cyan,.95);
+    drawGlowDot(645-Math.sin(convectionState.phase*4)*70,145,8,COLORS.cyan,.95);
+
+    label(ctx,'中央較熱物質上升',500,265,COLORS.yellow,'center',22);
+    label(ctx,'兩側冷卻下沉',108,408,COLORS.cyan,'center',18);label(ctx,'兩側冷卻下沉',892,408,COLORS.cyan,'center',18);
+    label(ctx,'板塊向兩側分離',500,112,COLORS.cyan,'center',21);
+  }else{
+    // 聚合的簡化示意：兩側上升、上方向中央、中央下沉、底部向兩側回流。
+    bezierArrow(ctx,155,530,145,430,145,320,170,230,flow,lw);
+    bezierArrow(ctx,185,238,270,235,385,240,470,275,flow,lw);
+    bezierArrow(ctx,845,530,855,430,855,320,830,230,flow,lw);
+    bezierArrow(ctx,815,238,730,235,615,240,530,275,flow,lw);
+    bezierArrow(ctx,500,280,500,355,500,455,500,535,flow,lw);
+    bezierArrow(ctx,480,545,385,560,270,558,180,535,flow,lw);
+    bezierArrow(ctx,520,545,615,560,730,558,820,535,flow,lw);
+    const leftSegs=[[165,520],[150,445],[150,360],[170,250],[250,240],[340,240],[430,248],[485,280],[500,340],[500,420],[495,520],[420,545],[330,550],[240,546],[175,534]];
+    const rightSegs=[[835,520],[850,445],[850,360],[830,250],[750,240],[660,240],[570,248],[515,280],[500,340],[500,420],[505,520],[580,545],[670,550],[760,546],[825,534]];
+    drawFlowDots(leftSegs,[COLORS.orange,COLORS.yellow],0);
+    drawFlowDots(rightSegs,[COLORS.orange,COLORS.yellow],0.35);
+    arrow(ctx,250,145,470,145,COLORS.cyan,10);arrow(ctx,750,145,530,145,COLORS.cyan,10);
+    drawGlowDot(320+Math.sin(convectionState.phase*4)*65,145,8,COLORS.cyan,.95);
+    drawGlowDot(680-Math.sin(convectionState.phase*4)*65,145,8,COLORS.cyan,.95);
+    label(ctx,'中央冷卻物質下沉',500,332,COLORS.cyan,'center',21);
+    label(ctx,'兩側較熱物質上升',500,506,COLORS.yellow,'center',20);
+    label(ctx,'板塊向中央推擠',500,112,COLORS.cyan,'center',21);
+  }
+
+  label(ctx,convectionState.mode==='diverge'?'兩個對流胞帶動板塊分離':'兩個對流胞帶動板塊靠近',500,48,COLORS.yellow,'center',26);
+  label(ctx,'岩石圈板塊',180,120,COLORS.white,'center',18);label(ctx,'岩石圈板塊',820,120,COLORS.white,'center',18);
+  label(ctx,'為了讓流向更清楚，動畫速度與流團大小已教學放大。',500,562,COLORS.white,'center',18);
+  mono(ctx,`模型強度 ${Math.round(strength)}`,880,534,COLORS.cyan,'center',16);
 }
-function animateConvection(ts){if(!convectionState.running)return;if(!convectionState.last)convectionState.last=ts;const dt=Math.min(40,ts-convectionState.last);convectionState.last=ts;convectionState.phase+=dt*(.001+.00008*convectionStrength());drawConvection(canvasContext('convectionCanvas').ctx);convectionState.raf=requestAnimationFrame(animateConvection)}
-function updateConvection(){safeDraw('convectionCanvas',drawConvection);document.getElementById('heatValue').textContent=`${convectionState.heat}%`;document.getElementById('frictionValue').textContent=`${convectionState.friction}%`;const s=convectionStrength();document.getElementById('convectionMetric').textContent=s<20?'微弱':s<48?'中等':'明顯';document.getElementById('plateSpeedMetric').textContent=s<20?'極慢':s<48?'緩慢':'較快';document.getElementById('plateMotionMetric').textContent=convectionState.mode==='diverge'?'互相分離':'互相推擠';document.getElementById('convectionResult').textContent=`目前溫差 ${convectionState.heat}%、阻力 ${convectionState.friction}%。在簡化模型中，對流${s<20?'微弱':s<48?'中等':'較明顯'}，板塊${convectionState.mode==='diverge'?'向兩側分離':'向中央靠近'}。`}
+function animateConvection(ts){if(!convectionState.running)return;if(!convectionState.last)convectionState.last=ts;const dt=Math.min(40,ts-convectionState.last);convectionState.last=ts;convectionState.phase+=dt*(.0035+.0002*convectionStrength());drawConvection(canvasContext('convectionCanvas').ctx);convectionState.raf=requestAnimationFrame(animateConvection)}
+function updateConvection(){safeDraw('convectionCanvas',drawConvection);document.getElementById('heatValue').textContent=`${convectionState.heat}%`;document.getElementById('frictionValue').textContent=`${convectionState.friction}%`;const s=convectionStrength();document.getElementById('convectionMetric').textContent=s<20?'微弱':s<48?'中等':'明顯';document.getElementById('plateSpeedMetric').textContent='教學放大';document.getElementById('plateMotionMetric').textContent=convectionState.mode==='diverge'?'互相分離':'互相推擠';document.getElementById('convectionResult').textContent=`目前溫差 ${convectionState.heat}%、阻力 ${convectionState.friction}%。我已把對流流團放大、動畫速度教學化放大，目的是讓學生一眼看清楚「上升、分流、下沉、回流」與板塊的相對運動；這不是實際速度。`}
 function stopConvection(){convectionState.running=false;convectionState.last=0;if(convectionState.raf)cancelAnimationFrame(convectionState.raf);document.getElementById('convectionPlay').textContent='▶️ 啟動模型'}
 
 function drawVisibleTab(id){if(id==='tab-wave')drawWave();if(id==='tab-layers')updateLayers();if(id==='tab-crust')updateCrust();if(id==='tab-rheology')updateRheology();if(id==='tab-convection')updateConvection()}
