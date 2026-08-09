@@ -109,7 +109,7 @@ button,input{font:inherit}button{touch-action:manipulation}.app{max-width:1080px
   <div class="stage-switch"><div id="stageA" class="stage-card active">A｜先看直射 vs 斜射</div><div id="stageB" class="stage-card">B｜再放回地球公轉</div></div>
   <article class="panel"><h2 id="seasonTitle">A｜同一束光，為什麼斜射比較不熱？</h2><div class="canvas-wrap"><canvas id="seasonCanvas" class="rect-canvas" width="1000" height="600"></canvas><canvas id="seasonCanvas3d" class="season3d-canvas" width="1000" height="600" style="display:none"></canvas><div id="season3dHud" class="season3d-hud" style="display:none">目前節氣：<strong id="season3dHudSeason">春分（直射赤道）</strong><br>直射緯度：<span id="season3dHudLat" class="accent-cyan" style="font-weight:900">赤道（0°）</span></div></div>
     <div id="angleControls"><div class="slider-block"><label>入射角</label><input id="angleRange" type="range" min="30" max="90" value="90"><span id="angleValue" class="slider-value">90°</span></div></div>
-    <div id="seasonControls" style="display:none"><div class="controls"><button class="season2 action-btn active-btn" data-season="spring">春分</button><button class="season2 action-btn" data-season="summer">夏至</button><button class="season2 action-btn" data-season="autumn">秋分</button><button class="season2 action-btn" data-season="winter">冬至</button><button id="tiltZero" class="action-btn warning">地軸改成 0°</button></div><div id="season3dMotion"><div class="slider-block"><label>一年進度</label><input id="season3dRange" type="range" min="0" max="360" step="0.5" value="270"><span id="season3dValue" class="slider-value">春分</span></div><div class="controls"><button id="season3dPlay" class="action-btn success">⏸ 暫停公轉</button></div><div class="season3d-help">👆 在圖上拖曳可自由旋轉整個公轉視角；先從平面圖看，再轉成側視圖觀察 23.5° 地軸與直射位置。</div></div></div>
+    <div id="seasonControls" style="display:none"><div class="controls"><button class="season2 action-btn active-btn" data-season="spring">春分</button><button class="season2 action-btn" data-season="summer">夏至</button><button class="season2 action-btn" data-season="autumn">秋分</button><button class="season2 action-btn" data-season="winter">冬至</button><button id="tiltZero" class="action-btn warning">地軸改成 0°</button></div><div id="season3dMotion"><div class="slider-block"><label>一年進度</label><input id="season3dRange" type="range" min="0" max="360" step="0.5" value="270"><span id="season3dValue" class="slider-value">春分</span></div><div class="controls"><button id="season3dPlay" class="action-btn success">⏸ 暫停公轉</button></div><div class="season3d-help">預設從北方上空往下俯視；在圖上拖曳可自由旋轉，再轉成側視圖觀察 23.5° 地軸與直射位置。</div></div></div>
     <div id="seasonResult" class="result-box">90° 直射：同一束光集中在較小面積，單位面積得到的能量較多。</div>
   </article>
   <div class="grid-2col grid-equal" style="margin-top:18px"><article class="panel"><h2>迷思破解器 ①</h2><p><span class="callout">夏天是因為比較靠近太陽？</span></p><p><strong class="accent-pink">不是。</strong>地球軌道近乎圓形；四季的主要原因是日照入射角改變，而不是單純的日地距離遠近。</p></article><article class="panel"><h2>迷思破解器 ②</h2><p><span class="callout">如果地軸傾斜變成 0°？</span></p><p>按上面的按鈕，直射緯度將不再隨一年南北移動；同一緯度全年日照角度的季節性變化會大幅減少，<strong class="accent-yellow">不再形成現在這種明顯四季</strong>。</p></article></div>
@@ -148,6 +148,7 @@ document.querySelectorAll('.practice-box').forEach(box=>box.querySelectorAll('.p
 function drawPolarSchematic(ctx,cx,cy,r,angleDeg,opts={}){
   const sunLeft = opts.sunLeft!==false;
   const showShading = opts.showShading!==false;
+  const northPoleSunAngle = Number(opts.northPoleSunAngle)||0;
   const showTaiwan = opts.showTaiwan!==false;
   const showLabel = opts.showLabel!==false;
   const showNorthPole = opts.showNorthPole!==false;
@@ -157,15 +158,42 @@ function drawPolarSchematic(ctx,cx,cy,r,angleDeg,opts={}){
   ctx.beginPath();ctx.arc(cx,cy,r,0,TAU);ctx.clip();
   ctx.fillStyle='#236e92';ctx.fillRect(cx-r,cy-r,2*r,2*r);
   if(showShading){
-    ctx.fillStyle='rgba(255,255,255,.08)';
-    ctx.fillRect(cx-r,cy-r,r,2*r);
+    // 北極俯視時，地軸朝向／背向太陽會讓投影中的日夜分界彎曲。
+    // northPoleSunAngle < 0：北極背向太陽，夜區呈凸月狀。
+    ctx.fillStyle='rgba(255,243,106,.10)';
+    ctx.fillRect(cx-r,cy-r,2*r,2*r);
     ctx.fillStyle='rgba(6,20,24,.72)';
-    ctx.fillRect(cx,cy-r,r,2*r);
+    ctx.beginPath();
+    for(let i=0;i<=72;i++){
+      const q=-1+2*i/72;
+      const bend=(sunLeft?1:-1)*Math.sin(northPoleSunAngle*DEG);
+      const px=cx+bend*r*Math.sqrt(Math.max(0,1-q*q));
+      const py=cy+q*r;
+      if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+    }
+    ctx.arc(cx,cy,r,Math.PI/2,-Math.PI/2,sunLeft);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.save();
+    ctx.strokeStyle='rgba(255,255,255,.38)';
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    for(let i=0;i<=72;i++){
+      const q=-1+2*i/72;
+      const bend=(sunLeft?1:-1)*Math.sin(northPoleSunAngle*DEG);
+      const px=cx+bend*r*Math.sqrt(Math.max(0,1-q*q));
+      const py=cy+q*r;
+      if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
   for(let rr=r*0.35; rr<r; rr+=r*0.22){ctx.strokeStyle='rgba(255,255,255,.16)';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(cx,cy,rr,0,TAU);ctx.stroke();}
   for(let i=0;i<8;i++){const a=(i*45+angleDeg)*DEG;line(ctx,[[cx,cy],[cx+Math.cos(a)*r,cy-Math.sin(a)*r]],'rgba(255,255,255,.12)',1.3)}
-  if(showNorthPole){glow(ctx,cx,cy,4,C.white);label(ctx,'北極點',cx,cy-r-16,C.white,'center',15);}
-  const ang=(90+angleDeg)*DEG;
+  if(showNorthPole){glow(ctx,cx,cy,4,C.white);label(ctx,'北極點',cx,cy+18,C.white,'center',13);}
+  // 0° 以台灣正對太陽（中午）為基準；每增加 90° 約經過 6 小時。
+  const ang=(180+angleDeg)*DEG;
   const tx=cx+Math.cos(ang)*taiwanRadius, ty=cy-Math.sin(ang)*taiwanRadius;
   if(showTaiwan){glow(ctx,tx,ty,6,C.yellow);label(ctx,'台灣',tx+38,ty-18,C.yellow,'left',16);}
   ctx.restore();
@@ -189,17 +217,20 @@ function latitudeGuideGeometry(r,latDeg){
   const half=r*Math.sqrt(Math.max(0,1-q*q));
   return {y,half};
 }
-function drawTaiwanMarkerOnGlobe(ctx,cx,cy,r,lonCenter,tiltDeg){
+function drawTaiwanMarkerOnGlobe(ctx,cx,cy,r,angleDeg,tiltDeg){
   const lat=23.5;
   const g=latitudeGuideGeometry(r,lat);
-  let dl=((121-lonCenter+540)%360)-180;
-  if(Math.abs(dl)>90)return;
-  const xLocal=g.half*Math.sin(dl*DEG);
+  // 與北極俯視小窗共用相位：0° 正午、90° 日落、180° 午夜、270° 日出。
+  const phase=angleDeg*DEG;
+  const xLocal=-g.half*Math.cos(phase);
+  const zLocal=g.half*Math.sin(phase);
+  if(zLocal < -1e-6)return;
   const [xr,yr]=rotateScreenPoint(xLocal,g.y,tiltDeg);
   glow(ctx,cx+xr,cy+yr,6,C.yellow);
-  label(ctx,'台灣（北回歸線附近）',cx+xr+28,cy+yr-18,C.yellow,'left',15);
+  const onRight=xr>0;
+  label(ctx,'台灣',cx+xr+(onRight?-20:20),cy+yr-18,C.yellow,onRight?'right':'left',15);
 }
-function drawLatitudeGuides(ctx,cx,cy,r,tiltDeg,lonCenterDeg=0){
+function drawLatitudeGuides(ctx,cx,cy,r,tiltDeg,lonCenterDeg=0,legendAnchorX=null){
   const bands=[
     {lat:66.5,name:'北極圈',color:'rgba(85,233,255,.72)'},
     {lat:23.5,name:'北回歸線',color:'rgba(255,243,106,.88)'},
@@ -212,7 +243,7 @@ function drawLatitudeGuides(ctx,cx,cy,r,tiltDeg,lonCenterDeg=0){
     const p1=rotateScreenPoint(-g.half,g.y,tiltDeg),p2=rotateScreenPoint(g.half,g.y,tiltDeg);
     line(ctx,[[cx+p1[0],cy+p1[1]],[cx+p2[0],cy+p2[1]]],b.color,b.lat===0?3.5:2.5,[8,7]);
   });
-  const lx=cx-r-165, ly=110;
+  const lx=legendAnchorX??(cx-r-165), ly=110;
   ctx.save();ctx.fillStyle='rgba(11,43,46,.82)';ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(lx-16,ly-28,150,154,14);ctx.fill();ctx.stroke();ctx.restore();
   bands.forEach((b,i)=>{const yy=ly+i*30;line(ctx,[[lx,yy],[lx+28,yy]],b.color,b.lat===0?3.5:2.5,[8,7]);label(ctx,b.name,lx+40,yy,C.white,'left',14)});
 }
@@ -241,7 +272,20 @@ function drawLatitudeCircleOnGlobe(ctx,cx,cy,r,tiltDeg,latDeg,lonCenterDeg=0,col
 }
 
 function drawPolarCircleHint(ctx,cx,cy,r){
+  drawLatitudeCircleOnGlobe(ctx,cx,cy,r,23.5,66.5,0,'rgba(85,233,255,.90)',[10,8],3);
   drawLatitudeCircleOnGlobe(ctx,cx,cy,r,23.5,-66.5,0,'rgba(85,233,255,.90)',[10,8],3);
+
+  const northLat=66.5*DEG, northDl=18*DEG;
+  const northX0=r*Math.cos(northLat)*Math.sin(northDl);
+  const northY0=-r*Math.sin(northLat);
+  const northT=23.5*DEG;
+  const northX=northX0*Math.cos(northT)-northY0*Math.sin(northT);
+  const northY=northX0*Math.sin(northT)+northY0*Math.cos(northT);
+  const northPx=cx+northX, northPy=cy+northY;
+  arrow(ctx,northPx+142,northPy+98,northPx+10,northPy+10,C.cyan,3);
+  label(ctx,'北極圈附近',northPx+162,northPy+101,C.cyan,'center',16);
+  label(ctx,'可出現永夜',northPx+162,northPy+125,C.pink,'center',16);
+
   const lat=-66.5*DEG, dl=(-18)*DEG;
   const x0=r*Math.cos(lat)*Math.sin(dl);
   const z0=r*Math.cos(lat)*Math.cos(dl);
@@ -257,15 +301,17 @@ function drawPolarCircleHint(ctx,cx,cy,r){
 
 // PAGE 1
 const dn={angle:25,running:false,speed:.035,last:0,raf:0,axis:true,term:true};
-function drawDay(ctx){clear(ctx);drawSun(ctx,135,320,86);for(let y=250;y<=390;y+=35)arrow(ctx,225,y,360,y,'rgba(255,243,106,.72)',3);label(ctx,'太陽光',292,220,C.yellow,'center',20);const dayLon=-dn.angle;drawEarthGlobe(ctx,640,325,158,dayLon,23.5,'left',true);
-  drawLatitudeGuides(ctx,640,325,158,23.5,dayLon);
-  drawTaiwanMarkerOnGlobe(ctx,640,325,158,dayLon,23.5);
-  drawPolarCircleHint(ctx,640,325,158);
-  glow(ctx,640,174,5,C.white);label(ctx,'北極',640,146,C.white,'center',16);
-  if(dn.axis){const a=(-90+23.5)*DEG,dx=Math.cos(a)*215,dy=Math.sin(a)*215;line(ctx,[[640-dx,325-dy],[640+dx,325+dy]],C.cyan,4);label(ctx,'地軸',640+dx+10,325+dy,C.cyan,'left',18);}
-  label(ctx,'白天',535,470,C.yellow,'center',21);label(ctx,'黑夜',748,470,C.white,'center',21);arrow(ctx,550,150,710,150,C.green,5);label(ctx,'地表由西 → 東自轉',630,118,C.green,'center',20);
-  ctx.save();ctx.fillStyle='rgba(16,45,38,.92)';ctx.strokeStyle=C.cyan;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(748,58,225,210,16);ctx.fill();ctx.stroke();ctx.restore();
-  drawPolarSchematic(ctx,860,165,64,dn.angle,{showShading:true,showTaiwan:true,showNorthPole:true,showArrows:true});
+function drawDay(ctx){clear(ctx);drawSun(ctx,135,320,86);for(let y=250;y<=390;y+=35)arrow(ctx,225,y,360,y,'rgba(255,243,106,.72)',3);label(ctx,'太陽光',292,220,C.yellow,'center',20);const dayLon=211-dn.angle,earthX=605,earthY=325,earthR=158,tilt=23.5;drawEarthGlobe(ctx,earthX,earthY,earthR,dayLon,tilt,'left',dn.term);
+  drawLatitudeGuides(ctx,earthX,earthY,earthR,tilt,dayLon,312);
+  drawTaiwanMarkerOnGlobe(ctx,earthX,earthY,earthR,dn.angle,tilt);
+  drawPolarCircleHint(ctx,earthX,earthY,earthR);
+  const northPole=rotateScreenPoint(0,-earthR,tilt);
+  const northX=earthX+northPole[0],northY=earthY+northPole[1];
+  glow(ctx,northX,northY,5,C.white);label(ctx,'北極點',northX+17,northY+19,C.white,'left',16);
+  if(dn.axis){const a=(-90+tilt)*DEG,dx=Math.cos(a)*215,dy=Math.sin(a)*215;line(ctx,[[earthX-dx,earthY-dy],[earthX+dx,earthY+dy]],C.cyan,4);label(ctx,'地軸',earthX+dx+10,earthY+dy,C.cyan,'left',18);}
+  label(ctx,'白天',earthX-105,470,C.yellow,'center',21);label(ctx,'黑夜',earthX+108,470,C.white,'center',21);arrow(ctx,earthX-90,150,earthX+70,150,C.green,5);label(ctx,'地表由西 → 東自轉',earthX,118,C.green,'center',20);
+  ctx.save();ctx.fillStyle='rgba(16,45,38,.92)';ctx.strokeStyle=C.cyan;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(770,58,225,210,16);ctx.fill();ctx.stroke();ctx.restore();
+  drawPolarSchematic(ctx,882,165,64,dn.angle,{showShading:dn.term,northPoleSunAngle:-23.5,showTaiwan:true,showNorthPole:true,showArrows:true});
 }
 function dnLoop(ts){if(!dn.running)return;if(!dn.last)dn.last=ts;const dt=Math.min(40,ts-dn.last);dn.last=ts;dn.angle=(dn.angle+dt*dn.speed)%360;document.getElementById('dnRange').value=dn.angle;document.getElementById('dnValue').textContent=`${Math.round(dn.angle)}°`;safeDraw('dayCanvas',drawDay);dn.raf=requestAnimationFrame(dnLoop)}
 document.getElementById('dnPlay').onclick=()=>{dn.running=!dn.running;document.getElementById('dnPlay').textContent=dn.running?'⏸ 暫停':'▶ 播放';if(dn.running){dn.last=0;dn.raf=requestAnimationFrame(dnLoop)}};document.getElementById('dnRange').oninput=e=>{dn.angle=+e.target.value;dn.running=false;document.getElementById('dnPlay').textContent='▶ 播放';document.getElementById('dnValue').textContent=`${Math.round(dn.angle)}°`;safeDraw('dayCanvas',drawDay)};document.getElementById('dnSlow').onclick=()=>dn.speed=.018;document.getElementById('dnFast').onclick=()=>dn.speed=.075;document.getElementById('dnReset').onclick=()=>{dn.angle=25;dn.running=false;document.getElementById('dnRange').value=25;document.getElementById('dnValue').textContent='25°';document.getElementById('dnPlay').textContent='▶ 播放';safeDraw('dayCanvas',drawDay)};document.getElementById('dnAxis').onclick=e=>{dn.axis=!dn.axis;e.currentTarget.classList.toggle('active-btn',dn.axis);safeDraw('dayCanvas',drawDay)};document.getElementById('dnTerm').onclick=e=>{dn.term=!dn.term;e.currentTarget.classList.toggle('active-btn',dn.term);safeDraw('dayCanvas',drawDay)};
@@ -330,8 +376,14 @@ document.getElementById('axisLabels').onclick=e=>{ob.labels=!ob.labels;e.current
 
 // PAGE 5
 const ss={stage:'A',angle:90,season:'spring',tilt0:false};
-const g3d={camTheta:-Math.PI/5,camPhi:Math.PI/6,orbitDeg:270,earthRot:0,isPlaying:true,lastTime:0,dragging:false,lastX:0,lastY:0};
+const G3D_NORTH_VIEW_THETA=-Math.PI/5,G3D_NORTH_VIEW_PHI=-Math.PI/6;
+const g3d={camTheta:G3D_NORTH_VIEW_THETA,camPhi:G3D_NORTH_VIEW_PHI,orbitDeg:270,earthRot:0,isPlaying:true,lastTime:0,dragging:false,lastX:0,lastY:0};
 const G3D_ORBIT_R=340,G3D_EARTH_R=28,G3D_SUN_R=85,G3D_TILT=23.5;
+
+function resetSeason3DNorthView(){
+  g3d.camTheta=G3D_NORTH_VIEW_THETA;
+  g3d.camPhi=G3D_NORTH_VIEW_PHI;
+}
 
 function drawAngleStage(ctx){clear(ctx);label(ctx,'同一束太陽光：入射角越小，照射面積越大',500,52,C.yellow,'center',25);const groundY=455;line(ctx,[[120,groundY],[640,groundY]],C.white,4);for(let x=160;x<=600;x+=80)line(ctx,[[x,groundY-8],[x,groundY+8]],'rgba(255,255,255,.26)',2);const angle=ss.angle*DEG,beamW=110/Math.sin(angle),cx=380;const footprint=Math.min(360,beamW);ctx.save();ctx.globalAlpha=.32;ctx.fillStyle=C.yellow;ctx.beginPath();ctx.moveTo(cx-footprint/2,groundY);ctx.lineTo(cx+footprint/2,groundY);ctx.lineTo(cx+footprint/2-170*Math.cos(angle),groundY-170*Math.sin(angle));ctx.lineTo(cx-footprint/2-170*Math.cos(angle),groundY-170*Math.sin(angle));ctx.closePath();ctx.fill();ctx.restore();for(let i=-2;i<=2;i++){const px=cx+i*footprint/4,tx=px-170*Math.cos(angle),ty=groundY-170*Math.sin(angle);arrow(ctx,tx,ty,px,groundY,C.yellow,3)}label(ctx,`${Math.round(ss.angle)}°`,cx+80,groundY-38,C.cyan,'center',22);const rel=Math.sin(angle);const barW=300;ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(230,520,barW,26);ctx.fillStyle=rel>.8?C.orange:C.cyan;ctx.fillRect(230,520,barW*rel,26);label(ctx,`單位面積能量：約 ${Math.round(rel*100)}%`,380,566,rel>.8?C.orange:C.cyan,'center',18);label(ctx,`照射面積相對值：約 ${(1/rel).toFixed(2)}×`,380,490,C.white,'center',19);
   // 放大圖：局部 3D 直射 / 斜射
@@ -524,7 +576,7 @@ function updateSeasonText(){
   }
 }
 document.getElementById('stageA').onclick=()=>{ss.stage='A';document.getElementById('stageA').classList.add('active');document.getElementById('stageB').classList.remove('active');updateSeasonText()};
-document.getElementById('stageB').onclick=()=>{ss.stage='B';document.getElementById('stageB').classList.add('active');document.getElementById('stageA').classList.remove('active');g3d.orbitDeg=seasonMap[ss.season];updateSeasonText()};
+document.getElementById('stageB').onclick=()=>{ss.stage='B';document.getElementById('stageB').classList.add('active');document.getElementById('stageA').classList.remove('active');resetSeason3DNorthView();g3d.orbitDeg=seasonMap[ss.season];updateSeasonText()};
 document.getElementById('angleRange').oninput=e=>{ss.angle=+e.target.value;document.getElementById('angleValue').textContent=`${ss.angle}°`;updateSeasonText()};
 document.querySelectorAll('.season2').forEach(b=>b.onclick=()=>{ss.season=b.dataset.season;g3d.orbitDeg=seasonMap[ss.season];g3d.isPlaying=false;document.getElementById('season3dPlay').textContent='▶ 播放公轉';document.getElementById('season3dPlay').classList.remove('active-btn');document.querySelectorAll('.season2').forEach(x=>x.classList.toggle('active-btn',x===b));updateSeasonText()});
 document.getElementById('tiltZero').onclick=e=>{ss.tilt0=!ss.tilt0;e.currentTarget.classList.toggle('active-btn',ss.tilt0);e.currentTarget.textContent=ss.tilt0?'恢復地軸 23.5°':'地軸改成 0°';updateSeasonText()};
