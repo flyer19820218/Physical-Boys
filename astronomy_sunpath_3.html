@@ -253,7 +253,7 @@
     <div class="sync-bottom">
       <div class="canvas-container">
         <h3 style="color: var(--chalk-green);">【地表視角】觀測者天空與四季軌跡</h3>
-        <canvas id="obsCanvas" class="rect-canvas" width="800" height="500"></canvas>
+        <canvas id="obsCanvas" class="rect-canvas draggable" width="800" height="500"></canvas>
         <div class="explain-box" id="obsExplain"></div>
       </div>
     </div>
@@ -822,41 +822,177 @@ document.getElementById('latSlider').addEventListener('input', e => {
 });
 document.getElementById('timeSlider').addEventListener('input', e => { state.syncTime = parseFloat(e.target.value); updateSyncUI(); });
 
+// 第三張「地表視角」的 3D 相機。
+// 初始值刻意維持第 6 版的教材方向：北左、南右、東上（遠側）、西下（近側）。
+const obs3DView = {
+  yaw: 0,
+  pitch: 0,
+  dragging: false,
+  lastX: 0,
+  lastY: 0
+};
+
+const obsCanvasEl = document.getElementById('obsCanvas');
+obsCanvasEl.addEventListener('pointerdown', e => {
+  obs3DView.dragging = true;
+  obs3DView.lastX = e.clientX;
+  obs3DView.lastY = e.clientY;
+  try { obsCanvasEl.setPointerCapture(e.pointerId); } catch (_) {}
+});
+obsCanvasEl.addEventListener('pointermove', e => {
+  if (!obs3DView.dragging) return;
+  const dx = e.clientX - obs3DView.lastX;
+  const dy = e.clientY - obs3DView.lastY;
+  obs3DView.lastX = e.clientX;
+  obs3DView.lastY = e.clientY;
+
+  obs3DView.yaw += dx * 0.008;
+  obs3DView.pitch += dy * 0.006;
+
+  // 不讓學生把天空整顆翻倒；保留「站在地面上看天空」的直覺。
+  obs3DView.pitch = Math.max(-0.25, Math.min(0.72, obs3DView.pitch));
+  drawObsCanvas();
+});
+function endObsDrag(e) {
+  obs3DView.dragging = false;
+  try { obsCanvasEl.releasePointerCapture(e.pointerId); } catch (_) {}
+}
+obsCanvasEl.addEventListener('pointerup', endObsDrag);
+obsCanvasEl.addEventListener('pointercancel', endObsDrag);
+
+// 雙擊 / 雙點附近的操作可快速回到老師預設視角。
+obsCanvasEl.addEventListener('dblclick', () => {
+  obs3DView.yaw = 0;
+  obs3DView.pitch = 0;
+  drawObsCanvas();
+});
+
 function drawHeliosCanvas() {
   const o = ctx('heliosCanvas'); if(!o) return; const x = o.x;
   x.clearRect(0,0,450,450);
-  const cx = 225, cy = 225, R = 110;
-  const phi_rad = state.syncLat * DEG, delta_rad = DELTA_MAP[state.syncSeason] * DEG;
 
-  drawArrow(x, cx+R+70, cy, cx+R+10, cy, C.yellow, '', -12, "center", 4);
+  const cx = 225, cy = 225, R = 112;
+  const phi = state.syncLat * DEG;
+  const tilt = DELTA_MAP[state.syncSeason] * DEG;
+  const H = (state.syncTime - 12) * 15 * DEG;
 
-  x.fillStyle = '#11261f'; x.beginPath(); x.arc(cx, cy, R, 0, TAU); x.fill();
-  x.strokeStyle = '#00E5FF'; x.lineWidth = 2; x.beginPath(); x.arc(cx, cy, R, 0, TAU); x.stroke();
-  x.fillStyle = 'rgba(3,12,15, 0.7)'; x.beginPath(); x.arc(cx, cy, R, Math.PI/2, 3*Math.PI/2); x.fill();
-  label(x, '太陽光', cx+R+52, cy-22, C.yellow, 'center', 14);
+  // 世界座標：
+  // +X = 面向太陽；+Y = 圖面上方；+Z = 朝觀察者。
+  // 地軸採用第 6 版原本的季節相對傾斜關係，只把畫法改成 3D。
+  const axis = vnorm({x:-Math.sin(tilt), y:Math.cos(tilt), z:0});
+  const eq0  = vnorm({x: Math.cos(tilt), y:Math.sin(tilt), z:0});
+  // eq0 × eastBasis = axis，確保正向自轉符合右手定則：
+  // 從北極上空看為逆時針（西 → 東）。
+  const eastBasis = {x:0,y:0,z:-1};
 
-  x.save(); x.translate(cx, cy); x.rotate(delta_rad);
-  line(x, [[0, -R-15], [0, R+15]], 'rgba(255,255,255,0.3)', 1, [4,4]);
-  line(x, [[-R-15, 0], [R+15, 0]], 'rgba(255,255,255,0.3)', 1);
-  label(x, 'N', -5, -R-20, C.white, 'center', 14);
-
-  const latY = -R * Math.sin(phi_rad), latR = R * Math.cos(phi_rad);
-  line(x, [[-latR, latY], [latR, latY]], 'rgba(255,255,255,0.4)', 1);
-
-  const t_rad = ((state.syncTime - 12) / 24) * TAU;
-  const ox = latR * Math.cos(t_rad), oz = latR * Math.sin(t_rad);
-
-  if (oz <= 0) {
-    glow(x, ox, latY, 5, C.pink);
-    const zx = Math.cos(phi_rad) * Math.cos(t_rad), zy = Math.sin(phi_rad);
-    drawArrow(x, ox, latY, ox + zx*30, latY - zy*30, C.pink, '');
-  } else {
-    x.fillStyle = 'rgba(255,51,153,0.3)'; x.beginPath(); x.arc(ox, latY, 4, 0, TAU); x.fill();
+  function earthPoint(lat, lon) {
+    return vadd(
+      vmul(axis, Math.sin(lat)),
+      vadd(
+        vmul(eq0, Math.cos(lat)*Math.cos(lon)),
+        vmul(eastBasis, Math.cos(lat)*Math.sin(lon))
+      )
+    );
   }
-  x.restore();
 
-  const hh = String(Math.floor(state.syncTime)).padStart(2,'0'), mm = String(Math.floor((state.syncTime%1)*60)).padStart(2,'0');
-  document.getElementById('heliosExplain').innerHTML = `時間：<span class="hl-cyan">${hh}:${mm}</span><br>為比較季節，畫面固定太陽光方向；地軸在真實太空中仍維持近似固定方向。地球自轉造成晝夜交替。`;
+  function p2(p, scale=R) {
+    // 輕微斜視，讓經緯線有立體感。
+    const sx = p.x*0.98 + p.z*0.12;
+    const sy = p.y*0.98 - p.z*0.10;
+    const depth = p.z;
+    return {x:cx+sx*scale, y:cy-sy*scale, depth};
+  }
+
+  function drawGrid(points, frontColor, backColor, frontW=1, backW=.75) {
+    for (const front of [false,true]) {
+      x.save();
+      x.strokeStyle = front ? frontColor : backColor;
+      x.lineWidth = front ? frontW : backW;
+      x.setLineDash(front ? [] : [3,3]);
+      x.beginPath();
+      let pen=false;
+      for (const p of points) {
+        const q=p2(p);
+        const isFront=q.depth>=0;
+        if (isFront===front) {
+          if(!pen){x.moveTo(q.x,q.y);pen=true}else x.lineTo(q.x,q.y);
+        } else pen=false;
+      }
+      x.stroke();
+      x.restore();
+    }
+  }
+
+  // 太陽光：由右往左。
+  for(let yy=-66; yy<=66; yy+=33){
+    drawArrow(x, cx+R+72, cy+yy, cx+R+22, cy+yy, C.yellow, '', 0, 'center', 2.5);
+  }
+  label(x,'太陽光',cx+R+54,cy-92,C.yellow,'center',14);
+
+  // 地球球體：右側朝向太陽較亮。
+  const g=x.createRadialGradient(cx+38,cy-32,12,cx,cy,R+10);
+  g.addColorStop(0,'#3a9bd4');
+  g.addColorStop(.55,'#174d78');
+  g.addColorStop(1,'#0d2b3b');
+  x.fillStyle=g; x.beginPath(); x.arc(cx,cy,R,0,TAU); x.fill();
+
+  // 背光半球陰影。
+  const night=x.createLinearGradient(cx-R,cy,cx+R,cy);
+  night.addColorStop(0,'rgba(3,12,15,.82)');
+  night.addColorStop(.48,'rgba(3,12,15,.48)');
+  night.addColorStop(.52,'rgba(3,12,15,.10)');
+  night.addColorStop(1,'rgba(3,12,15,0)');
+  x.save(); x.beginPath(); x.arc(cx,cy,R,0,TAU); x.clip();
+  x.fillStyle=night; x.fillRect(cx-R,cy-R,2*R,2*R); x.restore();
+
+  // 球面經線：每 30° 一條。
+  for(let lon=0; lon<180; lon+=30){
+    const pts=[];
+    for(let lat=-90; lat<=90; lat+=4) pts.push(earthPoint(lat*DEG,lon*DEG));
+    drawGrid(pts,'rgba(255,255,255,.30)','rgba(255,255,255,.11)',.9,.7);
+  }
+
+  // 緯線：60、30、赤道、-30、-60。
+  for(const lat of [-60,-30,0,30,60]){
+    const pts=[];
+    for(let lon=0; lon<=360; lon+=4) pts.push(earthPoint(lat*DEG,lon*DEG));
+    drawGrid(pts,'rgba(255,255,255,.28)','rgba(255,255,255,.10)',.9,.7);
+  }
+
+  // 觀察者所在緯線特別標示。
+  const latPts=[];
+  for(let lon=0; lon<=360; lon+=3) latPts.push(earthPoint(phi,lon*DEG));
+  drawGrid(latPts,'rgba(255,243,106,.85)','rgba(255,243,106,.24)',2.2,1.2);
+
+  // 地軸。
+  const n=p2(vmul(axis,1.30)), s=p2(vmul(axis,-1.30));
+  line(x,[[s.x,s.y],[n.x,n.y]],C.cyan,2.2,[6,5]);
+  label(x,'N',n.x,n.y-12,C.cyan,'center',14);
+
+  // 觀察者：時間增加時沿西→東方向自轉。
+  const obs3=earthPoint(phi,H);
+  const obs=p2(obs3);
+  if(obs.depth>=0){
+    glow(x,obs.x,obs.y,5,C.pink);
+    drawObserverIcon(x,obs.x,obs.y-2,.72,C.pink);
+    const zen=p2(vmul(obs3,1.30));
+    drawArrow(x,obs.x,obs.y,zen.x,zen.y,C.pink,'',0,'center',2);
+  } else {
+    glow(x,obs.x,obs.y,4,'rgba(255,51,153,.26)');
+  }
+
+  // 直接在赤道兩端標出西、東。
+  // 學生可由觀察者實際移動看出地球由西向東自轉，不再額外畫旋轉箭頭。
+  label(x,'西(W)',cx-R-18,cy,C.green,'right',16);
+  label(x,'東(E)',cx+R+18,cy,C.green,'left',16);
+
+  x.strokeStyle=C.cyan; x.lineWidth=2; x.beginPath(); x.arc(cx,cy,R,0,TAU); x.stroke();
+
+  const hh = String(Math.floor(state.syncTime)).padStart(2,'0'),
+        mm = String(Math.floor((state.syncTime%1)*60)).padStart(2,'0');
+  document.getElementById('heliosExplain').innerHTML =
+    `時間：<span class="hl-cyan">${hh}:${mm}</span><br>` +
+    `地球由西向東自轉；若從北極上空看為<strong>逆時針</strong>。畫面以 3D 經緯線呈現同一位觀察者的位置。`;
 }
 
 function drawTheoryCanvas() {
@@ -1008,138 +1144,207 @@ function drawTheoryCanvas() {
 function drawObsCanvas() {
   const o = ctx('obsCanvas'); if(!o) return; const x = o.x;
   x.clearRect(0,0,800,500);
-  const cx = 400, cy = 280, R = 230, depth = 0.35;
-  const phi = state.syncLat * DEG;
 
-  // 保留原本教材方位：北在左、南在右、東在上（遠側）、西在下（近側）。
-  x.fillStyle = 'rgba(0, 255, 102, 0.08)';
-  x.beginPath(); x.ellipse(cx, cy, R+20, R*depth, 0, 0, TAU); x.fill();
-  x.strokeStyle = C.green; x.lineWidth = 2; x.stroke();
-  x.strokeStyle = 'rgba(0, 162, 255, 0.5)'; x.lineWidth = 1.5;
-  x.beginPath(); x.arc(cx, cy, R+20, Math.PI, 0); x.stroke();
+  const cx=400, cy=250, R=205;
+  const phi=state.syncLat*DEG;
+  const delta=DELTA_MAP[state.syncSeason]*DEG;
 
-  line(x, [[cx, cy], [cx, cy-R-20]], 'rgba(255,255,255,0.2)', 1, [4,4]);
-  label(x, '天頂', cx+10, cy-R-20, C.muted, 'left', 16);
+  const V={
+    add:(a,b)=>({x:a.x+b.x,y:a.y+b.y,z:a.z+b.z}),
+    mul:(a,s)=>({x:a.x*s,y:a.y*s,z:a.z*s}),
+    dot:(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z,
+    norm:a=>{const m=Math.hypot(a.x,a.y,a.z)||1;return{x:a.x/m,y:a.y/m,z:a.z/m}}
+  };
 
-  label(x, '北(N)', cx-R-50, cy+5, C.green, 'center', 16);
-  label(x, '南(S)', cx+R+20, cy+5, C.green, 'center', 16);
-  label(x, '西(W)', cx-25, cy+R*depth+25, C.green, 'center', 16);
-  label(x, '東(E)', cx-25, cy-R*depth-10, 'rgba(0,255,102,0.5)', 'center', 16);
+  // 與第二張完全相同的天球世界座標。
+  const zenith=V.norm({x:Math.cos(phi),y:Math.sin(phi),z:0});
+  const north =V.norm({x:-Math.sin(phi),y:Math.cos(phi),z:0});
+  const south =V.mul(north,-1);
+  const east  ={x:0,y:0,z:-1};
+  const west  ={x:0,y:0,z:1};
 
-  drawObserverIcon(x, cx, cy-3, 1, C.pink);
+  function sunPathPoint(H,d=delta){
+    return {x:Math.cos(d)*Math.cos(H),y:Math.sin(d),z:Math.cos(d)*Math.sin(H)};
+  }
 
-  // 真正的地平座標（East / North / Up）。
-  // H：時角，上午為負、下午為正。
-  // 只改「投影」，不改你原本的東西南北排列。
-  function groundPos(H, delta, radius=R+20) {
-    const east  = -Math.cos(delta) * Math.sin(H);
-    const north =  Math.sin(delta) * Math.cos(phi)
-                 - Math.cos(delta) * Math.cos(H) * Math.sin(phi);
-    const up    =  Math.sin(delta) * Math.sin(phi)
-                 + Math.cos(delta) * Math.cos(H) * Math.cos(phi);
-
-    // 東在畫面遠側（上）、西在近側（下）；北左、南右。
-    // 加入很輕的透視縮放，讓圓弧保持 3D 感但不改教材方位。
-    const perspective = 1 / (1 + east * 0.08);
+  // 世界座標 -> 觀察者當地座標。
+  // 初始畫面固定保留第 6 版教材方向：
+  // 北左、南右、東上（遠側）、西下（近側）。
+  function toLocal(p){
     return {
-      x: cx - north * radius * perspective,
-      y: cy - up * radius - east * radius * depth,
-      altitude: up,
-      east,
-      z: -east,
-      perspective
+      x:V.dot(p,south),   // +x = 南，畫面右
+      y:V.dot(p,zenith),  // +y = 天頂
+      z:V.dot(p,west)     // +z = 西，靠近觀察者
     };
   }
 
-  // 天極軸：沿用原本方向，只用新投影定位。
-  const ncpP = groundPos(0, 90*DEG, R);
-  const scpP = groundPos(0, -90*DEG, R);
-  line(x, [[ncpP.x, ncpP.y], [scpP.x, scpP.y]], 'rgba(255,255,255,0.2)', 1.5, [4,4]);
-  if(ncpP.altitude >= 0) {
-    glow(x, ncpP.x, ncpP.y, 4, C.white);
-    label(x, '天極軸', ncpP.x+10, ncpP.y+15, C.white, 'left', 14);
+  function rotateView(v){
+    // 左右拖：繞天頂方向旋轉。
+    const cyaw=Math.cos(obs3DView.yaw), syaw=Math.sin(obs3DView.yaw);
+    let x1=v.x*cyaw + v.z*syaw;
+    let z1=-v.x*syaw + v.z*cyaw;
+    let y1=v.y;
+
+    // 初始俯視約 20°，讓東在上、西在下；上下拖再微調。
+    const pitch=20*DEG + obs3DView.pitch;
+    const cp=Math.cos(pitch), sp=Math.sin(pitch);
+    const y2=y1*cp - z1*sp;
+    const z2=y1*sp + z1*cp;
+
+    return {x:x1,y:y2,z:z2};
   }
 
-  // 天赤道：上午（東側）淡虛線、下午（西側）實線；不再像一根直線。
-  x.save();
-  x.strokeStyle = 'rgba(0, 229, 255, 0.18)'; x.lineWidth = 1.4; x.setLineDash([5,5]);
-  x.beginPath();
-  for(let h=-Math.PI; h<=0; h+=0.035) {
-    const p=groundPos(h,0);
-    if(h===-Math.PI) x.moveTo(p.x,p.y); else x.lineTo(p.x,p.y);
+  function proj(p,scale=R){
+    const v=rotateView(toLocal(p));
+    const perspective=1/(1-v.z*0.16);
+    return {
+      x:cx+v.x*scale*perspective,
+      y:cy-v.y*scale*perspective,
+      depth:v.z,
+      perspective,
+      altitude:V.dot(p,zenith)
+    };
   }
-  x.stroke();
-  x.strokeStyle = 'rgba(0, 229, 255, 0.52)'; x.lineWidth = 1.7; x.setLineDash([]);
-  x.beginPath();
-  for(let h=0; h<=Math.PI; h+=0.035) {
-    const p=groundPos(h,0);
-    if(h===0) x.moveTo(p.x,p.y); else x.lineTo(p.x,p.y);
+
+  function drawSphereRing(pointFn,color,width=2,belowDash=[5,5],showBelow=true){
+    const pts=[];
+    for(let i=0;i<=240;i++){
+      const t=i/240*TAU;
+      const p=pointFn(t),q=proj(p);
+      pts.push({p,q,above:q.altitude>=-0.0005});
+    }
+
+    if(showBelow){
+      x.save(); x.strokeStyle=color; x.lineWidth=Math.max(1,width*.55);
+      x.setLineDash(belowDash); x.globalAlpha=.18;
+      x.beginPath(); let pen=false;
+      for(const a of pts){
+        if(!a.above){
+          if(!pen){x.moveTo(a.q.x,a.q.y);pen=true}else x.lineTo(a.q.x,a.q.y);
+        } else pen=false;
+      }
+      x.stroke(); x.restore();
+    }
+
+    x.save(); x.strokeStyle=color; x.lineWidth=width; x.setLineDash([]);
+    x.beginPath(); let pen=false;
+    for(const a of pts){
+      if(a.above){
+        if(!pen){x.moveTo(a.q.x,a.q.y);pen=true}else x.lineTo(a.q.x,a.q.y);
+      } else pen=false;
+    }
+    x.stroke(); x.restore();
   }
-  x.stroke(); x.restore();
 
-  const eqLabel = groundPos(Math.PI/2, 0);
-  if(eqLabel.altitude >= -0.06) label(x, '天赤道', eqLabel.x-48, eqLabel.y-15, 'rgba(0,229,255,0.82)', 'left', 16);
+  // ---------- 透明 3D 天球 ----------
+  const sphereG=x.createRadialGradient(cx-68,cy-78,22,cx,cy,R+16);
+  sphereG.addColorStop(0,'rgba(90,205,255,.12)');
+  sphereG.addColorStop(.56,'rgba(24,91,125,.08)');
+  sphereG.addColorStop(1,'rgba(3,12,15,.025)');
+  x.fillStyle=sphereG; x.beginPath(); x.arc(cx,cy,R,0,TAU); x.fill();
+  x.strokeStyle='rgba(85,233,255,.42)'; x.lineWidth=1.8; x.stroke();
 
-  // 夏至／春秋分／冬至仍使用原本三色與原本方位，只把天空曲線換成 3D 弧線。
-  const tracks = [
-    { d: 23.5, col: C.orange, id: 'summer' },
-    { d: 0, col: C.green, id: 'equinox' },
-    { d: -23.5, col: C.cyan, id: 'winter' }
+  // 天球網格（少量即可，避免認知負荷）。
+  drawSphereRing(t=>({x:Math.cos(t),y:0,z:Math.sin(t)}),'rgba(85,233,255,.14)',1,[3,6],true);
+  drawSphereRing(t=>V.add(V.mul(north,Math.cos(t)),V.mul(east,Math.sin(t))),'rgba(0,255,102,.20)',1,[3,6],true);
+
+  // ---------- 地平面 ----------
+  const horizonPts=[];
+  for(let i=0;i<=180;i++){
+    const t=i/180*TAU;
+    const p=V.add(V.mul(north,Math.cos(t)),V.mul(east,Math.sin(t)));
+    horizonPts.push(proj(p));
+  }
+
+  // 先畫地平面透明圓盤。
+  x.save(); x.fillStyle='rgba(0,255,102,.07)'; x.beginPath();
+  horizonPts.forEach((p,i)=>i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));
+  x.closePath(); x.fill(); x.restore();
+
+  // 地平線。
+  x.save(); x.strokeStyle=C.green; x.lineWidth=2.4; x.beginPath();
+  horizonPts.forEach((p,i)=>i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));
+  x.closePath(); x.stroke(); x.restore();
+
+  // ---------- 天極軸與天赤道 ----------
+  const ncp=proj({x:0,y:1,z:0}), scp=proj({x:0,y:-1,z:0});
+  line(x,[[ncp.x,ncp.y],[scp.x,scp.y]],'rgba(255,255,255,.30)',1.3,[5,5]);
+  if(ncp.altitude>=0){
+    glow(x,ncp.x,ncp.y,3.5,C.white);
+    label(x,'天極軸',ncp.x+8,ncp.y+14,C.white,'left',13);
+  }
+
+  drawSphereRing(t=>({x:Math.cos(t),y:0,z:Math.sin(t)}),C.cyan,1.8,[5,5],true);
+
+  // ---------- 四季太陽軌跡 ----------
+  const tracks=[
+    {id:'summer',d:23.5*DEG,col:C.orange},
+    {id:'equinox',d:0,col:C.green},
+    {id:'winter',d:-23.5*DEG,col:C.cyan}
   ];
 
-  tracks.forEach(trk => {
-    const dr = trk.d * DEG;
-    const isActive = state.syncSeason === trk.id;
-    const col = isActive ? trk.col : 'rgba(255,255,255,0.15)';
-    const lw = isActive ? 3 : 1.5;
+  tracks.forEach(trk=>{
+    const active=state.syncSeason===trk.id;
+    const col=active?trk.col:'rgba(255,255,255,.16)';
+    drawSphereRing(
+      H=>sunPathPoint(H,trk.d),
+      col,
+      active?3:1.35,
+      [5,5],
+      true
+    );
 
-    // 地平線下：淡虛線；地平線上：實線。
-    x.save();
-    x.strokeStyle = col; x.lineWidth = lw * 0.55; x.setLineDash([5,5]); x.globalAlpha = isActive ? .52 : .30;
-    x.beginPath(); let pen=false;
-    for(let h=-Math.PI; h<=Math.PI; h+=0.035) {
-      const p=groundPos(h,dr);
-      if(p.altitude < 0) {
-        if(!pen){x.moveTo(p.x,p.y);pen=true}else x.lineTo(p.x,p.y);
-      } else pen=false;
-    }
-    x.stroke(); x.restore();
-
-    x.save();
-    x.strokeStyle = col; x.lineWidth = lw; x.setLineDash([]); x.globalAlpha = 1;
-    x.beginPath(); pen=false;
-    for(let h=-Math.PI; h<=Math.PI; h+=0.035) {
-      const p=groundPos(h,dr);
-      if(p.altitude >= 0) {
-        if(!pen){x.moveTo(p.x,p.y);pen=true}else x.lineTo(p.x,p.y);
-      } else pen=false;
-    }
-    x.stroke(); x.restore();
-
-    if(isActive) {
-      // 接近正午的位置標季節名稱，不改原本教學訊息。
-      const lbl=groundPos(0,dr);
-      if(lbl.altitude>=0) label(x, INFO[trk.id].name, lbl.x+10, lbl.y-13, col, 'left', 16);
+    if(active){
+      const noon=proj(sunPathPoint(0,trk.d));
+      if(noon.altitude>=0) label(x,INFO[trk.id].name,noon.x+10,noon.y-13,trk.col,'left',15);
     }
   });
 
-  // 太陽沿同一條 3D 軌跡移動：上午由東側進入，下午往西側離開。
-  const H_sun = (state.syncTime - 12) * 15 * DEG;
-  const sunP = groundPos(H_sun, DELTA_MAP[state.syncSeason]*DEG);
-  if (sunP.altitude >= 0) {
-    line(x, [[cx, cy], [sunP.x, sunP.y]], 'rgba(255,255,255,0.3)', 1.5);
-    if (sunP.z > 0) {
-      drawSun(x, sunP.x, sunP.y, 25);
-    } else {
-      drawSun(x, sunP.x, sunP.y, 35);
-      x.strokeStyle = '#FFFFFF'; x.lineWidth = 2;
-      x.beginPath(); x.arc(sunP.x, sunP.y, 11, 0, TAU); x.stroke();
-    }
-  } else {
-    glow(x, sunP.x, sunP.y, 8, 'rgba(255,230,0,0.15)');
+  // ---------- 觀察者、天頂、方位 ----------
+  drawObserverIcon(x,cx,cy-2,.95,C.pink);
+
+  const zTop=proj(zenith);
+  line(x,[[cx,cy],[zTop.x,zTop.y]],'rgba(255,120,183,.32)',1.3,[5,5]);
+  label(x,'天頂',zTop.x+8,zTop.y-12,C.muted,'left',14);
+
+  const pN=proj(north),pS=proj(south),pE=proj(east),pW=proj(west);
+  for(const [p,name,align,dx,dy] of [
+    [pN,'北(N)','right',-8,0],
+    [pS,'南(S)','left',8,0],
+    [pE,'東(E)','center',0,-14],
+    [pW,'西(W)','center',0,16]
+  ]){
+    glow(x,p.x,p.y,3,C.green);
+    label(x,name,p.x+dx,p.y+dy,C.green,align,14);
   }
 
-  document.getElementById('obsExplain').innerHTML = `將上方圖形幾何轉換為實際觀測星空。目前軌跡：<span style="color:${COLOR_MAP[state.syncSeason]}; font-weight:bold;">${INFO[state.syncSeason].name}</span>`;
+  // ---------- 太陽 ----------
+  const Hsun=(state.syncTime-12)*15*DEG;
+  const sun3=sunPathPoint(Hsun,delta);
+  const sun2=proj(sun3);
+  if(sun2.altitude>=0){
+    line(x,[[cx,cy],[sun2.x,sun2.y]],'rgba(255,255,255,.26)',1.3);
+    drawSun(x,sun2.x,sun2.y,26);
+    x.strokeStyle='#FFFFFF'; x.lineWidth=1.6;
+    x.beginPath(); x.arc(sun2.x,sun2.y,9,0,TAU); x.stroke();
+  }else{
+    glow(x,sun2.x,sun2.y,6,'rgba(255,230,0,.13)');
+  }
+
+  // ---------- 東 → 西 ----------
+  const a1=proj(sunPathPoint(-62*DEG,delta));
+  const a2=proj(sunPathPoint(-42*DEG,delta));
+  if(a1.altitude>=0 && a2.altitude>=0){
+    drawArrow(x,a1.x,a1.y,a2.x,a2.y,C.orange,'東 → 西',-11,'center',2.4);
+  }
+
+  // 操作提示。
+  roundRect(x,548,18,232,42,11,'rgba(3,12,15,.66)','rgba(85,233,255,.32)');
+  label(x,'👆 拖曳旋轉｜雙擊復位',664,39,C.cyan,'center',13);
+
+  document.getElementById('obsExplain').innerHTML =
+    `這是<strong>同一個 3D 天球</strong>，只是把鏡頭交給學生。拖曳可從不同角度確認東、西、天赤道與四季太陽軌跡；目前軌跡：` +
+    `<span style="color:${COLOR_MAP[state.syncSeason]};font-weight:bold;">${INFO[state.syncSeason].name}</span>`;
 }
 
 function updateSyncUI() {
