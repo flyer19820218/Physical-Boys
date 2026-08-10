@@ -16,7 +16,7 @@
 html{background:var(--bg)}
 body{
   margin:0; color:var(--white); font-family:'Noto Sans TC',sans-serif; 
-  font-size:22px; line-height:1.65; background-color:var(--bg); 
+  font-size:20px; line-height:1.65; background-color:var(--bg); 
   background-image:radial-gradient(circle at 1px 1px,#24493d 1.2px,transparent 1.3px); 
   background-size:18px 18px; min-height:100vh;
 }
@@ -24,9 +24,14 @@ button,input{font:inherit} button{touch-action:manipulation}
 .app{width:min(100% - 28px,1080px); margin:0 auto; padding:28px 0 52px}
 .hero{border:3px solid var(--cyan); border-radius:28px; background:#15372d; padding:28px 32px; margin-bottom:20px}
 h1{font-size:clamp(34px,5vw,48px); line-height:1.2; color:var(--yellow); margin:0 0 10px; font-weight:900}
-.subtitle{color:var(--white); margin:0; font-weight:700; font-size:22px;}
+.subtitle{color:var(--white); margin:0; font-weight:700; font-size:20px;}
 .mono{font-family:'JetBrains Mono',monospace; font-weight:800; white-space:nowrap}
 .nowrap{white-space:nowrap}
+
+/* 垂直分式 */
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 4px; }
+.frac span:first-child { border-bottom: 2px solid currentColor; padding: 0 2px; }
+.frac span:last-child { padding: 0 2px; }
 
 /* Tabs */
 .tabs{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:0 0 22px}
@@ -49,17 +54,28 @@ h1{font-size:clamp(34px,5vw,48px); line-height:1.2; color:var(--yellow); margin:
 .diagram-key{background:var(--deep); border:2px solid var(--line); border-radius:18px; padding:15px 18px}
 .diagram-key p{margin:0 0 8px; font-size:19px; font-weight:800} .diagram-key p:last-child{margin-bottom:0}
 
+/* Info Module (資優補充) */
+.info-module { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+.info-tabs { display: flex; gap: 8px; border-bottom: 2px solid var(--line); padding-bottom: 8px; }
+.info-tab-btn { background: transparent; color: var(--muted); border: none; font-size: 18px; font-weight: 800; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: 0.2s; }
+.info-tab-btn.active { background: var(--panel); color: var(--yellow); }
+.info-tab-btn:hover { color: var(--white); }
+.info-content { display: none; }
+.info-content.active { display: block; animation: fadeIn 0.2s ease; }
+
 /* Canvas */
 .canvas-wrap{position:relative; width:100%; height:auto; aspect-ratio:10/8; border:3px solid var(--line); border-radius:22px; overflow:hidden; background:#0d2821; grid-column:2; grid-row:2/span 4;}
 canvas{display:block; width:100%; height:auto; aspect-ratio:10/8;}
-.canvas-play{position:absolute; left:50%; top:80%; transform:translate(-50%,-50%); min-width:140px; padding:10px 20px; border:3px solid var(--green); border-radius:16px; background:#102f27; color:var(--white); font-weight:900; cursor:pointer;}
-.canvas-play.active{background:var(--cyan); border-color:var(--cyan); color:#123129}
 
-/* Controls */
-.controls{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;}
-.range-row{display:flex; align-items:center; gap:14px; margin-bottom:15px;}
-.range-row label{font-weight:900; white-space:nowrap}
-input[type=range]{flex:1; accent-color:var(--cyan); height:8px;}
+/* Controls Panel */
+.control-panel { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
+.control-row { display: flex; align-items: center; gap: 14px; background: var(--deep); padding: 12px 18px; border-radius: 18px; border: 2px solid var(--line); }
+.control-row label { font-weight: 900; white-space: nowrap; color: var(--cyan); }
+input[type=range] { flex: 1; accent-color: var(--cyan); height: 8px; }
+.play-btn { min-width: 140px; padding: 10px 20px; border: 3px solid var(--green); border-radius: 12px; background: #102f27; color: var(--white); font-weight: 900; cursor: pointer; transition: 0.18s; font-size: 20px; }
+.play-btn:hover { transform: translateY(-2px); background: #1d493b; }
+.play-btn.active { background: var(--cyan); border-color: var(--cyan); color: #123129; }
+
 .result-box{background:var(--deep); border:2px solid var(--cyan); border-radius:18px; padding:16px 20px; font-weight:800; font-size:20px;}
 
 /* Practice */
@@ -75,8 +91,13 @@ input[type=range]{flex:1; accent-color:var(--cyan); height:8px;}
 .accent-yellow{color:var(--yellow)} .accent-cyan{color:var(--cyan)} .accent-orange{color:var(--orange)} 
 .accent-green{color:var(--green)} .accent-pink{color:var(--pink)}
 
-@media(max-width:900px){ .tabs{grid-template-columns:repeat(3,1fr)} .panel{grid-template-columns:1fr;} .canvas-wrap{grid-column:1; grid-row:auto;} }
-@media(max-width:768px){ .tabs{grid-template-columns:1fr 1fr} .tab-btn:last-child:nth-child(odd){grid-column:1/-1} }
+/* RWD 大憲章規定: >768px維持雙欄, <=768px轉單欄 */
+@media(max-width:768px){ 
+  .tabs{grid-template-columns:1fr 1fr} 
+  .tab-btn:last-child:nth-child(odd){grid-column:1/-1} 
+  .panel{grid-template-columns:1fr;} 
+  .canvas-wrap{grid-column:1; grid-row:auto;} 
+}
 </style>
 </head>
 <body>
@@ -87,37 +108,56 @@ input[type=range]{flex:1; accent-color:var(--cyan); height:8px;}
   </header>
 
   <nav class="tabs">
-    <button class="tab-btn active" data-tab="tab-intro">1. 導電與電極</button>
-    <button class="tab-btn" data-tab="tab-water">2. 電解水</button>
-    <button class="tab-btn" data-tab="tab-cuso4-c">3. 電解硫酸銅(碳極)</button>
-    <button class="tab-btn" data-tab="tab-cuso4-cu">4. 電解硫酸銅(銅極)</button>
-    <button class="tab-btn" data-tab="tab-plating">5. 電鍍工業</button>
+    <button class="tab-btn active" data-tab="tab-intro">導電與電極</button>
+    <button class="tab-btn" data-tab="tab-water">電解水</button>
+    <button class="tab-btn" data-tab="tab-cuso4-c">電解硫酸銅(碳極)</button>
+    <button class="tab-btn" data-tab="tab-cuso4-cu">電解硫酸銅(銅極)</button>
+    <button class="tab-btn" data-tab="tab-plating">電鍍工業</button>
   </nav>
 
-  <!-- ================= 1. 導電與電極 ================= -->
+  <!-- ================= 導電與電極 ================= -->
   <section id="tab-intro" class="tab-content active">
     <div class="lesson-stack">
       <article class="panel">
         <h2>水溶液要導電的條件</h2>
         <div class="canvas-wrap"><canvas id="canvas-intro" width="600" height="480"></canvas></div>
         
-        <div class="concept-box">
-          <p>要讓外加電源產生化學反應，水溶液中必須有能夠自由移動的<strong class="accent-yellow">陰陽離子</strong>。</p>
-          <p>電極材質也很重要：<br>
-            👉 <strong class="accent-muted">惰性電極 (如：碳棒、鉑)</strong>：只負責傳遞電子，本身不參與反應。<br>
-            👉 <strong class="accent-orange">活性電極 (如：銅片、銀片)</strong>：可能會自己溶解參與化學反應！
-          </p>
+        <div class="info-module">
+          <div class="info-tabs">
+            <button class="info-tab-btn active" data-target="basic">基礎概念</button>
+            <button class="info-tab-btn" data-target="advanced">資優補充(極板反應)</button>
+          </div>
+          
+          <div class="info-content active" data-content="basic">
+            <div class="concept-box">
+              <p>要讓外加電源產生化學反應，水溶液中必須有能夠自由移動的<strong class="accent-yellow nowrap">陰陽離子</strong>。</p>
+              <p>電極材質也很重要：<br>
+                👉 <strong class="accent-muted nowrap">惰性電極 (如：碳棒、鉑)</strong>：只負責傳遞電子，本身不參與反應。<br>
+                👉 <strong class="accent-orange nowrap">活性電極 (如：銅片、銀片)</strong>：可能會自己溶解參與化學反應！
+              </p>
+            </div>
+            <div class="diagram-key">
+              <p><span class="accent-muted nowrap">安培計狀態</span>：指示電路是否有電流通過</p>
+              <p><span class="accent-yellow nowrap">純水</span>：幾乎不解離，無法導電</p>
+              <p><span class="accent-green nowrap">電解質</span>：解離出自由離子，幫助導電</p>
+            </div>
+          </div>
+          
+          <div class="info-content" data-content="advanced">
+            <div class="concept-box">
+              <p><strong class="accent-orange">實際電解 NaOH 水溶液的反應：</strong></p>
+              <p>負極端(陰極)：產生氫氣<br><span class="mono accent-green nowrap">4H₂O + 4e⁻ ⟶ 2H₂ + 4OH⁻</span></p>
+              <p>正極端(陽極)：產生氧氣<br><span class="mono accent-pink nowrap">4OH⁻ ⟶ 2H₂O + O₂ + 4e⁻</span></p>
+              <p style="font-size:18px; color:var(--muted); margin-top:8px;">※ 雖然 Na⁺ 游向負極端，但水分子比 Na⁺ 更容易獲得電子，所以實際析出的是氫氣。</p>
+            </div>
+          </div>
         </div>
 
-        <div class="controls">
-          <button class="choice-btn active" data-group="intro-liquid" data-val="pure">純水</button>
-          <button class="choice-btn" data-group="intro-liquid" data-val="salt">加入電解質 (NaOH)</button>
-        </div>
-        
-        <div class="diagram-key">
-          <p><span class="accent-muted">燈泡狀態</span>：指示電路是否有電流通過</p>
-          <p><span class="accent-yellow">純水</span>：幾乎不解離，無法導電</p>
-          <p><span class="accent-green">電解質</span>：解離出自由離子，幫助導電</p>
+        <div class="control-panel">
+          <div class="control-row" style="justify-content: center;">
+            <button class="play-btn active" data-group="intro-liquid" data-val="pure">純水</button>
+            <button class="play-btn" data-group="intro-liquid" data-val="salt">加入電解質 (NaOH)</button>
+          </div>
         </div>
       </article>
 
@@ -129,34 +169,57 @@ input[type=range]{flex:1; accent-color:var(--cyan); height:8px;}
         </div>
         <div class="practice-step active" data-id="q1"><h3>問題</h3><p>為什麼在電解純水時，通常會加入少量的氫氧化鈉 (NaOH) 或硫酸？</p></div>
         <div class="practice-step" data-id="h1"><h3>提示</h3><p>純水非常難導電，加入這些物質可以幫助電流通過。</p></div>
-        <div class="practice-step" data-id="a1"><h3>解答</h3><p>加入電解質是為了<span class="accent-green">幫助導電</span>。注意：不能加食鹽(NaCl)，否則正極會產生有毒的氯氣！</p></div>
+        <div class="practice-step" data-id="a1"><h3>解答</h3><p>加入電解質是為了<span class="accent-green">幫助導電</span>。注意：不能加食鹽(NaCl)，否則正極端會產生有毒的氯氣！</p></div>
       </article>
     </div>
   </section>
 
-  <!-- ================= 2. 電解水 ================= -->
+  <!-- ================= 電解水 ================= -->
   <section id="tab-water" class="tab-content">
     <div class="lesson-stack">
       <article class="panel">
         <h2>一般電解水：負氫正氧</h2>
-        <div class="canvas-wrap">
-          <canvas id="canvas-water" width="600" height="480"></canvas>
-          <button class="canvas-play" data-target="water">播放電解</button>
+        <div class="canvas-wrap"><canvas id="canvas-water" width="600" height="480"></canvas></div>
+        
+        <div class="info-module">
+          <div class="info-tabs">
+            <button class="info-tab-btn active" data-target="basic">基礎概念</button>
+            <button class="info-tab-btn" data-target="advanced">資優補充(極板反應)</button>
+          </div>
+          
+          <div class="info-content active" data-content="basic">
+            <div class="concept-box">
+              <p>總反應式：<span class="mono accent-cyan nowrap">2H₂O ⟶ 2H₂ + O₂</span></p>
+              <p>👉 <strong class="accent-orange nowrap">負極端產生氫氣 (H₂)</strong>，具有可燃性。<br>
+                 👉 <strong class="accent-pink nowrap">正極端產生氧氣 (O₂)</strong>，具有助燃性。</p>
+              <p>體積比為 <strong class="accent-yellow nowrap">氫氣：氧氣 ＝ 2：1</strong></p>
+            </div>
+          </div>
+          
+          <div class="info-content" data-content="advanced">
+            <div class="concept-box">
+              <p>以添加少量硫酸 (H₂SO₄) 為例：</p>
+              <p>負極端(陰極)：氫離子獲得電子<br><span class="mono accent-orange nowrap">4H⁺ + 4e⁻ ⟶ 2H₂</span></p>
+              <p>正極端(陽極)：水分子失去電子<br><span class="mono accent-pink nowrap">2H₂O ⟶ O₂ + 4H⁺ + 4e⁻</span></p>
+              <p>全反應式：<br><span class="mono accent-cyan nowrap">2H₂O ⟶ 2H₂ + O₂</span></p>
+            </div>
+          </div>
         </div>
         
-        <div class="concept-box">
-          <p>總反應式：<span class="mono accent-cyan">2H₂O ⟶ 2H₂ + O₂</span></p>
-          <p>👉 <strong class="accent-orange">負極產生氫氣 (H₂)</strong>，具有可燃性。<br>
-             👉 <strong class="accent-pink">正極產生氧氣 (O₂)</strong>，具有助燃性。</p>
-          <p>體積比為 <strong class="accent-yellow">氫氣：氧氣 ＝ 2：1</strong></p>
-        </div>
-        
-        <div class="range-row">
-          <label>電解時間</label>
-          <input type="range" id="water-progress" min="0" max="100" value="0">
+        <div class="control-panel">
+          <div class="control-row">
+            <button class="play-btn" data-target="water">播放電解</button>
+            <label>進度</label>
+            <input type="range" id="water-progress" min="0" max="100" value="0">
+          </div>
+          <div class="control-row">
+            <label>電極距離</label>
+            <input type="range" id="water-distance" min="80" max="220" value="200">
+            <span id="rate-badge" class="accent-yellow mono nowrap">速率：1.0x</span>
+          </div>
         </div>
 
-        <div class="result-box" id="water-status">兩極皆使用碳棒(惰性電極)。通電後，負極產生的氣體體積明顯較多。</div>
+        <div class="result-box" id="water-status">兩極皆使用碳棒(惰性電極)。愈靠近，電流愈強，產生速率越快。</div>
       </article>
 
       <article class="practice">
@@ -167,30 +230,48 @@ input[type=range]{flex:1; accent-color:var(--cyan); height:8px;}
         </div>
         <div class="practice-step active" data-id="q2"><h3>問題</h3><p>若電解水一段時間後，收集到 10 mL 的氧氣，那麼同時會收集到多少 mL 的氫氣？</p></div>
         <div class="practice-step" data-id="h2"><h3>提示</h3><p>利用必考口訣「負氫正氧」，且氫氣與氧氣的體積比為 2 : 1。</p></div>
-        <div class="practice-step" data-id="a2"><h3>解答</h3><p>會收集到 <span class="accent-orange">20 mL 的氫氣</span>。因為由化學式可知水分子分解出的氫氣體積是氧氣的兩倍。</p></div>
+        <div class="practice-step" data-id="a2"><h3>解答</h3><p>會收集到 <span class="accent-orange nowrap">20 mL 的氫氣</span>。因為由化學式可知水分子分解出的氫氣體積是氧氣的兩倍。</p></div>
       </article>
     </div>
   </section>
 
-  <!-- ================= 3. 電解硫酸銅(碳棒) ================= -->
+  <!-- ================= 電解硫酸銅(碳棒) ================= -->
   <section id="tab-cuso4-c" class="tab-content">
     <div class="lesson-stack">
       <article class="panel">
         <h2>電解硫酸銅溶液 (使用碳棒電極)</h2>
-        <div class="canvas-wrap">
-          <canvas id="canvas-cuso4-c" width="600" height="480"></canvas>
-          <button class="canvas-play" data-target="cuso4-c">播放電解</button>
-        </div>
+        <div class="canvas-wrap"><canvas id="canvas-cuso4-c" width="600" height="480"></canvas></div>
         
-        <div class="diagram-key">
-          <p><span class="accent-muted mono">正極(C)</span>：碳棒不反應，水發生反應產生 <span class="accent-pink mono">O₂</span> (冒泡)。</p>
-          <p><span class="accent-muted mono">負極(C)</span>：水中的 <span class="mono">Cu²⁺</span> 獲得電子，析出紅色的 <span class="accent-orange mono">Cu</span>。</p>
-          <p><span class="accent-cyan">水溶液</span>：因為 <span class="mono">Cu²⁺</span> 一直被消耗，藍色逐漸變淡！</p>
+        <div class="info-module">
+          <div class="info-tabs">
+            <button class="info-tab-btn active" data-target="basic">基礎概念</button>
+            <button class="info-tab-btn" data-target="advanced">資優補充(極板反應)</button>
+          </div>
+          
+          <div class="info-content active" data-content="basic">
+            <div class="diagram-key">
+              <p><span class="accent-muted mono nowrap">正極端(C)</span>：碳棒不反應，水發生反應產生 <span class="accent-pink mono nowrap">O₂</span> (冒泡)。</p>
+              <p><span class="accent-muted mono nowrap">負極端(C)</span>：水中的 <span class="mono nowrap">Cu²⁺</span> 獲得電子，析出紅色的 <span class="accent-orange mono nowrap">Cu</span>。</p>
+              <p><span class="accent-cyan">水溶液</span>：因為 <span class="mono nowrap">Cu²⁺</span> 一直被消耗，藍色逐漸變淡！</p>
+            </div>
+          </div>
+          
+          <div class="info-content" data-content="advanced">
+            <div class="concept-box">
+              <p>惰性電極(碳棒)不參與反應：</p>
+              <p>負極端(-)：銅離子還原析出<br><span class="mono accent-orange nowrap">2Cu²⁺ + 4e⁻ ⟶ 2Cu</span></p>
+              <p>正極端(+)：水氧化代勞產生氧氣<br><span class="mono accent-pink nowrap">2H₂O ⟶ O₂ + 4H⁺ + 4e⁻</span></p>
+              <p>全反應式：<br><span class="mono accent-cyan nowrap">2Cu²⁺ + 2H₂O ⟶ 2Cu + O₂ + 4H⁺</span></p>
+            </div>
+          </div>
         </div>
 
-        <div class="range-row">
-          <label>電解時間</label>
-          <input type="range" id="cuso4-c-progress" min="0" max="100" value="0">
+        <div class="control-panel">
+          <div class="control-row">
+            <button class="play-btn" data-target="cuso4-c">播放電解</button>
+            <label>進度</label>
+            <input type="range" id="cuso4-c-progress" min="0" max="100" value="0">
+          </div>
         </div>
 
         <div class="result-box">反應後，溶液中產生氫離子 (H⁺)，導致溶液變酸 (pH值下降)。</div>
@@ -202,35 +283,53 @@ input[type=range]{flex:1; accent-color:var(--cyan); height:8px;}
           <button class="practice-btn" data-step="h3">提示</button>
           <button class="practice-btn" data-step="a3">解答</button>
         </div>
-        <div class="practice-step active" data-id="q3"><h3>問題</h3><p>使用碳棒電解硫酸銅時，正負極分別會觀察到什麼現象？</p></div>
-        <div class="practice-step" data-id="h3"><h3>提示</h3><p>碳棒是惰性電極。負極總是會吸引帶正電的銅離子；而正極因為碳不反應，只好由水來負責反應。</p></div>
-        <div class="practice-step" data-id="a3"><h3>解答</h3><p>負極會<span class="accent-orange">析出紅色的銅</span>；正極會<span class="accent-pink">產生無色的氧氣氣泡</span>。</p></div>
+        <div class="practice-step active" data-id="q3"><h3>問題</h3><p>使用碳棒電解硫酸銅時，正負極端分別會觀察到什麼現象？</p></div>
+        <div class="practice-step" data-id="h3"><h3>提示</h3><p>碳棒是惰性電極。負極端總是會吸引帶正電的銅離子；而正極端因為碳不反應，只好由水來負責反應。</p></div>
+        <div class="practice-step" data-id="a3"><h3>解答</h3><p>負極端會<span class="accent-orange">析出紅色的銅</span>；正極端會<span class="accent-pink">產生無色的氧氣氣泡</span>。</p></div>
       </article>
     </div>
   </section>
 
-  <!-- ================= 4. 電解硫酸銅(銅極) ================= -->
+  <!-- ================= 電解硫酸銅(銅極) ================= -->
   <section id="tab-cuso4-cu" class="tab-content">
     <div class="lesson-stack">
       <article class="panel">
         <h2>電解硫酸銅溶液 (使用銅片電極)</h2>
-        <div class="canvas-wrap">
-          <canvas id="canvas-cuso4-cu" width="600" height="480"></canvas>
-          <button class="canvas-play" data-target="cuso4-cu">播放電解</button>
-        </div>
+        <div class="canvas-wrap"><canvas id="canvas-cuso4-cu" width="600" height="480"></canvas></div>
         
-        <div class="diagram-key">
-          <p><span class="accent-orange mono">正極(Cu)</span>：銅金屬失去電子，溶解變成 <span class="mono">Cu²⁺</span> 進入水中。</p>
-          <p><span class="accent-orange mono">負極(Cu)</span>：水中的 <span class="mono">Cu²⁺</span> 獲得電子，析出紅色的 <span class="accent-orange mono">Cu</span>。</p>
-          <p><span class="accent-cyan">水溶液</span>：消耗的銅離子剛好由正極補充，藍色<strong class="accent-green">完全不變</strong>！</p>
+        <div class="info-module">
+          <div class="info-tabs">
+            <button class="info-tab-btn active" data-target="basic">基礎概念</button>
+            <button class="info-tab-btn" data-target="advanced">資優補充(極板反應)</button>
+          </div>
+          
+          <div class="info-content active" data-content="basic">
+            <div class="diagram-key">
+              <p><span class="accent-orange mono nowrap">正極端(Cu)</span>：銅金屬失去電子，溶解變成 <span class="mono nowrap">Cu²⁺</span> 進入水中。</p>
+              <p><span class="accent-orange mono nowrap">負極端(Cu)</span>：水中的 <span class="mono nowrap">Cu²⁺</span> 獲得電子，析出紅色的 <span class="accent-orange mono nowrap">Cu</span>。</p>
+              <p><span class="accent-cyan">水溶液</span>：消耗的銅離子剛好由正極端補充，藍色<strong class="accent-green">完全不變</strong>！</p>
+            </div>
+          </div>
+          
+          <div class="info-content" data-content="advanced">
+            <div class="concept-box">
+              <p>活性電極(銅棒)親自參與反應：</p>
+              <p>負極端(-)：銅離子還原析出<br><span class="mono accent-orange nowrap">Cu²⁺ + 2e⁻ ⟶ Cu</span></p>
+              <p>正極端(+)：銅電極氧化溶解<br><span class="mono accent-cyan nowrap">Cu ⟶ Cu²⁺ + 2e⁻</span></p>
+              <p style="font-size:18px; color:var(--muted); margin-top:8px;">※ 消耗與生成的 Cu²⁺ 速率相等，故溶液藍色深淺不變。</p>
+            </div>
+          </div>
         </div>
 
-        <div class="range-row">
-          <label>電解時間</label>
-          <input type="range" id="cuso4-cu-progress" min="0" max="100" value="0">
+        <div class="control-panel">
+          <div class="control-row">
+            <button class="play-btn" data-target="cuso4-cu">播放電解</button>
+            <label>進度</label>
+            <input type="range" id="cuso4-cu-progress" min="0" max="100" value="0">
+          </div>
         </div>
 
-        <div class="result-box">總結果相當於把正極的銅，搬運到了負極。這就是電鍍與金屬精煉的原理！</div>
+        <div class="result-box">總結果相當於把正極端的銅，搬運到了負極端。這就是電鍍與金屬精煉的原理！</div>
       </article>
 
       <article class="practice">
@@ -240,32 +339,50 @@ input[type=range]{flex:1; accent-color:var(--cyan); height:8px;}
           <button class="practice-btn" type="button" data-step="a4">解答</button>
         </div>
         <div class="practice-step active" data-id="q4"><h3>問題</h3><p>為什麼使用銅片作為電極時，硫酸銅溶液的顏色不會變淡？</p></div>
-        <div class="practice-step" data-id="h4"><h3>提示</h3><p>觀察正極發生了什麼事？水中的銅離子總數有改變嗎？</p></div>
-        <div class="practice-step" data-id="a4"><h3>解答</h3><p>因為正極的銅片溶解成銅離子進入水中，<span class="accent-green">剛好補充了負極消耗的銅離子</span>，使得溶液中的銅離子總濃度保持不變，顏色自然就不會變淡。</p></div>
+        <div class="practice-step" data-id="h4"><h3>提示</h3><p>觀察正極端發生了什麼事？水中的銅離子總數有改變嗎？</p></div>
+        <div class="practice-step" data-id="a4"><h3>解答</h3><p>因為正極端的銅片溶解成銅離子進入水中，<span class="accent-green">剛好補充了負極端消耗的銅離子</span>，使得溶液中的銅離子總濃度保持不變，顏色自然就不會變淡。</p></div>
       </article>
     </div>
   </section>
 
-  <!-- ================= 5. 電鍍工業 ================= -->
+  <!-- ================= 電鍍工業 ================= -->
   <section id="tab-plating" class="tab-content">
     <div class="lesson-stack">
       <article class="panel">
         <h2>實用技術：電鍍 (在鐵湯匙上鍍銅)</h2>
-        <div class="canvas-wrap">
-          <canvas id="canvas-plating" width="600" height="480"></canvas>
-          <button class="canvas-play" data-target="plating">播放電鍍</button>
-        </div>
+        <div class="canvas-wrap"><canvas id="canvas-plating" width="600" height="480"></canvas></div>
         
-        <div class="concept-box">
-          <p>必考的三大原則：</p>
-          <p>1. 想要被包覆的<strong class="accent-yellow">被鍍物 (如鐵湯匙) 必須放在負極</strong>。<br>
-             2. 提供金屬的<strong class="accent-orange">欲鍍金屬 (如銅棒) 必須放在正極</strong>。<br>
-             3. 電解液必須含有<strong class="accent-cyan">欲鍍金屬的離子 (如硫酸銅)</strong>。</p>
+        <div class="info-module">
+          <div class="info-tabs">
+            <button class="info-tab-btn active" data-target="basic">基礎概念</button>
+            <button class="info-tab-btn" data-target="advanced">資優補充(極板反應)</button>
+          </div>
+          
+          <div class="info-content active" data-content="basic">
+            <div class="concept-box">
+              <p>必考的三大原則：</p>
+              <p>1. 想要被包覆的<strong class="accent-yellow nowrap">被鍍物 (如鐵湯匙) 必須放在負極端</strong>。<br>
+                 2. 提供金屬的<strong class="accent-orange nowrap">欲鍍金屬 (如銅片) 必須放在正極端</strong>。<br>
+                 3. 電解液必須含有<strong class="accent-cyan nowrap">欲鍍金屬的離子 (如硫酸銅)</strong>。</p>
+            </div>
+          </div>
+          
+          <div class="info-content" data-content="advanced">
+            <div class="concept-box">
+              <p>電鍍化學原理 (以鐵湯匙鍍銅為例)：</p>
+              <p>負極端(鐵湯匙)：銅離子附著<br><span class="mono accent-orange nowrap">Cu²⁺ + 2e⁻ ⟶ Cu</span></p>
+              <p>正極端(銅片)：提供金屬溶解<br><span class="mono accent-cyan nowrap">Cu ⟶ Cu²⁺ + 2e⁻</span></p>
+              <p style="font-size:18px; color:var(--muted); margin-top:8px;">※ 實質上是外加電能，把正極端的金屬「搬運」到負極端表面。</p>
+            </div>
+          </div>
         </div>
 
-        <div class="range-row">
-          <label>電鍍進度</label>
-          <input type="range" id="plating-progress" min="0" max="100" value="0">
+        <div class="control-panel">
+          <div class="control-row">
+            <button class="play-btn" data-target="plating">播放電鍍</button>
+            <label>進度</label>
+            <input type="range" id="plating-progress" min="0" max="100" value="0">
+          </div>
         </div>
 
         <div class="result-box">電鍍完畢後，通常會以清水沖洗，減少殘留的酸性或電解質溶液。</div>
@@ -277,9 +394,9 @@ input[type=range]{flex:1; accent-color:var(--cyan); height:8px;}
           <button class="practice-btn" data-step="h5">提示</button>
           <button class="practice-btn" data-step="a5">解答</button>
         </div>
-        <div class="practice-step active" data-id="q5"><h3>問題</h3><p>如果想在銅製的鑰匙圈上「鍍銀」，正負極和電解液應該如何安排？</p></div>
-        <div class="practice-step" data-id="h5"><h3>提示</h3><p>把要變漂亮的物品接負極，把提供材料的金屬接正極。</p></div>
-        <div class="practice-step" data-id="a5"><h3>解答</h3><p><span class="accent-yellow">負極接銅製鑰匙圈</span> (被鍍物)；<span class="accent-orange">正極接銀片</span> (欲鍍金屬)；電解液使用含有銀離子的溶液，例如<span class="accent-cyan">硝酸銀 (AgNO₃) 溶液</span>。</p></div>
+        <div class="practice-step active" data-id="q5"><h3>問題</h3><p>如果想在銅製的鑰匙圈上「鍍銀」，正負極端和電解液應該如何安排？</p></div>
+        <div class="practice-step" data-id="h5"><h3>提示</h3><p>把要變漂亮的物品接負極端，把提供材料的金屬接正極端。</p></div>
+        <div class="practice-step" data-id="a5"><h3>解答</h3><p><span class="accent-yellow">負極端接銅製鑰匙圈</span> (被鍍物)；<span class="accent-orange">正極端接銀片</span> (欲鍍金屬)；電解液使用含有銀離子的溶液，例如<span class="accent-cyan nowrap">硝酸銀 (AgNO₃) 溶液</span>。</p></div>
       </article>
     </div>
   </section>
@@ -288,13 +405,12 @@ input[type=range]{flex:1; accent-color:var(--cyan); height:8px;}
 
 <script>
 // ================= 核心常數與基礎繪圖工具 =================
-const C = { bg:'#0d2821', deep:'#081a15', white:'#ffffff', yellow:'#ffe45c', cyan:'#4ddff3', orange:'#ffa84d', green:'#91f56d', pink:'#ff65a8', muted:'#b6c9c1', wire:'#dddddd', water:'rgba(77, 223, 243, 0.15)', cuso4:'rgba(35, 145, 225, 0.6)', cuso4_light:'rgba(35, 145, 225, 0.2)' };
+const C = { bg:'#0d2821', deep:'#081a15', white:'#ffffff', yellow:'#ffe45c', cyan:'#4ddff3', orange:'#ffa84d', green:'#91f56d', pink:'#ff65a8', muted:'#b6c9c1', wire:'#dddddd', water:'rgba(77, 223, 243, 0.15)', cuso4:'rgba(35, 145, 225, 0.6)' };
 
-// 狀態管理
 const state = {
   active: 'tab-intro',
-  intro: { liquid: 'pure' }, // pure, salt
-  water: { prog: 0, playing: false },
+  intro: { liquid: 'pure' }, 
+  water: { prog: 0, playing: false, dist: 200 },
   cuso4_c: { prog: 0, playing: false },
   cuso4_cu: { prog: 0, playing: false },
   plating: { prog: 0, playing: false }
@@ -306,13 +422,11 @@ const CTX = {};
   if(canvas) CTX[id] = canvas.getContext('2d');
 });
 
-// 畫布清理
 function clear(ctx) {
   ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
   ctx.fillStyle = C.bg; ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
 }
 
-// 基礎形狀
 function roundedRect(ctx,x,y,w,h,r,fill,stroke,lw=3) {
   ctx.beginPath(); ctx.roundRect(x,y,w,h,r);
   if(fill){ ctx.fillStyle=fill; ctx.fill(); }
@@ -325,39 +439,59 @@ function drawLine(ctx,pts,color,width=4) {
 function drawText(ctx,text,x,y,color=C.white,size=20,font='Noto Sans TC') {
   ctx.fillStyle=color; ctx.font=`800 ${size}px '${font}'`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(text,x,y);
 }
+
+// 嚴謹的斷路電池畫法
 function drawBattery(ctx, x, y) {
-  // 長短線代表直流電源，左正右負
-  drawLine(ctx, [[x-20, y], [x-5, y]], C.wire, 4); // 線
-  drawLine(ctx, [[x-5, y-15], [x-5, y+15]], C.white, 4); // 長線 (+)
-  drawLine(ctx, [[x+5, y-8], [x+5, y+8]], C.white, 6); // 短線 (-)
-  drawLine(ctx, [[x+5, y], [x+20, y]], C.wire, 4); // 線
-  drawText(ctx, '+', x-15, y-25, C.pink, 18);
-  drawText(ctx, '-', x+15, y-25, C.green, 18);
+  drawLine(ctx, [[x-8, y-15], [x-8, y+15]], C.white, 4); // 正極端長線
+  drawLine(ctx, [[x+8, y-8], [x+8, y+8]], C.white, 6);  // 負極端短線
+  drawText(ctx, '+', x-20, y-25, C.pink, 18);
+  drawText(ctx, '-', x+20, y-25, C.green, 18);
 }
+
+function drawAmmeter(ctx, x, y, isOn) {
+  const color = isOn ? C.yellow : C.muted;
+  ctx.save();
+  if(isOn){ ctx.shadowColor=C.yellow; ctx.shadowBlur=15; }
+  ctx.beginPath(); ctx.arc(x,y,20,0,Math.PI*2); ctx.fillStyle=C.deep; ctx.fill();
+  ctx.strokeStyle=color; ctx.lineWidth=3; ctx.stroke();
+  drawText(ctx, 'A', x, y+2, color, 22, 'JetBrains Mono');
+  ctx.restore();
+}
+
 function drawBeaker(ctx, x, y, w, h, liquidColor) {
-  // 液體
   ctx.fillStyle = liquidColor;
   ctx.beginPath(); ctx.moveTo(x+10, y+30); ctx.lineTo(x+10, y+h-10); 
   ctx.quadraticCurveTo(x+w/2, y+h+10, x+w-10, y+h-10); ctx.lineTo(x+w-10, y+30);
   ctx.ellipse(x+w/2, y+30, w/2-10, 10, 0, 0, Math.PI*2); ctx.fill();
   
-  // 玻璃杯
   ctx.strokeStyle = C.white; ctx.lineWidth = 4;
   ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x+5, y+h-15);
   ctx.quadraticCurveTo(x+w/2, y+h+15, x+w-5, y+h-15); ctx.lineTo(x+w, y); ctx.stroke();
   ctx.beginPath(); ctx.ellipse(x+w/2, y, w/2, 12, 0, 0, Math.PI*2); ctx.stroke();
   ctx.beginPath(); ctx.ellipse(x+w/2, y, w/2-5, 8, 0, 0, Math.PI*2); ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=2; ctx.stroke();
 }
-function drawBulb(ctx, x, y, on=false) {
-  const color = on ? C.yellow : C.muted;
-  ctx.save();
-  if(on){ ctx.shadowColor=C.yellow; ctx.shadowBlur=15; }
-  ctx.beginPath(); ctx.arc(x,y,20,0,Math.PI*2); ctx.fillStyle=C.deep; ctx.fill();
-  ctx.strokeStyle=color; ctx.lineWidth=3; ctx.stroke();
-  drawLine(ctx, [[x-10, y+10],[x, y-5],[x+10,y+10]], color, 2); // 燈絲
+
+function pathLength(points) { let total=0; for(let i=1;i<points.length;i++) total+=Math.hypot(points[i][0]-points[i-1][0],points[i][1]-points[i-1][1]); return total; }
+function flowPhase(points,elapsed) { return elapsed*0.08/Math.max(1,pathLength(points)); }
+function pathPoint(points,t) { 
+  const lens=[]; let total=0; 
+  for(let i=1;i<points.length;i++){ const d=Math.hypot(points[i][0]-points[i-1][0],points[i][1]-points[i-1][1]); lens.push(d); total+=d; } 
+  let d=((t%1)+1)%1*total; 
+  for(let i=0;i<lens.length;i++){ if(d<=lens[i]){ const q=d/lens[i]; return [points[i][0]+(points[i+1][0]-points[i][0])*q, points[i][1]+(points[i+1][1]-points[i][1])*q]; } d-=lens[i]; } 
+  return points[0]; 
+}
+
+// 專屬「電子流」 (帶 e- 標誌)
+function movingElectrons(ctx, points, count, phase, speed=1, alpha=1) {
+  ctx.save(); ctx.globalAlpha = alpha;
+  for(let i=0; i<count; i++){
+    const p = pathPoint(points, phase*speed + i/count);
+    ctx.beginPath(); ctx.arc(p[0], p[1], 8, 0, Math.PI*2); ctx.fillStyle = C.yellow; ctx.fill();
+    drawText(ctx, 'e⁻', p[0], p[1]-1, C.deep, 12, 'JetBrains Mono');
+  }
   ctx.restore();
 }
-// 生成氣泡
+
 function drawBubbles(ctx, x, yBottom, yTop, progress, seedOffset, color=C.white) {
   ctx.save(); ctx.fillStyle = color; ctx.globalAlpha = 0.6;
   for(let i=0; i<8; i++) {
@@ -377,30 +511,37 @@ function renderIntro(now) {
   const ctx = CTX['intro']; if(!ctx) return; clear(ctx);
   const isSalt = state.intro.liquid === 'salt';
   
-  // 繪製電路
-  drawLine(ctx, [[150,250], [150,100], [450,100], [450,250]], C.wire, 4);
+  drawLine(ctx, [[200,160], [200,100], [292,100]], C.wire, 4); 
+  drawLine(ctx, [[308,100], [340,100]], C.wire, 4);            
+  drawLine(ctx, [[380,100], [400,100], [400,160]], C.wire, 4); 
+  
   drawBattery(ctx, 300, 100);
-  drawBulb(ctx, 400, 100, isSalt);
+  drawAmmeter(ctx, 360, 100, isSalt);
   
-  // 繪製燒杯與電極
-  drawBeaker(ctx, 180, 200, 240, 220, C.water);
-  roundedRect(ctx, 230, 160, 30, 240, 4, C.muted, C.white, 2); // 碳極
-  roundedRect(ctx, 340, 160, 30, 240, 4, C.muted, C.white, 2); // 碳極
-  drawText(ctx, 'C', 245, 180, C.deep, 18);
-  drawText(ctx, 'C', 355, 180, C.deep, 18);
+  drawBeaker(ctx, 150, 180, 300, 250, C.water);
+  roundedRect(ctx, 185, 150, 30, 250, 4, C.muted, C.white, 2); 
+  roundedRect(ctx, 385, 150, 30, 250, 4, C.muted, C.white, 2); 
+  drawText(ctx, 'C', 200, 170, C.deep, 18);
+  drawText(ctx, 'C', 400, 170, C.deep, 18);
   
-  // 離子
   if(isSalt) {
-    const t = now * 0.002;
-    drawText(ctx, 'Na⁺', 270 + Math.sin(t)*10, 300 + Math.cos(t)*10, C.green, 20, 'JetBrains Mono');
-    drawText(ctx, 'Na⁺', 360 + Math.sin(t+1)*10, 370 + Math.cos(t+1)*10, C.green, 20, 'JetBrains Mono');
-    drawText(ctx, 'OH⁻', 330 + Math.sin(t+2)*10, 280 + Math.cos(t+2)*10, C.pink, 20, 'JetBrains Mono');
-    drawText(ctx, 'OH⁻', 260 + Math.sin(t+3)*10, 380 + Math.cos(t+3)*10, C.pink, 20, 'JetBrains Mono');
+    for(let i=0; i<3; i++) {
+      let phase = (now * 0.0005 + i/3) % 1;
+      ctx.globalAlpha = Math.sin(phase * Math.PI); 
+      let naX = 300 + phase * 75; 
+      let ohX = 300 - phase * 75; 
+      drawText(ctx, 'Na⁺', naX, 260 + i*40, C.green, 20, 'JetBrains Mono');
+      drawText(ctx, 'OH⁻', ohX, 280 + i*40, C.pink, 20, 'JetBrains Mono');
+    }
+    ctx.globalAlpha = 1;
     
-    // 電子流動示意
-    ctx.fillStyle = C.yellow;
-    let ex = 150, ey = 100 + ((now*0.1)%150);
-    ctx.beginPath(); ctx.arc(ex, ey, 5, 0, Math.PI*2); ctx.fill();
+    // 電子流由負極端(右)出發流向正極端(左)
+    const pRight1 = [[308,100], [340,100]];
+    const pRight2 = [[380,100], [400,100], [400,160]];
+    const pLeft   = [[200,160], [200,100], [292,100]];
+    movingElectrons(ctx, pRight1, 1, flowPhase(pRight1, now)*0.5);
+    movingElectrons(ctx, pRight2, 2, flowPhase(pRight2, now)*0.5);
+    movingElectrons(ctx, pLeft,   3, flowPhase(pLeft, now)*0.5);
   }
 }
 
@@ -408,34 +549,42 @@ function renderIntro(now) {
 function renderWater(now) {
   const ctx = CTX['water']; if(!ctx) return; clear(ctx);
   const p = state.water.prog / 100;
+  const dist = state.water.dist;
+  const leftX = 300 - dist/2;
+  const rightX = 300 + dist/2;
   
-  drawLine(ctx, [[200,250], [200,100], [400,100], [400,250]], C.wire, 4);
-  drawBattery(ctx, 300, 100); // 左正右負 -> 左陽右陰
-  drawText(ctx, '正極(O₂)', 200, 70, C.pink, 18);
-  drawText(ctx, '負極(H₂)', 400, 70, C.orange, 18);
+  drawLine(ctx, [[leftX, 170], [leftX, 100], [292, 100]], C.wire, 4);
+  drawLine(ctx, [[308, 100], [rightX, 100], [rightX, 170]], C.wire, 4);
+  drawBattery(ctx, 300, 100); 
+  drawText(ctx, '正極端(O₂)', leftX, 70, C.pink, 18);
+  drawText(ctx, '負極端(H₂)', rightX, 70, C.orange, 18);
   
   drawBeaker(ctx, 150, 180, 300, 250, C.water);
   
-  // 電極 (上插式試管)
-  roundedRect(ctx, 185, 230, 30, 180, 4, C.muted, C.white, 2); // 正
-  roundedRect(ctx, 385, 230, 30, 180, 4, C.muted, C.white, 2); // 負
+  roundedRect(ctx, leftX - 15, 160, 30, 240, 4, C.muted, C.white, 2); 
+  roundedRect(ctx, rightX - 15, 160, 30, 240, 4, C.muted, C.white, 2); 
   
-  // 試管
   ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(175, 380); ctx.lineTo(175, 140); ctx.arc(200, 140, 25, Math.PI, 0); ctx.lineTo(225, 380); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(375, 380); ctx.lineTo(375, 140); ctx.arc(400, 140, 25, Math.PI, 0); ctx.lineTo(425, 380); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(leftX-25, 380); ctx.lineTo(leftX-25, 140); ctx.arc(leftX, 140, 25, Math.PI, 0); ctx.lineTo(leftX+25, 380); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(rightX-25, 380); ctx.lineTo(rightX-25, 140); ctx.arc(rightX, 140, 25, Math.PI, 0); ctx.lineTo(rightX+25, 380); ctx.stroke();
 
-  // 氣體體積 (負極H2是正極O2的兩倍)
   const maxGasH = 80;
   const o2H = p * maxGasH;
   const h2H = p * maxGasH * 2;
   
-  ctx.fillStyle = 'rgba(255,101,168,0.3)'; ctx.fillRect(177, 140, 46, o2H);
-  ctx.fillStyle = 'rgba(255,168,77,0.3)'; ctx.fillRect(377, 140, 46, h2H);
+  ctx.fillStyle = 'rgba(255,101,168,0.3)'; ctx.fillRect(leftX-23, 140, 46, o2H);
+  ctx.fillStyle = 'rgba(255,168,77,0.3)'; ctx.fillRect(rightX-23, 140, 46, h2H);
   
-  if(p > 0 && p < 1 && state.water.playing) {
-    drawBubbles(ctx, 200, 400, 140+o2H, p, 0, C.pink);
-    drawBubbles(ctx, 400, 400, 140+h2H, p, 0.5, C.orange);
+  if(state.water.playing) {
+    if(p > 0 && p < 1) {
+      drawBubbles(ctx, leftX, 400, 140+o2H, p, 0, C.pink);
+      drawBubbles(ctx, rightX, 400, 140+h2H, p, 0.5, C.orange);
+    }
+    // 全頻段電子流
+    const pRight = [[308,100], [rightX,100], [rightX,160]];
+    const pLeft  = [[leftX,160], [leftX,100], [292,100]];
+    movingElectrons(ctx, pRight, 3, flowPhase(pRight, now)*0.5);
+    movingElectrons(ctx, pLeft,  3, flowPhase(pLeft, now)*0.5);
   }
 }
 
@@ -444,36 +593,39 @@ function renderCuSO4_C(now) {
   const ctx = CTX['cuso4-c']; if(!ctx) return; clear(ctx);
   const p = state.cuso4_c.prog / 100;
   
-  drawLine(ctx, [[200,250], [200,100], [400,100], [400,250]], C.wire, 4);
+  drawLine(ctx, [[200,160], [200,100], [292,100]], C.wire, 4);
+  drawLine(ctx, [[308,100], [400,100], [400,160]], C.wire, 4);
   drawBattery(ctx, 300, 100); 
-  drawText(ctx, '正極(+)', 200, 70, C.pink, 18);
-  drawText(ctx, '負極(-)', 400, 70, C.green, 18);
+  drawText(ctx, '正極端(+)', 200, 70, C.pink, 18);
+  drawText(ctx, '負極端(-)', 400, 70, C.green, 18);
 
-  // 溶液變淡
-  const r = 35 + (77-35)*(1-p);
-  const g = 145 + (223-145)*(1-p);
-  const b = 225 + (243-225)*(1-p);
-  const liquidColor = `rgba(${r}, ${g}, ${b}, 0.6)`;
-  drawBeaker(ctx, 150, 180, 300, 250, liquidColor);
+  const r = 35 + (77-35)*(1-p); const g = 145 + (223-145)*(1-p); const b = 225 + (243-225)*(1-p);
+  drawBeaker(ctx, 150, 180, 300, 250, `rgba(${r}, ${g}, ${b}, 0.6)`);
   
-  // 電極 (都是碳棒)
-  roundedRect(ctx, 185, 200, 30, 200, 4, C.muted, C.white, 2); 
-  roundedRect(ctx, 385, 200, 30, 200, 4, C.muted, C.white, 2); 
-  drawText(ctx, 'C', 200, 220, C.deep, 18);
-  drawText(ctx, 'C', 400, 220, C.deep, 18);
+  roundedRect(ctx, 185, 150, 30, 250, 4, C.muted, C.white, 2); 
+  roundedRect(ctx, 385, 150, 30, 250, 4, C.muted, C.white, 2); 
+  drawText(ctx, 'C', 200, 170, C.deep, 18);
+  drawText(ctx, 'C', 400, 170, C.deep, 18);
 
-  // 負極析出紅銅 (寬度增加)
-  const cuWidth = 30 + p * 16;
-  roundedRect(ctx, 400 - cuWidth/2, 280, cuWidth, 110, 4, C.orange, null);
-
-  // 標示
+  // 負極端只變紅
   if(p > 0) {
+    ctx.save();
+    ctx.globalAlpha = p; 
+    ctx.beginPath(); ctx.roundRect(385, 210, 30, 190, [0,0,4,4]);
+    ctx.fillStyle = C.orange; ctx.fill();
+    ctx.strokeStyle = C.white; ctx.lineWidth = 2; ctx.stroke(); 
+    ctx.restore();
+    
     drawText(ctx, 'Cu 析出', 460, 350, C.orange, 16);
     drawText(ctx, 'O₂ 產生', 140, 350, C.pink, 16);
   }
   
-  if(p > 0 && p < 1 && state.cuso4_c.playing) {
-    drawBubbles(ctx, 200, 380, 200, p, 0, C.pink); // 正極冒氧氣
+  if(state.cuso4_c.playing) {
+    if(p > 0 && p < 1) drawBubbles(ctx, 200, 380, 210, p, 0, C.pink); 
+    const pRight = [[308,100], [400,100], [400,160]];
+    const pLeft  = [[200,160], [200,100], [292,100]];
+    movingElectrons(ctx, pRight, 3, flowPhase(pRight, now)*0.5);
+    movingElectrons(ctx, pLeft,  3, flowPhase(pLeft, now)*0.5);
   }
 }
 
@@ -482,32 +634,41 @@ function renderCuSO4_Cu(now) {
   const ctx = CTX['cuso4-cu']; if(!ctx) return; clear(ctx);
   const p = state.cuso4_cu.prog / 100;
   
-  drawLine(ctx, [[200,250], [200,100], [400,100], [400,250]], C.wire, 4);
+  drawLine(ctx, [[200,160], [200,100], [292,100]], C.wire, 4);
+  drawLine(ctx, [[308,100], [400,100], [400,160]], C.wire, 4);
   drawBattery(ctx, 300, 100); 
-  drawText(ctx, '正極(+)', 200, 70, C.pink, 18);
-  drawText(ctx, '負極(-)', 400, 70, C.green, 18);
+  drawText(ctx, '正極端(+)', 200, 70, C.pink, 18);
+  drawText(ctx, '負極端(-)', 400, 70, C.green, 18);
 
-  // 溶液顏色不變
   drawBeaker(ctx, 150, 180, 300, 250, C.cuso4);
   
-  // 正極銅棒變細
-  const anodeW = 30 - p * 16;
-  roundedRect(ctx, 200 - anodeW/2, 200, anodeW, 200, 4, C.orange, C.white, 2); 
+  // 銅片維持筆直大小不變
+  roundedRect(ctx, 185, 150, 30, 250, 4, C.orange, C.white, 2); 
   
-  // 負極銅棒變粗
-  const cathodeW = 30 + p * 16;
-  roundedRect(ctx, 400 - cathodeW/2, 200, cathodeW, 200, 4, C.orange, C.white, 2); 
+  roundedRect(ctx, 385, 150, 30, 250, 4, C.orange, C.white, 2); 
+  if(p > 0) {
+    ctx.save(); ctx.globalAlpha = p;
+    ctx.beginPath(); ctx.roundRect(385, 210, 30, 190, [0,0,4,4]);
+    ctx.fillStyle = '#ff6b35'; ctx.fill();
+    ctx.strokeStyle = C.white; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+  }
   
-  drawText(ctx, 'Cu', 200, 220, C.deep, 18);
-  drawText(ctx, 'Cu', 400, 220, C.deep, 18);
+  drawText(ctx, 'Cu', 200, 170, C.deep, 18);
+  drawText(ctx, 'Cu', 400, 170, C.deep, 18);
 
-  if(p > 0 && p < 1 && state.cuso4_cu.playing) {
-    // 銅離子游動示意
-    const t = (now * 0.001) % 1;
-    const ix = 220 + t * 160;
-    const iy = 350 - Math.sin(t*Math.PI)*30;
-    ctx.beginPath(); ctx.arc(ix, iy, 6, 0, Math.PI*2); ctx.fillStyle=C.cyan; ctx.fill();
-    drawText(ctx, 'Cu²⁺', ix, iy-15, C.cyan, 14, 'JetBrains Mono');
+  if(state.cuso4_cu.playing) {
+    if(p > 0 && p < 1) {
+      const t = (now * 0.001) % 1;
+      const ix = 220 + t * 160;
+      const iy = 350 - Math.sin(t*Math.PI)*30;
+      ctx.beginPath(); ctx.arc(ix, iy, 6, 0, Math.PI*2); ctx.fillStyle=C.cyan; ctx.fill();
+      drawText(ctx, 'Cu²⁺', ix, iy-15, C.cyan, 14, 'JetBrains Mono');
+    }
+    const pRight = [[308,100], [400,100], [400,160]];
+    const pLeft  = [[200,160], [200,100], [292,100]];
+    movingElectrons(ctx, pRight, 3, flowPhase(pRight, now)*0.5);
+    movingElectrons(ctx, pLeft,  3, flowPhase(pLeft, now)*0.5);
   }
 }
 
@@ -516,41 +677,46 @@ function renderPlating(now) {
   const ctx = CTX['plating']; if(!ctx) return; clear(ctx);
   const p = state.plating.prog / 100;
   
-  drawLine(ctx, [[200,250], [200,100], [400,100], [400,200]], C.wire, 4);
+  drawLine(ctx, [[200,160], [200,100], [292,100]], C.wire, 4);
+  drawLine(ctx, [[308,100], [400,100], [400,160]], C.wire, 4);
   drawBattery(ctx, 300, 100); 
-  drawText(ctx, '正極(銅片)', 200, 70, C.orange, 18);
-  drawText(ctx, '負極(鐵湯匙)', 400, 70, C.muted, 18);
+  drawText(ctx, '正極端(銅片)', 200, 70, C.orange, 18);
+  drawText(ctx, '負極端(鐵湯匙)', 400, 70, C.muted, 18);
 
   drawBeaker(ctx, 150, 180, 300, 250, C.cuso4);
   
-  // 正極銅片變細
-  const anodeW = 34 - p * 20;
-  roundedRect(ctx, 200 - anodeW/2, 200, anodeW, 180, 4, C.orange, C.white, 2); 
+  // 正極銅片維持筆直
+  roundedRect(ctx, 183, 150, 34, 250, 4, C.orange, C.white, 2); 
   
   // 負極湯匙
   ctx.save();
   ctx.translate(400, 260);
   
-  // 繪製底層鐵湯匙
   ctx.strokeStyle = C.muted; ctx.lineWidth = 8;
-  ctx.beginPath(); ctx.moveTo(0,-60); ctx.lineTo(0, 40); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,-100); ctx.lineTo(0, 40); ctx.stroke();
   ctx.beginPath(); ctx.ellipse(0, 70, 20, 30, 0, 0, Math.PI*2); ctx.fillStyle=C.muted; ctx.fill(); ctx.stroke();
   
-  // 覆蓋電鍍層 (根據進度)
   if(p > 0) {
     ctx.globalAlpha = p;
-    ctx.strokeStyle = C.orange; ctx.lineWidth = 10;
-    ctx.beginPath(); ctx.moveTo(0,-40); ctx.lineTo(0, 40); ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(0, 70, 22, 32, 0, 0, Math.PI*2); ctx.fillStyle=C.orange; ctx.fill();
+    ctx.strokeStyle = C.orange; ctx.lineWidth = 8; 
+    ctx.beginPath(); ctx.moveTo(0,-50); ctx.lineTo(0, 40); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0, 70, 20, 30, 0, 0, Math.PI*2); 
+    ctx.fillStyle = C.orange; ctx.fill(); ctx.stroke();
   }
   ctx.restore();
 
-  if(p > 0 && p < 1 && state.plating.playing) {
-    const t = (now * 0.001) % 1;
-    const ix = 220 + t * 160;
-    const iy = 320 + Math.sin(t*Math.PI*2)*20;
-    ctx.beginPath(); ctx.arc(ix, iy, 6, 0, Math.PI*2); ctx.fillStyle=C.orange; ctx.fill();
-    drawText(ctx, 'Cu²⁺', ix, iy-15, C.orange, 14, 'JetBrains Mono');
+  if(state.plating.playing) {
+    if(p > 0 && p < 1) {
+      const t = (now * 0.001) % 1;
+      const ix = 220 + t * 160;
+      const iy = 320 + Math.sin(t*Math.PI*2)*20;
+      ctx.beginPath(); ctx.arc(ix, iy, 6, 0, Math.PI*2); ctx.fillStyle=C.orange; ctx.fill();
+      drawText(ctx, 'Cu²⁺', ix, iy-15, C.orange, 14, 'JetBrains Mono');
+    }
+    const pRight = [[308,100], [400,100], [400,160]];
+    const pLeft  = [[200,160], [200,100], [292,100]];
+    movingElectrons(ctx, pRight, 3, flowPhase(pRight, now)*0.5);
+    movingElectrons(ctx, pLeft,  3, flowPhase(pLeft, now)*0.5);
   }
 }
 
@@ -562,33 +728,33 @@ function tick(now) {
   lastTime = now;
   
   try {
-    // 依據當前分頁推進進度
     if(state.active === 'tab-water' && state.water.playing) {
-      state.water.prog += dt * 0.015;
-      if(state.water.prog >= 100) { state.water.prog = 100; state.water.playing = false; }
+      let rate = 200 / state.water.dist;
+      state.water.prog += dt * 0.015 * rate;
+      if(state.water.prog >= 100) { state.water.prog = 100; state.water.playing = false; document.querySelector('[data-target="water"]').textContent='播放電解'; document.querySelector('[data-target="water"]').classList.remove('active'); }
       const el = document.getElementById('water-progress'); if(el) el.value = state.water.prog;
       renderWater(now);
     }
     else if(state.active === 'tab-cuso4-c' && state.cuso4_c.playing) {
       state.cuso4_c.prog += dt * 0.015;
-      if(state.cuso4_c.prog >= 100) { state.cuso4_c.prog = 100; state.cuso4_c.playing = false; }
+      if(state.cuso4_c.prog >= 100) { state.cuso4_c.prog = 100; state.cuso4_c.playing = false; document.querySelector('[data-target="cuso4-c"]').textContent='播放電解'; document.querySelector('[data-target="cuso4-c"]').classList.remove('active'); }
       const el = document.getElementById('cuso4-c-progress'); if(el) el.value = state.cuso4_c.prog;
       renderCuSO4_C(now);
     }
     else if(state.active === 'tab-cuso4-cu' && state.cuso4_cu.playing) {
       state.cuso4_cu.prog += dt * 0.015;
-      if(state.cuso4_cu.prog >= 100) { state.cuso4_cu.prog = 100; state.cuso4_cu.playing = false; }
+      if(state.cuso4_cu.prog >= 100) { state.cuso4_cu.prog = 100; state.cuso4_cu.playing = false; document.querySelector('[data-target="cuso4-cu"]').textContent='播放電解'; document.querySelector('[data-target="cuso4-cu"]').classList.remove('active'); }
       const el = document.getElementById('cuso4-cu-progress'); if(el) el.value = state.cuso4_cu.prog;
       renderCuSO4_Cu(now);
     }
     else if(state.active === 'tab-plating' && state.plating.playing) {
       state.plating.prog += dt * 0.015;
-      if(state.plating.prog >= 100) { state.plating.prog = 100; state.plating.playing = false; }
+      if(state.plating.prog >= 100) { state.plating.prog = 100; state.plating.playing = false; document.querySelector('[data-target="plating"]').textContent='播放電鍍'; document.querySelector('[data-target="plating"]').classList.remove('active'); }
       const el = document.getElementById('plating-progress'); if(el) el.value = state.plating.prog;
       renderPlating(now);
     }
     else if(state.active === 'tab-intro') {
-      renderIntro(now); // 持續渲染離子動畫
+      renderIntro(now); 
     }
   } catch(e) { console.error(e); }
   
@@ -597,7 +763,6 @@ function tick(now) {
 
 // ================= 事件綁定 =================
 function initEvents() {
-  // 分頁切換
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -607,7 +772,6 @@ function initEvents() {
       document.getElementById(tabId).classList.add('active');
       state.active = tabId;
       
-      // 切換時立刻重繪一次該頁面
       const now = performance.now();
       if(tabId==='tab-intro') renderIntro(now);
       if(tabId==='tab-water') renderWater(now);
@@ -617,7 +781,6 @@ function initEvents() {
     });
   });
 
-  // 第一頁按鈕
   document.querySelectorAll('[data-group="intro-liquid"]').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('[data-group="intro-liquid"]').forEach(b => b.classList.remove('active'));
@@ -626,8 +789,7 @@ function initEvents() {
     });
   });
 
-  // 播放按鈕處理
-  document.querySelectorAll('.canvas-play').forEach(btn => {
+  document.querySelectorAll('.play-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.target;
       if(target === 'water') { state.water.playing = !state.water.playing; if(state.water.prog>=100) state.water.prog=0; btn.textContent = state.water.playing?'暫停':'播放電解'; btn.classList.toggle('active', state.water.playing); }
@@ -637,7 +799,17 @@ function initEvents() {
     });
   });
 
-  // Slider 處理
+  // Info Tabs (資優補充)
+  document.querySelectorAll('.info-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const group = btn.closest('.info-module');
+      group.querySelectorAll('.info-tab-btn').forEach(b => b.classList.remove('active'));
+      group.querySelectorAll('.info-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      group.querySelector(`.info-content[data-content="${btn.dataset.target}"]`).classList.add('active');
+    });
+  });
+
   ['water', 'cuso4-c', 'cuso4-cu', 'plating'].forEach(key => {
     const slider = document.getElementById(`${key}-progress`);
     if(slider) {
@@ -651,7 +823,16 @@ function initEvents() {
     }
   });
 
-  // 練習題點擊
+  const distSlider = document.getElementById('water-distance');
+  if(distSlider) {
+    distSlider.addEventListener('input', (e) => {
+      state.water.dist = parseFloat(e.target.value);
+      let rate = (200 / state.water.dist).toFixed(1);
+      document.getElementById('rate-badge').textContent = `速率：${rate}x`;
+      if(!state.water.playing) renderWater(performance.now());
+    });
+  }
+
   document.querySelectorAll('.practice').forEach(box => {
     box.querySelectorAll('.practice-btn').forEach(btn => {
       btn.addEventListener('click', () => {
