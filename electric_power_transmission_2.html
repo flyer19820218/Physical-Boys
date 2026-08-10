@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>電力輸送與電費｜互動黑板教學</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;800&amp;family=Noto+Sans+TC:wght@500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#11261f;--panel:#173b31;--deep:#0a201b;--white:#fff;--muted:#b8c9c1;
+  --yellow:#fff36a;--cyan:#55e9ff;--orange:#ffad55;--green:#9af06f;--pink:#ff78b7;
+  --red:#ff7078;--blue:#72b9ff;--purple:#d99bff;--line:#55746a;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--white);font-family:'Noto Sans TC',system-ui,sans-serif;font-size:20px;line-height:1.65;background:radial-gradient(circle at 1px 1px,rgba(255,255,255,.045) 1px,transparent 1.3px) 0 0/6px 6px,var(--bg)}
+button,input{font:inherit}button{touch-action:manipulation}
+.app{max-width:1080px;margin:auto;padding:22px 18px 70px}
+.hero{text-align:center;padding:16px 8px 10px;border-bottom:2px dashed rgba(255,255,255,.18)}
+h1{margin:0;color:var(--yellow);font-size:46px;line-height:1.2;font-weight:900;letter-spacing:1px}
+.subtitle{margin:9px 0 0;color:var(--muted);font-weight:700}
+.tabs{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:20px 0}
+.tab-btn,.action-btn,.practice-btn,.choice-btn,.subtab-btn{border:2px solid var(--line);background:#102f27;color:var(--white);border-radius:14px;padding:10px 14px;font-weight:900;cursor:pointer;transition:.18s transform,.18s background,.18s border-color}
+.tab-btn:hover,.action-btn:hover,.practice-btn:hover,.choice-btn:hover,.subtab-btn:hover{transform:translateY(-2px);background:#1d493b}
+.tab-btn.active,.action-btn.active,.choice-btn.active{background:var(--cyan);color:#123129;border-color:var(--cyan)}
+.tab-content{display:none;animation:fade .22s ease}.tab-content.active{display:block}
+@keyframes fade{from{opacity:.3}to{opacity:1}}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.panel{min-width:0;background:rgba(23,59,49,.96);border:2px solid var(--cyan);border-radius:22px;padding:18px}
+.panel h2{margin:0 0 12px;color:var(--yellow);font-size:29px;line-height:1.3}.panel h3{margin:11px 0 7px;color:var(--cyan);font-size:24px}.panel p{margin:8px 0}.panel ul{padding-left:1.3em;margin:8px 0}.panel li{margin:7px 0}
+.canvas-wrap{width:100%;background:var(--deep);border:3px solid var(--cyan);border-radius:20px;overflow:hidden}
+.lesson-canvas{display:block;width:100%;height:auto;aspect-ratio:10/6}
+.controls,.choice-row{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:13px 0}.choice-btn{flex:1 1 110px}
+.slider-block{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;margin:14px 0;font-weight:900}.slider-block input{width:100%;accent-color:var(--cyan)}
+.slider-value{min-width:105px;text-align:right;color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:22px;white-space:nowrap}
+.formula-box,.key-box,.result-box{border:2px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:13px;background:rgba(10,32,27,.62);font-weight:700}
+.formula-box{text-align:center;color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:24px;white-space:nowrap}.result-box{border-color:var(--cyan)}
+.derivation{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:9px;color:var(--cyan)}.derivation span{font-family:'JetBrains Mono',monospace;font-weight:800;white-space:nowrap}.derivation .derive-arrow{color:var(--yellow)}
+.fraction{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;vertical-align:middle;line-height:1.1;margin:0 5px}.fraction .top{padding:0 5px 3px;border-bottom:2px solid currentColor}.fraction .bottom{padding:3px 5px 0}
+.mono{font-family:'JetBrains Mono',monospace;white-space:nowrap}.accent-yellow{color:var(--yellow)}.accent-cyan{color:var(--cyan)}.accent-orange{color:var(--orange)}.accent-green{color:var(--green)}.accent-pink{color:var(--pink)}
+.concept-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.concept-card{border:2px solid var(--line);border-radius:14px;padding:11px;background:#102f27}.concept-card strong{display:block;color:var(--yellow);font-size:22px}.concept-card span{color:var(--muted);font-size:17px}
+.definition-stack{display:grid;gap:8px;margin:12px 0}.definition-line{border:2px solid var(--line);border-radius:13px;padding:8px 10px;text-align:center;background:#102f27;color:var(--cyan);font-family:'JetBrains Mono',monospace;font-weight:800;font-size:22px;white-space:nowrap}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.metric{border:2px solid var(--line);border-radius:14px;padding:10px;text-align:center;background:#102f27}.metric span{display:block;color:var(--muted);font-size:16px}.metric strong{display:block;color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:22px;white-space:nowrap}
+.practice-box{margin-top:18px;border:2px solid var(--line);border-radius:18px;padding:14px;background:rgba(12,42,34,.72)}.practice-tabs{display:flex;gap:8px;flex-wrap:wrap}.practice-btn{padding:8px 14px}.practice-btn.active{background:var(--yellow);color:#25372f;border-color:var(--yellow)}.practice-step{display:none;padding:12px 4px 2px}.practice-step.active{display:block}.practice-step h3{color:var(--yellow);margin:0 0 7px;font-size:24px}.practice-step p{margin:0}.calc-line{display:block;margin:7px 0}
+.wide-panel{margin-top:18px}.teaching-note{color:var(--muted);font-size:17px}
+.loss-known{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:10px 0 15px}.loss-known span{border:2px solid var(--line);border-radius:12px;padding:7px 12px;background:var(--deep);font-family:'JetBrains Mono',monospace;font-weight:800;white-space:nowrap}
+.loss-metrics{grid-template-columns:repeat(3,1fr)}.calculation-stack{display:grid;gap:10px;margin-top:15px}.calculation-row{display:grid;grid-template-columns:150px 1fr;align-items:center;gap:14px;border:2px solid var(--line);border-radius:14px;padding:11px 14px;background:var(--deep);overflow-x:auto}.calculation-label{color:var(--yellow);font-weight:900;white-space:nowrap}.calculation-label.accent-pink{color:var(--pink)}.calculation-label.accent-cyan{color:var(--cyan)}.calculation-label.accent-orange{color:var(--orange)}.calculation-formula{color:var(--white);font-family:'JetBrains Mono',monospace;font-weight:800;white-space:nowrap}.calculation-formula strong{color:var(--cyan)}
+.subtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 18px}.subtab-btn.active{background:var(--yellow);border-color:var(--yellow);color:#25372f}.wiring-subpage{display:none}.wiring-subpage.active{display:block}.phase-summary{border-left:6px solid var(--orange);padding:10px 14px;margin-top:13px;background:var(--deep);border-radius:0 14px 14px 0}.phase-summary strong{color:var(--orange)}
+.wire-role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:13px 0}.wire-role{border:2px solid var(--line);border-radius:13px;padding:10px;background:var(--deep)}.wire-role strong{display:block;font-size:21px}.wire-role span{display:block;color:var(--muted);font-size:17px}.safety-box{border:2px solid var(--orange);border-radius:14px;padding:11px 14px;margin-top:13px;background:var(--deep)}
+@media(max-width:768px){
+  .app{padding:12px 8px 50px}h1{font-size:34px}.grid-2{grid-template-columns:1fr}.panel{padding:13px}.panel h2{font-size:26px}
+  .tabs{display:grid;grid-template-columns:1fr 1fr}.tab-btn{padding:9px 6px;font-size:17px}.tab-btn:last-child:nth-child(odd){grid-column:1/-1}
+  .slider-block{grid-template-columns:1fr}.slider-value{text-align:left}.concept-cards,.metric-grid,.loss-metrics,.subtabs,.wire-role-grid{grid-template-columns:1fr}.formula-box{font-size:19px;overflow-x:auto}.definition-line{font-size:19px}.calculation-row{grid-template-columns:1fr;gap:4px}
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="hero">
+    <h1>電力輸送與電費</h1>
+    <p class="subtitle">電從發電廠走到家裡，途中為什麼要升壓？最後又怎麼計費？</p>
+  </header>
+
+  <nav class="tabs" aria-label="單元分頁">
+    <button class="tab-btn active" type="button" data-tab="tab-current">直流與交流</button>
+    <button class="tab-btn" type="button" data-tab="tab-grid">電力輸送</button>
+    <button class="tab-btn" type="button" data-tab="tab-loss">高壓為何省電</button>
+    <button class="tab-btn" type="button" data-tab="tab-cost">一度電與電費</button>
+    <button class="tab-btn" type="button" data-tab="tab-wiring">家庭 110 V 與 220 V</button>
+  </nav>
+
+  <section id="tab-current" class="tab-content active">
+    <div class="grid-2">
+      <article class="panel">
+        <h2>電流方向會不會改變？</h2>
+        <div class="concept-cards">
+          <div class="concept-card"><strong class="accent-orange">直流電 DC</strong><span>方向固定，電池供應的電流屬於直流電。</span></div>
+          <div class="concept-card"><strong class="accent-cyan">交流電 AC</strong><span>方向週期性改變，台灣市電頻率為 60 Hz。</span></div>
+        </div>
+        <div class="choice-row" aria-label="選擇電流種類">
+          <button class="choice-btn" type="button" data-current="dc">直流電 DC</button>
+          <button class="choice-btn active" type="button" data-current="ac">交流電 AC</button>
+        </div>
+        <div id="currentResult" class="result-box" aria-live="polite"></div>
+        <div class="key-box"><strong class="accent-yellow mono">60 Hz</strong> 表示每秒完成 60 個週期；每個週期需時 <span class="fraction mono"><span class="top">1</span><span class="bottom">60</span></span> 秒。</div>
+        <p class="teaching-note">右圖將交流變化放慢，方便觀察；實際市電變化快得多。</p>
+      </article>
+      <article class="panel">
+        <h2>【動畫】電流與時間圖</h2>
+        <div class="canvas-wrap"><canvas id="currentCanvas" class="lesson-canvas" width="1000" height="600"></canvas></div>
+      </article>
+    </div>
+    <div class="practice-box">
+      <div class="practice-tabs"><button class="practice-btn active" type="button" data-step="question">問題</button><button class="practice-btn" type="button" data-step="hint">提示</button><button class="practice-btn" type="button" data-step="answer">解答</button></div>
+      <div class="practice-step active" data-content="question"><h3>問題</h3><p>台灣插座提供哪一種電流？頻率 60 Hz 代表什麼？</p></div>
+      <div class="practice-step" data-content="hint"><h3>提示</h3><p>插座的電流方向會週期性改變；Hz 是「每秒幾個週期」。</p></div>
+      <div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-cyan">交流電</strong>；每秒完成 <strong class="accent-yellow mono">60</strong> 個週期，每個週期為 <span class="fraction mono"><span class="top">1</span><span class="bottom">60</span></span> 秒。</p></div>
+    </div>
+  </section>
+
+  <section id="tab-grid" class="tab-content">
+    <div class="grid-2">
+      <article class="panel">
+        <h2>電壓一路改變，電能繼續前進</h2>
+        <p>發電後先<strong class="accent-orange">升高電壓</strong>，長距離輸送後再分階段<strong class="accent-green">降低電壓</strong>，最後送進家庭。</p>
+        <div class="choice-row" aria-label="選擇輸電區段">
+          <button class="choice-btn active" type="button" data-flow="all">完整流程</button>
+          <button class="choice-btn" type="button" data-flow="high">高壓輸電</button>
+          <button class="choice-btn" type="button" data-flow="down">逐級降壓</button>
+          <button class="choice-btn" type="button" data-flow="home">進入家庭</button>
+        </div>
+        <div class="slider-block"><label for="flowSpeed">輸送速度</label><input id="flowSpeed" type="range" min="0.3" max="1.8" step="0.1" value="0.9"><span id="flowSpeedValue" class="slider-value">0.9×</span></div>
+        <div id="flowResult" class="result-box" aria-live="polite"></div>
+        <div class="key-box">變壓器改變的是<strong class="accent-yellow">電壓與電流</strong>；交流電的頻率仍維持 <strong class="mono accent-cyan">60 Hz</strong>。</div>
+      </article>
+      <article class="panel">
+        <h2>【動畫】從發電廠到住家</h2>
+        <div class="canvas-wrap"><canvas id="gridCanvas" class="lesson-canvas" width="1000" height="600"></canvas></div>
+      </article>
+    </div>
+    <div class="practice-box">
+      <div class="practice-tabs"><button class="practice-btn active" type="button" data-step="question">問題</button><button class="practice-btn" type="button" data-step="hint">提示</button><button class="practice-btn" type="button" data-step="answer">解答</button></div>
+      <div class="practice-step active" data-content="question"><h3>問題</h3><p>發電廠送出的電，為什麼不直接用 110 V 一路送到住家？</p></div>
+      <div class="practice-step" data-content="hint"><h3>提示</h3><p>同樣功率下，電壓越高，輸電線中的電流越小。</p></div>
+      <div class="practice-step" data-content="answer"><h3>解答</h3><p>先升高電壓可以<strong class="accent-orange">降低電流與輸電線發熱損失</strong>；接近用戶後再逐級降壓，才適合安全使用。</p></div>
+    </div>
+  </section>
+
+  <section id="tab-loss" class="tab-content">
+    <div class="grid-2">
+      <article class="panel">
+        <h2>同樣功率：電壓高，電流小</h2>
+        <div class="formula-box"><span>I =</span><span class="fraction"><span class="top">P</span><span class="bottom">V</span></span><span>　　P<sub>損失</sub> = I²R</span></div>
+        <div class="key-box">
+          <strong class="accent-yellow">回想 1-1｜串聯電路</strong>
+          <p>在簡化的等效電路中，輸電線與用電端形成<strong class="accent-green">串聯回路</strong>，兩條輸電線中的電流都等於輸送電流。題目沒有直接給輸電線兩端的電壓，但已知<strong class="accent-cyan">電流 I</strong>與<strong class="accent-pink">線路總電阻 R</strong>，因此選用：</p>
+          <div class="derivation" aria-label="線路損失功率公式推導"><span>P<sub>損失</sub> = IV<sub>線</sub></span><span class="derive-arrow">→</span><span>V<sub>線</sub> = IR</span><span class="derive-arrow">→</span><span>P<sub>損失</sub> = I²R</span></div>
+        </div>
+      </article>
+      <article class="panel">
+        <h2>【比較】低壓與高壓輸電</h2>
+        <div class="canvas-wrap"><canvas id="lossCanvas" class="lesson-canvas" width="1000" height="600"></canvas></div>
+      </article>
+    </div>
+    <article class="panel wide-panel">
+      <h2>【精算】總輸送功率與線路損失</h2>
+      <div class="loss-known" aria-label="已知條件">
+        <span class="accent-yellow">P<sub>輸送</sub> = 1000 kW</span>
+        <span class="accent-pink">R<sub>線路</sub> = 1 Ω</span>
+      </div>
+      <div class="slider-block"><label for="transmissionVoltage">調整輸電電壓</label><input id="transmissionVoltage" type="range" min="10" max="100" step="10" value="100"><span id="transmissionVoltageValue" class="slider-value">100 kV</span></div>
+      <div class="metric-grid loss-metrics">
+        <div class="metric"><span>總輸送功率</span><strong>1000 kW</strong></div>
+        <div class="metric"><span>輸電電流</span><strong id="transmissionCurrent">10 A</strong></div>
+        <div class="metric"><span>線路損失</span><strong id="transmissionLoss">100 W</strong></div>
+      </div>
+      <div class="calculation-stack" aria-label="輸電線損逐步計算">
+        <div class="calculation-row">
+          <span class="calculation-label">先算電流</span>
+          <span class="calculation-formula">I = <span class="fraction"><span class="top">P</span><span class="bottom">V</span></span> = <span class="fraction"><span class="top">1,000,000 W</span><span id="calcVoltageDenominator" class="bottom">100,000 V</span></span> <span id="calcCurrentRelation">=</span> <strong id="calcCurrentAnswer">10 A</strong></span>
+        </div>
+        <div class="calculation-row">
+          <span class="calculation-label">核對總功率</span>
+          <span class="calculation-formula">P<sub>輸送</sub> = VI = <span id="calcVoltageProduct">100,000 V</span> × <span id="calcCurrentProduct">10 A</span> <span id="calcPowerRelation">=</span> <strong>1,000,000 W = 1000 kW</strong></span>
+        </div>
+        <div class="calculation-row">
+          <span class="calculation-label">再算線損</span>
+          <span class="calculation-formula">P<sub>損失</sub> = I²R = (<span id="calcCurrentLoss">10 A</span>)² × 1 Ω <span id="calcLossRelation">=</span> <strong id="calcLossAnswer">100 W</strong></span>
+        </div>
+        <div class="calculation-row">
+          <span class="calculation-label">最後算比例</span>
+          <span class="calculation-formula">線損比例 = <span class="fraction"><span id="calcLossNumerator" class="top">100 W</span><span class="bottom">1,000,000 W</span></span> × 100% <span id="calcPercentRelation">=</span> <strong id="calcPercentAnswer">0.01%</strong></span>
+        </div>
+      </div>
+      <div id="lossResult" class="result-box" aria-live="polite"></div>
+    </article>
+    <div class="practice-box">
+      <div class="practice-tabs"><button class="practice-btn active" type="button" data-step="question">問題</button><button class="practice-btn" type="button" data-step="hint">提示</button><button class="practice-btn" type="button" data-step="answer">解答</button></div>
+      <div class="practice-step active" data-content="question"><h3>問題</h3><p>輸送功率與電線電阻不變時，若輸電電壓變成原來 10 倍，電流與線路熱損失各變成幾倍？</p></div>
+      <div class="practice-step" data-content="hint"><h3>提示</h3><p><span class="mono">I</span> 與 <span class="mono">V</span> 成反比；熱損失與 <span class="mono">I²</span> 成正比。</p></div>
+      <div class="practice-step" data-content="answer"><h3>解答</h3><p>電流變為 <strong class="accent-cyan">原來的十分之一</strong>；熱損失變為 <strong class="accent-green">原來的一百分之一</strong>。</p></div>
+    </div>
+  </section>
+
+  <section id="tab-cost" class="tab-content">
+    <div class="grid-2">
+      <article class="panel">
+        <h2>一度電是能量，不是功率</h2>
+        <div class="definition-stack" aria-label="一度電的定義">
+          <div class="definition-line">1 度 = 1 kWh</div>
+          <div class="definition-line">= 1000 W × 1 h</div>
+          <div class="definition-line">= 1000 × 60 × 60 J</div>
+          <div class="definition-line">= 3.6 × 10⁶ J</div>
+        </div>
+        <div class="formula-box"><span>度數 =</span><span class="fraction"><span class="top">功率（W）</span><span class="bottom">1000</span></span><span>× 時間（h）</span></div>
+        <div class="slider-block"><label for="costPower">電器功率</label><input id="costPower" type="range" min="500" max="3000" step="100" value="2000"><span id="costPowerValue" class="slider-value">2000 W</span></div>
+        <div class="slider-block"><label for="costHours">使用時間</label><input id="costHours" type="range" min="1" max="80" step="1" value="40"><span id="costHoursValue" class="slider-value">40 h</span></div>
+        <div class="slider-block"><label for="costRate">每度電價</label><input id="costRate" type="range" min="1" max="8" step="0.5" value="4"><span id="costRateValue" class="slider-value">4 元</span></div>
+        <div class="metric-grid">
+          <div class="metric"><span>使用度數</span><strong id="costDegrees">80 度</strong></div>
+          <div class="metric"><span>應付電費</span><strong id="costMoney">320 元</strong></div>
+        </div>
+        <div id="costResult" class="result-box" aria-live="polite"></div>
+      </article>
+      <article class="panel">
+        <h2>【動畫】瓦時計累積</h2>
+        <div class="canvas-wrap"><canvas id="costCanvas" class="lesson-canvas" width="1000" height="600"></canvas></div>
+      </article>
+    </div>
+    <div class="practice-box">
+      <div class="practice-tabs"><button class="practice-btn active" type="button" data-step="question">問題</button><button class="practice-btn" type="button" data-step="hint">提示</button><button class="practice-btn" type="button" data-step="answer">解答</button></div>
+      <div class="practice-step active" data-content="question"><h3>問題</h3><p>2000 W 冷氣機連續使用 40 小時，每度 4 元。共使用幾度電？電費多少元？</p></div>
+      <div class="practice-step" data-content="hint"><h3>提示</h3><p>先把 <span class="mono">2000 W</span> 換成 <span class="mono">2 kW</span>；度數為 <span class="mono">2×40</span>，再乘每度 4 元。</p></div>
+      <div class="practice-step" data-content="answer"><h3>解答</h3><p><span class="calc-line mono">2×40=<strong class="accent-yellow">80 度</strong></span><span class="calc-line mono">80×4=<strong class="accent-pink">320 元</strong></span></p></div>
+    </div>
+  </section>
+
+  <section id="tab-wiring" class="tab-content">
+    <div class="subtabs" aria-label="家庭配電子分頁">
+      <button class="subtab-btn active" type="button" data-wiring-sub="wiring-basic">家庭三線配電</button>
+      <button class="subtab-btn" type="button" data-wiring-sub="wiring-advanced">220 V 怎麼來？</button>
+      <button class="subtab-btn" type="button" data-wiring-sub="wiring-sockets">插座與接地安全</button>
+    </div>
+
+    <div id="wiring-basic" class="wiring-subpage active">
+      <div class="grid-2">
+        <article class="panel">
+          <h2>三條線怎麼得到兩種電壓？</h2>
+          <ul>
+            <li><strong class="accent-pink">活線 A</strong> 與中性線 C：<span class="mono accent-yellow">110 V</span></li>
+            <li><strong class="accent-cyan">活線 B</strong> 與中性線 C：<span class="mono accent-yellow">110 V</span></li>
+            <li>活線 A 與活線 B：<span class="mono accent-orange">220 V</span></li>
+          </ul>
+          <div class="choice-row" aria-label="選擇配線組合">
+            <button class="choice-btn active" type="button" data-wiring="ac">A－C</button>
+            <button class="choice-btn" type="button" data-wiring="bc">B－C</button>
+            <button class="choice-btn" type="button" data-wiring="ab">A－B</button>
+          </div>
+          <div id="wiringResult" class="result-box" aria-live="polite"></div>
+          <div class="key-box">活線 A 與 B 的交流變化<strong class="accent-orange">相差半個週期</strong>；一正一負時，兩線間的電壓差最大。</div>
+          <p class="teaching-note">圖中的 110 V、220 V 為額定有效值；波形用比例示意相位與電壓差。</p>
+        </article>
+        <article class="panel">
+          <h2>【互動】配線與波形</h2>
+          <div class="canvas-wrap"><canvas id="wiringCanvas" class="lesson-canvas" width="1000" height="600"></canvas></div>
+        </article>
+      </div>
+      <div class="practice-box">
+        <div class="practice-tabs"><button class="practice-btn active" type="button" data-step="question">問題</button><button class="practice-btn" type="button" data-step="hint">提示</button><button class="practice-btn" type="button" data-step="answer">解答</button></div>
+        <div class="practice-step active" data-content="question"><h3>問題</h3><p>家中 220 V 電器應跨接哪兩條線？為什麼不是接活線與中性線？</p></div>
+        <div class="practice-step" data-content="hint"><h3>提示</h3><p>活線 A、B 相差半個週期；任一活線與中性線只有 110 V。</p></div>
+        <div class="practice-step" data-content="answer"><h3>解答</h3><p>跨接<strong class="accent-pink">活線 A</strong>與<strong class="accent-cyan">活線 B</strong>，兩線間為 <strong class="accent-orange mono">220 V</strong>；活線與中性線僅為 <span class="mono">110 V</span>。</p></div>
+      </div>
+    </div>
+
+    <div id="wiring-advanced" class="wiring-subpage">
+      <div class="grid-2">
+        <article class="panel">
+          <h2>為什麼兩條 110 V 會得到 220 V？</h2>
+          <p>把 <strong class="accent-pink">A 線</strong>與<strong class="accent-cyan">B 線</strong>想成兩個方向相反的盪鞦韆：A 線到上方時，B 線正好在下方；半個週期後，兩者交換位置。</p>
+          <div class="calculation-stack">
+            <div class="calculation-row"><span class="calculation-label accent-pink">A 線</span><span class="calculation-formula">上方：＋110 V</span></div>
+            <div class="calculation-row"><span class="calculation-label accent-cyan">B 線</span><span class="calculation-formula">下方：−110 V</span></div>
+            <div class="calculation-row"><span class="calculation-label accent-orange">兩端相距</span><span class="calculation-formula">110＋110＝<strong>220 V</strong></span></div>
+          </div>
+          <div class="phase-summary"><strong>不要只背 110＋110：</strong>量 A、B 兩線，就是在看兩端相隔多遠。從 <span class="mono accent-cyan">−110 V</span> 到 <span class="mono accent-pink">＋110 V</span>，中間相差 <span class="mono accent-orange">220 V</span>。</div>
+          <p class="teaching-note">為降低認知負荷，動畫以 110 與 220 作等比例示意，不在本頁引入交流電的瞬時峰值。</p>
+        </article>
+        <article class="panel">
+          <h2>【動畫】A、B 與兩線電壓差</h2>
+          <div class="canvas-wrap"><canvas id="phaseCanvas" class="lesson-canvas" width="1000" height="600"></canvas></div>
+        </article>
+      </div>
+      <div class="practice-box">
+        <div class="practice-tabs"><button class="practice-btn active" type="button" data-step="question">問題</button><button class="practice-btn" type="button" data-step="hint">提示</button><button class="practice-btn" type="button" data-step="answer">解答</button></div>
+        <div class="practice-step active" data-content="question"><h3>問題</h3><p>某一時刻，A 線在中性線上方 <span class="mono accent-pink">80 V</span>，B 線在中性線下方 <span class="mono accent-cyan">80 V</span>。A、B 兩端相隔多少伏特？</p></div>
+        <div class="practice-step" data-content="hint"><h3>提示</h3><p>從下方走到中性線是 80 V，再從中性線走到上方又是 80 V。</p></div>
+        <div class="practice-step" data-content="answer"><h3>解答</h3><p><span class="mono">80 V＋80 V＝<strong class="accent-orange">160 V</strong></span>。兩線方向相反，所以兩端的距離要合起來。</p></div>
+      </div>
+    </div>
+
+    <div id="wiring-sockets" class="wiring-subpage">
+      <div class="grid-2">
+        <article class="panel">
+          <h2>插孔不同，功能也不同</h2>
+          <div class="choice-row" aria-label="選擇插座種類">
+            <button class="choice-btn" type="button" data-socket="two-hole">110 V 二孔</button>
+            <button class="choice-btn active" type="button" data-socket="grounded">110 V 接地三孔</button>
+            <button class="choice-btn" type="button" data-socket="dedicated">220 V 專用</button>
+          </div>
+          <div id="socketResult" class="result-box" aria-live="polite"></div>
+          <div class="wire-role-grid" aria-label="三種導線的功能">
+            <div class="wire-role"><strong class="accent-pink">火線 L</strong><span>把電能送往電器；正常使用時有工作電流。</span></div>
+            <div class="wire-role"><strong class="accent-cyan">中性線 N</strong><span>讓工作電流回到電源，完成正常迴路。</span></div>
+            <div class="wire-role"><strong class="accent-green">接地線 PE</strong><span>連接金屬外殼；正常時不承擔工作電流。</span></div>
+          </div>
+          <div class="key-box"><strong class="accent-yellow">電池類比要用對：</strong>中性線可類比為「回到電源的路」，像電池電路要接回另一端；但交流電沒有固定正、負極，中性線<strong class="accent-cyan">不是固定負極</strong>。</div>
+        </article>
+        <article class="panel">
+          <h2>【動畫】正常迴路與漏電保護</h2>
+          <div class="choice-row" aria-label="選擇用電情境">
+            <button class="choice-btn active" type="button" data-socket-mode="normal">正常使用</button>
+            <button class="choice-btn" type="button" data-socket-mode="fault">外殼漏電</button>
+          </div>
+          <div class="canvas-wrap"><canvas id="socketCanvas" class="lesson-canvas" width="1000" height="600"></canvas></div>
+          <div class="safety-box"><strong class="accent-orange">接地線不是第二條中性線。</strong>漏電時，接地線提供安全路徑，協助保護裝置切斷電源。110 V 有極性插座在正確配線時是窄孔接 L、寬孔接 N，但不可只看孔形自行驗電；220 V 專用插座也不適用這項判斷。不可折斷接地腳或自行拆接插座。</div>
+        </article>
+      </div>
+      <div class="practice-box">
+        <div class="practice-tabs"><button class="practice-btn active" type="button" data-step="question">問題</button><button class="practice-btn" type="button" data-step="hint">提示</button><button class="practice-btn" type="button" data-step="answer">解答</button></div>
+        <div class="practice-step active" data-content="question"><h3>問題</h3><p>三孔插座的中性線與接地線都接近地電位，兩者可以互相取代嗎？</p></div>
+        <div class="practice-step" data-content="hint"><h3>提示</h3><p>先判斷哪一條線在電器正常工作時有電流，哪一條只負責外殼安全。</p></div>
+        <div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-orange">不可以。</strong>中性線是正常工作迴路的一部分，會承擔負載電流，也可能因壓降、斷線或接錯而出現危險電壓；接地線連接金屬外殼，正常時不承擔工作電流，只在故障時提供保護路徑。</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const C={bg:'#0a201b',panel:'#14372d',white:'#ffffff',muted:'#b8c9c1',yellow:'#fff36a',cyan:'#55e9ff',orange:'#ffad55',green:'#9af06f',pink:'#ff78b7',red:'#ff7078',blue:'#72b9ff',purple:'#d99bff',line:'#55746a'};
+const TAU=Math.PI*2;
+const state={activeTab:'tab-current',currentType:'ac',flowFocus:'all',flowSpeed:.9,voltageKV:100,costPower:2000,costHours:40,costRate:4,wiring:'ac',wiringSub:'wiring-basic',socketType:'grounded',socketMode:'normal'};
+function clear(ctx){ctx.clearRect(0,0,1000,600);ctx.fillStyle=C.bg;ctx.fillRect(0,0,1000,600)}
+function line(ctx,pts,color=C.white,width=4,dash=[]){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();ctx.restore()}
+function label(ctx,text,x,y,color=C.white,size=32,align='center',weight=800){ctx.save();ctx.fillStyle=color;ctx.font=`${weight} ${size}px 'Noto Sans TC',sans-serif`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(text,x,y);ctx.restore()}
+function mono(ctx,text,x,y,color=C.yellow,size=32,align='center'){ctx.save();ctx.fillStyle=color;ctx.font=`800 ${size}px 'JetBrains Mono',monospace`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(text,x,y);ctx.restore()}
+function rounded(ctx,x,y,w,h,r,fill,stroke=C.line,width=3){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();ctx.restore()}
+function arrow(ctx,x1,y1,x2,y2,color=C.cyan,width=5){line(ctx,[[x1,y1],[x2,y2]],color,width);const a=Math.atan2(y2-y1,x2-x1),s=15;ctx.save();ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-Math.cos(a-.55)*s,y2-Math.sin(a-.55)*s);ctx.lineTo(x2-Math.cos(a+.55)*s,y2-Math.sin(a+.55)*s);ctx.closePath();ctx.fill();ctx.restore()}
+function glowDot(ctx,x,y,r,color){ctx.save();ctx.shadowColor=color;ctx.shadowBlur=14;ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.restore()}
+function safeDraw(id,fn,retry=0){const canvas=document.getElementById(id);if(!canvas)return;if(canvas.clientWidth<=0){if(retry<4)setTimeout(()=>safeDraw(id,fn,retry+1),70);return}fn(canvas.getContext('2d'),performance.now())}
+function formatNumber(n){return Number.isInteger(n)?String(n):n.toFixed(1)}
+function formatPercent(n){const digits=n>=1?2:n>=.1?3:4;return n.toFixed(digits).replace(/\.?0+$/,'')}
+function formatCalc(n,digits=4){return n.toLocaleString('en-US',{maximumFractionDigits:digits})}
+
+function drawWave(ctx,x,y,w,h,mode,color,phase=0,scale=1){
+  line(ctx,[[x,y+h/2],[x+w,y+h/2]],C.line,3);line(ctx,[[x,y],[x,y+h]],C.line,3);ctx.save();ctx.strokeStyle=color;ctx.lineWidth=6;ctx.beginPath();for(let px=0;px<=w;px+=4){const value=mode==='dc'?.58:Math.sin(px/w*TAU*2+phase)*.42*scale;const py=mode==='dc'?y+h/2-value*h/2:y+h/2-value*h/2;px?ctx.lineTo(x+px,py):ctx.moveTo(x+px,py)}ctx.stroke();ctx.restore();
+}
+function drawCurrent(ctx,now){
+  clear(ctx);const ac=state.currentType==='ac',t=now/1000,osc=Math.sin(t*2.2);label(ctx,ac?'交流電 AC：方向週期性改變':'直流電 DC：方向固定',500,52,ac?C.cyan:C.orange,36);
+  rounded(ctx,80,105,840,220,24,'#123329',ac?C.cyan:C.orange,4);line(ctx,[[190,170],[770,170],[770,270],[190,270]],C.white,7);rounded(ctx,735,190,70,62,15,'#173b31',C.yellow,4);label(ctx,'燈',770,221,C.yellow,27);rounded(ctx,135,180,105,82,15,'#173b31',ac?C.cyan:C.orange,4);mono(ctx,ac?'~':'＋－',188,221,ac?C.cyan:C.orange,32);
+  for(let k=0;k<8;k++){
+    const base=235+k*68;
+    const upperX=ac?base+osc*24:210+((t*95+k*68)%540);
+    const lowerX=ac?base-osc*24:760-((t*95+k*68)%540);
+    glowDot(ctx,upperX,170,10,ac?C.cyan:C.orange);
+    glowDot(ctx,lowerX,270,10,ac?C.cyan:C.orange);
+  }
+  const forward=!ac||osc>=0,color=ac?C.cyan:C.orange;
+  if(forward){arrow(ctx,395,125,555,125,color,6);arrow(ctx,555,305,395,305,color,6)}
+  else{arrow(ctx,555,125,395,125,color,6);arrow(ctx,395,305,555,305,color,6)}
+  rounded(ctx,80,355,840,190,22,'#102f27',C.line,3);label(ctx,'電流－時間圖',190,385,C.white,26);drawWave(ctx,250,385,610,125,ac?'ac':'dc',ac?C.cyan:C.orange,t*2.2);mono(ctx,ac?'每個週期約 0.0167 s':'方向不改變',555,525,ac?C.cyan:C.orange,25);
+}
+
+function drawPlant(ctx,x,y,color){rounded(ctx,x-42,y-50,84,100,15,'#173b31',color,4);ctx.fillStyle=color;ctx.fillRect(x-25,y-78,18,30);ctx.fillRect(x+8,y-68,18,20);label(ctx,'⚡',x,y+2,C.yellow,34)}
+function drawTransformer(ctx,x,y,color){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=5;for(let i=-2;i<=2;i++){ctx.beginPath();ctx.ellipse(x-13+i*7,y,17,48,0,0,TAU);ctx.stroke();ctx.beginPath();ctx.ellipse(x+13+i*7,y,17,48,0,0,TAU);ctx.stroke()}ctx.restore()}
+function drawTower(ctx,x,y,color){line(ctx,[[x,y-60],[x-34,y+50],[x+34,y+50],[x,y-60],[x-25,y+18],[x+25,y+18]],color,4);line(ctx,[[x-45,y-25],[x+45,y-25]],color,4)}
+function drawHouse(ctx,x,y,color){ctx.save();ctx.fillStyle='#173b31';ctx.strokeStyle=color;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x-48,y-5);ctx.lineTo(x,y-50);ctx.lineTo(x+48,y-5);ctx.lineTo(x+48,y+48);ctx.lineTo(x-48,y+48);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();rounded(ctx,x-12,y+8,24,40,4,C.orange,C.orange,2)}
+function drawGrid(ctx,now){
+  clear(ctx);const xs=[75,245,415,585,755,925],y=260,t=now/1000*state.flowSpeed,names=['發電廠','一次變電所','二次變電所','配電變電所','桿上變壓器','住家'],volts=['升壓','345→161 kV','66 kV','11.4 kV','降壓','110 V 與 220 V'];label(ctx,'電力輸送：先升壓，再逐級降壓',500,55,C.yellow,35);line(ctx,[[95,y],[905,y]],C.white,8);
+  const activeRange=state.flowFocus==='high'?[0,2]:state.flowFocus==='down'?[2,4]:state.flowFocus==='home'?[4,5]:[0,5];
+  for(let k=0;k<10;k++){const p=(t*.12+k/10)%1,x=95+p*810,index=Math.min(4,Math.floor(p*5)),active=index>=activeRange[0]&&index<=activeRange[1];glowDot(ctx,x,y,active?11:7,active?C.yellow:C.line)}
+  xs.forEach((x,i)=>{const active=i>=activeRange[0]&&i<=activeRange[1],color=active?([1,2,3,4].includes(i)?C.cyan:C.green):C.line;if(i===0)drawPlant(ctx,x,y,color);else if(i===5)drawHouse(ctx,x,y,color);else if(i===2||i===3)drawTower(ctx,x,y,color);else drawTransformer(ctx,x,y,color);label(ctx,names[i],x,385,active?C.white:C.muted,20);mono(ctx,volts[i],x,425,active?C.yellow:C.muted,18)});
+  rounded(ctx,90,480,820,72,18,'#14372d',C.line,3);label(ctx,'電能持續傳遞；變壓器只改變輸送時的電壓與電流',500,516,C.white,27);
+}
+
+function drawLossRow(ctx,y,title,v,i,loss,color,now,selected){
+  rounded(ctx,70,y-80,860,150,22,'#123329',selected?color:C.line,4);label(ctx,title,100,y-52,color,27,'left');mono(ctx,`${v} kV`,235,y-52,C.yellow,25);mono(ctx,`${i} A`,390,y-52,C.cyan,25);mono(ctx,`損失 ${formatNumber(loss)} kW`,700,y-52,color,25);const thickness=Math.max(5,Math.min(26,5+i*.12));line(ctx,[[125,y+15],[875,y+15]],selected?color:C.muted,thickness);const count=Math.max(2,Math.min(12,Math.round(i/10)));for(let k=0;k<count;k++){const p=((now/1000)*(i/100)*.55+k/count)%1;glowDot(ctx,155+p*690,y+15,8,C.yellow)}
+}
+function drawLoss(ctx,now){
+  clear(ctx);const v=state.voltageKV,i=1000/v,loss=i*i/1000;label(ctx,'固定輸送 1000 kW｜電線電阻 1 Ω',500,48,C.white,31);drawLossRow(ctx,190,'低壓基準',10,100,10,C.red,now,false);drawLossRow(ctx,405,'目前設定',v,i,loss,C.green,now,true);rounded(ctx,180,510,640,58,15,'#14372d',C.green,3);label(ctx,`電壓 ${v/10} 倍 → 線損為基準的 ${formatNumber(loss/10*100)}%`,500,539,C.green,27);
+}
+
+function drawCost(ctx,now){
+  clear(ctx);const kw=state.costPower/1000,degrees=kw*state.costHours,money=degrees*state.costRate,t=now/1000;label(ctx,'功率 × 時間 → 使用度數 → 電費',500,52,C.yellow,33);rounded(ctx,65,115,250,280,22,'#123329',C.green,4);label(ctx,'冷氣機',190,150,C.green,31);rounded(ctx,110,205,160,80,18,'#173b31',C.green,5);for(let x=135;x<=245;x+=28)line(ctx,[[x,235],[x,270]],C.cyan,4);mono(ctx,`${state.costPower} W`,190,345,C.cyan,34);rounded(ctx,375,115,250,280,22,'#123329',C.cyan,4);label(ctx,'使用時間',500,150,C.cyan,31);ctx.save();ctx.strokeStyle=C.white;ctx.lineWidth=8;ctx.beginPath();ctx.arc(500,245,67,0,TAU);ctx.stroke();ctx.restore();line(ctx,[[500,245],[500,194]],C.yellow,8);line(ctx,[[500,245],[545,268]],C.yellow,8);glowDot(ctx,500,245,9,C.orange);mono(ctx,`${state.costHours} h`,500,345,C.cyan,34);rounded(ctx,685,115,250,280,22,'#123329',C.orange,4);label(ctx,'瓦時計',810,150,C.orange,31);rounded(ctx,732,210,156,78,12,'#173b31',C.white,3);mono(ctx,formatNumber(degrees),810,249,C.yellow,38);label(ctx,'度',810,325,C.white,29);mono(ctx,`${formatNumber(money)} 元`,810,365,C.pink,30);arrow(ctx,320,255,365,255,C.yellow,6);arrow(ctx,630,255,675,255,C.yellow,6);for(let k=0;k<3;k++){const p=(t*.5+k/3)%1;glowDot(ctx,330+p*28,255,7,C.yellow)}rounded(ctx,85,455,830,90,18,'#102f27',C.line,3);mono(ctx,`${formatNumber(kw)} kW × ${state.costHours} h = ${formatNumber(degrees)} 度`,500,485,C.yellow,28);mono(ctx,`${formatNumber(degrees)} × ${formatNumber(state.costRate)} = ${formatNumber(money)} 元`,500,525,C.pink,27);
+}
+
+function drawSine(ctx,x,y,w,h,color,phase,scale,width=5){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();for(let px=0;px<=w;px+=4){const py=y+h/2-Math.sin(px/w*TAU*2+phase)*h*.38*scale;px?ctx.lineTo(x+px,py):ctx.moveTo(x+px,py)}ctx.stroke();ctx.restore()}
+function drawWiring(ctx,now){
+  clear(ctx);const mode=state.wiring,t=now/1000,colors={a:C.pink,c:C.white,b:C.cyan};label(ctx,'三線配電：A、C、B',500,45,C.yellow,34);const ys={a:115,c:180,b:245};[['a','活線 A'],['c','中性線 C'],['b','活線 B']].forEach(([k,name])=>{const selected=mode.includes(k),color=colors[k];line(ctx,[[90,ys[k]],[690,ys[k]]],selected?color:C.line,selected?9:5);label(ctx,name,105,ys[k]-27,color,23,'left')});rounded(ctx,735,85,185,190,22,'#14372d',C.line,3);label(ctx,'輸出',828,115,C.white,25);const result=mode==='ab'?'220 V':'110 V';mono(ctx,result,828,185,mode==='ab'?C.orange:C.yellow,42);label(ctx,mode==='ac'?'A－C':mode==='bc'?'B－C':'A－B',828,235,C.white,28);
+  const pairs=mode==='ac'?['a','c']:mode==='bc'?['b','c']:['a','b'];pairs.forEach((k,idx)=>{const y1=ys[k],y2=145+idx*70;line(ctx,[[690,y1],[715,y1],[715,y2],[735,y2]],colors[k],7)});
+  rounded(ctx,75,320,850,225,20,'#102f27',C.line,3);line(ctx,[[145,430],[865,430]],C.line,3);line(ctx,[[145,345],[145,515]],C.line,3);label(ctx,'波形',105,350,C.white,23);if(mode==='ac'){drawSine(ctx,160,345,690,170,C.pink,t*.7,1,7);mono(ctx,'A－C：110 V',760,360,C.pink,21)}else if(mode==='bc'){drawSine(ctx,160,345,690,170,C.cyan,t*.7+Math.PI,1,7);mono(ctx,'B－C：110 V',760,360,C.cyan,21)}else{drawSine(ctx,160,345,690,170,C.purple,t*.7,1.75,8);mono(ctx,'A－B：220 V',760,360,C.orange,21)}
+}
+
+function drawPhase(ctx,now){
+  clear(ctx);
+  const progress=(now/1000*.08)%1,theta=progress*TAU*2,peak=110;
+  const a=peak*Math.sin(theta),b=-a,difference=a-b,xGuide=100+progress*580;
+  const signed=n=>`${n>=0?'＋':'−'}${Math.abs(n).toFixed(1)} V`;
+  label(ctx,'A 在上時，B 就在下：兩線方向相反',500,42,C.yellow,31);
+
+  rounded(ctx,55,80,650,220,20,'#102f27',C.line,3);
+  line(ctx,[[100,190],[680,190]],C.line,3);
+  label(ctx,'A',82,125,C.pink,25);label(ctx,'B',82,158,C.cyan,25);
+  drawSine(ctx,100,110,580,160,C.pink,0,.75,6);
+  drawSine(ctx,100,110,580,160,C.cyan,Math.PI,.75,6);
+  line(ctx,[[xGuide,105],[xGuide,275]],C.yellow,3,[8,7]);
+  glowDot(ctx,xGuide,190-Math.sin(theta)*45.6,8,C.pink);
+  glowDot(ctx,xGuide,190+Math.sin(theta)*45.6,8,C.cyan);
+  mono(ctx,'A 線',590,105,C.pink,19);mono(ctx,'B 線',590,275,C.cyan,19);
+
+  rounded(ctx,55,330,650,220,20,'#102f27',C.line,3);
+  line(ctx,[[100,440],[680,440]],C.line,3);
+  label(ctx,'兩端差',80,365,C.orange,20);
+  drawSine(ctx,100,360,580,160,C.purple,0,1.45,8);
+  line(ctx,[[xGuide,350],[xGuide,530]],C.yellow,3,[8,7]);
+  glowDot(ctx,xGuide,440-Math.sin(theta)*88.2,9,C.orange);
+  mono(ctx,'電壓差波形是兩倍',500,535,C.orange,20);
+
+  rounded(ctx,730,80,220,470,20,'#14372d',C.line,3);
+  label(ctx,'同步示意值',840,115,C.white,25);
+  label(ctx,'A 線',790,170,C.pink,21);mono(ctx,signed(a),840,205,C.pink,22);
+  label(ctx,'B 線',790,260,C.cyan,21);mono(ctx,signed(b),840,295,C.cyan,22);
+  line(ctx,[[755,335],[925,335]],C.line,3);
+  label(ctx,'兩端差',795,375,C.orange,20);mono(ctx,signed(difference),840,413,C.orange,24);
+  label(ctx,'上方距離＋下方距離',840,455,C.white,16);
+  rounded(ctx,745,478,190,62,10,'#102f27',C.orange,3);
+  mono(ctx,'110 V ＋ 110 V',840,495,C.yellow,16);
+  mono(ctx,'＝ 220 V',840,523,C.orange,18);
+}
+
+function drawSocket(ctx,now){
+  clear(ctx);
+  const type=state.socketType,fault=state.socketMode==='fault',t=now/1000;
+  const grounded=type!=='two-hole',dedicated=type==='dedicated';
+  const title=type==='two-hole'?'110 V 二孔插座':type==='grounded'?'110 V 接地三孔插座':'220 V 接地型專用插座';
+  label(ctx,title,500,42,C.yellow,31);
+
+  rounded(ctx,45,80,340,470,20,'#102f27',C.line,3);
+  label(ctx,'插座正面示意',215,112,C.white,24);
+  rounded(ctx,105,145,220,300,35,'#173b31',C.white,5);
+  if(dedicated){
+    rounded(ctx,142,225,72,18,6,C.bg,C.pink,3);rounded(ctx,242,205,18,72,6,C.bg,C.cyan,3);
+    mono(ctx,'L1',178,195,C.pink,21);mono(ctx,'L2',251,305,C.cyan,21);
+  }else{
+    rounded(ctx,148,215,21,92,7,C.bg,C.cyan,3);rounded(ctx,258,226,15,70,6,C.bg,C.pink,3);
+    mono(ctx,'N',158,337,C.cyan,22);mono(ctx,'L',266,337,C.pink,22);
+  }
+  if(grounded){
+    ctx.save();ctx.strokeStyle=C.green;ctx.lineWidth=7;ctx.beginPath();ctx.arc(215,370,25,.15,Math.PI-.15);ctx.stroke();ctx.restore();line(ctx,[[215,370],[215,398]],C.green,7);mono(ctx,'PE',215,425,C.green,19);
+  }else{
+    label(ctx,'沒有接地孔',215,390,C.red,23);
+  }
+  mono(ctx,dedicated?'額定 250 V、20 A':'額定 125 V、15 A',215,490,dedicated?C.orange:C.cyan,20);
+  label(ctx,dedicated?'兩孔都是活線，不套用長短規則':'正確配線時：窄孔 L；寬孔 N',215,525,dedicated?C.orange:C.muted,17);
+
+  rounded(ctx,420,80,535,470,20,'#102f27',C.line,3);
+  label(ctx,fault?'外殼漏電：保護路徑':'正常使用：工作電流迴路',687,112,fault?C.orange:C.green,25);
+  rounded(ctx,465,155,92,210,17,'#14372d',C.line,3);label(ctx,'電源',511,180,C.white,22);mono(ctx,'~',511,250,C.yellow,42);
+  rounded(ctx,790,155,120,210,17,fault?'#3b2925':'#14372d',fault?C.red:C.line,4);label(ctx,'電器',850,185,C.white,23);label(ctx,'金屬外殼',850,335,fault?C.red:C.muted,18);
+  line(ctx,[[557,205],[790,205]],dedicated?C.pink:C.pink,8);line(ctx,[[790,300],[557,300]],dedicated?C.cyan:C.cyan,8);
+  mono(ctx,dedicated?'L1':'L',590,178,C.pink,20);mono(ctx,dedicated?'L2':'N',590,330,C.cyan,20);
+  for(let k=0;k<5;k++){
+    const p=(t*92+k*58)%225;
+    glowDot(ctx,565+p,205,8,k%2?C.yellow:C.pink);
+    glowDot(ctx,782-p,300,8,dedicated?C.purple:C.cyan);
+  }
+  label(ctx,dedicated?'兩條活線都承擔工作電流':'火線送出；中性線形成回程',687,390,C.white,19);
+  if(grounded){
+    line(ctx,[[850,365],[850,460]],C.green,8);
+    line(ctx,[[815,460],[885,460]],C.green,7);line(ctx,[[825,477],[875,477]],C.green,6);line(ctx,[[836,493],[864,493]],C.green,5);
+    if(fault){
+      line(ctx,[[790,205],[850,260],[850,365]],C.red,7,[10,7]);
+      for(let k=0;k<4;k++){const y=382+((t*75+k*27)%75);glowDot(ctx,850,y,8,C.green)}
+      label(ctx,'故障電流經接地線',687,430,C.green,19);label(ctx,'協助保護裝置切斷電源',687,520,C.yellow,19);
+    }else{
+      label(ctx,'接地線連接外殼，平常待命',687,430,C.green,19);label(ctx,'正常時：接地線沒有工作電流',687,520,C.green,19);
+    }
+  }else if(fault){
+    line(ctx,[[790,205],[850,260],[850,365]],C.red,7,[10,7]);
+    label(ctx,'沒有接地保護',687,440,C.red,22);label(ctx,'外殼可能帶電，碰觸有危險',687,500,C.red,19);
+  }else{
+    label(ctx,'二孔插座沒有保護接地',687,455,C.red,20);
+  }
+}
+
+function updateCurrent(){const ac=state.currentType==='ac';document.querySelectorAll('[data-current]').forEach(btn=>btn.classList.toggle('active',btn.dataset.current===state.currentType));document.getElementById('currentResult').innerHTML=ac?'上下兩條導線<strong class="accent-cyan">都有電流</strong>；同一時刻一條流入燈泡、另一條流出，方向每半週期一起反轉。':'上下兩條導線<strong class="accent-orange">都有電流</strong>；電流由一條線流入燈泡，再由另一條線流回電源。'}
+function updateFlow(){const text={all:'從發電、升壓、輸電、逐級降壓到家庭用電，形成完整電網。',high:'高壓區段使用 345 kV、161 kV 等電壓，目的在降低長距離輸電線損。',down:'靠近用戶後，電壓依序降為 66 kV、11.4 kV，再由桿上變壓器降壓。',home:'最後以 110 V 與 220 V 配電進入住家，供不同額定電壓的電器使用。'};document.querySelectorAll('[data-flow]').forEach(btn=>btn.classList.toggle('active',btn.dataset.flow===state.flowFocus));document.getElementById('flowSpeedValue').textContent=`${state.flowSpeed.toFixed(1)}×`;document.getElementById('flowResult').textContent=text[state.flowFocus]}
+function updateLoss(){
+  const voltageV=state.voltageKV*1000,i=1000000/voltageV,lossW=i*i,percent=lossW/1000000*100;
+  const currentText=formatCalc(i),lossText=formatCalc(lossW),percentText=formatPercent(percent);
+  const currentRelation=Math.abs(i-Number(currentText.replace(/,/g,'')))>1e-9?'≈':'=';
+  const lossRelation=Math.abs(lossW-Number(lossText.replace(/,/g,'')))>1e-9?'≈':'=';
+  const percentRelation=Math.abs(percent-Number(percentText))>1e-9?'≈':'=';
+  document.getElementById('transmissionVoltageValue').textContent=`${state.voltageKV} kV`;
+  document.getElementById('transmissionCurrent').textContent=`${currentText} A`;
+  document.getElementById('transmissionLoss').textContent=`${lossText} W`;
+  document.getElementById('calcVoltageDenominator').textContent=`${formatCalc(voltageV,0)} V`;
+  document.getElementById('calcCurrentAnswer').textContent=`${currentText} A`;
+  document.getElementById('calcCurrentRelation').textContent=currentRelation;
+  document.getElementById('calcVoltageProduct').textContent=`${formatCalc(voltageV,0)} V`;
+  document.getElementById('calcCurrentProduct').textContent=`${currentText} A`;
+  document.getElementById('calcPowerRelation').textContent=currentRelation;
+  document.getElementById('calcCurrentLoss').textContent=`${currentText} A`;
+  document.getElementById('calcLossRelation').textContent=lossRelation;
+  document.getElementById('calcLossAnswer').textContent=`${lossText} W`;
+  document.getElementById('calcLossNumerator').textContent=`${lossText} W`;
+  document.getElementById('calcPercentRelation').textContent=percentRelation;
+  document.getElementById('calcPercentAnswer').textContent=`${percentText}%`;
+  document.getElementById('lossResult').innerHTML=`輸送功率固定為 <strong class="accent-yellow mono">1000 kW</strong>；電壓提高到 <strong class="accent-yellow mono">${state.voltageKV} kV</strong>，電流降為 <strong class="accent-cyan mono">${currentText} A</strong>，線損只占 <strong class="accent-green mono">${percentText}%</strong>。`;
+}
+function updateCost(){const kw=state.costPower/1000,degrees=kw*state.costHours,money=degrees*state.costRate;document.getElementById('costPowerValue').textContent=`${state.costPower} W`;document.getElementById('costHoursValue').textContent=`${state.costHours} h`;document.getElementById('costRateValue').textContent=`${formatNumber(state.costRate)} 元`;document.getElementById('costDegrees').textContent=`${formatNumber(degrees)} 度`;document.getElementById('costMoney').textContent=`${formatNumber(money)} 元`;document.getElementById('costResult').innerHTML=`<span class="mono">${formatNumber(kw)} kW × ${state.costHours} h = ${formatNumber(degrees)} 度</span>；電費為 <strong class="accent-pink mono">${formatNumber(money)} 元</strong>。`}
+function updateWiring(){const data={ac:['A－C','110 V','活線 A 與中性線 C'],bc:['B－C','110 V','活線 B 與中性線 C'],ab:['A－B','220 V','兩條相差半週期的活線']},d=data[state.wiring];document.querySelectorAll('[data-wiring]').forEach(btn=>btn.classList.toggle('active',btn.dataset.wiring===state.wiring));document.getElementById('wiringResult').innerHTML=`選擇 <strong class="accent-cyan mono">${d[0]}</strong>：${d[2]}，得到 <strong class="accent-yellow mono">${d[1]}</strong>。`}
+function updateSocket(){const text={
+  'two-hole':'<strong class="accent-yellow">二孔一般型</strong>：額定 125 V、15 A，常用於 110 V。正確配線時窄孔是火線 L、寬孔是中性線 N，但沒有保護接地，也不能只憑孔形自行驗電。',
+  grounded:'<strong class="accent-green">三孔接地型</strong>：額定 125 V、15 A，常用於 110 V。正確配線時窄孔是 L、寬孔是 N；第三孔才是接地線 PE。',
+  dedicated:'<strong class="accent-orange">接地型專用插座</strong>：額定 250 V、20 A，常供 220 V 冷氣等高耗電設備使用；純 220 V 負載使用 L1、L2 與 PE，不使用中性線。'
+};document.querySelectorAll('[data-socket]').forEach(btn=>btn.classList.toggle('active',btn.dataset.socket===state.socketType));document.querySelectorAll('[data-socket-mode]').forEach(btn=>btn.classList.toggle('active',btn.dataset.socketMode===state.socketMode));document.getElementById('socketResult').innerHTML=text[state.socketType]}
+function drawActive(){if(state.activeTab==='tab-current')safeDraw('currentCanvas',drawCurrent);if(state.activeTab==='tab-grid')safeDraw('gridCanvas',drawGrid);if(state.activeTab==='tab-loss')safeDraw('lossCanvas',drawLoss);if(state.activeTab==='tab-cost')safeDraw('costCanvas',drawCost);if(state.activeTab==='tab-wiring'&&state.wiringSub==='wiring-basic')safeDraw('wiringCanvas',drawWiring);if(state.activeTab==='tab-wiring'&&state.wiringSub==='wiring-advanced')safeDraw('phaseCanvas',drawPhase);if(state.activeTab==='tab-wiring'&&state.wiringSub==='wiring-sockets')safeDraw('socketCanvas',drawSocket)}
+
+document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{state.activeTab=btn.dataset.tab;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.tab-content').forEach(section=>section.classList.toggle('active',section.id===state.activeTab));requestAnimationFrame(drawActive)}));
+document.querySelectorAll('.practice-box').forEach(box=>box.querySelectorAll('.practice-btn').forEach(btn=>btn.addEventListener('click',()=>{box.querySelectorAll('.practice-btn').forEach(b=>b.classList.toggle('active',b===btn));box.querySelectorAll('.practice-step').forEach(step=>step.classList.toggle('active',step.dataset.content===btn.dataset.step))})));
+document.querySelectorAll('[data-current]').forEach(btn=>btn.addEventListener('click',()=>{state.currentType=btn.dataset.current;updateCurrent();drawActive()}));
+document.querySelectorAll('[data-flow]').forEach(btn=>btn.addEventListener('click',()=>{state.flowFocus=btn.dataset.flow;updateFlow();drawActive()}));
+document.getElementById('flowSpeed').addEventListener('input',e=>{state.flowSpeed=Number(e.target.value);updateFlow()});
+document.getElementById('transmissionVoltage').addEventListener('input',e=>{state.voltageKV=Number(e.target.value);updateLoss();drawActive()});
+[['costPower','costPower'],['costHours','costHours'],['costRate','costRate']].forEach(([id,key])=>document.getElementById(id).addEventListener('input',e=>{state[key]=Number(e.target.value);updateCost();drawActive()}));
+document.querySelectorAll('[data-wiring]').forEach(btn=>btn.addEventListener('click',()=>{state.wiring=btn.dataset.wiring;updateWiring();drawActive()}));
+document.querySelectorAll('[data-wiring-sub]').forEach(btn=>btn.addEventListener('click',()=>{state.wiringSub=btn.dataset.wiringSub;document.querySelectorAll('[data-wiring-sub]').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.wiring-subpage').forEach(page=>page.classList.toggle('active',page.id===state.wiringSub));requestAnimationFrame(drawActive)}));
+document.querySelectorAll('[data-socket]').forEach(btn=>btn.addEventListener('click',()=>{state.socketType=btn.dataset.socket;updateSocket();drawActive()}));
+document.querySelectorAll('[data-socket-mode]').forEach(btn=>btn.addEventListener('click',()=>{state.socketMode=btn.dataset.socketMode;updateSocket();drawActive()}));
+let resizeTimer=0;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(drawActive,120)});
+function animate(){drawActive();requestAnimationFrame(animate)}
+updateCurrent();updateFlow();updateLoss();updateCost();updateWiring();updateSocket();setTimeout(()=>{drawActive();requestAnimationFrame(animate)},140);
+</script>
+</body>
+</html>
