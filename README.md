@@ -118,8 +118,9 @@
   * [常見有機物 (烴、醇、酸、酯)](organics_2.html)
   * [聚合物與衣料纖維](organics_3.html)
   * [食品化學與清潔劑](organics_4.html)
-* **08｜🔋 電化學與化學電池** （準備中）
-  * ⚙️ 伏打電池原理、鉛蓄電池充放電、電解與電鍍實驗互動模擬正在開發中...
+* **08｜🔋 電化學與化學電池** （2 個小單元）
+  * [電能與電功率](electric_energy_power_1.html)
+  * [電力輸送與電費](electric_power_transmission_2.html)
 
 ### 🧬 生物與生命館 (Biology)
 
