@@ -236,6 +236,8 @@ button:disabled{opacity:.45; cursor:not-allowed; transform:none!important}
         <div class="canvas-wrap">
           <canvas id="cellCanvas" width="1000" height="600" role="img" aria-label="鋅銅電池電子流與電極質量變化動畫"></canvas>
           <button id="cellPlay" class="canvas-play active" type="button">暫停</button>
+          <!-- 降低認知負荷的鹽橋開關 -->
+          <button id="toggleBridgeAnim" class="canvas-play active" type="button" style="top:87%; font-size:18px; padding:6px 16px; min-width:120px; border-width:2px; box-shadow:none;">暫停鹽橋</button>
         </div>
         <div class="diagram-key" aria-label="動畫圖例">
           <p><span class="accent-green">起始</span>：每杯 3 個金屬離子＋3 個硫酸根</p>
@@ -353,7 +355,7 @@ const ctxs = Object.fromEntries(Object.entries(canvases).map(([k,v]) => [k, v ? 
 const state = {
   active: 'history', history: 'galvani', historyClosed: true, metal: 'different', redox: 'both',
   cellProgress: 0, cellPlaying: true, bridge: true, bridgeFlow: 1, bridgeCharge: 0, bridgeCycleStart: performance.now(),
-  battery: 'lithium', charge: 'discharge'
+  battery: 'lithium', charge: 'discharge', bridgeAnimPlaying: true
 };
 
 const FLOW_PIXELS_PER_MS = 0.08;
@@ -533,7 +535,7 @@ function drawHistory(now) {
 
 function drawOrigin(now) {
   const ctx = ctxs.origin; if(!ctx) return; clear(ctx);
-  ctx.save(); ctx.translate(500,360); ctx.scale(1.2,1.2); ctx.translate(-500,-300);
+  ctx.save(); ctx.translate(500,420); ctx.scale(1.44,1.44); ctx.translate(-500,-300);
   const active=state.metal==='different', leftPath=[[430,225],[430,124],[462,124]], rightPath=[[538,124],[570,124],[570,225]];
   cellBeaker(ctx,380,200,240,320,'#164c55',C.cyan);
   line(ctx,leftPath,C.white,6); line(ctx,rightPath,C.white,6); voltmeter(ctx,500,90,active?1:0);
@@ -577,7 +579,7 @@ function drawRedox(now) {
   label(ctx,state.redox==='both'?'電子數守恆：失去 2 個＝得到 2 個':'先看清楚電子在反應式哪一邊',500,560,C.green,28);
 }
 
-function drawCellBase(ctx,p,now,opts={bridge:true,current:1}){
+function drawCellBase(ctx,p,now,opts={bridge:true,current:1,showBridgeIons:true}){
   const leftX=130, rightX=660, bY=245, bW=210, bH=280, leftE=205, rightE=795;
   const leftWire=[[leftE,265],[leftE,109],[462,109]], rightWire=[[538,109],[rightE,109],[rightE,265]];
   const raw=Math.min(REACTION_STEPS,p*REACTION_STEPS), completed=Math.min(REACTION_STEPS,Math.floor(raw+1e-7));
@@ -597,17 +599,17 @@ function drawCellBase(ctx,p,now,opts={bridge:true,current:1}){
   
   rounded(ctx,leftE-znW/2,265,znW,240,6,C.orange,C.white,3); rounded(ctx,rightE-cuW/2,265,cuW,240,6,C.cyan,C.white,3);
   saltBridge(ctx,opts.bridge);
-  if(opts.bridge && opts.current>.02 && p<.999) movingBridgeStreams(ctx,carrierElapsed,opts.current);
+  if(opts.bridge && opts.showBridgeIons && opts.current>.02 && p<.999) movingBridgeStreams(ctx,carrierElapsed,opts.current);
   
   leftSulfate.forEach((point,i)=>wanderingSolutionIon(ctx,point,'SO₄²⁻',C.muted,now,10+i,leftBounds));
   rightSulfate.forEach((point,i)=>wanderingSolutionIon(ctx,point,'SO₄²⁻',C.muted,now,20+i,rightBounds));
   baseZn.forEach((point,i)=>wanderingSolutionIon(ctx,point,'Zn²⁺',C.orange,now,30+i,leftBounds));
   for(let i=0;i<produced;i++) wanderingSolutionIon(ctx,newZn[i],'Zn²⁺',C.orange,now,40+i,leftBounds);
   
-  // 兩倍量的鹽橋離子：每個 reaction step 需要掉入 2 個 NO3- 和 2 個 K+
+  // 兩倍量的鹽橋離子
   const settledNitrate=[[[275,340],[295,350]], [[275,400],[295,410]], [[275,470],[295,480]]];
   const settledPotassium=[[[725,340],[705,350]], [[725,400],[705,410]], [[725,470],[705,480]]];
-  if(opts.bridge){
+  if(opts.bridge && opts.showBridgeIons){
     for(let i=0;i<REACTION_STEPS;i++){
       const delivery=Math.max(0,Math.min(1,raw-i)); if(delivery<=.62)continue;
       const q=Math.min(1,(delivery-.62)/.38), ease=q*q*(3-2*q);
@@ -628,25 +630,30 @@ function drawCellBase(ctx,p,now,opts={bridge:true,current:1}){
   }
 }
 
-function drawCell(now) { const ctx=ctxs.cell; if(!ctx) return; clear(ctx); drawCellBase(ctx,state.cellProgress,now,{bridge:true,current:1}); }
+function drawCell(now) { const ctx=ctxs.cell; if(!ctx) return; clear(ctx); drawCellBase(ctx,state.cellProgress,now,{bridge:true,current:1,showBridgeIons:state.bridgeAnimPlaying}); }
 function drawBridge(now) {
   const ctx=ctxs.bridge; if(!ctx) return; clear(ctx);
-  if(state.bridge){ drawCellBase(ctx,state.cellProgress,now,{bridge:true,current:state.bridgeFlow}); }
-  else{ const stoppedProgress=Math.min(state.cellProgress,2/REACTION_STEPS), current=stoppedProgress<2/REACTION_STEPS-.002?1:0; drawCellBase(ctx,stoppedProgress,now,{bridge:false,current}); }
+  if(state.bridge){ drawCellBase(ctx,state.cellProgress,now,{bridge:true,current:state.bridgeFlow,showBridgeIons:true}); }
+  else{ const stoppedProgress=Math.min(state.cellProgress,2/REACTION_STEPS), current=stoppedProgress<2/REACTION_STEPS-.002?1:0; drawCellBase(ctx,stoppedProgress,now,{bridge:false,current,showBridgeIons:false}); }
 }
 
 const batteryInfo={
   carbon:{name:'碳鋅電池',voltage:'1.5 V',recharge:false,color:C.orange,facts:['一次電池｜不可充電','價格較低，使用時間較短','久放可能漏液與腐蝕']},
   alkaline:{name:'鹼性電池',voltage:'約 1.5 V',recharge:false,color:C.yellow,facts:['一次電池｜不可充電','低溫性能與壽命較佳','電解質常用氫氧化鉀']},
-  lead:{name:'鉛蓄電池',voltage:'每格約 2 V',recharge:true,color:C.purple,facts:['二次電池｜可以充電','汽機車常見，能供大電流','放電與充電反應方向相反']},
+  lead:{name:'鉛蓄電池',voltage:'每一組約 2 V',recharge:true,color:C.purple,facts:['二次電池｜可以充電','多組串聯可提高總電壓','放電與充電反應方向相反']},
   lithium:{name:'鋰離子電池',voltage:'3.6～3.7 V',recharge:true,color:C.cyan,facts:['二次電池｜可以充電','能量密度高，手機與電腦常用','避免高溫、擠壓與破壞']},
   nimh:{name:'鎳氫電池',voltage:'1.2 V',recharge:true,color:C.green,facts:['二次電池｜可以充電','家用 AA／AAA 充電電池','記憶效應較不明顯']}
 };
+
 function drawBatteryBody(ctx,info){
   rounded(ctx,95,145,360,330,26,C.deep,info.color,5);
   if(state.battery==='lead'){
-    for(let i=0;i<5;i++) rounded(ctx,135+i*58,215,34,180,5,i%2?C.orange:C.purple,C.white,2);
-    label(ctx,'鉛板組＋稀硫酸',275,430,C.white,24);
+    for(let i=0;i<5;i++) rounded(ctx,135+i*58,205,34,130,5,i%2?C.orange:C.purple,C.white,2);
+    label(ctx,'鉛板組＋稀硫酸',275,355,C.white,22);
+    const isChg = state.charge==='charge';
+    mono(ctx,'Pb＋PbO₂＋2H₂SO₄', 275, 395, isChg?C.muted:C.orange, 18);
+    mono(ctx, isChg ? '⟵ 充電' : '放電 ⟶', 275, 425, isChg?C.cyan:C.yellow, 16);
+    mono(ctx,'2PbSO₄＋2H₂O', 275, 455, isChg?C.green:C.muted, 18);
   } else if(state.battery==='lithium'){
     rounded(ctx,135,220,105,170,12,'#244c42',C.green,3); rounded(ctx,310,220,105,170,12,'#443d55',C.purple,3);
     label(ctx,'正極材料',187,420,C.green,22); label(ctx,'負極材料',362,420,C.purple,22);
@@ -657,16 +664,44 @@ function drawBatteryBody(ctx,info){
   }
   label(ctx,info.name,275,115,info.color,32); mono(ctx,info.voltage,275,180,info.color,28);
 }
+
 function drawTypes(now) {
   const ctx=ctxs.types; if(!ctx) return; clear(ctx); const info=batteryInfo[state.battery];
   label(ctx,'先分清楚：能不能充電，再比較電壓與用途',500,42,C.yellow,32);
-  drawBatteryBody(ctx,info); rounded(ctx,500,92,430,385,24,C.deep,C.line,3);
+  drawBatteryBody(ctx,info); 
+  
+  rounded(ctx,500,92,430,400,24,C.deep,C.line,3);
   label(ctx,info.recharge?'二次電池｜可重複充電':'一次電池｜不可充電',715,135,info.recharge?C.green:C.orange,28);
-  info.facts.forEach((f,i)=>{ dot(ctx,545,210+i*75,8,info.color); label(ctx,f,575,210+i*75,C.white,24,'left'); });
-  const discharge=state.charge==='discharge'; arrow(ctx,discharge?545:875,415,discharge?875:545,415,discharge?C.yellow:C.cyan,7);
-  label(ctx,discharge?'放電：化學能 → 電能':'充電：電能 → 化學能',710,455,discharge?C.yellow:C.cyan,26);
-  if(info.recharge){ movingDots(ctx,discharge?[[560,385],[860,385]]:[[860,385],[560,385]],5,now*.00015,C.yellow); } else label(ctx,'禁止嘗試充電',710,385,C.danger,26);
-  rounded(ctx,250,515,500,60,16,C.deep,info.color,3); label(ctx,'廢電池都要回收，不可拆解或短路',500,545,info.color,26);
+  info.facts.forEach((f,i)=>{ dot(ctx,545,195+i*65,8,info.color); label(ctx,f,575,195+i*65,C.white,24,'left'); });
+  
+  const discharge=state.charge==='discharge'; 
+  arrow(ctx,discharge?545:875,385,discharge?875:545,385,discharge?C.yellow:C.cyan,7);
+  label(ctx,discharge?'放電：化學能 → 電能':'充電：電能 → 化學能',715,425,discharge?C.yellow:C.cyan,26);
+  
+  if(info.recharge){ 
+    movingDots(ctx,discharge?[[560,355],[860,355]]:[[860,355],[560,355]],5,now*.00015,C.yellow); 
+    if(!discharge) {
+      label(ctx,'⚠️ 外加電源：正極接正極，負極接負極',715,465,C.pink,20);
+    }
+  } else {
+    label(ctx,'禁止嘗試充電',715,385,C.danger,26);
+  }
+  
+  rounded(ctx, 130, 505, 740, 70, 16, C.deep, info.color, 3);
+  if(state.battery === 'lead') {
+    const isChg = state.charge === 'charge';
+    ctx.fillStyle = isChg ? C.cyan : C.yellow;
+    ctx.font = `800 24px 'Noto Sans TC',sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(isChg ? '充電：' : '放電：', 165, 540); 
+    
+    ctx.fillStyle = C.white;
+    ctx.font = `800 24px 'JetBrains Mono',monospace`;
+    ctx.fillText(isChg ? '2PbSO₄ ＋ 2H₂O ⟶ Pb ＋ PbO₂ ＋ 2H₂SO₄' : 'Pb ＋ PbO₂ ＋ 2H₂SO₄ ⟶ 2PbSO₄ ＋ 2H₂O', 250, 540);
+  } else {
+    label(ctx,'※ 廢電池含有害物質，請務必依規定妥善回收', 500, 540, C.muted, 22);
+  }
 }
 
 // 頁籤切換
@@ -710,11 +745,36 @@ function updateCellControls(){
   document.querySelectorAll('#cellPlay,#bridgeCanvasPlay').forEach(b=>{b.textContent=state.cellPlaying?'暫停':'播放'; b.classList.toggle('active',state.cellPlaying);});
 }
 
+const toggleBridgeBtn = document.getElementById('toggleBridgeAnim');
+if(toggleBridgeBtn){
+  toggleBridgeBtn.addEventListener('click', () => {
+    state.bridgeAnimPlaying = !state.bridgeAnimPlaying;
+    toggleBridgeBtn.textContent = state.bridgeAnimPlaying ? '暫停鹽橋' : '播放鹽橋';
+    toggleBridgeBtn.classList.toggle('active', state.bridgeAnimPlaying);
+  });
+}
+
 document.querySelectorAll('[data-bridge]').forEach(btn=>btn.addEventListener('click',()=>{state.bridge=btn.dataset.bridge==='on'; state.bridgeFlow=1; state.bridgeCharge=0; state.cellProgress=0; state.cellPlaying=true; if(state.bridge)state.bridgeCycleStart=performance.now(); updateCellControls(); document.querySelectorAll('[data-bridge]').forEach(b=>b.classList.toggle('active',b===btn)); document.getElementById('bridgeStatus').textContent=state.bridge?'NO₃⁻由右向左游入鋅杯，K⁺由左向右游入銅杯，持續維持兩杯電中性。':'拔掉鹽橋後，反應進行到第 2 顆電子完成轉移便停止；無法維持電中性，後續反應不能繼續。';}));
 const brRst = document.getElementById('bridgeReset');
 if(brRst) brRst.addEventListener('click',()=>{state.bridge=true; state.bridgeFlow=1; state.bridgeCharge=0; state.bridgeCycleStart=performance.now(); state.cellProgress=0; state.cellPlaying=true; updateCellControls(); document.querySelectorAll('[data-bridge]').forEach(b=>b.classList.toggle('active',b.dataset.bridge==='on')); document.getElementById('bridgeStatus').textContent='NO₃⁻由右向左游入鋅杯，K⁺由左向右游入銅杯，持續維持兩杯電中性。';});
 
-function updateChargeButtons(){const info=batteryInfo[state.battery],chargeBtn=document.getElementById('chargeButton'); chargeBtn.disabled=!info.recharge; if(!info.recharge)state.charge='discharge'; document.querySelectorAll('[data-charge]').forEach(b=>b.classList.toggle('active',b.dataset.charge===state.charge)); document.getElementById('typesStatus').textContent=info.recharge?`${info.name}可重複充電；${state.charge==='discharge'?'放電時把化學能轉換成電能。':'充電時用電能推動反向化學變化。'}`:`${info.name}是一次電池，不可嘗試充電；使用後應交給廢電池回收。`;}
+function updateChargeButtons(){
+  const info=batteryInfo[state.battery],chargeBtn=document.getElementById('chargeButton'); 
+  chargeBtn.disabled=!info.recharge; 
+  if(!info.recharge)state.charge='discharge'; 
+  document.querySelectorAll('[data-charge]').forEach(b=>b.classList.toggle('active',b.dataset.charge===state.charge)); 
+  let statusText = '';
+  if (info.recharge) {
+    if (state.charge === 'discharge') {
+      statusText = `${info.name}可重複充電；放電時把儲存的化學能轉換成電能。`;
+    } else {
+      statusText = `${info.name}充電時，必須「正極接正極、負極接負極」，強制推動反向化學反應。`;
+    }
+  } else {
+    statusText = `${info.name}是一次電池，不可嘗試充電；使用後應交給廢電池回收。`;
+  }
+  document.getElementById('typesStatus').textContent = statusText;
+}
 document.querySelectorAll('[data-battery]').forEach(btn=>btn.addEventListener('click',()=>{state.battery=btn.dataset.battery; document.querySelectorAll('[data-battery]').forEach(b=>b.classList.toggle('active',b===btn)); updateChargeButtons();}));
 document.querySelectorAll('[data-charge]').forEach(btn=>btn.addEventListener('click',()=>{if(btn.disabled)return; state.charge=btn.dataset.charge; updateChargeButtons();}));
 
