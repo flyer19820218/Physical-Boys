@@ -118,9 +118,10 @@
   * [常見有機物 (烴、醇、酸、酯)](organics_2.html)
   * [聚合物與衣料纖維](organics_3.html)
   * [食品化學與清潔劑](organics_4.html)
-* **08｜🔋 電化學與化學電池** （2 個小單元）
+* **08｜🔋 電化學與化學電池** （3 個小單元）
   * [電能與電功率](electric_energy_power_1.html)
   * [電力輸送與電費](electric_power_transmission_2.html)
+  * [短路與用電安全](electrical_safety_3.html)
 
 ### 🧬 生物與生命館 (Biology)
 

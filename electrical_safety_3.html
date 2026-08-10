@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>短路與用電安全｜互動黑板教學</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap');
+:root{--bg:#11261f;--panel:#16372d;--deep:#0e2d25;--line:#5d7b70;--white:#f7fbf8;--yellow:#ffe45c;--cyan:#4ddff3;--orange:#ffa84d;--green:#91f56d;--pink:#ff65a8;--muted:#b6c9c1;--danger:#ff7a68}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--white);font-family:'Noto Sans TC',sans-serif;font-size:20px;line-height:1.65;background-color:var(--bg);background-image:radial-gradient(circle at 1px 1px,#24493d 1.2px,transparent 1.3px);background-size:18px 18px;min-height:100vh}
+button,input{font:inherit}
+button{touch-action:manipulation}
+.app{width:min(100% - 28px,1080px);margin:0 auto;padding:28px 0 52px}
+.hero{border:3px solid var(--cyan);border-radius:28px;background:#15372d;padding:28px 32px;margin-bottom:20px}
+h1{font-size:clamp(34px,5vw,48px);line-height:1.2;color:var(--yellow);margin:0 0 10px;font-weight:900}
+h2{font-size:clamp(28px,3.4vw,38px);line-height:1.3;color:var(--yellow);margin:0 0 18px;font-weight:900}
+h3{font-size:27px;line-height:1.35;margin:0 0 10px;color:var(--cyan)}
+p{margin:0 0 14px}
+.subtitle{color:var(--white);margin:0;font-weight:700}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:0 0 22px}
+.tab-btn,.action-btn,.choice-btn,.practice-btn{border:2px solid var(--line);background:#102f27;color:var(--white);border-radius:14px;padding:11px 12px;font-weight:900;cursor:pointer;transition:.18s transform,.18s background,.18s border-color}
+.tab-btn:hover,.action-btn:hover,.choice-btn:hover,.practice-btn:hover{transform:translateY(-2px);background:#1d493b}
+.tab-btn.active,.action-btn.active,.choice-btn.active{background:var(--cyan);color:#123129;border-color:var(--cyan)}
+.tab-content{display:none}.tab-content.active{display:block}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.panel{border:3px solid var(--cyan);border-radius:28px;background:var(--panel);padding:26px;min-width:0}
+.full{grid-column:1/-1}
+.key-box,.result-box,.safety-note{background:var(--deep);border:2px solid var(--line);border-radius:18px;padding:18px 20px;margin-top:16px}
+.result-box{border-color:var(--cyan)}
+.safety-note{border-color:var(--orange)}
+.accent-yellow{color:var(--yellow)}.accent-cyan{color:var(--cyan)}.accent-orange{color:var(--orange)}.accent-green{color:var(--green)}.accent-pink{color:var(--pink)}.accent-danger{color:var(--danger)}
+.mono,.formula,.metric strong{font-family:'JetBrains Mono',monospace;font-weight:800;white-space:nowrap}
+.formula{font-size:clamp(27px,4vw,43px);color:var(--yellow);display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;padding:14px}
+.fraction{display:inline-flex;flex-direction:column;align-items:stretch;vertical-align:middle;line-height:1.05;text-align:center;white-space:nowrap}
+.fraction .top{border-bottom:3px solid currentColor;padding:0 .22em .12em}.fraction .bottom{padding:.12em .22em 0}
+.controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+.controls .action-btn,.controls .choice-btn{min-width:140px}
+.canvas-wrap{width:100%;height:auto;aspect-ratio:10/6;border:3px solid var(--line);border-radius:22px;overflow:hidden;background:#0d2821}
+canvas{display:block;width:100%;height:auto;aspect-ratio:10/6;background:#0d2821}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;justify-content:center;color:var(--muted);font-weight:800}
+.legend span{white-space:nowrap}.legend i{display:inline-block;width:16px;height:16px;border-radius:50%;margin-right:6px;vertical-align:-2px}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px}
+.metric{background:var(--deep);border:2px solid var(--line);border-radius:16px;padding:14px;text-align:center}
+.metric span{display:block;color:var(--muted);font-weight:800}.metric strong{display:block;color:var(--yellow);font-size:27px}
+.appliances{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
+.appliances .choice-btn{display:flex;flex-direction:column;align-items:center;min-width:0}.appliances small{color:inherit;font-weight:800}
+.range-row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;margin:18px 0}
+.range-row label{font-weight:900;white-space:nowrap}.range-row output{font-family:'JetBrains Mono',monospace;color:var(--cyan);font-size:28px;font-weight:800;white-space:nowrap}
+input[type=range]{width:100%;accent-color:var(--cyan)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.compare>div{background:var(--deep);border-left:6px solid var(--cyan);border-radius:0 15px 15px 0;padding:14px 16px}.compare>div:last-child{border-color:var(--pink)}
+.extension-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}.extension-card{background:var(--deep);border:2px solid var(--line);border-radius:18px;padding:18px 20px}.extension-card h3{color:var(--yellow)}
+.current-flow{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin:16px 0}.current-flow>div{border:2px solid var(--line);border-radius:15px;padding:12px;text-align:center;font-weight:900}.current-flow .trunk{border-color:var(--orange);color:var(--orange)}.current-flow .flow-arrow{border:0;color:var(--cyan);font-size:34px;padding:0}
+.limit-box{border:3px solid var(--orange);border-radius:18px;padding:15px 18px;margin-top:15px;background:#18382f}.limit-box strong{color:var(--orange)}
+.practice{margin-top:20px;border:3px solid var(--yellow);border-radius:24px;background:#143329;padding:22px}
+.practice-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.practice-btn.active{background:var(--yellow);border-color:var(--yellow);color:#26372f}
+.practice-step{display:none;background:var(--deep);border-radius:16px;padding:18px 20px;min-height:115px}.practice-step.active{display:block}
+.practice-step p{font-size:22px;margin:0;font-weight:700}
+.calc-line{display:block;margin:8px 0}
+.danger-list{display:grid;gap:10px;margin-top:14px}.danger-list div{border-left:6px solid var(--danger);background:var(--deep);padding:12px 16px;border-radius:0 14px 14px 0}
+.footer-note{color:var(--muted);text-align:center;margin-top:28px;font-size:18px}
+@media(max-width:900px){.tabs{grid-template-columns:repeat(3,1fr)}.tab-btn:last-child:nth-child(2n){grid-column:auto}}
+@media(max-width:768px){body{font-size:20px}.app{width:min(100% - 18px,1080px);padding-top:14px}.hero{padding:22px 20px}.tabs{grid-template-columns:1fr 1fr}.tab-btn{padding:10px 6px;font-size:17px}.tab-btn:last-child:nth-child(odd){grid-column:1/-1}.grid{grid-template-columns:1fr}.full{grid-column:auto}.panel{padding:20px}.metrics,.compare,.extension-grid{grid-template-columns:1fr}.current-flow{grid-template-columns:1fr}.current-flow .flow-arrow{transform:rotate(90deg)}.canvas-wrap{border-radius:16px}.practice-nav{gap:7px}.practice-btn{padding:9px 6px}.range-row{grid-template-columns:1fr auto}.range-row input{grid-column:1/-1;grid-row:2}.appliances{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="hero">
+    <h1>短路與用電安全</h1>
+    <p class="subtitle">先分清楚短路與過載，再看保護裝置如何切斷危險電流。</p>
+  </header>
+
+  <nav class="tabs" aria-label="教學分頁">
+    <button class="tab-btn active" type="button" data-tab="tab-short">短路怎麼發生</button>
+    <button class="tab-btn" type="button" data-tab="tab-overload">並聯與過載</button>
+    <button class="tab-btn" type="button" data-tab="tab-heat">導線為何變熱</button>
+    <button class="tab-btn" type="button" data-tab="tab-protect">保護裝置</button>
+    <button class="tab-btn" type="button" data-tab="tab-shock">觸電安全</button>
+  </nav>
+
+  <section id="tab-short" class="tab-content active">
+    <div class="grid">
+      <article class="panel">
+        <h2>短路：電流改走低電阻路徑</h2>
+        <p>導線若直接跨接電器兩端，會形成<span class="accent-pink">電阻很小的旁路</span>。大部分電流繞過電器，導線中的電流可能非常大。</p>
+        <div class="formula"><span class="mono">I=</span><span class="fraction"><span class="top">V</span><span class="bottom">R</span></span></div>
+        <div class="key-box"><strong class="accent-yellow">重點：</strong>短路不是「電流消失」，而是電流大多改走不該走的低電阻路徑。</div>
+        <div class="compare">
+          <div><strong class="accent-cyan">正常迴路</strong><br>電流通過燈泡</div>
+          <div><strong class="accent-pink">短路迴路</strong><br>電流繞過燈泡</div>
+        </div>
+      </article>
+      <article class="panel">
+        <h2>【動畫】跨接燈泡兩端</h2>
+        <div class="canvas-wrap"><canvas id="shortCanvas" width="1000" height="600" role="img" aria-label="正常電路與短路旁路的電流動畫"></canvas></div>
+        <div class="controls">
+          <button class="action-btn active" type="button" data-short="normal">正常接法</button>
+          <button class="action-btn" type="button" data-short="short">接上旁路</button>
+        </div>
+        <div id="shortStatus" class="result-box" aria-live="polite">電流通過燈泡，燈泡正常發亮。</div>
+      </article>
+      <article class="practice full" data-practice>
+        <div class="practice-nav">
+          <button class="practice-btn active" type="button" data-step="question">問題</button>
+          <button class="practice-btn" type="button" data-step="hint">提示</button>
+          <button class="practice-btn" type="button" data-step="answer">解答</button>
+        </div>
+        <div class="practice-step active" data-content="question"><h3>問題</h3><p>一條導線直接跨接燈泡兩端後，燈泡熄滅。電流去哪裡了？</p></div>
+        <div class="practice-step" data-content="hint"><h3>提示</h3><p>比較導線與燈泡的電阻；電流會大量流向電阻較小的路徑。</p></div>
+        <div class="practice-step" data-content="answer"><h3>解答</h3><p>大部分電流改走<span class="accent-pink">跨接導線</span>，繞過燈泡。這是短路，導線可能因電流過大而快速升溫。</p></div>
+      </article>
+    </div>
+  </section>
+
+  <section id="tab-overload" class="tab-content">
+    <div class="grid">
+      <article class="panel">
+        <h2>過載：正常電器接得太多</h2>
+        <p>家庭電器採<span class="accent-green">並聯</span>，每一支路都有相同電壓。電器越多，幹線要供應的<span class="accent-yellow">總電流越大</span>。</p>
+        <div class="formula"><span class="mono">I<sub>總</sub>=I₁+I₂+I₃+…</span></div>
+        <div class="key-box"><strong class="accent-cyan">和短路不同：</strong>過載時每個電器仍在正常支路工作，只是總電流超過線路能安全承受的範圍。</div>
+        <div class="safety-note">本動畫以 <strong class="accent-yellow mono">110 V、15 A</strong> 分路作教學示意；實際額定值以配電設備標示為準。</div>
+      </article>
+      <article class="panel">
+        <h2>【互動】把電器接上延長線</h2>
+        <div class="canvas-wrap"><canvas id="overloadCanvas" width="1000" height="600" role="img" aria-label="並聯電器總電流與過載動畫"></canvas></div>
+        <div class="appliances" aria-label="選擇並聯電器">
+          <button class="choice-btn" type="button" data-appliance="lamp">檯燈<small>100 W</small></button>
+          <button class="choice-btn" type="button" data-appliance="dryer">吹風機<small>1200 W</small></button>
+          <button class="choice-btn" type="button" data-appliance="cooker">電鍋<small>1000 W</small></button>
+          <button class="choice-btn" type="button" data-appliance="heater">電暖器<small>1500 W</small></button>
+        </div>
+        <div class="metrics">
+          <div class="metric"><span>總功率</span><strong id="totalPower">0 W</strong></div>
+          <div class="metric"><span>總電流</span><strong id="totalCurrent">0.0 A</strong></div>
+        </div>
+        <div id="overloadStatus" class="result-box" aria-live="polite">按下電器，觀察幹線總電流。</div>
+      </article>
+      <article class="practice full" data-practice>
+        <div class="practice-nav">
+          <button class="practice-btn active" type="button" data-step="question">問題</button>
+          <button class="practice-btn" type="button" data-step="hint">提示</button>
+          <button class="practice-btn" type="button" data-step="answer">解答</button>
+        </div>
+        <div class="practice-step active" data-content="question"><h3>問題</h3><p><span class="mono">110 V</span> 分路同時使用 <span class="mono">1200 W</span> 吹風機與 <span class="mono">1500 W</span> 電暖器，總電流約多少？是否超過 <span class="mono">15 A</span>？</p></div>
+        <div class="practice-step" data-content="hint"><h3>提示</h3><p>先把功率相加，再用 <span class="mono">I=</span><span class="fraction mono"><span class="top">P</span><span class="bottom">V</span></span>。</p></div>
+        <div class="practice-step" data-content="answer"><h3>解答</h3><p><span class="calc-line mono">P<sub>總</sub>=1200+1500=2700 W</span><span class="calc-line"><span class="mono">I<sub>總</sub>=</span><span class="fraction mono"><span class="top">2700</span><span class="bottom">110</span></span><span class="mono">≈24.5 A</span></span>超過 <span class="accent-danger mono">15 A</span>，屬於過載。</p></div>
+      </article>
+    </div>
+  </section>
+
+  <section id="tab-heat" class="tab-content">
+    <div class="grid">
+      <article class="panel">
+        <h2>電流越大，導線發熱更快</h2>
+        <p>導線也有電阻。電流通過導線時，部分電能轉換成內能；同一條線中，電流加倍，發熱功率變成四倍。</p>
+        <div class="formula"><span class="mono">P<sub>熱</sub>=I²R</span></div>
+        <div class="key-box"><strong class="accent-orange">前一單元提醒：</strong>線路與電器串聯，通過它們的電流相同，因此判斷導線發熱最適合使用 <span class="mono accent-yellow">I²R</span>。</div>
+        <div class="danger-list">
+          <div>插頭鬆動、接點氧化：局部電阻變大，容易過熱。</div>
+          <div>延長線捲著使用、被物品覆蓋：熱不易散去。</div>
+          <div>電線破損、發燙或有焦味：停止使用並請專業人員檢查。</div>
+        </div>
+      </article>
+      <article class="panel">
+        <h2>【互動】改變電流與線徑</h2>
+        <div class="canvas-wrap"><canvas id="heatCanvas" width="1000" height="600" role="img" aria-label="電流平方與導線發熱動畫"></canvas></div>
+        <div class="range-row">
+          <label for="currentRange">電流</label>
+          <input id="currentRange" type="range" min="2" max="18" step="1" value="6">
+          <output id="currentValue" for="currentRange">6 A</output>
+        </div>
+        <div class="controls" aria-label="選擇導線粗細">
+          <button class="choice-btn" type="button" data-wire="thin">細線</button>
+          <button class="choice-btn active" type="button" data-wire="normal">一般</button>
+          <button class="choice-btn" type="button" data-wire="thick">粗線</button>
+        </div>
+        <div id="heatStatus" class="result-box" aria-live="polite"></div>
+      </article>
+      <article class="practice full" data-practice>
+        <div class="practice-nav">
+          <button class="practice-btn active" type="button" data-step="question">問題</button>
+          <button class="practice-btn" type="button" data-step="hint">提示</button>
+          <button class="practice-btn" type="button" data-step="answer">解答</button>
+        </div>
+        <div class="practice-step active" data-content="question"><h3>問題</h3><p>同一條導線中，電流由 <span class="mono">5 A</span> 增加到 <span class="mono">10 A</span>，導線發熱功率變成幾倍？</p></div>
+        <div class="practice-step" data-content="hint"><h3>提示</h3><p>電流變成 <span class="mono">2</span> 倍，代入 <span class="mono">P<sub>熱</sub>=I²R</span>。</p></div>
+        <div class="practice-step" data-content="answer"><h3>解答</h3><p><span class="mono">2²=4</span>，所以發熱功率變成 <span class="accent-orange mono">4 倍</span>。電流只增加一倍，發熱卻增加得更快。</p></div>
+      </article>
+      <article class="panel full">
+        <h2>資優延伸｜延長線為什麼通常比較粗？</h2>
+        <div class="extension-grid">
+          <div class="extension-card">
+            <h3>幹線承受所有電器的總電流</h3>
+            <p>每個電器接在不同並聯支路，但它們的電流最後都會流經延長線的共同幹線。</p>
+            <div class="current-flow" aria-label="支路電流匯入延長線幹線">
+              <div>各電器支路<br><span class="mono accent-cyan">I₁＋I₂＋I₃</span></div>
+              <div class="flow-arrow" aria-hidden="true">➜</div>
+              <div class="trunk">延長線幹線<br><span class="mono">I<sub>總</sub></span></div>
+            </div>
+            <p>因此，可供多個電器共用的延長線，導體必須能安全承受較大的<span class="accent-orange">總電流</span>。</p>
+          </div>
+          <div class="extension-card">
+            <h3>銅線截面積越大，電阻越小</h3>
+            <div class="formula"><span class="mono">R=ρ</span><span class="fraction"><span class="top">L</span><span class="bottom">A</span></span></div>
+            <p><span class="mono">L</span> 是導線長度，<span class="mono">A</span> 是銅線截面積。銅線越粗，<span class="mono">A</span> 越大，電阻通常越小；配合 <span class="mono accent-yellow">P<sub>熱</sub>=I²R</span>，可以降低導線發熱。</p>
+            <div class="limit-box"><strong>額定電流是安全上限，不是裝飾。</strong><br>例如標示 <span class="mono">15 A</span>，所有電器的總電流都不可超過它；在 <span class="mono">110 V</span> 時，對應的總功率上限為 <span class="mono">P=110×15=1650 W</span>。</div>
+          </div>
+        </div>
+        <div class="safety-note"><strong class="accent-yellow">不能只看外皮粗細。</strong>真正的安全電流還受到銅線截面積、長度、插頭與接點、絕緣耐熱及散熱狀況影響，必須以合格產品的標示與說明為準。</div>
+      </article>
+      <article class="practice full" data-practice>
+        <div class="practice-nav">
+          <button class="practice-btn active" type="button" data-step="question">問題</button>
+          <button class="practice-btn" type="button" data-step="hint">提示</button>
+          <button class="practice-btn" type="button" data-step="answer">解答</button>
+        </div>
+        <div class="practice-step active" data-content="question"><h3>延伸問題</h3><p><span class="mono">110 V、15 A</span> 延長線同時接上 <span class="mono">1200 W</span> 吹風機與 <span class="mono">1000 W</span> 電鍋，是否超過額定電流？</p></div>
+        <div class="practice-step" data-content="hint"><h3>提示</h3><p>先算總功率，再用 <span class="mono">I=</span><span class="fraction mono"><span class="top">P</span><span class="bottom">V</span></span> 求總電流。</p></div>
+        <div class="practice-step" data-content="answer"><h3>解答</h3><p><span class="calc-line mono">P<sub>總</sub>=1200+1000=2200 W</span><span class="calc-line"><span class="mono">I<sub>總</sub>=</span><span class="fraction mono"><span class="top">2200</span><span class="bottom">110</span></span><span class="mono">=20 A</span></span><span class="accent-danger">超過 15 A 額定電流，不可這樣使用。</span></p></div>
+      </article>
+    </div>
+  </section>
+
+  <section id="tab-protect" class="tab-content">
+    <div class="grid">
+      <article class="panel">
+        <h2>保護裝置必須串聯</h2>
+        <p>保險絲與斷路器都裝在幹線上。電流過大時，它們把迴路切開，使危險電流停止。</p>
+        <div class="compare">
+          <div><strong class="accent-yellow">保險絲</strong><br>低熔點合金受熱熔斷；熔斷後需更換合規格新品。</div>
+          <div><strong class="accent-cyan">無熔絲開關</strong><br>偵測過大電流後跳脫；排除原因後才能復歸。</div>
+        </div>
+        <div class="safety-note"><strong class="accent-danger">不可用銅線代替保險絲。</strong>銅線不會在設計電流下及時熔斷，可能失去保護作用。</div>
+        <div class="key-box"><strong class="accent-green">補充：</strong>漏電斷路器偵測流出與回流電流不相等，發現電流漏往其他路徑時快速切斷電源。</div>
+      </article>
+      <article class="panel">
+        <h2>【動畫】電流過大，自動斷路</h2>
+        <div class="canvas-wrap"><canvas id="protectCanvas" width="1000" height="600" role="img" aria-label="保險絲熔斷與無熔絲開關跳脫動畫"></canvas></div>
+        <div class="controls">
+          <button class="choice-btn active" type="button" data-protector="breaker">無熔絲開關</button>
+          <button class="choice-btn" type="button" data-protector="fuse">保險絲</button>
+        </div>
+        <div class="controls">
+          <button id="overcurrentBtn" class="action-btn" type="button">模擬過大電流</button>
+          <button id="resetProtectorBtn" class="action-btn" type="button">排除原因並復歸</button>
+        </div>
+        <div id="protectStatus" class="result-box" aria-live="polite">正常供電，保護裝置與負載串聯。</div>
+      </article>
+      <article class="practice full" data-practice>
+        <div class="practice-nav">
+          <button class="practice-btn active" type="button" data-step="question">問題</button>
+          <button class="practice-btn" type="button" data-step="hint">提示</button>
+          <button class="practice-btn" type="button" data-step="answer">解答</button>
+        </div>
+        <div class="practice-step active" data-content="question"><h3>問題</h3><p>保險絲應與電器串聯還是並聯？熔斷後能不能換成較粗的銅線？</p></div>
+        <div class="practice-step" data-content="hint"><h3>提示</h3><p>保護裝置要讓全部幹線電流通過，危險時才能切斷整個迴路。</p></div>
+        <div class="practice-step" data-content="answer"><h3>解答</h3><p>應<span class="accent-yellow">串聯</span>。不可用銅線或任意規格金屬線代替，應先排除故障，再更換符合原規格的保險絲。</p></div>
+      </article>
+    </div>
+  </section>
+
+  <section id="tab-shock" class="tab-content">
+    <div class="grid">
+      <article class="panel">
+        <h2>人體形成通路，就可能觸電</h2>
+        <p>觸碰裸露帶電處，又經地面或其他導體形成回路時，電流可能通過人體。潮濕會降低皮膚與接觸處的電阻，使危險增加。</p>
+        <div class="danger-list">
+          <div>不以濕手操作插頭，不在積水處使用電器。</div>
+          <div>拔插頭握住插頭本體，不拉扯電線。</div>
+          <div>電器或電線破損、冒煙、焦味：立即停止使用。</div>
+          <div>接地與漏電斷路器是保護措施，但不能取代正確使用。</div>
+        </div>
+        <div class="safety-note"><strong class="accent-danger">發現有人觸電：</strong>不要徒手碰觸；先切斷電源並立即呼叫成人與緊急救援。</div>
+      </article>
+      <article class="panel">
+        <h2>【情境】電流是否形成危險路徑？</h2>
+        <div class="canvas-wrap"><canvas id="shockCanvas" width="1000" height="600" role="img" aria-label="正常用電、濕手、積水與接地保護情境動畫"></canvas></div>
+        <div class="controls" aria-label="選擇用電情境">
+          <button class="choice-btn active" type="button" data-shock="normal">正常使用</button>
+          <button class="choice-btn" type="button" data-shock="wet">濕手碰破損處</button>
+          <button class="choice-btn" type="button" data-shock="water">積水處用電</button>
+          <button class="choice-btn" type="button" data-shock="ground">外殼接地＋斷路器</button>
+        </div>
+        <div id="shockStatus" class="result-box" aria-live="polite">電器絕緣完整，人體沒有接觸帶電處。</div>
+      </article>
+      <article class="practice full" data-practice>
+        <div class="practice-nav">
+          <button class="practice-btn active" type="button" data-step="question">問題</button>
+          <button class="practice-btn" type="button" data-step="hint">提示</button>
+          <button class="practice-btn" type="button" data-step="answer">解答</button>
+        </div>
+        <div class="practice-step active" data-content="question"><h3>問題</h3><p>看見有人疑似觸電倒下，第一步可以直接用手把他拉開嗎？</p></div>
+        <div class="practice-step" data-content="hint"><h3>提示</h3><p>若電源尚未切斷，救援者碰觸對方也可能成為電流路徑。</p></div>
+        <div class="practice-step" data-content="answer"><h3>解答</h3><p><span class="accent-danger">不可以徒手碰觸。</span>先在安全處切斷電源，立即呼叫成人與緊急救援；不要自行進行帶電操作。</p></div>
+      </article>
+    </div>
+  </section>
+
+  <p class="footer-note">動畫為概念示意，實際住宅配線、保護裝置與故障處理必須交由合格專業人員。</p>
+</main>
+
+<script>
+'use strict';
+const C={bg:'#0d2821',deep:'#102f27',panel:'#16372d',line:'#5d7b70',white:'#f7fbf8',yellow:'#ffe45c',cyan:'#4ddff3',orange:'#ffa84d',green:'#91f56d',pink:'#ff65a8',muted:'#b6c9c1',danger:'#ff7a68'};
+const state={activeTab:'tab-short',shortMode:false,appliances:new Set(),current:6,wire:'normal',protector:'breaker',tripped:false,shock:'normal'};
+const applianceData={lamp:{name:'檯燈',power:100,color:C.yellow},dryer:{name:'吹風機',power:1200,color:C.pink},cooker:{name:'電鍋',power:1000,color:C.orange},heater:{name:'電暖器',power:1500,color:C.cyan}};
+const wireData={thin:{label:'細線',r:0.55,width:10},normal:{label:'一般',r:0.28,width:18},thick:{label:'粗線',r:0.14,width:28}};
+const canvases={short:document.getElementById('shortCanvas'),overload:document.getElementById('overloadCanvas'),heat:document.getElementById('heatCanvas'),protect:document.getElementById('protectCanvas'),shock:document.getElementById('shockCanvas')};
+const ctxs=Object.fromEntries(Object.entries(canvases).map(([key,canvas])=>[key,canvas.getContext('2d')]));
+
+function clear(ctx){ctx.clearRect(0,0,1000,600);ctx.fillStyle=C.bg;ctx.fillRect(0,0,1000,600)}
+function line(ctx,points,color=C.white,width=6,dash=[]){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i+=1)ctx.lineTo(points[i][0],points[i][1]);ctx.stroke();ctx.restore()}
+function label(ctx,text,x,y,color=C.white,size=28,align='center'){ctx.save();ctx.fillStyle=color;ctx.font=`900 ${size}px 'Noto Sans TC',sans-serif`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(text,x,y);ctx.restore()}
+function mono(ctx,text,x,y,color=C.white,size=28,align='center'){ctx.save();ctx.fillStyle=color;ctx.font=`800 ${size}px 'JetBrains Mono',monospace`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(text,x,y);ctx.restore()}
+function rounded(ctx,x,y,w,h,r,fill,stroke=C.line,lw=3){ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke()}ctx.restore()}
+function circle(ctx,x,y,r,fill,stroke=null,lw=3){ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke()}ctx.restore()}
+function arrow(ctx,x1,y1,x2,y2,color=C.cyan,width=7){line(ctx,[[x1,y1],[x2,y2]],color,width);const a=Math.atan2(y2-y1,x2-x1);line(ctx,[[x2,y2],[x2-18*Math.cos(a-.55),y2-18*Math.sin(a-.55)]],color,width);line(ctx,[[x2,y2],[x2-18*Math.cos(a+.55),y2-18*Math.sin(a+.55)]],color,width)}
+function movingDots(ctx,path,count,t,color=C.cyan,r=9,speed=0.12){const lengths=[];let total=0;for(let i=1;i<path.length;i+=1){const dx=path[i][0]-path[i-1][0],dy=path[i][1]-path[i-1][1];const len=Math.hypot(dx,dy);lengths.push(len);total+=len}for(let n=0;n<count;n+=1){let d=((t*speed+n/count)%1)*total;let seg=0;while(seg<lengths.length-1&&d>lengths[seg]){d-=lengths[seg];seg+=1}const q=d/lengths[seg];const x=path[seg][0]+(path[seg+1][0]-path[seg][0])*q;const y=path[seg][1]+(path[seg+1][1]-path[seg][1])*q;circle(ctx,x,y,r,color)}}
+function drawBattery(ctx,x,y,top,bottom){line(ctx,[[x,top],[x,y-12]],C.white,7);line(ctx,[[x,y+12],[x,bottom]],C.white,7);line(ctx,[[x-25,y-12],[x+25,y-12]],C.orange,8);line(ctx,[[x-15,y+12],[x+15,y+12]],C.cyan,8);circle(ctx,x,top,5,C.white);circle(ctx,x,bottom,5,C.white);label(ctx,'＋',x+45,y-18,C.orange,28);label(ctx,'－',x+45,y+18,C.cyan,28)}
+function drawLamp(ctx,x,y,on){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.rotate(Math.PI/2);
+  if(on){ctx.shadowColor=C.yellow;ctx.shadowBlur=32}
+  circle(ctx,0,0,60,C.deep,C.white,5);
+  ctx.shadowBlur=0;
+  line(ctx,[[-86,0],[-60,0]],C.white,7);
+  line(ctx,[[60,0],[86,0]],C.white,7);
+  ctx.beginPath();
+  ctx.moveTo(-44,0);
+  ctx.lineTo(-36,0);
+  ctx.quadraticCurveTo(-30,-22,-24,0);
+  ctx.quadraticCurveTo(-18,22,-12,0);
+  ctx.quadraticCurveTo(-6,-22,0,0);
+  ctx.quadraticCurveTo(6,22,12,0);
+  ctx.quadraticCurveTo(18,-22,24,0);
+  ctx.quadraticCurveTo(30,22,36,0);
+  ctx.lineTo(44,0);
+  ctx.strokeStyle=on?C.yellow:C.muted;
+  ctx.lineWidth=8;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.stroke();
+  ctx.restore();
+  label(ctx,on?'亮':'熄滅',x-92,y,on?C.yellow:C.muted,25);
+}
+
+function drawShort(now){const ctx=ctxs.short;clear(ctx);const top=150,bottom=450,left=150,right=850,bypass=650;label(ctx,state.shortMode?'短路：絕大部分電流走旁路':'正常：電流通過燈泡',500,55,state.shortMode?C.pink:C.yellow,34);line(ctx,[[left,top],[right,top],[right,bottom],[left,bottom]],C.white,7);drawBattery(ctx,left,300,top,bottom);drawLamp(ctx,right,300,!state.shortMode);line(ctx,[[bypass,top],[bypass,bottom]],state.shortMode?C.pink:C.line,state.shortMode?12:5,state.shortMode?[]:[14,14]);label(ctx,'跨接導線',bypass-18,300,state.shortMode?C.pink:C.muted,25,'right');if(state.shortMode){movingDots(ctx,[[left,top],[bypass,top],[bypass,bottom],[left,bottom],[left,top]],18,now,C.cyan,10,.26);movingDots(ctx,[[left,top],[right,top],[right,bottom],[left,bottom],[left,top]],1,now,C.cyan,8,.03);mono(ctx,'I旁路：很大',340,530,C.danger,27);mono(ctx,'I燈泡：極小',710,530,C.muted,27)}else{movingDots(ctx,[[left,top],[right,top],[right,bottom],[left,bottom],[left,top]],10,now,C.cyan,9,.12);mono(ctx,'I：正常',400,530,C.green,28)}label(ctx,'電源',left-72,300,C.white,25)}
+
+function totalPower(){return [...state.appliances].reduce((sum,key)=>sum+applianceData[key].power,0)}
+function drawOverload(now){const ctx=ctxs.overload;clear(ctx);const power=totalPower(),amps=power/110,over=amps>15;label(ctx,'家庭並聯分路｜各支路 110 V',500,52,C.yellow,33);line(ctx,[[100,150],[900,150]],over?C.danger:C.white,8);line(ctx,[[100,450],[900,450]],C.white,8);drawBattery(ctx,100,300,150,450);rounded(ctx,410,78,180,58,14,over?C.danger:C.deep,over?C.danger:C.line,3);label(ctx,over?'過載：應跳脫':'15 A 分路示意',500,107,over?C.deep:C.green,24);const keys=['lamp','dryer','cooker','heater'],xs=[300,480,660,840];keys.forEach((key,i)=>{const active=state.appliances.has(key),d=applianceData[key],x=xs[i];line(ctx,[[x,150],[x,230]],active?d.color:C.line,active?7:4,active?[]:[10,12]);line(ctx,[[x,370],[x,450]],active?d.color:C.line,active?7:4,active?[]:[10,12]);rounded(ctx,x-62,230,124,140,18,active?'#193f34':C.deep,active?d.color:C.line,4);label(ctx,d.name,x,272,active?d.color:C.muted,23);mono(ctx,`${d.power} W`,x,320,active?C.white:C.muted,19);if(active&&!over){const branchAmps=d.power/110;movingDots(ctx,[[100,150],[x,150],[x,450],[100,450],[100,150]],Math.max(3,Math.round(branchAmps)),now+i*1.7,C.cyan,8,.11+branchAmps*.006)}});mono(ctx,`I總 = ${amps.toFixed(1)} A`,500,520,over?C.danger:C.green,29);label(ctx,over?'總電流超過示意上限':'各支路電流在幹線相加',500,562,over?C.danger:C.muted,23)}
+
+function drawHeat(now){const ctx=ctxs.heat;clear(ctx);const w=wireData[state.wire],power=state.current*state.current*w.r,ratio=Math.min(1,power/70),y=285;label(ctx,'導線發熱：電流平方效應',500,55,C.yellow,34);ctx.save();ctx.shadowColor=C.orange;ctx.shadowBlur=10+ratio*65;line(ctx,[[120,y],[880,y]],ratio>.65?C.danger:ratio>.32?C.orange:C.cyan,w.width);ctx.restore();movingDots(ctx,[[120,y],[880,y]],Math.round(5+state.current),now,C.yellow,7+Math.min(5,state.current/4),.12+state.current*.009);arrow(ctx,140,185,300,185,C.cyan,7);label(ctx,'電流方向',220,150,C.cyan,24);rounded(ctx,210,390,580,110,18,C.deep,C.line,3);mono(ctx,`I = ${state.current} A`,350,425,C.cyan,27);mono(ctx,`R = ${w.r.toFixed(2)} Ω`,650,425,C.pink,27);mono(ctx,`P熱 = ${power.toFixed(1)} W`,500,470,ratio>.65?C.danger:C.orange,32);label(ctx,`${w.label}｜${ratio>.7?'升溫很快':ratio>.35?'明顯發熱':'發熱較少'}`,500,550,ratio>.7?C.danger:ratio>.35?C.orange:C.green,27)}
+
+function drawProtector(now){const ctx=ctxs.protect;clear(ctx);const top=170,bottom=440,left=130,right=870;label(ctx,state.protector==='breaker'?'無熔絲開關跳脫示意':'保險絲熔斷示意',500,55,C.yellow,34);line(ctx,[[left,top],[330,top]],C.white,7);line(ctx,[[510,top],[right,top],[right,bottom],[left,bottom]],C.white,7);drawBattery(ctx,left,305,top,bottom);drawLamp(ctx,right,305,!state.tripped);rounded(ctx,330,115,180,110,18,C.deep,state.tripped?C.danger:C.cyan,4);if(state.protector==='breaker'){label(ctx,'斷路器',420,140,C.cyan,24);line(ctx,state.tripped?[[370,185],[455,150]]:[[370,185],[465,185]],state.tripped?C.danger:C.green,10);label(ctx,state.tripped?'跳脫':'接通',420,210,state.tripped?C.danger:C.green,22)}else{label(ctx,'保險絲',420,140,C.yellow,24);if(state.tripped){line(ctx,[[365,185],[405,185]],C.danger,7);line(ctx,[[435,185],[475,185]],C.danger,7);label(ctx,'熔斷',420,210,C.danger,22)}else{line(ctx,[[365,185],[475,185]],C.yellow,5);label(ctx,'完整',420,210,C.green,22)}}if(!state.tripped)movingDots(ctx,[[left,top],[right,top],[right,bottom],[left,bottom],[left,top]],12,now,C.cyan,9,.15);else{label(ctx,'迴路已切開｜電流停止',500,520,C.green,30);line(ctx,[[390,275],[450,335]],C.danger,8);line(ctx,[[450,275],[390,335]],C.danger,8)}label(ctx,'與負載串聯',420,270,C.white,25)}
+
+function drawPerson(ctx,x,y,color=C.white){circle(ctx,x,y-105,34,color);line(ctx,[[x,y-70],[x,y+30]],color,12);line(ctx,[[x,y-30],[x-62,y+12]],color,10);line(ctx,[[x,y-30],[x+62,y+12]],color,10);line(ctx,[[x,y+30],[x-42,y+105]],color,11);line(ctx,[[x,y+30],[x+42,y+105]],color,11)}
+function drawShock(now){const ctx=ctxs.shock;clear(ctx);const risky=state.shock==='wet'||state.shock==='water',protectedMode=state.shock==='ground';label(ctx,'電流只有形成通路才會流動',500,52,C.yellow,33);rounded(ctx,95,170,160,210,22,C.deep,C.line,4);label(ctx,'插座',175,205,C.white,25);rounded(ctx,135,245,80,105,15,C.panel,C.cyan,3);line(ctx,[[160,275],[160,305]],C.orange,9);line(ctx,[[190,275],[190,305]],C.cyan,9);label(ctx,'L',160,332,C.pink,19);label(ctx,'N',190,332,C.cyan,19);rounded(ctx,360,175,230,205,24,C.panel,protectedMode?C.green:C.line,5);label(ctx,'金屬外殼電器',475,215,C.white,24);circle(ctx,475,295,62,C.deep,C.cyan,5);line(ctx,[[430,295],[520,295]],C.orange,8);drawPerson(ctx,790,320,risky?C.danger:C.white);line(ctx,[[80,500],[920,500]],C.line,7);label(ctx,'地面',500,548,C.muted,22);if(state.shock==='normal'){line(ctx,[[215,275],[360,245]],C.pink,7);line(ctx,[[215,305],[360,335]],C.cyan,7);label(ctx,'絕緣完整｜人體未接觸帶電處',500,440,C.green,27)}else if(state.shock==='wet'){line(ctx,[[215,275],[360,245],[590,245],[728,332],[790,425],[790,500]],C.pink,10);movingDots(ctx,[[215,275],[360,245],[590,245],[728,332],[790,425],[790,500]],12,now,C.yellow,9,.2);circle(ctx,728,332,23,C.cyan);label(ctx,'潮濕接觸',690,285,C.cyan,22);label(ctx,'危險電流可能通過人體',500,440,C.danger,28)}else if(state.shock==='water'){line(ctx,[[215,275],[360,245],[475,295],[650,470],[790,500]],C.pink,11);movingDots(ctx,[[215,275],[360,245],[475,295],[650,470],[790,500]],14,now,C.yellow,9,.22);ctx.save();ctx.globalAlpha=.55;ctx.fillStyle=C.cyan;ctx.beginPath();ctx.ellipse(650,490,210,35,0,0,Math.PI*2);ctx.fill();ctx.restore();label(ctx,'積水形成導電路徑',500,440,C.danger,28)}else{line(ctx,[[215,275],[360,245],[475,295]],C.pink,8);line(ctx,[[475,355],[475,500]],C.green,12);movingDots(ctx,[[475,355],[475,500]],8,now,C.green,9,.2);rounded(ctx,275,90,170,65,14,C.deep,C.green,4);label(ctx,'漏電斷路器',360,122,C.green,22);line(ctx,[[305,145],[415,100]],C.danger,8);label(ctx,'漏電路徑被偵測，電源切斷',650,440,C.green,27)}label(ctx,'動畫僅示意｜不可實驗',500,585,C.orange,20)}
+
+function updateShort(){document.querySelectorAll('[data-short]').forEach(btn=>btn.classList.toggle('active',(btn.dataset.short==='short')===state.shortMode));document.getElementById('shortStatus').innerHTML=state.shortMode?'絕大部分電流走<span class="accent-pink">低電阻旁路</span>；燈泡支路仍可能有極小電流，但不足以使燈泡發亮。':'電流通過燈泡，燈泡正常發亮。'}
+function updateOverload(){const power=totalPower(),amps=power/110,over=amps>15;document.querySelectorAll('[data-appliance]').forEach(btn=>btn.classList.toggle('active',state.appliances.has(btn.dataset.appliance)));document.getElementById('totalPower').textContent=`${power} W`;document.getElementById('totalCurrent').textContent=`${amps.toFixed(1)} A`;document.getElementById('overloadStatus').innerHTML=power===0?'按下電器，觀察幹線總電流。':over?`總電流 <strong class="accent-danger mono">${amps.toFixed(1)} A</strong>，超過 15 A 示意上限：這是<strong class="accent-danger">過載</strong>。`:`總電流 <strong class="accent-green mono">${amps.toFixed(1)} A</strong>，尚未超過 15 A 示意上限。`}
+function updateHeat(){const w=wireData[state.wire],power=state.current*state.current*w.r;document.getElementById('currentValue').textContent=`${state.current} A`;document.querySelectorAll('[data-wire]').forEach(btn=>btn.classList.toggle('active',btn.dataset.wire===state.wire));document.getElementById('heatStatus').innerHTML=`${w.label}示意電阻 <span class="mono accent-pink">${w.r.toFixed(2)} Ω</span>；<span class="mono">P<sub>熱</sub>=${state.current}²×${w.r.toFixed(2)}=${power.toFixed(1)} W</span>。`}
+function updateProtector(){document.querySelectorAll('[data-protector]').forEach(btn=>btn.classList.toggle('active',btn.dataset.protector===state.protector));document.getElementById('protectStatus').innerHTML=state.tripped?(state.protector==='fuse'?'保險絲已<span class="accent-danger">熔斷</span>，迴路切開。先排除故障，再換合規格新品。':'無熔絲開關已<span class="accent-danger">跳脫</span>，迴路切開。先排除故障，再復歸。'):'正常供電，保護裝置與負載串聯。'}
+function updateShock(){const messages={normal:'電器絕緣完整，人體沒有接觸帶電處。',wet:'濕手接觸破損帶電處，電流可能經人體形成通路，危險增加。',water:'積水使導電路徑擴大；積水處不可使用或接近帶電設備。',ground:'外殼漏電時，接地提供故障電流路徑，並配合漏電斷路器切斷電源。'};document.querySelectorAll('[data-shock]').forEach(btn=>btn.classList.toggle('active',btn.dataset.shock===state.shock));document.getElementById('shockStatus').textContent=messages[state.shock]}
+
+document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{state.activeTab=btn.dataset.tab;document.querySelectorAll('.tab-btn').forEach(item=>item.classList.toggle('active',item===btn));document.querySelectorAll('.tab-content').forEach(section=>section.classList.toggle('active',section.id===state.activeTab));setTimeout(drawOnce,40)}));
+document.querySelectorAll('[data-short]').forEach(btn=>btn.addEventListener('click',()=>{state.shortMode=btn.dataset.short==='short';updateShort()}));
+document.querySelectorAll('[data-appliance]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.appliance;if(state.appliances.has(key))state.appliances.delete(key);else state.appliances.add(key);updateOverload()}));
+document.getElementById('currentRange').addEventListener('input',e=>{state.current=Number(e.target.value);updateHeat()});
+document.querySelectorAll('[data-wire]').forEach(btn=>btn.addEventListener('click',()=>{state.wire=btn.dataset.wire;updateHeat()}));
+document.querySelectorAll('[data-protector]').forEach(btn=>btn.addEventListener('click',()=>{state.protector=btn.dataset.protector;state.tripped=false;updateProtector()}));
+document.getElementById('overcurrentBtn').addEventListener('click',()=>{state.tripped=true;updateProtector()});
+document.getElementById('resetProtectorBtn').addEventListener('click',()=>{state.tripped=false;updateProtector()});
+document.querySelectorAll('[data-shock]').forEach(btn=>btn.addEventListener('click',()=>{state.shock=btn.dataset.shock;updateShock()}));
+document.querySelectorAll('[data-practice]').forEach(box=>{box.querySelectorAll('[data-step]').forEach(btn=>btn.addEventListener('click',()=>{const step=btn.dataset.step;box.querySelectorAll('[data-step]').forEach(item=>item.classList.toggle('active',item===btn));box.querySelectorAll('[data-content]').forEach(content=>content.classList.toggle('active',content.dataset.content===step))}))});
+
+function drawOnce(){const now=performance.now()/1000;if(state.activeTab==='tab-short')drawShort(now);if(state.activeTab==='tab-overload')drawOverload(now);if(state.activeTab==='tab-heat')drawHeat(now);if(state.activeTab==='tab-protect')drawProtector(now);if(state.activeTab==='tab-shock')drawShock(now)}
+let animationStarted=false;
+function animate(ms){const now=ms/1000;drawOnce(now);requestAnimationFrame(animate)}
+function safeStart(){const app=document.querySelector('.app');if(!app||app.getBoundingClientRect().width<=0){setTimeout(safeStart,120);return}if(!animationStarted){animationStarted=true;requestAnimationFrame(animate)}}
+updateShort();updateOverload();updateHeat();updateProtector();updateShock();setTimeout(safeStart,80);
+</script>
+</body>
+</html>
