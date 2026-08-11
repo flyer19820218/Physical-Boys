@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -91,7 +92,7 @@ h1{font-size:46px;line-height:1.15;margin:0;color:var(--yellow);font-weight:900}
           <li>指向北方的紅色端，稱為 <span class="nowrap"><strong style="color:var(--pole-n)">指北極 (N 極)</strong></span>。</li>
           <li>指向南方的藍色端，稱為 <span class="nowrap"><strong style="color:var(--pole-s)">指南極 (S 極)</strong></span>。</li>
         </ul>
-        <div class="key-box"><strong>動手玩：</strong>在右側的立體空間中，直接用滑鼠去「左右拖曳」磁鐵，看看它放開後如何擺盪回南北向！</div>
+        <div class="key-box"><strong>動手玩：</strong>在右側畫面中，按住並左右「撥轉」立體磁鐵，看看它放開後如何擺盪回南北向！</div>
       </div>
 
       <div id="pole-interact" class="sub-tab-content">
@@ -340,7 +341,7 @@ h1{font-size:46px;line-height:1.15;margin:0;color:var(--yellow);font-weight:900}
     </article>
 
     <article class="panel">
-      <h2>【圖解】透視地磁構造</h2>
+      <h2>【動畫】透視地磁構造</h2>
       <div class="canvas-wrap"><canvas id="earthCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
       <div class="controls">
         <button id="xrayBtn" class="action-btn success" style="width:100%">👁️ 開啟透視：觀察地球內部的秘密</button>
@@ -404,18 +405,16 @@ function getBField(x, y, poles) {
   return { bx, by };
 }
 
-// 繪圖：指南針 (終極修復版：確保 angle=0 時 N 極完美指向右側切線)
+// 【修復 3】指南針：完美讓 N 極(紅) 指向 +X 軸，完全貼合 Math.atan2 的切線
 function drawCompass(ctx, x, y, angle, radius = 35) {
   ctx.save(); ctx.translate(x, y);
   
-  // 外殼與刻度
   ctx.fillStyle = '#1a332b'; ctx.beginPath(); ctx.arc(0, 0, radius, 0, TAU); ctx.fill();
   ctx.strokeStyle = '#4d6b61'; ctx.lineWidth = 4; ctx.stroke();
   ctx.strokeStyle = '#4d6b61'; ctx.lineWidth = 2;
   for(let i=0; i<8; i++) { ctx.rotate(TAU/8); ctx.beginPath(); ctx.moveTo(radius-8, 0); ctx.lineTo(radius-2, 0); ctx.stroke(); }
   
-  // 旋轉對齊磁場向量
-  ctx.rotate(angle);
+  ctx.rotate(angle); // 套用切線角度
   
   // N 極 (紅色) -> 固定畫在 +X 軸方向 (右)
   ctx.fillStyle = C.poleN; 
@@ -425,9 +424,7 @@ function drawCompass(ctx, x, y, angle, radius = 35) {
   ctx.fillStyle = C.poleS; 
   ctx.beginPath(); ctx.moveTo(-radius*0.75, 0); ctx.lineTo(0, radius*0.25); ctx.lineTo(0, -radius*0.25); ctx.closePath(); ctx.fill();
   
-  // 軸心
   ctx.fillStyle = C.yellow; ctx.beginPath(); ctx.arc(0, 0, radius*0.15, 0, TAU); ctx.fill();
-  
   ctx.restore();
 }
 
@@ -444,27 +441,22 @@ function drawMagnet(ctx, x, y, w, h, isNLeft, drawLabels = true) {
   ctx.restore();
 }
 
-// 繪製 3D 立體磁鐵 (無字版，依講義真實投影)
+// 繪製 3D 立體磁鐵 (無字版)
 function draw3DMagnet(ctx, cx, cy, L, W, H, angle) {
     ctx.save();
     let sinA = Math.sin(angle);
     let cosA = Math.cos(angle);
     
-    // 將 3D 投影到 2D。配合等角透視：
-    // X (寬度) 是橫向的
-    // Z (長度/南北) 朝右上延伸 (slantX > 0, slantY < 0)
     function project3D(x, y, z) {
         const slantX = 0.5;
-        const slantY = -0.3;
+        const slantY = -0.3; // 北方(z>0)朝右上斜伸
         return {
             sx: cx + x + z * slantX,
-            sy: cy + y + z * slantY // 螢幕 Y 是往下增加，所以 +y 表示往下
+            sy: cy + y + z * slantY // 螢幕 Y 向下，故 +y
         };
     }
     
-    // 由下層往上層切片繪製，自然解決遮擋問題
     for (let y = H; y >= -H; y -= 1) {
-        // 角落定義 (長度L為Z軸)
         let corners = [ {x: W, z: L}, {x: -W, z: L}, {x: -W, z: -L}, {x: W, z: -L} ];
         
         let rotCorners = corners.map(c => ({
@@ -473,13 +465,12 @@ function draw3DMagnet(ctx, cx, cy, L, W, H, angle) {
         }));
         let pC = rotCorners.map(c => project3D(c.x, y, c.z));
         
-        // Z=0 切分線 (N半部與S半部分界)
         let rotMid1 = {x: W*cosA, z: 0};
         let rotMid2 = {x: -W*cosA, z: 0};
         let pM1 = project3D(rotMid1.x, y, rotMid1.z);
         let pM2 = project3D(rotMid2.x, y, rotMid2.z);
         
-        // Z > 0 端為 N(紅)，Z < 0 端為 S(藍)
+        // Z > 0 塗成紅色，Z < 0 塗成藍色
         let colorFaceN = C.poleN; let colorDarkN = '#cc565c';
         let colorFaceS = C.poleS; let colorDarkS = '#4a8ec7';
         
@@ -501,12 +492,10 @@ function draw3DMagnet(ctx, cx, cy, L, W, H, angle) {
         ctx.lineTo(pC[3].sx, pC[3].sy);
         ctx.fill();
         
-        // 邊線描繪增加立體感
         if (y === -H || y === 0 || y === H) {
-            ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1; ctx.stroke();
         }
         
-        // 最上層畫白色粗邊框
         if (y === -H) {
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
             ctx.beginPath();
@@ -519,21 +508,25 @@ function draw3DMagnet(ctx, cx, cy, L, W, H, angle) {
     ctx.restore();
 }
 
-// 繪製對稱且絕不相交的假想磁力線 (完美修復排斥現象)
+// 【修復 2 & 3】繪製連續對稱磁力線：消滅排斥直線、擴大邊界不吃線、無間隙出發、必定有箭頭
 function drawSymmetricFieldLines(ctx, poles, lineCount, radius, color = 'rgba(190, 90, 210, 0.9)', showArrows = false) {
   ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
   const step = 4;
   const isRepel = (document.getElementById('line-bar') && document.getElementById('line-bar').classList.contains('active') && lineState.type === 'repel');
+  const southPoles = poles.filter(p => p.m < 0);
+  const coveredSouthAngles = new Map(southPoles.map(p => [p, []]));
   
   for(let p of poles) {
-    if (p.m < 0) continue; // 絕對只從 N 極出發，不重複繪製！
+    if (p.m < 0) continue; // ★ 只從 N 極出發，絕不重複畫線與反向相撞
     
     for(let i=0; i<lineCount; i++) {
       let a = (i/lineCount)*TAU;
       
-      // ★ 核心修復：排斥時，讓發射角度微偏，避開正水平方向，使其自然被物理引擎往上下推開
+      // 【修復】同極相對時，跳過正 0 度與 180 度，徹底消滅中間那兩條撞牆的直線！
       if (isRepel) {
-          a = ((i + 0.5) / lineCount) * TAU; // 偏移半個區間，永遠不會有角度=0 或 PI
+          let deg = (a * 180 / Math.PI + 360) % 360;
+          if (p.x < 500 && (deg < 5 || deg > 355)) continue; 
+          if (p.x > 500 && (deg > 175 && deg < 185)) continue;
       }
       
       let cx = p.x + Math.cos(a)*radius;
@@ -543,7 +536,8 @@ function drawSymmetricFieldLines(ctx, poles, lineCount, radius, color = 'rgba(19
       let count = 0;
       let path = [];
       
-      while(count < 1500) { 
+      // 【修復】大幅增加迴圈次數，保證線條完整畫到 S 極或極遠處
+      while(count < 3000) { 
         path.push({x: cx, y: cy});
         let B = getBField(cx, cy, poles);
         let bMag = Math.hypot(B.bx, B.by);
@@ -552,36 +546,86 @@ function drawSymmetricFieldLines(ctx, poles, lineCount, radius, color = 'rgba(19
         cx += (B.bx/bMag)*step; 
         cy += (B.by/bMag)*step;
         
-        // 強制排斥力隔離牆 (中線 X = 500)
-        if (isRepel) {
-            if (p.x < 500 && cx > 495) break; 
-            if (p.x > 500 && cx < 505) break;
-        }
-        
         ctx.lineTo(cx, cy);
         
-        // 抵達 S 極則停止
-        let reachedS = false;
+        let reachedS = null;
         for(let op of poles) {
-          if (op.m < 0 && Math.hypot(cx-op.x, cy-op.y) < radius * 0.7) { reachedS = true; break; }
+          if (op.m < 0 && Math.hypot(cx-op.x, cy-op.y) < 15) { reachedS = op; break; }
         }
-        if(reachedS || cx < -100 || cx > 1100 || cy < -100 || cy > 700) break;
+        if(reachedS) {
+          coveredSouthAngles.get(reachedS).push(Math.atan2(cy-reachedS.y, cx-reachedS.x));
+          break;
+        }
+        // 【修復】擴展畫布運算邊界至正負2000，保證畫面邊緣外的線也能繞回來！
+        if(cx < -2000 || cx > 3000 || cy < -2000 || cy > 2600) break;
         count++;
       }
       ctx.stroke();
 
-      // 精準箭頭方向
-      if (showArrows && path.length > 35) {
-          let mid = Math.floor(path.length * 0.45);
-          let pt = path[mid];
-          let B = getBField(pt.x, pt.y, poles);
-          let angle = Math.atan2(B.by, B.bx); // 100% 貼合切線
-          ctx.save();
-          ctx.translate(pt.x, pt.y);
-          ctx.rotate(angle);
-          ctx.fillStyle = color;
-          ctx.beginPath(); ctx.moveTo(0, -7); ctx.lineTo(12, 0); ctx.lineTo(0, 7); ctx.fill();
-          ctx.restore();
+      // 【修復】保證畫面內一定有一個箭頭
+      if (showArrows && path.length > 20) {
+          // 找出所有落在可視畫面範圍內的點
+          let validPts = path.filter(pt => pt.x > 20 && pt.x < 980 && pt.y > 20 && pt.y < 580);
+          if (validPts.length > 5) {
+              let mid = Math.floor(validPts.length / 2);
+              let pt = validPts[mid];
+              let B = getBField(pt.x, pt.y, poles);
+              let angle = Math.atan2(B.by, B.bx); // 箭頭精準對齊真實切線
+              ctx.save();
+              ctx.translate(pt.x, pt.y);
+              ctx.rotate(angle);
+              ctx.fillStyle = color;
+              ctx.beginPath(); ctx.moveTo(0, -7); ctx.lineTo(12, 0); ctx.lineTo(0, 7); ctx.fill();
+              ctx.restore();
+          }
+      }
+    }
+  }
+
+  // N 極正向追蹤有些極外側線會在遠處才繞回 S 極，有限畫布會因此漏線。
+  // 逐一檢查每個 S 極尚未收到的等角度起線，只補缺少的分支，避免重複加粗。
+  const angleSpacing = TAU / lineCount;
+  const angleDifference = (a, b) => Math.abs(Math.atan2(Math.sin(a-b), Math.cos(a-b)));
+
+  for (const south of southPoles) {
+    const covered = coveredSouthAngles.get(south);
+    for (let i=0; i<lineCount; i++) {
+      const a = (i/lineCount)*TAU;
+      const alreadyCovered = covered.some(hit => angleDifference(a, hit) <= angleSpacing*0.6);
+      if (alreadyCovered) continue;
+
+      let cx = south.x + Math.cos(a)*radius;
+      let cy = south.y + Math.sin(a)*radius;
+      const path = [];
+      ctx.beginPath(); ctx.moveTo(cx,cy);
+
+      for (let count=0; count<3000; count++) {
+        path.push({x:cx,y:cy});
+        const B = getBField(cx,cy,poles);
+        const bMag = Math.hypot(B.bx,B.by);
+        if (bMag < 1e-7) break;
+
+        // 從 S 極逆著磁場回推，補回同一條磁力線的缺少部分。
+        cx -= B.bx/bMag*step;
+        cy -= B.by/bMag*step;
+        ctx.lineTo(cx,cy);
+
+        let reachedN = false;
+        for (const op of poles) {
+          if (op.m > 0 && Math.hypot(cx-op.x,cy-op.y) < 15) { reachedN = true; break; }
+        }
+        if (reachedN || cx < -2000 || cx > 3000 || cy < -2000 || cy > 2600) break;
+      }
+      ctx.stroke();
+
+      if (showArrows && path.length > 20) {
+        const visible = path.filter(pt => pt.x>20 && pt.x<980 && pt.y>20 && pt.y<580);
+        if (visible.length>5) {
+          const pt = visible[Math.floor(visible.length/2)];
+          const B = getBField(pt.x,pt.y,poles);
+          ctx.save(); ctx.translate(pt.x,pt.y); ctx.rotate(Math.atan2(B.by,B.bx));
+          ctx.fillStyle=color; ctx.beginPath(); ctx.moveTo(0,-7); ctx.lineTo(12,0); ctx.lineTo(0,7); ctx.fill(); ctx.restore();
+        }
       }
     }
   }
@@ -593,7 +637,7 @@ function drawSymmetricFieldLines(ctx, poles, lineCount, radius, color = 'rgba(19
 // ==========================================
 const poleState = { 
   type: 'suspend', breakDist: 0, raf: 0,
-  sus: { angle: 0, v: 0, dragging: false } // angle=0: Z軸(N極)指向北方(右上)
+  sus: { angle: 0, v: 0, dragging: false } // angle=0: 預設 Z 軸 (紅色端) 指向右上方的北
 };
 
 function drawPoleCanvas(ctx) {
@@ -602,7 +646,7 @@ function drawPoleCanvas(ctx) {
   const sub = document.querySelector('#tab-pole .sub-tab-btn.active').dataset.sub;
 
   if (sub === 'pole-suspend') {
-    const cx = 500, topY = 0, magY = 320;
+    const cx = 500, topY = 0, magY = 280;
     
     ctx.save(); 
     ctx.fillStyle = '#2a4d40'; ctx.fillRect(cx - 200, 0, 400, 20); // 天花板
@@ -621,12 +665,11 @@ function drawPoleCanvas(ctx) {
     label(ctx, '西', cx-220, magY, C.white, 'center', 20);
     ctx.restore();
 
-    // 吊線
     ctx.save(); ctx.strokeStyle='#fff'; ctx.lineWidth=2;
     ctx.beginPath(); ctx.moveTo(cx, topY+20); ctx.lineTo(cx, magY); ctx.stroke(); 
     ctx.restore();
 
-    // 畫 3D 磁鐵 (長 80, 寬 20, 高 15)
+    // 畫 3D 磁鐵 (無字版)
     draw3DMagnet(ctx, cx, magY, 80, 20, 15, poleState.sus.angle);
     
     if(poleState.sus.dragging) {
@@ -668,6 +711,7 @@ function drawPoleCanvas(ctx) {
   }
 }
 
+// 【修復 1】確保 0 度時，紅色端完美指向右上方 (北方)
 function animSuspend() {
   const sub = document.querySelector('#tab-pole .sub-tab-btn.active')?.dataset.sub;
   if(sub !== 'pole-suspend' || document.querySelector('.tab-content.active')?.id !== 'tab-pole') {
@@ -676,26 +720,26 @@ function animSuspend() {
 
   if(!poleState.sus.dragging) {
     let a = poleState.sus.angle;
-    let target = 0; // 0度時，透視 Z軸(紅端)朝向北方
+    let target = 0; // ★ 目標為 0度，讓紅色端精準回到北方(Z>0)
     let diff = (target - a) % TAU;
     if (diff > Math.PI) diff -= TAU;
     if (diff < -Math.PI) diff += TAU;
     
     let force = diff * 0.05; 
     poleState.sus.v += force;
-    poleState.sus.v *= 0.94; // 阻尼，平穩停止
+    poleState.sus.v *= 0.94; 
     poleState.sus.angle += poleState.sus.v;
   }
   safeDraw('poleCanvas', drawPoleCanvas);
   poleState.raf = requestAnimationFrame(animSuspend);
 }
 
-// 乾淨的無鎖死拖曳事件
 function initPoleEvents() {
   const canvas = document.getElementById('poleCanvas');
   let isDown = false; let lastX = 0;
 
   function getClientX(e) { return e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX; }
+  
   function handleDown(e) {
       if (document.querySelector('#tab-pole .sub-tab-btn.active')?.dataset.sub === 'pole-suspend') {
           isDown = true; lastX = getClientX(e); poleState.sus.dragging = true;
@@ -719,7 +763,9 @@ function initPoleEvents() {
   window.addEventListener('touchmove', handleMove, {passive: false});
   window.addEventListener('touchend', handleUp);
 
-  document.getElementById('spinBtn').addEventListener('click', () => { poleState.sus.v = (Math.random() > 0.5 ? 1 : -1) * (0.4 + Math.random()*0.4); });
+  document.getElementById('spinBtn').addEventListener('click', () => {
+    poleState.sus.v = (Math.random() > 0.5 ? 1 : -1) * (0.4 + Math.random()*0.4);
+  });
 }
 
 function animBreak() { if(poleState.breakDist < 80) { poleState.breakDist += 5; safeDraw('poleCanvas', drawPoleCanvas); poleState.raf = requestAnimationFrame(animBreak); } }
@@ -780,7 +826,7 @@ document.querySelectorAll('.store-btn').forEach(b => b.addEventListener('click',
 }));
 
 // ==========================================
-// 3. 磁力線分布 (完美4階段動畫版)
+// 3. 磁力線分布 (撒鐵粉 4 階段動畫版)
 // ==========================================
 const lineState = { type: 'single', tap: 0, filings: [] };
 
@@ -801,9 +847,11 @@ function drawLineCanvas(ctx) {
     else if(lineState.type === 'attract') { poles = [{x:100, y:cy, m:50000}, {x:400, y:cy, m:-50000}, {x:600, y:cy, m:50000}, {x:900, y:cy, m:-50000}]; } 
     else { poles = [{x:100, y:cy, m:-50000}, {x:400, y:cy, m:50000}, {x:600, y:cy, m:50000}, {x:900, y:cy, m:-50000}]; }
   } else {
+    // 縮小版 U 字形
     poles = [{x:620, y:230, m:60000}, {x:620, y:370, m:-60000}];
   }
 
+  // 鐵粉階段
   if(lineState.tap >= 0 && lineState.tap <= 2) {
     ctx.save(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)'; ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'; ctx.lineWidth = lineState.tap === 2 ? 1.5 : 1;
     ctx.beginPath();
@@ -826,9 +874,8 @@ function drawLineCanvas(ctx) {
     lineState.tap === 0 ? ctx.fill() : ctx.stroke();
     ctx.restore();
   } else if (lineState.tap === 3) {
-    // 假想紫線
-    let lineCount = 14; let r = 35;
-    if (!document.getElementById('line-bar').classList.contains('active')) { lineCount = 20; r = 28; }
+    let lineCount = 14; let r = 2; // 【修復】半徑縮小到 2，無縫貼合邊緣
+    if (!document.getElementById('line-bar').classList.contains('active')) { lineCount = 20; r = 2; }
     drawSymmetricFieldLines(ctx, poles, lineCount, r, 'rgba(190, 90, 210, 0.9)', true);
   }
 
@@ -871,7 +918,8 @@ const compassState = { c: {x: 500, y: 150}, dragging: false };
 const compassPoles = [{x: 370, y: 300, m: 80000}, {x: 630, y: 300, m: -80000}];
 function drawCompassCanvas(ctx) {
   clear(ctx);
-  drawSymmetricFieldLines(ctx, compassPoles, 20, 25, 'rgba(85,233,255,0.35)', true);
+  // 【修復】這裡一樣用半徑 2，從邊緣出發
+  drawSymmetricFieldLines(ctx, compassPoles, 20, 2, 'rgba(85,233,255,0.35)', true);
   drawMagnet(ctx, 350, 270, 300, 60, true);
   
   let B = getBField(compassState.c.x, compassState.c.y, compassPoles);
@@ -885,14 +933,14 @@ function drawCompassCanvas(ctx) {
     label(ctx, '磁力線切線方向 = 磁針 N 極方向', compassState.c.x, compassState.c.y - 60, C.yellow, 'center', 18);
   }
   
-  // 繪製羅盤 (保證紅色 N 極貼合角度)
+  // 繪製羅盤 (保證紅色 N 極完美貼合角度)
   drawCompass(ctx, compassState.c.x, compassState.c.y, angle, 40);
 }
 
 function initCompassEvents() {
   const canvas = document.getElementById('compassCanvas');
   let isDown = false;
-  
+
   function getPos(e) {
       const r = canvas.getBoundingClientRect();
       let cx = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
@@ -909,7 +957,8 @@ function initCompassEvents() {
   function handleMove(e) {
       if (isDown) {
           const p = getPos(e);
-          compassState.c.x = p.x; compassState.c.y = p.y;
+          compassState.c.x = p.x;
+          compassState.c.y = p.y;
           safeDraw('compassCanvas', drawCompassCanvas);
           if (e.cancelable) e.preventDefault();
       }
@@ -926,7 +975,7 @@ function initCompassEvents() {
 }
 
 // ==========================================
-// 5. 地球大磁鐵 (重現 Canvas 動畫與緊密磁場)
+// 5. 地球大磁鐵 (完美大跨度密度還原)
 // ==========================================
 const earthState = { isXray: false, fade: 0, raf: 0 };
 
@@ -937,8 +986,8 @@ function drawEarthMagneticField(ctx, cx, cy, tilt, r) {
     ctx.strokeStyle = '#a65ca8'; 
     ctx.lineWidth = 2.5;
     
-    // 密集內層，絕無多餘外擴
-    const Ls = [r * 1.05, r * 1.15, r * 1.30, r * 1.50];
+    // 【修復 5】大跨距參數，完美還原全畫面覆蓋
+    const Ls = [r*1.1, r*1.3, r*1.6, r*2.1, r*3.0, r*4.5, r*7.0, r*12.0];
     
     for (let L of Ls) {
         ctx.beginPath();
@@ -967,14 +1016,15 @@ function drawEarthMagneticField(ctx, cx, cy, tilt, r) {
         }
         ctx.stroke();
         
-        if (L > r * 1.1) {
+        // ★ 畫上專屬教科書的紫色大箭頭，位於赤道 (theta = PI/2)
+        if (L > r * 1.08 && L < r * 6.0) {
             ctx.save(); ctx.translate(L, 0); ctx.rotate(-Math.PI/2);
             ctx.fillStyle = '#a65ca8';
-            ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(14, 0); ctx.lineTo(0, 9); ctx.fill(); ctx.restore();
+            ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(12, 0); ctx.lineTo(0, 8); ctx.fill(); ctx.restore();
             
             ctx.save(); ctx.translate(-L, 0); ctx.rotate(-Math.PI/2);
             ctx.fillStyle = '#a65ca8';
-            ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(14, 0); ctx.lineTo(0, 9); ctx.fill(); ctx.restore();
+            ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(12, 0); ctx.lineTo(0, 8); ctx.fill(); ctx.restore();
         }
     }
     ctx.restore();
@@ -1013,6 +1063,7 @@ function drawEarthCanvas(ctx) {
     ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.roundRect(15, 130, 105, 36, 6); ctx.fill();
     label(ctx, '地磁 N 極 →', 68, 148, C.poleN, 'center', 18);
     ctx.restore();
+    
     ctx.restore();
   }
 
@@ -1034,6 +1085,7 @@ document.getElementById('xrayBtn').addEventListener('click', () => {
   if(earthState.raf) cancelAnimationFrame(earthState.raf); animEarth();
 });
 
+
 // ==========================================
 // 共用導航系統
 // ==========================================
@@ -1048,7 +1100,7 @@ function drawActive() {
   if (id === 'tab-mag') { initDomains(); safeDraw('magCanvas', drawMagCanvas); }
   if (id === 'tab-line') { lineState.tap = 0; document.getElementById('sprinkleBtn').textContent = '✨ 撒鐵粉 (0/4)'; safeDraw('lineCanvas', drawLineCanvas); }
   if (id === 'tab-compass') safeDraw('compassCanvas', drawCompassCanvas);
-  if (id === 'tab-earth') safeDraw('earthCanvas', drawEarthCanvas); 
+  if (id === 'tab-earth') safeDraw('earthCanvas', drawEarthCanvas);
 }
 
 document.querySelectorAll('.tab-button').forEach(b => b.addEventListener('click', () => {
