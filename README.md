@@ -81,8 +81,9 @@
   * [電壓本質與電路三態](electronics_2.html)
   * [串並聯電路與電流](electronics_3.html)
   * [電阻與歐姆定律](electronics_4.html)
-* **10｜🧭 電與磁** （1 個小單元）
+* **10｜🧭 電與磁** （2 個小單元）
   * [磁力與磁場](magnetism_1.html)｜磁極互動、磁疇、磁力線、指南針與地球磁場互動解析
+  * [電生磁與電磁鐵](electromagnetism_2.html)｜奧斯特實驗、右手定則、線圈磁場疊加、電磁鐵起重機與電話聽筒動畫
 
 ### 🧪 化學與反應館 (Chemistry)
 
