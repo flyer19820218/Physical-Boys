@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>電生磁：電流的磁效應</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#11261f;--panel:#173b31;--canvas:#0c1e19;--white:#ffffff;--yellow:#fff36a;--cyan:#55e9ff;
+  --orange:#ffb347;--green:#9af06f;--pink:#ff78b7;--purple:#dd8cff;--red:#ff6f76;--muted:#b8c9c1;
+  --pole-n:#ff6f76;--pole-s:#72b9ff;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  margin:0;color:var(--white);font-family:'Noto Sans TC',system-ui,sans-serif;
+  font-size:20px;line-height:1.65;
+  background:radial-gradient(circle at 1px 1px,rgba(255,255,255,.045) 1px,transparent 1.3px) 0 0/6px 6px,var(--bg)
+}
+button,input{font:inherit}button{touch-action:manipulation}
+.app{max-width:1080px;margin:auto;padding:22px 18px 70px}
+.hero{text-align:center;padding:18px 10px 12px}
+h1{font-size:46px;line-height:1.15;margin:0;color:var(--yellow);font-weight:900}
+.subtitle{color:var(--muted);font-weight:700;margin:12px 0 0}
+.tab-container{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:18px 0 22px}
+.tab-button,.action-btn,.practice-btn,.sub-tab-btn{
+  border:2px solid var(--muted);background:#102d26;color:var(--white);border-radius:14px;padding:11px 16px;
+  font-weight:900;cursor:pointer;transition:.18s transform,.18s background,.18s border-color
+}
+.tab-button:hover,.action-btn:hover,.practice-btn:hover,.sub-tab-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.08)}
+.tab-button.active,.active-btn{background:var(--cyan)!important;color:#0b2b2e!important;border-color:var(--cyan)!important}
+.tab-content{display:none;animation:fade .2s ease}.tab-content.active{display:block}@keyframes fade{from{opacity:.35}to{opacity:1}}
+.grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.panel{background:rgba(22,58,47,.95);border:2px solid var(--cyan);border-radius:22px;padding:18px;min-width:0}
+.panel h2{margin:0 0 12px;color:var(--yellow);font-size:29px;line-height:1.25}
+.panel p{margin:8px 0}.panel ul{margin:8px 0;padding-left:1.35em}.panel li{margin:7px 0}
+.key-box,.result-box{border:2px solid var(--cyan);border-radius:14px;padding:13px 15px;margin-top:14px;background:rgba(85,233,255,.05);font-weight:700}
+.canvas-wrap{background:var(--canvas);border:3px solid var(--cyan);border-radius:20px;overflow:hidden;position:relative}
+.rect-canvas{display:block;width:100%;height:auto;aspect-ratio:10/6;cursor:grab}
+.rect-canvas:active{cursor:grabbing}
+.controls{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:14px 0;align-items:center}
+.slider-group{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:140px}
+.slider-group label{font-weight:900;color:var(--cyan);font-size:18px}
+input[type=range]{width:100%;accent-color:var(--yellow)}
+.practice-box{margin-top:18px;border:2px solid #58736a;border-radius:18px;padding:14px;background:rgba(11,43,46,.18)}
+.practice-tabs{display:flex;gap:8px;flex-wrap:wrap}.practice-btn{padding:8px 14px}.practice-btn.active{background:var(--yellow);color:#21362f;border-color:var(--yellow)}
+.practice-step{display:none;padding:12px 4px 2px}.practice-step.active{display:block}.practice-step h3{color:var(--yellow);margin:0 0 7px;font-size:24px}.practice-step p{margin:0}
+.accent-cyan{color:var(--cyan)}.accent-orange{color:var(--orange)}.accent-pink{color:var(--pink)}.accent-green{color:var(--green)}.accent-yellow{color:var(--yellow)}
+.nowrap{white-space:nowrap}
+.sub-tab-container{display:flex;gap:6px;margin-bottom:14px;border-bottom:2px solid #4d6b61;padding-bottom:10px;flex-wrap:wrap}
+.sub-tab-btn{padding:8px 14px;border-radius:10px;border:none;background:transparent;color:var(--muted)}
+.sub-tab-btn.active{background:rgba(85,233,255,.15);color:var(--cyan);border:1px solid var(--cyan)}
+.sub-tab-content{display:none;animation:fade .2s ease}.sub-tab-content.active{display:block}
+.checkbox-group{display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:900;color:var(--orange)}
+.checkbox-group input{width:20px;height:20px;accent-color:var(--orange)}
+.phone-controls{margin-top:14px}
+.phone-controls .action-btn{width:100%}
+@media(max-width:768px){
+  .app{padding:12px 8px 50px}h1{font-size:34px}.grid-2col{grid-template-columns:1fr}
+  .panel{padding:13px}.panel h2{font-size:25px}
+  .tab-container{display:grid;grid-template-columns:1fr 1fr}.tab-button{padding:9px 6px;font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+  <h1>⚡ 電生磁：電流的磁效應</h1>
+  <p class="subtitle">從奧斯特的驚人發現，到強大的電磁鐵起重機。</p>
+</header>
+
+<nav class="tab-container" aria-label="單元分頁">
+  <button class="tab-button active" data-tab="tab-straight">➖ 直導線與右手</button>
+  <button class="tab-button" data-tab="tab-loop">⭕ 圓形線圈磁場</button>
+  <button class="tab-button" data-tab="tab-solenoid">🌀 螺線管與磁極</button>
+  <button class="tab-button" data-tab="tab-crane">🏗️ 電磁鐵起重機</button>
+  <button class="tab-button" data-tab="tab-phone">📞 聽筒與話筒</button>
+</nav>
+
+<!-- 1. 直導線與安培右手 -->
+<section id="tab-straight" class="tab-content active">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="st-field" data-parent="tab-straight">奧斯特的發現</button>
+        <button class="sub-tab-btn" data-sub="st-rule" data-parent="tab-straight">安培右手定則</button>
+      </nav>
+      
+      <div id="st-field" class="sub-tab-content active">
+        <h2>電流周圍藏著磁場</h2>
+        <p>1820 年，丹麥科學家<span class="nowrap"><strong class="accent-orange">奧斯特</strong></span>在實驗時意外發現：當導線通電時，旁邊的指南針竟然發生了偏轉！</p>
+        <ul>
+          <li>長直導線通電後，周圍會產生以導線為圓心的<span class="nowrap"><strong class="accent-cyan">同心圓磁力線</strong></span>。</li>
+          <li>磁場的方向與電流方向<strong class="accent-pink">互相垂直</strong>。</li>
+          <li>距離導線越近，磁場就越強（呈<strong class="accent-yellow">內密外疏</strong>的分佈）。</li>
+        </ul>
+      </div>
+
+      <div id="st-rule" class="sub-tab-content">
+        <h2>安培右手定則</h2>
+        <p>要判斷電流與磁場方向的關係，我們使用<span class="nowrap"><strong class="accent-cyan">安培右手定則</strong></span>：</p>
+        <ul>
+          <li>伸直右手，讓<strong class="accent-orange">大拇指</strong>指向<strong class="accent-orange">電流方向</strong>。</li>
+          <li>其餘<strong class="accent-green">四指彎曲</strong>的方向，就是<strong class="accent-green">磁場（磁力線）</strong>的環繞方向。</li>
+          <li>點擊下方按鈕，觀察右側的「手」與白色磁力線箭頭如何跟著反轉！</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>【互動】立體磁場觀測台</h2>
+      <div class="canvas-wrap"><canvas id="straightCanvas" class="rect-canvas" width="2000" height="1200"></canvas></div>
+      
+      <div class="controls">
+        <button id="wireDirBtn" class="action-btn success" style="width:100%">切換電流方向：向上 ⬆️</button>
+      </div>
+      
+      <div id="straightResult" class="result-box">大拇指向上指，四指逆時針彎曲，代表磁場呈<strong class="accent-green">逆時針方向</strong>環繞。</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>一條鉛直的導線，電流由下向上流動。放置在導線「東方」的小磁針，N 極會指向哪裡？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>用右手大拇指朝上，四指會呈現逆時針旋轉。在東方（右側）的切線方向是朝向哪裡？</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>小磁針的 N 極會指向<strong class="accent-cyan">北方</strong>。</p></div>
+  </div>
+</section>
+
+<!-- 2. 圓形線圈磁場 -->
+<section id="tab-loop" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="loop-shape" data-parent="tab-loop">從直導線到線圈</button>
+        <button class="sub-tab-btn" data-sub="loop-rule" data-parent="tab-loop">線圈專用右手定則</button>
+      </nav>
+      
+      <div id="loop-shape" class="sub-tab-content active">
+        <h2>磁場的完美疊加</h2>
+        <p>如果我們把長直導線彎曲成<span class="nowrap"><strong class="accent-cyan">封閉的圓形線圈</strong></span>，會發生什麼事？</p>
+        <ul>
+          <li>請點擊右下方的「彎曲導線」，<strong class="accent-orange">觀察導線上的磁力線如何向內靠攏</strong>！</li>
+          <li>在線圈的<strong class="accent-yellow">中心區域</strong>，所有圓段產生的磁場方向剛好一致，互相疊加產生極強的直線磁場！</li>
+          <li>這證明了線圈的強大磁場，本質上就是無限多段直導線磁場的加總結果。</li>
+        </ul>
+      </div>
+
+      <div id="loop-rule" class="sub-tab-content">
+        <h2>線圈專用的右手定則</h2>
+        <p>對於圓形線圈或螺線管，為了方便判斷，右手定則的指法會「互換」：</p>
+        <ul>
+          <li>讓<strong class="accent-orange">四指彎曲</strong>順著<strong class="accent-orange">電流環繞</strong>的方向。</li>
+          <li>伸直的<strong class="accent-green">大拇指</strong>所指的方向，就是線圈內部的磁場方向（也就是這端會產生 <span class="nowrap"><strong style="color:var(--pole-n)">N 極</strong></span>）。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>【動畫】長導線彎折進化 (支援 3D 旋轉)</h2>
+      <div class="canvas-wrap"><canvas id="loopCanvas" class="rect-canvas" width="2000" height="1200" style="cursor: grab;"></canvas></div>
+      <div class="controls">
+        <button id="loopDirBtn" class="action-btn success">切換電流：逆時針 ↺</button>
+        <button id="bendBtn" class="action-btn warning">彎曲導線 (0/10)</button>
+        <button id="loopResetBtn" class="action-btn" style="display:none;">↺ 重置</button>
+      </div>
+      <div id="loopResult" class="result-box">導線目前是直的，請點擊按鈕，觀察彎曲時磁場如何疊加融合！</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>若圓形線圈上的電流是「順時針」方向流動，請問線圈的「正面」（靠近我們的一面）會是什麼磁極？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>舉起右手，讓四指順時針彎曲，你的大拇指是指向自己，還是穿入紙面？大拇指代表 N 極。</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>大拇指穿入紙面，代表背面是 N 極，所以正面是 <strong class="accent-cyan">S 極</strong>。</p></div>
+  </div>
+</section>
+
+<!-- 3. 螺線管與磁極 -->
+<section id="tab-solenoid" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="sol-shape" data-parent="tab-solenoid">什麼是螺線管</button>
+        <button class="sub-tab-btn" data-sub="sol-field" data-parent="tab-solenoid">疊加的強大磁場</button>
+      </nav>
+      
+      <div id="sol-shape" class="sub-tab-content active">
+        <h2>把線圈無限疊加</h2>
+        <p>將導線密密集密地纏繞成圓筒狀，就稱為<span class="nowrap"><strong class="accent-cyan">螺線管 (Solenoid)</strong></span>。</p>
+        <ul>
+          <li>螺線管可以看作是許多個「圓形線圈」疊合在一起。</li>
+          <li>通電後，每一個線圈產生的磁場會互相疊加、增強。</li>
+          <li>判斷極性一樣使用右手：<strong class="accent-orange">四指順著表面電流彎</strong>，<strong class="accent-green">大拇指即為 N 極</strong>。</li>
+        </ul>
+      </div>
+
+      <div id="sol-field" class="sub-tab-content">
+        <h2>等效於長條形磁鐵</h2>
+        <p>螺線管通電後所產生的磁場形狀，幾乎與<span class="nowrap"><strong class="accent-yellow">長條形磁鐵一模一樣</strong></span>！</p>
+        <ul>
+          <li><strong class="accent-cyan">內部磁場：</strong>均勻、平行的強磁場，方向由 S 指向 N。</li>
+          <li><strong class="accent-pink">外部磁場：</strong>由 N 極出發，呈弧線彎曲回到 S 極。</li>
+          <li>因為它等同於磁鐵，所以它同樣具備「同名極相斥、異名極相吸」的特性。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>【動畫】螺線管磁場圖</h2>
+      <div class="canvas-wrap"><canvas id="solenoidCanvas" class="rect-canvas" width="2000" height="1200"></canvas></div>
+      <div class="controls">
+        <button id="solDirBtn" class="action-btn success">表面電流：往下流動 ↓</button>
+      </div>
+      <div id="solResult" class="result-box">表面電流向下，四指向下彎曲，大拇指朝左，因此<strong style="color:var(--pole-n)">左端為 N 極</strong>。</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>螺線管通電後，如果把裡面的電流方向反轉，周圍的小磁針會發生什麼事？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>電流方向改變，大拇指（N極）的方向會不會跟著改變？磁針的 N 極永遠順著磁力線方向。</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>螺線管的 N 極與 S 極會互換，因此周圍小磁針的指針方向也會<strong class="accent-cyan">全部反轉 180 度</strong>。</p></div>
+  </div>
+</section>
+
+<!-- 4. 電磁鐵起重機 -->
+<section id="tab-crane" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="crane-principle" data-parent="tab-crane">電磁鐵的秘密</button>
+        <button class="sub-tab-btn" data-sub="crane-factors" data-parent="tab-crane">增強磁力的三大要素</button>
+      </nav>
+      
+      <div id="crane-principle" class="sub-tab-content active">
+        <h2>可以開關的磁鐵</h2>
+        <p>在螺線管內部插入<span class="nowrap"><strong class="accent-orange">軟鐵芯</strong></span>，就製成了<span class="nowrap"><strong class="accent-cyan">電磁鐵</strong></span>。這是現代工業與科技的核心！</p>
+        <ul>
+          <li><strong class="accent-green">通電時：</strong>軟鐵芯瞬間被強烈「磁化」，與線圈磁場疊加，產生極大磁力。</li>
+          <li><strong class="accent-pink">斷電時：</strong>軟鐵因為不保留磁性，磁力瞬間消失，立刻釋放吸附物。</li>
+          <li>資源回收場的廢鐵起重機，就是利用這個原理來搬運與釋放廢車！</li>
+        </ul>
+      </div>
+
+      <div id="crane-factors" class="sub-tab-content">
+        <h2>如何讓起重機更夠力？</h2>
+        <p>要增強電磁鐵的磁場強度，有三個關鍵變數（考題必出）：</p>
+        <ol>
+          <li><strong class="accent-yellow">電池數量：</strong>串聯更多電池，電流越大，磁力越強。</li>
+          <li><strong class="accent-cyan">纏繞匝數：</strong>在長度不變下，導線纏繞的圈數越密集，磁力越強。</li>
+          <li><strong class="accent-orange">插入鐵芯：</strong>一定要用「軟鐵」（容易磁化也容易退磁），絕對不能用會永久磁化的「鋼」。</li>
+        </ol>
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>【互動】起重機測試場</h2>
+      <div class="canvas-wrap"><canvas id="craneCanvas" class="rect-canvas" width="2000" height="1200"></canvas></div>
+      
+      <div class="controls">
+        <div class="slider-group">
+          <label for="craneLoops">纏繞匝數 (N)</label>
+          <input type="range" id="craneLoops" min="1" max="5" value="2">
+        </div>
+        <div class="slider-group">
+          <label for="craneCurrent">電池數量 (I)</label>
+          <input type="range" id="craneCurrent" min="1" max="5" value="2">
+        </div>
+        <label class="checkbox-group">
+          <input type="checkbox" id="craneCore"> 插入軟鐵芯
+        </label>
+      </div>
+      <div class="controls">
+        <button id="cranePowerBtn" class="action-btn warning" style="width:100%">⚡ 按下通電測試吸力</button>
+      </div>
+      
+      <div id="craneResult" class="result-box">目前未通電，磁力為 0。請調整參數並通電測試！</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>為了搬運極重的廢汽車，小明把起重機的軟鐵芯換成了超硬的「鋼」，這會引發什麼災難？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>鋼是「硬磁性物質」，一旦被磁化，斷電後磁性會不會消失？</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>鋼會被永久磁化，導致<strong class="accent-pink">斷電後汽車依然黏在起重機上掉不下來</strong>，失去「隨意控制吸放」的功能。</p></div>
+  </div>
+</section>
+
+<!-- 5. 聽筒與話筒 -->
+<section id="tab-phone" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <h2>傳遞聲音的魔法</h2>
+      <p>早期的電話，就是利用「電磁鐵」與「電流的磁效應」來達成聲音與電能的互相轉換：</p>
+      <ul>
+        <li><strong class="accent-cyan">話筒（麥克風）：</strong>收集聲音。聲波震動使內部的「碳粉」忽鬆忽緊，改變了電阻，從而將聲波轉換成<strong class="accent-yellow">大小改變的電流</strong>。</li>
+        <li><strong class="accent-pink">聽筒（揚聲器）：</strong>還原聲音。內部有一個電磁鐵。當來自話筒的變動電流輸入時，電磁鐵的磁力會忽強忽弱，從而帶動前方的金屬薄片震動，把電能變回了聲波！</li>
+      </ul>
+      <div class="key-box">現代手機的聽筒（微型揚聲器），內部依然有微型的「音圈與永久磁鐵」，利用一樣的電磁效應推動振膜發聲！</div>
+    </article>
+
+    <article class="panel">
+      <h2>【動畫】電話聽筒發聲</h2>
+      <div class="canvas-wrap"><canvas id="phoneCanvas" class="rect-canvas" width="2000" height="1200"></canvas></div>
+      <div class="controls phone-controls">
+        <button id="phonePlayBtn" class="action-btn success">▶ 播放：電流如何變回聲音</button>
+      </div>
+      <div id="phoneResult" class="result-box">聲能 ➔ 電能 ➔ 磁能 ➔ 聲能，這就是通訊的基礎原理。</div>
+    </article>
+  </div>
+</section>
+</div>
+
+<script>
+// ==========================================
+// 防當機相容性補丁 (解決舊設備畫不出手手導致全黑的問題)
+// ==========================================
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+    if (typeof r === 'undefined') r = 0;
+    if (w < 2 * r) r = w / 2;
+    if (h < 2 * r) r = h / 2;
+    this.beginPath();
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    this.closePath();
+    return this;
+  };
+}
+
+// ==========================================
+// 共用資源與函式
+// ==========================================
+const C = {
+  bg: '#11261f', canvas: '#0c1e19', white: '#ffffff',
+  yellow: '#fff36a', cyan: '#55e9ff', orange: '#ffb347', green: '#9af06f',
+  pink: '#ff78b7', purple:'#dd8cff', red: '#ff6f76', blue: '#72b9ff', dark: '#0a1a20',
+  poleN: '#ff6f76', poleS: '#72b9ff'
+};
+const TAU = Math.PI * 2;
+function ctxOf(id) { 
+    const c = document.getElementById(id); 
+    return c ? { c, ctx: c.getContext('2d') } : null; 
+}
+function safeDraw(id, fn) {
+  const o = ctxOf(id); if (!o) return;
+  const run = () => { 
+      const parent = o.c.parentElement;
+      const w = parent ? parent.getBoundingClientRect().width : 0; 
+      if (w <= 0) { setTimeout(run, 80); return; } 
+      o.ctx.setTransform(2, 0, 0, 2, 0, 0); // 畫布無損 2 倍放大
+      fn(o.ctx); 
+  };
+  setTimeout(run, 25);
+}
+function clear(ctx) { ctx.fillStyle = C.canvas; ctx.fillRect(0, 0, 1000, 600); }
+function label(ctx, t, x, y, color = C.white, align = 'center', size = 20) {
+  ctx.save(); ctx.fillStyle = color; ctx.font = `900 ${size}px 'Noto Sans TC',sans-serif`;
+  ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.shadowColor = 'rgba(5,24,20,0.82)';
+  ctx.shadowBlur = 4; ctx.fillText(t, x, y); ctx.restore();
+}
+
+// 同色系立體箭頭：深色厚邊、主色本體、白色高光，方向直接貼在線路上。
+function drawArrow3D(ctx, x1, y1, x2, y2, color, width = 10, head = 18) {
+  const angle = Math.atan2(y2-y1, x2-x1);
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = 'rgba(5,24,20,.72)';
+  ctx.lineWidth = width + 7;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.42)';
+  ctx.lineWidth = Math.max(2,width*.2);
+  ctx.beginPath(); ctx.moveTo(x1,y1-width*.18); ctx.lineTo(x2,y2-width*.18); ctx.stroke();
+  ctx.translate(x2,y2); ctx.rotate(angle);
+  ctx.fillStyle = 'rgba(5,24,20,.78)';
+  ctx.beginPath(); ctx.moveTo(head+5,0); ctx.lineTo(-head*.55,-head*.72); ctx.lineTo(-head*.25,0); ctx.lineTo(-head*.55,head*.72); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.moveTo(head,0); ctx.lineTo(-head*.65,-head*.62); ctx.lineTo(-head*.3,0); ctx.lineTo(-head*.65,head*.62); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.48)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(head*.7,-1); ctx.lineTo(-head*.42,-head*.43); ctx.stroke();
+  ctx.restore();
+}
+
+function drawEllipseArrow3D(ctx, cx, cy, rx, ry, start, end, color, clockwise) {
+  const direction = clockwise ? 1 : -1;
+  const finish = start + direction*Math.abs(end-start);
+  ctx.save();
+  ctx.lineCap='round';
+  ctx.strokeStyle='rgba(5,24,20,.8)'; ctx.lineWidth=12;
+  ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,start,finish,!clockwise); ctx.stroke();
+  ctx.strokeStyle=color; ctx.lineWidth=7; ctx.shadowColor=color; ctx.shadowBlur=10;
+  ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,start,finish,!clockwise); ctx.stroke();
+  const a=finish;
+  const x=cx+rx*Math.cos(a), y=cy+ry*Math.sin(a);
+  const dx=-rx*Math.sin(a)*direction, dy=ry*Math.cos(a)*direction;
+  drawArrow3D(ctx,x-dx*.05,y-dy*.05,x,y,color,5,12);
+  ctx.restore();
+}
+
+function getBField(x, y, poles) {
+  let bx = 0, by = 0;
+  for (let p of poles) {
+    let dx = x - p.x; let dy = y - p.y;
+    let r2 = dx * dx + dy * dy;
+    if (r2 < 400) r2 = 400; 
+    let r = Math.sqrt(r2);
+    let mag = p.m / (r2 * r); 
+    bx += mag * dx; by += mag * dy;
+  }
+  return { bx, by };
+}
+
+function drawSymmetricFieldLines(ctx, poles, lineCount, radius, color = 'rgba(190, 90, 210, 0.9)', showArrows = false) {
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.lineCap='round';
+  const step=4;
+  const south=poles.filter(p=>p.m<0);
+  const hits=new Map(south.map(p=>[p,[]]));
+  const visible=pt=>pt.x>16&&pt.x<984&&pt.y>16&&pt.y<584;
+  const arrowOnPath=path=>{
+    if(!showArrows) return;
+    const inside=path.filter(visible);
+    if(inside.length<8) return;
+    const pt=inside[Math.floor(inside.length*.52)];
+    const B=getBField(pt.x,pt.y,poles);
+    const m=Math.hypot(B.bx,B.by); if(m<1e-7)return;
+    drawArrow3D(ctx,pt.x-B.bx/m*10,pt.y-B.by/m*10,pt.x+B.bx/m*7,pt.y+B.by/m*7,color,3,7);
+  };
+  const trace=(source,a,reverse)=>{
+    let cx=source.x+Math.cos(a)*radius, cy=source.y+Math.sin(a)*radius;
+    const path=[]; ctx.beginPath(); ctx.moveTo(cx,cy);
+    for(let count=0;count<3200;count++){
+      path.push({x:cx,y:cy});
+      const B=getBField(cx,cy,poles), m=Math.hypot(B.bx,B.by);
+      if(m<1e-7)break;
+      const sign=reverse?-1:1;
+      cx+=sign*B.bx/m*step; cy+=sign*B.by/m*step; ctx.lineTo(cx,cy);
+      const targets=reverse?poles.filter(p=>p.m>0):south;
+      const reached=targets.find(p=>Math.hypot(cx-p.x,cy-p.y)<15);
+      if(reached){
+        if(!reverse&&hits.has(reached))hits.get(reached).push(Math.atan2(cy-reached.y,cx-reached.x));
+        break;
+      }
+      if(cx<-2000||cx>3000||cy<-2000||cy>2600)break;
+    }
+    ctx.stroke(); arrowOnPath(path);
+  };
+
+  // 先從 N 極正向追蹤；運算邊界遠大於畫布，避免右半邊在畫布外被提早截斷。
+  poles.filter(p=>p.m>0).forEach(p=>{
+    for(let i=0;i<lineCount;i++)trace(p,(i/lineCount)*TAU,false);
+  });
+
+  // 若某些路徑必須在很遠處才繞回 S 極，從 S 極反向補足尚未覆蓋的角度。
+  const spacing=TAU/lineCount;
+  const diff=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
+  south.forEach(p=>{
+    for(let i=0;i<lineCount;i++){
+      const a=(i/lineCount)*TAU;
+      if(!hits.get(p).some(v=>diff(a,v)<=spacing*.6))trace(p,a,true);
+    }
+  });
+  ctx.restore();
+}
+
+function projectFlat3D(cx, cy, x, y, z) {
+    const ratio = 120 / 350; 
+    return { sx: cx + x, sy: cy - y + z * ratio };
+}
+
+// ==========================================
+// Tab 1: 直導線與安培右手 (全白磁力線、錯開箭頭、無字純淨手手)
+// ==========================================
+const straightState = { isUp: true };
+
+function drawHand(ctx, cx, cy, isUp) {
+  ctx.save(); ctx.translate(cx,cy); if(!isUp)ctx.scale(1,-1);
+  ctx.shadowColor='rgba(5,24,20,.72)';ctx.shadowBlur=16;ctx.shadowOffsetX=9;ctx.shadowOffsetY=9;
+  const skin=ctx.createRadialGradient(-25,-15,8,5,15,105);
+  skin.addColorStop(0,'#ffe0c6');skin.addColorStop(.48,'#f6b989');skin.addColorStop(1,'#b96f45');
+  ctx.fillStyle=skin;ctx.strokeStyle='#8c512f';ctx.lineWidth=4;ctx.lineJoin='round';
+  // 手腕與立體掌心
+  ctx.beginPath();ctx.roundRect(-28,36,62,88,24);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.ellipse(0,15,62,70,-.18,0,TAU);ctx.fill();ctx.stroke();
+  // 拇指沿著電流方向豎起
+  ctx.beginPath();ctx.roundRect(13,-105,27,105,14);ctx.fill();ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.28)';ctx.beginPath();ctx.roundRect(20,-94,7,75,4);ctx.fill();
+  // 四指從後方包住導線，遠近用明暗表示
+  for(let i=0;i<4;i++){
+    const y=-17+i*18;
+    const grad=ctx.createLinearGradient(-76,y,-5,y);
+    grad.addColorStop(0,'#b96f45');grad.addColorStop(.55,'#f1ae7c');grad.addColorStop(1,'#ffd8ba');
+    ctx.fillStyle=grad;ctx.beginPath();ctx.roundRect(-78,y,72,16,8);ctx.fill();ctx.stroke();
+  }
+  ctx.shadowBlur=0;
+  // 立體方向：橙色拇指箭頭代表 I，綠色橢圓箭頭代表四指與 B。
+  drawArrow3D(ctx,27,-56,27,-102,C.orange,8,15);
+  drawEllipseArrow3D(ctx,-5,10,88,46,-1.05,4.7,C.green,false);
+  label(ctx,'I',52,-82,C.orange,'left',22);
+  label(ctx,'B',-92,72,C.green,'center',22);
+  ctx.restore();
+}
+
+function drawStraightCanvas(ctx) {
+  clear(ctx);
+  const cx = 500, cy = 350;
+  
+  // 1. 下半段半透明導線
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255, 179, 71, 0.38)';
+  ctx.lineWidth = 16; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + 200); ctx.stroke();
+  ctx.restore();
+
+  // 2. 壓克力板
+  ctx.save();
+  ctx.fillStyle = 'rgba(85,233,255,0.08)';
+  ctx.strokeStyle = 'rgba(85,233,255,0.4)';
+  ctx.lineWidth = 3;
+  ctx.translate(cx, cy);
+  ctx.beginPath();
+  ctx.moveTo(-350, 0); ctx.lineTo(0, 120); ctx.lineTo(350, 0); ctx.lineTo(0, -120);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  
+  // 3. 內密外疏同心圓 (純白，左下與右下錯開箭頭)
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 2.5;
+  const ratio = 120 / 350; 
+  
+  for(let i=1; i<=6; i++) {
+    let r = 25 + i * 15 + i * i * 3.5; 
+    ctx.beginPath(); ctx.ellipse(0, 0, r, r * ratio, 0, 0, TAU); ctx.stroke();
+    
+    // 箭頭位置錯開：單數在右下(45度)，雙數在左下(135度)
+    let baseAngle = (i % 2 === 1) ? Math.PI * 0.25 : Math.PI * 0.75;
+    
+    let arrowX = r * Math.cos(baseAngle);
+    let arrowY = r * Math.sin(baseAngle) * ratio;
+    
+    // 計算切線方向
+    let dpx = -Math.sin(baseAngle); 
+    let dpy = Math.cos(baseAngle) * ratio;
+    // Canvas 的角度正向在畫面上是順時針。電流向上時，從上方俯視應為逆時針，
+    // 因此必須反轉參數切線；電流向下時才沿參數正向。
+    if (straightState.isUp) { dpx *= -1; dpy *= -1; }
+    let arrowAngle = Math.atan2(dpy, dpx);
+    
+    ctx.save(); 
+    ctx.translate(arrowX, arrowY); 
+    ctx.rotate(arrowAngle);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(12, 0); ctx.lineTo(0, 6); ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore(); 
+
+  // 4. 上半段導線 (實心)
+  ctx.save();
+  ctx.strokeStyle = C.orange; 
+  ctx.lineWidth = 16; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(cx, cy - 250); ctx.lineTo(cx, cy); ctx.stroke();
+  
+  // 電流箭頭直接融入銅色導線，不再像另一個浮動物件。
+  if(straightState.isUp) drawArrow3D(ctx,cx,cy-75,cx,cy-165,C.orange,9,16);
+  else drawArrow3D(ctx,cx,cy-165,cx,cy-75,C.orange,9,16);
+  label(ctx,'I',cx+32,cy-120,C.orange,'left',24);
+  ctx.restore();
+
+  // 5. 虛擬右手 (無文字干擾)
+  drawHand(ctx, cx + 270, cy + 100, straightState.isUp);
+}
+
+document.getElementById('wireDirBtn').addEventListener('click', (e) => {
+    straightState.isUp = !straightState.isUp;
+    e.target.textContent = straightState.isUp ? '切換電流方向：向上 ⬆️' : '切換電流方向：向下 ⬇️';
+    document.getElementById('straightResult').innerHTML = straightState.isUp ? '大拇指向上指，四指逆時針彎曲，代表磁場呈<strong class="accent-green">逆時針方向</strong>環繞。' : '大拇指向下指，四指順時針彎曲，代表磁場呈<strong class="accent-green">順時針方向</strong>環繞。';
+    safeDraw('straightCanvas', drawStraightCanvas);
+});
+
+
+// ==========================================
+// Tab 2: 圓形線圈磁場 (3D 旋轉 + 完美閉合動畫 + 重置)
+// ==========================================
+const loopState = { isCCW: true, bendStep: 0, rotX: 0.2, rotY: 0, isDragging: false }; 
+
+function rotate3D(x, y, z, rx, ry) {
+    let y1 = y * Math.cos(rx) - z * Math.sin(rx);
+    let z1 = y * Math.sin(rx) + z * Math.cos(rx);
+    let x2 = x * Math.cos(ry) + z1 * Math.sin(ry);
+    let z2 = -x * Math.sin(ry) + z1 * Math.cos(ry);
+    return {x: x2, y: y1, z: z2};
+}
+
+function drawLoopCanvas(ctx) {
+  clear(ctx);
+  const cx = 500, cy = 300;
+  
+  let p = loopState.bendStep / 10; 
+  let theta = p * 1.98 * Math.PI; // 幾乎閉合成圈，避免數學崩潰
+  let L = 600; 
+  
+  // 參數 s 由線圈頂端沿畫面方向增加；逆時針必須使用正切線。
+  // 舊版在這裡乘了 -1，等於把「逆時針」實際畫成順時針，磁場才會顛倒。
+  let dir = loopState.isCCW ? 1 : -1; 
+  
+  function getProj(x, y, z) {
+      let p3d = rotate3D(x, y, z, loopState.rotX, loopState.rotY);
+      return { sx: cx + p3d.x, sy: cy - p3d.y + p3d.z * 0.3 };
+  }
+
+  function getWirePos(s) {
+      if (theta === 0) return { P:{x:s*L/2,y:0,z:0}, T:{x:dir,y:0,z:0}, N:{x:0,y:0,z:-1}, B:{x:0,y:1,z:0} };
+      let R = L / theta; let phi = s * theta / 2;
+      return {
+          P: {x: R*Math.sin(phi), y:0, z: R*Math.cos(phi)-R},
+          T: {x: dir*Math.cos(phi), y:0, z: dir*-Math.sin(phi)},
+          N: {x: -Math.sin(phi), y:0, z: -Math.cos(phi)},
+          B: {x: 0, y:1, z:0}
+      };
+  }
+
+  // 1. 畫純白色的 3D 環繞磁力線
+  let spots = [-0.8, -0.4, 0, 0.4, 0.8];
+  let radii = [30, 60, 95];
+  for (let s of spots) {
+      let frame = getWirePos(s);
+      for (let r of radii) {
+          ctx.beginPath();
+          for(let g=0; g<=TAU+0.1; g+=0.1) {
+              let px = frame.P.x + r * Math.cos(g)*frame.N.x + r * Math.sin(g)*frame.B.x;
+              let py = frame.P.y + r * Math.cos(g)*frame.N.y + r * Math.sin(g)*frame.B.y;
+              let pz = frame.P.z + r * Math.cos(g)*frame.N.z + r * Math.sin(g)*frame.B.z;
+              let proj = getProj(px, py, pz);
+              if(g===0) ctx.moveTo(proj.sx, proj.sy); else ctx.lineTo(proj.sx, proj.sy);
+          }
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; ctx.lineWidth = 2.5; ctx.stroke();
+
+          // 白色箭頭
+          let gArr = Math.PI/2; 
+          let px = frame.P.x + r*Math.sin(gArr)*frame.B.x;
+          let py = frame.P.y + r*Math.sin(gArr)*frame.B.y;
+          let pz = frame.P.z + r*Math.sin(gArr)*frame.B.z;
+          let proj1 = getProj(px, py, pz);
+
+          let curDir = loopState.isCCW ? 1 : -1;
+          let dpGeoX = -Math.sin(gArr)*frame.N.x + Math.cos(gArr)*frame.B.x;
+          let dpGeoY = -Math.sin(gArr)*frame.N.y + Math.cos(gArr)*frame.B.y;
+          let dpGeoZ = -Math.sin(gArr)*frame.N.z + Math.cos(gArr)*frame.B.z;
+
+          let proj2 = getProj(px + dpGeoX * curDir, py + dpGeoY * curDir, pz + dpGeoZ * curDir);
+          let angle = Math.atan2(proj2.sy - proj1.sy, proj2.sx - proj1.sx);
+
+          ctx.save(); ctx.translate(proj1.sx, proj1.sy); ctx.rotate(angle);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(12, 0); ctx.lineTo(0, 6); ctx.fill();
+          ctx.restore();
+      }
+  }
+
+  // 2. 疊加的中心磁場 (彎曲過半時浮現)
+  if (p > 0.4) {
+      let alpha = (p - 0.4)/0.6;
+      let R = theta===0 ? 0 : L/theta;
+      let cz = theta===0 ? 0 : -R;
+
+      let topPos = {x:0, y:180, z:cz};
+      let botPos = {x:0, y:-180, z:cz};
+      let pTop = getProj(topPos.x, topPos.y, topPos.z);
+      let pBot = getProj(botPos.x, botPos.y, botPos.z);
+
+      // 由每一小段導線的 I × r 得到同一軸向；五支箭頭表示磁場累加。
+      // 逆時針時全部朝 +y（畫面上方），順時針時全部反轉。
+      const axisSign=loopState.isCCW?1:-1;
+      [-56,-28,0,28,56].forEach((dx,index)=>{
+        const from=getProj(dx,-axisSign*(80+index*7),cz);
+        const to=getProj(dx,axisSign*(80+index*7),cz);
+        drawArrow3D(ctx,from.sx,from.sy,to.sx,to.sy,`rgba(221,140,255,${.42+alpha*.5})`,4+index*.35,10);
+      });
+      label(ctx,'各段磁場同向疊加',cx,cy-205,C.purple,'center',20);
+
+      // N 極/S極
+      let nLabelPos = loopState.isCCW ? topPos : botPos;
+      let sLabelPos = loopState.isCCW ? botPos : topPos;
+      let pN = getProj(nLabelPos.x, nLabelPos.y + (loopState.isCCW ? 30 : -30), nLabelPos.z);
+      let pS = getProj(sLabelPos.x, sLabelPos.y + (loopState.isCCW ? -30 : 30), sLabelPos.z);
+
+      label(ctx, 'N 極', pN.sx, pN.sy, `rgba(255,111,118,${alpha})`, 'center', 26);
+      label(ctx, 'S 極', pS.sx, pS.sy, `rgba(114,185,255,${alpha})`, 'center', 26);
+  }
+
+  // 3. 動態彎曲導線實體
+  ctx.strokeStyle = 'rgba(255,179,71,.58)'; ctx.lineWidth = 14; ctx.lineCap = 'round';
+  ctx.shadowColor='rgba(255,179,71,.35)';ctx.shadowBlur=8;
+  ctx.beginPath();
+  let endS = (loopState.bendStep === 10) ? 0.98 : 1.0; 
+  for(let s=-1; s<=endS; s+=0.02) {
+      let f = getWirePos(s);
+      let proj = getProj(f.P.x, f.P.y, f.P.z);
+      if(s===-1) ctx.moveTo(proj.sx, proj.sy); else ctx.lineTo(proj.sx, proj.sy);
+  }
+  ctx.stroke();
+  ctx.shadowBlur=0;
+
+  // 4. 三支同色系立體電流箭頭沿導線切線前進。
+  [-.58,0,.58].forEach((s,index)=>{
+    const f=getWirePos(s);
+    const a={x:f.P.x-f.T.x*24,y:f.P.y,z:f.P.z-f.T.z*24};
+    const b={x:f.P.x+f.T.x*24,y:f.P.y,z:f.P.z+f.T.z*24};
+    const pa=getProj(a.x,a.y,a.z),pb=getProj(b.x,b.y,b.z);
+    drawArrow3D(ctx,pa.sx,pa.sy,pb.sx,pb.sy,C.orange,7,13);
+    if(index===1)label(ctx,'I',pb.sx,pb.sy-25,C.orange,'center',22);
+  });
+
+  // 任一彎曲階段都能自由旋轉觀察。
+  if(!loopState.isDragging) {
+      label(ctx, '🖐️ 任一階段皆可拖曳，360° 立體觀察', cx, 550, C.cyan, 'center', 22);
+  }
+}
+
+// 綁定 360 度拖曳事件
+const loopCanvas = document.getElementById('loopCanvas');
+let lastMouseX = 0, lastMouseY = 0;
+
+function handleLoopDown(e) {
+    loopState.isDragging = true;
+    lastMouseX = e.touches ? e.touches[0].clientX : e.clientX;
+    lastMouseY = e.touches ? e.touches[0].clientY : e.clientY;
+}
+function handleLoopMove(e) {
+    if (!loopState.isDragging) return;
+    let currentX = e.touches ? e.touches[0].clientX : e.clientX;
+    let currentY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    let deltaX = currentX - lastMouseX;
+    let deltaY = currentY - lastMouseY;
+    
+    loopState.rotY += deltaX * 0.01;
+    loopState.rotX += deltaY * 0.01;
+    
+    lastMouseX = currentX; lastMouseY = currentY;
+    safeDraw('loopCanvas', drawLoopCanvas);
+    if(e.cancelable) e.preventDefault();
+}
+function handleLoopUp() { loopState.isDragging = false; }
+
+loopCanvas.addEventListener('mousedown', handleLoopDown);
+window.addEventListener('mousemove', handleLoopMove);
+window.addEventListener('mouseup', handleLoopUp);
+loopCanvas.addEventListener('touchstart', handleLoopDown, {passive: false});
+window.addEventListener('touchmove', handleLoopMove, {passive: false});
+window.addEventListener('touchend', handleLoopUp);
+
+document.getElementById('loopDirBtn').addEventListener('click', (e) => {
+    loopState.isCCW = !loopState.isCCW;
+    e.target.textContent = loopState.isCCW ? '切換電流：逆時針 ↺' : '切換電流：順時針 ↻';
+    document.getElementById('loopResult').innerHTML = loopState.isCCW ? '電流逆時針流動，四指順著電流彎，大拇指朝上，中心產生向上的磁場 (<strong style="color:var(--pole-n)">上方為 N 極</strong>)。' : '電流順時針流動，四指順著電流彎，大拇指朝下，中心產生向下的磁場 (<strong style="color:var(--pole-s)">下方為 N 極</strong>，上方為 S 極)。';
+    safeDraw('loopCanvas', drawLoopCanvas);
+});
+
+document.getElementById('bendBtn').addEventListener('click', (e) => {
+    if(loopState.bendStep < 10) {
+        loopState.bendStep++;
+        e.target.textContent = `彎曲導線 (${loopState.bendStep}/10)`;
+        if(loopState.bendStep === 10) {
+            e.target.style.display = 'none'; 
+            document.getElementById('loopResetBtn').style.display = 'inline-block'; 
+            document.getElementById('loopResult').innerHTML = '線圈完成了！所有小磁場疊加在正中央，形成了極為強大集中的直線磁場。';
+        }
+        safeDraw('loopCanvas', drawLoopCanvas);
+    }
+});
+
+document.getElementById('loopResetBtn').addEventListener('click', (e) => {
+    loopState.bendStep = 0;
+    loopState.rotX = 0.2; 
+    loopState.rotY = 0;
+    document.getElementById('bendBtn').style.display = 'inline-block';
+    document.getElementById('bendBtn').textContent = `彎曲導線 (0/10)`;
+    e.target.style.display = 'none';
+    document.getElementById('loopResult').innerHTML = '導線目前是直的，請點擊按鈕，觀察彎曲時磁場如何疊加融合！';
+    safeDraw('loopCanvas', drawLoopCanvas);
+});
+
+// ==========================================
+// Tab 3: 螺線管與磁極 (未修改，保留原狀)
+// ==========================================
+const solState = { isDown: true };
+function drawSolenoidCanvas(ctx) {
+  clear(ctx);
+  const cx = 500, cy = 300;
+  
+  let poles = solState.isDown 
+      ? [{x: 350, y: cy, m: 80000}, {x: 650, y: cy, m: -80000}] 
+      : [{x: 350, y: cy, m: -80000}, {x: 650, y: cy, m: 80000}]; 
+      
+  drawSymmetricFieldLines(ctx, poles, 18, 30, 'rgba(190, 90, 210, 0.8)', true);
+
+  ctx.save();
+  ctx.fillStyle = '#294b41'; ctx.strokeStyle = '#58736a'; ctx.lineWidth = 2;
+  ctx.fillRect(350, 260, 300, 80); ctx.strokeRect(350, 260, 300, 80);
+  
+  ctx.strokeStyle = C.orange; ctx.lineWidth = 8;
+  for(let i=0; i<=10; i++) {
+      let wx = 360 + i*28;
+      ctx.beginPath();
+      ctx.moveTo(wx, 260); ctx.quadraticCurveTo(wx + 15, cy, wx, 340);
+      ctx.stroke();
+      
+      if (i === 5) {
+          if(solState.isDown)drawArrow3D(ctx,wx+8,278,wx+8,322,C.orange,6,11);
+          else drawArrow3D(ctx,wx+8,322,wx+8,278,C.orange,6,11);
+      }
+  }
+  
+  label(ctx, '電流 I', 500, 370, C.orange, 'center', 24);
+  label(ctx, solState.isDown ? 'N 極' : 'S 極', 310, cy, solState.isDown ? C.poleN : C.poleS, 'center', 28);
+  label(ctx, solState.isDown ? 'S 極' : 'N 極', 690, cy, solState.isDown ? C.poleS : C.poleN, 'center', 28);
+  
+  ctx.translate(cx, cy + 120);
+  if(!solState.isDown) { ctx.scale(-1, 1); }
+  
+  ctx.strokeStyle = C.orange; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-60, 0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-50, -10); ctx.lineTo(-60, 0); ctx.lineTo(-50, 10); ctx.stroke();
+  label(ctx, '大拇指朝左，左端為 N 極', cx - 60, cy + 130, C.orange, 'right', 20);
+  
+  ctx.strokeStyle = C.green;
+  ctx.beginPath(); ctx.arc(40, -20, 30, Math.PI, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(10, -20); ctx.lineTo(10, 0); ctx.stroke(); 
+  ctx.beginPath(); ctx.moveTo(5, -10); ctx.lineTo(10, 0); ctx.lineTo(15, -10); ctx.stroke();
+  label(ctx, '四指 (順電流)', solState.isDown ? 90 : -90, -40, C.green, 'center', 20);
+
+  ctx.restore();
+}
+
+document.getElementById('solDirBtn').addEventListener('click', (e) => {
+    solState.isDown = !solState.isDown;
+    e.target.textContent = solState.isDown ? '表面電流：往下流動 ↓' : '表面電流：往上流動 ↑';
+    document.getElementById('solResult').innerHTML = solState.isDown ? '表面電流向下，四指向下彎曲，大拇指朝左，因此<strong style="color:var(--pole-n)">左端為 N 極</strong>。' : '表面電流向上，四指向上彎曲，大拇指朝右，因此<strong style="color:var(--pole-n)">右端為 N 極</strong>。';
+    safeDraw('solenoidCanvas', drawSolenoidCanvas);
+});
+
+// ==========================================
+// Tab 4: 電磁鐵起重機 (未修改，保留原狀)
+// ==========================================
+const craneState = { loops: 2, current: 2, core: false, power: false, clips: [], raf: 0 };
+function initClips() {
+    craneState.clips = [];
+    for(let i=0; i<30; i++) {
+        craneState.clips.push({
+            x: 400 + Math.random()*200,
+            y: 500 + Math.random()*50,
+            angle: Math.random()*Math.PI,
+            active: false,
+            tx: 0, ty: 0
+        });
+    }
+}
+
+function drawCraneCanvas(ctx) {
+  clear(ctx);
+  const cx = 500;
+  
+  let strength = 0;
+  if(craneState.power) {
+      strength = (parseInt(craneState.loops) * parseInt(craneState.current)) * (craneState.core ? 1.5 : 0.8);
+  }
+  
+  let activeCount = Math.floor(Math.min(strength, 30));
+  for(let i=0; i<30; i++) {
+      let c = craneState.clips[i];
+      if(i < activeCount) {
+          if(!c.active) {
+              c.active = true;
+              c.tx = 450 + Math.random()*100;
+              c.ty = 360 + Math.random()*20;
+          }
+          c.y += (c.ty - c.y) * 0.1;
+          c.x += (c.tx - c.x) * 0.1;
+      } else {
+          c.active = false;
+          let groundY = 500 + (i%5)*10;
+          c.y += (groundY - c.y) * 0.1;
+      }
+  }
+
+  ctx.save();
+  ctx.fillStyle = '#27483f'; ctx.fillRect(cx - 20, 0, 40, 200); 
+
+  // 線圈後半圈先畫：較暗、半透明，讓學生看出它繞到鐵芯後方。
+  const loopCount = parseInt(craneState.loops) * 3;
+  const loopYs = Array.from({length: loopCount}, (_, i) =>
+      215 + i * (120 / Math.max(1, loopCount - 1))
+  );
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(197,109,38,.46)';
+  ctx.lineWidth = 7;
+  loopYs.forEach(wy => {
+      ctx.beginPath();
+      ctx.ellipse(cx, wy, 98, 14, 0, Math.PI, Math.PI * 2);
+      ctx.stroke();
+  });
+
+  // 鐵芯位在前、後半圈之間，建立真正的包覆感。
+  if(craneState.core) {
+      const coreGradient = ctx.createLinearGradient(cx - 80, 0, cx + 80, 0);
+      coreGradient.addColorStop(0, '#70847d');
+      coreGradient.addColorStop(.45, '#b6c2bd');
+      coreGradient.addColorStop(.55, '#d7dfdc');
+      coreGradient.addColorStop(1, '#70847d');
+      ctx.fillStyle = coreGradient;
+      ctx.fillRect(cx - 80, 200, 160, 150);
+  } else {
+      ctx.fillStyle = '#36584e';
+      ctx.fillRect(cx - 80, 200, 160, 150);
+      label(ctx, '空心', cx, 275, '#9eb5ad', 'center', 24);
+  }
+
+  // 亮橘前半圈與細高光：匝數增加時仍能一圈一圈辨認。
+  ctx.strokeStyle = C.orange;
+  ctx.lineWidth = 8;
+  ctx.shadowColor = 'rgba(255,179,71,.55)';
+  ctx.shadowBlur = 7;
+  loopYs.forEach(wy => {
+      ctx.beginPath();
+      ctx.ellipse(cx, wy, 98, 14, 0, 0, Math.PI);
+      ctx.stroke();
+  });
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255,255,255,.48)';
+  ctx.lineWidth = 2;
+  loopYs.forEach(wy => {
+      ctx.beginPath();
+      ctx.ellipse(cx, wy - 1, 95, 12, 0, 0, Math.PI);
+      ctx.stroke();
+  });
+
+  label(ctx, craneState.power ? 'N 極' : '', cx - 130, 275, C.poleN, 'center', 26);
+  label(ctx, craneState.power ? 'S 極' : '', cx + 130, 275, C.poleS, 'center', 26);
+  
+  if(craneState.power) {
+      ctx.strokeStyle = `rgba(85, 233, 255, ${0.5 + Math.sin(Date.now()/100)*0.2})`;
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(cx, 350, 100 + Math.random()*10, 0, Math.PI); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, 350, 130 + Math.random()*10, 0, Math.PI); ctx.stroke();
+      label(ctx, `磁力強度：${Math.floor(strength*10)}`, cx, 150, C.yellow, 'center', 28);
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = '#ddd'; ctx.lineWidth = 3;
+  for(let c of craneState.clips) {
+      ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.angle);
+      ctx.beginPath(); ctx.roundRect(-10, -5, 20, 10, 5); ctx.stroke();
+      ctx.restore();
+  }
+  ctx.restore();
+  
+  ctx.fillStyle = '#1a332b'; ctx.fillRect(0, 550, 1000, 50);
+
+  if(craneState.power || craneState.clips[0].y < 490 || craneState.clips[29].y > 510) {
+      craneState.raf = requestAnimationFrame(() => safeDraw('craneCanvas', drawCraneCanvas));
+  } else {
+      craneState.raf = 0;
+  }
+}
+
+function updateCrane() {
+    craneState.loops = document.getElementById('craneLoops').value;
+    craneState.current = document.getElementById('craneCurrent').value;
+    craneState.core = document.getElementById('craneCore').checked;
+    
+    if(craneState.power) {
+        document.getElementById('craneResult').innerHTML = `通電中！ 纏繞匝數(N) * 電池數量(I) * 軟鐵芯(有/無) = <strong class="accent-cyan">超強磁力</strong>`;
+    }
+    if(!craneState.raf) { safeDraw('craneCanvas', drawCraneCanvas); }
+}
+
+document.getElementById('craneLoops').addEventListener('input', updateCrane);
+document.getElementById('craneCurrent').addEventListener('input', updateCrane);
+document.getElementById('craneCore').addEventListener('change', updateCrane);
+document.getElementById('cranePowerBtn').addEventListener('click', (e) => {
+    craneState.power = !craneState.power;
+    e.target.textContent = craneState.power ? '🛑 關閉電源釋放' : '⚡ 按下通電測試吸力';
+    e.target.classList.toggle('warning'); e.target.classList.toggle('success');
+    if(!craneState.power) document.getElementById('craneResult').innerHTML = '<strong class="accent-pink">已斷電，磁力消失，物品掉落。</strong>';
+    updateCrane();
+});
+
+// ==========================================
+// Tab 5: 傳統電話聽筒（變動電流 → 變動磁力 → 振膜 → 聲波）
+// ==========================================
+const phoneState={playing:false,start:0,raf:0};
+
+function drawPhoneCanvas(ctx){
+  clear(ctx);
+  const now=performance.now();
+  const phase=phoneState.playing?(now-phoneState.start)*.006:0;
+  const wave=Math.sin(phase);
+  const strength=.55+.35*wave;
+  const diaphragmX=730-18*wave;
+
+  label(ctx,'變動電流',170,62,C.orange,'center',25);
+  label(ctx,'電磁鐵',500,62,C.cyan,'center',25);
+  label(ctx,'金屬薄片振動發聲',810,62,C.pink,'center',25);
+
+  // 導線與沿線前進的同色電流脈衝
+  ctx.strokeStyle=C.orange;ctx.lineWidth=9;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(65,300);ctx.lineTo(330,300);ctx.lineTo(390,235);ctx.stroke();
+  for(let i=0;i<5;i++){
+    const p=((phase*.22+i/5)%1+1)%1;
+    const x=75+p*250;
+    ctx.fillStyle=C.orange;ctx.shadowColor=C.orange;ctx.shadowBlur=10;
+    ctx.beginPath();ctx.arc(x,300,5+strength*3,0,TAU);ctx.fill();
+  }
+  ctx.shadowBlur=0;
+  drawArrow3D(ctx,185,300,285,300,C.orange,7,14);
+
+  // 軟鐵芯
+  const coreGrad=ctx.createLinearGradient(385,0,635,0);
+  coreGrad.addColorStop(0,'#677c75');coreGrad.addColorStop(.45,'#d7e0dc');coreGrad.addColorStop(1,'#506760');
+  ctx.fillStyle=coreGrad;ctx.strokeStyle=C.white;ctx.lineWidth=3;
+  ctx.beginPath();ctx.roundRect(390,255,240,90,18);ctx.fill();ctx.stroke();
+
+  // 線圈轉 90°：螺線管的強磁場軸正對金屬薄片。
+  ctx.strokeStyle=C.orange;ctx.lineWidth=9;
+  for(let i=0;i<8;i++){
+    const x=405+i*29;
+    ctx.beginPath();ctx.ellipse(x,300,20,78,0,0,TAU);ctx.stroke();
+  }
+  label(ctx,'軟鐵芯（強磁場軸向 →）',510,430,C.white,'center',21);
+
+  // 磁場強弱隨電流同步改變，磁極端面朝向薄片，縮短氣隙。
+  ctx.strokeStyle=`rgba(221,140,255,${.35+strength*.55})`;
+  ctx.lineWidth=3+strength*4;ctx.shadowColor=C.purple;ctx.shadowBlur=12*strength;
+  [-48,-24,0,24,48].forEach(offset=>{
+    ctx.beginPath();ctx.moveTo(630,300+offset*.55);
+    ctx.bezierCurveTo(660,300+offset,690,300+offset*.75,diaphragmX-18,300+offset*.28);ctx.stroke();
+  });
+  drawArrow3D(ctx,640,300,diaphragmX-20,300,`rgba(221,140,255,${.5+strength*.45})`,5,10);
+  ctx.shadowBlur=0;
+
+  // 可振動的金屬薄片：位置直接由同一個 wave 控制，保證與磁力同步。
+  ctx.save();ctx.translate(diaphragmX,300);
+  const metal=ctx.createLinearGradient(-18,0,22,0);
+  metal.addColorStop(0,'#728780');metal.addColorStop(.5,'#f3faf7');metal.addColorStop(1,'#60736d');
+  ctx.fillStyle=metal;ctx.strokeStyle=C.pink;ctx.lineWidth=5;ctx.shadowColor=C.pink;ctx.shadowBlur=10;
+  ctx.beginPath();ctx.moveTo(0,-145);ctx.quadraticCurveTo(16*wave,0,0,145);ctx.lineTo(20,145);
+  ctx.quadraticCurveTo(36*wave,0,20,-145);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+
+  // 聲波由振膜向外傳出
+  ctx.strokeStyle=C.pink;ctx.lineWidth=4;ctx.globalAlpha=phoneState.playing?.9:.35;
+  for(let i=0;i<4;i++){
+    const r=35+i*40+((phase*12)%36);
+    ctx.beginPath();ctx.ellipse(diaphragmX+10,300,r,r*.78,0,-1.05,1.05);ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  label(ctx,'電能',250,515,C.orange,'center',22);
+  label(ctx,'→  磁能  →',500,515,C.purple,'center',22);
+  label(ctx,'聲能',785,515,C.pink,'center',22);
+
+  if(phoneState.playing){
+    phoneState.raf=requestAnimationFrame(()=>safeDraw('phoneCanvas',drawPhoneCanvas));
+  }else phoneState.raf=0;
+}
+
+document.getElementById('phonePlayBtn').addEventListener('click',e=>{
+  phoneState.playing=!phoneState.playing;
+  if(phoneState.playing){
+    phoneState.start=performance.now();
+    e.target.textContent='Ⅱ 暫停動畫';
+    document.getElementById('phoneResult').innerHTML='變動電流使電磁鐵的磁力忽強忽弱，金屬薄片因此<strong class="accent-pink">同步振動並推動空氣</strong>，重新產生聲音。';
+  }else{
+    e.target.textContent='▶ 播放：電流如何變回聲音';
+    cancelAnimationFrame(phoneState.raf);phoneState.raf=0;
+  }
+  safeDraw('phoneCanvas',drawPhoneCanvas);
+});
+
+// ==========================================
+// 共用導航系統
+// ==========================================
+function drawActive() {
+  const id = document.querySelector('.tab-content.active')?.id;
+  if (id === 'tab-straight') safeDraw('straightCanvas', drawStraightCanvas);
+  if (id === 'tab-loop') safeDraw('loopCanvas', drawLoopCanvas);
+  if (id === 'tab-solenoid') safeDraw('solenoidCanvas', drawSolenoidCanvas);
+  if (id === 'tab-phone') safeDraw('phoneCanvas',drawPhoneCanvas);
+  
+  if (id === 'tab-crane') { 
+      if(craneState.clips.length===0) initClips(); 
+      if(!craneState.raf) safeDraw('craneCanvas', drawCraneCanvas); 
+  } else {
+      cancelAnimationFrame(craneState.raf); craneState.raf = 0;
+  }
+  if(id!=='tab-phone'){
+    phoneState.playing=false;
+    cancelAnimationFrame(phoneState.raf);phoneState.raf=0;
+    const phoneBtn=document.getElementById('phonePlayBtn');
+    if(phoneBtn)phoneBtn.textContent='▶ 播放：電流如何變回聲音';
+  }
+}
+
+document.querySelectorAll('.tab-button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tab-button').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); document.getElementById(b.dataset.tab)?.classList.add('active');
+  setTimeout(drawActive, 60);
+}));
+
+document.querySelectorAll('.sub-tab-btn').forEach(b => b.addEventListener('click', () => {
+  const parent = document.getElementById(b.dataset.parent);
+  parent.querySelectorAll('.sub-tab-btn').forEach(x => x.classList.remove('active'));
+  parent.querySelectorAll('.sub-tab-content').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); parent.querySelector(`#${b.dataset.sub}`)?.classList.add('active');
+  setTimeout(drawActive, 60);
+}));
+
+document.querySelectorAll('.practice-box').forEach(box => box.querySelectorAll('.practice-btn').forEach(b => b.addEventListener('click', () => {
+  box.querySelectorAll('.practice-btn').forEach(x => x.classList.remove('active'));
+  box.querySelectorAll('.practice-step').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); box.querySelector(`[data-content="${b.dataset.step}"]`)?.classList.add('active');
+})));
+
+window.addEventListener('resize', () => setTimeout(drawActive, 100), { passive: true });
+window.addEventListener('orientationchange', () => setTimeout(drawActive, 180), { passive: true });
+window.addEventListener('load', () => { setTimeout(drawActive, 100); });
+</script>
+</body>
+</html>
