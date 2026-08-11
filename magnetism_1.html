@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>磁鐵與磁場</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#11261f;--panel:#173b31;--canvas:#0c1e19;--white:#ffffff;--yellow:#fff36a;--cyan:#55e9ff;
+  --orange:#ffb347;--green:#9af06f;--pink:#ff78b7;--purple:#dd8cff;--red:#ff6f76;--muted:#b8c9c1;
+  --blue:#72b9ff;--pole-n:#ff6f76;--pole-s:#72b9ff;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  margin:0;color:var(--white);font-family:'Noto Sans TC',system-ui,sans-serif;
+  font-size:20px;line-height:1.65;
+  background:radial-gradient(circle at 1px 1px,rgba(255,255,255,.045) 1px,transparent 1.3px) 0 0/6px 6px,var(--bg)
+}
+button,input{font:inherit}button{touch-action:manipulation}
+.app{max-width:1080px;margin:auto;padding:22px 18px 70px}
+.hero{text-align:center;padding:18px 10px 12px}
+h1{font-size:46px;line-height:1.15;margin:0;color:var(--yellow);font-weight:900}
+.subtitle{color:var(--muted);font-weight:700;margin:12px 0 0}
+.tab-container{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:18px 0 22px}
+.tab-button,.action-btn,.practice-btn,.sub-tab-btn{
+  border:2px solid var(--muted);background:#102d26;color:var(--white);border-radius:14px;padding:11px 16px;
+  font-weight:900;cursor:pointer;transition:.18s transform,.18s background,.18s border-color
+}
+.tab-button:hover,.action-btn:hover,.practice-btn:hover,.sub-tab-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.08)}
+.tab-button.active,.active-btn{background:var(--cyan)!important;color:#0b2b2e!important;border-color:var(--cyan)!important}
+.tab-content{display:none;animation:fade .2s ease}.tab-content.active{display:block}@keyframes fade{from{opacity:.35}to{opacity:1}}
+.grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.panel{background:rgba(22,58,47,.95);border:2px solid var(--cyan);border-radius:22px;padding:18px;min-width:0}
+.panel h2{margin:0 0 12px;color:var(--yellow);font-size:29px;line-height:1.25}
+.panel p{margin:8px 0}.panel ul{margin:8px 0;padding-left:1.35em}.panel li{margin:7px 0}
+.key-box,.result-box{border:2px solid var(--cyan);border-radius:14px;padding:13px 15px;margin-top:14px;background:rgba(85,233,255,.05);font-weight:700}
+.canvas-wrap{background:var(--canvas);border:3px solid var(--cyan);border-radius:20px;overflow:hidden;position:relative}
+.rect-canvas{display:block;width:100%;height:auto;aspect-ratio:10/6;cursor:grab}
+.rect-canvas:active{cursor:grabbing}
+.controls{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.practice-box{margin-top:18px;border:2px solid #58736a;border-radius:18px;padding:14px;background:rgba(11,43,46,.18)}
+.practice-tabs{display:flex;gap:8px;flex-wrap:wrap}.practice-btn{padding:8px 14px}.practice-btn.active{background:var(--yellow);color:#21362f;border-color:var(--yellow)}
+.practice-step{display:none;padding:12px 4px 2px}.practice-step.active{display:block}.practice-step h3{color:var(--yellow);margin:0 0 7px;font-size:24px}.practice-step p{margin:0}
+.accent-cyan{color:var(--cyan)}.accent-orange{color:var(--orange)}.accent-pink{color:var(--pink)}.accent-green{color:var(--green)}.accent-yellow{color:var(--yellow)}
+.nowrap{white-space:nowrap}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:0.85em;line-height:1.1;margin:0 4px}
+.frac span:first-child{border-bottom:2px solid currentColor;padding-bottom:2px}
+.frac span:last-child{padding-top:2px}
+.sub-tab-container{display:flex;gap:6px;margin-bottom:14px;border-bottom:2px solid #4d6b61;padding-bottom:10px}
+.sub-tab-btn{padding:8px 14px;border-radius:10px;border:none;background:transparent;color:var(--muted)}
+.sub-tab-btn.active{background:rgba(85,233,255,.15);color:var(--cyan);border:1px solid var(--cyan)}
+.sub-tab-content{display:none;animation:fade .2s ease}.sub-tab-content.active{display:block}
+@media(max-width:768px){
+  .app{padding:12px 8px 50px}h1{font-size:34px}.grid-2col{grid-template-columns:1fr}
+  .panel{padding:13px}.panel h2{font-size:25px}
+  .tab-container{display:grid;grid-template-columns:1fr 1fr}.tab-button{padding:9px 6px;font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+  <h1>磁鐵與磁場</h1>
+  <p class="subtitle">從看不見的磁力線到地球大磁鐵，解開空間中的磁力密碼。</p>
+</header>
+
+<nav class="tab-container" aria-label="單元分頁">
+  <button class="tab-button active" data-tab="tab-pole">🧲 磁鐵與磁極</button>
+  <button class="tab-button" data-tab="tab-mag">✨ 磁化與保存</button>
+  <button class="tab-button" data-tab="tab-line">〰️ 磁力線分布</button>
+  <button class="tab-button" data-tab="tab-compass">🧭 磁場與指南針</button>
+  <button class="tab-button" data-tab="tab-earth">🌍 地球大磁鐵</button>
+</nav>
+
+<!-- 1. 磁鐵與磁極 -->
+<section id="tab-pole" class="tab-content active">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="pole-interact" data-parent="tab-pole">磁極交互作用</button>
+        <button class="sub-tab-btn" data-sub="pole-break" data-parent="tab-pole">磁鐵的切斷</button>
+      </nav>
+      
+      <div id="pole-interact" class="sub-tab-content active">
+        <h2>同名相斥，異名相吸</h2>
+        <p>磁鐵任何形狀都有兩個不同的磁性端，稱為<span class="nowrap"><strong class="accent-cyan">磁極</strong></span>。</p>
+        <ul>
+          <li>指向北方的稱為 <strong style="color:var(--pole-n)">指北極 (N 極)</strong>。</li>
+          <li>指向南方的稱為 <strong style="color:var(--pole-s)">指南極 (S 極)</strong>。</li>
+          <li>當兩塊磁鐵靠近時，<strong class="accent-pink">同名極互相排斥</strong>，<strong class="accent-green">異名極互相吸引</strong>。</li>
+        </ul>
+        <div class="key-box">不管磁鐵多大或多小，N 極與 S 極永遠成對出現！</div>
+      </div>
+      
+      <div id="pole-break" class="sub-tab-content">
+        <h2>磁極永遠成對出現</h2>
+        <p>如果把一塊長條形磁鐵從中間折斷，會發生什麼事？</p>
+        <ul>
+          <li>斷裂處會<strong class="accent-cyan">自動產生新的磁極</strong>。</li>
+          <li>切斷後的每一小塊，都會保有完整的 <strong style="color:var(--pole-n)">N 極</strong>與 <strong style="color:var(--pole-s)">S 極</strong>。</li>
+          <li><strong class="accent-orange">無法單獨分離</strong>出只有 N 極或只有 S 極的「單極磁鐵」。</li>
+        </ul>
+        <div class="key-box">即使切到原子大小，它依然是一個完整的微小磁鐵！</div>
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>【互動】磁極實驗室</h2>
+      <div class="canvas-wrap"><canvas id="poleCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
+      <div class="controls" id="pole-controls-interact">
+        <button class="action-btn pole-btn active-btn" data-action="attract">異名極靠近</button>
+        <button class="action-btn pole-btn" data-action="repel">同名極靠近</button>
+      </div>
+      <div class="controls" id="pole-controls-break" style="display:none;">
+        <button id="breakBtn" class="action-btn warning">✂️ 切斷磁鐵</button>
+        <button id="resetBreakBtn" class="action-btn">↺ 復原磁鐵</button>
+      </div>
+      <div id="poleResult" class="result-box">異名極 (N與S) 靠近時，會產生強烈的吸引力。</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>將一塊磁鐵等分成三段，總共會出現幾個 N 極與幾個 S 極？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>切斷磁鐵時，磁極會不會消失？每一段是不是都是獨立的磁鐵？</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>總共會有 <strong class="accent-cyan">3 個 N 極與 3 個 S 極</strong>。因為每一段都會成為具備完整雙極的新磁鐵。</p></div>
+  </div>
+</section>
+
+<!-- 2. 磁化與保存 -->
+<section id="tab-mag" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="mag-process" data-parent="tab-mag">磁化現象</button>
+        <button class="sub-tab-btn" data-sub="mag-store" data-parent="tab-mag">磁鐵的保存</button>
+      </nav>
+      
+      <div id="mag-process" class="sub-tab-content active">
+        <h2>把鐵變成磁鐵</h2>
+        <p>將原本沒有磁性的鐵釘靠近磁鐵，使其暫時具有磁性的現象稱為<span class="nowrap"><strong class="accent-cyan">磁化</strong></span>。</p>
+        <ul>
+          <li><strong class="accent-yellow">軟磁性物質 (如軟鐵)：</strong>容易被磁化，但磁鐵移開後<strong class="accent-pink">磁性容易消失</strong> (適合做電磁鐵)。</li>
+          <li><strong class="accent-orange">硬磁性物質 (如鋼)：</strong>不容易被磁化，但磁化後<strong class="accent-green">磁性可長久保存</strong> (適合做永久磁鐵)。</li>
+        </ul>
+        <div class="key-box">高溫加熱或劇烈撞擊，會破壞內部磁疇排列，使磁鐵失去磁性！</div>
+      </div>
+      
+      <div id="mag-store" class="sub-tab-content">
+        <h2>如何正確保存磁鐵？</h2>
+        <p>為了避免磁性隨著時間流失，必須讓磁力線形成封閉的迴路：</p>
+        <ul>
+          <li><strong class="accent-cyan">長條形磁鐵：</strong>應將兩支磁鐵的 <strong class="accent-orange">N 極與 S 極反向並排</strong>，並在兩端吸附軟鐵片。</li>
+          <li><strong class="accent-green">U 字形磁鐵：</strong>直接在兩極之間吸附一塊軟鐵片即可。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>【動畫】微觀世界下的磁化</h2>
+      <div class="canvas-wrap"><canvas id="magCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
+      <div class="controls" id="mag-controls-process">
+        <button id="magnetizeBtn" class="action-btn success">🧲 靠近磁鐵 (磁化)</button>
+        <button id="heatBtn" class="action-btn warning">🔥 高溫加熱 (退磁)</button>
+      </div>
+      <div class="controls" id="mag-controls-store" style="display:none;">
+        <button class="action-btn store-btn active-btn" data-type="bar">長條形保存法</button>
+        <button class="action-btn store-btn" data-type="u">U 字形保存法</button>
+      </div>
+      <div id="magResult" class="result-box">鐵塊內部有許多小磁區(磁疇)，平常排列凌亂，整體不具磁性。</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>工廠要製造能長時間吸附在冰箱上的造型磁鐵，內部應該選擇軟鐵還是鋼？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>軟鐵的磁性容易消失，鋼的磁性可以長久保存。</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>應該選擇<strong class="accent-cyan">鋼 (硬磁性物質)</strong>，才能確保製成永久磁鐵後磁性不易流失。</p></div>
+  </div>
+</section>
+
+<!-- 3. 磁力線分布 -->
+<section id="tab-line" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="line-bar" data-parent="tab-line">長條形與相對磁極</button>
+        <button class="sub-tab-btn" data-sub="line-u" data-parent="tab-line">U字形磁鐵</button>
+      </nav>
+      
+      <div id="line-bar" class="sub-tab-content active">
+        <h2>看見磁場的形狀</h2>
+        <p>鐵粉撒在磁鐵周圍，會受磁力作用排列成一條條曲線，稱為<span class="nowrap"><strong class="accent-cyan">磁力線</strong></span>。</p>
+        <ul>
+          <li><strong class="accent-orange">方向：</strong>外部由 <strong style="color:var(--pole-n)">N 極</strong> 出發，回到 <strong style="color:var(--pole-s)">S 極</strong>。內部則由 S 到 N，形成<strong class="accent-green">封閉曲線</strong>。</li>
+          <li><strong class="accent-pink">強弱：</strong>磁力線越<strong class="accent-yellow">密集</strong>的地方，代表磁場越強。</li>
+          <li>磁力線永遠不會相交！</li>
+        </ul>
+      </div>
+      
+      <div id="line-u" class="sub-tab-content">
+        <h2>特殊的均勻磁場</h2>
+        <p>U 字形磁鐵（或馬蹄形磁鐵）的設計，可以將 N 極與 S 極拉近：</p>
+        <ul>
+          <li>在 U 字形的兩個磁極之間，磁力線幾乎是<strong class="accent-cyan">互相平行的直線</strong>。</li>
+          <li>這種平行且等距的磁力線分布，代表兩極之間的空間擁有<strong class="accent-yellow">均勻的強磁場</strong>。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>【互動】撒鐵粉實驗室</h2>
+      <div class="canvas-wrap"><canvas id="lineCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
+      <div class="controls" id="line-controls-bar">
+        <button class="action-btn line-btn active-btn" data-type="single">單一長條形</button>
+        <button class="action-btn line-btn" data-type="attract">異名極相對</button>
+        <button class="action-btn line-btn" data-type="repel">同名極相對</button>
+      </div>
+      <div class="controls" id="line-controls-u" style="display:none;">
+        <button id="sprinkleUBtn" class="action-btn success">✨ 撒鐵粉觀察 U 字形磁場</button>
+      </div>
+      <div id="lineResult" class="result-box">點擊上方按鈕切換磁鐵排列，觀察磁力線形狀的改變！</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>長條形磁鐵的正中央地帶，鐵粉分布非常稀疏，這代表什麼意義？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>磁力線的「疏密程度」代表了磁場的什麼特性？</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>代表磁鐵中央地帶的<strong class="accent-cyan">磁場非常微弱</strong>（稱為中性區）。磁力主要集中在兩端磁極。</p></div>
+  </div>
+</section>
+
+<!-- 4. 磁場與指南針 -->
+<section id="tab-compass" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="compass-tangent" data-parent="tab-compass">磁力線切線方向</button>
+        <button class="sub-tab-btn" data-sub="compass-space" data-parent="tab-compass">空間中的指向</button>
+      </nav>
+      
+      <div id="compass-tangent" class="sub-tab-content active">
+        <h2>定義磁場的方向</h2>
+        <p>空間中任何一點的磁場方向，是透過指南針來定義的：</p>
+        <ul>
+          <li>將指南針靜置於磁場中，<span class="nowrap"><strong style="color:var(--pole-n)">N 極</strong></span>所指的方向即為<strong class="accent-cyan">該點的磁場方向</strong>。</li>
+          <li>在圖形上，磁場方向剛好與該點<span class="nowrap"><strong class="accent-yellow">磁力線的切線方向</strong></span>一致。</li>
+        </ul>
+        <div class="key-box">切線方向就是物體沿著曲線運動時，瞬間「飛出去」的直線方向。</div>
+      </div>
+      
+      <div id="compass-space" class="sub-tab-content">
+        <h2>解題必考：磁針偏轉</h2>
+        <p>考試常將多個磁針放置於磁鐵周圍，請記住兩大原則：</p>
+        <ul>
+          <li>磁針的 <strong style="color:var(--pole-n)">N 極</strong>會被磁鐵的 <strong style="color:var(--pole-s)">S 極</strong>吸引。</li>
+          <li>如果把磁力線畫出來，磁針的 <strong style="color:var(--pole-n)">N 極</strong>一定會順著箭頭的「切線方向」指過去。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>【互動】隨動磁針與切線</h2>
+      <div class="canvas-wrap"><canvas id="compassCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
+      <div id="compassResult" class="result-box">👆 <strong>直接在畫布上拖曳磁針！</strong> 觀察紅色 N 極如何順著磁力線的切線方向轉動。</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>若將小磁針放在磁鐵外部正中央的上方，磁針的 N 極會指向哪個方向？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>把小磁針拖曳到互動圖中磁鐵的「正上方」看看，磁力線是從 N 極出發走向 S 極。</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>磁針的 N 極會<strong class="accent-cyan">指向平行於磁鐵並朝向 S 極的方向</strong>（切線方向）。</p></div>
+  </div>
+</section>
+
+<!-- 5. 地球大磁鐵 -->
+<section id="tab-earth" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="earth-surface" data-parent="tab-earth">表面磁場指向</button>
+        <button class="sub-tab-btn" data-sub="earth-core" data-parent="tab-earth">透視地球內部</button>
+      </nav>
+      
+      <div id="earth-surface" class="sub-tab-content active">
+        <h2>為什麼指南針能指北？</h2>
+        <p>在地球表面，只要不受其他磁鐵干擾，指南針的 <strong style="color:var(--pole-n)">N 極</strong>永遠會指向北方。</p>
+        <ul>
+          <li>這代表地球本身就是一顆巨大的磁鐵，周圍充滿了<strong class="accent-cyan">地磁場</strong>。</li>
+          <li>地磁場可以阻擋太陽風與宇宙射線的直擊，保護地球上的生命。</li>
+        </ul>
+      </div>
+      
+      <div id="earth-core" class="sub-tab-content">
+        <h2>破除迷思：地理北 ≠ 地磁北</h2>
+        <p>運用「異名極相吸」的原理來推理：</p>
+        <ul>
+          <li>能把指南針 <strong style="color:var(--pole-n)">N 極</strong>吸向北方的，必定是 <strong style="color:var(--pole-s)">S 極</strong>。</li>
+          <li>因此，在地球的「地理北極」附近，其實隱藏著<span class="nowrap"><strong class="accent-cyan">地磁南極 (S極)</strong></span>！</li>
+          <li>相反地，「地理南極」附近則是<span class="nowrap"><strong class="accent-orange">地磁北極 (N極)</strong></span>。兩者夾角約有 11 度。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>【動畫】透視地磁構造</h2>
+      <div class="canvas-wrap"><canvas id="earthCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
+      <div class="controls">
+        <button id="xrayBtn" class="action-btn success">👁️ 開啟透視：觀察地球內部的秘密</button>
+      </div>
+      <div id="earthResult" class="result-box">點擊按鈕，看看吸引指南針 N 極的到底是什麼！</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>既然地球是一顆大磁鐵，那麼地球外部的磁力線，是從南方流向北方，還是從北方流向南方？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>想一想：磁力線永遠是從 N 極出發。地球的「地磁 N 極」位於哪裡？</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-cyan">從南方流向北方。</strong>因為「地磁 N 極」位於地理南極附近，磁力線由南半球出發，流向北半球的「地磁 S 極」。</p></div>
+  </div>
+</section>
+</div>
+
+<script>
+// 共用資源與函式
+const C = {
+  bg: '#11261f', canvas: '#0c1e19', white: '#ffffff',
+  yellow: '#fff36a', cyan: '#55e9ff', orange: '#ffb347', green: '#9af06f',
+  pink: '#ff78b7', red: '#ff6f76', blue: '#72b9ff', dark: '#0a1a20',
+  poleN: '#ff6f76', poleS: '#72b9ff'
+};
+const TAU = Math.PI * 2;
+function ctxOf(id) { const c = document.getElementById(id); return c ? { c, ctx: c.getContext('2d') } : null; }
+function safeDraw(id, fn) {
+  const o = ctxOf(id); if (!o) return;
+  const run = () => { const w = o.c.parentElement?.getBoundingClientRect().width || 0; if (w <= 0) { setTimeout(run, 80); return; } fn(o.ctx); };
+  setTimeout(run, 25);
+}
+function clear(ctx) { ctx.fillStyle = C.canvas; ctx.fillRect(0, 0, 1000, 600); }
+function line(ctx, pts, color = C.white, width = 4, dash = []) {
+  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath();
+  pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore();
+}
+function label(ctx, t, x, y, color = C.white, align = 'center', size = 20) {
+  ctx.save(); ctx.fillStyle = color; ctx.font = `900 ${size}px 'Noto Sans TC',sans-serif`;
+  ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  ctx.shadowBlur = 4; ctx.fillText(t, x, y); ctx.restore();
+}
+
+// 物理：磁場向量 (BField)
+function getBField(x, y, poles) {
+  let bx = 0, by = 0;
+  for (let p of poles) {
+    let dx = x - p.x;
+    let dy = y - p.y;
+    let r2 = dx * dx + dy * dy;
+    if (r2 < 400) r2 = 400; // 避免奇異點
+    let r = Math.sqrt(r2);
+    let mag = p.m / (r2 * r); 
+    bx += mag * dx; by += mag * dy;
+  }
+  return { bx, by };
+}
+
+// 繪圖：指南針與磁鐵
+function drawCompass(ctx, x, y, angle, radius = 35) {
+  ctx.save(); ctx.translate(x, y);
+  ctx.fillStyle = '#1a332b'; ctx.beginPath(); ctx.arc(0, 0, radius, 0, TAU); ctx.fill();
+  ctx.strokeStyle = '#4d6b61'; ctx.lineWidth = 4; ctx.stroke();
+  ctx.strokeStyle = '#4d6b61'; ctx.lineWidth = 2;
+  for(let i=0; i<8; i++) { ctx.rotate(TAU/8); ctx.beginPath(); ctx.moveTo(0, radius-8); ctx.lineTo(0, radius-2); ctx.stroke(); }
+  ctx.rotate(angle);
+  ctx.fillStyle = C.poleN; ctx.beginPath(); ctx.moveTo(0, -radius*0.7); ctx.lineTo(radius*0.2, 0); ctx.lineTo(-radius*0.2, 0); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = C.poleS; ctx.beginPath(); ctx.moveTo(0, radius*0.7); ctx.lineTo(radius*0.2, 0); ctx.lineTo(-radius*0.2, 0); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = C.yellow; ctx.beginPath(); ctx.arc(0, 0, radius*0.15, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+
+function drawMagnet(ctx, x, y, w, h, isNLeft, drawLabels = true) {
+  ctx.save();
+  ctx.fillStyle = isNLeft ? C.poleS : C.poleN; ctx.fillRect(x + w/2, y, w/2, h);
+  ctx.fillStyle = isNLeft ? C.poleN : C.poleS; ctx.fillRect(x, y, w/2, h);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+  if(drawLabels) {
+    label(ctx, isNLeft ? 'N' : 'S', x + w/4, y + h/2, '#fff', 'center', 30);
+    label(ctx, isNLeft ? 'S' : 'N', x + w*0.75, y + h/2, '#fff', 'center', 30);
+  }
+  ctx.restore();
+}
+
+function drawFieldLines(ctx, poles, lineCount, radius, color = 'rgba(255,255,255,0.4)') {
+  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+  const step = 6;
+  const nPoles = poles.filter(p => p.m > 0);
+  for(let p of nPoles) {
+    for(let i=0; i<lineCount; i++) {
+      let a = (i/lineCount)*TAU;
+      let cx = p.x + Math.cos(a)*radius;
+      let cy = p.y + Math.sin(a)*radius;
+      ctx.beginPath(); ctx.moveTo(cx, cy);
+      let count = 0;
+      while(count < 200) {
+        let B = getBField(cx, cy, poles);
+        let bMag = Math.hypot(B.bx, B.by);
+        if(bMag < 1e-6) break;
+        cx += (B.bx/bMag)*step; cy += (B.by/bMag)*step;
+        ctx.lineTo(cx, cy);
+        let nearSPole = false;
+        for(let sp of poles.filter(p=>p.m<0)){ if(Math.hypot(cx-sp.x, cy-sp.y) < radius) nearSPole = true; }
+        if(nearSPole || cx<0 || cx>1000 || cy<0 || cy>600) break;
+        count++;
+      }
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+// ==========================================
+// 1. 磁極互動
+// ==========================================
+const poleState = { type: 'attract', isBroken: false, breakDist: 0, raf: 0 };
+function drawPoleCanvas(ctx) {
+  clear(ctx);
+  const cy = 300;
+  if(document.getElementById('pole-interact').classList.contains('active')) {
+    if(poleState.type === 'attract') {
+      drawMagnet(ctx, 150, 260, 300, 80, true);
+      drawMagnet(ctx, 550, 260, 300, 80, true);
+      // 磁力線示意
+      ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=2;
+      for(let i=1; i<=4; i++){
+        ctx.beginPath(); ctx.moveTo(450, 260+16*i); ctx.lineTo(550, 260+16*i); ctx.stroke();
+        if(i===2 || i===3) {
+          ctx.fillStyle='rgba(255,255,255,0.8)';
+          ctx.beginPath(); ctx.moveTo(505, 260+16*i-6); ctx.lineTo(515, 260+16*i); ctx.lineTo(505, 260+16*i+6); ctx.fill();
+        }
+      }
+    } else {
+      drawMagnet(ctx, 150, 260, 300, 80, false); // S-N
+      drawMagnet(ctx, 550, 260, 300, 80, true);  // N-S
+      // 排斥示意
+      ctx.strokeStyle='rgba(255,111,118,0.8)'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(450, 280); ctx.quadraticCurveTo(500, 280, 500, 200); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(550, 280); ctx.quadraticCurveTo(500, 280, 500, 200); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(450, 320); ctx.quadraticCurveTo(500, 320, 500, 400); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(550, 320); ctx.quadraticCurveTo(500, 320, 500, 400); ctx.stroke();
+    }
+  } else {
+    // Break magnet
+    let gap = poleState.breakDist;
+    if(gap === 0) {
+      drawMagnet(ctx, 250, 260, 500, 80, true);
+      ctx.strokeStyle='#fff'; ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(500,240); ctx.lineTo(500,360); ctx.stroke(); ctx.setLineDash([]);
+    } else {
+      drawMagnet(ctx, 250 - gap, 260, 250, 80, true);
+      drawMagnet(ctx, 500 + gap, 260, 250, 80, true);
+      label(ctx, '斷裂處產生新磁極！', 500, 400, C.yellow, 'center', 24);
+    }
+  }
+}
+function animBreak() {
+  if(poleState.breakDist < 80) {
+    poleState.breakDist += 5;
+    safeDraw('poleCanvas', drawPoleCanvas);
+    poleState.raf = requestAnimationFrame(animBreak);
+  }
+}
+function animResetBreak() {
+  if(poleState.breakDist > 0) {
+    poleState.breakDist -= 5;
+    safeDraw('poleCanvas', drawPoleCanvas);
+    poleState.raf = requestAnimationFrame(animResetBreak);
+  } else {
+    poleState.breakDist = 0; safeDraw('poleCanvas', drawPoleCanvas);
+  }
+}
+
+document.querySelectorAll('.pole-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.pole-btn').forEach(x => x.classList.remove('active-btn'));
+  b.classList.add('active-btn'); poleState.type = b.dataset.action;
+  document.getElementById('poleResult').innerHTML = poleState.type === 'attract' ? '異名極 (N與S) 靠近時，會產生強烈的<strong class="accent-cyan">吸引力</strong>。' : '同名極 (N與N，或S與S) 靠近時，會產生強烈的<strong class="accent-pink">排斥力</strong>。';
+  safeDraw('poleCanvas', drawPoleCanvas);
+}));
+document.getElementById('breakBtn').addEventListener('click', () => { cancelAnimationFrame(poleState.raf); animBreak(); });
+document.getElementById('resetBreakBtn').addEventListener('click', () => { cancelAnimationFrame(poleState.raf); animResetBreak(); });
+
+// ==========================================
+// 2. 磁化與保存
+// ==========================================
+const magState = { domains: [], isMagnetized: false, storeType: 'bar' };
+function initDomains() {
+  magState.domains = [];
+  for(let i=0; i<4; i++){
+    for(let j=0; j<8; j++){
+      magState.domains.push({x: 320+j*48, y: 240+i*38, a: Math.random()*TAU});
+    }
+  }
+}
+function drawMagCanvas(ctx) {
+  clear(ctx);
+  if(document.getElementById('mag-process').classList.contains('active')) {
+    // 磁化現象
+    if(magState.isMagnetized) drawMagnet(ctx, 100, 230, 160, 140, true);
+    ctx.fillStyle = '#444'; ctx.fillRect(300, 220, 400, 160);
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 4; ctx.strokeRect(300, 220, 400, 160);
+    for(let d of magState.domains) {
+      let a = magState.isMagnetized ? 0 + (Math.random()-0.5)*0.3 : d.a;
+      ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(a);
+      ctx.fillStyle=C.poleS; ctx.fillRect(0, -10, 18, 20); ctx.fillStyle=C.poleN; ctx.fillRect(-18, -10, 18, 20);
+      ctx.restore();
+    }
+    label(ctx, '鐵塊內部磁疇', 500, 420, C.white, 'center', 24);
+  } else {
+    // 保存法
+    if(magState.storeType === 'bar') {
+      drawMagnet(ctx, 250, 150, 500, 80, true);
+      drawMagnet(ctx, 250, 370, 500, 80, false); // N,S 反向並排
+      ctx.fillStyle = '#777'; ctx.fillRect(200, 150, 50, 300); ctx.fillRect(750, 150, 50, 300);
+      label(ctx, '軟鐵片', 170, 300, C.white, 'center', 20); label(ctx, '軟鐵片', 830, 300, C.white, 'center', 20);
+      // 磁力線迴路
+      ctx.strokeStyle = C.cyan; ctx.lineWidth=3; ctx.setLineDash([5,5]);
+      ctx.beginPath(); ctx.moveTo(275, 190); ctx.lineTo(225, 190); ctx.lineTo(225, 410); ctx.lineTo(275, 410); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(725, 190); ctx.lineTo(775, 190); ctx.lineTo(775, 410); ctx.lineTo(725, 410); ctx.stroke();
+    } else {
+      ctx.strokeStyle = '#aaa'; ctx.lineWidth = 60;
+      ctx.beginPath(); ctx.arc(500, 250, 120, Math.PI, TAU); ctx.stroke();
+      ctx.fillStyle = C.poleS; ctx.fillRect(350, 250, 60, 150); label(ctx, 'S', 380, 325, '#fff', 'center', 30);
+      ctx.fillStyle = C.poleN; ctx.fillRect(590, 250, 60, 150); label(ctx, 'N', 620, 325, '#fff', 'center', 30);
+      ctx.fillStyle = '#777'; ctx.fillRect(350, 400, 300, 40);
+      label(ctx, '吸附軟鐵片', 500, 480, C.white, 'center', 20);
+      ctx.strokeStyle = C.cyan; ctx.lineWidth=3; ctx.setLineDash([5,5]);
+      ctx.beginPath(); ctx.moveTo(620, 350); ctx.lineTo(620, 420); ctx.lineTo(380, 420); ctx.lineTo(380, 350); ctx.stroke();
+    }
+  }
+}
+document.getElementById('magnetizeBtn').addEventListener('click', () => { magState.isMagnetized = true; document.getElementById('magResult').innerHTML='受外部磁場影響，磁疇變得<strong class="accent-cyan">規則排列</strong>，鐵塊暫時變成了磁鐵！'; safeDraw('magCanvas', drawMagCanvas); });
+document.getElementById('heatBtn').addEventListener('click', () => { magState.isMagnetized = false; initDomains(); document.getElementById('magResult').innerHTML='高溫或撞擊會破壞排列，使磁疇再度<strong class="accent-pink">混亂</strong>，失去磁性。'; safeDraw('magCanvas', drawMagCanvas); });
+document.querySelectorAll('.store-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.store-btn').forEach(x => x.classList.remove('active-btn'));
+  b.classList.add('active-btn'); magState.storeType = b.dataset.type; safeDraw('magCanvas', drawMagCanvas);
+}));
+
+// ==========================================
+// 3. 磁力線分布
+// ==========================================
+const lineState = { type: 'single', isU: false, showLines: false };
+function drawLineCanvas(ctx) {
+  clear(ctx);
+  const cx = 500, cy = 300;
+  let poles = [];
+  if(document.getElementById('line-bar').classList.contains('active')) {
+    if(lineState.type === 'single') {
+      poles = [{x:350, y:cy, m:60000}, {x:650, y:cy, m:-60000}];
+      drawMagnet(ctx, 350, 270, 300, 60, true);
+    } else if(lineState.type === 'attract') {
+      poles = [{x:100, y:cy, m:50000}, {x:400, y:cy, m:-50000}, {x:600, y:cy, m:50000}, {x:900, y:cy, m:-50000}];
+      drawMagnet(ctx, 100, 270, 300, 60, true); drawMagnet(ctx, 600, 270, 300, 60, true);
+    } else {
+      poles = [{x:100, y:cy, m:-50000}, {x:400, y:cy, m:50000}, {x:600, y:cy, m:50000}, {x:900, y:cy, m:-50000}];
+      drawMagnet(ctx, 100, 270, 300, 60, false); drawMagnet(ctx, 600, 270, 300, 60, true);
+    }
+  } else {
+    // U Shape
+    poles = [{x:700, y:200, m:60000}, {x:700, y:400, m:-60000}];
+    ctx.save();
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 60;
+    ctx.beginPath(); ctx.arc(350, 300, 100, Math.PI/2, Math.PI*1.5); ctx.stroke();
+    ctx.fillStyle = '#555'; ctx.fillRect(350, 170, 200, 60); ctx.fillRect(350, 370, 200, 60);
+    ctx.fillStyle = C.poleN; ctx.fillRect(550, 170, 150, 60); label(ctx, 'N', 625, 200, '#fff', 'center', 30);
+    ctx.fillStyle = C.poleS; ctx.fillRect(550, 370, 150, 60); label(ctx, 'S', 625, 400, '#fff', 'center', 30);
+    ctx.restore();
+  }
+
+  if(lineState.showLines) {
+    // Draw vector field like iron filings
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    for(let i=0; i<3000; i++){
+      let fx = Math.random()*1000, fy = Math.random()*600;
+      let B = getBField(fx, fy, poles);
+      let a = Math.atan2(B.by, B.bx);
+      ctx.save(); ctx.translate(fx,fy); ctx.rotate(a);
+      ctx.fillRect(-4, -0.5, 8, 1.5);
+      ctx.restore();
+    }
+  }
+}
+document.querySelectorAll('.line-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.line-btn').forEach(x => x.classList.remove('active-btn'));
+  b.classList.add('active-btn'); lineState.type = b.dataset.type; lineState.showLines=true; safeDraw('lineCanvas', drawLineCanvas);
+}));
+document.getElementById('sprinkleUBtn').addEventListener('click', () => { lineState.showLines=true; safeDraw('lineCanvas', drawLineCanvas); });
+
+
+// ==========================================
+// 4. 磁場與指南針
+// ==========================================
+const compassState = { c: {x: 500, y: 150}, dragging: false };
+const compassPoles = [{x: 350, y: 300, m: 80000}, {x: 650, y: 300, m: -80000}];
+function drawCompassCanvas(ctx) {
+  clear(ctx);
+  // Field Lines
+  drawFieldLines(ctx, compassPoles, 24, 30, 'rgba(85,233,255,0.25)');
+  drawMagnet(ctx, 350, 270, 300, 60, true);
+  
+  let B = getBField(compassState.c.x, compassState.c.y, compassPoles);
+  let angle = Math.atan2(B.by, B.bx);
+  
+  // 切線輔助線
+  if(document.getElementById('compass-tangent').classList.contains('active')) {
+    ctx.strokeStyle = C.yellow; ctx.lineWidth=3; ctx.setLineDash([8,6]);
+    ctx.beginPath(); ctx.moveTo(compassState.c.x - Math.cos(angle)*80, compassState.c.y - Math.sin(angle)*80);
+    ctx.lineTo(compassState.c.x + Math.cos(angle)*80, compassState.c.y + Math.sin(angle)*80); ctx.stroke();
+    ctx.setLineDash([]);
+    label(ctx, '磁力線切線方向 = 磁針 N 極方向', compassState.c.x, compassState.c.y + 60, C.yellow, 'center', 18);
+  }
+  
+  drawCompass(ctx, compassState.c.x, compassState.c.y, angle, 40);
+}
+function initCompassEvents() {
+  const canvas = document.getElementById('compassCanvas');
+  function getPos(e) { const r = canvas.getBoundingClientRect(); return { x: (e.clientX||e.touches[0].clientX - r.left)/r.width*1000, y: (e.clientY||e.touches[0].clientY - r.top)/r.height*600 }; }
+  canvas.addEventListener('mousedown', e => { const p=getPos(e); if(Math.hypot(p.x-compassState.c.x, p.y-compassState.c.y)<50) compassState.dragging=true; });
+  canvas.addEventListener('mousemove', e => { if(compassState.dragging) { const p=getPos(e); compassState.c.x=p.x; compassState.c.y=p.y; safeDraw('compassCanvas', drawCompassCanvas); } });
+  window.addEventListener('mouseup', () => compassState.dragging=false);
+  canvas.addEventListener('touchstart', e => { const p=getPos(e.touches[0]); if(Math.hypot(p.x-compassState.c.x, p.y-compassState.c.y)<50) compassState.dragging=true; e.preventDefault();}, {passive:false});
+  canvas.addEventListener('touchmove', e => { if(compassState.dragging) { const p=getPos(e.touches[0]); compassState.c.x=p.x; compassState.c.y=p.y; safeDraw('compassCanvas', drawCompassCanvas); e.preventDefault();} }, {passive:false});
+  window.addEventListener('touchend', () => compassState.dragging=false);
+}
+
+// ==========================================
+// 5. 地球大磁鐵
+// ==========================================
+const earthState = { isXray: false, fade: 0, raf: 0 };
+function drawEarthCanvas(ctx) {
+  clear(ctx);
+  const cx = 500, cy = 300, r = 160;
+  
+  // 磁力線
+  const eMag = 90000;
+  // 地理北極是 S, 地理南極是 N. (旋轉11度)
+  const tilt = 11 * Math.PI/180;
+  const earthPoles = [
+    {x: cx + Math.sin(tilt)*120, y: cy - Math.cos(tilt)*120, m: -eMag}, // S
+    {x: cx - Math.sin(tilt)*120, y: cy + Math.cos(tilt)*120, m: eMag}   // N
+  ];
+  drawFieldLines(ctx, earthPoles, 16, 40, 'rgba(255,255,255,0.2)');
+
+  // 地球本體
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); 
+  ctx.fillStyle = '#2f87a9'; ctx.fill(); 
+  ctx.lineWidth = 4; ctx.strokeStyle = C.cyan; ctx.stroke();
+  ctx.fillStyle = '#6a8f5d';
+  ctx.beginPath(); ctx.ellipse(cx-40, cy-40, 60, 40, 0.5, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx-60, cy+50, 30, 50, -0.3, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+80, cy-20, 50, 30, -0.5, 0, TAU); ctx.fill();
+  ctx.restore();
+
+  // X-Ray
+  if(earthState.fade > 0) {
+    ctx.save(); ctx.globalAlpha = earthState.fade;
+    ctx.translate(cx, cy); ctx.rotate(tilt);
+    ctx.fillStyle = C.poleS; ctx.fillRect(-30, -120, 60, 120);
+    ctx.fillStyle = C.poleN; ctx.fillRect(-30, 0, 60, 120);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth=3; ctx.strokeRect(-30, -120, 60, 240);
+    label(ctx, 'S', 0, -60, '#fff', 'center', 36); label(ctx, 'N', 0, 60, '#fff', 'center', 36);
+    ctx.rotate(-tilt);
+    label(ctx, '← 地磁 S 極', -45, -135, C.poleS, 'right', 20);
+    label(ctx, '地磁 N 極 →', 45, 135, C.poleN, 'left', 20);
+    ctx.restore();
+  }
+
+  // 地理極
+  label(ctx, '地理北極', cx, cy - r - 25, C.white, 'center', 22);
+  label(ctx, '地理南極', cx, cy + r + 25, C.white, 'center', 22);
+
+  // 小磁針
+  const cps = [{x:250,y:cy},{x:750,y:cy},{x:cx-150,y:cy-210},{x:cx+150,y:cy-210},{x:cx-150,y:cy+210},{x:cx+150,y:cy+210}];
+  for(let p of cps) {
+    let B = getBField(p.x, p.y, earthPoles);
+    drawCompass(ctx, p.x, p.y, Math.atan2(B.by, B.bx), 25);
+  }
+}
+function animEarth() {
+  let changed = false;
+  if(earthState.isXray && earthState.fade < 1) { earthState.fade+=0.05; if(earthState.fade>1)earthState.fade=1; changed=true; }
+  else if(!earthState.isXray && earthState.fade > 0) { earthState.fade-=0.05; if(earthState.fade<0)earthState.fade=0; changed=true; }
+  if(changed) { safeDraw('earthCanvas', drawEarthCanvas); earthState.raf = requestAnimationFrame(animEarth); }
+}
+document.getElementById('xrayBtn').addEventListener('click', () => {
+  earthState.isXray = !earthState.isXray;
+  document.getElementById('xrayBtn').textContent = earthState.isXray ? '關閉透視' : '👁️ 開啟透視：觀察地球內部的秘密';
+  document.getElementById('earthResult').innerHTML = earthState.isXray ? '驚人事實：地理北極附近，藏著 <strong class="accent-cyan">地磁 S 極</strong>！這就是指南針 N 極會指北的原因。' : '點擊按鈕，看看吸引指南針 N 極的到底是什麼！';
+  if(earthState.raf) cancelAnimationFrame(earthState.raf); animEarth();
+});
+
+
+// ==========================================
+// 共用導航系統
+// ==========================================
+function drawActive() {
+  const id = document.querySelector('.tab-content.active')?.id;
+  if (id === 'tab-pole') { initDomains(); safeDraw('poleCanvas', drawPoleCanvas); }
+  if (id === 'tab-mag') { initDomains(); safeDraw('magCanvas', drawMagCanvas); }
+  if (id === 'tab-line') { lineState.showLines = false; safeDraw('lineCanvas', drawLineCanvas); }
+  if (id === 'tab-compass') safeDraw('compassCanvas', drawCompassCanvas);
+  if (id === 'tab-earth') safeDraw('earthCanvas', drawEarthCanvas);
+}
+
+// 主分頁切換
+document.querySelectorAll('.tab-button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tab-button').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); document.getElementById(b.dataset.tab)?.classList.add('active');
+  setTimeout(drawActive, 60);
+}));
+
+// 子分頁切換
+document.querySelectorAll('.sub-tab-btn').forEach(b => b.addEventListener('click', () => {
+  const parent = document.getElementById(b.dataset.parent);
+  parent.querySelectorAll('.sub-tab-btn').forEach(x => x.classList.remove('active'));
+  parent.querySelectorAll('.sub-tab-content').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); parent.querySelector(`#${b.dataset.sub}`)?.classList.add('active');
+  
+  // 針對特例控制 UI
+  if(b.dataset.parent === 'tab-pole') {
+    document.getElementById('pole-controls-interact').style.display = b.dataset.sub==='pole-interact'?'flex':'none';
+    document.getElementById('pole-controls-break').style.display = b.dataset.sub==='pole-break'?'flex':'none';
+    poleState.breakDist = 0; safeDraw('poleCanvas', drawPoleCanvas);
+  }
+  if(b.dataset.parent === 'tab-mag') {
+    document.getElementById('mag-controls-process').style.display = b.dataset.sub==='mag-process'?'flex':'none';
+    document.getElementById('mag-controls-store').style.display = b.dataset.sub==='mag-store'?'flex':'none';
+    safeDraw('magCanvas', drawMagCanvas);
+  }
+  if(b.dataset.parent === 'tab-line') {
+    document.getElementById('line-controls-bar').style.display = b.dataset.sub==='line-bar'?'flex':'none';
+    document.getElementById('line-controls-u').style.display = b.dataset.sub==='line-u'?'flex':'none';
+    lineState.showLines = false; safeDraw('lineCanvas', drawLineCanvas);
+  }
+  if(b.dataset.parent === 'tab-compass') safeDraw('compassCanvas', drawCompassCanvas);
+  if(b.dataset.parent === 'tab-earth') safeDraw('earthCanvas', drawEarthCanvas);
+}));
+
+document.querySelectorAll('.practice-box').forEach(box => box.querySelectorAll('.practice-btn').forEach(b => b.addEventListener('click', () => {
+  box.querySelectorAll('.practice-btn').forEach(x => x.classList.remove('active'));
+  box.querySelectorAll('.practice-step').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); box.querySelector(`[data-content="${b.dataset.step}"]`)?.classList.add('active');
+})));
+
+window.addEventListener('resize', () => setTimeout(drawActive, 100), { passive: true });
+window.addEventListener('orientationchange', () => setTimeout(drawActive, 180), { passive: true });
+window.addEventListener('load', () => { initCompassEvents(); setTimeout(drawActive, 100); });
+</script>
+</body>
+</html>
