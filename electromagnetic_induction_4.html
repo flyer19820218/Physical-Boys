@@ -104,7 +104,6 @@ input[type=range]{width:100%;accent-color:var(--yellow)}
     <button class="tab-btn" data-tab="cooker" data-zh="🔥 電磁爐" data-en="🔥 Induction Cooker">🔥 電磁爐</button>
   </nav>
 
-  <!-- 第1分頁：法拉第與冷次 -->
   <section id="history" class="tab-page active">
     <div class="grid">
       <article class="panel">
@@ -165,7 +164,6 @@ input[type=range]{width:100%;accent-color:var(--yellow)}
     </div>
   </section>
 
-  <!-- 第2分頁：發電機：雙欄佈局 -->
   <section id="generator" class="tab-page">
     <article class="panel" style="grid-column: 1 / -1; margin-bottom: 18px;">
         <div class="grid">
@@ -201,7 +199,7 @@ input[type=range]{width:100%;accent-color:var(--yellow)}
           <ul>
             <li data-zh="場磁鐵固定，提供穩定的磁場。" data-en="Fixed field magnets provide a steady magnetic field.">場磁鐵固定，提供穩定的磁場。</li>
             <li data-zh="電樞與分裂環一起旋轉，切割磁力線。" data-en="The armature and split ring rotate together, cutting magnetic lines.">電樞與分裂環一起旋轉，切割磁力線。</li>
-            <li data-zh="分裂環每半圈交換接點，將輸出的波形翻轉成正向的直流脈衝！" data-en="The split ring swaps contacts every half cycle, flipping the output wave into a positive DC pulse!">分裂環每半圈交換接點，將輸出的波形翻轉成單一方向的直流脈衝！</li>
+            <li data-zh="分裂環每半圈交換接點，將輸出的波形翻轉成正向的直流脈衝！" data-en="The split ring swaps contacts every half cycle, flipping the output wave into a positive DC pulse!">分裂環每半圈交換接點，將輸出的波形翻轉成<strong class="yellow">正向的直流脈衝</strong>！</li>
           </ul>
           <div class="key"><span class="yellow">動能</span> → <span class="cyan">電能 (直流電)</span></div>
         </div>
@@ -301,11 +299,23 @@ function scheduleFrame(state,pageId,canvasId,fn){const epoch=animationEpoch;stat
 
 function drawPrism(ctx,x,y,w,h,depth,pole){const front=pole==='N'?C.n:C.s,side=pole==='N'?'#a93749':'#397fc2',top=pole==='N'?'#ff9da2':'#a8d7ff';ctx.save();ctx.lineJoin='round';ctx.strokeStyle='rgba(255,255,255,.72)';ctx.lineWidth=3;ctx.fillStyle=top;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+depth,y-depth);ctx.lineTo(x+w+depth,y-depth);ctx.lineTo(x+w,y);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=side;ctx.beginPath();ctx.moveTo(x+w,y);ctx.lineTo(x+w+depth,y-depth);ctx.lineTo(x+w+depth,y+h-depth);ctx.lineTo(x+w,y+h);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=front;ctx.beginPath();ctx.roundRect(x,y,w,h,12);ctx.fill();ctx.stroke();label(ctx,pole,x+w/2,y+h/2,C.white,'center',38);ctx.restore()}
 
+function drawArrow3D(ctx, cx, cy, start3D, end3D, color, width=6) {
+    let s = machineProject(start3D.x, start3D.y, start3D.z, 0, 0);
+    let e = machineProject(end3D.x, end3D.y, end3D.z, 0, 0);
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(cx+s.x, cy+s.y); ctx.lineTo(cx+e.x, cy+e.y); ctx.stroke();
+    let angle = Math.atan2(e.y - s.y, e.x - s.x);
+    ctx.save(); ctx.translate(cx+e.x, cy+e.y); ctx.rotate(angle);
+    ctx.beginPath(); ctx.moveTo(0, -width*1.2); ctx.lineTo(width*2, 0); ctx.lineTo(0, width*1.2); ctx.fill();
+    ctx.restore();
+}
+
 function tracePath(ctx,points,close=true){
     ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
     points.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));
     if(close) ctx.closePath();
 }
+
 function pointOnPath(points, progress) {
     const lengths = points.map((pt, i) => {
         if(i === points.length - 1) return 0;
@@ -322,29 +332,6 @@ function pointOnPath(points, progress) {
         target -= lengths[i];
     }
     return points[points.length - 1];
-}
-
-function drawCurrentFlow(ctx, pointsOrLoops, direction, amount, closePath=true) {
-    const loops=Array.isArray(pointsOrLoops[0])?pointsOrLoops:[pointsOrLoops];
-    const time=performance.now()/1700;
-    const particlesPerLoop=Math.max(16,Math.round((28+amount*6)/Math.sqrt(loops.length)));
-    ctx.save();
-    loops.forEach((points)=>{
-      tracePath(ctx,points,closePath); ctx.strokeStyle='rgba(85,233,255,.14)';ctx.lineWidth=11;ctx.stroke();
-      ctx.lineWidth=4;ctx.lineCap='round';ctx.setLineDash([24,9]);
-      ctx.lineDashOffset=-direction*time*78;
-      tracePath(ctx,points,closePath); ctx.strokeStyle='rgba(64,232,255,.96)';ctx.stroke();
-      ctx.setLineDash([]);
-      for(let i=0;i<particlesPerLoop;i++){
-        let progress = (direction*time + i/particlesPerLoop);
-        progress = ((progress % 1) + 1) % 1; 
-        const p = closePath ? pointOnClosedLoop(points, progress) : pointOnPath(points, progress);
-        const alpha=.24+.38*(.5+.5*Math.sin(i*2.7+time*5));
-        ctx.fillStyle=`rgba(155,246,255,${alpha})`;
-        ctx.beginPath();ctx.arc(p.x,p.y,1.1+(i%3)*.38,0,TAU);ctx.fill();
-      }
-    });
-    ctx.restore();
 }
 
 function pointOnClosedLoop(points, progress) {
@@ -366,6 +353,63 @@ function pointOnClosedLoop(points, progress) {
     return points[0];
 }
 
+// 【修復：電流粒子箭頭，指向正確的前進方向】
+function drawCurrentFlow(ctx, pointsOrLoops, direction, amount, closePath=true) {
+    if (direction === 0) return;
+    const loops=Array.isArray(pointsOrLoops[0])?pointsOrLoops:[pointsOrLoops];
+    const time=performance.now()/1700;
+    const particlesPerLoop=Math.max(16,Math.round((28+amount*6)/Math.sqrt(loops.length)));
+    
+    ctx.save();
+    loops.forEach((points)=>{
+      tracePath(ctx,points,closePath); ctx.strokeStyle='rgba(85,233,255,.14)';ctx.lineWidth=11;ctx.stroke();
+      ctx.lineWidth=4;ctx.lineCap='round';ctx.setLineDash([24,9]);
+      ctx.lineDashOffset=-direction*time*78;
+      tracePath(ctx,points,closePath); ctx.strokeStyle='rgba(64,232,255,.96)';ctx.stroke();
+      ctx.setLineDash([]);
+      
+      for(let i=0;i<particlesPerLoop;i++){
+        let progress = (direction*time + i/particlesPerLoop);
+        progress = ((progress % 1) + 1) % 1; 
+        const p = closePath ? pointOnClosedLoop(points, progress) : pointOnPath(points, progress);
+        
+        let angle;
+        if (closePath) {
+            let pNext = pointOnClosedLoop(points, ((progress + 0.01 * Math.sign(direction)) % 1 + 1) % 1);
+            angle = Math.atan2(pNext.y - p.y, pNext.x - p.x);
+        } else {
+            let nextP = progress + 0.01 * Math.sign(direction);
+            if (nextP > 1) {
+                let pPrev = pointOnPath(points, progress - 0.01);
+                angle = Math.atan2(p.y - pPrev.y, p.x - pPrev.x);
+            } else if (nextP < 0) {
+                let pPrev = pointOnPath(points, progress + 0.01);
+                angle = Math.atan2(pPrev.y - p.y, pPrev.x - p.x);
+            } else {
+                let pNext = pointOnPath(points, nextP);
+                angle = Math.atan2(pNext.y - p.y, pNext.x - p.x);
+            }
+        }
+
+        const alpha=.34+.38*(.5+.5*Math.sin(i*2.7+time*5));
+        
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(angle);
+        ctx.fillStyle = `rgba(155,246,255,${alpha + 0.2})`;
+        ctx.beginPath();
+        ctx.moveTo(8, 0);
+        ctx.lineTo(-6, 7);
+        ctx.lineTo(-2, 0);
+        ctx.lineTo(-6, -7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    });
+    ctx.restore();
+}
+
 function drawArmatureCorner(ctx, text, point, cx, cy, color) {
     const dx = point.x - cx, dy = point.y - cy;
     const length = Math.hypot(dx, dy) || 1;
@@ -373,7 +417,7 @@ function drawArmatureCorner(ctx, text, point, cx, cy, color) {
 }
 
 // ==================
-// Tab 1: 第一分頁 完美防卡頓與防破圖版本
+// Tab 1: 法拉第與冷次 (線圈平移、感應磁場明顯化)
 // ==================
 const induction={x:130,target:130,moving:0,flip:false,speed:3,phase:0,mode:'faraday',raf:0,lastResult:'',rotating:false,angle:0};
 function drawInduction(ctx){
@@ -506,17 +550,11 @@ function drawInduction(ctx){
   if(induction.rotating){ induction.angle+=.05*induction.speed; }
   else{ induction.angle-=induction.angle*.1; }
   
-  // 【修復：絕對防禦距離判定法】
   const stepDist = induction.speed * 1.45;
   const delta = induction.target - induction.x;
-  if(Math.abs(delta) > 0.5) { 
+  if(Math.abs(delta) > stepDist){ 
       induction.moving = Math.sign(delta); 
-      const moveAmt = Math.sign(delta) * stepDist;
-      if (Math.abs(delta) < Math.abs(moveAmt)) {
-          induction.x = induction.target; 
-      } else {
-          induction.x += moveAmt;
-      }
+      induction.x += Math.sign(delta) * stepDist; 
   } else { 
       induction.x = induction.target; 
       induction.moving = 0; 
@@ -544,7 +582,7 @@ function updateInductionResult(){
 }
 
 // ==================
-// Tab 2: 發電機模型與波形分離 (完美置中 & 雙滑環層疊 & 電流粒子)
+// Tab 2: 發電機模型與波形分離 (獨佔 RAF 迴圈 & 完美 Cosine 波)
 // ==================
 const gen={angle:.18,speed:2,play:true,dir:1,mode:'dc',raf:0,wave:[]};
 
@@ -591,7 +629,7 @@ function drawMachineBrush(ctx,cx,cy,side,z,color,showContact=true){
 
 function drawGenModelCanvas(ctx) {
   clear(ctx);
-  const cx = 500, cy = 350; // 【修復：完美居中於 1000 寬度的容器】
+  const cx = 500, cy = 350; 
   const a = gen.angle, c = Math.cos(a), s = Math.sin(a);
   const W = 158, zFront = -188, zBack = 208;
   const turnCount = 5;
@@ -640,7 +678,6 @@ function drawGenModelCanvas(ctx) {
       ctx.strokeStyle=color;ctx.lineWidth=7;ctx.stroke();ctx.restore()
   };
   
-  // 【修復：雙滑環與分裂環 Z 軸深度疊加邏輯】
   if (gen.mode === 'dc') {
       lead(hubA,{x:22*c,y:22*s,z:-220},{x:35*c,y:35*s,z:-250},C.orange);
       lead(hubB,{x:-22*c,y:-22*s,z:-220},{x:-35*c,y:-35*s,z:-250},C.pink);
@@ -654,22 +691,20 @@ function drawGenModelCanvas(ctx) {
           const m2 = hB.start + Math.PI/2;
           const s1 = Math.cos(m1) - Math.sin(m1);
           const s2 = Math.cos(m2) - Math.sin(m2);
-          return s1 - s2; // 深度排序：數值小的先畫(在後)，數值大的後畫(在前)
+          return s1 - s2; 
       }).forEach(h => {
           drawMachineCommutatorHalf(ctx, cx, cy, h.start, h.end, h.color, -280, -250, 48);
       });
   } else {
-      // 交流雙滑環：粉色環在後(-340 to -310)，先畫
       lead(hubB,{x:-22*c,y:-22*s,z:-220},{x:-35*c,y:-35*s,z:-310},C.pink);
       drawFullSlipRing(ctx, cx, cy, -325, C.pink);
       
-      // 交流雙滑環：橘色環在前(-280 to -250)，後畫
       lead(hubA,{x:22*c,y:22*s,z:-220},{x:35*c,y:35*s,z:-250},C.orange);
       drawFullSlipRing(ctx, cx, cy, -265, C.orange);
   }
 
-  const brushL_Z = gen.mode === 'dc' ? -265 : -325; // 左電刷退後
-  const brushR_Z = gen.mode === 'dc' ? -265 : -265; // 右電刷靠前
+  const brushL_Z = gen.mode === 'dc' ? -265 : -325; 
+  const brushR_Z = gen.mode === 'dc' ? -265 : -265; 
   const brushL = drawMachineBrush(ctx, cx, cy, -1, brushL_Z, C.cyan, true);
   const brushR = drawMachineBrush(ctx, cx, cy, 1, brushR_Z, C.orange, true);
 
@@ -716,7 +751,7 @@ function drawGenModelCanvas(ctx) {
 
 function drawGenWaveCanvas(ctx) {
     clear(ctx);
-    const gx = 100, gy = 350, gw = 800, gh = 400; // 居中 1000寬度
+    const gx = 100, gy = 350, gw = 800, gh = 400; 
     
     ctx.strokeStyle = 'rgba(85,233,255,.2)'; ctx.lineWidth = 2;
     for(let i=-2; i<=2; i++) {
@@ -731,20 +766,14 @@ function drawGenWaveCanvas(ctx) {
     ctx.strokeStyle = C.pink; ctx.lineWidth = 7; ctx.lineJoin = 'round';
     ctx.beginPath();
     
-    // 【修復：波形向右滾動，反向旋轉產生純負脈衝波】
-    // 公式映射：最新點在最左邊 (dx=0)，歷史點在右邊。
-    for(let dx = 0; dx <= gw; dx += 2) {
-        let pastAngle = gen.angle - dx * (TAU * 1.5 / gw); 
-        let v = Math.cos(pastAngle); 
-        
-        if (gen.mode === 'dc') {
-            v = Math.abs(v) * gen.dir; 
-        } else {
-            v = v * gen.dir; 
-        }
-        
-        let wy = gy - v * (gh/2 - 40); 
-        if (dx === 0) ctx.moveTo(gx + dx, wy); else ctx.lineTo(gx + dx, wy);
+    const maxLen = 250;
+    const stepX = gw / (maxLen - 1);
+    
+    for(let i=0; i<gen.wave.length; i++) {
+        let v = gen.wave[i];
+        let wx = gx + i * stepX; 
+        let wy = gy - v * (gh/2 - 40);
+        if (i === 0) ctx.moveTo(wx, wy); else ctx.lineTo(wx, wy);
     }
     ctx.stroke();
     
@@ -754,18 +783,26 @@ function drawGenWaveCanvas(ctx) {
     label(ctx, title, gx + gw/2, gy - gh/2 - 35, C.yellow, 'center', 36);
     
     const subDesc = gen.mode === 'dc' 
-        ? (gen.dir > 0 ? '波形全部在 0 以上 (單一方向)' : '反轉發電機，整流出方向相反的負向電流！') 
+        ? (gen.dir > 0 ? '波形全部在 0 以上 (單一方向)' : '反轉發電機，整流出方向相反的負向脈衝！') 
         : '波形在 0 的上下交替 (時間軸持續向右滾動)';
     label(ctx, subDesc, gx + gw/2, gy + gh/2 + 35, C.white, 'center', 24);
 }
 
-// 【修復：獨立迴圈控制，解決重疊殘影】
 function loopGenerator() {
     if(!pageIsActive('generator')) return;
     
     if(gen.play){
         gen.angle = (gen.angle + gen.dir*(.012 + gen.speed*.01)) % TAU;
         if(gen.angle < 0) gen.angle += TAU;
+        
+        let v = Math.cos(gen.angle);
+        if (gen.mode === 'dc') {
+            v = Math.abs(v) * gen.dir; 
+        } else {
+            v = v * gen.dir; 
+        }
+        gen.wave.unshift(v); 
+        if(gen.wave.length > 250) gen.wave.pop();
     }
     
     safeDraw('genModelCanvas', drawGenModelCanvas);
@@ -777,6 +814,7 @@ function loopGenerator() {
 function updateGeneratorMode(){
   const dc=gen.mode==='dc';
   document.getElementById('generatorAnimationTitle').textContent=dc?tr('【動畫】直流發電機構造','【Animation】DC Generator structure'):tr('【動畫】交流發電機構造','【Animation】AC Generator structure');
+  gen.wave = []; 
 }
 
 // ==================
@@ -826,7 +864,6 @@ function drawTransformer(ctx){
       ctx.fillStyle=C.purple;ctx.beginPath();ctx.arc(p.x,p.y,6,0,TAU);ctx.fill()
   }  
   
-  // 【新增：螺旋線圈電流粒子流動】
   if(Math.abs(field) > 0.05) drawCurrentFlow(ctx, [pCoil], field>0?1:-1, Math.abs(field)*2, false);
   if(Math.abs(change) > 0.05) drawCurrentFlow(ctx, [sCoil], change>0?-1:1, Math.abs(change)*2, false);
 
@@ -863,6 +900,16 @@ function drawActive(){
   }
   if(id==='generator') {
       cancelAnimationFrame(gen.raf);
+      if(gen.wave.length===0){
+          const stepAngle = gen.dir*(.012 + gen.speed*.01);
+          for(let i=0; i<250; i++) {
+              let a = gen.angle - (250 - 1 - i) * stepAngle;
+              let v = Math.cos(a);
+              if (gen.mode === 'dc') v = Math.abs(v) * gen.dir;
+              else v = v * gen.dir;
+              gen.wave.push(v);
+          }
+      }
       loopGenerator();
   }
   if(id==='transformer') safeDraw('transformerCanvas',drawTransformer);
