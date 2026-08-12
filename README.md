@@ -1,11 +1,12 @@
 # 黎明國中自然科學與數理互動教學總庫
-(Science Interactive Curriculum Platform)
 
 ## 專案簡介
-這是一個專為國中自然科學設計的 **HTML5 互動式教學網站**。  
-本系統旨在透過高解析度動態圖解、Canvas 互動模擬器與邏輯清晰的排版，幫助學生建構直觀且紮實的科學與數理概念，並提供隨堂演練的即時回饋。
 
-## 系統五層架構 (5-Level Architecture)
+這是一套面向國中自然科學課堂的 **開源 HTML5 雙語互動教材庫**。它不把學生留在被動觀看動畫的位置，而是讓學生親手拖曳、旋轉、改變變因、觀察回饋，再用物理、化學與地球科學語言解釋結果。
+
+教材以 **STEM 教育（Science, Technology, Engineering, Mathematics）**、**探究式學習（Inquiry-Based Learning）**、**科學視覺化（Scientific Visualization）** 與 **互動模擬（Interactive Simulation）** 為核心，涵蓋物理、化學、地球科學、天文與數學連結。網站採純前端架構，免安裝、免後端，可直接於教室大螢幕、iPad 與一般瀏覽器使用。
+
+## 系統五層架構
 為確保國中三年龐大的教材內容能夠有條理地擴充，全站嚴格遵守以下五層架構：
 
 1. **大館 (Pavilion)：** 依學科分類（物理與力學、化學與反應、地科與天文）。
@@ -14,7 +15,7 @@
 4. **分頁 (Tab)：** 每個單元內含 4~5 個頁籤，切割學習知識點。
 5. **子分頁 (Sub-tab)：** 針對計算題與實驗題，提供「問題 ➔ 提示 ➔ 解答」的三部曲互動演練。
 
-## 視覺與排版核心規範 (UI/UX Guidelines)
+## 視覺與排版核心規範
 為了保障課堂大螢幕投影效果與學生的閱讀舒適度，開發時必須遵守以下鐵律：
 
 * **零黑色護眼原則 (Dark Chalkboard Theme)：** 背景嚴格採用吸光深黛綠（`#11261f` / `#16332a`）。嚴禁任何純黑色字體與線條，文字一律採用高對比粉筆亮色。
@@ -81,9 +82,10 @@
   * [電壓本質與電路三態](electronics_2.html)
   * [串並聯電路與電流](electronics_3.html)
   * [電阻與歐姆定律](electronics_4.html)
-* **10｜🧭 電與磁** （2 個小單元）
+* **10｜🧭 電與磁** （3 個小單元）
   * [磁力與磁場](magnetism_1.html)｜磁極互動、磁疇、磁力線、指南針與地球磁場互動解析
   * [電生磁與電磁鐵](electromagnetism_2.html)｜奧斯特實驗、右手定則、線圈磁場疊加、電磁鐵起重機與電話聽筒動畫
+  * [磁力與電動機](electric_motor_3.html)｜右手開掌定則、平行電流交互作用、帶電粒子運動、分裂環換向與直流電動機動畫
 
 ### 🧪 化學與反應館 (Chemistry)
 
@@ -145,6 +147,156 @@
   * [月相、日月食與潮汐](astronomy_moon_phases_4.html)
 
 ---
+
 **設計與課程企劃：** 呂彥君老師  
 **聯絡信箱：** flyer19820218@gmail.com  
-**系統特點：** 純淨前端架構（HTML5, CSS3, Vanilla JS），免外掛、免伺服器後端，下載即可於任意大螢幕或平板無縫運行。
+**系統特點：** 純淨前端架構（HTML5、CSS3、Canvas、Vanilla JS），免外掛、免伺服器後端，下載即可於大螢幕、iPad 或一般瀏覽器執行。  
+**關鍵字：** STEM 教育、國中自然、互動科學、探究式學習、物理模擬、化學模擬、地球科學、天文、雙語教育、科學視覺化、開放教育資源。
+
+---
+
+# Liming Bilingual Interactive STEM Learning Hub
+
+## Project Overview
+
+This is an **open-source, bilingual HTML5 interactive curriculum** designed for middle-school science classrooms. Students do more than watch animations: they drag, rotate, change variables, observe feedback, and explain the results using scientific reasoning.
+
+The project centers on **STEM education**, **inquiry-based learning**, **scientific visualization**, and **interactive simulation**. It connects physics, chemistry, Earth science, astronomy, mathematics, technology, and engineering thinking. Because every lesson is built with client-side HTML5, CSS3, Canvas, and vanilla JavaScript, the materials run directly in modern browsers on classroom displays, iPads, and student devices—without plugins or a backend server.
+
+## Five-Level Curriculum Architecture
+
+1. **Pavilion:** Physics & Mechanics, Chemistry, and Earth & Space Science.
+2. **Chapter:** Approximately 30 core chapters organize the full curriculum.
+3. **Unit:** Each chapter contains 4–6 concept-building units.
+4. **Tab:** Each unit uses 4–5 focused learning tabs.
+5. **Sub-tab:** Calculations and experiments follow a Question → Hint → Answer progression.
+
+## Design and Accessibility Principles
+
+* **Dark chalkboard, high contrast:** A deep green background reduces glare while bright chalk colors map explanations to diagrams.
+* **Responsive, touch-friendly layout:** Optimized for classroom projection, iPad landscape mode, and smaller screens.
+* **Readable scientific typography:** Large body text, no-wrap scientific terms, and JetBrains Mono for variables and formulas.
+* **True mathematical fractions:** CSS-rendered vertical fractions replace slash notation.
+* **Teacher-ready language:** Concise explanations, interactive demonstrations, and immediate practice feedback.
+
+## Curriculum Directory
+
+> The live catalog in `index.html` is the source of truth.
+
+### Physics & Mechanics Pavilion
+* **01｜⚖️ Density & Measurement** (3 lessons)
+  * [Laboratory Safety & Length Measurement](density_1.html) — Seven lab-tool safeguards, visual-error checks, ruler precision, and reliable averaging ★
+  * [Measuring Mass & Volume](density_2.html) — Mass vs. weight, balance practice, three displacement methods, and graduated-cylinder parallax checks ★
+  * [Density: Meaning & Calculations](density_3.html) — Cutting-material investigations, density language, an interactive calculator, and mass-volume graph analysis ★
+* **02｜🌊 Waves & Sound** (4 lessons)
+  * [Wave Propagation & Mechanical Waves](waves_1.html) — Interactive models of transverse waves, longitudinal waves, and particle motion
+  * [Sound Propagation & Speed](waves_2.html) — Media, temperature effects, and sound-speed calculations
+  * [Echoes & the Two-Cliff Problem](waves_3.html) — Echo conditions, diffuse reflection, and a classic distance challenge
+  * [Pitch, Loudness, Timbre & Resonance](waves_4.html) — Interactive sound variables, glass experiments, and resonance
+* **03｜💡 Optics & Lenses** (6 lessons)
+  * [Rectilinear Light & Pinhole Imaging](optics_1.html) — Dynamic pinhole-camera simulation and straight-line light propagation
+  * [Plane Mirrors & Reflection](optics_2.html) — Virtual-image location, curved-mirror fields of view, and laser reflection ★
+  * [Refraction & Total Internal Reflection](optics_3.html) — Refraction patterns, apparent depth, and mirage simulations
+  * [Lenses & Vision Correction](optics_4.html) — Converging and diverging lenses, image formation, myopia, and hyperopia
+  * [Light & Color](optics_5.html) — Additive primary colors, object color, and optical filters
+  * [Advanced Optics: Multiple Reflections](optics_max1.html) — Two-mirror angle investigations and virtual-image counting
+* **04｜🔥 Thermal Physics** (5 lessons)
+  * [Temperature & Thermometers](thermo_1.html) — Thermometer principles, Celsius-Fahrenheit conversion, and calibration problems
+  * [Heat & Thermal Equilibrium](thermo_2.html) — Heat-flow direction, the calorie, and ideal equilibrium calculations
+  * [Specific Heat & Graph Slopes](thermo_3.html) — Mass-specific-heat relationships, graph slopes, and heat-loss extensions
+  * [Conduction, Convection & Radiation](thermo_4.html) — Interactive heat-transfer models and real-life applications
+  * [Thermal Effects on Matter](thermo_5.html) — Ice structure, the 4°C water anomaly, dehydration, and heating curves ★
+* **05｜🧲 Forces, Pressure & Fluids** (5 lessons)
+  * [Forces & Springs](mechanics_1.html) — Mass vs. weight, contact and non-contact forces, Hooke’s law, and spring networks ★
+  * [Force Composition, Resolution & Balance](mechanics_2.html) — Vector tug-of-war, equilibrium tables, parallelogram vectors, and inclined planes ★
+  * [Friction Everywhere](mechanics_3.html) — Microscopic contact, maximum static friction, velocity-time analysis, and controlled variables ★
+  * [Pressure & Fluid Pressure](mechanics_4.html) — Solid pressure, depth effects, communicating vessels, and Pascal’s principle ★
+  * [Atmospheric Pressure & Buoyancy](mechanics_5.html) — Magdeburg hemispheres, Torricelli’s barometer, Archimedes’ principle, and floating ★
+* **06｜📐 Linear Kinematics** (5 lessons)
+  * [Position, Path Length & Displacement](kinematics.html) — Number lines, tracks, clock hands, geometric reasoning, and quick practice
+  * [Average Speed, Velocity & v–t Graphs](kinematics_2.html) — Two-car comparisons, displacement from area, and turnaround motion
+  * [Uniform & Accelerated Motion](kinematics_3.html) — Dynamic chalkboard models of constant velocity and acceleration
+  * [Constant Acceleration I](kinematics_4.html) — Full-scale ticker timers and Galileo’s inclined-plane reasoning
+  * [Constant Acceleration II & Free Fall](kinematics_5.html) — Four motion equations and a precise model of free fall
+* **07｜🍎 Newtonian Mechanics** (5 lessons)
+  * [Newton’s First Law & Inertia](newton_1.html) — Galileo’s thought experiment, constant motion, and inertia on accelerating vehicles ★
+  * [Newton’s Second Law & F = ma](newton_2.html) — Force-acceleration relationships, weight in newtons, and measuring mass in space ★
+  * [Newton’s Third Law & Apparent Weight](newton_3.html) — Free-body diagrams, action-reaction pairs, sailboat myths, and elevator motion ★
+  * [Circular Motion & Gravitation](newton_4.html) — Centripetal force, tangential motion, banked roads, and inverse-square gravity ★
+  * [Torque & Static Equilibrium](newton_5.html) — Pivots, lever arms, rotational effects, and equilibrium conditions ★
+* **08｜⚡ Work & Energy** (4 lessons)
+  * [Work & Power](work_1.html) — Positive and negative work, force-displacement angles, and power calculations ★
+  * [Kinetic & Gravitational Potential Energy](work_2.html) — Energy transformations and mass-speed-squared relationships ★
+  * [Conservation of Mechanical Energy](work_3.html) — Pendulum energy, free fall, and Joule’s mechanical equivalent of heat ★
+  * [Simple Machines & Efficiency](work_4.html) — The work principle, nail-puller practice, wheel-and-axle systems, and inclined planes ★
+* **09｜💡 Electricity & Circuits** (4 lessons)
+  * [Electrostatics & Basic Circuits](electronics_1.html) — Charging by friction, electrostatic induction, and circuit-component observation ★
+  * [Voltage & Three Circuit States](electronics_2.html) — Water-flow analogy, open and closed circuits, and dangerous short circuits ★
+  * [Series/Parallel Circuits & Current](electronics_3.html) — Electric current, ammeter rules, and classic exam problems ★
+  * [Resistance & Ohm’s Law](electronics_4.html) — Microscopic collisions, V–I graphs, and unknown-resistance measurement ★
+* **10｜🧭 Electricity & Magnetism** (3 lessons)
+  * [Magnetic Forces & Fields](magnetism_1.html) — Poles, domains, field lines, compasses, and Earth’s magnetic field ★
+  * [Current-Generated Magnetism & Electromagnets](electromagnetism_2.html) — Oersted’s experiment, right-hand rules, field superposition, cranes, and telephone receivers ★
+  * [Magnetic Force & Electric Motors](electric_motor_3.html) — Right-hand palm rule, parallel-current forces, charged particles, split-ring commutation, and interactive DC motors ★
+### Chemistry Pavilion
+* **01｜🧪 Air & Solutions** (4 lessons)
+  * [Properties & Separation of Matter](concerntration_1.html) — Physical and chemical changes, pure substances, mixtures, filtration, and crystallization ★
+  * [Three Ways to Express Concentration](concerntration_2.html) — Solutions, saturation, mass percent, volume percent, and ppm calculators ★
+  * [Solubility & Saturation](concerntration_3.html) — Solubility curves, dissolved amount, and cooling crystallization challenges ★
+  * [Air & Gas Preparation](concerntration_4.html) — Air composition, oxygen preparation, water displacement, and carbon-dioxide tests ★
+* **02｜⚛️ Atoms & the Periodic Table** (4 lessons)
+  * [Pure Substances & Elements](atomics_1.html) — Classifying matter, Lavoisier’s water electrolysis, and metals vs. nonmetals ★
+  * [Atomic Models & the Periodic Table](atomics_2.html) — The history of atomic models, periodic patterns, and major element families ★
+  * [Subatomic Particles & Isotopes](atomics_3.html) — Protons, neutrons, electrons, ion calculations, and allotropes ★
+  * [Structures of Matter & Chemical Formulas](atomics_4.html) — Conductivity models, ion notation, 3D ethanol structure, and problem solving ★
+* **03｜⚖️ Chemical Reactions & Equations** (3 lessons)
+  * [Chemical Reactions & Conservation of Mass](chem_reaction_1.html) — Reaction evidence, fireworks, microscopic combustion, and closed-system precipitation ★
+  * [Chemical Equations & Balancing](chem_reaction_2.html) — Writing rules, inspection, algebraic methods, and redox extensions ★
+  * [Atomic Mass, Molecular Mass & the Mole](chem_reaction_3.html) — Carbon-12, molecular mass, Avogadro’s number, and molar-mass conversions ★
+* **04｜🔥 Oxidation & Reduction** (3 lessons)
+  * [Oxidation, Reduction & Reactivity](redox_1.html) — Virtual combustion, metal activity, and oxide acid-base patterns ★
+  * [Redox Competition & Electron Transfer](redox_2.html) — Copper-oxide reduction, oxidizing/reducing agents, and advanced challenges ★
+  * [Metal Smelting & Corrosion Protection](redox_3.html) — Blast-furnace chemistry, iron and steel, and everyday redox protection ★
+* **05｜⚗️ Electrolytes, Acids, Bases & Salts** (4 lessons)
+  * [Electrolytes & Ionic Dissociation](electrolyte_1.html) — Conductivity, closed circuits, 2:1 water electrolysis, and microscopic ion motion ★
+  * [Common Acids, Bases & Concentrated-Acid Safety](electrolyte_2.html) — Strong and weak acids, sugar dehydration, and safe dilution ★
+  * [Molarity, Dilution & pH](electrolyte_3.html) — Standard solutions, dilution and mixing, and extreme-pH challenges ★
+  * [Neutralization, Titration & Salts](electrolyte_4.html) — Automated titration, common salts, and acid-base stoichiometry ★
+* **06｜⚡ Reaction Rates & Equilibrium** (3 lessons)
+  * [Reaction Rates & Collision Theory](chem_reaction_balance_1.html) — Effective collisions, four rate factors, and a classic thiosulfate experiment ★
+  * [Activation Energy & Catalysts](chem_reaction_balance_2.html) — Reaction thresholds, catalyst properties, and real-world applications ★
+  * [Reversible Reactions & Dynamic Equilibrium](chem_reaction_balance_3.html) — Microscopic dynamics, concentration/temperature/pressure changes, caves, and blood buffers ★
+* **07｜🧬 Organic & Everyday Chemistry** (4 lessons)
+  * [Organic Chemistry & Wood Distillation](organics_1.html) — Definitions and exceptions, dry-distillation products, and 3D isomers ★
+  * [Hydrocarbons, Alcohols, Acids & Esters](organics_2.html) — Fractional distillation, acid-alcohol comparison, and fruity ester formation ★
+  * [Polymers & Textile Fibers](organics_3.html) — Monomer-polymer animation, thermoplastics vs. thermosets, and fiber testing ★
+  * [Food Chemistry & Detergents](organics_4.html) — Protein denaturation, soap making, and micelle cleaning ★
+* **08｜🔋 Electrochemistry & Batteries** (5 lessons)
+  * [Electrical Energy & Power](electric_energy_power_1.html) — Three effects of electricity, deriving E = IVt, circuit energy, power, and appliance ratings ★
+  * [Power Transmission & Electricity Cost](electric_power_transmission_2.html) — AC/DC, high-voltage transmission, line loss, kilowatt-hours, 110/220 V wiring, and grounding ★
+  * [Short Circuits & Electrical Safety](electrical_safety_3.html) — Overload, heating wires, fuses, breakers, electric shock, and extension-cord current ratings ★
+  * [Galvanic Cells](galvanic_batteries_4.html) — Galvani and Volta, redox, zinc-copper cells, salt bridges, and common batteries ★
+  * [Electrolysis & Electroplating](electrolysis_5.html) — Electrodes, water electrolysis, copper-sulfate electrolysis, and industrial electroplating ★
+### Earth & Space Science Pavilion
+* **01｜🌍 Water & Land** (4 lessons)
+  * [Earth’s Water & Groundwater](earth_water_1.html) — Earth systems, water distribution, salinity, glaciers, water tables, and overpumping ★
+  * [Changing Landforms & External Processes](earth_landforms_2.html) — Internal/external forces, weathering, rivers, glaciers, wind, and waves ★
+  * [Coastlines & Dynamic Equilibrium](earth_coastline_3.html) — Sediment budgets, transgression/regression, dams, and breakwater impacts ★
+  * [Rock Families & the Rock Cycle](earth_rocks_4.html) — Mineral identification, igneous cooling, sedimentation, metamorphism, and the rock cycle ★
+* **02｜🌋 Plate Tectonics & Earth History** (4 lessons)
+  * [Earth’s Interior & Plate Dynamics](earth_interior_1.html) — Crust, mantle, core, lithosphere, asthenosphere, convection, and plate motion ★
+  * [Plate Boundaries & Surface Change](earth_plates_2.html) — Global plates, seafloor spreading, subduction, mountain building, earthquakes, and volcanoes ★
+  * [Rock-Layer Records & Earth History](earth_strata_3.html) — Folds, faults, geologic-event sequencing, and index-fossil dating ★
+  * [Taiwan’s Plate Tectonics & Earthquakes](earth_taiwan_quake_4.html) — Orogeny, focus and epicenter, magnitude and intensity, hazard zones, and preparedness ★
+* **03｜🌌 Space & Astronomy** (4 lessons)
+  * [Cosmic Scale & the Solar System](astronomy_universe_1.html) — Zoom from the universe and Milky Way to the Solar System, Earth, and Moon ★
+  * [Earth’s Rotation, Revolution & Seasons](astronomy_earth_motion_2.html) — Day and night, time, apparent solar motion, revolution, and the seasons ★
+  * [Solar Paths & the Celestial Sphere](astronomy_sunpath_3.html) — Daily solar motion, seasonal daylight paths, and celestial-sphere directions ★
+  * [Moon Phases, Eclipses & Tides](astronomy_moon_phases_4.html) — Lunar phases and observing times, eclipses, the 5° orbital tilt, and tidal cycles ★
+
+---
+
+**Curriculum designer:** Yan-Jun Lu  
+**Contact:** flyer19820218@gmail.com  
+**Technology:** HTML5, CSS3, Canvas, and vanilla JavaScript—no plugins or backend required.  
+**Keywords:** STEM education, interactive science, inquiry-based learning, physics simulations, chemistry simulations, Earth science, astronomy, bilingual education, middle-school science, scientific visualization, open educational resources (OER).

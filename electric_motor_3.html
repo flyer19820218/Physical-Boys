@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>磁力與電動機：開掌定則的威力</title>
+<link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
+<link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+<link href="[https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;800&family=Noto+Sans+TC:wght@500;700;900&display=swap](https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;800&family=Noto+Sans+TC:wght@500;700;900&display=swap)" rel="stylesheet">
+<style>
+:root{
+  --bg:#11261f;--panel:#173b31;--canvas:#0c1e19;--white:#ffffff;--yellow:#fff36a;--cyan:#55e9ff;
+  --orange:#ffb347;--green:#9af06f;--pink:#ff78b7;--purple:#dd8cff;--red:#ff6f76;--muted:#b8c9c1;
+  --pole-n:#ff6f76;--pole-s:#72b9ff;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  margin:0;color:var(--white);font-family:'Noto Sans TC',system-ui,sans-serif;
+  font-size:20px;line-height:1.65;
+  background:radial-gradient(circle at 1px 1px,rgba(255,255,255,.045) 1px,transparent 1.3px) 0 0/6px 6px,var(--bg)
+}
+button,input{font:inherit}button{touch-action:manipulation}
+.app{max-width:1080px;margin:auto;padding:22px 18px 70px;position:relative}
+.hero{text-align:center;padding:54px 10px 12px}
+.language-switcher{
+  position:absolute;top:16px;right:18px;z-index:5;display:flex;align-items:center;gap:7px;
+  padding:7px 9px;border:2px solid rgba(85,233,255,.58);border-radius:14px;background:rgba(12,30,25,.92)
+}
+.language-switcher span{color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800}
+.lang-btn{border:1px solid #58736a;border-radius:9px;background:#102d26;color:var(--white);padding:4px 9px;font-weight:900;cursor:pointer}
+.lang-btn.active{background:var(--cyan);border-color:var(--cyan);color:#0b2b2e}
+h1{font-size:46px;line-height:1.15;margin:0;color:var(--yellow);font-weight:900}
+.subtitle{color:var(--muted);font-weight:700;margin:12px 0 0}
+.tab-container{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:18px 0 22px}
+.tab-button,.action-btn,.practice-btn,.sub-tab-btn{
+  border:2px solid var(--muted);background:#102d26;color:var(--white);border-radius:14px;padding:11px 16px;
+  font-weight:900;cursor:pointer;transition:.18s transform,.18s background,.18s border-color
+}
+.tab-button:hover,.action-btn:hover,.practice-btn:hover,.sub-tab-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.08)}
+.tab-button.active,.active-btn{background:var(--cyan)!important;color:#0b2b2e!important;border-color:var(--cyan)!important}
+.tab-content{display:none;animation:fade .2s ease}.tab-content.active{display:block}@keyframes fade{from{opacity:.35}to{opacity:1}}
+.grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.panel{background:rgba(22,58,47,.95);border:2px solid var(--cyan);border-radius:22px;padding:18px;min-width:0}
+.panel h2{margin:0 0 12px;color:var(--yellow);font-size:29px;line-height:1.25}
+.panel p{margin:8px 0}.panel ul{margin:8px 0;padding-left:1.35em}.panel li{margin:7px 0}
+.key-box,.result-box{border:2px solid var(--cyan);border-radius:14px;padding:13px 15px;margin-top:14px;background:rgba(85,233,255,.05);font-weight:700}
+.canvas-wrap{background:var(--canvas);border:3px solid var(--cyan);border-radius:20px;overflow:hidden;position:relative}
+.rect-canvas{display:block;width:100%;height:auto;aspect-ratio:10/6;cursor:grab}
+.rect-canvas:active{cursor:grabbing}
+.hand-guide{margin:16px 0 0;background:var(--canvas);border:2px solid rgba(255,179,71,.78);border-radius:18px;overflow:hidden}
+.hand-guide img{display:block;width:100%;height:auto;aspect-ratio:1/1;object-fit:contain;background:var(--canvas)}
+.hand-guide figcaption{padding:10px 14px;text-align:center;color:var(--white);font-weight:900;border-top:2px solid rgba(255,179,71,.42)}
+.controls{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:14px 0;align-items:center}
+.slider-group{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:140px}
+.slider-group label{font-weight:900;color:var(--cyan);font-size:18px}
+input[type=range]{width:100%;accent-color:var(--yellow)}
+.practice-box{margin-top:18px;border:2px solid #58736a;border-radius:18px;padding:14px;background:rgba(11,43,46,.18)}
+.practice-tabs{display:flex;gap:8px;flex-wrap:wrap}.practice-btn{padding:8px 14px}.practice-btn.active{background:var(--yellow);color:#21362f;border-color:var(--yellow)}
+.practice-step{display:none;padding:12px 4px 2px}.practice-step.active{display:block}.practice-step h3{color:var(--yellow);margin:0 0 7px;font-size:24px}.practice-step p{margin:0}
+.accent-cyan{color:var(--cyan)}.accent-orange{color:var(--orange)}.accent-pink{color:var(--pink)}.accent-green{color:var(--green)}.accent-yellow{color:var(--yellow)}.accent-red{color:var(--red)}
+.nowrap{white-space:nowrap}
+.sub-tab-container{display:flex;gap:6px;margin-bottom:14px;border-bottom:2px solid #4d6b61;padding-bottom:10px;flex-wrap:wrap}
+.sub-tab-btn{padding:8px 14px;border-radius:10px;border:none;background:transparent;color:var(--muted)}
+.sub-tab-btn.active{background:rgba(85,233,255,.15);color:var(--cyan);border:1px solid var(--cyan)}
+.sub-tab-content{display:none;animation:fade .2s ease}.sub-tab-content.active{display:block}
+@media(max-width:768px){
+  .app{padding:12px 8px 50px}.hero{padding-top:64px}h1{font-size:34px}.grid-2col{grid-template-columns:1fr}
+  .language-switcher{top:10px;right:8px}
+  .panel{padding:13px}.panel h2{font-size:25px}
+  .tab-container{display:grid;grid-template-columns:1fr 1fr}.tab-button{padding:9px 6px;font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="language-switcher" role="group" aria-label="Language 語言切換">
+  <span>Language</span>
+  <button class="lang-btn active" type="button" data-lang="zh">中文</button>
+  <button class="lang-btn" type="button" data-lang="en">EN</button>
+</div>
+<header class="hero">
+  <h1>🧲 磁場與電動機</h1>
+  <p class="subtitle">解鎖右手開掌定則，透視馬達旋轉的物理奧秘。</p>
+</header>
+
+<nav class="tab-container" aria-label="單元分頁">
+  <button class="tab-button active" data-tab="tab-palm">✋ 右手開掌訓練場</button>
+  <button class="tab-button" data-tab="tab-force-examples">🧪 開掌定則實例</button>
+  <button class="tab-button" data-tab="tab-motor-struct">⚙️ 電動機解剖室</button>
+  <button class="tab-button" data-tab="tab-motor-anim">🔄 馬達慢動作運轉</button>
+  <button class="tab-button" data-tab="tab-motor-power">🛠️ 實戰：極速馬達</button>
+</nav>
+
+<!-- 1. 右手開掌訓練場 -->
+<section id="tab-palm" class="tab-content active">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="palm-intro" data-parent="tab-palm">導線受力原理</button>
+        <button class="sub-tab-btn" data-sub="palm-rule" data-parent="tab-palm">右手開掌定則</button>
+      </nav>
+      
+      <div id="palm-intro" class="sub-tab-content active">
+        <h2>通電導線會受到磁力</h2>
+        <p>把<strong class="accent-cyan">通電導線</strong>放進<strong class="accent-orange">外加磁場</strong>，而且電流與磁場互相垂直時，導線會受到磁力。</p>
+        <ul>
+          <li><strong class="accent-green">磁場 B</strong>：由 N 極指向 S 極。</li>
+          <li><strong class="accent-cyan">電流 I</strong>：用 <span class="nowrap">⊙ 穿出</span>、<span class="nowrap">⊗ 穿入</span>表示。</li>
+          <li><strong class="accent-pink">磁力 F</strong>：一定同時垂直於電流與磁場。</li>
+        </ul>
+      </div>
+
+      <div id="palm-rule" class="sub-tab-content">
+        <h2>右手開掌定則</h2>
+        <p>伸出右手，把大拇指與其餘四指互相垂直：</p>
+        <ul>
+          <li><strong class="accent-cyan">大拇指</strong>：代表<strong class="accent-cyan">電流方向 (I)</strong>。</li>
+          <li><strong class="accent-green">伸直的四指</strong>：代表<strong class="accent-green">磁場方向 (B)</strong>（由 N 指向 S）。</li>
+          <li><strong class="accent-pink">掌心推出的方向</strong>：就是導線的<strong class="accent-pink">受力方向 (F)</strong>！</li>
+        </ul>
+        <div class="key-box">先認清 B 與 I，再用右手驗證 F；不要在腦中旋轉整張圖。</div>
+      </div>
+
+      <figure class="hand-guide">
+        <img src="assets/right-hand-open-palm.png" alt="右手開掌定則：磁場、電流與受力三個方向互相垂直">
+        <figcaption><span class="accent-green">B</span> ⟂ <span class="accent-cyan">I</span>　　<span class="accent-cyan">I</span> ⟂ <span class="accent-pink">F</span>　　<span class="accent-pink">F</span> ⟂ <span class="accent-green">B</span></figcaption>
+      </figure>
+    </article>
+
+    <article class="panel">
+      <h2>【互動】三方向同步訓練</h2>
+      <div class="canvas-wrap"><canvas id="palmCanvas" class="rect-canvas" width="2000" height="1200"></canvas></div>
+      
+      <div class="controls">
+        <button id="palmCurrentBtn" class="action-btn success">切換電流：穿出紙面 ⊙</button>
+        <button id="palmMagnetBtn" class="action-btn warning">翻轉磁鐵：N極在上 ⬇️</button>
+      </div>
+      
+      <div id="palmResult" class="result-box">拇指朝外，四指朝下，掌心朝<strong class="accent-pink">右</strong>。銅線向<strong class="accent-pink">右</strong>受力！</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>若磁場方向是「由東向西」，導線的電流方向是「由南向北」，導線會往哪個方向受力？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>四指指向西方，大拇指指向北方。這時候你的掌心是朝上還是朝下？</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>掌心朝上，導線受力方向為<strong class="accent-pink">向上（離開地面）</strong>。</p></div>
+  </div>
+</section>
+
+<!-- 2. 右手開掌定則實例 -->
+<section id="tab-force-examples" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="example-wires" data-parent="tab-force-examples" data-example-mode="wires">同向電流導線</button>
+        <button class="sub-tab-btn" data-sub="example-electron" data-parent="tab-force-examples" data-example-mode="electron">電子進入磁場</button>
+      </nav>
+
+      <div id="example-wires" class="sub-tab-content active">
+        <h2>兩條同向電流導線</h2>
+        <p><strong class="accent-cyan">A 導線的磁場</strong>作用在 B 導線，使 B 受力朝向 A；B 也用相同方式影響 A。</p>
+        <ul>
+          <li>A 影響 B：B 受到朝左的磁力。</li>
+          <li>B 影響 A：A 受到朝右的磁力。</li>
+          <li><strong class="accent-pink">結論：同方向電流互相吸引。</strong></li>
+        </ul>
+        <div class="key-box">每一條導線都同時是「磁場來源」，也是「磁力作用對象」。</div>
+      </div>
+
+      <div id="example-electron" class="sub-tab-content">
+        <h2>電子進入均勻磁場</h2>
+        <p>電子向右射入<strong class="accent-green">垂直穿入畫面的均勻磁場（⊗）</strong>，軌跡開始向下彎。磁力永遠垂直於運動方向，只改變方向，不直接改變速率。</p>
+        <ul>
+          <li>先用右手判斷<strong class="accent-cyan">傳統電流（正電荷）</strong>的受力。</li>
+          <li>電子帶負電，實際受力方向要<strong class="accent-pink">完全相反</strong>。</li>
+          <li>磁力持續擔任向心力，形成<strong class="accent-red">圓周運動</strong>。</li>
+        </ul>
+        <div class="key-box">資優關鍵：<span class="nowrap">v ⟂ B</span> 時，軌跡是圓；磁場越強，軌道半徑越小。</div>
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>【動畫】雙向作用與帶電粒子</h2>
+      <div class="canvas-wrap"><canvas id="forceExamplesCanvas" class="rect-canvas" width="2000" height="1200"></canvas></div>
+      <div class="controls">
+        <button id="toggleBFieldBtn" class="action-btn">關閉 B 導線磁力線</button>
+        <button id="exampleReplayBtn" class="action-btn warning">↻ 重播動畫</button>
+      </div>
+      <div id="forceExampleResult" class="result-box"><strong class="accent-pink">同向電流相吸：</strong>A、B 互相產生磁場，也互相受到磁力。</div>
+    </article>
+  </div>
+
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>若兩條平行導線的電流方向相反，兩條導線會互相吸引，還是互相排斥？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>把其中一條導線的電流翻轉，再用右手開掌定則判斷兩邊的受力。</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-pink">互相排斥</strong>。同方向電流相吸；反方向電流相斥。</p></div>
+  </div>
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 資優題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>資優題</h3><p>電子向右進入垂直穿入畫面的有限磁場，最初會往上彎，還是往下彎？離開磁場後如何運動？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>先把它當正電荷用右手判斷，再把受力方向反轉；磁力永遠和速度垂直。</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>電子最初受力<strong class="accent-pink">向下</strong>，在磁場內沿圓弧運動；離開磁場後不再受磁力，沿切線<strong class="accent-red">等速直線向左</strong>。</p></div>
+  </div>
+</section>
+
+<!-- 3. 電動機解剖室 -->
+<section id="tab-motor-struct" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <h2>拆解直流電動機 (馬達)</h2>
+      <p>馬達就是把「電能」轉換成「動能（旋轉）」的機器，它的內部主要由四大核心零件組成：</p>
+      <ul>
+        <li><strong class="accent-cyan">1. 場磁鐵：</strong> 固定在兩側的外加磁鐵，負責提供穩定、均勻的磁場 (B)。</li>
+        <li><strong class="accent-yellow">2. 電樞 (線圈)：</strong> 放在磁場中的矩形導線圈。通電後左右兩邊會受到反向的磁力，產生<strong class="accent-pink">旋轉力矩</strong>。</li>
+        <li><strong class="accent-orange">3. 集電環 (半圓形)：</strong> <strong style="text-decoration:underline;">這是馬達能「持續同向旋轉」的靈魂！</strong> 它隨線圈轉動，每半圈會切換一次輸入線圈的電流方向。</li>
+        <li><strong class="accent-green">4. 電刷：</strong> 固定不動的石墨塊，負責將外部電源的電流「輕輕刷」進旋轉中的集電環。</li>
+      </ul>
+      <div class="key-box">記住！如果沒有切成兩半的集電環，馬達轉了半圈就會卡死在原地來回震盪！</div>
+    </article>
+
+    <article class="panel">
+      <h2>【動畫】立體電動機構造</h2>
+      <div class="canvas-wrap"><canvas id="motorStructCanvas" class="rect-canvas" width="2000" height="1200"></canvas></div>
+      <div class="controls">
+        <button id="motorStructPlayBtn" class="action-btn warning">⏸️ 暫停立體旋轉</button>
+      </div>
+      <div class="result-box"><strong class="accent-yellow">電樞兩端</strong>分別接兩個半圓形<strong class="accent-orange">集電環</strong>；固定<strong class="accent-cyan">電刷</strong>再把外部電流送進集電環。</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>直流電動機中的「電刷」，為什麼通常使用石墨（碳）來製作，而不是用銅或鐵？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>電刷必須一直摩擦高速旋轉的集電環。石墨除了能導電，在物理特性上還有什麼優點？</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p>因為石墨具有<strong class="accent-cyan">導電性好</strong>，且質地較軟具有<strong class="accent-orange">潤滑作用</strong>，能減少摩擦阻力與集電環的磨損。</p></div>
+  </div>
+</section>
+
+<!-- 4. 電動機慢動作運轉 -->
+<section id="tab-motor-anim" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <nav class="sub-tab-container">
+        <button class="sub-tab-btn active" data-sub="anim-torque" data-parent="tab-motor-anim">轉動的秘密</button>
+        <button class="sub-tab-btn" data-sub="anim-gap" data-parent="tab-motor-anim">無電流的死角</button>
+      </nav>
+      
+      <div id="anim-torque" class="sub-tab-content active">
+        <h2>左右推拉，形成旋轉</h2>
+        <p>當線圈呈水平時，我們套用右手開掌定則：</p>
+        <ul>
+          <li>右側線圈電流朝內，磁場朝右，受力<strong class="accent-pink">向下</strong>。</li>
+          <li>左側線圈電流朝外，磁場朝右，受力<strong class="accent-pink">向上</strong>。</li>
+          <li>一上一下的力，完美形成了讓線圈<strong class="accent-cyan">逆時針旋轉</strong>的力矩！</li>
+        </ul>
+      </div>
+
+      <div id="anim-gap" class="sub-tab-content">
+        <h2>慣性闖過缺口</h2>
+        <p>注意看動畫！當線圈轉到<strong class="accent-yellow">垂直面</strong>時：</p>
+        <ul>
+          <li>此時電刷剛好接觸到集電環的<strong class="accent-orange">缺口</strong>。</li>
+          <li><span class="nowrap"><strong class="accent-red">線圈瞬間斷電，受力為零！</strong></span></li>
+          <li>但因為線圈已經在轉了，它會靠著<strong class="accent-cyan">慣性</strong>衝過這個死角。</li>
+          <li>衝過後，集電環的左右半部剛好交換，電流反向輸入，確保受力方向維持不變，繼續順暢旋轉！</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="panel">
+      <h2>【動畫】電動機運轉觀測</h2>
+      <div class="canvas-wrap"><canvas id="motorAnimCanvas" class="rect-canvas" width="2000" height="1200"></canvas></div>
+      
+      <div class="controls">
+        <div class="slider-group">
+          <label for="motorSpeed">轉動速度 (慢動作觀察)</label>
+          <input type="range" id="motorSpeed" min="1" max="10" value="4">
+        </div>
+        <button id="motorPlayBtn" class="action-btn warning">⏸️ 暫停觀察</button>
+      </div>
+      
+      <div id="motorAnimResult" class="result-box">注意觀察線圈轉至<strong class="accent-yellow">垂直</strong>時，畫面上閃爍的紅字提示！</div>
+    </article>
+  </div>
+  
+  <div class="practice-box">
+    <div class="practice-tabs">
+      <button class="practice-btn active" data-step="question">❓ 問題</button>
+      <button class="practice-btn" data-step="hint">💡 提示</button>
+      <button class="practice-btn" data-step="answer">✅ 解答</button>
+    </div>
+    <div class="practice-step active" data-content="question"><h3>問題</h3><p>如果我們把「半圓形的集電環」，換成兩個完全沒有缺口的「完整圓環」，馬達還能順利旋轉嗎？</p></div>
+    <div class="practice-step" data-content="hint"><h3>提示</h3><p>完整圓環無法改變線圈內的電流方向。當線圈轉過半圈後，原本向上的力會變成向下，這樣會發生什麼事？</p></div>
+    <div class="practice-step" data-content="answer"><h3>解答</h3><p><strong class="accent-red">不能旋轉</strong>。線圈會在垂直位置附近<strong class="accent-pink">來回擺盪卡死</strong>，無法持續朝同一方向旋轉。</p></div>
+  </div>
+</section>
+
+<!-- 5. 實戰：極速馬達 -->
+<section id="tab-motor-power" class="tab-content">
+  <div class="grid-2col">
+    <article class="panel">
+      <h2>如何讓馬達轉得更快？</h2>
+      <p>不論是電風扇、四驅車、還是特斯拉的電動車，要提升馬達的轉速與力量，物理原理完全相同：</p>
+      <ul>
+        <li><strong class="accent-cyan">1. 增加電流 (I)：</strong>換上更高電壓的電池，電流變大，磁力 F = I×L×B 也跟著變大。</li>
+        <li><strong class="accent-cyan">2. 增加線圈匝數 (N)：</strong>纏繞更多圈導線，相當於好幾倍的受力同時推動電樞。</li>
+        <li><strong class="accent-green">3. 增強場磁鐵 (B)：</strong>換上強力釹鐵硼磁鐵，提供更強大的外加磁場。</li>
+      </ul>
+      <div class="key-box">在下方互動區，將這三個參數拉到最大，感受工業級極速馬達的威力吧！</div>
+    </article>
+
+    <article class="panel">
+      <h2>【互動】同一具馬達強化台</h2>
+      <div class="canvas-wrap"><canvas id="motorPowerCanvas" class="rect-canvas" width="2000" height="1200"></canvas></div>
+      
+      <div class="controls" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+        <div class="slider-group">
+          <label for="pwrCurrent">⚡ 電流強度</label>
+          <input type="range" id="pwrCurrent" min="1" max="5" value="2">
+        </div>
+        <div class="slider-group">
+          <label for="pwrTurns">🧻 線圈圈數</label>
+          <input type="range" id="pwrTurns" min="1" max="5" value="1">
+        </div>
+        <div class="slider-group">
+          <label for="pwrMagnet">🧲 磁場強度</label>
+          <input type="range" id="pwrMagnet" min="1" max="5" value="2">
+        </div>
+      </div>
+      
+      <div id="motorPowerResult" class="result-box">目前轉速：<strong class="accent-cyan">中等</strong>。請試著把所有數值拉到最大！</div>
+    </article>
+  </div>
+</section>
+</div>
+
+<script>
+// ==========================================
+// 共用資源與函式
+// ==========================================
+const C = {
+  bg: '#11261f', canvas: '#0c1e19', white: '#ffffff',
+  yellow: '#fff36a', cyan: '#55e9ff', orange: '#ffb347', green: '#9af06f',
+  pink: '#ff78b7', purple: '#dd8cff', red: '#ff6f76', muted: '#b8c9c1',
+  poleN: '#ff6f76', poleS: '#72b9ff'
+};
+const TAU = Math.PI * 2;
+
+// ==========================================
+// 中英雙語：保留國際通用物理代號 B、I、F、e⁻
+// ==========================================
+let currentLang = 'zh';
+const tr = (zh, en) => currentLang === 'en' ? en : zh;
+const EN = {
+  '🧲 磁場與電動機':'🧲 Magnetic Fields & Motors',
+  '解鎖右手開掌定則，透視馬達旋轉的物理奧秘。':'Use the right-hand palm rule to see why a motor turns.',
+  '✋ 右手開掌訓練場':'✋ Right-hand Rule Lab','🧪 開掌定則實例':'🧪 Rule Applications',
+  '⚙️ 電動機解剖室':'⚙️ Motor Anatomy','🔄 馬達慢動作運轉':'🔄 Motor in Slow Motion','🛠️ 實戰：極速馬達':'🛠️ Build a Faster Motor',
+  '導線受力原理':'Force on a Wire','右手開掌定則':'Right-hand Palm Rule','通電導線會受到磁力':'A Current-carrying Wire Feels a Force',
+  '把':'Place ','通電導線':'a current-carrying wire','放進':' in an ','外加磁場':'external magnetic field',
+  '，而且電流與磁場互相垂直時，導線會受到磁力。':'. When current and field are perpendicular, the wire feels a magnetic force.',
+  '磁場 B':'Magnetic field B','：由 N 極指向 S 極。':': points from N to S.','電流 I':'Conventional current I','：用':': use ',
+  '⊙ 穿出':'⊙ out of page','⊗ 穿入':'⊗ into page','表示。':' to show direction.','磁力 F':'Magnetic force F','：一定同時垂直於電流與磁場。':': perpendicular to both I and B.',
+  '伸出右手，把大拇指與其餘四指互相垂直：':'Open your right hand so the thumb is perpendicular to the fingers:',
+  '大拇指':'Thumb','：代表':': represents ','電流方向 (I)':'conventional current (I)','伸直的四指':'Straight fingers','磁場方向 (B)':'magnetic field (B)',
+  '（由 N 指向 S）。':' (from N to S).','掌心推出的方向':'Palm push direction','：就是導線的':': gives the wire’s ','受力方向 (F)':'force direction (F)','！':'!',
+  '先認清 B 與 I，再用右手驗證 F；不要在腦中旋轉整張圖。':'Identify B and I first, then use your right hand to verify F. Do not rotate the whole diagram in your head.',
+  '【互動】三方向同步訓練':'[Interactive] Three Perpendicular Directions',
+  '❓ 問題':'❓ Question','💡 提示':'💡 Hint','✅ 解答':'✅ Answer','問題':'Question','提示':'Hint','解答':'Answer',
+  '若磁場方向是「由東向西」，導線的電流方向是「由南向北」，導線會往哪個方向受力？':'B points west and I points north. Which way is the force?',
+  '四指指向西方，大拇指指向北方。這時候你的掌心是朝上還是朝下？':'Point your fingers west and your thumb north. Does your palm face up or down?',
+  '掌心朝上，導線受力方向為':'The palm faces up, so the wire is forced ','向上（離開地面）':'upward (away from the ground)',
+  '同向電流導線':'Parallel Currents','電子進入磁場':'Electron in a Field','兩條同向電流導線':'Two Wires with Parallel Currents',
+  'A 導線的磁場':'Wire A’s magnetic field','作用在 B 導線，使 B 受力朝向 A；B 也用相同方式影響 A。':' acts on wire B and pulls it toward A; B affects A in the same way.',
+  'A 影響 B：B 受到朝左的磁力。':'A acts on B: B feels a force to the left.','B 影響 A：A 受到朝右的磁力。':'B acts on A: A feels a force to the right.',
+  '結論：同方向電流互相吸引。':'Conclusion: currents in the same direction attract.','每一條導線都同時是「磁場來源」，也是「磁力作用對象」。':'Each wire creates a field and also experiences a force.',
+  '電子進入均勻磁場':'Electron Entering a Uniform Field','電子向右射入':'An electron enters to the right into a ','垂直穿入畫面的均勻磁場（⊗）':'uniform field into the page (⊗)',
+  '，軌跡開始向下彎。磁力永遠垂直於運動方向，只改變方向，不直接改變速率。':'. Its path bends downward. Magnetic force stays perpendicular to motion, changing direction but not speed.',
+  '先用右手判斷':'First use the right hand to find the force on ','傳統電流（正電荷）':'conventional current (positive charge)','的受力。':'.',
+  '電子帶負電，實際受力方向要':'Because an electron is negative, reverse the force direction ','完全相反':'completely',
+  '磁力持續擔任向心力，形成':'Magnetic force supplies centripetal force, producing ','圓周運動':'circular motion',
+  '資優關鍵：':'Extension: ','時，軌跡是圓；磁場越強，軌道半徑越小。':' gives a circular path; a stronger field gives a smaller radius.',
+  '【動畫】雙向作用與帶電粒子':'[Animation] Mutual Forces & Charged Particles','↻ 重播動畫':'↻ Replay',
+  '同向電流相吸：':'Parallel currents attract: ','A、B 互相產生磁場，也互相受到磁力。':'A and B create fields and exert forces on each other.',
+  '若兩條平行導線的電流方向相反，兩條導線會互相吸引，還是互相排斥？':'If two parallel wires carry opposite currents, do they attract or repel?',
+  '把其中一條導線的電流翻轉，再用右手開掌定則判斷兩邊的受力。':'Reverse one current, then use the right-hand rule on both wires.',
+  '互相排斥':'They repel','。同方向電流相吸；反方向電流相斥。':'. Same-direction currents attract; opposite-direction currents repel.',
+  '❓ 資優題':'❓ Extension','資優題':'Extension','電子向右進入垂直穿入畫面的有限磁場，最初會往上彎，還是往下彎？離開磁場後如何運動？':'An electron moves right into a finite field directed into the page. Does it first curve up or down? What happens after it exits?',
+  '先把它當正電荷用右手判斷，再把受力方向反轉；磁力永遠和速度垂直。':'Treat it as a positive charge first, then reverse the force. Magnetic force is always perpendicular to velocity.',
+  '電子最初受力':'The electron is initially forced ','向下':'downward','，在磁場內沿圓弧運動；離開磁場後不再受磁力，沿切線':' and follows an arc in the field. After exiting, it follows the tangent in ','等速直線向左':'uniform straight-line motion to the left',
+  '拆解直流電動機 (馬達)':'Inside a DC Motor','馬達就是把「電能」轉換成「動能（旋轉）」的機器，它的內部主要由四大核心零件組成：':'A motor converts electrical energy into rotational kinetic energy. It has four core parts:',
+  '1. 場磁鐵：':'1. Field magnets:','固定在兩側的外加磁鐵，負責提供穩定、均勻的磁場 (B)。':'fixed magnets that provide a stable, uniform field B.',
+  '2. 電樞 (線圈)：':'2. Armature (coil):','放在磁場中的矩形導線圈。通電後左右兩邊會受到反向的磁力，產生':'a rectangular coil in the field. Opposite forces on its sides create ','旋轉力矩':'torque',
+  '3. 集電環 (半圓形)：':'3. Split-ring commutator:','這是馬達能「持續同向旋轉」的靈魂！':'the key to continuous rotation in one direction!','它隨線圈轉動，每半圈會切換一次輸入線圈的電流方向。':'It rotates with the coil and reverses current every half-turn.',
+  '4. 電刷：':'4. Brushes:','固定不動的石墨塊，負責將外部電源的電流「輕輕刷」進旋轉中的集電環。':'stationary graphite contacts that feed current into the rotating commutator.',
+  '記住！如果沒有切成兩半的集電環，馬達轉了半圈就會卡死在原地來回震盪！':'Without a split ring, the motor stalls and rocks back and forth after half a turn.',
+  '【動畫】立體電動機構造':'[Animation] 3D Motor Structure','電樞兩端':'The two armature ends ','分別接兩個半圓形':'connect to the two halves of the ','集電環':'commutator','；固定':' while fixed ','電刷':'brushes','再把外部電流送進集電環。':' feed external current into it.',
+  '直流電動機中的「電刷」，為什麼通常使用石墨（碳）來製作，而不是用銅或鐵？':'Why are DC motor brushes usually graphite rather than copper or iron?',
+  '電刷必須一直摩擦高速旋轉的集電環。石墨除了能導電，在物理特性上還有什麼優點？':'Brushes rub continuously against the fast commutator. Besides conducting, what advantage does graphite have?',
+  '因為石墨具有':'Graphite has ','導電性好':'good conductivity','，且質地較軟具有':' and is soft and ','潤滑作用':'self-lubricating','，能減少摩擦阻力與集電環的磨損。':', reducing friction and commutator wear.',
+  '轉動的秘密':'Why It Turns','無電流的死角':'The Current-free Gap','左右推拉，形成旋轉':'Opposite Forces Create Rotation','當線圈呈水平時，我們套用右手開掌定則：':'When the coil is horizontal, apply the right-hand rule:',
+  '右側線圈電流朝內，磁場朝右，受力':'On the right side, I is inward and B is right, so F is ','左側線圈電流朝外，磁場朝右，受力':'On the left side, I is outward and B is right, so F is ','向上':'upward',
+  '一上一下的力，完美形成了讓線圈':'The force pair creates torque for ','逆時針旋轉':'counterclockwise rotation','的力矩！':'!',
+  '慣性闖過缺口':'Inertia Carries It Across the Gap','注意看動畫！當線圈轉到':'Watch when the coil reaches the ','垂直面':'vertical position','時：':':',
+  '此時電刷剛好接觸到集電環的':'The brushes meet the commutator ','缺口':'insulating gap','線圈瞬間斷電，受力為零！':'The coil is briefly disconnected, so F = 0!','但因為線圈已經在轉了，它會靠著':'The moving coil crosses the dead spot by ','慣性':'inertia','衝過這個死角。':'.',
+  '衝過後，集電環的左右半部剛好交換，電流反向輸入，確保受力方向維持不變，繼續順暢旋轉！':'After crossing, the commutator reverses the current so the torque keeps the same rotational direction.',
+  '【動畫】電動機運轉觀測':'[Animation] Motor Operation','轉動速度 (慢動作觀察)':'Rotation speed (slow-motion study)','注意觀察線圈轉至':'Watch the red warning when the coil reaches ','垂直':'vertical','時，畫面上閃爍的紅字提示！':'.',
+  '如果我們把「半圓形的集電環」，換成兩個完全沒有缺口的「完整圓環」，馬達還能順利旋轉嗎？':'Would the motor keep rotating if the split-ring commutator were replaced by two complete rings?',
+  '完整圓環無法改變線圈內的電流方向。當線圈轉過半圈後，原本向上的力會變成向下，這樣會發生什麼事？':'Complete rings cannot reverse the coil current. What happens when the force reverses after half a turn?',
+  '不能旋轉':'It cannot rotate continuously','。線圈會在垂直位置附近':'The coil will ','來回擺盪卡死':'rock and stall','，無法持續朝同一方向旋轉。':' near the vertical position.',
+  '如何讓馬達轉得更快？':'How Can a Motor Run Faster?','不論是電風扇、四驅車、還是特斯拉的電動車，要提升馬達的轉速與力量，物理原理完全相同：':'Fans, model cars, and EVs follow the same three principles:',
+  '1. 增加電流 (I)：':'1. Increase current (I):','換上更高電壓的電池，電流變大，磁力 F = I×L×B 也跟著變大。':'a higher current increases F = I×L×B.',
+  '2. 增加線圈匝數 (N)：':'2. Increase coil turns (N):','纏繞更多圈導線，相當於好幾倍的受力同時推動電樞。':'more turns add the forces from multiple wire segments.',
+  '3. 增強場磁鐵 (B)：':'3. Increase field strength (B):','換上強力釹鐵硼磁鐵，提供更強大的外加磁場。':'stronger magnets provide a stronger external field.',
+  '在下方互動區，將這三個參數拉到最大，感受工業級極速馬達的威力吧！':'Maximize all three parameters below and watch the motor accelerate.',
+  '【互動】同一具馬達強化台':'[Interactive] Upgrade the Same Motor','⚡ 電流強度':'⚡ Current I','🧻 線圈圈數':'🧻 Coil turns N','🧲 磁場強度':'🧲 Field strength B','目前轉速：':'Current speed: ','中等':'medium','。請試著把所有數值拉到最大！':'. Try maximizing every value!'
+};
+const CANVAS_EN={
+  '固定磁場 B：N → S':'Fixed field B: N → S','瞬間斷電':'Power briefly off','絕緣縫通過電刷':'Insulating gap at brushes',
+  '一起轉：多圈電樞＋轉軸＋分裂環':'Rotates: armature + axle + commutator','固定：場磁鐵＋電刷＋電源':'Fixed: magnets + brushes + source',
+  '分裂環':'Commutator','左電刷':'Left brush','右電刷':'Right brush','電刷':'Brushes','磁場 B':'Field B',
+  '⚠️ 缺口斷電：靠慣性轉過！':'⚠️ Power gap: inertia carries it across!','分裂環＋電刷':'Commutator + brushes',
+  '🔥 極速運轉中！':'🔥 Maximum speed!','N 極':'N pole','S 極':'S pole'
+};
+const dynamicI18nSelector = '#palmCurrentBtn,#palmMagnetBtn,#palmResult,#toggleBFieldBtn,#forceExampleResult,#motorStructPlayBtn,#motorPlayBtn,#motorAnimResult,#motorPowerResult,.language-switcher';
+const translatedNodes = [];
+function captureStaticTranslations(){
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  let n;
+  while((n=walker.nextNode())){
+    const zh=n.nodeValue.trim();
+    if(!zh || n.parentElement?.closest('script,style') || n.parentElement?.closest(dynamicI18nSelector)) continue;
+    translatedNodes.push({node:n,zh,prefix:n.nodeValue.match(/^\s*/)?.[0]||'',suffix:n.nodeValue.match(/\s*$/)?.[0]||''});
+  }
+}
+function applyStaticTranslations(){
+  translatedNodes.forEach(({node,zh,prefix,suffix})=>{
+    if(!node.isConnected)return;
+    node.nodeValue=prefix+(currentLang==='en'?(EN[zh]||zh):zh)+suffix;
+  });
+}
+function ctxOf(id) { const c = document.getElementById(id); return c ? { c, ctx: c.getContext('2d') } : null; }
+function safeDraw(id, fn) {
+  const o = ctxOf(id); if (!o) return;
+  const run = () => { 
+      const tab = o.c.closest('.tab-content');
+      if (tab && !tab.classList.contains('active')) return;
+      const w = o.c.parentElement?.getBoundingClientRect().width || 0; 
+      if (w <= 0) { setTimeout(run, 80); return; } 
+      o.ctx.setTransform(2, 0, 0, 2, 0, 0); // 畫布無損 2 倍放大
+      fn(o.ctx); 
+  };
+  setTimeout(run, 25);
+}
+function clear(ctx) { ctx.fillStyle = C.canvas; ctx.fillRect(0, 0, 1000, 600); }
+function label(ctx, t, x, y, color = C.white, align = 'center', size = 20) {
+  ctx.save(); ctx.fillStyle = color; ctx.font = `900 ${size}px 'Noto Sans TC',sans-serif`;
+  ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.shadowColor = 'rgba(0,0,0,0.9)';
+  ctx.shadowBlur = 6; ctx.fillText(currentLang==='en'?(CANVAS_EN[t]||t):t, x, y); ctx.restore();
+}
+
+// 基礎 3D 等角投影 (ISO)
+// +X: 右下, +Y: 上, +Z: 左下
+function proj(x, y, z) {
+    const angleX = Math.PI / 6; // 30度
+    const angleZ = Math.PI / 6;
+    let sx = (x * Math.cos(angleX)) - (z * Math.cos(angleZ));
+    let sy = -(x * Math.sin(angleX)) - (z * Math.sin(angleZ)) - y;
+    return { x: sx, y: sy };
+}
+
+function drawArrow3D(ctx, cx, cy, start3D, end3D, color, width=6) {
+    let s = proj(start3D.x, start3D.y, start3D.z);
+    let e = proj(end3D.x, end3D.y, end3D.z);
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(cx+s.x, cy+s.y); ctx.lineTo(cx+e.x, cy+e.y); ctx.stroke();
+    
+    let angle = Math.atan2(e.y - s.y, e.x - s.x);
+    ctx.save(); ctx.translate(cx+e.x, cy+e.y); ctx.rotate(angle);
+    ctx.beginPath(); ctx.moveTo(0, -width*1.2); ctx.lineTo(width*2, 0); ctx.lineTo(0, width*1.2); ctx.fill();
+    ctx.restore();
+}
+
+// ==========================================
+// Tab 1: 右手開掌訓練場
+// ==========================================
+const palmState = { bDir: 'down', iDir: 'out' }; // bDir: down/up, iDir: out/in
+
+function drawFlatArrow(ctx, x1, y1, x2, y2, color, width = 8, head = 18) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.translate(x2, y2);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-head, -head * 0.62);
+  ctx.lineTo(-head, head * 0.62);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPole(ctx, x, y, w, h, pole) {
+  ctx.save();
+  ctx.fillStyle = pole === 'N' ? C.poleN : C.poleS;
+  ctx.strokeStyle = 'rgba(255,255,255,.82)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 16);
+  ctx.fill();
+  ctx.stroke();
+  label(ctx, `${pole} ${tr('極','pole')}`, x + w / 2, y + h / 2, C.white, 'center', 34);
+  ctx.restore();
+}
+
+function drawDirectionModel(ctx, x, y, fDir) {
+  const bDown = palmState.bDir === 'down';
+  const currentSymbol = palmState.iDir === 'out' ? '⊙' : '⊗';
+  const currentText = palmState.iDir === 'out' ? '穿出紙面' : '穿入紙面';
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(23,59,49,.82)';
+  ctx.strokeStyle = 'rgba(85,233,255,.7)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(x - 132, y - 205, 264, 410, 22);
+  ctx.fill();
+  ctx.stroke();
+  label(ctx, tr('右手方向架','Right-hand axes'), x, y - 170, C.cyan, 'center', 25);
+
+  // 四指順著磁場，掌心順著受力；拇指採端視符號。
+  drawFlatArrow(ctx, x - 58, bDown ? y - 118 : y + 118, x - 58, bDown ? y + 118 : y - 118, C.green, 7, 17);
+  drawFlatArrow(ctx, fDir > 0 ? x - 96 : x + 96, y, fDir > 0 ? x + 96 : x - 96, y, C.pink, 8, 19);
+
+  ctx.fillStyle = C.canvas;
+  ctx.strokeStyle = C.cyan;
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.arc(x, y, 47, 0, TAU);
+  ctx.fill();
+  ctx.stroke();
+  label(ctx, currentSymbol, x, y - 2, C.cyan, 'center', 58);
+
+  label(ctx, `${tr('四指','Fingers')} B: ${bDown ? tr('向下','down') : tr('向上','up')}`, x, y + 140, C.green, 'center', 20);
+  label(ctx, `${tr('拇指','Thumb')} I: ${palmState.iDir === 'out' ? tr('穿出紙面','out of page') : tr('穿入紙面','into page')}`, x, y + 168, C.cyan, 'center', 19);
+  label(ctx, `${tr('掌心','Palm')} F: ${fDir > 0 ? tr('向右','right') : tr('向左','left')}`, x, y + 194, C.pink, 'center', 20);
+  ctx.restore();
+}
+
+function drawPalmHandCanvas(ctx) {
+  clear(ctx);
+  label(ctx, tr('右手開掌：三個方向兩兩垂直','Right hand: all three directions are perpendicular'), 500, 48, C.yellow, 'center', currentLang==='en'?24:29);
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(255,179,71,.42)';
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = 'rgba(231,184,145,.94)';
+
+  // 只畫右手，不放人物。四指向上、拇指向右、掌心朝向觀察者。
+  const parts = [
+    [402, 438, 176, 128, 34], // 手腕
+    [326, 224, 316, 280, 78], // 掌面
+    [322, 174, 62, 226, 30],  // 小指
+    [382, 92, 66, 302, 32],   // 無名指
+    [447, 56, 70, 338, 34],   // 中指
+    [514, 102, 68, 292, 33]   // 食指
+  ];
+  parts.forEach(([x,y,w,h,r]) => {
+    ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill();
+  });
+
+  ctx.save();
+  ctx.translate(572, 338);
+  ctx.rotate(-0.11);
+  ctx.beginPath(); ctx.roundRect(0, -34, 220, 76, 36); ctx.fill();
+  ctx.restore();
+  ctx.shadowBlur = 0;
+
+  // 粉筆輪廓與掌紋。
+  ctx.strokeStyle = C.orange;
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.globalAlpha = .9;
+  [[390,222,390,124],[455,222,455,91],[521,226,521,137]].forEach(p => {
+    ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.lineTo(p[2],p[3]); ctx.stroke();
+  });
+  ctx.globalAlpha = .45;
+  ctx.beginPath(); ctx.moveTo(376,424); ctx.bezierCurveTo(430,382,500,382,554,424); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(388,455); ctx.bezierCurveTo(438,430,492,432,530,462); ctx.stroke();
+  ctx.restore();
+
+  // 四指 B：向上。
+  drawFlatArrow(ctx, 472, 328, 472, 104, C.green, 9, 23);
+  label(ctx, tr('四指 B','Fingers B'), 430, 126, C.green, 'right', 24);
+
+  // 拇指 I：向右。
+  drawFlatArrow(ctx, 506, 350, 742, 350, C.cyan, 9, 23);
+  label(ctx, tr('拇指 I','Thumb I'), 724, 316, C.cyan, 'right', 24);
+
+  // 掌心 F：用 ⊙ 表示垂直穿出紙面。
+  ctx.save();
+  ctx.fillStyle = C.canvas;
+  ctx.strokeStyle = C.pink;
+  ctx.lineWidth = 8;
+  ctx.beginPath(); ctx.arc(463, 407, 43, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = C.pink;
+  ctx.beginPath(); ctx.arc(463, 407, 13, 0, TAU); ctx.fill();
+  ctx.restore();
+  label(ctx, tr('掌心 F ⊙','Palm F ⊙'), 302, 407, C.pink, 'left', 25);
+  label(ctx, tr('推出紙面','out of page'), 302, 441, C.pink, 'left', 20);
+
+  // 直角記號與結論：不是「大約垂直」，而是三組皆為 90°。
+  ctx.save();
+  ctx.strokeStyle = C.white;
+  ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(490, 316); ctx.lineTo(514, 316); ctx.lineTo(514, 340); ctx.stroke();
+  ctx.restore();
+  label(ctx, 'B ⟂ I　　I ⟂ F　　F ⟂ B', 500, 554, C.white, 'center', 26);
+}
+
+function drawPalmCanvas(ctx) {
+  clear(ctx);
+  const fieldLeft = 48;
+  const fieldRight = 952;
+  const topY = 42;
+  const bottomY = 478;
+  const poleH = 78;
+  const wireX = 500;
+  const wireY = 300;
+  const bDown = palmState.bDir === 'down';
+  const fDir = (bDown && palmState.iDir === 'out') || (!bDown && palmState.iDir === 'in') ? 1 : -1;
+  const currentSymbol = palmState.iDir === 'out' ? '⊙' : '⊗';
+
+  // 左側：固定正視圖。B 上下、I 穿入穿出、F 左右，三軸互相垂直。
+  ctx.save();
+  ctx.strokeStyle = 'rgba(184,201,193,.42)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(fieldLeft, 24, fieldRight - fieldLeft, 552, 22);
+  ctx.stroke();
+  label(ctx, tr('磁場中的通電導線（正視圖）','Current-carrying wire in a field (front view)'), 500, 92, C.white, 'center', currentLang==='en'?21:24);
+
+  drawPole(ctx, 110, topY + 74, 780, poleH, bDown ? 'N' : 'S');
+  drawPole(ctx, 110, bottomY - 28, 780, poleH, bDown ? 'S' : 'N');
+
+  [168, 278, 388, 612, 722, 832].forEach(x => {
+    drawFlatArrow(ctx, x, bDown ? 212 : 414, x, bDown ? 414 : 212, 'rgba(154,240,111,.72)', 5, 14);
+  });
+  label(ctx, 'B', 82, 314, C.green, 'center', 28);
+
+  // 導線端視圖，符號與考題一致。
+  ctx.fillStyle = '#a96836';
+  ctx.strokeStyle = C.orange;
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  ctx.arc(wireX, wireY, 69, 0, TAU);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = C.canvas;
+  ctx.beginPath();
+  ctx.arc(wireX, wireY, 48, 0, TAU);
+  ctx.fill();
+  label(ctx, currentSymbol, wireX, wireY - 4, C.cyan, 'center', 68);
+  label(ctx, palmState.iDir === 'out' ? tr('I：穿出紙面','I: out of page') : tr('I：穿入紙面','I: into page'), wireX, wireY + 96, C.cyan, 'center', 22);
+
+  const forceStart = wireX + fDir * 88;
+  const forceEnd = wireX + fDir * 220;
+  drawFlatArrow(ctx, forceStart, wireY, forceEnd, wireY, C.pink, 10, 24);
+  label(ctx, `F ${fDir > 0 ? tr('向右','right') : tr('向左','left')}`, wireX + fDir * 157, wireY - 34, C.pink, 'center', 25);
+
+  label(ctx, `N → S, B ${bDown ? tr('向下','down') : tr('向上','up')}`, 500, 545, C.green, 'center', 22);
+  ctx.restore();
+}
+
+document.getElementById('palmCurrentBtn').addEventListener('click', (e) => {
+    palmState.iDir = palmState.iDir === 'out' ? 'in' : 'out';
+    updatePalmResult();
+});
+document.getElementById('palmMagnetBtn').addEventListener('click', (e) => {
+    palmState.bDir = palmState.bDir === 'down' ? 'up' : 'down';
+    updatePalmResult();
+});
+function updatePalmResult() {
+    const right = (palmState.bDir === 'down' && palmState.iDir === 'out') || (palmState.bDir === 'up' && palmState.iDir === 'in');
+    const fZh = right ? '右' : '左', fEn = right ? 'right' : 'left';
+    const iZh = palmState.iDir === 'out' ? '外' : '內', iEn = palmState.iDir === 'out' ? 'out of the page' : 'into the page';
+    const bZh = palmState.bDir === 'down' ? '下' : '上', bEn = palmState.bDir === 'down' ? 'down' : 'up';
+    document.getElementById('palmCurrentBtn').textContent = palmState.iDir === 'out'
+      ? tr('切換電流：穿出紙面 ⊙','Switch I: out of page ⊙') : tr('切換電流：穿入紙面 ⊗','Switch I: into page ⊗');
+    document.getElementById('palmMagnetBtn').textContent = palmState.bDir === 'down'
+      ? tr('翻轉磁鐵：N極在上 ⬇️','Flip magnets: N on top ⬇️') : tr('翻轉磁鐵：S極在上 ⬆️','Flip magnets: S on top ⬆️');
+    document.getElementById('palmResult').innerHTML = currentLang==='en'
+      ? `Thumb: <strong class="accent-cyan">${iEn}</strong>; fingers: <strong class="accent-green">${bEn}</strong>; palm: <strong class="accent-pink">${fEn}</strong>. The wire is forced <strong class="accent-pink">${fEn}</strong>.`
+      : `拇指朝<strong class="accent-cyan">${iZh}</strong>，四指朝<strong class="accent-green">${bZh}</strong>，掌心朝<strong class="accent-pink">${fZh}</strong>。銅線向<strong class="accent-pink">${fZh}</strong>受力！`;
+    safeDraw('palmCanvas', drawPalmCanvas);
+}
+
+// ==========================================
+// Tab 2: 右手開掌定則實例（兩個 3D 動畫）
+// ==========================================
+const forceExampleState={mode:'wires',phase:0,raf:0,showBField:true};
+
+function drawVerticalWire(ctx,x,color,phase=0){
+  const top=130,bottom=480,midY=(top+bottom)/2;
+  ctx.save();ctx.lineCap='round';
+  // 玻璃管式半透明導線：只保留淡淡的體積與邊緣，不再用深色外殼遮斷後方磁力線。
+  ctx.strokeStyle='rgba(210,255,245,.13)';ctx.lineWidth=26;
+  ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke();
+  const wire=ctx.createLinearGradient(x-15,0,x+15,0);
+  wire.addColorStop(0,'rgba(255,255,255,.05)');
+  wire.addColorStop(.34,'rgba(85,233,255,.17)');
+  wire.addColorStop(.53,'rgba(255,255,255,.27)');
+  wire.addColorStop(.72,'rgba(85,233,255,.10)');
+  wire.addColorStop(1,'rgba(255,255,255,.04)');
+  ctx.strokeStyle=wire;ctx.lineWidth=18;
+  ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke();
+  // 兩側細亮邊交代圓柱輪廓；中央保持透明，讓每一圈磁力線完整穿過。
+  ctx.lineWidth=2;
+  ctx.strokeStyle='rgba(222,255,250,.34)';
+  ctx.beginPath();ctx.moveTo(x-9,top+7);ctx.lineTo(x-9,bottom-7);ctx.stroke();
+  ctx.strokeStyle='rgba(85,233,255,.20)';
+  ctx.beginPath();ctx.moveTo(x+9,top+7);ctx.lineTo(x+9,bottom-7);ctx.stroke();
+  // 電流用鮮豔藍色短線段表示；段距固定，僅把每段長度縮短一半。
+  const currentBlue='#159dff',spacing=62,segmentLength=22;
+  ctx.strokeStyle=currentBlue;ctx.fillStyle=currentBlue;ctx.lineWidth=6;ctx.shadowColor=currentBlue;ctx.shadowBlur=10;
+  const offset=(phase*20)%spacing;
+  for(let y=bottom-offset;y>top+segmentLength;y-=spacing){
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y-segmentLength);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x,y-segmentLength-8);ctx.lineTo(x-7,y-segmentLength+4);ctx.lineTo(x+7,y-segmentLength+4);ctx.closePath();ctx.fill();
+  }
+  ctx.shadowBlur=0;label(ctx,'I',x+24,226,currentBlue,'left',25);
+  ctx.restore();
+  return {x,top,bottom,mid:{x,y:midY}};
+}
+
+function drawCurveArrowHead(ctx,x,y,tx,ty,color){
+  const angle=Math.atan2(ty,tx);
+  ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+  ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=8;
+  ctx.beginPath();ctx.moveTo(11,0);ctx.lineTo(-7,-6);ctx.lineTo(-5,0);ctx.lineTo(-7,6);ctx.closePath();ctx.fill();
+  ctx.restore();
+}
+
+function drawFieldRings(ctx,cx,cy,color,clockwise,phase){
+  ctx.save();ctx.strokeStyle=color;ctx.lineWidth=3;ctx.globalAlpha=.62;
+  // 最外圈剛好穿過另一條導線，明確呈現 A 的磁場作用到 B（反之亦然）。
+  [42,72,108,154,215,280].forEach((r,i)=>{
+    const ry=Math.max(18,r*.31);
+    ctx.beginPath();ctx.ellipse(cx,cy,r,ry,0,0,TAU);ctx.stroke();
+    const sign=clockwise?1:-1;
+    const t=sign*(phase*.65+i*.78);
+    const x=cx+r*Math.cos(t),y=cy+ry*Math.sin(t);
+    // 橢圓切線需同時使用 rx、ry；箭頭尖端因此會精準貼在磁力線上。
+    const tx=sign*(-r*Math.sin(t)),ty=sign*(ry*Math.cos(t));
+    drawCurveArrowHead(ctx,x,y,tx,ty,color);
+  });ctx.restore();
+}
+
+function drawWireInteraction(ctx){
+  clear(ctx);
+  // 左側只放跨語言代號；右側保留乾淨的立體動畫。
+  label(ctx,'I',92,205,C.cyan,'center',32);
+  label(ctx,'B',92,300,C.cyan,'center',32);
+  label(ctx,'F',92,395,C.pink,'center',32);
+  const ax=410,bx=690,midY=305;
+  // 磁力線先畫、導線後畫，讓半透明導線真正貫穿各圈的中央。
+  // 向上電流依右手安培定則環繞；原版本方向相反，這裡統一翻轉。
+  drawFieldRings(ctx,ax,midY,C.cyan,false,forceExampleState.phase);
+  if(forceExampleState.showBField)drawFieldRings(ctx,bx,midY,C.orange,false,forceExampleState.phase+.9);
+  const wireA=drawVerticalWire(ctx,ax,C.cyan,forceExampleState.phase);
+  const wireB=drawVerticalWire(ctx,bx,C.orange,forceExampleState.phase);
+  // 導線距離固定，因此受力箭頭固定長度，不做強弱脈動。
+  drawFlatArrow(ctx,wireB.mid.x-18,wireB.mid.y-48,wireB.mid.x-102,wireB.mid.y-48,C.pink,9,22);
+  label(ctx,'F',wireB.mid.x-66,wireB.mid.y-83,C.pink,'center',24);
+  drawFlatArrow(ctx,wireA.mid.x+18,wireA.mid.y+54,wireA.mid.x+102,wireA.mid.y+54,C.pink,9,22);
+  label(ctx,'F',wireA.mid.x+66,wireA.mid.y+91,C.pink,'center',24);
+  label(ctx,'A',wireA.x,522,C.cyan,'center',27);label(ctx,'B',wireB.x,522,C.orange,'center',27);
+}
+
+function drawUniformField3D(ctx,boundaryX=180){
+  ctx.save();
+  // 使用 ⊗ 已足以交代深度，因此改成正視平面，不再加入多餘透視。
+  const top=90,right=900,bottom=520;
+  ctx.fillStyle='rgba(154,240,111,.035)';ctx.strokeStyle='rgba(85,233,255,.26)';ctx.lineWidth=2;
+  ctx.fillRect(boundaryX,top,right-boundaryX,bottom-top);ctx.strokeRect(boundaryX,top,right-boundaryX,bottom-top);
+  for(let row=0;row<5;row++)for(let col=0;col<8;col++){
+    const x=boundaryX+70+col*88,y=135+row*82;
+    ctx.strokeStyle='rgba(154,240,111,.57)';ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(x,y,12,0,TAU);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x-6,y-6);ctx.lineTo(x+6,y+6);ctx.moveTo(x+6,y-6);ctx.lineTo(x-6,y+6);ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawElectronOrbit(ctx){
+  clear(ctx);
+  const entryX=180,entryY=205,r=122,centerY=entryY+r,exitY=entryY+2*r;
+  const electronRed=C.red;
+  drawUniformField3D(ctx,entryX);
+  ctx.save();ctx.strokeStyle='rgba(255,111,118,.48)';ctx.lineWidth=5;ctx.setLineDash([12,10]);
+  // 進入時向右；在磁場內只走右半圓；離場後沿切線水平向左。
+  ctx.beginPath();ctx.moveTo(64,entryY);ctx.lineTo(entryX,entryY);
+  ctx.arc(entryX,centerY,r,-Math.PI/2,Math.PI/2,false);
+  ctx.lineTo(64,exitY);ctx.stroke();ctx.setLineDash([]);
+  drawFlatArrow(ctx,70,entryY,154,entryY,electronRed,7,18);
+  drawFlatArrow(ctx,154,exitY,70,exitY,electronRed,7,18);
+  const progress=(forceExampleState.phase*.27)%1;
+  let ex,ey,onArc=false;
+  if(progress<.18){
+    const t=progress/.18;ex=64+(entryX-64)*t;ey=entryY;
+  }else if(progress<.76){
+    const t=(progress-.18)/.58,angle=-Math.PI/2+t*Math.PI;
+    ex=entryX+r*Math.cos(angle);ey=centerY+r*Math.sin(angle);onArc=true;
+  }else{
+    const t=(progress-.76)/.24;ex=entryX+(64-entryX)*t;ey=exitY;
+  }
+  const glow=ctx.createRadialGradient(ex,ey,2,ex,ey,20);glow.addColorStop(0,'#ffffff');glow.addColorStop(.35,electronRed);glow.addColorStop(1,'rgba(255,111,118,0)');
+  ctx.fillStyle=glow;ctx.beginPath();ctx.arc(ex,ey,20,0,TAU);ctx.fill();
+  ctx.fillStyle=electronRed;ctx.beginPath();ctx.arc(ex,ey,9,0,TAU);ctx.fill();
+  label(ctx,'e⁻',ex+19,ey-18,electronRed,'left',20);
+  if(onArc){
+    const cx=entryX,cy=centerY;
+    drawFlatArrow(ctx,ex,ey,ex+(cx-ex)*.42,ey+(cy-ey)*.42,C.pink,7,18);
+    label(ctx,'F',ex+(cx-ex)*.25,ey+(cy-ey)*.25-18,C.pink,'center',23);
+  }
+  ctx.restore();
+  // 左側只留跨語言代號，避免把說明綁死在單一語言。
+  label(ctx,'B ⊗',88,305,C.green,'center',28);
+  label(ctx,'e⁻',88,365,electronRed,'center',28);
+  label(ctx,'F',88,425,C.pink,'center',28);
+}
+
+function drawForceExamplesCanvas(ctx){
+  if(forceExampleState.mode==='electron')drawElectronOrbit(ctx);else drawWireInteraction(ctx);
+  forceExampleState.phase=(forceExampleState.phase+.025)%TAU;
+  forceExampleState.raf=requestAnimationFrame(()=>safeDraw('forceExamplesCanvas',drawForceExamplesCanvas));
+}
+
+document.getElementById('exampleReplayBtn').addEventListener('click',()=>{forceExampleState.phase=0;});
+document.getElementById('toggleBFieldBtn').addEventListener('click',(e)=>{
+  forceExampleState.showBField=!forceExampleState.showBField;
+  updateForceExampleText();
+});
+
+function updateForceExampleText(){
+  document.getElementById('toggleBFieldBtn').textContent=forceExampleState.showBField
+    ? tr('關閉 B 導線磁力線','Hide wire B field lines') : tr('顯示 B 導線磁力線','Show wire B field lines');
+  document.getElementById('forceExampleResult').innerHTML=forceExampleState.mode==='electron'
+    ? (currentLang==='en'
+      ? `<strong class="accent-red">Arc inside, straight line outside:</strong> the negative electron is deflected only while it is inside the field.`
+      : `<strong class="accent-red">磁場內圓弧、離場後直線：</strong>電子帶負電，磁力只在磁場區內改變它的方向。`)
+    : (currentLang==='en'
+      ? `<strong class="accent-pink">Parallel currents attract:</strong> A and B create fields and exert forces on each other.`
+      : `<strong class="accent-pink">同向電流相吸：</strong>A、B 互相產生磁場，也互相受到磁力。`);
+}
+
+// ==========================================
+// Tab 3: 電動機解剖室（立體構造圖）
+// ==========================================
+function drawMagnetPrism(ctx, x, y, w, h, depth, pole) {
+  const front = pole === 'N' ? C.poleN : C.poleS;
+  const side = pole === 'N' ? '#b9414d' : '#397fc2';
+  const top = pole === 'N' ? '#ff9da2' : '#a8d7ff';
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = 'rgba(255,255,255,.75)';
+  ctx.lineWidth = 3;
+  ctx.fillStyle = top;
+  ctx.beginPath();
+  ctx.moveTo(x, y); ctx.lineTo(x + depth, y - depth);
+  ctx.lineTo(x + w + depth, y - depth); ctx.lineTo(x + w, y); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = side;
+  ctx.beginPath();
+  ctx.moveTo(x + w, y); ctx.lineTo(x + w + depth, y - depth);
+  ctx.lineTo(x + w + depth, y + h - depth); ctx.lineTo(x + w, y + h); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = front;
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, 12); ctx.fill(); ctx.stroke();
+  label(ctx, `${pole} 極`, x + w / 2, y + h / 2, C.white, 'center', 38);
+  ctx.restore();
+}
+
+function drawFieldLineWithArrow(ctx, x1, y1, x2, y2, alpha = .72) {
+  ctx.save();
+  ctx.strokeStyle = `rgba(154,240,111,${alpha})`;
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  drawFlatArrow(ctx, 455, y1, 545, y2, `rgba(154,240,111,${Math.min(1, alpha + .2)})`, 6, 16);
+  ctx.restore();
+}
+
+const structState = { angle: 0.16, isPlaying: true, raf: 0 };
+
+// 完全照參考圖建立空間基準：Z 是斜向前後的轉軸；X、Y 是線圈旋轉平面。
+function structProject(x, y, z) {
+  return {
+    x: 500 + x * .90 + z * .42,
+    y: 320 + x * .18 - y * .85 - z * .36
+  };
+}
+
+function structPath(ctx, points, color, width) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  points.forEach((p, i) => {
+    const q = structProject(p.x, p.y, p.z);
+    if (i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+  });
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawObliqueMagnet(ctx, cx, cy, length, height, angle, pole) {
+  const ux = Math.cos(angle), uy = Math.sin(angle);
+  const vx = -uy, vy = ux;
+  const ex = 25, ey = -24;
+  const corners = [
+    {x:cx-ux*length/2-vx*height/2,y:cy-uy*length/2-vy*height/2},
+    {x:cx+ux*length/2-vx*height/2,y:cy+uy*length/2-vy*height/2},
+    {x:cx+ux*length/2+vx*height/2,y:cy+uy*length/2+vy*height/2},
+    {x:cx-ux*length/2+vx*height/2,y:cy-uy*length/2+vy*height/2}
+  ];
+  const face = pole === 'N' ? C.poleN : C.poleS;
+  const side = pole === 'N' ? '#a93749' : '#2e6eaa';
+  const top = pole === 'N' ? '#ff9fa5' : '#abd8ff';
+  ctx.save();
+  ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.72)';
+  ctx.fillStyle = side;
+  ctx.beginPath();
+  ctx.moveTo(corners[1].x,corners[1].y); ctx.lineTo(corners[1].x+ex,corners[1].y+ey);
+  ctx.lineTo(corners[2].x+ex,corners[2].y+ey); ctx.lineTo(corners[2].x,corners[2].y); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = top;
+  ctx.beginPath();
+  ctx.moveTo(corners[0].x,corners[0].y); ctx.lineTo(corners[1].x,corners[1].y);
+  ctx.lineTo(corners[1].x+ex,corners[1].y+ey); ctx.lineTo(corners[0].x+ex,corners[0].y+ey); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = face;
+  ctx.beginPath(); ctx.moveTo(corners[0].x,corners[0].y);
+  corners.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.translate(cx,cy); ctx.rotate(angle);
+  label(ctx, pole, 0, 0, C.white, 'center', 42);
+  ctx.restore();
+}
+
+function drawReferenceField(ctx, strength = 3) {
+  // 兩塊場磁鐵直立相對：N 在右、S 在左；中央磁場由右向左。
+  const power = .48 + strength * .09;
+  [220,270,320,370,420].forEach((y,i)=>{
+    drawFlatArrow(ctx, 790, y, 210, y,
+      `rgba(154,240,111,${i===2?Math.min(1,power+.18):power*.58})`, i===2?6:4, 15);
+  });
+  label(ctx, '固定磁場 B：N → S', 500, 64, C.green, 'center', 24);
+}
+
+function drawCommutatorHalf(ctx, start, end, color, zNear=-292, zFar=-232, radius=43) {
+  const near=[], far=[];
+  for(let t=start;t<=end+.001;t+=.08){
+    near.push(structProject(radius*Math.cos(t),radius*Math.sin(t),zNear));
+    far.push(structProject(radius*Math.cos(t),radius*Math.sin(t),zFar));
+  }
+  ctx.save();
+  ctx.fillStyle=color; ctx.strokeStyle='rgba(255,255,255,.75)'; ctx.lineWidth=2;
+  ctx.beginPath();
+  far.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  near.slice().reverse().forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+function drawBrush3D(ctx, side, z=-265, showContact=true) {
+  // 固定支架從下方立起，頂端向內突出的碳刷才是真正夾住分裂環的部位。
+  const ringCenter=structProject(0,0,z);
+  const contact=structProject(side*52,0,z);
+  const postOuterX=contact.x+side*72;
+  const postInnerX=contact.x+side*36;
+  const baseY=500;
+  const topY=contact.y-18;
+  const lipEndX=contact.x+side*3;
+  const holder=[
+    {x:postOuterX,y:baseY},
+    {x:postInnerX,y:baseY},
+    {x:postInnerX,y:contact.y+15},
+    {x:lipEndX,y:contact.y+10},
+    {x:lipEndX,y:contact.y-10},
+    {x:postInnerX,y:topY},
+    {x:postOuterX,y:contact.y+5}
+  ];
+  ctx.save();ctx.lineJoin='round';ctx.lineWidth=2.5;ctx.strokeStyle='rgba(255,255,255,.82)';
+  // 支架陰影讓左右兩座固定架呈現立體厚度。
+  ctx.fillStyle='#637872';ctx.beginPath();
+  holder.forEach((p,i)=>i?ctx.lineTo(p.x+9,p.y-7):ctx.moveTo(p.x+9,p.y-7));
+  ctx.closePath();ctx.fill();ctx.stroke();
+  const metal=ctx.createLinearGradient(postOuterX,topY,postInnerX,baseY);
+  metal.addColorStop(0,'#e6f2ee');metal.addColorStop(.48,'#aebfba');metal.addColorStop(1,'#71827c');
+  ctx.fillStyle=metal;ctx.beginPath();
+  holder.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.closePath();ctx.fill();ctx.stroke();
+  // 內側突出的小塊是碳刷接點。左側接點位於集電環後方，會被環遮住。
+  if(showContact){
+    ctx.fillStyle='#4f5d59';ctx.strokeStyle=C.white;ctx.lineWidth=2;
+    ctx.beginPath();ctx.roundRect(contact.x-10,contact.y-13,20,26,6);ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.yellow;ctx.beginPath();ctx.arc(contact.x,contact.y,5.5,0,TAU);ctx.fill();
+  }
+  // 支架底座上的外部接線端子。
+  const terminal={x:postOuterX+side*10,y:baseY-8};
+  ctx.fillStyle='#859691';ctx.strokeStyle=C.white;ctx.beginPath();
+  ctx.roundRect(terminal.x-17,terminal.y-10,34,20,5);ctx.fill();ctx.stroke();
+  ctx.fillStyle=side<0?C.cyan:C.orange;ctx.beginPath();ctx.arc(terminal.x,terminal.y,7,0,TAU);ctx.fill();
+  ctx.restore();
+  return {contact,outer:{x:postOuterX,y:contact.y+5},terminal,ringCenter};
+}
+
+function renderMotorAssembly(ctx, a, options = {}) {
+  clear(ctx);
+  const c=Math.cos(a), s=Math.sin(a);
+  const W=158, zFront=-188, zBack=208;
+  const turnCount=options.turns ?? 5;
+  const fieldStrength=options.fieldStrength ?? 3;
+
+  // 先畫直立、左右對稱且彼此拉開的場磁鐵，再畫中央均勻磁場。
+  ctx.save();ctx.globalAlpha=.62+fieldStrength*.075;
+  drawMagnetPrism(ctx,55,155,145,285,24,'S');
+  drawMagnetPrism(ctx,800,155,145,285,24,'N');ctx.restore();
+  drawReferenceField(ctx,fieldStrength);
+
+  // 同一根斜向轉軸貫穿電樞與集電環。
+  structPath(ctx,[{x:0,y:0,z:-335},{x:0,y:0,z:335}],'rgba(184,201,193,.48)',18);
+  structPath(ctx,[{x:0,y:0,z:-335},{x:0,y:0,z:335}],C.cyan,4);
+
+  // 多圈完整矩形銅線：前、後端都有橫邊，不再形成錯誤的三角形。
+  const copper=ctx.createLinearGradient(270,170,720,450);
+  copper.addColorStop(0,'#fff0b3'); copper.addColorStop(.45,C.orange); copper.addColorStop(1,'#bd6225');
+  const winding=[];
+  // 每一匝都保留一條獨立的投影路徑，通電時才不會只亮最外圈。
+  const currentTurnLoops=[];
+  const corner3d=[
+    {x:W*c,y:W*s,z:zFront},{x:W*c,y:W*s,z:zBack},
+    {x:-W*c,y:-W*s,z:zBack},{x:-W*c,y:-W*s,z:zFront}
+  ];
+  const corner2d=corner3d.map(p=>structProject(p.x,p.y,p.z));
+  for(let i=0;i<turnCount;i++){
+    const r=W-i*9, front=zFront+i*3, back=zBack-i*3;
+    const turn=[
+      {x:r*c,y:r*s,z:front},{x:r*c,y:r*s,z:back},
+      {x:-r*c,y:-r*s,z:back},{x:-r*c,y:-r*s,z:front}
+    ];
+    currentTurnLoops.push(turn.map(p=>structProject(p.x,p.y,p.z)));
+    winding.push(...turn);
+    if(i<turnCount-1){
+      const nextR=W-(i+1)*9, nextFront=zFront+(i+1)*3;
+      winding.push({x:nextR*c,y:nextR*s,z:nextFront});
+    }
+  }
+  // 線圈兩個自由端先收回轉軸中心；旋轉接點不再掛在線圈外緣。
+  const hubStart={x:22*c,y:22*s,z:zFront-8};
+  const hubEnd={x:-22*c,y:-22*s,z:zFront-8};
+  winding.unshift(hubStart);
+  winding.push(hubEnd);
+  structPath(ctx,winding,'rgba(88,42,16,.82)',12);
+  structPath(ctx,winding,copper,7);
+
+  // 兩個自由端在軸心附近保持分離，再沿轉軸接到不同半片集電環。
+  const firstEnd=winding[0], lastEnd=winding[winding.length-1];
+  const frontA=structProject(firstEnd.x,firstEnd.y,firstEnd.z);
+  const frontB=structProject(lastEnd.x,lastEnd.y,lastEnd.z);
+  const elbowA=structProject(22*c,22*s,-220);
+  const elbowB=structProject(-22*c,-22*s,-220);
+  const leadA=structProject(40*c,40*s,-246);
+  const leadB=structProject(-40*c,-40*s,-246);
+  const leadWire=(from,elbow,to,color)=>{
+    ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.strokeStyle='rgba(80,35,15,.88)';ctx.lineWidth=12;
+    ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(elbow.x,elbow.y);ctx.lineTo(to.x,to.y);ctx.stroke();
+    ctx.strokeStyle=color;ctx.lineWidth=7;
+    ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(elbow.x,elbow.y);ctx.lineTo(to.x,to.y);ctx.stroke();ctx.restore();
+  };
+  leadWire(frontA,elbowA,leadA,C.orange);
+  leadWire(frontB,elbowB,leadB,C.pink);
+
+  // 後方左電刷先畫；接著由分裂環遮住它的接觸端，建立正確景深。
+  const brushL=drawBrush3D(ctx,-1,-265,false);
+
+  // 半片中心必須對準兩條軸心接線：相較電樞角度轉 90°，接點才不會落在絕緣縫。
+  const gap=.12, ringPhase=a-Math.PI/2;
+  drawCommutatorHalf(ctx,ringPhase+gap,ringPhase+Math.PI-gap,C.orange,-300,-230,48);
+  drawCommutatorHalf(ctx,ringPhase+Math.PI+gap,ringPhase+TAU-gap,C.pink,-300,-230,48);
+
+  // 前方右電刷最後畫；左右支架共同夾住中央分裂環。
+  const brushR=drawBrush3D(ctx,1,-265,true);
+  // 電池置於分裂環正下方，兩條導線精確接到符號的負、正極。
+  const batteryY=536, negX=367, posX=411;
+  ctx.save();ctx.lineWidth=5;ctx.lineCap='round';
+  ctx.strokeStyle=C.cyan;ctx.beginPath();ctx.moveTo(brushL.terminal.x,brushL.terminal.y);
+  ctx.bezierCurveTo(270,518,330,batteryY,negX,batteryY);ctx.stroke();
+  ctx.strokeStyle=C.orange;ctx.beginPath();ctx.moveTo(brushR.terminal.x,brushR.terminal.y);
+  ctx.bezierCurveTo(565,516,480,batteryY,posX,batteryY);ctx.stroke();ctx.restore();
+  ctx.fillStyle=C.white;ctx.fillRect(negX-4,batteryY-17,8,34);ctx.fillRect(posX-4,batteryY-27,8,54);
+  label(ctx,'−',negX-13,batteryY,C.cyan,'right',23);label(ctx,'+',posX+13,batteryY,C.orange,'left',23);
+
+  if(options.showCurrent){
+    const disconnected=Math.abs(c)<.075;
+    const direction=c>=0?1:-1;
+    const sequence=direction>0?'A → B → C → D → A':'A → D → C → B → A';
+    drawArmatureCorner(ctx,'A',corner2d[0],500,320,C.cyan);
+    drawArmatureCorner(ctx,'B',corner2d[1],500,320,C.cyan);
+    drawArmatureCorner(ctx,'C',corner2d[2],500,320,C.pink);
+    drawArmatureCorner(ctx,'D',corner2d[3],500,320,C.pink);
+    // 多匝線圈是同一條串聯導線：同一時刻，每一匝都有同方向、同速率的電流。
+    if(!disconnected) drawCurrentFlow(ctx,currentTurnLoops,direction,options.currentStrength ?? 2);
+    if(!disconnected && options.showForces){
+      const sideAB={x:(corner2d[0].x+corner2d[1].x)/2,y:(corner2d[0].y+corner2d[1].y)/2};
+      const sideCD={x:(corner2d[2].x+corner2d[3].x)/2,y:(corner2d[2].y+corner2d[3].y)/2};
+      const dy=direction>0?-82:82;
+      drawFlatArrow(ctx,sideAB.x,sideAB.y,sideAB.x,sideAB.y+dy,C.pink,9,22);
+      drawFlatArrow(ctx,sideCD.x,sideCD.y,sideCD.x,sideCD.y-dy,C.pink,9,22);
+      label(ctx,'F',sideAB.x+25,sideAB.y+dy*.72,C.pink,'left',25);
+      label(ctx,'F',sideCD.x+25,sideCD.y-dy*.72,C.pink,'left',25);
+    }
+    if(disconnected){
+      label(ctx,'瞬間斷電',500,104,C.red,'center',30);
+      label(ctx,'絕緣縫通過電刷',500,132,C.white,'center',18);
+    }else{
+      label(ctx,`${tr('電流','Current I')}: ${sequence}`,500,104,C.cyan,'center',21);
+    }
+    options.onStatus?.({disconnected,direction,sequence});
+  }else{
+    label(ctx,'一起轉：多圈電樞＋轉軸＋分裂環',500,104,C.yellow,'center',22);
+  }
+  label(ctx,'固定：場磁鐵＋電刷＋電源',500,580,C.white,'center',20);
+  label(ctx,'分裂環',350,472,C.orange,'right',20);
+  label(ctx,'左電刷',brushL.outer.x,brushL.outer.y-31,C.muted,'center',17);
+  label(ctx,'右電刷',brushR.outer.x,brushR.outer.y-31,C.muted,'center',17);
+}
+
+function drawMotorStructCanvas(ctx) {
+  renderMotorAssembly(ctx,structState.angle,{turns:5,fieldStrength:3});
+  if(structState.isPlaying){structState.angle=(structState.angle+.012)%TAU;}
+  structState.raf=requestAnimationFrame(()=>safeDraw('motorStructCanvas',drawMotorStructCanvas));
+}
+
+document.getElementById('motorStructPlayBtn').addEventListener('click',(e)=>{
+  structState.isPlaying=!structState.isPlaying;
+  updateMotorButtons();
+});
+
+// ==========================================
+// Tab 3: 電動機慢動作運轉 (神級 3D 動畫)
+// ==========================================
+const motorState = { angle: 0, speed: 0.04, isPlaying: true, raf: 0, lastStatus: '' };
+
+function drawMotorAnimCanvas(ctx) {
+    clear(ctx);
+    const cx = 500, cy = 250;
+    
+    // 磁鐵 N / S
+    ctx.fillStyle = C.poleN; ctx.beginPath(); ctx.roundRect(cx-450, cy-150, 100, 300, 10); ctx.fill();
+    label(ctx, 'N', cx-400, cy, '#fff', 'center', 50);
+    
+    ctx.fillStyle = C.poleS; ctx.beginPath(); ctx.roundRect(cx+350, cy-150, 100, 300, 10); ctx.fill();
+    label(ctx, 'S', cx+400, cy, '#fff', 'center', 50);
+    
+    // B Field
+    ctx.strokeStyle = 'rgba(154,240,111,0.2)'; ctx.lineWidth = 2; ctx.setLineDash([15, 15]);
+    for(let y=-100; y<=100; y+=50) {
+        ctx.beginPath(); ctx.moveTo(cx-350, cy+y); ctx.lineTo(cx+350, cy+y); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    label(ctx, '磁場 B', cx, cy-180, C.green, 'center', 24);
+
+    // 動態運算
+    let a = motorState.angle;
+    let cosA = Math.cos(a), sinA = Math.sin(a);
+    let isGap = Math.abs(cosA) < 0.15; // 垂直死角判斷 (cos接近0時線圈呈垂直)
+    
+    // 畫 3D 線圈 (繞 Z 軸旋轉)
+    let W = 180, L = 200;
+    // 右臂 (紅色端)
+    let pR1 = proj(W*cosA, W*sinA, L); let pR2 = proj(W*cosA, W*sinA, -L);
+    // 左臂 (藍色端)
+    let pL1 = proj(-W*cosA, -W*sinA, L); let pL2 = proj(-W*cosA, -W*sinA, -L);
+    
+    ctx.lineWidth = 14; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    
+    // 先畫後方的連接線
+    ctx.strokeStyle = '#aaa'; 
+    ctx.beginPath(); ctx.moveTo(cx+pR2.x, cy+pR2.y); ctx.lineTo(cx+pL2.x, cy+pL2.y); ctx.stroke();
+
+    // 判斷集電環接觸狀況：若 cosA > 0，右臂接觸正極(通電出)，左臂接觸負極(通電入)
+    let rightArmColor = '#ff78b7'; // 粉紅標示半圈
+    let leftArmColor = '#72b9ff';  // 亮藍標示半圈
+    
+    // 畫左臂與右臂
+    ctx.strokeStyle = leftArmColor;
+    ctx.beginPath(); ctx.moveTo(cx+pL1.x, cy+pL1.y); ctx.lineTo(cx+pL2.x, cy+pL2.y); ctx.stroke();
+    
+    ctx.strokeStyle = rightArmColor;
+    ctx.beginPath(); ctx.moveTo(cx+pR1.x, cy+pR1.y); ctx.lineTo(cx+pR2.x, cy+pR2.y); ctx.stroke();
+
+    // 畫前方的連接線到集電環
+    let ringZ = 300;
+    let ringR1 = proj(W*cosA*0.3, W*sinA*0.3, ringZ);
+    let ringL1 = proj(-W*cosA*0.3, -W*sinA*0.3, ringZ);
+    
+    ctx.strokeStyle = rightArmColor;
+    ctx.beginPath(); ctx.moveTo(cx+pR1.x, cy+pR1.y); ctx.lineTo(cx+ringR1.x, cy+ringR1.y); ctx.stroke();
+    
+    ctx.strokeStyle = leftArmColor;
+    ctx.beginPath(); ctx.moveTo(cx+pL1.x, cy+pL1.y); ctx.lineTo(cx+ringL1.x, cy+ringL1.y); ctx.stroke();
+
+    // 畫集電環 (3D 透視圓弧)
+    ctx.lineWidth = 18;
+    // 右半環
+    ctx.strokeStyle = rightArmColor;
+    ctx.beginPath();
+    for(let g = a - Math.PI/2 + 0.1; g <= a + Math.PI/2 - 0.1; g += 0.1) {
+        let p = proj(40*Math.cos(g), 40*Math.sin(g), ringZ);
+        if(g === a - Math.PI/2 + 0.1) ctx.moveTo(cx+p.x, cy+p.y); else ctx.lineTo(cx+p.x, cy+p.y);
+    }
+    ctx.stroke();
+    // 左半環
+    ctx.strokeStyle = leftArmColor;
+    ctx.beginPath();
+    for(let g = a + Math.PI/2 + 0.1; g <= a + Math.PI*1.5 - 0.1; g += 0.1) {
+        let p = proj(40*Math.cos(g), 40*Math.sin(g), ringZ);
+        if(g === a + Math.PI/2 + 0.1) ctx.moveTo(cx+p.x, cy+p.y); else ctx.lineTo(cx+p.x, cy+p.y);
+    }
+    ctx.stroke();
+
+    // 畫固定的電刷 (左右兩側)
+    let brushL = proj(-50, 0, ringZ);
+    let brushR = proj(50, 0, ringZ);
+    ctx.fillStyle = '#888';
+    ctx.beginPath(); ctx.roundRect(cx+brushL.x-10, cy+brushL.y-20, 20, 40, 4); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(cx+brushR.x-10, cy+brushR.y-20, 20, 40, 4); ctx.fill();
+    label(ctx, '電刷', cx+brushL.x-40, cy+brushL.y, '#ccc', 'right', 20);
+
+    // 判斷受力與畫箭頭 (當不在死角時)
+    if(!isGap) {
+        // 右側電刷為正極，左側為負極。
+        // 所以落在右側(X>0)的臂，電流是從前向後流(入)。
+        // 落在左側(X<0)的臂，電流是從後向前流(出)。
+        
+        let armRight = cosA > 0 ? pR1 : pL1; // 找出哪隻手在右邊
+        let armLeft = cosA > 0 ? pL1 : pR1;  // 找出哪隻手在左邊
+        let zMid = 0;
+        
+        let rMid = proj(Math.abs(W*cosA), W*sinA*(cosA>0?1:-1), zMid);
+        let lMid = proj(-Math.abs(W*cosA), -W*sinA*(cosA>0?1:-1), zMid);
+        
+        // 傳統電流 I 統一使用藍色。
+        drawArrow3D(ctx, cx, cy, 
+            {x: Math.abs(W*cosA), y: W*sinA*(cosA>0?1:-1), z: 80}, 
+            {x: Math.abs(W*cosA), y: W*sinA*(cosA>0?1:-1), z: -80}, C.cyan, 6); // 右臂電流入
+        label(ctx, 'I', cx+rMid.x+20, cy+rMid.y, C.cyan, 'left', 22);
+
+        drawArrow3D(ctx, cx, cy, 
+            {x: -Math.abs(W*cosA), y: -W*sinA*(cosA>0?1:-1), z: -80}, 
+            {x: -Math.abs(W*cosA), y: -W*sinA*(cosA>0?1:-1), z: 80}, C.cyan, 6); // 左臂電流出
+        label(ctx, 'I', cx+lMid.x-20, cy+lMid.y, C.cyan, 'right', 22);
+
+        // 受力箭頭 (粉紅) F = I x B
+        // 右側: I入(Z-), B右(X+). F = (-Z) x (+X) = -Y (向下)
+        drawArrow3D(ctx, cx, cy, 
+            {x: Math.abs(W*cosA), y: W*sinA*(cosA>0?1:-1), z: 0}, 
+            {x: Math.abs(W*cosA), y: W*sinA*(cosA>0?1:-1) - 100, z: 0}, C.pink, 8); // 向下推
+        label(ctx, 'F', cx+rMid.x, cy+rMid.y + 120, C.pink, 'center', 26); // 螢幕 Y 朝下，所以 +120
+        
+        // 左側: I出(Z+), B右(X+). F = (+Z) x (+X) = +Y (向上)
+        drawArrow3D(ctx, cx, cy, 
+            {x: -Math.abs(W*cosA), y: -W*sinA*(cosA>0?1:-1), z: 0}, 
+            {x: -Math.abs(W*cosA), y: -W*sinA*(cosA>0?1:-1) + 100, z: 0}, C.pink, 8); // 向上拉
+        label(ctx, 'F', cx+lMid.x, cy+lMid.y - 120, C.pink, 'center', 26);
+    } else {
+        // 死角閃爍警告
+        if (Math.floor(Date.now() / 150) % 2 === 0) {
+            label(ctx, '⚠️ 缺口斷電：靠慣性轉過！', cx, cy - 80, C.red, 'center', 32);
+        }
+    }
+    
+    // 電池連線
+    ctx.strokeStyle = C.white; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(cx+brushL.x, cy+brushL.y+20); ctx.lineTo(cx+brushL.x, cy+brushL.y+150); ctx.lineTo(cx-30, cy+brushL.y+150); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+brushR.x, cy+brushR.y+20); ctx.lineTo(cx+brushR.x, cy+brushR.y+150); ctx.lineTo(cx+30, cy+brushR.y+150); ctx.stroke();
+    
+    ctx.fillRect(cx-30, cy+brushR.y+135, 10, 30);
+    ctx.fillRect(cx+20, cy+brushR.y+125, 10, 50);
+
+    if (motorState.isPlaying) {
+        motorState.angle += motorState.speed;
+        if (motorState.angle > TAU) motorState.angle -= TAU;
+    }
+    motorState.raf = requestAnimationFrame(() => safeDraw('motorAnimCanvas', drawMotorAnimCanvas));
+}
+
+// 第三分頁直接延伸第二分頁：幾何完全相同，只增加端點、電流與換向狀態。
+function drawMotorLessonCanvas(ctx) {
+    renderMotorAssembly(ctx,motorState.angle,{
+      turns:5,
+      fieldStrength:3,
+      showCurrent:true,
+      showForces:true,
+      currentStrength:2,
+      onStatus:({disconnected,direction,sequence})=>{
+        const key=`${disconnected}-${direction}`;
+        if(key===motorState.lastStatus)return;
+        motorState.lastStatus=key;
+        document.getElementById('motorAnimResult').innerHTML=disconnected
+          ? (currentLang==='en'
+            ? `<strong class="accent-pink">Power briefly off:</strong> the insulating gap reaches the brushes and inertia carries the armature across.`
+            : `<strong class="accent-pink">瞬間斷電：</strong>絕緣縫通過電刷，電樞靠慣性越過死角。`)
+          : (currentLang==='en'
+            ? `Terminal current: <strong class="accent-cyan">${sequence}</strong>; the commutator reverses it after each half-turn.`
+            : `端點電流：<strong class="accent-cyan">${sequence}</strong>；轉過半圈後，集電環自動換向。`);
+      }
+    });
+    if(motorState.isPlaying)motorState.angle=(motorState.angle+motorState.speed)%TAU;
+    motorState.raf=requestAnimationFrame(()=>safeDraw('motorAnimCanvas',drawMotorLessonCanvas));
+}
+
+document.getElementById('motorSpeed').addEventListener('input', (e) => {
+    motorState.speed = parseInt(e.target.value) * 0.01;
+});
+document.getElementById('motorPlayBtn').addEventListener('click', (e) => {
+    motorState.isPlaying = !motorState.isPlaying;
+    updateMotorButtons();
+    e.target.classList.toggle('warning'); e.target.classList.toggle('success');
+});
+
+// ==========================================
+// Tab 4: 實戰極速馬達 (綜合參數影響)
+// ==========================================
+const pwrState = { i: 2, n: 1, b: 2, angle: 0, raf: 0, lastStatus: '' };
+
+function pointOnClosedLoop(points, progress) {
+    const p = ((progress % 1) + 1) % 1;
+    const lengths = points.map((pt, i) => {
+        const next = points[(i + 1) % points.length];
+        return Math.hypot(next.x - pt.x, next.y - pt.y);
+    });
+    const total = lengths.reduce((sum, v) => sum + v, 0);
+    let target = p * total;
+    for (let i = 0; i < points.length; i++) {
+        if (target <= lengths[i]) {
+            const next = points[(i + 1) % points.length];
+            const ratio = lengths[i] ? target / lengths[i] : 0;
+            return {
+                x: points[i].x + (next.x - points[i].x) * ratio,
+                y: points[i].y + (next.y - points[i].y) * ratio
+            };
+        }
+        target -= lengths[i];
+    }
+    return points[0];
+}
+
+function traceClosedLoop(ctx,points){
+  ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
+  points.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.closePath();
+}
+
+function drawCurrentFlow(ctx, pointsOrLoops, direction, amount) {
+    // 接受單一閉合路徑，也接受多匝路徑；每一匝共用相位與流速。
+    const loops=Array.isArray(pointsOrLoops[0])?pointsOrLoops:[pointsOrLoops];
+    const time=performance.now()/1700;
+    const particlesPerLoop=Math.max(16,Math.round((28+amount*6)/Math.sqrt(loops.length)));
+    ctx.save();
+    loops.forEach((points)=>{
+      // 連續藍色流帶＋密集微粒：每一條銅線都能看見電流，而不是只有最外圈。
+      traceClosedLoop(ctx,points);ctx.strokeStyle='rgba(85,233,255,.14)';ctx.lineWidth=11;ctx.stroke();
+      ctx.lineWidth=4;ctx.lineCap='round';ctx.setLineDash([24,9]);
+      ctx.lineDashOffset=-direction*time*78;traceClosedLoop(ctx,points);ctx.strokeStyle='rgba(64,232,255,.96)';ctx.stroke();
+      ctx.setLineDash([]);
+      for(let i=0;i<particlesPerLoop;i++){
+        const p=pointOnClosedLoop(points,direction*time+i/particlesPerLoop);
+        const alpha=.24+.38*(.5+.5*Math.sin(i*2.7+time*5));
+        ctx.fillStyle=`rgba(155,246,255,${alpha})`;
+        ctx.beginPath();ctx.arc(p.x,p.y,1.1+(i%3)*.38,0,TAU);ctx.fill();
+      }
+    });
+    ctx.restore();
+}
+
+function drawArmatureCorner(ctx, text, point, cx, cy, color) {
+    const dx = point.x - cx, dy = point.y - cy;
+    const length = Math.hypot(dx, dy) || 1;
+    label(ctx, text, point.x + dx / length * 28, point.y + dy / length * 28,
+      color, 'center', 25);
+}
+
+function drawMotorPowerCanvas(ctx) {
+    clear(ctx);
+    const cx = 500, cy = 292;
+    
+    // 計算綜合總力 F = I * N * B
+    let force = pwrState.i * pwrState.n * pwrState.b; 
+    let speed = force * 0.01 + 0.02; // 最低給點轉速
+    
+    // 固定場磁鐵與均勻磁場；顏色深度隨 B 改變。
+    let bAlpha = 0.4 + (pwrState.b / 5) * 0.6;
+    ctx.fillStyle = `rgba(255,111,118,${bAlpha})`; ctx.beginPath(); ctx.roundRect(50,142,112,300,12); ctx.fill();
+    ctx.fillStyle = `rgba(114,185,255,${bAlpha})`; ctx.beginPath(); ctx.roundRect(838,142,112,300,12); ctx.fill();
+    label(ctx,'N 極',106,292,C.white,'center',34);
+    label(ctx,'S 極',894,292,C.white,'center',34);
+    [-92,-46,0,46,92].forEach((offset,i)=>{
+        drawFlatArrow(ctx,174,cy+offset,826,cy+offset,
+          `rgba(154,240,111,${i===2?.72:.28})`,i===2?5:3,13);
+    });
+    
+    // 畫電樞線圈，線條粗細隨 N 改變
+    let a = pwrState.angle;
+    let cosA = Math.cos(a), sinA = Math.sin(a);
+    let W = 150, L = 175;
+    const A0 = proj(-W*cosA,-W*sinA, L);
+    const B0 = proj(-W*cosA,-W*sinA,-L);
+    const C0 = proj( W*cosA, W*sinA,-L);
+    const D0 = proj( W*cosA, W*sinA, L);
+    const loop = [A0,B0,C0,D0].map(p=>({x:cx+p.x,y:cy+p.y}));
+
+    // 電樞四角固定命名 A、B、C、D；標籤跟著線圈一起轉。
+    ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
+    ctx.strokeStyle='rgba(92,42,17,.90)';ctx.lineWidth=10+pwrState.n*1.5;
+    ctx.beginPath();ctx.moveTo(loop[0].x,loop[0].y);
+    loop.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.closePath();ctx.stroke();
+    ctx.strokeStyle=C.orange;ctx.lineWidth=5+pwrState.n;
+    ctx.beginPath();ctx.moveTo(loop[0].x,loop[0].y);
+    loop.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.closePath();ctx.stroke();ctx.restore();
+    drawArmatureCorner(ctx,'A',loop[0],cx,cy,C.cyan);
+    drawArmatureCorner(ctx,'B',loop[1],cx,cy,C.cyan);
+    drawArmatureCorner(ctx,'C',loop[2],cx,cy,C.pink);
+    drawArmatureCorner(ctx,'D',loop[3],cx,cy,C.pink);
+
+    // 絕緣縫每半圈通過電刷：只有極短時間斷電；通過後線圈電流反向。
+    const gapDistance=Math.abs(cosA);
+    const disconnected=gapDistance<.075;
+    const direction=cosA>=0?1:-1;
+    if(!disconnected) drawCurrentFlow(ctx,loop,direction,pwrState.i);
+
+    // 右下角同步顯示分裂環：顏色每半圈交換，紅色缺口表示瞬間斷電。
+    const ringX=725,ringY=510,ringR=42,ringPhase=a-Math.PI/2;
+    ctx.save();ctx.lineWidth=16;ctx.lineCap='butt';
+    ctx.strokeStyle=C.orange;ctx.beginPath();ctx.arc(ringX,ringY,ringR,ringPhase+.12,ringPhase+Math.PI-.12);ctx.stroke();
+    ctx.strokeStyle=C.pink;ctx.beginPath();ctx.arc(ringX,ringY,ringR,ringPhase+Math.PI+.12,ringPhase+TAU-.12);ctx.stroke();
+    ctx.fillStyle=C.muted;ctx.fillRect(ringX-ringR-24,ringY-10,24,20);ctx.fillRect(ringX+ringR,ringY-10,24,20);ctx.restore();
+    label(ctx,'分裂環＋電刷',ringX,570,C.muted,'center',18);
+
+    const sequence=direction>0?'A → B → C → D → A':'A → D → C → B → A';
+    let level='微弱', levelColor=C.muted;
+    if(force>50){level='🔥 狂暴極速';levelColor=C.red;}
+    else if(force>25){level='高速';levelColor=C.cyan;}
+    else if(force>10){level='中等';levelColor=C.yellow;}
+    const statusKey=`${disconnected}-${direction}-${pwrState.i}-${pwrState.n}-${pwrState.b}`;
+    if(statusKey!==pwrState.lastStatus){
+      pwrState.lastStatus=statusKey;
+      const levelText=currentLang==='en'?(force>50?'🔥 maximum':force>25?'high':force>10?'medium':'low'):level;
+      document.getElementById('motorPowerResult').innerHTML=disconnected
+        ? (currentLang==='en'
+          ? `<strong class="accent-pink">Power briefly off:</strong> the gap is at the brushes and inertia keeps the armature turning. Force level: <strong style="color:${levelColor}">${levelText}</strong>.`
+          : `<strong class="accent-pink">瞬間斷電：</strong>絕緣縫正通過電刷，電樞靠慣性繼續轉；綜合受力等級為 <strong style="color:${levelColor}">${levelText}</strong>。`)
+        : (currentLang==='en'
+          ? `Current I: <strong class="accent-cyan">${sequence}</strong>; it reverses after half a turn. Force level: <strong style="color:${levelColor}">${levelText}</strong>.`
+          : `電流方向：<strong class="accent-cyan">${sequence}</strong>；轉過半圈後換向。綜合受力等級：<strong style="color:${levelColor}">${levelText}</strong>。`);
+    }
+    if(disconnected){
+      label(ctx,'瞬間斷電',500,92,C.red,'center',31);
+      label(ctx,'絕緣縫通過電刷',500,124,C.white,'center',19);
+    }else{
+      label(ctx,`${tr('電流','Current I')}: ${sequence}`,500,86,C.cyan,'center',23);
+    }
+    
+    // 轉速特效條
+    if (force > 15) {
+        ctx.strokeStyle = `rgba(85,233,255, ${Math.random()})`; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.ellipse(cx, cy, 250, 80, 0, 0, TAU); ctx.stroke();
+        label(ctx, '🔥 極速運轉中！', cx, cy - 200, C.red, 'center', 40);
+    }
+
+    pwrState.angle += Math.min(speed,.105);
+    if (pwrState.angle > TAU) pwrState.angle -= TAU;
+    pwrState.raf = requestAnimationFrame(() => safeDraw('motorPowerCanvas', drawMotorPowerCanvas));
+}
+
+// 第四分頁沿用第二、三分頁的同一具馬達；三個滑桿只改變教學模型的三大因素。
+function drawMotorPowerLessonCanvas(ctx) {
+    const force=pwrState.i*pwrState.n*pwrState.b;
+    // 三項皆拉滿時刻意快到難以辨認；低檔仍保留可觀察的差異。
+    const speed=.008+Math.pow(force/125,1.38)*1.62;
+    let level='微弱',levelColor=C.muted;
+    if(force>50){level='🔥 狂暴極速';levelColor=C.red;}
+    else if(force>25){level='高速';levelColor=C.cyan;}
+    else if(force>10){level='中等';levelColor=C.yellow;}
+    renderMotorAssembly(ctx,pwrState.angle,{
+      turns:pwrState.n,
+      fieldStrength:pwrState.b,
+      showCurrent:false
+    });
+    const key=`${pwrState.i}-${pwrState.n}-${pwrState.b}`;
+    if(key!==pwrState.lastStatus){
+      pwrState.lastStatus=key;
+      const rpm=Math.round(180+speed*7900);
+      const levelText=currentLang==='en'?(force>50?'🔥 maximum':force>25?'high':force>10?'medium':'low'):level;
+      document.getElementById('motorPowerResult').innerHTML=currentLang==='en'
+        ? `Simulated speed: <strong style="color:${levelColor}">${levelText}</strong> (about ${rpm} rpm). At maximum settings the armature becomes almost impossible to track.`
+        : `模擬轉速：<strong style="color:${levelColor}">${levelText}</strong>（約 ${rpm} rpm）。三項全滿時，電樞快到幾乎看不清楚。`;
+    }
+    pwrState.angle=(pwrState.angle+speed)%TAU;
+    pwrState.raf=requestAnimationFrame(()=>safeDraw('motorPowerCanvas',drawMotorPowerLessonCanvas));
+}
+
+function updatePower() {
+    pwrState.i = parseInt(document.getElementById('pwrCurrent').value);
+    pwrState.n = parseInt(document.getElementById('pwrTurns').value);
+    pwrState.b = parseInt(document.getElementById('pwrMagnet').value);
+    pwrState.lastStatus = '';
+    
+    let force = pwrState.i * pwrState.n * pwrState.b;
+    let lv = "微弱"; let color = C.muted;
+    if (force > 50) { lv = "🔥 狂暴極速"; color = C.red; }
+    else if (force > 25) { lv = "高速"; color = C.cyan; }
+    else if (force > 10) { lv = "中等"; color = C.yellow; }
+    
+    const levelText=currentLang==='en'?(force>50?'🔥 maximum':force>25?'high':force>10?'medium':'low'):lv;
+    document.getElementById('motorPowerResult').innerHTML = currentLang==='en'
+      ? `Combined force F = I×L×B. Current speed: <strong style="color:${color}">${levelText}</strong>.`
+      : `綜合受力 F = I×L×B。目前轉速：<strong style="color:${color}">${levelText}</strong>。`;
+}
+
+['pwrCurrent', 'pwrTurns', 'pwrMagnet'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updatePower);
+});
+
+function updateMotorButtons(){
+  document.getElementById('motorStructPlayBtn').textContent=structState.isPlaying
+    ? tr('⏸️ 暫停立體旋轉','⏸️ Pause 3D rotation') : tr('▶️ 繼續立體旋轉','▶️ Resume 3D rotation');
+  document.getElementById('motorPlayBtn').textContent=motorState.isPlaying
+    ? tr('⏸️ 暫停觀察','⏸️ Pause') : tr('▶️ 繼續播放','▶️ Resume');
+  document.getElementById('exampleReplayBtn').textContent=tr('↻ 重播動畫','↻ Replay');
+}
+
+function setLanguage(lang){
+  currentLang=lang==='en'?'en':'zh';
+  document.documentElement.lang=currentLang==='en'?'en':'zh-Hant';
+  document.title=currentLang==='en'?'Magnetic Fields & Motors: The Right-hand Rule':'磁力與電動機：開掌定則的威力';
+  document.querySelectorAll('.lang-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.lang===currentLang));
+  applyStaticTranslations();
+  updatePalmResult();
+  updateForceExampleText();
+  updateMotorButtons();
+  motorState.lastStatus='';
+  pwrState.lastStatus='';
+  setTimeout(drawActive,40);
+}
+
+// ==========================================
+// 共用導航系統
+// ==========================================
+function drawActive() {
+  const id = document.querySelector('.tab-content.active')?.id;
+  
+  // 停止所有動畫迴圈
+  cancelAnimationFrame(structState.raf); structState.raf = 0;
+  cancelAnimationFrame(motorState.raf); motorState.raf = 0;
+  cancelAnimationFrame(pwrState.raf); pwrState.raf = 0;
+  cancelAnimationFrame(forceExampleState.raf); forceExampleState.raf = 0;
+  
+  if (id === 'tab-palm') {
+    safeDraw('palmCanvas', drawPalmCanvas);
+  }
+  if (id === 'tab-force-examples') safeDraw('forceExamplesCanvas',drawForceExamplesCanvas);
+  if (id === 'tab-motor-struct') safeDraw('motorStructCanvas', drawMotorStructCanvas);
+  if (id === 'tab-motor-anim') safeDraw('motorAnimCanvas', drawMotorLessonCanvas);
+  if (id === 'tab-motor-power') safeDraw('motorPowerCanvas', drawMotorPowerLessonCanvas);
+}
+
+document.querySelectorAll('.tab-button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tab-button').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); document.getElementById(b.dataset.tab)?.classList.add('active');
+  setTimeout(drawActive, 60);
+}));
+
+document.querySelectorAll('.sub-tab-btn').forEach(b => b.addEventListener('click', () => {
+  const parent = document.getElementById(b.dataset.parent);
+  parent.querySelectorAll('.sub-tab-btn').forEach(x => x.classList.remove('active'));
+  parent.querySelectorAll('.sub-tab-content').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); parent.querySelector(`#${b.dataset.sub}`)?.classList.add('active');
+  if(b.dataset.exampleMode){
+    forceExampleState.mode=b.dataset.exampleMode;forceExampleState.phase=0;
+    document.getElementById('toggleBFieldBtn').style.display=b.dataset.exampleMode==='electron'?'none':'inline-flex';
+    updateForceExampleText();
+  }
+  setTimeout(drawActive, 60);
+}));
+
+document.querySelectorAll('.practice-box').forEach(box => box.querySelectorAll('.practice-btn').forEach(b => b.addEventListener('click', () => {
+  box.querySelectorAll('.practice-btn').forEach(x => x.classList.remove('active'));
+  box.querySelectorAll('.practice-step').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); box.querySelector(`[data-content="${b.dataset.step}"]`)?.classList.add('active');
+})));
+
+window.addEventListener('resize', () => setTimeout(drawActive, 100), { passive: true });
+window.addEventListener('orientationchange', () => setTimeout(drawActive, 180), { passive: true });
+document.querySelectorAll('.lang-btn').forEach(btn=>btn.addEventListener('click',()=>setLanguage(btn.dataset.lang)));
+captureStaticTranslations();
+setLanguage('zh');
+window.addEventListener('load', () => { setTimeout(drawActive, 100); });
+</script>
+</body>
