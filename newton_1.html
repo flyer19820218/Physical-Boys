@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>國中自然｜牛頓第一運動定律（慣性定律）</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700&family=JetBrains+Mono:wght@600;700&display=swap');
@@ -23,28 +23,51 @@
     * { box-sizing: border-box; }
 
     /* 嚴格堅持基礎字體地板 20px */
+    html { background: var(--board-dark); }
+
     body {
       margin: 0;
       background: var(--board-dark);
       color: var(--chalk-white);
       font-family: 'Noto Sans TC', sans-serif;
       font-size: 20px;
-      padding: 20px 14px 60px;
+      padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(60px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
     }
 
-    .wrap { max-width: 1320px; margin: 0 auto; }
+    .wrap { width: 100%; max-width: 1080px; margin: 0 auto; }
 
-    header { text-align: center; margin-bottom: 24px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 16px; }
+    header { position: relative; text-align: center; margin-bottom: 24px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding: 74px 0 16px; }
     header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 20px; letter-spacing: 0.15em; color: var(--chalk-teal); text-transform: uppercase; font-weight: 700; }
     h1 { font-size: 40px; font-weight: 700; margin: 8px 0 12px; color: var(--chalk-yellow); letter-spacing: 2px; text-shadow: 0 0 16px rgba(255, 224, 102, 0.4); }
-    header p { color: var(--chalk-dim); max-width: 950px; margin: 0 auto; line-height: 1.6; font-size: 22px; }
+    header p { color: var(--chalk-dim); max-width: 950px; margin: 0 auto; line-height: 1.6; font-size: 20px; }
+
+    .language-switch {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top));
+      right: max(12px, env(safe-area-inset-right));
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px; border: 2px solid var(--chalk-teal); border-radius: 12px;
+      background: rgba(17, 38, 31, 0.96); z-index: 1000;
+      box-shadow: 0 8px 24px rgba(5, 18, 14, 0.45), 0 0 16px rgba(78, 216, 238, 0.16);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+    .language-label { color: var(--chalk-teal); font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; }
+    .lang-btn {
+      min-width: 58px; min-height: 48px; padding: 8px 12px; border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 9px; background: var(--board-dark); color: var(--chalk-white);
+      font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; cursor: pointer;
+    }
+    .lang-btn.active { background: var(--chalk-teal); color: var(--board-dark); border-color: var(--chalk-teal); }
 
     /* 導覽列：不加數字編號、簡明扼要、字體放大 */
     .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
     .tab-btn {
       font-family: 'Noto Sans TC', sans-serif; font-size: 22px; font-weight: 700;
       background: rgba(255, 255, 255, 0.08); color: var(--chalk-dim); border: 2px dashed rgba(255, 255, 255, 0.3);
-      padding: 16px 8px; border-radius: 10px; cursor: pointer; transition: all .2s; text-align: center;
+      min-height: 64px; padding: 12px 8px; border-radius: 10px; cursor: pointer; transition: all .2s; text-align: center;
     }
     .tab-btn:hover { background: rgba(255, 255, 255, 0.15); color: var(--chalk-white); border-color: var(--chalk-teal); }
     .tab-btn.active {
@@ -57,7 +80,7 @@
       background: var(--board);
       border: 10px solid var(--frame);
       border-radius: 8px;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6), inset 0 0 50px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 18px 40px rgba(17, 38, 31, 0.65), inset 0 0 50px rgba(17, 38, 31, 0.38);
       padding: 26px;
       margin-bottom: 20px;
       position: relative;
@@ -73,13 +96,28 @@
     .sub-tag { font-size: 20px; color: var(--board-dark); background: var(--chalk-green); padding: 6px 18px; border-radius: 999px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
 
     /* 控制與按鈕區 */
-    .controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; background: rgba(0, 0, 0, 0.35); padding: 18px 22px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); }
+    .controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; background: rgba(17, 38, 31, 0.72); padding: 18px 22px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); }
+    .umbrella-controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-auto-rows: 1fr;
+      align-items: stretch;
+      justify-content: center;
+    }
+    .umbrella-controls .action-btn {
+      width: 100%;
+      min-height: 68px;
+      padding: 12px 16px;
+      line-height: 1.35;
+    }
     .control-group { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 280px; }
     .control-group label { font-size: 22px; color: var(--chalk-teal); font-weight: 700; }
     input[type=range] { flex: 1; height: 10px; accent-color: var(--chalk-yellow); cursor: pointer; }
+    input[type=range] { min-height: 44px; }
+    button, input[type=range] { touch-action: manipulation; }
     
     button.action-btn {
-      padding: 12px 22px; border: 2px solid var(--chalk-coral);
+      min-height: 48px; padding: 12px 22px; border: 2px solid var(--chalk-coral);
       background: var(--board-dark); color: var(--chalk-coral);
       border-radius: 8px; cursor: pointer; font-size: 20px; font-weight: 700; transition: 0.2s;
     }
@@ -94,24 +132,27 @@
     .readout-badge { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--board-dark); background: var(--chalk-yellow); padding: 6px 16px; border-radius: 6px; min-width: 100px; text-align: center; font-size: 22px; }
 
     /* 畫布（絕對禁止黑色線條） */
-    .stage-container { width: 100%; border: 2px solid rgba(255,255,255,0.4); border-radius: 10px; overflow: hidden; background: #11261f; box-shadow: inset 0 0 25px rgba(0,0,0,0.7); position: relative; }
+    .stage-container { width: 100%; border: 2px solid rgba(255,255,255,0.4); border-radius: 10px; overflow: hidden; background: #11261f; box-shadow: inset 0 0 25px rgba(17,38,31,0.78); position: relative; }
     canvas { display: block; width: 100%; height: auto; }
+    #canvas-tab2 { aspect-ratio: 1000 / 350; }
+    #canvas-tab3 { aspect-ratio: 1000 / 400; }
+    #canvas-tab4 { aspect-ratio: 1000 / 380; }
 
     /* 防斷字與公式特選字體綁定 */
     .nowrap-term { white-space: nowrap; display: inline-block; font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif; font-weight: 700; }
     .formula-box { font-family: 'JetBrains Mono', monospace; background: rgba(255, 224, 102, 0.15); border: 2px dashed var(--chalk-yellow); padding: 4px 14px; border-radius: 6px; color: var(--chalk-yellow); font-weight: 700; display: inline-block; margin: 4px 2px; white-space: nowrap; }
 
     /* 重點筆記 */
-    .note { font-size: 22px; color: var(--chalk-white); margin-top: 20px; line-height: 1.8; background: rgba(0, 0, 0, 0.35); padding: 20px 26px; border-radius: 10px; border-left: 8px solid var(--chalk-yellow); }
+    .note { font-size: 20px; color: var(--chalk-white); margin-top: 20px; line-height: 1.8; background: rgba(17, 38, 31, 0.72); padding: 20px 26px; border-radius: 10px; border-left: 8px solid var(--chalk-yellow); }
     .note b { color: var(--chalk-yellow); }
 
     /* 嚴格雙欄排版與大螢幕適配 (minmax 420px) */
-    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 20px; margin-bottom: 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
     .card { background: rgba(255, 255, 255, 0.06); border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 10px; padding: 24px; }
     .card h3 { color: var(--chalk-yellow); margin: 0 0 14px 0; font-size: 26px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 10px; }
-    .card p { margin: 0 0 12px 0; font-size: 22px; line-height: 1.7; color: var(--chalk-dim); }
+    .card p { margin: 0 0 12px 0; font-size: 20px; line-height: 1.7; color: var(--chalk-dim); }
     .card p b { color: var(--chalk-white); }
-    .card ul { margin: 0; padding-left: 28px; font-size: 22px; line-height: 1.8; color: var(--chalk-dim); }
+    .card ul { margin: 0; padding-left: 28px; font-size: 20px; line-height: 1.8; color: var(--chalk-dim); }
     .card ul li b { color: var(--chalk-teal); }
 
     /* 科學史卡片 */
@@ -126,180 +167,254 @@
     /* 測驗區 */
     .quiz-card { background: rgba(255, 255, 255, 0.06); border: 2px dashed var(--chalk-teal); border-radius: 10px; padding: 22px; margin-bottom: 18px; }
     .quiz-card h3 { margin: 0 0 14px 0; color: var(--chalk-teal); font-size: 24px; display: flex; align-items: center; gap: 10px; }
-    .quiz-card p { margin: 10px 0; font-size: 22px; line-height: 1.7; }
+    .quiz-card p { margin: 10px 0; font-size: 20px; line-height: 1.7; }
     .quiz-options { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
-    .quiz-btn { padding: 12px 22px; font-size: 20px; font-weight: 700; background: transparent; color: var(--chalk-white); border: 2px solid var(--chalk-dim); border-radius: 8px; cursor: pointer; transition: 0.2s; }
+    .quiz-btn { min-height: 48px; padding: 12px 22px; font-size: 20px; font-weight: 700; background: transparent; color: var(--chalk-white); border: 2px solid var(--chalk-dim); border-radius: 8px; cursor: pointer; transition: 0.2s; }
     .quiz-btn:hover { border-color: var(--chalk-yellow); color: var(--chalk-yellow); background: rgba(255,224,102,0.15); }
-    .quiz-result { margin-top: 14px; font-weight: 700; font-size: 22px; padding: 14px 18px; border-radius: 8px; display: none; line-height: 1.6; }
+    .quiz-result { margin-top: 14px; font-weight: 700; font-size: 20px; padding: 14px 18px; border-radius: 8px; display: none; line-height: 1.6; }
 
     footer { text-align: center; color: var(--chalk-dim); font-size: 20px; margin-top: 30px; font-family: 'JetBrains Mono', monospace; opacity: 0.8; }
+
+    @media (max-width: 1040px) {
+      .umbrella-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 900px) {
+      body { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
+      .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tab-btn:last-child { grid-column: 1 / -1; }
+      .board { padding: 20px; border-width: 7px; }
+      .history-grid { grid-template-columns: 1fr 1fr; }
+      .control-group { min-width: 0; width: 100%; }
+    }
+
+    @media (max-width: 768px) {
+      header { padding-top: 78px; }
+      h1 { font-size: 34px; }
+      h2 { font-size: 28px; }
+      .language-switch {
+        left: auto;
+        right: max(10px, env(safe-area-inset-right));
+      }
+      .grid-2, .history-grid { grid-template-columns: 1fr; }
+      .controls { align-items: stretch; padding: 14px; }
+      .control-group { flex-wrap: wrap; }
+      .control-group label { font-size: 20px; }
+      button.action-btn, .quiz-btn { width: 100%; }
+      .note { padding: 18px; }
+    }
+
+    @media (max-width: 520px) {
+      .language-label { display: none; }
+      .language-switch { gap: 6px; padding: 6px; }
+      .lang-btn { min-width: 52px; min-height: 44px; padding: 6px 10px; }
+    }
+
+    @media (max-width: 520px) {
+      body { padding-top: max(10px, env(safe-area-inset-top)); }
+      .tabs { grid-template-columns: 1fr; }
+      .tab-btn:last-child { grid-column: auto; }
+      .board { padding: 14px; border-width: 5px; }
+      .panel-header { align-items: flex-start; }
+      h1 { font-size: 30px; }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="eyebrow">Newton's First Law of Motion</div>
-      <h1>牛頓第一運動定律（慣性定律）</h1>
-      <p>從科學思維的演進，到旋轉雨傘切線噴濺與公車煞車傾倒的真實物理。視覺化見證「靜者恆靜、動者恆等速」的力學本質！</p>
+      <div class="language-switch" role="group" aria-label="語言切換" data-aria-zh="語言切換" data-aria-en="Language switch">
+        <span class="language-label" data-zh="語言" data-en="Language">語言</span>
+        <button class="lang-btn active" type="button" data-lang="zh" aria-pressed="true" onclick="setLanguage('zh')">中文</button>
+        <button class="lang-btn" type="button" data-lang="en" aria-pressed="false" onclick="setLanguage('en')">EN</button>
+      </div>
+      <div class="eyebrow" data-zh="國中自然 · 牛頓力學" data-en="Newton's First Law of Motion">國中自然 · 牛頓力學</div>
+      <h1><span data-zh="牛頓第一運動定律（慣性定律）" data-en="Newton's First Law (Law of Inertia)">牛頓第一運動定律（慣性定律）</span></h1>
+      <p><span data-zh="從科學思維的演進，到旋轉雨傘切線噴濺與公車煞車傾倒的真實物理。視覺化見證「靜者恆靜、動者恆等速」的力學本質！" data-en="Trace the evolution of scientific thought, then visualize tangential droplets and inertia during acceleration and braking. See why an object at rest stays at rest and a moving object keeps a constant velocity when the net force is zero.">從科學思維的演進，到旋轉雨傘切線噴濺與公車煞車傾倒的真實物理。視覺化見證「靜者恆靜、動者恆等速」的力學本質！</span></p>
     </header>
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('tab1')">科學史話</button>
-      <button class="tab-btn" onclick="switchTab('tab2')">伽利略斜面</button>
-      <button class="tab-btn" onclick="switchTab('tab3')">旋轉雨傘切線</button>
-      <button class="tab-btn" onclick="switchTab('tab4')">車廂與水杯</button>
-      <button class="tab-btn" onclick="switchTab('tab5')">考題實戰</button>
+      <button class="tab-btn active" onclick="switchTab('tab1')"><span data-zh="科學史話" data-en="History of Science">科學史話</span></button>
+      <button class="tab-btn" onclick="switchTab('tab2')"><span data-zh="伽利略斜面" data-en="Galileo's Ramps">伽利略斜面</span></button>
+      <button class="tab-btn" onclick="switchTab('tab3')"><span data-zh="旋轉雨傘切線" data-en="Umbrella Tangent">旋轉雨傘切線</span></button>
+      <button class="tab-btn" onclick="switchTab('tab4')"><span data-zh="車廂與水杯" data-en="Train and Water">車廂與水杯</span></button>
+      <button class="tab-btn" onclick="switchTab('tab5')"><span data-zh="考題實戰" data-en="Practice">考題實戰</span></button>
     </div>
 
     <!-- 面板 1：科學史話 -->
     <div class="board" id="panel-tab1">
       <div class="panel-header">
-        <h2>人類對「力與運動」的思維演進</h2>
-        <span class="sub-tag" style="background:var(--chalk-yellow);">History of Physics</span>
+        <h2><span data-zh="人類對「力與運動」的思維演進" data-en="How Ideas About Force and Motion Evolved">人類對「力與運動」的思維演進</span></h2>
+        <span class="sub-tag" style="background:var(--chalk-yellow);" data-zh="科學史" data-en="History of Physics">科學史</span>
       </div>
       <div class="history-grid">
         <div class="history-card">
-          <span class="time">古希臘時期 · 錯誤迷思</span>
-          <h3>亞里斯多德</h3>
-          <p>觀察日常馬車與重物，推論<b>「力是維持物體運動的原因」</b>。<br><br>👉 迷思：必須持續推動物體才會前進；一旦停止施力，物體自然就會歸於靜止。</p>
+          <span class="time" data-zh="古希臘時期 · 錯誤迷思" data-en="Ancient Greece · A persistent misconception">古希臘時期 · 錯誤迷思</span>
+          <h3><span data-zh="亞里斯多德" data-en="Aristotle">亞里斯多德</span></h3>
+          <p><span data-zh="觀察日常馬車與重物，推論「力是維持物體運動的原因」。迷思：物體必須持續受推力才會前進；一旦停止施力，就會自然靜止。" data-en="From carts and falling objects, he inferred that force keeps an object moving. Misconception: an object must be pushed continuously to keep moving and naturally stops when the push ends.">觀察日常馬車與重物，推論<b>「力是維持物體運動的原因」</b>。<br><br>👉 迷思：必須持續推動物體才會前進；一旦停止施力，物體自然就會歸於靜止。</span></p>
         </div>
         <div class="history-card">
-          <span class="time">17 世紀 · 實驗突破</span>
-          <h3>伽利略</h3>
-          <p>透過<b>「理想斜面實驗」</b>，發現物體停下是因為<b>接觸面摩擦力</b>的阻礙。<br><br>👉 突破：若毫無阻力，運動中的物體根本不需要外力維持，會永遠等速滾動下去。</p>
+          <span class="time" data-zh="17 世紀 · 實驗突破" data-en="17th century · Experimental breakthrough">17 世紀 · 實驗突破</span>
+          <h3><span data-zh="伽利略" data-en="Galileo">伽利略</span></h3>
+          <p><span data-zh="透過「理想斜面實驗」，他發現物體停下是因為接觸面的摩擦力。突破：若完全沒有阻力，運動中的物體不需要外力維持，會永遠等速運動。" data-en="Using an idealized ramp experiment, he recognized that friction makes objects stop. Breakthrough: without resistance, a moving object needs no force to keep moving at constant velocity.">透過<b>「理想斜面實驗」</b>，發現物體停下是因為<b>接觸面摩擦力</b>的阻礙。<br><br>👉 突破：若毫無阻力，運動中的物體根本不需要外力維持，會永遠等速滾動下去。</span></p>
         </div>
         <div class="history-card">
-          <span class="time">1687 年 · 經典集大成</span>
-          <h3>牛頓</h3>
-          <p>總結前人成果，於《自然哲學的數學原理》提出<b>第一運動定律</b>。<br><br>👉 核心：物體具有維持原本運動狀態的特性（<b>慣性</b>）。力不是維持運動，而是<b>改變運動狀態的原因</b>。</p>
+          <span class="time" data-zh="1687 年 · 經典集大成" data-en="1687 · The classical synthesis">1687 年 · 經典集大成</span>
+          <h3><span data-zh="牛頓" data-en="Newton">牛頓</span></h3>
+          <p><span data-zh="牛頓在《自然哲學的數學原理》中提出第一運動定律。核心：物體具有維持原本運動狀態的特性（慣性）。力不是維持運動，而是改變運動狀態的原因。" data-en="In Principia, Newton stated the first law of motion. Core idea: inertia preserves an object's state of motion. Force does not maintain motion; it changes motion.">總結前人成果，於《自然哲學的數學原理》提出<b>第一運動定律</b>。<br><br>👉 核心：物體具有維持原本運動狀態的特性（<b>慣性</b>）。力不是維持運動，而是<b>改變運動狀態的原因</b>。</span></p>
         </div>
       </div>
       <div class="note">
-        💡 <b>黑板重點：</b><br>
-        • <b>科學史的啟示：</b>亞里斯多德的直覺之所以影響人類兩千年，是因為我們身處於充滿「摩擦力」與「空氣阻力」的地球環境。<br>
-        • <b>觀念翻轉：</b>沒有受力時，物體絕對不是只能靜止。當<span class="nowrap-term">合力為零 (<span class="formula-box">ΣF = 0</span>)</span> 時，運動中的物體必維持<b>等速度直線運動</b>。
+        <span data-zh="💡 黑板重點：科學史的啟示：亞里斯多德的直覺之所以影響人類兩千年，是因為我們身處於充滿摩擦力與空氣阻力的環境。觀念翻轉：沒有受力時，物體不一定靜止。當合力為零時，運動中的物體維持等速度直線運動。" data-en="💡 Key idea: Aristotle's intuition lasted for centuries because our everyday environment is full of friction and air resistance. Concept shift: zero net force does not mean an object must be at rest. A moving object continues in a straight line at constant velocity.">💡 <b>黑板重點：</b><br>• <b>科學史的啟示：</b>亞里斯多德的直覺之所以影響人類兩千年，是因為我們身處於充滿「摩擦力」與「空氣阻力」的地球環境。<br>• <b>觀念翻轉：</b>沒有受力時，物體絕對不是只能靜止。當合力為零時，運動中的物體必維持<b>等速度直線運動</b>。</span>
+        <span class="formula-box">ΣF = 0</span>
       </div>
     </div>
 
     <!-- 面板 2：伽利略斜面 -->
     <div class="board" id="panel-tab2" style="display:none;">
       <div class="panel-header">
-        <h2>伽利略理想斜面實驗（慣性定律推導起源）</h2>
-        <span class="sub-tag" style="background:var(--chalk-teal);">Thought Experiment</span>
+        <h2><span data-zh="伽利略理想斜面實驗（慣性定律推導起源）" data-en="Galileo's Idealized Ramp Experiment">伽利略理想斜面實驗（慣性定律推導起源）</span></h2>
+        <span class="sub-tag" style="background:var(--chalk-teal);" data-zh="思想實驗" data-en="Thought Experiment">思想實驗</span>
       </div>
       <div class="controls">
         <div class="control-group">
-          <label>右側斜面角度 <span class="nowrap-term">θ</span>：</label>
+          <label><span data-zh="右側斜面角度" data-en="Right ramp angle">右側斜面角度</span> <span class="nowrap-term">θ</span>：</label>
           <input id="rng-angle" type="range" min="0" max="45" step="15" value="30" />
           <span id="val-angle" class="readout-badge">30°</span>
         </div>
-        <button class="action-btn btn-green" onclick="startGalileo()">▶ 釋放小球</button>
-        <button class="action-btn btn-teal" onclick="resetGalileo()">↺ 重置位置</button>
+        <button class="action-btn btn-green" onclick="startGalileo()"><span data-zh="▶ 釋放小球" data-en="▶ Release ball">▶ 釋放小球</span></button>
+        <button class="action-btn btn-teal" onclick="resetGalileo()"><span data-zh="↺ 重置位置" data-en="↺ Reset position">↺ 重置位置</span></button>
       </div>
       <div class="stage-container">
         <canvas id="canvas-tab2" width="1000" height="350"></canvas>
       </div>
       <div class="note">
-        💡 <b>黑板重點：</b><br>
-        • <b>等高線定律：</b>無摩擦力時，小球從左側滑下，不論右側斜面角度多平緩，永遠會向爬回<b>原本的<span class="nowrap-term">起始高度 (h)</span></b>。<br>
-        • <b>水平推論 (<span class="nowrap-term">θ = 0°</span>)：</b>若將右側放平為水平面，小球因為永遠找不到原本的高度，將會以固定的速度<b>永遠維持等速度直線運動</b>。<br>
-        • <b>數學表達：</b>合力為零時，速度為定值。 <span class="nowrap-term"><span class="formula-box">ΣF = 0 ➔ v = const</span></span>
+        <span data-zh="💡 黑板重點：無摩擦力時，小球會回到原本的起始高度 h。若右側放平（θ = 0°），小球找不到原本高度，便持續做等速度直線運動。合力為零時，速度為定值。" data-en="💡 Key idea: without friction, the ball climbs back to its initial height h. If the right side becomes horizontal (θ = 0°), the ball never reaches that height and continues in a straight line at constant velocity. Zero net force means constant velocity.">💡 <b>黑板重點：</b><br>• 無摩擦力時，小球會回到原本的起始高度 h。<br>• 若右側放平（θ = 0°），小球找不到原本高度，便持續做等速度直線運動。<br>• 合力為零時，速度為定值。</span>
+        <span class="formula-box">ΣF = 0 ➔ v = const</span>
       </div>
     </div>
 
     <!-- 面板 3：旋轉雨傘切線 (新加入核心動畫！) -->
     <div class="board" id="panel-tab3" style="display:none;">
       <div class="panel-header">
-        <h2>經典段考迷思：旋轉雨傘與水滴切線飛出</h2>
-        <span class="sub-tag" style="background:var(--chalk-coral);">Tangential Velocity</span>
+        <h2><span data-zh="經典段考迷思：旋轉雨傘與水滴切線飛出" data-en="Common Misconception: Droplets Leave Tangentially">經典段考迷思：旋轉雨傘與水滴切線飛出</span></h2>
+        <span class="sub-tag" style="background:var(--chalk-coral);" data-zh="切線速度" data-en="Tangential Velocity">切線速度</span>
       </div>
-      <div class="controls">
-        <button class="action-btn btn-teal" onclick="setUmbrellaState('slow')">☂️ 慢速旋轉 (水滴附著)</button>
-        <button class="action-btn btn-green" onclick="setUmbrellaState('fast')">⚡ 高速旋轉 (切線噴出)</button>
-        <button class="action-btn btn-yellow" onclick="toggleVectors()">📐 切換：顯示正確切線 vs 錯誤徑向</button>
-        <button class="action-btn" onclick="resetUmbrella()">↺ 重置雨傘</button>
+      <div class="controls umbrella-controls">
+        <button class="action-btn btn-teal" onclick="setUmbrellaState('slow')"><span data-zh="☂️ 慢速旋轉（水滴附著）" data-en="☂️ Slow rotation (attached)">☂️ 慢速旋轉（水滴附著）</span></button>
+        <button class="action-btn btn-green" onclick="setUmbrellaState('fast')"><span data-zh="⚡ 高速旋轉（切線飛出）" data-en="⚡ Fast rotation (tangent)">⚡ 高速旋轉（切線飛出）</span></button>
+        <button class="action-btn btn-yellow" onclick="toggleVectors()"><span data-zh="📐 切換正確切線與錯誤徑向" data-en="📐 Toggle tangent vs radial">📐 切換正確切線與錯誤徑向</span></button>
+        <button class="action-btn" onclick="resetUmbrella()"><span data-zh="↺ 重置雨傘" data-en="↺ Reset umbrella">↺ 重置雨傘</span></button>
       </div>
       <div class="stage-container">
         <canvas id="canvas-tab3" width="1000" height="400"></canvas>
       </div>
       <div class="note">
-        💡 <b>黑板重點：</b><br>
-        • <b>學生最常錯的考題：</b>旋轉雨傘時，傘緣的水滴會向哪一個方向飛出？許多人誤以為會順著傘骨「向外徑向放射」，這是嚴重的物理觀念錯誤！<br>
-        • <b>慣性切線原理：</b>當雨傘旋轉過快，水滴附著力不足以提供圓周運動所需的向心力時，水滴會因為<b>慣性</b>，順著脫離瞬間的<span class="nowrap-term"><b>速度方向（切線方向 v）</b></span>直線飛出。<br>
-        • <b>判斷口訣：</b>圓周運動失去向心力時，物體一律沿<span class="nowrap-term"><b>「切線方向」</b></span>直線飛出（如：砂輪機火花、旋轉雨傘水滴、旋轉拋鏈球）。
+        <span data-zh="💡 黑板重點：水滴不會沿傘骨向外徑向飛出。當附著力不足以提供向心力，水滴因慣性沿脫離瞬間的速度方向，也就是切線方向 v，做直線運動。砂輪機火花與拋鏈球也是同一原理。" data-en="💡 Key idea: droplets do not fly radially outward along the umbrella ribs. When the attachment force cannot provide enough centripetal force, a droplet continues along its instantaneous velocity—the tangent v—because of inertia. Sparks from a grinder and a released hammer follow the same principle.">💡 <b>黑板重點：</b><br>水滴不會沿傘骨向外徑向飛出。當附著力不足以提供向心力，水滴因慣性沿脫離瞬間的速度方向，也就是切線方向 v，做直線運動。砂輪機火花與拋鏈球也是同一原理。</span>
       </div>
     </div>
 
     <!-- 面板 4：車廂與水杯模擬 -->
     <div class="board" id="panel-tab4" style="display:none;">
       <div class="panel-header">
-        <h2>經典段考動畫：列車起步、煞車與水杯傾斜</h2>
-        <span class="sub-tag" style="background:var(--chalk-green);">Dynamic Simulation</span>
+        <h2><span data-zh="經典段考動畫：列車起步、煞車與水杯傾斜" data-en="Train Acceleration, Braking, and Water Surface">經典段考動畫：列車起步、煞車與水杯傾斜</span></h2>
+        <span class="sub-tag" style="background:var(--chalk-green);" data-zh="動態模擬" data-en="Dynamic Simulation">動態模擬</span>
       </div>
       <div class="controls">
-        <button class="action-btn btn-teal" onclick="setTrainState('constant')">🚆 等速度行駛 (<span class="nowrap-term">v = const</span>)</button>
-        <button class="action-btn btn-green" onclick="setTrainState('accel')">⚡ 突然急加速 (向前起步)</button>
-        <button class="action-btn" onclick="setTrainState('brake')">🛑 緊急煞車 (減速停止)</button>
+        <button class="action-btn btn-teal" onclick="setTrainState('constant')"><span data-zh="🚆 等速度行駛" data-en="🚆 Constant velocity">🚆 等速度行駛</span> (<span class="nowrap-term">v = const</span>)</button>
+        <button class="action-btn btn-green" onclick="setTrainState('accel')"><span data-zh="⚡ 突然向前加速" data-en="⚡ Sudden forward acceleration">⚡ 突然向前加速</span></button>
+        <button class="action-btn" onclick="setTrainState('brake')"><span data-zh="🛑 緊急煞車" data-en="🛑 Emergency braking">🛑 緊急煞車</span></button>
       </div>
       <div class="stage-container">
         <canvas id="canvas-tab4" width="1000" height="380"></canvas>
       </div>
       <div class="note">
-        💡 <b>黑板重點：</b><br>
-        • <b>急加速起步：</b>列車隨引擎向前衝，乘客的腳與水杯底部受地板摩擦力向前，但<b>上半身與杯中的水因慣性想留在原本靜止的位置</b> ➔ 乘客向後倒、水面往後潑升。<br>
-        • <b>緊急煞車：</b>列車急速減速，腳與杯底受地面摩擦力停止，但<b>上半身與水因慣性想維持原本的速度繼續衝</b> ➔ 乘客向前倒、水面往前潑升。<br>
-        • <b>判斷口訣：</b>水面與乘客身體的傾倒方向，永遠指向<b>「物體慣性原本想去的地方」</b>！
+        <span data-zh="💡 黑板重點：列車突然向前加速時，腳與杯底受地板作用而向前，上半身與水因慣性傾向維持原狀，因此乘客與水面向後傾。緊急煞車時，上半身與水傾向維持原速度，因此向前傾。" data-en="💡 Key idea: when the train suddenly accelerates forward, the floor pushes the feet and cup forward, while the upper body and water tend to preserve their original motion, so they tilt backward. During braking, they tend to keep moving forward, so they tilt forward.">💡 <b>黑板重點：</b><br>列車突然向前加速時，腳與杯底受地板作用而向前，上半身與水因慣性傾向維持原狀，因此乘客與水面向後傾。緊急煞車時，上半身與水傾向維持原速度，因此向前傾。</span>
       </div>
     </div>
 
     <!-- 面板 5：考題實戰 -->
     <div class="board" id="panel-tab5" style="display:none;">
       <div class="panel-header">
-        <h2>牛頓第一運動定律｜名師實戰考題</h2>
-        <span class="sub-tag" style="background:var(--chalk-yellow);">Exam Practice</span>
+        <h2><span data-zh="牛頓第一運動定律｜名師實戰考題" data-en="Newton's First Law | Practice Questions">牛頓第一運動定律｜名師實戰考題</span></h2>
+        <span class="sub-tag" style="background:var(--chalk-yellow);" data-zh="考題練習" data-en="Exam Practice">考題練習</span>
       </div>
 
       <!-- 題目 1 -->
       <div class="quiz-card">
-        <h3>📝 實戰考題 01｜旋轉雨傘的水滴飛出方向</h3>
-        <p>下雨天收傘前，小明將雨傘快速旋轉以甩乾傘面的雨水。已知由上往下俯視時，雨傘為<b>順時針旋轉</b>。請問傘緣東側邊緣的水滴，在脫離雨傘瞬間會向哪一個方向飛出？</p>
+        <h3><span data-zh="📝 實戰考題 01｜旋轉雨傘的水滴飛出方向" data-en="📝 Question 01 | Direction of a Droplet">📝 實戰考題 01｜旋轉雨傘的水滴飛出方向</span></h3>
+        <p><span data-zh="由上往下看，雨傘順時針旋轉。傘緣東側的水滴脫離瞬間會向哪個方向飛出？" data-en="Viewed from above, an umbrella rotates clockwise. In which direction does a droplet at the eastern edge move the instant it leaves?">由上往下看，雨傘<b>順時針旋轉</b>。傘緣東側的水滴脫離瞬間會向哪個方向飛出？</span></p>
         <div class="quiz-options">
-          <button class="quiz-btn" onclick="checkQuiz(1, 'A')">(A) 向正東方（沿半徑向外飛出）</button>
-          <button class="quiz-btn" onclick="checkQuiz(1, 'B')">(B) 向正南方（沿切線方向飛出）</button>
-          <button class="quiz-btn" onclick="checkQuiz(1, 'C')">(C) 向正北方（沿切線相反方向）</button>
+          <button class="quiz-btn" onclick="checkQuiz(1, 'A')"><span data-zh="(A) 正東方（徑向向外）" data-en="(A) East (radially outward)">(A) 正東方（徑向向外）</span></button>
+          <button class="quiz-btn" onclick="checkQuiz(1, 'B')"><span data-zh="(B) 正南方（切線方向）" data-en="(B) South (tangent)">(B) 正南方（切線方向）</span></button>
+          <button class="quiz-btn" onclick="checkQuiz(1, 'C')"><span data-zh="(C) 正北方（反切線方向）" data-en="(C) North (opposite tangent)">(C) 正北方（反切線方向）</span></button>
         </div>
         <div id="res-1" class="quiz-result"></div>
       </div>
 
       <!-- 題目 2 -->
       <div class="quiz-card">
-        <h3>📝 實戰考題 02｜火車水杯的傾斜判定</h3>
-        <p>一列原本向<b>東方</b>高速行駛的火車，桌面上有一杯八分滿的水。某刻乘客發現杯裡的水面突然向<b>東方（前方）</b>溢出，請問這代表火車當時的運動狀態發生了什麼改變？</p>
+        <h3><span data-zh="📝 實戰考題 02｜火車水杯的傾斜判定" data-en="📝 Question 02 | Water in a Braking Train">📝 實戰考題 02｜火車水杯的傾斜判定</span></h3>
+        <p><span data-zh="火車原本高速向東行駛，杯中的水突然向東方（前方）溢出。火車的運動狀態發生了什麼改變？" data-en="A train is moving east at high speed. Water suddenly spills toward the east (front). What change occurred in the train's motion?">火車原本高速向東行駛，杯中的水突然向東方（前方）溢出。火車的運動狀態發生了什麼改變？</span></p>
         <div class="quiz-options">
-          <button class="quiz-btn" onclick="checkQuiz(2, 'A')">(A) 火車正在突然急加速向前</button>
-          <button class="quiz-btn" onclick="checkQuiz(2, 'B')">(B) 火車發生了緊急煞車（減速）</button>
-          <button class="quiz-btn" onclick="checkQuiz(2, 'C')">(C) 火車正在等速度直線行駛</button>
+          <button class="quiz-btn" onclick="checkQuiz(2, 'A')"><span data-zh="(A) 突然向前加速" data-en="(A) Sudden forward acceleration">(A) 突然向前加速</span></button>
+          <button class="quiz-btn" onclick="checkQuiz(2, 'B')"><span data-zh="(B) 緊急煞車（減速）" data-en="(B) Emergency braking">(B) 緊急煞車（減速）</span></button>
+          <button class="quiz-btn" onclick="checkQuiz(2, 'C')"><span data-zh="(C) 等速度直線行駛" data-en="(C) Constant-velocity motion">(C) 等速度直線行駛</span></button>
         </div>
         <div id="res-2" class="quiz-result"></div>
       </div>
 
       <!-- 題目 3 -->
       <div class="quiz-card">
-        <h3>📝 實戰考題 03｜慣性大小與質量的關係</h3>
-        <p>大隊接力運動會中，老師準備了體積相同的「實心鐵球」與「空心塑膠球」讓同學進行慣性測試。請問下列關於兩球「慣性大小」的敘述，何者正確？</p>
+        <h3><span data-zh="📝 實戰考題 03｜慣性大小與質量" data-en="📝 Question 03 | Inertia and Mass">📝 實戰考題 03｜慣性大小與質量</span></h3>
+        <p><span data-zh="體積相同的實心鐵球與空心塑膠球，哪一項關於兩球慣性的敘述正確？" data-en="A solid iron ball and a hollow plastic ball have the same volume. Which statement about their inertia is correct?">體積相同的實心鐵球與空心塑膠球，哪一項關於兩球慣性的敘述正確？</span></p>
         <div class="quiz-options">
-          <button class="quiz-btn" onclick="checkQuiz(3, 'A')">(A) 兩球體積相同，所以慣性一樣大</button>
-          <button class="quiz-btn" onclick="checkQuiz(3, 'B')">(B) 若塑膠球滾動速度極快，其慣性可能大於靜止的鐵球</button>
-          <button class="quiz-btn" onclick="checkQuiz(3, 'C')">(C) 鐵球質量較大，無論運動狀態為何，其慣性永遠大於塑膠球</button>
+          <button class="quiz-btn" onclick="checkQuiz(3, 'A')"><span data-zh="(A) 體積相同，所以慣性相同" data-en="(A) Same volume means same inertia">(A) 體積相同，所以慣性相同</span></button>
+          <button class="quiz-btn" onclick="checkQuiz(3, 'B')"><span data-zh="(B) 塑膠球夠快時，慣性可能較大" data-en="(B) A fast plastic ball may have more inertia">(B) 塑膠球夠快時，慣性可能較大</span></button>
+          <button class="quiz-btn" onclick="checkQuiz(3, 'C')"><span data-zh="(C) 鐵球質量較大，因此慣性較大" data-en="(C) The heavier iron ball has more inertia">(C) 鐵球質量較大，因此慣性較大</span></button>
         </div>
         <div id="res-3" class="quiz-result"></div>
       </div>
     </div>
 
-    <footer>國中自然力學單元 · 視覺化黑板互動教材 · 堅持名師現場視線品質規範</footer>
+    <footer><span data-zh="國中自然力學單元 · 視覺化黑板互動教材" data-en="Middle School Mechanics · Interactive STEM Visualization">國中自然力學單元 · 視覺化黑板互動教材</span></footer>
   </div>
 
   <script>
+    // --- 雙語顯示層（不改動物理或動畫邏輯） ---
+    let currentLang = 'zh';
+
+    function tr(zh, en) {
+      return currentLang === 'en' ? en : zh;
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang === 'en' ? 'en' : 'zh';
+      document.documentElement.lang = currentLang === 'en' ? 'en' : 'zh-Hant';
+      document.title = tr(
+        '國中自然｜牛頓第一運動定律（慣性定律）',
+        "Middle School Science | Newton's First Law of Motion"
+      );
+
+      document.querySelectorAll('[data-zh][data-en]').forEach((element) => {
+        element.textContent = currentLang === 'en' ? element.dataset.en : element.dataset.zh;
+      });
+
+      document.querySelectorAll('[data-aria-zh][data-aria-en]').forEach((element) => {
+        element.setAttribute('aria-label', currentLang === 'en' ? element.dataset.ariaEn : element.dataset.ariaZh);
+      });
+
+      document.querySelectorAll('.lang-btn').forEach((button) => {
+        const isActive = button.dataset.lang === currentLang;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+
+      document.querySelectorAll('.quiz-result[data-answer]').forEach((result) => {
+        checkQuiz(Number(result.id.replace('res-', '')), result.dataset.answer);
+      });
+    }
+
     // --- 分頁切換邏輯 ---
     let currentTab = 'tab1';
     let aniFrame2, aniFrame3, aniFrame4;
@@ -400,7 +515,7 @@
       ctx2.stroke();
       ctx2.fillStyle = '#ffe066';
       ctx2.font = 'bold 24px JetBrains Mono';
-      ctx2.fillText('起始等高線 h = const', 120, 55);
+      ctx2.fillText(tr('起始等高線 h = const', 'Initial height h = const'), 120, 55);
       ctx2.restore();
 
       ctx2.save();
@@ -462,13 +577,13 @@
       ctx2.font = 'bold 26px "Noto Sans TC"';
       if (ball2.state === 'idle') {
         ctx2.fillStyle = '#ffffff';
-        ctx2.fillText('👉 點擊「釋放小球」觀察等高爬升現象', 340, 150);
+        ctx2.fillText(tr('👉 點擊「釋放小球」觀察等高爬升現象', '👉 Release ball: returns to height h'), 340, 150);
       } else if (ball2.state === 'forever') {
         ctx2.fillStyle = '#ffe066';
-        ctx2.fillText('🌟 阻力為零、右側放平：小球以等速度永遠運動！ v = const', 200, 150);
+        ctx2.fillText(tr('🌟 阻力為零、右側放平：小球以等速度永遠運動！ v = const', '🌟 No resistance: constant velocity, v = const'), 200, 150);
       } else if (ball2.state === 'done') {
         ctx2.fillStyle = '#33cc99';
-        ctx2.fillText('✔ 成功驗證：小球爬升回到原本的起始等高線 h！', 280, 150);
+        ctx2.fillText(tr('✔ 成功驗證：小球爬升回到原本的起始等高線 h！', '✔ Verified: the ball returns to height h'), 280, 150);
       }
 
       if (currentTab === 'tab2') aniFrame2 = requestAnimationFrame(animateTab2);
@@ -577,9 +692,9 @@
 
       if (umbrella.showVectors) {
         // 正確的切線速度向量 (順時針向南 #33cc99)
-        drawChalkArrow(ctx3, eastX, eastY, eastX, eastY + 90, '#33cc99', '正確：沿切線飛出 (v)');
+        drawChalkArrow(ctx3, eastX, eastY, eastX, eastY + 90, '#33cc99', tr('正確：沿切線飛出 (v)', 'Correct: tangent (v)'));
         // 錯誤的徑向外飛向量 (#ff8040)
-        drawChalkArrow(ctx3, eastX, eastY, eastX + 90, eastY, '#ff8040', '迷思：沿半徑向外');
+        drawChalkArrow(ctx3, eastX, eastY, eastX + 90, eastY, '#ff8040', tr('迷思：沿半徑向外', 'Misconception: radial'));
         // 劃掉錯誤向量
         ctx3.save();
         ctx3.strokeStyle = '#ff8040'; ctx3.lineWidth = 5;
@@ -592,10 +707,10 @@
       ctx3.font = 'bold 26px "Noto Sans TC"';
       ctx3.fillStyle = '#ffffff';
       if (umbrella.state === 'slow') {
-        ctx3.fillText('☂️ 慢速旋轉中：附著力足夠提供向心力，水滴隨傘旋轉！', 160, 45);
+        ctx3.fillText(tr('☂️ 慢速旋轉中：附著力足夠提供向心力，水滴隨傘旋轉！', '☂️ Slow: attachment provides the required centripetal force'), 160, 45);
       } else {
         ctx3.fillStyle = '#ffe066';
-        ctx3.fillText('⚡ 高速旋轉：附著力不足以提供向心力，水滴因慣性沿【切線方向】飛出！', 80, 45);
+        ctx3.fillText(tr('⚡ 高速旋轉：附著力不足以提供向心力，水滴因慣性沿【切線方向】飛出！', '⚡ Fast: droplets leave along the tangent because of inertia'), 80, 45);
       }
 
       if (currentTab === 'tab3') aniFrame3 = requestAnimationFrame(animateTab3);
@@ -696,21 +811,21 @@
 
       ctx4.font = 'bold 26px "Noto Sans TC"';
       if (train4.state === 'constant') {
-        drawChalkArrow(ctx4, tx + tw + 20, ty + 60, tx + tw + 130, ty + 60, '#4dd2ff', '等速前進');
+        drawChalkArrow(ctx4, tx + tw + 20, ty + 60, tx + tw + 130, ty + 60, '#4dd2ff', tr('等速前進', 'Constant v'));
         ctx4.fillStyle = '#ffffff';
-        ctx4.fillText('🚆 等速度行駛：合力為零，乘客直立、杯裡水面平靜水平！', 180, 45);
+        ctx4.fillText(tr('🚆 等速度行駛：合力為零，乘客直立、杯裡水面平靜水平！', '🚆 Constant velocity: passenger upright, water surface level'), 180, 45);
       } else if (train4.state === 'accel') {
-        drawChalkArrow(ctx4, tx + tw + 20, ty + 60, tx + tw + 170, ty + 60, '#33cc99', '急加速起步');
-        drawChalkArrow(ctx4, px - 35, py - 55, px - 130, py - 55, '#ff8040', '慣性向後');
-        drawChalkArrow(ctx4, cx - 45, cy - 20, cx - 120, cy - 20, '#ff8040', '水往後潑');
+        drawChalkArrow(ctx4, tx + tw + 20, ty + 60, tx + tw + 170, ty + 60, '#33cc99', tr('急加速起步', 'Accelerating'));
+        drawChalkArrow(ctx4, px - 35, py - 55, px - 130, py - 55, '#ff8040', tr('慣性向後', 'Inertia: back'));
+        drawChalkArrow(ctx4, cx - 45, cy - 20, cx - 120, cy - 20, '#ff8040', tr('水往後潑', 'Water: back'));
         ctx4.fillStyle = '#ffe066';
-        ctx4.fillText('⚡ 突然起步向前：車身與底部向前衝，身體與水面慣性向後倒！', 150, 45);
+        ctx4.fillText(tr('⚡ 突然起步向前：車身與底部向前衝，身體與水面慣性向後倒！', '⚡ Accelerating forward: body and water tilt backward'), 150, 45);
       } else if (train4.state === 'brake') {
-        drawChalkArrow(ctx4, tx + tw + 150, ty + 60, tx + tw + 20, ty + 60, '#ff8040', '緊急煞車');
-        drawChalkArrow(ctx4, px + 35, py - 55, px + 130, py - 55, '#ffe066', '慣性向前');
-        drawChalkArrow(ctx4, cx + 45, cy - 20, cx + 120, cy - 20, '#ffe066', '水往前潑');
+        drawChalkArrow(ctx4, tx + tw + 150, ty + 60, tx + tw + 20, ty + 60, '#ff8040', tr('緊急煞車', 'Braking'));
+        drawChalkArrow(ctx4, px + 35, py - 55, px + 130, py - 55, '#ffe066', tr('慣性向前', 'Inertia: front'));
+        drawChalkArrow(ctx4, cx + 45, cy - 20, cx + 120, cy - 20, '#ffe066', tr('水往前潑', 'Water: front'));
         ctx4.fillStyle = '#ff8040';
-        ctx4.fillText('🛑 緊急煞車：車身與底部停止，身體與水面慣性向前衝潑！', 150, 45);
+        ctx4.fillText(tr('🛑 緊急煞車：車身與底部停止，身體與水面慣性向前衝潑！', '🛑 Braking: body and water continue forward'), 150, 45);
       }
 
       if (currentTab === 'tab4') aniFrame4 = requestAnimationFrame(animateTab4);
@@ -720,40 +835,42 @@
     function checkQuiz(qNum, ans) {
       const resEl = document.getElementById(`res-${qNum}`);
       resEl.style.display = 'block';
+      resEl.dataset.answer = ans;
       if (qNum === 1) {
         if (ans === 'B') {
           resEl.style.background = 'rgba(51, 204, 153, 0.25)';
           resEl.style.color = 'var(--chalk-green)';
-          resEl.innerHTML = '🎉 <b>答對了！</b> 旋轉雨傘為順時針旋轉時，東側（最右端）瞬間的切線方向為「正南方」。失去了向心力後，水滴會因慣性維持瞬間切線速度向南飛出！';
+          resEl.textContent = tr('🎉 答對了！提示：先找東側點的瞬時速度。解答：順時針旋轉時，東側點的切線方向為正南方；水滴脫離後沿切線飛出。', '🎉 Correct! Hint: find the instantaneous velocity at the eastern point. Answer: for clockwise rotation, the tangent there points south, so the droplet travels south.');
         } else {
           resEl.style.background = 'rgba(255, 128, 64, 0.25)';
           resEl.style.color = 'var(--chalk-coral)';
-          resEl.innerHTML = '❌ <b>答錯了！</b> 這就是最大的考題陷阱！水滴不會順著傘骨半徑向外飛，失去向心力時必定沿著旋轉瞬間的「切線方向」直線飛出。';
+          resEl.textContent = tr('❌ 再想想。提示：水滴脫離後保留瞬時速度。解答：它不會沿半徑飛出，而會沿脫離瞬間的切線方向前進。', '❌ Try again. Hint: after release, the droplet keeps its instantaneous velocity. Answer: it moves along the tangent, not radially outward.');
         }
       } else if (qNum === 2) {
         if (ans === 'B') {
           resEl.style.background = 'rgba(51, 204, 153, 0.25)';
           resEl.style.color = 'var(--chalk-green)';
-          resEl.innerHTML = '🎉 <b>答對了！</b> 水面向「東方（前方）」潑出，代表杯底受摩擦力減速停止，但杯中的水因為慣性繼續向東衝，這正是火車緊急煞車減速的典型特徵！';
+          resEl.textContent = tr('🎉 答對了！提示：水因慣性維持原速度。解答：水向前溢出表示杯子正在減速，因此火車緊急煞車。', '🎉 Correct! Hint: the water tends to keep its original velocity. Answer: spilling forward means the cup is slowing down, so the train is braking.');
         } else {
           resEl.style.background = 'rgba(255, 128, 64, 0.25)';
           resEl.style.color = 'var(--chalk-coral)';
-          resEl.innerHTML = '❌ <b>答錯了！</b> 請聯想第4頁動畫，火車向前急加速時水面往後倒。水往前方溢出代表火車正在緊急減速！';
+          resEl.textContent = tr('❌ 再想想。提示：向前加速時水面向後傾。解答：水向前溢出代表火車正在減速。', '❌ Try again. Hint: during forward acceleration, the water tilts backward. Answer: spilling forward indicates braking.');
         }
       } else if (qNum === 3) {
         if (ans === 'C') {
           resEl.style.background = 'rgba(51, 204, 153, 0.25)';
           resEl.style.color = 'var(--chalk-green)';
-          resEl.innerHTML = '🎉 <b>答對了！</b> 「質量」是物體慣性大小的唯一量度！鐵球的質量大於塑膠球，所以無論它在靜止或飛行中，其慣性永遠大於塑膠球，與速度快慢完全無關！';
+          resEl.textContent = tr('🎉 答對了！提示：慣性以質量衡量。解答：鐵球質量較大，因此慣性較大；慣性大小與速度無關。', '🎉 Correct! Hint: mass measures inertia. Answer: the iron ball has greater mass and therefore greater inertia; inertia does not depend on speed.');
         } else {
           resEl.style.background = 'rgba(255, 128, 64, 0.25)';
           resEl.style.color = 'var(--chalk-coral)';
-          resEl.innerHTML = '❌ <b>答錯了！</b> 速度會影響衝擊動量，但「慣性」只由物體的「質量 (m)」決定，與體積或速度快慢無關！';
+          resEl.textContent = tr('❌ 再想想。提示：不要把慣性與動量混在一起。解答：慣性只由質量 m 衡量，與體積或速度無關。', '❌ Try again. Hint: do not confuse inertia with momentum. Answer: inertia is measured only by mass m, not volume or speed.');
         }
       }
     }
 
     // 初始化啟動
+    setLanguage('zh');
     switchTab('tab1');
   </script>
 </body>
