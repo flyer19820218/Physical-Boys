@@ -82,10 +82,11 @@
   * [電壓本質與電路三態](electronics_2.html)
   * [串並聯電路與電流](electronics_3.html)
   * [電阻與歐姆定律](electronics_4.html)
-* **10｜🧭 電與磁** （3 個小單元）
+* **10｜🧭 電與磁** （4 個小單元）
   * [磁力與磁場](magnetism_1.html)｜磁極互動、磁疇、磁力線、指南針與地球磁場互動解析
   * [電生磁與電磁鐵](electromagnetism_2.html)｜奧斯特實驗、右手定則、線圈磁場疊加、電磁鐵起重機與電話聽筒動畫
   * [磁力與電動機](electric_motor_3.html)｜右手開掌定則、平行電流交互作用、帶電粒子運動、分裂環換向與直流電動機動畫
+  * [電磁感應與交流電](electromagnetic_induction_4.html)｜法拉第與冷次定律、發電機、變壓器、感應加熱與高中資優計算
 
 ### 🧪 化學與反應館 (Chemistry)
 
@@ -234,10 +235,11 @@ The project centers on **STEM education**, **inquiry-based learning**, **scienti
   * [Voltage & Three Circuit States](electronics_2.html) — Water-flow analogy, open and closed circuits, and dangerous short circuits ★
   * [Series/Parallel Circuits & Current](electronics_3.html) — Electric current, ammeter rules, and classic exam problems ★
   * [Resistance & Ohm’s Law](electronics_4.html) — Microscopic collisions, V–I graphs, and unknown-resistance measurement ★
-* **10｜🧭 Electricity & Magnetism** (3 lessons)
+* **10｜🧭 Electricity & Magnetism** (4 lessons)
   * [Magnetic Forces & Fields](magnetism_1.html) — Poles, domains, field lines, compasses, and Earth’s magnetic field ★
   * [Current-Generated Magnetism & Electromagnets](electromagnetism_2.html) — Oersted’s experiment, right-hand rules, field superposition, cranes, and telephone receivers ★
   * [Magnetic Force & Electric Motors](electric_motor_3.html) — Right-hand palm rule, parallel-current forces, charged particles, split-ring commutation, and interactive DC motors ★
+  * [Electromagnetic Induction & AC](electromagnetic_induction_4.html) — Faraday and Lenz laws, generators, transformers, induction heating, and high-school extension calculations ★
 ### Chemistry Pavilion
 * **01｜🧪 Air & Solutions** (4 lessons)
   * [Properties & Separation of Matter](concerntration_1.html) — Physical and chemical changes, pure substances, mixtures, filtration, and crystallization ★
