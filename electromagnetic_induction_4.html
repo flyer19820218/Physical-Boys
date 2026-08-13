@@ -104,6 +104,7 @@ input[type=range]{width:100%;accent-color:var(--yellow)}
     <button class="tab-btn" data-tab="cooker" data-zh="🔥 電磁爐" data-en="🔥 Induction Cooker">🔥 電磁爐</button>
   </nav>
 
+  <!-- 第1分頁：法拉第與冷次 -->
   <section id="history" class="tab-page active">
     <div class="grid">
       <article class="panel">
@@ -164,6 +165,7 @@ input[type=range]{width:100%;accent-color:var(--yellow)}
     </div>
   </section>
 
+  <!-- 第2分頁：發電機 -->
   <section id="generator" class="tab-page">
     <article class="panel" style="grid-column: 1 / -1; margin-bottom: 18px;">
         <div class="grid">
@@ -199,7 +201,7 @@ input[type=range]{width:100%;accent-color:var(--yellow)}
           <ul>
             <li data-zh="場磁鐵固定，提供穩定的磁場。" data-en="Fixed field magnets provide a steady magnetic field.">場磁鐵固定，提供穩定的磁場。</li>
             <li data-zh="電樞與分裂環一起旋轉，切割磁力線。" data-en="The armature and split ring rotate together, cutting magnetic lines.">電樞與分裂環一起旋轉，切割磁力線。</li>
-            <li data-zh="分裂環每半圈交換接點，將輸出的波形翻轉成正向的直流脈衝！" data-en="The split ring swaps contacts every half cycle, flipping the output wave into a positive DC pulse!">分裂環每半圈交換接點，將輸出的波形翻轉成<strong class="yellow">正向的直流脈衝</strong>！</li>
+            <li data-zh="分裂環每半圈交換接點，將輸出的波形翻轉成正向的直流脈衝！" data-en="The split ring swaps contacts every half cycle, flipping the output wave into a positive DC pulse!">分裂環每半圈交換接點，將輸出的波形翻轉成單一方向的直流脈衝！</li>
           </ul>
           <div class="key"><span class="yellow">動能</span> → <span class="cyan">電能 (直流電)</span></div>
         </div>
@@ -234,7 +236,7 @@ input[type=range]{width:100%;accent-color:var(--yellow)}
     </div>
   </section>
 
-  <!-- 變壓器與電磁爐保留原狀 -->
+  <!-- 第3分頁：變壓器 -->
   <section id="transformer" class="tab-page">
     <div class="grid">
       <article class="panel">
@@ -259,6 +261,7 @@ input[type=range]{width:100%;accent-color:var(--yellow)}
     </div>
   </section>
 
+  <!-- 第4分頁：電磁爐 -->
   <section id="cooker" class="tab-page">
     <div class="grid">
       <article class="panel">
@@ -298,17 +301,6 @@ function pageIsActive(id){return document.getElementById(id)?.classList.contains
 function scheduleFrame(state,pageId,canvasId,fn){const epoch=animationEpoch;state.raf=requestAnimationFrame(()=>{if(epoch===animationEpoch&&pageIsActive(pageId))safeDraw(canvasId,fn)})}
 
 function drawPrism(ctx,x,y,w,h,depth,pole){const front=pole==='N'?C.n:C.s,side=pole==='N'?'#a93749':'#397fc2',top=pole==='N'?'#ff9da2':'#a8d7ff';ctx.save();ctx.lineJoin='round';ctx.strokeStyle='rgba(255,255,255,.72)';ctx.lineWidth=3;ctx.fillStyle=top;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+depth,y-depth);ctx.lineTo(x+w+depth,y-depth);ctx.lineTo(x+w,y);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=side;ctx.beginPath();ctx.moveTo(x+w,y);ctx.lineTo(x+w+depth,y-depth);ctx.lineTo(x+w+depth,y+h-depth);ctx.lineTo(x+w,y+h);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=front;ctx.beginPath();ctx.roundRect(x,y,w,h,12);ctx.fill();ctx.stroke();label(ctx,pole,x+w/2,y+h/2,C.white,'center',38);ctx.restore()}
-
-function drawArrow3D(ctx, cx, cy, start3D, end3D, color, width=6) {
-    let s = machineProject(start3D.x, start3D.y, start3D.z, 0, 0);
-    let e = machineProject(end3D.x, end3D.y, end3D.z, 0, 0);
-    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(cx+s.x, cy+s.y); ctx.lineTo(cx+e.x, cy+e.y); ctx.stroke();
-    let angle = Math.atan2(e.y - s.y, e.x - s.x);
-    ctx.save(); ctx.translate(cx+e.x, cy+e.y); ctx.rotate(angle);
-    ctx.beginPath(); ctx.moveTo(0, -width*1.2); ctx.lineTo(width*2, 0); ctx.lineTo(0, width*1.2); ctx.fill();
-    ctx.restore();
-}
 
 function tracePath(ctx,points,close=true){
     ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
@@ -353,11 +345,10 @@ function pointOnClosedLoop(points, progress) {
     return points[0];
 }
 
-// 【修復：電流粒子箭頭，指向正確的前進方向】
 function drawCurrentFlow(ctx, pointsOrLoops, direction, amount, closePath=true) {
     if (direction === 0) return;
     const loops=Array.isArray(pointsOrLoops[0])?pointsOrLoops:[pointsOrLoops];
-    const time=performance.now()/1700;
+    const time=performance.now()/3400; 
     const particlesPerLoop=Math.max(16,Math.round((28+amount*6)/Math.sqrt(loops.length)));
     
     ctx.save();
@@ -398,10 +389,10 @@ function drawCurrentFlow(ctx, pointsOrLoops, direction, amount, closePath=true) 
         ctx.rotate(angle);
         ctx.fillStyle = `rgba(155,246,255,${alpha + 0.2})`;
         ctx.beginPath();
-        ctx.moveTo(8, 0);
-        ctx.lineTo(-6, 7);
-        ctx.lineTo(-2, 0);
-        ctx.lineTo(-6, -7);
+        ctx.moveTo(9, 0);
+        ctx.lineTo(-7, 8);
+        ctx.lineTo(-3, 0);
+        ctx.lineTo(-7, -8);
         ctx.closePath();
         ctx.fill();
         ctx.restore();
@@ -417,9 +408,10 @@ function drawArmatureCorner(ctx, text, point, cx, cy, color) {
 }
 
 // ==================
-// Tab 1: 法拉第與冷次 (線圈平移、感應磁場明顯化)
+// Tab 1: 第一分頁 (刪除流動顆粒、完美磁鐵移動)
 // ==================
 const induction={x:130,target:130,moving:0,flip:false,speed:3,phase:0,mode:'faraday',raf:0,lastResult:'',rotating:false,angle:0};
+
 function drawInduction(ctx){
   clear(ctx);
   const mx=induction.x, axisY=240, coilStart=480, coilEnd=780, meterX=630, meterY=510; 
@@ -436,6 +428,7 @@ function drawInduction(ctx){
 
   const turns=10, startAngle=Math.PI/2;
   
+  // 線圈後半
   ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
   for(let i=0; i<turns; i++){
       ctx.beginPath();
@@ -455,6 +448,7 @@ function drawInduction(ctx){
   }
   ctx.restore();
 
+  // 磁鐵
   ctx.save();
   ctx.translate(mx,axisY);
   ctx.rotate(induction.angle);
@@ -464,6 +458,7 @@ function drawInduction(ctx){
   label(ctx,induction.flip?'N':'S',52,0,C.white);
   ctx.restore();
 
+  // 感應磁場 Bᵢ
   if(induction.mode==='lenz' && active && !induction.rotating){
       const originalRight=nearPoleNorth;
       const motionDir=dir||1;
@@ -491,6 +486,7 @@ function drawInduction(ctx){
       }
   }
 
+  // 線圈前半
   ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
   for(let i=0; i<turns; i++){
       ctx.beginPath();
@@ -513,17 +509,19 @@ function drawInduction(ctx){
   label(ctx,tr('長線圈 (10圈)','LONG COIL (10 TURNS)'), meterX, 365, C.orange);
 
   if(induction.mode==='lenz'){
-      label(ctx,tr('冷次定律：感應磁場反抗磁通量的改變，阻力將動能轉換成電能。','LENZ: INDUCED FIELD OPPOSES FLUX CHANGE, CONVERTING K.E. TO E.E.'),500,105,C.purple,'center',22);
+      label(ctx,tr('冷次定律：感應磁場反抗磁場改變，阻力將動能轉換成電能。','LENZ: INDUCED FIELD OPPOSES CHANGE, CONVERTING K.E. TO E.E.'),500,105,C.purple,'center',24);
   }else{
       label(ctx,active?tr('磁通量正在改變','MAGNETIC FLUX IS CHANGING'):tr('磁通量不變 → I＝0','CONSTANT FLUX → I = 0'),500,92,active?C.green:C.muted);
   }
 
+  // 電路接線
   ctx.save();ctx.strokeStyle=C.cyan;ctx.fillStyle=C.cyan;ctx.lineWidth=6;ctx.lineCap='round';ctx.lineJoin='round';
   ctx.beginPath(); ctx.moveTo(coilStart, axisY+112); ctx.lineTo(coilStart, meterY); ctx.lineTo(meterX - 75, meterY); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(coilEnd, axisY+112); ctx.lineTo(coilEnd, meterY); ctx.lineTo(meterX + 75, meterY); ctx.stroke();
   [ {x:coilStart, y:axisY+112}, {x:coilEnd, y:axisY+112} ].forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,8,0,TAU);ctx.fill()});
   ctx.restore();
 
+  // 安培計
   ctx.save();ctx.strokeStyle=active?C.cyan:C.muted;ctx.lineWidth=7;
   ctx.beginPath();ctx.arc(meterX,meterY,75,0,TAU);ctx.stroke();
   ctx.translate(meterX,meterY);
@@ -532,6 +530,7 @@ function drawInduction(ctx){
   ctx.restore();
   label(ctx,tr('安培計','AMMETER'),meterX,614,C.cyan);
 
+  // 感應電流箭頭 (無流動顆粒)
   if(active){
       let iDir = induced > 0 ? -1 : 1; 
       arrow(ctx, coilStart, 440 - iDir*20, coilStart, 440 + iDir*20, C.cyan, 6, 14); 
@@ -550,21 +549,20 @@ function drawInduction(ctx){
   if(induction.rotating){ induction.angle+=.05*induction.speed; }
   else{ induction.angle-=induction.angle*.1; }
   
-  const stepDist = induction.speed * 1.45;
-  const delta = induction.target - induction.x;
-  if(Math.abs(delta) > stepDist){ 
-      induction.moving = Math.sign(delta); 
-      induction.x += Math.sign(delta) * stepDist; 
-  } else { 
-      induction.x = induction.target; 
-      induction.moving = 0; 
+  // 【修復：完美防卡頓磁鐵移動邏輯】
+  let delta = induction.target - induction.x;
+  const step = induction.speed * 1.5;
+  if (Math.abs(delta) > step) {
+      induction.moving = Math.sign(delta);
+      induction.x += induction.moving * step;
+  } else {
+      induction.x = induction.target;
+      induction.moving = 0;
   }
   
-  induction.phase+=.02*induction.speed*(induced!==0?induced:1);
-  induction.phase=(induction.phase%1+1)%1;
   updateInductionResult();
   
-  if(induction.moving||active||Math.abs(induction.angle)>.01) scheduleFrame(induction,'history','inductionCanvas',drawInduction)
+  if(induction.moving !== 0 || induction.rotating || active) scheduleFrame(induction,'history','inductionCanvas',drawInduction)
 }
 
 function updateInductionResult(){
@@ -572,7 +570,7 @@ function updateInductionResult(){
     let html;
     if(induction.rotating){
         html=tr('磁鐵旋轉中：磁通量連續改變，產生<strong class="yellow">交流電</strong>！','Magnet rotating: continuous flux change produces <strong>AC</strong>!');
-    }else if(!induction.moving){
+    }else if(induction.moving === 0){
         html=tr('磁鐵靜止：磁通量沒有改變，安培計回到 0。','Magnet stationary: flux is constant and the ammeter returns to zero.');
     }else{
         const approach=induction.moving>0,nearNorth=induction.flip,coilNearNorth=approach?nearNorth:!nearNorth,face=coilNearNorth?'N':'S';
@@ -582,7 +580,7 @@ function updateInductionResult(){
 }
 
 // ==================
-// Tab 2: 發電機模型與波形分離 (獨佔 RAF 迴圈 & 完美 Cosine 波)
+// Tab 2: 發電機模型與波形分離 (完美置中、AC 雙滑環層疊、箭頭粒子)
 // ==================
 const gen={angle:.18,speed:2,play:true,dir:1,mode:'dc',raf:0,wave:[]};
 
@@ -595,6 +593,7 @@ function machinePath(ctx,points,color,width, cx=500, cy=350){
     points.forEach((p,i)=>{const q=machineProject(p.x,p.y,p.z,cx,cy);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)});
     ctx.stroke();ctx.restore()
 }
+
 function drawMachineCommutatorHalf(ctx,cx,cy,start,end,color,zNear=-300,zFar=-230,radius=48){
     const near=[],far=[];
     for(let t=start;t<=end+.001;t+=.08){near.push(machineProject(radius*Math.cos(t),radius*Math.sin(t),zNear,cx,cy));far.push(machineProject(radius*Math.cos(t),radius*Math.sin(t),zFar,cx,cy))}
@@ -603,11 +602,7 @@ function drawMachineCommutatorHalf(ctx,cx,cy,start,end,color,zNear=-300,zFar=-23
     near.slice().reverse().forEach(p=>ctx.lineTo(p.x,p.y));
     ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()
 }
-function drawFullSlipRing(ctx,cx,cy,z,color){
-    const p=machineProject(0,0,z,cx,cy);
-    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(-.69);ctx.strokeStyle='rgba(55,27,13,.82)';ctx.lineWidth=18;
-    ctx.beginPath();ctx.ellipse(0,0,48,34,0,0,TAU);ctx.stroke();ctx.strokeStyle=color;ctx.lineWidth=11;ctx.stroke();ctx.restore()
-}
+
 function drawMachineBrush(ctx,cx,cy,side,z,color,showContact=true){
     const contact=machineProject(side*52,0,z,cx,cy),postOuterX=contact.x+side*72,postInnerX=contact.x+side*36,baseY=cy+200,topY=contact.y-18,lipEndX=contact.x+side*3;
     const holder=[{x:postOuterX,y:baseY},{x:postInnerX,y:baseY},{x:postInnerX,y:contact.y+15},{x:lipEndX,y:contact.y+10},{x:lipEndX,y:contact.y-10},{x:postInnerX,y:topY},{x:postOuterX,y:contact.y+5}];
@@ -634,10 +629,10 @@ function drawGenModelCanvas(ctx) {
   const W = 158, zFront = -188, zBack = 208;
   const turnCount = 5;
 
-  drawPrism(ctx, cx - 280, 145, 100, 285, 24, 'S');
-  drawPrism(ctx, cx + 180, 145, 100, 285, 24, 'N');
+  drawPrism(ctx, cx - 340, 145, 100, 285, 24, 'S');
+  drawPrism(ctx, cx + 240, 145, 100, 285, 24, 'N');
   [205,255,305,355,405].forEach((y,i)=> {
-      arrow(ctx, cx + 180, y, cx - 180, y, `rgba(154,240,111,0.5)`, i===2?6:3, 14);
+      arrow(ctx, cx + 240, y, cx - 240, y, `rgba(154,240,111,0.5)`, i===2?6:3, 14);
   });
   label(ctx,tr('固定磁場 B：N → S','FIXED FIELD B: N → S'),cx,54,C.green);
 
@@ -696,38 +691,46 @@ function drawGenModelCanvas(ctx) {
           drawMachineCommutatorHalf(ctx, cx, cy, h.start, h.end, h.color, -280, -250, 48);
       });
   } else {
-      lead(hubB,{x:-22*c,y:-22*s,z:-220},{x:-35*c,y:-35*s,z:-310},C.pink);
-      drawFullSlipRing(ctx, cx, cy, -325, C.pink);
+      // 交流雙滑環：粉色環在後(-310 to -270)，先畫
+      lead(hubB,{x:-22*c,y:-22*s,z:-220},{x:-35*c,y:-35*s,z:-290},C.pink);
+      drawMachineCommutatorHalf(ctx, cx, cy, 0, TAU, C.pink, -310, -270, 48);
       
-      lead(hubA,{x:22*c,y:22*s,z:-220},{x:35*c,y:35*s,z:-250},C.orange);
-      drawFullSlipRing(ctx, cx, cy, -265, C.orange);
+      // 交流雙滑環：橘色環在前(-250 to -210)，後畫
+      lead(hubA,{x:22*c,y:22*s,z:-220},{x:35*c,y:35*s,z:-230},C.orange);
+      drawMachineCommutatorHalf(ctx, cx, cy, 0, TAU, C.orange, -250, -210, 48);
   }
 
-  const brushL_Z = gen.mode === 'dc' ? -265 : -325; 
-  const brushR_Z = gen.mode === 'dc' ? -265 : -265; 
+  const brushL_Z = gen.mode === 'dc' ? -265 : -290; 
+  const brushR_Z = gen.mode === 'dc' ? -265 : -230; 
   const brushL = drawMachineBrush(ctx, cx, cy, -1, brushL_Z, C.cyan, true);
   const brushR = drawMachineBrush(ctx, cx, cy, 1, brushR_Z, C.orange, true);
 
   const by = 550;
+  const boxCx = (brushL.terminal.x + brushR.terminal.x) / 2;
+
   ctx.save(); ctx.lineWidth = 6; ctx.lineJoin = 'round';
   ctx.strokeStyle = C.cyan; ctx.beginPath(); 
   ctx.moveTo(brushL.terminal.x, brushL.terminal.y);
-  ctx.lineTo(brushL.terminal.x, by - 20); ctx.lineTo(cx - 150, by - 20); ctx.stroke();
+  ctx.lineTo(brushL.terminal.x, by - 20); 
+  ctx.lineTo(boxCx - 80, by - 20); 
+  ctx.stroke();
   
   ctx.strokeStyle = C.orange; ctx.beginPath(); 
   ctx.moveTo(brushR.terminal.x, brushR.terminal.y);
-  ctx.lineTo(brushR.terminal.x, by - 20); ctx.lineTo(cx + 150, by - 20); ctx.stroke();
+  ctx.lineTo(brushR.terminal.x, by - 20); 
+  ctx.lineTo(boxCx + 80, by - 20); 
+  ctx.stroke();
   ctx.restore();
 
   if (gen.mode === 'dc') {
       ctx.fillStyle = '#2a3b36'; ctx.strokeStyle = C.yellow; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.roundRect(cx - 150, by - 55, 300, 70, 8); ctx.fill(); ctx.stroke();
-      label(ctx, '儲能裝置 (充電中)', cx, by - 20, C.yellow, 'center', 24);
+      ctx.beginPath(); ctx.roundRect(boxCx - 80, by - 45, 160, 50, 8); ctx.fill(); ctx.stroke();
+      label(ctx, '儲能裝置', boxCx, by - 20, C.yellow, 'center', 22);
       label(ctx, tr('直流發電機：單一分裂環','DC GENERATOR: SINGLE SPLIT RING'),cx,120,C.pink);
   } else {
       ctx.fillStyle = '#102d26'; ctx.strokeStyle = C.green; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.roundRect(cx - 70, by - 55, 140, 70, 12); ctx.fill(); ctx.stroke();
-      label(ctx, 'V~ 交流', cx, by - 20, C.green, 'center', 25);
+      ctx.beginPath(); ctx.roundRect(boxCx - 70, by - 45, 140, 50, 12); ctx.fill(); ctx.stroke();
+      label(ctx, 'V~ 交流', boxCx, by - 20, C.green, 'center', 25);
       label(ctx, tr('交流發電機：一前一後雙滑環','AC GENERATOR: TWO SEPARATE SLIP RINGS'),cx,120,C.cyan);
   }
 
@@ -738,8 +741,25 @@ function drawGenModelCanvas(ctx) {
   drawArmatureCorner(ctx, 'C', corner2d[2], cx, cy, C.pink);
   drawArmatureCorner(ctx, 'D', corner2d[3], cx, cy, C.pink);
 
+  let extI_Dir = 0;
   if (!disconnected) {
-      drawCurrentFlow(ctx, currentTurnLoops, direction, 2);
+      extI_Dir = gen.mode === 'dc' ? gen.dir : (c >= 0 ? 1 : -1) * gen.dir;
+      
+      drawCurrentFlow(ctx, currentTurnLoops, direction, 2, true);
+
+      const pathR = [
+          {x: brushR.terminal.x, y: brushR.terminal.y},
+          {x: brushR.terminal.x, y: by - 20},
+          {x: boxCx + 80, y: by - 20}
+      ];
+      const pathL = [
+          {x: boxCx - 80, y: by - 20},
+          {x: brushL.terminal.x, y: by - 20},
+          {x: brushL.terminal.x, y: brushL.terminal.y}
+      ];
+      
+      drawCurrentFlow(ctx, [pathR], extI_Dir, 1, false);
+      drawCurrentFlow(ctx, [pathL], extI_Dir, 1, false);
   }
 
   const crankZ = -200;
@@ -818,7 +838,7 @@ function updateGeneratorMode(){
 }
 
 // ==================
-// Tab 3: 變壓器 (連續螺旋線圈與電流粒子)
+// Tab 3: 變壓器 (無小箭頭特效、精準置中、完美冷次定律 B 與 Bᵢ)
 // ==================
 const trans={np:5,ns:8,phase:0,raf:0};
 
@@ -831,7 +851,7 @@ function getSpiralPoints(cx, cy, count, radiusX, radiusY, totalHeight) {
         const progress = i/steps;
         points.push({
             x: cx + radiusX*Math.cos(g),
-            y: cy - 100 + progress*totalHeight + radiusY*Math.sin(g)
+            y: cy - totalHeight/2 + progress*totalHeight + radiusY*Math.sin(g)
         });
     }
     return points;
@@ -842,52 +862,149 @@ function drawTransformer(ctx){
   ctx.strokeStyle='#a8b5b1';ctx.lineWidth=70;ctx.lineJoin='round';ctx.strokeRect(250,100,500,385);
   ctx.strokeStyle='#4e6660';ctx.lineWidth=5;ctx.strokeRect(250,100,500,385);
   
-  const pCoil = getSpiralPoints(245, 190, trans.np, 48, 15, 220);
-  const sCoil = getSpiralPoints(755, 190, trans.ns, 48, 15, 220);
+  // 線圈完美置中於鐵芯柱上
+  const pCoil = getSpiralPoints(250, 292.5, trans.np, 60, 20, 280);
+  const sCoil = getSpiralPoints(750, 292.5, trans.ns, 60, 20, 280);
   
-  ctx.strokeStyle = C.orange; ctx.lineWidth = 7; tracePath(ctx, pCoil, false); ctx.stroke();
-  ctx.strokeStyle = C.cyan; ctx.lineWidth = 7; tracePath(ctx, sCoil, false); ctx.stroke();
+  ctx.strokeStyle = C.orange; ctx.lineWidth = 10; tracePath(ctx, pCoil, false); ctx.stroke();
+  ctx.strokeStyle = C.cyan; ctx.lineWidth = 10; tracePath(ctx, sCoil, false); ctx.stroke();
 
   const field=Math.sin(trans.phase), change=Math.cos(trans.phase);
-  const fieldDir=field>=0?1:-1, inducedDir=change>=0?-1:1; 
-  const alpha=.28+.55*Math.abs(field);
+  const bDir=field>=0?1:-1, biDir=change>=0?-1:1; 
+  const isIncreasing = (field * change) >= 0;
   
-  ctx.save();ctx.strokeStyle=`rgba(221,140,255,${alpha})`;ctx.lineWidth=7;ctx.setLineDash([15,10]);ctx.strokeRect(285,135,430,315);ctx.restore();
-  
-  function rectPoint(t,x,y,w,h){
-      const p=((t%1)+1)%1,L=2*(w+h),d=p*L;
-      if(d<w)return{x:x+d,y};if(d<w+h)return{x:x+w,y:y+d-w};
-      if(d<2*w+h)return{x:x+w-(d-w-h),y:y+h};return{x,y:y+h-(d-2*w-h)}
-  }
-  for(let i=0;i<8;i++){
-      const p=rectPoint((trans.phase/TAU+i/8)*fieldDir,285,135,430,315);
-      ctx.fillStyle=C.purple;ctx.beginPath();ctx.arc(p.x,p.y,6,0,TAU);ctx.fill()
-  }  
-  
-  if(Math.abs(field) > 0.05) drawCurrentFlow(ctx, [pCoil], field>0?1:-1, Math.abs(field)*2, false);
-  if(Math.abs(change) > 0.05) drawCurrentFlow(ctx, [sCoil], change>0?-1:1, Math.abs(change)*2, false);
+  // 兩側電流標示 (無特效，乾淨俐落)
+  if(field > 0) arrow(ctx,130,220,130,360,C.orange,8,22);
+  else arrow(ctx,130,360,130,220,C.orange,8,22);
+  label(ctx,'Iₚ',130,190,C.orange,'center',24);
 
-  const primaryColor=`rgba(255,179,71,${.2+.8*Math.abs(field)})`,secondaryColor=`rgba(85,233,255,${.15+.85*Math.abs(change)})`;
-  arrow(ctx,110,350,110,fieldDir>0?250:450,primaryColor,7,18);label(ctx,'Iₚ',110,210,C.orange);
-  arrow(ctx,890,350,890,inducedDir>0?250:450,secondaryColor,7,18);label(ctx,'Iₛ / Vₛ',890,210,C.cyan);
+  if(change > 0) arrow(ctx,870,220,870,360,C.cyan,8,22);
+  else arrow(ctx,870,360,870,220,C.cyan,8,22);
+  label(ctx,'Iₛ / Vₛ',870,190,C.cyan,'center',24);
   
-  label(ctx,tr('交變磁場沿軟鐵芯傳遞','CHANGING FIELD TRAVELS THROUGH THE CORE'),500,65,C.purple);
-  label(ctx,tr('二次感應方向反抗磁通量改變','SECONDARY OPPOSES THE FLUX CHANGE'),500,530,C.green,'center',20);
-  label(ctx,change>=0?tr('原磁場正在增加','ORIGINAL FIELD INCREASING'):tr('原磁場正在減少','ORIGINAL FIELD DECREASING'),500,285,C.yellow);
-  arrow(ctx,420,330,fieldDir>0?580:260,330,C.purple,6,17);
-  arrow(ctx,580,370,inducedDir>0?740:420,370,secondaryColor,6,17);
-  label(ctx,'B',500,330,C.purple);label(ctx,'Bᵢ',580,400,C.cyan);  
+  label(ctx,tr('交變磁場沿軟鐵芯傳遞','CHANGING FIELD TRAVELS THROUGH THE CORE'),500,45,C.purple);
+  label(ctx,tr('二次感應方向反抗磁通量改變','SECONDARY OPPOSES THE FLUX CHANGE'),500,540,C.green,'center',20);
   
+  // 【修復：冷次定律精準磁場顯示 (全部畫在鐵芯與線圈內部！)】
+  const bText = isIncreasing ? tr('原磁場正在增加','ORIGINAL FIELD INCREASING') : tr('原磁場正在減少','ORIGINAL FIELD DECREASING');
+  label(ctx, bText, 500, 292.5, C.yellow, 'center', 24);
+  
+  const bLen = Math.max(10, Math.abs(field) * 180);
+  const bColor = `rgba(221,140,255,${0.4 + 0.6*Math.abs(field)})`;
+  
+  if(field > 0) {
+      arrow(ctx, 250, 292.5 + bLen/2, 250, 292.5 - bLen/2, bColor, 16, 30); // 左 (向上)
+      arrow(ctx, 500 - bLen/2, 100, 500 + bLen/2, 100, bColor, 16, 30);     // 上
+      arrow(ctx, 500 + bLen/2, 485, 500 - bLen/2, 485, bColor, 16, 30);     // 下
+      arrow(ctx, 730, 292.5 - bLen/2, 730, 292.5 + bLen/2, bColor, 16, 30); // 右 (向下)
+  } else {
+      arrow(ctx, 250, 292.5 - bLen/2, 250, 292.5 + bLen/2, bColor, 16, 30); // 左 (向下)
+      arrow(ctx, 500 + bLen/2, 100, 500 - bLen/2, 100, bColor, 16, 30);
+      arrow(ctx, 500 - bLen/2, 485, 500 + bLen/2, 485, bColor, 16, 30);
+      arrow(ctx, 730, 292.5 + bLen/2, 730, 292.5 - bLen/2, bColor, 16, 30); // 右 (向上)
+  }
+  
+  const biLen = Math.max(10, Math.abs(change) * 180);
+  const biColor = `rgba(85,233,255,${0.4 + 0.6*Math.abs(change)})`;
+  if(change > 0) {
+      arrow(ctx, 770, 292.5 + biLen/2, 770, 292.5 - biLen/2, biColor, 16, 30); // 感應磁場向下
+  } else {
+      arrow(ctx, 770, 292.5 - biLen/2, 770, 292.5 + biLen/2, biColor, 16, 30); // 感應磁場向上
+  }
+  
+  label(ctx, 'B', 700, 292.5, C.purple, 'center', 26);
+  label(ctx, 'Bᵢ', 800, 292.5, C.cyan, 'center', 26);
+
   const vs=110*trans.ns/trans.np;
-  label(ctx,`Nₚ = ${trans.np}`,245,552,C.orange);
-  label(ctx,`Nₛ = ${trans.ns}`,755,552,C.cyan);
-  label(ctx,'110 V AC',105,480,C.orange,'center',18);
-  label(ctx,`${vs.toFixed(1)} V AC`,895,480,C.cyan,'center',18);
+  label(ctx,`Nₚ = ${trans.np}`,250,500,C.orange);
+  label(ctx,`Nₛ = ${trans.ns}`,750,500,C.cyan);
+  label(ctx,'110 V AC',100,420,C.orange,'center',20);
+  label(ctx,`${vs.toFixed(1)} V AC`,900,420,C.cyan,'center',20);
+  
   trans.phase+=.038;
   scheduleFrame(trans,'transformer','transformerCanvas',drawTransformer)
 }
+
 function updateTransformer(){trans.np=+document.getElementById('primaryTurns').value;trans.ns=+document.getElementById('secondaryTurns').value;document.getElementById('primaryTurnsOut').textContent=trans.np;document.getElementById('secondaryTurnsOut').textContent=trans.ns;const vs=110*trans.ns/trans.np;const mode=trans.ns>trans.np?tr('升壓','step-up'):trans.ns<trans.np?tr('降壓','step-down'):tr('等電壓','equal voltage');document.getElementById('transformerResult').innerHTML=tr(`匝數比＝${trans.ns}：${trans.np}，輸出約 <strong class="cyan">${vs.toFixed(1)} V</strong>（${mode}）；瞬時感應方向遵守冷次定律。`,`Turns ratio = ${trans.ns}:${trans.np}; output ≈ <strong class="cyan">${vs.toFixed(1)} V</strong> (${mode}); instantaneous induction follows Lenz's law.`)}
-const cooker={play:true,phase:0,heat:0,raf:0,lastQuarter:-1,lastTime:0};function drawInductionCooker(ctx){  const now=performance.now(),dt=cooker.lastTime?Math.min((now-cooker.lastTime)/1000,.08):0;cooker.lastTime=now;  clear(ctx);drawInductionHeating(ctx);if(cooker.play){cooker.phase=(cooker.phase+TAU*dt)%TAU;cooker.heat=Math.min(100,cooker.heat+2.1*dt);scheduleFrame(cooker,'cooker','cookerCanvas',drawInductionCooker)}}function drawInductionHeating(ctx){  const field=Math.sin(cooker.phase),change=Math.cos(cooker.phase),bDir=field>=0?1:-1,eddyDir=change>=0?-1:1,amp=Math.abs(change);const quarter=Math.floor((cooker.phase%TAU)/(TAU/4));const steps=[tr('① 線圈電流增加，向上的磁場增強','① COIL CURRENT RISES; UPWARD FIELD GROWS'),tr('② 線圈磁場減弱，鍋底感應電流反抗減弱','② FIELD WEAKENS; PAN OPPOSES THE DECREASE'),tr('③ 電流反向，向下的磁場增強','③ CURRENT REVERSES; DOWNWARD FIELD GROWS'),tr('④ 向下磁場減弱，鍋底再次反抗改變','④ DOWNWARD FIELD WEAKENS; PAN OPPOSES AGAIN')];label(ctx,steps[quarter],500,48,C.yellow,'center',20);  ctx.save();ctx.strokeStyle=C.orange;ctx.lineWidth=8;ctx.shadowColor=C.orange;ctx.shadowBlur=8;for(let i=0;i<6;i++){ctx.beginPath();ctx.ellipse(500,500-i*9,220-i*14,25,0,0,TAU);ctx.stroke()}ctx.restore();label(ctx,tr('底下交流線圈｜1 Hz 慢動作','AC COIL BELOW | 1 Hz SLOW MOTION'),500,560,C.orange);  const topY=160,bottomY=455,fieldColor=`rgba(221,140,255,${.12+.8*Math.abs(field)})`;for(let i=-2;i<=2;i++){const x=500+i*72;ctx.strokeStyle=fieldColor;ctx.lineWidth=i===0?6:3;ctx.beginPath();ctx.moveTo(x,bottomY);ctx.bezierCurveTo(x+i*18,350,x+i*18,250,x,topY);ctx.stroke();arrow(ctx,x,bDir>0?350:250,x,bDir>0?250:350,fieldColor,i===0?7:4,15)}label(ctx,tr('線圈磁場 B 持續改變','COIL FIELD B KEEPS CHANGING'),500,405,C.purple);  ctx.strokeStyle='#d6e0dc';ctx.fillStyle='#596864';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(260,145);ctx.lineTo(740,145);ctx.lineTo(690,315);ctx.quadraticCurveTo(500,370,310,315);ctx.closePath();ctx.fill();ctx.stroke();label(ctx,tr('金屬鍋底','METAL PAN'),500,325,C.white);  for(let r=0;r<4;r++){ctx.strokeStyle=`rgba(255,120,183,${.22+amp*.62})`;ctx.lineWidth=6;ctx.beginPath();ctx.ellipse(500,245,70+r*48,20+r*11,0,0,TAU);ctx.stroke();const a=cooker.phase*eddyDir+r*.75,x=500+Math.cos(a)*(70+r*48),y=245+Math.sin(a)*(20+r*11);ctx.fillStyle=C.pink;ctx.beginPath();ctx.arc(x,y,5+amp*3,0,TAU);ctx.fill()}label(ctx,tr('感應渦電流 Iᵢ（方向反抗改變）','INDUCED EDDY CURRENT Iᵢ (OPPOSES CHANGE)'),500,205,C.pink,'center',19);for(let i=0;i<8;i++){const a=i*TAU/8+cooker.phase*.12;label(ctx,'✦',500+Math.cos(a)*175,275+Math.sin(a)*32,cooker.heat>55?C.red:C.orange,'center',18)}  if(quarter!==cooker.lastQuarter){document.getElementById('cookerResult').textContent=steps[quarter]+tr('；渦電流在金屬電阻中轉換成熱。','; resistance converts the eddy current energy into heat.');cooker.lastQuarter=quarter}}
+
+// ==================
+// Tab 4: 電磁爐 (國一重繪版)
+// ==================
+const cooker={play:true,phase:0,heat:0,raf:0,lastQuarter:-1,lastTime:0};
+
+function drawInductionCooker(ctx){  
+  const now=performance.now();
+  const dt=cooker.lastTime?Math.min((now-cooker.lastTime)/1000,.08):0;
+  cooker.lastTime=now;  
+  clear(ctx);
+  drawInductionHeating(ctx);
+  if(cooker.play){
+      cooker.phase=(cooker.phase+TAU*dt)%TAU;
+      cooker.heat=Math.min(100,cooker.heat+2.1*dt);
+      scheduleFrame(cooker,'cooker','cookerCanvas',drawInductionCooker);
+  }
+}
+
+function drawInductionHeating(ctx){  
+  const field=Math.sin(cooker.phase);
+  const change=Math.cos(cooker.phase);
+  const bDir=field>=0?1:-1;
+  const amp=Math.abs(field);
+  const eddyAmp=Math.abs(change);
+
+  label(ctx, '實際上各國的交流電頻率不同，動畫降成 1 Hz 是為了方便觀察。', 500, 48, C.yellow, 'center', 20);
+
+  // 電磁爐底座
+  ctx.fillStyle = '#102d26'; ctx.strokeStyle = '#58736a'; ctx.lineWidth = 4;
+  ctx.fillRect(300, 380, 400, 100); ctx.strokeRect(300, 380, 400, 100);
+  label(ctx, '電磁爐', 720, 430, C.white, 'left', 22);
+
+  // 交流線圈
+  for(let i=0; i<3; i++){
+      ctx.strokeStyle = C.orange; ctx.lineWidth = 8;
+      ctx.beginPath(); ctx.ellipse(500, 430, 120 - i*25, 20 - i*4, 0, 0, TAU); ctx.stroke();
+  }
+  label(ctx, '線圈', 720, 470, C.orange, 'left', 22);
+
+  // 金屬鍋
+  ctx.strokeStyle = '#b8c9c1'; ctx.lineWidth = 12; ctx.lineCap = 'square'; ctx.lineJoin = 'miter';
+  ctx.beginPath();
+  ctx.moveTo(280, 180); ctx.lineTo(280, 360); ctx.lineTo(720, 360); ctx.lineTo(720, 180);
+  ctx.stroke();
+  label(ctx, '金屬鍋', 740, 260, C.white, 'left', 22);
+
+  // 垂直磁場線
+  ctx.strokeStyle = `rgba(154,240,111,${0.2 + 0.8*amp})`;
+  ctx.lineWidth = 4;
+  const offsets = [-90, -45, 0, 45, 90];
+  offsets.forEach(dx => {
+      ctx.beginPath();
+      ctx.moveTo(500 + dx, 530);
+      ctx.bezierCurveTo(500 + dx*1.5, 450, 500 + dx*1.2, 280, 500 + dx*1.8, 150);
+      ctx.stroke();
+      
+      if(amp > 0.1) {
+          const arrowY = 280;
+          const arrowX = 500 + dx*1.35;
+          arrow(ctx, arrowX, bDir>0?arrowY+12:arrowY-12, arrowX, bDir>0?arrowY-12:arrowY+12, ctx.strokeStyle, 6, 16);
+      }
+  });
+  label(ctx, '磁場', 720, 530, C.green, 'left', 22);
+
+  // 鍋底渦電流
+  if(eddyAmp > 0.1) {
+      ctx.strokeStyle = `rgba(255,120,183,${0.2 + 0.8*eddyAmp})`; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.ellipse(500, 345, 90, 12, 0, 0, TAU); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(500, 345, 45, 6, 0, 0, TAU); ctx.stroke();
+      
+      let eddyDir = -bDir; 
+      arrow(ctx, 500, 333, 500+eddyDir*10, 333, ctx.strokeStyle, 4, 12);
+      arrow(ctx, 500, 357, 500-eddyDir*10, 357, ctx.strokeStyle, 4, 12);
+      
+      label(ctx, '渦電流反抗改變', 500, 310, C.pink, 'center', 20);
+      label(ctx, '熱', 500, 345, `rgba(255,111,118,${eddyAmp})`, 'center', 32);
+  }
+}
 
 function drawActive(){
   animationEpoch++;
@@ -895,7 +1012,6 @@ function drawActive(){
   const id=document.querySelector('.tab-page.active')?.id;
   
   if(id==='history') {
-      induction.moving = 0; 
       safeDraw('inductionCanvas',drawInduction);
   }
   if(id==='generator') {
