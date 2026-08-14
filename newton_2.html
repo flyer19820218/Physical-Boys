@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國中自然｜牛頓第二運動定律 (F=ma)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title data-zh="國中自然｜牛頓第二運動定律 (F=ma)" data-en="Middle School Science | Newton's Second Law (F=ma)">國中自然｜牛頓第二運動定律 (F=ma)</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700&family=JetBrains+Mono:wght@600;700&display=swap');
 
@@ -21,17 +21,60 @@
 
     * { box-sizing: border-box; }
 
+    html {
+      background: var(--board-dark);
+      -webkit-text-size-adjust: 100%;
+    }
+
     /* 嚴格堅持基礎字體地板 20px */
     body {
       margin: 0;
-      background: var(--board-dark);
+      background-color: var(--board-dark);
+      background-image: radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+      background-size: 8px 8px;
       color: var(--chalk-white);
       font-family: 'Noto Sans TC', sans-serif;
       font-size: 20px;
-      padding: 20px 14px 60px;
+      padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(60px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+      overflow-x: hidden;
     }
 
-    .wrap { max-width: 1300px; margin: 0 auto; }
+    .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-top: 48px; }
+
+    .language-switch {
+      position: fixed;
+      z-index: 1000;
+      top: max(12px, env(safe-area-inset-top));
+      right: max(12px, env(safe-area-inset-right));
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      border: 2px solid var(--chalk-teal);
+      border-radius: 12px;
+      background: rgba(17, 38, 31, 0.96);
+      box-shadow: 0 8px 24px rgba(5, 18, 14, 0.45), 0 0 16px rgba(78, 216, 238, 0.16);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+    .language-label { color: var(--chalk-teal); font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; }
+    .lang-btn {
+      min-width: 58px;
+      min-height: 48px;
+      padding: 8px 12px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 9px;
+      background: var(--board-dark);
+      color: var(--chalk-white);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .lang-btn.active { background: var(--chalk-teal); color: var(--board-dark); border-color: var(--chalk-teal); }
+    .lang-btn:focus-visible { outline: 3px solid rgba(255, 224, 102, 0.75); outline-offset: 3px; }
 
     header { text-align: center; margin-bottom: 24px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 16px; }
     header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 20px; letter-spacing: 0.15em; color: var(--chalk-teal); text-transform: uppercase; font-weight: 700; }
@@ -43,7 +86,8 @@
     .tab-btn {
       font-family: 'Noto Sans TC', sans-serif; font-size: 22px; font-weight: 700;
       background: rgba(255, 255, 255, 0.08); color: var(--chalk-dim); border: 2px dashed rgba(255, 255, 255, 0.3);
-      padding: 16px 10px; border-radius: 10px; cursor: pointer; transition: all .2s; text-align: center;
+      min-height: 72px; padding: 12px 10px; border-radius: 10px; cursor: pointer; transition: all .2s; text-align: center;
+      line-height: 1.25; overflow-wrap: break-word; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
     .tab-btn:hover { background: rgba(255, 255, 255, 0.15); color: var(--chalk-white); border-color: var(--chalk-teal); }
     .tab-btn.active {
@@ -75,12 +119,59 @@
     .controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; background: rgba(0, 0, 0, 0.35); padding: 18px 22px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); }
     .control-group { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 280px; }
     .control-group label { font-size: 22px; color: var(--chalk-teal); font-weight: 700; }
-    input[type=range] { flex: 1; height: 10px; accent-color: var(--chalk-yellow); cursor: pointer; }
+    .stacked-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 18px;
+    }
+    .control-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 22px;
+      width: 100%;
+    }
+    .stacked-controls .control-group {
+      min-width: 0;
+      width: 100%;
+      display: grid;
+      grid-template-rows: auto auto;
+      align-content: start;
+      gap: 10px;
+    }
+    .stacked-controls .control-group label {
+      width: 100%;
+      min-height: 2.8em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1.3;
+      white-space: normal;
+    }
+    .control-input-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+    }
+    .control-actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .control-actions .action-btn { min-width: 220px; }
+    input[type=range] { flex: 1; min-width: 120px; min-height: 48px; accent-color: var(--chalk-yellow); cursor: pointer; touch-action: pan-x; }
     
     button.action-btn {
-      padding: 12px 22px; border: 2px solid var(--chalk-coral);
+      min-height: 48px; padding: 10px 22px; border: 2px solid var(--chalk-coral);
       background: var(--board-dark); color: var(--chalk-coral);
       border-radius: 8px; cursor: pointer; font-size: 20px; font-weight: 700; transition: 0.2s;
+      line-height: 1.3; overflow-wrap: break-word; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
     button.action-btn:hover { background: var(--chalk-coral); color: var(--board-dark); transform: translateY(-2px); }
     button.btn-teal { border-color: var(--chalk-teal); color: var(--chalk-teal); }
@@ -94,218 +185,318 @@
 
     /* 畫布（絕對禁止黑色線條） */
     .stage-container { width: 100%; border: 2px solid rgba(255,255,255,0.4); border-radius: 10px; overflow: hidden; background: #11261f; box-shadow: inset 0 0 25px rgba(0,0,0,0.7); position: relative; }
-    canvas { display: block; width: 100%; height: auto; }
+    canvas { display: block; width: 100%; height: auto; aspect-ratio: 20 / 7; }
 
     /* 重點筆記與公式排版 */
-    .note { font-size: 22px; color: var(--chalk-white); margin-top: 20px; line-height: 1.8; background: rgba(0, 0, 0, 0.35); padding: 20px 26px; border-radius: 10px; border-left: 8px solid var(--chalk-yellow); }
+    .note { font-size: 20px; color: var(--chalk-white); margin-top: 20px; line-height: 1.8; background: rgba(0, 0, 0, 0.35); padding: 20px 26px; border-radius: 10px; border-left: 8px solid var(--chalk-yellow); }
     .note b { color: var(--chalk-yellow); }
     .formula-box { font-family: 'JetBrains Mono', monospace; background: rgba(255, 224, 102, 0.15); border: 2px dashed var(--chalk-yellow); padding: 4px 16px; border-radius: 6px; color: var(--chalk-yellow); font-weight: 700; display: inline-block; margin: 4px 0; }
 
     /* 網格展示區 */
-    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; margin-bottom: 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
     .card { background: rgba(255, 255, 255, 0.06); border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 10px; padding: 24px; }
     .card h3 { color: var(--chalk-yellow); margin: 0 0 14px 0; font-size: 26px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 10px; }
-    .card p { margin: 0 0 12px 0; font-size: 22px; line-height: 1.7; color: var(--chalk-dim); }
+    .card p { margin: 0 0 12px 0; font-size: 20px; line-height: 1.7; color: var(--chalk-dim); }
     .card p b { color: var(--chalk-white); }
-    .card ul { margin: 0; padding-left: 28px; font-size: 22px; line-height: 1.8; color: var(--chalk-dim); }
+    .card ul { margin: 0; padding-left: 28px; font-size: 20px; line-height: 1.8; color: var(--chalk-dim); }
     .card ul li b { color: var(--chalk-teal); }
 
     /* 步驟解題框 */
     .step-box { background: rgba(0, 0, 0, 0.4); border: 2px solid var(--chalk-teal); border-radius: 10px; padding: 20px; margin-top: 15px; }
     .step-box .title { font-size: 24px; color: var(--chalk-teal); font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-    .step-box .content { font-size: 22px; line-height: 1.8; color: var(--chalk-white); font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif; }
-    .step-box .content span { color: var(--chalk-yellow); font-weight: 700; }
+    .step-box .content { font-size: 20px; line-height: 1.8; color: var(--chalk-white); font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif; }
+    .step-box .content .result { color: var(--chalk-yellow); font-weight: 700; }
+    .step-line { display: block; }
+
+    .formula-box,
+    .readout-badge,
+    .sub-tag { white-space: nowrap; }
+
+    [data-zh][data-en] { overflow-wrap: break-word; }
 
     footer { text-align: center; color: var(--chalk-dim); font-size: 20px; margin-top: 30px; font-family: 'JetBrains Mono', monospace; opacity: 0.8; }
+
+    @media (max-width: 768px) {
+      body { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
+      .wrap { padding-top: 54px; }
+      header p { font-size: 20px; }
+      h1 { font-size: 36px; line-height: 1.25; }
+      .tabs { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .tab-btn { font-size: 20px; min-height: 64px; }
+      .board { border-width: 7px; padding: 18px; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .panel-header { align-items: flex-start; }
+      h2 { font-size: 28px; line-height: 1.3; }
+      .controls { flex-direction: column; align-items: stretch; padding: 16px; }
+      .control-group { width: 100%; min-width: 0; flex-wrap: wrap; }
+      .control-group label { width: 100%; font-size: 20px; }
+      .control-fields { grid-template-columns: 1fr; }
+      .stacked-controls .control-group label { min-height: 0; align-items: center; }
+      button.action-btn { width: 100%; }
+      .readout-badge { min-width: 92px; }
+      .card { padding: 20px; }
+      .comparison-divider { display: none; }
+      .comparison-item { width: 100%; }
+    }
+
+    @media (orientation: portrait) and (max-width: 1024px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .language-label { display: none; }
+      .language-switch { gap: 6px; padding: 6px; }
+      .lang-btn { min-width: 52px; min-height: 44px; padding: 6px 10px; }
+      h1 { font-size: 30px; letter-spacing: 1px; }
+      .tabs { grid-template-columns: 1fr; }
+      .board { padding: 12px; }
+      h2 { font-size: 26px; }
+      .card { padding: 16px; }
+      .note { padding: 18px; border-left-width: 6px; }
+      .step-box { padding: 16px; }
+      .control-group input[type=range] { width: calc(100% - 110px); }
+    }
   </style>
 </head>
 <body>
+  <div class="language-switch" role="group" aria-label="語言切換" data-aria-zh="語言切換" data-aria-en="Language switch">
+    <span class="language-label">Language</span>
+    <button class="lang-btn active" type="button" data-lang="zh" aria-pressed="true">中文</button>
+    <button class="lang-btn" type="button" data-lang="en" aria-pressed="false">EN</button>
+  </div>
   <div class="wrap">
     <header>
-      <div class="eyebrow">Newton's Second Law of Motion</div>
-      <h1>牛頓第二運動定律 (F = ma)</h1>
-      <p>從作用力、質量與加速度的數學關係，到投擲鉛球與太空梭測質量的經典實戰。視覺化破解力與運動的定量規律！</p>
+      <div class="eyebrow" data-zh="牛頓第二運動定律" data-en="Newton's Second Law of Motion">牛頓第二運動定律</div>
+      <h1 data-zh="牛頓第二運動定律 (F = ma)" data-en="Newton's Second Law (F = ma)">牛頓第二運動定律 (F = ma)</h1>
+      <p data-zh="從作用力、質量與加速度的數學關係，到投擲鉛球與太空梭測質量的經典實戰。視覺化破解力與運動的定量規律！" data-en="Explore the mathematical link among force, mass, and acceleration through ball-throwing and spacecraft mass-measurement examples.">從作用力、質量與加速度的數學關係，到投擲鉛球與太空梭測質量的經典實戰。視覺化破解力與運動的定量規律！</p>
     </header>
 
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('tab1')">核心公式推導</button>
-      <button class="tab-btn" onclick="switchTab('tab2')">加速度比例實驗</button>
-      <button class="tab-btn" onclick="switchTab('tab3')">棒球投擲計算</button>
-      <button class="tab-btn" onclick="switchTab('tab4')">無重力質量測量</button>
+    <div class="tabs" role="tablist" data-aria-zh="主題分頁" data-aria-en="Lesson tabs" aria-label="主題分頁">
+      <button id="tab-button-1" class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="panel-tab1" onclick="switchTab('tab1')" data-zh="核心公式推導" data-en="Core Formula">核心公式推導</button>
+      <button id="tab-button-2" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-tab2" onclick="switchTab('tab2')" data-zh="加速度比例實驗" data-en="Acceleration Ratios">加速度比例實驗</button>
+      <button id="tab-button-3" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-tab3" onclick="switchTab('tab3')" data-zh="棒球投擲計算" data-en="Baseball Calculation">棒球投擲計算</button>
+      <button id="tab-button-4" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-tab4" onclick="switchTab('tab4')" data-zh="無重力質量測量" data-en="Zero-G Mass">無重力質量測量</button>
     </div>
 
     <!-- 面板 1：核心公式推導 -->
-    <div class="board" id="panel-tab1">
+    <div class="board" id="panel-tab1" role="tabpanel" aria-labelledby="tab-button-1">
       <div class="panel-header">
-        <h2>運動定律的核心關係與單位定義</h2>
-        <span class="sub-tag" style="background:var(--chalk-yellow);">Core Concepts</span>
+        <h2 data-zh="運動定律的核心關係與單位定義" data-en="Core Relationships and Unit Definition">運動定律的核心關係與單位定義</h2>
+        <span class="sub-tag" style="background:var(--chalk-yellow);" data-zh="核心概念" data-en="Core Concepts">核心概念</span>
       </div>
       
       <div class="grid-2">
         <div class="card">
-          <h3>三大物理量的正反比關係</h3>
-          <p>當物體受到外力 <span class="formula-box">F</span> 作用時，會沿著力的方向產生加速度 <span class="formula-box">a</span>：</p>
+          <h3 data-zh="三大物理量的正反比關係" data-en="How the Three Quantities Relate">三大物理量的正反比關係</h3>
+          <p><span data-zh="當物體受到外力" data-en="When an external force">當物體受到外力</span> <span class="formula-box">F</span> <span data-zh="作用時，會沿著力的方向產生加速度" data-en="acts on an object, it produces acceleration in the force direction">作用時，會沿著力的方向產生加速度</span> <span class="formula-box">a</span><span data-zh="：" data-en=".">：</span></p>
           <ul>
-            <li><b>與作用力成正比：</b>當質量固定時，推力愈大，產生的加速度愈大 (<span class="formula-box">a ∝ F</span>)。</li>
-            <li><b>與質量成反比：</b>當推力固定時，物體質量愈大（愈重），產生的加速度愈小 (<span class="formula-box">a ∝ 1/m</span>)。</li>
+            <li><b data-zh="與作用力成正比：" data-en="Directly proportional to force: ">與作用力成正比：</b><span data-zh="當質量固定時，推力愈大，產生的加速度愈大" data-en="With mass fixed, a larger force produces a larger acceleration">當質量固定時，推力愈大，產生的加速度愈大</span> (<span class="formula-box">a ∝ F</span>)<span data-zh="。" data-en=".">。</span></li>
+            <li><b data-zh="與質量成反比：" data-en="Inversely proportional to mass: ">與質量成反比：</b><span data-zh="當推力固定時，物體質量愈大（愈重），產生的加速度愈小" data-en="With force fixed, a more massive object has a smaller acceleration">當推力固定時，物體質量愈大（愈重），產生的加速度愈小</span> (<span class="formula-box">a ∝ 1/m</span>)<span data-zh="。" data-en=".">。</span></li>
           </ul>
         </div>
 
         <div class="card">
-          <h3>1 牛頓 (N) 的嚴格定義</h3>
-          <p>為了建立標準定量關係，物理學界定義了力的單位：</p>
+          <h3 data-zh="1 牛頓 (N) 的嚴格定義" data-en="Exact Definition of 1 Newton (N)">1 牛頓 (N) 的嚴格定義</h3>
+          <p data-zh="為了建立標準定量關係，物理學界定義了力的單位：" data-en="Physics defines a standard unit of force for quantitative work:">為了建立標準定量關係，物理學界定義了力的單位：</p>
           <div style="background:rgba(255,255,255,0.08); padding:16px; border-radius:8px; text-align:center; margin:14px 0;">
             <span class="formula-box" style="font-size:28px;">F = m × a</span>
           </div>
-          <p><b>1 牛頓 (1 N)</b>：使質量 <b>1 kg</b> 的物體，產生 <b>1 m/s²</b> 加速度所須的作用力大小。</p>
+          <p><b data-zh="1 牛頓 (1 N)" data-en="1 newton (1 N)">1 牛頓 (1 N)</b><span data-zh="：使質量" data-en=": the force required to give a">：使質量</span> <b>1 kg</b> <span data-zh="的物體，產生" data-en="object an acceleration of">的物體，產生</span> <b>1 m/s²</b><span data-zh=" 加速度所須的作用力大小。" data-en="."> 加速度所須的作用力大小。</span></p>
           <p style="text-align:center; font-family:'JetBrains Mono'; color:var(--chalk-green); font-size:24px; font-weight:700; margin-top:10px;">1 N = 1 kg · m/s²</p>
         </div>
       </div>
 
       <div class="controls" style="justify-content:space-around;">
-        <div style="text-align:center;">
-          <span style="color:var(--chalk-teal); font-size:24px; font-weight:700; display:block; margin-bottom:8px;">施力 F 增加 ➔ 加速度 a 變大</span>
-          <span style="color:var(--chalk-dim); font-size:20px;">大賣場推車：用力推比輕輕推跑得更快！</span>
+        <div class="comparison-item" style="text-align:center;">
+          <span style="color:var(--chalk-teal); font-size:24px; font-weight:700; display:block; margin-bottom:8px;" data-zh="施力 F 增加 ➔ 加速度 a 變大" data-en="Greater force F ➔ greater acceleration a">施力 F 增加 ➔ 加速度 a 變大</span>
+          <span style="color:var(--chalk-dim); font-size:20px;" data-zh="大賣場推車：用力推比輕輕推跑得更快！" data-en="Shopping cart: a harder push speeds it up more!">大賣場推車：用力推比輕輕推跑得更快！</span>
         </div>
-        <div style="height:50px; width:2px; background:rgba(255,255,255,0.2);"></div>
-        <div style="text-align:center;">
-          <span style="color:var(--chalk-coral); font-size:24px; font-weight:700; display:block; margin-bottom:8px;">質量 m 增加 ➔ 加速度 a 變小</span>
-          <span style="color:var(--chalk-dim); font-size:20px;">大賣場推車：裝滿貨物比空車更難推動！</span>
+        <div class="comparison-divider" style="height:50px; width:2px; background:rgba(255,255,255,0.2);"></div>
+        <div class="comparison-item" style="text-align:center;">
+          <span style="color:var(--chalk-coral); font-size:24px; font-weight:700; display:block; margin-bottom:8px;" data-zh="質量 m 增加 ➔ 加速度 a 變小" data-en="Greater mass m ➔ smaller acceleration a">質量 m 增加 ➔ 加速度 a 變小</span>
+          <span style="color:var(--chalk-dim); font-size:20px;" data-zh="大賣場推車：裝滿貨物比空車更難推動！" data-en="Shopping cart: a loaded cart is harder to accelerate!">大賣場推車：裝滿貨物比空車更難推動！</span>
         </div>
       </div>
 
       <div class="note">
-        💡 <b>黑板重點：</b><br>
-        • <b>力的方向：</b>物體產生的加速度方向，永遠與受到的<b>合力方向相同</b>。<br>
-        • <b>重量與牛頓的轉換：</b>在地球表面，1 公斤重的力 (1 kgw) 能使 1 kg 物體產生 9.8 m/s² 的重力加速度 (g)，因此 <span class="formula-box">1 kgw = 9.8 N</span>。
+        💡 <b data-zh="黑板重點：" data-en="Key points:">黑板重點：</b><br>
+        • <b data-zh="力的方向：" data-en="Force direction: ">力的方向：</b><span data-zh="物體產生的加速度方向，永遠與受到的" data-en="An object's acceleration is always in the same direction as the">物體產生的加速度方向，永遠與受到的</span><b data-zh="合力方向相同" data-en="net force">合力方向相同</b><span data-zh="。" data-en=".">。</span><br>
+        • <b data-zh="重量與牛頓的轉換：" data-en="Kilogram-force to newtons: ">重量與牛頓的轉換：</b><span data-zh="在地球表面，1 公斤重的力 (1 kgw) 能使 1 kg 物體產生 9.8 m/s² 的重力加速度 (g)，因此" data-en="At Earth's surface, 1 kilogram-force (1 kgw) gives a 1 kg object an acceleration of 9.8 m/s² (g), so">在地球表面，1 公斤重的力 (1 kgw) 能使 1 kg 物體產生 9.8 m/s² 的重力加速度 (g)，因此</span> <span class="formula-box">1 kgw = 9.8 N</span><span data-zh="。" data-en=".">。</span>
       </div>
     </div>
 
     <!-- 面板 2：加速度比例實驗 -->
-    <div class="board" id="panel-tab2" style="display:none;">
+    <div class="board" id="panel-tab2" role="tabpanel" aria-labelledby="tab-button-2" aria-hidden="true" style="display:none;">
       <div class="panel-header">
-        <h2>經典範例：皮卡丘投擲鐵球與鉛球 (a ∝ 1/m)</h2>
-        <span class="sub-tag" style="background:var(--chalk-teal);">Ratio Experiment</span>
+        <h2 data-zh="經典範例：皮卡丘投擲鐵球與鉛球 (a ∝ 1/m)" data-en="Example: Pikachu Throws Iron and Lead Balls (a ∝ 1/m)">經典範例：皮卡丘投擲鐵球與鉛球 (a ∝ 1/m)</h2>
+        <span class="sub-tag" style="background:var(--chalk-teal);" data-zh="比例實驗" data-en="Ratio Experiment">比例實驗</span>
       </div>
 
       <div class="controls">
         <div class="control-group">
-          <label>投擲作用力 F：</label>
-          <input id="rng-force2" type="range" min="21" max="105" step="21" value="42" />
+          <label for="rng-force2" data-zh="投擲作用力 F：" data-en="Throwing force F:">投擲作用力 F：</label>
+          <input id="rng-force2" type="range" min="21" max="105" step="21" value="42" data-aria-zh="投擲作用力 F" data-aria-en="Throwing force F" aria-label="投擲作用力 F" />
           <span id="val-force2" class="readout-badge">42 N</span>
         </div>
-        <button class="action-btn btn-green" onclick="startThrow2()">▶ 同時投擲比較</button>
-        <button class="action-btn btn-teal" onclick="resetThrow2()">↺ 重置球體</button>
+        <button class="action-btn btn-green" type="button" onclick="startThrow2()" data-zh="▶ 同時投擲比較" data-en="▶ Throw Both">▶ 同時投擲比較</button>
+        <button class="action-btn btn-teal" type="button" onclick="resetThrow2()" data-zh="↺ 重置球體" data-en="↺ Reset Balls">↺ 重置球體</button>
       </div>
 
       <div class="stage-container">
-        <canvas id="canvas-tab2" width="1000" height="350"></canvas>
+        <canvas id="canvas-tab2" width="1000" height="350" role="img" data-aria-zh="相同作用力下鐵球與鉛球加速度比較動畫" data-aria-en="Animation comparing iron- and lead-ball acceleration under the same force" aria-label="相同作用力下鐵球與鉛球加速度比較動畫"></canvas>
       </div>
 
       <div class="step-box">
-        <div class="title">📝 解題推導步驟</div>
+        <div class="title" data-zh="📝 解題推導步驟" data-en="📝 Solution Steps">📝 解題推導步驟</div>
         <div class="content">
-          1. 根據公式 F = m × a，當施力 F 相同時，加速度 a 與質量 m 呈現<b>反比關係</b>。<br>
-          2. 鐵球質量 m₁ = <span>3 kg</span>，鉛球質量 m₂ = <span>7 kg</span>，質量比 = <span>3 : 7</span>。<br>
-          3. 因此產生的加速度比 a₁ : a₂ = 1/3 : 1/7 = <span>7 : 3</span> (鐵球產生的加速度是鉛球的 2.33 倍！)。
+          <span class="step-line" data-zh="1. 根據公式 F = m × a，當施力 F 相同時，加速度 a 與質量 m 呈反比。" data-en="1. From F = m × a, when force F is the same, acceleration a is inversely proportional to mass m.">1. 根據公式 F = m × a，當施力 F 相同時，加速度 a 與質量 m 呈反比。</span>
+          <span class="step-line" data-zh="2. 鐵球質量 m₁ = 3 kg，鉛球質量 m₂ = 7 kg，質量比 = 3 : 7。" data-en="2. Iron-ball mass m₁ = 3 kg and lead-ball mass m₂ = 7 kg, so the mass ratio is 3 : 7.">2. 鐵球質量 m₁ = 3 kg，鉛球質量 m₂ = 7 kg，質量比 = 3 : 7。</span>
+          <span class="step-line" data-zh="3. 因此加速度比 a₁ : a₂ = 1/3 : 1/7 = 7 : 3（鐵球加速度是鉛球的 2.33 倍）。" data-en="3. Thus a₁ : a₂ = 1/3 : 1/7 = 7 : 3; the iron ball accelerates 2.33 times as fast.">3. 因此加速度比 a₁ : a₂ = 1/3 : 1/7 = 7 : 3（鐵球加速度是鉛球的 2.33 倍）。</span>
         </div>
       </div>
 
       <div class="note">
-        💡 <b>黑板重點：</b><br>
-        • 質量較輕的鐵球 (3 kg) 在相同推力下，能獲得較大的加速度，因此在畫布中速度增加得非常快！<br>
-        • 質量較重的鉛球 (7 kg) 慣性較大，抵抗速度改變的能力強，因此加速度較小。
+        💡 <b data-zh="黑板重點：" data-en="Key points:">黑板重點：</b><br>
+        • <span data-zh="質量較輕的鐵球 (3 kg) 在相同推力下能獲得較大的加速度，因此在畫布中速度增加得非常快！" data-en="Under the same force, the lighter iron ball (3 kg) has greater acceleration, so its speed rises quickly.">質量較輕的鐵球 (3 kg) 在相同推力下能獲得較大的加速度，因此在畫布中速度增加得非常快！</span><br>
+        • <span data-zh="質量較重的鉛球 (7 kg) 慣性較大，抵抗速度改變的能力強，因此加速度較小。" data-en="The heavier lead ball (7 kg) has greater inertia and therefore a smaller acceleration.">質量較重的鉛球 (7 kg) 慣性較大，抵抗速度改變的能力強，因此加速度較小。</span>
       </div>
     </div>
 
     <!-- 面板 3：棒球投擲計算 -->
-    <div class="board" id="panel-tab3" style="display:none;">
+    <div class="board" id="panel-tab3" role="tabpanel" aria-labelledby="tab-button-3" aria-hidden="true" style="display:none;">
       <div class="panel-header">
-        <h2>經典範例：卡比獸投擲快速棒球計算</h2>
-        <span class="sub-tag" style="background:var(--chalk-coral);">Velocity Calculation</span>
+        <h2 data-zh="經典範例：卡比獸投擲快速棒球計算" data-en="Example: Snorlax Throws a Fast Baseball">經典範例：卡比獸投擲快速棒球計算</h2>
+        <span class="sub-tag" style="background:var(--chalk-coral);" data-zh="速度計算" data-en="Velocity Calculation">速度計算</span>
       </div>
 
-      <div class="controls">
-        <div class="control-group">
-          <label>卡比獸施力 F：</label>
-          <input id="rng-force3" type="range" min="50" max="200" step="10" value="100" />
-          <span id="val-force3" class="readout-badge">100 N</span>
+      <div class="controls stacked-controls">
+        <div class="control-fields">
+          <div class="control-group">
+            <label for="rng-force3" data-zh="卡比獸施力 F：" data-en="Snorlax's force F:">卡比獸施力 F：</label>
+            <div class="control-input-row">
+              <input id="rng-force3" type="range" min="50" max="200" step="10" value="100" data-aria-zh="卡比獸施力 F" data-aria-en="Snorlax's force F" aria-label="卡比獸施力 F" />
+              <span id="val-force3" class="readout-badge">100 N</span>
+            </div>
+          </div>
+          <div class="control-group">
+            <label for="rng-mass3" data-zh="棒球質量 m：" data-en="Baseball mass m:">棒球質量 m：</label>
+            <div class="control-input-row">
+              <input id="rng-mass3" type="range" min="100" max="500" step="50" value="200" data-aria-zh="棒球質量 m" data-aria-en="Baseball mass m" aria-label="棒球質量 m" />
+              <span id="val-mass3" class="readout-badge">200 g</span>
+            </div>
+          </div>
         </div>
-        <div class="control-group">
-          <label>棒球質量 m：</label>
-          <input id="rng-mass3" type="range" min="100" max="500" step="50" value="200" />
-          <span id="val-mass3" class="readout-badge">200 g</span>
+        <div class="control-actions">
+          <button class="action-btn btn-green" type="button" onclick="startThrow3()" data-zh="▶ 投出棒球" data-en="▶ Throw Baseball">▶ 投出棒球</button>
+          <button class="action-btn btn-teal" type="button" onclick="resetThrow3()" data-zh="↺ 重置" data-en="↺ Reset">↺ 重置</button>
         </div>
-        <button class="action-btn btn-green" onclick="startThrow3()">▶ 投出棒球</button>
-        <button class="action-btn btn-teal" onclick="resetThrow3()">↺ 重置</button>
       </div>
 
       <div class="stage-container">
-        <canvas id="canvas-tab3" width="1000" height="350"></canvas>
+        <canvas id="canvas-tab3" width="1000" height="350" role="img" data-aria-zh="棒球受力加速後等速飛行動畫" data-aria-en="Animation of a baseball accelerating under force and then moving at constant velocity" aria-label="棒球受力加速後等速飛行動畫"></canvas>
       </div>
 
       <div class="step-box">
-        <div class="title">📝 棒球末速度解題推導 (作用時間 t = 0.2 s)</div>
+        <div class="title" data-zh="📝 棒球末速度解題推導（作用時間 t = 0.2 s）" data-en="📝 Baseball Final-Velocity Solution (force time t = 0.2 s)">📝 棒球末速度解題推導（作用時間 t = 0.2 s）</div>
         <div class="content" id="step-content3">
-          1. <b>單位轉換：</b>質量 m = 200 g = <span>0.2 kg</span> (必須轉為標準單位 kg！)。<br>
-          2. <b>計算加速度：</b>由 a = F / m ➔ a = 100 N / 0.2 kg = <span>500 m/s²</span>。<br>
-          3. <b>計算末速度：</b>球從靜止起速，0.2 秒後的球速 v = a × t = 500 × 0.2 = <span>100 m/s</span> (相當於時速 360 km/h！)。
+          <span class="step-line"><b data-zh="1. 單位轉換：" data-en="1. Unit conversion: ">1. 單位轉換：</b><span data-zh="質量 m =" data-en="mass m =">質量 m =</span> <span id="step3-mass-g">200 g</span> = <span id="step3-mass-kg" class="result">0.20 kg</span> <span data-zh="（必須轉為標準單位 kg）。" data-en="(convert to the SI unit kg).">（必須轉為標準單位 kg）。</span></span>
+          <span class="step-line"><b data-zh="2. 計算加速度：" data-en="2. Acceleration: ">2. 計算加速度：</b><span data-zh="由" data-en="from">由</span> a = F / m<span data-zh="，" data-en=",">，</span> a = <span id="step3-force">100 N</span> / <span id="step3-divisor">0.20 kg</span> = <span id="step3-acc" class="result">500 m/s²</span><span data-zh="。" data-en=".">。</span></span>
+          <span class="step-line"><b data-zh="3. 計算末速度：" data-en="3. Final velocity: ">3. 計算末速度：</b><span data-zh="球從靜止起速，0.2 秒後" data-en="starting from rest, after 0.2 s,">球從靜止起速，0.2 秒後</span> v = a × t = <span id="step3-acc-product">500</span> × 0.2 = <span id="step3-velocity" class="result">100 m/s</span> <span id="step3-speed-note" data-zh="（約時速 360 km/h）。" data-en="(about 360 km/h).">（約時速 360 km/h）。</span></span>
         </div>
       </div>
 
       <div class="note">
-        💡 <b>黑板重點：</b><br>
-        • <b>段考陷阱提醒：</b>題目給的棒球質量通常是「公克 (g)」，代入 F = ma 前務必先除以 1000 轉換為「公斤 (kg)」！<br>
-        • 加速度代表「每秒增加的速度」，乘以施力時間 t，即可算得最終獲得的速度。
+        💡 <b data-zh="黑板重點：" data-en="Key points:">黑板重點：</b><br>
+        • <b data-zh="段考陷阱提醒：" data-en="Exam reminder: ">段考陷阱提醒：</b><span data-zh="題目給的棒球質量通常是「公克 (g)」，代入 F = ma 前務必先除以 1000 轉換為「公斤 (kg)」！" data-en="Baseball mass is often given in grams (g). Divide by 1000 to convert it to kilograms (kg) before using F = ma.">題目給的棒球質量通常是「公克 (g)」，代入 F = ma 前務必先除以 1000 轉換為「公斤 (kg)」！</span><br>
+        • <span data-zh="加速度代表「每秒增加的速度」，乘以施力時間 t，即可算得最終獲得的速度。" data-en="Acceleration is the change in velocity per second. Multiply it by force time t to find the final velocity.">加速度代表「每秒增加的速度」，乘以施力時間 t，即可算得最終獲得的速度。</span>
       </div>
     </div>
 
     <!-- 面板 4：無重力質量測量 -->
-    <div class="board" id="panel-tab4" style="display:none;">
+    <div class="board" id="panel-tab4" role="tabpanel" aria-labelledby="tab-button-4" aria-hidden="true" style="display:none;">
       <div class="panel-header">
-        <h2>經典範例：傑尼龜在太空梭測量眼鏡質量</h2>
-        <span class="sub-tag" style="background:var(--chalk-green);">Zero-G Measurement</span>
+        <h2 data-zh="經典範例：傑尼龜在太空梭測量眼鏡質量" data-en="Example: Squirtle Measures Glasses Mass in Space">經典範例：傑尼龜在太空梭測量眼鏡質量</h2>
+        <span class="sub-tag" style="background:var(--chalk-green);" data-zh="無重力測量" data-en="Zero-G Measurement">無重力測量</span>
       </div>
 
-      <div class="controls">
-        <div class="control-group">
-          <label>儀器推進施力 F：</label>
-          <input id="rng-force4" type="range" min="155" max="620" step="31" value="310" />
-          <span id="val-force4" class="readout-badge">310 N</span>
+      <div class="controls stacked-controls">
+        <div class="control-fields">
+          <div class="control-group">
+            <label for="rng-force4" data-zh="儀器推進施力 F：" data-en="Instrument force F:">儀器推進施力 F：</label>
+            <div class="control-input-row">
+              <input id="rng-force4" type="range" min="155" max="620" step="31" value="310" data-aria-zh="儀器推進施力 F" data-aria-en="Instrument force F" aria-label="儀器推進施力 F" />
+              <span id="val-force4" class="readout-badge">310 N</span>
+            </div>
+          </div>
+          <div class="control-group">
+            <label for="rng-acc4" data-zh="測得加速度 a：" data-en="Measured acceleration a:">測得加速度 a：</label>
+            <div class="control-input-row">
+              <input id="rng-acc4" type="range" min="155" max="620" step="31" value="310" data-aria-zh="測得加速度 a" data-aria-en="Measured acceleration a" aria-label="測得加速度 a" />
+              <span id="val-acc4" class="readout-badge">310 m/s²</span>
+            </div>
+          </div>
         </div>
-        <div class="control-group">
-          <label>測得加速度 a：</label>
-          <input id="rng-acc4" type="range" min="155" max="620" step="31" value="310" />
-          <span id="val-acc4" class="readout-badge">310 m/s²</span>
+        <div class="control-actions">
+          <button class="action-btn btn-green" type="button" onclick="startPush4()" data-zh="▶ 啟動測量儀" data-en="▶ Start Instrument">▶ 啟動測量儀</button>
+          <button class="action-btn btn-teal" type="button" onclick="resetPush4()" data-zh="↺ 重置" data-en="↺ Reset">↺ 重置</button>
         </div>
-        <button class="action-btn btn-green" onclick="startPush4()">▶ 啟動測量儀</button>
-        <button class="action-btn btn-teal" onclick="resetPush4()">↺ 重置</button>
       </div>
 
       <div class="stage-container">
-        <canvas id="canvas-tab4" width="1000" height="350"></canvas>
+        <canvas id="canvas-tab4" width="1000" height="350" role="img" data-aria-zh="無重力艙內以作用力與加速度測量眼鏡質量動畫" data-aria-en="Animation measuring glasses mass from force and acceleration in a zero-gravity cabin" aria-label="無重力艙內以作用力與加速度測量眼鏡質量動畫"></canvas>
       </div>
 
       <div class="step-box">
-        <div class="title">📝 無重力質量推導步驟</div>
+        <div class="title" data-zh="📝 無重力質量推導步驟" data-en="📝 Zero-G Mass Solution">📝 無重力質量推導步驟</div>
         <div class="content" id="step-content4">
-          1. <b>原理說明：</b>在太空無重力狀態下，物體重量為零，無法用天平或磅秤測量，但物體的<b>慣性（質量 m）永遠不變</b>！<br>
-          2. <b>代入定律公式：</b>移項得到 m = F / a。<br>
-          3. <b>計算眼鏡質量：</b>m = 310 N / 310 m/s² = <span>1.0 kg</span> (這副特製太空眼鏡質量剛好是 1 公斤！)。
+          <span class="step-line"><b data-zh="1. 原理說明：" data-en="1. Principle: ">1. 原理說明：</b><span data-zh="太空無重力時物體重量為零，無法用天平或磅秤測量，但物體的慣性（質量 m）永遠不變。" data-en="in zero gravity, weight is zero, so a balance or scale cannot be used; inertia (mass m) remains unchanged.">太空無重力時物體重量為零，無法用天平或磅秤測量，但物體的慣性（質量 m）永遠不變。</span></span>
+          <span class="step-line"><b data-zh="2. 代入定律公式：" data-en="2. Formula: ">2. 代入定律公式：</b><span data-zh="移項得到" data-en="rearrange to get">移項得到</span> m = F / a<span data-zh="。" data-en=".">。</span></span>
+          <span class="step-line"><b data-zh="3. 計算眼鏡質量：" data-en="3. Glasses mass: ">3. 計算眼鏡質量：</b>m = <span id="step4-force">310 N</span> / <span id="step4-acc">310 m/s²</span> = <span id="step4-mass" class="result">1.00 kg</span> <span id="step4-mass-note" data-zh="（這副特製太空眼鏡的質量剛好是 1.00 公斤）。" data-en="(the special glasses have a mass of 1.00 kg).">（這副特製太空眼鏡的質量剛好是 1.00 公斤）。</span></span>
         </div>
       </div>
 
       <div class="note">
-        💡 <b>黑板重點：</b><br>
-        • <b>重量與質量的差別：</b>重量是地球引力造成的（無重力時為 0）；質量是物體內含物質的多少（在宇宙任何地方皆不變）。<br>
-        • 現代太空站航天員測量體重，也是使用「線性加速慣性秤」，完全應用牛頓第二運動定律！
+        💡 <b data-zh="黑板重點：" data-en="Key points:">黑板重點：</b><br>
+        • <b data-zh="重量與質量的差別：" data-en="Weight vs. mass: ">重量與質量的差別：</b><span data-zh="重量是地球引力造成的（無重力時為 0）；質量是物體內含物質的多少（在宇宙任何地方皆不變）。" data-en="Weight is caused by gravity (zero in zero gravity); mass measures the amount of matter and is unchanged anywhere in the universe.">重量是地球引力造成的（無重力時為 0）；質量是物體內含物質的多少（在宇宙任何地方皆不變）。</span><br>
+        • <span data-zh="現代太空站航天員測量體重，也是使用「線性加速慣性秤」，完全應用牛頓第二運動定律！" data-en="Astronauts on modern space stations use a linear-acceleration inertial balance, an application of Newton's second law.">現代太空站航天員測量體重，也是使用「線性加速慣性秤」，完全應用牛頓第二運動定律！</span>
       </div>
     </div>
 
-    <footer>國中自然力學單元 · 視覺化黑板互動教材 · 堅持名師現場視線品質規範</footer>
+    <footer data-zh="國中自然力學單元 · 視覺化黑板互動教材" data-en="Middle School Mechanics · Interactive Chalkboard Lesson">國中自然力學單元 · 視覺化黑板互動教材</footer>
   </div>
 
   <script>
+    // --- 中英文切換 ---
+    let currentLanguage = 'zh';
+
+    function tr(zh, en) {
+      return currentLanguage === 'zh' ? zh : en;
+    }
+
+    function setLanguage(language) {
+      currentLanguage = language;
+      document.documentElement.lang = language === 'zh' ? 'zh-Hant' : 'en';
+      document.title = tr('國中自然｜牛頓第二運動定律 (F=ma)', "Middle School Science | Newton's Second Law (F=ma)");
+
+      document.querySelectorAll('[data-zh][data-en]').forEach((element) => {
+        element.textContent = element.dataset[language];
+      });
+
+      document.querySelectorAll('[data-aria-zh][data-aria-en]').forEach((element) => {
+        element.setAttribute('aria-label', language === 'zh' ? element.dataset.ariaZh : element.dataset.ariaEn);
+      });
+
+      document.querySelectorAll('.lang-btn').forEach((button) => {
+        const isActive = button.dataset.lang === currentLanguage;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+    }
+
+    document.querySelectorAll('.lang-btn').forEach((button) => {
+      button.addEventListener('click', () => setLanguage(button.dataset.lang));
+    });
+
     // --- 分頁切換邏輯 ---
     let currentTab = 'tab1';
     let aniFrame2, aniFrame3, aniFrame4;
@@ -317,12 +508,16 @@
       cancelAnimationFrame(aniFrame4);
 
       document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
-        btn.classList.remove('active');
-        if (`tab${idx + 1}` === tab) btn.classList.add('active');
+        const isActive = `tab${idx + 1}` === tab;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-selected', String(isActive));
       });
 
       for (let i = 1; i <= 4; i++) {
-        document.getElementById(`panel-tab${i}`).style.display = (`tab${i}` === tab) ? 'block' : 'none';
+        const panel = document.getElementById(`panel-tab${i}`);
+        const isActive = `tab${i}` === tab;
+        panel.style.display = isActive ? 'block' : 'none';
+        panel.setAttribute('aria-hidden', String(!isActive));
       }
 
       if (tab === 'tab2') { resetThrow2(); animateTab2(); }
@@ -406,7 +601,7 @@
       ctx2.beginPath(); ctx2.moveTo(880, 40); ctx2.lineTo(880, 330); ctx2.stroke();
       ctx2.fillStyle = '#ff8040';
       ctx2.font = 'bold 24px "Noto Sans TC"';
-      ctx2.fillText('終點線', 860, 30);
+      ctx2.fillText(tr('終點線', 'Finish'), 860, 30);
       ctx2.restore();
 
       // 物理更新 (按比例縮放動畫加速度)
@@ -442,8 +637,8 @@
       // 施力箭頭與數據說明
       ctx2.font = 'bold 24px "Noto Sans TC"';
       ctx2.fillStyle = '#ffffff';
-      ctx2.fillText(`鐵球 (m=3kg) ➔ 加速度 a₁ = ${ballIron.a.toFixed(0)} m/s²`, 200, 70);
-      ctx2.fillText(`鉛球 (m=7kg) ➔ 加速度 a₂ = ${ballLead.a.toFixed(0)} m/s²`, 200, 210);
+      ctx2.fillText(tr(`鐵球 (m=3kg) ➔ 加速度 a₁ = ${ballIron.a.toFixed(0)} m/s²`, `Iron ball (m=3kg) ➔ a₁ = ${ballIron.a.toFixed(0)} m/s²`), 200, 70);
+      ctx2.fillText(tr(`鉛球 (m=7kg) ➔ 加速度 a₂ = ${ballLead.a.toFixed(0)} m/s²`, `Lead ball (m=7kg) ➔ a₂ = ${ballLead.a.toFixed(0)} m/s²`), 200, 210);
 
       if (ballIron.state === 'run' || ballLead.state === 'run') {
         drawChalkArrow(ctx2, ballIron.x + 35, ballIron.y, ballIron.x + 110, ballIron.y, '#ff8040', `F=${force2}N`);
@@ -472,11 +667,17 @@
       const v_final = acc * 0.2;
       valForce3.textContent = `${force3} N`;
       valMass3.textContent = `${mass3_g} g`;
-      stepContent3.innerHTML = `
-        1. <b>單位轉換：</b>質量 m = ${mass3_g} g = <span>${m_kg.toFixed(2)} kg</span> (必須轉為標準單位 kg！)。<br>
-        2. <b>計算加速度：</b>由 a = F / m ➔ a = ${force3} N / ${m_kg.toFixed(2)} kg = <span>${acc.toFixed(0)} m/s²</span>。<br>
-        3. <b>計算末速度：</b>球從靜止起速，0.2 秒後的球速 v = a × t = ${acc.toFixed(0)} × 0.2 = <span>${v_final.toFixed(0)} m/s</span> (約時速 ${(v_final*3.6).toFixed(0)} km/h！)。
-      `;
+      document.getElementById('step3-mass-g').textContent = `${mass3_g} g`;
+      document.getElementById('step3-mass-kg').textContent = `${m_kg.toFixed(2)} kg`;
+      document.getElementById('step3-force').textContent = `${force3} N`;
+      document.getElementById('step3-divisor').textContent = `${m_kg.toFixed(2)} kg`;
+      document.getElementById('step3-acc').textContent = `${acc.toFixed(0)} m/s²`;
+      document.getElementById('step3-acc-product').textContent = acc.toFixed(0);
+      document.getElementById('step3-velocity').textContent = `${v_final.toFixed(0)} m/s`;
+      const speedNote3 = document.getElementById('step3-speed-note');
+      speedNote3.dataset.zh = `（約時速 ${(v_final*3.6).toFixed(0)} km/h）。`;
+      speedNote3.dataset.en = `(about ${(v_final*3.6).toFixed(0)} km/h).`;
+      speedNote3.textContent = speedNote3.dataset[currentLanguage];
     }
 
     if (rngForce3 && rngMass3) {
@@ -501,7 +702,7 @@
       ctx3.fillRect(40, 130, 80, 100);
       ctx3.fillStyle = '#ffffff';
       ctx3.font = 'bold 24px "Noto Sans TC"';
-      ctx3.fillText('卡比獸施力區 (0.2秒)', 30, 110);
+      ctx3.fillText(tr('卡比獸施力區 (0.2秒)', 'Snorlax force zone (0.2 s)'), 30, 110);
       ctx3.strokeStyle = 'rgba(255,255,255,0.4)';
       ctx3.lineWidth = 4;
       ctx3.setLineDash([15, 15]);
@@ -534,15 +735,15 @@
       ctx3.font = 'bold 26px "Noto Sans TC"';
       if (ball3.state === 'idle') {
         ctx3.fillStyle = '#ffffff';
-        ctx3.fillText('👉 點擊「投出棒球」觀察卡比獸施力加速過程', 340, 185);
+        ctx3.fillText(tr('👉 點擊「投出棒球」觀察卡比獸施力加速過程', '👉 Tap “Throw Baseball” to watch acceleration'), 340, 185);
       } else if (ball3.state === 'run' && ball3.x < 280) {
         drawChalkArrow(ctx3, ball3.x + 30, ball3.y, ball3.x + 110, ball3.y, '#ffe066', `F=${force3}N`);
         ctx3.fillStyle = '#ffe066';
-        ctx3.fillText(`⚡ 施力加速中！ a = ${acc.toFixed(0)} m/s²`, 340, 185);
+        ctx3.fillText(tr(`⚡ 施力加速中！ a = ${acc.toFixed(0)} m/s²`, `⚡ Accelerating! a = ${acc.toFixed(0)} m/s²`), 340, 185);
       } else {
         drawChalkArrow(ctx3, ball3.x + 30, ball3.y, ball3.x + 130, ball3.y, '#33cc99', `v=${v_final.toFixed(0)}m/s`);
         ctx3.fillStyle = '#33cc99';
-        ctx3.fillText(`🚀 球已飛出！以末速度 ${v_final.toFixed(0)} m/s 等速飛行！`, 340, 185);
+        ctx3.fillText(tr(`🚀 球已飛出！以末速度 ${v_final.toFixed(0)} m/s 等速飛行！`, `🚀 Ball released! Constant v = ${v_final.toFixed(0)} m/s`), 340, 185);
       }
 
       if (currentTab === 'tab3') aniFrame3 = requestAnimationFrame(animateTab3);
@@ -565,11 +766,13 @@
       const mass_calc = force4 / acc4;
       valForce4.textContent = `${force4} N`;
       valAcc4.textContent = `${acc4} m/s²`;
-      stepContent4.innerHTML = `
-        1. <b>原理說明：</b>在太空無重力狀態下，物體重量為零，無法用天平或磅秤測量，但物體的<b>慣性（質量 m）永遠不變</b>！<br>
-        2. <b>代入定律公式：</b>移項得到 m = F / a。<br>
-        3. <b>計算眼鏡質量：</b>m = ${force4} N / ${acc4} m/s² = <span>${mass_calc.toFixed(2)} kg</span> (這副特製太空眼鏡質量剛好是 ${mass_calc.toFixed(2)} 公斤！)。
-      `;
+      document.getElementById('step4-force').textContent = `${force4} N`;
+      document.getElementById('step4-acc').textContent = `${acc4} m/s²`;
+      document.getElementById('step4-mass').textContent = `${mass_calc.toFixed(2)} kg`;
+      const massNote4 = document.getElementById('step4-mass-note');
+      massNote4.dataset.zh = `（這副特製太空眼鏡的質量剛好是 ${mass_calc.toFixed(2)} 公斤）。`;
+      massNote4.dataset.en = `(the special glasses have a mass of ${mass_calc.toFixed(2)} kg).`;
+      massNote4.textContent = massNote4.dataset[currentLanguage];
     }
 
     if (rngForce4 && rngAcc4) {
@@ -607,7 +810,7 @@
       ctx4.fillRect(50, 40, 900, 270);
       ctx4.fillStyle = 'var(--chalk-teal)';
       ctx4.font = 'bold 24px "Noto Sans TC"';
-      ctx4.fillText('🌌 潘朵拉星球太空梭無重力實驗艙 (Weight = 0 N)', 80, 80);
+      ctx4.fillText(tr('🌌 潘朵拉星球太空梭無重力實驗艙（重量 = 0 N）', '🌌 Zero-G spacecraft cabin (Weight = 0 N)'), 80, 80);
       ctx4.restore();
 
       // 物理更新
@@ -617,30 +820,85 @@
         if (glasses4.x > 820) { glasses4.x = 820; glasses4.state = 'done'; }
       }
 
-      // 繪製傑尼龜的特製眼鏡 (#ffe066 亮黃色)
+      // 繪製傑尼龜的特製太空護目鏡（僅更新外觀，不影響運動模型）
       ctx4.save();
+      ctx4.translate(glasses4.x, glasses4.y);
+      ctx4.lineCap = 'round';
+      ctx4.lineJoin = 'round';
+
+      // 鏡腳：先畫在鏡片後方，讓輪廓更有前後層次。
+      ctx4.strokeStyle = '#ff9f43';
+      ctx4.lineWidth = 7;
+      ctx4.beginPath();
+      ctx4.moveTo(-45, -8); ctx4.lineTo(-61, -16); ctx4.lineTo(-68, -9);
+      ctx4.moveTo(45, -8); ctx4.lineTo(61, -16); ctx4.lineTo(68, -9);
+      ctx4.stroke();
+
+      const lensGradient4 = ctx4.createLinearGradient(0, -25, 0, 25);
+      lensGradient4.addColorStop(0, 'rgba(110, 235, 255, 0.78)');
+      lensGradient4.addColorStop(0.55, 'rgba(24, 160, 210, 0.58)');
+      lensGradient4.addColorStop(1, 'rgba(8, 72, 103, 0.82)');
+
+      // 左右鏡片使用微微上揚的護目鏡造型，比正圓更有速度感。
+      function drawSpaceLens4(side) {
+        ctx4.save();
+        ctx4.scale(side, 1);
+        ctx4.beginPath();
+        ctx4.moveTo(7, -15);
+        ctx4.bezierCurveTo(17, -23, 40, -22, 48, -10);
+        ctx4.bezierCurveTo(53, 0, 47, 18, 35, 23);
+        ctx4.bezierCurveTo(21, 28, 8, 17, 7, -15);
+        ctx4.fillStyle = lensGradient4;
+        ctx4.fill();
+        ctx4.strokeStyle = '#ffe066';
+        ctx4.lineWidth = 6;
+        ctx4.stroke();
+
+        // 鏡片高光與內層青色飾線。
+        ctx4.beginPath();
+        ctx4.moveTo(16, -13);
+        ctx4.bezierCurveTo(25, -18, 38, -16, 43, -8);
+        ctx4.strokeStyle = 'rgba(255,255,255,0.82)';
+        ctx4.lineWidth = 3;
+        ctx4.stroke();
+        ctx4.beginPath();
+        ctx4.moveTo(14, 16);
+        ctx4.bezierCurveTo(24, 23, 38, 19, 43, 11);
+        ctx4.strokeStyle = '#4dd2ff';
+        ctx4.lineWidth = 2;
+        ctx4.stroke();
+        ctx4.restore();
+      }
+
+      drawSpaceLens4(-1);
+      drawSpaceLens4(1);
+
+      // 鼻橋、中央感測器與鏡腳鉚釘。
       ctx4.strokeStyle = '#ffe066';
       ctx4.lineWidth = 6;
-      ctx4.beginPath(); ctx4.arc(glasses4.x - 25, glasses4.y, 22, 0, Math.PI * 2); ctx4.stroke();
-      ctx4.beginPath(); ctx4.arc(glasses4.x + 25, glasses4.y, 22, 0, Math.PI * 2); ctx4.stroke();
-      ctx4.beginPath(); ctx4.moveTo(glasses4.x - 3, glasses4.y); ctx4.lineTo(glasses4.x + 3, glasses4.y); ctx4.stroke();
-      ctx4.fillStyle = 'rgba(77, 210, 255, 0.4)';
-      ctx4.beginPath(); ctx4.arc(glasses4.x - 25, glasses4.y, 22, 0, Math.PI * 2); ctx4.fill();
-      ctx4.beginPath(); ctx4.arc(glasses4.x + 25, glasses4.y, 22, 0, Math.PI * 2); ctx4.fill();
+      ctx4.beginPath();
+      ctx4.moveTo(-8, -8);
+      ctx4.quadraticCurveTo(0, -15, 8, -8);
+      ctx4.stroke();
+      ctx4.fillStyle = '#ff6b9d';
+      ctx4.beginPath(); ctx4.arc(0, -11, 4.5, 0, Math.PI * 2); ctx4.fill();
+      ctx4.fillStyle = '#ffe066';
+      ctx4.beginPath(); ctx4.arc(-47, -8, 3.5, 0, Math.PI * 2); ctx4.fill();
+      ctx4.beginPath(); ctx4.arc(47, -8, 3.5, 0, Math.PI * 2); ctx4.fill();
       ctx4.restore();
 
       // 施力推桿與說明
       ctx4.font = 'bold 26px "Noto Sans TC"';
       if (glasses4.state === 'idle') {
         ctx4.fillStyle = '#ffffff';
-        ctx4.fillText('👉 點擊「啟動測量儀」以已知推力 F 測試加速度', 280, 260);
+        ctx4.fillText(tr('👉 點擊「啟動測量儀」以已知推力 F 測試加速度', '👉 Tap “Start Instrument” to test acceleration'), 280, 260);
       } else if (glasses4.state === 'run') {
         drawChalkArrow(ctx4, glasses4.x - 120, glasses4.y, glasses4.x - 60, glasses4.y, '#ff8040', `F=${force4}N`);
         ctx4.fillStyle = '#33cc99';
-        ctx4.fillText(`⚡ 測得加速度 a = ${acc4} m/s² ➔ 質量 m = 1.0 kg！`, 280, 260);
+        ctx4.fillText(tr(`⚡ 測得加速度 a = ${acc4} m/s² ➔ 質量 m = 1.0 kg！`, `⚡ Measured a = ${acc4} m/s² ➔ m = 1.0 kg`), 280, 260);
       } else {
         ctx4.fillStyle = '#ffe066';
-        ctx4.fillText('✔ 測量完成！在宇宙任何地方，慣性質量永遠不會改變！', 240, 260);
+        ctx4.fillText(tr('✔ 測量完成！在宇宙任何地方，慣性質量永遠不會改變！', '✔ Done! Inertial mass never changes anywhere.'), 240, 260);
       }
 
       if (currentTab === 'tab4') aniFrame4 = requestAnimationFrame(animateTab4);
@@ -649,6 +907,7 @@
     // 初始化啟動
     updateStep3();
     updateStep4();
+    setLanguage('zh');
     switchTab('tab1');
   </script>
 </body>
