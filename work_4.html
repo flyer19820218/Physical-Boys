@@ -2,11 +2,11 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>簡單機械與功的原理：HTML5 互動黑板教學</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title data-zh="簡單機械與功的原理：HTML5 互動黑板教學" data-en="Simple Machines & Principle of Work: Interactive Blackboard">簡單機械與功的原理：HTML5 互動黑板教學</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg-base: #11261f;
@@ -20,324 +20,137 @@
     --chalk-green: #33cc99;
     --chalk-purple: #d4a5a5;
     --rule-color: rgba(246, 243, 234, 0.22);
+    --shadow-dark: rgba(9, 20, 16, 0.9);
   }
 
   * { box-sizing: border-box; }
 
   body {
     margin: 0;
+    padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(60px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
     background-color: var(--bg-base);
+    background-image: 
+      radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0),
+      radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+    background-size: 24px 24px, 16px 16px;
+    background-position: 0 0, 8px 8px;
     color: var(--chalk-white);
     font-family: 'Noto Sans TC', sans-serif;
     font-size: 20px;
     line-height: 1.65;
-    padding: 24px 0 80px;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
   }
 
-  .wrap {
-    max-width: 1140px;
-    margin: 0 auto;
-    padding: 0 24px;
-  }
+  .wrap { width: 100%; max-width: 1080px; margin: 0 auto; }
 
-  header {
-    text-align: center;
-    margin-bottom: 28px;
-    border-bottom: 2px dashed var(--rule-color);
-    padding-bottom: 20px;
-  }
+  header { text-align: center; margin-bottom: 24px; padding-top: 40px; padding-bottom: 16px; border-bottom: 3px solid var(--chalk-green); }
+  h1 { font-size: 36px; margin: 0 0 8px 0; color: var(--chalk-yellow); letter-spacing: 2px; font-weight: 700; }
+  .subtitle { margin: 0; color: var(--chalk-teal); font-size: 22px; font-weight: 700; }
 
-  h1 {
-    font-size: 36px;
-    margin: 0 0 10px 0;
-    color: var(--chalk-yellow);
-    letter-spacing: 2px;
-    font-weight: 700;
+  .language-switch {
+    position: fixed; z-index: 3000;
+    top: max(16px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right));
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border: 2px solid var(--chalk-teal); border-radius: 12px;
+    background: rgba(17, 38, 31, 0.96); box-shadow: 0 8px 24px var(--shadow-dark), 0 0 16px rgba(77, 210, 255, 0.2);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   }
-
-  header p {
-    margin: 0;
-    color: var(--chalk-muted);
-    font-size: 21px;
+  .language-label { color: var(--chalk-teal); font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; }
+  .lang-btn {
+    min-width: 58px; min-height: 48px; padding: 8px 12px;
+    border: 2px solid rgba(255, 255, 255, 0.35); border-radius: 9px;
+    background: var(--bg-base); color: var(--chalk-white);
+    font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700;
+    cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
   }
+  .lang-btn.active { background: var(--chalk-teal); color: var(--bg-base); border-color: var(--chalk-teal); }
+  .lang-btn:focus-visible { outline: 3px solid rgba(255, 224, 102, 0.75); outline-offset: 3px; }
 
-  /* 乾淨導覽列 (嚴禁數字前綴) */
-  .tabs {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-  }
-
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
   .tab-btn {
-    flex: 1;
-    min-width: 200px;
-    padding: 16px 14px;
-    font-size: 20px;
-    font-weight: 700;
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--chalk-muted);
-    border: 2px dashed var(--rule-color);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
+    padding: 14px 10px; font-size: 20px; font-weight: 700; background: rgba(255, 255, 255, 0.05);
+    color: var(--chalk-muted); border: 2px dashed var(--rule-color); border-radius: 10px;
+    cursor: pointer; transition: all 0.2s ease; text-align: center; min-height: 60px;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    white-space: normal; display: flex; align-items: center; justify-content: center; line-height: 1.2;
   }
+  .tab-btn:hover { background: var(--bg-panel-hover); color: var(--chalk-white); border-color: var(--chalk-white); }
+  .tab-btn.active { background: var(--bg-panel); color: var(--chalk-yellow); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 16px rgba(255, 224, 102, 0.25); }
 
-  .tab-btn:hover {
-    background: var(--bg-panel-hover);
-    color: var(--chalk-white);
-  }
+  .grid-container { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  .panel { background: var(--bg-panel); border: 2px solid var(--rule-color); border-radius: 16px; padding: 26px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px dashed var(--rule-color); padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  h2 { margin: 0; font-size: 28px; color: var(--chalk-teal); }
+  .sub-tag { font-size: 19px; color: var(--bg-base); background: var(--chalk-green); padding: 6px 18px; border-radius: 999px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
 
-  .tab-btn.active {
-    background: #1f4236;
-    color: var(--chalk-yellow);
-    border: 2px solid var(--chalk-yellow);
-    box-shadow: 0 0 16px rgba(255, 224, 102, 0.25);
-  }
+  .stage-container { width: 100%; border: 2px solid var(--chalk-yellow); border-radius: 12px; overflow: hidden; background: #0d201a; position: relative; margin-bottom: 20px; box-shadow: 0 4px 15px var(--shadow-dark); }
+  canvas { display: block; width: 100%; height: auto; aspect-ratio: 960 / 440; }
 
-  /* 嚴格單一版面 Grid */
-  .grid-container {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
+  .controls { background: rgba(0, 0, 0, 0.35); padding: 20px; border-radius: 12px; border: 2px dashed var(--chalk-teal); margin-bottom: 20px; }
+  .control-group { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+  .control-group:last-child { margin-bottom: 0; }
+  label { font-weight: 700; color: var(--chalk-teal); font-size: 20px; }
+  input[type=range] { flex: 1; height: 10px; accent-color: var(--chalk-yellow); cursor: pointer; min-height: 48px; }
+  .readout-badge { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--bg-base); background: var(--chalk-yellow); padding: 6px 16px; border-radius: 8px; min-width: 110px; text-align: center; font-size: 20px; }
 
-  .panel {
-    background: var(--bg-panel);
-    border: 2px solid var(--rule-color);
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-  }
+  .stats { background: transparent; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .stat-row { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; flex-wrap: wrap; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--rule-color); border-radius: 12px; padding: 14px 20px; font-size: 20px; font-weight: 700; }
+  .val-badge { background: #11261f; border: 1px solid rgba(255, 255, 255, 0.2); padding: 6px 16px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; color: var(--chalk-white); display: inline-flex; align-items: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
 
-  .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px dashed var(--rule-color);
-    padding-bottom: 14px;
-  }
+  .hl-yellow { color: var(--chalk-yellow) !important; } .hl-teal { color: var(--chalk-teal) !important; } .hl-coral { color: var(--chalk-coral) !important; } .hl-green { color: var(--chalk-green) !important; }
 
-  h2 {
-    margin: 0;
-    font-size: 28px;
-    color: var(--chalk-white);
-  }
+  .math-fraction { display: inline-flex; flex-direction: column; justify-content: center; align-items: center; vertical-align: middle; margin: 0 8px; line-height: 1.2; font-family: 'JetBrains Mono', monospace; }
+  .math-fraction .num { border-bottom: 2px solid var(--chalk-white); padding: 0 6px 2px; }
+  .math-fraction .den { padding: 2px 6px 0; }
 
-  .sub-tag {
-    font-size: 18px;
-    color: var(--bg-base);
-    background: var(--chalk-yellow);
-    padding: 4px 16px;
-    border-radius: 999px;
-    font-weight: 700;
-  }
+  .note { font-size: 20px; color: var(--chalk-white); line-height: 1.8; background: var(--bg-panel); padding: 22px; border-radius: 12px; border: 2px solid var(--chalk-white); }
+  .note ul { margin: 10px 0 0 0; padding-left: 26px; }
+  .note li { margin-bottom: 10px; }
+  .formula-box { font-family: 'JetBrains Mono', monospace; background: rgba(0, 0, 0, 0.35); padding: 16px 24px; border-radius: 10px; border: 1px dashed var(--chalk-white); margin: 16px 0; text-align: center; font-size: 22px; color: var(--chalk-teal); display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; }
 
-  .stage-container {
-    width: 100%;
-    border: 2px solid var(--rule-color);
-    border-radius: 12px;
-    overflow: hidden;
-    background: #0d201a;
-    position: relative;
-    margin-bottom: 20px;
-  }
+  .btn-switch { padding: 10px 18px; border: 2px solid var(--chalk-teal); background: transparent; color: var(--chalk-teal); border-radius: 8px; font-size: 19px; font-weight: 700; cursor: pointer; transition: 0.2s; min-height: 48px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .btn-switch:hover, .btn-switch.active { background: var(--chalk-teal); color: var(--bg-base); }
 
-  canvas {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
+  .btn-action-group { display: flex; justify-content: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+  .btn-action { padding: 10px 20px; font-size: 19px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: 0.2s; min-height: 48px; border: 2px solid var(--chalk-yellow); background: var(--bg-base); color: var(--chalk-yellow); touch-action: manipulation; }
+  .btn-action:hover, .btn-action.active { background: var(--chalk-yellow); color: var(--bg-base); }
+  .btn-action.btn-green { border-color: var(--chalk-green); color: var(--chalk-green); }
+  .btn-action.btn-green:hover, .btn-action.btn-green.active { background: var(--chalk-green); color: var(--bg-base); }
+  .btn-action.btn-coral { border-color: var(--chalk-coral); color: var(--chalk-coral); }
+  .btn-action.btn-coral:hover, .btn-action.btn-coral.active { background: var(--chalk-coral); color: var(--bg-base); }
+  .btn-action.btn-teal { border-color: var(--chalk-teal); color: var(--chalk-teal); }
+  .btn-action.btn-teal:hover, .btn-action.btn-teal.active { background: var(--chalk-teal); color: var(--bg-base); }
 
-  .controls {
-    background: rgba(255, 255, 255, 0.04);
-    padding: 22px;
-    border-radius: 12px;
-    border: 1px solid var(--rule-color);
-    margin-bottom: 20px;
-  }
+  .prop-table { width: 100%; border-collapse: collapse; margin-top: 14px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; overflow: hidden; }
+  .prop-table th, .prop-table td { padding: 12px 14px; text-align: center; border: 1px solid var(--rule-color); font-size: 19px; }
+  .prop-table th { background: rgba(77, 210, 255, 0.15); color: var(--chalk-teal); font-weight: 700; }
 
-  .control-group {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
+  .nw { white-space: nowrap; }
 
-  .control-group:last-child {
-    margin-bottom: 0;
-  }
-
-  label {
-    font-weight: 700;
-    color: var(--chalk-teal);
-    font-size: 21px;
-  }
-
-  input[type=range] {
-    flex: 1;
-    height: 12px;
-    accent-color: var(--chalk-yellow);
-    cursor: pointer;
-  }
-
-  .readout-badge {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    color: var(--bg-base);
-    background: var(--chalk-yellow);
-    padding: 4px 16px;
-    border-radius: 8px;
-    min-width: 110px;
-    text-align: center;
-    font-size: 19px;
-  }
-
-  .stats {
-    background: transparent;
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  /* 🌟 全新升級：教科書級徽章數據與數學分式排版 */
-  .stat-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    width: 100%;
-    flex-wrap: wrap;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--rule-color);
-    border-radius: 12px;
-    padding: 14px 20px;
-    font-size: 21px;
-    font-weight: 700;
-  }
-  
-  .val-badge {
-    background: #11261f;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--chalk-white);
-    display: inline-flex;
-    align-items: center;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-  }
-
-  .hl-yellow { color: var(--chalk-yellow) !important; }
-  .hl-teal { color: var(--chalk-teal) !important; }
-
-  .math-fraction {
-    display: inline-flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    vertical-align: middle;
-    margin: 0 10px;
-    line-height: 1.3;
-  }
-
-  .math-fraction .num {
-    border-bottom: 2px solid var(--chalk-white);
-    padding: 0 8px 4px;
-  }
-
-  .math-fraction .den {
-    padding: 4px 8px 0;
-  }
-
-  .note {
-    font-size: 20px;
-    color: var(--chalk-white);
-    line-height: 1.8;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 24px;
-    border-radius: 12px;
-    border-left: 6px solid var(--chalk-yellow);
-  }
-
-  .note ul {
-    margin: 10px 0 0 0;
-    padding-left: 28px;
-  }
-
-  .note li {
-    margin-bottom: 10px;
-  }
-
-  .formula-box {
-    font-family: 'JetBrains Mono', monospace;
-    background: rgba(255, 255, 255, 0.06);
-    padding: 16px 24px;
-    border-radius: 10px;
-    border: 1px solid var(--rule-color);
-    margin: 16px 0;
-    text-align: center;
-    font-size: 23px;
-    color: var(--chalk-teal);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .btn-switch {
-    padding: 10px 20px;
-    border: 2px solid var(--chalk-teal);
-    background: transparent;
-    color: var(--chalk-teal);
-    border-radius: 8px;
-    font-size: 18px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-
-  .btn-switch:hover, .btn-switch.active {
-    background: var(--chalk-teal);
-    color: var(--bg-base);
-  }
-
-  .prop-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 14px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  .prop-table th, .prop-table td {
-    padding: 14px;
-    text-align: center;
-    border: 1px solid var(--rule-color);
-    font-size: 20px;
-  }
-  .prop-table th {
-    background: rgba(77, 210, 255, 0.15);
-    color: var(--chalk-teal);
-    font-weight: 700;
-  }
+  @media (max-width: 1023px) { body { font-size: 20px; } .tabs { grid-template-columns: 1fr 1fr; } .stat-row { font-size: 19px; } }
+  @media (max-width: 520px) { .language-label { display: none; } .language-switch { top: 8px; right: 8px; padding: 6px; } .tabs { grid-template-columns: 1fr; } .panel { padding: 16px; } .control-group { flex-direction: column; align-items: stretch; gap: 8px; } }
 </style>
 </head>
 <body>
 <div class="wrap">
+  <!-- 懸浮雙語切換 -->
+  <div class="language-switch" role="group" aria-label="語言切換">
+    <span class="language-label" data-zh="Language" data-en="Language">Language</span>
+    <button class="lang-btn active" type="button" data-lang="zh" aria-pressed="true">中文</button>
+    <button class="lang-btn" type="button" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+
   <header>
-    <h1>⚙️ 簡單機械與功的原理</h1>
-    <p>國中自然科核心單元：功的黃金鐵律、銳角拔釘演練、輪軸實例解剖與斜面螺旋</p>
+    <h1 data-zh="⚙️ 簡單機械與功的原理" data-en="⚙️ Simple Machines & Principle of Work">⚙️ 簡單機械與功的原理</h1>
+    <div class="subtitle" data-zh="國中自然科核心單元：功的黃金鐵律、銳角拔釘演練、輪軸實例解剖與斜面螺旋" data-en="Core Physics Unit: Golden Rule of Work, Levers, Wheel & Axle, and Inclined Planes">國中自然科核心單元：功的黃金鐵律、銳角拔釘演練、輪軸實例解剖與斜面螺旋</div>
   </header>
 
   <div class="tabs">
-    <div class="tab-btn active" onclick="switchTab('tab1')">簡單機械與功</div>
-    <div class="tab-btn" onclick="switchTab('tab2')">槓桿與拔釘演練</div>
-    <div class="tab-btn" onclick="switchTab('tab3')">輪軸與滑輪系統</div>
-    <div class="tab-btn" onclick="switchTab('tab4')">斜面與螺旋原理</div>
+    <button class="tab-btn active" onclick="switchTab('tab1', this)" data-zh="簡單機械與功" data-en="Work & Machines">簡單機械與功</button>
+    <button class="tab-btn" onclick="switchTab('tab2', this)" data-zh="槓桿與拔釘演練" data-en="Levers & Claw Hammer">槓桿與拔釘演練</button>
+    <button class="tab-btn" onclick="switchTab('tab3', this)" data-zh="輪軸與滑輪系統" data-en="Wheel, Axle & Pulleys">輪軸與滑輪系統</button>
+    <button class="tab-btn" onclick="switchTab('tab4', this)" data-zh="斜面與螺旋原理" data-en="Inclined Planes & Screws">斜面與螺旋原理</button>
   </div>
 
   <div class="panel">
@@ -362,11 +175,40 @@
 </div>
 
 <script>
+  let LANG = 'zh';
+
+  function tr(zhText, enText) { return LANG === 'en' ? enText : zhText; }
+
+  function applyTranslations() {
+    document.querySelectorAll('[data-zh][data-en]').forEach(el => {
+      if (el.tagName === 'INPUT' && el.type === 'button') {
+        el.value = el.getAttribute(`data-${LANG}`);
+      } else {
+        el.innerHTML = el.getAttribute(`data-${LANG}`);
+      }
+    });
+    document.querySelectorAll('.lang-btn').forEach(b => {
+      const isActive = b.dataset.lang === LANG;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-pressed', String(isActive));
+    });
+  }
+
+  function setLanguage(lang) {
+    LANG = lang;
+    document.documentElement.lang = LANG === 'en' ? 'en' : 'zh-Hant';
+    applyTranslations();
+    renderCurrentTabUI();
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.addEventListener('click', () => setLanguage(b.dataset.lang));
+  });
+
   const canvas = document.getElementById('stage');
   const ctx = canvas.getContext('2d');
   
   let currentTab = 'tab1';
-  let animationFrame;
   let animTime = 0;
 
   // 物理互動操作變數
@@ -374,200 +216,210 @@
   let t2_arm_eff = 30, t2_arm_res = 5, t2_res_force = 600;
   let t3_mode = 'wheel';
   let t3_wheel_item = 'pencil';
-  let t4_mode = 'inclined', t4_len = 6, t4_h = 2;
+
+  // 分頁四互動控制變數
+  let t4_mode = 'inclined';
+  let t4_len = 6, t4_h = 2;
+  let t4_incline_state = 'idle'; 
+  let t4_incline_prog = 0;
+  let t4_screw_state = 'idle';   
+  let t4_screw_time = 0;
 
   const dynamicControls = document.getElementById('dynamic-controls');
   const dynamicStats = document.getElementById('dynamic-stats');
 
-  function switchTab(tab) {
+  function switchTab(tab, btn) {
     currentTab = tab;
-    cancelAnimationFrame(animationFrame);
     animTime = 0;
+    if (btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+    renderCurrentTabUI();
+  }
 
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-
+  function renderCurrentTabUI() {
     const title = document.getElementById('panel-title');
     const badge = document.getElementById('panel-badge');
     const note = document.getElementById('note-text');
 
-    if (tab === 'tab1') {
-      title.textContent = '簡單機械之目的與功的黃金鐵律';
-      badge.textContent = '能量守恆';
+    if (currentTab === 'tab1') {
+      title.textContent = tr('簡單機械之目的與功的黃金鐵律', 'Purpose of Machines & Golden Rule of Work');
+      badge.textContent = tr('能量守恆', 'Energy Conservation');
       
       dynamicControls.innerHTML = `
         <div class="control-group">
-          <label>施力大小 (<span style="white-space: nowrap;">F</span>)：</label>
-          <input id="rng-t1-f" type="range" min="20" max="100" step="10" value="${t1_f}">
+          <label>${tr('施力大小', 'Effort Force')} (<span class="nw mono">F</span>)：</label>
+          <input id="rng-t1-f" type="range" min="20" max="100" step="10" value="${t1_f}" oninput="t1_f=parseFloat(this.value); document.getElementById('val-t1-f').textContent=t1_f+' N'; updateTab1();">
           <span id="val-t1-f" class="readout-badge">${t1_f} N</span>
         </div>
         <div class="control-group">
-          <label>施力位移 (<span style="white-space: nowrap;">S</span>)：</label>
-          <input id="rng-t1-s" type="range" min="1" max="10" step="1" value="${t1_s}">
+          <label>${tr('施力位移', 'Effort Distance')} (<span class="nw mono">S</span>)：</label>
+          <input id="rng-t1-s" type="range" min="1" max="10" step="1" value="${t1_s}" oninput="t1_s=parseFloat(this.value); document.getElementById('val-t1-s').textContent=t1_s+' m'; updateTab1();">
           <span id="val-t1-s" class="readout-badge">${t1_s} m</span>
         </div>
         <div style="text-align:center; color:var(--chalk-teal); font-size:19px; margin-top:10px;">
-          👉 觀察「省力必費距離」：輸入功的總量 <span style="white-space: nowrap;">W = F × S</span> 恆定不變！
+          ${tr('👉 觀察「省力必費距離」：輸入功的總量 <span class="nw mono">W = F × S</span> 恆定不變！', '👉 Force vs. Distance Trade-off: Total input work <span class="nw mono">W = F × S</span> is invariant!')}
         </div>
       `;
 
       note.innerHTML = `
-        💡 <b>黑板重點：</b>
+        💡 <b>${tr('黑板重點：', 'Key Concepts:')}</b>
         <ul>
-          <li><b>何謂簡單機械：</b>能協助人類作功的單純工具，如槓桿、輪軸、滑輪、齒輪、斜面與螺旋。</li>
-          <li><b>使用目的三大核心：</b>
-            <br>① <span style="white-space: nowrap;"><b>省力</b></span>：施力小於物重，但必定<span style="white-space: nowrap;"><b>費距離（費時）</b></span>。
-            <br>② <span style="white-space: nowrap;"><b>省時</b></span>：施力距離小於物體移動距離，但必定<span style="white-space: nowrap;"><b>費力</b></span>。
-            <br>③ <span style="white-space: nowrap;"><b>操作方便</b></span>：僅改變施力方向（如定滑輪），不省力亦不費力。
+          <li><b>${tr('何謂簡單機械：', 'Simple Machines:')}</b>${tr('能協助人類作功的單純工具，如槓桿、輪軸、滑輪、齒輪、斜面與螺旋。', 'Basic devices aiding mechanical work: levers, wheel & axle, pulleys, gears, inclined planes, and screws.')}</li>
+          <li><b>${tr('使用目的三大核心：', 'Three Main Purposes:')}</b>
+            <br>① <span class="nw"><b>${tr('省力', 'Save Force')}</b></span>：${tr('施力小於物重，但必定<span class="nw"><b>費距離（費時）</b></span>。', 'Effort is less than load, but requires <span class="nw"><b>greater distance</b></span>.')}
+            <br>② <span class="nw"><b>${tr('省時', 'Save Distance/Time')}</b></span>：${tr('施力距離小於物體移動距離，但必定<span class="nw"><b>費力</b></span>。', 'Effort distance is smaller than load displacement, but requires <span class="nw"><b>greater force</b></span>.')}
+            <br>③ <span class="nw"><b>${tr('操作方便', 'Convenience')}</b></span>：${tr('僅改變施力方向（如定滑輪），不省力亦不費力。', 'Only changes the direction of force (e.g., fixed pulley), without changing force magnitude.')}
           </li>
-          <li><b>功的原理 (黃金鐵律)：</b>任何簡單機械<span style="white-space: nowrap;"><b>絕對無法省功！</b></span> 在無摩擦力之理想狀態下，操作者輸入之總功，必等於機械對物體輸出之功。
+          <li><b>${tr('功的原理 (黃金鐵律)：', 'Principle of Work (Golden Rule):')}</b>${tr('任何簡單機械<span class="nw"><b>絕對無法省功！</b></span> 在無摩擦力之理想狀態下，操作者輸入之總功，必等於機械對物體輸出之功。', 'No machine can ever save work! In frictionless conditions, Work Input equals Work Output.')}
             <div class="formula-box">
-              <span style="white-space: nowrap;">W施 = W抗 👉 F施 × S施 = F抗 × S抗</span>
+              <span class="nw">W<sub>${tr('施', 'in')}</sub> = W<sub>${tr('抗', 'out')}</sub> 👉 F<sub>${tr('施', 'in')}</sub> × S<sub>${tr('施', 'in')}</sub> = F<sub>${tr('抗', 'out')}</sub> × S<sub>${tr('抗', 'out')}</sub></span>
             </div>
           </li>
         </ul>
       `;
-
-      document.getElementById('rng-t1-f').addEventListener('input', e => { t1_f = parseFloat(e.target.value); document.getElementById('val-t1-f').textContent = t1_f + ' N'; updateTab1(); });
-      document.getElementById('rng-t1-s').addEventListener('input', e => { t1_s = parseFloat(e.target.value); document.getElementById('val-t1-s').textContent = t1_s + ' m'; updateTab1(); });
-
       updateTab1();
-      animateTab1();
     }
-    else if (tab === 'tab2') {
-      title.textContent = '槓桿分類與銳角鐵撬拔釘演練';
-      badge.textContent = '實戰試題';
+    else if (currentTab === 'tab2') {
+      title.textContent = tr('槓桿分類與銳角鐵撬拔釘演練', 'Lever Classes & Claw Hammer Practice');
+      badge.textContent = tr('實戰試題', 'Exam Practice');
       
       dynamicControls.innerHTML = `
         <div class="control-group">
-          <label>握柄施力臂 (<span style="white-space: nowrap;">L施</span>)：</label>
-          <input id="rng-eff" type="range" min="15" max="45" step="5" value="${t2_arm_eff}">
+          <label>${tr('握柄施力臂', 'Effort Arm')} (<span class="nw mono">L<sub>${tr('施', 'e')}</sub></span>)：</label>
+          <input id="rng-eff" type="range" min="15" max="45" step="5" value="${t2_arm_eff}" oninput="t2_arm_eff=parseFloat(this.value); document.getElementById('val-eff').textContent=t2_arm_eff+' cm'; updateTab2();">
           <span id="val-eff" class="readout-badge">${t2_arm_eff} cm</span>
         </div>
         <div class="control-group">
-          <label>拔釘抗力臂 (<span style="white-space: nowrap;">L抗</span>)：</label>
-          <input id="rng-res" type="range" min="3" max="10" step="1" value="${t2_arm_res}">
+          <label>${tr('拔釘抗力臂', 'Resistance Arm')} (<span class="nw mono">L<sub>${tr('抗', 'r')}</sub></span>)：</label>
+          <input id="rng-res" type="range" min="3" max="10" step="1" value="${t2_arm_res}" oninput="t2_arm_res=parseFloat(this.value); document.getElementById('val-res').textContent=t2_arm_res+' cm'; updateTab2();">
           <span id="val-res" class="readout-badge">${t2_arm_res} cm</span>
         </div>
         <div class="control-group">
-          <label>鐵釘阻力 (<span style="white-space: nowrap;">F抗</span>)：</label>
-          <input id="rng-res-f" type="range" min="300" max="900" step="50" value="${t2_res_force}">
+          <label>${tr('鐵釘阻力', 'Nail Resistance')} (<span class="nw mono">F<sub>${tr('抗', 'r')}</sub></span>)：</label>
+          <input id="rng-res-f" type="range" min="300" max="900" step="50" value="${t2_res_force}" oninput="t2_res_force=parseFloat(this.value); document.getElementById('val-res-f').textContent=t2_res_force+' N'; updateTab2();">
           <span id="val-res-f" class="readout-badge">${t2_res_force} N</span>
         </div>
       `;
 
       note.innerHTML = `
-        💡 <b>黑板重點：</b>
+        💡 <b>${tr('黑板重點：', 'Key Concepts:')}</b>
         <ul>
-          <li><b>槓桿分類與必考生活實例大彙整 (🌟 全套生動圖示版)：</b>
+          <li><b>${tr('槓桿分類與必考生活實例大彙整：', 'Lever Classes & Common Examples:')}</b>
             <table class="prop-table">
-              <tr><th>類別</th><th>結構特徵</th><th>機械特性</th><th>必考常見實例 (圖示)</th></tr>
-              <tr><td><b>第一類</b></td><td>支點在中間</td><td>可省力或費力</td><td>✂️ 剪刀、⚖️ 翹蹺板、🔨 拔釘器、⚖️ <b style="color:var(--chalk-green);">天平</b>、🔧 鉗子</td></tr>
-              <tr><td><b>第二類</b></td><td>抗力在中間</td><td><b style="color:var(--chalk-yellow);">恆省力費時</b></td><td>🛒 手推車、🍾 開瓶器、🔪 裁紙刀、🥜 胡桃鉗、🗜️ 鍘刀</td></tr>
-              <tr><td><b>第三類</b></td><td>施力在中間</td><td><b style="color:var(--chalk-coral);">恆費力省時</b></td><td>🥢 筷子、🥖 麵包夾、🎣 釣魚竿、🧹 <b style="color:var(--chalk-coral);">掃把</b>、💪 手臂前臂</td></tr>
+              <tr><th>${tr('類別', 'Class')}</th><th>${tr('結構特徵', 'Structure')}</th><th>${tr('機械特性', 'Property')}</th><th>${tr('常見實例', 'Examples')}</th></tr>
+              <tr><td><b>${tr('第一類', '1st Class')}</b></td><td>${tr('支點在中間', 'Fulcrum in middle')}</td><td>${tr('可省力或費力', 'Force/Distance')}</td><td>✂️ ${tr('剪刀', 'Scissors')}, ⚖️ ${tr('翹蹺板', 'Seesaw')}, 🔨 ${tr('拔釘器', 'Crowbar')}, ⚖️ <b class="hl-green">${tr('天平', 'Balance')}</b>, 🔧 ${tr('鉗子', 'Pliers')}</td></tr>
+              <tr><td><b>${tr('第二類', '2nd Class')}</b></td><td>${tr('抗力在中間', 'Load in middle')}</td><td><b class="hl-yellow">${tr('恆省力費時', 'Always saves force')}</b></td><td>🛒 ${tr('手推車', 'Wheelbarrow')}, 🍾 ${tr('開瓶器', 'Bottle Opener')}, 🔪 ${tr('裁紙刀', 'Paper Cutter')}, 🥜 ${tr('胡桃鉗', 'Nutcracker')}</td></tr>
+              <tr><td><b>${tr('第三類', '3rd Class')}</b></td><td>${tr('施力在中間', 'Effort in middle')}</td><td><b class="hl-coral">${tr('恆費力省時', 'Always saves distance')}</b></td><td>🥢 ${tr('筷子', 'Chopsticks')}, 🥖 ${tr('麵包夾', 'Tongs')}, 🎣 ${tr('釣魚竿', 'Fishing Rod')}, 🧹 <b class="hl-coral">${tr('掃把', 'Broom')}</b>, 💪 ${tr('手臂前臂', 'Forearm')}</td></tr>
             </table>
           </li>
-          <li><b>銳角鐵撬拔釘幾何解析 (對齊經典實例)：</b>
-            <br>👉 <span style="white-space: nowrap;"><b>丁 (支點)</b></span>：羊角轉折凸點接觸木板表面； <span style="white-space: nowrap;"><b>甲 (施力點)</b></span>：長柄握把端。
-            <br>👉 <span style="white-space: nowrap;"><b>乙 (施力臂)</b></span>：長邊桿身； <span style="white-space: nowrap;"><b>丙 (抗力點)</b></span>：短邊分叉處扣住金屬平頭鐵釘。
+          <li><b>${tr('銳角鐵撬拔釘幾何解析：', 'Claw Hammer Geometry:')}</b>
+            <br>👉 <span class="nw"><b>${tr('丁 (支點)', 'Point D (Fulcrum)')}</b></span>：${tr('羊角轉折凸點接觸木板表面；', 'Corner pivot touching the wooden board;')} <span class="nw"><b>${tr('甲 (施力點)', 'Point A (Effort Point)')}</b></span>：${tr('長柄握把端。', 'End of handle.')}
+            <br>👉 <span class="nw"><b>${tr('乙 (施力臂)', 'Segment B (Effort Arm)')}</b></span>：${tr('長邊桿身；', 'Long arm body;')} <span class="nw"><b>${tr('丙 (抗力點)', 'Point C (Load Point)')}</b></span>：${tr('短邊分叉處扣住金屬平頭鐵釘。', 'Claw slot gripping the nail.')}
           </li>
         </ul>
       `;
-
-      document.getElementById('rng-eff').addEventListener('input', e => { t2_arm_eff = parseFloat(e.target.value); document.getElementById('val-eff').textContent = t2_arm_eff + ' cm'; updateTab2(); });
-      document.getElementById('rng-res').addEventListener('input', e => { t2_arm_res = parseFloat(e.target.value); document.getElementById('val-res').textContent = t2_arm_res + ' cm'; updateTab2(); });
-      document.getElementById('rng-res-f').addEventListener('input', e => { t2_res_force = parseFloat(e.target.value); document.getElementById('val-res-f').textContent = t2_res_force + ' N'; updateTab2(); });
-
       updateTab2();
-      animateTab2();
     }
-    else if (tab === 'tab3') {
-      title.textContent = '輪軸與滑輪：靜態幾何結構特展';
-      badge.textContent = '轉動機械';
+    else if (currentTab === 'tab3') {
+      title.textContent = tr('輪軸與滑輪：靜態幾何結構特展', 'Wheel & Axle, Pulleys: Structural Anatomy');
+      badge.textContent = tr('轉動機械', 'Rotational Machines');
       
       dynamicControls.innerHTML = `
-        <div style="display:flex; justify-content:center; gap:16px; margin-bottom:16px;">
-          <button class="btn-switch ${t3_mode==='wheel'?'active':''}" onclick="setTab3Mode('wheel', this)">輪軸生活實例解剖</button>
-          <button class="btn-switch ${t3_mode==='pulley'?'active':''}" onclick="setTab3Mode('pulley', this)">定滑輪 vs 動滑輪</button>
+        <div style="display:flex; justify-content:center; gap:16px; margin-bottom:16px; flex-wrap:wrap;">
+          <button class="btn-switch ${t3_mode==='wheel'?'active':''}" onclick="setTab3Mode('wheel', this)">${tr('輪軸生活實例解剖', 'Wheel & Axle Anatomy')}</button>
+          <button class="btn-switch ${t3_mode==='pulley'?'active':''}" onclick="setTab3Mode('pulley', this)">${tr('定滑輪 vs 動滑輪', 'Fixed vs Movable Pulley')}</button>
         </div>
         <div id="wheel-sub-controls" style="display:${t3_mode==='wheel'?'flex':'none'}; justify-content:center; gap:8px; flex-wrap:wrap;">
-          <button class="btn-switch ${t3_wheel_item==='copter'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('copter', this)">竹蜻蜓 / 擀麵棍 🚁</button>
-          <button class="btn-switch ${t3_wheel_item==='pencil'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('pencil', this)">削鉛筆機 ✏️</button>
-          <button class="btn-switch ${t3_wheel_item==='faucet'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('faucet', this)">水龍頭 🚰</button>
-          <button class="btn-switch ${t3_wheel_item==='doorknob'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('doorknob', this)">喇叭門把 🚪</button>
-          <button class="btn-switch ${t3_wheel_item==='screwdriver'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('screwdriver', this)">螺絲起子 🪛</button>
-          <button class="btn-switch ${t3_wheel_item==='wheel'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('wheel', this)">方向盤 ☸️</button>
+          <button class="btn-switch ${t3_wheel_item==='copter'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('copter', this)">${tr('竹蜻蜓 / 擀麵棍 🚁', 'Bamboo-copter 🚁')}</button>
+          <button class="btn-switch ${t3_wheel_item==='pencil'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('pencil', this)">${tr('削鉛筆機 ✏️', 'Pencil Sharpener ✏️')}</button>
+          <button class="btn-switch ${t3_wheel_item==='faucet'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('faucet', this)">${tr('水龍頭 🚰', 'Faucet 🚰')}</button>
+          <button class="btn-switch ${t3_wheel_item==='doorknob'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('doorknob', this)">${tr('喇叭門把 🚪', 'Doorknob 🚪')}</button>
+          <button class="btn-switch ${t3_wheel_item==='screwdriver'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('screwdriver', this)">${tr('螺絲起子 🪛', 'Screwdriver 🪛')}</button>
+          <button class="btn-switch ${t3_wheel_item==='wheel'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('wheel', this)">${tr('方向盤 ☸️', 'Steering Wheel ☸️')}</button>
         </div>
       `;
 
       note.innerHTML = `
-        💡 <b>黑板重點：</b>
+        💡 <b>${tr('黑板重點：', 'Key Concepts:')}</b>
         <ul>
-          <li><b>輪軸原理：</b>同軸心旋轉之大輪與小軸。半徑大者為輪 (<span style="white-space: nowrap;">R</span>)，半徑小者為軸 (<span style="white-space: nowrap;">r</span>)。
+          <li><b>${tr('輪軸原理：', 'Wheel & Axle Principle:')}</b>${tr('同軸心旋轉之大輪與小軸。半徑大者為輪 (<span class="nw mono">R</span>)，半徑小者為軸 (<span class="nw mono">r</span>)。', 'Concentric rotating wheel (R) and axle (r).')}
             <div class="formula-box">
-              <span style="white-space: nowrap;">F × R = W × r 👉 F = <div class="fraction"><span class="numerator">r</span><span class="denominator">R</span></div> × W</span>
+              <span class="nw">F × R = W × r 👉 F = 
+                <span class="math-fraction"><span class="num">r</span><span class="den">R</span></span> × W
+              </span>
             </div>
           </li>
-          <li><b>輪軸實例大判讀 (必考！看清楚手握在輪還是軸)：</b>
-            <br>👉 <span style="white-space: nowrap;"><b>施力於輪 (省力費時)</b></span>：削鉛筆機把手、水龍頭手柄、門把、螺絲起子粗柄、汽車方向盤、喇叭鎖。
-            <br>👉 <span style="white-space: nowrap;"><b>施力於軸 (費力省時)</b></span>：竹蜻蜓手搓細桿、擀麵棍手握細軸、汽車轉動輪胎、電風扇馬達帶動扇葉。
+          <li><b>${tr('輪軸實例大判讀：', 'Wheel & Axle Applications:')}</b>
+            <br>👉 <span class="nw"><b>${tr('施力於輪 (省力費時)', 'Effort on Wheel (Saves Force)')}</b></span>：${tr('削鉛筆機把手、水龍頭手柄、門把、螺絲起子粗柄、方向盤。', 'Pencil sharpener crank, faucet handle, doorknob, screwdriver handle, steering wheel.')}
+            <br>👉 <span class="nw"><b>${tr('施力於軸 (費力省時)', 'Effort on Axle (Saves Distance)')}</b></span>：${tr('竹蜻蜓細桿、擀麵棍細軸、汽車轉動輪胎、電風扇馬達帶動扇葉。', 'Bamboo-copter shaft, rolling pin axle, car drive axle, electric fan blades.')}
           </li>
-          <li><b>滑輪系統：</b>定滑輪為等臂槓桿（<span style="white-space: nowrap;">F = W</span>，僅改方向）；動滑輪力臂為 2 倍（<span style="white-space: nowrap;">F = <div class="fraction"><span class="numerator">W</span><span class="denominator">2</span></div></span>，省一半力但繩拉 2 倍距離 <span style="white-space: nowrap;">2h</span>）。</li>
+          <li><b>${tr('滑輪系統：', 'Pulley Systems:')}</b>${tr('定滑輪為等臂槓桿（<span class="nw mono">F = W</span>，僅改方向）；動滑輪力臂為 2 倍（<span class="nw mono">F = W / 2</span>，省一半力但繩拉 2 倍距離 <span class="nw mono">2h</span>）。', 'Fixed pulley is an equal-arm lever (F = W, changes direction); movable pulley halves the effort (F = W/2) but doubles rope pull distance.')}</li>
         </ul>
       `;
-
       updateTab3();
-      animateTab3();
     }
-    else if (tab === 'tab4') {
-      title.textContent = '斜面推力計算與螺旋自轉捲動';
-      badge.textContent = '連續位移';
+    else if (currentTab === 'tab4') {
+      title.textContent = tr('斜面推拉對照、螺旋自轉與生活應用', 'Inclined Planes, Screws & Real-World Applications');
+      badge.textContent = tr('斜面與螺旋', 'Incline & Screw');
       
       dynamicControls.innerHTML = `
-        <div style="display:flex; justify-content:center; gap:16px; margin-bottom:16px;">
-          <button class="btn-switch ${t4_mode==='inclined'?'active':''}" onclick="setTab4Mode('inclined', this)">斜面推力計算</button>
-          <button class="btn-switch ${t4_mode==='screw'?'active':''}" onclick="setTab4Mode('screw', this)">雙斜面自轉捲動 (螺距 d)</button>
+        <div style="display:flex; justify-content:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+          <button class="btn-switch ${t4_mode==='inclined'?'active':''}" onclick="setTab4Mode('inclined', this)">${tr('斜面推升 vs 鉛直抬升', 'Incline Push vs Vertical Lift')}</button>
+          <button class="btn-switch ${t4_mode==='screw'?'active':''}" onclick="setTab4Mode('screw', this)">${tr('雙斜面自轉捲動 (螺距 d)', 'Screw Winding (Pitch d)')}</button>
+          <button class="btn-switch ${t4_mode==='apps'?'active':''}" onclick="setTab4Mode('apps', this)">${tr('手繪應用：樓梯與盤山公路', 'Real-World: Stairs & Mountain Road')}</button>
         </div>
+        
         <div id="inc-sub-controls" style="display:${t4_mode==='inclined'?'block':'none'};">
           <div class="control-group">
-            <label>斜面長度 (<span style="white-space: nowrap;">L</span>)：</label>
-            <input id="rng-inc-l" type="range" min="3" max="10" step="1" value="${t4_len}">
+            <label>${tr('斜面長度', 'Incline Length')} (<span class="nw mono">L</span>)：</label>
+            <input id="rng-inc-l" type="range" min="3" max="10" step="1" value="${t4_len}" oninput="t4_len=parseFloat(this.value); document.getElementById('val-inc-l').textContent=t4_len+' m'; updateTab4();">
             <span id="val-inc-l" class="readout-badge">${t4_len} m</span>
           </div>
           <div class="control-group">
-            <label>斜面高度 (<span style="white-space: nowrap;">h</span>)：</label>
-            <input id="rng-inc-h" type="range" min="1" max="4" step="0.5" value="${t4_h}">
+            <label>${tr('斜面高度', 'Incline Height')} (<span class="nw mono">h</span>)：</label>
+            <input id="rng-inc-h" type="range" min="1" max="4" step="0.5" value="${t4_h}" oninput="t4_h=parseFloat(this.value); document.getElementById('val-inc-h').textContent=t4_h+' m'; updateTab4();">
             <span id="val-inc-h" class="readout-badge">${t4_h} m</span>
           </div>
+          <div class="btn-action-group">
+            <button class="btn-action btn-green" onclick="startInclineAction('push')">${tr('🟢 沿斜面推升 (省力)', '🟢 Push along Incline')}</button>
+            <button class="btn-action btn-coral" onclick="startInclineAction('lift')">${tr('🔴 鉛直直接抬升 (費力)', '🔴 Lift Vertically')}</button>
+            <button class="btn-action btn-teal" onclick="startInclineAction('reset')">${tr('↺ 重置位置', '↺ Reset')}</button>
+          </div>
         </div>
-        <div id="screw-hint" style="display:${t4_mode==='screw'?'block':'none'}; text-align:center; color:var(--chalk-yellow); font-size:19px;">
-          ✨ 物理轉動展示：木條自轉，前 4 秒等速將斜面紙條捲入，螺紋 100% 由頂端向底端依序生成！第 4 秒立即剎車停止，清楚展示右上左下之螺距 d！
+
+        <div id="screw-sub-controls" style="display:${t4_mode==='screw'?'block':'none'}; text-align:center;">
+          <div class="btn-action-group">
+            <button class="btn-action btn-yellow" onclick="startScrewWinding()">${tr('▶️ 開始捲動木條 (自轉捲入)', '▶️ Start Winding')}</button>
+            <button class="btn-action btn-teal" onclick="resetScrewWinding()">${tr('↺ 重置展開', '↺ Reset')}</button>
+          </div>
+        </div>
+
+        <div id="apps-sub-controls" style="display:${t4_mode==='apps'?'block':'none'}; text-align:center; color:var(--chalk-teal); font-size:19px;">
+          ${tr('💡 點擊觀察手繪物理：樓梯（階梯化斜面）與 盤山公路（連續螺旋斜面）', '💡 Observe real-world physics: Stairs (stepped incline) and winding mountain road (helical incline).')}
         </div>
       `;
 
       note.innerHTML = `
-        💡 <b>黑板重點：</b>
+        💡 <b>${tr('黑板重點：', 'Key Concepts:')}</b>
         <ul>
-          <li><b>斜面原理 (先學觀念)：</b>將重物沿斜面等速推升至高處，所作之功等於垂直直接抬升至同高度之功。
+          <li><b>${tr('斜面推升 vs 鉛直直接抬升（功的原理）：', 'Incline Push vs Vertical Lift:')}</b>
             <div class="formula-box">
-              <span style="white-space: nowrap;">F × L = W × h 👉 F = <div class="fraction"><span class="numerator">W × h</span><span class="denominator">L</span></div></span>
+              <span class="nw">W<sub>${tr('斜', 'Inc')}</sub> = F<sub>${tr('推', 'Push')}</sub> × L</span> 
+              <span class="nw">= <span class="math-fraction"><span class="num">W × h</span><span class="den">L</span></span> × L</span> 
+              <span class="nw">= W × h = W<sub>${tr('直', 'Vert')}</sub></span>
             </div>
+            ${tr('👉 沿斜面推升<b class="hl-yellow">省力但費距離</b>，鉛直抬升<b class="hl-coral">費力但省距離</b>，兩者所作之功<b class="hl-green">完全相等（絕不省功）</b>！', '👉 Pushing up an incline saves force but requires longer distance; vertical lift requires full weight. Both do identical work!')}
           </li>
-          <li><b>螺旋 (<span style="white-space: nowrap;">Screw</span>)：</b>纏繞於圓柱體上的連續斜面應用。</li>
-          <li><b>雙斜面自轉捲動對照 (如畫布上方物理捲動旋轉動畫所示)：</b>
-            <br>👉 <span style="white-space: nowrap;"><b>上列 (緩斜面捲動)</b></span>：斜面長 <span style="white-space: nowrap;">L</span> 超長、坡度平緩 👉 木條需自轉多圈，烙印之螺紋極為密集（<b>螺距 <span style="white-space: nowrap;">d</span> 小</b>），旋入時<b style="color:var(--chalk-yellow);">極致省力，但費距離（費時）</b>！
-            <br>👉 <span style="white-space: nowrap;"><b>下列 (陡斜面捲動)</b></span>：斜面長 <span style="white-space: nowrap;">L</span> 短、坡度陡峭 👉 木條轉少數圈即捲完，螺紋極為稀疏（<b>螺距 <span style="white-space: nowrap;">d</span> 大</b>），旋入時<b style="color:var(--chalk-coral);">較為費力，但省距離（省時）</b>！
+          <li><b>${tr('螺旋原理與螺距 (Pitch d)：', 'Screw & Thread Pitch d:')}</b>${tr('纏繞於圓柱上的連續斜面。坡度平緩者螺距 <span class="nw mono">d</span> 小（極省力）；坡度陡峭者螺距 <span class="nw mono">d</span> 大（較費力）。', 'An inclined plane wound on a cylinder. Gentle slope yields small pitch d (saves effort); steep slope yields large pitch d.')}</li>
+          <li><b>${tr('生活手繪實例剖析：', 'Real-World Applications:')}</b>
+            <br>👉 <span class="nw"><b>${tr('樓梯 (Stairs)', 'Stairs')}</b></span>：${tr('將陡峭的垂直高度 <span class="nw mono">h</span> 分割轉化為多階平緩的斜面長度 <span class="nw mono">L</span>，讓人輕鬆抬步登上高樓。', 'Transforms steep height h into multiple gentle inclined steps L for effortless climbing.')}
+            <br>👉 <span class="nw"><b>${tr('盤山公路 (Winding Road)', 'Winding Mountain Road')}</b></span>：${tr('車輛無法直衝垂直山頂，沿山腰蜿蜒盤旋將路徑大幅拉長（<span class="nw mono">L ↑</span>），引擎所需推力大幅減小（<span class="nw mono">F ↓</span>）。', 'Spirals around the mountain to maximize length L, minimizing required engine climbing force F.')}
           </li>
         </ul>
       `;
-
-      if (t4_mode === 'inclined') {
-        document.getElementById('rng-inc-l').addEventListener('input', e => { t4_len = parseFloat(e.target.value); document.getElementById('val-inc-l').textContent = t4_len + ' m'; updateTab4(); });
-        document.getElementById('rng-inc-h').addEventListener('input', e => { t4_h = parseFloat(e.target.value); document.getElementById('val-inc-h').textContent = t4_h + ' m'; updateTab4(); });
-      }
-
       updateTab4();
-      animateTab4();
     }
   }
 
@@ -576,17 +428,16 @@
     let work = t1_f * t1_s;
     dynamicStats.innerHTML = `
       <div class="stat-row">
-        <span>施力大小</span><div class="val-badge">F = <span class="hl-yellow" style="margin-left:6px;">${t1_f} N</span></div>
-        <span>作用距離</span><div class="val-badge">S = <span class="hl-yellow" style="margin-left:6px;">${t1_s} m</span></div>
+        <span>${tr('施力大小', 'Effort Force')}</span><div class="val-badge">F = <span class="hl-yellow" style="margin-left:6px;">${t1_f} N</span></div>
+        <span>${tr('作用距離', 'Displacement')}</span><div class="val-badge">S = <span class="hl-yellow" style="margin-left:6px;">${t1_s} m</span></div>
       </div>
       <div class="stat-row">
-        <span>輸入總功</span><div class="val-badge">W = F × S = <span class="hl-yellow" style="margin-left:6px;">${work} J</span></div>
+        <span>${tr('輸入總功', 'Total Work')}</span><div class="val-badge">W = F × S = <span class="hl-yellow" style="margin-left:6px;">${work} J</span></div>
       </div>
     `;
   }
 
-  function animateTab1() {
-    if (currentTab !== 'tab1') return;
+  function renderTab1() {
     ctx.clearRect(0, 0, 960, 440);
     animTime += 0.02;
 
@@ -599,87 +450,80 @@
     ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 2; ctx.setLineDash([8, 8]);
     ctx.beginPath(); ctx.moveTo(180, 360); ctx.lineTo(740, 360); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = '#ffe066'; ctx.font = 'bold 20px JetBrains Mono';
-    ctx.fillText(`位移 S = ${t1_s} m`, 410, 390);
+    ctx.fillStyle = '#ffe066'; ctx.font = 'bold 20px "JetBrains Mono", "Noto Sans TC"';
+    ctx.fillText(`${tr('位移', 'Displacement')} S = ${t1_s} m`, 390, 390);
 
     ctx.fillStyle = '#4dd2ff'; ctx.fillRect(bx, 220, 100, 100);
     ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.strokeRect(bx, 220, 100, 100);
-    ctx.fillStyle = '#11261f'; ctx.font = 'bold 24px Noto Sans TC'; ctx.fillText('重物', bx + 26, 278);
+    ctx.fillStyle = '#11261f'; ctx.font = 'bold 24px "Noto Sans TC"'; ctx.fillText(tr('重物', 'Load'), bx + 26, 278);
 
     ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 8;
     ctx.beginPath(); ctx.moveTo(bx - 90, 270); ctx.lineTo(bx - 12, 270); ctx.stroke();
     ctx.fillStyle = '#ff8040';
     ctx.beginPath(); ctx.moveTo(bx - 12, 260); ctx.lineTo(bx + 8, 270); ctx.lineTo(bx - 12, 280); ctx.fill();
-    ctx.font = 'bold 22px JetBrains Mono'; ctx.fillText(`F = ${t1_f} N`, bx - 90, 245);
+    ctx.font = 'bold 22px "JetBrains Mono"'; ctx.fillText(`F = ${t1_f} N`, bx - 90, 245);
 
-    ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 26px Noto Sans TC';
-    ctx.fillText('機械作功模擬：施力 × 位移 = 恆定功總量 (絕不省功)', 180, 50);
-
-    animationFrame = requestAnimationFrame(animateTab1);
+    ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 24px "Noto Sans TC"';
+    ctx.fillText(tr('機械作功模擬：施力 × 位移 = 恆定功總量 (絕不省功)', 'Work Simulation: W = F × S (No machine saves work)'), 140, 50);
   }
 
-  // ============== 分頁二：槓桿與銳角拔釘演練 (完美升級版) ==============
+  // ============== 分頁二：槓桿與銳角拔釘演練 ==============
   function updateTab2() {
     let f_eff = (t2_res_force * t2_arm_res) / t2_arm_eff;
     let adv = t2_arm_eff / t2_arm_res;
 
     dynamicStats.innerHTML = `
       <div class="stat-row">
-        <span>鐵釘阻力</span>
-        <div class="val-badge">F抗 = <span class="hl-yellow" style="margin-left:6px;">${t2_res_force} N</span></div>
-        <span>（位於 丙 處）</span>
+        <span>${tr('鐵釘阻力', 'Nail Resistance')}</span>
+        <div class="val-badge">F<sub>${tr('抗', 'r')}</sub> = <span class="hl-yellow" style="margin-left:6px;">${t2_res_force} N</span></div>
+        <span>${tr('（位於 丙 處）', '(at Point C)')}</span>
       </div>
       <div class="stat-row">
-        <span>握柄施力臂</span>
-        <div class="val-badge">L施 = <span class="hl-yellow" style="margin-left:6px;">${t2_arm_eff} cm</span></div>
-        <span>（乙區長度）， 抗力臂</span>
-        <div class="val-badge">L抗 = <span class="hl-yellow" style="margin-left:6px;">${t2_arm_res} cm</span></div>
+        <span>${tr('握柄施力臂', 'Effort Arm')}</span>
+        <div class="val-badge">L<sub>${tr('施', 'e')}</sub> = <span class="hl-yellow" style="margin-left:6px;">${t2_arm_eff} cm</span></div>
+        <span>${tr('（乙區長度）， 抗力臂', '(Length B), Load Arm')}</span>
+        <div class="val-badge">L<sub>${tr('抗', 'r')}</sub> = <span class="hl-yellow" style="margin-left:6px;">${t2_arm_res} cm</span></div>
       </div>
       <div class="stat-row">
-        <span>所需省力拔除</span>
+        <span>${tr('所需省力拔除', 'Required Effort')}</span>
         <div class="val-badge">
-          F施 =
+          F<sub>${tr('施', 'e')}</sub> =
           <div class="math-fraction">
             <span class="num">${t2_res_force} × ${t2_arm_res}</span>
             <span class="den">${t2_arm_eff}</span>
           </div>
           = <span class="hl-yellow" style="margin-left:8px;">${f_eff.toFixed(1)} N</span>
         </div>
-        <span>（位於 甲 處）</span>
+        <span>${tr('（位於 甲 處）', '(at Point A)')}</span>
       </div>
       <div class="stat-row" style="background: rgba(77, 210, 255, 0.1); padding: 8px 16px; border-radius: 8px; border: 1px solid var(--chalk-teal);">
-        <span style="color: var(--chalk-teal);">👉 省力倍率：施力僅需阻力的</span>
+        <span style="color: var(--chalk-teal);">${tr('👉 省力倍率：施力僅需阻力的', '👉 Force Multiplier: Effort is only')}</span>
         <div class="val-badge" style="color: var(--chalk-teal); border-color: var(--chalk-teal);">1 / ${adv.toFixed(1)}</div>
-        <span style="color: var(--chalk-teal);">！長柄愈長愈輕鬆。</span>
+        <span style="color: var(--chalk-teal);">${tr('！長柄愈長愈輕鬆。', 'of load! Longer handle saves more effort.')}</span>
       </div>
     `;
   }
 
-  function animateTab2() {
-    if (currentTab !== 'tab2') return;
+  function renderTab2() {
     ctx.clearRect(0, 0, 960, 440);
     animTime += 0.03;
 
-    // 1. 底部厚實木板
     ctx.fillStyle = '#a3b8b0'; ctx.fillRect(180, 320, 600, 60);
     ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.strokeRect(180, 320, 600, 60);
     for(let i=338; i<=365; i+=15) {
       ctx.beginPath(); ctx.moveTo(195, i); ctx.lineTo(765, i); ctx.stroke();
     }
 
-    // 2. 支點 丁：接觸木板表面
     let cx = 520, cy = 320;
     ctx.fillStyle = '#33cc99'; ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 22px Noto Sans TC';
-    ctx.fillText('丁 (支點)', cx - 45, cy + 35);
+    ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 22px "Noto Sans TC"';
+    ctx.fillText(tr('丁 (支點)', 'D (Fulcrum)'), cx - 45, cy + 35);
 
-    // 3. 銳角羊角鐵撬模擬 (夾角 60 度銳角，整支統一橘色 #ff8040)
     let tilt = (1 - Math.cos(animTime)) * 0.06; 
     ctx.save();
     ctx.translate(cx, cy); 
     ctx.rotate(tilt);
 
-    // 握柄往左上 (-140度)，拔釘爪往左 (-175度)，統一繪製為亮橘色！
     let handleAng = -140 * Math.PI / 180;
     let hx = 230 * Math.cos(handleAng);
     let hy = 230 * Math.sin(handleAng);
@@ -694,39 +538,35 @@
     ctx.lineTo(cx_tip, cy_tip);
     ctx.stroke();
 
-    ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 20px Noto Sans TC';
-    ctx.fillText('乙 (施力臂 L施)', -160, -25);
-    ctx.fillStyle = '#ffe066'; ctx.font = 'bold 22px Noto Sans TC';
-    ctx.fillText('甲 (施力點)', -290, -150);
-    ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 20px Noto Sans TC';
-    ctx.fillText('丙 (抗力點)', -105, -30);
+    ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 20px "Noto Sans TC"';
+    ctx.fillText(tr('乙 (施力臂 L施)', 'B (Effort Arm L_e)'), -180, -25);
+    ctx.fillStyle = '#ffe066'; ctx.font = 'bold 22px "Noto Sans TC"';
+    ctx.fillText(tr('甲 (施力點)', 'A (Effort Pt)'), -300, -150);
+    ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 20px "Noto Sans TC"';
+    ctx.fillText(tr('丙 (抗力點)', 'C (Load Pt)'), -115, -30);
 
-    // 🌟 鐵釘連動拔出：高對比金屬平頭鐵釘 + 尖銳釘身
     ctx.save();
     ctx.translate(cx_tip, cy_tip);
     ctx.rotate(-tilt); 
     
-    // 金屬平頭釘帽 (厚 12px、寬 50px)
     ctx.fillStyle = '#FFFFFF';
     ctx.strokeStyle = '#00E5FF';
     ctx.lineWidth = 3;
     ctx.fillRect(-25, -12, 50, 12);
     ctx.strokeRect(-25, -12, 50, 12);
 
-    // 釘身與下端尖銳釘尖
     ctx.beginPath();
     ctx.moveTo(-9, 0);
     ctx.lineTo(9, 0);
     ctx.lineTo(9, 50);
-    ctx.lineTo(0, 75);  // 尖銳底部頂點
+    ctx.lineTo(0, 75);
     ctx.lineTo(-9, 50);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
     ctx.restore();
 
-    // 🌟 施力 F 箭頭：嚴格垂直於握柄，指向「右上角」(往上拉起)！
-    let fAng = handleAng + Math.PI / 2; // -140 + 90 = -50度 (右上)
+    let fAng = handleAng + Math.PI / 2;
     let fLen = 90;
     let fx1 = hx, fy1 = hy;
     let fx2 = hx + fLen * Math.cos(fAng);
@@ -735,7 +575,6 @@
     ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 6; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(fx1, fy1); ctx.lineTo(fx2, fy2); ctx.stroke();
     
-    // 完美對稱黃色箭頭
     let headLen = 22;
     ctx.fillStyle = '#ffe066'; 
     ctx.beginPath(); 
@@ -745,14 +584,13 @@
     ctx.closePath(); 
     ctx.fill();
     
-    ctx.font = 'bold 22px JetBrains Mono'; 
-    ctx.fillText('F施 (往上拉)', fx2 + 15, fy2 - 5);
+    ctx.font = 'bold 22px "JetBrains Mono", "Noto Sans TC"'; 
+    ctx.fillText(tr('F施 (往上拉)', 'Effort F (Pull)'), fx2 + 15, fy2 - 5);
 
-    // 📐 直角記號證明 F 垂直於握柄
     let cornerSize = 25;
-    let ux1 = Math.cos(handleAng + Math.PI); // 朝向支點方向
+    let ux1 = Math.cos(handleAng + Math.PI);
     let uy1 = Math.sin(handleAng + Math.PI);
-    let ux2 = Math.cos(fAng); // 施力方向
+    let ux2 = Math.cos(fAng);
     let uy2 = Math.sin(fAng);
     
     ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 4; ctx.lineJoin = 'miter';
@@ -764,10 +602,8 @@
 
     ctx.restore();
 
-    ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 26px Noto Sans TC';
-    ctx.fillText('銳角鐵撬拔釘幾何還原：往「右上角」施力上拉產生順時針力矩拔出鐵釘', 80, 45);
-
-    animationFrame = requestAnimationFrame(animateTab2);
+    ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 24px "Noto Sans TC"';
+    ctx.fillText(tr('銳角鐵撬拔釘幾何還原：往「右上角」施力上拉產生順時針力矩拔出鐵釘', 'Claw Hammer Geometry: Pulling towards upper-right generates torque'), 80, 45);
   }
 
   // ============== 分頁三：輪軸與滑輪 ==============
@@ -790,38 +626,37 @@
     if (t3_mode === 'pulley') {
       dynamicStats.innerHTML = `
         <div class="stat-row">
-          <span><b>定滑輪：</b>等臂槓桿（L施 = L抗 = R），施力 F = W。<b>不省力、僅改方向</b>。</span>
+          <span><b>${tr('定滑輪：', 'Fixed Pulley:')}</b>${tr('等臂槓桿（L施 = L抗 = R），施力 F = W。<b>不省力、僅改方向</b>。', 'Equal-arm lever (L_e = L_r = R), F = W. <b>Changes direction only.</b>')}</span>
         </div>
         <div class="stat-row">
-          <span><b>動滑輪：</b>力臂倍增（L施 = 2R，L抗 = R），施力 F = W/2。<b>省一半力、費一倍距離</b>。</span>
+          <span><b>${tr('動滑輪：', 'Movable Pulley:')}</b>${tr('力臂倍增（L施 = 2R，L抗 = R），施力 F = W/2。<b>省一半力、費一倍距離</b>。', 'Lever arm doubles (L_e = 2R, L_r = R), F = W/2. <b>Halves force, doubles distance.</b>')}</span>
         </div>
       `;
     } else {
       let info = '';
-      if (t3_wheel_item === 'copter') info = '<b>🚁 竹蜻蜓／擀麵棍解剖：</b>雙手搓動之細長桿為【軸 (r)】，上方旋轉飛舞之寬大葉片為【輪 (R)】。<b style="color:var(--chalk-coral);">施力於小軸，費力，極度省時！</b>';
-      if (t3_wheel_item === 'pencil') info = '<b>✏️ 削鉛筆機解剖：</b>手搖長柄旋轉大圓軌跡為【輪 (R)】，內部旋轉切削滾口為【軸 (r)】。<b style="color:var(--chalk-yellow);">手搖長臂極致省力！</b>';
-      if (t3_wheel_item === 'faucet') info = '<b>🚰 水龍頭解剖：</b>上方水平寬大十字柄為【輪 (R)】，中心直立旋轉控制閥桿為【軸 (r)】。<b style="color:var(--chalk-yellow);">手握大輪旋轉，極致省力！</b>';
-      if (t3_wheel_item === 'doorknob') info = '<b>🚪 喇叭門把解剖：</b>外表大圓球握把為【輪 (R)】，內部貫穿木門連動鎖舌之金屬軸為【軸 (r)】。<b style="color:var(--chalk-yellow);">轉動大輪開門，輕鬆省力！</b>';
-      if (t3_wheel_item === 'screwdriver') info = '<b>🪛 螺絲起子解剖：</b>塑膠粗手柄為【輪 (R)】，金屬細長桿端為【軸 (r)】。<b style="color:var(--chalk-yellow);">握粗柄轉動，克服強大阻力！</b>';
-      if (t3_wheel_item === 'wheel') info = '<b>☸️ 汽車方向盤解剖：</b>外圍大握圈為【輪 (R)】，中心轉向金屬柱為【軸 (r)】。<b style="color:var(--chalk-yellow);">以小施力帶動笨重車輪轉向！</b>';
+      if (t3_wheel_item === 'copter') info = tr('<b>🚁 竹蜻蜓／擀麵棍解剖：</b>雙手搓動之細長桿為【軸 (r)】，上方旋轉飛舞之寬大葉片為【輪 (R)】。<b class="hl-coral">施力於小軸，費力，極度省時！</b>', '<b>🚁 Bamboo-copter:</b> Shaft = Axle (r), Blades = Wheel (R). <b class="hl-coral">Effort on axle: Greater force, saves time!</b>');
+      if (t3_wheel_item === 'pencil') info = tr('<b>✏️ 削鉛筆機解剖：</b>手搖長柄旋轉大圓軌跡為【輪 (R)】，內部旋轉切削滾口為【軸 (r)】。<b class="hl-yellow">手搖長臂極致省力！</b>', '<b>✏️ Pencil Sharpener:</b> Crank = Wheel (R), Cutter = Axle (r). <b class="hl-yellow">Effort on wheel: Saves force!</b>');
+      if (t3_wheel_item === 'faucet') info = tr('<b>🚰 水龍頭解剖：</b>上方水平寬大十字柄為【輪 (R)】，中心直立旋轉控制閥桿為【軸 (r)】。<b class="hl-yellow">手握大輪旋轉，極致省力！</b>', '<b>🚰 Faucet:</b> Handle = Wheel (R), Valve stem = Axle (r). <b class="hl-yellow">Effort on wheel: Saves force!</b>');
+      if (t3_wheel_item === 'doorknob') info = tr('<b>🚪 喇叭門把解剖：</b>外表大圓球握把為【輪 (R)】，內部貫穿木門連動鎖舌之金屬軸為【軸 (r)】。<b class="hl-yellow">轉動大輪開門，輕鬆省力！</b>', '<b>🚪 Doorknob:</b> Knob = Wheel (R), Spindle = Axle (r). <b class="hl-yellow">Effort on wheel: Saves force!</b>');
+      if (t3_wheel_item === 'screwdriver') info = tr('<b>🪛 螺絲起子解剖：</b>塑膠粗手柄為【輪 (R)】，金屬細長桿端為【軸 (r)】。<b class="hl-yellow">握粗柄轉動，克服強大阻力！</b>', '<b>🪛 Screwdriver:</b> Handle = Wheel (R), Metal shaft = Axle (r). <b class="hl-yellow">Effort on wheel: Saves force!</b>');
+      if (t3_wheel_item === 'wheel') info = tr('<b>☸️ 汽車方向盤解剖：</b>外圍大握圈為【輪 (R)】，中心轉向金屬柱為【軸 (r)】。<b class="hl-yellow">以小施力帶動笨重車輪轉向！</b>', '<b>☸️ Steering Wheel:</b> Rim = Wheel (R), Steering column = Axle (r). <b class="hl-yellow">Effort on wheel: Saves force!</b>');
       dynamicStats.innerHTML = `
         <div class="stat-row" style="padding:10px 20px;"><span>${info}</span></div>
         <div class="stat-row">
-          <span><b>物理平衡鐵律：</b> F × R = W × r 👉 </span>
+          <span><b>${tr('物理平衡鐵律：', 'Equilibrium Formula:')}</b> F × R = W × r 👉 </span>
           <div class="val-badge">F = <div class="math-fraction"><span class="num">r</span><span class="den">R</span></div> × W</div>
         </div>
       `;
     }
   }
 
-  function animateTab3() {
-    if (currentTab !== 'tab3') return;
+  function renderTab3() {
     ctx.clearRect(0, 0, 960, 440);
     animTime += 0.03;
 
     if (t3_mode === 'pulley') {
-      ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 26px Noto Sans TC';
-      ctx.fillText('滑輪真實軌跡對照：定滑輪 (左) vs 動滑輪 (右)', 180, 45);
+      ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 24px "Noto Sans TC"';
+      ctx.fillText(tr('滑輪真實軌跡對照：定滑輪 (左) vs 動滑輪 (右)', 'Pulley Trajectory: Fixed (Left) vs Movable (Right)'), 180, 45);
 
       let offset_fixed = Math.sin(animTime) * 45; 
       let f_wheel_x = 260, f_wheel_y = 120;
@@ -839,7 +674,7 @@
       ctx.beginPath(); ctx.moveTo(f_wheel_x - 45, f_wheel_y); ctx.lineTo(f_wheel_x - 45, box_y_fixed); ctx.stroke();
       ctx.fillStyle = '#ff8040'; ctx.fillRect(f_wheel_x - 70, box_y_fixed, 50, 50);
       ctx.strokeStyle = '#f6f3ea'; ctx.strokeRect(f_wheel_x - 70, box_y_fixed, 50, 50);
-      ctx.fillStyle = '#11261f'; ctx.font = 'bold 20px JetBrains Mono'; ctx.fillText('W', f_wheel_x - 51, box_y_fixed + 32);
+      ctx.fillStyle = '#11261f'; ctx.font = 'bold 20px "JetBrains Mono"'; ctx.fillText('W', f_wheel_x - 51, box_y_fixed + 32);
 
       let hand_y_fixed = 240 + offset_fixed;
       ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 3;
@@ -849,7 +684,7 @@
       ctx.fillStyle = '#ffe066';
       ctx.beginPath(); ctx.moveTo(f_wheel_x + 45, hand_y_fixed + 45); ctx.lineTo(f_wheel_x + 36, hand_y_fixed + 32); ctx.lineTo(f_wheel_x + 54, hand_y_fixed + 32); ctx.fill();
       ctx.fillText('F=W', f_wheel_x + 60, hand_y_fixed + 25);
-      ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 21px Noto Sans TC'; ctx.fillText('定滑輪：1比1連動', 160, 380);
+      ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 21px "Noto Sans TC"'; ctx.fillText(tr('定滑輪：1比1連動', 'Fixed Pulley: 1:1 Motion'), 150, 380);
 
       let offset_mov = Math.sin(animTime) * 45; 
       let m_wheel_x = 700;
@@ -871,20 +706,19 @@
       ctx.beginPath(); ctx.moveTo(m_wheel_x, m_wheel_y); ctx.lineTo(m_wheel_x, box_y_mov); ctx.stroke();
       ctx.fillStyle = '#ff8040'; ctx.fillRect(m_wheel_x - 25, box_y_mov, 50, 50);
       ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.strokeRect(m_wheel_x - 25, box_y_mov, 50, 50);
-      ctx.fillStyle = '#11261f'; ctx.font = 'bold 20px JetBrains Mono'; ctx.fillText('W', m_wheel_x - 6, box_y_mov + 32);
+      ctx.fillStyle = '#11261f'; ctx.font = 'bold 20px "JetBrains Mono"'; ctx.fillText('W', m_wheel_x - 6, box_y_mov + 32);
 
       ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 5;
       ctx.beginPath(); ctx.moveTo(m_wheel_x + 45, hand_y_mov); ctx.lineTo(m_wheel_x + 45, hand_y_mov - 45); ctx.stroke();
       ctx.fillStyle = '#ffe066';
       ctx.beginPath(); ctx.moveTo(m_wheel_x + 45, hand_y_mov - 45); ctx.lineTo(m_wheel_x + 36, hand_y_mov - 32); ctx.lineTo(m_wheel_x + 54, hand_y_mov - 32); ctx.fill();
       ctx.fillText('F=W/2', m_wheel_x + 60, hand_y_mov - 15);
-      ctx.fillStyle = '#33cc99'; ctx.font = 'bold 21px Noto Sans TC'; ctx.fillText('動滑輪：繩拉2倍、力省一半', 580, 380);
+      ctx.fillStyle = '#33cc99'; ctx.font = 'bold 21px "Noto Sans TC"'; ctx.fillText(tr('動滑輪：繩拉2倍、力省一半', 'Movable: 2x Dist, 1/2 Force'), 560, 380);
 
     } else {
-      ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 25px Noto Sans TC';
-      ctx.fillText('輪軸靜態結構解剖：亮青色為【大輪 R】 vs 亮橘色為【小軸 r】', 140, 40);
+      ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 23px "Noto Sans TC"';
+      ctx.fillText(tr('輪軸靜態結構解剖：亮青色為【大輪 R】 vs 亮橘色為【小軸 r】', 'Wheel & Axle Anatomy: Cyan = Wheel R vs Orange = Axle r'), 100, 40);
 
-      // === 左區：基礎同心圓 ===
       let cx = 260, cy = 240;
       ctx.strokeStyle = '#4dd2ff'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, 110, 0, Math.PI*2); ctx.stroke();
       ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, 45, 0, Math.PI*2); ctx.stroke();
@@ -895,15 +729,13 @@
       ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - 45); ctx.stroke();
 
-      ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 20px Noto Sans TC'; ctx.fillText('大輪 (半徑 R)', cx - 110, cy - 15);
-      ctx.fillStyle = '#ff8040'; ctx.fillText('小軸 (半徑 r)', cx + 15, cy - 25);
-      ctx.fillStyle = '#a3b8b0'; ctx.font = '18px Noto Sans TC'; ctx.fillText('▲ 同心旋轉幾何模型', cx - 90, cy + 150);
+      ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 20px "Noto Sans TC"'; ctx.fillText(tr('大輪 (半徑 R)', 'Wheel (Radius R)'), cx - 110, cy - 15);
+      ctx.fillStyle = '#ff8040'; ctx.fillText(tr('小軸 (半徑 r)', 'Axle (Radius r)'), cx + 15, cy - 25);
+      ctx.fillStyle = '#a3b8b0'; ctx.font = '18px "Noto Sans TC"'; ctx.fillText(tr('▲ 同心旋轉幾何模型', '▲ Concentric Geometry'), cx - 90, cy + 150);
 
-      // === 右區：100% 靜態實例工整剖面繪圖 ===
       let rx = 700, ry = 240;
       ctx.save();
       ctx.translate(rx, ry);
-
       ctx.textAlign = 'center';
 
       if (t3_wheel_item === 'copter') {
@@ -913,8 +745,8 @@
         ctx.fillStyle = '#4dd2ff'; ctx.fillRect(-130, -32, 260, 22);
         ctx.strokeStyle = '#f6f3ea'; ctx.strokeRect(-130, -32, 260, 22);
 
-        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px Noto Sans TC'; ctx.fillText('寬長葉片為【大輪 R】(極省時！)', 0, -60);
-        ctx.fillStyle = '#ff8040'; ctx.fillText('手搓細桿為【小軸 r】(費力)', 0, 155);
+        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px "Noto Sans TC"'; ctx.fillText(tr('寬長葉片為【大輪 R】(極省時！)', 'Blades = Wheel R (High Speed!)'), 0, -60);
+        ctx.fillStyle = '#ff8040'; ctx.fillText(tr('手搓細桿為【小軸 r】(費力)', 'Shaft = Axle r (More Force)'), 0, 155);
       }
       else if (t3_wheel_item === 'pencil') {
         ctx.fillStyle = '#ffe066'; ctx.fillRect(-170, -15, 80, 24);
@@ -936,8 +768,8 @@
         ctx.fillStyle = '#ffe066'; ctx.fillRect(crank_center_x + 40, -120, 22, 54);
         ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.strokeRect(crank_center_x + 40, -120, 22, 54);
 
-        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px Noto Sans TC'; ctx.fillText('手搖把手為【大輪 R】(極省力)', -20, -135);
-        ctx.fillStyle = '#ff8040'; ctx.fillText('中心滾刀為【小軸 r】', -20, 115);
+        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px "Noto Sans TC"'; ctx.fillText(tr('手搖把手為【大輪 R】(極省力)', 'Handle = Wheel R (Saves Force)'), -20, -135);
+        ctx.fillStyle = '#ff8040'; ctx.fillText(tr('中心滾刀為【小軸 r】', 'Cutter = Axle r'), -20, 115);
       }
       else if (t3_wheel_item === 'faucet') {
         ctx.fillStyle = '#a3b8b0'; ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 3;
@@ -959,8 +791,8 @@
         ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 3; ctx.strokeRect(-110, -55, 220, 22);
         ctx.fillRect(-22, -68, 44, 13); ctx.strokeRect(-22, -68, 44, 13);
 
-        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px Noto Sans TC'; ctx.fillText('手柄寬跨距為【大輪 R】(省力)', 0, -90);
-        ctx.fillStyle = '#ff8040'; ctx.fillText('閥桿中心為【小軸 r】', 0, 135);
+        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px "Noto Sans TC"'; ctx.fillText(tr('手柄寬跨距為【大輪 R】(省力)', 'Handle = Wheel R (Saves Force)'), 0, -90);
+        ctx.fillStyle = '#ff8040'; ctx.fillText(tr('閥桿中心為【小軸 r】', 'Valve Stem = Axle r'), 0, 135);
       }
       else if (t3_wheel_item === 'doorknob') {
         ctx.fillStyle = '#1e382b'; ctx.fillRect(-30, -110, 50, 230);
@@ -980,8 +812,8 @@
         ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 3; ctx.stroke();
         ctx.fillRect(-48, -20, 10, 40); ctx.strokeRect(-48, -20, 10, 40);
 
-        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px Noto Sans TC'; ctx.fillText('外把球為【大輪 R】(省力)', -95, -80);
-        ctx.fillStyle = '#ff8040'; ctx.fillText('內部鎖舌為【小軸 r】', 45, 55);
+        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px "Noto Sans TC"'; ctx.fillText(tr('外把球為【大輪 R】(省力)', 'Knob = Wheel R (Saves Force)'), -95, -80);
+        ctx.fillStyle = '#ff8040'; ctx.fillText(tr('內部鎖舌為【小軸 r】', 'Spindle = Axle r'), 45, 55);
       }
       else if (t3_wheel_item === 'screwdriver') {
         ctx.fillStyle = '#ff8040'; ctx.fillRect(20, -14, 140, 28);
@@ -995,8 +827,8 @@
           ctx.beginPath(); ctx.moveTo(i, -42); ctx.lineTo(i, 42); ctx.stroke();
         }
 
-        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px Noto Sans TC'; ctx.fillText('粗柄為【大輪 R】(省力)', -65, -70);
-        ctx.fillStyle = '#ff8040'; ctx.fillText('細金屬為【小軸 r】', 90, 55);
+        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px "Noto Sans TC"'; ctx.fillText(tr('粗柄為【大輪 R】(省力)', 'Handle = Wheel R (Saves Force)'), -65, -70);
+        ctx.fillStyle = '#ff8040'; ctx.fillText(tr('細金屬為【小軸 r】', 'Shaft = Axle r'), 90, 55);
       }
       else if (t3_wheel_item === 'wheel') {
         ctx.fillStyle = '#ff8040'; ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI*2); ctx.fill();
@@ -1008,97 +840,303 @@
         ctx.beginPath(); ctx.moveTo(32, 0); ctx.lineTo(100, 0); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, 32); ctx.lineTo(0, 100); ctx.stroke();
 
-        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px Noto Sans TC'; ctx.fillText('外握圈為【大輪 R】(省力)', 0, -135);
-        ctx.fillStyle = '#ff8040'; ctx.fillText('轉向柱為【小軸 r】', 0, 155);
+        ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 22px "Noto Sans TC"'; ctx.fillText(tr('外握圈為【大輪 R】(省力)', 'Rim = Wheel R (Saves Force)'), 0, -135);
+        ctx.fillStyle = '#ff8040'; ctx.fillText(tr('轉向柱為【小軸 r】', 'Column = Axle r'), 0, 155);
       }
 
       ctx.restore();
     }
-
-    animationFrame = requestAnimationFrame(animateTab3);
   }
 
-  // ============== 分頁四：斜面推力計算與螺旋自轉捲動 ==============
+  // ============== 分頁四：斜面推拉、螺旋自轉與生活手繪應用 ==============
   function setTab4Mode(mode, btn) {
     t4_mode = mode;
     document.querySelectorAll('.btn-switch').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    
     document.getElementById('inc-sub-controls').style.display = (mode === 'inclined') ? 'block' : 'none';
-    document.getElementById('screw-hint').style.display = (mode === 'screw') ? 'block' : 'none';
+    document.getElementById('screw-sub-controls').style.display = (mode === 'screw') ? 'block' : 'none';
+    document.getElementById('apps-sub-controls').style.display = (mode === 'apps') ? 'block' : 'none';
+
+    if (mode === 'inclined') startInclineAction('reset');
+    if (mode === 'screw') resetScrewWinding();
+
     updateTab4();
   }
 
+  function startInclineAction(action) {
+    if (action === 'reset') {
+      t4_incline_state = 'idle';
+      t4_incline_prog = 0;
+    } else if (action === 'push') {
+      t4_incline_state = 'pushing';
+      t4_incline_prog = 0;
+    } else if (action === 'lift') {
+      t4_incline_state = 'lifting';
+      t4_incline_prog = 0;
+    }
+    updateTab4();
+  }
+
+  function startScrewWinding() {
+    t4_screw_state = 'winding';
+    t4_screw_time = 0;
+  }
+
+  function resetScrewWinding() {
+    t4_screw_state = 'idle';
+    t4_screw_time = 0;
+  }
+
   function updateTab4() {
+    let w_val = 120;
+    let f_inc = (w_val * t4_h) / t4_len;
+    let work_inc = f_inc * t4_len;
+    let work_lift = w_val * t4_h;
+
     if (t4_mode === 'inclined') {
-      let w_val = 120;
-      let f_inc = (w_val * t4_h) / t4_len;
       dynamicStats.innerHTML = `
         <div class="stat-row">
-          <span>物體重 <span style="white-space: nowrap;">W = <b>120 N</b></span>，高度 <span style="white-space: nowrap;">h = <b>${t4_h} m</b></span>，長度 <span style="white-space: nowrap;">L = <b>${t4_len} m</b></span></span>
+          <span>${tr('物體重量', 'Load')} <span class="nw mono">W = <b>120 N</b></span>，${tr('垂直高度', 'Height')} <span class="nw mono">h = <b>${t4_h} m</b></span>，${tr('斜面長度', 'Length')} <span class="nw mono">L = <b>${t4_len} m</b></span></span>
         </div>
         <div class="stat-row">
-          <span>沿斜面平衡推力</span>
-          <div class="val-badge">
-            F = <div class="math-fraction"><span class="num">W × h</span><span class="den">L</span></div> = <span class="hl-teal" style="margin-left:6px;">${f_inc.toFixed(1)} N</span>
-          </div>
+          <span>🟢 ${tr('沿斜面推力', 'Incline Push Force')}</span>
+          <div class="val-badge">F<sub>${tr('推', 'push')}</sub> = <span class="hl-teal" style="margin-left:6px;">${f_inc.toFixed(1)} N</span></div>
+          <span>➜ ${tr('推升作功', 'Incline Work')}</span>
+          <div class="val-badge">W<sub>${tr('斜面', 'incline')}</sub> = <span class="hl-yellow" style="margin-left:6px;">${work_inc.toFixed(0)} J</span></div>
+        </div>
+        <div class="stat-row">
+          <span>🔴 ${tr('鉛直拉力', 'Vertical Lift Force')}</span>
+          <div class="val-badge">F<sub>${tr('抬', 'lift')}</sub> = <span class="hl-coral" style="margin-left:6px;">${w_val} N</span></div>
+          <span>➜ ${tr('抬升作功', 'Lift Work')}</span>
+          <div class="val-badge">W<sub>${tr('鉛直', 'vertical')}</sub> = <span class="hl-yellow" style="margin-left:6px;">${work_lift.toFixed(0)} J</span></div>
+        </div>
+      `;
+    } else if (t4_mode === 'screw') {
+      dynamicStats.innerHTML = `
+        <div class="stat-row" style="flex-direction:column; align-items:flex-start; font-size:19px;">
+          <span>👉 <b>${tr('上列 (緩斜面)：', 'Top (Gentle):')}</b>${tr('捲動圈數多，螺紋密集（<b>螺距 d 小</b>）➔ <b class="hl-yellow">極致省力，但費距離！</b>', 'More turns, dense threads (<b>small pitch d</b>) ➔ <b class="hl-yellow">Saves force, more turns!</b>')}</span>
+          <span style="margin-top:8px;">👉 <b>${tr('下列 (陡斜面)：', 'Bottom (Steep):')}</b>${tr('捲動圈數少，螺紋稀疏（<b>螺距 d 大</b>）➔ <b class="hl-coral">較為費力，但省距離！</b>', 'Fewer turns, sparse threads (<b>large pitch d</b>) ➔ <b class="hl-coral">Requires more force, fewer turns!</b>')}</span>
         </div>
       `;
     } else {
       dynamicStats.innerHTML = `
         <div class="stat-row" style="flex-direction:column; align-items:flex-start; font-size:19px;">
-          <span>👉 <b>上列 (緩斜面)：</b>捲動圈數多，螺紋密集（<b>螺距 d 小</b>）➔ <b style="color:var(--chalk-yellow);">極致省力，但費距離！</b></span>
-          <span style="margin-top:8px;">👉 <b>下列 (陡斜面)：</b>捲動圈數少，螺紋稀疏（<b>螺距 d 大</b>）➔ <b style="color:var(--chalk-coral);">較為費力，但省距離！</b></span>
+          <span>🪜 <b>${tr('樓梯（階梯化斜面）：', 'Stairs (Stepped Incline):')}</b>${tr('將直角斷崖高度 h 轉化為平緩斜坡梯級，克服重力更輕鬆。', 'Converts steep vertical cliff h into stepped incline for safe and easy ascent.')}</span>
+          <span style="margin-top:8px;">🛣️ <b>${tr('盤山公路（連續螺旋斜面）：', 'Winding Mountain Road (Helical Incline):')}</b>${tr('汽車與行人沿山壁環繞盤旋，以極長蜿蜒距離 L 換取微小推力 F，直達高聳山頂！', 'Vehicles and hikers spiral around the mountain, trading distance L for minimal engine climbing force F.')}</span>
         </div>
       `;
     }
   }
 
-  function animateTab4() {
-    if (currentTab !== 'tab4') return;
+  // --- 手繪火柴人 ---
+  function drawChalkPerson(ctx, x, y, angle, pose, color, scale) {
+    if (scale === undefined) scale = 1;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.scale(scale, scale);
+
+    ctx.strokeStyle = color || '#33cc99';
+    ctx.fillStyle = color || '#33cc99';
+    ctx.lineWidth = scale < 0.5 ? 6 : 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // 1. 頭部
+    ctx.beginPath();
+    ctx.arc(0, -52, 11, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. 軀幹
+    ctx.beginPath();
+    ctx.moveTo(0, -41);
+    ctx.lineTo(0, -14);
+    ctx.stroke();
+
+    // 3. 雙腿
+    ctx.beginPath();
+    if (pose === 'push') {
+      ctx.moveTo(0, -14);
+      ctx.lineTo(-14, 14);
+      ctx.moveTo(0, -14);
+      ctx.lineTo(10, 14);
+    } else if (pose === 'lift') {
+      ctx.moveTo(0, -14);
+      ctx.lineTo(-10, 14);
+      ctx.moveTo(0, -14);
+      ctx.lineTo(10, 14);
+    } else if (pose === 'climb') {
+      ctx.moveTo(0, -14);
+      ctx.lineTo(-12, 14);
+      ctx.moveTo(0, -14);
+      ctx.lineTo(14, 2);
+      ctx.lineTo(14, 14);
+    } else if (pose === 'hike') {
+      ctx.moveTo(0, -14);
+      ctx.lineTo(-12, 14);
+      ctx.moveTo(0, -14);
+      ctx.lineTo(12, 12);
+    } else {
+      ctx.moveTo(0, -14);
+      ctx.lineTo(-10, 14);
+      ctx.moveTo(0, -14);
+      ctx.lineTo(10, 14);
+    }
+    ctx.stroke();
+
+    // 4. 手臂
+    ctx.beginPath();
+    if (pose === 'push') {
+      ctx.moveTo(0, -32);
+      ctx.lineTo(18, -25);
+      ctx.lineTo(34, -20);
+      ctx.moveTo(0, -32);
+      ctx.lineTo(14, -18);
+      ctx.lineTo(34, -14);
+    } else if (pose === 'lift') {
+      ctx.moveTo(0, -32);
+      ctx.lineTo(16, -18);
+      ctx.lineTo(28, -8);
+      ctx.moveTo(0, -32);
+      ctx.lineTo(20, -24);
+      ctx.lineTo(32, -14);
+    } else if (pose === 'climb') {
+      ctx.moveTo(0, -32);
+      ctx.lineTo(-14, -14);
+      ctx.lineTo(-18, 0);
+      ctx.moveTo(0, -32);
+      ctx.lineTo(14, -22);
+      ctx.lineTo(22, -10);
+    } else if (pose === 'hike') {
+      ctx.moveTo(0, -32);
+      ctx.lineTo(-12, -16);
+      ctx.lineTo(-16, -2);
+      ctx.moveTo(0, -32);
+      ctx.lineTo(14, -20);
+      ctx.lineTo(18, -2);
+      ctx.moveTo(18, -20);
+      ctx.lineTo(22, 14);
+    } else {
+      ctx.moveTo(0, -32);
+      ctx.lineTo(-10, -10);
+      ctx.moveTo(0, -32);
+      ctx.lineTo(10, -10);
+    }
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function renderTab4() {
     ctx.clearRect(0, 0, 960, 440);
-    animTime += 0.03;
+
+    let w_val = 120;
+    let f_inc = (w_val * t4_h) / t4_len;
 
     if (t4_mode === 'inclined') {
-      ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 26px Noto Sans TC';
-      ctx.fillText('斜面省力推析：以長度換取輕鬆推力', 250, 45);
-
-      let bx = 160, by = 350;
-      let sw = 640, sh = (t4_h / 4) * 220;
-
-      ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + sw, by); ctx.lineTo(bx + sw, by - sh); ctx.closePath(); ctx.stroke();
-
-      let prog = (Math.sin(animTime) + 1) / 2;
-      let cx = bx + prog * sw, cy = by - prog * sh;
-
-      ctx.save();
-      ctx.translate(cx, cy);
-      let inc_angle = Math.atan2(-sh, sw);
-      ctx.rotate(inc_angle);
-      ctx.fillStyle = '#4dd2ff'; ctx.fillRect(-45, -50, 60, 50);
-      ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.strokeRect(-45, -50, 60, 50);
-      ctx.restore();
-
-      ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 22px JetBrains Mono';
-      ctx.fillText(`高度 h = ${t4_h}m`, bx + sw + 20, by - sh/2);
-      ctx.fillText(`斜面長 L = ${t4_len}m`, bx + sw/2 - 60, by - sh/2 - 30);
-    } else {
-      ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 25px Noto Sans TC';
-      ctx.fillText('雙斜面木條自轉捲動模擬：角度恆定、由上往下印出右上左下螺紋', 120, 38);
-
-      let cycleTime = animTime % 6;
-      let roll_prog = 0;
-      let isSpinning = false;
-      if (cycleTime < 4) {
-        roll_prog = cycleTime / 4; 
-        isSpinning = true;
-      } else {
-        roll_prog = 1; 
-        isSpinning = false;
+      if (t4_incline_state === 'pushing') {
+        t4_incline_prog += 0.012;
+        if (t4_incline_prog >= 1) {
+          t4_incline_prog = 1;
+          t4_incline_state = 'pushed';
+        }
+      } else if (t4_incline_state === 'lifting') {
+        t4_incline_prog += 0.012;
+        if (t4_incline_prog >= 1) {
+          t4_incline_prog = 1;
+          t4_incline_state = 'lifted';
+        }
       }
 
-      let r_y = 190;
-      let cyl_r_x = 760, cyl_w = 45, cyl_h = 110;
+      ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 24px "Noto Sans TC"';
+      ctx.fillText(tr('斜面推升 (左) vs 鉛直直接抬升 (右) 施力與作功對照', 'Incline Push vs Vertical Lift: Force & Work'), 60, 40);
+
+      let bx = 100, by = 360;
+      let sw = 420, sh = (t4_h / 4) * 190;
+      let inc_angle = Math.atan2(-sh, sw);
+
+      ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(40, by); ctx.lineTo(920, by); ctx.stroke();
+
+      ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + sw, by); ctx.lineTo(bx + sw, by - sh); ctx.closePath(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255, 224, 102, 0.08)'; ctx.fill();
+
+      ctx.fillStyle = '#ffe066'; ctx.font = 'bold 20px "JetBrains Mono"';
+      ctx.fillText(`L = ${t4_len} m`, bx + sw/2 - 50, by - sh/2 - 25);
+      
+      ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(bx + sw, by - sh); ctx.lineTo(bx + sw + 50, by - sh); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ff8040';
+      ctx.fillText(`h = ${t4_h} m`, bx + sw + 15, by - sh/2);
+
+      let p_prog = (t4_incline_state === 'pushing' || t4_incline_state === 'pushed') ? t4_incline_prog : 0;
+      let cx_box = bx + p_prog * sw;
+      let cy_box = by - p_prog * sh;
+
+      ctx.save();
+      ctx.translate(cx_box, cy_box);
+      ctx.rotate(inc_angle);
+      
+      ctx.fillStyle = '#4dd2ff'; ctx.fillRect(-25, -45, 55, 45);
+      ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.strokeRect(-25, -45, 55, 45);
+      ctx.fillStyle = '#11261f'; ctx.font = 'bold 18px "JetBrains Mono"'; ctx.fillText('120N', -20, -17);
+
+      drawChalkPerson(ctx, -56, -14, 0, 'push', '#33cc99', 1.0);
+
+      ctx.strokeStyle = '#33cc99'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(30, -22); ctx.lineTo(105, -22); ctx.stroke();
+      ctx.fillStyle = '#33cc99';
+      ctx.beginPath(); ctx.moveTo(105, -22); ctx.lineTo(90, -30); ctx.lineTo(90, -14); ctx.fill();
+      ctx.font = 'bold 18px "JetBrains Mono"'; ctx.fillText(`F推=${f_inc.toFixed(1)}N`, 40, -32);
+
+      ctx.restore();
+
+      let l_prog = (t4_incline_state === 'lifting' || t4_incline_state === 'lifted') ? t4_incline_prog : 0;
+      let rx_pos = 680;
+      let ry_pos = by - l_prog * sh;
+
+      ctx.strokeStyle = 'rgba(255, 128, 64, 0.4)'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+      ctx.strokeRect(rx_pos + 28, by - sh - 45, 55, 45);
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#ff8040'; ctx.fillRect(rx_pos + 28, ry_pos - 45, 55, 45);
+      ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2; ctx.strokeRect(rx_pos + 28, ry_pos - 45, 55, 45);
+      ctx.fillStyle = '#11261f'; ctx.font = 'bold 18px "JetBrains Mono"'; ctx.fillText('120N', rx_pos + 33, ry_pos - 17);
+
+      drawChalkPerson(ctx, rx_pos, ry_pos - 14, 0, 'lift', '#ff8040', 1.0);
+
+      ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(rx_pos + 55, ry_pos - 45); ctx.lineTo(rx_pos + 55, ry_pos - 110); ctx.stroke();
+      ctx.fillStyle = '#ff8040';
+      ctx.beginPath(); ctx.moveTo(rx_pos + 55, ry_pos - 110); ctx.lineTo(rx_pos + 47, ry_pos - 95); ctx.lineTo(rx_pos + 63, ry_pos - 95); ctx.fill();
+      ctx.font = 'bold 18px "JetBrains Mono"'; ctx.fillText('F抬=120N', rx_pos + 68, ry_pos - 80);
+
+      ctx.strokeStyle = '#4dd2ff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(rx_pos + 120, by); ctx.lineTo(rx_pos + 120, by - sh); ctx.stroke();
+      ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 18px "Noto Sans TC"';
+      ctx.fillText(tr(`抬升高度 h = ${t4_h}m`, `Lift Height h = ${t4_h}m`), rx_pos + 130, by - sh/2 + 5);
+
+    } else if (t4_mode === 'screw') {
+      if (t4_screw_state === 'winding') {
+        t4_screw_time += 0.02;
+        if (t4_screw_time >= 4) {
+          t4_screw_time = 4;
+          t4_screw_state = 'wound';
+        }
+      }
+
+      ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 23px "Noto Sans TC"';
+      ctx.fillText(tr('雙斜面自轉捲動模擬：按鈕開始捲動，4 秒後展示螺距 d', 'Screw Winding: Click Start, halts at 4s to show pitch d'), 60, 38);
+
+      let roll_prog = (t4_screw_state === 'idle') ? 0 : (t4_screw_time / 4);
+      let isSpinning = (t4_screw_state === 'winding');
+
+      // ✅ 將這兩個位置基準點往下移動，以確保上方文字有充足空間
+      let r_y = 200;
+      let cyl_r_x = 760, cyl_w = 45, cyl_h = 100;
       
       ctx.fillStyle = '#1e2f27'; ctx.fillRect(cyl_r_x, r_y - cyl_h, cyl_w, cyl_h);
       ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 3; ctx.strokeRect(cyl_r_x, r_y - cyl_h, cyl_w, cyl_h);
@@ -1128,7 +1166,6 @@
         ctx.fillStyle = 'rgba(255, 224, 102, 0.15)'; ctx.fill();
       }
 
-      // 🌟 嚴格由上方往下，印出「右上左下」傾斜螺紋
       ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 5;
       let count2 = Math.floor(roll_prog * 6) + 1;
       for(let i = 0; i < count2; i++) {
@@ -1137,14 +1174,19 @@
           ctx.beginPath(); ctx.moveTo(cyl_r_x + cyl_w, y_top); ctx.lineTo(cyl_r_x, y_top + 10); ctx.stroke();
         }
       }
-      ctx.fillStyle = '#ffe066'; ctx.font = 'bold 21px Noto Sans TC';
-      if (!isSpinning) {
-        ctx.fillText('✨ 捲繞完成！螺紋密、螺距 d 小 (極省力)', 120, r_y - 45);
+      
+      // ✅ 修正點：將文字統一拉到形狀之上（y 軸再減去 10），並設定起始 X 在左側安全區
+      ctx.fillStyle = '#ffe066'; ctx.font = 'bold 21px "Noto Sans TC"';
+      if (t4_screw_state === 'wound') {
+        ctx.fillText(tr('✨ 捲繞完成！螺紋密、螺距 d 小 (極省力)', '✨ Winding Complete! Dense Threads, Small Pitch d (Saves Force)'), 60, r_y - cyl_h - 10);
+      } else if (isSpinning) {
+        ctx.fillText(tr('緩斜面捲動中... ➔ 螺紋密、螺距 d 小', 'Gentle Incline Winding... ➔ Small Pitch d'), 60, r_y - cyl_h - 10);
       } else {
-        ctx.fillText('緩斜面捲動中... ➔ 螺紋密、螺距 d 小', 120, r_y - 45);
+        ctx.fillText(tr('點擊按鈕開始捲動緩斜面紙條', 'Click button to start winding gentle incline'), 60, r_y - cyl_h - 10);
       }
 
-      let l_y = 380;
+      // ✅ 將下列基準點也往下移動
+      let l_y = 400;
       
       ctx.fillStyle = '#1e2f27'; ctx.fillRect(cyl_r_x, l_y - cyl_h, cyl_w, cyl_h);
       ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 3; ctx.strokeRect(cyl_r_x, l_y - cyl_h, cyl_w, cyl_h);
@@ -1174,7 +1216,6 @@
         ctx.fillStyle = 'rgba(255, 128, 64, 0.15)'; ctx.fill();
       }
 
-      // 🌟 嚴格由上方往下，印出「右上左下」傾斜螺紋
       ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 5;
       let count1 = Math.floor(roll_prog * 2.5) + 1;
       for(let i = 0; i < count1; i++) {
@@ -1183,19 +1224,127 @@
           ctx.beginPath(); ctx.moveTo(cyl_r_x + cyl_w, y_top); ctx.lineTo(cyl_r_x, y_top + 20); ctx.stroke();
         }
       }
-      ctx.fillStyle = '#ff8040'; ctx.font = 'bold 21px Noto Sans TC';
-      if (!isSpinning) {
-        ctx.fillText('✨ 捲繞完成！螺紋疏、螺距 d 大 (費力省時)', 120, l_y - 45);
+      
+      // ✅ 修正點：將文字統一拉到形狀之上（y 軸再減去 10），並設定起始 X 在左側安全區
+      ctx.fillStyle = '#ff8040'; ctx.font = 'bold 21px "Noto Sans TC"';
+      if (t4_screw_state === 'wound') {
+        ctx.fillText(tr('✨ 捲繞完成！螺紋疏、螺距 d 大 (費力省時)', '✨ Winding Complete! Sparse Threads, Large Pitch d'), 60, l_y - cyl_h - 10);
+      } else if (isSpinning) {
+        ctx.fillText(tr('陡斜面捲動中... ➔ 螺紋疏、螺距 d 大', 'Steep Incline Winding... ➔ Large Pitch d'), 60, l_y - cyl_h - 10);
       } else {
-        ctx.fillText('陡斜面捲動中... ➔ 螺紋疏、螺距 d 大', 120, l_y - 45);
+        ctx.fillText(tr('點擊按鈕開始捲動陡斜面紙條', 'Click button to start winding steep incline'), 60, l_y - cyl_h - 10);
       }
-    }
 
-    animationFrame = requestAnimationFrame(animateTab4);
+    } else if (t4_mode === 'apps') {
+      ctx.fillStyle = '#f6f3ea'; ctx.font = 'bold 24px "Noto Sans TC"';
+      ctx.fillText(tr('手繪物理生活實例：樓梯 (階梯化斜面) 與 盤山公路 (螺旋)', 'Real-World Apps: Stairs (Incline) & Mountain Road (Screw)'), 40, 40);
+
+      // 分隔線
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+      ctx.beginPath(); ctx.moveTo(480, 70); ctx.lineTo(480, 410); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // === 左側：樓梯手繪圖 ===
+      let sx = 60, sy = 360, steps = 6, stepW = 55, stepH = 40;
+      
+      ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      for(let i = 0; i < steps; i++) {
+        ctx.lineTo(sx + i * stepW, sy - (i + 1) * stepH);
+        ctx.lineTo(sx + (i + 1) * stepW, sy - (i + 1) * stepH);
+      }
+      ctx.stroke();
+
+      // 斜坡等效虛線
+      ctx.strokeStyle = '#33cc99'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + steps * stepW, sy - steps * stepH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 爬樓梯的人物 (0.85x 比例，動作協調自然)
+      drawChalkPerson(ctx, sx + 2.5 * stepW, sy - 3 * stepH - 5, 0, 'climb', '#ffe066', 0.85);
+
+      ctx.fillStyle = '#ffe066'; ctx.font = 'bold 20px "Noto Sans TC"';
+      ctx.fillText(tr('🪜 樓梯：斜面的階梯化', '🪜 Stairs: Stepped Incline'), 110, 80);
+      ctx.fillStyle = '#33cc99'; ctx.font = '18px "Noto Sans TC"';
+      ctx.fillText(tr('▲ 綠色虛線為等效平緩斜面 (L)', '▲ Green line: Equivalent Incline (L)'), 70, 395);
+      ctx.fillText(tr('將高度 h 拆分為多段小台階，輕鬆拾級而上！', 'Divides vertical height h into easy steps!'), 70, 420);
+
+      // === 右側：盤山公路手繪圖 ===
+      let mx = 720, my = 370;
+
+      // 綠色山丘輪廓
+      ctx.fillStyle = 'rgba(51, 204, 153, 0.12)';
+      ctx.strokeStyle = '#33cc99'; ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(mx - 200, my);
+      ctx.quadraticCurveTo(mx - 150, my - 240, mx, my - 260);
+      ctx.quadraticCurveTo(mx + 150, my - 240, mx + 200, my);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // 盤山蜿蜒道路
+      ctx.strokeStyle = '#4dd2ff'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+      
+      ctx.beginPath();
+      ctx.moveTo(mx - 170, my - 30);
+      ctx.quadraticCurveTo(mx, my - 70, mx + 160, my - 60);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(mx + 140, my - 100);
+      ctx.quadraticCurveTo(mx, my - 140, mx - 130, my - 130);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(mx - 110, my - 170);
+      ctx.quadraticCurveTo(mx, my - 200, mx + 100, my - 190);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(mx + 80, my - 220);
+      ctx.quadraticCurveTo(mx, my - 245, mx, my - 260);
+      ctx.stroke();
+
+      // 行駛小車 (長 34px, 高 16px)
+      let carX = mx - 20, carY = my - 137;
+      ctx.fillStyle = '#ff8040';
+      ctx.fillRect(carX, carY - 14, 34, 16);
+      ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 2;
+      ctx.strokeRect(carX, carY - 14, 34, 16);
+      // 車輪
+      ctx.fillStyle = '#11261f';
+      ctx.beginPath(); ctx.arc(carX + 7, carY + 3, 4.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(carX + 27, carY + 3, 4.5, 0, Math.PI*2); ctx.fill();
+
+      // 健行登山客 (縮小至 0.35x)
+      drawChalkPerson(ctx, mx - 80, my - 45, 0, 'hike', '#ffe066', 0.35);
+
+      ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 20px "Noto Sans TC"';
+      ctx.fillText(tr('🛣️ 盤山公路：纏繞山體的螺旋', '🛣️ Winding Road: Helical Spiral'), 500, 80);
+      ctx.fillStyle = '#f6f3ea'; ctx.font = '18px "Noto Sans TC"';
+      ctx.fillText(tr('蜿蜒盤旋拉長前進路徑 (L ↑)', 'Lengthens travel path (L ↑)'), 500, 395);
+      ctx.fillText(tr('車輛與行人爬坡推力大幅減小 (F ↓)', 'Reduces required climbing force (F ↓)'), 500, 420);
+    }
+  }
+
+  // --- 全域單一主動畫迴圈 (徹底杜絕競態與凍結) ---
+  function mainLoop() {
+    if (currentTab === 'tab1') renderTab1();
+    else if (currentTab === 'tab2') renderTab2();
+    else if (currentTab === 'tab3') renderTab3();
+    else if (currentTab === 'tab4') renderTab4();
+    requestAnimationFrame(mainLoop);
   }
 
   // 初始化啟動
-  switchTab('tab1');
+  applyTranslations();
+  switchTab('tab1', null);
+  requestAnimationFrame(mainLoop);
 </script>
 </body>
 </html>
