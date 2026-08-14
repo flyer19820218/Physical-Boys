@@ -2,11 +2,11 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>靜電與電荷的奧祕：HTML5 互動黑板教學</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title data-zh="靜電與電荷的奧祕：HTML5 互動黑板教學" data-en="Mysteries of Static Electricity: Interactive Blackboard">靜電與電荷的奧祕：HTML5 互動黑板教學</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg-base: #11261f;
@@ -21,30 +21,35 @@
     --chalk-blue: #4dd2ff;  /* 極簡版電子顏色 */
     --chalk-red: #ff4d4d;   /* 極簡版正電顏色 */
     --rule-color: rgba(246, 243, 234, 0.22);
+    --shadow-dark: rgba(9, 20, 16, 0.9);
   }
 
   * { box-sizing: border-box; }
 
+  /* 嚴格堅持基礎字體地板 20px */
   body {
     margin: 0;
     background-color: var(--bg-base);
     color: var(--chalk-white);
     font-family: 'Noto Sans TC', sans-serif;
-    font-size: 19px;
+    font-size: 20px;
     line-height: 1.65;
-    padding: 24px 0 80px;
+    padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(60px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
   }
 
+  /* 規範2：全站最大寬度鎖定 1080px */
   .wrap {
-    max-width: 1350px;
+    max-width: 1080px;
     margin: 0 auto;
-    padding: 0 24px;
   }
 
   header {
     text-align: center;
     margin-bottom: 28px;
     border-bottom: 2px dashed var(--rule-color);
+    padding-top: 40px;
     padding-bottom: 20px;
   }
 
@@ -62,6 +67,26 @@
     font-size: 21px;
   }
 
+  /* 懸浮雙語切換按鈕 */
+  .language-switch {
+    position: fixed; z-index: 3000;
+    top: max(16px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right));
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border: 2px solid var(--chalk-teal); border-radius: 12px;
+    background: rgba(17, 38, 31, 0.96); box-shadow: 0 8px 24px var(--shadow-dark), 0 0 16px rgba(77, 210, 255, 0.2);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .language-label { color: var(--chalk-teal); font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; }
+  .lang-btn {
+    min-width: 58px; min-height: 48px; padding: 8px 12px;
+    border: 2px solid rgba(255, 255, 255, 0.35); border-radius: 9px;
+    background: var(--bg-base); color: var(--chalk-white);
+    font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700;
+    cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  .lang-btn.active { background: var(--chalk-teal); color: var(--bg-base); border-color: var(--chalk-teal); }
+  .lang-btn:focus-visible { outline: 3px solid rgba(255, 224, 102, 0.75); outline-offset: 3px; }
+
   .tabs {
     display: flex;
     gap: 12px;
@@ -73,7 +98,7 @@
     flex: 1;
     min-width: 160px;
     padding: 14px 10px;
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 700;
     background: rgba(255, 255, 255, 0.05);
     color: var(--chalk-muted);
@@ -82,28 +107,31 @@
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    white-space: normal;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
   }
 
-  .tab-btn:hover { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .tab-btn:hover { background: var(--bg-panel-hover); color: var(--chalk-white); border-color: var(--chalk-white); }
   .tab-btn.active {
     background: #1f4236; color: var(--chalk-yellow);
     border: 2px solid var(--chalk-yellow); box-shadow: 0 0 16px rgba(255, 224, 102, 0.25);
   }
 
-  /* 🌟 第六分頁資優補充按鈕專屬樣式 */
   .tab-btn.danger-tab { color: var(--chalk-coral); border-color: rgba(255, 128, 64, 0.5); background: rgba(255, 128, 64, 0.05); }
-  .tab-btn.danger-tab:hover { background: rgba(255, 128, 64, 0.15); color: #ffaa80; }
+  .tab-btn.danger-tab:hover { background: rgba(255, 128, 64, 0.15); color: #ffaa80; border-color: var(--chalk-coral); }
   .tab-btn.danger-tab.active {
     background: #4a2511; color: var(--chalk-coral);
     border: 2px solid var(--chalk-coral); box-shadow: 0 0 20px rgba(255, 128, 64, 0.4);
   }
 
   .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; margin-bottom: 20px; }
-  
-  /* 🌟 第六分頁的雙欄佈局 */
   .main-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: stretch; margin-bottom: 20px; }
-  @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } }
-
+  
   .panel { display: none; animation: fadeIn 0.3s ease; }
   .panel.active { display: block; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -115,11 +143,17 @@
 
   h2 { margin: 0 0 16px 0; font-size: 28px; color: var(--chalk-green); border-bottom: 1px dashed var(--rule-color); padding-bottom: 12px; }
 
+  /* 規範4：畫布等比例縮放容器 */
   .canvas-container {
     width: 100%; border: 2px solid var(--chalk-white); border-radius: 12px;
     overflow: hidden; background: #0d201a; position: relative; margin-bottom: 16px;
+    box-shadow: 0 4px 15px var(--shadow-dark);
   }
   canvas { display: block; width: 100%; height: auto; }
+  #cvs-tab1, #cvs-tab2, #cvs-tab4 { aspect-ratio: 500 / 280; }
+  #cvs-tab3 { aspect-ratio: 500 / 300; }
+  #cvs-tab5 { aspect-ratio: 500 / 260; }
+  #cvs-t6 { aspect-ratio: 800 / 400; }
 
   .controls {
     background: rgba(255, 255, 255, 0.04); padding: 16px 20px; border-radius: 12px;
@@ -130,11 +164,12 @@
 
   .action-btn {
     padding: 10px 18px; border: 2px solid var(--chalk-white); background: transparent; color: var(--chalk-white);
-    border-radius: 8px; font-size: 19px; font-weight: 700; cursor: pointer; transition: 0.2s;
+    border-radius: 8px; font-size: 20px; font-weight: 700; cursor: pointer; transition: 0.2s;
+    min-height: 48px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; white-space: normal;
   }
-  .action-btn:hover:not(:disabled) { background: var(--chalk-white); color: var(--bg-base); }
-  .action-btn.active { background: var(--chalk-yellow); border-color: var(--chalk-yellow); color: var(--bg-base); }
-  .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .action-btn:hover:not(:disabled) { background: var(--chalk-white); color: var(--bg-base); transform: translateY(-2px); }
+  .action-btn.active { background: var(--chalk-yellow); border-color: var(--chalk-yellow); color: var(--bg-base); transform: none; }
+  .action-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
   .btn-blue { border-color: var(--chalk-teal); color: var(--chalk-teal); }
   .btn-blue:hover:not(:disabled), .btn-blue.active { background: var(--chalk-teal); color: var(--bg-base); }
@@ -146,24 +181,23 @@
   .math-fraction { display: inline-flex; flex-direction: column; justify-content: center; align-items: center; vertical-align: middle; margin: 0 8px; line-height: 1.2; font-family: 'JetBrains Mono', monospace; }
   .math-fraction .num { border-bottom: 2px solid var(--chalk-white); padding: 0 4px 2px; }
   .math-fraction .den { padding: 2px 4px 0; }
-  .mono { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--chalk-yellow); }
+  .mono { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--chalk-yellow); white-space: nowrap; }
 
   .note-ul { margin: 0; padding-left: 28px; }
   .note-ul li { margin-bottom: 12px; }
 
-  .color-pos { color: var(--chalk-coral); font-weight: 700; }
-  .color-neg { color: var(--chalk-teal); font-weight: 700; }
+  .color-pos { color: var(--chalk-coral); font-weight: 700; white-space: nowrap; }
+  .color-neg { color: var(--chalk-teal); font-weight: 700; white-space: nowrap; }
 
-  .readout-badge { font-family: 'JetBrains Mono', monospace; font-weight: 700; background: #11261f; border: 1px solid rgba(255,255,255,0.2); padding: 4px 16px; border-radius: 8px; display: inline-block; }
+  .readout-badge { font-family: 'JetBrains Mono', monospace; font-weight: 700; background: #11261f; border: 1px solid rgba(255,255,255,0.2); padding: 4px 16px; border-radius: 8px; display: inline-block; white-space: nowrap; }
   
   .formula-box { font-family: 'JetBrains Mono', monospace; background: rgba(255, 255, 255, 0.06); padding: 16px 24px; border-radius: 10px; border: 1px solid var(--rule-color); margin: 16px 0; text-align: center; font-size: 23px; color: var(--chalk-teal); }
   
   .control-group { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
-  .control-group label { font-weight: 700; color: var(--chalk-teal); font-size: 21px; }
-  .control-group input[type=range] { flex: 1; height: 12px; accent-color: var(--chalk-yellow); cursor: pointer; }
+  .control-group label { font-weight: 700; color: var(--chalk-teal); font-size: 21px; white-space: nowrap; }
+  .control-group input[type=range] { flex: 1; height: 12px; accent-color: var(--chalk-yellow); cursor: pointer; min-height: 48px; }
   input[type=range].danger-slider { accent-color: var(--chalk-red); }
 
-  /* 第六分頁學習單專屬樣式 */
   .status-badge-t6 { display: inline-block; padding: 4px 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-weight: bold; background: #000; min-width: 120px; text-align: center; }
   .task-card { background: rgba(0, 0, 0, 0.25); border-left: 6px solid var(--chalk-yellow); padding: 24px; border-radius: 0 16px 16px 0; flex: 1; display: flex; flex-direction: column; justify-content: center; animation: fadeIn 0.4s ease; }
   .task-card.danger { border-left-color: var(--chalk-red); }
@@ -179,81 +213,105 @@
   .poe-act .poe-header { color: var(--chalk-green); }
   .poe-verify .poe-header { color: var(--chalk-blue); }
   .poe-content { color: var(--chalk-white); font-size: 18px; line-height: 1.6; }
+
+  [data-zh][data-en] { overflow-wrap: break-word; }
+
+  @media (max-width: 768px) {
+    body { font-size: 20px; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 24px; }
+    .grid-2, .main-grid { grid-template-columns: 1fr; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; }
+    .action-btn { width: 100%; white-space: normal; }
+  }
+
+  @media (max-width: 520px) {
+    .language-label { display: none; }
+    .language-switch { top: 8px; right: 8px; padding: 6px; }
+    .tabs { grid-template-columns: 1fr; }
+    .panel { padding: 16px; border-width: 2px; }
+    .control-group { flex-direction: column; align-items: stretch; gap: 8px; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
+  <!-- 懸浮雙語切換 -->
+  <div class="language-switch" role="group" aria-label="語言切換">
+    <span class="language-label" data-zh="Language" data-en="Language">Language</span>
+    <button class="lang-btn active" type="button" data-lang="zh" onclick="setLanguage('zh')" aria-pressed="true">中文</button>
+    <button class="lang-btn" type="button" data-lang="en" onclick="setLanguage('en')" aria-pressed="false">EN</button>
+  </div>
+
   <header>
-    <h1>⚡ 靜電與電荷的奧祕</h1>
-    <p>國中自然科核心單元：自由電子、摩擦起電、感應起電四步驟、接觸起電與庫侖定律</p>
+    <h1 data-zh="⚡ 靜電與電荷的奧祕" data-en="⚡ Mysteries of Static Electricity">⚡ 靜電與電荷的奧祕</h1>
+    <p data-zh="國中自然科核心單元：自由電子、摩擦起電、感應起電四步驟、接觸起電與庫侖定律" data-en="Core Physics Unit: Free Electrons, Friction Charging, Induction, Contact Charging & Coulomb's Law">國中自然科核心單元：自由電子、摩擦起電、感應起電四步驟、接觸起電與庫侖定律</p>
   </header>
 
   <div class="tabs">
-    <div class="tab-btn active" onclick="switchTab('tab1')">原子結構與導電性</div>
-    <div class="tab-btn" onclick="switchTab('tab2')">摩擦起電模擬</div>
-    <div class="tab-btn" onclick="switchTab('tab3')">感應起電步驟</div>
-    <div class="tab-btn" onclick="switchTab('tab4')">接觸起電與驗電器</div>
-    <div class="tab-btn" onclick="switchTab('tab5')">庫侖定律與靜電力</div>
-    <div class="tab-btn danger-tab" onclick="switchTab('tab6')">🌟 資優補充：驗電器探討</div>
+    <button class="tab-btn active" onclick="switchTab('tab1', this)" data-zh="原子結構與導電性" data-en="Atomic Structure & Conductivity">原子結構與導電性</button>
+    <button class="tab-btn" onclick="switchTab('tab2', this)" data-zh="摩擦起電模擬" data-en="Friction Charging">摩擦起電模擬</button>
+    <button class="tab-btn" onclick="switchTab('tab3', this)" data-zh="感應起電步驟" data-en="Induction Steps">感應起電步驟</button>
+    <button class="tab-btn" onclick="switchTab('tab4', this)" data-zh="接觸起電與驗電器" data-en="Contact & Electroscope">接觸起電與驗電器</button>
+    <button class="tab-btn" onclick="switchTab('tab5', this)" data-zh="庫侖定律與靜電力" data-en="Coulomb's Law">庫侖定律與靜電力</button>
+    <button class="tab-btn danger-tab" onclick="switchTab('tab6', this)" data-zh="🌟 資優補充：驗電器探討" data-en="🌟 Adv: Electroscope Inquiry">🌟 資優補充：驗電器探討</button>
   </div>
 
   <!-- 分頁一：原子結構與自由電子 -->
   <div id="tab1" class="panel active">
     <div class="grid-2">
       <div class="content-box">
-        <h2>導體與絕緣體的微觀對比</h2>
+        <h2 data-zh="導體與絕緣體的微觀對比" data-en="Microscopic View: Conductor vs Insulator">導體與絕緣體的微觀對比</h2>
         <div class="canvas-container">
           <canvas id="cvs-tab1" width="500" height="280"></canvas>
         </div>
-        <div style="font-size: 20px; text-align: center; color: var(--chalk-yellow); margin-top: 10px;">
+        <div style="font-size: 20px; text-align: center; color: var(--chalk-yellow); margin-top: 10px;" data-zh="觀察：亮青色的「負電荷」是否能自由移動？" data-en="Observe: Can the cyan 'negative charges' move freely?">
           觀察：亮青色的「負電荷」是否能自由移動？
         </div>
       </div>
       <div class="content-box">
-        <h2>💡 教學黑板</h2>
+        <h2 data-zh="💡 教學黑板" data-en="💡 Blackboard Notes">💡 教學黑板</h2>
         <ul class="note-ul">
-          <li><b>靜電的本質：</b>靜止不流動的電荷。只會發生在<span style="white-space: nowrap;">「絕緣體」</span>之間的互相摩擦。</li>
-          <li><b>微觀導電性差異：</b>
-            <br>👉 <span style="white-space: nowrap;"><b>導體（如金屬）：</b></span>擁有可四處游走的<span class="color-neg">自由電子</span>。若發生摩擦，電荷會迅速流動散失，無法累積靜電。
-            <br>👉 <span style="white-space: nowrap;"><b>絕緣體（如塑膠）：</b></span>電子為<span class="color-neg">束縛電子</span>，被紅色的原子核緊緊拉住。摩擦後，電荷只能停留在表面形成靜電。
+          <li><b data-zh="靜電的本質：" data-en="Nature of Static Electricity:">靜電的本質：</b><span data-zh="靜止不流動的電荷。只會發生在" data-en="Stationary electric charges. Occurs only via friction between ">靜止不流動的電荷。只會發生在</span><span style="white-space: nowrap;" data-zh="「絕緣體」" data-en="'Insulators'">「絕緣體」</span><span data-zh="之間的互相摩擦。" data-en=".">之間的互相摩擦。</span></li>
+          <li><b data-zh="微觀導電性差異：" data-en="Microscopic Conductivity:">微觀導電性差異：</b>
+            <br>👉 <span style="white-space: nowrap;"><b data-zh="導體（如金屬）：" data-en="Conductors (e.g., Metals):">導體（如金屬）：</b></span><span data-zh="擁有可四處游走的" data-en="Possess mobile ">擁有可四處游走的</span><span class="color-neg" data-zh="自由電子" data-en="Free Electrons">自由電子</span><span data-zh="。若發生摩擦，電荷會迅速流動散失，無法累積靜電。" data-en=". Charges flow rapidly and dissipate, preventing static buildup.">。若發生摩擦，電荷會迅速流動散失，無法累積靜電。</span>
+            <br>👉 <span style="white-space: nowrap;"><b data-zh="絕緣體（如塑膠）：" data-en="Insulators (e.g., Plastics):">絕緣體（如塑膠）：</b></span><span data-zh="電子為" data-en="Electrons are ">電子為</span><span class="color-neg" data-zh="束縛電子" data-en="Bound Electrons">束縛電子</span><span data-zh="，被紅色的原子核緊緊拉住。摩擦後，電荷只能停留在表面形成靜電。" data-en=", tightly held by atomic nuclei. After friction, charges stay on the surface.">，被紅色的原子核緊緊拉住。摩擦後，電荷只能停留在表面形成靜電。</span>
           </li>
-          <li><b>基本電荷：</b>自然界中發現的最小電量單位。一個電子或質子的電量為 <span class="mono" style="white-space: nowrap;">1.6 × 10⁻¹⁹ C</span>。</li>
+          <li><b data-zh="基本電荷：" data-en="Elementary Charge:">基本電荷：</b><span data-zh="自然界中發現的最小電量單位。一個電子或質子的電量為 " data-en="The smallest observed unit of electric charge. The charge of an electron or proton is ">自然界中發現的最小電量單位。一個電子或質子的電量為 </span><span class="mono" style="white-space: nowrap;">1.6 × 10⁻¹⁹ C</span>。</li>
         </ul>
       </div>
     </div>
   </div>
 
-  <!-- 🌟 分頁二：摩擦起電模擬 (極致修復版：確保電荷不跑出框界，修復當機) -->
+  <!-- 🌟 分頁二：摩擦起電模擬 -->
   <div id="tab2" class="panel">
     <div class="grid-2">
       <div class="content-box">
-        <h2>絕緣體摩擦起電</h2>
+        <h2 data-zh="絕緣體摩擦起電" data-en="Charging Insulators by Friction">絕緣體摩擦起電</h2>
         <div class="canvas-container">
           <canvas id="cvs-tab2" width="500" height="280"></canvas>
         </div>
         <div class="controls" style="text-align: center;">
           <div class="control-row" style="justify-content: center; gap: 10px; margin-bottom: 15px;">
-            <button class="action-btn active" id="btn-mat-plastic" onclick="setT2Material('plastic')">毛皮與塑膠尺</button>
-            <button class="action-btn" id="btn-mat-glass" onclick="setT2Material('glass')">玻棒與絲絹</button>
+            <button class="action-btn active" id="btn-mat-plastic" onclick="setT2Material('plastic')" data-zh="毛皮與塑膠尺" data-en="Fur & Plastic Ruler">毛皮與塑膠尺</button>
+            <button class="action-btn" id="btn-mat-glass" onclick="setT2Material('glass')" data-zh="玻棒與絲絹" data-en="Glass Rod & Silk">玻棒與絲絹</button>
           </div>
-          <button class="action-btn btn-orange" id="btn-rub" onclick="startRubbing()">🔄 開始摩擦 (約 3 秒)</button>
+          <button class="action-btn btn-orange" id="btn-rub" onclick="startRubbing()" data-zh="🔄 開始摩擦 (約 3 秒)" data-en="🔄 Simulate Rubbing (~3s)">🔄 開始摩擦 (約 3 秒)</button>
         </div>
         <div id="t2-result" style="font-size: 21px; text-align: center; opacity: 0; transition: opacity 0.5s; font-weight: bold; color: var(--chalk-yellow); min-height: 60px;">
-          毛皮失去 4 個電子帶 <span class="color-pos">正電</span><br>
-          塑膠尺獲得 4 個電子帶 <span class="color-neg">負電</span>
         </div>
       </div>
       <div class="content-box">
-        <h2>💡 教學黑板</h2>
+        <h2 data-zh="💡 教學黑板" data-en="💡 Blackboard Notes">💡 教學黑板</h2>
         <ul class="note-ul">
-          <li><b>摩擦起電的條件：</b>必須是兩種<span style="white-space: nowrap;">「不同材質的絕緣體」</span>互相摩擦。</li>
-          <li style="color: var(--chalk-yellow);"><b>18世紀富蘭克林定義：</b>
-            <br>👉 <span style="white-space: nowrap;"><b>玻棒與絲絹：</b></span>玻棒帶正電、絲絹帶負電。
-            <br>👉 <span style="white-space: nowrap;"><b>毛皮和塑膠尺：</b></span>毛皮帶正電、塑膠尺帶負電。
+          <li><b data-zh="摩擦起電的條件：" data-en="Condition for Friction Charging:">摩擦起電的條件：</b><span data-zh="必須是兩種" data-en="Requires two ">必須是兩種</span><span style="white-space: nowrap;" data-zh="「不同材質的絕緣體」" data-en="'different insulating materials'">「不同材質的絕緣體」</span><span data-zh="互相摩擦。" data-en=" rubbed together.">互相摩擦。</span></li>
+          <li style="color: var(--chalk-yellow);"><b data-zh="18世紀富蘭克林定義：" data-en="Benjamin Franklin's Convention:">18世紀富蘭克林定義：</b>
+            <br>👉 <span style="white-space: nowrap;"><b data-zh="玻棒與絲絹：" data-en="Glass Rod & Silk:">玻棒與絲絹：</b></span><span data-zh="玻棒帶正電、絲絹帶負電。" data-en="Glass becomes Positive, Silk becomes Negative.">玻棒帶正電、絲絹帶負電。</span>
+            <br>👉 <span style="white-space: nowrap;"><b data-zh="毛皮和塑膠尺：" data-en="Fur & Plastic Ruler:">毛皮和塑膠尺：</b></span><span data-zh="毛皮帶正電、塑膠尺帶負電。" data-en="Fur becomes Positive, Ruler becomes Negative.">毛皮帶正電、塑膠尺帶負電。</span>
           </li>
-          <li><b>電荷守恆定律：</b>
-            <br>起電的本質是<span style="white-space: nowrap;">「電子的轉移」</span>，並非創造出新電荷。（起電前皆為<span style="white-space: nowrap;">電中性</span>）。
-            <br>失去電子的物體會帶<span class="color-pos">正電</span>，得到電子的物體會帶等量的<span class="color-neg">負電</span>。摩擦後兩者電量大小相等、電性相反。
+          <li><b data-zh="電荷守恆定律：" data-en="Law of Conservation of Charge:">電荷守恆定律：</b>
+            <br><span data-zh="起電的本質是" data-en="Charging is essentially ">起電的本質是</span><span style="white-space: nowrap;" data-zh="「電子的轉移」" data-en="'Electron Transfer'">「電子的轉移」</span><span data-zh="，並非創造出新電荷。（起電前皆為" data-en=", not creation of new charges. (Both are ">，並非創造出新電荷。（起電前皆為</span><span style="white-space: nowrap;" data-zh="電中性" data-en="Neutral">電中性</span><span data-zh="）。" data-en=" prior to rubbing).">）。</span>
+            <br><span data-zh="失去電子的物體會帶" data-en="The object losing electrons becomes ">失去電子的物體會帶</span><span class="color-pos" data-zh="正電" data-en="Positive">正電</span><span data-zh="，得到電子的物體會帶等量的" data-en=", while the one gaining electrons becomes equally ">，得到電子的物體會帶等量的</span><span class="color-neg" data-zh="負電" data-en="Negative">負電</span><span data-zh="。摩擦後兩者電量大小相等、電性相反。" data-en=". They carry equal but opposite charges.">。摩擦後兩者電量大小相等、電性相反。</span>
           </li>
         </ul>
       </div>
@@ -264,40 +322,40 @@
   <div id="tab3" class="panel">
     <div class="grid-2">
       <div class="content-box">
-        <h2>金屬塊感應起電程序</h2>
+        <h2 data-zh="金屬塊感應起電程序" data-en="Electrostatic Induction Process">金屬塊感應起電程序</h2>
         <div class="canvas-container">
           <canvas id="cvs-tab3" width="500" height="300"></canvas>
         </div>
         <div class="controls">
-          <div style="text-align: center; margin-bottom: 12px; font-weight: bold;">
+          <div style="text-align: center; margin-bottom: 12px; font-weight: bold;" data-zh="準備階段：請先選擇帶電棒電性" data-en="Setup: Select Rod Polarity">
             準備階段：請先選擇帶電棒電性
           </div>
           <div class="btn-group">
-            <button class="action-btn btn-blue" id="btn-rod-neg" onclick="initInduction(-1)">使用負帶電棒</button>
-            <button class="action-btn btn-orange" id="btn-rod-pos" onclick="initInduction(1)">使用正帶電棒</button>
+            <button class="action-btn btn-blue" id="btn-rod-neg" onclick="initInduction(-1)" data-zh="使用負帶電棒" data-en="Negative Rod">使用負帶電棒</button>
+            <button class="action-btn btn-orange" id="btn-rod-pos" onclick="initInduction(1)" data-zh="使用正帶電棒" data-en="Positive Rod">使用正帶電棒</button>
           </div>
-          <div style="text-align: center; margin: 16px 0 8px 0; font-weight: bold; border-top: 1px dashed var(--rule-color); padding-top: 16px;">
+          <div style="text-align: center; margin: 16px 0 8px 0; font-weight: bold; border-top: 1px dashed var(--rule-color); padding-top: 16px;" data-zh="操作階段：嚴格執行標準四步驟" data-en="Action: Execute 4 Standard Steps">
             操作階段：嚴格執行標準四步驟
           </div>
           <div class="btn-group">
-            <button class="action-btn" id="btn-step1" onclick="doInductionStep(1)" disabled>1. 靠近</button>
-            <button class="action-btn" id="btn-step2" onclick="doInductionStep(2)" disabled>2. 接地</button>
-            <button class="action-btn" id="btn-step3" onclick="doInductionStep(3)" disabled>3. 移開手</button>
-            <button class="action-btn" id="btn-step4" onclick="doInductionStep(4)" disabled>4. 移開棒</button>
+            <button class="action-btn" id="btn-step1" onclick="doInductionStep(1)" disabled data-zh="1. 靠近" data-en="1. Approach">1. 靠近</button>
+            <button class="action-btn" id="btn-step2" onclick="doInductionStep(2)" disabled data-zh="2. 接地" data-en="2. Ground">2. 接地</button>
+            <button class="action-btn" id="btn-step3" onclick="doInductionStep(3)" disabled data-zh="3. 移開手" data-en="3. Remove Hand">3. 移開手</button>
+            <button class="action-btn" id="btn-step4" onclick="doInductionStep(4)" disabled data-zh="4. 移開棒" data-en="4. Remove Rod">4. 移開棒</button>
           </div>
         </div>
       </div>
       <div class="content-box">
-        <h2>💡 教學黑板</h2>
+        <h2 data-zh="💡 教學黑板" data-en="💡 Blackboard Notes">💡 教學黑板</h2>
         <ul class="note-ul">
-          <li><b>靜電感應定義：</b>帶電體靠近導體時，導體內部發生<span style="white-space: nowrap;">「正負電荷分離」</span>的物理現象。<span style="color:var(--chalk-coral);">（注意：正電荷被原子核固定，只有自由電子會移動！）</span></li>
-          <li><b>感應起電標準步驟：</b>
-            <br>1️⃣ <span style="white-space: nowrap;"><b>靠近但不接觸</b></span>：使金屬內部自由電子發生分離。（注意：帶電棒是<span style="white-space: nowrap;">絕緣體</span>，內部電荷固定不動）
-            <br>2️⃣ <span style="white-space: nowrap;"><b>接地 (手指觸碰)</b></span>：建立電子流動通道。若帶電棒為負，電子被排斥<span style="white-space: nowrap;">流出至地下</span>；若帶電棒為正，電子被吸引<span style="white-space: nowrap;">從地下流入</span>。
-            <br>3️⃣ <span style="white-space: nowrap;"><b>移開手指</b></span>：切斷電子通道，此時金屬塊內正負電荷數量已不相等。
-            <br>4️⃣ <span style="white-space: nowrap;"><b>移開帶電棒</b></span>：同性電子互斥，均勻分布於金屬內部。
+          <li><b data-zh="靜電感應定義：" data-en="Definition of Induction:">靜電感應定義：</b><span data-zh="帶電體靠近導體時，導體內部發生" data-en="When a charged body approaches a conductor, ">帶電體靠近導體時，導體內部發生</span><span style="white-space: nowrap;" data-zh="「正負電荷分離」" data-en="'charge separation'">「正負電荷分離」</span><span data-zh="的物理現象。" data-en=" occurs inside. ">的物理現象。</span><span style="color:var(--chalk-coral);" data-zh="（注意：正電荷被原子核固定，只有自由電子會移動！）" data-en="(Note: Positive charges are fixed in nuclei; only free electrons move!)">（注意：正電荷被原子核固定，只有自由電子會移動！）</span></li>
+          <li><b data-zh="感應起電標準步驟：" data-en="Standard Steps for Charging by Induction:">感應起電標準步驟：</b>
+            <br>1️⃣ <span style="white-space: nowrap;"><b data-zh="靠近但不接觸" data-en="Approach without touching">靠近但不接觸</b></span><span data-zh="：使金屬內部自由電子發生分離。（注意：帶電棒是" data-en=": Separates free electrons in the metal. (Charged rod is an ">：使金屬內部自由電子發生分離。（注意：帶電棒是</span><span style="white-space: nowrap;" data-zh="絕緣體" data-en="insulator">絕緣體</span><span data-zh="，內部電荷固定不動）" data-en=" so its charges don't move)">，內部電荷固定不動）</span>
+            <br>2️⃣ <span style="white-space: nowrap;"><b data-zh="接地 (手指觸碰)" data-en="Grounding (Touching with finger)">接地 (手指觸碰)</b></span><span data-zh="：建立電子流動通道。若帶電棒為負，電子被排斥" data-en=": Creates an electron pathway. If rod is negative, electrons are repelled ">：建立電子流動通道。若帶電棒為負，電子被排斥</span><span style="white-space: nowrap;" data-zh="流出至地下" data-en="out to ground">流出至地下</span><span data-zh="；若帶電棒為正，電子被吸引" data-en="; if rod is positive, electrons are attracted ">；若帶電棒為正，電子被吸引</span><span style="white-space: nowrap;" data-zh="從地下流入" data-en="in from ground">從地下流入</span>。
+            <br>3️⃣ <span style="white-space: nowrap;"><b data-zh="移開手指" data-en="Remove finger">移開手指</b></span><span data-zh="：切斷電子通道，此時金屬塊內正負電荷數量已不相等。" data-en=": Cuts off the pathway, leaving a net charge in the metal.">：切斷電子通道，此時金屬塊內正負電荷數量已不相等。</span>
+            <br>4️⃣ <span style="white-space: nowrap;"><b data-zh="移開帶電棒" data-en="Remove charged rod">移開帶電棒</b></span><span data-zh="：同性電子互斥，均勻分布於金屬內部。" data-en=": Remaining charges distribute uniformly in the metal.">：同性電子互斥，均勻分布於金屬內部。</span>
           </li>
-          <li><b>最終結論：</b>感應起電後，金屬塊所帶的電性必定與靠近的帶電棒<span style="white-space: nowrap;"><b>電性相反</b></span>！</li>
+          <li><b data-zh="最終結論：" data-en="Conclusion:">最終結論：</b><span data-zh="感應起電後，金屬塊所帶的電性必定與靠近的帶電棒" data-en="The metal block will acquire a net charge that is ">感應起電後，金屬塊所帶的電性必定與靠近的帶電棒</span><span style="white-space: nowrap;"><b data-zh="電性相反" data-en="OPPOSITE in polarity">電性相反</b></span><span data-zh="！" data-en=" to the inducing rod!">！</span></li>
         </ul>
       </div>
     </div>
@@ -307,65 +365,67 @@
   <div id="tab4" class="panel">
     <div class="grid-2">
       <div class="content-box">
-        <div style="display:flex; justify-content:center; gap:16px; margin-bottom:16px;">
-          <button class="action-btn active" id="btn-sub-contact" onclick="setTab4Mode('contact')">金屬塊接觸起電</button>
-          <button class="action-btn" id="btn-sub-electro" onclick="setTab4Mode('electro')">驗電器感應起電</button>
+        <div style="display:flex; justify-content:center; gap:16px; margin-bottom:16px; flex-wrap:wrap;">
+          <button class="action-btn active" id="btn-sub-contact" onclick="setTab4Mode('contact')" data-zh="金屬塊接觸起電" data-en="Charging Block by Contact">金屬塊接觸起電</button>
+          <button class="action-btn" id="btn-sub-electro" onclick="setTab4Mode('electro')" data-zh="驗電器感應起電" data-en="Charging Electroscope by Induction">驗電器感應起電</button>
         </div>
         <div class="canvas-container">
           <canvas id="cvs-tab4" width="500" height="280"></canvas>
         </div>
         
+        <!-- Contact Controls -->
         <div class="controls" id="ctrl-contact" style="text-align: center;">
-          <label>選擇導體帶電棒觸碰金屬塊：</label>
+          <label data-zh="選擇導體帶電棒觸碰金屬塊：" data-en="Select conducting rod to touch block:">選擇導體帶電棒觸碰金屬塊：</label>
           <div class="btn-group">
-            <button class="action-btn btn-blue" onclick="operateContact(-1)">負電棒接觸</button>
-            <button class="action-btn btn-orange" onclick="operateContact(1)">正電棒接觸</button>
-            <button class="action-btn" onclick="operateContact(0)">復原</button>
+            <button class="action-btn btn-blue" onclick="operateContact(-1)" data-zh="負電棒接觸" data-en="Touch w/ Negative Rod">負電棒接觸</button>
+            <button class="action-btn btn-orange" onclick="operateContact(1)" data-zh="正電棒接觸" data-en="Touch w/ Positive Rod">正電棒接觸</button>
+            <button class="action-btn" onclick="operateContact(0)" data-zh="復原" data-en="Reset">復原</button>
           </div>
         </div>
 
+        <!-- Electroscope Controls -->
         <div class="controls" id="ctrl-electro" style="text-align: center; display: none;">
-          <div style="margin-bottom: 10px; font-weight: bold;">
+          <div style="margin-bottom: 10px; font-weight: bold;" data-zh="準備階段：請先選擇帶電棒電性" data-en="Setup: Select Rod Polarity">
             準備階段：請先選擇帶電棒電性
           </div>
           <div class="btn-group">
-            <button class="action-btn btn-blue active" id="btn-e-rod-neg" onclick="initElectroscope(-1)">使用負帶電棒</button>
-            <button class="action-btn btn-orange" id="btn-e-rod-pos" onclick="initElectroscope(1)">使用正帶電棒</button>
+            <button class="action-btn btn-blue active" id="btn-e-rod-neg" onclick="initElectroscope(-1)" data-zh="使用負帶電棒" data-en="Negative Rod">使用負帶電棒</button>
+            <button class="action-btn btn-orange" id="btn-e-rod-pos" onclick="initElectroscope(1)" data-zh="使用正帶電棒" data-en="Positive Rod">使用正帶電棒</button>
           </div>
-          <div style="margin-top: 10px; font-weight: bold; border-top: 1px dashed var(--rule-color); padding-top: 10px;">
+          <div style="margin-top: 10px; font-weight: bold; border-top: 1px dashed var(--rule-color); padding-top: 10px;" data-zh="操作階段：驗電器感應起電" data-en="Action: Charging Electroscope by Induction">
             操作階段：驗電器感應起電
           </div>
           <div class="btn-group">
-            <button class="action-btn" id="btn-e-step1" onclick="doElectroscopeStep(1)" disabled>1. 靠近</button>
-            <button class="action-btn" id="btn-e-step2" onclick="doElectroscopeStep(2)" disabled>2. 接地</button>
-            <button class="action-btn" id="btn-e-step3" onclick="doElectroscopeStep(3)" disabled>3. 移手</button>
-            <button class="action-btn" id="btn-e-step4" onclick="doElectroscopeStep(4)" disabled>4. 移棒</button>
+            <button class="action-btn" id="btn-e-step1" onclick="doElectroscopeStep(1)" disabled data-zh="1. 靠近" data-en="1. Approach">1. 靠近</button>
+            <button class="action-btn" id="btn-e-step2" onclick="doElectroscopeStep(2)" disabled data-zh="2. 接地" data-en="2. Ground">2. 接地</button>
+            <button class="action-btn" id="btn-e-step3" onclick="doElectroscopeStep(3)" disabled data-zh="3. 移手" data-en="3. Remove Hand">3. 移手</button>
+            <button class="action-btn" id="btn-e-step4" onclick="doElectroscopeStep(4)" disabled data-zh="4. 移棒" data-en="4. Remove Rod">4. 移棒</button>
           </div>
         </div>
         
-        <div id="t4-status" style="text-align:center; font-weight:700; color:var(--chalk-yellow); margin-top:10px;">
+        <div id="t4-status" style="text-align:center; font-weight:700; color:var(--chalk-yellow); margin-top:10px;" data-zh="請點擊上方按鈕進行操作" data-en="Click buttons above to operate">
           請點擊上方按鈕進行操作
         </div>
       </div>
       <div class="content-box">
-        <h2>💡 教學黑板</h2>
+        <h2 data-zh="💡 教學黑板" data-en="💡 Blackboard Notes">💡 教學黑板</h2>
         <div id="t4-note-contact">
           <ul class="note-ul">
-            <li><b>接觸起電：</b><span style="white-space: nowrap;">導體</span>帶電棒直接觸碰不帶電的金屬體，發生真實的<span style="white-space: nowrap;">電子流動轉移</span>。最終兩者帶有<span style="white-space: nowrap;"><b>相同電性</b></span>的電荷。</li>
-            <li><b>微觀原理解析：</b>
-              <br>👉 <span style="white-space: nowrap;"><b>負電棒接觸</b></span>：棒內過剩的電子相互排斥，順著接觸點<span style="white-space: nowrap;">流入</span>金屬塊，使金屬塊也帶負電。
-              <br>👉 <span style="white-space: nowrap;"><b>正電棒接觸</b></span>：金屬塊內的自由電子被強大正電荷吸引，<span style="white-space: nowrap;">流出</span>至帶電棒，使金屬塊失去電子而帶正電。
+            <li><b data-zh="接觸起電：" data-en="Charging by Contact:">接觸起電：</b><span style="white-space: nowrap;" data-zh="導體" data-en="Conducting ">導體</span><span data-zh="帶電棒直接觸碰不帶電的金屬體，發生真實的" data-en="charged rod touches neutral metal, causing actual ">帶電棒直接觸碰不帶電的金屬體，發生真實的</span><span style="white-space: nowrap;" data-zh="電子流動轉移" data-en="electron transfer">電子流動轉移</span><span data-zh="。最終兩者帶有" data-en=". They end up sharing ">。最終兩者帶有</span><span style="white-space: nowrap;"><b data-zh="相同電性" data-en="IDENTICAL polarity">相同電性</b></span><span data-zh="的電荷。" data-en=" charges.">的電荷。</span></li>
+            <li><b data-zh="微觀原理解析：" data-en="Microscopic Analysis:">微觀原理解析：</b>
+              <br>👉 <span style="white-space: nowrap;"><b data-zh="負電棒接觸" data-en="Negative Rod Contact">負電棒接觸</b></span><span data-zh="：棒內過剩的電子相互排斥，順著接觸點" data-en=": Excess electrons repel each other and flow ">：棒內過剩的電子相互排斥，順著接觸點</span><span style="white-space: nowrap;" data-zh="流入" data-en="INTO">流入</span><span data-zh="金屬塊，使金屬塊也帶負電。" data-en=" the block.">金屬塊，使金屬塊也帶負電。</span>
+              <br>👉 <span style="white-space: nowrap;"><b data-zh="正電棒接觸" data-en="Positive Rod Contact">正電棒接觸</b></span><span data-zh="：金屬塊內的自由電子被強大正電荷吸引，" data-en=": Free electrons in block are attracted and flow ">：金屬塊內的自由電子被強大正電荷吸引，</span><span style="white-space: nowrap;" data-zh="流出" data-en="OUT TO">流出</span><span data-zh="至帶電棒，使金屬塊失去電子而帶正電。" data-en=" the rod.">至帶電棒，使金屬塊失去電子而帶正電。</span>
             </li>
           </ul>
         </div>
         <div id="t4-note-electro" style="display: none;">
           <ul class="note-ul">
-            <li><b>驗電器構造：</b>金屬頂盤、導電桿與下方兩片金屬箔片，用於檢驗物體是否帶電。</li>
-            <li><b>感應起電的四段式張角變化：</b>
-              <br>👉 <span style="white-space: nowrap;"><b>1. 靠近</b></span>：頂盤感應出異性電，同性電被排斥至箔片，箔片<span style="white-space: nowrap;"><b>張開</b></span>。
-              <br>👉 <span style="white-space: nowrap;"><b>2. 接地</b></span>：手指觸碰頂盤，電子受排斥流入地下（或受吸引流入）。此時箔片變為電中性，<span style="white-space: nowrap;"><b>閉合</b></span>。
-              <br>👉 <span style="white-space: nowrap;"><b>3. 移開手</b></span>：切斷電子通道，驗電器已帶有淨電荷，但電子仍受上方帶電棒牽制，箔片維持<span style="white-space: nowrap;"><b>閉合</b></span>。
-              <br>👉 <span style="white-space: nowrap;"><b>4. 移開棒</b></span>：外部電場消失，淨電荷均勻分布至箔片，箔片帶同性電，再次<span style="white-space: nowrap;"><b>張開</b></span>！
+            <li><b data-zh="驗電器構造：" data-en="Electroscope Structure:">驗電器構造：</b><span data-zh="金屬頂盤、導電桿與下方兩片金屬箔片，用於檢驗物體是否帶電。" data-en="Metal disk, rod, and gold leaves. Used to detect electric charge.">金屬頂盤、導電桿與下方兩片金屬箔片，用於檢驗物體是否帶電。</span></li>
+            <li><b data-zh="感應起電的四段式張角變化：" data-en="Four-Stage Leaf Angle Changes:">感應起電的四段式張角變化：</b>
+              <br>👉 <span style="white-space: nowrap;"><b data-zh="1. 靠近" data-en="1. Approach">1. 靠近</b></span><span data-zh="：頂盤感應出異性電，同性電被排斥至箔片，箔片" data-en=": Top disk induces opposite charge; like charges repelled to leaves. Leaves ">：頂盤感應出異性電，同性電被排斥至箔片，箔片</span><span style="white-space: nowrap;"><b data-zh="張開" data-en="DIVERGE">張開</b></span>。
+              <br>👉 <span style="white-space: nowrap;"><b data-zh="2. 接地" data-en="2. Ground">2. 接地</b></span><span data-zh="：手指觸碰頂盤，電子受排斥流入地下（或受吸引流入）。此時箔片變為電中性，" data-en=": Touch disk. Electrons flow to/from ground. Leaves become neutral and ">：手指觸碰頂盤，電子受排斥流入地下（或受吸引流入）。此時箔片變為電中性，</span><span style="white-space: nowrap;"><b data-zh="閉合" data-en="CLOSE">閉合</b></span>。
+              <br>👉 <span style="white-space: nowrap;"><b data-zh="3. 移開手" data-en="3. Remove Hand">3. 移開手</b></span><span data-zh="：切斷電子通道，驗電器已帶有淨電荷，但電子仍受上方帶電棒牽制，箔片維持" data-en=": Cut off path. Net charge trapped, but constrained by rod. Leaves remain ">：切斷電子通道，驗電器已帶有淨電荷，但電子仍受上方帶電棒牽制，箔片維持</span><span style="white-space: nowrap;"><b data-zh="閉合" data-en="CLOSED">閉合</b></span>。
+              <br>👉 <span style="white-space: nowrap;"><b data-zh="4. 移開棒" data-en="4. Remove Rod">4. 移開棒</b></span><span data-zh="：外部電場消失，淨電荷均勻分布至箔片，箔片帶同性電，再次" data-en=": External field gone. Net charge distributes. Leaves ">：外部電場消失，淨電荷均勻分布至箔片，箔片帶同性電，再次</span><span style="white-space: nowrap;"><b data-zh="張開" data-en="DIVERGE">張開</b></span><span data-zh="！" data-en=" again!">！</span>
             </li>
           </ul>
         </div>
@@ -373,33 +433,33 @@
     </div>
   </div>
 
-  <!-- 分頁五：庫侖定律與靜電力 -->
+  <!-- 分頁五：庫侖定律與靜電力 (極致排版防禦修正版：拉開距離，垂直分流) -->
   <div id="tab5" class="panel">
     <div class="grid-2">
       <div class="content-box">
-        <h2>庫侖定律作用力模擬</h2>
+        <h2 data-zh="庫侖定律作用力模擬" data-en="Coulomb's Law Force Simulation">庫侖定律作用力模擬</h2>
         <div class="canvas-container">
-          <canvas id="cvs-tab5" width="500" height="240"></canvas>
+          <canvas id="cvs-tab5" width="500" height="260"></canvas>
         </div>
         <div class="controls">
           <div class="control-group">
-            <label><span style="white-space: nowrap;">Q₁ 電量</span>：</label>
+            <label><span style="white-space: nowrap;" data-zh="Q₁ 電量" data-en="Charge Q₁">Q₁ 電量</span>：</label>
             <input type="range" id="rng-q1" min="-5" max="5" value="3">
             <span id="val-q1" class="readout-badge color-pos">+3 C</span>
           </div>
           <div class="control-group">
-            <label><span style="white-space: nowrap;">Q₂ 電量</span>：</label>
+            <label><span style="white-space: nowrap;" data-zh="Q₂ 電量" data-en="Charge Q₂">Q₂ 電量</span>：</label>
             <input type="range" id="rng-q2" min="-5" max="5" value="-2">
             <span id="val-q2" class="readout-badge color-neg">-2 C</span>
           </div>
           <div class="control-group">
-            <label><span style="white-space: nowrap;">距離 r</span>：</label>
+            <label><span style="white-space: nowrap;" data-zh="距離 r" data-en="Distance r">距離 r</span>：</label>
             <input type="range" id="rng-r" min="1" max="5" value="2">
             <span id="val-r" class="readout-badge color-white">2 m</span>
           </div>
         </div>
         <div style="text-align: center; font-size: 22px;">
-          靜電力相對大小：<span class="mono">F ∝ </span>
+          <span data-zh="靜電力相對大小：" data-en="Relative Electrostatic Force: ">靜電力相對大小：</span><span class="mono">F ∝ </span>
           <div class="math-fraction">
             <span class="num">|<span id="d-q1">3</span> × <span id="d-q2">-2</span>|</span>
             <span class="den"><span id="d-r">2</span>²</span>
@@ -408,9 +468,9 @@
         </div>
       </div>
       <div class="content-box">
-        <h2>💡 教學黑板</h2>
+        <h2 data-zh="💡 教學黑板" data-en="💡 Blackboard Notes">💡 教學黑板</h2>
         <ul class="note-ul">
-          <li><b>庫侖定律：</b>兩帶電體間的靜電力大小，與兩者的電量乘積成正比，與兩者距離的平方成反比。
+          <li><b data-zh="庫侖定律：" data-en="Coulomb's Law:">庫侖定律：</b><span data-zh="兩帶電體間的靜電力大小，與兩者的電量乘積成正比，與兩者距離的平方成反比。" data-en="The electrostatic force is directly proportional to the product of charges and inversely proportional to the square of distance.">兩帶電體間的靜電力大小，與兩者的電量乘積成正比，與兩者距離的平方成反比。</span>
             <div class="formula-box">
               <span style="white-space: nowrap;">
                 F = K × 
@@ -421,8 +481,8 @@
               </span>
             </div>
           </li>
-          <li><b>作用力特徵：</b><span style="white-space: nowrap;">同性相斥</span>（向量箭頭向外），<span style="white-space: nowrap;">異性相吸</span>（向量箭頭向內）。</li>
-          <li><b>作用力與反作用力：</b>兩球互相施加的靜電力，必然大小相等、方向相反且作用在同一直線上（符合牛頓第三運動定律）。</li>
+          <li><b data-zh="作用力特徵：" data-en="Force Characteristics:">作用力特徵：</b><span style="white-space: nowrap;" data-zh="同性相斥" data-en="Like charges repel">同性相斥</span><span data-zh="（向量箭頭向外），" data-en=" (arrows outward), ">（向量箭頭向外），</span><span style="white-space: nowrap;" data-zh="異性相吸" data-en="Opposite charges attract">異性相吸</span><span data-zh="（向量箭頭向內）。" data-en=" (arrows inward).">（向量箭頭向內）。</span></li>
+          <li><b data-zh="作用力與反作用力：" data-en="Action & Reaction Forces:">作用力與反作用力：</b><span data-zh="兩球互相施加的靜電力，必然大小相等、方向相反且作用在同一直線上（符合牛頓第三運動定律）。" data-en="Forces exerted by two charges on each other are always equal in magnitude, opposite in direction, and along the same line (Newton's 3rd Law).">兩球互相施加的靜電力，必然大小相等、方向相反且作用在同一直線上（符合牛頓第三運動定律）。</span></li>
         </ul>
       </div>
     </div>
@@ -442,34 +502,34 @@
           <div class="controls">
             <div class="control-row">
               <div>
-                <div style="font-weight: bold; font-size: 15px; margin-bottom: 4px; text-align: center;">1. 選擇帶電棒</div>
+                <div style="font-weight: bold; font-size: 15px; margin-bottom: 4px; text-align: center;" data-zh="1. 選擇帶電棒" data-en="1. Select Rod">1. 選擇帶電棒</div>
                 <div class="btn-group" style="margin-top: 0;">
-                  <button class="action-btn btn-blue active" id="btn-t6-rod-neg" onclick="t6_setRod(-1)" style="padding: 6px 12px; font-size: 16px;">負電棒</button>
-                  <button class="action-btn btn-red" id="btn-t6-rod-pos" onclick="t6_setRod(1)" style="padding: 6px 12px; font-size: 16px;">正電棒</button>
+                  <button class="action-btn btn-blue active" id="btn-t6-rod-neg" onclick="t6_setRod(-1)" style="padding: 6px 12px; font-size: 16px;" data-zh="負電棒" data-en="Negative Rod">負電棒</button>
+                  <button class="action-btn btn-red" id="btn-t6-rod-pos" onclick="t6_setRod(1)" style="padding: 6px 12px; font-size: 16px;" data-zh="正電棒" data-en="Positive Rod">正電棒</button>
                 </div>
               </div>
               <div style="flex: 1; padding: 0 10px;">
-                <div style="font-weight: bold; font-size: 15px; margin-bottom: 4px; text-align: center;">2. 慢慢拖動距離 (觸發電子流動)</div>
+                <div style="font-weight: bold; font-size: 15px; margin-bottom: 4px; text-align: center;" data-zh="2. 慢慢拖動距離 (觸發電子流動)" data-en="2. Drag Distance (Trigger Flow)">2. 慢慢拖動距離 (觸發電子流動)</div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="color: var(--chalk-muted); font-size: 14px;">遠</span>
+                  <span style="color: var(--chalk-muted); font-size: 14px;" data-zh="遠" data-en="Far">遠</span>
                   <input type="range" id="t6-rng-dist" class="danger-slider" min="0" max="100" value="0">
-                  <span style="color: var(--chalk-red); font-weight: bold; font-size: 14px;">近</span>
+                  <span style="color: var(--chalk-red); font-weight: bold; font-size: 14px;" data-zh="近" data-en="Near">近</span>
                 </div>
               </div>
               <div>
-                <div style="font-weight: bold; font-size: 15px; margin-bottom: 4px; text-align: center;">3. 接地開關</div>
-                <button class="action-btn" id="btn-t6-ground" onclick="t6_toggleGround()" style="border-color: var(--chalk-yellow); color: var(--chalk-yellow); width: 100%; padding: 6px 12px; font-size: 16px;">⚡ 點擊接地</button>
+                <div style="font-weight: bold; font-size: 15px; margin-bottom: 4px; text-align: center;" data-zh="3. 接地開關" data-en="3. Ground Switch">3. 接地開關</div>
+                <button class="action-btn" id="btn-t6-ground" onclick="t6_toggleGround()" style="border-color: var(--chalk-yellow); color: var(--chalk-yellow); width: 100%; padding: 6px 12px; font-size: 16px;" data-zh="⚡ 點擊接地" data-en="⚡ Toggle Ground">⚡ 點擊接地</button>
               </div>
             </div>
           </div>
 
           <div class="controls" style="border-color: rgba(255,255,255,0.1); margin-bottom: 0; padding: 12px 20px;">
             <div class="control-row" style="margin-bottom: 0;">
-              <div style="font-weight: bold; font-size: 15px;">【資優專區】設定驗電器初始淨電荷：</div>
+              <div style="font-weight: bold; font-size: 15px;" data-zh="【資優專區】設定驗電器初始淨電荷：" data-en="[Advanced] Set Initial Net Charge:">【資優專區】設定驗電器初始淨電荷：</div>
               <div class="btn-group" style="margin-top: 0;">
-                <button class="action-btn btn-blue" onclick="t6_forceSetCharge(-100)" style="padding: 4px 10px; font-size: 14px;">預設帶負電</button>
-                <button class="action-btn" onclick="t6_forceSetCharge(0)" style="padding: 4px 10px; font-size: 14px;">還原電中性</button>
-                <button class="action-btn btn-red" onclick="t6_forceSetCharge(100)" style="padding: 4px 10px; font-size: 14px;">預設帶正電</button>
+                <button class="action-btn btn-blue" onclick="t6_forceSetCharge(-100)" style="padding: 4px 10px; font-size: 14px;" data-zh="預設帶負電" data-en="Set Negative">預設帶負電</button>
+                <button class="action-btn" onclick="t6_forceSetCharge(0)" style="padding: 4px 10px; font-size: 14px;" data-zh="還原電中性" data-en="Set Neutral">還原電中性</button>
+                <button class="action-btn btn-red" onclick="t6_forceSetCharge(100)" style="padding: 4px 10px; font-size: 14px;" data-zh="預設帶正電" data-en="Set Positive">預設帶正電</button>
               </div>
               <div>
                 <span id="t6-ui-net-charge" class="status-badge-t6" style="color: var(--chalk-white);">0</span>
@@ -483,7 +543,7 @@
       <div class="right-col">
         <div class="content-box" style="border-color: var(--chalk-yellow); height: 100%; display: flex; flex-direction: column;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px dashed var(--rule-color); padding-bottom: 12px;">
-            <h2 style="margin: 0; padding: 0; color: var(--chalk-yellow); border: none;">📝 互動解謎任務</h2>
+            <h2 style="margin: 0; padding: 0; color: var(--chalk-yellow); border: none;" data-zh="📝 互動解謎任務" data-en="📝 Interactive Inquiry Tasks">📝 互動解謎任務</h2>
             <span id="t6-task-progress" style="color: var(--chalk-muted); font-size: 20px; font-weight: bold; font-family: 'JetBrains Mono', monospace;">1 / 5</span>
           </div>
           
@@ -492,8 +552,8 @@
           </div>
 
           <div style="display: flex; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--rule-color);">
-            <button class="action-btn" id="btn-t6-prev-task" onclick="t6_prevTask()" style="font-size: 18px;">⬅️ 上一題</button>
-            <button class="action-btn" id="btn-t6-next-task" onclick="t6_nextTask()" style="font-size: 18px; border-color: var(--chalk-yellow); color: var(--chalk-yellow);">下一題 ➡️</button>
+            <button class="action-btn" id="btn-t6-prev-task" onclick="t6_prevTask()" style="font-size: 18px;" data-zh="⬅️ 上一題" data-en="⬅️ Prev Task">⬅️ 上一題</button>
+            <button class="action-btn" id="btn-t6-next-task" onclick="t6_nextTask()" style="font-size: 18px; border-color: var(--chalk-yellow); color: var(--chalk-yellow);" data-zh="下一題 ➡️" data-en="Next Task ➡️">下一題 ➡️</button>
           </div>
         </div>
       </div>
@@ -504,10 +564,10 @@
 </div>
 
 <script>
+  let LANG = 'zh';
   let currentTab = 'tab1';
   let animFrames = {};
 
-  // 🌟 確保所有需要用到的顏色變數都已經定義！
   const COLOR_POS = '#ff8040'; 
   const COLOR_NEG = '#4dd2ff'; 
   const COLOR_WHITE = '#f6f3ea';
@@ -520,19 +580,76 @@
   const COLOR_RED = '#ff4d4d';
   const COLOR_GREEN = '#33cc99';
 
-  function switchTab(tabId) {
+  function tr(zhText, enText) {
+    return LANG === 'en' ? enText : zhText;
+  }
+
+  function applyTranslations() {
+    document.querySelectorAll('[data-zh][data-en]').forEach(el => {
+      if (el.tagName === 'INPUT' && el.type === 'button') {
+        el.value = el.getAttribute(`data-${LANG}`);
+      } else {
+        el.innerHTML = el.getAttribute(`data-${LANG}`);
+      }
+    });
+    document.querySelectorAll('.lang-btn').forEach(b => {
+      const isActive = b.dataset.lang === LANG;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-pressed', String(isActive));
+    });
+  }
+
+  function setLanguage(lang) {
+    LANG = lang;
+    document.documentElement.lang = LANG === 'en' ? 'en' : 'zh-Hant';
+    applyTranslations();
+
+    // 重新觸發動態生成 HTML 的部份，以確保內容同步更新
+    if(currentTab === 'tab2' && t2_animPhase === 'done') {
+      let resBox = document.getElementById('t2-result');
+      if (t2_materialMode === 'plastic') {
+          resBox.innerHTML = tr(`毛皮失去 4 個電子帶 <span class="color-pos">正電</span><br>塑膠尺獲得 4 個電子帶 <span class="color-neg">負電</span>`, `Fur loses 4 e⁻ $\\rightarrow$ <span class="color-pos">Positive</span><br>Ruler gains 4 e⁻ $\\rightarrow$ <span class="color-neg">Negative</span>`);
+      } else {
+          resBox.innerHTML = tr(`玻棒失去 4 個電子帶 <span class="color-pos">正電</span><br>絲絹獲得 4 個電子帶 <span class="color-neg">負電</span>`, `Glass Rod loses 4 e⁻ $\\rightarrow$ <span class="color-pos">Positive</span><br>Silk gains 4 e⁻ $\\rightarrow$ <span class="color-neg">Negative</span>`);
+      }
+    }
+    if(currentTab === 'tab3') doInductionStep(t3_step);
+    if(currentTab === 'tab4') {
+      operateContact(t4_contactState);
+      doElectroscopeStep(t4_e_step);
+    }
+    if(currentTab === 'tab6') {
+      t6_renderTask();
+      t6_updateChargeUI();
+      let btn = document.getElementById('btn-t6-ground');
+      if (t6_isGrounded) {
+        btn.textContent = tr("🔌 解除接地 (移手)", "🔌 Remove Ground");
+      } else {
+        btn.textContent = tr("⚡ 點擊接地", "⚡ Toggle Ground");
+      }
+    }
+  }
+
+  function switchTab(tabId, btnElement = null) {
     currentTab = tabId;
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    
     document.getElementById(tabId).classList.add('active');
-    event.currentTarget.classList.add('active');
+    
+    if (btnElement) {
+      btnElement.classList.add('active');
+    } else {
+      const defaultBtn = document.querySelector(`.tab-btn[onclick*="${tabId}"]`);
+      if (defaultBtn) defaultBtn.classList.add('active');
+    }
 
     for (let id in animFrames) { cancelAnimationFrame(animFrames[id]); }
 
     if (tabId === 'tab1') initTab1();
     if (tabId === 'tab2') {
       t2_materialMode = 'plastic';
-      setT2Material('plastic'); // 確保初始狀態為塑膠
+      setT2Material('plastic'); 
       initTab2();
     }
     if (tabId === 'tab3') initTab3(); 
@@ -566,7 +683,7 @@
       ctx.fillStyle = '#2d3a33'; ctx.fillRect(30, 40, 190, 190); ctx.fillRect(270, 40, 190, 190);
       ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 2; ctx.strokeRect(30, 40, 190, 190); ctx.strokeRect(270, 40, 190, 190);
       ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 22px Noto Sans TC'; ctx.textAlign = 'center';
-      ctx.fillText('導體 (金屬)', 125, 260); ctx.fillText('絕緣體 (塑膠)', 365, 260);
+      ctx.fillText(tr('導體 (金屬)', 'Conductor (Metal)'), 125, 260); ctx.fillText(tr('絕緣體 (塑膠)', 'Insulator (Plastic)'), 365, 260);
       ctx.font = 'bold 24px JetBrains Mono'; ctx.textBaseline = 'middle';
       
       ctx.fillStyle = COLOR_POS;
@@ -588,10 +705,10 @@
     render();
   }
 
-  // --- 🌟 TAB 2: Friction Charging (極致修復版：正負電上下排，避免跑出框) ---
-  let t2_animPhase = 'idle'; // 'idle', 'animating', 'done'
+  // --- 🌟 TAB 2: Friction Charging ---
+  let t2_animPhase = 'idle'; 
   let t2_startTime = 0;
-  let t2_materialMode = 'plastic'; // 'plastic' or 'glass'
+  let t2_materialMode = 'plastic'; 
 
   function setT2Material(mode) {
     t2_materialMode = mode;
@@ -617,32 +734,27 @@
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       
       let isPlastic = (t2_materialMode === 'plastic');
-      let rx = 90; // Default far left position
+      let rx = 90; 
       let transfer = false;
 
-      // Animation State Machine
       if (t2_animPhase === 'animating') {
         let elapsed = Date.now() - t2_startTime;
         if (elapsed < 500) {
-          // Phase 1: Move right
           rx = 90 + (180 * (elapsed / 500));
         } else if (elapsed < 2500) {
-          // Phase 2: Rubbing
           rx = 270 + Math.sin((elapsed - 500) / 40) * 20; 
         } else if (elapsed < 3000) {
-          // Phase 3: Move left
           rx = 270 - (180 * ((elapsed - 2500) / 500)); 
-          transfer = true; // Show transfer when moving away
+          transfer = true;
         } else {
-          // Phase 4: Done
           t2_animPhase = 'done';
           transfer = true;
           document.getElementById('btn-rub').disabled = false;
           let resBox = document.getElementById('t2-result');
           if (isPlastic) {
-              resBox.innerHTML = `毛皮失去 4 個電子帶 <span class="color-pos">正電</span><br>塑膠尺獲得 4 個電子帶 <span class="color-neg">負電</span>`;
+              resBox.innerHTML = tr(`毛皮失去 4 個電子帶 <span class="color-pos">正電</span><br>塑膠尺獲得 4 個電子帶 <span class="color-neg">負電</span>`, `Fur loses 4 e⁻ $\\rightarrow$ <span class="color-pos">Positive</span><br>Ruler gains 4 e⁻ $\\rightarrow$ <span class="color-neg">Negative</span>`);
           } else {
-              resBox.innerHTML = `玻棒失去 4 個電子帶 <span class="color-pos">正電</span><br>絲絹獲得 4 個電子帶 <span class="color-neg">負電</span>`;
+              resBox.innerHTML = tr(`玻棒失去 4 個電子帶 <span class="color-pos">正電</span><br>絲絹獲得 4 個電子帶 <span class="color-neg">負電</span>`, `Glass Rod loses 4 e⁻ $\\rightarrow$ <span class="color-pos">Positive</span><br>Silk gains 4 e⁻ $\\rightarrow$ <span class="color-neg">Negative</span>`);
           }
           resBox.style.opacity = 1; 
         }
@@ -651,75 +763,58 @@
         transfer = true;
       }
 
-      // Draw Right Object (Fur / Silk)
       ctx.fillStyle = isPlastic ? '#4a3b32' : '#6b4c6a'; 
       ctx.beginPath(); ctx.ellipse(350, 140, 60, 100, 0, 0, Math.PI*2); ctx.fill();
       ctx.strokeStyle = COLOR_WHITE; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 20px Noto Sans TC'; ctx.textAlign = 'center'; 
-      ctx.fillText(isPlastic ? '毛皮' : '絲絹', 350, 270);
+      ctx.fillText(isPlastic ? tr('毛皮', 'Fur') : tr('絲絹', 'Silk'), 350, 270);
 
-      // Draw Left Object (Ruler / Glass Rod)
-      // 🌟 加厚高度 (h:50)，確保上下排列有足夠空間
       ctx.fillStyle = isPlastic ? '#2c4053' : 'rgba(255, 255, 255, 0.15)'; 
       ctx.fillRect(rx, 80, 160, 50);
       ctx.strokeStyle = isPlastic ? COLOR_WHITE : COLOR_TEAL; 
       ctx.strokeRect(rx, 80, 160, 50);
-      ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 20px Noto Sans TC'; ctx.fillText(isPlastic ? '塑膠尺' : '玻棒', rx + 80, 65);
+      ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 20px Noto Sans TC'; 
+      ctx.fillText(isPlastic ? tr('塑膠尺', 'Plastic Ruler') : tr('玻棒', 'Glass Rod'), rx + 80, 65);
 
-      // --- Draw Charges ---
       ctx.font = 'bold 24px JetBrains Mono'; ctx.textBaseline = 'middle';
 
-      // 1. Right Object Charges (8 pairs)
       for(let i=0; i<8; i++) {
-        let cx = 315 + (i%2)*70; // 315, 385 
-        let cy = 75 + Math.floor(i/2)*40; // 75, 115, 155, 195
-        
+        let cx = 315 + (i%2)*70;
+        let cy = 75 + Math.floor(i/2)*40;
         ctx.fillStyle = COLOR_POS; 
-        ctx.fillText('+', cx, cy - 8); // 正電在上
-        
+        ctx.fillText('+', cx, cy - 8);
         let hasElectron = true;
-        // Plastic mode: Fur loses 4 electrons (lose the right column)
         if (transfer && isPlastic && i % 2 !== 0) hasElectron = false; 
-        
         if (hasElectron) { 
             ctx.fillStyle = COLOR_NEG; 
-            ctx.fillText('-', cx, cy + 8); // 🌟 負電垂直對齊，放在下方
+            ctx.fillText('-', cx, cy + 8);
         }
       }
       
-      // Glass mode: Silk gains 4 electrons
       if (transfer && !isPlastic) { 
         ctx.fillStyle = COLOR_NEG;
         for(let i=0; i<4; i++) { 
             let cy = 75 + i*40;
-            // 🌟 搶來的電子，放在兩直排正電荷的正中間，非常清晰
             ctx.fillText('-', 350, cy); 
         }
       }
 
-      // 2. Left Object Charges (4 pairs)
       for(let i=0; i<4; i++) {
         let cx = rx + 28 + i*34; 
-        
         ctx.fillStyle = COLOR_POS; 
-        ctx.fillText('+', cx, 105 - 8); // 正電在上
-        
+        ctx.fillText('+', cx, 105 - 8);
         let hasElectron = true;
-        // Glass mode: Glass rod loses 4 electrons
         if (transfer && !isPlastic) hasElectron = false; 
-        
         if (hasElectron) { 
             ctx.fillStyle = COLOR_NEG; 
-            ctx.fillText('-', cx, 105 + 8); // 🌟 負電垂直對齊，放在下方
+            ctx.fillText('-', cx, 105 + 8);
         }
       }
       
-      // Plastic mode: Ruler gains 4 electrons
       if (transfer && isPlastic) { 
         ctx.fillStyle = COLOR_NEG; 
         for(let i=0; i<4; i++) { 
             let cx = rx + 45 + i*34;
-            // 🌟 搶來的電子，精準安排在相鄰兩組電荷的中間，不會超出右側邊緣
             ctx.fillText('-', cx, 105); 
         }
       }
@@ -801,10 +896,10 @@
 
     if (t3_step === 2) {
       ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx + 60, cy); ctx.lineTo(cx + 120, cy); ctx.lineTo(cx + 120, cy + 100); ctx.stroke();
-      ctx.fillStyle = COLOR_WHITE; ctx.font = '16px Noto Sans TC'; ctx.textAlign = 'left'; ctx.fillText('接地', cx + 125, cy + 100);
+      ctx.fillStyle = COLOR_WHITE; ctx.font = '16px Noto Sans TC'; ctx.textAlign = 'left'; ctx.fillText(tr('接地', 'Ground'), cx + 125, cy + 100);
       ctx.textAlign = 'center';
-      if (t3_rodType === -1) { drawArrow(ctx, cx + 70, cy - 55, cx + 110, cy - 55, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流出', cx + 90, cy - 75); } 
-      else { drawArrow(ctx, cx + 110, cy - 55, cx + 70, cy - 55, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流入', cx + 90, cy - 75); }
+      if (t3_rodType === -1) { drawArrow(ctx, cx + 70, cy - 55, cx + 110, cy - 55, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText(tr('e⁻ 流出', 'e⁻ Out'), cx + 90, cy - 75); } 
+      else { drawArrow(ctx, cx + 110, cy - 55, cx + 70, cy - 55, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText(tr('e⁻ 流入', 'e⁻ In'), cx + 90, cy - 75); }
 
       ctx.font = 'bold 24px JetBrains Mono';
       t3_flowAnimFrames.forEach((p) => {
@@ -815,12 +910,14 @@
       });
       t3_flowAnimFrames = t3_flowAnimFrames.filter(p => !p.done);
     }
-    ctx.textAlign = 'left'; ctx.fillStyle = COLOR_YELLOW; ctx.font = '18px Noto Sans TC';
+    ctx.textAlign = 'center'; ctx.fillStyle = COLOR_YELLOW; ctx.font = '18px Noto Sans TC';
     let msg = "";
-    if(t3_step===0) msg = "電中性：正負電荷數量相等"; else if(t3_step===1) msg = "靠近：自由電子受力發生偏移 (靜電感應)";
-    else if(t3_step===2) msg = "接地：電子流出或流入，電荷數量不平衡"; else if(t3_step===3) msg = "移開手：切斷通道，保留不平衡狀態";
-    else if(t3_step===4) msg = `完成：金屬帶有與帶電棒相反之淨 ${t3_rodType===-1?'正':'負'} 電！`;
-    ctx.fillText(msg, 50, 40);
+    if(t3_step===0) msg = tr("電中性：正負電荷數量相等", "Neutral: Equal positive & negative charges"); 
+    else if(t3_step===1) msg = tr("靠近：自由電子受力發生偏移 (靜電感應)", "Approach: Free electrons shift (Electrostatic Induction)");
+    else if(t3_step===2) msg = tr("接地：電子流出或流入，電荷數量不平衡", "Ground: Electrons flow, charge imbalance occurs"); 
+    else if(t3_step===3) msg = tr("移開手：切斷通道，保留不平衡狀態", "Remove Hand: Path cut, imbalance remains");
+    else if(t3_step===4) msg = tr(`完成：金屬帶有與帶電棒相反之淨 ${t3_rodType===-1?'正':'負'} 電！`, `Done: Metal carries net ${t3_rodType===-1?'Positive':'Negative'} charge!`);
+    ctx.fillText(msg, cvs.width/2, 40);
   }
 
   // --- TAB 4: Contact & Electroscope ---
@@ -842,9 +939,9 @@
   function operateContact(state) {
     t4_contactState = state; t4_contactFrame = 0; t4_migratingElectrons = []; 
     let stText = document.getElementById('t4-status');
-    if(state === 0) { stText.textContent = "電中性金屬塊"; stText.style.color = COLOR_DIM; } 
-    else if(state === -1) { stText.textContent = "接觸起電：負電棒的多餘電子流入金屬塊"; stText.style.color = COLOR_NEG; } 
-    else if(state === 1) { stText.textContent = "接觸起電：金屬塊的電子流入正電棒"; stText.style.color = COLOR_POS; }
+    if(state === 0) { stText.textContent = tr("電中性金屬塊", "Neutral Metal Block"); stText.style.color = COLOR_DIM; } 
+    else if(state === -1) { stText.textContent = tr("接觸起電：負電棒的多餘電子流入金屬塊", "Contact: Excess electrons flow into block"); stText.style.color = COLOR_NEG; } 
+    else if(state === 1) { stText.textContent = tr("接觸起電：金屬塊的電子流入正電棒", "Contact: Electrons flow into positive rod"); stText.style.color = COLOR_POS; }
     const cx = 250, cy = 150;
     t4_blockElectrons = []; for(let i=0; i<6; i++) { t4_blockElectrons.push({ x: cx + (Math.random()-0.5)*90, y: cy + (Math.random()-0.5)*50, vx: (Math.random()-0.5)*2.5, vy: (Math.random()-0.5)*2.5 }); }
     t4_rodElectrons = [];
@@ -868,8 +965,8 @@
         else if (t4_contactState === 1 && t4_blockElectrons.length > 0) { let e = t4_blockElectrons.pop(); t4_migratingElectrons.push({x: e.x, y: e.y, target: 'rod'}); }
       }
       ctx.textAlign = 'center';
-      if (t4_contactState === -1) { drawArrow(ctx, cx - 100, cy - 65, cx - 20, cy - 65, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流入', cx - 60, cy - 85); } 
-      else { drawArrow(ctx, cx - 20, cy - 65, cx - 100, cy - 65, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流出', cx - 60, cy - 85); }
+      if (t4_contactState === -1) { drawArrow(ctx, cx - 100, cy - 65, cx - 20, cy - 65, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText(tr('e⁻ 流入', 'e⁻ In'), cx - 60, cy - 85); } 
+      else { drawArrow(ctx, cx - 20, cy - 65, cx - 100, cy - 65, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText(tr('e⁻ 流出', 'e⁻ Out'), cx - 60, cy - 85); }
     }
     let posPositions = [ {x: cx - 35, y: cy - 20}, {x: cx, y: cy - 20}, {x: cx + 35, y: cy - 20}, {x: cx - 35, y: cy + 20}, {x: cx, y: cy + 20}, {x: cx + 35, y: cy + 20} ];
     posPositions.forEach(p => { ctx.fillStyle = COLOR_POS; ctx.fillText('+', p.x, p.y + 2); });
@@ -903,16 +1000,16 @@
     document.getElementById('btn-e-rod-neg').classList.toggle('active', type === -1); document.getElementById('btn-e-rod-pos').classList.toggle('active', type === 1);
     let btns = [1,2,3,4].map(i => document.getElementById('btn-e-step'+i));
     btns.forEach(b => { b.disabled = true; b.classList.remove('active'); }); btns[0].disabled = false;
-    let stText = document.getElementById('t4-status'); stText.textContent = "驗電器電中性狀態：箔片閉合"; stText.style.color = COLOR_DIM;
+    let stText = document.getElementById('t4-status'); stText.textContent = tr("驗電器電中性狀態：箔片閉合", "Electroscope Neutral: Leaves closed"); stText.style.color = COLOR_DIM;
   }
   function doElectroscopeStep(step) {
     t4_e_step = step; let btns = [1,2,3,4].map(i => document.getElementById('btn-e-step'+i));
     btns.forEach((b, i) => { b.classList.toggle('active', i+1 === step); b.disabled = (i+1 > step + 1); });
     let stText = document.getElementById('t4-status');
-    if(step===1) { stText.textContent = "1. 靠近：同性電被排斥至下方，箔片張開"; stText.style.color = COLOR_YELLOW; }
-    else if(step===2) { stText.textContent = "2. 接地：下方電子流入地下(或從地下流入)，箔片閉合"; stText.style.color = COLOR_NEG; }
-    else if(step===3) { stText.textContent = "3. 移手：淨電荷仍受牽制，箔片維持閉合"; stText.style.color = COLOR_DIM; }
-    else if(step===4) { stText.textContent = `4. 移棒：淨 ${t4_e_rodType===-1?'正':'負'} 電荷均勻分布，箔片再次張開！`; stText.style.color = COLOR_YELLOW; }
+    if(step===1) { stText.textContent = tr("1. 靠近：同性電被排斥至下方，箔片張開", "1. Approach: Like charges repelled down, leaves diverge"); stText.style.color = COLOR_YELLOW; }
+    else if(step===2) { stText.textContent = tr("2. 接地：下方電子流入地下(或從地下流入)，箔片閉合", "2. Ground: Electrons flow. Leaves close"); stText.style.color = COLOR_NEG; }
+    else if(step===3) { stText.textContent = tr("3. 移手：淨電荷仍受牽制，箔片維持閉合", "3. Remove Hand: Net charge trapped, leaves closed"); stText.style.color = COLOR_DIM; }
+    else if(step===4) { stText.textContent = tr(`4. 移棒：淨 ${t4_e_rodType===-1?'正':'負'} 電荷均勻分布，箔片再次張開！`, `4. Remove Rod: Net ${t4_e_rodType===-1?'Pos':'Neg'} charge distributes, leaves diverge!`); stText.style.color = COLOR_YELLOW; }
   }
   function renderTab4Electroscope() {
     const cvs = document.getElementById('cvs-tab4'); const ctx = cvs.getContext('2d'); ctx.clearRect(0, 0, cvs.width, cvs.height);
@@ -948,14 +1045,14 @@
       }
     } else if (t4_e_step === 2) {
       ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx + 40, cy); ctx.lineTo(cx + 100, cy); ctx.lineTo(cx + 100, cy + 100); ctx.stroke();
-      ctx.fillStyle = COLOR_WHITE; ctx.font = '16px Noto Sans TC'; ctx.textAlign = 'left'; ctx.fillText('接地', cx + 105, cy + 115);
+      ctx.fillStyle = COLOR_WHITE; ctx.font = '16px Noto Sans TC'; ctx.textAlign = 'left'; ctx.fillText(tr('接地', 'Ground'), cx + 105, cy + 115);
       ctx.font = 'bold 20px JetBrains Mono'; ctx.textAlign = 'center';
       if (t4_e_rodType === -1) {
         ctx.fillStyle = COLOR_POS; ctx.fillText('+', cx - 15, cy - 5); ctx.fillText('+', cx + 15, cy - 5);
-        drawArrow(ctx, cx + 50, cy - 30, cx + 90, cy - 30, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流出', cx + 70, cy - 50);
+        drawArrow(ctx, cx + 50, cy - 30, cx + 90, cy - 30, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText(tr('e⁻ 流出', 'e⁻ Out'), cx + 70, cy - 50);
       } else {
         ctx.fillStyle = COLOR_NEG; ctx.fillText('-', cx - 15, cy - 5); ctx.fillText('-', cx + 15, cy - 5);
-        drawArrow(ctx, cx + 90, cy - 30, cx + 50, cy - 30, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText('e⁻ 流入', cx + 70, cy - 50);
+        drawArrow(ctx, cx + 90, cy - 30, cx + 50, cy - 30, COLOR_NEG, 3, 10); ctx.fillStyle = COLOR_NEG; ctx.fillText(tr('e⁻ 流入', 'e⁻ In'), cx + 70, cy - 50);
       }
     } else if (t4_e_step === 3) {
       if (t4_e_rodType === -1) { ctx.fillStyle = COLOR_POS; ctx.fillText('+', cx - 15, cy - 5); ctx.fillText('+', cx + 15, cy - 5); } 
@@ -969,7 +1066,7 @@
     }
   }
 
-  // --- TAB 5: Coulomb's Law ---
+  // --- TAB 5: Coulomb's Law (極致排版防禦修正版：拉開距離，垂直分流) ---
   function initTab5() {
     const cvs = document.getElementById('cvs-tab5'); const ctx = cvs.getContext('2d');
     const rngQ1 = document.getElementById('rng-q1'), rngQ2 = document.getElementById('rng-q2'), rngR = document.getElementById('rng-r');
@@ -984,33 +1081,49 @@
       let f = (Math.abs(q1 * q2) / (r * r)); valForce.textContent = f.toFixed(2);
       if(currentTab !== 'tab5') return;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
-      let cx = cvs.width / 2, cy = cvs.height / 2 + 20, px1 = cx - (r * 30), px2 = cx + (r * 30);
+      
+      let cx = cvs.width / 2, cy = 130;
+      // 🌟 核心修改：大幅拉開間距係數 (從原本 30 增加到 65)，杜絕重疊擁擠
+      let px1 = cx - (r * 65), px2 = cx + (r * 65);
 
-      ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
-      ctx.beginPath(); ctx.moveTo(px1, cy); ctx.lineTo(px2, cy); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = COLOR_WHITE; ctx.font = '18px Noto Sans TC'; ctx.textAlign = 'center'; ctx.fillText(`距離 r = ${r}`, cx, cy - 40);
+      // 1. 頂層：距離尺規 (拉高到 Y - 55，完全不與下方箭頭重疊)
+      ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+      ctx.beginPath(); ctx.moveTo(px1, cy - 55); ctx.lineTo(px2, cy - 55); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(px1, cy - 65); ctx.lineTo(px1, cy - 45); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px2, cy - 65); ctx.lineTo(px2, cy - 45); ctx.stroke();
+      ctx.fillStyle = '#ffe066'; ctx.font = 'bold 20px "JetBrains Mono", "Noto Sans TC"'; ctx.textAlign = 'center';
+      ctx.fillText(tr(`距離 r = ${r} m`, `Distance r = ${r} m`), cx, cy - 68);
 
-      let r1 = 15 + Math.abs(q1) * 3;
+      // 2. 中層：兩顆帶電球本體
+      let r1 = 18 + Math.abs(q1) * 3.5;
       ctx.fillStyle = q1 > 0 ? COLOR_POS : (q1 < 0 ? COLOR_NEG : COLOR_DIM);
       ctx.beginPath(); ctx.arc(px1, cy, r1, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 18px JetBrains Mono'; ctx.textBaseline='middle'; ctx.fillText(q1>0?'+':(q1<0?'-':'0'), px1, cy);
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = COLOR_WHITE; ctx.font = 'bold 22px JetBrains Mono'; ctx.textBaseline='middle'; 
+      ctx.fillText(q1>0?'+':(q1<0?'-':'0'), px1, cy);
 
-      let r2 = 15 + Math.abs(q2) * 3;
+      let r2 = 18 + Math.abs(q2) * 3.5;
       ctx.fillStyle = q2 > 0 ? COLOR_POS : (q2 < 0 ? COLOR_NEG : COLOR_DIM);
       ctx.beginPath(); ctx.arc(px2, cy, r2, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = COLOR_WHITE; ctx.fillText(q2>0?'+':(q2<0?'-':'0'), px2, cy);
 
+      // 3. 靜電力向量箭頭 (位於球心水平高度，長度最適化)
       if (q1 !== 0 && q2 !== 0) {
-        let fLen = Math.min(20 + f * 40, 100); let isAttract = (q1 * q2) < 0;
-        ctx.fillStyle = COLOR_YELLOW; ctx.font = 'bold 18px JetBrains Mono';
+        let fLen = Math.min(25 + f * 35, 90); 
+        let isAttract = (q1 * q2) < 0;
+        ctx.fillStyle = COLOR_YELLOW; ctx.font = 'bold 20px JetBrains Mono';
         if (isAttract) {
-          drawArrow(ctx, px1 + r1 + 5, cy, px1 + r1 + 5 + fLen, cy, COLOR_YELLOW, 3, 10);
-          drawArrow(ctx, px2 - r2 - 5, cy, px2 - r2 - 5 - fLen, cy, COLOR_YELLOW, 3, 10);
-          ctx.fillText('F', px1 + r1 + 15 + fLen/2, cy - 20); ctx.fillText('F', px2 - r2 - 15 - fLen/2, cy - 20);
+          drawArrow(ctx, px1 + r1 + 4, cy, px1 + r1 + 4 + fLen, cy, COLOR_YELLOW, 4, 12);
+          drawArrow(ctx, px2 - r2 - 4, cy, px2 - r2 - 4 - fLen, cy, COLOR_YELLOW, 4, 12);
+          // 4. 底層：力量標記 F 移至球體正下方，極致清晰
+          ctx.fillText('F₁', px1, cy + r1 + 25); 
+          ctx.fillText('F₂', px2, cy + r2 + 25);
         } else {
-          drawArrow(ctx, px1 - r1 - 5, cy, px1 - r1 - 5 - fLen, cy, COLOR_YELLOW, 3, 10);
-          drawArrow(ctx, px2 + r2 + 5, cy, px2 + r2 + 5 + fLen, cy, COLOR_YELLOW, 3, 10);
-          ctx.fillText('F', px1 - r1 - 15 - fLen/2, cy - 20); ctx.fillText('F', px2 + r2 + 15 + fLen/2, cy - 20);
+          drawArrow(ctx, px1 - r1 - 4, cy, px1 - r1 - 4 - fLen, cy, COLOR_YELLOW, 4, 12);
+          drawArrow(ctx, px2 + r2 + 4, cy, px2 + r2 + 4 + fLen, cy, COLOR_YELLOW, 4, 12);
+          ctx.fillText('F₁', px1, cy + r1 + 25); 
+          ctx.fillText('F₂', px2, cy + r2 + 25);
         }
       }
     }
@@ -1022,30 +1135,30 @@
   // 🌟 TAB 6: 資優補充 - 驗電器力場雙欄探究
   // ==========================================
   const t6_tasks = [
-    { title: "🔍 挑戰一：感應起電的無中生有", danger: false,
-      think: "如果拿「負電棒」慢慢靠近「電中性」的驗電器，裡面的自由電子會怎麼跑？底下的金箔會發生什麼事？",
-      act: "將下方設為「還原電中性」，點選「負電棒」，慢慢將距離滑桿從「遠」拉到「近」。",
-      verify: "觀察藍色電子流動的方向。下方的金箔張開了嗎？這說明了「靜電力大小」與「距離」有什麼關係？" },
-    { title: "⚡ 挑戰二：接地瞬間的電子狂流", danger: false,
-      think: "保持負電棒在靠近的狀態。現在如果用手摸一下驗電器（接地），被排斥在底下的電子會往哪裡逃？金箔會怎樣？",
-      act: "保持負電棒在「近」處。接著，按下畫面上的「⚡ 點擊接地」。",
-      verify: "觀察藍色電子的真實流動路徑！為什麼電子寧願往地下跑？此時底下的金箔發生了什麼事？" },
-    { title: "✋ 挑戰三：移開手的正確時機", danger: false,
-      think: "在接地的狀態下，如果我們先移開手（解除接地），再把負電棒拿遠，驗電器最後會帶什麼電？",
-      act: "先點擊「🔌 解除接地 (移手)」，最後再將帶電棒拉回最「遠」。",
-      verify: "看看儀表板上的當前淨電荷！為什麼一開始明明是用「負」電棒感應，最後驗電器卻會帶「正」電？" },
-    { title: "🧐 挑戰四：檢驗未知電荷 (同性)", danger: false,
-      think: "如果驗電器已經帶「負電」（金箔張開），這時拿「負電棒」靠近，金箔會張得更大還是縮小？",
-      act: "點擊【資優專區】的「預設帶負電」。接著選擇「負電棒」，並慢慢將滑桿拉近。",
-      verify: "金箔的角度怎麼變化了？請利用「電子被往下排斥」的觀點來解釋這個現象！" },
-    { title: "😈 挑戰五：極限異性力場大魔王", danger: true,
-      think: "如果驗電器帶「負電」，改拿「正電棒」極度靠近，金箔會只是一直縮合嗎？還是會發生意想不到的事？",
-      act: "保持「預設帶負電」。這次改選「正電棒」，並將滑桿非常緩慢、一路拉到最「近」。",
-      verify: `觀察下方的金箔，它會先慢慢「閉合」，拉到極限時竟然會「再次張開」並呈現紅色！<br><span style="font-size: 14px; color: var(--chalk-muted);">（註：真實的金屬箔片當然不會變色，紅色是為了降低認知負荷，代表該區域「缺乏電子、帶正電」！）</span><br>請挑戰解釋這個「先閉合、又反向張開變紅」的神奇現象！` }
+    { title: {zh: "🔍 挑戰一：感應起電的無中生有", en: "🔍 Task 1: Induction from Scratch"}, danger: false,
+      think: {zh: "如果拿「負電棒」慢慢靠近「電中性」的驗電器，裡面的自由電子會怎麼跑？底下的金箔會發生什麼事？", en: "If a 'Negative Rod' approaches a 'Neutral' electroscope, how do free electrons move? What happens to the leaves?"},
+      act: {zh: "將下方設為「還原電中性」，點選「負電棒」，慢慢將距離滑桿從「遠」拉到「近」。", en: "Set to 'Neutral', select 'Negative Rod', drag distance from 'Far' to 'Near'."},
+      verify: {zh: "觀察藍色電子流動的方向。下方的金箔張開了嗎？這說明了「靜電力大小」與「距離」有什麼關係？", en: "Observe the blue electrons. Did the leaves diverge? What does this imply about 'Electrostatic Force' and 'Distance'?"} },
+    { title: {zh: "⚡ 挑戰二：接地瞬間的電子狂流", en: "⚡ Task 2: Electron Rush on Grounding"}, danger: false,
+      think: {zh: "保持負電棒在靠近的狀態。現在如果用手摸一下驗電器（接地），被排斥在底下的電子會往哪裡逃？金箔會怎樣？", en: "With the negative rod near, if you ground the electroscope, where will the repelled electrons go? The leaves?"},
+      act: {zh: "保持負電棒在「近」處。接著，按下畫面上的「⚡ 點擊接地」。", en: "Keep the negative rod 'Near'. Click '⚡ Toggle Ground'."},
+      verify: {zh: "觀察藍色電子的真實流動路徑！為什麼電子寧願往地下跑？此時底下的金箔發生了什麼事？", en: "Observe the path of the electrons! Why do they prefer the ground? What happens to the leaves?"} },
+    { title: {zh: "✋ 挑戰三：移開手的正確時機", en: "✋ Task 3: Timing the Hand Removal"}, danger: false,
+      think: {zh: "在接地的狀態下，如果我們先移開手（解除接地），再把負電棒拿遠，驗電器最後會帶什麼電？", en: "While grounded, if we remove our hand first, then move the rod far away, what charge will the electroscope have?"},
+      act: {zh: "先點擊「🔌 解除接地 (移手)」，最後再將帶電棒拉回最「遠」。", en: "Click '🔌 Remove Ground', then drag the rod 'Far' away."},
+      verify: {zh: "看看儀表板上的當前淨電荷！為什麼一開始明明是用「負」電棒感應，最後驗電器卻會帶「正」電？", en: "Check the net charge panel! Why does it carry 'Positive' charge when we used a 'Negative' rod?"} },
+    { title: {zh: "🧐 挑戰四：檢驗未知電荷 (同性)", en: "🧐 Task 4: Testing Unknown Charges (Same)"}, danger: false,
+      think: {zh: "如果驗電器已經帶「負電」（金箔張開），這時拿「負電棒」靠近，金箔會張得更大還是縮小？", en: "If the electroscope is already 'Negative' (leaves open), what happens if a 'Negative Rod' approaches?"},
+      act: {zh: "點擊【資優專區】的「預設帶負電」。接著選擇「負電棒」，並慢慢將滑桿拉近。", en: "Click 'Set Negative' in Advanced Area. Select 'Negative Rod' and drag it 'Near'."},
+      verify: {zh: "金箔的角度怎麼變化了？請利用「電子被往下排斥」的觀點來解釋這個現象！", en: "How did the leaf angle change? Explain this using the concept of 'electrons being repelled downward'!"} },
+    { title: {zh: "😈 挑戰五：極限異性力場大魔王", en: "😈 Task 5: Extreme Opposite Field Boss"}, danger: true,
+      think: {zh: "如果驗電器帶「負電」，改拿「正電棒」極度靠近，金箔會只是一直縮合嗎？還是會發生意想不到的事？", en: "If the electroscope is 'Negative', and a 'Positive Rod' comes extremely close, will the leaves just close?"},
+      act: {zh: "保持「預設帶負電」。這次改選「正電棒」，並將滑桿非常緩慢、一路拉到最「近」。", en: "Keep 'Set Negative'. Select 'Positive Rod', slowly drag it to the closest 'Near' position."},
+      verify: {zh: `觀察下方的金箔，它會先慢慢「閉合」，拉到極限時竟然會「再次張開」並呈現紅色！<br><span style="font-size: 14px; color: var(--chalk-muted);">（註：真實的金屬箔片當然不會變色，紅色是為了降低認知負荷，代表該區域「缺乏電子、帶正電」！）</span><br>請挑戰解釋這個「先閉合、又反向張開變紅」的神奇現象！`, en: `Observe the leaves: they slowly 'close', but at the limit, they 'open again' and turn red!<br><span style="font-size: 14px; color: var(--chalk-muted);">(Note: Real metal leaves don't change color; red means 'electron deficient, positive charge'!)</span><br>Try to explain this 'close, then reverse-open red' phenomenon!`} }
   ];
 
   let t6_currentTaskIdx = 0;
-  let t6_rodType = -1;              
+  let t6_rodType = -1;             
   let t6_dist = 0;                 
   let t6_isGrounded = false;       
   let t6_electroscope_net_Q = 0;   
@@ -1077,19 +1190,19 @@
     const container = document.getElementById('t6-task-container');
     container.innerHTML = `
       <div class="task-card ${task.danger ? 'danger' : ''}">
-        <div class="task-title">${task.title}</div>
-        <div class="poe-block poe-think"><div class="poe-header">🤔 1. 先想一想</div><div class="poe-content">${task.think}</div></div>
-        <div class="poe-block poe-act"><div class="poe-header">👉 2. 動手實驗</div><div class="poe-content">${task.act}</div></div>
-        <div class="poe-block poe-verify"><div class="poe-header">💡 3. 觀察驗證</div><div class="poe-content">${task.verify}</div></div>
+        <div class="task-title">${tr(task.title.zh, task.title.en)}</div>
+        <div class="poe-block poe-think"><div class="poe-header">${tr("🤔 1. 先想一想", "🤔 1. Think")}</div><div class="poe-content">${tr(task.think.zh, task.think.en)}</div></div>
+        <div class="poe-block poe-act"><div class="poe-header">${tr("👉 2. 動手實驗", "👉 2. Act")}</div><div class="poe-content">${tr(task.act.zh, task.act.en)}</div></div>
+        <div class="poe-block poe-verify"><div class="poe-header">${tr("💡 3. 觀察驗證", "💡 3. Verify")}</div><div class="poe-content">${tr(task.verify.zh, task.verify.en)}</div></div>
       </div>
     `;
     document.getElementById('t6-task-progress').textContent = `${t6_currentTaskIdx + 1} / ${t6_tasks.length}`;
     document.getElementById('btn-t6-prev-task').style.visibility = (t6_currentTaskIdx === 0) ? 'hidden' : 'visible';
     const nextBtn = document.getElementById('btn-t6-next-task');
     if (t6_currentTaskIdx === t6_tasks.length - 1) {
-      nextBtn.textContent = "🎉 完成挑戰"; nextBtn.disabled = true; nextBtn.style.borderColor = "var(--chalk-muted)"; nextBtn.style.color = "var(--chalk-muted)";
+      nextBtn.textContent = tr("🎉 完成挑戰", "🎉 Challenge Complete"); nextBtn.disabled = true; nextBtn.style.borderColor = "var(--chalk-muted)"; nextBtn.style.color = "var(--chalk-muted)";
     } else {
-      nextBtn.textContent = "下一題 ➡️"; nextBtn.disabled = false; nextBtn.style.borderColor = "var(--chalk-yellow)"; nextBtn.style.color = "var(--chalk-yellow)";
+      nextBtn.textContent = tr("下一題 ➡️", "Next Task ➡️"); nextBtn.disabled = false; nextBtn.style.borderColor = "var(--chalk-yellow)"; nextBtn.style.color = "var(--chalk-yellow)";
     }
   }
 
@@ -1107,9 +1220,9 @@
     t6_isGrounded = !t6_isGrounded;
     let btn = document.getElementById('btn-t6-ground');
     if (t6_isGrounded) {
-      btn.textContent = "🔌 解除接地 (移手)"; btn.style.color = "var(--chalk-white)"; btn.style.borderColor = "var(--chalk-white)";
+      btn.textContent = tr("🔌 解除接地 (移手)", "🔌 Remove Ground"); btn.style.color = "var(--chalk-white)"; btn.style.borderColor = "var(--chalk-white)";
     } else {
-      btn.textContent = "⚡ 點擊接地"; btn.style.color = "var(--chalk-yellow)"; btn.style.borderColor = "var(--chalk-yellow)";
+      btn.textContent = tr("⚡ 點擊接地", "⚡ Toggle Ground"); btn.style.color = "var(--chalk-yellow)"; btn.style.borderColor = "var(--chalk-yellow)";
       t6_electroscope_net_Q = t6_visual_Q_plate + t6_visual_Q_leaf;
       t6_updateChargeUI();
     }
@@ -1121,7 +1234,7 @@
   function t6_forceSetCharge(q) {
     t6_electroscope_net_Q = q; t6_isGrounded = false;
     let btn = document.getElementById('btn-t6-ground');
-    btn.textContent = "⚡ 點擊接地"; btn.style.color = "var(--chalk-yellow)"; btn.style.borderColor = "var(--chalk-yellow)";
+    btn.textContent = tr("⚡ 點擊接地", "⚡ Toggle Ground"); btn.style.color = "var(--chalk-yellow)"; btn.style.borderColor = "var(--chalk-yellow)";
     t6_dist = 0; document.getElementById('t6-rng-dist').value = 0;
     t6_visual_Q_plate = q / 2; t6_visual_Q_leaf = q / 2;
     t6_updateChargeUI(); t6_updatePhysics(false);
@@ -1129,9 +1242,9 @@
 
   function t6_updateChargeUI() {
     let ui = document.getElementById('t6-ui-net-charge');
-    if (t6_electroscope_net_Q === 0) { ui.textContent = "0 (中性)"; ui.style.color = "var(--chalk-white)"; } 
-    else if (t6_electroscope_net_Q > 0) { ui.textContent = `+${Math.round(t6_electroscope_net_Q)} (正電)`; ui.style.color = "var(--chalk-red)"; } 
-    else { ui.textContent = `${Math.round(t6_electroscope_net_Q)} (負電)`; ui.style.color = "var(--chalk-blue)"; }
+    if (t6_electroscope_net_Q === 0) { ui.textContent = tr("0 (中性)", "0 (Neutral)"); ui.style.color = "var(--chalk-white)"; } 
+    else if (t6_electroscope_net_Q > 0) { ui.textContent = `+${Math.round(t6_electroscope_net_Q)} ${tr("(正電)", "(Pos)")}`; ui.style.color = "var(--chalk-red)"; } 
+    else { ui.textContent = `${Math.round(t6_electroscope_net_Q)} ${tr("(負電)", "(Neg)")}`; ui.style.color = "var(--chalk-blue)"; }
   }
 
   function t6_updatePhysics(spawnParticles) {
@@ -1192,7 +1305,7 @@
     if (t6_isGrounded) {
       ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 5;
       ctx.beginPath(); ctx.moveTo(T6_P_WIRE_1.x, T6_P_WIRE_1.y); ctx.lineTo(T6_P_WIRE_2.x, T6_P_WIRE_2.y); ctx.lineTo(T6_P_GROUND.x, T6_P_GROUND.y); ctx.stroke();
-      ctx.fillStyle = '#f6f3ea'; ctx.font = '20px Noto Sans TC'; ctx.textAlign = 'center'; ctx.fillText('接地線', t6_cx + 150, t6_cy + 210);
+      ctx.fillStyle = '#f6f3ea'; ctx.font = '20px Noto Sans TC'; ctx.textAlign = 'center'; ctx.fillText(tr('接地線', 'Ground Wire'), t6_cx + 150, t6_cy + 210);
     }
 
     ctx.fillStyle = '#f6f3ea'; ctx.fillRect(t6_cx - 4, t6_cy - 25, 8, 115);
@@ -1231,8 +1344,13 @@
     ctx.shadowBlur = 0; 
   }
 
-  // Init
-  switchTab('tab1');
+  // --- 立即開場喚醒系統 ---
+  window.onload = function() {
+    applyTranslations();
+    document.documentElement.lang = 'zh-Hant';
+    const firstBtn = document.querySelector('.tab-btn');
+    switchTab('tab1', firstBtn);
+  };
 </script>
 </body>
 </html>
