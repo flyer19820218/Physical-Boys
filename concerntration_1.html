@@ -899,7 +899,7 @@
                     if(p.type === 'salt') {
                         ctx.fillStyle = '#f8fafc'; // 白色食鹽 (一致性)
                         ctx.fillRect(p.x - 5, p.y - 5, 10, 10);
-                        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1; ctx.strokeRect(p.x - 5, p.y - 5, 10, 10);
+                        ctx.strokeStyle = '#000000'; ctx.lineWidth = 1; ctx.strokeRect(p.x - 5, p.y - 5, 10, 10);
                     } else {
                         ctx.fillStyle = '#38bdf8';
                         ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill();
@@ -923,10 +923,19 @@
                 stirProgress = 0;
                 sandParticles = [];
                 saltParticles = [];
-                // 產生底部的砂子(灰正方形)與食鹽(白正方形)
+                // 產生底部的砂子(灰正方形)與食鹽(白正方形) - 同在杯底混合區
                 for(let i=0; i<30; i++) {
-                    sandParticles.push({x: 350 + (i%8)*12 + Math.random()*2, y: 228 - Math.floor(i/8)*10});
-                    saltParticles.push({x: 345 + (i%10)*10 + Math.random()*4, y: 200 - Math.floor(i/10)*8});
+                    // 隨機分佈在同一個底部區域，讓它們混合在一起
+                    sandParticles.push({
+                        ox: 345 + Math.random()*90, 
+                        oy: 225 - Math.random()*15, 
+                        rnd: Math.random() * Math.PI * 2
+                    });
+                    saltParticles.push({
+                        ox: 345 + Math.random()*90, 
+                        oy: 225 - Math.random()*15, 
+                        rnd: Math.random() * Math.PI * 2
+                    });
                 }
             } else if (step === '2') {
                 // 自動開始過濾動畫 (0~1 倒滿漏斗, 1~3 流下)
@@ -1016,9 +1025,23 @@
                 // 畫水
                 ctx.fillStyle = 'rgba(56, 189, 248, 0.35)'; ctx.fillRect(333, 110, 124, 127);
 
-                // 畫灰色砂子
+                let time = Date.now() * 0.005;
+                let swirlIntensity = isStirring ? Math.sin(stirProgress * Math.PI) : 0;
+
+                // 畫灰色砂子 (黑框 + 旋轉攪動)
                 ctx.fillStyle = '#9ca3af'; // 砂子灰
-                sandParticles.forEach(p => ctx.fillRect(p.x, p.y, 10, 10));
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1.5;
+                sandParticles.forEach(p => {
+                    let cx = p.ox;
+                    let cy = p.oy;
+                    if (swirlIntensity > 0) {
+                        cx += Math.cos(time + p.rnd) * 30 * swirlIntensity;
+                        cy -= Math.abs(Math.sin(time + p.rnd)) * 40 * swirlIntensity; // 向上揚起
+                    }
+                    ctx.fillRect(cx - 5, cy - 5, 10, 10);
+                    ctx.strokeRect(cx - 5, cy - 5, 10, 10);
+                });
 
                 // 處理自動攪拌進度 (0.008 * 60fps = 0.48 / sec => 約 2 秒完成)
                 if (isStirring && stirProgress < 1) {
@@ -1029,13 +1052,22 @@
                     }
                 }
 
-                // 畫白色食鹽 (依據 stirProgress 逐漸縮小到消失)
+                // 畫白色食鹽 (黑框 + 旋轉攪動 + 逐漸縮小到消失)
                 let currentSaltSize = 10 * (1 - Math.min(stirProgress, 1));
                 if (currentSaltSize > 0.5) {
                     ctx.fillStyle = '#f8fafc'; // 食鹽白
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 1.5;
                     saltParticles.forEach(p => {
-                        let offset = (10 - currentSaltSize) / 2;
-                        ctx.fillRect(p.x + offset, p.y + offset, currentSaltSize, currentSaltSize);
+                        let cx = p.ox;
+                        let cy = p.oy;
+                        if (swirlIntensity > 0) {
+                            cx += Math.cos(time + p.rnd) * 30 * swirlIntensity;
+                            cy -= Math.abs(Math.sin(time + p.rnd)) * 40 * swirlIntensity; // 向上揚起
+                        }
+                        let half = currentSaltSize / 2;
+                        ctx.fillRect(cx - half, cy - half, currentSaltSize, currentSaltSize);
+                        ctx.strokeRect(cx - half, cy - half, currentSaltSize, currentSaltSize);
                     });
                 }
 
@@ -1049,6 +1081,7 @@
 
                 // 標示與按鈕
                 ctx.fillStyle = '#fde047'; ctx.font = 'bold 22px "Noto Sans TC", sans-serif';
+                ctx.textAlign = 'left';
                 if(stirProgress === 0) {
                     // 繪製開始按鈕
                     ctx.fillStyle = '#fb923c'; ctx.roundRect(140, 30, 130, 40, 8); ctx.fill();
@@ -1076,7 +1109,7 @@
             // 步驟 2：過濾分離 (兩階段 + 緊貼杯壁)
             // =========================
             else if(currentStep === '2') {
-                // 處理過濾進度 (0~1 倒滿漏斗, 1~3 漏斗排空且流入燒杯)
+                // 處理過濾進度 (0~1 倒滿漏斗, 1~3 流下)
                 if (filterProgress < 3) filterProgress += 0.01;
 
                 let funnelWaterY = 114;
@@ -1119,10 +1152,13 @@
                 ctx.lineTo(369, 90);
                 ctx.fill();
 
-                // 砂子顆粒質感
+                // 砂子顆粒質感 (含黑邊)
                 ctx.fillStyle = '#6b7280';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
                 sandParticles.forEach(p => {
-                    ctx.fillRect(p.x, p.y, 3, 3);
+                    ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+                    ctx.strokeRect(p.x - 2, p.y - 2, 4, 4);
                 });
 
                 // 濾紙內的水 (藍色半透明多邊形，隨進度變化)
@@ -1150,6 +1186,7 @@
                     ctx.fillRect(352, waterY, 86, 237 - waterY); // 填滿左壁352到右壁438
                 }
                 
+                ctx.textAlign = 'left';
                 ctx.fillStyle = '#fde047'; ctx.font = 'bold 22px "Noto Sans TC", sans-serif';
                 ctx.fillText(tr("2. 過濾分離 ｜ 漏斗頸緊貼杯壁，食鹽水流下", "2. Filtration | Funnel stem leans on wall, saltwater flows"), 140, 30);
 
@@ -1249,6 +1286,7 @@
                     ctx.stroke();
                 }
                 
+                ctx.textAlign = 'left';
                 ctx.fillStyle = '#fde047'; ctx.font = 'bold 22px "Noto Sans TC", sans-serif';
                 ctx.fillText(tr("3. 加熱蒸發 ｜ 沸點高低差異", "3. Evaporation | Boiling Point Difference"), 210, 30);
 
@@ -1265,12 +1303,16 @@
                 ctx.fillStyle = '#132a1e';
                 ctx.beginPath(); ctx.arc(375, 100, 58, 0, Math.PI); ctx.fill();
 
-                // 白色食鹽晶體析出 (堆疊在底部曲線內)
+                // 白色食鹽晶體析出 (堆疊在底部曲線內，含黑邊)
                 ctx.fillStyle = '#f8fafc';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1.5;
                 saltParticles.forEach(p => {
                     ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
+                    ctx.strokeRect(p.x - 4, p.y - 4, 8, 8);
                 });
                 
+                ctx.textAlign = 'left';
                 ctx.fillStyle = '#4ade80'; ctx.font = 'bold 24px "Noto Sans TC", sans-serif';
                 ctx.fillText(tr("✨ 4. 結晶取得白色食鹽晶體", "✨ 4. Crystallization: Obtain Salt Crystals"), 220, 45);
             }
