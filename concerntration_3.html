@@ -2,8 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第三單元：溶解度與飽和濃度 (護眼黑板大字互動版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title data-zh="第三單元：溶解度與飽和濃度 (護眼黑板大字互動版)" data-en="Unit 3: Solubility & Saturation (Interactive Blackboard)">第三單元：溶解度與飽和濃度 (護眼黑板大字互動版)</title>
     <style>
         :root {
             --bg-board: #132a1e;       /* 傳統黑板深黛綠 - 吸光護眼 */
@@ -15,6 +15,8 @@
             --chalk-pink: #f472b6;     /* 警告/溶質紅 */
             --chalk-blue: #38bdf8;     /* 溶劑/冷靜藍 */
             --chalk-orange: #fb923c;   /* 溫熱橘 */
+            --chalk-teal: #2dd4bf;
+            --chalk-dim: #8fa498;
             --border-style: 2px dashed rgba(241, 245, 249, 0.3);
         }
 
@@ -26,8 +28,9 @@
         }
 
         /* 嚴格堅持 20px 基礎字體，照顧後排同學 */
-        html {
+        html, body {
             font-size: 20px;
+            -webkit-text-size-adjust: 100%;
         }
 
         body {
@@ -35,6 +38,63 @@
             color: var(--chalk-white);
             line-height: 1.8;
             padding-bottom: 50px;
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0),
+                radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0);
+            background-size: 24px 24px, 16px 16px;
+            background-position: 0 0, 8px 8px;
+        }
+
+        /* 🌟 右上角橫向懸浮雙語切換按鈕 (嚴格鎖死排版) */
+        .floating-lang-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 35, 24, 0.95);
+            border: 2px solid var(--chalk-teal);
+            padding: 8px 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .lang-label {
+            font-family: Consolas, monospace;
+            color: var(--chalk-teal);
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .lang-options {
+            display: flex;
+            gap: 6px;
+        }
+
+        .lang-pill {
+            min-width: 58px;
+            min-height: 48px;
+            padding: 8px 14px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-radius: 8px;
+            background: var(--bg-darker);
+            color: var(--chalk-white);
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+
+        .lang-pill.active {
+            background: var(--chalk-teal);
+            color: #0b2b2e;
+            border-color: var(--chalk-teal);
         }
 
         header {
@@ -43,6 +103,7 @@
             padding: 1.2rem 1.5rem;
             text-align: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            margin-bottom: 1rem;
         }
 
         header h1 {
@@ -59,29 +120,32 @@
             font-weight: bold;
         }
 
-        /* 導覽列：字體縮小、文字精簡、不換行不卡視窗 */
+        /* 導覽列 */
         .nav-tabs {
             display: flex;
             justify-content: center;
             background-color: #0d1f15;
             padding: 0.4rem;
             gap: 0.5rem;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             border-bottom: 2px solid rgba(241,245,249,0.2);
-            overflow-x: auto;
+            max-width: 1080px;
+            margin: 0 auto 1.5rem auto;
         }
 
         .tab-btn {
-            padding: 0.45rem 0.9rem;
+            min-height: 48px; /* 觸控熱區防禦 */
+            padding: 0.5rem 1rem;
             border: 2px solid transparent;
             background-color: transparent;
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: bold;
             color: #94a3b8;
             cursor: pointer;
             border-radius: 0.5rem;
             transition: all 0.2s ease;
             white-space: nowrap;
+            touch-action: manipulation;
         }
 
         .tab-btn:hover {
@@ -96,10 +160,10 @@
             box-shadow: 0 0 15px rgba(253, 224, 71, 0.3);
         }
 
-        /* 內容區域 */
+        /* 內容區域限制寬度 1080px */
         .container {
-            max-width: 1150px;
-            margin: 1.5rem auto;
+            max-width: 1080px;
+            margin: 0 auto;
             padding: 0 1.2rem;
         }
 
@@ -155,9 +219,66 @@
             text-align: center;
         }
 
+        /* 練習區塊 (問題/提示/解答) */
+        .practice-box {
+            margin-top: 1.5rem;
+            border: 2px solid var(--chalk-teal);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            background: rgba(45, 212, 191, 0.1);
+            text-align: left;
+        }
+        .practice-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .practice-btn {
+            min-height: 48px;
+            padding: 8px 18px;
+            background: var(--bg-card);
+            color: var(--chalk-white);
+            border: 2px solid var(--chalk-dim);
+            border-radius: 0.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+        .practice-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .practice-btn.active {
+            background: var(--chalk-yellow);
+            color: #111;
+            border-color: var(--chalk-yellow);
+            box-shadow: 0 0 10px rgba(253, 224, 71, 0.4);
+        }
+        .practice-step {
+            display: none;
+            padding: 10px 5px 5px;
+            animation: fadeIn 0.3s ease;
+        }
+        .practice-step.active {
+            display: block;
+        }
+        .practice-step h3 {
+            color: var(--chalk-yellow);
+            margin: 0 0 10px 0;
+            font-size: 1.4rem;
+            border: none;
+            padding: 0;
+        }
+        .practice-step p {
+            margin: 0;
+            line-height: 1.8;
+            font-size: 1.15rem;
+        }
+
         .btn {
-            background-color: var(--chalk-orange);
-            color: #000;
+            min-height: 48px; /* 觸控熱區防禦 */
             border: none;
             padding: 0.7rem 1.5rem;
             font-size: 1.1rem;
@@ -167,22 +288,23 @@
             transition: all 0.2s;
             margin: 0.4rem 0.5rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            touch-action: manipulation;
         }
 
-        .btn:hover {
-            background-color: #ea580c;
-            color: #fff;
-            transform: translateY(-2px);
-        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn.active { box-shadow: 0 0 12px currentColor; }
 
         .btn-blue { background-color: var(--chalk-blue); color: #000; }
-        .btn-blue:hover { background-color: #0284c7; color: #fff; }
-        
+        .btn-blue:hover, .btn-blue.active { background-color: #0284c7; color: #fff; }
+
         .btn-green { background-color: var(--chalk-green); color: #000; }
-        .btn-green:hover { background-color: #16a34a; color: #fff; }
+        .btn-green:hover, .btn-green.active { background-color: #16a34a; color: #fff; }
 
         .btn-pink { background-color: var(--chalk-pink); color: #000; }
-        .btn-pink:hover { background-color: #db2777; color: #fff; }
+        .btn-pink:hover, .btn-pink.active { background-color: #db2777; color: #fff; }
+
+        .btn-orange { background-color: var(--chalk-orange); color: #000; }
+        .btn-orange:hover, .btn-orange.active { background-color: #ea580c; color: #fff; }
 
         /* 重點文字配色 */
         .hl-yellow { color: var(--chalk-yellow); font-weight: bold; }
@@ -190,16 +312,23 @@
         .hl-pink { color: var(--chalk-pink); font-weight: bold; }
         .hl-blue { color: var(--chalk-blue); font-weight: bold; }
         .hl-orange { color: var(--chalk-orange); font-weight: bold; }
+        .hl-white { color: var(--chalk-white); font-weight: bold; }
 
-        /* 畫布：絕對禁止黑色線條 */
+        /* 畫布：等比例縮放 */
         canvas {
             background-color: #0d1a13;
             border: 2px solid var(--chalk-yellow);
             border-radius: 0.6rem;
-            max-width: 100%;
-            margin: 1rem auto;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 750 / 280;
             display: block;
+            margin: 1rem auto;
             box-shadow: 0 0 15px rgba(0,0,0,0.6);
+        }
+        
+        #curveCanvas {
+            aspect-ratio: 750 / 400;
         }
 
         .grid-2 {
@@ -223,6 +352,7 @@
             background: rgba(244, 114, 182, 0.08);
         }
 
+        /* 控制滑桿與輸入框 */
         .control-group {
             margin: 1rem 0;
             display: flex;
@@ -234,10 +364,11 @@
         }
 
         input[type="range"] {
+            min-height: 48px; /* 觸控熱區防禦 */
             width: 250px;
             accent-color: var(--chalk-yellow);
-            height: 10px;
             cursor: pointer;
+            touch-action: manipulation;
         }
 
         /* 嚴格數學方程式排版 (Math Mode) */
@@ -252,16 +383,14 @@
             font-size: 1.35rem;
         }
 
-        /* --- 💡 針對第二張圖：優化算式行與讀音說明的彈性排版 --- */
         .math-row-flex {
             display: flex;
             align-items: center;
-            flex-wrap: wrap;           /* 允許在螢幕不夠寬時整體換行 */
-            gap: 0.8rem 1.2rem;        /* 上下與左右的間距 */
+            flex-wrap: wrap;
+            gap: 0.8rem 1.2rem;
             margin-bottom: 18px;
         }
 
-        /* 讀音說明文字：禁止本身從中間被切斷，要換就整句換 */
         .math-read-text {
             white-space: nowrap;
             color: var(--chalk-white);
@@ -305,12 +434,12 @@
             padding-top: 6px;
         }
 
-        /* --- 💡 針對第一張圖：優化極限數值展示區的排版 --- */
+        /* 極限數值展示區的排版 */
         .limit-display-box {
             display: flex;
             justify-content: center;
-            flex-wrap: wrap;           /* 空間不夠時允許某幾個單元整組換到下一行 */
-            gap: 15px 30px;            /* 上下間距15px，左右間距30px */
+            flex-wrap: wrap;
+            gap: 15px 30px;
             max-width: 850px;
             margin: 15px auto 0 auto;
             background: var(--bg-card);
@@ -320,101 +449,121 @@
             font-size: 1.25rem;
         }
 
-        /* 每個獨立單元絕對不准內部換行 (禁止 g 被擠到下一行) */
         .limit-item {
             white-space: nowrap;
             display: flex;
             align-items: baseline;
             gap: 4px;
         }
+
+        @media (max-width: 960px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            .floating-lang-container { top: 8px; right: 8px; padding: 6px 8px; }
+            .lang-label { display: none; }
+            header h1 { font-size: 1.8rem; }
+            .tab-btn { flex: 1 1 45%; }
+            .math-row { flex-wrap: wrap; white-space: normal; } /* 小螢幕允許換行 */
+            .math-eq { width: auto; margin-right: 10px; }
+        }
     </style>
 </head>
 <body>
 
+    <!-- 懸浮雙語切換器 -->
+    <div class="floating-lang-container">
+        <span class="lang-label">Language</span>
+        <div class="lang-options">
+            <button class="lang-pill active" id="btn-lang-zh" onclick="setLang('zh')">中文</button>
+            <button class="lang-pill" id="btn-lang-en" onclick="setLang('en')">EN</button>
+        </div>
+    </div>
+
     <header>
-        <h1>🔬 國中化學黑板教室：溶解度與飽和濃度</h1>
-        <p>國中化學核心單元：最大溶解極限與降溫結晶計算</p>
+        <h1 data-zh="🔬 國中化學黑板教室：溶解度與飽和濃度" data-en="🔬 Chem Blackboard: Solubility & Saturation Concentration">🔬 國中化學黑板教室：溶解度與飽和濃度</h1>
+        <p data-zh="國中化學核心單元：最大溶解極限與降溫結晶計算" data-en="Core Unit: Max Solubility & Cooling Crystallization">國中化學核心單元：最大溶解極限與降溫結晶計算</p>
     </header>
 
     <nav class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('tab1')">溶解度 vs 溶解量</button>
-        <button class="tab-btn" onclick="switchTab('tab2')">溶解度 vs 飽和濃度</button>
-        <button class="tab-btn" onclick="switchTab('tab3')">溫度與溶解度曲線</button>
-        <button class="tab-btn" onclick="switchTab('tab4')">結晶析出計算</button>
-        <button class="tab-btn" onclick="switchTab('tab5')">氣體與壓力</button>
+        <button class="tab-btn active" onclick="switchTab('tab1')" data-zh="溶解度 vs 溶解量" data-en="Solubility vs Dissolved Amt">溶解度 vs 溶解量</button>
+        <button class="tab-btn" onclick="switchTab('tab2')" data-zh="溶解度 vs 飽和濃度" data-en="Solubility vs Saturation %">溶解度 vs 飽和濃度</button>
+        <button class="tab-btn" onclick="switchTab('tab3')" data-zh="溫度與溶解度曲線" data-en="Temp & Solubility Curves">溫度與溶解度曲線</button>
+        <button class="tab-btn" onclick="switchTab('tab4')" data-zh="結晶析出計算" data-en="Crystallization Calc">結晶析出計算</button>
+        <button class="tab-btn" onclick="switchTab('tab5')" data-zh="氣體與壓力" data-en="Gases & Pressure">氣體與壓力</button>
     </nav>
 
     <div class="container">
         <!-- ================= 第一分頁：溶解度 vs 溶解量 ================= -->
         <section id="tab1" class="tab-content active">
-            <h2>💥 學生最大盲區：【溶解度】絕對不是【溶解量】！</h2>
+            <h2 data-zh="💥 學生最大盲區：【溶解度】絕對不是【溶解量】！" data-en="💥 Biggest Blind Spot: [Solubility] is NOT [Dissolved Amount]!">💥 學生最大盲區：【溶解度】絕對不是【溶解量】！</h2>
             <div class="concept-box">
-                💡 <strong class="hl-yellow">極限比例 vs. 實際公克數（一秒辨析！）：</strong><br>
-                👉 <strong class="hl-green">溶解度 (Solubility)：</strong> 是這杯水的<strong class="hl-yellow">「極限比例（上限）」</strong>！通常以 <code>g / 100g 水</code> 表示。代表在定溫定壓下，每 100g 的水最多能吃下多少克的溶質。<br>
-                👉 <strong class="hl-pink">溶解量 (Dissolved Amount)：</strong> 是這杯水肚子裡<strong class="hl-pink">「實際溶解了多少公克 (g)」</strong>！<br>
-                🚨 <strong class="hl-orange">核心鐵則：</strong> <span class="hl-yellow">水量不同，能消化的「溶解量」就不同！</span>如果只有 50g 的水，達到飽和時的「溶解量」會減半；但這杯水的「溶解度」依然不變！
+                💡 <strong class="hl-yellow" data-zh="極限比例 vs. 實際公克數（一秒辨析！）：" data-en="Limit Ratio vs. Actual Grams (1-sec distinguish!):">極限比例 vs. 實際公克數（一秒辨析！）：</strong><br>
+                👉 <strong class="hl-green" data-zh="溶解度 (Solubility)：" data-en="Solubility:">溶解度 (Solubility)：</strong> <span data-zh="是這杯水的<strong class='hl-yellow'>「極限比例（上限）」</strong>！通常以 <code>g / 100g 水</code> 表示。代表在定溫定壓下，每 100g 的水最多能吃下多少克的溶質。" data-en="It's the <strong class='hl-yellow'>'limit ratio (maximum)'</strong> of this water! Usually expressed as <code>g / 100g water</code>. It represents the max grams of solute 100g of water can take at a given temp/pressure.">是這杯水的<strong class="hl-yellow">「極限比例（上限）」</strong>！通常以 <code>g / 100g 水</code> 表示。代表在定溫定壓下，每 100g 的水最多能吃下多少克的溶質。</span><br>
+                👉 <strong class="hl-pink" data-zh="溶解量 (Dissolved Amount)：" data-en="Dissolved Amount:">溶解量 (Dissolved Amount)：</strong> <span data-zh="是這杯水肚子裡<strong class='hl-pink'>「實際溶解了多少公克 (g)」</strong>！" data-en="It's the <strong class='hl-pink'>'actual grams (g) dissolved'</strong> inside this water's belly!">是這杯水肚子裡<strong class="hl-pink">「實際溶解了多少公克 (g)」</strong>！</span><br>
+                🚨 <strong class="hl-orange" data-zh="核心鐵則：" data-en="Core Rule:">核心鐵則：</strong> <span class="hl-yellow" data-zh="水量不同，能消化的「溶解量」就不同！" data-en="Different water amounts can digest different 'dissolved amounts'!">水量不同，能消化的「溶解量」就不同！</span><span data-zh="如果只有 50g 的水，達到飽和時的「溶解量」會減半；但這杯水的「溶解度」依然不變！" data-en="If there's only 50g of water, the 'dissolved amount' at saturation halves; but the 'solubility' of the water remains unchanged!">如果只有 50g 的水，達到飽和時的「溶解量」會減半；但這杯水的「溶解度」依然不變！</span>
             </div>
 
             <div class="interactive-area">
-                <h3 style="margin-top:0;">☕ 互動黑板實驗：定溫 20°C 下，100g 水的食鹽溶解度為 36g / 100g 水</h3>
-                <p>請點擊下方加入不同重量的食鹽，觀察「極限比例」與「實際公克數」的清晰差異：</p>
+                <h3 style="margin-top:0;" data-zh="☕ 互動黑板實驗：定溫 20°C 下，100g 水的食鹽溶解度為 36g / 100g 水" data-en="☕ Interactive Exp: At 20°C, Salt solubility in 100g water is 36g / 100g water">☕ 互動黑板實驗：定溫 20°C 下，100g 水的食鹽溶解度為 36g / 100g 水</h3>
+                <p data-zh="請點擊下方加入不同重量的食鹽，觀察「極限比例」與「實際公克數」的清晰差異：" data-en="Click below to add different weights of salt, observing the clear difference between 'limit ratio' and 'actual grams':">請點擊下方加入不同重量的食鹽，觀察「極限比例」與「實際公克數」的清晰差異：</p>
                 <div style="margin: 15px 0;">
-                    <button class="btn btn-blue" onclick="testSolubility(15)">加入 15g 食鹽 (未飽和)</button>
-                    <button class="btn btn-green" onclick="testSolubility(36)">加入 36g 食鹽 (剛好飽和！)</button>
-                    <button class="btn btn-pink" onclick="testSolubility(50)">加入 50g 食鹽 (過量沉澱！)</button>
+                    <button class="btn btn-blue" id="btn-sol-15" onclick="testSolubility(15, this)" data-zh="加入 15g 食鹽 (未飽和)" data-en="Add 15g Salt (Unsaturated)">加入 15g 食鹽 (未飽和)</button>
+                    <button class="btn btn-green" id="btn-sol-36" onclick="testSolubility(36, this)" data-zh="加入 36g 食鹽 (剛好飽和！)" data-en="Add 36g Salt (Just Saturated!)">加入 36g 食鹽 (剛好飽和！)</button>
+                    <button class="btn btn-pink" id="btn-sol-50" onclick="testSolubility(50, this)" data-zh="加入 50g 食鹽 (過量沉澱！)" data-en="Add 50g Salt (Precipitates!)">加入 50g 食鹽 (過量沉澱！)</button>
                 </div>
                 <canvas id="solCanvas1" width="750" height="280"></canvas>
                 <div id="solText1" style="background: var(--bg-card); padding: 1.2rem; border-radius: 0.8rem; border: 2px dashed var(--chalk-white); text-align: left; max-width: 750px; margin: 15px auto 0 auto; font-size: 1.25rem;">
-                    👉 請點擊上方按鈕，觀察極限比例與實際溶解公克數...
+                    <!-- JS 動態寫入 -->
                 </div>
             </div>
 
             <div class="grid-2">
                 <div class="info-card">
-                    <h3 style="color: var(--chalk-yellow); margin-top: 0;">🟢 未飽和時：實際溶解量 ＜ 最大極限</h3>
-                    <p>當你在 100g 水中只加 15g 食鹽時，因為還沒達到 36g 的上限，所以食鹽全部融化！</p>
-                    <p style="margin-top: 10px; color: var(--chalk-blue);">👉 此時<strong class="hl-green">「實際溶解量 ＝ 15g」</strong>，但這杯水的<strong class="hl-yellow">「溶解度依然是 36g / 100g 水」</strong>！極限上限不會因為你加得少而改變！</p>
+                    <h3 style="color: var(--chalk-yellow); margin-top: 0;" data-zh="🟢 未飽和時：實際溶解量 ＜ 最大極限" data-en="🟢 Unsaturated: Actual Dissolved < Max Limit">🟢 未飽和時：實際溶解量 ＜ 最大極限</h3>
+                    <p data-zh="當你在 100g 水中只加 15g 食鹽時，因為還沒達到 36g 的上限，所以食鹽全部融化！" data-en="When you add only 15g salt to 100g water, it all dissolves because it hasn't reached the 36g limit!">當你在 100g 水中只加 15g 食鹽時，因為還沒達到 36g 的上限，所以食鹽全部融化！</p>
+                    <p style="margin-top: 10px; color: var(--chalk-blue);" data-zh="👉 此時<strong class='hl-green'>「實際溶解量 ＝ 15g」</strong>，但這杯水的<strong class='hl-yellow'>「溶解度依然是 36g / 100g 水」</strong>！極限上限不會因為你加得少而改變！" data-en="👉 At this point, <strong class='hl-green'>'Actual Dissolved Amount = 15g'</strong>, but the water's <strong class='hl-yellow'>'Solubility is still 36g / 100g water'</strong>! The limit doesn't change just because you added less!">👉 此時<strong class="hl-green">「實際溶解量 ＝ 15g」</strong>，但這杯水的<strong class="hl-yellow">「溶解度依然是 36g / 100g 水」</strong>！極限上限不會因為你加得少而改變！</p>
                 </div>
                 <div class="info-card info-card-pink">
-                    <h3 style="color: var(--chalk-pink); margin-top: 0;">🔴 達到飽和時：溶解量 ＝ 當前水量的極限</h3>
-                    <p>當你在 100g 水中倒進 50g 食鹽時，水最多就是只能融化 36g，多出來的 14g 只能沉在杯底！</p>
-                    <p style="margin-top: 10px; color: var(--chalk-yellow);">👉 此時<strong class="hl-pink">「實際溶解量 ＝ 36g」</strong>，絕不是 50g！而「溶解度」依然維持 <code>36g / 100g 水</code>。沉澱在底部的 14g 不能算入溶解量！</p>
+                    <h3 style="color: var(--chalk-pink); margin-top: 0;" data-zh="🔴 達到飽和時：溶解量 ＝ 當前水量的極限" data-en="🔴 Saturated: Dissolved = Limit for current water">🔴 達到飽和時：溶解量 ＝ 當前水量的極限</h3>
+                    <p data-zh="當你在 100g 水中倒進 50g 食鹽時，水最多就是只能融化 36g，多出來的 14g 只能沉在杯底！" data-en="When you pour 50g salt into 100g water, the water can only melt 36g max. The extra 14g must sink to the bottom!">當你在 100g 水中倒進 50g 食鹽時，水最多就是只能融化 36g，多出來的 14g 只能沉在杯底！</p>
+                    <p style="margin-top: 10px; color: var(--chalk-yellow);" data-zh="👉 此時<strong class='hl-pink'>「實際溶解量 ＝ 36g」</strong>，絕不是 50g！而「溶解度」依然維持 <code>36g / 100g 水</code>。沉澱在底部的 14g 不能算入溶解量！" data-en="👉 At this point, <strong class='hl-pink'>'Actual Dissolved Amount = 36g'</strong>, absolutely NOT 50g! And 'Solubility' remains <code>36g / 100g water</code>. The 14g precipitate doesn't count towards dissolved amount!">👉 此時<strong class="hl-pink">「實際溶解量 ＝ 36g」</strong>，絕不是 50g！而「溶解度」依然維持 <code>36g / 100g 水</code>。沉澱在底部的 14g 不能算入溶解量！</p>
                 </div>
             </div>
         </section>
 
         <!-- ================= 第二分頁：溶解度 vs 飽和濃度 ================= -->
         <section id="tab2" class="tab-content">
-            <h2>⚖️ 為什麼總被搞混？【溶解度】vs. 【飽和濃度】名詞大辨析！</h2>
+            <h2 data-zh="⚖️ 為什麼總被搞混？【溶解度】vs. 【飽和濃度】名詞大辨析！" data-en="⚖️ Why the confusion? [Solubility] vs [Saturation %] Analysis!">⚖️ 為什麼總被搞混？【溶解度】vs. 【飽和濃度】名詞大辨析！</h2>
             <div class="concept-box">
-                💡 <strong class="hl-yellow">為什麼學生會把它們混為一談？</strong><br>
-                因為當我們要算「飽和濃度」時，分子一定會帶入「最大極限的溶解度數值」！<br>
-                🚨 <strong class="hl-pink">但是兩者的定義和分母根本不一樣：</strong><br>
-                👉 <strong class="hl-green">溶解度：</strong> 分母<strong class="hl-yellow">「永遠只是水 (純溶劑 100g)」</strong>！表示為 <code>36g / 100g 水</code>。<br>
-                👉 <strong class="hl-pink">飽和濃度：</strong> 分母<strong class="hl-pink">「必須是：水 ＋ 溶質 (整杯溶液總重)」</strong>！表示為百分比 <code>wt%</code>！
+                💡 <strong class="hl-yellow" data-zh="為什麼學生會把它們混為一談？" data-en="Why do students confuse them?">為什麼學生會把它們混為一談？</strong><br>
+                <span data-zh="因為當我們要算「飽和濃度」時，分子一定會帶入「最大極限的溶解度數值」！" data-en="Because when calculating 'Saturation Concentration', we must use the 'max limit solubility value' in the numerator!">因為當我們要算「飽和濃度」時，分子一定會帶入「最大極限的溶解度數值」！</span><br>
+                🚨 <strong class="hl-pink" data-zh="但是兩者的定義和分母根本不一樣：" data-en="BUT their definitions and denominators are completely different:">但是兩者的定義和分母根本不一樣：</strong><br>
+                👉 <strong class="hl-green" data-zh="溶解度：" data-en="Solubility:">溶解度：</strong> <span data-zh="分母<strong class='hl-yellow'>「永遠只是水 (純溶劑 100g)」</strong>！表示為 <code>36g / 100g 水</code>。" data-en="Denominator is <strong class='hl-yellow'>'ALWAYS just water (pure solvent 100g)'</strong>! Expressed as <code>36g / 100g water</code>.">分母<strong class="hl-yellow">「永遠只是水 (純溶劑 100g)」</strong>！表示為 <code>36g / 100g 水</code>。</span><br>
+                👉 <strong class="hl-pink" data-zh="飽和濃度：" data-en="Saturation %:">飽和濃度：</strong> <span data-zh="分母<strong class='hl-pink'>「必須是：水 ＋ 溶質 (整杯溶液總重)」</strong>！表示為百分比 <code>wt%</code>！" data-en="Denominator <strong class='hl-pink'>'MUST BE: Water + Solute (Total Solution Mass)'</strong>! Expressed as a percentage <code>wt%</code>!">分母<strong class="hl-pink">「必須是：水 ＋ 溶質 (整杯溶液總重)」</strong>！表示為百分比 <code>wt%</code>！</span>
             </div>
 
             <div class="math-box">
-                <!-- 💡 修正第二張圖問題：套用彈性 Flex 結構與不換行約束 -->
                 <div class="math-row-flex">
                     <div style="white-space: nowrap;">
-                        🟢 <strong class="hl-green">食鹽的溶解度標示法：</strong> 
+                        🟢 <strong class="hl-green" data-zh="食鹽的溶解度標示法：" data-en="Salt's Solubility Notation:">食鹽的溶解度標示法：</strong> 
                         <span class="fraction">
-                            <span class="num hl-pink">最多溶解 36 g 食鹽</span>
-                            <span class="den hl-blue">標準 100 g 純水 (僅溶劑！)</span>
+                            <span class="num hl-pink" data-zh="最多溶解 36 g 食鹽" data-en="Max dissolve 36 g salt">最多溶解 36 g 食鹽</span>
+                            <span class="den hl-blue" data-zh="標準 100 g 純水 (僅溶劑！)" data-en="Std 100 g pure water (Solvent ONLY!)">標準 100 g 純水 (僅溶劑！)</span>
                         </span>
                     </div>
-                    <div class="math-read-text">👉 讀作：每 100g 水最多溶 36g 食鹽</div>
+                    <div class="math-read-text" data-zh="👉 讀作：每 100g 水最多溶 36g 食鹽" data-en="👉 Read as: Max 36g salt dissolved per 100g water">👉 讀作：每 100g 水最多溶 36g 食鹽</div>
                 </div>
                 <hr style="border: 0; border-top: 1px dashed var(--chalk-green); margin: 20px 0;">
-                <div style="font-weight: bold; color: var(--chalk-white); margin-bottom: 5px;">
+                <div style="font-weight: bold; color: var(--chalk-white); margin-bottom: 5px;" data-zh="🔴 <strong class='hl-pink'>食鹽的飽和重量百分濃度計算：</strong>" data-en="🔴 <strong class='hl-pink'>Salt's Saturated Mass Percentage Calculation:</strong>">
                     🔴 <strong class="hl-pink">食鹽的飽和重量百分濃度計算：</strong>
                 </div>
                 <div class="math-row">
                     <span class="math-eq">＝</span>
                     <span class="fraction">
-                        <span class="num hl-pink">溶質 36 g</span>
-                        <span class="den"><span class="hl-pink">溶質 36 g</span> ＋ <span class="hl-blue">水 100 g</span></span>
+                        <span class="num hl-pink" data-zh="溶質 36 g" data-en="Solute 36 g">溶質 36 g</span>
+                        <span class="den"><span class="hl-pink" data-zh="溶質 36 g" data-en="Solute 36 g">溶質 36 g</span> ＋ <span class="hl-blue" data-zh="水 100 g" data-en="Water 100 g">水 100 g</span></span>
                     </span>
                     <span>× 100%</span>
                 </div>
@@ -422,7 +571,7 @@
                     <span class="math-eq">＝</span>
                     <span class="fraction">
                         <span class="num hl-pink">36 g</span>
-                        <span class="den hl-green">136 g (溶液總重)</span>
+                        <span class="den hl-green" data-zh="136 g (溶液總重)" data-en="136 g (Total Solution)">136 g (溶液總重)</span>
                     </span>
                     <span>× 100%</span>
                 </div>
@@ -432,111 +581,124 @@
                 </div>
             </div>
 
-            <div class="interactive-area">
-                <h3 style="margin-top:0;">⚡ 黑板快問快答：分辨你是算「溶解度」還是「濃度」？</h3>
-                <p>點擊下方問題，看名師如何一秒破解分母陷阱：</p>
-                <div style="margin: 15px 0;">
-                    <button class="btn btn-blue" onclick="checkConcept('1')">Q1：在 20°C 時，把 36g 食鹽溶在 100g 水中達到飽和，請問「溶解度」是多少？</button>
-                    <button class="btn btn-green" onclick="checkConcept('2')">Q2：承上題，這杯飽和食鹽水的「重量百分濃度」是多少？會是 36% 嗎？</button>
-                    <button class="btn btn-orange" onclick="checkConcept('3')">Q3：如果改成 50g 的水，最多可以溶解多少克食鹽？溶解度會變半嗎？</button>
+            <!-- 🌟 練習區塊：問題 / 提示 / 解答 三部曲 -->
+            <div class="practice-box">
+                <div class="practice-tabs">
+                    <button class="practice-btn active" onclick="switchPractice(this, 'question')" data-zh="❓ 問題" data-en="❓ Question">❓ 問題</button>
+                    <button class="practice-btn" onclick="switchPractice(this, 'hint')" data-zh="💡 提示" data-en="💡 Hint">💡 提示</button>
+                    <button class="practice-btn" onclick="switchPractice(this, 'answer')" data-zh="✅ 解答" data-en="✅ Answer">✅ 解答</button>
                 </div>
-                <div id="conceptBox" style="background: var(--bg-card); padding: 1.2rem; border-radius: 0.8rem; border: 2px dashed var(--chalk-yellow); text-align: left; max-width: 750px; margin: 10px auto 0 auto; font-size: 1.25rem;">
-                    👉 請點擊上方問題，看穿分母的秘密...
+                <div class="practice-step active" data-content="question">
+                    <h3 data-zh="問題" data-en="Question">問題</h3>
+                    <p data-zh="在 20°C 時，將 36g 食鹽溶於 100g 水中剛好達到飽和。請問這杯食鹽水的「溶解度」和「重量百分濃度」分別是多少？如果水量減半成 50g，溶解度會改變嗎？" data-en="At 20°C, 36g of salt saturates 100g of water. What is the 'Solubility' and 'Mass Percentage' of this saltwater? If water is halved to 50g, does solubility change?">
+                        在 20°C 時，將 36g 食鹽溶於 100g 水中剛好達到飽和。請問這杯食鹽水的「溶解度」和「重量百分濃度」分別是多少？如果水量減半成 50g，溶解度會改變嗎？
+                    </p>
+                </div>
+                <div class="practice-step" data-content="hint">
+                    <h3 data-zh="提示" data-en="Hint">提示</h3>
+                    <p data-zh="1. 溶解度分母是「純水」，濃度分母是「全體溶液」。 <br>2. 溶解度是一種「極限比例標示」，就像最高速限一樣，不會因為車子（水量）變少而改變。" data-en="1. Solubility denominator is 'pure water', concentration denominator is 'total solution'. <br>2. Solubility is a 'limit ratio', like a speed limit, it doesn't change with less water.">
+                        1. 溶解度分母是「純水」，濃度分母是「全體溶液」。 <br>2. 溶解度是一種「極限比例標示」，就像最高速限一樣，不會因為車子（水量）變少而改變。
+                    </p>
+                </div>
+                <div class="practice-step" data-content="answer">
+                    <h3 data-zh="解答" data-en="Answer">解答</h3>
+                    <p data-zh="1. <strong class='hl-green'>溶解度：</strong>36g / 100g 水。<br>2. <strong class='hl-pink'>濃度：</strong>36 ÷ (36+100) × 100% ＝ 26.5%（不是36%！）。<br>3. <strong class='hl-blue'>水量減半：</strong>最多溶解 18g 食鹽，但溶解度「不變」（仍維持 36g / 100g 水）！" data-en="1. <strong class='hl-green'>Solubility:</strong> 36g / 100g water.<br>2. <strong class='hl-pink'>Concentration:</strong> 36 ÷ (36+100) × 100% = 26.5% (NOT 36%!).<br>3. <strong class='hl-blue'>Halved water:</strong> Dissolves max 18g salt, but solubility 'unchanged' (remains 36g / 100g water)!">
+                        1. <strong class="hl-green">溶解度：</strong>36g / 100g 水。<br>2. <strong class="hl-pink">濃度：</strong>36 ÷ (36+100) × 100% ＝ 26.5%（不是36%！）。<br>3. <strong class="hl-blue">水量減半：</strong>最多溶解 18g 食鹽，但溶解度「不變」（仍維持 36g / 100g 水）！
+                    </p>
                 </div>
             </div>
         </section>
 
         <!-- ================= 第三分頁：溫度與溶解度曲線 ================= -->
         <section id="tab3" class="tab-content">
-            <h2>📈 溫度對溶解度的影響：固體曲線 vs. 氣體曲線</h2>
+            <h2 data-zh="📈 溫度對溶解度的影響：固體曲線 vs. 氣體曲線" data-en="📈 Temp Effect on Solubility: Solid vs Gas Curves">📈 溫度對溶解度的影響：固體曲線 vs. 氣體曲線</h2>
             <div class="concept-box">
-                💡 <strong class="hl-yellow">溫度改變時，水胃口的大小也會跟著變！</strong><br>
-                👉 <strong class="hl-green">大部分固體 (如硝酸鉀)：</strong> 溫度愈高，水分子運動愈劇烈，<span class="hl-yellow">溶解度大幅上升！</span><br>
-                👉 <strong class="hl-blue">少數固體 (如食鹽)：</strong> 溫度變化對溶解度的影響<span class="hl-green">極小（曲線幾乎是水平線）</span>。<br>
-                👉 <strong class="hl-pink">極少數固體與「所有氣體」 (如氫氧化鈣、CO₂)：</strong> 溫度愈高，反而<span class="hl-pink">溶解度下降（熱水藏不住氣體！）</span>。
+                💡 <strong class="hl-yellow" data-zh="溫度改變時，水胃口的大小也會跟著變！" data-en="As temperature changes, water's 'appetite' changes too!">溫度改變時，水胃口的大小也會跟著變！</strong><br>
+                👉 <strong class="hl-green" data-zh="大部分固體 (如硝酸鉀)：" data-en="Most Solids (e.g., KNO3):">大部分固體 (如硝酸鉀)：</strong> <span data-zh="溫度愈高，水分子運動愈劇烈，<span class='hl-yellow'>溶解度大幅上升！</span>" data-en="Higher temp = more vigorous water molecules = <span class='hl-yellow'>Solubility drastically increases!</span>">溫度愈高，水分子運動愈劇烈，<span class="hl-yellow">溶解度大幅上升！</span></span><br>
+                👉 <strong class="hl-blue" data-zh="少數固體 (如食鹽)：" data-en="Few Solids (e.g., NaCl):">少數固體 (如食鹽)：</strong> <span data-zh="溫度變化對溶解度的影響<span class='hl-green'>極小（曲線幾乎是水平線）</span>。" data-en="Temp changes have <span class='hl-green'>minimal effect (curve is almost horizontal)</span>.">溫度變化對溶解度的影響<span class="hl-green">極小（曲線幾乎是水平線）</span>。</span><br>
+                👉 <strong class="hl-pink" data-zh="極少數固體與「所有氣體」 (如氫氧化鈣、CO₂)：" data-en="Very few solids & 'All Gases' (e.g., Ca(OH)2, CO2):">極少數固體與「所有氣體」 (如氫氧化鈣、CO₂)：</strong> <span data-zh="溫度愈高，反而<span class='hl-pink'>溶解度下降（熱水藏不住氣體！）</span>。" data-en="Higher temp = <span class='hl-pink'>Solubility decreases (Hot water can't hold gas!)</span>.">溫度愈高，反而<span class="hl-pink">溶解度下降（熱水藏不住氣體！）</span>。</span>
             </div>
 
             <div class="interactive-area">
-                <h3 style="margin-top:0;">📊 互動黑板溶解度曲線圖：拖曳溫度，觀察三者最大極限！</h3>
-                <p>請拖曳溫度滑桿，對照 100g 水在不同溫度下，三種固體最多能吃下幾克：</p>
+                <h3 style="margin-top:0;" data-zh="📊 互動黑板溶解度曲線圖：拖曳溫度，觀察三者最大極限！" data-en="📊 Interactive Solubility Curve: Drag Temp, Observe Max Limits!">📊 互動黑板溶解度曲線圖：拖曳溫度，觀察三者最大極限！</h3>
+                <p data-zh="請拖曳溫度滑桿，對照 100g 水在不同溫度下，三種固體最多能吃下幾克：" data-en="Drag the temp slider to compare how many grams of the 3 solids 100g of water can dissolve:">請拖曳溫度滑桿，對照 100g 水在不同溫度下，三種固體最多能吃下幾克：</p>
                 
                 <div class="control-group">
-                    <label style="color: var(--chalk-yellow);">🌡️ 當前水溫：<strong id="valTemp" style="font-size:1.6rem;">20</strong> °C</label>
+                    <label style="color: var(--chalk-yellow);"><span data-zh="🌡️ 當前水溫：" data-en="🌡️ Current Temp:">🌡️ 當前水溫：</span><strong id="valTemp" style="font-size:1.6rem;">20</strong> °C</label>
                     <input type="range" id="rangeTemp" min="0" max="80" step="10" value="20" oninput="updateTempCurve()">
                 </div>
 
                 <canvas id="curveCanvas" width="750" height="400"></canvas>
 
-                <!-- 💡 修正第一張圖問題：套用 `.limit-display-box` 與 `.limit-item`，把數字跟 g 牢牢綁在一起 -->
                 <div class="limit-display-box">
-                    <div class="limit-item">🟢 硝酸鉀極限：<strong class="hl-green" id="kno3Val" style="font-size:1.5rem;">31.6</strong> g</div>
-                    <div class="limit-item">🟡 食鹽極限：<strong class="hl-yellow" id="naclVal" style="font-size:1.5rem;">35.9</strong> g</div>
-                    <div class="limit-item">🔵 氫氧化鈣極限：<strong class="hl-blue" id="caohVal" style="font-size:1.5rem;">0.17</strong> g</div>
+                    <div class="limit-item"><span data-zh="🟢 硝酸鉀極限：" data-en="🟢 KNO3 Limit:">🟢 硝酸鉀極限：</span><strong class="hl-green" id="kno3Val" style="font-size:1.5rem;">31.6</strong> g</div>
+                    <div class="limit-item"><span data-zh="🟡 食鹽極限：" data-en="🟡 NaCl Limit:">🟡 食鹽極限：</span><strong class="hl-yellow" id="naclVal" style="font-size:1.5rem;">35.9</strong> g</div>
+                    <div class="limit-item"><span data-zh="🔵 氫氧化鈣極限：" data-en="🔵 Ca(OH)2 Limit:">🔵 氫氧化鈣極限：</span><strong class="hl-blue" id="caohVal" style="font-size:1.5rem;">0.17</strong> g</div>
                 </div>
             </div>
         </section>
 
         <!-- ================= 第四分頁：降溫結晶析出計算 ================= -->
         <section id="tab4" class="tab-content">
-            <h2>❄️ 段考魔王題破解：熱水降溫，【結晶析出】計算機！</h2>
+            <h2 data-zh="❄️ 段考魔王題破解：熱水降溫，【結晶析出】計算機！" data-en="❄️ Exam Boss Crack: Hot Water Cooling, [Crystallization] Calc!">❄️ 段考魔王題破解：熱水降溫，【結晶析出】計算機！</h2>
             <div class="concept-box">
-                💡 <strong class="hl-yellow">為什麼熱水變冷時，會有晶體「吐出來（析出）」？</strong><br>
-                因為像硝酸鉀這種物質，在高溫時胃口超大（能溶很多），一旦降溫變冷，水的胃口瞬間變小！原本融化在肚子裡的溶質<span class="hl-pink">「超過了低溫時的極限」</span>，多出來的部分只好重新變成固體晶體沉澱在杯底！
+                💡 <strong class="hl-yellow" data-zh="為什麼熱水變冷時，會有晶體「吐出來（析出）」？" data-en="Why do crystals 'spit out (precipitate)' when hot water cools?">為什麼熱水變冷時，會有晶體「吐出來（析出）」？</strong><br>
+                <span data-zh="因為像硝酸鉀這種物質，在高溫時胃口超大（能溶很多），一旦降溫變冷，水的胃口瞬間變小！原本融化在肚子裡的溶質<span class='hl-pink'>「超過了低溫時的極限」</span>，多出來的部分只好重新變成固體晶體沉澱在杯底！" data-en="Substances like KNO3 have huge 'appetites' (solubility) at high temps. Upon cooling, water's appetite shrinks instantly! The dissolved solute <span class='hl-pink'>'exceeds the low-temp limit'</span>, so the excess must turn back into solid crystals at the bottom!">因為像硝酸鉀這種物質，在高溫時胃口超大（能溶很多），一旦降溫變冷，水的胃口瞬間變小！原本融化在肚子裡的溶質<span class="hl-pink">「超過了低溫時的極限」</span>，多出來的部分只好重新變成固體晶體沉澱在杯底！</span>
             </div>
 
             <div class="math-box">
-                <div style="color: var(--chalk-yellow); font-weight: bold; margin-bottom: 8px;">
+                <div style="color: var(--chalk-yellow); font-weight: bold; margin-bottom: 8px;" data-zh="🔥 名師結晶析出速算公式 (絕不卡關！)" data-en="🔥 Crystallization Quick Formula (Never get stuck!)">
                     🔥 名師結晶析出速算公式 (絕不卡關！)
                 </div>
-                <div style="font-weight: bold; color: var(--chalk-white); margin-bottom: 5px;">
+                <div style="font-weight: bold; color: var(--chalk-white); margin-bottom: 5px;" data-zh="析出晶體重量 (g)：" data-en="Precipitated Crystal Mass (g):">
                     析出晶體重量 (g)：
                 </div>
                 <div class="math-row">
                     <span class="math-eq">＝</span>
                     <span class="fraction">
-                        <span class="num hl-pink">( 高溫溶解度 － 低溫溶解度 )</span>
-                        <span class="den hl-blue">100 g 標準水量</span>
+                        <span class="num hl-pink" data-zh="( 高溫溶解度 － 低溫溶解度 )" data-en="( High-Temp Solubility - Low-Temp Solubility )">( 高溫溶解度 － 低溫溶解度 )</span>
+                        <span class="den hl-blue" data-zh="100 g 標準水量" data-en="100 g Std Water">100 g 標準水量</span>
                     </span>
-                    <span>× <strong class="hl-green">題目給的實際純水量 (g)</strong></span>
+                    <span>× <strong class="hl-green" data-zh="題目給的實際純水量 (g)" data-en="Actual Pure Water Mass from Question (g)">題目給的實際純水量 (g)</strong></span>
                 </div>
             </div>
 
             <div class="interactive-area">
-                <h3 style="margin-top:0;">🧮 互動結晶實驗室：硝酸鉀溶液降溫模擬</h3>
-                <p>已知硝酸鉀在 <strong class="hl-pink">60°C 時溶解度為 110g</strong>；而在 <strong class="hl-blue">20°C 時溶解度降為 30g</strong> (每100g水)。<br>請拖曳題目給的「實際純水量」，觀察降溫到 20°C 時會吐出多少晶體：</p>
+                <h3 style="margin-top:0;" data-zh="🧮 互動結晶實驗室：硝酸鉀溶液降溫模擬" data-en="🧮 Interactive Crystal Lab: KNO3 Cooling Simulation">🧮 互動結晶實驗室：硝酸鉀溶液降溫模擬</h3>
+                <p data-zh="已知硝酸鉀在 <strong class='hl-pink'>60°C 時溶解度為 110g</strong>；而在 <strong class='hl-blue'>20°C 時溶解度降為 30g</strong> (每100g水)。<br>請拖曳題目給的「實際純水量」，觀察降溫到 20°C 時會吐出多少晶體：" data-en="Given KNO3 solubility is <strong class='hl-pink'>110g at 60°C</strong>; drops to <strong class='hl-blue'>30g at 20°C</strong> (per 100g water).<br>Drag the 'actual pure water mass' to see how many crystals precipitate when cooled to 20°C:">已知硝酸鉀在 <strong class="hl-pink">60°C 時溶解度為 110g</strong>；而在 <strong class="hl-blue">20°C 時溶解度降為 30g</strong> (每100g水)。<br>請拖曳題目給的「實際純水量」，觀察降溫到 20°C 時會吐出多少晶體：</p>
                 
                 <div class="control-group">
-                    <label style="color: var(--chalk-green);">💧 題目給的實際純水量：<strong id="valWaterMass" style="font-size:1.6rem;">100</strong> g</label>
+                    <label style="color: var(--chalk-green);"><span data-zh="💧 題目給的實際純水量：" data-en="💧 Actual Pure Water Mass:">💧 題目給的實際純水量：</span><strong id="valWaterMass" style="font-size:1.6rem;">100</strong> g</label>
                     <input type="range" id="rangeWaterMass" min="50" max="300" step="50" value="100" oninput="updateCrystalCalc()">
                 </div>
 
                 <div class="math-box" style="border-color: var(--chalk-pink);">
-                    <div style="font-weight: bold; color: var(--chalk-white); margin-bottom: 5px;">
+                    <div style="font-weight: bold; color: var(--chalk-white); margin-bottom: 5px;" data-zh="📝 實戰計算推導過程：" data-en="📝 Practical Calculation Derivation:">
                         📝 實戰計算推導過程：
                     </div>
                     <div class="math-row">
                         <span class="math-eq">＝</span>
                         <span class="fraction">
                             <span class="num hl-pink">( 110 g － 30 g )</span>
-                            <span class="den hl-blue">100 g 水</span>
+                            <span class="den hl-blue" data-zh="100 g 水" data-en="100 g Water">100 g 水</span>
                         </span>
-                        <span>× <strong class="hl-green" id="showWaterMass">100</strong> g 水</span>
+                        <span>× <strong class="hl-green" id="showWaterMass">100</strong> <span data-zh="g 水" data-en="g Water">g 水</span></span>
                     </div>
                     <div class="math-row">
                         <span class="math-eq">＝</span>
                         <span class="fraction">
-                            <span class="num hl-yellow">胃口差額 80 g</span>
-                            <span class="den hl-blue">100 g 水</span>
+                            <span class="num hl-yellow" data-zh="胃口差額 80 g" data-en="Appetite Diff 80 g">胃口差額 80 g</span>
+                            <span class="den hl-blue" data-zh="100 g 水" data-en="100 g Water">100 g 水</span>
                         </span>
-                        <span>× <strong class="hl-green" id="showWaterMass2">100</strong> g 水</span>
+                        <span>× <strong class="hl-green" id="showWaterMass2">100</strong> <span data-zh="g 水" data-en="g Water">g 水</span></span>
                     </div>
                     <div class="math-row" style="margin-top: 15px;">
                         <span class="math-eq">＝</span>
                         <strong class="hl-yellow" style="font-size: 2.6rem; margin-left: 10px;" id="showCrystalResult">
-                            析出 80.0 g 晶體！
+                            <!-- JS Dynamic -->
                         </strong>
                     </div>
-                    <p style="color: var(--chalk-green); font-size: 1.15rem; margin-top: 15px; text-align: center;">
+                    <p style="color: var(--chalk-green); font-size: 1.15rem; margin-top: 15px; text-align: center;" data-zh="✔ 結論：水量如果變成 2 倍 (200g)，吐出來的晶體自然也會變成 2 倍！看比例最快！" data-en="✔ Conclusion: If water mass doubles (200g), precipitated crystals naturally double too! Proportions are fastest!">
                         ✔ 結論：水量如果變成 2 倍 (200g)，吐出來的晶體自然也會變成 2 倍！看比例最快！
                     </p>
                 </div>
@@ -545,54 +707,118 @@
 
         <!-- ================= 第五分頁：氣體溶解度與壓力 ================= -->
         <section id="tab5" class="tab-content">
-            <h2>🍾 氣體的溶解度：為什麼汽水打開會狂冒泡？</h2>
+            <h2 data-zh="🍾 氣體的溶解度：為什麼汽水打開會狂冒泡？" data-en="🍾 Gas Solubility: Why does soda fizz crazily when opened?">🍾 氣體的溶解度：為什麼汽水打開會狂冒泡？</h2>
             <div class="concept-box">
-                💡 <strong class="hl-yellow">氣體的胃口跟固體完全相反！雙重影響鐵則：</strong><br>
-                1️⃣ <strong class="hl-pink">溫度愈高，溶解度愈「低」：</strong> 熱水煮沸時，水裡的溶氧跟氣體都會被趕出來冒氣泡！<br>
-                2️⃣ <strong class="hl-green">壓力愈大，溶解度愈「高」：</strong> 氣體就像彈簧，壓力越大越能把它們硬壓進水分子裡！
+                💡 <strong class="hl-yellow" data-zh="氣體的胃口跟固體完全相反！雙重影響鐵則：" data-en="Gas 'appetite' is the exact opposite of solids! Dual-effect rule:">氣體的胃口跟固體完全相反！雙重影響鐵則：</strong><br>
+                1️⃣ <strong class="hl-pink" data-zh="溫度愈高，溶解度愈「低」：" data-en="Higher temp = 'Lower' solubility:">溫度愈高，溶解度愈「低」：</strong> <span data-zh="熱水煮沸時，水裡的溶氧跟氣體都會被趕出來冒氣泡！" data-en="When water boils, dissolved oxygen and gases are driven out as bubbles!">熱水煮沸時，水裡的溶氧跟氣體都會被趕出來冒氣泡！</span><br>
+                2️⃣ <strong class="hl-green" data-zh="壓力愈大，溶解度愈「高」：" data-en="Higher pressure = 'Higher' solubility:">壓力愈大，溶解度愈「高」：</strong> <span data-zh="氣體就像彈簧，壓力越大越能把它們硬壓進水分子裡！" data-en="Gases are like springs; higher pressure forces more of them into water molecules!">氣體就像彈簧，壓力越大越能把它們硬壓進水分子裡！</span>
             </div>
 
             <div class="grid-2">
                 <div class="info-card">
-                    <h3 style="color: var(--chalk-yellow); margin-top: 0;">🍾 汽水開瓶的化學解密</h3>
-                    <p>👉 <strong class="hl-green">開瓶前（高壓）：</strong> 工廠利用高壓把大量二氧化碳壓入糖水中，此時瓶內壓力大，<span class="hl-yellow">二氧化碳溶解度極高</span>，看不到氣泡。</p>
-                    <p style="margin-top:10px;">👉 <strong class="hl-pink">開瓶後（減壓）：</strong> 「啵」的一聲，外界壓力變小（降回一大氣壓），<strong class="hl-pink">二氧化碳溶解度瞬間暴跌</strong>！水裡再也藏不住那麼多氣體，只好化為無數氣泡狂湧而出！</p>
+                    <h3 style="color: var(--chalk-yellow); margin-top: 0;" data-zh="🍾 汽水開瓶的化學解密" data-en="🍾 Soda Opening Chemistry Decoded">🍾 汽水開瓶的化學解密</h3>
+                    <p data-zh="👉 <strong class='hl-green'>開瓶前（高壓）：</strong> 工廠利用高壓把大量二氧化碳壓入糖水中，此時瓶內壓力大，<span class='hl-yellow'>二氧化碳溶解度極高</span>，看不到氣泡。" data-en="👉 <strong class='hl-green'>Before opening (High Pressure):</strong> Factories use high pressure to force massive CO2 into syrup water. Pressure is high, <span class='hl-yellow'>CO2 solubility is extremely high</span>, no bubbles.">👉 <strong class="hl-green">開瓶前（高壓）：</strong> 工廠利用高壓把大量二氧化碳壓入糖水中，此時瓶內壓力大，<span class="hl-yellow">二氧化碳溶解度極高</span>，看不到氣泡。</p>
+                    <p style="margin-top:10px;" data-zh="👉 <strong class='hl-pink'>開瓶後（減壓）：</strong> 「啵」的一聲，外界壓力變小（降回一大氣壓），<strong class='hl-pink'>二氧化碳溶解度瞬間暴跌</strong>！水裡再也藏不住那麼多氣體，只好化為無數氣泡狂湧而出！" data-en="👉 <strong class='hl-pink'>After opening (Depressurized):</strong> 'Pop!' External pressure drops (back to 1 atm), <strong class='hl-pink'>CO2 solubility plummets instantly</strong>! Water can't hold the gas, erupting into countless bubbles!">👉 <strong class="hl-pink">開瓶後（減壓）：</strong> 「啵」的一聲，外界壓力變小（降回一大氣壓），<strong class="hl-pink">二氧化碳溶解度瞬間暴跌</strong>！水裡再也藏不住那麼多氣體，只好化為無數氣泡狂湧而出！</p>
                 </div>
                 <div class="info-card info-card-pink">
-                    <h3 style="color: var(--chalk-pink); margin-top: 0;">🤿 潛水夫病的致命危機</h3>
-                    <p>👉 <strong class="hl-blue">深海潛水（高壓）：</strong> 深海水壓極大，呼吸空氣中的「氮氣」會<span class="hl-yellow">大量溶解在高壓的血液中</span>。</p>
-                    <p style="margin-top:10px;">👉 <strong class="hl-pink">浮上水面太快（瞬間減壓）：</strong> 如果潛水員急速上浮，水壓驟減，血液中的氮氣溶解度暴降！<strong class="hl-pink">氮氣在血管裡像汽水開瓶一樣直接化為氣泡</strong>，堵塞血管、劇痛甚至致命！</p>
+                    <h3 style="color: var(--chalk-pink); margin-top: 0;" data-zh="🤿 潛水夫病的致命危機" data-en="🤿 Deadly Risk of Decompression Sickness">🤿 潛水夫病的致命危機</h3>
+                    <p data-zh="👉 <strong class='hl-blue'>深海潛水（高壓）：</strong> 深海水壓極大，呼吸空氣中的「氮氣」會<span class='hl-yellow'>大量溶解在高壓的血液中</span>。" data-en="👉 <strong class='hl-blue'>Deep Diving (High Pressure):</strong> Huge deep-sea pressure causes 'Nitrogen' from breathing air to <span class='hl-yellow'>dissolve massively in high-pressure blood</span>.">👉 <strong class="hl-blue">深海潛水（高壓）：</strong> 深海水壓極大，呼吸空氣中的「氮氣」會<span class="hl-yellow">大量溶解在高壓的血液中</span>。</p>
+                    <p style="margin-top:10px;" data-zh="👉 <strong class='hl-pink'>浮上水面太快（瞬間減壓）：</strong> 如果潛水員急速上浮，水壓驟減，血液中的氮氣溶解度暴降！<strong class='hl-pink'>氮氣在血管裡像汽水開瓶一樣直接化為氣泡</strong>，堵塞血管、劇痛甚至致命！" data-en="👉 <strong class='hl-pink'>Ascending too fast (Instant Depressurization):</strong> If a diver ascends rapidly, water pressure plummets, and blood nitrogen solubility drops! <strong class='hl-pink'>Nitrogen forms bubbles directly in vessels like opening a soda</strong>, blocking blood flow, causing agony or death!">👉 <strong class="hl-pink">浮上水面太快（瞬間減壓）：</strong> 如果潛水員急速上浮，水壓驟減，血液中的氮氣溶解度暴降！<strong class="hl-pink">氮氣在血管裡像汽水開瓶一樣直接化為氣泡</strong>，堵塞血管、劇痛甚至致命！</p>
                 </div>
             </div>
 
-            <div class="interactive-area">
-                <h3 style="margin-top:0;">⚡ 黑板快問快答：如何讓汽水裡溶有最多的二氧化碳？</h3>
-                <p>如果工廠想要製造出氣泡感超強、溶有最多 CO₂ 的超級汽水，應該在什麼環境下灌裝？</p>
-                <div style="margin: 15px 0;">
-                    <button class="btn btn-blue" onclick="alert('🚨 錯誤！高溫會讓氣體狂跑出來，根本壓不進去水裡！')">A. 高溫 ＋ 低壓 環境</button>
-                    <button class="btn btn-green" onclick="alert('🎉 答對了！【低溫】讓氣體安分不想跑，【高壓】把它們強力壓緊水裡！這就是汽水灌裝的黃金守則！')">B. 低溫 ＋ 高壓 環境 (正確答案)</button>
-                    <button class="btn btn-pink" onclick="alert('🚨 錯誤！低壓下氣體沒有被壓迫，無法大量溶入水中！')">C. 低溫 ＋ 低壓 環境</button>
+            <!-- 🌟 練習區塊：問題 / 提示 / 解答 三部曲 -->
+            <div class="practice-box">
+                <div class="practice-tabs">
+                    <button class="practice-btn active" onclick="switchPractice(this, 'question')" data-zh="❓ 問題" data-en="❓ Question">❓ 問題</button>
+                    <button class="practice-btn" onclick="switchPractice(this, 'hint')" data-zh="💡 提示" data-en="💡 Hint">💡 提示</button>
+                    <button class="practice-btn" onclick="switchPractice(this, 'answer')" data-zh="✅ 解答" data-en="✅ Answer">✅ 解答</button>
+                </div>
+                <div class="practice-step active" data-content="question">
+                    <h3 data-zh="問題" data-en="Question">問題</h3>
+                    <p data-zh="如果工廠想要製造出氣泡感超強、溶有最多二氧化碳的超級汽水，應該在什麼環境（溫度與壓力）下灌裝？" data-en="If a factory wants to produce super-fizzy soda with the maximum dissolved CO2, under what environment (temp & pressure) should it be bottled?">
+                        如果工廠想要製造出氣泡感超強、溶有最多二氧化碳的超級汽水，應該在什麼環境（溫度與壓力）下灌裝？
+                    </p>
+                </div>
+                <div class="practice-step" data-content="hint">
+                    <h3 data-zh="提示" data-en="Hint">提示</h3>
+                    <p data-zh="氣體分子像彈簧，且很怕熱。想想看怎麼把它們「壓」進水裡，又讓它們「不想跑出來」？" data-en="Gas molecules are like springs and hate heat. How do you 'press' them into water and make them 'stay'?">
+                        氣體分子像彈簧，且很怕熱。想想看怎麼把它們「壓」進水裡，又讓它們「不想跑出來」？
+                    </p>
+                </div>
+                <div class="practice-step" data-content="answer">
+                    <h3 data-zh="解答" data-en="Answer">解答</h3>
+                    <p data-zh="<strong class='hl-yellow'>低溫 ＋ 高壓</strong> 環境！<br>低溫讓氣體安分不想跑，高壓把它們強力壓緊水裡，這就是汽水灌裝的黃金守則！" data-en="<strong class='hl-yellow'>Low Temp + High Pressure</strong>!<br>Low temp keeps gas calm, high pressure forces them tightly into water. This is the golden rule for soda bottling!">
+                        <strong class="hl-yellow">低溫 ＋ 高壓</strong> 環境！<br>低溫讓氣體安分不想跑，高壓把它們強力壓緊水裡，這就是汽水灌裝的黃金守則！
+                    </p>
                 </div>
             </div>
+
         </section>
     </div>
 
     <script>
+        // --- 核心變數與雙語邏輯 ---
+        let currentLang = 'zh';
+        let currentSolSugarAmount = 15;
+
+        function tr(zh, en) {
+            return currentLang === 'en' ? en : zh;
+        }
+
+        function setLang(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
+
+            document.getElementById('btn-lang-zh').classList.toggle('active', lang === 'zh');
+            document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+
+            // 替換全站 DOM 靜態文字
+            document.querySelectorAll('[data-zh][data-en]').forEach(el => {
+                el.innerHTML = el.getAttribute(`data-${lang}`);
+            });
+
+            // 觸發重新渲染以更新動態文字
+            testSolubility(currentSolSugarAmount);
+            updateTempCurve();
+            updateCrystalCalc();
+        }
+
         // --- 1. 分頁切換 ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             
             document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+            if(window.event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            } else {
+                document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`)?.classList.add('active');
+            }
 
-            if(tabId === 'tab1') testSolubility(15);
+            if(tabId === 'tab1') testSolubility(currentSolSugarAmount);
             if(tabId === 'tab3') updateTempCurve();
             if(tabId === 'tab4') updateCrystalCalc();
         }
 
-        // --- 2. 第一分頁：溶解度 vs 溶解量畫布 (嚴格區分極限比例與實際公克數) ---
-        function testSolubility(addedMass) {
+        // --- 🌟 三部曲 Practice Box 核心切換邏輯 (使用最穩定的行內綁定) ---
+        function switchPractice(btn, step) {
+            const box = btn.closest('.practice-box');
+            if (!box) return;
+            box.querySelectorAll('.practice-btn').forEach(b => b.classList.remove('active'));
+            box.querySelectorAll('.practice-step').forEach(s => s.classList.remove('active'));
+            btn.classList.add('active');
+            box.querySelector(`[data-content="${step}"]`).classList.add('active');
+        }
+
+        // --- 2. 第一分頁：溶解度 vs 溶解量畫布 ---
+        function testSolubility(addedMass, btnEl) {
+            currentSolSugarAmount = addedMass;
+            if(btnEl) {
+                document.querySelectorAll('#tab1 .btn').forEach(b => b.classList.remove('active'));
+                btnEl.classList.add('active');
+            }
+
             const canvas = document.getElementById('solCanvas1');
             if(!canvas) return;
             const ctx = canvas.getContext('2d');
@@ -629,45 +855,44 @@
                 }
             }
 
-            if(addedMass === 15) {
-                ctx.fillStyle = '#4ade80'; ctx.font = 'bold 22px PingFang TC';
-                ctx.fillText("🟢 未飽和 ｜ 加入15g，實際溶解量 ＝ 15g", 160, 25);
-                textEl.innerHTML = `
-                    🟢 <strong class="hl-green">未飽和狀態分析：</strong><br>
-                    100g 水在 20°C 時的極限上限是 36g，你加了 15g 食鹽，全部融化！<br>
-                    👉 <strong class="hl-yellow">重要觀念：</strong> 此時【實際溶解量 ＝ 15g】，但請記得這杯水的【溶解度依然是 36g / 100g 水】！極限上限不會因為你加得少就變小！
-                `;
-            } else if(addedMass === 36) {
-                ctx.fillStyle = '#fde047'; ctx.font = 'bold 22px PingFang TC';
-                ctx.fillText("🟡 剛好飽和 ｜ 加入36g，達到當前水量的極限", 140, 25);
-                textEl.innerHTML = `
-                    🟡 <strong class="hl-yellow">恰好飽和狀態分析：</strong><br>
-                    你加了 36g 食鹽，剛好達到 100g 水在 20°C 時能消化的最大極限！<br>
-                    👉 <strong class="hl-yellow">重要觀念：</strong> 此時【實際溶解量 ＝ 36g】。如果今天水量改成 50g，恰好飽和時的「溶解量」會減半為 18g，但「溶解度」依然維持 <code>36g / 100g 水</code> 不變！
-                `;
-            } else {
-                ctx.fillStyle = '#f472b6'; ctx.font = 'bold 22px PingFang TC';
-                ctx.fillText(`🔴 過量沉澱 ｜ 加入50g，溶解量＝36g (沉澱${ppt}g)`, 120, 25);
-                textEl.innerHTML = `
-                    🔴 <strong class="hl-pink">過量沉澱狀態分析 (段考陷阱！)：</strong><br>
-                    你硬加了 50g 食鹽，但 100g 的水最多就是只能融化 36g，多出來的 <strong class="hl-yellow">14g 只能變成固體沉澱吐在杯底</strong>！<br>
-                    👉 <strong class="hl-pink">名師鐵則：</strong> 此時【實際溶解量依然是 36g】，絕不是 50g！也絕不能說溶解度變成 50g！沉澱在底部的晶體根本沒有融化！
-                `;
-            }
-        }
+            ctx.textAlign = 'left';
 
-        // --- 3. 第二分頁：名詞辨析快問快答 ---
-        function checkConcept(q) {
-            const box = document.getElementById('conceptBox');
-            if(q === '1') {
-                box.innerHTML = `🎯 <strong class="hl-green">【正確答案：36g / 100g 水】</strong><br>因為「溶解度」的定義就是每 100g 溶劑最多溶多少。分母只能是純水，切記！`;
-                box.style.borderColor = "var(--chalk-green)";
-            } else if(q === '2') {
-                box.innerHTML = `🚨 <strong class="hl-pink">【錯！不是 36%！】</strong><br>算重量百分濃度時，分母必須是「全體溶液重 (36g＋100g)」，所以看上方黑板的算式：36 ÷ 136 × 100% ＝ 26.5% 喔！`;
-                box.style.borderColor = "var(--chalk-pink)";
-            } else if(q === '3') {
-                box.innerHTML = `🎯 <strong class="hl-blue">【最多可以溶 18g 食鹽，但溶解度不變！】</strong><br>水量少一半，能吃的絕對重量 (實際溶解量) 當然變半為 18g；但是我們標示溶解度時，習慣換算回標準的「100g 水為基準」，所以溶解度標示依然是 36g / 100g 水！`;
-                box.style.borderColor = "var(--chalk-blue)";
+            if(addedMass === 15) {
+                ctx.fillStyle = '#4ade80'; ctx.font = 'bold 22px PingFang TC, sans-serif';
+                ctx.fillText(tr("🟢 未飽和 ｜ 加入15g，實際溶解量 ＝ 15g", "🟢 Unsaturated | Added 15g, Actual Dissolved = 15g"), 140, 25);
+                textEl.innerHTML = tr(
+                    `🟢 <strong class="hl-green">未飽和狀態分析：</strong><br>
+                    100g 水在 20°C 時的極限上限是 36g，你加了 15g 食鹽，全部融化！<br>
+                    👉 <strong class="hl-yellow">重要觀念：</strong> 此時【實際溶解量 ＝ 15g】，但請記得這杯水的【溶解度依然是 36g / 100g 水】！極限上限不會因為你加得少就變小！`,
+                    
+                    `🟢 <strong class="hl-green">Unsaturated State Analysis:</strong><br>
+                    100g water's limit at 20°C is 36g. You added 15g salt, it all melts!<br>
+                    👉 <strong class="hl-yellow">Key Concept:</strong> Now [Actual Dissolved = 15g], but remember the water's [Solubility is STILL 36g / 100g water]! The limit doesn't shrink because you added less!`
+                );
+            } else if(addedMass === 36) {
+                ctx.fillStyle = '#fde047'; ctx.font = 'bold 22px PingFang TC, sans-serif';
+                ctx.fillText(tr("🟡 剛好飽和 ｜ 加入36g，達到當前水量的極限", "🟡 Just Saturated | Added 36g, Reached current water's limit"), 110, 25);
+                textEl.innerHTML = tr(
+                    `🟡 <strong class="hl-yellow">恰好飽和狀態分析：</strong><br>
+                    你加了 36g 食鹽，剛好達到 100g 水在 20°C 時能消化的最大極限！<br>
+                    👉 <strong class="hl-yellow">重要觀念：</strong> 此時【實際溶解量 ＝ 36g】。如果今天水量改成 50g，恰好飽和時的「溶解量」會減半為 18g，但「溶解度」依然維持 <code>36g / 100g 水</code> 不變！`,
+
+                    `🟡 <strong class="hl-yellow">Exactly Saturated State Analysis:</strong><br>
+                    You added 36g salt, hitting the exact max limit 100g water can digest at 20°C!<br>
+                    👉 <strong class="hl-yellow">Key Concept:</strong> Now [Actual Dissolved = 36g]. If water volume changes to 50g, 'dissolved amount' at saturation halves to 18g, but 'Solubility' remains <code>36g / 100g water</code>!`
+                );
+            } else {
+                ctx.fillStyle = '#f472b6'; ctx.font = 'bold 22px PingFang TC, sans-serif';
+                ctx.fillText(tr(`🔴 過量沉澱 ｜ 加入50g，溶解量＝36g (沉澱${ppt}g)`, `🔴 Precipitate | Added 50g, Dissolved=36g (Ppt ${ppt}g)`), 90, 25);
+                textEl.innerHTML = tr(
+                    `🔴 <strong class="hl-pink">過量沉澱狀態分析 (段考陷阱！)：</strong><br>
+                    你硬加了 50g 食鹽，但 100g 的水最多就是只能融化 36g，多出來的 <strong class="hl-yellow">14g 只能變成固體沉澱吐在杯底</strong>！<br>
+                    👉 <strong class="hl-pink">名師鐵則：</strong> 此時【實際溶解量依然是 36g】，絕不是 50g！也絕不能說溶解度變成 50g！沉澱在底部的晶體根本沒有融化！`,
+
+                    `🔴 <strong class="hl-pink">Saturated with Precipitate Analysis (Exam Trap!):</strong><br>
+                    You forced in 50g salt, but 100g water can only melt 36g max. The extra <strong class="hl-yellow">14g becomes solid precipitate at the bottom</strong>!<br>
+                    👉 <strong class="hl-pink">Master Rule:</strong> Now [Actual Dissolved is STILL 36g], definitely NOT 50g! You cannot say solubility became 50g! Bottom crystals did NOT melt!`
+                );
             }
         }
 
@@ -695,20 +920,23 @@
 
             const ox = 70, oy = 340;
 
+            // Axes
             ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 3;
             ctx.beginPath(); ctx.moveTo(ox, 20); ctx.lineTo(ox, oy); ctx.lineTo(680, oy); ctx.stroke();
-            ctx.fillStyle = '#f1f5f9'; ctx.font = 'bold 18px PingFang TC';
-            ctx.fillText("溶解度 (g/100g水) ▲", 10, 35);
-            ctx.fillText("溫度 (°C) ➔", 600, oy + 35);
+            ctx.fillStyle = '#f1f5f9'; ctx.font = 'bold 18px PingFang TC, sans-serif';
+            ctx.fillText(tr("溶解度 (g/100g水) ▲", "Solubility (g/100g H2O) ▲"), 10, 35);
+            ctx.fillText(tr("溫度 (°C) ➔", "Temp (°C) ➔"), 600, oy + 35);
             ctx.fillText("0", 45, oy + 20);
 
             let scaleY = 1.45;
             let scaleX = 6.5;
 
+            // NaCl
             ctx.strokeStyle = '#fde047'; ctx.lineWidth = 4;
             ctx.beginPath(); ctx.moveTo(ox, oy - 35.7*scaleY); ctx.lineTo(ox + 80*scaleX, oy - 38*scaleY); ctx.stroke();
-            ctx.fillStyle = '#fde047'; ctx.fillText("食鹽 NaCl (溫度影響極小)", 390, oy - 38*scaleY - 10);
+            ctx.fillStyle = '#fde047'; ctx.fillText(tr("食鹽 NaCl (溫度影響極小)", "Salt NaCl (Minimal temp effect)"), 390, oy - 38*scaleY - 10);
 
+            // KNO3
             ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 4;
             ctx.beginPath();
             for(let t=0; t<=80; t+=5) {
@@ -718,25 +946,28 @@
                 if(t === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
             ctx.stroke();
-            ctx.fillStyle = '#4ade80'; ctx.fillText("硝酸鉀 KNO₃ (高溫急遽上升)", 310, 50);
+            ctx.fillStyle = '#4ade80'; ctx.fillText(tr("硝酸鉀 KNO₃ (高溫急遽上升)", "KNO3 (Rises sharply at high temp)"), 310, 50);
 
+            // Ca(OH)2
             ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3;
             ctx.beginPath();
             for(let t=0; t<=80; t+=10) {
                 let c = 0.18 - (t / 80) * 0.09;
                 let x = ox + t * scaleX;
-                let y = oy - (c * 80); 
+                let y = oy - (c * 80); // scale up tiny values visually
                 if(t === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
             ctx.stroke();
-            ctx.fillStyle = '#38bdf8'; ctx.fillText("氫氧化鈣 Ca(OH)₂ (反向：越熱溶越少！)", 210, oy - 20);
+            ctx.fillStyle = '#38bdf8'; ctx.fillText(tr("氫氧化鈣 Ca(OH)₂ (反向：越熱溶越少！)", "Ca(OH)2 (Inverse: Less sol. when hotter!)"), 210, oy - 20);
 
+            // Current Temp Line
             let curX = ox + temp * scaleX;
             ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
             ctx.beginPath(); ctx.moveTo(curX, oy); ctx.lineTo(curX, 30); ctx.stroke();
             ctx.setLineDash([]);
             ctx.fillStyle = '#f472b6'; ctx.fillText(`${temp}°C`, curX - 18, oy + 25);
 
+            // Dots
             ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.arc(curX, oy - kno3*scaleY, 8, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(curX, oy - nacl*scaleY, 8, 0, Math.PI*2); ctx.fill();
         }
@@ -749,14 +980,13 @@
             document.getElementById('showWaterMass2').innerText = waterMass;
 
             const crystal = (80 / 100) * waterMass;
-            document.getElementById('showCrystalResult').innerText = `析出 ${crystal.toFixed(1)} g 晶體！`;
+            document.getElementById('showCrystalResult').innerText = tr(`析出 ${crystal.toFixed(1)} g 晶體！`, `Ppts ${crystal.toFixed(1)} g crystals!`);
         }
 
         // 初始渲染
         window.onload = function() {
-            testSolubility(15);
-            updateTempCurve();
-            updateCrystalCalc();
+            setLang('zh');
+            switchTab('tab1');
         };
     </script>
 </body>
