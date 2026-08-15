@@ -245,6 +245,59 @@
             text-align: center;
         }
 
+        /* 🌟 練習區塊 (問題/提示/解答 三部曲) */
+        .practice-box {
+            margin-top: 1.5rem;
+            border: 2px solid var(--chalk-teal);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            background: rgba(45, 212, 191, 0.1);
+            text-align: left;
+        }
+        .practice-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .practice-btn {
+            min-height: 48px;
+            padding: 8px 18px;
+            background: var(--bg-card);
+            color: var(--chalk-white);
+            border: 2px solid var(--chalk-dim);
+            border-radius: 0.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+        .practice-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .practice-btn.active {
+            background: var(--chalk-yellow);
+            color: #111;
+            border-color: var(--chalk-yellow);
+            box-shadow: 0 0 10px rgba(253, 224, 71, 0.4);
+        }
+        .practice-step {
+            display: none;
+            padding: 10px 5px 5px;
+            animation: fadeIn 0.3s ease;
+        }
+        .practice-step.active {
+            display: block;
+        }
+        .practice-step h3 {
+            color: var(--chalk-yellow);
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            border: none;
+            padding: 0;
+        }
+
         .btn {
             background-color: var(--chalk-orange);
             color: #000;
@@ -326,6 +379,11 @@
             margin: 1rem auto;
             display: block;
             box-shadow: 0 0 15px rgba(0,0,0,0.6);
+        }
+        
+        #sepCanvas {
+            /* 🌟 拉高畫布比例以容納倒置漏斗、明亮火焰與煙霧 */
+            aspect-ratio: 750 / 450;
         }
 
         .grid-2 {
@@ -477,12 +535,34 @@
             <div class="interactive-area">
                 <h3 style="margin-top:0;" data-zh="⚡ 黑板快問快答解析" data-en="⚡ Instant Interactive Quiz & Analysis">⚡ 黑板快問快答解析</h3>
                 <div style="margin: 15px 0;">
-                    <button class="btn btn-blue" onclick="checkProp('1')" data-zh="冰熔化時溫度維持 0°C" data-en="Ice melts at steady 0°C">冰熔化時溫度維持 0°C</button>
+                    <button class="btn btn-blue" onclick="checkProp('1')" data-zh="冰受熱熔化時溫度維持 0°C" data-en="Ice melting at steady 0°C">冰受熱熔化時溫度維持 0°C</button>
                     <button class="btn btn-green" onclick="checkProp('2')" data-zh="鑽石可用來切割玻璃" data-en="Diamond cuts glass">鑽石可用來切割玻璃</button>
                     <button class="btn btn-orange" onclick="checkProp('3')" data-zh="麵包烤太久會焦黑" data-en="Bread toasts until charred">麵包烤太久會焦黑</button>
                     <button class="btn btn-pink" onclick="checkProp('4')" data-zh="鐵在潮濕空氣中生鏽" data-en="Iron rusts in moist air">鐵在潮濕空氣中生鏽</button>
                     <button class="btn btn-blue" onclick="checkProp('5')" data-zh="黃金可拉成細絲" data-en="Gold drawn into thin wires">黃金可拉成細絲</button>
                 </div>
+                
+                <!-- 🌟 練習區塊：問題 / 提示 / 解答 三部曲 -->
+                <div class="practice-box" id="propPracticeBox" style="display:none;">
+                    <div class="practice-tabs">
+                        <button class="practice-btn active" onclick="switchPractice(this, 'question')" data-zh="❓ 題目" data-en="❓ Question">❓ 題目</button>
+                        <button class="practice-btn" onclick="switchPractice(this, 'hint')" data-zh="💡 提示" data-en="💡 Hint">💡 提示</button>
+                        <button class="practice-btn" onclick="switchPractice(this, 'answer')" data-zh="✅ 解析" data-en="✅ Analysis">✅ 解析</button>
+                    </div>
+                    <div class="practice-step active" data-content="question">
+                        <h3 data-zh="題目" data-en="Question">題目</h3>
+                        <p id="propQText"></p>
+                    </div>
+                    <div class="practice-step" data-content="hint">
+                        <h3 data-zh="提示" data-en="Hint">提示</h3>
+                        <p id="propHText"></p>
+                    </div>
+                    <div class="practice-step" data-content="answer">
+                        <h3 data-zh="解析" data-en="Analysis">解析</h3>
+                        <p id="propAText"></p>
+                    </div>
+                </div>
+
                 <div id="propBox" class="result-box" style="border-color: var(--chalk-yellow);">
                     👉 請點擊上方情境觀看解析...
                 </div>
@@ -493,7 +573,7 @@
         <section id="tab3" class="tab-content">
             <h2 data-zh="🧪 純物質 vs. 混合物" data-en="🧪 Pure Substances vs. Mixtures">🧪 純物質 vs. 混合物</h2>
             <div class="concept-box">
-                <span data-zh="💡 <strong class='hl-yellow'>物質的進階分類：組成是否固定？</strong><br>👉 <strong class='hl-green'>純物質：</strong> 由<span class='hl-yellow'>單一種物質</span>組成。具有固定的組成與特定的物理性質（如<strong class='hl-green'>固定的熔點與沸點</strong>）。<br>👉 <strong class='hl-pink'>混合物：</strong> 由<span class='hl-pink'>兩種以上的純物質</span>依任意比例混合而成。沒有固定的沸點與熔點。" data-en="💡 <strong class='hl-yellow'>Classification: Is composition fixed?</strong><br>👉 <strong class='hl-green'>Pure Substances:</strong> Composed of a <span class='hl-yellow'>single substance</span> with fixed composition and definite properties (such as <strong class='hl-green'>constant boiling and melting points</strong>).<br>👉 <strong class='hl-pink'>Mixtures:</strong> Composed of <span class='hl-pink'>two or more pure substances</span> mixed in variable ratios without fixed boiling/melting points.">💡 <strong class="hl-yellow">物質的進階分類：組成是否固定？</strong><br>👉 <strong class="hl-green">純物質：</strong> 由<span class="hl-yellow">單一種物質</span>組成。具有固定的組成與特定的物理性質（如<strong class="hl-green">固定的熔點與沸點</strong>）。<br>👉 <strong class="hl-pink">混合物：</strong> 由<span class="hl-pink">兩種以上的純物質</span>依任意比例混合而成。沒有固定的沸點與熔點。</span>
+                <span data-zh="💡 <strong class='hl-yellow'>物質的進階分類：組成是否固定？</strong><br>👉 <strong class='hl-green'>純物質：</strong> 由<span class='hl-yellow'>單一種物質</span>組成。具有固定的組成與特定的物理性質（如<strong class='hl-green'>固定的沸點</strong>）。<br>👉 <strong class='hl-pink'>混合物：</strong> 由<span class='hl-pink'>兩種以上的純物質</span>依任意比例混合而成。沒有固定的沸點與熔點。" data-en="💡 <strong class='hl-yellow'>Classification: Is composition fixed?</strong><br>👉 <strong class='hl-green'>Pure Substances:</strong> Composed of a <span class='hl-yellow'>single substance</span> with fixed composition and definite properties (such as <strong class='hl-green'>constant boiling point</strong>).<br>👉 <strong class='hl-pink'>Mixtures:</strong> Composed of <span class='hl-pink'>two or more pure substances</span> mixed in variable ratios without fixed boiling/melting points.">💡 <strong class="hl-yellow">物質的進階分類：組成是否固定？</strong><br>👉 <strong class="hl-green">純物質：</strong> 由<span class="hl-yellow">單一種物質</span>組成。具有固定的組成與特定的物理性質（如<strong class="hl-green">固定的沸點</strong>）。<br>👉 <strong class="hl-pink">混合物：</strong> 由<span class="hl-pink">兩種以上的純物質</span>依任意比例混合而成。沒有固定的沸點與熔點。</span>
             </div>
 
             <div class="interactive-area">
@@ -511,8 +591,8 @@
                 <table>
                     <thead>
                         <tr>
-                            <th width="50%" class="hl-green" data-zh="純物質 (有固定熔沸點)" data-en="Pure Substances (Fixed MP / BP)">純物質 (有固定熔沸點)</th>
-                            <th width="50%" class="hl-pink" data-zh="混合物 (無固定熔沸點)" data-en="Mixtures (No Fixed MP / BP)">混合物 (無固定熔沸點)</th>
+                            <th width="50%" class="hl-green" data-zh="純物質 (有固定熔點/沸點)" data-en="Pure Substances (Fixed MP / BP)">純物質 (有固定熔點/沸點)</th>
+                            <th width="50%" class="hl-pink" data-zh="混合物 (無固定熔點/沸點)" data-en="Mixtures (No Fixed MP / BP)">混合物 (無固定熔點/沸點)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -556,12 +636,13 @@
             <div class="interactive-area">
                 <h3 style="margin-top:0;" data-zh="⚡ 黑板虛擬實驗室：食鹽與細砂的分離" data-en="⚡ Virtual Lab: Separation of Salt and Sand">⚡ 黑板虛擬實驗室：食鹽與細砂的分離</h3>
                 <div style="margin: 15px 0;">
-                    <button class="btn btn-blue" onclick="runSep('1')" data-zh="步驟一：加水攪拌溶解" data-en="Step 1: Dissolve & Stir">步驟一：加水攪拌溶解</button>
-                    <button class="btn btn-green" onclick="runSep('2')" data-zh="步驟二：過濾分離" data-en="Step 2: Filtration">步驟二：過濾分離</button>
-                    <button class="btn btn-orange" onclick="runSep('3')" data-zh="步驟三：加熱蒸發" data-en="Step 3: Evaporation">步驟三：加熱蒸發</button>
-                    <button class="btn btn-pink" onclick="runSep('4')" data-zh="步驟四：取得晶體" data-en="Step 4: Crystallization">步驟四：取得晶體</button>
+                    <button class="btn btn-blue" onclick="runSep('1', this)" data-zh="步驟一：加水攪拌溶解" data-en="Step 1: Dissolving (Stir)">步驟一：加水攪拌溶解</button>
+                    <button class="btn btn-green" onclick="runSep('2', this)" data-zh="步驟二：過濾分離" data-en="Step 2: Filtration">步驟二：過濾分離</button>
+                    <button class="btn btn-orange" onclick="runSep('3', this)" data-zh="步驟三：加熱蒸發" data-en="Step 3: Evaporation">步驟三：加熱蒸發</button>
+                    <button class="btn btn-pink" onclick="runSep('4', this)" data-zh="步驟四：取得晶體" data-en="Step 4: Crystallization">步驟四：取得晶體</button>
                 </div>
-                <canvas id="sepCanvas" width="750" height="280"></canvas>
+                <!-- 🌟 畫布屬性精確綁定 750x450，杜絕拉伸變形 -->
+                <canvas id="sepCanvas" width="750" height="450"></canvas>
                 
                 <div id="sepText" class="result-box" style="border-color: var(--chalk-green);"></div>
             </div>
@@ -617,11 +698,16 @@
             // 確保當前動態文字更新
             if (activeTabId === 'tab1') switchState(currentState);
             if (activeTabId === 'tab2') {
-                if(!currentProp) document.getElementById('propBox').innerHTML = tr("👉 請點擊上方情境觀看解析...", "👉 Click any scenario above to view analysis...");
-                else checkProp(currentProp);
+                if(!currentProp) {
+                    document.getElementById('propBox').style.display = 'block';
+                    document.getElementById('propPracticeBox').style.display = 'none';
+                    document.getElementById('propBox').innerHTML = tr("👉 請點擊上方情境觀看解析...", "👉 Click any scenario above to view analysis...");
+                } else {
+                    checkProp(currentProp);
+                }
             }
             if (activeTabId === 'tab3') switchMatter(currentMatter);
-            if (activeTabId === 'tab4') runSep(currentStep);
+            if (activeTabId === 'tab4') runSep(currentStep, null);
             if (activeTabId === 'tab5') toggleChroma(isChromaRunning ? 'none' : 'reset');
         }
 
@@ -681,23 +767,34 @@
         let isChromaRunning = false;
 
         // ==============================================
-        // 分頁控制
+        // 分頁控制 (最穩健 DOM 選擇器)
         // ==============================================
         function switchTab(tabId) {
             activeTabId = tabId;
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.nav-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
             
             document.getElementById(tabId).classList.add('active');
-            document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            
+            const targetBtn = document.querySelector(`.nav-tabs .tab-btn[onclick*="${tabId}"]`);
+            if(targetBtn) targetBtn.classList.add('active');
 
             if(tabId === 'tab1') switchState('solid');
             if(tabId === 'tab2') {
-                if (!currentProp) document.getElementById('propBox').innerHTML = tr("👉 請點擊上方情境觀看解析...", "👉 Click any scenario above to view analysis...");
-                else checkProp(currentProp);
+                if (!currentProp) {
+                    document.getElementById('propBox').style.display = 'block';
+                    document.getElementById('propPracticeBox').style.display = 'none';
+                    document.getElementById('propBox').innerHTML = tr("👉 請點擊上方情境觀看解析...", "👉 Click any scenario above to view analysis...");
+                } else {
+                    checkProp(currentProp);
+                }
             }
             if(tabId === 'tab3') switchMatter('pure');
-            if(tabId === 'tab4') runSep('1');
+            if(tabId === 'tab4') {
+                document.querySelectorAll('#tab4 .interactive-area .btn').forEach(b => b.classList.remove('active'));
+                const stepBtn = document.querySelector(`#tab4 .interactive-area .btn[onclick*="'1'"]`);
+                runSep('1', stepBtn);
+            }
             if(tabId === 'tab5') toggleChroma('reset');
         }
 
@@ -816,27 +913,60 @@
         }
 
         // ==============================================
-        // Tab 2: 性質快問快答
+        // Tab 2: 性質快問快答 (🌟 升級為三部曲 Practice Box)
         // ==============================================
         function checkProp(idx) {
             currentProp = idx;
-            const box = document.getElementById('propBox');
+            document.getElementById('propBox').style.display = 'none';
+            document.getElementById('propPracticeBox').style.display = 'block';
+
+            // Reset tabs inside practice box
+            const pBox = document.getElementById('propPracticeBox');
+            pBox.querySelectorAll('.practice-btn').forEach(b => b.classList.remove('active'));
+            pBox.querySelectorAll('.practice-step').forEach(s => s.classList.remove('active'));
+            pBox.querySelector('.practice-btn[data-step="question"]')?.classList.add('active');
+            pBox.querySelector('.practice-step[data-content="question"]')?.classList.add('active');
+
+            let qText, hText, aText;
+
             if(idx === '1') {
-                box.innerHTML = tr(`🎯 <strong class="hl-blue">【物理性質】</strong> ｜ 冰熔化為狀態改變，測量熔點不需產生新物質，屬於物理性質。`, `🎯 <strong class="hl-blue">[Physical Property]</strong> | Ice melting is a state change. Measuring melting point creates no new substance.`);
-                box.style.borderColor = "var(--chalk-blue)";
+                qText = tr(`冰塊放在室溫下，慢慢變成液態水。測量時發現，這段過程中溫度始終維持在 0°C。請問「測量熔點」這個行為，是在測量冰的物理性質還是化學性質？`, `Ice at room temperature slowly turns into liquid water. During this, the temp stays at 0°C. Is 'measuring melting point' a physical or chemical property?`);
+                hText = tr(`觀察這個性質的過程中，冰有變成別的物質嗎？還是依然是 H₂O？`, `During this observation, did the ice turn into another substance? Or is it still H₂O?`);
+                aText = tr(`🎯 <strong class="hl-blue">【物理性質】</strong><br>冰受熱熔化為液態水只是「狀態改變」，並沒有產生新物質，因此屬於物理性質。`, `🎯 <strong class="hl-blue">[Physical Property]</strong><br>Ice melting to water is a 'state change'. No new substance is formed.`);
             } else if(idx === '2') {
-                box.innerHTML = tr(`🎯 <strong class="hl-blue">【物理性質】</strong> ｜ 鑽石的「硬度」可直接力學測知，本質無改變，屬於物理性質。`, `🎯 <strong class="hl-blue">[Physical Property]</strong> | Diamond's hardness is directly measurable without altering its chemical identity.`);
-                box.style.borderColor = "var(--chalk-blue)";
+                qText = tr(`師傅使用鑲有小鑽石的切割刀，輕易地將厚玻璃劃出一道深溝並折斷。請問鑽石的「硬度」屬於物理性質還是化學性質？`, `A craftsman uses a diamond cutter to easily score and snap thick glass. Is diamond's 'hardness' a physical or chemical property?`);
+                hText = tr(`切割的動作，需要鑽石跟玻璃發生化學反應才能測量出硬度嗎？`, `Does the cutting action require a chemical reaction between diamond and glass to measure hardness?`);
+                aText = tr(`🎯 <strong class="hl-blue">【物理性質】</strong><br>硬度可直接透過力學摩擦與刮痕測知，本質毫無改變，屬於物理性質。`, `🎯 <strong class="hl-blue">[Physical Property]</strong><br>Hardness is measured by physical scratching without changing its essence.`);
             } else if(idx === '3') {
-                box.innerHTML = tr(`🔥 <strong class="hl-pink">【化學性質】</strong> ｜ 麵包燒焦為澱粉碳化，產生全新的物質，屬於化學性質。`, `🔥 <strong class="hl-pink">[Chemical Property]</strong> | Toasting until charred carbonizes starch into new substances.`);
-                box.style.borderColor = "var(--chalk-pink)";
+                qText = tr(`不小心把吐司放進烤箱烤太久，拿出來時發現表面變成焦黑的碳化狀態，散發出焦味。這是物理變化還是化學變化？`, `Leaving toast in the oven too long turns it charred black with a burnt smell. Is this physical or chemical?`);
+                hText = tr(`黑色的焦炭還能變回原本白白的吐司麵包嗎？成分有沒有改變？`, `Can the black char turn back into white bread? Did the composition change?`);
+                aText = tr(`🔥 <strong class="hl-pink">【化學性質】</strong><br>麵包燒焦是澱粉受熱發生碳化反應，產生了全新的物質（碳），因此屬於化學變化。`, `🔥 <strong class="hl-pink">[Chemical Property]</strong><br>Toasting bread to a crisp is carbonization, creating new substances (carbon).`);
             } else if(idx === '4') {
-                box.innerHTML = tr(`🔥 <strong class="hl-pink">【化學性質】</strong> ｜ 鐵生鏽是產生新物質「氧化鐵」，屬於化學反應，為化學性質。`, `🔥 <strong class="hl-pink">[Chemical Property]</strong> | Rusting generates iron oxide through chemical reaction.`);
-                box.style.borderColor = "var(--chalk-pink)";
+                qText = tr(`一根原本閃亮的鐵釘被丟在潮濕的草叢裡，幾個月後表面長滿了紅褐色的鐵鏽，輕輕一剝就碎了。這是表現出鐵的哪種性質？`, `A shiny iron nail left in damp grass gets covered in reddish-brown rust over months. Which property is this?`);
+                hText = tr(`紅褐色的鐵鏽跟原本的鐵，還是同一種物質嗎？`, `Is the reddish-brown rust the exact same substance as the original iron?`);
+                aText = tr(`🔥 <strong class="hl-pink">【化學性質】</strong><br>鐵在潮濕空氣中氧化，產生了新物質「氧化鐵（鐵鏽）」，必須透過化學反應才能表現出來。`, `🔥 <strong class="hl-pink">[Chemical Property]</strong><br>Iron oxidizing to form 'iron oxide (rust)' requires a chemical reaction.`);
             } else if(idx === '5') {
-                box.innerHTML = tr(`🎯 <strong class="hl-blue">【物理性質】</strong> ｜ 「延展性」僅改變金屬外觀形狀，原子本質不變，屬於物理性質。`, `🎯 <strong class="hl-blue">[Physical Property]</strong> | Malleability only deforms physical shape while atomic identity remains unchanged.`);
-                box.style.borderColor = "var(--chalk-blue)";
+                qText = tr(`珠寶工匠將一小塊純金，經過不斷敲打和拉拉扯扯，最終變成了一根極細且長達幾十公尺的金絲。請問金屬的「延展性」屬於哪種性質？`, `A jeweler hammers and pulls a small gold piece into a very thin, long wire. Which property is 'malleability'?`);
+                hText = tr(`雖然外觀從一坨變成了一根絲，但它還是純金嗎？`, `Although the shape changed from a lump to a wire, is it still pure gold?`);
+                aText = tr(`🎯 <strong class="hl-blue">【物理性質】</strong><br>「延展性」僅改變了金屬的外觀與形狀，金原子的本質並沒有改變，屬於物理性質。`, `🎯 <strong class="hl-blue">[Physical Property]</strong><br>'Malleability' changes physical shape, but the gold atoms' identity remains unchanged.`);
             }
+
+            document.getElementById('propQText').innerHTML = qText;
+            document.getElementById('propHText').innerHTML = hText;
+            document.getElementById('propAText').innerHTML = aText;
+            
+            // 強制切換到第一個 tab
+            switchPractice(document.querySelector('.practice-btn[data-zh="❓ 題目"]'), 'question');
+        }
+
+        // --- Practice Box 核心切換邏輯 ---
+        function switchPractice(btn, step) {
+            const box = btn.closest('.practice-box');
+            if (!box) return;
+            box.querySelectorAll('.practice-btn').forEach(b => b.classList.remove('active'));
+            box.querySelectorAll('.practice-step').forEach(s => s.classList.remove('active'));
+            btn.classList.add('active');
+            box.querySelector(`[data-content="${step}"]`).classList.add('active');
         }
 
         // ==============================================
@@ -848,22 +978,22 @@
             if(type === 'pure') {
                 textEl.innerHTML = tr(`
                     💧 <strong class="hl-green">純物質：蒸餾水</strong><br>
-                    👉 <strong class="hl-yellow">微觀結構：</strong> 容器中僅有水分子，組成單一固定。<br>
-                    👉 <strong class="hl-blue">沸騰特性：</strong> 沸騰時，<strong class="hl-yellow">溫度維持在固定的 100°C</strong>，展現純物質具固定沸點的特徵。
+                    👉 <strong class="hl-yellow">微觀結構：</strong> 容器中僅有單一種水分子，沒有其他雜質。<br>
+                    👉 <strong class="hl-blue">沸騰特性：</strong> 加熱沸騰時，<strong class="hl-yellow">溫度維持在固定的 100°C</strong>，展現純物質具【固定沸點】的特徵。
                 `, `
                     💧 <strong class="hl-green">Pure Substance: Distilled Water</strong><br>
-                    👉 <strong class="hl-yellow">Microscopic View:</strong> Contains only H₂O molecules with uniform composition.<br>
-                    👉 <strong class="hl-blue">Boiling Behavior:</strong> Boiling temperature remains <strong class="hl-yellow">fixed at 100°C</strong> under 1 atm.
+                    👉 <strong class="hl-yellow">Microscopic View:</strong> Contains only H₂O molecules, no impurities.<br>
+                    👉 <strong class="hl-blue">Boiling Behavior:</strong> Boiling temp remains <strong class="hl-yellow">fixed at 100°C</strong> under 1 atm.
                 `);
             } else {
                 textEl.innerHTML = tr(`
                     🧂 <strong class="hl-pink">混合物：食鹽水</strong><br>
-                    👉 <strong class="hl-yellow">微觀結構：</strong> 由水分子與食鹽粒子均勻混合，無單一固定組成。<br>
-                    👉 <strong class="hl-pink">沸騰特性：</strong> 加熱沸騰時，水分蒸發導致濃度變高，<strong class="hl-yellow">沸騰溫度不固定且隨加熱持續上升</strong>。
+                    👉 <strong class="hl-yellow">微觀結構：</strong> 由水分子與食鹽粒子混合，屬於兩種以上的純物質組成。<br>
+                    👉 <strong class="hl-pink">沸騰特性：</strong> 加熱沸騰時，因為水分不斷蒸發導致食鹽水濃度變高，<strong class="hl-yellow">沸騰溫度不固定，且會隨加熱持續上升</strong>！
                 `, `
                     🧂 <strong class="hl-pink">Mixture: Saltwater</strong><br>
-                    👉 <strong class="hl-yellow">Microscopic View:</strong> Water molecules and salt ions distributed uniformly.<br>
-                    👉 <strong class="hl-pink">Boiling Behavior:</strong> As water evaporates, concentration rises, causing the <strong class="hl-yellow">boiling point to increase continuously</strong>.
+                    👉 <strong class="hl-yellow">Microscopic View:</strong> Water molecules and salt ions mixed together.<br>
+                    👉 <strong class="hl-pink">Boiling Behavior:</strong> As water evaporates, concentration rises, causing the <strong class="hl-yellow">boiling point to increase continuously</strong>!
                 `);
             }
         }
@@ -891,17 +1021,18 @@
                 ctx.fillStyle = '#fde047'; ctx.font = 'bold 22px "Noto Sans TC", sans-serif';
                 ctx.fillText(tr("💧 蒸餾水：單一組成粒子", "💧 Distilled Water: Single Particle Type"), 240, 25);
             } else {
+                let time = Date.now() / 1000;
                 mixParticles.forEach(p => {
                     p.x += p.vx; p.y += p.vy;
                     if(p.x < 265 || p.x > 485) p.vx *= -1;
                     if(p.y < 80 || p.y > 210) p.vy *= -1;
                     
                     if(p.type === 'salt') {
-                        ctx.fillStyle = '#f8fafc'; // 白色食鹽 (一致性)
+                        ctx.fillStyle = '#f8fafc'; // 白色食鹽 (正方形)
                         ctx.fillRect(p.x - 5, p.y - 5, 10, 10);
-                        ctx.strokeStyle = '#000000'; ctx.lineWidth = 1; ctx.strokeRect(p.x - 5, p.y - 5, 10, 10);
+                        ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5; ctx.strokeRect(p.x - 5, p.y - 5, 10, 10);
                     } else {
-                        ctx.fillStyle = '#38bdf8';
+                        ctx.fillStyle = '#38bdf8'; // 水
                         ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill();
                     }
                 });
@@ -911,11 +1042,19 @@
         }
 
         // ==============================================
-        // Tab 4: 分離法虛擬實驗 (🌟 動畫重構：真實感升級)
+        // Tab 4: 分離法虛擬實驗 (🌟 動畫重構：完全符合要求)
         // ==============================================
-        function runSep(step) {
+        function runSep(step, btnEl) {
             currentStep = step;
             const textEl = document.getElementById('sepText');
+
+            if(btnEl) {
+                document.querySelectorAll('#tab4 .interactive-area .btn').forEach(b => b.classList.remove('active'));
+                btnEl.classList.add('active');
+            } else {
+                const targetBtn = document.querySelector(`#tab4 .interactive-area .btn[onclick*="'${step}'"]`);
+                if(targetBtn) targetBtn.classList.add('active');
+            }
 
             // 初始化粒子陣列 (進入步驟一時重置)
             if(step === '1') {
@@ -923,41 +1062,44 @@
                 stirProgress = 0;
                 sandParticles = [];
                 saltParticles = [];
-                // 產生底部的砂子(灰正方形)與食鹽(白正方形) - 同在杯底混合區
+                // 產生底部的砂子(灰正方形)與食鹽(白正方形) - 同在杯底區域
                 for(let i=0; i<30; i++) {
-                    // 隨機分佈在同一個底部區域，讓它們混合在一起
                     sandParticles.push({
-                        ox: 345 + Math.random()*90, 
-                        oy: 225 - Math.random()*15, 
-                        rnd: Math.random() * Math.PI * 2
+                        ox: 375 + (Math.random()*60 - 30), 
+                        oy: 365 + Math.random()*10, 
+                        rnd: Math.random() * Math.PI * 2,
+                        spinSpeed: 2 + Math.random()*2,
+                        liftSpeed: 0.5 + Math.random()*1,
+                        maxLift: 30 + Math.random()*20
                     });
                     saltParticles.push({
-                        ox: 345 + Math.random()*90, 
-                        oy: 225 - Math.random()*15, 
-                        rnd: Math.random() * Math.PI * 2
+                        ox: 375 + (Math.random()*60 - 30), 
+                        oy: 365 + Math.random()*10, 
+                        rnd: Math.random() * Math.PI * 2,
+                        spinSpeed: 2 + Math.random()*2,
+                        liftSpeed: 0.5 + Math.random()*1,
+                        maxLift: 30 + Math.random()*20
                     });
                 }
             } else if (step === '2') {
-                // 自動開始過濾動畫 (0~1 倒滿漏斗, 1~3 流下)
                 filterProgress = 0;
                 // 重置漏斗內砂子的位置：均勻散布在 V 字形底部範圍內
                 sandParticles = [];
                 for(let i=0; i<35; i++) {
-                    // A=(335,90), B=(369,90), C=(352,113)
-                    let r1 = Math.random(), r2 = Math.random();
-                    if(r1+r2 > 1) { r1 = 1-r1; r2 = 1-r2; }
-                    let px = 335 + r1*(369-335) + r2*(352-335);
-                    let py = 90 + r1*(90-90) + r2*(113-90);
+                    let py = 205 + Math.random()*18; 
+                    let halfWidth = (225 - py) * 0.75; 
+                    let px = 332 + (Math.random() * 2 * halfWidth - halfWidth) * 0.8;
                     sandParticles.push({x: px, y: py});
                 }
             } else if (step === '4') {
                 saltParticles = [];
-                // 產生晶體堆積在碗底
-                for(let i=0; i<25; i++) {
-                    let angle = (Math.PI/4) + Math.random()*(Math.PI/2); // 45 to 135 deg
-                    let rad = 45 + Math.random()*10;
+                // 產生晶體堆積在碗底，利用半徑與極座標產生不懸空的堆疊感
+                for(let i=0; i<40; i++) {
+                    // 只產生底部 60 到 120 度的範圍，且貼齊半徑邊緣
+                    let angle = (Math.PI/2) + (Math.random() * 1.2 - 0.6);
+                    let rad = 60 + Math.random() * 6; // 蒸發皿半徑為 70，這裡限制在 60~66 剛好貼底
                     let x = 375 + rad * Math.cos(angle);
-                    let y = 100 + rad * Math.sin(angle);
+                    let y = 200 + rad * Math.sin(angle);
                     saltParticles.push({x: x, y: y});
                 }
             }
@@ -968,7 +1110,7 @@
                     👉 <strong class="hl-green">操作：</strong> 請點擊【開始攪拌】按鈕。<br>
                     👉 <strong class="hl-green">物理性質差異：</strong> <span class="hl-white">白色食鹽可溶於水</span>；而<span class="hl-gray" style="color:var(--chalk-gray);">灰色細砂不溶於水</span>。
                 `, `
-                    💧 <strong class="hl-blue">Step 1: Dissolution with Stirring</strong><br>
+                    💧 <strong class="hl-blue">Step 1: Dissolving with Stirring</strong><br>
                     👉 <strong class="hl-green">Action:</strong> Click [Start Stirring] button.<br>
                     👉 <strong class="hl-green">Physical Difference:</strong> <span class="hl-white">White salt dissolves</span>, while <span class="hl-gray" style="color:var(--chalk-gray);">gray sand is insoluble</span>.
                 `);
@@ -980,15 +1122,17 @@
                 `, `
                     ☕ <strong class="hl-green">Step 2: Filtration</strong><br>
                     👉 <strong class="hl-yellow">Exam Detail:</strong> The funnel stem must <strong class="hl-pink">'lean against the beaker inner wall'</strong> to guide the filtrate smoothly and prevent splashing!<br>
-                    👉 <strong class="hl-yellow">Separation Principle:</strong> Dissolved saltwater passes through paper pores; large <span class="hl-gray" style="color:var(--chalk-gray);">gray sand</span> particles are retained inside the filter paper.
+                    👉 <strong class="hl-yellow">Separation Principle:</strong> Dissolved saltwater passes through filter paper; large <span class="hl-gray" style="color:var(--chalk-gray);">gray sand</span> particles are retained inside the filter paper.
                 `);
             } else if(step === '3') {
                 textEl.innerHTML = tr(`
                     🔥 <strong class="hl-pink">步驟三：加熱蒸發</strong><br>
-                    👉 <strong class="hl-yellow">分離原理：</strong> 利用<strong class="hl-yellow">沸點高低</strong>的差異。沸點低的水受熱汽化，沸點高的<span class="hl-white">白色食鹽</span>留在原處。
+                    👉 <strong class="hl-yellow">分離原理：</strong> 利用<strong class="hl-yellow">沸點高低</strong>的差異。沸點低的水受熱汽化，沸點高的<span class="hl-white">白色食鹽</span>留在原處。<br>
+                    👉 <strong class="hl-blue">實驗細節：</strong> 蒸發皿上方倒置玻璃漏斗，是為了<strong class="hl-pink">避免加熱時食鹽晶體劇烈跳躍飛濺出來</strong>！
                 `, `
                     🔥 <strong class="hl-pink">Step 3: Heating & Evaporation</strong><br>
-                    👉 <strong class="hl-yellow">Separation Principle:</strong> Uses <strong class="hl-yellow">boiling point differences</strong>. Lower boiling water evaporates, leaving high boiling <span class="hl-white">white salt</span>.
+                    👉 <strong class="hl-yellow">Separation Principle:</strong> Uses <strong class="hl-yellow">boiling point differences</strong>. Lower boiling water evaporates, leaving high boiling <span class="hl-white">white salt</span>.<br>
+                    👉 <strong class="hl-blue">Lab Detail:</strong> An inverted glass funnel is placed on top to <strong class="hl-pink">prevent salt crystals from splashing and jumping out</strong> during violent boiling!
                 `);
             } else if(step === '4') {
                 textEl.innerHTML = tr(`
@@ -1015,141 +1159,148 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // =========================
-            // 步驟 1：攪拌溶解
+            // 步驟 1：攪拌溶解 (常溫狀態，絕對沒有冒泡！)
             // =========================
             if(currentStep === '1') {
-                // 畫燒杯
+                // 畫燒杯 (調整至中心)
                 ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 4;
-                ctx.beginPath(); ctx.moveTo(330, 60); ctx.lineTo(330, 240); ctx.lineTo(460, 240); ctx.lineTo(460, 60); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(310, 150); ctx.lineTo(310, 380); ctx.lineTo(440, 380); ctx.lineTo(440, 150); ctx.stroke();
                 
                 // 畫水
-                ctx.fillStyle = 'rgba(56, 189, 248, 0.35)'; ctx.fillRect(333, 110, 124, 127);
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.35)'; ctx.fillRect(313, 200, 124, 177);
 
-                let time = Date.now() * 0.005;
-                let swirlIntensity = isStirring ? Math.sin(stirProgress * Math.PI) : 0;
-
-                // 畫灰色砂子 (黑框 + 旋轉攪動)
-                ctx.fillStyle = '#9ca3af'; // 砂子灰
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 1.5;
-                sandParticles.forEach(p => {
-                    let cx = p.ox;
-                    let cy = p.oy;
-                    if (swirlIntensity > 0) {
-                        cx += Math.cos(time + p.rnd) * 30 * swirlIntensity;
-                        cy -= Math.abs(Math.sin(time + p.rnd)) * 40 * swirlIntensity; // 向上揚起
-                    }
-                    ctx.fillRect(cx - 5, cy - 5, 10, 10);
-                    ctx.strokeRect(cx - 5, cy - 5, 10, 10);
-                });
-
-                // 處理自動攪拌進度 (0.008 * 60fps = 0.48 / sec => 約 2 秒完成)
+                // 處理自動攪拌進度 (4秒完成 => 0.004 * 60fps = 0.24/s => 4.16s)
                 if (isStirring && stirProgress < 1) {
-                    stirProgress += 0.008; 
+                    stirProgress += 0.004; 
                     if (stirProgress >= 1) {
                         isStirring = false;
                         stirProgress = 1;
                     }
                 }
 
-                // 畫白色食鹽 (黑框 + 旋轉攪動 + 逐漸縮小到消失)
+                let time = Date.now() * 0.002;
+                let swirlIntensity = isStirring ? Math.sin(stirProgress * Math.PI) : 0; // 0 -> 1 -> 0
+
+                // 🌟 絕對移除錯誤的沸騰氣泡，常溫攪拌只有微粒本身！
+
+                // 畫灰色砂子 (黑框 + 錐狀旋轉渦流)
+                ctx.fillStyle = '#9ca3af'; // 砂子灰
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1.5;
+                
+                sandParticles.forEach(p => {
+                    let cx = p.ox;
+                    let cy = p.oy;
+                    if (swirlIntensity > 0) {
+                        let lift = p.maxLift * Math.abs(Math.sin(time * p.liftSpeed + p.rnd));
+                        cy = p.oy - lift * swirlIntensity;
+                        let radiusX = (15 + p.maxLift * 0.6) * swirlIntensity; // 錐狀半徑
+                        cx = 375 + Math.cos(time * p.spinSpeed + p.rnd) * radiusX;
+                    }
+                    // 約束在燒杯範圍內 (避免飛出)
+                    cx = Math.max(320, Math.min(cx, 430));
+                    cy = Math.max(210, Math.min(cy, 375));
+                    
+                    ctx.fillRect(cx - 5, cy - 5, 10, 10);
+                    ctx.strokeRect(cx - 5, cy - 5, 10, 10);
+                });
+
+                // 畫白色食鹽 (黑框 + 錐狀旋轉渦流 + 逐漸縮小到消失)
                 let currentSaltSize = 10 * (1 - Math.min(stirProgress, 1));
                 if (currentSaltSize > 0.5) {
                     ctx.fillStyle = '#f8fafc'; // 食鹽白
                     ctx.strokeStyle = '#000000';
                     ctx.lineWidth = 1.5;
+
                     saltParticles.forEach(p => {
                         let cx = p.ox;
                         let cy = p.oy;
                         if (swirlIntensity > 0) {
-                            cx += Math.cos(time + p.rnd) * 30 * swirlIntensity;
-                            cy -= Math.abs(Math.sin(time + p.rnd)) * 40 * swirlIntensity; // 向上揚起
+                            let lift = p.maxLift * Math.abs(Math.sin(time * p.liftSpeed + p.rnd));
+                            cy = p.oy - lift * swirlIntensity;
+                            let radiusX = (15 + p.maxLift * 0.6) * swirlIntensity;
+                            cx = 375 + Math.cos(time * p.spinSpeed + p.rnd) * radiusX;
                         }
+                        // 約束在燒杯範圍內
+                        cx = Math.max(320, Math.min(cx, 430));
+                        cy = Math.max(210, Math.min(cy, 375));
+
                         let half = currentSaltSize / 2;
                         ctx.fillRect(cx - half, cy - half, currentSaltSize, currentSaltSize);
                         ctx.strokeRect(cx - half, cy - half, currentSaltSize, currentSaltSize);
                     });
                 }
 
-                // 畫玻棒與攪拌動作
+                // 畫玻棒與攪拌動作 (置中於 450 高畫布)
                 let rodOffset = 0;
                 if (isStirring) {
-                    rodOffset = Math.sin(Date.now() * 0.015) * 25; // 來回擺動
+                    rodOffset = Math.sin(Date.now() * 0.008) * 35; // 配合 4 秒加慢攪拌棒速度
                 }
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'; ctx.lineWidth = 6; ctx.lineCap = 'round';
-                ctx.beginPath(); ctx.moveTo(430 + rodOffset*0.3, 20); ctx.lineTo(380 + rodOffset, 220); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(410 + rodOffset*0.3, 100); ctx.lineTo(360 + rodOffset, 375); ctx.stroke();
 
                 // 標示與按鈕
                 ctx.fillStyle = '#fde047'; ctx.font = 'bold 22px "Noto Sans TC", sans-serif';
                 ctx.textAlign = 'left';
                 if(stirProgress === 0) {
-                    // 繪製開始按鈕
-                    ctx.fillStyle = '#fb923c'; ctx.roundRect(140, 30, 130, 40, 8); ctx.fill();
-                    ctx.fillStyle = '#000'; ctx.font = 'bold 18px "Noto Sans TC", sans-serif';
-                    ctx.fillText(tr("▶ 開始攪拌", "▶ Start Stir"), 150, 56);
+                    // 繪製開始按鈕：替換 roundRect 以避免 iPad 當機
+                    ctx.fillStyle = '#fb923c'; 
+                    ctx.fillRect(140, 110, 130, 40);
                     
-                    // 監聽點擊 (簡單座標判斷)
+                    ctx.fillStyle = '#000'; ctx.font = 'bold 18px "Noto Sans TC", sans-serif';
+                    ctx.fillText(tr("▶ 開始攪拌", "▶ Start Stir"), 150, 136);
+                    
+                    // 監聽點擊
                     canvas.onclick = function(e) {
                         const rect = canvas.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
-                        if (x > 140 && x < 270 && y > 30 && y < 70) {
+                        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+                        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+                        if (x > 140 && x < 270 && y > 110 && y < 150) {
                             startAutoStir();
-                            canvas.onclick = null; // 移除監聽
+                            canvas.onclick = null;
                         }
                     };
                 } else if(stirProgress < 1) {
-                    ctx.fillText(tr(`🥢 攪拌中... 白色食鹽逐漸溶解`, `🥢 Stirring... White salt dissolving`), 160, 45);
+                    ctx.fillText(tr(`🥢 攪拌中... 白色食鹽逐漸溶解`, `🥢 Stirring... White salt dissolving`), 160, 136);
                 } else {
-                    ctx.fillText(tr("✨ 溶解完成，灰色細砂沉底", "✨ Dissolved! Gray sand at bottom"), 160, 45);
+                    ctx.fillText(tr("✨ 溶解完成，灰色細砂沉底", "✨ Dissolved! Gray sand at bottom"), 160, 136);
                 }
 
             } 
             // =========================
-            // 步驟 2：過濾分離 (兩階段 + 緊貼杯壁)
+            // 步驟 2：過濾分離 (一開始水就注滿漏斗)
             // =========================
             else if(currentStep === '2') {
-                // 處理過濾進度 (0~1 倒滿漏斗, 1~3 流下)
-                if (filterProgress < 3) filterProgress += 0.01;
+                // 自動開始過濾動畫 (0~2 流下)
+                if (filterProgress < 2) filterProgress += 0.006; // 調整流動速度
 
-                let funnelWaterY = 114;
-                let beakerWaterLevel = 0;
-                let isFlowing = false;
+                let funnelWaterY = 165 + ((filterProgress/2) * 60); // 從滿水位 165 降到 225
+                if (funnelWaterY > 225) funnelWaterY = 225;
+                
+                let beakerWaterLevel = filterProgress / 2; // 0 to 1
+                if (beakerWaterLevel > 1) beakerWaterLevel = 1;
+                
+                let isFlowing = (filterProgress < 1.95);
 
-                if (filterProgress <= 1) {
-                    // 階段 1：水倒滿漏斗
-                    funnelWaterY = 114 - (filterProgress * 44); // 裝到 Y=70
-                    beakerWaterLevel = 0;
-                    isFlowing = false;
-                } else {
-                    // 階段 2：水慢慢流進燒杯
-                    let p2 = (filterProgress - 1) / 2; // 0 to 1
-                    funnelWaterY = 70 + (p2 * 44); // drops back to 114
-                    beakerWaterLevel = p2;
-                    isFlowing = (p2 < 0.98);
-                }
-
-                // 下方燒杯 (置中於395, 寬度90) -> 左壁350, 右壁440
+                // 下方燒杯 (置中, 寬度90) -> 左壁332, 右壁422
                 ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 3;
-                ctx.beginPath(); ctx.moveTo(350, 150); ctx.lineTo(350, 240); ctx.lineTo(440, 240); ctx.lineTo(440, 150); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(332, 270); ctx.lineTo(332, 410); ctx.lineTo(422, 410); ctx.lineTo(422, 270); ctx.stroke();
 
-                // 漏斗與濾紙 (漏斗管緊貼左側杯壁 X=352)
+                // 漏斗與濾紙 (漏斗管緊貼左側杯壁 X=332)
                 ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 3;
-                // 漏斗本體
-                ctx.beginPath(); ctx.moveTo(297, 40); ctx.lineTo(352, 120); ctx.lineTo(407, 40); ctx.stroke();
-                // 漏斗管 (靠在左邊杯壁)
-                ctx.beginPath(); ctx.moveTo(352, 120); ctx.lineTo(352, 200); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(277, 150); ctx.lineTo(332, 230); ctx.lineTo(387, 150); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(332, 230); ctx.lineTo(332, 350); ctx.stroke();
                 
                 // 濾紙
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 4;
-                ctx.beginPath(); ctx.moveTo(307, 55); ctx.lineTo(352, 115); ctx.lineTo(397, 55); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(287, 165); ctx.lineTo(332, 225); ctx.lineTo(377, 165); ctx.stroke();
 
                 // 畫附著在濾紙內的灰色細砂 (貼合V形多邊形底部)
                 ctx.fillStyle = '#9ca3af'; // 砂子灰
                 ctx.beginPath();
-                ctx.moveTo(352, 113); 
-                ctx.lineTo(335, 90);
-                ctx.lineTo(369, 90);
+                ctx.moveTo(332, 223); 
+                ctx.lineTo(315, 200);
+                ctx.lineTo(349, 200);
                 ctx.fill();
 
                 // 砂子顆粒質感 (含黑邊)
@@ -1161,149 +1312,188 @@
                     ctx.strokeRect(p.x - 2, p.y - 2, 4, 4);
                 });
 
-                // 濾紙內的水 (藍色半透明多邊形，隨進度變化)
-                if (funnelWaterY < 114) {
+                // 濾紙內的水 (藍色半透明多邊形，精準貼合斜率)
+                if (funnelWaterY < 225) {
                     ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
                     ctx.beginPath();
-                    ctx.moveTo(352, 114);
-                    let dx = (114 - funnelWaterY) * 0.75; // 斜率 45/60=0.75
-                    ctx.lineTo(352 - dx, funnelWaterY);
-                    ctx.lineTo(352 + dx, funnelWaterY);
+                    ctx.moveTo(332, 225); // 漏斗底部頂點
+                    let dx = (225 - funnelWaterY) * 0.75; // 斜率 60/45=1.33 -> 1/1.33=0.75
+                    ctx.lineTo(332 - dx, funnelWaterY);
+                    ctx.lineTo(332 + dx, funnelWaterY);
                     ctx.fill();
                 }
                 
                 // 濾液流入動畫 (沿著左側杯壁流下)
                 if (isFlowing) {
                     ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)'; ctx.lineWidth = 2;
-                    let flowEndY = 237 - (beakerWaterLevel * 55);
-                    ctx.beginPath(); ctx.moveTo(352, 120); ctx.lineTo(352, flowEndY); ctx.stroke();
+                    let flowEndY = 407 - (beakerWaterLevel * 60);
+                    ctx.beginPath(); ctx.moveTo(332, 230); ctx.lineTo(332, flowEndY); ctx.stroke();
                 }
 
                 // 燒杯內食鹽水上升
                 if (beakerWaterLevel > 0) {
-                    let waterY = 237 - (beakerWaterLevel * 55);
+                    let waterY = 407 - (beakerWaterLevel * 60);
                     ctx.fillStyle = 'rgba(56, 189, 248, 0.4)'; 
-                    ctx.fillRect(352, waterY, 86, 237 - waterY); // 填滿左壁352到右壁438
+                    ctx.fillRect(334, waterY, 86, 407 - waterY); // 填滿左壁334到右壁420
                 }
                 
                 ctx.textAlign = 'left';
                 ctx.fillStyle = '#fde047'; ctx.font = 'bold 22px "Noto Sans TC", sans-serif';
-                ctx.fillText(tr("2. 過濾分離 ｜ 漏斗頸緊貼杯壁，食鹽水流下", "2. Filtration | Funnel stem leans on wall, saltwater flows"), 140, 30);
+                ctx.fillText(tr("2. 過濾分離 ｜ 漏斗頸緊貼杯壁，食鹽水流下", "2. Filtration | Funnel stem leans on wall, saltwater flows"), 140, 35);
 
             } 
             // =========================
-            // 步驟 3：加熱蒸發 (依據 image_7304b8.png 更新經典酒精燈)
+            // 步驟 3：加熱蒸發 (厚實三腳架 + 高級酒精燈 + 倒立漏斗 + 泡泡煙霧 + 沸騰氣泡)
             // =========================
             else if(currentStep === '3') {
-                // 1. 三腳架與陶瓷纖維網
-                ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 4;
-                ctx.beginPath(); ctx.moveTo(315, 240); ctx.lineTo(345, 160); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(435, 240); ctx.lineTo(405, 160); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(335, 160); ctx.lineTo(415, 160); ctx.stroke(); // 網子
+                let t = Date.now() / 1000;
 
-                // 2. 經典酒精燈 (image_7304b8.png 樣式)
+                // 0. 桌面底線 (讓所有儀器腳架平穩落地)
+                ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(250, 420); ctx.lineTo(500, 420); ctx.stroke();
+
+                // 1. 三腳架與陶瓷纖維網 (確保 Y=270 網子，腳架落地 Y=420)
+                ctx.strokeStyle = '#8a8d91'; ctx.lineWidth = 6;
+                ctx.lineCap = 'round';
+                ctx.beginPath(); ctx.moveTo(330, 270); ctx.lineTo(290, 420); ctx.stroke(); // 左腳落地
+                ctx.beginPath(); ctx.moveTo(420, 270); ctx.lineTo(460, 420); ctx.stroke(); // 右腳落地
+                ctx.beginPath(); ctx.moveTo(310, 270); ctx.lineTo(440, 270); ctx.stroke(); // 網子平台
+
+                // 2. 高級透明酒精燈 (真實構造，落地 Y=420)
                 ctx.save();
                 ctx.beginPath();
-                ctx.moveTo(340, 238);
-                ctx.lineTo(410, 238);
-                ctx.quadraticCurveTo(410, 200, 390, 200);
-                ctx.lineTo(360, 200);
-                ctx.quadraticCurveTo(340, 200, 340, 238);
+                ctx.moveTo(355, 310);
+                ctx.lineTo(395, 310);
+                ctx.bezierCurveTo(440, 330, 430, 420, 415, 420);
+                ctx.lineTo(335, 420);
+                ctx.bezierCurveTo(320, 420, 310, 330, 355, 310);
                 ctx.closePath();
                 ctx.clip();
                 
                 // 玻璃內部深灰色空間
-                ctx.fillStyle = '#374151';
-                ctx.fillRect(330, 195, 90, 45);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(300, 300, 150, 150);
+                
                 // 藍色酒精液體
-                ctx.fillStyle = '#1d70b8';
-                ctx.fillRect(330, 215, 90, 25);
+                ctx.fillStyle = '#1f77b4';
+                ctx.fillRect(300, 360, 150, 70);
+                
+                // 內置燈芯 (泡在藍色酒精中)
+                ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(375, 310);
+                ctx.quadraticCurveTo(390, 360, 350, 405);
+                ctx.stroke();
+                // 增加燈芯的毛細纖維紋理感
+                ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(373, 310); ctx.quadraticCurveTo(388, 360, 348, 405); ctx.stroke();
+                
                 ctx.restore();
 
                 // 酒精燈玻璃外框
-                ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 4;
+                ctx.strokeStyle = 'rgba(241, 245, 249, 0.8)'; ctx.lineWidth = 4;
                 ctx.beginPath();
-                ctx.moveTo(340, 238);
-                ctx.lineTo(410, 238);
-                ctx.quadraticCurveTo(410, 200, 390, 200);
-                ctx.lineTo(360, 200);
-                ctx.quadraticCurveTo(340, 200, 340, 238);
+                ctx.moveTo(355, 310);
+                ctx.lineTo(395, 310);
+                ctx.bezierCurveTo(440, 330, 430, 420, 415, 420);
+                ctx.lineTo(335, 420);
+                ctx.bezierCurveTo(320, 420, 310, 330, 355, 310);
                 ctx.closePath();
                 ctx.stroke();
 
-                // 金屬燈蓋
-                ctx.fillStyle = '#9ca3af';
-                ctx.fillRect(355, 195, 40, 6);
+                // 金屬燈蓋 (黃銅色，使用安全的 fillRect)
+                ctx.fillStyle = '#d4af37'; 
+                ctx.fillRect(355, 295, 40, 15);
+                // 金屬螺紋
+                ctx.strokeStyle = '#a67c00'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(355, 300); ctx.lineTo(395, 300); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(355, 305); ctx.lineTo(395, 305); ctx.stroke();
 
-                // 燈芯
-                ctx.fillStyle = '#d2b48c';
-                ctx.fillRect(368, 175, 14, 20);
+                // 露出外面的燈芯
+                ctx.fillStyle = '#f1f5f9'; ctx.fillRect(368, 280, 14, 15);
+                ctx.fillStyle = '#cbd5e1'; ctx.fillRect(370, 280, 2, 15); ctx.fillRect(374, 280, 2, 15);
 
-                // 動態火焰
-                let flameWobble = Math.sin(Date.now() * 0.015) * 3;
-                ctx.fillStyle = '#d97706'; // 外焰
+                // 動態火焰 (紅黃雙層明亮火焰，精準碰觸 Y=270 網子)
+                let flameWobble = Math.sin(t * 15) * 2;
+                ctx.fillStyle = '#ff5e4d'; // 外焰
                 ctx.beginPath();
-                ctx.moveTo(375, 155 - flameWobble);
-                ctx.quadraticCurveTo(390, 175, 375, 178);
-                ctx.quadraticCurveTo(360, 175, 375, 155 - flameWobble);
+                ctx.moveTo(375, 250 - flameWobble);
+                ctx.quadraticCurveTo(390, 275, 375, 282);
+                ctx.quadraticCurveTo(360, 275, 375, 250 - flameWobble);
+                ctx.fill();
+                // 內焰
+                ctx.fillStyle = '#fde047';
+                ctx.beginPath();
+                ctx.moveTo(375, 260 - flameWobble*0.5);
+                ctx.quadraticCurveTo(383, 275, 375, 280);
+                ctx.quadraticCurveTo(367, 275, 375, 260 - flameWobble*0.5);
                 ctx.fill();
 
-                ctx.fillStyle = '#fde047'; // 內焰
-                ctx.beginPath();
-                ctx.moveTo(375, 165 - flameWobble*0.5);
-                ctx.quadraticCurveTo(383, 175, 375, 178);
-                ctx.quadraticCurveTo(367, 175, 375, 165 - flameWobble*0.5);
-                ctx.fill();
-
-                // 3. 蒸發皿 (在火焰與石棉網上方)
+                // 3. 蒸發皿 (置於腳架上 Y=200, R=70, 底部=270)
                 ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 4;
-                ctx.beginPath(); ctx.arc(375, 100, 60, 0, Math.PI); ctx.closePath(); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(305, 200); ctx.lineTo(445, 200); ctx.stroke();
+                ctx.beginPath(); ctx.arc(375, 200, 70, 0, Math.PI); ctx.stroke();
                 
-                ctx.fillStyle = '#1e607a'; // 湛藍色液體
-                ctx.beginPath(); ctx.arc(375, 100, 56, 0, Math.PI); ctx.fill();
-                
-                // 4. 動態蒸氣 (冒煙)
-                let t = Date.now() / 1000; // 取得秒數
-                ctx.lineWidth = 3;
-                ctx.lineCap = 'round';
-                for (let i = 0; i < 4; i++) {
-                    let phase = t * 1.5 + i * 1.2; // 產生隨機相位
-                    let progress = (phase % 2);    // 循環週期 0~2
-                    let alpha = Math.max(0, 1 - progress / 1.5); // 逐漸透明
-                    let baseY = 95 - progress * 40; // 向上飄浮
-                    let baseX = 345 + i * 20;       // 分佈 4 條線
-                    
-                    let wave = Math.sin(phase * 4) * 6; // S型波浪搖擺
+                ctx.fillStyle = '#215c6d'; // 深湛藍色液體
+                ctx.beginPath(); ctx.arc(375, 200, 66, 0, Math.PI); ctx.fill();
 
-                    ctx.strokeStyle = `rgba(241, 245, 249, ${alpha * 0.6})`;
-                    ctx.beginPath();
-                    ctx.moveTo(baseX + wave, baseY);
-                    ctx.bezierCurveTo(
-                        baseX - wave * 1.5, baseY - 10, 
-                        baseX + wave * 1.5, baseY - 20, 
-                        baseX + wave, baseY - 30
-                    );
-                    ctx.stroke();
+                // 🌟 新增：沸騰氣泡 (嚴格限制在半圓液體內部)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                for (let i = 0; i < 20; i++) {
+                    let speed = 1.5 + (i % 3);
+                    let bY = 266 - ((t * 40 * speed + i * 15) % 66); // 在液體內部上升
+                    let bX = 375 + ((i * 17) % 100) - 50 + Math.sin(t * 5 + i) * 5;
+                    // 確保氣泡不會超出半圓蒸發皿範圍
+                    let dx = bX - 375;
+                    let dy = bY - 200;
+                    if (dx*dx + dy*dy < 64*64 && bY > 200) {
+                        ctx.beginPath(); ctx.arc(bX, bY, 2 + (i%3), 0, Math.PI*2); ctx.fill();
+                    }
+                }
+
+                // 🌟 新增：倒置的玻璃漏斗 (防飛濺，段考重點)
+                ctx.strokeStyle = 'rgba(241, 245, 249, 0.9)'; ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(315, 200); // 貼齊邊緣
+                ctx.lineTo(365, 80);  // 漏斗錐部
+                ctx.lineTo(365, 40);  // 漏斗頸管
+                ctx.moveTo(435, 200);
+                ctx.lineTo(385, 80);
+                ctx.lineTo(385, 40);
+                ctx.stroke();
+                
+                // 4. 真實感泡泡煙霧粒子 (從倒置漏斗頂端 y=40 冒出)
+                for (let i = 0; i < 8; i++) {
+                    let life = ((t * 1.2 + i * 0.8) % 3) / 3; // 0 to 1
+                    let alpha = Math.max(0, 1 - life * 1.2);
+                    let sY = 40 - life * 90; 
+                    let sX = 375 + Math.sin(t * 3 + i) * 20 * life + (i%3 - 1)*10;
+                    let radius = 6 + life * 18;
+                    
+                    ctx.fillStyle = `rgba(180, 180, 180, ${alpha * 0.6})`;
+                    ctx.beginPath(); ctx.arc(sX, sY, radius, 0, Math.PI*2); ctx.fill();
                 }
                 
                 ctx.textAlign = 'left';
                 ctx.fillStyle = '#fde047'; ctx.font = 'bold 22px "Noto Sans TC", sans-serif';
-                ctx.fillText(tr("3. 加熱蒸發 ｜ 沸點高低差異", "3. Evaporation | Boiling Point Difference"), 210, 30);
+                ctx.fillText(tr("3. 加熱蒸發 ｜ 沸點高低差異", "3. Evaporation | Boiling Point Difference"), 210, 35);
 
             } 
             // =========================
-            // 步驟 4：取得晶體
+            // 步驟 4：取得晶體 
             // =========================
             else if(currentStep === '4') {
-                // 空蒸發皿 (只有白框)
+                // 蒸發皿 (位置 y=200, r=70)
                 ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 4;
-                ctx.beginPath(); ctx.arc(375, 100, 60, 0, Math.PI); ctx.stroke();
+                // 有杯口線
+                ctx.beginPath(); ctx.moveTo(305, 200); ctx.lineTo(445, 200); ctx.stroke();
+                ctx.beginPath(); ctx.arc(375, 200, 70, 0, Math.PI); ctx.stroke();
                 
-                // 內部塗黑代表液體已乾
+                // 內部黑底代表乾掉
                 ctx.fillStyle = '#132a1e';
-                ctx.beginPath(); ctx.arc(375, 100, 58, 0, Math.PI); ctx.fill();
+                ctx.beginPath(); ctx.arc(375, 200, 68, 0, Math.PI); ctx.fill();
 
-                // 白色食鹽晶體析出 (堆疊在底部曲線內，含黑邊)
+                // 🌟 完美服貼堆積的白色食鹽晶體 (利用精準極座標半徑)
                 ctx.fillStyle = '#f8fafc';
                 ctx.strokeStyle = '#000000';
                 ctx.lineWidth = 1.5;
@@ -1336,32 +1526,26 @@
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 桌面
             ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
             ctx.beginPath(); ctx.moveTo(100, 310); ctx.lineTo(650, 310); ctx.stroke();
 
-            // 燒杯
             ctx.strokeStyle = 'rgba(241, 245, 249, 0.9)'; ctx.lineWidth = 4;
             ctx.beginPath(); ctx.moveTo(250, 100); ctx.lineTo(250, 310); ctx.lineTo(500, 310); ctx.lineTo(500, 100); ctx.stroke();
 
-            // 展開液 (水)
             ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
             ctx.fillRect(253, 260, 244, 48);
 
-            // 濾紙
             ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.fillRect(325, 40, 100, 260);
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.lineWidth = 2;
             ctx.strokeRect(325, 40, 100, 260);
 
-            // 起始線
             ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
             ctx.beginPath(); ctx.moveTo(310, 240); ctx.lineTo(440, 240); ctx.stroke();
             ctx.setLineDash([]);
             ctx.fillStyle = '#fde047'; ctx.font = '18px "Noto Sans TC", sans-serif'; 
             ctx.fillText(tr("起始線", "Origin"), 245, 245);
 
-            // 水分子上升 (藍色展開液前沿)
             let maxWaterY = 240 - (chromaProgress * 1.6);
             ctx.fillStyle = 'rgba(56, 189, 248, 0.3)';
             ctx.fillRect(327, maxWaterY, 96, 260 - maxWaterY);
@@ -1372,26 +1556,22 @@
                 ctx.fillText(tr("水分子 (移動相)", "Solvent Front (Mobile Phase)"), 440, maxWaterY + 10);
             }
 
-            // 綠色色素 (跑較慢)
             let greenY = 240 - (chromaProgress * 0.7);
             let greenSpread = 5 + (chromaProgress * 0.1);
             ctx.fillStyle = 'rgba(74, 222, 128, 0.8)';
             ctx.beginPath(); ctx.ellipse(375, greenY, greenSpread, greenSpread*0.6, 0, 0, Math.PI*2); ctx.fill();
 
-            // 紅色色素 (跑較快)
             let redY = 240 - (chromaProgress * 1.3);
             let redSpread = 5 + (chromaProgress * 0.15);
             ctx.fillStyle = 'rgba(244, 114, 182, 0.8)';
             ctx.beginPath(); ctx.ellipse(375, redY, redSpread, redSpread*0.7, 0, 0, Math.PI*2); ctx.fill();
 
-            // 混合原點
             let mixAlpha = Math.max(0, 1 - (chromaProgress * 0.05));
             if (mixAlpha > 0) {
                 ctx.fillStyle = `rgba(51, 65, 85, ${mixAlpha})`;
                 ctx.beginPath(); ctx.arc(375, 240, 6, 0, Math.PI*2); ctx.fill();
             }
 
-            // 標示文字
             if (chromaProgress > 10) {
                 ctx.fillStyle = '#4ade80'; 
                 ctx.font = '18px "Noto Sans TC", sans-serif';
