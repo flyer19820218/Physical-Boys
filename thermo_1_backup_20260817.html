@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>溫度與溫度計 - 黑板互動教學</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chilanka&family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        body {
+            background-color: #213c2c;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #fdf6e3;
+            font-family: 'Noto Sans TC', 'Chilanka', cursive, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .blackboard {
+            width: 950px;
+            height: 650px;
+            border: 12px solid #5d4037;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 10px 10px 20px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            border-bottom: 2px dashed #a5d6a7;
+            padding-bottom: 10px;
+        }
+        .tab-btn {
+            background: transparent;
+            color: #a5d6a7;
+            border: 2px solid #a5d6a7;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { background: rgba(165, 214, 167, 0.2); }
+        .tab-btn.active {
+            background: #a5d6a7;
+            color: #213c2c;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            animation: fadeIn 0.4s ease;
+        }
+        .tab-content.active { display: flex; gap: 30px; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chalk-yellow { color: #ffe082; }
+        .chalk-red { color: #ff8a80; }
+        .chalk-blue { color: #81d4fa; }
+        
+        .left-panel { flex: 1.2; display: flex; flex-direction: column; justify-content: center;}
+        .right-panel { flex: 0.8; display: flex; justify-content: center; align-items: center;}
+        
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #ff8a80;
+        }
+        .chalk-box {
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .thermo-container {
+            position: relative;
+            width: 45px;
+            height: 380px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid #fdf6e3;
+            border-radius: 25px;
+            display: flex;
+            align-items: flex-end;
+            padding: 3px;
+        }
+        .thermo-fill {
+            width: 100%;
+            background: linear-gradient(to top, #ff3333, #ff9999);
+            border-radius: 20px;
+            transition: height 0.3s ease;
+        }
+        .scale-mark {
+            position: absolute;
+            width: 320px;
+            left: -137px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+        .scale-mark .dashed-line { flex: 1; border-bottom: 1px dashed rgba(255,255,255,0.7); margin: 0 10px; }
+        .scale-mark .text-left { width: 100px; text-align: right; font-size: 1.2em; font-weight: bold; }
+        .scale-mark .text-right { width: 100px; text-align: left; font-size: 1.2em; font-weight: bold; }
+        .current-pointer {
+            position: absolute;
+            width: 320px;
+            left: -137px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: bottom 0.3s ease;
+            z-index: 10;
+        }
+        .current-pointer .arrow-line { flex: 1; border-bottom: 2px solid #ffe082; margin: 0 5px; position: relative; }
+        .current-pointer .arrow-line::after {
+            content: ''; position: absolute; right: -6px; top: -5px;
+            border-width: 5px 0 5px 6px; border-style: solid;
+            border-color: transparent transparent transparent #ffe082;
+        }
+        .current-pointer .arrow-line::before {
+            content: ''; position: absolute; left: -6px; top: -5px;
+            border-width: 5px 6px 5px 0; border-style: solid;
+            border-color: transparent #ffe082 transparent transparent;
+        }
+        .math-display { display: flex; align-items: center; justify-content: center; font-size: 1.8em; margin: 20px 0; font-family: 'Times New Roman', Times, serif; }
+        .math-display i { font-style: italic; }
+        .fraction { display: inline-flex; flex-direction: column; align-items: center; margin: 0 15px; }
+        .fraction .numerator { border-bottom: 3px solid currentColor; padding: 0 8px; width: 100%; text-align: center; }
+        .fraction .denominator { padding: 0 8px; width: 100%; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="blackboard">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab1')">1. 攝氏 vs 華氏</button>
+        <button class="tab-btn" onclick="switchTab('tab2')">2. 自製水溫度計</button>
+        <button class="tab-btn" onclick="switchTab('tab3')">3. 絕對溫度 (凱氏)</button>
+    </div>
+    <div id="tab1" class="tab-content active">
+        <div class="left-panel">
+            <h2 class="chalk-yellow">🔍 溫度計大觀園</h2>
+            <ul>
+                <li><span class="chalk-blue">水銀溫度計</span>：高沸點，適合測高溫。</li>
+                <li><strong class="chalk-yellow">紅外線溫度計</strong>：利用物體發出<span class="chalk-red">熱輻射</span>，<strong>不需接觸</strong>！（如：耳溫槍）。</li>
+            </ul>
+            <div class="chalk-box">
+                <h3 class="chalk-yellow">🔄 攝氏 / 華氏 等比例轉換</h3>
+                <label>拖曳改變溫度：</label>
+                <input type="range" id="cSlider" min="0" max="100" value="25" oninput="updateCF()">
+                <div class="math-display chalk-blue">
+                    <div class="fraction"><span class="numerator"><i>C</i> - 0</span><span class="denominator">100 - 0</span></div>
+                    <span>=</span>
+                    <div class="fraction"><span class="numerator"><i>F</i> - 32</span><span class="denominator">212 - 32</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="right-panel">
+            <div class="thermo-container">
+                <div class="thermo-fill" id="cFill" style="height: 25%;"></div>
+                <div class="scale-mark" style="bottom: 95%;"><div class="text-left">100°C</div><div class="dashed-line"></div><div class="text-right">212°F</div></div>
+                <div class="scale-mark" style="bottom: 15%;"><div class="text-left">0°C</div><div class="dashed-line"></div><div class="text-right">32°F</div></div>
+                <div class="current-pointer" id="cPointer" style="bottom: 35%;"><div class="text-left chalk-yellow" id="cValText">25°C</div><div class="arrow-line"></div><div class="text-right chalk-yellow" id="fValText">77°F</div></div>
+            </div>
+        </div>
+    </div>
+    <div id="tab2" class="tab-content">
+        <div class="left-panel">
+            <h2 class="chalk-yellow">🧪 自製溫度計（長度比例）</h2>
+            <div class="chalk-box">
+                <label>拖曳改變液面高度：<span id="lengthDisplay" class="chalk-yellow">8</span> cm</label>
+                <input type="range" id="lengthSlider" min="2" max="12" step="0.5" value="8" oninput="updateWater()">
+                <div class="math-display chalk-blue">
+                    <div class="fraction"><span class="numerator"><i>T</i> - 10</span><span class="denominator">60 - 10</span></div>
+                    <span>=</span>
+                    <div class="fraction"><span class="numerator" id="mathL_top">8 - 2</span><span class="denominator">12 - 2</span></div>
+                </div>
+                <div id="calc-steps" style="font-size: 1.3em; text-align: center;"></div>
+            </div>
+        </div>
+        <div class="right-panel">
+            <div class="thermo-container">
+                <div class="thermo-fill" id="waterFill" style="height: 60%;"></div>
+                <div class="scale-mark" style="bottom: 90%;"><div class="text-left">60°C</div><div class="dashed-line"></div><div class="text-right">12cm</div></div>
+                <div class="scale-mark" style="bottom: 10%;"><div class="text-left">10°C</div><div class="dashed-line"></div><div class="text-right">2cm</div></div>
+                <div class="current-pointer" id="waterPointer" style="bottom: 60%;"><div class="text-left chalk-yellow" id="waterT">?°C</div><div class="arrow-line"></div><div class="text-right chalk-yellow" id="waterL">8cm</div></div>
+            </div>
+        </div>
+    </div>
+    <div id="tab3" class="tab-content">
+        <div class="left-panel">
+            <h2 class="chalk-yellow">❄️ 補充：絕對溫度 (K)</h2>
+            <p>粒子幾乎停止熱運動的最低極限為 <strong class="chalk-blue">-273.15°C</strong>，將此定義為 <strong>0K (絕對零度)</strong>。</p>
+            <div class="chalk-box" style="margin-top: 15px;">
+                <label>拖曳觀察變化：</label>
+                <input type="range" id="kSlider" min="-273" max="100" value="0" oninput="updateK()">
+                <div class="math-display chalk-red"><span><i>K</i> = °C + 273.15</span></div>
+            </div>
+        </div>
+        <div class="right-panel">
+            <div class="thermo-container">
+                <div class="thermo-fill" id="kFill" style="height: 73%;"></div>
+                <div class="scale-mark" style="bottom: 90%;"><div class="text-left">100°C</div><div class="dashed-line"></div><div class="text-right">373.15K</div></div>
+                <div class="scale-mark" style="bottom: 65%;"><div class="text-left">0°C</div><div class="dashed-line"></div><div class="text-right">273.15K</div></div>
+                <div class="scale-mark" style="bottom: 5%;"><div class="text-left">-273.15°C</div><div class="dashed-line"></div><div class="text-right">0K</div></div>
+                <div class="current-pointer" id="kPointer" style="bottom: 65%;"><div class="text-left chalk-yellow" id="k_cVal">0°C</div><div class="arrow-line"></div><div class="text-right chalk-yellow" id="k_kVal">273.15K</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+    }
+    function updateCF() {
+        let c = parseFloat(document.getElementById('cSlider').value);
+        let f = (c * 9/5) + 32;
+        document.getElementById('cValText').innerText = c + "°C";
+        document.getElementById('fValText').innerText = f.toFixed(1) + "°F";
+        let percent = 15 + (c / 100) * 80;
+        document.getElementById('cFill').style.height = percent + "%";
+        document.getElementById('cPointer').style.bottom = percent + "%";
+    }
+    function updateWater() {
+        let L = parseFloat(document.getElementById('lengthSlider').value);
+        document.getElementById('lengthDisplay').innerText = L;
+        let ratio = (L - 2) / 10;
+        let T = 10 + ratio * 50;
+        let percent = 10 + (ratio * 80);
+        document.getElementById('waterFill').style.height = percent + "%";
+        document.getElementById('waterPointer').style.bottom = percent + "%";
+        document.getElementById('waterT').innerText = T.toFixed(1) + "°C";
+        document.getElementById('waterL').innerText = L + "cm";
+        document.getElementById('mathL_top').innerText = L + " - 2";
+        document.getElementById('calc-steps').innerHTML = `
+            👉 交叉相乘：<i>T</i> - 10 = 50 × ${ratio.toFixed(2)}<br>
+            <span class="chalk-yellow" style="font-size:1.2em; font-weight:bold;"><i>T</i> = ${T.toFixed(1)} °C</span>
+        `;
+    }
+    function updateK() {
+        let c = parseFloat(document.getElementById('kSlider').value);
+        let k = c + 273.15;
+        document.getElementById('k_cVal').innerText = c + "°C";
+        document.getElementById('k_kVal').innerText = k.toFixed(2) + " K";
+        let percent = 5 + ((c + 273.15) / 373.15) * 85;
+        document.getElementById('kFill').style.height = percent + "%";
+        document.getElementById('kPointer').style.bottom = percent + "%";
+    }
+    updateCF();
+    updateWater();
+    updateK();
+</script>
+</body>
+</html>
