@@ -2,17 +2,21 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國中自然 光學｜折射原理與日常生活 黑板模擬器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title data-zh="國中自然 光學｜折射原理與日常生活 黑板模擬器" data-en="Optics | Refraction Principles & Daily Phenomena Simulator">國中自然 光學｜折射原理與日常生活 黑板模擬器</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
-
     :root {
       --board: #1c3d34;
-      --board-dark: #15302a;
+      --board-dark: #11261f;
       --chalk: #f2ecd9;
       --chalk-dim: #c9c2ab;
-      --chalk-yellow: #f2d675;
+      --chalk-yellow: #fde047;
+      --chalk-green: #4ade80;
+      --chalk-pink: #f472b6;
+      --chalk-blue: #38bdf8;
+      --chalk-gray: #9fb0a8;
+      --chalk-orange: #fb923c;
       --x-color: #5fb0ff;
       --v-color: #ef6a5a;
       --frame: #5c4a33;
@@ -25,22 +29,80 @@
       background: var(--board-dark);
       color: var(--chalk);
       font-family: 'Noto Sans TC', sans-serif;
+      font-size: 20px;
       padding: 20px 14px 60px;
+      padding-top: 80px;
     }
 
-    .wrap { max-width: 1300px; margin: 0 auto; }
+    /* 🌟 規範：右上角橫向懸浮雙語切換器 */
+    .floating-lang-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 2px solid var(--chalk-blue);
+      border-radius: 12px;
+      background: rgba(17, 38, 31, 0.95);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(56, 189, 248, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .lang-label {
+      color: var(--chalk-blue);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      user-select: none;
+      margin-left: 4px;
+    }
+    .lang-options {
+      display: flex;
+      flex-direction: row;
+      gap: 4px;
+    }
+    .lang-pill {
+      min-width: 60px;
+      min-height: 48px; /* 觸控防禦 */
+      padding: 6px 12px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      background: transparent;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      touch-action: manipulation;
+    }
+    .lang-pill.active {
+      background: var(--chalk-blue) !important;
+      color: #0b1a15 !important;
+      border-color: var(--chalk-blue) !important;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+
+    .wrap { max-width: 1080px; margin: 0 auto; }
 
     header { text-align: center; margin-bottom: 24px; }
-    header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.2em; color: var(--chalk-dim); text-transform: uppercase; }
-    h1 { font-family: 'Kalam', cursive; font-size: 2.1rem; font-weight: 700; margin: 6px 0 10px; text-shadow: 0 0 14px rgba(242, 236, 217, 0.15); }
-    header p { color: var(--chalk-dim); max-width: 780px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem; }
+    header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 20px; letter-spacing: 0.15em; color: var(--chalk-dim); text-transform: uppercase; }
+    h1 { font-size: 38px; font-weight: 700; margin: 6px 0 10px; text-shadow: 0 0 14px rgba(242, 236, 217, 0.15); color: var(--chalk-yellow); }
+    header p { color: var(--chalk-green); max-width: 850px; margin: 0 auto; line-height: 1.6; font-size: 21px; font-weight: bold; }
 
     .board {
       background: var(--board);
       border: 10px solid var(--frame);
       border-radius: 6px;
       box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4), inset 0 0 60px rgba(0, 0, 0, 0.25);
-      padding: 20px 18px 24px;
+      padding: 24px 20px;
       margin-bottom: 20px;
       position: relative;
     }
@@ -51,145 +113,231 @@
     }
 
     .board h2 {
-      font-family: 'Kalam', cursive; font-size: 1.25rem; margin: 0 0 14px;
+      font-size: 28px; margin: 0 0 16px; font-weight: 700;
       color: var(--chalk-yellow); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
     }
 
-    .mode-switch { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .mode-switch { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .mode-switch button {
-      font-family: 'Noto Sans TC', sans-serif; font-size: 0.92rem; font-weight: 700;
-      background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 1.5px solid rgba(242, 236, 217, 0.18);
-      padding: 12px 14px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; display: flex; flex-direction: column; gap: 4px;
+      font-family: 'Noto Sans TC', sans-serif; font-size: 20px; font-weight: 700;
+      background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 2px dashed rgba(242, 236, 217, 0.25);
+      padding: 14px 12px; min-height: 64px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; display: flex; flex-direction: column; gap: 4px;
+      touch-action: manipulation;
     }
-    .mode-switch button span.sub { font-size: 0.75rem; font-weight: 400; opacity: 0.7; }
-    .mode-switch button:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(242, 236, 217, 0.4); }
+    .mode-switch button span.sub { font-size: 16px; font-weight: 400; opacity: 0.8; }
+    .mode-switch button:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(242, 236, 217, 0.5); color: var(--chalk); }
     .mode-switch button.active {
-      background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow);
+      background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow); border-style: solid;
       box-shadow: 0 4px 12px rgba(242, 214, 117, 0.25);
     }
-    .mode-switch button.active span.sub { color: var(--board-dark); opacity: 0.85; font-weight: 600; }
+    .mode-switch button.active span.sub { color: var(--board-dark); opacity: 0.9; font-weight: 600; }
 
-    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.15); padding: 14px; border-radius: 8px; }
-    .control label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--chalk-dim); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
-    .control label span.val { color: var(--chalk-yellow); font-weight: 600; }
-    input[type=range] { width: 100%; accent-color: var(--chalk-yellow); height: 5px; background: transparent; cursor: pointer; }
+    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.15); padding: 16px; border-radius: 8px; }
+    .control label { display: flex; justify-content: space-between; font-size: 20px; color: var(--chalk-dim); margin-bottom: 8px; font-family: 'JetBrains Mono', 'Noto Sans TC', monospace; font-weight: bold; }
+    .control label span.val { color: var(--chalk-yellow); font-weight: 700; }
+    input[type=range] { width: 100%; accent-color: var(--chalk-yellow); height: 8px; background: transparent; cursor: pointer; min-height: 44px; touch-action: manipulation; }
 
-    .presets { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
-    .presets span { font-size: 0.8rem; color: var(--chalk-dim); margin-right: 4px; }
-    .presets button {
-      font-family: 'Noto Sans TC', sans-serif; background: transparent; border: 1px dashed var(--chalk-dim);
-      color: var(--chalk); padding: 6px 12px; border-radius: 18px; font-size: 0.8rem; cursor: pointer; transition: all .15s;
+    .presets { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; align-items: center; justify-content: center; }
+    .presets span { font-size: 20px; color: var(--chalk-dim); font-weight: bold; }
+    .presets button, .tool-btn {
+      font-family: 'Noto Sans TC', sans-serif; background: transparent; border: 2px dashed var(--chalk-dim);
+      color: var(--chalk); padding: 10px 18px; min-height: 48px; border-radius: 18px; font-size: 20px; cursor: pointer; transition: all .15s; font-weight: bold;
+      touch-action: manipulation; display: inline-flex; align-items: center; justify-content: center;
     }
-    .presets button:hover { border-color: var(--chalk-yellow); color: var(--chalk-yellow); background: rgba(242, 214, 117, 0.1); }
+    .presets button:hover, .tool-btn:hover { border-color: var(--chalk-yellow); color: var(--chalk-yellow); background: rgba(242, 214, 117, 0.1); }
 
-    .visual-card { width: 100%; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; margin-top: 10px; }
-    svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .visual-card { width: 100%; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; margin-top: 16px; }
+    svg { width: 100%; height: auto; display: block; overflow: visible; aspect-ratio: 600 / 320; }
     
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 14px; }
-    .stat { background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 10px 8px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.04); }
-    .stat .k { font-family: 'Noto Sans TC', sans-serif; font-size: 0.85rem; color: var(--chalk-dim); }
-    .stat .v { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--chalk-yellow); font-weight: 600; margin-top: 3px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
+    .stat { background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 14px 10px; text-align: center; border: 1px dashed var(--chalk-dim); }
+    .stat .k { font-family: 'Noto Sans TC', sans-serif; font-size: 20px; color: var(--chalk-dim); font-weight: bold; }
+    .stat .v { font-family: 'JetBrains Mono', monospace; font-size: 24px; color: var(--chalk-yellow); font-weight: 700; margin-top: 8px; }
 
-    .explain-box { margin-top: 18px; background: rgba(0, 0, 0, 0.18); border-left: 4px solid var(--chalk-yellow); border-radius: 0 8px 8px 0; padding: 14px 18px; }
-    .explain-box h3 { font-family: 'Kalam', cursive; color: var(--chalk-yellow); margin: 0 0 8px; font-size: 1.1rem; }
-    .explain-box p { margin: 0; font-size: 0.95rem; line-height: 1.6; color: var(--chalk); }
-    .formula-highlight { font-family: 'JetBrains Mono', monospace; background: rgba(242, 214, 117, 0.15); padding: 2px 8px; border-radius: 4px; color: var(--chalk-yellow); font-weight: 600; display: inline-block; margin: 4px 0; font-style: italic; }
-    
-    footer { text-align: center; color: var(--chalk-dim); font-size: 0.8rem; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; }
+    .explain-box { margin-top: 18px; background: rgba(0, 0, 0, 0.18); border-left: 6px solid var(--chalk-yellow); border-radius: 0 8px 8px 0; padding: 16px 20px; }
+    .explain-box h3 { color: var(--chalk-yellow); margin: 0 0 10px; font-size: 24px; font-weight: 700; }
+    .explain-box p { margin: 0; font-size: 20px; line-height: 1.8; color: var(--chalk); }
+    .formula-highlight { font-family: 'JetBrains Mono', monospace; background: rgba(242, 214, 117, 0.15); padding: 4px 12px; border-radius: 6px; color: var(--chalk-yellow); font-weight: 700; display: inline-block; margin: 4px 0; }
+
+    footer { text-align: center; color: var(--chalk-dim); font-size: 20px; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; font-weight: bold; }
+
+    @media (max-width: 768px) {
+      .floating-lang-container { top: 8px; right: 8px; padding: 6px 8px; }
+      .lang-label { display: none; }
+      .mode-switch { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- 🌟 右上角橫向懸浮雙語切換器 -->
+  <div class="floating-lang-container">
+    <span class="lang-label">Language</span>
+    <div class="lang-options">
+      <button class="lang-pill active" id="btn-lang-zh" onclick="setLang('zh')">中文</button>
+      <button class="lang-pill" id="btn-lang-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
   <div class="wrap">
     <header>
       <div class="eyebrow">Optics Chapter 4-3</div>
-      <h1>光學三：折射原理與日常生活</h1>
-      <p>從爛泥巴轉彎的直觀比喻，到無敵口訣「大角快、小角慢」，一拉滑桿破解水深變淺與魚變大的自然錯覺！</p>
+      <h1 data-zh="光學三：折射原理與日常生活" data-en="Optics 3: Refraction Principles & Daily Phenomena">光學三：折射原理與日常生活</h1>
+      <p data-zh="從爛泥巴轉彎的直觀比喻，到無敵口訣「大角快、小角慢」，一拉滑桿破解水深變淺與魚變大的自然錯覺！" data-en="From the mud-wheel analogy to 'Faster in larger angles, slower in smaller angles', decode optical illusions like shallow water and magnified fish!">從爛泥巴轉彎的直觀比喻，到無敵口訣「大角快、小角慢」，一拉滑桿破解水深變淺與魚變大的自然錯覺！</p>
     </header>
 
     <div class="board">
-      <h2>① 選擇互動教學模式</h2>
+      <h2 data-zh="選擇互動教學模式" data-en="Select Interactive Mode">選擇互動教學模式</h2>
       <div class="mode-switch">
         <button class="active" data-mode="car_mud">
-          <span>🚗 1. 為什麼會折射？</span>
-          <span class="sub">車輪入爛泥巴減速比喻</span>
+          <span data-zh="🚗 為什麼會折射？" data-en="🚗 Why Refraction Occurs?">🚗 為什麼會折射？</span>
+          <span class="sub" data-zh="車輪入爛泥巴物理動畫" data-en="Mud Wheel Physical Animation">車輪入爛泥巴物理動畫</span>
         </button>
         <button data-mode="snells_law">
-          <span>📐 2. 無敵解題口訣</span>
-          <span class="sub">大角快、小角慢驗證器</span>
+          <span data-zh="📐 無敵解題口訣" data-en="📐 Universal Problem-Solving Rule">📐 無敵解題口訣</span>
+          <span class="sub" data-zh="大角快、小角慢驗證器" data-en="Larger Angle Faster, Smaller Slower">大角快、小角慢驗證器</span>
         </button>
         <button data-mode="coin_water">
-          <span>🪙 3. 生活實例：硬幣現身</span>
-          <span class="sub">加水讓視深變淺</span>
+          <span data-zh="🪙 生活實例：硬幣現身" data-en="🪙 Real Life: Coin Reappearing">🪙 生活實例：硬幣現身</span>
+          <span class="sub" data-zh="加水讓視深變淺" data-en="Adding Water Appears Shallower">加水讓視深變淺</span>
         </button>
         <button data-mode="fish_human">
-          <span>🐟 4. 生活實例：水底看人</span>
-          <span class="sub">視深變高，魚的警戒機制</span>
+          <span data-zh="🐟 生活實例：水底看人" data-en="🐟 Real Life: Underwater View">🐟 生活實例：水底看人</span>
+          <span class="sub" data-zh="視深變高，魚的警戒機制" data-en="Apparent Height & Fish Alert">視深變高，魚的警戒機制</span>
         </button>
       </div>
 
       <div class="controls" id="controlsBox"></div>
       <div class="presets" id="presetsBox"></div>
+      
       <div class="visual-card">
-        <svg id="visualSvg" viewBox="-300 -160 600 320"></svg>
+        <svg id="visualSvg" viewBox="-300 -160 600 320">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+              <path d="M 0 2 L 10 5 L 0 8 z" fill="#4ade80" />
+            </marker>
+          </defs>
+          <g id="drawLayer"></g>
+        </svg>
       </div>
+      
       <div class="stats-grid" id="statsGrid"></div>
     </div>
 
     <div class="board">
-      <h2>② 課堂重點與原理解析</h2>
+      <h2 data-zh="課堂重點與原理解析" data-en="Key Concepts & Analysis">課堂重點與原理解析</h2>
       <div class="explain-box" id="explainBox"></div>
     </div>
 
-    <footer>國中理化 光學單元 · 視覺化互動教學教材 · 設計：彥君老師</footer>
+    <footer data-zh="國中理化 光學單元 · 視覺化互動教學教材" data-en="Junior High Science Optics · Interactive Blackboard">國中理化 光學單元 · 視覺化互動教學教材</footer>
   </div>
 
   <script>
     (function() {
-      const controlsBox = document.getElementById('controlsBox');
-      const presetsBox = document.getElementById('presetsBox');
-      const visualSvg = document.getElementById('visualSvg');
-      const statsGrid = document.getElementById('statsGrid');
-      const explainBox = document.getElementById('explainBox');
-
+      let currentLang = 'zh';
       let currentMode = 'car_mud';
       const SVG_NS = 'http://www.w3.org/2000/svg';
 
+      const controlsBox = document.getElementById('controlsBox');
+      const presetsBox = document.getElementById('presetsBox');
+      const drawLayer = document.getElementById('drawLayer');
+      const statsGrid = document.getElementById('statsGrid');
+      const explainBox = document.getElementById('explainBox');
+
+      // 動畫全域變數
+      let carAnimTime = 0;
+      let isCarPlaying = false;
+      let lastTime = performance.now();
+
       const params = {
-        car_mud: { progress: 0 },
-        snells_law: { v1: 30, v2: 22, angle: 45 }, // v in 10000 km/s (30=30萬)
+        snells_law: { v1: 30, v2: 22, angle: 45 },
         coin_water: { waterLevel: 0 },
-        fish_human: { observer: 'human' } // 'human' 或 'fish'
+        fish_human: { observer: 'human' }
+      };
+
+      function tr(zh, en) {
+        return currentLang === 'en' ? en : zh;
+      }
+
+      window.setLang = function(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
+
+        document.getElementById('btn-lang-zh').classList.toggle('active', lang === 'zh');
+        document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+
+        document.querySelectorAll('[data-zh][data-en]').forEach(el => {
+          el.innerHTML = el.getAttribute(`data-${lang}`);
+        });
+
+        initUI();
       };
 
       function createSvgEl(tag, attrs) {
         const el = document.createElementNS(SVG_NS, tag);
-        if (attrs) { for (let key in attrs) el.setAttribute(key, attrs[key]); }
+        if (attrs) { 
+          for (let key in attrs) {
+            if (key === 'style') el.style.cssText = attrs[key];
+            else el.setAttribute(key, attrs[key]);
+          }
+        }
         return el;
       }
 
-      function addText(parent, x, y, txt, anchor, color, size, weight='normal') {
-          const t = createSvgEl('text', { x, y, 'text-anchor': anchor, fill: color, 'font-size': size, 'font-weight': weight, 'font-family': 'Noto Sans TC' });
-          t.innerHTML = txt; 
-          parent.appendChild(t);
+      function addText(parent, x, y, txt, anchor, color, size, weight='normal', style='') {
+        const t = createSvgEl('text', { 
+          x: x, 
+          y: y, 
+          'text-anchor': anchor, 
+          fill: color, 
+          'font-size': size, 
+          'font-weight': weight, 
+          'font-family': 'Noto Sans TC, sans-serif'
+        });
+        if(style) t.style.cssText = style;
+        t.textContent = txt;
+        parent.appendChild(t);
+      }
+
+      // 🌟 新增高解析度的人類繪製函數
+      function drawHuman(parent, x, y, scale, opacity, label) {
+        const h = createSvgEl('g', { opacity: opacity, transform: `translate(${x}, ${y}) scale(${scale})` });
+        // Head
+        h.appendChild(createSvgEl('circle', { cx: 0, cy: -10, r: 12, fill: '#ef6a5a' }));
+        // Body (rounded rect)
+        h.appendChild(createSvgEl('rect', { x: -8, y: 5, width: 16, height: 35, fill: '#ef6a5a', rx: 6 }));
+        // Arms
+        h.appendChild(createSvgEl('path', { d: `M -8,10 Q -25,20 -15,35`, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 5, 'stroke-linecap': 'round' }));
+        h.appendChild(createSvgEl('path', { d: `M 8,10 Q 25,20 15,35`, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 5, 'stroke-linecap': 'round' }));
+        // Legs
+        h.appendChild(createSvgEl('path', { d: `M -4,40 L -12,70`, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 6, 'stroke-linecap': 'round' }));
+        h.appendChild(createSvgEl('path', { d: `M 4,40 L 12,70`, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 6, 'stroke-linecap': 'round' }));
+        
+        addText(h, 0, -32, label, 'middle', '#ef6a5a', 15/scale, 'bold');
+        parent.appendChild(h);
       }
 
       function initUI() {
+        // 重置動畫狀態
+        isCarPlaying = false;
+        carAnimTime = 0;
+        
         renderControls();
         renderPresets();
         updateSimulation();
       }
 
       function renderControls() {
-        controlsBox.innerHTML = '';
-        presetsBox.innerHTML = '';
+        controlsBox.replaceChildren();
+        presetsBox.replaceChildren();
         const m = currentMode;
         const p = params[m];
 
-        const addSlider = (id, label, min, max, step, val, unit, onChange) => {
+        const addSlider = (id, labelZh, labelEn, min, max, step, val, unit, onChange) => {
           const div = document.createElement('div');
           div.className = 'control';
           div.innerHTML = `
-            <label>${label} <span class="val" id="val_${id}">${val} ${unit}</span></label>
+            <label>${tr(labelZh, labelEn)} <span class="val" id="val_${id}">${val} ${unit}</span></label>
             <input type="range" id="inp_${id}" min="${min}" max="${max}" step="${step}" value="${val}">
           `;
           controlsBox.appendChild(div);
@@ -203,21 +351,43 @@
         };
 
         if (m === 'car_mud') {
-          addSlider('progress', '拖拉車輛前進', 0, 100, 1, p.progress, '%', v => { p.progress = v; return v; });
+          // 🌟 移除滑桿，改成一鍵播放 5 秒動畫按鈕
+          const div = document.createElement('div');
+          div.className = 'control';
+          div.style.gridColumn = '1 / -1'; // 滿寬
+          div.innerHTML = `
+            <label>${tr('播放轉向物理動畫', 'Play Physical Turning Animation')} <span class="val">${tr('點擊按鈕', 'Click Button')}</span></label>
+            <div style="display:flex; gap:12px; margin-top:8px;">
+              <button type="button" class="tool-btn" style="flex:1; border-color:var(--chalk-green); color:var(--chalk-green);" onclick="playCarAnim()">▶ ${tr('開始 5 秒模擬', 'Start 5s Sim')}</button>
+              <button type="button" class="tool-btn" style="flex:1; border-color:var(--chalk-orange); color:var(--chalk-orange);" onclick="resetCarAnim()">↺ ${tr('重置位置', 'Reset')}</button>
+            </div>
+          `;
+          controlsBox.appendChild(div);
+
+          window.playCarAnim = () => {
+              isCarPlaying = true;
+              if(carAnimTime >= 5) carAnimTime = 0;
+          };
+          window.resetCarAnim = () => {
+              isCarPlaying = false;
+              carAnimTime = 0;
+              updateSimulation();
+          };
+
         } else if (m === 'snells_law') {
-          addSlider('angle', '入射角 <i>θ<sub>1</sub></i>', 0, 85, 1, p.angle, '度', v => { p.angle = v; return v; });
-          addSlider('v1', '介質甲 光速', 10, 30, 1, p.v1, '萬公里/s', v => { p.v1 = v; return v; });
-          addSlider('v2', '介質乙 光速', 10, 30, 1, p.v2, '萬公里/s', v => { p.v2 = v; return v; });
+          addSlider('angle', '入射角 θ₁', 'Incident Angle θ₁', 0, 85, 1, p.angle, '°', v => { p.angle = v; return v; });
+          addSlider('v1', '介質甲 光速', 'Medium 1 Speed', 10, 30, 1, p.v1, tr('萬 km/s', '0k km/s'), v => { p.v1 = v; return v; });
+          addSlider('v2', '介質乙 光速', 'Medium 2 Speed', 10, 30, 1, p.v2, tr('萬 km/s', '0k km/s'), v => { p.v2 = v; return v; });
         } else if (m === 'coin_water') {
-          addSlider('waterLevel', '加水進碗裡 (水位高度)', 0, 80, 2, p.waterLevel, 'cm', v => { p.waterLevel = v; return v; });
+          addSlider('waterLevel', '加水進碗裡 (水位高度)', 'Water Level in Bowl', 0, 80, 2, p.waterLevel, 'cm', v => { p.waterLevel = v; return v; });
         } else if (m === 'fish_human') {
           const div = document.createElement('div');
           div.className = 'control';
           div.innerHTML = `
-            <label>切換觀察者視角 <span class="val">點擊按鈕</span></label>
-            <div style="display:flex; gap:6px; margin-top:4px;">
-              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.observer === 'human' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.observer === 'human' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setObserver('human')">👨 人看水底的魚</button>
-              <button type="button" style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--chalk-dim); background:${p.observer === 'fish' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.observer === 'fish' ? 'var(--board-dark)' : 'var(--chalk)'}; cursor:pointer; font-weight:bold;" onclick="setObserver('fish')">🐟 魚看岸上的人</button>
+            <label>${tr('切換觀察者視角', 'Switch Observer')} <span class="val">${tr('點擊按鈕', 'Click to switch')}</span></label>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+              <button type="button" class="tool-btn" style="flex:1; background:${p.observer === 'human' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.observer === 'human' ? 'var(--board-dark)' : 'var(--chalk)'}; border-color:var(--chalk-yellow);" onclick="setObserver('human')">👨 ${tr('人看魚', 'Human sees Fish')}</button>
+              <button type="button" class="tool-btn" style="flex:1; background:${p.observer === 'fish' ? 'var(--chalk-yellow)' : 'transparent'}; color:${p.observer === 'fish' ? 'var(--board-dark)' : 'var(--chalk)'}; border-color:var(--chalk-yellow);" onclick="setObserver('fish')">🐟 ${tr('魚看人', 'Fish sees Human')}</button>
             </div>
           `;
           controlsBox.appendChild(div);
@@ -226,227 +396,249 @@
       }
 
       function renderPresets() {
+        presetsBox.replaceChildren();
         const m = currentMode;
         if(m === 'snells_law') {
-            presetsBox.innerHTML = '<span>⚡ 經典介質設定：</span>';
-            const p = params.snells_law;
-            const addBtn = (label, v1, v2) => {
-                const b = document.createElement('button');
-                b.textContent = label;
-                b.onclick = () => { p.v1 = v1; p.v2 = v2; renderControls(); updateSimulation(); };
-                presetsBox.appendChild(b);
-            };
-            addBtn('空氣 ➔ 水 (變慢偏折)', 30, 22.5);
-            addBtn('玻璃 ➔ 空氣 (變快遠離)', 20, 30);
-            addBtn('水 ➔ 玻璃 (微幅變慢)', 22.5, 20);
+          const span = document.createElement('span');
+          span.textContent = tr('⚡ 經典介質設定：', '⚡ Presets:');
+          presetsBox.appendChild(span);
+          
+          const p = params.snells_law;
+          const addBtn = (labelZh, labelEn, v1, v2) => {
+            const b = document.createElement('button');
+            b.textContent = tr(labelZh, labelEn);
+            b.onclick = () => { p.v1 = v1; p.v2 = v2; renderControls(); renderPresets(); updateSimulation(); };
+            presetsBox.appendChild(b);
+          };
+          addBtn('空氣 ➔ 水 (變慢偏向)', 'Air ➔ Water (Slower)', 30, 22.5);
+          addBtn('玻璃 ➔ 空氣 (變快遠離)', 'Glass ➔ Air (Faster)', 20, 30);
+          addBtn('水 ➔ 玻璃 (微幅變慢)', 'Water ➔ Glass (Slightly Slower)', 22.5, 20);
         }
       }
 
       function updateSimulation() {
-        visualSvg.innerHTML = '';
-        statsGrid.innerHTML = '';
+        while (drawLayer.firstChild) {
+          drawLayer.removeChild(drawLayer.firstChild);
+        }
+        statsGrid.replaceChildren();
         const m = currentMode;
         
-        const addStat = (k, v) => {
+        const addStat = (kZh, kEn, v) => {
           const d = document.createElement('div'); d.className = 'stat';
-          d.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div>`; statsGrid.appendChild(d);
+          d.innerHTML = `<div class="k">${tr(kZh, kEn)}</div><div class="v">${v}</div>`; statsGrid.appendChild(d);
         };
 
         if (m === 'car_mud') {
-          const progress = params.car_mud.progress / 100; // 0 to 1
+          const t = carAnimTime; // 0 to 5 seconds
           
-          // 背景：上半部柏油路，下半部爛泥巴
-          visualSvg.appendChild(createSvgEl('rect', { x: -300, y: -160, width: 600, height: 160, fill: '#3b4045' }));
-          visualSvg.appendChild(createSvgEl('rect', { x: -300, y: 0, width: 600, height: 160, fill: '#5c4a33' }));
+          // 上半部柏油路，下半部爛泥巴
+          drawLayer.appendChild(createSvgEl('rect', { x: -300, y: -160, width: 600, height: 160, fill: '#3b4045' }));
+          drawLayer.appendChild(createSvgEl('rect', { x: -300, y: 0, width: 600, height: 160, fill: '#5c4a33' }));
           
-          visualSvg.appendChild(createSvgEl('line', { x1: -300, y1: 0, x2: 300, y2: 0, stroke: 'var(--chalk)', 'stroke-width': 2 }));
-          addText(visualSvg, -280, -10, '平坦柏油路 (速度快)', 'start', '#c9c2ab', 14, 'bold');
-          addText(visualSvg, -280, 20, '爛泥巴區 (速度慢)', 'start', '#f2d675', 14, 'bold');
+          drawLayer.appendChild(createSvgEl('line', { x1: -300, y1: 0, x2: 300, y2: 0, stroke: 'var(--chalk)', 'stroke-width': 2 }));
+          addText(drawLayer, -280, -10, tr('平坦柏油路 (速度快)', 'Paved Road (Fast)'), 'start', '#c9c2ab', 18, 'bold');
+          addText(drawLayer, -280, 26, tr('爛泥巴區 (速度慢)', 'Muddy Zone (Slow)'), 'start', '#f2d675', 18, 'bold');
 
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: -160, x2: 0, y2: 160, stroke: 'var(--chalk-dim)', 'stroke-width': 2, 'stroke-dasharray': '5 5' }));
-          addText(visualSvg, 5, -140, '法線', 'start', 'var(--chalk-dim)', 14);
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: -160, x2: 0, y2: 160, stroke: 'var(--chalk-dim)', 'stroke-width': 2, 'stroke-dasharray': '5 5' }));
+          addText(drawLayer, 8, -140, tr('法線', 'Normal Line'), 'start', 'var(--chalk-dim)', 18);
 
-          // 計算車子軌跡
           const angle1 = 45 * Math.PI / 180;
           const angle2 = 25 * Math.PI / 180;
           
           // 軌跡輔助線
-          visualSvg.appendChild(createSvgEl('line', { x1: -150 * Math.sin(angle1), y1: -150 * Math.cos(angle1), x2: 0, y2: 0, stroke: 'rgba(255,255,255,0.2)', 'stroke-width': 4, 'stroke-dasharray': '8 4' }));
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: 0, x2: 150 * Math.sin(angle2), y2: 150 * Math.cos(angle2), stroke: 'rgba(255,255,255,0.2)', 'stroke-width': 4, 'stroke-dasharray': '8 4' }));
+          drawLayer.appendChild(createSvgEl('line', { x1: -150 * Math.sin(angle1), y1: -150 * Math.cos(angle1), x2: 0, y2: 0, stroke: 'rgba(255,255,255,0.2)', 'stroke-width': 4, 'stroke-dasharray': '8 4' }));
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: 0, x2: 150 * Math.sin(angle2), y2: 150 * Math.cos(angle2), stroke: 'rgba(255,255,255,0.2)', 'stroke-width': 4, 'stroke-dasharray': '8 4' }));
 
+          // 🌟 動畫核心演算法：5秒分三段 (0-2秒直行，2-3秒轉向，3-5秒直行)
           let cx, cy, rot;
-          if (progress <= 0.5) {
-             const t = progress / 0.5; // 0 to 1
-             const dist = -120 * (1 - t);
-             cx = dist * Math.sin(angle1);
-             cy = dist * Math.cos(angle1);
-             rot = 90 - 45; // 直進
+          if (t <= 2) {
+              let p = t / 2; // 0 to 1
+              let d = -130 + p * 110; // 從 -130 移動到 -20 (準備碰線)
+              cx = d * Math.sin(angle1);
+              cy = d * Math.cos(angle1);
+              rot = 45; // 90 - 45 (向下為正，所以朝右下角轉 45度)
+          } else if (t <= 3) {
+              let p = t - 2; // 0 to 1
+              let startX = -20 * Math.sin(angle1), startY = -20 * Math.cos(angle1);
+              let targetX = 20 * Math.sin(angle2), targetY = 20 * Math.cos(angle2);
+              
+              cx = startX + (targetX - startX) * p;
+              cy = startY + (targetY - startY) * p;
+              
+              // 平滑轉向角度 (Smooth step)
+              let sp = p * p * (3 - 2 * p);
+              rot = 45 + sp * 20; // 45 度平滑過渡到 65 度 (即偏向法線)
           } else {
-             const t = (progress - 0.5) / 0.5; // 0 to 1
-             const dist = 120 * t;
-             cx = dist * Math.sin(angle2);
-             cy = dist * Math.cos(angle2);
-             rot = 90 - 25; // 偏折
+              let p = (t - 3) / 2; // 0 to 1
+              let d = 20 + p * 110; // 從 20 移動到 130
+              cx = d * Math.sin(angle2);
+              cy = d * Math.cos(angle2);
+              rot = 65; // 90 - 25
           }
 
-          // 畫車子
+          // 繪製車輛
           const car = createSvgEl('g', { transform: `translate(${cx}, ${cy}) rotate(${rot})` });
           car.appendChild(createSvgEl('rect', { x: -20, y: -15, width: 40, height: 30, fill: '#ef6a5a', rx: 4 }));
           car.appendChild(createSvgEl('rect', { x: 10, y: -12, width: 8, height: 24, fill: '#8fd0ff', rx: 2 })); // 擋風玻璃
-          // 輪子
-          car.appendChild(createSvgEl('rect', { x: -15, y: -18, width: 10, height: 4, fill: '#111', rx: 1 }));
-          car.appendChild(createSvgEl('rect', { x: -15, y: 14, width: 10, height: 4, fill: '#111', rx: 1 }));
-          // 前輪 (右輪先碰泥巴)
-          car.appendChild(createSvgEl('rect', { x: 10, y: -18, width: 10, height: 4, fill: '#111', rx: 1 })); // 左前輪
-          car.appendChild(createSvgEl('rect', { x: 10, y: 14, width: 10, height: 4, fill: '#f2d675', rx: 1, filter: 'drop-shadow(0 0 5px #f2d675)' })); // 右前輪 (特別標示)
+          car.appendChild(createSvgEl('rect', { x: -15, y: -18, width: 10, height: 4, fill: '#111', rx: 1 })); // 左後輪
+          car.appendChild(createSvgEl('rect', { x: -15, y: 14, width: 10, height: 4, fill: '#111', rx: 1 })); // 右後輪
+          
+          if (t > 2 && t < 3) {
+             car.appendChild(createSvgEl('rect', { x: 10, y: -18, width: 10, height: 4, fill: '#8fd0ff', rx: 1 })); // 左前輪(高速藍)
+             car.appendChild(createSvgEl('rect', { x: 10, y: 14, width: 10, height: 4, fill: '#f2d675', rx: 1 })); // 右前輪(減速黃)
+          } else {
+             car.appendChild(createSvgEl('rect', { x: 10, y: -18, width: 10, height: 4, fill: '#111', rx: 1 })); 
+             car.appendChild(createSvgEl('rect', { x: 10, y: 14, width: 10, height: 4, fill: '#111', rx: 1 })); 
+          }
+          drawLayer.appendChild(car);
 
-          visualSvg.appendChild(car);
-
-          if (progress > 0.4 && progress < 0.6) {
-              addText(visualSvg, 40, -20, '右輪先陷進爛泥巴減速', 'start', '#f2d675', 14, 'bold');
-              addText(visualSvg, 40, 0, '左輪仍維持高速', 'start', '#8fd0ff', 14, 'bold');
-              addText(visualSvg, 40, 20, '➔ 車頭向右偏轉！', 'start', '#ef6a5a', 14, 'bold');
+          // 即時解說文字
+          if (t > 2 && t < 3) {
+            addText(drawLayer, 60, -20, tr('右前輪先入泥巴，開始減速！', 'Right wheel in mud slows down!'), 'start', '#f2d675', 18, 'bold');
+            addText(drawLayer, 60, 6, tr('左前輪還在柏油路，維持高速！', 'Left wheel still moving fast!'), 'start', '#8fd0ff', 18, 'bold');
+            addText(drawLayer, 60, 32, tr('➔ 扭力產生，車頭向右轉 (偏向法線)！', '➔ Torque turns car right (towards normal)!'), 'start', '#ef6a5a', 18, 'bold');
+          } else if (t >= 3) {
+            addText(drawLayer, 60, 6, tr('雙輪皆進入泥巴，以新角度慢速直行', 'Both wheels in mud, moving slow at new angle'), 'start', '#c9c2ab', 18, 'bold');
+          } else if (t > 0) {
+            addText(drawLayer, 60, 6, tr('雙輪在平坦路面，高速直行', 'Both wheels on paved road, moving fast'), 'start', '#c9c2ab', 18, 'bold');
           }
 
-          explainBox.innerHTML = `
+          addStat('播放時間', 'Time', `${t.toFixed(1)} s`);
+          addStat('車輛狀態', 'Status', t <= 2 ? tr('高速直進', 'Fast Straight') : (t <= 3 ? tr('轉向中...', 'Turning...') : tr('慢速直進', 'Slow Straight')));
+
+          explainBox.innerHTML = tr(`
             <h3>💡 老師精闢解析：為什麼光線會折射？</h3>
             <p>光線就像是一台車子。當光線從<b>疏介質（如空氣，光速快＝柏油路）</b>斜向進入<b>密介質（如玻璃或水，光速慢＝爛泥巴）</b>時，因為「一邊的輪子先碰到爛泥巴減速，另一邊還在高速前進」，車頭就會硬生生地被拉向法線，這就是<b>折射偏折的成因</b>喔！</p>
-          `;
+          `, `
+            <h3>💡 Teacher's Analysis: Why Light Refracts</h3>
+            <p>Light behaves like a moving vehicle. When light enters obliquely from a <b>faster medium (air = paved road)</b> into a <b>slower medium (water/glass = mud)</b>, the wheel hitting mud first slows down while the other stays fast, naturally pulling the front towards the normal line!</p>
+          `);
           
         } else if (m === 'snells_law') {
           const p = params.snells_law;
           const theta1 = p.angle;
           const rad1 = theta1 * Math.PI / 180;
           
-          // 司乃耳定律：sin(θ2) = (v2 / v1) * sin(θ1)
           const sinTheta2 = (p.v2 / p.v1) * Math.sin(rad1);
           let theta2 = 0;
-          let isTIR = false; // 判斷是否全反射
+          let isTIR = false;
           if (sinTheta2 >= 1) {
-              isTIR = true;
-              theta2 = theta1; // 全反射角等於入射角
+            isTIR = true;
+            theta2 = theta1;
           } else {
-              theta2 = Math.asin(sinTheta2) * 180 / Math.PI;
+            theta2 = Math.asin(sinTheta2) * 180 / Math.PI;
           }
           const rad2 = theta2 * Math.PI / 180;
 
-          // 背景與法線
-          visualSvg.appendChild(createSvgEl('rect', { x: -300, y: -160, width: 600, height: 160, fill: p.v1 >= p.v2 ? 'rgba(95,176,255,0.1)' : 'rgba(239,106,90,0.1)' }));
-          visualSvg.appendChild(createSvgEl('rect', { x: -300, y: 0, width: 600, height: 160, fill: p.v2 >= p.v1 ? 'rgba(95,176,255,0.1)' : 'rgba(239,106,90,0.1)' }));
-          visualSvg.appendChild(createSvgEl('line', { x1: -300, y1: 0, x2: 300, y2: 0, stroke: 'var(--chalk)', 'stroke-width': 2 }));
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: -160, x2: 0, y2: 160, stroke: 'var(--chalk-dim)', 'stroke-width': 2, 'stroke-dasharray': '5 5' }));
+          drawLayer.appendChild(createSvgEl('rect', { x: -300, y: -160, width: 600, height: 160, fill: p.v1 >= p.v2 ? 'rgba(95,176,255,0.1)' : 'rgba(239,106,90,0.1)' }));
+          drawLayer.appendChild(createSvgEl('rect', { x: -300, y: 0, width: 600, height: 160, fill: p.v2 >= p.v1 ? 'rgba(95,176,255,0.1)' : 'rgba(239,106,90,0.1)' }));
+          drawLayer.appendChild(createSvgEl('line', { x1: -300, y1: 0, x2: 300, y2: 0, stroke: 'var(--chalk)', 'stroke-width': 2 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: -160, x2: 0, y2: 160, stroke: 'var(--chalk-dim)', 'stroke-width': 2, 'stroke-dasharray': '5 5' }));
           
-          addText(visualSvg, -280, -10, `介質甲 (光速 ${p.v1} 萬公里/s)`, 'start', 'var(--chalk)', 14, 'bold');
-          addText(visualSvg, -280, 20, `介質乙 (光速 ${p.v2} 萬公里/s)`, 'start', 'var(--chalk)', 14, 'bold');
+          addText(drawLayer, -280, -10, `${tr('介質甲 (光速', 'Medium 1 (Speed')} ${p.v1} ${tr('萬 km/s)', '0k km/s)')}`, 'start', 'var(--chalk)', 18, 'bold');
+          addText(drawLayer, -280, 26, `${tr('介質乙 (光速', 'Medium 2 (Speed')} ${p.v2} ${tr('萬 km/s)', '0k km/s)')}`, 'start', 'var(--chalk)', 18, 'bold');
 
-          // 光線長度
           const L = 140;
           const incX = -L * Math.sin(rad1);
           const incY = -L * Math.cos(rad1);
           
-          // 入射線（黃色，由左上向中心，箭頭順向朝右下角）
-          visualSvg.appendChild(createSvgEl('line', { x1: incX, y1: incY, x2: 0, y2: 0, stroke: '#f2d675', 'stroke-width': 3 }));
-          visualSvg.appendChild(createSvgEl('polygon', { points: '-6,-6 6,-6 0,6', fill: '#f2d675', transform: `translate(${incX/2}, ${incY/2}) rotate(${-theta1})` }));
+          drawLayer.appendChild(createSvgEl('line', { x1: incX, y1: incY, x2: 0, y2: 0, stroke: '#f2d675', 'stroke-width': 3 }));
+          drawLayer.appendChild(createSvgEl('polygon', { points: '-6,-6 6,-6 0,6', fill: '#f2d675', transform: `translate(${incX/2}, ${incY/2}) rotate(${-theta1})` }));
 
           if (isTIR) {
-              // 全反射線（紅色，由中心往右上彈射）
-              const refX = L * Math.sin(rad1);
-              const refY = -L * Math.cos(rad1);
-              visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: 0, x2: refX, y2: refY, stroke: '#ef6a5a', 'stroke-width': 3 }));
-              visualSvg.appendChild(createSvgEl('polygon', { points: '-6,6 6,6 0,-6', fill: '#ef6a5a', transform: `translate(${refX/2}, ${refY/2}) rotate(${theta1})` }));
-              addText(visualSvg, 50, 40, '💥 發生全反射！', 'start', '#ef6a5a', 16, 'bold');
+            const refX = L * Math.sin(rad1);
+            const refY = -L * Math.cos(rad1);
+            drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: 0, x2: refX, y2: refY, stroke: '#ef6a5a', 'stroke-width': 3 }));
+            drawLayer.appendChild(createSvgEl('polygon', { points: '-6,6 6,6 0,-6', fill: '#ef6a5a', transform: `translate(${refX/2}, ${refY/2}) rotate(${theta1})` }));
+            addText(drawLayer, 50, 40, tr('💥 發生全反射！', '💥 Total Internal Reflection!'), 'start', '#ef6a5a', 18, 'bold');
           } else {
-              // 折射線（紅色，由中心往右下折射，箭頭修正為紅色且朝向右下角）
-              const refX = L * Math.sin(rad2);
-              const refY = L * Math.cos(rad2);
-              visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: 0, x2: refX, y2: refY, stroke: '#ef6a5a', 'stroke-width': 3 }));
-              visualSvg.appendChild(createSvgEl('polygon', { points: '-6,-6 6,-6 0,6', fill: '#ef6a5a', transform: `translate(${refX/2}, ${refY/2}) rotate(${-theta2})` }));
-              
-              // 虛線（原本直進的方向）
-              visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: 0, x2: -incX, y2: -incY, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
+            const refX = L * Math.sin(rad2);
+            const refY = L * Math.cos(rad2);
+            drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: 0, x2: refX, y2: refY, stroke: '#ef6a5a', 'stroke-width': 3 }));
+            drawLayer.appendChild(createSvgEl('polygon', { points: '-6,-6 6,-6 0,6', fill: '#ef6a5a', transform: `translate(${refX/2}, ${refY/2}) rotate(${-theta2})` }));
+            
+            drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: 0, x2: -incX, y2: -incY, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
           }
 
-          // 角度標示
           const arcR = 40;
-          visualSvg.appendChild(createSvgEl('path', { d: `M 0,${-arcR} A ${arcR} ${arcR} 0 0 0 ${-arcR*Math.sin(rad1)} ${-arcR*Math.cos(rad1)}`, fill: 'none', stroke: '#f2d675', 'stroke-width': 2 }));
-          addText(visualSvg, -10, -50, `入射角 ${theta1.toFixed(1)}°`, 'end', '#f2d675', 13, 'bold');
+          drawLayer.appendChild(createSvgEl('path', { d: `M 0,${-arcR} A ${arcR} ${arcR} 0 0 0 ${-arcR*Math.sin(rad1)} ${-arcR*Math.cos(rad1)}`, fill: 'none', stroke: '#f2d675', 'stroke-width': 2 }));
+          addText(drawLayer, -10, -50, `${tr('入射角', 'Incident')} ${theta1.toFixed(1)}°`, 'end', '#f2d675', 16, 'bold');
 
           if (!isTIR) {
-            visualSvg.appendChild(createSvgEl('path', { d: `M 0,${arcR} A ${arcR} ${arcR} 0 0 1 ${arcR*Math.sin(rad2)} ${arcR*Math.cos(rad2)}`, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 2 }));
-            addText(visualSvg, 10, 60, `折射角 ${theta2.toFixed(1)}°`, 'start', '#ef6a5a', 13, 'bold');
+            drawLayer.appendChild(createSvgEl('path', { d: `M 0,${arcR} A ${arcR} ${arcR} 0 0 1 ${arcR*Math.sin(rad2)} ${arcR*Math.cos(rad2)}`, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 2 }));
+            addText(drawLayer, 10, 60, `${tr('折射角', 'Refracted')} ${theta2.toFixed(1)}°`, 'start', '#ef6a5a', 16, 'bold');
           }
 
-          addStat('介質甲速度', `<i>v<sub>1</sub></i> = ${p.v1}`);
-          addStat('介質乙速度', `<i>v<sub>2</sub></i> = ${p.v2}`);
-          addStat('入射角', `<i>θ<sub>1</sub></i> = ${theta1.toFixed(1)}°`);
-          addStat(isTIR ? '反射角' : '折射角', `<i>θ<sub>2</sub></i> = ${theta2.toFixed(1)}°`);
+          addStat('介質甲速度', 'Med 1 Speed', `<i>v<sub>1</sub></i> = ${p.v1}`);
+          addStat('介質乙速度', 'Med 2 Speed', `<i>v<sub>2</sub></i> = ${p.v2}`);
+          addStat('入射角', 'Incident Ang', `<i>θ<sub>1</sub></i> = ${theta1.toFixed(1)}°`);
+          addStat(isTIR ? '反射角' : '折射角', isTIR ? 'Reflected Ang' : 'Refracted Ang', `<i>θ<sub>2</sub></i> = ${theta2.toFixed(1)}°`);
 
-          let relation = p.v1 > p.v2 ? '光速變慢 ➔ 角度變小 (偏向法線)' : (p.v1 < p.v2 ? '光速變快 ➔ 角度變大 (偏離法線)' : '速度相同 ➔ 不偏折');
-          if (isTIR) relation = '光速快 ➔ 全反射無法穿透';
+          let relZh = p.v1 > p.v2 ? '光速變慢 ➔ 角度變小 (偏向法線)' : (p.v1 < p.v2 ? '光速變快 ➔ 角度變大 (偏離法線)' : '速度相同 ➔ 不偏折');
+          let relEn = p.v1 > p.v2 ? 'Slows down ➔ Angle smaller (Towards normal)' : (p.v1 < p.v2 ? 'Speeds up ➔ Angle larger (Away from normal)' : 'Same speed ➔ No deviation');
+          if (isTIR) {
+            relZh = '光速快 ➔ 全反射無法穿透';
+            relEn = 'Total internal reflection occurs';
+          }
 
-          explainBox.innerHTML = `
+          explainBox.innerHTML = tr(`
             <h3>💡 老師精闢解析：無敵解題口訣</h3>
             <p>考試遇到折射圖形，請直接默念超好用的判斷口訣：<span class="formula-highlight">大角快、小角慢</span>！<br>
             先判斷入射角和折射角哪一個比較大，<b>角度大的那一側，光速就一定比較快</b>。<br>
             不同介質光速比較：<span class="formula-highlight">真空 > 空氣 > 水 > 玻璃 > 鑽石</span>。<br>
-            (目前狀態：${relation})</p>
-          `;
+            (目前狀態：${relZh})</p>
+          `, `
+            <h3>💡 Teacher's Analysis: Universal Solving Rule</h3>
+            <p>For refraction diagrams, remember: <span class="formula-highlight">Faster in larger angles, slower in smaller angles</span>!<br>
+            Identify which angle is larger—<b>the side with the larger angle always has a faster speed of light</b>.<br>
+            Speed in media: <span class="formula-highlight">Vacuum > Air > Water > Glass > Diamond</span>.<br>
+            (Current state: ${relEn})</p>
+          `);
 
         } else if (m === 'coin_water') {
           const wLevel = params.coin_water.waterLevel; // 0 to 80
-          const cupWidth = 180, cupHeight = 80; // 寬矮的碗
-          const cupY = 100; // 碗底 y
+          const cupWidth = 180, cupHeight = 80;
+          const cupY = 100;
           
-          // 畫眼睛 (右上) - 【修正】降低眼睛高度，確保沒水的時候一定被碗壁擋住
           const eyeX = 220, eyeY = -10; 
-          visualSvg.appendChild(createSvgEl('path', { d: `M ${eyeX-15} ${eyeY} Q ${eyeX} ${eyeY-15} ${eyeX+15} ${eyeY} Q ${eyeX} ${eyeY+15} ${eyeX-15} ${eyeY}`, fill: 'none', stroke: '#fff', 'stroke-width': 2 }));
-          visualSvg.appendChild(createSvgEl('circle', { cx: eyeX, cy: eyeY, r: 5, fill: '#5fb0ff' }));
+          drawLayer.appendChild(createSvgEl('path', { d: `M ${eyeX-15} ${eyeY} Q ${eyeX} ${eyeY-15} ${eyeX+15} ${eyeY} Q ${eyeX} ${eyeY+15} ${eyeX-15} ${eyeY}`, fill: 'none', stroke: '#fff', 'stroke-width': 2 }));
+          drawLayer.appendChild(createSvgEl('circle', { cx: eyeX, cy: eyeY, r: 5, fill: '#5fb0ff' }));
 
-          // 畫碗
-          visualSvg.appendChild(createSvgEl('path', { d: `M ${-cupWidth/2},${cupY-cupHeight} L ${-cupWidth/2},${cupY} L ${cupWidth/2},${cupY} L ${cupWidth/2},${cupY-cupHeight}`, fill: 'none', stroke: 'rgba(255,255,255,0.8)', 'stroke-width': 4 }));
+          drawLayer.appendChild(createSvgEl('path', { d: `M ${-cupWidth/2},${cupY-cupHeight} L ${-cupWidth/2},${cupY} L ${cupWidth/2},${cupY} L ${cupWidth/2},${cupY-cupHeight}`, fill: 'none', stroke: 'rgba(255,255,255,0.8)', 'stroke-width': 4 }));
           
-          // 畫水
           if (wLevel > 0) {
-              visualSvg.appendChild(createSvgEl('rect', { x: -cupWidth/2+2, y: cupY-wLevel, width: cupWidth-4, height: wLevel, fill: 'rgba(95,176,255,0.3)' }));
-              visualSvg.appendChild(createSvgEl('line', { x1: -cupWidth/2+2, y1: cupY-wLevel, x2: cupWidth/2-2, y2: cupY-wLevel, stroke: '#5fb0ff', 'stroke-width': 2 }));
+              drawLayer.appendChild(createSvgEl('rect', { x: -cupWidth/2+2, y: cupY-wLevel, width: cupWidth-4, height: wLevel, fill: 'rgba(95,176,255,0.3)' }));
+              drawLayer.appendChild(createSvgEl('line', { x1: -cupWidth/2+2, y1: cupY-wLevel, x2: cupWidth/2-2, y2: cupY-wLevel, stroke: '#5fb0ff', 'stroke-width': 2 }));
           }
 
-          // 畫硬幣 (放在碗底偏左) - 【修正】讓硬幣稍微更靠左，藏進視角死角
           const coinX = -50, coinY = cupY - 5; 
-          visualSvg.appendChild(createSvgEl('ellipse', { cx: coinX, cy: coinY, rx: 20, ry: 6, fill: '#f2d675' }));
-          addText(visualSvg, coinX - 30, coinY + 4, '硬幣', 'end', '#f2d675', 12, 'bold');
+          drawLayer.appendChild(createSvgEl('ellipse', { cx: coinX, cy: coinY, rx: 20, ry: 6, fill: '#f2d675' }));
+          addText(drawLayer, coinX - 30, coinY + 6, tr('硬幣', 'Coin'), 'end', '#f2d675', 16, 'bold');
 
-          const blockLineY = cupY - cupHeight; // 碗口邊緣高度
-          const blockLineX = cupWidth/2; // 碗口右邊緣
+          const blockLineY = cupY - cupHeight;
+          const blockLineX = cupWidth/2;
 
-          // 光路計算 (從硬幣出發到眼睛)
           if (wLevel === 0) {
-             // 沒水：直線前進
-             visualSvg.appendChild(createSvgEl('line', { x1: coinX, y1: coinY, x2: eyeX, y2: eyeY, stroke: '#ef6a5a', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
-             // 判斷是否被碗壁擋住
+             drawLayer.appendChild(createSvgEl('line', { x1: coinX, y1: coinY, x2: eyeX, y2: eyeY, stroke: '#ef6a5a', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
              const slope = (eyeY - coinY) / (eyeX - coinX);
              const yAtCupEdge = coinY + slope * (blockLineX - coinX);
              
              if (yAtCupEdge > blockLineY) {
-                 // 被碗壁擋住
-                 addText(visualSvg, 0, -40, '光線被碗壁擋住，看不見硬幣！', 'middle', 'var(--v-color)', 16, 'bold');
+                 addText(drawLayer, 0, -40, tr('光線被碗壁擋住，看不見硬幣！', 'Light blocked by rim, coin invisible!'), 'middle', 'var(--v-color)', 20, 'bold');
              } else {
-                 addText(visualSvg, 0, -40, '直線看見硬幣！', 'middle', 'var(--chalk-yellow)', 16, 'bold');
+                 addText(drawLayer, 0, -40, tr('直線看見硬幣！', 'Direct line of sight to coin!'), 'middle', 'var(--chalk-yellow)', 20, 'bold');
              }
           } else {
-             // 有水：折射
              const surfaceY = cupY - wLevel;
              
-             // 簡化尋找打在水面上的 X 座標 (使用二分法逼近 Snell's law)
              let left = coinX, right = eyeX, hitX = coinX;
              const nWater = 1.33, nAir = 1.0;
-             
              for(let i=0; i<15; i++) {
                  hitX = (left + right) / 2;
                  const dx1 = hitX - coinX, dy1 = surfaceY - coinY;
                  const dx2 = eyeX - hitX, dy2 = eyeY - surfaceY;
-                 const sin1 = dx1 / Math.sqrt(dx1*dx1 + dy1*dy1); // 水中入射角的 sin
-                 const sin2 = dx2 / Math.sqrt(dx2*dx2 + dy2*dy2); // 空氣折射角的 sin
+                 const sin1 = dx1 / Math.sqrt(dx1*dx1 + dy1*dy1); 
+                 const sin2 = dx2 / Math.sqrt(dx2*dx2 + dy2*dy2); 
                  if (nWater * sin1 > nAir * sin2) right = hitX;
                  else left = hitX;
              }
@@ -455,82 +647,72 @@
              const yAtCupEdge = surfaceY + slopeAir * (blockLineX - hitX);
 
              if (yAtCupEdge > blockLineY && hitX < blockLineX) {
-                 // 折射後仍被碗壁擋住
-                 visualSvg.appendChild(createSvgEl('line', { x1: coinX, y1: coinY, x2: hitX, y2: surfaceY, stroke: '#ef6a5a', 'stroke-width': 2 }));
-                 visualSvg.appendChild(createSvgEl('line', { x1: hitX, y1: surfaceY, x2: eyeX, y2: eyeY, stroke: '#ef6a5a', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
-                 addText(visualSvg, 0, -40, '光線折射，但仍被碗壁擋住', 'middle', 'var(--v-color)', 16, 'bold');
+                 drawLayer.appendChild(createSvgEl('line', { x1: coinX, y1: coinY, x2: hitX, y2: surfaceY, stroke: '#ef6a5a', 'stroke-width': 2 }));
+                 drawLayer.appendChild(createSvgEl('line', { x1: hitX, y1: surfaceY, x2: eyeX, y2: eyeY, stroke: '#ef6a5a', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
+                 addText(drawLayer, 0, -40, tr('光線折射，但仍被碗壁擋住', 'Refracted light still blocked by rim'), 'middle', 'var(--v-color)', 20, 'bold');
              } else {
-                 // 成功折射入眼
-                 visualSvg.appendChild(createSvgEl('line', { x1: coinX, y1: coinY, x2: hitX, y2: surfaceY, stroke: '#ef6a5a', 'stroke-width': 2 }));
-                 visualSvg.appendChild(createSvgEl('line', { x1: hitX, y1: surfaceY, x2: eyeX, y2: eyeY, stroke: '#f2d675', 'stroke-width': 2 }));
+                 drawLayer.appendChild(createSvgEl('line', { x1: coinX, y1: coinY, x2: hitX, y2: surfaceY, stroke: '#ef6a5a', 'stroke-width': 2 }));
+                 drawLayer.appendChild(createSvgEl('line', { x1: hitX, y1: surfaceY, x2: eyeX, y2: eyeY, stroke: '#f2d675', 'stroke-width': 2 }));
                  
-                 // 畫虛線延伸尋找虛像
-                 const virtualCoinX = coinX; // 近似在正上方
+                 const virtualCoinX = coinX;
                  const virtualCoinY = surfaceY - slopeAir * (hitX - coinX);
                  
-                 visualSvg.appendChild(createSvgEl('line', { x1: hitX, y1: surfaceY, x2: virtualCoinX, y2: virtualCoinY, stroke: '#f2d675', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+                 drawLayer.appendChild(createSvgEl('line', { x1: hitX, y1: surfaceY, x2: virtualCoinX, y2: virtualCoinY, stroke: '#f2d675', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
                  
-                 // 畫虛像硬幣
-                 visualSvg.appendChild(createSvgEl('ellipse', { cx: virtualCoinX, cy: virtualCoinY, rx: 20, ry: 6, fill: '#f2d675', opacity: 0.5, stroke: '#fff', 'stroke-width': 1 }));
-                 addText(visualSvg, virtualCoinX - 30, virtualCoinY + 4, '硬幣虛像', 'end', '#fff', 12, 'bold');
+                 drawLayer.appendChild(createSvgEl('ellipse', { cx: virtualCoinX, cy: virtualCoinY, rx: 20, ry: 6, fill: '#f2d675', opacity: 0.5, stroke: '#fff', 'stroke-width': 1 }));
+                 addText(drawLayer, virtualCoinX - 30, virtualCoinY + 6, tr('硬幣虛像', 'Virtual Coin'), 'end', '#fff', 16, 'bold');
                  
-                 visualSvg.appendChild(createSvgEl('path', { d: `M ${virtualCoinX},${coinY-8} L ${virtualCoinX},${virtualCoinY+8}`, stroke: '#4cd964', 'stroke-width': 2, fill: 'none', 'marker-end': 'url(#arrow)' }));
-                 addText(visualSvg, virtualCoinX+10, (coinY+virtualCoinY)/2, '浮起！', 'start', '#4cd964', 12, 'bold');
-                 
-                 addText(visualSvg, 0, -40, '折射讓視深變淺，看見硬幣！', 'middle', 'var(--chalk-yellow)', 16, 'bold');
+                 // draw arrow dynamically avoiding innerHTML
+                 drawLayer.appendChild(createSvgEl('line', { x1: virtualCoinX, y1: coinY-8, x2: virtualCoinX, y2: virtualCoinY+8, stroke: '#4ade80', 'stroke-width': 2 }));
+                 drawLayer.appendChild(createSvgEl('polygon', { points: `${virtualCoinX},${virtualCoinY+8} ${virtualCoinX-5},${virtualCoinY+16} ${virtualCoinX+5},${virtualCoinY+16}`, fill: '#4ade80' }));
+
+                 addText(drawLayer, virtualCoinX+15, (coinY+virtualCoinY)/2 + 6, tr('浮起！', 'Floats up!'), 'start', '#4ade80', 16, 'bold');
+                 addText(drawLayer, 0, -40, tr('折射讓視深變淺，看見硬幣！', 'Refraction makes depth shallower, coin visible!'), 'middle', 'var(--chalk-yellow)', 20, 'bold');
              }
           }
 
-          visualSvg.innerHTML += `<defs><marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 2 L 10 5 L 0 8 z" fill="#4cd964" /></marker></defs>`;
+          addStat('水位高度', 'Water Level', `${wLevel} cm`);
+          addStat('光線路徑', 'Ray Path', wLevel > 0 ? tr('水 ➔ 空氣', 'Water ➔ Air') : tr('空氣', 'Air'));
+          addStat('視覺效果', 'Visual Effect', wLevel > 0 ? tr('變淺浮起', 'Shallower / Floated') : tr('真實深度', 'True Depth'));
 
-          addStat('水位高度', `${wLevel} cm`);
-          addStat('光線路徑', wLevel > 0 ? '水 ➔ 空氣' : '空氣');
-          addStat('視覺效果', wLevel > 0 ? '變淺浮起' : '真實深度');
-
-          explainBox.innerHTML = `
+          explainBox.innerHTML = tr(`
             <h3>💡 生活實例：若隱若現的銅板</h3>
             <p>將硬幣放在碗底，挪開一點距離讓自己剛好從側面看不到硬幣。接著緩緩倒入水，漸漸地硬幣又出現了！為什麼？<br>
             光在不同介質傳遞速率不同，當硬幣的光線從水（慢）進入空氣（快）時，產生折射偏折（偏離法線），進入了我們的眼睛。<br>
             簡單來說：<span class="formula-highlight">折射現象讓我們看水裡的東西都變「淺」了！</span></p>
-          `;
+          `, `
+            <h3>💡 Daily Phenomenon: The Reappearing Coin</h3>
+            <p>Place a coin at the bottom of a bowl and move back until the rim blocks it. As water is poured in, the coin reappears!<br>
+            When light from the coin leaves water (slower) into air (faster), it bends away from the normal line and enters the eye.<br>
+            In short: <span class="formula-highlight">Refraction makes submerged objects appear shallower!</span></p>
+          `);
 
         } else if (m === 'fish_human') {
           const observer = params.fish_human.observer;
           
-          visualSvg.appendChild(createSvgEl('rect', { x: -300, y: 0, width: 600, height: 160, fill: 'rgba(95,176,255,0.2)' }));
-          visualSvg.appendChild(createSvgEl('line', { x1: -300, y1: 0, x2: 300, y2: 0, stroke: '#5fb0ff', 'stroke-width': 2 }));
-          addText(visualSvg, -280, -10, '空氣 (快)', 'start', 'var(--chalk)', 14, 'bold');
-          addText(visualSvg, -280, 20, '水 (慢)', 'start', '#5fb0ff', 14, 'bold');
+          drawLayer.appendChild(createSvgEl('rect', { x: -300, y: 0, width: 600, height: 160, fill: 'rgba(95,176,255,0.2)' }));
+          drawLayer.appendChild(createSvgEl('line', { x1: -300, y1: 0, x2: 300, y2: 0, stroke: '#5fb0ff', 'stroke-width': 2 }));
+          addText(drawLayer, -280, -10, tr('空氣 (快)', 'Air (Fast)'), 'start', 'var(--chalk)', 18, 'bold');
+          addText(drawLayer, -280, 26, tr('水 (慢)', 'Water (Slow)'), 'start', '#5fb0ff', 18, 'bold');
 
           const fishX = 150, fishY = 100;
-          const headX = -150, headY = -120;
+          const headX = -150, headY = -80; // 調整人眼的高度
           
-          // 畫魚
           const drawFish = (x, y, opacity, label) => {
               const f = createSvgEl('g', { opacity: opacity });
               f.appendChild(createSvgEl('ellipse', { cx: x, cy: y, rx: 20, ry: 10, fill: '#f2d675' }));
               f.appendChild(createSvgEl('polygon', { points: `${x+15},${y} ${x+30},${y-10} ${x+30},${y+10}`, fill: '#f2d675' }));
               f.appendChild(createSvgEl('circle', { cx: x-10, cy: y-2, r: 2, fill: '#000' }));
-              addText(f, x, y+20, label, 'middle', '#f2d675', 12, 'bold');
-              visualSvg.appendChild(f);
-          };
-          
-          // 畫人
-          const drawHuman = (x, y, scale, opacity, label) => {
-              const h = createSvgEl('g', { opacity: opacity, transform: `translate(${x}, 0) scale(${scale})` });
-              h.appendChild(createSvgEl('circle', { cx: 0, cy: y, r: 15, fill: '#ef6a5a' }));
-              h.appendChild(createSvgEl('line', { x1: 0, y1: y+15, x2: 0, y2: 0, stroke: '#ef6a5a', 'stroke-width': 4 }));
-              addText(h, 0, y-20, label, 'middle', '#ef6a5a', 12/scale, 'bold');
-              visualSvg.appendChild(h);
+              addText(f, x, y+28, label, 'middle', '#f2d675', 16, 'bold');
+              drawLayer.appendChild(f);
           };
 
-          // 光路尋根二分法
           let left = headX, right = fishX, hitX = headX;
           const nAir = 1.0, nWater = 1.33;
           for(let i=0; i<15; i++) {
               hitX = (left + right) / 2;
-              const dx1 = hitX - headX, dy1 = 0 - headY; // Air
-              const dx2 = fishX - hitX, dy2 = fishY - 0; // Water
+              const dx1 = hitX - headX, dy1 = 0 - headY; 
+              const dx2 = fishX - hitX, dy2 = fishY - 0; 
               const sin1 = dx1 / Math.sqrt(dx1*dx1 + dy1*dy1); 
               const sin2 = dx2 / Math.sqrt(dx2*dx2 + dy2*dy2); 
               if (nAir * sin1 > nWater * sin2) right = hitX;
@@ -538,69 +720,94 @@
           }
 
           if (observer === 'human') {
-              // 人看魚：光從魚出發到人
-              drawHuman(headX, headY, 1, 1, '人 (觀察者)');
-              drawFish(fishX, fishY, 1, '真實魚');
+              drawHuman(drawLayer, headX, headY, 1, 1, tr('人 (觀察者)', 'Human (Observer)'));
+              drawFish(fishX, fishY, 1, tr('真實魚', 'Real Fish'));
               
-              visualSvg.appendChild(createSvgEl('line', { x1: fishX, y1: fishY, x2: hitX, y2: 0, stroke: '#ef6a5a', 'stroke-width': 2 }));
-              visualSvg.appendChild(createSvgEl('line', { x1: hitX, y1: 0, x2: headX, y2: headY, stroke: '#f2d675', 'stroke-width': 2 }));
+              drawLayer.appendChild(createSvgEl('line', { x1: fishX, y1: fishY, x2: hitX, y2: 0, stroke: '#ef6a5a', 'stroke-width': 2 }));
+              drawLayer.appendChild(createSvgEl('line', { x1: hitX, y1: 0, x2: headX, y2: headY, stroke: '#f2d675', 'stroke-width': 2 }));
               
-              // 人大腦反向延伸
               const slope = (0 - headY) / (hitX - headX);
-              const virtualFishX = fishX; // 近似
+              const virtualFishX = fishX; 
               const virtualFishY = 0 + slope * (virtualFishX - hitX);
               
-              visualSvg.appendChild(createSvgEl('line', { x1: hitX, y1: 0, x2: virtualFishX, y2: virtualFishY, stroke: '#f2d675', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
-              drawFish(virtualFishX, virtualFishY, 0.5, '魚虛像 (變淺)');
+              drawLayer.appendChild(createSvgEl('line', { x1: hitX, y1: 0, x2: virtualFishX, y2: virtualFishY, stroke: '#f2d675', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+              drawFish(virtualFishX, virtualFishY, 0.5, tr('魚虛像 (變淺)', 'Virtual Fish (Shallower)'));
 
-              addStat('觀察者', `岸上的人`);
-              addStat('光線路徑', `水 ➔ 空氣`);
-              addStat('看見的像', `變淺 (浮起)`);
+              addStat('觀察者', 'Observer', tr('岸上的人', 'Human on Shore'));
+              addStat('光線路徑', 'Ray Path', tr('水 ➔ 空氣', 'Water ➔ Air'));
+              addStat('看見的像', 'Perceived Image', tr('變淺 (浮起)', 'Shallower (Elevated)'));
 
-              explainBox.innerHTML = `
+              explainBox.innerHTML = tr(`
                 <h3>💡 老師精闢解析：人看水裡的魚</h3>
                 <p>光線從水裡的魚發出，進入空氣時折射（偏離法線，折射角大）。人的大腦會認為光是「沿著直線」來的，所以視覺向後延伸，就會覺得<span class="formula-highlight">魚的虛像變「淺」了</span>！<br>
-                因此，若要去溪邊叉魚，必須瞄準魚的<b>「下方」</b>才叉得到喔！另外，到野外的溪流或湖泊中，不要以為看到的深度很淺就跳下去，那時候就會有生命危險了，要特別小心！</p>
-              `;
+                因此，若要去溪邊叉魚，必須瞄準魚的<b>「下方」</b>才叉得到喔！另外，到野外不要以為看到的溪水很淺就跳下去，那時候就會有生命危險了，要特別小心！</p>
+              `, `
+                <h3>💡 Teacher's Analysis: Human Looking at Fish</h3>
+                <p>Light emitted from fish bends away from the normal when entering air. Human eyes trace rays backward in a straight line, perceiving the <span class="formula-highlight">virtual fish as shallower</span> than reality!<br>
+                To spear a fish, you must aim <b>below</b> its apparent position! Also, never jump into wild streams assuming water is shallow—it is far deeper than it looks!</p>
+              `);
           } else {
-              // 魚看人：光從人出發到魚
-              drawFish(fishX, fishY, 1, '魚 (觀察者)');
-              drawHuman(headX, headY, 1, 1, '真實人');
+              drawFish(fishX, fishY, 1, tr('魚 (觀察者)', 'Fish (Observer)'));
+              drawHuman(drawLayer, headX, headY, 1, 1, tr('真實人', 'Real Human'));
 
-              visualSvg.appendChild(createSvgEl('line', { x1: headX, y1: headY, x2: hitX, y2: 0, stroke: '#ef6a5a', 'stroke-width': 2 }));
-              visualSvg.appendChild(createSvgEl('line', { x1: hitX, y1: 0, x2: fishX, y2: fishY, stroke: '#f2d675', 'stroke-width': 2 }));
+              drawLayer.appendChild(createSvgEl('line', { x1: headX, y1: headY, x2: hitX, y2: 0, stroke: '#ef6a5a', 'stroke-width': 2 }));
+              drawLayer.appendChild(createSvgEl('line', { x1: hitX, y1: 0, x2: fishX, y2: fishY, stroke: '#f2d675', 'stroke-width': 2 }));
 
-              // 魚大腦反向延伸
               const slope = (0 - fishY) / (hitX - fishX);
-              const virtualHeadX = headX; // 近似
+              const virtualHeadX = headX; 
               const virtualHeadY = 0 + slope * (virtualHeadX - hitX);
               
-              visualSvg.appendChild(createSvgEl('line', { x1: hitX, y1: 0, x2: virtualHeadX, y2: virtualHeadY, stroke: '#f2d675', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
-              drawHuman(virtualHeadX, virtualHeadY, 1.3, 0.5, '人虛像 (變高大)');
+              drawLayer.appendChild(createSvgEl('line', { x1: hitX, y1: 0, x2: virtualHeadX, y2: virtualHeadY, stroke: '#f2d675', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+              
+              // 在虛像位置畫放大的人像
+              drawHuman(drawLayer, virtualHeadX, virtualHeadY, 1.25, 0.5, tr('人虛像 (變高大)', 'Virtual Human (Taller)'));
 
-              addStat('觀察者', `水底的魚`);
-              addStat('光線路徑', `空氣 ➔ 水`);
-              addStat('看見的像', `變高、變大`);
+              addStat('觀察者', 'Observer', tr('水底的魚', 'Fish Underwater'));
+              addStat('光線路徑', 'Ray Path', tr('空氣 ➔ 水', 'Air ➔ Water'));
+              addStat('看見的像', 'Perceived Image', tr('變高、變大', 'Taller & Larger'));
 
-              explainBox.innerHTML = `
+              explainBox.innerHTML = tr(`
                 <h3>💡 老師精闢解析：水裡的魚看岸邊的人</h3>
                 <p>光線從岸上的人發出，進入水中時折射（偏向法線，折射角小）。魚的大腦同樣認為光是直線來的，向後延伸後，水裡的魚看到陸地上的人會覺得<span class="formula-highlight">變高、變大</span>！<br>
                 變大、變高的影像對魚類而言，具有保護警戒的效果。因為人靠近的時候會有很大的影像產生，容易讓魚類觀察到而逃離。</p>
-              `;
+              `, `
+                <h3>💡 Teacher's Analysis: Fish Looking at Human</h3>
+                <p>Light from a human bends towards the normal when entering water. The fish perceives the human as <span class="formula-highlight">taller and larger</span>!<br>
+                This magnified image acts as a natural alert mechanism, making approaching predators or humans easily noticeable so the fish can escape.</p>
+              `);
           }
         }
       }
 
+      // ==========================================
+      // 動畫主迴圈 (全域控管，Zero Yank)
+      // ==========================================
+      function animationLoop(now) {
+          let dt = (now - lastTime) / 1000;
+          lastTime = now;
+          if (currentMode === 'car_mud' && isCarPlaying) {
+              carAnimTime += dt;
+              if (carAnimTime >= 5) {
+                  carAnimTime = 5;
+                  isCarPlaying = false;
+              }
+              updateSimulation();
+          }
+          requestAnimationFrame(animationLoop);
+      }
+      requestAnimationFrame(animationLoop);
+
       document.querySelectorAll('.mode-switch button').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
           document.querySelectorAll('.mode-switch button').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          currentMode = btn.dataset.mode;
+          e.currentTarget.classList.add('active');
+          currentMode = e.currentTarget.dataset.mode;
           initUI();
         });
       });
 
       initUI();
+      setLang('zh');
     })();
   </script>
 </body>
