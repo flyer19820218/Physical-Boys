@@ -2,10 +2,13 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>化學電池｜互動黑板教學</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title data-zh="電能與電功率｜互動黑板教學" data-en="Electric Energy & Power | Interactive Blackboard">電能與電功率｜互動黑板教學</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap');
+/* 1. 核心變數與黑板基底 */
 :root{
   --bg:#11261f; --panel:#16372d; --deep:#0d2c24; --line:#5d7b70; 
   --white:#ffffff; --yellow:#ffe45c; --cyan:#4ddff3; --orange:#ffa84d; 
@@ -17,11 +20,36 @@ body{
   margin:0; color:var(--white); font-family:'Noto Sans TC',sans-serif; 
   font-size:22px; line-height:1.65; background-color:var(--bg); 
   background-image:radial-gradient(circle at 1px 1px,#24493d 1.2px,transparent 1.3px); 
-  background-size:18px 18px; min-height:100vh;
+  background-size:18px 18px; min-height:100vh; padding-top: 80px;
 }
 button,input{font:inherit} button{touch-action:manipulation}
 .app{width:min(100% - 28px,1080px); margin:0 auto; padding:28px 0 52px}
-.hero{border:3px solid var(--cyan); border-radius:28px; background:#15372d; padding:28px 32px; margin-bottom:20px}
+
+/* 🌟 規範：右上角橫向懸浮雙語切換器 */
+.floating-lang-container{
+  position:fixed;top:20px;right:20px;z-index:9999;
+  display:flex;flex-direction:row;align-items:center;gap:12px;
+  padding:8px 12px;border:2px solid var(--cyan);border-radius:12px;
+  background:rgba(17,38,31,.95);box-shadow:0 8px 24px rgba(0,0,0,.8);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)
+}
+.lang-label{color:var(--cyan);font-family:'JetBrains Mono', 'Noto Sans TC', monospace;font-size:22px;font-weight:900;user-select:none; margin-left: 8px;}
+.lang-options{display:flex;flex-direction:row;gap:4px}
+.lang-pill{
+  min-width:64px;min-height:44px;padding:6px 14px;
+  border:2px solid var(--line);border-radius:8px;
+  background:transparent;color:var(--white);font-family:'JetBrains Mono', 'Noto Sans TC', monospace;
+  font-size:20px;font-weight:900;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:.2s all ease;touch-action:manipulation
+}
+.lang-pill.active{
+  background:var(--cyan)!important;color:#11261f!important;
+  border-color:var(--cyan)!important;
+}
+
+/* 2. 主版面排版 */
+.hero{border:3px solid var(--cyan); border-radius:28px; background:#15372d; padding:28px 32px; margin-bottom:20px; text-align:center;}
 h1{font-size:clamp(34px,5vw,48px); line-height:1.2; color:var(--yellow); margin:0 0 10px; font-weight:900}
 h2{font-size:clamp(28px,3.4vw,38px); line-height:1.3; color:var(--yellow); margin:0 0 18px; font-weight:900}
 h3{font-size:27px; line-height:1.35; margin:0 0 10px; color:var(--cyan)}
@@ -29,14 +57,13 @@ p{margin:0 0 14px}
 .subtitle{color:var(--white); margin:0; font-weight:700}
 .nowrap{white-space:nowrap}
 
-/* Tabs */
 .tabs{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:0 0 22px}
 .tab-btn,.action-btn,.choice-btn,.practice-btn{
   border:2px solid var(--line); background:#102f27; color:var(--white); 
   border-radius:14px; padding:11px 12px; font-weight:900; cursor:pointer; 
   transition:.18s transform,.18s background,.18s border-color
 }
-.tab-btn:hover,.action-btn:hover,.choice-btn:hover,.practice-btn:hover{transform:translateY(-2px); background:#1d493b}
+.tab-btn:hover,.action-btn:hover:not(:disabled),.choice-btn:hover:not(:disabled),.practice-btn:hover{transform:translateY(-2px); background:#1d493b}
 .tab-btn.active,.action-btn.active,.choice-btn.active{background:var(--cyan); color:#123129; border-color:var(--cyan)}
 .tab-content{display:none} .tab-content.active{display:block; animation: fadeIn 0.3s ease;}
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -48,18 +75,31 @@ p{margin:0 0 14px}
 /* Panels */
 .panel{border:3px solid var(--cyan); border-radius:28px; background:var(--panel); padding:26px; min-width:0; display:grid; grid-template-columns:1fr; gap:18px 22px; align-items:start}
 .panel>.diagram-key,.panel>.controls,.panel>.range-row,.panel>.battery-types,.panel>.result-box{margin-top:0}
-.origin-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-.origin-layout>h2{grid-column:1/-1}
-.origin-layout>.canvas-wrap{grid-column:2; grid-row:2/span 8; width:100%; aspect-ratio:25/21}
-.origin-layout>.canvas-wrap canvas{aspect-ratio:25/21}
-.origin-layout>.diagram-key,.origin-layout>.controls,.origin-layout>.result-box{grid-column:1}
 
 /* Canvas */
 .canvas-wrap{position:relative; width:100%; max-width:864px; height:auto; aspect-ratio:10/6; margin-inline:auto; border:3px solid var(--line); border-radius:22px; overflow:hidden; background:#0d2821}
 canvas{display:block; width:100%; height:auto; aspect-ratio:10/6; background:#0d2821}
-.canvas-play{position:absolute; left:50%; top:72%; transform:translate(-50%,-50%); min-width:150px; padding:10px 20px; border:3px solid var(--green); border-radius:16px; background:#102f27; color:var(--white); font-weight:900; cursor:pointer; box-shadow:0 0 16px rgba(145,245,109,.22)}
-.canvas-play:hover{transform:translate(-50%,-54%); background:#1d493b}
-.canvas-play.active{background:var(--cyan); border-color:var(--cyan); color:#123129}
+
+/* 🌟 單欄特製：鋅銅電池畫布滿版放大 (1200x850) */
+#cellCanvasWrap { aspect-ratio: 1200/850; max-width: 100%; border-width: 4px; border-color: var(--cyan); }
+#cellCanvas { aspect-ratio: 1200/850; }
+
+/* 🌟 Canvas 內部堆疊按鈕樣式 */
+.canvas-play{
+    background:#102f27; color:var(--white); font-weight:900; font-size:26px; cursor:pointer; 
+    border:3px solid var(--line); border-radius:16px; padding:8px 24px;
+    transition:.18s all ease; box-shadow:0 0 16px rgba(0,0,0,.5);
+}
+.btn-play-state { border-color: var(--green); }
+.btn-play-state:hover:not(.active) { background: #1d493b; }
+.btn-play-state.active { background: var(--green); color: #123129; box-shadow:0 0 16px rgba(145,245,109,.4); }
+
+.btn-bridge-state { border-color: var(--cyan); }
+.btn-bridge-state:hover:not(.active) { background: #1d493b; }
+.btn-bridge-state.active { background: var(--cyan); color: #123129; box-shadow:0 0 16px rgba(77,223,243,.4); }
+
+.btn-replay-state { border-color: var(--orange); }
+.btn-replay-state:hover { background: #1d493b; box-shadow:0 0 16px rgba(255,168,77,.4); }
 
 .diagram-key{background:var(--deep); border:2px solid var(--line); border-radius:18px; padding:15px 18px}
 .diagram-key p{margin:0 0 8px; font-size:19px; font-weight:800} .diagram-key p:last-child{margin-bottom:0}
@@ -100,65 +140,79 @@ button:disabled{opacity:.45; cursor:not-allowed; transform:none!important}
   .tabs{grid-template-columns:1fr 1fr} 
   .tab-btn{padding:10px 6px; font-size:18px} 
   .tab-btn:last-child:nth-child(odd){grid-column:1/-1} 
-  .panel,.origin-layout{padding:18px; grid-template-columns:1fr} 
-  .origin-layout>h2,.origin-layout>.canvas-wrap,.origin-layout>.diagram-key,.origin-layout>.controls,.origin-layout>.result-box{grid-column:1; grid-row:auto} 
+  .panel{padding:18px; grid-template-columns:1fr} 
   .canvas-wrap{width:100%; border-radius:16px} 
   .practice-nav{gap:7px} .practice-btn{padding:9px 6px} 
   .range-row{grid-template-columns:1fr auto} .range-row input{grid-column:1/-1; grid-row:2} 
   .battery-types{grid-template-columns:1fr 1fr}
 }
+@media(max-width:600px){
+  .floating-lang-container{top:8px;right:8px;padding:6px 8px}
+  .lang-label{display:none}
+}
 @media(prefers-reduced-motion:reduce){ *{scroll-behavior:auto!important; transition:none!important} }
 </style>
 </head>
 <body>
+
+<!-- 🌟 右上角橫向懸浮雙語切換器 -->
+<div class="floating-lang-container">
+  <span class="lang-label">Language</span>
+  <div class="lang-options">
+    <button class="lang-pill active" id="btn-lang-zh" onclick="setLang('zh')">中文</button>
+    <button class="lang-pill" id="btn-lang-en" onclick="setLang('en')">EN</button>
+  </div>
+</div>
+
 <main class="app">
   <header class="hero">
-    <h1>化學電池</h1>
-    <p class="subtitle">化學反應把電子送進外電路；電子與離子的路徑必須分清楚。</p>
+    <h1 data-zh="化學電池" data-en="Chemical Batteries">化學電池</h1>
+    <p class="subtitle" data-zh="化學反應把電子送進外電路；電子與離子的路徑必須分清楚。" data-en="Chemical reactions push electrons into the external circuit; paths of electrons and ions must be clearly distinguished.">化學反應把電子送進外電路；電子與離子的路徑必須分清楚。</p>
   </header>
 
   <nav class="tabs" aria-label="教學分頁">
-    <button class="tab-btn active" type="button" data-tab="tab-history">科學史</button>
-    <button class="tab-btn" type="button" data-tab="tab-origin">兩種金屬發電</button>
-    <button class="tab-btn" type="button" data-tab="tab-redox">氧化與還原</button>
-    <button class="tab-btn" type="button" data-tab="tab-cell">鋅銅電池與鹽橋</button>
-    <button class="tab-btn" type="button" data-tab="tab-types">常見電池</button>
+    <button class="tab-btn active" type="button" data-tab="tab-history" data-zh="科學史" data-en="History">科學史</button>
+    <button class="tab-btn" type="button" data-tab="tab-origin" data-zh="兩種金屬發電" data-en="Two Metals Power">兩種金屬發電</button>
+    <button class="tab-btn" type="button" data-tab="tab-redox" data-zh="氧化與還原" data-en="Redox Reaction">氧化與還原</button>
+    <!-- 🌟 合併為單一分頁：鋅銅電池與鹽橋 -->
+    <button class="tab-btn" type="button" data-tab="tab-cell" data-zh="鋅銅電池與鹽橋" data-en="Zn-Cu Cell & Bridge">鋅銅電池與鹽橋</button>
+    <button class="tab-btn" type="button" data-tab="tab-types" data-zh="常見電池" data-en="Common Batteries">常見電池</button>
   </nav>
 
   <!-- ================= TAB 1: 科學史 ================= -->
   <section id="tab-history" class="tab-content active">
     <nav class="unit-subtabs" aria-label="科學史子分頁">
-      <button class="choice-btn active" type="button" data-history="galvani">賈法尼蛙腿實驗</button>
-      <button class="choice-btn" type="button" data-history="volta">伏打電池</button>
+      <button class="choice-btn active" type="button" data-history="galvani" data-zh="賈法尼蛙腿實驗" data-en="Galvani's Frog Legs">賈法尼蛙腿實驗</button>
+      <button class="choice-btn" type="button" data-history="volta" data-zh="伏打電池" data-en="Voltaic Pile">伏打電池</button>
     </nav>
     <div class="lesson-stack">
       <article class="panel">
-        <h2 id="historyTitle">賈法尼：金屬一接通，蛙腿就抽動</h2>
+        <h2 id="historyTitle" data-zh="賈法尼：金屬一接通，蛙腿就抽動" data-en="Galvani: Connect the Metals, Frog Leg Twitches">賈法尼：金屬一接通，蛙腿就抽動</h2>
         <div class="canvas-wrap">
-          <canvas id="historyCanvas" width="1000" height="600" role="img" aria-label="賈法尼蛙腿實驗與伏打電池科學史動畫"></canvas>
+          <canvas id="historyCanvas" width="1000" height="600" role="img"></canvas>
         </div>
         <div class="diagram-key history-copy active" data-history-copy="galvani">
-          <p><span class="accent-yellow">觀察</span>：銅製解剖刀碰觸神經，青蛙放在鐵盤上；兩金屬接觸後，蛙腿收縮。</p>
-          <p><span class="accent-green">賈法尼的想法</span>：動物體內具有「動物電」。</p>
-          <p><span class="accent-cyan">今天的理解</span>：生物確有電訊號；不同金屬也能形成電位差。</p>
+          <p><span class="accent-yellow" data-zh="觀察" data-en="Observation">觀察</span>：<span data-zh="銅製解剖刀碰觸神經，青蛙放在鐵盤上；兩金屬接觸後，蛙腿收縮。" data-en="Copper scalpel touches nerve, frog on iron plate; upon metal contact, leg contracts.">銅製解剖刀碰觸神經，青蛙放在鐵盤上；兩金屬接觸後，蛙腿收縮。</span></p>
+          <p><span class="accent-green" data-zh="賈法尼的想法" data-en="Galvani's Idea">賈法尼的想法</span>：<span data-zh="動物體內具有「動物電」。" data-en="Animals possess 'animal electricity'.">動物體內具有「動物電」。</span></p>
+          <p><span class="accent-cyan" data-zh="今天的理解" data-en="Modern Understanding">今天的理解</span>：<span data-zh="生物確有電訊號；不同金屬也能形成電位差。" data-en="Bio-electricity exists; different metals also create potential difference.">生物確有電訊號；不同金屬也能形成電位差。</span></p>
         </div>
         <div class="diagram-key history-copy" data-history-copy="volta">
-          <p><span class="accent-yellow">1800 年</span>：伏打公布能穩定供應電流的伏打電堆。</p>
-          <p><span class="accent-orange mono">Cu</span>、<span class="accent-cyan mono">Zn</span> 交替堆疊，中間夾食鹽水浸濕的布片。</p>
-          <p><span class="accent-green">金屬組數增加</span>：總電壓隨堆疊增加。</p>
+          <p><span class="accent-yellow" data-zh="1800 年" data-en="Year 1800">1800 年</span>：<span data-zh="伏打公布能穩定供應電流的伏打電堆。" data-en="Volta announces the voltaic pile, providing steady current.">伏打公布能穩定供應電流的伏打電堆。</span></p>
+          <p><span class="accent-orange mono">Cu</span>、<span class="accent-cyan mono">Zn</span> <span data-zh="交替堆疊，中間夾食鹽水浸濕的布片。" data-en="stacked alternately with brine-soaked cloth in between.">交替堆疊，中間夾食鹽水浸濕的布片。</span></p>
+          <p><span class="accent-green" data-zh="金屬組數增加" data-en="More Metal Pairs">金屬組數增加</span>：<span data-zh="總電壓隨堆疊增加。" data-en="Total voltage increases with stacking.">總電壓隨堆疊增加。</span></p>
         </div>
-        <div class="controls"><button id="historyCircuit" class="action-btn active" type="button">斷開迴路</button></div>
-        <div id="historyStatus" class="result-box" aria-live="polite">蛙腿是電刺激的偵測者；收縮現象引出了「電從哪裡來」的科學爭論。</div>
+        <div class="controls"><button id="historyCircuit" class="action-btn active" type="button" data-zh="斷開迴路" data-en="Open Circuit">斷開迴路</button></div>
+        <div id="historyStatus" class="result-box" aria-live="polite"></div>
       </article>
       <article class="practice" data-practice>
         <div class="practice-nav">
-          <button class="practice-btn active" type="button" data-step="question">問題</button>
-          <button class="practice-btn" type="button" data-step="hint">提示</button>
-          <button class="practice-btn" type="button" data-step="answer">解答</button>
+          <button class="practice-btn active" type="button" data-step="question" data-zh="問題" data-en="Question">問題</button>
+          <button class="practice-btn" type="button" data-step="hint" data-zh="提示" data-en="Hint">提示</button>
+          <button class="practice-btn" type="button" data-step="answer" data-zh="解答" data-en="Answer">解答</button>
         </div>
-        <div class="practice-step active" data-content="question"><h3>問題</h3><p>伏打如何證明產生電流不需要蛙腿？</p></div>
-        <div class="practice-step" data-content="hint"><h3>提示</h3><p>把蛙腿拿掉，保留不同金屬與食鹽水浸濕的布片，並重複堆疊。</p></div>
-        <div class="practice-step" data-content="answer"><h3>解答</h3><p>伏打交替堆疊<span class="accent-orange">兩種金屬</span>與<span class="accent-cyan">食鹽水浸濕的布片</span>，製成能持續供電的伏打電堆。</p></div>
+        <div class="practice-step active" data-content="question"><h3 data-zh="問題" data-en="Question">問題</h3><p data-zh="伏打如何證明產生電流不需要蛙腿？" data-en="How did Volta prove that a frog leg isn't required to generate current?">伏打如何證明產生電流不需要蛙腿？</p></div>
+        <div class="practice-step" data-content="hint"><h3 data-zh="提示" data-en="Hint">提示</h3><p data-zh="把蛙腿拿掉，保留不同金屬與食鹽水浸濕的布片，並重複堆疊。" data-en="Remove the frog leg, keep different metals and brine-soaked cloth, and stack them.">把蛙腿拿掉，保留不同金屬與食鹽水浸濕的布片，並重複堆疊。</p></div>
+        <div class="practice-step" data-content="answer"><h3 data-zh="解答" data-en="Answer">解答</h3><p data-zh="伏打交替堆疊<span class='accent-orange'>兩種金屬</span>與<span class='accent-cyan'>食鹽水浸濕的布片</span>，製成能持續供電的伏打電堆。" data-en="Volta alternately stacked <span class='accent-orange'>two metals</span> and <span class='accent-cyan'>brine-soaked cloths</span> to build the continuously powering voltaic pile.">伏打交替堆疊<span class="accent-orange">兩種金屬</span>與<span class="accent-cyan">食鹽水浸濕的布片</span>，製成能持續供電的伏打電堆。</p></div>
       </article>
     </div>
   </section>
@@ -166,32 +220,33 @@ button:disabled{opacity:.45; cursor:not-allowed; transform:none!important}
   <!-- ================= TAB 2: 兩種金屬發電 ================= -->
   <section id="tab-origin" class="tab-content">
     <div class="lesson-stack">
-      <article class="panel origin-layout">
-        <h2>從蛙腿抽動找到電池條件</h2>
+      <!-- 原本這裡是雙欄，現已統一為單欄 -->
+      <article class="panel">
+        <h2 data-zh="從蛙腿抽動找到電池條件" data-en="Finding Battery Conditions from Frog Twitch">從蛙腿抽動找到電池條件</h2>
         <div class="canvas-wrap">
-          <canvas id="originCanvas" width="1000" height="840" role="img" aria-label="兩種不同金屬與電解質形成電池的動畫"></canvas>
+          <canvas id="originCanvas" width="1000" height="600" role="img"></canvas>
         </div>
         <div class="diagram-key" aria-label="動畫圖例">
-          <p><span class="accent-orange mono">Zn</span>：較活潑，送出電子</p>
-          <p><span class="accent-cyan mono">Cu</span>：較不活潑，接收電子</p>
-          <p><span class="accent-yellow mono">e⁻</span>：由鋅流向銅</p>
-          <p><span class="accent-green">同一杯電解質</span>：不需要鹽橋</p>
+          <p><span class="accent-orange mono">Zn</span>：<span data-zh="較活潑，送出電子" data-en="More active, donates electrons">較活潑，送出電子</span></p>
+          <p><span class="accent-cyan mono">Cu</span>：<span data-zh="較不活潑，接收電子" data-en="Less active, receives electrons">較不活潑，接收電子</span></p>
+          <p><span class="accent-yellow mono">e⁻</span>：<span data-zh="由鋅流向銅" data-en="Flows from Zn to Cu">由鋅流向銅</span></p>
+          <p><span class="accent-green" data-zh="同一杯電解質" data-en="Same Electrolyte Cup">同一杯電解質</span>：<span data-zh="不需要鹽橋" data-en="No salt bridge needed">不需要鹽橋</span></p>
         </div>
         <div class="controls" aria-label="選擇電極組合">
-          <button class="choice-btn" type="button" data-metal="same">兩片鋅</button>
-          <button class="choice-btn active" type="button" data-metal="different">鋅＋銅</button>
+          <button class="choice-btn" type="button" data-metal="same" data-zh="兩片鋅" data-en="Two Zn Plates">兩片鋅</button>
+          <button class="choice-btn active" type="button" data-metal="different" data-zh="鋅＋銅" data-en="Zn + Cu">鋅＋銅</button>
         </div>
-        <div id="originStatus" class="result-box" aria-live="polite">兩種不同金屬浸入電解質並接成閉合迴路，可形成化學電池。</div>
+        <div id="originStatus" class="result-box" aria-live="polite"></div>
       </article>
       <article class="practice" data-practice>
         <div class="practice-nav">
-          <button class="practice-btn active" type="button" data-step="question">問題</button>
-          <button class="practice-btn" type="button" data-step="hint">提示</button>
-          <button class="practice-btn" type="button" data-step="answer">解答</button>
+          <button class="practice-btn active" type="button" data-step="question" data-zh="問題" data-en="Question">問題</button>
+          <button class="practice-btn" type="button" data-step="hint" data-zh="提示" data-en="Hint">提示</button>
+          <button class="practice-btn" type="button" data-step="answer" data-zh="解答" data-en="Answer">解答</button>
         </div>
-        <div class="practice-step active" data-content="question"><h3>問題</h3><p>要讓簡單化學電池產生持續電流，至少需要哪些條件？</p></div>
-        <div class="practice-step" data-content="hint"><h3>提示</h3><p>觀察電極是否相同、容器中是否有電解質，以及外部電路是否閉合。</p></div>
-        <div class="practice-step" data-content="answer"><h3>解答</h3><p>需要<span class="accent-orange">兩種不同金屬</span>、可導電的<span class="accent-cyan">電解質</span>與<span class="accent-yellow">閉合外電路</span>。蛙腿只是早期實驗中的偵測者，不是電力來源。</p></div>
+        <div class="practice-step active" data-content="question"><h3 data-zh="問題" data-en="Question">問題</h3><p data-zh="要讓簡單化學電池產生持續電流，至少需要哪些條件？" data-en="What are the minimum conditions to generate steady current in a simple chemical battery?">要讓簡單化學電池產生持續電流，至少需要哪些條件？</p></div>
+        <div class="practice-step" data-content="hint"><h3 data-zh="提示" data-en="Hint">提示</h3><p data-zh="觀察電極是否相同、容器中是否有電解質，以及外部電路是否閉合。" data-en="Check if electrodes are identical, if electrolyte is present, and if the external circuit is closed.">觀察電極是否相同、容器中是否有電解質，以及外部電路是否閉合。</p></div>
+        <div class="practice-step" data-content="answer"><h3 data-zh="解答" data-en="Answer">解答</h3><p data-zh="需要<span class='accent-orange'>兩種不同金屬</span>、可導電的<span class='accent-cyan'>電解質</span>與<span class='accent-yellow'>閉合外電路</span>。蛙腿只是早期實驗中的偵測者，不是電力來源。" data-en="Needs <span class='accent-orange'>two different metals</span>, conductive <span class='accent-cyan'>electrolyte</span>, and a <span class='accent-yellow'>closed external circuit</span>. The frog leg was just an early detector, not the power source.">需要<span class="accent-orange">兩種不同金屬</span>、可導電的<span class="accent-cyan">電解質</span>與<span class="accent-yellow">閉合外電路</span>。蛙腿只是早期實驗中的偵測者，不是電力來源。</p></div>
       </article>
     </div>
   </section>
@@ -200,107 +255,68 @@ button:disabled{opacity:.45; cursor:not-allowed; transform:none!important}
   <section id="tab-redox" class="tab-content">
     <div class="lesson-stack">
       <article class="panel">
-        <h2>電子從氧化反應流向還原反應</h2>
+        <h2 data-zh="電子從氧化反應流向還原反應" data-en="Electrons Flow from Oxidation to Reduction">電子從氧化反應流向還原反應</h2>
         <div class="canvas-wrap">
-          <canvas id="redoxCanvas" width="1000" height="600" role="img" aria-label="鋅氧化與銅離子還原的電子轉移動畫"></canvas>
+          <canvas id="redoxCanvas" width="1000" height="600" role="img"></canvas>
         </div>
         <div class="controls" aria-label="選擇反應步驟">
-          <button class="choice-btn" type="button" data-redox="oxidation">只看氧化</button>
-          <button class="choice-btn" type="button" data-redox="reduction">只看還原</button>
-          <button class="choice-btn active" type="button" data-redox="both">合併觀看</button>
+          <button class="choice-btn" type="button" data-redox="oxidation" data-zh="只看氧化" data-en="Oxidation Only">只看氧化</button>
+          <button class="choice-btn" type="button" data-redox="reduction" data-zh="只看還原" data-en="Reduction Only">只看還原</button>
+          <button class="choice-btn active" type="button" data-redox="both" data-zh="合併觀看" data-en="View Both">合併觀看</button>
         </div>
-        <div id="redoxStatus" class="result-box" aria-live="polite">鋅失去電子；銅離子得到相同數量的電子。電子不會憑空出現或消失。</div>
+        <div id="redoxStatus" class="result-box" aria-live="polite"></div>
       </article>
       <article class="practice" data-practice>
         <div class="practice-nav">
-          <button class="practice-btn active" type="button" data-step="question">問題</button>
-          <button class="practice-btn" type="button" data-step="hint">提示</button>
-          <button class="practice-btn" type="button" data-step="answer">解答</button>
+          <button class="practice-btn active" type="button" data-step="question" data-zh="問題" data-en="Question">問題</button>
+          <button class="practice-btn" type="button" data-step="hint" data-zh="提示" data-en="Hint">提示</button>
+          <button class="practice-btn" type="button" data-step="answer" data-zh="解答" data-en="Answer">解答</button>
         </div>
-        <div class="practice-step active" data-content="question"><h3>問題</h3><p>反應 <span class="mono">Zn → Zn²⁺＋2e⁻</span> 中，鋅發生氧化還是還原？</p></div>
-        <div class="practice-step" data-content="hint"><h3>提示</h3><p>電子出現在反應式右邊，代表鋅原子送出了電子。</p></div>
-        <div class="practice-step" data-content="answer"><h3>解答</h3><p>鋅<span class="accent-orange">失去 2 個電子</span>，所以發生氧化。判斷時一定要看電子在反應式的哪一邊。</p></div>
+        <div class="practice-step active" data-content="question"><h3 data-zh="問題" data-en="Question">問題</h3><p data-zh="反應 <span class='mono'>Zn → Zn²⁺＋2e⁻</span> 中，鋅發生氧化還是還原？" data-en="In <span class='mono'>Zn → Zn²⁺＋2e⁻</span>, does Zinc undergo oxidation or reduction?">反應 <span class="mono">Zn → Zn²⁺＋2e⁻</span> 中，鋅發生氧化還是還原？</p></div>
+        <div class="practice-step" data-content="hint"><h3 data-zh="提示" data-en="Hint">提示</h3><p data-zh="電子出現在反應式右邊，代表鋅原子送出了電子。" data-en="Electrons are on the right side of the equation, meaning Zn donates electrons.">電子出現在反應式右邊，代表鋅原子送出了電子。</p></div>
+        <div class="practice-step" data-content="answer"><h3 data-zh="解答" data-en="Answer">解答</h3><p data-zh="鋅<span class='accent-orange'>失去 2 個電子</span>，所以發生氧化。判斷時一定要看電子在反應式的哪一邊。" data-en="Zn <span class='accent-orange'>loses 2 electrons</span>, so it undergoes oxidation. Always check which side electrons are on.">鋅<span class="accent-orange">失去 2 個電子</span>，所以發生氧化。判斷時一定要看電子在反應式的哪一邊。</p></div>
       </article>
     </div>
   </section>
 
-  <!-- ================= TAB 4: 鋅銅電池與鹽橋 ================= -->
+  <!-- ================= TAB 4: 鋅銅電池與鹽橋 (🌟 完美單欄滿版) ================= -->
   <section id="tab-cell" class="tab-content">
-    <nav class="unit-subtabs" aria-label="鋅銅電池子分頁">
-      <button class="choice-btn active" type="button" data-unit-subtab="tab-cell">鋅銅電池</button>
-      <button class="choice-btn" type="button" data-unit-subtab="tab-bridge">鹽橋的功能</button>
-    </nav>
     <div class="lesson-stack">
-      <article class="panel">
-        <h2>鋅銅電池同步反應</h2>
-        <div class="canvas-wrap">
-          <canvas id="cellCanvas" width="1000" height="600" role="img" aria-label="鋅銅電池電子流與電極質量變化動畫"></canvas>
-          <button id="cellPlay" class="canvas-play active" type="button">暫停</button>
-          <!-- 降低認知負荷的鹽橋開關 -->
-          <button id="toggleBridgeAnim" class="canvas-play active" type="button" style="top:87%; font-size:18px; padding:6px 16px; min-width:120px; border-width:2px; box-shadow:none;">暫停鹽橋</button>
+      <article class="panel" style="align-items: stretch;">
+        <h2 data-zh="鋅銅電池同步反應" data-en="Zn-Cu Cell Synchronous Reaction">鋅銅電池同步反應</h2>
+        
+        <!-- 🌟 圖例：橫向排列於畫布上方 -->
+        <div class="diagram-key" aria-label="動畫圖例" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-bottom: 15px; background: transparent; border: none; padding: 0;">
+          <p><span class="accent-orange mono">Zn</span> <span data-zh="負極：變輕，送出 e⁻" data-en="Anode: Lighter, donates e⁻">負極：變輕，送出 e⁻</span></p>
+          <p><span class="accent-cyan mono">Cu</span> <span data-zh="正極：變重，接收 e⁻" data-en="Cathode: Heavier, accepts e⁻">正極：變重，接收 e⁻</span></p>
+          <p><span class="accent-yellow mono">e⁻</span>：<span data-zh="成對地只走外電路" data-en="Flow in pairs via external circuit">成對地只走外電路</span></p>
+          <p><span class="accent-pink mono">NO₃⁻</span> / <span class="accent-green mono">K⁺</span>：<span data-zh="游入溶液維持電中性" data-en="Enter solution for neutrality">游入溶液維持電中性</span></p>
         </div>
-        <div class="diagram-key" aria-label="動畫圖例">
-          <p><span class="accent-green">起始</span>：每杯 3 個金屬離子＋3 個硫酸根</p>
-          <p><span class="accent-orange mono">Zn</span> 負極：變輕，<span class="mono">Zn²⁺</span> 增加</p>
-          <p><span class="accent-cyan mono">Cu</span> 正極：變重</p>
-          <p><span class="accent-cyan">硫酸銅溶液</span>：藍色逐漸變淡</p>
-          <p><span class="accent-yellow mono">e⁻</span>：沿外電路兩兩成對流動</p>
-        </div>
-        <div class="range-row">
-          <label for="cellProgress">反應進度</label>
-          <input id="cellProgress" type="range" min="0" max="100" step="1" value="0">
-          <output id="cellProgressValue" for="cellProgress">0%</output>
-        </div>
-        <div class="controls"><button id="cellReplay" class="action-btn" type="button">重播</button></div>
-        <div class="result-box">負極鋅每次送出 2 個電子；正極處的銅離子每次接收 2 個電子並析出成銅。</div>
-      </article>
-      <article class="practice" data-practice>
-        <div class="practice-nav">
-          <button class="practice-btn active" type="button" data-step="question">問題</button>
-          <button class="practice-btn" type="button" data-step="hint">提示</button>
-          <button class="practice-btn" type="button" data-step="answer">解答</button>
-        </div>
-        <div class="practice-step active" data-content="question"><h3>問題</h3><p>鋅銅電池放電一段時間後，哪一片電極變輕？硫酸銅溶液的藍色如何改變？</p></div>
-        <div class="practice-step" data-content="hint"><h3>提示</h3><p>鋅原子進入溶液；銅離子離開溶液並附著在銅片上。</p></div>
-        <div class="practice-step" data-content="answer"><h3>解答</h3><p><span class="accent-orange">鋅片變輕</span>；銅離子濃度下降，所以硫酸銅溶液的<span class="accent-cyan">藍色逐漸變淡</span>，銅片則逐漸變重。</p></div>
-      </article>
-    </div>
-  </section>
 
-  <section id="tab-bridge" class="tab-content">
-    <nav class="unit-subtabs" aria-label="鋅銅電池子分頁">
-      <button class="choice-btn" type="button" data-unit-subtab="tab-cell">鋅銅電池</button>
-      <button class="choice-btn active" type="button" data-unit-subtab="tab-bridge">鹽橋的功能</button>
-    </nav>
-    <div class="lesson-stack">
-      <article class="panel">
-        <h2>鹽橋用兩倍的一價離子維持電中性</h2>
-        <div class="canvas-wrap">
-          <canvas id="bridgeCanvas" width="1000" height="600" role="img" aria-label="鹽橋中硝酸根與鉀離子移動動畫"></canvas>
-          <button id="bridgeCanvasPlay" class="canvas-play active" type="button">暫停</button>
+        <!-- 🌟 滿版 1200x850 放大畫布 -->
+        <div class="canvas-wrap" id="cellCanvasWrap">
+          <canvas id="cellCanvas" class="lesson-canvas" width="1200" height="850" role="img"></canvas>
+          
+          <!-- 🌟 統一按鈕區塊 (鹽橋正下方，完美置中直式堆疊) -->
+          <div style="position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 15px; width: 240px; z-index: 10;">
+            <button id="cellPlay" class="canvas-play btn-play-state" type="button" style="position:relative; left:auto; top:auto; transform:none; width:100%; margin:0; font-size:24px; padding: 12px 16px; border-width: 3px;" data-zh="播放" data-en="Play">播放</button>
+            <button id="toggleBridgeBtn" class="canvas-play btn-bridge-state" type="button" style="position:relative; left:auto; top:auto; transform:none; width:100%; margin:0; font-size:24px; padding: 12px 16px; border-width: 3px;" data-zh="裝上鹽橋" data-en="Attach Bridge">裝上鹽橋</button>
+            <button id="cellReplay" class="canvas-play btn-replay-state" type="button" style="position:relative; left:auto; top:auto; transform:none; width:100%; margin:0; font-size:24px; padding: 12px 16px; border-width: 3px;" data-zh="重播" data-en="Replay">重播</button>
+          </div>
         </div>
-        <div class="diagram-key" aria-label="動畫圖例">
-          <p><span class="accent-yellow mono">e⁻</span>：成對地只走外電路</p>
-          <p><span class="accent-pink mono">NO₃⁻</span>：右杯 → 左杯 (每次 2 顆)</p>
-          <p><span class="accent-green mono">K⁺</span>：左杯 → 右杯 (每次 2 顆)</p>
-          <p><span class="accent-cyan">棉花塞</span>：讓溶液留在鹽橋內</p>
-        </div>
-        <div class="controls">
-          <button class="choice-btn active" type="button" data-bridge="on">裝上鹽橋</button>
-          <button class="choice-btn" type="button" data-bridge="off">拔掉鹽橋</button>
-          <button id="bridgeReset" class="action-btn" type="button">重設</button>
-        </div>
-        <div id="bridgeStatus" class="result-box" aria-live="polite">因為金屬離子是 2 價，所以每次會有 2 顆 NO₃⁻游入鋅杯，2 顆 K⁺游入銅杯，精準維持電中性。</div>
+        
+        <div id="cellStatus" class="result-box" aria-live="polite" style="width: 100%; text-align: center;"></div>
       </article>
+      
       <article class="practice" data-practice>
         <div class="practice-nav">
-          <button class="practice-btn active" type="button" data-step="question">問題</button>
-          <button class="practice-btn" type="button" data-step="hint">提示</button>
-          <button class="practice-btn" type="button" data-step="answer">解答</button>
+          <button class="practice-btn active" type="button" data-step="question" data-zh="問題" data-en="Question">問題</button>
+          <button class="practice-btn" type="button" data-step="hint" data-zh="提示" data-en="Hint">提示</button>
+          <button class="practice-btn" type="button" data-step="answer" data-zh="解答" data-en="Answer">解答</button>
         </div>
-        <div class="practice-step active" data-content="question"><h3>問題</h3><p>使用硝酸鉀鹽橋時，1 個鋅離子產生，需要幾個硝酸根來中和？</p></div>
-        <div class="practice-step" data-content="hint"><h3>提示</h3><p>鋅離子是 Zn²⁺ (帶兩個正電)，而硝酸根是 NO₃⁻ (帶一個負電)。</p></div>
-        <div class="practice-step" data-content="answer"><h3>解答</h3><p><span class="accent-pink mono">2 個 NO₃⁻</span> 移向鋅杯中和 1 個 Zn²⁺；<span class="accent-green mono">2 個 K⁺</span> 移向銅杯補回消耗的 1 個 Cu²⁺。金屬離子是 2 價，所以需要 2 倍的一價離子。</p></div>
+        <div class="practice-step active" data-content="question"><h3 data-zh="問題" data-en="Question">問題</h3><p data-zh="使用硝酸鉀鹽橋時，1 個鋅離子產生，需要幾個硝酸根來中和？" data-en="Using a KNO₃ salt bridge, how many NO₃⁻ are needed to neutralize 1 generated Zn²⁺ ion?">使用硝酸鉀鹽橋時，1 個鋅離子產生，需要幾個硝酸根來中和？</p></div>
+        <div class="practice-step" data-content="hint"><h3 data-zh="提示" data-en="Hint">提示</h3><p data-zh="鋅離子是 Zn²⁺ (帶兩個正電)，而硝酸根是 NO₃⁻ (帶一個負電)。" data-en="Zn²⁺ carries +2 charge, while NO₃⁻ carries -1 charge.">鋅離子是 Zn²⁺ (帶兩個正電)，而硝酸根是 NO₃⁻ (帶一個負電)。</p></div>
+        <div class="practice-step" data-content="answer"><h3 data-zh="解答" data-en="Answer">解答</h3><p data-zh="<span class='accent-pink mono'>2 個 NO₃⁻</span> 移向鋅杯中和 1 個 Zn²⁺；<span class='accent-green mono'>2 個 K⁺</span> 移向銅杯補回消耗的 1 個 Cu²⁺。金屬離子是 2 價，所以需要 2 倍的一價離子。" data-en="<span class='accent-pink mono'>2 NO₃⁻</span> move to the Zn cup to neutralize 1 Zn²⁺; <span class='accent-green mono'>2 K⁺</span> move to the Cu cup to replenish 1 consumed Cu²⁺. Since metal ions are divalent, twice as many monovalent ions are needed."><span class="accent-pink mono">2 個 NO₃⁻</span> 移向鋅杯中和 1 個 Zn²⁺；<span class="accent-green mono">2 個 K⁺</span> 移向銅杯補回消耗的 1 個 Cu²⁺。金屬離子是 2 價，所以需要 2 倍的一價離子。</p></div>
       </article>
     </div>
   </section>
@@ -309,61 +325,83 @@ button:disabled{opacity:.45; cursor:not-allowed; transform:none!important}
   <section id="tab-types" class="tab-content">
     <div class="lesson-stack">
       <article class="panel">
-        <h2>一次電池與二次電池</h2>
+        <h2 data-zh="一次電池與二次電池" data-en="Primary vs Secondary Batteries">一次電池與二次電池</h2>
         <div class="canvas-wrap">
-          <canvas id="typesCanvas" width="1000" height="600" role="img" aria-label="常見電池結構、電壓與充放電比較"></canvas>
+          <canvas id="typesCanvas" width="1000" height="650" role="img"></canvas>
         </div>
         <div class="battery-types" aria-label="選擇電池種類">
-          <button class="choice-btn" type="button" data-battery="carbon">碳鋅</button>
-          <button class="choice-btn" type="button" data-battery="alkaline">鹼性</button>
-          <button class="choice-btn" type="button" data-battery="lead">鉛蓄</button>
-          <button class="choice-btn active" type="button" data-battery="lithium">鋰離子</button>
-          <button class="choice-btn" type="button" data-battery="nimh">鎳氫</button>
+          <button class="choice-btn active" type="button" data-battery="carbon" data-zh="碳鋅" data-en="Carbon-Zinc">碳鋅</button>
+          <button class="choice-btn" type="button" data-battery="alkaline" data-zh="鹼性" data-en="Alkaline">鹼性</button>
+          <button class="choice-btn" type="button" data-battery="lead" data-zh="鉛蓄" data-en="Lead-Acid">鉛蓄</button>
+          <button class="choice-btn" type="button" data-battery="lithium" data-zh="鋰離子" data-en="Li-ion">鋰離子</button>
+          <button class="choice-btn" type="button" data-battery="nimh" data-zh="鎳氫" data-en="Ni-MH">鎳氫</button>
         </div>
         <div class="controls">
-          <button class="choice-btn active" type="button" data-charge="discharge">放電</button>
-          <button id="chargeButton" class="choice-btn" type="button" data-charge="charge">充電</button>
+          <button class="choice-btn active" type="button" data-charge="discharge" data-zh="放電" data-en="Discharge">放電</button>
+          <button id="chargeButton" class="choice-btn" type="button" data-charge="charge" data-zh="充電" data-en="Charge" disabled>充電</button>
         </div>
-        <div id="typesStatus" class="result-box" aria-live="polite">鋰離子電池可重複充電；放電時把儲存的化學能轉換成電能。</div>
+        <div id="typesStatus" class="result-box" aria-live="polite"></div>
       </article>
       <article class="practice" data-practice>
         <div class="practice-nav">
-          <button class="practice-btn active" type="button" data-step="question">問題</button>
-          <button class="practice-btn" type="button" data-step="hint">提示</button>
-          <button class="practice-btn" type="button" data-step="answer">解答</button>
+          <button class="practice-btn active" type="button" data-step="question" data-zh="問題" data-en="Question">問題</button>
+          <button class="practice-btn" type="button" data-step="hint" data-zh="提示" data-en="Hint">提示</button>
+          <button class="practice-btn" type="button" data-step="answer" data-zh="解答" data-en="Answer">解答</button>
         </div>
-        <div class="practice-step active" data-content="question"><h3>問題</h3><p>遙控器使用的鎳氫充電電池標示 <span class="mono">1.2 V</span>；可以用一般碳鋅電池的方式任意丟棄嗎？</p></div>
-        <div class="practice-step" data-content="hint"><h3>提示</h3><p>所有廢電池都含可回收材料，也可能含會污染環境的物質。</p></div>
-        <div class="practice-step" data-content="answer"><h3>解答</h3><p>不可以。無論一次或二次電池，都應依規定交給<span class="accent-green">廢電池回收管道</span>；充電電池也不可因「可重複使用」就當作一般垃圾。</p></div>
+        <div class="practice-step active" data-content="question"><h3 data-zh="問題" data-en="Question">問題</h3><p data-zh="遙控器使用的鎳氫充電電池標示 <span class='mono'>1.2 V</span>；可以用一般碳鋅電池的方式任意丟棄嗎？" data-en="A Ni-MH rechargeable battery for a remote says <span class='mono'>1.2 V</span>. Can it be discarded like a regular carbon-zinc battery?">遙控器使用的鎳氫充電電池標示 <span class="mono">1.2 V</span>；可以用一般碳鋅電池的方式任意丟棄嗎？</p></div>
+        <div class="practice-step" data-content="hint"><h3 data-zh="提示" data-en="Hint">提示</h3><p data-zh="所有廢電池都含可回收材料，也可能含會污染環境的物質。" data-en="All waste batteries contain recyclable materials and potentially polluting substances.">所有廢電池都含可回收材料，也可能含會污染環境的物質。</p></div>
+        <div class="practice-step" data-content="answer"><h3 data-zh="解答" data-en="Answer">解答</h3><p data-zh="不可以。無論一次或二次電池，都應依規定交給<span class='accent-green'>廢電池回收管道</span>；充電電池也不可因「可重複使用」就當作一般垃圾。" data-en="No. Both primary and secondary batteries must be given to <span class='accent-green'>battery recycling channels</span>; rechargeable ones shouldn't be tossed as regular trash.">不可以。無論一次或二次電池，都應依規定交給<span class="accent-green">廢電池回收管道</span>；充電電池也不可因「可重複使用」就當作一般垃圾。</p></div>
       </article>
     </div>
   </section>
 
-  <p class="footer-note">動畫為粒子與能量轉換的概念模型；實際電池不可拆解、短路、加熱或嘗試替不可充電電池充電。</p>
+  <p class="footer-note" data-zh="動畫為粒子與能量轉換的概念模型；實際電池不可拆解、短路、加熱或嘗試替不可充電電池充電。" data-en="Animations are conceptual models for particles/energy. Do not disassemble, short, heat, or try to charge non-rechargeable batteries in real life.">動畫為粒子與能量轉換的概念模型；實際電池不可拆解、短路、加熱或嘗試替不可充電電池充電。</p>
 </main>
 
 <script>
+// ================= 雙語切換系統 =================
+let currentLang = 'zh';
+function tr(zh, en) { return currentLang === 'en' ? en : zh; }
+
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
+  
+  document.getElementById('btn-lang-zh').classList.toggle('active', lang === 'zh');
+  document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+  
+  document.querySelectorAll('[data-zh][data-en]').forEach(el => {
+    el.innerHTML = el.getAttribute(`data-${lang}`);
+  });
+  
+  updateHistoryView();
+  updateOriginView();
+  updateRedoxView();
+  updateCellControls();
+  updateCellView();
+  updateChargeButtons();
+}
+
 // ================= 常數與基礎工具 =================
 const C = { bg:'#0a1a20', panel:'#14372d', deep:'#0c241e', line:'#5d7b70', white:'#ffffff', yellow:'#ffe45c', cyan:'#4ddff3', orange:'#ffa84d', green:'#91f56d', pink:'#ff65a8', muted:'#b6c9c1', danger:'#ff7a68', purple:'#c691ff', blue:'#3b9ed8' };
 const canvases = {
   history: document.getElementById('historyCanvas'), origin: document.getElementById('originCanvas'),
   redox: document.getElementById('redoxCanvas'), cell: document.getElementById('cellCanvas'),
-  bridge: document.getElementById('bridgeCanvas'), types: document.getElementById('typesCanvas')
+  types: document.getElementById('typesCanvas')
 };
 const ctxs = Object.fromEntries(Object.entries(canvases).map(([k,v]) => [k, v ? v.getContext('2d') : null]));
 
 const state = {
   active: 'history', history: 'galvani', historyClosed: true, metal: 'different', redox: 'both',
-  cellProgress: 0, cellPlaying: true, bridge: true, bridgeFlow: 1, bridgeCharge: 0, bridgeCycleStart: performance.now(),
-  battery: 'lithium', charge: 'discharge', bridgeAnimPlaying: true
+  cellProgress: 0, cellPlaying: false, bridge: false, animTime: 0,
+  battery: 'carbon', charge: 'discharge'
 };
 
 const FLOW_PIXELS_PER_MS = 0.08;
-const BRIDGE_FLOW_RATE = 0.5;
 const REACTION_STEPS = 3;
 const ELECTRON_PATH = [[205,265],[205,109],[462,109],[500,109],[538,109],[795,109],[795,265]];
 
-// 絕對完美貼合管徑的貝茲曲線生成 (保證絕對不漏出管外)
+// 絕對完美貼合管徑的貝茲曲線生成
 const BRIDGE_K_PATH = [[300,450], [300,285]];
 for(let i=1; i<=20; i++){ 
   const t = i/20, u = 1-t; 
@@ -387,7 +425,6 @@ function dot(ctx,x,y,r,color,glow=0) { ctx.save(); if(glow){ctx.shadowColor=colo
 function arrow(ctx,x1,y1,x2,y2,color=C.yellow,width=5) { line(ctx,[[x1,y1],[x2,y2]],color,width); const a=Math.atan2(y2-y1,x2-x1), s=15; ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-s*Math.cos(a-.48),y2-s*Math.sin(a-.48)); ctx.lineTo(x2-s*Math.cos(a+.48),y2-s*Math.sin(a+.48)); ctx.closePath(); ctx.fillStyle=color; ctx.fill(); }
 
 function pathLength(points) { let total=0; for(let i=1;i<points.length;i++) total+=Math.hypot(points[i][0]-points[i-1][0],points[i][1]-points[i-1][1]); return total; }
-function flowPhase(points,elapsed) { return elapsed*FLOW_PIXELS_PER_MS/Math.max(1,pathLength(points)); }
 function pathPoint(points,t) { 
   const lens=[]; let total=0; 
   for(let i=1;i<points.length;i++){ const d=Math.hypot(points[i][0]-points[i-1][0],points[i][1]-points[i-1][1]); lens.push(d); total+=d; } 
@@ -395,11 +432,19 @@ function pathPoint(points,t) {
   for(let i=0;i<lens.length;i++){ if(d<=lens[i]){ const q=d/lens[i]; return [points[i][0]+(points[i+1][0]-points[i][0])*q, points[i][1]+(points[i+1][1]-points[i][1])*q]; } d-=lens[i]; } 
   return points[0]; 
 }
-function movingDots(ctx,points,count,phase,color=C.yellow,speed=1,alpha=1) { ctx.save(); ctx.globalAlpha=alpha; for(let i=0;i<count;i++){ const p=pathPoint(points,phase*speed+i/count); dot(ctx,p[0],p[1],8,color,8); } ctx.restore(); }
 
-// 升級版成對電子流
+// 🌟 絕對流速控制器
+function movingDots(ctx,points,count,phase,color=C.yellow,alpha=1) { 
+  ctx.save(); ctx.globalAlpha=alpha; 
+  for(let i=0;i<count;i++){ 
+    const p=pathPoint(points,phase+i/count); 
+    dot(ctx,p[0],p[1],8,color,8); 
+  } 
+  ctx.restore(); 
+}
+
 function movingElectronStream(ctx,elapsed,alpha=1) { 
-  const pairs=5, phase=flowPhase(ELECTRON_PATH,elapsed); 
+  const pairs=5, phase=(elapsed*FLOW_PIXELS_PER_MS)/Math.max(1,pathLength(ELECTRON_PATH)); 
   ctx.save(); ctx.globalAlpha=alpha; 
   for(let i=0;i<pairs;i++){ 
     const p1 = pathPoint(ELECTRON_PATH, phase + i/pairs); 
@@ -410,23 +455,17 @@ function movingElectronStream(ctx,elapsed,alpha=1) {
   ctx.restore(); 
 }
 
-// 升級版倍量鹽橋離子流 (精準綁定在中心線上)
-function movingBridgeStreams(ctx,elapsed,alpha=1) { 
-  const count=12, bridgeElapsed=elapsed*BRIDGE_FLOW_RATE, kPhase=flowPhase(BRIDGE_K_PATH,bridgeElapsed), nPhase=flowPhase(BRIDGE_NO3_PATH,bridgeElapsed); 
-  ctx.save(); ctx.globalAlpha=alpha; 
-  for(let i=0;i<count;i++){ const p=pathPoint(BRIDGE_K_PATH,kPhase+i/count); bridgeIon(ctx,p[0],p[1],'K⁺',C.green); } 
-  for(let i=0;i<count;i++){ const p=pathPoint(BRIDGE_NO3_PATH,nPhase+i/count); bridgeIon(ctx,p[0],p[1],'NO₃⁻',C.pink); } 
-  ctx.restore(); 
-}
-
+// 🌟 燒杯繪製 (光澤大幅調降)
 function cellBeaker(ctx,x,y,w,h,fill,surface=C.cyan) {
   ctx.save(); ctx.beginPath(); ctx.moveTo(x+16,y+58); ctx.lineTo(x+24,y+h-22); ctx.quadraticCurveTo(x+w/2,y+h+8,x+w-24,y+h-22); ctx.lineTo(x+w-16,y+58); ctx.closePath(); ctx.fillStyle=fill; ctx.fill();
   ctx.beginPath(); ctx.ellipse(x+w/2,y+58,w/2-16,13,0,0,Math.PI*2); ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle=surface; ctx.lineWidth=3; ctx.stroke();
   ctx.beginPath(); ctx.moveTo(x+7,y+10); ctx.lineTo(x+22,y+h-22); ctx.quadraticCurveTo(x+w/2,y+h+10,x+w-22,y+h-22); ctx.lineTo(x+w-7,y+10); ctx.strokeStyle=C.white; ctx.lineWidth=5; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
   ctx.beginPath(); ctx.ellipse(x+w/2,y+10,w/2-7,17,0,0,Math.PI*2); ctx.strokeStyle=C.white; ctx.lineWidth=5; ctx.stroke();
   ctx.beginPath(); ctx.ellipse(x+w/2,y+10,w/2-18,10,0,0,Math.PI*2); ctx.strokeStyle=C.line; ctx.lineWidth=2; ctx.stroke();
-  ctx.globalAlpha=.42; ctx.beginPath(); ctx.moveTo(x+38,y+42); ctx.quadraticCurveTo(x+28,y+100,x+46,y+h-42); ctx.strokeStyle=C.white; ctx.lineWidth=7; ctx.stroke();
-  ctx.globalAlpha=.22; ctx.beginPath(); ctx.moveTo(x+w-42,y+52); ctx.quadraticCurveTo(x+w-28,y+112,x+w-48,y+h-36); ctx.strokeStyle=C.white; ctx.lineWidth=4; ctx.stroke(); ctx.restore();
+  
+  // 🌟 將透明度從原本的 0.42 / 0.22 降到極低 0.12 / 0.05
+  ctx.globalAlpha=.12; ctx.beginPath(); ctx.moveTo(x+38,y+42); ctx.quadraticCurveTo(x+28,y+100,x+46,y+h-42); ctx.strokeStyle=C.white; ctx.lineWidth=7; ctx.stroke();
+  ctx.globalAlpha=.05; ctx.beginPath(); ctx.moveTo(x+w-42,y+52); ctx.quadraticCurveTo(x+w-28,y+112,x+w-48,y+h-36); ctx.strokeStyle=C.white; ctx.lineWidth=4; ctx.stroke(); ctx.restore();
 }
 function voltmeter(ctx,x,y,level=1) {
   const value=Math.max(0,Math.min(1,level)); rounded(ctx,x-62,y-39,124,78,12,C.deep,C.green,4); label(ctx,'V',x,y-18,C.white,22);
@@ -449,63 +488,57 @@ function bridgeIon(ctx,x,y,text,color) { const r=text==='K⁺'?14:18; ctx.save()
 
 function wanderingPoint(x,y,elapsed,seed,bounds,spread=12) { const t=elapsed*.00034,s1=seed*1.73,s2=seed*.91,cx=(bounds[0]+bounds[1])/2,cy=(bounds[2]+bounds[3])/2,rx=(bounds[1]-bounds[0])/2,ry=(bounds[3]-bounds[2])/2; let px=cx+Math.sin(t*(.62+(seed%3)*.07)+s1)*rx*.82+Math.sin(t*1.41+s2)*rx*.14; let py=cy+Math.cos(t*(.57+(seed%4)*.05)+s2)*ry*.80+Math.sin(t*1.23+s1)*ry*.14; px=Math.max(bounds[0],Math.min(bounds[1],px)); py=Math.max(bounds[2],Math.min(bounds[3],py)); return[px,py]; }
 function wanderingSolutionIon(ctx,base,text,color,elapsed,seed,bounds,r=15) { const p=wanderingPoint(base[0],base[1],elapsed,seed,bounds,11); solutionIon(ctx,p[0],p[1],text,color,r); return p; }
-function wanderingBridgeIon(ctx,base,text,color,elapsed,seed,bounds) { const p=wanderingPoint(base[0],base[1],elapsed,seed,bounds,10); bridgeIon(ctx,p[0],p[1],text,color); return p; }
 
 // ================= 各分頁繪圖函數 =================
 function drawGalvaniHistory(ctx,now) {
-  label(ctx,'1780 年代｜一次抽動，引出一場科學爭論',500,42,C.yellow,32);
+  label(ctx,tr('1780 年代｜一次抽動，引出一場科學爭論','1780s | A Twitch Sparks a Scientific Debate'),500,42,C.yellow,32);
   rounded(ctx,45,88,270,415,22,C.deep,C.line,3);
-  label(ctx,'觀察',180,125,C.cyan,28); 
-  label(ctx,'解剖刀 ＋ 鐵盤',180,190,C.white,26); 
-  label(ctx,'碰觸蛙腿',180,238,C.white,26);
+  label(ctx,tr('觀察','Observation'),180,125,C.cyan,28); 
+  label(ctx,tr('解剖刀 ＋ 鐵盤','Scalpel + Iron Plate'),180,190,C.white,26); 
+  label(ctx,tr('碰觸蛙腿','Touch Frog Leg'),180,238,C.white,26);
   arrow(ctx,115,290,245,290,C.yellow,5);
-  label(ctx,'蛙腿收縮',180,345,C.green,30); 
-  label(ctx,'蛙腿是偵測者',180,425,C.muted,22); 
-  label(ctx,'不是持續電源',180,462,C.muted,22);
+  label(ctx,tr('蛙腿收縮','Leg Twitches'),180,345,C.green,30); 
+  label(ctx,tr('蛙腿是偵測者','Leg is a detector'),180,425,C.muted,22); 
+  label(ctx,tr('不是持續電源','Not a power source'),180,462,C.muted,22);
 
   const kick = state.historyClosed ? Math.pow(Math.max(0, Math.sin(now * 0.006)), 7) : 0;
   
-  // 鐵盤 (金屬 B)
   const plateY = 460;
   rounded(ctx, 380, plateY, 520, 25, 8, '#2a3a4a', C.cyan, 3);
-  label(ctx, '鐵盤', 850, plateY + 12, C.cyan, 22);
+  label(ctx, tr('鐵盤','Iron Plate'), 850, plateY + 12, C.cyan, 22);
 
-  // 蛙腿 (往下平移貼住鐵盤)
   const hip = [550, 325], knee = [630, 395], ankle = [715, 452 - kick * 34], toe = [810, 456 - kick * 64];
   line(ctx, [hip, knee], C.line, 58); line(ctx, [knee, ankle], C.line, 48); line(ctx, [ankle, toe], C.line, 34);
   line(ctx, [hip, knee], C.green, 48); line(ctx, [knee, ankle], C.green, 38); line(ctx, [ankle, toe], C.green, 25);
   dot(ctx, hip[0], hip[1], 29, C.green); dot(ctx, knee[0], knee[1], 23, C.green); dot(ctx, ankle[0], ankle[1], 18, C.green);
   
-  // 神經
   const nerveContact = [510, 280];
   line(ctx, [nerveContact, hip, knee, [ankle[0], ankle[1]-10]], C.pink, 6);
-  label(ctx, '神經', 510, 245, C.pink, 22); 
-  label(ctx, '肌肉', 680, 370, C.green, 22);
+  label(ctx, tr('神經','Nerve'), 510, 245, C.pink, 22); 
+  label(ctx, tr('肌肉','Muscle'), 680, 370, C.green, 22);
 
-  // 解剖刀 (銅製, 金屬 A) - 直接接觸鐵盤
   const scalpelTip = nerveContact;
   const scalpelEnd = state.historyClosed ? [430, plateY] : [380, 380];
-  
   line(ctx, [scalpelEnd, scalpelTip], C.orange, 12);
-  label(ctx, '銅製解剖刀', 390, 200, C.orange, 22);
+  label(ctx, tr('銅製解剖刀','Copper Scalpel'), 390, 200, C.orange, 22);
 
   if(state.historyClosed){
     dot(ctx, scalpelEnd[0], scalpelEnd[1], 10, C.yellow, 7); 
-    label(ctx, '直接接觸', 350, plateY + 12, C.yellow, 20);
+    label(ctx, tr('直接接觸','Direct Contact'), 350, plateY + 12, C.yellow, 20);
     const metalRoute = [scalpelEnd, scalpelTip];
-    movingDots(ctx, metalRoute, 3, flowPhase(metalRoute, now)*2, C.yellow, 1, 1);
-    label(ctx, '迴路接通｜蛙腿抽動', 600, 545, C.green, 26);
+    movingDots(ctx, metalRoute, 3, (now*FLOW_PIXELS_PER_MS)/Math.max(1,pathLength(metalRoute))*2, C.yellow);
+    label(ctx, tr('迴路接通｜蛙腿抽動','Circuit Closed | Leg Twitches'), 600, 545, C.green, 26);
   }else{
-    label(ctx, '未接觸', 350, 380, C.muted, 20); 
-    label(ctx, '迴路斷開｜蛙腿不動', 600, 545, C.muted, 26);
+    label(ctx, tr('未接觸','No Contact'), 350, 380, C.muted, 20); 
+    label(ctx, tr('迴路斷開｜蛙腿不動','Circuit Open | No Twitch'), 600, 545, C.muted, 26);
   }
 }
 
 function drawVoltaHistory(ctx,now) {
-  label(ctx,'1800 年｜伏打電堆提供穩定電流',500,42,C.yellow,32);
+  label(ctx,tr('1800 年｜伏打電堆提供穩定電流','1800 | Voltaic Pile Provides Steady Current'),500,42,C.yellow,32);
   rounded(ctx,45,92,230,410,22,C.deep,C.line,3);
-  label(ctx,'不用蛙腿',160,135,C.cyan,28); label(ctx,'兩種金屬',160,205,C.orange,26); label(ctx,'＋',160,246,C.yellow,30);
-  label(ctx,'食鹽水濕布',160,288,C.cyan,26); label(ctx,'重複堆疊',160,365,C.green,28); label(ctx,'持續電流',160,445,C.yellow,30);
+  label(ctx,tr('不用蛙腿','No Frog Leg'),160,135,C.cyan,28); label(ctx,tr('兩種金屬','Two Metals'),160,205,C.orange,26); label(ctx,'＋',160,246,C.yellow,30);
+  label(ctx,tr('食鹽水濕布','Brine-Soaked Cloth'),160,288,C.cyan,26); label(ctx,tr('重複堆疊','Stacked'),160,365,C.green,28); label(ctx,tr('持續電流','Steady Current'),160,445,C.yellow,30);
   
   const stackX=365,stackW=230,baseY=500,pairs=6,step=45;
   rounded(ctx,335,500,290,17,7,C.line,C.white,2);
@@ -516,15 +549,15 @@ function drawVoltaHistory(ctx,now) {
     for(let j=0;j<5;j++) dot(ctx,stackX+38+j*36,y-9,2,j%2?C.pink:C.green);
     rounded(ctx,stackX,y-28,stackW,12,5,C.orange,C.white,2);
   }
-  label(ctx,'Zn',335,442,C.cyan,22); label(ctx,'Cu',335,397,C.orange,22); label(ctx,'多組堆疊',480,540,C.green,24);
+  label(ctx,'Zn',335,442,C.cyan,22); label(ctx,'Cu',335,397,C.orange,22); label(ctx,tr('多組堆疊','Multiple Layers'),480,540,C.green,24);
 
-  rounded(ctx,660,130,290,330,22,C.deep,C.cyan,3); label(ctx,'放大看一組',805,165,C.yellow,26);
+  rounded(ctx,660,130,290,330,22,C.deep,C.cyan,3); label(ctx,tr('放大看一組','Zoom In (One Layer)'),805,165,C.yellow,26);
   rounded(ctx,705,205,200,34,8,C.orange,C.white,2); mono(ctx,'Cu',805,222,C.deep,22);
   rounded(ctx,705,258,200,92,12,'#d9fbff',C.cyan,3);
   for(let i=0;i<7;i++){ const x=730+i*25; dot(ctx,x,282+(i%2)*26,5,i%2?C.pink:C.green,3); }
-  label(ctx,'食鹽水',805,282,C.deep,24); label(ctx,'浸濕的布片',805,325,C.deep,22);
+  label(ctx,tr('食鹽水','Brine'),805,282,C.deep,24); label(ctx,tr('浸濕的布片','Soaked Cloth'),805,325,C.deep,22);
   rounded(ctx,705,370,200,34,8,C.cyan,C.white,2); mono(ctx,'Zn',805,387,C.deep,22);
-  label(ctx,'布片吸住食鹽水，形成可導電的中間層',805,430,C.white,18);
+  label(ctx,tr('布片吸住食鹽水，形成可導電的中間層','Cloth holds brine, forming a conductive layer'),805,430,C.white,18);
   line(ctx,[[595,350],[645,350],[675,304]],C.yellow,4);
 }
 
@@ -545,7 +578,8 @@ function drawOrigin(now) {
   ion(ctx,435,450,'−',C.pink); ion(ctx,565,450,'＋',C.green);
   if(active){
     arrow(ctx,440,124,458,124,C.yellow,4);
-    movingDots(ctx,leftPath,2,flowPhase(leftPath,now),C.yellow); movingDots(ctx,rightPath,2,flowPhase(rightPath,now),C.yellow);
+    movingDots(ctx,leftPath,2,(now*FLOW_PIXELS_PER_MS)/Math.max(1,pathLength(leftPath)),C.yellow); 
+    movingDots(ctx,rightPath,2,(now*FLOW_PIXELS_PER_MS)/Math.max(1,pathLength(rightPath)),C.yellow);
   } else {
     line(ctx,[[440,124],[458,124]],C.muted,4,[8,8]);
   }
@@ -555,9 +589,16 @@ function drawOrigin(now) {
 function drawRedox(now) {
   const ctx = ctxs.redox; if(!ctx) return; clear(ctx);
   const showOx=state.redox!=='reduction', showRed=state.redox!=='oxidation';
-  label(ctx,'電子一定有來源，也一定有去處',500,42,C.yellow,34);
+  
+  let topTitleSize = currentLang === 'en' ? 28 : 34;
+  label(ctx,tr('電子一定有來源，也一定有去處','Electrons Must Come From Somewhere & Go Somewhere'),500,42,C.yellow, topTitleSize);
+  
   rounded(ctx,50,85,410,420,24,C.deep,showOx?C.orange:C.line,4); rounded(ctx,540,85,410,420,24,C.deep,showRed?C.cyan:C.line,4);
-  label(ctx,'氧化＝失去電子',255,135,showOx?C.orange:C.muted,30); label(ctx,'還原＝得到電子',745,135,showRed?C.cyan:C.muted,30);
+  
+  let boxTitleSize = currentLang === 'en' ? 22 : 30;
+  label(ctx,tr('氧化＝失去電子','Oxidation = Losing Electrons'),255,135,showOx?C.orange:C.muted, boxTitleSize); 
+  label(ctx,tr('還原＝得到電子','Reduction = Gaining Electrons'),745,135,showRed?C.cyan:C.muted, boxTitleSize);
+  
   mono(ctx,'Zn → Zn²⁺＋2e⁻',255,195,showOx?C.white:C.muted,28); mono(ctx,'Cu²⁺＋2e⁻ → Cu',745,195,showRed?C.white:C.muted,28);
   dot(ctx,220,320,72,showOx?C.orange:C.line,10); mono(ctx,'Zn',220,320,C.deep,30);
   dot(ctx,780,320,72,showRed?C.cyan:C.line,10); mono(ctx,showRed?'Cu²⁺':'Cu',780,320,C.deep,28);
@@ -574,12 +615,15 @@ function drawRedox(now) {
     arrow(ctx,525,320,735,320,C.yellow,5);
     for(let i=0;i<2;i++){ const x=525+210*((q+i*.5)%1); dot(ctx,x,320,11,C.yellow,10); mono(ctx,'e⁻',x,292,C.yellow,18); }
   }
-  if(showOx) label(ctx,'送出 2 個電子',255,430,C.orange,24);
-  if(showRed) label(ctx,'接收 2 個電子',745,430,C.cyan,24);
-  label(ctx,state.redox==='both'?'電子數守恆：失去 2 個＝得到 2 個':'先看清楚電子在反應式哪一邊',500,560,C.green,28);
+  if(showOx) label(ctx,tr('送出 2 個電子','Releases 2 Electrons'),255,430,C.orange,24);
+  if(showRed) label(ctx,tr('接收 2 個電子','Gains 2 Electrons'),745,430,C.cyan,24);
+  
+  let bottomTitleSize = currentLang === 'en' ? 24 : 28;
+  label(ctx,state.redox==='both'?tr('電子數守恆：失去 2 個＝得到 2 個','Electron Conservation: Lost 2 = Gained 2'):tr('先看清楚電子在反應式哪一邊','Check which side electrons are on'),500,560,C.green, bottomTitleSize);
 }
 
-function drawCellBase(ctx,p,now,opts={bridge:true,current:1,showBridgeIons:true}){
+// 🌟 核心：單欄鋅銅電池動畫 
+function drawCellBase(ctx,p,now,opts={bridge:true,current:1}){
   const leftX=130, rightX=660, bY=245, bW=210, bH=280, leftE=205, rightE=795;
   const leftWire=[[leftE,265],[leftE,109],[462,109]], rightWire=[[538,109],[rightE,109],[rightE,265]];
   const raw=Math.min(REACTION_STEPS,p*REACTION_STEPS), completed=Math.min(REACTION_STEPS,Math.floor(raw+1e-7));
@@ -589,27 +633,40 @@ function drawCellBase(ctx,p,now,opts={bridge:true,current:1,showBridgeIons:true}
   const leftBounds=[160,305,330,475], rightBounds=[695,840,330,475];
   const newZn=[[175,395],[235,455],[180,505]], copperSolution=`rgba(35,145,225,${Math.max(.35,.9-p*.55)})`;
   
+  // 🌟 滿版微調比例
+  ctx.save();
+  ctx.scale(1.2, 1.2);
+  ctx.translate(0, 50);
+
   cellBeaker(ctx,leftX,bY,bW,bH,'#18434b',C.muted); cellBeaker(ctx,rightX,bY,bW,bH,copperSolution,C.cyan);
   const znW=35-Math.min(18,p*18), cuW=28+Math.min(18,p*18);
   line(ctx,leftWire,C.white,6); line(ctx,rightWire,C.white,6); voltmeter(ctx,500,75,opts.current);
   
-  const carrierElapsed=p*CELL_REACTION_DURATION_MS;
-  if(opts.current>.02 && p<.999) movingElectronStream(ctx,carrierElapsed,opts.current);
+  if(opts.bridge && p < 1) {
+    movingElectronStream(ctx,state.animTime,1);
+  } else if (!opts.bridge && p > 0) {
+    movingElectronStream(ctx,state.animTime,1); 
+  }
+  
   arrow(ctx,300,109,395,109,C.yellow,5);
   
   rounded(ctx,leftE-znW/2,265,znW,240,6,C.orange,C.white,3); rounded(ctx,rightE-cuW/2,265,cuW,240,6,C.cyan,C.white,3);
-  saltBridge(ctx,opts.bridge);
-  if(opts.bridge && opts.showBridgeIons && opts.current>.02 && p<.999) movingBridgeStreams(ctx,carrierElapsed,opts.current);
+  if(opts.bridge){
+    saltBridge(ctx,true);
+    for(let i=0;i<12;i++){ const pt=pathPoint(BRIDGE_K_PATH,((state.animTime*FLOW_PIXELS_PER_MS)/Math.max(1,pathLength(BRIDGE_K_PATH)))+i/12); bridgeIon(ctx,pt[0],pt[1],'K⁺',C.green); } 
+    for(let i=0;i<12;i++){ const pt=pathPoint(BRIDGE_NO3_PATH,((state.animTime*FLOW_PIXELS_PER_MS)/Math.max(1,pathLength(BRIDGE_NO3_PATH)))+i/12); bridgeIon(ctx,pt[0],pt[1],'NO₃⁻',C.pink); } 
+  } else {
+    saltBridge(ctx,false); 
+  }
   
   leftSulfate.forEach((point,i)=>wanderingSolutionIon(ctx,point,'SO₄²⁻',C.muted,now,10+i,leftBounds));
   rightSulfate.forEach((point,i)=>wanderingSolutionIon(ctx,point,'SO₄²⁻',C.muted,now,20+i,rightBounds));
   baseZn.forEach((point,i)=>wanderingSolutionIon(ctx,point,'Zn²⁺',C.orange,now,30+i,leftBounds));
   for(let i=0;i<produced;i++) wanderingSolutionIon(ctx,newZn[i],'Zn²⁺',C.orange,now,40+i,leftBounds);
   
-  // 兩倍量的鹽橋離子
   const settledNitrate=[[[275,340],[295,350]], [[275,400],[295,410]], [[275,470],[295,480]]];
   const settledPotassium=[[[725,340],[705,350]], [[725,400],[705,410]], [[725,470],[705,480]]];
-  if(opts.bridge && opts.showBridgeIons){
+  if(opts.bridge){
     for(let i=0;i<REACTION_STEPS;i++){
       const delivery=Math.max(0,Math.min(1,raw-i)); if(delivery<=.62)continue;
       const q=Math.min(1,(delivery-.62)/.38), ease=q*q*(3-2*q);
@@ -628,135 +685,237 @@ function drawCellBase(ctx,p,now,opts={bridge:true,current:1,showBridgeIons:true}
     else solutionIon(ctx,start[0],start[1],'Cu²⁺',C.cyan);
     for(let i=completed+1;i<REACTION_STEPS;i++) wanderingSolutionIon(ctx,baseCu[i],'Cu²⁺',C.cyan,now,70+i,rightBounds);
   }
+
+  ctx.restore();
 }
 
-function drawCell(now) { const ctx=ctxs.cell; if(!ctx) return; clear(ctx); drawCellBase(ctx,state.cellProgress,now,{bridge:true,current:1,showBridgeIons:state.bridgeAnimPlaying}); }
-function drawBridge(now) {
-  const ctx=ctxs.bridge; if(!ctx) return; clear(ctx);
-  if(state.bridge){ drawCellBase(ctx,state.cellProgress,now,{bridge:true,current:state.bridgeFlow,showBridgeIons:true}); }
-  else{ const stoppedProgress=Math.min(state.cellProgress,2/REACTION_STEPS), current=stoppedProgress<2/REACTION_STEPS-.002?1:0; drawCellBase(ctx,stoppedProgress,now,{bridge:false,current,showBridgeIons:false}); }
+function drawCell(now) { 
+  const ctx=ctxs.cell; if(!ctx) return; clear(ctx); 
+  if(state.bridge){ 
+    drawCellBase(ctx,state.cellProgress,now,{bridge:true,current:1}); 
+  } else { 
+    const stoppedProgress=Math.min(state.cellProgress,2/REACTION_STEPS);
+    const current=stoppedProgress<2/REACTION_STEPS-.002?1:0; 
+    drawCellBase(ctx,stoppedProgress,now,{bridge:false,current}); 
+  } 
+}
+
+function updateCellControls(){
+  const playBtn = document.getElementById('cellPlay');
+  if(playBtn) {
+    playBtn.textContent = state.cellPlaying ? tr('暫停','Pause') : tr('播放','Play');
+    if(state.cellPlaying) {
+       playBtn.style.background = 'var(--green)';
+       playBtn.style.color = '#123129';
+    } else {
+       playBtn.style.background = '#102f27';
+       playBtn.style.color = 'var(--white)';
+    }
+  }
+  const bridgeBtn = document.getElementById('toggleBridgeBtn');
+  if(bridgeBtn) {
+    bridgeBtn.textContent = state.bridge ? tr('拔掉鹽橋','Remove Bridge') : tr('裝上鹽橋','Attach Bridge');
+    if(state.bridge) {
+       bridgeBtn.style.background = 'var(--cyan)';
+       bridgeBtn.style.color = '#123129';
+    } else {
+       bridgeBtn.style.background = '#102f27';
+       bridgeBtn.style.color = 'var(--white)';
+    }
+  }
+}
+
+function updateCellView() {
+  const statusBox = document.getElementById('cellStatus');
+  if(statusBox) {
+    statusBox.textContent = state.bridge 
+      ? tr('NO₃⁻由右向左游入鋅杯，K⁺由左向右游入銅杯，持續維持兩杯電中性。','NO₃⁻ flows left to Zn cup, K⁺ flows right to Cu cup to maintain neutrality.')
+      : tr('拔掉鹽橋後，反應進行到第 2 顆電子完成轉移便停止；無法維持電中性，後續反應不能繼續。','Without bridge, reaction stops after 2e⁻; neutrality cannot be maintained.');
+  }
 }
 
 const batteryInfo={
-  carbon:{name:'碳鋅電池',voltage:'1.5 V',recharge:false,color:C.orange,facts:['一次電池｜不可充電','價格較低，使用時間較短','久放可能漏液與腐蝕']},
-  alkaline:{name:'鹼性電池',voltage:'約 1.5 V',recharge:false,color:C.yellow,facts:['一次電池｜不可充電','低溫性能與壽命較佳','電解質常用氫氧化鉀']},
-  lead:{name:'鉛蓄電池',voltage:'每一組約 2 V',recharge:true,color:C.purple,facts:['二次電池｜可以充電','多組串聯可提高總電壓','放電與充電反應方向相反']},
-  lithium:{name:'鋰離子電池',voltage:'3.6～3.7 V',recharge:true,color:C.cyan,facts:['二次電池｜可以充電','能量密度高，手機與電腦常用','避免高溫、擠壓與破壞']},
-  nimh:{name:'鎳氫電池',voltage:'1.2 V',recharge:true,color:C.green,facts:['二次電池｜可以充電','家用 AA／AAA 充電電池','記憶效應較不明顯']}
+  carbon:{nameZh:'碳鋅電池',nameEn:'Carbon-Zinc',voltage:'1.5 V',recharge:false,color:C.orange,
+    factsZh:['一次電池｜不可充電','價格較低，使用時間較短','久放可能漏液與腐蝕'],
+    factsEn:['Primary | Non-rechargeable','Lower cost, shorter lifespan','Prone to leakage over time']},
+  alkaline:{nameZh:'鹼性電池',nameEn:'Alkaline',voltage:'約 1.5 V',recharge:false,color:C.yellow,
+    factsZh:['一次電池｜不可充電','低溫性能與壽命較佳','電解質常用氫氧化鉀'],
+    factsEn:['Primary | Non-rechargeable','Better low-temp performance','KOH commonly used as electrolyte']},
+  lead:{nameZh:'鉛蓄電池',nameEn:'Lead-Acid',voltage:'每一組約 2 V',recharge:true,color:C.purple,
+    factsZh:['二次電池｜可以充電','多組串聯可提高總電壓','放電與充電反應方向相反'],
+    factsEn:['Secondary | Rechargeable','Series connection boosts voltage','Charge/Discharge are reversible']},
+  lithium:{nameZh:'鋰離子電池',nameEn:'Li-ion',voltage:'3.6～3.7 V',recharge:true,color:C.cyan,
+    factsZh:['二次電池｜可以充電','能量密度高，手機與電腦常用','避免高溫、擠壓與破壞'],
+    factsEn:['Secondary | Rechargeable','High energy density, used in tech','Avoid high temp & physical damage']},
+  nimh:{nameZh:'鎳氫電池',nameEn:'Ni-MH',voltage:'1.2 V',recharge:true,color:C.green,
+    factsZh:['二次電池｜可以充電','家用 AA／AAA 充電電池','記憶效應較不明顯'],
+    factsEn:['Secondary | Rechargeable','Household AA/AAA batteries','Less memory effect than Ni-Cd']}
 };
 
 function drawBatteryBody(ctx,info){
   rounded(ctx,95,145,360,330,26,C.deep,info.color,5);
   if(state.battery==='lead'){
     for(let i=0;i<5;i++) rounded(ctx,135+i*58,205,34,130,5,i%2?C.orange:C.purple,C.white,2);
-    label(ctx,'鉛板組＋稀硫酸',275,355,C.white,22);
-    const isChg = state.charge==='charge';
-    mono(ctx,'Pb＋PbO₂＋2H₂SO₄', 275, 395, isChg?C.muted:C.orange, 18);
-    mono(ctx, isChg ? '⟵ 充電' : '放電 ⟶', 275, 425, isChg?C.cyan:C.yellow, 16);
-    mono(ctx,'2PbSO₄＋2H₂O', 275, 455, isChg?C.green:C.muted, 18);
+    label(ctx,tr('鉛板組＋稀硫酸','Lead plates + H₂SO₄'),275,355,C.white,22);
   } else if(state.battery==='lithium'){
     rounded(ctx,135,220,105,170,12,'#244c42',C.green,3); rounded(ctx,310,220,105,170,12,'#443d55',C.purple,3);
-    label(ctx,'正極材料',187,420,C.green,22); label(ctx,'負極材料',362,420,C.purple,22);
+    label(ctx,tr('正極材料','Cathode Material'),187,420,C.green,22); label(ctx,tr('負極材料','Anode Material'),362,420,C.purple,22);
     for(let i=0;i<9;i++){ const u=(performance.now()*.00012+i/9)%1, x=state.charge==='discharge'?245+60*u:305-60*u; ion(ctx,x,260+(i%3)*48,'Li⁺',C.orange); }
   } else {
     rounded(ctx,185,210,180,220,58,'#233f36',C.white,3); rounded(ctx,258,220,34,195,8,C.deep,C.white,2);
-    label(ctx,state.battery==='nimh'?'合金與氫氧化物':'碳棒／鋅系材料',275,455,C.white,22);
+    label(ctx,state.battery==='nimh'?tr('合金與氫氧化物','Alloy & Hydroxide'):tr('碳棒／鋅系材料','Carbon/Zinc Material'),275,455,C.white,22);
   }
-  label(ctx,info.name,275,115,info.color,32); mono(ctx,info.voltage,275,180,info.color,28);
+  label(ctx,tr(info.nameZh,info.nameEn),275,115,info.color,32); mono(ctx,info.voltage,275,180,info.color,28);
 }
 
 function drawTypes(now) {
   const ctx=ctxs.types; if(!ctx) return; clear(ctx); const info=batteryInfo[state.battery];
-  label(ctx,'先分清楚：能不能充電，再比較電壓與用途',500,42,C.yellow,32);
+  
+  let topTitleSize = currentLang === 'en' ? 24 : 30;
+  label(ctx,tr('先分清楚：能不能充電，再比較電壓與用途','First distinguish: Rechargeable or not, then compare voltage/use'),500,42,C.yellow, topTitleSize);
+  
   drawBatteryBody(ctx,info); 
   
-  rounded(ctx,500,92,430,400,24,C.deep,C.line,3);
-  label(ctx,info.recharge?'二次電池｜可重複充電':'一次電池｜不可充電',715,135,info.recharge?C.green:C.orange,28);
-  info.facts.forEach((f,i)=>{ dot(ctx,545,195+i*65,8,info.color); label(ctx,f,575,195+i*65,C.white,24,'left'); });
+  rounded(ctx,500,92,430,360,24,C.deep,C.line,3);
+  
+  let rightTitleSize = currentLang === 'en' ? 20 : 26;
+  label(ctx,info.recharge?tr('二次電池｜可重複充電','Secondary Battery | Rechargeable'):tr('一次電池｜不可充電','Primary Battery | Non-rechargeable'),715,125,info.recharge?C.green:C.orange, rightTitleSize);
+  
+  const facts = currentLang === 'en' ? info.factsEn : info.factsZh;
+  let factSize = currentLang === 'en' ? 18 : 22;
+  facts.forEach((f,i)=>{ dot(ctx,525,170+i*35,6,info.color); label(ctx,f,545,170+i*35,C.white, factSize,'left'); });
   
   const discharge=state.charge==='discharge'; 
-  arrow(ctx,discharge?545:875,385,discharge?875:545,385,discharge?C.yellow:C.cyan,7);
-  label(ctx,discharge?'放電：化學能 → 電能':'充電：電能 → 化學能',715,425,discharge?C.yellow:C.cyan,26);
   
-  if(info.recharge){ 
-    movingDots(ctx,discharge?[[560,355],[860,355]]:[[860,355],[560,355]],5,now*.00015,C.yellow); 
-    if(!discharge) {
-      label(ctx,'⚠️ 外加電源：正極接正極，負極接負極',715,465,C.pink,20);
-    }
+  // 🌟 動態電路圖繪製 (放電 vs 充電)
+  const cx = 715;
+  let cy = 345;
+  rounded(ctx, cx - 115, cy, 230, 40, 8, '#1b4638', C.cyan, 3);
+  mono(ctx, '＋', cx - 90, cy+20, C.orange, 28); mono(ctx, '－', cx + 90, cy+20, C.cyan, 28);
+  
+  line(ctx, [[cx-90,cy], [cx-90,cy-70]], C.white, 6);
+  line(ctx, [[cx+90,cy], [cx+90,cy-70]], C.white, 6);
+  
+  // 🌟 絕對流速參數：保證跑大圈跟跑小圈，電子的速度與間距絕對一模一樣！
+  const baseSpeed = now * 0.05; 
+  
+  if(discharge) {
+    line(ctx, [[cx-90,cy-70], [cx-40,cy-70]], C.white, 6);
+    line(ctx, [[cx+90,cy-70], [cx+40,cy-70]], C.white, 6);
+    rounded(ctx, cx - 40, cy-95, 80, 50, 8, C.panel, C.yellow, 3);
+    label(ctx, tr('電器', 'Load'), cx, cy-70, C.yellow, 22);
+    
+    const ePath = [[cx+90,cy], [cx+90,cy-70], [cx-90,cy-70], [cx-90,cy]];
+    const pLen = pathLength(ePath); 
+    movingDots(ctx, ePath, 5, baseSpeed / pLen, C.yellow);
+    
+    label(ctx, tr('放電：化學能 → 電能', 'Discharge: Chem → Elec'), cx, cy+60, C.yellow, 22);
   } else {
-    label(ctx,'禁止嘗試充電',715,385,C.danger,26);
+    if(info.recharge) {
+      rounded(ctx, cx - 110, cy-120, 220, 50, 8, C.panel, C.cyan, 3);
+      label(ctx, tr('外加直流電源', 'DC Power Supply'), cx, cy-95, C.cyan, 22);
+      mono(ctx, '＋', cx - 90, cy-50, C.orange, 20); mono(ctx, '－', cx + 90, cy-50, C.cyan, 20);
+      
+      const ePath1 = [[cx+90,cy-70], [cx+90,cy]];
+      const ePath2 = [[cx-90,cy], [cx-90,cy-70]];
+      const pLen1 = pathLength(ePath1); 
+      movingDots(ctx, ePath1, 1, baseSpeed / pLen1, C.yellow);
+      movingDots(ctx, ePath2, 1, baseSpeed / pLen1, C.yellow);
+      
+      arrow(ctx, cx + 50, cy+20, cx - 50, cy+20, C.green, 4);
+      
+      label(ctx, tr('充電：電能 → 化學能', 'Charge: Elec → Chem'), cx, cy+60, C.cyan, 20);
+      label(ctx, tr('★ 正極接正極、負極接負極', '★ (+) to (+), (-) to (-)'), cx, cy+85, C.pink, 18);
+    } else {
+      label(ctx, tr('禁止嘗試充電', 'DO NOT RECHARGE'), cx, cy-35, C.danger, 26);
+      ctx.strokeStyle = C.danger; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(cx-30,cy-70); ctx.lineTo(cx+30,cy-10); ctx.moveTo(cx+30,cy-70); ctx.lineTo(cx-30,cy-10); ctx.stroke();
+    }
   }
   
-  rounded(ctx, 130, 505, 740, 70, 16, C.deep, info.color, 3);
-  if(state.battery === 'lead') {
-    const isChg = state.charge === 'charge';
-    ctx.fillStyle = isChg ? C.cyan : C.yellow;
-    ctx.font = `800 24px 'Noto Sans TC',sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(isChg ? '充電：' : '放電：', 165, 540); 
+  // 🌟 單欄解釋區 (置於底部滿版)
+  let boxX = 130, boxY = 475, boxW = 740, boxH = 155;
+  if (state.battery === 'carbon') {
+    rounded(ctx, boxX, boxY, boxW, boxH, 16, C.deep, info.color, 3);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     
-    ctx.fillStyle = C.white;
-    ctx.font = `800 24px 'JetBrains Mono',monospace`;
-    ctx.fillText(isChg ? '2PbSO₄ ＋ 2H₂O ⟶ Pb ＋ PbO₂ ＋ 2H₂SO₄' : 'Pb ＋ PbO₂ ＋ 2H₂SO₄ ⟶ 2PbSO₄ ＋ 2H₂O', 250, 540);
+    ctx.fillStyle = C.pink; ctx.font = `900 22px 'Noto Sans TC',sans-serif`;
+    ctx.fillText(tr('【資優補充】', '【Pro Tip】'), boxX + 20, boxY + 30);
+    
+    ctx.fillStyle = C.cyan; ctx.font = `800 20px 'Noto Sans TC',sans-serif`;
+    let elText = currentLang === 'en' ? 'Electrolyte: NH₄Cl + ZnCl₂' : '電解液：NH₄Cl + ZnCl₂ 糊狀物';
+    ctx.fillText(elText, boxX + 160, boxY + 30);
+    
+    ctx.fillStyle = C.white; ctx.font = `800 20px 'JetBrains Mono', 'Noto Sans TC', sans-serif`;
+    ctx.fillText('(-): Zn ⟶ Zn²⁺ ＋ 2e⁻', boxX + 20, boxY + 75);
+    
+    let eq2Size = currentLang === 'en' ? 18 : 20;
+    ctx.font = `800 ${eq2Size}px 'JetBrains Mono', 'Noto Sans TC', sans-serif`;
+    ctx.fillText('(+): 2MnO₂ ＋ 2NH₄⁺ ＋ 2e⁻ ⟶ Mn₂O₃ ＋ 2NH₃ ＋ H₂O', boxX + 20, boxY + 115);
+
+  } else if (state.battery === 'lead') {
+    rounded(ctx, boxX, boxY, boxW, boxH, 16, C.deep, info.color, 3);
+    const isChg = state.charge === 'charge';
+    
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = isChg ? C.cyan : C.yellow; 
+    ctx.font = `900 24px 'Noto Sans TC',sans-serif`;
+    ctx.fillText(isChg ? tr('充電反應：','Charging Rxn:') : tr('放電反應：','Discharging Rxn:'), boxX + 20, boxY + 50); 
+    
+    ctx.fillStyle = C.white; 
+    ctx.font = `800 22px 'JetBrains Mono',monospace`;
+    ctx.fillText(isChg ? '2PbSO₄ ＋ 2H₂O ⟶ Pb ＋ PbO₂ ＋ 2H₂SO₄' : 'Pb ＋ PbO₂ ＋ 2H₂SO₄ ⟶ 2PbSO₄ ＋ 2H₂O', boxX + 20, boxY + 100);
+    
   } else {
-    label(ctx,'※ 廢電池含有害物質，請務必依規定妥善回收', 500, 540, C.muted, 22);
+    rounded(ctx, boxX, 510, boxW, 70, 16, C.deep, info.color, 3);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    label(ctx,tr('※ 廢電池含有害物質，請務必依規定妥善回收', '※ Waste batteries contain toxins, please recycle properly'), 500, 545, C.muted, 22);
   }
 }
 
 // 頁籤切換
 function setActiveTab(id) {
-  const mainId = id==='tab-bridge'?'tab-cell':id;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===mainId));
-  document.querySelectorAll('[data-unit-subtab]').forEach(b=>b.classList.toggle('active',b.dataset.unitSubtab===id));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
   document.querySelectorAll('.tab-content').forEach(s=>s.classList.toggle('active',s.id===id));
   state.active = id.replace('tab-','');
-  if(id==='tab-cell'){ state.bridge=true; state.bridgeFlow=1; document.querySelectorAll('[data-bridge]').forEach(b=>b.classList.toggle('active',b.dataset.bridge==='on')); }
-  if(id==='tab-bridge') state.bridgeCycleStart=performance.now();
+  if(id==='tab-cell'){ 
+      // 🌟 預設「無鹽橋」降低認知負荷狀態
+      state.bridge=false; 
+      state.cellProgress=0;
+      state.animTime=0;
+      state.cellPlaying=true; 
+      updateCellControls();
+      updateCellView();
+  }
+  updateHistoryView(); updateOriginView(); updateRedoxView(); 
 }
+
 document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>setActiveTab(btn.dataset.tab)));
-document.querySelectorAll('[data-unit-subtab]').forEach(btn=>btn.addEventListener('click',()=>setActiveTab(btn.dataset.unitSubtab)));
 
-// 互動事件綁定
-function updateHistoryView() {
-  const galvani=state.history==='galvani', closed=state.historyClosed;
-  document.querySelectorAll('[data-history]').forEach(b=>b.classList.toggle('active',b.dataset.history===state.history));
-  document.querySelectorAll('[data-history-copy]').forEach(box=>box.classList.toggle('active',box.dataset.historyCopy===state.history));
-  document.getElementById('historyTitle').textContent=galvani?'賈法尼：金屬一接通，蛙腿就抽動':'伏打：兩種金屬與食鹽水濕布重複堆疊';
-  const circuit=document.getElementById('historyCircuit'); circuit.hidden=!galvani; circuit.textContent=closed?'斷開迴路':'接通迴路'; circuit.classList.toggle('active',closed);
-  document.getElementById('historyStatus').textContent=galvani?(closed?'蛙腿是電刺激的偵測者；收縮現象引出了「電從哪裡來」的科學爭論。':'解剖刀與鐵盤未接觸時，沒有電流通過神經，蛙腿不收縮。'):'鋅片、銅片與食鹽水浸濕的布片交替堆疊，就能組成伏打電堆。';
-}
-document.querySelectorAll('[data-history]').forEach(btn=>btn.addEventListener('click',()=>{state.history=btn.dataset.history; state.historyClosed=true; updateHistoryView();}));
-const historyCircBtn = document.getElementById('historyCircuit');
-if(historyCircBtn) historyCircBtn.addEventListener('click',()=>{state.historyClosed=!state.historyClosed; updateHistoryView();});
+// 🌟 鋅銅電池互動按鈕綁定
+const playBtn = document.getElementById('cellPlay');
+if(playBtn) playBtn.addEventListener('click', () => {
+    state.cellPlaying = !state.cellPlaying;
+    updateCellControls();
+});
 
-document.querySelectorAll('[data-metal]').forEach(btn=>btn.addEventListener('click',()=>{state.metal=btn.dataset.metal; document.querySelectorAll('[data-metal]').forEach(b=>b.classList.toggle('active',b===btn)); document.getElementById('originStatus').textContent=state.metal==='different'?'兩種不同金屬浸入電解質並接成閉合迴路，可形成化學電池。':'兩片相同金屬沒有足夠差異，無法維持持續電流。';}));
-document.querySelectorAll('[data-redox]').forEach(btn=>btn.addEventListener('click',()=>{state.redox=btn.dataset.redox; document.querySelectorAll('[data-redox]').forEach(b=>b.classList.toggle('active',b===btn)); const text={oxidation:'氧化：鋅原子失去電子，成為鋅離子。',reduction:'還原：銅離子得到電子，成為銅原子。',both:'鋅失去電子；銅離子得到相同數量的電子。電子不會憑空出現或消失。'}; document.getElementById('redoxStatus').textContent=text[state.redox];}));
+const toggleBridgeBtn = document.getElementById('toggleBridgeBtn');
+if(toggleBridgeBtn) toggleBridgeBtn.addEventListener('click', () => {
+    state.bridge = !state.bridge;
+    state.cellProgress = 0;
+    state.animTime = 0;
+    state.cellPlaying = true;
+    updateCellControls();
+    updateCellView();
+});
 
-const cellRange=document.getElementById('cellProgress');
-if(cellRange){
-  cellRange.addEventListener('input',()=>{state.cellProgress=Number(cellRange.value)/100; state.cellPlaying=false; updateCellControls();});
-  document.querySelectorAll('#cellPlay,#bridgeCanvasPlay').forEach(btn=>btn.addEventListener('click',()=>{state.cellPlaying=!state.cellPlaying; updateCellControls();}));
-  document.getElementById('cellReplay').addEventListener('click',()=>{state.cellProgress=0; state.cellPlaying=true; updateCellControls();});
-}
-function updateCellControls(){
-  if(!cellRange) return;
-  cellRange.value=Math.round(state.cellProgress*100); document.getElementById('cellProgressValue').textContent=`${Math.round(state.cellProgress*100)}%`;
-  document.querySelectorAll('#cellPlay,#bridgeCanvasPlay').forEach(b=>{b.textContent=state.cellPlaying?'暫停':'播放'; b.classList.toggle('active',state.cellPlaying);});
-}
-
-const toggleBridgeBtn = document.getElementById('toggleBridgeAnim');
-if(toggleBridgeBtn){
-  toggleBridgeBtn.addEventListener('click', () => {
-    state.bridgeAnimPlaying = !state.bridgeAnimPlaying;
-    toggleBridgeBtn.textContent = state.bridgeAnimPlaying ? '暫停鹽橋' : '播放鹽橋';
-    toggleBridgeBtn.classList.toggle('active', state.bridgeAnimPlaying);
-  });
-}
-
-document.querySelectorAll('[data-bridge]').forEach(btn=>btn.addEventListener('click',()=>{state.bridge=btn.dataset.bridge==='on'; state.bridgeFlow=1; state.bridgeCharge=0; state.cellProgress=0; state.cellPlaying=true; if(state.bridge)state.bridgeCycleStart=performance.now(); updateCellControls(); document.querySelectorAll('[data-bridge]').forEach(b=>b.classList.toggle('active',b===btn)); document.getElementById('bridgeStatus').textContent=state.bridge?'NO₃⁻由右向左游入鋅杯，K⁺由左向右游入銅杯，持續維持兩杯電中性。':'拔掉鹽橋後，反應進行到第 2 顆電子完成轉移便停止；無法維持電中性，後續反應不能繼續。';}));
-const brRst = document.getElementById('bridgeReset');
-if(brRst) brRst.addEventListener('click',()=>{state.bridge=true; state.bridgeFlow=1; state.bridgeCharge=0; state.bridgeCycleStart=performance.now(); state.cellProgress=0; state.cellPlaying=true; updateCellControls(); document.querySelectorAll('[data-bridge]').forEach(b=>b.classList.toggle('active',b.dataset.bridge==='on')); document.getElementById('bridgeStatus').textContent='NO₃⁻由右向左游入鋅杯，K⁺由左向右游入銅杯，持續維持兩杯電中性。';});
+const cellReplayBtn = document.getElementById('cellReplay');
+if(cellReplayBtn) cellReplayBtn.addEventListener('click', () => {
+    state.cellProgress = 0;
+    state.animTime = 0;
+    state.cellPlaying = true;
+    updateCellControls();
+});
 
 function updateChargeButtons(){
   const info=batteryInfo[state.battery],chargeBtn=document.getElementById('chargeButton'); 
@@ -766,26 +925,63 @@ function updateChargeButtons(){
   let statusText = '';
   if (info.recharge) {
     if (state.charge === 'discharge') {
-      statusText = `${info.name}可重複充電；放電時把儲存的化學能轉換成電能。`;
+      statusText = tr(`${info.nameZh}可重複充電；放電時把儲存的化學能轉換成電能。`, `${info.nameEn} is rechargeable; converts chem energy to electric energy during discharge.`);
     } else {
-      statusText = `${info.name}充電時，必須「正極接正極、負極接負極」，強制推動反向化學反應。`;
+      statusText = tr(`${info.nameZh}充電時，必須「正極接正極、負極接負極」，強制推動反向化學反應。`, `Charging ${info.nameEn} requires connecting (+) to (+) and (-) to (-), forcing reverse chemical reaction.`);
     }
   } else {
-    statusText = `${info.name}是一次電池，不可嘗試充電；使用後應交給廢電池回收。`;
+    statusText = tr(`${info.nameZh}是一次電池，不可嘗試充電；使用後應交給廢電池回收。`, `${info.nameEn} is a primary battery, DO NOT recharge; recycle properly after use.`);
   }
   document.getElementById('typesStatus').textContent = statusText;
 }
 document.querySelectorAll('[data-battery]').forEach(btn=>btn.addEventListener('click',()=>{state.battery=btn.dataset.battery; document.querySelectorAll('[data-battery]').forEach(b=>b.classList.toggle('active',b===btn)); updateChargeButtons();}));
 document.querySelectorAll('[data-charge]').forEach(btn=>btn.addEventListener('click',()=>{if(btn.disabled)return; state.charge=btn.dataset.charge; updateChargeButtons();}));
 
+// 互動事件綁定
+function updateHistoryView() {
+  const galvani=state.history==='galvani', closed=state.historyClosed;
+  document.querySelectorAll('[data-history]').forEach(b=>b.classList.toggle('active',b.dataset.history===state.history));
+  document.querySelectorAll('[data-history-copy]').forEach(box=>box.classList.toggle('active',box.dataset.historyCopy===state.history));
+  document.getElementById('historyTitle').textContent=galvani?tr('賈法尼：金屬一接通，蛙腿就抽動','Galvani: Connect the Metals, Frog Leg Twitches'):tr('伏打：兩種金屬與食鹽水濕布重複堆疊','Volta: Stacked Metals & Brine Cloth');
+  const circuit=document.getElementById('historyCircuit'); circuit.hidden=!galvani; circuit.textContent=closed?tr('斷開迴路','Open Circuit'):tr('接通迴路','Close Circuit'); circuit.classList.toggle('active',closed);
+  document.getElementById('historyStatus').textContent=galvani?(closed?tr('蛙腿是電刺激的偵測者；收縮現象引出了「電從哪裡來」的科學爭論。','The leg is a detector; the twitch sparked the debate on where electricity comes from.'):tr('解剖刀與鐵盤未接觸時，沒有電流通過神經，蛙腿不收縮。','Without contact, no current flows, leg does not twitch.')):tr('鋅片、銅片與食鹽水浸濕的布片交替堆疊，就能組成伏打電堆。','Stacking Zn, Cu, and brine cloth forms a voltaic pile.');
+}
+document.querySelectorAll('[data-history]').forEach(btn=>btn.addEventListener('click',()=>{state.history=btn.dataset.history; state.historyClosed=true; updateHistoryView();}));
+const historyCircBtn = document.getElementById('historyCircuit');
+if(historyCircBtn) historyCircBtn.addEventListener('click',()=>{state.historyClosed=!state.historyClosed; updateHistoryView();});
+
+function updateOriginView() {
+  document.getElementById('originStatus').textContent=state.metal==='different'?tr('兩種不同金屬浸入電解質並接成閉合迴路，可形成化學電池。','Two different metals in electrolyte in a closed circuit form a battery.'):tr('兩片相同金屬沒有足夠差異，無法維持持續電流。','Two identical metals lack potential difference to maintain current.');
+}
+document.querySelectorAll('[data-metal]').forEach(btn=>btn.addEventListener('click',()=>{state.metal=btn.dataset.metal; document.querySelectorAll('[data-metal]').forEach(b=>b.classList.toggle('active',b===btn)); updateOriginView();}));
+
+function updateRedoxView() {
+  const textZh={oxidation:'氧化：鋅原子失去電子，成為鋅離子。',reduction:'還原：銅離子得到電子，成為銅原子。',both:'鋅失去電子；銅離子得到相同數量的電子。電子不會憑空出現或消失。'};
+  const textEn={oxidation:'Oxidation: Zn atom loses electrons to become Zn²⁺.',reduction:'Reduction: Cu²⁺ gains electrons to become Cu atom.',both:'Zn loses e⁻; Cu²⁺ gains the same amount. Electrons do not vanish.'};
+  document.getElementById('redoxStatus').textContent=tr(textZh[state.redox], textEn[state.redox]);
+}
+document.querySelectorAll('[data-redox]').forEach(btn=>btn.addEventListener('click',()=>{state.redox=btn.dataset.redox; document.querySelectorAll('[data-redox]').forEach(b=>b.classList.toggle('active',b===btn)); updateRedoxView();}));
+
 // 動畫主迴圈
 function tick(now) {
   const dt = Math.max(0, Math.min(50, now - last || 16));
   last = now;
   try {
-    if(state.cellPlaying){const stopAt=state.bridge?1:2/REACTION_STEPS; state.cellProgress+=dt/CELL_REACTION_DURATION_MS; if(state.cellProgress>=stopAt){state.cellProgress=stopAt; state.cellPlaying=false;} updateCellControls();}
-    if(state.bridge){state.bridgeFlow+=(1-state.bridgeFlow)*Math.min(1,dt*.004); state.bridgeCharge=Math.max(0,state.bridgeCharge-dt*.002);}
-    const fn={history:drawHistory,origin:drawOrigin,redox:drawRedox,cell:drawCell,bridge:drawBridge,types:drawTypes}[state.active];
+    if (state.active === 'cell') {
+        const isConnected = state.bridge && state.cellProgress < 1;
+        if (state.cellPlaying && (isConnected || (!state.bridge && state.cellProgress < 2/REACTION_STEPS))) {
+            state.animTime += dt;
+            state.cellProgress += dt / CELL_REACTION_DURATION_MS;
+            
+            const stopAt = state.bridge ? 1 : 2/REACTION_STEPS;
+            if (state.cellProgress >= stopAt) {
+                state.cellProgress = stopAt;
+                state.cellPlaying = false;
+                updateCellControls();
+            }
+        }
+    } 
+    const fn={history:drawHistory,origin:drawOrigin,redox:drawRedox,cell:drawCell,types:drawTypes}[state.active];
     if(fn) fn(now);
   } catch(e) { console.error("Animation Error:", e); }
   raf = requestAnimationFrame(tick);
@@ -807,11 +1003,11 @@ document.querySelectorAll('.practice-box').forEach(box => {
 function safeStart() {
   const canvas = canvases[state.active];
   if (!canvas || canvas.offsetWidth <= 0) { setTimeout(safeStart, 80); return; }
-  updateHistoryView(); updateCellControls(); updateChargeButtons();
+  updateHistoryView(); updateCellControls(); updateChargeButtons(); updateCellView();
   cancelAnimationFrame(raf); last = performance.now(); raf = requestAnimationFrame(tick);
 }
 
-setTimeout(safeStart, 100);
+setTimeout(()=>{setLang('zh'); safeStart();}, 100);
 window.addEventListener('resize', () => setTimeout(safeStart, 100));
 </script>
 </body>
