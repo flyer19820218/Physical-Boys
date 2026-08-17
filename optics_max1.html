@@ -1,403 +1,497 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>平面鏡對稱映射與盲區邊界終極模擬器 (100分大師定稿版)</title>
-    <style>
-        :root {
-            --bg-color: #0b0f19;
-            --panel-bg: #151c2c;
-            --text-color: #f8fafc;
-            --accent-blue: #38bdf8;
-            --accent-green: #4ade80;
-            --accent-red: #f87171;
-            --accent-yellow: #facc15;
-            --border-color: #2a354d;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; min-height: 100vh; overflow-y: auto; }
-        
-        /* 導覽列 */
-        .navbar { background-color: #070a12; border-bottom: 2px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px; z-index: 20; flex-shrink: 0; position: sticky; top: 0; }
-        .nav-title { font-weight: bold; font-size: 1.1rem; color: var(--accent-yellow); display: flex; align-items: center; gap: 8px; }
-        .tab-group { display: flex; gap: 6px; height: 100%; }
-        .tab-btn { background: transparent; border: none; color: #94a3b8; padding: 0 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-        .tab-btn:hover { color: var(--text-color); background: rgba(255,255,255,0.05); }
-        .tab-btn.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); background: rgba(56, 189, 248, 0.08); }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title data-zh="雙平面鏡成像探究與作圖探討" data-en="Dual Plane Mirror Imaging Inquiry">雙平面鏡成像探究與作圖探討</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --panel-bg: #151c2c;
+      --text-color: #f8fafc;
+      --accent-blue: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-red: #f87171;
+      --accent-yellow: #facc15;
+      --border-color: #2a354d;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; font-size: 20px; }
 
-        /* 主區塊 (上方互動區) */
-        .main-content { display: flex; position: relative; height: calc(100vh - 56px); flex-shrink: 0; }
-        .tab-pane { display: none; width: 100%; height: 100%; }
-        .tab-pane.active { display: flex; }
+    /* 🌟 規範：右上角橫向懸浮雙語切換器 */
+    .floating-lang-container {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 2px solid var(--accent-blue);
+      border-radius: 12px;
+      background: rgba(11, 15, 25, 0.95);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(56, 189, 248, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .lang-label { color: var(--accent-blue); font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; user-select: none; margin-left: 4px; }
+    .lang-options { display: flex; flex-direction: row; gap: 4px; }
+    .lang-pill {
+      min-width: 60px;
+      min-height: 48px;
+      padding: 6px 12px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      background: transparent;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      touch-action: manipulation;
+    }
+    .lang-pill.active { background: var(--accent-blue) !important; color: #0b0f19 !important; border-color: var(--accent-blue) !important; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
 
-        /* ==================== 新增：分頁一專屬 CSS (表格與迷思卡片) ==================== */
-        .myth-container { width: 100%; height: 100%; padding: 24px 36px; overflow-y: auto; background: radial-gradient(circle at top, #151c2c 0%, #0b0f19 80%); display: flex; flex-direction: column; gap: 24px; }
-        .myth-header { display: flex; flex-direction: column; gap: 10px; background: #131c2e; border: 2px solid var(--accent-red); padding: 20px 28px; border-radius: 12px; box-shadow: 0 8px 30px rgba(248, 113, 113, 0.15); }
-        .myth-header h2 { font-size: 1.4rem; color: var(--accent-yellow); display: flex; align-items: center; gap: 10px; }
-        .myth-header p { font-size: 0.95rem; color: #cbd5e1; line-height: 1.6; }
-        .myth-header code { background: #070a12; color: var(--accent-red); padding: 2px 8px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 1.05rem; }
-        
-        .table-box { background: #0b0f19; border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .table-title { background: #151c2c; padding: 14px 20px; font-size: 1.05rem; font-weight: bold; color: var(--accent-blue); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem; }
-        th { background: #0e1626; color: #94a3b8; font-weight: 600; padding: 12px 10px; border-bottom: 2px solid var(--border-color); }
-        td { padding: 12px 10px; border-bottom: 1px solid #151c2c; color: var(--text-color); }
-        tr:hover { background: rgba(56, 189, 248, 0.05); }
-        .col-deg { font-weight: bold; color: var(--accent-yellow); font-family: monospace; font-size: 1rem; }
-        .col-type { font-size: 0.82rem; color: #cbd5e1; text-align: left; padding-left: 16px; }
-        .col-center { font-weight: bold; color: #4ade80; font-family: monospace; font-size: 1.05rem; }
-        .col-offset { font-weight: bold; color: var(--accent-red); font-family: monospace; font-size: 1.05rem; }
-        .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .tag.even { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid #4ade80; }
-        .tag.odd { background: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid #f87171; }
-        .tag.diff { background: var(--accent-yellow); color: #0b0f19; font-weight: 900; }
+    /* 導覽列 */
+    .navbar { background-color: #070a12; border-bottom: 2px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 20px 24px 0; z-index: 20; flex-shrink: 0; position: sticky; top: 0; }
+    .nav-title { font-weight: 900; font-size: 32px; color: var(--accent-yellow); text-shadow: 0 4px 12px rgba(250, 204, 21, 0.2); text-align: center; }
+    .tab-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; }
+    .tab-btn { background: transparent; border: none; color: #94a3b8; padding: 12px 20px; font-size: 20px; font-weight: 700; cursor: pointer; border-bottom: 4px solid transparent; transition: all 0.2s; display: flex; align-items: center; gap: 8px; touch-action: manipulation; }
+    .tab-btn:hover { color: var(--text-color); background: rgba(255,255,255,0.05); }
+    .tab-btn.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); background: rgba(56, 189, 248, 0.08); }
 
-        /* 側邊欄 */
-        .sidebar { width: 430px; background-color: var(--panel-bg); padding: 16px; display: flex; flex-direction: column; gap: 12px; border-right: 1px solid var(--border-color); overflow-y: auto; z-index: 10; flex-shrink: 0; }
-        .control-group { display: flex; flex-direction: column; gap: 6px; background: #0b0f19; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .control-group label { font-size: 0.88rem; font-weight: 600; display: flex; justify-content: space-between; color: #cbd5e1; }
-        .control-group span.val { color: var(--accent-yellow); font-family: monospace; font-size: 1.05rem; }
-        input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--accent-blue); }
-        .checkbox-group { display: flex; align-items: center; gap: 10px; font-size: 0.88rem; cursor: pointer; color: #cbd5e1; }
-        .checkbox-group input { cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent-blue); }
-        
-        /* 預設按鈕 */
-        .preset-container { display: flex; gap: 6px; }
-        .preset-btn { flex: 1; padding: 8px 4px; background: #151c2c; border: 1px solid var(--accent-blue); color: var(--accent-blue); border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; transition: all 0.2s; text-align: center; }
-        .preset-btn:hover { background: var(--accent-blue); color: #0b0f19; }
-        .preset-btn.red { border-color: var(--accent-red); color: var(--accent-red); }
-        .preset-btn.red:hover { background: var(--accent-red); color: #0b0f19; }
+    /* 主區塊佈局 */
+    .main-content { display: flex; position: relative; width: 100%; max-width: 1080px; margin: 0 auto; flex-grow: 1; min-height: calc(100vh - 120px); }
+    .tab-pane { display: none; width: 100%; height: 100%; }
+    .tab-pane.active { display: flex; }
 
-        /* 統計 */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .stat-card { background: #0b0f19; padding: 8px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color); }
-        .stat-card .num { font-size: 1.3rem; font-weight: bold; font-family: monospace; }
-        .stat-card .label { font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
-        .seq-a { color: var(--accent-blue); }
-        .seq-b { color: var(--accent-green); }
-        .total-stat { grid-column: span 2; background: linear-gradient(135deg, #151c2c, #0b0f19); border-color: var(--accent-yellow); }
-        .total-stat .num { color: var(--accent-yellow); font-size: 1.5rem; }
-        
-        .log-box { flex-grow: 1; background: #0b0f19; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 0.78rem; overflow-y: auto; border: 1px solid var(--border-color); line-height: 1.5; }
-        .log-title { font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px; border-bottom: 1px dashed var(--border-color); padding-bottom: 4px; }
-        .log-entry { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #151c2c; }
-        .log-entry.fail { color: var(--accent-red); font-weight: bold; background: rgba(248, 113, 113, 0.1); padding: 4px; border-radius: 4px; }
-        
-        .info-card { background: #0b0f19; border-left: 4px solid var(--accent-blue); padding: 10px 12px; border-radius: 4px; font-size: 0.83rem; line-height: 1.5; color: #cbd5e1; }
-        .info-card.red { border-left-color: var(--accent-red); background: rgba(248, 113, 113, 0.08); }
-        .info-card h4 { color: var(--text-color); margin-bottom: 4px; font-size: 0.9rem; }
+    /* ==================== 分頁一：迷思釐清與分析表 ==================== */
+    .myth-container { width: 100%; padding: 32px 24px; display: flex; flex-direction: column; gap: 24px; }
+    .myth-header { display: flex; flex-direction: column; gap: 12px; background: #131c2e; border: 2px solid var(--accent-red); padding: 24px 32px; border-radius: 12px; box-shadow: 0 8px 30px rgba(248, 113, 113, 0.15); }
+    .myth-header h2 { font-size: 28px; color: var(--accent-yellow); display: flex; align-items: center; gap: 10px; font-weight: 900; margin: 0; }
+    .myth-header p { font-size: 20px; color: #cbd5e1; line-height: 1.8; margin: 0; }
+    
+    .table-box { background: #0b0f19; border: 2px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; }
+    .table-title { background: #151c2c; padding: 18px 24px; font-size: 22px; font-weight: 900; color: var(--accent-blue); border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .table-title span:last-child { font-size: 18px; color: #94a3b8; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; text-align: center; font-size: 20px; }
+    th { background: #0e1626; color: #94a3b8; font-weight: 700; padding: 16px 12px; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    td { padding: 16px 12px; border-bottom: 1px solid #151c2c; color: var(--text-color); }
+    tr:hover { background: rgba(56, 189, 248, 0.08); }
+    .col-deg { font-weight: bold; color: var(--accent-yellow); font-family: 'JetBrains Mono', monospace; font-size: 22px; }
+    .col-type { color: #cbd5e1; text-align: left; padding-left: 20px; }
+    .col-center { font-weight: bold; color: #4ade80; font-family: 'JetBrains Mono', monospace; font-size: 22px; }
+    .col-offset { font-weight: bold; color: var(--accent-red); font-family: 'JetBrains Mono', monospace; font-size: 22px; }
+    
+    .tag { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 18px; font-weight: 900; white-space: nowrap; }
+    .tag.even { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid #4ade80; }
+    .tag.odd { background: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid #f87171; }
+    .tag.diff { background: var(--accent-yellow); color: #0b0f19; }
 
-        /* 接力步驟卡片 */
-        .step-list { display: flex; flex-direction: column; gap: 4px; background: #070a12; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 4px; max-height: 160px; overflow-y: auto; }
-        .step-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; padding: 4px 6px; border-radius: 4px; }
-        .step-item.alive { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
-        .step-item.dead { background: rgba(248, 113, 113, 0.15); color: #f87171; font-weight: bold; border: 1px dashed #f87171; }
+    /* ==================== 模擬器共通佈局 (Sidebar + Canvas) ==================== */
+    .sidebar { width: 440px; background-color: var(--panel-bg); padding: 16px; display: flex; flex-direction: column; gap: 10px; border-right: 2px solid var(--border-color); overflow-y: auto; z-index: 10; flex-shrink: 0; order: 1; }
+    .canvas-container { flex-grow: 1; position: relative; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, #151c2c 0%, #0b0f19 75%); padding: 16px; order: 2; }
+    
+    /* 🌟 SVG 防禦等比縮放 */
+    canvas { width: 100%; height: auto; aspect-ratio: 1 / 1; box-shadow: 0 0 40px rgba(0,0,0,0.6); max-width: 600px; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.1); }
 
-        /* 畫布 */
-        .canvas-container { flex-grow: 1; position: relative; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, #151c2c 0%, #0b0f19 75%); }
-        canvas { box-shadow: 0 0 40px rgba(0,0,0,0.6); }
-        
-        /* 圖例 */
-        .legend { position: absolute; bottom: 16px; right: 16px; background: rgba(11, 15, 25, 0.9); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.78rem; display: flex; flex-direction: column; gap: 6px; backdrop-filter: blur(4px); pointer-events: none; z-index: 5; }
-        .legend-item { display: flex; align-items: center; gap: 8px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .control-group { display: flex; flex-direction: column; gap: 4px; background: #0b0f19; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border-color); }
+    .control-group label { font-size: 20px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; color: #cbd5e1; }
+    .control-group span.val { color: var(--accent-yellow); font-family: 'JetBrains Mono', monospace; font-size: 22px; }
+    input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--accent-blue); height: 36px; margin: 0; touch-action: manipulation; }
+    
+    .checkbox-container { display: flex; flex-wrap: wrap; gap: 12px; background: #0b0f19; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border-color); }
+    .checkbox-group { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: bold; cursor: pointer; color: #cbd5e1; touch-action: manipulation; }
+    .checkbox-group input { cursor: pointer; width: 24px; height: 24px; accent-color: var(--accent-blue); margin: 0; }
+    
+    .preset-container { display: flex; gap: 8px; flex-wrap: wrap; }
+    .preset-btn { flex: 1; min-width: 110px; padding: 8px; min-height: 48px; background: #151c2c; border: 2px solid var(--accent-blue); color: var(--accent-blue); border-radius: 8px; font-size: 20px; font-weight: 900; cursor: pointer; transition: all 0.2s; text-align: center; line-height: 1.4; touch-action: manipulation; }
+    .preset-btn:hover { background: var(--accent-blue); color: #0b0f19; }
+    .preset-btn.red { border-color: var(--accent-red); color: var(--accent-red); }
+    .preset-btn.red:hover { background: var(--accent-red); color: #0b0f19; }
 
-        /* ==================== 👑 最下方：大師黑板極簡二式區塊 ==================== */
-        .formula-section { background-color: #070a12; border-top: 2px solid var(--border-color); padding: 36px 48px; z-index: 10; }
-        .formula-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; }
-        .formula-header h2 { font-size: 1.35rem; color: var(--accent-yellow); font-weight: 800; letter-spacing: 0.5px; }
-        .formula-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        .formula-card { background: #151c2c; border: 1px solid var(--border-color); border-radius: 10px; padding: 22px; display: flex; flex-direction: column; gap: 14px; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .formula-card::before { content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: var(--accent-blue); }
-        .formula-card:nth-child(2)::before { background: var(--accent-red); }
-        .formula-card h3 { font-size: 1.05rem; color: var(--text-color); display: flex; align-items: center; gap: 8px; font-weight: bold; }
-        .formula-box { background: #0b0f19; padding: 16px; border-radius: 8px; font-family: 'Courier New', Courier, monospace; font-size: 1.25rem; color: var(--accent-yellow); border: 2px dashed var(--accent-yellow); text-align: center; font-weight: bold; letter-spacing: 1px; }
-        .formula-desc { font-size: 0.9rem; color: #cbd5e1; line-height: 1.7; }
-        .formula-desc span.hl { color: var(--accent-yellow); font-weight: bold; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+    .stat-card { background: #0b0f19; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color); }
+    .stat-card .num { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+    .stat-card .label { font-size: 18px; color: #94a3b8; margin-top: 4px; font-weight: bold; }
+    .seq-a { color: var(--accent-blue); }
+    .seq-b { color: var(--accent-green); }
+    .total-stat { grid-column: span 2; background: linear-gradient(135deg, #151c2c, #0b0f19); border-color: var(--accent-yellow); }
+    .total-stat .num { color: var(--accent-yellow); font-size: 36px; }
+    
+    .log-box { flex-grow: 1; background: #0b0f19; border-radius: 8px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 18px; overflow-y: auto; border: 1px solid var(--border-color); line-height: 1.5; min-height: 120px; max-height: 250px; }
+    .log-title { font-size: 18px; font-family: 'Noto Sans TC', sans-serif; font-weight: bold; color: #94a3b8; margin-bottom: 8px; border-bottom: 2px dashed var(--border-color); padding-bottom: 6px; }
+    .log-entry { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #151c2c; }
+    .log-entry.fail { color: var(--accent-red); font-weight: bold; background: rgba(248, 113, 113, 0.1); padding: 8px; border-radius: 6px; }
+    
+    .info-card { background: #0b0f19; border-left: 6px solid var(--accent-blue); padding: 12px 16px; border-radius: 6px; font-size: 20px; line-height: 1.6; color: #cbd5e1; font-weight: bold; }
+    .info-card.red { border-left-color: var(--accent-red); background: rgba(248, 113, 113, 0.08); }
+    .info-card.yellow { border-left-color: var(--accent-yellow); background: rgba(250, 204, 21, 0.08); }
+    .info-card h4 { color: var(--text-color); margin: 0 0 6px 0; font-size: 22px; font-weight: 900; }
+
+    .step-list { display: flex; flex-direction: column; gap: 4px; background: #070a12; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 4px; max-height: 180px; overflow-y: auto; }
+    .step-item { display: flex; justify-content: space-between; align-items: center; font-size: 18px; padding: 6px 10px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-weight: bold; }
+    .step-item.alive { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+    .step-item.dead { background: rgba(248, 113, 113, 0.15); color: #f87171; border: 2px dashed #f87171; }
+
+    /* 圖例 */
+    .legend { position: absolute; bottom: 16px; right: 16px; background: rgba(11, 15, 25, 0.95); padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border-color); font-size: 18px; font-weight: bold; display: flex; flex-direction: column; gap: 8px; backdrop-filter: blur(6px); pointer-events: none; z-index: 5; }
+    .legend-item { display: flex; align-items: center; gap: 10px; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+    /* ==================== 👑 最下方：公式區塊 ==================== */
+    .formula-section { width: 100%; max-width: 1080px; margin: 0 auto; background-color: #070a12; border-top: 2px solid var(--border-color); padding: 40px 24px; z-index: 10; }
+    .formula-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; border-bottom: 2px solid var(--border-color); padding-bottom: 16px; }
+    .formula-header h2 { font-size: 28px; color: var(--accent-yellow); font-weight: 900; letter-spacing: 1px; margin: 0; }
+    .formula-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    
+    .formula-card { background: #151c2c; border: 2px solid var(--border-color); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .formula-card::before { content: ''; position: absolute; top: 0; left: 0; width: 8px; height: 100%; background: var(--accent-blue); }
+    .formula-card:nth-child(2)::before { background: var(--accent-red); }
+    .formula-card h3 { font-size: 22px; color: var(--text-color); margin: 0; display: flex; align-items: center; gap: 10px; font-weight: 900; }
+    
+    .formula-box { background: #0b0f19; padding: 20px; border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 26px; color: var(--accent-yellow); border: 3px dashed var(--accent-yellow); text-align: center; font-weight: 900; letter-spacing: 2px; }
+    .formula-desc { font-size: 20px; color: #cbd5e1; line-height: 1.8; margin: 0; }
+    .formula-desc span.hl { color: var(--accent-yellow); font-weight: bold; }
+    
+    .banner-card { grid-column: span 2; background: linear-gradient(135deg, #131c2e, #0b0f19); border: 2px solid var(--accent-green); border-radius: 12px; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .banner-title { font-size: 24px; font-weight: 900; color: var(--accent-green); display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+    .banner-text { font-size: 20px; color: #94a3b8; line-height: 1.6; font-weight: bold; margin: 0; }
+
+    /* 垂直分數寫法 */
+    .math-eq { display: inline-flex; align-items: center; vertical-align: middle; gap: 6px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--accent-yellow); }
+    .fraction { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 2px; }
+    .fraction .num { border-bottom: 2px solid currentColor; padding: 2px 4px; line-height: 1.2; }
+    .fraction .den { padding: 2px 4px; line-height: 1.2; }
+    
+    @media (max-width: 950px) {
+        .floating-lang-container { top: 8px; right: 8px; padding: 6px 8px; }
+        .lang-label { display: none; }
+        .navbar { padding: 12px; gap: 12px; height: auto; }
+        .nav-title { font-size: 24px; }
+        .tab-group { padding-right: 0; flex-wrap: wrap; justify-content: center; }
+        .tab-btn { padding: 12px 16px; font-size: 20px; }
         
-        .banner-card { grid-column: span 2; background: linear-gradient(135deg, #131c2e, #0b0f19); border: 1px solid var(--accent-green); border-radius: 10px; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-        .banner-title { font-size: 1.05rem; font-weight: bold; color: var(--accent-green); display: flex; align-items: center; gap: 10px; white-space: nowrap; }
-        .banner-text { font-size: 0.88rem; color: #94a3b8; line-height: 1.5; }
+        .main-content { flex-direction: column; height: auto; }
+        .sidebar { order: 2; width: 100%; border-right: none; border-top: 2px solid var(--border-color); }
+        .canvas-container { order: 1; padding: 16px; }
         
-        @media (max-width: 950px) {
-            body { height: auto; overflow: auto; }
-            .main-content { flex-direction: column; height: auto; }
-            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); }
-            .canvas-container { height: 550px; }
-            .formula-section { padding: 24px 20px; }
-            .formula-grid { grid-template-columns: 1fr; }
-            .banner-card { grid-column: span 1; flex-direction: column; text-align: center; }
-            .myth-container { padding: 16px; }
-        }
-    </style>
+        canvas { max-width: 100%; }
+        .formula-grid { grid-template-columns: 1fr; }
+        .banner-card { grid-column: span 1; flex-direction: column; text-align: center; }
+        .table-title { flex-direction: column; align-items: flex-start; }
+        th, td { font-size: 18px; padding: 12px 8px; }
+    }
+  </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="nav-title">👑 平面鏡對稱映射與盲區邊界終極模擬器 (100分大師定稿版)</div>
-        <div class="tab-group">
-            <button class="tab-btn active" onclick="switchTab('tab0', this)">
-                <span>💥</span> 分頁一：破除迷思與花式大表
-            </button>
-            <button class="tab-btn" onclick="switchTab('tab1', this)">
-                <span>⚖️</span> 分頁二：360° 嚴格對稱映射
-            </button>
-            <button class="tab-btn" onclick="switchTab('tab2', this)">
-                <span>🚨</span> 分頁三：盲區邊界與懸崖圖解
-            </button>
-        </div>
-    </nav>
-
-    <!-- 主互動區域 -->
-    <div class="main-content">
-        <!-- ==================== 👑 新增的分頁一：破除公式迷思與花式大表 ==================== -->
-        <div id="tab0" class="tab-pane active">
-            <div class="myth-container">
-                <div class="myth-header">
-                    <h2><span>🚫</span> 破除參考書迷思：虛像數目絕對不是「單純的公式解」！</h2>
-                    <p>
-                        傳統參考書和補習班常叫學生死背高斯取整數公式：<code>N = [360°/θ]</code>（偶數不變，奇數減一或視位置而定）。<br>
-                        但這完全忽略了幾何光學的空間本質！請看下方 30°～90° 由精密物理計算機算出的「花式真實殘酷大表」。<br>
-                        你會發現：<b>當物體從正中央向旁偏離時，只要超過臨界餘裕，最後一個像就會踩碰到 180° 超級結界而陣亡，總像數直接「減 1」！</b><br>
-                        <span style="color: var(--accent-yellow);">👉 想知道為什麼會減一嗎？請點擊上方【分頁二】與【分頁三】，看大師親自演繹的光學真相！</span>
-                    </p>
-                </div>
-
-                <div class="table-box">
-                    <div class="table-title">
-                        <span>📊 30° ～ 90° 平面鏡成像「正中央 vs. 極端偏離」花式殘酷對比表</span>
-                        <span style="font-size: 0.85rem; color: #94a3b8;">💡 規律鐵證：極端偏離一律踩線陣亡，<b>「反正就是減 1 嘛！」</b></span>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>鏡面夾角 (θ)</th>
-                                <th>角度結構分類</th>
-                                <th>正中央成像數 (Δ = 0°)</th>
-                                <th>極端偏離成像數 (踩線陣亡)</th>
-                                <th>物理殘酷真相 (變化結果)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="col-deg">30°</td>
-                                <td class="col-type">整除角 (360÷30 = 12 偶數)</td>
-                                <td class="col-center"><span class="tag even">11 個像</span> (含重合)</td>
-                                <td class="col-offset"><span class="tag odd">11 個像</span></td>
-                                <td>對稱重合解離，但在盲區陣亡抵消 (維持 11)</td>
-                            </tr>
-                            <tr style="background: rgba(248, 113, 113, 0.06);">
-                                <td class="col-deg">31°</td>
-                                <td class="col-type" style="color:var(--accent-yellow); font-weight:bold;">經典臨界角 (餘裕僅 9.5°)</td>
-                                <td class="col-center"><span class="tag even">12 個像</span> (全數存活)</td>
-                                <td class="col-offset"><span class="tag odd">11 個像</span></td>
-                                <td><span class="tag diff">觸碰到 180° 結界！直接減 1</span></td>
-                            </tr>
-                            <tr>
-                                <td class="col-deg">35°</td>
-                                <td class="col-type">非整除奇角 (360÷35 = 10.28)</td>
-                                <td class="col-center"><span class="tag even">10 個像</span> (餘裕 22.5°)</td>
-                                <td class="col-offset"><span class="tag odd">9 個像</span></td>
-                                <td><span class="tag diff">觸碰到 180° 結界！直接減 1</span></td>
-                            </tr>
-                            <tr>
-                                <td class="col-deg">40°</td>
-                                <td class="col-type">整除角 (360÷40 = 9 奇數)</td>
-                                <td class="col-center"><span class="tag even">8 個像</span> (末像重合)</td>
-                                <td class="col-offset"><span class="tag odd">8 個像</span></td>
-                                <td>解離與陣亡同步發生 (維持 8)</td>
-                            </tr>
-                            <tr>
-                                <td class="col-deg">45°</td>
-                                <td class="col-type">整除角 (360÷45 = 8 偶數)</td>
-                                <td class="col-center"><span class="tag even">7 個像</span> (含重合)</td>
-                                <td class="col-offset"><span class="tag odd">7 個像</span></td>
-                                <td>對稱重合解離與陣亡抵消 (維持 7)</td>
-                            </tr>
-                            <tr style="background: rgba(248, 113, 113, 0.06);">
-                                <td class="col-deg">50°</td>
-                                <td class="col-type" style="color:var(--accent-yellow); font-weight:bold;">非整除偶角 (360÷50 = 7.2)</td>
-                                <td class="col-center"><span class="tag even">8 個像</span> (餘裕 5.0° 極小!)</td>
-                                <td class="col-offset"><span class="tag odd">7 個像</span></td>
-                                <td><span class="tag diff">觸碰到 180° 結界！直接減 1</span></td>
-                            </tr>
-                            <tr>
-                                <td class="col-deg">60°</td>
-                                <td class="col-type">整除角 (360÷60 = 6 偶數)</td>
-                                <td class="col-center"><span class="tag even">5 個像</span> (含重合)</td>
-                                <td class="col-offset"><span class="tag odd">5 個像</span></td>
-                                <td>對稱重合解離與陣亡抵消 (維持 5)</td>
-                            </tr>
-                            <tr style="background: rgba(248, 113, 113, 0.06);">
-                                <td class="col-deg">70°</td>
-                                <td class="col-type" style="color:var(--accent-yellow); font-weight:bold;">非整除角 (360÷70 = 5.14)</td>
-                                <td class="col-center"><span class="tag even">6 個像</span> (餘裕 5.0° 極小!)</td>
-                                <td class="col-offset"><span class="tag odd">5 個像</span></td>
-                                <td><span class="tag diff">觸碰到 180° 結界！直接減 1</span></td>
-                            </tr>
-                            <tr>
-                                <td class="col-deg">72°</td>
-                                <td class="col-type">整除角 (360÷72 = 5 奇數)</td>
-                                <td class="col-center"><span class="tag even">4 個像</span> (末像重合)</td>
-                                <td class="col-offset"><span class="tag odd">4 個像</span></td>
-                                <td>解離與陣亡同步發生 (維持 4)</td>
-                            </tr>
-                            <tr>
-                                <td class="col-deg">80°</td>
-                                <td class="col-type">非整除角 (360÷80 = 4.5)</td>
-                                <td class="col-center"><span class="tag even">4 個像</span> (餘裕 20.0°)</td>
-                                <td class="col-offset"><span class="tag odd">3 個像</span></td>
-                                <td><span class="tag diff">觸碰到 180° 結界！直接減 1</span></td>
-                            </tr>
-                            <tr>
-                                <td class="col-deg">90°</td>
-                                <td class="col-type">垂直整除角 (360÷90 = 4 偶數)</td>
-                                <td class="col-center"><span class="tag even">3 個像</span> (含重合)</td>
-                                <td class="col-offset"><span class="tag odd">3 個像</span></td>
-                                <td>第 4 象限末像重合解離與陣亡抵消</td>
-                            </tr>
-                            <tr style="background: rgba(56, 189, 248, 0.08);">
-                                <td class="col-deg">91°</td>
-                                <td class="col-type" style="color:var(--accent-blue); font-weight:bold;">經典非整除角 (大師破題首選)</td>
-                                <td class="col-center"><span class="tag even">4 個像</span> (餘裕 44.5°)</td>
-                                <td class="col-offset"><span class="tag odd">3 個像</span></td>
-                                <td><span class="tag diff">觸碰到 180° 結界！直接減 1</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== 分頁二：嚴格對稱多重成像 (原分頁一，毫無修改) ==================== -->
-        <div id="tab1" class="tab-pane">
-            <div class="sidebar">
-                <div class="info-card" style="border-left-color: var(--accent-green);">
-                    <h4>⚖️ 嚴格幾何對稱保留</h4>
-                    遵從鏡像映射：<code>像 = 2 × 鏡角 - 物角</code>。不管如何拉動偏離角，兩序列必定以各自鏡面為對稱軸，進行百分之百嚴格同軌對稱移動！
-                </div>
-
-                <div class="control-group">
-                    <label>鏡面夾角 (θ) <span class="val" id="angleVal1">31°</span></label>
-                    <input type="range" id="angleSlider1" min="20" max="150" value="31">
-                </div>
-
-                <div class="control-group">
-                    <label>物體偏離中央角度 <span class="val" id="offsetVal1">+9.5°</span></label>
-                    <input type="range" id="offsetSlider1" min="-30" max="30" step="0.5" value="9.5">
-                </div>
-
-                <div class="control-group" style="gap: 10px;">
-                    <label class="checkbox-group"><input type="checkbox" id="checkBlind1" checked> 顯示 180° 無鏡面盲區 (Blind Zone)</label>
-                    <label class="checkbox-group"><input type="checkbox" id="checkAngles1" checked> 顯示成像累積角度深度</label>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="num seq-a" id="statA1">5</div><div class="label">A 序列 (左向)</div></div>
-                    <div class="stat-card"><div class="num seq-b" id="statB1">6</div><div class="label">B 序列 (右向)</div></div>
-                    <div class="stat-card total-stat"><div class="num" id="statTotal1">11</div><div class="label" id="statOddEven1">奇數像 (極端偏離-1像)</div></div>
-                </div>
-
-                <div class="log-box">
-                    <div class="log-title">⚙️ 嚴格對稱映射計算日誌</div>
-                    <div id="logContent1"></div>
-                </div>
-            </div>
-
-            <div class="canvas-container">
-                <canvas id="simCanvas1"></canvas>
-                <div class="legend">
-                    <div class="legend-item"><span class="dot" style="background: var(--accent-yellow);"></span> 實體物體 (與像等距 R)</div>
-                    <div class="legend-item"><span class="dot" style="background: var(--accent-blue);"></span> A 序列嚴格對稱虛像</div>
-                    <div class="legend-item"><span class="dot" style="background: var(--accent-green);"></span> B 序列嚴格對稱虛像</div>
-                    <div class="legend-item"><span class="dot" style="background: rgba(248, 113, 113, 0.4); border-radius: 2px;"></span> 鏡後面無反射盲區 (≥180°)</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== 分頁三：盲區邊界與懸崖圖解 (原分頁二，毫無修改) ==================== -->
-        <div id="tab2" class="tab-pane">
-            <div class="sidebar">
-                <div class="info-card" style="border-left-color: var(--accent-yellow);">
-                    <h4>🎯 核心結論：為什麼無法再產生下一個像？</h4>
-                    因為最後一個像**剛好落在盲區邊界 (180°) 上**！盲區就是沒有反射正面的重疊區，一進入後反射鏈立即被強制停止，所以少掉 1 個像！
-                </div>
-
-                <div class="control-group">
-                    <label>鏡面夾角 (θ) <span class="val" id="angleVal2">31°</span></label>
-                    <input type="range" id="angleSlider2" min="20" max="150" value="31">
-                </div>
-
-                <div class="control-group" style="background: #0d1322; border-color: var(--accent-yellow);">
-                    <label style="color: var(--accent-yellow);">物體偏離角 (Δ) <span class="val" id="offsetVal2">+9.5° (觀測A序列)</span></label>
-                    <input type="range" id="offsetSlider2" min="-15" max="15" step="0.1" value="9.5">
-                    <small id="runwayText" style="color: #f87171; font-weight: bold; font-size: 0.78rem;">📏 觀測目標：A 序列 (因為往右偏離拉大了A的起跑角)</small>
-                </div>
-
-                <div class="control-group" style="background: #131c2e;">
-                    <label style="color: var(--text-color); margin-bottom: 2px;">⚡ 31° 經典臨界關卡一鍵切換</label>
-                    <div class="preset-container">
-                        <button class="preset-btn" onclick="setCriticalTest(31, 0)">🟢 正中央 (偏0°)<br><span style="font-size:0.7rem; font-weight:normal;">A6/B6:170.5°(12像全活)</span></button>
-                        <button class="preset-btn" onclick="setCriticalTest(31, 8.0)">🟡 懸崖邊 (偏+8°)<br><span style="font-size:0.7rem; font-weight:normal;">A6:178.5°(即將踩線)</span></button>
-                        <button class="preset-btn red" onclick="setCriticalTest(31, 9.5)">💥 踩邊界 (偏+9.5°)<br><span style="font-size:0.7rem; font-weight:normal;">A6:180.0°(踩邊界停止!)</span></button>
-                    </div>
-                </div>
-
-                <div id="statusBox2" class="info-card red">
-                    <!-- 動態載入 -->
-                </div>
-
-                <div class="control-group" style="background: #070a12; border: 1px solid #334155;">
-                    <label id="listTitle" style="color: var(--accent-blue); font-size: 0.82rem;">📋 觀測序列接力明細 (步長 +31°)</label>
-                    <div id="stepListContent" class="step-list">
-                        <!-- 動態載入 -->
-                    </div>
-                </div>
-            </div>
-
-            <div class="canvas-container">
-                <canvas id="simCanvas2"></canvas>
-                <div class="legend">
-                    <div class="legend-item"><span class="dot" style="background: var(--accent-yellow);"></span> 實體物體 (與像等距 R)</div>
-                    <div class="legend-item"><span class="dot" style="background: #4ade80;"></span> 存活的虛像 (深度 &lt; 180°，綠線串連)</div>
-                    <div class="legend-item"><span class="dot" style="background: #f87171; border-radius: 0; height: 4px;"></span> 🚨 180° 無鏡面盲區邊界界線 (Cliff)</div>
-                </div>
-            </div>
-        </div>
+  <!-- 🌟 右上角橫向懸浮雙語切換器 -->
+  <div class="floating-lang-container">
+    <span class="lang-label">Language</span>
+    <div class="lang-options">
+      <button class="lang-pill active" id="btn-lang-zh" onclick="setLang('zh')">中文</button>
+      <button class="lang-pill" id="btn-lang-en" onclick="setLang('en')">EN</button>
     </div>
+  </div>
 
-    <!-- ==================== 👑 最下方：大師黑板極簡二式區塊 ==================== -->
-    <div class="formula-section">
-        <div class="formula-header">
-            <span>⚡</span>
-            <h2>物理大師黑板神技：極端偏離秒殺「極簡二式」</h2>
-        </div>
-        <div class="formula-grid">
-            <div class="formula-card">
-                <h3>第一式：求正中央安全步數 (最大正整數 x)</h3>
-                <div class="formula-box">(x + 0.5) × angle &lt; 180°</div>
-                <div class="formula-desc">
-                    擺在正中央起跑先消耗 0.5 步，接著每反彈接力一次跨 1 步。<span class="hl">滿足此小於 180° 條件的「最大正整數 x」</span>，就是光線在正中央時，能在兩個鏡面之間安全來回反彈的完整大步數！
-                </div>
-            </div>
-            <div class="formula-card">
-                <h3>第二式：秒解極限偏移角度 (觸碰結界)</h3>
-                <div class="formula-box">180° = (x + 0.5) × angle + 偏移角度</div>
-                <div class="formula-desc">
-                    180° 是絕對切線的超級結界！把正中央最後一個存活像的總深度 <span class="hl">(x + 0.5) × angle</span> 算出來，離 180° 差多少，<span class="hl">極限偏移角度就是多少</span>！一踩線立刻陣亡，總像數硬生生減 1！
-                </div>
-            </div>
-            <div class="banner-card">
-                <div class="banner-title"><span>👑</span>大師教學指引 (講台專用)</div>
-                <div class="banner-text">
-                    「把這兩行極簡不等式列在黑板上，剩下的物理靈魂與空間折返跑比喻，留給大師在台上親口詮釋！」
-                </div>
-            </div>
-        </div>
-    </div>
+  <nav class="navbar">
+      <div class="nav-title" data-zh="雙平面鏡成像探究與作圖探討" data-en="Dual Plane Mirror Imaging Inquiry & Drawing">雙平面鏡成像探究與作圖探討</div>
+      <div class="tab-group">
+          <button class="tab-btn active" onclick="switchTab('tab0', this)">
+              <span>📊</span> <span data-zh="分頁一：迷思釐清與分析表" data-en="Tab 1: Myth Busting & Data Table">分頁一：迷思釐清與分析表</span>
+          </button>
+          <button class="tab-btn" onclick="switchTab('tab1', this)">
+              <span>⚖️</span> <span data-zh="分頁二：360° 幾何對稱映射" data-en="Tab 2: 360° Geometric Symmetry">分頁二：360° 幾何對稱映射</span>
+          </button>
+          <button class="tab-btn" onclick="switchTab('tab2', this)">
+              <span>📐</span> <span data-zh="分頁三：盲區邊界與反射極限" data-en="Tab 3: Blind Zone & Limits">分頁三：盲區邊界與反射極限</span>
+          </button>
+      </div>
+  </nav>
+
+  <!-- 主互動區域 -->
+  <div class="main-content">
+      
+      <!-- ==================== 📊 分頁一：迷思釐清與分析表 ==================== -->
+      <div id="tab0" class="tab-pane active">
+          <div class="myth-container">
+              <div class="myth-header">
+                  <h2 data-zh="💡 釐清迷思：虛像數目並非僅由單一公式決定！" data-en="💡 Clarification: Image Count is NOT just a simple formula!">💡 釐清迷思：虛像數目並非僅由單一公式決定！</h2>
+                  <!-- 確保不被內部的 span 影響 -->
+                  <div style="font-size: 20px; color: #cbd5e1; line-height: 1.8;" data-zh="傳統教材常使用公式 <span class='math-eq'>N = <div class='fraction'><span class='num'>360°</span><span class='den'>θ</span></div></span> 取整數來計算成像數。然而，這忽略了物體位置的幾何影響！請參考下方 30°～90° 的「成像數量分析表」。可以觀察到：當物體從正中央向兩側偏離至特定角度時，末像會落入 180° 的無反射盲區，導致總像數「減 1」。 👉 詳細幾何證明請點擊上方【分頁二】與【分頁三】的光路解析。" data-en="Traditional texts use <span class='math-eq'>N = <div class='fraction'><span class='num'>360°</span><span class='den'>θ</span></div></span> for image count. However, this ignores the geometric impact of object position! Observe the table below. When the object deviates significantly from the center, the final image falls into the 180° blind zone, reducing the total count by 1. 👉 See Tabs 2 & 3 for geometric proofs.">
+                      傳統教材常使用公式 <span class="math-eq">N = <div class="fraction"><span class="num">360°</span><span class="den">θ</span></div></span> 取整數來計算成像數。然而，這忽略了物體位置的幾何影響！請參考下方 30°～90° 的「成像數量分析表」。可以觀察到：當物體從正中央向兩側偏離至特定角度時，末像會落入 180° 的無反射盲區，導致總像數「減 1」。 👉 詳細幾何證明請點擊上方【分頁二】與【分頁三】的光路解析。
+                  </div>
+              </div>
+
+              <div class="table-box">
+                  <div class="table-title">
+                      <span data-zh="📊 30° ～ 90° 平面鏡成像「正中央 vs. 極端偏離」對比表" data-en="📊 30°-90° Mirror Imaging: 'Center vs Extreme Offset' Table">📊 30° ～ 90° 平面鏡成像「正中央 vs. 極端偏離」對比表</span>
+                      <span data-zh="💡 規律觀察：極端偏離時末像落入盲區，總像數減 1。" data-en="💡 Observation: Extreme offset causes last image to hit blind zone, -1 total.">💡 規律觀察：極端偏離時末像落入盲區，總像數減 1。</span>
+                  </div>
+                  <table>
+                      <thead>
+                          <tr>
+                              <th data-zh="鏡面夾角 (θ)" data-en="Angle (θ)">鏡面夾角 (θ)</th>
+                              <th data-zh="角度結構分類" data-en="Angle Type">角度結構分類</th>
+                              <th data-zh="正中央成像數 (Δ = 0°)" data-en="Center Images (Δ = 0°)">正中央成像數 (Δ = 0°)</th>
+                              <th data-zh="極端偏離成像數 (落入盲區)" data-en="Extreme Offset Images (Blind Zone)">極端偏離成像數 (落入盲區)</th>
+                              <th data-zh="幾何變化結果" data-en="Geometric Result">幾何變化結果</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr>
+                              <td class="col-deg">30°</td>
+                              <td class="col-type" data-zh="整除角 (偶數)" data-en="Divisible (Even)">整除角 (偶數)</td>
+                              <td class="col-center"><span class="tag even" data-zh="11 個像" data-en="11 Imgs">11 個像</span> <span data-zh="(含重合)" data-en="(Overlapped)">(含重合)</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="11 個像" data-en="11 Imgs">11 個像</span></td>
+                              <td data-zh="重合像分離，但末像落入盲區抵消 (維持 11)" data-en="Overlap splits, but blind zone kills cancel out (Stays 11)">重合像分離，但末像落入盲區抵消 (維持 11)</td>
+                          </tr>
+                          <tr style="background: rgba(248, 113, 113, 0.08);">
+                              <td class="col-deg">31°</td>
+                              <td class="col-type" style="color:var(--accent-yellow); font-weight:bold;" data-zh="經典臨界角" data-en="Classic Critical Angle">經典臨界角</td>
+                              <td class="col-center"><span class="tag even" data-zh="12 個像" data-en="12 Imgs">12 個像</span> <span data-zh="(全數正常)" data-en="(All Alive)">(全數正常)</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="11 個像" data-en="11 Imgs">11 個像</span></td>
+                              <td><span class="tag diff" data-zh="末像落入 180° 盲區，總像數減 1" data-en="Hit 180° Blind Zone, Total - 1">末像落入 180° 盲區，總像數減 1</span></td>
+                          </tr>
+                          <tr>
+                              <td class="col-deg">35°</td>
+                              <td class="col-type" data-zh="非整除奇角" data-en="Non-divisible Odd">非整除奇角</td>
+                              <td class="col-center"><span class="tag even" data-zh="10 個像" data-en="10 Imgs">10 個像</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="9 個像" data-en="9 Imgs">9 個像</span></td>
+                              <td><span class="tag diff" data-zh="末像落入 180° 盲區，總像數減 1" data-en="Hit 180° Blind Zone, Total - 1">末像落入 180° 盲區，總像數減 1</span></td>
+                          </tr>
+                          <tr>
+                              <td class="col-deg">40°</td>
+                              <td class="col-type" data-zh="整除角 (奇數)" data-en="Divisible (Odd)">整除角 (奇數)</td>
+                              <td class="col-center"><span class="tag even" data-zh="8 個像" data-en="8 Imgs">8 個像</span> <span data-zh="(末像重合)" data-en="(Last Overlaps)">(末像重合)</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="8 個像" data-en="8 Imgs">8 個像</span></td>
+                              <td data-zh="像分離與落入盲區同時發生 (維持 8)" data-en="Split and blind zone entry occur simultaneously (Stays 8)">像分離與落入盲區同時發生 (維持 8)</td>
+                          </tr>
+                          <tr>
+                              <td class="col-deg">45°</td>
+                              <td class="col-type" data-zh="整除角 (偶數)" data-en="Divisible (Even)">整除角 (偶數)</td>
+                              <td class="col-center"><span class="tag even" data-zh="7 個像" data-en="7 Imgs">7 個像</span> <span data-zh="(含重合)" data-en="(Overlapped)">(含重合)</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="7 個像" data-en="7 Imgs">7 個像</span></td>
+                              <td data-zh="重合像分離與落入盲區抵消 (維持 7)" data-en="Overlap splits, but blind zone entry cancels it (Stays 7)">重合像分離與落入盲區抵消 (維持 7)</td>
+                          </tr>
+                          <tr style="background: rgba(248, 113, 113, 0.08);">
+                              <td class="col-deg">50°</td>
+                              <td class="col-type" style="color:var(--accent-yellow); font-weight:bold;" data-zh="非整除偶角" data-en="Non-divisible Even">非整除偶角</td>
+                              <td class="col-center"><span class="tag even" data-zh="8 個像" data-en="8 Imgs">8 個像</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="7 個像" data-en="7 Imgs">7 個像</span></td>
+                              <td><span class="tag diff" data-zh="末像落入 180° 盲區，總像數減 1" data-en="Hit 180° Blind Zone, Total - 1">末像落入 180° 盲區，總像數減 1</span></td>
+                          </tr>
+                          <tr>
+                              <td class="col-deg">60°</td>
+                              <td class="col-type" data-zh="整除角 (偶數)" data-en="Divisible (Even)">整除角 (偶數)</td>
+                              <td class="col-center"><span class="tag even" data-zh="5 個像" data-en="5 Imgs">5 個像</span> <span data-zh="(含重合)" data-en="(Overlapped)">(含重合)</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="5 個像" data-en="5 Imgs">5 個像</span></td>
+                              <td data-zh="重合像分離與落入盲區抵消 (維持 5)" data-en="Overlap splits, but blind zone entry cancels it (Stays 5)">重合像分離與落入盲區抵消 (維持 5)</td>
+                          </tr>
+                          <tr style="background: rgba(248, 113, 113, 0.08);">
+                              <td class="col-deg">70°</td>
+                              <td class="col-type" style="color:var(--accent-yellow); font-weight:bold;" data-zh="非整除角" data-en="Non-divisible">非整除角</td>
+                              <td class="col-center"><span class="tag even" data-zh="6 個像" data-en="6 Imgs">6 個像</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="5 個像" data-en="5 Imgs">5 個像</span></td>
+                              <td><span class="tag diff" data-zh="末像落入 180° 盲區，總像數減 1" data-en="Hit 180° Blind Zone, Total - 1">末像落入 180° 盲區，總像數減 1</span></td>
+                          </tr>
+                          <tr>
+                              <td class="col-deg">72°</td>
+                              <td class="col-type" data-zh="整除角 (奇數)" data-en="Divisible (Odd)">整除角 (奇數)</td>
+                              <td class="col-center"><span class="tag even" data-zh="4 個像" data-en="4 Imgs">4 個像</span> <span data-zh="(末像重合)" data-en="(Last Overlaps)">(末像重合)</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="4 個像" data-en="4 Imgs">4 個像</span></td>
+                              <td data-zh="像分離與落入盲區同時發生 (維持 4)" data-en="Split and blind zone entry occur simultaneously (Stays 4)">像分離與落入盲區同時發生 (維持 4)</td>
+                          </tr>
+                          <tr>
+                              <td class="col-deg">80°</td>
+                              <td class="col-type" data-zh="非整除角" data-en="Non-divisible">非整除角</td>
+                              <td class="col-center"><span class="tag even" data-zh="4 個像" data-en="4 Imgs">4 個像</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="3 個像" data-en="3 Imgs">3 個像</span></td>
+                              <td><span class="tag diff" data-zh="末像落入 180° 盲區，總像數減 1" data-en="Hit 180° Blind Zone, Total - 1">末像落入 180° 盲區，總像數減 1</span></td>
+                          </tr>
+                          <tr>
+                              <td class="col-deg">90°</td>
+                              <td class="col-type" data-zh="垂直整除角 (偶數)" data-en="Perpendicular (Even)">垂直整除角 (偶數)</td>
+                              <td class="col-center"><span class="tag even" data-zh="3 個像" data-en="3 Imgs">3 個像</span> <span data-zh="(含重合)" data-en="(Overlapped)">(含重合)</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="3 個像" data-en="3 Imgs">3 個像</span></td>
+                              <td data-zh="末像分離與落入盲區抵消" data-en="Last image split and blind zone death cancel out">末像分離與落入盲區抵消</td>
+                          </tr>
+                          <tr style="background: rgba(56, 189, 248, 0.08);">
+                              <td class="col-deg">91°</td>
+                              <td class="col-type" style="color:var(--accent-blue); font-weight:bold;" data-zh="經典非整除角" data-en="Classic Non-divisible">經典非整除角</td>
+                              <td class="col-center"><span class="tag even" data-zh="4 個像" data-en="4 Imgs">4 個像</span></td>
+                              <td class="col-offset"><span class="tag odd" data-zh="3 個像" data-en="3 Imgs">3 個像</span></td>
+                              <td><span class="tag diff" data-zh="末像落入 180° 盲區，總像數減 1" data-en="Hit 180° Blind Zone, Total - 1">末像落入 180° 盲區，總像數減 1</span></td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+      </div>
+
+      <!-- ==================== ⚖️ 分頁二：嚴格對稱多重成像 ==================== -->
+      <div id="tab1" class="tab-pane">
+          <div class="sidebar">
+              <div class="info-card" style="border-left-color: var(--accent-green);">
+                  <h4 data-zh="⚖️ 嚴格幾何對稱" data-en="⚖️ Strict Geometric Symmetry">⚖️ 嚴格幾何對稱</h4>
+                  <div style="font-size: 18px; line-height: 1.6;" data-zh="依據鏡像原理：<code class='math-eq'>像角 = 2 × 鏡角 - 物角</code>。無論物體如何偏離，兩組成像序列皆以各自的鏡面為對稱軸，進行嚴格的對稱移動。" data-en="Mirror principle: <code class='math-eq'>ImgAng = 2 × MirrorAng - ObjAng</code>. Sequences move symmetrically along mirror axes regardless of object offset.">
+                      依據鏡像原理：<code class='math-eq'>像角 = 2 × 鏡角 - 物角</code>。無論物體如何偏離，兩組成像序列皆以各自的鏡面為對稱軸，進行嚴格的對稱移動。
+                  </div>
+              </div>
+
+              <div class="control-group">
+                  <label><span data-zh="鏡面夾角 (θ)" data-en="Mirror Angle (θ)">鏡面夾角 (θ)</span> <span class="val" id="angleVal1">31°</span></label>
+                  <input type="range" id="angleSlider1" min="20" max="150" value="31">
+              </div>
+
+              <div class="control-group">
+                  <label><span data-zh="物體偏離中央角度" data-en="Object Offset Angle">物體偏離中央角度</span> <span class="val" id="offsetVal1">+9.5°</span></label>
+                  <input type="range" id="offsetSlider1" min="-30" max="30" step="0.5" value="9.5">
+              </div>
+
+              <div class="checkbox-container">
+                  <label class="checkbox-group"><input type="checkbox" id="checkBlind1" checked> <span data-zh="顯示 180° 盲區" data-en="Show 180° Blind Zone">顯示 180° 盲區</span></label>
+                  <label class="checkbox-group"><input type="checkbox" id="checkAngles1" checked> <span data-zh="顯示成像深度" data-en="Show Image Depth">顯示成像深度</span></label>
+              </div>
+
+              <div class="stats-grid">
+                  <div class="stat-card"><div class="num seq-a" id="statA1">5</div><div class="label" data-zh="A 序列 (左向)" data-en="Seq A (Left)">A 序列 (左向)</div></div>
+                  <div class="stat-card"><div class="num seq-b" id="statB1">6</div><div class="label" data-zh="B 序列 (右向)" data-en="Seq B (Right)">B 序列 (右向)</div></div>
+                  <div class="stat-card total-stat"><div class="num" id="statTotal1">11</div><div class="label" id="statOddEven1" data-zh="奇數像 (偏離時 -1)" data-en="Odd Images (Offset -1)">奇數像 (偏離時 -1)</div></div>
+              </div>
+
+              <div class="log-box">
+                  <div class="log-title" data-zh="⚙️ 對稱映射計算日誌" data-en="⚙️ Symmetry Calc Log">⚙️ 對稱映射計算日誌</div>
+                  <div id="logContent1"></div>
+              </div>
+          </div>
+
+          <div class="canvas-container">
+              <canvas id="simCanvas1"></canvas>
+              <div class="legend">
+                  <div class="legend-item"><span class="dot" style="background: var(--accent-yellow);"></span> <span data-zh="實體物體 (與像等距 R)" data-en="Real Object (Dist R)">實體物體 (與像等距 R)</span></div>
+                  <div class="legend-item"><span class="dot" style="background: var(--accent-blue);"></span> <span data-zh="A 序列對稱虛像" data-en="Seq A Virtual Images">A 序列對稱虛像</span></div>
+                  <div class="legend-item"><span class="dot" style="background: var(--accent-green);"></span> <span data-zh="B 序列對稱虛像" data-en="Seq B Virtual Images">B 序列對稱虛像</span></div>
+                  <div class="legend-item"><span class="dot" style="background: rgba(248, 113, 113, 0.4); border-radius: 2px;"></span> <span data-zh="無反射盲區 (≥180°)" data-en="Blind Zone (≥180°)">無反射盲區 (≥180°)</span></div>
+              </div>
+          </div>
+      </div>
+
+      <!-- ==================== 📐 分頁三：盲區邊界與反射極限 ==================== -->
+      <div id="tab2" class="tab-pane">
+          <div class="sidebar">
+              <div class="info-card" style="border-left-color: var(--accent-yellow);">
+                  <h4 data-zh="🎯 核心結論：為何停止成像？" data-en="🎯 Core Conclusion: Why stop imaging?">🎯 核心結論：為何停止成像？</h4>
+                  <div style="font-size: 18px; line-height: 1.6;" data-zh="當最後一個像進入 180° 盲區（即無法再被任一鏡面反射的區域）時，反射隨即停止，總像數因此減少。" data-en="When the last image enters the 180° blind zone (area with no reflective surface), reflection stops, reducing the total count.">
+                      當最後一個像進入 180° 盲區（即無法再被任一鏡面反射的區域）時，反射隨即停止，總像數因此減少。
+                  </div>
+              </div>
+
+              <div class="control-group">
+                  <label><span data-zh="鏡面夾角 (θ)" data-en="Mirror Angle (θ)">鏡面夾角 (θ)</span> <span class="val" id="angleVal2">31°</span></label>
+                  <input type="range" id="angleSlider2" min="20" max="150" value="31">
+              </div>
+
+              <div class="control-group" style="background: #0d1322; border-color: var(--accent-yellow);">
+                  <label style="color: var(--accent-yellow);"><span data-zh="物體偏離角 (Δ)" data-en="Object Offset Angle (Δ)">物體偏離角 (Δ)</span> <span class="val" id="offsetVal2" data-zh="+9.5° (觀測A序列)" data-en="+9.5° (Track Seq A)">+9.5° (觀測A序列)</span></label>
+                  <input type="range" id="offsetSlider2" min="-15" max="15" step="0.1" value="9.5">
+                  <div id="runwayText" style="color: #f87171; font-weight: bold; font-size: 18px; margin-top:4px;"></div>
+              </div>
+
+              <div class="control-group" style="background: #131c2e;">
+                  <label style="color: var(--text-color); margin-bottom: 4px;" data-zh="⚡ 31° 臨界角觀測" data-en="⚡ 31° Critical Angle Observe">⚡ 31° 臨界角觀測</label>
+                  <div class="preset-container">
+                      <button class="preset-btn" onclick="setCriticalTest(31, 0)" data-zh="🟢 正中央 (偏0°)" data-en="🟢 Center (Offset 0°)">🟢 正中央 (偏0°)</button>
+                      <button class="preset-btn" onclick="setCriticalTest(31, 8.0)" data-zh="🟡 臨界邊緣 (偏+8°)" data-en="🟡 Cliff Edge (+8°)">🟡 臨界邊緣 (偏+8°)</button>
+                      <button class="preset-btn red" onclick="setCriticalTest(31, 9.5)" data-zh="🔴 進入盲區 (偏+9.5°)" data-en="🔴 Hit Blind Zone (+9.5°)">🔴 進入盲區 (偏+9.5°)</button>
+                  </div>
+              </div>
+
+              <div id="statusBox2" class="info-card red">
+                  <!-- 動態載入 -->
+              </div>
+
+              <div class="control-group" style="background: #070a12; border: 1px solid #334155;">
+                  <label id="listTitle" style="color: var(--accent-blue); font-size: 20px;"></label>
+                  <div id="stepListContent" class="step-list">
+                      <!-- 動態載入 -->
+                  </div>
+              </div>
+          </div>
+
+          <div class="canvas-container">
+              <canvas id="simCanvas2"></canvas>
+              <div class="legend">
+                  <div class="legend-item"><span class="dot" style="background: var(--accent-yellow);"></span> <span data-zh="實體物體 (與像等距 R)" data-en="Real Object (Dist R)">實體物體 (與像等距 R)</span></div>
+                  <div class="legend-item"><span class="dot" style="background: #4ade80;"></span> <span data-zh="存活的虛像 (深度 &lt; 180°)" data-en="Alive Images (Depth &lt; 180°)">存活的虛像 (深度 &lt; 180°)</span></div>
+                  <div class="legend-item"><span class="dot" style="background: #f87171; border-radius: 0; height: 6px;"></span> <span data-zh="🚨 180° 無鏡面盲區邊界" data-en="🚨 180° Blind Zone Boundary">🚨 180° 無鏡面盲區邊界</span></div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- ==================== 👑 最下方：公式推導區塊 ==================== -->
+  <div class="formula-section">
+      <div class="formula-header">
+          <span style="font-size: 36px;">⚡</span>
+          <h2 data-zh="核心公式：多重成像數學推導" data-en="Core Formula: Multi-Imaging Math Derivation">核心公式：多重成像數學推導</h2>
+      </div>
+      <div class="formula-grid">
+          <div class="formula-card">
+              <h3 data-zh="公式一：求正中央成像次數 (最大正整數 x)" data-en="Eq 1: Central Image Count (Max Int x)">公式一：求正中央成像次數 (最大正整數 x)</h3>
+              <div class="formula-box">(x + 0.5) × θ &lt; 180°</div>
+              <div class="formula-desc" data-zh="光線在正中央時，初始深度為 0.5 倍夾角。每次反射增加 1 倍夾角。<span class='hl'>滿足此小於 180° 條件的「最大正整數 x」</span>，即為單一序列的安全反射次數。" data-en="Starting at center gives initial depth of 0.5θ, then +1θ per bounce. The <span class='hl'>maximum positive integer x</span> satisfying <180° is the safe bounce count per sequence.">
+                  光線在正中央時，初始深度為 0.5 倍夾角。每次反射增加 1 倍夾角。<span class="hl">滿足此小於 180° 條件的「最大正整數 x」</span>，即為單一序列的安全反射次數。
+              </div>
+          </div>
+          <div class="formula-card">
+              <h3 data-zh="公式二：計算極限偏移角度" data-en="Eq 2: Calculate Limit Offset Angle">公式二：計算極限偏移角度</h3>
+              <div class="formula-box">180° = (x + 0.5) × θ + <span data-zh="偏移角" data-en="Offset">偏移角</span></div>
+              <div class="formula-desc" data-zh="180° 為反射極限邊界。計算正中央末像的總深度 <span class='hl'>(x + 0.5) × θ</span>，其與 180° 的差值即為極限偏移角度。一旦超過此角度，末像將落入盲區，總像數減 1。" data-en="180° is the absolute limit. Calculate total depth of central last image <span class='hl'>(x + 0.5) × θ</span>. The difference to 180° is the Limit Offset Angle. Exceeding it drops the image into the blind zone.">
+                  180° 為反射極限邊界。計算正中央末像的總深度 <span class="hl">(x + 0.5) × θ</span>，其與 180° 的差值即為極限偏移角度。一旦超過此角度，末像將落入盲區，總像數減 1。
+              </div>
+          </div>
+          <div class="banner-card">
+              <div class="banner-title"><span>💡</span><span data-zh="教學指引" data-en="Teaching Guide">教學指引</span></div>
+              <div class="banner-text" data-zh="透過不等式推導，結合空間反射概念，能更精準地解釋成像數量的變化條件。" data-en="By combining inequality derivation with spatial reflection concepts, we can accurately explain the conditions for changing image counts.">
+                  透過不等式推導，結合空間反射概念，能更精準地解釋成像數量的變化條件。
+              </div>
+          </div>
+      </div>
+  </div>
 
 <script>
+    let currentLang = 'zh';
+
+    function tr(zh, en) {
+        return currentLang === 'en' ? en : zh;
+    }
+
+    window.setLang = function(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
+
+        document.getElementById('btn-lang-zh').classList.toggle('active', lang === 'zh');
+        document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+
+        document.querySelectorAll('[data-zh][data-en]').forEach(el => {
+            el.innerHTML = el.getAttribute(`data-${lang}`);
+        });
+
+        drawTab1();
+        drawTab2();
+    };
+
     function switchTab(tabId, btn) {
         document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -416,7 +510,7 @@
             [canvas1, canvas2].forEach(c => {
                 const container = c.parentElement;
                 if (container) {
-                    const size = Math.min(container.clientWidth - 30, container.clientHeight - 30, 750);
+                    const size = Math.min(container.clientWidth - 32, container.clientHeight - 32, 750);
                     c.width = size;
                     c.height = size;
                 }
@@ -427,6 +521,9 @@
     }
     window.addEventListener('resize', resizeAllCanvases);
 
+    // ==========================================
+    // 物理極座標與角度運算 (100% 鎖死)
+    // ==========================================
     function toRad(deg) { return -deg * Math.PI / 180; }
     function polarToCanvas(cx, cy, r, deg) {
         const rad = deg * Math.PI / 180;
@@ -435,7 +532,7 @@
     function normDeg(deg) { return ((deg % 360) + 360) % 360; }
 
     // ==========================================
-    // =   嚴格對稱映射保留 (Tab 1)     =
+    // Tab 1: 幾何對稱
     // ==========================================
     const angleSlider1 = document.getElementById('angleSlider1');
     const offsetSlider1 = document.getElementById('offsetSlider1');
@@ -462,7 +559,7 @@
         const phiObj = normDeg(90 + offset);
 
         ctx1.beginPath(); ctx1.arc(cx, cy, R, 0, Math.PI * 2);
-        ctx1.strokeStyle = '#2a354d'; ctx1.lineWidth = 1; ctx1.setLineDash([4, 4]); ctx1.stroke(); ctx1.setLineDash([]);
+        ctx1.strokeStyle = '#2a354d'; ctx1.lineWidth = 2; ctx1.setLineDash([4, 4]); ctx1.stroke(); ctx1.setLineDash([]);
 
         if (checkBlind1.checked) {
             ctx1.fillStyle = 'rgba(248, 113, 113, 0.15)';
@@ -481,38 +578,40 @@
             }
             ctx1.restore();
             const lblPos = polarToCanvas(cx, cy, R * 1.16, angle);
-            ctx1.fillStyle = '#f8fafc'; ctx1.font = 'bold 14px sans-serif'; ctx1.textAlign = 'center'; ctx1.textBaseline = 'middle';
+            ctx1.fillStyle = '#f8fafc'; ctx1.font = 'bold 18px sans-serif'; ctx1.textAlign = 'center'; ctx1.textBaseline = 'middle';
             ctx1.fillText(label, lblPos.x, lblPos.y);
         }
         drawMirror(phi1, 'M1'); drawMirror(phi2, 'M2');
 
         let logText = '', seqACount = 0, seqBCount = 0, images = [];
         
+        // Seq A
         let currDeg = phiObj, depth = normDeg(phiObj - phi1), k = 1;
         while (depth < 180.0 && k <= 30) {
             seqACount++;
             let mirrorDeg = (k % 2 !== 0) ? phi1 : phi2;
             let nextImgDeg = normDeg(2 * mirrorDeg - currDeg);
             images.push({ deg: nextImgDeg, name: 'A' + k, seq: 'A', depth: depth });
-            logText += `<div class="log-entry"><span style="color:var(--accent-blue)">[A${k}]</span> 嚴格對稱座標: <b>${nextImgDeg.toFixed(1)}°</b> (深度:${depth.toFixed(1)}°) ➔ <span style="color:#4ade80">成功成像</span></div>`;
+            logText += `<div class="log-entry"><span style="color:var(--accent-blue)">[A${k}]</span> ${tr('對稱座標', 'Symmetry Coord')}: <b>${nextImgDeg.toFixed(1)}°</b> (${tr('深度', 'Depth')}:${depth.toFixed(1)}°) ➔ <span style="color:#4ade80">${tr('成功成像', 'Success')}</span></div>`;
             let nextDepth = depth + theta;
             if (nextDepth >= 180.0) {
-                logText += `<div class="log-entry fail">💥 [A${k+1}嘗試] 深度 ${nextDepth.toFixed(1)}° ≥ 180° ➔ 虛像落入盲區，停止！</div>`;
+                logText += `<div class="log-entry fail">🚫 [A${k+1}] ${tr('深度', 'Depth')} ${nextDepth.toFixed(1)}° ≥ 180° ➔ ${tr('落入盲區，停止成像。', 'In blind zone, stop.')}</div>`;
                 break;
             }
             currDeg = nextImgDeg; depth = nextDepth; k++;
         }
 
+        // Seq B
         currDeg = phiObj; depth = normDeg(phi2 - phiObj); k = 1;
         while (depth < 180.0 && k <= 30) {
             seqBCount++;
             let mirrorDeg = (k % 2 !== 0) ? phi2 : phi1;
             let nextImgDeg = normDeg(2 * mirrorDeg - currDeg);
             images.push({ deg: nextImgDeg, name: 'B' + k, seq: 'B', depth: depth });
-            logText += `<div class="log-entry"><span style="color:var(--accent-green)">[B${k}]</span> 嚴格對稱座標: <b>${nextImgDeg.toFixed(1)}°</b> (深度:${depth.toFixed(1)}°) ➔ <span style="color:#4ade80">成功成像</span></div>`;
+            logText += `<div class="log-entry"><span style="color:var(--accent-green)">[B${k}]</span> ${tr('對稱座標', 'Symmetry Coord')}: <b>${nextImgDeg.toFixed(1)}°</b> (${tr('深度', 'Depth')}:${depth.toFixed(1)}°) ➔ <span style="color:#4ade80">${tr('成功成像', 'Success')}</span></div>`;
             let nextDepth = depth + theta;
             if (nextDepth >= 180.0) {
-                logText += `<div class="log-entry fail">💥 [B${k+1}嘗試] 深度 ${nextDepth.toFixed(1)}° ≥ 180° ➔ 虛像落入盲區，停止！</div>`;
+                logText += `<div class="log-entry fail">🚫 [B${k+1}] ${tr('深度', 'Depth')} ${nextDepth.toFixed(1)}° ≥ 180° ➔ ${tr('落入盲區，停止成像。', 'In blind zone, stop.')}</div>`;
                 break;
             }
             currDeg = nextImgDeg; depth = nextDepth; k++;
@@ -529,7 +628,7 @@
                     if (diff > 180) diff = 360 - diff;
                     if (diff < 0.1) {
                         isOverlapped = true; totalCount--;
-                        images[i].name += "/" + images[j].name + "(重合)"; images[j].hidden = true;
+                        images[i].name += "/" + images[j].name; images[j].hidden = true;
                     }
                 }
             }
@@ -539,31 +638,35 @@
         document.getElementById('statB1').textContent = seqBCount;
         document.getElementById('statTotal1').textContent = totalCount;
         const oddEvenEl = document.getElementById('statOddEven1');
-        if (isOverlapped) { oddEvenEl.textContent = `奇數像 (因重合扣除 1 個)`; oddEvenEl.style.color = 'var(--accent-red)'; }
-        else { oddEvenEl.textContent = `${totalCount % 2 === 0 ? '偶數像' : '奇數像'} (完全對稱無重合)`; oddEvenEl.style.color = 'var(--accent-green)'; }
+        if (isOverlapped) { 
+            oddEvenEl.innerHTML = tr(`奇數像 <br><span style="font-size:16px">(因重合減 1)</span>`, `Odd Images <br><span style="font-size:16px">(-1 Overlap)</span>`); 
+            oddEvenEl.style.color = 'var(--accent-red)'; 
+        } else { 
+            oddEvenEl.innerHTML = tr(`${totalCount % 2 === 0 ? '偶數像' : '奇數像'} <br><span style="font-size:16px">(無重合)</span>`, `${totalCount % 2 === 0 ? 'Even' : 'Odd'} Images <br><span style="font-size:16px">(No Overlap)</span>`); 
+            oddEvenEl.style.color = 'var(--accent-green)'; 
+        }
 
         images.forEach(img => {
             if (img.hidden) return;
             const pos = polarToCanvas(cx, cy, R, img.deg);
             ctx1.beginPath(); ctx1.moveTo(cx, cy); ctx1.lineTo(pos.x, pos.y);
-            ctx1.strokeStyle = img.seq === 'A' ? 'rgba(56, 189, 248, 0.25)' : 'rgba(74, 222, 128, 0.25)'; ctx1.stroke();
-            ctx1.beginPath(); ctx1.arc(pos.x, pos.y, 7, 0, Math.PI * 2);
+            ctx1.strokeStyle = img.seq === 'A' ? 'rgba(56, 189, 248, 0.25)' : 'rgba(74, 222, 128, 0.25)'; ctx1.lineWidth = 2; ctx1.stroke();
+            ctx1.beginPath(); ctx1.arc(pos.x, pos.y, 10, 0, Math.PI * 2);
             ctx1.fillStyle = img.seq === 'A' ? 'var(--accent-blue)' : 'var(--accent-green)'; ctx1.fill();
-            ctx1.strokeStyle = '#0b0f19'; ctx1.lineWidth = 2; ctx1.stroke();
-            const txtPos = polarToCanvas(cx, cy, R + 22, img.deg);
-            ctx1.font = 'bold 12px monospace'; ctx1.textAlign = 'center'; ctx1.fillText(img.name, txtPos.x, txtPos.y);
+            ctx1.strokeStyle = '#0b0f19'; ctx1.lineWidth = 3; ctx1.stroke();
+            const txtPos = polarToCanvas(cx, cy, R + 28, img.deg);
+            ctx1.font = 'bold 16px JetBrains Mono, monospace'; ctx1.textAlign = 'center'; ctx1.fillText(img.name, txtPos.x, txtPos.y);
             if (checkAngles1.checked) {
-                const degPos = polarToCanvas(cx, cy, R - 20, img.deg);
-                ctx1.fillStyle = '#94a3b8'; ctx1.font = '11px sans-serif'; ctx1.fillText(`${img.depth.toFixed(1)}°`, degPos.x, degPos.y);
+                const degPos = polarToCanvas(cx, cy, R - 26, img.deg);
+                ctx1.fillStyle = '#94a3b8'; ctx1.font = '16px Noto Sans TC, sans-serif'; ctx1.fillText(`${img.depth.toFixed(1)}°`, degPos.x, degPos.y);
             }
         });
 
-        // 100分規範：物體百分之百在邊緣半徑 R 上！
         const objPos = polarToCanvas(cx, cy, R, phiObj);
-        ctx1.beginPath(); ctx1.moveTo(cx, cy); ctx1.lineTo(objPos.x, objPos.y); ctx1.strokeStyle = 'var(--accent-yellow)'; ctx1.lineWidth = 2; ctx1.stroke();
-        ctx1.beginPath(); ctx1.arc(objPos.x, objPos.y, 9, 0, Math.PI * 2); ctx1.fillStyle = 'var(--accent-yellow)'; ctx1.fill();
-        ctx1.fillStyle = '#f8fafc'; ctx1.font = 'bold 13px sans-serif'; ctx1.textAlign = 'center'; 
-        ctx1.fillText('實物 (Object)', objPos.x, objPos.y - 18);
+        ctx1.beginPath(); ctx1.moveTo(cx, cy); ctx1.lineTo(objPos.x, objPos.y); ctx1.strokeStyle = 'var(--accent-yellow)'; ctx1.lineWidth = 3; ctx1.stroke();
+        ctx1.beginPath(); ctx1.arc(objPos.x, objPos.y, 12, 0, Math.PI * 2); ctx1.fillStyle = 'var(--accent-yellow)'; ctx1.fill();
+        ctx1.fillStyle = '#f8fafc'; ctx1.font = 'bold 18px Noto Sans TC, sans-serif'; ctx1.textAlign = 'center'; 
+        ctx1.fillText(tr('實物 (Object)', 'Object'), objPos.x, objPos.y - 20);
     }
     if (angleSlider1) angleSlider1.addEventListener('input', drawTab1);
     if (offsetSlider1) offsetSlider1.addEventListener('input', drawTab1);
@@ -571,18 +674,18 @@
     if (checkAngles1) checkAngles1.addEventListener('change', drawTab1);
 
     // ==========================================
-    // =   盲區邊界與懸崖圖解 (Tab 2)   =
+    // Tab 2: Blind Zone Cliff Diagram
     // ==========================================
     const angleSlider2 = document.getElementById('angleSlider2');
     const offsetSlider2 = document.getElementById('offsetSlider2');
 
-    function setCriticalTest(theta, offset) {
+    window.setCriticalTest = function(theta, offset) {
         if (angleSlider2 && offsetSlider2) {
             angleSlider2.value = theta;
             offsetSlider2.value = offset;
             drawTab2();
         }
-    }
+    };
 
     function drawTab2() {
         if (!canvas2 || !ctx2) return;
@@ -601,9 +704,8 @@
         const targetColor = (trackSeq === 'A') ? 'var(--accent-blue)' : 'var(--accent-green)';
         const targetMirror = (trackSeq === 'A') ? 'M1' : 'M2';
         
-        document.getElementById('offsetVal2').textContent = `${offset > 0 ? '+' : ''}${offset.toFixed(1)}° (鎖定觀測 ${trackSeq} 序列)`;
-        document.getElementById('offsetVal2').style.color = targetColor;
-        document.getElementById('listTitle').textContent = `📋 ${trackSeq} 序列接力軌跡明細 (初始深度 + 步長${theta}°)`;
+        document.getElementById('offsetVal2').textContent = `${offset > 0 ? '+' : ''}${offset.toFixed(1)}°`;
+        document.getElementById('listTitle').textContent = `📋 ${trackSeq} ${tr('序列軌跡明細 (步長', 'Seq Log (Step ')}${theta}°)`;
         document.getElementById('listTitle').style.color = targetColor;
 
         let centerDepth = theta / 2;
@@ -617,16 +719,28 @@
         const isFallen = (absOff >= runway);
 
         const runwayEl = document.getElementById('runwayText');
-        runwayEl.textContent = `📏 觀測 ${trackSeq} 序列 (往 ${targetMirror} 累積)｜中央末像: ${centerDepth.toFixed(1)}°｜邊界餘裕: ${runway.toFixed(1)}°`;
+        runwayEl.textContent = `📏 ${tr('觀測', 'Track')} ${trackSeq} ${tr('序列 (往', 'Seq (To')} ${targetMirror} ${tr('累積)｜中央末像:', 'Acc) | Center Last:')} ${centerDepth.toFixed(1)}°｜${tr('邊界餘裕:', 'Margin:')} ${runway.toFixed(1)}°`;
         runwayEl.style.color = isFallen ? 'var(--accent-red)' : '#4ade80';
 
         const statusBox2 = document.getElementById('statusBox2');
         if (!isFallen) {
             statusBox2.className = 'info-card';
-            statusBox2.innerHTML = `<h4>🟢 物理狀態：安全！${trackSeq}1 到 ${trackSeq}${k} 全數在 180° 盲區邊界內存活</h4>目前偏離角 (${absOff.toFixed(1)}°) 小於邊界餘裕 (${runway.toFixed(1)}°)。第 ${k} 個像 (${trackSeq}${k}) 深度為 **${(centerDepth + absOff).toFixed(1)}° < 180°**，還沒踩到盲區邊界，完整看得到！`;
+            statusBox2.innerHTML = tr(`
+              <h4>🟢 物理狀態：正常成像</h4>
+              目前偏離角 (${absOff.toFixed(1)}°) 小於邊界餘裕 (${runway.toFixed(1)}°)。第 ${k} 個像 (${trackSeq}${k}) 深度為 <span style="font-family:'JetBrains Mono',monospace;">${(centerDepth + absOff).toFixed(1)}° < 180°</span>，尚未進入盲區，正常成像！
+            `, `
+              <h4>🟢 Status: Normal Imaging</h4>
+              Current offset (${absOff.toFixed(1)}°) < margin (${runway.toFixed(1)}°). Depth of image ${k} (${trackSeq}${k}) is <span style="font-family:'JetBrains Mono',monospace;">${(centerDepth + absOff).toFixed(1)}° < 180°</span>. Not in blind zone yet!
+            `);
         } else {
             statusBox2.className = 'info-card red';
-            statusBox2.innerHTML = `<h4>💥 物理狀態：${trackSeq}${k} 剛好落在盲區邊界上，無法再產生下一個像！</h4>你看畫布上的軌跡：**${trackSeq}1 到 ${trackSeq}${k-1} 穩穩存活！** 但最後一步跨出時，${trackSeq}${k} 深度達到 **${(centerDepth + absOff).toFixed(1)}° ≥ 180°**，剛好踩在盲區邊界紅線上陣亡，總像數少 1！`;
+            statusBox2.innerHTML = tr(`
+              <h4>🔴 物理狀態：${trackSeq}${k} 落入盲區，停止成像！</h4>
+              軌跡顯示：<b>${trackSeq}1 到 ${trackSeq}${k-1} 正常成像。</b> 但 ${trackSeq}${k} 深度達到 <span style="font-family:'JetBrains Mono',monospace; color:var(--accent-yellow); font-weight:bold;">${(centerDepth + absOff).toFixed(1)}° ≥ 180°</span>，已進入盲區，反射終止，總像數減少 1。
+            `, `
+              <h4>🔴 Status: ${trackSeq}${k} hit blind zone, imaging stopped!</h4>
+              Track: <b>${trackSeq}1 to ${trackSeq}${k-1} normal.</b> But ${trackSeq}${k} depth reaches <span style="font-family:'JetBrains Mono',monospace; color:var(--accent-yellow); font-weight:bold;">${(centerDepth + absOff).toFixed(1)}° ≥ 180°</span>, entering the blind zone. Total images minus 1.
+            `);
         }
 
         const cx = canvas2.width / 2, cy = canvas2.height * 0.52;
@@ -638,45 +752,42 @@
         const phiObj = normDeg(90 + offset);
 
         ctx2.beginPath(); ctx2.arc(cx, cy, R, 0, Math.PI * 2);
-        ctx2.strokeStyle = '#2a354d'; ctx2.lineWidth = 1; ctx2.setLineDash([4, 4]); ctx2.stroke(); ctx2.setLineDash([]);
+        ctx2.strokeStyle = '#2a354d'; ctx2.lineWidth = 2; ctx2.setLineDash([4, 4]); ctx2.stroke(); ctx2.setLineDash([]);
 
-        // 100分規範：兩個盲區一起放上去！因為是不斷反彈輪流限制的！(保持乾淨暗紅色，絕不加斜線！)
         ctx2.save();
         ctx2.fillStyle = 'rgba(248, 113, 113, 0.15)';
         ctx2.beginPath(); ctx2.moveTo(cx, cy); ctx2.arc(cx, cy, R * 1.08, toRad(phi1), toRad(phi1 - 180), true); ctx2.closePath(); ctx2.fill();
         ctx2.beginPath(); ctx2.moveTo(cx, cy); ctx2.arc(cx, cy, R * 1.08, toRad(phi2 + 180), toRad(phi2), true); ctx2.closePath(); ctx2.fill();
         ctx2.restore();
 
-        // 100分規範：正中央清楚標註「盲區」！
         const midBlind1 = normDeg(phi1 - 90);
         const lblPos1 = polarToCanvas(cx, cy, R * 0.55, midBlind1);
-        ctx2.fillStyle = '#f87171'; ctx2.font = 'bold 13px sans-serif'; ctx2.textAlign = 'center'; ctx2.textBaseline = 'middle';
-        ctx2.fillText('🚫 M1 鏡後盲區 (≥ 180°)', lblPos1.x, lblPos1.y);
+        ctx2.fillStyle = '#f87171'; ctx2.font = 'bold 16px sans-serif'; ctx2.textAlign = 'center'; ctx2.textBaseline = 'middle';
+        ctx2.fillText(tr('🚫 M1 盲區 (≥ 180°)', '🚫 M1 Blind (≥ 180°)'), lblPos1.x, lblPos1.y);
 
         const midBlind2 = normDeg(phi2 + 90);
         const lblPos2 = polarToCanvas(cx, cy, R * 0.55, midBlind2);
-        ctx2.fillStyle = '#f87171'; ctx2.font = 'bold 13px sans-serif'; ctx2.textAlign = 'center'; ctx2.textBaseline = 'middle';
-        ctx2.fillText('🚫 M2 鏡後盲區 (≥ 180°)', lblPos2.x, lblPos2.y);
+        ctx2.fillStyle = '#f87171'; ctx2.font = 'bold 16px sans-serif'; ctx2.textAlign = 'center'; ctx2.textBaseline = 'middle';
+        ctx2.fillText(tr('🚫 M2 盲區 (≥ 180°)', '🚫 M2 Blind (≥ 180°)'), lblPos2.x, lblPos2.y);
 
         function drawMirror2(angle, label) {
             const end = polarToCanvas(cx, cy, R, angle);
             ctx2.beginPath(); ctx2.moveTo(cx, cy); ctx2.lineTo(end.x, end.y); ctx2.strokeStyle = '#f8fafc'; ctx2.lineWidth = 4; ctx2.stroke();
             const lblPos = polarToCanvas(cx, cy, R * 1.15, angle);
-            ctx2.fillStyle = '#f8fafc'; ctx2.font = 'bold 14px sans-serif'; ctx2.textAlign = 'center'; ctx2.fillText(label, lblPos.x, lblPos.y);
+            ctx2.fillStyle = '#f8fafc'; ctx2.font = 'bold 18px sans-serif'; ctx2.textAlign = 'center'; ctx2.fillText(label, lblPos.x, lblPos.y);
         }
         drawMirror2(phi1, 'M1'); drawMirror2(phi2, 'M2');
 
         const cliff1 = normDeg(phi1 - 180);
         const end1 = polarToCanvas(cx, cy, R * 1.15, cliff1);
         ctx2.beginPath(); ctx2.moveTo(cx, cy); ctx2.lineTo(end1.x, end1.y);
-        ctx2.strokeStyle = '#f87171'; ctx2.lineWidth = 2; ctx2.setLineDash([4, 4]); ctx2.stroke(); ctx2.setLineDash([]);
+        ctx2.strokeStyle = '#f87171'; ctx2.lineWidth = 3; ctx2.setLineDash([6, 6]); ctx2.stroke(); ctx2.setLineDash([]);
 
         const cliff2 = normDeg(phi2 + 180);
         const end2 = polarToCanvas(cx, cy, R * 1.15, cliff2);
         ctx2.beginPath(); ctx2.moveTo(cx, cy); ctx2.lineTo(end2.x, end2.y);
-        ctx2.strokeStyle = '#f87171'; ctx2.lineWidth = 2; ctx2.setLineDash([4, 4]); ctx2.stroke(); ctx2.setLineDash([]);
+        ctx2.strokeStyle = '#f87171'; ctx2.lineWidth = 3; ctx2.setLineDash([6, 6]); ctx2.stroke(); ctx2.setLineDash([]);
 
-        // 100分規範：絕對不畫 A7（或任何進入盲區後的虛假點）！只留下真正存活的軌跡！
         let trackImages = [];
         let d = (trackSeq === 'A') ? normDeg(phiObj - phi1) : normDeg(phi2 - phiObj);
         let curr = phiObj;
@@ -691,9 +802,9 @@
             
             if (d < 180.0) {
                 trackImages.push({ name: trackSeq + step, deg: curr, depth: d, alive: true });
-                listHtml += `<div class="step-item alive"><span><b>[${trackSeq}${step}]</b> 深度: ${d.toFixed(1)}° &lt; 180°</span><span>🟢 成功成像</span></div>`;
+                listHtml += `<div class="step-item alive"><span><b>[${trackSeq}${step}]</b> ${tr('深度', 'Depth')}: ${d.toFixed(1)}° &lt; 180°</span><span>🟢 ${tr('成功成像', 'Success')}</span></div>`;
             } else {
-                listHtml += `<div class="step-item dead"><span><b>[${trackSeq}${step}]</b> 深度: ${d.toFixed(1)}° ≥ 180°</span><span>💥 進入盲區！停止反射</span></div>`;
+                listHtml += `<div class="step-item dead"><span><b>[${trackSeq}${step}]</b> ${tr('深度', 'Depth')}: ${d.toFixed(1)}° ≥ 180°</span><span>🚫 ${tr('進入盲區，停止', 'In blind zone, stop')}</span></div>`;
                 break;
             }
             d += theta;
@@ -708,37 +819,37 @@
             if (i === 0) {
                 const objP = polarToCanvas(cx, cy, R, phiObj);
                 ctx2.beginPath(); ctx2.moveTo(objP.x, objP.y); ctx2.lineTo(pos.x, pos.y);
-                ctx2.strokeStyle = ((trackSeq==='A')?'rgba(56, 189, 248, 0.4)':'rgba(74, 222, 128, 0.4)'); ctx2.lineWidth = 1.5; ctx2.setLineDash([3, 3]); ctx2.stroke(); ctx2.setLineDash([]);
+                ctx2.strokeStyle = ((trackSeq==='A')?'rgba(56, 189, 248, 0.4)':'rgba(74, 222, 128, 0.4)'); ctx2.lineWidth = 2; ctx2.setLineDash([4, 4]); ctx2.stroke(); ctx2.setLineDash([]);
             } else {
                 const prevP = polarToCanvas(cx, cy, R, trackImages[i-1].deg);
                 ctx2.beginPath(); ctx2.moveTo(prevP.x, prevP.y); ctx2.lineTo(pos.x, pos.y);
                 ctx2.strokeStyle = ((trackSeq==='A')?'#38bdf8':'#4ade80');
-                ctx2.lineWidth = 2.5;
+                ctx2.lineWidth = 3.5;
                 ctx2.stroke();
             }
 
-            ctx2.beginPath(); ctx2.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
+            ctx2.beginPath(); ctx2.arc(pos.x, pos.y, 11, 0, Math.PI * 2);
             ctx2.fillStyle = ((trackSeq==='A')?'var(--accent-blue)':'var(--accent-green)'); ctx2.fill();
-            ctx2.strokeStyle = '#0b0f19'; ctx2.lineWidth = 2; ctx2.stroke();
+            ctx2.strokeStyle = '#0b0f19'; ctx2.lineWidth = 3; ctx2.stroke();
 
-            const txtPos = polarToCanvas(cx, cy, R + 25, img.deg);
+            const txtPos = polarToCanvas(cx, cy, R + 30, img.deg);
             ctx2.fillStyle = ((trackSeq==='A')?'var(--accent-blue)':'var(--accent-green)');
-            ctx2.font = 'bold 12px monospace';
+            ctx2.font = 'bold 16px JetBrains Mono, monospace';
             ctx2.textAlign = 'center';
             ctx2.fillText(`${img.name} (${img.depth.toFixed(1)}°)`, txtPos.x, txtPos.y);
         }
 
-        // 100分規範：物體百分之百在邊緣半徑 R 上！
         const objPos = polarToCanvas(cx, cy, R, phiObj);
-        ctx2.beginPath(); ctx2.moveTo(cx, cy); ctx2.lineTo(objPos.x, objPos.y); ctx2.strokeStyle = 'var(--accent-yellow)'; ctx2.lineWidth = 2; ctx2.stroke();
-        ctx2.beginPath(); ctx2.arc(objPos.x, objPos.y, 9, 0, Math.PI * 2); ctx2.fillStyle = 'var(--accent-yellow)'; ctx2.fill();
-        ctx2.fillStyle = '#f8fafc'; ctx2.font = 'bold 13px sans-serif'; ctx2.textAlign = 'center'; 
-        ctx2.fillText('實物 (Object)', objPos.x, objPos.y - 18);
+        ctx2.beginPath(); ctx2.moveTo(cx, cy); ctx2.lineTo(objPos.x, objPos.y); ctx2.strokeStyle = 'var(--accent-yellow)'; ctx2.lineWidth = 3; ctx2.stroke();
+        ctx2.beginPath(); ctx2.arc(objPos.x, objPos.y, 13, 0, Math.PI * 2); ctx2.fillStyle = 'var(--accent-yellow)'; ctx2.fill();
+        ctx2.fillStyle = '#f8fafc'; ctx2.font = 'bold 18px Noto Sans TC, sans-serif'; ctx2.textAlign = 'center'; 
+        ctx2.fillText(tr('實物 (Object)', 'Object'), objPos.x, objPos.y - 20);
     }
     if (angleSlider2) angleSlider2.addEventListener('input', drawTab2);
     if (offsetSlider2) offsetSlider2.addEventListener('input', drawTab2);
 
     setTimeout(resizeAllCanvases, 50);
+    setLang('zh'); // Init Language
 </script>
 </body>
 </html>
