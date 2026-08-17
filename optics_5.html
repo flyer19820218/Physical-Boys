@@ -2,17 +2,23 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國中自然 光學｜光與顏色的世界 黑板模擬器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title data-zh="國中自然 光學｜光與顏色的世界 黑板模擬器" data-en="Optics | Light & Colors Simulator">國中自然 光學｜光與顏色的世界 黑板模擬器</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
-
     :root {
       --board: #1c3d34;
-      --board-dark: #15302a;
+      --board-dark: #11261f;
       --chalk: #f2ecd9;
       --chalk-dim: #c9c2ab;
-      --chalk-yellow: #f2d675;
+      --chalk-yellow: #fde047;
+      --chalk-green: #4ade80;
+      --chalk-pink: #f472b6;
+      --chalk-blue: #38bdf8;
+      --chalk-gray: #9fb0a8;
+      --chalk-orange: #fb923c;
+      --x-color: #5fb0ff;
+      --v-color: #ef6a5a;
       --frame: #5c4a33;
     }
 
@@ -23,22 +29,80 @@
       background: var(--board-dark);
       color: var(--chalk);
       font-family: 'Noto Sans TC', sans-serif;
+      font-size: 20px;
       padding: 20px 14px 60px;
+      padding-top: 80px; 
     }
 
-    .wrap { max-width: 1300px; margin: 0 auto; }
+    /* 🌟 規範：右上角橫向懸浮雙語切換器 */
+    .floating-lang-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 2px solid var(--chalk-blue);
+      border-radius: 12px;
+      background: rgba(17, 38, 31, 0.95);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(56, 189, 248, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .lang-label {
+      color: var(--chalk-blue);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      user-select: none;
+      margin-left: 4px;
+    }
+    .lang-options {
+      display: flex;
+      flex-direction: row;
+      gap: 4px;
+    }
+    .lang-pill {
+      min-width: 60px;
+      min-height: 48px; /* 觸控防禦 */
+      padding: 6px 12px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      background: transparent;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      touch-action: manipulation;
+    }
+    .lang-pill.active {
+      background: var(--chalk-blue) !important;
+      color: #0b1a15 !important;
+      border-color: var(--chalk-blue) !important;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+
+    .wrap { max-width: 1080px; margin: 0 auto; }
 
     header { text-align: center; margin-bottom: 24px; }
-    header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.2em; color: var(--chalk-dim); text-transform: uppercase; }
-    h1 { font-family: 'Kalam', cursive; font-size: 2.1rem; font-weight: 700; margin: 6px 0 10px; text-shadow: 0 0 14px rgba(242, 236, 217, 0.15); }
-    header p { color: var(--chalk-dim); max-width: 780px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem; }
+    header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 20px; letter-spacing: 0.15em; color: var(--chalk-dim); text-transform: uppercase; }
+    h1 { font-family: 'Kalam', cursive; font-size: 40px; font-weight: 700; margin: 6px 0 10px; text-shadow: 0 0 14px rgba(242, 236, 217, 0.15); color: var(--chalk-yellow); }
+    header p { color: var(--chalk-green); max-width: 850px; margin: 0 auto; line-height: 1.6; font-size: 21px; font-weight: bold; }
 
     .board {
       background: var(--board);
       border: 10px solid var(--frame);
       border-radius: 6px;
       box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4), inset 0 0 60px rgba(0, 0, 0, 0.25);
-      padding: 20px 18px 24px;
+      padding: 24px 20px;
       margin-bottom: 20px;
       position: relative;
     }
@@ -49,41 +113,49 @@
     }
 
     .board h2 {
-      font-family: 'Kalam', cursive; font-size: 1.25rem; margin: 0 0 14px;
-      color: var(--chalk-yellow); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+      font-family: 'Kalam', cursive; font-size: 28px; margin: 0 0 16px;
+      color: var(--chalk-yellow); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-weight: 700;
     }
 
-    .mode-switch { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    /* 模式切換按鈕 */
+    .mode-switch { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .mode-switch button {
-      font-family: 'Noto Sans TC', sans-serif; font-size: 0.92rem; font-weight: 700;
-      background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 1.5px solid rgba(242, 236, 217, 0.18);
-      padding: 12px 14px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; display: flex; flex-direction: column; gap: 4px;
+      font-family: 'Noto Sans TC', sans-serif; font-size: 20px; font-weight: 700;
+      background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 2px dashed rgba(242, 236, 217, 0.25);
+      padding: 14px 12px; min-height: 64px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; display: flex; flex-direction: column; gap: 4px;
+      touch-action: manipulation;
     }
-    .mode-switch button span.sub { font-size: 0.75rem; font-weight: 400; opacity: 0.7; }
-    .mode-switch button:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(242, 236, 217, 0.4); }
+    .mode-switch button span.sub { font-size: 16px; font-weight: 400; opacity: 0.8; }
+    .mode-switch button:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(242, 236, 217, 0.5); color: var(--chalk); }
     .mode-switch button.active {
-      background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow);
+      background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow); border-style: solid;
       box-shadow: 0 4px 12px rgba(242, 214, 117, 0.25);
     }
-    .mode-switch button.active span.sub { color: var(--board-dark); opacity: 0.85; font-weight: 600; }
+    .mode-switch button.active span.sub { color: var(--board-dark); opacity: 0.9; font-weight: 600; }
 
-    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.15); padding: 14px; border-radius: 8px; }
-    .control label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--chalk-dim); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
-    .control label span.val { color: var(--chalk-yellow); font-weight: 600; }
-    input[type=range] { width: 100%; accent-color: var(--chalk-yellow); height: 5px; background: transparent; cursor: pointer; }
+    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.15); padding: 16px; border-radius: 8px; }
+    .control label { display: flex; justify-content: space-between; font-size: 20px; color: var(--chalk-dim); margin-bottom: 8px; font-family: 'JetBrains Mono', 'Noto Sans TC', monospace; font-weight: bold; }
+    .control label span.val { color: var(--chalk-yellow); font-weight: 700; }
+    input[type=range] { width: 100%; accent-color: var(--chalk-yellow); height: 8px; background: transparent; cursor: pointer; min-height: 44px; touch-action: manipulation; }
 
-    .visual-card { width: 100%; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; margin-top: 10px; min-height: 350px; justify-content: center; }
-    svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .btn-group { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+    .c-btn { flex: 1; min-width: 80px; min-height: 48px; padding: 10px 8px; border-radius: 8px; border: 2px solid var(--chalk-dim); cursor: pointer; font-weight: bold; font-size: 18px; transition: all 0.2s; touch-action: manipulation; display: flex; align-items: center; justify-content: center; }
+    .c-btn:hover { transform: translateY(-2px); }
     
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 14px; }
-    .stat { background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 10px 8px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.04); }
-    .stat .k { font-family: 'Noto Sans TC', sans-serif; font-size: 0.85rem; color: var(--chalk-dim); }
-    .stat .v { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--chalk-yellow); font-weight: 600; margin-top: 3px; }
+    select { height: 48px; font-size: 20px; font-weight: bold; cursor: pointer; }
 
-    .explain-box { margin-top: 18px; background: rgba(0, 0, 0, 0.18); border-left: 4px solid var(--chalk-yellow); border-radius: 0 8px 8px 0; padding: 14px 18px; }
-    .explain-box h3 { font-family: 'Kalam', cursive; color: var(--chalk-yellow); margin: 0 0 8px; font-size: 1.1rem; }
-    .explain-box p { margin: 0; font-size: 0.95rem; line-height: 1.6; color: var(--chalk); }
-    .formula-highlight { font-family: 'JetBrains Mono', monospace; background: rgba(242, 214, 117, 0.15); padding: 2px 8px; border-radius: 4px; color: var(--chalk-yellow); font-weight: 600; display: inline-block; margin: 4px 0; font-style: italic; }
+    .visual-card { width: 100%; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-top: 16px; min-height: 350px; }
+    svg { width: 100%; height: auto; display: block; overflow: visible; aspect-ratio: 600 / 300; }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
+    .stat { background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 14px 10px; text-align: center; border: 1px dashed var(--chalk-dim); }
+    .stat .k { font-family: 'Noto Sans TC', sans-serif; font-size: 20px; color: var(--chalk-dim); font-weight: bold; }
+    .stat .v { font-family: 'JetBrains Mono', monospace; font-size: 24px; color: var(--chalk-yellow); font-weight: 700; margin-top: 8px; }
+
+    .explain-box { margin-top: 18px; background: rgba(0, 0, 0, 0.18); border-left: 6px solid var(--chalk-yellow); border-radius: 0 8px 8px 0; padding: 16px 20px; }
+    .explain-box h3 { color: var(--chalk-yellow); margin: 0 0 10px; font-size: 24px; font-weight: 700; }
+    .explain-box p { margin: 0; font-size: 20px; line-height: 1.8; color: var(--chalk); }
+    .formula-highlight { font-family: 'JetBrains Mono', monospace; background: rgba(242, 214, 117, 0.15); padding: 4px 12px; border-radius: 6px; color: var(--chalk-yellow); font-weight: 700; display: inline-block; margin: 4px 0; }
 
     /* RGB 混色專用 CSS */
     .rgb-container { position: relative; width: 300px; height: 300px; background: #000; border-radius: 50%; }
@@ -92,38 +164,51 @@
     .spot-g { background: rgb(0, 255, 0); bottom: 30px; left: 20px; }
     .spot-b { background: rgb(0, 0, 255); bottom: 30px; right: 20px; }
 
-    .btn-group { display: flex; gap: 6px; margin-top: 4px; }
-    .c-btn { flex: 1; padding: 6px; border-radius: 6px; border: 1px solid var(--chalk-dim); cursor: pointer; font-weight: bold; transition: all 0.2s; }
-    
-    footer { text-align: center; color: var(--chalk-dim); font-size: 0.8rem; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; }
+    footer { text-align: center; color: var(--chalk-dim); font-size: 20px; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; font-weight: bold; }
+
+    @media (max-width: 768px) {
+      .floating-lang-container { top: 8px; right: 8px; padding: 6px 8px; }
+      .lang-label { display: none; }
+      .mode-switch { grid-template-columns: 1fr 1fr; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- 🌟 右上角橫向懸浮雙語切換器 -->
+  <div class="floating-lang-container">
+    <span class="lang-label">Language</span>
+    <div class="lang-options">
+      <button class="lang-pill active" id="btn-lang-zh" onclick="setLang('zh')">中文</button>
+      <button class="lang-pill" id="btn-lang-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
   <div class="wrap">
     <header>
       <div class="eyebrow">Optics Chapter 4-5</div>
-      <h1>光與顏色的世界</h1>
-      <p>從牛頓的三稜鏡色散，到光的三原色加法混色。親手搭配入射光與物體顏色，破解生活中的顏色魔術！</p>
+      <h1 data-zh="光學五：光與顏色的世界" data-en="Optics 5: The World of Light & Colors">光學五：光與顏色的世界</h1>
+      <p data-zh="從牛頓的三稜鏡色散，到光的三原色加法混色。親手搭配入射光與物體顏色，破解生活中的顏色魔術！" data-en="From Newton's prism dispersion to RGB additive color mixing. Match incident light with object colors to reveal daily color magic!">從牛頓的三稜鏡色散，到光的三原色加法混色。親手搭配入射光與物體顏色，破解生活中的顏色魔術！</p>
     </header>
 
     <div class="board">
-      <h2>① 選擇互動教學模式</h2>
+      <h2 data-zh="選擇互動教學模式" data-en="Select Interactive Mode">選擇互動教學模式</h2>
       <div class="mode-switch">
         <button class="active" data-mode="prism">
-          <span>🌈 1. 三稜鏡色散</span>
-          <span class="sub">紅光快、紫光慢，偏折不同</span>
+          <span data-zh="🌈 1. 三稜鏡色散" data-en="🌈 1. Prism Dispersion">🌈 1. 三稜鏡色散</span>
+          <span class="sub" data-zh="紅光快、紫光慢，偏折不同" data-en="Red fast, Violet slow = diff bends">紅光快、紫光慢，偏折不同</span>
         </button>
         <button data-mode="rgb">
-          <span>💡 2. 光的三原色</span>
-          <span class="sub">RGB 疊加與混合光</span>
+          <span data-zh="💡 2. 光的三原色" data-en="💡 2. RGB Primary Colors">💡 2. 光的三原色</span>
+          <span class="sub" data-zh="RGB 疊加與混合光" data-en="RGB blending and mixing">RGB 疊加與混合光</span>
         </button>
         <button data-mode="object_color">
-          <span>🍎 3. 物體的顏色</span>
-          <span class="sub">反射不吸收的色光</span>
+          <span data-zh="🍎 3. 物體的顏色" data-en="🍎 3. Object Colors">🍎 3. 物體的顏色</span>
+          <span class="sub" data-zh="反射不吸收的色光" data-en="Reflects non-absorbed light">反射不吸收的色光</span>
         </button>
         <button data-mode="quiz_love">
-          <span>💌 4. 經典題：LOVE 卡片</span>
-          <span class="sub">切換燈光，愛心去哪了？</span>
+          <span data-zh="💌 4. 經典題：LOVE 卡片" data-en="💌 4. Quiz: LOVE Card">💌 4. 經典題：LOVE 卡片</span>
+          <span class="sub" data-zh="切換燈光，愛心去哪了？" data-en="Switch light, where's the heart?">切換燈光，愛心去哪了？</span>
         </button>
       </div>
 
@@ -135,22 +220,23 @@
     </div>
 
     <div class="board">
-      <h2>② 課堂重點與原理解析</h2>
+      <h2 data-zh="課堂重點與原理解析" data-en="Key Concepts & Analysis">課堂重點與原理解析</h2>
       <div class="explain-box" id="explainBox"></div>
     </div>
 
-    <footer>國中理化 光學單元 · 視覺化互動教學教材 · 設計：彥君老師</footer>
+    <footer data-zh="國中理化 光學單元 · 視覺化互動教學教材" data-en="Junior High Science Optics · Interactive Blackboard">國中理化 光學單元 · 視覺化互動教學教材</footer>
   </div>
 
   <script>
     (function() {
+      let currentLang = 'zh';
+      let currentMode = 'prism';
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+
       const controlsBox = document.getElementById('controlsBox');
       const visualContainer = document.getElementById('visualContainer');
       const statsGrid = document.getElementById('statsGrid');
       const explainBox = document.getElementById('explainBox');
-
-      let currentMode = 'prism';
-      const SVG_NS = 'http://www.w3.org/2000/svg';
 
       const params = {
         prism: { angle: 15 },
@@ -160,22 +246,45 @@
       };
 
       const colorMap = {
-        'white': { name: '白', val: '#ffffff', hex: '#ffffff' },
-        'red': { name: '紅', val: 'rgb(255,0,0)', hex: '#ff0000' },
-        'green': { name: '綠', val: 'rgb(0,255,0)', hex: '#00ff00' },
-        'blue': { name: '藍', val: 'rgb(0,0,255)', hex: '#5fb0ff' }, 
-        'black': { name: '黑', val: '#111111', hex: '#222222' }
+        'white': { zh: '白', en: 'White', val: '#ffffff', hex: '#ffffff' },
+        'red': { zh: '紅', en: 'Red', val: 'rgb(255,0,0)', hex: '#ff0000' },
+        'green': { zh: '綠', en: 'Green', val: 'rgb(0,255,0)', hex: '#00ff00' },
+        'blue': { zh: '藍', en: 'Blue', val: 'rgb(0,0,255)', hex: '#5fb0ff' }, 
+        'black': { zh: '黑', en: 'Black', val: '#111111', hex: '#222222' }
+      };
+
+      function tr(zh, en) {
+        return currentLang === 'en' ? en : zh;
+      }
+
+      window.setLang = function(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
+
+        document.getElementById('btn-lang-zh').classList.toggle('active', lang === 'zh');
+        document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+
+        document.querySelectorAll('[data-zh][data-en]').forEach(el => {
+          el.innerHTML = el.getAttribute(`data-${lang}`);
+        });
+
+        initUI();
       };
 
       function createSvgEl(tag, attrs) {
         const el = document.createElementNS(SVG_NS, tag);
-        if (attrs) { for (let key in attrs) el.setAttribute(key, attrs[key]); }
+        if (attrs) { 
+          for (let key in attrs) {
+            if (key === 'style') el.style.cssText = attrs[key];
+            else el.setAttribute(key, attrs[key]);
+          }
+        }
         return el;
       }
 
       function addText(parent, x, y, txt, anchor, color, size, weight='normal') {
-          const t = createSvgEl('text', { x, y, 'text-anchor': anchor, fill: color, 'font-size': size, 'font-weight': weight, 'font-family': 'Noto Sans TC' });
-          t.innerHTML = txt; 
+          const t = createSvgEl('text', { x, y, 'text-anchor': anchor, fill: color, 'font-size': size, 'font-weight': weight, 'font-family': 'Noto Sans TC, sans-serif' });
+          t.textContent = txt; 
           parent.appendChild(t);
       }
 
@@ -185,15 +294,15 @@
       }
 
       function renderControls() {
-        controlsBox.innerHTML = '';
+        controlsBox.replaceChildren();
         const m = currentMode;
         const p = params[m];
 
-        const addSlider = (id, label, min, max, step, val, unit, onChange) => {
+        const addSlider = (id, labelZh, labelEn, min, max, step, val, unit, onChange) => {
           const div = document.createElement('div');
           div.className = 'control';
           div.innerHTML = `
-            <label>${label} <span class="val" id="val_${id}">${val} ${unit}</span></label>
+            <label>${tr(labelZh, labelEn)} <span class="val" id="val_${id}">${val} ${unit}</span></label>
             <input type="range" id="inp_${id}" min="${min}" max="${max}" step="${step}" value="${val}">
           `;
           controlsBox.appendChild(div);
@@ -207,37 +316,37 @@
         };
 
         if (m === 'prism') {
-          addSlider('angle', '入射光角度', 0, 30, 1, p.angle, '度', v => { p.angle = v; return v; });
+          addSlider('angle', '入射光角度', 'Incident Angle', 0, 30, 1, p.angle, '°', v => { p.angle = v; return v; });
         } else if (m === 'rgb') {
-          addSlider('r', '紅光 (Red) 強度', 0, 255, 5, p.r, '', v => { p.r = v; return v; });
-          addSlider('g', '綠光 (Green) 強度', 0, 255, 5, p.g, '', v => { p.g = v; return v; });
-          addSlider('b', '藍光 (Blue) 強度', 0, 255, 5, p.b, '', v => { p.b = v; return v; });
+          addSlider('r', '紅光 (Red) 強度', 'Red Light Intensity', 0, 255, 5, p.r, '', v => { p.r = v; return v; });
+          addSlider('g', '綠光 (Green) 強度', 'Green Light Intensity', 0, 255, 5, p.g, '', v => { p.g = v; return v; });
+          addSlider('b', '藍光 (Blue) 強度', 'Blue Light Intensity', 0, 255, 5, p.b, '', v => { p.b = v; return v; });
         } else if (m === 'object_color') {
           const div1 = document.createElement('div'); div1.className = 'control';
           div1.innerHTML = `
-            <label>照射光源顏色</label>
+            <label>${tr('照射光源顏色', 'Illumination Light Color')}</label>
             <div class="btn-group">
-              <button class="c-btn" style="background:${p.light==='white'?'#fff':'#333'}; color:${p.light==='white'?'#000':'#fff'}" onclick="setObjColor('light', 'white')">白光</button>
-              <button class="c-btn" style="background:${p.light==='red'?'#ff4d4d':'#333'}; color:${p.light==='red'?'#000':'#ff4d4d'}" onclick="setObjColor('light', 'red')">紅光</button>
-              <button class="c-btn" style="background:${p.light==='green'?'#4cd964':'#333'}; color:${p.light==='green'?'#000':'#4cd964'}" onclick="setObjColor('light', 'green')">綠光</button>
-              <button class="c-btn" style="background:${p.light==='blue'?'#5fb0ff':'#333'}; color:${p.light==='blue'?'#000':'#5fb0ff'}" onclick="setObjColor('light', 'blue')">藍光</button>
+              <button class="c-btn" style="background:${p.light==='white'?'#fff':'#333'}; color:${p.light==='white'?'#000':'#fff'}" onclick="setObjColor('light', 'white')">${tr('白光', 'White')}</button>
+              <button class="c-btn" style="background:${p.light==='red'?'#ff4d4d':'#333'}; color:${p.light==='red'?'#000':'#ff4d4d'}" onclick="setObjColor('light', 'red')">${tr('紅光', 'Red')}</button>
+              <button class="c-btn" style="background:${p.light==='green'?'#4cd964':'#333'}; color:${p.light==='green'?'#000':'#4cd964'}" onclick="setObjColor('light', 'green')">${tr('綠光', 'Green')}</button>
+              <button class="c-btn" style="background:${p.light==='blue'?'#5fb0ff':'#333'}; color:${p.light==='blue'?'#000':'#5fb0ff'}" onclick="setObjColor('light', 'blue')">${tr('藍光', 'Blue')}</button>
             </div>
           `;
           controlsBox.appendChild(div1);
 
           const div2 = document.createElement('div'); div2.className = 'control';
           div2.innerHTML = `
-            <label>物體本色與材質</label>
-            <select id="selObjType" style="width:100%; padding:6px; background:#222; color:#fff; border:1px solid var(--chalk-dim); border-radius:4px; margin-bottom:6px;">
-                <option value="opaque" ${p.objType==='opaque'?'selected':''}>不透明物體 (反射)</option>
-                <option value="transparent" ${p.objType==='transparent'?'selected':''}>透明壓克力板 (透射)</option>
+            <label>${tr('物體本色與材質', 'Object Color & Material')}</label>
+            <select id="selObjType" style="width:100%; padding:10px; background:#222; color:#fff; border:2px solid var(--chalk-dim); border-radius:8px; margin-bottom:8px;">
+                <option value="opaque" ${p.objType==='opaque'?'selected':''}>${tr('不透明物體 (反射)', 'Opaque (Reflection)')}</option>
+                <option value="transparent" ${p.objType==='transparent'?'selected':''}>${tr('透明壓克力板 (透射)', 'Transparent (Transmission)')}</option>
             </select>
             <div class="btn-group">
-              <button class="c-btn" style="background:${p.objColor==='white'?'#fff':'#333'}; color:${p.objColor==='white'?'#000':'#fff'}" onclick="setObjColor('objColor', 'white')">白色</button>
-              <button class="c-btn" style="background:${p.objColor==='red'?'#ff4d4d':'#333'}; color:${p.objColor==='red'?'#000':'#ff4d4d'}" onclick="setObjColor('objColor', 'red')">紅色</button>
-              <button class="c-btn" style="background:${p.objColor==='green'?'#4cd964':'#333'}; color:${p.objColor==='green'?'#000':'#4cd964'}" onclick="setObjColor('objColor', 'green')">綠色</button>
-              <button class="c-btn" style="background:${p.objColor==='blue'?'#5fb0ff':'#333'}; color:${p.objColor==='blue'?'#000':'#5fb0ff'}" onclick="setObjColor('objColor', 'blue')">藍色</button>
-              <button class="c-btn" style="background:${p.objColor==='black'?'#000':'#333'}; color:${p.objColor==='black'?'#fff':'#aaa'}; border-color:#fff;" onclick="setObjColor('objColor', 'black')">黑色</button>
+              <button class="c-btn" style="background:${p.objColor==='white'?'#fff':'#333'}; color:${p.objColor==='white'?'#000':'#fff'}" onclick="setObjColor('objColor', 'white')">${tr('白色', 'White')}</button>
+              <button class="c-btn" style="background:${p.objColor==='red'?'#ff4d4d':'#333'}; color:${p.objColor==='red'?'#000':'#ff4d4d'}" onclick="setObjColor('objColor', 'red')">${tr('紅色', 'Red')}</button>
+              <button class="c-btn" style="background:${p.objColor==='green'?'#4cd964':'#333'}; color:${p.objColor==='green'?'#000':'#4cd964'}" onclick="setObjColor('objColor', 'green')">${tr('綠色', 'Green')}</button>
+              <button class="c-btn" style="background:${p.objColor==='blue'?'#5fb0ff':'#333'}; color:${p.objColor==='blue'?'#000':'#5fb0ff'}" onclick="setObjColor('objColor', 'blue')">${tr('藍色', 'Blue')}</button>
+              <button class="c-btn" style="background:${p.objColor==='black'?'#000':'#333'}; color:${p.objColor==='black'?'#fff':'#aaa'}; border-color:#fff;" onclick="setObjColor('objColor', 'black')">${tr('黑色', 'Black')}</button>
             </div>
           `;
           controlsBox.appendChild(div2);
@@ -255,12 +364,12 @@
         } else if (m === 'quiz_love') {
           const div = document.createElement('div'); div.className = 'control';
           div.innerHTML = `
-            <label>切換房間燈光</label>
+            <label>${tr('切換房間燈光', 'Switch Room Light')}</label>
             <div class="btn-group">
-              <button class="c-btn" style="background:${p.light==='white'?'#fff':'#333'}; color:${p.light==='white'?'#000':'#fff'}" onclick="setLoveLight('white')">💡 白光</button>
-              <button class="c-btn" style="background:${p.light==='red'?'#ff4d4d':'#333'}; color:${p.light==='red'?'#000':'#ff4d4d'}" onclick="setLoveLight('red')">🔴 紅光</button>
-              <button class="c-btn" style="background:${p.light==='green'?'#4cd964':'#333'}; color:${p.light==='green'?'#000':'#4cd964'}" onclick="setLoveLight('green')">🟢 綠光</button>
-              <button class="c-btn" style="background:${p.light==='blue'?'#5fb0ff':'#333'}; color:${p.light==='blue'?'#000':'#5fb0ff'}" onclick="setLoveLight('blue')">🔵 藍光</button>
+              <button class="c-btn" style="background:${p.light==='white'?'#fff':'#333'}; color:${p.light==='white'?'#000':'#fff'}" onclick="setLoveLight('white')">💡 ${tr('白光', 'White')}</button>
+              <button class="c-btn" style="background:${p.light==='red'?'#ff4d4d':'#333'}; color:${p.light==='red'?'#000':'#ff4d4d'}" onclick="setLoveLight('red')">🔴 ${tr('紅光', 'Red')}</button>
+              <button class="c-btn" style="background:${p.light==='green'?'#4cd964':'#333'}; color:${p.light==='green'?'#000':'#4cd964'}" onclick="setLoveLight('green')">🟢 ${tr('綠光', 'Green')}</button>
+              <button class="c-btn" style="background:${p.light==='blue'?'#5fb0ff':'#333'}; color:${p.light==='blue'?'#000':'#5fb0ff'}" onclick="setLoveLight('blue')">🔵 ${tr('藍光', 'Blue')}</button>
             </div>
           `;
           controlsBox.appendChild(div);
@@ -269,13 +378,13 @@
       }
 
       function updateSimulation() {
-        visualContainer.innerHTML = '';
-        statsGrid.innerHTML = '';
+        visualContainer.replaceChildren();
+        statsGrid.replaceChildren();
         const m = currentMode;
         
-        const addStat = (k, v) => {
+        const addStat = (kZh, kEn, v) => {
           const d = document.createElement('div'); d.className = 'stat';
-          d.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div>`; statsGrid.appendChild(d);
+          d.innerHTML = `<div class="k">${tr(kZh, kEn)}</div><div class="v">${v}</div>`; statsGrid.appendChild(d);
         };
 
         if (m === 'prism') {
@@ -284,13 +393,14 @@
           const incY = 50 + angle * 2; 
 
           svg.appendChild(createSvgEl('line', { x1: -250, y1: incY, x2: -50, y2: 0, stroke: '#ffffff', 'stroke-width': 4 }));
-          addText(svg, -150, incY/2 - 10, '太陽白光', 'middle', '#fff', 14, 'bold');
+          addText(svg, -150, incY/2 - 15, tr('太陽白光', 'White Sun Light'), 'middle', '#fff', 18, 'bold');
 
           svg.appendChild(createSvgEl('polygon', { points: '0,-100 -80,60 80,60', fill: 'rgba(255,255,255,0.1)', stroke: 'var(--chalk-dim)', 'stroke-width': 2 }));
-          addText(svg, 0, 80, '玻璃三稜鏡', 'middle', 'var(--chalk-dim)', 14, 'bold');
+          addText(svg, 0, 80, tr('玻璃三稜鏡', 'Glass Prism'), 'middle', 'var(--chalk-dim)', 18, 'bold');
 
           const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#8b00ff'];
-          const names = ['紅', '橙', '黃', '綠', '藍', '靛', '紫'];
+          const namesZh = ['紅', '橙', '黃', '綠', '藍', '靛', '紫'];
+          const namesEn = ['Red', 'Org', 'Yel', 'Grn', 'Blu', 'Ind', 'Vio'];
           
           colors.forEach((col, idx) => {
              const rightY = -10 + idx * 3;
@@ -299,21 +409,26 @@
              const spread = 20 + idx * 10 + angle * 1.5;
              svg.appendChild(createSvgEl('line', { x1: 50, y1: rightY, x2: 250, y2: rightY + spread, stroke: col, 'stroke-width': 3 }));
              
-             addText(svg, 260, rightY + spread + 4, names[idx], 'start', col, 14, 'bold');
+             addText(svg, 260, rightY + spread + 6, tr(namesZh[idx], namesEn[idx]), 'start', col, 18, 'bold');
           });
 
           visualContainer.appendChild(svg);
 
-          addStat('紅光偏折', `最小`);
-          addStat('紫光偏折', `最大`);
-          addStat('光速(玻璃中)', `紅光 > 紫光`);
+          addStat('紅光偏折', 'Red Refraction', tr(`最小`, `Min`));
+          addStat('紫光偏折', 'Violet Refraction', tr(`最大`, `Max`));
+          addStat('光速(玻璃中)', 'Speed in Glass', tr(`紅光 > 紫光`, `Red > Violet`));
 
-          explainBox.innerHTML = `
+          explainBox.innerHTML = tr(`
             <h3>💡 老師精闢解析：牛頓的三稜鏡色散</h3>
             <p>西元 1666 年，牛頓發現太陽的白光通過三稜鏡後，會被折射分散成七種色光。<br>
             為什麼會這樣呢？因為不同顏色的光，在玻璃中的<b>行進速度不同</b>！<br>
             記住關鍵：<span class="formula-highlight">紅光較快，所以偏折較少</span>；紫光最慢，所以偏折角度最大！</p>
-          `;
+          `, `
+            <h3>💡 Teacher's Analysis: Newton's Prism Dispersion</h3>
+            <p>In 1666, Newton discovered that white sunlight passing through a prism disperses into seven colors.<br>
+            Why? Because different colors of light travel at <b>different speeds</b> in glass!<br>
+            Key takeaway: <span class="formula-highlight">Red light is faster, so it bends less</span>; Violet light is slowest, so it bends the most!</p>
+          `);
 
         } else if (m === 'rgb') {
           const p = params.rgb;
@@ -328,18 +443,18 @@
           `;
           visualContainer.appendChild(container);
 
-          addStat('R (紅)', `${p.r}`);
-          addStat('G (綠)', `${p.g}`);
-          addStat('B (藍)', `${p.b}`);
+          addStat('R (紅)', 'R (Red)', `${p.r}`);
+          addStat('G (綠)', 'G (Green)', `${p.g}`);
+          addStat('B (藍)', 'B (Blue)', `${p.b}`);
 
-          let mixed = '黑色 (無光)';
-          if (p.r > 200 && p.g > 200 && p.b > 200) mixed = '白光';
-          else if (p.r > 200 && p.g > 200 && p.b < 50) mixed = '黃光 (Yellow)';
-          else if (p.r > 200 && p.b > 200 && p.g < 50) mixed = '洋紅光 (Magenta)';
-          else if (p.g > 200 && p.b > 200 && p.r < 50) mixed = '青光 (Cyan)';
-          addStat('中心混色結果', mixed);
+          let mixedZh = '黑色 (無光)', mixedEn = 'Black (No Light)';
+          if (p.r > 200 && p.g > 200 && p.b > 200) { mixedZh = '白光'; mixedEn = 'White'; }
+          else if (p.r > 200 && p.g > 200 && p.b < 50) { mixedZh = '黃光 (Yellow)'; mixedEn = 'Yellow'; }
+          else if (p.r > 200 && p.b > 200 && p.g < 50) { mixedZh = '洋紅光 (Magenta)'; mixedEn = 'Magenta'; }
+          else if (p.g > 200 && p.b > 200 && p.r < 50) { mixedZh = '青光 (Cyan)'; mixedEn = 'Cyan'; }
+          addStat('中心混色結果', 'Center Mix', tr(mixedZh, mixedEn));
 
-          explainBox.innerHTML = `
+          explainBox.innerHTML = tr(`
             <h3>💡 老師精闢解析：光的三原色</h3>
             <p>紅(R)、綠(G)、藍(B)是光的三原色。這是一種「加法混色」，光線越疊加越亮！<br>
             試著將兩兩滑桿拉滿：<br>
@@ -347,7 +462,15 @@
             <span class="formula-highlight">紅＋藍 ＝ 洋紅</span><br>
             <span class="formula-highlight">藍＋綠 ＝ 青</span><br>
             三原色光同時照射，就會合成白色光！電視機和手機螢幕就是利用這個原理發光的喔。</p>
-          `;
+          `, `
+            <h3>💡 Teacher's Analysis: RGB Primary Colors</h3>
+            <p>Red (R), Green (G), and Blue (B) are the primary colors of light. This is "Additive Mixing"—the more light you add, the brighter it gets!<br>
+            Try maxing out two sliders at a time:<br>
+            <span class="formula-highlight">Red + Green = Yellow</span><br>
+            <span class="formula-highlight">Red + Blue = Magenta</span><br>
+            <span class="formula-highlight">Blue + Green = Cyan</span><br>
+            Combining all three produces white light! TV and phone screens use this exact principle.</p>
+          `);
 
         } else if (m === 'object_color') {
           const p = params.object_color;
@@ -361,14 +484,15 @@
           else inColors = [lightObj.hex];
 
           inColors.forEach((col, idx) => {
-              const offset = inColors.length === 3 ? (idx - 1) * 15 : 0;
-              svg.appendChild(createSvgEl('line', { x1: -150 + offset, y1: -120, x2: offset, y2: -20, stroke: col, 'stroke-width': 4, 'marker-end': 'url(#arrow_' + col.replace('#','') + ')' }));
+              const offset = inColors.length === 3 ? (idx - 1) * 20 : 0;
+              svg.appendChild(createSvgEl('line', { x1: -160 + offset, y1: -120, x2: offset, y2: -20, stroke: col, 'stroke-width': 5, 'marker-end': 'url(#arrow_' + col.replace('#','') + ')' }));
           });
 
           let outColors = [];
           if (p.objColor === 'black') {
+             // 黑色吸收所有光線，不輸出
           } else if (p.objColor === 'white') {
-              outColors = [...inColors];
+              outColors = [...inColors]; // 白色反射/穿透所有光線
           } else {
               if (p.light === 'white' || p.light === p.objColor) {
                   outColors = [objObj.hex];
@@ -376,52 +500,60 @@
           }
 
           if (p.objType === 'opaque') {
-              svg.appendChild(createSvgEl('rect', { x: -60, y: -20, width: 120, height: 40, fill: objObj.hex, rx: 10, stroke: '#fff', 'stroke-width': 2 }));
-              addText(svg, 0, 45, `${objObj.name}色 不透明物體`, 'middle', 'var(--chalk)', 14, 'bold');
+              svg.appendChild(createSvgEl('rect', { x: -80, y: -20, width: 160, height: 40, fill: objObj.hex, rx: 10, stroke: '#fff', 'stroke-width': 2 }));
+              addText(svg, 0, 45, `${tr(objObj.zh, objObj.en)}${tr('色 不透明物', ' Opaque Obj')}`, 'middle', 'var(--chalk)', 18, 'bold');
               
               outColors.forEach((col, idx) => {
-                  const offset = outColors.length === 3 ? (idx - 1) * 15 : 0;
-                  svg.appendChild(createSvgEl('line', { x1: offset, y1: -20, x2: 150 + offset, y2: -120, stroke: col, 'stroke-width': 5, 'marker-end': 'url(#arrow_' + col.replace('#','') + ')' }));
+                  const offset = outColors.length === 3 ? (idx - 1) * 20 : 0;
+                  svg.appendChild(createSvgEl('line', { x1: offset, y1: -20, x2: 160 + offset, y2: -120, stroke: col, 'stroke-width': 6, 'marker-end': 'url(#arrow_' + col.replace('#','') + ')' }));
               });
               
               if (outColors.length === 0) {
-                 addText(svg, 100, -60, '光被全部吸收！', 'middle', 'var(--chalk-dim)', 14, 'bold');
+                 addText(svg, 120, -60, tr('光被全部吸收！', 'Light fully absorbed!'), 'middle', 'var(--chalk-dim)', 18, 'bold');
               }
           } else {
-              svg.appendChild(createSvgEl('polygon', { points: '-80,-20 60,-20 80,20 -60,20', fill: objObj.hex, opacity: 0.7, stroke: '#fff', 'stroke-width': 2 }));
-              addText(svg, 0, 45, `${objObj.name}色 壓克力板`, 'middle', 'var(--chalk)', 14, 'bold');
+              svg.appendChild(createSvgEl('polygon', { points: '-100,-20 80,-20 100,20 -80,20', fill: objObj.hex, opacity: 0.7, stroke: '#fff', 'stroke-width': 2 }));
+              addText(svg, 0, 45, `${tr(objObj.zh, objObj.en)}${tr('色 壓克力板', ' Transparent Sheet')}`, 'middle', 'var(--chalk)', 18, 'bold');
 
               outColors.forEach((col, idx) => {
-                  const offset = outColors.length === 3 ? (idx - 1) * 15 : 0;
-                  svg.appendChild(createSvgEl('line', { x1: offset, y1: 20, x2: 150 + offset, y2: 120, stroke: col, 'stroke-width': 5, 'marker-end': 'url(#arrow_' + col.replace('#','') + ')' }));
+                  const offset = outColors.length === 3 ? (idx - 1) * 20 : 0;
+                  svg.appendChild(createSvgEl('line', { x1: offset, y1: 20, x2: 160 + offset, y2: 120, stroke: col, 'stroke-width': 6, 'marker-end': 'url(#arrow_' + col.replace('#','') + ')' }));
               });
 
               if (outColors.length === 0) {
-                 addText(svg, 100, 80, '光被全部吸收！', 'middle', 'var(--chalk-dim)', 14, 'bold');
+                 addText(svg, 120, 80, tr('光被全部吸收！', 'Light fully absorbed!'), 'middle', 'var(--chalk-dim)', 18, 'bold');
               }
           }
 
-          let defs = '<defs>';
+          // 安全注入 markers
+          const defs = createSvgEl('defs');
           ['ff0000', '00ff00', '5fb0ff', 'ffffff'].forEach(col => {
-             defs += `<marker id="arrow_${col}" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 2 L 10 5 L 0 8 z" fill="#${col}" /></marker>`;
+             const m = createSvgEl('marker', { id: `arrow_${col}`, viewBox: '0 0 10 10', refX: 5, refY: 5, markerWidth: 4, markerHeight: 4, orient: 'auto-start-reverse' });
+             const p = createSvgEl('path', { d: 'M 0 2 L 10 5 L 0 8 z', fill: `#${col}` });
+             m.appendChild(p); defs.appendChild(m);
           });
-          defs += '</defs>';
-          svg.innerHTML += defs;
+          svg.appendChild(defs);
 
           visualContainer.appendChild(svg);
 
-          let seenColor = outColors.length === 3 ? '白色' : (outColors.length === 1 ? colorMap[p.objColor].name + '色' : '黑色');
+          let seenColorZh = outColors.length === 3 ? '白色' : (outColors.length === 1 ? colorMap[p.objColor].zh + '色' : '黑色');
+          let seenColorEn = outColors.length === 3 ? 'White' : (outColors.length === 1 ? colorMap[p.objColor].en : 'Black');
 
-          addStat('入射光', `${lightObj.name}光`);
-          addStat('物體顏色', `${objObj.name}色`);
-          addStat('眼睛看到的顏色', `<span style="color:${outColors.length > 0 ? outColors[0] : '#aaa'}">${seenColor}</span>`);
+          addStat('入射光', 'Incident Light', `${tr(lightObj.zh, lightObj.en)}${tr('光', '')}`);
+          addStat('物體顏色', 'Object Color', `${tr(objObj.zh, objObj.en)}${tr('色', '')}`);
+          addStat('眼睛看到的顏色', 'Perceived Color', `<span style="color:${outColors.length > 0 ? outColors[0] : '#aaa'}">${tr(seenColorZh, seenColorEn)}</span>`);
 
-          explainBox.innerHTML = `
+          explainBox.innerHTML = tr(`
             <h3>💡 老師精闢解析：看見顏色的定義</h3>
             <p>1. <b>不透明物體</b>：物體會反射它本身不吸收的色光。例如：紅色的鞋子只反射紅光，吸收綠光與藍光；白色物體將所有色光反射；黑色物體吸收所有色光！<br>
             2. <b>透明物體</b>：透明壓克力片或玻璃紙，只會讓「跟自己同顏色」的光穿透過去，其餘吸收。<br>
             （試試看用「綠光」照「紅色物體」，你會發現沒有光反射，物體看起來會變成黑色！）</p>
-          `;
+          `, `
+            <h3>💡 Teacher's Analysis: Definition of Seeing Colors</h3>
+            <p>1. <b>Opaque Objects</b>: They reflect colors they do not absorb. E.g., red shoes reflect only red light, absorbing green and blue. White objects reflect all light; black objects absorb all light!<br>
+            2. <b>Transparent Objects</b>: Acrylic sheets or cellophane only let light of "their own color" pass through, absorbing the rest.<br>
+            (Try illuminating a "Red Object" with "Green Light"—you'll see no light reflected, making the object appear black!)</p>
+          `);
 
         } else if (m === 'quiz_love') {
           const lightCol = params.quiz_love.light;
@@ -445,47 +577,60 @@
 
           svg.appendChild(createSvgEl('path', { d: 'M 200,180 L 120,80 A 45,45 0 0,1 200,50 A 45,45 0 0,1 280,80 Z', fill: heartFill }));
 
-          addText(svg, 110, 240, 'L', 'middle', textFill, 32, 'bold');
-          addText(svg, 170, 240, 'O', 'middle', textFill, 32, 'bold');
-          addText(svg, 230, 240, 'V', 'middle', textFill, 32, 'bold');
-          addText(svg, 290, 240, 'E', 'middle', textFill, 32, 'bold');
+          addText(svg, 110, 240, 'L', 'middle', textFill, 40, 'bold');
+          addText(svg, 170, 240, 'O', 'middle', textFill, 40, 'bold');
+          addText(svg, 230, 240, 'V', 'middle', textFill, 40, 'bold');
+          addText(svg, 290, 240, 'E', 'middle', textFill, 40, 'bold');
 
           if (lightCol === 'green' || lightCol === 'blue') {
-             svg.appendChild(createSvgEl('rect', { x: 50, y: 50, width: 300, height: 150, fill: 'none', stroke: '#333', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
-             addText(svg, 200, 120, '愛心變成黑色，融入背景看不見了！', 'middle', '#888', 14);
+             svg.appendChild(createSvgEl('rect', { x: 50, y: 50, width: 300, height: 150, fill: 'none', stroke: '#555', 'stroke-width': 2, 'stroke-dasharray': '5 5' }));
+             addText(svg, 200, 120, tr('愛心變成黑色，融入背景看不見了！', 'Heart turns black, blending into the background!'), 'middle', '#888', 18, 'bold');
           }
 
           const lightHex = lightCol === 'white' ? 'rgba(255,255,255,0.15)' : 
-                          (lightCol === 'red' ? 'rgba(255,0,0,0.15)' : 
-                          (lightCol === 'green' ? 'rgba(0,255,0,0.15)' : 'rgba(95,176,255,0.15)'));
+                         (lightCol === 'red' ? 'rgba(255,0,0,0.15)' : 
+                         (lightCol === 'green' ? 'rgba(0,255,0,0.15)' : 'rgba(95,176,255,0.15)'));
           svg.appendChild(createSvgEl('polygon', { points: '200,0 0,300 400,300', fill: lightHex, 'mix-blend-mode': 'screen', 'pointer-events': 'none' }));
 
           visualContainer.appendChild(svg);
 
-          const lName = colorMap[lightCol].name;
-          addStat('目前燈光', `${lName}光`);
-          addStat('愛心看起來', lightCol==='white'||lightCol==='red' ? '紅色' : '黑色 (消失)');
-          addStat('文字看起來', lightCol==='white' ? '白色' : `${lName}色`);
+          const lNameZh = colorMap[lightCol].zh;
+          const lNameEn = colorMap[lightCol].en;
+          addStat('目前燈光', 'Current Light', `${tr(lNameZh, lNameEn)}${tr('光', '')}`);
+          
+          let heartLooksZh = lightCol==='white'||lightCol==='red' ? '紅色' : '黑色 (消失)';
+          let heartLooksEn = lightCol==='white'||lightCol==='red' ? 'Red' : 'Black (Disappears)';
+          addStat('愛心看起來', 'Heart Appears', tr(heartLooksZh, heartLooksEn));
+          
+          let textLooksZh = lightCol==='white' ? '白色' : `${lNameZh}色`;
+          let textLooksEn = lightCol==='white' ? 'White' : lNameEn;
+          addStat('文字看起來', 'Text Appears', tr(textLooksZh, textLooksEn));
 
-          explainBox.innerHTML = `
+          explainBox.innerHTML = tr(`
             <h3>💡 經典試題挑戰：消失的情人節卡片</h3>
             <p>這是一張黑底、白字、紅愛心的卡片：<br>
             當用<b>綠色燈光</b>或<b>藍色燈光</b>照射時，白字會反射該色光變成綠/藍色，但<b>紅色的愛心會將綠/藍光完全吸收</b>，導致沒有光線反射出來，變成黑色！<br>
             因為背景本來就是黑色，所以愛心就完美地「隱形」在背景中了！</p>
-          `;
+          `, `
+            <h3>💡 Classic Exam Challenge: Vanishing Valentine's Card</h3>
+            <p>This is a card with a black background, white text, and a red heart:<br>
+            When illuminated with <b>Green</b> or <b>Blue Light</b>, the white text reflects that color. However, the <b>red heart absorbs all green/blue light</b>, reflecting nothing and turning black!<br>
+            Since the background is already black, the heart "turns invisible" and perfectly blends in!</p>
+          `);
         }
       }
 
       document.querySelectorAll('.mode-switch button').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
           document.querySelectorAll('.mode-switch button').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          currentMode = btn.dataset.mode;
+          e.currentTarget.classList.add('active');
+          currentMode = e.currentTarget.dataset.mode;
           initUI();
         });
       });
 
       initUI();
+      setLang('zh');
     })();
   </script>
 </body>
