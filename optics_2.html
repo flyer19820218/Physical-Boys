@@ -2,17 +2,21 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國中自然 光學｜平面鏡成像與反射定律 黑板模擬器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title data-zh="國中自然 光學｜平面鏡成像與反射定律 黑板模擬器" data-en="Optics | Plane Mirror Imaging & Reflection Laws Simulator">國中自然 光學｜平面鏡成像與反射定律 黑板模擬器</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
-
     :root {
       --board: #1c3d34;
-      --board-dark: #15302a;
+      --board-dark: #11261f;
       --chalk: #f2ecd9;
       --chalk-dim: #c9c2ab;
-      --chalk-yellow: #f2d675;
+      --chalk-yellow: #fde047;
+      --chalk-green: #4ade80;
+      --chalk-pink: #f472b6;
+      --chalk-blue: #38bdf8;
+      --chalk-gray: #9fb0a8;
+      --chalk-orange: #fb923c;
       --x-color: #5fb0ff;
       --v-color: #ef6a5a;
       --frame: #5c4a33;
@@ -25,22 +29,80 @@
       background: var(--board-dark);
       color: var(--chalk);
       font-family: 'Noto Sans TC', sans-serif;
+      font-size: 20px; /* 基礎字體鎖定 20px */
       padding: 20px 14px 60px;
+      padding-top: 80px;
     }
 
-    .wrap { max-width: 1300px; margin: 0 auto; }
+    /* 🌟 規範：右上角橫向懸浮雙語切換器 */
+    .floating-lang-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 2px solid var(--chalk-blue);
+      border-radius: 12px;
+      background: rgba(17, 38, 31, 0.95);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(56, 189, 248, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .lang-label {
+      color: var(--chalk-blue);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      user-select: none;
+      margin-left: 4px;
+    }
+    .lang-options {
+      display: flex;
+      flex-direction: row;
+      gap: 4px;
+    }
+    .lang-pill {
+      min-width: 60px;
+      min-height: 48px; /* 觸控防禦 */
+      padding: 6px 12px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      background: transparent;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      touch-action: manipulation;
+    }
+    .lang-pill.active {
+      background: var(--chalk-blue) !important;
+      color: #0b1a15 !important;
+      border-color: var(--chalk-blue) !important;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+
+    .wrap { max-width: 1080px; margin: 0 auto; }
 
     header { text-align: center; margin-bottom: 24px; }
-    header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.2em; color: var(--chalk-dim); text-transform: uppercase; }
-    h1 { font-family: 'Kalam', cursive; font-size: 2.1rem; font-weight: 700; margin: 6px 0 10px; text-shadow: 0 0 14px rgba(242, 236, 217, 0.15); }
-    header p { color: var(--chalk-dim); max-width: 780px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem; }
+    header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 20px; letter-spacing: 0.15em; color: var(--chalk-dim); text-transform: uppercase; }
+    h1 { font-size: 38px; font-weight: 700; margin: 6px 0 10px; text-shadow: 0 0 14px rgba(242, 236, 217, 0.15); color: var(--chalk-yellow); }
+    header p { color: var(--chalk-green); max-width: 850px; margin: 0 auto; line-height: 1.6; font-size: 21px; font-weight: bold; }
 
     .board {
       background: var(--board);
       border: 10px solid var(--frame);
       border-radius: 6px;
       box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4), inset 0 0 60px rgba(0, 0, 0, 0.25);
-      padding: 20px 18px 24px;
+      padding: 24px 20px;
       margin-bottom: 20px;
       position: relative;
     }
@@ -51,112 +113,150 @@
     }
 
     .board h2 {
-      font-family: 'Kalam', cursive; font-size: 1.25rem; margin: 0 0 14px;
+      font-size: 28px; margin: 0 0 16px; font-weight: 700;
       color: var(--chalk-yellow); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
     }
 
-    .mode-switch { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    /* 模式切換按鈕 */
+    .mode-switch { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .mode-switch button {
-      font-family: 'Noto Sans TC', sans-serif; font-size: 0.92rem; font-weight: 700;
-      background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 1.5px solid rgba(242, 236, 217, 0.18);
-      padding: 12px 14px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; display: flex; flex-direction: column; gap: 4px;
+      font-family: 'Noto Sans TC', sans-serif; font-size: 20px; font-weight: 700;
+      background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 2px dashed rgba(242, 236, 217, 0.25);
+      padding: 14px 12px; min-height: 64px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; display: flex; flex-direction: column; gap: 4px;
+      touch-action: manipulation;
     }
-    .mode-switch button span.sub { font-size: 0.75rem; font-weight: 400; opacity: 0.7; }
-    .mode-switch button:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(242, 236, 217, 0.4); }
+    .mode-switch button span.sub { font-size: 16px; font-weight: 400; opacity: 0.8; }
+    .mode-switch button:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(242, 236, 217, 0.5); color: var(--chalk); }
     .mode-switch button.active {
-      background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow);
+      background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow); border-style: solid;
       box-shadow: 0 4px 12px rgba(242, 214, 117, 0.25);
     }
-    .mode-switch button.active span.sub { color: var(--board-dark); opacity: 0.85; font-weight: 600; }
+    .mode-switch button.active span.sub { color: var(--board-dark); opacity: 0.9; font-weight: 600; }
 
-    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.15); padding: 14px; border-radius: 8px; }
-    .control label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--chalk-dim); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
-    .control label span.val { color: var(--chalk-yellow); font-weight: 600; }
-    input[type=range] { width: 100%; accent-color: var(--chalk-yellow); height: 5px; background: transparent; cursor: pointer; }
+    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.15); padding: 16px; border-radius: 8px; }
+    .control label { display: flex; justify-content: space-between; font-size: 20px; color: var(--chalk-dim); margin-bottom: 8px; font-family: 'JetBrains Mono', 'Noto Sans TC', monospace; font-weight: bold; }
+    .control label span.val { color: var(--chalk-yellow); font-weight: 700; }
+    input[type=range] { width: 100%; accent-color: var(--chalk-yellow); height: 8px; background: transparent; cursor: pointer; min-height: 44px; touch-action: manipulation; }
 
-    .presets { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
-    .presets span { font-size: 0.8rem; color: var(--chalk-dim); margin-right: 4px; }
+    .presets { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; align-items: center; justify-content: center; }
+    .presets span { font-size: 20px; color: var(--chalk-dim); font-weight: bold; }
     .presets button {
-      font-family: 'Noto Sans TC', sans-serif; background: transparent; border: 1px dashed var(--chalk-dim);
-      color: var(--chalk); padding: 6px 12px; border-radius: 18px; font-size: 0.8rem; cursor: pointer; transition: all .15s;
+      font-family: 'Noto Sans TC', sans-serif; background: transparent; border: 2px dashed var(--chalk-dim);
+      color: var(--chalk); padding: 10px 18px; min-height: 48px; border-radius: 18px; font-size: 20px; cursor: pointer; transition: all .15s; font-weight: bold;
+      touch-action: manipulation;
     }
     .presets button:hover { border-color: var(--chalk-yellow); color: var(--chalk-yellow); background: rgba(242, 214, 117, 0.1); }
 
-    .visual-card { width: 100%; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; margin-top: 10px; }
-    svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .visual-card { width: 100%; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; margin-top: 16px; }
     
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 14px; }
-    .stat { background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 10px 8px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.04); }
-    .stat .k { font-family: 'Noto Sans TC', sans-serif; font-size: 0.85rem; color: var(--chalk-dim); }
-    .stat .v { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: var(--chalk-yellow); font-weight: 600; margin-top: 3px; }
+    /* 🌟 SVG 等比例防禦 */
+    svg { width: 100%; height: auto; display: block; overflow: visible; aspect-ratio: 600 / 400; }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
+    .stat { background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 14px 10px; text-align: center; border: 1px dashed var(--chalk-dim); }
+    .stat .k { font-family: 'Noto Sans TC', sans-serif; font-size: 20px; color: var(--chalk-dim); font-weight: bold; }
+    .stat .v { font-family: 'JetBrains Mono', monospace; font-size: 24px; color: var(--chalk-yellow); font-weight: 700; margin-top: 8px; }
+    .math-text { font-family: 'JetBrains Mono', monospace; font-weight: bold; }
 
-    .explain-box { margin-top: 18px; background: rgba(0, 0, 0, 0.18); border-left: 4px solid var(--chalk-yellow); border-radius: 0 8px 8px 0; padding: 14px 18px; }
-    .explain-box h3 { font-family: 'Kalam', cursive; color: var(--chalk-yellow); margin: 0 0 8px; font-size: 1.1rem; }
-    .explain-box p { margin: 0; font-size: 0.95rem; line-height: 1.6; color: var(--chalk); }
-    .formula-highlight { font-family: 'JetBrains Mono', monospace; background: rgba(242, 214, 117, 0.15); padding: 2px 8px; border-radius: 4px; color: var(--chalk-yellow); font-weight: 600; display: inline-block; margin: 4px 0; font-style: italic; }
+    .explain-box { margin-top: 18px; background: rgba(0, 0, 0, 0.18); border-left: 6px solid var(--chalk-yellow); border-radius: 0 8px 8px 0; padding: 16px 20px; }
+    .explain-box h3 { color: var(--chalk-yellow); margin: 0 0 10px; font-size: 24px; font-weight: 700; }
+    .explain-box p { margin: 0; font-size: 20px; line-height: 1.8; color: var(--chalk); }
     
-    footer { text-align: center; color: var(--chalk-dim); font-size: 0.8rem; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; }
+    /* 🌟 核心：垂直分數與數學公式樣式 */
+    .math-eq { display: inline-flex; align-items: center; vertical-align: middle; gap: 6px; font-family: 'JetBrains Mono', monospace; font-weight: bold; }
+    .fraction { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 2px; }
+    .fraction .num { border-bottom: 2px solid currentColor; padding: 2px 4px; line-height: 1.2; }
+    .fraction .den { padding: 2px 4px; line-height: 1.2; }
+    .formula-highlight { background: rgba(242, 214, 117, 0.15); padding: 4px 12px; border-radius: 6px; color: var(--chalk-yellow); display: inline-flex; margin: 6px 0; }
+
+    footer { text-align: center; color: var(--chalk-dim); font-size: 20px; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; font-weight: bold; }
+
+    @media (max-width: 768px) {
+      .floating-lang-container { top: 8px; right: 8px; padding: 6px 8px; }
+      .lang-label { display: none; }
+      .mode-switch { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- 🌟 右上角橫向懸浮雙語切換器 -->
+  <div class="floating-lang-container">
+    <span class="lang-label">Language</span>
+    <div class="lang-options">
+      <button class="lang-pill active" id="btn-lang-zh" onclick="setLang('zh')">中文</button>
+      <button class="lang-pill" id="btn-lang-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
   <div class="wrap">
     <header>
       <div class="eyebrow">Optics Chapter 4-2</div>
-      <h1>光學二：平面鏡成像與反射定律</h1>
-      <p>從基礎光路圖、平凸凹曲面鏡特性，到考試大魔王「全身鏡迷思」與「三面鏡相對運動」。五大模組一次到位！</p>
+      <h1 data-zh="光學二：平面鏡成像與反射定律" data-en="Optics 2: Plane Mirror Imaging & Reflection Laws">光學二：平面鏡成像與反射定律</h1>
+      <p data-zh="從基礎光路圖、平凸凹曲面鏡特性，到考試大魔王「全身鏡迷思」與「三面鏡相對運動」。五大模組一次到位！" data-en="From ray tracing and curved mirrors to the 'full-body mirror' myth and 'three mirrors' relative motion!">從基礎光路圖、平凸凹曲面鏡特性，到考試大魔王「全身鏡迷思」與「三面鏡相對運動」。五大模組一次到位！</p>
     </header>
 
     <div class="board">
-      <h2>① 選擇互動教學模式</h2>
+      <h2 data-zh="選擇互動教學模式" data-en="Select Interactive Mode">選擇互動教學模式</h2>
       <div class="mode-switch">
         <button class="active" data-mode="plane_mirror">
-          <span>🪞 1. 平面鏡光路找虛像</span>
-          <span class="sub">物距＝像距、左右相反</span>
+          <span data-zh="🪞 平面鏡光路找虛像" data-en="🪞 Plane Mirror Virtual Image">🪞 平面鏡光路找虛像</span>
+          <span class="sub" data-zh="物距＝像距、左右相反" data-en="Obj Dist = Img Dist, Inverted">物距＝像距、左右相反</span>
         </button>
         <button data-mode="curved_mirror">
-          <span>🥣 2. 曲面鏡與視野</span>
-          <span class="sub">平、凸、凹面鏡特性</span>
+          <span data-zh="🥣 曲面鏡與視野" data-en="🥣 Curved Mirrors & FOV">🥣 曲面鏡與視野</span>
+          <span class="sub" data-zh="平、凸、凹面鏡特性" data-en="Plane, Convex, Concave">平、凸、凹面鏡特性</span>
         </button>
         <button data-mode="reflection">
-          <span>📐 3. 反射定律雷射槍</span>
-          <span class="sub">永遠相等的入射與反射角</span>
+          <span data-zh="📐 反射定律雷射槍" data-en="📐 Law of Reflection">📐 反射定律雷射槍</span>
+          <span class="sub" data-zh="永遠相等的入射與反射角" data-en="Incident = Reflected Angle">永遠相等的入射與反射角</span>
         </button>
         <button data-mode="full_body">
-          <span>🧍 4. 經典：全身鏡迷思</span>
-          <span class="sub">退後就能看到全身？</span>
+          <span data-zh="🧍 全身鏡迷思" data-en="🧍 Full-Body Mirror Myth">🧍 全身鏡迷思</span>
+          <span class="sub" data-zh="退後就能看到全身？" data-en="Back up to see full body?">退後就能看到全身？</span>
         </button>
         <button data-mode="three_mirrors">
-          <span>🔮 5. 經典：三面鏡運動</span>
-          <span class="sub">球往右移，3個像怎麼跑？</span>
+          <span data-zh="🔮 三面鏡相對運動" data-en="🔮 Three Mirrors Motion">🔮 三面鏡相對運動</span>
+          <span class="sub" data-zh="球往右移，3個像怎麼跑？" data-en="Ball moves right, where do images go?">球往右移，3個像怎麼跑？</span>
         </button>
       </div>
 
       <div class="controls" id="controlsBox"></div>
       <div class="presets" id="presetsBox"></div>
+      
       <div class="visual-card">
-        <svg id="visualSvg" viewBox="-300 -200 600 400"></svg>
+        <svg id="visualSvg" viewBox="-300 -200 600 400">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+              <path d="M 0 2 L 10 5 L 0 8 z" fill="var(--chalk-dim)" />
+            </marker>
+          </defs>
+          <g id="drawLayer"></g>
+        </svg>
       </div>
+      
       <div class="stats-grid" id="statsGrid"></div>
     </div>
 
     <div class="board">
-      <h2>② 課堂重點與原理解析</h2>
+      <h2 data-zh="課堂重點與原理解析" data-en="Key Concepts & Analysis">課堂重點與原理解析</h2>
       <div class="explain-box" id="explainBox"></div>
     </div>
 
-    <footer>國中理化 光學單元 · 視覺化互動教學教材 · 設計：彥君老師</footer>
+    <footer data-zh="國中理化 光學單元 · 視覺化互動教學教材" data-en="Junior High Science Optics · Interactive Blackboard">國中理化 光學單元 · 視覺化互動教學教材</footer>
   </div>
 
   <script>
     (function() {
-      const controlsBox = document.getElementById('controlsBox');
-      const presetsBox = document.getElementById('presetsBox');
-      const visualSvg = document.getElementById('visualSvg');
-      const statsGrid = document.getElementById('statsGrid');
-      const explainBox = document.getElementById('explainBox');
-
+      let currentLang = 'zh';
       let currentMode = 'plane_mirror';
       const SVG_NS = 'http://www.w3.org/2000/svg';
+
+      const controlsBox = document.getElementById('controlsBox');
+      const presetsBox = document.getElementById('presetsBox');
+      const drawLayer = document.getElementById('drawLayer');
+      const statsGrid = document.getElementById('statsGrid');
+      const explainBox = document.getElementById('explainBox');
 
       const params = {
         plane_mirror: { objX: -100 },
@@ -166,16 +266,48 @@
         three_mirrors: { ballX: 0 }
       };
 
+      function tr(zh, en) {
+        return currentLang === 'en' ? en : zh;
+      }
+
+      window.setLang = function(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
+
+        document.getElementById('btn-lang-zh').classList.toggle('active', lang === 'zh');
+        document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+
+        document.querySelectorAll('[data-zh][data-en]').forEach(el => {
+          el.innerHTML = el.getAttribute(`data-${lang}`);
+        });
+
+        initUI();
+      };
+
       function createSvgEl(tag, attrs) {
         const el = document.createElementNS(SVG_NS, tag);
-        if (attrs) { for (let key in attrs) el.setAttribute(key, attrs[key]); }
+        if (attrs) { 
+          for (let key in attrs) {
+            if (key === 'style') el.style.cssText = attrs[key];
+            else el.setAttribute(key, attrs[key]);
+          }
+        }
         return el;
       }
 
-      function addText(parent, x, y, txt, anchor, color, size, weight='normal') {
-          const t = createSvgEl('text', { x, y, 'text-anchor': anchor, fill: color, 'font-size': size, 'font-weight': weight, 'font-family': 'Noto Sans TC' });
-          t.innerHTML = txt; 
-          parent.appendChild(t);
+      function addText(parent, x, y, txt, anchor, color, size, weight='normal', style='') {
+        const t = createSvgEl('text', { 
+          x: x, 
+          y: y, 
+          'text-anchor': anchor, 
+          fill: color, 
+          'font-size': size, 
+          'font-weight': weight, 
+          'font-family': 'Noto Sans TC, sans-serif'
+        });
+        if(style) t.style.cssText = style;
+        t.textContent = txt;
+        parent.appendChild(t);
       }
 
       function initUI() {
@@ -185,16 +317,16 @@
       }
 
       function renderControls() {
-        controlsBox.innerHTML = '';
-        presetsBox.innerHTML = '';
+        controlsBox.replaceChildren();
+        presetsBox.replaceChildren();
         const m = currentMode;
         const p = params[m];
 
-        const addSlider = (id, label, min, max, step, val, unit, onChange) => {
+        const addSlider = (id, labelZh, labelEn, min, max, step, val, unit, onChange) => {
           const div = document.createElement('div');
           div.className = 'control';
           div.innerHTML = `
-            <label>${label} <span class="val" id="val_${id}">${val} ${unit}</span></label>
+            <label>${tr(labelZh, labelEn)} <span class="val" id="val_${id}">${val} ${unit}</span></label>
             <input type="range" id="inp_${id}" min="${min}" max="${max}" step="${step}" value="${val}">
           `;
           controlsBox.appendChild(div);
@@ -208,43 +340,49 @@
         };
 
         if (m === 'plane_mirror') {
-          addSlider('objX', '拖拉物體 (改變物距)', -200, -30, 5, p.objX, 'cm', v => { p.objX = v; return v; });
+          addSlider('objX', '拖拉物體 (改變物距)', 'Drag Object (Change Obj Dist)', -200, -30, 5, p.objX, 'cm', v => { p.objX = v; return v; });
         } else if (m === 'curved_mirror') {
-          addSlider('curve', '改變鏡面曲率 (凸面 ↔ 凹面)', -50, 50, 5, p.curve, '', v => { p.curve = v; return v; });
+          addSlider('curve', '改變鏡面曲率 (凸面 ↔ 凹面)', 'Curvature (Convex ↔ Concave)', -50, 50, 5, p.curve, '', v => { p.curve = v; return v; });
         } else if (m === 'reflection') {
-          addSlider('angle', '拖拉雷射槍 (改變入射角)', 10, 80, 1, p.angle, '度', v => { p.angle = v; return v; });
+          addSlider('angle', '拖拉雷射槍 (改變入射角)', 'Drag Laser (Change Angle)', 10, 80, 1, p.angle, '°', v => { p.angle = v; return v; });
         } else if (m === 'full_body') {
-          addSlider('dist', '人與鏡子的距離 (物距)', 50, 250, 5, p.dist, 'cm', v => { p.dist = v; return v; });
+          addSlider('dist', '人與鏡子的距離 (物距)', 'Distance to Mirror (Obj Dist)', 50, 250, 5, p.dist, 'cm', v => { p.dist = v; return v; });
         } else if (m === 'three_mirrors') {
-          addSlider('ballX', '移動中間的物體球 (左 ↔ 右)', -100, 100, 5, p.ballX, 'cm', v => { p.ballX = v; return v; });
+          addSlider('ballX', '移動中間的物體球 (左 ↔ 右)', 'Move Ball (Left ↔ Right)', -100, 100, 5, p.ballX, 'cm', v => { p.ballX = v; return v; });
         }
       }
 
       function renderPresets() {
+        presetsBox.replaceChildren();
         const m = currentMode;
         if(m === 'curved_mirror') {
-            presetsBox.innerHTML = '<span>⚡ 快速切換：</span>';
-            const p = params.curved_mirror;
-            const addBtn = (label, action) => {
-                const b = document.createElement('button');
-                b.textContent = label;
-                b.onclick = () => { action(); renderControls(); updateSimulation(); };
-                presetsBox.appendChild(b);
-            };
-            addBtn('凸面鏡 (發散)', () => { p.curve = -40; });
-            addBtn('平面鏡', () => { p.curve = 0; });
-            addBtn('凹面鏡 (會聚)', () => { p.curve = 40; });
+          const span = document.createElement('span');
+          span.textContent = tr('⚡ 快速切換：', '⚡ Presets:');
+          presetsBox.appendChild(span);
+          
+          const p = params.curved_mirror;
+          const addBtn = (labelZh, labelEn, action) => {
+            const b = document.createElement('button');
+            b.textContent = tr(labelZh, labelEn);
+            b.onclick = () => { action(); renderControls(); renderPresets(); updateSimulation(); };
+            presetsBox.appendChild(b);
+          };
+          addBtn('凸面鏡 (發散)', 'Convex (Diverge)', () => { p.curve = -40; });
+          addBtn('平面鏡', 'Plane Mirror', () => { p.curve = 0; });
+          addBtn('凹面鏡 (會聚)', 'Concave (Converge)', () => { p.curve = 40; });
         }
       }
 
       function updateSimulation() {
-        visualSvg.innerHTML = '';
-        statsGrid.innerHTML = '';
+        while (drawLayer.firstChild) {
+          drawLayer.removeChild(drawLayer.firstChild);
+        }
+        statsGrid.replaceChildren();
         const m = currentMode;
         
-        const addStat = (k, v) => {
+        const addStat = (kZh, kEn, v) => {
           const d = document.createElement('div'); d.className = 'stat';
-          d.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div>`; statsGrid.appendChild(d);
+          d.innerHTML = `<div class="k">${tr(kZh, kEn)}</div><div class="v">${v}</div>`; statsGrid.appendChild(d);
         };
 
         if (m === 'plane_mirror') {
@@ -253,179 +391,181 @@
           const imgX = p;
           const h = 50; 
 
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: -120, x2: 0, y2: 120, stroke: '#8f8a80', 'stroke-width': 6 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: -120, x2: 0, y2: 120, stroke: '#8f8a80', 'stroke-width': 6 }));
           for(let i=-110; i<=110; i+=20) {
-              visualSvg.appendChild(createSvgEl('line', { x1: 3, y1: i, x2: 15, y2: i-10, stroke: '#8f8a80', 'stroke-width': 2 }));
+            drawLayer.appendChild(createSvgEl('line', { x1: 3, y1: i, x2: 15, y2: i-10, stroke: '#8f8a80', 'stroke-width': 2 }));
           }
-          addText(visualSvg, 0, -135, '平面鏡', 'middle', '#8f8a80', 14, 'bold');
-          visualSvg.appendChild(createSvgEl('line', { x1: -280, y1: 80, x2: 280, y2: 80, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
+          addText(drawLayer, 0, -135, tr('平面鏡', 'Plane Mirror'), 'middle', '#8f8a80', 18, 'bold');
+          drawLayer.appendChild(createSvgEl('line', { x1: -280, y1: 80, x2: 280, y2: 80, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
 
           const eyeX = -200, eyeY = -40;
-          visualSvg.appendChild(createSvgEl('path', { d: `M ${eyeX-15} ${eyeY} Q ${eyeX} ${eyeY-15} ${eyeX+15} ${eyeY} Q ${eyeX} ${eyeY+15} ${eyeX-15} ${eyeY}`, fill: 'none', stroke: '#fff', 'stroke-width': 2 }));
-          visualSvg.appendChild(createSvgEl('circle', { cx: eyeX, cy: eyeY, r: 5, fill: '#5fb0ff' }));
+          drawLayer.appendChild(createSvgEl('path', { d: `M ${eyeX-15} ${eyeY} Q ${eyeX} ${eyeY-15} ${eyeX+15} ${eyeY} Q ${eyeX} ${eyeY+15} ${eyeX-15} ${eyeY}`, fill: 'none', stroke: '#fff', 'stroke-width': 2 }));
+          drawLayer.appendChild(createSvgEl('circle', { cx: eyeX, cy: eyeY, r: 5, fill: '#5fb0ff' }));
 
-          visualSvg.appendChild(createSvgEl('line', { x1: objX, y1: 80, x2: objX, y2: 80-h, stroke: '#ef6a5a', 'stroke-width': 6 }));
-          visualSvg.appendChild(createSvgEl('polygon', { points: `${objX},${80-h-8} ${objX-6},${80-h+2} ${objX+6},${80-h+2}`, fill: '#ef6a5a' }));
-          addText(visualSvg, objX, 80-h-15, '真實物體', 'middle', '#ef6a5a', 12, 'bold');
+          drawLayer.appendChild(createSvgEl('line', { x1: objX, y1: 80, x2: objX, y2: 80-h, stroke: '#ef6a5a', 'stroke-width': 6 }));
+          drawLayer.appendChild(createSvgEl('polygon', { points: `${objX},${80-h-8} ${objX-6},${80-h+2} ${objX+6},${80-h+2}`, fill: '#ef6a5a' }));
+          addText(drawLayer, objX, 80-h-15, tr('真實物體', 'Real Object'), 'middle', '#ef6a5a', 16, 'bold');
 
-          visualSvg.appendChild(createSvgEl('line', { x1: imgX, y1: 80, x2: imgX, y2: 80-h, stroke: '#5fb0ff', 'stroke-width': 4, 'stroke-dasharray': '6 4' }));
-          visualSvg.appendChild(createSvgEl('polygon', { points: `${imgX},${80-h-8} ${imgX-6},${80-h+2} ${imgX+6},${80-h+2}`, fill: '#5fb0ff' }));
-          addText(visualSvg, imgX, 80-h-15, '正立虛像', 'middle', '#5fb0ff', 12, 'bold');
+          drawLayer.appendChild(createSvgEl('line', { x1: imgX, y1: 80, x2: imgX, y2: 80-h, stroke: '#5fb0ff', 'stroke-width': 4, 'stroke-dasharray': '6 4' }));
+          drawLayer.appendChild(createSvgEl('polygon', { points: `${imgX},${80-h-8} ${imgX-6},${80-h+2} ${imgX+6},${80-h+2}`, fill: '#5fb0ff' }));
+          addText(drawLayer, imgX, 80-h-15, tr('正立虛像', 'Virtual Image'), 'middle', '#5fb0ff', 16, 'bold');
 
           const imgTopY = 80-h;
           const slope = (eyeY - imgTopY) / (eyeX - imgX);
           const hitY = imgTopY + slope * (0 - imgX);
 
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: hitY, x2: eyeX, y2: eyeY, stroke: '#f2d675', 'stroke-width': 2 }));
-          visualSvg.appendChild(createSvgEl('line', { x1: objX, y1: imgTopY, x2: 0, y2: hitY, stroke: '#ef6a5a', 'stroke-width': 2 }));
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: hitY, x2: imgX, y2: imgTopY, stroke: '#5fb0ff', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: hitY, x2: eyeX, y2: eyeY, stroke: '#f2d675', 'stroke-width': 2 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: objX, y1: imgTopY, x2: 0, y2: hitY, stroke: '#ef6a5a', 'stroke-width': 2 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: hitY, x2: imgX, y2: imgTopY, stroke: '#5fb0ff', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
 
-          visualSvg.appendChild(createSvgEl('path', { d: `M ${objX},100 L 0,100`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
-          visualSvg.appendChild(createSvgEl('path', { d: `M 0,100 L ${imgX},100`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
-          addText(visualSvg, objX/2, 120, `物距 = ${p} cm`, 'middle', '#ef6a5a', 13, 'bold');
-          addText(visualSvg, imgX/2, 120, `像距 = ${p} cm`, 'middle', '#5fb0ff', 13, 'bold');
+          drawLayer.appendChild(createSvgEl('path', { d: `M ${objX},100 L 0,100`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
+          drawLayer.appendChild(createSvgEl('path', { d: `M 0,100 L ${imgX},100`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
+          addText(drawLayer, objX/2, 125, `${tr('物距', 'p')} = ${p} cm`, 'middle', '#ef6a5a', 16, 'bold');
+          addText(drawLayer, imgX/2, 125, `${tr('像距', 'q')} = ${p} cm`, 'middle', '#5fb0ff', 16, 'bold');
 
-          visualSvg.innerHTML += `<defs><marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 2 L 10 5 L 0 8 z" fill="var(--chalk-dim)" /></marker></defs>`;
+          addStat('物距 (p)', 'Obj Dist (p)', `${p} cm`);
+          addStat('像距 (q)', 'Img Dist (q)', `${p} cm`);
+          addStat('成像性質', 'Image Property', tr('正立虛像', 'Upright Virtual'));
 
-          addStat('物距', `${p} cm`);
-          addStat('像距', `${p} cm`);
-          addStat('成像性質', `正立虛像`);
-
-          explainBox.innerHTML = `
+          explainBox.innerHTML = tr(`
             <h3>💡 老師精闢解析：平面鏡的「對稱魔法」</h3>
             <p>1. <b>物距恆等於像距</b>：物體退後，像也會等速退後。<br>
             2. <b>成像性質</b>：大小相等、左右相反的正立「虛像」。<br>
             3. <b>光路圖畫法捷徑</b>：因為像距等於物距，眼睛看鏡子裡的像，光線就像是從「虛像」筆直發射過來的一樣！所以直接把虛像跟眼睛連直線，就能精準找到鏡面上的反射點喔！</p>
-          `;
+          `, `
+            <h3>💡 Teacher's Analysis: Plane Mirror Symmetry</h3>
+            <p>1. <b>Object Distance = Image Distance</b>: As the object moves back, the image moves back at the same rate.<br>
+            2. <b>Image Properties</b>: Equal size, left-right reversed upright "virtual image".<br>
+            3. <b>Ray Tracing Shortcut</b>: Since image distance equals object distance, light entering the eye appears to come straight from the virtual image! Connecting the virtual image and eye gives the exact reflection point on the mirror!</p>
+          `);
           
         } else if (m === 'curved_mirror') {
           const c = params.curved_mirror.curve; 
           
-          visualSvg.appendChild(createSvgEl('line', { x1: -280, y1: 0, x2: 280, y2: 0, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
-          visualSvg.appendChild(createSvgEl('path', { d: `M 0,-100 Q ${c*2},0 0,100`, fill: 'none', stroke: '#8f8a80', 'stroke-width': 6 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: -280, y1: 0, x2: 280, y2: 0, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
+          drawLayer.appendChild(createSvgEl('path', { d: `M 0,-100 Q ${c*2},0 0,100`, fill: 'none', stroke: '#8f8a80', 'stroke-width': 6 }));
           
-          let title = "平面鏡", sub = "平行反射";
-          if (c > 0) { title = "凹面鏡"; sub = "會聚光線，視野較小"; }
-          if (c < 0) { title = "凸面鏡"; sub = "發散光線，視野較廣"; }
-          addText(visualSvg, 0, -120, title, 'middle', '#fff', 16, 'bold');
+          let titleZh = "平面鏡", titleEn = "Plane Mirror";
+          if (c > 0) { titleZh = "凹面鏡"; titleEn = "Concave Mirror"; }
+          if (c < 0) { titleZh = "凸面鏡"; titleEn = "Convex Mirror"; }
+          addText(drawLayer, 0, -120, tr(titleZh, titleEn), 'middle', '#fff', 18, 'bold');
 
           const f = c === 0 ? Infinity : -1500 / c; 
 
           const rayYs = [-60, -30, 0, 30, 60];
           rayYs.forEach(y => {
-              const mirrorX = (c/2) * (1 - (y*y)/(100*100));
+              // 🌟 修正完美貼合公式：乘上 c，不除以 2！保證 100% 接觸在鏡面曲線上
+              const mirrorX = c * (1 - (y*y)/(100*100));
 
-              visualSvg.appendChild(createSvgEl('line', { x1: -280, y1: y, x2: mirrorX, y2: y, stroke: '#ef6a5a', 'stroke-width': 2 }));
+              drawLayer.appendChild(createSvgEl('line', { x1: -280, y1: y, x2: mirrorX, y2: y, stroke: '#ef6a5a', 'stroke-width': 2 }));
 
               if (c === 0) {
-                 visualSvg.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: -280, y2: y, stroke: '#f2d675', 'stroke-width': 2 }));
+                 drawLayer.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: -280, y2: y, stroke: '#f2d675', 'stroke-width': 2 }));
               } else {
                  const slope = (0 - y) / (f - mirrorX);
                  const destX = -280;
                  const destY = y + slope * (destX - mirrorX);
-                 visualSvg.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: destX, y2: destY, stroke: '#f2d675', 'stroke-width': 2 }));
+                 drawLayer.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: destX, y2: destY, stroke: '#f2d675', 'stroke-width': 2 }));
                  
                  if (c < 0) {
-                     visualSvg.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: f, y2: 0, stroke: '#5fb0ff', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
+                     drawLayer.appendChild(createSvgEl('line', { x1: mirrorX, y1: y, x2: f, y2: 0, stroke: '#5fb0ff', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
                  }
               }
           });
 
           if (c !== 0) {
-              visualSvg.appendChild(createSvgEl('circle', { cx: f, cy: 0, r: 4, fill: '#5fb0ff' }));
-              addText(visualSvg, f, 20, c > 0 ? '真實焦點' : '虛焦點', 'middle', '#5fb0ff', 12, 'bold');
+              drawLayer.appendChild(createSvgEl('circle', { cx: f, cy: 0, r: 5, fill: '#5fb0ff' }));
+              addText(drawLayer, f, 24, c > 0 ? tr('真實焦點', 'Real Focus') : tr('虛焦點', 'Virtual Focus'), 'middle', '#5fb0ff', 16, 'bold');
           }
 
-          addStat('鏡面種類', title);
-          if(c !== 0) addStat('焦距位置', c > 0 ? '鏡前 (實)' : '鏡後 (虛)');
+          addStat('鏡面種類', 'Mirror Type', tr(titleZh, titleEn));
+          if(c !== 0) addStat('焦距位置', 'Focal Position', c > 0 ? tr('鏡前 (實)', 'Front (Real)') : tr('鏡後 (虛)', 'Behind (Virtual)'));
 
-          let usage = '日常照鏡子';
-          if (c > 0) usage = '手電筒、太陽能鍋爐';
-          if (c < 0) usage = '路口反光鏡、後照鏡';
-          addStat('生活應用', usage);
+          let usageZh = '日常照鏡子', usageEn = 'Daily Grooming';
+          if (c > 0) { usageZh = '手電筒、太陽能鍋爐'; usageEn = 'Flashlights & Solar Cookers'; }
+          if (c < 0) { usageZh = '路口反光鏡、後照鏡'; usageEn = 'Traffic & Rearview Mirrors'; }
+          addStat('生活應用', 'Applications', tr(usageZh, usageEn));
 
-          explainBox.innerHTML = `
+          explainBox.innerHTML = tr(`
             <h3>💡 老師精闢解析：曲面鏡的功能</h3>
             <p><b>凸面鏡</b>（向外凸）：會將光線發散，讓照後鏡或路口反射鏡可以容納更寬廣的畫面（<b>視野變大</b>），成像是正立縮小虛像。<br>
             <b>凹面鏡</b>（向內凹）：會將光線會聚到一點，適合用在探照燈把光打遠，或是太陽能鍋爐<b>集中能量</b>喔！</p>
-          `;
+          `, `
+            <h3>💡 Teacher's Analysis: Curved Mirror Functions</h3>
+            <p><b>Convex Mirror</b> (curving outward): Diverges light rays, allowing rearview/traffic mirrors to capture a broader view (<b>larger field of view</b>); creates an upright, reduced virtual image.<br>
+            <b>Concave Mirror</b> (curving inward): Converges light rays to a point, ideal for searchlights to project light far, or solar concentrators to <b>focus energy</b>!</p>
+          `);
 
         } else if (m === 'reflection') {
           const angleDeg = params.reflection.angle;
           const angleRad = angleDeg * Math.PI / 180;
           const L = 160; 
 
-          visualSvg.appendChild(createSvgEl('line', { x1: -250, y1: 50, x2: 250, y2: 50, stroke: '#8f8a80', 'stroke-width': 6 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: -250, y1: 50, x2: 250, y2: 50, stroke: '#8f8a80', 'stroke-width': 6 }));
           for(let i=-240; i<=240; i+=20) {
-              visualSvg.appendChild(createSvgEl('line', { x1: i, y1: 53, x2: i-10, y2: 65, stroke: '#8f8a80', 'stroke-width': 2 }));
+            drawLayer.appendChild(createSvgEl('line', { x1: i, y1: 53, x2: i-10, y2: 65, stroke: '#8f8a80', 'stroke-width': 2 }));
           }
-          addText(visualSvg, -230, 40, '平面鏡', 'start', '#8f8a80', 14, 'bold');
+          addText(drawLayer, -230, 36, tr('平面鏡', 'Plane Mirror'), 'start', '#8f8a80', 16, 'bold');
 
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: 50, x2: 0, y2: -140, stroke: 'var(--chalk-dim)', 'stroke-width': 2, 'stroke-dasharray': '5 5' }));
-          addText(visualSvg, 0, -150, '法線', 'middle', 'var(--chalk-dim)', 14);
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: 50, x2: 0, y2: -140, stroke: 'var(--chalk-dim)', 'stroke-width': 2, 'stroke-dasharray': '5 5' }));
+          addText(drawLayer, 0, -150, tr('法線', 'Normal Line'), 'middle', 'var(--chalk-dim)', 16);
 
           const incX = -L * Math.sin(angleRad);
           const incY = 50 - L * Math.cos(angleRad);
           const refX = L * Math.sin(angleRad);
           const refY = 50 - L * Math.cos(angleRad);
 
-          // ----------------------------------------------------
-          // 【重大修正區】：使用 Math.atan2 取得絕對向量角度，確保箭頭完美貼合光束
-          // ----------------------------------------------------
-
-          // 1. 入射光 (紅)
-          visualSvg.appendChild(createSvgEl('line', { x1: incX, y1: incY, x2: 0, y2: 50, stroke: '#ef6a5a', 'stroke-width': 3 }));
-          
+          // 1. 入射光
+          drawLayer.appendChild(createSvgEl('line', { x1: incX, y1: incY, x2: 0, y2: 50, stroke: '#ef6a5a', 'stroke-width': 3 }));
           const midIncX = incX / 2;
           const midIncY = (incY + 50) / 2;
-          // 計算入射向量角度 (目標點 - 起始點)
           const angleInc = Math.atan2(50 - incY, 0 - incX) * 180 / Math.PI + 90; 
           
-          visualSvg.appendChild(createSvgEl('polygon', {
+          drawLayer.appendChild(createSvgEl('polygon', {
               points: `${midIncX},${midIncY-7} ${midIncX-6},${midIncY+5} ${midIncX+6},${midIncY+5}`,
               fill: '#ef6a5a',
               transform: `rotate(${angleInc}, ${midIncX}, ${midIncY})`
           }));
 
-          // 畫雷射槍
-          visualSvg.appendChild(createSvgEl('rect', { x: incX-15, y: incY-10, width: 30, height: 20, fill: '#5fb0ff', rx: 3, transform: `rotate(${90-angleDeg}, ${incX}, ${incY})` }));
+          drawLayer.appendChild(createSvgEl('rect', { x: incX-15, y: incY-10, width: 30, height: 20, fill: '#5fb0ff', rx: 3, transform: `rotate(${90-angleDeg}, ${incX}, ${incY})` }));
 
-          // 2. 反射光 (黃)
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: 50, x2: refX, y2: refY, stroke: '#f2d675', 'stroke-width': 3 }));
-          
+          // 2. 反射光
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: 50, x2: refX, y2: refY, stroke: '#f2d675', 'stroke-width': 3 }));
           const midRefX = refX / 2;
           const midRefY = (refY + 50) / 2;
-          // 計算反射向量角度
           const angleRef = Math.atan2(refY - 50, refX - 0) * 180 / Math.PI + 90;
           
-          visualSvg.appendChild(createSvgEl('polygon', {
+          drawLayer.appendChild(createSvgEl('polygon', {
               points: `${midRefX},${midRefY-7} ${midRefX-6},${midRefY+5} ${midRefX+6},${midRefY+5}`,
               fill: '#f2d675',
               transform: `rotate(${angleRef}, ${midRefX}, ${midRefY})`
           }));
 
-
           // 角度標示弧線
           const arcR = 40;
           const arcIncX = -arcR * Math.sin(angleRad);
           const arcIncY = 50 - arcR * Math.cos(angleRad);
-          visualSvg.appendChild(createSvgEl('path', { d: `M 0,${50-arcR} A ${arcR} ${arcR} 0 0 0 ${arcIncX} ${arcIncY}`, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 2 }));
+          drawLayer.appendChild(createSvgEl('path', { d: `M 0,${50-arcR} A ${arcR} ${arcR} 0 0 0 ${arcIncX} ${arcIncY}`, fill: 'none', stroke: '#ef6a5a', 'stroke-width': 2 }));
           
           const arcRefX = arcR * Math.sin(angleRad);
-          visualSvg.appendChild(createSvgEl('path', { d: `M 0,${50-arcR} A ${arcR} ${arcR} 0 0 1 ${arcRefX} ${arcIncY}`, fill: 'none', stroke: '#f2d675', 'stroke-width': 2 }));
+          drawLayer.appendChild(createSvgEl('path', { d: `M 0,${50-arcR} A ${arcR} ${arcR} 0 0 1 ${arcRefX} ${arcIncY}`, fill: 'none', stroke: '#f2d675', 'stroke-width': 2 }));
 
-          addText(visualSvg, -arcR/2 - 10, 50 - arcR/2 - 10, `入射角 ${angleDeg}°`, 'end', '#ef6a5a', 14, 'bold');
-          addText(visualSvg, arcR/2 + 10, 50 - arcR/2 - 10, `反射角 ${angleDeg}°`, 'start', '#f2d675', 14, 'bold');
+          addText(drawLayer, -arcR/2 - 10, 50 - arcR/2 - 10, `${tr('入射角', 'Incident')} ${angleDeg}°`, 'end', '#ef6a5a', 16, 'bold');
+          addText(drawLayer, arcR/2 + 10, 50 - arcR/2 - 10, `${tr('反射角', 'Reflected')} ${angleDeg}°`, 'start', '#f2d675', 16, 'bold');
 
-          addStat('入射角 <i>θ<sub>i</sub></i>', `${angleDeg}°`);
-          addStat('反射角 <i>θ<sub>r</sub></i>', `${angleDeg}°`);
-          addStat('光與鏡面夾角', `${90 - angleDeg}°`);
+          addStat('入射角 <i>θ<sub>i</sub></i>', 'Incident Angle <i>θ<sub>i</sub></i>', `${angleDeg}°`);
+          addStat('反射角 <i>θ<sub>r</sub></i>', 'Reflected Angle <i>θ<sub>r</sub></i>', `${angleDeg}°`);
+          addStat('光與鏡面夾角', 'Angle with Mirror', `${90 - angleDeg}°`);
 
-          explainBox.innerHTML = `
+          explainBox.innerHTML = tr(`
             <h3>💡 老師精闢解析：反射定律的對稱美學</h3>
             <p>1. <b>入射角＝反射角</b>：光線碰到不透明物體反彈，永遠遵守這個黃金準則。<br>
             2. <b>法線是基準</b>：考試最愛考的陷阱！角度一定要找光線與「法線」的夾角，絕對不是光線跟「鏡面」的夾角喔！</p>
-          `;
+          `, `
+            <h3>💡 Teacher's Analysis: Law of Reflection</h3>
+            <p>1. <b>Incident Angle = Reflected Angle</b>: Reflection off surfaces strictly obeys this rule.<br>
+            2. <b>Normal Line is Reference</b>: Common exam trap! Angles must always be measured relative to the "normal line", never to the "mirror surface"!</p>
+          `);
           
         } else if (m === 'full_body') {
           const dist = params.full_body.dist;
@@ -433,118 +573,133 @@
           const H = 160;
           const yFoot = 100, yHead = -60, yEye = -50;
 
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: -140, x2: 0, y2: 140, stroke: 'rgba(255,255,255,0.1)', 'stroke-width': 2 }));
-          visualSvg.appendChild(createSvgEl('line', { x1: -280, y1: 100, x2: 280, y2: 100, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: -140, x2: 0, y2: 140, stroke: 'rgba(255,255,255,0.1)', 'stroke-width': 2 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: -280, y1: 100, x2: 280, y2: 100, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
           
-          visualSvg.appendChild(createSvgEl('line', { x1: px, y1: yFoot, x2: px, y2: yHead, stroke: '#ef6a5a', 'stroke-width': 6, 'stroke-linecap': 'round' }));
-          visualSvg.appendChild(createSvgEl('circle', { cx: px, cy: yEye, r: 4, fill: '#fff' }));
-          addText(visualSvg, px - 15, yHead - 10, '真實人', 'middle', '#ef6a5a', 12, 'bold');
-          addText(visualSvg, px - 10, yEye + 4, '眼', 'end', '#fff', 10);
+          drawLayer.appendChild(createSvgEl('line', { x1: px, y1: yFoot, x2: px, y2: yHead, stroke: '#ef6a5a', 'stroke-width': 6, 'stroke-linecap': 'round' }));
+          drawLayer.appendChild(createSvgEl('circle', { cx: px, cy: yEye, r: 4, fill: '#fff' }));
+          addText(drawLayer, px - 15, yHead - 10, tr('真實人', 'Person'), 'middle', '#ef6a5a', 15, 'bold');
+          addText(drawLayer, px - 10, yEye + 4, tr('眼', 'Eye'), 'end', '#fff', 12);
 
           const imgX = dist;
-          visualSvg.appendChild(createSvgEl('line', { x1: imgX, y1: yFoot, x2: imgX, y2: yHead, stroke: '#5fb0ff', 'stroke-width': 4, 'stroke-dasharray': '6 4' }));
-          visualSvg.appendChild(createSvgEl('circle', { cx: imgX, cy: yEye, r: 4, fill: '#fff', opacity: 0.5 }));
-          addText(visualSvg, imgX + 15, yHead - 10, '鏡中虛像', 'middle', '#5fb0ff', 12, 'bold');
+          drawLayer.appendChild(createSvgEl('line', { x1: imgX, y1: yFoot, x2: imgX, y2: yHead, stroke: '#5fb0ff', 'stroke-width': 4, 'stroke-dasharray': '6 4' }));
+          drawLayer.appendChild(createSvgEl('circle', { cx: imgX, cy: yEye, r: 4, fill: '#fff', opacity: 0.5 }));
+          addText(drawLayer, imgX + 15, yHead - 10, tr('鏡中虛像', 'Virtual Image'), 'middle', '#5fb0ff', 15, 'bold');
 
           const yMirrorTop = (yHead + yEye) / 2; // -55
           const yMirrorBot = (yFoot + yEye) / 2; // 25
 
-          visualSvg.appendChild(createSvgEl('line', { x1: px, y1: yEye, x2: 0, y2: yMirrorTop, stroke: '#f2d675', 'stroke-width': 2 }));
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: yMirrorTop, x2: imgX, y2: yHead, stroke: '#5fb0ff', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
-          visualSvg.appendChild(createSvgEl('line', { x1: px, y1: yHead, x2: 0, y2: yMirrorTop, stroke: '#ef6a5a', 'stroke-width': 1.5, opacity: 0.6 })); 
+          drawLayer.appendChild(createSvgEl('line', { x1: px, y1: yEye, x2: 0, y2: yMirrorTop, stroke: '#f2d675', 'stroke-width': 2 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: yMirrorTop, x2: imgX, y2: yHead, stroke: '#5fb0ff', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+          drawLayer.appendChild(createSvgEl('line', { x1: px, y1: yHead, x2: 0, y2: yMirrorTop, stroke: '#ef6a5a', 'stroke-width': 1.5, opacity: 0.6 })); 
 
-          visualSvg.appendChild(createSvgEl('line', { x1: px, y1: yEye, x2: 0, y2: yMirrorBot, stroke: '#f2d675', 'stroke-width': 2 }));
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: yMirrorBot, x2: imgX, y2: yFoot, stroke: '#5fb0ff', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
-          visualSvg.appendChild(createSvgEl('line', { x1: px, y1: yFoot, x2: 0, y2: yMirrorBot, stroke: '#ef6a5a', 'stroke-width': 1.5, opacity: 0.6 })); 
+          drawLayer.appendChild(createSvgEl('line', { x1: px, y1: yEye, x2: 0, y2: yMirrorBot, stroke: '#f2d675', 'stroke-width': 2 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: yMirrorBot, x2: imgX, y2: yFoot, stroke: '#5fb0ff', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
+          drawLayer.appendChild(createSvgEl('line', { x1: px, y1: yFoot, x2: 0, y2: yMirrorBot, stroke: '#ef6a5a', 'stroke-width': 1.5, opacity: 0.6 })); 
 
-          visualSvg.appendChild(createSvgEl('line', { x1: 0, y1: yMirrorBot, x2: 0, y2: yMirrorTop, stroke: '#4cd964', 'stroke-width': 8 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: 0, y1: yMirrorBot, x2: 0, y2: yMirrorTop, stroke: '#4ade80', 'stroke-width': 8 }));
           for(let i=yMirrorTop+5; i<=yMirrorBot; i+=15) {
-              visualSvg.appendChild(createSvgEl('line', { x1: 4, y1: i, x2: 14, y2: i-8, stroke: '#4cd964', 'stroke-width': 2 }));
+            drawLayer.appendChild(createSvgEl('line', { x1: 4, y1: i, x2: 14, y2: i-8, stroke: '#4ade80', 'stroke-width': 2 }));
           }
-          addText(visualSvg, 10, (yMirrorTop+yMirrorBot)/2 + 4, '所需鏡子', 'start', '#4cd964', 12, 'bold');
+          addText(drawLayer, 10, (yMirrorTop+yMirrorBot)/2 + 4, tr('所需鏡子', 'Req. Mirror'), 'start', '#4ade80', 15, 'bold');
 
-          visualSvg.appendChild(createSvgEl('path', { d: `M ${px},130 L 0,130`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
-          addText(visualSvg, px/2, 145, `物距 = ${dist} cm`, 'middle', '#ef6a5a', 12, 'bold');
+          drawLayer.appendChild(createSvgEl('path', { d: `M ${px},130 L 0,130`, stroke: 'var(--chalk-dim)', 'stroke-width': 1, fill: 'none', 'marker-end': 'url(#arrow)', 'marker-start': 'url(#arrow)' }));
+          addText(drawLayer, px/2, 150, `${tr('物距', 'p')} = ${dist} cm`, 'middle', '#ef6a5a', 15, 'bold');
           
-          visualSvg.innerHTML += `<defs><marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 2 L 10 5 L 0 8 z" fill="var(--chalk-dim)" /></marker></defs>`;
-
           const mirrorLength = Math.abs(yMirrorBot - yMirrorTop);
-          addStat('人身高', `${H} cm`);
-          addStat('眼高', `${100 - yEye} cm`);
-          addStat('所需鏡長', `<span style="color:#4cd964">${mirrorLength} cm</span>`);
-          addStat('物距', `${dist} cm`);
+          addStat('人身高', 'Height', `${H} cm`);
+          addStat('眼高', 'Eye Height', `${100 - yEye} cm`);
+          addStat('所需鏡長', 'Req. Mirror', `<span style="color:#4ade80">${mirrorLength} cm</span>`);
+          addStat('物距', 'Obj Dist', `${dist} cm`);
 
-          explainBox.innerHTML = `
+          explainBox.innerHTML = tr(`
             <h3>💡 經典試題挑戰：全身鏡迷思</h3>
             <p>很多學生以為「退後一點，就可以用比較小的鏡子看到全身」，<b>這是錯的！</b><br>
             請試著拖拉上方滑桿改變距離，你會發現：不管人退後多少，從頭頂發出的光和從腳底發出的光，打到鏡子再反射進眼睛的位置，<b>永遠固定在牆上的同一個高度</b>！<br>
             結論：要看到全身，所需的最短鏡子長度永遠是<span class="formula-highlight">身高的一半 (1/2)</span>，且安裝位置只跟眼睛高度有關，跟站在哪裡<b>完全無關</b>！</p>
-          `;
+          `, `
+            <h3>💡 Classic Exam Challenge: Full-Body Mirror Myth</h3>
+            <p>Many students think "backing up allows using a smaller mirror to see the full body" — <b>this is WRONG!</b><br>
+            Drag the slider to change distance: regardless of how far the person moves back, rays from head and feet reflecting into the eyes strike the mirror at <b>fixed heights</b>!<br>
+            Conclusion: The minimum mirror length to see the full body is always <span class="formula-highlight">half the person's height (1/2)</span>, and placement depends only on eye height, completely independent of distance!</p>
+          `);
           
         } else if (m === 'three_mirrors') {
           const ballX = params.three_mirrors.ballX; 
           const ballY = 60; 
           
-          visualSvg.appendChild(createSvgEl('line', { x1: -120, y1: -40, x2: 120, y2: -40, stroke: '#8f8a80', 'stroke-width': 6 }));
-          addText(visualSvg, 0, -55, '前方鏡子', 'middle', '#8f8a80', 12, 'bold');
+          drawLayer.appendChild(createSvgEl('line', { x1: -120, y1: -40, x2: 120, y2: -40, stroke: '#8f8a80', 'stroke-width': 6 }));
+          addText(drawLayer, 0, -55, tr('前方鏡子', 'Front Mirror'), 'middle', '#8f8a80', 16, 'bold');
           
-          visualSvg.appendChild(createSvgEl('line', { x1: -150, y1: -40, x2: -150, y2: 160, stroke: '#8f8a80', 'stroke-width': 6 }));
-          addText(visualSvg, -165, 60, '左方鏡', 'middle', '#8f8a80', 12, 'bold', 'writing-mode: vertical-lr; text-orientation: upright;');
+          // 🌟 左右兩側鏡子向內縮減 1/3 (從 150 改為 100)
+          const leftMirrorX = -100;
+          const rightMirrorX = 100;
 
-          visualSvg.appendChild(createSvgEl('line', { x1: 150, y1: -40, x2: 150, y2: 160, stroke: '#8f8a80', 'stroke-width': 6 }));
-          addText(visualSvg, 165, 60, '右方鏡', 'middle', '#8f8a80', 12, 'bold', 'writing-mode: vertical-lr; text-orientation: upright;');
+          drawLayer.appendChild(createSvgEl('line', { x1: leftMirrorX, y1: -40, x2: leftMirrorX, y2: 160, stroke: '#8f8a80', 'stroke-width': 6 }));
+          addText(drawLayer, leftMirrorX - 15, 60, tr('左方鏡', 'Left Mirror'), 'middle', '#8f8a80', 16, 'bold', 'writing-mode: vertical-lr; text-orientation: upright;');
 
-          visualSvg.appendChild(createSvgEl('line', { x1: -280, y1: 60, x2: 280, y2: 60, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '3 3', opacity: 0.4 }));
-          visualSvg.appendChild(createSvgEl('line', { x1: ballX, y1: -180, x2: ballX, y2: 180, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '3 3', opacity: 0.4 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: rightMirrorX, y1: -40, x2: rightMirrorX, y2: 160, stroke: '#8f8a80', 'stroke-width': 6 }));
+          addText(drawLayer, rightMirrorX + 15, 60, tr('右方鏡', 'Right Mirror'), 'middle', '#8f8a80', 16, 'bold', 'writing-mode: vertical-lr; text-orientation: upright;');
+
+          drawLayer.appendChild(createSvgEl('line', { x1: -280, y1: 60, x2: 280, y2: 60, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '3 3', opacity: 0.4 }));
+          drawLayer.appendChild(createSvgEl('line', { x1: ballX, y1: -180, x2: ballX, y2: 180, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '3 3', opacity: 0.4 }));
 
           const drawVector = (x, y, dir, color, label) => {
              const len = 30;
              const endX = dir === 'right' ? x + len : x - len;
-             visualSvg.appendChild(createSvgEl('line', { x1: x, y1: y, x2: endX, y2: y, stroke: color, 'stroke-width': 3 }));
+             drawLayer.appendChild(createSvgEl('line', { x1: x, y1: y, x2: endX, y2: y, stroke: color, 'stroke-width': 3 }));
              const pts = dir === 'right' ? `${endX},${y-4} ${endX+6},${y} ${endX},${y+4}` : `${endX},${y-4} ${endX-6},${y} ${endX},${y+4}`;
-             visualSvg.appendChild(createSvgEl('polygon', { points: pts, fill: color }));
-             addText(visualSvg, (x+endX)/2, y - 8, label, 'middle', color, 12, 'bold');
+             drawLayer.appendChild(createSvgEl('polygon', { points: pts, fill: color }));
+             addText(drawLayer, (x+endX)/2, y - 10, label, 'middle', color, 14, 'bold');
           };
 
-          visualSvg.appendChild(createSvgEl('circle', { cx: ballX, cy: ballY, r: 12, fill: '#ef6a5a' }));
-          drawVector(ballX, ballY, 'right', '#ef6a5a', '物體速度 <i>v</i>');
-          addText(visualSvg, ballX, ballY + 25, '真實物體', 'middle', '#ef6a5a', 12, 'bold');
+          drawLayer.appendChild(createSvgEl('circle', { cx: ballX, cy: ballY, r: 12, fill: '#ef6a5a' }));
+          drawVector(ballX, ballY, 'right', '#ef6a5a', tr('物體速度 v', 'Velocity v'));
+          addText(drawLayer, ballX, ballY + 28, tr('真實物體', 'Real Object'), 'middle', '#ef6a5a', 15, 'bold');
 
           const topImgY = -140;
-          visualSvg.appendChild(createSvgEl('circle', { cx: ballX, cy: topImgY, r: 12, fill: '#5fb0ff', opacity: 0.6 }));
-          drawVector(ballX, topImgY, 'right', '#5fb0ff', '像 1 (同向)');
-          visualSvg.appendChild(createSvgEl('line', { x1: ballX, y1: ballY, x2: ballX, y2: topImgY, stroke: '#5fb0ff', 'stroke-width': 1, 'stroke-dasharray': '4 4', opacity: 0.5 }));
+          drawLayer.appendChild(createSvgEl('circle', { cx: ballX, cy: topImgY, r: 12, fill: '#5fb0ff', opacity: 0.6 }));
+          drawVector(ballX, topImgY, 'right', '#5fb0ff', tr('像 1 (同向)', 'Img 1 (Same)'));
+          drawLayer.appendChild(createSvgEl('line', { x1: ballX, y1: ballY, x2: ballX, y2: topImgY, stroke: '#5fb0ff', 'stroke-width': 1, 'stroke-dasharray': '4 4', opacity: 0.5 }));
 
-          const leftImgX = -300 - ballX;
-          visualSvg.appendChild(createSvgEl('circle', { cx: leftImgX, cy: ballY, r: 12, fill: '#4cd964', opacity: 0.6 }));
-          drawVector(leftImgX, ballY, 'left', '#4cd964', '像 2 (反向)');
-          visualSvg.appendChild(createSvgEl('line', { x1: ballX, y1: ballY, x2: leftImgX, y2: ballY, stroke: '#4cd964', 'stroke-width': 1, 'stroke-dasharray': '4 4', opacity: 0.5 }));
+          // 🌟 左方虛像位置根據新的鏡面座標 (leftMirrorX) 運算
+          const leftImgX = leftMirrorX - (ballX - leftMirrorX);
+          drawLayer.appendChild(createSvgEl('circle', { cx: leftImgX, cy: ballY, r: 12, fill: '#4ade80', opacity: 0.6 }));
+          drawVector(leftImgX, ballY, 'left', '#4ade80', tr('像 2 (反向)', 'Img 2 (Opp)'));
+          drawLayer.appendChild(createSvgEl('line', { x1: ballX, y1: ballY, x2: leftImgX, y2: ballY, stroke: '#4ade80', 'stroke-width': 1, 'stroke-dasharray': '4 4', opacity: 0.5 }));
 
-          const rightImgX = 300 - ballX;
-          visualSvg.appendChild(createSvgEl('circle', { cx: rightImgX, cy: ballY, r: 12, fill: '#f2d675', opacity: 0.6 }));
-          drawVector(rightImgX, ballY, 'left', '#f2d675', '像 3 (反向)');
-          visualSvg.appendChild(createSvgEl('line', { x1: ballX, y1: ballY, x2: rightImgX, y2: ballY, stroke: '#f2d675', 'stroke-width': 1, 'stroke-dasharray': '4 4', opacity: 0.5 }));
+          // 🌟 右方虛像位置根據新的鏡面座標 (rightMirrorX) 運算
+          const rightImgX = rightMirrorX + (rightMirrorX - ballX);
+          drawLayer.appendChild(createSvgEl('circle', { cx: rightImgX, cy: ballY, r: 12, fill: '#f2d675', opacity: 0.6 }));
+          drawVector(rightImgX, ballY, 'left', '#f2d675', tr('像 3 (反向)', 'Img 3 (Opp)'));
+          drawLayer.appendChild(createSvgEl('line', { x1: ballX, y1: ballY, x2: rightImgX, y2: ballY, stroke: '#f2d675', 'stroke-width': 1, 'stroke-dasharray': '4 4', opacity: 0.5 }));
 
-          addStat('物體移動', `向右移動`);
-          addStat('前方虛像', `<span style="color:#5fb0ff">向右平移</span>`);
-          addStat('左方虛像', `<span style="color:#4cd964">向左退後</span>`);
-          addStat('右方虛像', `<span style="color:#f2d675">向左迎面來</span>`);
+          addStat('物體移動', 'Object Motion', tr('向右移動', 'Moving Right'));
+          addStat('前方虛像', 'Front Image', `<span style="color:#5fb0ff">${tr('向右平移', 'Moving Right')}</span>`);
+          addStat('左方虛像', 'Left Image', `<span style="color:#4ade80">${tr('向左退後', 'Moving Left')}</span>`);
+          addStat('右方虛像', 'Right Image', `<span style="color:#f2d675">${tr('向左迎面來', 'Moving Left')}</span>`);
 
-          explainBox.innerHTML = `
+          explainBox.innerHTML = tr(`
             <h3>💡 經典試題挑戰：三面鏡相對運動</h3>
             <p>當物體在三面Ｕ型鏡子中間「向右」移動時，鏡子裡的 3 個像會怎麼跑？這題是立體空間感的魔王題！<br>
             請拖拉滑桿觀察：<br>
             1. <b>前方鏡子（像 1）</b>：因為物體是「平行」於鏡面移動，物距沒變，所以虛像會跟著往<span class="formula-highlight">同方向（向右）</span>平移。<br>
             2. <b>左右鏡子（像 2 & 像 3）</b>：物體是「垂直」遠離或靠近鏡面，物距改變了，像距必須跟著改變。所以這兩個虛像都會往物體的<span class="formula-highlight">反方向（向左）</span>移動！</p>
-          `;
+          `, `
+            <h3>💡 Classic Exam Challenge: Three Mirrors Motion</h3>
+            <p>When an object moves "right" between three U-shaped mirrors, where do the 3 images go?<br>
+            Drag the slider to observe:<br>
+            1. <b>Front Mirror (Image 1)</b>: Moving parallel to the mirror keeps object distance constant, so the virtual image moves in the <span class="formula-highlight">same direction (right)</span>.<br>
+            2. <b>Left & Right Mirrors (Images 2 & 3)</b>: Moving perpendicularly away/towards changes object distance, so image distance must change. Both virtual images move in the <span class="formula-highlight">opposite direction (left)</span>!</p>
+          `);
         }
       }
 
       document.querySelectorAll('.mode-switch button').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
           document.querySelectorAll('.mode-switch button').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          currentMode = btn.dataset.mode;
+          e.currentTarget.classList.add('active');
+          currentMode = e.currentTarget.dataset.mode;
           initUI();
         });
       });
