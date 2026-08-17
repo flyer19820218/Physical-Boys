@@ -1,630 +1,728 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
-<meta charset="utf-8">
-<title>光學透鏡：五大核心單元與視力黑板模擬器</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root {
-    --bg-base: #111e19;
-    --bg-panel: #172a23;
-    --bg-panel-hover: #1f382f;
-    --chalk-white: #ffffff;
-    --chalk-yellow: #ffe066;
-    --chalk-teal: #4dd2ff;
-    --chalk-coral: #ff8040;
-    --chalk-green: #33cc99;
-    --rule-color: rgba(255, 255, 255, 0.25);
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif;
-    background-color: var(--bg-base);
-    color: var(--chalk-white);
-  }
-  .wrap { max-width: 1140px; margin: 20px auto; padding: 0 16px 40px; }
-  
-  header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed var(--rule-color); padding-bottom: 16px; }
-  h1 { font-size: 36px; margin: 0 0 8px; color: var(--chalk-yellow); letter-spacing: 2px; font-weight: 800; }
-  header p { margin: 0; color: #e0e0e0; font-size: 16px; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title data-zh="光學透鏡：五大核心單元與視力黑板模擬器" data-en="Lenses: Five Core Units & Vision Simulator">光學透鏡：五大核心單元與視力黑板模擬器</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --board: #1c3d34;
+      --board-dark: #11261f;
+      --chalk: #f2ecd9;
+      --chalk-dim: #c9c2ab;
+      --chalk-yellow: #fde047;
+      --chalk-green: #4ade80;
+      --chalk-pink: #f472b6;
+      --chalk-blue: #38bdf8;
+      --chalk-gray: #9fb0a8;
+      --chalk-orange: #fb923c;
+      --frame: #5c4a33;
+    }
 
-  /* 導覽列 */
-  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .tab-btn {
-    flex: 1; min-width: 140px;
-    padding: 12px 10px; font-size: 16px; font-weight: bold;
-    background: rgba(255,255,255,0.08); color: #c0d0c8;
-    border: 1.5px dashed var(--rule-color); border-radius: 10px;
-    cursor: pointer; transition: all 0.2s; text-align: center;
-  }
-  .tab-btn:hover { background: var(--bg-panel-hover); color: #ffffff; }
-  .tab-btn.active { background: #223e34; color: var(--chalk-yellow); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 12px rgba(255, 224, 102, 0.3); }
+    * { box-sizing: border-box; }
 
-  /* 面板 */
-  .panel { background: var(--bg-panel); border: 2px solid var(--rule-color); border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
-  .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px dashed var(--rule-color); padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
-  h2 { margin: 0; font-size: 22px; color: #ffffff; letter-spacing: 1px; }
-  .sub-tag { font-size: 14px; color: #000000; background: var(--chalk-yellow); padding: 4px 14px; border-radius: 999px; font-weight: 800; }
+    body {
+      margin: 0;
+      background: var(--board-dark);
+      color: var(--chalk);
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 20px;
+      padding: 20px 14px 60px;
+      padding-top: 80px;
+    }
 
-  /* 控制區 */
-  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; background: rgba(0,0,0,0.35); padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); min-height: 56px; }
-  input[type=range] { flex: 1; min-width: 200px; accent-color: var(--chalk-yellow); cursor: pointer; }
-  button.action-btn {
-    padding: 6px 14px; border: 1px solid var(--rule-color);
-    background: #111e19; color: #ffffff;
-    border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold;
-  }
-  button.action-btn:hover { background: var(--chalk-yellow); color: #000000; border-color: var(--chalk-yellow); }
-  .readout-badge { font-weight: bold; color: #000000; background: var(--chalk-yellow); padding: 6px 14px; border-radius: 6px; min-width: 110px; text-align: center; font-size: 15px; }
+    /* 🌟 規範：右上角橫向懸浮雙語切換器 */
+    .floating-lang-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 2px solid var(--chalk-blue);
+      border-radius: 12px;
+      background: rgba(17, 38, 31, 0.95);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(56, 189, 248, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .lang-label {
+      color: var(--chalk-blue);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      user-select: none;
+      margin-left: 4px;
+    }
+    .lang-options {
+      display: flex;
+      flex-direction: row;
+      gap: 4px;
+    }
+    .lang-pill {
+      min-width: 60px;
+      min-height: 48px;
+      padding: 6px 12px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      background: transparent;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      touch-action: manipulation;
+    }
+    .lang-pill.active {
+      background: var(--chalk-blue) !important;
+      color: #0b1a15 !important;
+      border-color: var(--chalk-blue) !important;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
 
-  /* 畫布 */
-  #stage-container { width: 100%; border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; overflow: hidden; background: #0c1612; box-shadow: inset 0 0 25px rgba(0,0,0,0.7); }
-  canvas { display: block; width: 100%; height: auto; }
-  
-  .stats { display: flex; gap: 24px; font-size: 15px; color: #ffffff; margin-top: 14px; background: rgba(0,0,0,0.4); padding: 12px 18px; border-radius: 8px; border: 1px dashed var(--rule-color); flex-wrap: wrap; }
-  .stats b { color: var(--chalk-yellow); margin-left: 6px; font-size: 16px; }
-  .note { font-size: 15px; color: #ffffff; margin-top: 14px; line-height: 1.6; background: rgba(255,255,255,0.05); padding: 14px 18px; border-radius: 8px; border-left: 5px solid var(--chalk-yellow); }
-</style>
+    .wrap { max-width: 1080px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 24px; }
+    header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 20px; letter-spacing: 0.15em; color: var(--chalk-dim); text-transform: uppercase; }
+    h1 { font-size: 38px; font-weight: 700; margin: 6px 0 10px; text-shadow: 0 0 14px rgba(242, 236, 217, 0.15); color: var(--chalk-yellow); }
+    header p { color: var(--chalk-green); max-width: 850px; margin: 0 auto; line-height: 1.6; font-size: 21px; font-weight: bold; }
+
+    .board {
+      background: var(--board);
+      border: 10px solid var(--frame);
+      border-radius: 6px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4), inset 0 0 60px rgba(0, 0, 0, 0.25);
+      padding: 24px 20px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .board::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 5px 5px; pointer-events: none; border-radius: 6px;
+    }
+
+    .board h2 {
+      font-size: 28px; margin: 0 0 16px; font-weight: 700;
+      color: var(--chalk-yellow); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+    }
+
+    .mode-switch { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .mode-switch button {
+      font-family: 'Noto Sans TC', sans-serif; font-size: 20px; font-weight: 700;
+      background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 2px dashed rgba(242, 236, 217, 0.25);
+      padding: 14px 12px; min-height: 64px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: center; display: flex; align-items: center; justify-content: center;
+      touch-action: manipulation;
+    }
+    .mode-switch button:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(242, 236, 217, 0.5); color: var(--chalk); }
+    .mode-switch button.active {
+      background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow); border-style: solid;
+      box-shadow: 0 4px 12px rgba(242, 214, 117, 0.25);
+    }
+
+    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.15); padding: 16px; border-radius: 8px; }
+    .control label { display: flex; justify-content: space-between; font-size: 20px; color: var(--chalk-dim); margin-bottom: 8px; font-family: 'JetBrains Mono', 'Noto Sans TC', monospace; font-weight: bold; }
+    .control label span.val { color: var(--chalk-yellow); font-weight: 700; }
+    input[type=range] { width: 100%; accent-color: var(--chalk-yellow); height: 8px; background: transparent; cursor: pointer; min-height: 44px; touch-action: manipulation; }
+
+    .presets { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; align-items: center; justify-content: center; }
+    .presets span { font-size: 20px; color: var(--chalk-dim); font-weight: bold; }
+    .presets button {
+      font-family: 'Noto Sans TC', sans-serif; background: transparent; border: 2px dashed var(--chalk-dim);
+      color: var(--chalk); padding: 10px 18px; min-height: 48px; border-radius: 18px; font-size: 20px; cursor: pointer; transition: all .15s; font-weight: bold;
+      touch-action: manipulation;
+    }
+    .presets button:hover { border-color: var(--chalk-yellow); color: var(--chalk-yellow); background: rgba(242, 214, 117, 0.1); }
+
+    .visual-card { width: 100%; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(242, 236, 217, 0.12); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; margin-top: 16px; }
+    svg { width: 100%; height: auto; display: block; overflow: visible; aspect-ratio: 1000 / 480; }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
+    .stat { background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 14px 10px; text-align: center; border: 1px dashed var(--chalk-dim); }
+    .stat .k { font-family: 'Noto Sans TC', sans-serif; font-size: 20px; color: var(--chalk-dim); font-weight: bold; }
+    .stat .v { font-family: 'JetBrains Mono', monospace; font-size: 24px; color: var(--chalk-yellow); font-weight: 700; margin-top: 8px; }
+
+    .explain-box { margin-top: 18px; background: rgba(0, 0, 0, 0.18); border-left: 6px solid var(--chalk-yellow); border-radius: 0 8px 8px 0; padding: 16px 20px; }
+    .explain-box h3 { color: var(--chalk-yellow); margin: 0 0 10px; font-size: 24px; font-weight: 700; }
+    .explain-box p { margin: 0; font-size: 20px; line-height: 1.8; color: var(--chalk); }
+    
+    .math-eq { display: inline-flex; align-items: center; vertical-align: middle; gap: 6px; font-family: 'JetBrains Mono', monospace; font-weight: bold; }
+    .fraction { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 2px; }
+    .fraction .num { border-bottom: 2px solid currentColor; padding: 2px 4px; line-height: 1.2; }
+    .fraction .den { padding: 2px 4px; line-height: 1.2; }
+    .formula-highlight { background: rgba(242, 214, 117, 0.15); padding: 4px 12px; border-radius: 6px; color: var(--chalk-yellow); display: inline-flex; margin: 6px 0; }
+
+    footer { text-align: center; color: var(--chalk-dim); font-size: 20px; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; font-weight: bold; }
+
+    @media (max-width: 768px) {
+      .floating-lang-container { top: 8px; right: 8px; padding: 6px 8px; }
+      .lang-label { display: none; }
+      .mode-switch { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>光學透鏡</h1>
-    <p>國中自然科核心概念：從透鏡會聚與發散原理，到視力矯正光路模擬</p>
-  </header>
 
-  <div class="tabs">
-    <div class="tab-btn active" onclick="switchTab('intro')">一、介紹兩種透鏡與原理</div>
-    <div class="tab-btn" onclick="switchTab('convex')">二、凸透鏡</div>
-    <div class="tab-btn" onclick="switchTab('hyperopia')">三、遠視</div>
-    <div class="tab-btn" onclick="switchTab('concave')">四、凹透鏡</div>
-    <div class="tab-btn" onclick="switchTab('myopia')">五、近視</div>
+  <!-- 🌟 右上角橫向懸浮雙語切換器 -->
+  <div class="floating-lang-container">
+    <span class="lang-label">Language</span>
+    <div class="lang-options">
+      <button class="lang-pill active" id="btn-lang-zh" onclick="setLang('zh')">中文</button>
+      <button class="lang-pill" id="btn-lang-en" onclick="setLang('en')">EN</button>
+    </div>
   </div>
 
-  <div class="panel">
-    <div class="panel-header">
-      <h2 id="panel-title">一、介紹兩種透鏡與原理</h2>
-      <span id="panel-badge" class="sub-tag" style="background:#4dd2ff;">六大分類與光路對照</span>
-    </div>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">Optics Chapter 4-4</div>
+      <h1 data-zh="光學透鏡：核心單元與視力模擬器" data-en="Lenses: Core Units & Vision Simulator">光學透鏡：核心單元與視力模擬器</h1>
+      <p data-zh="從透鏡會聚與發散原理，到視力矯正光路模擬。一鍵切換，破解成像規律！" data-en="From converging/diverging principles to vision correction simulation. Master imaging laws instantly!">從透鏡會聚與發散原理，到視力矯正光路模擬。一鍵切換，破解成像規律！</p>
+    </header>
 
-    <div class="controls" id="controls-box">
-      <label id="rng-label" style="font-weight: bold; color: #ffe066;">展示模式：</label>
-      <input id="rng" type="range" min="0" max="259" step="1" value="104" style="display:none;" />
-      <span id="readout" class="readout-badge" style="display:none;">A (≈3f)</span>
-      
-      <div id="btn-group-convex" style="display:none; gap:6px; flex-wrap:wrap;">
-        <button class="action-btn" onclick="jump(0)">A (3f)</button>
-        <button class="action-btn" onclick="jump(104)">B (2f)</button>
-        <button class="action-btn" onclick="jump(155)">C (1.5f)</button>
-        <button class="action-btn" onclick="jump(207)">D (f)</button>
-        <button class="action-btn" onclick="jump(259)">E (0.5f)</button>
+    <div class="board">
+      <h2 data-zh="選擇互動教學模式" data-en="Select Interactive Mode">選擇互動教學模式</h2>
+      <div class="mode-switch">
+        <button class="active" data-mode="intro" data-zh="1. 兩種透鏡與原理" data-en="1. Two Lenses & Principles">1. 兩種透鏡與原理</button>
+        <button data-mode="convex" data-zh="2. 凸透鏡成像模擬" data-en="2. Convex Lens Simulator">2. 凸透鏡成像模擬</button>
+        <button data-mode="hyperopia" data-zh="3. 遠視眼與矯正" data-en="3. Hyperopia Correction">3. 遠視眼與矯正</button>
+        <button data-mode="concave" data-zh="4. 凹透鏡成像模擬" data-en="4. Concave Lens Simulator">4. 凹透鏡成像模擬</button>
+        <button data-mode="myopia" data-zh="5. 近視眼與矯正" data-en="5. Myopia Correction">5. 近視眼與矯正</button>
       </div>
 
-      <span id="intro-hint" style="color:#ffffff; font-weight:bold;">觀察平行光束通過「中間較周圍厚」與「中間較周圍薄」的六大透鏡分類與折射光路！</span>
+      <div class="controls" id="controlsBox"></div>
+      <div class="presets" id="presetsBox"></div>
+      
+      <div class="visual-card">
+        <svg id="visualSvg" viewBox="0 0 1000 480">
+          <g id="drawLayer"></g>
+        </svg>
+      </div>
+      
+      <div class="stats-grid" id="statsGrid"></div>
     </div>
 
-    <div id="stage-container">
-      <canvas id="stage"></canvas>
+    <div class="board">
+      <h2 data-zh="課堂重點與原理解析" data-en="Key Concepts & Analysis">課堂重點與原理解析</h2>
+      <div class="explain-box" id="explainBox"></div>
     </div>
 
-    <div class="stats" id="stats-box" style="display:none;">
-      <span>物距 u：<b id="val-u">3.00f</b></span>
-      <span>像距 v：<b id="val-v">-0.75f</b></span>
-      <span>放大率 m：<b id="val-m">0.25 倍</b></span>
-      <span style="color: #ff8040; font-weight: bold;">成像性質：<b id="val-type" style="color:#ff8040;">正立縮小虛像</b></span>
-    </div>
-
-    <div class="note" id="note-text">
-      💡 <b>黑板重點：</b>請觀察上方的透鏡剖面與光路。<b>「凸透鏡」</b>（雙凸、平凸、凹凸）共通點為<b>中間厚、邊緣薄</b>，能將平行光束<b>會聚</b>於後方焦點；<b>「凹透鏡」</b>（雙凹、凸凹、平凹）共通點為<b>中間薄、邊緣厚</b>，會使平行光束<b>向外發散</b>，折射光反向延長交會於鏡前虛焦點。
-    </div>
+    <footer data-zh="國中理化 光學單元 · 視覺化互動教學教材" data-en="Junior High Science Optics · Interactive Blackboard">國中理化 光學單元 · 視覺化互動教學教材</footer>
   </div>
-</div>
 
-<script>
-  const canvas = document.getElementById('stage');
-  const ctx = canvas.getContext('2d');
-  const rng = document.getElementById('rng');
-  const readout = document.getElementById('readout');
-  
-  let currentTab = 'intro';
+  <script>
+    (function() {
+      let currentLang = 'zh';
+      let currentMode = 'intro';
+      const SVG_NS = 'http://www.w3.org/2000/svg';
 
-  const V_WIDTH = 1000;
-  const V_HEIGHT = 480;
-  const CX = 500;
-  const CY = 240;
-  const F_LEN = 140;
-  const OBJ_H = 100;
+      const controlsBox = document.getElementById('controlsBox');
+      const presetsBox = document.getElementById('presetsBox');
+      const drawLayer = document.getElementById('drawLayer');
+      const statsGrid = document.getElementById('statsGrid');
+      const explainBox = document.getElementById('explainBox');
 
-  function initCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = V_WIDTH * dpr;
-    canvas.height = V_HEIGHT * dpr;
-    ctx.scale(dpr, dpr);
-    render(rng.value);
-  }
+      const params = {
+        intro: {},
+        convex: { uRatio: 3.0 }, 
+        concave: { uRatio: 3.0 },
+        hyperopia: { power: 0 }, 
+        myopia: { power: 0 }
+      };
 
-  function switchTab(tab) {
-    currentTab = tab;
-    document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
-      btn.classList.remove('active');
-      const tabsOrder = ['intro', 'convex', 'hyperopia', 'concave', 'myopia'];
-      if (tabsOrder[idx] === tab) btn.classList.add('active');
-    });
+      const V_WIDTH = 1000;
+      const V_HEIGHT = 480;
+      const CX = 500;
+      const CY = 240;
+      const F_LEN = 140;
+      const OBJ_H = 100;
 
-    const btnGroupConvex = document.getElementById('btn-group-convex');
-    const introHint = document.getElementById('intro-hint');
-    const statsBox = document.getElementById('stats-box');
-    const panelTitle = document.getElementById('panel-title');
-    const panelBadge = document.getElementById('panel-badge');
-    const rngLabel = document.getElementById('rng-label');
-    const noteText = document.getElementById('note-text');
-
-    rng.style.display = 'none';
-    readout.style.display = 'none';
-    btnGroupConvex.style.display = 'none';
-    introHint.style.display = 'none';
-    statsBox.style.display = 'none';
-
-    if (tab === 'intro') {
-      panelTitle.textContent = '一、介紹兩種透鏡與原理';
-      panelBadge.textContent = '六大分類與光路對照';
-      panelBadge.style.background = '#4dd2ff';
-      introHint.style.display = 'inline-block';
-      noteText.innerHTML = '💡 <b>黑板重點：</b>請觀察上方的透鏡剖面與光路。<b>「凸透鏡」</b>（雙凸、平凸、凹凸）共通點為<b>中間厚、邊緣薄</b>，能將平行光束<b>會聚</b>於後方焦點；<b>「凹透鏡」</b>（雙凹、凸凹、平凹）共通點為<b>中間薄、邊緣厚</b>，會使平行光束<b>向外發散</b>，折射光反向延長交會於鏡前虛焦點。';
-      render(0);
-    } else if (tab === 'convex') {
-      panelTitle.textContent = '二、凸透鏡成像模擬器（會聚透鏡）';
-      panelBadge.textContent = '3F → 0.5F 六大成像區間';
-      panelBadge.style.background = '#ffe066';
-      rngLabel.textContent = '物體位置 u (3F → 0.5F)：';
-      rng.style.display = 'inline-block';
-      readout.style.display = 'inline-block';
-      btnGroupConvex.style.display = 'flex';
-      statsBox.style.display = 'flex';
-      rng.min = 0; rng.max = 259; rng.value = 104;
-      noteText.innerHTML = '💡 <b>黑板重點：</b>凸透鏡為會聚透鏡。當物距 <b>u > f</b> 時形成倒立實像；當物距等於焦距 <b>u = f</b> 時折射光平行不成像；當物距小於焦距 <b>u < f</b> 時，化身為放大鏡，形成鏡前正立放大虛像！';
-      update(parseInt(rng.value));
-    } else if (tab === 'hyperopia') {
-      panelTitle.textContent = '三、遠視眼(老花眼)成像與「凸透鏡」矯正原理';
-      panelBadge.textContent = '凸透鏡會聚矯正';
-      panelBadge.style.background = '#ff8040';
-      rngLabel.textContent = '鏡片矯正配戴強度：';
-      rng.style.display = 'inline-block';
-      readout.style.display = 'inline-block';
-      rng.min = 0; rng.max = 100; rng.value = 0;
-      noteText.innerHTML = '💡 <b>黑板重點（遠視/老花）：</b>眼球軸長過短或水晶體聚焦力不足，導致近處光線聚焦在<b>「視網膜後方」</b>。配戴<b>「凸透鏡（會聚透鏡）」</b>幫忙把光線提前會聚，就能讓焦點前移回到視網膜上！';
-      update(0);
-    } else if (tab === 'concave') {
-      panelTitle.textContent = '四、凹透鏡成像模擬器（發散透鏡）';
-      panelBadge.textContent = '單一成像性質模擬';
-      panelBadge.style.background = '#4dd2ff';
-      rngLabel.textContent = '物體位置 (遠 ←→ 近)：';
-      rng.style.display = 'inline-block';
-      readout.style.display = 'inline-block';
-      statsBox.style.display = 'flex';
-      rng.min = 0; rng.max = 259; rng.value = 50;
-      noteText.innerHTML = '💡 <b>黑板重點：</b>凹透鏡為發散透鏡。不管物體在什麼位置移動（無需死記 3F 或 2F），成像永遠在<b>「鏡前、正立、縮小、虛像」</b>。兩條折射線在鏡前的反向延長虛線，必然精準交會於縮小虛像的頂端。';
-      update(parseInt(rng.value));
-    } else if (tab === 'myopia') {
-      panelTitle.textContent = '五、近視眼成像與「凹透鏡」矯正原理';
-      panelBadge.textContent = '凹透鏡發散矯正';
-      panelBadge.style.background = '#6fa8f2';
-      rngLabel.textContent = '鏡片矯正配戴強度：';
-      rng.style.display = 'inline-block';
-      readout.style.display = 'inline-block';
-      rng.min = 0; rng.max = 100; rng.value = 0;
-      noteText.innerHTML = '💡 <b>黑板重點（近視眼）：</b>眼球軸長過長或水晶體折射力太強，導致遠方光線聚焦在<b>「視網膜前方」</b>。配戴<b>「凹透鏡（發散透鏡）」</b>先將光線適度發散，即可將焦點往後推移，精準落在視網膜上！';
-      update(0);
-    }
-  }
-
-  // 100% 亮彩粉筆風格箭頭繪製
-  function drawArrow(x, yFrom, yTo, color, isDashed = false, labelText = "") {
-    ctx.save();
-    ctx.strokeStyle = color; 
-    ctx.fillStyle = color;
-    ctx.lineWidth = 3.5;
-    if (isDashed) { ctx.setLineDash([6, 5]); ctx.lineWidth = 2.5; }
-    
-    ctx.beginPath(); ctx.moveTo(x, yFrom); ctx.lineTo(x, yTo); ctx.stroke();
-    ctx.setLineDash([]); ctx.beginPath();
-    const headSize = isDashed ? 9 : 12;
-    const dir = yTo < yFrom ? -1 : 1;
-    ctx.moveTo(x, yTo);
-    ctx.lineTo(x - headSize/1.5, yTo - dir * headSize);
-    ctx.lineTo(x + headSize/1.5, yTo - dir * headSize);
-    ctx.closePath(); ctx.fill();
-
-    if (labelText) {
-      ctx.font = "bold 16px 'Noto Sans TC', sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#ffffff"; // 強制純白粉筆標籤
-      ctx.fillText(labelText, x, yTo < yFrom ? yTo - 14 : yTo + 26);
-    }
-    ctx.restore();
-  }
-
-  function drawLens(cx, cy, h, w, type) {
-    ctx.save();
-    if (type === 'concave') {
-      ctx.fillStyle = "rgba(77, 210, 255, 0.25)"; ctx.strokeStyle = "#4dd2ff";
-      ctx.lineWidth = 3; ctx.beginPath();
-      ctx.moveTo(cx - w, cy - h); ctx.lineTo(cx + w, cy - h);
-      ctx.quadraticCurveTo(cx + w/4, cy, cx + w, cy + h);
-      ctx.lineTo(cx - w, cy + h);
-      ctx.quadraticCurveTo(cx - w/4, cy, cx - w, cy - h);
-      ctx.closePath(); ctx.fill(); ctx.stroke();
-    } else {
-      ctx.fillStyle = "rgba(255, 224, 102, 0.25)"; ctx.strokeStyle = "#ffe066";
-      ctx.lineWidth = 3; ctx.beginPath();
-      ctx.moveTo(cx, cy - h - 10);
-      ctx.quadraticCurveTo(cx + w*1.8, cy, cx, cy + h + 10);
-      ctx.quadraticCurveTo(cx - w*1.8, cy, cx, cy - h - 10);
-      ctx.closePath(); ctx.fill(); ctx.stroke();
-    }
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(cx, cy - h - 15); ctx.lineTo(cx, cy + h + 15); ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawCustomLensSection(cx, cy, type, name) {
-    ctx.save();
-    ctx.fillStyle = "rgba(111, 168, 242, 0.3)";
-    ctx.strokeStyle = "#6fa8f2";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    
-    const h = 42;
-    if (type === 'bi-convex') {
-      ctx.moveTo(cx, cy-h); ctx.quadraticCurveTo(cx+16, cy, cx, cy+h); ctx.quadraticCurveTo(cx-16, cy, cx, cy-h);
-    } else if (type === 'plano-convex') {
-      ctx.moveTo(cx-6, cy-h); ctx.lineTo(cx-6, cy+h); ctx.quadraticCurveTo(cx+16, cy, cx-6, cy-h);
-    } else if (type === 'concavo-convex') {
-      ctx.moveTo(cx-8, cy-h); ctx.quadraticCurveTo(cx+18, cy, cx-8, cy+h); ctx.quadraticCurveTo(cx+4, cy, cx-8, cy-h);
-    } else if (type === 'bi-concave') {
-      ctx.moveTo(cx-12, cy-h); ctx.lineTo(cx+12, cy-h); ctx.quadraticCurveTo(cx+3, cy, cx+12, cy+h); ctx.lineTo(cx-12, cy+h); ctx.quadraticCurveTo(cx-3, cy, cx-12, cy-h);
-    } else if (type === 'convexo-concave') {
-      ctx.moveTo(cx-12, cy-h); ctx.quadraticCurveTo(cx+10, cy, cx-12, cy+h); ctx.lineTo(cx-4, cy+h); ctx.quadraticCurveTo(cx+14, cy, cx-4, cy-h);
-    } else if (type === 'plano-concave') {
-      ctx.moveTo(cx-10, cy-h); ctx.lineTo(cx+4, cy-h); ctx.quadraticCurveTo(cx-6, cy, cx+4, cy+h); ctx.lineTo(cx-10, cy+h);
-    }
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-
-    ctx.strokeStyle = "#ff8040"; ctx.fillStyle = "#ff8040"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(cx-7, cy); ctx.lineTo(cx+7, cy); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI*2); ctx.fill();
-
-    ctx.fillStyle = "#ffffff"; ctx.font = "bold 16px 'Noto Sans TC', sans-serif";
-    ctx.textAlign = "center"; ctx.fillText(name, cx, cy + h + 26);
-    ctx.restore();
-  }
-
-  function render(val) {
-    ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
-    if (currentTab === 'intro') renderIntro();
-    else if (currentTab === 'convex' || currentTab === 'concave') renderOptics(val);
-    else renderVision(val);
-  }
-
-  function renderIntro() {
-    const cy1 = 110;
-    ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(20, cy1); ctx.lineTo(V_WIDTH-20, cy1); ctx.stroke();
-
-    drawCustomLensSection(100, cy1, 'bi-convex', '雙凸透鏡');
-    drawCustomLensSection(210, cy1, 'plano-convex', '平凸透鏡');
-    drawCustomLensSection(320, cy1, 'concavo-convex', '凹凸透鏡');
-
-    ctx.fillStyle = "#ffe066"; ctx.font = "bold 18px sans-serif";
-    ctx.fillText("● 凸透鏡家族：中間部份較周圍為【厚】的透明玻璃 ➔ 具有「會聚光線」效果", 30, cy1 - 65);
-
-    drawLens(650, cy1, 65, 14, 'convex');
-    [-35, -18, 0, 18, 35].forEach(offset => {
-      const y = cy1 + offset;
-      ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(460, y); ctx.lineTo(650, y); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(650, y); ctx.lineTo(880, cy1 + (0 - offset) * (230/110)); ctx.stroke();
-    });
-    ctx.fillStyle = "#ffffff"; ctx.font = "bold 16px sans-serif";
-    ctx.fillText("實焦點 F", 850, cy1 + 28);
-    ctx.fillStyle = "#ff8040"; ctx.beginPath(); ctx.arc(880, cy1, 6, 0, Math.PI*2); ctx.fill();
-
-    ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 2; ctx.setLineDash([8, 8]);
-    ctx.beginPath(); ctx.moveTo(30, 240); ctx.lineTo(V_WIDTH-30, 240); ctx.stroke();
-    ctx.setLineDash([]);
-
-    const cy2 = 360;
-    ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(20, cy2); ctx.lineTo(V_WIDTH-20, cy2); ctx.stroke();
-
-    drawCustomLensSection(100, cy2, 'bi-concave', '雙凹透鏡');
-    drawCustomLensSection(210, cy2, 'convexo-concave', '凸凹透鏡');
-    drawCustomLensSection(320, cy2, 'plano-concave', '平凹透鏡');
-
-    ctx.fillStyle = "#4dd2ff"; ctx.font = "bold 18px sans-serif";
-    ctx.fillText("● 凹透鏡家族：中間部份較周圍為【薄】的透明玻璃 ➔ 具有「發散光線」效果", 30, cy2 - 65);
-
-    drawLens(650, cy2, 65, 14, 'concave');
-    [-35, -18, 0, 18, 35].forEach(offset => {
-      const y = cy2 + offset;
-      ctx.strokeStyle = "#4dd2ff"; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(460, y); ctx.lineTo(650, y); ctx.stroke();
-      const slope = offset / 110;
-      ctx.beginPath(); ctx.moveTo(650, y); ctx.lineTo(880, cy2 + slope * 230); ctx.stroke();
-      if (offset !== 0) {
-        ctx.strokeStyle = "#4dd2ff"; ctx.lineWidth = 1.8;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath(); ctx.moveTo(650, y); ctx.lineTo(540, cy2); ctx.stroke();
-        ctx.setLineDash([]);
+      function tr(zh, en) {
+        return currentLang === 'en' ? en : zh;
       }
-    });
-    ctx.fillStyle = "#ffffff"; ctx.font = "bold 16px sans-serif";
-    ctx.fillText("虛焦點 F", 505, cy2 + 28);
-    ctx.fillStyle = "#4dd2ff"; ctx.beginPath(); ctx.arc(540, cy2, 6, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
-  }
 
-  function renderOptics(val) {
-    ctx.save();
-    // 繪製白色光軸
-    ctx.strokeStyle = "rgba(255,255,255,0.6)"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(20, CY); ctx.lineTo(V_WIDTH - 20, CY); ctx.stroke();
+      window.setLang = function(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
 
-    const u_ratio = 3 - (val / 259) * 2.5;
-    const u = F_LEN * u_ratio;
-    const obj_x = CX - u;
-    const obj_top_y = CY - OBJ_H;
+        document.getElementById('btn-lang-zh').classList.toggle('active', lang === 'zh');
+        document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
 
-    const markers = [
-      { name: 'A', ratio: 3.0 }, { name: 'B', ratio: 2.0, sub: '2f' },
-      { name: 'C', ratio: 1.5 }, { name: 'D', ratio: 1.0, sub: 'f' }, { name: 'E', ratio: 0.5 }
-    ];
-    ctx.font = "bold 16px sans-serif";
-    markers.forEach(mk => {
-      const x = CX - mk.ratio * F_LEN;
-      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(x, CY - 8); ctx.lineTo(x, CY + 8); ctx.stroke();
-      
-      if (currentTab === 'convex') {
-        ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.fillText(mk.name, x, CY - 15);
-      }
-      if (mk.sub) { ctx.fillStyle = "#ffe066"; ctx.textAlign = "center"; ctx.fillText(mk.sub, x, CY + 25); }
-    });
-    ['f', '2f'].forEach((sub, idx) => {
-      const x = CX + (idx + 1) * F_LEN;
-      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(x, CY - 8); ctx.lineTo(x, CY + 8); ctx.stroke();
-      ctx.fillStyle = "#ffe066"; ctx.textAlign = "center"; ctx.fillText(sub, x, CY + 25);
-    });
-    ctx.restore();
+        document.querySelectorAll('[data-zh][data-en]').forEach(el => {
+          el.innerHTML = el.getAttribute(`data-${lang}`);
+        });
 
-    if (currentTab === 'concave') {
-      const v = -(u * F_LEN) / (u + F_LEN);
-      const m = Math.abs(v) / u;
-      const img_x = CX + v;
-      const img_top_y = CY - OBJ_H * m;
+        initUI();
+      };
 
-      document.getElementById('val-u').textContent = `${u_ratio.toFixed(2)}f`;
-      document.getElementById('val-v').textContent = `${(v / F_LEN).toFixed(2)}f`;
-      document.getElementById('val-m').textContent = `${m.toFixed(2)} 倍`;
-      document.getElementById('val-type').textContent = "正立縮小虛像";
-
-      // 第一條光線：平行主光軸，折射後向外發散（橘色光線）
-      ctx.save(); 
-      ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.8;
-      ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(CX, obj_top_y); ctx.stroke();
-      const slope1 = (obj_top_y - CY) / (CX - (CX - F_LEN));
-      ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(V_WIDTH - 40, obj_top_y + slope1 * (V_WIDTH - 40 - CX)); ctx.stroke();
-      
-      // 第一條光線的反向虛線延長線（藍色虛線）
-      ctx.strokeStyle = "#4dd2ff"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
-      ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(CX - F_LEN, CY); ctx.stroke(); 
-      ctx.restore();
-
-      // 第二條光線：過鏡心直進（鮮綠色光線）
-      ctx.save(); 
-      ctx.strokeStyle = "#33cc99"; ctx.lineWidth = 2.8;
-      const slope2 = (CY - obj_top_y) / (CX - obj_x);
-      ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(V_WIDTH - 40, CY + slope2 * (V_WIDTH - 40 - CX)); ctx.stroke();
-      ctx.restore();
-
-      // 畫透鏡與物件
-      drawLens(CX, CY, 150, 18, 'concave');
-      drawArrow(obj_x, CY, obj_top_y, "#ffe066", false, "物體");
-      drawArrow(img_x, CY, img_top_y, "#4dd2ff", true, "虛像");
-
-    } else if (currentTab === 'convex') {
-      drawLens(CX, CY, 150, 18, 'convex');
-      drawArrow(obj_x, CY, obj_top_y, "#ffe066", false, "物體");
-
-      document.getElementById('val-u').textContent = `${u_ratio.toFixed(2)}f`;
-
-      if (Math.abs(u_ratio - 1.0) < 0.02) {
-        document.getElementById('val-v').textContent = "無限遠 (∞)";
-        document.getElementById('val-m').textContent = "無法計算";
-        document.getElementById('val-type').textContent = "平行光折射，不成像";
-
-        ctx.save(); ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.8;
-        ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(CX, obj_top_y); ctx.stroke();
-        const slope1 = (CY - obj_top_y) / F_LEN;
-        ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(V_WIDTH - 20, obj_top_y + slope1 * (V_WIDTH - 20 - CX)); ctx.stroke();
-
-        ctx.strokeStyle = "#33cc99";
-        const slope2 = (CY - obj_top_y) / (CX - obj_x);
-        ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(V_WIDTH - 20, CY + slope2 * (V_WIDTH - 20 - CX)); ctx.stroke();
-        ctx.restore();
-
-      } else if (u > F_LEN) {
-        const v = (u * F_LEN) / (u - F_LEN);
-        const m = v / u;
-        const img_x = CX + v;
-        const img_to_y = CY + OBJ_H * m;
-
-        document.getElementById('val-v').textContent = `${(v / F_LEN).toFixed(2)}f`;
-        document.getElementById('val-m').textContent = `${m.toFixed(2)} 倍`;
-        if (m > 1.05) document.getElementById('val-type').textContent = "倒立放大實像";
-        else if (m < 0.95) document.getElementById('val-type').textContent = "倒立縮小實像";
-        else document.getElementById('val-type').textContent = "倒立等大實像 (2f處)";
-
-        ctx.save(); ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.8;
-        ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(CX, obj_top_y); ctx.stroke();
-        const slope1 = (CY - obj_top_y) / F_LEN;
-        ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(Math.min(V_WIDTH - 20, img_x + 100), obj_top_y + slope1 * (Math.min(V_WIDTH - 20, img_x + 100) - CX)); ctx.stroke();
-
-        ctx.strokeStyle = "#33cc99";
-        const slope2 = (CY - obj_top_y) / (CX - obj_x);
-        ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(Math.min(V_WIDTH - 20, img_x + 100), CY + slope2 * (Math.min(V_WIDTH - 20, img_x + 100) - CX)); ctx.stroke();
-        ctx.restore();
-
-        if (img_x < V_WIDTH - 30) {
-          drawArrow(img_x, CY, img_to_y, "#4dd2ff", false, "實像");
+      function createSvgEl(tag, attrs) {
+        const el = document.createElementNS(SVG_NS, tag);
+        if (attrs) { 
+          for (let key in attrs) {
+            if (key === 'style') el.style.cssText = attrs[key];
+            else el.setAttribute(key, attrs[key]);
+          }
         }
-      } else {
-        const v = -(u * F_LEN) / (F_LEN - u);
-        const m = Math.abs(v) / u;
-        const img_x = CX + v;
-        const img_to_y = CY - OBJ_H * m;
+        return el;
+      }
 
-        document.getElementById('val-v').textContent = `${(v / F_LEN).toFixed(2)}f (鏡前)`;
-        document.getElementById('val-m').textContent = `${m.toFixed(2)} 倍`;
-        document.getElementById('val-type').textContent = "正立放大虛像 (放大鏡)";
+      function addText(parent, x, y, txt, anchor, color, size, weight='normal', style='') {
+        const t = createSvgEl('text', { 
+          x: x, 
+          y: y, 
+          'text-anchor': anchor, 
+          fill: color, 
+          'font-size': size, 
+          'font-weight': weight, 
+          'font-family': 'Noto Sans TC, sans-serif'
+        });
+        if(style) t.style.cssText = style;
+        t.textContent = txt;
+        parent.appendChild(t);
+      }
 
-        ctx.save(); ctx.strokeStyle = "#ff8040"; ctx.lineWidth = 2.8;
-        ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(CX, obj_top_y); ctx.stroke();
-        const slope1 = (CY - obj_top_y) / F_LEN;
-        ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(V_WIDTH - 20, obj_top_y + slope1 * (V_WIDTH - 20 - CX)); ctx.stroke();
-        ctx.strokeStyle = "#4dd2ff"; ctx.setLineDash([5, 5]); ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(CX, obj_top_y); ctx.lineTo(Math.max(20, img_x), obj_top_y + slope1 * (Math.max(20, img_x) - CX)); ctx.stroke();
+      function drawRay(parent, x1, y1, x2, y2, color, strokeWidth, isDashed = false, drawArrowHead = true) {
+        const line = createSvgEl('line', { x1, y1, x2, y2, stroke: color, 'stroke-width': strokeWidth });
+        if (isDashed) line.setAttribute('stroke-dasharray', '8 6');
+        parent.appendChild(line);
 
-        ctx.strokeStyle = "#33cc99"; ctx.lineWidth = 2.8; ctx.setLineDash([]);
-        const slope2 = (CY - obj_top_y) / (CX - obj_x);
-        ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(V_WIDTH - 20, CY + slope2 * (V_WIDTH - 20 - CX)); ctx.stroke();
-        ctx.strokeStyle = "#4dd2ff"; ctx.setLineDash([5, 5]); ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(obj_x, obj_top_y); ctx.lineTo(Math.max(20, img_x), CY + slope2 * (Math.max(20, img_x) - CX)); ctx.stroke();
-        ctx.restore();
-
-        if (img_x > 40) {
-          drawArrow(img_x, CY, img_to_y, "#4dd2ff", true, "放大虛像");
+        if (drawArrowHead) {
+          const angle = Math.atan2(y2 - y1, x2 - x1);
+          const hl = 14; 
+          const pts = `${x2},${y2} ${x2 - hl * Math.cos(angle - Math.PI/6)},${y2 - hl * Math.sin(angle - Math.PI/6)} ${x2 - hl * Math.cos(angle + Math.PI/6)},${y2 - hl * Math.sin(angle + Math.PI/6)}`;
+          const polygon = createSvgEl('polygon', { points: pts, fill: color });
+          parent.appendChild(polygon);
         }
       }
-    }
-  }
 
-  function renderVision(val) {
-    const power = val / 100;
-    const EYE_X = 580;
-    const EYE_R = 120;
-    const LENS_X = EYE_X - EYE_R + 10;
-    const RETINA_X = EYE_X + EYE_R;
-    const GLASSES_X = 280;
-
-    ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,0.6)"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(20, CY); ctx.lineTo(V_WIDTH - 20, CY); ctx.stroke();
-
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3;
-    ctx.fillStyle = "#162820";
-    ctx.beginPath(); ctx.arc(EYE_X, CY, EYE_R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    
-    ctx.fillStyle = "rgba(255,255,255,0.15)"; ctx.strokeStyle = "#4dd2ff"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.ellipse(LENS_X, CY, 18, 55, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-
-    ctx.strokeStyle = "#ffe066"; ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.arc(EYE_X, CY, EYE_R, -0.4, 0.4); ctx.stroke();
-    ctx.fillStyle = "#ffe066"; ctx.font = "bold 16px sans-serif";
-    ctx.fillText("視網膜 (成像目標)", RETINA_X - 10, CY - EYE_R - 15);
-    ctx.restore();
-
-    const beamY1 = CY - 35;
-    const beamY2 = CY + 35;
-    let focusX = 0;
-
-    if (currentTab === 'myopia') {
-      focusX = (RETINA_X - 65) + 65 * power;
-      if (power > 0) {
-        drawLens(GLASSES_X, CY, 70, 8 + 8 * power, 'concave');
-        ctx.fillStyle = "#ffffff"; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText("凹透鏡 (先發散光線)", GLASSES_X, CY - 85);
+      function drawLens(parent, cx, cy, h, w, type) {
+        if (type === 'concave') {
+          const path = createSvgEl('path', {
+            d: `M ${cx - w},${cy - h} L ${cx + w},${cy - h} Q ${cx + w/4},${cy} ${cx + w},${cy + h} L ${cx - w},${cy + h} Q ${cx - w/4},${cy} ${cx - w},${cy - h} Z`,
+            fill: 'rgba(77, 210, 255, 0.25)', stroke: '#4dd2ff', 'stroke-width': 3
+          });
+          parent.appendChild(path);
+        } else {
+          const path = createSvgEl('path', {
+            d: `M ${cx},${cy - h - 10} Q ${cx + w*1.8},${cy} ${cx},${cy + h + 10} Q ${cx - w*1.8},${cy} ${cx},${cy - h - 10} Z`,
+            fill: 'rgba(255, 224, 102, 0.25)', stroke: '#ffe066', 'stroke-width': 3
+          });
+          parent.appendChild(path);
+        }
+        const axis = createSvgEl('line', { x1: cx, y1: cy - h - 15, x2: cx, y2: cy + h + 15, stroke: 'rgba(255,255,255,0.6)', 'stroke-width': 2, 'stroke-dasharray': '5 5' });
+        parent.appendChild(axis);
       }
-    } else {
-      focusX = (RETINA_X + 70) - 70 * power;
-      if (power > 0) {
-        drawLens(GLASSES_X, CY, 70, 8 + 8 * power, 'convex');
-        ctx.fillStyle = "#ffffff"; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "center";
-        ctx.fillText("凸透鏡 (先會聚光線)", GLASSES_X, CY - 85);
+
+      function drawCustomLensSection(parent, cx, cy, type, name) {
+        const h = 42;
+        let d = '';
+        if (type === 'bi-convex') d = `M ${cx},${cy-h} Q ${cx+16},${cy} ${cx},${cy+h} Q ${cx-16},${cy} ${cx},${cy-h} Z`;
+        else if (type === 'plano-convex') d = `M ${cx-6},${cy-h} L ${cx-6},${cy+h} Q ${cx+16},${cy} ${cx-6},${cy-h} Z`;
+        else if (type === 'concavo-convex') d = `M ${cx-8},${cy-h} Q ${cx+18},${cy} ${cx-8},${cy+h} Q ${cx+4},${cy} ${cx-8},${cy-h} Z`;
+        else if (type === 'bi-concave') d = `M ${cx-12},${cy-h} L ${cx+12},${cy-h} Q ${cx+3},${cy} ${cx+12},${cy+h} L ${cx-12},${cy+h} Q ${cx-3},${cy} ${cx-12},${cy-h} Z`;
+        else if (type === 'convexo-concave') d = `M ${cx-12},${cy-h} Q ${cx+10},${cy} ${cx-12},${cy+h} L ${cx-4},${cy+h} Q ${cx+14},${cy} ${cx-4},${cy-h} Z`;
+        else if (type === 'plano-concave') d = `M ${cx-10},${cy-h} L ${cx+4},${cy-h} Q ${cx-6},${cy} ${cx+4},${cy+h} L ${cx-10},${cy+h} Z`;
+        
+        const path = createSvgEl('path', { d: d, fill: 'rgba(111, 168, 242, 0.3)', stroke: '#6fa8f2', 'stroke-width': 2.5 });
+        parent.appendChild(path);
+
+        const axis = createSvgEl('line', { x1: cx-10, y1: cy, x2: cx+10, y2: cy, stroke: '#ff8040', 'stroke-width': 2 });
+        parent.appendChild(axis);
+        parent.appendChild(createSvgEl('circle', { cx: cx, cy: cy, r: 2.5, fill: '#ff8040' }));
+
+        addText(parent, cx, cy + h + 26, name, 'middle', '#ffffff', 18, 'bold');
       }
-    }
 
-    ctx.save();
-    ctx.lineWidth = 3;
+      function initUI() {
+        renderControls();
+        renderPresets();
+        updateSimulation();
+      }
 
-    if (power === 0) {
-      ctx.strokeStyle = "#ff8040";
-      ctx.beginPath(); ctx.moveTo(20, beamY1); ctx.lineTo(LENS_X, beamY1); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(LENS_X, beamY1); ctx.lineTo(focusX, CY); ctx.stroke();
+      function renderControls() {
+        controlsBox.replaceChildren();
+        presetsBox.replaceChildren();
+        const m = currentMode;
+        const p = params[m];
 
-      ctx.beginPath(); ctx.moveTo(20, beamY2); ctx.lineTo(LENS_X, beamY2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(LENS_X, beamY2); ctx.lineTo(focusX, CY); ctx.stroke();
-    } else {
-      ctx.strokeStyle = power > 0.95 ? "#33cc99" : "#6fa8f2";
-      const offset = currentTab === 'myopia' ? (14 * power) : -(14 * power);
-      const lensY1 = beamY1 + offset;
-      const lensY2 = beamY2 - offset;
+        const addSlider = (id, labelZh, labelEn, min, max, step, val, unit, onChange) => {
+          const div = document.createElement('div');
+          div.className = 'control';
+          div.innerHTML = `
+            <label>${tr(labelZh, labelEn)} <span class="val" id="val_${id}">${val} ${unit}</span></label>
+            <input type="range" id="inp_${id}" min="${min}" max="${max}" step="${step}" value="${val}">
+          `;
+          controlsBox.appendChild(div);
+          div.querySelector('input').addEventListener('input', (e) => {
+            let newVal = parseFloat(e.target.value);
+            newVal = onChange(newVal);
+            e.target.value = newVal;
+            document.getElementById(`val_${id}`).textContent = `${newVal} ${unit}`;
+            updateSimulation();
+          });
+        };
 
-      ctx.beginPath(); ctx.moveTo(20, beamY1); ctx.lineTo(GLASSES_X, beamY1); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(GLASSES_X, beamY1); ctx.lineTo(LENS_X, lensY1); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(LENS_X, lensY1); ctx.lineTo(focusX, CY); ctx.stroke();
+        if (m === 'convex' || m === 'concave') {
+          addSlider('uRatio', '物體位置 (物距 u)', 'Object Position (u)', 0.5, 3.5, 0.1, p.uRatio, 'f', v => { p.uRatio = v; return v; });
+        } else if (m === 'hyperopia' || m === 'myopia') {
+          addSlider('power', '鏡片矯正強度', 'Lens Correction Power', 0, 100, 1, p.power, '%', v => { p.power = v; return v; });
+        }
+      }
 
-      ctx.beginPath(); ctx.moveTo(20, beamY2); ctx.lineTo(GLASSES_X, beamY2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(GLASSES_X, beamY2); ctx.lineTo(LENS_X, lensY2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(LENS_X, lensY2); ctx.lineTo(focusX, CY); ctx.stroke();
-    }
-    ctx.restore();
+      function renderPresets() {
+        presetsBox.replaceChildren();
+        const m = currentMode;
+        if (m === 'convex') {
+          const span = document.createElement('span');
+          span.textContent = tr('⚡ 成像區間快速跳轉：', '⚡ Jump to Region:');
+          presetsBox.appendChild(span);
+          
+          const p = params.convex;
+          const addBtn = (label, action) => {
+            const b = document.createElement('button');
+            b.textContent = label;
+            b.onclick = () => { action(); renderControls(); renderPresets(); updateSimulation(); };
+            presetsBox.appendChild(b);
+          };
+          addBtn('A (3f)', () => { p.uRatio = 3.0; });
+          addBtn('B (2f)', () => { p.uRatio = 2.0; });
+          addBtn('C (1.5f)', () => { p.uRatio = 1.5; });
+          addBtn('D (f)', () => { p.uRatio = 1.0; });
+          addBtn('E (0.5f)', () => { p.uRatio = 0.5; });
+        }
+      }
 
-    ctx.save();
-    ctx.fillStyle = power > 0.95 ? "#33cc99" : "#ff8040";
-    ctx.beginPath(); ctx.arc(focusX, CY, 6, 0, Math.PI * 2); ctx.fill();
-    
-    ctx.font = "bold 18px sans-serif"; ctx.textAlign = "center";
-    if (power > 0.95) {
-      ctx.fillText("🎯 焦點精準落在視網膜上！(視力清晰)", RETINA_X - 60, CY + 155);
-    } else if (currentTab === 'myopia') {
-      ctx.fillText("⚠️ 焦點在視網膜「前方」(遠處模糊，需配戴凹透鏡)", focusX, CY + 45);
-    } else {
-      ctx.fillText("⚠️ 焦點在視網膜「後方」(近處模糊，需配戴凸透鏡)", Math.min(V_WIDTH - 120, focusX), CY + 45);
-    }
-    ctx.restore();
-  }
+      function updateSimulation() {
+        while (drawLayer.firstChild) {
+          drawLayer.removeChild(drawLayer.firstChild);
+        }
+        statsGrid.replaceChildren();
+        const m = currentMode;
+        
+        const addStat = (kZh, kEn, v) => {
+          const d = document.createElement('div'); d.className = 'stat';
+          d.innerHTML = `<div class="k">${tr(kZh, kEn)}</div><div class="v">${v}</div>`; statsGrid.appendChild(d);
+        };
 
-  function update(val) {
-    if (currentTab === 'convex') {
-      const markers = ['A (3f)', 'B (2f)', 'C (1.5f)', 'D (f)', 'E (0.5f)'];
-      const idxs = [0, 104, 155, 207, 259];
-      let txt = `u ≈ ${(3 - (val/259)*2.5).toFixed(2)}f`;
-      idxs.forEach((idxVal, i) => { if(Math.abs(val - idxVal) < 3) txt = markers[i]; });
-      readout.textContent = txt;
-    } else if (currentTab === 'concave') {
-      readout.textContent = `u ≈ ${(3 - (val/259)*2.5).toFixed(2)}f`;
-    } else if (currentTab === 'myopia' || currentTab === 'hyperopia') {
-      if (val === 0) readout.textContent = "未戴眼鏡 (0%)";
-      else if (val === 100) readout.textContent = "完全矯正 (100%)";
-      else readout.textContent = `鏡片強度 ${val}%`;
-    }
-    render(val);
-  }
+        if (m === 'intro') {
+          const cy1 = 120;
+          drawLayer.appendChild(createSvgEl('line', { x1: 20, y1: cy1, x2: V_WIDTH-20, y2: cy1, stroke: 'rgba(255,255,255,0.4)', 'stroke-width': 2 }));
 
-  function jump(val) {
-    rng.value = val;
-    update(val);
-  }
+          drawCustomLensSection(drawLayer, 120, cy1, 'bi-convex', tr('雙凸透鏡', 'Biconvex'));
+          drawCustomLensSection(drawLayer, 240, cy1, 'plano-convex', tr('平凸透鏡', 'Plano-convex'));
+          drawCustomLensSection(drawLayer, 360, cy1, 'concavo-convex', tr('凹凸透鏡', 'Concavo-convex'));
 
-  rng.addEventListener('input', e => update(parseInt(e.target.value)));
-  window.addEventListener('resize', initCanvas);
-  
-  initCanvas();
-  switchTab('intro');
-</script>
+          addText(drawLayer, 30, cy1 - 70, tr("● 凸透鏡家族：中間部份較周圍為【厚】 ➔ 具有「會聚光線」效果", "● Convex Family: Thicker in middle ➔ Converges light"), 'start', '#ffe066', 20, 'bold');
+
+          drawLens(drawLayer, 650, cy1, 65, 14, 'convex');
+          const focusX1 = 880; 
+          [-40, -20, 0, 20, 40].forEach(offset => {
+            const y = cy1 + offset;
+            drawLayer.appendChild(createSvgEl('line', { x1: 460, y1: y, x2: 650, y2: y, stroke: '#ff8040', 'stroke-width': 3 }));
+            
+            // 🌟 【完美修復】凸透鏡折射光線斜率嚴格鎖死為穿過焦點 (880, cy1)
+            const slope = (cy1 - y) / (focusX1 - 650);
+            const endX = 950; // 延伸到右側邊緣
+            drawRay(drawLayer, 650, y, endX, y + slope * (endX - 650), '#ff8040', 3, false, offset !== 0);
+          });
+          addText(drawLayer, focusX1 - 30, cy1 + 32, tr("實焦點 F", "Real Focus F"), 'start', '#ffffff', 18, 'bold');
+          drawLayer.appendChild(createSvgEl('circle', { cx: focusX1, cy: cy1, r: 6, fill: '#ff8040' }));
+
+          drawLayer.appendChild(createSvgEl('line', { x1: 30, y1: 250, x2: V_WIDTH-30, y2: 250, stroke: 'rgba(255,255,255,0.4)', 'stroke-width': 2, 'stroke-dasharray': '8 8' }));
+
+          const cy2 = 380;
+          drawLayer.appendChild(createSvgEl('line', { x1: 20, y1: cy2, x2: V_WIDTH-20, y2: cy2, stroke: 'rgba(255,255,255,0.4)', 'stroke-width': 2 }));
+
+          drawCustomLensSection(drawLayer, 120, cy2, 'bi-concave', tr('雙凹透鏡', 'Biconcave'));
+          drawCustomLensSection(drawLayer, 240, cy2, 'convexo-concave', tr('凸凹透鏡', 'Convexo-concave'));
+          drawCustomLensSection(drawLayer, 360, cy2, 'plano-concave', tr('平凹透鏡', 'Plano-concave'));
+
+          addText(drawLayer, 30, cy2 - 70, tr("● 凹透鏡家族：中間部份較周圍為【薄】 ➔ 具有「發散光線」效果", "● Concave Family: Thinner in middle ➔ Diverges light"), 'start', '#4dd2ff', 20, 'bold');
+
+          drawLens(drawLayer, 650, cy2, 65, 14, 'concave');
+          const vFocusX = 540;
+          [-40, -20, 0, 20, 40].forEach(offset => {
+            const y = cy2 + offset;
+            drawLayer.appendChild(createSvgEl('line', { x1: 460, y1: y, x2: 650, y2: y, stroke: '#4dd2ff', 'stroke-width': 3 }));
+            
+            // 🌟 【完美修復】凹透鏡反向虛線與前進實線 100% 貼合共線
+            const slope = (y - cy2) / (650 - vFocusX);
+            const endX = 950;
+            drawRay(drawLayer, 650, y, endX, y + slope * (endX - 650), '#4dd2ff', 3, false, offset !== 0);
+            
+            if (offset !== 0) {
+              drawLayer.appendChild(createSvgEl('line', { x1: 650, y1: y, x2: vFocusX, y2: cy2, stroke: '#4dd2ff', 'stroke-width': 2, 'stroke-dasharray': '5 5' }));
+            }
+          });
+          addText(drawLayer, vFocusX - 35, cy2 + 32, tr("虛焦點 F", "Virtual Focus F"), 'start', '#ffffff', 18, 'bold');
+          drawLayer.appendChild(createSvgEl('circle', { cx: vFocusX, cy: cy2, r: 6, fill: '#4dd2ff' }));
+
+          explainBox.innerHTML = tr(`
+            <h3>💡 老師精闢解析：透鏡的基本形狀與光路</h3>
+            <p>只要是<b>「中間厚、邊緣薄」</b>的透鏡，就具備<b>會聚</b>光線的能力；相反地，<b>「中間薄、邊緣厚」</b>的透鏡，就具備<b>發散</b>光線的能力。<br>
+            光線通過透鏡時，會發生兩次折射（空氣入玻璃、玻璃出空氣），但在畫光路圖時，我們習慣簡化成在透鏡的中軸線（虛線處）發生一次折射即可。</p>
+          `, `
+            <h3>💡 Teacher's Analysis: Lens Shapes & Rays</h3>
+            <p>Lenses that are <b>"thicker in the middle"</b> have the ability to <b>converge</b> light rays. Conversely, lenses <b>"thinner in the middle"</b> <b>diverge</b> light rays.<br>
+            Although light refracts twice (entering and exiting glass), in ray tracing, we simplify it as a single bend at the lens's central axis.</p>
+          `);
+
+        } else if (m === 'convex' || m === 'concave') {
+          const u_ratio = params[m].uRatio;
+          const u = F_LEN * u_ratio;
+          const obj_x = CX - u;
+          const obj_top_y = CY - OBJ_H;
+
+          // 光軸與透鏡
+          drawLayer.appendChild(createSvgEl('line', { x1: 20, y1: CY, x2: V_WIDTH - 20, y2: CY, stroke: 'rgba(255,255,255,0.6)', 'stroke-width': 2 }));
+          drawLens(drawLayer, CX, CY, 150, 18, m);
+
+          // 標示焦點與 2f 點
+          const markers = [ { ratio: 2.0, name: '2f' }, { ratio: 1.0, name: 'f' } ];
+          markers.forEach(mk => {
+            [-1, 1].forEach(dir => {
+              const x = CX + dir * mk.ratio * F_LEN;
+              drawLayer.appendChild(createSvgEl('line', { x1: x, y1: CY - 10, x2: x, y2: CY + 10, stroke: '#ffffff', 'stroke-width': 2 }));
+              addText(drawLayer, x, CY + 30, mk.name, 'middle', '#ffe066', 18, 'bold');
+            });
+          });
+
+          // 繪製物體
+          drawLayer.appendChild(createSvgEl('line', { x1: obj_x, y1: CY, x2: obj_x, y2: obj_top_y, stroke: '#ffe066', 'stroke-width': 6 }));
+          drawLayer.appendChild(createSvgEl('polygon', { points: `${obj_x},${obj_top_y-8} ${obj_x-6},${obj_top_y+2} ${obj_x+6},${obj_top_y+2}`, fill: '#ffe066' }));
+          addText(drawLayer, obj_x, obj_top_y - 15, tr('物體', 'Object'), 'middle', '#ffe066', 18, 'bold');
+
+          if (m === 'concave') {
+            const v = -(u * F_LEN) / (u + F_LEN);
+            const m_mag = Math.abs(v) / u;
+            const img_x = CX + v;
+            const img_top_y = CY - OBJ_H * m_mag;
+
+            // 射線 1 (平行光 -> 發散)
+            drawLayer.appendChild(createSvgEl('line', { x1: obj_x, y1: obj_top_y, x2: CX, y2: obj_top_y, stroke: '#ff8040', 'stroke-width': 3 }));
+            const slope1 = (obj_top_y - CY) / F_LEN; 
+            drawRay(drawLayer, CX, obj_top_y, V_WIDTH - 20, obj_top_y + slope1 * (V_WIDTH - 20 - CX), '#ff8040', 3, false, true);
+            drawLayer.appendChild(createSvgEl('line', { x1: CX, y1: obj_top_y, x2: CX - F_LEN, y2: CY, stroke: '#4dd2ff', 'stroke-width': 2, 'stroke-dasharray': '6 6' }));
+
+            // 射線 2 (過鏡心直進)
+            const slope2 = (CY - obj_top_y) / (CX - obj_x);
+            drawRay(drawLayer, obj_x, obj_top_y, V_WIDTH - 20, CY + slope2 * (V_WIDTH - 20 - CX), '#33cc99', 3, false, true);
+            drawLayer.appendChild(createSvgEl('line', { x1: CX, y1: CY, x2: img_x, y2: img_top_y, stroke: '#4dd2ff', 'stroke-width': 2, 'stroke-dasharray': '6 6' }));
+
+            // 繪製虛像
+            drawLayer.appendChild(createSvgEl('line', { x1: img_x, y1: CY, x2: img_x, y2: img_top_y, stroke: '#4dd2ff', 'stroke-width': 4, 'stroke-dasharray': '5 3' }));
+            drawLayer.appendChild(createSvgEl('polygon', { points: `${img_x},${img_top_y-8} ${img_x-6},${img_top_y+2} ${img_x+6},${img_top_y+2}`, fill: '#4dd2ff' }));
+            addText(drawLayer, img_x, img_top_y - 15, tr('虛像', 'Virtual'), 'middle', '#4dd2ff', 16, 'bold');
+
+            addStat('物距 <span class="math-text">u</span>', 'Obj Dist <span class="math-text">u</span>', `${u_ratio.toFixed(2)} f`);
+            addStat('像距 <span class="math-text">v</span>', 'Img Dist <span class="math-text">v</span>', `${(Math.abs(v) / F_LEN).toFixed(2)} f ${tr('(鏡前)', '(Front)')}`);
+            addStat('放大率 <span class="math-text">m</span>', 'Mag <span class="math-text">m</span>', `${m_mag.toFixed(2)} ${tr('倍', 'x')}`);
+            addStat('成像性質', 'Image Type', `<span style="color:#ff8040">${tr('正立縮小虛像', 'Upright Reduced Virtual')}</span>`);
+
+            explainBox.innerHTML = tr(`
+              <h3>💡 老師精闢解析：凹透鏡永遠的宿命</h3>
+              <p>凹透鏡為發散透鏡。不管物體在什麼位置移動（無需死記 3F 或 2F），成像永遠在<b>「鏡前、正立、縮小、虛像」</b>。<br>
+              請注意：兩條折射線在鏡前的反向延長虛線，必然精準交會於縮小虛像的頂端。</p>
+            `, `
+              <h3>💡 Teacher's Analysis: Concave Lens Fate</h3>
+              <p>A concave lens is a diverging lens. Regardless of object position, the image is ALWAYS <b>"front, upright, reduced, virtual"</b>.<br>
+              Notice how the backward extensions of both refracted rays intersect perfectly at the tip of the virtual image.</p>
+            `);
+
+          } else if (m === 'convex') {
+            addStat('物距 <span class="math-text">u</span>', 'Obj Dist <span class="math-text">u</span>', `${u_ratio.toFixed(2)} f`);
+
+            if (Math.abs(u_ratio - 1.0) < 0.02) {
+              // 位於焦點上 (u = f)
+              drawLayer.appendChild(createSvgEl('line', { x1: obj_x, y1: obj_top_y, x2: CX, y2: obj_top_y, stroke: '#ff8040', 'stroke-width': 3 }));
+              const slope1 = (CY - obj_top_y) / F_LEN;
+              drawRay(drawLayer, CX, obj_top_y, V_WIDTH - 20, obj_top_y + slope1 * (V_WIDTH - 20 - CX), '#ff8040', 3, false, true);
+
+              const slope2 = (CY - obj_top_y) / (CX - obj_x);
+              drawRay(drawLayer, obj_x, obj_top_y, V_WIDTH - 20, CY + slope2 * (V_WIDTH - 20 - CX), '#33cc99', 3, false, true);
+
+              addStat('像距 <span class="math-text">v</span>', 'Img Dist <span class="math-text">v</span>', `∞ ${tr('(無限遠)', '(Infinity)')}`);
+              addStat('放大率 <span class="math-text">m</span>', 'Mag <span class="math-text">m</span>', tr('無法計算', 'N/A'));
+              addStat('成像性質', 'Image Type', `<span style="color:#ff8040">${tr('折射光平行，不成像', 'Parallel rays, no image')}</span>`);
+            } else if (u > F_LEN) {
+              // 實像區 (u > f)
+              const v = (u * F_LEN) / (u - F_LEN);
+              const m_mag = v / u;
+              const img_x = CX + v;
+              const img_top_y = CY + OBJ_H * m_mag;
+
+              drawLayer.appendChild(createSvgEl('line', { x1: obj_x, y1: obj_top_y, x2: CX, y2: obj_top_y, stroke: '#ff8040', 'stroke-width': 3 }));
+              const slope1 = (CY - obj_top_y) / F_LEN;
+              const extX = Math.min(V_WIDTH - 20, img_x + 100);
+              drawRay(drawLayer, CX, obj_top_y, extX, obj_top_y + slope1 * (extX - CX), '#ff8040', 3, false, true);
+
+              const slope2 = (CY - obj_top_y) / (CX - obj_x);
+              drawRay(drawLayer, obj_x, obj_top_y, extX, CY + slope2 * (extX - CX), '#33cc99', 3, false, true);
+
+              if (img_x < V_WIDTH - 40) {
+                drawLayer.appendChild(createSvgEl('line', { x1: img_x, y1: CY, x2: img_x, y2: img_top_y, stroke: '#4dd2ff', 'stroke-width': 6 }));
+                drawLayer.appendChild(createSvgEl('polygon', { points: `${img_x},${img_top_y+8} ${img_x-6},${img_top_y-2} ${img_x+6},${img_top_y-2}`, fill: '#4dd2ff' }));
+                addText(drawLayer, img_x, img_top_y + 25, tr('實像', 'Real'), 'middle', '#4dd2ff', 18, 'bold');
+              }
+
+              let imgTypeZh = "倒立等大實像"; let imgTypeEn = "Inverted Same-size Real";
+              if (m_mag > 1.05) { imgTypeZh = "倒立放大實像"; imgTypeEn = "Inverted Magnified Real"; }
+              else if (m_mag < 0.95) { imgTypeZh = "倒立縮小實像"; imgTypeEn = "Inverted Reduced Real"; }
+
+              addStat('像距 <span class="math-text">v</span>', 'Img Dist <span class="math-text">v</span>', `${(v / F_LEN).toFixed(2)} f ${tr('(鏡後)', '(Back)')}`);
+              addStat('放大率 <span class="math-text">m</span>', 'Mag <span class="math-text">m</span>', `${m_mag.toFixed(2)} ${tr('倍', 'x')}`);
+              addStat('成像性質', 'Image Type', `<span style="color:#ff8040">${tr(imgTypeZh, imgTypeEn)}</span>`);
+            } else {
+              // 虛像區 (u < f)
+              const v = (u * F_LEN) / (F_LEN - u); // 正值表示鏡前
+              const m_mag = v / u;
+              const img_x = CX - v; 
+              const img_top_y = CY - OBJ_H * m_mag;
+
+              drawLayer.appendChild(createSvgEl('line', { x1: obj_x, y1: obj_top_y, x2: CX, y2: obj_top_y, stroke: '#ff8040', 'stroke-width': 3 }));
+              const slope1 = (CY - obj_top_y) / F_LEN;
+              drawRay(drawLayer, CX, obj_top_y, V_WIDTH - 20, obj_top_y + slope1 * (V_WIDTH - 20 - CX), '#ff8040', 3, false, true);
+              drawLayer.appendChild(createSvgEl('line', { x1: CX, y1: obj_top_y, x2: Math.max(20, img_x), y2: obj_top_y + slope1 * (Math.max(20, img_x) - CX), stroke: '#4dd2ff', 'stroke-width': 2, 'stroke-dasharray': '6 6' }));
+
+              const slope2 = (CY - obj_top_y) / (CX - obj_x);
+              drawRay(drawLayer, obj_x, obj_top_y, V_WIDTH - 20, CY + slope2 * (V_WIDTH - 20 - CX), '#33cc99', 3, false, true);
+              drawLayer.appendChild(createSvgEl('line', { x1: obj_x, y1: obj_top_y, x2: Math.max(20, img_x), y2: CY + slope2 * (Math.max(20, img_x) - CX), stroke: '#4dd2ff', 'stroke-width': 2, 'stroke-dasharray': '6 6' }));
+
+              if (img_x > 40) {
+                drawLayer.appendChild(createSvgEl('line', { x1: img_x, y1: CY, x2: img_x, y2: img_top_y, stroke: '#4dd2ff', 'stroke-width': 4, 'stroke-dasharray': '5 3' }));
+                drawLayer.appendChild(createSvgEl('polygon', { points: `${img_x},${img_top_y-8} ${img_x-6},${img_top_y+2} ${img_x+6},${img_top_y+2}`, fill: '#4dd2ff' }));
+                addText(drawLayer, img_x, img_top_y - 15, tr('放大虛像', 'Virtual Image'), 'middle', '#4dd2ff', 18, 'bold');
+              }
+
+              addStat('像距 <span class="math-text">v</span>', 'Img Dist <span class="math-text">v</span>', `${(v / F_LEN).toFixed(2)} f ${tr('(鏡前)', '(Front)')}`);
+              addStat('放大率 <span class="math-text">m</span>', 'Mag <span class="math-text">m</span>', `${m_mag.toFixed(2)} ${tr('倍', 'x')}`);
+              addStat('成像性質', 'Image Type', `<span style="color:#ff8040">${tr('正立放大虛像', 'Upright Magnified Virtual')}</span>`);
+            }
+
+            explainBox.innerHTML = tr(`
+              <h3>💡 老師精闢解析：凸透鏡的六大成像區塊</h3>
+              <p>凸透鏡為會聚透鏡，成像變化多端，是考試的絕對重點！<br>
+              請拉動上方滑桿，觀察物距與成像的關係：<br>
+              當物距 <span class="math-eq">u > f</span> 時，在鏡後形成<b>倒立實像</b>，且「物近像遠像變大」。<br>
+              當物距小於焦距 <span class="math-eq">u < f</span> 時，光線發散無法在鏡後交會，但在鏡前反向延伸會交會，化身為<b>放大鏡</b>，形成正立放大虛像！</p>
+            `, `
+              <h3>💡 Teacher's Analysis: 6 Imaging Zones of Convex Lens</h3>
+              <p>Convex lenses converge light, creating versatile images that are heavily tested!<br>
+              Drag the slider to observe:<br>
+              When <span class="math-eq">u > f</span>, it forms an <b>inverted real image</b> behind the lens. As the object approaches f, the image moves further away and gets larger.<br>
+              When <span class="math-eq">u < f</span>, refracted rays diverge but their backward extensions meet in front of the lens. It becomes a <b>magnifying glass</b>, forming an upright magnified virtual image!</p>
+            `);
+          }
+
+        } else if (m === 'hyperopia' || m === 'myopia') {
+          const power = params[m].power / 100; // 0 to 1
+          const EYE_X = 650;
+          const EYE_R = 140;
+          const LENS_X = EYE_X - EYE_R + 10;
+          const RETINA_X = EYE_X + EYE_R;
+          const GLASSES_X = 250;
+
+          drawLayer.appendChild(createSvgEl('line', { x1: 20, y1: CY, x2: V_WIDTH - 20, y2: CY, stroke: 'rgba(255,255,255,0.6)', 'stroke-width': 2 }));
+
+          drawLayer.appendChild(createSvgEl('circle', { cx: EYE_X, cy: CY, r: EYE_R, fill: '#11261f', stroke: '#ffffff', 'stroke-width': 3 }));
+          drawLayer.appendChild(createSvgEl('ellipse', { cx: LENS_X, cy: CY, rx: 20, ry: 65, fill: 'rgba(255,255,255,0.15)', stroke: '#4dd2ff', 'stroke-width': 2 }));
+
+          drawLayer.appendChild(createSvgEl('path', { d: `M ${EYE_X},${CY-EYE_R} A ${EYE_R} ${EYE_R} 0 0 1 ${EYE_X},${CY+EYE_R}`, fill: 'none', stroke: '#ffe066', 'stroke-width': 6 }));
+          addText(drawLayer, RETINA_X - 10, CY - EYE_R - 15, tr("視網膜 (成像目標)", "Retina (Target)"), 'end', '#ffe066', 20, 'bold');
+
+          const beamY1 = CY - 40;
+          const beamY2 = CY + 40;
+          let focusX = 0;
+
+          if (m === 'myopia') {
+            focusX = (RETINA_X - 80) + 80 * power;
+            if (power > 0) {
+              drawLens(drawLayer, GLASSES_X, CY, 80, 10 + 10 * power, 'concave');
+              addText(drawLayer, GLASSES_X, CY - 100, tr("凹透鏡 (先發散光線)", "Concave Lens (Diverges)"), 'middle', '#ffffff', 18, 'bold');
+            }
+          } else {
+            focusX = (RETINA_X + 80) - 80 * power;
+            if (power > 0) {
+              drawLens(drawLayer, GLASSES_X, CY, 80, 10 + 10 * power, 'convex');
+              addText(drawLayer, GLASSES_X, CY - 100, tr("凸透鏡 (先會聚光線)", "Convex Lens (Converges)"), 'middle', '#ffffff', 18, 'bold');
+            }
+          }
+
+          if (power === 0) {
+            drawRay(drawLayer, 20, beamY1, LENS_X, beamY1, '#ff8040', 3, false, false);
+            drawRay(drawLayer, LENS_X, beamY1, focusX, CY, '#ff8040', 3, false, true);
+
+            drawRay(drawLayer, 20, beamY2, LENS_X, beamY2, '#33cc99', 3, false, false);
+            drawRay(drawLayer, LENS_X, beamY2, focusX, CY, '#33cc99', 3, false, true);
+          } else {
+            const rayColor = power > 0.95 ? '#4ade80' : '#6fa8f2';
+            const offset = m === 'myopia' ? (16 * power) : -(16 * power);
+            const lensY1 = beamY1 + offset;
+            const lensY2 = beamY2 - offset;
+
+            drawRay(drawLayer, 20, beamY1, GLASSES_X, beamY1, rayColor, 3, false, false);
+            drawRay(drawLayer, GLASSES_X, beamY1, LENS_X, lensY1, rayColor, 3, false, false);
+            drawRay(drawLayer, LENS_X, lensY1, focusX, CY, rayColor, 3, false, true);
+
+            drawRay(drawLayer, 20, beamY2, GLASSES_X, beamY2, rayColor, 3, false, false);
+            drawRay(drawLayer, GLASSES_X, beamY2, LENS_X, lensY2, rayColor, 3, false, false);
+            drawRay(drawLayer, LENS_X, lensY2, focusX, CY, rayColor, 3, false, true);
+          }
+
+          const focusColor = power > 0.95 ? "#4ade80" : "#ff8040";
+          drawLayer.appendChild(createSvgEl('circle', { cx: focusX, cy: CY, r: 8, fill: focusColor }));
+          
+          if (power > 0.95) {
+            addText(drawLayer, RETINA_X - 60, CY + 175, tr("🎯 焦點精準落在視網膜上！(視力清晰)", "🎯 Focused perfectly on retina! (Clear vision)"), 'center', focusColor, 22, 'bold');
+          } else if (m === 'myopia') {
+            addText(drawLayer, focusX, CY + 50, tr("⚠️ 焦點在視網膜「前方」(遠處模糊)", "⚠️ Focused IN FRONT of retina (Blurry far)"), 'middle', focusColor, 20, 'bold');
+          } else {
+            addText(drawLayer, Math.min(V_WIDTH - 150, focusX), CY + 50, tr("⚠️ 焦點在視網膜「後方」(近處模糊)", "⚠️ Focused BEHIND retina (Blurry near)"), 'middle', focusColor, 20, 'bold');
+          }
+
+          if (m === 'myopia') {
+            explainBox.innerHTML = tr(`
+              <h3>💡 老師精闢解析：近視眼與凹透鏡矯正</h3>
+              <p>眼球軸長過長或水晶體折射力太強，導致遠方光線過早會聚，聚焦在<b>「視網膜前方」</b>。<br>
+              戴上<b>「凹透鏡（發散透鏡）」</b>後，光線會先被適度發散，即可將焦點順利往後推移，精準落在視網膜上！</p>
+            `, `
+              <h3>💡 Teacher's Analysis: Myopia & Concave Correction</h3>
+              <p>If the eyeball is too long or the lens is too strong, distant rays converge too early, focusing <b>IN FRONT of the retina</b>.<br>
+              Wearing a <b>"Concave Lens (Diverging)"</b> spreads the rays slightly before they enter the eye, pushing the focal point back perfectly onto the retina!</p>
+            `);
+          } else {
+            explainBox.innerHTML = tr(`
+              <h3>💡 老師精闢解析：遠視/老花眼與凸透鏡矯正</h3>
+              <p>眼球軸長過短或水晶體聚焦力不足，導致近處光線來不及會聚，聚焦在<b>「視網膜後方」</b>。<br>
+              配戴<b>「凸透鏡（會聚透鏡）」</b>幫忙把光線提前會聚，就能讓焦點前移回到視網膜上！</p>
+            `, `
+              <h3>💡 Teacher's Analysis: Hyperopia & Convex Correction</h3>
+              <p>If the eyeball is too short or the lens is too weak, near rays don't converge fast enough, focusing <b>BEHIND the retina</b>.<br>
+              Wearing a <b>"Convex Lens (Converging)"</b> helps converge the rays early, pulling the focal point forward perfectly onto the retina!</p>
+            `);
+          }
+        }
+      }
+
+      document.querySelectorAll('.mode-switch button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.mode-switch button').forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          currentMode = e.currentTarget.dataset.mode;
+          initUI();
+        });
+      });
+
+      initUI();
+      setLang('zh');
+    })();
+  </script>
 </body>
 </html>
