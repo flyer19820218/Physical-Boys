@@ -1,5 +1,6 @@
 name: Complete kinematics 06-1 bilingual layer
 
+# Trigger pass 2: workflow now exists on default branch.
 on:
   push:
     paths:
@@ -23,9 +24,7 @@ jobs:
 
           p = Path('kinematics.html')
           s = p.read_text(encoding='utf-8')
-          original = s
 
-          # Protect the exact SVG geometry and the three core simulation functions.
           protected_svgs = re.findall(r'<svg\b.*?</svg>', s, flags=re.S)
           protected_functions = {}
           for name, next_name in [('getKinematics','animate'), ('drawAnimation','drawGraph'), ('drawGraph','checkAnswer')]:
@@ -33,157 +32,63 @@ jobs:
               if m:
                   protected_functions[name] = m.group(1)
 
-          # Chinese is the absolute default. Browser title changes only after EN is selected.
-          s = s.replace('<title>06-1｜位置、路徑長與位移｜Position, Distance & Displacement</title>',
-                        '<title>06-1｜位置、路徑長與位移</title>')
-
-          # Remove the one English word left in the Chinese definition.
+          s = s.replace('<title>06-1｜位置、路徑長與位移｜Position, Distance & Displacement</title>', '<title>06-1｜位置、路徑長與位移</title>')
           s = s.replace('位置（position）：', '位置：')
           s = s.replace('1D 數線運動軌跡', '一維數線運動軌跡')
 
-          misses = []
-
-          def mark_plain(zh, en, count=0):
+          def add_attr_by_text(tag, zh, en):
               global s
-              pat = re.compile(r'(<(?P<tag>[A-Za-z][A-Za-z0-9:-]*)(?![^>]*\bdata-zh=)[^>]*>)' + re.escape(zh) + r'(</(?P=tag)>)')
-              repl_count = count if count else 0
+              pat = re.compile(rf'(<{tag}\b(?![^>]*data-zh=)[^>]*>)' + re.escape(zh) + rf'(</{tag}>)')
               def repl(m):
-                  op = m.group(1)[:-1]
-                  return f'{op} data-zh="{html.escape(zh, quote=True)}" data-en="{html.escape(en, quote=True)}">{zh}{m.group(3)}'
-              s2, n = pat.subn(repl, s, count=repl_count)
-              if n == 0 and f'data-zh="{html.escape(zh, quote=True)}"' not in s:
-                  misses.append('plain: ' + zh[:50])
-              s = s2
+                  return m.group(1)[:-1] + f' data-zh="{html.escape(zh, quote=True)}" data-en="{html.escape(en, quote=True)}">' + zh + m.group(2)
+              s, _ = pat.subn(repl, s, count=1)
 
-          def mark_contains(tag, phrase, en_inner, count=1):
-              global s
-              pat = re.compile(rf'(<{tag}\b(?![^>]*\bdata-zh=)[^>]*>)(?P<inner>(?:(?!</{tag}>).)*{re.escape(phrase)}(?:(?!</{tag}>).)*)(</{tag}>)', re.S)
-              def repl(m):
-                  inner = m.group('inner')
-                  op = m.group(1)[:-1]
-                  return f'{op} data-zh="{html.escape(inner, quote=True)}" data-en="{html.escape(en_inner, quote=True)}">{inner}{m.group(3)}'
-              s2, n = pat.subn(repl, s, count=count)
-              if n == 0:
-                  misses.append(f'{tag}: {phrase[:50]}')
-              s = s2
+          pairs = [
+            ('div','曉臻老師的小提醒',"Ms. Hsiao-Chen's Note"),
+            ('p','▼ 數線上的位置表示法','▼ Position on a Number Line'),
+            ('button','下一頁：平面座標與颱風 ➔','Next: Position in 2D ➔'),
+            ('div','曉臻老師的氣象播報台',"Ms. Hsiao-Chen's Weather Desk"),
+            ('p','▼ 凱米颱風中心位置監測圖','▼ Tracking the Center of Typhoon Gaemi'),
+            ('h3','✏️ 題組第 1 題：平面相對坐標','✏️ Question 1: Relative Coordinates in 2D'),
+            ('h3','✏️ 題組第 2 題：二維空間的位移大小','✏️ Question 2: Displacement Magnitude in 2D'),
+            ('button','⬅ 上一頁：位置的定義','⬅ Previous: Position & Reference Point'),
+            ('button','下一頁：路徑長與位移 ➔','Next: Distance & Displacement ➔'),
+            ('p','▼ 靜態圖解：向前走 12 m，再往回走 8 m','▼ Walk 12 m Forward, Then 8 m Back'),
+            ('button','⬅ 上一頁：平面座標與颱風','⬅ Previous: Position in 2D'),
+            ('button','下一頁：進階應用 ➔','Next: Nonlinear Paths ➔'),
+            ('h3','🏟️ 範例一：跑半圈圓形操場','🏟️ Example 1: Half a Lap Around a Circular Track'),
+            ('p','▼ 從 A 點跑半圈到對面的 B 點','▼ Run Half a Lap from A to the Opposite Point B'),
+            ('h3','🕐 範例二：時鐘秒針走 15 秒','🕐 Example 2: A Second Hand Moves for 15 Seconds'),
+            ('p','▼ 秒針從 12 點走到 3 點（15秒＝1/4圈）','▼ From 12 to 3 (15 s = 1/4 revolution)'),
+            ('button','⬅ 上一頁：路徑長與位移','⬅ Previous: Distance & Displacement'),
+            ('button','下一頁：互動實驗室 ➔','Next: Interactive Lab ➔'),
+            ('div','曉臻老師的實驗室指引',"Ms. Hsiao-Chen's Lab Guide"),
+            ('div','經過時間 (t)','Elapsed time (t)'),('div','當前位置 (x)','Current position (x)'),('div','路徑長 (L)','Distance (L)'),('div','位移 (Δx)','Displacement (Δx)'),
+            ('h3','一維數線運動軌跡','1D Number-Line Motion'),('h3','x-t 圖 (位置-時間圖)','x-t Graph (Position-Time Graph)'),
+            ('button','↺ 重置','↺ Reset'),('button','⬅ 上一頁：進階應用','⬅ Previous: Nonlinear Paths'),('button','下一頁：隨堂實戰 ➔','Next: Quick Challenge ➔'),
+            ('div','曉臻老師的試場分析',"Ms. Hsiao-Chen's Test-Taking Tip"),('button','⬅ 上一頁：回到互動實驗室','⬅ Previous: Interactive Lab')
+          ]
+          for tag,zh,en in pairs: add_attr_by_text(tag,zh,en)
 
-          # ---------- Static text: slide 0 ----------
-          mark_plain('曉臻老師的小提醒', "Ms. Hsiao-Chen's Note")
-          mark_contains('p', '講「位置」之前一定要先選一個',
-              'Before talking about position, first choose a <span class="highlight-blue">reference point (origin)</span>. Without a reference point, saying “I am at 5 meters” is incomplete—5 meters measured from where?')
-          mark_contains('li', '<span class="highlight-blue">位置：</span>',
-              '<span class="highlight-blue">Position:</span> the coordinate of an object at a given time relative to a <span class="highlight-orange">reference point (origin O)</span>, written as <b>x</b>.')
-          mark_contains('li', '位置需要包含',
-              'A position includes <span class="highlight-yellow">magnitude</span> and <span class="highlight-yellow">direction (sign)</span>. For example, x = +5 m means 5 m to the right of the origin, while x = −3 m means 3 m to the left.')
-          mark_plain('▼ 數線上的位置表示法', '▼ Position on a Number Line')
-          mark_plain('O（原點 0）', 'O (origin 0)')
-          mark_plain('下一頁：平面座標與颱風 ➔', 'Next: Position in 2D ➔')
+          # Large rich-text blocks: wrap in bilingual spans without changing original Chinese HTML.
+          rich = [
+            ('同學們，講「位置」之前一定要先選一個', 'Before talking about position, first choose a <span class="highlight-blue">reference point (origin)</span>. Without a reference point, saying “I am at 5 meters” is incomplete—measured from where?'),
+            ('真實世界可不是一條直線', 'The real world is not one straight line. Meteorologists use a <span class="highlight-yellow">two-dimensional coordinate system (x, y)</span> to locate a typhoon.'),
+            ('同學們！想像你在操場跑步', 'Imagine running around a track. The total actual path is <span class="highlight-yellow">distance traveled</span>; the change from start to finish is <span class="highlight-green">displacement</span>.'),
+            ('路徑長永遠是「沿著實際走過的軌跡」去算', 'Distance follows the actual path, while displacement depends only on the straight-line change from the starting position to the final position.'),
+            ('在運動會大隊接力熱身時', '<strong>【Question】</strong> During relay warm-up, Xiaoming starts at <strong>0 m</strong>, runs right to <strong>15 m</strong>, then turns back and stops at <strong>5 m</strong>.<br>What are his <span class="highlight-yellow">distance traveled</span> and <span class="highlight-green">displacement</span>?')
+          ]
+          for phrase,en in rich:
+              pat = re.compile(r'(<p\b(?![^>]*data-zh=)[^>]*>)(?P<x>(?:(?!</p>).)*'+re.escape(phrase)+r'(?:(?!</p>).)*)(</p>)', re.S)
+              def repl(m,en=en):
+                  zh=m.group('x'); return m.group(1)[:-1]+f' data-zh="{html.escape(zh,quote=True)}" data-en="{html.escape(en,quote=True)}">'+zh+m.group(3)
+              s,_=pat.subn(repl,s,count=1)
 
-          # ---------- Static text: slide 1 ----------
-          mark_plain('曉臻老師的氣象播報台', "Ms. Hsiao-Chen's Weather Desk")
-          mark_contains('p', '真實世界可不是一條直線',
-              'The real world is not a single straight line. To locate a typhoon, meteorologists use a <span class="highlight-yellow">two-dimensional coordinate system (x, y)</span>. Let’s use this typhoon problem to practice locating objects on a plane.')
-          mark_contains('p', '【颱風警報情境】',
-              '<b>【Typhoon Warning Scenario】</b>The weather service tracks Typhoon Gaemi. At 8:00 a.m. on July 24, its center is at <b style="color:#ef4444;">point A</b>. At 8:00 a.m. on July 25, it has moved to <b style="color:#ef4444;">point B</b>. Use the coordinate diagram to answer the two questions below:')
-          mark_contains('li', '坐標找法',
-              '💡 <b>Reading coordinates:</b> read left-right first (x-axis), then up-down (y-axis). Right and up are positive; left and down are negative.')
-          mark_contains('li', '直線距離公式',
-              '💡 <b>Straight-line distance:</b> use the Pythagorean theorem:<br><span class="highlight-green" style="font-size:1.2rem;">displacement magnitude = √(Δx² + Δy²)</span>')
-          mark_plain('▼ 凱米颱風中心位置監測圖', '▼ Tracking the Center of Typhoon Gaemi')
-          mark_plain('恆春 (0, 0)', 'Hengchun (0, 0)')
-          mark_plain('✏️ 題組第 1 題：平面相對坐標', '✏️ Question 1: Relative Coordinates in 2D')
-          mark_plain('✏️ 題組第 2 題：二維空間的位移大小', '✏️ Question 2: Displacement Magnitude in 2D')
-          for zh,en in [
-              ('(A) 450 公里','(A) 450 km'),('(B) 600 公里','(B) 600 km'),
-              ('(C) 750 公里','(C) 750 km'),('(D) 1050 公里','(D) 1050 km')]: mark_plain(zh,en)
-          mark_plain('⬅ 上一頁：位置的定義', '⬅ Previous: Position & Reference Point')
-          mark_plain('下一頁：路徑長與位移 ➔', 'Next: Distance & Displacement ➔')
+          # Dynamic slider label prefixes.
+          s=s.replace('<label for="x1Slider">❶ 前進折返點位置 x₁： <span id="x1Val"','<label for="x1Slider"><span data-zh="❶ 前進折返點位置 x₁：" data-en="❶ Turning-point position x₁:">❶ 前進折返點位置 x₁：</span> <span id="x1Val"')
+          s=s.replace('<label for="x2Slider">❷ 後退終點位置 x₂： <span id="x2Val"','<label for="x2Slider"><span data-zh="❷ 後退終點位置 x₂：" data-en="❷ Final position after returning x₂:">❷ 後退終點位置 x₂：</span> <span id="x2Val"')
 
-          # ---------- Static text: slide 2 ----------
-          mark_contains('p', '想像你在操場跑步',
-              'Imagine running around a track. Your step counter keeps increasing—that is <span class="highlight-yellow">distance traveled</span>. Your final position relative to the start, including direction, is your <span class="highlight-green">displacement</span>.')
-          mark_contains('li', '【路徑長】（純量）',
-              '<span class="highlight-yellow">【Distance traveled】 (scalar):</span><br>the total length of the actual path.<br>👉 <b>It has magnitude only and is never negative.</b>')
-          mark_contains('li', '【位移】（向量）',
-              '<span class="highlight-green">【Displacement】 (vector):</span><br>determined by the final position relative to the initial position.<br>👉 <b>It has magnitude and direction; the sign indicates direction in one dimension.</b>')
-          mark_plain('▼ 靜態圖解：向前走 12 m，再往回走 8 m', '▼ Example: Walk 12 m Forward, Then 8 m Back')
-          for zh,en in [
-              ('0 m (起點)','0 m (start)'),('4 m (終點)','4 m (finish)'),('12 m (折返點)','12 m (turning point)'),
-              ('路徑長 = 12 + 8 = 20 m','distance = 12 + 8 = 20 m'),('去程 12 m ➔','outward 12 m ➔'),
-              ('⬅ 回程 8 m','⬅ return 8 m'),('位移 = +4 m (向右)','displacement = +4 m (right)')]: mark_plain(zh,en)
-
-          # Fix the moved formula/example so bilingual switching preserves their rich formatting.
-          s = re.sub(r'<div class="formula-box"\s+data-zh="[^"]*"\s+data-en="[^"]*">', '<div class="formula-box">', s, count=1)
-          s = re.sub(r'<div class="example-note"\s+data-zh="[^"]*"\s+data-en="[^"]*">', '<div class="example-note">', s, count=1)
-          mark_contains('div', '位移的定義式（由位置變化得到）',
-              '<span class="formula-label">Displacement from the change in position</span>Δx = x<sub>final</sub> − x<sub>initial</sub>')
-          mark_contains('div', '<b>小範例：</b>小明原本站在 x₁ = −2 m',
-              '<b>Example:</b> Xiaoming moves from x₁ = −2 m to x₂ = +6 m.<br>Displacement Δx = x₂ − x₁ = (+6) − (−2) = <span class="highlight-green">+8 m</span> (positive means to the right).')
-
-          mark_plain('⬅ 上一頁：平面座標與颱風', '⬅ Previous: Position in 2D')
-          mark_plain('下一頁：進階應用 ➔', 'Next: Nonlinear Paths ➔')
-
-          # ---------- Static text: slide 3 ----------
-          mark_contains('p', '路徑長永遠是「沿著實際走過的軌跡」去算',
-              'Distance traveled is measured <b>along the actual path</b>. Displacement ignores how the path bends and depends only on the straight-line change from start to finish. These two examples make that distinction visible.')
-          mark_plain('🏟️ 範例一：跑半圈圓形操場', '🏟️ Example 1: Half a Lap Around a Circular Track')
-          mark_plain('▼ 從 A 點跑半圈到對面的 B 點', '▼ Run Half a Lap from A to the Opposite Point B')
-          for zh,en in [
-              ('A（起點）','A (start)'),('B（終點）','B (finish)'),('路徑長 = 半圓弧長','distance = semicircular arc length'),
-              ('位移 = 直徑','displacement = diameter'),('半圓路徑長','Half-circle distance'),('位移大小（直徑）','Displacement magnitude (diameter)'),
-              ('✏️ 練習題','✏️ Practice')]: mark_plain(zh,en)
-          mark_contains('div', '<b>代入數字：</b>操場半徑 r = 50 m',
-              '<b>Using numbers:</b> for a track radius r = 50 m and half a lap:<br>distance L = π × 50 ≈ <span class="highlight-yellow">157 m</span><br>displacement magnitude = 2 × 50 = <span class="highlight-green">100 m</span> (direction: from A toward B)')
-          mark_plain('曉臻老師的提問', "Ms. Hsiao-Chen's Question")
-          for zh,en in [
-              ('(A) 路徑長 60 m，位移 94.2 m','(A) distance 60 m; displacement 94.2 m'),
-              ('(B) 路徑長 94.2 m，位移 60 m','(B) distance 94.2 m; displacement 60 m'),
-              ('(C) 路徑長 30 m，位移 30 m','(C) distance 30 m; displacement 30 m')]: mark_plain(zh,en)
-
-          mark_plain('🕐 範例二：時鐘秒針走 15 秒', '🕐 Example 2: A Second Hand Moves for 15 Seconds')
-          mark_plain('▼ 秒針從 12 點走到 3 點（15秒＝1/4圈）', '▼ From 12 to 3 (15 s = 1/4 revolution)')
-          mark_plain('路徑長(弧)', 'distance (arc)')
-          mark_plain('位移(直線)', 'displacement (straight line)')
-          mark_plain('秒針走 1/4 圈的路徑長（設秒針長 L）', 'Distance for 1/4 revolution (second-hand length L)')
-          mark_plain('位移大小（直角三角形斜邊）', 'Displacement magnitude (hypotenuse)')
-          mark_contains('div', '<b>代入數字：</b>秒針長 L = 10 cm',
-              '<b>Using numbers:</b> for a second hand of length L = 10 cm moving 15 s (90°):<br>distance = π×10 ÷ 2 ≈ <span class="highlight-yellow">15.7 cm</span><br>displacement = 10×√2 ≈ <span class="highlight-green">14.1 cm</span> (direction: straight from the 12 position to the 3 position)')
-          for zh,en in [
-              ('(A) 路徑長 ≈ 31.4 cm，位移 = 20 cm','(A) distance ≈ 31.4 cm; displacement = 20 cm'),
-              ('(B) 路徑長 = 20 cm，位移 ≈ 31.4 cm','(B) distance = 20 cm; displacement ≈ 31.4 cm'),
-              ('(C) 路徑長與位移都是 20 cm','(C) distance and displacement are both 20 cm')]: mark_plain(zh,en)
-          mark_plain('⬅ 上一頁：路徑長與位移', '⬅ Previous: Distance & Displacement')
-          mark_plain('下一頁：互動實驗室 ➔', 'Next: Interactive Lab ➔')
-
-          # ---------- Static text: slide 4 ----------
-          mark_plain('曉臻老師的實驗室指引', "Ms. Hsiao-Chen's Lab Guide")
-          # Dynamic numeric labels: translate only the fixed prefix, preserving live values.
-          s = s.replace('<label for="x1Slider">❶ 前進折返點位置 x₁： <span id="x1Val"',
-                        '<label for="x1Slider"><span data-zh="❶ 前進折返點位置 x₁：" data-en="❶ Turning-point position x₁:">❶ 前進折返點位置 x₁：</span> <span id="x1Val"')
-          s = s.replace('<label for="x2Slider">❷ 後退終點位置 x₂： <span id="x2Val"',
-                        '<label for="x2Slider"><span data-zh="❷ 後退終點位置 x₂：" data-en="❷ Final position after returning x₂:">❷ 後退終點位置 x₂：</span> <span id="x2Val"')
-          for zh,en in [
-              ('經過時間 (t)','Elapsed time (t)'),('當前位置 (x)','Current position (x)'),('路徑長 (L)','Distance (L)'),('位移 (Δx)','Displacement (Δx)'),
-              ('一維數線運動軌跡','1D Number-Line Motion'),('x-t 圖 (位置-時間圖)','x-t Graph (Position-Time Graph)'),
-              ('↺ 重置','↺ Reset'),('⬅ 上一頁：進階應用','⬅ Previous: Nonlinear Paths'),('下一頁：隨堂實戰 ➔','Next: Quick Challenge ➔')]: mark_plain(zh,en)
-
-          # ---------- Static text: slide 5 ----------
-          mark_contains('p', '在運動會大隊接力熱身時',
-              '<strong>【Question】</strong> During relay warm-up, Xiaoming starts at <strong>0 m</strong>, runs right to the <strong>15 m</strong> turning point, then runs back and stops at <strong>5 m</strong>.<br>What are his <span class="highlight-yellow">distance traveled</span> and <span class="highlight-green">displacement</span>?')
-          mark_plain('曉臻老師的試場分析', "Ms. Hsiao-Chen's Test-Taking Tip")
-          for zh,en in [
-              (' (A) 路徑長 15 m，位移 +5 m',' (A) distance 15 m; displacement +5 m'),
-              (' (B) 路徑長 20 m，位移 -5 m',' (B) distance 20 m; displacement -5 m'),
-              (' (C) 路徑長 25 m，位移 +5 m',' (C) distance 25 m; displacement +5 m'),
-              (' (D) 路徑長 25 m，位移 +20 m',' (D) distance 25 m; displacement +20 m'),
-              ('⬅ 上一頁：回到互動實驗室','⬅ Previous: Interactive Lab')]: mark_plain(zh,en)
-
-          # Dynamic targets must preserve current question/feedback state during language switching.
-          # Remove the earlier static data attributes from posTeacherText only.
-          s = re.sub(r'(<p class="teacher-text" id="posTeacherText")\s+data-zh="[^"]*"\s+data-en="[^"]*"', r'\1', s, count=1)
-
-          # Replace the first-generation language engine with a state-preserving translation overlay.
-          old_engine = '''    let currentLang = 'zh';
+          old = """    let currentLang = 'zh';
     function tr(zh,en){ return currentLang==='en'?en:zh; }
     function setLang(lang){
       currentLang=lang;
@@ -191,185 +96,57 @@ jobs:
       const z=document.getElementById('btn-lang-zh'), e=document.getElementById('btn-lang-en'); if(z)z.classList.toggle('active',lang==='zh'); if(e)e.classList.toggle('active',lang==='en');
       if(typeof resetSim==='function') resetSim();
     }
-'''
-          new_engine = r'''    let currentLang = 'zh';
+"""
+          new = r"""    let currentLang = 'zh';
     let i18nMutating = false;
-    function tr(zh, en) { return currentLang === 'en' ? en : zh; }
+    function tr(zh,en){ return currentLang==='en'?en:zh; }
+    const canvasTextMap={'路徑長 L':'Distance L','位移 Δx':'Displacement Δx','時間 t (s)':'Time t (s)','位置 x (m)':'Position x (m)','折返轉折點':'Turning point'};
+    if(!CanvasRenderingContext2D.prototype.__pbI18n){const _ft=CanvasRenderingContext2D.prototype.fillText;CanvasRenderingContext2D.prototype.fillText=function(text,...args){const k=String(text);return _ft.call(this,currentLang==='en'&&canvasTextMap[k]?canvasTextMap[k]:text,...args)};CanvasRenderingContext2D.prototype.__pbI18n=true;}
+    function dynEn(el){const t=(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(el.id==='startBtn'){return {'▶ 播放動畫':'▶ Play animation','▶ 繼續播放':'▶ Resume','❚❚ 暫停':'❚❚ Pause','↺ 重新播放':'↺ Replay'}[t]||null;}
+      if(t.includes('小華原本在數線')) return 'Xiaohua moves from x₁ = +3 m to x₂ = −4 m. What is the displacement?';
+      if(t.startsWith('🎉 答對了！位移')) return '🎉 <b>Correct!</b> Δx = (−4) − (+3) = <b>−7 m</b>. The negative sign means left.';
+      if(t.startsWith('❌ 再想想：位移公式')) return '❌ <b>Try again:</b> Δx = x<sub>final</sub> − x<sub>initial</sub>. Check the signs carefully.';
+      if(t.includes('若以「恆春」為基準點')) return 'Using <b>Hengchun</b> as (0,0), point A is (3,−1). What are the coordinates of <b>point B</b>?';
+      if(t.startsWith('🎉 完全正確！')) return '🎉 <b>Correct!</b> B is 1 square left and 2 squares up, so B = <b>(−1, 2)</b>.';
+      if(t.startsWith('❌ 哎呀看錯格囉！')) return '❌ <b>Check again:</b> coordinates are (x,y): left/right first, then down/up.';
+      if(t.includes('每一個小方格的邊長代表 150 公里')) return 'If each grid square represents <b>150 km</b>, what is the <b>displacement magnitude</b> from A to B?';
+      if(t.startsWith('🎉 太厲害了！正是 750 公里！')) return '🎉 <b>Correct—750 km!</b> The changes form a 3–4–5 triangle, so displacement is 5 squares × 150 km = <b>750 km</b>.';
+      if(t.startsWith('❌ 再算一次看看！')) return '❌ <b>Try again:</b> horizontal change = 4 squares, vertical change = 3 squares. Use the Pythagorean theorem.';
+      if(t.includes('若操場半徑改成 r = 30 m')) return 'If r = 30 m and you run half a lap, which distance-displacement pair is correct?';
+      if(t.includes('若秒針走了 30 秒')) return 'If the second hand moves for 30 s (half a revolution), which statement is correct?';
+      if(t.startsWith('請老師或同學拖拉上方滑塊')) return 'Adjust the sliders, then press “Play animation” to observe.';
+      if(t.startsWith('⏸ 動畫暫停中')) return '⏸ <b>Paused.</b> Compare the current position with the x-t graph.';
+      if(t.includes('等速向前奔跑中')) return '🏃‍♂️ <b>Moving forward at constant speed.</b> Before turning, distance and displacement magnitude are equal.';
+      if(t.includes('跑到起點後方了')) return '⚠️ <b>Now behind the starting point.</b> Displacement is negative, while distance keeps increasing.';
+      if(t.includes('轉身往回跑了')) return '🔄 <b>It turned around.</b> Distance keeps increasing while displacement decreases.';
+      if(t.startsWith('🏁 到達終點！')) return '🏁 <b>Finished!</b> Compare total distance traveled with final displacement from the start.';
+      if(t.startsWith('點選下方選項作答')) return 'Choose an answer. First decide whether the question asks for distance or displacement.';
+      if(t.startsWith('🎉 太厲害了！答對了！')) return '🎉 <b>Correct!</b> Distance = 15 + 10 = <b>25 m</b>; displacement = 5 − 0 = <b>+5 m</b>.';
+      if(t.startsWith('❌ 哎呀，答錯囉！')) return '❌ <b>Try again:</b> distance adds every segment; displacement is final position minus initial position.';
+      return null;}
+    const dynamicIds=['posTeacherText','typhoonQ1Text','typhoonQ2Text','circleTeacherText','clockTeacherText','teacherText2','quizTeacherText','startBtn'];
+    function applyDyn(el){if(!el||i18nMutating)return;if(currentLang==='en'){if(/[\u4e00-\u9fff]/.test(el.textContent||''))el.dataset.zhDynamic=el.innerHTML;const en=dynEn(el);if(en){i18nMutating=true;el.innerHTML=en;i18nMutating=false;}}else if(el.dataset.zhDynamic){i18nMutating=true;el.innerHTML=el.dataset.zhDynamic;i18nMutating=false;}}
+    function translateDyn(){dynamicIds.forEach(id=>applyDyn(document.getElementById(id)));}
+    let dynObserver=null;function initDynamicI18n(){if(dynObserver)return;dynObserver=new MutationObserver(rs=>{if(i18nMutating)return;rs.forEach(r=>{let el=r.target.nodeType===1?r.target:r.target.parentElement;if(el&&el.closest){let target=dynamicIds.map(id=>el.closest('#'+id)).find(Boolean);if(target)applyDyn(target);}})});dynamicIds.forEach(id=>{const el=document.getElementById(id);if(el)dynObserver.observe(el,{childList:true,subtree:true,characterData:true});});}
+    function setLang(lang){currentLang=lang;document.querySelectorAll('[data-zh][data-en]').forEach(el=>{const v=lang==='en'?el.dataset.en:el.dataset.zh;if(el.namespaceURI&&el.namespaceURI.includes('svg'))el.textContent=v;else el.innerHTML=v;});const z=document.getElementById('btn-lang-zh'),e=document.getElementById('btn-lang-en');if(z)z.classList.toggle('active',lang==='zh');if(e)e.classList.toggle('active',lang==='en');document.title=lang==='en'?'06-1 | Position, Distance & Displacement':'06-1｜位置、路徑長與位移';translateDyn();if(typeof getKinematics==='function'){const k=getKinematics(t);drawAnimation(k.pos,k.path,k.disp);drawGraph(t);}}
+"""
+          if old not in s: print('ERROR language engine not found'); sys.exit(2)
+          s=s.replace(old,new,1)
+          s=re.sub(r'^\s*setLang\(\'zh\'\);\s*$','',s,flags=re.M)
+          s=s.replace('    // 初始化繪製\n    resetSim();\n</script>',"    // 初始化繪製\n    initDynamicI18n();\n    resetSim();\n    setLang('zh');\n</script>")
 
-    const canvasTextMap = {
-        '路徑長 L': 'Distance L',
-        '位移 Δx': 'Displacement Δx',
-        '時間 t (s)': 'Time t (s)',
-        '位置 x (m)': 'Position x (m)',
-        '折返轉折點': 'Turning point'
-    };
-    if (!CanvasRenderingContext2D.prototype.__physicalBoysI18n) {
-        const originalFillText = CanvasRenderingContext2D.prototype.fillText;
-        CanvasRenderingContext2D.prototype.fillText = function(text, ...args) {
-            const key = String(text);
-            const shown = currentLang === 'en' && canvasTextMap[key] ? canvasTextMap[key] : text;
-            return originalFillText.call(this, shown, ...args);
-        };
-        CanvasRenderingContext2D.prototype.__physicalBoysI18n = true;
-    }
-
-    const dynamicIds = ['posTeacherText','typhoonQ1Text','typhoonQ2Text','circleTeacherText','clockTeacherText','teacherText2','quizTeacherText','startBtn'];
-
-    function dynamicEnglish(el) {
-        const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
-        if (!t) return null;
-
-        if (el.id === 'startBtn') {
-            const map = {'▶ 播放動畫':'▶ Play animation','▶ 繼續播放':'▶ Resume','❚❚ 暫停':'❚❚ Pause','↺ 重新播放':'↺ Replay'};
-            return map[t] || null;
-        }
-
-        if (t.includes('小華原本在數線 x₁ = +3 m')) return 'Xiaohua starts at x₁ = +3 m and then moves to x₂ = −4 m. What is his displacement?';
-        if (t.startsWith('🎉 答對了！位移')) return '🎉 <b>Correct!</b> Displacement Δx = x₂ − x₁ = (−4) − (+3) = <b>−7 m</b>. The negative sign means the displacement is to the left.';
-        if (t.startsWith('❌ 再想想：位移公式')) return '❌ <b>Try again:</b> Δx = x<sub>final</sub> − x<sub>initial</sub>. Here it is (−4) − (+3). Check the signs carefully.';
-
-        if (t.includes('若以「恆春」為基準點')) return 'Using <b>Hengchun</b> as the reference point (0, 0), point A is (3, −1). What are the coordinates of <b>point B</b>?';
-        if (t.startsWith('🎉 完全正確！')) return '🎉 <b>Exactly right!</b> From Hengchun (0,0), point B is 1 grid square left (−1) and 2 squares up (+2), so its coordinates are <b>(−1, 2)</b>.';
-        if (t.startsWith('❌ 哎呀看錯格囉！')) return '❌ <b>Check the grid again.</b> Coordinates are written (x, y): left/right first, then down/up. Left is negative and up is positive.';
-
-        if (t.includes('每一個小方格的邊長代表 150 公里')) return 'If each grid square represents <b>150 km</b>, what is the <b>magnitude of the displacement</b> from A to B?';
-        if (t.startsWith('🎉 太厲害了！正是 750 公里！')) return '🎉 <b>Correct—750 km!</b><br>• From A(3, −1) to B(−1, 2): Δx = 4 squares and Δy = 3 squares.<br>• This forms a <b>3–4–5 right triangle</b>, so the displacement is 5 squares.<br>• 5 × 150 km = <b>750 km</b>.';
-        if (t.startsWith('❌ 再算一次看看！')) return '❌ <b>Try again.</b> The horizontal change is 4 squares and the vertical change is 3 squares. Use √(3² + 4²), then multiply by 150 km per square.';
-
-        if (t.includes('若操場半徑改成 r = 30 m')) return 'If the track radius is r = 30 m and you run half a lap, which pair of distance and displacement is closest? (Use π ≈ 3.14.)';
-        if (t.startsWith('🎉 答對了！路徑長 = πr')) return '🎉 <b>Correct!</b> Distance = πr = 3.14 × 30 ≈ <b>94.2 m</b>; displacement magnitude = 2r = <b>60 m</b>, directed from the start to the opposite point.';
-        if (t.startsWith('❌ 再檢查一下：路徑長是繞半圓')) return '❌ <b>Check again:</b> distance follows the semicircular arc (πr), while displacement is the straight-line diameter (2r).';
-
-        if (t.includes('若秒針走了 30 秒')) return 'If the second hand moves for 30 s (half a revolution) and its length is still 10 cm, which statement is correct?';
-        if (t.startsWith('🎉 答對了！30秒是半圈')) return '🎉 <b>Correct!</b> In 30 s the hand moves half a revolution. Distance = πL ≈ <b>31.4 cm</b>; displacement = 2L = <b>20 cm</b>.';
-        if (t.startsWith('❌ 再想想：走半圈時')) return '❌ <b>Try again:</b> after half a revolution, the start and finish are opposite ends of a diameter. Displacement is 2L = 20 cm; distance is the semicircular arc πL ≈ 31.4 cm.';
-
-        if (t.startsWith('請老師或同學拖拉上方滑塊')) return 'Adjust the sliders to set the turning point and final position, then press “Play animation” to observe.';
-        if (t.startsWith('⏸ 動畫暫停中')) return '⏸ <b>Paused.</b> Use this moment to compare the current position with the x-t graph.';
-        if (t.includes('等速向前奔跑中')) return '🏃‍♂️ <b>Moving forward at constant speed.</b> Before turning around, the distance traveled and the magnitude of displacement are the same.';
-        if (t.includes('跑到起點後方了')) return '⚠️ <b>The object is now behind the starting point.</b> Displacement becomes negative, while distance traveled keeps increasing.';
-        if (t.includes('轉身往回跑了')) return '🔄 <b>It has turned around.</b> Watch the x-t graph slope downward. Distance keeps increasing while displacement decreases.';
-        if (t.startsWith('🏁 到達終點！')) {
-            const nums = t.match(/跑了\s*([+−-]?\d+(?:\.\d+)?)\s*m.*?位移只有\s*([+−-]?\d+(?:\.\d+)?)\s*m/);
-            if (nums) return `🏁 <b>Finished!</b> Total distance traveled: <span class="highlight-yellow">${nums[1]} m</span>. Final displacement from the start: <span class="highlight-green">${nums[2]} m</span>.`;
-            return '🏁 <b>Finished!</b> Compare the total distance traveled with the final displacement from the start.';
-        }
-
-        if (t.startsWith('點選下方選項作答')) return 'Choose an answer below. First decide whether the question asks for a scalar distance or a vector displacement.';
-        if (t.startsWith('🎉 太厲害了！答對了！')) return '🎉 <b>Correct!</b><br>• <b>Distance:</b> 15 m forward, then 10 m back, so total distance = 25 m.<br>• <b>Displacement:</b> final position 5 m − initial position 0 m = <b>+5 m</b>.';
-        if (t.startsWith('❌ 哎呀，答錯囉！')) return '❌ <b>Try again:</b> distance adds every part of the path. Displacement depends only on final position minus initial position.';
-
-        return null;
-    }
-
-    function applyDynamicTranslation(el) {
-        if (!el || i18nMutating) return;
-        if (currentLang === 'en') {
-            const txt = (el.textContent || '').trim();
-            if (/[\u4e00-\u9fff]/.test(txt)) el.dataset.zhDynamic = el.innerHTML;
-            const en = dynamicEnglish(el);
-            if (en) {
-                i18nMutating = true;
-                el.innerHTML = en;
-                i18nMutating = false;
-            }
-        } else if (el.dataset.zhDynamic) {
-            i18nMutating = true;
-            el.innerHTML = el.dataset.zhDynamic;
-            i18nMutating = false;
-        }
-    }
-
-    function translateAllDynamic() {
-        dynamicIds.forEach(id => applyDynamicTranslation(document.getElementById(id)));
-    }
-
-    let dynamicObserver = null;
-    function initDynamicI18n() {
-        if (dynamicObserver) return;
-        dynamicObserver = new MutationObserver(records => {
-            if (i18nMutating) return;
-            const seen = new Set();
-            records.forEach(r => {
-                const el = r.target.nodeType === 1 ? r.target : r.target.parentElement;
-                const target = el && el.closest ? el.closest('#' + dynamicIds.join(',#')) : null;
-                if (target && !seen.has(target)) { seen.add(target); applyDynamicTranslation(target); }
-            });
-        });
-        dynamicIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) dynamicObserver.observe(el, {childList:true, subtree:true, characterData:true});
-        });
-    }
-
-    function setLang(lang) {
-        currentLang = lang;
-        document.querySelectorAll('[data-zh][data-en]').forEach(el => {
-            const value = lang === 'en' ? el.dataset.en : el.dataset.zh;
-            if (el.namespaceURI && el.namespaceURI.includes('svg')) el.textContent = value;
-            else el.innerHTML = value;
-        });
-        const z = document.getElementById('btn-lang-zh');
-        const e = document.getElementById('btn-lang-en');
-        if (z) z.classList.toggle('active', lang === 'zh');
-        if (e) e.classList.toggle('active', lang === 'en');
-        document.title = lang === 'en' ? '06-1 | Position, Distance & Displacement' : '06-1｜位置、路徑長與位移';
-        translateAllDynamic();
-        if (typeof getKinematics === 'function' && typeof drawAnimation === 'function' && typeof drawGraph === 'function') {
-            const k = getKinematics(t);
-            drawAnimation(k.pos, k.path, k.disp);
-            drawGraph(t);
-        }
-    }
-'''
-          if old_engine not in s:
-              print('ERROR: expected old language engine not found')
-              sys.exit(2)
-          s = s.replace(old_engine, new_engine, 1)
-
-          # Remove any accidental early initialization from the previous patch.
-          s = re.sub(r'^\s*setLang\(\'zh\'\);\s*$', '', s, flags=re.M)
-
-          # Initialize once, only after all functions and DOM references exist.
-          s = s.replace('    // 初始化繪製\n    resetSim();\n</script>',
-                        "    // 初始化繪製\n    initDynamicI18n();\n    resetSim();\n    setLang('zh');\n</script>")
-
-          # Verify protected SVG blocks and core simulation functions remain byte-for-byte unchanged.
-          new_svgs = re.findall(r'<svg\b.*?</svg>', s, flags=re.S)
-          if len(new_svgs) != len(protected_svgs):
-              print('ERROR: SVG count changed')
-              sys.exit(3)
-          # Text-only bilingual attributes are permitted inside SVG; strip them and compare geometry/structure.
-          def strip_i18n(x):
-              return re.sub(r'\s+data-(?:zh|en)="[^"]*"', '', x)
-          for i,(a,b) in enumerate(zip(protected_svgs,new_svgs)):
-              # Allow translated text wrappers/attributes but reject geometry/style/path changes.
-              a2 = re.sub(r'>([^<>]*)<', '><', strip_i18n(a))
-              b2 = re.sub(r'>([^<>]*)<', '><', strip_i18n(b))
-              if a2 != b2:
-                  print('ERROR: protected SVG geometry changed at index', i)
-                  sys.exit(4)
-
-          for name, before in protected_functions.items():
-              next_name = {'getKinematics':'animate','drawAnimation':'drawGraph','drawGraph':'checkAnswer'}[name]
-              m = re.search(rf'(    function {name}\(.*?)(?=\n    function {next_name}\b|\n    // ==================== 隨堂實戰)', s, flags=re.S)
-              if not m or m.group(1) != before:
-                  print('ERROR: protected core function changed:', name)
-                  sys.exit(5)
-
-          if misses:
-              print('WARN: some translation targets were not matched:')
-              for x in misses: print(' -', x)
-
-          # Basic bilingual checks for important legacy text.
-          required_en = ['Reference Point','Position in 2D','Distance & Displacement','Interactive Lab','Typhoon Warning Scenario','Distance traveled','Nonlinear Paths']
-          missing_en = [x for x in required_en if x not in s]
-          if missing_en:
-              print('ERROR: missing required English markers:', missing_en)
-              sys.exit(6)
-
-          p.write_text(s, encoding='utf-8')
-          print('Bilingual completion patch written successfully.')
+          # Protected geometry and core functions must remain unchanged.
+          new_svgs=re.findall(r'<svg\b.*?</svg>',s,flags=re.S)
+          if len(new_svgs)!=len(protected_svgs): print('ERROR SVG count'); sys.exit(3)
+          def skeleton(x): x=re.sub(r'\s+data-(?:zh|en)="[^"]*"','',x); return re.sub(r'>([^<>]*)<','><',x)
+          for a,b in zip(protected_svgs,new_svgs):
+              if skeleton(a)!=skeleton(b): print('ERROR SVG geometry changed'); sys.exit(4)
+          for name,before in protected_functions.items():
+              nxt={'getKinematics':'animate','drawAnimation':'drawGraph','drawGraph':'checkAnswer'}[name]
+              m=re.search(rf'(    function {name}\(.*?)(?=\n    function {nxt}\b|\n    // ==================== 隨堂實戰)',s,flags=re.S)
+              if not m or m.group(1)!=before: print('ERROR protected function',name); sys.exit(5)
+          p.write_text(s,encoding='utf-8')
           PY
 
       - name: Commit bilingual completion and remove one-time workflow
