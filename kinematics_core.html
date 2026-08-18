@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <title>06-1｜位置、路徑長與位移｜Position, Distance & Displacement</title>
+    <style>
+        :root {
+            --bg-board: #1c3829;
+            --bg-card: #244734;
+            --border-color: #3b6e52;
+            --chalk-white: #fcfcfc;
+            --chalk-yellow: #fde047;
+            --chalk-green: #4ade80;
+            --chalk-blue: #38bdf8;
+            --chalk-orange: #fb923c;
+            --chalk-pink: #f472b6;
+            --chalk-purple: #c084fc;
+        }
+        body {
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            background-color: var(--bg-board);
+            color: var(--chalk-white);
+            margin: 0;
+            padding: 15px 25px;
+            line-height: 1.6;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 3px solid var(--border-color);
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: #172e21;
+            color: #94a3b8;
+            border: 2px solid var(--border-color);
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 130px;
+        }
+        .tab-btn:hover { background: #1f3d2c; color: var(--chalk-white); }
+        .tab-btn.active {
+            background: var(--bg-card);
+            color: var(--chalk-yellow);
+            border-color: var(--chalk-yellow);
+            border-bottom-color: var(--bg-card);
+            transform: translateY(3px);
+        }
+
+        .slide { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .slide.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        h2 {
+            color: var(--chalk-blue);
+            font-size: 1.5rem;
+            border-left: 6px solid var(--chalk-orange);
+            padding-left: 12px;
+            margin-top: 0;
+        }
+        h3 { margin-top: 0; }
+
+        .teacher-box {
+            background: #172e21;
+            border: 2px solid var(--chalk-pink);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .teacher-avatar {
+            font-size: 2.5rem;
+            background: var(--chalk-pink);
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .teacher-content { flex-grow: 1; }
+        .teacher-name { color: var(--chalk-pink); font-weight: bold; font-size: 0.95rem; margin-bottom: 3px; }
+        .teacher-text { font-size: 1.1rem; color: var(--chalk-white); margin: 0; }
+
+        .highlight-yellow { color: var(--chalk-yellow); font-weight: bold; }
+        .highlight-green { color: var(--chalk-green); font-weight: bold; }
+        .highlight-orange { color: var(--chalk-orange); font-weight: bold; }
+        .highlight-blue { color: var(--chalk-blue); font-weight: bold; }
+        .highlight-purple { color: var(--chalk-purple); font-weight: bold; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        .formula-box {
+            background: #172e21;
+            border: 2px dashed var(--chalk-blue);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-size: 1.25rem;
+            text-align: center;
+        }
+        .formula-box .formula-label {
+            display: block;
+            font-size: 0.9rem;
+            color: #a7f3d0;
+            margin-bottom: 6px;
+        }
+
+        .diagram-box {
+            background: #172e21;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px dashed var(--border-color);
+        }
+        .diagram-caption { margin: 0 0 10px 0; color:#a7f3d0; font-weight:bold; }
+
+        .example-note {
+            background: rgba(56,189,248,0.08);
+            border-left: 4px solid var(--chalk-blue);
+            padding: 10px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 14px 0;
+            font-size: 1.05rem;
+        }
+
+        .controls {
+            background: #172e21;
+            padding: 18px;
+            border-radius: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .control-group { flex: 1; min-width: 200px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 1.05rem; }
+        input[type="range"] { width: 100%; cursor: pointer; height: 8px; }
+
+        .btn-group { display: flex; gap: 12px; width: 100%; margin-top: 10px; }
+        button.action-btn {
+            background-color: var(--chalk-orange);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            flex: 1;
+        }
+        button.action-btn:hover { background-color: #f97316; transform: scale(1.02); }
+        button.reset-btn { background-color: #64748b; color: white; }
+        button.reset-btn:hover { background-color: #475569; }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: #172e21;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        .stat-title { font-size: 0.9rem; color: #a7f3d0; }
+        .stat-value { font-size: 1.8rem; font-weight: bold; margin-top: 5px; }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            background: #172e21;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .option-btn {
+            background: #172e21;
+            color: var(--chalk-white);
+            border: 2px solid var(--border-color);
+            text-align: left;
+            margin-bottom: 12px;
+            padding: 12px 18px;
+            font-size: 1.05rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .option-btn:hover { background: #1f3d2c; border-color: var(--chalk-yellow); transform: translateX(5px); }
+
+        .footer-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .nav-page-btn {
+            background: #3b6e52;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .nav-page-btn:hover { background: #4e8a67; }
+
+        .sub-card {
+            background: #172e21;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 22px;
+        }
+        .sub-card h3 { color: var(--chalk-purple); }
+
+        /* README_2 teaching wrapper: do not alter existing SVG/Canvas/physics logic */
+        body { font-size: 20px; }
+        .container { max-width: 1080px; }
+        .floating-lang-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:row;align-items:center;gap:8px;background:#172e21ee;border:2px solid var(--chalk-teal,#64ffda);border-radius:999px;padding:7px 10px}
+        .lang-options{display:flex;flex-direction:row;gap:6px}.lang-label{color:#64ffda;font-weight:bold}.lang-pill{min-width:52px;min-height:44px;border:1.5px solid #64ffda;border-radius:999px;background:transparent;color:#64ffda;font-weight:bold}.lang-pill.active{background:#64ffda;color:#112219}
+        .lesson-intro{text-align:center;padding:0 150px 12px}.lesson-intro h1{margin:0;color:var(--chalk-yellow);font-size:2rem;line-height:1.2}.lesson-intro p{margin:5px 0 0;color:var(--chalk-blue);font-weight:bold}
+        .hook-subtitle{margin:-6px 0 14px;color:#a7f3d0;font-weight:bold}.bridge-box{margin:8px 0 14px;padding:12px 16px;background:rgba(100,255,218,.08);border-left:5px solid #64ffda;border-radius:0 10px 10px 0;font-weight:bold}.bridge-box strong{color:#64ffda}
+        .tab-btn,.nav-page-btn,.action-btn,.reset-btn,.option-btn,.lang-pill{min-height:44px}.tab-btn{font-size:20px}.teacher-text,.example-note,label,.nav-page-btn,.action-btn,.option-btn{font-size:20px}
+        @media(max-width:960px) and (orientation:portrait){body{padding:12px}.lesson-intro{padding:64px 10px 12px}.grid-2{grid-template-columns:1fr}.dashboard{grid-template-columns:1fr 1fr}}
+    </style>
+</head>
+<body>
+<div class="floating-lang-container">
+  <span class="lang-label">Language</span>
+  <div class="lang-options"><button class="lang-pill active" id="btn-lang-zh" onclick="setLang('zh')">中文</button><button class="lang-pill" id="btn-lang-en" onclick="setLang('en')">EN</button></div>
+</div>
+
+
+<div class="container">
+    <header class="lesson-intro">
+      <h1 data-zh="位置、路徑長與位移" data-en="Position, Distance & Displacement">位置、路徑長與位移</h1>
+      <p data-zh="先知道物體在哪裡，再描述它怎麼移動" data-en="Locate the object first, then describe how it moves">先知道物體在哪裡，再描述它怎麼移動</p>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="tab-btn active" onclick="switchSlide(0)" data-zh="位置與參考點" data-en="Position & Reference Point">位置與參考點</button>
+        <button class="tab-btn" onclick="switchSlide(1)" data-zh="平面上的位置" data-en="Position in 2D">平面上的位置</button>
+        <button class="tab-btn" onclick="switchSlide(2)" data-zh="路徑長與位移" data-en="Distance & Displacement">路徑長與位移</button>
+        <button class="tab-btn" onclick="switchSlide(3)" data-zh="非直線運動" data-en="Nonlinear Paths">非直線運動</button>
+        <button class="tab-btn" onclick="switchSlide(4)" data-zh="互動實驗室" data-en="Interactive Lab">互動實驗室</button>
+        <button class="tab-btn" onclick="switchSlide(5)" data-zh="隨堂挑戰" data-en="Quick Challenge">隨堂挑戰</button>
+    </nav>
+
+    <!-- ==================== 投影片 0：位置的定義 ==================== -->
+    <div id="slide-0" class="slide active">
+        <div class="card">
+            <h2 data-zh="📍「我在 5 公尺的位置！」——等等，從哪裡開始算？" data-en="📍 “I am at 5 meters!”—Wait, measured from where?">📍「我在 5 公尺的位置！」——等等，從哪裡開始算？</h2><p class="hook-subtitle" data-zh="同一句「5 公尺」，參考點不同，位置就可能完全不同。" data-en="The same “5 meters” can mean different positions if the reference point changes.">同一句「5 公尺」，參考點不同，位置就可能完全不同。</p>
+
+            <div class="teacher-box">
+                <div class="teacher-avatar">👩‍🏫</div>
+                <div class="teacher-content">
+                    <div class="teacher-name">曉臻老師的小提醒</div>
+                    <p class="teacher-text">同學們，講「位置」之前一定要先選一個<span class="highlight-blue">參考點（原點）</span>！沒有參考點，「我在5公尺處」這句話就沒有意義——5公尺是從哪裡算起呢？</p>
+                </div>
+            </div>
+
+            <div class="grid-2" style="align-items: center;">
+                <div>
+                    <ul style="font-size: 1.1rem; line-height: 2;">
+                        <li><span class="highlight-blue">位置（position）：</span>物體在某一時刻，相對於<span class="highlight-orange">參考點（原點 O）</span>的坐標，用 <b>x</b> 表示。</li>
+                        <li>位置需要包含<span class="highlight-yellow">大小</span>與<span class="highlight-yellow">方向（正負號）</span>，例如 x = +5 m（原點右方5公尺）或 x = −3 m（原點左方3公尺）。</li>
+                    </ul>
+                </div>
+                <div class="diagram-box">
+                    <p class="diagram-caption">▼ 數線上的位置表示法</p>
+                    <svg viewBox="0 0 380 140" width="100%" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="20" y1="70" x2="360" y2="70" stroke="#94a3b8" stroke-width="2"/>
+                        <polygon points="360,70 348,64 348,76" fill="#94a3b8"/>
+                        <text x="365" y="74" fill="#94a3b8" font-size="13">x</text>
+
+                        <circle cx="90" cy="70" r="5" fill="#f472b6"/>
+                        <text x="90" y="50" fill="#f472b6" font-size="14" font-weight="bold" text-anchor="middle">x = −3 m</text>
+
+                        <circle cx="190" cy="70" r="6" fill="#fde047"/>
+                        <text x="190" y="95" fill="#fde047" font-size="14" font-weight="bold" text-anchor="middle">O（原點 0）</text>
+
+                        <circle cx="290" cy="70" r="5" fill="#4ade80"/>
+                        <text x="290" y="50" fill="#4ade80" font-size="14" font-weight="bold" text-anchor="middle">x = +5 m</text>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+        <div class="bridge-box"><strong data-zh="串場｜" data-en="Bridge｜">串場｜</strong><span data-zh="一條數線可以描述左右的位置；可是颱風會往東西南北移動，一條線還夠嗎？" data-en="A number line describes left and right. But a typhoon moves in two dimensions—is one line enough?">一條數線可以描述左右的位置；可是颱風會往東西南北移動，一條線還夠嗎？</span></div>
+        <div class="footer-nav">
+            <div></div>
+            <button class="nav-page-btn" onclick="switchSlide(1)">下一頁：平面座標與颱風 ➔</button>
+        </div>
+    </div>
+
+    <!-- ==================== 投影片 1：平面座標與颱風應用題組 ==================== -->
+    <div id="slide-1" class="slide">
+        <div class="card">
+            <h2 data-zh="🌀 颱風在哪裡？只說「在臺灣附近」夠不夠？" data-en="🌀 Where is the typhoon? Is “near Taiwan” precise enough?">🌀 颱風在哪裡？只說「在臺灣附近」夠不夠？</h2><p class="hook-subtitle" data-zh="一條數線只能說左右；真實世界的位置，常常需要兩個方向一起描述。" data-en="A number line only gives left-right position; real locations often need two coordinates.">一條數線只能說左右；真實世界的位置，常常需要兩個方向一起描述。</p>
+
+            <div class="teacher-box">
+                <div class="teacher-avatar">👩‍🏫</div>
+                <div class="teacher-content">
+                    <div class="teacher-name">曉臻老師的氣象播報台</div>
+                    <p class="teacher-text">真實世界可不是一條直線！氣象局在定位颱風時，會在地圖上建立<span class="highlight-yellow">二維平面坐標系（x, y）</span>。讓我們來挑戰這道經典的「颱風位移」段考會考題！</p>
+                </div>
+            </div>
+
+            <div class="sub-card" style="background: rgba(253, 224, 71, 0.05); border-color: var(--chalk-yellow);">
+                <p style="font-size: 1.1rem; margin-top: 0; line-height: 1.8;">
+                    <b>【颱風警報情境】</b>氣象局監測「凱米颱風」的移動路徑，在 7 月 24 日上午 8 時，中心位置在右圖中的 <b style="color:#ef4444;">A 點</b>；到了 7 月 25 日上午 8 時，中心位置移動到了 <b style="color:#ef4444;">B 點</b>。請參考右方坐標圖，回答下列兩題：
+                </p>
+
+                <div class="grid-2" style="align-items: center; margin-top: 15px;">
+                    <div>
+                        <ul style="font-size: 1.05rem; line-height: 2;">
+                            <li>💡 <b>坐標找法：</b>先看左右 (x軸)，再看上下 (y軸)。往右、往上為正；往左、往下為負。</li>
+                            <li>💡 <b>直線距離公式：</b>利用數學的勾股定理（畢氏定理）：<br>
+                            <span class="highlight-green" style="font-size:1.2rem;">位移大小 = √( Δx² + Δy² )</span></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- 純 SVG 繪製無版權台灣網格圖（台灣與原點精準固定） -->
+                    <div class="diagram-box" style="background: #112219;">
+                        <p class="diagram-caption" style="color:var(--chalk-yellow);">▼ 凱米颱風中心位置監測圖</p>
+                        <svg viewBox="0 0 280 240" width="100%" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <pattern id="grid" width="35" height="35" patternUnits="userSpaceOnUse">
+                                    <path d="M 35 0 L 0 0 0 35" fill="none" stroke="#3b6e52" stroke-width="1"/>
+                                </pattern>
+                            </defs>
+                            <rect width="280" height="245" fill="url(#grid)" />
+                            
+                            <path d="M 140 140 Q 125 115 120 90 Q 115 65 145 45 Q 165 55 160 85 Q 155 115 140 140 Z" fill="#2d5a41" stroke="#4ade80" stroke-width="1.5" opacity="0.75"/>
+                            
+                            <circle cx="140" cy="140" r="6" fill="#fde047"/>
+                            <text x="140" y="158" fill="#fde047" font-size="13" font-weight="bold" text-anchor="middle">恆春 (0, 0)</text>
+
+                            <line x1="245" y1="175" x2="105" y2="70" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5,5"/>
+
+                            <circle cx="245" cy="175" r="8" fill="none" stroke="#ef4444" stroke-width="2"/>
+                            <circle cx="245" cy="175" r="4" fill="#ef4444"/>
+                            <text x="245" y="200" fill="#ef4444" font-size="14" font-weight="bold" text-anchor="middle">A (3, -1)</text>
+
+                            <circle cx="105" cy="70" r="8" fill="none" stroke="#ef4444" stroke-width="2"/>
+                            <circle cx="105" cy="70" r="4" fill="#ef4444"/>
+                            <text x="85" y="65" fill="#ef4444" font-size="14" font-weight="bold" text-anchor="middle">B (?)</text>
+
+                            <!-- 箭頭無縫一體成型 -->
+                            <polygon points="105,70 117,73 111,81" fill="#ef4444"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 題組第 1 題 -->
+            <h3 style="color: var(--chalk-orange); margin-top:20px;">✏️ 題組第 1 題：平面相對坐標</h3>
+            <div class="teacher-box" id="typhoonQ1Box">
+                <div class="teacher-avatar">1️⃣</div>
+                <div class="teacher-content">
+                    <p class="teacher-text" id="typhoonQ1Text">若以<b>「恆春」</b>為基準點 (0, 0)，A 點的坐標標示為 <b>(3, -1)</b>，試問 <b>B 點</b>的坐標應該如何標示？</p>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div><button class="option-btn" onclick="checkTyphoonQ1(1)">(A) (-2, 1)</button></div>
+                <div><button class="option-btn" onclick="checkTyphoonQ1(2)">(B) (-1, 2)</button></div>
+                <div><button class="option-btn" onclick="checkTyphoonQ1(3)">(C) (1, -2)</button></div>
+                <div><button class="option-btn" onclick="checkTyphoonQ1(4)">(D) (2, -1)</button></div>
+            </div>
+
+            <!-- 題組第 2 題 -->
+            <h3 style="color: var(--chalk-orange); margin-top:24px;">✏️ 題組第 2 題：二維空間的位移大小</h3>
+            <div class="teacher-box" id="typhoonQ2Box">
+                <div class="teacher-avatar">2️⃣</div>
+                <div class="teacher-content">
+                    <p class="teacher-text" id="typhoonQ2Text">若圖中<b>每一個小方格的邊長代表 150 公里</b>，試問颱風中心由 A 點移動至 B 點，其<b>「位移大小」</b>為多少公里？</p>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div><button class="option-btn" onclick="checkTyphoonQ2(1)">(A) 450 公里</button></div>
+                <div><button class="option-btn" onclick="checkTyphoonQ2(2)">(B) 600 公里</button></div>
+                <div><button class="option-btn" onclick="checkTyphoonQ2(3)">(C) 750 公里</button></div>
+                <div><button class="option-btn" onclick="checkTyphoonQ2(4)">(D) 1050 公里</button></div>
+            </div>
+
+        </div>
+        <div class="bridge-box"><strong data-zh="串場｜" data-en="Bridge｜">串場｜</strong><span data-zh="現在我們知道物體「在哪裡」。如果它開始移動，接下來要分清楚：它走了多遠，和它的位置改變多少，是同一件事嗎？" data-en="Now we know where the object is. Once it moves, is distance traveled the same as change in position?">現在我們知道物體「在哪裡」。如果它開始移動，接下來要分清楚：它走了多遠，和它的位置改變多少，是同一件事嗎？</span></div>
+        <div class="footer-nav">
+            <button class="nav-page-btn" onclick="switchSlide(0)">⬅ 上一頁：位置的定義</button>
+            <button class="nav-page-btn" onclick="switchSlide(2)">下一頁：路徑長與位移 ➔</button>
+        </div>
+    </div>
+
+    <!-- ==================== 投影片 2：路徑長與位移（觀念熱身） ==================== -->
+    <div id="slide-2" class="slide">
+        <div class="card">
+            <h2 data-zh="🏃 繞操場一圈回到原點：明明跑了很遠，位移怎麼會是 0？" data-en="🏃 One lap back to the start: you ran far, so how can displacement be zero?">🏃 繞操場一圈回到原點：明明跑了很遠，位移怎麼會是 0？</h2><p class="hook-subtitle" data-zh="「實際走了多遠」和「最後位置改變多少」需要兩個不同的物理量。" data-en="“How far you traveled” and “how much your position changed” require two different quantities.">「實際走了多遠」和「最後位置改變多少」需要兩個不同的物理量。</p>
+
+            <div class="teacher-box">
+                <div class="teacher-avatar">👩‍🏫</div>
+                <div class="teacher-content">
+                    <div class="teacher-name">曉臻老師的小提醒</div>
+                    <p class="teacher-text">同學們！想像你在操場跑步。不管你往哪裡跑，計步器數字只會越來越大，那就是<span class="highlight-yellow">【路徑長】</span>；而你最後離起點有多遠、在起點的哪個方向，就是<span class="highlight-green">【位移】</span>喔！</p>
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top: 20px; align-items: center;">
+                <div>
+                    <ul style="font-size: 1.15rem; line-height: 2;">
+                        <li><span class="highlight-yellow">【路徑長】（純量）：</span><br>實際走過的總軌跡！<br>👉 <b>只有大小，沒有方向，永遠為正！</b></li>
+                        <li><span class="highlight-green">【位移】（向量）：</span><br>只看「終點位置減去初位置」！<br>👉 <b>有大小，也有方向（正負號代表方向）！</b></li>
+                    </ul>
+                </div>
+
+                <div class="diagram-box">
+                    <p class="diagram-caption">▼ 靜態圖解：向前走 12 m，再往回走 8 m</p>
+                    <svg viewBox="0 0 400 210" width="100%" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="30" y1="110" x2="370" y2="110" stroke="#94a3b8" stroke-width="2"/>
+
+                        <circle cx="40" cy="110" r="5" fill="#fff"/>
+                        <text x="40" y="132" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">0 m (起點)</text>
+
+                        <circle cx="160" cy="110" r="5" fill="#fff"/>
+                        <text x="160" y="132" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">4 m (終點)</text>
+
+                        <circle cx="340" cy="110" r="5" fill="#fff"/>
+                        <text x="340" y="132" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">12 m (折返點)</text>
+
+                        <path d="M 40 80 L 340 80 L 340 55 L 160 55" stroke="#fde047" stroke-width="3" fill="none" stroke-dasharray="6,4"/>
+                        <text x="240" y="38" fill="#fde047" font-size="15" font-weight="bold" text-anchor="middle">路徑長 = 12 + 8 = 20 m</text>
+                        <text x="180" y="75" fill="#fde047" font-size="12">去程 12 m ➔</text>
+                        <text x="260" y="70" fill="#fde047" font-size="12">⬅ 回程 8 m</text>
+
+                        <!-- 位移線條與箭頭無縫連續處理 -->
+                        <line x1="40" y1="165" x2="150" y2="165" stroke="#4ade80" stroke-width="4"/>
+                        <polygon points="160,165 146,158 146,172" fill="#4ade80"/>
+                        
+                        <text x="100" y="190" fill="#4ade80" font-size="15" font-weight="bold" text-anchor="middle">位移 = +4 m (向右)</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="bridge-box"><strong data-zh="串場｜" data-en="Bridge｜">串場｜</strong><span data-zh="直線折返已經看出路徑長和位移不同。那如果路徑變成圓弧，位移還是沿路徑算嗎？" data-en="A straight out-and-back path separates distance from displacement. What happens when the path is curved?">直線折返已經看出路徑長和位移不同。那如果路徑變成圓弧，位移還是沿路徑算嗎？</span></div>
+        <div class="footer-nav">
+            <button class="nav-page-btn" onclick="switchSlide(1)">⬅ 上一頁：平面座標與颱風</button>
+            <button class="nav-page-btn" onclick="switchSlide(3)">下一頁：進階應用 ➔</button>
+
+            <div class="formula-box" data-zh="位移定義：Δx = x末 − x初" data-en="Displacement: Δx = xfinal − xinitial"><span class="formula-label" data-zh="位移的定義式（由位置變化得到）" data-en="Displacement from the change in position">位移的定義式（由位置變化得到）</span>Δx = x<sub>末</sub> − x<sub>初</sub></div>
+            <div class="example-note" data-zh="小範例：小明從 x₁ = −2 m 走到 x₂ = +6 m，位移 Δx = (+6) − (−2) = +8 m（正號代表向右）。" data-en="Example: from x₁ = −2 m to x₂ = +6 m, Δx = (+6) − (−2) = +8 m (positive means right)."><b>小範例：</b>小明原本站在 x₁ = −2 m 處，之後走到 x₂ = +6 m 處。<br>位移 Δx = x₂ − x₁ = (+6) − (−2) = <span class="highlight-green">+8 m</span>（正號代表方向朝右）</div>
+            <h3 style="color: var(--chalk-orange); margin-top:24px;" data-zh="✏️ 練習題：從位置算位移" data-en="✏️ Practice: Find displacement from positions">✏️ 練習題：從位置算位移</h3>
+            <div class="teacher-box" id="posTeacherBox"><div class="teacher-avatar">👩‍🏫</div><div class="teacher-content"><div class="teacher-name" data-zh="曉臻老師的提問" data-en="Teacher's Question">曉臻老師的提問</div><p class="teacher-text" id="posTeacherText" data-zh="小華原本在數線 x₁ = +3 m 處，之後走到 x₂ = −4 m 處，請問他的位移是多少？" data-en="Xiaohua moves from x₁ = +3 m to x₂ = −4 m. What is the displacement?">小華原本在數線 x₁ = +3 m 處，之後走到 x₂ = −4 m 處，請問他的位移是多少？</p></div></div>
+            <div><button class="option-btn" onclick="checkPosAnswer(1)">(A) +7 m</button><button class="option-btn" onclick="checkPosAnswer(2)">(B) −7 m</button><button class="option-btn" onclick="checkPosAnswer(3)">(C) −1 m</button><button class="option-btn" onclick="checkPosAnswer(4)">(D) +1 m</button></div>
+        </div>
+    </div>
+
+    
+<!-- ==================== 投影片 3：進階應用（圓形操場與時鐘） ==================== -->
+    <div id="slide-3" class="slide">
+        <div class="card">
+            <h2 data-zh="↪️ 路徑彎來彎去，位移也要跟著繞嗎？" data-en="↪️ If the path bends, does displacement bend too?">↪️ 路徑彎來彎去，位移也要跟著繞嗎？</h2><p class="hook-subtitle" data-zh="路徑長沿著實際軌跡計算；位移始終只連接起點與終點。" data-en="Distance follows the actual path; displacement always connects start to finish.">路徑長沿著實際軌跡計算；位移始終只連接起點與終點。</p>
+            <div class="teacher-box">
+                <div class="teacher-avatar">👩‍🏫</div>
+                <div class="teacher-content">
+                    <div class="teacher-name">曉臻老師的小提醒</div>
+                    <p class="teacher-text">路徑長永遠是「沿著實際走過的軌跡」去算；但位移<b>不管路徑怎麼繞</b>，永遠只看「起點到終點的直線距離與方向」！這兩個例子會讓你徹底搞懂這件事。</p>
+                </div>
+            </div>
+
+            <div class="sub-card">
+                <h3>🏟️ 範例一：跑半圈圓形操場</h3>
+                <div class="grid-2" style="align-items:center;">
+                    <div class="diagram-box">
+                        <p class="diagram-caption">▼ 從 A 點跑半圈到對面的 B 點</p>
+                        <svg viewBox="0 0 400 220" width="100%" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="200" cy="110" r="80" fill="none" stroke="#4b5563" stroke-width="2" stroke-dasharray="4,4"/>
+                            <path d="M 120,110 A 80,80 0 1,1 280,110" fill="none" stroke="#fde047" stroke-width="4" stroke-dasharray="8,5"/>
+                            
+                            <!-- 操場位移無縫一體處理 -->
+                            <line x1="120" y1="110" x2="270" y2="110" stroke="#4ade80" stroke-width="4"/>
+                            <polygon points="280,110 266,103 266,117" fill="#4ade80"/>
+                            
+                            <circle cx="120" cy="110" r="6" fill="#fff"/>
+                            <text x="110" y="140" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">A（起點）</text>
+                            <circle cx="280" cy="110" r="6" fill="#fff"/>
+                            <text x="290" y="140" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">B（終點）</text>
+                            <text x="200" y="16" fill="#fde047" font-size="14" font-weight="bold" text-anchor="middle">路徑長 = 半圓弧長</text>
+                            <text x="200" y="128" fill="#4ade80" font-size="14" font-weight="bold" text-anchor="middle">位移 = 直徑</text>
+                            <line x1="200" y1="110" x2="200" y2="60" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2,2"/>
+                            <text x="205" y="80" fill="#94a3b8" font-size="12">r</text>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="formula-box">
+                            <span class="formula-label">半圓路徑長</span>
+                            L = πr
+                            <br><span class="formula-label" style="margin-top:10px;">位移大小（直徑）</span>
+                            Δx = 2r
+                        </div>
+                        <div class="example-note">
+                            <b>代入數字：</b>操場半徑 r = 50 m，繞半圈：<br>
+                            路徑長 L = π × 50 ≈ <span class="highlight-yellow">157 m</span><br>
+                            位移 Δx = 2 × 50 = <span class="highlight-green">100 m</span>（方向：由 A 指向 B）
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="color: var(--chalk-orange); margin-top:20px;">✏️ 練習題</h3>
+                <div class="teacher-box" id="circleTeacherBox">
+                    <div class="teacher-avatar">👩‍🏫</div>
+                    <div class="teacher-content">
+                        <div class="teacher-name">曉臻老師的提問</div>
+                        <p class="teacher-text" id="circleTeacherText">若操場半徑改成 r = 30 m，同樣繞半圈，路徑長與位移分別最接近下列何者？（取 π ≈ 3.14）</p>
+                    </div>
+                </div>
+                <button class="option-btn" onclick="checkCircleAnswer(1)">(A) 路徑長 60 m，位移 94.2 m</button>
+                <button class="option-btn" onclick="checkCircleAnswer(2)">(B) 路徑長 94.2 m，位移 60 m</button>
+                <button class="option-btn" onclick="checkCircleAnswer(3)">(C) 路徑長 30 m，位移 30 m</button>
+            </div>
+
+            <div class="sub-card">
+                <h3>🕐 範例二：時鐘秒針走 15 秒</h3>
+                <div class="grid-2" style="align-items:center;">
+                    <div class="diagram-box">
+                        <p class="diagram-caption">▼ 秒針從 12 點走到 3 點（15秒＝1/4圈）</p>
+                        <svg viewBox="0 0 240 240" width="100%" xmlns="http://www.w3.org/2000/svg">
+                            <!-- 圓面 -->
+                            <circle cx="120" cy="120" r="90" fill="none" stroke="#4b5563" stroke-width="2"/>
+                            <!-- 黃色虛線路徑弧 -->
+                            <path d="M 120,30 A 90,90 0 0,1 210,120" fill="none" stroke="#fde047" stroke-width="4" stroke-dasharray="8,5"/>
+                            
+                            <!-- 💡 照你的好方法：像畫水平數線一樣畫水平線＋箭頭，再直接旋轉 45 度！絕對平順無斷層 -->
+                            <g transform="translate(120, 30) rotate(45)">
+                                <line x1="0" y1="0" x2="127.3" y2="0" stroke="#4ade80" stroke-width="4"/>
+                                <polygon points="127.3,0 113,-7 113,7" fill="#4ade80"/>
+                            </g>
+                            
+                            <!-- 12點與3點時針 -->
+                            <line x1="120" y1="120" x2="120" y2="30" stroke="#ef4444" stroke-width="3"/>
+                            <line x1="120" y1="120" x2="210" y2="120" stroke="#ef4444" stroke-width="3" stroke-dasharray="3,3" opacity="0.6"/>
+                            <!-- 中心點 -->
+                            <circle cx="120" cy="120" r="5" fill="#fff"/>
+                            <!-- 刻度與說明字樣 -->
+                            <text x="120" y="18" fill="#fff" font-size="15" font-weight="bold" text-anchor="middle">12</text>
+                            <text x="224" y="125" fill="#fff" font-size="15" font-weight="bold" text-anchor="middle">3</text>
+                            <text x="165" y="55" fill="#fde047" font-size="13" font-weight="bold">路徑長(弧)</text>
+                            <text x="140" y="145" fill="#4ade80" font-size="13" font-weight="bold">位移(直線)</text>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="formula-box">
+                            <span class="formula-label">秒針走 1/4 圈的路徑長（設秒針長 L）</span>
+                            弧長 = <sup>1</sup>&frasl;<sub>4</sub> × 2πL = <sup>πL</sup>&frasl;<sub>2</sub>
+                            <br><span class="formula-label" style="margin-top:10px;">位移大小（直角三角形斜邊）</span>
+                            Δx = √(L² + L²) = L√2
+                        </div>
+                        <div class="example-note">
+                            <b>代入數字：</b>秒針長 L = 10 cm，走 15 秒（90°）：<br>
+                            路徑長 = π×10 ÷ 2 ≈ <span class="highlight-yellow">15.7 cm</span><br>
+                            位移 = 10×√2 ≈ <span class="highlight-green">14.1 cm</span>（方向：由12點朝3點方向的斜線）
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="color: var(--chalk-orange); margin-top:20px;">✏️ 練習題</h3>
+                <div class="teacher-box" id="clockTeacherBox">
+                    <div class="teacher-avatar">👩‍🏫</div>
+                    <div class="teacher-content">
+                        <div class="teacher-name">曉臻老師的提問</div>
+                        <p class="teacher-text" id="clockTeacherText">若秒針走了 30 秒（半圈），秒針長仍是 10 cm，下列敘述何者正確？</p>
+                    </div>
+                </div>
+                <button class="option-btn" onclick="checkClockAnswer(1)">(A) 路徑長 ≈ 31.4 cm，位移 = 20 cm</button>
+                <button class="option-btn" onclick="checkClockAnswer(2)">(B) 路徑長 = 20 cm，位移 ≈ 31.4 cm</button>
+                <button class="option-btn" onclick="checkClockAnswer(3)">(C) 路徑長與位移都是 20 cm</button>
+            </div>
+        </div>
+        <div class="bridge-box"><strong data-zh="串場｜" data-en="Bridge｜">串場｜</strong><span data-zh="概念看懂了，下一步先做預測，再用互動實驗驗證。" data-en="Now predict first, then verify with the interactive experiment.">概念看懂了，下一步先做預測，再用互動實驗驗證。</span></div>
+        <div class="footer-nav">
+            <button class="nav-page-btn" onclick="switchSlide(2)">⬅ 上一頁：路徑長與位移</button>
+            <button class="nav-page-btn" onclick="switchSlide(4)">下一頁：互動實驗室 ➔</button>
+        </div>
+    </div>
+    <!-- ==================== 投影片 4：互動實驗室 ==================== -->
+    <div id="slide-4" class="slide">
+        <div class="card">
+            <h2 data-zh="🎮 先別算！你能先預測折返後的路徑長與位移嗎？" data-en="🎮 Don’t calculate yet—can you predict distance and displacement after turning back?">🎮 先別算！你能先預測折返後的路徑長與位移嗎？</h2><p class="hook-subtitle" data-zh="先預測，再操作；用動畫和數據驗證自己的想法。" data-en="Predict first, then test your idea with the animation and data.">先預測，再操作；用動畫和數據驗證自己的想法。</p>
+
+            <div class="teacher-box" id="teacherBox2">
+                <div class="teacher-avatar">👩‍🏫</div>
+                <div class="teacher-content">
+                    <div class="teacher-name">曉臻老師的實驗室指引</div>
+                    <p class="teacher-text" id="teacherText2">請老師或同學拖拉上方滑塊，設定我們要折返跑的距離，然後按下「播放動畫」觀察吧！</p>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="x1Slider">❶ 前進折返點位置 x₁： <span id="x1Val" class="highlight-yellow">12</span> m</label>
+                    <input type="range" id="x1Slider" min="5" max="20" value="12">
+                </div>
+                <div class="control-group">
+                    <label for="x2Slider">❷ 後退終點位置 x₂： <span id="x2Val" class="highlight-green">4</span> m</label>
+                    <input type="range" id="x2Slider" min="-5" max="15" value="4">
+                </div>
+                <div class="btn-group">
+                    <button class="action-btn" id="startBtn" onclick="togglePlay()">▶ 播放動畫</button>
+                    <button class="action-btn reset-btn" onclick="resetSim()">↺ 重置</button>
+                </div>
+            </div>
+
+            <div class="dashboard">
+                <div class="stat-box">
+                    <div class="stat-title">經過時間 (t)</div>
+                    <div class="stat-value"><span id="timeDisplay">0.0</span> s</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">當前位置 (x)</div>
+                    <div class="stat-value" style="color: var(--chalk-blue);"><span id="posDisplay">0.0</span> m</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">路徑長 (L)</div>
+                    <div class="stat-value" style="color: var(--chalk-yellow);"><span id="pathDisplay">0.0</span> m</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">位移 (Δx)</div>
+                    <div class="stat-value" style="color: var(--chalk-green);"><span id="dispDisplay">0.0</span> m</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <h3 style="color:var(--chalk-yellow); text-align:center;">1D 數線運動軌跡</h3>
+                    <canvas id="animCanvas" width="450" height="230"></canvas>
+                </div>
+                <div>
+                    <h3 style="color:var(--chalk-blue); text-align:center;">x-t 圖 (位置-時間圖)</h3>
+                    <canvas id="graphCanvas" width="450" height="230"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="bridge-box"><strong data-zh="串場｜" data-en="Bridge｜">串場｜</strong><span data-zh="你已經看過位置、路徑長與位移同步變化。最後，用一道題目確認自己真的分得清楚。" data-en="You have watched position, distance, and displacement change together. Finish with one challenge.">你已經看過位置、路徑長與位移同步變化。最後，用一道題目確認自己真的分得清楚。</span></div>
+        <div class="footer-nav">
+            <button class="nav-page-btn" onclick="switchSlide(3)">⬅ 上一頁：進階應用</button>
+            <button class="nav-page-btn" onclick="switchSlide(5)">下一頁：隨堂實戰 ➔</button>
+        </div>
+    </div>
+
+    <!-- ==================== 投影片 5：隨堂實戰 ==================== -->
+    <div id="slide-5" class="slide">
+        <div class="card">
+            <h2 data-zh="🎯 你是在算「走多遠」，還是算「位置改變多少」？" data-en="🎯 Are you finding how far it traveled, or how much its position changed?">🎯 你是在算「走多遠」，還是算「位置改變多少」？</h2><p class="hook-subtitle" data-zh="先判斷題目問的是路徑長還是位移，再開始計算。" data-en="Identify whether the question asks for distance or displacement before calculating.">先判斷題目問的是路徑長還是位移，再開始計算。</p>
+
+            <p style="font-size: 1.2rem; line-height: 1.8; background: #172e21; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <strong>【題目】</strong> 在運動會大隊接力熱身時，小明從跑道起點 <strong>0 m</strong> 處出發，先向右跑到了 <strong>15 m</strong> 處的折返點，接著轉身往回慢跑，最後在 <strong>5 m</strong> 處停下來綁鞋帶。<br>
+                請問小明在這段過程中的 <span class="highlight-yellow">路徑長</span> 與 <span class="highlight-green">位移</span> 分別是多少？
+            </p>
+
+            <div class="teacher-box" id="quizTeacherBox">
+                <div class="teacher-avatar">👩‍🏫</div>
+                <div class="teacher-content">
+                    <div class="teacher-name">曉臻老師的試場分析</div>
+                    <p class="teacher-text" id="quizTeacherText">點選下方選項作答，我來幫你看看觀念對不對！記得區分「純量」與「向量」喔！</p>
+                </div>
+            </div>
+
+            <div id="quizOptions" style="margin-top: 20px;">
+                <button class="option-btn" onclick="checkAnswer(1)"> (A) 路徑長 15 m，位移 +5 m</button>
+                <button class="option-btn" onclick="checkAnswer(2)"> (B) 路徑長 20 m，位移 -5 m</button>
+                <button class="option-btn" onclick="checkAnswer(3)"> (C) 路徑長 25 m，位移 +5 m</button>
+                <button class="option-btn" onclick="checkAnswer(4)"> (D) 路徑長 25 m，位移 +20 m</button>
+            </div>
+        </div>
+        <div class="footer-nav">
+            <button class="nav-page-btn" onclick="switchSlide(4)">⬅ 上一頁：回到互動實驗室</button>
+            <div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentLang = 'zh';
+    function tr(zh,en){ return currentLang==='en'?en:zh; }
+    function setLang(lang){
+      currentLang=lang;
+      document.querySelectorAll('[data-zh][data-en]').forEach(el=>{el.innerHTML=lang==='en'?el.dataset.en:el.dataset.zh;});
+      const z=document.getElementById('btn-lang-zh'), e=document.getElementById('btn-lang-en'); if(z)z.classList.toggle('active',lang==='zh'); if(e)e.classList.toggle('active',lang==='en');
+      if(typeof resetSim==='function') resetSim();
+    }
+
+    // ==================== 投影片切換邏輯 ====================
+    function switchSlide(index) {
+        const slides = document.querySelectorAll('.slide');
+        const tabs = document.querySelectorAll('.tab-btn');
+
+        slides.forEach((slide, i) => {
+            if (i === index) {
+                slide.classList.add('active');
+                tabs[i].classList.add('active');
+            } else {
+                slide.classList.remove('active');
+                tabs[i].classList.remove('active');
+            }
+        });
+
+        // 切換到「互動實驗室」（現在是索引 4）時，重新繪製 Canvas 確保座標對齊
+        if (index === 4) {
+            const currentKin = getKinematics(t);
+            drawAnimation(currentKin.pos, currentKin.path, currentKin.disp);
+            drawGraph(t);
+        }
+    }
+
+    // ==================== 位置定義練習題批改邏輯 ====================
+    function checkPosAnswer(option) {
+        const box = document.getElementById('posTeacherBox');
+        const text = document.getElementById('posTeacherText');
+        if (!box || !text) return;
+
+        box.style.borderColor = option === 2 ? "var(--chalk-green)" : "#ef4444";
+
+        if (option === 2) {
+            text.innerHTML = `🎉 <b>答對了！</b>位移 Δx = x₂ − x₁ = (−4) − (+3) = <b>−7 m</b>。負號代表方向朝左（向數線的負方向移動）。`;
+        } else {
+            text.innerHTML = `❌ <b>再想想：</b>位移公式是 Δx = x<sub>末</sub> − x<sub>初</sub>，這裡是 (−4) − (+3)，注意正負號的運算，再算一次看看！`;
+        }
+    }
+
+    // ==================== 颱風題組 Q1 批改邏輯 ====================
+    function checkTyphoonQ1(option) {
+        const box = document.getElementById('typhoonQ1Box');
+        const text = document.getElementById('typhoonQ1Text');
+        if (!box || !text) return;
+
+        box.style.borderColor = option === 2 ? "var(--chalk-green)" : "#ef4444";
+
+        if (option === 2) {
+            text.innerHTML = `🎉 <b>完全正確！</b>從基準點恆春 (0,0) 看，B 點在「左方 1 格 (-1)」、「上方 2 格 (+2)」，所以坐標為 <b>(-1, 2)</b>！`;
+        } else {
+            text.innerHTML = `❌ <b>哎呀看錯格囉！</b>記得坐標 (x, y) 先寫左右 (左負右正)，再寫上下 (下負上正)。從黃點往左走幾格？往上走幾格呢？`;
+        }
+    }
+
+    // ==================== 颱風題組 Q2 批改邏輯 ====================
+    function checkTyphoonQ2(option) {
+        const box = document.getElementById('typhoonQ2Box');
+        const text = document.getElementById('typhoonQ2Text');
+        if (!box || !text) return;
+
+        box.style.borderColor = option === 3 ? "var(--chalk-green)" : "#ef4444";
+
+        if (option === 3) {
+            text.innerHTML = `🎉 <b>太厲害了！正是 750 公里！</b><br>• 從 A(3, -1) 到 B(-1, 2)，X方向移動 4 格，Y方向移動 3 格。<br>• 這是經典的 <b>3 : 4 : 5 直角三角形</b>！斜邊位移為 5 格。<br>• 5 格 × 150 公里/格 = <b>750 公里</b>！`;
+        } else {
+            text.innerHTML = `❌ <b>再算一次看看！</b><br>A 到 B 的水平差了 4 格，垂直差了 3 格。用勾股定理 √(3² + 4²) 可以算出直線位移是幾格？最後別忘了乘以每格 150 公里喔！`;
+        }
+    }
+
+    // ==================== 圓形操場練習題批改邏輯 ====================
+    function checkCircleAnswer(option) {
+        const box = document.getElementById('circleTeacherBox');
+        const text = document.getElementById('circleTeacherText');
+        if (!box || !text) return;
+
+        box.style.borderColor = option === 2 ? "var(--chalk-green)" : "#ef4444";
+
+        if (option === 2) {
+            text.innerHTML = `🎉 <b>答對了！</b>路徑長 = πr = 3.14 × 30 ≈ <b>94.2 m</b>；位移 = 2r = <b>60 m</b>（方向由起點指向對面終點）。半圓弧長一定比直徑長，別搞反囉！`;
+        } else {
+            text.innerHTML = `❌ <b>再檢查一下：</b>路徑長是繞半圓的弧長（πr），位移是兩點間的直線距離，也就是直徑（2r）。半圓弧長會比直徑「長」，不會比較短喔！`;
+        }
+    }
+
+    // ==================== 時鐘秒針練習題批改邏輯 ====================
+    function checkClockAnswer(option) {
+        const box = document.getElementById('clockTeacherBox');
+        const text = document.getElementById('clockTeacherText');
+        if (!box || !text) return;
+
+        box.style.borderColor = option === 1 ? "var(--chalk-green)" : "#ef4444";
+
+        if (option === 1) {
+            text.innerHTML = `🎉 <b>答對了！</b>30秒是半圈（180°），路徑長 = 半圓周長 = πL ≈ 3.14×10 ≈ <b>31.4 cm</b>；位移 = 直徑 = 2L = <b>20 cm</b>（秒針指向12點的正對面，也就是6點方向）。`;
+        } else {
+            text.innerHTML = `❌ <b>再想想：</b>走半圈時，起點和終點恰好是「直徑」兩端，位移就是直徑 2L = 20 cm；路徑長則是半圓弧長 πL ≈ 31.4 cm，弧長一定比直線距離長！`;
+        }
+    }
+
+    // ==================== 模擬器核心邏輯（互動實驗室） ====================
+    const animCanvas = document.getElementById('animCanvas');
+    const aCtx = animCanvas ? animCanvas.getContext('2d') : null;
+    const graphCanvas = document.getElementById('graphCanvas');
+    const gCtx = graphCanvas ? graphCanvas.getContext('2d') : null;
+
+    let isPlaying = false;
+    let animId = null;
+    let t = 0;
+    const totalTime = 10;
+    let x0 = 0, x1 = 12, x2 = 4;
+
+    const x1Slider = document.getElementById('x1Slider');
+    const x2Slider = document.getElementById('x2Slider');
+    const x1Val = document.getElementById('x1Val');
+    const x2Val = document.getElementById('x2Val');
+    const startBtn = document.getElementById('startBtn');
+    const teacherText2 = document.getElementById('teacherText2');
+
+    if (x1Slider && x2Slider) {
+        x1Slider.addEventListener('input', (e) => {
+            x1 = parseInt(e.target.value);
+            if (x2 > x1) { x2 = x1; x2Slider.value = x2; x2Val.innerText = x2; }
+            x2Slider.max = x1;
+            x1Val.innerText = x1;
+            resetSim();
+    setLang('zh');
+        });
+
+        x2Slider.addEventListener('input', (e) => {
+            x2 = parseInt(e.target.value);
+            x2Val.innerText = x2;
+            resetSim();
+        });
+    }
+
+    function togglePlay() {
+        if (isPlaying) {
+            isPlaying = false;
+            startBtn.innerText = "▶ 繼續播放";
+            cancelAnimationFrame(animId);
+            teacherText2.innerHTML = `⏸ <b>動畫暫停中。</b>老師可以趁現在讓同學觀察目前的位置與 x-t 圖斜率喔！`;
+        } else {
+            if (t >= totalTime) resetSim();
+            isPlaying = true;
+            startBtn.innerText = "❚❚ 暫停";
+            lastFrameTime = performance.now();
+            animate();
+        }
+    }
+
+    function resetSim() {
+        isPlaying = false;
+        if (startBtn) startBtn.innerText = "▶ 播放動畫";
+        cancelAnimationFrame(animId);
+        t = 0;
+        updateDashboard(0, 0, 0, 0);
+        drawAnimation(0, 0, 0);
+        drawGraph(0);
+        if (teacherText2) {
+            teacherText2.innerHTML = `請老師或同學拖拉上方滑塊，設定我們要折返跑的距離，然後按下「播放動畫」觀察吧！`;
+        }
+    }
+
+    function getKinematics(currentT) {
+        let pos, path, disp;
+        if (currentT <= 6) {
+            let progress = currentT / 6;
+            pos = x0 + progress * (x1 - x0);
+            path = Math.abs(pos - x0);
+            disp = pos - x0;
+        } else {
+            let progress = (currentT - 6) / 4;
+            pos = x1 + progress * (x2 - x1);
+            path = Math.abs(x1 - x0) + Math.abs(pos - x1);
+            disp = pos - x0;
+        }
+        return { pos, path, disp };
+    }
+
+    let lastFrameTime = 0;
+    function animate() {
+        if (!isPlaying) return;
+        const now = performance.now();
+        const dt = (now - lastFrameTime) / 1000;
+        lastFrameTime = now;
+
+        t += dt;
+        if (t >= totalTime) {
+            t = totalTime;
+            isPlaying = false;
+            startBtn.innerText = "↺ 重新播放";
+        }
+
+        const { pos, path, disp } = getKinematics(t);
+        updateDashboard(t, pos, path, disp);
+        drawAnimation(pos, path, disp);
+        drawGraph(t);
+
+        if (isPlaying && teacherText2) {
+            if (t <= 6) {
+                teacherText2.innerHTML = `🏃‍♂️ <b>等速向前奔跑中！</b>你看！這時候物體不轉向，「路徑長」跟「位移大小」是完全一模一樣的喔！`;
+            } else if (t > 6 && t < 10) {
+                if (disp < 0) {
+                    teacherText2.innerHTML = `⚠️ <b>哇！跑到起點後方了！</b>這時候位移變成<span class="highlight-yellow">負值</span>了！但你看，黃色的「路徑長」還是繼續增加喔！`;
+                } else {
+                    teacherText2.innerHTML = `🔄 <b>轉身往回跑了！</b>注意看 x-t 圖線條往下滑！這時候「路徑長」繼續變大，但綠色的「位移」卻開始縮水囉！`;
+                }
+            }
+        }
+        if (t === totalTime && teacherText2) {
+            teacherText2.innerHTML = `🏁 <b>到達終點！</b>我們總共跑了 <span class="highlight-yellow">${path.toFixed(0)} m</span> 的路程，但最後位置相對於起點的位移只有 <span class="highlight-green">${(disp>=0?"+":"")+disp.toFixed(0)} m</span>！懂兩者差別了嗎？`;
+        }
+
+        if (isPlaying) {
+            animId = requestAnimationFrame(animate);
+        }
+    }
+
+    function updateDashboard(tVal, posVal, pathVal, dispVal) {
+        if (!document.getElementById('timeDisplay')) return;
+        document.getElementById('timeDisplay').innerText = tVal.toFixed(1);
+        document.getElementById('posDisplay').innerText = posVal.toFixed(1);
+        document.getElementById('pathDisplay').innerText = pathVal.toFixed(1);
+        document.getElementById('dispDisplay').innerText = (dispVal >= 0 ? "+" : "") + dispVal.toFixed(1);
+    }
+
+    function drawAnimation(pos, path, disp) {
+        if (!aCtx || !animCanvas) return;
+        aCtx.clearRect(0, 0, animCanvas.width, animCanvas.height);
+
+        const minX = -8, maxX = 22;
+        const pad = 30;
+        const toScreenX = (val) => pad + ((val - minX) / (maxX - minX)) * (animCanvas.width - 2 * pad);
+        const centerY = 130;
+
+        aCtx.beginPath();
+        aCtx.moveTo(toScreenX(minX), centerY);
+        aCtx.lineTo(toScreenX(maxX), centerY);
+        aCtx.strokeStyle = "#94a3b8";
+        aCtx.lineWidth = 2;
+        aCtx.stroke();
+
+        aCtx.fillStyle = "#fcfcfc";
+        aCtx.font = "12px sans-serif";
+        aCtx.textAlign = "center";
+        for (let i = -5; i <= 20; i += 5) {
+            let sx = toScreenX(i);
+            aCtx.beginPath();
+            aCtx.moveTo(sx, centerY - 5);
+            aCtx.lineTo(sx, centerY + 5);
+            aCtx.stroke();
+            aCtx.fillText(i, sx, centerY + 20);
+        }
+        aCtx.fillText("x (m)", toScreenX(maxX) - 10, centerY - 10);
+
+        if (t > 0) {
+            aCtx.strokeStyle = "#fde047";
+            aCtx.lineWidth = 3;
+            aCtx.beginPath();
+            if (t <= 6) {
+                aCtx.moveTo(toScreenX(0), centerY - 15);
+                aCtx.lineTo(toScreenX(pos), centerY - 15);
+            } else {
+                aCtx.moveTo(toScreenX(0), centerY - 15);
+                aCtx.lineTo(toScreenX(x1), centerY - 15);
+                aCtx.lineTo(toScreenX(x1), centerY - 28);
+                aCtx.lineTo(toScreenX(pos), centerY - 28);
+            }
+            aCtx.stroke();
+            aCtx.fillStyle = "#fde047";
+            aCtx.fillText("路徑長 L", toScreenX(pos), centerY - 38);
+        }
+
+        if (Math.abs(disp) > 0.1) {
+            let startX = toScreenX(0);
+            let endX = toScreenX(disp);
+            let arrowY = centerY + 45;
+
+            aCtx.strokeStyle = "#4ade80";
+            aCtx.fillStyle = "#4ade80";
+            aCtx.lineWidth = 3;
+
+            aCtx.beginPath();
+            aCtx.moveTo(startX, arrowY);
+            aCtx.lineTo(endX, arrowY);
+            aCtx.stroke();
+
+            let dir = disp > 0 ? 1 : -1;
+            aCtx.beginPath();
+            aCtx.moveTo(endX, arrowY);
+            aCtx.lineTo(endX - dir * 8, arrowY - 5);
+            aCtx.lineTo(endX - dir * 8, arrowY + 5);
+            aCtx.closePath();
+            aCtx.fill();
+
+            aCtx.fillText("位移 Δx", startX + (endX - startX)/2, arrowY + 20);
+        }
+
+        let ballX = toScreenX(pos);
+        aCtx.beginPath();
+        aCtx.arc(ballX, centerY, 10, 0, Math.PI * 2);
+        aCtx.fillStyle = "#38bdf8";
+        aCtx.fill();
+        aCtx.lineWidth = 2;
+        aCtx.strokeStyle = "#ffffff";
+        aCtx.stroke();
+    }
+
+    function drawGraph(currentT) {
+        if (!gCtx || !graphCanvas) return;
+        gCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+        const padX = 40, padY = 25;
+        const w = graphCanvas.width - padX * 2;
+        const h = graphCanvas.height - padY * 2;
+
+        const minX = -8, maxX = 22;
+        const toX = (timeVal) => padX + (timeVal / totalTime) * w;
+        const toY = (posVal) => graphCanvas.height - padY - ((posVal - minX) / (maxX - minX)) * h;
+
+        gCtx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+        gCtx.lineWidth = 1;
+        gCtx.beginPath();
+        for (let i = -5; i <= 20; i += 5) {
+            let y = toY(i);
+            gCtx.moveTo(padX, y);
+            gCtx.lineTo(padX + w, y);
+        }
+        gCtx.stroke();
+
+        gCtx.strokeStyle = "#94a3b8";
+        gCtx.lineWidth = 2;
+        gCtx.beginPath();
+        gCtx.moveTo(padX, padY);
+        gCtx.lineTo(padX, graphCanvas.height - padY);
+        gCtx.lineTo(padX + w, graphCanvas.height - padY);
+        gCtx.moveTo(padX, toY(0));
+        gCtx.lineTo(padX + w, toY(0));
+        gCtx.stroke();
+
+        gCtx.fillStyle = "#fcfcfc";
+        gCtx.font = "11px sans-serif";
+        gCtx.textAlign = "right";
+        for (let i = -5; i <= 20; i += 5) {
+            gCtx.fillText(i, padX - 8, toY(i) + 4);
+        }
+        gCtx.textAlign = "center";
+        for (let i = 0; i <= 10; i += 2) {
+            gCtx.fillText(i, toX(i), graphCanvas.height - padY + 18);
+        }
+        gCtx.fillText("時間 t (s)", padX + w - 20, graphCanvas.height - 5);
+        gCtx.fillText("位置 x (m)", padX + 20, padY - 10);
+
+        gCtx.strokeStyle = "#38bdf8";
+        gCtx.lineWidth = 3;
+        gCtx.beginPath();
+        gCtx.moveTo(toX(0), toY(x0));
+
+        if (currentT <= 6) {
+            let p = getKinematics(currentT).pos;
+            gCtx.lineTo(toX(currentT), toY(p));
+        } else {
+            gCtx.lineTo(toX(6), toY(x1));
+            let p = getKinematics(currentT).pos;
+            gCtx.lineTo(toX(currentT), toY(p));
+        }
+        gCtx.stroke();
+
+        if (currentT >= 6) {
+            gCtx.fillStyle = "#fb923c";
+            gCtx.beginPath();
+            gCtx.arc(toX(6), toY(x1), 4, 0, Math.PI*2);
+            gCtx.fill();
+            gCtx.fillText("折返轉折點", toX(6), toY(x1) - 8);
+        }
+    }
+
+    // ==================== 隨堂實戰批改邏輯 ====================
+    function checkAnswer(option) {
+        const qBox = document.getElementById('quizTeacherBox');
+        const qText = document.getElementById('quizTeacherText');
+        if (!qBox || !qText) return;
+
+        qBox.style.borderColor = option === 3 ? "var(--chalk-green)" : "#ef4444";
+
+        if (option === 3) {
+            qText.innerHTML = `🎉 <b>太厲害了！答對了！</b><br>• <b>路徑長：</b>往前 15 m，往回跑到 5 m 處又走了 10 m，總共實際走了 15 + 10 = 25 m。<br>• <b>位移：</b>只看起點與終點！最後在 5 m，減掉起點 0 m = <b>+5 m</b>！`;
+        } else {
+            qText.innerHTML = `❌ <b>哎呀，答錯囉！再檢查一下：</b>記得「路徑長」是要把走過的每一段距離通通加起來（不能相減喔）；而「位移」只需要拿「最後的位置」減去「最初的位置」！再來一次！`;
+        }
+    }
+
+    // 初始化繪製
+    resetSim();
+</script>
+</body>
+</html>
