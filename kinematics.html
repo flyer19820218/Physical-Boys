@@ -1094,5 +1094,114 @@
     // 初始化繪製
     resetSim();
 </script>
+
+<script>
+(function(){
+    const style = document.createElement('style');
+    style.textContent = `
+      body{font-size:20px;padding:14px 16px 36px;}
+      .container{width:100%;max-width:none;margin:0 auto;}
+      .lesson-intro{text-align:center;margin:0 150px 18px;padding:2px 0 12px;border-bottom:2px dashed var(--border-color);}
+      .lesson-intro h1{margin:0 0 6px;color:var(--chalk-yellow);font-size:clamp(32px,3vw,44px);line-height:1.2;}
+      .lesson-intro p{margin:0;color:var(--chalk-blue);font-size:clamp(20px,1.8vw,25px);font-weight:bold;}
+      .floating-lang-container{position:fixed;top:18px;right:18px;z-index:9999;display:flex;align-items:center;gap:8px;background:rgba(23,46,33,.96);border:2px solid #64ffda;border-radius:999px;padding:7px 10px;box-shadow:0 6px 18px rgba(0,0,0,.32)}
+      .lang-label{color:#64ffda;font-size:16px;font-weight:bold}.lang-options{display:flex;gap:6px}
+      .lang-pill{min-width:52px;min-height:44px;padding:7px 11px;border:1.5px solid #64ffda;border-radius:999px;background:transparent;color:#64ffda;font-weight:bold;cursor:pointer}.lang-pill.active{background:#64ffda;color:#112219}
+      .nav-tabs{gap:10px}.tab-btn{min-width:185px;min-height:76px;padding:9px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}.tab-main{font-size:1.05rem;line-height:1.2}.tab-sub{font-size:.75rem;line-height:1.15;opacity:.85}
+      .action-btn,.option-btn,.nav-page-btn{min-height:44px}
+      @media (max-width:960px) and (orientation:portrait){body{padding:12px}.lesson-intro{margin:58px 8px 16px}.grid-2{grid-template-columns:1fr}.dashboard{grid-template-columns:repeat(2,1fr)}.nav-tabs{display:grid;grid-template-columns:1fr 1fr}.tab-btn{min-width:0}}
+      @media (max-width:600px){.lang-label{display:none}.nav-tabs{grid-template-columns:1fr}.lesson-intro h1{font-size:1.65rem}}
+    `;
+    document.head.appendChild(style);
+
+    const vp = document.querySelector('meta[name="viewport"]');
+    if(vp) vp.setAttribute('content','width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no');
+
+    const langBox = document.createElement('div');
+    langBox.className='floating-lang-container';
+    langBox.innerHTML='<span class="lang-label">Language</span><div class="lang-options"><button class="lang-pill active" id="btn-lang-zh">中文</button><button class="lang-pill" id="btn-lang-en">EN</button></div>';
+    document.body.appendChild(langBox);
+
+    const container=document.querySelector('.container');
+    const nav=document.querySelector('.nav-tabs');
+    const intro=document.createElement('header');
+    intro.className='lesson-intro';
+    intro.innerHTML='<h1 data-zh="你在哪裡？又走了多遠？" data-en="Where Are You, and How Far Did You Travel?">你在哪裡？又走了多遠？</h1><p data-zh="從位置與座標出發，讀懂路徑長、位移與運動圖像" data-en="Start with position and coordinates to understand path length, displacement, and motion graphs">從位置與座標出發，讀懂路徑長、位移與運動圖像</p>';
+    container.insertBefore(intro,nav);
+
+    const tabData=[
+      ['你在哪裡？先選原點！','位置與參考點','Where Are You? Choose an Origin First!','position and reference point'],
+      ['颱風跑到哪裡去了？','平面座標與位移','Where Did the Typhoon Move?','2D coordinates and displacement'],
+      ['走了多遠，不等於離起點多遠','路徑長與位移','Distance Traveled Is Not Displacement','path length and displacement'],
+      ['繞一圈、走半圈，位移怎麼算？','非直線路徑','On a Curved Path, What Is Displacement?','nonlinear paths'],
+      ['讓運動自己畫出圖來','位置－時間圖','Let the Motion Draw Its Own Graph','position–time graph'],
+      ['你真的分得清路徑長與位移嗎？','概念實戰','Can You Really Tell Path Length from Displacement?','concept practice']
+    ];
+    document.querySelectorAll('.tab-btn').forEach((btn,i)=>{
+      const d=tabData[i];
+      btn.innerHTML=`<span class="tab-main" data-zh="${d[0]}" data-en="${d[2]}">${d[0]}</span><span class="tab-sub" data-zh="${d[1]}" data-en="${d[3]}">${d[1]}</span>`;
+    });
+
+    let lang='zh';
+    const textStore=new WeakMap();
+    const pairs=[
+      ['「位置」是什麼？怎麼用數字表示？','What is “position,” and how can we express it with numbers?'],
+      ['曉臻老師的小提醒','Ms. Hsiao-Chen’s Reminder'],
+      ['曉臻老師的提問','Ms. Hsiao-Chen’s Question'],
+      ['位置（position）：','Position:'],['參考點（原點 O）','reference point (origin O)'],['大小','magnitude'],['方向（正負號）','direction (positive or negative sign)'],['一個點','a point'],['兩個位置之間的變化量','the change between two positions'],
+      ['▼ 數線上的位置表示法','▼ Position on a number line'],['O（原點 0）','O (origin 0)'],['位移的定義式（和位置的關係）','Definition of displacement (relation to position)'],['小範例：','Example:'],['（正號代表方向朝右）','(the positive sign indicates the rightward direction)'],['✏️ 練習題：位置與位移的觀念','✏️ Practice: Position and Displacement'],
+      ['下一頁：平面座標與颱風 ➔','Next: 2D Coordinates and Typhoon ➔'],['應用題組：平面座標與颱風中心位置','Application: 2D Coordinates and Typhoon Center'],['曉臻老師的氣象播報台','Ms. Hsiao-Chen’s Weather Desk'],['二維平面坐標系（x, y）','two-dimensional coordinate system (x, y)'],['【颱風警報情境】','【Typhoon Alert Scenario】'],['A 點','Point A'],['B 點','Point B'],['坐標找法：','How to read coordinates:'],['直線距離公式：','Straight-line distance formula:'],['位移大小 = √( Δx² + Δy² )','Displacement magnitude = √( Δx² + Δy² )'],['▼ 凱米颱風中心位置監測圖','▼ Typhoon Gaemi center-position map'],['恆春 (0, 0)','Hengchun (0, 0)'],['✏️ 題組第 1 題：平面相對坐標','✏️ Question 1: Relative Coordinates in 2D'],['✏️ 題組第 2 題：二維空間的位移大小','✏️ Question 2: Displacement Magnitude in 2D'],['「恆春」','“Hengchun”'],['每一個小方格的邊長代表 150 公里','each grid square represents 150 km per side'],['「位移大小」','“displacement magnitude”'],['公里','km'],['⬅ 上一頁：位置的定義','⬅ Previous: Definition of Position'],['下一頁：路徑長與位移 ➔','Next: Path Length and Displacement ➔'],
+      ['什麼是路徑長？什麼是位移？','What is path length? What is displacement?'],['【路徑長】','【Path Length】'],['【位移】','【Displacement】'],['（純量）：',' (scalar):'],['（向量）：',' (vector):'],['實際走過的總軌跡！','The total length of the actual path traveled!'],['只有大小，沒有方向，永遠為正！','Magnitude only, no direction, and always positive!'],['只看「終點位置減去初位置」！','Only the final position minus the initial position matters!'],['有大小，也有方向（正負號代表方向）！','It has both magnitude and direction (the sign indicates direction)!'],['▼ 靜態圖解：向前走 12 m，再往回走 8 m','▼ Diagram: Walk forward 12 m, then back 8 m'],['起點','start'],['終點','finish'],['折返點','turnaround'],['路徑長 = 12 + 8 = 20 m','Path length = 12 + 8 = 20 m'],['去程 12 m ➔','Outbound 12 m ➔'],['⬅ 回程 8 m','⬅ Return 8 m'],['位移 = +4 m (向右)','Displacement = +4 m (right)'],['⬅ 上一頁：平面座標與颱風','⬅ Previous: 2D Coordinates and Typhoon'],['下一頁：進階應用 ➔','Next: Advanced Applications ➔'],
+      ['進階應用：當路徑不是直線時','Advanced Applications: When the Path Is Not Straight'],['🏟️ 範例一：跑半圈圓形操場','🏟️ Example 1: Run Halfway Around a Circular Track'],['▼ 從 A 點跑半圈到對面的 B 點','▼ Run half a lap from A to the opposite point B'],['A（起點）','A (start)'],['B（終點）','B (finish)'],['路徑長 = 半圓弧長','Path length = semicircle arc length'],['位移 = 直徑','Displacement = diameter'],['半圓路徑長','Semicircle path length'],['位移大小（直徑）','Displacement magnitude (diameter)'],['代入數字：','Substitute the values:'],['（方向：由 A 指向 B）','(direction: from A toward B)'],['✏️ 練習題','✏️ Practice'],['🕐 範例二：時鐘秒針走 15 秒','🕐 Example 2: The Second Hand Moves for 15 Seconds'],['▼ 秒針從 12 點走到 3 點（15秒＝1/4圈）','▼ The second hand moves from 12 to 3 (15 s = 1/4 turn)'],['路徑長(弧)','Path length (arc)'],['位移(直線)','Displacement (straight line)'],['秒針走 1/4 圈的路徑長（設秒針長 L）','Path length for 1/4 turn (second-hand length = L)'],['弧長 =','Arc length ='],['位移大小（直角三角形斜邊）','Displacement magnitude (hypotenuse)'],['⬅ 上一頁：路徑長與位移','⬅ Previous: Path Length and Displacement'],['下一頁：互動實驗室 ➔','Next: Interactive Lab ➔'],
+      ['觀察折返運動：x-t 圖與數據同步實況','Observe Turnaround Motion: x-t Graph and Live Data'],['曉臻老師的實驗室指引','Ms. Hsiao-Chen’s Lab Guide'],['前進折返點位置 x₁：','Forward turnaround position x₁:'],['後退終點位置 x₂：','Return endpoint position x₂:'],['▶ 播放動畫','▶ Play Animation'],['▶ 繼續播放','▶ Continue'],['❚❚ 暫停','❚❚ Pause'],['↺ 重新播放','↺ Replay'],['↺ 重置','↺ Reset'],['經過時間 (t)','Elapsed time (t)'],['當前位置 (x)','Current position (x)'],['路徑長 (L)','Path length (L)'],['位移 (Δx)','Displacement (Δx)'],['1D 數線運動軌跡','1D Motion on a Number Line'],['x-t 圖 (位置-時間圖)','x-t Graph (Position–Time Graph)'],['⬅ 上一頁：進階應用','⬅ Previous: Advanced Applications'],['下一頁：隨堂實戰 ➔','Next: Practice Challenge ➔'],
+      ['隨堂概念小挑戰','Quick Concept Challenge'],['【題目】','【Question】'],['路徑長','path length'],['位移','displacement'],['曉臻老師的試場分析','Ms. Hsiao-Chen’s Exam Analysis'],['純量','scalar'],['向量','vector'],['⬅ 上一頁：回到互動實驗室','⬅ Previous: Back to Interactive Lab'],
+      ['答對了！','Correct!'],['再想想：','Think again:'],['完全正確！','Exactly right!'],['哎呀看錯格囉！','Check the grid again!'],['太厲害了！正是 750 公里！','Excellent! It is exactly 750 km!'],['再算一次看看！','Try the calculation again!'],['再檢查一下：','Check again:'],['太厲害了！答對了！','Excellent! Correct!'],['哎呀，答錯囉！再檢查一下：','Not quite. Check again:'],['動畫暫停中。','Animation paused.'],['等速向前奔跑中！','Moving forward at constant velocity!'],['哇！跑到起點後方了！','Now it is behind the starting point!'],['負值','negative'],['轉身往回跑了！','Turned around and is running back!'],['到達終點！','Reached the finish!'],['折返轉折點','turnaround point'],['時間 t (s)','time t (s)'],['位置 x (m)','position x (m)'],['路徑長 L','path length L'],['位移 Δx','displacement Δx']
+    ].sort((a,b)=>b[0].length-a[0].length);
+
+    function replaceText(s,toEn){
+      let out=s;
+      if(toEn){ for(const [z,e] of pairs) out=out.split(z).join(e); }
+      return out;
+    }
+    function rememberAndApply(root){
+      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+      let n;
+      while(n=walker.nextNode()){
+        if(!n.nodeValue || !n.nodeValue.trim()) continue;
+        if(!textStore.has(n)) textStore.set(n,n.nodeValue);
+        const zh=textStore.get(n);
+        n.nodeValue=lang==='en'?replaceText(zh,true):zh;
+      }
+      root.querySelectorAll?.('[data-zh][data-en]').forEach(el=>{el.textContent=el.dataset[lang]});
+    }
+    function setLang(next){
+      lang=next;
+      document.documentElement.lang=lang==='zh'?'zh-TW':'en';
+      document.getElementById('btn-lang-zh').classList.toggle('active',lang==='zh');
+      document.getElementById('btn-lang-en').classList.toggle('active',lang==='en');
+      rememberAndApply(document.body);
+      if(typeof drawAnimation==='function' && typeof getKinematics==='function'){const k=getKinematics(t);drawAnimation(k.pos,k.path,k.disp);drawGraph(t);}
+    }
+    document.getElementById('btn-lang-zh').onclick=()=>setLang('zh');
+    document.getElementById('btn-lang-en').onclick=()=>setLang('en');
+
+    const originalFillText=CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText=function(text,...args){
+      return originalFillText.call(this,lang==='en'?replaceText(String(text),true):text,...args);
+    };
+
+    const observer=new MutationObserver(muts=>{
+      if(lang!=='en') return;
+      observer.disconnect();
+      for(const m of muts){
+        if(m.type==='characterData'){ if(!textStore.has(m.target)) textStore.set(m.target,m.target.nodeValue); const z=textStore.get(m.target); m.target.nodeValue=replaceText(z,true); }
+        m.addedNodes.forEach(node=>{if(node.nodeType===1||node.nodeType===3) rememberAndApply(node.nodeType===1?node:node.parentNode);});
+      }
+      observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+    });
+    observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+    setLang('zh');
+})();
+</script>
 </body>
 </html>
