@@ -2,13 +2,25 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<!-- 允許自由縮放，適配各裝置旋轉 -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>基礎力學：無所不在的摩擦力</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title data-zh="基礎力學：無所不在的摩擦力" data-en="Basic Mechanics: Omnipresent Friction">基礎力學：無所不在的摩擦力</title>
+
+<!-- 強制注入 MathJax 解析設定 -->
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        svg: { fontCache: 'global' }
+    };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
     /* 1. 黑板視覺與零黑色原則 */
     :root {
@@ -35,14 +47,24 @@
         background-position: 0 0, 2px 3px;
         color: var(--chalk-white);
         font-family: 'Noto Sans TC', sans-serif;
-        font-size: 24px; 
+        font-size: 20px; 
         margin: 0;
         padding: 40px 0 80px; 
         line-height: 1.8;
         overflow-x: hidden; 
+        padding-top: 70px; /* 留給雙語按鈕空間 */
     }
 
     * { box-sizing: border-box; }
+
+    /* 🌟 規範：右上角橫向懸浮雙語切換器 */
+    .floating-lang-container {
+        position: fixed; top: 16px; right: 20px; z-index: 9999; display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 6px 10px; border: 2px solid var(--chalk-cyan); border-radius: 12px; background: rgba(17, 38, 31, 0.95); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 255, 255, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    .lang-label { color: var(--chalk-cyan); font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 900; user-select: none; margin-left: 4px; }
+    .lang-options { display: flex; flex-direction: row; gap: 4px; }
+    .lang-pill { padding: 6px 12px; border: 2px solid rgba(255, 255, 255, 0.35); border-radius: 6px; background: transparent; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease; touch-action: manipulation; }
+    .lang-pill.active { background: var(--chalk-cyan) !important; color: var(--bg-base) !important; border-color: var(--chalk-cyan) !important; box-shadow: 0 0 10px rgba(0, 255, 255, 0.5); font-weight: 900; }
 
     /* 2. 響應式排版 (同步首頁 1080px) */
     .wrap {
@@ -54,32 +76,92 @@
 
     .header-container {
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 24px;
         padding-bottom: 15px;
-        border-bottom: 3px solid var(--chalk-green);
+    }
+    .header-container .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 16px; letter-spacing: 0.1em; color: var(--chalk-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 8px; }
+    .header-container h1 {
+        font-size: 40px; 
+        color: var(--chalk-yellow);
+        margin: 0 0 12px 0;
+        font-weight: 900;
+        text-shadow: 0 0 14px rgba(255, 255, 0, 0.15);
+    }
+    .header-container p { color: var(--chalk-cyan); max-width: 850px; margin: 0 auto; line-height: 1.6; font-size: 20px; font-weight: bold; }
+
+    /* 🌟 V4 規範：曉臻老師專屬 Hook 區塊 */
+    .hook-box { 
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.12), rgba(0, 255, 255, 0.02)); 
+        border-left: 6px solid var(--chalk-cyan); 
+        border-radius: 12px; 
+        padding: 16px 20px; 
+        margin-bottom: 24px; 
+        box-shadow: 0 4px 20px rgba(0, 255, 255, 0.08);
+        border-right: 1px solid rgba(0, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        border-top: 1px solid rgba(0, 255, 255, 0.1);
     }
 
-    .header-container h1 {
-        font-size: 44px; 
+    .xiaozhen-logo {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background-color: var(--bg-panel);
+        border: 3px solid var(--chalk-cyan);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 38px;
+        flex-shrink: 0;
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+        overflow: hidden;
+    }
+    
+    /* 如果有真實圖片，可直接套用此樣式 */
+    .xiaozhen-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .hook-content {
+        flex: 1;
+        line-height: 1.6;
+    }
+
+    .hook-title {
         color: var(--chalk-cyan);
-        margin: 0;
-        letter-spacing: 3px;
+        font-size: 22px;
+        font-weight: 900;
+        margin-bottom: 4px;
+        font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif;
+    }
+
+    .hook-text {
+        color: var(--chalk-white);
+        font-size: 20px;
+        font-weight: bold;
     }
 
     h2 {
-        font-size: 32px; 
+        font-size: 28px; 
         color: var(--chalk-yellow);
         margin-top: 0;
-        margin-bottom: 15px;
-        border-bottom: 2px dashed rgba(255, 255, 0, 0.4);
-        padding-bottom: 12px;
+        margin-bottom: 16px;
+        font-weight: 900;
+        border-left: 6px solid var(--chalk-orange);
+        padding-left: 12px;
     }
 
     h3 {
-        font-size: 28px; 
+        font-size: 24px; 
         margin-top: 0;
-        margin-bottom: 15px;
+        margin-bottom: 12px;
         color: var(--chalk-pink);
+        font-weight: bold;
     }
 
     /* 絕對雙欄引擎 */
@@ -91,21 +173,23 @@
         align-items: stretch;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 960px) {
         .grid-2col { grid-template-columns: 1fr; }
         .header-container h1 { font-size: 32px; }
         .panel { padding: 20px; }
-        body { font-size: 20px; }
+        .floating-lang-container { top: 8px; right: 8px; padding: 6px 8px; }
+        .lang-label { display: none; }
+        .hook-box { flex-direction: column; text-align: center; }
     }
 
     .panel {
-        border: 2px solid var(--chalk-cyan);
+        border: 2px solid var(--chalk-muted);
         border-radius: 12px;
-        padding: 24px 30px; 
+        padding: 24px 28px; 
         background-color: var(--bg-panel);
         display: flex;
         flex-direction: column;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); 
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3); 
         position: relative;
     }
 
@@ -113,69 +197,72 @@
     .math-text {
         font-family: 'JetBrains Mono', monospace;
         color: var(--chalk-orange);
-        font-weight: bold;
+        font-weight: 900;
     }
     .nowrap { white-space: nowrap; }
 
     .tab-container {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-bottom: 30px;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+        border-bottom: 3px solid var(--chalk-muted);
+        padding-bottom: 12px;
     }
 
     .tab-button {
-        background-color: transparent;
-        color: var(--chalk-white);
-        border: 3px solid var(--chalk-green);
-        border-radius: 10px;
-        padding: 10px 24px;
-        font-size: 24px; 
-        font-weight: bold;
+        background-color: #102d26;
+        color: var(--chalk-muted);
+        border: 2px solid var(--chalk-muted);
+        border-radius: 10px 10px 0 0;
+        padding: 14px 16px;
+        font-size: 20px; 
+        font-weight: 900;
         cursor: pointer;
-        transition: all 0.3s ease;
-        font-family: inherit;
+        transition: all 0.2s ease;
+        touch-action: manipulation;
+        text-align: center;
     }
 
-    .tab-button.active, .tab-button:hover { 
-        background-color: var(--chalk-green); 
-        color: var(--bg-base); 
+    .tab-button.active { 
+        background-color: var(--bg-panel); 
+        color: var(--chalk-white); 
+        transform: translateY(3px);
+        box-shadow: 0 -4px 12px rgba(255, 255, 255, 0.1);
+    }
+    .tab-button:hover {
+        background-color: rgba(255,255,255,0.08);
+        color: var(--chalk-white);
     }
 
-    .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
 
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(8px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
-    .highlight-box {
-        border: 2px dashed var(--chalk-green);
-        padding: 16px 20px;
-        border-radius: 10px;
-        background-color: rgba(124, 252, 0, 0.08);
-        margin-bottom: 20px;
-    }
+    ul { padding-left: 28px; margin-top: 8px; margin-bottom: 20px; line-height: 1.8; }
+    li { margin-bottom: 8px; font-weight: bold; }
+    p { font-weight: bold; }
 
-    ul { padding-left: 30px; margin-top: 5px; margin-bottom: 20px; }
-    li { margin-bottom: 12px; }
-
-    /* 按鈕瘦身，減少版面佔用，字體縮小 */
+    /* V3/V4 按鈕彈性設計 */
     .action-btn {
-        background-color: var(--bg-base);
+        background-color: transparent;
         color: var(--chalk-white);
         border: 2px solid var(--chalk-cyan);
-        padding: 8px 16px; 
+        padding: 10px 18px; 
         border-radius: 8px;
         cursor: pointer;
         font-size: 18px; 
-        font-weight: bold;
+        font-weight: 900;
         transition: all 0.2s;
         margin: 4px;
-        display: inline-block;
-        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: manipulation;
     }
     
     .action-btn:hover:not(:disabled) { 
@@ -183,22 +270,23 @@
         transform: translateY(-2px);
     }
     .action-btn.active-btn {
-        background-color: var(--chalk-cyan);
-        color: var(--bg-base);
+        background-color: var(--chalk-cyan) !important;
+        color: var(--bg-base) !important;
+        border-color: var(--chalk-cyan) !important;
     }
     .action-btn:disabled {
         opacity: 0.3; cursor: not-allowed;
     }
 
-    /* 4. 互動區真等比縮放 */
+    /* 4. 互動區等比縮放防禦 */
     .canvas-wrap {
         width: 100%;
-        border: 3px solid var(--chalk-muted);
-        border-radius: 8px;
+        border: 2px solid var(--chalk-muted);
+        border-radius: 10px;
         background-color: var(--bg-canvas);
         overflow: hidden;
         position: relative;
-        margin-bottom: 5px;
+        margin-bottom: 16px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -217,28 +305,33 @@
         gap: 8px; 
         flex-wrap: wrap;
         width: 100%;
-        margin-top: 5px;
+        margin-top: 8px;
+        padding: 0 10px;
     }
 
     .slider-container {
-        width: 90%;
-        margin: 10px 0;
+        width: 100%;
+        margin: 12px 0;
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 16px;
         justify-content: center;
+        flex-wrap: wrap;
     }
     .slider-container input[type=range] {
         flex: 1;
+        min-width: 200px;
         accent-color: var(--chalk-orange);
         height: 8px;
+        touch-action: manipulation;
     }
     .slider-value {
         font-family: 'JetBrains Mono', monospace;
-        font-weight: bold;
-        font-size: 26px;
+        font-weight: 900;
+        font-size: 24px;
         color: var(--chalk-orange);
-        min-width: 80px;
+        min-width: 90px;
+        text-align: right;
     }
 
     /* 步驟解說專用樣式 */
@@ -252,19 +345,36 @@
 </style>
 </head>
 <body>
+
+<!-- 🌟 右上角橫向懸浮雙語切換器 -->
+<div class="floating-lang-container">
+    <span class="lang-label">Language</span>
+    <div class="lang-options">
+        <button class="lang-pill active" id="btn-lang-zh" onclick="setLang('zh')">中文</button>
+        <button class="lang-pill" id="btn-lang-en" onclick="setLang('en')">EN</button>
+    </div>
+</div>
+
 <div class="wrap">
 
     <div class="header-container">
-        <h1>基礎力學：無所不在的摩擦力</h1>
+        <div class="eyebrow">Taiwan Middle School Science · Mechanics</div>
+        <h1 data-zh="基礎力學：無所不在的摩擦力" data-en="Basic Mechanics: Omnipresent Friction">基礎力學：無所不在的摩擦力</h1>
+        <p data-zh="推不動的冰箱、打滑的腳踏車，還有資優班最愛考的「雙木塊疊放」，這些全都跟摩擦力有關！來看看微觀世界下的鋸齒，並徹底搞懂動摩擦與靜摩擦的差異。" data-en="An unmovable fridge, a slipping bike, and the classic 'stacked blocks' problem—all related to friction! Let's explore the microscopic teeth and understand static vs kinetic friction.">推不動的冰箱、打滑的腳踏車，還有資優班最愛考的「雙木塊疊放」，這些全都跟摩擦力有關！來看看微觀世界下的鋸齒，並徹底搞懂動摩擦與靜摩擦的差異。</p>
     </div>
 
     <!-- 主分頁導覽 -->
     <div class="tab-container">
-        <button class="tab-button active" onclick="openTab('tab-micro', this)">摩擦力的本質</button>
-        <button class="tab-button" onclick="openTab('tab-graph', this)" style="border-color: var(--chalk-pink);">靜摩擦 vs 動摩擦</button>
-        <button class="tab-button" onclick="openTab('tab-var', this)" style="border-color: var(--chalk-orange);">影響變因實驗</button>
-        <button class="tab-button" onclick="openTab('tab-bike', this)" style="border-color: var(--chalk-cyan);">應用與克服</button>
-        <button class="tab-button" onclick="openTab('tab-prob', this)" style="border-color: var(--chalk-purple);">資優經典試題</button>
+        <button class="tab-button active" onclick="openTab('tab-micro', this)" style="border-color: var(--chalk-cyan);" data-zh="摩擦力的本質" data-en="Nature of Friction">摩擦力的本質</button>
+        <button class="tab-button" onclick="openTab('tab-graph', this)" style="border-color: var(--chalk-pink);" data-zh="靜摩擦 vs 動摩擦" data-en="Static vs Kinetic">靜摩擦 vs 動摩擦</button>
+        <button class="tab-button" onclick="openTab('tab-var', this)" style="border-color: var(--chalk-orange);" data-zh="影響變因實驗" data-en="Variable Experiment">影響變因實驗</button>
+        <button class="tab-button" onclick="openTab('tab-bike', this)" style="border-color: var(--chalk-green);" data-zh="應用與克服" data-en="Application & Solution">應用與克服</button>
+        <button class="tab-button" onclick="openTab('tab-prob', this)" style="border-color: var(--chalk-purple);" data-zh="資優經典試題" data-en="Classic Problems">資優經典試題</button>
+    </div>
+
+    <!-- 🌟 V4 規範：曉臻老師專屬 Hook 區塊 -->
+    <div class="hook-box" id="hookBox">
+        <!-- JS 動態生成 -->
     </div>
 
     <!-- ========================================== -->
@@ -273,30 +383,31 @@
     <div id="tab-micro" class="tab-content active">
         <div class="grid-2col">
             <div class="panel" style="border-color: var(--chalk-cyan);">
-                <h2 style="color: var(--chalk-cyan);">什麼是摩擦力？</h2>
-                <p>摩擦力是一種<strong style="color: var(--chalk-yellow);">接觸力</strong>，發生在兩個互相接觸的物體表面之間。</p>
+                <h2 style="color: var(--chalk-cyan); border-left-color: var(--chalk-cyan);" data-zh="什麼是摩擦力？" data-en="What is Friction?">什麼是摩擦力？</h2>
+                <p data-zh="摩擦力是一種<strong style='color: var(--chalk-yellow);'>接觸力</strong>，發生在兩個互相接觸的物體表面之間。" data-en="Friction is a <strong style='color: var(--chalk-yellow);'>contact force</strong> that occurs between two touching surfaces.">摩擦力是一種<strong style="color: var(--chalk-yellow);">接觸力</strong>，發生在兩個互相接觸的物體表面之間。</p>
                 <ul>
-                    <li><strong class="nowrap" style="color: var(--chalk-pink);">微觀成因：</strong> 看似平滑的表面，在顯微鏡下其實充滿了<strong style="color: var(--chalk-orange);">凹凸不平的鋸齒</strong>，當兩者互相咬合拉扯時，就產生了阻力。</li>
+                    <li data-zh="<strong class='nowrap' style='color: var(--chalk-pink);'>微觀成因：</strong> 看似平滑的表面，在顯微鏡下其實充滿了<strong style='color: var(--chalk-orange);'>凹凸不平的鋸齒</strong>，當兩者互相咬合拉扯時，就產生了阻力。" data-en="<strong class='nowrap' style='color: var(--chalk-pink);'>Microscopic Cause:</strong> Seemingly smooth surfaces are actually full of <strong style='color: var(--chalk-orange);'>microscopic teeth</strong>. When they interlock and pull, resistance is created."><strong class="nowrap" style="color: var(--chalk-pink);">微觀成因：</strong> 看似平滑的表面，在顯微鏡下其實充滿了<strong style="color: var(--chalk-orange);">凹凸不平的鋸齒</strong>，當兩者互相咬合拉扯時，就產生了阻力。</li>
                 </ul>
 
-                <div class="highlight-box" style="border-color: var(--chalk-green); background-color: rgba(124, 252, 0, 0.08);">
-                    <h3 style="color: var(--chalk-green); margin-top: 0;">🚨 必考重點：方向判定</h3>
-                    <p style="margin: 0;">摩擦力的方向，永遠與物體的<strong style="color: var(--chalk-yellow);">「運動方向」或「運動趨勢」相反</strong>！<br>
+                <div style="background-color: rgba(124, 252, 0, 0.08); border: 2px dashed var(--chalk-green); padding: 16px 20px; border-radius: 10px; margin-top: auto; margin-bottom: 0;">
+                    <h3 style="color: var(--chalk-green); margin-top: 0;" data-zh="🚨 必考重點：方向判定" data-en="🚨 Exam Tip: Determining Direction">🚨 必考重點：方向判定</h3>
+                    <p style="margin: 0; line-height: 1.8;" data-zh="摩擦力的方向，永遠與物體的<strong style='color: var(--chalk-yellow);'>「運動方向」或「運動趨勢」相反</strong>！<br>▶ 你往右推，摩擦力就向左抵抗。<br>▶ 你往左推，摩擦力就向右抵抗。" data-en="Friction ALWAYS opposes the <strong style='color: var(--chalk-yellow);'>'direction of motion' or 'tendency of motion'</strong>!<br>▶ Push right, friction resists to the left.<br>▶ Push left, friction resists to the right.">
+                    摩擦力的方向，永遠與物體的<strong style="color: var(--chalk-yellow);">「運動方向」或「運動趨勢」相反</strong>！<br>
                     ▶ 你往右推，摩擦力就向左抵抗。<br>
                     ▶ 你往左推，摩擦力就向右抵抗。</p>
                 </div>
             </div>
             
             <div class="panel" style="border-color: var(--chalk-yellow);">
-                <h2 style="color: var(--chalk-yellow); text-align: center;">【互動】微觀接觸面探測儀</h2>
-                <p style="text-align: center; color: var(--chalk-muted);">拉動滑桿施加外力，觀察放大鏡底下的鋸齒變化！</p>
+                <h2 style="color: var(--chalk-yellow); text-align: center; border-left: none; justify-content: center;" data-zh="【互動】微觀接觸面探測儀" data-en="[Interact] Micro-Surface Scanner">【互動】微觀接觸面探測儀</h2>
+                <p style="text-align: center; color: var(--chalk-muted);" data-zh="拉動滑桿施加外力，觀察放大鏡底下卡死的鋸齒！" data-en="Drag the slider to apply force and observe the interlocked teeth under the magnifying glass!">拉動滑桿施加外力，觀察放大鏡底下卡死的鋸齒！</p>
                 
                 <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
                     <!-- 比例 10:8 -->
                     <canvas id="microCanvas" class="rect-canvas" style="aspect-ratio: 10 / 8;" width="1000" height="800"></canvas>
                     
-                    <div class="slider-container">
-                        <span style="font-weight: bold; color: var(--chalk-cyan); white-space: nowrap;">向右施力：</span>
+                    <div class="slider-container" style="padding-bottom: 10px;">
+                        <span style="font-weight: 900; color: var(--chalk-cyan); white-space: nowrap;" data-zh="向右施力：" data-en="Force Right:">向右施力：</span>
                         <input type="range" id="microF" min="0" max="100" value="0" step="5" oninput="updateMicro()">
                         <span class="slider-value nowrap" style="color: var(--chalk-cyan);" id="microFVal">0 gw</span>
                     </div>
@@ -311,32 +422,34 @@
     <div id="tab-graph" class="tab-content">
         <div class="grid-2col">
             <div class="panel" style="border-color: var(--chalk-pink);">
-                <h2 style="color: var(--chalk-pink);">推不動的冰箱</h2>
-                <p>當我們推重物時，會經歷兩個階段：</p>
+                <h2 style="color: var(--chalk-pink); border-left-color: var(--chalk-pink);" data-zh="推不動的冰箱" data-en="The Immovable Fridge">推不動的冰箱</h2>
+                <p data-zh="當我們推重物時，會經歷兩個階段：" data-en="When pushing a heavy object, we experience two stages:">當我們推重物時，會經歷兩個階段：</p>
                 
-                <div class="highlight-box" style="border-color: var(--chalk-cyan);">
-                    <h3 style="color: var(--chalk-cyan); margin-top: 0;">1. 靜摩擦力 (物體靜止)</h3>
-                    <p style="margin: 0;">當你施力卻推不動時，代表合力為零。<br>
+                <div style="background-color: rgba(0, 255, 255, 0.08); border: 2px dashed var(--chalk-cyan); padding: 16px 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 style="color: var(--chalk-cyan); margin-top: 0;" data-zh="1. 靜摩擦力 (物體靜止)" data-en="1. Static Friction (At Rest)">1. 靜摩擦力 (物體靜止)</h3>
+                    <p style="margin: 0; line-height: 1.8;" data-zh="當你施力卻推不動時，代表合力為零。<br>此時 <strong style='color: var(--chalk-yellow);'>靜摩擦力 ＝ 外力</strong> (會跟著外力自動變大)。<br>推不動的極限點稱為<strong style='color: var(--chalk-orange);'>「最大靜摩擦力」</strong>。" data-en="If it doesn't move when pushed, net force is zero.<br>Here, <strong style='color: var(--chalk-yellow);'>Static Friction = Applied Force</strong> (adjusts automatically).<br>The limit before moving is the <strong style='color: var(--chalk-orange);'>'Maximum Static Friction'</strong>.">
+                    當你施力卻推不動時，代表合力為零。<br>
                     此時 <strong style="color: var(--chalk-yellow);">靜摩擦力 ＝ 外力</strong> (會跟著外力自動變大)。<br>
                     推不動的極限點稱為<strong style="color: var(--chalk-orange);">「最大靜摩擦力」</strong>。</p>
                 </div>
 
-                <div class="highlight-box" style="border-color: var(--chalk-green);">
-                    <h3 style="color: var(--chalk-green); margin-top: 0;">2. 動摩擦力 (物體滑動)</h3>
-                    <p style="margin: 0;">一旦外力突破最大靜摩擦力，物體「碰」一聲滑出去。<br>
+                <div style="background-color: rgba(124, 252, 0, 0.08); border: 2px dashed var(--chalk-green); padding: 16px 20px; border-radius: 10px; margin-bottom: 0;">
+                    <h3 style="color: var(--chalk-green); margin-top: 0;" data-zh="2. 動摩擦力 (物體滑動)" data-en="2. Kinetic Friction (Sliding)">2. 動摩擦力 (物體滑動)</h3>
+                    <p style="margin: 0; line-height: 1.8;" data-zh="一旦外力突破最大靜摩擦力，物體「碰」一聲滑出去。<br>此時摩擦力會瞬間掉下來，變成一個<strong style='color: var(--chalk-pink);'>固定不變</strong>的數值，稱為「動摩擦力」。" data-en="Once the applied force exceeds max static friction, the object slides.<br>Friction instantly drops to a <strong style='color: var(--chalk-pink);'>constant</strong> value, called 'Kinetic Friction'.">
+                    一旦外力突破最大靜摩擦力，物體「碰」一聲滑出去。<br>
                     此時摩擦力會瞬間掉下來，變成一個<strong style="color: var(--chalk-pink);">固定不變</strong>的數值，稱為「動摩擦力」。</p>
                 </div>
             </div>
 
             <div class="panel" style="border-color: var(--chalk-cyan);">
-                <h2 style="color: var(--chalk-cyan); text-align: center;">【互動】推箱子實戰與 V-t 圖</h2>
-                <p style="text-align: center; color: var(--chalk-muted);">緩慢增加推力，觀察右側經典折線圖的變化！</p>
+                <h2 style="color: var(--chalk-cyan); text-align: center; border-left: none; justify-content: center;" data-zh="【互動】推箱子實戰與 V-t 圖" data-en="[Interact] Push Box & Graph">【互動】推箱子實戰與 V-t 圖</h2>
+                <p style="text-align: center; color: var(--chalk-muted);" data-zh="緩慢增加推力，觀察右側經典折線圖的變化！" data-en="Slowly increase the push force and watch the classic line graph change!">緩慢增加推力，觀察右側經典折線圖的變化！</p>
                 
                 <div class="canvas-wrap" style="border-color: var(--chalk-cyan);">
                     <canvas id="graphCanvas" class="rect-canvas" style="aspect-ratio: 10 / 9;" width="1000" height="900"></canvas>
                     
-                    <div class="slider-container">
-                        <span style="font-weight: bold; color: var(--chalk-yellow); white-space: nowrap;">水平推力：</span>
+                    <div class="slider-container" style="padding-bottom: 10px;">
+                        <span style="font-weight: 900; color: var(--chalk-yellow); white-space: nowrap;" data-zh="水平推力：" data-en="Horizontal Push:">水平推力：</span>
                         <input type="range" id="graphF" min="0" max="100" value="0" step="5" oninput="updateGraph()">
                         <span class="slider-value nowrap" style="color: var(--chalk-yellow);" id="graphFVal">0 gw</span>
                     </div>
@@ -346,37 +459,37 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- 分頁三：影響摩擦力的變因 -->
+    <!-- 分頁三：影響變因實驗 -->
     <!-- ========================================== -->
     <div id="tab-var" class="tab-content">
         <div class="grid-2col">
             <div class="panel" style="border-color: var(--chalk-orange);">
-                <h2 style="color: var(--chalk-orange);">影響摩擦力的變因</h2>
-                <p>最大靜摩擦力與動摩擦力的大小，只受以下兩點影響：</p>
+                <h2 style="color: var(--chalk-orange); border-left-color: var(--chalk-orange);" data-zh="影響摩擦力的變因" data-en="Factors Affecting Friction">影響摩擦力的變因</h2>
+                <p data-zh="最大靜摩擦力與動摩擦力的大小，只受以下兩點影響：" data-en="The magnitude of max static and kinetic friction depends ONLY on:">最大靜摩擦力與動摩擦力的大小，只受以下兩點影響：</p>
                 
-                <ol>
-                    <li><strong class="nowrap" style="color: var(--chalk-yellow);">正向力 (垂直下壓的力)：</strong> <br>物體越重 (或往下壓的力越大)，接觸面咬合越緊，摩擦力就<strong style="color: var(--chalk-pink);">越大</strong>。</li>
-                    <li style="margin-top: 15px;"><strong class="nowrap" style="color: var(--chalk-cyan);">接觸面性質：</strong> <br>表面越粗糙 (如砂紙)，摩擦力越大；表面越光滑 (如結冰)，摩擦力越小。</li>
-                </ol>
+                <ul>
+                    <li data-zh="<strong class='nowrap' style='color: var(--chalk-yellow);'>正向力 (垂直下壓的力)：</strong> <br>物體越重 (或往下壓的力越大)，接觸面咬合越緊，摩擦力就<strong style='color: var(--chalk-pink);'>越大</strong>。" data-en="<strong class='nowrap' style='color: var(--chalk-yellow);'>Normal Force (Downward Press):</strong> <br>The heavier the object (or harder the press), the tighter the surfaces interlock, resulting in <strong style='color: var(--chalk-pink);'>greater</strong> friction."><strong class="nowrap" style="color: var(--chalk-yellow);">正向力 (垂直下壓的力)：</strong> <br>物體越重 (或往下壓的力越大)，接觸面咬合越緊，摩擦力就<strong style="color: var(--chalk-pink);">越大</strong>。</li>
+                    <li style="margin-top: 15px;" data-zh="<strong class='nowrap' style='color: var(--chalk-cyan);'>接觸面性質：</strong> <br>表面越粗糙 (如砂紙)，摩擦力越大；表面越光滑 (如結冰)，摩擦力越小。" data-en="<strong class='nowrap' style='color: var(--chalk-cyan);'>Nature of Surfaces:</strong> <br>Rougher surfaces (e.g., sandpaper) = more friction; smoother surfaces (e.g., ice) = less friction."><strong class="nowrap" style="color: var(--chalk-cyan);">接觸面性質：</strong> <br>表面越粗糙 (如砂紙)，摩擦力越大；表面越光滑 (如結冰)，摩擦力越小。</li>
+                </ul>
 
-                <div class="highlight-box" style="border-color: var(--chalk-pink); background-color: rgba(255, 105, 180, 0.08);">
-                    <h3 style="color: var(--chalk-pink); margin-top: 0;">🚨 終極陷阱：接觸面積</h3>
-                    <p style="margin: 0; font-size: 26px;">摩擦力大小 <strong style="color: var(--chalk-yellow);">完全與「接觸面積」無關！</strong> 無論木塊是平放還是立起來放，只要重量一樣，摩擦力就完全一樣！</p>
+                <div style="background-color: rgba(255, 105, 180, 0.08); border: 2px dashed var(--chalk-pink); padding: 16px 20px; border-radius: 10px; margin-bottom: 0;">
+                    <h3 style="color: var(--chalk-pink); margin-top: 0;" data-zh="🚨 終極陷阱：接觸面積" data-en="🚨 Ultimate Trap: Contact Area">🚨 終極陷阱：接觸面積</h3>
+                    <p style="margin: 0; font-size: 24px;" data-zh="摩擦力大小 <strong style='color: var(--chalk-yellow);'>完全與「接觸面積」無關！</strong> 無論木塊是平放還是立起來放，只要重量一樣，摩擦力就完全一樣！" data-en="Friction magnitude is <strong style='color: var(--chalk-yellow);'>COMPLETELY UNRELATED to 'Contact Area'!</strong> Whether a block is flat or on its side, if the weight is the same, friction is exactly the same!">摩擦力大小 <strong style="color: var(--chalk-yellow);">完全與「接觸面積」無關！</strong> 無論木塊是平放還是立起來放，只要重量一樣，摩擦力就完全一樣！</p>
                 </div>
             </div>
 
             <div class="panel" style="border-color: var(--chalk-yellow);">
-                <h2 style="color: var(--chalk-yellow); text-align: center;">【互動】變因控制實驗室</h2>
-                <p style="text-align: center; color: var(--chalk-muted);">點擊按鈕切換變因，觀察「最大靜摩擦力」的極限值！</p>
+                <h2 style="color: var(--chalk-yellow); text-align: center; border-left: none; justify-content: center;" data-zh="【互動】變因控制實驗室" data-en="[Interact] Variables Lab">【互動】變因控制實驗室</h2>
+                <p style="text-align: center; color: var(--chalk-muted);" data-zh="點擊按鈕切換變因，觀察「最大靜摩擦力」的極限值！" data-en="Click buttons to change variables and observe the 'Max Static Friction' limit!">點擊按鈕切換變因，觀察「最大靜摩擦力」的極限值！</p>
                 
                 <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
                     <canvas id="varCanvas" class="rect-canvas" style="aspect-ratio: 10 / 6;" width="1000" height="600"></canvas>
                     
-                    <div class="lab-controls">
-                        <button class="action-btn" id="btnBase" onclick="setVarState('base')" style="border-color: var(--chalk-white);">🪵 標準木塊</button>
-                        <button class="action-btn" id="btnWeight" onclick="setVarState('weight')" style="border-color: var(--chalk-orange);">🧱 增加正向力</button>
-                        <button class="action-btn" id="btnArea" onclick="setVarState('area')" style="border-color: var(--chalk-pink);">📐 立著放</button>
-                        <button class="action-btn" id="btnIce" onclick="setVarState('ice')" style="border-color: var(--chalk-cyan);">🧊 地板結冰</button>
+                    <div class="lab-controls" style="padding-bottom: 12px;">
+                        <button class="action-btn" id="btnBase" onclick="setVarState('base')" style="border-color: var(--chalk-white);" data-zh="🪵 標準木塊" data-en="🪵 Standard Block">🪵 標準木塊</button>
+                        <button class="action-btn" id="btnWeight" onclick="setVarState('weight')" style="border-color: var(--chalk-orange); color: var(--chalk-orange);" data-zh="🧱 增加正向力" data-en="🧱 Increase Normal">🧱 增加正向力</button>
+                        <button class="action-btn" id="btnArea" onclick="setVarState('area')" style="border-color: var(--chalk-pink); color: var(--chalk-pink);" data-zh="📐 立著放" data-en="📐 Stand Upright">📐 立著放</button>
+                        <button class="action-btn" id="btnIce" onclick="setVarState('ice')" style="border-color: var(--chalk-cyan); color: var(--chalk-cyan);" data-zh="🧊 地板結冰" data-en="🧊 Icy Floor">🧊 地板結冰</button>
                     </div>
                 </div>
             </div>
@@ -384,22 +497,22 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- 分頁四：摩擦力的應用與克服 -->
+    <!-- 分頁四：應用與克服 -->
     <!-- ========================================== -->
     <div id="tab-bike" class="tab-content">
         <div class="grid-2col">
             <div class="panel" style="border-color: var(--chalk-green);">
-                <h2 style="color: var(--chalk-green);">摩擦力的應用與克服</h2>
-                <p>摩擦力雖然會浪費能源 (轉換成熱能散失)，但沒有它我們連走路都會摔倒！</p>
+                <h2 style="color: var(--chalk-green); border-left-color: var(--chalk-green);" data-zh="摩擦力的應用與克服" data-en="Friction: Application & Solution">摩擦力的應用與克服</h2>
+                <p data-zh="摩擦力雖然會浪費能源 (轉換成熱能散失)，但沒有它我們連走路都會摔倒！" data-en="Although friction wastes energy (lost as heat), without it, we would slip just trying to walk!">摩擦力雖然會浪費能源 (轉換成熱能散失)，但沒有它我們連走路都會摔倒！</p>
                 
-                <div class="highlight-box" style="border-color: var(--chalk-orange);">
-                    <h3 style="color: var(--chalk-orange); margin-top: 0;">需要「增加」摩擦力的時候：</h3>
-                    <p style="margin: 0;">防止打滑！例如：鞋底的防滑紋路、汽車的輪胎胎紋、下雪時綁上的雪鏈。</p>
+                <div style="background-color: rgba(255, 165, 0, 0.08); border: 2px dashed var(--chalk-orange); padding: 16px 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 style="color: var(--chalk-orange); margin-top: 0;" data-zh="需要「增加」摩擦力的時候：" data-en="When to 'Increase' Friction:">需要「增加」摩擦力的時候：</h3>
+                    <p style="margin: 0;" data-zh="防止打滑！例如：鞋底的防滑紋路、汽車的輪胎胎紋、下雪時綁上的雪鏈。" data-en="To prevent slipping! e.g., Anti-slip patterns on shoe soles, tire treads, snow chains.">防止打滑！例如：鞋底的防滑紋路、汽車的輪胎胎紋、下雪時綁上的雪鏈。</p>
                 </div>
 
-                <div class="highlight-box" style="border-color: var(--chalk-cyan);">
-                    <h3 style="color: var(--chalk-cyan); margin-top: 0;">需要「減少」摩擦力的時候：</h3>
-                    <p style="margin: 0;">
+                <div style="background-color: rgba(0, 255, 255, 0.08); border: 2px dashed var(--chalk-cyan); padding: 16px 20px; border-radius: 10px; margin-bottom: 0;">
+                    <h3 style="color: var(--chalk-cyan); margin-top: 0;" data-zh="需要「減少」摩擦力的時候：" data-en="When to 'Reduce' Friction:">需要「減少」摩擦力的時候：</h3>
+                    <p style="margin: 0; line-height: 1.8;" data-zh="1. <strong style='color: var(--chalk-yellow);'>加潤滑油：</strong> 改變接觸面性質，變得更光滑。<br>2. <strong style='color: var(--chalk-yellow);'>使用流線型設計：</strong> 減少空氣或水的阻力與摩擦。" data-en="1. <strong style='color: var(--chalk-yellow);'>Add Lubricants:</strong> Change surface nature to be smoother.<br>2. <strong style='color: var(--chalk-yellow);'>Use Streamlined Design:</strong> Reduce air or water drag and friction.">
                         1. <strong style="color: var(--chalk-yellow);">加潤滑油：</strong> 改變接觸面性質，變得更光滑。<br>
                         2. <strong style="color: var(--chalk-yellow);">使用流線型設計：</strong> 減少空氣或水的阻力與摩擦。
                     </p>
@@ -407,15 +520,15 @@
             </div>
 
             <div class="panel" style="border-color: var(--chalk-purple);">
-                <h2 style="color: var(--chalk-purple); text-align: center;">【互動】腳踏車改造車庫</h2>
-                <p style="text-align: center; color: var(--chalk-muted);">點擊下方改造按鈕，判斷是為了增加還是減少摩擦力！</p>
+                <h2 style="color: var(--chalk-purple); text-align: center; border-left: none; justify-content: center;" data-zh="【互動】腳踏車改造車庫" data-en="[Interact] Bike Mod Garage">【互動】腳踏車改造車庫</h2>
+                <p style="text-align: center; color: var(--chalk-muted);" data-zh="點擊下方改造按鈕，判斷是為了增加還是減少摩擦力！" data-en="Click mod buttons to decide if it increases or decreases friction!">點擊下方改造按鈕，判斷是為了增加還是減少摩擦力！</p>
                 
                 <div class="canvas-wrap" style="border-color: var(--chalk-purple);">
                     <canvas id="bikeCanvas" class="rect-canvas" style="aspect-ratio: 10 / 7;" width="1000" height="700"></canvas>
                     
-                    <div class="lab-controls">
-                        <button class="action-btn" onclick="triggerBike('tire')" style="border-color: var(--chalk-orange);">🛞 加深胎紋</button>
-                        <button class="action-btn" onclick="triggerBike('chain')" style="border-color: var(--chalk-cyan);">🛢️ 鏈條上油</button>
+                    <div class="lab-controls" style="padding-bottom: 12px;">
+                        <button class="action-btn" onclick="triggerBike('tire')" style="border-color: var(--chalk-orange); color: var(--chalk-orange);" data-zh="🛞 加深胎紋" data-en="🛞 Deepen Tread">🛞 加深胎紋</button>
+                        <button class="action-btn" onclick="triggerBike('chain')" style="border-color: var(--chalk-cyan); color: var(--chalk-cyan);" data-zh="🛢️ 鏈條上油" data-en="🛢️ Oil Chain">🛢️ 鏈條上油</button>
                     </div>
                 </div>
             </div>
@@ -423,72 +536,72 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- ★ 分頁五：資優經典試題 (完美還原三部曲) ★ -->
+    <!-- ★ 分頁五：資優經典試題 ★ -->
     <!-- ========================================== -->
     <div id="tab-prob" class="tab-content">
         <!-- 子分頁切換列 -->
-        <div class="lab-controls" style="margin-bottom: 20px;">
-            <button class="action-btn active-btn" id="btnModeF" onclick="setProbMode('fridge')" style="border-color: var(--chalk-cyan); font-size: 22px;">🧊 牆上的冰箱</button>
-            <button class="action-btn" id="btnModeS" onclick="setProbMode('stack')" style="border-color: var(--chalk-yellow); font-size: 22px;">🧱 雙木塊疊放</button>
-            <button class="action-btn" id="btnModeW" onclick="setProbMode('wall')" style="border-color: var(--chalk-pink); font-size: 22px;">🏢 牆間木塊</button>
+        <div class="lab-controls" style="margin-bottom: 24px; background: transparent; padding: 0;">
+            <button class="action-btn active-btn" id="btnModeF" onclick="setProbMode('fridge')" style="border-color: var(--chalk-cyan); font-size: 20px; padding: 12px 24px;" data-zh="🧊 牆上的冰箱" data-en="🧊 Wall Fridge">🧊 牆上的冰箱</button>
+            <button class="action-btn" id="btnModeS" onclick="setProbMode('stack')" style="border-color: var(--chalk-yellow); font-size: 20px; padding: 12px 24px;" data-zh="🧱 雙木塊疊放" data-en="🧱 Stacked Blocks">🧱 雙木塊疊放</button>
+            <button class="action-btn" id="btnModeW" onclick="setProbMode('wall')" style="border-color: var(--chalk-pink); font-size: 20px; padding: 12px 24px;" data-zh="🏢 牆間木塊" data-en="🏢 Blocks Between Walls">🏢 牆間木塊</button>
         </div>
 
         <div class="grid-2col">
             <!-- 左欄：解題三部曲文字區 -->
             <div class="panel" style="border-color: var(--chalk-purple);">
-                <h2 style="color: var(--chalk-purple);">【解題三部曲】</h2>
+                <h2 style="color: var(--chalk-purple); border-left-color: var(--chalk-purple);" data-zh="【解題三部曲】" data-en="[3-Step Solution]">【解題三部曲】</h2>
                 
                 <!-- 步驟切換按鈕 -->
-                <div class="lab-controls" style="justify-content: flex-start; margin-bottom: 20px; border-bottom: 2px dashed var(--chalk-muted); padding-bottom: 15px;">
-                    <button class="action-btn active-btn" id="btnStep0" onclick="setProbStep(0)" style="border-color: var(--chalk-white);">❓ 1. 問題</button>
-                    <button class="action-btn" id="btnStep1" onclick="setProbStep(1)" style="border-color: var(--chalk-white);">💡 2. 提示</button>
-                    <button class="action-btn" id="btnStep2" onclick="setProbStep(2)" style="border-color: var(--chalk-white);">✅ 3. 解答</button>
+                <div class="lab-controls" style="justify-content: flex-start; margin-bottom: 20px; border-bottom: 2px dashed var(--chalk-muted); padding-bottom: 15px; background: transparent;">
+                    <button class="action-btn active-btn" id="btnStep0" onclick="setProbStep(0)" style="border-color: var(--chalk-white);" data-zh="❓ 1. 問題" data-en="❓ 1. Problem">❓ 1. 問題</button>
+                    <button class="action-btn" id="btnStep1" onclick="setProbStep(1)" style="border-color: var(--chalk-white);" data-zh="💡 2. 提示" data-en="💡 2. Hint">💡 2. 提示</button>
+                    <button class="action-btn" id="btnStep2" onclick="setProbStep(2)" style="border-color: var(--chalk-white);" data-zh="✅ 3. 解答" data-en="✅ 3. Answer">✅ 3. 解答</button>
                 </div>
 
                 <!-- 冰箱題文字 -->
                 <div id="text-fridge">
                     <div id="f-step0" class="step-text active">
-                        <h3 style="color: var(--chalk-cyan);">❓ 問題：</h3>
-                        <p>質量 <span class="math-text">50kg</span> 的冰箱壓在牆上。已知在平地上推動這個冰箱，最少需要 <span class="math-text">25kgw</span> 的水平力。</p>
-                        <p>請問現在壓在牆上，最少需要多少推力 (<span class="math-text">kgw</span>) 冰箱才不會掉落？</p>
+                        <h3 style="color: var(--chalk-cyan);" data-zh="❓ 問題：" data-en="❓ Problem:">❓ 問題：</h3>
+                        <p data-zh="質量 <span class='math-text'>50kg</span> 的冰箱壓在牆上。已知在平地上推動這個冰箱，最少需要 <span class='math-text'>25kgw</span> 的水平力。" data-en="A <span class='math-text'>50kg</span> fridge is pressed against a wall. On flat ground, it takes at least <span class='math-text'>25kgw</span> of horizontal force to move it.">質量 <span class="math-text">50kg</span> 的冰箱壓在牆上。已知在平地上推動這個冰箱，最少需要 <span class="math-text">25kgw</span> 的水平力。</p>
+                        <p data-zh="請問現在壓在牆上，最少需要多少推力 (<span class='math-text'>kgw</span>) 冰箱才不會掉落？" data-en="How much pushing force (<span class='math-text'>kgw</span>) is required at minimum to keep the fridge from falling while pressed against the wall?">請問現在壓在牆上，最少需要多少推力 (<span class="math-text">kgw</span>) 冰箱才不會掉落？</p>
                     </div>
                     <div id="f-step1" class="step-text">
-                        <h3 style="color: var(--chalk-yellow);">💡 提示：</h3>
-                        <p>1. 冰箱要靜止不掉，向上的靜摩擦力必須等於向下的重力 (<span class="math-text">50kgw</span>)。</p>
-                        <p>2. 從平地推動的經驗得知，極限狀態下：<br>
+                        <h3 style="color: var(--chalk-yellow);" data-zh="💡 提示：" data-en="💡 Hint:">💡 提示：</h3>
+                        <p data-zh="1. 冰箱要靜止不掉，向上的靜摩擦力必須等於向下的重力 (<span class='math-text'>50kgw</span>)。" data-en="1. To prevent falling, the upward static friction must equal the downward gravity (<span class='math-text'>50kgw</span>).">1. 冰箱要靜止不掉，向上的靜摩擦力必須等於向下的重力 (<span class="math-text">50kgw</span>)。</p>
+                        <p data-zh="2. 從平地推動的經驗得知，極限狀態下：<br><strong style='color: var(--chalk-green);'>最大靜摩擦力 : 正向力 = 25 : 50 = 1 : 2</strong>" data-en="2. From the flat ground experience, at the limit:<br><strong style='color: var(--chalk-green);'>Max Static Friction : Normal Force = 25 : 50 = 1 : 2</strong>">2. 從平地推動的經驗得知，極限狀態下：<br>
                         <strong style="color: var(--chalk-green);">最大靜摩擦力 : 正向力 = 25 : 50 = 1 : 2</strong></p>
-                        <p>也就是說，最大靜摩擦力永遠是正向力的一半！</p>
+                        <p data-zh="也就是說，最大靜摩擦力永遠是正向力的一半！" data-en="That is, maximum static friction is always half of the normal force!">也就是說，最大靜摩擦力永遠是正向力的一半！</p>
                     </div>
                     <div id="f-step2" class="step-text">
-                        <h3 style="color: var(--chalk-pink);">✅ 解答：</h3>
-                        <p>在牆上，你的推力變成了「正向力」。</p>
-                        <p>因為需要 <span class="math-text">50kgw</span> 的摩擦力來抵抗重力，且摩擦力是正向力的一半，所以：</p>
-                        <p style="font-size: 28px; color: var(--chalk-orange); font-weight: bold;">
+                        <h3 style="color: var(--chalk-pink);" data-zh="✅ 解答：" data-en="✅ Answer:">✅ 解答：</h3>
+                        <p data-zh="在牆上，你的推力變成了「正向力」。" data-en="On the wall, your pushing force becomes the 'Normal Force'.">在牆上，你的推力變成了「正向力」。</p>
+                        <p data-zh="因為需要 <span class='math-text'>50kgw</span> 的摩擦力來抵抗重力，且摩擦力是正向力的一半，所以：" data-en="Since <span class='math-text'>50kgw</span> of friction is needed to resist gravity, and friction is half the normal force:">因為需要 <span class="math-text">50kgw</span> 的摩擦力來抵抗重力，且摩擦力是正向力的一半，所以：</p>
+                        <p style="font-size: 26px; color: var(--chalk-orange); font-weight: 900;" data-zh="所需正向力 (推力) = 50 × 2 = 100 kgw！" data-en="Required Normal Force (Push) = 50 × 2 = 100 kgw!">
                             所需正向力 (推力) = 50 × 2 = 100 kgw！
                         </p>
                     </div>
                 </div>
 
-                <!-- ★ 雙木塊題文字 (完美還原講義) ★ -->
+                <!-- ★ 雙木塊題文字 ★ -->
                 <div id="text-stack" style="display: none;">
                     <div id="s-step0" class="step-text active">
-                        <h3 style="color: var(--chalk-cyan);">❓ 問題：</h3>
-                        <p>右圖中，A、B 同時受到彈簧的作用力，請問：</p>
-                        <p>(1) A 木塊所受的摩擦力方向為何？</p>
-                        <p>(2) A 木塊的彈簧讀數為 <span class="math-text">50gw</span>，B 木塊在地面上的摩擦力為 <span class="math-text">350gw</span>，請問 B 木塊的彈簧讀數是多少？(兩木塊皆為靜止)</p>
+                        <h3 style="color: var(--chalk-cyan);" data-zh="❓ 問題：" data-en="❓ Problem:">❓ 問題：</h3>
+                        <p data-zh="右圖中，A、B 同時受到彈簧的作用力，請問：" data-en="In the diagram, A and B are acted upon by springs. Ask:">右圖中，A、B 同時受到彈簧的作用力，請問：</p>
+                        <p data-zh="(1) A 木塊所受的摩擦力方向為何？" data-en="(1) What is the direction of friction on block A?">(1) A 木塊所受的摩擦力方向為何？</p>
+                        <p data-zh="(2) A 木塊的彈簧讀數為 <span class='math-text'>50gw</span>，B 木塊在地面上的摩擦力為 <span class='math-text'>350gw</span>，請問 B 木塊的彈簧讀數是多少？(兩木塊皆為靜止)" data-en="(2) Spring on A reads <span class='math-text'>50gw</span>. Ground friction on B is <span class='math-text'>350gw</span>. What is the reading of spring on B? (Both blocks are at rest)">(2) A 木塊的彈簧讀數為 <span class="math-text">50gw</span>，B 木塊在地面上的摩擦力為 <span class="math-text">350gw</span>，請問 B 木塊的彈簧讀數是多少？(兩木塊皆為靜止)</p>
                     </div>
                     <div id="s-step1" class="step-text">
-                        <h3 style="color: var(--chalk-yellow);">💡 提示 (拆解 A)：</h3>
-                        <p>先單獨看上面的 A 木塊！<br>
+                        <h3 style="color: var(--chalk-yellow);" data-zh="💡 提示 (拆解 A)：" data-en="💡 Hint (Analyze A):">💡 提示 (拆解 A)：</h3>
+                        <p data-zh="先單獨看上面的 A 木塊！<br>A 保持靜止，合力為零。既然它被彈簧往<strong style='color: var(--chalk-cyan);'>右</strong>拉 <span class='math-text'>50gw</span>，為了保持靜止，底下的 B 一定給它一個往<strong style='color: var(--chalk-pink);'>左</strong>的摩擦力。" data-en="Look at block A alone first!<br>A is at rest, net force is zero. Since it's pulled <strong style='color: var(--chalk-cyan);'>Right</strong> by <span class='math-text'>50gw</span>, the B underneath MUST provide a <strong style='color: var(--chalk-pink);'>Leftward</strong> friction to keep it at rest.">先單獨看上面的 A 木塊！<br>
                         A 保持靜止，合力為零。既然它被彈簧往<strong style="color: var(--chalk-cyan);">右</strong>拉 <span class="math-text">50gw</span>，為了保持靜止，底下的 B 一定給它一個往<strong style="color: var(--chalk-pink);">左</strong>的摩擦力。</p>
-                        <p><strong style="color: var(--chalk-green);">結論：B 給 A 一個向左 50gw 的摩擦力。</strong></p>
+                        <p data-zh="<strong style='color: var(--chalk-green);'>結論：B 給 A 一個向左 50gw 的摩擦力。</strong>" data-en="<strong style='color: var(--chalk-green);'>Conclusion: B applies 50gw leftward friction on A.</strong>"><strong style="color: var(--chalk-green);">結論：B 給 A 一個向左 50gw 的摩擦力。</strong></p>
                     </div>
                     <div id="s-step2" class="step-text">
-                        <h3 style="color: var(--chalk-pink);">✅ 解答 (拆解 B)：</h3>
-                        <p>根據「作用力與反作用力」，B 給 A 向左的摩擦力，<strong style="color: var(--chalk-orange);">A 就必定給 B 向右 50gw 的摩擦力！</strong></p>
-                        <p>現在看 B 的受力：B 有往左滑動的趨勢，所以地面給它向右 <span class="math-text">350gw</span> 的摩擦力。<br>
+                        <h3 style="color: var(--chalk-pink);" data-zh="✅ 解答 (拆解 B)：" data-en="✅ Answer (Analyze B):">✅ 解答 (拆解 B)：</h3>
+                        <p data-zh="根據「作用力與反作用力」，B 給 A 向左的摩擦力，<strong style='color: var(--chalk-orange);'>A 就必定給 B 向右 50gw 的摩擦力！</strong>" data-en="By 'Action and Reaction', if B gives A leftward friction, <strong style='color: var(--chalk-orange);'>A MUST give B rightward 50gw friction!</strong>">根據「作用力與反作用力」，B 給 A 向左的摩擦力，<strong style="color: var(--chalk-orange);">A 就必定給 B 向右 50gw 的摩擦力！</strong></p>
+                        <p data-zh="現在看 B 的受力：B 有往左滑動的趨勢，所以地面給它向右 <span class='math-text'>350gw</span> 的摩擦力。<br>向右的總力 = A給的摩擦(50) + 地面摩擦(350) = <span class='math-text'>400gw</span>" data-en="Now look at B: B tends to slide left, so ground gives it rightward <span class='math-text'>350gw</span> friction.<br>Total Rightward Force = Friction from A (50) + Ground Friction (350) = <span class='math-text'>400gw</span>">現在看 B 的受力：B 有往左滑動的趨勢，所以地面給它向右 <span class="math-text">350gw</span> 的摩擦力。<br>
                         向右的總力 = A給的摩擦(50) + 地面摩擦(350) = <span class="math-text">400gw</span></p>
-                        <p style="font-size: 28px; color: var(--chalk-orange); font-weight: bold;">
+                        <p style="font-size: 26px; color: var(--chalk-orange); font-weight: 900;" data-zh="因為 B 靜止，所以向左的彈簧拉力 F = 400 gw！" data-en="Since B is at rest, Leftward Spring Force F = 400 gw!">
                             因為 B 靜止，所以向左的彈簧拉力 F = 400 gw！
                         </p>
                     </div>
@@ -497,21 +610,21 @@
                 <!-- ★ 牆間木塊題文字 ★ -->
                 <div id="text-wall" style="display: none;">
                     <div id="w-step0" class="step-text active">
-                        <h3 style="color: var(--chalk-cyan);">❓ 問題：</h3>
-                        <p>木塊重量皆為 <span class="math-text">W</span>，且皆為靜止狀態。</p>
-                        <p>請問圖中每一個接觸面與牆面間的摩擦力各為何？</p>
+                        <h3 style="color: var(--chalk-cyan);" data-zh="❓ 問題：" data-en="❓ Problem:">❓ 問題：</h3>
+                        <p data-zh="木塊重量皆為 <span class='math-text'>W</span>，且皆為靜止狀態。" data-en="Block weights are all <span class='math-text'>W</span>, and all are at rest.">木塊重量皆為 <span class="math-text">W</span>，且皆為靜止狀態。</p>
+                        <p data-zh="請問圖中每一個接觸面與牆面間的摩擦力各為何？" data-en="What is the friction at each contact surface and wall in the diagram?">請問圖中每一個接觸面與牆面間的摩擦力各為何？</p>
                     </div>
                     <div id="w-step1" class="step-text">
-                        <h3 style="color: var(--chalk-yellow);">💡 提示 (系統觀念)：</h3>
-                        <p>1. 把相連的木塊當成<strong style="color: var(--chalk-green);">「一個整體」</strong>來看！<br>
+                        <h3 style="color: var(--chalk-yellow);" data-zh="💡 提示 (系統觀念)：" data-en="💡 Hint (System Concept):">💡 提示 (系統觀念)：</h3>
+                        <p data-zh="1. 把相連的木塊當成<strong style='color: var(--chalk-green);'>「一個整體」</strong>來看！<br>雙木塊總重 <span class='math-text'>2W</span>；三木塊總重 <span class='math-text'>3W</span>。" data-en="1. Treat connected blocks as a <strong style='color: var(--chalk-green);'>'Single Whole'</strong>!<br>2 blocks total weight <span class='math-text'>2W</span>; 3 blocks total weight <span class='math-text'>3W</span>.">1. 把相連的木塊當成<strong style="color: var(--chalk-green);">「一個整體」</strong>來看！<br>
                         雙木塊總重 <span class="math-text">2W</span>；三木塊總重 <span class="math-text">3W</span>。</p>
-                        <p>2. 因為整體靜止，所以兩側牆壁提供的向上摩擦力總和，必須等於物體總重量 (左右牆壁平均分擔)。</p>
+                        <p data-zh="2. 因為整體靜止，所以兩側牆壁提供的向上摩擦力總和，必須等於物體總重量 (左右牆壁平均分擔)。" data-en="2. Because the whole is at rest, the total upward friction from both walls must equal the total weight (shared equally by L/R walls).">2. 因為整體靜止，所以兩側牆壁提供的向上摩擦力總和，必須等於物體總重量 (左右牆壁平均分擔)。</p>
                     </div>
                     <div id="w-step2" class="step-text">
-                        <h3 style="color: var(--chalk-pink);">✅ 解答 (內部拆解)：</h3>
-                        <p>【雙木塊】<br>
+                        <h3 style="color: var(--chalk-pink);" data-zh="✅ 解答 (內部拆解)：" data-en="✅ Answer (Internal Analysis):">✅ 解答 (內部拆解)：</h3>
+                        <p data-zh="【雙木塊】<br>牆面摩擦力各為 <strong style='color: var(--chalk-orange);'>W</strong>。兩木塊受力對稱，彼此間沒有相對滑動趨勢，故<strong style='color: var(--chalk-orange);'>木塊間摩擦力為 0</strong>。" data-en="[2 Blocks]<br>Wall friction is <strong style='color: var(--chalk-orange);'>W</strong> each. Blocks are symmetric with no relative sliding tendency, so <strong style='color: var(--chalk-orange);'>friction between blocks is 0</strong>.">【雙木塊】<br>
                         牆面摩擦力各為 <strong style="color: var(--chalk-orange);">W</strong>。兩木塊受力對稱，彼此間沒有相對滑動趨勢，故<strong style="color: var(--chalk-orange);">木塊間摩擦力為 0</strong>。</p>
-                        <p>【三木塊】<br>
+                        <p data-zh="【三木塊】<br>牆面摩擦力各為 <strong style='color: var(--chalk-orange);'>1.5W</strong>。單看中間木塊，重力 <span class='math-text'>W</span> 向下，由左右木塊各提供 <strong style='color: var(--chalk-orange);'>0.5W</strong> 向上的摩擦力支撐！" data-en="[3 Blocks]<br>Wall friction is <strong style='color: var(--chalk-orange);'>1.5W</strong> each. Looking only at middle block: Gravity <span class='math-text'>W</span> down, supported by <strong style='color: var(--chalk-orange);'>0.5W</strong> upward friction from L/R blocks each!">【三木塊】<br>
                         牆面摩擦力各為 <strong style="color: var(--chalk-orange);">1.5W</strong>。單看中間木塊，重力 <span class="math-text">W</span> 向下，由左右木塊各提供 <strong style="color: var(--chalk-orange);">0.5W</strong> 向上的摩擦力支撐！</p>
                     </div>
                 </div>
@@ -520,14 +633,14 @@
 
             <!-- 右欄：純動畫展示區 -->
             <div class="panel" style="border-color: var(--chalk-yellow);">
-                <h2 style="color: var(--chalk-yellow); text-align: center;">【力圖解析】</h2>
+                <h2 style="color: var(--chalk-yellow); text-align: center; border-left: none; justify-content: center;" data-zh="【力圖解析】" data-en="[Force Diagram Analysis]">【力圖解析】</h2>
                 
                 <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
                     <canvas id="probCanvas" class="rect-canvas" style="aspect-ratio: 10 / 10;" width="1000" height="1000"></canvas>
                     
                     <!-- 冰箱題專用控制滑桿 -->
-                    <div id="probCtrl-fridge" class="slider-container" style="display: none; margin-top: 15px;">
-                        <span style="font-weight: bold; color: var(--chalk-cyan); white-space: nowrap;">牆面推力：</span>
+                    <div id="probCtrl-fridge" class="slider-container" style="display: none; padding: 10px 0;">
+                        <span style="font-weight: 900; color: var(--chalk-cyan); white-space: nowrap;" data-zh="牆面推力：" data-en="Wall Push:">牆面推力：</span>
                         <input type="range" id="probF" min="0" max="150" value="0" step="10" oninput="updateProb()">
                         <span class="slider-value nowrap" style="color: var(--chalk-cyan);" id="probFVal">0 kgw</span>
                     </div>
@@ -539,6 +652,75 @@
 </div>
 
 <script>
+    let currentLang = 'zh';
+
+    window.setLang = function(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
+
+        document.getElementById('btn-lang-zh').classList.toggle('active', lang === 'zh');
+        document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+
+        document.querySelectorAll('[data-zh][data-en]').forEach(el => {
+            el.innerHTML = el.getAttribute(`data-${lang}`);
+        });
+
+        // 重新繪製當前活動的 Canvas 以更新文字
+        drawActiveCanvas();
+        updateHookBox();
+    };
+
+    function tr(zh, en) {
+        return currentLang === 'en' ? en : zh;
+    }
+
+    const hooks = {
+        'tab-micro': {
+            zh: "為什麼溜冰鞋可以在冰上滑行，但在柏油路上卻很難滑？摩擦力到底是從哪裡來的？",
+            en: "Why do ice skates glide on ice but not on asphalt? Where does friction actually come from?"
+        },
+        'tab-graph': {
+            zh: "推一個很重的衣櫃，一開始推不動，但一旦推動了之後，好像就變得比較輕鬆了？這是為什麼？",
+            en: "When pushing a heavy wardrobe, it's hard to start, but once moving, it feels easier. Why is that?"
+        },
+        'tab-var': {
+            zh: "把一塊磚頭平放和立著放，哪一種比較難推動？接觸面積真的會影響摩擦力嗎？",
+            en: "Is it harder to push a brick laid flat or stood upright? Does contact area really affect friction?"
+        },
+        'tab-bike': {
+            zh: "腳踏車的鏈條要上油，但煞車皮卻要有紋路，摩擦力到底是好朋友還是壞朋友？",
+            en: "Bike chains need oil, but brake pads need texture. Is friction a good friend or a bad enemy?"
+        },
+        'tab-prob': {
+            zh: "如果你用力把一本書壓在牆上不讓它掉下來，是你的推力抵銷了重力嗎？還是有別的力在幫忙？",
+            en: "If you press a book hard against a wall so it doesn't fall, is your push canceling gravity? Or is another force helping?"
+        }
+    };
+
+    // 🌟 獨立抽出的 V4 曉臻老師專屬 Hook 更新函數
+    function updateHookBox() {
+        const activeTab = document.querySelector('.tab-content.active');
+        if (!activeTab) return;
+        const tabId = activeTab.id;
+        
+        const hookBox = document.getElementById('hookBox');
+        if(hookBox) {
+            const titleText = tr("👩🏻‍🏫 曉臻老師說：", "👩🏻‍🏫 Teacher Xiaozhen says:");
+            const contentText = tr(hooks[tabId].zh, hooks[tabId].en);
+            
+            hookBox.innerHTML = `
+                <div class="xiaozhen-logo">
+                    <!-- 若有專屬圖片，可將下方 emoji 替換為 <img src="您的Base64或網址" alt="曉臻老師"> -->
+                    👩🏻‍🏫
+                </div>
+                <div class="hook-content">
+                    <div class="hook-title">${titleText}</div>
+                    <div class="hook-text">${contentText}</div>
+                </div>
+            `;
+        }
+    }
+
     // ==========================================
     // 頁籤切換控制
     // ==========================================
@@ -546,12 +728,13 @@
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('active');
-            btn.style.backgroundColor = 'transparent';
-            btn.style.color = 'var(--chalk-white)';
+            btn.style.backgroundColor = '#102d26';
+            btn.style.color = 'var(--chalk-muted)';
         });
         
         document.getElementById(tabId).classList.add('active');
-        
+        updateHookBox(); // 🌟 V4 觸發更新曉臻老師對話
+
         if (btnElement) {
             btnElement.classList.add('active');
             if (tabId === 'tab-micro') {
@@ -570,11 +753,28 @@
                 btnElement.style.backgroundColor = 'var(--chalk-purple)';
                 setProbMode('fridge');
             }
-            btnElement.style.color = 'var(--bg-base)';
+            btnElement.style.color = 'var(--bg-panel)';
         }
     }
 
-    // 箭頭繪製輔助函數
+    function drawActiveCanvas() {
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab) {
+            if (activeTab.id === 'tab-micro') drawMicroScene(parseInt(document.getElementById('microF').value));
+            if (activeTab.id === 'tab-graph') drawGraphScene();
+            if (activeTab.id === 'tab-var') drawVarScene();
+            if (activeTab.id === 'tab-bike') drawBikeScene();
+            if (activeTab.id === 'tab-prob') drawProbScene();
+        }
+    }
+
+    function resizeCanvases() {
+        drawActiveCanvas();
+    }
+    window.addEventListener('resize', resizeCanvases);
+
+
+    // 箭頭繪製輔助函數 (共用)
     function drawArrow(ctx, fromX, fromY, toX, toY, color, width) {
         if(Math.abs(fromX - toX) < 1 && Math.abs(fromY - toY) < 1) return;
         let headlen = width * 2.5; 
@@ -596,7 +796,7 @@
         ctx.fill();
     }
 
-    // ★ 逼真彈簧繪製函數 ★
+    // 逼真彈簧繪製函數
     function drawSpring(ctx, startX, y, len, color, width=20, coils=10) {
         ctx.strokeStyle = color; ctx.lineWidth = 6; ctx.lineJoin = 'round';
         ctx.beginPath();
@@ -626,13 +826,12 @@
         const cvs = document.getElementById('microCanvas');
         if (!cvs) return;
         let ctx = cvs.getContext('2d');
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-        ctx.fillStyle = '#0b1813';
-        ctx.fillRect(0, 0, cvs.width, cvs.height);
+        const Wcvs = cvs.width; const Hcvs = cvs.height;
+        ctx.clearRect(0, 0, Wcvs, Hcvs);
 
-        let cx = 500;
-        ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 36px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('巨觀視角', cx, 60);
+        let cx = Wcvs/2;
+        ctx.fillStyle = '#FFFFFF'; ctx.font = '900 36px "Noto Sans TC", sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(tr('巨觀視角', 'Macroscopic View'), cx, 60);
 
         ctx.fillStyle = '#5b7a6b';
         ctx.fillRect(100, 240, 800, 40);
@@ -640,58 +839,65 @@
         ctx.fillRect(cx - 100, 90, 200, 150);
         ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 4;
         ctx.strokeRect(cx - 100, 90, 200, 150);
-        ctx.fillStyle = '#11261f'; ctx.font = 'bold 32px sans-serif';
-        ctx.fillText('木塊', cx, 180);
+        ctx.fillStyle = '#11261f'; ctx.font = '900 32px "Noto Sans TC", sans-serif';
+        ctx.fillText(tr('木塊', 'Block'), cx, 180);
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 3; ctx.setLineDash([10, 10]);
         ctx.beginPath(); ctx.moveTo(cx - 50, 240); ctx.lineTo(150, 480); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(cx + 50, 240); ctx.lineTo(850, 480); ctx.stroke();
         ctx.setLineDash([]);
 
-        ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 36px sans-serif';
-        ctx.fillText('放大 1000 倍：微觀接觸面', cx, 420);
+        ctx.fillStyle = '#FFFF00'; ctx.font = '900 36px "Noto Sans TC", sans-serif';
+        ctx.fillText(tr('放大 1000 倍：微觀接觸面', '1000x Zoom: Microscopic Surface'), cx, 420);
         
         let microY = 650; 
-        let shiftX = (fApp / 100) * 40; 
-
+        
+        // ★ V3 防禦：靜摩擦微觀世界絕對鎖死（無動畫位移） ★
         ctx.fillStyle = '#5b7a6b';
         ctx.beginPath();
-        ctx.moveTo(150, 800); ctx.lineTo(150, microY + 20);
+        ctx.moveTo(130, 800);
+        ctx.lineTo(130, microY);
         for(let i=0; i<10; i++) {
-            ctx.lineTo(150 + i*70 + 35, microY - 40);
-            ctx.lineTo(150 + i*70 + 70, microY + 20);
+            ctx.lineTo(130 + i*70 + 35, microY - 60);
+            ctx.lineTo(130 + i*70 + 70, microY);
         }
-        ctx.lineTo(850, 800); ctx.fill();
+        ctx.lineTo(830, 800); ctx.fill();
         ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 4; ctx.stroke();
 
         ctx.fillStyle = '#A9A9A9';
         ctx.beginPath();
-        ctx.moveTo(150 + shiftX, 480); ctx.lineTo(150 + shiftX, microY - 10);
+        // 為了讓兩個鋸齒完美卡死，上方鋸齒的座標需與左邊斜面完美對齊
+        let grayStartX = 130 - 14; 
+        ctx.moveTo(grayStartX, 480);
+        ctx.lineTo(grayStartX, microY - 24); 
         for(let i=0; i<10; i++) {
-            ctx.lineTo(150 + shiftX + i*70 + 35, microY + 50); 
-            ctx.lineTo(150 + shiftX + i*70 + 70, microY - 10);
+            ctx.lineTo(130 + i*70 + 35 - 14, microY - 60 - 24); 
+            ctx.lineTo(130 + i*70 + 70 - 14, microY - 24); 
         }
-        ctx.lineTo(850 + shiftX, 480); ctx.fill();
+        ctx.lineTo(830 - 14, 480); ctx.fill();
         ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 4; ctx.stroke();
 
         if (fApp > 0) {
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-            for(let i=1; i<9; i++) {
-                ctx.beginPath(); ctx.arc(150 + shiftX + i*70 + 20, microY + 10, 15, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.6)';
+            for(let i=0; i<10; i++) {
+                ctx.beginPath();
+                ctx.arc(130 + i*70 + 17.5, microY - 30, 12, 0, Math.PI*2);
+                ctx.fill();
             }
-            ctx.fillStyle = '#FF0000'; ctx.font = 'bold 28px sans-serif';
-            ctx.fillText('鋸齒互相卡住產生阻力！', cx, 750);
+            ctx.fillStyle = '#FF0000'; ctx.font = '900 28px "Noto Sans TC", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(tr('鋸齒互相卡住產生阻力！', 'Teeth interlock creating resistance!'), cx, 730);
         }
 
         let scale = 3; 
         if (fApp > 0) {
             drawArrow(ctx, cx + 110, 160, cx + 110 + fApp*scale, 160, '#00FFFF', 10);
-            ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 24px "JetBrains Mono"';
-            ctx.fillText(`外力 = ${fApp}`, cx + 110 + fApp*scale/2, 140);
+            ctx.fillStyle = '#00FFFF'; ctx.font = '900 24px "JetBrains Mono", "Noto Sans TC", sans-serif';
+            ctx.fillText(tr(`外力 = ${fApp}`, `F_app = ${fApp}`), cx + 110 + fApp*scale/2, 140);
 
             drawArrow(ctx, cx - 10, 310, cx - 10 - fApp*scale, 310, '#FF69B4', 10);
             ctx.fillStyle = '#FF69B4'; 
-            ctx.fillText(`靜摩擦力 = ${fApp}`, cx - 10 - fApp*scale/2, 350);
+            ctx.fillText(tr(`靜摩擦力 = ${fApp}`, `Static f = ${fApp}`), cx - 10 - fApp*scale/2, 350);
         }
         ctx.textAlign = 'left';
     }
@@ -709,12 +915,16 @@
     }
 
     function runGraphLoop() {
+        graphAnimId = requestAnimationFrame(runGraphLoop);
+        drawGraphScene();
+    }
+
+    function drawGraphScene() {
         const cvs = document.getElementById('graphCanvas');
         if (!cvs) return;
         let ctx = cvs.getContext('2d');
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-        ctx.fillStyle = '#0b1813';
-        ctx.fillRect(0, 0, cvs.width, cvs.height);
+        const Wcvs = cvs.width; const Hcvs = cvs.height;
+        ctx.clearRect(0, 0, Wcvs, Hcvs);
 
         let fApp = parseInt(document.getElementById('graphF').value);
         let maxStatic = 60;
@@ -756,11 +966,11 @@
 
         ctx.textAlign = 'center';
         if (!isMoving) {
-            ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 36px sans-serif';
-            ctx.fillText('合力 = 0，推不動 (靜止狀態)', 500, 80);
+            ctx.fillStyle = '#FFFF00'; ctx.font = '900 36px "Noto Sans TC", sans-serif';
+            ctx.fillText(tr('合力 = 0，推不動 (靜止狀態)', 'Net = 0, Cannot push (At Rest)'), Wcvs/2, 80);
         } else {
-            ctx.fillStyle = '#FF0000'; ctx.font = 'bold 36px sans-serif';
-            ctx.fillText('合力 > 0，突破極限滑動中！', 500, 80);
+            ctx.fillStyle = '#FF0000'; ctx.font = '900 36px "Noto Sans TC", sans-serif';
+            ctx.fillText(tr('合力 > 0，突破極限滑動中！', 'Net > 0, Limit broken, Sliding!'), Wcvs/2, 80);
             ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3;
             ctx.beginPath(); ctx.moveTo(cx + fridgeX - 100, cy - 80); ctx.lineTo(cx + fridgeX - 150, cy - 80); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(cx + fridgeX - 100, cy - 140); ctx.lineTo(cx + fridgeX - 160, cy - 140); ctx.stroke();
@@ -769,10 +979,10 @@
         let scale = 2;
         if(fApp > 0) {
             drawArrow(ctx, cx + fridgeX + bW/2, cy - bH/2 - 50, cx + fridgeX + bW/2 + fApp*scale, cy - bH/2 - 50, '#00FFFF', 8);
-            ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 24px "JetBrains Mono"'; ctx.fillText(`推力=${fApp}`, cx + fridgeX + bW/2 + fApp*scale/2, cy - bH/2 - 70);
+            ctx.fillStyle = '#00FFFF'; ctx.font = '900 24px "JetBrains Mono", "Noto Sans TC", sans-serif'; ctx.fillText(tr(`推力=${fApp}`, `Push=${fApp}`), cx + fridgeX + bW/2 + fApp*scale/2, cy - bH/2 - 70);
 
             drawArrow(ctx, cx + fridgeX + bW/2, cy + 30, cx + fridgeX + bW/2 - friction*scale, cy + 30, '#FF69B4', 8);
-            ctx.fillStyle = '#FF69B4'; ctx.fillText(`摩擦力=${friction}`, cx + fridgeX + bW/2 - friction*scale/2, cy + 70);
+            ctx.fillStyle = '#FF69B4'; ctx.fillText(tr(`摩擦力=${friction}`, `Friction=${friction}`), cx + fridgeX + bW/2 - friction*scale/2, cy + 70);
         }
 
         let gX = 150, gY = 850;
@@ -782,8 +992,8 @@
         drawArrow(ctx, gX, gY, gX + gW + 40, gY, '#FFFFFF', 6); 
         drawArrow(ctx, gX, gY, gX, gY - gH - 40, '#FFFFFF', 6); 
         
-        ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('水平推力 F (gw)', gX + gW, gY + 40);
-        ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('摩擦力 f (gw)', gX, gY - gH - 60);
+        ctx.fillStyle = '#00FFFF'; ctx.font = '900 24px "Noto Sans TC", sans-serif'; ctx.fillText(tr('水平推力 F (gw)', 'Horizontal Push F (gw)'), gX + gW, gY + 40);
+        ctx.fillStyle = '#FF69B4'; ctx.font = '900 24px "Noto Sans TC", sans-serif'; ctx.fillText(tr('摩擦力 f (gw)', 'Friction f (gw)'), gX, gY - gH - 60);
         ctx.fillStyle = '#FFF'; ctx.fillText('0', gX - 20, gY + 20);
 
         let plotScaleX = gW / 100;
@@ -797,10 +1007,10 @@
         ctx.lineTo(gX + 100 * plotScaleX, gY - kinetic * plotScaleY);         
         ctx.stroke();
 
-        ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 20px sans-serif';
-        ctx.fillText('最大靜摩擦力 (60gw)', gX + maxStatic * plotScaleX, gY - maxStatic * plotScaleY - 20);
+        ctx.fillStyle = '#FFFF00'; ctx.font = '900 20px "Noto Sans TC", sans-serif';
+        ctx.fillText(tr('最大靜摩擦力 (60gw)', 'Max Static Friction (60gw)'), gX + maxStatic * plotScaleX, gY - maxStatic * plotScaleY - 20);
         ctx.fillStyle = '#7CFC00'; 
-        ctx.fillText('動摩擦力 (40gw)', gX + 80 * plotScaleX, gY - kinetic * plotScaleY - 20);
+        ctx.fillText(tr('動摩擦力 (40gw)', 'Kinetic Friction (40gw)'), gX + 80 * plotScaleX, gY - kinetic * plotScaleY - 20);
 
         let px = gX + fApp * plotScaleX;
         let py = gY - friction * plotScaleY;
@@ -815,7 +1025,6 @@
         ctx.setLineDash([]);
 
         ctx.textAlign = 'left';
-        graphAnimId = requestAnimationFrame(runGraphLoop);
     }
 
     // ==========================================
@@ -836,6 +1045,11 @@
         if(state === 'area') document.getElementById('btnArea').classList.add('active-btn');
         if(state === 'ice') document.getElementById('btnIce').classList.add('active-btn');
 
+        if(!varAnimId) runVarLoop();
+    }
+
+    function runVarLoop() {
+        varAnimId = requestAnimationFrame(runVarLoop);
         drawVarScene();
     }
 
@@ -843,15 +1057,14 @@
         const cvs = document.getElementById('varCanvas');
         if (!cvs) return;
         let ctx = cvs.getContext('2d');
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-        ctx.fillStyle = '#0b1813';
-        ctx.fillRect(0, 0, cvs.width, cvs.height);
+        const Wcvs = cvs.width; const Hcvs = cvs.height;
+        ctx.clearRect(0, 0, Wcvs, Hcvs);
 
         varTimer++;
 
-        let cx = 350, cy = 450; 
+        let cx = Wcvs/2 - 150, cy = 450; 
 
-        let mu_text = (varState === 'ice') ? "0.2 (極小)" : "0.6 (標準)"; 
+        let mu_text = (varState === 'ice') ? tr("0.2 (極小)", "0.2 (Min)") : tr("0.6 (標準)", "0.6 (Std)"); 
         let mu_val = (varState === 'ice') ? 0.2 : 0.6;
         let normalF = (varState === 'weight') ? 100 : 50; 
         let maxStatic = mu_val * normalF; 
@@ -867,46 +1080,46 @@
         if (slideX > 600) { varTimer = 0; } 
 
         ctx.fillStyle = 'rgba(255,255,255,0.05)';
-        ctx.fillRect(100, 30, 800, 180);
-        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; ctx.strokeRect(100, 30, 800, 180);
+        ctx.fillRect(100, 30, Wcvs - 200, 180);
+        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; ctx.strokeRect(100, 30, Wcvs - 200, 180);
         
         let desc = "";
-        if (varState === 'base') desc = "標準對照組";
-        if (varState === 'weight') desc = "正向力增加，接觸面咬合更緊實！";
-        if (varState === 'area') desc = "面積不影響摩擦力大小！";
-        if (varState === 'ice') desc = "接觸面變光滑，極度容易滑動！";
+        if (varState === 'base') desc = tr("標準對照組", "Standard Control");
+        if (varState === 'weight') desc = tr("正向力增加，接觸面咬合更緊實！", "Normal force increased, tighter interlock!");
+        if (varState === 'area') desc = tr("面積不影響摩擦力大小！", "Area does NOT affect friction magnitude!");
+        if (varState === 'ice') desc = tr("接觸面變光滑，極度容易滑動！", "Smoother surface, very easy to slide!");
 
-        ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 32px sans-serif';
-        ctx.fillText(`目前測試：${desc}`, 130, 80);
+        ctx.fillStyle = '#FFFFFF'; ctx.font = '900 32px "Noto Sans TC", sans-serif';
+        ctx.fillText(tr(`目前測試：${desc}`, `Testing: ${desc}`), 130, 80);
 
-        ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 28px "JetBrains Mono"';
-        ctx.fillText(`正向力 N = ${normalF} gw`, 130, 130);
-        ctx.fillText(`表面粗糙度對比 = ${mu_text}`, 460, 130);
+        ctx.fillStyle = '#7CFC00'; ctx.font = '900 28px "JetBrains Mono", "Noto Sans TC", sans-serif';
+        ctx.fillText(tr(`正向力 N = ${normalF} gw`, `Normal N = ${normalF} gw`), 130, 130);
+        ctx.fillText(tr(`表面粗糙度對比 = ${mu_text}`, `Roughness = ${mu_text}`), Wcvs/2 - 40, 130);
 
-        ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 36px "JetBrains Mono"';
-        ctx.fillText(`極限值：最大靜摩擦力 = ${maxStatic} gw`, 130, 190);
+        ctx.fillStyle = '#FF69B4'; ctx.font = '900 36px "JetBrains Mono", "Noto Sans TC", sans-serif';
+        ctx.fillText(tr(`極限值：最大靜摩擦力 = ${maxStatic} gw`, `Limit: Max Static Friction = ${maxStatic} gw`), 130, 190);
 
         if (varState === 'ice') {
             ctx.fillStyle = '#E0FFFF'; 
-            ctx.fillRect(50, cy, 900, 40);
-            ctx.fillStyle = '#111'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('冰塊表面 (極光滑)', 80, cy + 28);
+            ctx.fillRect(50, cy, Wcvs - 100, 40);
+            ctx.fillStyle = '#111'; ctx.font = '900 24px "Noto Sans TC", sans-serif'; ctx.fillText(tr('冰塊表面 (極光滑)', 'Ice Surface (Very Smooth)'), 80, cy + 28);
         } else {
             ctx.fillStyle = '#8B4513'; 
-            ctx.fillRect(50, cy, 900, 40);
-            ctx.fillStyle = '#FFF'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('木板表面 (粗糙)', 80, cy + 28);
+            ctx.fillRect(50, cy, Wcvs - 100, 40);
+            ctx.fillStyle = '#FFF'; ctx.font = '900 24px "Noto Sans TC", sans-serif'; ctx.fillText(tr('木板表面 (粗糙)', 'Wood Surface (Rough)'), 80, cy + 28);
         }
 
         ctx.fillStyle = '#A9A9A9';
         ctx.fillRect(cx + slideX - bW/2, cy - bH, bW, bH);
         ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; ctx.strokeRect(cx + slideX - bW/2, cy - bH, bW, bH);
         
-        ctx.fillStyle = '#11261f'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('木塊', cx + slideX, cy - bH/2 + 10);
+        ctx.fillStyle = '#11261f'; ctx.font = '900 28px "Noto Sans TC", sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(tr('木塊', 'Block'), cx + slideX, cy - bH/2 + 10);
 
         if (varState === 'weight') {
             ctx.fillStyle = '#FF0000';
             ctx.fillRect(cx + slideX - 60, cy - bH - 60, 120, 60);
-            ctx.fillStyle = '#FFF'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('+50gw', cx + slideX, cy - bH - 25);
+            ctx.fillStyle = '#FFF'; ctx.font = '900 24px "JetBrains Mono", sans-serif'; ctx.fillText('+50gw', cx + slideX, cy - bH - 25);
         }
 
         let hookX = cx + slideX + bW/2;
@@ -922,16 +1135,14 @@
         ctx.fillStyle = '#FF0000';
         ctx.beginPath(); ctx.moveTo(needleX, hookY - 5); ctx.lineTo(needleX - 10, hookY - 20); ctx.lineTo(needleX + 10, hookY - 20); ctx.fill();
 
-        ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 24px "JetBrains Mono"'; ctx.textAlign = 'left';
-        ctx.fillText(`拉力 = ${pullForce.toFixed(1)}`, hookX + 130, hookY - 30);
+        ctx.fillStyle = '#00FFFF'; ctx.font = '900 24px "JetBrains Mono", "Noto Sans TC", sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(tr(`拉力 = ${pullForce.toFixed(1)}`, `Pull = ${pullForce.toFixed(1)}`), hookX + 130, hookY - 30);
 
         if (isSliding) {
-            ctx.fillStyle = '#FF0000'; ctx.font = 'bold 44px sans-serif'; ctx.textAlign = 'center';
-            ctx.fillText('碰！突破極限，滑動了！', 500, 300);
+            ctx.fillStyle = '#FF0000'; ctx.font = '900 44px "Noto Sans TC", sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(tr('碰！突破極限，滑動了！', 'Bam! Limit broken, it slides!'), Wcvs/2, 300);
             ctx.textAlign = 'left';
         }
-
-        varAnimId = requestAnimationFrame(drawVarScene);
     }
 
 
@@ -953,11 +1164,10 @@
         const cvs = document.getElementById('bikeCanvas');
         if (!cvs) return;
         let ctx = cvs.getContext('2d');
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-        ctx.fillStyle = '#0b1813';
-        ctx.fillRect(0, 0, cvs.width, cvs.height);
+        const Wcvs = cvs.width; const Hcvs = cvs.height;
+        ctx.clearRect(0, 0, Wcvs, Hcvs);
 
-        let cx = 500, cy = 480;
+        let cx = Wcvs/2, cy = Hcvs/2 + 130;
         let wR = 120; 
         let w1X = cx - 200, w1Y = cy; 
         let w2X = cx + 200, w2Y = cy; 
@@ -996,7 +1206,7 @@
         }
 
         ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(100, cy + wR + 10); ctx.lineTo(900, cy + wR + 10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(100, cy + wR + 10); ctx.lineTo(Wcvs - 100, cy + wR + 10); ctx.stroke();
 
         ctx.shadowBlur = 20;
         
@@ -1004,37 +1214,38 @@
             ctx.shadowColor = '#FFA500'; ctx.strokeStyle = '#FFA500'; ctx.lineWidth = 6;
             ctx.beginPath(); ctx.arc(w1X, w1Y, wR+10, 0, Math.PI*2); ctx.stroke();
             ctx.beginPath(); ctx.arc(w2X, w2Y, wR+10, 0, Math.PI*2); ctx.stroke();
-            drawInfoBox(ctx, '🛞 加深輪胎胎紋', '目的：【增加】摩擦力', '增加接觸面的粗糙程度，防止騎乘時打滑摔車。', '#FFA500');
+            drawInfoBox(ctx, tr('🛞 加深輪胎胎紋', '🛞 Deepen Tire Tread'), tr('目的：【增加】摩擦力', 'Goal: [Increase] Friction'), tr('增加接觸面的粗糙程度，防止騎乘時打滑摔車。', 'Increase surface roughness to prevent slipping while riding.'), '#FFA500');
         } else if (bikeState === 'chain') {
             ctx.shadowColor = '#00FFFF'; ctx.strokeStyle = '#00FFFF'; ctx.lineWidth = 6;
             ctx.beginPath(); ctx.arc(cx, cy, 50, 0, Math.PI*2); ctx.stroke();
             ctx.beginPath(); ctx.arc(w1X, w1Y, 30, 0, Math.PI*2); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(w1X, w1Y-30); ctx.lineTo(cx, cy-50); ctx.stroke(); 
             ctx.beginPath(); ctx.moveTo(w1X, w1Y+30); ctx.lineTo(cx, cy+50); ctx.stroke();
-            drawInfoBox(ctx, '🛢️ 鏈條上潤滑油', '目的：【減少】摩擦力', '改變接觸面性質，變得更光滑，減少動能變熱能散失。', '#00FFFF');
+            drawInfoBox(ctx, tr('🛢️ 鏈條上潤滑油', '🛢️ Lubricate Chain'), tr('目的：【減少】摩擦力', 'Goal: [Decrease] Friction'), tr('改變接觸面性質，變得更光滑，減少動能變熱能散失。', 'Make surface smoother, reduce kinetic energy lost as heat.'), '#00FFFF');
         } else {
-            drawInfoBox(ctx, '🚲 腳踏車改造車庫', '點擊下方按鈕', '觀察腳踏車各部位設計的物理原理。', '#FFFFFF');
+            drawInfoBox(ctx, tr('🚲 腳踏車改造車庫', '🚲 Bike Mod Garage'), tr('點擊下方按鈕', 'Click buttons below'), tr('觀察腳踏車各部位設計的物理原理。', 'Observe the physics behind different bike parts.'), '#FFFFFF');
         }
         ctx.shadowBlur = 0;
     }
 
     function drawInfoBox(ctx, title, sub, desc, color) {
+        const Wcvs = ctx.canvas.width;
         ctx.shadowBlur = 0;
         ctx.fillStyle = 'rgba(255,255,255,0.05)';
-        ctx.fillRect(150, 40, 700, 180);
-        ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(150, 40, 700, 180);
+        ctx.fillRect(Wcvs/2 - 400, 40, 800, 180);
+        ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(Wcvs/2 - 400, 40, 800, 180);
         
-        ctx.fillStyle = color; ctx.font = 'bold 40px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText(title, 500, 100);
-        ctx.fillStyle = '#FFF'; ctx.font = 'bold 26px sans-serif';
-        ctx.fillText(sub, 500, 150);
-        ctx.fillStyle = '#9fb0a8'; ctx.font = '22px sans-serif';
-        ctx.fillText(desc, 500, 190);
+        ctx.fillStyle = color; ctx.font = '900 40px "Noto Sans TC", sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(title, Wcvs/2, 100);
+        ctx.fillStyle = '#FFF'; ctx.font = '900 26px "Noto Sans TC", sans-serif';
+        ctx.fillText(sub, Wcvs/2, 150);
+        ctx.fillStyle = '#9fb0a8'; ctx.font = '22px "Noto Sans TC", sans-serif';
+        ctx.fillText(desc, Wcvs/2, 190);
         ctx.textAlign = 'left';
     }
 
     // ==========================================
-    // ★ 全新 Canvas 5：資優經典試題 (防當機 & 牆面/雙木塊完美分離版) ★
+    // Canvas 5：資優經典試題 (防當機 & 牆面/雙木塊完美分離版)
     // ==========================================
     let probAnimId;
     let probMode = 'fridge'; 
@@ -1077,7 +1288,11 @@
             document.getElementById('probCtrl-fridge').style.display = 'none';
         }
         
-        drawProbScene(); 
+        if (probMode === 'fridge' && step === 2) {
+            runProbLoop();
+        } else {
+            drawProbScene();
+        }
     }
 
     function updateProb() {
@@ -1086,7 +1301,15 @@
             document.getElementById('probFVal').innerText = f + " kgw"; 
             fridgeY = 450; 
         }
-        if (probAnimId) { cancelAnimationFrame(probAnimId); probAnimId = null; }
+        if(!probAnimId && probMode === 'fridge' && probStep === 2) {
+             runProbLoop();
+        } else if (!probAnimId) {
+             drawProbScene();
+        }
+    }
+
+    function runProbLoop() {
+        probAnimId = requestAnimationFrame(runProbLoop);
         drawProbScene();
     }
 
@@ -1094,14 +1317,13 @@
         const cvs = document.getElementById('probCanvas');
         if (!cvs) return;
         let ctx = cvs.getContext('2d');
-        ctx.clearRect(0, 0, cvs.width, cvs.height);
-        ctx.fillStyle = '#0b1813';
-        ctx.fillRect(0, 0, cvs.width, cvs.height);
+        const Wcvs = cvs.width; const Hcvs = cvs.height;
+        ctx.clearRect(0, 0, Wcvs, Hcvs);
 
         // ======= 冰箱題 =======
         if (probMode === 'fridge') {
             let bW = 140, bH = 200;
-            let cx = 500;
+            let cx = Wcvs/2;
             let scale = 3;
 
             if (probStep <= 1) {
@@ -1112,24 +1334,24 @@
                 
                 ctx.fillStyle = '#A9A9A9'; ctx.fillRect(cx - bW/2, cy - bH, bW, bH);
                 ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; ctx.strokeRect(cx - bW/2, cy - bH, bW, bH);
-                ctx.fillStyle = '#11261f'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText('冰箱', cx, cy - bH/2 + 10);
+                ctx.fillStyle = '#11261f'; ctx.font = '900 32px "Noto Sans TC", sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(tr('冰箱', 'Fridge'), cx, cy - bH/2 + 10);
 
                 drawArrow(ctx, cx, cy - bH/2, cx, cy - bH/2 + 50*scale, '#FFFF00', 10);
-                ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 24px "JetBrains Mono"'; ctx.fillText('正向力 = 50', cx + 110, cy - bH/2 + 50*scale + 20);
+                ctx.fillStyle = '#FFFF00'; ctx.font = '900 24px "JetBrains Mono", "Noto Sans TC", sans-serif'; ctx.fillText(tr('正向力 = 50', 'Normal F = 50'), cx + 110, cy - bH/2 + 50*scale + 20);
 
                 drawArrow(ctx, cx - bW/2 - 25*scale, cy - bH/2, cx - bW/2, cy - bH/2, '#00FFFF', 10);
-                ctx.fillStyle = '#00FFFF'; ctx.fillText('極限推力 = 25', cx - bW/2 - 25*scale - 110, cy - bH/2 - 15);
+                ctx.fillStyle = '#00FFFF'; ctx.fillText(tr('極限推力 = 25', 'Limit Push = 25'), cx - bW/2 - 25*scale - 110, cy - bH/2 - 15);
 
                 drawArrow(ctx, cx, cy + 20, cx - 25*scale, cy + 20, '#FF69B4', 10);
-                ctx.fillStyle = '#FF69B4'; ctx.fillText('最大靜摩擦 = 25', cx - 25*scale - 110, cy + 60);
+                ctx.fillStyle = '#FF69B4'; ctx.fillText(tr('最大靜摩擦 = 25', 'Max Static f = 25'), cx - 25*scale - 110, cy + 60);
 
                 if(probStep === 1) {
-                    ctx.fillStyle = '#7CFC00'; ctx.font = 'bold 36px sans-serif';
-                    ctx.fillText('👉 最大靜摩擦力是正向力的 一半 (1:2)', cx, 200);
+                    ctx.fillStyle = '#7CFC00'; ctx.font = '900 36px "Noto Sans TC", sans-serif';
+                    ctx.fillText(tr('👉 最大靜摩擦力是正向力的 一半 (1:2)', '👉 Max Static f is HALF of Normal F (1:2)'), cx, 200);
                 } else {
-                    ctx.fillStyle = '#FFF'; ctx.font = 'bold 36px sans-serif';
-                    ctx.fillText('【前置情報】平地推動極限測試', cx, 200);
+                    ctx.fillStyle = '#FFF'; ctx.font = '900 36px "Noto Sans TC", sans-serif';
+                    ctx.fillText(tr('【前置情報】平地推動極限測試', '[Intel] Flat Ground Limit Test'), cx, 200);
                 }
                 ctx.textAlign = 'left';
 
@@ -1151,204 +1373,183 @@
 
                 ctx.fillStyle = '#A9A9A9'; ctx.fillRect(wallX - bW, fridgeY, bW, bH);
                 ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; ctx.strokeRect(wallX - bW, fridgeY, bW, bH);
-                ctx.fillStyle = '#11261f'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText('冰箱', wallX - bW/2, fridgeY + bH/2 + 10);
+                ctx.fillStyle = '#11261f'; ctx.font = '900 32px "Noto Sans TC", sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(tr('冰箱', 'Fridge'), wallX - bW/2, fridgeY + bH/2 + 10);
 
                 let fCenterY = fridgeY + bH/2;
                 
                 if(fPush > 0) {
                     drawArrow(ctx, wallX - bW - fPush*scale, fCenterY, wallX - bW, fCenterY, '#00FFFF', 10);
-                    ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 28px "JetBrains Mono"'; 
-                    ctx.fillText(`推力(正向力) = ${fPush}`, wallX - bW - fPush*scale - 160, fCenterY - 20);
+                    ctx.fillStyle = '#00FFFF'; ctx.font = '900 28px "JetBrains Mono", "Noto Sans TC", sans-serif'; 
+                    ctx.fillText(tr(`推力(正向力) = ${fPush}`, `Push(Normal) = ${fPush}`), wallX - bW - fPush*scale - 200, fCenterY - 20);
                 }
                 
                 drawArrow(ctx, wallX - bW/2, fCenterY, wallX - bW/2, fCenterY + weight*scale, '#FFFF00', 10);
-                ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 28px "JetBrains Mono"';
-                ctx.fillText(`重力 = 50`, wallX - bW/2, fCenterY + weight*scale + 40);
+                ctx.fillStyle = '#FFFF00'; ctx.font = '900 28px "JetBrains Mono", "Noto Sans TC", sans-serif';
+                ctx.fillText(tr(`重力 = 50`, `Gravity = 50`), wallX - bW/2, fCenterY + weight*scale + 40);
 
                 let friction = isFalling ? maxStatic : weight; 
                 if(friction > 0) {
                     drawArrow(ctx, wallX - 15, fCenterY, wallX - 15, fCenterY - friction*scale, '#FF69B4', 10);
-                    ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 28px "JetBrains Mono"';
-                    ctx.fillText(`摩擦力 = ${friction}`, wallX + 50, fCenterY - friction*scale - 10);
+                    ctx.fillStyle = '#FF69B4'; ctx.font = '900 28px "JetBrains Mono", "Noto Sans TC", sans-serif';
+                    ctx.fillText(tr(`摩擦力 = ${friction}`, `Friction = ${friction}`), wallX + 50, fCenterY - friction*scale - 10);
                 }
 
                 ctx.textAlign = 'left';
                 if (isFalling) {
-                    ctx.fillStyle = '#FF0000'; ctx.font = 'bold 44px sans-serif';
-                    ctx.fillText('❌ 摩擦力極限不足，掉落！', 100, 800);
+                    ctx.fillStyle = '#FF0000'; ctx.font = '900 44px "Noto Sans TC", sans-serif';
+                    ctx.fillText(tr('❌ 摩擦力極限不足，掉落！', '❌ Friction limit insufficient, falls!'), 100, 800);
                 } else {
-                    ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 44px sans-serif';
-                    ctx.fillText('✅ 摩擦力達標，成功靜止！', 100, 800);
+                    ctx.fillStyle = '#00FFFF'; ctx.font = '900 44px "Noto Sans TC", sans-serif';
+                    ctx.fillText(tr('✅ 摩擦力達標，成功靜止！', '✅ Friction sufficient, rests!'), 100, 800);
                 }
             }
-            probAnimId = requestAnimationFrame(drawProbScene);
             
         } else if (probMode === 'stack') {
-            // ======= 雙木塊題 (完全還原講義圖示) =======
-            let cx = 500, cy = 600; 
+            // ======= 雙木塊題 =======
+            let cx = Wcvs/2, cy = 600; 
             
-            // 地板
             ctx.fillStyle = '#5b7a6b'; ctx.fillRect(100, cy, 800, 40);
-            ctx.fillStyle = '#FFF'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('粗糙地面 (已知給 B 向右摩擦力 350gw)', 120, cy + 28);
+            ctx.fillStyle = '#FFF'; ctx.font = '900 24px "Noto Sans TC", sans-serif'; ctx.fillText(tr('粗糙地面 (已知給 B 向右摩擦力 350gw)', 'Rough Ground (Gives B 350gw rightward f)'), 120, cy + 28);
 
-            // B木塊
             ctx.fillStyle = '#888'; ctx.fillRect(cx - 150, cy - 100, 300, 100);
             ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; ctx.strokeRect(cx - 150, cy - 100, 300, 100);
-            ctx.fillStyle = '#111'; ctx.font = 'bold 36px sans-serif'; ctx.fillText('B 木塊', cx - 20, cy - 40);
+            ctx.fillStyle = '#111'; ctx.font = '900 36px "Noto Sans TC", sans-serif'; ctx.fillText(tr('B 木塊', 'Block B'), cx - 20, cy - 40);
 
-            // A木塊
             ctx.fillStyle = '#A9A9A9'; ctx.fillRect(cx - 80, cy - 180, 160, 80);
             ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; ctx.strokeRect(cx - 80, cy - 180, 160, 80);
-            ctx.fillStyle = '#111'; ctx.fillText('A 木塊', cx - 20, cy - 130);
+            ctx.fillStyle = '#111'; ctx.fillText(tr('A 木塊', 'Block A'), cx - 20, cy - 130);
 
-            // ★ 兩側牆壁與彈簧 ★
-            ctx.fillStyle = '#444'; ctx.fillRect(100, cy - 250, 20, 250); // 左牆
-            ctx.fillRect(880, cy - 250, 20, 250); // 右牆
+            ctx.fillStyle = '#444'; ctx.fillRect(100, cy - 250, 20, 250); 
+            ctx.fillRect(880, cy - 250, 20, 250); 
 
-            // A 被向右拉
             drawSpring(ctx, cx + 80, cy - 140, 880 - (cx + 80), '#00FFFF', 12, 10);
-            ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 24px "JetBrains Mono"'; ctx.fillText('50gw', cx + 180, cy - 160);
+            ctx.fillStyle = '#00FFFF'; ctx.font = '900 24px "JetBrains Mono"'; ctx.fillText('50gw', cx + 180, cy - 160);
 
-            // B 被向左拉
             drawSpring(ctx, 120, cy - 50, (cx - 150) - 120, '#FFFF00', 12, 10);
-            ctx.fillStyle = '#FFFF00'; ctx.fillText('未知讀數', 160, cy - 70);
+            ctx.fillStyle = '#FFFF00'; ctx.font = '900 24px "Noto Sans TC", sans-serif'; ctx.fillText(tr('未知讀數', 'Unknown'), 160, cy - 70);
 
             if (probStep === 1) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; ctx.fillRect(0,0,1000,900); 
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; ctx.fillRect(0,0,Wcvs,Hcvs); 
                 
-                // 亮畫 A
                 ctx.fillStyle = '#A9A9A9'; ctx.fillRect(cx - 80, cy - 180, 160, 80);
                 ctx.strokeStyle = '#FFF'; ctx.strokeRect(cx - 80, cy - 180, 160, 80);
-                ctx.fillStyle = '#111'; ctx.font = 'bold 36px sans-serif'; ctx.fillText('A 木塊', cx - 20, cy - 130);
+                ctx.fillStyle = '#111'; ctx.font = '900 36px "Noto Sans TC", sans-serif'; ctx.fillText(tr('A 木塊', 'Block A'), cx - 20, cy - 130);
                 drawSpring(ctx, cx + 80, cy - 140, 880 - (cx + 80), '#00FFFF', 12, 10);
-                ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 24px "JetBrains Mono"'; ctx.fillText('50gw', cx + 180, cy - 160);
+                ctx.fillStyle = '#00FFFF'; ctx.font = '900 24px "JetBrains Mono"'; ctx.fillText('50gw', cx + 180, cy - 160);
                 
-                // B 給 A 的向左摩擦
                 drawArrow(ctx, cx, cy - 100, cx - 120, cy - 100, '#FF69B4', 10);
-                ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 28px sans-serif'; 
-                ctx.fillText('B給A 摩擦力=50 (向左)', cx - 440, cy - 90);
+                ctx.fillStyle = '#FF69B4'; ctx.font = '900 28px "Noto Sans TC", sans-serif'; 
+                ctx.fillText(tr('B給A 摩擦力=50 (向左)', 'B on A f=50 (Left)'), cx - 440, cy - 90);
                 
-                ctx.fillStyle = '#FFF'; ctx.font = 'bold 40px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText('看著 A：向右被拉，要靜止，摩擦力必向左！', cx, 200);
+                ctx.fillStyle = '#FFF'; ctx.font = '900 40px "Noto Sans TC", sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(tr('看著 A：向右被拉，要靜止，摩擦力必向左！', 'Look at A: Pulled Right, to rest, f MUST be Left!'), cx, 200);
                 ctx.textAlign = 'left';
 
             } else if (probStep === 2) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; ctx.fillRect(0,0,1000,900); 
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; ctx.fillRect(0,0,Wcvs,Hcvs); 
                 
-                // 亮畫 B
                 ctx.fillStyle = '#888'; ctx.fillRect(cx - 150, cy - 100, 300, 100);
                 ctx.strokeStyle = '#FFF'; ctx.strokeRect(cx - 150, cy - 100, 300, 100);
-                ctx.fillStyle = '#111'; ctx.font = 'bold 36px sans-serif'; ctx.fillText('B 木塊', cx - 20, cy - 40);
+                ctx.fillStyle = '#111'; ctx.font = '900 36px "Noto Sans TC", sans-serif'; ctx.fillText(tr('B 木塊', 'Block B'), cx - 20, cy - 40);
                 
                 drawSpring(ctx, 120, cy - 50, (cx - 150) - 120, '#FFFF00', 12, 10);
-                ctx.fillStyle = '#FFFF00'; ctx.font = 'bold 24px "JetBrains Mono"'; ctx.fillText('未知拉力 (向左)', 140, cy - 70);
+                ctx.fillStyle = '#FFFF00'; ctx.font = '900 24px "Noto Sans TC", sans-serif'; ctx.fillText(tr('未知拉力 (向左)', 'Unknown Pull (Left)'), 140, cy - 70);
 
-                // A 給 B 的向右反作用力
                 drawArrow(ctx, cx, cy - 100, cx + 120, cy - 100, '#FF69B4', 10);
-                ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 26px sans-serif'; 
-                ctx.fillText('A給B 反作用力=50 (向右)', cx + 140, cy - 90);
+                ctx.fillStyle = '#FF69B4'; ctx.font = '900 26px "Noto Sans TC", sans-serif'; 
+                ctx.fillText(tr('A給B 反作用力=50 (向右)', 'A on B Reaction=50 (Right)'), cx + 140, cy - 90);
 
-                // 地面給 B 的向右摩擦
                 drawArrow(ctx, cx, cy, cx + 250, cy, '#7CFC00', 10);
                 ctx.fillStyle = '#7CFC00'; 
-                ctx.fillText('地面給B 摩擦力=350 (向右)', cx + 270, cy + 10);
+                ctx.fillText(tr('地面給B 摩擦力=350 (向右)', 'Ground on B f=350 (Right)'), cx + 270, cy + 10);
 
-                ctx.fillStyle = '#FFF'; ctx.font = 'bold 40px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText('看著 B：反作用力 + 地面阻力，總共向右 400', cx, 200);
+                ctx.fillStyle = '#FFF'; ctx.font = '900 40px "Noto Sans TC", sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(tr('看著 B：反作用力 + 地面阻力，總共向右 400', 'Look at B: Reaction + Ground f, Total Right = 400'), cx, 200);
                 
-                ctx.fillStyle = '#FF0000'; ctx.font = 'bold 48px "JetBrains Mono"';
-                ctx.fillText('向左彈簧讀數 = 400 gw！', cx, 280);
+                ctx.fillStyle = '#FF0000'; ctx.font = '900 48px "JetBrains Mono", "Noto Sans TC", sans-serif';
+                ctx.fillText(tr('向左彈簧讀數 = 400 gw！', 'Left Spring Reading = 400 gw!'), cx, 280);
                 ctx.textAlign = 'left';
             }
 
         } else if (probMode === 'wall') {
             // ======= 牆間木塊題 =======
-            let cx = 500;
+            let cx = Wcvs/2;
             
-            ctx.fillStyle = '#FFF'; ctx.font = 'bold 36px sans-serif'; ctx.textAlign = 'center';
-            ctx.fillText('【雙木塊】', cx, 80);
-            ctx.fillText('【三木塊】', cx, 480);
+            ctx.fillStyle = '#FFF'; ctx.font = '900 36px "Noto Sans TC", sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(tr('【雙木塊】', '[2 Blocks]'), cx, 80);
+            ctx.fillText(tr('【三木塊】', '[3 Blocks]'), cx, 480);
             ctx.textAlign = 'left';
 
-            // 雙木塊
             let topY = 250;
-            ctx.fillStyle = '#444'; ctx.fillRect(cx - 120, topY - 120, 20, 200); ctx.fillRect(cx + 100, topY - 120, 20, 200); // 牆
+            ctx.fillStyle = '#444'; ctx.fillRect(cx - 120, topY - 120, 20, 200); ctx.fillRect(cx + 100, topY - 120, 20, 200); 
             ctx.fillStyle = '#A9A9A9'; ctx.fillRect(cx - 100, topY - 80, 100, 100); ctx.fillRect(cx, topY - 80, 100, 100);
             ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; ctx.strokeRect(cx - 100, topY - 80, 100, 100); ctx.strokeRect(cx, topY - 80, 100, 100);
             
-            // 三木塊
             let botY = 680;
-            ctx.fillStyle = '#444'; ctx.fillRect(cx - 170, botY - 120, 20, 200); ctx.fillRect(cx + 150, botY - 120, 20, 200); // 牆
+            ctx.fillStyle = '#444'; ctx.fillRect(cx - 170, botY - 120, 20, 200); ctx.fillRect(cx + 150, botY - 120, 20, 200); 
             ctx.fillStyle = '#A9A9A9'; 
             ctx.fillRect(cx - 150, botY - 80, 100, 100); ctx.fillRect(cx - 50, botY - 80, 100, 100); ctx.fillRect(cx + 50, botY - 80, 100, 100);
             ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; 
             ctx.strokeRect(cx - 150, botY - 80, 100, 100); ctx.strokeRect(cx - 50, botY - 80, 100, 100); ctx.strokeRect(cx + 50, botY - 80, 100, 100);
 
             if(probStep === 0) {
-                // 原圖標示 W
                 drawArrow(ctx, cx - 50, topY, cx - 50, topY + 40, '#FFFF00', 6); drawArrow(ctx, cx + 50, topY, cx + 50, topY + 40, '#FFFF00', 6);
                 drawArrow(ctx, cx - 100, botY, cx - 100, botY + 40, '#FFFF00', 6); drawArrow(ctx, cx, botY, cx, botY + 40, '#FFFF00', 6); drawArrow(ctx, cx + 100, botY, cx + 100, botY + 40, '#FFFF00', 6);
             }
 
             if(probStep === 1) {
-                // 將系統框起來
                 ctx.strokeStyle = '#FF69B4'; ctx.lineWidth = 6; ctx.setLineDash([15, 15]);
                 ctx.strokeRect(cx - 105, topY - 85, 210, 110);
                 ctx.strokeRect(cx - 155, botY - 85, 310, 110);
                 ctx.setLineDash([]);
 
-                ctx.fillStyle = '#FF69B4'; ctx.font = 'bold 28px "JetBrains Mono"';
-                ctx.fillText('總重 2W', cx + 140, topY - 30);
-                ctx.fillText('總重 3W', cx + 190, botY - 30);
+                ctx.fillStyle = '#FF69B4'; ctx.font = '900 28px "JetBrains Mono", "Noto Sans TC", sans-serif';
+                ctx.fillText(tr('總重 2W', 'Total 2W'), cx + 140, topY - 30);
+                ctx.fillText(tr('總重 3W', 'Total 3W'), cx + 190, botY - 30);
 
-                // 牆面支撐力
                 drawArrow(ctx, cx - 110, topY + 10, cx - 110, topY - 70, '#00FFFF', 8);
                 drawArrow(ctx, cx + 110, topY + 10, cx + 110, topY - 70, '#00FFFF', 8);
-                ctx.fillStyle = '#00FFFF'; ctx.fillText('牆面支撐 W', cx - 280, topY - 30); ctx.fillText('W', cx + 130, topY - 30);
+                ctx.fillStyle = '#00FFFF'; ctx.fillText(tr('牆面支撐 W', 'Wall W'), cx - 280, topY - 30); ctx.fillText('W', cx + 130, topY - 30);
 
                 drawArrow(ctx, cx - 160, botY + 10, cx - 160, botY - 70, '#00FFFF', 8);
                 drawArrow(ctx, cx + 160, botY + 10, cx + 160, botY - 70, '#00FFFF', 8);
-                ctx.fillText('牆面支撐 1.5W', cx - 360, botY - 30); ctx.fillText('1.5W', cx + 180, botY - 30);
+                ctx.fillText(tr('牆面支撐 1.5W', 'Wall 1.5W'), cx - 360, botY - 30); ctx.fillText('1.5W', cx + 180, botY - 30);
             }
 
             if(probStep === 2) {
-                ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,0,1000,1000); // 暗化
+                ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,0,Wcvs,Hcvs); 
                 
-                // 拆解雙木塊
-                ctx.fillStyle = '#A9A9A9'; ctx.fillRect(cx - 110, topY - 80, 100, 100); ctx.fillRect(cx + 10, topY - 80, 100, 100); // 左右分開
+                ctx.fillStyle = '#A9A9A9'; ctx.fillRect(cx - 110, topY - 80, 100, 100); ctx.fillRect(cx + 10, topY - 80, 100, 100); 
                 ctx.strokeStyle = '#FFF'; ctx.strokeRect(cx - 110, topY - 80, 100, 100); ctx.strokeRect(cx + 10, topY - 80, 100, 100);
-                drawArrow(ctx, cx - 120, topY + 10, cx - 120, topY - 70, '#00FFFF', 8); ctx.fillStyle = '#00FFFF'; ctx.font = 'bold 24px "JetBrains Mono"'; ctx.fillText('W (牆)', cx - 200, topY - 30);
-                drawArrow(ctx, cx - 60, topY - 30, cx - 60, topY + 50, '#FFFF00', 8); ctx.fillStyle = '#FFFF00'; ctx.fillText('重 W', cx - 60, topY + 80);
-                ctx.fillStyle = '#7CFC00'; ctx.fillText('內部 0', cx - 35, topY - 30);
+                drawArrow(ctx, cx - 120, topY + 10, cx - 120, topY - 70, '#00FFFF', 8); ctx.fillStyle = '#00FFFF'; ctx.font = '900 24px "JetBrains Mono", "Noto Sans TC", sans-serif'; ctx.fillText(tr('W (牆)', 'W (Wall)'), cx - 200, topY - 30);
+                drawArrow(ctx, cx - 60, topY - 30, cx - 60, topY + 50, '#FFFF00', 8); ctx.fillStyle = '#FFFF00'; ctx.fillText(tr('重 W', 'W (Grav)'), cx - 60, topY + 80);
+                ctx.fillStyle = '#7CFC00'; ctx.fillText(tr('內部 0', 'Inner 0'), cx - 45, topY - 30);
 
-                drawArrow(ctx, cx + 120, topY + 10, cx + 120, topY - 70, '#00FFFF', 8); ctx.fillStyle = '#00FFFF'; ctx.fillText('W (牆)', cx + 130, topY - 30);
-                drawArrow(ctx, cx + 60, topY - 30, cx + 60, topY + 50, '#FFFF00', 8); ctx.fillStyle = '#FFFF00'; ctx.fillText('重 W', cx + 40, topY + 80);
+                drawArrow(ctx, cx + 120, topY + 10, cx + 120, topY - 70, '#00FFFF', 8); ctx.fillStyle = '#00FFFF'; ctx.fillText(tr('W (牆)', 'W (Wall)'), cx + 130, topY - 30);
+                drawArrow(ctx, cx + 60, topY - 30, cx + 60, topY + 50, '#FFFF00', 8); ctx.fillStyle = '#FFFF00'; ctx.fillText(tr('重 W', 'W (Grav)'), cx + 40, topY + 80);
 
-                // 拆解三木塊
-                ctx.fillStyle = '#A9A9A9'; ctx.fillRect(cx - 170, botY - 80, 100, 100); ctx.fillRect(cx - 50, botY - 80, 100, 100); ctx.fillRect(cx + 70, botY - 80, 100, 100); // 分開
+                ctx.fillStyle = '#A9A9A9'; ctx.fillRect(cx - 170, botY - 80, 100, 100); ctx.fillRect(cx - 50, botY - 80, 100, 100); ctx.fillRect(cx + 70, botY - 80, 100, 100); 
                 ctx.strokeStyle = '#FFF'; ctx.strokeRect(cx - 170, botY - 80, 100, 100); ctx.strokeRect(cx - 50, botY - 80, 100, 100); ctx.strokeRect(cx + 70, botY - 80, 100, 100);
                 
-                // 中木塊
-                drawArrow(ctx, cx, botY - 30, cx, botY + 50, '#FFFF00', 8); ctx.fillStyle = '#FFFF00'; ctx.fillText('重 W', cx - 20, botY + 80);
+                drawArrow(ctx, cx, botY - 30, cx, botY + 50, '#FFFF00', 8); ctx.fillStyle = '#FFFF00'; ctx.fillText(tr('重 W', 'W (Grav)'), cx - 20, botY + 80);
                 drawArrow(ctx, cx - 50, botY, cx - 50, botY - 50, '#7CFC00', 8); ctx.fillStyle = '#7CFC00'; ctx.fillText('0.5W', cx - 70, botY - 60);
                 drawArrow(ctx, cx + 50, botY, cx + 50, botY - 50, '#7CFC00', 8); ctx.fillText('0.5W', cx + 20, botY - 60);
 
-                // 左木塊
-                drawArrow(ctx, cx - 180, botY + 10, cx - 180, botY - 70, '#00FFFF', 8); ctx.fillStyle = '#00FFFF'; ctx.fillText('1.5W (牆)', cx - 310, botY - 30);
+                drawArrow(ctx, cx - 180, botY + 10, cx - 180, botY - 70, '#00FFFF', 8); ctx.fillStyle = '#00FFFF'; ctx.fillText(tr('1.5W (牆)', '1.5W(Wall)'), cx - 310, botY - 30);
                 drawArrow(ctx, cx - 120, botY - 30, cx - 120, botY + 50, '#FFFF00', 8);
-                drawArrow(ctx, cx - 70, botY - 50, cx - 70, botY, '#FF69B4', 8); ctx.fillStyle = '#FF69B4'; ctx.fillText('0.5W(反)', cx - 140, botY + 80);
+                drawArrow(ctx, cx - 70, botY - 50, cx - 70, botY, '#FF69B4', 8); ctx.fillStyle = '#FF69B4'; ctx.fillText(tr('0.5W(反)', '0.5W(Reac)'), cx - 150, botY + 80);
 
-                // 右木塊
-                drawArrow(ctx, cx + 180, botY + 10, cx + 180, botY - 70, '#00FFFF', 8); ctx.fillStyle = '#00FFFF'; ctx.fillText('1.5W (牆)', cx + 190, botY - 30);
+                drawArrow(ctx, cx + 180, botY + 10, cx + 180, botY - 70, '#00FFFF', 8); ctx.fillStyle = '#00FFFF'; ctx.fillText(tr('1.5W (牆)', '1.5W(Wall)'), cx + 190, botY - 30);
                 drawArrow(ctx, cx + 120, botY - 30, cx + 120, botY + 50, '#FFFF00', 8);
-                drawArrow(ctx, cx + 70, botY - 50, cx + 70, botY, '#FF69B4', 8); ctx.fillStyle = '#FF69B4'; ctx.fillText('0.5W(反)', cx + 70, botY + 80);
+                drawArrow(ctx, cx + 70, botY - 50, cx + 70, botY, '#FF69B4', 8); ctx.fillStyle = '#FF69B4'; ctx.fillText(tr('0.5W(反)', '0.5W(Reac)'), cx + 70, botY + 80);
             }
         }
     }
 
     // 初始化啟動
     setTimeout(() => { 
+        setLang('zh');
         openTab('tab-micro', document.querySelector('.tab-button'));
     }, 100);
 
