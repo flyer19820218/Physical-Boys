@@ -69,13 +69,16 @@
 .galaxy-photo{display:block;width:100%;height:auto;border-radius:16px;background:#061418}
 .galaxy-photo-note{margin-top:10px;color:var(--muted);font-size:16px;text-align:center;font-weight:700}
 
+.floating-lang-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;align-items:center;gap:10px;padding:8px 10px;border:3px solid var(--cyan);border-radius:16px;background:#09231f;box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.hero{padding-top:58px}
+.lang-label{color:var(--cyan);font-weight:900;font-size:18px}.lang-options{display:flex;gap:6px}.lang-pill{min-width:62px;padding:10px 14px;border:3px solid #72847f;border-radius:10px;background:#10221f;color:#fff;font:900 18px/1 'Noto Sans TC',sans-serif;cursor:pointer}.lang-pill.active{border-color:var(--cyan);background:var(--cyan);color:#09231f;box-shadow:0 0 14px rgba(85,233,255,.45)}
 @media(max-width:768px){
   body{font-size:18px}.app{padding:12px 8px 50px}h1{font-size:34px}.grid-2col{grid-template-columns:1fr}
   .mission-row{grid-template-columns:1fr 1fr}.scale-row{grid-template-columns:repeat(3,1fr)}
   .panel{padding:13px}.panel h2{font-size:25px}
   .tab-container{display:grid;grid-template-columns:1fr 1fr}.tab-button{padding:9px 6px;font-size:16px}
-  .compare-grid{grid-template-columns:1fr 1fr}
-}</style></head><body><div class="app"><header class="hero">
+  .compare-grid{grid-template-columns:1fr 1fr}.hero{padding-top:52px}.floating-lang-container{top:10px;right:10px;padding:6px}.lang-label{display:none}.lang-pill{min-width:54px;padding:9px 10px;font-size:16px}
+}</style></head><body><div class="floating-lang-container" role="group" aria-label="Language selection"><span class="lang-label">Language</span><div class="lang-options"><button class="lang-pill active" id="btn-lang-zh" type="button" onclick="setLang('zh')">中文</button><button class="lang-pill" id="btn-lang-en" type="button" onclick="setLang('en')">EN</button></div></div><div class="app"><header class="hero">
   <h1>宇宙尺度與太陽系</h1>
   <p class="subtitle">從浩瀚宇宙一路縮放到月球，再把太陽系真正的距離與大小攤開來看。</p></header><nav class="tab-container" aria-label="單元分頁">
   <button class="tab-button active" data-tab="tab-scale">🔭 宇宙縮放</button>
@@ -286,6 +289,49 @@
 </div>
 
 <script>
+
+let currentLang='zh';
+const tr=(zh,en)=>currentLang==='en'?en:zh;
+const staticTranslations=new Map([
+  ['宇宙尺度與太陽系','Scale of the Universe and the Solar System'],
+  ['從浩瀚宇宙一路縮放到月球，再把太陽系真正的距離與大小攤開來看。','Zoom from the vast universe down to the Moon, then explore the true distances and sizes in the Solar System.'],
+  ['🔭 宇宙縮放','🔭 Cosmic Zoom'],['✨ 光年與過去','✨ Light-years and the Past'],['🌌 銀河系','🌌 Milky Way'],['🪐 太陽系','🪐 Solar System'],['📏 真實比例','📏 True Scale'],
+  ['<b>① 宇宙</b><br>大量星系','<b>① Universe</b><br>Many galaxies'],['<b>② 銀河系</b><br>我們的星系','<b>② Milky Way</b><br>Our galaxy'],['<b>③ 太陽系</b><br>恆星系統','<b>③ Solar System</b><br>A star system'],['<b>④ 地球</b><br>行星','<b>④ Earth</b><br>A planet'],['<b>⑤ 月球</b><br>衛星','<b>⑤ Moon</b><br>A natural satellite'],
+  ['🎬 從宇宙深處一路回到月球','🎬 From Deep Space Back to the Moon'],['第一遍先<strong>只看尺度旅程</strong>；抵達月球後，再用「倒帶教學」逐層退回去整理概念。','On the first run, <strong>focus only on the scale journey</strong>. After reaching the Moon, use “Rewind Lesson” to review each level in reverse.'],['旅程','Journey'],['▶ 從宇宙飛到月球','▶ Fly from the Universe to the Moon'],['⏪ 倒帶教學','⏪ Rewind Lesson'],['↺ 回到宇宙','↺ Back to the Universe'],
+  ['❓ 問題','❓ Question'],['💡 提示','💡 Hint'],['✅ 解答','✅ Answer'],['問題','Question'],['提示','Hint'],['解答','Answer'],
+  ['「太陽系是一個星系」這句話對嗎？','Is the statement “The Solar System is a galaxy” correct?'],['旅程中，太陽系是被包在銀河系裡面的下一層。','In the journey, the Solar System is the next level contained within the Milky Way.'],['<strong class="accent-pink">不對。</strong>太陽系是以太陽這顆恆星為中心的系統；銀河系才是包含大量恆星的星系。','<strong class="accent-pink">No.</strong> The Solar System is centered on the Sun, a star; the Milky Way is the galaxy that contains vast numbers of stars.'],
+  ['<b>① 光年</b><br>是距離','<b>① Light-year</b><br>A distance'],['<b>② 光速</b><br>約30萬 km/s','<b>② Speed of light</b><br>About 300,000 km/s'],['<b>③ 看遠方</b><br>就是看過去','<b>③ Looking far away</b><br>Means seeing the past'],['<b>④ 星光</b><br>需要時間抵達','<b>④ Starlight</b><br>Takes time to arrive'],
+  ['光年不是「幾歲」','A Light-year Is Not an Age'],['<strong class="accent-cyan">1 光年</strong>是光以光速行走一年的<strong>距離</strong>，約為 <strong class="accent-yellow">10 兆公里</strong>。','<strong class="accent-cyan">1 light-year</strong> is the <strong>distance</strong> light travels in one year, about <strong class="accent-yellow">10 trillion km</strong>.'],['比鄰星：約 4.3 光年。','Proxima Centauri: about 4.3 light-years.'],['織女星：約 26 光年。','Vega: about 26 light-years.'],['參宿四：約 640 光年。','Betelgeuse: about 640 light-years.'],['如果一顆星距離我們 640 光年，今天進入眼睛的星光，是它約 <strong>640 年前</strong>發出的。','If a star is 640 light-years away, the starlight entering our eyes today left it about <strong>640 years ago</strong>.'],['【互動】星光旅行時間','[Interactive] Starlight Travel Time'],['距離','Distance'],['比鄰星','Proxima Centauri'],['織女星','Vega'],['參宿四','Betelgeuse'],['▶ 光出發','▶ Send the Light'],['參宿四距離約 640 光年，代表它「640 歲」嗎？','Betelgeuse is about 640 light-years away. Does that mean it is “640 years old”?'],['光年描述的是距離，不是年齡。','A light-year measures distance, not age.'],['<strong class="accent-pink">不是。</strong>640 光年是距離；我們看到的是約 640 年前從參宿四出發的光。','<strong class="accent-pink">No.</strong> 640 light-years is a distance; we see light that left Betelgeuse about 640 years ago.'],
+  ['<b>① 俯視</b><br>看旋臂','<b>① Top view</b><br>See the spiral arms'],['<b>② 側視</b><br>看盤狀','<b>② Side view</b><br>See the disk shape'],['<b>③ 中央</b><br>較凸起','<b>③ Center</b><br>Has a central bulge'],['<b>④ 尺度</b><br>約10萬光年','<b>④ Scale</b><br>About 100,000 ly'],
+  ['銀河系不是一顆「銀色圓球」','The Milky Way Is Not a “Silver Ball”'],['課本用兩個視角建立銀河系外觀：','The textbook uses two viewpoints to show the shape of the Milky Way:'],['<strong class="accent-cyan">俯視</strong>：可看到發亮的旋臂結構。','<strong class="accent-cyan">Top view</strong>: shows the glowing spiral-arm structure.'],['<strong class="accent-orange">側視</strong>：整體呈扁平、中央核球較凸起的盤狀。','<strong class="accent-orange">Side view</strong>: shows a flat disk with a thicker central bulge.'],['直徑約 <strong class="accent-yellow">10 萬光年</strong>。','Its diameter is about <strong class="accent-yellow">100,000 light-years</strong>.'],['我們身處銀河系內部，所以夜空中的銀河光帶，是從銀河系盤面內往密集恆星方向看的結果。','We are inside the Milky Way, so its band of light appears when we look along the galactic disk toward densely packed stars.'],['【圖解】銀河系俯視與太陽系位置','[Diagram] Top View of the Milky Way and the Solar System’s Location'],['俯視示意：旋臂向內盤繞；太陽系位於銀河系盤面內，離中心約 27,000 光年。','Top-view diagram: the spiral arms wind inward; the Solar System lies in the galactic disk, about 27,000 light-years from the center.'],['這張圖直接用同一個銀河系視覺，讓第 1 頁的尺度旅程與第 3 頁的結構教學保持一致。','This page uses the same Milky Way visual so the scale journey on Page 1 stays consistent with the structure lesson on Page 3.'],['若銀河系側視呈很薄的盤狀，為什麼從地球看天空會有一條銀河光帶？','If the Milky Way is a thin disk when viewed from the side, why do we see a band of light across the sky from Earth?'],['地球和太陽系本來就在銀河系的盤面內。','Earth and the Solar System are already inside the Milky Way’s disk.'],['因為我們<strong class="accent-cyan">身在銀河系盤面內部</strong>，沿盤面方向看出去時，視線穿過大量恆星，因此形成密集光帶。','Because we are <strong class="accent-cyan">inside the Milky Way’s disk</strong>, looking along the disk sends our line of sight through many stars, creating a dense band of light.'],
+  ['<b>① 太陽</b><br>唯一恆星','<b>① Sun</b><br>The only star'],['<b>② 八大行星</b><br>繞日公轉','<b>② Eight planets</b><br>Orbit the Sun'],['<b>③ 內圈</b><br>類地行星','<b>③ Inner region</b><br>Terrestrial planets'],['<b>④ 外圈</b><br>類木行星','<b>④ Outer region</b><br>Giant planets'],
+  ['八大行星「一起朝同方向跑」','The Eight Planets “Move in the Same Direction”'],['八大行星在近乎相同的軌道面上繞太陽運行。依課本的方向定義，從<strong class="accent-cyan">太陽北極上空俯視</strong>，八大行星皆呈<strong class="accent-yellow">逆時鐘</strong>公轉。','The eight planets orbit the Sun in nearly the same orbital plane. By the textbook’s convention, viewed from <strong class="accent-cyan">above the Sun’s north pole</strong>, all eight orbit <strong class="accent-yellow">counterclockwise</strong>.'],['<strong class="accent-orange">類地行星</strong>：水、金、地、火；岩石與金屬為主，體積與質量較小、密度較大。','<strong class="accent-orange">Terrestrial planets</strong>: Mercury, Venus, Earth, and Mars; mainly rock and metal, with smaller sizes and masses but higher densities.'],['<strong class="accent-pink">類木行星</strong>：木、土、天、海；以氣體與液體為主，體積與質量較大、密度較小。','<strong class="accent-pink">Giant planets</strong>: Jupiter, Saturn, Uranus, and Neptune; mainly gases and fluids, with larger sizes and masses but lower densities.'],['衛星繞行星；小行星、彗星與矮行星則屬太陽系其他成員。','Moons orbit planets; asteroids, comets, and dwarf planets are other members of the Solar System.'],['【互動】太陽系動起來','[Interactive] Set the Solar System in Motion'],['⏸ 暫停','⏸ Pause'],['🪨 類地行星','🪨 Terrestrial Planets'],['💨 類木行星','💨 Giant Planets'],['全部','All'],['木星體積很大，所以它應該屬於「類地行星」嗎？','Jupiter is very large, so should it be classified as a “terrestrial planet”?'],['分類不只看「大不大」，還看主要組成、密度、質量與體積特徵。','Classification considers not only size, but also composition, density, mass, and volume.'],['<strong class="accent-pink">不是。</strong>木星屬類木行星，主要由氣體與液體構成，體積與質量大、平均密度較小。','<strong class="accent-pink">No.</strong> Jupiter is a giant planet made mainly of gases and fluids, with large volume and mass but lower average density.'],
+  ['<b>① 距離</b><br>位置按 au 比例','<b>① Distance</b><br>Positions scaled by au'],['<b>② 大小</b><br>直徑以地球=1','<b>② Size</b><br>Earth’s diameter = 1'],['<b>③ 迷思</b><br>課本圖非真比例','<b>③ Misconception</b><br>Textbook images are not to scale'],['<b>④ 地球</b><br>適居條件','<b>④ Earth</b><br>Conditions for habitability'],
+  ['太陽系真正攤開，會非常「空」','At True Scale, the Solar System Is Mostly “Empty”'],['課本特別提醒：一般太陽系圖片的<strong class="accent-pink">行星大小與彼此距離並未依實際比例</strong>。','The textbook emphasizes that in typical Solar System images, <strong class="accent-pink">planet sizes and the distances between them are not shown to scale</strong>.'],['表 7-2 以地球距太陽平均距離為 <strong class="accent-cyan">1 au</strong>；海王星約在 <strong class="accent-yellow">30.07 au</strong>。','Table 7-2 defines Earth’s average distance from the Sun as <strong class="accent-cyan">1 au</strong>; Neptune is about <strong class="accent-yellow">30.07 au</strong> away.'],['<strong>本頁分開看兩種比例：</strong><br>「距離模式」位置按 au 排列，球體大小放大；「大小模式」八大行星直徑依地球＝1 比例繪製，位置則等距。','<strong>This page separates two kinds of scale:</strong><br>In “Distance mode,” positions are scaled by au and bodies are enlarged. In “Size mode,” planet diameters are scaled with Earth = 1 and positions are evenly spaced.'],['【互動】距離比例 ↔ 大小比例','[Interactive] Distance Scale ↔ Size Scale'],['📏 距離比例','📏 Distance Scale'],['🪐 行星大小','🪐 Planet Sizes'],
+  ['為什麼地球適合生命？四顆類地行星一起比','Why Is Earth Suitable for Life? Compare the Four Terrestrial Planets'],['水星','Mercury'],['金星','Venus'],['地球','Earth'],['火星','Mars'],['0.39 au｜167°C 平均值<br>氣體極稀薄，晝夜溫差大','0.39 au | 167°C average<br>Extremely thin atmosphere; large day–night temperature range'],['0.72 au｜464°C<br>濃厚 CO₂，大氣壓力很高','0.72 au | 464°C<br>Dense CO₂ atmosphere; very high pressure'],['1.00 au｜15°C<br>液態水＋適宜大氣','1.00 au | 15°C<br>Liquid water + suitable atmosphere'],['1.52 au｜−63°C<br>大氣稀薄、平均溫度低','1.52 au | −63°C<br>Thin atmosphere; low average temperature'],['金星離太陽比水星遠，為什麼平均表面溫度反而更高？','Venus is farther from the Sun than Mercury. Why is its average surface temperature higher?'],['除了距離太陽，行星的大氣也會影響保溫能力。','Besides distance from the Sun, a planet’s atmosphere also affects how well it retains heat.'],['金星具有非常濃厚、富含二氧化碳的大氣，<strong class="accent-orange">強烈溫室效應</strong>使熱量不易散失，因此平均表面溫度高於水星。','Venus has a very dense, carbon-dioxide-rich atmosphere. Its <strong class="accent-orange">strong greenhouse effect</strong> traps heat, making its average surface temperature higher than Mercury’s.']
+]);
+const translatableSelector='h1,h2,h3,p,li,label,.subtitle,.tab-button,.mission-step,.action-btn,.practice-btn,.key-box,.galaxy-photo-note,.result-box,.planet-card strong,.planet-card span';
+function prepareStaticTranslations(){
+  document.querySelectorAll(translatableSelector).forEach(el=>{const zh=el.innerHTML.trim(),en=staticTranslations.get(zh);if(en){el.dataset.zh=zh;el.dataset.en=en;}});
+}
+const dynamicControlPairs=[
+  ['▶ 從宇宙飛到月球','▶ Fly from the Universe to the Moon'],['↻ 再播放一次','↻ Replay'],['⏪ 再倒帶教學','⏪ Rewind Lesson Again'],['⏸ 倒帶教學中','⏸ Rewinding Lesson'],['▶ 從這裡繼續','▶ Continue from Here'],['▶ 繼續','▶ Continue'],['⏸ 暫停','⏸ Pause'],['⏪ 倒帶教學','⏪ Rewind Lesson'],['↻ 再播放','↻ Replay'],['光正在旅行…','Light is traveling…'],['▶ 光出發','▶ Send the Light']
+];
+function translateDynamicControls(){
+  document.querySelectorAll('#zoomPlay,#zoomTeach,#lightPlay,#solarPlay').forEach(el=>{const text=el.textContent.trim();const pair=dynamicControlPairs.find(p=>p.includes(text));if(pair)el.textContent=tr(pair[0],pair[1]);});
+}
+function setLang(lang){
+  currentLang=lang==='en'?'en':'zh';document.documentElement.lang=currentLang==='en'?'en':'zh-Hant';
+  document.getElementById('btn-lang-zh')?.classList.toggle('active',currentLang==='zh');document.getElementById('btn-lang-en')?.classList.toggle('active',currentLang==='en');
+  document.querySelectorAll('[data-zh][data-en]').forEach(el=>{el.innerHTML=currentLang==='en'?el.dataset.en:el.dataset.zh;});
+  const img=document.getElementById('galaxyMasterImage');if(img)img.alt=tr('銀河系俯視示意圖，標示銀河系直徑約105,700光年，以及太陽系距銀河系中心約27,000光年的位置','Top-view diagram of the Milky Way, showing its diameter of about 105,700 light-years and the Solar System about 27,000 light-years from the galactic center');
+  document.title=tr('宇宙尺度與太陽系','Scale of the Universe and the Solar System');translateDynamicControls();
+  if(typeof updateZoomUI==='function')updateZoomUI();if(typeof updateLight==='function')updateLight();if(typeof updateGalaxy==='function')updateGalaxy();if(typeof updateSolarText==='function')updateSolarText();if(typeof updateReal==='function')updateReal();
+  const activeHabit=document.querySelector('.planet-card.active');if(activeHabit&&typeof habitMsgs!=='undefined')document.getElementById('habitResult').textContent=tr(habitMsgs[+activeHabit.dataset.habit],habitMsgsEn[+activeHabit.dataset.habit]);
+  if(typeof drawActive==='function')setTimeout(drawActive,40);
+}
+prepareStaticTranslations();
+
 const C={white:'#ffffff',yellow:'#fff36a',cyan:'#55e9ff',orange:'#ffb347',green:'#9af06f',pink:'#ff78b7',purple:'#dd8cff',red:'#ff6f76',muted:'#b8c9c1',canvas:'#0a1a20',blue:'#72b9ff',deep:'#061418'};
 const TAU=Math.PI*2;
 function ctxOf(id){const c=document.getElementById(id);return c?{c,ctx:c.getContext('2d')}:null}
@@ -374,12 +420,21 @@ function drawSuperGalaxy(ctx, cx, cy, r_scale, alpha, time) {
 // ==========================================
 const zoomState={z:0,running:false,raf:0,startTs:0,mode:'forward'};
 const zoomNames=['宇宙','銀河系','太陽系','地球','月球'];
+const zoomNamesEn=['Universe','Milky Way','Solar System','Earth','Moon'];
+const zoomName=i=>tr(zoomNames[i],zoomNamesEn[i]);
 const zoomDescs=[
   '【宇宙】這是一個<strong class="accent-yellow">深空視野示意</strong>：畫面中的主要亮斑是許多不同距離的遙遠星系，而不是星系之間灑滿恆星。青色定位圈指出接下來要進入的銀河系。',
   '【銀河系】銀河系是扁平、中央較凸起的盤狀星系；中央是恆星密集區，<strong class="accent-pink">不是一顆巨大球體</strong>。定位圈標出太陽系所在區域。',
   '【太陽系】太陽是中心恆星，八大行星繞它公轉。下一個焦點直接鎖定<strong class="accent-cyan">地球</strong>。',
   '【地球】地球是一顆行星；旁邊繞行的月球是它的衛星。下一個焦點鎖定<strong class="accent-cyan">月球</strong>。',
   '【月球】旅程抵達月球。把五層重新串起來：<strong class="accent-yellow">宇宙 → 星系 → 恆星系統 → 行星 → 衛星</strong>。'
+];
+const zoomDescsEn=[
+  '[Universe] This is a <strong class="accent-yellow">deep-space view</strong>: the main bright patches are distant galaxies at many distances, not stars scattered between galaxies. The cyan target marks the Milky Way as the next destination.',
+  '[Milky Way] The Milky Way is a flat disk with a thicker center. Its center is a dense region of stars, <strong class="accent-pink">not one giant sphere</strong>. The target marks the Solar System’s location.',
+  '[Solar System] The Sun is the central star, and eight planets orbit it. The next target locks directly onto <strong class="accent-cyan">Earth</strong>.',
+  '[Earth] Earth is a planet; the Moon orbiting nearby is its natural satellite. The next target locks onto the <strong class="accent-cyan">Moon</strong>.',
+  '[Moon] The journey reaches the Moon. Connect the five levels again: <strong class="accent-yellow">Universe → Galaxy → Star System → Planet → Natural Satellite</strong>.'
 ];
 
 function focusRing(ctx,x,y,r,text){
@@ -537,9 +592,9 @@ function drawUniverseScene(ctx){
 
   // 目標銀河系：只是深空中其中一個星系，用青色圈指出下一個焦點。
   drawMiniGalaxy(ctx,targetX,targetY,1.35,0,-.22,1);
-  focusRing(ctx,targetX,targetY,47,'銀河系');
+  focusRing(ctx,targetX,targetY,47,tr('銀河系','Milky Way'));
 
-  label(ctx,'深空視野：看到的是許多遙遠星系，不是銀河系周圍灑滿恆星',0,-278,C.yellow,'center',22);
+  label(ctx,tr('深空視野：看到的是許多遙遠星系，不是銀河系周圍灑滿恆星','Deep-space view: many distant galaxies, not stars scattered around the Milky Way'),0,-278,C.yellow,'center',22);
 }
 function drawMilkyWayScene(ctx){
   // 第 1 頁與第 3 頁共用同一張銀河系圖，避免學生看到兩種不同造型。
@@ -554,7 +609,7 @@ function drawMilkyWayScene(ctx){
     drawMilkyWayDisk(ctx,0,0,1.00,1,-.10);
   }
   // 太陽系標記約落在圖片下半部中央，定位圈只負責引導下一個縮放焦點。
-  focusRing(ctx,0,112,34,'下一站：太陽系');
+  focusRing(ctx,0,112,34,tr('下一站：太陽系','Next: Solar System'));
 }
 function drawSolarJourneyScene(ctx){
   glow(ctx,0,0,30,C.yellow);
@@ -570,8 +625,8 @@ function drawSolarJourneyScene(ctx){
   // 地球固定在右側，下一段鏡頭直接鎖它
   const ex=102,ey=0;
   glow(ctx,ex,ey,9,C.blue);
-  focusRing(ctx,ex,ey,30,'地球');
-  label(ctx,'太陽',0,-48,C.yellow,'center',20);
+  focusRing(ctx,ex,ey,30,tr('地球','Earth'));
+  label(ctx,tr('太陽','Sun'),0,-48,C.yellow,'center',20);
 }
 function drawEarthMoonJourneyScene(ctx){
   // 地球
@@ -583,13 +638,13 @@ function drawEarthMoonJourneyScene(ctx){
   ctx.beginPath();ctx.ellipse(-15,-8,23,12,-.3,0,TAU);ctx.fill();
   ctx.beginPath();ctx.ellipse(20,26,16,9,.6,0,TAU);ctx.fill();
   ctx.restore();
-  label(ctx,'地球',0,-112,C.cyan,'center',24);
+  label(ctx,tr('地球','Earth'),0,-112,C.cyan,'center',24);
   // 月球
   ctx.save();ctx.strokeStyle='rgba(255,255,255,.22)';ctx.lineWidth=2;ctx.setLineDash([9,9]);
   ctx.beginPath();ctx.ellipse(0,0,245,128,0,0,TAU);ctx.stroke();ctx.restore();
   const mx=238,my=0;
   glow(ctx,mx,my,28,'#d7d9d3');
-  focusRing(ctx,mx,my,50,'月球');
+  focusRing(ctx,mx,my,50,tr('月球','Moon'));
 }
 function drawMoonJourneyScene(ctx){
   ctx.save();
@@ -602,7 +657,7 @@ function drawMoonJourneyScene(ctx){
     ctx.strokeStyle='rgba(245,245,235,.24)';ctx.lineWidth=4;ctx.stroke();
   });
   ctx.restore();
-  label(ctx,'月球｜地球的衛星',0,285,C.yellow,'center',25);
+  label(ctx,tr('月球｜地球的衛星','Moon | Earth’s natural satellite'),0,285,C.yellow,'center',25);
 }
 
 const scaleScenes=[
@@ -671,21 +726,21 @@ function drawZoomScale(ctx){
   // 上方只保留一個概念標題，避免資訊競爭
   ctx.fillStyle=C.deep;ctx.fillRect(0,0,1000,78);
   const idx=Math.round(z);
-  label(ctx,zoomNames[idx],500,38,C.yellow,'center',30);
+  label(ctx,zoomName(idx),500,38,C.yellow,'center',30);
 
   // 底部提示下一個焦點
   if(idx<4){
-    label(ctx,`下一個焦點：${zoomNames[idx+1]}`,500,565,C.cyan,'center',18);
+    label(ctx,tr(`下一個焦點：${zoomNames[idx+1]}`,`Next target: ${zoomNamesEn[idx+1]}`),500,565,C.cyan,'center',18);
   }else{
-    label(ctx,'宇宙 → 銀河系 → 太陽系 → 地球 → 月球',500,565,C.cyan,'center',18);
+    label(ctx,tr('宇宙 → 銀河系 → 太陽系 → 地球 → 月球','Universe → Milky Way → Solar System → Earth → Moon'),500,565,C.cyan,'center',18);
   }
 }
 
 function updateZoomUI(){
   const idx=Math.max(0,Math.min(4,Math.round(zoomState.z)));
   document.getElementById('zoomRange').value=zoomState.z*100;
-  document.getElementById('zoomValue').textContent=zoomNames[idx];
-  document.getElementById('scaleResult').innerHTML=zoomDescs[idx];
+  document.getElementById('zoomValue').textContent=zoomName(idx);
+  document.getElementById('scaleResult').innerHTML=tr(zoomDescs[idx],zoomDescsEn[idx]);
   document.querySelectorAll('[data-scale-step]').forEach(el=>{
     el.classList.toggle('scale-active',+el.dataset.scaleStep===idx);
   });
@@ -698,7 +753,7 @@ function animZoom(ts){
   const e=ts-zoomState.startTs;
   if(e>=TOTAL){
     zoomState.z=4;zoomState.running=false;updateZoomUI();safeDraw('scaleCanvas',drawZoomScale);
-    document.getElementById('zoomPlay').textContent='↻ 再播放一次';
+    document.getElementById('zoomPlay').textContent=tr('↻ 再播放一次','↻ Replay');
     const teach=document.getElementById('zoomTeach');teach.disabled=false;teach.classList.add('active-btn');
     return;
   }
@@ -718,7 +773,7 @@ function animTeach(ts){
   const e=ts-zoomState.startTs;
   if(e>=TEACH_TOTAL){
     zoomState.z=0;zoomState.running=false;updateZoomUI();safeDraw('scaleCanvas',drawZoomScale);
-    document.getElementById('zoomTeach').textContent='⏪ 再倒帶教學';
+    document.getElementById('zoomTeach').textContent=tr('⏪ 再倒帶教學','⏪ Rewind Lesson Again');
     return;
   }
   const seg=Math.min(4,Math.floor(e/TEACH_CYCLE));
@@ -746,7 +801,7 @@ document.getElementById('zoomTeach').addEventListener('click',()=>{
   zoomState.startTs=0;
   zoomState.running=true;
   document.getElementById('zoomTeach').disabled=false;
-  document.getElementById('zoomTeach').textContent='⏸ 倒帶教學中';
+  document.getElementById('zoomTeach').textContent=tr('⏸ 倒帶教學中','⏸ Rewinding Lesson');
   updateZoomUI();safeDraw('scaleCanvas',drawZoomScale);
   zoomState.raf=requestAnimationFrame(animTeach);
 });
@@ -754,26 +809,26 @@ document.getElementById('zoomTeach').addEventListener('click',()=>{
 document.getElementById('zoomRange').addEventListener('input',e=>{
   zoomState.running=false;if(zoomState.raf)cancelAnimationFrame(zoomState.raf);
   zoomState.z=+e.target.value/100;
-  document.getElementById('zoomPlay').textContent='▶ 從這裡繼續';
+  document.getElementById('zoomPlay').textContent=tr('▶ 從這裡繼續','▶ Continue from Here');
   updateZoomUI();safeDraw('scaleCanvas',drawZoomScale);
 });
 document.getElementById('zoomPlay').addEventListener('click',()=>{
   if(zoomState.running){
     zoomState.running=false;if(zoomState.raf)cancelAnimationFrame(zoomState.raf);
-    document.getElementById('zoomPlay').textContent='▶ 繼續';
+    document.getElementById('zoomPlay').textContent=tr('▶ 繼續','▶ Continue');
     return;
   }
   // 自動播放一律從宇宙開始，避免學生中途迷失
   zoomState.mode='forward';zoomState.z=0;zoomState.startTs=0;zoomState.running=true;
-  document.getElementById('zoomPlay').textContent='⏸ 暫停';
+  document.getElementById('zoomPlay').textContent=tr('⏸ 暫停','⏸ Pause');
   updateZoomUI();safeDraw('scaleCanvas',drawZoomScale);
   zoomState.raf=requestAnimationFrame(animZoom);
 });
 document.getElementById('zoomReset').addEventListener('click',()=>{
   zoomState.running=false;if(zoomState.raf)cancelAnimationFrame(zoomState.raf);
   zoomState.mode='forward';zoomState.z=0;zoomState.startTs=0;
-  document.getElementById('zoomPlay').textContent='▶ 從宇宙飛到月球';
-  const teach=document.getElementById('zoomTeach');teach.disabled=true;teach.classList.remove('active-btn');teach.textContent='⏪ 倒帶教學';
+  document.getElementById('zoomPlay').textContent=tr('▶ 從宇宙飛到月球','▶ Fly from the Universe to the Moon');
+  const teach=document.getElementById('zoomTeach');teach.disabled=true;teach.classList.remove('active-btn');teach.textContent=tr('⏪ 倒帶教學','⏪ Rewind Lesson');
   updateZoomUI();safeDraw('scaleCanvas',drawZoomScale);
 });
 
@@ -782,32 +837,32 @@ document.getElementById('zoomReset').addEventListener('click',()=>{
 // 2. 光年與過去
 // ==========================================
 const stars=[
-  {name:'比鄰星',ly:4.3,color:C.orange},
-  {name:'織女星',ly:26,color:C.cyan},
-  {name:'參宿四',ly:640,color:C.red}
+  {name:'比鄰星',nameEn:'Proxima Centauri',ly:4.3,color:C.orange},
+  {name:'織女星',nameEn:'Vega',ly:26,color:C.cyan},
+  {name:'參宿四',nameEn:'Betelgeuse',ly:640,color:C.red}
 ];const lightState={idx:2,p:0,running:false,raf:0,last:0};function drawLight(ctx){
   clear(ctx);ctx.fillStyle=C.deep;ctx.fillRect(0,0,1000,82);
   const s=stars[lightState.idx];
-  label(ctx,`${s.name} → 地球：約 ${s.ly} 光年`,500,41,C.yellow,'center',27);
-  glow(ctx,130,310,48,s.color);label(ctx,s.name,130,390,s.color,'center',22);
-  glow(ctx,870,310,46,C.blue);label(ctx,'地球',870,390,C.cyan,'center',22);
+  label(ctx,tr(`${s.name} → 地球：約 ${s.ly} 光年`,`${s.nameEn} → Earth: about ${s.ly} light-years`),500,41,C.yellow,'center',27);
+  glow(ctx,130,310,48,s.color);label(ctx,tr(s.name,s.nameEn),130,390,s.color,'center',22);
+  glow(ctx,870,310,46,C.blue);label(ctx,tr('地球','Earth'),870,390,C.cyan,'center',22);
   line(ctx,[[195,310],[805,310]],'rgba(255,255,255,.22)',4,[12,10]);
   const x=195+(805-195)*lightState.p;glow(ctx,x,310,13,C.yellow);
-  label(ctx,'星光',x,270,C.yellow,'center',17);
-  label(ctx,'教學動畫把幾年至數百年的旅行壓縮成數秒',500,535,C.muted,'center',17);
+  label(ctx,tr('星光','Starlight'),x,270,C.yellow,'center',17);
+  label(ctx,tr('教學動畫把幾年至數百年的旅行壓縮成數秒','The animation compresses years to centuries of travel into seconds'),500,535,C.muted,'center',17);
 }function updateLight(){
   const s=stars[lightState.idx];
   document.getElementById('lightRange').value=lightState.idx;
   document.getElementById('lightValue').textContent=`${s.ly} ly`;
   document.querySelectorAll('.star-choice').forEach(b=>b.classList.toggle('active-btn',+b.dataset.star===lightState.idx));
-  document.getElementById('lightResult').innerHTML=`距離 <strong style="color:var(--cyan)">${s.ly} 光年</strong>：今天收到的光，大約是在 <strong style="color:var(--yellow)">${s.ly} 年前</strong>離開${s.name}。光年是距離，不是這顆星的年齡。`;
+  document.getElementById('lightResult').innerHTML=tr(`距離 <strong style="color:var(--cyan)">${s.ly} 光年</strong>：今天收到的光，大約是在 <strong style="color:var(--yellow)">${s.ly} 年前</strong>離開${s.name}。光年是距離，不是這顆星的年齡。`,`Distance: <strong style="color:var(--cyan)">${s.ly} light-years</strong>. The light received today left ${s.nameEn} about <strong style="color:var(--yellow)">${s.ly} years ago</strong>. A light-year is a distance, not the star’s age.`);
   safeDraw('lightCanvas',drawLight);
 }function animLight(ts){
   if(!lightState.running)return;if(!lightState.last)lightState.last=ts;
   const dt=Math.min(40,ts-lightState.last);lightState.last=ts;lightState.p+=dt/2500;
-  if(lightState.p>=1){lightState.p=1;lightState.running=false;document.getElementById('lightPlay').textContent='↻ 再播放';safeDraw('lightCanvas',drawLight);return}
+  if(lightState.p>=1){lightState.p=1;lightState.running=false;document.getElementById('lightPlay').textContent=tr('↻ 再播放','↻ Replay');safeDraw('lightCanvas',drawLight);return}
   safeDraw('lightCanvas',drawLight);lightState.raf=requestAnimationFrame(animLight);
-}document.getElementById('lightRange').addEventListener('input',e=>{lightState.idx=+e.target.value;lightState.p=0;lightState.running=false;if(lightState.raf)cancelAnimationFrame(lightState.raf);updateLight()});document.querySelectorAll('.star-choice').forEach(b=>b.addEventListener('click',()=>{lightState.idx=+b.dataset.star;lightState.p=0;lightState.running=false;if(lightState.raf)cancelAnimationFrame(lightState.raf);updateLight()}));document.getElementById('lightPlay').addEventListener('click',()=>{if(lightState.running)return;lightState.p=0;lightState.last=0;lightState.running=true;document.getElementById('lightPlay').textContent='光正在旅行…';lightState.raf=requestAnimationFrame(animLight)});
+}document.getElementById('lightRange').addEventListener('input',e=>{lightState.idx=+e.target.value;lightState.p=0;lightState.running=false;if(lightState.raf)cancelAnimationFrame(lightState.raf);updateLight()});document.querySelectorAll('.star-choice').forEach(b=>b.addEventListener('click',()=>{lightState.idx=+b.dataset.star;lightState.p=0;lightState.running=false;if(lightState.raf)cancelAnimationFrame(lightState.raf);updateLight()}));document.getElementById('lightPlay').addEventListener('click',()=>{if(lightState.running)return;lightState.p=0;lightState.last=0;lightState.running=true;document.getElementById('lightPlay').textContent=tr('光正在旅行…','Light is traveling…');lightState.raf=requestAnimationFrame(animLight)});
 
 
 // ==========================================
@@ -815,45 +870,45 @@ const stars=[
 // ==========================================
 function updateGalaxy(){
   const result=document.getElementById('galaxyResult');
-  if(result) result.textContent='俯視：銀河系的旋臂向內盤繞；太陽系位於盤面內，距銀河系中心約 27,000 光年。';
+  if(result) result.textContent=tr('俯視：銀河系的旋臂向內盤繞；太陽系位於盤面內，距銀河系中心約 27,000 光年。','Top view: the Milky Way’s spiral arms wind inward; the Solar System lies in the disk, about 27,000 light-years from the galactic center.');
 }
 
 // ==========================================
 // 4. 太陽系
 // ==========================================
 const planets=[
-  {name:'水',full:'水星',d:.39,size:.38,color:'#aaa7a0',group:'terrestrial',speed:1.60},
-  {name:'金',full:'金星',d:.72,size:.95,color:'#d9a85f',group:'terrestrial',speed:1.18},
-  {name:'地',full:'地球',d:1.00,size:1,color:C.blue,group:'terrestrial',speed:1.00},
-  {name:'火',full:'火星',d:1.52,size:.53,color:'#c96b4b',group:'terrestrial',speed:.82},
-  {name:'木',full:'木星',d:5.20,size:10.97,color:'#d5ae80',group:'giant',speed:.44},
-  {name:'土',full:'土星',d:9.54,size:9.14,color:'#d8c27d',group:'giant',speed:.33},
-  {name:'天',full:'天王星',d:19.19,size:3.98,color:'#8cd9d7',group:'giant',speed:.23},
-  {name:'海',full:'海王星',d:30.07,size:3.86,color:'#547ce0',group:'giant',speed:.18}
+  {name:'水',nameEn:'Mer.',full:'水星',fullEn:'Mercury',d:.39,size:.38,color:'#aaa7a0',group:'terrestrial',speed:1.60},
+  {name:'金',nameEn:'Ven.',full:'金星',fullEn:'Venus',d:.72,size:.95,color:'#d9a85f',group:'terrestrial',speed:1.18},
+  {name:'地',nameEn:'Earth',full:'地球',fullEn:'Earth',d:1.00,size:1,color:C.blue,group:'terrestrial',speed:1.00},
+  {name:'火',nameEn:'Mars',full:'火星',fullEn:'Mars',d:1.52,size:.53,color:'#c96b4b',group:'terrestrial',speed:.82},
+  {name:'木',nameEn:'Jup.',full:'木星',fullEn:'Jupiter',d:5.20,size:10.97,color:'#d5ae80',group:'giant',speed:.44},
+  {name:'土',nameEn:'Sat.',full:'土星',fullEn:'Saturn',d:9.54,size:9.14,color:'#d8c27d',group:'giant',speed:.33},
+  {name:'天',nameEn:'Ura.',full:'天王星',fullEn:'Uranus',d:19.19,size:3.98,color:'#8cd9d7',group:'giant',speed:.23},
+  {name:'海',nameEn:'Nep.',full:'海王星',fullEn:'Neptune',d:30.07,size:3.86,color:'#547ce0',group:'giant',speed:.18}
 ];const solarState={running:true,t:0,last:0,raf:0,filter:'all'};function drawSolar(ctx){
   clear(ctx);ctx.fillStyle=C.deep;ctx.fillRect(0,0,1000,82);
-  label(ctx,'由太陽北極上空俯視：八大行星逆時鐘公轉',500,41,C.yellow,'center',24);
+  label(ctx,tr('由太陽北極上空俯視：八大行星逆時鐘公轉','Viewed above the Sun’s north pole: eight planets orbit counterclockwise'),500,41,C.yellow,'center',24);
   const cx=500,cy=330;glow(ctx,cx,cy,26,C.yellow);
   for(let i=0;i<8;i++){
     const r=55+i*29;ctx.save();ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,r,0,TAU);ctx.stroke();ctx.restore();
     const p=planets[i],a=solarState.t*p.speed+i*.7,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;
     const faded=solarState.filter!=='all'&&solarState.filter!==p.group;
-    ctx.save();ctx.globalAlpha=faded?.15:1;glow(ctx,x,y,4+(i>=4?3:1),p.color);label(ctx,p.name,x,y-14,p.color,'center',14);ctx.restore();
+    ctx.save();ctx.globalAlpha=faded?.15:1;glow(ctx,x,y,4+(i>=4?3:1),p.color);label(ctx,tr(p.name,p.nameEn),x,y-14,p.color,'center',14);ctx.restore();
   }
   for(let j=0;j<65;j++){const a=j*.54,r=156+(j%7)*2;ctx.fillStyle='rgba(255,255,255,.25)';ctx.beginPath();ctx.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,1.2,0,TAU);ctx.fill()}
-  arrow(ctx,745,118,705,150,C.cyan,4);label(ctx,'逆時鐘',790,105,C.cyan,'center',18);
-  label(ctx,'速度、大小、軌道間距皆為教學示意',500,565,C.muted,'center',16);
+  arrow(ctx,745,118,705,150,C.cyan,4);label(ctx,tr('逆時鐘','Counterclockwise'),790,105,C.cyan,'center',18);
+  label(ctx,tr('速度、大小、軌道間距皆為教學示意','Speeds, sizes, and orbit spacing are instructional'),500,565,C.muted,'center',16);
 }function solarLoop(ts){
   if(!solarState.running)return;if(!solarState.last)solarState.last=ts;
   const dt=Math.min(40,ts-solarState.last);solarState.last=ts;solarState.t+=dt*.0012;safeDraw('solarCanvas',drawSolar);solarState.raf=requestAnimationFrame(solarLoop);
 }function updateSolarText(){
-  const msg={all:'目前顯示全部八大行星；軌道與行星大小皆為教學示意，公轉速度已大幅放大。',
-    terrestrial:'類地行星：水星、金星、地球、火星；主要由岩石與金屬構成，體積、質量較小，平均密度較大。',
-    giant:'類木行星：木星、土星、天王星、海王星；主要由氣體與液體構成，體積、質量較大，平均密度較小。'};
+  const msg={all:tr('目前顯示全部八大行星；軌道與行星大小皆為教學示意，公轉速度已大幅放大。','All eight planets are shown. Orbits and planet sizes are instructional, and orbital speeds are greatly accelerated.'),
+    terrestrial:tr('類地行星：水星、金星、地球、火星；主要由岩石與金屬構成，體積、質量較小，平均密度較大。','Terrestrial planets: Mercury, Venus, Earth, and Mars; mainly rock and metal, with smaller sizes and masses but higher average densities.'),
+    giant:tr('類木行星：木星、土星、天王星、海王星；主要由氣體與液體構成，體積、質量較大，平均密度較小。','Giant planets: Jupiter, Saturn, Uranus, and Neptune; mainly gases and fluids, with larger sizes and masses but lower average densities.')};
   document.getElementById('solarResult').textContent=msg[solarState.filter];
   document.querySelectorAll('.class-btn').forEach(b=>b.classList.toggle('active-btn',b.dataset.class===solarState.filter));
 }document.getElementById('solarPlay').addEventListener('click',()=>{
-  solarState.running=!solarState.running;document.getElementById('solarPlay').textContent=solarState.running?'⏸ 暫停':'▶ 繼續';
+  solarState.running=!solarState.running;document.getElementById('solarPlay').textContent=solarState.running?tr('⏸ 暫停','⏸ Pause'):tr('▶ 繼續','▶ Continue');
   if(solarState.running){solarState.last=0;solarState.raf=requestAnimationFrame(solarLoop)}
 });document.querySelectorAll('.class-btn').forEach(b=>b.addEventListener('click',()=>{solarState.filter=b.dataset.class;updateSolarText();safeDraw('solarCanvas',drawSolar)}));
 
@@ -862,38 +917,43 @@ const planets=[
 // ==========================================
 const realState={mode:'distance'};function drawReal(ctx){
   clear(ctx);ctx.fillStyle=C.deep;ctx.fillRect(0,0,1000,82);
-  label(ctx,realState.mode==='distance'?'行星距離比例：0 ～ 30.07 au':'八大行星直徑比例：地球＝1',500,41,C.yellow,'center',25);
+  label(ctx,realState.mode==='distance'?tr('行星距離比例：0 ～ 30.07 au','Planet distance scale: 0–30.07 au'):tr('八大行星直徑比例：地球＝1','Planet diameter scale: Earth = 1'),500,41,C.yellow,'center',25);
   if(realState.mode==='distance'){
     const x0=80,x1=930,y=340;line(ctx,[[x0,y],[x1,y]],C.white,3);
     for(let au=0;au<=30;au+=5){const x=x0+(au/30.07)*(x1-x0);line(ctx,[[x,y-8],[x,y+8]],C.white,2);label(ctx,`${au}`,x,y+30,C.muted,'center',14)}
     label(ctx,'au',950,y+30,C.cyan,'center',16);
-    glow(ctx,x0,y,18,C.yellow);label(ctx,'太陽',x0,285,C.yellow,'center',17);
-    planets.forEach((p,i)=>{const x=x0+(p.d/30.07)*(x1-x0),py=y-(i%2?45:75);line(ctx,[[x,y],[x,py+15]],'rgba(255,255,255,.22)',2);glow(ctx,x,py,6,p.color);label(ctx,p.name,x,py-20,p.color,'center',14)});
-    label(ctx,'注意：位置按距離比例；球體大小刻意放大，否則幾乎看不見。',500,540,C.cyan,'center',17);
+    glow(ctx,x0,y,18,C.yellow);label(ctx,tr('太陽','Sun'),x0,285,C.yellow,'center',17);
+    planets.forEach((p,i)=>{const x=x0+(p.d/30.07)*(x1-x0),py=y-(i%2?45:75);line(ctx,[[x,y],[x,py+15]],'rgba(255,255,255,.22)',2);glow(ctx,x,py,6,p.color);label(ctx,tr(p.name,p.nameEn),x,py-20,p.color,'center',14)});
+    label(ctx,tr('注意：位置按距離比例；球體大小刻意放大，否則幾乎看不見。','Positions are distance-scaled; bodies are enlarged or they would be almost invisible.'),500,540,C.cyan,'center',17);
   }else{
     const base=6.5,y=330,start=80,step=112;
-    planets.forEach((p,i)=>{const x=start+i*step,r=Math.max(3,p.size*base);glow(ctx,x,y,r,p.color);label(ctx,p.name,x,475,p.color,'center',17);label(ctx,`${p.size}×`,x,510,C.muted,'center',13)});
-    label(ctx,'直徑以地球＝1；位置改為等距，方便比較大小。',500,555,C.cyan,'center',17);
+    planets.forEach((p,i)=>{const x=start+i*step,r=Math.max(3,p.size*base);glow(ctx,x,y,r,p.color);label(ctx,tr(p.name,p.nameEn),x,475,p.color,'center',17);label(ctx,`${p.size}×`,x,510,C.muted,'center',13)});
+    label(ctx,tr('直徑以地球＝1；位置改為等距，方便比較大小。','Diameters use Earth = 1; positions are evenly spaced for comparison.'),500,555,C.cyan,'center',17);
   }
 }function updateReal(){
   safeDraw('realCanvas',drawReal);
   document.querySelectorAll('.real-mode').forEach(b=>b.classList.toggle('active-btn',b.dataset.mode===realState.mode));
   document.getElementById('realResult').innerHTML=realState.mode==='distance'
-    ?'海王星約 <strong style="color:var(--yellow)">30.07 au</strong>；把 0～30 au 攤開後，水、金、地、火四顆內行星全部擠在靠近太陽的一小段。'
-    :'木星直徑約為地球的 <strong style="color:var(--yellow)">10.97 倍</strong>，土星約 9.14 倍；水星只有約 0.38 倍。';
+    ?tr('海王星約 <strong style="color:var(--yellow)">30.07 au</strong>；把 0～30 au 攤開後，水、金、地、火四顆內行星全部擠在靠近太陽的一小段。','Neptune is about <strong style="color:var(--yellow)">30.07 au</strong> away. On a 0–30 au scale, all four inner planets are crowded into a short segment near the Sun.')
+    :tr('木星直徑約為地球的 <strong style="color:var(--yellow)">10.97 倍</strong>，土星約 9.14 倍；水星只有約 0.38 倍。','Jupiter’s diameter is about <strong style="color:var(--yellow)">10.97 times</strong> Earth’s, Saturn’s about 9.14 times, and Mercury’s only about 0.38 times.');
 }document.querySelectorAll('.real-mode').forEach(b=>b.addEventListener('click',()=>{realState.mode=b.dataset.mode;updateReal()}));const habitMsgs=[
   '☿ 水星距太陽最近，但氣體極稀薄，保溫能力差，因此晝夜溫差非常大。',
   '♀ 金星大小與地球接近，但濃厚二氧化碳大氣造成強烈溫室效應，平均表面溫度高達數百度。',
   '🌍 地球距太陽遠近適中，地表有大量液態水；地殼提供多樣棲地，大氣層也能供應生命所需氣體並減少太空碎屑與輻射的威脅。',
   '♂ 火星距太陽較遠且大氣非常稀薄，平均表面溫度低，保溫能力也較差。'
+];const habitMsgsEn=[
+  '☿ Mercury is closest to the Sun, but its extremely thin atmosphere retains little heat, producing a very large day–night temperature range.',
+  '♀ Venus is similar in size to Earth, but its dense carbon-dioxide atmosphere creates a strong greenhouse effect and an average surface temperature of hundreds of degrees.',
+  '🌍 Earth is at a suitable distance from the Sun and has abundant liquid water. Its crust provides diverse habitats, while its atmosphere supplies essential gases and reduces threats from space debris and radiation.',
+  '♂ Mars is farther from the Sun and has a very thin atmosphere, so its average surface temperature is low and it retains little heat.'
 ];document.querySelectorAll('.planet-card').forEach(c=>c.addEventListener('click',()=>{
   document.querySelectorAll('.planet-card').forEach(x=>x.classList.remove('active'));c.classList.add('active');
-  document.getElementById('habitResult').textContent=habitMsgs[+c.dataset.habit];
+  document.getElementById('habitResult').textContent=tr(habitMsgs[+c.dataset.habit],habitMsgsEn[+c.dataset.habit]);
 }));
 
 // 共用控制
 function stopHiddenAnimations(){
-  zoomState.running=false;if(zoomState.raf)cancelAnimationFrame(zoomState.raf); document.getElementById('zoomPlay').textContent='▶ 從宇宙飛到月球';
+  zoomState.running=false;if(zoomState.raf)cancelAnimationFrame(zoomState.raf); document.getElementById('zoomPlay').textContent=tr('▶ 從宇宙飛到月球','▶ Fly from the Universe to the Moon');
   lightState.running=false;if(lightState.raf)cancelAnimationFrame(lightState.raf);
 }
 function drawActive(){
@@ -927,6 +987,7 @@ if(galaxyMaster){
 window.addEventListener('resize',()=>setTimeout(drawActive,100),{passive:true});
 window.addEventListener('orientationchange',()=>setTimeout(drawActive,180),{passive:true});
 window.addEventListener('load',()=>{
+  setLang('zh');
   setTimeout(()=>{
     updateZoomUI(); safeDraw('scaleCanvas', drawZoomScale);
     updateLight(); updateGalaxy(); updateSolarText(); updateReal();
