@@ -33,7 +33,7 @@ button,input{font:inherit}button{touch-action:manipulation}.app{max-width:1080px
 .panel{background:rgba(22,58,47,.95);border:2px solid var(--cyan);border-radius:22px;padding:18px;min-width:0}
 .panel h2{margin:0 0 12px;color:var(--yellow);font-size:29px;line-height:1.25}.panel h3{color:var(--cyan);margin:12px 0 6px}.panel p{margin:8px 0}.panel ul{margin:8px 0;padding-left:1.35em}.panel li{margin:7px 0}
 .key-box,.result-box{border:2px solid var(--cyan);border-radius:14px;padding:13px 15px;margin-top:14px;background:rgba(85,233,255,.05);font-weight:700}
-.result-box strong{color:var(--yellow)}.canvas-wrap{background:var(--canvas);border:3px solid var(--cyan);border-radius:20px;overflow:hidden;position:relative}
+.result-box strong{color:var(--yellow)}.canvas-wrap{background:var(--canvas);border:3px solid var(--cyan);border-radius:20px;overflow:hidden;position:relative;contain:paint;isolation:isolate}
 .rect-canvas{display:block;width:100%;height:auto;aspect-ratio:10/6}.controls{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:14px 0}.action-btn{padding:9px 14px}.action-btn.success{border-color:var(--green)}.action-btn.warning{border-color:var(--orange)}.action-btn.danger{border-color:var(--red)}
 .slider-block{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;margin:13px 0;font-weight:900}.slider-block input{width:100%;accent-color:var(--cyan)}.slider-value{color:var(--cyan);font-family:"SFMono-Regular",Consolas,monospace;font-size:21px;white-space:nowrap;min-width:82px;text-align:right}
 .toggle-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}.small{font-size:16px;color:var(--muted)}
@@ -68,6 +68,8 @@ button,input{font:inherit}button{touch-action:manipulation}.app{max-width:1080px
 
 .floating-lang-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;align-items:center;gap:10px;padding:8px 10px;border:3px solid var(--cyan);border-radius:16px;background:#09231f;box-shadow:0 10px 26px rgba(0,0,0,.35)}
 .hero{padding-top:58px}.lang-label{color:var(--cyan);font-weight:900;font-size:18px}.lang-options{display:flex;gap:6px}.lang-pill{min-width:62px;padding:10px 14px;border:3px solid #72847f;border-radius:10px;background:#10221f;color:#fff;font:900 18px/1 'Noto Sans TC',sans-serif;cursor:pointer}.lang-pill.active{border-color:var(--cyan);background:var(--cyan);color:#09231f;box-shadow:0 0 14px rgba(85,233,255,.45)}
+/* iOS Safari：fixed 圖層在長頁面上可能留下垂直合成接縫。 */
+@supports (-webkit-touch-callout: none){.floating-lang-container{position:absolute}}
 @media(max-width:768px){body{font-size:18px}.app{padding:12px 8px 50px}.hero h1{font-size:34px}.grid-2col,.grid-equal{grid-template-columns:1fr}.mission-row{grid-template-columns:1fr 1fr}.panel{padding:13px}.panel h2{font-size:25px}.tab-container{display:grid;grid-template-columns:1fr 1fr}.tab-button{padding:9px 6px;font-size:15px}.stage-switch{grid-template-columns:1fr}.hero{padding-top:52px}.floating-lang-container{top:10px;right:10px;padding:6px}.lang-label{display:none}.lang-pill{min-width:54px;padding:9px 10px;font-size:16px}.hook-box{flex-direction:column;text-align:center;padding:14px}.hook-text{font-size:17px}.intro-screen::before{inset:0;background-size:contain;background-repeat:no-repeat}.intro-prompt{bottom:24px;border-radius:18px;padding:12px 16px}.intro-prompt strong{font-size:17px}.intro-prompt span{font-size:12px}}
 </style>
 </head>
@@ -225,7 +227,7 @@ function formatTime(h){h=((h%24)+24)%24;const hh=Math.floor(h),mm=Math.round((h-
 
 // Tabs & practice
 const drawers={"tab-daynight":()=>safeDraw('dayCanvas',drawDay),"tab-clock":()=>safeDraw('clockCanvas',drawClock),"tab-sunrise":()=>{safeDraw('spaceView',drawSpaceView);safeDraw('groundView',drawGroundView)},"tab-orbit":()=>safeDraw('orbitCanvas',drawOrbit),"tab-seasons":()=>safeDraw('seasonCanvas',drawSeasons)};
-document.querySelectorAll('.tab-button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab-button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.tab).classList.add('active');updateHookBox();drawers[b.dataset.tab]?.()}));
+document.querySelectorAll('.tab-button').forEach(b=>b.addEventListener('click',()=>{killAllSims();document.querySelectorAll('.tab-button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.tab).classList.add('active');updateHookBox();drawers[b.dataset.tab]?.();if(b.dataset.tab==='tab-seasons'&&ss.stage==='B'&&g3d.isPlaying)startSeason3DLoop()}));
 document.querySelectorAll('.practice-box').forEach(box=>box.querySelectorAll('.practice-btn').forEach(btn=>btn.addEventListener('click',()=>{box.querySelectorAll('.practice-btn').forEach(b=>b.classList.remove('active'));box.querySelectorAll('.practice-step').forEach(s=>s.classList.remove('active'));btn.classList.add('active');box.querySelector(`[data-content="${btn.dataset.step}"]`).classList.add('active')})));
 
 
@@ -397,7 +399,7 @@ function drawDay(ctx){clear(ctx);drawSun(ctx,135,320,86);for(let y=250;y<=390;y+
   ctx.save();ctx.fillStyle='rgba(16,45,38,.92)';ctx.strokeStyle=C.cyan;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(770,58,225,210,16);ctx.fill();ctx.stroke();ctx.restore();
   drawPolarSchematic(ctx,882,165,64,dn.angle,{showShading:dn.term,northPoleSunAngle:-23.5,showTaiwan:true,showNorthPole:true,showArrows:true});
 }
-function dnLoop(ts){if(!dn.running)return;if(!dn.last)dn.last=ts;const dt=Math.min(40,ts-dn.last);dn.last=ts;dn.angle=(dn.angle+dt*dn.speed)%360;document.getElementById('dnRange').value=dn.angle;document.getElementById('dnValue').textContent=`${Math.round(dn.angle)}°`;safeDraw('dayCanvas',drawDay);dn.raf=requestAnimationFrame(dnLoop)}
+function dnLoop(ts){if(!dn.running){dn.raf=0;return}if(!dn.last)dn.last=ts;const dt=Math.min(40,ts-dn.last);dn.last=ts;dn.angle=(dn.angle+dt*dn.speed)%360;document.getElementById('dnRange').value=dn.angle;document.getElementById('dnValue').textContent=`${Math.round(dn.angle)}°`;safeDraw('dayCanvas',drawDay);dn.raf=requestAnimationFrame(dnLoop)}
 document.getElementById('dnPlay').onclick=()=>{dn.running=!dn.running;document.getElementById('dnPlay').textContent=dn.running?tr('⏸ 暫停','⏸ Pause'):tr('▶ 播放','▶ Play');if(dn.running){dn.last=0;dn.raf=requestAnimationFrame(dnLoop)}};document.getElementById('dnRange').oninput=e=>{dn.angle=+e.target.value;dn.running=false;document.getElementById('dnPlay').textContent=tr('▶ 播放','▶ Play');document.getElementById('dnValue').textContent=`${Math.round(dn.angle)}°`;safeDraw('dayCanvas',drawDay)};document.getElementById('dnSlow').onclick=()=>dn.speed=.018;document.getElementById('dnFast').onclick=()=>dn.speed=.075;document.getElementById('dnReset').onclick=()=>{dn.angle=25;dn.running=false;document.getElementById('dnRange').value=25;document.getElementById('dnValue').textContent='25°';document.getElementById('dnPlay').textContent=tr('▶ 播放','▶ Play');safeDraw('dayCanvas',drawDay)};document.getElementById('dnAxis').onclick=e=>{dn.axis=!dn.axis;e.currentTarget.classList.toggle('active-btn',dn.axis);safeDraw('dayCanvas',drawDay)};document.getElementById('dnTerm').onclick=e=>{dn.term=!dn.term;e.currentTarget.classList.toggle('active-btn',dn.term);safeDraw('dayCanvas',drawDay)};
 
 // PAGE 2
@@ -421,7 +423,7 @@ function drawSpaceView(ctx){clear(ctx);drawSun(ctx,165,300,75);for(let y=240;y<=
 }
 function skyColor(t){const day=t>=6&&t<=18;let k;if(day){k=Math.sin((t-6)/12*Math.PI);return `rgb(${Math.round(25+50*k)},${Math.round(70+85*k)},${Math.round(105+110*k)})`}return '#0d2730'}
 function drawGroundView(ctx){ctx.fillStyle=skyColor(sv.time);ctx.fillRect(0,0,1000,420);ctx.fillStyle='#183d31';ctx.fillRect(0,420,1000,180);line(ctx,[[0,420],[1000,420]],C.white,3);label(ctx,'東',85,455,C.cyan,'center',24);label(ctx,'南方天空',500,455,C.muted,'center',20);label(ctx,'西',915,455,C.orange,'center',24);const day=sv.time>=6&&sv.time<=18;if(day){const p=(sv.time-6)/12,x=90+p*820,y=410-Math.sin(p*Math.PI)*285;drawSun(ctx,x,y,36);label(ctx,formatTime(sv.time),x,y-60,C.yellow,'center',18)}else{for(let i=0;i<50;i++){const x=(i*173+41)%1000,y=(i*89+25)%360;glow(ctx,x,y,i%9===0?1.8:.9,'rgba(255,255,255,.65)')}label(ctx,'太陽在地平線下',500,250,C.muted,'center',23)}arrow(ctx,160,515,840,515,C.yellow,5);label(ctx,'太陽看起來：東 → 西',500,555,C.yellow,'center',22)}
-function updateSV(){document.getElementById('sunRange').value=sv.time;document.getElementById('sunValue').textContent=formatTime(sv.time);safeDraw('spaceView',drawSpaceView);safeDraw('groundView',drawGroundView)}function svLoop(ts){if(!sv.running)return;if(!sv.last)sv.last=ts;const dt=Math.min(40,ts-sv.last);sv.last=ts;sv.time=(sv.time+dt/900)%24;updateSV();sv.raf=requestAnimationFrame(svLoop)}document.getElementById('sunPlay').onclick=()=>{sv.running=!sv.running;document.getElementById('sunPlay').textContent=sv.running?tr('⏸ 暫停','⏸ Pause'):tr('▶ 同步播放','▶ Play Together');if(sv.running){sv.last=0;sv.raf=requestAnimationFrame(svLoop)}};document.getElementById('sunRange').oninput=e=>{sv.time=+e.target.value;sv.running=false;document.getElementById('sunPlay').textContent=tr('▶ 同步播放','▶ Play Together');updateSV()};[['sunMorning',6],['sunNoon',12],['sunEvening',18]].forEach(([id,t])=>document.getElementById(id).onclick=()=>{sv.time=t;updateSV()});
+function updateSV(){document.getElementById('sunRange').value=sv.time;document.getElementById('sunValue').textContent=formatTime(sv.time);safeDraw('spaceView',drawSpaceView);safeDraw('groundView',drawGroundView)}function svLoop(ts){if(!sv.running){sv.raf=0;return}if(!sv.last)sv.last=ts;const dt=Math.min(40,ts-sv.last);sv.last=ts;sv.time=(sv.time+dt/900)%24;updateSV();sv.raf=requestAnimationFrame(svLoop)}document.getElementById('sunPlay').onclick=()=>{sv.running=!sv.running;document.getElementById('sunPlay').textContent=sv.running?tr('⏸ 暫停','⏸ Pause'):tr('▶ 同步播放','▶ Play Together');if(sv.running){sv.last=0;sv.raf=requestAnimationFrame(svLoop)}};document.getElementById('sunRange').oninput=e=>{sv.time=+e.target.value;sv.running=false;document.getElementById('sunPlay').textContent=tr('▶ 同步播放','▶ Play Together');updateSV()};[['sunMorning',6],['sunNoon',12],['sunEvening',18]].forEach(([id,t])=>document.getElementById(id).onclick=()=>{sv.time=t;updateSV()});
 
 // PAGE 4
 const ob={deg:270,running:false,last:0,raf:0,zeroTilt:false,labels:true};const seasonMap={summer:0,autumn:90,winter:180,spring:270},seasonNames={spring:'春分',summer:'夏至',autumn:'秋分',winter:'冬至'},seasonNamesEn={spring:'March Equinox',summer:'June Solstice',autumn:'September Equinox',winter:'December Solstice'};const seasonName=k=>tr(seasonNames[k],seasonNamesEn[k]);
@@ -451,7 +453,7 @@ function updateOrbit(){
   document.getElementById('orbitRange').value=ob.deg;document.getElementById('orbitValue').textContent=nearestSeason(ob.deg);safeDraw('orbitCanvas',drawOrbit);
   document.getElementById('orbitResult').innerHTML=ob.zeroTilt?tr('比較模式：把地軸改成 <strong>0°</strong>，用來觀察「沒有傾斜」時會失去哪一個季節因素。','Comparison mode: set the axis to <strong>0°</strong> to observe which seasonal factor disappears without tilt.'):tr('地球模式：自轉軸傾斜 <strong>23.5°</strong>，一年中方向近似固定；本頁只播放公轉，不另外播放自轉。','Earth model: the axis is tilted <strong>23.5°</strong> and remains nearly fixed throughout the year. This page plays revolution only, without rotation.');
 }
-function orbitLoop(ts){if(!ob.running)return;if(!ob.last)ob.last=ts;const dt=Math.min(40,ts-ob.last);ob.last=ts;ob.deg=(ob.deg+dt*.025)%360;updateOrbit();ob.raf=requestAnimationFrame(orbitLoop)}
+function orbitLoop(ts){if(!ob.running){ob.raf=0;return}if(!ob.last)ob.last=ts;const dt=Math.min(40,ts-ob.last);ob.last=ts;ob.deg=(ob.deg+dt*.025)%360;updateOrbit();ob.raf=requestAnimationFrame(orbitLoop)}
 document.getElementById('orbitPlay').onclick=()=>{ob.running=!ob.running;document.getElementById('orbitPlay').textContent=ob.running?tr('⏸ 暫停','⏸ Pause'):tr('▶ 公轉一年','▶ Revolve for One Year');if(ob.running){ob.last=0;ob.raf=requestAnimationFrame(orbitLoop)}};
 document.getElementById('orbitRange').oninput=e=>{ob.deg=+e.target.value;ob.running=false;document.getElementById('orbitPlay').textContent=tr('▶ 公轉一年','▶ Revolve for One Year');updateOrbit()};
 document.querySelectorAll('.season-btn').forEach(b=>b.onclick=()=>{ob.deg=seasonMap[b.dataset.season];document.querySelectorAll('.season-btn').forEach(x=>x.classList.toggle('active-btn',x===b));updateOrbit()});
@@ -461,8 +463,21 @@ document.getElementById('axisLabels').onclick=e=>{ob.labels=!ob.labels;e.current
 // PAGE 5
 const ss={stage:'A',angle:90,season:'spring',tilt0:false};
 const G3D_NORTH_VIEW_THETA=-Math.PI/5,G3D_NORTH_VIEW_PHI=-Math.PI/6;
-const g3d={camTheta:G3D_NORTH_VIEW_THETA,camPhi:G3D_NORTH_VIEW_PHI,orbitDeg:270,earthRot:0,isPlaying:true,lastTime:0,dragging:false,lastX:0,lastY:0};
+const g3d={camTheta:G3D_NORTH_VIEW_THETA,camPhi:G3D_NORTH_VIEW_PHI,orbitDeg:270,earthRot:0,isPlaying:true,lastTime:0,raf:0,dragging:false,lastX:0,lastY:0};
 const G3D_ORBIT_R=340,G3D_EARTH_R=28,G3D_SUN_R=85,G3D_TILT=23.5;
+
+function stopTimedSim(state,buttonId,zh,en){
+  state.running=false;state.last=0;
+  if(state.raf){cancelAnimationFrame(state.raf);state.raf=0}
+  const button=document.getElementById(buttonId);if(button)button.textContent=tr(zh,en);
+}
+function killAllSims(){
+  stopTimedSim(dn,'dnPlay','▶ 播放','▶ Play');
+  stopTimedSim(sv,'sunPlay','▶ 同步播放','▶ Play Together');
+  stopTimedSim(ob,'orbitPlay','▶ 公轉一年','▶ Revolve for One Year');
+  if(g3d.raf){cancelAnimationFrame(g3d.raf);g3d.raf=0}
+  g3d.lastTime=0;g3d.dragging=false;
+}
 
 function resetSeason3DNorthView(){
   g3d.camTheta=G3D_NORTH_VIEW_THETA;
@@ -633,17 +648,27 @@ function setSeason3DVisible(on){
   if(a)a.style.display=on?'none':'block';if(b)b.style.display=on?'block':'none';if(h)h.style.display=on?'block':'none';
 }
 function animateSeason3D(time){
-  if(g3d.lastTime&&g3d.isPlaying&&ss.stage==='B'){const dt=time-g3d.lastTime;g3d.orbitDeg=(g3d.orbitDeg+dt*.02)%360;g3d.earthRot=(g3d.earthRot+dt*.2)%360;drawSeason3D()}
-  g3d.lastTime=time;requestAnimationFrame(animateSeason3D);
+  g3d.raf=0;
+  if(!season3DShouldRun()){g3d.lastTime=0;return}
+  if(g3d.lastTime){const dt=time-g3d.lastTime;g3d.orbitDeg=(g3d.orbitDeg+dt*.02)%360;g3d.earthRot=(g3d.earthRot+dt*.2)%360;drawSeason3D()}
+  g3d.lastTime=time;g3d.raf=requestAnimationFrame(animateSeason3D);
+}
+function season3DShouldRun(){
+  const active=document.querySelector('.tab-button.active');
+  return document.visibilityState!=='hidden'&&active?.dataset.tab==='tab-seasons'&&ss.stage==='B'&&g3d.isPlaying;
+}
+function startSeason3DLoop(){
+  if(g3d.raf||!season3DShouldRun())return;
+  g3d.lastTime=0;g3d.raf=requestAnimationFrame(animateSeason3D);
 }
 const season3dCanvas=document.getElementById('seasonCanvas3d');
 season3dCanvas.addEventListener('pointerdown',e=>{if(ss.stage!=='B')return;g3d.dragging=true;g3d.lastX=e.clientX;g3d.lastY=e.clientY;season3dCanvas.setPointerCapture(e.pointerId)});
 season3dCanvas.addEventListener('pointermove',e=>{if(!g3d.dragging)return;const dx=e.clientX-g3d.lastX,dy=e.clientY-g3d.lastY;g3d.lastX=e.clientX;g3d.lastY=e.clientY;g3d.camTheta-=dx*.008;g3d.camPhi+=dy*.008;g3d.camPhi=Math.max(-Math.PI/2+.1,Math.min(Math.PI/2-.1,g3d.camPhi));drawSeason3D()});
 function endSeason3DDrag(e){g3d.dragging=false;try{season3dCanvas.releasePointerCapture(e.pointerId)}catch(_){}}
 season3dCanvas.addEventListener('pointerup',endSeason3DDrag);season3dCanvas.addEventListener('pointercancel',endSeason3DDrag);
-document.getElementById('season3dPlay').onclick=e=>{g3d.isPlaying=!g3d.isPlaying;e.currentTarget.textContent=g3d.isPlaying?tr('⏸ 暫停公轉','⏸ Pause Revolution'):tr('▶ 播放公轉','▶ Play Revolution');e.currentTarget.classList.toggle('active-btn',g3d.isPlaying);drawSeason3D()};
+document.getElementById('season3dPlay').onclick=e=>{g3d.isPlaying=!g3d.isPlaying;e.currentTarget.textContent=g3d.isPlaying?tr('⏸ 暫停公轉','⏸ Pause Revolution'):tr('▶ 播放公轉','▶ Play Revolution');e.currentTarget.classList.toggle('active-btn',g3d.isPlaying);if(g3d.isPlaying)startSeason3DLoop();else{if(g3d.raf)cancelAnimationFrame(g3d.raf);g3d.raf=0;g3d.lastTime=0}drawSeason3D()};
 document.getElementById('season3dRange').oninput=e=>{g3d.orbitDeg=parseFloat(e.target.value);g3d.isPlaying=false;document.getElementById('season3dPlay').textContent=tr('▶ 播放公轉','▶ Play Revolution');document.getElementById('season3dPlay').classList.remove('active-btn');drawSeason3D()};
-requestAnimationFrame(animateSeason3D);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){if(g3d.raf)cancelAnimationFrame(g3d.raf);g3d.raf=0;g3d.lastTime=0}else startSeason3DLoop()});
 
 function drawSeasons(ctx){if(ss.stage==='A')drawAngleStage(ctx);else drawSeason3D()}
 function updateSeasonText(){
@@ -660,7 +685,7 @@ function updateSeasonText(){
   }
 }
 document.getElementById('stageA').onclick=()=>{ss.stage='A';document.getElementById('stageA').classList.add('active');document.getElementById('stageB').classList.remove('active');updateSeasonText()};
-document.getElementById('stageB').onclick=()=>{ss.stage='B';document.getElementById('stageB').classList.add('active');document.getElementById('stageA').classList.remove('active');resetSeason3DNorthView();g3d.orbitDeg=seasonMap[ss.season];updateSeasonText()};
+document.getElementById('stageB').onclick=()=>{ss.stage='B';document.getElementById('stageB').classList.add('active');document.getElementById('stageA').classList.remove('active');resetSeason3DNorthView();g3d.orbitDeg=seasonMap[ss.season];updateSeasonText();startSeason3DLoop()};
 document.getElementById('angleRange').oninput=e=>{ss.angle=+e.target.value;document.getElementById('angleValue').textContent=`${ss.angle}°`;updateSeasonText()};
 document.querySelectorAll('.season2').forEach(b=>b.onclick=()=>{ss.season=b.dataset.season;g3d.orbitDeg=seasonMap[ss.season];g3d.isPlaying=false;document.getElementById('season3dPlay').textContent=tr('▶ 播放公轉','▶ Play Revolution');document.getElementById('season3dPlay').classList.remove('active-btn');document.querySelectorAll('.season2').forEach(x=>x.classList.toggle('active-btn',x===b));updateSeasonText()});
 document.getElementById('tiltZero').onclick=e=>{ss.tilt0=!ss.tilt0;e.currentTarget.classList.toggle('active-btn',ss.tilt0);e.currentTarget.textContent=ss.tilt0?tr('恢復地軸 23.5°','Restore Axis to 23.5°'):tr('地軸改成 0°','Set Axis to 0°');updateSeasonText()};
