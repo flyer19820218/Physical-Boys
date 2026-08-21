@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title data-zh="第三節：密度 (護眼黑板大字互動版)" data-en="Unit 3: Density (Interactive Blackboard)">第三節：密度 (護眼黑板大字互動版)</title>
+    <title>理化互動實驗室｜密度大解密</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- ================= 1. CSS 樣式 (變數, UI, 排版, 動畫) ================= -->
     <style>
         :root {
             --bg-board: #132a1e;       /* 傳統黑板深黛綠 - 吸光護眼 */
@@ -20,16 +22,9 @@
             --border-style: 2px dashed rgba(241, 245, 249, 0.3);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* 嚴格堅持 20px 基礎字體，照顧後排同學 */
-        html {
-            font-size: 20px;
-        }
+        html { font-size: 20px; }
 
         body {
             background-color: var(--bg-darker);
@@ -39,214 +34,114 @@
             padding-bottom: 50px;
         }
 
-        /* 🌟 規範：右上角橫向懸浮雙語切換器 */
+        /* 🌟 V5 規範：電影式高畫質單元封面 (完全無字純圖懸念版) */
+        body.intro-locked { overflow: hidden; }
+        .intro-screen {
+            position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center;
+            overflow: hidden; background: #03130f; cursor: pointer; isolation: isolate;
+            transition: opacity .7s ease, visibility .7s ease;
+        }
+        .intro-bg-img {
+            position: absolute; inset: -5%; z-index: -3;
+            width: 110%; height: 110%; object-fit: cover;
+            filter: brightness(0.7) contrast(1.1) saturate(1.1);
+            animation: introZoom 9s ease-out both;
+        }
+        .intro-gradient {
+            position: absolute; inset: 0; z-index: -2;
+            background: radial-gradient(circle, rgba(1,11,11,0) 40%, rgba(1,12,10,0.7) 100%);
+            pointer-events: none;
+        }
+        .intro-screen.exiting { opacity: 0; visibility: hidden; pointer-events: none; }
+        @keyframes introZoom { from { transform: scale(1); } to { transform: scale(1.035); } }
+        @media (prefers-reduced-motion: reduce) { .intro-bg-img { animation: none; } }
+
+        /* 🌟 V5 規範：右上角橫向懸浮雙語切換器 */
         .floating-lang-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border: 2px solid var(--chalk-teal);
-            border-radius: 12px;
-            background: rgba(15, 35, 24, 0.95);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(45, 212, 191, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            display: flex; flex-direction: row; align-items: center; gap: 8px;
+            padding: 8px 12px; border: 2px solid var(--chalk-teal); border-radius: 12px;
+            background: rgba(15, 35, 24, 0.95); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(45, 212, 191, 0.2);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
-        .lang-label {
-            color: var(--chalk-teal);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 20px;
-            font-weight: 700;
-            user-select: none;
-        }
-        .lang-options {
-            display: flex;
-            flex-direction: row;
-            gap: 4px;
-        }
+        .lang-label { color: var(--chalk-teal); font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; user-select: none; }
+        .lang-options { display: flex; flex-direction: row; gap: 4px; }
         .lang-pill {
-            min-width: 58px;
-            min-height: 48px; /* 觸控防禦 */
-            padding: 8px 12px;
-            border: 2px solid rgba(241, 245, 249, 0.35);
-            border-radius: 8px;
-            background: var(--bg-darker);
-            color: var(--chalk-white);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 20px;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            touch-action: manipulation;
+            min-width: 58px; min-height: 48px; padding: 8px 12px;
+            border: 2px solid rgba(241, 245, 249, 0.35); border-radius: 8px;
+            background: var(--bg-darker); color: var(--chalk-white);
+            font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700;
+            cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease; touch-action: manipulation;
         }
-        .lang-pill.active {
-            background: var(--chalk-teal) !important;
-            color: #0b2b2e !important;
-            border-color: var(--chalk-teal) !important;
-            box-shadow: 0 0 10px rgba(45, 212, 191, 0.5);
-        }
+        .lang-pill.active { background: var(--chalk-teal) !important; color: #0b2b2e !important; border-color: var(--chalk-teal) !important; box-shadow: 0 0 10px rgba(45, 212, 191, 0.5); }
 
         header {
             background: linear-gradient(135deg, #0f2318, #183827);
             border-bottom: 3px solid var(--chalk-green);
-            padding: 1.2rem 1.5rem;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            padding: 1.2rem 1.5rem; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             margin-top: 40px;
         }
-
-        header h1 {
-            font-size: 2.2rem;
-            color: var(--chalk-yellow);
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
-            margin-bottom: 0.3rem;
-            letter-spacing: 2px;
-            font-weight: 900;
-        }
-
-        header p {
-            font-size: 1.1rem;
-            color: var(--chalk-green);
-            font-weight: bold;
-        }
+        header h1 { font-size: 2.2rem; color: var(--chalk-yellow); text-shadow: 2px 2px 4px rgba(0,0,0,0.6); margin-bottom: 0.3rem; letter-spacing: 2px; font-weight: 900; }
+        header p { font-size: 1.1rem; color: var(--chalk-green); font-weight: bold; }
 
         /* 導覽列 */
         .nav-tabs {
-            display: flex;
-            justify-content: center;
-            background-color: #0d1f15;
-            padding: 0.6rem;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-            border-bottom: 2px solid rgba(241,245,249,0.2);
+            display: flex; justify-content: center; background-color: #0d1f15; padding: 0.6rem;
+            gap: 0.8rem; flex-wrap: wrap; border-bottom: 2px solid rgba(241,245,249,0.2);
         }
-
         .tab-btn {
-            padding: 0.7rem 1.4rem;
-            min-height: 48px;
-            border: 2px solid transparent;
-            background-color: transparent;
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #94a3b8;
-            cursor: pointer;
-            border-radius: 0.6rem;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            touch-action: manipulation;
+            padding: 0.7rem 1.4rem; min-height: 48px; border: 2px solid transparent;
+            background-color: transparent; font-size: 1.1rem; font-weight: bold;
+            color: #94a3b8; cursor: pointer; border-radius: 0.6rem; transition: all 0.2s ease;
+            white-space: nowrap; touch-action: manipulation;
         }
+        .tab-btn:hover { background-color: var(--bg-card); color: var(--chalk-white); }
+        .tab-btn.active { background-color: var(--bg-card); color: var(--chalk-yellow); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 15px rgba(253, 224, 71, 0.3); }
 
-        .tab-btn:hover {
-            background-color: var(--bg-card);
-            color: var(--chalk-white);
-        }
-
-        .tab-btn.active {
-            background-color: var(--bg-card);
-            color: var(--chalk-yellow);
-            border: 2px solid var(--chalk-yellow);
-            box-shadow: 0 0 15px rgba(253, 224, 71, 0.3);
-        }
-
-        /* 內容區域：滿版 1080px 防禦 */
-        .container {
-            max-width: 1080px;
-            margin: 1.5rem auto;
-            padding: 0 1.2rem;
-        }
-
+        /* 內容區域 */
+        .container { max-width: 1080px; margin: 1.5rem auto; padding: 0 1.2rem; }
         .tab-content {
-            display: none;
-            background-color: var(--bg-board);
-            padding: 2rem;
-            border-radius: 1rem;
-            border: 2px solid rgba(241,245,249,0.25);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            animation: fadeIn 0.3s ease;
+            display: none; background-color: var(--bg-board); padding: 2rem;
+            border-radius: 1rem; border: 2px solid rgba(241,245,249,0.25);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); animation: fadeIn 0.3s ease;
         }
+        .tab-content.active { display: block; }
 
-        .tab-content.active {
-            display: block;
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { color: var(--chalk-yellow); border-bottom: 3px solid var(--chalk-orange); padding-bottom: 0.5rem; margin-bottom: 1.2rem; font-size: 1.6rem; }
+        h3 { color: var(--chalk-blue); margin: 1.5rem 0 0.8rem 0; font-size: 1.3rem; }
+
+        /* 🌟 V5 曉臻老師專屬 Hook 區塊 */
+        .hook-box { 
+            display: flex; align-items: center; gap: 18px;
+            background: linear-gradient(135deg, rgba(85, 233, 255, 0.12), rgba(85, 233, 255, 0.02)); 
+            border-left: 6px solid var(--chalk-cyan); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; 
+            box-shadow: 0 4px 20px rgba(85, 233, 255, 0.08);
+            border-right: 1px solid rgba(85, 233, 255, 0.1); border-bottom: 1px solid rgba(85, 233, 255, 0.1); border-top: 1px solid rgba(85, 233, 255, 0.1);
         }
+        .xiaozhen-logo { width: 64px; height: 64px; border-radius: 50%; background-color: var(--bg-card); border: 3px solid var(--chalk-cyan); display: flex; align-items: center; justify-content: center; font-size: 38px; flex-shrink: 0; box-shadow: 0 0 15px rgba(85, 233, 255, 0.4); overflow: hidden; }
+        .hook-content { flex: 1; line-height: 1.6; }
+        .hook-title { color: var(--chalk-cyan); font-size: 22px; font-weight: 900; margin-bottom: 4px; font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif; }
+        .hook-text { color: var(--chalk-white); font-size: 20px; font-weight: bold; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h2 {
-            color: var(--chalk-yellow);
-            border-bottom: 3px solid var(--chalk-orange);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.2rem;
-            font-size: 1.6rem;
-        }
-
-        h3 {
-            color: var(--chalk-blue);
-            margin: 1.5rem 0 0.8rem 0;
-            font-size: 1.3rem;
-        }
-
-        .concept-box {
-            background-color: var(--bg-card);
-            border-left: 6px solid var(--chalk-green);
-            padding: 1.2rem;
-            margin-bottom: 1.5rem;
-            border-radius: 0 0.6rem 0.6rem 0;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
-            font-size: 1.1rem;
-        }
-
-        .interactive-area {
-            background-color: rgba(0, 0, 0, 0.35);
-            border: var(--border-style);
-            padding: 1.5rem;
-            border-radius: 0.8rem;
-            margin-top: 1.5rem;
-            text-align: center;
-        }
-
+        .concept-box { background-color: var(--bg-card); border-left: 6px solid var(--chalk-green); padding: 1.2rem; margin-bottom: 1.5rem; border-radius: 0 0.6rem 0.6rem 0; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); font-size: 1.1rem; }
+        .interactive-area { background-color: rgba(0, 0, 0, 0.35); border: var(--border-style); padding: 1.5rem; border-radius: 0.8rem; margin-top: 1.5rem; text-align: center; }
+        
         .btn {
-            background-color: var(--chalk-orange);
-            color: #000;
-            border: none;
-            min-height: 48px;
-            padding: 0.7rem 1.5rem;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin: 0.4rem 0.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            touch-action: manipulation;
+            background-color: var(--chalk-orange); color: #000; border: none; min-height: 48px;
+            padding: 0.7rem 1.4rem; font-size: 1.1rem; font-weight: bold; border-radius: 0.5rem;
+            cursor: pointer; transition: all 0.2s; margin: 0.4rem 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3); touch-action: manipulation;
         }
-
-        .btn:hover {
-            background-color: #ea580c;
-            color: #fff;
-            transform: translateY(-2px);
-        }
-
+        .btn:hover { background-color: #ea580c; color: #fff; transform: translateY(-2px); }
         .btn-blue { background-color: var(--chalk-blue); color: #000; }
         .btn-blue:hover { background-color: #0284c7; color: #fff; }
-        
         .btn-green { background-color: var(--chalk-green); color: #000; }
         .btn-green:hover { background-color: #16a34a; color: #fff; }
-
         .btn-pink { background-color: var(--chalk-pink); color: #000; }
         .btn-pink:hover { background-color: #db2777; color: #fff; }
 
-        /* 重點文字配色 */
         .hl-yellow { color: var(--chalk-yellow); font-weight: bold; }
         .hl-green { color: var(--chalk-green); font-weight: bold; }
         .hl-pink { color: var(--chalk-pink); font-weight: bold; }
@@ -254,94 +149,30 @@
         .hl-orange { color: var(--chalk-orange); font-weight: bold; }
         .mono { font-family: 'JetBrains Mono', monospace; font-weight: bold; }
 
-        /* 表格：絕對禁止黑色線條 */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1.5rem 0;
-            background-color: rgba(0,0,0,0.25);
-            font-size: 1.1rem;
-        }
+        /* 表格：絕對禁止黑色線條，改用亮白色/黃色虛線框 */
+        table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; background-color: rgba(0,0,0,0.25); font-size: 1.1rem; }
+        th, td { border: 2px solid rgba(241,245,249,0.3); padding: 0.8rem; text-align: center; }
+        th { background-color: var(--bg-card); color: var(--chalk-yellow); font-size: 1.2rem; }
 
-        th, td {
-            border: 2px solid rgba(241,245,249,0.3);
-            padding: 0.8rem;
-            text-align: center;
-        }
-
-        th {
-            background-color: var(--bg-card);
-            color: var(--chalk-yellow);
-            font-size: 1.2rem;
-        }
-
-        /* 畫布：絕對禁止黑色線條，等比縮放防禦 */
-        canvas {
-            background-color: #0d1a13;
-            border: 2px solid var(--chalk-yellow);
-            border-radius: 0.6rem;
-            max-width: 100%;
-            height: auto;
-            margin: 1rem auto;
-            display: block;
-            box-shadow: 0 0 15px rgba(0,0,0,0.6);
-        }
+        /* 畫布：等比縮放防禦 */
+        canvas { background-color: #0d1a13; border: 2px solid var(--chalk-yellow); border-radius: 0.6rem; max-width: 100%; height: auto; margin: 1rem auto; display: block; box-shadow: 0 0 15px rgba(0,0,0,0.6); }
 
         .data-box {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 48px;
-            background: rgba(255,255,255,0.08);
-            border: 2px solid var(--chalk-white);
-            padding: 10px 20px;
-            margin: 5px;
-            border-radius: 8px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: 0.3s;
-            touch-action: manipulation;
+            display: inline-flex; align-items: center; justify-content: center; min-height: 48px;
+            background: rgba(255,255,255,0.08); border: 2px solid var(--chalk-white); padding: 10px 20px;
+            margin: 5px; border-radius: 8px; font-size: 1.2rem; cursor: pointer; transition: 0.3s; touch-action: manipulation;
         }
-
-        .data-box:hover {
-            background: rgba(244, 114, 182, 0.3);
-            border-color: var(--chalk-pink);
-        }
-
-        .data-box.deleted {
-            text-decoration: line-through;
-            opacity: 0.3;
-            border-color: #64748b;
-            background: transparent;
-        }
+        .data-box:hover { background: rgba(244, 114, 182, 0.3); border-color: var(--chalk-pink); }
+        .data-box.deleted { text-decoration: line-through; opacity: 0.3; border-color: #64748b; background: transparent; }
 
         /* 雙欄對稱式器材圖卡 */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1rem;
-        }
-
-        .info-card {
-            background: var(--bg-card);
-            border: 2px solid var(--chalk-green);
-            padding: 1.5rem;
-            border-radius: 0.8rem;
-            text-align: left;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
-        }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 1rem; }
+        .info-card { background: var(--bg-card); border: 2px solid var(--chalk-green); padding: 1.5rem; border-radius: 0.8rem; text-align: left; box-shadow: 0 6px 15px rgba(0,0,0,0.3); position: relative; }
+        .info-card-pink { border-color: var(--chalk-pink); background: rgba(244, 114, 182, 0.08); }
 
         input[type="number"] {
-            padding: 0.5rem;
-            background-color: #0f2318;
-            border: 2px solid var(--chalk-green);
-            color: var(--chalk-white);
-            border-radius: 0.4rem;
-            width: 130px;
-            font-size: 1.1rem;
-            text-align: center;
-            font-weight: bold;
+            padding: 0.5rem; background-color: #0f2318; border: 2px solid var(--chalk-green); color: var(--chalk-white);
+            border-radius: 0.4rem; width: 130px; font-size: 1.1rem; text-align: center; font-weight: bold;
         }
 
         /* 縮放斷點 */
@@ -350,10 +181,20 @@
             .lang-label { display: none; }
             header h1 { font-size: 1.6rem; }
             .data-box { width: 100%; margin: 5px 0; }
+            .hook-box { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
-<body>
+<body class="intro-locked">
+
+    <!-- ================= 2. HTML 結構 (電影開場、導覽、分頁) ================= -->
+
+    <!-- 🌟 V5 電影式開場動畫 (完全無字純圖懸念版) -->
+    <div id="introScreen" class="intro-screen" role="dialog" aria-modal="true" aria-label="單元封面" tabindex="0">
+        <!-- 🌟 使用相對路徑呼叫老師的精美封面圖 -->
+        <img class="intro-bg-img" src="density_2_cover.jpeg" alt="單元封面">
+        <div class="intro-gradient"></div>
+    </div>
 
     <!-- 🌟 右上角橫向懸浮雙語切換器 -->
     <div class="floating-lang-container">
@@ -365,8 +206,8 @@
     </div>
 
     <header>
-        <h1 data-zh="🔬 國中自然黑板教室：第三節 密 度" data-en="🔬 Science Blackboard: Section 3 - Density">🔬 國中自然黑板教室：第三節 密 度</h1>
-        <p data-zh="🌿 20px 大字體 × 絕對零黑線 ｜ 破解質量與體積的核心奧秘" data-en="🌿 20px Font × Zero Black Lines | Unlocking the Secrets of Mass & Volume">🌿 20px 大字體 × 絕對零黑線 ｜ 破解質量與體積的核心奧秘</p>
+        <h1 data-zh="🔬 密度大解密：質量與體積的完美比例" data-en="🔬 Density Decoded: Perfect Ratio of Mass & Volume">🔬 密度大解密：質量與體積的完美比例</h1>
+        <p data-zh="掌握物質的核心密碼：特性的絕對指標" data-en="Mastering the core code of matter: The absolute indicator of properties">掌握物質的核心密碼：特性的絕對指標</p>
     </header>
 
     <nav class="nav-tabs">
@@ -377,18 +218,23 @@
     </nav>
 
     <div class="container">
+        <!-- 🌟 V5 曉臻老師專屬 Hook 區塊 -->
+        <div class="hook-box" id="hookBox">
+            <!-- JS 動態生成 -->
+        </div>
+
         <!-- ================= 第一分頁：定義與切塊法 ================= -->
         <section id="tab1" class="tab-content active">
             <h2 data-zh="🍰 密度的核心概念：把物質「切成 1 立方公分」來 PK！" data-en="🍰 Density Concept: 'Cut into 1 cm³' to Compare!">🍰 密度的核心概念：把物質「切成 1 立方公分」來 PK！</h2>
             <div class="concept-box">
                 💡 <strong class="hl-yellow" data-zh="為什麼一定要算「密度」？" data-en="Why do we need to calculate 'Density'?">為什麼一定要算「密度」？</strong><br>
-                <span data-zh="如果有兩個不同的物體（例如：甲物體體積 100 cm³、質量 50g；乙物體體積 20 cm³、質量 5g），因為它們的<span class='hl-pink'>「體積不一樣大，很難直接比誰比較重（密集）」</span>！" data-en="If you have two objects (e.g., Object A: 100 cm³, 50g; Object B: 20 cm³, 5g), because their <span class='hl-pink'>'volumes are different, it is hard to directly compare which is heavier (denser)'</span>!">如果有兩個不同的物體（例如：甲物體體積 100 cm³、質量 50g；乙物體體積 20 cm³、質量 5g），因為它們的<span class="hl-pink">「體積不一樣大，很難直接比誰比較重（密集）」</span>！</span><br>
-                👉 <span data-zh="最公平的做法：就是<strong class='hl-green'>「把大家通通切成 1 立方公分 (1 cm³) 的大小」</strong>再來比質量！這就是「密度」的由來！" data-en="The fairest way: <strong class='hl-green'>'Cut everything into 1 cubic centimeter (1 cm³) blocks'</strong> and then compare the mass! That is where 'Density' comes from!">最公平的做法：就是<strong class="hl-green">「把大家通通切成 1 立方公分 (1 cm³) 的大小」</strong>再來比質量！這就是「密度」的由來！</span>
+                <span data-zh="如果有兩個不同的物體（例如：甲物體體積 100 cm<sup>3</sup>、質量 50g；乙物體體積 20 cm<sup>3</sup>、質量 5g），因為它們的<span class='hl-pink'>「體積不一樣大，很難直接比誰比較重（密集）」</span>！" data-en="If you have two objects (e.g., Object A: 100 cm<sup>3</sup>, 50g; Object B: 20 cm<sup>3</sup>, 5g), because their <span class='hl-pink'>'volumes are different, it is hard to directly compare which is heavier (denser)'</span>!">如果有兩個不同的物體（例如：甲物體體積 100 cm<sup>3</sup>、質量 50g；乙物體體積 20 cm<sup>3</sup>、質量 5g），因為它們的<span class="hl-pink">「體積不一樣大，很難直接比誰比較重（密集）」</span>！</span><br>
+                👉 <span data-zh="最公平的做法：就是<strong class='hl-green'>「把大家通通切成 1 立方公分 (1 cm<sup>3</sup>) 的大小」</strong>再來比質量！這就是「密度」的由來！" data-en="The fairest way: <strong class='hl-green'>'Cut everything into 1 cubic centimeter (1 cm<sup>3</sup>) blocks'</strong> and then compare the mass! That is where 'Density' comes from!">最公平的做法：就是<strong class="hl-green">「把大家通通切成 1 立方公分 (1 cm<sup>3</sup>) 的大小」</strong>再來比質量！這就是「密度」的由來！</span>
             </div>
 
             <div class="interactive-area">
                 <h3 style="margin-top:0;" data-zh="🔪 互動黑板實驗：切塊對決（每 1 cm³ 誰比較重？）" data-en="🔪 Interactive Lab: Cutting Duel (Who's heavier per 1 cm³?)">🔪 互動黑板實驗：切塊對決（每 1 cm³ 誰比較重？）</h3>
-                <p data-zh="請點擊下方按鈕，把體積龐大的甲物體與乙物體，用切塊法切成標準的 <strong class='hl-yellow'>1 cm³</strong> 方塊來比拼！" data-en="Click the buttons below to cut the bulky Objects A and B into standard <strong class='hl-yellow'>1 cm³</strong> blocks to compete!">請點擊下方按鈕，把體積龐大的甲物體與乙物體，用切塊法切成標準的 <strong class="hl-yellow">1 cm³</strong> 方塊來比拼！</p>
+                <p data-zh="請點擊下方按鈕，把體積龐大的甲物體與乙物體，用切塊法切成標準的 <strong class='hl-yellow'>1 cm³</strong> 方塊來比拼！" data-en="Click the buttons below to cut the bulky Objects A and B into standard <strong class='hl-yellow'>1 cm³</strong> blocks to compete!">請點擊下方按鈕，把體積龐大的甲物體與乙物體，用切塊法切成標準的 <strong class="hl-yellow">1 cm<sup>3</sup></strong> 方塊來比拼！</p>
                 
                 <div style="margin: 15px 0;">
                     <button class="btn btn-blue" onclick="cutCube('origin')" data-zh="📦 原始狀態 (體積不同，無法直接比)" data-en="📦 Original State (Diff Volume, Can't Compare)">📦 原始狀態 (體積不同，無法直接比)</button>
@@ -426,18 +272,18 @@
             <div class="grid-2">
                 <div class="info-card">
                     <h3 style="color: var(--chalk-yellow); margin-top: 0;" data-zh="單位怎麼寫？" data-en="How to write the unit?">單位怎麼寫？</h3>
-                    <p data-zh="將質量的單位 <strong class='hl-green'>g (公克)</strong> 除以體積的單位 <strong class='hl-blue'>cm³ (立方公分)</strong>，就變成了：" data-en="Divide the mass unit <strong class='hl-green'>g (grams)</strong> by the volume unit <strong class='hl-blue'>cm³ (cubic centimeters)</strong>, and it becomes:">將質量的單位 <strong class="hl-green">g (公克)</strong> 除以體積的單位 <strong class="hl-blue">cm³ (立方公分)</strong>，就變成了：</p>
+                    <p data-zh="將質量的單位 <strong class='hl-green'>g (公克)</strong> 除以體積的單位 <strong class='hl-blue'>cm³ (立方公分)</strong>，就變成了：" data-en="Divide the mass unit <strong class='hl-green'>g (grams)</strong> by the volume unit <strong class='hl-blue'>cm³ (cubic centimeters)</strong>, and it becomes:">將質量的單位 <strong class="hl-green">g (公克)</strong> 除以體積的單位 <strong class="hl-blue">cm<sup>3</sup> (立方公分)</strong>，就變成了：</p>
                     <div style="font-size: 2.2rem; color: var(--chalk-yellow); text-align: center; margin: 15px 0; font-weight: bold;" class="mono">
-                        g / cm³
+                        g / cm<sup>3</sup>
                     </div>
-                    <p style="text-align: center; color: #cbd5e1;" class="mono">(or kg / m³)</p>
+                    <p style="text-align: center; color: #cbd5e1;" class="mono">(or kg / m<sup>3</sup>)</p>
                 </div>
                 <div class="info-card">
                     <h3 style="color: var(--chalk-green); margin-top: 0;" data-zh="正確唸法與意義" data-en="Proper Pronunciation & Meaning">正確唸法與意義</h3>
-                    <p data-zh="當我們說甲物體的密度是 <strong class='hl-yellow'>3 g/cm³</strong> 時：" data-en="When we say the density of Object A is <strong class='hl-yellow'>3 g/cm³</strong>:">當我們說甲物體的密度是 <strong class="hl-yellow">3 g/cm³</strong> 時：</p>
+                    <p data-zh="當我們說甲物體的密度是 <strong class='hl-yellow'>3 g/cm³</strong> 時：" data-en="When we say the density of Object A is <strong class='hl-yellow'>3 g/cm³</strong>:">當我們說甲物體的密度是 <strong class="hl-yellow">3 g/cm<sup>3</sup></strong> 時：</p>
                     <p data-zh="👉 唸作：<span class='hl-green'>「每 1 立方公分的甲物體，質量有 3 公克」</span>！" data-en="👉 Read as: <span class='hl-green'>'For every 1 cm³ of Object A, the mass is 3 grams'</span>!">👉 唸作：<span class="hl-green">「每 1 立方公分的甲物體，質量有 3 公克」</span>！</p>
-                    <p data-zh="👉 數學寫法等於：<strong class='hl-blue'>3 g ÷ 1 cm³</strong>。" data-en="👉 Mathematically equals: <strong class='hl-blue'>3 g ÷ 1 cm³</strong>.">👉 數學寫法等於：<strong class="hl-blue">3 g ÷ 1 cm³</strong>。</p>
-                    <p style="margin-top: 10px; color: var(--chalk-pink);" data-zh="⚠️ 不要光背數字，要知道它是「1 cm³ 裡重幾克」！" data-en="⚠️ Don't just memorize numbers, know it means 'how many grams per 1 cm³'!">⚠️ 不要光背數字，要知道它是「1 cm³ 裡重幾克」！</p>
+                    <p data-zh="👉 數學寫法等於：<strong class='hl-blue'>3 g ÷ 1 cm³</strong>。" data-en="👉 Mathematically equals: <strong class='hl-blue'>3 g ÷ 1 cm³</strong>.">👉 數學寫法等於：<strong class="hl-blue">3 g ÷ 1 cm<sup>3</sup></strong>。</p>
+                    <p style="margin-top: 10px; color: var(--chalk-pink);" data-zh="⚠️ 不要光背數字，要知道它是「1 cm³ 裡重幾克」！" data-en="⚠️ Don't just memorize numbers, know it means 'how many grams per 1 cm³'!">⚠️ 不要光背數字，要知道它是「1 cm<sup>3</sup> 裡重幾克」！</p>
                 </div>
             </div>
 
@@ -445,9 +291,9 @@
             <table>
                 <tr>
                     <th data-zh="物質名稱" data-en="Substance Name">物質名稱</th>
-                    <th class="hl-yellow" data-zh="密度 (g/cm³)" data-en="Density (g/cm³)">密度 (g/cm³)</th>
+                    <th class="hl-yellow" data-zh="密度 (g/cm³)" data-en="Density (g/cm³)">密度 (g/cm<sup>3</sup>)</th>
                     <th data-zh="物質名稱" data-en="Substance Name">物質名稱</th>
-                    <th class="hl-yellow" data-zh="密度 (g/cm³)" data-en="Density (g/cm³)">密度 (g/cm³)</th>
+                    <th class="hl-yellow" data-zh="密度 (g/cm³)" data-en="Density (g/cm³)">密度 (g/cm<sup>3</sup>)</th>
                 </tr>
                 <tr>
                     <td class="hl-yellow" data-zh="金 (Au)" data-en="Gold (Au)">金 (Au)</td>
@@ -458,7 +304,7 @@
                 <tr>
                     <td class="hl-blue" data-zh="水銀 (Hg)" data-en="Mercury (Hg)">水銀 (Hg)</td>
                     <td data-zh="<strong class='mono'>13.6</strong> (最重液體)" data-en="<strong class='mono'>13.6</strong> (Heaviest liquid)"><strong class="mono">13.6</strong> (最重液體)</td>
-                    <td class="hl-green" data-zh="水 (H₂O)" data-en="Water (H₂O)">水 (H₂O)</td>
+                    <td class="hl-green" data-zh="水 (H₂O)" data-en="Water (H₂O)">水 (H<sub>2</sub>O)</td>
                     <td style="background: rgba(74, 222, 128, 0.15);" data-zh="<strong class='mono'>1.0</strong> (標準基準！)" data-en="<strong class='mono'>1.0</strong> (Standard Base!)"><strong class="mono">1.0</strong> (標準基準！)</td>
                 </tr>
                 <tr>
@@ -505,7 +351,7 @@
                         <td class="hl-pink"><strong id="valX" class="mono">X ＝ ？</strong></td>
                     </tr>
                     <tr>
-                        <td data-zh="體積 V (cm³)" data-en="Volume V (cm³)">體積 V (cm³)</td>
+                        <td data-zh="體積 V (cm³)" data-en="Volume V (cm³)">體積 V (cm<sup>3</sup>)</td>
                         <td class="mono">5.0</td>
                         <td class="mono">10.0</td>
                         <td class="mono">20.0</td>
@@ -533,12 +379,12 @@
                     </div>
                     <div style="font-size: 1.8rem; color: var(--chalk-yellow);" class="mono">÷</div>
                     <div>
-                        <label style="display:block; color:var(--chalk-blue);" data-zh="體積 V (cm³)" data-en="Volume V (cm³)">體積 V (cm³)</label>
+                        <label style="display:block; color:var(--chalk-blue);" data-zh="體積 V (cm³)" data-en="Volume V (cm³)">體積 V (cm<sup>3</sup>)</label>
                         <input type="number" id="calcV" value="30" oninput="runCalculator('V')" class="mono">
                     </div>
                     <div style="font-size: 1.8rem; color: var(--chalk-yellow);" class="mono">＝</div>
                     <div>
-                        <label style="display:block; color:var(--chalk-yellow);" data-zh="密度 D (g/cm³)" data-en="Density D (g/cm³)">密度 D (g/cm³)</label>
+                        <label style="display:block; color:var(--chalk-yellow);" data-zh="密度 D (g/cm³)" data-en="Density D (g/cm³)">密度 D (g/cm<sup>3</sup>)</label>
                         <input type="number" id="calcD" value="2.67" step="0.1" oninput="runCalculator('D')" class="mono">
                     </div>
                 </div>
@@ -580,22 +426,77 @@
                     <h3 style="color: var(--chalk-yellow); margin-top: 0;" data-zh="🔥 鐵則一：同體積，M 與 D 成正比" data-en="🔥 Rule 1: Same V, M ∝ D">🔥 鐵則一：同體積，M 與 D 成正比</h3>
                     <p data-zh="當大家切成**一樣大塊 (V相同)**時：" data-en="When cut into **same size blocks (V is same)**:">當大家切成**一樣大塊 (V相同)**時：</p>
                     <p data-zh="👉 質量 M 愈重的人，代表物質愈密集，它的**密度 D 必然愈大**！" data-en="👉 The heavier the Mass M, the denser the substance, its **Density D must be larger**!">👉 質量 M 愈重的人，代表物質愈密集，它的**密度 D 必然愈大**！</p>
-                    <p style="color: var(--chalk-blue);" data-zh="例：1 cm³ 的銅 (8.9g) 比 1 cm³ 的鋁 (2.7g) 重，所以銅密度大！" data-en="Ex: 1 cm³ Cu (8.9g) is heavier than 1 cm³ Al (2.7g), so Cu has larger density!">例：1 cm³ 的銅 (8.9g) 比 1 cm³ 的鋁 (2.7g) 重，所以銅密度大！</p>
+                    <p style="color: var(--chalk-blue);" data-zh="例：1 cm³ 的銅 (8.9g) 比 1 cm³ 的鋁 (2.7g) 重，所以銅密度大！" data-en="Ex: 1 cm³ Cu (8.9g) is heavier than 1 cm³ Al (2.7g), so Cu has larger density!">例：1 cm<sup>3</sup> 的銅 (8.9g) 比 1 cm<sup>3</sup> 的鋁 (2.7g) 重，所以銅密度大！</p>
                 </div>
                 <div class="info-card">
                     <h3 style="color: var(--chalk-green); margin-top: 0;" data-zh="🔥 鐵則二：同質量，V 與 D 成反比" data-en="🔥 Rule 2: Same M, V ∝ 1/D">🔥 鐵則二：同質量，V 與 D 成反比</h3>
                     <p data-zh="當大家拿**一樣重 100 克 (M相同)**時：" data-en="When taking **same weight 100g (M is same)**:">當大家拿**一樣重 100 克 (M相同)**時：</p>
                     <p data-zh="👉 體積 V 愈大（膨鬆很大塊）的人，代表它很稀疏，它的**密度 D 必然愈小**！" data-en="👉 The larger the Volume V (fluffy block), the sparser it is, its **Density D must be smaller**!">👉 體積 V 愈大（膨鬆很大塊）的人，代表它很稀疏，它的**密度 D 必然愈小**！</p>
-                    <p style="color: var(--chalk-pink);" data-zh="例：100g 鋁塊體積 (37cm³) 比 100g 銅塊體積 (11cm³) 大很多，因為鋁密度小！" data-en="Ex: 100g Al volume (37cm³) is much larger than 100g Cu volume (11cm³), because Al density is smaller!">例：100g 鋁塊體積 (37cm³) 比 100g 銅塊體積 (11cm³) 大很多，因為鋁密度小！</p>
+                    <p style="color: var(--chalk-pink);" data-zh="例：100g 鋁塊體積 (37cm³) 比 100g 銅塊體積 (11cm³) 大很多，因為鋁密度小！" data-en="Ex: 100g Al volume (37cm³) is much larger than 100g Cu volume (11cm³), because Al density is smaller!">例：100g 鋁塊體積 (37cm<sup>3</sup>) 比 100g 銅塊體積 (11cm<sup>3</sup>) 大很多，因為鋁密度小！</p>
                 </div>
             </div>
         </section>
     </div>
 
+    <!-- // ================= 3. JS 核心邏輯 (Zero Touch 物理與互動運算) ================= // -->
     <script>
-        // ==========================================
-        // 🌟 雙語切換引擎 (預設繁中絕對防禦)
-        // ==========================================
+        // --- 確保切換分頁時的安全機制 (SOP V5) ---
+        function killAllSims() {
+            // 本單元無 requestAnimationFrame，提供空實作保證相容性
+        }
+
+        // --- V5 開場動畫控制 ---
+        const introScreen = document.getElementById('introScreen');
+        let introClosed = false;
+        function enterLesson() {
+            if (introClosed) return;
+            introClosed = true;
+            introScreen.classList.add('exiting');
+            document.body.classList.remove('intro-locked'); // 恢復滾動
+            setTimeout(() => introScreen.remove(), 800);
+        }
+        introScreen.addEventListener('click', enterLesson);
+        document.addEventListener('keydown', enterLesson, { once: true });
+
+        // --- 🌟 曉臻老師 Hook 提問資料庫 ---
+        const hooks = {
+            'tab1': {
+                zh: "一公斤的鐵和一公斤的棉花，哪一個比較重？哪一個體積比較大？為什麼我們總是覺得鐵比較『重』？",
+                en: "Which is heavier: 1 kg of iron or 1 kg of cotton? Which has a larger volume? Why do we always intuitively feel iron is 'heavier'?"
+            },
+            'tab2': {
+                zh: "黃金的密度是 19.3 g/cm³，這串數字到底是什麼意思？如果給你一個 10 立方公分的金塊，你抱得動嗎？",
+                en: "The density of gold is 19.3 g/cm³. What exactly does this number mean? If handed a 10 cm³ gold block, could you hold it?"
+            },
+            'tab3': {
+                zh: "把一塊大石頭敲成兩半，它的質量會減半，那它的『密度』也會跟著減半嗎？",
+                en: "If you smash a large rock into two, its mass is halved. But does its 'density' also get halved?"
+            },
+            'tab4': {
+                zh: "在 M-V 的圖表上，為什麼每一種物質都只能走一條『筆直的斜線』，絕對不准轉彎？",
+                en: "On the M-V graph, why must every substance follow a 'straight slanted line' and never be allowed to curve?"
+            }
+        };
+
+        function updateHookBox() {
+            const activeTab = document.querySelector('.tab-content.active');
+            if (!activeTab) return;
+            const tabId = activeTab.id;
+            const hookBox = document.getElementById('hookBox');
+            if(hookBox && hooks[tabId]) {
+                const titleText = currentLang === 'en' ? "👩🏻‍🏫 Teacher Xiaozhen says:" : "👩🏻‍🏫 曉臻老師說：";
+                const contentText = currentLang === 'en' ? hooks[tabId].en : hooks[tabId].zh;
+                hookBox.innerHTML = `
+                    <div class="xiaozhen-logo">👩🏻‍🏫</div>
+                    <div class="hook-content">
+                        <div class="hook-title">${titleText}</div>
+                        <div class="hook-text">${contentText}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // --- 🌟 雙語切換引擎 ---
         let currentLang = 'zh';
         
         function tr(zh, en) {
@@ -613,6 +514,8 @@
                 el.innerHTML = el.getAttribute(`data-${lang}`);
             });
             
+            updateHookBox(); // 更新 Hook
+            
             // 重新渲染動態畫布與文字
             cutCube(currentCubeMode);
             if(currentIronStep) solveIron(currentIronStep);
@@ -627,11 +530,14 @@
 
         // --- 1. 分頁切換 ---
         function switchTab(tabId) {
+            killAllSims();
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
+
+            updateHookBox();
 
             if(tabId === 'tab1') cutCube(currentCubeMode);
             if(tabId === 'tab4') drawMV(currentMVRule);
