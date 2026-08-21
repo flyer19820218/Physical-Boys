@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title data-zh="第二節：質量與體積的測量 (護眼黑板互動版)" data-en="Unit 2: Measurement of Mass & Volume (Interactive Blackboard)">第二節：質量與體積的測量 (護眼黑板互動版)</title>
+    <title>地球科學互動實驗室｜質量與體積的測量</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- ================= 1. CSS 樣式 (變數、UI、排版、動畫) ================= -->
     <style>
         :root {
-            --bg-board: #132a1e;       /* 傳統黑板深黛綠 - 吸光護眼 */
+            --bg-board: #132a1e;       /* 傳統黑板深黛綠 */
             --bg-card: #1c3b2b;        /* 粉筆盒/卡片底色 */
             --bg-darker: #0f2318;      /* 深邃背景 */
             --chalk-white: #f1f5f9;    /* 粉筆特白 */
@@ -20,16 +22,9 @@
             --border-style: 2px dashed rgba(241, 245, 249, 0.3);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* 嚴格堅持 20px 基礎字體，照顧後排同學 */
-        html {
-            font-size: 20px;
-        }
+        html { font-size: 20px; }
 
         body {
             background-color: var(--bg-darker);
@@ -39,217 +34,114 @@
             padding-bottom: 50px;
         }
 
-        /* 🌟 規範：右上角橫向懸浮雙語切換器 */
+        /* 🌟 V5 規範：電影式單元封面 (極簡 HTML 結構，禁止多餘文字) */
+        body.intro-locked { overflow: hidden; }
+        .intro-screen {
+            position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center;
+            overflow: hidden; background: #03130f; cursor: pointer; isolation: isolate;
+            transition: opacity .7s ease, visibility .7s ease;
+        }
+        .intro-screen::before {
+            content: ""; position: absolute; inset: -3%; z-index: -3;
+            /* 相對路徑直接調用神級高畫質圖檔 */
+            background: url("Gemini_Generated_Image_x366cvx366cvx366.jpeg") center/cover no-repeat;
+            animation: introZoom 9s ease-out both;
+        }
+        .intro-screen::after {
+            content: ""; position: absolute; inset: 0; z-index: -2;
+            background: linear-gradient(180deg, rgba(1,11,11,.03) 35%, rgba(1,12,10,.26) 67%, rgba(1,12,10,.88) 100%),
+                        radial-gradient(circle at 88% 35%, rgba(255,183,71,.22), transparent 30%);
+        }
+        .intro-screen.exiting { opacity: 0; visibility: hidden; pointer-events: none; }
+        @keyframes introZoom { from { transform: scale(1); } to { transform: scale(1.035); } }
+        @media (prefers-reduced-motion: reduce) { .intro-screen::before { animation: none; } }
+
+        /* 🌟 V5 規範：右上角橫向懸浮雙語切換器 */
         .floating-lang-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border: 2px solid var(--chalk-teal);
-            border-radius: 12px;
-            background: rgba(15, 35, 24, 0.95);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(45, 212, 191, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            display: flex; flex-direction: row; align-items: center; gap: 8px;
+            padding: 8px 12px; border: 2px solid var(--chalk-teal); border-radius: 12px;
+            background: rgba(15, 35, 24, 0.95); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(45, 212, 191, 0.2);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
-        .lang-label {
-            color: var(--chalk-teal);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 20px;
-            font-weight: 700;
-            user-select: none;
-        }
-        .lang-options {
-            display: flex;
-            flex-direction: row;
-            gap: 4px;
-        }
+        .lang-label { color: var(--chalk-teal); font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; user-select: none; }
+        .lang-options { display: flex; flex-direction: row; gap: 4px; }
         .lang-pill {
-            min-width: 58px;
-            min-height: 48px; /* 觸控防禦 */
-            padding: 8px 12px;
-            border: 2px solid rgba(241, 245, 249, 0.35);
-            border-radius: 8px;
-            background: var(--bg-darker);
-            color: var(--chalk-white);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 20px;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            touch-action: manipulation;
+            min-width: 58px; min-height: 48px; padding: 8px 12px;
+            border: 2px solid rgba(241, 245, 249, 0.35); border-radius: 8px;
+            background: var(--bg-darker); color: var(--chalk-white);
+            font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700;
+            cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease; touch-action: manipulation;
         }
-        .lang-pill.active {
-            background: var(--chalk-teal) !important;
-            color: #0b2b2e !important;
-            border-color: var(--chalk-teal) !important;
-            box-shadow: 0 0 10px rgba(45, 212, 191, 0.5);
-        }
+        .lang-pill.active { background: var(--chalk-teal) !important; color: #0b2b2e !important; border-color: var(--chalk-teal) !important; box-shadow: 0 0 10px rgba(45, 212, 191, 0.5); }
 
         header {
             background: linear-gradient(135deg, #0f2318, #183827);
             border-bottom: 3px solid var(--chalk-green);
-            padding: 1.2rem 1.5rem;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            padding: 1.2rem 1.5rem; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             margin-top: 40px;
         }
-
-        header h1 {
-            font-size: 2.2rem;
-            color: var(--chalk-yellow);
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
-            margin-bottom: 0.3rem;
-            letter-spacing: 2px;
-            font-weight: 900;
-        }
-
-        header p {
-            font-size: 1.1rem;
-            color: var(--chalk-green);
-            font-weight: bold;
-        }
+        header h1 { font-size: 2.2rem; color: var(--chalk-yellow); text-shadow: 2px 2px 4px rgba(0,0,0,0.6); margin-bottom: 0.3rem; letter-spacing: 2px; font-weight: 900; }
+        header p { font-size: 1.1rem; color: var(--chalk-green); font-weight: bold; }
 
         /* 導覽列 */
         .nav-tabs {
-            display: flex;
-            justify-content: center;
-            background-color: #0d1f15;
-            padding: 0.6rem;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-            border-bottom: 2px solid rgba(241,245,249,0.2);
+            display: flex; justify-content: center; background-color: #0d1f15; padding: 0.6rem;
+            gap: 0.8rem; flex-wrap: wrap; border-bottom: 2px solid rgba(241,245,249,0.2);
         }
-
         .tab-btn {
-            padding: 0.7rem 1.4rem;
-            min-height: 48px;
-            border: 2px solid transparent;
-            background-color: transparent;
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #94a3b8;
-            cursor: pointer;
-            border-radius: 0.6rem;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            touch-action: manipulation;
+            padding: 0.7rem 1.4rem; min-height: 48px; border: 2px solid transparent;
+            background-color: transparent; font-size: 1.1rem; font-weight: bold;
+            color: #94a3b8; cursor: pointer; border-radius: 0.6rem; transition: all 0.2s ease;
+            white-space: nowrap; touch-action: manipulation;
         }
+        .tab-btn:hover { background-color: var(--bg-card); color: var(--chalk-white); }
+        .tab-btn.active { background-color: var(--bg-card); color: var(--chalk-yellow); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 15px rgba(253, 224, 71, 0.3); }
 
-        .tab-btn:hover {
-            background-color: var(--bg-card);
-            color: var(--chalk-white);
-        }
-
-        .tab-btn.active {
-            background-color: var(--bg-card);
-            color: var(--chalk-yellow);
-            border: 2px solid var(--chalk-yellow);
-            box-shadow: 0 0 15px rgba(253, 224, 71, 0.3);
-        }
-
-        /* 內容區域：滿版 1080px 防禦 */
-        .container {
-            max-width: 1080px;
-            margin: 1.5rem auto;
-            padding: 0 1.2rem;
-        }
-
+        /* 內容區域 */
+        .container { max-width: 1080px; margin: 1.5rem auto; padding: 0 1.2rem; }
         .tab-content {
-            display: none;
-            background-color: var(--bg-board);
-            padding: 2rem;
-            border-radius: 1rem;
-            border: 2px solid rgba(241,245,249,0.25);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            animation: fadeIn 0.3s ease;
+            display: none; background-color: var(--bg-board); padding: 2rem;
+            border-radius: 1rem; border: 2px solid rgba(241,245,249,0.25);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); animation: fadeIn 0.3s ease;
         }
+        .tab-content.active { display: block; }
 
-        .tab-content.active {
-            display: block;
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { color: var(--chalk-yellow); border-bottom: 3px solid var(--chalk-orange); padding-bottom: 0.5rem; margin-bottom: 1.2rem; font-size: 1.6rem; }
+        h3 { color: var(--chalk-blue); margin: 1.5rem 0 0.8rem 0; font-size: 1.3rem; }
+
+        /* 🌟 V5 曉臻老師專屬 Hook 區塊 */
+        .hook-box { 
+            display: flex; align-items: center; gap: 18px;
+            background: linear-gradient(135deg, rgba(85, 233, 255, 0.12), rgba(85, 233, 255, 0.02)); 
+            border-left: 6px solid var(--chalk-cyan); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; 
+            box-shadow: 0 4px 20px rgba(85, 233, 255, 0.08);
+            border-right: 1px solid rgba(85, 233, 255, 0.1); border-bottom: 1px solid rgba(85, 233, 255, 0.1); border-top: 1px solid rgba(85, 233, 255, 0.1);
         }
+        .xiaozhen-logo { width: 64px; height: 64px; border-radius: 50%; background-color: var(--bg-card); border: 3px solid var(--chalk-cyan); display: flex; align-items: center; justify-content: center; font-size: 38px; flex-shrink: 0; box-shadow: 0 0 15px rgba(85, 233, 255, 0.4); overflow: hidden; }
+        .hook-content { flex: 1; line-height: 1.6; }
+        .hook-title { color: var(--chalk-cyan); font-size: 22px; font-weight: 900; margin-bottom: 4px; font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif; }
+        .hook-text { color: var(--chalk-white); font-size: 20px; font-weight: bold; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h2 {
-            color: var(--chalk-yellow);
-            border-bottom: 3px solid var(--chalk-orange);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.2rem;
-            font-size: 1.6rem;
-        }
-
-        h3 {
-            color: var(--chalk-blue);
-            margin: 1.5rem 0 0.8rem 0;
-            font-size: 1.3rem;
-        }
-
-        .concept-box {
-            background-color: var(--bg-card);
-            border-left: 6px solid var(--chalk-green);
-            padding: 1.2rem;
-            margin-bottom: 1.5rem;
-            border-radius: 0 0.6rem 0.6rem 0;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
-            font-size: 1.1rem;
-        }
-
-        .interactive-area {
-            background-color: rgba(0, 0, 0, 0.35);
-            border: var(--border-style);
-            padding: 1.5rem;
-            border-radius: 0.8rem;
-            margin-top: 1.5rem;
-            text-align: center;
-        }
-
+        .concept-box { background-color: var(--bg-card); border-left: 6px solid var(--chalk-green); padding: 1.2rem; margin-bottom: 1.5rem; border-radius: 0 0.6rem 0.6rem 0; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); font-size: 1.1rem; }
+        .interactive-area { background-color: rgba(0, 0, 0, 0.35); border: var(--border-style); padding: 1.5rem; border-radius: 0.8rem; margin-top: 1.5rem; text-align: center; }
+        
         .btn {
-            background-color: var(--chalk-orange);
-            color: #000;
-            border: none;
-            padding: 0.7rem 1.5rem;
-            min-height: 48px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin: 0.4rem 0.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            touch-action: manipulation;
+            background-color: var(--chalk-orange); color: #000; border: none; min-height: 48px;
+            padding: 0.7rem 1.4rem; font-size: 1.1rem; font-weight: bold; border-radius: 0.5rem;
+            cursor: pointer; transition: all 0.2s; margin: 0.4rem 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3); touch-action: manipulation;
         }
-
-        .btn:hover {
-            background-color: #ea580c;
-            color: #fff;
-            transform: translateY(-2px);
-        }
-
+        .btn:hover { background-color: #ea580c; color: #fff; transform: translateY(-2px); }
         .btn-blue { background-color: var(--chalk-blue); color: #000; }
         .btn-blue:hover { background-color: #0284c7; color: #fff; }
-        
         .btn-green { background-color: var(--chalk-green); color: #000; }
         .btn-green:hover { background-color: #16a34a; color: #fff; }
-
         .btn-pink { background-color: var(--chalk-pink); color: #000; }
         .btn-pink:hover { background-color: #db2777; color: #fff; }
 
-        /* 重點文字配色 */
         .hl-yellow { color: var(--chalk-yellow); font-weight: bold; }
         .hl-green { color: var(--chalk-green); font-weight: bold; }
         .hl-pink { color: var(--chalk-pink); font-weight: bold; }
@@ -257,94 +149,41 @@
         .hl-orange { color: var(--chalk-orange); font-weight: bold; }
         .mono { font-family: 'JetBrains Mono', monospace; }
 
-        /* 表格：絕對禁止黑色線條，改用亮白色/黃色虛線框 */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1.5rem 0;
-            background-color: rgba(0,0,0,0.25);
-            font-size: 1.1rem;
-        }
+        /* 表格防禦：禁用黑線 */
+        table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; background-color: rgba(0,0,0,0.25); font-size: 1.1rem; }
+        th, td { border: 2px solid rgba(241,245,249,0.3); padding: 0.8rem; text-align: center; }
+        th { background-color: var(--bg-card); color: var(--chalk-yellow); font-size: 1.2rem; }
 
-        th, td {
-            border: 2px solid rgba(241,245,249,0.3);
-            padding: 0.8rem;
-            text-align: center;
-        }
+        /* 畫布防禦 */
+        canvas { background-color: #0d1a13; border: 2px solid var(--chalk-yellow); border-radius: 0.6rem; max-width: 100%; height: auto; margin: 1rem auto; display: block; box-shadow: 0 0 15px rgba(0,0,0,0.6); }
 
-        th {
-            background-color: var(--bg-card);
-            color: var(--chalk-yellow);
-            font-size: 1.2rem;
-        }
-
-        /* 畫布：絕對禁止黑色線條，等比縮放 */
-        canvas {
-            background-color: #0d1a13;
-            border: 2px solid var(--chalk-yellow);
-            border-radius: 0.6rem;
-            max-width: 100%;
-            height: auto;
-            margin: 1rem auto;
-            display: block;
-            box-shadow: 0 0 15px rgba(0,0,0,0.6);
-        }
-
-        /* 雙欄圖卡排版 */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-top: 1rem;
-        }
-
-        .info-card {
-            background: var(--bg-card);
-            border: 2px solid var(--chalk-green);
-            padding: 1.5rem;
-            border-radius: 0.8rem;
-            text-align: left;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
-        }
-
-        .info-card-pink {
-            border-color: var(--chalk-pink);
-            background: rgba(244, 114, 182, 0.08);
-        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+        .info-card { background: var(--bg-card); border: 2px solid var(--chalk-green); padding: 1.5rem; border-radius: 0.8rem; text-align: left; box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+        .info-card-pink { border-color: var(--chalk-pink); background: rgba(244, 114, 182, 0.08); }
 
         .weight-chip {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 48px;
-            background: rgba(253, 224, 71, 0.15);
-            border: 2px solid var(--chalk-yellow);
-            color: var(--chalk-yellow);
-            padding: 8px 16px;
-            margin: 5px;
-            border-radius: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-            touch-action: manipulation;
-            font-family: 'JetBrains Mono', monospace;
+            display: inline-flex; align-items: center; justify-content: center; min-height: 48px;
+            background: rgba(253, 224, 71, 0.15); border: 2px solid var(--chalk-yellow); color: var(--chalk-yellow);
+            padding: 8px 16px; margin: 5px; border-radius: 20px; font-weight: bold; cursor: pointer;
+            transition: 0.2s; touch-action: manipulation; font-family: 'JetBrains Mono', monospace;
         }
-        .weight-chip:hover {
-            background: var(--chalk-yellow);
-            color: #000;
-            transform: scale(1.05);
-        }
+        .weight-chip:hover { background: var(--chalk-yellow); color: #000; transform: scale(1.05); }
 
-        /* 斷點偵測 */
         @media (max-width: 768px) {
             .grid-2 { grid-template-columns: 1fr; }
             .floating-lang-container { top: 8px; right: 8px; padding: 6px 8px; }
             .lang-label { display: none; }
             header h1 { font-size: 1.6rem; }
+            .hook-box { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
-<body>
+<body class="intro-locked">
+
+    <!-- ================= 2. HTML 結構 (電影開場、導覽、分頁) ================= -->
+
+    <!-- 🌟 V5 電影式開場動畫 -->
+    <div id="introScreen" class="intro-screen" role="dialog" aria-modal="true" aria-label="單元封面" tabindex="0"></div>
 
     <!-- 🌟 右上角橫向懸浮雙語切換器 -->
     <div class="floating-lang-container">
@@ -356,11 +195,10 @@
     </div>
 
     <header>
-        <h1 data-zh="🔬 國中自然黑板教室：質量與體積的測量" data-en="🔬 Science Blackboard: Mass & Volume Measurement">🔬 國中自然黑板教室：質量與體積的測量</h1>
-        <p data-zh="🌿 堅持 20px 大字體 × 絕對零黑線護眼粉筆風 ｜ 掌握精確實驗核心" data-en="🌿 20px Font × Zero Black Lines Chalkboard Style | Mastering Precise Experiments">🌿 堅持 20px 大字體 × 絕對零黑線護眼粉筆風 ｜ 掌握精確實驗核心</p>
+        <h1 data-zh="第二節：質量與體積的測量" data-en="Unit 2: Measurement of Mass & Volume">第二節：質量與體積的測量</h1>
+        <p data-zh="掌握科學探究的基石：精確、客觀與安全" data-en="Mastering the foundation of scientific inquiry: Precision, Objectivity, and Safety">掌握科學探究的基石：精確、客觀與安全</p>
     </header>
 
-    <!-- 🌟 精簡導覽列按鈕文字 -->
     <nav class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('tab1')" data-zh="質量與重量" data-en="Mass vs. Weight">質量與重量</button>
         <button class="tab-btn" onclick="switchTab('tab2')" data-zh="天平規範" data-en="Balance Rules">天平規範</button>
@@ -370,7 +208,12 @@
     </nav>
 
     <div class="container">
-        <!-- ================= 第一分頁：質量與重量差異 ================= -->
+        <!-- 🌟 V5 曉臻老師專屬 Hook 區塊 -->
+        <div class="hook-box" id="hookBox">
+            <!-- JS 動態生成 -->
+        </div>
+
+        <!-- 第一分頁：質量與重量差異 -->
         <section id="tab1" class="tab-content active">
             <h2 data-zh="🌍 質量 (Mass) vs. 重量 (Weight) 的終極對決" data-en="🌍 Mass vs. Weight: The Ultimate Showdown">🌍 質量 (Mass) vs. 重量 (Weight) 的終極對決</h2>
             <div class="concept-box">
@@ -424,7 +267,7 @@
             </div>
         </section>
 
-        <!-- ================= 第二分頁：天平結構與規範 ================= -->
+        <!-- 第二分頁：天平結構與規範 -->
         <section id="tab2" class="tab-content">
             <h2 data-zh="⚖️ 測量質量的利器：天平操作鐵則與防呆規範" data-en="⚖️ The Weapon of Mass Measurement: Balance Rules & Taboos">⚖️ 測量質量的利器：天平操作鐵則與防呆規範</h2>
             <div class="concept-box">
@@ -463,7 +306,7 @@
             </div>
         </section>
 
-        <!-- ================= 第三分頁：虛擬天平秤重實戰 ================= -->
+        <!-- 第三分頁：虛擬天平秤重實戰 -->
         <section id="tab3" class="tab-content">
             <h2 data-zh="🎯 虛擬黑板實驗室：等臂天平秤重實戰" data-en="🎯 Virtual Lab: Equal-Arm Balance Practice">🎯 虛擬黑板實驗室：等臂天平秤重實戰</h2>
             <div class="concept-box">
@@ -499,13 +342,13 @@
             </div>
         </section>
 
-        <!-- ================= 第四分頁：體積測量與排水法 ================= -->
+        <!-- 第四分頁：體積測量與排水法 -->
         <section id="tab4" class="tab-content">
             <h2 data-zh="📐 體積 (Volume) 的測量：規則公式與三大排水法" data-en="📐 Volume Measurement: Formulas & Water Displacement">📐 體積 (Volume) 的測量：規則公式與三大排水法</h2>
             <div class="concept-box">
                 💡 <strong class="hl-yellow" data-zh="體積就是「物質所佔有的空間大小」！" data-en="Volume is 'the amount of space matter occupies'!">體積就是「物質所佔有的空間大小」！</strong><br>
-                <span data-zh="常用單位有：" data-en="Common units:">常用單位有：</span><span class="hl-blue" data-zh="立方公尺 (m³)、公升 (L)、毫升 (mL)、立方公分 (cm³ 或 cc)" data-en="Cubic meters (m³), Liters (L), Milliliters (mL), Cubic cm (cm³ or cc)">立方公尺 (m³)、公升 (L)、毫升 (mL)、立方公分 (cm³ 或 cc)</span>。<br>
-                👉 <strong class="hl-green" data-zh="黃金換算尺：" data-en="Golden Conversion:">黃金換算尺：</strong> <span class="hl-yellow mono">1 L = 1000 mL = 1000 cm³ = 1000 cc</span> <span data-zh="(1 mL 的水體積剛好就是 1 cm³)！" data-en="(1 mL of water volume is exactly 1 cm³)!">(1 mL 的水體積剛好就是 1 cm³)！</span>
+                <span data-zh="常用單位有：" data-en="Common units:">常用單位有：</span><span class="hl-blue" data-zh="立方公尺 (m³)、公升 (L)、毫升 (mL)、立方公分 (cm³ 或 cc)" data-en="Cubic meters (m³), Liters (L), Milliliters (mL), Cubic cm (cm³ or cc)">立方公尺 (m<sup>3</sup>)、公升 (L)、毫升 (mL)、立方公分 (cm<sup>3</sup> 或 cc)</span>。<br>
+                👉 <strong class="hl-green" data-zh="黃金換算尺：" data-en="Golden Conversion:">黃金換算尺：</strong> <span class="hl-yellow mono">1 L = 1000 mL = 1000 cm<sup>3</sup> = 1000 cc</span> <span data-zh="(1 mL 的水體積剛好就是 1 cm³)！" data-en="(1 mL of water volume is exactly 1 cm³)!">(1 mL 的水體積剛好就是 1 cm<sup>3</sup>)！</span>
             </div>
 
             <h3 data-zh="🧪 固體體積測量四大策略全攻略：" data-en="🧪 Solid Volume Measurement 4 Strategies:">🧪 固體體積測量四大策略全攻略：</h3>
@@ -536,7 +379,7 @@
                 </tr>
                 <tr>
                     <td class="hl-pink" data-zh="不規則 ＋ 會溶解於水" data-en="Irregular + Soluble in water">不規則 ＋ 會溶解於水</td>
-                    <td data-zh="<strong>飽解溶液排水法</strong><br>或改用非水溶劑" data-en="<strong>Saturated Solution Method</strong><br>or Non-aqueous solvent"><strong>飽和溶液排水法</strong><br>或改用非水溶劑</td>
+                    <td data-zh="<strong>飽和溶液排水法</strong><br>或改用非水溶劑" data-en="<strong>Saturated Solution Method</strong><br>or Non-aqueous solvent"><strong>飽和溶液排水法</strong><br>或改用非水溶劑</td>
                     <td data-zh="食鹽顆粒、冰糖塊、方糖" data-en="Salt grains, Sugar cubes">食鹽顆粒、冰糖塊、方糖</td>
                     <td data-zh="將待測物投入<strong class='hl-green'>「該物質的飽和溶液」</strong>或酒精/油中，使其不再溶解，再以排水法計算！" data-en="Drop into <strong class='hl-green'>'Saturated solution of the substance'</strong> or alcohol/oil so it won't dissolve, then use displacement!">將待測物投入<strong class="hl-green">「該物質的飽和溶液」</strong>或酒精/油中，使其不再溶解，再以排水法計算！</td>
                 </tr>
@@ -546,14 +389,14 @@
                 <h3 style="margin-top:0;" data-zh="⚡ 排水法經典考題實戰演練" data-en="⚡ Water Displacement Exam Practice">⚡ 排水法經典考題實戰演練</h3>
                 <p data-zh="一個量筒內原本裝有 <strong class='hl-blue mono'>30 mL</strong> 的水。小華綁了一個鐵塊沉入底部，水位上升到 <strong class='hl-blue mono'>45 mL</strong>；接著他把一個軟木塞和鐵塊綁在一起完全沉入水中，水位上升到 <strong class='hl-yellow mono'>65 mL</strong>。請問這個軟木塞的體積是多少？" data-en="A cylinder has <strong class='hl-blue mono'>30 mL</strong> of water. Xiao Hua sinks an iron block, level rises to <strong class='hl-blue mono'>45 mL</strong>; then ties a cork to it and sinks both, level rises to <strong class='hl-yellow mono'>65 mL</strong>. What's the cork's volume?">一個量筒內原本裝有 <strong class="hl-blue mono">30 mL</strong> 的水。小華綁了一個鐵塊沉入底部，水位上升到 <strong class="hl-blue mono">45 mL</strong>；接著他把一個軟木塞和鐵塊綁在一起完全沉入水中，水位上升到 <strong class="hl-yellow mono">65 mL</strong>。請問這個軟木塞的體積是多少？</p>
                 <div style="margin-top: 15px;">
-                    <button class="btn btn-blue" onclick="alert(tr('🚨 錯誤！這是把最後的總水位 (65) 直接減去最當初的純水 (30)，這樣算出來的是【鐵塊 + 軟木塞】的總體積 35 cm³！', '🚨 Wrong! Subtracting initial water (30) from final level (65) gives the total volume of [Iron Block + Cork] which is 35 cm³!'))">A. 35 cm³</button>
-                    <button class="btn btn-green" onclick="alert(tr('🎉 答對了！【水＋鐵塊＋軟木塞 (65)】減去【水＋鐵塊 (45)】＝ 20 cm³！這就是重錘排水法的核心技巧！', '🎉 Correct! [Water+Iron+Cork (65)] minus [Water+Iron (45)] = 20 cm³! This is the core trick of the Sinker Method!'))">B. 20 cm³</button>
-                    <button class="btn" onclick="alert(tr('🚨 錯誤！45 mL 是水加上鐵塊的體積喔！', '🚨 Wrong! 45 mL is the volume of water plus the iron block!'))">C. 15 cm³</button>
+                    <button class="btn btn-blue" onclick="alert(tr('🚨 錯誤！這是把最後的總水位 (65) 直接減去最當初的純水 (30)，這樣算出來的是【鐵塊 + 軟木塞】的總體積 35 cm³！', '🚨 Wrong! Subtracting initial water (30) from final level (65) gives the total volume of [Iron Block + Cork] which is 35 cm³!'))">A. 35 cm<sup>3</sup></button>
+                    <button class="btn btn-green" onclick="alert(tr('🎉 答對了！【水＋鐵塊＋軟木塞 (65)】減去【水＋鐵塊 (45)】＝ 20 cm³！這就是重錘排水法的核心技巧！', '🎉 Correct! [Water+Iron+Cork (65)] minus [Water+Iron (45)] = 20 cm³! This is the core trick of the Sinker Method!'))">B. 20 cm<sup>3</sup></button>
+                    <button class="btn" onclick="alert(tr('🚨 錯誤！45 mL 是水加上鐵塊的體積喔！', '🚨 Wrong! 45 mL is the volume of water plus the iron block!'))">C. 15 cm<sup>3</sup></button>
                 </div>
             </div>
         </section>
 
-        <!-- ================= 第五分頁：量筒讀數視差檢定 ================= -->
+        <!-- 第五分頁：量筒讀數視差檢定 -->
         <section id="tab5" class="tab-content">
             <h2 data-zh="👀 量筒讀數視差檢定：俯視、平視與仰視的考題陷阱" data-en="👀 Parallax Test: Trap of Looking Down, Level, and Up">👀 量筒讀數視差檢定：俯視、平視與仰視的考題陷阱</h2>
             <div class="concept-box">
@@ -581,10 +424,69 @@
         </section>
     </div>
 
+    <!-- ================= 3. JS 核心邏輯 (Zero Touch 物理與互動運算) ================= -->
     <script>
-        // ==========================================
-        // 🌟 雙語切換引擎 (預設繁中絕對防禦)
-        // ==========================================
+        // --- 確保切換分頁時的安全機制 (SOP V5) ---
+        function killAllSims() {
+            // 本單元若無 requestAnimationFrame 循環動畫，提供空實作保證相容性與記憶體安全
+        }
+
+        // --- V5 開場動畫控制 ---
+        const introScreen = document.getElementById('introScreen');
+        let introClosed = false;
+        function enterLesson() {
+            if (introClosed) return;
+            introClosed = true;
+            introScreen.classList.add('exiting');
+            document.body.classList.remove('intro-locked'); // 恢復滾動
+            setTimeout(() => introScreen.remove(), 800);
+        }
+        introScreen.addEventListener('click', enterLesson);
+        document.addEventListener('keydown', enterLesson, { once: true });
+
+        // --- 🌟 曉臻老師 Hook 提問資料庫 ---
+        const hooks = {
+            'tab1': {
+                zh: "想一秒減肥成功？飛去月球量體重馬上剩下六分之一！但你的身體真的變瘦了嗎？",
+                en: "Want an instant weight loss? Fly to the Moon and your weight drops to 1/6! But did your body actually get thinner?"
+            },
+            'tab2': {
+                zh: "如果你不小心拿了『生鏽的砝碼』去秤黃金賣給別人，你到底是賺到了，還是賠慘了？",
+                en: "If you accidentally use a 'rusted weight' to weigh and sell gold to someone, are you making a huge profit or taking a terrible loss?"
+            },
+            'tab3': {
+                zh: "用天平秤未知物體時，為什麼規定一定要『從最重的砝碼』開始放？從輕的慢慢加難道不行嗎？",
+                en: "When weighing an unknown object, why must we start with the 'heaviest weight'? What's wrong with starting from the lightest one?"
+            },
+            'tab4': {
+                zh: "把石頭丟進水裡看水位上升，可以測出體積。那如果是一顆會溶化的『方糖』，該怎麼用量筒測量它有多大？",
+                en: "Dropping a stone into water to measure volume is easy. But how do you use a graduated cylinder to measure a 'sugar cube' that dissolves in water?"
+            },
+            'tab5': {
+                zh: "量筒裡的水面為什麼總是『微微下凹』像個笑臉？如果你站著『由上往下』看，讀出來的數字會比實際多還是少？",
+                en: "Why does the water surface in a cylinder always curve into a 'concave' smile? If you look 'down' at it, will the reading be higher or lower than reality?"
+            }
+        };
+
+        function updateHookBox() {
+            const activeTab = document.querySelector('.tab-content.active');
+            if (!activeTab) return;
+            const tabId = activeTab.id;
+            const hookBox = document.getElementById('hookBox');
+            if(hookBox && hooks[tabId]) {
+                const titleText = currentLang === 'en' ? "👩🏻‍🏫 Teacher Xiaozhen says:" : "👩🏻‍🏫 曉臻老師說：";
+                const contentText = currentLang === 'en' ? hooks[tabId].en : hooks[tabId].zh;
+                hookBox.innerHTML = `
+                    <div class="xiaozhen-logo">👩🏻‍🏫</div>
+                    <div class="hook-content">
+                        <div class="hook-title">${titleText}</div>
+                        <div class="hook-text">${contentText}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // --- 🌟 雙語切換引擎 ---
         let currentLang = 'zh';
 
         function tr(zh, en) {
@@ -602,6 +504,8 @@
                 el.innerHTML = el.getAttribute(`data-${lang}`);
             });
             
+            updateHookBox(); // 更新 Hook
+            
             // 重新渲染動態組件
             spaceTravel(currentPlanet);
             drawBalance();
@@ -617,14 +521,17 @@
         let currentSum = 0;
 
         // ==========================================
-        // UI & 邏輯控制
+        // UI & 邏輯控制 (Zero Touch 保留原創邏輯)
         // ==========================================
         function switchTab(tabId) {
+            killAllSims();
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
+
+            updateHookBox();
 
             if(tabId === 'tab3') drawBalance();
             if(tabId === 'tab5') checkParallax(currentParallaxMode);
