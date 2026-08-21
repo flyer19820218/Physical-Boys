@@ -30,27 +30,28 @@
     padding-bottom: 50px;
   }
 
-  /* 🌟 V5 規範：電影式高畫質單元封面 (完全無字純圖懸念版) */
+  /* 🌟 規範：電影式單元封面 (與 density_1 統一格式，絕不再改！) */
   body.intro-locked { overflow: hidden; }
   .intro-screen {
       position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center;
       overflow: hidden; background: #03130f; cursor: pointer; isolation: isolate;
       transition: opacity .7s ease, visibility .7s ease;
   }
-  .intro-bg-img {
-      position: absolute; inset: -5%; z-index: -3;
-      width: 110%; height: 110%; object-fit: cover;
-      filter: brightness(0.7) contrast(1.1) saturate(1.1);
+  .intro-screen::before {
+      content: ""; position: absolute; inset: -3%; z-index: -3;
+      /* 👇 老師，圖檔名稱在這裡改！大約第 50 行 */
+      background: url("waves_2_cover.jpeg") center/cover no-repeat;
       animation: introZoom 9s ease-out both;
+      filter: brightness(0.7) contrast(1.1) saturate(1.1);
   }
-  .intro-gradient {
-      position: absolute; inset: 0; z-index: -2;
+  .intro-screen::after {
+      content: ""; position: absolute; inset: 0; z-index: -2;
       background: radial-gradient(circle, rgba(1,11,11,0) 40%, rgba(1,12,10,0.7) 100%);
       pointer-events: none;
   }
   .intro-screen.exiting { opacity: 0; visibility: hidden; pointer-events: none; }
   @keyframes introZoom { from { transform: scale(1); } to { transform: scale(1.035); } }
-  @media (prefers-reduced-motion: reduce) { .intro-bg-img { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .intro-screen::before { animation: none; } }
 
   /* 🌟 規範：右上角橫向懸浮雙語切換器 */
   .floating-lang-container {
@@ -192,10 +193,9 @@
 </head>
 <body class="intro-locked">
 
-<!-- 🌟 V5 電影式開場動畫 (完全無字純圖懸念版，統一標準格式) -->
+<!-- 🌟 V5 電影式開場動畫 -->
 <div id="introScreen" class="intro-screen" role="dialog" aria-modal="true" aria-label="單元封面" tabindex="0">
-    <img class="intro-bg-img" src="wave_2_cover.jpeg" alt="單元封面">
-    <div class="intro-gradient"></div>
+    <!-- ⚠️ 格式已淨化：背景圖移至上方第 50 行的 CSS 內 -->
 </div>
 
 <!-- 🌟 雙語切換器 -->
@@ -711,7 +711,7 @@
       ctx.restore();
     }
 
-    // 1. 當前氣溫標示 (變數數字 t 換成極光亮紫色 #e64dff)
+    // 1. 當前氣溫標示
     const topFont = "bold 28px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans TC', sans-serif";
     drawCenteredSegments([
       { text: tr("當前氣溫：", "Current Temp: "), color: "#ffffff" },
@@ -768,7 +768,7 @@
   // ==========================================
   function switchTab(tab) {
     currentTab = tab;
-    cancelAnimationFrame(aniFrame);
+    cancelAnimationFrame(aniFrame); // 🚨 防暴衝
     
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
@@ -785,6 +785,8 @@
   }
 
   function renderUIForTab() {
+    cancelAnimationFrame(aniFrame); // 🚨 徹底消滅加速 Bug
+
     const title = document.getElementById('panel-title');
     const badge = document.getElementById('panel-badge');
     const note = document.getElementById('note-text');
@@ -873,9 +875,11 @@
   });
 
   // Init
-  initCanvas();
+  window.onload = function() {
+      initCanvas();
+      setLang('zh'); // Initialize Language and UI, renderUIForTab kills ghost loops.
+  };
   window.addEventListener('resize', initCanvas);
-  setLang('zh'); // 初始化語言與介面
 </script>
 </body>
 </html>
