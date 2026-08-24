@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title data-zh="光學透鏡：五大核心單元與視力黑板模擬器" data-en="Lenses: Five Core Units & Vision Simulator">光學透鏡：五大核心單元與視力黑板模擬器</title>
+  <title data-zh="國中自然 光學四｜透鏡成像與視力矯正" data-en="Optics 4 | Lens Imaging & Vision Correction">國中自然 光學四｜透鏡成像與視力矯正</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -17,6 +17,9 @@
       --chalk-blue: #38bdf8;
       --chalk-gray: #9fb0a8;
       --chalk-orange: #fb923c;
+      --chalk-cyan: #55e9ff;
+      --lab-purple: #c084fc;
+      --lab-magenta: #e879f9;
       --frame: #5c4a33;
     }
 
@@ -30,6 +33,56 @@
       font-size: 20px;
       padding: 20px 14px 60px;
       padding-top: 80px;
+    }
+
+    /* V5：電影式單元封面 */
+    body.intro-locked { overflow: hidden; }
+    .intro-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      overflow: hidden;
+      background: #03130f;
+      cursor: pointer;
+      isolation: isolate;
+      touch-action: manipulation;
+      transition: opacity .75s ease, visibility .75s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .intro-screen::before {
+      content: '';
+      position: absolute;
+      inset: -4%;
+      z-index: -2;
+      background: url("optics_4_cover.jpg") center / cover no-repeat;
+      filter: brightness(.7) contrast(1.08) saturate(1.06);
+      animation: introZoom 11s ease-out both;
+      will-change: transform;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .intro-screen::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(to bottom, rgba(3, 19, 15, .08) 42%, rgba(3, 19, 15, .58) 100%),
+        radial-gradient(circle at center, rgba(3, 19, 15, 0) 38%, rgba(3, 19, 15, .68) 100%);
+      pointer-events: none;
+    }
+    .intro-screen.exiting {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    @keyframes introZoom {
+      from { transform: scale(1) translate3d(0, 0, 0); }
+      to { transform: scale(1.055) translate3d(-.4%, -.25%, 0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .intro-screen::before { animation: none; }
+      .intro-screen { transition-duration: .01ms; }
     }
 
     /* 🌟 規範：右上角橫向懸浮雙語切換器 */
@@ -88,12 +141,45 @@
       box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
     }
 
-    .wrap { max-width: 1080px; margin: 0 auto; }
+    .wrap { width: 100%; max-width: 1080px; margin: 0 auto; }
 
     header { text-align: center; margin-bottom: 24px; }
     header .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 20px; letter-spacing: 0.15em; color: var(--chalk-dim); text-transform: uppercase; }
     h1 { font-size: 38px; font-weight: 700; margin: 6px 0 10px; text-shadow: 0 0 14px rgba(242, 236, 217, 0.15); color: var(--chalk-yellow); }
     header p { color: var(--chalk-green); max-width: 850px; margin: 0 auto; line-height: 1.6; font-size: 21px; font-weight: bold; }
+
+    /* V5：每個主分頁各自擁有一則曉臻老師 Hook */
+    .hook-box {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin: 0 0 20px;
+      padding: 16px 20px;
+      border: 1px solid rgba(85, 233, 255, .12);
+      border-left: 6px solid var(--chalk-cyan);
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(85, 233, 255, .12), rgba(85, 233, 255, .02));
+      box-shadow: 0 4px 20px rgba(85, 233, 255, .08);
+      position: relative;
+      z-index: 1;
+    }
+    .xiaozhen-logo {
+      width: 64px;
+      height: 64px;
+      flex: 0 0 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 3px solid var(--chalk-cyan);
+      border-radius: 50%;
+      background: var(--board-dark);
+      box-shadow: 0 0 15px rgba(85, 233, 255, .35);
+      font-size: 38px;
+    }
+    .hook-content { flex: 1; min-width: 0; line-height: 1.6; }
+    .hook-title { margin-bottom: 4px; color: var(--chalk-cyan); font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 900; }
+    .hook-text { color: var(--chalk); font-size: 20px; font-weight: 700; }
 
     .board {
       background: var(--board);
@@ -115,18 +201,246 @@
       color: var(--chalk-yellow); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
     }
 
-    .mode-switch { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .mode-switch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
     .mode-switch button {
       font-family: 'Noto Sans TC', sans-serif; font-size: 20px; font-weight: 700;
       background: rgba(0, 0, 0, 0.25); color: var(--chalk-dim); border: 2px dashed rgba(242, 236, 217, 0.25);
-      padding: 14px 12px; min-height: 64px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: center; display: flex; align-items: center; justify-content: center;
+      padding: 14px 12px; min-height: 72px; border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px;
       touch-action: manipulation;
     }
-    .mode-switch button:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(242, 236, 217, 0.5); color: var(--chalk); }
+    .mode-switch button .sub { font-size: 16px; font-weight: 500; line-height: 1.35; opacity: .82; }
+    .mode-switch button:hover { background: rgba(56, 189, 248, 0.16); border-color: var(--chalk-blue); color: var(--chalk); }
     .mode-switch button.active {
-      background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow); border-style: solid;
-      box-shadow: 0 4px 12px rgba(242, 214, 117, 0.25);
+      background: var(--chalk-blue); color: var(--board-dark); border-color: var(--chalk-blue); border-style: solid;
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
     }
+    .mode-switch button.active .sub { color: var(--board-dark); opacity: .9; font-weight: 600; }
+    .mode-switch button.lab-tab {
+      border: 3px solid var(--lab-purple);
+      background: linear-gradient(135deg, rgba(192, 132, 252, .18), rgba(232, 121, 249, .08));
+      color: #f3e8ff;
+      box-shadow: 0 0 18px rgba(192, 132, 252, .36), inset 0 0 16px rgba(192, 132, 252, .08);
+    }
+    .mode-switch button.lab-tab:hover {
+      border-color: #e9d5ff;
+      background: linear-gradient(135deg, rgba(192, 132, 252, .3), rgba(232, 121, 249, .15));
+      box-shadow: 0 0 26px rgba(192, 132, 252, .55);
+    }
+    .mode-switch button.lab-tab.active {
+      border-color: #e9d5ff;
+      background: linear-gradient(135deg, #a855f7, #d946ef);
+      color: #fdf4ff;
+      box-shadow: 0 0 30px rgba(192, 132, 252, .75), inset 0 0 20px rgba(255, 255, 255, .16);
+    }
+    .mode-switch button.lab-tab.active .sub { color: #fdf4ff; }
+
+    /* 3D 光學透鏡互動實驗室 */
+    [hidden] { display: none !important; }
+    .lab-stage { margin-top: 18px; }
+    .lab-shell {
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+      border: 4px solid var(--lab-purple);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(38, 15, 58, .92), rgba(7, 24, 29, .96));
+      box-shadow:
+        0 0 0 1px rgba(233, 213, 255, .45),
+        0 0 32px rgba(192, 132, 252, .48),
+        inset 0 0 44px rgba(168, 85, 247, .12);
+    }
+    .lab-shell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 0%, rgba(232, 121, 249, .16), transparent 42%);
+    }
+    .lab-heading {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .lab-heading h3 { margin: 0; color: #f3e8ff; font-size: 26px; }
+    .lab-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 7px 14px;
+      border: 1px solid rgba(233, 213, 255, .62);
+      border-radius: 999px;
+      color: #f5d0fe;
+      background: rgba(168, 85, 247, .2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .lab-mission-box {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding: 16px;
+      border: 2px solid rgba(85, 233, 255, .58);
+      border-left: 6px solid var(--chalk-cyan);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(85, 233, 255, .12), rgba(168, 85, 247, .13));
+      box-shadow: 0 0 22px rgba(85, 233, 255, .12);
+    }
+    .lab-mission-avatar {
+      width: 58px;
+      height: 58px;
+      flex: 0 0 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid var(--chalk-cyan);
+      border-radius: 50%;
+      background: var(--board-dark);
+      box-shadow: 0 0 14px rgba(85, 233, 255, .32);
+      font-size: 34px;
+    }
+    .lab-mission-content { flex: 1; min-width: 0; }
+    .lab-mission-title { color: var(--chalk-cyan); font-size: 22px; font-weight: 900; }
+    .lab-mission-intro { margin: 4px 0 12px; color: var(--chalk); font-size: 20px; line-height: 1.6; }
+    .lab-mission-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .lab-mission-item {
+      min-height: 96px;
+      padding: 11px 12px;
+      border: 1px solid rgba(233, 213, 255, .28);
+      border-radius: 10px;
+      background: rgba(7, 23, 20, .62);
+      color: var(--chalk);
+      font-size: 18px;
+      line-height: 1.55;
+    }
+    .lab-mission-item strong { display: block; margin-bottom: 3px; color: #fef08a; font-size: 20px; }
+    .lab-control-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(240px, 1.1fr) minmax(260px, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .lab-control-card {
+      padding: 14px;
+      border: 1px solid rgba(233, 213, 255, .24);
+      border-radius: 12px;
+      background: rgba(11, 26, 21, .62);
+    }
+    .lab-control-card label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      color: #f3e8ff;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .lab-control-card output { color: #f0abfc; font-family: 'JetBrains Mono', monospace; }
+    .lab-text-input {
+      width: 100%;
+      min-height: 48px;
+      padding: 10px 14px;
+      border: 2px solid var(--lab-purple);
+      border-radius: 10px;
+      outline: none;
+      background: rgba(8, 20, 18, .88);
+      color: #fef08a;
+      box-shadow: inset 0 0 16px rgba(232, 121, 249, .1);
+      font-family: 'JetBrains Mono', 'Noto Sans TC', monospace;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .lab-text-input:focus { border-color: #f0abfc; box-shadow: 0 0 18px rgba(232, 121, 249, .42); }
+    .lab-range { accent-color: var(--lab-magenta) !important; }
+    .lab-tools {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .lab-tool-btn {
+      min-height: 52px;
+      padding: 9px 12px;
+      border: 2px solid rgba(192, 132, 252, .56);
+      border-radius: 10px;
+      background: rgba(11, 26, 21, .7);
+      color: #f3e8ff;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .lab-tool-btn:hover,
+    .lab-tool-btn.active {
+      border-color: #f0abfc;
+      background: linear-gradient(135deg, rgba(168, 85, 247, .82), rgba(217, 70, 239, .72));
+      box-shadow: 0 0 18px rgba(192, 132, 252, .44);
+    }
+    .lab-canvas-wrap {
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      border: 2px solid rgba(233, 213, 255, .54);
+      border-radius: 14px;
+      background: #071714;
+      box-shadow: inset 0 0 35px rgba(168, 85, 247, .12);
+    }
+    #lab3dCanvas {
+      display: block;
+      width: 100%;
+      height: clamp(430px, 57vw, 610px);
+      touch-action: none;
+      cursor: grab;
+    }
+    #lab3dCanvas.dragging { cursor: grabbing; }
+    .lab-canvas-help {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      max-width: calc(100% - 24px);
+      padding: 8px 12px;
+      border: 1px solid rgba(233, 213, 255, .34);
+      border-radius: 9px;
+      background: rgba(7, 23, 20, .82);
+      color: #e9d5ff;
+      font-size: 16px;
+      line-height: 1.45;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .lab-stats {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .lab-stat {
+      min-width: 0;
+      padding: 12px 8px;
+      border: 1px solid rgba(192, 132, 252, .4);
+      border-radius: 10px;
+      background: rgba(12, 27, 23, .72);
+      text-align: center;
+    }
+    .lab-stat .k { color: #d8b4fe; font-size: 20px; font-weight: 700; }
+    .lab-stat .v { margin-top: 5px; color: #fef08a; font-family: 'JetBrains Mono', 'Noto Sans TC', monospace; font-size: 22px; font-weight: 700; }
 
     .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.15); padding: 16px; border-radius: 8px; }
     .control label { display: flex; justify-content: space-between; font-size: 20px; color: var(--chalk-dim); margin-bottom: 8px; font-family: 'JetBrains Mono', 'Noto Sans TC', monospace; font-weight: bold; }
@@ -155,6 +469,7 @@
     .explain-box p { margin: 0; font-size: 20px; line-height: 1.8; color: var(--chalk); }
     
     .math-eq { display: inline-flex; align-items: center; vertical-align: middle; gap: 6px; font-family: 'JetBrains Mono', monospace; font-weight: bold; }
+    .math-text { font-family: 'JetBrains Mono', monospace; }
     .fraction { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 2px; }
     .fraction .num { border-bottom: 2px solid currentColor; padding: 2px 4px; line-height: 1.2; }
     .fraction .den { padding: 2px 4px; line-height: 1.2; }
@@ -166,10 +481,32 @@
       .floating-lang-container { top: 8px; right: 8px; padding: 6px 8px; }
       .lang-label { display: none; }
       .mode-switch { grid-template-columns: 1fr 1fr; }
+      .board { border-width: 6px; padding: 20px 14px; }
+      .hook-box { align-items: flex-start; padding: 14px 16px; }
+      .lab-control-grid { grid-template-columns: 1fr; }
+      .lab-mission-grid { grid-template-columns: 1fr; }
+      .lab-tools { grid-template-columns: 1fr 1fr; }
+      .lab-stats { grid-template-columns: 1fr 1fr; }
+      #lab3dCanvas { height: 500px; }
+    }
+
+    @media (max-width: 560px) {
+      body { padding-left: 10px; padding-right: 10px; }
+      .mode-switch { grid-template-columns: 1fr; }
+      .hook-box { gap: 12px; }
+      .xiaozhen-logo { width: 54px; height: 54px; flex-basis: 54px; font-size: 32px; }
+      .lab-shell { padding: 12px; border-width: 3px; }
+      .lab-mission-box { gap: 12px; padding: 13px; }
+      .lab-mission-avatar { width: 50px; height: 50px; flex-basis: 50px; font-size: 30px; }
+      .lab-tools { grid-template-columns: 1fr; }
+      #lab3dCanvas { height: 440px; }
     }
   </style>
 </head>
-<body>
+<body class="intro-locked">
+
+  <!-- V5 電影式開場：無提示文字，點擊／觸碰後進入 -->
+  <div id="introScreen" class="intro-screen" role="dialog" aria-modal="true" aria-label="透鏡與視力單元封面" tabindex="0"></div>
 
   <!-- 🌟 右上角橫向懸浮雙語切換器 -->
   <div class="floating-lang-container">
@@ -183,30 +520,132 @@
   <div class="wrap">
     <header>
       <div class="eyebrow">Optics Chapter 4-4</div>
-      <h1 data-zh="光學透鏡：核心單元與視力模擬器" data-en="Lenses: Core Units & Vision Simulator">光學透鏡：核心單元與視力模擬器</h1>
-      <p data-zh="從透鏡會聚與發散原理，到視力矯正光路模擬。一鍵切換，破解成像規律！" data-en="From converging/diverging principles to vision correction simulation. Master imaging laws instantly!">從透鏡會聚與發散原理，到視力矯正光路模擬。一鍵切換，破解成像規律！</p>
+      <h1 data-zh="光學四：透鏡成像與視力矯正" data-en="Optics 4: Lens Imaging & Vision Correction">光學四：透鏡成像與視力矯正</h1>
+      <p data-zh="從會聚與發散，到凸透鏡成像與近視、遠視矯正；親手移動光線，看懂焦點如何決定我們看見的世界。" data-en="From convergence and divergence to lens imaging and vision correction—move the rays and see how focal points shape what we see.">從會聚與發散，到凸透鏡成像與近視、遠視矯正；親手移動光線，看懂焦點如何決定我們看見的世界。</p>
     </header>
+
+    <!-- V5：沿用 optics_2／optics_3 的曉臻老師 Hook 位置與結構 -->
+    <div class="hook-box" id="hookBox" aria-live="polite"></div>
 
     <div class="board">
       <h2 data-zh="選擇互動教學模式" data-en="Select Interactive Mode">選擇互動教學模式</h2>
       <div class="mode-switch">
-        <button class="active" data-mode="intro" data-zh="1. 兩種透鏡與原理" data-en="1. Two Lenses & Principles">1. 兩種透鏡與原理</button>
-        <button data-mode="convex" data-zh="2. 凸透鏡成像模擬" data-en="2. Convex Lens Simulator">2. 凸透鏡成像模擬</button>
-        <button data-mode="hyperopia" data-zh="3. 遠視眼與矯正" data-en="3. Hyperopia Correction">3. 遠視眼與矯正</button>
-        <button data-mode="concave" data-zh="4. 凹透鏡成像模擬" data-en="4. Concave Lens Simulator">4. 凹透鏡成像模擬</button>
-        <button data-mode="myopia" data-zh="5. 近視眼與矯正" data-en="5. Myopia Correction">5. 近視眼與矯正</button>
+        <button class="active" data-mode="intro">
+          <span data-zh="🔍 透鏡為什麼會聚或發散？" data-en="🔍 Why Do Lenses Converge or Diverge?">🔍 透鏡為什麼會聚或發散？</span>
+          <span class="sub" data-zh="先從形狀看懂兩大透鏡家族" data-en="Start with the shapes of the two lens families">先從形狀看懂兩大透鏡家族</span>
+        </button>
+        <button data-mode="convex">
+          <span data-zh="📽️ 凸透鏡把像成在哪裡？" data-en="📽️ Where Does a Convex Lens Form Images?">📽️ 凸透鏡把像成在哪裡？</span>
+          <span class="sub" data-zh="移動物體，觀察實像與虛像" data-en="Move the object and compare real and virtual images">移動物體，觀察實像與虛像</span>
+        </button>
+        <button data-mode="hyperopia">
+          <span data-zh="👓 遠視為什麼需要凸透鏡？" data-en="👓 Why Does Hyperopia Need a Convex Lens?">👓 遠視為什麼需要凸透鏡？</span>
+          <span class="sub" data-zh="把視網膜後方的焦點拉回來" data-en="Bring the focal point back from behind the retina">把視網膜後方的焦點拉回來</span>
+        </button>
+        <button data-mode="concave">
+          <span data-zh="🔦 凹透鏡為什麼只成虛像？" data-en="🔦 Why Does a Concave Lens Form Only Virtual Images?">🔦 凹透鏡為什麼只成虛像？</span>
+          <span class="sub" data-zh="追蹤發散光線的反向延長線" data-en="Trace the backward extensions of diverging rays">追蹤發散光線的反向延長線</span>
+        </button>
+        <button data-mode="myopia">
+          <span data-zh="👁️ 近視為什麼需要凹透鏡？" data-en="👁️ Why Does Myopia Need a Concave Lens?">👁️ 近視為什麼需要凹透鏡？</span>
+          <span class="sub" data-zh="把視網膜前方的焦點往後推" data-en="Push the focal point back onto the retina">把視網膜前方的焦點往後推</span>
+        </button>
+        <button class="lab-tab" data-mode="lab3d">
+          <span data-zh="🟣 光學透鏡互動實驗室" data-en="🟣 Interactive Lens Laboratory">🟣 光學透鏡互動實驗室</span>
+          <span class="sub" data-zh="360° 操作 LED 看板，親眼看見實像" data-en="Move a 360° LED board and watch a real image form">360° 操作 LED 看板，親眼看見實像</span>
+        </button>
       </div>
 
-      <div class="controls" id="controlsBox"></div>
-      <div class="presets" id="presetsBox"></div>
-      
-      <div class="visual-card">
-        <svg id="visualSvg" viewBox="0 0 1000 480">
-          <g id="drawLayer"></g>
-        </svg>
+      <div id="classicStage">
+        <div class="controls" id="controlsBox"></div>
+        <div class="presets" id="presetsBox"></div>
+
+        <div class="visual-card">
+          <svg id="visualSvg" viewBox="0 0 1000 480">
+            <g id="drawLayer"></g>
+          </svg>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
       </div>
-      
-      <div class="stats-grid" id="statsGrid"></div>
+
+      <section class="lab-stage" id="lab3dStage" hidden>
+        <div class="lab-shell">
+          <div class="lab-heading">
+            <h3 data-zh="3D 凸透鏡成像實驗" data-en="3D Convex-Lens Imaging Experiment">3D 凸透鏡成像實驗</h3>
+            <span class="lab-badge" data-zh="即時薄透鏡模型" data-en="Live thin-lens model">即時薄透鏡模型</span>
+          </div>
+
+          <div class="lab-mission-box">
+            <div class="lab-mission-avatar" aria-hidden="true">👩🏻‍🏫</div>
+            <div class="lab-mission-content">
+              <div class="lab-mission-title" data-zh="曉臻老師的 3D 光學任務" data-en="Teacher Xiaozhen's 3D Optics Missions">曉臻老師的 3D 光學任務</div>
+              <p class="lab-mission-intro" data-zh="先輸入你的名字，再切換下方工具拖曳看板。完成三個任務，就能親手驗證凸透鏡的成像規律！" data-en="Type your name, then switch tools and drag the board. Complete all three missions to verify the imaging rules of a convex lens!">先輸入你的名字，再切換下方工具拖曳看板。完成三個任務，就能親手驗證凸透鏡的成像規律！</p>
+              <div class="lab-mission-grid">
+                <div class="lab-mission-item">
+                  <strong data-zh="任務 1｜點亮名字" data-en="Mission 1 | Light Your Name">任務 1｜點亮名字</strong>
+                  <span data-zh="輸入名字，按「旋轉 LED 看板」拖動，確認文字和所有燈珠永遠一起轉。" data-en="Type your name, choose Rotate LED Board, and verify that the message and every LED always rotate together.">輸入名字，按「旋轉 LED 看板」拖動，確認文字和所有燈珠永遠一起轉。</span>
+                </div>
+                <div class="lab-mission-item">
+                  <strong data-zh="任務 2｜找出等大實像" data-en="Mission 2 | Find a Same-Size Image">任務 2｜找出等大實像</strong>
+                  <span data-zh="按「前進／後退」，把物距調到 30.0 cm（2f），觀察另一側是否形成倒立等大實像。" data-en="Choose Move Forward / Back and set u to 30.0 cm (2f). Check whether an inverted same-size real image forms.">按「前進／後退」，把物距調到 30.0 cm（2f），觀察另一側是否形成倒立等大實像。</span>
+                </div>
+                <div class="lab-mission-item">
+                  <strong data-zh="任務 3｜讓實像變大" data-en="Mission 3 | Magnify the Real Image">任務 3｜讓實像變大</strong>
+                  <span data-zh="把看板移近焦點到約 23.0 cm，再按「360° 環視」拖曳畫面，找出像變遠、變大的證據。" data-en="Move the board toward F to about 23.0 cm, then orbit the scene and find evidence that the image moves farther away and grows.">把看板移近焦點到約 23.0 cm，再按「360° 環視」拖曳畫面，找出像變遠、變大的證據。</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lab-control-grid">
+            <div class="lab-control-card">
+              <label for="labLedText" data-zh="LED 看板顯示文字" data-en="LED board message">LED 看板顯示文字</label>
+              <input class="lab-text-input" id="labLedText" type="text" maxlength="10" value="光" autocomplete="off" spellcheck="false" aria-label="LED 看板顯示文字">
+            </div>
+            <div class="lab-control-card">
+              <label for="labDistance">
+                <span data-zh="物距 u" data-en="Object distance u">物距 u</span>
+                <output id="labDistanceValue">300</output>
+              </label>
+              <input class="lab-range" id="labDistance" type="range" min="230" max="520" step="1" value="300">
+            </div>
+            <div class="lab-control-card">
+              <label for="labRotation">
+                <span data-zh="LED 看板旋轉角度" data-en="LED board rotation">LED 看板旋轉角度</span>
+                <output id="labRotationValue">0°</output>
+              </label>
+              <input class="lab-range" id="labRotation" type="range" min="0" max="360" step="1" value="0">
+            </div>
+            <div class="lab-control-card">
+              <label for="labTilt">
+                <span data-zh="LED 看板前後傾斜" data-en="LED board forward tilt">LED 看板前後傾斜</span>
+                <output id="labTiltValue">0°</output>
+              </label>
+              <input class="lab-range" id="labTilt" type="range" min="-50" max="50" step="1" value="0">
+            </div>
+          </div>
+
+          <div class="lab-tools" role="group" aria-label="3D 實驗操作工具">
+            <button class="lab-tool-btn active" type="button" data-lab-tool="orbit" data-zh="🌐 360° 環視" data-en="🌐 Orbit 360°">🌐 360° 環視</button>
+            <button class="lab-tool-btn" type="button" data-lab-tool="move" data-zh="↔️ 前進／後退" data-en="↔️ Move Forward / Back">↔️ 前進／後退</button>
+            <button class="lab-tool-btn" type="button" data-lab-tool="rotate" data-zh="🔄 旋轉 LED 看板" data-en="🔄 Rotate LED Board">🔄 旋轉 LED 看板</button>
+            <button class="lab-tool-btn" id="labReset" type="button" data-lab-tool="reset" data-zh="↺ 重置實驗" data-en="↺ Reset Lab">↺ 重置實驗</button>
+          </div>
+
+          <div class="lab-canvas-wrap">
+            <canvas id="lab3dCanvas" role="img" aria-label="可旋轉的三維凸透鏡成像實驗" tabindex="0"></canvas>
+            <div class="lab-canvas-help" id="labCanvasHelp" data-zh="拖曳畫面環視；切換工具後可直接拖動或旋轉整片 LED 看板。文字與燈珠永遠固定在同一平面。" data-en="Drag to orbit. Switch tools to move or rotate the entire LED board. The message and LEDs always stay on one plane.">拖曳畫面環視；切換工具後可直接拖動或旋轉整片 LED 看板。文字與燈珠永遠固定在同一平面。</div>
+          </div>
+
+          <div class="lab-stats" aria-live="polite">
+            <div class="lab-stat"><div class="k" data-zh="物距 u" data-en="Object u">物距 u</div><div class="v" id="labStatU">2.00 f</div></div>
+            <div class="lab-stat"><div class="k" data-zh="像距 v" data-en="Image v">像距 v</div><div class="v" id="labStatV">2.00 f</div></div>
+            <div class="lab-stat"><div class="k" data-zh="放大率 m" data-en="Magnification m">放大率 m</div><div class="v" id="labStatM">−1.00</div></div>
+            <div class="lab-stat"><div class="k" data-zh="成像性質" data-en="Image type">成像性質</div><div class="v" id="labStatType">倒立等大實像</div></div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <div class="board">
@@ -219,6 +658,24 @@
 
   <script>
     (function() {
+      // V5 開場動畫控制
+      const introScreen = document.getElementById('introScreen');
+      let introClosed = false;
+      function enterLesson() {
+        if (introClosed) return;
+        introClosed = true;
+        introScreen.classList.add('exiting');
+        document.body.classList.remove('intro-locked');
+        setTimeout(() => introScreen.remove(), 800);
+      }
+      introScreen.addEventListener('click', enterLesson);
+      introScreen.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          enterLesson();
+        }
+      });
+
       let currentLang = 'zh';
       let currentMode = 'intro';
       const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -228,14 +685,56 @@
       const drawLayer = document.getElementById('drawLayer');
       const statsGrid = document.getElementById('statsGrid');
       const explainBox = document.getElementById('explainBox');
+      const classicStage = document.getElementById('classicStage');
+      const lab3dStage = document.getElementById('lab3dStage');
+      const labCanvas = document.getElementById('lab3dCanvas');
+      const labCtx = labCanvas.getContext('2d', { alpha: false });
 
       const params = {
         intro: {},
         convex: { uRatio: 3.0 }, 
         concave: { uRatio: 3.0 },
         hyperopia: { power: 0 }, 
-        myopia: { power: 0 }
+        myopia: { power: 0 },
+        lab3d: {}
       };
+
+      // 每個主分頁各自獨立的中英雙語 Hook
+      const hooks = {
+        intro: {
+          zh: '同樣叫做透鏡，有的能把陽光聚成亮點，有的卻讓光線散開。真正的差別藏在透鏡的哪個部位？',
+          en: 'Both are called lenses, yet one concentrates sunlight into a bright point while the other spreads light apart. Where does the real difference lie?'
+        },
+        convex: {
+          zh: '只移動物體，同一片凸透鏡形成的像竟然會倒立、放大，甚至跑到鏡前。焦點究竟扮演什麼角色？',
+          en: 'Move only the object, and the same convex lens can produce an inverted image, a larger image, or even an image in front of the lens. What role does the focal point play?'
+        },
+        hyperopia: {
+          zh: '遠視眼看近物模糊，為什麼在眼睛前面多放一片凸透鏡，影像反而能清楚落在視網膜上？',
+          en: 'Near objects look blurry with hyperopia. Why does adding a convex lens help the image land clearly on the retina?'
+        },
+        concave: {
+          zh: '無論物體放多遠，凹透鏡形成的像總是正立、縮小。光線明明沒有真正交會，我們又是在哪裡看見像的？',
+          en: 'No matter how far away the object is, a concave lens forms an upright, reduced image. If the rays never truly meet, where do we see the image?'
+        },
+        myopia: {
+          zh: '近視眼不是看不到，而是遠方光線太早聚焦。凹透鏡如何先讓光線散開，再把焦點送回視網膜？',
+          en: 'Myopia is not a failure to see—the rays simply focus too early. How does a concave lens spread them first and move the focus back onto the retina?'
+        },
+        lab3d: {
+          zh: '今天你是 3D 光學實驗員！先點亮自己的名字，再讓 LED 看板前進、後退與旋轉，找出「倒立等大」和「倒立放大」實像。',
+          en: 'Today you are a 3D optics scientist! Light up your name, then move and rotate the LED board to find same-size and magnified inverted real images.'
+        }
+      };
+
+      function updateHookBox() {
+        const hookBox = document.getElementById('hookBox');
+        const hook = hooks[currentMode];
+        if (!hookBox || !hook) return;
+        const title = currentLang === 'en' ? 'Teacher Xiaozhen says:' : '曉臻老師說：';
+        const text = currentLang === 'en' ? hook.en : hook.zh;
+        hookBox.innerHTML = `<div class="xiaozhen-logo" aria-hidden="true">👩🏻‍🏫</div><div class="hook-content"><div class="hook-title">${title}</div><div class="hook-text">${text}</div></div>`;
+      }
 
       const V_WIDTH = 1000;
       const V_HEIGHT = 480;
@@ -340,7 +839,551 @@
         addText(parent, cx, cy + h + 26, name, 'middle', '#ffffff', 18, 'bold');
       }
 
+      // ─────────────────────────────────────────────────────────────
+      // 3D 光學透鏡互動實驗室（新增模型，不改動既有 2D SVG）
+      // ─────────────────────────────────────────────────────────────
+      const LAB_F = 150;
+      const labState = {
+        text: '光',
+        u: 300,
+        roll: 0,
+        tilt: 0,
+        tool: 'orbit',
+        yaw: Math.PI / 2.18,
+        pitch: 0.24,
+        cameraDistance: 1040
+      };
+      const labView = { width: 0, height: 0, dpr: 1 };
+      const labPointers = new Map();
+      let labRafId = null;
+      let labLastPointer = null;
+      let labPinchStart = null;
+
+      const labClamp = (value, min, max) => Math.min(max, Math.max(min, value));
+      const labAdd = (a, b) => ({ x: a.x + b.x, y: a.y + b.y, z: a.z + b.z });
+      const labSub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
+      const labScale = (v, scale) => ({ x: v.x * scale, y: v.y * scale, z: v.z * scale });
+      const labDot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
+      const labCross = (a, b) => ({
+        x: a.y * b.z - a.z * b.y,
+        y: a.z * b.x - a.x * b.z,
+        z: a.x * b.y - a.y * b.x
+      });
+      function labNormalize(v) {
+        const length = Math.hypot(v.x, v.y, v.z) || 1;
+        return labScale(v, 1 / length);
+      }
+
+      function labOptics() {
+        const v = (LAB_F * labState.u) / (labState.u - LAB_F);
+        const m = -v / labState.u;
+        return { v, m };
+      }
+
+      function labBasis() {
+        const sinTilt = Math.sin(labState.tilt);
+        const cosTilt = Math.cos(labState.tilt);
+        const sinRoll = Math.sin(labState.roll);
+        const cosRoll = Math.cos(labState.roll);
+        return {
+          horizontal: { x: sinTilt, y: -cosTilt * sinRoll, z: cosTilt * cosRoll },
+          vertical: { x: 0, y: cosRoll, z: sinRoll }
+        };
+      }
+
+      function labObjectPoint(localX, localY) {
+        const basis = labBasis();
+        const center = { x: -labState.u, y: 0, z: 0 };
+        return labAdd(center, labAdd(labScale(basis.horizontal, localX), labScale(basis.vertical, localY)));
+      }
+
+      function labImagePoint(objectPoint) {
+        const u = -objectPoint.x;
+        if (u <= LAB_F + 1) return null;
+        const v = (LAB_F * u) / (u - LAB_F);
+        const m = -v / u;
+        return { x: v, y: objectPoint.y * m, z: objectPoint.z * m };
+      }
+
+      function labProject(point) {
+        const cosPitch = Math.cos(labState.pitch);
+        const camera = {
+          x: labState.cameraDistance * cosPitch * Math.cos(labState.yaw),
+          y: labState.cameraDistance * Math.sin(labState.pitch),
+          z: labState.cameraDistance * cosPitch * Math.sin(labState.yaw)
+        };
+        const target = { x: 15, y: 0, z: 0 };
+        const forward = labNormalize(labSub(target, camera));
+        const right = labNormalize(labCross(forward, { x: 0, y: 1, z: 0 }));
+        const up = labCross(right, forward);
+        const relative = labSub(point, camera);
+        const depth = labDot(relative, forward);
+        if (depth <= 20) return null;
+        const focal = Math.min(labView.width, labView.height) * 1.34;
+        return {
+          x: labView.width / 2 + (labDot(relative, right) * focal) / depth,
+          y: labView.height / 2 - (labDot(relative, up) * focal) / depth,
+          depth
+        };
+      }
+
+      function labResizeCanvas() {
+        const rect = labCanvas.getBoundingClientRect();
+        if (!rect.width || !rect.height) return false;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const width = Math.round(rect.width * dpr);
+        const height = Math.round(rect.height * dpr);
+        if (labCanvas.width !== width || labCanvas.height !== height) {
+          labCanvas.width = width;
+          labCanvas.height = height;
+        }
+        labView.width = rect.width;
+        labView.height = rect.height;
+        labView.dpr = dpr;
+        return true;
+      }
+
+      function labLine(a, b, color, width = 1.5, dash = []) {
+        const pa = labProject(a);
+        const pb = labProject(b);
+        if (!pa || !pb) return;
+        labCtx.save();
+        labCtx.strokeStyle = color;
+        labCtx.lineWidth = width;
+        labCtx.setLineDash(dash);
+        labCtx.beginPath();
+        labCtx.moveTo(pa.x, pa.y);
+        labCtx.lineTo(pb.x, pb.y);
+        labCtx.stroke();
+        labCtx.restore();
+      }
+
+      function labPolygon(points, fill, stroke, width = 1.5) {
+        const projected = points.map(labProject);
+        if (projected.some(point => !point)) return;
+        labCtx.save();
+        labCtx.beginPath();
+        projected.forEach((point, index) => index ? labCtx.lineTo(point.x, point.y) : labCtx.moveTo(point.x, point.y));
+        labCtx.closePath();
+        if (fill) { labCtx.fillStyle = fill; labCtx.fill(); }
+        if (stroke) { labCtx.strokeStyle = stroke; labCtx.lineWidth = width; labCtx.stroke(); }
+        labCtx.restore();
+      }
+
+      function labPoint(point, radius, color, glow = 0) {
+        const projected = labProject(point);
+        if (!projected) return;
+        labCtx.save();
+        labCtx.fillStyle = color;
+        labCtx.shadowColor = color;
+        labCtx.shadowBlur = glow;
+        labCtx.beginPath();
+        labCtx.arc(projected.x, projected.y, radius, 0, Math.PI * 2);
+        labCtx.fill();
+        labCtx.restore();
+      }
+
+      function labLabel(point, text, color, offsetY = -16) {
+        const projected = labProject(point);
+        if (!projected) return;
+        labCtx.save();
+        labCtx.font = "700 16px 'Noto Sans TC', sans-serif";
+        labCtx.textAlign = 'center';
+        labCtx.textBaseline = 'middle';
+        const textWidth = labCtx.measureText(text).width;
+        labCtx.fillStyle = 'rgba(7, 23, 20, .84)';
+        labCtx.fillRect(projected.x - textWidth / 2 - 8, projected.y + offsetY - 13, textWidth + 16, 26);
+        labCtx.fillStyle = color;
+        labCtx.fillText(text, projected.x, projected.y + offsetY);
+        labCtx.restore();
+      }
+
+      const LAB_LED_COLS = 36;
+      const LAB_LED_ROWS = 14;
+      const labTextCanvas = document.createElement('canvas');
+      const labTextCtx = labTextCanvas.getContext('2d', { willReadFrequently: true });
+      labTextCanvas.width = 360;
+      labTextCanvas.height = 140;
+      let labLedMatrixKey = '';
+      let labLedMatrix = [];
+
+      function labBuildLedMatrix() {
+        const text = labState.text || 'LED';
+        if (labLedMatrixKey === text && labLedMatrix.length) return labLedMatrix;
+        labLedMatrixKey = text;
+        labTextCtx.clearRect(0, 0, labTextCanvas.width, labTextCanvas.height);
+        let fontSize = 104;
+        labTextCtx.font = `900 ${fontSize}px 'Noto Sans TC', 'JetBrains Mono', sans-serif`;
+        while (labTextCtx.measureText(text).width > 324 && fontSize > 28) {
+          fontSize -= 4;
+          labTextCtx.font = `900 ${fontSize}px 'Noto Sans TC', 'JetBrains Mono', sans-serif`;
+        }
+        labTextCtx.fillStyle = '#ffffff';
+        labTextCtx.textAlign = 'center';
+        labTextCtx.textBaseline = 'middle';
+        labTextCtx.fillText(text, labTextCanvas.width / 2, labTextCanvas.height / 2 + 4);
+        const pixels = labTextCtx.getImageData(0, 0, labTextCanvas.width, labTextCanvas.height).data;
+        labLedMatrix = [];
+        for (let row = 0; row < LAB_LED_ROWS; row++) {
+          const matrixRow = [];
+          const cellTop = Math.floor(row * labTextCanvas.height / LAB_LED_ROWS);
+          const cellBottom = Math.floor((row + 1) * labTextCanvas.height / LAB_LED_ROWS);
+          for (let column = 0; column < LAB_LED_COLS; column++) {
+            const cellLeft = Math.floor(column * labTextCanvas.width / LAB_LED_COLS);
+            const cellRight = Math.floor((column + 1) * labTextCanvas.width / LAB_LED_COLS);
+            let alphaTotal = 0;
+            let samples = 0;
+            for (let y = cellTop; y < cellBottom; y += 2) {
+              for (let x = cellLeft; x < cellRight; x += 2) {
+                alphaTotal += pixels[(y * labTextCanvas.width + x) * 4 + 3];
+                samples++;
+              }
+            }
+            matrixRow.push(samples > 0 && alphaTotal / samples > 32);
+          }
+          labLedMatrix.push(matrixRow);
+        }
+        return labLedMatrix;
+      }
+
+      function labDrawLedDots(points, color, radius, glow) {
+        if (!points.length) return;
+        labCtx.save();
+        labCtx.fillStyle = color;
+        labCtx.shadowColor = color;
+        labCtx.shadowBlur = glow;
+        labCtx.beginPath();
+        points.forEach(point => {
+          labCtx.moveTo(point.x + radius, point.y);
+          labCtx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+        });
+        labCtx.fill();
+        labCtx.restore();
+      }
+
+      function labDrawLedBoard(isImage) {
+        const mapper = isImage
+          ? (x, y) => labImagePoint(labObjectPoint(x, y))
+          : (x, y) => labObjectPoint(x, y);
+        const outerCorners = [[-86, 48], [86, 48], [86, -48], [-86, -48]].map(([x, y]) => mapper(x, y)).filter(Boolean);
+        const innerCorners = [[-80, 42], [80, 42], [80, -42], [-80, -42]].map(([x, y]) => mapper(x, y)).filter(Boolean);
+        if (outerCorners.length !== 4 || innerCorners.length !== 4) return;
+        const frameColor = isImage ? 'rgba(216, 180, 254, .95)' : 'rgba(240, 171, 252, .98)';
+        const panelFill = isImage ? 'rgba(49, 20, 71, .36)' : 'rgba(5, 15, 17, .96)';
+        labCtx.save();
+        labCtx.shadowColor = isImage ? '#c084fc' : '#e879f9';
+        labCtx.shadowBlur = isImage ? 18 : 22;
+        labPolygon(outerCorners, panelFill, frameColor, isImage ? 2 : 2.6);
+        labCtx.restore();
+        labPolygon(innerCorners, 'rgba(3, 12, 13, .74)', isImage ? 'rgba(192, 132, 252, .42)' : 'rgba(232, 121, 249, .56)', 1.2);
+
+        const matrix = labBuildLedMatrix();
+        const activePoints = [];
+        const inactivePoints = [];
+        for (let row = 0; row < LAB_LED_ROWS; row++) {
+          const y = 36 - row * (72 / (LAB_LED_ROWS - 1));
+          for (let column = 0; column < LAB_LED_COLS; column++) {
+            const x = -76 + column * (152 / (LAB_LED_COLS - 1));
+            const worldPoint = mapper(x, y);
+            const projected = worldPoint && labProject(worldPoint);
+            if (!projected) continue;
+            (matrix[row][column] ? activePoints : inactivePoints).push(projected);
+          }
+        }
+        labDrawLedDots(inactivePoints, isImage ? 'rgba(126, 86, 163, .28)' : 'rgba(71, 83, 78, .5)', isImage ? 1.05 : 1.15, 0);
+        labDrawLedDots(activePoints, isImage ? '#e9d5ff' : '#fef08a', isImage ? 1.75 : 1.95, isImage ? 12 : 14);
+      }
+
+      function labDrawLens() {
+        const ring = (x, radius) => {
+          const points = [];
+          for (let i = 0; i < 64; i++) {
+            const angle = i / 64 * Math.PI * 2;
+            points.push({ x, y: Math.cos(angle) * radius, z: Math.sin(angle) * radius });
+          }
+          return points;
+        };
+        const back = ring(-18, 116);
+        const middle = ring(0, 132);
+        const front = ring(18, 116);
+        labPolygon(middle, 'rgba(56, 189, 248, .13)', 'rgba(85, 233, 255, .92)', 2.4);
+        labPolygon(back, null, 'rgba(125, 211, 252, .42)', 1.2);
+        labPolygon(front, null, 'rgba(125, 211, 252, .6)', 1.4);
+        for (let i = 0; i < 64; i += 8) {
+          labLine(back[i], middle[i], 'rgba(85, 233, 255, .34)', 1);
+          labLine(middle[i], front[i], 'rgba(85, 233, 255, .34)', 1);
+        }
+        labLabel({ x: 0, y: 150, z: 0 }, tr('凸透鏡', 'Convex lens'), '#55e9ff', -10);
+      }
+
+      function labDrawGrid() {
+        for (let z = -300; z <= 300; z += 60) {
+          labLine({ x: -620, y: -150, z }, { x: 680, y: -150, z }, 'rgba(192, 132, 252, .09)', 1);
+        }
+        for (let x = -600; x <= 660; x += 90) {
+          labLine({ x, y: -150, z: -300 }, { x, y: -150, z: 300 }, 'rgba(85, 233, 255, .07)', 1);
+        }
+        labLine({ x: -650, y: 0, z: 0 }, { x: 700, y: 0, z: 0 }, 'rgba(254, 240, 138, .72)', 2, [10, 7]);
+        [-LAB_F, LAB_F].forEach(x => {
+          labPoint({ x, y: 0, z: 0 }, 5, '#fde047', 10);
+          labLabel({ x, y: 0, z: 0 }, x < 0 ? 'F' : "F′", '#fde047', 25);
+        });
+      }
+
+      function labDrawScreen() {
+        const corners = [
+          labImagePoint(labObjectPoint(-94, 56)),
+          labImagePoint(labObjectPoint(94, 56)),
+          labImagePoint(labObjectPoint(94, -56)),
+          labImagePoint(labObjectPoint(-94, -56))
+        ].filter(Boolean);
+        if (corners.length === 4) {
+          labPolygon(corners, 'rgba(192, 132, 252, .08)', 'rgba(216, 180, 254, .52)', 1.4);
+        }
+      }
+
+      function labPulse(a, b, progress, color) {
+        const point = labAdd(a, labScale(labSub(b, a), progress));
+        labPoint(point, 2.8, color, 12);
+      }
+
+      function labDrawRays(time) {
+        const samples = [[0, 36], [-68, 0], [68, 0]];
+        const colors = ['#fde047', '#55e9ff', '#f0abfc'];
+        samples.forEach(([localX, localY], index) => {
+          const objectPoint = labObjectPoint(localX, localY);
+          const imagePoint = labImagePoint(objectPoint);
+          if (!imagePoint) return;
+          const lensPoints = [
+            { x: 0, y: 0, z: 0 },
+            {
+              x: 0,
+              y: labClamp(objectPoint.y * .26 + (index - 1) * 13, -72, 72),
+              z: labClamp(objectPoint.z * .26 - (index - 1) * 13, -72, 72)
+            }
+          ];
+          lensPoints.forEach((lensPoint, rayIndex) => {
+            const alphaColor = rayIndex ? `${colors[index]}88` : `${colors[index]}bb`;
+            labLine(objectPoint, lensPoint, alphaColor, rayIndex ? 1.1 : 1.6);
+            labLine(lensPoint, imagePoint, alphaColor, rayIndex ? 1.1 : 1.6);
+            if (rayIndex === 0) {
+              const phase = (time * .00028 + index * .29) % 1;
+              if (phase < .48) labPulse(objectPoint, lensPoint, phase / .48, colors[index]);
+              else labPulse(lensPoint, imagePoint, (phase - .48) / .52, colors[index]);
+            }
+          });
+        });
+      }
+
+      function labUpdateStats() {
+        const { v, m } = labOptics();
+        const ratioU = labState.u / LAB_F;
+        const ratioV = v / LAB_F;
+        let imageTypeZh = '倒立等大實像';
+        let imageTypeEn = 'Inverted same-size real';
+        if (ratioU > 2.04) {
+          imageTypeZh = '倒立縮小實像';
+          imageTypeEn = 'Inverted reduced real';
+        } else if (ratioU < 1.96) {
+          imageTypeZh = '倒立放大實像';
+          imageTypeEn = 'Inverted magnified real';
+        }
+        document.getElementById('labDistanceValue').textContent = `${(labState.u / 10).toFixed(1)} cm`;
+        document.getElementById('labRotationValue').textContent = `${Math.round((labState.roll * 180 / Math.PI + 360) % 360)}°`;
+        document.getElementById('labTiltValue').textContent = `${Math.round(labState.tilt * 180 / Math.PI)}°`;
+        document.getElementById('labStatU').textContent = `${ratioU.toFixed(2)} f · ${(labState.u / 10).toFixed(1)} cm`;
+        document.getElementById('labStatV').textContent = `${ratioV.toFixed(2)} f · ${(v / 10).toFixed(1)} cm`;
+        document.getElementById('labStatM').textContent = `−${Math.abs(m).toFixed(2)}`;
+        document.getElementById('labStatType').textContent = tr(imageTypeZh, imageTypeEn);
+      }
+
+      function labSyncInputs() {
+        document.getElementById('labDistance').value = Math.round(labState.u);
+        document.getElementById('labRotation').value = Math.round((labState.roll * 180 / Math.PI + 360) % 360);
+        document.getElementById('labTilt').value = Math.round(labState.tilt * 180 / Math.PI);
+        document.getElementById('labLedText').value = labState.text;
+        labUpdateStats();
+      }
+
+      function labExplanation() {
+        explainBox.innerHTML = tr(`
+          <h3>🟣 3D 實驗室：把薄透鏡公式變成一座真正能操作的空間</h3>
+          <p>本實驗固定凸透鏡焦距為 <span class="math-text">15.0 cm</span>，並把 LED 看板保持在焦點外，因此另一側一定能形成<b>倒立實像</b>。拖近焦點時，像會跑得更遠、變得更大；把看板拉遠，像就會靠近焦點並縮小。<br>輸入的文字會先轉換成演唱會看板般的 LED 點陣；每一顆燈珠都固定在看板平面，並逐顆經薄透鏡模型映射到另一側，所以文字與看板必定一起倒立。</p>
+        `, `
+          <h3>🟣 3D Lab: Turn the Thin-Lens Equation into a Space You Can Control</h3>
+          <p>The convex lens has a fixed focal length of <span class="math-text">15.0 cm</span>. The LED board stays outside the focal point, so an <b>inverted real image</b> always forms on the other side. Move the board toward F and the image moves farther away and grows; move it away and the image approaches F and shrinks.<br>Your message becomes a concert-style LED dot matrix. Every LED remains fixed to the board plane and is mapped individually through the thin-lens model, so the message and board always invert together.</p>
+        `);
+      }
+
+      function labRender(time) {
+        if (!labResizeCanvas()) return;
+        const { width, height, dpr } = labView;
+        labCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const background = labCtx.createRadialGradient(width * .52, height * .44, 20, width * .52, height * .5, Math.max(width, height) * .72);
+        background.addColorStop(0, '#17332f');
+        background.addColorStop(.48, '#0a211d');
+        background.addColorStop(1, '#071412');
+        labCtx.fillStyle = background;
+        labCtx.fillRect(0, 0, width, height);
+
+        labDrawGrid();
+        labDrawScreen();
+        labDrawRays(time);
+        labDrawLens();
+        labDrawLedBoard(false);
+        labDrawLedBoard(true);
+
+        const vignette = labCtx.createRadialGradient(width / 2, height / 2, Math.min(width, height) * .28, width / 2, height / 2, Math.max(width, height) * .72);
+        vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        vignette.addColorStop(1, 'rgba(4, 13, 11, .62)');
+        labCtx.fillStyle = vignette;
+        labCtx.fillRect(0, 0, width, height);
+
+        labLabel(labObjectPoint(0, 62), tr('可移動 LED 看板', 'Movable LED board'), '#fef08a', -12);
+        const imageCenter = labImagePoint(labObjectPoint(0, 0));
+        if (imageCenter) labLabel(imageCenter, tr('倒立 LED 實像', 'Inverted LED real image'), '#e9d5ff', 74);
+      }
+
+      function labLoop(time) {
+        if (currentMode !== 'lab3d') {
+          labRafId = null;
+          return;
+        }
+        labRender(time);
+        labRafId = requestAnimationFrame(labLoop);
+      }
+
+      function labStart() {
+        labUpdateStats();
+        requestAnimationFrame(() => labResizeCanvas());
+        if (labRafId === null) labRafId = requestAnimationFrame(labLoop);
+      }
+
+      function labStop() {
+        if (labRafId !== null) cancelAnimationFrame(labRafId);
+        labRafId = null;
+      }
+
+      function labSetTool(tool) {
+        if (tool === 'reset') {
+          Object.assign(labState, {
+            text: '光', u: 300, roll: 0, tilt: 0,
+            tool: 'orbit', yaw: Math.PI / 2.18, pitch: .24, cameraDistance: 1040
+          });
+          labSyncInputs();
+          tool = 'orbit';
+        } else {
+          labState.tool = tool;
+        }
+        document.querySelectorAll('.lab-tool-btn').forEach(button => {
+          button.classList.toggle('active', button.dataset.labTool === tool);
+        });
+      }
+
+      function labPointerDistance() {
+        const points = [...labPointers.values()];
+        if (points.length < 2) return 0;
+        return Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+      }
+
+      function setupLab3D() {
+        document.getElementById('labLedText').addEventListener('input', event => {
+          labState.text = event.target.value.replace(/[\r\n\t]/g, '').slice(0, 10);
+        });
+        document.getElementById('labDistance').addEventListener('input', event => {
+          labState.u = Number(event.target.value);
+          labUpdateStats();
+        });
+        document.getElementById('labRotation').addEventListener('input', event => {
+          labState.roll = Number(event.target.value) * Math.PI / 180;
+          labUpdateStats();
+        });
+        document.getElementById('labTilt').addEventListener('input', event => {
+          labState.tilt = Number(event.target.value) * Math.PI / 180;
+          labUpdateStats();
+        });
+        document.querySelectorAll('.lab-tool-btn').forEach(button => {
+          button.addEventListener('click', () => labSetTool(button.dataset.labTool));
+        });
+
+        labCanvas.addEventListener('pointerdown', event => {
+          labCanvas.setPointerCapture(event.pointerId);
+          labPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+          labLastPointer = { x: event.clientX, y: event.clientY };
+          labCanvas.classList.add('dragging');
+          if (labPointers.size === 2) {
+            labPinchStart = { distance: labPointerDistance(), cameraDistance: labState.cameraDistance };
+          }
+        });
+
+        labCanvas.addEventListener('pointermove', event => {
+          if (!labPointers.has(event.pointerId)) return;
+          const previous = labPointers.get(event.pointerId);
+          labPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+          if (labPointers.size >= 2 && labPinchStart) {
+            const distance = labPointerDistance();
+            if (distance > 0) {
+              labState.cameraDistance = labClamp(labPinchStart.cameraDistance * labPinchStart.distance / distance, 720, 1480);
+            }
+            return;
+          }
+          const dx = event.clientX - previous.x;
+          const dy = event.clientY - previous.y;
+          if (labState.tool === 'orbit') {
+            labState.yaw += dx * .009;
+            labState.pitch = labClamp(labState.pitch - dy * .007, -1.15, 1.15);
+          } else if (labState.tool === 'move') {
+            const origin = labProject({ x: 0, y: 0, z: 0 });
+            const alongAxis = labProject({ x: 100, y: 0, z: 0 });
+            if (origin && alongAxis) {
+              const axisX = alongAxis.x - origin.x;
+              const axisY = alongAxis.y - origin.y;
+              const length = Math.hypot(axisX, axisY) || 1;
+              const along = (dx * axisX + dy * axisY) / length;
+              labState.u = labClamp(labState.u - along * 100 / length, 230, 520);
+              labSyncInputs();
+            }
+          } else if (labState.tool === 'rotate') {
+            labState.roll = (labState.roll + dx * .012 + Math.PI * 2) % (Math.PI * 2);
+            labState.tilt = labClamp(labState.tilt - dy * .006, -50 * Math.PI / 180, 50 * Math.PI / 180);
+            labSyncInputs();
+          }
+          labLastPointer = { x: event.clientX, y: event.clientY };
+        });
+
+        const endPointer = event => {
+          labPointers.delete(event.pointerId);
+          if (labPointers.size < 2) labPinchStart = null;
+          if (!labPointers.size) {
+            labLastPointer = null;
+            labCanvas.classList.remove('dragging');
+          }
+        };
+        labCanvas.addEventListener('pointerup', endPointer);
+        labCanvas.addEventListener('pointercancel', endPointer);
+        labCanvas.addEventListener('wheel', event => {
+          event.preventDefault();
+          labState.cameraDistance = labClamp(labState.cameraDistance + event.deltaY * .7, 720, 1480);
+        }, { passive: false });
+
+        if ('ResizeObserver' in window) {
+          new ResizeObserver(() => {
+            if (currentMode === 'lab3d') labResizeCanvas();
+          }).observe(labCanvas);
+        }
+      }
+
       function initUI() {
+        updateHookBox();
+        const isLab = currentMode === 'lab3d';
+        classicStage.hidden = isLab;
+        lab3dStage.hidden = !isLab;
+        if (isLab) {
+          labExplanation();
+          labStart();
+          return;
+        }
+        labStop();
         renderControls();
         renderPresets();
         updateSimulation();
@@ -720,6 +1763,7 @@
         });
       });
 
+      setupLab3D();
       initUI();
       setLang('zh');
     })();
