@@ -228,7 +228,6 @@
     .rainbow-panel.wide svg { max-width: 720px; margin: 0 auto; aspect-ratio: 480 / 430; }
     .rainbow-answer { width: 100%; margin: 14px 0 0; padding: 13px 16px; border: 2px solid rgba(253,224,71,.62); border-radius: 11px; background: rgba(49,43,11,.34); color: var(--chalk); font-size: 20px; line-height: 1.65; }
     .rainbow-answer b { color: var(--chalk-yellow); }
-
     footer { text-align: center; color: var(--chalk-dim); font-size: 20px; margin-top: 28px; font-family: 'JetBrains Mono', monospace; opacity: 0.7; font-weight: bold; }
 
     @media (max-width: 768px) {
@@ -369,8 +368,8 @@
           en: 'The escape-room door has a black card with white letters and a red heart. Two of four lamps can hide the heart completely. Can you find them?'
         },
         rainbow_lab: {
-          zh: '彩虹其實是一個圓！你往旁邊走一步，看到的還是同一批水滴嗎？站在地面為什麼只見弧，坐飛機卻可能看見整圈？關鍵在「哪個角度的光剛好進入你的眼睛」。',
-          en: 'A rainbow is actually a circle. If you step sideways, are the same droplets still making it? Why an arc from the ground but sometimes a full circle from an aircraft? The key is which ray angle enters your eye.'
+          zh: '彩虹其實是一個圓！更神奇的是：你霓上的某一顆水滴，可能正是別人虹上的一顆水滴。水滴沒有改變，是觀察位置決定哪一道光進入誰的眼睛。',
+          en: 'A rainbow is actually a circle—and one drop in your secondary bow may be part of someone else’s primary bow. The drop did not change; observer position decides which ray reaches which eye.'
         }
       };
 
@@ -420,10 +419,10 @@
           titleEn: 'Advanced Principle | What Separates a Primary from a Secondary Rainbow?',
           textZh: '每一顆被陽光照到、近似球形的水滴，都會讓光折射、在滴內反射、分色，並把光送往許多方向；但在虹、霓的特定角度附近，許多光線會集中到相近方向。對某位觀察者而言，只有落在他的角度圓錐上的那一組水滴，才把明顯的彩色亮帶送進眼睛。',
           textEn: 'Every sunlit, nearly spherical drop refracts, internally reflects, disperses, and sends light in many directions. Near the rainbow angles, many paths bunch into similar directions. For one observer, only drops on that observer’s angular cone send a strong colored band into the eye.',
-          coreZh: '虹約 40°～42°且較亮；霓約 50°～54°且較暗。觀察者一移動，角度圓錐也跟著移動，形成彩虹的水滴便主要換成另一組。',
-          coreEn: 'The primary is about 40°–42° and brighter; the secondary is about 50°–54° and fainter. Move the observer and the angular cone moves, so a mostly different set of drops forms the bow.',
-          flowZh: ['每滴都折射、反射、分色', '特定角度的光線集中', '圓錐上的水滴送光進眼', '人移動，水滴換一批'],
-          flowEn: ['Every drop processes sunlight', 'Rays bunch near special angles', 'Drops on a cone reach the eye', 'Move—and the contributing drops change']
+          coreZh: '虹約 40°～42°且較亮；霓約 50°～54°且較暗。同一顆水滴能同時送出一次與兩次反射的光，因此站位不同的人，可能分別從它看見虹光與霓光。',
+          coreEn: 'The primary is about 40°–42° and brighter; the secondary is about 50°–54° and fainter. One drop can send both one- and two-reflection rays, so observers in different positions may receive different bow orders from it.',
+          flowZh: ['每滴都折射、反射、分色', '一次反射送出虹光', '兩次反射送出霓光', '眼睛位置決定收到哪一道'],
+          flowEn: ['Every drop processes sunlight', 'One reflection sends primary rays', 'Two reflections send secondary rays', 'Eye position selects the ray']
         }
       };
 
@@ -450,8 +449,8 @@
         },
         rainbow_lab: {
           icon: '💧',
-          zh: '資優任務｜先播放雨滴內的計算光路，再用角度探測器找出亮帶；接著在小晴、小宇之間切換，觀察亮起的水滴如何換一圈；最後調整太陽高度，切換地面與飛機，把彩虹從弧變成完整圓。',
-          en: 'Advanced mission | Play the calculated drop ray and locate the bright band. Switch between Xiaoqing and Xiaoyu to see which droplets change, then adjust Sun altitude and switch from ground to aircraft to recover the full circle.'
+          zh: '資優任務｜先沿著箭頭追蹤雨滴內的光路，再用角度探測器找亮帶；切換小晴、小宇，觀察「同一滴水的雙重身分」與水滴圈如何改變；最後把地面彩虹變成飛機上可能看見的完整圓。',
+          en: 'Advanced mission | Follow the arrows through the drop, find the bright angles, then switch Xiaoqing and Xiaoyu to reveal one drop’s two roles and the changing droplet cone. Finish by recovering the full circle from an aircraft.'
         }
       };
 
@@ -586,7 +585,10 @@
       function calculateRainbowRay(reflections, waterBendingValue, cx, cy, radius, bounds) {
         const incidence = rainbowIncidenceAngle(reflections);
         const impact = radius * Math.sin(incidence);
-        const entry = { x: cx - Math.sqrt(radius * radius - impact * impact), y: cy - impact };
+        // 採用鏡像等價的入射側，讓虹與霓都朝畫面左下方出射，
+        // 與下一張「光進入觀察者眼睛」的圖保持同方向，降低認知負荷。
+        const teachingSide = reflections % 2 === 0 ? 1 : -1;
+        const entry = { x: cx - Math.sqrt(radius * radius - impact * impact), y: cy + teachingSide * impact };
         const incoming = { x: 1, y: 0 };
         const entryNormal = unitVector({ x: entry.x - cx, y: entry.y - cy });
         let direction = refractVector(incoming, entryNormal, 1 / waterBendingValue);
@@ -905,6 +907,8 @@
           const observerIsA = p.observer === 'a';
           const observerEmoji = observerIsA ? '👧🏻' : '🧒🏻';
           const observerName = tr(observerIsA ? '小晴' : '小宇', observerIsA ? 'Xiaoqing' : 'Xiaoyu');
+          const otherObserverEmoji = observerIsA ? '🧒🏻' : '👧🏻';
+          const otherObserverName = tr(observerIsA ? '小宇' : '小晴', observerIsA ? 'Xiaoyu' : 'Xiaoqing');
           const observerShift = observerIsA ? -12 : 12;
 
           const lab = document.createElement('div');
@@ -919,6 +923,7 @@
             head.innerHTML = `<div class="rainbow-panel-title">${tr(titleZh,titleEn)}</div><div class="rainbow-panel-note">${tr(noteZh,noteEn)}</div>`;
             panel.appendChild(head);
             const panelSvg = createSvgEl('svg', { viewBox: `0 0 480 ${height}`, role: 'img' });
+            panelSvg.style.aspectRatio = `480 / ${height}`;
             panel.appendChild(panelSvg);
             lab.appendChild(panel);
             return panelSvg;
@@ -931,10 +936,10 @@
           };
 
           const microSvg = makePanel(
-            '① 雨滴顯微鏡｜光真的怎麼走？',
-            '① Drop Microscope | The Calculated Ray Path',
-            isPrimary ? '虹：圓周交點＋一次內部反射，紅、紫光分開計算' : '霓：圓周交點＋兩次內部反射，第二次轉折不再手畫',
-            isPrimary ? 'Primary: circular intersections + one reflection; red and violet calculated separately' : 'Secondary: circular intersections + two reflections; no hand-drawn corners'
+            '① 雨滴顯微鏡｜沿箭頭追光，最後往左下進眼睛',
+            '① Drop Microscope | Follow the Arrows Toward the Eye',
+            isPrimary ? '虹：一次內部反射；紅、紫光依圓形雨滴分開計算' : '霓：上下鏡像的等價光路；出射方向和下一張「進眼睛」一致',
+            isPrimary ? 'Primary: one internal reflection; red and violet are calculated separately in a circular drop' : 'Secondary: an equivalent vertically mirrored path, aligned with the next eye-entry diagram'
           );
           microSvg.setAttribute('aria-label', tr('依圓形雨滴邊界計算的虹與霓光路', 'Calculated primary and secondary ray paths in a circular raindrop'));
           const microTitle = createSvgEl('title');
@@ -986,7 +991,7 @@
             addText(microSvg, point.x, point.y + 6, `${index + 1}`, 'middle', '#10221c', 18, 'bold');
           });
           addText(microSvg, guideRay.entry.x - 9, guideRay.entry.y - 12, tr('折射進入', 'Refract in'), 'end', '#8fdcff', 16, 'bold');
-          addText(microSvg, guideRay.exit.x + (isPrimary ? 10 : -10), guideRay.exit.y + 20, tr('折射離開', 'Refract out'), isPrimary ? 'start' : 'end', '#8fdcff', 16, 'bold');
+          addText(microSvg, guideRay.exit.x + (isPrimary ? 10 : -10), guideRay.exit.y + 20, tr('折射離開 → 往觀察者', 'Refract out → observer'), isPrimary ? 'start' : 'end', '#8fdcff', 16, 'bold');
           microSvg.appendChild(createSvgEl('rect', { x: 16, y: 340, width: 448, height: 40, rx: 9, fill: 'rgba(7,28,24,.92)', stroke: 'rgba(143,220,255,.25)' }));
           addText(microSvg, 240, 356, tr('虛線＝雨滴表面的垂直線（法線）', 'Dashed lines = surface normals'), 'middle', '#c9c2ab', 14, 'bold');
           addText(microSvg, 240, 375, `${tr('計算出射角', 'Calculated exit angles')}｜${tr('紅', 'R')} ${redAngle.toFixed(1)}° · ${tr('紫', 'V')} ${violetAngle.toFixed(1)}°`, 'middle', '#fde047', 16, 'bold');
@@ -1061,9 +1066,81 @@
           addText(angleSvg, 368, 360, angleMatches ? tr('✓ 色光集中進眼睛', '✓ Ray reaches the eye') : tr('再找找：光線錯過亮帶', 'Outside the bright band'), 'middle', angleMatches ? '#4ade80' : '#c9c2ab', 16, 'bold');
           addText(angleSvg, 18, 374, `${tr('亮帶範圍', 'Bright band')} ${minAngle.toFixed(1)}°–${maxAngle.toFixed(1)}°`, 'start', '#fde047', 16, 'bold');
 
+          const identitySvg = makePanel(
+            isPrimary
+              ? `③ 同一滴水的雙重身分｜${observerName}虹上的這滴，也可能在${otherObserverName}的霓裡`
+              : `③ 同一滴水的雙重身分｜${observerName}霓上的這滴，也可能在${otherObserverName}的虹裡`,
+            '③ One Drop, Two Roles | The Same Drop Can Join Both Bows',
+            '不是同一束光變身：同一滴同時送出一次與兩次反射光，不同站位的雙眼各自收到',
+            'It is not one ray changing identity: the drop sends one- and two-reflection rays toward eyes in different positions',
+            true,
+            320
+          );
+          identitySvg.setAttribute('aria-label', tr('同一顆雨滴將虹光與霓光送往不同觀察者的示意圖', 'Diagram of one drop sending primary and secondary rays toward different observers'));
+          const identityDefs = createSvgEl('defs');
+          const identityDropGradient = createSvgEl('radialGradient', { id: 'identityDropFill', cx: '36%', cy: '30%' });
+          identityDropGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': '#e8fbff', 'stop-opacity': .42 }));
+          identityDropGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': '#38bdf8', 'stop-opacity': .12 }));
+          identityDefs.appendChild(identityDropGradient);
+          addArrowMarker(identityDefs, 'identitySunArrow', '#fff7d6');
+          addArrowMarker(identityDefs, 'identityPrimaryArrow', '#fde047');
+          addArrowMarker(identityDefs, 'identitySecondaryArrow', '#c084fc');
+          identitySvg.appendChild(identityDefs);
+          identitySvg.appendChild(createSvgEl('rect', { x: 0, y: 0, width: 480, height: 320, fill: '#081d18' }));
+
+          [146, 160, 174].forEach((y, index) => {
+            identitySvg.appendChild(createSvgEl('line', {
+              x1: 26, y1: y, x2: 325, y2: y,
+              stroke: '#fff7d6', 'stroke-width': index === 1 ? 5 : 2.2,
+              opacity: index === 1 ? .9 : .48,
+              'marker-end': 'url(#identitySunArrow)'
+            }));
+          });
+          addEmoji(identitySvg, 18, 132, '☀️', 26, 'start');
+          addText(identitySvg, 52, 130, tr('平行陽光束', 'Parallel sunlight'), 'start', '#fff7d6', 15, 'bold');
+
+          const identityDrop = { x: 380, y: 160, r: 52 };
+          const secondaryEye = { x: 282, y: 39 };
+          const primaryEye = { x: 282, y: 248 };
+          const identityRayStart = (eyePoint) => {
+            const direction = unitVector({ x: eyePoint.x - identityDrop.x, y: eyePoint.y - identityDrop.y });
+            return { x: identityDrop.x + direction.x * identityDrop.r, y: identityDrop.y + direction.y * identityDrop.r };
+          };
+          const primaryViewerEmoji = isPrimary ? observerEmoji : otherObserverEmoji;
+          const primaryViewerName = isPrimary ? observerName : otherObserverName;
+          const secondaryViewerEmoji = isPrimary ? otherObserverEmoji : observerEmoji;
+          const secondaryViewerName = isPrimary ? otherObserverName : observerName;
+          const drawIdentityRay = (eyePoint, color, markerId, width, opacity) => {
+            const start = identityRayStart(eyePoint);
+            identitySvg.appendChild(createSvgEl('line', {
+              x1: start.x, y1: start.y, x2: eyePoint.x, y2: eyePoint.y,
+              stroke: color, 'stroke-width': width, opacity,
+              'stroke-linecap': 'round', 'marker-end': `url(#${markerId})`,
+              style: `filter:drop-shadow(0 0 5px ${color})`
+            }));
+            identitySvg.appendChild(createSvgEl('circle', { cx: eyePoint.x, cy: eyePoint.y, r: 6, fill: '#f2ecd9', stroke: color, 'stroke-width': 3 }));
+          };
+
+          drawIdentityRay(secondaryEye, '#c084fc', 'identitySecondaryArrow', 3.3, .72);
+          drawIdentityRay(primaryEye, '#fde047', 'identityPrimaryArrow', 5, .98);
+          identitySvg.appendChild(createSvgEl('circle', { cx: identityDrop.x, cy: identityDrop.y, r: identityDrop.r, fill: 'url(#identityDropFill)', stroke: '#8fdcff', 'stroke-width': 4 }));
+          addText(identitySvg, identityDrop.x, 156, tr('同一顆', 'SAME'), 'middle', '#e0f7ff', 16, 'bold');
+          addText(identitySvg, identityDrop.x, 177, tr('雨滴', 'DROP'), 'middle', '#8fdcff', 16, 'bold');
+
+          identitySvg.appendChild(createSvgEl('rect', { x: 216, y: 77, width: 186, height: 26, rx: 8, fill: 'rgba(7,28,24,.88)', stroke: 'rgba(192,132,252,.42)' }));
+          addEmoji(identitySvg, 214, 57, secondaryViewerEmoji, 34);
+          addText(identitySvg, 194, 25, `${secondaryViewerName}${!isPrimary ? tr('（目前）', ' (selected)') : ''}`, 'middle', '#f3e8ff', 15, 'bold');
+          addText(identitySvg, 307, 96, tr('兩次反射 → 霓較暗｜約 51°', 'Two reflections → fainter secondary | ~51°'), 'middle', '#d8b4fe', 14, 'bold');
+          identitySvg.appendChild(createSvgEl('rect', { x: 216, y: 202, width: 186, height: 26, rx: 8, fill: 'rgba(7,28,24,.88)', stroke: 'rgba(253,224,71,.42)' }));
+          addEmoji(identitySvg, 214, 263, primaryViewerEmoji, 34);
+          addText(identitySvg, 194, 282, `${primaryViewerName}${isPrimary ? tr('（目前）', ' (selected)') : ''}`, 'middle', '#fff7d6', 15, 'bold');
+          addText(identitySvg, 307, 221, tr('一次反射 → 虹較亮｜約 42°', 'One reflection → brighter primary | ~42°'), 'middle', '#fde047', 14, 'bold');
+          identitySvg.appendChild(createSvgEl('rect', { x: 18, y: 292, width: 444, height: 22, rx: 8, fill: 'rgba(7,28,24,.94)', stroke: 'rgba(143,220,255,.32)' }));
+          addText(identitySvg, 240, 308, tr('同一滴 ≠ 同一束光；它同時送出兩種光路（示意圖，非比例）', 'Same drop ≠ same ray; it sends both paths (schematic, not to scale)'), 'middle', '#c9c2ab', 12, 'bold');
+
           const skySvg = makePanel(
-            '③ 把圓找回來｜地面看到弧，飛機可能看到整圈',
-            '③ Recover the Circle | Arc on Ground, Full Circle from the Air',
+            '④ 把圓找回來｜地面看到弧，飛機可能看到整圈',
+            '④ Recover the Circle | Arc on Ground, Full Circle from the Air',
             `每滴都會處理陽光；亮點只是把所選彩虹送進${observerName}眼睛的那一組水滴`,
             `Every drop processes sunlight; bright dots are the set sending the selected bow to ${observerName}`,
             true,
@@ -1220,6 +1297,7 @@
           answer.innerHTML = angleMatches
             ? `<b>${tr('角度探測成功：', 'Angle lock acquired:')}</b>${tr(`你選的 ${p.scanAngle.toFixed(1)}° 落在 ${minAngle.toFixed(1)}°～${maxAngle.toFixed(1)}° 亮帶內；這個角度附近的光線會集中到相近方向。`, `Your ${p.scanAngle.toFixed(1)}° scan lies inside the ${minAngle.toFixed(1)}°–${maxAngle.toFixed(1)}° bright band, where many ray paths bunch into similar directions.`)}<br><b>${tr('每滴都會，不是每滴都被你看見：', 'Every drop does it, but you do not see every drop:')}</b>${tr(`所有小水滴都在讓陽光折射、反射、分色；畫面亮起的水滴，只是剛好把所選彩虹送進${observerName}眼睛的那一組。`, `All drops refract, reflect, and disperse sunlight. The lit markers are just the set sending the selected bow into ${observerName}'s eye.`)}<br><b>${tr('換人為什麼會換一圈？', 'Why does changing observer change the ring?')}</b>${tr('以每個人的眼睛為頂點，同樣角度繞反太陽方向形成各自的圓錐；人一移動，圓錐跟著移動，貢獻彩虹的水滴便主要換成另一組。這不是固定距離的一個水滴圓環，而是角度圓錐投影到天空後看成的圓。', 'Each eye is the tip of its own angular cone. Move the observer and the cone moves, so a mostly different set of drops contributes. It is not one ring of drops at a fixed distance, but the sky projection of an angular cone.')}`
             : `<b>${tr('角度還沒對準：', 'Angle not locked yet:')}</b>${tr(`你選的 ${p.scanAngle.toFixed(1)}° 不在 ${minAngle.toFixed(1)}°～${maxAngle.toFixed(1)}° 亮帶內。繼續拖曳，直到探測器變綠。`, `Your ${p.scanAngle.toFixed(1)}° scan is outside the ${minAngle.toFixed(1)}°–${maxAngle.toFixed(1)}° bright band. Keep dragging until the detector turns green.`)}<br><b>${tr('別誤會暗的地方：', 'Do not misread the dark region:')}</b>${tr('水滴沒有停止折射與反射；只是這個方向沒有那麼多虹或霓的光線集中進眼睛。角度要從反太陽方向量，不是從地面量。', 'The droplets have not stopped refracting or reflecting; fewer primary- or secondary-bow rays concentrate toward the eye in that direction. Measure from the antisolar direction, not the ground.')}`;
+          answer.innerHTML += `<br><b>${tr('同一滴水的雙重身分：', 'One drop, two roles:')}</b>${tr('同一顆雨滴可以把一次反射的虹光送進一雙眼睛，同時把兩次反射的霓光送往另一雙眼睛。所以你霓上的某些水滴，可能在別人眼中成為虹上的水滴；不是整條霓直接變成別人的整條虹。', 'One drop can send a one-reflection primary ray into one pair of eyes while sending a two-reflection secondary ray toward another pair. So some drops in your secondary bow may appear in another observer’s primary bow; your entire secondary does not simply become their entire primary.')}`;
           visualContainer.appendChild(answer);
 
           addStat('雨滴內部反射', 'Internal Reflections', isPrimary ? tr('1 次', '1') : tr('2 次', '2'));
@@ -1237,6 +1315,7 @@
             <b>霓（副虹）：</b>兩次內部反射；紅光約 ${secondaryReference.red.toFixed(1)}°、紫光約 ${secondaryReference.violet.toFixed(1)}°。紫光角度更大，因此色序反轉；多反射一次也讓霓更淡。<br>
             <b>亞歷山大暗帶不是「沒有水滴」：</b>虹外緣與霓內緣之間，較少一次或兩次反射的彩虹光線集中朝向觀察者，所以只會<b>相對較暗</b>，不是完全沒有光。圖中虹永遠畫得較亮、霓永遠較暗；白色虛線只表示目前追蹤哪一道，不會改變物理亮度。<br>
             <b>每個人都有自己的彩虹：</b>能以相同角度把色光送進某雙眼睛的水滴，在三維空間形成以那雙眼睛為頂點的圓錐。觀察者一移動，圓錐就移動，貢獻彩虹的水滴也主要換成另一組；甚至同一條彩虹的紅、紫兩色，也分別來自角度稍不同的水滴。<br>
+            <b>「你的霓」可能用到「別人的虹」那顆水滴：</b>同一顆雨滴同時接收一整束平行陽光，其中不同的入射光會走一次或兩次內部反射，再朝不同方向離開。因此它可能把霓光送給你，同時把虹光送給另一個站在不同位置的人。這不是同一束光變身，也不是整條霓原封不動地變成別人的虹，而是某些水滴在不同觀察者眼中扮演不同角色。<br>
             <b>圓從哪裡來：</b>同一角度繞反太陽方向一整圈，形成角度圓錐；投影到天空視野後看成圓。這不是固定距離的一個水滴圓環，水滴可以位在圓錐面上的不同距離。地面遮住下半圈，所以平常只見弧；飛機上若視線下方也有水滴，便可能看見完整圓。<br>
             <b>太陽愈高，弧愈低：</b>反太陽點會落到地平線下同樣的角度；主虹在太陽高度接近 42° 時會沉到地平線下。圖中色帶有加粗方便觀察，但紅、紫光路與角度由程式分別計算。</p>
           `, `
@@ -1248,6 +1327,7 @@
             <b>Secondary rainbow:</b> two reflections; red is about ${secondaryReference.red.toFixed(1)}° and violet about ${secondaryReference.violet.toFixed(1)}°. The larger violet angle reverses the order, and the extra reflection makes the bow fainter.<br>
             <b>Alexander's dark band does not mean “no drops”:</b> between the outer edge of the primary and the inner edge of the secondary, fewer one- or two-reflection rainbow rays concentrate toward the observer, so the region is only <b>relatively darker</b>. The primary stays brighter and the secondary stays fainter in this diagram; the dashed white ring only marks the selected bow.<br>
             <b>Each observer has a personal rainbow:</b> drops sending a color at the same angle to one pair of eyes form a cone with those eyes at its tip. Move the observer and the cone moves, so a mostly different set of drops contributes. Even red and violet in one bow come from slightly different angular sets of drops.<br>
+            <b>A drop in “your secondary” may also be a drop in “someone else's primary”:</b> one drop receives a whole bundle of parallel sunlight. Different incident rays within that bundle can follow one- or two-reflection paths and leave in different directions. The drop may therefore send a secondary ray to you while sending a primary ray to another person standing elsewhere. This is not one ray changing identity, nor does your whole secondary become their whole primary; some drops play different roles for different observers.<br>
             <b>Why a circle:</b> rotating one angle all the way around the antisolar direction forms an angular cone whose sky projection is a circle. It is not one ring of drops at a fixed distance; contributing drops may lie at different distances along the cone. The ground blocks the lower part; from an aircraft, droplets below the line of sight may complete it.<br>
             <b>Higher Sun, lower arc:</b> the antisolar point lies equally far below the horizon. The primary bow drops below the horizon when the Sun approaches 42° altitude. Bands are thickened for visibility, while the red and violet paths and angles are calculated separately.</p>
           `);
