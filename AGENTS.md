@@ -131,31 +131,31 @@
 
 ## 2.3 V5 字體尺度｜統一，不要每區各玩各的
 
-預設字級：
+主要可讀文字以 **22～48px** 為 V5 建議範圍。預設字級：
 
 ```css
-body                { font-size: 20px; }
-header .eyebrow     { font-size: 20px; }
-h1                  { font-size: 38px; }
-header p            { font-size: 21px; }
-.board h2           { font-size: 28px; }
-.mode-switch button { font-size: 20px; }
-.mode-switch .sub   { font-size: 16px; }
-.hook-title         { font-size: 22px; }
-.hook-text          { font-size: 20px; }
-.control label      { font-size: 20px; }
-.tool-btn           { font-size: 20px; }
-.stat .k            { font-size: 20px; }
-.stat .v            { font-size: 24px; }
-.explain-box h3     { font-size: 24px; }
-.explain-box p      { font-size: 20px; }
-footer              { font-size: 20px; }
+body                { font-size: 22px; }
+header .eyebrow     { font-size: 22px; }
+h1                  { font-size: 48px; }
+header p            { font-size: 24px; }
+.board h2           { font-size: 32px; }
+.mode-switch button { font-size: 22px; }
+.mode-switch .sub   { font-size: 22px; }
+.hook-title         { font-size: 26px; }
+.hook-text          { font-size: 22px; }
+.control label      { font-size: 22px; }
+.tool-btn           { font-size: 22px; }
+.stat .k            { font-size: 22px; }
+.stat .v            { font-size: 28px; }
+.explain-box h3     { font-size: 28px; }
+.explain-box p      { font-size: 22px; }
+footer              { font-size: 22px; }
 ```
 
 ### 原則
-- 內文字級以 **20px** 為基準。
-- 小字只允許用於副標題、註解、單位等次要資訊。
-- 不得在同一層級任意出現 16 / 17 / 18 / 19 / 21 / 23px 混搭。
+- 主要內文字級以 **22px** 為基準，主標題最高以 **48px** 為原則。
+- 主要教學文字維持在 **22～48px**；副標題、註解、單位等次要資訊可依版面使用較小字級。
+- 同一層級應維持一致字級，不可為了硬塞內容任意縮字。
 - 英文版不能因為字串較長就偷偷縮到看不清楚；優先改排版，不是縮字。
 
 ---
@@ -166,8 +166,8 @@ footer              { font-size: 20px; }
 - 優先使用 `grid` / `flex` 正常排版。
 - 禁止為了塞畫面大量使用 `position:absolute`。
 - 長英文按鈕必須允許合理換行，不能硬塞。
-- 按鈕最小高度：`44px`。
-- 主要互動按鈕建議：`48px` 以上。
+- 按鈕尺寸依操作情境、文字長度、畫面密度與裝置調整，不硬套單一固定高度。
+- 主要、高頻互動按鈕應保留足夠觸控面積；次要或緊湊控制可適度縮小，但不得造成誤觸或難以閱讀。
 
 ### SVG / Canvas
 - 圖形與文字之間必須保留安全距離。
