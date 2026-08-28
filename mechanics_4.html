@@ -403,8 +403,7 @@
         </div>
 
         <div id="solid-practice" class="subtab-content">
-            <div class="grid-2col">
-                <div class="panel" style="border-color: var(--chalk-purple);">
+                <div class="panel" style="border-color: var(--chalk-purple); margin-top: 20px;">
                     <h2 style="color: var(--chalk-purple);" data-zh="磚塊翻轉練習" data-en="Brick Flip Practice">磚塊翻轉練習</h2>
                     <div class="lab-controls" style="justify-content: flex-start;">
                         <button class="action-btn active-btn" id="btnSolidP0" onclick="setSolidStep(0)" data-zh="❓ 問題" data-en="❓ Problem">❓ 問題</button>
@@ -414,7 +413,7 @@
 
                     <div id="solid-step0" class="step-text active">
                         <h3 style="color: var(--chalk-cyan);" data-zh="❓ 問題：" data-en="❓ Problem:">❓ 問題：</h3>
-                        <p data-zh="一塊均勻的磚塊，總重量為 <span class='math-text'>1200gw</span>。已知其各面邊長如右圖。" data-en="A uniform brick weighs <span class='math-text'>1200gw</span>. Its side lengths are shown on the right.">一塊均勻的磚塊，總重量為 <span class="math-text">1200gw</span>。已知其各面邊長如右圖。</p>
+                        <p data-zh="一塊長 <span class='math-text'>20 cm</span>、寬 <span class='math-text'>10 cm</span>、高 <span class='math-text'>5 cm</span> 的均勻磚塊，總重量為 <span class='math-text'>1200 gw</span>。" data-en="A uniform brick is <span class='math-text'>20 cm</span> long, <span class='math-text'>10 cm</span> wide, and <span class='math-text'>5 cm</span> high. Its total weight is <span class='math-text'>1200 gw</span>.">一塊長 <span class="math-text">20 cm</span>、寬 <span class="math-text">10 cm</span>、高 <span class="math-text">5 cm</span> 的均勻磚塊，總重量為 <span class="math-text">1200 gw</span>。</p>
                         <p data-zh="請問它平放與立放時，能產生的「最大壓力」與「最小壓力」各為多少 <span class='math-text'>gw/cm&sup2;</span>？" data-en="What are the 'Maximum Pressure' and 'Minimum Pressure' it can exert when placed flat vs upright (<span class='math-text'>gw/cm&sup2;</span>)?">請問它平放與立放時，能產生的「最大壓力」與「最小壓力」各為多少 <span class="math-text">gw/cm&sup2;</span>？</p>
                     </div>
                     <div id="solid-step1" class="step-text">
@@ -430,14 +429,16 @@
                         <p data-zh="最大面積 = 20 × 10 = 200 cm&sup2;<br><strong style='color: var(--chalk-cyan);'>最小壓力</strong> = 1200 / 200 = <span class='math-text'>6 gw/cm&sup2;</span>" data-en="Max Area = 20 × 10 = 200 cm&sup2;<br><strong style='color: var(--chalk-cyan);'>Min Pressure</strong> = 1200 / 200 = <span class='math-text'>6 gw/cm&sup2;</span>">最大面積 = 20 × 10 = 200 cm&sup2;<br>
                            <strong style="color: var(--chalk-cyan);">最小壓力</strong> = 1200 / 200 = <span class="math-text">6 gw/cm&sup2;</span></p>
                     </div>
-                </div>
 
-                <div class="panel" style="border-color: var(--chalk-yellow);">
-                    <div class="canvas-wrap" style="border-color: var(--chalk-yellow);">
+                    <div class="canvas-wrap" style="border-color: var(--chalk-yellow); margin-top: 18px;">
                         <canvas id="brickCanvas" class="rect-canvas" width="1000" height="600"></canvas>
                     </div>
+                    <div class="lab-controls">
+                        <button class="action-btn active-btn" id="flatBtn" onclick="setBrickOrientation('flat')" style="border-color: var(--chalk-cyan); color: var(--chalk-cyan);" data-zh="平放｜20 × 10 面" data-en="Flat｜20 × 10 face">平放｜20 × 10 面</button>
+                        <button class="action-btn" id="uprightBtn" onclick="setBrickOrientation('upright')" style="border-color: var(--chalk-pink); color: var(--chalk-pink);" data-zh="立放｜10 × 5 面" data-en="Upright｜10 × 5 face">立放｜10 × 5 面</button>
+                    </div>
+                    <p style="margin: 8px 0 0; text-align: center;" data-zh="磚塊會先抬起、翻面、落下；接觸軟墊後才慢慢壓出凹痕。" data-en="The brick lifts, rotates, and lands; the dent forms gradually only after contact.">磚塊會先抬起、翻面、落下；接觸軟墊後才慢慢壓出凹痕。</p>
                 </div>
-            </div>
         </div>
     </div>
 
@@ -669,6 +670,10 @@
         if (window.liqAnim) cancelAnimationFrame(window.liqAnim);
         if (window.vesselAnim) cancelAnimationFrame(window.vesselAnim);
         if (window.pascalAnim) cancelAnimationFrame(window.pascalAnim);
+        if (brickAnim) {
+            cancelAnimationFrame(brickAnim);
+            brickAnim = null;
+        }
     }
 
     function openTab(tabId, btnElement) {
@@ -831,35 +836,280 @@
         if (solidState > 0 && solidState < 4) window.solidAnim = requestAnimationFrame(drawSolidScene);
     }
 
+    let brickAngle = 0;
+    let brickLift = 0;
+    let brickIndentDepth = 12;
+    let brickAnim = null;
+
     function setSolidStep(step) {
-        document.querySelectorAll('#solid-practice .action-btn').forEach(b => b.classList.remove('active-btn'));
+        document.querySelectorAll('#solid-practice #btnSolidP0, #solid-practice #btnSolidP1, #solid-practice #btnSolidP2').forEach(b => b.classList.remove('active-btn'));
         document.getElementById(`btnSolidP${step}`).classList.add('active-btn');
         document.querySelectorAll('#solid-practice .step-text').forEach(t => t.classList.remove('active'));
         document.getElementById(`solid-step${step}`).classList.add('active');
-        
-        let ctx = safeGetContext('brickCanvas'); if(!ctx) return;
-        ctx.clearRect(0, 0, 1000, 600);
-        ctx.fillStyle = '#7CFC00'; ctx.font = '900 32px "Noto Sans TC", sans-serif'; ctx.textAlign='center'; 
-        ctx.fillText(tr('🧱 均勻磚塊 (1200gw)', '🧱 Uniform Brick (1200gw)'), 500, 80);
+        drawBrickExperiment();
+    }
 
-        let drawBlock = (x, y, w, h, d) => {
-            ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
-            ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+w,y); ctx.lineTo(x+w+d,y-d); ctx.lineTo(x+d,y-d); ctx.fill(); ctx.stroke(); 
-            ctx.fillStyle = '#FF8C00'; ctx.fillRect(x, y, w, h); ctx.strokeRect(x,y,w,h); 
-            ctx.fillStyle = '#FFA500'; ctx.beginPath(); ctx.moveTo(x+w,y); ctx.lineTo(x+w+d,y-d); ctx.lineTo(x+w+d,y-d+h); ctx.lineTo(x+w,y+h); ctx.fill(); ctx.stroke(); 
-        };
+    function brickPointOnFace(points, u, v) {
+        const topX = points[0].x + (points[1].x - points[0].x) * u;
+        const topY = points[0].y + (points[1].y - points[0].y) * u;
+        const bottomX = points[3].x + (points[2].x - points[3].x) * u;
+        const bottomY = points[3].y + (points[2].y - points[3].y) * u;
+        return { x: topX + (bottomX - topX) * v, y: topY + (bottomY - topY) * v };
+    }
 
-        if (step < 2) {
-            drawBlock(350, 350, 240, 60, 120);
-            ctx.fillStyle = '#FFF'; ctx.font = '900 22px "JetBrains Mono"';
-            ctx.fillText('20 cm', 470, 440); ctx.fillText('10 cm', 630, 440); ctx.fillText('5 cm', 300, 380);
-        } else {
-            drawBlock(200, 200, 120, 240, 60); 
-            drawBlock(600, 380, 240, 60, 120); 
-            ctx.font = '900 24px "Noto Sans TC", sans-serif';
-            ctx.fillStyle = '#FF69B4'; ctx.fillText(tr('最大壓力 (立)', 'Max P (Upright)'), 260, 160);
-            ctx.fillStyle = '#00FFFF'; ctx.fillText(tr('最小壓力 (平)', 'Min P (Flat)'), 720, 340);
+    function drawSingleBrick3D(ctx, angle, baseY, lift) {
+        const vertices = [];
+        const index = new Map();
+        [-1, 1].forEach(sx => [-1, 1].forEach(sy => [-1, 1].forEach(sz => {
+            index.set(`${sx},${sy},${sz}`, vertices.length);
+            vertices.push({ x: sx * 10, y: sy * 2.5, z: sz * 5 });
+        })));
+
+        const cosine = Math.cos(angle);
+        const sine = Math.sin(angle);
+        const rotated = vertices.map(vertex => ({
+            x: vertex.x * cosine - vertex.y * sine,
+            y: vertex.x * sine + vertex.y * cosine,
+            z: vertex.z
+        }));
+        const minY = Math.min(...rotated.map(vertex => vertex.y));
+        rotated.forEach(vertex => { vertex.y -= minY; });
+
+        const projected = rotated.map(vertex => ({
+            x: 500 + vertex.x * 11 + vertex.z * 5.6,
+            y: baseY - lift - vertex.y * 11 + (vertex.z - 5) * 3.1,
+            depth: vertex.z + vertex.x * 0.38 + vertex.y * 0.14
+        }));
+        const v = (sx, sy, sz) => index.get(`${sx},${sy},${sz}`);
+        const faces = [
+            { name: 'large-id', color: '#FFD400', ids: [v(-1,1,-1), v(1,1,-1), v(1,1,1), v(-1,1,1)] },
+            { name: 'large-back', color: '#E7BB00', ids: [v(-1,-1,1), v(1,-1,1), v(1,-1,-1), v(-1,-1,-1)] },
+            { name: 'small-right', color: '#FF69B4', ids: [v(1,-1,-1), v(1,-1,1), v(1,1,1), v(1,1,-1)] },
+            { name: 'small-left', color: '#E8529E', ids: [v(-1,1,-1), v(-1,1,1), v(-1,-1,1), v(-1,-1,-1)] },
+            { name: 'medium-front', color: '#FF8C00', ids: [v(-1,-1,1), v(-1,1,1), v(1,1,1), v(1,-1,1)] },
+            { name: 'medium-back', color: '#D96F00', ids: [v(1,-1,-1), v(1,1,-1), v(-1,1,-1), v(-1,-1,-1)] }
+        ].map(face => ({
+            ...face,
+            points: face.ids.map(id => projected[id]),
+            depth: face.ids.reduce((sum, id) => sum + projected[id].depth, 0) / face.ids.length
+        })).sort((a, b) => a.depth - b.depth);
+
+        ctx.lineJoin = 'round';
+        faces.forEach(face => {
+            ctx.beginPath();
+            face.points.forEach((point, i) => i ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+            ctx.closePath();
+            ctx.fillStyle = face.color;
+            ctx.fill();
+            ctx.strokeStyle = '#F2ECD9';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        });
+
+        if (lift <= 1) {
+            const upright = Math.abs(angle) > Math.PI / 4;
+            const baseHalfWidth = upright ? 55 : 138;
+            const baseLeft = 500 - baseHalfWidth;
+            const baseRight = 500 + baseHalfWidth;
+            const bevelWidth = 56;
+            const bevelTopY = baseY - 31;
+            const contactFaceColor = upright ? '#FFD400' : '#E8529E';
+            ctx.fillStyle = contactFaceColor;
+            ctx.beginPath();
+            ctx.moveTo(baseLeft, bevelTopY);
+            ctx.lineTo(baseLeft + bevelWidth, baseY);
+            ctx.lineTo(baseLeft, baseY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = contactFaceColor;
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'butt';
+            ctx.beginPath();
+            ctx.moveTo(baseLeft, bevelTopY);
+            ctx.lineTo(baseLeft + bevelWidth, baseY);
+            ctx.stroke();
+            ctx.strokeStyle = '#F2ECD9';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(baseLeft, bevelTopY);
+            ctx.lineTo(baseLeft, baseY);
+            ctx.lineTo(baseRight, baseY);
+            ctx.stroke();
         }
+
+        const idFace = faces.find(face => face.name === 'large-id');
+        const label = brickPointOnFace(idFace.points, 0.5, 0.5);
+        const scratchA = brickPointOnFace(idFace.points, 0.68, 0.31);
+        const scratchB = brickPointOnFace(idFace.points, 0.82, 0.44);
+        ctx.strokeStyle = '#00FFFF';
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(scratchA.x, scratchA.y);
+        ctx.lineTo(scratchB.x, scratchB.y);
+        ctx.stroke();
+        ctx.fillStyle = '#4A2B00';
+        ctx.textAlign = 'center';
+        ctx.font = '900 20px "JetBrains Mono", monospace';
+        ctx.fillText('B-01', label.x, label.y - 3);
+        ctx.font = '900 15px "JetBrains Mono", monospace';
+        ctx.fillText('20×10', label.x, label.y + 20);
+    }
+
+    function drawBrickExperiment() {
+        const canvas = document.getElementById('brickCanvas');
+        if (!canvas || canvas.clientWidth === 0) return;
+        const ctx = canvas.getContext('2d');
+        const uprightRatio = Math.min(1, Math.abs(brickAngle) / (Math.PI / 2));
+        const indentation = Math.max(0, brickIndentDepth);
+        const contactHalfWidth = 138 - uprightRatio * 83;
+        const padTop = 390;
+        const padBottom = 470;
+        const padLeft = 165;
+        const padRight = 835;
+        const contactLeft = 500 - contactHalfWidth;
+        const contactRight = 500 + contactHalfWidth;
+
+        const background = ctx.createLinearGradient(0, 0, 0, 600);
+        background.addColorStop(0, '#0E241D');
+        background.addColorStop(1, '#071711');
+        ctx.fillStyle = background;
+        ctx.fillRect(0, 0, 1000, 600);
+        ctx.strokeStyle = 'rgba(85,233,255,0.08)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= 1000; x += 50) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 600); ctx.stroke();
+        }
+        for (let y = 0; y <= 600; y += 50) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1000, y); ctx.stroke();
+        }
+
+        ctx.fillStyle = '#7CFC00';
+        ctx.font = '900 30px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(tr('同一塊 B-01 磚｜1200 gw', 'The same B-01 brick｜1200 gw'), 500, 48);
+
+        const tableGradient = ctx.createLinearGradient(0, 470, 0, 600);
+        tableGradient.addColorStop(0, '#B7C8C1');
+        tableGradient.addColorStop(1, '#52675F');
+        ctx.fillStyle = tableGradient;
+        ctx.fillRect(105, 470, 790, 34);
+        ctx.fillRect(155, 500, 70, 100);
+        ctx.fillRect(775, 500, 70, 100);
+        ctx.strokeStyle = '#F2ECD9';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(105, 470, 790, 34);
+
+        const padGradient = ctx.createLinearGradient(0, padTop, 0, padBottom);
+        padGradient.addColorStop(0, '#B9F3D1');
+        padGradient.addColorStop(0.55, '#67C89A');
+        padGradient.addColorStop(1, '#338065');
+        ctx.beginPath();
+        ctx.moveTo(padLeft, padTop);
+        ctx.lineTo(contactLeft - 26, padTop);
+        ctx.bezierCurveTo(contactLeft - 13, padTop, contactLeft - 13, padTop + indentation, contactLeft, padTop + indentation);
+        ctx.lineTo(contactRight, padTop + indentation);
+        ctx.bezierCurveTo(contactRight + 13, padTop + indentation, contactRight + 13, padTop, contactRight + 26, padTop);
+        ctx.lineTo(padRight, padTop);
+        ctx.lineTo(padRight, padBottom);
+        ctx.lineTo(padLeft, padBottom);
+        ctx.closePath();
+        ctx.fillStyle = padGradient;
+        ctx.fill();
+        ctx.strokeStyle = '#F2ECD9';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        if (brickLift > 1) {
+            const shadowFade = Math.max(0.08, 0.22 - brickLift / 700);
+            ctx.fillStyle = `rgba(3,14,11,${shadowFade})`;
+            ctx.beginPath();
+            ctx.ellipse(500, padTop + 6, contactHalfWidth * 0.82, 9, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        drawSingleBrick3D(ctx, brickAngle, padTop + indentation, brickLift);
+
+        const isUpright = uprightRatio > 0.5;
+        const area = isUpright ? 50 : 200;
+        const pressure = isUpright ? 24 : 6;
+        const statusColor = isUpright ? '#FF69B4' : '#00FFFF';
+        ctx.fillStyle = 'rgba(7,23,17,0.88)';
+        ctx.fillRect(38, 78, 325, 116);
+        ctx.strokeStyle = statusColor;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(38, 78, 325, 116);
+        ctx.fillStyle = statusColor;
+        ctx.textAlign = 'left';
+        ctx.font = '900 23px "Noto Sans TC", sans-serif';
+        ctx.fillText(isUpright ? tr('立放｜小面著地', 'Upright｜small face') : tr('平放｜大面著地', 'Flat｜large face'), 55, 112);
+        ctx.font = '900 20px "JetBrains Mono", monospace';
+        ctx.fillText(`A = ${area} cm²`, 55, 145);
+        ctx.fillText(`P = ${pressure} gw/cm²`, 55, 177);
+
+        ctx.fillStyle = '#F2ECD9';
+        ctx.textAlign = 'center';
+        ctx.font = '800 18px "Noto Sans TC", sans-serif';
+        ctx.fillText(tr('軟墊壓痕為相對示意；磚塊重量始終相同。', 'Foam dents show a relative comparison; brick weight stays constant.'), 500, 570);
+    }
+
+    function setBrickOrientation(mode) {
+        const targetAngle = mode === 'upright' ? Math.PI / 2 : 0;
+        const targetIndentDepth = mode === 'upright' ? 46 : 12;
+        document.getElementById('flatBtn').classList.toggle('active-btn', mode === 'flat');
+        document.getElementById('uprightBtn').classList.toggle('active-btn', mode === 'upright');
+        if (brickAnim) cancelAnimationFrame(brickAnim);
+        if (Math.abs(targetAngle - brickAngle) < 0.001) {
+            brickAngle = targetAngle;
+            brickLift = 0;
+            brickIndentDepth = targetIndentDepth;
+            drawBrickExperiment();
+            return;
+        }
+
+        const startAngle = brickAngle;
+        const startIndentDepth = brickIndentDepth;
+        let startTime = null;
+        const ease = value => value < 0.5
+            ? 2 * value * value
+            : 1 - Math.pow(-2 * value + 2, 2) / 2;
+
+        const animate = timestamp => {
+            if (startTime === null) startTime = timestamp;
+            const progress = Math.min(1, (timestamp - startTime) / 2200);
+            const rotationProgress = Math.max(0, Math.min(1, (progress - 0.14) / 0.38));
+            brickAngle = startAngle + (targetAngle - startAngle) * ease(rotationProgress);
+
+            if (progress < 0.18) {
+                brickLift = 82 * ease(progress / 0.18);
+            } else if (progress < 0.52) {
+                brickLift = 82;
+            } else if (progress < 0.70) {
+                brickLift = 82 * (1 - ease((progress - 0.52) / 0.18));
+            } else {
+                brickLift = 0;
+            }
+
+            if (progress < 0.15) {
+                brickIndentDepth = startIndentDepth * (1 - ease(progress / 0.15));
+            } else if (progress < 0.70) {
+                brickIndentDepth = 0;
+            } else {
+                brickIndentDepth = targetIndentDepth * ease((progress - 0.70) / 0.30);
+            }
+
+            drawBrickExperiment();
+            if (progress < 1) {
+                brickAnim = requestAnimationFrame(animate);
+            } else {
+                brickAngle = targetAngle;
+                brickLift = 0;
+                brickIndentDepth = targetIndentDepth;
+                brickAnim = null;
+                drawBrickExperiment();
+            }
+        };
+        brickAnim = requestAnimationFrame(animate);
     }
 
     // ==========================================
