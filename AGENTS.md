@@ -304,7 +304,9 @@ Hook 的目的：
 
 ```html
 <div class="hook-box">
-  <div class="xiaozhen-logo">👩🏻‍🏫</div>
+  <div class="xiaozhen-logo">
+    <img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師">
+  </div>
   <div class="hook-content">
     <div class="hook-title">曉臻老師說：</div>
     <div class="hook-text">...</div>
@@ -313,6 +315,29 @@ Hook 的目的：
 ```
 
 Hook 不能取代教材本體，也不能搶過主動畫。
+
+### Hook 頭像統一格式
+
+- 曉臻老師在 Hook 中固定使用 **88 × 88px 青色圓框頭像**；所有單元統一，不可直接放無框、方形或任意尺寸圖片。
+- 圓框使用 `4px solid #55e9ff`、`border-radius: 50%` 與 `overflow: hidden`。
+- 圖片使用正式透明角色素材，保持比例並以 `object-fit: cover` 放入圓框；不得拉伸或壓扁。
+- Hook 空間極端不足或正式素材載入失敗時，才可使用 `👩🏻‍🏫` 作為後備標記。
+
+```css
+.xiaozhen-logo {
+  width: 88px;
+  height: 88px;
+  flex: 0 0 88px;
+  overflow: hidden;
+  border: 4px solid #55e9ff;
+  border-radius: 50%;
+}
+.xiaozhen-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+```
 
 ## 5.1 曉臻老師角色母版
 
