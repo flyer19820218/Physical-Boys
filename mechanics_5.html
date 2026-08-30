@@ -515,7 +515,7 @@
                     <div class="cao-boat-group" id="caoBoatGroup">
                         <img class="cao-elephant-img" id="caoElephant" src="assets/mechanics_5/cao_chong_elephant.webp" alt="站在船上的亞洲象" data-alt-zh="站在船上的亞洲象" data-alt-en="Asian elephant standing on the boat">
                         <div class="cao-stone-rack" id="caoStoneRack" aria-label="石頭籃數量">
-                            <!-- 🌟 生成 7 籃石頭的空間 -->
+                            <!-- 🌟 生成 10 籃石頭的空間 -->
                             <img class="cao-stone-img" src="assets/mechanics_5/cao_chong_stones.webp" alt="石頭籃 1">
                             <img class="cao-stone-img" src="assets/mechanics_5/cao_chong_stones.webp" alt="石頭籃 2">
                             <img class="cao-stone-img" src="assets/mechanics_5/cao_chong_stones.webp" alt="石頭籃 3">
@@ -523,6 +523,9 @@
                             <img class="cao-stone-img" src="assets/mechanics_5/cao_chong_stones.webp" alt="石頭籃 5">
                             <img class="cao-stone-img" src="assets/mechanics_5/cao_chong_stones.webp" alt="石頭籃 6">
                             <img class="cao-stone-img" src="assets/mechanics_5/cao_chong_stones.webp" alt="石頭籃 7">
+                            <img class="cao-stone-img" src="assets/mechanics_5/cao_chong_stones.webp" alt="石頭籃 8">
+                            <img class="cao-stone-img" src="assets/mechanics_5/cao_chong_stones.webp" alt="石頭籃 9">
+                            <img class="cao-stone-img" src="assets/mechanics_5/cao_chong_stones.webp" alt="石頭籃 10">
                         </div>
                         <img class="cao-boat-img" src="assets/mechanics_5/cao_chong_boat.webp" alt="古代木船" data-alt-zh="古代木船" data-alt-en="Ancient wooden boat">
                         <div class="cao-hull-mark" id="caoHullMark" aria-hidden="true"></div>
@@ -867,6 +870,7 @@
         return cvs.getContext('2d');
     }
 
+    // 🌟 全面修正動畫生命週期釋放問題 🌟
     function killAllSims() {
         if (window.magAnim) { cancelAnimationFrame(window.magAnim); window.magAnim = null; }
         if (window.torAnim) { cancelAnimationFrame(window.torAnim); window.torAnim = null; }
@@ -900,6 +904,7 @@
         if(unit === 'torr' && window.torAnim) { cancelAnimationFrame(window.torAnim); window.torAnim = null; }
         if(unit === 'archi' && window.archiAnim) { cancelAnimationFrame(window.archiAnim); window.archiAnim = null; }
         
+        // 切換浮力實驗室的右側子分頁時，只清理大船跟氣泡的動畫，保留 buoyAnim (左側沉浮)
         if(unit === 'buoy-lab') {
             if(window.shipAnim) { cancelAnimationFrame(window.shipAnim); window.shipAnim = null; }
             if(window.bubbleAnim) { cancelAnimationFrame(window.bubbleAnim); window.bubbleAnim = null; }
@@ -1193,7 +1198,7 @@
     // 4. 🌟 全新手動互動版：曹沖稱象
     // ==========================================
     const caoStoneTarget = 6;
-    const caoStoneMax = 7;
+    const caoStoneMax = 10;
     let caoStage = 0;
     let caoStoneCount = 0;
 
@@ -1202,6 +1207,8 @@
             caoStoneCount++;
             if(caoStoneCount === caoStoneMax) {
                 window.caoMessage = tr('💥 船進水沉沒啦！放太多石頭了！', '💥 Boat sunk! Too many stones!');
+            } else if (caoStoneCount > caoStoneTarget) {
+                window.caoMessage = tr(`🪨 已放入 ${caoStoneCount} 籃石頭。⚠️ 水快淹進來了！`, `🪨 Added ${caoStoneCount} baskets. ⚠️ Water is close to the edge!`);
             } else {
                 window.caoMessage = tr(`🪨 已放入 ${caoStoneCount} 籃石頭。`, `🪨 Added ${caoStoneCount} baskets of stones.`);
             }
@@ -1220,7 +1227,9 @@
     window.checkWeighing = function() {
         if (caoStoneCount < caoStoneTarget) {
             window.caoMessage = tr('❌ 船浮得太高了！水線還沒對齊，再加一點石頭吧！', '❌ Boat is too high! Waterline not reached. Add more stones!');
-        } else if (caoStoneCount > caoStoneTarget) {
+        } else if (caoStoneCount > caoStoneTarget && caoStoneCount < caoStoneMax) {
+            window.caoMessage = tr('❌ 船沉得太深了！水線超過了，拿幾籃石頭出來！', '❌ Boat is too deep! Waterline exceeded. Remove some stones!');
+        } else if (caoStoneCount === caoStoneMax) {
             window.caoMessage = tr('💥 船沉了啦！快拿幾籃石頭出來！', '💥 Boat sunk! Remove some stones!');
         } else {
             caoStage = 4; // 成功
@@ -1544,10 +1553,11 @@
         shipDraft += (targetDraft - shipDraft) * 0.1; // 平滑追隨
 
         let waterY = 350;
+        // ★ V4：使用漸層取代死板的虛線交界 ★
         let grd = ctx.createLinearGradient(0, 0, 1000, 0);
-        grd.addColorStop(0, 'rgba(0, 105, 148, 0.7)'); 
+        grd.addColorStop(0, 'rgba(0, 105, 148, 0.7)'); // 海水
         grd.addColorStop(0.3, 'rgba(0, 105, 148, 0.7)');
-        grd.addColorStop(0.7, 'rgba(0, 191, 255, 0.4)'); 
+        grd.addColorStop(0.7, 'rgba(0, 191, 255, 0.4)'); // 淡水
         grd.addColorStop(1, 'rgba(0, 191, 255, 0.4)');
         
         ctx.fillStyle = grd; 
@@ -1576,9 +1586,11 @@
         ctx.fillStyle = '#FF69B4'; ctx.fillText(tr('浮力 B', 'Buoyancy B'), 0, 120);
         ctx.restore();
 
+        // Overlay Water Surface Line so it covers the hull
         ctx.strokeStyle = '#00FFFF'; ctx.lineWidth = 4;
         ctx.beginPath(); ctx.moveTo(0, waterY); ctx.lineTo(1000, waterY); ctx.stroke();
 
+        // Dashboard Info
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(50, 50, 900, 80);
         ctx.strokeStyle = '#FFF'; ctx.lineWidth=2; ctx.strokeRect(50, 50, 900, 80);
         ctx.fillStyle = '#FFF'; ctx.font = '900 32px "Noto Sans TC", sans-serif'; ctx.textAlign='center';
@@ -1597,7 +1609,7 @@
     }
 
     // ==========================================
-    // 6. 🫧 海底氣泡膨脹引擎
+    // 6. 🫧 海底氣泡膨脹引擎 (修正邊界 Pop 特效)
     // ==========================================
     let bubbleY = 550, bubbleSpeed = 1.0, bTrail = [];
 
@@ -1623,13 +1635,16 @@
         ctx.fillText(tr('深海', 'Deep Sea'), 80, 580);
         for(let i=100; i<=500; i+=100) { ctx.beginPath(); ctx.moveTo(70, i); ctx.lineTo(90, i); ctx.stroke(); }
         
+        // ★ V4：繪製海面參考虛線，避免視覺誤判 ★
         ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)'; ctx.lineWidth = 3; ctx.setLineDash([10, 10]);
         ctx.beginPath(); ctx.moveTo(80, 60); ctx.lineTo(1000, 60); ctx.stroke(); ctx.setLineDash([]);
 
         bubbleY -= bubbleSpeed;
         
+        // ★ V4：修正越界判定與真實破裂特效 ★
         if (bubbleY < 60) {
             let cx = 500 + Math.sin(bubbleY * 0.05) * 20;
+            // 繪製破裂的四濺水花
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             for(let i=0; i<8; i++) {
                 let angle = (Math.PI * 2 / 8) * i;
@@ -1638,11 +1653,12 @@
                 ctx.arc(cx + Math.cos(angle)*popR, bubbleY + Math.sin(angle)*popR, 6, 0, Math.PI*2); 
                 ctx.fill();
             }
+            // 標示破裂文字
             ctx.fillStyle = '#00FFFF'; ctx.font = '900 36px "Noto Sans TC", sans-serif'; ctx.textAlign='center';
             ctx.fillText(tr('💥 啵！', '💥 POP!'), cx, bubbleY + 10);
             
             window.bubbleAnim = null;
-            setTimeout(initBubbleSim, 800);
+            setTimeout(initBubbleSim, 800); // 稍微延長停頓時間，讓學生看清楚破裂
             return;
         }
 
