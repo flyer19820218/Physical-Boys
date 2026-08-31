@@ -806,7 +806,7 @@
                     <section class="sep-view-panel" aria-labelledby="sepMacroTitle">
                         <div id="sepMacroTitle" class="sep-view-title">
                             <span data-zh="🌐 3D 巨觀實驗桌" data-en="🌐 3D macroscopic lab">🌐 3D 巨觀實驗桌</span>
-                            <small data-zh="拖曳環視・雙指或滾輪縮放" data-en="Drag to orbit · pinch or wheel to zoom">拖曳環視・雙指或滾輪縮放</small>
+                            <small id="sepMacroHint" data-zh="拖曳環視・雙指或滾輪縮放" data-en="Drag to orbit · pinch or wheel to zoom">拖曳環視・雙指或滾輪縮放</small>
                         </div>
                         <canvas id="sepMacroCanvas" class="orbit-mode" width="700" height="500" aria-label="可旋轉與操作的食鹽細砂分離三維實驗桌"></canvas>
                     </section>
@@ -831,7 +831,7 @@
                     <button class="sep-action-btn" type="button" onclick="resetSepCamera()" data-zh="🎥 重設視角" data-en="🎥 Reset view">🎥 重設視角</button>
                     <button class="sep-action-btn" type="button" onclick="resetSepStep()" data-zh="重置本步驟" data-en="Reset step">重置本步驟</button>
                 </div>
-                <div class="sep-lab-note" data-zh="操作提示：選【環視實驗桌】可從各角度檢查器材；選【操作器材】後，步驟一可拖曳玻棒攪拌。其餘步驟使用主要操作鍵完成貼壁確認、倒液與加熱；右側微觀模型同步解釋粒子變化。" data-en="Tip: Choose [Orbit lab bench] to inspect the apparatus from every angle. Choose [Operate apparatus] to stir with the rod in step 1. Use the main action button for wall contact, pouring and heating; the particle model updates alongside it.">操作提示：選【環視實驗桌】可從各角度檢查器材；選【操作器材】後，步驟一可拖曳玻棒攪拌。其餘步驟使用主要操作鍵完成貼壁確認、倒液與加熱；右側微觀模型同步解釋粒子變化。</div>
+                <div id="sepLabNote" class="sep-lab-note" data-zh="操作提示：先選擇【操作器材】，再拖曳畫面中有黃色操作圈的器材。" data-en="Tip: Choose [Operate apparatus], then drag the apparatus marked by a yellow handle.">操作提示：先選擇【操作器材】，再拖曳畫面中有黃色操作圈的器材。</div>
                 
                 <div id="sepText" class="result-box" style="border-color: var(--chalk-green); max-width:1000px;"></div>
             </div>
@@ -933,6 +933,12 @@
             heatProgress: 0,
             collected: false,
             warning: false,
+            lampX: 0,
+            lampZ: 0,
+            sandDishX: -175,
+            sandDishZ: 5,
+            saltDishX: 175,
+            saltDishZ: -5,
             time: 0
         };
 
@@ -975,6 +981,8 @@
             lastY: 0,
             pointers: new Map(),
             pinchStart: null,
+            activeObject: null,
+            hitTargets: [],
             primitives: [],
             labels: []
         };
@@ -2574,6 +2582,13 @@
             sepLab.heatProgress = 0;
             sepLab.collected = false;
             sepLab.warning = false;
+            sepLab.lampX = 0;
+            sepLab.lampZ = 0;
+            sepLab.sandDishX = -175;
+            sepLab.sandDishZ = 5;
+            sepLab.saltDishX = 175;
+            sepLab.saltDishZ = -5;
+            sepWorld.activeObject = null;
             seedSepParticles();
             updateSepText();
             updateSepUI();
@@ -2607,13 +2622,14 @@
                 if (!sepLab.filterReady) sepLab.filterReady = true;
                 else if (!sepLab.filtering && !sepFilterComplete()) sepLab.filtering = true;
             } else if (currentStep === '3') {
+                const lampCentered = Math.hypot(sepLab.lampX, sepLab.lampZ) < 62;
                 if (!sepLab.lampLit) {
                     sepLab.lampLit = true;
-                    sepLab.heating = true;
+                    sepLab.heating = lampCentered;
                 } else if (sepLab.heating) {
                     sepLab.heating = false;
                 } else if (sepLab.heatProgress < .9) {
-                    sepLab.heating = true;
+                    sepLab.heating = lampCentered;
                 }
             } else if (currentStep === '4') {
                 sepLab.collected = true;
@@ -2692,12 +2708,13 @@
                 primary.disabled = sepLab.filtering || filterComplete;
             } else if (currentStep === '3') {
                 const safeToStop = sepLab.heatProgress >= .76;
-                task.textContent = !sepLab.lampLit ? tr('點燃酒精燈', 'Light the alcohol lamp') : sepLab.heating ? tr('觀察濃縮並適時停火', 'Watch concentration; stop in time') : safeToStop ? tr('利用餘熱完成析晶', 'Use residual heat to finish') : tr('繼續溫和加熱', 'Continue gentle heating');
-                evidence.textContent = sepLab.warning ? tr('過熱：出現晶體飛濺', 'Overheated: crystal spitting') : safeToStop ? tr('皿邊出現食鹽晶體', 'Salt crystals appear at edge') : tr('水量下降、離子更密集', 'Water falls; ions crowd together');
+                const lampCentered = Math.hypot(sepLab.lampX, sepLab.lampZ) < 62;
+                task.textContent = !sepLab.lampLit ? tr('點燃酒精燈', 'Light the alcohol lamp') : !lampCentered ? tr('把酒精燈移回蒸發皿正下方', 'Move the lamp beneath the basin') : sepLab.heating ? tr('觀察濃縮並適時移開火源', 'Watch concentration; remove heat in time') : safeToStop ? tr('利用餘熱完成析晶', 'Use residual heat to finish') : tr('把酒精燈移回皿下繼續加熱', 'Return the lamp beneath the basin');
+                evidence.textContent = sepLab.warning ? tr('過熱警示：晶體仍留在蒸發皿內', 'Overheat warning: crystals remain in the basin') : sepLab.lampLit&&!lampCentered ? tr('火源已移開，液體停止受熱', 'Heat source removed; heating has stopped') : safeToStop ? tr('食鹽晶體貼著蒸發皿析出', 'Salt crystallizes against the basin') : tr('水量下降、離子更密集', 'Water falls; ions crowd together');
                 property.textContent = tr('沸點高低差異', 'Different boiling points');
                 progress.textContent = Math.round(sepLab.heatProgress * 100) + '%';
-                primary.textContent = !sepLab.lampLit ? tr('點燃酒精燈', 'Light alcohol lamp') : sepLab.heating ? tr('停止加熱', 'Stop heating') : safeToStop ? tr('已停止加熱', 'Heating stopped') : tr('繼續加熱', 'Continue heating');
-                primary.disabled = !sepLab.heating && safeToStop;
+                primary.textContent = !sepLab.lampLit ? tr('點燃酒精燈', 'Light alcohol lamp') : !lampCentered ? tr('請拖曳酒精燈歸位', 'Drag lamp back into position') : sepLab.heating ? tr('停止加熱', 'Stop heating') : safeToStop ? tr('已停止加熱', 'Heating stopped') : tr('繼續加熱', 'Continue heating');
+                primary.disabled = (!lampCentered&&sepLab.lampLit)||(!sepLab.heating&&safeToStop);
             } else {
                 task.textContent = tr('收集並比較兩種固體', 'Collect and compare solids');
                 evidence.textContent = sepLab.collected ? tr('食鹽與細砂均已分離', 'Salt and sand separated') : tr('兩種產物位於不同位置', 'Products are in separate places');
@@ -2706,6 +2723,7 @@
                 primary.textContent = sepLab.collected ? tr('任務完成', 'Mission complete') : tr('收集並比較', 'Collect and compare');
                 primary.disabled = sepLab.collected;
             }
+            updateSepInteractionCopy();
         }
 
         function sepDrawSceneBackground(ctx, width, height) {
@@ -3069,26 +3087,48 @@
                 ctx.strokeStyle = 'rgba(85,233,255,.65)';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(20, 58, 260, 382);
+                const dissolve=sepLab.stirPhase;
                 for (let i = 0; i < 18; i++) {
                     const p = sepMicroParticles[i];
-                    sepDrawWater2D(ctx, p.x + Math.sin(sepLab.time + p.phase) * 4, p.y, .8);
+                    const startY=p.y>230?86+(i%5)*29:p.y;
+                    const waterY=startY+(p.y-startY)*dissolve;
+                    sepDrawWater2D(ctx, p.x + Math.sin(sepLab.time + p.phase) * 4, waterY, .8);
                 }
-                const freeCount = Math.floor(sepLab.stirPhase * 22);
-                for (let i = 0; i < freeCount; i++) {
-                    const p = sepMicroParticles[i];
-                    sepDrawIon2D(ctx, p.x, p.y + Math.sin(sepLab.time * 1.2 + p.phase) * 5, p.type, .78);
-                }
-                const rows = 4, cols = 5;
-                ctx.globalAlpha = Math.max(0, 1 - sepLab.stirPhase);
-                for (let row = 0; row < rows; row++) {
-                    for (let col = 0; col < cols; col++) {
-                        const isNa = (row + col) % 2 === 0;
-                        sepDrawIon2D(ctx, 92 + col * 29, 360 + row * 24, isNa ? 'Na' : 'Cl', .66);
+                const crystalAlpha=Math.max(0,1-dissolve*1.12);
+                if(crystalAlpha>0) {
+                    ctx.save();
+                    ctx.globalAlpha=crystalAlpha;
+                    ctx.fillStyle='rgba(242,236,217,.13)';
+                    ctx.strokeStyle='#f2ecd9';
+                    ctx.lineWidth=2;
+                    ctx.fillRect(55,244,190,174);
+                    ctx.strokeRect(55,244,190,174);
+                    ctx.beginPath();
+                    ctx.moveTo(55,244); ctx.lineTo(70,228); ctx.lineTo(260,228); ctx.lineTo(245,244); ctx.closePath();
+                    ctx.fill(); ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(245,244); ctx.lineTo(260,228); ctx.lineTo(260,402); ctx.lineTo(245,418); ctx.closePath();
+                    ctx.fill(); ctx.stroke();
+                    for(let row=0;row<6;row++) {
+                        for(let col=0;col<6;col++) {
+                            const isNa=(row+col)%2===0;
+                            sepDrawIon2D(ctx,72+col*31,260+row*27,isNa?'Na':'Cl',.55);
+                        }
                     }
+                    ctx.restore();
                 }
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = '#9ca3af';
-                for (let i = 0; i < 14; i++) ctx.fillRect(35 + i * 17, 424 - (i % 3) * 5, 8, 8);
+                const freeCount=Math.floor(dissolve*22);
+                for(let i=0;i<freeCount;i++) {
+                    const p=sepMicroParticles[i];
+                    const release=(i+1)/22*.62;
+                    const spread=sepV3Clamp((dissolve-release)/Math.max(.18,1-release),0,1);
+                    const eased=spread*spread*(3-2*spread);
+                    const startX=150+(i%2?13:-13);
+                    const startY=326+(i%6-2.5)*13;
+                    const x=startX+(p.x-startX)*eased;
+                    const y=startY+(p.y-startY)*eased+Math.sin(sepLab.time*1.2+p.phase)*5*eased;
+                    sepDrawIon2D(ctx,x,y,p.type,.78);
+                }
             } else if (currentStep === '2') {
                 const pourProgress=sepLab.filterProgress;
                 const passage=sepFiltrateProgress();
@@ -3315,6 +3355,61 @@
             sepWorld.labels.push({projected, text, color, offsetY});
         }
 
+        function sepV3RegisterHitTarget(id, point, radius, label) {
+            const projected = sepV3Project(point);
+            if (!projected) return;
+            sepWorld.hitTargets.push({id, projected, radius, label});
+        }
+
+        function sepV3FindHitTarget(pointer) {
+            let best = null;
+            sepWorld.hitTargets.forEach(target => {
+                const distance = Math.hypot(pointer.x - target.projected.x, pointer.y - target.projected.y);
+                if (distance <= target.radius && (!best || distance < best.distance)) best = {target, distance};
+            });
+            return best?.target || null;
+        }
+
+        function sepV3GroundDragDelta(dx, dy) {
+            const basis = sepV3Camera();
+            const groundRight = sepV3Normalize(sepV3(basis.right.x, 0, basis.right.z));
+            const cameraGround = sepV3Normalize(sepV3(basis.camera.x, 0, basis.camera.z));
+            const worldPerPixel = sepWorld.distance / basis.focal * .82;
+            return sepV3(
+                (groundRight.x * dx + cameraGround.x * dy) * worldPerPixel,
+                0,
+                (groundRight.z * dx + cameraGround.z * dy) * worldPerPixel
+            );
+        }
+
+        function sepV3DrawInteractionTargets(ctx) {
+            if (sepWorld.tool !== 'interact') return;
+            sepWorld.hitTargets.forEach(target => {
+                const active = sepWorld.activeObject === target.id;
+                const radius = active ? target.radius * .72 : target.radius * .58;
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(target.projected.x, target.projected.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = active ? 'rgba(253,224,71,.14)' : 'rgba(253,224,71,.06)';
+                ctx.fill();
+                ctx.strokeStyle = active ? '#fde047' : 'rgba(253,224,71,.88)';
+                ctx.lineWidth = active ? 3 : 2;
+                ctx.setLineDash(active ? [] : [7, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.font = '800 13px "Noto Sans TC", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                const labelWidth = ctx.measureText(target.label).width;
+                sepRoundRect(ctx, target.projected.x - labelWidth / 2 - 7, target.projected.y - radius - 27, labelWidth + 14, 23, 6);
+                ctx.fillStyle = 'rgba(7,24,19,.86)';
+                ctx.fill();
+                ctx.fillStyle = '#fde047';
+                ctx.fillText(target.label, target.projected.x, target.projected.y - radius - 9);
+                ctx.restore();
+            });
+        }
+
         function sepV3Ring(cx, y, cz, radius, segments=32, start=0) {
             const points = [];
             for (let i = 0; i < segments; i++) {
@@ -3356,6 +3451,69 @@
             sepV3QueuePolygon([p.rbf,p.rbb,p.rtb,p.rtf], sideFill, stroke, 1, depthBias);
             sepV3QueuePolygon([p.rbb,p.lbb,p.ltb,p.rtb], sideFill, stroke, 1, depthBias);
             sepV3QueuePolygon([p.lbb,p.lbf,p.ltf,p.ltb], sideFill, stroke, 1, depthBias);
+        }
+
+        function sepV3QueueCrystalCube(cx, baseY, cz, size, depthBias=-5, alpha=1) {
+            const half=size/2;
+            sepV3QueueBox(
+                cx-half,
+                cx+half,
+                baseY,
+                baseY+size,
+                cz-half,
+                cz+half,
+                `rgba(255,253,244,${alpha})`,
+                `rgba(220,231,235,${alpha})`,
+                `rgba(159,180,187,${alpha})`,
+                depthBias
+            );
+        }
+
+        function sepV3QueueIrregularGrain(cx, baseY, cz, size, seed, depthBias=-5) {
+            const vertices=5+(seed%3);
+            const height=size*(.34+sepRand(seed,311)*.22);
+            const bottom=[];
+            const top=[];
+            for(let vertex=0;vertex<vertices;vertex++) {
+                const angle=vertex/vertices*Math.PI*2+sepRand(seed,312)*.48;
+                const radius=size*(.55+sepRand(seed*11+vertex,313)*.42);
+                const x=cx+Math.cos(angle)*radius;
+                const z=cz+Math.sin(angle)*radius;
+                bottom.push(sepV3(x,baseY,z));
+                top.push(sepV3(x,baseY+height,z));
+            }
+            sepV3QueuePolygon(top,'#8d989c','#485459',.8,depthBias-2);
+            for(let vertex=0;vertex<vertices;vertex++) {
+                const next=(vertex+1)%vertices;
+                sepV3QueuePolygon(
+                    [bottom[vertex],bottom[next],top[next],top[vertex]],
+                    vertex%2?'#69767b':'#7c888c',
+                    '#3f4b50',
+                    .65,
+                    depthBias
+                );
+            }
+        }
+
+        function sepV3QueueIrregularFlake(point, size, seed, depthBias=-5) {
+            const vertices=5+(seed%3);
+            const points=[];
+            for(let vertex=0;vertex<vertices;vertex++) {
+                const angle=vertex/vertices*Math.PI*2+sepRand(seed,321)*.5;
+                const radius=size*(.55+sepRand(seed*13+vertex,322)*.45);
+                points.push(sepV3(
+                    point.x+Math.cos(angle)*radius,
+                    point.y,
+                    point.z+Math.sin(angle)*radius
+                ));
+            }
+            sepV3QueuePolygon(
+                points,
+                seed%2?'#7c888c':'#929b9e',
+                '#3f4b50',
+                .8,
+                depthBias
+            );
         }
 
         function sepV3DrawBackground(ctx) {
@@ -3416,7 +3574,12 @@
                 const angle = sepRand(i,201) * Math.PI * 2 + sepLab.time * agitation * (1.2 + sepRand(i,202));
                 const radius = Math.sqrt(sepRand(i,203)) * 86;
                 const lift = agitation * Math.abs(Math.sin(sepLab.time*2+i)) * (12 + sepRand(i,204)*74);
-                sepV3QueuePoint(sepV3(Math.cos(angle)*radius,20+lift,Math.sin(angle)*radius),5,'#7d898d','#364248');
+                sepV3QueueIrregularFlake(
+                    sepV3(Math.cos(angle)*radius,20+lift,Math.sin(angle)*radius),
+                    5.5,
+                    i+410,
+                    -4
+                );
             }
             const saltAlpha = Math.max(0,1-progress*1.16);
             if (saltAlpha>0) {
@@ -3424,12 +3587,20 @@
                     const angle = sepRand(i,205)*Math.PI*2 + sepLab.time*agitation*(1.6+sepRand(i,206));
                     const radius = Math.sqrt(sepRand(i,207))*82;
                     const lift = agitation*Math.abs(Math.sin(sepLab.time*2.4+i))*(22+sepRand(i,208)*110);
-                    sepV3QueuePoint(sepV3(Math.cos(angle)*radius,24+lift,Math.sin(angle)*radius),5,'rgba(248,250,252,'+saltAlpha+')','#9fb4bb');
+                    sepV3QueueCrystalCube(
+                        Math.cos(angle)*radius,
+                        18+lift,
+                        Math.sin(angle)*radius,
+                        7+sepRand(i,209)*2,
+                        -5,
+                        saltAlpha
+                    );
                 }
             }
-            const swing = sepLab.demoStirring || sepLab.dragging && sepWorld.dragMode==='stir' ? Math.sin(sepLab.time*7)*46 : Math.sin(progress*15)*12;
+            const swing = sepLab.demoStirring || sepWorld.dragging && sepWorld.dragMode==='stir' ? Math.sin(sepLab.time*7)*46 : Math.sin(progress*15)*12;
             sepV3QueueLine([sepV3(62,330,-18),sepV3(swing,35,6)],'rgba(238,253,255,.92)',11,[],-8);
             sepV3QueueLine([sepV3(60,330,-20),sepV3(swing-2,35,4)],'rgba(85,233,255,.48)',3,[],-9);
+            sepV3RegisterHitTarget('rod',sepV3((62+swing)/2,182,-6),54,tr('拖曳玻棒','Drag rod'));
             sepV3QueueLabel(sepV3(0,285,0), progress>=1 ? tr('食鹽已溶解｜細砂仍可見','Salt dissolved | Sand remains') : tr('拖曳玻棒或按示範攪拌','Drag the rod or demonstrate stirring'),'#fde047',-18);
         }
 
@@ -3646,6 +3817,12 @@
                 sourceAngle,
                 sourceLiquidFraction
             );
+            const sourceHandle=sepV3RotateLocal(
+                sepV3(0,sourceHeight*.54,0),
+                sourceCenter,
+                sourceAngle
+            );
+            sepV3RegisterHitTarget('source-beaker',sourceHandle,66,tr('拖曳燒杯倒液','Drag beaker to pour'));
 
             // 倒液前，所有細砂都留在上方燒杯；開始倒液後才逐步轉移到濾紙。
             const sourceSandCount=Math.round(34*(1-pourProgress));
@@ -3657,11 +3834,10 @@
                     17+sepRand(i,222)*25,
                     Math.sin(angle)*radius
                 );
-                sepV3QueuePoint(
+                sepV3QueueIrregularFlake(
                     sepV3RotateLocal(localPoint,sourceCenter,sourceAngle),
-                    5,
-                    i%2?'#7b8488':'#98a1a4',
-                    '#364248',
+                    5.2,
+                    i+510,
                     -7
                 );
             }
@@ -3673,11 +3849,10 @@
                 const paperRadius=14+(y-216)/100*(94-14);
                 const radius=Math.sqrt(sepRand(i,224))*Math.max(3,paperRadius-8);
                 const angle=sepRand(i,225)*Math.PI*2;
-                sepV3QueuePoint(
+                sepV3QueueIrregularFlake(
                     sepV3(stemX+Math.cos(angle)*radius,y,stemZ+Math.sin(angle)*radius),
-                    5,
-                    i%2?'#7b8488':'#98a1a4',
-                    '#364248',
+                    5.2,
+                    i+610,
                     -8
                 );
             }
@@ -3718,32 +3893,31 @@
             }
         }
 
-        function sepV3QueueFlame(point) {
-            const projected=sepV3Project(point);
-            if(!projected)return;
-            sepWorld.primitives.push({
-                depth:projected.depth-12,
-                draw(ctx){
-                    const scale=projected.scale;
-                    const flicker=Math.sin(sepLab.time*14)*4*scale;
-                    ctx.save();
-                    ctx.translate(projected.x,projected.y);
-                    ctx.fillStyle='#fb5b3d';
-                    ctx.beginPath();
-                    ctx.moveTo(flicker,-54*scale);
-                    ctx.quadraticCurveTo(-25*scale,-17*scale,-7*scale,7*scale);
-                    ctx.lineTo(7*scale,7*scale);
-                    ctx.quadraticCurveTo(25*scale,-17*scale,flicker,-54*scale);
-                    ctx.fill();
-                    ctx.fillStyle='#fde047';
-                    ctx.beginPath();
-                    ctx.moveTo(flicker*.35,-32*scale);
-                    ctx.quadraticCurveTo(-11*scale,-10*scale,-3*scale,5*scale);
-                    ctx.lineTo(3*scale,5*scale);
-                    ctx.quadraticCurveTo(11*scale,-10*scale,flicker*.35,-32*scale);
-                    ctx.fill();
-                    ctx.restore();
-                }
+        function sepV3QueueFlame(basePoint, ceilingY=181) {
+            const flicker=Math.sin(sepLab.time*14)*2.2;
+            const topY=Math.min(ceilingY,basePoint.y+35+flicker);
+            const height=Math.max(22,topY-basePoint.y);
+            const directions=[sepV3(1,0,0),sepV3(0,0,1)];
+            directions.forEach((direction,index)=>{
+                const outer=[
+                    sepV3Add(basePoint,sepV3Scale(direction,-6)),
+                    sepV3Add(sepV3(basePoint.x,basePoint.y+height*.34,basePoint.z),sepV3Scale(direction,-17)),
+                    sepV3Add(sepV3(basePoint.x,basePoint.y+height*.72,basePoint.z),sepV3Scale(direction,-8+flicker)),
+                    sepV3(basePoint.x+direction.x*flicker,topY,basePoint.z+direction.z*flicker),
+                    sepV3Add(sepV3(basePoint.x,basePoint.y+height*.72,basePoint.z),sepV3Scale(direction,8+flicker)),
+                    sepV3Add(sepV3(basePoint.x,basePoint.y+height*.34,basePoint.z),sepV3Scale(direction,17)),
+                    sepV3Add(basePoint,sepV3Scale(direction,6))
+                ];
+                sepV3QueuePolygon(outer,index?'rgba(251,91,61,.70)':'#fb5b3d','#fb923c',.8,-7-index);
+                const innerTopY=Math.min(topY-5,basePoint.y+height*.66);
+                const inner=[
+                    sepV3Add(basePoint,sepV3Scale(direction,-3)),
+                    sepV3Add(sepV3(basePoint.x,basePoint.y+height*.28,basePoint.z),sepV3Scale(direction,-7)),
+                    sepV3(basePoint.x+direction.x*flicker*.3,innerTopY,basePoint.z+direction.z*flicker*.3),
+                    sepV3Add(sepV3(basePoint.x,basePoint.y+height*.28,basePoint.z),sepV3Scale(direction,7)),
+                    sepV3Add(basePoint,sepV3Scale(direction,3))
+                ];
+                sepV3QueuePolygon(inner,index?'rgba(253,224,71,.72)':'#fde047','#fde68a',.6,-9-index);
             });
         }
 
@@ -3763,13 +3937,16 @@
                 sepV3QueueLine([sepV3(n*24,topY+1,-132),sepV3(n*24,topY+1,132)],'rgba(220,232,235,.52)',1,[],-5);
                 sepV3QueueLine([sepV3(-132,topY+1,n*24),sepV3(132,topY+1,n*24)],'rgba(220,232,235,.52)',1,[],-5);
             }
-            sepV3QueueFrustum(0,0,45,70,110,12,'rgba(223,252,255,.07)','rgba(223,252,255,.10)','rgba(223,252,255,.10)',30,false);
-            sepV3QueueRing(0,12,0,70,'rgba(223,252,255,.78)',3,-5,32);
-            sepV3QueueRing(0,110,0,45,'rgba(223,252,255,.72)',3,-5,28);
-            sepV3QueueCylinder(0,0,62,62,18,'rgba(56,189,248,.58)','rgba(14,116,144,.36)','rgba(85,233,255,.06)',28,false);
-            sepV3QueueCylinder(0,0,28,128,103,'#b59a43','#8d7b42','#d6c36d',24,false);
-            sepV3QueueCylinder(0,0,8,143,126,'#e8dfc8','#b8ad91','#f2ecd9',16,false);
-            if(sepLab.lampLit)sepV3QueueFlame(sepV3(0,171,0));
+            const lampX=sepLab.lampX;
+            const lampZ=sepLab.lampZ;
+            sepV3QueueFrustum(lampX,lampZ,45,70,110,12,'rgba(223,252,255,.07)','rgba(223,252,255,.10)','rgba(223,252,255,.10)',30,false);
+            sepV3QueueRing(lampX,12,lampZ,70,'rgba(223,252,255,.78)',3,-5,32);
+            sepV3QueueRing(lampX,110,lampZ,45,'rgba(223,252,255,.72)',3,-5,28);
+            sepV3QueueCylinder(lampX,lampZ,62,62,18,'rgba(56,189,248,.58)','rgba(14,116,144,.36)','rgba(85,233,255,.06)',28,false);
+            sepV3QueueCylinder(lampX,lampZ,28,128,103,'#b59a43','#8d7b42','#d6c36d',24,false);
+            sepV3QueueCylinder(lampX,lampZ,8,143,126,'#e8dfc8','#b8ad91','#f2ecd9',16,false);
+            if(sepLab.lampLit)sepV3QueueFlame(sepV3(lampX,145,lampZ),181);
+            sepV3RegisterHitTarget('alcohol-lamp',sepV3(lampX,78,lampZ),68,tr('拖曳酒精燈','Drag alcohol lamp'));
             sepV3QueueFrustum(0,0,132,84,225,192,null,'rgba(242,236,217,.30)','rgba(242,236,217,.16)',36,true);
             sepV3QueueRing(0,225,0,132,'#f2ecd9',5,-6,44);
             const water=Math.max(.03,1-sepLab.heatProgress*1.05);
@@ -3777,38 +3954,60 @@
             if(sepLab.heatProgress>.52) {
                 const count=Math.floor((sepLab.heatProgress-.52)*90);
                 for(let i=0;i<count;i++) {
-                    const angle=sepRand(i,241)*Math.PI*2;
-                    const radius=35+sepRand(i,242)*86;
-                    sepV3QueuePoint(sepV3(Math.cos(angle)*radius,232+sepRand(i,243)*8,Math.sin(angle)*radius),5,'#f8fafc','#9fb4bb',-8);
+                    const angle=i*Math.PI*(3-Math.sqrt(5));
+                    const radius=25+Math.sqrt((i+.5)/Math.max(1,count))*90;
+                    const basinFloorY=192+sepV3Clamp((radius-84)/(132-84),0,1)*(225-192);
+                    const crystalSize=8+sepRand(i,243)*2.5;
+                    sepV3QueueCrystalCube(
+                        Math.cos(angle)*radius,
+                        basinFloorY+1,
+                        Math.sin(angle)*radius,
+                        crystalSize,
+                        -8
+                    );
                 }
             }
             if(sepLab.heating) {
                 for(let i=0;i<14;i++) {
                     const rise=(sepLab.time*(25+i)+i*19)%125;
-                    sepV3QueuePoint(sepV3(Math.sin(i*1.7+sepLab.time)*76,245+rise,Math.cos(i*2.1)*45),7+i%4,'rgba(223,252,255,.28)',null,-4);
+                    sepV3QueuePoint(sepV3(Math.sin(i*1.7+sepLab.time)*76,245+rise,Math.cos(i*2.1)*45),7+i%4,'rgba(85,233,255,.16)',null,-4);
                 }
             }
             if(sepLab.warning) {
-                for(let i=0;i<8;i++) {
-                    const angle=sepRand(i,244)*Math.PI*2;
-                    sepV3QueuePoint(sepV3(Math.cos(angle)*(145+sepRand(i,245)*70),250+sepRand(i,246)*95,Math.sin(angle)*(145+sepRand(i,247)*70)),6,'#f8fafc','#9fb4bb',-10);
-                }
+                sepV3QueueRing(0,229,0,142,'rgba(251,146,60,.92)',5,-12,44);
+                sepV3QueueLabel(sepV3(0,306,0),tr('過熱警示：請立即停火','Overheat warning: stop heating now'),'#fb923c',-16);
             }
             sepV3QueueLabel(sepV3(0,410,0),tr('蒸發皿・陶瓷纖維網・三角架・酒精燈','Basin · ceramic gauze · tripod · alcohol lamp'),'#fde047',-10);
         }
 
         function sepV3BuildStep4() {
             sepV3BuildBench();
-            const dishes=[{x:-175,z:5,type:'sand'},{x:175,z:-5,type:'salt'}];
+            const dishes=[
+                {x:sepLab.sandDishX,z:sepLab.sandDishZ,type:'sand',id:'sand-dish'},
+                {x:sepLab.saltDishX,z:sepLab.saltDishZ,type:'salt',id:'salt-dish'}
+            ];
             dishes.forEach(item=>{
                 const rim=item.type==='salt'?'#f2ecd9':'#9ca3af';
                 sepV3QueueCylinder(item.x,item.z,118,25,12,'rgba(242,252,255,.12)','rgba(223,252,255,.08)',rim,36,false);
-                const count=sepLab.collected?64:42;
+                sepV3RegisterHitTarget(
+                    item.id,
+                    sepV3(item.x,30,item.z),
+                    70,
+                    item.type==='salt'?tr('拖曳食鹽皿','Drag salt dish'):tr('拖曳細砂皿','Drag sand dish')
+                );
+                const count=sepLab.collected
+                    ? (item.type==='salt'?42:50)
+                    : (item.type==='salt'?30:36);
                 for(let i=0;i<count;i++) {
-                    const angle=sepRand(i,item.type==='salt'?251:261)*Math.PI*2;
-                    const radius=Math.sqrt(sepRand(i,item.type==='salt'?252:262))*88;
-                    const point=sepV3(item.x+Math.cos(angle)*radius,30+sepRand(i,253)*30,item.z+Math.sin(angle)*radius);
-                    sepV3QueuePoint(point,item.type==='salt'?6:5,item.type==='salt'?'#f8fafc':i%2?'#aeb7ba':'#7f8b90',item.type==='salt'?'#9fb4bb':'#3f4b50',-5);
+                    const angle=i*Math.PI*(3-Math.sqrt(5))+(item.type==='salt'?.35:.08);
+                    const radius=Math.sqrt((i+.5)/count)*91;
+                    const x=item.x+Math.cos(angle)*radius;
+                    const z=item.z+Math.sin(angle)*radius;
+                    if(item.type==='salt') {
+                        sepV3QueueCrystalCube(x,26,z,5.2+sepRand(i,253)*1.6,-5);
+                    } else {
+                        sepV3QueueIrregularGrain(x,26,z,5+sepRand(i,254)*3,i+370,-5);
+                    }
                 }
                 sepV3QueueLabel(sepV3(item.x,92,item.z),item.type==='salt'?tr('食鹽晶體','Salt crystals'):tr('細砂','Fine sand'),item.type==='salt'?'#fde047':'#cbd5e1',-10);
             });
@@ -3838,6 +4037,7 @@
         function sepV3DrawScene(ctx) {
             sepWorld.primitives=[];
             sepWorld.labels=[];
+            sepWorld.hitTargets=[];
             sepV3DrawBackground(ctx);
             if(currentStep==='1')sepV3BuildStep1();
             else if(currentStep==='2')sepV3BuildStep2();
@@ -3845,6 +4045,7 @@
             else sepV3BuildStep4();
             sepWorld.primitives.sort((a,b)=>b.depth-a.depth).forEach(primitive=>primitive.draw(ctx));
             sepV3DrawLabels(ctx);
+            sepV3DrawInteractionTargets(ctx);
             ctx.save();
             ctx.fillStyle='rgba(11,26,21,.82)';
             sepRoundRect(ctx,12,12,176,32,16);
@@ -3880,15 +4081,30 @@
             if(!canvas)return;
             canvas.addEventListener('pointerdown',event=>{
                 const p=sepV3Pointer(event,canvas);
+                const firstPointer=sepWorld.pointers.size===0;
                 canvas.setPointerCapture?.(event.pointerId);
                 sepWorld.pointers.set(event.pointerId,p);
                 sepWorld.dragging=true;
                 sepWorld.dragDistance=0;
                 sepWorld.lastX=p.x;
                 sepWorld.lastY=p.y;
-                sepWorld.dragMode=sepWorld.tool==='interact'&&currentStep==='1'?'stir':'orbit';
+                if(firstPointer) {
+                    const target=sepWorld.tool==='interact'?sepV3FindHitTarget(p):null;
+                    sepWorld.activeObject=target?.id||null;
+                    if(sepWorld.tool==='orbit')sepWorld.dragMode='orbit';
+                    else if(target?.id==='rod')sepWorld.dragMode='stir';
+                    else if(target?.id==='source-beaker') {
+                        sepWorld.dragMode='pour';
+                        sepLab.filterReady=true;
+                        sepLab.filtering=true;
+                    } else if(target?.id==='alcohol-lamp')sepWorld.dragMode='lamp';
+                    else if(target?.id==='sand-dish'||target?.id==='salt-dish')sepWorld.dragMode=target.id;
+                    else sepWorld.dragMode='none';
+                }
                 if(sepWorld.pointers.size===2) {
                     sepWorld.pinchStart={distance:sepV3PointerDistance(),cameraDistance:sepWorld.distance};
+                    sepWorld.dragMode='pinch';
+                    sepWorld.activeObject=null;
                 }
                 canvas.classList.add('dragging');
                 event.preventDefault();
@@ -3910,21 +4126,43 @@
                     sepLab.stirPhase=Math.min(1,sepLab.stirPhase+Math.hypot(dx,dy)*.0018);
                     sepLab.demoStirring=false;
                     updateSepUI();
-                } else if(sepWorld.tool==='orbit') {
+                } else if(sepWorld.dragMode==='pour') {
+                    sepLab.filterReady=true;
+                    sepLab.filtering=true;
+                    sepLab.filterProgress=Math.min(1,sepLab.filterProgress+Math.hypot(dx,dy)*.0025);
+                    updateSepUI();
+                } else if(sepWorld.dragMode==='lamp') {
+                    const delta=sepV3GroundDragDelta(dx,dy);
+                    sepLab.lampX=sepV3Clamp(sepLab.lampX+delta.x,-285,285);
+                    sepLab.lampZ=sepV3Clamp(sepLab.lampZ+delta.z,-185,185);
+                    const centered=Math.hypot(sepLab.lampX,sepLab.lampZ)<62;
+                    sepLab.heating=sepLab.lampLit&&centered&&sepLab.heatProgress<.95;
+                    updateSepUI();
+                } else if(sepWorld.dragMode==='sand-dish'||sepWorld.dragMode==='salt-dish') {
+                    const delta=sepV3GroundDragDelta(dx,dy);
+                    const prefix=sepWorld.dragMode==='sand-dish'?'sand':'salt';
+                    sepLab[prefix+'DishX']=sepV3Clamp(sepLab[prefix+'DishX']+delta.x,-285,285);
+                    sepLab[prefix+'DishZ']=sepV3Clamp(sepLab[prefix+'DishZ']+delta.z,-185,185);
+                } else if(sepWorld.dragMode==='orbit') {
                     sepWorld.yaw-=dx*.009;
                     sepWorld.pitch=sepV3Clamp(sepWorld.pitch-dy*.007,-1.12,1.2);
                 }
                 event.preventDefault();
             });
             const finish=event=>{
-                const wasTap=sepWorld.dragDistance<10;
+                const completedMode=sepWorld.dragMode;
                 sepWorld.pointers.delete(event.pointerId);
                 if(sepWorld.pointers.size<2)sepWorld.pinchStart=null;
                 if(!sepWorld.pointers.size) {
+                    if(completedMode==='pour') {
+                        sepLab.filtering=sepLab.filterProgress>=1;
+                    }
                     sepWorld.dragging=false;
+                    sepWorld.dragMode='none';
+                    sepWorld.activeObject=null;
                     canvas.classList.remove('dragging');
                 }
-                if(wasTap&&sepWorld.tool==='interact'&&currentStep!=='1')sepPrimaryAction();
+                updateSepUI();
                 if(canvas.hasPointerCapture?.(event.pointerId))canvas.releasePointerCapture(event.pointerId);
             };
             canvas.addEventListener('pointerup',finish);
@@ -3944,6 +4182,42 @@
             interact?.classList.toggle('active',sepWorld.tool==='interact');
             canvas?.classList.toggle('orbit-mode',sepWorld.tool==='orbit');
             canvas?.classList.toggle('interact-mode',sepWorld.tool==='interact');
+            updateSepInteractionCopy();
+        }
+
+        function updateSepInteractionCopy() {
+            const hint=document.getElementById('sepMacroHint');
+            const note=document.getElementById('sepLabNote');
+            if(!hint||!note)return;
+            if(sepWorld.tool==='orbit') {
+                hint.textContent=tr('拖曳環視・雙指或滾輪縮放','Drag to orbit · pinch or wheel to zoom');
+                note.textContent=tr(
+                    '目前是環視模式：拖曳只會轉動視角。若要移動器材，請先選【操作器材】。',
+                    'Orbit mode is active: dragging only rotates the view. Choose [Operate apparatus] to move equipment.'
+                );
+                return;
+            }
+            const copies={
+                '1':[
+                    '拖曳黃色操作圈內的玻棒攪拌；食鹽逐漸溶解，細砂仍留在杯底。',
+                    'Drag the glass rod inside the yellow handle; salt dissolves while sand remains.'
+                ],
+                '2':[
+                    '拖曳黃色操作圈內的上方燒杯倒液；燒杯沿受限路徑傾斜，尖脣會持續接觸玻棒。',
+                    'Drag the upper beaker to pour; it follows a constrained path so the spout stays on the glass rod.'
+                ],
+                '3':[
+                    '拖曳黃色操作圈內的酒精燈。移到蒸發皿下方才會加熱；移開火源即可停止加熱。',
+                    'Drag the alcohol lamp. It heats only beneath the basin; move it away to stop heating.'
+                ],
+                '4':[
+                    '拖曳任一黃色操作圈，可重新擺放細砂皿與食鹽晶體皿；顆粒會貼著皿底一起移動。',
+                    'Drag either yellow handle to reposition the sand or salt dish; the solids remain grounded in each dish.'
+                ]
+            };
+            hint.textContent=tr('拖曳黃色操作圈內的器材','Drag apparatus inside a yellow handle');
+            const copy=copies[currentStep]||copies['1'];
+            note.textContent=tr(copy[0],copy[1]);
         }
 
         function setSepWorldTool(tool) {
@@ -3988,15 +4262,18 @@
                 if(sepLab.stirPhase>=1)sepLab.demoStirring=false;
             }
             if(currentStep==='2'&&sepLab.filtering) {
-                if(sepLab.filterProgress<1) {
-                    sepLab.filterProgress=Math.min(1,sepLab.filterProgress+.0035);
-                } else if(sepLab.filterDrainProgress<1) {
-                    sepLab.filterDrainProgress=Math.min(1,sepLab.filterDrainProgress+.0028);
-                } else {
-                    sepLab.filtering=false;
+                const manualPour=sepWorld.dragging&&sepWorld.dragMode==='pour';
+                if(!manualPour) {
+                    if(sepLab.filterProgress<1) {
+                        sepLab.filterProgress=Math.min(1,sepLab.filterProgress+.0035);
+                    } else if(sepLab.filterDrainProgress<1) {
+                        sepLab.filterDrainProgress=Math.min(1,sepLab.filterDrainProgress+.0028);
+                    } else {
+                        sepLab.filtering=false;
+                    }
                 }
             }
-            if(currentStep==='3'&&sepLab.heating) {
+            if(currentStep==='3'&&sepLab.heating&&Math.hypot(sepLab.lampX,sepLab.lampZ)<62) {
                 sepLab.heatProgress=Math.min(1,sepLab.heatProgress+.00165);
                 if(sepLab.heatProgress>=.95) {
                     sepLab.warning=true;
