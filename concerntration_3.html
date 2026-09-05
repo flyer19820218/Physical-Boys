@@ -553,14 +553,14 @@
         .hook-title { color: #55e9ff; font-size: 26px; font-weight: 700; margin-bottom: 5px; }
         .hook-text { color: #f2ecd9; font-size: 22px; font-weight: 700; line-height: 1.55; }
 
-        /* 第一分頁：固定 2.5D 燒杯母版；只有按鈕切換狀態，沒有動畫。 */
+        /* 第一分頁：固定 2.5D 燒杯母版＋小型溶質粒子動畫。 */
         .solubility-visual {
             max-width: 820px;
             margin: 20px auto 8px;
             padding: 18px 20px 20px;
             border: 2px solid rgba(85,233,255,.28);
             border-radius: 18px;
-            background: radial-gradient(circle at 50% 40%, rgba(56,189,248,.12), transparent 52%), #0b1a15;
+            background: #0b1a15;
             overflow: hidden;
         }
         .sol-state-heading {
@@ -578,31 +578,6 @@
             align-items: center;
             gap: 18px;
             min-height: 320px;
-        }
-        .sol-beaker-layout::before {
-            content: "";
-            position: absolute;
-            left: 1%;
-            right: 1%;
-            top: 64px;
-            height: 222px;
-            z-index: 0;
-            border: 2px solid #d8e1e3;
-            border-radius: 10px 10px 3px 3px;
-            background: linear-gradient(to bottom, #ffffff 0%, #f9faf8 68%, #eef2f2 100%);
-            box-shadow: 0 16px 24px rgba(2,15,12,.36);
-        }
-        .sol-beaker-layout::after {
-            content: "";
-            position: absolute;
-            left: 1%;
-            right: 1%;
-            top: 278px;
-            height: 12px;
-            z-index: 0;
-            border-radius: 0 0 5px 5px;
-            background: linear-gradient(to bottom, #d5dee1, #aeb9bd);
-            box-shadow: 0 5px 10px rgba(2,15,12,.26);
         }
         .sol-side-card {
             position: relative;
@@ -644,9 +619,9 @@
             height: 144px;
             z-index: 1;
             clip-path: polygon(0 0,100% 0,94% 100%,6% 100%);
-            background: linear-gradient(to right, rgba(56,189,248,.52), rgba(251,146,60,var(--solute-alpha,.18)) 52%, rgba(56,189,248,.50));
+            background: linear-gradient(to right, rgba(56,189,248,.28), rgba(125,211,252,.12) 52%, rgba(56,189,248,.26));
             border-top: 3px solid rgba(85,233,255,.88);
-            box-shadow: inset 0 -24px 28px rgba(14,116,144,.30);
+            box-shadow: inset 0 -24px 28px rgba(14,116,144,.22);
         }
         .sol-liquid::before {
             content: "";
@@ -658,6 +633,21 @@
             border: 2px solid rgba(177,247,255,.75);
             border-radius: 50%;
             background: rgba(85,233,255,.18);
+            z-index: 3;
+            pointer-events: none;
+        }
+        .solute-particle {
+            position: absolute;
+            left: 0;
+            top: 0;
+            z-index: 2;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #fecaca 0 18%, #ef4444 42%, #991b1b 100%);
+            box-shadow: 0 0 3px rgba(239,68,68,.58);
+            will-change: transform;
+            pointer-events: none;
         }
         .sol-crystal-layer {
             position: absolute;
@@ -711,7 +701,7 @@
             .sol-beaker-layout { grid-template-columns: 1fr; }
             .sol-side-card { order: 2; }
             .sol-beaker-wrap { order: 1; width: min(250px, 100%); height: auto; aspect-ratio: 1; }
-            .sol-beaker-layout::before { left: 0; right: 0; }
+            .solute-particle { width: 4px; height: 4px; }
         }
     </style>
 </head>
@@ -760,7 +750,7 @@
                 <div style="margin: 15px 0;">
                     <button class="btn btn-blue" id="btn-sol-15" onclick="testSolubility(15, this)" data-zh="加入 15g 糖 (未飽和)" data-en="Add 15g Sugar (Unsaturated)">加入 15g 糖 (未飽和)</button>
                     <button class="btn btn-green" id="btn-sol-36" onclick="testSolubility(36, this)" data-zh="加入 36g 糖 (剛好飽和！)" data-en="Add 36g Sugar (Just Saturated!)">加入 36g 糖 (剛好飽和！)</button>
-                    <button class="btn btn-pink" id="btn-sol-50" onclick="testSolubility(50, this)" data-zh="加入 50g 糖 (過量沉澱！)" data-en="Add 50g Sugar (Precipitates!)">加入 50g 糖 (過量沉澱！)</button>
+                    <button class="btn btn-pink" id="btn-sol-50" onclick="testSolubility(50, this)" data-zh="加入 50g 糖 (飽和＋未溶糖！)" data-en="Add 50g Sugar (Saturated + Undissolved)">加入 50g 糖 (飽和＋未溶糖！)</button>
                 </div>
                 <div class="solubility-visual" id="solubilityVisual" aria-live="polite">
                     <div class="sol-state-heading" id="solStateHeading">未飽和：15g 糖全部溶解</div>
@@ -781,7 +771,7 @@
                             <span class="sol-v" id="solRemainValue">0g</span>
                         </div>
                     </div>
-                    <div class="sol-model-note" data-zh="※ 燒杯使用統一 2.5D 儀器母版；液體顏色深淺只用來比較溶解量，真實糖水仍是無色透明。" data-en="※ The beaker uses the standard 2.5D equipment master. Liquid tint only compares dissolved amounts; real sugar solution is colorless and transparent.">※ 燒杯使用統一 2.5D 儀器母版；液體顏色深淺只用來比較溶解量，真實糖水仍是無色透明。</div>
+                    <div class="sol-model-note" data-zh="※ 紅點代表已溶解、持續無規則熱運動的溶質粒子；點數只用來比較濃度，不代表實際粒子數或比例。" data-en="※ Red dots represent dissolved solute particles in continuous random thermal motion. Dot counts compare concentration only; they are not the actual particle count or scale.">※ 紅點代表已溶解、持續無規則熱運動的溶質粒子；點數只用來比較濃度，不代表實際粒子數或比例。</div>
                 </div>
                 <div id="solText1" class="result-box" style="border-color: var(--chalk-white);">
                     <!-- JS 動態寫入 -->
@@ -791,13 +781,13 @@
             <div class="grid-2">
                 <div class="info-card">
                     <h3 style="color: var(--chalk-yellow); margin-top: 0;" data-zh="🟢 未飽和時：實際溶解量 ＜ 最大極限" data-en="🟢 Unsaturated: Actual Dissolved < Max Limit">🟢 未飽和時：實際溶解量 ＜ 最大極限</h3>
-                    <p data-zh="當你在 100g 水中只加 15g 糖時，因為還沒達到 36g 的上限，所以糖全部融化！" data-en="When you add only 15g sugar to 100g water, it all dissolves because it hasn't reached the 36g limit!">當你在 100g 水中只加 15g 糖時，因為還沒達到 36g 的上限，所以糖全部融化！</p>
+                    <p data-zh="當你在 100g 水中只加 15g 糖時，因為還沒達到 36g 的上限，所以糖全部溶解！" data-en="When you add only 15g sugar to 100g water, it all dissolves because it hasn't reached the 36g limit!">當你在 100g 水中只加 15g 糖時，因為還沒達到 36g 的上限，所以糖全部溶解！</p>
                     <p style="margin-top: 10px; color: var(--chalk-blue);" data-zh="👉 此時<strong class='hl-green'>「實際溶解量 ＝ 15g」</strong>，但這杯水的<strong class='hl-yellow'>「溶解度依然是 36g / 100g 水」</strong>！極限上限不會因為你加得少而改變！" data-en="👉 At this point, <strong class='hl-green'>'Actual Dissolved Amount = 15g'</strong>, but the water's <strong class='hl-yellow'>'Solubility is still 36g / 100g water'</strong>! The limit doesn't change just because you added less!">👉 此時<strong class="hl-green">「實際溶解量 ＝ 15g」</strong>，但這杯水的<strong class="hl-yellow">「溶解度依然是 36g / 100g 水」</strong>！極限上限不會因為你加得少而改變！</p>
                 </div>
                 <div class="info-card info-card-pink">
                     <h3 style="color: var(--chalk-pink); margin-top: 0;" data-zh="🔴 達到飽和時：溶解量 ＝ 當前水量的極限" data-en="🔴 Saturated: Dissolved = Limit for current water">🔴 達到飽和時：溶解量 ＝ 當前水量的極限</h3>
-                    <p data-zh="當你在 100g 水中倒進 50g 糖時，水最多就是只能融化 36g，多出來的 14g 只能以晶體狀態沉在杯底！" data-en="When you pour 50g sugar into 100g water, the water can only melt 36g max. The extra 14g must sink to the bottom as crystals!">當你在 100g 水中倒進 50g 糖時，水最多就是只能融化 36g，多出來的 14g 只能以晶體狀態沉在杯底！</p>
-                    <p style="margin-top: 10px; color: var(--chalk-yellow);" data-zh="👉 此時<strong class='hl-pink'>「實際溶解量 ＝ 36g」</strong>，絕不是 50g！而「溶解度」依然維持 <code>36g / 100g 水</code>。沉澱在底部的 14g 不能算入溶解量！" data-en="👉 At this point, <strong class='hl-pink'>'Actual Dissolved Amount = 36g'</strong>, absolutely NOT 50g! And 'Solubility' remains <code>36g / 100g water</code>. The 14g precipitate doesn't count towards dissolved amount!">👉 此時<strong class="hl-pink">「實際溶解量 ＝ 36g」</strong>，絕不是 50g！而「溶解度」依然維持 <code>36g / 100g 水</code>。沉澱在底部的 14g 不能算入溶解量！</p>
+                    <p data-zh="當你在 100g 水中倒進 50g 糖時，最多只能溶解 36g；多出的 14g 仍是未溶砂糖，留在杯底！" data-en="When 50g of sugar is added to 100g of water, only 36g can dissolve. The extra 14g remains as undissolved sugar at the bottom.">當你在 100g 水中倒進 50g 糖時，最多只能溶解 36g；多出的 14g 仍是未溶砂糖，留在杯底！</p>
+                    <p style="margin-top: 10px; color: var(--chalk-yellow);" data-zh="👉 此時<strong class='hl-pink'>「實際溶解量 ＝ 36g」</strong>，絕不是 50g！而「溶解度」依然維持 <code>36g / 100g 水</code>。杯底未溶的 14g 不能算入溶解量！" data-en="👉 At this point, <strong class='hl-pink'>'Actual Dissolved Amount = 36g'</strong>, absolutely NOT 50g! And 'Solubility' remains <code>36g / 100g water</code>. The undissolved 14g at the bottom does not count toward the dissolved amount.">👉 此時<strong class="hl-pink">「實際溶解量 ＝ 36g」</strong>，絕不是 50g！而「溶解度」依然維持 <code>36g / 100g 水</code>。杯底未溶的 14g 不能算入溶解量！</p>
                 </div>
             </div>
         </section>
@@ -1036,6 +1026,9 @@
         // --- 核心變數與雙語邏輯 ---
         let currentLang = 'zh';
         let currentSolSugarAmount = 15;
+        let soluteMotionFrame = null;
+        let soluteMotionLast = 0;
+        let soluteParticles = [];
 
         function tr(zh, en) {
             return currentLang === 'en' ? en : zh;
@@ -1084,7 +1077,97 @@
             box.querySelector(`[data-content="${step}"]`).classList.add('active');
         }
 
-        // --- 2. 第一分頁：溶解度 vs 溶解量（靜態 2.5D 燒杯） ---
+        // --- 2. 第一分頁：溶解度 vs 溶解量（2.5D 燒杯＋溶質無規則熱運動） ---
+        function syncSoluteParticles(actualDissolved) {
+            const liquid = document.getElementById('solLiquid');
+            if(!liquid) return;
+
+            // 15g → 8 顆、36g → 18 顆；只表達相對濃度，不代表真實粒子數。
+            const targetCount = Math.max(1, Math.round(actualDissolved / 2));
+            if(soluteParticles.length !== targetCount) {
+                liquid.querySelectorAll('.solute-particle').forEach(node => node.remove());
+                soluteParticles = Array.from({length: targetCount}, (_, index) => {
+                    const node = document.createElement('span');
+                    node.className = 'solute-particle';
+                    node.setAttribute('aria-hidden', 'true');
+                    liquid.appendChild(node);
+                    const angle = ((index * 137.5) % 360) * Math.PI / 180;
+                    const speed = .025 + (index % 4) * .006;
+                    return {
+                        node,
+                        x: .12 + ((index * .61803398875) % 1) * .76,
+                        y: .10 + ((index * .41421356237) % 1) * .78,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        turnIn: .14 + (index % 5) * .07
+                    };
+                });
+            }
+
+            if(!soluteMotionFrame && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                soluteMotionLast = performance.now();
+                soluteMotionFrame = requestAnimationFrame(animateSoluteParticles);
+            } else {
+                positionSoluteParticles();
+            }
+        }
+
+        function positionSoluteParticles() {
+            const liquid = document.getElementById('solLiquid');
+            if(!liquid) return;
+            const width = liquid.clientWidth;
+            const height = liquid.clientHeight;
+            soluteParticles.forEach(particle => {
+                particle.node.style.transform = `translate(${particle.x * width}px, ${particle.y * height}px)`;
+            });
+        }
+
+        function animateSoluteParticles(timestamp) {
+            soluteMotionFrame = null;
+            const tab1 = document.getElementById('tab1');
+            const liquid = document.getElementById('solLiquid');
+            if(!tab1?.classList.contains('active') || !liquid) return;
+
+            const dt = Math.min((timestamp - soluteMotionLast) / 1000, .04) || .016;
+            soluteMotionLast = timestamp;
+            const width = Math.max(1, liquid.clientWidth);
+            const height = Math.max(1, liquid.clientHeight);
+
+            soluteParticles.forEach(particle => {
+                particle.turnIn -= dt;
+                if(particle.turnIn <= 0) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = .024 + Math.random() * .026;
+                    particle.vx = particle.vx * .28 + Math.cos(angle) * speed * .72;
+                    particle.vy = particle.vy * .28 + Math.sin(angle) * speed * .72;
+                    particle.turnIn = .14 + Math.random() * .34;
+                }
+
+                particle.x += particle.vx * dt;
+                particle.y += particle.vy * dt;
+
+                const radiusX = 3 / width;
+                const radiusY = 3 / height;
+                const sideInset = .05 + particle.y * .025;
+                const minX = sideInset + radiusX;
+                const maxX = 1 - sideInset - radiusX;
+                const minY = .07 + radiusY;
+                const maxY = .91 - radiusY;
+                if(particle.x < minX || particle.x > maxX) {
+                    particle.x = Math.min(maxX, Math.max(minX, particle.x));
+                    particle.vx *= -1;
+                }
+                if(particle.y < minY || particle.y > maxY) {
+                    particle.y = Math.min(maxY, Math.max(minY, particle.y));
+                    particle.vy *= -1;
+                }
+
+                particle.node.style.transform = `translate(${particle.x * width}px, ${particle.y * height}px)`;
+            });
+
+            soluteMotionFrame = requestAnimationFrame(animateSoluteParticles);
+        }
+
         function testSolubility(addedMass, btnEl) {
             currentSolSugarAmount = addedMass;
             document.querySelectorAll('#tab1 .btn').forEach(b => b.classList.remove('active'));
@@ -1102,7 +1185,7 @@
             const heading = document.getElementById('solStateHeading');
             document.getElementById('solActualValue').textContent = `${actualDissolved}g`;
             document.getElementById('solRemainValue').textContent = `${ppt}g`;
-            liquid.style.setProperty('--solute-alpha', (.12 + actualDissolved / 36 * .48).toFixed(2));
+            syncSoluteParticles(actualDissolved);
             crystalLayer.replaceChildren();
             const sugarGrainLayout = [
                 {left:16, top:38, size:12, rotate:-7},
@@ -1130,36 +1213,36 @@
                 heading.textContent=tr('未飽和：15g 糖全部溶解，但溶解度仍是 36g / 100g 水','Unsaturated: all 15g dissolves, while solubility remains 36g per 100g water');
                 textEl.innerHTML = tr(
                     `🟢 <strong class="hl-green">未飽和狀態分析：</strong><br>
-                    100g 水在 20°C 時的極限上限是 36g，你加了 15g 糖，全部融化！<br>
-                    👉 <strong class="hl-yellow">微觀觀察：</strong> 此時【實際溶解量 ＝ 15g】，糖水呈現<span class="hl-orange">淡淡的橘紅色</span>。如果再繼續加糖，顏色還會變深！`,
+                    100g 水在 20°C 時的溶解上限是 36g；加入 15g 糖後，糖全部溶解。<br>
+                    👉 <strong class="hl-yellow">粒子模型：</strong> 此時【實際溶解量 ＝ 15g】，紅色溶質粒子較少，並在水中持續做無規則熱運動。`,
                     
                     `🟢 <strong class="hl-green">Unsaturated State Analysis:</strong><br>
-                    100g water's limit at 20°C is 36g. You added 15g sugar, it all melts!<br>
-                    👉 <strong class="hl-yellow">Microscopic View:</strong> Now [Actual Dissolved = 15g]. The water shows a <span class="hl-orange">light orange-red</span> color. If you add more sugar, the color will deepen!`
+                    The solubility limit in 100g of water at 20°C is 36g. All 15g of added sugar dissolves.<br>
+                    👉 <strong class="hl-yellow">Particle Model:</strong> [Actual Dissolved = 15g]. Fewer red solute particles move randomly through the water.`
                 );
             } else if(addedMass === 36) {
                 heading.style.color='#fde047';
                 heading.textContent=tr('恰好飽和：實際溶解量 36g，正好碰到溶解度上限','Just saturated: 36g actually dissolves, exactly reaching the solubility limit');
                 textEl.innerHTML = tr(
                     `🟡 <strong class="hl-yellow">恰好飽和狀態分析：</strong><br>
-                    你加了 36g 糖，剛好達到 100g 水在 20°C 時能消化的最大極限！<br>
-                    👉 <strong class="hl-yellow">微觀觀察：</strong> 此時【實際溶解量 ＝ 36g】，溶液的橘紅色<span class="hl-orange">達到最深、最濃的極限</span>！若再多加 0.1g 糖，水也吃不下了！`,
+                    加入 36g 糖，剛好達到 100g 水在 20°C 時的溶解上限。<br>
+                    👉 <strong class="hl-yellow">粒子模型：</strong> 此時【實際溶解量 ＝ 36g】，紅色溶質粒子的密度達到本頁模型的最高值；再加糖就會留下未溶固體。`,
 
                     `🟡 <strong class="hl-yellow">Exactly Saturated State Analysis:</strong><br>
-                    You added 36g sugar, hitting the exact max limit 100g water can digest at 20°C!<br>
-                    👉 <strong class="hl-yellow">Microscopic View:</strong> Now [Actual Dissolved = 36g]. The orange-red color <span class="hl-orange">reaches its darkest, most concentrated limit</span>! Adding even 0.1g more sugar will result in precipitate!`
+                    Adding 36g of sugar exactly reaches the solubility limit in 100g of water at 20°C.<br>
+                    👉 <strong class="hl-yellow">Particle Model:</strong> [Actual Dissolved = 36g]. Red solute-particle density reaches this model's maximum; additional sugar remains undissolved.`
                 );
             } else {
                 heading.style.color='#f472b6';
-                heading.textContent=tr(`超過上限：只溶解 36g，杯底留下 ${ppt}g 晶體`,`Above the limit: only 36g dissolves; ${ppt}g of crystals remains at the bottom`);
+                heading.textContent=tr(`飽和＋未溶糖：只溶解 36g，杯底留下 ${ppt}g`,`Saturated + undissolved sugar: only 36g dissolves; ${ppt}g remains at the bottom`);
                 textEl.innerHTML = tr(
-                    `🔴 <strong class="hl-pink">過量沉澱狀態分析 (段考陷阱！)：</strong><br>
-                    你硬加了 50g 糖，但 100g 的水最多就是只能融化 36g，多出來的 <strong class="hl-yellow">14g 只能變成橘紅色的正方形晶體沉澱吐在杯底</strong>！<br>
-                    👉 <strong class="hl-pink">名師鐵則：</strong> 此時【實際溶解量依然是 36g】，溶液顏色<strong class="hl-orange">沒有變得更深</strong>！這杯糖水和【剛好加 36g】的那杯一模一樣濃！`,
+                    `🔴 <strong class="hl-pink">飽和並有未溶糖 (段考陷阱！)：</strong><br>
+                    加入 50g 糖，但 100g 水最多只能溶解 36g；多出的 <strong class="hl-yellow">14g 仍以正方形未溶糖模型留在杯底</strong>。<br>
+                    👉 <strong class="hl-pink">核心規則：</strong>【實際溶解量仍是 36g】，所以紅點數量與【剛好加入 36g】完全相同，兩杯溶液的濃度也相同。`,
 
-                    `🔴 <strong class="hl-pink">Saturated with Precipitate Analysis (Exam Trap!):</strong><br>
-                    You forced in 50g sugar, but 100g water can only melt 36g max. The extra <strong class="hl-yellow">14g becomes orange-red crystal precipitate at the bottom</strong>!<br>
-                    👉 <strong class="hl-pink">Master Rule:</strong> Now [Actual Dissolved is STILL 36g], the solution color <strong class="hl-orange">did NOT get darker</strong>! This cup is exactly as concentrated as the 36g one!`
+                    `🔴 <strong class="hl-pink">Saturated with Undissolved Sugar (Exam Trap!):</strong><br>
+                    Of 50g added sugar, only 36g can dissolve in 100g of water. The extra <strong class="hl-yellow">14g remains at the bottom as square undissolved-sugar symbols</strong>.<br>
+                    👉 <strong class="hl-pink">Core Rule:</strong> [Actual Dissolved remains 36g], so the red-dot count matches the 36g state exactly; both solutions have the same concentration.`
                 );
             }
         }
