@@ -978,7 +978,7 @@
     const canvas4 = document.getElementById('canvas-tab4');
     const ctx4 = canvas4.getContext('2d');
     let train4 = { state: 'constant', offset: 0, speed: 220, tilt: 0, targetTilt: 0, wheelAngle: 0 };
-    const cam4 = { pivotX: 500, pivotY: 195, pivotZ: 0, yaw: -0.34, pitch: -0.20, dist: 2100, focal: 1850, cx: 500, cy: 225, auto: true, baseYaw: -0.34 };
+    const cam4 = { pivotX: 500, pivotY: 195, pivotZ: 0, yaw: -0.34, pitch: 0.26, dist: 2100, focal: 1850, cx: 500, cy: 225, auto: true, baseYaw: -0.34 };
     attachOrbit(canvas4, cam4, { lockPitch: true });
 
     function setTrainState(st) {
@@ -993,15 +993,6 @@
       const r = deg * Math.PI / 180, c = Math.cos(r), s = Math.sin(r);
       return { x: x * c - y * s, y: x * s + y * c };
     }
-
-    // April 的三種表情：等速站穩、急加速被拉著、煞車嚇一跳
-    const aprilPose = {};
-    ['constant:normal', 'accel:struggling', 'brake:shocked'].forEach(pair => {
-      const [state, file] = pair.split(':');
-      const im = new Image();
-      im.src = `assets/characters/april/${file}.png`;
-      aprilPose[state] = im;
-    });
 
     let lastT4 = null;
     function animateTab4(now) {
@@ -1152,30 +1143,20 @@
           ctx4.beginPath(); ctx4.moveTo(hb.x, hb.y); ctx4.lineTo(hb2.x, hb2.y); ctx4.stroke();
           ctx4.restore();
 
-          const poseImg = aprilPose[train4.state] || aprilPose.constant;
-          if (poseImg && poseImg.complete && poseImg.naturalWidth) {
-            const hPx = 168 * hip.scale;
-            const wPx = hPx * poseImg.naturalWidth / poseImg.naturalHeight;
-            ctx4.save();
-            ctx4.translate(hip.x, hip.y);
-            ctx4.rotate(train4.tilt * Math.PI / 180);
-            ctx4.shadowColor = 'rgba(0,0,0,0.45)'; ctx4.shadowBlur = 14; ctx4.shadowOffsetY = 6;
-            ctx4.drawImage(poseImg, -wPx / 2, -hPx, wPx, hPx);
-            ctx4.restore();
-          } else {
-            const bodyLocal = [{ p: [0, -60], to: [0, -125] }, { p: [0, -105], to: [25, -135] }, { p: [0, -60], to: [-18, 0] }, { p: [0, -60], to: [18, 0] }];
-            ctx4.save(); ctx4.strokeStyle = '#ffe066'; ctx4.lineWidth = 7; ctx4.lineCap = 'round';
-            bodyLocal.forEach(seg => {
-              const a = rot2D(seg.p[0], seg.p[1], train4.tilt), b = rot2D(seg.to[0], seg.to[1], train4.tilt);
-              const pa = P(px + a.x, py + a.y, pz), pb = P(px + b.x, py + b.y, pz);
-              ctx4.beginPath(); ctx4.moveTo(pa.x, pa.y); ctx4.lineTo(pb.x, pb.y); ctx4.stroke();
-            });
-            const hl = rot2D(0, -142, train4.tilt);
-            const hp = P(px + hl.x, py + hl.y, pz);
-            ctx4.fillStyle = '#ffe066';
-            ctx4.beginPath(); ctx4.arc(hp.x, hp.y, Math.max(4, 17 * hp.scale), 0, Math.PI * 2); ctx4.fill();
-            ctx4.restore();
-          }
+          // 棒棒人：以髖部為樞紐隨慣性傾倒（頭、身體、雙腳）
+          const bodyLocal = [{ p: [0, -60], to: [0, -125] }, { p: [0, -105], to: [25, -135] }, { p: [0, -60], to: [-18, 0] }, { p: [0, -60], to: [18, 0] }];
+          ctx4.save(); ctx4.strokeStyle = '#ffe066'; ctx4.lineWidth = 7; ctx4.lineCap = 'round';
+          ctx4.shadowColor = 'rgba(0,0,0,0.4)'; ctx4.shadowBlur = 10; ctx4.shadowOffsetY = 4;
+          bodyLocal.forEach(seg => {
+            const a = rot2D(seg.p[0], seg.p[1], train4.tilt), b = rot2D(seg.to[0], seg.to[1], train4.tilt);
+            const pa = P(px + a.x, py + a.y, pz), pb = P(px + b.x, py + b.y, pz);
+            ctx4.beginPath(); ctx4.moveTo(pa.x, pa.y); ctx4.lineTo(pb.x, pb.y); ctx4.stroke();
+          });
+          const hl = rot2D(0, -142, train4.tilt);
+          const hp = P(px + hl.x, py + hl.y, pz);
+          ctx4.fillStyle = '#ffe066';
+          ctx4.beginPath(); ctx4.arc(hp.x, hp.y, Math.max(4, 17 * hp.scale), 0, Math.PI * 2); ctx4.fill();
+          ctx4.restore();
         }
       });
 
