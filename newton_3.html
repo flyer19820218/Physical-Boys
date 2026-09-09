@@ -32,9 +32,16 @@
       transition: opacity .7s ease, visibility .7s ease;
     }
     .intro-screen::before {
-      content: ""; position: absolute; inset: -3%; z-index: -3;
+      content: ""; position: absolute; inset: -3%; z-index: -4;
       background: #0b1a15 url("assets/covers/newton_3_cover_v1.png") center/cover no-repeat;
       animation: introZoom 9s ease-out both;
+    }
+    /* 🎬 影片開場：靜音＋playsinline 才會在 iPad 上自動播放；
+       影片還沒載完或播不出來時，下面那張 poster 會自動頂上，不會開天窗 */
+    .intro-video {
+      position: absolute; inset: 0; z-index: -3;
+      width: 100%; height: 100%; object-fit: cover;
+      pointer-events: none; background: #0b1a15;
     }
     .intro-screen::after {
       content: ""; position: absolute; inset: 0; z-index: -2;
@@ -284,7 +291,12 @@
 </head>
 <body>
   <!-- 🎬 電影式單元封面（無文字，僅推鏡＋暗角，點擊或按任意鍵退場） -->
-  <div id="introScreen" class="intro-screen" role="dialog" aria-modal="true" aria-label="牛頓第三運動定律單元封面" tabindex="0"></div>
+  <div id="introScreen" class="intro-screen" role="dialog" aria-modal="true" aria-label="牛頓第三運動定律單元封面" tabindex="0">
+    <video class="intro-video" id="introVideo" autoplay muted playsinline preload="auto"
+           poster="assets/covers/newton_3_cover_v1.png" aria-hidden="true">
+      <source src="assets/covers/newton_3_cover_v1.mp4" type="video/mp4">
+    </video>
+  </div>
 
   <!-- 🌟 右上角橫向懸浮雙語切換器 -->
   <div class="floating-lang-container">
@@ -659,6 +671,15 @@
       redrawStatic();
     }
     function tr(zh, en) { return currentLang === 'en' ? en : zh; }
+
+    // 🎬 影片開場：使用者若開啟「減少動態」就停在靜止畫面；自動播放被擋也不影響教學
+    (function initIntroVideo() {
+      const v = document.getElementById('introVideo');
+      if (!v) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { v.removeAttribute('autoplay'); v.pause(); return; }
+      const play = v.play();
+      if (play && play.catch) play.catch(() => {});
+    })();
 
     // 🎬 電影式運鏡退場
     function dismissIntro() {
