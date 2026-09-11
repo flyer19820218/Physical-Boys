@@ -1052,6 +1052,158 @@
             updateCrystalCalc();
         }
 
+
+        /* ==================================================================
+           以下兩個函式原本被呼叫五次（兩個滑桿的 oninput、初始化、
+           setLang、switchTab）卻從未定義，導致分頁三的曲線整張空白、
+           分頁四的滑桿沒反應、切換語言時中途丟錯。此處補回。
+           ================================================================== */
+
+        /* 溶解度資料：每 100 g 水，0～80°C 每 10°C 一筆（國中課本常用值）
+           ─ 硝酸鉀 KNO₃：溫度愈高胃口愈大，曲線陡升
+           ─ 食鹽 NaCl：幾乎是一條水平線
+           ─ 氫氧化鈣 Ca(OH)₂：少數「溫度愈高反而愈難溶」的固體
+             （真實值只有零點幾克，畫在同一張圖上會貼著底線看不出來，
+              所以曲線放大 100 倍並在圖上標明；下方數字顯示的是真實值） */
+        const SOL_TEMPS = [0, 10, 20, 30, 40, 50, 60, 70, 80];
+        const SOL_DATA = {
+            kno3: { g: [13, 21, 30, 45, 64, 85, 110, 138, 169], color: '#4ade80',
+                    zh: '硝酸鉀 KNO₃', en: 'KNO₃', scale: 1 },
+            nacl: { g: [35.7, 35.8, 36.0, 36.3, 36.6, 37.0, 37.3, 37.8, 38.4], color: '#fde047',
+                    zh: '食鹽 NaCl', en: 'NaCl', scale: 1 },
+            caoh: { g: [0.185, 0.176, 0.165, 0.153, 0.141, 0.128, 0.116, 0.105, 0.094], color: '#38bdf8',
+                    zh: 'Ca(OH)₂', en: 'Ca(OH)₂', scale: 100 }
+        };
+        const SOL_YMAX = 180;
+
+        function updateTempCurve() {
+            const range = document.getElementById('rangeTemp');
+            const cv = document.getElementById('curveCanvas');
+            if (!range || !cv) return;
+
+            const t = parseInt(range.value, 10);
+            const i = SOL_TEMPS.indexOf(t) >= 0 ? SOL_TEMPS.indexOf(t) : Math.round(t / 10);
+
+            const valTemp = document.getElementById('valTemp');
+            if (valTemp) valTemp.textContent = t;
+            const setVal = (id, v, digits) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = v.toFixed(digits);
+            };
+            setVal('kno3Val', SOL_DATA.kno3.g[i], 0);
+            setVal('naclVal', SOL_DATA.nacl.g[i], 1);
+            setVal('caohVal', SOL_DATA.caoh.g[i], 3);
+
+            const ctx = cv.getContext('2d');
+            const L = 64, R = 128, T = 44, B = 52;
+            const W = cv.width - L - R, H = cv.height - T - B;
+            const px = temp => L + (temp / 80) * W;
+            const py = gram => T + (1 - Math.min(gram, SOL_YMAX) / SOL_YMAX) * H;
+
+            ctx.clearRect(0, 0, cv.width, cv.height);
+            ctx.save();
+            ctx.font = 'bold 20px "Noto Sans TC", sans-serif';
+            ctx.fillStyle = '#f1f5f9';
+            ctx.textAlign = 'center';
+            ctx.fillText(tr('每 100 g 水最多能溶解幾公克', 'Grams dissolved per 100 g of water'), L + W / 2, 26);
+
+            /* 格線與刻度 */
+            ctx.font = 'bold 17px "JetBrains Mono", "Noto Sans TC", monospace';
+            ctx.strokeStyle = 'rgba(241,245,249,0.16)';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = '#8fa498';
+            ctx.textAlign = 'right';
+            for (let g = 0; g <= SOL_YMAX; g += 30) {
+                const y = py(g);
+                ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + W, y); ctx.stroke();
+                ctx.fillText(String(g), L - 10, y + 6);
+            }
+            ctx.textAlign = 'center';
+            for (let temp = 0; temp <= 80; temp += 10) {
+                const x = px(temp);
+                ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, T + H); ctx.stroke();
+                if (temp % 20 === 0) ctx.fillText(String(temp), x, T + H + 26);
+            }
+
+            /* 座標軸 */
+            ctx.strokeStyle = 'rgba(241,245,249,0.55)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(L, T); ctx.lineTo(L, T + H); ctx.lineTo(L + W, T + H);
+            ctx.stroke();
+            ctx.font = 'bold 18px "Noto Sans TC", sans-serif';
+            ctx.fillStyle = '#8fa498';
+            ctx.fillText(tr('水溫（°C）', 'Temperature (°C)'), L + W / 2, T + H + 48);
+            ctx.save();
+            ctx.translate(20, T + H / 2); ctx.rotate(-Math.PI / 2);
+            ctx.fillText(tr('溶解度（g）', 'Solubility (g)'), 0, 0);
+            ctx.restore();
+
+            /* 目前溫度的參考線 */
+            const xNow = px(t);
+            ctx.save();
+            ctx.strokeStyle = 'rgba(253,224,71,0.75)';
+            ctx.lineWidth = 2; ctx.setLineDash([8, 7]);
+            ctx.beginPath(); ctx.moveTo(xNow, T); ctx.lineTo(xNow, T + H); ctx.stroke();
+            ctx.restore();
+
+            /* 三條曲線 */
+            Object.keys(SOL_DATA).forEach(key => {
+                const d = SOL_DATA[key];
+                ctx.save();
+                ctx.strokeStyle = d.color;
+                ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+                if (d.scale !== 1) ctx.setLineDash([10, 6]);
+                ctx.beginPath();
+                SOL_TEMPS.forEach((temp, k) => {
+                    const x = px(temp), y = py(d.g[k] * d.scale);
+                    if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                ctx.restore();
+
+                /* 目前溫度的圓點 */
+                const y = py(d.g[i] * d.scale);
+                ctx.save();
+                ctx.fillStyle = d.color;
+                ctx.strokeStyle = '#0f2a22'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(xNow, y, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.restore();
+            });
+
+            /* 曲線名稱：硝酸鉀與食鹽標在右端；氫氧化鈣標在線的上方並註明放大倍率 */
+            ctx.font = 'bold 19px "Noto Sans TC", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillStyle = SOL_DATA.kno3.color;
+            ctx.fillText(tr(SOL_DATA.kno3.zh, SOL_DATA.kno3.en), L + W + 10, py(SOL_DATA.kno3.g[8]) + 6);
+            ctx.fillStyle = SOL_DATA.nacl.color;
+            ctx.fillText(tr(SOL_DATA.nacl.zh, SOL_DATA.nacl.en), L + W + 10, py(SOL_DATA.nacl.g[8]) + 6);
+            ctx.fillStyle = SOL_DATA.caoh.color;
+            ctx.font = 'bold 17px "Noto Sans TC", sans-serif';
+            ctx.textAlign = 'center';
+            /* 標在偏右處，避開左半邊會穿過來的硝酸鉀曲線 */
+            ctx.fillText(tr('Ca(OH)₂（曲線放大 100 倍才看得見）', 'Ca(OH)₂ (curve magnified ×100)'),
+                         L + W * 0.62, py(SOL_DATA.caoh.g[5] * 100) - 18);
+            ctx.restore();
+        }
+
+        function updateCrystalCalc() {
+            const range = document.getElementById('rangeWaterMass');
+            if (!range) return;
+            const water = parseInt(range.value, 10);
+
+            /* 情境固定為：硝酸鉀飽和溶液由 60°C 降到 20°C
+               60°C 溶解度 110 g／100 g 水，20°C 溶解度 30 g／100 g 水 → 胃口差額 80 g */
+            const DIFF = SOL_DATA.kno3.g[6] - SOL_DATA.kno3.g[2];   // 110 - 30 = 80
+            const crystal = DIFF / 100 * water;
+
+            const put = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+            put('valWaterMass', water);
+            put('showWaterMass', water);
+            put('showWaterMass2', water);
+            put('showCrystalResult', (Math.round(crystal * 10) / 10) + ' g');
+        }
+
         // --- 1. 分頁切換 ---
         function switchTab(tabId, button) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
