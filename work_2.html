@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title data-zh="物理黑板教室：動能與位能" data-en="Physics Chalkboard: Kinetic & Potential Energy">物理黑板教室：動能與位能</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -382,9 +385,427 @@
     .nav-tabs { grid-template-columns: 1fr; }
     .panel { padding: 16px; border-width: 2px; }
   }
+
+  /* ==================================================================
+     V5 大憲章升級層（外層加法：只加樣式，不改原有繪圖與物理邏輯）
+     ================================================================== */
+
+  /* ── 第二定律 2.3：字級拉回 V5 標準（22～48px）── */
+  body { font-size: 22px; }
+  h1 { font-size: 48px; }
+  h2 { font-size: 32px; }
+  .subtitle { font-size: 24px; }
+  .sub-tag { font-size: 22px; }
+  /* ── 分頁鈕：牛頓力學同款雙行標題（問句在上，主題＋公式在下）── */
+  .tab-btn {
+    font-size: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 136px;
+    padding: 20px 12px;
+    line-height: 1.4;
+  }
+  .tab-hook { font-size: 22px; font-weight: 700; line-height: 1.38; }
+  .tab-sub  { font-size: 17px; font-weight: 700; line-height: 1.3; opacity: 0.82; }
+  /* 選中的分頁：牛頓力學同款實心黃底深字 */
+  .tab-btn.active {
+    background: var(--chalk-yellow);
+    color: var(--bg-blackboard);
+    border: 3px solid var(--chalk-yellow);
+    box-shadow: 0 0 20px rgba(255, 224, 102, 0.5);
+  }
+  .tab-btn.active .tab-hook,
+  .tab-btn.active .tab-sub { color: var(--bg-blackboard); }
+  .tab-btn.active .tab-sub { opacity: 0.78; }
+  /* 五個分頁排成一整排 */
+  .nav-tabs { grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .card-title { font-size: 26px; }
+  .concept-box { font-size: 22px; line-height: 1.85; }
+  .explain-box { font-size: 22px; }
+  .action-btn { font-size: 22px; min-height: 52px; }
+  .action-btn:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .action-btn:disabled:hover { background: var(--bg-blackboard); color: var(--chalk-pink); transform: none; }
+  .control-group { font-size: 22px; }
+  .language-label { font-size: 22px; }
+  .lang-btn { font-size: 22px; min-height: 52px; }
+
+  /* ── 第七定律 7.2：每張畫布用自己的長寬比，禁止非等比拉伸 ──
+     原本全域 canvas{aspect-ratio:1000/520} 會把 1000×360 的彈簧畫布
+     垂直拉長 44%，木塊與中文字都被拉高。改成逐張指定。 */
+  #gravityCanvas { aspect-ratio: 1000 / 520; }
+  #springCanvas  { aspect-ratio: 1000 / 360; }
+  #kineticCanvas { aspect-ratio: 1000 / 460; }
+
+  /* ── 第五定律：曉臻老師 Hook ── */
+  .hook-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    background: rgba(77, 210, 255, 0.08);
+    border: 2px solid rgba(77, 210, 255, 0.4);
+    border-left: 6px solid var(--chalk-cyan);
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+  }
+  .xiaozhen-logo {
+    width: 88px;
+    height: 88px;
+    flex: 0 0 88px;
+    overflow: hidden;
+    border: 4px solid #55e9ff;
+    border-radius: 50%;
+    background: rgba(11, 26, 21, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+  }
+  .xiaozhen-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .hook-content { flex: 1 1 auto; min-width: 0; }
+  .hook-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--chalk-cyan);
+    margin-bottom: 6px;
+  }
+  .hook-text { font-size: 22px; line-height: 1.75; color: var(--chalk-white); }
+  .hook-text b { color: var(--chalk-yellow); }
+
+  /* ── 實驗室：控制列與滑桿 ── */
+  .lab-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 26px;
+    justify-content: center;
+    align-items: center;
+    margin: 16px 0 10px;
+  }
+  .ctl { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
+  .ctl label {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--chalk-cyan);
+    white-space: nowrap;
+  }
+  .ctl input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 190px;
+    height: 10px;
+    min-height: 44px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+    outline: none;
+    touch-action: manipulation;
+  }
+  .ctl input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--chalk-yellow);
+    border: 3px solid var(--bg-blackboard);
+    cursor: pointer;
+  }
+  .ctl input[type="range"]::-moz-range-thumb {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--chalk-yellow);
+    border: 3px solid var(--bg-blackboard);
+    cursor: pointer;
+  }
+  .readout {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--chalk-yellow);
+    background: rgba(11, 26, 21, 0.6);
+    border: 2px solid rgba(255, 224, 102, 0.5);
+    border-radius: 8px;
+    padding: 4px 12px;
+    min-width: 108px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* ── 實驗室：數據列 ── */
+  .lab-hud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin: 14px 0 0;
+  }
+  .lab-stat {
+    background: rgba(11, 26, 21, 0.6);
+    border: 2px solid var(--chalk-line);
+    border-radius: 10px;
+    padding: 10px 18px;
+    min-width: 172px;
+    text-align: center;
+  }
+  .lab-stat .k {
+    display: block;
+    font-size: 20px;
+    color: var(--chalk-dim);
+    line-height: 1.4;
+  }
+  .lab-stat .v {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--chalk-yellow);
+    line-height: 1.3;
+  }
+  .lab-stat.big { border-color: var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.25); }
+  .lab-stat.big .v { font-size: 34px; }
+  .lab-stat.cyan .v { color: var(--chalk-cyan); }
+  .lab-stat.green .v { color: var(--chalk-green); }
+  .lab-stat.pink .v { color: var(--chalk-pink); }
+
+  /* ── 模式切換小按鈕 ── */
+  .mode-btn {
+    min-height: 52px;
+    padding: 10px 20px;
+    font-size: 22px;
+    font-weight: 700;
+    font-family: "Noto Sans TC", sans-serif;
+    cursor: pointer;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--chalk-dim);
+    border: 2px solid rgba(255, 255, 255, 0.28);
+    transition: all 0.18s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mode-btn:hover { background: rgba(255, 255, 255, 0.16); color: var(--chalk-white); }
+  .mode-btn.active {
+    background: var(--chalk-cyan);
+    color: var(--bg-blackboard);
+    border-color: var(--chalk-cyan);
+    box-shadow: 0 0 12px rgba(77, 210, 255, 0.45);
+  }
+
+  /* ── 能量條（HTML 版，數字不再擠在畫布裡）── */
+  .energy-wrap { max-width: 760px; margin: 16px auto 0; }
+  .energy-row { margin-bottom: 12px; }
+  .energy-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 21px;
+    color: var(--chalk-dim);
+    margin-bottom: 6px;
+    gap: 12px;
+  }
+  .energy-label .mono { font-size: 26px; }
+  .energy-track {
+    height: 30px;
+    border: 2px solid var(--chalk-line);
+    border-radius: 999px;
+    background: rgba(11, 26, 21, 0.6);
+    overflow: hidden;
+  }
+  .energy-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: var(--chalk-cyan);
+    transition: width 0.18s linear;
+  }
+  .energy-fill.green { background: var(--chalk-green); }
+  .energy-fill.orange { background: var(--chalk-orange); }
+
+  /* ── 課堂提醒 / 概念收束 ── */
+  .note-box {
+    margin-top: 16px;
+    font-size: 22px;
+    line-height: 1.8;
+    color: var(--chalk-white);
+    background: rgba(11, 26, 21, 0.5);
+    border-left: 6px solid var(--chalk-green);
+    border-radius: 0 10px 10px 0;
+    padding: 16px 20px;
+    text-align: left;
+  }
+  .note-box b { color: var(--chalk-yellow); }
+  .warn-box {
+    margin-top: 14px;
+    font-size: 21px;
+    line-height: 1.75;
+    color: var(--chalk-white);
+    background: rgba(255, 128, 64, 0.12);
+    border-left: 6px solid var(--chalk-orange);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    text-align: left;
+  }
+  .warn-box b { color: var(--chalk-orange); }
+
+  /* ── 段考挑戰 ── */
+  .quiz-item {
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px solid var(--chalk-line);
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .quiz-q { font-size: 22px; line-height: 1.8; margin-bottom: 6px; }
+  .quiz-q .qno {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--bg-blackboard);
+    background: var(--chalk-yellow);
+    border-radius: 6px;
+    padding: 1px 10px;
+    margin-right: 10px;
+  }
+  .q-fig { margin: 14px 0 4px; }
+  .q-fig canvas {
+    background: rgba(11, 26, 21, 0.45);
+    border: 2px solid var(--chalk-line);
+    border-radius: 10px;
+    aspect-ratio: 900 / 360;
+  }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .opts label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 21px;
+    line-height: 1.6;
+    background: rgba(11, 26, 21, 0.5);
+    border: 2px solid var(--chalk-line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    min-height: 48px;
+    transition: all 0.15s;
+  }
+  .opts label:hover { border-color: var(--chalk-white); background: rgba(255, 255, 255, 0.08); }
+  .opts input[type="radio"] { width: 22px; height: 22px; margin-top: 4px; flex: 0 0 22px; accent-color: #4dd2ff; }
+  .quiz-fb {
+    margin-top: 12px;
+    font-size: 21px;
+    line-height: 1.75;
+    border-radius: 0 8px 8px 0;
+    padding: 0 18px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+  .quiz-fb.show { max-height: 560px; padding: 14px 18px; }
+  .quiz-fb.ok { background: rgba(51, 204, 153, 0.14); border-left: 6px solid var(--chalk-green); }
+  .quiz-fb.ng { background: rgba(255, 102, 178, 0.14); border-left: 6px solid var(--chalk-pink); }
+  .quiz-fb b { color: var(--chalk-yellow); }
+  .score-box {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--chalk-yellow);
+    background: rgba(11, 26, 21, 0.6);
+    border: 2px dashed var(--chalk-yellow);
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 10px;
+  }
+
+  /* ── 頁尾 ── */
+  .page-foot {
+    margin-top: 34px;
+    padding-top: 18px;
+    text-align: center;
+    font-size: 20px;
+    color: var(--chalk-dim);
+    border-top: 2px dashed var(--chalk-line);
+  }
+
+  /* ── 第六定律：電影式單元封面（畫面上絕無文字）── */
+  .intro-screen {
+    position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center;
+    overflow: hidden; background: #0b1a15; cursor: pointer; isolation: isolate;
+    transition: opacity .7s ease, visibility .7s ease;
+  }
+  .intro-screen::before {
+    content: ""; position: absolute; inset: -3%; z-index: -4;
+    background: #0b1a15 url("assets/covers/work_2_cover_v1.png") center/cover no-repeat;
+    animation: introZoom 14s ease-out both;
+  }
+  /* 🎬 點一下才播放的有聲開場：
+     瀏覽器規定「沒有使用者互動就不准帶聲音自動播放」，
+     所以這裡不放 autoplay / muted，改成老師點第一下才 play()。
+     影片還沒開始或載不到時，下面那張 poster（同一支影片的第一格）會頂上，不會開天窗。 */
+  .intro-video {
+    position: absolute; inset: 0; z-index: -3;
+    width: 100%; height: 100%; object-fit: cover;
+    pointer-events: none; background: #0b1a15;
+    opacity: 0; transition: opacity .4s ease;
+  }
+  .intro-screen.playing .intro-video { opacity: 1; }
+  .intro-screen.playing::before { animation: none; }
+  .intro-screen::after {
+    content: ""; position: absolute; inset: 0; z-index: -2;
+    background: linear-gradient(180deg, rgba(1,11,11,.02) 34%, rgba(1,12,10,.22) 65%, rgba(1,12,10,.88) 100%),
+                radial-gradient(circle at 48% 34%, rgba(255,224,102,.08), transparent 32%);
+  }
+  .intro-screen.exiting { opacity: 0; visibility: hidden; pointer-events: none; }
+  @keyframes introZoom { from { transform: scale(1); } to { transform: scale(1.06); } }
+  @media (prefers-reduced-motion: reduce) { .intro-screen::before { animation: none; } }
+
+  /* ── 第七定律：iPad 與窄螢幕 ──
+     原本斷點只有 768px，剛好漏掉 iPad 直式 834px：
+     雙欄會被 nowrap 的長公式撐爆，整頁可以左右滑。 */
+  @media (max-width: 1150px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 1000px) {
+    .nav-tabs { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 900px) {
+    .nav-tabs { grid-template-columns: 1fr 1fr; }
+    .tab-btn { min-height: 118px; padding: 16px 12px; }
+  }
+  @media (max-width: 768px) {
+    body { font-size: 21px; }
+    h1 { font-size: 34px; }
+    h2 { font-size: 27px; }
+    .nav-tabs { grid-template-columns: 1fr 1fr; }
+    .opts { grid-template-columns: 1fr; }
+    .hook-box { gap: 14px; padding: 16px; }
+    .xiaozhen-logo { width: 72px; height: 72px; flex: 0 0 72px; }
+    .ctl input[type="range"] { width: 150px; }
+    .mode-btn { width: 100%; }
+    .action-btn { width: 100%; white-space: normal; }
+  }
+  @media (max-width: 520px) {
+    .nav-tabs { grid-template-columns: 1fr; }
+    .lab-controls { gap: 12px; }
+    .ctl { width: 100%; justify-content: space-between; }
+    .ctl input[type="range"] { width: 44%; }
+    .lab-stat { min-width: 132px; padding: 10px 12px; }
+  }
+
 </style>
 </head>
 <body>
+
+<div id="introScreen" class="intro-screen" role="dialog" aria-modal="true" aria-label="動能與位能單元封面" tabindex="0">
+  <video class="intro-video" id="introVideo" playsinline preload="auto"
+         poster="assets/covers/work_2_cover_v1.png" aria-hidden="true">
+    <source src="assets/covers/work_2_cover_v1.mp4" type="video/mp4">
+  </video>
+</div>
 
 <div class="wrap">
   <div class="language-switch" role="group" aria-label="語言切換">
@@ -399,23 +820,47 @@
   </header>
 
   <nav class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab(0)" data-zh="動能的定義與特性" data-en="Kinetic Energy">動能的定義與特性</button>
-    <button class="tab-btn" onclick="switchTab(1)" data-zh="重力位能與高度" data-en="Gravitational Potential">重力位能與高度</button>
-    <button class="tab-btn" onclick="switchTab(2)" data-zh="彈力位能與彈射" data-en="Elastic Potential">彈力位能與彈射</button>
-    <button class="tab-btn" onclick="switchTab(3)" data-zh="課堂實戰演練" data-en="Exam Practice">課堂實戰演練</button>
+    <button class="tab-btn active" onclick="switchTab(0)">
+      <span class="tab-hook" data-zh="時速加倍，為什麼就是煞不住？" data-en="Double the speed - why can't it stop?">時速加倍，為什麼就是煞不住？</span>
+      <span class="tab-sub" data-zh="動能｜K = ½mv²" data-en="Kinetic Energy｜K = ½mv²">動能｜K = ½mv²</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab(1)">
+      <span class="tab-hook" data-zh="爬上去的力氣，跑到哪裡去了？" data-en="Where does the lifting effort go?">爬上去的力氣，跑到哪裡去了？</span>
+      <span class="tab-sub" data-zh="重力位能｜U = mgh" data-en="Gravitational PE｜U = mgh">重力位能｜U = mgh</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab(2)">
+      <span class="tab-hook" data-zh="壓得越深，為什麼衝得越快？" data-en="Deeper compression - faster launch?">壓得越深，為什麼衝得越快？</span>
+      <span class="tab-sub" data-zh="彈力位能｜形變儲能" data-en="Elastic PE｜Stored by Deformation">彈力位能｜形變儲能</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab(3)">
+      <span class="tab-hook" data-zh="換單位這一步，你敢跳過嗎？" data-en="Dare you skip the unit conversion?">換單位這一步，你敢跳過嗎？</span>
+      <span class="tab-sub" data-zh="計算實戰｜板書推導" data-en="Calculation｜Chalkboard Steps">計算實戰｜板書推導</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab(4)">
+      <span class="tab-hook" data-zh="這五題，你真的算得出來嗎？" data-en="Can you actually solve these five?">這五題，你真的算得出來嗎？</span>
+      <span class="tab-sub" data-zh="考題實戰｜先看圖再算" data-en="Practice｜Figure First, Then Numbers">考題實戰｜先看圖再算</span>
+    </button>
   </nav>
 
   <!-- ================= 分頁 1：動能的定義與特性 ================= -->
   <div class="panel active">
     <div class="panel-header">
-      <h2 data-zh="動能的定義與特性" data-en="Definition & Properties of Kinetic Energy">動能的定義與特性</h2>
-      <span class="sub-tag" data-zh="運動能量" data-en="Energy in Motion">運動能量</span>
+      <h2 data-zh="動能：為什麼速率加倍，動能卻變四倍？" data-en="Kinetic Energy: why does doubling the speed quadruple the energy?">動能：為什麼速率加倍，動能卻變四倍？</h2>
+      <span class="sub-tag" data-zh="動能 K" data-en="Kinetic K">動能 K</span>
+    </div>
+
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師說：" data-en="Ms. Xiaozhen says:">曉臻老師說：</div>
+        <div class="hook-text" data-zh="腳踏車和大卡車都用同樣的速率朝你衝過來，你當然知道要閃哪一台。<br>但是換個問法：<b>同一台車</b>，時速從 30 變成 60，危險只變成 <b>2 倍</b>嗎？<br>幾乎每個人的直覺都說「2 倍」。而這個直覺，<b>正好是每年段考扣分最多的地方</b>。" data-en="A bicycle and a truck come at you at the same speed - you already know which one to dodge.<br>But try this instead: for <b>the same car</b>, going from 30 to 60 km/h, does the danger only double?<br>Almost everyone's gut says <b>'twice'</b>. And that gut feeling is <b>exactly where most exam marks are lost every year</b>.">腳踏車和大卡車都用同樣的速率朝你衝過來，你當然知道要閃哪一台。<br>但是換個問法：<b>同一台車</b>，時速從 30 變成 60，危險只變成 <b>2 倍</b>嗎？<br>幾乎每個人的直覺都說「2 倍」。而這個直覺，<b>正好是每年段考扣分最多的地方</b>。</div>
+      </div>
     </div>
     
     <div class="concept-box">
-      <span data-zh="💡 <strong class='hl-yellow'>什麼是「動能」<span class='mono nw'>(Kinetic Energy)</span>？</strong><br>
+      <span data-zh="💡 <strong class='hl-yellow'>什麼是「動能」<span class='mono'>(Kinetic Energy)</span>？</strong><br>
       任何<span class='hl-green'>「正在運動中的物體」</span>所具有的能量，就稱為動能。物體運動的速度越快、質量越大，所具有的動能就越強。" data-en="💡 <strong class='hl-yellow'>What is 'Kinetic Energy' <span class='mono nw'>(K)</span>?</strong><br>
-      The energy possessed by any <span class='hl-green'>'object in motion'</span>. Higher speed and larger mass yield greater kinetic energy.">💡 <strong class="hl-yellow">什麼是「動能」<span class="mono nw">(Kinetic Energy)</span>？</strong><br>
+      The energy possessed by any <span class='hl-green'>'object in motion'</span>. Higher speed and larger mass yield greater kinetic energy.">💡 <strong class="hl-yellow">什麼是「動能」<span class="mono">(Kinetic Energy)</span>？</strong><br>
       任何<span class="hl-green">「正在運動中的物體」</span>所具有的能量，就稱為動能。物體運動的速度越快、質量越大，所具有的動能就越強。</span>
     </div>
 
@@ -451,19 +896,80 @@
         </div>
       </div>
     </div>
+
+    <div class="interactive-area" style="margin-top: 24px;">
+      <h3 style="margin-top: 0; font-size: 26px;" data-zh="🔬 動能對決台：把「成正比」和「平方成正比」擺在一起看" data-en="🔬 Kinetic Energy Showdown: Linear vs. Squared, Side by Side">🔬 動能對決台：把「成正比」和「平方成正比」擺在一起看</h3>
+      <p data-zh="上面那兩段文字，一段講質量、一段講速率。它們<span class='hl-pink'>影響動能的方式完全不同</span>——選一個模式，親手把差別拉出來看。" data-en="The two points above look similar, but mass and speed affect kinetic energy in <span class='hl-pink'>completely different ways</span>. Pick a mode and pull the difference open yourself.">上面那兩段文字，一段講質量、一段講速率。它們<span class="hl-pink">影響動能的方式完全不同</span>——選一個模式，親手把差別拉出來看。</p>
+
+      <div class="btn-group">
+        <button class="mode-btn active" id="kModeMass" onclick="kSetMode('mass', this)" data-zh="① 只比質量（兩車速率相同）" data-en="① Compare Mass (same speed)">① 只比質量（兩車速率相同）</button>
+        <button class="mode-btn" id="kModeSpeed" onclick="kSetMode('speed', this)" data-zh="② 只比速率（兩車質量相同）" data-en="② Compare Speed (same mass)">② 只比速率（兩車質量相同）</button>
+      </div>
+
+      <div class="lab-controls">
+        <div class="ctl">
+          <label id="kSliderLabel" data-zh="B 車的質量：" data-en="Mass of car B:">B 車的質量：</label>
+          <input type="range" id="kRange" min="0" max="3" step="1" value="2" oninput="kSync()" aria-label="B 車變數">
+          <span class="readout" id="kReadout">1000 kg</span>
+        </div>
+      </div>
+
+      <div class="stage-container">
+        <canvas id="kineticCanvas" width="1000" height="460"></canvas>
+      </div>
+
+      <div class="energy-wrap">
+        <div class="energy-row">
+          <div class="energy-label">
+            <span data-zh="A 車動能 K" data-en="Car A kinetic energy K">A 車動能 K</span>
+            <span class="mono" id="kValA">4000 J</span>
+          </div>
+          <div class="energy-track"><div class="energy-fill green" id="kBarA"></div></div>
+        </div>
+        <div class="energy-row">
+          <div class="energy-label">
+            <span data-zh="B 車動能 K" data-en="Car B kinetic energy K">B 車動能 K</span>
+            <span class="mono" id="kValB">50000 J</span>
+          </div>
+          <div class="energy-track"><div class="energy-fill" id="kBarB"></div></div>
+        </div>
+      </div>
+
+      <div class="lab-hud">
+        <div class="lab-stat cyan"><span class="k" id="kRatioLabel" data-zh="B 是 A 的幾倍（質量）" data-en="B ÷ A (mass)">B 是 A 的幾倍（質量）</span><span class="v" id="kRatioIn">×12.5</span></div>
+        <div class="lab-stat big"><span class="k" data-zh="動能變成幾倍" data-en="Kinetic energy ratio">動能變成幾倍</span><span class="v" id="kRatioOut">×12.5</span></div>
+        <div class="lab-stat green"><span class="k" data-zh="A 車煞車距離" data-en="Car A braking distance">A 車煞車距離</span><span class="v" id="kDistA">10 m</span></div>
+        <div class="lab-stat pink"><span class="k" data-zh="B 車煞車距離" data-en="Car B braking distance">B 車煞車距離</span><span class="v" id="kDistB">10 m</span></div>
+      </div>
+
+      <div class="btn-group">
+        <button class="action-btn btn-pink" id="kBrakeBtn" onclick="kBrake()" data-zh="🛑 兩台車同時踩煞車！" data-en="🛑 Both Cars Brake Now!">🛑 兩台車同時踩煞車！</button>
+        <button class="action-btn btn-teal" onclick="kReset()" data-zh="↺ 重置實驗" data-en="↺ Reset Experiment">↺ 重置實驗</button>
+      </div>
+
+      <div class="note-box" id="kNote"></div>
+    </div>
   </div>
 
   <!-- ================= 分頁 2：重力位能與高度 ================= -->
   <div class="panel">
     <div class="panel-header">
-      <h2 data-zh="重力位能與高度" data-en="Gravitational Potential Energy & Height">重力位能與高度</h2>
-      <span class="sub-tag" data-zh="位置能量" data-en="Stored Energy">位置能量</span>
+      <h2 data-zh="重力位能：抬高的能量，被存到哪裡去了？" data-en="Gravitational Potential: where is the lifted energy stored?">重力位能：抬高的能量，被存到哪裡去了？</h2>
+      <span class="sub-tag" data-zh="重力位能 U" data-en="Gravitational U">重力位能 U</span>
+    </div>
+
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師說：" data-en="Ms. Xiaozhen says:">曉臻老師說：</div>
+        <div class="hook-text" data-zh="一箱書搬上三樓。走樓梯的人滿頭大汗，坐電梯的人吹著冷氣滑手機。<br>誰比較累？當然是走樓梯的。<br>但如果我問的是「<b>書</b>的重力位能增加了多少」——答案是<b>一模一樣</b>。<br>因為重力位能不管你走哪條路、流多少汗，它<b>只認垂直高度</b>。" data-en="A box of books goes up to the third floor. One person takes the stairs and is drenched in sweat; the other rides the lift.<br>Who is more tired? The one on the stairs, obviously.<br>But if I ask how much gravitational potential energy <b>the books</b> gained - the answer is <b>exactly the same</b>.<br>Potential energy does not care about your route or your sweat. It only counts <b>vertical height</b>.">一箱書搬上三樓。走樓梯的人滿頭大汗，坐電梯的人吹著冷氣滑手機。<br>誰比較累？當然是走樓梯的。<br>但如果我問的是「<b>書</b>的重力位能增加了多少」——答案是<b>一模一樣</b>。<br>因為重力位能不管你走哪條路、流多少汗，它<b>只認垂直高度</b>。</div>
+      </div>
     </div>
     
     <div class="concept-box">
-      <span data-zh="💡 <strong class='hl-yellow'>什麼是「重力位能」<span class='mono nw'>(Gravitational Potential Energy)</span>？</strong><br>
+      <span data-zh="💡 <strong class='hl-yellow'>什麼是「重力位能」<span class='mono'>(Gravitational Potential Energy)</span>？</strong><br>
       物體因<span class='hl-cyan'>「抵抗重力移至高處」</span>所儲存的能量，稱為重力位能。位能在物體下落轉換為動能時才會釋放出來。" data-en="💡 <strong class='hl-yellow'>What is 'Gravitational Potential Energy' <span class='mono nw'>(U)</span>?</strong><br>
-      Energy stored when an object is <span class='hl-cyan'>lifted against gravity</span>. It releases as kinetic energy when the object falls.">💡 <strong class="hl-yellow">什麼是「重力位能」<span class="mono nw">(Gravitational Potential Energy)</span>？</strong><br>
+      Energy stored when an object is <span class='hl-cyan'>lifted against gravity</span>. It releases as kinetic energy when the object falls.">💡 <strong class="hl-yellow">什麼是「重力位能」<span class="mono">(Gravitational Potential Energy)</span>？</strong><br>
       物體因<span class="hl-cyan">「抵抗重力移至高處」</span>所儲存的能量，稱為重力位能。位能在物體下落轉換為動能時才會釋放出來。</span>
     </div>
 
@@ -523,25 +1029,33 @@
   <!-- ================= 分頁 3：彈力位能與彈射 ================= -->
   <div class="panel">
     <div class="panel-header">
-      <h2 data-zh="彈力位能與彈射" data-en="Elastic Potential Energy & Launch">彈力位能與彈射</h2>
-      <span class="sub-tag" data-zh="形變能量" data-en="Deformation Energy">形變能量</span>
+      <h2 data-zh="彈力位能：形變存起來的能量，怎麼放出來？" data-en="Elastic Potential: how is deformation energy released?">彈力位能：形變存起來的能量，怎麼放出來？</h2>
+      <span class="sub-tag" data-zh="彈力位能" data-en="Elastic PE">彈力位能</span>
+    </div>
+
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師說：" data-en="Ms. Xiaozhen says:">曉臻老師說：</div>
+        <div class="hook-text" data-zh="彈簧壓 2 格，木塊射出去的速率是 <b>v</b>。那壓 4 格會射多快？<br>你猜 <b>2v</b>——恭喜，這次直覺是<b>對的</b>。<br>但下一題超過一半的人會答錯：<b>那彈簧裡存的能量，是幾倍？</b><br>先別急著回答。等一下我們用你剛學會的動能，把它算出來。" data-en="Compress the spring by 2 notches and the block flies out at speed <b>v</b>. What about 4 notches?<br>You guessed <b>2v</b> - and this time your instinct is <b>right</b>.<br>But more than half the class gets the next one wrong: <b>how many times more energy was stored in the spring?</b><br>Don't answer yet. We are going to work it out using the kinetic energy you just learned.">彈簧壓 2 格，木塊射出去的速率是 <b>v</b>。那壓 4 格會射多快？<br>你猜 <b>2v</b>——恭喜，這次直覺是<b>對的</b>。<br>但下一題超過一半的人會答錯：<b>那彈簧裡存的能量，是幾倍？</b><br>先別急著回答。等一下我們用你剛學會的動能，把它算出來。</div>
+      </div>
     </div>
     
     <div class="concept-box">
-      <span data-zh="💡 <strong class='hl-yellow'>什麼是「彈力位能」<span class='mono nw'>(Elastic Potential Energy)</span>？</strong><br>
+      <span data-zh="💡 <strong class='hl-yellow'>什麼是「彈力位能」<span class='mono'>(Elastic Potential Energy)</span>？</strong><br>
       彈性物體（彈簧、橡皮筋）發生<span class='hl-orange'>「壓縮或拉長形變」</span>時所儲存的能量稱為彈力位能。<br>
-      👉 <strong class='hl-green'>彈射直覺：</strong><span class='hl-yellow'>形變壓縮量愈大 $\rightarrow$ 儲存彈力位能愈多 $\rightarrow$ 放手後轉化動能愈大 $\rightarrow$ 噴射速率愈快！</span>" data-en="💡 <strong class='hl-yellow'>What is 'Elastic Potential Energy'?</strong><br>
+      👉 <strong class='hl-green'>彈射直覺：</strong><span class='hl-yellow'>形變壓縮量愈大 → 儲存彈力位能愈多 → 放手後轉化動能愈大 → 噴射速率愈快！</span>" data-en="💡 <strong class='hl-yellow'>What is 'Elastic Potential Energy'?</strong><br>
       Energy stored when an elastic object is <span class='hl-orange'>compressed or stretched</span>.<br>
-      👉 <strong class='hl-green'>Launch Principle:</strong> <span class='hl-yellow'>Greater compression $\rightarrow$ More elastic energy $\rightarrow$ More kinetic energy released $\rightarrow$ Faster launch!</span>">💡 <strong class="hl-yellow">什麼是「彈力位能」<span class="mono nw">(Elastic Potential Energy)</span>？</strong><br>
+      👉 <strong class='hl-green'>Launch Principle:</strong> <span class='hl-yellow'>Greater compression → More elastic energy → More kinetic energy released → Faster launch!</span>">💡 <strong class="hl-yellow">什麼是「彈力位能」<span class="mono">(Elastic Potential Energy)</span>？</strong><br>
       彈性物體（彈簧、橡皮筋）發生<span class="hl-orange">「壓縮或拉長形變」</span>時所儲存的能量稱為彈力位能。<br>
-      👉 <strong class='hl-green'>彈射直覺：</strong><span class='hl-yellow'>形變壓縮量愈大 $\rightarrow$ 儲存彈力位能愈多 $\rightarrow$ 放手後轉化動能愈大 $\rightarrow$ 噴射速率愈快！</span></span>
+      👉 <strong class='hl-green'>彈射直覺：</strong><span class='hl-yellow'>形變壓縮量愈大 → 儲存彈力位能愈多 → 放手後轉化動能愈大 → 噴射速率愈快！</span></span>
     </div>
 
     <div class="grid-2">
       <div class="card" style="border-color: var(--chalk-orange);">
         <div class="card-title" style="color: var(--chalk-orange);" data-zh="🏹 壓縮形變與儲存能量" data-en="🏹 Compression & Energy Storage">🏹 壓縮形變與儲存能量</div>
         <p data-zh="👉 <strong class='hl-yellow'>克服彈力作功：</strong><br>將木塊向左推壓彈簧時，手對彈簧施力作正功，能量以<span class='hl-orange'>「彈力位能」</span>形式儲存。" data-en="👉 <strong class='hl-yellow'>Work Against Elastic Force:</strong><br>Pushing the block left against the spring does positive work, storing <span class='hl-orange'>elastic potential energy</span>.">👉 <strong class="hl-yellow">克服彈力作功：</strong><br>將木塊向左推壓彈簧時，手對彈簧施力作正功，能量以<span class="hl-orange">「彈力位能」</span>形式儲存。</p>
-        <p data-zh="👉 <strong class='hl-green'>壓縮愈長，位能愈大：</strong><br>壓縮量 <span class='mono nw'>x</span> 越大，形變越劇烈，儲存的彈力位能也就越龐大！" data-en="👉 <strong class='hl-green'>Larger Compression = More Energy:</strong><br>Greater compression distance <span class='mono nw'>x</span> stores exponentially more elastic potential energy.">👉 <strong class="hl-green">壓縮愈長，位能愈大：</strong><br>壓縮量 <span class="mono nw">x</span> 越大，形變越劇烈，儲存的彈力位能也就越龐大！</p>
+        <p data-zh="👉 <strong class='hl-green'>壓縮愈長，位能愈大：</strong><br>壓縮量 <span class='mono nw'>x</span> 越大，形變越劇烈，儲存的彈力位能也就越龐大——而且不是「成正比」，是<span class='hl-pink'>平方成正比</span>（下方實驗後會證明給你看）。" data-en="👉 <strong class='hl-green'>Larger Compression = More Energy:</strong><br>Doubling the compression distance <span class='mono nw'>x</span> stores <span class='hl-pink'>four times</span> the elastic potential energy - it grows with the square of x, not in proportion to it.">👉 <strong class="hl-green">壓縮愈長，位能愈大：</strong><br>壓縮量 <span class="mono nw">x</span> 越大，形變越劇烈，儲存的彈力位能也就越龐大——而且不是「成正比」，是<span class="hl-pink">平方成正比</span>（下方實驗後會證明給你看）。</p>
       </div>
 
       <div class="card" style="border-color: var(--chalk-cyan);">
@@ -569,6 +1083,22 @@
         <canvas id="springCanvas" width="1000" height="360"></canvas>
       </div>
       <div id="springExplain" class="explain-box"></div>
+
+      <div class="note-box" style="border-left-color: var(--chalk-pink);">
+        <span data-zh="🧠 <b>把兩頁串起來：壓縮 2 倍，存的能量是幾倍？</b><br>
+        上面的實驗已經告訴你一件事：<span class='hl-orange'>壓縮量變 2 倍，木塊射出的速率也變 2 倍</span>（<span class='mono nw'>v ∝ x</span>）。<br>
+        現在把分頁一學的動能拿來用：射出後彈力位能<span class='hl-green'>全部</span>變成動能，而動能是 <span class='mono nw'>K = ½mv²</span>，速率變 2 倍 → 動能變 <span class='hl-pink'>2² = 4 倍</span>。<br>
+        👉 所以彈簧原本存的<b>彈力位能，也是 4 倍</b>。<span class='hl-yellow'>壓縮量加倍，儲存的能量不是加倍，是變成四倍。</span><br>
+        <small style='color:var(--chalk-dim);'>（這裡不用背新公式，是用「能量守恆 + 動能平方」推出來的。）</small>" data-en="🧠 <b>Linking the two tabs: double the compression, how much more energy?</b><br>
+        The lab above already showed you one thing: <span class='hl-orange'>double the compression and the launch speed also doubles</span> (<span class='mono nw'>v ∝ x</span>).<br>
+        Now use the kinetic energy from Tab 1: after release the elastic energy becomes <span class='hl-green'>entirely</span> kinetic, and <span class='mono nw'>K = ½mv²</span>. Double the speed → <span class='hl-pink'>2² = 4 times</span> the kinetic energy.<br>
+        👉 So the spring must have stored <b>4 times</b> the elastic potential energy. <span class='hl-yellow'>Doubling the compression does not double the stored energy - it quadruples it.</span><br>
+        <small style='color:var(--chalk-dim);'>(No new formula needed here - this comes from energy conservation plus the squared speed in K.)</small>">🧠 <b>把兩頁串起來：壓縮 2 倍，存的能量是幾倍？</b><br>
+        上面的實驗已經告訴你一件事：<span class="hl-orange">壓縮量變 2 倍，木塊射出的速率也變 2 倍</span>（<span class="mono nw">v ∝ x</span>）。<br>
+        現在把分頁一學的動能拿來用：射出後彈力位能<span class="hl-green">全部</span>變成動能，而動能是 <span class="mono nw">K = ½mv²</span>，速率變 2 倍 → 動能變 <span class="hl-pink">2² = 4 倍</span>。<br>
+        👉 所以彈簧原本存的<b>彈力位能，也是 4 倍</b>。<span class="hl-yellow">壓縮量加倍，儲存的能量不是加倍，是變成四倍。</span><br>
+        <small style="color:var(--chalk-dim);">（這裡不用背新公式，是用「能量守恆 + 動能平方」推出來的。）</small></span>
+      </div>
     </div>
   </div>
 
@@ -577,6 +1107,14 @@
     <div class="panel-header">
       <h2 data-zh="課堂實戰演練" data-en="Practice Exercises">課堂實戰演練</h2>
       <span class="sub-tag" data-zh="試題解析" data-en="Step-by-Step">試題解析</span>
+    </div>
+
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師說：" data-en="Ms. Xiaozhen says:">曉臻老師說：</div>
+        <div class="hook-text" data-zh="改考卷改了這麼多年，這一課丟分最多的<b>從來不是不會公式</b>。<br>是<b>單位</b>。<br>看到「公克」就要想到<b>除以 1000</b>，看到「公分」就要想到<b>除以 100</b>。<br>公式背得再熟，單位沒換，整題就是零分。所以下面每一題，<b>第一步永遠是換單位</b>。" data-en="After marking papers for years, the biggest loss on this topic is <b>never the formula</b>.<br>It is <b>units</b>.<br>See 'grams' - think <b>divide by 1000</b>. See 'centimetres' - think <b>divide by 100</b>.<br>You can recite the formula perfectly and still score zero if the units are wrong. So in every solution below, <b>step one is always the unit conversion</b>.">改考卷改了這麼多年，這一課丟分最多的<b>從來不是不會公式</b>。<br>是<b>單位</b>。<br>看到「公克」就要想到<b>除以 1000</b>，看到「公分」就要想到<b>除以 100</b>。<br>公式背得再熟，單位沒換，整題就是零分。所以下面每一題，<b>第一步永遠是換單位</b>。</div>
+      </div>
     </div>
     
     <div class="concept-box">
@@ -615,8 +1153,8 @@
               <span class="num mono">1</span>
               <span class="den mono">2</span>
             </span>
-            <span class="mono nw"> × 0.1 kg × (5 m/s)²</span><br><br>
-            <span class="mono nw" style="color: var(--chalk-yellow); font-size: 26px;">  = 0.05 × 25 = 1.25 J</span>
+            <span class="mono nw"> × 0.1 kg</span> <span class="mono nw">× (5 m/s)²</span><br><br>
+            <span class="mono nw" style="color: var(--chalk-yellow); font-size: 26px;">  = 0.05 × 25</span> <span class="mono nw" style="color: var(--chalk-yellow); font-size: 26px;">= 1.25 J</span>
           </div>
         </div>
       </div>
@@ -634,14 +1172,108 @@
           <span data-zh="👉 步驟二：代入重力位能公式" data-en="👉 Step 2: Apply formula">👉 步驟二：代入重力位能公式</span><br>
           <div style="font-size: 22px; margin-top: 8px;">
             <span class="mono nw">U = m × g × h</span><br>
-            <span class="mono nw">  = 0.2 kg × 9.8 m/s² × 2.5 m</span><br>
+            <span class="mono nw">  = 0.2 kg</span> <span class="mono nw">× 9.8 m/s²</span> <span class="mono nw">× 2.5 m</span><br>
             <span class="mono nw" style="color: var(--chalk-green); font-size: 26px;">  = 4.9 J</span>
           </div>
-          <small style="color: var(--chalk-dim); display: block; margin-top: 10px;" data-zh="💡 若學校段考約定 g = 10 m/s²，則位能為 0.2 × 10 × 2.5 = 5 J。" data-en="💡 If g = 10 m/s², potential energy = 0.2 × 10 × 2.5 = 5 J.">💡 若學校段考約定 <span class="mono nw">g = 10 m/s²</span>，則位能為 <span class="mono nw">0.2 × 10 × 2.5 = 5 J</span>。</small>
+          <small style="color: var(--chalk-dim); display: block; margin-top: 10px;" data-zh="💡 若學校段考約定 g = 10 m/s²，則位能為 0.2 × 10 × 2.5 = 5 J。" data-en="💡 If g = 10 m/s², potential energy = 0.2 × 10 × 2.5 = 5 J.">💡 若學校段考約定 <span class="mono nw">g = 10 m/s²</span>，則位能為 <span class="mono nw">0.2 × 10 × 2.5</span> <span class="mono nw">= 5 J</span>。</small>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- ================= 分頁 5：段考挑戰 ================= -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2 data-zh="段考挑戰：先看圖，再算數字" data-en="Exam Challenge: Read the Figure First, Then the Numbers">段考挑戰：先看圖，再算數字</h2>
+      <span class="sub-tag" data-zh="5 題" data-en="5 Questions">5 題</span>
+    </div>
+
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師說：" data-en="Ms. Xiaozhen says:">曉臻老師說：</div>
+        <div class="hook-text" data-zh="五題全部附圖。<b>先在圖上找到「速度箭頭」和「高度」</b>，再決定這題要用 <b>K</b> 還是 <b>U</b>。<br>找不到速度就不會有動能，找不到高度差就不會有位能改變——就這麼簡單。<br>作答後按最下面的按鈕，圖上會<b>自動補上那條關鍵的線</b>。" data-en="All five questions come with a figure. <b>Find the velocity arrow and the height on the figure first</b>, then decide whether this is a <b>K</b> question or a <b>U</b> question.<br>No velocity means no kinetic energy; no height difference means no change in potential energy. That simple.<br>After answering, press the button at the bottom and each figure will <b>draw in the decisive line for you</b>.">五題全部附圖。<b>先在圖上找到「速度箭頭」和「高度」</b>，再決定這題要用 <b>K</b> 還是 <b>U</b>。<br>找不到速度就不會有動能，找不到高度差就不會有位能改變——就這麼簡單。<br>作答後按最下面的按鈕，圖上會<b>自動補上那條關鍵的線</b>。</div>
+      </div>
+    </div>
+
+    <div class="concept-box">
+      <span data-zh="💡 五題全部附圖。<span class='hl-yellow'>先在圖上找出速度箭頭與高度差</span>，再決定要用動能還是位能。<br>作答後按下最下面的按鈕，圖上會<span class='hl-green'>自動補上關鍵的那條線</span>。本頁計算一律取 <span class='mono nw'>g = 10 m/s²</span>。" data-en="💡 Every question has a figure. <span class='hl-yellow'>Find the velocity arrow and the height difference first</span>, then decide whether you need kinetic or potential energy.<br>After answering, press the button at the bottom and each figure will <span class='hl-green'>draw in the decisive line</span>. All calculations here take <span class='mono nw'>g = 10 m/s²</span>.">💡 五題全部附圖。<span class="hl-yellow">先在圖上找出速度箭頭與高度差</span>，再決定要用動能還是位能。<br>作答後按下最下面的按鈕，圖上會<span class="hl-green">自動補上關鍵的那條線</span>。本頁計算一律取 <span class="mono nw">g = 10 m/s²</span>。</span>
+    </div>
+
+    <!-- Q1 -->
+    <div class="quiz-item">
+      <div class="quiz-q"><span class="qno">Q1</span><span data-zh="一顆質量 <span class='mono nw'>2 kg</span> 的球，速率從 <span class='mono nw'>3 m/s</span> 增加為 <span class='mono nw'>6 m/s</span>。它的<b>動能</b>變成原來的幾倍？" data-en="A <span class='mono nw'>2 kg</span> ball speeds up from <span class='mono nw'>3 m/s</span> to <span class='mono nw'>6 m/s</span>. Its <b>kinetic energy</b> becomes how many times the original?">一顆質量 <span class="mono nw">2 kg</span> 的球，速率從 <span class="mono nw">3 m/s</span> 增加為 <span class="mono nw">6 m/s</span>。它的<b>動能</b>變成原來的幾倍？</span></div>
+      <div class="q-fig"><canvas id="qc1" width="900" height="360"></canvas></div>
+      <div class="opts">
+        <label><input type="radio" name="q1" value="A"><span data-zh="(A) 2 倍" data-en="(A) 2 times">(A) 2 倍</span></label>
+        <label><input type="radio" name="q1" value="B"><span data-zh="(B) 3 倍" data-en="(B) 3 times">(B) 3 倍</span></label>
+        <label><input type="radio" name="q1" value="C"><span data-zh="(C) 4 倍" data-en="(C) 4 times">(C) 4 倍</span></label>
+        <label><input type="radio" name="q1" value="D"><span data-zh="(D) 9 倍" data-en="(D) 9 times">(D) 9 倍</span></label>
+      </div>
+      <div class="quiz-fb" id="fb1"></div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="quiz-item">
+      <div class="quiz-q"><span class="qno">Q2</span><span data-zh="一顆質量 <span class='mono nw'>500 g</span> 的球，以 <span class='mono nw'>4 m/s</span> 的等速率滾動。它的動能是多少焦耳？" data-en="A ball of mass <span class='mono nw'>500 g</span> rolls at a constant <span class='mono nw'>4 m/s</span>. What is its kinetic energy in joules?">一顆質量 <span class="mono nw">500 g</span> 的球，以 <span class="mono nw">4 m/s</span> 的等速率滾動。它的動能是多少焦耳？</span></div>
+      <div class="q-fig"><canvas id="qc2" width="900" height="360"></canvas></div>
+      <div class="opts">
+        <label><input type="radio" name="q2" value="A"><span data-zh="(A) 4000 J" data-en="(A) 4000 J">(A) 4000 J</span></label>
+        <label><input type="radio" name="q2" value="B"><span data-zh="(B) 4 J" data-en="(B) 4 J">(B) 4 J</span></label>
+        <label><input type="radio" name="q2" value="C"><span data-zh="(C) 8 J" data-en="(C) 8 J">(C) 8 J</span></label>
+        <label><input type="radio" name="q2" value="D"><span data-zh="(D) 0.4 J" data-en="(D) 0.4 J">(D) 0.4 J</span></label>
+      </div>
+      <div class="quiz-fb" id="fb2"></div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="quiz-item">
+      <div class="quiz-q"><span class="qno">Q3</span><span data-zh="把同一個 <span class='mono nw'>20 kg</span> 的箱子從地面移到 <span class='mono nw'>3 公尺</span> 高的平台。甲直接用垂直電梯吊上去，乙沿著一條很長的斜坡推上去。兩人讓箱子<b>增加的重力位能</b>如何？" data-en="The same <span class='mono nw'>20 kg</span> crate is moved from the ground to a platform <span class='mono nw'>3 m</span> high. Person A lifts it straight up; person B pushes it up a long ramp. How do the <b>gains in gravitational potential energy</b> compare?">把同一個 <span class="mono nw">20 kg</span> 的箱子從地面移到 <span class="mono nw">3 公尺</span> 高的平台。甲直接用垂直電梯吊上去，乙沿著一條很長的斜坡推上去。兩人讓箱子<b>增加的重力位能</b>如何？</span></div>
+      <div class="q-fig"><canvas id="qc3" width="900" height="360"></canvas></div>
+      <div class="opts">
+        <label><input type="radio" name="q3" value="A"><span data-zh="(A) 甲比較多" data-en="(A) A gains more">(A) 甲比較多</span></label>
+        <label><input type="radio" name="q3" value="B"><span data-zh="(B) 乙比較多（路徑比較長）" data-en="(B) B gains more (longer path)">(B) 乙比較多（路徑比較長）</span></label>
+        <label><input type="radio" name="q3" value="C"><span data-zh="(C) 一樣多，都是 200 J" data-en="(C) Equal, both 200 J">(C) 一樣多，都是 200 J</span></label>
+        <label><input type="radio" name="q3" value="D"><span data-zh="(D) 一樣多，都是 600 J" data-en="(D) Equal, both 600 J">(D) 一樣多，都是 600 J</span></label>
+      </div>
+      <div class="quiz-fb" id="fb3"></div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="quiz-item">
+      <div class="quiz-q"><span class="qno">Q4</span><span data-zh="一顆球從 <span class='mono nw'>5 公尺</span> 高處<b>靜止</b>自由落下（不計空氣阻力）。它<b>落地瞬間</b>的速率約為多少？" data-en="A ball is released <b>from rest</b> at a height of <span class='mono nw'>5 m</span> and falls freely (ignore air resistance). What is its speed <b>just before it lands</b>?">一顆球從 <span class="mono nw">5 公尺</span> 高處<b>靜止</b>自由落下（不計空氣阻力）。它<b>落地瞬間</b>的速率約為多少？</span></div>
+      <div class="q-fig"><canvas id="qc4" width="900" height="360"></canvas></div>
+      <div class="opts">
+        <label><input type="radio" name="q4" value="A"><span data-zh="(A) 10 m/s" data-en="(A) 10 m/s">(A) 10 m/s</span></label>
+        <label><input type="radio" name="q4" value="B"><span data-zh="(B) 5 m/s" data-en="(B) 5 m/s">(B) 5 m/s</span></label>
+        <label><input type="radio" name="q4" value="C"><span data-zh="(C) 25 m/s" data-en="(C) 25 m/s">(C) 25 m/s</span></label>
+        <label><input type="radio" name="q4" value="D"><span data-zh="(D) 50 m/s" data-en="(D) 50 m/s">(D) 50 m/s</span></label>
+      </div>
+      <div class="quiz-fb" id="fb4"></div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="quiz-item">
+      <div class="quiz-q"><span class="qno">Q5</span><span data-zh="同一支彈簧：壓縮 <span class='mono nw'>2</span> 單位時木塊射出速率為 <span class='mono nw'>v</span>；壓縮 <span class='mono nw'>4</span> 單位時射出速率為 <span class='mono nw'>2v</span>。則壓縮 4 單位時<b>儲存的彈力位能</b>，是壓縮 2 單位時的幾倍？" data-en="The same spring: compressed <span class='mono nw'>2</span> units the block launches at <span class='mono nw'>v</span>; compressed <span class='mono nw'>4</span> units it launches at <span class='mono nw'>2v</span>. How many times more <b>elastic potential energy</b> is stored at 4 units than at 2 units?">同一支彈簧：壓縮 <span class="mono nw">2</span> 單位時木塊射出速率為 <span class="mono nw">v</span>；壓縮 <span class="mono nw">4</span> 單位時射出速率為 <span class="mono nw">2v</span>。則壓縮 4 單位時<b>儲存的彈力位能</b>，是壓縮 2 單位時的幾倍？</span></div>
+      <div class="q-fig"><canvas id="qc5" width="900" height="360"></canvas></div>
+      <div class="opts">
+        <label><input type="radio" name="q5" value="A"><span data-zh="(A) 2 倍" data-en="(A) 2 times">(A) 2 倍</span></label>
+        <label><input type="radio" name="q5" value="B"><span data-zh="(B) 3 倍" data-en="(B) 3 times">(B) 3 倍</span></label>
+        <label><input type="radio" name="q5" value="C"><span data-zh="(C) 4 倍" data-en="(C) 4 times">(C) 4 倍</span></label>
+        <label><input type="radio" name="q5" value="D"><span data-zh="(D) 8 倍" data-en="(D) 8 times">(D) 8 倍</span></label>
+      </div>
+      <div class="quiz-fb" id="fb5"></div>
+    </div>
+
+    <div class="btn-group">
+      <button class="action-btn btn-green" onclick="checkQuiz()" data-zh="✅ 對答案並解鎖圖解" data-en="✅ Check Answers & Unlock the Figures">✅ 對答案並解鎖圖解</button>
+      <button class="action-btn" onclick="resetQuiz()" data-zh="↺ 再考一次" data-en="↺ Try Again">↺ 再考一次</button>
+    </div>
+
+    <div class="score-box" id="quizScore" data-zh="還沒作答" data-en="Not answered yet">還沒作答</div>
+  </div>
+
+  <div class="page-foot" data-zh="Physical-Boys 互動教材 ｜ 動能與位能 ｜ V5" data-en="Physical-Boys Interactive Lessons | Kinetic &amp; Potential Energy | V5">Physical-Boys 互動教材 ｜ 動能與位能 ｜ V5</div>
 </div>
 
 <script>
@@ -671,8 +1303,7 @@
     document.documentElement.lang = LANG === 'en' ? 'en' : 'zh-Hant';
     applyTranslations();
 
-    if(activeTabIdx === 1) drawGravityScene();
-    if(activeTabIdx === 2) drawLauncherFrame();
+    redrawAll();
   }
 
   document.querySelectorAll('.lang-btn').forEach(b => {
@@ -681,12 +1312,14 @@
 
   let activeTabIdx = 0;
   function switchTab(idx) {
+    killAllSims();
     activeTabIdx = idx;
     document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === idx));
     document.querySelectorAll('.nav-tabs .tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
 
     if(idx === 1) resetGravityScene(null);
     if(idx === 2) setLauncherState(launcherState, null);
+    onTabShown(idx);
   }
 
   function drawArrow(ctx, fromX, fromY, toX, toY, color, width, text, textOffsetX=0, textOffsetY=0, align="center") {
@@ -734,9 +1367,9 @@
     ctx.strokeRect(bx, by, bw, bh);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px "Noto Sans TC"';
+    ctx.font = 'bold 20px "Noto Sans TC"';
     ctx.textAlign = 'center';
-    ctx.fillText(tr("能量狀態 (Energy)", "Energy State"), bx + bw/2, by - 12);
+    ctx.fillText(tr("能量狀態", "Energy"), bx + bw/2, by - 12);
 
     const barW = 42;
     const maxBarH = 160;
@@ -763,13 +1396,17 @@
     ctx.strokeRect(bx + 88, baseY - maxBarH, barW, maxBarH);
 
     // 數值與標籤
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px "JetBrains Mono"';
-    ctx.fillText(`${Math.round(uVal)}J`, bx + 41, baseY - uH - 6);
-    ctx.fillText(`${Math.round(kVal)}J`, bx + 109, baseY - kH - 6);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px "JetBrains Mono"';
+    ctx.fillText(`${Math.round(uVal)}J`, bx + 41, baseY - uH - 8);
+    ctx.fillText(`${Math.round(kVal)}J`, bx + 109, baseY - kH - 8);
 
-    ctx.font = 'bold 16px "JetBrains Mono"';
-    ctx.fillText("U(位能)", bx + 41, baseY + 24);
-    ctx.fillText("K(動能)", bx + 109, baseY + 24);
+    ctx.font = 'bold 22px "JetBrains Mono"';
+    ctx.fillStyle = '#33cc99'; ctx.fillText("U", bx + 41, baseY + 26);
+    ctx.fillStyle = '#4dd2ff'; ctx.fillText("K", bx + 109, baseY + 26);
+    ctx.font = 'bold 19px "Noto Sans TC"';
+    ctx.fillStyle = '#d1ded9';
+    ctx.fillText(tr("位能", "PE"), bx + 41, baseY + 48);
+    ctx.fillText(tr("動能", "KE"), bx + 109, baseY + 48);
     ctx.restore();
   }
 
@@ -827,8 +1464,8 @@
     drawGravityScene();
     const exp = document.getElementById('gravityExplain');
     exp.innerHTML = tr(
-      `<strong class="hl-yellow">🔄 實驗已重置</strong><br>書包已放回地面參考面上（<span class="mono nw">h = 0.0 m, U = 0 J, K = 0 J</span>）。請點擊上方按鈕開始觀察能量轉換！`,
-      `<strong class="hl-yellow">🔄 Experiment Reset</strong><br>The bag is reset to ground (<span class="mono nw">h = 0.0 m, U = 0 J, K = 0 J</span>). Click a button above to begin!`
+      `<strong class="hl-yellow">🔄 實驗已重置</strong><br>書包已放回地面參考面上（<span class="mono nw">h = 0.0 m</span>, <span class="mono nw">U = 0 J</span>, <span class="mono nw">K = 0 J</span>）。請點擊上方按鈕開始觀察能量轉換！`,
+      `<strong class="hl-yellow">🔄 Experiment Reset</strong><br>The bag is reset to ground (<span class="mono nw">h = 0.0 m</span>, <span class="mono nw">U = 0 J</span>, <span class="mono nw">K = 0 J</span>). Click a button above to begin!`
     );
     exp.style.borderColor = 'var(--chalk-yellow)';
   }
@@ -914,6 +1551,7 @@
   }
 
   function animateSquashImpact(frame) {
+    if (activeTabIdx !== 1) { gravAnimId = null; return; }
     const maxImpactSquash = Math.min(42, massVal * heightVal * 2.2);
     const totalFrames = 20;
     if (frame <= totalFrames) {
@@ -960,7 +1598,7 @@
         👉 <strong class="hl-cyan">能量轉換：</strong> 位能 <strong class="hl-green">U = ${roundedU} J</strong> 轉化為動能 <strong class="hl-cyan">K = ${roundedK} J</strong>（總力學能恆定 <span class="mono nw">E = ${totalE} J</span>）。${isLanded ? '<br>💥 <strong class="hl-yellow">落地瞬間：</strong>位能全數轉化為動能並造成書包劇烈形變！' : ''}`,
         `<strong class="hl-pink">🔴 State: Free Falling (Gravity does positive work)</strong><br>
         Height <span class="mono nw">h = ${hStr} m</span> | Speed <span class="mono nw">v = ${vStr} m/s</span><br>
-        👉 <strong class="hl-cyan">Energy Conservation:</strong> <strong class="hl-green">U = ${roundedU} J</strong> $\\rightarrow$ <strong class="hl-cyan">K = ${roundedK} J</strong> (Total <span class="mono nw">E = ${totalE} J</span>).`
+        👉 <strong class="hl-cyan">Energy Conservation:</strong> <strong class="hl-green">U = ${roundedU} J</strong> → <strong class="hl-cyan">K = ${roundedK} J</strong> (Total <span class="mono nw">E = ${totalE} J</span>).`
       );
       exp.style.borderColor = 'var(--chalk-pink)';
     }
@@ -1009,13 +1647,13 @@
       ctx.fillStyle = '#ffe066';
       ctx.font = "bold 20px 'JetBrains Mono'";
       ctx.textAlign = "center";
-      ctx.fillText("h = 0.0 m", 150, GROUND_Y - 14);
+      ctx.fillText("h = 0.0 m", 75, GROUND_Y - 16);
       ctx.restore();
     }
 
     // 5. 重力向量 mg (X = 270，獨立不重疊)
     const mgVal = (massVal * g_accel).toFixed(1);
-    drawArrow(ctx, 270, boxTopY + 15, 270, boxTopY + boxH + 40, '#ff8040', 5, tr(`mg = ${mgVal} N`, `mg = ${mgVal} N`), -80, 0, "center");
+    drawArrow(ctx, 270, boxTopY + 15, 270, boxTopY + boxH + 12, '#ff8040', 5, tr(`mg = ${mgVal} N`, `mg = ${mgVal} N`), -70, 0, "center");
 
     // 6. 繪製書包本體
     ctx.save();
@@ -1133,12 +1771,13 @@
       👉 <strong class="hl-yellow">觀念驗證：</strong> 剛才壓縮了 <span class="mono nw">${compressVal}</span> 單位，木塊獲得了<strong class="hl-cyan">【${speedDescZH}】</strong>的運動速率 <span class="mono nw">v</span>！（飛出後即靜止，點擊按鈕可再次儲能發射）`,
       `<strong class="hl-green">🚀 State 2: Released! 100% Elastic potential energy converted to kinetic energy</strong><br>
       The spring expands to equilibrium <span class="mono nw">(x = 0)</span> and the block separates at peak velocity!<br>
-      👉 <strong class="hl-yellow">Verification:</strong> Compressed <span class="mono nw">${compressVal}</span> units $\\rightarrow$ launched with <strong class="hl-cyan">【${speedDescEN}】</strong> speed <span class="mono nw">v</span>!`
+      👉 <strong class="hl-yellow">Verification:</strong> Compressed <span class="mono nw">${compressVal}</span> units → launched with <strong class="hl-cyan">【${speedDescEN}】</strong> speed <span class="mono nw">v</span>!`
     );
     exp.style.borderColor = 'var(--chalk-green)';
   }
 
   function animateLauncher() {
+    if (activeTabIdx !== 2) { animId = null; return; }
     if(launcherState === 'launch') {
       if(blockX < 460) {
         let remainDistance = 460 - blockX;
@@ -1214,20 +1853,660 @@
     }
 
     if(launcherState === 'compress') {
-      drawArrow(ctx, 460, 105, blockX + 45, 105, '#ffe066', 4, tr(`壓縮量 x = ${compressVal}`, `Compression x = ${compressVal}`), 0, -18, "center");
-      drawArrow(ctx, blockX + 180, 200, blockX + 105, 200, '#4dd2ff', 6, tr("F (壓縮施力)", "F (Compress Force)"), 0, -18, "center");
+      drawArrow(ctx, 460, 105, blockX + 45, 105, '#ffe066', 4, null);
+      chalkText(ctx, tr(`壓縮量 x = ${compressVal}`, `Compression x = ${compressVal}`), 448, 88, '#ffe066', 20, 'right');
+      drawArrow(ctx, blockX + 180, 200, blockX + 105, 200, '#4dd2ff', 6, null);
+      textPlate(ctx, tr("F (壓縮施力)", "F (push)"), blockX + 142, 184, '#4dd2ff', 20, 'center');
     } else if(launcherState === 'launch') {
       if(blockX < 850) {
         let vLen = Math.min(blockV * 6, 120);
-        drawArrow(ctx, blockX + 45, 115, blockX + 45 + vLen, 115, '#4dd2ff', 5, tr("v (高速飛出！)", "v (Speed!)"), 0, -18, "center");
+        drawArrow(ctx, blockX + 45, 115, blockX + 45 + vLen, 115, '#4dd2ff', 5, null);
+        textPlate(ctx, tr("v (高速飛出！)", "v (launched!)"), blockX + 45 + vLen / 2, 99, '#4dd2ff', 20, 'center');
       }
     }
+  }
+
+
+  /* ==================================================================
+     V5 升級層：新增功能一律寫在這裡，原有函式只做最小補丁
+     ================================================================== */
+
+  /* ── 第十定律：集中管理 requestAnimationFrame ── */
+  const RAF = { k: null, q: null };
+  function killAllSims() {
+    for (const key in RAF) {
+      if (RAF[key]) { cancelAnimationFrame(RAF[key]); RAF[key] = null; }
+    }
+    if (typeof gravAnimId !== 'undefined' && gravAnimId) { cancelAnimationFrame(gravAnimId); gravAnimId = null; }
+    if (typeof animId !== 'undefined' && animId) { cancelAnimationFrame(animId); animId = null; }
+    K1.running = false;
+  }
+
+  /* ── 雙語小工具：同時更新 data-zh / data-en 與畫面文字，
+        這樣切語言時 applyTranslations() 不會把 JS 寫進去的內容蓋掉 ── */
+  function setBil(el, zh, en) {
+    if (!el) return;
+    el.setAttribute('data-zh', zh);
+    el.setAttribute('data-en', en);
+    el.innerHTML = LANG === 'en' ? en : zh;
+  }
+
+  /* ── Canvas 繪圖小工具 ── */
+  function chalkText(ctx, text, x, y, color, size, align, weight) {
+    ctx.save();
+    ctx.fillStyle = color || '#f2ecd9';
+    ctx.font = `${weight || 'bold'} ${size || 20}px "Noto Sans TC", "JetBrains Mono", sans-serif`;
+    ctx.textAlign = align || 'left';
+    ctx.fillText(text, x, y);
+    ctx.restore();
+  }
+  /* 文字襯底：讓標籤壓在參考虛線上時仍然看得清楚（2.4 防重疊） */
+  function textPlate(ctx, text, x, y, color, size, align) {
+    ctx.save();
+    ctx.font = `bold ${size || 20}px "Noto Sans TC", "JetBrains Mono", sans-serif`;
+    const w = ctx.measureText(text).width + 16;
+    const left = align === 'right' ? x - w + 8 : (align === 'left' ? x - 8 : x - w / 2);
+    ctx.fillStyle = 'rgba(17, 38, 31, 0.88)';
+    roundRect(ctx, left, y - (size || 20) - 2, w, (size || 20) + 12, 6);
+    ctx.fill();
+    ctx.restore();
+    chalkText(ctx, text, x, y, color, size, align);
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    const rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.lineTo(x + w - rr, y); ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+    ctx.lineTo(x + w, y + h - rr); ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+    ctx.lineTo(x + rr, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+    ctx.lineTo(x, y + rr); ctx.quadraticCurveTo(x, y, x + rr, y);
+    ctx.closePath();
+  }
+  function dashLine(ctx, x1, y1, x2, y2, color, width, dash) {
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = width || 2;
+    ctx.setLineDash(dash || [8, 8]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.restore();
+  }
+  function solidLine(ctx, x1, y1, x2, y2, color, width) {
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = width || 3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.restore();
+  }
+  function drawCar(ctx, x, roadY, w, h, stroke, fill) {
+    ctx.save();
+    ctx.strokeStyle = stroke; ctx.fillStyle = fill; ctx.lineWidth = 4;
+    const bodyH = h * 0.58;
+    roundRect(ctx, x, roadY - bodyH, w, bodyH, 8); ctx.fill(); ctx.stroke();
+    roundRect(ctx, x + w * 0.20, roadY - h, w * 0.54, h - bodyH + 4, 7); ctx.fill(); ctx.stroke();
+    const wr = Math.max(9, h * 0.20);
+    [x + w * 0.24, x + w * 0.78].forEach(cx => {
+      ctx.beginPath(); ctx.arc(cx, roadY - wr * 0.35, wr, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(17, 38, 31, 0.9)'; ctx.fill(); ctx.stroke();
+    });
+    ctx.restore();
+  }
+  function drawBike(ctx, x, roadY, w, h, stroke, fill) {
+    ctx.save();
+    ctx.strokeStyle = stroke; ctx.fillStyle = fill; ctx.lineWidth = 3;
+    const r = h * 0.34, y = roadY - r;
+    const x1 = x + r + 2, x2 = x + w - r - 2, mid = (x1 + x2) / 2;
+    [x1, x2].forEach(cx => { ctx.beginPath(); ctx.arc(cx, y, r, 0, Math.PI * 2); ctx.stroke(); });
+    const top = y - h * 0.40;
+    ctx.beginPath();
+    ctx.moveTo(x1, y); ctx.lineTo(mid, top); ctx.lineTo(x2, y);
+    ctx.moveTo(mid, top); ctx.lineTo(mid + 3, y);
+    ctx.moveTo(x2 - 6, y - h * 0.52); ctx.lineTo(x2, y);
+    ctx.stroke();
+    const hx = mid - 2, hy = top - h * 0.56;
+    ctx.beginPath(); ctx.arc(hx, hy, h * 0.15, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(hx, hy + h * 0.15); ctx.lineTo(mid - 4, top);
+    ctx.moveTo(hx + 1, hy + h * 0.30); ctx.lineTo(x2 - 6, y - h * 0.52);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function drawTruck(ctx, x, roadY, w, h, stroke, fill) {
+    ctx.save();
+    ctx.strokeStyle = stroke; ctx.fillStyle = fill; ctx.lineWidth = 4;
+    roundRect(ctx, x, roadY - h, w * 0.60, h * 0.78, 5); ctx.fill(); ctx.stroke();
+    roundRect(ctx, x + w * 0.62, roadY - h * 0.62, w * 0.38, h * 0.44, 6); ctx.fill(); ctx.stroke();
+    const wr = h * 0.16;
+    [x + w * 0.14, x + w * 0.44, x + w * 0.86].forEach(cx => {
+      ctx.beginPath(); ctx.arc(cx, roadY - wr * 0.3, wr, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(17, 38, 31, 0.9)'; ctx.fill(); ctx.stroke(); ctx.fillStyle = fill;
+    });
+    ctx.restore();
+  }
+  function drawVehicle(ctx, shape, x, roadY, w, h, stroke, fill) {
+    if (shape === 'bike')  return drawBike(ctx, x, roadY, w, h, stroke, fill);
+    if (shape === 'truck') return drawTruck(ctx, x, roadY, w, h, stroke, fill);
+    return drawCar(ctx, x, roadY, w, h, stroke, fill);
+  }
+  function drawBall(ctx, cx, cy, r, stroke, fill) {
+    ctx.save();
+    ctx.strokeStyle = stroke; ctx.fillStyle = fill; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+  function fmtJ(v) {
+    return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  function fmtX(v) {
+    return '×' + (Math.abs(v - Math.round(v)) < 0.05 ? Math.round(v) : v.toFixed(1));
+  }
+
+  /* ==================================================================
+     分頁 1：動能對決台（速率平方 vs 質量正比）
+     ================================================================== */
+  const K_MASS = [
+    { m: 80,   w: 76,  h: 46, shape: 'bike',  zh: '腳踏車＋人', en: 'Bicycle + rider' },
+    { m: 1000, w: 108, h: 54, shape: 'car',   zh: '小客車',     en: 'Car' },
+    { m: 4000, w: 150, h: 72, shape: 'truck', zh: '大卡車',     en: 'Truck' }
+  ];
+  const K_SPEEDS  = [10, 20, 30, 40];
+  const K_CAR     = K_MASS[1];     // 只比速率時，兩車都是小客車
+  const K_BASE_V  = 10;            // A 車基準速率 (m/s)
+  const K_DECEL   = 5;             // 煞車減速度 a = 5 m/s²
+  const K_PXM     = 4.0;           // 煞車距離的像素比例
+  const K_START_X = 200;           // 起煞點
+  const K_LANE_A  = 180;
+  const K_LANE_B  = 380;
+  const K_TSCALE  = 2.5;           // 動畫快轉倍率
+
+  const K1 = { mode: 'mass', idx: 2, running: false, t0: 0, dA: 0, dB: 0, vA: 0, vB: 0, braked: false };
+
+  function kCarA() {
+    return K1.mode === 'mass'
+      ? { m: K_MASS[0].m, v: K_BASE_V, w: K_MASS[0].w, h: K_MASS[0].h, shape: K_MASS[0].shape, name: K_MASS[0] }
+      : { m: K_CAR.m, v: K_BASE_V, w: K_CAR.w, h: K_CAR.h, shape: K_CAR.shape, name: K_CAR };
+  }
+  function kCarB() {
+    if (K1.mode === 'mass') {
+      const s = K_MASS[K1.idx];
+      return { m: s.m, v: K_BASE_V, w: s.w, h: s.h, shape: s.shape, name: s };
+    }
+    return { m: K_CAR.m, v: K_SPEEDS[K1.idx], w: K_CAR.w, h: K_CAR.h, shape: K_CAR.shape, name: K_CAR };
+  }
+  function kEnergy(c) { return 0.5 * c.m * c.v * c.v; }
+  function kStopDist(c) { return (c.v * c.v) / (2 * K_DECEL); }
+
+  function kSetMode(mode, btn) {
+    K1.mode = mode;
+    K1.braked = false;
+    K1.running = false;
+    if (RAF.k) { cancelAnimationFrame(RAF.k); RAF.k = null; }
+    document.getElementById('kModeMass').classList.toggle('active', mode === 'mass');
+    document.getElementById('kModeSpeed').classList.toggle('active', mode === 'speed');
+    const r = document.getElementById('kRange');
+    r.max = (mode === 'mass') ? 2 : 3;
+    K1.idx = 1;
+    r.value = K1.idx;
+    K1.dA = 0; K1.dB = 0;
+    K1.vA = kCarA().v; K1.vB = kCarB().v;
+    kSync();
+  }
+
+  function kSync() {
+    K1.idx = parseInt(document.getElementById('kRange').value, 10);
+    if (!K1.running) { K1.dA = 0; K1.dB = 0; K1.braked = false; }
+    K1.vA = kCarA().v; K1.vB = kCarB().v;
+
+    const lbl = document.getElementById('kSliderLabel');
+    const ro  = document.getElementById('kReadout');
+    const brakeBtn = document.getElementById('kBrakeBtn');
+
+    if (K1.mode === 'mass') {
+      setBil(lbl, 'B 車的質量：', 'Mass of car B:');
+      const s = K_MASS[K1.idx];
+      ro.textContent = s.m + ' kg';
+      ro.title = tr(s.zh, s.en);
+      setBil(document.getElementById('kRatioLabel'), 'B 是 A 的幾倍（質量）', 'B ÷ A (mass)');
+      brakeBtn.disabled = true;
+    } else {
+      setBil(lbl, 'B 車的速率：', 'Speed of car B:');
+      ro.textContent = K_SPEEDS[K1.idx] + ' m/s';
+      setBil(document.getElementById('kRatioLabel'), 'B 是 A 的幾倍（速率）', 'B ÷ A (speed)');
+      brakeBtn.disabled = false;
+    }
+    kHud();
+    kDraw();
+  }
+
+  function kHud() {
+    const A = kCarA(), B = kCarB();
+    const KA = kEnergy(A), KB = kEnergy(B);
+    const maxK = Math.max(KA, KB, 1);
+    document.getElementById('kValA').textContent = fmtJ(KA) + ' J';
+    document.getElementById('kValB').textContent = fmtJ(KB) + ' J';
+    document.getElementById('kBarA').style.width = (KA / maxK * 100) + '%';
+    document.getElementById('kBarB').style.width = (KB / maxK * 100) + '%';
+
+    const inRatio = (K1.mode === 'mass') ? (B.m / A.m) : (B.v / A.v);
+    document.getElementById('kRatioIn').textContent = fmtX(inRatio);
+    document.getElementById('kRatioOut').textContent = fmtX(KB / KA);
+
+    if (K1.mode === 'mass') {
+      document.getElementById('kDistA').textContent = '—';
+      document.getElementById('kDistB').textContent = '—';
+    } else {
+      document.getElementById('kDistA').textContent = kStopDist(A).toFixed(0) + ' m';
+      document.getElementById('kDistB').textContent = kStopDist(B).toFixed(0) + ' m';
+    }
+    kNoteText();
+  }
+
+  function kNoteText() {
+    const A = kCarA(), B = kCarB();
+    const el = document.getElementById('kNote');
+    if (K1.mode === 'mass') {
+      const r = B.m / A.m;
+      setBil(el,
+        `🟢 <b>只比質量：兩台車速率都是 ${K_BASE_V} m/s。</b><br>
+         B 車的質量是 A 車的 <b>${fmtX(r)}</b>，動能也剛好是 <b>${fmtX(r)}</b>——<span class="hl-green">一模一樣的倍數，這就叫「成正比」</span>。<br>
+         👉 現在切到 <b>② 只比速率</b>，看看同樣把數字放大 2 倍，動能會發生什麼事。`,
+        `🟢 <b>Mass only: both cars travel at ${K_BASE_V} m/s.</b><br>
+         Car B has <b>${fmtX(r)}</b> the mass of car A, and exactly <b>${fmtX(r)}</b> the kinetic energy - <span class="hl-green">the same multiplier. That is what "proportional" means</span>.<br>
+         👉 Now switch to <b>② Compare Speed</b> and see what happens when you double that number instead.`);
+    } else {
+      const rv = B.v / A.v, rk = kEnergy(B) / kEnergy(A);
+      const rd = kStopDist(B) / kStopDist(A);
+      setBil(el,
+        `🔴 <b>只比速率：兩台車都是 ${K_CAR.m} kg 的小客車。</b><br>
+         速率只放大 <b>${fmtX(rv)}</b>，動能卻放大到 <b class="hl-pink">${fmtX(rk)}</b>，煞車距離也跟著變成 <b class="hl-pink">${fmtX(rd)}</b>
+         （<span class="mono nw">${fmtX(rv)}</span> 的平方＝<span class="mono nw">${fmtX(rk)}</span>）。<br>
+         👉 這就是「速率平方」的威力：<span class="hl-yellow">速率只快一點點，危險是用平方在漲的</span>。按下煞車鈕，用煞車痕的長度親眼比一次。<br>
+         <small style="color:var(--chalk-dim);">（本模擬取煞車減速度 <span class="mono nw">a = 5 m/s²</span>，煞車距離 <span class="mono nw">d = v² ÷ 2a</span>。）</small>`,
+        `🔴 <b>Speed only: both cars are ${K_CAR.m} kg.</b><br>
+         The speed is only <b>${fmtX(rv)}</b> larger, but the kinetic energy is <b class="hl-pink">${fmtX(rk)}</b> larger, and so is the braking distance: <b class="hl-pink">${fmtX(rd)}</b>
+         (<span class="mono nw">${fmtX(rv)}</span> squared is <span class="mono nw">${fmtX(rk)}</span>).<br>
+         👉 That is the power of the squared term: <span class="hl-yellow">a small gain in speed makes the danger grow by its square</span>. Press the brake button and compare the skid marks yourself.<br>
+         <small style="color:var(--chalk-dim);">(This simulation uses a braking deceleration of <span class="mono nw">a = 5 m/s²</span>, so <span class="mono nw">d = v² ÷ 2a</span>.)</small>`);
+    }
+  }
+
+  function kLane(ctx, car, dist, vNow, roadY, tone, badgeZh, badgeEn) {
+    const badgeY = roadY - 116;                 // 左側固定欄，永遠不碰到起煞線
+    const arrowY = roadY - car.h - 22;          // 速度箭頭貼著車頂
+    const fill = tone.replace('rgb(', 'rgba(').replace(')', ', 0.22)');
+    solidLine(ctx, 60, roadY, 970, roadY, 'rgba(242, 236, 217, 0.35)', 3);
+    chalkText(ctx, tr(badgeZh, badgeEn), 20, badgeY, tone, 20, 'left');
+
+    const x = K_START_X + dist * K_PXM;
+    if (dist > 0.2) {
+      solidLine(ctx, K_START_X + car.w * 0.24, roadY + 5, x + car.w * 0.24, roadY + 5, tone, 9);
+      drawArrow(ctx, K_START_X, roadY + 30, x + car.w * 0.24, roadY + 30, 'rgba(242, 236, 217, 0.55)', 2, null);
+      textPlate(ctx, `d = ${dist.toFixed(0)} m`,
+        (K_START_X + x + car.w * 0.24) / 2, roadY + 56, 'rgba(242, 236, 217, 0.9)', 20, 'center');
+    }
+    drawVehicle(ctx, car.shape, x, roadY, car.w, car.h, tone, fill);
+
+    if (vNow > 0.3) {
+      const vLen = Math.min(150, vNow * 3.0);
+      drawArrow(ctx, x + car.w + 10, arrowY, x + car.w + 10 + vLen, arrowY, tone, 5, null);
+      chalkText(ctx, `${vNow.toFixed(0)} m/s`, x + car.w + 20 + vLen, arrowY + 7, tone, 20, 'left');
+    } else {
+      chalkText(ctx, tr('已停止', 'stopped'), x + car.w + 20, arrowY + 7, 'rgba(242, 236, 217, 0.75)', 20, 'left');
+    }
+  }
+
+  function kDraw() {
+    const cv = document.getElementById('kineticCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    ctx.clearRect(0, 0, cv.width, cv.height);
+
+    const A = kCarA(), B = kCarB();
+    const vA = K1.braked ? K1.vA : A.v;
+    const vB = K1.braked ? K1.vB : B.v;
+
+    chalkText(ctx,
+      K1.mode === 'mass'
+        ? tr('兩車速率相同，只有質量不同', 'Same speed, different mass')
+        : tr('兩車質量相同，只有速率不同', 'Same mass, different speed'),
+      560, 32, '#ffe066', 22, 'center');
+
+    if (K1.mode === 'speed') {
+      dashLine(ctx, K_START_X, 46, K_START_X, 442, 'rgba(255, 224, 102, 0.7)', 3, [10, 10]);
+      chalkText(ctx, tr('起煞點', 'brake here'), K_START_X, 30, '#ffe066', 20, 'center');
+    }
+
+    kLane(ctx, A, K1.dA, vA, K_LANE_A, 'rgb(51, 204, 153)',
+      K1.mode === 'mass' ? 'A：' + A.m + ' kg' : 'A：' + K_BASE_V + ' m/s',
+      K1.mode === 'mass' ? 'A: ' + A.m + ' kg' : 'A: ' + K_BASE_V + ' m/s');
+    kLane(ctx, B, K1.dB, vB, K_LANE_B, 'rgb(77, 210, 255)',
+      K1.mode === 'mass' ? 'B：' + B.m + ' kg' : 'B：' + B.v + ' m/s',
+      K1.mode === 'mass' ? 'B: ' + B.m + ' kg' : 'B: ' + B.v + ' m/s');
+  }
+
+  function kBrake() {
+    if (K1.mode !== 'speed') return;
+    if (RAF.k) { cancelAnimationFrame(RAF.k); RAF.k = null; }
+    K1.braked = true;
+    K1.running = true;
+    K1.dA = 0; K1.dB = 0;
+    K1.vA = kCarA().v; K1.vB = kCarB().v;
+    K1.t0 = performance.now();
+    kStep();
+  }
+
+  function kStep() {
+    if (!K1.running || activeTabIdx !== 0) { K1.running = false; RAF.k = null; return; }
+    const t = ((performance.now() - K1.t0) / 1000) * K_TSCALE;
+    const A = kCarA(), B = kCarB();
+    let done = 0;
+    [[A, 'dA', 'vA'], [B, 'dB', 'vB']].forEach(([car, dk, vk]) => {
+      const tStop = car.v / K_DECEL;
+      if (t >= tStop) { K1[dk] = kStopDist(car); K1[vk] = 0; done++; }
+      else { K1[dk] = car.v * t - 0.5 * K_DECEL * t * t; K1[vk] = car.v - K_DECEL * t; }
+    });
+    kDraw();
+    if (done < 2) RAF.k = requestAnimationFrame(kStep);
+    else { K1.running = false; RAF.k = null; }
+  }
+
+  function kReset() {
+    if (RAF.k) { cancelAnimationFrame(RAF.k); RAF.k = null; }
+    K1.running = false; K1.braked = false;
+    K1.dA = 0; K1.dB = 0;
+    K1.vA = kCarA().v; K1.vB = kCarB().v;
+    kHud(); kDraw();
+  }
+
+  /* ==================================================================
+     分頁 5：段考挑戰
+     ================================================================== */
+  const QANS = { q1: 'C', q2: 'B', q3: 'D', q4: 'A', q5: 'C' };
+  const QREV = { q1: false, q2: false, q3: false, q4: false, q5: false };
+  const QCAP = 296, QFORM = 336;   // 保留給說明與算式的文字帶，任何圖形都不准畫進來
+
+  function qCtx(n) {
+    const c = document.getElementById('qc' + n);
+    if (!c) return null;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+    return ctx;
+  }
+  function qCap(ctx, zh, en, color) {
+    chalkText(ctx, tr(zh, en), 450, QCAP, color || '#4dd2ff', 21, 'center');
+  }
+  function qForm(ctx, txt, color) {
+    ctx.save();
+    ctx.fillStyle = color || '#ffe066';
+    ctx.font = 'bold 22px "JetBrains Mono", "Noto Sans TC", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(txt, 450, QFORM);
+    ctx.restore();
+  }
+
+  function drawQ1() {
+    const ctx = qCtx(1); if (!ctx) return;
+    const yc = 130;
+    [[250, 3, 60, '#33cc99', tr('原本', 'before')], [640, 6, 120, '#ff66b2', tr('加速後', 'after')]].forEach(([cx, v, len, col, cap]) => {
+      drawBall(ctx, cx, yc, 34, col, 'rgba(255,255,255,0.10)');
+      chalkText(ctx, '2 kg', cx, yc + 8, '#f2ecd9', 20, 'center');
+      drawArrow(ctx, cx + 44, yc, cx + 44 + len, yc, col, 5, null);
+      chalkText(ctx, v + ' m/s', cx + 54 + len, yc + 7, col, 20, 'left');
+      chalkText(ctx, cap, cx, yc + 74, 'rgba(242,236,217,0.8)', 20, 'center');
+    });
+    if (QREV.q1) {
+      // 動能長條 1 : 4
+      [[250, 9, '#33cc99', 40], [640, 36, '#ff66b2', 160]].forEach(([cx, j, col, w]) => {
+        ctx.save(); ctx.fillStyle = col; ctx.globalAlpha = 0.75;
+        ctx.fillRect(cx - 80, 228, w, 22); ctx.restore();
+        ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.strokeRect(cx - 80, 228, w, 22); ctx.restore();
+        chalkText(ctx, j + ' J', cx - 80 + w + 10, 246, col, 20, 'left');
+      });
+      qCap(ctx, '速率 ×2，動能卻是 ×4（平方，不是倍數）', 'Speed ×2, but energy ×4 - squared, not doubled');
+      qForm(ctx, 'K = ½ × 2 × 3² = 9 J    →    ½ × 2 × 6² = 36 J');
+    }
+  }
+
+  function drawQ2() {
+    const ctx = qCtx(2); if (!ctx) return;
+    const yc = 140;
+    drawBall(ctx, 300, yc, 46, '#4dd2ff', 'rgba(77,210,255,0.14)');
+    chalkText(ctx, '500 g', 300, yc + 8, '#f2ecd9', 22, 'center');
+    drawArrow(ctx, 356, yc, 486, yc, '#4dd2ff', 5, null);
+    chalkText(ctx, '4 m/s', 496, yc + 7, '#4dd2ff', 22, 'left');
+    solidLine(ctx, 150, yc + 50, 640, yc + 50, 'rgba(242,236,217,0.35)', 3);
+    if (QREV.q2) {
+      ctx.save(); ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 3;
+      roundRect(ctx, 250, 232, 130, 40, 8); ctx.stroke();
+      roundRect(ctx, 470, 232, 130, 40, 8); ctx.stroke(); ctx.restore();
+      chalkText(ctx, '500 g', 315, 258, '#ff8040', 22, 'center');
+      chalkText(ctx, '0.5 kg', 535, 258, '#33cc99', 22, 'center');
+      drawArrow(ctx, 388, 252, 462, 252, '#ff8040', 4, null);
+      chalkText(ctx, tr('÷ 1000', '÷ 1000'), 425, 224, '#ff8040', 20, 'center');
+      qCap(ctx, '公克不能直接代入！第一步永遠是換單位', 'Never plug in grams. Step one is always the unit conversion');
+      qForm(ctx, 'K = ½ × 0.5 × 4² = 4 J');
+    }
+  }
+
+  function drawQ3() {
+    const ctx = qCtx(3); if (!ctx) return;
+    const GY = 226, TOP = 126;
+    solidLine(ctx, 60, GY, 840, GY, 'rgba(242,236,217,0.4)', 3);
+    // 平台
+    ctx.save(); ctx.strokeStyle = 'rgba(242,236,217,0.6)'; ctx.fillStyle = 'rgba(255,255,255,0.035)'; ctx.lineWidth = 3;
+    ctx.fillRect(640, TOP, 200, GY - TOP);
+    ctx.beginPath(); ctx.moveTo(640, GY); ctx.lineTo(640, TOP); ctx.lineTo(848, TOP); ctx.stroke(); ctx.restore();
+    // 高度標示（放在最左側，不壓到任何路徑）
+    dashLine(ctx, 96, TOP, 700, TOP, 'rgba(255,224,102,0.45)', 2, [7, 9]);
+    drawArrow(ctx, 110, GY, 110, TOP, '#ffe066', 4, null);
+    chalkText(ctx, 'h = 3 m', 100, (GY + TOP) / 2, '#ffe066', 20, 'right');
+    // 甲：垂直
+    dashLine(ctx, 250, GY, 250, TOP, '#33cc99', 3, [10, 8]);
+    drawArrow(ctx, 250, GY - 10, 250, TOP + 16, '#33cc99', 5, null);
+    ctx.save(); ctx.strokeStyle = '#33cc99'; ctx.fillStyle = 'rgba(51,204,153,0.2)'; ctx.lineWidth = 3;
+    ctx.fillRect(222, TOP - 34, 56, 34); ctx.strokeRect(222, TOP - 34, 56, 34); ctx.restore();
+    chalkText(ctx, tr('甲：垂直吊上去', 'A: straight up'), 250, GY + 34, '#33cc99', 20, 'center');
+    // 乙：斜坡
+    ctx.save(); ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(360, GY); ctx.lineTo(640, TOP); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.strokeStyle = '#ff8040'; ctx.fillStyle = 'rgba(255,128,64,0.2)'; ctx.lineWidth = 3;
+    ctx.translate(500, 176); ctx.rotate(Math.atan2(TOP - GY, 640 - 360));
+    ctx.fillRect(-28, -34, 56, 34); ctx.strokeRect(-28, -34, 56, 34); ctx.restore();
+    chalkText(ctx, tr('乙：推長斜坡', 'B: long ramp'), 500, GY + 34, '#ff8040', 20, 'center');
+    chalkText(ctx, '20 kg', 250, TOP - 44, '#f2ecd9', 20, 'center');
+    if (QREV.q3) {
+      qCap(ctx, '重力位能只認垂直高度差，跟走哪一條路完全無關', 'Potential energy counts vertical height only - the path is irrelevant');
+      qForm(ctx, 'ΔU = m g h = 20 × 10 × 3 = 600 J（甲、乙都一樣）');
+    }
+  }
+
+  function drawQ4() {
+    const ctx = qCtx(4); if (!ctx) return;
+    const TOP = 70, GY = 250;
+    solidLine(ctx, 120, GY, 500, GY, 'rgba(242,236,217,0.4)', 3);
+    drawArrow(ctx, 190, TOP, 190, GY, '#ffe066', 4, null);
+    chalkText(ctx, 'h = 5 m', 180, (TOP + GY) / 2, '#ffe066', 20, 'right');
+    [[TOP + 4, 'rgba(51,204,153,0.9)'], [TOP + 78, 'rgba(255,224,102,0.75)'], [GY - 26, 'rgba(255,102,178,0.95)']].forEach(([y, col], i) => {
+      drawBall(ctx, 300, y, 24, col, 'rgba(255,255,255,0.08)');
+      if (i === 0) chalkText(ctx, tr('靜止 v = 0', 'at rest, v = 0'), 336, y + 7, '#33cc99', 20, 'left');
+      if (i === 2) chalkText(ctx, tr('落地', 'landing'), 336, y + 7, '#ff66b2', 20, 'left');
+    });
+    if (QREV.q4) {
+      chalkText(ctx, tr('位能全部變成動能：', 'All potential becomes kinetic:'), 560, 104, '#4dd2ff', 21, 'left');
+      ['m g h  =  ½ m v²', '10 × 5  =  ½ v²', 'v²  =  100'].forEach((s, i) => {
+        chalkText(ctx, s, 560, 146 + i * 38, '#f2ecd9', 21, 'left');
+      });
+      chalkText(ctx, 'v = 10 m/s', 560, 260, '#ffe066', 24, 'left');
+      qCap(ctx, '兩邊的 m 會自己消掉：落地速率跟球有多重無關', 'The mass cancels: landing speed does not depend on how heavy the ball is');
+      qForm(ctx, 'v = √(2gh) = √(2 × 10 × 5) = 10 m/s');
+    }
+  }
+
+  function drawQ5() {
+    const ctx = qCtx(5); if (!ctx) return;
+    const EQ = 420;
+    [[108, 2, 360, 60, '#ff8040', 'v'], [216, 4, 300, 120, '#ff66b2', '2v']].forEach(([yc, units, bx, vlen, col, vlab]) => {
+      // 牆
+      ctx.save(); ctx.strokeStyle = '#f2ecd9'; ctx.fillStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 3;
+      ctx.fillRect(80, yc - 40, 24, 80); ctx.strokeRect(80, yc - 40, 24, 80); ctx.restore();
+      // 彈簧
+      ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(104, yc);
+      const coils = 9, step = (bx - 104) / coils;
+      for (let i = 1; i <= coils; i++) {
+        ctx.lineTo(104 + i * step - step / 2, i % 2 === 0 ? yc - 26 : yc + 26);
+        ctx.lineTo(104 + i * step, yc);
+      }
+      ctx.stroke(); ctx.restore();
+      // 木塊
+      ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 3;
+      ctx.fillRect(bx, yc - 26, 58, 52); ctx.strokeRect(bx, yc - 26, 58, 52); ctx.restore();
+      // 平衡點
+      dashLine(ctx, EQ, yc - 42, EQ, yc + 42, 'rgba(51,204,153,0.7)', 2, [7, 7]);
+      // 射出速率（一律畫在平衡點右側，不會壓到虛線）
+      drawArrow(ctx, EQ + 44, yc, EQ + 44 + vlen, yc, col, 5, null);
+      chalkText(ctx, vlab, EQ + 54 + vlen, yc + 7, col, 22, 'left');
+      chalkText(ctx, tr('壓縮 ' + units + ' 單位', 'compressed ' + units), 112, yc - 50, col, 20, 'left');
+    });
+    chalkText(ctx, tr('平衡點', 'equilibrium'), EQ, 44, 'rgba(51,204,153,0.85)', 20, 'center');
+    if (QREV.q5) {
+      qCap(ctx, '彈力位能全部變成動能，而動能看的是速率的平方', 'The elastic energy becomes kinetic energy - and kinetic energy uses speed squared');
+      qForm(ctx, 'U₂ ÷ U₁ = K₂ ÷ K₁ = (2v)² ÷ v² = 4');
+    }
+  }
+
+  function drawAllQ() { drawQ1(); drawQ2(); drawQ3(); drawQ4(); drawQ5(); }
+
+  const QFB = {
+    q1: {
+      zh: '<b>答案：(C) 4 倍。</b>動能公式裡速率是<b>平方項</b>，速率 3 → 6 是 2 倍，動能就是 2² = <b>4 倍</b>。選 (A) 的人是把「速率 2 倍」直接當成「動能 2 倍」；選 (D) 9 倍的人是把速率的數字 3 拿去平方，但要平方的是<b>倍率</b>，不是速率本身。',
+      en: '<b>Answer: (C) 4 times.</b> Speed is <b>squared</b> in the formula, so doubling 3 → 6 m/s gives 2² = <b>4 times</b> the energy. Choosing (A) treats double speed as double energy; choosing (D) squares the number 3 instead of squaring the <b>ratio</b>.'
+    },
+    q2: {
+      zh: '<b>答案：(B) 4 J。</b>先換單位：<span class="mono nw">500 g = 0.5 kg</span>，再代入 <span class="mono nw">K = ½ × 0.5 × 4² = 4 J</span>。選 (A) 4000 J 的人直接把 500 代進去，這是這一課最常見的丟分方式。',
+      en: '<b>Answer: (B) 4 J.</b> Convert first: <span class="mono nw">500 g = 0.5 kg</span>, then <span class="mono nw">K = ½ × 0.5 × 4² = 4 J</span>. Choosing (A) means plugging 500 straight in - the most common way to lose marks on this topic.'
+    },
+    q3: {
+      zh: '<b>答案：(D) 一樣多，都是 600 J。</b>重力位能只看<b>垂直高度差</b>：<span class="mono nw">ΔU = 20 × 10 × 3 = 600 J</span>，走斜坡雖然路徑長、推的距離遠，但施力小，最後存進箱子的位能完全一樣。選 (C) 的人算成 <span class="mono nw">20 × 10 = 200</span>，漏乘了高度。',
+      en: '<b>Answer: (D) Equal, both 600 J.</b> Potential energy depends only on <b>vertical height</b>: <span class="mono nw">ΔU = 20 × 10 × 3 = 600 J</span>. The ramp is longer but the force is smaller, so the stored energy is identical. Choosing (C) forgets to multiply by the height.'
+    },
+    q4: {
+      zh: '<b>答案：(A) 10 m/s。</b>位能全部轉成動能：<span class="mono nw">mgh = ½mv²</span>，兩邊的 <span class="mono nw">m</span> 消掉，得 <span class="mono nw">v² = 2gh = 2 × 10 × 5 = 100</span>，所以 <span class="mono nw">v = 10 m/s</span>。選 (D) 50 m/s 的人算的是 <span class="mono nw">2gh</span> 卻忘了開根號。',
+      en: '<b>Answer: (A) 10 m/s.</b> All the potential energy becomes kinetic: <span class="mono nw">mgh = ½mv²</span>. The <span class="mono nw">m</span> cancels, giving <span class="mono nw">v² = 2gh = 100</span>, so <span class="mono nw">v = 10 m/s</span>. Choosing (D) computes <span class="mono nw">2gh</span> but forgets the square root.'
+    },
+    q5: {
+      zh: '<b>答案：(C) 4 倍。</b>放手後彈力位能<b>全部</b>變成動能，所以比較彈力位能就等於比較動能。速率從 <span class="mono nw">v</span> 變成 <span class="mono nw">2v</span>，動能就是 <span class="mono nw">(2v)² ÷ v² = 4</span> 倍，因此原本存的彈力位能也是 <b>4 倍</b>。選 (A) 2 倍的人，是把「壓縮量 2 倍」直接當成「能量 2 倍」。',
+      en: '<b>Answer: (C) 4 times.</b> On release the elastic energy becomes <b>entirely</b> kinetic, so comparing stored energy is the same as comparing kinetic energy. Speed goes from <span class="mono nw">v</span> to <span class="mono nw">2v</span>, so the energy ratio is <span class="mono nw">(2v)² ÷ v² = 4</span>. Choosing (A) treats double compression as double energy.'
+    }
+  };
+
+  function checkQuiz() {
+    let score = 0, answered = 0;
+    for (let i = 1; i <= 5; i++) {
+      const key = 'q' + i;
+      const picked = document.querySelector(`input[name="${key}"]:checked`);
+      const fb = document.getElementById('fb' + i);
+      QREV[key] = true;
+      if (picked) answered++;
+      const ok = picked && picked.value === QANS[key];
+      if (ok) score++;
+      fb.classList.add('show');
+      fb.classList.toggle('ok', !!ok);
+      fb.classList.toggle('ng', !ok);
+      const head = picked
+        ? (ok ? tr('✅ 答對了！', '✅ Correct!') : tr('❌ 再看一次圖：', '❌ Look at the figure again:'))
+        : tr('⬜ 這題沒作答：', '⬜ Not answered:');
+      setBil(fb, head + QFB[key].zh, head + QFB[key].en);
+    }
+    drawAllQ();
+    const sc = document.getElementById('quizScore');
+    setBil(sc,
+      `答對 <span class="mono nw">${score} / 5</span> 題　（作答 ${answered} 題）` +
+        (score === 5 ? '　🎉 五題全對，這一課的觀念你抓到了！' : '　圖已解鎖，對著圖再想一次錯的那幾題。'),
+      `Score <span class="mono nw">${score} / 5</span> (${answered} answered)` +
+        (score === 5 ? '  🎉 All five correct - you have this topic.' : '  The figures are unlocked; rework the ones you missed.'));
+  }
+
+  function resetQuiz() {
+    for (let i = 1; i <= 5; i++) {
+      QREV['q' + i] = false;
+      document.querySelectorAll(`input[name="q${i}"]`).forEach(r => { r.checked = false; });
+      const fb = document.getElementById('fb' + i);
+      fb.classList.remove('show', 'ok', 'ng');
+      setBil(fb, '', '');
+    }
+    drawAllQ();
+    setBil(document.getElementById('quizScore'), '還沒作答', 'Not answered yet');
+  }
+
+  /* ==================================================================
+     切頁與語言切換的統一重繪
+     ================================================================== */
+  function onTabShown(idx) {
+    if (idx === 0) { kHud(); kDraw(); }
+    if (idx === 4) drawAllQ();
+  }
+
+  function redrawAll() {
+    kHud();
+    kDraw();
+    drawAllQ();
+    if (typeof drawGravityScene === 'function') drawGravityScene();
+    if (typeof drawLauncherFrame === 'function') drawLauncherFrame();
+    // 說明框原本沒有 data-zh/data-en，切語言時會停在舊語言，這裡補回來
+    if (typeof updateGravityText === 'function') updateGravityText(currentGravityType);
+    if (typeof updateCompressText === 'function') {
+      if (launcherState === 'compress') updateCompressText(); else updateLaunchText();
+    }
+  }
+
+  /* ── 第六定律：電影式封面（點一下播放，有聲；播完自動進教材）── */
+  let introTimer = null;
+  let introStarted = false;
+
+  function dismissIntro() {
+    const el = document.getElementById('introScreen');
+    if (!el || el.classList.contains('exiting')) return;
+    clearTimeout(introTimer);
+    el.classList.add('exiting');
+    setTimeout(() => { if (el && el.parentNode) el.parentNode.removeChild(el); }, 750);
+  }
+
+  /* 第一下＝開始播（這一下就是瀏覽器要的「使用者互動」，聲音才解得開）
+     第二下＝跳過，直接進教材 */
+  function introClick() {
+    const el = document.getElementById('introScreen');
+    if (!el) return;
+    const v = document.getElementById('introVideo');
+    if (!v || introStarted) { dismissIntro(); return; }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { dismissIntro(); return; }
+    introStarted = true;
+    el.classList.add('playing');
+    const p = v.play();
+    // 播不動（檔案缺、格式不支援）就別讓老師卡在封面
+    if (p && p.catch) p.catch(() => dismissIntro());
+    // 保險：影片比預期長或 ended 沒觸發，也一定會退場
+    introTimer = setTimeout(dismissIntro, 20000);
+  }
+
+  function initLabs() {
+    kSetMode('mass', null);
+    resetQuiz();
   }
 
   function bootUp() {
     applyTranslations();
     document.documentElement.lang = 'zh-Hant';
+    initLabs();
     switchTab(0);
+
+    const intro = document.getElementById('introScreen');
+    if (intro) {
+      intro.addEventListener('click', introClick);
+      window.addEventListener('keydown', function (e) {
+        if (!document.getElementById('introScreen')) return;
+        if (['Tab', 'Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
+        introClick();
+      });
+      const iv = document.getElementById('introVideo');
+      if (iv) iv.addEventListener('ended', dismissIntro);
+    }
   }
 
   bootUp();
