@@ -413,6 +413,77 @@ Hook 不能取代教材本體，也不能搶過主動畫。
 }
 ```
 
+### Hook 小單元（分頁鈕）配色 — 全單元統一，不可自行調
+
+分頁鈕就是「Hook 小單元」：每一格是一個子主題的鉤子，主標題寫鉤子、副標題寫學科名稱。
+**選中的那一格是整塊實心黃底 ＋ 深色字 ＋ 外圈黃光**，不是「深底配黃字」——
+深底配黃字和沒選中的格子對比太弱，學生要找一下才知道自己站在哪裡。
+
+```html
+<button class="tab-btn active" onclick="switchTab('tab1', this)" type="button">
+  <span class="tab-main" data-zh="機械不省功" data-en="No free lunch">機械不省功</span>
+  <span class="tab-sub"  data-zh="功的黃金鐵律" data-en="The golden rule">功的黃金鐵律</span>
+</button>
+```
+
+```css
+.tabs { display: grid; gap: 10px; }          /* 欄數看分頁數：5 格一排、6 格三欄兩列 */
+.tab-btn {
+  min-height: 136px; padding: 20px 12px; gap: 6px; line-height: 1.4;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--chalk-muted);
+  border: 2px dashed var(--rule-color);
+  border-radius: 10px;
+}
+.tab-main { font-size: 22px; font-weight: 700; line-height: 1.38; }
+.tab-sub  { font-size: 17px; font-weight: 700; line-height: 1.3; opacity: 0.82; }
+
+.tab-btn:hover { background: var(--bg-panel-hover); color: var(--chalk-white); border-color: var(--chalk-white); }
+
+.tab-btn.active {
+  background: var(--chalk-yellow);           /* 實心黃底 */
+  color: var(--bg-base);                     /* 深色字 */
+  border: 3px solid var(--chalk-yellow);
+  box-shadow: 0 0 20px rgba(255, 224, 102, 0.5);
+}
+.tab-btn.active .tab-main,
+.tab-btn.active .tab-sub { color: var(--bg-base); }
+.tab-btn.active .tab-sub { opacity: 0.78; }
+
+/* 資優／進階分頁：換成珊瑚色，但一樣是實心底 ＋ 深色字 */
+.tab-btn.danger-tab.active {
+  background: var(--chalk-coral);
+  border-color: var(--chalk-coral);
+  box-shadow: 0 0 20px rgba(255, 128, 64, 0.5);
+}
+```
+
+窄螢幕只縮尺寸，不改配色：`min-height` 136 → 118（≤900px）→ 96（≤480px），欄數逐段遞減。
+
+### Hook 對話框底色的陷阱
+
+`.hook-box` 的 8% 青色薄膜**必須疊在「抬起來的面板色」`--bg-panel` 上**。
+有些單元的 `.panel` 是透明的，薄膜就會直接落到更暗的 `--bg-base`，整塊 Hook 看起來灰掉、
+標題和粗體字都變鈍——電腦上量到的色碼一模一樣，但肉眼就是不對。
+所以底色要自己補回去，不要靠父層：
+
+```css
+.hook-box {
+  /* 不要只寫 background: rgba(77, 210, 255, 0.08); */
+  background: linear-gradient(rgba(77, 210, 255, 0.08), rgba(77, 210, 255, 0.08)), var(--bg-panel);
+  border: 2px solid rgba(77, 210, 255, 0.4);
+  border-left: 6px solid var(--chalk-teal);
+  border-radius: 12px; padding: 18px 22px; margin-bottom: 22px;
+}
+.hook-title { font-size: 26px; font-weight: 700; color: var(--chalk-teal); margin-bottom: 6px; }
+.hook-text  { font-size: 22px; line-height: 1.75; color: var(--chalk-white); }
+.hook-text b { color: var(--chalk-yellow); }
+```
+
+交件前的檢查方式：把新單元和前一個單元的 `.hook-box` / `.tab-btn.active`
+用同一支瀏覽器抓 `getComputedStyle`，逐項比對，不要用肉眼判斷「差不多」。
+
 ## 5.1 曉臻老師角色母版
 
 曉臻老師是 Physical-Boys 的固定教學角色；語音、字幕、Hook、實驗提示與概念收束應依情境選用她的透明角色圖，不可每個單元重新生成不同長相。
@@ -473,6 +544,12 @@ background: url("optics_3_cover.jpg") center / cover no-repeat;
 ```
 
 - 禁止 Base64 圖片。
+- **影片封面的 `poster` 一定要用影片的「第一格」，絕對不能用最後一格或高潮那一格。**
+  封面是點一下才播（不 autoplay、不 muted），播之前那張靜止畫學生會盯著看好幾秒；
+  放結局等於先把答案講完，懸念就沒了。用第一格還有一個好處：點下去的瞬間畫面完全接得上，
+  不會跳一下。做法是從成品影片抽第 0 格：
+  `ffmpeg -i <cover>.mp4 -vf "select=eq(n\,0)" -frames:v 1 -q:v 3 <cover>.jpg`
+  —— `poster` 和 `.intro-screen::before` 的背景圖要用同一張。
 - 動畫採緩慢推鏡 `introZoom`。
 - 搭配暗角或底部漸層遮罩。
 - 不可因封面造成 iOS 邊線、滾動條或版面位移。
