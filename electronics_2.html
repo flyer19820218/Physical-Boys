@@ -493,8 +493,8 @@
     header { padding-top: 64px; }
   }
 
-  /* ── 第六定律：電影式封面（點一下播放，有聲、無文字）──
-     poster 一定是影片的「第一格」，不能是結局那一格。 */
+  /* ── 第六定律：單元封面（靜態圖，點一下進教材）──
+     瀑布＝水位差，正好接上這一節「電壓就是高度差」的主軸。 */
   .intro-screen {
     position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center;
     overflow: hidden; background: #11261f; cursor: pointer; isolation: isolate;
@@ -503,41 +503,26 @@
   .intro-screen::before {
     content: ""; position: absolute; inset: -3%; z-index: -4;
     background: #11261f url("assets/covers/electronics_2_cover_v1.jpg") center/cover no-repeat;
-    animation: introZoom 14s ease-out both;
+    animation: introZoom 16s ease-out both;
   }
-  .intro-video {
-    position: absolute; inset: 0; z-index: -3;
-    width: 100%; height: 100%; object-fit: cover;
-    pointer-events: none; background: #11261f;
-    opacity: 0; transition: opacity .4s ease;
-  }
-  .intro-screen.playing .intro-video { opacity: 1; }
-  .intro-screen.playing::before { animation: none; }
   .intro-screen::after {
     content: ""; position: absolute; inset: 0; z-index: -2;
-    background: linear-gradient(180deg, rgba(1,11,11,.02) 34%, rgba(1,12,10,.20) 66%, rgba(1,12,10,.86) 100%),
-                radial-gradient(circle at 50% 44%, rgba(77,210,255,.10), transparent 36%);
+    background: linear-gradient(180deg, rgba(1,11,11,.06) 30%, rgba(1,12,10,.26) 66%, rgba(1,12,10,.80) 100%);
   }
   .intro-screen.exiting { opacity: 0; visibility: hidden; pointer-events: none; }
-  @keyframes introZoom { from { transform: scale(1); } to { transform: scale(1.06); } }
+  @keyframes introZoom { from { transform: scale(1); } to { transform: scale(1.07); } }
   @media (prefers-reduced-motion: reduce) { .intro-screen::before { animation: none; } }
-  /* 直式螢幕用 cover 會把手機左右切掉一大半，窄一點就整張塞進去 */
+  /* 直式螢幕用 cover 會把瀑布左右切掉一大半，窄一點就整張塞進去 */
   @media (max-aspect-ratio: 5/4) {
     .intro-screen::before { inset: 0; background-size: contain; background-position: center; }
-    .intro-video { object-fit: contain; }
   }
 
 </style>
 </head>
 <body>
-<!-- 第六定律：電影式封面（點一下播放，有聲；播完自動進教材） -->
+<!-- 第六定律：單元封面（靜態圖，點一下進教材；畫面上不得有任何文字） -->
 <div class="intro-screen" id="introScreen" onclick="introClick()" role="button" tabindex="0"
-     aria-label="點一下播放開場影片">
-  <video class="intro-video" id="introVideo" playsinline preload="auto"
-         poster="assets/covers/electronics_2_cover_v1.jpg">
-    <source src="assets/covers/electronics_2_cover_v1.mp4" type="video/mp4">
-  </video>
-</div>
+     aria-label="點一下進入教材"></div>
 <div class="wrap">
   <!-- 🌟 統一規格切換列 -->
   <div class="top-bar">
@@ -1824,7 +1809,7 @@
       /* ── 下半：把符號接起來，就是一個會動的電路 ──
          元件自己會畫出 ±30×size 的接腳，導線就畫到那裡為止，一格不差。 */
       const L = 150, R = 810, TOP = 300, BOT = 404;
-      const BULB_X = 420, BAT_X = 480, SW_X = 300;
+      const BULB_X = 480, BAT_X = 480, SW_X = 280;   /* 燈泡與電池都對齊導線中心 (150+810)/2 = 480 */
       const BULB_LEAD = 45, BAT_LEAD = 45, SW_LEAD = 30;   /* size 1.5 → 30×1.5；開關固定 30 */
 
       ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 4;
@@ -1876,7 +1861,7 @@
 
     const TK_X = 152, TK_W = 104, TK_H = 64, FILL = 0.80;
     const WBOT = 392, WR = 404, TURB_X = 282;
-    const CL = 616, CR = 902, CBOT = 392, BULB_X = 700;
+    const CL = 616, CR = 902, CBOT = 392, BULB_X = 759;   /* (616+902)/2 */
 
     function render() {
       if (currentTab !== 'tab2') return;
@@ -1996,7 +1981,7 @@
     const cvs = document.getElementById('cvs-tab3'); const ctx = cvs.getContext('2d');
 
     const L = 200, R = 760, TOP = 150, BOT = 372, JUMP = 250;
-    const BAT_L = 440, BAT_R = 560, BULB_X = 420, SW_X = 300;
+    const BAT_L = 420, BAT_R = 540, BULB_X = 480, SW_X = 290;   /* 都對齊導線中心 (200+760)/2 = 480 */
 
     function render() {
       if (currentTab !== 'tab3') return;
@@ -2212,39 +2197,41 @@
           e_battery3d(ctx, 420, BOT, 120, 22, '1.5V', false);
 
         } else if (t4_batMode === 2) {
-          e_wire(ctx, [{ x: L, y: BOT }, { x: 330, y: BOT }], 7, '#5c6763');
-          e_wire(ctx, [{ x: 450, y: BOT }, { x: 490, y: BOT }], 7, '#5c6763');
-          e_wire(ctx, [{ x: 610, y: BOT }, { x: R, y: BOT }], 7, '#5c6763');
+          /* 兩顆一組，整組對齊導線中心 480：340..460 ＋ 500..620 */
+          e_wire(ctx, [{ x: L, y: BOT }, { x: 340, y: BOT }], 7, '#5c6763');
+          e_wire(ctx, [{ x: 460, y: BOT }, { x: 500, y: BOT }], 7, '#5c6763');
+          e_wire(ctx, [{ x: 620, y: BOT }, { x: R, y: BOT }], 7, '#5c6763');
           /* 兩顆串在一起：整串的負極在最左邊（330）、正極在最右邊（610） */
-          const loop = [{ x: 330, y: BOT }, { x: L, y: BOT }, { x: L, y: TOP }, { x: 480, y: TOP },
-                        { x: R, y: TOP }, { x: R, y: BOT }, { x: 610, y: BOT }];
+          const loop = [{ x: 340, y: BOT }, { x: L, y: BOT }, { x: L, y: TOP }, { x: 480, y: TOP },
+                        { x: R, y: TOP }, { x: R, y: BOT }, { x: 620, y: BOT }];
           e_flow(ctx, loop, 50, time * current * 46, [{ x: 480, y: TOP, amount: 1 }]);
-          e_battery3d(ctx, 330, BOT, 120, 22, '1.5V', false);
-          e_battery3d(ctx, 490, BOT, 120, 22, '1.5V', false);
-          e_label(ctx, tr('首尾相接：電壓相加', 'End to end: the voltages add'), 470, BOT - 46, COLOR_GREEN, 20, 'center', true, 420);
+          e_battery3d(ctx, 340, BOT, 120, 22, '1.5V', false);
+          e_battery3d(ctx, 500, BOT, 120, 22, '1.5V', false);
+          e_label(ctx, tr('首尾相接：電壓相加', 'End to end: the voltages add'), 480, BOT - 46, COLOR_GREEN, 20, 'center', true, 420);
 
         } else {
           const yA = BOT - 36, yB = BOT + 36;
-          e_wire(ctx, [{ x: 340, y: BOT }, { x: 340, y: yA }, { x: 400, y: yA }], 6, '#5c6763');
-          e_wire(ctx, [{ x: 340, y: BOT }, { x: 340, y: yB }, { x: 400, y: yB }], 6, '#5c6763');
-          e_wire(ctx, [{ x: 520, y: yA }, { x: 580, y: yA }, { x: 580, y: BOT }], 6, '#5c6763');
-          e_wire(ctx, [{ x: 520, y: yB }, { x: 580, y: yB }, { x: 580, y: BOT }], 6, '#5c6763');
+          /* 兩顆並排，整組對齊導線中心 480：電池 420..540、節點 340 與 620 */
+          e_wire(ctx, [{ x: 340, y: BOT }, { x: 340, y: yA }, { x: 420, y: yA }], 6, '#5c6763');
+          e_wire(ctx, [{ x: 340, y: BOT }, { x: 340, y: yB }, { x: 420, y: yB }], 6, '#5c6763');
+          e_wire(ctx, [{ x: 540, y: yA }, { x: 620, y: yA }, { x: 620, y: BOT }], 6, '#5c6763');
+          e_wire(ctx, [{ x: 540, y: yB }, { x: 620, y: yB }, { x: 620, y: BOT }], 6, '#5c6763');
           e_wire(ctx, [{ x: L, y: BOT }, { x: 340, y: BOT }], 7, '#5c6763');
-          e_wire(ctx, [{ x: 580, y: BOT }, { x: R, y: BOT }], 7, '#5c6763');
-          const pa = [{ x: 340, y: BOT }, { x: 340, y: yA }, { x: 520, y: yA }, { x: 580, y: yA }, { x: 580, y: BOT }];
-          const pb = [{ x: 340, y: BOT }, { x: 340, y: yB }, { x: 520, y: yB }, { x: 580, y: yB }, { x: 580, y: BOT }];
+          e_wire(ctx, [{ x: 620, y: BOT }, { x: R, y: BOT }], 7, '#5c6763');
+          const pa = [{ x: 340, y: BOT }, { x: 340, y: yA }, { x: 540, y: yA }, { x: 620, y: yA }, { x: 620, y: BOT }];
+          const pb = [{ x: 340, y: BOT }, { x: 340, y: yB }, { x: 540, y: yB }, { x: 620, y: yB }, { x: 620, y: BOT }];
           const outer = [{ x: 340, y: BOT }, { x: L, y: BOT }, { x: L, y: TOP }, { x: 480, y: TOP },
-                         { x: R, y: TOP }, { x: R, y: BOT }, { x: 580, y: BOT }];
+                         { x: R, y: TOP }, { x: R, y: BOT }, { x: 620, y: BOT }];
           /* 主線：離開並聯節點（340）就是滿能量，掉在燈泡上；
              兩條支路是在電池「裡面」把能量補回來，所以用負的 amount 表示「得到能量」。 */
           e_flow(ctx, outer, 54, time * current * 46, [{ x: 480, y: TOP, amount: 1 }]);
           /* 電子在電池「裡面」把能量補回來，所以用負的 amount 表示「得到能量」 */
-          e_flow(ctx, [...pa].reverse(), 52, time * current * 23, [{ x: 460, y: yA, amount: -1 }], 0);
-          e_flow(ctx, [...pb].reverse(), 52, time * current * 23, [{ x: 460, y: yB, amount: -1 }], 0);
-          e_battery3d(ctx, 400, yA, 120, 20, '1.5V', false);
-          e_battery3d(ctx, 400, yB, 120, 20, '1.5V', false);
+          e_flow(ctx, [...pa].reverse(), 52, time * current * 23, [{ x: 480, y: yA, amount: -1 }], 0);
+          e_flow(ctx, [...pb].reverse(), 52, time * current * 23, [{ x: 480, y: yB, amount: -1 }], 0);
+          e_battery3d(ctx, 420, yA, 120, 20, '1.5V', false);
+          e_battery3d(ctx, 420, yB, 120, 20, '1.5V', false);
           e_label(ctx, tr('並排接：電壓不變，兩顆分著出力', 'Side by side: same voltage, the two share the load'),
-                  460, BOT - 92, COLOR_GREEN, 20, 'center', true, 480);
+                  480, BOT - 92, COLOR_GREEN, 20, 'center', true, 480);
         }
 
         e_lamp(ctx, 480, TOP, 0.84, bright);
@@ -2654,28 +2641,14 @@
     render();
   }
 
-  /* ── 第六定律：開場封面（點一下才播，有聲；播完自動進教室）── */
-  let introTimerE2 = null, introStartedE2 = false;
+  /* ── 第六定律：開場封面（靜態圖，點一下就進教室）── */
   function dismissIntro() {
     const el = document.getElementById('introScreen');
     if (!el || el.classList.contains('exiting')) return;
-    clearTimeout(introTimerE2);
     el.classList.add('exiting');
     setTimeout(() => { if (el && el.parentNode) el.parentNode.removeChild(el); }, 750);
   }
-  function introClick() {
-    const el = document.getElementById('introScreen');
-    if (!el) return;
-    const v = document.getElementById('introVideo');
-    if (!v || introStartedE2) { dismissIntro(); return; }
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { dismissIntro(); return; }
-    introStartedE2 = true;
-    el.classList.add('playing');
-    v.addEventListener('ended', dismissIntro, { once: true });
-    const p = v.play();
-    if (p && p.catch) p.catch(() => dismissIntro());
-    introTimerE2 = setTimeout(dismissIntro, 13000);
-  }
+  function introClick() { dismissIntro(); }
 
   // 🌟 頁面載入後立即執行，確保第一頁電路圖瞬間繪出，絕不黑屏
   window.addEventListener('DOMContentLoaded', () => {
