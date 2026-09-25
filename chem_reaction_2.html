@@ -344,9 +344,249 @@
       .home-fab { top: 8px; left: 8px; width: 42px; height: 42px; }
       .home-fab svg { width: 20px; height: 20px; }
     }
+
+  /* ══════════════════════════════════════════════════════════════
+     V5 大憲章外層（chem_reaction_2 化學反應式與平衡係數）
+     ══════════════════════════════════════════════════════════════ */
+
+  /* ── 第二定律 2.3：字級（原檔把 p/li/span/div 全鎖在 20px，這裡整批拉到 22px）── */
+  body { font-size: 22px; }
+  p, li, span, strong, div { font-size: 22px; }
+  h1 { font-size: 48px; }
+  h2 { font-size: 32px; }
+  header p { font-size: 24px; }
+  .note-ul li { margin-bottom: 14px; }
+  .action-btn { font-size: 21px; min-height: 52px; padding: 10px 18px; }
+  .sub-tab-btn { font-size: 21px; min-height: 54px; }
+  .lang-label, .lang-pill { font-size: 20px; }
+  .lang-pill { min-height: 48px; }
+  .equation-row { font-size: 26px; }
+
+  /* ── 第三定律 3.3：公式、化學式、數字一律 JetBrains Mono（跟 chem_reaction_1 同一套） ── */
+  .math-text, .equation-row, .fraction, .c-num, .c-num-new, .math-btn, .coef-n, .wb-eq, .wb-alg .alg-eq {
+    font-family: 'JetBrains Mono', 'Noto Sans TC', monospace;
+  }
+  .math-text { font-size: inherit; }
+
+  /* ── 第七定律：改單欄，說明在上、互動在下，畫布吃滿 1080px 框架內的整列 ── */
+  .grid-layout { grid-template-columns: 1fr !important; }
+  .grid-layout > .panel { min-width: 0; }            /* 格子不准被一行不換行的反應式撐破（手機） */
+  #cvs-sub   { aspect-ratio: 960 / 440; }
+  #cvs-wb1, #cvs-wb2 { aspect-ratio: 960 / 460; }
+  #cvs-mole  { aspect-ratio: 960 / 500; }
+  #cvs-redox { aspect-ratio: 960 / 520; }
+  .canvas-container {
+    width: 100%; border: 2px solid var(--chalk-white); border-radius: 12px 12px 0 0;
+    overflow: hidden; background: #0b1a15; position: relative; margin-bottom: 0;
+  }
+  .canvas-container canvas { width: 100%; height: auto; display: block; }
+  .v5-panel > h2 + div { margin-bottom: 4px; }
+
+  /* 控制鍵黏在畫布正下方：按下去，眼睛不用離開畫面 */
+  .controls {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    margin-bottom: 4px;
+    border: 2px solid var(--chalk-white); border-top: none;
+    border-radius: 0 0 12px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px 18px;
+  }
+  .controls .action-btn { margin: 0; align-self: auto; }
+  .ctrl-row {
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px;
+    width: 100%;
+  }
+  .ctrl-name { font-weight: 700; color: var(--chalk-muted); min-width: 64px; }
+  .btn-green { border-color: var(--chalk-green); color: var(--chalk-green); }
+  .btn-green:hover { background: var(--chalk-green); color: var(--bg-base); }
+  .btn-orange { border-color: var(--chalk-coral); color: var(--chalk-coral); }
+  .btn-orange:hover { background: var(--chalk-coral); color: var(--bg-base); }
+  .mode-btn { border-style: dashed; color: var(--chalk-muted); border-color: var(--rule-color); }
+  .mode-btn.active {
+    background: var(--chalk-yellow); color: var(--bg-base);
+    border: 2px solid var(--chalk-yellow);
+  }
+  .mode-btn:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .math-btn sub { font-size: 0.72em; }
+
+  /* 係數＋／−：數得出來的段數（第八定律 8.1），一格就是一個分子 */
+  .step-btn {
+    min-width: 52px; min-height: 52px; padding: 0 !important;
+    font-size: 28px !important; line-height: 1; border-color: var(--chalk-yellow); color: var(--chalk-yellow);
+  }
+  .step-btn:hover:not(:disabled) { background: var(--chalk-yellow); color: var(--bg-base); }
+  .step-btn:disabled { opacity: 0.32; cursor: default; }
+  .coef-n {
+    display: inline-block; min-width: 44px; text-align: center;
+    font-size: 34px; font-weight: 700; color: var(--chalk-yellow);
+  }
+
+  /* 工作台的反應式：每個物質一格，係數在上、化學式在下 */
+  .wb-eq {
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 6px;
+    width: 100%; font-size: 26px;
+  }
+  .wb-eq .sp {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--rule-color);
+  }
+  .wb-eq .sp-ctl { display: flex; align-items: center; gap: 6px; }
+  .wb-eq .sp-f { font-size: 26px; font-weight: 700; color: var(--chalk-white); white-space: nowrap; }
+  .wb-eq .sp-f sub { font-size: 0.7em; }
+  .wb-eq .sp-f .let { color: var(--chalk-teal); margin-right: 4px; }
+  .wb-eq .op { font-size: 30px; font-weight: 700; color: var(--chalk-muted); padding: 0 4px; }
+  .wb-eq .op.arrow { color: var(--chalk-white); }
+  .wb-eq .step-btn { min-width: 48px; min-height: 48px; font-size: 26px !important; }
+  .wb-eq .coef-n { min-width: 40px; font-size: 32px; }
+
+  .wb-status {
+    width: 100%; text-align: center; line-height: 1.6; color: var(--chalk-white);
+    min-height: 1.6em;
+  }
+  .wb-status b { color: var(--chalk-yellow); }
+  .wb-status .good { color: var(--chalk-green); font-weight: 700; }
+  .wb-status .bad  { color: var(--chalk-coral); font-weight: 700; }
+  .wb-status sub, .wb-status sup { font-size: 0.7em; }
+
+  /* 代數法：把係數代進每一條原子等式 */
+  .wb-alg {
+    width: 100%; display: grid; gap: 6px;
+    padding: 12px 16px; border-radius: 12px; background: rgba(11, 26, 21, 0.55);
+    border: 1px dashed var(--rule-color);
+  }
+  .wb-alg .alg-row {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 14px;
+  }
+  .wb-alg .alg-el { font-weight: 700; color: var(--chalk-muted); }
+  .wb-alg .alg-eq { font-weight: 700; color: var(--chalk-teal); white-space: nowrap; }
+  .wb-alg .alg-sub { font-weight: 700; color: var(--chalk-white); white-space: nowrap; }
+  .wb-alg .ok { color: var(--chalk-green); font-weight: 700; }
+  .wb-alg .no { color: var(--chalk-coral); font-weight: 700; }
+  .wb-alg .alg-vals { text-align: center; color: var(--chalk-yellow); font-weight: 700; }
+
+  .rdx-steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; width: 100%; }
+  .rdx-steps .sp-ctl { display: flex; align-items: center; gap: 8px; }
+  .rdx-steps .rdx-name { font-weight: 700; color: var(--chalk-white); }
+  .rdx-steps .rdx-name sub, .rdx-steps .rdx-name sup { font-size: 0.7em; }
+
+  /* ── 第五定律：分頁鈕＝Hook 小單元，五格一排、雙行主副標題 ──
+     選中的那一格是「整塊實心黃 ＋ 深色字 ＋ 外圈黃光」，不是「深底配黃字」。 */
+  .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .tab-btn {
+    flex: none; min-width: 0; min-height: 136px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    padding: 20px 12px; line-height: 1.4; border-radius: 10px;
+  }
+  .tab-btn .tab-main { font-size: 21px; font-weight: 700; line-height: 1.38; }
+  .tab-btn .tab-sub  { font-size: 16px; font-weight: 700; line-height: 1.3; opacity: 0.82; }
+  .tab-btn.active {
+    background: var(--chalk-yellow);
+    color: var(--bg-base);
+    border: 3px solid var(--chalk-yellow);
+    box-shadow: 0 0 20px rgba(255, 224, 102, 0.5);
+  }
+  .tab-btn.active .tab-main,
+  .tab-btn.active .tab-sub { color: var(--bg-base); }
+  .tab-btn.active .tab-sub { opacity: 0.78; }
+  /* 進階分頁（氧化還原）：沒選時珊瑚色虛框，選中時換成實心珊瑚底 ＋ 深色字 */
+  .tab-btn.danger-tab { border-color: rgba(255, 128, 64, 0.65); color: var(--chalk-coral); }
+  .tab-btn.danger-tab.active {
+    background: var(--chalk-coral);
+    border-color: var(--chalk-coral);
+    box-shadow: 0 0 20px rgba(255, 128, 64, 0.5);
+  }
+
+  /* ── 第五定律：曉臻老師 Hook ──
+     8% 的青色薄膜一定要疊在「抬起來的面板色」上，不能直接疊在頁面底色。 */
+  .hook-box {
+    display: flex; align-items: flex-start; gap: 18px;
+    background: linear-gradient(rgba(77, 210, 255, 0.08), rgba(77, 210, 255, 0.08)), var(--bg-panel);
+    border: 2px solid rgba(77, 210, 255, 0.4);
+    border-left: 6px solid var(--chalk-teal);
+    border-radius: 12px; padding: 18px 22px; margin-bottom: 22px;
+  }
+  .xiaozhen-logo {
+    width: 88px; height: 88px; flex: 0 0 88px;
+    overflow: hidden; border: 4px solid #55e9ff; border-radius: 50%;
+    background: rgba(11, 26, 21, 0.6);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .xiaozhen-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .hook-content { flex: 1 1 auto; min-width: 0; }
+  .hook-box .hook-title { font-size: 26px; font-weight: 700; color: var(--chalk-teal); margin-bottom: 6px; }
+  .hook-box .hook-text { font-size: 22px; line-height: 1.75; color: var(--chalk-white); }
+  .hook-box .hook-text span, .hook-box .hook-text b { font-size: 22px; }
+  .hook-box .hook-text b { color: var(--chalk-yellow); }
+
+  /* ── 第七定律：窄螢幕只縮尺寸，不改配色 ── */
+  @media (max-width: 1100px) {
+    .tabs { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 1000px) {
+    h1 { font-size: 38px; }
+    h2 { font-size: 28px; }
+  }
+  @media (max-width: 900px) {
+    .tabs { grid-template-columns: 1fr 1fr; }
+    .tab-btn { min-height: 118px; padding: 16px 12px; }
+  }
+  @media (max-width: 720px) {
+    body, p, li, span, strong, div { font-size: 20px; }
+    h1 { font-size: 32px; }
+    header p { font-size: 20px; }
+    .panel { padding: 16px; }
+    .hook-box { gap: 14px; padding: 16px; }
+    .xiaozhen-logo { width: 72px; height: 72px; flex: 0 0 72px; }
+    .hook-box .hook-title { font-size: 22px; }
+    .hook-box .hook-text, .hook-box .hook-text span, .hook-box .hook-text b { font-size: 20px; }
+    .action-btn { font-size: 19px; padding: 10px 14px; min-height: 48px; }
+    .tab-btn .tab-main { font-size: 19px; }
+    .tab-btn .tab-sub { font-size: 15px; }
+    .ctrl-name { min-width: 0; width: 100%; text-align: center; }
+    .equation-row { font-size: 22px; flex-wrap: wrap; row-gap: 22px; overflow-x: visible; }   /* 手機：反應式太長就折成兩行，不用左右滑 */
+    .equation-row .chem-arrow { margin: 0 10px; }
+    .wb-eq .sp-f { font-size: 22px; }
+    .wb-eq .op { font-size: 24px; }
+    .controls { padding: 14px 10px; }
+  }
+  @media (max-width: 480px) {
+    .tabs { grid-template-columns: 1fr; }
+    .tab-btn { min-height: 96px; }
+  }
+
+  /* ── 第四定律：雙語切換是「懸浮按鈕」，版面要替它（和左上角的回首頁鈕）讓出位置 ── */
+  header { margin-top: 92px; }
+  @media (max-width: 520px) {
+    .lang-label { display: none; }
+    .floating-lang-container { top: 8px; right: 8px; padding: 6px; }
+  }
+
+  /* ── 第六定律：單元封面（靜態圖，點一下進教材；畫面上不得有任何文字）── */
+  .intro-screen {
+    position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center;
+    overflow: hidden; background: #11261f; cursor: pointer; isolation: isolate;
+    transition: opacity .7s ease, visibility .7s ease;
+  }
+  .intro-screen::before {
+    content: ""; position: absolute; inset: -3%; z-index: -4;
+    background: #11261f url("assets/covers/chem_reaction_2_cover_v1.jpg") 62% center/cover no-repeat;   /* 燒瓶在畫面右半，直式 iPad 也要看得到整支 */
+    animation: introZoom 16s ease-out both;
+  }
+  .intro-screen::after {
+    content: ""; position: absolute; inset: 0; z-index: -2;
+    background: linear-gradient(180deg, rgba(1,11,11,.06) 30%, rgba(1,12,10,.26) 66%, rgba(1,12,10,.80) 100%);
+  }
+  .intro-screen.exiting { opacity: 0; visibility: hidden; pointer-events: none; }
+  @keyframes introZoom { from { transform: scale(1); } to { transform: scale(1.07); } }
+  @media (prefers-reduced-motion: reduce) { .intro-screen::before { animation: none; } }
+
   </style>
 </head>
 <body>
+<!-- 第六定律：單元封面（靜態圖，點一下進教材；畫面上不得有任何文字） -->
+<div class="intro-screen" id="introScreen" onclick="introClick()" role="button" tabindex="0"
+     aria-label="點一下進入教材"></div>
 <a href="index.html" class="home-fab" aria-label="回首頁" title="回首頁 Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></a>
 
 
@@ -367,15 +607,37 @@
   </header>
 
   <div class="tabs">
-    <button class="tab-btn active" id="btn-tab-rules" onclick="openTab('reaction-rules')" data-zh="反應式書寫原則" data-en="Equation Rules">反應式書寫原則</button>
-    <button class="tab-btn" id="btn-tab-obs" onclick="openTab('observation-method')" data-zh="觀察法係數平衡" data-en="Inspection Balancing">觀察法係數平衡</button>
-    <button class="tab-btn" id="btn-tab-alg" onclick="openTab('algebraic-method')" data-zh="代數法係數平衡" data-en="Algebraic Balancing">代數法係數平衡</button>
-    <button class="tab-btn" id="btn-tab-micro" onclick="openTab('micro-meaning')" data-zh="反應式微觀意義" data-en="Microscopic Meaning">反應式微觀意義</button>
-    <button class="tab-btn" id="btn-tab-redox" onclick="openTab('redox-method')" data-zh="氧化還原法推導" data-en="Redox Derivation" style="border-color: var(--chalk-coral); color: var(--chalk-coral);">氧化還原法推導</button>
+    <button class="tab-btn active" id="btn-tab-rules" type="button" onclick="openTab('reaction-rules')">
+      <span class="tab-main" data-zh="係數還是下標？" data-en="Coefficient or subscript?">係數還是下標？</span>
+      <span class="tab-sub" data-zh="反應式書寫原則" data-en="Equation Rules">反應式書寫原則</span>
+    </button>
+    <button class="tab-btn" id="btn-tab-obs" type="button" onclick="openTab('observation-method')">
+      <span class="tab-main" data-zh="左右原子要對帳" data-en="Make the atoms add up">左右原子要對帳</span>
+      <span class="tab-sub" data-zh="觀察法係數平衡" data-en="Inspection Balancing">觀察法係數平衡</span>
+    </button>
+    <button class="tab-btn" id="btn-tab-alg" type="button" onclick="openTab('algebraic-method')">
+      <span class="tab-main" data-zh="猜不到就設未知數" data-en="Can't guess? Use unknowns">猜不到就設未知數</span>
+      <span class="tab-sub" data-zh="代數法係數平衡" data-en="Algebraic Balancing">代數法係數平衡</span>
+    </button>
+    <button class="tab-btn" id="btn-tab-micro" type="button" onclick="openTab('micro-meaning')">
+      <span class="tab-main" data-zh="係數比不是重量比" data-en="Count ratio, not weight ratio">係數比不是重量比</span>
+      <span class="tab-sub" data-zh="反應式微觀意義" data-en="Microscopic Meaning">反應式微觀意義</span>
+    </button>
+    <button class="tab-btn danger-tab" id="btn-tab-redox" type="button" onclick="openTab('redox-method')">
+      <span class="tab-main" data-zh="電子的得失帳本" data-en="The electron ledger">電子的得失帳本</span>
+      <span class="tab-sub" data-zh="氧化還原法推導" data-en="Redox Derivation">氧化還原法推導</span>
+    </button>
   </div>
 
   <!-- 分頁：反應式書寫原則 -->
   <div id="reaction-rules" class="tab-content active">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen opens">曉臻老師開場</div>
+        <div class="hook-text"><span data-zh="打火機一按，丁烷就燒起來了。化學家把這件事寫成一行反應式，全世界的人都看得懂。可是要小心：H₂O 前面的大 2 和右下角的小 2，只差一個位置，意思完全不一樣——" data-en="Click a lighter and the butane burns. Chemists write that as a one-line equation anyone in the world can read. But careful: the big 2 in front of H₂O and the little 2 at its lower right are one position apart and mean completely different things — ">打火機一按，丁烷就燒起來了。化學家把這件事寫成一行反應式，全世界的人都看得懂。可是要小心：H₂O 前面的大 2 和右下角的小 2，只差一個位置，意思完全不一樣——</span><b data-zh="改錯了，水就變成雙氧水！" data-en="change the wrong one and water turns into hydrogen peroxide!">改錯了，水就變成雙氧水！</b><br><span data-zh="先讀書寫原則，再到實驗台上，把係數和下標都按按看。" data-en="Read the rules first, then try both the coefficient and the subscript on the bench.">先讀書寫原則，再到實驗台上，把係數和下標都按按看。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
         <div class="panel">
             <h2 data-zh="化學反應式的基本原則" data-en="Basic Principles of Chemical Equations">化學反應式的基本原則</h2>
@@ -386,6 +648,26 @@
                 <li><strong style="color: var(--chalk-teal);" data-zh="狀態標示：" data-en="Phase States: ">狀態標示：</strong><span data-zh="利用 (s)固態、(l)液態、(g)氣態、(aq)水溶液標明物理狀態。氣體逸散用「↑」，沉澱用「↓」。" data-en="Use (s) solid, (l) liquid, (g) gas, (aq) aqueous. Gas evolution uses '↑', precipitation uses '↓'.">利用 <sub class="math-text state">(s)</sub>固態、<sub class="math-text state">(l)</sub>液態、<sub class="math-text state">(g)</sub>氣態、<sub class="math-text state">(aq)</sub>水溶液 標明物理狀態。氣體逸散用「<span class="math-text">↑</span>」，沉澱用「<span class="math-text">↓</span>」。</span></li>
                 <li><strong style="color: var(--chalk-teal);" data-zh="反應條件：" data-en="Reaction Conditions: ">反應條件：</strong><span data-zh="溫度、壓力或催化劑需標示於箭頭上方。加熱統一標示為「△」。" data-en="Temperature, pressure, or catalysts indicated above the arrow. Heating is designated as '△'.">溫度、壓力或催化劑需標示於箭頭上方。加熱統一標示為「<span class="math-text">△</span>」。</span></li>
             </ul>
+        </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="實驗台：改係數 vs 改下標" data-en="Bench: Coefficient vs. Subscript">實驗台：改係數 vs 改下標</h2>
+            <div data-zh="係數加一加、下標換一換，看看分子到底變了什麼。" data-en="Add to the coefficient, swap the subscript, and see what really changes in the molecules.">係數加一加、下標換一換，看看分子到底變了什麼。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-sub" width="960" height="440"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="係數" data-en="Coefficient">係數</span>
+                    <button class="action-btn step-btn" type="button" onclick="subCoef(-1)" aria-label="係數減一">−</button>
+                    <span class="coef-n" id="sub-n">1</span>
+                    <button class="action-btn step-btn" type="button" onclick="subCoef(1)" aria-label="係數加一">＋</button>
+                </div>
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="下標" data-en="Subscript">下標</span>
+                    <button class="action-btn mode-btn active math-btn" id="btn-sub-1" type="button" onclick="subSet(1)">H<sub>2</sub>O</button>
+                    <button class="action-btn mode-btn math-btn" id="btn-sub-2" type="button" onclick="subSet(2)">H<sub>2</sub>O<sub>2</sub></button>
+                </div>
+            </div>
         </div>
         <div class="panel">
             <h2 data-zh="經典示範：有機反應與催化劑" data-en="Classic Demonstrations: Organic Reactions & Catalysts">經典示範：有機反應與催化劑</h2>
@@ -405,7 +687,7 @@
             </div>
 
             <p style="margin-top: 30px; margin-bottom: 5px;"><strong data-zh="催化反應（雙氧水分解）" data-en="Catalytic Reaction (H₂O₂ Decomposition)">催化反應（雙氧水分解）</strong><br>
-                <span data-zh="以二氧化錳為催化劑（不參與化學反應本身）加速產氧。" data-en="Manganese dioxide acts as a catalyst (unchanged in the reaction) to accelerate oxygen production.">以二氧化錳為催化劑（不參與化學反應本身）加速產氧。</span></p>
+                <span data-zh="以二氧化錳為催化劑加速產氧（催化劑在反應前後，本身的質量與化學性質都不變）。" data-en="Manganese dioxide acts as a catalyst to speed up oxygen production (its own mass and chemical properties are the same before and after the reaction).">以二氧化錳為催化劑加速產氧（催化劑在反應前後，本身的質量與化學性質都不變）。</span></p>
             <div class="equation-row">
                 <span class="nowrap">2 H<sub>2</sub>O<sub>2</sub><sub class="state">(aq)</sub></span>
                 <div class="chem-arrow">
@@ -423,6 +705,13 @@
 
   <!-- 分頁：觀察法係數平衡 -->
   <div id="observation-method" class="tab-content">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
+        <div class="hook-text"><span data-zh="鎂帶燒完，剩下一團白色粉末。原子一個都沒有消失，只是換了夥伴——所以反應式左右兩邊，每一種原子都要像對帳一樣數得一模一樣。" data-en="Burnt magnesium ribbon leaves a white powder. Not a single atom disappeared; they just changed partners — so on both sides of the equation, every kind of atom has to add up exactly, like balancing a ledger.">鎂帶燒完，剩下一團白色粉末。原子一個都沒有消失，只是換了夥伴——所以反應式左右兩邊，每一種原子都要像對帳一樣數得一模一樣。</span><br><b data-zh="只能改前面的係數，不能動化學式裡的下標。" data-en="You may only change the coefficients in front — never the subscripts inside a formula.">只能改前面的係數，不能動化學式裡的下標。</b><span data-zh="看完三題推導，到最下面的配平工作台自己動手，再按「讓原子去拼」驗收。" data-en=" After the three worked examples, try the workbench at the bottom yourself, then press “Let the atoms rebuild” to check.">看完三題推導，到最下面的配平工作台自己動手，再按「讓原子去拼」驗收。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
         <div class="panel">
             <h2 data-zh="解題核心原則" data-en="Core Problem-Solving Principles">解題核心原則</h2>
@@ -434,7 +723,7 @@
             </ol>
             <div class="sub-tabs" style="margin-top: 20px;">
                 <button class="sub-tab-btn active" onclick="switchObs('mg', event)" data-zh="鎂燃燒反應" data-en="Magnesium Combustion">鎂燃燒反應</button>
-                <button class="sub-tab-btn" onclick="switchObs('water', event)" data-zh="水分解反應" data-en="Water Decomposition">水分解反應</button>
+                <button class="sub-tab-btn" onclick="switchObs('water', event)" data-zh="氫氣燃燒反應" data-en="Hydrogen Combustion">氫氣燃燒反應</button>
                 <button class="sub-tab-btn" onclick="switchObs('propane', event)" data-zh="丙烷燃燒反應" data-en="Propane Combustion">丙烷燃燒反應</button>
             </div>
         </div>
@@ -494,11 +783,39 @@
                 <button class="action-btn" onclick="nextObsStep('propane')" data-zh="揭曉：下一步 ➔" data-en="Reveal: Next Step ➔">揭曉：下一步 ➔</button>
             </div>
         </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="配平工作台：換你動手" data-en="Balancing Workbench: Your Turn">配平工作台：換你動手</h2>
+            <div data-zh="按 ＋／− 改係數，下面的原子帳本會即時對帳；每一行都相等之後，按「讓原子去拼」，看原子重新組合。" data-en="Use ＋/− to change coefficients; the atom ledger below checks the count live. When every row matches, press “Let the atoms rebuild” and watch the atoms regroup.">按 ＋／− 改係數，下面的原子帳本會即時對帳；每一行都相等之後，按「讓原子去拼」，看原子重新組合。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-wb1" width="960" height="460"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="反應" data-en="Reaction">反應</span>
+                    <button class="action-btn mode-btn active" id="wb1-rx-0" type="button" onclick="wbPick('wb1', 0)" data-zh="鎂＋氧氣" data-en="Mg + O₂">鎂＋氧氣</button>
+                    <button class="action-btn mode-btn" id="wb1-rx-1" type="button" onclick="wbPick('wb1', 1)" data-zh="氫氣＋氧氣" data-en="H₂ + O₂">氫氣＋氧氣</button>
+                    <button class="action-btn mode-btn" id="wb1-rx-2" type="button" onclick="wbPick('wb1', 2)" data-zh="丙烷＋氧氣" data-en="C₃H₈ + O₂">丙烷＋氧氣</button>
+                </div>
+                <div class="wb-eq" id="wb1-eq"></div>
+                <div class="ctrl-row">
+                    <button class="action-btn btn-green" type="button" onclick="wbReact('wb1')" data-zh="⚗ 讓原子去拼" data-en="⚗ Let the atoms rebuild">⚗ 讓原子去拼</button>
+                    <button class="action-btn btn-orange" type="button" onclick="wbReset('wb1')" data-zh="⟲ 係數全部歸 1" data-en="⟲ Reset all to 1">⟲ 係數全部歸 1</button>
+                </div>
+                <div class="wb-status" id="wb1-status"></div>
+            </div>
+        </div>
     </div>
   </div>
 
   <!-- 分頁：代數法係數平衡 -->
   <div id="algebraic-method" class="tab-content">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師的挑戰" data-en="Ms. Xiaozhen's challenge">曉臻老師的挑戰</div>
+        <div class="hook-text"><span data-zh="乙烷燃燒，氧氣前面到底要填幾？用猜的：3 不對、4 也不對，一路猜下去沒完沒了。遇到這種題目，就把每個係數都當成未知數 a、b、c、d——" data-en="Burning ethane: what number goes in front of oxygen? Guess 3 — wrong; 4 — wrong; the guessing never ends. For problems like this, treat every coefficient as an unknown a, b, c, d — ">乙烷燃燒，氧氣前面到底要填幾？用猜的：3 不對、4 也不對，一路猜下去沒完沒了。遇到這種題目，就把每個係數都當成未知數 a、b、c、d——</span><b data-zh="每一種原子列一條等式，讓數學把答案算出來。" data-en="write one equation per element and let the math find the answer.">每一種原子列一條等式，讓數學把答案算出來。</b><br><span data-zh="最下面的工作台會把你填的係數即時代進每一條等式，一眼看出哪一條還不成立。" data-en="The workbench at the bottom plugs your coefficients into every equation live, so you can see at a glance which one still fails.">最下面的工作台會把你填的係數即時代進每一條等式，一眼看出哪一條還不成立。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
         <div class="panel">
             <h2 data-zh="代數法核心原則" data-en="Core Algebraic Principles">代數法核心原則</h2>
@@ -527,10 +844,10 @@
                     <span class="math-text">H</span> <span data-zh="原子：" data-en="atom:">原子：</span><span class="math-text">2b = 3c</span>
                 </div>
                 <div id="alg-nh3-step1" class="step-box" style="border-left: 4px solid var(--chalk-coral); color: var(--chalk-coral);">
-                    <strong data-zh="第一步：" data-en="Step 1:">第一步：</strong> <span data-zh="令 a = 1，推導得出 c = 2。" data-en="Set a = 1, deriving c = 2.">令 <span class="math-text">a = 1</span>，推導得出 <span class="math-text">c = 2</span>。</span>
+                    <strong data-zh="第一步：" data-en="Step 1:">第一步：</strong> <span data-zh="令最複雜的 NH₃ 係數 c = 1，代入 N 守恆 2a = 1，得出 a = 1/2。" data-en="Set the most complex molecule NH₃ to c = 1; N conservation 2a = 1 gives a = 1/2.">令最複雜的 <span class="math-text">NH<sub>3</sub></span> 係數 <span class="math-text">c = 1</span>，代入 <span class="math-text">N</span> 守恆 <span class="math-text">2a = 1</span>，得出 <span class="math-text">a = <span class="fraction"><span class="numerator">1</span><span class="denominator">2</span></span></span>。</span>
                 </div>
                 <div id="alg-nh3-step2" class="step-box" style="border-left: 4px solid var(--chalk-green); color: var(--chalk-green);">
-                    <strong data-zh="第二步：" data-en="Step 2:">第二步：</strong> <span data-zh="將數值代入 H 守恆方程式 2b = 3(2)，得出 b = 3。" data-en="Substitute into H conservation: 2b = 3(2), yielding b = 3.">將數值代入 <span class="math-text">H</span> 守恆方程式 <span class="math-text">2b = 3(2)</span>，得出 <span class="math-text">b = 3</span>。</span><br>
+                    <strong data-zh="第二步：" data-en="Step 2:">第二步：</strong> <span data-zh="將 c = 1 代入 H 守恆方程式 2b = 3(1)，得出 b = 3/2。為求最簡整數比，全體數值同乘 2。" data-en="Substitute c = 1 into H conservation: 2b = 3(1), so b = 3/2. Multiply all by 2 for the simplest integer ratio.">將 <span class="math-text">c = 1</span> 代入 <span class="math-text">H</span> 守恆方程式 <span class="math-text">2b = 3(1)</span>，得出 <span class="math-text">b = <span class="fraction"><span class="numerator">3</span><span class="denominator">2</span></span></span>。為求最簡整數比，全體數值同乘 2。</span><br>
                     <strong data-zh="完成式：" data-en="Balanced:">完成式：</strong> <span class="math-text" style="color: var(--chalk-white);"><span class="c-num">1</span> N<sub>2</sub> + <span class="c-num">3</span> H<sub>2</sub> &rarr; <span class="c-num">2</span> NH<sub>3</sub></span>
                 </div>
                 <button class="action-btn" onclick="nextAlgStep('nh3')" data-zh="揭曉：下一步 ➔" data-en="Reveal: Next Step ➔">揭曉：下一步 ➔</button>
@@ -574,11 +891,40 @@
                 <button class="action-btn" onclick="nextAlgStep('al-hcl')" data-zh="揭曉：下一步 ➔" data-en="Reveal: Next Step ➔">揭曉：下一步 ➔</button>
             </div>
         </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="代數配平工作台" data-en="Algebraic Workbench">代數配平工作台</h2>
+            <div data-zh="字母 a、b、c、d 就是各物質前面的係數。改一改，看下面每一條原子等式是不是都成立。" data-en="The letters a, b, c, d stand for the coefficients. Change them and check whether every atom equation below holds.">字母 a、b、c、d 就是各物質前面的係數。改一改，看下面每一條原子等式是不是都成立。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-wb2" width="960" height="460"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="反應" data-en="Reaction">反應</span>
+                    <button class="action-btn mode-btn active" id="wb2-rx-0" type="button" onclick="wbPick('wb2', 0)" data-zh="氮氣＋氫氣" data-en="N₂ + H₂">氮氣＋氫氣</button>
+                    <button class="action-btn mode-btn" id="wb2-rx-1" type="button" onclick="wbPick('wb2', 1)" data-zh="乙烷＋氧氣" data-en="C₂H₆ + O₂">乙烷＋氧氣</button>
+                    <button class="action-btn mode-btn" id="wb2-rx-2" type="button" onclick="wbPick('wb2', 2)" data-zh="鋁＋鹽酸" data-en="Al + HCl">鋁＋鹽酸</button>
+                </div>
+                <div class="wb-eq" id="wb2-eq"></div>
+                <div class="wb-alg" id="wb2-alg"></div>
+                <div class="ctrl-row">
+                    <button class="action-btn btn-green" type="button" onclick="wbReact('wb2')" data-zh="⚗ 讓原子去拼" data-en="⚗ Let the atoms rebuild">⚗ 讓原子去拼</button>
+                    <button class="action-btn btn-orange" type="button" onclick="wbReset('wb2')" data-zh="⟲ 係數全部歸 1" data-en="⟲ Reset all to 1">⟲ 係數全部歸 1</button>
+                </div>
+                <div class="wb-status" id="wb2-status"></div>
+            </div>
+        </div>
     </div>
   </div>
 
   <!-- 分頁：反應式微觀意義 -->
   <div id="micro-meaning" class="tab-content">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-text"><span data-zh="2 H₂ + O₂ → 2 H₂O，係數是 2 : 1 : 2。那是不是 2 公克氫氣配 1 公克氧氣？" data-en="2 H₂ + O₂ → 2 H₂O has coefficients 2 : 1 : 2. So does 2 grams of hydrogen react with 1 gram of oxygen?">2 H₂ + O₂ → 2 H₂O，係數是 2 : 1 : 2。那是不是 2 公克氫氣配 1 公克氧氣？</span><br><b data-zh="不是！係數數的是分子的「個數」，不是重量。" data-en="No! Coefficients count molecules — they are not weights.">不是！係數數的是分子的「個數」，不是重量。</b><span data-zh="一個氧分子比一個氫分子重 16 倍。在下面切換「數個數」和「秤重量」比比看。" data-en=" One oxygen molecule is 16 times heavier than one hydrogen molecule. Switch between “Count” and “Weigh” below and compare.">一個氧分子比一個氫分子重 16 倍。在下面切換「數個數」和「秤重量」比比看。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
         <div class="panel">
             <h2 data-zh="平衡係數的科學涵義" data-en="Scientific Meaning of Balancing Coefficients">平衡係數的科學涵義</h2>
@@ -586,8 +932,30 @@
             <ul class="note-ul" style="color: var(--chalk-teal); margin-top: 15px;">
                 <li><strong style="color: var(--chalk-yellow);" data-zh="分子數比例：" data-en="Molecular ratio:">分子數比例：</strong><span data-zh="2 個氫分子與 1 個氧分子發生反應。" data-en="2 hydrogen molecules react with 1 oxygen molecule.">2 個氫分子與 1 個氧分子發生反應。</span></li>
                 <li><strong style="color: var(--chalk-yellow);" data-zh="莫耳數比例：" data-en="Molar ratio:">莫耳數比例：</strong><span data-zh="2 莫耳與 1 莫耳。" data-en="2 moles to 1 mole.">2 莫耳與 1 莫耳。</span></li>
-                <li><strong style="color: var(--chalk-yellow);" data-zh="氣體體積比例（同溫同壓條件）：" data-en="Gas volume ratio (STP):">氣體體積比例（同溫同壓條件）：</strong><span data-zh="2 公升與 1 公升。" data-en="2 liters to 1 liter.">2 公升與 1 公升。</span></li>
+                <li><strong style="color: var(--chalk-yellow);" data-zh="氣體體積比例（同溫同壓條件）：" data-en="Gas volume ratio (same temperature &amp; pressure):">氣體體積比例（同溫同壓條件）：</strong><span data-zh="2 公升與 1 公升。" data-en="2 liters to 1 liter.">2 公升與 1 公升。</span></li>
             </ul>
+        </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="數個數 vs 秤重量" data-en="Counting vs. Weighing">數個數 vs 秤重量</h2>
+            <div data-zh="先選放大倍數，再切換「數個數」和「秤重量」，看比例有沒有跟著變。" data-en="Pick a scale-up, then switch between “Count” and “Weigh” to see whether the ratio changes.">先選放大倍數，再切換「數個數」和「秤重量」，看比例有沒有跟著變。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-mole" width="960" height="500"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="放大" data-en="Scale">放大</span>
+                    <button class="action-btn mode-btn active" id="mole-k-0" type="button" onclick="moleSet('k', 0)" data-zh="× 1" data-en="× 1">× 1</button>
+                    <button class="action-btn mode-btn" id="mole-k-1" type="button" onclick="moleSet('k', 1)" data-zh="× 3" data-en="× 3">× 3</button>
+                    <button class="action-btn mode-btn" id="mole-k-2" type="button" onclick="moleSet('k', 2)" data-zh="× 10" data-en="× 10">× 10</button>
+                    <button class="action-btn mode-btn" id="mole-k-3" type="button" onclick="moleSet('k', 3)" data-zh="× 1 莫耳" data-en="× 1 mole">× 1 莫耳</button>
+                </div>
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="比較" data-en="Compare">比較</span>
+                    <button class="action-btn mode-btn active" id="mole-m-0" type="button" onclick="moleSet('m', 0)" data-zh="🔢 數個數" data-en="🔢 Count">🔢 數個數</button>
+                    <button class="action-btn mode-btn" id="mole-m-1" type="button" onclick="moleSet('m', 1)" data-zh="⚖ 秤重量" data-en="⚖ Weigh">⚖ 秤重量</button>
+                </div>
+                <div class="wb-status" id="mole-status"></div>
+            </div>
         </div>
         <div class="panel">
             <h2 data-zh="核心易錯觀念澄清" data-en="Core Misconception Clarification">核心易錯觀念澄清</h2>
@@ -607,6 +975,13 @@
 
   <!-- 分頁：氧化還原法推導 -->
   <div id="redox-method" class="tab-content">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師的進階挑戰" data-en="Ms. Xiaozhen's advanced challenge">曉臻老師的進階挑戰</div>
+        <div class="hook-text"><span data-zh="銅片放進稀硝酸，會冒出氣泡、溶液慢慢變藍。這種反應原子一大堆，用觀察法數到眼花。其實訣竅只有一個：" data-en="Drop copper into dilute nitric acid: bubbles rise and the solution slowly turns blue. With so many atoms, inspection makes your eyes swim. There is really only one trick: ">銅片放進稀硝酸，會冒出氣泡、溶液慢慢變藍。這種反應原子一大堆，用觀察法數到眼花。其實訣竅只有一個：</span><b data-zh="銅丟掉的電子，一定全部被氮接走。" data-en="every electron copper gives up is taken by nitrogen.">銅丟掉的電子，一定全部被氮接走。</b><br><span data-zh="讓失去的電子和得到的電子一樣多，係數就出來了。這是高中先修內容，挑戰看看！" data-en="Make electrons lost equal electrons gained and the coefficients fall out. This is a senior-high preview — give it a try!">讓失去的電子和得到的電子一樣多，係數就出來了。這是高中先修內容，挑戰看看！</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
         <div class="panel" style="border-color: var(--chalk-coral);">
             <h2 style="color: var(--chalk-coral);" data-zh="高階解析：氧化還原與氧化數" data-en="Advanced Analysis: Redox & Oxidation Numbers">高階解析：氧化還原與氧化數</h2>
@@ -707,6 +1082,27 @@
                     <strong data-zh="完成式：" data-en="Balanced:">完成式：</strong> <span class="math-text" style="color: var(--chalk-white);"><span class="c-num">2</span> MnO<sub>4</sub><sup>-</sup> + <span class="c-num-new">5</span> C<sub>2</sub>O<sub>4</sub><sup>2-</sup> + <span class="c-num-new">16</span> H<sup>+</sup> &rarr; <span class="c-num">2</span> Mn<sup>2+</sup> + <span class="c-num">10</span> CO<sub>2</sub> + <span class="c-num">8</span> H<sub>2</sub>O</span>
                 </div>
                 <button class="action-btn" onclick="nextRedoxStep('permanganate')" data-zh="揭曉：下一步 ➔" data-en="Reveal: Next Step ➔">揭曉：下一步 ➔</button>
+            </div>
+        </div>
+        <div class="panel v5-panel" style="border-color: var(--chalk-coral);">
+            <h2 style="color: var(--chalk-coral);" data-zh="電子帳本：失去的 ＝ 得到的" data-en="Electron Ledger: Lost = Gained">電子帳本：失去的 ＝ 得到的</h2>
+            <div data-zh="選一個反應，調整兩邊的粒子個數，按下開始，看電子從誰身上跑到誰身上。" data-en="Pick a reaction, set how many particles are on each side, press start, and watch where the electrons go.">選一個反應，調整兩邊的粒子個數，按下開始，看電子從誰身上跑到誰身上。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-redox" width="960" height="520"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="反應" data-en="Reaction">反應</span>
+                    <button class="action-btn mode-btn" id="rdx-rx-0" type="button" onclick="rdxPick(0)" data-zh="碳＋濃硫酸" data-en="C + H₂SO₄">碳＋濃硫酸</button>
+                    <button class="action-btn mode-btn active" id="rdx-rx-1" type="button" onclick="rdxPick(1)" data-zh="銅＋稀硝酸" data-en="Cu + HNO₃">銅＋稀硝酸</button>
+                    <button class="action-btn mode-btn" id="rdx-rx-2" type="button" onclick="rdxPick(2)" data-zh="過錳酸根＋草酸根" data-en="MnO₄⁻ + C₂O₄²⁻">過錳酸根＋草酸根</button>
+                </div>
+                <div class="rdx-steps" id="rdx-steps"></div>
+                <div class="ctrl-row">
+                    <button class="action-btn btn-green" type="button" onclick="rdxGo()" data-zh="⚡ 開始轉移電子" data-en="⚡ Transfer electrons">⚡ 開始轉移電子</button>
+                    <button class="action-btn btn-orange" type="button" onclick="rdxReset()" data-zh="⟲ 重來" data-en="⟲ Reset">⟲ 重來</button>
+                </div>
+                <div class="wb-status" id="rdx-status"></div>
             </div>
         </div>
 
@@ -810,6 +1206,1003 @@
           document.getElementById(`redox-${id}-step${redoxSteps[id]}`).style.display = 'block';
       }
   }
+
+  /* ==================================================================
+     V5 手繪工具層（electronics_1 靜電單元）
+     畫布統一 960 寬，座標全部以此為準。
+     函式一律 e_ 開頭，避開原檔既有的 drawArrow / tr 等名稱。
+     ================================================================== */
+  function e_pen(c) { c.lineJoin = 'round'; c.lineCap = 'round'; }
+
+  function e_rr(c, x, y, w, h, r) {
+    const rr = Math.max(0, Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2));
+    c.beginPath();
+    c.moveTo(x + rr, y);
+    c.lineTo(x + w - rr, y); c.quadraticCurveTo(x + w, y, x + w, y + rr);
+    c.lineTo(x + w, y + h - rr); c.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+    c.lineTo(x + rr, y + h); c.quadraticCurveTo(x, y + h, x, y + h - rr);
+    c.lineTo(x, y + rr); c.quadraticCurveTo(x, y, x + rr, y);
+    c.closePath();
+  }
+
+  function e_glow(c, color, blur) { c.shadowColor = color; c.shadowBlur = blur === undefined ? 16 : blur; }
+  function e_noglow(c) { c.shadowBlur = 0; c.shadowColor = 'rgba(0,0,0,0)'; }
+
+  function e_ln(c, x1, y1, x2, y2, color, w) {
+    c.strokeStyle = color; c.lineWidth = w || 3;
+    c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+  }
+  function e_dash(c, x1, y1, x2, y2, color, w, pat) {
+    c.save(); c.setLineDash(pat || [8, 7]);
+    e_ln(c, x1, y1, x2, y2, color, w || 2);
+    c.restore();
+  }
+  function e_arrow(c, x1, y1, x2, y2, color, w, head) {
+    const s = head || 14, a = Math.atan2(y2 - y1, x2 - x1);
+    e_ln(c, x1, y1, x2 - s * 0.6 * Math.cos(a), y2 - s * 0.6 * Math.sin(a), color, w || 4);
+    c.fillStyle = color;
+    c.beginPath();
+    c.moveTo(x2, y2);
+    c.lineTo(x2 - s * Math.cos(a - 0.42), y2 - s * Math.sin(a - 0.42));
+    c.lineTo(x2 - s * Math.cos(a + 0.42), y2 - s * Math.sin(a + 0.42));
+    c.closePath(); c.fill();
+  }
+  function e_dim(c, x1, y1, x2, y2, color) {
+    e_arrow(c, x1, y1, x2, y2, color, 2.5, 11);
+    e_arrow(c, x2, y2, x1, y1, color, 2.5, 11);
+  }
+
+  /* 第一定律 1.1 例外：寫在色塊裡或有邊界的字，先量再寫 */
+  function e_fit(c, s, maxW, floor) {
+    const m = /([\d.]+)px/.exec(c.font); if (!m) return;
+    let size = parseFloat(m[1]); const fl = floor || 12;
+    while (size > fl && c.measureText(s).width > maxW) {
+      size = Math.max(fl, size - 0.5);
+      c.font = c.font.replace(/[\d.]+px/, size + 'px');
+    }
+  }
+  function e_w(c, s, size) {
+    const old = c.font;
+    if (size) c.font = `bold ${size}px "Noto Sans TC", "JetBrains Mono"`;
+    const r = c.measureText(s).width;
+    c.font = old;
+    return r;
+  }
+  function e_txt(c, s, x, y, color, size, align, maxW) {
+    c.fillStyle = color;
+    c.font = `bold ${size || 20}px "Noto Sans TC", "JetBrains Mono"`;
+    if (maxW) e_fit(c, s, maxW, 13);
+    c.textAlign = align || 'left'; c.textBaseline = 'alphabetic';
+    c.fillText(s, x, y);
+    c.textAlign = 'left';
+  }
+  /* 深色底上又壓到線條時，先鋪一塊底再寫字（第十定律 10.4） */
+  function e_plate(c, s, x, y, size, align, pad) {
+    const p = pad === undefined ? 6 : pad;
+    const wd = e_w(c, s, size), h = size * 1.15;
+    let lx = x;
+    if (align === 'center') lx = x - wd / 2; else if (align === 'right') lx = x - wd;
+    c.fillStyle = 'rgba(13, 32, 26, 0.86)';
+    e_rr(c, lx - p, y - size * 0.86 - p * 0.5, wd + p * 2, h + p, 6); c.fill();
+  }
+  function e_label(c, s, x, y, color, size, align, plate, maxW) {
+    let sz = size || 20;
+    if (maxW) {
+      c.font = `bold ${sz}px "Noto Sans TC", "JetBrains Mono"`;
+      e_fit(c, s, maxW, 13);
+      sz = parseFloat(/([\d.]+)px/.exec(c.font)[1]);
+    }
+    if (plate !== false) e_plate(c, s, x, y, sz, align);
+    e_txt(c, s, x, y, color, sz, align);
+  }
+
+  function e_lighten(hex, amt) {
+    if (hex[0] !== '#') return hex;
+    const n = parseInt(hex.slice(1), 16);
+    const m = v => Math.round(v + (255 - v) * amt);
+    return `rgb(${m((n >> 16) & 255)}, ${m((n >> 8) & 255)}, ${m(n & 255)})`;
+  }
+  function e_darken(hex, amt) {
+    if (hex[0] !== '#') return hex;
+    const n = parseInt(hex.slice(1), 16);
+    const m = v => Math.round(v * (1 - amt));
+    return `rgb(${m((n >> 16) & 255)}, ${m((n >> 8) & 255)}, ${m(n & 255)})`;
+  }
+
+  /* 一顆有立體感的球：右下暗、左上亮，外加一點高光 */
+  function e_ball(c, x, y, r, color, glow) {
+    if (glow) e_glow(c, color, 18);
+    const g = c.createRadialGradient(x - r * 0.35, y - r * 0.38, r * 0.08, x, y, r);
+    g.addColorStop(0, e_lighten(color, 0.55));
+    g.addColorStop(0.55, color);
+    g.addColorStop(1, e_darken(color, 0.42));
+    c.fillStyle = g;
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+    e_noglow(c);
+    c.strokeStyle = 'rgba(246,243,234,0.55)'; c.lineWidth = 2;
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.32)';
+    c.beginPath(); c.ellipse(x - r * 0.34, y - r * 0.40, r * 0.24, r * 0.16, -0.6, 0, Math.PI * 2); c.fill();
+  }
+
+  /* ==================================================================
+     chem_reaction_2 V5：原子與分子的畫法（全部新互動共用）
+     顏色沿用 chem_reaction_1：C 橘、O 青、H 粉紅——同一種原子，全系列同一個顏色。
+     ================================================================== */
+  const CH_C = '#ff9a3c', CH_O = '#55e9ff', CH_H = '#f472b6';
+  const CH_YEL = '#ffe066', CH_GRN = '#33cc99', CH_MUT = '#a3b8b0', CH_WHT = '#f6f3ea', CH_COR = '#ff8040';
+  const CH_ELEC = '#4dd2ff';                       /* 2.2.1：電子一律藍 */
+  const CH_INK = '#0b1a15';
+  const ATOM = {
+    H:  { r: 11, c: CH_H },       C:  { r: 16, c: CH_C },       O:  { r: 15, c: CH_O },
+    N:  { r: 16, c: '#a78bfa' },  Mg: { r: 19, c: '#dfe6ea' },  Al: { r: 19, c: '#aab7c0' },
+    Cl: { r: 18, c: '#4ade80' },  S:  { r: 18, c: '#fde047' },  Cu: { r: 19, c: '#d98a5b' },
+    Mn: { r: 19, c: '#c084fc' },
+  };
+  /* 分子的平面座標（原子中心、單位 px）；相鄰原子中心距 ＝ 兩半徑和 × 0.78，畫成「填充模型」。
+     畫的順序就是陣列順序：外圍的 H 先畫，中心原子最後畫、疊在上面。 */
+  const MOL = {
+    Mg:    [['Mg', 0, 0]],
+    Al:    [['Al', 0, 0]],
+    O2:    [['O', -11.7, 0], ['O', 11.7, 0]],
+    H2:    [['H', -8.6, 0], ['H', 8.6, 0]],
+    N2:    [['N', -12.5, 0], ['N', 12.5, 0]],
+    MgO:   [['O', 14.5, 0], ['Mg', -12, 0]],
+    H2O:   [['H', -16.1, 7.4], ['H', 16.1, 7.4], ['O', 0, -5]],
+    H2O2:  [['H', -21.9, -17.6], ['H', 21.9, 17.6], ['O', -11.7, 0], ['O', 11.7, 0]],
+    CO2:   [['O', -24.2, 0], ['O', 24.2, 0], ['C', 0, 0]],
+    NH3:   [['H', 0, -19.1], ['H', -18.27, 12.55], ['H', 18.27, 12.55], ['N', 0, 2]],
+    HCl:   [['H', 15.6, 0], ['Cl', -7, 0]],
+    AlCl3: [['Cl', 0, -28.9], ['Cl', 25.03, 14.45], ['Cl', -25.03, 14.45], ['Al', 0, 0]],
+    C2H6:  [['H', -33.6, 0], ['H', -23.05, -18.27], ['H', -23.05, 18.27],
+            ['H', 33.6, 0], ['H', 23.05, -18.27], ['H', 23.05, 18.27],
+            ['C', -12.5, 0], ['C', 12.5, 0]],
+    C3H8:  [['H', -45.1, 3], ['H', -34.55, -15.27], ['H', -34.55, 21.27],
+            ['H', -12.1, -22.3], ['H', 12.1, -22.3],
+            ['H', 45.1, 3], ['H', 34.55, -15.27], ['H', 34.55, 21.27],
+            ['C', -24, 3], ['C', 0, -5], ['C', 24, 3]],
+  };
+  function ch_mono(c, s, x, y, color, size, align) {
+    c.fillStyle = color; c.font = `bold ${size}px "JetBrains Mono", "Noto Sans TC"`;
+    c.textAlign = align || 'left'; c.textBaseline = 'alphabetic';
+    c.fillText(s, x, y); c.textAlign = 'left';
+  }
+  const CH_BOX = {};
+  function molBox(f) {
+    if (CH_BOX[f]) return CH_BOX[f];
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    MOL[f].forEach(([el, x, y]) => {
+      const r = ATOM[el].r;
+      x0 = Math.min(x0, x - r); x1 = Math.max(x1, x + r); y0 = Math.min(y0, y - r); y1 = Math.max(y1, y + r);
+    });
+    return (CH_BOX[f] = { w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 });
+  }
+  /* 化學式裡每一種原子有幾個（'C3H8' → {C:3, H:8}） */
+  function ch_count(f) {
+    const m = {}, re = /([A-Z][a-z]?)(\d*)/g; let r;
+    while ((r = re.exec(f.split('^')[0]))) m[r[1]] = (m[r[1]] || 0) + (r[2] ? +r[2] : 1);
+    return m;
+  }
+  /* 化學式拆成「一般字／下標／上標」：'C2O4^2-' → C ₂ O ₄ ²⁻ */
+  function ch_tok(f) {
+    const out = []; let i = 0;
+    while (i < f.length) {
+      const ch = f[i];
+      if (ch === '^') { out.push({ t: f.slice(i + 1).replace('-', '−'), k: 'sup' }); break; }
+      if (/\d/.test(ch)) { let j = i; while (j < f.length && /\d/.test(f[j])) j++; out.push({ t: f.slice(i, j), k: 'sub' }); i = j; continue; }
+      let j = i + 1; while (j < f.length && !/[\d^]/.test(f[j])) j++;
+      out.push({ t: f.slice(i, j), k: 'n' }); i = j;
+    }
+    return out;
+  }
+  function fmHTML(f) {
+    return ch_tok(f).map(o => o.k === 'sub' ? `<sub>${o.t}</sub>` : o.k === 'sup' ? `<sup>${o.t}</sup>` : o.t).join('');
+  }
+  /* 畫布上的化學式：下標真的縮小、往下掉，不靠 Unicode 小字 */
+  function ch_formula(c, f, x, y, size, color, align, measureOnly) {
+    const toks = ch_tok(f);
+    const fN = `bold ${size}px "JetBrains Mono", "Noto Sans TC"`, fS = `bold ${Math.round(size * 0.64)}px "JetBrains Mono", "Noto Sans TC"`;
+    let w = 0;
+    toks.forEach(o => { c.font = o.k === 'n' ? fN : fS; o.w = c.measureText(o.t).width + (o.k === 'n' ? 0 : 1); w += o.w; });
+    if (measureOnly) return w;
+    let px = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    c.fillStyle = color; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    toks.forEach(o => {
+      c.font = o.k === 'n' ? fN : fS;
+      c.fillText(o.t, px, y + (o.k === 'sub' ? size * 0.26 : o.k === 'sup' ? -size * 0.42 : 0));
+      px += o.w;
+    });
+    return w;
+  }
+  /* 一顆原子：立體球 ＋ 元素符號；ghost＝還沒填進來的空位（虛線圈） */
+  function ch_atom(c, el, x, y, s, opt) {
+    const A = ATOM[el], r = A.r * s, o = opt || {};
+    if (r < 0.8) return;
+    c.save();
+    if (o.alpha !== undefined) c.globalAlpha = o.alpha;
+    if (o.ghost) {
+      c.setLineDash([5, 4]); c.strokeStyle = A.c; c.lineWidth = 2;
+      c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke();
+      c.restore(); return;
+    }
+    e_ball(c, x, y, r, A.c, o.glow);
+    if (r >= 8.5 && o.label !== false) {
+      const fs = Math.max(11, Math.round(r * (el.length > 1 ? 0.84 : 1.02)));
+      c.fillStyle = CH_INK; c.font = `bold ${fs}px "Noto Sans TC", "JetBrains Mono"`;
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(el, x, y + 1);
+      c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    }
+    c.restore();
+  }
+  /* 分子裡每顆原子在畫布上的位置（以外框中心為軸，可旋轉、可縮放） */
+  function ch_molAtoms(f, cx, cy, s, rot) {
+    const bx = molBox(f), cs = Math.cos(rot || 0), sn = Math.sin(rot || 0);
+    return MOL[f].map(([el, ax, ay]) => {
+      const dx = (ax - bx.cx) * s, dy = (ay - bx.cy) * s;
+      return { el, x: cx + dx * cs - dy * sn, y: cy + dx * sn + dy * cs, s };
+    });
+  }
+  function ch_mol(c, f, cx, cy, s, rot, opt) {
+    ch_molAtoms(f, cx, cy, s, rot).forEach(a => ch_atom(c, a.el, a.x, a.y, a.s, opt));
+  }
+  function ch_box(c, x, y, w, h, stroke, glow) {
+    c.save();
+    c.fillStyle = 'rgba(22, 51, 42, 0.92)'; e_rr(c, x, y, w, h, 14); c.fill();
+    if (glow) e_glow(c, stroke, 18);
+    c.strokeStyle = stroke || 'rgba(246,243,234,0.18)'; c.lineWidth = glow ? 3 : 2; e_rr(c, x, y, w, h, 14); c.stroke();
+    c.restore();
+  }
+  /* 打勾、打叉：用畫的，不靠字型裡有沒有 ✓ ✗ */
+  function ch_check(c, x, y, s, color) {
+    c.save(); e_pen(c); c.strokeStyle = color; c.lineWidth = 4.5 * s / 14;
+    c.beginPath(); c.moveTo(x - s * 0.55, y); c.lineTo(x - s * 0.12, y + s * 0.45); c.lineTo(x + s * 0.62, y - s * 0.5); c.stroke();
+    c.restore();
+  }
+  function ch_cross(c, x, y, s, color) {
+    c.save(); e_pen(c); c.strokeStyle = color; c.lineWidth = 4.5 * s / 14;
+    c.beginPath(); c.moveTo(x - s * 0.45, y - s * 0.45); c.lineTo(x + s * 0.45, y + s * 0.45);
+    c.moveTo(x + s * 0.45, y - s * 0.45); c.lineTo(x - s * 0.45, y + s * 0.45); c.stroke();
+    c.restore();
+  }
+  function ch_clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function ch_ease(t) { t = ch_clamp(t, 0, 1); return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+  function ch_pop(t) { t = ch_clamp(t, 0, 1); const k = 1.70158; return 1 + (k + 1) * Math.pow(t - 1, 3) + k * Math.pow(t - 1, 2); }
+  function ch_gcd(a, b) { while (b) { [a, b] = [b, a % b]; } return a; }
+  /* 在 rw×rh 的格子裡擺 n 個 mw×mh 的分子，最大可以放多大 */
+  function ch_fit(n, rw, rh, mw, mh, cap) {
+    for (let s = cap || 1.3; s > 0.42; s -= 0.02) {
+      const cw = mw * s + 16, chh = mh * s + 16;
+      const cols = Math.max(1, Math.floor(rw / cw)), rows = Math.ceil(n / cols);
+      if (rows * chh <= rh && cw <= rw) return s;
+    }
+    return 0.42;
+  }
+  /* 依比例 s 把 n 個分子排成置中的格子，回傳每個中心點 */
+  function ch_grid(n, x, y, rw, rh, mw, mh, s) {
+    const cw = mw * s + 16, chh = mh * s + 16;
+    const cols = Math.max(1, Math.min(n, Math.floor(rw / cw))), rows = Math.ceil(n / cols);
+    const cellW = rw / cols, cellH = Math.min(rh / rows, chh * 1.35);
+    const top = y + (rh - rows * cellH) / 2, out = [];
+    for (let k = 0; k < n; k++) {
+      const row = Math.floor(k / cols), col = k % cols;
+      const inRow = Math.min(cols, n - row * cols);
+      out.push({ cx: x + (rw - inRow * cellW) / 2 + (col + 0.5) * cellW, cy: top + (row + 0.5) * cellH });
+    }
+    return out;
+  }
+  function ch_now() { return performance.now(); }
+
+  /* ==================================================================
+     分頁一：改係數 vs 改下標
+     ================================================================== */
+  const SUB = { n: 1, mode: 1, m: 0, last: '', born: [0, 0, 0, 0] };
+  /* H₂O → H₂O₂：同一批原子的座標慢慢移過去，第二顆 O 從 0 長大 */
+  const SUB_A = [[-16.1, 7.4], [16.1, 7.4], [0, -5], [0, -5]];
+  const SUB_B = [[-21.9, -17.6], [21.9, 17.6], [-11.7, 0], [11.7, 0]];
+  const SUB_EL = ['H', 'H', 'O', 'O'];
+  function subCoef(d) {
+    const n = ch_clamp(SUB.n + d, 1, 4);
+    if (n === SUB.n) return;
+    if (n > SUB.n) SUB.born[n - 1] = ch_now();
+    SUB.n = n; SUB.last = 'coef';
+    subHTML();
+  }
+  function subSet(k) {
+    if (SUB.mode === k) return;
+    SUB.mode = k; SUB.last = 'sub';
+    subHTML();
+  }
+  function subHTML() {
+    const n = document.getElementById('sub-n'); if (n) n.textContent = SUB.n;
+    [1, 2].forEach(k => { const b = document.getElementById('btn-sub-' + k); if (b) b.classList.toggle('active', SUB.mode === k); });
+    document.querySelectorAll('#reaction-rules .step-btn').forEach((b, i) => { b.disabled = i === 0 ? SUB.n <= 1 : SUB.n >= 4; });
+  }
+  function subDraw() {
+    const cv = document.getElementById('cvs-sub'); if (!cv) return;
+    const c = cv.getContext('2d'), W = 960, H = 440, t = ch_now() / 1000;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+    SUB.m += ((SUB.mode === 2 ? 1 : 0) - SUB.m) * 0.09;
+    const m = SUB.m, peroxide = SUB.mode === 2;
+
+    /* ── 左半：大大的化學式，係數黃、下標青，改過的下標珊瑚色 ── */
+    ch_box(c, 18, 18, 440, 330);
+    e_txt(c, tr('化學式', 'Formula'), 40, 54, CH_MUT, 20);
+    const base = 176, big = 92, small = 56;
+    c.font = `bold ${big}px "JetBrains Mono"`;
+    const wCoef = c.measureText(String(SUB.n)).width, wH = c.measureText('H').width, wO = c.measureText('O').width;
+    c.font = `bold ${small}px "JetBrains Mono"`;
+    const wS = c.measureText('2').width;
+    const x0 = 58, xH = x0 + wCoef + 26, xS1 = xH + wH + 2, xO = xS1 + wS + 4, xS2 = xO + wO + 2;
+    e_glow(c, CH_YEL, 14); ch_mono(c, String(SUB.n), x0, base, CH_YEL, big); e_noglow(c);
+    ch_mono(c, 'H', xH, base, CH_WHT, big);
+    ch_mono(c, '2', xS1, base + 22, CH_O, small);
+    ch_mono(c, 'O', xO, base, CH_WHT, big);
+    if (m > 0.02) {
+      c.save(); c.globalAlpha = ch_clamp(m * 1.3, 0, 1);
+      e_glow(c, CH_COR, 18); ch_mono(c, '2', xS2, base + 22, CH_COR, small); e_noglow(c);
+      c.restore();
+    }
+    /* 指示線：係數指到「有幾個分子」，下標指到「分子裡有幾個原子」 */
+    const yl = 262;
+    e_arrow(c, x0 + wCoef / 2, yl - 26, x0 + wCoef / 2, base + 20, CH_YEL, 3, 12);
+    e_txt(c, tr('係數', 'Coefficient'), 40, yl + 6, CH_YEL, 22, 'left', 190);
+    e_txt(c, tr('＝有幾個分子', '= # of molecules'), 40, yl + 36, CH_YEL, 20, 'left', 190);
+    e_arrow(c, 272, yl - 26, xS1 + wS / 2, base + 36, CH_O, 3, 12);
+    if (m > 0.02) { c.save(); c.globalAlpha = ch_clamp(m * 1.3, 0, 1); e_arrow(c, 292, yl - 26, xS2 + wS / 2, base + 36, CH_COR, 3, 12); c.restore(); }
+    e_txt(c, tr('下標', 'Subscript'), 250, yl + 6, CH_O, 22, 'left', 196);
+    e_txt(c, tr('＝分子裡有幾個原子', '= atoms per molecule'), 250, yl + 36, CH_O, 20, 'left', 196);
+
+    /* ── 右半：分子實物，一個係數就是一個分子 ── */
+    const card = peroxide ? CH_COR : CH_O;
+    ch_box(c, 480, 18, 462, 330, peroxide && m > 0.5 ? CH_COR : null, peroxide && m > 0.5);
+    const cols = SUB.n === 1 ? 1 : 2, rows = SUB.n > 2 ? 2 : 1;
+    const cellW = 440 / cols, cellH = 236 / rows, sc = SUB.n === 1 ? 2.3 : SUB.n === 2 ? 1.9 : 1.55;
+    for (let k = 0; k < SUB.n; k++) {
+      const inRow = Math.min(cols, SUB.n - Math.floor(k / cols) * cols);
+      const cx = 491 + (440 - inRow * cellW) / 2 + ((k % cols) + 0.5) * cellW, cy = 32 + (Math.floor(k / cols) + 0.5) * cellH;
+      const pop = ch_pop((ch_now() - SUB.born[k]) / 360), ph = k * 2.1;
+      const jx = 3 * Math.sin(t * 1.6 + ph), jy = 3 * Math.cos(t * 1.25 + ph * 1.7), rot = 0.14 * Math.sin(t * 0.8 + ph);
+      const cs = Math.cos(rot), sn = Math.sin(rot);
+      for (let a = 0; a < 4; a++) {
+        const ax = SUB_A[a][0] + (SUB_B[a][0] - SUB_A[a][0]) * m, ay = SUB_A[a][1] + (SUB_B[a][1] - SUB_A[a][1]) * m + 2 * (1 - m);
+        const g = a === 3 ? m : 1;
+        if (g < 0.05) continue;
+        const dx = ax * sc * pop, dy = ay * sc * pop;
+        ch_atom(c, SUB_EL[a], cx + jx + dx * cs - dy * sn, cy + jy + dx * sn + dy * cs, sc * pop * g);
+      }
+    }
+    /* 身分證：還是水？還是已經變成別的東西？ */
+    c.save(); c.fillStyle = peroxide ? 'rgba(255,128,64,0.16)' : 'rgba(85,233,255,0.12)';
+    e_rr(c, 496, 276, 430, 58, 12); c.fill(); c.strokeStyle = card; c.lineWidth = 2; e_rr(c, 496, 276, 430, 58, 12); c.stroke(); c.restore();
+    const idW = ch_formula(c, peroxide ? 'H2O2' : 'H2O', 0, 0, 26, card, 'left', true);
+    const idTxt = peroxide ? tr('雙氧水：傷口消毒用，不能喝！', 'Hydrogen peroxide: for wounds, never drink!')
+                           : tr('水：每天喝的水', 'Water: the water you drink');
+    ch_formula(c, peroxide ? 'H2O2' : 'H2O', 516, 314, 26, card, 'left');
+    e_txt(c, idTxt, 516 + idW + 14, 314, peroxide ? CH_COR : CH_WHT, 22, 'left', 392 - idW);
+
+    /* ── 底部：原子總數＋結論 ── */
+    const nH = 2 * SUB.n, nO = (peroxide ? 2 : 1) * SUB.n;
+    const lab = tr('原子總數', 'Total atoms'), ax = 40 + e_w(c, lab, 20) + 30;
+    e_txt(c, lab, 40, 388, CH_MUT, 20);
+    ch_atom(c, 'H', ax, 381, 1.05); ch_mono(c, '× ' + nH, ax + 18, 388, CH_WHT, 22);
+    ch_atom(c, 'O', ax + 108, 381, 0.95); ch_mono(c, '× ' + nO, ax + 126, 388, CH_WHT, 22);
+    let msg, col = CH_WHT;
+    if (SUB.last === 'sub' && peroxide) { msg = tr('改下標：分子的長相變了——這已經不是水，是雙氧水！', 'Changed the subscript: the molecule itself changed — this is no longer water, it is H₂O₂!'); col = CH_COR; }
+    else if (SUB.last === 'sub') { msg = tr('下標改回來：又變回水了。下標決定「這是什麼物質」。', 'Subscript back: it is water again. Subscripts decide what the substance is.'); col = CH_O; }
+    else if (SUB.last === 'coef') { msg = tr('改係數：分子變多或變少，還是同一種物質。', 'Changed the coefficient: more or fewer molecules — still the same substance.'); col = CH_YEL; }
+    else msg = tr('先按係數 ＋／−，再換下標，比較兩種改法。', 'Try the coefficient ＋/− first, then swap the subscript, and compare.');
+    e_txt(c, msg, 480, 428, col, 22, 'center', 920);
+  }
+
+  /* ==================================================================
+     分頁二、三：配平工作台（觀察法 wb1 ／ 代數法 wb2 共用同一台機器）
+     左框反應物、右框生成物；下面的「原子帳本」每一種原子一行，左右一顆一顆對帳。
+     ================================================================== */
+  const WB_RX = {
+    wb1: [{ L: ['Mg', 'O2'], R: ['MgO'] }, { L: ['H2', 'O2'], R: ['H2O'] }, { L: ['C3H8', 'O2'], R: ['CO2', 'H2O'] }],
+    wb2: [{ L: ['N2', 'H2'], R: ['NH3'] }, { L: ['C2H6', 'O2'], R: ['CO2', 'H2O'] }, { L: ['Al', 'HCl'], R: ['AlCl3', 'H2'] }],
+  };
+  const WB_MAX = 8, WB_LET = 'abcd';
+  const WB_BOX = [{ x: 18, y: 52, w: 424, h: 262 }, { x: 518, y: 52, w: 424, h: 262 }];
+  const WB = {};
+  function wbS(id) {
+    if (!WB[id]) { WB[id] = { id, rx: 0, n: [], born: [], anim: null, bars: {} }; wbInit(id, 0); }
+    return WB[id];
+  }
+  function wbRx(id) { return WB_RX[id][WB[id].rx]; }
+  function wbSp(id) { const R = wbRx(id); return R.L.concat(R.R); }
+  function wbInit(id, k) {
+    const S = WB[id]; S.rx = k; S.anim = null; S.bars = {};
+    const now = ch_now();
+    S.n = wbSp(id).map(() => 1);
+    S.born = wbSp(id).map(() => [now]);
+  }
+  /* 每一種原子：左邊總數、右邊總數（係數 × 化學式裡的個數） */
+  function wbSums(id) {
+    const S = wbS(id), R = wbRx(id), els = [], L = {}, Rt = {};
+    R.L.concat(R.R).forEach(f => Object.keys(ch_count(f)).forEach(el => { if (!els.includes(el)) els.push(el); }));
+    els.forEach(el => { L[el] = 0; Rt[el] = 0; });
+    R.L.forEach((f, i) => { const m = ch_count(f); for (const el in m) L[el] += S.n[i] * m[el]; });
+    R.R.forEach((f, j) => { const m = ch_count(f); for (const el in m) Rt[el] += S.n[R.L.length + j] * m[el]; });
+    const bal = els.every(el => L[el] === Rt[el]);
+    return { els, L, R: Rt, bal, g: S.n.reduce((a, b) => ch_gcd(a, b)) };
+  }
+  function wbStep(id, i, d) {
+    const S = wbS(id), n = ch_clamp(S.n[i] + d, 1, WB_MAX);
+    if (n === S.n[i]) return;
+    if (n > S.n[i]) S.born[i].push(ch_now()); else S.born[i].pop();
+    S.n[i] = n; S.anim = null;
+    wbHTML(id);
+  }
+  function wbPick(id, k) {
+    wbS(id); wbInit(id, k);
+    for (let j = 0; j < WB_RX[id].length; j++) { const b = document.getElementById(`${id}-rx-${j}`); if (b) b.classList.toggle('active', j === k); }
+    wbHTML(id);
+  }
+  function wbReset(id) { wbS(id); wbInit(id, WB[id].rx); wbHTML(id); }
+
+  /* ── 版面：兩個框、每個物質一個區塊；全畫布同一個縮放比，原子才一樣大 ── */
+  function wbLayout(id) {
+    const S = wbS(id), R = wbRx(id), regs = [];
+    [R.L, R.R].forEach((list, side) => {
+      const B = WB_BOX[side], pad = 10, rw = (B.w - pad * 2) / list.length;
+      list.forEach((f, j) => regs.push({ f, side, x: B.x + pad + j * rw, y: B.y + 10, w: rw, h: B.h - 58 }));
+    });
+    let s = 1.6;
+    regs.forEach((g, i) => { const b = molBox(g.f); s = Math.min(s, ch_fit(S.n[i], g.w, g.h, b.w, b.h, 1.6)); });
+    regs.forEach((g, i) => { const b = molBox(g.f); g.mols = ch_grid(S.n[i], g.x, g.y, g.w, g.h, b.w, b.h, s); });
+    return { regs, s };
+  }
+
+  /* ── 「讓原子去拼」：把左邊每一顆原子，配到右邊同一種原子的空位 ── */
+  function wbReact(id) {
+    const S = wbS(id), Lo = wbLayout(id), src = {}, dst = {};
+    let ord = 0;
+    Lo.regs.forEach(g => g.mols.forEach(m => {
+      ch_molAtoms(g.f, m.cx, m.cy, Lo.s, 0).forEach(a => {
+        const rec = { el: a.el, x: a.x, y: a.y, s: a.s, mx: m.cx, my: m.cy, ord: ord++ };
+        const bag = g.side === 0 ? src : dst;
+        (bag[a.el] = bag[a.el] || []).push(rec);
+      });
+    }));
+    const fl = [], left = [], miss = [], els = [...new Set(Object.keys(src).concat(Object.keys(dst)))];
+    els.forEach(el => {
+      const A = (src[el] || []).sort((p, q) => p.x - q.x), B = (dst[el] || []).sort((p, q) => p.x - q.x);
+      const k = Math.min(A.length, B.length);
+      for (let q = 0; q < k; q++) fl.push({ el, a: A[q], b: B[q], delay: 0.2 * (q / Math.max(1, k)) + 0.03 * Math.random() });
+      A.slice(k).forEach(a => left.push(a));
+      B.slice(k).forEach(b => miss.push(b));
+    });
+    fl.sort((p, q) => p.b.ord - q.b.ord);
+    S.anim = { t0: ch_now(), dur: 2800, fl, left, miss, dst: [].concat(...Object.values(dst)), done: false };
+    wbStatus(id);
+  }
+  function wbSpread(a, k) { return { x: a.mx + (a.x - a.mx) * (1 + 0.45 * k), y: a.my + (a.y - a.my) * (1 + 0.45 * k) }; }
+
+  function wbDraw(id) {
+    const cv = document.getElementById('cvs-' + id); if (!cv) return;
+    const S = wbS(id), c = cv.getContext('2d'), W = 960, H = 460, now = ch_now(), t = now / 1000;
+    const sums = wbSums(id), A = S.anim;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+    const okLook = sums.bal && !A;
+    ch_box(c, WB_BOX[0].x, WB_BOX[0].y, WB_BOX[0].w, WB_BOX[0].h, okLook ? CH_GRN : null, okLook);
+    ch_box(c, WB_BOX[1].x, WB_BOX[1].y, WB_BOX[1].w, WB_BOX[1].h, okLook ? CH_GRN : null, okLook);
+    e_txt(c, tr('反應物', 'Reactants'), 230, 36, CH_WHT, 22, 'center');
+    e_txt(c, tr('生成物', 'Products'), 730, 36, CH_WHT, 22, 'center');
+    if (sums.bal) e_label(c, tr('平衡了', 'Balanced'), 480, 36, CH_GRN, 22, 'center');
+    else e_label(c, tr('還沒平衡', 'Not yet'), 480, 36, CH_COR, 22, 'center');
+    e_arrow(c, 452, 183, 508, 183, sums.bal ? CH_GRN : CH_MUT, 5, 16);
+
+    const Lo = wbLayout(id);
+    /* 每個區塊底下寫「係數 化學式」 */
+    Lo.regs.forEach((g, i) => {
+      const B = WB_BOX[g.side], y = B.y + B.h - 18;
+      c.font = 'bold 24px "JetBrains Mono"'; const wc = c.measureText(String(S.n[i])).width;
+      const wf = ch_formula(c, g.f, 0, 0, 24, CH_WHT, 'left', true), x0 = g.x + g.w / 2 - (wc + 10 + wf) / 2;
+      ch_mono(c, String(S.n[i]), x0, y, CH_YEL, 24);
+      ch_formula(c, g.f, x0 + wc + 10, y, 24, CH_WHT, 'left');
+    });
+
+    if (!A) {
+      Lo.regs.forEach((g, i) => g.mols.forEach((m, k) => {
+        const ph = i * 1.7 + k * 2.3, born = S.born[i][k] || 0;
+        const sc = ch_pop((now - born) / 340);
+        ch_mol(c, g.f, m.cx + 1.8 * Math.sin(t * 1.7 + ph), m.cy + 1.8 * Math.cos(t * 1.3 + ph * 1.7), Lo.s * sc, 0.08 * Math.sin(t * 0.9 + ph));
+      }));
+    } else {
+      const p = (now - A.t0) / A.dur, brk = ch_ease(p / 0.15);
+      A.dst.forEach(b => ch_atom(c, b.el, b.x, b.y, b.s, { ghost: true, alpha: 0.75 }));
+      const pulse = p > 0.82 ? 0.5 + 0.5 * Math.sin(t * 7) : 0;
+      A.left.forEach(a => {
+        const q = wbSpread(a, brk);
+        ch_atom(c, a.el, q.x, q.y, a.s);
+        if (pulse) { c.save(); c.strokeStyle = CH_COR; c.lineWidth = 3; c.globalAlpha = 0.4 + 0.6 * pulse;
+          c.beginPath(); c.arc(q.x, q.y, ATOM[a.el].r * a.s + 5, 0, Math.PI * 2); c.stroke(); c.restore(); }
+      });
+      A.miss.forEach(b => {
+        if (!pulse) return;
+        c.save(); c.strokeStyle = CH_COR; c.lineWidth = 3; c.globalAlpha = 0.4 + 0.6 * pulse; c.setLineDash([4, 4]);
+        c.beginPath(); c.arc(b.x, b.y, ATOM[b.el].r * b.s + 5, 0, Math.PI * 2); c.stroke(); c.restore();
+      });
+      A.fl.forEach(f => {
+        const o = wbSpread(f.a, brk), q = ch_ease((p - 0.16 - f.delay) / 0.55);
+        const x = o.x + (f.b.x - o.x) * q, y = Math.max(62, o.y + (f.b.y - o.y) * q - 36 * Math.sin(Math.PI * q));
+        ch_atom(c, f.el, x, y, f.a.s + (f.b.s - f.a.s) * q, { glow: q > 0 && q < 1 });
+      });
+      if (p >= 1) {
+        if (!A.left.length && !A.miss.length) e_label(c, tr('一顆不多、一顆不少', 'Nothing extra, nothing missing'), 730, 76, CH_GRN, 20, 'center');
+        else {
+          if (A.left.length) e_label(c, tr('多出來的原子', 'Atoms left over'), 230, 76, CH_COR, 20, 'center');
+          if (A.miss.length) e_label(c, tr('缺原子，拼不起來', 'Missing atoms'), 730, 76, CH_COR, 20, 'center');
+        }
+      }
+      if (p >= 1 && !A.done) { A.done = true; wbStatus(id); }
+    }
+
+    /* ── 原子帳本 ── */
+    const E = sums.els.length, top = 324, bot = 454, rh = Math.min(46, (bot - top) / E);
+    const y0 = top + ((bot - top) - rh * E) / 2;
+    let mx = 1; sums.els.forEach(el => { mx = Math.max(mx, sums.L[el], sums.R[el]); });
+    const unit = Math.min(24, 320 / mx);
+    sums.els.forEach((el, j) => {
+      const yc = y0 + j * rh + rh / 2, eq = sums.L[el] === sums.R[el];
+      c.fillStyle = eq ? 'rgba(51,204,153,0.08)' : 'rgba(255,128,64,0.07)';
+      e_rr(c, 16, yc - rh / 2 + 3, 928, rh - 6, 10); c.fill();
+      ch_atom(c, el, 42, yc, 13 / ATOM[el].r);
+      ['L', 'R'].forEach(side => {
+        const key = el + side, tgt = sums[side][el];
+        const d = (S.bars[key] === undefined ? tgt : S.bars[key]);
+        S.bars[key] = d + (tgt - d) * 0.22;
+        const v = S.bars[key], dir = side === 'L' ? -1 : 1, x0 = side === 'L' ? 430 : 530;
+        if (unit >= 11) {
+          const rr = Math.min(8.5, unit * 0.38);
+          for (let q = 0; q < Math.ceil(v - 0.02); q++) {
+            c.save(); c.globalAlpha = ch_clamp(v - q, 0.15, 1);
+            c.fillStyle = ATOM[el].c; c.beginPath(); c.arc(x0 + dir * unit * (q + 0.5), yc, rr, 0, Math.PI * 2); c.fill();
+            c.restore();
+          }
+        } else {
+          c.fillStyle = ATOM[el].c; c.globalAlpha = 0.85;
+          const len = v * unit; c.fillRect(side === 'L' ? x0 - len : x0, yc - 8, len, 16); c.globalAlpha = 1;
+        }
+      });
+      ch_mono(c, String(sums.L[el]), 468, yc + 8, CH_WHT, 22, 'right');
+      ch_mono(c, eq ? '=' : '≠', 480, yc + 8, eq ? CH_GRN : CH_COR, 22, 'center');
+      ch_mono(c, String(sums.R[el]), 492, yc + 8, CH_WHT, 22, 'left');
+      if (eq) ch_check(c, 906, yc, 16, CH_GRN); else ch_cross(c, 906, yc, 14, CH_COR);
+    });
+  }
+
+  /* ── HTML：係數＋／−、代數等式、狀態說明 ── */
+  function wbHTML(id) {
+    const S = wbS(id), R = wbRx(id), sp = wbSp(id), box = document.getElementById(id + '-eq');
+    if (box) {
+      let h = '';
+      sp.forEach((f, i) => {
+        if (i === R.L.length) h += '<span class="op arrow">→</span>';
+        else if (i > 0) h += '<span class="op">+</span>';
+        const let_ = id === 'wb2' ? `<span class="let">${WB_LET[i]}</span>` : '';
+        h += `<div class="sp"><div class="sp-ctl">`
+          + `<button class="action-btn step-btn" type="button" onclick="wbStep('${id}', ${i}, -1)" ${S.n[i] <= 1 ? 'disabled' : ''} aria-label="−">−</button>`
+          + `<span class="coef-n">${S.n[i]}</span>`
+          + `<button class="action-btn step-btn" type="button" onclick="wbStep('${id}', ${i}, 1)" ${S.n[i] >= WB_MAX ? 'disabled' : ''} aria-label="+">＋</button>`
+          + `</div><div class="sp-f">${let_}${fmHTML(f)}</div></div>`;
+      });
+      box.innerHTML = h;
+    }
+    wbStatus(id);
+  }
+  function wbTerm(cnt, v) { return (cnt > 1 ? cnt : '') + v; }
+  function wbAlg(id) {
+    const box = document.getElementById(id + '-alg'); if (!box) return;
+    const S = wbS(id), R = wbRx(id), sums = wbSums(id), nL = R.L.length;
+    let h = `<div class="alg-vals">${S.n.map((v, i) => `${WB_LET[i]} = ${v}`).join(tr('，', ', '))}</div>`;
+    sums.els.forEach(el => {
+      const lt = [], rt = [], ls = [], rs = [];
+      R.L.forEach((f, i) => { const k = ch_count(f)[el]; if (k) { lt.push(wbTerm(k, WB_LET[i])); ls.push(k > 1 ? `${k}×${S.n[i]}` : `${S.n[i]}`); } });
+      R.R.forEach((f, j) => { const k = ch_count(f)[el]; if (k) { rt.push(wbTerm(k, WB_LET[nL + j])); rs.push(k > 1 ? `${k}×${S.n[nL + j]}` : `${S.n[nL + j]}`); } });
+      const ok = sums.L[el] === sums.R[el];
+      h += `<div class="alg-row"><span class="alg-el">${tr(el + ' 原子', el + ' atoms')}</span>`
+        + `<span class="alg-eq">${lt.join(' + ')} = ${rt.join(' + ')}</span>`
+        + `<span class="alg-sub">→ ${ls.join(' + ')} = ${rs.join(' + ')}</span>`
+        + `<span class="${ok ? 'ok' : 'no'}">${ok ? `${sums.L[el]} = ${sums.R[el]} ✓` : `${sums.L[el]} ≠ ${sums.R[el]} ✗`}</span></div>`;
+    });
+    box.innerHTML = h;
+  }
+  function wbList(obj) {
+    return Object.keys(obj).filter(k => obj[k] > 0).map(k => tr(`${obj[k]} 個 <b>${k}</b>`, `${obj[k]} <b>${k}</b>`)).join(tr('、', ', '));
+  }
+  function wbStatus(id) {
+    const box = document.getElementById(id + '-status'); if (!box) return;
+    const S = wbS(id), sums = wbSums(id), A = S.anim;
+    let h;
+    if (A && A.done) {
+      if (!A.left.length && !A.miss.length) {
+        h = `<span class="good">${tr('✓ 原子剛好用完', '✓ Every atom used exactly')}</span>`
+          + tr('：左邊拆下來的每一顆原子，右邊都找到了位置——一顆不多、一顆不少。', ': each atom taken apart on the left found a place on the right — none extra, none missing.');
+      } else {
+        const lo = {}, mi = {};
+        A.left.forEach(a => { lo[a.el] = (lo[a.el] || 0) + 1; });
+        A.miss.forEach(b => { mi[b.el] = (mi[b.el] || 0) + 1; });
+        const parts = [];
+        if (A.left.length) parts.push(tr('左邊剩下 ', 'left over on the left: ') + wbList(lo));
+        if (A.miss.length) parts.push(tr('右邊還缺 ', 'missing on the right: ') + wbList(mi));
+        h = `<span class="bad">${tr('✗ 拼不完整', '✗ Can’t rebuild it')}</span>：${parts.join(tr('；', '; '))}`
+          + tr('。原子不會憑空消失、也不會憑空出現，所以反應式一定要配平。', '. Atoms never vanish or appear from nothing — that is why the equation must balance.');
+      }
+    } else if (A) {
+      h = tr('原子正在拆開、重新組合……', 'Atoms are coming apart and regrouping…');
+    } else if (sums.bal && sums.g > 1) {
+      h = `<span class="good">${tr('✓ 左右原子相等', '✓ Atoms match')}</span>`
+        + tr(`，但係數還能同除以 ${sums.g}——化成<b>最簡整數比</b>才是標準答案。`, `, but every coefficient can still be divided by ${sums.g} — the standard answer uses the <b>simplest whole-number ratio</b>.`);
+    } else if (sums.bal) {
+      h = `<span class="good">${tr('✓ 平衡了！', '✓ Balanced!')}</span>`
+        + tr('每一種原子，左右都一樣多。按「讓原子去拼」驗收看看。', ' Every kind of atom matches on both sides. Press “Let the atoms rebuild” to check.');
+    } else {
+      const bad = sums.els.filter(el => sums.L[el] !== sums.R[el]);
+      if (id === 'wb2') {
+        h = tr(`還沒平衡：上面有 <b>${bad.length}</b> 條等式不成立。`, `Not balanced yet: <b>${bad.length}</b> equation(s) above still fail.`);
+      } else {
+        h = tr('還沒平衡：', 'Not balanced yet: ')
+          + bad.map(el => tr(`<b>${el}</b> 左邊 ${sums.L[el]} 個、右邊 ${sums.R[el]} 個`, `<b>${el}</b> left ${sums.L[el]}, right ${sums.R[el]}`)).join(tr('；', '; '));
+      }
+    }
+    box.innerHTML = h;
+    if (id === 'wb2') wbAlg(id);
+  }
+
+  /* ==================================================================
+     分頁四：數個數 vs 秤重量（2 H₂ + O₂ → 2 H₂O）
+     ================================================================== */
+  const MOLE = { k: 0, m: 0, bars: [0, 0, 0], born: 0, dots: null };
+  const MOLE_K = [1, 3, 10, 0];                     /* 0 ＝ 1 莫耳 */
+  const MOLE_SP = [{ f: 'H2', c: 2, M: 2 }, { f: 'O2', c: 1, M: 32 }, { f: 'H2O', c: 2, M: 18 }];
+  const MOLE_X = [170, 480, 790];
+  function moleSet(key, v) {
+    if (MOLE[key] === v) return;
+    MOLE[key] = v; if (key === 'k') MOLE.born = ch_now();
+    moleHTML();
+  }
+  function moleVals() {
+    const k = MOLE_K[MOLE.k], mol = k === 0;
+    return MOLE_SP.map(s => { const n = mol ? s.c : s.c * k; return { n, mass: n * s.M, mol }; });
+  }
+  function moleDots() {
+    if (MOLE.dots) return MOLE.dots;
+    const rng = (() => { let s = 20260925; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); })();
+    MOLE.dots = MOLE_SP.map((s, i) => Array.from({ length: s.c * 70 }, () => ({
+      x: MOLE_X[i] - 120 + rng() * 240, y: 84 + rng() * 150, vx: (rng() - 0.5) * 0.9, vy: (rng() - 0.5) * 0.9, a: rng() * 6.28 })));
+    return MOLE.dots;
+  }
+  function moleDraw() {
+    const cv = document.getElementById('cvs-mole'); if (!cv) return;
+    const c = cv.getContext('2d'), W = 960, H = 500, now = ch_now(), t = now / 1000;
+    const V = moleVals(), mol = V[0].mol, mass = MOLE.m === 1;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+
+    /* 最上面：放大後的反應式 */
+    MOLE_SP.forEach((s, i) => {
+      const pre = mol ? tr(`${s.c} 莫耳 `, `${s.c} mol `) : (V[i].n === 1 ? '' : V[i].n + ' ');
+      const wp = pre ? e_w(c, pre, 24) : 0, wf = ch_formula(c, s.f, 0, 0, 26, CH_WHT, 'left', true);
+      const x0 = MOLE_X[i] - (wp + wf) / 2;
+      if (pre) e_txt(c, pre, x0, 46, CH_YEL, 24);
+      ch_formula(c, s.f, x0 + wp, 46, 26, CH_WHT, 'left');
+    });
+    ch_mono(c, '+', 325, 46, CH_MUT, 28, 'center');
+    ch_mono(c, '→', 635, 46, CH_WHT, 28, 'center');
+
+    /* 三個托盤：真的有幾個分子，就畫幾個 */
+    let s = 1.7;
+    if (!mol) MOLE_SP.forEach((sp, i) => { const b = molBox(sp.f); s = Math.min(s, ch_fit(V[i].n, 250, 160, b.w, b.h, 1.7)); });
+    const pop = ch_pop((now - MOLE.born) / 380);
+    MOLE_SP.forEach((sp, i) => {
+      const X = MOLE_X[i];
+      ch_box(c, X - 135, 66, 270, 186);
+      if (!mol) {
+        const b = molBox(sp.f);
+        ch_grid(V[i].n, X - 125, 76, 250, 166, b.w, b.h, s).forEach((m, k) => {
+          const ph = i * 1.3 + k * 2.1;
+          ch_mol(c, sp.f, m.cx + 2 * Math.sin(t * 1.8 + ph), m.cy + 2 * Math.cos(t * 1.4 + ph), s * pop, 0.14 * Math.sin(t + ph));
+        });
+      } else {
+        moleDots()[i].forEach(d => {
+          d.x += d.vx; d.y += d.vy;
+          if (d.x < X - 124 || d.x > X + 124) d.vx *= -1;
+          if (d.y < 76 || d.y > 212) d.vy *= -1;
+          const ca = Math.cos(d.a + t), sa = Math.sin(d.a + t);
+          const dot = (el, dx, dy) => { c.fillStyle = ATOM[el].c; c.beginPath(); c.arc(d.x + dx * ca - dy * sa, d.y + dx * sa + dy * ca, 2.1, 0, 6.283); c.fill(); };
+          if (sp.f === 'H2') { dot('H', -1.8, 0); dot('H', 1.8, 0); }
+          else if (sp.f === 'O2') { dot('O', -2, 0); dot('O', 2, 0); }
+          else { dot('O', 0, -1); dot('H', -2.6, 1.6); dot('H', 2.6, 1.6); }
+        });
+        e_label(c, tr(`${sp.c} × 6.02×10²³ 個`, `${sp.c} × 6.02×10²³`), X, 238, CH_WHT, 20, 'center');
+      }
+    });
+    ch_mono(c, '+', 325, 168, CH_MUT, 30, 'center');
+    ch_mono(c, '→', 635, 168, CH_WHT, 30, 'center');
+
+    /* 下半：長條圖。數個數 → 2 : 1 : 2；秤重量 → 4 : 32 : 36 */
+    const vals = V.map(v => mass ? v.mass : v.n), mx = Math.max(...vals), base = 462;
+    e_ln(c, 40, base, 920, base, 'rgba(246,243,234,0.35)', 2);
+    V.forEach((v, i) => {
+      const X = MOLE_X[i], tgt = vals[i] / mx * 150;
+      MOLE.bars[i] += (tgt - MOLE.bars[i]) * 0.12;
+      const h = Math.max(2, MOLE.bars[i]);
+      let fill = i === 0 ? CH_H : i === 1 ? CH_O : null;
+      if (!fill) { fill = c.createLinearGradient(0, base - h, 0, base); fill.addColorStop(0, CH_O); fill.addColorStop(1, CH_H); }
+      c.fillStyle = fill; e_rr(c, X - 48, base - h, 96, h, 8); c.fill();
+      let lab;
+      if (!mass) lab = mol ? tr(`${MOLE_SP[i].c} 莫耳`, `${MOLE_SP[i].c} mol`) : tr(`${v.n} 個`, `${v.n}`);
+      else lab = mol ? tr(`${v.mass} 公克`, `${v.mass} g`) : `${v.n}×${MOLE_SP[i].M} = ${v.mass}`;
+      e_label(c, lab, X, base - h - 12, CH_WHT, 22, 'center');
+      ch_formula(c, MOLE_SP[i].f, X, base + 30, 24, i === 0 ? CH_H : i === 1 ? CH_O : CH_WHT, 'center');
+    });
+    /* 長條之間的符號：數個數是「比」，秤重量是「加起來相等」——質量守恆 */
+    ch_mono(c, mass ? '+' : ':', 325, base - 22, mass ? CH_WHT : CH_YEL, 34, 'center');
+    ch_mono(c, mass ? '=' : ':', 635, base - 22, mass ? CH_GRN : CH_YEL, 34, 'center');
+  }
+  function moleHTML() {
+    for (let j = 0; j < 4; j++) { const b = document.getElementById('mole-k-' + j); if (b) b.classList.toggle('active', MOLE.k === j); }
+    for (let j = 0; j < 2; j++) { const b = document.getElementById('mole-m-' + j); if (b) b.classList.toggle('active', MOLE.m === j); }
+    const box = document.getElementById('mole-status'); if (!box) return;
+    const V = moleVals(), mol = V[0].mol, F = f => fmHTML(f);
+    let h;
+    if (MOLE.m === 0) {
+      h = mol
+        ? tr(`1 莫耳 ＝ 6.02×10<sup>23</sup> 個。莫耳數比 ${F('H2')} : ${F('O2')} : ${F('H2O')} ＝ <b>2 : 1 : 2</b>，跟係數比一模一樣。`,
+             `1 mole = 6.02×10<sup>23</sup> particles. The mole ratio ${F('H2')} : ${F('O2')} : ${F('H2O')} = <b>2 : 1 : 2</b> — exactly the coefficient ratio.`)
+        : tr(`數個數：${F('H2')} : ${F('O2')} : ${F('H2O')} ＝ ${V[0].n} : ${V[1].n} : ${V[2].n} ＝ <b>2 : 1 : 2</b>——放大幾倍，比例都一樣。`,
+             `Counting: ${F('H2')} : ${F('O2')} : ${F('H2O')} = ${V[0].n} : ${V[1].n} : ${V[2].n} = <b>2 : 1 : 2</b> — scale it up as much as you like, the ratio stays.`);
+    } else {
+      h = mol
+        ? tr(`2 莫耳 ${F('H2')} ＝ 4 公克，1 莫耳 ${F('O2')} ＝ 32 公克，2 莫耳 ${F('H2O')} ＝ 36 公克：質量比 <b>1 : 8 : 9</b>，不是 2 : 1 : 2！而且 4 + 32 ＝ 36 公克——質量守恆。`,
+             `2 mol ${F('H2')} = 4 g, 1 mol ${F('O2')} = 32 g, 2 mol ${F('H2O')} = 36 g: the mass ratio is <b>1 : 8 : 9</b>, not 2 : 1 : 2! And 4 + 32 = 36 g — mass is conserved.`)
+        : tr(`秤重量：(${V[0].n}×2) : (${V[1].n}×32) : (${V[2].n}×18) ＝ ${V[0].mass} : ${V[1].mass} : ${V[2].mass} ＝ <b>1 : 8 : 9</b>，不是 2 : 1 : 2！而且 ${V[0].mass} + ${V[1].mass} ＝ ${V[2].mass}——質量守恆。`,
+             `Weighing: (${V[0].n}×2) : (${V[1].n}×32) : (${V[2].n}×18) = ${V[0].mass} : ${V[1].mass} : ${V[2].mass} = <b>1 : 8 : 9</b>, not 2 : 1 : 2! And ${V[0].mass} + ${V[1].mass} = ${V[2].mass} — mass is conserved.`);
+    }
+    box.innerHTML = h;
+  }
+
+  /* ==================================================================
+     分頁五：電子帳本（氧化數階梯）
+     被氧化的往上爬、吐出電子；電子飛過去，被還原的接住後往下走。
+     ================================================================== */
+  const RDX_RX = [
+    { ox: { el: 'C', n2: 1, from: 0, to: 4, per: 4, f: 'C' }, red: { el: 'S', from: 6, to: 4, per: 2, f: 'H2SO4', to_f: 'SO2' } },
+    { ox: { el: 'Cu', n2: 1, from: 0, to: 2, per: 2, f: 'Cu' }, red: { el: 'N', from: 5, to: 2, per: 3, f: 'HNO3', to_f: 'NO' } },
+    { ox: { el: 'C', n2: 2, from: 3, to: 4, per: 2, f: 'C2O4^2-' }, red: { el: 'Mn', from: 7, to: 2, per: 5, f: 'MnO4^-', to_f: 'Mn^2+' } },
+  ];
+  const RDX = { rx: 1, nO: 1, nR: 1, anim: null };
+  const RDX_X = [330, 700], RDX_MAX = 6;
+  function rdxY(v) { return 420 - v * 40; }
+  function rdxPX(side, j, n) { const sp = side === 0 && RDX_RX[RDX.rx].ox.n2 === 2 ? 74 : 48; return RDX_X[side] + (j - (n - 1) / 2) * sp; }
+  function rdxPick(k) {
+    RDX.rx = k; RDX.nO = 1; RDX.nR = 1; RDX.anim = null;
+    for (let j = 0; j < 3; j++) { const b = document.getElementById('rdx-rx-' + j); if (b) b.classList.toggle('active', j === k); }
+    rdxHTML();
+  }
+  function rdxStep(side, d) {
+    const key = side === 0 ? 'nO' : 'nR', n = ch_clamp(RDX[key] + d, 1, RDX_MAX);
+    if (n === RDX[key]) return;
+    RDX[key] = n; RDX.anim = null; rdxHTML();
+  }
+  function rdxReset() { RDX.nO = 1; RDX.nR = 1; RDX.anim = null; rdxHTML(); }
+  function rdxGo() {
+    const R = RDX_RX[RDX.rx], nO = RDX.nO, nR = RDX.nR, pO = R.ox.per, pR = R.red.per;
+    const L = nO * pO, G = nR * pR, m = Math.min(L, G), full = L >= G ? nR : Math.floor(L / pR), es = [];
+    for (let j = 0; j < nO; j++) for (let e = 0; e < pO; e++) {
+      const idx = j * pO + e, x0 = rdxPX(0, j, nO) + (R.ox.n2 === 2 ? (e - 0.5) * 28 : (e - (pO - 1) / 2) * 13);
+      const o = { idx, x0, y0: rdxY(R.ox.from) + 34, delay: idx / Math.max(1, L) * 800 };
+      if (idx < G) { o.r = Math.floor(idx / pR); o.q = idx % pR; }
+      else { const k = idx - G; o.r = -1; o.tx = 515 + ((k % 4) - 1.5) * 20; o.ty = 176 + Math.floor(k / 4) * 20; }
+      es.push(o);
+    }
+    RDX.anim = { t0: ch_now(), L, G, m, full, es, done: false };
+    rdxStatus();
+  }
+  function rdxE(c, x, y, sc, alpha) {
+    if (sc <= 0.02 || alpha <= 0.02) return;
+    c.save(); c.globalAlpha = alpha;
+    e_glow(c, CH_ELEC, 12); c.fillStyle = CH_ELEC; c.beginPath(); c.arc(x, y, 8 * sc, 0, 6.283); c.fill(); e_noglow(c);
+    c.strokeStyle = CH_INK; c.lineWidth = 2.4 * sc; c.beginPath(); c.moveTo(x - 4 * sc, y); c.lineTo(x + 4 * sc, y); c.stroke();
+    c.restore();
+  }
+  /* 一行字裡混著化學式：分段量寬、置中排好 */
+  function rdxLine(c, segs, x, y, size, color) {
+    let w = 0;
+    segs.forEach(s => { s.w = s.f ? ch_formula(c, s.f, 0, 0, size, color, 'left', true) : e_w(c, s.t, size); w += s.w; });
+    let px = x - w / 2;
+    segs.forEach(s => { if (s.f) ch_formula(c, s.f, px, y, size, s.c || color, 'left'); else e_txt(c, s.t, px, y, s.c || color, size); px += s.w; });
+  }
+  function rdxPart(c, R, side, x, y, ghost) {
+    const P = side === 0 ? R.ox : R.red;
+    if (P.n2 === 2) {
+      if (ghost) { ch_atom(c, P.el, x - 14, y, 0.9, { ghost: true }); ch_atom(c, P.el, x + 14, y, 0.9, { ghost: true }); return; }
+      c.save(); c.setLineDash([4, 4]); c.strokeStyle = 'rgba(246,243,234,0.5)'; c.lineWidth = 2; e_rr(c, x - 33, y - 21, 66, 42, 21); c.stroke(); c.restore();
+      ch_atom(c, P.el, x - 14, y, 0.9); ch_atom(c, P.el, x + 14, y, 0.9);
+    } else ch_atom(c, P.el, x, y, 1.1, ghost ? { ghost: true } : undefined);
+  }
+  function rdxDraw() {
+    const cv = document.getElementById('cvs-redox'); if (!cv) return;
+    const c = cv.getContext('2d'), W = 960, H = 520, now = ch_now(), t = now / 1000;
+    const R = RDX_RX[RDX.rx], A = RDX.anim, nO = RDX.nO, nR = RDX.nR;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+
+    /* 氧化數階梯 */
+    for (let v = 0; v <= 7; v++) {
+      const y = rdxY(v);
+      e_ln(c, 92, y, 940, y, 'rgba(246,243,234,0.07)', 1);
+      e_ln(c, 72, y, 84, y, CH_MUT, 2);
+      ch_mono(c, v === 0 ? '0' : '+' + v, 64, y + 6, CH_MUT, 18, 'right');
+    }
+    e_ln(c, 78, rdxY(0) + 8, 78, rdxY(7) - 10, CH_MUT, 2);
+    e_txt(c, tr('氧化數', 'Ox. no.'), 78, rdxY(7) - 22, CH_MUT, 18, 'center');
+    rdxE(c, 36, 30, 1, 1); e_txt(c, tr('＝ 1 個電子', '= 1 electron'), 52, 37, CH_ELEC, 18);
+
+    /* 兩欄標題 */
+    const sgn = v => (v > 0 ? '+' : '') + v;
+    e_txt(c, tr('被氧化：失去電子', 'Oxidized: loses e⁻'), RDX_X[0], 32, CH_YEL, 22, 'center');
+    e_txt(c, tr('被還原：得到電子', 'Reduced: gains e⁻'), RDX_X[1], 32, CH_GRN, 22, 'center');
+    const oxSeg = R.ox.n2 === 2 ? [{ f: R.ox.f }, { t: tr(' 裡的 C：', ': C ') }] : [{ f: R.ox.f }, { t: tr('：', ': ') }];
+    rdxLine(c, oxSeg.concat([{ t: `${sgn(R.ox.from)} → ${sgn(R.ox.to)}` }]), RDX_X[0], 60, 20, CH_WHT);
+    rdxLine(c, [{ f: R.red.f }, { t: tr(` 裡的 ${R.red.el}：`, `: ${R.red.el} `) }, { t: `${sgn(R.red.from)} → ${sgn(R.red.to)}` }], RDX_X[1], 60, 20, CH_WHT);
+    e_txt(c, R.ox.n2 === 2 ? tr(`每個失去 ${R.ox.per} 個（2 個 C 各 1 個）`, `each loses ${R.ox.per} (1 per C)`) : tr(`每個失去 ${R.ox.per} 個電子`, `each loses ${R.ox.per} e⁻`), RDX_X[0], 88, CH_YEL, 20, 'center');
+    e_txt(c, tr(`每個得到 ${R.red.per} 個電子`, `each gains ${R.red.per} e⁻`), RDX_X[1], 88, CH_GRN, 20, 'center');
+
+    /* 時間軸：0–0.6 秒吐電子、0.6–1.4 秒往上爬、1.4–2.9 秒電子飛過去、3.0–3.8 秒接住往下走 */
+    const T = A ? now - A.t0 : 0;
+    const rise = A ? ch_ease((T - 600) / 800) : 0, drop = A ? ch_ease((T - 3000) / 800) : 0;
+    const bob = j => (A ? 0 : 2 * Math.sin(t * 2 + j));
+
+    /* 目標位置（虛線）→ 粒子本體 */
+    for (let j = 0; j < nO; j++) {
+      const x = rdxPX(0, j, nO);
+      if (rise < 0.98) rdxPart(c, R, 0, x, rdxY(R.ox.to), true);
+      rdxPart(c, R, 0, x, rdxY(R.ox.from + (R.ox.to - R.ox.from) * rise) + bob(j));
+    }
+    const redLv = j => R.red.from + (R.red.to - R.red.from) * (A && j < A.full ? drop : 0);
+    for (let j = 0; j < nR; j++) {
+      const x = rdxPX(1, j, nR);
+      if (!(A && j < A.full && drop > 0.98)) rdxPart(c, R, 1, x, rdxY(R.red.to), true);
+      rdxPart(c, R, 1, x, rdxY(redLv(j)) + bob(j + 3));
+    }
+    if (!A) {
+      e_arrow(c, rdxPX(0, nO - 1, nO) + (R.ox.n2 === 2 ? 46 : 32), rdxY(R.ox.from) - 4, rdxPX(0, nO - 1, nO) + (R.ox.n2 === 2 ? 46 : 32), rdxY(R.ox.to) + 10, CH_YEL, 3, 12);
+      e_arrow(c, rdxPX(1, nR - 1, nR) + 32, rdxY(R.red.from) + 4, rdxPX(1, nR - 1, nR) + 32, rdxY(R.red.to) - 10, CH_GRN, 3, 12);
+    }
+
+    /* 電子 */
+    if (A) {
+      const pR = R.red.per;
+      A.es.forEach(e => {
+        let x, y, sc = 1, al = 1;
+        const q = ch_ease((T - 1400 - e.delay) / 700);
+        let tx, ty;
+        if (e.r >= 0) {
+          const rx = rdxPX(1, e.r, nR), ry = rdxY(redLv(e.r));
+          tx = rx + (e.q - (pR - 1) / 2) * 13; ty = ry - 34;
+          if (e.r < A.full) al = 1 - drop;
+        } else { tx = e.tx; ty = e.ty; }
+        if (T < 600) { sc = ch_pop(T / 600 - e.idx * 0.02); x = e.x0; y = e.y0; }
+        else { x = e.x0 + (tx - e.x0) * q; y = e.y0 + (ty - e.y0) * q - 110 * Math.sin(Math.PI * q); }
+        rdxE(c, x, y, ch_clamp(sc, 0, 1), al);
+        if (e.r < 0 && A.done) {
+          c.save(); c.strokeStyle = CH_COR; c.lineWidth = 2.5; c.globalAlpha = 0.5 + 0.5 * Math.sin(t * 7);
+          c.beginPath(); c.arc(x, y, 12, 0, 6.283); c.stroke(); c.restore();
+        }
+      });
+      if (A.L > A.G && T > 2900) e_label(c, tr('沒人接的電子', 'Nobody takes these'), 515, 156, CH_COR, 20, 'center');
+      if (T > 3900 && !A.done) { A.done = true; rdxStatus(); }
+    }
+
+    /* 帳本：失去幾個、得到幾個 */
+    const L = nO * R.ox.per, G = nR * R.red.per, got = A && A.done ? A.m : 0;
+    e_txt(c, tr('失去的電子', 'e⁻ lost'), 24, 474, CH_YEL, 18);
+    e_txt(c, tr('得到的電子', 'e⁻ gained'), 24, 504, CH_GRN, 18);
+    for (let k = 0; k < L; k++) rdxE(c, 150 + k * 13, 468, 0.62, 1);
+    for (let k = 0; k < G; k++) {
+      if (k < got) rdxE(c, 150 + k * 13, 498, 0.62, 1);
+      else { c.save(); c.strokeStyle = CH_ELEC; c.lineWidth = 1.6; c.globalAlpha = 0.8; c.beginPath(); c.arc(150 + k * 13, 498, 5, 0, 6.283); c.stroke(); c.restore(); }
+    }
+    ch_mono(c, `${nO} × ${R.ox.per} = ${L}`, 580, 474, CH_YEL, 20);
+    ch_mono(c, `${nR} × ${R.red.per} = ${G}`, 580, 504, CH_GRN, 20);
+    if (L === G) ch_check(c, 790, 484, 18, CH_GRN); else ch_cross(c, 790, 484, 16, CH_COR);
+    e_txt(c, L === G ? tr('一樣多', 'equal') : tr('不一樣多', 'not equal'), 816, 492, L === G ? CH_GRN : CH_COR, 20);
+  }
+  function rdxNames() {
+    const R = RDX_RX[RDX.rx];
+    const ox = fmHTML(R.ox.f);
+    const red = RDX.rx === 2 ? tr(`${fmHTML(R.red.f)} 裡的 Mn`, `Mn in ${fmHTML(R.red.f)}`)
+                             : tr(`變成 ${fmHTML(R.red.to_f)} 的 ${R.red.el}`, `${R.red.el} that becomes ${fmHTML(R.red.to_f)}`);
+    return { ox, red };
+  }
+  function rdxHTML() {
+    const box = document.getElementById('rdx-steps');
+    if (box) {
+      const N = rdxNames(), grp = (side, name, n) =>
+        `<div class="sp-ctl"><span class="rdx-name">${side === 0 ? tr('被氧化：', 'Oxidized: ') : tr('被還原：', 'Reduced: ')}${name}</span>`
+        + `<button class="action-btn step-btn" type="button" onclick="rdxStep(${side}, -1)" ${n <= 1 ? 'disabled' : ''} aria-label="−">−</button>`
+        + `<span class="coef-n">${n}</span>`
+        + `<button class="action-btn step-btn" type="button" onclick="rdxStep(${side}, 1)" ${n >= RDX_MAX ? 'disabled' : ''} aria-label="+">＋</button></div>`;
+      box.innerHTML = grp(0, N.ox, RDX.nO) + grp(1, N.red, RDX.nR);
+    }
+    rdxStatus();
+  }
+  function rdxStatus() {
+    const box = document.getElementById('rdx-status'); if (!box) return;
+    const R = RDX_RX[RDX.rx], A = RDX.anim, nO = RDX.nO, nR = RDX.nR, L = nO * R.ox.per, G = nR * R.red.per, g = ch_gcd(nO, nR);
+    const led = tr(`失去：${nO} × ${R.ox.per} = <b>${L}</b> 個電子　｜　得到：${nR} × ${R.red.per} = <b>${G}</b> 個電子`,
+                   `Lost: ${nO} × ${R.ox.per} = <b>${L}</b> e⁻　|　Gained: ${nR} × ${R.red.per} = <b>${G}</b> e⁻`);
+    const RES = [
+      tr(`所以 C 配 1、${fmHTML('H2SO4')} 和 ${fmHTML('SO2')} 配 2；剩下的 H、O 再用觀察法補齊（上面推導的第三步）。`,
+         `So C gets 1, ${fmHTML('H2SO4')} and ${fmHTML('SO2')} get 2; finish H and O by inspection (step 3 above).`),
+      tr(`所以 Cu 配 3、NO 配 2；剩下的 N、H、O 再用觀察法補齊（上面推導的第三步）。`,
+         `So Cu gets 3 and NO gets 2; finish N, H and O by inspection (step 3 above).`),
+      tr(`所以 ${fmHTML('MnO4^-')} 配 2、${fmHTML('C2O4^2-')} 配 5；再用電荷補 H<sup>+</sup>、用 H 補 ${fmHTML('H2O')}（上面推導的第三步）。`,
+         `So ${fmHTML('MnO4^-')} gets 2 and ${fmHTML('C2O4^2-')} gets 5; then use charge for H<sup>+</sup> and H for ${fmHTML('H2O')} (step 3 above).`),
+    ];
+    let h;
+    if (A && A.done) {
+      if (L === G && g === 1) h = `<span class="good">${tr('✓ 電子一個不剩、也一個不缺', '✓ No electron left over, none missing')}</span>。` + RES[RDX.rx];
+      else if (L === G) h = `<span class="good">${tr('✓ 一樣多', '✓ Equal')}</span>` + tr(`，但兩邊還能同除以 ${g}，最簡是 ${nO / g} : ${nR / g}。`, `, but both sides can still be divided by ${g}: simplest is ${nO / g} : ${nR / g}.`);
+      else if (L > G) h = `<span class="bad">${tr('✗ 失去的比得到的多', '✗ More lost than gained')}</span>` + tr(`：${L - G} 個電子沒人接。電子不會憑空消失，所以這個比例不可能。`, `: ${L - G} electron(s) have nowhere to go. Electrons cannot just vanish, so this ratio is impossible.`);
+      else h = `<span class="bad">${tr('✗ 得到的電子不夠', '✗ Not enough electrons')}</span>` + tr(`：還有 ${nR - A.full} 個粒子等不到足夠的電子，停在原地。`, `: ${nR - A.full} particle(s) never get enough electrons and stay put.`);
+      h = led + '<br>' + h;
+    } else if (A) h = led + '<br>' + tr('電子轉移中……', 'Electrons moving…');
+    else h = led + '　' + (L === G ? `<span class="good">${tr('→ 一樣多', '→ equal')}</span>` : `<span class="bad">${tr('→ 不一樣多', '→ not equal')}</span>`);
+    box.innerHTML = h;
+  }
+
+  /* ==================================================================
+     V5 外層：常駐動畫迴圈（只畫目前看得到的那一頁）、語言切換後重畫、封面
+     分頁判斷一律用分頁的 id 名稱，不用編號（第十定律 10.1）。
+     ================================================================== */
+  function v5TabOn(id) { const el = document.getElementById(id); return !!el && el.classList.contains('active'); }
+  function v5Loop() {
+      if (v5TabOn('reaction-rules')) subDraw();
+      if (v5TabOn('observation-method')) wbDraw('wb1');
+      if (v5TabOn('algebraic-method')) wbDraw('wb2');
+      if (v5TabOn('micro-meaning')) moleDraw();
+      if (v5TabOn('redox-method')) rdxDraw();
+      requestAnimationFrame(v5Loop);
+  }
+  function v5Redraw() { subHTML(); wbHTML('wb1'); wbHTML('wb2'); moleHTML(); rdxHTML(); }
+  /* 原本的 setLang 一字不改，只在外面包一層：
+     ① 換完語言，工作台上動態產生的字也要跟著換（第四定律 4.3）；
+     ② 原本切回中文時是塞 data-zh 的「純文字」，推導區裡橘色的化學式、分數會被洗成白色一般字。
+        所以離開中文的那一刻先把每一段的中文原樣存起來，切回中文時原樣放回去。 */
+  const v5BaseSetLang = setLang;
+  let v5ZhSnap = null;
+  setLang = function (lang) {
+      if (currentLang === 'zh') v5ZhSnap = [...document.querySelectorAll('[data-zh]')].map(el => [el, el.innerHTML]);
+      v5BaseSetLang(lang);
+      if (lang === 'zh' && v5ZhSnap) v5ZhSnap.forEach(([el, h]) => { if (el.isConnected) el.innerHTML = h; });
+      v5Redraw();
+  };
+
+  /* ── 第六定律：開場封面（靜態圖，點一下就進教室）── */
+  function dismissIntro() {
+      const el = document.getElementById('introScreen');
+      if (!el || el.classList.contains('exiting')) return;
+      el.classList.add('exiting');
+      setTimeout(() => { if (el && el.parentNode) el.parentNode.removeChild(el); }, 750);
+  }
+  function introClick() { dismissIntro(); }
+  window.addEventListener('DOMContentLoaded', () => {
+      /* 封面圖還沒放進 assets/covers 之前，不要讓學生面對一片空白：載不到就直接進教材 */
+      const probe = new Image();
+      probe.onerror = () => { const el = document.getElementById('introScreen'); if (el && el.parentNode) el.parentNode.removeChild(el); };
+      probe.src = 'assets/covers/chem_reaction_2_cover_v1.jpg';
+      v5Redraw();
+      requestAnimationFrame(v5Loop);
+      /* 字體載完再重排一次：不然第一格會用到預設字體（第十定律 10.5） */
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(v5Redraw);
+  });
 </script>
 </body>
 </html>
