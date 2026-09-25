@@ -304,9 +304,253 @@
       .home-fab { top: 8px; left: 8px; width: 42px; height: 42px; }
       .home-fab svg { width: 20px; height: 20px; }
     }
+
+  /* ══════════════════════════════════════════════════════════════
+     V5 大憲章外層（chem_reaction_3 原子量與分子量、莫耳）
+     ══════════════════════════════════════════════════════════════ */
+
+  /* ── 第二定律 2.3：字級（原檔把 p/li/span/div 全鎖在 20px，這裡整批拉到 22px）── */
+  body { font-size: 22px; }
+  p, li, span, strong, div { font-size: 22px; }
+  h1 { font-size: 48px; }
+  h2 { font-size: 32px; }
+  header p { font-size: 24px; }
+  .note-ul li { margin-bottom: 14px; }
+  .action-btn { font-size: 21px; min-height: 52px; padding: 10px 18px; }
+  .sub-tab-btn { font-size: 21px; min-height: 54px; }
+  .lang-label, .lang-pill { font-size: 20px; }
+  .lang-pill { min-height: 48px; }
+  .equation-row { font-size: 26px; }
+
+  /* ── 第三定律 3.3：公式、化學式、數字一律 JetBrains Mono（跟 chem_reaction_1 同一套） ── */
+  .math-text, .equation-row, .fraction, .c-num, .c-num-new, .math-btn, .coef-n, .wb-eq, .wb-alg .alg-eq {
+    font-family: 'JetBrains Mono', 'Noto Sans TC', monospace;
+  }
+  .math-text { font-size: inherit; }
+
+  /* ── 第七定律：改單欄，說明在上、互動在下，畫布吃滿 1080px 框架內的整列 ── */
+  .grid-layout { grid-template-columns: 1fr !important; }
+  .grid-layout > .panel { min-width: 0; }            /* 格子不准被一行不換行的反應式撐破（手機） */
+  #cvs-scale  { aspect-ratio: 960 / 470; }
+  #cvs-mw     { aspect-ratio: 960 / 440; }
+  #cvs-avo    { aspect-ratio: 960 / 480; }
+  #cvs-crate  { aspect-ratio: 960 / 460; }
+  #cvs-bridge { aspect-ratio: 960 / 420; }
+  .canvas-container {
+    width: 100%; border: 2px solid var(--chalk-white); border-radius: 12px 12px 0 0;
+    overflow: hidden; background: #0b1a15; position: relative; margin-bottom: 0;
+  }
+  .canvas-container canvas { width: 100%; height: auto; display: block; }
+  .v5-panel > h2 + div { margin-bottom: 4px; }
+
+  /* 控制鍵黏在畫布正下方：按下去，眼睛不用離開畫面 */
+  .controls {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    margin-bottom: 4px;
+    border: 2px solid var(--chalk-white); border-top: none;
+    border-radius: 0 0 12px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px 18px;
+  }
+  .controls .action-btn { margin: 0; align-self: auto; }
+  .ctrl-row {
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px;
+    width: 100%;
+  }
+  .ctrl-name { font-weight: 700; color: var(--chalk-muted); min-width: 64px; }
+  .btn-green { border-color: var(--chalk-green); color: var(--chalk-green); }
+  .btn-green:hover { background: var(--chalk-green); color: var(--bg-base); }
+  .btn-orange { border-color: var(--chalk-coral); color: var(--chalk-coral); }
+  .btn-orange:hover { background: var(--chalk-coral); color: var(--bg-base); }
+  .mode-btn { border-style: dashed; color: var(--chalk-muted); border-color: var(--rule-color); }
+  .mode-btn.active {
+    background: var(--chalk-yellow); color: var(--bg-base);
+    border: 2px solid var(--chalk-yellow);
+  }
+  .mode-btn:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  /* 按鈕是 inline-flex，裡面的 <sub> 會變成彈性項目、vertical-align 失效——自己往下推，下標才看得出來 */
+  .math-btn sub { font-size: 0.64em; position: relative; top: 0.36em; line-height: 0; margin: 0 1px; }
+  .math-btn { text-transform: none; }
+  .sp-gap { display: inline-block; width: 18px; }
+
+  /* 係數＋／−：數得出來的段數（第八定律 8.1），一格就是一個分子 */
+  .step-btn {
+    min-width: 52px; min-height: 52px; padding: 0 !important;
+    font-size: 28px !important; line-height: 1; border-color: var(--chalk-yellow); color: var(--chalk-yellow);
+  }
+  .step-btn:hover:not(:disabled) { background: var(--chalk-yellow); color: var(--bg-base); }
+  .step-btn:disabled { opacity: 0.32; cursor: default; }
+  .coef-n {
+    display: inline-block; min-width: 44px; text-align: center;
+    font-size: 34px; font-weight: 700; color: var(--chalk-yellow);
+  }
+
+  /* 工作台的反應式：每個物質一格，係數在上、化學式在下 */
+  .wb-eq {
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 6px;
+    width: 100%; font-size: 26px;
+  }
+  .wb-eq .sp {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--rule-color);
+  }
+  .wb-eq .sp-ctl { display: flex; align-items: center; gap: 6px; }
+  .wb-eq .sp-f { font-size: 26px; font-weight: 700; color: var(--chalk-white); white-space: nowrap; }
+  .wb-eq .sp-f sub { font-size: 0.7em; }
+  .wb-eq .sp-f .let { color: var(--chalk-teal); margin-right: 4px; }
+  .wb-eq .op { font-size: 30px; font-weight: 700; color: var(--chalk-muted); padding: 0 4px; }
+  .wb-eq .op.arrow { color: var(--chalk-white); }
+  .wb-eq .step-btn { min-width: 48px; min-height: 48px; font-size: 26px !important; }
+  .wb-eq .coef-n { min-width: 40px; font-size: 32px; }
+
+  .wb-status {
+    width: 100%; text-align: center; line-height: 1.6; color: var(--chalk-white);
+    min-height: 1.6em;
+  }
+  .wb-status b { color: var(--chalk-yellow); }
+  .wb-status .good { color: var(--chalk-green); font-weight: 700; }
+  .wb-status .bad  { color: var(--chalk-coral); font-weight: 700; }
+  .wb-status sub, .wb-status sup { font-size: 0.7em; }
+
+  /* 代數法：把係數代進每一條原子等式 */
+  .wb-alg {
+    width: 100%; display: grid; gap: 6px;
+    padding: 12px 16px; border-radius: 12px; background: rgba(11, 26, 21, 0.55);
+    border: 1px dashed var(--rule-color);
+  }
+  .wb-alg .alg-row {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 14px;
+  }
+  .wb-alg .alg-el { font-weight: 700; color: var(--chalk-muted); }
+  .wb-alg .alg-eq { font-weight: 700; color: var(--chalk-teal); white-space: nowrap; }
+  .wb-alg .alg-sub { font-weight: 700; color: var(--chalk-white); white-space: nowrap; }
+  .wb-alg .ok { color: var(--chalk-green); font-weight: 700; }
+  .wb-alg .no { color: var(--chalk-coral); font-weight: 700; }
+  .wb-alg .alg-vals { text-align: center; color: var(--chalk-yellow); font-weight: 700; }
+
+  .rdx-steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; width: 100%; }
+  .rdx-steps .sp-ctl { display: flex; align-items: center; gap: 8px; }
+  .rdx-steps .rdx-name { font-weight: 700; color: var(--chalk-white); }
+  .rdx-steps .rdx-name sub, .rdx-steps .rdx-name sup { font-size: 0.7em; }
+
+  /* ── 第五定律：分頁鈕＝Hook 小單元，五格一排、雙行主副標題 ──
+     選中的那一格是「整塊實心黃 ＋ 深色字 ＋ 外圈黃光」，不是「深底配黃字」。 */
+  .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .tab-btn {
+    flex: none; min-width: 0; min-height: 136px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    padding: 20px 12px; line-height: 1.4; border-radius: 10px;
+  }
+  .tab-btn .tab-main { font-size: 21px; font-weight: 700; line-height: 1.38; }
+  .tab-btn .tab-sub  { font-size: 16px; font-weight: 700; line-height: 1.3; opacity: 0.82; }
+  .tab-btn.active {
+    background: var(--chalk-yellow);
+    color: var(--bg-base);
+    border: 3px solid var(--chalk-yellow);
+    box-shadow: 0 0 20px rgba(255, 224, 102, 0.5);
+  }
+  .tab-btn.active .tab-main,
+  .tab-btn.active .tab-sub { color: var(--bg-base); }
+  .tab-btn.active .tab-sub { opacity: 0.78; }
+  /* 進階分頁（氧化還原）：沒選時珊瑚色虛框，選中時換成實心珊瑚底 ＋ 深色字 */
+  .tab-btn.danger-tab { border-color: rgba(255, 128, 64, 0.65); color: var(--chalk-coral); }
+  .tab-btn.danger-tab.active {
+    background: var(--chalk-coral);
+    border-color: var(--chalk-coral);
+    box-shadow: 0 0 20px rgba(255, 128, 64, 0.5);
+  }
+
+  /* ── 第五定律：曉臻老師 Hook ──
+     8% 的青色薄膜一定要疊在「抬起來的面板色」上，不能直接疊在頁面底色。 */
+  .hook-box {
+    display: flex; align-items: flex-start; gap: 18px;
+    background: linear-gradient(rgba(77, 210, 255, 0.08), rgba(77, 210, 255, 0.08)), var(--bg-panel);
+    border: 2px solid rgba(77, 210, 255, 0.4);
+    border-left: 6px solid var(--chalk-teal);
+    border-radius: 12px; padding: 18px 22px; margin-bottom: 22px;
+  }
+  .xiaozhen-logo {
+    width: 88px; height: 88px; flex: 0 0 88px;
+    overflow: hidden; border: 4px solid #55e9ff; border-radius: 50%;
+    background: rgba(11, 26, 21, 0.6);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .xiaozhen-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .hook-content { flex: 1 1 auto; min-width: 0; }
+  .hook-box .hook-title { font-size: 26px; font-weight: 700; color: var(--chalk-teal); margin-bottom: 6px; }
+  .hook-box .hook-text { font-size: 22px; line-height: 1.75; color: var(--chalk-white); }
+  .hook-box .hook-text span, .hook-box .hook-text b { font-size: 22px; }
+  .hook-box .hook-text b { color: var(--chalk-yellow); }
+
+  /* ── 第七定律：窄螢幕只縮尺寸，不改配色 ── */
+  @media (max-width: 1100px) {
+    .tabs { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 1000px) {
+    h1 { font-size: 38px; }
+    h2 { font-size: 28px; }
+  }
+  @media (max-width: 900px) {
+    .tabs { grid-template-columns: 1fr 1fr; }
+    .tab-btn { min-height: 118px; padding: 16px 12px; }
+  }
+  @media (max-width: 720px) {
+    body, p, li, span, strong, div { font-size: 20px; }
+    h1 { font-size: 32px; }
+    header p { font-size: 20px; }
+    .panel { padding: 16px; }
+    .hook-box { gap: 14px; padding: 16px; }
+    .xiaozhen-logo { width: 72px; height: 72px; flex: 0 0 72px; }
+    .hook-box .hook-title { font-size: 22px; }
+    .hook-box .hook-text, .hook-box .hook-text span, .hook-box .hook-text b { font-size: 20px; }
+    .action-btn { font-size: 19px; padding: 10px 14px; min-height: 48px; }
+    .tab-btn .tab-main { font-size: 19px; }
+    .tab-btn .tab-sub { font-size: 15px; }
+    .ctrl-name { min-width: 0; width: 100%; text-align: center; }
+    .equation-row { font-size: 22px; flex-wrap: wrap; row-gap: 22px; overflow-x: visible; }   /* 手機：反應式太長就折成兩行，不用左右滑 */
+    .equation-row .chem-arrow { margin: 0 10px; }
+    .wb-eq .sp-f { font-size: 22px; }
+    .wb-eq .op { font-size: 24px; }
+    .controls { padding: 14px 10px; }
+  }
+  @media (max-width: 480px) {
+    .tabs { grid-template-columns: 1fr; }
+    .tab-btn { min-height: 96px; }
+  }
+
+  /* ── 第四定律：雙語切換是「懸浮按鈕」，版面要替它（和左上角的回首頁鈕）讓出位置 ── */
+  header { margin-top: 92px; }
+  @media (max-width: 520px) {
+    .lang-label { display: none; }
+    .floating-lang-container { top: 8px; right: 8px; padding: 6px; }
+  }
+
+  /* ── 第六定律：單元封面（靜態圖，點一下進教材；畫面上不得有任何文字）── */
+  .intro-screen {
+    position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center;
+    overflow: hidden; background: #11261f; cursor: pointer; isolation: isolate;
+    transition: opacity .7s ease, visibility .7s ease;
+  }
+  .intro-screen::before {
+    content: ""; position: absolute; inset: -3%; z-index: -4;
+    background: #11261f url("assets/covers/chem_reaction_3_cover_v1.jpg") center/cover no-repeat;
+    animation: introZoom 16s ease-out both;
+  }
+  .intro-screen::after {
+    content: ""; position: absolute; inset: 0; z-index: -2;
+    background: linear-gradient(180deg, rgba(1,11,11,.06) 30%, rgba(1,12,10,.26) 66%, rgba(1,12,10,.80) 100%);
+  }
+  .intro-screen.exiting { opacity: 0; visibility: hidden; pointer-events: none; }
+  @keyframes introZoom { from { transform: scale(1); } to { transform: scale(1.07); } }
+  @media (prefers-reduced-motion: reduce) { .intro-screen::before { animation: none; } }
+
   </style>
 </head>
 <body>
+<!-- 第六定律：單元封面（靜態圖，點一下進教材；畫面上不得有任何文字） -->
+<div class="intro-screen" id="introScreen" onclick="introClick()" role="button" tabindex="0"
+     aria-label="點一下進入教材"></div>
 <a href="index.html" class="home-fab" aria-label="回首頁" title="回首頁 Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></a>
 
 
@@ -327,15 +571,37 @@
   </header>
 
   <div class="tabs">
-    <button class="tab-btn active" id="btn-tab-atomic" onclick="openTab('atomic-mass')" data-zh="原子量基準定義" data-en="Atomic Mass Standard">原子量基準定義</button>
-    <button class="tab-btn" id="btn-tab-molecular" onclick="openTab('molecular-mass')" data-zh="分子量進階計算" data-en="Molecular Mass Calculations">分子量進階計算</button>
-    <button class="tab-btn" id="btn-tab-avogadro" onclick="openTab('avogadro')" data-zh="亞佛加厥數概念" data-en="Avogadro's Number">亞佛加厥數概念</button>
-    <button class="tab-btn" id="btn-tab-quantity" onclick="openTab('mole-quantity')" data-zh="莫耳與數量轉換" data-en="Mole & Quantity Conversion">莫耳與數量轉換</button>
-    <button class="tab-btn" id="btn-tab-mass" onclick="openTab('mole-mass')" data-zh="莫耳與質量轉換" data-en="Mole & Mass Conversion">莫耳與質量轉換</button>
+    <button class="tab-btn active" id="btn-tab-atomic" type="button" onclick="openTab('atomic-mass')">
+      <span class="tab-main" data-zh="原子要怎麼秤？" data-en="How do you weigh an atom?">原子要怎麼秤？</span>
+      <span class="tab-sub" data-zh="原子量基準定義" data-en="Atomic Mass Standard">原子量基準定義</span>
+    </button>
+    <button class="tab-btn" id="btn-tab-molecular" type="button" onclick="openTab('molecular-mass')">
+      <span class="tab-main" data-zh="括號和圓點怎麼算" data-en="Brackets and dots?">括號和圓點怎麼算</span>
+      <span class="tab-sub" data-zh="分子量進階計算" data-en="Molecular Mass Calculations">分子量進階計算</span>
+    </button>
+    <button class="tab-btn" id="btn-tab-avogadro" type="button" onclick="openTab('avogadro')">
+      <span class="tab-main" data-zh="1 莫耳有多少？" data-en="How many is a mole?">1 莫耳有多少？</span>
+      <span class="tab-sub" data-zh="亞佛加厥數概念" data-en="Avogadro's Number">亞佛加厥數概念</span>
+    </button>
+    <button class="tab-btn" id="btn-tab-quantity" type="button" onclick="openTab('mole-quantity')">
+      <span class="tab-main" data-zh="問分子還是原子？" data-en="Molecules or atoms?">問分子還是原子？</span>
+      <span class="tab-sub" data-zh="莫耳與數量轉換" data-en="Mole &amp; Quantity Conversion">莫耳與數量轉換</span>
+    </button>
+    <button class="tab-btn" id="btn-tab-mass" type="button" onclick="openTab('mole-mass')">
+      <span class="tab-main" data-zh="秤一秤就知道幾個" data-en="Weigh it to count it">秤一秤就知道幾個</span>
+      <span class="tab-sub" data-zh="莫耳與質量轉換" data-en="Mole &amp; Mass Conversion">莫耳與質量轉換</span>
+    </button>
   </div>
 
   <!-- 分頁一：原子量基準定義 -->
   <div id="atomic-mass" class="tab-content active">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen opens">曉臻老師開場</div>
+        <div class="hook-text"><span data-zh="一個碳原子只有大約 2×10⁻²³ 公克，世界上沒有任何一台天平秤得出來。那化學家怎麼知道，氧原子比碳原子重？" data-en="A carbon atom weighs only about 2×10⁻²³ grams — no balance on Earth can weigh it. So how do chemists know an oxygen atom is heavier than a carbon atom?">一個碳原子只有大約 2×10<sup>−23</sup> 公克，世界上沒有任何一台天平秤得出來。那化學家怎麼知道，氧原子比碳原子重？</span><br><b data-zh="不秤真正的重量，只比「誰是誰的幾倍」——拿碳-12 當標準砝碼，定為 12。" data-en="Don't weigh the true mass — compare “how many times heavier.” Carbon-12 is the standard weight, set at exactly 12.">不秤真正的重量，只比「誰是誰的幾倍」——拿碳-12 當標準砝碼，定為 12。</b><span data-zh="先到微觀天平上放放看，再挑戰下面的比值題。" data-en=" Try the micro-balance first, then take on the ratio problems below.">先到微觀天平上放放看，再挑戰下面的比值題。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
         <div class="panel">
             <h2 data-zh="原子量建立與碳-12標準" data-en="Atomic Mass & Carbon-12 Standard">原子量建立與碳-12標準</h2>
@@ -347,6 +613,42 @@
                 <li><span data-zh="若某原子質量是 ¹²C 的 4/3 倍，其原子量即為 12 × (4/3) = 16（氧原子）。" data-en="If an atom's mass is 4/3 of ¹²C, its atomic mass is 12 × (4/3) = 16 (Oxygen atom).">若某原子質量是 <span class="math-text"><sup>12</sup>C</span> 的 <span class="fraction nowrap"><span class="numerator">4</span><span class="denominator">3</span></span> 倍，其原子量即為 <span class="math-text">12 &times; </span><span class="fraction nowrap"><span class="numerator">4</span><span class="denominator">3</span></span><span class="math-text"> = 16</span>（氧原子）。</span></li>
                 <li><strong style="color: var(--chalk-coral);" data-zh="核心觀念：" data-en="Core Concept: ">核心觀念：</strong><span data-zh="因為原子量是相對倍數，所以原子量本身沒有單位。" data-en="Because atomic mass is a relative dimensionless ratio, it has no units.">因為原子量是相對倍數，所以<span class="nowrap" style="color: var(--chalk-teal);">原子量本身沒有單位</span>。</span></li>
             </ul>
+        </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="微觀天平：原子量是「比」出來的" data-en="Micro-Balance: Atomic Mass Is a Comparison">微觀天平：原子量是「比」出來的</h2>
+            <div data-zh="左右各選一種原子、各放幾顆，看天平往哪邊倒；兩邊的總原子量一樣，天平就平了。" data-en="Pick an atom and a count for each pan and watch which way the balance tips; when both totals match, it balances.">左右各選一種原子、各放幾顆，看天平往哪邊倒；兩邊的總原子量一樣，天平就平了。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-scale" width="960" height="470"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="左盤" data-en="Left">左盤</span>
+                    <button class="action-btn mode-btn" id="sc-L-H" type="button" onclick="scSet('L', 'H')">H</button>
+                    <button class="action-btn mode-btn active" id="sc-L-C" type="button" onclick="scSet('L', 'C')">C</button>
+                    <button class="action-btn mode-btn" id="sc-L-O" type="button" onclick="scSet('L', 'O')">O</button>
+                    <button class="action-btn mode-btn" id="sc-L-Mg" type="button" onclick="scSet('L', 'Mg')">Mg</button>
+                    <button class="action-btn mode-btn" id="sc-L-S" type="button" onclick="scSet('L', 'S')">S</button>
+                    <span class="sp-gap"></span>
+                    <button class="action-btn step-btn" id="sc-L-minus" type="button" onclick="scStep('L', -1)" aria-label="左盤少一顆">−</button>
+                    <span class="coef-n" id="sc-L-n">1</span>
+                    <button class="action-btn step-btn" id="sc-L-plus" type="button" onclick="scStep('L', 1)" aria-label="左盤多一顆">＋</button>
+                </div>
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="右盤" data-en="Right">右盤</span>
+                    <button class="action-btn mode-btn" id="sc-R-H" type="button" onclick="scSet('R', 'H')">H</button>
+                    <button class="action-btn mode-btn" id="sc-R-C" type="button" onclick="scSet('R', 'C')">C</button>
+                    <button class="action-btn mode-btn active" id="sc-R-O" type="button" onclick="scSet('R', 'O')">O</button>
+                    <button class="action-btn mode-btn" id="sc-R-Mg" type="button" onclick="scSet('R', 'Mg')">Mg</button>
+                    <button class="action-btn mode-btn" id="sc-R-S" type="button" onclick="scSet('R', 'S')">S</button>
+                    <span class="sp-gap"></span>
+                    <button class="action-btn step-btn" id="sc-R-minus" type="button" onclick="scStep('R', -1)" aria-label="右盤少一顆">−</button>
+                    <span class="coef-n" id="sc-R-n">1</span>
+                    <button class="action-btn step-btn" id="sc-R-plus" type="button" onclick="scStep('R', 1)" aria-label="右盤多一顆">＋</button>
+                </div>
+                <div class="ctrl-row">
+                    <button class="action-btn btn-orange" type="button" onclick="scReset()" data-zh="⟲ 回到碳 vs 氧" data-en="⟲ Back to C vs O">⟲ 回到碳 vs 氧</button>
+                </div>
+            </div>
         </div>
         <div class="panel">
             <h2 data-zh="原子量比值實戰" data-en="Atomic Mass Ratio Practice">原子量比值實戰</h2>
@@ -413,6 +715,13 @@
 
   <!-- 分頁二：分子量進階計算 -->
   <div id="molecular-mass" class="tab-content">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
+        <div class="hook-text"><span data-zh="胃藥裡的氫氧化鎂寫成 Mg(OH)₂，石膏寫成 CaSO₄·2H₂O。括號外面的 2、中間那個小圓點，到底是乘還是加？" data-en="The magnesium hydroxide in antacids is written Mg(OH)₂; gypsum is CaSO₄·2H₂O. The 2 outside the brackets, the little dot in the middle — multiply or add?">胃藥裡的氫氧化鎂寫成 Mg(OH)₂，石膏寫成 CaSO₄·2H₂O。括號外面的 2、中間那個小圓點，到底是乘還是加？</span><br><b data-zh="分子量就是把每一顆原子的原子量加起來：括號外的數字要乘進去，「·」是加上結晶水。" data-en="Molecular mass is the sum of every atom's atomic mass: the number outside brackets multiplies, and “·” adds the water of crystallization.">分子量就是把每一顆原子的原子量加起來：括號外的數字要乘進去，「·」是加上結晶水。</b><span data-zh="分子量秤會一顆一顆加給你看。" data-en=" The molecular-mass scale adds them up one atom at a time.">分子量秤會一顆一顆加給你看。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
         <div class="panel">
             <h2 data-zh="分子量的標準計算原則" data-en="Standard Molecular Mass Principles">分子量的標準計算原則</h2>
@@ -420,6 +729,27 @@
             <div style="color: var(--chalk-teal); text-align: center; margin: 20px 0; font-weight: bold;" data-zh="分子量 ＝ 分子內所有原子的「原子量總和」" data-en="Molecular Mass = Sum of Atomic Masses of All Constituent Atoms">分子量 ＝ 分子內所有原子的「原子量總和」</div>
             <div class="highlight-box">
                 <div style="margin: 0; color: var(--chalk-coral);" data-zh="常用基本原子量：H = 1, C = 12, N = 14, O = 16, S = 32, Ca = 40, Cu = 64" data-en="Standard Atomic Masses: H = 1, C = 12, N = 14, O = 16, S = 32, Ca = 40, Cu = 64"><strong>常用基本原子量：</strong><br><span class="math-text">H = 1</span>, <span class="math-text">C = 12</span>, <span class="math-text">N = 14</span>, <span class="math-text">O = 16</span>, <span class="math-text">S = 32</span>, <span class="math-text">Ca = 40</span>, <span class="math-text">Cu = 64</span></div>
+            </div>
+        </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="分子量秤：一顆一顆加" data-en="Molecular-Mass Scale: One Atom at a Time">分子量秤：一顆一顆加</h2>
+            <div data-zh="選一個生活中的物質，按下開始，看每一顆原子的原子量怎麼加成分子量。" data-en="Pick an everyday substance, press start, and watch each atom's atomic mass add up to the molecular mass.">選一個生活中的物質，按下開始，看每一顆原子的原子量怎麼加成分子量。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-mw" width="960" height="440"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="物質" data-en="Substance">物質</span>
+                    <button class="action-btn mode-btn active math-btn" id="mw-0" type="button" onclick="mwPick(0)">H<sub>2</sub>O</button>
+                    <button class="action-btn mode-btn math-btn" id="mw-1" type="button" onclick="mwPick(1)">CH<sub>4</sub></button>
+                    <button class="action-btn mode-btn math-btn" id="mw-2" type="button" onclick="mwPick(2)">CaCO<sub>3</sub></button>
+                    <button class="action-btn mode-btn math-btn" id="mw-3" type="button" onclick="mwPick(3)">Mg(OH)<sub>2</sub></button>
+                    <button class="action-btn mode-btn math-btn" id="mw-4" type="button" onclick="mwPick(4)">CaSO<sub>4</sub>·2H<sub>2</sub>O</button>
+                </div>
+                <div class="ctrl-row">
+                    <button class="action-btn btn-green" type="button" onclick="mwGo()" data-zh="▶ 一顆一顆加" data-en="▶ Add one by one">▶ 一顆一顆加</button>
+                    <button class="action-btn btn-orange" type="button" onclick="mwReset()" data-zh="⟲ 重來" data-en="⟲ Reset">⟲ 重來</button>
+                </div>
             </div>
         </div>
         <div class="panel">
@@ -475,7 +805,7 @@
                     <button class="action-btn btn-green" onclick="reveal('ans-mol3')" data-zh="✅ 解答" data-en="✅ Solution">✅ 解答</button>
                 </div>
                 <div id="hint-mol3" class="step-box hint-box">
-                    <span data-zh="含有 6 個碳（12）、12 個氫（1）與 6 個氧（16）。這是一個常見的生物分子。" data-en="Contains 6 C (12), 12 H (1), and 6 O (16). Memorize this standard biochemical value.">含有 6 個碳（12）、12 個氫（1）與 6 個氧（16）。這是一個常見的生物分子。</span>
+                    <span data-zh="含有 6 個碳（12）、12 個氫（1）與 6 個氧（16）。這是一個常見的生物分子。" data-en="Contains 6 C (12), 12 H (1), and 6 O (16). This is a common biological molecule.">含有 6 個碳（12）、12 個氫（1）與 6 個氧（16）。這是一個常見的生物分子。</span>
                 </div>
                 <div id="ans-mol3" class="step-box ans-box">
                     <span class="math-text">= (12 &times; 6) + (1 &times; 12) + (16 &times; 6)</span><br>
@@ -543,10 +873,17 @@
 
   <!-- 分頁三：亞佛加厥數概念 -->
   <div id="avogadro" class="tab-content">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-text"><span data-zh="1 打是 12 個，1 莫耳是 6×10²³ 個。如果一秒數一個、不吃不睡，要數多久才數得完？" data-en="A dozen is 12; a mole is 6×10²³. Counting one per second without eating or sleeping, how long would it take?">1 打是 12 個，1 莫耳是 6×10<sup>23</sup> 個。如果一秒數一個、不吃不睡，要數多久才數得完？</span><br><b data-zh="從宇宙誕生數到今天，連 1 莫耳的百萬分之一都數不到。" data-en="Counting from the birth of the universe until today wouldn't reach even a millionth of a mole.">從宇宙誕生數到今天，連 1 莫耳的百萬分之一都數不到。</b><span data-zh="可是 1 莫耳的水只有 18 公克，差不多就是一口水。" data-en=" Yet 1 mole of water is only 18 grams — about one mouthful.">可是 1 莫耳的水只有 18 公克，差不多就是一口水。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
         <div class="panel">
             <h2 data-zh="連接宏觀與微觀的橋樑" data-en="Bridge Between Macroscopic & Microscopic">連接宏觀與微觀的橋樑</h2>
-            <div data-zh="我們知道碳的原子量是 12，但這只是無單位的相對比例。科學家希望在實驗室中，能直接秤出與原子量數值相同的「公克數」。" data-en="We know carbon's atomic mass is 12, but it is a dimensionless ratio. Scientists wanted to weigh gram amounts matching atomic numbers directly in the lab.">我們知道碳的原子量是 12，但這只是無單位的相對比例。科學家希望在實驗室中，能直接秤出與原子量數值相同的「公克數」。</div>
+            <div data-zh="我們知道碳的原子量是 12，但這只是無單位的相對比例。科學家希望在實驗室中，能直接秤出與原子量數值相同的「公克數」。" data-en="We know carbon's atomic mass is 12, but it is a dimensionless ratio. Scientists wanted to weigh out, directly in the lab, a number of grams equal to the atomic mass.">我們知道碳的原子量是 12，但這只是無單位的相對比例。科學家希望在實驗室中，能直接秤出與原子量數值相同的「公克數」。</div>
             <div style="margin-top: 15px;" data-zh="若要讓「碳原子」剛好秤起來是 12 g，我們需要一筆特定且極端龐大數量的碳原子。這個精確的數量，就是亞佛加厥數。" data-en="To make 'carbon atoms' weigh exactly 12 g, we need a specific, extremely massive count of atoms: Avogadro's Number.">若要讓「碳原子」剛好秤起來是 <span class="math-text">12 g</span>，我們需要一筆特定且極端龐大數量的碳原子。這個精確的數量，就是<span class="nowrap" style="color: var(--chalk-teal);">亞佛加厥數</span>。</div>
         </div>
         <div class="panel">
@@ -554,19 +891,40 @@
             <div data-zh="如同生活中我們會用「1 打」來代表 12 個，在化學世界裡，我們使用「莫耳」作為計量單位的集合名詞。" data-en="Just as we use '1 dozen' for 12 items, in chemistry we use 'mole' as a collective counting unit.">如同生活中我們會用「1 打」來代表 12 個，在化學世界裡，我們使用「莫耳」作為計量單位的集合名詞。</div>
             <div class="highlight-box" style="margin-top: 15px;">
                 <p style="margin: 0; text-align: center;">
-                    <span class="nowrap" style="font-size: 24px; color: var(--chalk-green);">1 莫耳 ＝ <span class="math-text">6 &times; 10<sup>23</sup></span> <span data-zh="個粒子" data-en="particles">個粒子</span></span>
+                    <span class="nowrap" style="font-size: 24px; color: var(--chalk-green);"><span data-zh="1 莫耳 ＝ " data-en="1 mole = ">1 莫耳 ＝ </span><span class="math-text">6 &times; 10<sup>23</sup></span> <span data-zh="個粒子" data-en="particles">個粒子</span></span>
                 </p>
             </div>
             <ul class="note-ul" style="margin-top: 15px;">
-                <li><span data-zh="1 莫耳碳原子 ＝ 集合了 6 × 10²³ 個碳原子。" data-en="1 mole of carbon atoms = 6 × 10²³ carbon atoms.">1 莫耳碳原子</span> ＝ 集合了 <span class="math-text">6 &times; 10<sup>23</sup></span> 個碳原子。</li>
-                <li><span data-zh="1 莫耳水分子 ＝ 集合了 6 × 10²³ 個水分子。" data-en="1 mole of water molecules = 6 × 10²³ water molecules.">1 莫耳水分子</span> ＝ 集合了 <span class="math-text">6 &times; 10<sup>23</sup></span> 個水分子。</li>
+                <li><span data-zh="1 莫耳碳原子 ＝ 集合了 6 × 10²³ 個碳原子。" data-en="1 mole of carbon atoms = 6 × 10²³ carbon atoms.">1 莫耳碳原子 ＝ 集合了 <span class="math-text">6 &times; 10<sup>23</sup></span> 個碳原子。</span></li>
+                <li><span data-zh="1 莫耳水分子 ＝ 集合了 6 × 10²³ 個水分子。" data-en="1 mole of water molecules = 6 × 10²³ water molecules.">1 莫耳水分子 ＝ 集合了 <span class="math-text">6 &times; 10<sup>23</sup></span> 個水分子。</span></li>
             </ul>
+        </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="1 莫耳有多大？" data-en="How Big Is a Mole?">1 莫耳有多大？</h2>
+            <div data-zh="上面四樣東西都剛好是 1 莫耳：個數一模一樣，秤起來卻不一樣重。下面算算看，一秒數一個要數多久。" data-en="Each sample above is exactly 1 mole: the same number of particles, yet different weights. Below: how long would counting one per second take?">上面四樣東西都剛好是 1 莫耳：個數一模一樣，秤起來卻不一樣重。下面算算看，一秒數一個要數多久。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-avo" width="960" height="480"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <button class="action-btn btn-green" type="button" onclick="avoGo()" data-zh="▶ 一秒數一個，開始！" data-en="▶ Start counting, one per second!">▶ 一秒數一個，開始！</button>
+                    <button class="action-btn btn-orange" type="button" onclick="avoReset()" data-zh="⟲ 重來" data-en="⟲ Reset">⟲ 重來</button>
+                </div>
+                <div class="wb-status" id="avo-status"></div>
+            </div>
         </div>
     </div>
   </div>
 
   <!-- 分頁四：莫耳與數量轉換 -->
   <div id="mole-quantity" class="tab-content">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師的陷阱" data-en="Ms. Xiaozhen's trap">曉臻老師的陷阱</div>
+        <div class="hook-text"><span data-zh="一箱 1 莫耳的水分子，拆開來會變成幾箱原子？每個 H₂O 裡有 2 個 H、1 個 O——" data-en="Take one crate holding a mole of water molecules. Break them apart — how many crates of atoms do you get? Each H₂O has 2 H and 1 O — ">一箱 1 莫耳的水分子，拆開來會變成幾箱原子？每個 H₂O 裡有 2 個 H、1 個 O——</span><b data-zh="題目問「分子」還是問「原子」，答案差好幾倍。" data-en="whether a question asks for molecules or atoms changes the answer several times over.">題目問「分子」還是問「原子」，答案差好幾倍。</b><br><span data-zh="到莫耳箱把分子拆開，箱子一數就知道。" data-en="Break the molecules apart in the mole crates and just count the crates.">到莫耳箱把分子拆開，箱子一數就知道。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
         <div class="panel">
             <h2 data-zh="數量轉換核心公式" data-en="Core Quantity Conversion Formula">數量轉換核心公式</h2>
@@ -581,6 +939,33 @@
                 </p>
             </div>
             <div style="margin-top: 15px;" data-zh="反之，若已知莫耳數要求粒子總數，只需將莫耳數乘上 6 × 10²³ 即可。" data-en="Conversely, to find total particles from moles, multiply moles by 6 × 10²³.">反之，若已知莫耳數要求粒子總數，只需將莫耳數乘上 <span class="math-text">6 &times; 10<sup>23</sup></span> 即可。</div>
+        </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="莫耳箱：分子拆開變原子" data-en="Mole Crates: Break Molecules into Atoms">莫耳箱：分子拆開變原子</h2>
+            <div data-zh="一箱就是 1 莫耳。選物質和莫耳數，再按「拆成原子」，數數看原子有幾箱。" data-en="One crate is 1 mole. Pick a substance and an amount, then press “Break into atoms” and count the crates of atoms.">一箱就是 1 莫耳。選物質和莫耳數，再按「拆成原子」，數數看原子有幾箱。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-crate" width="960" height="460"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="物質" data-en="Substance">物質</span>
+                    <button class="action-btn mode-btn active math-btn" id="cr-s-0" type="button" onclick="crSet('s', 0)">H<sub>2</sub>O</button>
+                    <button class="action-btn mode-btn math-btn" id="cr-s-1" type="button" onclick="crSet('s', 1)">NH<sub>3</sub></button>
+                    <button class="action-btn mode-btn math-btn" id="cr-s-2" type="button" onclick="crSet('s', 2)">CH<sub>4</sub></button>
+                    <button class="action-btn mode-btn math-btn" id="cr-s-3" type="button" onclick="crSet('s', 3)">N<sub>2</sub></button>
+                </div>
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="莫耳數" data-en="Moles">莫耳數</span>
+                    <button class="action-btn mode-btn math-btn" id="cr-m-0" type="button" onclick="crSet('m', 0)">0.5</button>
+                    <button class="action-btn mode-btn active math-btn" id="cr-m-1" type="button" onclick="crSet('m', 1)">1</button>
+                    <button class="action-btn mode-btn math-btn" id="cr-m-2" type="button" onclick="crSet('m', 2)">1.5</button>
+                </div>
+                <div class="ctrl-row">
+                    <button class="action-btn mode-btn active" id="cr-a-0" type="button" onclick="crSet('atom', false)" data-zh="🧪 看分子" data-en="🧪 Molecules">🧪 看分子</button>
+                    <button class="action-btn mode-btn" id="cr-a-1" type="button" onclick="crSet('atom', true)" data-zh="💥 拆成原子" data-en="💥 Break into atoms">💥 拆成原子</button>
+                </div>
+                <div class="wb-status" id="cr-status"></div>
+            </div>
         </div>
         <div class="panel">
             <h2 data-zh="數量轉換實戰" data-en="Quantity Conversion Practice">數量轉換實戰</h2>
@@ -628,7 +1013,7 @@
                 <div id="ans-mq2" class="step-box ans-box">
                     <span class="nowrap" data-zh="粒子總數 ＝ " data-en="Total particles = ">粒子總數 ＝ </span>
                     <span class="nowrap math-text">0.5 &times; (6 &times; 10<sup>23</sup>)</span><br>
-                    <span class="nowrap math-text" data-zh="＝ 3 × 10²³ 個分子" data-en="＝ 3 × 10²³ molecules">＝ 3 &times; 10<sup>23</sup></span> <span data-zh="個分子" data-en="molecules">個分子</span>
+                    <span class="nowrap math-text" data-zh="＝ 3 × 10²³" data-en="＝ 3 × 10²³">＝ 3 &times; 10<sup>23</sup></span> <span data-zh="個分子" data-en="molecules">個分子</span>
                 </div>
             </div>
 
@@ -658,6 +1043,13 @@
 
   <!-- 分頁五：莫耳與質量轉換 -->
   <div id="mole-mass" class="tab-content">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師的實驗室" data-en="In Ms. Xiaozhen's lab">曉臻老師的實驗室</div>
+        <div class="hook-text"><span data-zh="實驗室裡沒有人一顆一顆數原子，大家都用秤的：秤出 18 公克的水，就等於拿到 6×10²³ 個水分子。" data-en="Nobody in a lab counts atoms one by one — we weigh them. Weigh out 18 grams of water and you are holding 6×10²³ water molecules.">實驗室裡沒有人一顆一顆數原子，大家都用秤的：秤出 18 公克的水，就等於拿到 6×10<sup>23</sup> 個水分子。</span><br><b data-zh="莫耳是一座橋：質量 ÷ 分子量 ＝ 莫耳數，莫耳數 × 6×10²³ ＝ 個數。" data-en="The mole is a bridge: mass ÷ molecular mass = moles, and moles × 6×10²³ = number of particles.">莫耳是一座橋：質量 ÷ 分子量 ＝ 莫耳數，莫耳數 × 6×10<sup>23</sup> ＝ 個數。</b><span data-zh="先猜「?」是多少，再讓數字自己過橋。" data-en=" Guess each “?” first, then let the numbers cross the bridge.">先猜「?」是多少，再讓數字自己過橋。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
         <div class="panel">
             <h2 data-zh="質量轉換核心公式" data-en="Core Mass Conversion Formula">質量轉換核心公式</h2>
@@ -673,12 +1065,43 @@
                 </p>
             </div>
         </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="莫耳橋：質量 ⇄ 莫耳 ⇄ 個數" data-en="The Mole Bridge: Mass ⇄ Moles ⇄ Particles">莫耳橋：質量 ⇄ 莫耳 ⇄ 個數</h2>
+            <div data-zh="選物質、選份量、選方向。先在心裡算出每一個「?」，再按「▶ 過橋」看答案。" data-en="Choose a substance, an amount and a direction. Work out each “?” in your head, then press “▶ Cross the bridge”.">選物質、選份量、選方向。先在心裡算出每一個「?」，再按「▶ 過橋」看答案。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-bridge" width="960" height="420"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="物質" data-en="Substance">物質</span>
+                    <button class="action-btn mode-btn math-btn" id="br-s-0" type="button" onclick="brSet('s', 0)">C</button>
+                    <button class="action-btn mode-btn active math-btn" id="br-s-1" type="button" onclick="brSet('s', 1)">H<sub>2</sub>O</button>
+                    <button class="action-btn mode-btn math-btn" id="br-s-2" type="button" onclick="brSet('s', 2)">CO<sub>2</sub></button>
+                    <button class="action-btn mode-btn math-btn" id="br-s-3" type="button" onclick="brSet('s', 3)">C<sub>6</sub>H<sub>12</sub>O<sub>6</sub></button>
+                </div>
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="方向" data-en="Direction">方向</span>
+                    <button class="action-btn mode-btn active" id="br-d-0" type="button" onclick="brSet('dir', 0)" data-zh="質量 → 個數" data-en="Mass → particles">質量 → 個數</button>
+                    <button class="action-btn mode-btn" id="br-d-1" type="button" onclick="brSet('dir', 1)" data-zh="個數 → 質量" data-en="Particles → mass">個數 → 質量</button>
+                </div>
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="份量" data-en="Amount">份量</span>
+                    <button class="action-btn mode-btn math-btn" id="br-i-0" type="button" onclick="brSet('i', 0)">9 g</button>
+                    <button class="action-btn mode-btn active math-btn" id="br-i-1" type="button" onclick="brSet('i', 1)">18 g</button>
+                    <button class="action-btn mode-btn math-btn" id="br-i-2" type="button" onclick="brSet('i', 2)">36 g</button>
+                </div>
+                <div class="ctrl-row">
+                    <button class="action-btn btn-green" type="button" onclick="brGo()" data-zh="▶ 過橋" data-en="▶ Cross the bridge">▶ 過橋</button>
+                </div>
+                <div class="wb-status" id="br-status"></div>
+            </div>
+        </div>
         <div class="panel">
             <h2 data-zh="質量轉換實戰" data-en="Mass Conversion Practice">質量轉換實戰</h2>
             <div class="sub-tabs">
                 <button class="sub-tab-btn active" onclick="openSubTab('mm-1', event)" data-zh="質量轉莫耳" data-en="Mass to Moles">質量轉莫耳</button>
                 <button class="sub-tab-btn" onclick="openSubTab('mm-2', event)" data-zh="莫耳轉質量" data-en="Moles to Mass">莫耳轉質量</button>
-                <button class="sub-tab-btn" onclick="openSubTab('mm-3', event)" style="border-color: #FF69B4; color: #FF69B4;" data-zh="質量轉原子數" data-en="Mass to Molecules">質量轉原子數</button>
+                <button class="sub-tab-btn" onclick="openSubTab('mm-3', event)" style="border-color: #FF69B4; color: #FF69B4;" data-zh="質量轉分子數" data-en="Mass to Molecules">質量轉分子數</button>
             </div>
 
             <!-- 質量題 1 -->
@@ -733,11 +1156,11 @@
                 </div>
                 <div id="ans-mm3" class="step-box ans-box">
                     <span data-zh="1. 先算莫耳數：" data-en="1. Calculate moles first:">1. 先算莫耳數：</span><br>
-                    <span class="math-text">88 / 44 = 2 莫耳</span>。<br><br>
+                    <span class="math-text">88 / 44 = 2 <span data-zh="莫耳" data-en="moles">莫耳</span></span>。<br><br>
                     <span data-zh="2. 再換算分子數：" data-en="2. Convert to molecular count:">2. 再換算分子數：</span><br>
                     <span class="math-text">2 &times; (6 &times; 10<sup>23</sup>)</span><br>
                     <span class="math-text">＝ 12 &times; 10<sup>23</sup></span><br>
-                    <span class="math-text" data-zh="＝ 1.2 × 10²⁴ 個分子" data-en="＝ 1.2 × 10²⁴ molecules">＝ 1.2 &times; 10<sup>24</sup></span> <span data-zh="個分子" data-en="molecules">個分子</span>
+                    <span class="math-text" data-zh="＝ 1.2 × 10²⁴" data-en="＝ 1.2 × 10²⁴">＝ 1.2 &times; 10<sup>24</sup></span> <span data-zh="個分子" data-en="molecules">個分子</span>
                 </div>
             </div>
         </div>
@@ -792,6 +1215,890 @@
   function reveal(id) {
       document.getElementById(id).style.display = 'block';
   }
+
+  /* ==================================================================
+     V5 手繪工具層（electronics_1 靜電單元）
+     畫布統一 960 寬，座標全部以此為準。
+     函式一律 e_ 開頭，避開原檔既有的 drawArrow / tr 等名稱。
+     ================================================================== */
+  function e_pen(c) { c.lineJoin = 'round'; c.lineCap = 'round'; }
+
+  function e_rr(c, x, y, w, h, r) {
+    const rr = Math.max(0, Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2));
+    c.beginPath();
+    c.moveTo(x + rr, y);
+    c.lineTo(x + w - rr, y); c.quadraticCurveTo(x + w, y, x + w, y + rr);
+    c.lineTo(x + w, y + h - rr); c.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+    c.lineTo(x + rr, y + h); c.quadraticCurveTo(x, y + h, x, y + h - rr);
+    c.lineTo(x, y + rr); c.quadraticCurveTo(x, y, x + rr, y);
+    c.closePath();
+  }
+
+  function e_glow(c, color, blur) { c.shadowColor = color; c.shadowBlur = blur === undefined ? 16 : blur; }
+  function e_noglow(c) { c.shadowBlur = 0; c.shadowColor = 'rgba(0,0,0,0)'; }
+
+  function e_ln(c, x1, y1, x2, y2, color, w) {
+    c.strokeStyle = color; c.lineWidth = w || 3;
+    c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+  }
+  function e_dash(c, x1, y1, x2, y2, color, w, pat) {
+    c.save(); c.setLineDash(pat || [8, 7]);
+    e_ln(c, x1, y1, x2, y2, color, w || 2);
+    c.restore();
+  }
+  function e_arrow(c, x1, y1, x2, y2, color, w, head) {
+    const s = head || 14, a = Math.atan2(y2 - y1, x2 - x1);
+    e_ln(c, x1, y1, x2 - s * 0.6 * Math.cos(a), y2 - s * 0.6 * Math.sin(a), color, w || 4);
+    c.fillStyle = color;
+    c.beginPath();
+    c.moveTo(x2, y2);
+    c.lineTo(x2 - s * Math.cos(a - 0.42), y2 - s * Math.sin(a - 0.42));
+    c.lineTo(x2 - s * Math.cos(a + 0.42), y2 - s * Math.sin(a + 0.42));
+    c.closePath(); c.fill();
+  }
+  function e_dim(c, x1, y1, x2, y2, color) {
+    e_arrow(c, x1, y1, x2, y2, color, 2.5, 11);
+    e_arrow(c, x2, y2, x1, y1, color, 2.5, 11);
+  }
+
+  /* 第一定律 1.1 例外：寫在色塊裡或有邊界的字，先量再寫 */
+  function e_fit(c, s, maxW, floor) {
+    const m = /([\d.]+)px/.exec(c.font); if (!m) return;
+    let size = parseFloat(m[1]); const fl = floor || 12;
+    while (size > fl && c.measureText(s).width > maxW) {
+      size = Math.max(fl, size - 0.5);
+      c.font = c.font.replace(/[\d.]+px/, size + 'px');
+    }
+  }
+  function e_w(c, s, size) {
+    const old = c.font;
+    if (size) c.font = `bold ${size}px "Noto Sans TC", "JetBrains Mono"`;
+    const r = c.measureText(s).width;
+    c.font = old;
+    return r;
+  }
+  function e_txt(c, s, x, y, color, size, align, maxW) {
+    c.fillStyle = color;
+    c.font = `bold ${size || 20}px "Noto Sans TC", "JetBrains Mono"`;
+    if (maxW) e_fit(c, s, maxW, 13);
+    c.textAlign = align || 'left'; c.textBaseline = 'alphabetic';
+    c.fillText(s, x, y);
+    c.textAlign = 'left';
+  }
+  /* 深色底上又壓到線條時，先鋪一塊底再寫字（第十定律 10.4） */
+  function e_plate(c, s, x, y, size, align, pad) {
+    const p = pad === undefined ? 6 : pad;
+    const wd = e_w(c, s, size), h = size * 1.15;
+    let lx = x;
+    if (align === 'center') lx = x - wd / 2; else if (align === 'right') lx = x - wd;
+    c.fillStyle = 'rgba(13, 32, 26, 0.86)';
+    e_rr(c, lx - p, y - size * 0.86 - p * 0.5, wd + p * 2, h + p, 6); c.fill();
+  }
+  function e_label(c, s, x, y, color, size, align, plate, maxW) {
+    let sz = size || 20;
+    if (maxW) {
+      c.font = `bold ${sz}px "Noto Sans TC", "JetBrains Mono"`;
+      e_fit(c, s, maxW, 13);
+      sz = parseFloat(/([\d.]+)px/.exec(c.font)[1]);
+    }
+    if (plate !== false) e_plate(c, s, x, y, sz, align);
+    e_txt(c, s, x, y, color, sz, align);
+  }
+
+  function e_lighten(hex, amt) {
+    if (hex[0] !== '#') return hex;
+    const n = parseInt(hex.slice(1), 16);
+    const m = v => Math.round(v + (255 - v) * amt);
+    return `rgb(${m((n >> 16) & 255)}, ${m((n >> 8) & 255)}, ${m(n & 255)})`;
+  }
+  function e_darken(hex, amt) {
+    if (hex[0] !== '#') return hex;
+    const n = parseInt(hex.slice(1), 16);
+    const m = v => Math.round(v * (1 - amt));
+    return `rgb(${m((n >> 16) & 255)}, ${m((n >> 8) & 255)}, ${m(n & 255)})`;
+  }
+
+  /* 一顆有立體感的球：右下暗、左上亮，外加一點高光 */
+  function e_ball(c, x, y, r, color, glow) {
+    if (glow) e_glow(c, color, 18);
+    const g = c.createRadialGradient(x - r * 0.35, y - r * 0.38, r * 0.08, x, y, r);
+    g.addColorStop(0, e_lighten(color, 0.55));
+    g.addColorStop(0.55, color);
+    g.addColorStop(1, e_darken(color, 0.42));
+    c.fillStyle = g;
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+    e_noglow(c);
+    c.strokeStyle = 'rgba(246,243,234,0.55)'; c.lineWidth = 2;
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.32)';
+    c.beginPath(); c.ellipse(x - r * 0.34, y - r * 0.40, r * 0.24, r * 0.16, -0.6, 0, Math.PI * 2); c.fill();
+  }
+
+  /* ==================================================================
+     chem_reaction_3 V5：原子與分子的畫法（沿用 chem_reaction_2 同一套）
+     顏色沿用 chem_reaction_1：C 橘、O 青、H 粉紅——同一種原子，全系列同一個顏色。
+     ================================================================== */
+  const CH_C = '#ff9a3c', CH_O = '#55e9ff', CH_H = '#f472b6';
+  const CH_YEL = '#ffe066', CH_GRN = '#33cc99', CH_MUT = '#a3b8b0', CH_WHT = '#f6f3ea', CH_COR = '#ff8040';
+  const CH_ELEC = '#4dd2ff';                       /* 2.2.1：電子一律藍 */
+  const CH_INK = '#0b1a15';
+  const ATOM = {
+    H:  { r: 11, c: CH_H },       C:  { r: 16, c: CH_C },       O:  { r: 15, c: CH_O },
+    N:  { r: 16, c: '#a78bfa' },  Mg: { r: 19, c: '#dfe6ea' },  Al: { r: 19, c: '#aab7c0' },
+    Cl: { r: 18, c: '#4ade80' },  S:  { r: 18, c: '#fde047' },  Cu: { r: 19, c: '#d98a5b' },
+    Mn: { r: 19, c: '#c084fc' },  Ca: { r: 20, c: '#f0c987' },
+  };
+  /* 課本常用原子量（本單元「常用基本原子量」同一組） */
+  const AM = { H: 1, C: 12, N: 14, O: 16, Mg: 24, S: 32, Ca: 40, Cu: 64 };
+  /* 分子的平面座標（原子中心、單位 px）；相鄰原子中心距 ＝ 兩半徑和 × 0.78，畫成「填充模型」。
+     畫的順序就是陣列順序：外圍的 H 先畫，中心原子最後畫、疊在上面。 */
+  const MOL = {
+    Mg:    [['Mg', 0, 0]],
+    Al:    [['Al', 0, 0]],
+    O2:    [['O', -11.7, 0], ['O', 11.7, 0]],
+    H2:    [['H', -8.6, 0], ['H', 8.6, 0]],
+    N2:    [['N', -12.5, 0], ['N', 12.5, 0]],
+    MgO:   [['O', 14.5, 0], ['Mg', -12, 0]],
+    H2O:   [['H', -16.1, 7.4], ['H', 16.1, 7.4], ['O', 0, -5]],
+    H2O2:  [['H', -21.9, -17.6], ['H', 21.9, 17.6], ['O', -11.7, 0], ['O', 11.7, 0]],
+    CO2:   [['O', -24.2, 0], ['O', 24.2, 0], ['C', 0, 0]],
+    NH3:   [['H', 0, -19.1], ['H', -18.27, 12.55], ['H', 18.27, 12.55], ['N', 0, 2]],
+    CH4:   [['H', 0, -21.1], ['H', 0, 21.1], ['H', -21.1, 0], ['H', 21.1, 0], ['C', 0, 0]],
+    HCl:   [['H', 15.6, 0], ['Cl', -7, 0]],
+    AlCl3: [['Cl', 0, -28.9], ['Cl', 25.03, 14.45], ['Cl', -25.03, 14.45], ['Al', 0, 0]],
+    C2H6:  [['H', -33.6, 0], ['H', -12.5, -21.1], ['H', -12.5, 21.1],
+            ['H', 33.6, 0], ['H', 12.5, -21.1], ['H', 12.5, 21.1],
+            ['C', -12.5, 0], ['C', 12.5, 0]],
+    /* 丙烷、乙烷照課本結構式排：每個碳上下各一個 H，兩端的碳再多一個往外（老師 0925 指正：中間的 H 要上下各一顆） */
+    C3H8:  [['H', -46.1, 0], ['H', -25, -21.1], ['H', -25, 21.1],
+            ['H', 0, -21.1], ['H', 0, 21.1],
+            ['H', 46.1, 0], ['H', 25, -21.1], ['H', 25, 21.1],
+            ['C', -25, 0], ['C', 0, 0], ['C', 25, 0]],
+  };
+  function ch_mono(c, s, x, y, color, size, align) {
+    c.fillStyle = color; c.font = `bold ${size}px "JetBrains Mono", "Noto Sans TC"`;
+    c.textAlign = align || 'left'; c.textBaseline = 'alphabetic';
+    c.fillText(s, x, y); c.textAlign = 'left';
+  }
+  const CH_BOX = {};
+  function molBox(f) {
+    if (CH_BOX[f]) return CH_BOX[f];
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    MOL[f].forEach(([el, x, y]) => {
+      const r = ATOM[el].r;
+      x0 = Math.min(x0, x - r); x1 = Math.max(x1, x + r); y0 = Math.min(y0, y - r); y1 = Math.max(y1, y + r);
+    });
+    return (CH_BOX[f] = { w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 });
+  }
+  /* 化學式裡每一種原子有幾個（'C3H8' → {C:3, H:8}） */
+  function ch_count(f) {
+    const m = {}, re = /([A-Z][a-z]?)(\d*)/g; let r;
+    while ((r = re.exec(f.split('^')[0]))) m[r[1]] = (m[r[1]] || 0) + (r[2] ? +r[2] : 1);
+    return m;
+  }
+  /* 化學式拆成「一般字／下標／上標」：'C2O4^2-' → C ₂ O ₄ ²⁻ */
+  function ch_tok(f) {
+    const out = []; let i = 0;
+    while (i < f.length) {
+      const ch = f[i];
+      if (ch === '^') { out.push({ t: f.slice(i + 1).replace('-', '−'), k: 'sup' }); break; }
+      if (/\d/.test(ch)) { let j = i; while (j < f.length && /\d/.test(f[j])) j++; out.push({ t: f.slice(i, j), k: 'sub' }); i = j; continue; }
+      let j = i + 1; while (j < f.length && !/[\d^]/.test(f[j])) j++;
+      out.push({ t: f.slice(i, j), k: 'n' }); i = j;
+    }
+    return out;
+  }
+  function fmHTML(f) {
+    return ch_tok(f).map(o => o.k === 'sub' ? `<sub>${o.t}</sub>` : o.k === 'sup' ? `<sup>${o.t}</sup>` : o.t).join('');
+  }
+  /* 畫布上的化學式：下標真的縮小、往下掉，不靠 Unicode 小字 */
+  function ch_formula(c, f, x, y, size, color, align, measureOnly) {
+    const toks = ch_tok(f);
+    const fN = `bold ${size}px "JetBrains Mono", "Noto Sans TC"`, fS = `bold ${Math.round(size * 0.64)}px "JetBrains Mono", "Noto Sans TC"`;
+    let w = 0;
+    toks.forEach(o => { c.font = o.k === 'n' ? fN : fS; o.w = c.measureText(o.t).width + (o.k === 'n' ? 0 : 1); w += o.w; });
+    if (measureOnly) return w;
+    let px = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    c.fillStyle = color; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    toks.forEach(o => {
+      c.font = o.k === 'n' ? fN : fS;
+      c.fillText(o.t, px, y + (o.k === 'sub' ? size * 0.26 : o.k === 'sup' ? -size * 0.42 : 0));
+      px += o.w;
+    });
+    return w;
+  }
+  /* 一顆原子：立體球 ＋ 元素符號；ghost＝還沒填進來的空位（虛線圈） */
+  function ch_atom(c, el, x, y, s, opt) {
+    const A = ATOM[el], r = A.r * s, o = opt || {};
+    if (r < 0.8) return;
+    c.save();
+    if (o.alpha !== undefined) c.globalAlpha = o.alpha;
+    if (o.ghost) {
+      c.setLineDash([5, 4]); c.strokeStyle = A.c; c.lineWidth = 2;
+      c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke();
+      c.restore(); return;
+    }
+    e_ball(c, x, y, r, A.c, o.glow);
+    if (r >= 8.5 && o.label !== false) {
+      const fs = Math.max(11, Math.round(r * (el.length > 1 ? 0.84 : 1.02)));
+      c.fillStyle = CH_INK; c.font = `bold ${fs}px "Noto Sans TC", "JetBrains Mono"`;
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(el, x, y + 1);
+      c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    }
+    c.restore();
+  }
+  /* 分子裡每顆原子在畫布上的位置（以外框中心為軸，可旋轉、可縮放） */
+  function ch_molAtoms(f, cx, cy, s, rot) {
+    const bx = molBox(f), cs = Math.cos(rot || 0), sn = Math.sin(rot || 0);
+    return MOL[f].map(([el, ax, ay]) => {
+      const dx = (ax - bx.cx) * s, dy = (ay - bx.cy) * s;
+      return { el, x: cx + dx * cs - dy * sn, y: cy + dx * sn + dy * cs, s };
+    });
+  }
+  function ch_mol(c, f, cx, cy, s, rot, opt) {
+    ch_molAtoms(f, cx, cy, s, rot).forEach(a => ch_atom(c, a.el, a.x, a.y, a.s, opt));
+  }
+  function ch_box(c, x, y, w, h, stroke, glow) {
+    c.save();
+    c.fillStyle = 'rgba(22, 51, 42, 0.92)'; e_rr(c, x, y, w, h, 14); c.fill();
+    if (glow) e_glow(c, stroke, 18);
+    c.strokeStyle = stroke || 'rgba(246,243,234,0.18)'; c.lineWidth = glow ? 3 : 2; e_rr(c, x, y, w, h, 14); c.stroke();
+    c.restore();
+  }
+  /* 打勾、打叉：用畫的，不靠字型裡有沒有 ✓ ✗ */
+  function ch_check(c, x, y, s, color) {
+    c.save(); e_pen(c); c.strokeStyle = color; c.lineWidth = 4.5 * s / 14;
+    c.beginPath(); c.moveTo(x - s * 0.55, y); c.lineTo(x - s * 0.12, y + s * 0.45); c.lineTo(x + s * 0.62, y - s * 0.5); c.stroke();
+    c.restore();
+  }
+  function ch_cross(c, x, y, s, color) {
+    c.save(); e_pen(c); c.strokeStyle = color; c.lineWidth = 4.5 * s / 14;
+    c.beginPath(); c.moveTo(x - s * 0.45, y - s * 0.45); c.lineTo(x + s * 0.45, y + s * 0.45);
+    c.moveTo(x + s * 0.45, y - s * 0.45); c.lineTo(x - s * 0.45, y + s * 0.45); c.stroke();
+    c.restore();
+  }
+  /* 畫布上的科學記號：Unicode 上標（²³⁴⁻…）各字型的字形大小不一，改成「縮小、抬高的一般數字」自己畫 */
+  const CH_SUP = { '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9', '⁻': '−' };
+  function ch_rich(c, s, x, y, color, size, align, mono, measureOnly) {
+    const segs = []; let cur = '', sup = false;
+    for (const ch of String(s)) {
+      const isS = ch in CH_SUP;
+      if (isS !== sup && cur) { segs.push({ t: cur, sup }); cur = ''; }
+      sup = isS; cur += isS ? CH_SUP[ch] : ch;
+    }
+    if (cur) segs.push({ t: cur, sup });
+    const fam = mono ? '"JetBrains Mono", "Noto Sans TC"' : '"Noto Sans TC", "JetBrains Mono"';
+    const fN = `bold ${size}px ${fam}`, fS = `bold ${Math.round(size * 0.62)}px ${fam}`;
+    let w = 0; segs.forEach(g => { c.font = g.sup ? fS : fN; g.w = c.measureText(g.t).width + (g.sup ? 1 : 0); w += g.w; });
+    if (measureOnly) return w;
+    let px = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    c.fillStyle = color; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    segs.forEach(g => { c.font = g.sup ? fS : fN; c.fillText(g.t, px, y - (g.sup ? size * 0.42 : 0)); px += g.w; });
+    return w;
+  }
+  function ch_richLabel(c, s, x, y, color, size, align, mono) {
+    const w = ch_rich(c, s, 0, 0, color, size, align, mono, true);
+    let lx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    c.fillStyle = 'rgba(13, 32, 26, 0.86)'; e_rr(c, lx - 6, y - size * 0.86 - 3 - size * 0.2, w + 12, size * 1.15 + 6 + size * 0.2, 6); c.fill();
+    ch_rich(c, s, x, y, color, size, align, mono);
+  }
+  function ch_clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function ch_ease(t) { t = ch_clamp(t, 0, 1); return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+  function ch_pop(t) { t = ch_clamp(t, 0, 1); const k = 1.70158; return 1 + (k + 1) * Math.pow(t - 1, 3) + k * Math.pow(t - 1, 2); }
+  function ch_gcd(a, b) { while (b) { [a, b] = [b, a % b]; } return a; }
+  /* 在 rw×rh 的格子裡擺 n 個 mw×mh 的分子，最大可以放多大 */
+  function ch_fit(n, rw, rh, mw, mh, cap) {
+    for (let s = cap || 1.3; s > 0.42; s -= 0.02) {
+      const cw = mw * s + 16, chh = mh * s + 16;
+      const cols = Math.max(1, Math.floor(rw / cw)), rows = Math.ceil(n / cols);
+      if (rows * chh <= rh && cw <= rw) return s;
+    }
+    return 0.42;
+  }
+  /* 依比例 s 把 n 個分子排成置中的格子，回傳每個中心點 */
+  function ch_grid(n, x, y, rw, rh, mw, mh, s) {
+    const cw = mw * s + 16, chh = mh * s + 16;
+    const cols = Math.max(1, Math.min(n, Math.floor(rw / cw))), rows = Math.ceil(n / cols);
+    const cellW = rw / cols, cellH = Math.min(rh / rows, chh * 1.35);
+    const top = y + (rh - rows * cellH) / 2, out = [];
+    for (let k = 0; k < n; k++) {
+      const row = Math.floor(k / cols), col = k % cols;
+      const inRow = Math.min(cols, n - row * cols);
+      out.push({ cx: x + (rw - inRow * cellW) / 2 + (col + 0.5) * cellW, cy: top + (row + 0.5) * cellH });
+    }
+    return out;
+  }
+  function ch_now() { return performance.now(); }
+
+
+  /* ==================================================================
+     分頁一：微觀天平（原子量是「比出來」的）
+     左右各放一種原子、各放幾顆；天平依「總原子量」傾斜。
+     ================================================================== */
+  const SC_EL = ['H', 'C', 'O', 'Mg', 'S'];
+  const SC = { L: { el: 'C', n: 1, born: [] }, R: { el: 'O', n: 1, born: [] }, ang: 0, vel: 0, MAX: 12 };
+  const SC_PIV = { x: 480, y: 112 }, SC_ARM = 300, SC_HANG = 150;
+  const EL_ZH = { H: '氫', C: '碳', N: '氮', O: '氧', Mg: '鎂', S: '硫', Ca: '鈣', Cu: '銅' };
+  const EL_EN = { H: 'hydrogen', C: 'carbon', N: 'nitrogen', O: 'oxygen', Mg: 'magnesium', S: 'sulfur', Ca: 'calcium', Cu: 'copper' };
+  function scMass(side) { return AM[SC[side].el] * SC[side].n; }
+  function scSet(side, el) {
+    if (SC[side].el === el) return;
+    SC[side].el = el; SC[side].born = [];
+    scHTML();
+  }
+  function scStep(side, d) {
+    const n = ch_clamp(SC[side].n + d, 1, SC.MAX);
+    if (n === SC[side].n) return;
+    if (n > SC[side].n) SC[side].born[n - 1] = ch_now();
+    SC[side].n = n; scHTML();
+  }
+  function scReset() { SC.L = { el: 'C', n: 1, born: [] }; SC.R = { el: 'O', n: 1, born: [] }; scHTML(); }
+  function scHTML() {
+    ['L', 'R'].forEach(side => {
+      SC_EL.forEach(el => { const b = document.getElementById(`sc-${side}-${el}`); if (b) b.classList.toggle('active', SC[side].el === el); });
+      const n = document.getElementById(`sc-${side}-n`); if (n) n.textContent = SC[side].n;
+      const m = document.getElementById(`sc-${side}-minus`); if (m) m.disabled = SC[side].n <= 1;
+      const p = document.getElementById(`sc-${side}-plus`); if (p) p.disabled = SC[side].n >= SC.MAX;
+    });
+  }
+  /* 秤盤上的原子堆：一列最多 6 顆，由下往上疊 */
+  function scPile(c, side, px, py) {
+    const S = SC[side], r = ATOM[S.el].r * 1.05, per = 6, now = ch_now(), t = now / 1000;
+    for (let k = 0; k < S.n; k++) {
+      const row = Math.floor(k / per), inRow = Math.min(per, S.n - row * per), col = k % per;
+      const x = px + (col - (inRow - 1) / 2) * (r * 2 + 2);
+      const y = py - r - 2 - row * (r * 1.8);
+      const pop = ch_pop((now - (S.born[k] || 0)) / 320);
+      ch_atom(c, S.el, x, y + 0.8 * Math.sin(t * 3 + k), 1.05 * pop);
+    }
+  }
+  function scDraw() {
+    const cv = document.getElementById('cvs-scale'); if (!cv) return;
+    const c = cv.getContext('2d'), W = 960, H = 470, t = ch_now() / 1000;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+    const mL = scMass('L'), mR = scMass('R'), bal = mL === mR;
+    const tgt = ch_clamp(0.26 * (mR - mL) / Math.max(mL, mR), -0.26, 0.26);
+    SC.vel += (tgt - SC.ang) * 0.018; SC.vel *= 0.9; SC.ang += SC.vel;
+    const a = SC.ang, cs = Math.cos(a), sn = Math.sin(a);
+    const eL = { x: SC_PIV.x - SC_ARM * cs, y: SC_PIV.y - SC_ARM * sn }, eR = { x: SC_PIV.x + SC_ARM * cs, y: SC_PIV.y + SC_ARM * sn };
+
+    /* 支架與底座 */
+    c.save(); e_pen(c);
+    c.fillStyle = '#23463b'; e_rr(c, 390, 430, 180, 22, 8); c.fill();
+    c.strokeStyle = '#8fa89f'; c.lineWidth = 10; c.beginPath(); c.moveTo(480, 432); c.lineTo(480, SC_PIV.y); c.stroke();
+    /* 指針與刻度弧：看中間這根針就知道平不平 */
+    c.strokeStyle = 'rgba(246,243,234,0.35)'; c.lineWidth = 3;
+    c.beginPath(); c.arc(480, SC_PIV.y, 230, Math.PI / 2 - 0.3, Math.PI / 2 + 0.3); c.stroke();
+    e_ln(c, 480, SC_PIV.y + 222, 480, SC_PIV.y + 242, bal ? CH_GRN : 'rgba(246,243,234,0.6)', 3);
+    c.strokeStyle = bal ? CH_GRN : CH_YEL; c.lineWidth = 4;
+    c.beginPath(); c.moveTo(480, SC_PIV.y); c.lineTo(480 - 232 * Math.sin(a), SC_PIV.y + 232 * Math.cos(a)); c.stroke();
+    /* 秤桿 */
+    if (bal) e_glow(c, CH_GRN, 14);
+    c.strokeStyle = bal ? CH_GRN : '#d7c9a0'; c.lineWidth = 9;
+    c.beginPath(); c.moveTo(eL.x, eL.y); c.lineTo(eR.x, eR.y); c.stroke(); e_noglow(c);
+    c.fillStyle = '#f6f3ea'; c.beginPath(); c.arc(SC_PIV.x, SC_PIV.y, 9, 0, 6.283); c.fill();
+    c.restore();
+    /* 兩個秤盤（永遠保持水平） */
+    [['L', eL], ['R', eR]].forEach(([side, e]) => {
+      const py = e.y + SC_HANG;
+      c.save(); c.strokeStyle = 'rgba(246,243,234,0.55)'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(e.x, e.y); c.lineTo(e.x - 100, py); c.moveTo(e.x, e.y); c.lineTo(e.x + 100, py); c.stroke();
+      c.fillStyle = '#9fb7ae'; c.beginPath(); c.moveTo(e.x - 112, py); c.quadraticCurveTo(e.x, py + 34, e.x + 112, py); c.closePath(); c.fill();
+      c.restore();
+      scPile(c, side, e.x, py);
+      const S = SC[side];
+      ch_mono(c, `${S.n} × ${AM[S.el]} = ${S.n * AM[S.el]}`, e.x, py + 60, CH_WHT, 26, 'center');
+      e_txt(c, tr(`${S.n} 個${EL_ZH[S.el]}原子`, `${S.n} ${EL_EN[S.el]} atom${S.n > 1 ? 's' : ''}`), e.x, py + 88, CH_MUT, 20, 'center');
+    });
+
+    /* 上方結論 */
+    let msg, col;
+    if (bal) { msg = tr(`平衡！兩邊的總原子量都是 ${mL}`, `Balanced! Both sides total ${mL}`); col = CH_GRN; }
+    else if (mR > mL) { msg = tr('右邊比較重', 'The right side is heavier'); col = CH_COR; }
+    else { msg = tr('左邊比較重', 'The left side is heavier'); col = CH_COR; }
+    e_label(c, msg, 480, 42, col, 24, 'center');
+    if (SC.L.n === 1 && SC.R.n === 1 && SC.L.el !== SC.R.el) {
+      const A = AM[SC.R.el], B = AM[SC.L.el], g = ch_gcd(A, B);
+      const ratio = B / g === 1 ? `${A / g}` : `${A / g}/${B / g}`;
+      e_label(c, tr(`1 個${EL_ZH[SC.R.el]}是 1 個${EL_ZH[SC.L.el]}的 ${A}/${B} ＝ ${ratio} 倍`, `1 ${SC.R.el} = ${A}/${B} = ${ratio} × 1 ${SC.L.el}`), 480, 78, CH_YEL, 20, 'center');
+    }
+    /* 右下：原子量對照（以碳-12 為 12）——先量總寬，再靠右排 */
+    const lab = tr('原子量', 'Atomic mass'), items = SC_EL.map(el => ({ el, w: 24 + e_w(c, String(AM[el]), 18) * 0.62 + 16 }));
+    c.font = 'bold 18px "JetBrains Mono"';
+    items.forEach(it => { it.w = 24 + c.measureText(String(AM[it.el])).width + 16; });
+    let x = 944 - items.reduce((s, it) => s + it.w, 0) + 16 - e_w(c, lab, 18) - 12;
+    e_txt(c, lab, x, 452, CH_MUT, 18);
+    x += e_w(c, lab, 18) + 12;
+    items.forEach(it => { ch_atom(c, it.el, x + 10, 446, 10 / ATOM[it.el].r); ch_mono(c, String(AM[it.el]), x + 24, 452, CH_WHT, 18); x += it.w; });
+  }
+
+  /* ==================================================================
+     分頁二：分子量秤——一顆一顆加
+     ================================================================== */
+  const MW_SET = [
+    { disp: [['H'], ['2', 's'], ['O']], name: ['水', 'water'], groups: [{ a: ['H', 'H', 'O'] }] },
+    { disp: [['CH'], ['4', 's']], name: ['甲烷（天然氣）', 'methane (natural gas)'], groups: [{ a: ['C', 'H', 'H', 'H', 'H'] }] },
+    { disp: [['CaCO'], ['3', 's']], name: ['碳酸鈣（大理石）', 'calcium carbonate (marble)'], groups: [{ a: ['Ca', 'C', 'O', 'O', 'O'] }] },
+    { disp: [['Mg(OH)'], ['2', 's']], name: ['氫氧化鎂（胃藥）', 'magnesium hydroxide (antacid)'], groups: [{ a: ['Mg'] }, { a: ['O', 'H'], x: 2, paren: true }] },
+    { disp: [['CaSO'], ['4', 's'], [' · 2H'], ['2', 's'], ['O']], name: ['石膏', 'gypsum'], groups: [{ a: ['Ca', 'S', 'O', 'O', 'O', 'O'] }, { a: ['H', 'H', 'O'], x: 2, hyd: true }] },
+  ];
+  const MW = { k: 0, t0: null, STEP: 430 };
+  function mwAtoms(m) {
+    const out = [];
+    m.groups.forEach((g, gi) => { for (let r = 0; r < (g.x || 1); r++) g.a.forEach(el => out.push({ el, gi, r })); });
+    return out;
+  }
+  function mwTotal(m) { return mwAtoms(m).reduce((s, a) => s + AM[a.el], 0); }
+  function mwMax() { return Math.max(...MW_SET.map(mwTotal)); }
+  function mwEq(m) {
+    const term = atoms => { const cnt = {}; atoms.forEach(el => cnt[el] = (cnt[el] || 0) + 1);
+      return Object.keys(cnt).map(el => cnt[el] > 1 ? `${AM[el]}×${cnt[el]}` : `${AM[el]}`); };
+    return m.groups.map(g => {
+      const t = term(g.a);
+      if (g.paren) return `(${t.join(' + ')})×${g.x}`;
+      if (g.hyd) return `${g.x}×(${t.join(' + ')})`;
+      return t.join(' + ');
+    }).join(' + ');
+  }
+  function mwPick(k) { MW.k = k; MW.t0 = null; mwHTML(); }
+  function mwHTML() {
+    for (let j = 0; j < MW_SET.length; j++) { const b = document.getElementById('mw-' + j); if (b) b.classList.toggle('active', j === MW.k); }
+  }
+  function mwGo() { MW.t0 = ch_now(); }
+  function mwReset() { MW.t0 = null; }
+  function mwFormula(c, m, x, y, size, color) {
+    const fN = `bold ${size}px "JetBrains Mono", "Noto Sans TC"`, fS = `bold ${Math.round(size * 0.64)}px "JetBrains Mono", "Noto Sans TC"`;
+    let w = 0; m.disp.forEach(d => { c.font = d[1] ? fS : fN; d.w = c.measureText(d[0]).width + (d[1] ? 2 : 0); w += d.w; });
+    let px = x - w / 2; c.fillStyle = color; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    m.disp.forEach(d => { c.font = d[1] ? fS : fN; c.fillText(d[0], px, y + (d[1] ? size * 0.26 : 0)); px += d.w; });
+  }
+  function mwDraw() {
+    const cv = document.getElementById('cvs-mw'); if (!cv) return;
+    const c = cv.getContext('2d'), W = 960, H = 440, now = ch_now(), t = now / 1000;
+    const m = MW_SET[MW.k], atoms = mwAtoms(m), total = mwTotal(m);
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+    const done = MW.t0 === null ? -1 : Math.floor((now - MW.t0) / MW.STEP);   /* 已經加進去的顆數 */
+    const nIn = ch_clamp(done, 0, atoms.length), fin = done >= atoms.length;
+
+    mwFormula(c, m, 480, 58, 46, CH_WHT);
+    e_txt(c, tr(m.name[0], m.name[1]), 480, 96, CH_MUT, 22, 'center');
+
+    /* ── 原子隊伍：括號、結晶水用框框起來 ── */
+    const R = 17, gapA = 40, gapG = 34;
+    let x = 0; const pos = [], gspan = [];
+    atoms.forEach((a, i) => {
+      if (i > 0 && (a.gi !== atoms[i - 1].gi || a.r !== atoms[i - 1].r)) x += gapG;
+      pos.push(x); x += gapA;
+      const key = a.gi + ':' + a.r; const gs = gspan.find(q => q.key === key);
+      if (gs) gs.x1 = pos[i]; else gspan.push({ key, gi: a.gi, r: a.r, x0: pos[i], x1: pos[i] });
+    });
+    const x0 = 480 - (x - gapA) / 2, yA = 168;
+    gspan.forEach(g => {
+      const G = m.groups[g.gi]; if (!G.paren && !G.hyd) return;
+      const L = x0 + g.x0 - 26, Rr = x0 + g.x1 + 26;
+      c.save(); c.strokeStyle = G.hyd ? CH_O : CH_YEL; c.lineWidth = 2.5; c.setLineDash([6, 5]);
+      e_rr(c, L, yA - 30, Rr - L, 60, 16); c.stroke(); c.restore();
+      if (g.r === 0 && G.hyd) ch_mono(c, '+', L - 17, yA + 9, CH_O, 26, 'center');
+      if (G.paren && g.r === G.x - 1) ch_mono(c, `×${G.x}`, Rr + 24, yA + 8, CH_YEL, 22, 'center');
+    });
+    atoms.forEach((a, i) => {
+      const lit = i < nIn, cur = i === nIn - 1 && !fin;
+      ch_atom(c, a.el, x0 + pos[i], yA + 1.2 * Math.sin(t * 2.4 + i), R / ATOM[a.el].r * (cur ? 1.22 : 1), { glow: cur, alpha: MW.t0 === null || lit ? 1 : 0.55 });
+    });
+
+    /* ── 質量長條：每顆原子一段，寬度 ∝ 原子量 ── */
+    const bx = 80, bw = 760, by = 262, bh = 46, sc = bw / mwMax();
+    c.save(); c.setLineDash([6, 6]); c.strokeStyle = 'rgba(246,243,234,0.28)'; c.lineWidth = 2;
+    e_rr(c, bx, by, bw, bh, 8); c.stroke(); c.restore();
+    let cx = bx, sum = 0;
+    for (let i = 0; i < nIn; i++) {
+      const el = atoms[i].el, w = AM[el] * sc;
+      c.fillStyle = ATOM[el].c; c.fillRect(cx, by, Math.max(1, w - 1), bh);
+      if (w > 34) { c.fillStyle = CH_INK; c.font = 'bold 16px "Noto Sans TC", "JetBrains Mono"'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(el, cx + w / 2, by + bh / 2 + 1); c.textAlign = 'left'; c.textBaseline = 'alphabetic'; }
+      cx += w; sum += AM[el];
+    }
+    /* 右邊的加總計數器 */
+    e_txt(c, tr('原子量加總', 'Running total'), 900, 208, CH_MUT, 18, 'right');
+    ch_mono(c, MW.t0 === null ? '?' : String(sum), 900, 244, fin ? CH_GRN : CH_YEL, 30, 'right');
+    if (MW.t0 !== null && nIn > 0 && !fin) {
+      const a = atoms[nIn - 1];
+      e_label(c, `+ ${AM[a.el]}（${a.el}）`, ch_clamp(cx, 140, 820), by + bh + 30, CH_YEL, 20, 'center');
+    }
+
+    /* ── 底部：說明／最後的算式 ── */
+    let cap = tr('按「▶ 一顆一顆加」，把分子裡每一顆原子的原子量加起來。', 'Press “▶ Add one by one” to add up the atomic mass of every atom in the molecule.'), col = CH_MUT;
+    if (MW.t0 !== null && !fin && nIn > 0) {
+      const a = atoms[nIn - 1], G = m.groups[a.gi];
+      if (G.paren && a.r === 1) { cap = tr(`括號外的 ${G.x}：括號裡的 OH 要再算一次`, `The ${G.x} outside the brackets: count the OH again`); col = CH_YEL; }
+      else if (G.hyd) { cap = tr(`「·」後面是結晶水：加上 ${G.x} 個 H₂O（是加，不是乘）`, `After the “·” comes water of crystallization: add ${G.x} H₂O (add, not multiply)`); col = CH_O; }
+      else cap = tr('一顆一顆加……', 'Adding one by one…');
+    }
+    if (fin) {
+      e_label(c, `${mwEq(m)} = ${total}`, 480, 372, CH_WHT, 26, 'center', undefined, 900);
+      cap = tr(`分子量 ＝ ${total}（原子量是相對值，所以分子量也沒有單位）`, `Molecular mass = ${total} (a relative value, so it has no unit)`); col = CH_GRN;
+    }
+    e_txt(c, cap, 480, 420, col, 22, 'center', 920);
+  }
+
+  /* ==================================================================
+     分頁三：1 莫耳有多大？
+     上半：四種物質各 1 莫耳，放在秤上（個數一樣、重量不同）。
+     下半：一秒數一個，數到 1 莫耳要多久（對數尺）。
+     ================================================================== */
+  const AVO_S = [
+    { el: 'C', mol: null, g: 12, zh: '碳 C', en: 'Carbon C', unit: ['原子量', 'atomic mass'] },
+    { el: 'O', mol: 'H2O', g: 18, zh: '水 H₂O', en: 'Water H₂O', unit: ['分子量', 'molecular mass'] },
+    { el: 'S', mol: null, g: 32, zh: '硫 S', en: 'Sulfur S', unit: ['原子量', 'atomic mass'] },
+    { el: 'Cu', mol: null, g: 64, zh: '銅 Cu', en: 'Copper Cu', unit: ['原子量', 'atomic mass'] },
+  ];
+  const AVO_X = [120, 360, 600, 840];
+  /* 一秒數一個的里程碑（個數取 log10） */
+  const AVO_MS = [
+    { e: Math.log10(60), zh: '1 分鐘', en: '1 minute', n: '60', row: 0 },
+    { e: Math.log10(86400), zh: '1 天', en: '1 day', n: '8.6×10⁴', row: 1 },
+    { e: Math.log10(3.156e7), zh: '1 年', en: '1 year', n: '3.2×10⁷', row: 0 },
+    { e: Math.log10(80 * 3.156e7), zh: '人的一生', en: 'A lifetime', n: '2.5×10⁹', row: 1 },
+    { e: Math.log10(6.6e7 * 3.156e7), zh: '恐龍滅絕至今', en: 'Since the dinosaurs', n: '2.1×10¹⁵', row: 0 },
+    { e: Math.log10(1.38e10 * 3.156e7), zh: '宇宙的年齡', en: 'Age of the universe', n: '4.4×10¹⁷', row: 1 },
+  ];
+  const AVO_MOLE = Math.log10(6e23), AVO_END = Math.log10(1.38e10 * 3.156e7);
+  const AVO = { t0: null, DUR: 6500, dots: null };
+  function avoGo() { AVO.t0 = ch_now(); }
+  function avoReset() { AVO.t0 = null; }
+  function avoAX(e) { return 70 + e / 24 * 820; }
+  function avoSample(c, s, x, y, t) {
+    if (s.el === 'C') {              /* 一小塊木炭 */
+      c.save(); c.fillStyle = '#2a2d2c'; c.beginPath();
+      [[-30, 0], [-24, -24], [-4, -34], [20, -28], [32, -8], [26, 0]].forEach(([dx, dy], i) => i ? c.lineTo(x + dx, y + dy) : c.moveTo(x + dx, y + dy));
+      c.closePath(); c.fill(); c.strokeStyle = 'rgba(200,210,205,0.35)'; c.lineWidth = 2; c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.12)'; c.beginPath(); c.moveTo(x - 20, y - 22); c.lineTo(x - 4, y - 30); c.lineTo(x + 4, y - 18); c.closePath(); c.fill(); c.restore();
+    } else if (s.el === 'O') {       /* 一小杯水 */
+      c.save(); c.fillStyle = 'rgba(85,233,255,0.35)'; e_rr(c, x - 24, y - 34 + 6, 48, 28, 4); c.fill();
+      c.strokeStyle = 'rgba(246,243,234,0.7)'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(x - 26, y - 44); c.lineTo(x - 24, y); c.lineTo(x + 24, y); c.lineTo(x + 26, y - 44); c.stroke();
+      c.strokeStyle = 'rgba(85,233,255,0.8)'; c.beginPath(); c.moveTo(x - 24, y - 28 + 1.5 * Math.sin(t * 2)); c.lineTo(x + 24, y - 28 - 1.5 * Math.sin(t * 2)); c.stroke(); c.restore();
+    } else if (s.el === 'S') {       /* 一小堆硫粉 */
+      c.save(); const g = c.createLinearGradient(0, y - 32, 0, y); g.addColorStop(0, '#fff17a'); g.addColorStop(1, '#d9b91f');
+      c.fillStyle = g; c.beginPath(); c.moveTo(x - 38, y); c.quadraticCurveTo(x - 10, y - 44, x, y - 36); c.quadraticCurveTo(x + 12, y - 44, x + 38, y); c.closePath(); c.fill(); c.restore();
+    } else {                         /* 一小疊銅塊 */
+      c.save(); for (let k = 0; k < 3; k++) { const g = c.createLinearGradient(x - 26, 0, x + 26, 0); g.addColorStop(0, '#9a5530'); g.addColorStop(0.5, '#e9a06c'); g.addColorStop(1, '#9a5530');
+        c.fillStyle = g; e_rr(c, x - 26, y - 12 - k * 11, 52, 10, 3); c.fill(); } c.restore();
+    }
+  }
+  function avoDraw() {
+    const cv = document.getElementById('cvs-avo'); if (!cv) return;
+    const c = cv.getContext('2d'), W = 960, H = 480, now = ch_now(), t = now / 1000;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+
+    /* ── 上半：四個 1 莫耳 ── */
+    AVO_S.forEach((s, i) => {
+      const X = AVO_X[i];
+      /* 放大鏡：裡面是那一種粒子 */
+      c.save(); c.beginPath(); c.arc(X, 70, 50, 0, 6.283); c.fillStyle = 'rgba(22,51,42,0.95)'; c.fill(); c.clip();
+      for (let k = 0; k < 7; k++) {
+        const a = k * 0.9 + i, rr = k === 0 ? 0 : 26 + (k % 2) * 6;
+        const px = X + rr * Math.cos(a + t * 0.25) + 2 * Math.sin(t * 3 + k), py = 70 + rr * Math.sin(a + t * 0.25) + 2 * Math.cos(t * 2.6 + k);
+        if (s.mol) ch_mol(c, s.mol, px, py, 0.62, a + t * 0.4); else ch_atom(c, s.el, px, py, 13 / ATOM[s.el].r, { label: false });
+      }
+      c.restore();
+      c.save(); c.strokeStyle = 'rgba(246,243,234,0.7)'; c.lineWidth = 3; c.beginPath(); c.arc(X, 70, 50, 0, 6.283); c.stroke();
+      c.lineWidth = 2; c.setLineDash([4, 4]); c.beginPath(); c.moveTo(X, 121); c.lineTo(X, 150); c.stroke(); c.restore();
+      /* 秤與樣品 */
+      avoSample(c, s, X, 190, t);
+      c.save(); c.fillStyle = '#2d4f44'; e_rr(c, X - 78, 190, 156, 12, 4); c.fill();
+      c.fillStyle = '#1b3a31'; e_rr(c, X - 70, 202, 140, 48, 8); c.fill();
+      c.fillStyle = '#0d241d'; e_rr(c, X - 46, 211, 92, 30, 5); c.fill(); c.restore();
+      ch_mono(c, `${s.g} g`, X, 234, '#7dffb0', 22, 'center');
+      e_txt(c, tr(s.zh, s.en), X, 278, CH_WHT, 20, 'center');
+      e_txt(c, tr(`${s.unit[0]} ${s.g}`, `${s.unit[1]} ${s.g}`), X, 302, CH_MUT, 18, 'center');
+    });
+    e_ln(c, 30, 322, 930, 322, 'rgba(246,243,234,0.15)', 2);
+
+    /* ── 下半：一秒數一個 ── */
+    const ay = 414;
+    e_txt(c, tr('一秒數一個，要數多久？', 'Counting one per second — how long?'), 30, 350, CH_YEL, 20);
+    e_ln(c, 70, ay, 900, ay, 'rgba(246,243,234,0.55)', 3);
+    for (let e = 0; e <= 24; e += 4) {
+      e_ln(c, avoAX(e), ay - 6, avoAX(e), ay + 6, 'rgba(246,243,234,0.55)', 2);
+    }
+    ch_mono(c, '1', avoAX(0), ay + 26, CH_MUT, 16, 'center');
+    AVO_MS.forEach(m => {
+      const x = avoAX(m.e), up = m.row === 0;
+      e_ln(c, x, ay, x, up ? ay - 18 : ay + 18, 'rgba(246,243,234,0.45)', 2);
+      c.fillStyle = CH_WHT; c.beginPath(); c.arc(x, ay, 4, 0, 6.283); c.fill();
+      e_txt(c, tr(m.zh, m.en), x, up ? ay - 40 : ay + 38, CH_WHT, 17, 'center');
+      ch_rich(c, m.n, x, up ? ay - 20 : ay + 60, CH_MUT, 16, 'center', true);
+    });
+    /* 1 莫耳：終點星 */
+    const mx = avoAX(AVO_MOLE);
+    c.save(); e_glow(c, CH_YEL, 16); c.fillStyle = CH_YEL; c.beginPath();
+    for (let k = 0; k < 10; k++) { const r = k % 2 ? 6 : 14, a = -Math.PI / 2 + k * Math.PI / 5; c.lineTo(mx + r * Math.cos(a), ay + r * Math.sin(a)); }
+    c.closePath(); c.fill(); c.restore();
+    e_txt(c, tr('1 莫耳', '1 mole'), mx, ay - 40, CH_YEL, 20, 'center');
+    ch_rich(c, '6×10²³', mx, ay - 20, CH_YEL, 16, 'center', true);
+
+    /* 數數的小人：從 1 開始，數到「宇宙的年齡」就停了 */
+    if (AVO.t0 !== null) {
+      const p = ch_clamp((now - AVO.t0) / AVO.DUR, 0, 1), e = AVO_END * ch_ease(p), x = avoAX(e);
+      c.save(); c.fillStyle = 'rgba(77,210,255,0.22)'; c.fillRect(70, ay - 5, x - 70, 10); c.restore();
+      c.save(); e_glow(c, CH_ELEC, 14); c.fillStyle = CH_ELEC; c.beginPath(); c.arc(x, ay, 9, 0, 6.283); c.fill(); c.restore();
+      if (p >= 1) {
+        const x1 = avoAX(AVO_END) + 14, x2 = mx - 20;
+        c.save(); c.setLineDash([6, 5]); c.strokeStyle = CH_COR; c.lineWidth = 2.5; c.beginPath(); c.moveTo(x1, ay - 64); c.lineTo(x2, ay - 64); c.stroke(); c.restore();
+        e_arrow(c, x2 - 30, ay - 64, x2, ay - 64, CH_COR, 2.5, 10);
+        e_label(c, tr('還差一百多萬倍', 'still over a million times short'), (x1 + x2) / 2, ay - 76, CH_COR, 18, 'center');
+      }
+    }
+  }
+  function avoStatus() {
+    const box = document.getElementById('avo-status'); if (!box) return;
+    box.innerHTML = tr('一秒數一個、不吃不睡，從宇宙誕生數到今天，大約只數到 4.4×10<sup>17</sup> 個——<b>還不到 1 莫耳的百萬分之一</b>。可是 1 莫耳的水只有 18 公克，差不多就是一口水。',
+      'Counting one per second, nonstop, from the birth of the universe until today gets you only about 4.4×10<sup>17</sup> — <b>less than a millionth of a mole</b>. Yet 1 mole of water is only 18 grams, about one mouthful.');
+  }
+
+  /* ==================================================================
+     分頁四：莫耳箱——問分子，還是問原子？
+     一箱 ＝ 1 莫耳 ＝ 6×10²³ 個（國中課本的數值）
+     ================================================================== */
+  const CR_SP = [{ f: 'H2O', zh: '水', en: 'water' }, { f: 'NH3', zh: '氨', en: 'ammonia' }, { f: 'CH4', zh: '甲烷', en: 'methane' }, { f: 'N2', zh: '氮氣', en: 'nitrogen' }];
+  const CR_MOL = [0.5, 1, 1.5];
+  const CR = { s: 0, m: 1, atom: false, t0: 0 };
+  function crSet(k, v) {
+    if (k === 'atom') { if (CR.atom === v) return; CR.atom = v; CR.t0 = ch_now(); }
+    else { CR[k] = v; CR.atom = false; CR.t0 = ch_now(); }
+    crHTML();
+  }
+  /* k × 6×10²³，寫成科學記號 */
+  function avoFmt(k, html) {
+    let man = Math.round(k * 6 * 1000) / 1000, ex = 23;
+    while (man >= 10) { man = Math.round(man / 10 * 1000) / 1000; ex++; }
+    while (man < 1) { man = Math.round(man * 10 * 1000) / 1000; ex--; }
+    const m = String(man);
+    if (html) return `${m}×10<sup>${ex}</sup>`;
+    const sup = String(ex).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+    return `${m}×10${sup}`;
+  }
+  function crFmtMol(v) { return String(Math.round(v * 100) / 100); }
+  /* 一個箱子：amount 1＝滿、0.5＝半箱；裡面畫幾個代表性的粒子 */
+  function crBox(c, x, y, w, h, amount, draw, label, sub, alpha, t) {
+    c.save(); c.globalAlpha = alpha;
+    c.fillStyle = '#5c4630'; e_rr(c, x, y, w, h, 8); c.fill();
+    c.fillStyle = '#16332a'; e_rr(c, x + 6, y + 6, w - 12, h - 30, 6); c.fill();
+    const fillH = (h - 30) * amount;
+    c.fillStyle = 'rgba(255,224,102,0.06)'; e_rr(c, x + 6, y + 6 + (h - 30) - fillH, w - 12, fillH, 6); c.fill();
+    const cols = 3, rows = 2, n = Math.round(cols * rows * amount);
+    for (let k = 0; k < n; k++) {
+      const col = k % cols, row = rows - 1 - Math.floor(k / cols);
+      draw(x + 6 + (col + 0.5) * (w - 12) / cols + 1.5 * Math.sin(t * 2.2 + k), y + 6 + (row + 0.5) * (h - 30) / rows + 1.5 * Math.cos(t * 1.9 + k), k);
+    }
+    c.strokeStyle = '#c9a36b'; c.lineWidth = 2.5; e_rr(c, x, y, w, h, 8); c.stroke();
+    c.restore();
+    c.save(); c.globalAlpha = alpha;
+    e_txt(c, label, x + w / 2, y + h - 8, '#fbe7c2', 16, 'center', w - 8);
+    c.restore();
+    if (sub) { c.save(); c.globalAlpha = alpha; e_txt(c, sub, x + w / 2, y + h + 20, CH_MUT, 15, 'center', w + 20); c.restore(); }
+  }
+  function crDraw() {
+    const cv = document.getElementById('cvs-crate'); if (!cv) return;
+    const c = cv.getContext('2d'), W = 960, H = 460, now = ch_now(), t = now / 1000;
+    const S = CR_SP[CR.s], mol = CR_MOL[CR.m], cnt = ch_count(S.f), els = Object.keys(cnt);
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+    ch_rich(c, tr('一箱 ＝ 1 莫耳 ＝ 6×10²³ 個', 'One crate = 1 mole = 6×10²³'), 24, 34, CH_MUT, 18);
+    const p = ch_ease((now - CR.t0) / 900);
+    const boxes = (n, sz) => { const out = []; let left = n; while (left > 1e-9) { out.push(Math.min(1, left)); left -= 1; } return out; };
+    const mScale = { H2O: 0.62, NH3: 0.6, CH4: 0.6, N2: 0.62 }[S.f];
+
+    /* 分子箱 */
+    const molA = CR.atom ? 1 - p : p;
+    if (molA > 0.01) {
+      const bs = boxes(mol), bw = 170, bh = 150, gap = 26, tot = bs.length * bw + (bs.length - 1) * gap, x0 = 480 - tot / 2;
+      bs.forEach((a, i) => crBox(c, x0 + i * (bw + gap), 76, bw, bh, a,
+        (x, y) => ch_mol(c, S.f, x, y, mScale, 0.3 * Math.sin(t + x)), a < 1 ? tr('半箱 ＝ 0.5 莫耳', 'half = 0.5 mol') : tr('1 莫耳', '1 mole'), '', molA, t));
+      c.save(); c.globalAlpha = molA;
+      ch_formula(c, S.f, 480, 290, 28, CH_WHT, 'center');
+      ch_rich(c, `${crFmtMol(mol)} × 6×10²³ = ${avoFmt(mol)}`, 480, 336, CH_YEL, 26, 'center', true);
+      e_txt(c, tr(`個 ${S.zh}分子`, `${S.en} molecules`), 480, 368, CH_WHT, 20, 'center');
+      c.restore();
+    }
+    /* 原子箱：每種原子一列 */
+    const atA = CR.atom ? p : 1 - p;
+    if (atA > 0.01) {
+      const rowH = 146, y0 = els.length > 1 ? 58 : 110;
+      els.forEach((el, r) => {
+        const n = cnt[el] * mol, bs = boxes(n), bw = 100, bh = 92, gap = 12;
+        const y = y0 + r * rowH;
+        ch_atom(c, el, 50, y + bh / 2, 1.25, { alpha: atA });
+        c.save(); c.globalAlpha = atA;
+        ch_mono(c, `×${cnt[el]}`, 108, y + bh / 2 + 9, CH_YEL, 26, 'center');
+        c.restore();
+        bs.forEach((a, i) => crBox(c, 170 + i * (bw + gap), y, bw, bh, a,
+          (x, yy) => ch_atom(c, el, x, yy, 9 / ATOM[el].r, { label: false }), a < 1 ? tr('半箱', 'half') : tr('1 莫耳', '1 mol'), '', atA * ch_clamp(p * 3 - i * 0.25, 0.15, 1), t));
+        c.save(); c.globalAlpha = atA;
+        ch_mono(c, `${cnt[el]} × ${crFmtMol(mol)} = ${crFmtMol(n)} ${tr('莫耳', 'mol')}`, 170, y + bh + 26, CH_YEL, 20, 'left');
+        c.restore();
+      });
+      const tot = els.reduce((s, el) => s + cnt[el], 0) * mol;
+      c.save(); c.globalAlpha = atA;
+      ch_richLabel(c, tr(`原子總共 ${crFmtMol(tot)} 莫耳 ＝ ${avoFmt(tot)} 個`, `Atoms in total: ${crFmtMol(tot)} mol = ${avoFmt(tot)}`), 480, 438, CH_GRN, 22, 'center');
+      c.restore();
+    }
+  }
+  function crHTML() {
+    CR_SP.forEach((s, j) => { const b = document.getElementById('cr-s-' + j); if (b) b.classList.toggle('active', CR.s === j); });
+    CR_MOL.forEach((m, j) => { const b = document.getElementById('cr-m-' + j); if (b) b.classList.toggle('active', CR.m === j); });
+    [0, 1].forEach(j => { const b = document.getElementById('cr-a-' + j); if (b) b.classList.toggle('active', CR.atom === !!j); });
+    const box = document.getElementById('cr-status'); if (!box) return;
+    const S = CR_SP[CR.s], mol = CR_MOL[CR.m], cnt = ch_count(S.f), per = Object.values(cnt).reduce((a, b) => a + b, 0);
+    box.innerHTML = CR.atom
+      ? tr(`每個 ${fmHTML(S.f)} 分子裡有 ${per} 個原子，所以原子的莫耳數是分子的 <b>${per} 倍</b>：${crFmtMol(mol)} × ${per} ＝ ${crFmtMol(mol * per)} 莫耳 ＝ ${avoFmt(mol * per, true)} 個原子。`,
+           `Each ${fmHTML(S.f)} molecule holds ${per} atoms, so there are <b>${per} times</b> as many moles of atoms: ${crFmtMol(mol)} × ${per} = ${crFmtMol(mol * per)} mol = ${avoFmt(mol * per, true)} atoms.`)
+      : tr(`${crFmtMol(mol)} 莫耳的 ${fmHTML(S.f)} ＝ ${crFmtMol(mol)} × 6×10<sup>23</sup> ＝ ${avoFmt(mol, true)} 個<b>分子</b>。題目如果問「原子」，要把分子拆開再數。`,
+           `${crFmtMol(mol)} mol of ${fmHTML(S.f)} = ${crFmtMol(mol)} × 6×10<sup>23</sup> = ${avoFmt(mol, true)} <b>molecules</b>. If a question asks for atoms, break the molecules apart first.`);
+  }
+
+  /* ==================================================================
+     分頁五：莫耳橋——質量 ⇄ 莫耳 ⇄ 個數
+     ================================================================== */
+  const BR_SP = [
+    { f: 'C', zh: '碳', en: 'carbon', M: 12, g: [6, 24, 36], kind: ['原子量', 'atomic mass'] },
+    { f: 'H2O', zh: '水', en: 'water', M: 18, g: [9, 18, 36], kind: ['分子量', 'molecular mass'] },
+    { f: 'CO2', zh: '二氧化碳', en: 'carbon dioxide', M: 44, g: [11, 22, 132], kind: ['分子量', 'molecular mass'] },
+    { f: 'C6H12O6', zh: '葡萄糖', en: 'glucose', M: 180, g: [18, 90, 360], kind: ['分子量', 'molecular mass'] },
+  ];
+  const BR = { s: 1, i: 1, dir: 0, t0: null };      /* dir 0：質量 → 個數；1：個數 → 質量 */
+  const BR_X = [150, 480, 810], BR_Y = 238, BR_W = 105;
+  function brSet(k, v) { BR[k] = v; BR.t0 = null; brHTML(); }
+  function brGo() { BR.t0 = ch_now(); brHTML(); }
+  function brVals() {
+    const S = BR_SP[BR.s], g = S.g[BR.i], mol = g / S.M;
+    return { S, g, mol, n: avoFmt(mol), nH: avoFmt(mol, true) };
+  }
+  function brHTML() {
+    BR_SP.forEach((s, j) => { const b = document.getElementById('br-s-' + j); if (b) b.classList.toggle('active', BR.s === j); });
+    [0, 1].forEach(j => { const b = document.getElementById('br-d-' + j); if (b) b.classList.toggle('active', BR.dir === j); });
+    const S = BR_SP[BR.s];
+    [0, 1, 2].forEach(j => {
+      const b = document.getElementById('br-i-' + j); if (!b) return;
+      b.classList.toggle('active', BR.i === j);
+      b.innerHTML = BR.dir === 0 ? `${S.g[j]} g` : tr(`${avoFmt(S.g[j] / S.M, true)} 個`, `${avoFmt(S.g[j] / S.M, true)}`);
+    });
+    const box = document.getElementById('br-status'); if (!box) return;
+    const V = brVals(), done = BR.t0 !== null && ch_now() - BR.t0 > 2700;
+    if (!done) { box.innerHTML = tr('先在心裡算一算「?」是多少，再按「▶ 過橋」對答案。', 'Work out each “?” in your head first, then press “▶ Cross the bridge” to check.'); return; }
+    box.innerHTML = BR.dir === 0
+      ? tr(`${V.g} g ÷ ${S.M} ＝ ${crFmtMol(V.mol)} 莫耳；${crFmtMol(V.mol)} × 6×10<sup>23</sup> ＝ <b>${V.nH} 個</b>。`, `${V.g} g ÷ ${S.M} = ${crFmtMol(V.mol)} mol; ${crFmtMol(V.mol)} × 6×10<sup>23</sup> = <b>${V.nH}</b>.`)
+      : tr(`${V.nH} ÷ 6×10<sup>23</sup> ＝ ${crFmtMol(V.mol)} 莫耳；${crFmtMol(V.mol)} × ${S.M} ＝ <b>${V.g} g</b>。`, `${V.nH} ÷ 6×10<sup>23</sup> = ${crFmtMol(V.mol)} mol; ${crFmtMol(V.mol)} × ${S.M} = <b>${V.g} g</b>.`);
+  }
+  function brIsland(c, i, title, val, known, t) {
+    const X = BR_X[i], y = BR_Y;
+    c.save(); c.fillStyle = 'rgba(28,61,52,0.95)'; e_rr(c, X - BR_W, y - 88, BR_W * 2, 176, 26); c.fill();
+    c.strokeStyle = known ? CH_YEL : 'rgba(246,243,234,0.35)'; c.lineWidth = known ? 3 : 2; e_rr(c, X - BR_W, y - 88, BR_W * 2, 176, 26); c.stroke(); c.restore();
+    e_txt(c, title, X, y - 56, CH_MUT, 20, 'center');
+    /* 小圖示 */
+    if (i === 0) { c.save(); c.fillStyle = '#2d4f44'; e_rr(c, X - 40, y - 26, 80, 10, 3); c.fill(); c.fillStyle = '#1b3a31'; e_rr(c, X - 34, y - 16, 68, 22, 5); c.fill(); c.restore(); }
+    else if (i === 1) { c.save(); c.fillStyle = '#5c4630'; e_rr(c, X - 26, y - 36, 52, 40, 5); c.fill(); c.strokeStyle = '#c9a36b'; c.lineWidth = 2; e_rr(c, X - 26, y - 36, 52, 40, 5); c.stroke(); c.restore(); }
+    else { for (let k = 0; k < 9; k++) { c.fillStyle = k % 3 ? CH_H : CH_O; c.beginPath(); c.arc(X - 30 + (k % 5) * 15 + 2 * Math.sin(t * 3 + k), y - 22 + Math.floor(k / 5) * 14 + 2 * Math.cos(t * 2.5 + k), 5, 0, 6.283); c.fill(); } }
+    if (val === '?') ch_mono(c, '?', X, y + 50, CH_COR, 40, 'center');
+    else ch_rich(c, val, X, y + 50, known ? CH_YEL : CH_GRN, 30, 'center', true);
+  }
+  function brDraw() {
+    const cv = document.getElementById('cvs-bridge'); if (!cv) return;
+    const c = cv.getContext('2d'), W = 960, H = 420, now = ch_now(), t = now / 1000;
+    const V = brVals(), S = V.S, fwd = BR.dir === 0;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+    /* 上方：這是什麼物質 */
+    const head = tr(`${S.zh}　`, `${S.en}　`);
+    const wh = e_w(c, head, 24), wf = ch_formula(c, S.f, 0, 0, 26, CH_WHT, 'left', true);
+    const tail = tr(`　${S.kind[0]} ${S.M}`, `　${S.kind[1]} ${S.M}`), wt = e_w(c, tail, 24);
+    const hx = 480 - (wh + wf + wt) / 2;
+    e_txt(c, head, hx, 44, CH_WHT, 24); ch_formula(c, S.f, hx + wh, 44, 26, CH_WHT, 'left'); e_txt(c, tail, hx + wh + wf, 44, CH_YEL, 24);
+    /* 橋下的水在流 */
+    c.save(); c.strokeStyle = 'rgba(77,210,255,0.22)'; c.lineWidth = 2;
+    for (let r = 0; r < 3; r++) { c.beginPath(); for (let x = 0; x <= W; x += 12) { const y = 372 + r * 14 + 4 * Math.sin(x / 40 + t * 1.6 + r); x ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke(); }
+    c.restore();
+    /* 兩座橋與運算 */
+    const T = BR.t0 === null ? -1 : now - BR.t0, legs = fwd ? [[0, 1], [1, 2]] : [[2, 1], [1, 0]];
+    const op = [fwd ? `÷ ${S.M}` : `× ${S.M}`, fwd ? '× 6×10²³' : '÷ 6×10²³'];
+    [[0, 1], [1, 2]].forEach(([a, b]) => {
+      const xa = BR_X[a] + BR_W, xb = BR_X[b] - BR_W, xm = (xa + xb) / 2;
+      c.save(); c.strokeStyle = '#c9a36b'; c.lineWidth = 6; c.beginPath(); c.moveTo(xa - 6, BR_Y + 10); c.quadraticCurveTo(xm, BR_Y - 40, xb + 6, BR_Y + 10); c.stroke();
+      c.lineWidth = 2; for (let q = 1; q < 6; q++) { const u = q / 6, x = xa + (xb - xa) * u, y = (1 - u) * (1 - u) * (BR_Y + 10) + 2 * u * (1 - u) * (BR_Y - 40) + u * u * (BR_Y + 10); c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + 30); c.stroke(); }
+      c.restore();
+    });
+    /* 三座島：還沒算出來的寫「?」 */
+    const reached = [T >= 1300, T >= 2600];          /* 第一座橋、第二座橋走完了沒 */
+    const known = fwd ? [true, reached[0], reached[1]] : [reached[1], reached[0], true];
+    brIsland(c, 0, tr('質量', 'Mass'), known[0] ? `${V.g} g` : '?', fwd, t);
+    brIsland(c, 1, tr('莫耳數', 'Moles'), known[1] ? `${crFmtMol(V.mol)} ${tr('莫耳', 'mol')}` : '?', false, t);
+    brIsland(c, 2, tr('粒子個數', 'Particles'), known[2] ? V.n + tr(' 個', '') : '?', !fwd, t);
+    [[0, 1], [1, 2]].forEach(([a, b], k) => {
+      const xm = (BR_X[a] + BR_W + BR_X[b] - BR_W) / 2;
+      ch_richLabel(c, op[k], xm, BR_Y - 50, CH_YEL, 20, 'center');
+      e_arrow(c, fwd ? xm - 22 : xm + 22, BR_Y + 56, fwd ? xm + 22 : xm - 22, BR_Y + 56, CH_YEL, 3, 10);
+    });
+    /* 背著數字過橋的光點 */
+    if (T >= 0) {
+      legs.forEach(([a, b], k) => {
+        const q = ch_ease((T - k * 1300) / 1150); if (q <= 0 || q >= 1) return;
+        const xa = BR_X[a] + (a < b ? BR_W : -BR_W), xb = BR_X[b] + (a < b ? -BR_W : BR_W);
+        const x = xa + (xb - xa) * q, y = (1 - q) * (1 - q) * (BR_Y + 4) + 2 * q * (1 - q) * (BR_Y - 46) + q * q * (BR_Y + 4);
+        c.save(); e_glow(c, CH_YEL, 20); c.fillStyle = CH_YEL; c.beginPath(); c.arc(x, y - 14, 11, 0, 6.283); c.fill(); c.restore();
+      });
+      if (T > 2700 && !BR.shown) { BR.shown = true; brHTML(); }
+      if (T < 2700) BR.shown = false;
+    }
+  }
+
+  /* ==================================================================
+     V5 外層：常駐動畫迴圈（只畫目前看得到的那一頁）、語言切換後重畫、封面
+     分頁判斷一律用分頁的 id 名稱，不用編號（第十定律 10.1）。
+     ================================================================== */
+  function v5TabOn(id) { const el = document.getElementById(id); return !!el && el.classList.contains('active'); }
+  function v5Loop() {
+      if (v5TabOn('atomic-mass')) scDraw();
+      if (v5TabOn('molecular-mass')) mwDraw();
+      if (v5TabOn('avogadro')) avoDraw();
+      if (v5TabOn('mole-quantity')) crDraw();
+      if (v5TabOn('mole-mass')) brDraw();
+      requestAnimationFrame(v5Loop);
+  }
+  function v5Redraw() { scHTML(); mwHTML(); avoStatus(); crHTML(); brHTML(); }
+  /* 原本的 setLang 一字不改，只在外面包一層：
+     ① 換完語言，動態產生的說明也要跟著換（第四定律 4.3）；
+     ② 原本切回中文時是塞 data-zh 的「純文字」，推導區裡橘色的化學式、分數會被洗成白色一般字。
+        所以離開中文的那一刻先把每一段的中文原樣存起來，切回中文時原樣放回去。 */
+  const v5BaseSetLang = setLang;
+  let v5ZhSnap = null;
+  setLang = function (lang) {
+      if (currentLang === 'zh') v5ZhSnap = [...document.querySelectorAll('[data-zh]')].map(el => [el, el.innerHTML]);
+      v5BaseSetLang(lang);
+      if (lang === 'zh' && v5ZhSnap) v5ZhSnap.forEach(([el, h]) => { if (el.isConnected) el.innerHTML = h; });
+      v5Redraw();
+  };
+
+  /* ── 第六定律：開場封面（靜態圖，點一下就進教室）── */
+  function dismissIntro() {
+      const el = document.getElementById('introScreen');
+      if (!el || el.classList.contains('exiting')) return;
+      el.classList.add('exiting');
+      setTimeout(() => { if (el && el.parentNode) el.parentNode.removeChild(el); }, 750);
+  }
+  function introClick() { dismissIntro(); }
+  window.addEventListener('DOMContentLoaded', () => {
+      /* 封面圖還沒放進 assets/covers 之前，不要讓學生面對一片空白：載不到就直接進教材 */
+      const probe = new Image();
+      probe.onerror = () => { const el = document.getElementById('introScreen'); if (el && el.parentNode) el.parentNode.removeChild(el); };
+      probe.src = 'assets/covers/chem_reaction_3_cover_v1.jpg';
+      v5Redraw();
+      requestAnimationFrame(v5Loop);
+      /* 字體載完再重排一次：不然第一格會用到預設字體（第十定律 10.5） */
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(v5Redraw);
+  });
 </script>
 </body>
 </html>

@@ -341,9 +341,270 @@
   .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
   .sub-panel { display: none; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-</style>
+    /* 🏠 首頁懸浮按鈕（V5：全站導覽，2026-09-25 新增） */
+    .home-fab {
+      position: fixed; top: 16px; left: 20px; z-index: 9999;
+      width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; text-decoration: none;
+      background: rgba(17, 38, 31, 0.92); border: 2px solid #ffe066; color: #f6f3ea;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 224, 102, 0.25);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+    }
+    .home-fab svg { width: 24px; height: 24px; display: block; }
+    .home-fab:hover, .home-fab:focus-visible {
+      background: #ffe066; color: #11261f;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 224, 102, 0.55);
+      transform: translateY(-2px);
+    }
+    .home-fab:active { transform: translateY(0); }
+    @media (max-width: 520px) {
+      .home-fab { top: 8px; left: 8px; width: 42px; height: 42px; }
+      .home-fab svg { width: 20px; height: 20px; }
+    }
+
+  /* ══════════════════════════════════════════════════════════════
+     V5 大憲章外層（chem_reaction_4 化學計量與反應計算）
+     ══════════════════════════════════════════════════════════════ */
+
+  /* ── 第二定律 2.3：字級（原檔把 p/li/span/div 全鎖在 20px，這裡整批拉到 22px）── */
+  body { font-size: 22px; }
+  p, li, span, strong, div { font-size: 22px; }
+  h1 { font-size: 48px; }
+  h2 { font-size: 32px; }
+  header p { font-size: 24px; }
+  .note-ul li { margin-bottom: 14px; }
+  .action-btn { font-size: 21px; min-height: 52px; padding: 10px 18px; }
+  .sub-tab-btn { font-size: 21px; min-height: 54px; }
+  .lang-label, .lang-pill { font-size: 20px; }
+  .lang-pill { min-height: 48px; }
+  .equation-row { font-size: 26px; }
+
+  /* ── 第三定律 3.3：公式、化學式、數字一律 JetBrains Mono（跟 chem_reaction_1 同一套） ── */
+  .math-text, .equation-row, .fraction, .c-num, .c-num-new, .math-btn, .coef-n, .wb-eq, .wb-alg .alg-eq {
+    font-family: 'JetBrains Mono', 'Noto Sans TC', monospace;
+  }
+  .math-text { font-size: inherit; }
+
+  /* ── 第七定律：改單欄，說明在上、互動在下，畫布吃滿 1080px 框架內的整列 ── */
+  .grid-layout { grid-template-columns: 1fr !important; }
+  .grid-layout > .panel { min-width: 0; }            /* 格子不准被一行不換行的反應式撐破（手機） */
+  #cvs-ratio { aspect-ratio: 960 / 460; }
+  #cvs-path  { aspect-ratio: 960 / 420; }
+  #cvs-lr    { aspect-ratio: 960 / 460; }
+  .canvas-container {
+    width: 100%; border: 2px solid var(--chalk-white); border-radius: 12px 12px 0 0;
+    overflow: hidden; background: #0b1a15; position: relative; margin-bottom: 0;
+  }
+  .canvas-container canvas { width: 100%; height: auto; display: block; }
+  .v5-panel > h2 + div { margin-bottom: 4px; }
+
+  /* 控制鍵黏在畫布正下方：按下去，眼睛不用離開畫面 */
+  .controls {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    margin-bottom: 4px;
+    border: 2px solid var(--chalk-white); border-top: none;
+    border-radius: 0 0 12px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px 18px;
+  }
+  .controls .action-btn { margin: 0; align-self: auto; }
+  .ctrl-row {
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px;
+    width: 100%;
+  }
+  .ctrl-name { font-weight: 700; color: var(--chalk-muted); min-width: 64px; }
+  .btn-green { border-color: var(--chalk-green); color: var(--chalk-green); }
+  .btn-green:hover { background: var(--chalk-green); color: var(--bg-base); }
+  .btn-orange { border-color: var(--chalk-coral); color: var(--chalk-coral); }
+  .btn-orange:hover { background: var(--chalk-coral); color: var(--bg-base); }
+  .mode-btn { border-style: dashed; color: var(--chalk-muted); border-color: var(--rule-color); }
+  .mode-btn.active {
+    background: var(--chalk-yellow); color: var(--bg-base);
+    border: 2px solid var(--chalk-yellow);
+  }
+  .mode-btn:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  /* 按鈕是 inline-flex，裡面的 <sub> 會變成彈性項目、vertical-align 失效——自己往下推，下標才看得出來 */
+  .math-btn sub { font-size: 0.64em; position: relative; top: 0.36em; line-height: 0; margin: 0 1px; }
+  .math-btn { text-transform: none; }
+  .sp-gap { display: inline-block; width: 18px; }
+
+  /* 係數＋／−：數得出來的段數（第八定律 8.1），一格就是一個分子 */
+  .step-btn {
+    min-width: 52px; min-height: 52px; padding: 0 !important;
+    font-size: 28px !important; line-height: 1; border-color: var(--chalk-yellow); color: var(--chalk-yellow);
+  }
+  .step-btn:hover:not(:disabled) { background: var(--chalk-yellow); color: var(--bg-base); }
+  .step-btn:disabled { opacity: 0.32; cursor: default; }
+  .coef-n {
+    display: inline-block; min-width: 44px; text-align: center;
+    font-size: 34px; font-weight: 700; color: var(--chalk-yellow);
+  }
+
+  /* 工作台的反應式：每個物質一格，係數在上、化學式在下 */
+  .wb-eq {
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 6px;
+    width: 100%; font-size: 26px;
+  }
+  .wb-eq .sp {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--rule-color);
+  }
+  .wb-eq .sp-ctl { display: flex; align-items: center; gap: 6px; }
+  .wb-eq .sp-f { font-size: 26px; font-weight: 700; color: var(--chalk-white); white-space: nowrap; }
+  .wb-eq .sp-f sub { font-size: 0.7em; }
+  .wb-eq .sp-f .let { color: var(--chalk-teal); margin-right: 4px; }
+  .wb-eq .op { font-size: 30px; font-weight: 700; color: var(--chalk-muted); padding: 0 4px; }
+  .wb-eq .op.arrow { color: var(--chalk-white); }
+  .wb-eq .step-btn { min-width: 48px; min-height: 48px; font-size: 26px !important; }
+  .wb-eq .coef-n { min-width: 40px; font-size: 32px; }
+
+  .wb-status {
+    width: 100%; text-align: center; line-height: 1.6; color: var(--chalk-white);
+    min-height: 1.6em;
+  }
+  .wb-status b { color: var(--chalk-yellow); }
+  .wb-status .good { color: var(--chalk-green); font-weight: 700; }
+  .wb-status .bad  { color: var(--chalk-coral); font-weight: 700; }
+  .wb-status sub, .wb-status sup { font-size: 0.7em; }
+
+  /* 代數法：把係數代進每一條原子等式 */
+  .wb-alg {
+    width: 100%; display: grid; gap: 6px;
+    padding: 12px 16px; border-radius: 12px; background: rgba(11, 26, 21, 0.55);
+    border: 1px dashed var(--rule-color);
+  }
+  .wb-alg .alg-row {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 14px;
+  }
+  .wb-alg .alg-el { font-weight: 700; color: var(--chalk-muted); }
+  .wb-alg .alg-eq { font-weight: 700; color: var(--chalk-teal); white-space: nowrap; }
+  .wb-alg .alg-sub { font-weight: 700; color: var(--chalk-white); white-space: nowrap; }
+  .wb-alg .ok { color: var(--chalk-green); font-weight: 700; }
+  .wb-alg .no { color: var(--chalk-coral); font-weight: 700; }
+  .wb-alg .alg-vals { text-align: center; color: var(--chalk-yellow); font-weight: 700; }
+
+  .rdx-steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; width: 100%; }
+  .rdx-steps .sp-ctl { display: flex; align-items: center; gap: 8px; }
+  .rdx-steps .rdx-name { font-weight: 700; color: var(--chalk-white); }
+  .rdx-steps .rdx-name sub, .rdx-steps .rdx-name sup { font-size: 0.7em; }
+
+  /* ── 第五定律：分頁鈕＝Hook 小單元，五格一排、雙行主副標題 ──
+     選中的那一格是「整塊實心黃 ＋ 深色字 ＋ 外圈黃光」，不是「深底配黃字」。 */
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .tab-btn {
+    flex: none; min-width: 0; min-height: 136px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    padding: 20px 12px; line-height: 1.4; border-radius: 10px;
+  }
+  .tab-btn .tab-main { font-size: 22px; font-weight: 700; line-height: 1.38; }
+  .tab-btn .tab-sub  { font-size: 17px; font-weight: 700; line-height: 1.3; opacity: 0.82; }
+  .tab-btn.active {
+    background: var(--chalk-yellow);
+    color: var(--bg-base);
+    border: 3px solid var(--chalk-yellow);
+    box-shadow: 0 0 20px rgba(255, 224, 102, 0.5);
+  }
+  .tab-btn.active .tab-main,
+  .tab-btn.active .tab-sub { color: var(--bg-base); }
+  .tab-btn.active .tab-sub { opacity: 0.78; }
+  /* 進階分頁（氧化還原）：沒選時珊瑚色虛框，選中時換成實心珊瑚底 ＋ 深色字 */
+  .tab-btn.danger-tab { border-color: rgba(255, 128, 64, 0.65); color: var(--chalk-coral); }
+  .tab-btn.danger-tab.active {
+    background: var(--chalk-coral);
+    border-color: var(--chalk-coral);
+    box-shadow: 0 0 20px rgba(255, 128, 64, 0.5);
+  }
+
+  /* ── 第五定律：曉臻老師 Hook ──
+     8% 的青色薄膜一定要疊在「抬起來的面板色」上，不能直接疊在頁面底色。 */
+  .hook-box {
+    display: flex; align-items: flex-start; gap: 18px;
+    background: linear-gradient(rgba(77, 210, 255, 0.08), rgba(77, 210, 255, 0.08)), var(--bg-panel);
+    border: 2px solid rgba(77, 210, 255, 0.4);
+    border-left: 6px solid var(--chalk-teal);
+    border-radius: 12px; padding: 18px 22px; margin-bottom: 22px;
+  }
+  .xiaozhen-logo {
+    width: 88px; height: 88px; flex: 0 0 88px;
+    overflow: hidden; border: 4px solid #55e9ff; border-radius: 50%;
+    background: rgba(11, 26, 21, 0.6);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .xiaozhen-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .hook-content { flex: 1 1 auto; min-width: 0; }
+  .hook-box .hook-title { font-size: 26px; font-weight: 700; color: var(--chalk-teal); margin-bottom: 6px; }
+  .hook-box .hook-text { font-size: 22px; line-height: 1.75; color: var(--chalk-white); }
+  .hook-box .hook-text span, .hook-box .hook-text b { font-size: 22px; }
+  .hook-box .hook-text b { color: var(--chalk-yellow); }
+
+  /* ── 第七定律：窄螢幕只縮尺寸，不改配色 ── */
+  @media (max-width: 1000px) {
+    h1 { font-size: 38px; }
+    h2 { font-size: 28px; }
+  }
+  @media (max-width: 900px) {
+    .tabs { grid-template-columns: 1fr 1fr; }
+    .tab-btn { min-height: 118px; padding: 16px 12px; }
+  }
+  @media (max-width: 720px) {
+    body, p, li, span, strong, div { font-size: 20px; }
+    h1 { font-size: 32px; }
+    header p { font-size: 20px; }
+    .panel { padding: 16px; }
+    .hook-box { gap: 14px; padding: 16px; }
+    .xiaozhen-logo { width: 72px; height: 72px; flex: 0 0 72px; }
+    .hook-box .hook-title { font-size: 22px; }
+    .hook-box .hook-text, .hook-box .hook-text span, .hook-box .hook-text b { font-size: 20px; }
+    .action-btn { font-size: 19px; padding: 10px 14px; min-height: 48px; }
+    .tab-btn .tab-main { font-size: 19px; }
+    .tab-btn .tab-sub { font-size: 15px; }
+    .ctrl-name { min-width: 0; width: 100%; text-align: center; }
+    .equation-row { font-size: 22px; flex-wrap: wrap; row-gap: 22px; overflow-x: visible; }   /* 手機：反應式太長就折成兩行，不用左右滑 */
+    .equation-row .chem-arrow { margin: 0 10px; }
+    .wb-eq .sp-f { font-size: 22px; }
+    .wb-eq .op { font-size: 24px; }
+    .controls { padding: 14px 10px; }
+  }
+  @media (max-width: 480px) {
+    .tabs { grid-template-columns: 1fr; }
+    .tab-btn { min-height: 96px; }
+  }
+
+  /* ── 第四定律：雙語切換是「懸浮按鈕」，版面要替它（和左上角的回首頁鈕）讓出位置 ── */
+  header { margin-top: 92px; }
+  @media (max-width: 520px) {
+    .lang-label { display: none; }
+    .floating-lang-container { top: 8px; right: 8px; padding: 6px; }
+  }
+
+  /* ── 第六定律：單元封面（靜態圖，點一下進教材；畫面上不得有任何文字）── */
+  .intro-screen {
+    position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center;
+    overflow: hidden; background: #11261f; cursor: pointer; isolation: isolate;
+    transition: opacity .7s ease, visibility .7s ease;
+  }
+  .intro-screen::before {
+    content: ""; position: absolute; inset: -3%; z-index: -4;
+    background: #11261f url("assets/covers/chem_reaction_4_cover_v1.jpg") 64% center/cover no-repeat;   /* 玻璃罩在畫面右半，直式 iPad 也要看得到 */
+    animation: introZoom 16s ease-out both;
+  }
+  .intro-screen::after {
+    content: ""; position: absolute; inset: 0; z-index: -2;
+    background: linear-gradient(180deg, rgba(1,11,11,.06) 30%, rgba(1,12,10,.26) 66%, rgba(1,12,10,.80) 100%);
+  }
+  .intro-screen.exiting { opacity: 0; visibility: hidden; pointer-events: none; }
+  @keyframes introZoom { from { transform: scale(1); } to { transform: scale(1.07); } }
+  @media (prefers-reduced-motion: reduce) { .intro-screen::before { animation: none; } }
+
+  </style>
 </head>
 <body>
+<a href="index.html" class="home-fab" aria-label="回首頁" title="回首頁 Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></a>
+<!-- 第六定律：單元封面（靜態圖，點一下進教材；畫面上不得有任何文字） -->
+<div class="intro-screen" id="introScreen" onclick="introClick()" role="button" tabindex="0"
+     aria-label="點一下進入教材"></div>
 
 <!-- 🌟 右上角懸浮語言切換列 -->
 <div class="floating-lang-container">
@@ -362,14 +623,33 @@
 
   <!-- 主分頁按鈕 -->
   <div class="tabs">
-    <button class="tab-btn active" id="btn-tab-concept" onclick="openTab('stoichiometry-concept')" data-zh="化學計量概念" data-en="Stoichiometry Concepts">化學計量概念</button>
-    <button class="tab-btn" id="btn-tab-ratio" onclick="openTab('mole-ratio')" data-zh="莫耳數比例關係" data-en="Mole Ratios">莫耳數比例關係</button>
-    <button class="tab-btn" id="btn-tab-calc" onclick="openTab('mass-mole-calc')" data-zh="質量與莫耳換算" data-en="Mass &amp; Mole Conversions">質量與莫耳換算</button>
-    <button class="tab-btn" id="btn-tab-lr" onclick="openTab('limiting-reagent')" data-zh="限量試劑判定" data-en="Limiting Reagents">限量試劑判定</button>
+    <button class="tab-btn active" id="btn-tab-concept" type="button" onclick="openTab('stoichiometry-concept')">
+      <span class="tab-main" data-zh="化學也有食譜" data-en="Chemistry has recipes">化學也有食譜</span>
+      <span class="tab-sub" data-zh="化學計量概念" data-en="Stoichiometry Concepts">化學計量概念</span>
+    </button>
+    <button class="tab-btn" id="btn-tab-ratio" type="button" onclick="openTab('mole-ratio')">
+      <span class="tab-main" data-zh="照比例放大" data-en="Scale it up">照比例放大</span>
+      <span class="tab-sub" data-zh="莫耳數比例關係" data-en="Mole Ratios">莫耳數比例關係</span>
+    </button>
+    <button class="tab-btn" id="btn-tab-calc" type="button" onclick="openTab('mass-mole-calc')">
+      <span class="tab-main" data-zh="公克怎麼換公克？" data-en="Grams to grams?">公克怎麼換公克？</span>
+      <span class="tab-sub" data-zh="質量與莫耳換算" data-en="Mass &amp; Mole Conversions">質量與莫耳換算</span>
+    </button>
+    <button class="tab-btn" id="btn-tab-lr" type="button" onclick="openTab('limiting-reagent')">
+      <span class="tab-main" data-zh="誰先用完？" data-en="Who runs out first?">誰先用完？</span>
+      <span class="tab-sub" data-zh="限量試劑判定" data-en="Limiting Reagents">限量試劑判定</span>
+    </button>
   </div>
 
   <!-- 分頁一：化學計量概念 -->
   <div id="stoichiometry-concept" class="tab-content active">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen opens">曉臻老師開場</div>
+        <div class="hook-text"><span data-zh="鬆餅食譜寫著：2 杯麵粉配 1 顆蛋。想做兩倍的鬆餅，就全部乘以 2。化學反應式就是化學家的食譜——" data-en="A pancake recipe says: 2 cups of flour to 1 egg. Want twice as many pancakes? Double everything. A chemical equation is a chemist's recipe — ">鬆餅食譜寫著：2 杯麵粉配 1 顆蛋。想做兩倍的鬆餅，就全部乘以 2。化學反應式就是化學家的食譜——</span><b data-zh="係數比就是「幾個分子配幾個分子」的配方，也就是莫耳數比。" data-en="the coefficient ratio says how many molecules go with how many, which is also the mole ratio.">係數比就是「幾個分子配幾個分子」的配方，也就是莫耳數比。</b><br><span data-zh="工廠要生產多少、要準備多少原料，全靠這份食譜算出來。" data-en="How much a factory can make, and how much raw material it needs, all comes from this recipe.">工廠要生產多少、要準備多少原料，全靠這份食譜算出來。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
       <div class="panel">
         <h2 data-zh="什麼是化學計量？" data-en="What is Stoichiometry?">什麼是化學計量？</h2>
@@ -395,6 +675,13 @@
 
   <!-- 分頁二：莫耳數比例關係 -->
   <div id="mole-ratio" class="tab-content">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
+        <div class="hook-text"><span data-zh="2 H₂ + O₂ → 2 H₂O：2 個氫分子配 1 個氧分子。那 2 打呢？2 莫耳呢？" data-en="2 H₂ + O₂ → 2 H₂O: 2 hydrogen molecules for every 1 oxygen molecule. What about 2 dozen? 2 moles?">2 H₂ + O₂ → 2 H₂O：2 個氫分子配 1 個氧分子。那 2 打呢？2 莫耳呢？</span><br><b data-zh="不管放大幾倍，比例都不變：係數比 ＝ 分子數比 ＝ 莫耳數比。" data-en="However much you scale it, the ratio stays: coefficient ratio = molecule ratio = mole ratio.">不管放大幾倍，比例都不變：係數比 ＝ 分子數比 ＝ 莫耳數比。</b><span data-zh="用莫耳箱放大看看。" data-en=" Scale it up with the mole crates.">用莫耳箱放大看看。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
       <div class="panel">
         <h2 data-zh="碳燃燒的比例關係" data-en="Mole Ratio in Carbon Combustion">碳燃燒的比例關係</h2>
@@ -434,11 +721,41 @@
           <div style="margin-top: 6px;" data-zh="如果我們有 4 莫耳的氫氣參與反應，需要多少氧氣？會產生多少水？&lt;br&gt;答案：需要 &lt;span class=&quot;nowrap math-text&quot;&gt;2 莫耳&lt;/span&gt;氧氣，產生 &lt;span class=&quot;nowrap math-text&quot;&gt;4 莫耳&lt;/span&gt;水（等比例放大）。" data-en="If 4 moles of H₂ react, how much O₂ is needed and how much H₂O is produced?&lt;br&gt;Answer: &lt;span class=&quot;nowrap math-text&quot;&gt;2 moles&lt;/span&gt; of O₂ needed, yielding &lt;span class=&quot;nowrap math-text&quot;&gt;4 moles&lt;/span&gt; of H₂O (scaled).">如果我們有 4 莫耳的氫氣參與反應，需要多少氧氣？會產生多少水？<br>答案：需要 <span class="nowrap math-text">2 莫耳</span>氧氣，產生 <span class="nowrap math-text">4 莫耳</span>水（等比例放大）。</div>
         </div>
       </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="莫耳箱：照係數比放大" data-en="Mole Crates: Scale by the Coefficients">莫耳箱：照係數比放大</h2>
+            <div data-zh="一箱就是 1 莫耳。選一個反應，按 ＋ 放大，看每一種物質的箱子怎麼跟著變。" data-en="One crate is 1 mole. Pick a reaction, press ＋ to scale it up, and watch every substance's crates change together.">一箱就是 1 莫耳。選一個反應，按 ＋ 放大，看每一種物質的箱子怎麼跟著變。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-ratio" width="960" height="460"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="反應" data-en="Reaction">反應</span>
+                    <button class="action-btn mode-btn" id="rt-0" type="button" onclick="rtPick(0)" data-zh="碳燃燒" data-en="Burning carbon">碳燃燒</button>
+                    <button class="action-btn mode-btn active" id="rt-1" type="button" onclick="rtPick(1)" data-zh="氫氣燃燒" data-en="Burning hydrogen">氫氣燃燒</button>
+                    <button class="action-btn mode-btn" id="rt-2" type="button" onclick="rtPick(2)" data-zh="鎂燃燒" data-en="Burning magnesium">鎂燃燒</button>
+                    <button class="action-btn mode-btn" id="rt-3" type="button" onclick="rtPick(3)" data-zh="合成氨" data-en="Making ammonia">合成氨</button>
+                </div>
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="放大" data-en="Scale">放大</span>
+                    <button class="action-btn step-btn" id="rt-minus" type="button" onclick="rtStep(-1)" aria-label="縮小">−</button>
+                    <span class="coef-n" id="rt-k">×1</span>
+                    <button class="action-btn step-btn" id="rt-plus" type="button" onclick="rtStep(1)" aria-label="放大">＋</button>
+                </div>
+                <div class="wb-status" id="rt-status"></div>
+            </div>
+        </div>
     </div>
   </div>
 
   <!-- 分頁三：質量與莫耳換算 -->
   <div id="mass-mole-calc" class="tab-content">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-text"><span data-zh="燒掉 4 公克的氫氣，可以得到幾公克的水？直接拿 4 公克去乘係數比？不行！" data-en="Burn 4 grams of hydrogen — how many grams of water do you get? Just multiply 4 g by the coefficient ratio? No!">燒掉 4 公克的氫氣，可以得到幾公克的水？直接拿 4 公克去乘係數比？不行！</span><br><b data-zh="係數比講的是莫耳，不是公克：先換成莫耳，照係數比換算，最後再換回公克。" data-en="The coefficient ratio is about moles, not grams: convert to moles, apply the ratio, then convert back to grams.">係數比講的是莫耳，不是公克：先換成莫耳，照係數比換算，最後再換回公克。</b><span data-zh="到計量路徑上一步一步走一次。" data-en=" Walk the stoichiometry path one step at a time.">到計量路徑上一步一步走一次。</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
       <div class="panel">
         <h2 data-zh="跨單位進階計算實戰" data-en="Cross-Unit Calculations">跨單位進階計算實戰</h2>
@@ -500,7 +817,7 @@
           </div>
           <div id="ans-c3" class="step-box ans-box">
             <strong data-zh="詳細解答：" data-en="Detailed Solution:">詳細解答：</strong><br>
-            <span data-zh="1. &lt;span class=&quot;nowrap math-text&quot;&gt;CO&lt;sub&gt;2&lt;/sub&gt;&lt;/span&gt; 分子量 ＝ 44。莫耳數 ＝ &lt;span class=&quot;nowrap math-text&quot;&gt;22 / 44 = 0.5 莫耳&lt;/span&gt;。&lt;br&gt;2. 係數比 &lt;span class=&quot;nowrap math-text&quot;&gt;NaHCO&lt;sub&gt;3&lt;/sub&gt; : CO&lt;sub&gt;2&lt;/sub&gt; = 2 : 1&lt;/span&gt;。&lt;br&gt;3. 所需小蘇打 ＝ &lt;span class=&quot;nowrap math-text&quot;&gt;0.5 &amp;times; 2 = 1 莫耳&lt;/span&gt;。" data-en="1. CO₂ molar mass = 44. Moles = &lt;span class=&quot;nowrap math-text&quot;&gt;22 / 44 = 0.5 mole&lt;/span&gt;.&lt;br&gt;2. Ratio &lt;span class=&quot;nowrap math-text&quot;&gt;NaHCO&lt;sub&gt;3&lt;/sub&gt; : CO&lt;sub&gt;2&lt;/sub&gt; = 2 : 1&lt;/span&gt;.&lt;br&gt;3. Required NaHCO₃ = &lt;span class=&quot;nowrap math-text&quot;&gt;0.5 &amp;times; 2 = 1 mole&lt;/span&gt;.">1. <span class="nowrap math-text">CO<sub>2</sub></span> 分子量 ＝ 44。莫耳數 ＝ <span class="nowrap math-text">22 / 44 = 0.5 莫耳</span>。<br>2. 係數比 <span class="nowrap math-text">NaHCO<sub>3</sub> : CO<sub>2</sub> = 2 : 1</span>。<br>3. 所需小蘇打 ＝ <span class="nowrap math-text">0.5 &times; 2 = 1 莫耳</span>。<</span>
+            <span data-zh="1. &lt;span class=&quot;nowrap math-text&quot;&gt;CO&lt;sub&gt;2&lt;/sub&gt;&lt;/span&gt; 分子量 ＝ 44。莫耳數 ＝ &lt;span class=&quot;nowrap math-text&quot;&gt;22 / 44 = 0.5 莫耳&lt;/span&gt;。&lt;br&gt;2. 係數比 &lt;span class=&quot;nowrap math-text&quot;&gt;NaHCO&lt;sub&gt;3&lt;/sub&gt; : CO&lt;sub&gt;2&lt;/sub&gt; = 2 : 1&lt;/span&gt;。&lt;br&gt;3. 所需小蘇打 ＝ &lt;span class=&quot;nowrap math-text&quot;&gt;0.5 &amp;times; 2 = 1 莫耳&lt;/span&gt;。" data-en="1. CO₂ molar mass = 44. Moles = &lt;span class=&quot;nowrap math-text&quot;&gt;22 / 44 = 0.5 mole&lt;/span&gt;.&lt;br&gt;2. Ratio &lt;span class=&quot;nowrap math-text&quot;&gt;NaHCO&lt;sub&gt;3&lt;/sub&gt; : CO&lt;sub&gt;2&lt;/sub&gt; = 2 : 1&lt;/span&gt;.&lt;br&gt;3. Required NaHCO₃ = &lt;span class=&quot;nowrap math-text&quot;&gt;0.5 &amp;times; 2 = 1 mole&lt;/span&gt;.">1. <span class="nowrap math-text">CO<sub>2</sub></span> 分子量 ＝ 44。莫耳數 ＝ <span class="nowrap math-text">22 / 44 = 0.5 莫耳</span>。<br>2. 係數比 <span class="nowrap math-text">NaHCO<sub>3</sub> : CO<sub>2</sub> = 2 : 1</span>。<br>3. 所需小蘇打 ＝ <span class="nowrap math-text">0.5 &times; 2 = 1 莫耳</span>。</span>
           </div>
         </div>
 
@@ -569,11 +886,39 @@
           <div style="color: var(--chalk-white); font-weight: 700;" data-zh="生成物質量 (g)" data-en="Product Mass (g)">生成物質量 (g)</div>
         </div>
       </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="計量路徑：質量 → 莫耳 → 莫耳 → 質量" data-en="The Stoichiometry Path: Mass → Moles → Moles → Mass">計量路徑：質量 → 莫耳 → 莫耳 → 質量</h2>
+            <div data-zh="選一題，先在心裡算出每一個「?」，再按開始，看數字一站一站走過去。" data-en="Pick a problem, work out each “?” in your head, then press start and watch the number travel station by station.">選一題，先在心裡算出每一個「?」，再按開始，看數字一站一站走過去。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-path" width="960" height="420"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="題目" data-en="Problem">題目</span>
+                    <button class="action-btn mode-btn active" id="pt-0" type="button" onclick="ptPick(0)" data-zh="氫氣 → 水" data-en="H₂ → H₂O">氫氣 → 水</button>
+                    <button class="action-btn mode-btn" id="pt-1" type="button" onclick="ptPick(1)" data-zh="鎂 → 氧化鎂" data-en="Mg → MgO">鎂 → 氧化鎂</button>
+                    <button class="action-btn mode-btn" id="pt-2" type="button" onclick="ptPick(2)" data-zh="石灰石 → 二氧化碳" data-en="CaCO₃ → CO₂">石灰石 → 二氧化碳</button>
+                    <button class="action-btn mode-btn" id="pt-3" type="button" onclick="ptPick(3)" data-zh="氮氣 → 氨" data-en="N₂ → NH₃">氮氣 → 氨</button>
+                </div>
+                <div class="ctrl-row">
+                    <button class="action-btn btn-green" type="button" onclick="ptGo()" data-zh="▶ 開始計算" data-en="▶ Start">▶ 開始計算</button>
+                    <button class="action-btn btn-orange" type="button" onclick="ptReset()" data-zh="⟲ 重來" data-en="⟲ Reset">⟲ 重來</button>
+                </div>
+                <div class="wb-status" id="pt-status"></div>
+            </div>
+        </div>
     </div>
   </div>
 
   <!-- 分頁四：限量試劑判定 -->
   <div id="limiting-reagent" class="tab-content">
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師的挑戰" data-en="Ms. Xiaozhen's challenge">曉臻老師的挑戰</div>
+        <div class="hook-text"><span data-zh="10 片吐司、3 片起司，一個三明治要 2 片吐司夾 1 片起司，最多做幾個？答案是 3 個——起司先用完，吐司還剩 4 片。" data-en="10 slices of bread and 3 slices of cheese; each sandwich takes 2 bread and 1 cheese. How many can you make? 3 — the cheese runs out first, with 4 slices of bread left over.">10 片吐司、3 片起司，一個三明治要 2 片吐司夾 1 片起司，最多做幾個？答案是 3 個——起司先用完，吐司還剩 4 片。</span><br><b data-zh="化學反應也一樣：先用完的反應物決定能做出多少產物，它叫限量試劑。" data-en="Reactions work the same way: the reactant that runs out first decides how much product forms — the limiting reagent.">化學反應也一樣：先用完的反應物決定能做出多少產物，它叫限量試劑。</b><span data-zh="在下面放放看，誰會先用完？" data-en=" Try it below — who runs out first?">在下面放放看，誰會先用完？</span></div>
+      </div>
+    </div>
     <div class="grid-layout">
       <div class="panel">
         <h2 data-zh="何謂限量試劑？" data-en="What is a Limiting Reagent?">何謂限量試劑？</h2>
@@ -587,6 +932,25 @@
           <div style="margin-top: 6px;" data-zh="生成物的理論最大產量，完全由&lt;strong style=&quot;color: var(--chalk-yellow);&quot;&gt;限量試劑&lt;/strong&gt;來決定！" data-en="Theoretical product yield is strictly governed by the &lt;strong style=&quot;color: var(--chalk-yellow);&quot;&gt;Limiting Reagent&lt;/strong&gt;!">生成物的理論最大產量，完全由<strong style="color: var(--chalk-yellow);">限量試劑</strong>來決定！</div>
         </div>
       </div>
+        <div class="panel v5-panel">
+            <h2 data-zh="誰先用完？反應前 vs 反應後" data-en="Who Runs Out First? Before vs After">誰先用完？反應前 vs 反應後</h2>
+            <div data-zh="調整兩種反應物各放幾個分子，按「▶ 反應」，看做出多少產物、誰剩下來。" data-en="Set how many molecules of each reactant to put in, press “▶ React”, and see how much product forms and what is left over.">調整兩種反應物各放幾個分子，按「▶ 反應」，看做出多少產物、誰剩下來。</div>
+            <div class="canvas-container" style="margin-top: 15px;">
+                <canvas id="cvs-lr" width="960" height="460"></canvas>
+            </div>
+            <div class="controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-name" data-zh="反應" data-en="Reaction">反應</span>
+                    <button class="action-btn mode-btn active" id="lr-rx-0" type="button" onclick="lrPick(0)" data-zh="氫氣＋氧氣" data-en="H₂ + O₂">氫氣＋氧氣</button>
+                    <button class="action-btn mode-btn" id="lr-rx-1" type="button" onclick="lrPick(1)" data-zh="氮氣＋氫氣" data-en="N₂ + H₂">氮氣＋氫氣</button>
+                </div>
+                <div class="rdx-steps" id="lr-steps"></div>
+                <div class="ctrl-row">
+                    <button class="action-btn btn-green" type="button" onclick="lrGo()" data-zh="▶ 反應" data-en="▶ React">▶ 反應</button>
+                </div>
+                <div class="wb-status" id="lr-status"></div>
+            </div>
+        </div>
       
       <div class="panel">
         <h2 data-zh="資優專區：限量試劑 3 大挑戰" data-en="Honors Zone: 3 Challenges">資優專區：限量試劑 3 大挑戰</h2>
@@ -744,6 +1108,632 @@
     const el = document.getElementById(id);
     if (el) el.style.display = 'block';
   }
+
+  /* ==================================================================
+     V5 手繪工具層（electronics_1 靜電單元）
+     畫布統一 960 寬，座標全部以此為準。
+     函式一律 e_ 開頭，避開原檔既有的 drawArrow / tr 等名稱。
+     ================================================================== */
+  function e_pen(c) { c.lineJoin = 'round'; c.lineCap = 'round'; }
+
+  function e_rr(c, x, y, w, h, r) {
+    const rr = Math.max(0, Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2));
+    c.beginPath();
+    c.moveTo(x + rr, y);
+    c.lineTo(x + w - rr, y); c.quadraticCurveTo(x + w, y, x + w, y + rr);
+    c.lineTo(x + w, y + h - rr); c.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+    c.lineTo(x + rr, y + h); c.quadraticCurveTo(x, y + h, x, y + h - rr);
+    c.lineTo(x, y + rr); c.quadraticCurveTo(x, y, x + rr, y);
+    c.closePath();
+  }
+
+  function e_glow(c, color, blur) { c.shadowColor = color; c.shadowBlur = blur === undefined ? 16 : blur; }
+  function e_noglow(c) { c.shadowBlur = 0; c.shadowColor = 'rgba(0,0,0,0)'; }
+
+  function e_ln(c, x1, y1, x2, y2, color, w) {
+    c.strokeStyle = color; c.lineWidth = w || 3;
+    c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+  }
+  function e_dash(c, x1, y1, x2, y2, color, w, pat) {
+    c.save(); c.setLineDash(pat || [8, 7]);
+    e_ln(c, x1, y1, x2, y2, color, w || 2);
+    c.restore();
+  }
+  function e_arrow(c, x1, y1, x2, y2, color, w, head) {
+    const s = head || 14, a = Math.atan2(y2 - y1, x2 - x1);
+    e_ln(c, x1, y1, x2 - s * 0.6 * Math.cos(a), y2 - s * 0.6 * Math.sin(a), color, w || 4);
+    c.fillStyle = color;
+    c.beginPath();
+    c.moveTo(x2, y2);
+    c.lineTo(x2 - s * Math.cos(a - 0.42), y2 - s * Math.sin(a - 0.42));
+    c.lineTo(x2 - s * Math.cos(a + 0.42), y2 - s * Math.sin(a + 0.42));
+    c.closePath(); c.fill();
+  }
+  function e_dim(c, x1, y1, x2, y2, color) {
+    e_arrow(c, x1, y1, x2, y2, color, 2.5, 11);
+    e_arrow(c, x2, y2, x1, y1, color, 2.5, 11);
+  }
+
+  /* 第一定律 1.1 例外：寫在色塊裡或有邊界的字，先量再寫 */
+  function e_fit(c, s, maxW, floor) {
+    const m = /([\d.]+)px/.exec(c.font); if (!m) return;
+    let size = parseFloat(m[1]); const fl = floor || 12;
+    while (size > fl && c.measureText(s).width > maxW) {
+      size = Math.max(fl, size - 0.5);
+      c.font = c.font.replace(/[\d.]+px/, size + 'px');
+    }
+  }
+  function e_w(c, s, size) {
+    const old = c.font;
+    if (size) c.font = `bold ${size}px "Noto Sans TC", "JetBrains Mono"`;
+    const r = c.measureText(s).width;
+    c.font = old;
+    return r;
+  }
+  function e_txt(c, s, x, y, color, size, align, maxW) {
+    c.fillStyle = color;
+    c.font = `bold ${size || 20}px "Noto Sans TC", "JetBrains Mono"`;
+    if (maxW) e_fit(c, s, maxW, 13);
+    c.textAlign = align || 'left'; c.textBaseline = 'alphabetic';
+    c.fillText(s, x, y);
+    c.textAlign = 'left';
+  }
+  /* 深色底上又壓到線條時，先鋪一塊底再寫字（第十定律 10.4） */
+  function e_plate(c, s, x, y, size, align, pad) {
+    const p = pad === undefined ? 6 : pad;
+    const wd = e_w(c, s, size), h = size * 1.15;
+    let lx = x;
+    if (align === 'center') lx = x - wd / 2; else if (align === 'right') lx = x - wd;
+    c.fillStyle = 'rgba(13, 32, 26, 0.86)';
+    e_rr(c, lx - p, y - size * 0.86 - p * 0.5, wd + p * 2, h + p, 6); c.fill();
+  }
+  function e_label(c, s, x, y, color, size, align, plate, maxW) {
+    let sz = size || 20;
+    if (maxW) {
+      c.font = `bold ${sz}px "Noto Sans TC", "JetBrains Mono"`;
+      e_fit(c, s, maxW, 13);
+      sz = parseFloat(/([\d.]+)px/.exec(c.font)[1]);
+    }
+    if (plate !== false) e_plate(c, s, x, y, sz, align);
+    e_txt(c, s, x, y, color, sz, align);
+  }
+
+  function e_lighten(hex, amt) {
+    if (hex[0] !== '#') return hex;
+    const n = parseInt(hex.slice(1), 16);
+    const m = v => Math.round(v + (255 - v) * amt);
+    return `rgb(${m((n >> 16) & 255)}, ${m((n >> 8) & 255)}, ${m(n & 255)})`;
+  }
+  function e_darken(hex, amt) {
+    if (hex[0] !== '#') return hex;
+    const n = parseInt(hex.slice(1), 16);
+    const m = v => Math.round(v * (1 - amt));
+    return `rgb(${m((n >> 16) & 255)}, ${m((n >> 8) & 255)}, ${m(n & 255)})`;
+  }
+
+  /* 一顆有立體感的球：右下暗、左上亮，外加一點高光 */
+  function e_ball(c, x, y, r, color, glow) {
+    if (glow) e_glow(c, color, 18);
+    const g = c.createRadialGradient(x - r * 0.35, y - r * 0.38, r * 0.08, x, y, r);
+    g.addColorStop(0, e_lighten(color, 0.55));
+    g.addColorStop(0.55, color);
+    g.addColorStop(1, e_darken(color, 0.42));
+    c.fillStyle = g;
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+    e_noglow(c);
+    c.strokeStyle = 'rgba(246,243,234,0.55)'; c.lineWidth = 2;
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.32)';
+    c.beginPath(); c.ellipse(x - r * 0.34, y - r * 0.40, r * 0.24, r * 0.16, -0.6, 0, Math.PI * 2); c.fill();
+  }
+
+  /* ==================================================================
+     chem_reaction_4 V5：原子與分子的畫法（沿用 chem_reaction_2、3 同一套）
+     顏色沿用 chem_reaction_1：C 橘、O 青、H 粉紅——同一種原子，全系列同一個顏色。
+     ================================================================== */
+  const CH_C = '#ff9a3c', CH_O = '#55e9ff', CH_H = '#f472b6';
+  const CH_YEL = '#ffe066', CH_GRN = '#33cc99', CH_MUT = '#a3b8b0', CH_WHT = '#f6f3ea', CH_COR = '#ff8040';
+  const CH_ELEC = '#4dd2ff';                       /* 2.2.1：電子一律藍 */
+  const CH_INK = '#0b1a15';
+  const ATOM = {
+    H:  { r: 11, c: CH_H },       C:  { r: 16, c: CH_C },       O:  { r: 15, c: CH_O },
+    N:  { r: 16, c: '#a78bfa' },  Mg: { r: 19, c: '#dfe6ea' },  Al: { r: 19, c: '#aab7c0' },
+    Cl: { r: 18, c: '#4ade80' },  S:  { r: 18, c: '#fde047' },  Cu: { r: 19, c: '#d98a5b' },
+    Mn: { r: 19, c: '#c084fc' },  Ca: { r: 20, c: '#f0c987' },
+  };
+  /* 課本常用原子量（本單元「常用基本原子量」同一組） */
+  const AM = { H: 1, C: 12, N: 14, O: 16, Mg: 24, S: 32, Ca: 40, Cu: 64 };
+  /* 分子的平面座標（原子中心、單位 px）；相鄰原子中心距 ＝ 兩半徑和 × 0.78，畫成「填充模型」。
+     畫的順序就是陣列順序：外圍的 H 先畫，中心原子最後畫、疊在上面。 */
+  const MOL = {
+    Mg:    [['Mg', 0, 0]],
+    C:     [['C', 0, 0]],
+    Al:    [['Al', 0, 0]],
+    O2:    [['O', -11.7, 0], ['O', 11.7, 0]],
+    H2:    [['H', -8.6, 0], ['H', 8.6, 0]],
+    N2:    [['N', -12.5, 0], ['N', 12.5, 0]],
+    MgO:   [['O', 14.5, 0], ['Mg', -12, 0]],
+    H2O:   [['H', -16.1, 7.4], ['H', 16.1, 7.4], ['O', 0, -5]],
+    H2O2:  [['H', -21.9, -17.6], ['H', 21.9, 17.6], ['O', -11.7, 0], ['O', 11.7, 0]],
+    CO2:   [['O', -24.2, 0], ['O', 24.2, 0], ['C', 0, 0]],
+    NH3:   [['H', 0, -19.1], ['H', -18.27, 12.55], ['H', 18.27, 12.55], ['N', 0, 2]],
+    CH4:   [['H', 0, -21.1], ['H', 0, 21.1], ['H', -21.1, 0], ['H', 21.1, 0], ['C', 0, 0]],
+    HCl:   [['H', 15.6, 0], ['Cl', -7, 0]],
+    AlCl3: [['Cl', 0, -28.9], ['Cl', 25.03, 14.45], ['Cl', -25.03, 14.45], ['Al', 0, 0]],
+    C2H6:  [['H', -33.6, 0], ['H', -12.5, -21.1], ['H', -12.5, 21.1],
+            ['H', 33.6, 0], ['H', 12.5, -21.1], ['H', 12.5, 21.1],
+            ['C', -12.5, 0], ['C', 12.5, 0]],
+    /* 丙烷、乙烷照課本結構式排：每個碳上下各一個 H，兩端的碳再多一個往外（老師 0925 指正：中間的 H 要上下各一顆） */
+    C3H8:  [['H', -46.1, 0], ['H', -25, -21.1], ['H', -25, 21.1],
+            ['H', 0, -21.1], ['H', 0, 21.1],
+            ['H', 46.1, 0], ['H', 25, -21.1], ['H', 25, 21.1],
+            ['C', -25, 0], ['C', 0, 0], ['C', 25, 0]],
+  };
+  function ch_mono(c, s, x, y, color, size, align) {
+    c.fillStyle = color; c.font = `bold ${size}px "JetBrains Mono", "Noto Sans TC"`;
+    c.textAlign = align || 'left'; c.textBaseline = 'alphabetic';
+    c.fillText(s, x, y); c.textAlign = 'left';
+  }
+  const CH_BOX = {};
+  function molBox(f) {
+    if (CH_BOX[f]) return CH_BOX[f];
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    MOL[f].forEach(([el, x, y]) => {
+      const r = ATOM[el].r;
+      x0 = Math.min(x0, x - r); x1 = Math.max(x1, x + r); y0 = Math.min(y0, y - r); y1 = Math.max(y1, y + r);
+    });
+    return (CH_BOX[f] = { w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 });
+  }
+  /* 化學式裡每一種原子有幾個（'C3H8' → {C:3, H:8}） */
+  function ch_count(f) {
+    const m = {}, re = /([A-Z][a-z]?)(\d*)/g; let r;
+    while ((r = re.exec(f.split('^')[0]))) m[r[1]] = (m[r[1]] || 0) + (r[2] ? +r[2] : 1);
+    return m;
+  }
+  /* 化學式拆成「一般字／下標／上標」：'C2O4^2-' → C ₂ O ₄ ²⁻ */
+  function ch_tok(f) {
+    const out = []; let i = 0;
+    while (i < f.length) {
+      const ch = f[i];
+      if (ch === '^') { out.push({ t: f.slice(i + 1).replace('-', '−'), k: 'sup' }); break; }
+      if (/\d/.test(ch)) { let j = i; while (j < f.length && /\d/.test(f[j])) j++; out.push({ t: f.slice(i, j), k: 'sub' }); i = j; continue; }
+      let j = i + 1; while (j < f.length && !/[\d^]/.test(f[j])) j++;
+      out.push({ t: f.slice(i, j), k: 'n' }); i = j;
+    }
+    return out;
+  }
+  function fmHTML(f) {
+    return ch_tok(f).map(o => o.k === 'sub' ? `<sub>${o.t}</sub>` : o.k === 'sup' ? `<sup>${o.t}</sup>` : o.t).join('');
+  }
+  /* 畫布上的化學式：下標真的縮小、往下掉，不靠 Unicode 小字 */
+  function ch_formula(c, f, x, y, size, color, align, measureOnly) {
+    const toks = ch_tok(f);
+    const fN = `bold ${size}px "JetBrains Mono", "Noto Sans TC"`, fS = `bold ${Math.round(size * 0.64)}px "JetBrains Mono", "Noto Sans TC"`;
+    let w = 0;
+    toks.forEach(o => { c.font = o.k === 'n' ? fN : fS; o.w = c.measureText(o.t).width + (o.k === 'n' ? 0 : 1); w += o.w; });
+    if (measureOnly) return w;
+    let px = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    c.fillStyle = color; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    toks.forEach(o => {
+      c.font = o.k === 'n' ? fN : fS;
+      c.fillText(o.t, px, y + (o.k === 'sub' ? size * 0.26 : o.k === 'sup' ? -size * 0.42 : 0));
+      px += o.w;
+    });
+    return w;
+  }
+  /* 一顆原子：立體球 ＋ 元素符號；ghost＝還沒填進來的空位（虛線圈） */
+  function ch_atom(c, el, x, y, s, opt) {
+    const A = ATOM[el], r = A.r * s, o = opt || {};
+    if (r < 0.8) return;
+    c.save();
+    if (o.alpha !== undefined) c.globalAlpha = o.alpha;
+    if (o.ghost) {
+      c.setLineDash([5, 4]); c.strokeStyle = A.c; c.lineWidth = 2;
+      c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke();
+      c.restore(); return;
+    }
+    e_ball(c, x, y, r, A.c, o.glow);
+    if (r >= 8.5 && o.label !== false) {
+      const fs = Math.max(11, Math.round(r * (el.length > 1 ? 0.84 : 1.02)));
+      c.fillStyle = CH_INK; c.font = `bold ${fs}px "Noto Sans TC", "JetBrains Mono"`;
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(el, x, y + 1);
+      c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    }
+    c.restore();
+  }
+  /* 分子裡每顆原子在畫布上的位置（以外框中心為軸，可旋轉、可縮放） */
+  function ch_molAtoms(f, cx, cy, s, rot) {
+    const bx = molBox(f), cs = Math.cos(rot || 0), sn = Math.sin(rot || 0);
+    return MOL[f].map(([el, ax, ay]) => {
+      const dx = (ax - bx.cx) * s, dy = (ay - bx.cy) * s;
+      return { el, x: cx + dx * cs - dy * sn, y: cy + dx * sn + dy * cs, s };
+    });
+  }
+  function ch_mol(c, f, cx, cy, s, rot, opt) {
+    ch_molAtoms(f, cx, cy, s, rot).forEach(a => ch_atom(c, a.el, a.x, a.y, a.s, opt));
+  }
+  function ch_box(c, x, y, w, h, stroke, glow) {
+    c.save();
+    c.fillStyle = 'rgba(22, 51, 42, 0.92)'; e_rr(c, x, y, w, h, 14); c.fill();
+    if (glow) e_glow(c, stroke, 18);
+    c.strokeStyle = stroke || 'rgba(246,243,234,0.18)'; c.lineWidth = glow ? 3 : 2; e_rr(c, x, y, w, h, 14); c.stroke();
+    c.restore();
+  }
+  /* 打勾、打叉：用畫的，不靠字型裡有沒有 ✓ ✗ */
+  function ch_check(c, x, y, s, color) {
+    c.save(); e_pen(c); c.strokeStyle = color; c.lineWidth = 4.5 * s / 14;
+    c.beginPath(); c.moveTo(x - s * 0.55, y); c.lineTo(x - s * 0.12, y + s * 0.45); c.lineTo(x + s * 0.62, y - s * 0.5); c.stroke();
+    c.restore();
+  }
+  function ch_cross(c, x, y, s, color) {
+    c.save(); e_pen(c); c.strokeStyle = color; c.lineWidth = 4.5 * s / 14;
+    c.beginPath(); c.moveTo(x - s * 0.45, y - s * 0.45); c.lineTo(x + s * 0.45, y + s * 0.45);
+    c.moveTo(x + s * 0.45, y - s * 0.45); c.lineTo(x - s * 0.45, y + s * 0.45); c.stroke();
+    c.restore();
+  }
+  /* 畫布上的科學記號：Unicode 上標（²³⁴⁻…）各字型的字形大小不一，改成「縮小、抬高的一般數字」自己畫 */
+  const CH_SUP = { '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9', '⁻': '−' };
+  function ch_rich(c, s, x, y, color, size, align, mono, measureOnly) {
+    const segs = []; let cur = '', sup = false;
+    for (const ch of String(s)) {
+      const isS = ch in CH_SUP;
+      if (isS !== sup && cur) { segs.push({ t: cur, sup }); cur = ''; }
+      sup = isS; cur += isS ? CH_SUP[ch] : ch;
+    }
+    if (cur) segs.push({ t: cur, sup });
+    const fam = mono ? '"JetBrains Mono", "Noto Sans TC"' : '"Noto Sans TC", "JetBrains Mono"';
+    const fN = `bold ${size}px ${fam}`, fS = `bold ${Math.round(size * 0.62)}px ${fam}`;
+    let w = 0; segs.forEach(g => { c.font = g.sup ? fS : fN; g.w = c.measureText(g.t).width + (g.sup ? 1 : 0); w += g.w; });
+    if (measureOnly) return w;
+    let px = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    c.fillStyle = color; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    segs.forEach(g => { c.font = g.sup ? fS : fN; c.fillText(g.t, px, y - (g.sup ? size * 0.42 : 0)); px += g.w; });
+    return w;
+  }
+  function ch_richLabel(c, s, x, y, color, size, align, mono) {
+    const w = ch_rich(c, s, 0, 0, color, size, align, mono, true);
+    let lx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    c.fillStyle = 'rgba(13, 32, 26, 0.86)'; e_rr(c, lx - 6, y - size * 0.86 - 3 - size * 0.2, w + 12, size * 1.15 + 6 + size * 0.2, 6); c.fill();
+    ch_rich(c, s, x, y, color, size, align, mono);
+  }
+  function ch_clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function ch_ease(t) { t = ch_clamp(t, 0, 1); return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+  function ch_pop(t) { t = ch_clamp(t, 0, 1); const k = 1.70158; return 1 + (k + 1) * Math.pow(t - 1, 3) + k * Math.pow(t - 1, 2); }
+  function ch_gcd(a, b) { while (b) { [a, b] = [b, a % b]; } return a; }
+  /* 在 rw×rh 的格子裡擺 n 個 mw×mh 的分子，最大可以放多大 */
+  function ch_fit(n, rw, rh, mw, mh, cap) {
+    for (let s = cap || 1.3; s > 0.42; s -= 0.02) {
+      const cw = mw * s + 16, chh = mh * s + 16;
+      const cols = Math.max(1, Math.floor(rw / cw)), rows = Math.ceil(n / cols);
+      if (rows * chh <= rh && cw <= rw) return s;
+    }
+    return 0.42;
+  }
+  /* 依比例 s 把 n 個分子排成置中的格子，回傳每個中心點 */
+  function ch_grid(n, x, y, rw, rh, mw, mh, s) {
+    const cw = mw * s + 16, chh = mh * s + 16;
+    const cols = Math.max(1, Math.min(n, Math.floor(rw / cw))), rows = Math.ceil(n / cols);
+    const cellW = rw / cols, cellH = Math.min(rh / rows, chh * 1.35);
+    const top = y + (rh - rows * cellH) / 2, out = [];
+    for (let k = 0; k < n; k++) {
+      const row = Math.floor(k / cols), col = k % cols;
+      const inRow = Math.min(cols, n - row * cols);
+      out.push({ cx: x + (rw - inRow * cellW) / 2 + (col + 0.5) * cellW, cy: top + (row + 0.5) * cellH });
+    }
+    return out;
+  }
+  function ch_now() { return performance.now(); }
+
+
+  /* 莫耳箱（沿用 chem_reaction_3 的畫法） */
+  function crBox(c, x, y, w, h, amount, draw, label, sub, alpha, t) {
+    c.save(); c.globalAlpha = alpha;
+    c.fillStyle = '#5c4630'; e_rr(c, x, y, w, h, 8); c.fill();
+    c.fillStyle = '#16332a'; e_rr(c, x + 6, y + 6, w - 12, h - 30, 6); c.fill();
+    const fillH = (h - 30) * amount;
+    c.fillStyle = 'rgba(255,224,102,0.06)'; e_rr(c, x + 6, y + 6 + (h - 30) - fillH, w - 12, fillH, 6); c.fill();
+    const cols = 3, rows = 2, n = Math.round(cols * rows * amount);
+    for (let k = 0; k < n; k++) {
+      const col = k % cols, row = rows - 1 - Math.floor(k / cols);
+      draw(x + 6 + (col + 0.5) * (w - 12) / cols + 1.5 * Math.sin(t * 2.2 + k), y + 6 + (row + 0.5) * (h - 30) / rows + 1.5 * Math.cos(t * 1.9 + k), k);
+    }
+    c.strokeStyle = '#c9a36b'; c.lineWidth = 2.5; e_rr(c, x, y, w, h, 8); c.stroke();
+    c.restore();
+    c.save(); c.globalAlpha = alpha;
+    e_txt(c, label, x + w / 2, y + h - 8, '#fbe7c2', 16, 'center', w - 8);
+    c.restore();
+    if (sub) { c.save(); c.globalAlpha = alpha; e_txt(c, sub, x + w / 2, y + h + 20, CH_MUT, 15, 'center', w + 20); c.restore(); }
+  }
+  /* ==================================================================
+     分頁二：莫耳箱——照係數比放大
+     ================================================================== */
+  const RT = [
+    { s: [[1, 'C'], [1, 'O2'], [1, 'CO2']] },
+    { s: [[2, 'H2'], [1, 'O2'], [2, 'H2O']] },
+    { s: [[2, 'Mg'], [1, 'O2'], [2, 'MgO']] },
+    { s: [[1, 'N2'], [3, 'H2'], [2, 'NH3']] },
+  ];
+  const RATIO = { r: 1, k: 1, born: [] };
+  const RT_X = [170, 480, 790], RT_KMAX = 3;
+  function rtPick(r) { RATIO.r = r; RATIO.k = 1; RATIO.born = []; rtHTML(); }
+  function rtStep(d) {
+    const k = ch_clamp(RATIO.k + d, 1, RT_KMAX); if (k === RATIO.k) return;
+    RATIO.k = k; RATIO.born = RT[RATIO.r].s.map(() => ch_now()); rtHTML();
+  }
+  /* 在畫布上寫「係數 化學式」：係數黃、化學式白 */
+  function rtTerm(c, n, f, x, y, size, align, showOne) {
+    const cs = n === 1 && !showOne ? '' : String(n);
+    c.font = `bold ${size}px "JetBrains Mono"`; const wc = cs ? c.measureText(cs).width + size * 0.3 : 0;
+    const wf = ch_formula(c, f, 0, 0, size, CH_WHT, 'left', true), w = wc + wf;
+    const x0 = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    if (cs) ch_mono(c, cs, x0, y, CH_YEL, size);
+    ch_formula(c, f, x0 + wc, y, size, CH_WHT, 'left');
+    return w;
+  }
+  function rtDraw() {
+    const cv = document.getElementById('cvs-ratio'); if (!cv) return;
+    const c = cv.getContext('2d'), W = 960, H = 460, now = ch_now(), t = now / 1000;
+    const R = RT[RATIO.r], k = RATIO.k;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+    /* 最上面：原本的反應式（食譜） */
+    R.s.forEach(([n, f], i) => rtTerm(c, n, f, RT_X[i], 50, 30, 'center'));
+    ch_mono(c, '+', 325, 50, CH_MUT, 30, 'center');
+    ch_mono(c, '→', 635, 50, CH_WHT, 30, 'center');
+    e_txt(c, tr('係數（食譜）', 'Coefficients (the recipe)'), 30, 86, CH_MUT, 18);
+    /* 每一種物質：n × k 箱 */
+    R.s.forEach(([n, f], i) => {
+      const N = n * k, bw = 80, bh = 70, gap = 10, cols = 3;
+      const X = RT_X[i], rows = Math.ceil(N / cols), top = 112;
+      const b = molBox(f), ms = Math.min(0.5, 19 / Math.max(b.w, b.h));
+      for (let q = 0; q < N; q++) {
+        const row = Math.floor(q / cols), inRow = Math.min(cols, N - row * cols), col = q % cols;
+        const x = X - (inRow * bw + (inRow - 1) * gap) / 2 + col * (bw + gap), y = top + row * (bh + 12);
+        const pop = q < n * (k - 1) ? 1 : ch_pop((now - (RATIO.born[i] || 0)) / 380 - (q - n * (k - 1)) * 0.12);
+        if (pop <= 0.02) continue;
+        c.save(); c.translate(x + bw / 2, y + bh / 2); c.scale(pop, pop); c.translate(-(x + bw / 2), -(y + bh / 2));
+        crBox(c, x, y, bw, bh, 1, (px, py) => ch_mol(c, f, px, py, ms, 0.3 * Math.sin(t + px)), tr('1 莫耳', '1 mol'), '', 1, t);
+        c.restore();
+      }
+      ch_richLabel(c, tr(`${N} 莫耳`, `${N} mol`), X, 392, CH_YEL, 26, 'center', true);
+      ch_formula(c, f, X, 428, 24, CH_WHT, 'center');
+    });
+    ch_mono(c, '+', 325, 250, CH_MUT, 30, 'center');
+    ch_mono(c, '→', 635, 250, CH_WHT, 30, 'center');
+    e_label(c, `×${k}`, 915, 50, CH_O, 26, 'right');
+  }
+  function rtHTML() {
+    RT.forEach((r, j) => { const b = document.getElementById('rt-' + j); if (b) b.classList.toggle('active', RATIO.r === j); });
+    const kk = document.getElementById('rt-k'); if (kk) kk.textContent = '×' + RATIO.k;
+    const m = document.getElementById('rt-minus'); if (m) m.disabled = RATIO.k <= 1;
+    const p = document.getElementById('rt-plus'); if (p) p.disabled = RATIO.k >= RT_KMAX;
+    const box = document.getElementById('rt-status'); if (!box) return;
+    const R = RT[RATIO.r], k = RATIO.k, F = R.s.map(([n, f]) => fmHTML(f)).join(' : ');
+    box.innerHTML = tr(`莫耳數比 ${F} ＝ ${R.s.map(([n]) => n * k).join(' : ')} ＝ <b>${R.s.map(([n]) => n).join(' : ')}</b>，和係數比一模一樣。`,
+                       `Mole ratio ${F} = ${R.s.map(([n]) => n * k).join(' : ')} = <b>${R.s.map(([n]) => n).join(' : ')}</b> — exactly the coefficient ratio.`);
+  }
+
+  /* ==================================================================
+     分頁三：計量路徑——質量 ÷ 分子量 → 莫耳 × 係數比 → 莫耳 × 分子量 → 質量
+     ================================================================== */
+  const PT = [
+    { eq: [[2, 'H2'], '+', [1, 'O2'], '→', [2, 'H2O']], A: 'H2', a: 2, MA: 2, gA: 4, B: 'H2O', b: 2, MB: 18, zh: ['氫氣', '水'], en: ['hydrogen', 'water'] },
+    { eq: [[2, 'Mg'], '+', [1, 'O2'], '→', [2, 'MgO']], A: 'Mg', a: 2, MA: 24, gA: 12, B: 'MgO', b: 2, MB: 40, zh: ['鎂', '氧化鎂'], en: ['magnesium', 'magnesium oxide'] },
+    { eq: [[1, 'CaCO3'], '△', [1, 'CaO'], '+', [1, 'CO2']], A: 'CaCO3', a: 1, MA: 100, gA: 50, B: 'CO2', b: 1, MB: 44, zh: ['碳酸鈣', '二氧化碳'], en: ['calcium carbonate', 'carbon dioxide'] },
+    { eq: [[1, 'N2'], '+', [3, 'H2'], '→', [2, 'NH3']], A: 'N2', a: 1, MA: 28, gA: 14, B: 'NH3', b: 2, MB: 17, zh: ['氮氣', '氨'], en: ['nitrogen', 'ammonia'] },
+  ];
+  const PATH = { p: 0, t0: null, shown: false, LEG: 1250 };
+  function ptPick(p) { PATH.p = p; PATH.t0 = null; ptHTML(); }
+  function ptGo() { PATH.t0 = ch_now(); PATH.shown = false; ptHTML(); }
+  function ptReset() { PATH.t0 = null; ptHTML(); }
+  function ptNum(v) { return String(Math.round(v * 1000) / 1000); }
+  function ptVals(P) { const nA = P.gA / P.MA, nB = nA * P.b / P.a; return { nA, nB, gB: nB * P.MB }; }
+  const PT_X = [10, 260, 510, 760], PT_W = 190, PT_Y = 150, PT_H = 140;
+  function ptDraw() {
+    const cv = document.getElementById('cvs-path'); if (!cv) return;
+    const c = cv.getContext('2d'), W = 960, H = 420, now = ch_now(), t = now / 1000;
+    const P = PT[PATH.p], V = ptVals(P), T = PATH.t0 === null ? -1 : now - PATH.t0, L = PATH.LEG;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+    /* 反應式（加熱的分解反應在箭頭上標 △） */
+    let w = 0; const parts = P.eq.map(q => {
+      if (Array.isArray(q)) { c.font = 'bold 28px "JetBrains Mono"'; const cs = q[0] === 1 ? '' : String(q[0]); const wc = cs ? c.measureText(cs).width + 8 : 0; const pw = wc + ch_formula(c, q[1], 0, 0, 28, CH_WHT, 'left', true); return { q, pw }; }
+      return { q, pw: q === '+' ? 34 : 60 };
+    });
+    parts.forEach(p => { w += p.pw + 12; });
+    let x = 480 - w / 2;
+    parts.forEach(p => {
+      if (Array.isArray(p.q)) rtTerm(c, p.q[0], p.q[1], x, 48, 28, 'left');
+      else if (p.q === '+') ch_mono(c, '+', x + p.pw / 2, 48, CH_MUT, 28, 'center');
+      else { e_arrow(c, x + 4, 38, x + p.pw - 4, 38, CH_WHT, 3, 12); if (p.q === '△') ch_mono(c, '△', x + p.pw / 2, 26, CH_YEL, 18, 'center'); }
+      x += p.pw + 12;
+    });
+    const ask = tr(`已知 ${P.gA} g 的${P.zh[0]}，可以生成幾公克的${P.zh[1]}？`, `Given ${P.gA} g of ${P.en[0]}, how many grams of ${P.en[1]} form?`);
+    e_txt(c, ask, 480, 90, CH_YEL, 22, 'center', 900);
+    /* 四站 */
+    const reached = [true, T >= L, T >= 2 * L, T >= 3 * L];
+    const title = [tr('反應物質量', 'Reactant mass'), tr('反應物莫耳數', 'Reactant moles'), tr('生成物莫耳數', 'Product moles'), tr('生成物質量', 'Product mass')];
+    const who = [P.A, P.A, P.B, P.B];
+    const val = [`${P.gA} g`, `${ptNum(V.nA)} ${tr('莫耳', 'mol')}`, `${ptNum(V.nB)} ${tr('莫耳', 'mol')}`, `${ptNum(V.gB)} g`];
+    PT_X.forEach((X, i) => {
+      c.save(); c.fillStyle = 'rgba(28,61,52,0.95)'; e_rr(c, X, PT_Y, PT_W, PT_H, 20); c.fill();
+      c.strokeStyle = i === 0 ? CH_YEL : reached[i] ? CH_GRN : 'rgba(246,243,234,0.35)'; c.lineWidth = i === 0 || reached[i] ? 3 : 2; e_rr(c, X, PT_Y, PT_W, PT_H, 20); c.stroke(); c.restore();
+      e_txt(c, title[i], X + PT_W / 2, PT_Y + 32, CH_MUT, 18, 'center', PT_W - 16);
+      ch_formula(c, who[i], X + PT_W / 2, PT_Y + 66, 24, CH_WHT, 'center');
+      if (reached[i]) ch_mono(c, val[i], X + PT_W / 2, PT_Y + 116, i === 0 ? CH_YEL : CH_GRN, 26, 'center');
+      else ch_mono(c, '?', X + PT_W / 2, PT_Y + 118, CH_COR, 38, 'center');
+    });
+    /* 三段運算 */
+    const op = [[tr('÷ 分子量', '÷ molecular mass'), `÷ ${P.MA}`], [tr('× 係數比', '× coefficient ratio'), `× ${P.b}/${P.a}`], [tr('× 分子量', '× molecular mass'), `× ${P.MB}`]];
+    const calc = [`${P.gA} ÷ ${P.MA} = ${ptNum(V.nA)}`, `${ptNum(V.nA)} × ${P.b}/${P.a} = ${ptNum(V.nB)}`, `${ptNum(V.nB)} × ${P.MB} = ${ptNum(V.gB)}`];
+    for (let k = 0; k < 3; k++) {
+      const xa = PT_X[k] + PT_W, xb = PT_X[k + 1], xm = (xa + xb) / 2;
+      e_arrow(c, xa + 6, PT_Y + PT_H / 2, xb - 6, PT_Y + PT_H / 2, reached[k + 1] ? CH_GRN : CH_MUT, 3, 12);
+      e_txt(c, op[k][0], xm, 112, CH_MUT, 16, 'center');
+      e_label(c, op[k][1], xm, 138, CH_YEL, 20, 'center');
+      if (reached[k + 1]) e_label(c, calc[k], xm, 334, CH_WHT, 20, 'center');
+      /* 背著數字往前走的光點 */
+      const q = T < 0 ? -1 : (T - k * L) / (L * 0.85);
+      if (q > 0 && q < 1) { const e = ch_ease(q); c.save(); e_glow(c, CH_YEL, 18); c.fillStyle = CH_YEL; c.beginPath(); c.arc(xa + (xb - xa) * e, PT_Y + PT_H / 2 - 22 - 8 * Math.sin(Math.PI * e), 9, 0, 6.283); c.fill(); c.restore(); }
+    }
+    if (reached[3]) {
+      const s = tr(`答：${P.gA} g 的${P.zh[0]}可以生成 ${ptNum(V.gB)} g 的${P.zh[1]}`, `Answer: ${P.gA} g of ${P.en[0]} makes ${ptNum(V.gB)} g of ${P.en[1]}`);
+      e_label(c, s, 480, 392, CH_GRN, 24, 'center', undefined, 900);
+      if (!PATH.shown) { PATH.shown = true; ptHTML(); }
+    } else {
+      e_txt(c, tr('公克不能直接照係數比換算——一定要先換成莫耳', 'Grams never go straight through the coefficient ratio — convert to moles first'), 480, 392, CH_MUT, 20, 'center', 900);
+      /* 待機時讓光點在第一站旁邊呼吸，畫面不是死的 */
+      if (T < 0) { const g = 0.5 + 0.5 * Math.sin(t * 3); c.save(); c.globalAlpha = 0.35 + 0.5 * g; e_glow(c, CH_YEL, 14); c.fillStyle = CH_YEL; c.beginPath(); c.arc(PT_X[0] + PT_W - 16, PT_Y + 18, 6, 0, 6.283); c.fill(); c.restore(); }
+    }
+  }
+  function ptHTML() {
+    PT.forEach((p, j) => { const b = document.getElementById('pt-' + j); if (b) b.classList.toggle('active', PATH.p === j); });
+    const box = document.getElementById('pt-status'); if (!box) return;
+    const P = PT[PATH.p], V = ptVals(P);
+    const done = PATH.t0 !== null && ch_now() - PATH.t0 >= 3 * PATH.LEG;
+    box.innerHTML = !done
+      ? tr('先在心裡算出每一個「?」，再按「▶ 開始計算」對答案。', 'Work out each “?” first, then press “▶ Start” to check.')
+      : tr(`${P.gA} g ÷ ${P.MA} ＝ ${ptNum(V.nA)} 莫耳 ${fmHTML(P.A)} → 照係數比 ${P.a} : ${P.b} → ${ptNum(V.nB)} 莫耳 ${fmHTML(P.B)} → × ${P.MB} ＝ <b>${ptNum(V.gB)} g</b>`,
+           `${P.gA} g ÷ ${P.MA} = ${ptNum(V.nA)} mol ${fmHTML(P.A)} → ratio ${P.a} : ${P.b} → ${ptNum(V.nB)} mol ${fmHTML(P.B)} → × ${P.MB} = <b>${ptNum(V.gB)} g</b>`);
+  }
+
+  /* ==================================================================
+     分頁四：誰先用完？（反應前 vs 反應後）
+     ================================================================== */
+  const LR_RX = [
+    { A: 'H2', a: 2, B: 'O2', b: 1, P: 'H2O', p: 2, zh: ['氫氣', '氧氣', '水'], en: ['hydrogen', 'oxygen', 'water'] },
+    { A: 'N2', a: 1, B: 'H2', b: 3, P: 'NH3', p: 2, zh: ['氮氣', '氫氣', '氨'], en: ['nitrogen', 'hydrogen', 'ammonia'] },
+  ];
+  const LR = { r: 0, nA: 5, nB: 2, t0: null, shown: false, MAX: 10 };
+  function lrPick(r) {
+    LR.r = r; LR.t0 = null;
+    if (r === 0) { LR.nA = 5; LR.nB = 2; } else { LR.nA = 3; LR.nB = 6; }
+    lrHTML();
+  }
+  function lrStep(side, d) {
+    const key = side === 0 ? 'nA' : 'nB', n = ch_clamp(LR[key] + d, 1, LR.MAX);
+    if (n === LR[key]) return; LR[key] = n; LR.t0 = null; lrHTML();
+  }
+  function lrGo() { LR.t0 = ch_now(); LR.shown = false; lrHTML(); }
+  function lrRes() {
+    const R = LR_RX[LR.r], sets = Math.min(Math.floor(LR.nA / R.a), Math.floor(LR.nB / R.b));
+    const leftA = LR.nA - sets * R.a, leftB = LR.nB - sets * R.b;
+    /* 誰先用完：拿自己的量除以係數，比較能撐幾「份」 */
+    const fa = LR.nA / R.a, fb = LR.nB / R.b;
+    const lim = Math.abs(fa - fb) < 1e-9 ? 'both' : fa < fb ? 'A' : 'B';
+    return { R, sets, prod: sets * R.p, leftA, leftB, lim };
+  }
+  function lrRegion(c, f, n, x, y, w, h, s, t, opt) {
+    const b = molBox(f);
+    ch_grid(n, x, y, w, h, b.w, b.h, s).forEach((m, k) => {
+      const o = opt ? opt(k) : {};
+      if (o.skip) return;
+      c.save(); if (o.alpha !== undefined) c.globalAlpha = o.alpha;
+      ch_mol(c, f, m.cx + 1.6 * Math.sin(t * 1.7 + k), m.cy + 1.6 * Math.cos(t * 1.4 + k * 1.3), s * (o.sc || 1), 0.1 * Math.sin(t + k));
+      c.restore();
+      if (o.ring) { c.save(); c.strokeStyle = CH_COR; c.lineWidth = 3; c.globalAlpha = 0.55 + 0.45 * Math.sin(t * 6); c.beginPath(); c.arc(m.cx, m.cy, Math.max(b.w, b.h) * s / 2 + 6, 0, 6.283); c.stroke(); c.restore(); }
+    });
+  }
+  function lrDraw() {
+    const cv = document.getElementById('cvs-lr'); if (!cv) return;
+    const c = cv.getContext('2d'), W = 960, H = 460, now = ch_now(), t = now / 1000;
+    const Z = lrRes(), R = Z.R, T = LR.t0 === null ? -1 : now - LR.t0, done = T >= 1500;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#0b1a15'; c.fillRect(0, 0, W, H);
+    const BX = [{ x: 18, y: 52, w: 424, h: 250 }, { x: 518, y: 52, w: 424, h: 250 }];
+    ch_box(c, BX[0].x, BX[0].y, BX[0].w, BX[0].h);
+    ch_box(c, BX[1].x, BX[1].y, BX[1].w, BX[1].h, done ? CH_GRN : null, done);
+    e_txt(c, tr('反應前', 'Before'), 230, 38, CH_WHT, 22, 'center');
+    e_txt(c, tr('反應後', 'After'), 730, 38, CH_WHT, 22, 'center');
+    e_arrow(c, 452, 177, 508, 177, T >= 0 ? CH_GRN : CH_MUT, 5, 16);
+    /* 共同縮放：左右兩框的分子一樣大 */
+    const rw = (424 - 30) / 2, rh = 250 - 56;
+    let s = 1.3;
+    [[R.A, LR.nA], [R.B, LR.nB], [R.P, Math.max(1, Z.prod)]].forEach(([f, n]) => { const b = molBox(f); s = Math.min(s, ch_fit(n, rw, rh, b.w, b.h, 1.3)); });
+    /* 反應前：兩種反應物；反應完之後，剩下來的那幾個用珊瑚色圈起來 */
+    lrRegion(c, R.A, LR.nA, BX[0].x + 10, BX[0].y + 10, rw, rh, s, t, k => ({ ring: done && k >= LR.nA - Z.leftA }));
+    lrRegion(c, R.B, LR.nB, BX[0].x + 20 + rw, BX[0].y + 10, rw, rh, s, t, k => ({ ring: done && k >= LR.nB - Z.leftB }));
+    const lab = (n, f, x, y, col) => { c.font = 'bold 22px "JetBrains Mono"'; const w1 = c.measureText(String(n)).width; const wf = ch_formula(c, f, 0, 0, 22, col, 'left', true); const x0 = x - (w1 + 8 + wf) / 2; ch_mono(c, String(n), x0, y, CH_YEL, 22); ch_formula(c, f, x0 + w1 + 8, y, 22, col, 'left'); };
+    lab(LR.nA, R.A, BX[0].x + 10 + rw / 2, BX[0].y + BX[0].h - 16, CH_WHT);
+    lab(LR.nB, R.B, BX[0].x + 20 + rw * 1.5, BX[0].y + BX[0].h - 16, CH_WHT);
+    /* 反應後：產物一個一個冒出來，剩下的反應物也搬過來 */
+    if (T < 0) ch_mono(c, '?', 730, 196, CH_COR, 56, 'center');
+    else {
+      const leftF = Z.leftA > 0 ? R.A : Z.leftB > 0 ? R.B : null, leftN = Z.leftA || Z.leftB;
+      lrRegion(c, R.P, Math.max(1, Z.prod), BX[1].x + 10, BX[1].y + 10, rw, rh, s, t, k => ({ skip: Z.prod === 0, sc: ch_pop((T - 200 - k * 110) / 360) }));
+      if (leftF) lrRegion(c, leftF, leftN, BX[1].x + 20 + rw, BX[1].y + 10, rw, rh, s, t, k => ({ sc: ch_pop((T - 700 - k * 90) / 360), ring: done }));
+      if (done) {
+        lab(Z.prod, R.P, BX[1].x + 10 + rw / 2, BX[1].y + BX[1].h - 16, CH_GRN);
+        if (leftF) { const lx = BX[1].x + 20 + rw * 1.5; e_txt(c, tr('剩下', 'left over'), lx, BX[1].y + BX[1].h - 44, CH_COR, 18, 'center'); lab(leftN, leftF, lx, BX[1].y + BX[1].h - 16, CH_COR); }
+      }
+    }
+    /* 下方帳本 */
+    const rows = [[R.A, LR.nA, Z.sets * R.a, Z.leftA], [R.B, LR.nB, Z.sets * R.b, Z.leftB]];
+    rows.forEach(([f, n, used, left], i) => {
+      const y = 350 + i * 40;
+      ch_formula(c, f, 40, y, 22, CH_WHT, 'left');
+      const txt = done ? tr(`放 ${n} 個，用掉 ${used} 個，剩 ${left} 個`, `put in ${n}, used ${used}, left ${left}`) : tr(`放 ${n} 個`, `put in ${n}`);
+      e_txt(c, txt, 110, y, CH_WHT, 20);
+      if (done && left === 0 && Z.lim !== 'both') e_label(c, tr('← 先用完！', '← ran out first!'), 470, y, CH_YEL, 20, 'left');
+    });
+    if (done) {
+      const s2 = Z.lim === 'both' ? tr(`剛剛好：兩種都用完，生成 ${Z.prod} 個`, `A perfect match: both used up, making ${Z.prod}`)
+        : tr(`限量試劑是 ${Z.lim === 'A' ? R.zh[0] : R.zh[1]}：它決定只能做出 ${Z.prod} 個`, `The limiting reagent is ${Z.lim === 'A' ? R.en[0] : R.en[1]}: it caps the product at ${Z.prod}`);
+      const w2 = e_w(c, s2, 22), wf = ch_formula(c, R.P, 0, 0, 22, CH_GRN, 'left', true), x0 = 480 - (w2 + 8 + wf) / 2;
+      e_txt(c, s2, x0, 440, CH_GRN, 22); ch_formula(c, R.P, x0 + w2 + 8, 440, 22, CH_GRN, 'left');
+      if (!LR.shown) { LR.shown = true; lrHTML(); }
+    }
+  }
+  function lrHTML() {
+    LR_RX.forEach((r, j) => { const b = document.getElementById('lr-rx-' + j); if (b) b.classList.toggle('active', LR.r === j); });
+    const R = LR_RX[LR.r], box = document.getElementById('lr-steps');
+    if (box) {
+      const grp = (side, f, n) => `<div class="sp-ctl"><span class="rdx-name">${fmHTML(f)}</span>`
+        + `<button class="action-btn step-btn" type="button" onclick="lrStep(${side}, -1)" ${n <= 1 ? 'disabled' : ''} aria-label="−">−</button>`
+        + `<span class="coef-n">${n}</span>`
+        + `<button class="action-btn step-btn" type="button" onclick="lrStep(${side}, 1)" ${n >= LR.MAX ? 'disabled' : ''} aria-label="+">＋</button></div>`;
+      box.innerHTML = grp(0, R.A, LR.nA) + grp(1, R.B, LR.nB);
+    }
+    const st = document.getElementById('lr-status'); if (!st) return;
+    const Z = lrRes(), done = LR.t0 !== null && ch_now() - LR.t0 >= 1500;
+    if (!done) { st.innerHTML = tr(`食譜：${R.a} 個 ${fmHTML(R.A)} 配 ${R.b} 個 ${fmHTML(R.B)}，做出 ${R.p} 個 ${fmHTML(R.P)}。先猜誰會先用完，再按「▶ 反應」。`, `Recipe: ${R.a} ${fmHTML(R.A)} with ${R.b} ${fmHTML(R.B)} makes ${R.p} ${fmHTML(R.P)}. Guess who runs out first, then press “▶ React”.`); return; }
+    const perA = LR.nA / R.a, perB = LR.nB / R.b, fx = v => ptNum(v);
+    st.innerHTML = tr(`${fmHTML(R.A)} 夠做 ${LR.nA} ÷ ${R.a} ＝ ${fx(perA)} 份，${fmHTML(R.B)} 夠做 ${LR.nB} ÷ ${R.b} ＝ ${fx(perB)} 份——`, `${fmHTML(R.A)} is enough for ${LR.nA} ÷ ${R.a} = ${fx(perA)} batches, ${fmHTML(R.B)} for ${LR.nB} ÷ ${R.b} = ${fx(perB)} — `)
+      + (Z.lim === 'both' ? tr('<b>一樣多，剛好完全反應</b>。', '<b>equal, so both are used up exactly</b>.')
+        : tr(`<b>${Z.lim === 'A' ? fmHTML(R.A) : fmHTML(R.B)} 能做的份數比較少，是限量試劑</b>；另一種是過量試劑，會剩下來。`, `<b>${Z.lim === 'A' ? fmHTML(R.A) : fmHTML(R.B)} supports fewer batches, so it is the limiting reagent</b>; the other is in excess and is left over.`));
+  }
+
+  /* ==================================================================
+     V5 外層：常駐動畫迴圈、語言切換、封面
+     ================================================================== */
+  function v5TabOn(id) { const el = document.getElementById(id); return !!el && el.classList.contains('active'); }
+  function v5Loop() {
+      if (v5TabOn('mole-ratio')) rtDraw();
+      if (v5TabOn('mass-mole-calc')) ptDraw();
+      if (v5TabOn('limiting-reagent')) lrDraw();
+      requestAnimationFrame(v5Loop);
+  }
+  function v5Redraw() { rtHTML(); ptHTML(); lrHTML(); }
+  /* 原本的 setLang 一字不改，只在外面包一層：換完語言，動態產生的說明也要跟著換（第四定律 4.3） */
+  const v5BaseSetLang = setLang;
+  setLang = function (lang) { v5BaseSetLang(lang); v5Redraw(); };
+  function dismissIntro() {
+      const el = document.getElementById('introScreen');
+      if (!el || el.classList.contains('exiting')) return;
+      el.classList.add('exiting');
+      setTimeout(() => { if (el && el.parentNode) el.parentNode.removeChild(el); }, 750);
+  }
+  function introClick() { dismissIntro(); }
+  window.addEventListener('DOMContentLoaded', () => {
+      /* 封面圖還沒放進 assets/covers 之前，不要讓學生面對一片空白：載不到就直接進教材 */
+      const probe = new Image();
+      probe.onerror = () => { const el = document.getElementById('introScreen'); if (el && el.parentNode) el.parentNode.removeChild(el); };
+      probe.src = 'assets/covers/chem_reaction_4_cover_v1.jpg';
+      v5Redraw();
+      requestAnimationFrame(v5Loop);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(v5Redraw);
+  });
 </script>
 </body>
 </html>
