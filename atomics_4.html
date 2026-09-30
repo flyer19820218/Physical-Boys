@@ -2421,7 +2421,7 @@
   const CD = { W: 960, H: 540, B: 440, X: { cu: 110, salt: 262, sw: 432, sg: 604 }, BK: { hw: 60, rim: 292, wl: 332 },
     WS: { x: 772, hw: 44, rim: 352, wl: 418 }, WB: { x: 892, y0: 362 }, GAP: 40, LEN: 140, SAFE: 262,
     TIP: { cu: 420, salt: 396, sw: 404, sg: 404 }, GLOW: { cu: 1, salt: 0, sw: 0.55, sg: 0 },
-    BAT: { x: 700, y: 60, w: 124 }, BULB: { x: 900, base: 100 }, LR: 78, LY: 150, HOME: { x: 772, y: 300 } };
+    BAT: { x: 700, y: 60, w: 124 }, BUB: { neg: 8, pos: 4 }, BULB: { x: 900, base: 100 }, LR: 78, LY: 150, HOME: { x: 772, y: 300 } };
   function cdInit(L) {
     L.hd = { ...CD.HOME }; L.on = 0; L.glow = 0; L.test = null; L.loupe = 0; L.wash = 0; L.done = {};
   }
@@ -2450,7 +2450,7 @@
     salt: ['experimenting', '換<b>岩鹽塊</b>：它是食鹽的晶體，一樣壓上兩支碳棒。', 'Now the <b>rock-salt lump</b>, a crystal of table salt: press both rods onto it.'],
     saltB: ['thinking', '燈泡<b>不亮</b>。食鹽是由鈉離子和氯離子組成的，可是在晶體裡，離子被<b>固定</b>住了。', 'The bulb stays <b>dark</b>. Salt is made of sodium and chloride ions, but in the crystal the ions are <b>held in place</b>.'],
     sw: ['experimenting', '要測水溶液了：先用洗瓶的<b>蒸餾水</b>把碳棒沖乾淨，再放進<b>食鹽水</b>。', 'Now the solutions: first rinse the rods with <b>distilled water</b> from the wash bottle, then dip them in the <b>salt water</b>.'],
-    swB: ['surprised', '燈泡<b>亮了</b>（比銅片暗一些）！食鹽溶在水裡，離子散開、<b>可以移動</b>：鈉離子往 − 極、氯離子往 ＋ 極。碳棒上冒出小氣泡，是電流通過時發生的<b>電解</b>，後面的單元會學到。', 'The bulb <b>lights</b> (a little dimmer than with copper)! Dissolved salt splits into ions that <b>can move</b>: sodium ions head for the − rod, chloride ions for the + rod. The tiny bubbles on the rods come from <b>electrolysis</b>, which you will meet in a later unit.'],
+    swB: ['surprised', '燈泡<b>亮了</b>（比銅片暗一些）！食鹽溶在水裡，離子散開、<b>可以移動</b>：鈉離子往 − 極、氯離子往 ＋ 極。碳棒上冒出小氣泡，<b>負極的氣泡大約是正極的 2 倍</b>——這是電流通過時發生的<b>電解</b>，後面的單元會學到。', 'The bulb <b>lights</b> (a little dimmer than with copper)! Dissolved salt splits into ions that <b>can move</b>: sodium ions head for the − rod, chloride ions for the + rod. Tiny bubbles form on the rods, <b>about twice as many at the negative rod as at the positive one</b> — this is <b>electrolysis</b>, which you will meet in a later unit.'],
     sg: ['experimenting', '一樣先把碳棒<b>沖乾淨</b>（不然沾到的食鹽水也會導電），再放進<b>糖水</b>。', 'Rinse the rods <b>clean</b> again (leftover salt water would conduct too), then dip them in the <b>sugar water</b>.'],
     sgB: ['thinking', '燈泡<b>不亮</b>。糖溶在水裡還是一個一個完整的<b>糖分子</b>，分子<b>不帶電</b>。', 'The bulb stays <b>dark</b>. Dissolved sugar stays as whole <b>sugar molecules</b>, and molecules carry <b>no charge</b>.']
   };
@@ -2525,8 +2525,8 @@
     /* 碳棒＋電極架 */
     [R.a, R.b].forEach(r => { c.fillStyle = '#2f3336'; c.fillRect(r.x - 4, r.top, 8, r.tip - r.top); c.fillStyle = 'rgba(255,255,255,0.22)'; c.fillRect(r.x - 3, r.top, 2, r.tip - r.top); });
     c.fillStyle = '#e8e2d0'; e_rr(c, L.hd.x - 36, R.a.top + 16, 72, 14, 4); c.fill();
-    /* 食鹽水通電時碳棒上的小氣泡（到水面就破掉） */
-    if (L.test === 'sw' && L.glow > 0.3) [R.a, R.b].forEach((r, j) => { for (let i = 0; i < 5; i++) { const u = (t * 0.55 + i / 5 + j * 0.13) % 1, y = kLerp(r.tip - 4, CD.BK.wl + 3, u); if (y > CD.BK.wl + 2) { c.strokeStyle = 'rgba(240,250,255,0.8)'; c.lineWidth = 1.2; c.beginPath(); c.arc(r.x + (i % 2 ? 6 : -6) + Math.sin(t * 5 + i) * 1.2, y, 2.2, 0, Math.PI * 2); c.stroke(); } } });
+    /* 食鹽水通電時碳棒上的小氣泡（到水面就破掉）：負極（左棒）冒的氣泡是正極（右棒）的 2 倍 */
+    if (L.test === 'sw' && L.glow > 0.3) [[R.a, CD.BUB.neg], [R.b, CD.BUB.pos]].forEach(([r, n], j) => { for (let i = 0; i < n; i++) { const u = (t * 0.55 + i / n + j * 0.13) % 1, y = kLerp(r.tip - 4, CD.BK.wl + 3, u); if (y > CD.BK.wl + 2) { c.strokeStyle = 'rgba(240,250,255,0.8)'; c.lineWidth = 1.2; c.beginPath(); c.arc(r.x + (i % 2 ? 6 : -6) + Math.sin(t * 5 + i) * 1.2, y, 2.2, 0, Math.PI * 2); c.stroke(); } } });
     /* 燒杯前面那層水＋玻璃 */
     cdBeaker(c, S.sw, CD.BK.hw, CD.BK.rim, CD.BK.wl, B, t, false); cdBeaker(c, S.sg, CD.BK.hw, CD.BK.rim, CD.BK.wl, B, t, false);
     cdBeaker(c, CD.WS.x, CD.WS.hw, CD.WS.rim, CD.WS.wl, B, t, false);
