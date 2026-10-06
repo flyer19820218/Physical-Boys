@@ -1,0 +1,18 @@
+/* Per-bench aspect ratio and outer UI only. */
+(()=>{
+  'use strict';
+  let active=null,backFocus=null,owned=false,resizeRaf=0;
+  const tr=(zh,en)=>document.documentElement.lang==='en'?en:zh;
+  const benches=[...document.querySelectorAll('.scope-workbench')];
+  function sync(){benches.forEach(b=>{const btn=b.querySelector('.cell-full'),on=active===b;btn.textContent=tr(on?'✕ 離開全螢幕':'⛶ 全螢幕操作',on?'✕ Exit full screen':'⛶ Full screen');btn.setAttribute('aria-pressed',String(on));});}
+  function size(){if(active){const view=active.querySelector('.scope-view'),title=view.querySelector('.lens-title');active.style.setProperty('--view-h',Math.max(80,view.clientHeight-(title?.offsetHeight||0)-48)+'px');}}
+  function schedule(){if(resizeRaf)cancelAnimationFrame(resizeRaf);resizeRaf=requestAnimationFrame(()=>{resizeRaf=0;size();});}
+  function leave(native=true){if(!active)return;const old=active,f=backFocus;active=null;owned=false;backFocus=null;old.classList.remove('scope-full');old.setAttribute('role','region');old.removeAttribute('aria-modal');document.body.classList.remove('scope-full-lock');if(resizeRaf)cancelAnimationFrame(resizeRaf);resizeRaf=0;sync();if(native&&(document.fullscreenElement||document.webkitFullscreenElement)===old){try{const p=(document.exitFullscreen||document.webkitExitFullscreen)?.call(document);p?.catch?.(()=>{});}catch{}}if(f?.isConnected)f.focus({preventScroll:true});}
+  function toggle(b){if(active===b){leave();return;}leave();active=b;owned=false;backFocus=document.activeElement;b.classList.add('scope-full');b.setAttribute('role','dialog');b.setAttribute('aria-modal','true');document.body.classList.add('scope-full-lock');sync();b.querySelector('.cell-full').focus({preventScroll:true});schedule();const request=b.requestFullscreen||b.webkitRequestFullscreen;if(request)try{request.call(b)?.then?.(()=>{if(active===b){owned=true;schedule();}else if((document.fullscreenElement||document.webkitFullscreenElement)===b)(document.exitFullscreen||document.webkitExitFullscreen)?.call(document);})?.catch?.(()=>schedule());}catch{}}
+  for(const b of benches){const c=b.querySelector('canvas');b.style.setProperty('--ar',String(c.width/c.height));b.setAttribute('aria-labelledby',b.querySelector('h3').id);b.querySelector('.cell-full').addEventListener('click',()=>toggle(b));b.querySelectorAll('[data-lang]').forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.lang==='zh'?'langZh':'langEn').click()));if(typeof ResizeObserver!=='undefined')new ResizeObserver(()=>{if(active===b)schedule();}).observe(b.querySelector('.scope-view'));}
+  document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>leave()));
+  for(const id of ['langZh','langEn'])document.getElementById(id).addEventListener('click',()=>{sync();schedule();});
+  for(const type of ['fullscreenchange','webkitfullscreenchange'])document.addEventListener(type,()=>{if(!active)return;const e=document.fullscreenElement||document.webkitFullscreenElement;if(e===active){owned=true;schedule();}else if(owned)leave(false);});
+  document.addEventListener('keydown',e=>{if(!active)return;if(e.key==='Escape'){e.preventDefault();leave();}if(e.key==='Tab'){const items=[...active.querySelectorAll('button,input,select,a[href],summary,[tabindex="0"]')].filter(n=>!n.disabled&&n.getClientRects().length),first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}}});
+  window.addEventListener('resize',schedule);window.addEventListener('pagehide',()=>leave());sync();
+})();
