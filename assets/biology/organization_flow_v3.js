@@ -1,0 +1,19 @@
+/* Original AI sprite metadata and teacher-approved hierarchy content. No photograph mutations. */
+(function(root){'use strict';
+ const atlas={human:{path:'assets/biology/organization_human_levels_ai_v3.png',w:1983,h:793},plant:{path:'assets/biology/organization_plant_whole_ai_v3.png',w:1983,h:793}};
+ const level=(zh,en,name,nameEn,crop,short,shortEn,fn,fnEn)=>({zh,en,name,nameEn,crop,short,shortEn,fn,fnEn});
+ const hierarchy={human:[
+  level('細胞','Cell','胃皮膜細胞','Gastric epithelial cell',[35,85,250,570],'一個細胞，生命構造與功能的基本單位。','One cell: the basic unit of structure and function.','圖中紫色的是細胞核，不是整個細胞。胃表面的皮膜細胞可分泌黏液，協助保護胃的內面。','The purple structure is the nucleus, not the whole cell. Surface epithelial cells can secrete mucus that helps protect the stomach lining.'),
+  level('組織','Tissue','胃皮膜組織','Gastric epithelium',[316,154,474,461],'許多細胞合作，形成保護與分泌的組織。','Many cells cooperate in protection and secretion.','緊密相連的皮膜細胞覆蓋胃的內面。胃還有肌肉、結締與神經等組織，不是只有皮膜。','Closely connected epithelial cells line the stomach. The stomach also contains muscle, connective, and nervous tissues—not just epithelium.'),
+  level('器官','Organ','胃','Stomach',[790,40,475,642],'不同組織合作，構成一個胃。','Different tissue types cooperate to form a stomach.','皮膜保護與分泌、肌肉攪拌、神經調節，結締組織提供支持；多種組織共同完成器官的工作。','Epithelium protects and secretes, muscle mixes, nerves regulate, and connective tissue supports. Different tissues cooperate in the organ.'),
+  level('器官系統','Organ system','消化系統','Digestive system',[1263,0,392,772],'多個器官一起消化食物、吸收養分。','Several organs digest food and absorb nutrients.','口、食道、胃、小腸、大腸等器官相互配合。圖中頭到腳的人體輪廓只幫助定位，這一層強調的是消化系統。','The mouth, esophagus, stomach, small intestine, large intestine, and other organs cooperate. The full-body silhouette locates the digestive system; it is not another level.'),
+  level('個體','Organism','完整的人','Whole human',[1670,0,298,773],'多個器官系統合作，形成一個完整的人。','Multiple organ systems cooperate in a complete human.','人不只是消化系統；循環、神經、內分泌、泌尿等系統一起維持生命活動。整個人，包括頭、軀幹和四肢，才是這裡的個體。','A human is more than a digestive system. Circulatory, nervous, endocrine, urinary, and other systems cooperate in life processes. The entire person is the organism.')
+ ],plant:[
+  level('細胞','Cell','葉肉細胞','Mesophyll cell',[0,0,285,793],'葉綠體在細胞內，協助進行光合作用。','Chloroplasts within the cell support photosynthesis.','綠色小顆粒是葉綠體；大型中央液胞佔大部分空間，細胞核位於周邊細胞質，不在液胞裡。','Small green granules are chloroplasts. The central vacuole occupies much of the cell; the nucleus lies in peripheral cytoplasm, not inside the vacuole.'),
+  level('組織','Tissue','柵狀葉肉組織','Palisade mesophyll',[300,90,650,600],'許多葉肉細胞合作，進行光合作用。','Many mesophyll cells cooperate in photosynthesis.','這一群富含葉綠體、排列較緊密的細胞形成葉內的組織；一片葉還有其他組織。','These closely arranged chloroplast-rich cells form tissue within a leaf. The leaf also contains other tissues.'),
+  level('器官','Organ','葉','Leaf',[950,0,600,755],'多種組織一起，構成葉這個器官。','Different tissues form the leaf organ.','葉包含表皮、葉肉、輸導等組織，參與光合作用、氣體交換與蒸散；一片葉不是整株植物。','A leaf contains epidermal, mesophyll, and conducting tissues. It participates in photosynthesis, gas exchange, and transpiration. One leaf is not the whole plant.'),
+  level('個體','Organism','完整番茄植株','Whole tomato plant',[1549,40,422,743],'根、莖、葉等器官合作，形成完整植株。','Roots, stems, leaves, and other organs form a whole plant.','本章依講義以細胞、組織、器官、個體四層整理植物，不列人體的器官系統這一格。圖中顯示根、莖、葉、花與果實；種子位於果實內。','This chapter follows the handout’s four-level plant hierarchy, omitting the human organ-system slot. The illustration shows roots, stems, leaves, flowers, and fruit; seeds are within the fruit.')
+ ]};
+ function flowWeights(count,selected){return Array.from({length:count},(_,i)=>i===selected?1.8:1);}
+ const data={atlas,hierarchy,flowWeights};root.OrganizationFlow=data;if(typeof module!=='undefined'&&module.exports)module.exports=data;
+})(typeof globalThis!=='undefined'?globalThis:this);
