@@ -275,11 +275,15 @@
   * 2-3 素材見 [V2 圖片授權與尺寸来源](assets/biology/scale_credits_v2.md)。新增 CDC 公共領域流感病毒 TEM 加色照片，明示非自然色；照片只做顯示縮放。42 單位往返、49 長度比較、24 工具雙語狀態及觸控事件模型通過，實際瀏覽器字體／CSS與iPad尚未獨立驗證。
   * 每個小單元至少兩項核心互動，維持真實圖像優先、V5 雙語、曉臻 Hook 與無字圖片封面；未完成前不在首頁放無效連結。
 
-* **03｜養分與生命**（3 個小單元已核准上架，動物營養製作中）
+* **03｜養分與生命**（4 個小單元均已核准上架）
   * [食物中的養分](biology_nutrients.html)：六大養分、熱量、碘液與本氏液檢驗、標示與餐盤。
   * [酵素與生命的反應](biology_enzymes.html)：分解與合成、活性區吻合、溫度與 pH、唾液澱粉酶實驗。
   * [植物的營養方式](biology_photosynthesis.html)：6 個主分頁——原料與養分、葉片構造、光合作用、氣體交換、遮光葉片實驗、對照與推論。V8 使用 Ali Zifan 的保衛細胞開閉原圖匯出，保留構造、作者、翻譯貢獻者與 CC BY-SA 4.0；可全螢幕、拖曳與雙指縮放，不再以自畫細胞取代原圖。
+  * [動物的營養方式](biology_animal_nutrition.html)：6 個主分頁——物理與化學消化、消化器官、消化液、蠕動、小腸吸收、養分利用。V2 使用公共領域解剖原圖拆分器官，點選後移出、等比放大與逐站講解；小分子分段通過上皮進入血管，完整澱粉／蛋白質鏈留在腸腔。分子為放大的教學符號，非真實比例。
   * 植物單元素材見 [V8 原圖來源與處理紀錄](assets/biology/photosynthesis_sources_v8.md)、[V3 剖面與分子紀錄](assets/biology/photosynthesis_sources_v3.md)。水浴實驗保留酒精燈、熄燈後處理酒精、逐步操作與證據解說。Native Canvas／事件模型檢查通過，iPad 實機 CSS、字體與觸控命中仍待核對。
+  * 動物單元素材見 [原圖署名與授權](assets/biology/animal_nutrition_sources_v2.md)；原生 Canvas 與事件模型檢查見 [V2 驗證界線](assets/biology/animal_nutrition_checks_v2.md)。實際 Safari／iPad 的 CSS、字體、觸控命中仍待核對。
+
+十個生物單元的 HTML UI 已依老師核准調整為主標 36px、段落標題 28px、內文／控制 20px，保留原有美圖、無字封面、圖庫與來源署名；前九個單元的教學程式、Canvas／SVG 座標與動畫逐字保留。詳見 [美圖保留與介面修訂](assets/biology/ui_images_preserved_1008_v2.md)。
 
 ---
 
