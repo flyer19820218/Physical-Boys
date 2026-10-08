@@ -255,7 +255,7 @@
   const HEART_REGIONS = {
     ra: [.10, .34, .32, .30], rv: [.20, .60, .38, .27],
     la: [.60, .30, .27, .22], lv: [.57, .52, .35, .40],
-    av: [.30, .43, .52, .25], sl: [.34, .25, .30, .25], septum: [.43, .51, .15, .40]
+    av: [.30, .43, .52, .25], sl: [.34, .25, .30, .25], septum: [.48, .48, .33, .44]
   };
   function focusOutline(ctx, D, fitted, crop, key, value) {
     if (!fitted) return;
@@ -279,6 +279,18 @@
     TEXT(ctx, D, from, x, y + 38, w / 2 - 6);
     TEXT(ctx, D, to, x + w, y + 38, w / 2 - 6, { align: 'right' });
   }
+  function septumOutline(ctx, fitted) {
+    if (!fitted) return;
+    const point = (x, y) => [fitted.x + fitted.w * x, fitted.y + fitted.h * y];
+    ctx.save(); ctx.beginPath(); ctx.moveTo(...point(.505, .494));
+    ctx.bezierCurveTo(...point(.507, .575), ...point(.552, .653), ...point(.600, .735));
+    ctx.bezierCurveTo(...point(.644, .804), ...point(.699, .872), ...point(.764, .901));
+    ctx.bezierCurveTo(...point(.800, .900), ...point(.792, .865), ...point(.750, .820));
+    ctx.bezierCurveTo(...point(.695, .748), ...point(.659, .678), ...point(.609, .600));
+    ctx.bezierCurveTo(...point(.581, .550), ...point(.560, .506), ...point(.543, .493));
+    ctx.closePath(); ctx.fillStyle = 'rgba(253,224,71,.10)'; ctx.fill();
+    ctx.strokeStyle = C.yellow; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke(); ctx.restore();
+  }
   function heartDraw(ctx, s, t, D) {
     const delta = tick(s, t);
     if (s.auto) s.beat = mod(s.beat + delta * .55, 4);
@@ -286,7 +298,10 @@
     board(ctx, D, P('課本心臟原圖＋瓣膜機制', 'Original heart + valve mechanism'), P('觀眾左＝人體右；觀眾右＝人體左。機制窗不是器官外形。', 'Viewer left = body right; viewer right = body left. Channels show valve function.'));
     const fitted = imagePanel(ctx, D, s.view === 'body' ? 'body_circulation.png' : 'heart.png', 24, 62, 430, 490);
     const crop = HEART_REGIONS[s.part] || HEART_REGIONS.lv;
-    if (s.view === 'heart') focusOutline(ctx, D, fitted, crop);
+    if (s.view === 'heart') {
+      if (s.part === 'septum') septumOutline(ctx, fitted);
+      else focusOutline(ctx, D, fitted, crop);
+    }
     if (fitted && s.view === 'heart') {
       // The four chamber rectangles are taps on the original, never replacements.
       ['ra', 'rv', 'la', 'lv'].forEach(key => {
