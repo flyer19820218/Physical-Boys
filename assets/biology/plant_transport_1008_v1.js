@@ -139,47 +139,60 @@ function transplantModel(c,s,t,D){
 }
 function transpire(c,s,t,D){
  const rates={baseline:1,wind:1.6,humid:.5,drought:.2},closed=s.condition==='drought';
- panel(c,D,20,40,270,520);panel(c,D,310,40,630,520);
- D.text(c,['課本氣孔原圖','Textbook stoma'],155,76,{align:'center',color:'#1c3d34',size:22,max:245});
- D.image(c,closed?'stoma_closed.png':'stoma_open.png',33,104,244,350);
- D.text(c,closed?['缺水：氣孔趨向關閉','Water stress: closure']:['張開的氣孔','An open stoma'],155,490,{align:'center',color:'#1c3d34',size:22,max:245});
- D.text(c,['蒸散拉動連續水柱','Transpiration pulls a water column'],625,77,{align:'center',color:'#1c3d34',max:580});
- // Leaf section: a real gap in the epidermis opens into the internal air space.
- D.round(c,341,162,425,20,9,'#a9c984','#718d62');D.round(c,824,162,94,20,9,'#a9c984','#718d62');
- D.round(c,341,295,192,23,9,'#a9c984','#718d62');D.round(c,646,295,272,23,9,'#a9c984','#718d62');
- for(const [x,y,w,h] of [[351,191,69,90],[427,191,62,90],[499,188,71,67],[674,252,76,37],[830,191,70,91]]){
+ panel(c,D,20,40,290,520);panel(c,D,330,40,610,520);
+ D.text(c,['課本原圖：葉脈剖面','Textbook leaf vein'],165,76,{align:'center',color:'#1c3d34',size:22,max:270});
+ // Display-only crop of Fig. 3-1. The original bitmap is neither redrawn nor rotated.
+ D.focus(c,atlas,[.075,.115,.59,.37],[32,88,266,223]);
+ D.text(c,['木質部在上，韌皮部在下','Xylem above phloem'],165,331,{align:'center',color:'#1c3d34',size:22,max:270});
+ D.image(c,closed?'stoma_closed.png':'stoma_open.png',66,348,198,157);
+ D.text(c,closed?['原圖：氣孔關閉','Original: closed stoma']:['原圖：氣孔張開','Original: open stoma'],165,538,{align:'center',color:'#1c3d34',size:22,max:270});
+ D.text(c,['沿葉脈的縱剖示意','Along a leaf vein'],635,77,{align:'center',color:'#1c3d34',max:575});
+ // Leaf veins lie along the blade; the two tissues stay parallel to the epidermis.
+ D.round(c,348,141,575,20,9,'#a9c984','#718d62');
+ D.round(c,348,429,445,20,9,'#a9c984','#718d62');D.round(c,883,429,40,20,9,'#a9c984','#718d62');
+ for(const [x,y,w,h] of [[358,178,57,67],[424,178,57,67],[490,178,57,67],[556,178,57,67],[625,199,78,58],[837,204,74,86],[355,382,88,33],[710,382,63,33]]){
   const g=c.createLinearGradient(x,y,x+w,y+h);g.addColorStop(0,'#daedaa');g.addColorStop(1,'#95bf70');
   D.round(c,x,y,w,h,16,g,'#729a58');D.sphere(c,x+w*.3,y+h*.4,6,'#6b9f47');
  }
- const gap=closed?4:24;
- D.round(c,795-gap/2-31,154,31,39,15,'#91bd66','#668d47');D.round(c,795+gap/2,154,31,39,15,'#91bd66','#668d47');
- D.text(c,closed?['關閉','Closed']:['氣孔','Stoma'],919,151,{align:'right',color:'#1c3d34',size:22,max:105});
- D.text(c,['葉內空氣間隙','Leaf air space'],688,348,{color:'#506b57',size:22,max:238});D.line(c,[[715,324],[735,249]],'#718d62',2);
- // Xylem walls end inside the leaf. There is no cap over the water column.
- const g=c.createLinearGradient(541,0,640,0);g.addColorStop(0,'#459cab');g.addColorStop(.5,'#def6ef');g.addColorStop(1,'#459cab');
- c.fillStyle=g;c.fillRect(541,296,99,209);D.line(c,[[541,297],[541,505]],'#53bdd1',3);D.line(c,[[640,297],[640,505]],'#53bdd1',3);
- D.line(c,[[541,297],[570,274],[638,258]],'#53bdd1',3);D.line(c,[[640,297],[661,275],[680,264]],'#53bdd1',3);
- c.save();c.beginPath();c.ellipse(590,505,49,11,0,0,Math.PI);c.strokeStyle='#53bdd1';c.lineWidth=3;c.stroke();c.restore();
- D.text(c,['木質部','Xylem'],667,421,{color:'#287f95',size:24,max:230});
- D.text(c,['根部持續補水','Water supplied from roots'],590,548,{align:'center',color:'#1c3d34',size:22,max:390});
- const liquid=[[590,497],[590,298],[624,270],[680,254]],vapour=[[680,254],[739,232],[793,197],[798,153],[880,101]];
+ const gap=closed?4:52;
+ D.round(c,836-gap/2-31,422,31,34,15,'#91bd66','#668d47');D.round(c,836+gap/2,422,31,34,15,'#91bd66','#668d47');
+ const g=c.createLinearGradient(0,268,0,326);g.addColorStop(0,'#459cab');g.addColorStop(.5,'#def6ef');g.addColorStop(1,'#459cab');
+ c.fillStyle=g;c.fillRect(351,268,377,58);
+ // A lateral exit to mesophyll, not an upright pipe poking through an epidermis.
+ D.line(c,[[351,269],[632,269]],'#53bdd1',3);D.line(c,[[682,269],[728,269]],'#53bdd1',3);
+ D.line(c,[[351,326],[728,326]],'#53bdd1',3);
+ D.line(c,[[637,268],[641,257],[676,257]],'#82d3d0',5);
+ const phloem=c.createLinearGradient(0,339,0,365);phloem.addColorStop(0,'#f0b261');phloem.addColorStop(.5,'#ffe5b3');phloem.addColorStop(1,'#e69b46');
+ c.fillStyle=phloem;c.fillRect(351,339,377,26);D.line(c,[[351,339],[728,339]],'#bc8544',2);D.line(c,[[351,365],[728,365]],'#bc8544',2);
+ const liquid=[[363,298],[653,298],[653,267],[678,249]],vapour=[[678,249],[750,280],[799,344],[836,392],[836,470],[880,501]];
  function along(points,u){const lengths=points.slice(1).map((p,i)=>Math.hypot(p[0]-points[i][0],p[1]-points[i][1])),sum=lengths.reduce((a,b)=>a+b,0);let d=Math.max(0,Math.min(1,u))*sum,i=0;while(i<lengths.length-1&&d>lengths[i])d-=lengths[i++];const f=d/lengths[i];return[points[i][0]+(points[i+1][0]-points[i][0])*f,points[i][1]+(points[i+1][1]-points[i][1])*f];}
  // Matching phase at u=1: the leading molecule evaporates, then releases its neighbour.
  const phase=(t*rates[s.condition]*.32)%1,spacing=1/7,chain=[];
  for(let i=0;i<=7;i++){const u=(i+phase)*spacing;if(u<=1)chain.push({u,p:along(liquid,u)});}
- function hands(a,b,fade=1){c.save();c.globalAlpha=fade;c.strokeStyle='#c78f68';c.lineWidth=5;c.lineCap='round';const mx=(a[0]+b[0])/2+33,my=(a[1]+b[1])/2;
-  c.beginPath();c.moveTo(a[0]+12,a[1]+2);c.quadraticCurveTo(mx+5,a[1]+7,mx,my+2);c.stroke();
-  c.beginPath();c.moveTo(b[0]+12,b[1]+2);c.quadraticCurveTo(mx+5,b[1]-6,mx,my-2);c.stroke();
-  c.beginPath();c.ellipse(mx,my,7,6,-.3,0,Math.PI*2);c.fillStyle='#fff4db';c.fill();c.strokeStyle='#b68b62';c.lineWidth=1;c.stroke();
-  c.beginPath();c.moveTo(mx-4,my-1);c.lineTo(mx+3,my-1);c.moveTo(mx-4,my+2);c.lineTo(mx+3,my+2);c.stroke();
-  c.beginPath();c.ellipse(mx-6,my-3,3,2,.5,0,Math.PI*2);c.fill();c.stroke();c.restore();}
+ function hands(a,b,fade=1){
+  const angle=Math.atan2(b[1]-a[1],b[0]-a[0]),length=Math.hypot(b[0]-a[0],b[1]-a[1]);
+  c.save();c.globalAlpha=fade;c.translate(...a);c.rotate(angle);c.strokeStyle='#c78f68';c.lineWidth=4;c.lineCap='round';
+  const mid=length/2;
+  c.beginPath();c.moveTo(12,5);c.quadraticCurveTo(mid-5,19,mid,18);c.stroke();
+  c.beginPath();c.moveTo(length-12,5);c.quadraticCurveTo(mid+5,19,mid,18);c.stroke();
+  c.beginPath();c.ellipse(mid,18,7,6,0,0,Math.PI*2);c.fillStyle='#fff4db';c.fill();c.strokeStyle='#b68b62';c.lineWidth=1;c.stroke();
+  D.line(c,[[mid-4,17],[mid+3,17]],'#b68b62',1);D.line(c,[[mid-4,20],[mid+3,20]],'#b68b62',1);
+  c.beginPath();c.ellipse(mid-5,14,3,2,.5,0,Math.PI*2);c.fill();c.stroke();c.restore();
+ }
  for(let i=0;i<chain.length-1;i++)hands(chain[i].p,chain[i+1].p);
  const flying=closed?null:along(vapour,Math.min(1,phase*1.18));
  if(flying&&phase<.25)hands(chain.at(-1).p,flying,1-phase/.25);
  for(const {p} of chain)D.water(c,...p,19);
  if(!closed){D.water(c,...flying,19);for(let i=1;i<3;i++)D.water(c,...along(vapour,Math.min(1,(phase+i)/3)),15);}
- D.text(c,['牽手＝分子間吸引力（不是化學鍵）','Hands = attraction, not chemical bonds'],624,584,{align:'center',size:22,max:630});
- D.status(closed?['氣孔關閉使蒸散減少，水柱上升也減慢。','Closure reduces evaporation and slows the upward column.']:['葉內水分蒸發 → 水蒸氣由氣孔散出 → 牽動水柱向上補位。','Leaf water evaporates, vapour exits through the stoma, and the water column is pulled upward.']);
+ // Captions are drawn last in clear spaces, not over the moving liquid/vapour.
+ D.text(c,['木質部：沿葉脈運水','Xylem along the vein'],358,263,{color:'#287f95',size:22,max:270});
+ D.text(c,['韌皮部','Phloem'],540,359,{align:'center',color:'#865020',size:22,max:310});
+ D.text(c,['葉肉','Leaf cell'],744,211,{align:'center',color:'#506b57',size:22,max:150});D.line(c,[[725,216],[697,228]],'#718d62',2);
+ D.text(c,['葉內空氣間隙','Leaf air space'],479,419,{color:'#506b57',size:22,max:235});D.line(c,[[665,413],[755,373]],'#718d62',2);
+ D.text(c,closed?['關閉','Closed']:['氣孔','Stoma'],919,482,{align:'right',color:'#1c3d34',size:22,max:105});
+ D.text(c,['從葉柄持續補水','Supplied from the petiole'],358,482,{color:'#1c3d34',size:22,max:375});
+ D.text(c,['牽手＝互相吸引，非化學鍵','Hands show attraction, not bonds'],635,541,{align:'center',color:'#1c3d34',size:22,max:575});
+ D.status(closed?['氣孔關閉使蒸散減少；葉脈裡的液態水仍連續，移動趨勢減慢。','Closure reduces transpiration; liquid water in the leaf vein remains continuous and moves more slowly.']:['沿平躺葉脈運水 → 進入葉肉 → 蒸發成水蒸氣 → 從氣孔散出，牽動後方水分子補位。','Water follows the horizontal vein, enters mesophyll, evaporates and exits through the stoma, pulling neighbouring water molecules along.']);
 }
 const labText=[
  ['先預測：染液會出現在莖的哪一部分？','Predict where the coloured solution will appear in the stem.'],
@@ -262,7 +275,7 @@ const tabs=[
    surfaceSites:rootSurfaceSites(s.hairs==='damaged').length,entryRegions:[...new Set(rootSurfaceSites(s.hairs==='damaged').map(p=>p.kind))],
    transplant:s.view==='transplant'?s.compare:null})
  },
- {id:'transpiration',title:['水怎麼爬上高樹？','How does water rise in a tall tree?'],sub:['蒸散與氣孔','Transpiration and stomata'],hook:['高樹沒有心臟，把水拉到葉片的主要動力，竟和水「離開」葉片有關。','A tall tree has no heart. A major driver of upward water transport is water leaving its leaves.'],body:['根吸收的水沿木質部上升。葉內水分蒸發，再由氣孔散失，產生拉力；水分子彼此吸引，使連續水柱向上補位。蒸散是主要動力，毛細作用與根壓也有幫助，但不能把三者當成同等力量。缺水時，保衛細胞使氣孔趨向關閉，減少散失。','Water rises in xylem. Evaporation inside leaves and vapour loss through stomata create a pull; attraction between water molecules maintains a continuous column. Transpiration is the main driver. Capillarity and root pressure also contribute, but are not equally important. Guard cells can close stomata during water stress.'],closure:['比較風或濕度時只改一個因素；保持其他條件相同。蒸散不是葉片主動把水一顆顆「泵」上來。','Change one factor when comparing wind or humidity and hold others constant. Leaves do not actively pump water molecules upward one by one.'],sources:[source('stoma_open.png',['張開氣孔顯微照片','Open stoma micrograph'],97,'3-11A'),source('stoma_closed.png',['關閉氣孔顯微照片','Closed stoma micrograph'],97,'3-11B')],init:()=>({running:true,condition:'baseline'}),controls:s=>[{label:['和基準比較，每次改一項','Compare one change with the reference'],items:[choice(['基準條件','Reference'],'condition','baseline'),choice(['風較強','Stronger wind'],'condition','wind'),choice(['濕度較高','Higher humidity'],'condition','humid'),choice(['根部缺水','Water stress'],'condition','drought')]}],explain:s=>({title:['水柱上行，水蒸氣散出','Liquid water rises; vapour escapes'],text:({baseline:["水以液態在木質部中移動；在葉內蒸發後，水蒸氣經氣孔散出。\n\n蒸散：葉內水分蒸發並由氣孔散出，拉動連續水柱，是主要動力。\n毛細作用：水附著管壁、分子彼此吸引，幫助水在細管內上升；單靠它不足以送到高樹頂端。\n根壓（與滲透作用有關）：根部累積溶質，水跨膜進入，使木質部產生向上的推力；不能單獨解釋高樹運水。\n牽手是分子間吸引力的卡通比喻，不是化學鍵或真正的手。","Water rises as liquid in xylem, evaporates inside the leaf, and exits as vapour through the stoma.\n\nTranspiration: leaf evaporation and vapour loss pull the continuous water column upward; this is the main driver.\nCapillarity: attraction to tube walls and between water molecules helps water rise in narrow tubes, but cannot by itself supply a tall treetop.\nRoot pressure (linked to osmosis): solute accumulation promotes water entry into roots and creates an upward push in xylem; it cannot alone supply tall trees.\nHands are a cartoon metaphor for attraction, not chemical bonds or real hands."],wind:['其他條件相同且氣孔開放時，風加速移走葉面附近水蒸氣，通常促進蒸散。運動畫面只表示相對趨勢。','With other conditions unchanged and stomata open, wind removes vapour near the leaf and usually increases transpiration. Motion shows a qualitative trend only.'],humid:['空氣較潮濕時，葉片內外的水蒸氣差距較小，蒸散通常減慢。水柱不是被切斷，而是流動趨勢減弱。','Higher humidity reduces the vapour difference between leaf and air, usually slowing transpiration. The water column remains continuous.'],drought:['根部缺水可使氣孔趨向關閉，減少水分散失，也限制氣體交換；不能簡化成「白天一定開、晚上一定關」。','Water stress can promote stomatal closure, reducing water loss and restricting gas exchange. Stomata are not invariably open by day and closed by night.']})[s.condition]}),draw:transpire,check:s=>({qualitative:true,condition:s.condition})},
+ {id:'transpiration',title:['水怎麼爬上高樹？','How does water rise in a tall tree?'],sub:['蒸散與氣孔','Transpiration and stomata'],hook:['高樹沒有心臟，把水拉到葉片的主要動力，竟和水「離開」葉片有關。','A tall tree has no heart. A major driver of upward water transport is water leaving its leaves.'],body:['根吸收的水沿莖內木質部上升；進入葉片後，沿葉脈平行於葉面運送，再到葉肉細胞。葉內水分蒸發，再由氣孔散失，產生拉力；水分子彼此吸引，使連續水柱向上補位。蒸散是主要動力，毛細作用與根壓也有幫助，但不能把三者當成同等力量。缺水時，保衛細胞使氣孔趨向關閉，減少散失。','Water rises through stem xylem, then follows veins along the leaf blade and reaches mesophyll cells. Evaporation inside leaves and vapour loss through stomata create a pull; attraction between water molecules maintains a continuous column. Transpiration is the main driver. Capillarity and root pressure also contribute, but are not equally important. Guard cells can close stomata during water stress.'],closure:['比較風或濕度時只改一個因素；保持其他條件相同。蒸散不是葉片主動把水一顆顆「泵」上來。','Change one factor when comparing wind or humidity and hold others constant. Leaves do not actively pump water molecules upward one by one.'],sources:[source(atlas,['葉片維管束剖面原圖','Original leaf vascular-bundle cutaway'],89,'3-1'),source('stoma_open.png',['張開氣孔顯微照片','Open stoma micrograph'],97,'3-11A'),source('stoma_closed.png',['關閉氣孔顯微照片','Closed stoma micrograph'],97,'3-11B')],init:()=>({running:true,condition:'baseline'}),controls:s=>[{label:['和基準比較，每次改一項','Compare one change with the reference'],items:[choice(['基準條件','Reference'],'condition','baseline'),choice(['風較強','Stronger wind'],'condition','wind'),choice(['濕度較高','Higher humidity'],'condition','humid'),choice(['根部缺水','Water stress'],'condition','drought')]}],explain:s=>({title:['水柱上行，水蒸氣散出','Liquid water rises; vapour escapes'],text:({baseline:["先看左側課本原圖：葉脈沿葉面延伸，木質部在上、韌皮部在下。右側沿葉脈的縱剖模型，不把莖的直立管道直接插入葉片。水從葉柄送入，沿木質部移動，再到葉肉；在葉內蒸發後，水蒸氣經空氣間隙、氣孔散出。\n\n蒸散：葉內水分蒸發並由氣孔散出，拉動連續水柱，是主要動力。\n毛細作用：水附著管壁、分子彼此吸引，幫助水在細管內上升；單靠它不足以送到高樹頂端。\n根壓（與滲透作用有關）：根部累積溶質，水跨膜進入，使木質部產生向上的推力；不能單獨解釋高樹運水。\n牽手是分子間吸引力的卡通比喻，不是化學鍵或真正的手。","Compare the textbook figure on the left: veins follow the leaf blade, with xylem above phloem. The longitudinal model does not insert an upright stem tube into the leaf. Liquid water arrives through the petiole, follows xylem and reaches mesophyll; after evaporation, vapour moves through air spaces and exits through the stoma.\n\nTranspiration: leaf evaporation and vapour loss pull the continuous water column upward; this is the main driver.\nCapillarity: attraction to tube walls and between water molecules helps water rise in narrow tubes, but cannot by itself supply a tall treetop.\nRoot pressure (linked to osmosis): solute accumulation promotes water entry into roots and creates an upward push in xylem; it cannot alone supply tall trees.\nHands are a cartoon metaphor for attraction, not chemical bonds or real hands."],wind:['其他條件相同且氣孔開放時，風加速移走葉面附近水蒸氣，通常促進蒸散。運動畫面只表示相對趨勢。','With other conditions unchanged and stomata open, wind removes vapour near the leaf and usually increases transpiration. Motion shows a qualitative trend only.'],humid:['空氣較潮濕時，葉片內外的水蒸氣差距較小，蒸散通常減慢。水柱不是被切斷，而是流動趨勢減弱。','Higher humidity reduces the vapour difference between leaf and air, usually slowing transpiration. The water column remains continuous.'],drought:['根部缺水可使氣孔趨向關閉，減少水分散失，也限制氣體交換；不能簡化成「白天一定開、晚上一定關」。','Water stress can promote stomatal closure, reducing water loss and restricting gas exchange. Stomata are not invariably open by day and closed by night.']})[s.condition]}),draw:transpire,check:s=>({qualitative:true,condition:s.condition})},
  {id:'celeryLab',title:['紅色染液走哪條路？','Which route does red dye take?'],sub:['水分運輸實驗','Water-transport experiment'],hook:['染液讓看不見的水路顯形。先預測，再用橫切和縱切找證據。','Dye reveals an invisible water route. Predict first, then compare cross and longitudinal sections.'],body:['課本照片是金魚草：雙子葉植物，莖的維管束環狀排列；不是散生。立體剖面是教學模型，不代表實際維管束的數目。依實驗 3-2：準備紅色溶液、在水中切莖、浸入染液，約 30 分鐘後觀察，再由老師切片。實作也可選課本列出的芹菜等植物。','The textbook plant is snapdragon, a dicot with stem vascular bundles arranged in a ring, not scattered. The cutaway is a teaching model; bundle counts are illustrative. Experiment 3-2 uses red solution and an underwater stem cut, followed by about 30 minutes of observation and teacher-made sections. Celery is another permitted practical specimen.'],closure:['染色證據支持木質部運輸水分。不能只看植物變紅，就宣稱每一種組織都負責運水。','Stained tissue supports the role of xylem in water transport. A coloured plant does not prove that every tissue carries water.'],sources:[source('celery_whole.png',['染液中的金魚草','Snapdragon in dye'],96,'3-8'),source('stem_cross.png',['莖橫切觀察','Stem cross section'],96,'3-8B'),source('stem_long.png',['莖縱切觀察','Stem longitudinal section'],96,'3-8C')],init:()=>({running:true,step:0,start:0,prediction:'none'}),controls:s=>[{label:['先預測染色部位','Predict the stained tissue'],items:[choice(['木質部','Xylem'],'prediction','xylem'),choice(['整個莖','The entire stem'],'prediction','whole'),choice(['韌皮部','Phloem'],'prediction','phloem')]},{label:['依序操作','Follow the sequence'],items:[{...choice(['下一步','Next step'],'action','next'),disabled:s.prediction==='none'||s.step>=5},choice(['重新實驗','Restart'],'action','restart')]}],act(s,k,v){if(k!=='action')s[k]=v;else if(v==='restart')Object.assign(s,{step:0,prediction:'none',start:s.elapsed});else if(s.prediction!=='none'&&s.step<5){s.step++;s.start=s.elapsed;}},explain:s=>({title:s.step===5?['把預測與原圖證據比較','Compare your prediction with the evidence']:['實驗進度 · '+s.step+'/5','Experiment stage · '+s.step+'/5'],text:[labText[s.step][0]+'\n\n'+waterDrivers[0]+'\n\n本實驗用的是切下的莖，沒有根，不能把染液上升歸因於根壓。',labText[s.step][1]+'\n\n'+waterDrivers[1]+'\n\nThis experiment uses a cut stem with no roots; root pressure cannot explain its dye uptake.']}),draw:celery,check:s=>({step:s.step,actualWaitMinutes:30,volumeML:5,teacherBlade:true})},
  {id:'wholePlant',title:['讓整株植物動起來','Bring the whole plant to life'],sub:['吸收、製造與運輸','Uptake, production and transport'],hook:['水和糖不是同一條路。追蹤一種物質，把根、莖、葉的功能接起來。','Water and sugar do not share one transport route. Follow one substance to connect root, stem and leaf functions.'],body:['根吸水，木質部將水與礦物質送向地上部；葉綠體在光照等條件下製造養分。可運輸的蔗糖由韌皮部送到需要的部位，供生長、使用或儲藏。','Roots take up water; xylem carries water and minerals toward the shoots. Chloroplasts produce sugars under suitable conditions. Phloem distributes transportable sucrose for growth, use or storage.'],closure:['根不是從土裡吸收現成糖作主要食物來源；葉是主要光合作用器官，但儲藏器官也會供應新生部位。','Roots do not mainly obtain ready-made sugars as food from soil. Leaves are major photosynthetic organs, and storage organs can supply new growth.'],sources:[source(atlas,['根、莖、葉的維管束相連','Connected root, stem and leaf vascular bundles'],89,'3-1')],init:()=>({running:true,path:'water'}),controls:s=>[{label:['追蹤一條完整路線','Trace one complete route'],items:[choice(['水：根 → 葉','Water: root → leaf'],'path','water'),choice(['蔗糖：葉 → 根','Sucrose: leaf → root'],'path','sugarDown'),choice(['蔗糖：根 → 新芽','Sucrose: root → shoot'],'path','sugarUp')]}],explain:s=>({title:['位置、管道、方向一起看','Connect location, conduit and direction'],text:s.path==='water'?['水分子由根部上行，再進入葉的木質部。藍色表示木質部，不是把水畫成藍色原子；水分子沿用大氧、兩個小氫的辨識符號。','Water rises from roots and enters leaf xylem. Blue identifies xylem, not blue water atoms. Water symbols retain one oxygen and two smaller hydrogen spheres.']:['蔗糖用相接的六角形與五角形辨識。先找供應部位與需求部位，決定向上或向下的路線；橘色管道是韌皮部。','Touching hexagon and pentagon symbols identify sucrose. Locate the source and sink to determine upward or downward flow in orange phloem.']}),draw:whole,check:s=>({path:s.path,sucroseBidirectional:true})}
 ];

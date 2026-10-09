@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const framing = {
+    structure: { x: '48%', y: '57%', dx: '.6%', dy: '-.8%', scale: '1.18' },
     plant: { x: '55%', y: '60%', dx: '-1.2%', dy: '-.8%', scale: '1.18' },
     human: { x: '41%', y: '50%', dx: '1.1%', dy: '.4%', scale: '1.16' },
     immune: { x: '56%', y: '53%', dx: '-.8%', dy: '-.4%', scale: '1.18' },

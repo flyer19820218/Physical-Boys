@@ -44,7 +44,9 @@
     document.getElementById('sourceList').querySelectorAll('img').forEach((im,i)=>{const s=Object.values(M.sources)[i];im.dataset.altZh=s[3];im.dataset.altEn=s[4];});
     document.querySelectorAll('[data-tab]').forEach(e=>e.addEventListener('click',()=>switchTab(+e.dataset.tab)));
     document.querySelectorAll('[data-lang]').forEach(e=>e.addEventListener('click',()=>setLang(e.dataset.lang)));
-    document.getElementById('introScreen').addEventListener('click',()=>{document.getElementById('introScreen').hidden=true;});
+    const enterLesson=()=>{document.getElementById('introScreen').hidden=true;drawCurrent();};
+    if(window.LivingBookCover)window.LivingBookCover.mount(document.getElementById('introScreen'),{id:'structure',cover:PATH+'hollow_maple_native2.png'},enterLesson);
+    else document.getElementById('introScreen').addEventListener('click',enterLesson);
     document.querySelectorAll('[data-lab]').forEach(lab=>{
       const key=lab.dataset.lab,canvas=lab.querySelector('canvas');
       lab.querySelectorAll('[data-action]').forEach(e=>e.addEventListener('click',()=>act(key,e.dataset.action,e.dataset.value,e)));
