@@ -8,7 +8,20 @@
  function sugar(c,x,y,r=22,col=C.yellow){let g=c.createLinearGradient(x-r,y-r,x+r,y+r);g.addColorStop(0,'#fff2ac');g.addColorStop(.5,col);g.addColorStop(1,'#b89026');c.beginPath();for(let i=0;i<6;i++){let a=i*Math.PI/3-Math.PI/6;let xx=x+Math.cos(a)*r,yy=y+Math.sin(a)*r;i?c.lineTo(xx,yy):c.moveTo(xx,yy)}c.closePath();c.fillStyle=g;c.fill();c.strokeStyle='#fff0c1';c.lineWidth=2;c.stroke()}
  function amino(c,x,y,i=0,r=20){const cols=[C.pink,'#cfa9ed','#eeab76'];if(i%3===0)ball(c,x,y,r,cols[0]);else{c.save();c.translate(x,y);c.rotate(i%3===1?.2:-.2);round(c,-r,-r,r*2,r*2,i%3===1?5:18,cols[i%3],C.white);c.restore()}}
  function water(c,x,y,r=12){ball(c,x,y,r,C.pink);ball(c,x-r*.78,y-r*.67,r*.52,C.white);ball(c,x+r*.78,y-r*.67,r*.52,C.white)}
- function molecule(c,n,x,y,phase=0,small=false){if(n===0){let count=small?1:14;for(let i=0;i<count;i++){let xx=x+(i-(count-1)/2)*(small?0:22),yy=y+Math.sin(i*.85+phase)*8;sugar(c,xx,yy,small?24:16)}}else if(n===1){let count=small?1:12;for(let i=0;i<count;i++)amino(c,x+(i-(count-1)/2)*23,y+Math.sin(i*.8+phase)*16,i,small?22:16)}else if(small){ball(c,x-35,y,18,C.orange);for(let i=0;i<3;i++)round(c,x+2,y-35+i*25,70,14,7,C.orange,C.white)}else{ball(c,x,y,56,C.orange);for(let i=0;i<10;i++)round(c,x-30+(i%3)*21,y-25+Math.floor(i/3)*16,18,7,3,'#ffd9a8')}}
+ // Teacher-requested, original three-legged lipid mascot: the body stands for
+ // glycerol, each leg for one fatty acid. Separation preserves all four parts.
+ // This is a teaching metaphor, not an octopus or a literal molecular shape.
+ function lipid(c,x,y,split=0){c.save();c.translate(x,y);c.lineCap='round';c.lineJoin='round';
+  const q=A.clamp(split,0,1),paint=c.createLinearGradient(-50,-60,50,65);paint.addColorStop(0,'#ffd59b');paint.addColorStop(.55,C.orange);paint.addColorStop(1,'#d86e2e');
+  // Exactly three rounded legs. Their roots move away from the body, not vanish.
+  for(const side of [-1,0,1]){const i=side+1,rootX=side*30+(18+i*37-side*30)*q,rootY=-27*q;
+   c.save();c.translate(rootX,rootY);c.beginPath();c.moveTo(-10,-3);c.bezierCurveTo(-16,20,side*12-17,31,side*12-11,51);c.bezierCurveTo(side*12-8,68,side*12+15,64,side*12+12,48);c.bezierCurveTo(side*12+8,31,16,20,10,-3);c.closePath();c.fillStyle=paint;c.fill();c.strokeStyle='#824622';c.lineWidth=3.5;c.stroke();c.restore();}
+  c.save();c.translate(-55*q,0);c.beginPath();c.moveTo(-48,6);c.bezierCurveTo(-48,-22,-39,-59,-5,-60);c.bezierCurveTo(29,-64,49,-42,49,6);c.bezierCurveTo(34,14,-33,14,-48,6);c.closePath();c.fillStyle=paint;c.fill();
+  c.strokeStyle='#824622';c.lineWidth=3.5;if(q>0)c.stroke();else{c.beginPath();c.moveTo(-48,6);c.bezierCurveTo(-48,-22,-39,-59,-5,-60);c.bezierCurveTo(29,-64,49,-42,49,6);c.stroke();}
+  c.strokeStyle='#653b29';c.lineWidth=4;c.beginPath();c.moveTo(-26,-20);c.bezierCurveTo(-22,-29,-14,-29,-10,-20);c.moveTo(11,-20);c.bezierCurveTo(15,-29,23,-29,27,-20);c.moveTo(-12,-5);c.bezierCurveTo(-4,2,8,2,16,-6);c.stroke();
+  c.fillStyle='rgba(244,114,182,.42)';for(const side of [-1,1]){c.beginPath();c.ellipse(side*29,-8,7,4,0,0,Math.PI*2);c.fill();}c.restore();c.restore();
+ }
+ function molecule(c,n,x,y,phase=0,small=false){if(n===0){let count=small?1:14;for(let i=0;i<count;i++){let xx=x+(i-(count-1)/2)*(small?0:22),yy=y+Math.sin(i*.85+phase)*8;sugar(c,xx,yy,small?24:16)}}else if(n===1){let count=small?1:12;for(let i=0;i<count;i++)amino(c,x+(i-(count-1)/2)*23,y+Math.sin(i*.8+phase)*16,i,small?22:16)}else if(small){c.save();c.translate(x,y);c.scale(.64,.64);lipid(c,0,0,1);c.restore()}else lipid(c,x,y)}
  function pill(c,t,x,y,w,color=C.teal){c.font='700 24px "Noto Sans TC"';const lines=linesFor(c,t,w-16),h=48+Math.max(0,lines.length-1)*32.4;round(c,x,y,w,h,12,C.deep,color);text(c,t,x+w/2,y+24,24,color,'center',w-16);return{x,y,w,h,lines}}
  function digestion(c,s,tr,time){bg(c);text(c,tr('先分清楚：顆粒變小，還是分子分解？','Smaller food particles—or smaller molecules?'),480,44,28,C.yellow,'center',900);let n=s.nutrient;
   round(c,40,104,880,444,24,'rgba(11,26,21,.40)','#638579');text(c,A.nutrients[n].name.map((v,i)=>i===s.langIndex?v:null).filter(Boolean)[0],480,147,28,A.nutrients[n].color);
@@ -51,10 +64,9 @@
   if(e===0||q<.05)molecule(c,n,480,322,time*.15);
   else if(e===2){let r=56/Math.cbrt(9),spread=q*155;for(let i=0;i<9;i++){let a=i*Math.PI*2/9;ball(c,480+Math.cos(a)*spread,325+Math.sin(a)*spread,r,C.orange)}text(c,tr('油滴變小；脂質分子不變','Smaller droplets; unchanged fat molecules'),480,513,24,C.orange,'center',800)}
   else if(n<2){const units=A.digestUnits(n,f,s.fluidProgress),fragmented=n===0&&(f===0||f===3)||n===1&&f===1;for(const u of units){if(n===0)sugar(c,u.x,u.y,18);else amino(c,u.x,u.y,u.index,16)}text(c,q<.9?tr('分子逐步分解，單元數量不憑空增加','Molecules break down; their units are conserved'):fragmented?tr('片段仍需進一步消化','Fragments still need further digestion'):tr(...A.nutrients[n].unit),480,513,24,C.green,'center',800)}
-  else if(q<.55){for(let j=0;j<3;j++){c.save();c.translate(230+j*250,325);c.scale(.55,.55);molecule(c,n,0,0);c.restore()}text(c,tr('初步分解成較小片段','Initial breakdown into smaller fragments'),480,513,24,C.teal,'center',800)}
-  else{const final=(n===0&&(f===0||f===3))||(n===1&&f===1);for(let j=0;j<6;j++){let x=210+(j%3)*270,y=270+Math.floor(j/3)*120;if(final){if(n===0){sugar(c,x-17,y,20);sugar(c,x+17,y,20)}else{for(let i=0;i<4;i++)amino(c,x+(i-1.5)*23,y,i,15)}}else molecule(c,n,x,y,0,true)}text(c,final?tr('片段仍需進一步消化','Fragments still need further digestion'):tr(...A.nutrients[n].unit),480,513,24,C.green,'center',800)}
+  else{lipid(c,480,322,A.clamp((q-.05)/.85,0,1));text(c,q<.9?tr('三條脂肪酸逐步分離','Three fatty-acid chains separate'):tr(...A.nutrients[n].unit),480,513,24,C.green,'center',800)}
   if(e===0)text(c,tr('本課模型：此消化液不作用於這種養分','Course model: this fluid does not act on this nutrient'),480,513,24,C.orange,'center',800);
-  if(n===2&&e===1&&q>=.55)text(c,tr('球：甘油；條形：脂肪酸（形狀示意）','Ball: glycerol; bars: fatty acids (shape symbols)'),480,565,22,C.teal,'center',870);
+  if(n===2&&e===1&&q>=.05)text(c,tr('主體：甘油；三隻腳：脂肪酸（造型示意）','Body: glycerol; three legs: fatty acids (teaching symbols)'),480,565,22,C.teal,'center',870);
   text(c,tr('教學分段，非實測時間或分子比例。','Teaching stages—not measured time or molecular scale.'),480,607,22,C.muted,'center',870);
  }
  function peristalsis(c,s,tr){bg(c);const p=A.peristalsis(s.peristalsis/100),cy=325;const half=x=>85-57*Math.exp(-Math.pow(x-p.wave,2)/1800);
