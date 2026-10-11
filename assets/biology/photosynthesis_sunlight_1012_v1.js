@@ -8,6 +8,16 @@
 })(typeof window==='object'?window:globalThis,function(base){'use strict';
  const W=960,H=620,SW=384,SH=576,COLS=10,ROWS=22,cache=new WeakMap();
  const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n)),tr=(l,z,e)=>l==='zh'?z:e;
+ const smooth=(a,b,n)=>{const p=clamp((n-a)/(b-a));return p*p*(3-2*p);};
+ function lighting(progress){
+  // Seven complete 24-hour cycles, starting at 08:00. The sun is never drawn.
+  const p=clamp(progress),phase=(p*7+1/3)%1,elevation=Math.sin((phase-.25)*Math.PI*2);
+  const daylight=smooth(-.12,.32,elevation),direct=smooth(0,.16,elevation);
+  const dayPhase=clamp((phase-.25)*2),lightX=Math.cos(dayPhase*Math.PI),height=Math.max(0,elevation);
+  return {phase,dayPhase,day:Math.min(7,Math.floor(p*7)+1),elevation,daylight,direct,lightX,
+   shadowShear:lightX*(.18+1.16*(1-height)),shadowDepth:.045+.19*(1-height),
+   shadowOpacity:.58*direct,warmth:direct*(1-smooth(.12,.75,height)),night:elevation<0};
+ }
  function surface(c,images,w,h){
   const cv=images.canvasFactory?images.canvasFactory(w,h):typeof document!=='undefined'?document.createElement('canvas'):new OffscreenCanvas(w,h);
   cv.width=w;cv.height=h;return cv;
@@ -48,45 +58,52 @@
   const minX=Math.max(0,Math.floor(Math.min(s0.x,s1.x,s2.x))-1),minY=Math.max(0,Math.floor(Math.min(s0.y,s1.y,s2.y))-1),maxX=Math.min(SW,Math.ceil(Math.max(s0.x,s1.x,s2.x))+1),maxY=Math.min(SH,Math.ceil(Math.max(s0.y,s1.y,s2.y))+1);
   c.drawImage(im,minX,minY,maxX-minX,maxY-minY,minX,minY,maxX-minX,maxY-minY);c.restore();
  }
- function plantFrame(item,t,daylight,phase){
+ function plantFrame(item,t,light){
+  const {direct,dayPhase,lightX,warmth}=light;
   const pc=item.plant.getContext('2d');pc.clearRect(0,0,item.plant.width,item.plant.height);
   const points=[];for(let row=0;row<=ROWS;row++){const line=[];for(let col=0;col<=COLS;col++){const x=col*SW/COLS,y=row*SH/ROWS;line.push({s:{x,y},d:pose(x,y,t)});}points.push(line);}
   for(let row=0;row<ROWS;row++)if(row*SH/ROWS<455)for(let col=0;col<COLS;col++){const a=points[row][col],b=points[row][col+1],cc=points[row+1][col+1],d=points[row+1][col];triangle(pc,item.texture,a.s,b.s,cc.s,a.d,b.d,cc.d);triangle(pc,item.texture,a.s,cc.s,d.s,a.d,cc.d,d.d);}
   // Stationary pot bypasses the mesh entirely: no triangulation seams across the ceramic.
   pc.clearRect(0,463,SW+32,SH+16-463);pc.drawImage(item.texture,0,455,SW,SH-455,16,463,SW,SH-455);
   pc.save();pc.globalCompositeOperation='source-atop';
-  const shade=pc.createLinearGradient(0,0,SW,SH);shade.addColorStop(0,`rgba(255,218,137,${.11*daylight})`);shade.addColorStop(.52,'rgba(255,234,177,.03)');shade.addColorStop(1,`rgba(21,42,30,${.12*(1-daylight)})`);pc.fillStyle=shade;pc.fillRect(0,0,SW+32,SH+16);
+  // Light-facing side brightens; the opposite side darkens, including the flowerpot.
+  const shade=pc.createLinearGradient(0,0,SW+32,0),right=lightX>=0;
+  const lit=`rgba(255,${Math.round(234-35*warmth)},151,${.11*direct})`,dark=`rgba(14,34,25,${.22*direct*Math.abs(lightX)})`;
+  shade.addColorStop(0,right?dark:lit);shade.addColorStop(.5,'rgba(255,234,177,0)');shade.addColorStop(1,right?lit:dark);pc.fillStyle=shade;pc.fillRect(0,0,SW+32,SH+16);
   // Soft moving patches on the leaf surfaces, not cartoon rays drawn over them.
-  for(let i=0;i<4;i++){const xx=60+phase*260+i*45,yy=75+i*80+10*Math.sin(t*1.2+i),g=pc.createRadialGradient(xx,yy,1,xx,yy,60);g.addColorStop(0,`rgba(255,241,183,${.16*daylight})`);g.addColorStop(1,'rgba(255,241,183,0)');pc.fillStyle=g;pc.fillRect(xx-60,yy-60,120,120);}pc.restore();
+  for(let i=0;i<4;i++){const xx=60+dayPhase*260+i*45,yy=75+i*80+10*Math.sin(t*1.2+i),g=pc.createRadialGradient(xx,yy,1,xx,yy,60);g.addColorStop(0,`rgba(255,241,183,${.16*direct})`);g.addColorStop(1,'rgba(255,241,183,0)');pc.fillStyle=g;pc.fillRect(xx-60,yy-60,120,120);}pc.restore();
   const sc=item.shadow.getContext('2d');sc.clearRect(0,0,item.shadow.width,item.shadow.height);sc.drawImage(item.plant,0,0);sc.globalCompositeOperation='source-in';sc.fillStyle='#172b20';sc.fillRect(0,0,item.shadow.width,item.shadow.height);sc.globalCompositeOperation='source-over';return item.plant;
  }
- function background(c,image,daylight,phase){
+ function background(c,image,light){
+  const {direct,dayPhase,lightX,warmth}=light;
   c.clearRect(0,0,W,H);c.fillStyle='#1c3d34';c.fillRect(0,0,W,H);
   if(image){const s=Math.max(W/image.width,H/image.height),w=image.width*s,h=image.height*s;c.drawImage(image,(W-w)/2,(H-h)/2,w,h);}
-  c.fillStyle=`rgba(8,29,24,${.56*(1-daylight)})`;c.fillRect(0,0,W,H);
-  const sunX=1050-990*phase,sunY=-160+70*Math.sin(phase*Math.PI);
-  const glow=c.createRadialGradient(sunX,sunY,30,sunX,sunY,1000);glow.addColorStop(0,`rgba(255,224,153,${.4*daylight})`);glow.addColorStop(.6,`rgba(255,226,164,${.11*daylight})`);glow.addColorStop(1,'rgba(255,230,180,0)');c.fillStyle=glow;c.fillRect(0,0,W,H);
+  const sunX=480+570*lightX,sunY=-180;
+  const glow=c.createRadialGradient(sunX,sunY,30,sunX,sunY,1000);glow.addColorStop(0,`rgba(255,${Math.round(236-50*warmth)},153,${.38*direct})`);glow.addColorStop(.6,`rgba(255,226,164,${.11*direct})`);glow.addColorStop(1,'rgba(255,230,180,0)');c.fillStyle=glow;c.fillRect(0,0,W,H);
   // Sunlight crossing the table: diffuse oblique bands that sweep with the solar direction.
   c.save();c.beginPath();c.rect(0,452,W,H-452);c.clip();c.filter='blur(12px)';
-  const sweep=phase*350;for(let i=0;i<5;i++){c.beginPath();c.moveTo(i*280-430+sweep,452);c.lineTo(i*280-310+sweep,452);c.lineTo(i*280-110+sweep,620);c.lineTo(i*280-230+sweep,620);c.closePath();c.fillStyle=`rgba(255,235,169,${.16*daylight})`;c.fill();}c.restore();
+  const sweep=dayPhase*350;for(let i=0;i<5;i++){c.beginPath();c.moveTo(i*280-430+sweep,452);c.lineTo(i*280-310+sweep,452);c.lineTo(i*280-110+sweep,620);c.lineTo(i*280-230+sweep,620);c.closePath();c.fillStyle=`rgba(255,235,169,${.16*direct})`;c.fill();}c.restore();
  }
  function lightExposure(c,u,l,images){
-  const m=u.lab.motion,p=m?clamp(m.t/m.duration):0,t=m?m.t:0,phase=m?(p*7)%1:.35;
-  const daylight=.2+.8*Math.pow(Math.max(0,Math.sin(Math.PI*phase)),.55);
-  background(c,images.sunlitGarden,daylight,phase);
+  const m=u.lab.motion,p=m?clamp(m.t/m.duration):0,t=m?m.t:0,light=lighting(p);
+  background(c,images.sunlitGarden,light);
   const item=prepare(c,images),x=307,y=70,scale=.865;
-  if(item){const frame=plantFrame(item,t,daylight,phase);
-   c.save();c.beginPath();c.rect(0,452,960,168);c.clip();c.globalAlpha=.23*daylight;c.filter='blur(4px)';c.translate(480,571);c.transform(1,.03,(1-phase*2)*1.05,-.2,0,0);c.drawImage(item.shadow,-(192+16)*scale,-(566+8)*scale,item.shadow.width*scale,item.shadow.height*scale);c.restore();
+  if(item){const frame=plantFrame(item,t,light),baseX=208,baseY=574,groundX=x+baseX*scale,groundY=y+baseY*scale;
+   // Project the same plant-and-pot silhouette from its real contact point.
+   // Positive lightX means light on the right and a shadow extending to the left.
+   c.save();c.beginPath();c.rect(0,400,960,220);c.clip();c.globalAlpha=light.shadowOpacity;c.filter=`blur(${2+4*(1-Math.max(0,light.elevation))}px)`;c.translate(groundX,groundY);c.transform(1,0,light.shadowShear,light.shadowDepth,0,0);c.drawImage(item.shadow,-baseX*scale,-baseY*scale,item.shadow.width*scale,item.shadow.height*scale);c.restore();
    // Contact shadow is fixed at the pot base while the foliage's cast shadow changes.
-   c.save();c.fillStyle='rgba(21,39,26,.26)';c.filter='blur(5px)';c.beginPath();c.ellipse(479,566,65,8,0,0,Math.PI*2);c.fill();c.restore();
+   c.save();c.fillStyle='rgba(21,39,26,.26)';c.filter='blur(5px)';c.beginPath();c.ellipse(groundX,groundY,65,8,0,0,Math.PI*2);c.fill();c.restore();
    c.drawImage(frame,x,y,frame.width*scale,frame.height*scale);
   }else base.lab(c,u,l,images);
+  // Night affects the WHOLE scene, including the pot and foil, not only the backdrop.
+  // Keep enough ambient detail to see the plant; direct sunlight/shadows vanish at night.
+  c.fillStyle=`rgba(9,20,34,${.92*(1-light.daylight)})`;c.fillRect(0,0,W,H);
   const mask=c.createLinearGradient(0,0,0,620);mask.addColorStop(0,'rgba(11,26,21,.85)');mask.addColorStop(.17,'rgba(11,26,21,0)');mask.addColorStop(.82,'rgba(11,26,21,0)');mask.addColorStop(1,'rgba(11,26,21,.88)');c.fillStyle=mask;c.fillRect(0,0,960,620);
-  base.label(c,tr(l,'陽光縮時 · 葉片隨風擺動','Sunlight time-lapse · leaves in the breeze'),480,34,'#fde047',28);
-  const day=m?Math.min(7,Math.floor(p*7)+1):1;
-  base.label(c,tr(l,'第 '+day+' 天','Day '+day),814,97,'#f2ecd9',24);
+  base.label(c,tr(l,'晝夜縮時 · 葉片隨風擺動','Day–night time-lapse · leaves in the breeze'),480,34,'#fde047',28);
+  base.label(c,tr(l,'第 '+light.day+' 天 · '+(light.night?'夜晚':'白天'),'Day '+light.day+' · '+(light.night?'Night':'Daytime')),800,97,'#f2ecd9',24);
   base.label(c,tr(l,'5～7 天壓縮呈現 · AI 縮時模擬，非實拍','5–7 days compressed · AI time-lapse simulation, not footage'),480,598,'#f2ecd9',22);
  }
  function lab(c,u,l,images={}){if(u.lab.step===1&&images.pottedPlant&&images.sunlitGarden){lightExposure(c,u,l,images);return;}base.lab(c,u,l,images);}
- return {...base,lab,sunlightPose:pose};
+ return {...base,lab,sunlightPose:pose,sunlightLighting:lighting};
 });
