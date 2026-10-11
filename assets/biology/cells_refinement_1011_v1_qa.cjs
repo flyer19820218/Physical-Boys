@@ -18,14 +18,14 @@ async function main(){
  const originalGallery=gallerySrc();
  check('Diagram/photo switching, structure identification, photo panning and all seven original gallery images',()=>{
   const bench=id('shapeBench'),stage=bench.querySelector('.cell-photo-stage'),img=stage.querySelector('img'),modes=id('neuronMediaChoices'),features=bench.querySelector('.neuron-feature-controls');
-  assert(img.src.endsWith('neuron_long_fibers_1011_v1.png'));assert(!modes.hidden);
+  assert(img.src.endsWith('neuron_long_fibers_1011_v2.png'));assert(!modes.hidden);
   for(const b of features.children){b.click();assert(!bench.querySelector('.cell-part-marker').hidden);assert(id('shapeInfo').textContent.includes(b.textContent));}
   const ev=(type,p,x)=>stage.dispatchEvent(new E.Ev(type,{pointerId:p,clientX:x,clientY:100,pointerType:'touch'}));
   ev('pointerdown',1,100);ev('pointerdown',2,200);ev('pointermove',2,300);assert.equal(stage.dataset.zoom,'2');ev('pointerup',1,100);ev('pointerup',2,300);
   bench.querySelector('.cell-photo-controls button').click();assert.equal(stage.dataset.zoom,'1');
   modes.children[1].click();assert(img.src.endsWith('neuron_fluorescence_v2.jpg'));assert(bench.querySelector('.cell-part-marker').hidden);assert(features.hidden);assert(id('shapeInfo').textContent.includes('GFP'));
   lang('en');assert(bench.querySelector('.lens-title').textContent.includes('Real micrograph'));assert.deepEqual(gallerySrc(),originalGallery);lang('zh');
-  id('shapeChoices').children[1].click();assert(modes.hidden);assert(img.src.endsWith('muscle_v2.jpg'));id('shapeChoices').children[0].click();assert(!modes.hidden);modes.children[0].click();assert(img.src.endsWith('neuron_long_fibers_1011_v1.png'));
+  id('shapeChoices').children[1].click();assert(modes.hidden);assert(img.src.endsWith('muscle_v2.jpg'));id('shapeChoices').children[0].click();assert(!modes.hidden);modes.children[0].click();assert(img.src.endsWith('neuron_long_fibers_1011_v2.png'));
   assert.equal(originalGallery.length,7);assert.deepEqual(gallerySrc(),originalGallery);assert(!originalGallery.some(s=>s.includes('neuron_long')));
  });
  check('Every specimen completes every preparation action in both languages; busy state is explicit and repeat clicks cannot skip steps',()=>{
@@ -54,6 +54,15 @@ async function main(){
   // Byte-identical renderer proves ALL coordinate values and animation geometry are identical.
   protection={drawingFileByteIdentical:true,allCoordinatesIdentical:true,unchangedLifecycleFunctions:5};
  }
+ const sharp=require('/Users/lvyanjun/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');
+ const asset=path.join(base,'assets/biology/neuron_long_fibers_1011_v2.png'),meta=await sharp(asset).metadata();
+ const {data:pixels,info}=await sharp(asset).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+ check('Neuron PNG has genuine alpha transparency; corners are clear and the soma remains visible',()=>{
+  assert(meta.hasAlpha);assert.equal(meta.width,2098);assert.equal(meta.height,749);
+  for(const n of [3,info.width*4-1,pixels.length-1,pixels.length-info.width*4+3])assert.equal(pixels[n],0);
+  const soma=(Math.round(info.height*.489)*info.width+Math.round(info.width*.823))*4;assert(pixels[soma+3]>200);
+  assert(read('assets/biology/cells_refinement_1011_v1.css').includes('[data-illustration=true] {background:transparent}'));
+ });
  // Native rendering of the protected mounting steps validates geometry and nonempty frames.
  const drawScope={};vm.runInNewContext(read('assets/biology/cells_draw_v1.js'),drawScope);const D=drawScope.CellsDrawV1;
  const {createCanvas}=require('/Users/lvyanjun/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/@napi-rs/canvas');
