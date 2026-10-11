@@ -24,6 +24,9 @@
   };
   const materials=[['onion','洋蔥鱗葉內表皮','Onion inner epidermis'],['cheek','口腔皮膜','Cheek epithelium'],['elodea','水蘊草葉片','Elodea leaf']];
   const steps=[['滴液','Add liquid'],['放置薄標本','Place a thin specimen'],['斜放蓋玻片','Lower coverslip at an angle'],['吸去多餘液體','Remove excess liquid'],['低倍開始觀察','Start at low power']];
+  const operationKeys=document.createElement('div');operationKeys.id='mountOperationKeys';operationKeys.className='mount-operation-keys';
+  $('mountNext').before(operationKeys);
+  const operationButtons=steps.map((s,i)=>{const b=document.createElement('button');b.type='button';b.className='action-btn';b.dataset.mountStep=String(i);b.addEventListener('click',()=>{if(!mount.busy&&mount.step===i)$('mountNext').click();});operationKeys.append(b);return b;});
   function button(zh,en,handler){const b=document.createElement('button');b.type='button';b.className='choice';b.dataset.zh=zh;b.dataset.en=en;b.textContent=tr(zh,en);b.addEventListener('click',handler);return b;}
   function active(container,value,get){$(container).querySelectorAll('button').forEach((b,i)=>{const on=get(i)===value;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));});}
   function info(id,title,text){const el=$(id),h=document.createElement('h4'),p=document.createElement('p');h.textContent=title;p.textContent=text;el.replaceChildren(h,p);}
@@ -44,7 +47,9 @@
     $('mountMaterial').textContent=mount.material==='elodea'?tr('清水＋薄葉片；保留葉綠體原有綠色。','Water and a thin leaf; retain natural green chloroplasts.'):tr('依老師講義：先滴一滴亞甲藍，再放標本。','Follow the handout: methylene blue first, then the specimen.');
     const list=$('mountSteps');list.replaceChildren();steps.forEach((s,i)=>{const li=document.createElement('li');li.textContent=tr(...s);li.className=i<mount.step?'done':i===mount.step?'current':'';list.append(li);});
     const next=$('mountNext');next.disabled=mount.busy||mount.step>=5;
-    next.textContent=mount.badCover?tr('重新斜放蓋玻片','Lower coverslip correctly'):mount.step>=5?tr('玻片完成','Slide complete'):tr(...steps[mount.step]);
+    next.textContent=mount.busy?tr('操作中：','In progress: ')+tr(...steps[mount.step-1]):mount.badCover?tr('重新斜放蓋玻片','Lower coverslip correctly'):mount.step>=5?tr('玻片完成','Slide complete'):tr('下一步：','Next: ')+tr(...steps[mount.step]);
+    next.setAttribute('aria-busy',String(mount.busy));
+    operationButtons.forEach((b,i)=>{b.textContent=(i+1)+'. '+tr(...steps[i]);b.disabled=mount.busy||mount.step!==i;b.classList.toggle('active',mount.step===i&&!mount.busy);b.classList.toggle('done',i<mount.step-(mount.busy?1:0));b.setAttribute('aria-current',mount.step===i?'step':'false');});
     $('mountBadCover').disabled=mount.busy||mount.step!==2||mount.badCover;
     const msg=[
       ['乾淨載玻片準備好了。先滴一滴液體。','Clean slide ready. Add one drop first.'],
