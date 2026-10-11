@@ -1,5 +1,5 @@
 /* Teacher-authorized change: only the outdoor light-exposure shot.
- * Same plant/foil, same six-second model action, same subsequent eight-step lab.
+ * Same plant/foil, same six-second action and sway; only dawn/dusk fades slow down.
  * AI background + deterministic time-lapse simulation, never documentary footage. */
 (function(root,factory){
  const base=typeof module==='object'&&module.exports?require('./photosynthesis_teacher_lab_1011_v1.js'):root.PhotosynthesisDraw;
@@ -12,7 +12,11 @@
  function lighting(progress){
   // Seven complete 24-hour cycles, starting at 08:00. The sun is never drawn.
   const p=clamp(progress),phase=(p*7+1/3)%1,elevation=Math.sin((phase-.25)*Math.PI*2);
-  const daylight=smooth(-.12,.32,elevation),direct=smooth(0,.16,elevation);
+  // Stretch each original dawn/dusk fade to twice its phase span, without slowing
+  // the seven-day clock, wind motion, solar direction, or the six-second action.
+  const dawnCenter=.25+(Math.asin(-.12)+Math.asin(.32))/(Math.PI*4),fadeCenter=phase<.5?dawnCenter:1-dawnCenter;
+  const fadePhase=fadeCenter+(phase-fadeCenter)/2;
+  const daylight=smooth(-.12,.32,Math.sin((fadePhase-.25)*Math.PI*2)),direct=smooth(0,.16,elevation);
   const dayPhase=clamp((phase-.25)*2),lightX=Math.cos(dayPhase*Math.PI),height=Math.max(0,elevation);
   return {phase,dayPhase,day:Math.min(7,Math.floor(p*7)+1),elevation,daylight,direct,lightX,
    shadowShear:lightX*(.18+1.16*(1-height)),shadowDepth:.045+.19*(1-height),
@@ -85,7 +89,7 @@
   const sweep=dayPhase*350;for(let i=0;i<5;i++){c.beginPath();c.moveTo(i*280-430+sweep,452);c.lineTo(i*280-310+sweep,452);c.lineTo(i*280-110+sweep,620);c.lineTo(i*280-230+sweep,620);c.closePath();c.fillStyle=`rgba(255,235,169,${.16*direct})`;c.fill();}c.restore();
  }
  function lightExposure(c,u,l,images){
-  const m=u.lab.motion,p=m?clamp(m.t/m.duration):0,t=m?m.t:0,light=lighting(p);
+  const m=u.lab.motion,complete=u.lab.step===2&&!m,p=m?clamp(m.t/m.duration):complete?1:0,t=m?m.t:complete?6:0,light=lighting(p);
   background(c,images.sunlitGarden,light);
   const item=prepare(c,images),x=307,y=70,scale=.865;
   if(item){const frame=plantFrame(item,t,light),baseX=208,baseY=574,groundX=x+baseX*scale,groundY=y+baseY*scale;
@@ -104,6 +108,7 @@
   base.label(c,tr(l,'第 '+light.day+' 天 · '+(light.night?'夜晚':'白天'),'Day '+light.day+' · '+(light.night?'Night':'Daytime')),800,97,'#f2ecd9',24);
   base.label(c,tr(l,'5～7 天壓縮呈現 · AI 縮時模擬，非實拍','5–7 days compressed · AI time-lapse simulation, not footage'),480,598,'#f2ecd9',22);
  }
- function lab(c,u,l,images={}){if(u.lab.step===1&&images.pottedPlant&&images.sunlitGarden){lightExposure(c,u,l,images);return;}base.lab(c,u,l,images);}
+ // Hold the outdoor final frame until the teacher starts the indoor leaf-removal action.
+ function lab(c,u,l,images={}){if((u.lab.step===1||(u.lab.step===2&&!u.lab.motion))&&images.pottedPlant&&images.sunlitGarden){lightExposure(c,u,l,images);return;}base.lab(c,u,l,images);}
  return {...base,lab,sunlightPose:pose,sunlightLighting:lighting};
 });

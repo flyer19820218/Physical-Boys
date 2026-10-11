@@ -53,3 +53,15 @@ Use case: photorealistic-natural. Asset type: background plate for an interactiv
 - 實際 Codex 瀏覽器截到白天與夜晚；中文及英文間隔約 1 秒截圖皆有變化，兩語暫停截圖皆完全相同；切換語言保留步驟與暫停。完成後可接取葉，再到沸水軟化。console warning/error 為 0，字型載入錯誤提示隱藏。
 - 瀏覽器白天／夜晚畫面：`/private/tmp/photosynthesis_daynight_browser_2.png`、`/private/tmp/photosynthesis_daynight_browser_3.png`。本次原生接觸表與結果更新在 `/private/tmp/photosynthesis_sunlight_1012_v1/`。
 - 全螢幕 CSS、畫布比例與控制欄未改，本次實際瀏覽器播放可見按鍵不被遮擋；前版 12 尺寸 × 雙語的版面檢查紀錄仍保留。實機 iPad／Safari 未驗證。
+
+## 僅放慢天亮／天暗漸變、保留最後背景（daynight4）
+
+老師澄清：「天亮和天暗的速度調慢一點，其他的不變」。因此不是把照光總時間加倍。未發布的 12 秒試改已完整撤回：原模型與舊回歸測試恢復原樣，照光仍為 6 秒、其他步驟仍為 4 秒。
+
+- 只把原有黎明／黃昏亮度曲線的時間跨度伸長為兩倍，保持原曲線形狀。七天時鐘、光源方向、投影速率、莖葉擺動、明夜亮度上限／下限都不改。
+- 原問題是 step 1 結束後立刻由 step 2 的待命畫面覆蓋庭院背景。現在待命時完整保留照光的最後一幀；只有按下「取葉、除鋁箔」才交回原本搬入實驗室的動畫，不改該動作。
+- 新本機預覽：`biology_photosynthesis_dawn_dusk_preview_1012_v4.html`；正式頁僅更新日照模組快取，沒有改模型、UI 或 CSS。
+- 原生測試：黎明及黃昏各 21 個取樣點證明漸變精確延長兩倍；101 個時點的其他光照／投影參數與前版完全一致。六個植物／背景繪製函式原始碼逐字相同，座標與擺動速率沒有變更。
+- 72 張雙語縮時畫面與 62 張非修改狀態的逐像素回歸通過。兩語完成後的待命畫面與最後一幀 byte 完全相同，停留後不動；按下取葉仍與原圖逐像素相同。原模型 SHA-256 未變；文字越界為 0。
+- 實際 Codex 瀏覽器：中英播放各間隔 1 秒有像素變化，兩語暫停各間隔 1 秒完全相同；完成後庭院仍在、取葉按鍵可用。console warning/error 為 0。最後背景畫面：`/private/tmp/photosynthesis_finished_bg_1012_v4.png`。
+- V5 框架、控制欄、字級、來源標記均未改；本機 Noto Sans TC／JetBrains Mono 仍沿用。實機 iPad／Safari 未測。
