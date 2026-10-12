@@ -46,7 +46,8 @@
 - 瀏覽器實際解碼影片：H.264，696 × 520，100.1 秒，播放倍率 1；readyState 4，影片 error 為空，播放時間前進。影片全長 FFmpeg 解碼亦通過。
 - 瀏覽器 12 種尺寸（iPad Pro 13/12.9/11、Air、10.2、mini 的橫直參考 CSS 尺寸）× 2 語言 × 3 畫面，共 72 案例：畫面均在視窗內、不蓋控制欄、可見按鍵中心點命中正確按鍵、零橫向溢位。
 - 原 `AnimalDraw.use` 全函式、其他繪圖／酵素／吸收幾何／故事秒數／原版 CSS 均以逐字比對確認未更動；本次是老師授權替換此一場景，不宣稱只改樣式。
-- 本機預覽：`biology_animal_nutrition_evidence_preview_1012_v4.html`；原片與 JSON 授權證據、本次前版保存在 `local-backups/20261012-nutrient-evidence-pre.Y6Y49A/`。成品、檢查報告與截圖備份於 `local-backups/20261012-nutrient-evidence-final.f3swb4/`。
+- 本機預覽：`biology_animal_nutrition_evidence_preview_1012_v5.html`；原片與 JSON 授權證據、本次前版保存在 `local-backups/20261012-nutrient-evidence-pre.Y6Y49A/`。成品、檢查報告與截圖備份於 `local-backups/20261012-nutrient-evidence-final.f3swb4/`。
+- 實際瀏覽器確認：全域暫停停止影片、影片播放鍵可獨立使用；雙語及全螢幕重新排版後保留影片時間。播放成功隱藏提示，不讓已移除的舊播放器覆寫新提示。
 - 實機 iPad、Safari 尚未驗證，不以桌面 CSS 尺寸模擬冒稱通過。
 
 ## 可見性限制
