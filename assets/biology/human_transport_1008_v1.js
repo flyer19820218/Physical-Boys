@@ -140,12 +140,12 @@
       paragraphs: [
         P('血漿在血管內，組織液在組織細胞間，淋巴在淋巴管內。這三個名稱主要辨認所在位置，不是血漿一流出去就突然變成另一種完全不同的液體。', 'Plasma is inside blood vessels, tissue fluid is between tissue cells, and lymph is inside lymphatic vessels. These names identify compartments rather than three unrelated liquids.'),
         P('正常紅血球不隨這些液體穿出一般微血管；留在血管內的血球和多數大蛋白，也使組織液與血漿的組成有所不同。', 'Normal red cells do not leave ordinary capillaries with this fluid. Retention of cells and many large proteins also means tissue fluid and plasma do not have identical composition.'),
-        P('依課本的簡化模型，部分組織液回到血管，部分進入鄰近淋巴管。實際淨流量依組織、壓力與狀態而異；本圖不固定分配比例，也不表示每一條微血管都同樣回收。', 'In the textbook’s simplified model, some tissue fluid returns directly to blood and some enters nearby lymphatics. Net flow depends on tissue, pressure and state; the model assigns no fixed fractions or identical behaviour to every capillary.'),
+        P('血漿的部分水與小分子進入細胞間，形成組織液；組織液進入淋巴管後稱為淋巴，最後注入靜脈，回到血液循環。', 'Some water and small molecules from plasma enter spaces between cells as tissue fluid. After entering lymphatic vessels, the fluid is called lymph. It enters veins and rejoins blood circulation.'),
         P('淋巴管起於組織間的盲端，淋巴逐步匯入較大的淋巴管。瓣膜配合周圍肌肉與呼吸等作用，幫助單向回流；沒有另一顆「淋巴心臟」。', 'Lymphatic vessels begin as blind-ended capillaries and merge into larger vessels. Valves cooperate with muscle movement and breathing to assist one-way return; there is no separate lymph heart.'),
         P('淋巴結分布於淋巴管途中，能過濾異物，並讓防禦細胞接觸病原體。最後淋巴回到頸根部附近的靜脈，接回心血管系統。', 'Nodes along lymphatic vessels filter foreign material and provide sites for immune cells to encounter pathogens. Lymph ultimately enters veins near the base of the neck and rejoins the cardiovascular system.'),
         P('淋巴主要協助回收組織液、運送部分養分（如小腸吸收的脂質），並參與防禦。圖中綠色只為區分淋巴路徑；一般淋巴並不是綠色的血。', 'Lymphatics recover tissue fluid, transport some nutrients such as intestinally absorbed fats, and support defence. Green distinguishes the lymphatic route; ordinary lymph is not green blood.')
       ],
-      question: P('組織液若都流出、完全沒有回收，組織與血液的液體量會怎樣變？用模型中的回收路徑說明。', 'If all fluid escaped and none returned, how would tissue and blood volumes change? Explain using the return routes.'),
+      question: P('組織液若都流出、完全沒有回收，組織與血液的液體量會怎樣變？用模型中的淋巴回收路徑說明。', 'If all fluid escaped and none returned, how would tissue and blood volumes change? Explain using the lymphatic return route.'),
       closure: P('血漿在管內、組織液在細胞間、淋巴在淋巴管；回收路徑最後接回靜脈。', 'Plasma is in blood vessels, tissue fluid between cells, lymph in lymphatics; recovery routes ultimately reconnect to veins.')
     },
     {
@@ -551,14 +551,11 @@
     // Explicit blind entry end, and a venous outlet at the top right.
     ctx.save(); ctx.strokeStyle = '#badf9a'; ctx.lineWidth = 17; ctx.beginPath(); ctx.arc(477, 352, 1, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
     const out = [[383, 187], [399, 241], [425, 298], [477, 319]];
-    const direct = [[477, 319], [593, 313], [650, 246], [692, 187]];
-    poly(ctx, out, 'rgba(233,206,133,.35)', 3); poly(ctx, direct, 'rgba(233,206,133,.35)', 3);
+    poly(ctx, out, 'rgba(233,206,133,.35)', 3);
     const viaLymph = [[383, 187], [399, 241], [425, 298], [477, 319], ...lymph];
-    const viaBlood = [...out, ...direct.slice(1)];
     const speed = s.movement === 'active' ? .10 : .065;
     for (let i = 0; i < 7; i++) {
-      let p = pointOn(viaBlood, mod(t * speed + i / 7, 1)); D.water(ctx, p.x, p.y, 5);
-      p = pointOn(viaLymph, mod(t * speed * .66 + i / 7, 1)); D.water(ctx, p.x, p.y, 5);
+      const p = pointOn(viaLymph, mod(t * speed * .66 + i / 7, 1)); D.water(ctx, p.x, p.y, 5);
     }
     D.round(ctx, 680, 375, 104, 79, 37, '#7fc772', '#d3f1a5');
     for (let i = 0; i < 4; i++) whiteCell(ctx, 703 + i % 2 * 32, 398 + Math.floor(i / 2) * 25, 9);
@@ -569,7 +566,6 @@
       poly(ctx, pts1, '#27622f', 3); poly(ctx, pts2, '#27622f', 3);
     });
     TEXT(ctx, D, P('血漿', 'Plasma'), 306, 136, 150);
-    TEXT(ctx, D, P('直接回到血管', 'Direct return to blood'), 685, 239, 293, { align: 'right' });
     TEXT(ctx, D, P('淋巴管', 'Lymphatic vessel'), 314, 453, 283, { color: C.lymph });
     TEXT(ctx, D, P('淋巴結', 'Lymph node'), 731, 491, 200, { align: 'center', color: C.lymph });
     TEXT(ctx, D, P('回到靜脈', 'Into veins'), 928, 111, 230, { align: 'right', color: C.lymph });
@@ -789,7 +785,7 @@
         group(P('追蹤液體所在位置', 'Follow the fluid compartment'), Object.entries(LYMPH_EXPLAIN).map(([k, v]) => item(v.title, 'compartment', k))),
         group(P('比較回流', 'Compare return'), [item(P('安靜時', 'At rest'), 'movement', 'rest'), item(P('肌肉活動協助', 'Muscle movement helps'), 'movement', 'active')])
       ], explain: s => LYMPH_EXPLAIN[s.compartment], draw: lymphDraw,
-      check: () => ({ ...COMMON_CHECK, namesByCompartment: ['plasma', 'tissue fluid', 'lymph'], bothReturnPaths: true, returnTo: 'veins near base of neck', lymphHeart: false, lymphDirection: 'one way', greenIsSchematic: true, fixedRecoveryFractions: false })
+      check: () => ({ ...COMMON_CHECK, namesByCompartment: ['plasma', 'tissue fluid', 'lymph'], bothReturnPaths: false, lymphReturnOnlyInCore: true, returnTo: 'veins near base of neck', lymphHeart: false, lymphDirection: 'one way', greenIsSchematic: true, fixedRecoveryFractions: false })
     }),
     tabMeta(5, {
       sources: [source('stethoscope_photo.png', P('心音探測照片', 'Heart-sound observation photograph'), 110, '實驗 3-3-1'), source('pulse_photo.png', P('脈搏探測照片', 'Pulse observation photograph'), 110, '實驗 3-3-1'), source('fish_photo.png', P('魚的原照片，非血流短片', 'Original fish photograph, not flow footage'), 112, '實驗 3-3-2')],
