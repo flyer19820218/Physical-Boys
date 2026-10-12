@@ -4,9 +4,9 @@
  const D=root.AnimalDraw,C=D.C;
  const phase=p=>Math.min(2,Math.floor(Math.max(0,Math.min(1,p))*3));
  const captions=[
-  [['小腸吸收','Small-intestinal absorption'],['絨毛增加表面積。葡萄糖與胺基酸穿過上皮，進入微血管。','Villi increase surface area. Glucose and amino acids cross the epithelium into blood capillaries.']],
-  [['血液運送・看真實血流','Transport: watch real blood flow'],['會移動的是紅血球；葡萄糖、胺基酸主要溶在血漿中，隨血流運送。這段實拍不是人體腸道，也看不到單個養分分子。','The moving cells are red blood cells. Glucose and amino acids travel mainly dissolved in plasma. This is not a human intestine; individual nutrient molecules are not visible.']],
-  [['細胞利用・粒線體參與呼吸','Cell use: mitochondria and respiration'],['養分送到細胞後，可用來合成物質或供應能量。粒線體是有氧呼吸的重要場所；不是把整顆葡萄糖直接送進粒線體。','Cells use nutrients to build materials or obtain energy. Mitochondria are important sites of aerobic respiration; whole glucose is not simply delivered straight into them.']]
+  [['先吸收・從小腸進入血液','First: absorption into the blood'],['消化成小分子後，葡萄糖與胺基酸先穿過小腸上皮，進入微血管，這就是吸收。接下來，它們要隨血液送往細胞。絨毛增加表面積，幫助吸收。','After digestion into small molecules, glucose and amino acids first cross the intestinal epithelium into capillaries: this is absorption. Next, blood carries them toward cells. Villi increase the area available for absorption.']],
+  [['接著運送・隨血流送往細胞','Next: blood carries nutrients to cells'],['吸收後，這些養分接著隨血液運送：葡萄糖與胺基酸主要溶在血漿中；紅血球主要協助運送氧。養分與氧送到細胞後，才接上細胞呼吸作用。這段幼魚尾部實拍能看見移動的血球，不能看見單個養分分子。','After absorption, nutrients travel with blood: glucose and amino acids mainly dissolve in plasma, while red blood cells help carry oxygen. Once nutrients and oxygen reach cells, the story connects to cellular respiration. This larval-tail footage shows moving blood cells, not individual nutrient molecules.']],
+  [['送到細胞後・接上呼吸作用','Then: cellular respiration'],['隨血液送到細胞後，養分可用來合成物質；其中葡萄糖也能與氧參與細胞呼吸作用，釋放供細胞使用的能量。粒線體是有氧呼吸的重要場所；糖解先在細胞質進行，不是整顆葡萄糖直接進入粒線體。','Once blood delivers nutrients to cells, they can be used to build materials. Glucose can also take part in cellular respiration with oxygen, releasing energy for the cell. Mitochondria are important sites of aerobic respiration; glycolysis begins in the cytoplasm, not by sending whole glucose straight into a mitochondrion.']]
  ];
  const credits=[
   ['OpenStax College · 真實光學切片；保留原圖、局部取景。','OpenStax College · genuine light micrograph; digital crop only.'],
