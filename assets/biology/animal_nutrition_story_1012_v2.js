@@ -1,0 +1,91 @@
+(function(){'use strict';
+ const A=window.AnimalData,D=window.AnimalDraw,J=window.AnimalJourney,F=window.AnimalStoryData,P=window.AnimalPolymer;
+ const s={lang:'zh',page:0,station:0,route:0,step:0,elapsed:0,playing:false,scope:'station',expanded:false,absorb:'glucose',zoom:1,panX:0,panY:0};
+ const images={},pointers=new Map();let entered=false,raf=0,last=0,gesture=null;
+ const $=id=>document.getElementById(id),tr=(z,e)=>s.lang==='zh'?z:e,T=a=>tr(...a),esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const button=(action,pair,value='',active=false,primary=false,disabled=false)=>`<button type="button" class="action-btn${active?' active':''}${primary?' primary':''}" data-action="${action}" data-value="${esc(value)}" aria-pressed="${active}" ${disabled?'disabled':''}>${esc(T(pair))}</button>`;
+ const stationHeading=pair=>s.lang==='en'?esc(T(pair)):T(pair).split('，').map((part,i,parts)=>`<span class="station-word">${esc(part+(i<parts.length-1?'，':''))}</span>`).join('<wbr>');
+ const stop=()=>{if(raf)cancelAnimationFrame(raf);raf=0;last=0;};
+ const current=()=>F.stops[s.station].steps[s.step],progress=()=>s.elapsed/current().seconds;
+ const resetView=()=>{s.zoom=1;s.panX=0;s.panY=0;pointers.clear();gesture=null;};
+ const nativeState=()=>({lang:s.lang,langIndex:s.lang==='zh'?0:1,nutrient:0,digestion:progress()<.5?0:1,organ:F.route[s.route][0],anatomyMode:'tract',anatomyView:'atlas',zoomOrgan:false,organProgress:1,fluid:0,fluidProgress:0,peristalsis:progress()*100,villusView:'original',absorb:s.absorb,absorbStage:-1,route:0,useProgress:progress()*100});
+ function anatomyCredit(){return tr('原創 AI 解剖示意，非實拍；器官放大取自同一張圖。','Original AI anatomical illustration, not a photograph; zooms use this same image.')+` <a href="assets/biology/animal_nutrition_revision_1012_v1.md">${tr('生成紀錄','Generation record')}</a>`;}
+ function histologyCredit(){return `OpenStax College · <a href="https://commons.wikimedia.org/wiki/File:2418_Histology_Small_IntestinesN.jpg">${tr('來源','Source')}</a> · <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a> · University of Michigan Medical School (Regents, 2012) · ${tr('保留真實切片；中文構造重繪、英文用原圖。','Real micrographs retained; Chinese structural drawing, original English plate.')}`;}
+ function controls(){
+  let out=`<div class="story-toolbar">${button('fullscreen',s.expanded?['× 返回教材','× Return to lesson']:['⛶ 全螢幕操作','⛶ Full-screen controls'])}${button('resetView',['還原視野','Reset view'])}</div>`;
+  if(s.page===0)return out+`<div class="story-actions">${button('routePlay',['▶ 播放整條路線','▶ Play the full route'],'',false,true)}${button('pause',s.playing?['暫停','Pause']:['繼續','Continue'],'',false,false,s.elapsed===0&&!s.playing)}</div><div class="story-route">${F.route.map((r,i)=>button('route',r[1],i,s.route===i)).join('')}</div><p>${tr('食物走消化道；消化腺把消化液送進來。','Food follows the tract; glands supply digestive fluids.')}</p>${button('detail',['看這一站如何工作 →','See how this stop works →'],'',false,true)}`;
+  const st=F.stops[s.station];
+  out+=`<div class="story-actions">${button('stationPlay',['▶ 播放本站','▶ Play this stop'],'',false,true)}${button('pause',s.playing?['暫停','Pause']:['繼續','Continue'],'',false,false,s.elapsed===0&&!s.playing)}</div><div class="story-steps" aria-label="${tr('本站教學流程','Teaching sequence at this stop')}">${st.steps.map((v,i)=>button('step',v.label,i,s.step===i)).join('')}</div><label for="storyProgress">${tr('慢看這一段','Scrub this segment')} · <output id="storyProgressValue" class="math-text">${Math.round(progress()*100)}%</output></label><input id="storyProgress" type="range" min="0" max="100" value="${Math.round(progress()*100)}" aria-label="${tr('動畫進度','Animation progress')}"><div class="story-toolbar">${button('segmentPlay',['重播這一段','Replay this segment'])}${button('stepNext',['下一段 →','Next segment →'],'',false,false,s.step===st.steps.length-1)}</div>`;
+  if(current().scene==='absorb')out+=`<div class="story-choices">${[['glucose',['葡萄糖','Glucose']],['amino',['胺基酸','Amino acid']],['starch',['完整澱粉','Whole starch']],['protein',['完整蛋白質','Whole protein']]].map(([v,label])=>button('absorb',label,v,s.absorb===v)).join('')}</div>`;
+  if(current().scene==='glands')out+=`<div class="story-choices">${(s.station===0?['salivary']:['liver','gall','pancreas']).map(id=>button('gland',A.organs.find(o=>o.id===id).name,id,(s.focusOrgan||current().organ)===id)).join('')}</div>`;
+  return out+`<p class="story-location">${esc(T(st.name))}${st.ph?' · '+esc(T(st.ph)):''}</p><div class="story-toolbar">${button('previous',['← 上一站','← Previous stop'],'',false,false,s.station===0)}${button('next',['下一站 →','Next stop →'],'',false,true,s.station===5)}</div>`;
+ }
+ function panelCaption(){if(s.page===0){const id=F.route[s.route][0],organ=A.organs.find(o=>o.id===id);return `<strong>${esc(T(F.route[s.route][1]))}</strong><p>${id==='rectum'?tr('糞便先在直腸暫存，再由肛門排出。','Feces are stored in the rectum, then pass through the anus.'):esc(T(organ.info))}</p>`;}
+  return `<strong>${esc(T(current().label))}</strong><p>${esc(T(current().copy))}</p>`;
+ }
+ function render(){
+  pointers.clear();gesture=null;
+  document.documentElement.lang=s.lang==='zh'?'zh-Hant':'en';document.title=tr('食物的旅程｜Physical-Boys','Food’s journey | Physical-Boys');
+  document.querySelectorAll('[data-zh]').forEach(el=>el.textContent=el.dataset[s.lang]);document.querySelectorAll('[data-language]').forEach(b=>{b.classList.toggle('active',b.dataset.language===s.lang);b.setAttribute('aria-pressed',b.dataset.language===s.lang);});
+  const tabs=[[['先看整條路','See the whole route'],['消化道概論','Digestive tract overview']],[['跟著這一口','Follow this bite'],['逐站消化與吸收','Digestion and absorption at each stop']]];
+  $('tabs').innerHTML=tabs.map((t,i)=>`<button type="button" id="story-tab-${i}" class="tab-btn${s.page===i?' active':''}" role="tab" aria-selected="${s.page===i}" aria-controls="story-lesson" tabindex="${s.page===i?0:-1}" data-action="page" data-value="${i}"><span class="tab-main">${esc(T(t[0]))}</span><span class="tab-sub">${esc(T(t[1]))}</span></button>`).join('');
+  const hook=s.page===0?['食物會進入肝臟和胰臟嗎？先沿著精美解剖圖，把真正的食物通道走一遍。','Does food enter the liver or pancreas? Follow the anatomical illustration to find its actual passage.']:['同一口食物，到了新的一站，會遇到誰？按「播放本站」，一起看器官、消化液與分子如何接力。','Who meets this bite at the next stop? Play the stop to connect the organ, fluids and molecular changes.'];
+  const stations=s.page===1?`<nav class="story-stations" aria-label="${tr('食物旅程各站','Stops on the food journey')}">${F.stops.map((st,i)=>`<button type="button" class="tab-btn${s.station===i?' active':''}" data-action="station" data-value="${i}" aria-pressed="${s.station===i}"><span class="tab-main">${stationHeading(J.stations[i].title)}</span><span class="tab-sub">${esc(T(J.stations[i].sub))}</span></button>`).join('')}</nav>`:'';
+  $('lessons').innerHTML=`<section id="story-lesson" class="lesson" role="tabpanel" aria-labelledby="story-tab-${s.page}"><div class="hook-box"><div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="${tr('曉臻老師','Teacher Xiaozhen')}"></div><div><div class="hook-title">${tr('曉臻老師說：','Teacher Xiaozhen says:')}</div><div class="hook-text">${esc(T(hook))}</div></div></div>${stations}<div id="story-lab" class="an-lab${s.expanded?' expanded':''}" style="--ar:1.4545454545454546"><div class="an-controls">${controls()}</div><div class="an-visual"><div class="an-stage"><canvas id="storyScene" width="960" height="660" aria-label="${s.page===0?tr('消化道解剖與路線','Digestive anatomy and route'):esc(T(current().label))}"></canvas></div><div id="storyCaption" class="an-caption">${panelCaption()}</div><p id="storyCredit" class="an-credit">${s.page===0||['zoom','glands'].includes(current().scene)?anatomyCredit():current().scene==='structure'?histologyCredit():tr('原創動態教學模型，非實拍、非真實尺度與速率。','Original dynamic teaching model, not photographs, real scale or measured speeds.')}</p></div></div>${s.page===1?`<details class="story-notes"><summary>${tr('展開本站完整解說','Expand the complete stop explanation')}</summary>${J.stations[s.station].facts.map(p=>`<p>${esc(T(p))}</p>`).join('')}<p>${esc(T(J.stations[s.station].closure))}</p>${s.station===0?`<a href="biology_enzymes.html">${tr('回看澱粉酶與唾液實驗','Revisit enzymes and the saliva experiment')}</a>`:''}</details>`:`<div class="an-closure">${tr('口腔 → 咽 → 食道 → 胃 → 小腸 → 大腸 → 直腸 → 肛門','Mouth → pharynx → esophagus → stomach → small intestine → large intestine → rectum → anus')}</div>`}</section>`;
+  $('sources').innerHTML=`<details><summary>${tr('圖像來源與科學核對','Image credits and scientific references')}</summary><p>${anatomyCredit()}</p><p>${histologyCredit()}</p><p>${tr('酵素外輪廓與四階段作用沿用既有單元；三種活性區依老師授權改為與受質局部吻合。澱粉分支鏈、蛋白質線性鏈的單元守恆；三腳脂質沿用原造型。皆為縮略教學模型。','Enzyme outlines and four action stages reuse the existing unit; matching active sites were teacher-authorized. Branched starch and linear protein conserve their units; fat reuses the original three-legged shape. These are abbreviated teaching models.')}</p><p><a href="assets/biology/animal_nutrition_sources_v2.md">${tr('既有素材授權紀錄','Existing asset licensing record')}</a> · <a href="assets/biology/animal_nutrition_story_revision_1012_v2.md">${tr('本版修改紀錄','This revision record')}</a></p><p>OpenStax: <a href="https://openstax.org/books/biology-2e/pages/3-2-carbohydrates">${tr('澱粉與多醣','Starch and polysaccharides')}</a> · <a href="https://openstax.org/books/anatomy-and-physiology-2e/pages/23-7-chemical-digestion-and-absorption-a-closer-look">${tr('消化反應與吸收','Chemical digestion and absorption')}</a> · <a href="https://openstax.org/books/anatomy-and-physiology-2e/pages/23-3-the-mouth-pharynx-and-esophagus">${tr('口腔與食道','Mouth and esophagus')}</a> · <a href="https://openstax.org/books/anatomy-and-physiology-2e/pages/23-4-the-stomach">${tr('胃','Stomach')}</a> · <a href="https://openstax.org/books/anatomy-and-physiology-2e/pages/23-5-the-small-and-large-intestines">${tr('小腸與大腸','Intestines')}</a></p></details>`;
+  document.body.classList.toggle('an-expanded',s.expanded);draw();
+ }
+ function overview(c){const ns=nativeState();ns.organ=F.route[s.route][0];D.anatomy(c,ns,tr,images);
+  const p=window.AnimalAtlas.placement,point={x:p.x+530/1024*p.w,y:p.y+1340/1536*p.h},active=ns.organ==='rectum';
+  c.strokeStyle=D.C.teal;c.lineWidth=2;c.beginPath();c.moveTo(699,606);c.lineTo(point.x,point.y);c.stroke();D.round(c,699,582,245,48,12,active?D.C.teal:D.C.deep,D.C.teal);D.text(c,tr('直腸','Rectum'),821,606,24,active?D.C.deep:D.C.teal,'center',229);c.beginPath();c.arc(point.x,point.y,active?8:5,0,Math.PI*2);c.fillStyle=D.C.teal;c.fill();
+ }
+ function zoom(c,st,p){D.bg(c);const id=st.organ||F.stops[s.station].id,im=images.atlas;if(!im)return;const to=F.crops[id],q=window.EnzymesModel.smooth(Math.min(1,p*3)),from=[0,0,1024,1536],crop=from.map((v,i)=>v+(to[i]-v)*q),scale=Math.min(810/crop[2],500/crop[3]),w=crop[2]*scale,h=crop[3]*scale;
+  c.drawImage(im,...crop,480-w/2,325-h/2,w,h);const name=id==='rectum'?['直腸','Rectum']:A.organs.find(o=>o.id===id).name;D.text(c,T(name),480,38,32,D.C.yellow,'center',870);D.text(c,tr('同一張 AI 解剖圖取景放大 · 非實拍','Digital zoom of the same AI anatomical image · not a photograph'),480,624,22,D.C.muted,'center',910);
+ }
+ function draw(){const cv=$('storyScene');if(!cv)return;const c=cv.getContext('2d');D.bg(c);c.save();c.translate(480+s.panX,330+s.panY);c.scale(s.zoom,s.zoom);c.translate(-480,-330);
+  if(s.page===0)overview(c);else{const st=current(),p=progress(),ns=nativeState();
+   if(st.scene==='zoom')zoom(c,st,p);
+   else if(st.scene==='glands'){ns.anatomyMode='glands';ns.organ=s.focusOrgan||st.organ;D.anatomy(c,ns,tr,images);}
+   else if(st.scene==='chew')D.digestion(c,ns,tr,s.elapsed);
+   else if(st.scene==='wave')D.peristalsis(c,ns,tr);
+   else if(st.scene==='polymer')P.draw(c,p,tr,st);
+   else if(st.scene==='fat'){if(st.fluid===3)P.lipid(c,p,tr);else{ns.nutrient=2;ns.fluid=st.fluid;ns.fluidProgress=p*100;D.secretions(c,ns,tr,s.elapsed);}}
+   else if(st.scene==='structure')D.absorption(c,ns,tr,images,s.elapsed);
+   else if(st.scene==='absorb'){ns.villusView='model';D.absorption(c,ns,tr,images,s.elapsed);}
+   else if(st.scene==='use')D.use(c,ns,tr,s.elapsed);
+  }c.restore();
+ }
+ function advance(dt){if(!s.playing)return;s.elapsed+=dt;
+  if(s.page===0){if(s.elapsed>=2){s.elapsed-=2;if(s.route<7){s.route++;render();}else{s.elapsed=2;s.playing=false;render();}}return;}
+  const seconds=current().seconds;if(s.elapsed>=seconds){s.elapsed=seconds;if(s.scope==='station'&&s.step<F.stops[s.station].steps.length-1){s.step++;s.elapsed=0;s.focusOrgan=null;resetView();render();}else{s.playing=false;render();}}
+ }
+ function frame(t){raf=0;if(!entered||document.hidden||!s.playing)return;const dt=last?Math.min((t-last)/1000,.1):0;last=t;advance(dt);draw();const input=$('storyProgress'),output=$('storyProgressValue');if(input)input.value=Math.round(progress()*100);if(output)output.textContent=Math.round(progress()*100)+'%';if(s.playing&&!raf)raf=requestAnimationFrame(frame);}
+ function resume(){if(entered&&!document.hidden&&s.playing&&!raf){last=0;raf=requestAnimationFrame(frame);}}
+ function selectStation(i){if(i<0||i>5)return;stop();s.station=i;s.step=0;s.elapsed=0;s.playing=false;s.focusOrgan=null;resetView();render();}
+ function selectStep(i){if(i<0||i>=F.stops[s.station].steps.length)return;stop();s.step=i;s.elapsed=0;s.playing=false;s.focusOrgan=null;resetView();render();}
+ function start(scope){stop();s.scope=scope;s.elapsed=0;if(scope==='station'){s.step=0;s.focusOrgan=null;s.absorb='glucose';}if(scope==='route'){s.route=0;}s.playing=true;resetView();render();resume();}
+ document.addEventListener('click',ev=>{const b=ev.target.closest('[data-action]');if(!b||b.disabled)return;const a=b.dataset.action,v=b.dataset.value;
+  if(a==='page'){stop();s.page=+v;s.elapsed=0;s.playing=false;s.expanded=false;resetView();render();}
+  else if(a==='station')selectStation(+v);else if(a==='step')selectStep(+v);else if(a==='previous')selectStation(s.station-1);else if(a==='next')selectStation(s.station+1);
+  else if(a==='route'){stop();s.route=+v;s.elapsed=0;s.playing=false;resetView();render();}
+  else if(a==='detail'){stop();s.page=1;selectStation(s.route<=1?0:s.route===2?1:s.route===3?2:s.route===4?3:s.route===5?4:5);}
+  else if(a==='stationPlay')start('station');else if(a==='segmentPlay')start('segment');else if(a==='routePlay')start('route');
+  else if(a==='pause'){s.playing=!s.playing;if(!s.playing)stop();render();resume();}
+  else if(a==='stepNext')selectStep(s.step+1);else if(a==='fullscreen'){s.expanded=!s.expanded;render();resume();}
+  else if(a==='resetView'){resetView();draw();}
+  else if(a==='absorb'){s.absorb=v;s.elapsed=0;s.playing=false;stop();render();}
+  else if(a==='gland'){s.focusOrgan=v;render();resume();}
+ });
+ document.addEventListener('input',ev=>{if(ev.target.id!=='storyProgress')return;stop();s.playing=false;s.elapsed=current().seconds*(+ev.target.value)/100;$('storyProgressValue').textContent=ev.target.value+'%';draw();const b=document.querySelector('[data-action="pause"]');b.disabled=false;b.textContent=tr('繼續','Continue');});
+ document.querySelectorAll('[data-language]').forEach(b=>b.addEventListener('click',()=>{s.lang=b.dataset.language;render();resume();}));
+ $('introScreen').addEventListener('click',()=>{entered=true;$('introScreen').hidden=true;draw();resume();});
+ document.addEventListener('visibilitychange',()=>{stop();if(!document.hidden)resume();});
+ document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&s.expanded){s.expanded=false;render();resume();}if(ev.target.matches('[role="tab"]')&&['ArrowLeft','ArrowRight'].includes(ev.key)){ev.preventDefault();stop();s.page=1-s.page;s.playing=false;s.elapsed=0;render();$('story-tab-'+s.page).focus();}});
+ function point(ev){const r=$('storyScene').getBoundingClientRect();return{x:(ev.clientX-r.left)*960/r.width,y:(ev.clientY-r.top)*660/r.height};}
+ document.addEventListener('pointerdown',ev=>{if(ev.target.id!=='storyScene'||pointers.size>=2)return;ev.preventDefault();ev.target.setPointerCapture(ev.pointerId);const p=point(ev);pointers.set(ev.pointerId,p);gesture={last:p};if(pointers.size===2){const ps=[...pointers.values()];gesture.distance=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y);gesture.zoom=s.zoom;}});
+ document.addEventListener('pointermove',ev=>{if(!pointers.has(ev.pointerId))return;const p=point(ev);pointers.set(ev.pointerId,p);if(pointers.size===2){const ps=[...pointers.values()];s.zoom=A.clamp(gesture.zoom*Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y)/Math.max(1,gesture.distance),1,4);}else{s.panX=A.clamp(s.panX+p.x-gesture.last.x,-700,700);s.panY=A.clamp(s.panY+p.y-gesture.last.y,-500,500);}gesture.last=p;draw();});
+ const release=ev=>{pointers.delete(ev.pointerId);gesture=pointers.size?{last:[...pointers.values()][0]}:null;};document.addEventListener('pointerup',release);document.addEventListener('pointercancel',release);
+ document.addEventListener('wheel',ev=>{if(ev.target.id!=='storyScene')return;ev.preventDefault();s.zoom=A.clamp(s.zoom*(ev.deltaY<0?1.1:.9),1,4);draw();},{passive:false});
+ render();Promise.all(Object.entries({atlas:'assets/biology/animal_digestive_atlas_ai_1012_v1.png',histology:'assets/biology/animal_intestine_openstax_v1.jpg'}).map(([id,src])=>new Promise(resolve=>{const im=new Image();im.onload=()=>{images[id]=im;resolve();};im.onerror=()=>{$('assetStatus').hidden=false;$('assetStatus').textContent=tr('圖片載入失敗：','Image failed to load: ')+src;resolve();};im.src=src;})).concat(document.fonts?[document.fonts.load('700 22px "Noto Sans TC"'),document.fonts.load('700 22px "JetBrains Mono"')]:[])).then(draw).catch(err=>{$('assetStatus').hidden=false;$('assetStatus').textContent=tr('字體載入失敗：','Font loading failed: ')+err.message;});
+ window.AnimalStory={state:s,images,render,draw,start,advance,selectStation,selectStep,progress,resume,stop,resetView};
+})();

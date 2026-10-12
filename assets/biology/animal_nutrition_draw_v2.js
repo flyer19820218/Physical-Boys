@@ -110,5 +110,5 @@
   let x=175+p*615,y=240+Math.sin(p*Math.PI)*20;if(s.route===1)amino(c,x,y,1,22);else sugar(c,x,y,23);
   text(c,tr('由小腸到細胞 · 位置、形狀與速率均為示意','From intestine to cells · positions, shapes and speeds are illustrative'),480,607,22,C.muted,'center',890);
  }
- root.AnimalDraw={W,H,C,text,bg,round,pill,sugar,amino,water,molecule,digestion,anatomy,secretions,peristalsis,absorption,use,anatomyTransform,anatomyLabels,organLayout,organCopy,absorbPosition,absorbGlyph};
+ root.AnimalDraw={W,H,C,text,bg,round,pill,sugar,amino,water,lipid,molecule,digestion,anatomy,secretions,peristalsis,absorption,use,anatomyTransform,anatomyLabels,organLayout,organCopy,absorbPosition,absorbGlyph};
 })(typeof window==='undefined'?globalThis:window);
