@@ -52,17 +52,38 @@
     };
     heart.check=s=>({...oldHeart.check(s),valves:s.cutawayTimeline?{avOpen:s.cutawayTimeline.avOpen,slOpen:s.cutawayTimeline.slOpen}:null,oneS1S2PairOneBeat:true,medicalAnimationIsCG:true});
     next.tabs.find(x=>x.id==='vessels').draw=C.vesselsDraw;
-    next.tabs.find(x=>x.id==='blood').draw=C.bloodDraw;
+    const blood=next.tabs.find(x=>x.id==='blood'),oldBloodControls=blood.controls,oldBloodExplain=blood.explain;
+    blood.draw=C.bloodDraw;
+    blood.controls=s=>[...oldBloodControls(s),...(s.task==='repair'?[group(P('止血：完整播放／分段看','Hemostasis: play / inspect'),[
+      item(P('重播完整止血','Replay hemostasis'),'repairStage','auto'),
+      ...C.hemostasisStages.map(p=>item(p.name,'repairStage',p.id))
+    ])]:[])];
+    blood.act=(s,k,v)=>{
+      if(k==='repairStage'){
+        s.repairStage=v;s.repair=v==='auto'?0:C.hemostasisStages.find(p=>p.id===v).progress;s.running=true;return;
+      }
+      originals.blood.act(s,k,v);
+      if(k==='action'&&v==='repair'){s.repairStage='auto';s.running=true;}
+    };
+    blood.explain=s=>s.task==='repair'?C.hemostasisExplain(s):oldBloodExplain(s);
     const circulation=next.tabs.find(x=>x.id==='circulation'),oldCircle=originals.circulation;
-    circulation.init=()=>({...oldCircle.init(),organ:'tissue',exchange:null,substance:'all',exchangeSpeed:1});
+    circulation.init=()=>({...oldCircle.init(),organ:'tissue',exchange:null,substance:'all',exchangeSpeed:1,lungView:'gas',kidneyView:'cells'});
     circulation.controls=s=>[
       group(P('完整路線／六大物質交換區','Whole circuit / six exchange regions'),[item(P('完整封閉路線','Complete closed circuit'),'view','loop'),...X.zones.map(z=>item(z.name,'exchange',z.id))]),
       ...(s.view==='exchange'?[
-        group(P('追蹤哪種物質？','Which substance?'),[item(P('一起看交換','All exchanges'),'substance','all'),...Object.entries(X.species).filter(([k])=>X.flows(s.exchange).some(f=>f.kind===k)).map(([k,v])=>item(v.name,'substance',k))]),
+        ...(s.exchange==='lung'?[group(P('肺：兩種不同的交換','Lungs: two kinds of exchange'),[
+          item(P('肺泡與空氣換氣','Alveolar gas exchange'),'lungView','gas'),
+          item(P('肺細胞也要葡萄糖','Lung cells need glucose'),'lungView','cells')
+        ])]:[]),
+        ...(s.exchange==='kidney'?[group(P('主課程／延伸閱讀（不考）','Main lesson / optional non-exam reading'),[
+          item(P('腎細胞物質交換','Kidney-cell exchanges'),'kidneyView','cells'),
+          item(P('延伸閱讀：過濾與再吸收','Extra: filtration / reabsorption'),'kidneyView','extension')
+        ])]:[]),
+        group(P('追蹤哪種物質？','Which substance?'),[item(P('一起看交換','All exchanges'),'substance','all'),...Object.entries(X.species).filter(([k])=>X.flows(s.exchange,s.lungView,s.kidneyView).some(f=>f.kind===k)).map(([k,v])=>item(v.name,'substance',k))]),
         group(P('放慢看穿過界面','Slow the crossing'),[item(P('慢速','Slow'),'exchangeSpeed',.5),item(P('標準','Normal'),'exchangeSpeed',1)])
       ]:[...oldCircle.controls(s).slice(1),group(P('選器官供血支路','Choose an organ supply branch'),G.organs.map(o=>item(o.name,'organ',o.id)))])
     ];
-    circulation.act=(s,k,v)=>{if(k==='exchange'){s.exchange=v;s.view='exchange';s.substance='all';s.running=true;}else if(k==='organ'){s.organ=v;s.exchange=null;s.view='loop';s.travel=0;s.running=true;}else if(k==='substance'||k==='exchangeSpeed'){s[k]=v;}else{if(k==='view'&&v==='loop')s.exchange=null;oldCircle.act(s,k,v);}};
+    circulation.act=(s,k,v)=>{if(k==='exchange'){s.exchange=v;s.view='exchange';s.substance='all';s.running=true;}else if(k==='lungView'||k==='kidneyView'){s[k]=v;s.substance='all';s.running=true;}else if(k==='organ'){s.organ=v;s.exchange=null;s.view='loop';s.travel=0;s.running=true;}else if(k==='substance'||k==='exchangeSpeed'){s[k]=v;}else{if(k==='view'&&v==='loop')s.exchange=null;oldCircle.act(s,k,v);}};
     circulation.draw=(ctx,s,t,D)=>s.view==='exchange'?X.draw(ctx,s,t,D):s.view==='loop'?G.draw(ctx,s,t,D):oldCircle.draw(ctx,s,t,D);
     circulation.explain=s=>s.view==='exchange'?X.explain(s):s.view==='loop'?G.explain(s):oldCircle.explain(s);
     circulation.check=s=>({...oldCircle.check(s),graph:G.graph,organ:s.organ,portalReturnsViaLiver:true,coronaryReturnsViaSinus:true,exchange:s.exchangeTrace||null});

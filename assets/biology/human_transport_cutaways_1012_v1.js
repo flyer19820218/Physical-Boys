@@ -618,10 +618,114 @@
   }
 
   const CROPS={rbc:[.49,.34,.10,.13],wbc:[.414,.493,.10,.14],platelet:[.829,.863,.049,.067],plasma:[0,0,1,1]};
+  // Teacher-authorized injury model. The ordinary blood/centrifuge drawings
+  // retain their original routes; this enlarged window has its own geometry.
+  const REPAIR_ROUTE=curve([[64,343],[326,315],[637,384],[897,347]]);
+  const REPAIR_D=440,REPAIR_RADIUS=65;
+  const REPAIR_ANCHOR=at(REPAIR_ROUTE,REPAIR_D);
+  const repairSeed=n=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);};
+  const repairWorld=p=>({x:REPAIR_ANCHOR.x+Math.cos(REPAIR_ANCHOR.angle)*p[0]-Math.sin(REPAIR_ANCHOR.angle)*p[1],
+    y:REPAIR_ANCHOR.y+Math.sin(REPAIR_ANCHOR.angle)*p[0]+Math.cos(REPAIR_ANCHOR.angle)*p[1]});
+  const REPAIR_STAGES=Object.freeze([
+    {id:'bleeding',progress:.06,name:P('受傷、出血','Injury / bleeding'),text:P('管壁破裂，血液從破口流到周圍組織；局部血管收縮，減少出血。','A wall injury lets blood escape into surrounding tissue. Local vessel constriction reduces bleeding.')},
+    {id:'platelets',progress:.32,name:P('血小板抵達','Platelets arrive'),text:P('血小板隨血流抵達傷口，黏附在受損管壁，再活化、招來更多血小板。','Flowing platelets reach the wound, adhere to the damaged wall, activate and recruit more platelets.')},
+    {id:'fibrin',progress:.62,name:P('纖維蛋白加固','Fibrin reinforces'),text:P('血小板栓先減少外漏；凝血形成纖維蛋白網，網住血小板與血球，加固血塊。','A platelet plug reduces leakage. Coagulation forms fibrin that traps platelets and blood cells, reinforcing the clot.')},
+    {id:'sealed',progress:1,name:P('封住破口、止血','Sealed / bleeding stops'),text:P('破口被血塊封住，外漏停止；其餘管腔仍讓血液通過。止血不是整條血管凝固。','The clot seals the wound and leakage stops. Blood still passes through the remaining lumen; the whole vessel does not clot.')}
+  ]);
+  function hemostasisFrame(progress){
+    const p=clamp(progress),seconds=p*20;
+    const stage=REPAIR_STAGES[seconds<3?0:seconds<8?1:seconds<15.5?2:3];
+    const constriction=7*smooth(p/.14);
+    const radius=d=>REPAIR_RADIUS-constriction*Math.exp(-(((d-REPAIR_D)/105)**2));
+    // The puncture cuts completely through endothelium, muscle and outer coat.
+    const edgeY=-(radius(REPAIR_D)+6),gap=[[-38,-99],[38,-99],[32,-48],[-32,-48]].map(repairWorld);
+    const platelets=Array.from({length:34},(_,i)=>{
+      const arrivalStart=1.6+i*.22,travel=1.1+repairSeed(i+400)*.5;
+      const target=[i<2?(i?-31:31):(repairSeed(i+100)-.5)*57,edgeY-2-repairSeed(i+200)*12];
+      const start=at(REPAIR_ROUTE,REPAIR_D-235+(i%5)*19,(repairSeed(i+300)-.5)*58);
+      const a=repairWorld([-150,-24]),b=repairWorld([-49,-44]),end=repairWorld(target);
+      const route=curve([[start.x,start.y],[a.x,a.y],[b.x,b.y],[end.x,end.y]]);
+      const u=clamp((seconds-arrivalStart)/travel);
+      return {index:i,start,target,end,route,u,visible:seconds>=arrivalStart,bound:u===1,position:at(route,route.length*smooth(u))};
+    });
+    const leak=1-smooth((p-.18)/.60),fibrin=smooth((p-.40)/.35);
+    const escaped=[];
+    for(let i=0;i<38;i++){
+      const born=.35+i*.43,atBirth=1-smooth((born/20-.18)/.60);
+      if(seconds<born||repairSeed(i+500)>atBirth)continue;
+      const end=[92+repairSeed(i+600)*47,-148+(repairSeed(i+700)-.5)*29];
+      const local=[[-9+repairSeed(i+800)*18,-48],[-5,-99],[52,-143],end];
+      const pts=local.map(repairWorld),route=curve(pts.map(q=>[q.x,q.y]));
+      const u=clamp((seconds-born)/(1.15+repairSeed(i+900)*.45));
+      escaped.push({index:i,born,u,route,position:at(route,route.length*u),deposited:u===1});
+    }
+    return {progress:p,seconds,stage,constriction,radius,edgeY,gap,platelets,escaped,leak,fibrin,
+      adhered:platelets.filter(q=>q.bound).length,sealed:leak<.001,injury:REPAIR_ANCHOR};
+  }
+  function hemostasisExplain(s){
+    const q=hemostasisFrame(s.repair||0);
+    return {title:q.stage.name,text:q.stage.text.map((p,i)=>p+'\n\n'+P(
+      '這些機制會重疊進行。血小板在傷口黏附、聚集；凝血反應形成的纖維蛋白網再把血塊加固。動畫是放大、分段教學，不是真實時間或血球比例。',
+      'These mechanisms overlap. Platelets adhere and aggregate at the wound; fibrin produced by coagulation then stabilizes the clot. This enlarged, staged model is not real timing or cell proportions.')[i])};
+  }
+  function hemostasisDraw(ctx,s,t,D,dt){
+    if(!s.repairStage||s.repairStage==='auto')s.repair=clamp((s.repair||0)+dt/20);
+    const q=hemostasisFrame(s.repair||0);s.hemostasisTrace={progress:q.progress,stage:q.stage.id,adhered:q.adhered,leak:q.leak,fibrin:q.fibrin,escaped:q.escaped.length,sealed:q.sealed};
+    base(ctx,D,P('止血：先到傷口，再把破口封住','Hemostasis: reach the wound, then seal it'));
+    txt(ctx,D,q.stage.name,24,79,26,'#55e9ff');
+    // Exclude the real opening while drawing the continuous vessel wall.
+    ctx.save();ctx.beginPath();ctx.rect(0,0,960,600);q.gap.forEach((p,i)=>ctx[i?'lineTo':'moveTo'](p.x,p.y));ctx.closePath();ctx.clip('evenodd');
+    tubes(ctx,[REPAIR_ROUTE],[q.radius],12,5);ctx.restore();
+    ctx.save();clipTubes(ctx,[REPAIR_ROUTE],[q.radius]);
+    const main=cells(REPAIR_ROUTE,t,[-40,-14,14,40],35,42,8);
+    main.forEach(p=>{if(p.row===1&&p.index===10)wbc(ctx,p.x,p.y,13);else if(!(p.row===2&&p.index===10))rbc(ctx,p.x,p.y,p.r,.9,p.angle+p.tilt);});
+    for(let i=0;i<27;i++){const p=at(REPAIR_ROUTE,mod(t*42+i*31.7,REPAIR_ROUTE.length),(repairSeed(i+1000)-.5)*82);platelet(ctx,p.x,p.y,3.2);}
+    ctx.restore();
+    ctx.save();ctx.translate(q.injury.x,q.injury.y);ctx.rotate(q.injury.angle);
+    // Exposed wall ends / collagen, at the puncture rather than in midstream.
+    for(const sign of [-1,1])for(let i=0;i<4;i++)line(ctx,[[sign*(32+i),q.edgeY-13+i*3],[sign*(27+i),q.edgeY-5+i*2]],'#ebc7a7',2);
+    const deposited=q.escaped.filter(p=>p.deposited).length;
+    if(q.escaped.length){
+      const pooled=smooth(deposited/18);
+      ellipse(ctx,111,-149,24+pooled*30,12+pooled*10,gradient(ctx,111,-149,166,-126,[[0,'#c3626680'],[1,'#8f334c55']]));
+    }
+    if(q.leak>.001){
+      ctx.beginPath();ctx.moveTo(0,-49);ctx.bezierCurveTo(-5,-99,52,-143,107,-149);
+      ctx.lineCap='round';ctx.lineWidth=17*q.leak;ctx.strokeStyle='#a74655b0';ctx.stroke();
+      ctx.lineWidth=6*q.leak;ctx.strokeStyle='#e9978b70';ctx.stroke();
+    }
+    ctx.restore();
+    q.escaped.forEach(p=>rbc(ctx,p.position.x,p.position.y,7+repairSeed(p.index+1100)*2,.7,p.position.angle));
+    q.platelets.filter(p=>p.visible&&!p.bound).forEach(p=>platelet(ctx,p.position.x,p.position.y,4.8));
+    const bound=q.platelets.filter(p=>p.bound);
+    ctx.save();ctx.translate(q.injury.x,q.injury.y);ctx.rotate(q.injury.angle);
+    // Platelet plug is localized to the wall. It never fills the entire lumen.
+    if(bound.length>6){ctx.globalAlpha=smooth((bound.length-6)/22)*(.7+.3*q.fibrin);ellipse(ctx,0,q.edgeY-2,36,23,'#b887b4');ctx.globalAlpha=1;}
+    bound.forEach(p=>platelet(ctx,p.target[0],p.target[1],5.4));
+    if(q.fibrin){
+      ctx.globalAlpha=q.fibrin;
+      for(let i=0;i<9;i++){line(ctx,[[-32,q.edgeY-17+i*3.4],[32,q.edgeY+10-i*3.4]],'#f2ecd9',1.4);line(ctx,[[-30+i*7,q.edgeY-17],[-22+i*6,q.edgeY+11]],'#f2ecd9',1.2);}
+      for(let i=0;i<4;i++)rbc(ctx,-21+i*14,q.edgeY-4+(i%2)*7,5.5,.6,i*.2);
+      ctx.globalAlpha=1;
+    }
+    ctx.restore();
+    const edge=repairWorld([0,q.edgeY-17]),pool=repairWorld([126,-152]);
+    txt(ctx,D,P('受損管壁／破口','Damaged wall / opening'),195,145,22,'#ebc7a7');
+    line(ctx,[[398,153],[edge.x-30,edge.y-37],[edge.x,edge.y]],'#ebc7a7',1.5);
+    textWrap(ctx,D,q.sealed?P('外漏停止；血液留在周圍組織','Leak stopped; escaped blood remains in tissue'):P('血液從破口流出','Blood escapes through the opening'),708,151,226,22,'#fb923c');
+    line(ctx,[[732,187],[pool.x+18,pool.y-5]],'#fb923c',1.5);
+    textWrap(ctx,D,q.stage.text,24,470,910,22);
+    platelet(ctx,38,548,5);txt(ctx,D,P('血小板黏附、聚集','Platelet adhesion / aggregation'),55,555,20,'#e7c2ed');
+    line(ctx,[[441,544],[459,552],[441,552],[459,544]],INK,1.5);txt(ctx,D,P('纖維蛋白網穩固血塊','Fibrin stabilizes the clot'),471,555,20);
+    txt(ctx,D,P('機制會重疊；放大模型，非真實時間。','Overlapping mechanisms; enlarged model, not real timing.'),24,592,20,'#b9cbbd');
+    D.status(P('傷口外漏 → 血小板黏附、聚集 → 纖維蛋白加固 → 止血；管內血流仍持續。','Leakage → platelet adhesion and aggregation → fibrin reinforcement → hemostasis; lumen flow continues.'));
+    return s.hemostasisTrace;
+  }
   function bloodDraw(ctx,s,t,D){
     const dt=dtFor(s,t,D,'bloodTime');
     s.separation=clamp((s.separation||0)+((s.targetSeparation||0)-(s.separation||0))*Math.min(1,dt*1.6));
     if(s.task==='separate')return separationDraw(ctx,s,t,D);
+    if(s.task==='repair')return hemostasisDraw(ctx,s,t,D,dt);
     base(ctx,D,P('血液：原圖證據與小動脈剖面','Blood evidence and an arteriole cutaway'));
     if(s.view==='focus'){
       const f=original(ctx,D,'blood_smear.png',24,57,435,238);
@@ -652,18 +756,6 @@
       ellipse(ctx,p.x,p.y,1.8,1.8,'#f4e4ad');
     }
     ctx.restore();
-    if(s.task==='repair'){
-      const p=clamp(s.repair||0);s.repair=clamp(p+dt*.14);
-      const injury=at(BLOOD_MAIN,620,-39);
-      ctx.save();ctx.translate(injury.x,injury.y);ctx.rotate(injury.angle);
-      ctx.fillStyle=BG;ctx.fillRect(-15,-13,30,15);
-      for(let i=0;i<16;i++){
-        const u=clamp(p*1.7-i*.035),a=[-96+i*4,17+(i%3)*6],b=[-13+(i%5)*6,-1+Math.floor(i/5)*5];
-        platelet(ctx,mix(a[0],b[0],smooth(u)),mix(a[1],b[1],smooth(u)),4);
-      }
-      if(p>.35)for(let i=0;i<8;i++)line(ctx,[[-17,1+i*2],[16,15-i*2]],'#f2ecd9b0',1);
-      ctx.restore();
-    }
     // Legend separate from cells; no explanatory prose squeezed into the lumen.
     rbc(ctx,38,555,10,1);txt(ctx,D,P('無核紅血球','Red cell · no nucleus'),58,562,18);
     wbc(ctx,329,555,12);txt(ctx,D,P('有核白血球','White cell · nucleus'),349,562,18);
@@ -721,10 +813,10 @@
     return {period:2.8,waveSpeed:520,cellMeanSpeed:46+90*.21,simulation:true,bounds:{...b}};
   }
 
-  root.HumanTransportCutaways=Object.freeze({heartDraw,vesselsDraw,bloodDraw,pulseDraw,heartExplain,timeline,
+  root.HumanTransportCutaways=Object.freeze({heartDraw,vesselsDraw,bloodDraw,pulseDraw,heartExplain,timeline,hemostasisFrame,hemostasisExplain,hemostasisStages:REPAIR_STAGES,
     render:Object.freeze({tubes,clipTubes,rbc,renderCells,venousLeaflets}),
     // Read-only numerical hooks let the optional validator exercise the SAME
     // geometry used by rendering, rather than a second approximate model.
     geometry:Object.freeze({curve,at,cells,pulseProfile,pulseDisplacement,veinMotion,stepVein,
-      vesselMain:VESSEL_MAIN,vesselBranch:VESSEL_BRANCH,bloodMain:BLOOD_MAIN,bloodBranch:BLOOD_BRANCH,heartRegions:HEART_REGIONS})});
+      vesselMain:VESSEL_MAIN,vesselBranch:VESSEL_BRANCH,bloodMain:BLOOD_MAIN,bloodBranch:BLOOD_BRANCH,heartRegions:HEART_REGIONS,hemostasisRoute:REPAIR_ROUTE})});
 })(globalThis);

@@ -78,11 +78,50 @@ async function main(){
     report.exchangeChecks.geometries++;
   }
   const near=(p,r)=>Math.min(...r.samples.map(q=>Math.hypot(p[0]-q.x,p[1]-q.y)));
-  const glucose=X.flows('kidney').filter(f=>f.kind==='glucose');assert.equal(glucose.length,1);
+  const glucose=X.flows('kidney','gas','extension').filter(f=>f.kind==='glucose'&&f.to==='reabsorbed blood');assert.equal(glucose.length,1);
   assert.equal(glucose[0].to,'reabsorbed blood');assert(near(glucose[0].path.at(-1),X.geometry.renalReturn)<1);
-  assert.equal(X.flows('kidney').find(f=>f.kind==='urea').to,'urine');
+  assert.equal(X.flows('kidney','gas','extension').find(f=>f.kind==='urea').to,'urine');
+  assert(!X.flows('kidney').some(f=>/glomerular|urine|reabsorbed/.test(f.from+' '+f.to)));
   for(const f of X.flows('intestine')){const p=f.kind==='oxygen'?f.path[0]:f.path.at(-1);assert(near(p,X.geometry.villus)<3,'Intestinal exchange meets real capillary lumen');}
   assert.deepEqual([...X.flows('lung').map(f=>f.kind)].sort(),['carbon','oxygen']);
+  const lungGlucose=X.flows('lung','cells').find(f=>f.kind==='glucose');
+  assert.equal(lungGlucose.to,'lung tissue cells');assert.equal(lungGlucose.from,'bronchial tissue plasma');
+  const kidneyGlucose=X.flows('kidney').find(f=>f.kind==='glucose'&&f.to==='kidney cells');
+  assert(kidneyGlucose);assert.equal(kidneyGlucose.from,'plasma');
+  const circleTab=spec.tabs.find(t=>t.id==='circulation'),kidneyState=circleTab.init();
+  circleTab.act(kidneyState,'exchange','kidney');assert.equal(kidneyState.kidneyView,'cells');
+  circleTab.act(kidneyState,'kidneyView','extension');assert.equal(kidneyState.kidneyView,'extension');assert.equal(kidneyState.substance,'all');
+  const bloodTab=spec.tabs.find(t=>t.id==='blood'),pausedBlood={...bloodTab.init(),running:false};
+  bloodTab.act(pausedBlood,'action','repair');assert.equal(pausedBlood.running,true);assert.equal(pausedBlood.repair,0);
+  bloodTab.act(pausedBlood,'repairStage','sealed');assert.equal(pausedBlood.repair,1);
+  bloodTab.act(pausedBlood,'repairStage','auto');assert.equal(pausedBlood.repair,0);
+  report.hemostasis={frames:0,adhesionOnlyAtWound:true,coagulationLocalized:true,leakStops:true,normalFlowPreserved:true};
+  let previousAdhesion=0,previousLeak=1;
+  for(let i=0;i<=200;i++){
+    const q=C.hemostasisFrame(i/200);assert(q.adhered>=previousAdhesion);assert(q.leak<=previousLeak);
+    previousAdhesion=q.adhered;previousLeak=q.leak;
+    if(q.fibrin>0)assert(q.adhered>0,'Fibrin does not precede platelet arrival');
+    for(const p of q.platelets){assert(Math.abs(p.start.lane)<q.radius(p.start.d));if(p.bound){assert(Math.abs(p.target[0])<=32);assert(p.target[1]<-q.radius(440));}}
+    for(const p of q.escaped){assert(p.born<=q.seconds);assert(p.route.samples[0].y>q.injury.y-70);}
+    report.hemostasis.frames++;
+  }
+  assert.equal(C.hemostasisFrame(0).adhered,0);assert.equal(C.hemostasisFrame(0).escaped.length,0);
+  assert(C.hemostasisFrame(.1).escaped.length>0);assert.equal(C.hemostasisFrame(1).leak,0);
+  assert(C.hemostasisFrame(1).adhered>20);assert(C.hemostasisFrame(1).escaped.length>0);
+  const priorScope={},preFile=path.join(repo,'local-backups/20261013-hemostasis-pre.c8Zc1G/human_transport_cutaways_1012_v1.js');
+  const preCutaways=fs.existsSync(preFile)?fs.readFileSync(preFile,'utf8'):require('node:child_process').execFileSync('git',['show','fa350165f732930306264e99bfedaf035db66ef6:assets/biology/human_transport_cutaways_1012_v1.js'],{cwd:repo,encoding:'utf8'});
+  vm.runInNewContext(preCutaways,priorScope);
+  for(const key of ['heartDraw','vesselsDraw','pulseDraw','heartExplain','timeline'])assert.equal(C[key].toString(),priorScope.HumanTransportCutaways[key].toString(),key+' remains unchanged');
+  for(const key of ['vesselMain','vesselBranch','bloodMain','bloodBranch','heartRegions'])assert.equal(JSON.stringify(C.geometry[key]),JSON.stringify(priorScope.HumanTransportCutaways.geometry[key]),key+' numerical geometry remains unchanged');
+  const repairState={...bloodTab.init(),task:'repair',repair:0,repairStage:'auto'},repairCanvas=createCanvas(960,600),repairCtx=repairCanvas.getContext('2d');
+  for(let i=0;i<=200;i++)bloodTab.draw(repairCtx,repairState,i/10,D);
+  assert(repairState.hemostasisTrace.sealed);assert(repairState.repair>.99);
+  repairState.running=false;const held=repairState.repair;bloodTab.draw(repairCtx,repairState,20,D);const heldImage=repairCanvas.toBuffer('image/png');bloodTab.draw(repairCtx,repairState,20,D);assert(heldImage.equals(repairCanvas.toBuffer('image/png')));assert.equal(repairState.repair,held);
+  report.hemostasis.fullAutoProgressionAndPauseStable=true;
+  for(const initial of [{task:'flow',view:'smear',component:'rbc'},{task:'separate',separation:1,targetSeparation:1}]){
+    const images=[priorScope.HumanTransportCutaways,C].map(api=>{const cv=createCanvas(960,600);api.bloodDraw(cv.getContext('2d'),{running:false,...initial},2,D);return cv.toBuffer('image/png');});
+    assert(images[0].equals(images[1]),'Normal blood flow and centrifugation must remain pixel-identical');
+  }
   assert.equal(X.flows('liver').find(f=>f.kind==='ammonia').to,'liver cell');
   assert.equal(X.flows('liver').find(f=>f.kind==='urea').to,'blood to kidney');
   const newSource=fs.readFileSync(path.join(__dirname,'human_transport_exchanges_1013_v1.js'),'utf8');
@@ -97,8 +136,11 @@ async function main(){
   const scenarios=[['medical',0,{view:'medical'}],['heart',0,{view:'heart'}],['body',0,{view:'body'}],
     ['artery',1,{}],['vein',1,{vessel:'vein',squeeze:true}],['capillary',1,{vessel:'capillary'}],['vessel-section',1,{view:'micrograph'}],
     ['blood',2,{}],['blood-em',2,{view:'em'}],['blood-focus',2,{view:'focus',component:'platelet'}],['clot',2,{task:'repair',repair:.7}],['centrifuge',2,{task:'separate',separation:1,targetSeparation:1}],
+    ...C.hemostasisStages.map(p=>['clot-'+p.id,2,{task:'repair',repair:p.progress,repairStage:p.id}]),
     ...scope.HumanTransportCirculation.organs.map(o=>['route-'+o.id,3,{organ:o.id}]),['tissue-exchange',3,{view:'body'}],['lung-exchange',3,{view:'lung'}],
     ...scope.HumanTransportExchanges.zones.map(z=>['exchange-'+z.id,3,{view:'exchange',exchange:z.id}]),
+    ['exchange-lung-cells',3,{view:'exchange',exchange:'lung',lungView:'cells'}],
+    ['exchange-kidney-extra',3,{view:'exchange',exchange:'kidney',kidneyView:'extension'}],
     ['lymph',4,{}],['lymph-node',4,{compartment:'node'}],['lymph-source',4,{lymphView:'reference'}],['pulse',5,{view:'pulse'}],['records',5,{view:'records'}],['fish',5,{view:'fish'}]];
   for(lang of ['zh','en'])for(const[name,i,initial]of scenarios.filter(([name])=>!process.argv.includes('--exchange-only')||name.startsWith('exchange-')||name.startsWith('lymph'))){
     const tab=spec.tabs[i],state={...tab.init(),...initial};let labelIndex=0,skip=-1;const cv=createCanvas(960,600),ctx=cv.getContext('2d'),nativeFill=ctx.fillText.bind(ctx),nativeDraw=ctx.drawImage.bind(ctx);
