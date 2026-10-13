@@ -31,9 +31,10 @@ const report={output:out,fonts:'Repository Noto Sans TC and JetBrains Mono'+(pro
 async function main(){
   for(const file of files)imageCache[file]=await loadImage(path.join(__dirname,'ch4_new_1008_v1',file));
   for(const file of ['organ_atlas.png','heart_valves_frames.webp'])imageCache['assets/biology/human_transport_media_1012_v1/'+file]=await loadImage(path.join(__dirname,'human_transport_media_1012_v1',file));
+  for(const file of ['lymph_capillaries_seer_zh.png','lymph_capillaries_seer_en.png'])imageCache['assets/biology/human_transport_media_1012_v1/'+file]=await loadImage(path.join(__dirname,'human_transport_media_1012_v1',file));
   class ImageProxy{set src(file){this.native=imageCache[file];assert(this.native,'Image exists: '+file);}get complete(){return true;}get naturalWidth(){return this.native?.width||0;}get width(){return this.native?.width||0;}get height(){return this.native?.height||0;}}
   const scope={LivingBook:{register:s=>{spec=s;}},Image:ImageProxy,Date:clock};
-  for(const f of ['human_transport_teaching_1012_v1.js','human_transport_cutaways_1012_v1.js','human_transport_circulation_1012_v1.js','human_transport_valve_media_1012_v1.js','human_transport_upgrade_1012_v1.js','human_transport_1008_v1.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,f),'utf8'),scope,{filename:f});
+  for(const f of ['human_transport_teaching_1012_v1.js','human_transport_cutaways_1012_v1.js','human_transport_circulation_1012_v1.js','human_transport_valve_media_1012_v1.js','human_transport_exchanges_1013_v1.js','human_transport_upgrade_1012_v1.js','human_transport_1008_v1.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,f),'utf8'),scope,{filename:f});
   assert.equal(spec.tabs.length,6);assert.equal(spec.title[0],'人體的運輸');
   for(let i=0;i<6;i++)for(const f of ['init','controls','act','draw','check']){
     if(i===4&&['draw','check'].includes(f))continue;
@@ -54,12 +55,52 @@ async function main(){
   const reach=(from,to,seen=new Set())=>from===to||(!seen.has(from)&&(seen.add(from),(graph[from]||[]).some(n=>reach(n,to,seen))));
   for(const o of scope.HumanTransportCirculation.organs){assert(reach('lv',o.id));assert(reach(o.id,'lv'));report.graph.push(o.id+' has complete return circuit');}
   assert.deepEqual([...graph.intestine],['portal']);assert.deepEqual([...graph.portal],['liver']);assert.deepEqual([...graph.coronarySinus],['ra']);assert(!graph.aorta.includes('lung'));assert.deepEqual([...graph.rv],['pa']);assert.deepEqual([...graph.pa],['lung']);assert.deepEqual([...graph.lung],['pv']);assert.deepEqual([...graph.pv],['la']);
+  const X=scope.HumanTransportExchanges,C=scope.HumanTransportCutaways;
+  report.exchangeChecks={zones:[],geometries:0};
+  const seeded=n=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);};
+  let queued=[-26,-8,10,28].flatMap((lane,row)=>Array.from({length:19},(_,i)=>({d:40+i*42+(row%2)*20+(seeded(i+row*73)-.5)*9,lane,row,index:i,headway:27+6*seeded(i+row*173+503)})));
+  report.seededVeinChecks={positions:0,closedValves:0};
+  for(let i=0;i<2400;i++){
+    const motion=C.geometry.veinMotion(i/60,false),previous=queued;
+    queued=C.geometry.stepVein(previous,1/60,motion,C.geometry.vesselMain.length);
+    for(let j=0;j<queued.length;j++){
+      const a=previous[j],b=queued[j];assert.equal(b.headway,a.headway);
+      if(a.d>=0&&a.d<=C.geometry.vesselMain.length)assert(b.d<=a.d+1e-9,'Seeded queue may not reverse blood cells');
+      for(const [gate,open]of[[250,motion.downstreamAperture>.95],[665,motion.upstreamAperture>.95]])if(!open&&a.d>=gate+14){assert(b.d>=gate+14,'Seeded queue cannot cross a closed valve');report.seededVeinChecks.closedValves++;}
+      report.seededVeinChecks.positions++;
+    }
+  }
+  const gaps=queued.filter(p=>p.row===0).sort((a,b)=>a.d-b.d).slice(1).map((p,i)=>p.d-queued.filter(p=>p.row===0).sort((a,b)=>a.d-b.d)[i].d);
+  assert(Math.max(...gaps)-Math.min(...gaps)>2,'Queue keeps irregular spacing after repeated valve closure');
+  for(const route of [X.geometry.villus,...X.geometry.tuft,X.geometry.renalReturn]){
+    assert(route.length>0&&Number.isFinite(route.length));
+    for(const p of route.samples)assert(['x','y','nx','ny','d'].every(k=>Number.isFinite(p[k])));
+    report.exchangeChecks.geometries++;
+  }
+  const near=(p,r)=>Math.min(...r.samples.map(q=>Math.hypot(p[0]-q.x,p[1]-q.y)));
+  const glucose=X.flows('kidney').filter(f=>f.kind==='glucose');assert.equal(glucose.length,1);
+  assert.equal(glucose[0].to,'reabsorbed blood');assert(near(glucose[0].path.at(-1),X.geometry.renalReturn)<1);
+  assert.equal(X.flows('kidney').find(f=>f.kind==='urea').to,'urine');
+  for(const f of X.flows('intestine')){const p=f.kind==='oxygen'?f.path[0]:f.path.at(-1);assert(near(p,X.geometry.villus)<3,'Intestinal exchange meets real capillary lumen');}
+  assert.deepEqual([...X.flows('lung').map(f=>f.kind)].sort(),['carbon','oxygen']);
+  assert.equal(X.flows('liver').find(f=>f.kind==='ammonia').to,'liver cell');
+  assert.equal(X.flows('liver').find(f=>f.kind==='urea').to,'blood to kidney');
+  const newSource=fs.readFileSync(path.join(__dirname,'human_transport_exchanges_1013_v1.js'),'utf8');
+  assert(!/requestAnimationFrame|setInterval|setTimeout|Math.random/.test(newSource));
+  assert(!newSource.includes('human_lymph_textbook_1013_v1'));
+  for(const z of X.zones){const st={exchange:z.id,substance:'all',running:false,exchangeSpeed:1};const cv=createCanvas(960,600),ctx=cv.getContext('2d'),nativeDraw=ctx.drawImage.bind(ctx);ctx.drawImage=(im,...a)=>nativeDraw(im.native||im,...a);X.draw(ctx,st,2,D);const a=cv.toBuffer('image/png');X.draw(ctx,st,2,D);const b=cv.toBuffer('image/png');if(!a.equals(b)){fs.writeFileSync(path.join(out,z.id+'-paused-a.png'),a);fs.writeFileSync(path.join(out,z.id+'-paused-b.png'),b);}assert(a.equals(b),z.id+': Pause redraw preserves molecule positions '+out);const f=X.flows(z.id);assert(f.length>=2);for(const p of f.flatMap(f=>f.path))assert(p.every(Number.isFinite));report.exchangeChecks.zones.push({zone:z.id,flows:f.map(f=>({kind:f.kind,from:f.from,to:f.to})),pauseStable:true});}
+  // Cache must be pixel-identical to fresh union geometry, not an approximation.
+  const noCache={};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'human_transport_cutaways_1012_v1.js'),'utf8').replace('for(const original of cachedOutlines(routes,radii,extra))','for(const original of joinedOutlines(routes,radii,extra))'),noCache);
+  const routes=[C.geometry.vesselMain,C.geometry.vesselBranch],radii=[39,23];
+  for(const time of [0,1.4]){const frames=[C,noCache.HumanTransportCutaways].map(api=>{const cv=createCanvas(960,600),ctx=cv.getContext('2d');api.render.tubes(ctx,routes,radii);return cv.toBuffer('image/png');});assert(frames[0].equals(frames[1]));}
+  report.exchangeChecks.outlineCachePixelIdentical=true;
   const scenarios=[['medical',0,{view:'medical'}],['heart',0,{view:'heart'}],['body',0,{view:'body'}],
     ['artery',1,{}],['vein',1,{vessel:'vein',squeeze:true}],['capillary',1,{vessel:'capillary'}],['vessel-section',1,{view:'micrograph'}],
     ['blood',2,{}],['blood-em',2,{view:'em'}],['blood-focus',2,{view:'focus',component:'platelet'}],['clot',2,{task:'repair',repair:.7}],['centrifuge',2,{task:'separate',separation:1,targetSeparation:1}],
     ...scope.HumanTransportCirculation.organs.map(o=>['route-'+o.id,3,{organ:o.id}]),['tissue-exchange',3,{view:'body'}],['lung-exchange',3,{view:'lung'}],
-    ['lymph',4,{}],['pulse',5,{view:'pulse'}],['records',5,{view:'records'}],['fish',5,{view:'fish'}]];
-  for(lang of ['zh','en'])for(const[name,i,initial]of scenarios){
+    ...scope.HumanTransportExchanges.zones.map(z=>['exchange-'+z.id,3,{view:'exchange',exchange:z.id}]),
+    ['lymph',4,{}],['lymph-node',4,{compartment:'node'}],['lymph-source',4,{lymphView:'reference'}],['pulse',5,{view:'pulse'}],['records',5,{view:'records'}],['fish',5,{view:'fish'}]];
+  for(lang of ['zh','en'])for(const[name,i,initial]of scenarios.filter(([name])=>!process.argv.includes('--exchange-only')||name.startsWith('exchange-')||name.startsWith('lymph'))){
     const tab=spec.tabs[i],state={...tab.init(),...initial};let labelIndex=0,skip=-1;const cv=createCanvas(960,600),ctx=cv.getContext('2d'),nativeFill=ctx.fillText.bind(ctx),nativeDraw=ctx.drawImage.bind(ctx);
     let labels=[],captureInk=false;
     ctx.drawImage=(im,...args)=>nativeDraw(im.native||im,...args);
@@ -67,7 +108,7 @@ async function main(){
     const frame=t=>{ctx.fillStyle='#11261f';ctx.fillRect(0,0,960,600);labels=[];labelIndex=0;tab.draw(ctx,state,t,D);};
     for(let f=0;f<=30;f++)frame(f/30);const a=ctx.getImageData(0,0,960,600).data.slice();for(let f=31;f<=60;f++)frame(f/30);const b=ctx.getImageData(0,0,960,600).data.slice();
     let changed=0;for(let p=0;p<a.length;p+=4)if(a[p]!==b[p]||a[p+1]!==b[p+1]||a[p+2]!==b[p+2])changed++;
-    const staticExpected=['centrifuge'].includes(name);if(!staticExpected)assert(changed>80,`${name}/${lang}: animation actually moves`);
+    const staticExpected=['centrifuge','lymph-source'].includes(name);if(!staticExpected)assert(changed>80,`${name}/${lang}: animation actually moves`);
     const outside=labels.filter(l=>l.left<0||l.right>960||l.y>600);assert.equal(outside.length,0,`${name}/${lang}: out of canvas ${JSON.stringify(outside)}`);
     captureInk=true;frame(2);captureInk=false;const complete=ctx.getImageData(0,0,960,600).data.slice(),lastLabels=labels.slice();
     // The new compact strip intentionally masks the old strip and its caption.

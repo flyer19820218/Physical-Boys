@@ -338,55 +338,129 @@
       ctx.lineTo(p.x-p.nx*r,p.y-p.ny*r); }
     ctx.closePath();
   }
+  // Merge the two cutaway outlines before painting. In particular, a branch
+  // has no cut end or separate shadow crossing the parent vessel's lumen.
+  function tubeOutline(route, radius, extra = 0) {
+    const side = sign => route.samples.map(p => {
+      const r = (typeof radius === 'function' ? radius(p.d) : radius) + extra;
+      return {x:p.x+p.nx*r*sign,y:p.y+p.ny*r*sign};
+    });
+    return [...side(1), ...side(-1).reverse()];
+  }
+  function insideOutline(p, polygon) {
+    let inside = false;
+    for(let i=0,j=polygon.length-1;i<polygon.length;j=i++) {
+      const a=polygon[i],b=polygon[j];
+      if((a.y>p.y)!==(b.y>p.y)&&p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x)inside=!inside;
+    }
+    return inside;
+  }
+  function joinedOutlines(routes, radii, extra = 0) {
+    const polygons=routes.map((r,i)=>tubeOutline(r,radii[i],extra));
+    if(polygons.length===1)return polygons;
+    const edges=polygons.map(p=>p.map((a,i)=>({a,b:p[(i+1)%p.length],cuts:[{u:0,p:a},{u:1,p:p[(i+1)%p.length]}]})));
+    let crossings=0;
+    for(let i=0;i<edges.length;i++)for(let j=i+1;j<edges.length;j++)for(const a of edges[i])for(const b of edges[j]) {
+      if(Math.max(a.a.x,a.b.x)<Math.min(b.a.x,b.b.x)||Math.max(b.a.x,b.b.x)<Math.min(a.a.x,a.b.x)||
+        Math.max(a.a.y,a.b.y)<Math.min(b.a.y,b.b.y)||Math.max(b.a.y,b.b.y)<Math.min(a.a.y,a.b.y))continue;
+      const ax=a.b.x-a.a.x,ay=a.b.y-a.a.y,bx=b.b.x-b.a.x,by=b.b.y-b.a.y,den=ax*by-ay*bx;
+      if(Math.abs(den)<1e-9)continue;
+      const dx=b.a.x-a.a.x,dy=b.a.y-a.a.y,u=(dx*by-dy*bx)/den,v=(dx*ay-dy*ax)/den;
+      if(u<0||u>1||v<0||v>1)continue;
+      const p={x:a.a.x+ax*u,y:a.a.y+ay*u,junction:true};
+      a.cuts.push({u,p});b.cuts.push({u:v,p});crossings++;
+    }
+    if(!crossings)return polygons.filter((p,i)=>!polygons.some((other,k)=>k!==i&&insideOutline(p[0],other)));
+    const segments=[];
+    edges.forEach((list,i)=>list.forEach(e=>{
+      e.cuts.sort((a,b)=>a.u-b.u);
+      for(let j=0;j<e.cuts.length-1;j++) {
+        const a=e.cuts[j],b=e.cuts[j+1];if(b.u-a.u<1e-9)continue;
+        if(!polygons.some((other,k)=>k!==i&&insideOutline({x:(a.p.x+b.p.x)/2,y:(a.p.y+b.p.y)/2},other)))segments.push({a:a.p,b:b.p});
+      }
+    }));
+    const key=p=>`${p.x.toFixed(5)},${p.y.toFixed(5)}`,next=new Map(segments.map(s=>[key(s.a),s]));
+    const contours=[];
+    while(next.size) {
+      const first=next.values().next().value,start=key(first.a),contour=[];let edge=first;
+      while(edge) {
+        contour.push(edge.a);next.delete(key(edge.a));
+        if(key(edge.b)===start)break;
+        edge=next.get(key(edge.b));
+      }
+      if(contour.length>2)contours.push(contour);
+    }
+    return contours;
+  }
+  const outlineCache=new WeakMap(),routeIds=new WeakMap();let routeSerial=0;
+  function cachedOutlines(routes,radii,extra){
+    // Exact same numeric union, cached only for immutable sampled routes and
+    // numeric radii. Dynamic pulse-radius functions still compute every frame.
+    if(radii.some(r=>typeof r!=='number'))return joinedOutlines(routes,radii,extra);
+    let cache=outlineCache.get(routes[0]);if(!cache){cache=new Map();outlineCache.set(routes[0],cache);}
+    const ids=routes.map(r=>{if(!routeIds.has(r))routeIds.set(r,++routeSerial);return routeIds.get(r);});
+    const key=JSON.stringify([ids,radii,extra]);
+    if(!cache.has(key))cache.set(key,joinedOutlines(routes,radii,extra));
+    return cache.get(key);
+  }
+  function joinedPath(ctx, routes, radii, extra = 0) {
+    ctx.beginPath();
+    for(const original of cachedOutlines(routes,radii,extra)) {
+      let points=original.slice();
+      // Only soften the explicitly authorised branch junction. Sampled bends,
+      // vessel endpoints and the blood-cell centreline remain untouched.
+      for(let i=points.length-1;i>=0;i--)if(points[i]?.junction) {
+        const corner=points[i],reach=18+Math.max(0,extra)*.3;
+        let before=i,after=i,db=0,da=0;
+        while(db<reach&&before>0){db+=Math.hypot(points[before].x-points[before-1].x,points[before].y-points[before-1].y);before--;}
+        while(da<reach&&after<points.length-1){da+=Math.hypot(points[after].x-points[after+1].x,points[after].y-points[after+1].y);after++;}
+        if(before<i&&after>i){points.splice(before,after-before+1,points[before],{...points[after],control:corner});i=before;}
+      }
+      points.forEach((p,i)=>{
+        if(!i)ctx.moveTo(p.x,p.y);
+        else if(p.control)ctx.quadraticCurveTo(p.control.x,p.control.y,p.x,p.y);
+        else ctx.lineTo(p.x,p.y);
+      });ctx.closePath();
+    }
+  }
   function tubes(ctx, routes, radii, muscle = 18, wall = 7) {
     const bounds = routes.flatMap(r => r.samples), ymin = Math.min(...bounds.map(p=>p.y))-90, ymax = Math.max(...bounds.map(p=>p.y))+90;
     const layers = [
       [muscle+wall, [[0,'#754949'],[.3,'#bf8279'],[.52,'#e7b39a'],[.8,'#965954'],[1,'#57363d']]],
       [muscle, [[0,'#8b454e'],[.3,'#d88c86'],[.6,'#b75f64'],[1,'#67343f']]],
       [3, [[0,'#ba8b65'],[.5,'#e7c896'],[1,'#a47559']]],
-      [0, [[0,'#503529'],[.28,'#b39461'],[.48,'#d2b273'],[.7,'#c5a166'],[1,'#715036']]]
+      [0, [[0,'#b9ac79'],[.28,'#efe5b9'],[.48,'#fff5cf'],[.7,'#f0e4b1'],[1,'#c4b783']]]
     ];
     for (const [extra, colors] of layers) {
-      ctx.beginPath(); routes.forEach((r,i)=>tubePath(ctx,r,radii[i],extra));
+      joinedPath(ctx,routes,radii,extra);
       ctx.fillStyle=gradient(ctx,0,ymin,0,ymax,colors);ctx.fill();
     }
-    // Local-normal shading follows the bend (a global vertical gradient alone
-    // makes the cutaway look like a flat ribbon). Keep the lumen unobstructed.
+    // A single continuous inner rim shades the merged lumen. Painting shadows
+    // once per route used to leave a diagonal doubled-shadow seam at the fork.
     ctx.save();clipTubes(ctx,routes,radii);
-    routes.forEach((r,i)=>{
-      for(let band=0;band<20;band++){
-        const f0=-1+band/10,f1=f0+.1,mid=(f0+f1)/2;
-        ctx.beginPath();r.samples.forEach((p,j)=>{const rr=typeof radii[i]==='function'?radii[i](p.d):radii[i];
-          ctx[j?'lineTo':'moveTo'](p.x+p.nx*rr*f0,p.y+p.ny*rr*f0);});
-        for(let j=r.samples.length-1;j>=0;j--){const p=r.samples[j],rr=typeof radii[i]==='function'?radii[i](p.d):radii[i];ctx.lineTo(p.x+p.nx*rr*f1,p.y+p.ny*rr*f1);}
-        ctx.closePath();ctx.fillStyle=`rgba(57,32,30,${Math.pow(Math.abs(mid),3)*.38})`;ctx.fill();
-      }
-    });ctx.restore();
-    // Narrow specular rims describe curved surfaces; no decorative glow.
-    routes.forEach((r,i)=>{
-      for(const sign of [-1,1]) {
-        let points=[];
-        r.samples.forEach(p=>{
-          const rr=typeof radii[i]==='function'?radii[i](p.d):radii[i];
-          const point=[p.x+p.nx*(rr+muscle*.58)*sign,p.y+p.ny*(rr+muscle*.58)*sign];
-          const insideOther=routes.some((other,k)=>k!==i&&other.samples.some(o=>Math.hypot(point[0]-o.x,point[1]-o.y)<(typeof radii[k]==='function'?radii[k](o.d):radii[k])+muscle));
-          if(insideOther){if(points.length>1)line(ctx,points,sign<0?'#f3bba470':'#552f3860',1.6);points=[];}else points.push(point);
-        });
-        if(points.length>1)line(ctx,points,sign<0?'#f3bba470':'#552f3860',1.6);
-      }
-    });
+    joinedPath(ctx,routes,radii);ctx.lineJoin='round';ctx.lineCap='round';
+    for(let band=7;band>0;band--){ctx.lineWidth=band*3;ctx.strokeStyle='rgba(57,32,30,.042)';ctx.stroke();}
+    ctx.restore();
+    joinedPath(ctx,routes,radii,muscle*.58);
+    ctx.strokeStyle=gradient(ctx,0,ymin,0,ymax,[[0,'#f3bba480'],[.6,'#d9a18a60'],[1,'#552f3860']]);
+    ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.stroke();
   }
-  function clipTubes(ctx,routes,radii) {ctx.beginPath();routes.forEach((r,i)=>tubePath(ctx,r,radii[i]));ctx.clip();}
+  function clipTubes(ctx,routes,radii) {joinedPath(ctx,routes,radii);ctx.clip();}
+  // Stable seeded irregularity, never Math.random() during a redraw: each cell
+  // keeps its own offset/tilt, so pause and language changes do not reshuffle it.
+  function scatter(n) {const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);}
   function cells(route, time, lanes, spacing, speed, radius=9) {
     const count=Math.max(1,Math.floor(route.length/spacing)), pitch=route.length/count, result=[];
     lanes.forEach((lane,row)=>{
       for(let i=0;i<count;i++) {
-        const d=mod(time*speed+i*pitch+(row%2)*pitch/2,route.length);
-        result.push({...at(route,d,lane),r:radius,row,index:i});
+        const seed=i+row*137,offset=(scatter(seed)-.5)*pitch*.30;
+        const d=mod(time*speed+i*pitch+scatter(row+731)*pitch+offset,route.length);
+        const lateral=lanes.length===1?0:(scatter(seed+901)-.5)*2.3;
+        result.push({...at(route,d,lane+lateral),r:radius*(.92+.17*scatter(seed+231)),tilt:(scatter(seed+19)-.5)*1.35,row,index:i});
       }
     });return result;
   }
-  function renderCells(ctx,arr,oxygen){arr.forEach(p=>rbc(ctx,p.x,p.y,p.r,oxygen,p.angle+.12*Math.sin(p.index*2)));}
+  function renderCells(ctx,arr,oxygen){arr.forEach(p=>rbc(ctx,p.x,p.y,p.r,oxygen,p.angle+(p.tilt||0)));}
   function pulseProfile(distance, seconds, period=2.8, speed=520) {
     const u=mod((seconds-distance/speed)/period);
     // Compact wave packet; quiet wall ahead and recoil behind, continuous wrap.
@@ -406,11 +480,17 @@
   function veinMotion(t,squeeze){
     const u=mod(t/3.6), active=!!squeeze;
     const contraction=active&&u<.48?Math.sin(Math.PI*u/.48):0;
-    const forward=active?u<.48:true;
+    const forward=u<.48;
     // Continuous, nondecreasing displacement: cells stop when the valve closes.
     const distance=active?Math.floor(t/3.6)*95+95*smooth(u/.48):t*24;
-    return {u,contraction,forward,distance,open:forward?1:0,
-      upstreamOpen:!active||!forward,downstreamOpen:!active||forward};
+    // The default is an explicitly slowed forward-pressure / reflux-pressure
+    // demonstration, not a claim that all venous valves beat like the heart.
+    // Muscle mode shows the two valves bracketing the squeezed segment.
+    const openWindow=(a,b)=>u>=a&&u<b?smooth((u-a)/.06)*smooth((b-u)/.06):0;
+    const downstreamAperture=openWindow(0,.48),upstreamAperture=active?openWindow(.48,1):downstreamAperture;
+    return {u,contraction,forward,distance,open:downstreamAperture,
+      upstreamOpen:active?!forward:forward,downstreamOpen:forward,
+      upstreamAperture,downstreamAperture,pressureDemo:!active};
   }
   function stepVein(particles,dt,motion,length){
     const result=particles.map(p=>({...p}));
@@ -420,14 +500,16 @@
       for(const p of lane){
         const speed=motion.contraction>0?62:30;
         let target=p.d-speed*dt;
-        for(const [gate,open] of [[250,motion.downstreamOpen],[665,motion.upstreamOpen]]){
+        for(const [gate,open] of [[250,motion.downstreamOpen&&motion.downstreamAperture>.95],[665,motion.upstreamOpen&&motion.upstreamAperture>.95]]){
           if(!open&&p.d>=gate+14&&target<gate+14)target=gate+14;
         }
-        p.d=Math.max(target,previous+32);previous=p.d;
+        // Preserve each cell's seeded spacing even in a queue: equal headway
+        // would erase the scatter and form a four-column grid after closure.
+        p.d=Math.max(target,previous+(p.headway||32));previous=p.d;
       }
       // Re-enter only through the upstream cut end, with preserved headway.
       const tail=lane[lane.length-1];
-      for(const p of lane)if(p.d<-12){p.d=Math.max(length+12,tail.d+34);}
+      for(const p of lane)if(p.d<-12){p.d=Math.max(length+12,tail.d+(p.headway||34));}
     }
     return result;
   }
@@ -436,11 +518,23 @@
     // Downstream is +local y; open tips bend downstream, closed tips coapt.
     leafletPair(ctx,0,0,r,open,'venous');ctx.restore();
   }
+  function venousLeaflets(ctx,r,aperture){
+    // Two compliant pocket-shaped leaflets. At aperture 0 their free edges
+    // meet at precisely the same point; at 1 they lie against the inner wall.
+    for(const side of [-1,1]){
+      const anchor=side*r,tip=side*r*.80*aperture,depth=12+35*aperture;
+      ctx.beginPath();ctx.moveTo(anchor,0);
+      ctx.bezierCurveTo(anchor-side*r*.12,19,tip+side*r*.12,depth+8,tip,depth);
+      ctx.bezierCurveTo(tip+side*r*.10,depth-7,anchor-side*3,6,anchor,0);ctx.closePath();
+      ctx.fillStyle=gradient(ctx,anchor,0,tip,depth,[[0,'#b39780'],[.42,'#e9d8b5'],[1,'#f3e8cb']]);
+      ctx.fill();ctx.strokeStyle='#f2ecd9';ctx.lineWidth=2;ctx.stroke();
+    }
+  }
   function vesselsDraw(ctx,s,t,D){
     const dt=dtFor(s,t,D,'vesselTime'), memory=memories.get(s);
     const motion=veinMotion(t,s.squeeze);
     if(!memory.veinParticles)memory.veinParticles=[-26,-8,10,28].flatMap((lane,row)=>
-      Array.from({length:19},(_,i)=>({d:40+i*42+(row%2)*20,lane,row,index:i,r:8})));
+      Array.from({length:19},(_,i)=>({d:40+i*42+(row%2)*20+(scatter(i+row*73)-.5)*9,lane:lane+(scatter(i+row*137+901)-.5)*2.3,row,index:i,r:7.6+.8*scatter(i+231),tilt:(scatter(i+row*91)-.5)*1.35,headway:27+6*scatter(i+row*173+503)})));
     memory.veinParticles=stepVein(memory.veinParticles,dt,motion,VESSEL_MAIN.length);
     base(ctx,D,P('血管剖面：沿著管腔走','Vessel cutaways: follow the lumen'));
     if(s.view==='micrograph'||s.view==='capillary'){
@@ -468,12 +562,17 @@
         line(ctx,[[350,485],[346,392]],'#d5a59b',1.5);
         line(ctx,[[618,485],[620,410]],'#e7c896',1.5);
       }
-      const note=s.vessel==='vein'?P('部分靜脈：瓣膜防倒流，肌肉擠壓助回流。','Some veins: valves prevent backflow; muscles assist return.'):
+      const note=s.vessel==='vein'?(s.squeeze?P('肌肉擠壓：靠心端開、遠心端關；放鬆時相反。','Muscle squeeze: heart-side opens, far-side closes; release reverses them.'):
+        P('慢速壓力示意：順流推開瓣葉，回流傾向使瓣葉閉合。','Slowed pressure demo: forward flow opens; reflux tendency closes.')):
         s.vessel==='capillary'?P('一層內皮・紅血球逐顆通過，留在管內。','One endothelial layer · cells pass singly inside the lumen.'):
           P('管壁局部擴張後回彈；動脈沒有靜脈瓣。','Local wall expansion and recoil; no venous valves in arteries.');
       textWrap(ctx,D,note,24,560,912,22);
     }
-    if(D.status)D.status(s.circuit==='lung'?P('肺循環：動脈較少氧，靜脈富氧。','Pulmonary circuit: oxygen-poor arteries, oxygen-rich veins.'):
+    if(D.status)D.status(s.vessel==='vein'?(s.squeeze?(motion.forward?P('擠壓送血：靠心端瓣膜開，遠心端瓣膜關。','Squeeze: heart-side valve opens; far-side valve closes.'):
+      P('放鬆充血：靠心端瓣膜關，遠心端瓣膜開。','Refill: heart-side valve closes; far-side valve opens.')):
+      (motion.forward?P('順流壓力推開瓣膜 → 血液朝心臟流。','Forward pressure opens valves → flow toward the heart.'):
+        P('回流傾向使瓣膜閉合 → 阻止血液倒流。','Reflux tendency closes valves → backflow blocked.'))):
+      s.circuit==='lung'?P('肺循環：動脈較少氧，靜脈富氧。','Pulmonary circuit: oxygen-poor arteries, oxygen-rich veins.'):
       P('體循環：動脈富氧，靜脈較少氧。','Systemic circuit: oxygen-rich arteries, oxygen-poor veins.'));
   }
   function drawVesselModel(ctx,s,t,D,veinParticles){
@@ -508,14 +607,14 @@
     if(vein){
       // Return flow is right-to-left; rotate the valve section to face it.
       [250,665].forEach(d=>{const p=at(VESSEL_MAIN,d);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle+Math.PI/2);
-        leafletPair(ctx,0,0,radius(d),(d===250?motion.downstreamOpen:motion.upstreamOpen)?1:0,'venous');ctx.restore();});
+        venousLeaflets(ctx,radius(d),d===250?motion.downstreamAperture:motion.upstreamAperture);ctx.restore();});
     }
     // Cross-sectional rim at the cut end displays three concentric tissue layers.
     const end=VESSEL_MAIN.samples[0], r=radius(0);
     ctx.save();ctx.translate(end.x,end.y);ctx.rotate(end.angle);
     ellipse(ctx,0,0,16,r+(vein?16:31),'#b88078','#edb59d',1);
     ellipse(ctx,0,0,12,r+(vein?9:24),'#a44f5b','#e79b91',1);
-    ellipse(ctx,0,0,9,r+3,'#e3bc87');ellipse(ctx,0,0,7,r,'#714632');ctx.restore();
+    ellipse(ctx,0,0,9,r+3,'#e3bc87');ellipse(ctx,0,0,7,r,'#c4b783');ctx.restore();
   }
 
   const CROPS={rbc:[.49,.34,.10,.13],wbc:[.414,.493,.10,.14],platelet:[.829,.863,.049,.067],plasma:[0,0,1,1]};
@@ -542,7 +641,7 @@
     all.forEach(p=>{
       // Replace reserved neighbouring RBC slots, so larger WBCs do not overlap.
       if(p.row===1&&(p.index===5||p.index===18))wbc(ctx,p.x,p.y,12);
-      else if(!(p.row===2&&(p.index===5||p.index===18)))rbc(ctx,p.x,p.y,p.r,.95,p.angle);
+      else if(!(p.row===2&&(p.index===5||p.index===18)))rbc(ctx,p.x,p.y,p.r,.95,p.angle+p.tilt);
     });
     renderCells(ctx,cells(BLOOD_BRANCH,t,[-8,8],32,29,7).filter(p=>p.d>86),1);
     for(let i=0;i<23;i++){
@@ -577,7 +676,7 @@
     original(ctx,D,'blood_smear.png',24,74,457,388);
     txt(ctx,D,P('染色光學血抹片','Stained optical blood smear'),24,497,22);
     ctx.save();ctx.beginPath();ctx.roundRect(569,85,183,420,65);
-    ctx.fillStyle=gradient(ctx,569,0,752,0,[[0,'#9c8558'],[.25,'#ecdaa6'],[.7,'#e3c98c'],[1,'#aa8559']]);ctx.fill();ctx.clip();
+    ctx.fillStyle=gradient(ctx,569,0,752,0,[[0,'#c4b783'],[.25,'#fff5cf'],[.7,'#f0e4b1'],[1,'#c4b783']]);ctx.fill();ctx.clip();
     const sep=s.separation;
     ctx.globalAlpha=sep;ctx.fillStyle='#772d3d';ctx.fillRect(569,316,183,189);
     ctx.fillStyle='#e3dbcd';ctx.fillRect(569,311,183,5);ctx.globalAlpha=1;
@@ -623,6 +722,7 @@
   }
 
   root.HumanTransportCutaways=Object.freeze({heartDraw,vesselsDraw,bloodDraw,pulseDraw,heartExplain,timeline,
+    render:Object.freeze({tubes,clipTubes,rbc,renderCells,venousLeaflets}),
     // Read-only numerical hooks let the optional validator exercise the SAME
     // geometry used by rendering, rather than a second approximate model.
     geometry:Object.freeze({curve,at,cells,pulseProfile,pulseDisplacement,veinMotion,stepVein,

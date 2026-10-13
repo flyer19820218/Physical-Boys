@@ -5,8 +5,8 @@
 (function(root){
   'use strict';
   const B=root.LivingBook,T=root.HumanTransportTeaching,C=root.HumanTransportCutaways;
-  const G=root.HumanTransportCirculation,V=root.HumanTransportValveMedia;
-  if(!B||!T||!C||!G||!V)throw new Error('Human transport upgrade dependencies are missing.');
+  const G=root.HumanTransportCirculation,V=root.HumanTransportValveMedia,X=root.HumanTransportExchanges;
+  if(!B||!T||!C||!G||!V||!X)throw new Error('Human transport upgrade dependencies are missing.');
   const P=(a,b)=>[a,b], group=(label,items)=>({label,items}), item=(label,key,value)=>({label,key,value});
   const originalRegister=B.register,originals={},sounds=new WeakMap();let audio;
   function enableSound(){const A=root.AudioContext||root.webkitAudioContext;if(!A)return false;try{audio=audio||new A();audio.resume();return true;}catch{return false;}}
@@ -54,15 +54,28 @@
     next.tabs.find(x=>x.id==='vessels').draw=C.vesselsDraw;
     next.tabs.find(x=>x.id==='blood').draw=C.bloodDraw;
     const circulation=next.tabs.find(x=>x.id==='circulation'),oldCircle=originals.circulation;
-    circulation.init=()=>({...oldCircle.init(),organ:'tissue'});
+    circulation.init=()=>({...oldCircle.init(),organ:'tissue',exchange:null,substance:'all',exchangeSpeed:1});
     circulation.controls=s=>[
-      ...oldCircle.controls(s),
-      group(P('選器官支路','Choose an organ branch'),G.organs.map(o=>item(o.name,'organ',o.id)))
+      group(P('完整路線／六大物質交換區','Whole circuit / six exchange regions'),[item(P('完整封閉路線','Complete closed circuit'),'view','loop'),...X.zones.map(z=>item(z.name,'exchange',z.id))]),
+      ...(s.view==='exchange'?[
+        group(P('追蹤哪種物質？','Which substance?'),[item(P('一起看交換','All exchanges'),'substance','all'),...Object.entries(X.species).filter(([k])=>X.flows(s.exchange).some(f=>f.kind===k)).map(([k,v])=>item(v.name,'substance',k))]),
+        group(P('放慢看穿過界面','Slow the crossing'),[item(P('慢速','Slow'),'exchangeSpeed',.5),item(P('標準','Normal'),'exchangeSpeed',1)])
+      ]:[...oldCircle.controls(s).slice(1),group(P('選器官供血支路','Choose an organ supply branch'),G.organs.map(o=>item(o.name,'organ',o.id)))])
     ];
-    circulation.act=(s,k,v)=>{if(k==='organ'){s.organ=v;s.view='loop';s.travel=0;s.running=true;}else oldCircle.act(s,k,v);};
-    circulation.draw=(ctx,s,t,D)=>s.view==='loop'?G.draw(ctx,s,t,D):oldCircle.draw(ctx,s,t,D);
-    circulation.explain=s=>s.view==='loop'?G.explain(s):oldCircle.explain(s);
-    circulation.check=s=>({...oldCircle.check(s),graph:G.graph,organ:s.organ,portalReturnsViaLiver:true,coronaryReturnsViaSinus:true});
+    circulation.act=(s,k,v)=>{if(k==='exchange'){s.exchange=v;s.view='exchange';s.substance='all';s.running=true;}else if(k==='organ'){s.organ=v;s.exchange=null;s.view='loop';s.travel=0;s.running=true;}else if(k==='substance'||k==='exchangeSpeed'){s[k]=v;}else{if(k==='view'&&v==='loop')s.exchange=null;oldCircle.act(s,k,v);}};
+    circulation.draw=(ctx,s,t,D)=>s.view==='exchange'?X.draw(ctx,s,t,D):s.view==='loop'?G.draw(ctx,s,t,D):oldCircle.draw(ctx,s,t,D);
+    circulation.explain=s=>s.view==='exchange'?X.explain(s):s.view==='loop'?G.explain(s):oldCircle.explain(s);
+    circulation.check=s=>({...oldCircle.check(s),graph:G.graph,organ:s.organ,portalReturnsViaLiver:true,coronaryReturnsViaSinus:true,exchange:s.exchangeTrace||null});
+    const lymph=next.tabs.find(x=>x.id==='lymph');
+    lymph.draw=X.lymph;
+    const oldLymphControls=lymph.controls;
+    lymph.controls=s=>[group(P('動畫／來源對照','Animation / source'),[item(P('原創回收動畫','Original recovery animation'),'lymphView','animation'),item(P('維基來源圖','Commons source image'),'lymphView','reference')]),...oldLymphControls(s)];
+    const oldLymphInit=lymph.init;
+    lymph.init=()=>({...oldLymphInit(),lymphView:'animation'});
+    lymph.sources=[...lymph.sources,...[
+      ['lymph_capillaries_seer_zh.png','NIH／SEER 淋巴微血管中文圖','NIH / SEER lymph capillaries, Chinese'],
+      ['lymph_capillaries_seer_en.png','NIH／SEER 淋巴微血管英文圖','NIH / SEER lymph capillaries, English']
+    ].map(([file,zh,en])=>({file:'assets/biology/human_transport_media_1012_v1/'+file,name:P(zh,en),page:P('來源對照','Source comparison'),figure:'NIH / SEER',license:P('Wikimedia Commons 來源頁標示 Public domain','Wikimedia Commons source marked Public domain')}))];
     const experiment=next.tabs.find(x=>x.id==='experiment'),oldExp=originals.experiment;
     const modes=group(P('先看模型，再做實驗','Model, then your experiment'),[
       item(P('動脈脈搏剖面','Arterial pulse cutaway'),'view','pulse'),
