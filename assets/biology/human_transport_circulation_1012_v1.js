@@ -44,12 +44,17 @@
     const top=y+h/2-(rows.length-1)*13+8;
     rows.forEach((r,i)=>text(ctx,D,[r,r],tile===null?x+w/2:start,top+i*26,22,tile===null?'center':'left'));
   }
+  // A real T-junction below the caval turn, shared by the liver and portal route.
+  // The hepatic return no longer doubles back through the cava or ends above it.
+  const HEPATIC_RETURN=Object.freeze([[492,207],[564,207],[564,246],[614,246]]);
+  const CAVA_RETURN=Object.freeze([[614,507],[614,212],[758,212]]);
   function paths(organ){
     const y=organ.y;
     const outlet=organ.id==='heart'?[[492,y],[660,y],[660,196],[758,196]]:
-      organ.id==='intestine'?[[492,y],[534,y],[534,227],[492,227],[510,207],[614,207],[614,386]]:
+      organ.id==='intestine'?[[492,y],[534,y],[534,227],[492,227],[510,207],...HEPATIC_RETURN.slice(1)]:
+      organ.id==='liver'?HEPATIC_RETURN:
       [[492,y],[614,y],[614,386]];
-    const cava=organ.id==='heart'?[758,196]:[614,386];
+    const cava=organ.id==='heart'?[758,196]:organ.id==='liver'||organ.id==='intestine'?HEPATIC_RETURN.at(-1):[614,386];
     return [
       [[164,280],[214,280]],
       [[214,280],[214,y],[284,y],[388,y]],
@@ -71,9 +76,9 @@
     text(ctx,D,P('鮮紅：較多氧','Bright red: more O₂'),601,68,20,'left',rich);
     text(ctx,D,P('暗紅：較少氧','Dark red: less O₂'),601,95,20,'left','#df8794');
     flow(ctx,[[164,280],[214,280],[214,107]],1,t);flow(ctx,[[214,280],[214,507]],1,t);
-    for(const o of ORGANS){flow(ctx,[[214,o.y],[284,o.y]],1,t);if(o.id==='heart')flow(ctx,[[492,107],[660,107],[660,196],[758,196]],.2,t);else if(o.id!=='intestine')flow(ctx,[[492,o.y],[614,o.y],[614,386]],.2,t);}
+    flow(ctx,CAVA_RETURN,.2,t);
+    for(const o of ORGANS){flow(ctx,[[214,o.y],[284,o.y]],1,t);if(o.id==='heart')flow(ctx,[[492,107],[660,107],[660,196],[758,196]],.2,t);else if(o.id==='liver')flow(ctx,HEPATIC_RETURN,.2,t);else if(o.id!=='intestine')flow(ctx,[[492,o.y],[614,o.y],[614,386]],.2,t);}
     flow(ctx,[[492,307],[534,307],[534,227],[492,227]],.2,t);
-    flow(ctx,[[614,386],[614,212],[758,212]],.2,t);
     flow(ctx,[[844,248],[844,278]],.2,t);
     flow(ctx,[[930,310],[942,310],[942,410],[930,410]],.2,t);
     flow(ctx,[[758,410],[736,410],[736,508],[758,508]],1,t);
@@ -84,6 +89,7 @@
     D.round(ctx,565,344,143,90,12,'#193b31',stage===3?'#fde047':'#638979');
     text(ctx,D,P('上／下','Superior /'),636,377,22,'center');text(ctx,D,P('大靜脈','inferior cava'),636,407,22,'center');
     text(ctx,D,P('冠狀竇','Coronary sinus'),665,145,18,'center','#e597a5');
+    text(ctx,D,P('肝靜脈','Hepatic veins'),550,185,22,'left','#e597a5');
     text(ctx,D,P('肝門靜脈','Portal vein'),538,270,18,'left','#e597a5');
     card(ctx,D,P('右心房','Right atrium'),758,180,172,68,null,stage===4);
     card(ctx,D,P('右心室','Right ventricle'),758,278,172,68,null,stage===5);
@@ -103,5 +109,5 @@
     text:P(`左心室 → 主動脈 → ${o.artery[0]} → ${o.name[0]}的微血管 → ${o.return[0]} → 右心房 → 右心室 → 肺動脈 → 肺微血管補氧 → 肺靜脈 → 左心房 → 左心室。\n\n各器官不是排隊串在一起：血液分走不同支路。器官、管徑與時間為示意；鮮紅／暗紅表示相對含氧量，沒有藍色血液。`,
     `Left ventricle → aorta → ${o.artery[1]} → ${o.name[1]} capillaries → ${o.return[1]} → right atrium → right ventricle → pulmonary artery → lung capillaries (gain oxygen) → pulmonary veins → left atrium → left ventricle.\n\nOrgans are not one long queue: blood follows separate branches. Organs, vessel widths and travel times are illustrative. Bright/dark red show relative oxygen; blood is not blue.`)
   };}
-  root.HumanTransportCirculation=Object.freeze({draw,explain,organs:ORGANS,graph:GRAPH,paths,point});
+  root.HumanTransportCirculation=Object.freeze({draw,explain,organs:ORGANS,graph:GRAPH,paths,point,geometry:Object.freeze({hepaticReturn:HEPATIC_RETURN,cavaReturn:CAVA_RETURN})});
 })(globalThis);

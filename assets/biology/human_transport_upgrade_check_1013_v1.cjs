@@ -32,9 +32,11 @@ async function main(){
   for(const file of files)imageCache[file]=await loadImage(path.join(__dirname,'ch4_new_1008_v1',file));
   for(const file of ['organ_atlas.png','heart_valves_frames.webp'])imageCache['assets/biology/human_transport_media_1012_v1/'+file]=await loadImage(path.join(__dirname,'human_transport_media_1012_v1',file));
   for(const file of ['lymph_capillaries_seer_zh.png','lymph_capillaries_seer_en.png'])imageCache['assets/biology/human_transport_media_1012_v1/'+file]=await loadImage(path.join(__dirname,'human_transport_media_1012_v1',file));
+  const lymphSources=JSON.parse(fs.readFileSync(path.join(__dirname,'human_transport_media_1012_v1/lymph_sources_1013_v1.json'),'utf8'));
+  report.sourceImageHashes=lymphSources.files.map(source=>{const actual=require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(__dirname,'human_transport_media_1012_v1',source.file))).digest('hex');assert.equal(actual,source.sha256,source.file+' source PNG remains byte-identical');return{file:source.file,sha256:actual,unchanged:true};});
   class ImageProxy{set src(file){this.native=imageCache[file];assert(this.native,'Image exists: '+file);}get complete(){return true;}get naturalWidth(){return this.native?.width||0;}get width(){return this.native?.width||0;}get height(){return this.native?.height||0;}}
   const scope={LivingBook:{register:s=>{spec=s;}},Image:ImageProxy,Date:clock};
-  for(const f of ['human_transport_teaching_1012_v1.js','human_transport_cutaways_1012_v1.js','human_transport_circulation_1012_v1.js','human_transport_valve_media_1012_v1.js','human_transport_exchanges_1013_v1.js','human_transport_upgrade_1012_v1.js','human_transport_1008_v1.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,f),'utf8'),scope,{filename:f});
+  for(const f of ['human_transport_teaching_1012_v1.js','human_transport_cutaways_1012_v1.js','human_transport_circulation_1012_v1.js','human_transport_valve_media_1012_v1.js','human_transport_exchanges_1013_v1.js','human_transport_lymph_journey_1013_v1.js','human_transport_upgrade_1012_v1.js','human_transport_1008_v1.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,f),'utf8'),scope,{filename:f});
   assert.equal(spec.tabs.length,6);assert.equal(spec.title[0],'人體的運輸');
   for(let i=0;i<6;i++)for(const f of ['init','controls','act','draw','check']){
     if(i===4&&['draw','check'].includes(f))continue;
@@ -52,6 +54,16 @@ async function main(){
   const c=createCanvas(960,600);exp.draw(c.getContext('2d'),s,0,D);assert(s.timer.done);assert.equal(s.records.before.seconds,60);assert.equal(s.records.before.heart,1);
   report.timers.push({realDeadline:61000,pausedAnimationStillSettles:true,countsRecordedNotAutoFilled:true,stageChangeBlockedDuringTimer:true});
   const graph=scope.HumanTransportCirculation.graph;
+  const circuit=scope.HumanTransportCirculation,junction=circuit.geometry.hepaticReturn.at(-1);
+  const caval=circuit.geometry.cavaReturn;
+  assert.equal(junction[0],caval[0][0]);assert(junction[1]>caval[1][1]&&junction[1]<caval[0][1]);
+  assert.deepEqual([...graph.hepaticVeins],['ivc']);
+  for(const name of ['liver','intestine']){
+    const routes=circuit.paths(circuit.organs.find(o=>o.id===name));
+    assert.deepEqual([...routes[2].at(-1)],[...junction]);
+    assert.deepEqual([...routes[3][0]],[...junction]);
+    assert(routes[3][1][1]<junction[1],'Hepatic return enters the cava toward the right atrium, with no detour');
+  }
   const reach=(from,to,seen=new Set())=>from===to||(!seen.has(from)&&(seen.add(from),(graph[from]||[]).some(n=>reach(n,to,seen))));
   for(const o of scope.HumanTransportCirculation.organs){assert(reach('lv',o.id));assert(reach(o.id,'lv'));report.graph.push(o.id+' has complete return circuit');}
   assert.deepEqual([...graph.intestine],['portal']);assert.deepEqual([...graph.portal],['liver']);assert.deepEqual([...graph.coronarySinus],['ra']);assert(!graph.aorta.includes('lung'));assert.deepEqual([...graph.rv],['pa']);assert.deepEqual([...graph.pa],['lung']);assert.deepEqual([...graph.lung],['pv']);assert.deepEqual([...graph.pv],['la']);
@@ -92,6 +104,11 @@ async function main(){
   circleTab.act(kidneyState,'exchange','kidney');assert.equal(kidneyState.kidneyView,'cells');
   circleTab.act(kidneyState,'kidneyView','extension');assert.equal(kidneyState.kidneyView,'extension');assert.equal(kidneyState.substance,'all');
   const bloodTab=spec.tabs.find(t=>t.id==='blood'),pausedBlood={...bloodTab.init(),running:false};
+  const evidenceState=bloodTab.init(),focusButton=s=>bloodTab.controls(s).flatMap(g=>g.items).find(i=>i.key==='view'&&i.value==='focus');
+  for(const component of ['rbc','wbc','platelet']){bloodTab.act(evidenceState,'component',component);assert(focusButton(evidenceState));}
+  bloodTab.act(evidenceState,'view','focus');bloodTab.act(evidenceState,'component','plasma');
+  assert(!focusButton(evidenceState),'Plasma has no redundant full-frame zoom button');assert.equal(evidenceState.view,'smear');
+  bloodTab.act(evidenceState,'view','focus');assert.equal(evidenceState.view,'smear','Stale focus request cannot duplicate a plasma overview');
   bloodTab.act(pausedBlood,'action','repair');assert.equal(pausedBlood.running,true);assert.equal(pausedBlood.repair,0);
   bloodTab.act(pausedBlood,'repairStage','sealed');assert.equal(pausedBlood.repair,1);
   bloodTab.act(pausedBlood,'repairStage','auto');assert.equal(pausedBlood.repair,0);
@@ -127,6 +144,23 @@ async function main(){
   const newSource=fs.readFileSync(path.join(__dirname,'human_transport_exchanges_1013_v1.js'),'utf8');
   assert(!/requestAnimationFrame|setInterval|setTimeout|Math.random/.test(newSource));
   assert(!newSource.includes('human_lymph_textbook_1013_v1'));
+  const J=scope.HumanTransportLymphJourney,lymphTab=spec.tabs[4];
+  const journeySource=fs.readFileSync(path.join(__dirname,'human_transport_lymph_journey_1013_v1.js'),'utf8');
+  assert(!/requestAnimationFrame|setInterval|setTimeout|Math.random/.test(journeySource));
+  assert.equal(lymphTab.init().lymphStep,'auto');
+  let timeline=0;for(const p of J.steps){assert.equal(J.phase({lymphStep:'auto'},timeline+.5).step.id,p.id);timeline+=p.duration;}
+  assert.equal(J.phase({lymphStep:'auto'},J.total+.5).step.id,0);
+  assert.equal(J.geometry.leak[1][0],591.5,'Fluid crosses the designated endothelial gap, not a cell body');
+  for(let n=0;n<4;n++){
+    const st={...lymphTab.init(),elapsed:2};lymphTab.act(st,'lymphStep',n);assert.equal(J.phase(st,90).step.id,n);
+    const cv=createCanvas(960,600),ctx=cv.getContext('2d'),nativeDraw=ctx.drawImage.bind(ctx);ctx.drawImage=(im,...a)=>nativeDraw(im.native||im,...a);
+    st.running=false;J.draw(ctx,st,4,D);const a=cv.toBuffer('image/png');J.draw(ctx,st,4,D);assert(a.equals(cv.toBuffer('image/png')),'Paused lymph step '+n+' is pixel-stable');
+    assert.equal(st.lymphTrace.directCapillaryReturn,false);assert.equal(st.lymphTrace.redCellsOutsideBlood,0);assert.equal(st.lymphTrace.sourceUnchanged,true);
+    assert(lymphTab.explain(st).text[0].length>60,'Each step has its own connected explanation');
+  }
+  const neck=J.geometry.collector.samples.at(-1);assert(Math.min(...J.geometry.vein.samples.map(p=>Math.hypot(p.x-neck.x,p.y-neck.y)))<18,'Lymph collector ends inside the neck vein lumen');
+  const veinEnd=J.geometry.vein.samples.at(-1),cavaStart=J.geometry.cava.samples[0];assert(Math.hypot(veinEnd.x-cavaStart.x,veinEnd.y-cavaStart.y)<.01,'Neck vein and cava join exactly');
+  report.lymphJourney={steps:4,autoCycles:true,pauseStable:true,sourceUnchanged:true,noDirectCapillaryReturn:true,neckCavalConnection:true};
   for(const z of X.zones){const st={exchange:z.id,substance:'all',running:false,exchangeSpeed:1};const cv=createCanvas(960,600),ctx=cv.getContext('2d'),nativeDraw=ctx.drawImage.bind(ctx);ctx.drawImage=(im,...a)=>nativeDraw(im.native||im,...a);X.draw(ctx,st,2,D);const a=cv.toBuffer('image/png');X.draw(ctx,st,2,D);const b=cv.toBuffer('image/png');if(!a.equals(b)){fs.writeFileSync(path.join(out,z.id+'-paused-a.png'),a);fs.writeFileSync(path.join(out,z.id+'-paused-b.png'),b);}assert(a.equals(b),z.id+': Pause redraw preserves molecule positions '+out);const f=X.flows(z.id);assert(f.length>=2);for(const p of f.flatMap(f=>f.path))assert(p.every(Number.isFinite));report.exchangeChecks.zones.push({zone:z.id,flows:f.map(f=>({kind:f.kind,from:f.from,to:f.to})),pauseStable:true});}
   // Cache must be pixel-identical to fresh union geometry, not an approximation.
   const noCache={};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'human_transport_cutaways_1012_v1.js'),'utf8').replace('for(const original of cachedOutlines(routes,radii,extra))','for(const original of joinedOutlines(routes,radii,extra))'),noCache);
@@ -141,7 +175,7 @@ async function main(){
     ...scope.HumanTransportExchanges.zones.map(z=>['exchange-'+z.id,3,{view:'exchange',exchange:z.id}]),
     ['exchange-lung-cells',3,{view:'exchange',exchange:'lung',lungView:'cells'}],
     ['exchange-kidney-extra',3,{view:'exchange',exchange:'kidney',kidneyView:'extension'}],
-    ['lymph',4,{}],['lymph-node',4,{compartment:'node'}],['lymph-source',4,{lymphView:'reference'}],['pulse',5,{view:'pulse'}],['records',5,{view:'records'}],['fish',5,{view:'fish'}]];
+    ...scope.HumanTransportLymphJourney.steps.map(p=>['lymph-step-'+p.id,4,{lymphStep:p.id}]),['pulse',5,{view:'pulse'}],['records',5,{view:'records'}],['fish',5,{view:'fish'}]];
   for(lang of ['zh','en'])for(const[name,i,initial]of scenarios.filter(([name])=>!process.argv.includes('--exchange-only')||name.startsWith('exchange-')||name.startsWith('lymph'))){
     const tab=spec.tabs[i],state={...tab.init(),...initial};let labelIndex=0,skip=-1;const cv=createCanvas(960,600),ctx=cv.getContext('2d'),nativeFill=ctx.fillText.bind(ctx),nativeDraw=ctx.drawImage.bind(ctx);
     let labels=[],captureInk=false;

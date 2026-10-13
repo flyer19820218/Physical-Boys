@@ -5,8 +5,8 @@
 (function(root){
   'use strict';
   const B=root.LivingBook,T=root.HumanTransportTeaching,C=root.HumanTransportCutaways;
-  const G=root.HumanTransportCirculation,V=root.HumanTransportValveMedia,X=root.HumanTransportExchanges;
-  if(!B||!T||!C||!G||!V||!X)throw new Error('Human transport upgrade dependencies are missing.');
+  const G=root.HumanTransportCirculation,V=root.HumanTransportValveMedia,X=root.HumanTransportExchanges,J=root.HumanTransportLymphJourney;
+  if(!B||!T||!C||!G||!V||!X||!J)throw new Error('Human transport upgrade dependencies are missing.');
   const P=(a,b)=>[a,b], group=(label,items)=>({label,items}), item=(label,key,value)=>({label,key,value});
   const originalRegister=B.register,originals={},sounds=new WeakMap();let audio;
   function enableSound(){const A=root.AudioContext||root.webkitAudioContext;if(!A)return false;try{audio=audio||new A();audio.resume();return true;}catch{return false;}}
@@ -54,7 +54,7 @@
     next.tabs.find(x=>x.id==='vessels').draw=C.vesselsDraw;
     const blood=next.tabs.find(x=>x.id==='blood'),oldBloodControls=blood.controls,oldBloodExplain=blood.explain;
     blood.draw=C.bloodDraw;
-    blood.controls=s=>[...oldBloodControls(s),...(s.task==='repair'?[group(P('止血：完整播放／分段看','Hemostasis: play / inspect'),[
+    blood.controls=s=>[...oldBloodControls(s).map(g=>({...g,items:g.items.filter(i=>!(i.key==='view'&&i.value==='focus'&&s.component==='plasma')).map(i=>i.key==='view'&&i.value==='focus'?{...i,label:({rbc:P('放大紅血球','Enlarge red cell'),wbc:P('放大白血球','Enlarge white cell'),platelet:P('放大血小板','Enlarge platelet')})[s.component]}:i)})),...(s.task==='repair'?[group(P('止血：完整播放／分段看','Hemostasis: play / inspect'),[
       item(P('重播完整止血','Replay hemostasis'),'repairStage','auto'),
       ...C.hemostasisStages.map(p=>item(p.name,'repairStage',p.id))
     ])]:[])];
@@ -63,6 +63,8 @@
         s.repairStage=v;s.repair=v==='auto'?0:C.hemostasisStages.find(p=>p.id===v).progress;s.running=true;return;
       }
       originals.blood.act(s,k,v);
+      // Plasma has no distinct cell crop; never show two identical smear views.
+      if(s.component==='plasma'&&s.view==='focus')s.view='smear';
       if(k==='action'&&v==='repair'){s.repairStage='auto';s.running=true;}
     };
     blood.explain=s=>s.task==='repair'?C.hemostasisExplain(s):oldBloodExplain(s);
@@ -88,11 +90,16 @@
     circulation.explain=s=>s.view==='exchange'?X.explain(s):s.view==='loop'?G.explain(s):oldCircle.explain(s);
     circulation.check=s=>({...oldCircle.check(s),graph:G.graph,organ:s.organ,portalReturnsViaLiver:true,coronaryReturnsViaSinus:true,exchange:s.exchangeTrace||null});
     const lymph=next.tabs.find(x=>x.id==='lymph');
-    lymph.draw=X.lymph;
-    const oldLymphControls=lymph.controls;
-    lymph.controls=s=>[group(P('動畫／來源對照','Animation / source'),[item(P('原創回收動畫','Original recovery animation'),'lymphView','animation'),item(P('維基來源圖','Commons source image'),'lymphView','reference')]),...oldLymphControls(s)];
+    lymph.draw=J.draw;
+    lymph.explain=J.explain;
+    lymph.controls=s=>[group(P('原圖與放大，串起完整回程','Map and close-up: follow the complete return'),[
+      item(P('自動播放完整旅程','Autoplay the journey'),'lymphStep','auto'),
+      ...J.steps.map(p=>item(p.name,'lymphStep',p.id))
+    ])];
+    const oldLymphAct=lymph.act;
+    lymph.act=(s,k,v)=>{if(k==='lymphStep'){s.lymphStep=v;s.lymphStarted=s.elapsed||0;s.running=true;}else if(oldLymphAct)oldLymphAct(s,k,v);else s[k]=v;};
     const oldLymphInit=lymph.init;
-    lymph.init=()=>({...oldLymphInit(),lymphView:'animation'});
+    lymph.init=()=>({...oldLymphInit(),lymphStep:'auto',lymphStarted:0});
     lymph.sources=[...lymph.sources,...[
       ['lymph_capillaries_seer_zh.png','NIH／SEER 淋巴微血管中文圖','NIH / SEER lymph capillaries, Chinese'],
       ['lymph_capillaries_seer_en.png','NIH／SEER 淋巴微血管英文圖','NIH / SEER lymph capillaries, English']
