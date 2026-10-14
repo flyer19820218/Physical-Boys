@@ -29,8 +29,8 @@
         'A lymphatic begins as a closed blind end. Its wall is one cell layer, and neighbouring cell edges overlap. When pressure in the tissue is higher than inside the vessel, the overlapping edges are pushed open like doors that only swing inward, and tissue fluid between the cells seeps in. When the pressure difference reverses, the doors close, so lymph does not flow back into the tissue.\n\nThe fluid does not fly in from far away; it moves gradually between cells and enters through gaps in the wall. Between cells it is tissue fluid; inside the lymphatic it is lymph, which then flows on to larger lymphatic vessels.')},
     {id:3,name:P('回到大靜脈','Back to vena cava'),duration:12,
       title:P('接上回程：淋巴管、淋巴結，再回到靜脈','The return: lymphatic vessels, nodes, then veins'),
-      text:P('離開組織區後，淋巴沿較大的淋巴管運送，途中經過淋巴結。肌肉活動、呼吸及淋巴管本身的收縮等協助流動，管內瓣膜幫助維持單向；不是淋巴結充當幫浦把液體吸進去。\n\n淋巴最後注入頸根部的靜脈，接著隨靜脈血經上大靜脈回右心房。左側全圖是局部組織，右側是較遠處的回程示意，大小與距離不可直接相比。血漿 → 組織液 → 淋巴 → 靜脈血：位置換了，名稱跟著改變。',
-        'Beyond the tissue region, lymph travels in larger lymphatic vessels and passes through lymph nodes. Muscle activity, breathing and lymphatic contractions help movement; valves help prevent backflow. A lymph node is not a suction pump.\n\nLymph enters veins at the root of the neck, then travels with venous blood through the superior vena cava to the right atrium. The map on the left shows local tissue; the right is a distant return route at a different scale. Plasma → tissue fluid → lymph → venous blood: the name changes with location.')}
+      text:P('離開組織區後，淋巴沿較大的淋巴管運送，途中經過淋巴結。肌肉活動、呼吸及淋巴管本身的收縮等協助流動，淋巴是一段一段被推送的：推送時管內瓣膜打開；瓣膜關閉時淋巴暫停，不會往回流。不是淋巴結充當幫浦把液體吸進去。\n\n淋巴最後注入頸根部的靜脈，接著隨靜脈血經上大靜脈回右心房。左側全圖是局部組織，右側是較遠處的回程示意，大小與距離不可直接相比。血漿 → 組織液 → 淋巴 → 靜脈血：位置換了，名稱跟著改變。',
+        'Beyond the tissue region, lymph travels in larger lymphatic vessels and passes through lymph nodes. Muscle activity, breathing and lymphatic contractions help movement, so lymph advances in pulses: valves open while it is pushed, and when they close the lymph pauses instead of flowing back. A lymph node is not a suction pump.\n\nLymph enters veins at the root of the neck, then travels with venous blood through the superior vena cava to the right atrium. The map on the left shows local tissue; the right is a distant return route at a different scale. Plasma → tissue fluid → lymph → venous blood: the name changes with location.')}
   ]);
   const TOTAL=STEPS.reduce((n,s)=>n+s.duration,0);
   function phase(s,t){
@@ -97,7 +97,7 @@
     for(let i=1;i<ss.length;i++){const u=i/ss.length,o=mix(oxygenA,oxygenB,u);stroke(ctx,[[ss[i-1].x,ss[i-1].y],[ss[i].x,ss[i].y]],`rgb(${Math.round(mix(132,214,o))},${Math.round(mix(34,58,o))},${Math.round(mix(52,58,o))})`,r*2);}
   }
   function bigVessel(ctx,route,r,fill,light){stroke(ctx,poly(route),'#4d1520',r*2+5);stroke(ctx,poly(route),fill,r*2);
-    stroke(ctx,route.samples.map(p=>[p.x+p.nx*r*.42,p.y+p.ny*r*.42]),light,r*.5);}
+    stroke(ctx,route.samples.map(p=>[p.x+p.nx*r*.72,p.y+p.ny*r*.72]),light,r*.18);}
   function drawMap(ctx,t){
     ctx.save();ctx.beginPath();ctx.roundRect(0,0,800,400,18);ctx.fillStyle='#2b5446';ctx.fill();ctx.clip();
     for(const c of CELLS)tissueCell(ctx,c.x,c.y,c.r,c.rot);
@@ -114,9 +114,9 @@
     // Plasma water leaves capillaries (blue); tissue fluid enters lymphatics (green).
     for(const [i,a] of LEAKS.entries()){arrow(ctx,a,CYAN,2.4,7);for(let k=0;k<2;k++){const u=mod(t*.22+k/2+i*.13),p=pointOn(a,u);droplet(ctx,p.x,p.y,2.9,Math.min(1,u*6,(1-u)*6));}}
     for(const [i,a] of ENTRIES.entries()){arrow(ctx,a,ARROW_GREEN,2.4,7);for(let k=0;k<2;k++){const u=mod(t*.2+k/2+i*.19),p=pointOn(a,u);droplet(ctx,p.x,p.y,2.9,Math.min(1,u*6,(1-u)*4));}}
-    bigVessel(ctx,ARTERIOLE,20,'#cf3a3d','#ee7a72');bigVessel(ctx,VENULE,24,'#87283a','#a8495a');
-    C.geometry.cells(ARTERIOLE,t,[-9,0,9],15,60,4.2).forEach(p=>C.render.rbc(ctx,p.x,p.y,p.r,1,p.angle));
-    C.geometry.cells(VENULE,t,[-10,0,10],15,30,4.6).forEach(p=>C.render.rbc(ctx,p.x,p.y,p.r,.25,p.angle));
+    bigVessel(ctx,ARTERIOLE,20,'#cf3a3d','rgba(255,176,166,0.45)');bigVessel(ctx,VENULE,24,'#87283a','rgba(226,140,158,0.35)');
+    C.geometry.cells(ARTERIOLE,t,[-13,-4.5,4.5,13],17,60,3.9).forEach(p=>C.render.rbc(ctx,p.x,p.y,p.r,1,p.angle));
+    C.geometry.cells(VENULE,t,[-16,-5.5,5.5,16],17,30,4.3).forEach(p=>C.render.rbc(ctx,p.x,p.y,p.r,.25,p.angle));
     // Blood-flow direction (chalk white, never black on the board).
     const beside=(route,d0,d1,lane)=>{const pts=[];for(let d=d0;d<=d1;d+=6){const q=at(route,d,lane);pts.push([q.x,q.y]);}return pts;};
     arrow(ctx,beside(ARTERIOLE,250,330,-36),INK,3,9);arrow(ctx,beside(VENULE,250,330,38),INK,3,9);
@@ -172,20 +172,30 @@
     text(ctx,D,P('經由靜脈回到血液','Back to the blood via veins'),480,570,22,'#ef9a9a','center');
   }
 
-  // ── step 1: capillary close-up (cartoon kept from the approved version) ──
-  const GAP_X=591.5,LEAK=Object.freeze([[GAP_X,343],[GAP_X,389],[GAP_X,431],[621,453]]);
+  // ── step 1: capillary close-up — only as wide as one red cell ─────────
+  // Lumen 44 px; an edge-on red cell is 40 px across, so cells pass one at a
+  // time in single file. One endothelial layer with one enlarged junction gap.
+  const CAP=Object.freeze({x0:382,x1:925,cy:340,r:22,wall:18});
+  const GAP_X=598,LEAK=Object.freeze([[GAP_X,352],[GAP_X,CAP.cy+CAP.r+CAP.wall/2],[GAP_X,414],[GAP_X+34,448]]);
   function fluid(ctx,D,path,t,count=3,size=7){for(let i=0;i<count;i++){const u=mod(t*.12+i/count),p=pointOn(path,u);ctx.save();ctx.globalAlpha=Math.min(1,u*12,(1-u)*12);D.water(ctx,p.x,p.y,size);ctx.restore();}}
+  const CAP_CELLS=(()=>{const n=7,w=Array.from({length:n},(_,i)=>.75+.5*scatter(i+61)),sum=w.reduce((a,b)=>a+b,0);let o=0;return w.map(v=>{const b=o;o+=v/sum;return b;});})();
   function cartoon(ctx,D,t){
     D.round(ctx,361,153,575,374,16,'#1c3d34','#789b85');
-    text(ctx,D,P('一層內皮細胞','One endothelial layer'),387,205,22,'#d4daa8');
-    const g=ctx.createLinearGradient(0,248,0,376);g.addColorStop(0,'#f7edc5');g.addColorStop(1,'#e6d8a5');ctx.fillStyle=g;ctx.fillRect(382,249,543,128);
-    // Static blood cells, irregular positions/tilts; no cell can leave the lumen.
-    for(let i=0;i<37;i++){const x=398+(i*83.73)%488,y=269+(i*47.31)%65;C.render.rbc(ctx,x,y,8+(i%4)*.5,.8,Math.sin(i*2.63)*.55);}
-    for(const y of [236,389])for(let i=0;i<13;i++){const x=382+i*42+(y===389&&i===5?9:0),w=y===389&&i===4?32:y===389&&i===5?30:39;D.round(ctx,x,y-11,w,22,7,'#d4daa8','#6c8b5b');ellipse(ctx,x+w*.54,y,3.5,2.6,'#879165');}
-    text(ctx,D,P('紅血球留在血管內','Red cells stay inside'),401,363,22,'#762f3d');
-    ctx.save();ctx.strokeStyle=YELLOW;ctx.lineWidth=2;ctx.beginPath();ctx.arc(GAP_X,389,17,0,Math.PI*2);ctx.stroke();ctx.restore();
-    stroke(ctx,[[609,399],[650,421]],YELLOW,2);
-    text(ctx,D,P('細胞間隙','Junction gap'),658,429,22,YELLOW);
+    const {x0,x1,cy,r,wall}=CAP,top=cy-r-wall/2,bot=cy+r+wall/2;
+    for(const [x,y,rr] of [[724,482,24],[806,456,22],[884,490,24]])tissueCell(ctx,x,y,rr,x*.01);
+    const g=ctx.createLinearGradient(0,cy-r,0,cy+r);g.addColorStop(0,'#f7edc5');g.addColorStop(1,'#e6d8a5');ctx.fillStyle=g;ctx.fillRect(x0,cy-r,x1-x0,2*r);
+    ctx.save();ctx.beginPath();ctx.rect(x0,cy-r,x1-x0,2*r);ctx.clip();
+    const L=x1-x0+60;for(const b of CAP_CELLS)C.render.rbc(ctx,x0-30+mod(b*L+22*t,L),cy,20,.8,Math.PI/2);
+    ctx.restore();
+    for(const [y,gap] of [[top,false],[bot,true]])for(let x=x0;x<x1-4;x+=42){
+      const pieces=gap&&GAP_X-9<x+39&&GAP_X+9>x?[[x,GAP_X-9],[GAP_X+9,x+39]]:[[x,x+39]];
+      for(const [a,b] of pieces){if(b-a<8)continue;D.round(ctx,a,y-wall/2,b-a,wall,6,'#d4daa8','#6c8b5b');ellipse(ctx,(a+b)/2,y,3.5,2.6,'#879165');}
+    }
+    text(ctx,D,P('紅血球一次一顆通過，留在管內','Red cells pass one at a time and stay inside'),387,236,22,'#f49189');
+    text(ctx,D,P('一層內皮細胞','One endothelial layer'),387,284,22,'#d4daa8');
+    ctx.save();ctx.strokeStyle=YELLOW;ctx.lineWidth=2;ctx.beginPath();ctx.arc(GAP_X,bot,16,0,Math.PI*2);ctx.stroke();ctx.restore();
+    stroke(ctx,[[GAP_X+14,bot+8],[GAP_X+52,bot+30]],YELLOW,2);
+    text(ctx,D,P('細胞間隙','Junction gap'),GAP_X+58,bot+40,22,YELLOW);
     arrow(ctx,LEAK,CYAN,2.5,8);fluid(ctx,D,LEAK,t,3,7);
     text(ctx,D,P('水與小分子 → 組織液','Water + small solutes → tissue fluid'),387,494,22,CYAN);
   }
@@ -196,7 +206,7 @@
     const [fx,fy]=m.to(CAP_FOCUS[0]+CAP_FOCUS[2],CAP_FOCUS[1]+CAP_FOCUS[3]/2);
     stroke(ctx,[[fx,fy],[342,fy],[361,237]],YELLOW,2);
     wrap(ctx,D,P('局部 → 放大','Local → enlarged'),24,380,300,24,YELLOW);
-    wrap(ctx,D,P('不是另一根大血管；紅血球與間隙都不是實際比例。','Not a different large vessel; cells and gaps are not to scale.'),24,424,300,22);
+    wrap(ctx,D,P('微血管很細，紅血球一次只過一顆；間隙經過放大。','Capillaries are narrow: red cells pass one at a time. The gap is enlarged.'),24,424,300,22);
     const u=clamp(elapsed/1.25),ease=u*u*(3-2*u);ctx.save();ctx.globalAlpha=ease;cartoon(ctx,D,t);ctx.restore();
     if(u<1)zoomFrom(ctx,t,m,CAP_FOCUS,[361,153,575,374],ease);
     wrap(ctx,D,P('不是破裂：血漿中的部分水與小分子穿過管壁。','Not a rupture: some plasma water and small solutes cross the wall.'),24,567,912,22);
@@ -244,7 +254,7 @@
     ctx.restore();
     chip(ctx,D,P('組織液：在細胞之間','Tissue fluid: between cells'),378,194,CYAN);
     stroke(ctx,[[519,303],[529,321]],YELLOW,2);chip(ctx,D,P('小門','Flap'),466,311,YELLOW);
-    chip(ctx,D,open>.5?P('組織間壓力較高 → 小門往內開','Tissue pressure higher → flaps open inward'):P('小門闔上 → 淋巴不倒流','Flaps closed → no backflow'),922,515,open>.5?ARROW_GREEN:INK,'right');
+    chip(ctx,D,open>.5?P('組織間壓力較高 → 小門往內開','Tissue pressure higher → flaps open inward'):P('小門闔上：淋巴往下游流，不倒流回組織','Flaps closed: lymph moves on, not back out'),922,515,open>.5?ARROW_GREEN:INK,'right');
     return open;
   }
   function entry(ctx,D,t,elapsed){
@@ -281,10 +291,30 @@
     ctx.strokeStyle='#e8a48b';ctx.lineWidth=2.5;ctx.stroke();
     text(ctx,D,P('右心房','Right atrium'),856,497,22,INK,'center');
   }
+  // Collecting lymphatics move lymph in pulses and their valves keep it one
+  // way. Teaching rhythm: valves open together → lymph moves; valves close
+  // together → lymph pauses and cannot slip back. Not a measured rate.
+  const PULSE=3.2,OPEN_END=.55,LYMPH_SPEED=62,BLOOD_SPEED=34,LYMPH_DROPS=8;
+  const aperture=u=>u<OPEN_END?smooth(u/.08)*smooth((OPEN_END-u)/.08):0;
+  const OPEN_TABLE=(()=>{const n=320,c=[0];for(let i=1;i<=n;i++)c.push(c[i-1]+(aperture((i-1)/n)+aperture(i/n))/2/n);return c;})();
+  const valveOpen=t=>aperture(mod(t/PULSE));
+  function openTime(t){const k=Math.floor(t/PULSE),u=mod(t/PULSE)*320,i=Math.min(319,Math.floor(u));return(k*OPEN_TABLE[320]+mix(OPEN_TABLE[i],OPEN_TABLE[i+1],u-i))*PULSE;}
+  function lymphDrops(t){const L=LYMPH_RETURN.length,s=LYMPH_SPEED*openTime(t);return Array.from({length:LYMPH_DROPS},(_,i)=>mod(i*L/LYMPH_DROPS+s,L));}
+  function veinDrops(t){
+    // A droplet enters the vein only when it actually leaves the lymphatic:
+    // exits happen whenever the travelled distance passes a multiple of the
+    // droplet spacing; find those moments by bisection on openTime.
+    const step=LYMPH_RETURN.length/LYMPH_DROPS,win=(VEIN.length-JOIN_D)/BLOOD_SPEED,t0=Math.max(0,t-win),out=[];
+    const s0=LYMPH_SPEED*openTime(t0),s1=LYMPH_SPEED*openTime(t);
+    for(let m=Math.max(1,Math.ceil(s0/step));m*step<=s1;m++){let lo=t0,hi=t;for(let k=0;k<24;k++){const mid=(lo+hi)/2;if(LYMPH_SPEED*openTime(mid)<m*step)lo=mid;else hi=mid;}out.push({age:t-hi,m});}
+    return out;
+  }
   function lymphValves(ctx,t){
-    const open=.55+.45*Math.sin(t*2.2);
+    const a=valveOpen(t);
     for(const d of [80,420]){const p=at(LYMPH_RETURN,d);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);
-      for(const s of [-1,1])stroke(ctx,[[-9,s*9],[7,s*9*mix(.12,.78,open)]],'#3f6b35',3.4);ctx.restore();}
+      // Cusps attach at the wall; free edges point downstream and meet when closed.
+      for(const s of [-1,1])stroke(ctx,[[-8,s*9.5],[0,s*mix(4.5,9,a)],[10,s*mix(0,8,a)]],'#2f5a2a',3.6);ctx.restore();}
+    return a;
   }
   function returning(ctx,D,t){
     text(ctx,D,P('組織區：從這裡出發','Local tissue: start here'),24,158,22,GREEN);
@@ -293,23 +323,25 @@
     stroke(ctx,[[ex,ey],[300,296]],GREEN,2);
     // Lymphatic vessel with valves, the node, then the vein it empties into.
     const lp=poly(LYMPH_RETURN);stroke(ctx,lp,'#3f6b35',25);stroke(ctx,lp,'#8cbb6b',21);stroke(ctx,lp,'#e4eab9',13);
-    lymphValves(ctx,t);
+    const valve=lymphValves(ctx,t);
     ctx.save();ctx.translate(...NODE);ctx.beginPath();ctx.moveTo(-48,-6);ctx.bezierCurveTo(-46,-46,30,-44,46,-18);ctx.bezierCurveTo(56,0,44,34,4,36);ctx.bezierCurveTo(-30,38,-50,24,-48,-6);ctx.closePath();
     ctx.fillStyle='#91ad64';ctx.fill();ctx.strokeStyle='#c4dc98';ctx.lineWidth=2.5;ctx.stroke();
     for(const [x,y] of [[-28,-16],[-6,-24],[18,-20],[30,4],[-20,16],[6,18]]){ellipse(ctx,x,y,9,8,'#d5ddab');ellipse(ctx,x,y,4.5,4,'#8da976');}
     ctx.restore();
     C.render.tubes(ctx,[VEIN],[18],0,2);
     ctx.save();C.render.clipTubes(ctx,[VEIN],[18]);
-    C.geometry.cells(VEIN,t,[-8,8],34,26,6).forEach(p=>C.render.rbc(ctx,p.x,p.y,p.r,.25,p.angle+p.tilt));ctx.restore();
+    C.geometry.cells(VEIN,t,[-8,8],34,BLOOD_SPEED,6).forEach(p=>C.render.rbc(ctx,p.x,p.y,p.r,.25,p.angle+p.tilt));ctx.restore();
     // Lymph droplets: along the lymphatic, through the node, into the vein,
     // then onward with venous blood down the vena cava into the atrium.
-    for(let i=0;i<8;i++){const u=mod(t*.06+i/8),p=at(LYMPH_RETURN,u*LYMPH_RETURN.length);D.water(ctx,p.x,p.y,6);}
-    for(let i=0;i<4;i++){const u=mod(t*.09+i/4),d=mix(JOIN_D,VEIN.length,u),p=at(VEIN,d,(i%2?5:-5));ctx.save();ctx.globalAlpha=Math.min(1,(1-u)*5);D.water(ctx,p.x,p.y,6);ctx.restore();}
+    for(const d of lymphDrops(t)){const p=at(LYMPH_RETURN,d);D.water(ctx,p.x,p.y,6);}
+    for(const v of veinDrops(t)){const d=JOIN_D+BLOOD_SPEED*v.age,p=at(VEIN,d,v.m%2?5:-5);ctx.save();ctx.globalAlpha=Math.min(1,(VEIN.length-d)/40);D.water(ctx,p.x,p.y,6);ctx.restore();}
     atrium(ctx,D);
     const lymphArrow=[];for(let d=100;d<=170;d+=7){const q=at(LYMPH_RETURN,d,-26);lymphArrow.push([q.x,q.y]);}arrow(ctx,lymphArrow,GREEN,3,9);
     const svc=[];for(let d=VEIN.length-170;d<=VEIN.length-70;d+=8){const q=at(VEIN,d,-40);svc.push([q.x,q.y]);}arrow(ctx,svc,INK,3,9);
     text(ctx,D,P('淋巴結','Lymph node'),NODE[0],318,22,GREEN,'center');
     wrap(ctx,D,P('淋巴管（有瓣膜）','Lymphatic vessel (with valves)'),310,452,340,22,GREEN);
+    chip(ctx,D,valve>.5?P('瓣膜開：淋巴往前流','Valves open: lymph moves on'):P('瓣膜關：淋巴暫停，不倒流','Valves closed: lymph pauses, no backflow'),317,490,valve>.5?ARROW_GREEN:INK);
+    return valve;
     text(ctx,D,P('頸根部的靜脈','Vein at the neck root'),680,146,22,VEIN_LABEL,'center');
     const svcLabel=lines(ctx,D,P('上大靜脈','Superior vena cava'),118);svcLabel.forEach((r,i)=>text(ctx,D,[r,r],830,330+28*i,22,VEIN_LABEL,'right'));
     text(ctx,D,P('局部組織 ↗ 遠端回流（不同尺度）','Local tissue ↗ distant return (different scales)'),24,526,22,MUTED);
@@ -317,10 +349,10 @@
   }
   function draw(ctx,s,t,D){
     const q=phase(s,t);let open=null;ctx.save();ctx.fillStyle=BG;ctx.fillRect(0,0,960,600);wrap(ctx,D,q.step.title,24,39,912,26,YELLOW);
-    if(q.step.id===0)overview(ctx,D,t);else if(q.step.id===1)closeup(ctx,D,t,q.elapsed);else if(q.step.id===2)open=entry(ctx,D,t,q.elapsed);else returning(ctx,D,t);
-    s.lymphTrace={step:q.step.id,auto:q.auto,directCapillaryReturn:false,redCellsOutsideBlood:0,originalDrawing:true,flapsOpen:open,
+    if(q.step.id===0)overview(ctx,D,t);else if(q.step.id===1)closeup(ctx,D,t,q.elapsed);else if(q.step.id===2)open=entry(ctx,D,t,q.elapsed);else open=returning(ctx,D,t);
+    s.lymphTrace={step:q.step.id,auto:q.auto,directCapillaryReturn:false,redCellsOutsideBlood:0,originalDrawing:true,flapsOpen:q.step.id===2?open:null,valvesOpen:q.step.id===3?open:null,
       returnTo:'neck veins → superior vena cava → right atrium'};
-    D.status(q.step.id===2?(open>.5?P('組織間壓力較高 → 小門往內開，組織液滲入淋巴管。','Higher tissue pressure → flaps open inward; tissue fluid seeps in.'):P('壓力反過來 → 小門闔上，淋巴不倒流。','Pressure reversed → flaps closed; no backflow.')):
+    D.status(q.step.id===3?(open>.5?P('淋巴管瓣膜打開 → 淋巴往前推送。','Lymphatic valves open → lymph is pushed onward.'):P('瓣膜關閉 → 淋巴暫停，不會往回流。','Valves closed → lymph pauses and cannot flow back.')):q.step.id===2?(open>.5?P('組織間壓力較高 → 小門往內開，組織液滲入淋巴管。','Higher tissue pressure → flaps open inward; tissue fluid seeps in.'):P('壓力反過來 → 小門闔上；管內淋巴往下游流，不會倒流回組織。','Pressure reversed → flaps closed; lymph moves downstream, not back into tissue.')):
       P('全圖 → 微血管局部放大 → 盲端入口放大 → 追蹤淋巴回程。','Whole map → capillary close-up → blind-end entry → lymph return.'));
     ctx.restore();return s.lymphTrace;
   }

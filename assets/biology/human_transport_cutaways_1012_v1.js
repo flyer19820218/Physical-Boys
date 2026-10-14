@@ -473,7 +473,6 @@
   }
   const VESSEL_MAIN=curve([[82,357],[326,273],[558,440],[886,324]]);
   const VESSEL_BRANCH=curve([[503,357],[568,317],[615,200],[851,186]]);
-  const VEIN_BRANCH=curve([[218,334],[350,214],[623,188],[851,186]]);
   const BLOOD_MAIN=curve([[40,461],[314,414],[560,540],[920,447]]);
   const BLOOD_BRANCH=curve([[533,474],[641,477],[704,378],[899,381]]);
 
@@ -482,7 +481,7 @@
   // Capillary: one endothelial layer; the narrowest lumen fits one red cell.
   // Vein: pocket valves visibly coapt; while closed the blood column stops.
   const VEIN_VALVES=Object.freeze({heart:250,far:665});
-  const VEIN_FORWARD=70, VEIN_SQUEEZE=95, VEIN_COLUMN=30, BRANCH_COLUMN=26;
+  const VEIN_FORWARD=70, VEIN_SQUEEZE=95, VEIN_COLUMN=30;
   function veinMotion(t,squeeze){
     const u=mod(t/3.6), active=!!squeeze, forward=u<.48;
     const contraction=active&&forward?Math.sin(Math.PI*u/.48):0;
@@ -512,9 +511,8 @@
     return {cells,tail,serial};
   }
   const MAIN_LANES=n=>n%2?[-21,-7,7,21]:[-28,-14,0,14,28];
-  const BRANCH_LANES=n=>n%2?[-6,6]:[-12,0,12];
   function stepVein(pool,dt,motion,length){
-    // pool={main,branch}; each keeps its cells, the last spawned column and a
+    // pool={main}: its cells, the last spawned column and a
     // serial so every new cell receives stable seeded jitter (no Math.random).
     const advance=(group,speedAt,spawnAt,column,lanes,jA,jL,radius,remove)=>{
       for(const p of group.cells)p.d-=speedAt(p.d)*dt;
@@ -523,15 +521,10 @@
       group.cells=group.cells.filter(p=>p.d>=remove);
     };
     advance(pool.main,d=>veinVelocity(d,motion),length+24,VEIN_COLUMN,MAIN_LANES,18,7,8.2,-26);
-    // The tributary joins downstream of the heart-side valve: it moves with
-    // that part of the main vein and fades out where it merges.
-    const down=veinVelocity(0,motion);
-    advance(pool.branch,()=>down,VEIN_BRANCH.length+20,BRANCH_COLUMN,BRANCH_LANES,10,5,7.2,96);
     return pool;
   }
   function newVeinPool(){
-    return {main:veinPopulation(VESSEL_MAIN.length,VEIN_COLUMN,MAIN_LANES,18,7,8.2,-24),
-      branch:veinPopulation(VEIN_BRANCH.length,BRANCH_COLUMN,BRANCH_LANES,10,5,7.2,96)};
+    return {main:veinPopulation(VESSEL_MAIN.length,VEIN_COLUMN,MAIN_LANES,18,7,8.2,-24)};
   }
   // One pocket valve in a longitudinal section. Local +x points toward the
   // heart. Cusps are attached at x=0 on each wall; their free edges point
@@ -683,8 +676,9 @@
     if(cap){drawCapillary(ctx,s,t);return;}
     const motion=veinMotion(t,s.squeeze), radius=vein?d=>48-10*motion.contraction*Math.exp(-Math.pow((d-460)/145,2)):
       d=>39+7*pulseProfile(d,t);
-    const branch=vein?VEIN_BRANCH:VESSEL_BRANCH;
-    const rr=[radius,vein?25:23], routes=[VESSEL_MAIN,branch];
+    // The vein is ONE unbranched vessel: a tributary without its own valves
+    // made the closed-valve pause look wrong upstream of the branch point.
+    const rr=vein?[radius]:[radius,23], routes=vein?[VESSEL_MAIN]:[VESSEL_MAIN,VESSEL_BRANCH];
     if(vein&&s.squeeze){
       const p=at(VESSEL_MAIN,460), squeeze=motion.contraction*13;
       for(const sign of [-1,1]){
@@ -698,7 +692,6 @@
       ctx.save();clipTubes(ctx,routes,rr);
       const place=(route,list)=>list.map(p=>({...p,...at(route,p.d,p.lane)}));
       renderCells(ctx,place(VESSEL_MAIN,pool.main.cells.filter(p=>p.d>=-20&&p.d<=VESSEL_MAIN.length+20)),oxygen);
-      for(const p of place(VEIN_BRANCH,pool.branch.cells)){ctx.save();ctx.globalAlpha=clamp((p.d-96)/24);rbc(ctx,p.x,p.y,p.r,oxygen,p.angle+p.tilt);ctx.restore();}
       ctx.restore();
       // Valves are drawn last so the cusps are never hidden behind cells.
       venousValve(ctx,VESSEL_MAIN,VEIN_VALVES.heart,radius(VEIN_VALVES.heart),motion.downstreamAperture);
