@@ -8,7 +8,7 @@
 const B=window.LivingBook,D=B.D,P=(zh,en)=>[zh,en];
 const C={white:'#f2ecd9',yellow:'#fde047',cyan:'#55e9ff',green:'#4ade80',orange:'#fb923c',pink:'#f472b6',panel:'#1c3d34',deep:'#0b1a15',muted:'#b9cbbd',
   ink:'#0b1a15',skin:'#f6d2b0',skinDark:'#dfa982',hair:'#5b3a29',brain:'#f4a6b8',nerve:'#f6c453',shirt:'#3fb3a3',receptor:'#ffd84d'};
-const TAU=Math.PI*2,clamp=n=>Math.max(0,Math.min(1,n)),mod=(n,d=1)=>((n%d)+d)%d,mix=(a,b,u)=>a+(b-a)*u,smooth=u=>{u=clamp(u);return u*u*(3-2*u);};
+const TAU=Math.PI*2,clamp=n=>Math.max(0,Math.min(1,n)),mod=(n,d=1)=>((n%d)+d)%d,mix=(a,b,u)=>a+(b-a)*u;
 
 // ── small cartoon kit ──────────────────────────────────────────────────────
 function line(c,pts,color,w=3){D.line(c,pts,color,w);}
@@ -162,7 +162,40 @@ function neuronBody(c,t,face=true){
   circle(c,SOMA.x-6,SOMA.y+20,20,'#8e6fd1',C.ink,2.5);circle(c,SOMA.x-1,SOMA.y+16,6,'#c4b5fd');
   if(face){eyes(c,SOMA.x+4,SOMA.y-20,7,'happy',[.6,0]);smile(c,SOMA.x+6,SOMA.y-4,14);}
 }
+// A nerve: the long fibres of several neurons run side by side inside one
+// wrapping sheath. Cell bodies lie outside the bundle; each fibre carries its
+// own signal, so the dots travel at different times.
+const NERVE_SOMAS=[[118,150],[166,225],[104,300],[160,375],[116,450]];
+const NERVE_FIBRES=NERVE_SOMAS.map(([x,y],i)=>{
+  const lane=300+(i-2)*11,pts=[],tx=880,ty=118+i*70;
+  for(let k=0;k<=12;k++){const u=k/12,a=1-u;pts.push([a*a*a*(x+22)+3*a*a*u*260+3*a*u*u*320+u*u*u*380,a*a*a*y+3*a*a*u*y+3*a*u*u*lane+u*u*u*lane]);}
+  for(let xx=390;xx<=760;xx+=10)pts.push([xx,lane+Math.sin((xx-380)/55+i*1.3)*2.5]);
+  for(let k=1;k<=12;k++){const u=k/12,a=1-u;pts.push([a*a*a*760+3*a*a*u*810+3*a*u*u*840+u*u*u*tx,a*a*a*lane+3*a*a*u*lane+3*a*u*u*ty+u*u*u*ty]);}
+  return{pts,soma:[x,y],end:[tx,ty]};});
+function drawNerve(c,t){
+  for(const f of NERVE_FIBRES){line(c,f.pts,C.ink,9);line(c,f.pts,'#bcd8f3',5);}
+  // Sheath drawn over the fibres (translucent) so they read as wrapped inside.
+  c.save();c.beginPath();c.roundRect(370,262,404,76,38);c.fillStyle='rgba(233,215,168,.42)';c.fill();c.lineWidth=4;c.strokeStyle='#e9d7a8';c.stroke();c.restore();
+  c.save();c.beginPath();c.roundRect(370,262,404,76,38);c.lineWidth=1.5;c.strokeStyle=C.ink;c.stroke();c.restore();
+  NERVE_FIBRES.forEach((f,i)=>{
+    for(const a of [2.3,2.9,3.5,4.0]){const [x,y]=f.soma;line(c,[[x,y],[x+Math.cos(a)*34,y+Math.sin(a)*30],[x+Math.cos(a)*48,y+Math.sin(a)*42-6]],C.ink,6);line(c,[[x,y],[x+Math.cos(a)*34,y+Math.sin(a)*30],[x+Math.cos(a)*48,y+Math.sin(a)*42-6]],'#bcd8f3',3);}
+    const g=c.createRadialGradient(f.soma[0]-7,f.soma[1]-8,3,f.soma[0],f.soma[1],26);g.addColorStop(0,'#eef6ff');g.addColorStop(1,'#9fc5ec');
+    circle(c,f.soma[0],f.soma[1],22,g,C.ink,3);circle(c,f.soma[0]-3,f.soma[1]+5,8,'#8e6fd1',C.ink,2);
+    ellipse(c,f.end[0]+22,f.end[1],22,12,'#f472b6',C.ink,2.5);circle(c,f.end[0],f.end[1],6,'#bcd8f3',C.ink,2);
+    signal(c,f.pts,mod(t*.3+i*.21),7);
+  });
+  // Cross-section of the nerve: many fibre ends inside one wrapping.
+  line(c,[[600,338],[600,404]],C.yellow,3);circle(c,600,470,64,'#e9d7a8',C.ink,4);
+  for(const [dx,dy] of [[0,0],[-22,-12],[22,-12],[-22,14],[22,14],[0,-26],[0,27],[-38,1],[38,1]])circle(c,600+dx,470+dy,10,'#bcd8f3',C.ink,2);
+  text(c,P('神經元','Neurons'),40,112,22,'#bcd8f3');
+  text(c,P('神經纖維','Nerve fibres'),200,122,22,'#bcd8f3');line(c,[[236,130],[256,160]],'#bcd8f3',2);
+  text(c,P('神經（外面有膜包住）','Nerve (wrapped together)'),400,248,22,C.yellow);
+  wrap(c,P('橫切面：一條神經裡有很多條神經纖維','Cross-section: one nerve holds many nerve fibres'),684,452,250,22,C.yellow);
+  wrap(c,P('神經：許多神經元的神經纖維集合成束',"Nerve: many neurons' fibres in one bundle"),40,520,500,22,C.white);
+}
 function drawNeuron(c,s,t){
+  if(s.part==='nerve'){text(c,P('神經：很多條神經纖維包在一起','A nerve: many fibres wrapped together'),30,40,24,C.yellow);drawNerve(c,t);
+    D.round(c,30,556,410,34,8,C.panel);text(c,P('亮起＝訊息傳到，不是物質整顆移動','Glow = signal arriving, not a substance moving'),42,580,22,C.cyan);return;}
   const hi=s.part==='fibre',u=mod(t*.35);
   text(c,P('神經元：一顆會傳訊的細胞','A neuron: one cell that carries signals'),30,40,24,C.yellow);
   for(const d of DENDRITES){line(c,d.pts,C.ink,d.w+4);line(c,d.pts,hi?'#fde68a':'#bcd8f3',d.w);}
@@ -180,66 +213,81 @@ function drawNeuron(c,s,t){
   }else if(hi){
     text(c,P('樹突','Dendrites'),40,130,22,'#fde68a');text(c,P('軸突（長的神經纖維）','Axon (a long nerve fibre)'),420,250,22,'#fde68a');
     wrap(c,P('樹突、軸突都是同一顆細胞的突起，不是別的細胞。','Dendrites and the axon are extensions of the same cell, not other cells.'),400,410,530,22,C.white);
-  }else{
-    line(c,[[700,330],[640,420]],C.yellow,3);
-    const cx=700,cy=430;ellipse(c,cx+120,cy,30,78,'#e9d7a8',C.ink,4);D.round(c,cx-10,cy-78,130,156,0,'#e9d7a8');line(c,[[cx-10,cy-78],[cx+120,cy-78]],C.ink,4);line(c,[[cx-10,cy+78],[cx+120,cy+78]],C.ink,4);
-    ellipse(c,cx-10,cy,30,78,'#f4e7c2',C.ink,4);
-    for(let i=0;i<14;i++){const a=i*2.4,r=8+((i*13)%52);circle(c,cx-10+Math.cos(a)*r*.36,cy+Math.sin(a)*r,7,'#bcd8f3',C.ink,1.5);}
-    wrap(c,P('神經：許多神經纖維集合成束','Nerve: many nerve fibres bundled together'),470,540,440,22,C.yellow);
   }
   D.round(c,30,556,410,34,8,C.panel);text(c,P('亮起＝訊息傳到，不是物質整顆移動','Glow = signal arriving, not a substance moving'),42,580,22,C.cyan);
 }
 
 // ── Tab 3: receptor → nervous system → effector ────────────────────────────
-const journey=[P('受器：接收刺激','Receptor: detects stimulus'),P('神經系統：傳導與整合','Nervous system: relays and integrates'),P('動器：產生反應','Effector: produces response')];
-const KID={hx:205,hy:180};
-const IN_PATH=[[318,388],[296,330],[262,282],[214,268],[205,232],[205,196]];
-function outPath(effect){return effect==='muscle'?[[205,196],[205,232],[214,268],[262,282],[290,312]]:[[205,196],[205,232],[214,268],[250,262],[286,250]];}
-function kid(c,t,stage,effect){
-  circle(c,70,85,30,C.yellow,C.ink,3);for(let i=0;i<10;i++){const a=i*TAU/10+t*.2;line(c,[[70+Math.cos(a)*40,85+Math.sin(a)*40],[70+Math.cos(a)*54,85+Math.sin(a)*54]],C.yellow,4);}
-  for(let i=0;i<3;i++){const y=140+i*36;c.beginPath();for(let x=40;x<=110;x+=6)c.lineTo(x,y+Math.sin(x*.2+t*4)*4);c.strokeStyle='rgba(251,146,60,.55)';c.lineWidth=3;c.stroke();}
-  D.round(c,176,440,26,90,12,'#365a8c',C.ink);D.round(c,210,440,26,90,12,'#365a8c',C.ink);
-  D.round(c,150,250,110,200,30,C.shirt,C.ink);
-  const raise=effect==='muscle'&&stage===2?smooth(mod(t*.7)*3%1):0;
-  line(c,[[160,280],[120,360],[128,420]],C.ink,26);line(c,[[160,280],[120,360],[128,420]],C.skin,20);
-  const elbow=[290,mix(340,312,raise)],handP=[mix(330,300,raise),mix(400,260,raise)];
-  line(c,[[250,280],elbow,handP],C.ink,26);line(c,[[250,280],elbow,handP],C.skin,20);
-  if(effect==='muscle'&&stage===2)ellipse(c,(250+elbow[0])/2+4,(280+elbow[1])/2,16,10+raise*6,'#f472b6',C.ink,2);
-  circle(c,KID.hx,KID.hy,72,C.skin,C.ink,4);
-  c.save();c.beginPath();c.arc(KID.hx,KID.hy,72,0,TAU);c.clip();c.beginPath();c.arc(KID.hx,KID.hy-30,74,Math.PI,TAU);c.fillStyle=C.hair;c.fill();c.restore();circle(c,KID.hx,KID.hy,72,null,C.ink,4);
-  brain(c,KID.hx,KID.hy-28,30,stage===1);
-  eyes(c,KID.hx,KID.hy+8,9,'hot',[.4,.2]);smile(c,KID.hx,KID.hy+38,18,true);blush(c,KID.hx-40,KID.hy+24,9);blush(c,KID.hx+40,KID.hy+24,9);
-  line(c,[[205,240],[205,420]],'rgba(246,196,83,.9)',6);
-  if(effect==='gland'&&stage===2)for(const [x,y,k] of [[160,150,0],[250,150,1],[300,300,2],[132,330,3]]){const u=mod(t*.8+k*.25);c.save();c.globalAlpha=1-u;D.water(c,x,y+u*30,10);c.restore();}
+const journey=[P('受器：接收刺激','Receptor: detects'),P('神經系統：傳導與整合','Nerves relay, CNS integrates'),P('動器：產生反應','Effector: responds')];
+// No person: only the receptor, two SEPARATE neurons and the effector.
+// Sensory neuron (blue) carries the message in; the central nervous system
+// integrates; a different motor neuron (orange) carries it out. The two never
+// touch: a visible gap marks the hand-over.
+const SENSE_COL='#a5b4fc',MOTOR_COL='#fdba74';
+const RECEPTOR=[170,452],HANDOVER=[486,198];
+const SENSORY={den:[[170,452],[184,402],[205,348]],soma:[205,330],axon:[[205,330],[250,282],[316,246],[396,214],[452,198]]};
+const MOTOR={den:[[514,196],[528,198],[540,198]],soma:[556,198],axon:[[556,198],[600,222],[634,262],[684,330],[736,394],[776,428]]};
+// To a sweat gland the outgoing fibre ends on the coiled gland, not on the skin surface.
+const MOTOR_GLAND={...MOTOR,axon:[[556,198],[600,222],[634,262],[684,330],[708,400],[704,468]]};
+function neuronPath(c,n,color,glow){
+  const fibre=[...n.den,...n.axon.slice(1)];
+  line(c,fibre,C.ink,10);line(c,fibre,glow?'#fef9c3':color,6);
+  const start=n.den[0];for(const a of [-2.3,-1.6,-.9,2.6])line(c,[start,[start[0]+Math.cos(a)*22,start[1]+Math.sin(a)*14]],color,3);
+  const end=n.axon[n.axon.length-1],prev=n.axon[n.axon.length-2],ang=Math.atan2(end[1]-prev[1],end[0]-prev[0]);
+  for(const d of [-.6,0,.6]){const tx=end[0]+Math.cos(ang+d)*20,ty=end[1]+Math.sin(ang+d)*20;line(c,[end,[tx,ty]],C.ink,7);line(c,[end,[tx,ty]],color,4);circle(c,tx,ty,6,color,C.ink,2);}
+  const g=c.createRadialGradient(n.soma[0]-6,n.soma[1]-7,3,n.soma[0],n.soma[1],24);g.addColorStop(0,'#ffffff');g.addColorStop(1,color);
+  circle(c,n.soma[0],n.soma[1],20,g,C.ink,3);circle(c,n.soma[0]-2,n.soma[1]+4,7,'#8e6fd1',C.ink,2);
+  return fibre;
 }
-function effectorArt(c,t,effect,active){
-  panel(c,470,382,460,150);
+function sweatDrop(c,x,y,r){c.beginPath();c.moveTo(x,y-r*1.7);c.bezierCurveTo(x+r*.9,y-r*.6,x+r,y+r*.1,x+r,y+r*.3);c.arc(x,y+r*.3,r,0,Math.PI);c.bezierCurveTo(x-r,y+r*.1,x-r*.9,y-r*.6,x,y-r*1.7);c.closePath();
+  c.fillStyle='#7dd3fc';c.fill();c.strokeStyle=C.ink;c.lineWidth=2;c.stroke();circle(c,x-r*.35,y,r*.25,'rgba(255,255,255,.8)');}
+function effector(c,t,effect,active){
   if(effect==='muscle'){
-    const k=active?(Math.sin(t*4)+1)/2:0;
-    line(c,[[510,500],[620,470],[mix(700,660,k),mix(500,420,k)]],C.ink,30);line(c,[[510,500],[620,470],[mix(700,660,k),mix(500,420,k)]],C.skin,24);
-    ellipse(c,566,mix(478,466,k),34,mix(14,22,k),'#f472b6',C.ink,2.5);
-    const fx=840,fy=455;circle(c,fx,fy,46,'#1f4f4a',C.ink,3);for(let i=0;i<3;i++){const a=i*TAU/3+(active?t*8:0);ellipse(c,fx+Math.cos(a)*22,fy+Math.sin(a)*22,22,10,'#a5f3fc',C.ink,2,a);}circle(c,fx,fy,8,C.white,C.ink,2);
-    text(c,P('動器：肌肉（收縮產生動作）','Effector: muscle (contracts)'),490,412,22,C.yellow);
+    const k=active?(Math.sin(t*5)+1)/2:0,len=mix(110,82,k),fat=mix(30,40,k),cx=800,cy=462;
+    line(c,[[cx-len-46,cy],[cx-len,cy]],'#f5f5f4',8);line(c,[[cx+len,cy],[cx+len+46,cy]],'#f5f5f4',8);
+    ellipse(c,cx,cy,len,fat,'#f472b6',C.ink,3);
+    for(let i=-3;i<=3;i++){c.save();c.beginPath();c.ellipse(cx,cy,len,fat,0,0,TAU);c.clip();line(c,[[cx+i*len/4,cy-fat],[cx+i*len/4+6,cy+fat]],'rgba(255,255,255,.35)',2);c.restore();}
+    text(c,P('肌肉','Muscle'),cx+30,cy+12,22,C.deep,'center');
   }else{
-    D.round(c,490,452,420,26,4,'#f1c9a5',C.ink);D.round(c,490,478,420,46,4,'#e8a9a1',C.ink);
-    const coil=[];for(let i=0;i<=40;i++){const a=i/40*TAU*3;coil.push([640+Math.cos(a)*22+i*.6,506+Math.sin(a)*9]);}
-    line(c,[[662,506],[662,452]],'#3b82f6',6);line(c,coil,C.ink,9);line(c,coil,'#60a5fa',5);
-    for(let i=0;i<3;i++){const u=active?mod(t*.7+i/3):0;c.save();c.globalAlpha=active?1-u*.6:.4;D.water(c,662+i*30,mix(450,436,u),10);c.restore();}
-    text(c,P('動器：汗腺（分泌汗液）','Effector: sweat gland (secretes)'),490,412,22,C.yellow);
+    D.round(c,660,424,270,26,4,'#f1c9a5',C.ink);D.round(c,660,450,270,62,4,'#e8a9a1',C.ink);
+    const coil=[];for(let i=0;i<=40;i++){const a=i/40*TAU*3;coil.push([716+Math.cos(a)*24+i*.6,490+Math.sin(a)*10]);}
+    line(c,[[744,490],[744,426]],C.ink,9);line(c,[[744,490],[744,426]],'#60a5fa',5);line(c,coil,C.ink,9);line(c,coil,'#60a5fa',5);
+    for(let i=0;i<3;i++){const u=active?mod(t*.7+i/3):0;c.save();c.globalAlpha=active?1-u*.5:.35;sweatDrop(c,744+i*34,mix(410,394,u),8);c.restore();}
+    text(c,P('汗腺','Sweat gland'),856,490,22,C.deep,'center');
   }
 }
 function drawJourney(c,s,t){
-  const stage=s.step<0?Math.floor(t*.7)%3:s.step,u=mod(t*.7);
-  text(c,P('天氣熱：接收 → 傳導整合 → 反應','Heat: detect → relay and integrate → respond'),136,40,24,C.yellow);
-  kid(c,t,stage,s.effect);
-  nerveLine(c,IN_PATH,5);nerveLine(c,outPath(s.effect),5);
-  sparkle(c,318,388,stage===0?16:10,stage===0?C.yellow:'#a3863a');
-  if(stage===0)glow(c,318,388,30,C.yellow,.6);
-  if(stage===1)signal(c,IN_PATH,u);
-  if(stage===2)signal(c,outPath(s.effect),u);
-  journey.forEach((p,i)=>{node(c,p,470,70+i*102,460,78,i===stage,C.cyan);if(i)arrow(c,700,58+i*102,700,68+i*102,C.cyan,3);});
-  effectorArt(c,t,s.effect,stage===2);
-  text(c,P('黃星＝皮膚受器；黃線＝神經；亮點＝訊息','Star = skin receptor; yellow line = nerve; glow = signal'),30,580,22,C.cyan);
+  const stage=s.step<0?Math.floor(t*.7)%3:s.step,u=mod(t*.7),gland=s.effect==='gland';
+  // Heat reaching the skin receptor.
+  circle(c,82,330,26,C.yellow,C.ink,3);for(let i=0;i<8;i++){const a=i*TAU/8+t*.2;line(c,[[82+Math.cos(a)*34,330+Math.sin(a)*34],[82+Math.cos(a)*44,330+Math.sin(a)*44]],C.yellow,3);}
+  for(let i=0;i<3;i++){const y=380+i*16;c.beginPath();for(let x=60;x<=150;x+=6)c.lineTo(x,y+Math.sin(x*.2+t*4)*3);c.strokeStyle='rgba(251,146,60,.7)';c.lineWidth=3;c.stroke();}
+  D.round(c,30,440,280,22,4,'#f1c9a5',C.ink);D.round(c,30,462,280,44,4,'#e8a9a1',C.ink);
+  text(c,P('皮膚','Skin'),262,492,22,C.deep,'center');
+  // Central nervous system: where the two neurons hand the message over.
+  D.round(c,316,84,330,178,18,stage===1?'#21524a':'#1c3d34',stage===1?C.cyan:'#5c8a7c');
+  brain(c,346,120,20,stage===1);text(c,P('中樞神經（腦、脊髓）','CNS (brain, spinal cord)'),374,128,22,C.white);
+  // Effector first, so the outgoing fibre stays visible where it reaches the gland.
+  effector(c,t,s.effect,stage===2);
+  const sFibre=neuronPath(c,SENSORY,SENSE_COL,stage===1&&u<.7);
+  const mFibre=neuronPath(c,gland?MOTOR_GLAND:MOTOR,MOTOR_COL,stage===2);
+  c.save();c.setLineDash([5,5]);circle(c,HANDOVER[0],HANDOVER[1],32,null,C.yellow,2.5);c.restore();
+  sparkle(c,RECEPTOR[0],RECEPTOR[1],stage===0?17:11,stage===0?C.yellow:'#a3863a');if(stage===0)glow(c,RECEPTOR[0],RECEPTOR[1],32,C.yellow,.6);
+  if(stage===1){
+    signal(c,sFibre,u/.75);
+    // The message crosses the small gap to the next neuron; the fibres stay apart.
+    if(u>.75){const k=(u-.75)/.25;glow(c,HANDOVER[0],HANDOVER[1],30,C.cyan,.5);for(const dy of [-7,0,7])circle(c,mix(478,496,mod(k+dy*.05)),HANDOVER[1]+dy,3.5,C.cyan);}
+  }
+  if(stage===2)signal(c,mFibre,u);
+  text(c,P('感覺神經元（傳入）','Sensory neuron (in)'),34,240,22,SENSE_COL);
+  text(c,P('運動神經元（傳出）','Motor neuron (out)'),700,300,22,MOTOR_COL);
+  text(c,P('交接處','Hand-over'),HANDOVER[0],252,22,C.yellow,'center');
+  node(c,journey[0],30,516,280,48,stage===0,C.yellow);
+  node(c,journey[1],316,22,330,48,stage===1,C.cyan);
+  node(c,journey[2],650,516,280,48,stage===2,MOTOR_COL);
+  D.round(c,660,30,270,92,12,C.panel,'#47675d');
+  line(c,[[676,58],[716,58]],SENSE_COL,6);text(c,P('感覺神經元','Sensory neuron'),726,66,22,C.white);
+  line(c,[[676,96],[716,96]],MOTOR_COL,6);text(c,P('運動神經元','Motor neuron'),726,104,22,C.white);
+  wrap(c,P('是兩條不同的神經元：在中樞交接訊息，不是同一條來回。','Two different neurons meet in the CNS; not one neuron going there and back.'),30,592,900,22,C.cyan);
 }
 
 // ── Tab 4: reaction-time practice (timing logic unchanged) ────────────────
@@ -314,12 +362,12 @@ const tabs=[
   reading:P('細胞本體中有細胞核，維持神經元的生長與代謝。延伸出去的神經纖維可傳遞訊息：樹突多而短，軸突通常較長。神經元、神經纖維與整條神經是不同的層級：神經是許多神經纖維集合成的一束。圖中大小為示意。','The cell body contains the nucleus and maintains growth and metabolism. Its extending fibres carry signals: dendrites are many and short, while the axon is usually longer. A neuron, a nerve fibre and a whole nerve are different levels: a nerve is a bundle of many nerve fibres. Sizes are schematic.'),
   sources:[],init:()=>({running:true,part:'body'}),controls:()=>[choice(P('放大位置','Enlarge'),'part',[['body',P('細胞本體','Cell body')],['fibre',P('神經纖維','Nerve fibres')],['nerve',P('神經','Nerve')]])],
   explain:s=>({title:s.part==='body'?P('細胞本體內有細胞核','The cell body contains a nucleus'):s.part==='fibre'?P('細長突起仍是細胞的一部分','Extensions remain part of the cell'):P('神經是一束神經纖維','A nerve is a bundle of fibres'),
-   text:s.part==='body'?P('放大鏡裡是細胞本體；紫色構造是細胞核。細胞本體的臉只是擬人化裝飾。','The magnifier shows the cell body; the purple structure is the nucleus. The face is only decoration.'):s.part==='fibre'?P('沿著細胞突起傳遞訊息；發亮符號代表訊息到達，不是分子在神經裡一路跑。','Signals travel along cell extensions. The glow represents a signal arriving, not a molecule travelling along the entire nerve.'):P('一條神經裡有許多神經纖維，像一束電線包在一起；神經不是一顆神經元。','A nerve contains many nerve fibres wrapped together like a bundle of wires; it is not a single neuron.')}),draw:drawNeuron},
+   text:s.part==='body'?P('放大鏡裡是細胞本體；紫色構造是細胞核。細胞本體的臉只是擬人化裝飾。','The magnifier shows the cell body; the purple structure is the nucleus. The face is only decoration.'):s.part==='fibre'?P('沿著細胞突起傳遞訊息；發亮符號代表訊息到達，不是分子在神經裡一路跑。','Signals travel along cell extensions. The glow represents a signal arriving, not a molecule travelling along the entire nerve.'):P('許多神經元的神經纖維並排在一起，外面有膜包住，就成了一條神經；每條纖維各自傳自己的訊息。神經元的細胞本體不在這一束裡。神經不是一顆神經元。','The fibres of many neurons run side by side, wrapped together, to form a nerve; each fibre carries its own signal. The cell bodies are outside the bundle. A nerve is not a single neuron.')}),draw:drawNeuron},
  {id:'journey',title:P('有收到，還要有回應','Detect, then respond'),sub:P('受器、整合與動器','Receptors, integration, effectors'),hook:P('天氣熱時不只會想開冷氣，還會流汗。這兩種反應的動器相同嗎？','In heat you may move toward a fan and also sweat. Are the effectors the same?'),
   body:P('用同一套接收、整合、反應的流程，比較肌肉動作與腺體分泌。','Compare muscle movement and gland secretion using the same detect–integrate–respond model.'),
   closure:P('動器不只有肌肉，腺體也是動器。完整反應需要受器、傳訊與整合、動器共同完成。','Effectors include glands as well as muscles. A complete response requires detection, signaling and integration, then an effector.'),
   sources:[],init:()=>({running:true,effect:'muscle',step:-1}),controls:()=>[choice(P('動器','Effector'),'effect',[['muscle',P('肌肉收縮','Muscle contracts')],['gland',P('汗腺分泌','Sweat gland secretes')]]),stepControls(journey)],
-  explain:s=>({title:journey[s.step<0?Math.floor(s.elapsed*.7)%3:s.step],text:s.effect==='muscle'?P('皮膚受器接收溫度刺激；神經系統整合訊息後，可控制肌肉做出移動等反應。此圖只呈現分工，不等同特定反射弧。','Skin receptors detect temperature. After integration, the nervous system can control muscles to produce movement. This diagram shows roles, not a specific reflex arc.'):P('神經系統也可把訊息傳到汗腺；汗腺分泌汗液，並不是肌肉收縮。汗液蒸發有助散熱。','Signals can also reach sweat glands, which secrete rather than contract. Evaporation of sweat helps heat loss.')}),draw:drawJourney},
+  explain:s=>({title:journey[s.step<0?Math.floor(s.elapsed*.7)%3:s.step],text:s.effect==='muscle'?P('皮膚受器接收溫度刺激，訊息由感覺神經元傳到中樞神經；中樞整合後，再由另一條運動神經元把訊息傳到肌肉，肌肉收縮產生動作。傳入和傳出是兩條不同的神經元。此圖只呈現分工，不等同特定反射弧。','Skin receptors detect temperature. A sensory neuron carries the message to the central nervous system; after integration, a different motor neuron carries it to a muscle, which contracts to produce movement. The incoming and outgoing paths are two different neurons. This diagram shows roles, not a specific reflex arc.'):P('一樣由感覺神經元傳入、中樞整合，再由另一條傳出的神經元把訊息送到汗腺；汗腺分泌汗液，並不是肌肉收縮。汗液蒸發有助散熱。','Again a sensory neuron carries the message in and the CNS integrates it; a different outgoing neuron then reaches the sweat gland, which secretes rather than contracts. Evaporation of sweat helps heat loss.')}),draw:drawJourney},
  {id:'reaction',title:P('看到就能立刻動？','Can you react instantly?'),sub:P('反應時間與紀錄','Reaction time and records'),hook:P('不要預猜！等畫面真的變綠，再按「反應」。多做幾次，結果一樣嗎？','Do not guess! Wait until the panel turns green, then respond. Are repeated results identical?'),
   body:P('這是螢幕視覺反應練習。真實接尺實驗要記直尺落下的距離；本練習記的是畫面變色到按鍵的時間。','This is an on-screen visual reaction task. The physical ruler experiment records falling distance; this task records the interval from colour change to your press.'),
   closure:P('刺激接收、訊息整合與肌肉反應都需要時間。練習、注意力與測量方式可能影響結果。','Detection, integration and muscle responses take time. Practice, attention and the measurement method can affect results.'),
