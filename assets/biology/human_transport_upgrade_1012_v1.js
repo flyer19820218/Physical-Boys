@@ -128,5 +128,23 @@
       const en=document.documentElement.lang==='en';credit.querySelectorAll('[data-zh][data-en]').forEach(n=>{n.textContent=n.dataset[en?'en':'zh'];});
     }).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
   }
+  // Fullscreen (landscape): move the controls and the caption into one left
+  // column so the canvas can use the full height on the right. Moves the same
+  // nodes (ids unchanged) and puts them back on exit or in portrait.
+  if(root.document){
+    const bench=document.getElementById('bench'),landscape=root.matchMedia?root.matchMedia('(orientation: landscape)'):null;
+    if(bench){
+      const side=document.createElement('div');side.className='side-column';
+      const sync=()=>{
+        const controls=document.getElementById('controls'),workspace=bench.querySelector('.workspace'),caption=bench.querySelector('.caption');
+        if(!controls||!workspace||!caption)return;
+        const want=bench.classList.contains('expanded')&&(!landscape||landscape.matches);
+        if(want&&side.parentNode!==bench){bench.insertBefore(side,workspace);side.append(controls,caption);}
+        else if(!want&&side.parentNode===bench){bench.insertBefore(controls,workspace);workspace.append(caption);side.remove();}
+      };
+      new MutationObserver(sync).observe(bench,{attributes:true,attributeFilter:['class']});
+      if(landscape)(landscape.addEventListener?landscape.addEventListener('change',sync):landscape.addListener(sync));
+    }
+  }
   root.HumanTransportUpgrade=Object.freeze({version:'1012_v1',originals,install,largePulse});
 })(globalThis);
