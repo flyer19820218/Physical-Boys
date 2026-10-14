@@ -100,10 +100,6 @@
     lymph.act=(s,k,v)=>{if(k==='lymphStep'){s.lymphStep=v;s.lymphStarted=s.elapsed||0;s.running=true;}else if(oldLymphAct)oldLymphAct(s,k,v);else s[k]=v;};
     const oldLymphInit=lymph.init;
     lymph.init=()=>({...oldLymphInit(),lymphStep:'auto',lymphStarted:0});
-    lymph.sources=[...lymph.sources,...[
-      ['lymph_capillaries_seer_zh.png','NIH／SEER 淋巴微血管中文圖','NIH / SEER lymph capillaries, Chinese'],
-      ['lymph_capillaries_seer_en.png','NIH／SEER 淋巴微血管英文圖','NIH / SEER lymph capillaries, English']
-    ].map(([file,zh,en])=>({file:'assets/biology/human_transport_media_1012_v1/'+file,name:P(zh,en),page:P('來源對照','Source comparison'),figure:'NIH / SEER',license:P('Wikimedia Commons 來源頁標示 Public domain','Wikimedia Commons source marked Public domain')}))];
     const experiment=next.tabs.find(x=>x.id==='experiment'),oldExp=originals.experiment;
     const modes=group(P('先看模型，再做實驗','Model, then your experiment'),[
       item(P('動脈脈搏剖面','Arterial pulse cutaway'),'view','pulse'),
@@ -131,6 +127,24 @@
     if(credit)new MutationObserver(()=>{
       const en=document.documentElement.lang==='en';credit.querySelectorAll('[data-zh][data-en]').forEach(n=>{n.textContent=n.dataset[en?'en':'zh'];});
     }).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+  }
+  // Fullscreen (landscape): move the controls and the caption into one left
+  // column so the canvas can use the full height on the right. Moves the same
+  // nodes (ids unchanged) and puts them back on exit or in portrait.
+  if(root.document){
+    const bench=document.getElementById('bench'),landscape=root.matchMedia?root.matchMedia('(orientation: landscape)'):null;
+    if(bench){
+      const side=document.createElement('div');side.className='side-column';
+      const sync=()=>{
+        const controls=document.getElementById('controls'),workspace=bench.querySelector('.workspace'),caption=bench.querySelector('.caption');
+        if(!controls||!workspace||!caption)return;
+        const want=bench.classList.contains('expanded')&&(!landscape||landscape.matches);
+        if(want&&side.parentNode!==bench){bench.insertBefore(side,workspace);side.append(controls,caption);}
+        else if(!want&&side.parentNode===bench){bench.insertBefore(controls,workspace);workspace.append(caption);side.remove();}
+      };
+      new MutationObserver(sync).observe(bench,{attributes:true,attributeFilter:['class']});
+      if(landscape)(landscape.addEventListener?landscape.addEventListener('change',sync):landscape.addListener(sync));
+    }
   }
   root.HumanTransportUpgrade=Object.freeze({version:'1012_v1',originals,install,largePulse});
 })(globalThis);
