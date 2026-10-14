@@ -100,10 +100,6 @@
     lymph.act=(s,k,v)=>{if(k==='lymphStep'){s.lymphStep=v;s.lymphStarted=s.elapsed||0;s.running=true;}else if(oldLymphAct)oldLymphAct(s,k,v);else s[k]=v;};
     const oldLymphInit=lymph.init;
     lymph.init=()=>({...oldLymphInit(),lymphStep:'auto',lymphStarted:0});
-    lymph.sources=[...lymph.sources,...[
-      ['lymph_capillaries_seer_zh.png','NIH／SEER 淋巴微血管中文圖','NIH / SEER lymph capillaries, Chinese'],
-      ['lymph_capillaries_seer_en.png','NIH／SEER 淋巴微血管英文圖','NIH / SEER lymph capillaries, English']
-    ].map(([file,zh,en])=>({file:'assets/biology/human_transport_media_1012_v1/'+file,name:P(zh,en),page:P('來源對照','Source comparison'),figure:'NIH / SEER',license:P('Wikimedia Commons 來源頁標示 Public domain','Wikimedia Commons source marked Public domain')}))];
     const experiment=next.tabs.find(x=>x.id==='experiment'),oldExp=originals.experiment;
     const modes=group(P('先看模型，再做實驗','Model, then your experiment'),[
       item(P('動脈脈搏剖面','Arterial pulse cutaway'),'view','pulse'),

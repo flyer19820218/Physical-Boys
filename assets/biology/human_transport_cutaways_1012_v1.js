@@ -477,65 +477,88 @@
   const BLOOD_MAIN=curve([[40,461],[314,414],[560,540],[920,447]]);
   const BLOOD_BRANCH=curve([[533,474],[641,477],[704,378],[899,381]]);
 
+  // ── Teacher-authorised vessel redraw · 2026-10-14 ─────────────────────────
+  // Artery: fast pulsatile flow, the lumen is packed but single cells blur.
+  // Capillary: one endothelial layer; the narrowest lumen fits one red cell.
+  // Vein: pocket valves visibly coapt; while closed the blood column stops.
+  const VEIN_VALVES=Object.freeze({heart:250,far:665});
+  const VEIN_FORWARD=70, VEIN_SQUEEZE=95, VEIN_COLUMN=30, BRANCH_COLUMN=26;
   function veinMotion(t,squeeze){
-    const u=mod(t/3.6), active=!!squeeze;
-    const contraction=active&&u<.48?Math.sin(Math.PI*u/.48):0;
-    const forward=u<.48;
-    // Continuous, nondecreasing displacement: cells stop when the valve closes.
-    const distance=active?Math.floor(t/3.6)*95+95*smooth(u/.48):t*24;
-    // The default is an explicitly slowed forward-pressure / reflux-pressure
-    // demonstration, not a claim that all venous valves beat like the heart.
-    // Muscle mode shows the two valves bracketing the squeezed segment.
+    const u=mod(t/3.6), active=!!squeeze, forward=u<.48;
+    const contraction=active&&forward?Math.sin(Math.PI*u/.48):0;
+    const refill=active&&!forward?Math.sin(Math.PI*(u-.48)/.52):0;
+    // Slowed teaching rhythm: forward pressure opens; reflux tendency closes.
     const openWindow=(a,b)=>u>=a&&u<b?smooth((u-a)/.06)*smooth((b-u)/.06):0;
     const downstreamAperture=openWindow(0,.48),upstreamAperture=active?openWindow(.48,1):downstreamAperture;
-    return {u,contraction,forward,distance,open:downstreamAperture,
+    return {u,contraction,refill,forward,squeeze:active,open:downstreamAperture,
       upstreamOpen:active?!forward:forward,downstreamOpen:forward,
       upstreamAperture,downstreamAperture,pressureDemo:!active};
   }
-  function stepVein(particles,dt,motion,length){
-    const result=particles.map(p=>({...p}));
-    for(const row of [0,1,2,3]){
-      const lane=result.filter(p=>p.row===row).sort((a,b)=>a.d-b.d);
-      let previous=-100;
-      for(const p of lane){
-        const speed=motion.contraction>0?62:30;
-        let target=p.d-speed*dt;
-        for(const [gate,open] of [[250,motion.downstreamOpen&&motion.downstreamAperture>.95],[665,motion.upstreamOpen&&motion.upstreamAperture>.95]]){
-          if(!open&&p.d>=gate+14&&target<gate+14)target=gate+14;
-        }
-        // Preserve each cell's seeded spacing even in a queue: equal headway
-        // would erase the scatter and form a four-column grid after closure.
-        p.d=Math.max(target,previous+(p.headway||32));previous=p.d;
-      }
-      // Re-enter only through the upstream cut end, with preserved headway.
-      const tail=lane[lane.length-1];
-      for(const p of lane)if(p.d<-12){p.d=Math.max(length+12,tail.d+(p.headway||34));}
-    }
-    return result;
+  // Speed toward the heart (toward smaller d). Blood is not compressed against
+  // a closed valve: on that side of the valve the whole column simply stops.
+  function veinVelocity(d,m){
+    if(!m.squeeze)return VEIN_FORWARD*m.downstreamAperture;
+    const a=VEIN_VALVES.heart,b=VEIN_VALVES.far,f=clamp((d-a)/(b-a));
+    if(m.forward){const v=VEIN_SQUEEZE*m.downstreamAperture*m.contraction;return d<a?v:d>b?0:v*(1-f);}
+    const v=VEIN_SQUEEZE*.923*m.upstreamAperture*m.refill;return d<a?0:d>b?v:v*f;
   }
-  function venousValve(ctx,route,d,r,open){
-    const p=at(route,d);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle-Math.PI/2);
-    // Downstream is +local y; open tips bend downstream, closed tips coapt.
-    leafletPair(ctx,0,0,r,open,'venous');ctx.restore();
+  function veinColumn(serial,at,lanes,jitterAlong,jitterLane,radius){
+    return lanes.map((lane,k)=>{const seed=serial*11+k*3;return{d:at+(scatter(seed+5)-.5)*jitterAlong,
+      lane:lane+(scatter(seed+71)-.5)*jitterLane,tilt:(scatter(seed+139)-.5)*1.4,r:radius*(.92+.16*scatter(seed+211))};});
   }
+  function veinPopulation(length,column,lanesFor,jitterAlong,jitterLane,radius,start){
+    const cells=[];let serial=0,tail=start;
+    for(let d=start;d<=length+24;d+=column){cells.push(...veinColumn(serial,d,lanesFor(serial),jitterAlong,jitterLane,radius));tail=d;serial++;}
+    return {cells,tail,serial};
+  }
+  const MAIN_LANES=n=>n%2?[-21,-7,7,21]:[-28,-14,0,14,28];
+  const BRANCH_LANES=n=>n%2?[-6,6]:[-12,0,12];
+  function stepVein(pool,dt,motion,length){
+    // pool={main,branch}; each keeps its cells, the last spawned column and a
+    // serial so every new cell receives stable seeded jitter (no Math.random).
+    const advance=(group,speedAt,spawnAt,column,lanes,jA,jL,radius,remove)=>{
+      for(const p of group.cells)p.d-=speedAt(p.d)*dt;
+      group.tail-=speedAt(spawnAt)*dt;
+      while(group.tail+column<=spawnAt){group.tail+=column;const n=group.serial++;group.cells.push(...veinColumn(n,group.tail,lanes(n),jA,jL,radius));}
+      group.cells=group.cells.filter(p=>p.d>=remove);
+    };
+    advance(pool.main,d=>veinVelocity(d,motion),length+24,VEIN_COLUMN,MAIN_LANES,18,7,8.2,-26);
+    // The tributary joins downstream of the heart-side valve: it moves with
+    // that part of the main vein and fades out where it merges.
+    const down=veinVelocity(0,motion);
+    advance(pool.branch,()=>down,VEIN_BRANCH.length+20,BRANCH_COLUMN,BRANCH_LANES,10,5,7.2,96);
+    return pool;
+  }
+  function newVeinPool(){
+    return {main:veinPopulation(VESSEL_MAIN.length,VEIN_COLUMN,MAIN_LANES,18,7,8.2,-24),
+      branch:veinPopulation(VEIN_BRANCH.length,BRANCH_COLUMN,BRANCH_LANES,10,5,7.2,96)};
+  }
+  // One pocket valve in a longitudinal section. Local +x points toward the
+  // heart. Cusps are attached at x=0 on each wall; their free edges point
+  // toward the heart. Open: flat against the wall. Closed: free edges meet in
+  // the centre, so blood cannot slip back past the valve.
   function venousLeaflets(ctx,r,aperture){
-    // Two compliant pocket-shaped leaflets. At aperture 0 their free edges
-    // meet at precisely the same point; at 1 they lie against the inner wall.
+    const L=r*1.28;
     for(const side of [-1,1]){
-      const anchor=side*r,tip=side*r*.80*aperture,depth=12+35*aperture;
-      ctx.beginPath();ctx.moveTo(anchor,0);
-      ctx.bezierCurveTo(anchor-side*r*.12,19,tip+side*r*.12,depth+8,tip,depth);
-      ctx.bezierCurveTo(tip+side*r*.10,depth-7,anchor-side*3,6,anchor,0);ctx.closePath();
-      ctx.fillStyle=gradient(ctx,anchor,0,tip,depth,[[0,'#b39780'],[.42,'#e9d8b5'],[1,'#f3e8cb']]);
-      ctx.fill();ctx.strokeStyle='#f2ecd9';ctx.lineWidth=2;ctx.stroke();
+      const base={x:0,y:side*r},tip={x:L*(.84+.16*aperture),y:side*(r-6)*aperture};
+      const ctrl={x:L*(.18+.34*aperture),y:side*mix(r*.30,r-3,aperture)};
+      ctx.lineCap='round';ctx.lineJoin='round';
+      for(const [w,color] of [[8.5,'#6f3f3a'],[5.2,'#f4e2bf']]){
+        ctx.beginPath();ctx.moveTo(base.x,base.y);ctx.quadraticCurveTo(ctrl.x,ctrl.y,tip.x,tip.y);
+        ctx.strokeStyle=color;ctx.lineWidth=w;ctx.stroke();
+      }
     }
+  }
+  function venousValve(ctx,route,d,r,aperture){
+    // Flow in the vein model runs toward smaller d, so +x faces -tangent.
+    const p=at(route,d);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle+Math.PI);
+    venousLeaflets(ctx,r,aperture);ctx.restore();
   }
   function vesselsDraw(ctx,s,t,D){
     const dt=dtFor(s,t,D,'vesselTime'), memory=memories.get(s);
     const motion=veinMotion(t,s.squeeze);
-    if(!memory.veinParticles)memory.veinParticles=[-26,-8,10,28].flatMap((lane,row)=>
-      Array.from({length:19},(_,i)=>({d:40+i*42+(row%2)*20+(scatter(i+row*73)-.5)*9,lane:lane+(scatter(i+row*137+901)-.5)*2.3,row,index:i,r:7.6+.8*scatter(i+231),tilt:(scatter(i+row*91)-.5)*1.35,headway:27+6*scatter(i+row*173+503)})));
-    memory.veinParticles=stepVein(memory.veinParticles,dt,motion,VESSEL_MAIN.length);
+    if(!memory.veinPool)memory.veinPool=newVeinPool();
+    stepVein(memory.veinPool,dt,motion,VESSEL_MAIN.length);
     base(ctx,D,P('血管剖面：沿著管腔走','Vessel cutaways: follow the lumen'));
     if(s.view==='micrograph'||s.view==='capillary'){
       original(ctx,D,s.view==='micrograph'?'vessel_photo.png':'capillary_micrograph.png',24,60,530,244);
@@ -544,10 +567,10 @@
       txt(ctx,D,P('課本構造原圖','Textbook anatomy'),584,327,22);
       // Evidence remains selectable; the model occupies the lower half here.
       ctx.save();ctx.translate(230,260);ctx.scale(.52,.52);
-      drawVesselModel(ctx,s,t,D,memory.veinParticles);ctx.restore();
+      drawVesselModel(ctx,s,t,D,memory.veinPool);ctx.restore();
       txt(ctx,D,P('下方為動態教學模型','Animated teaching model below'),24,580,22,'#b9cbbd');
     }else{
-      drawVesselModel(ctx,s,t,D,memory.veinParticles);
+      drawVesselModel(ctx,s,t,D,memory.veinPool);
       original(ctx,D,'vessel_atlas.png',25,60,171,125);
       txt(ctx,D,P('構造原圖','Source anatomy'),26,207,18,'#b9cbbd');
       const name=s.vessel==='vein'?P('靜脈・回到心臟','Vein · toward the heart'):s.vessel==='capillary'?P('微血管・單列慢行','Capillaries · single file'):P('動脈・離開心臟','Artery · away from the heart');
@@ -555,35 +578,109 @@
       txt(ctx,D,P('放大剖面示意・各圖不同比例','Enlarged cutaway · scales differ'),237,128,22,'#b9cbbd');
       if(s.vessel!=='capillary'){
         const vein=s.vessel==='vein';
+        txt(ctx,D,vein?P('← 流回心臟','← Toward the heart'):P('由心臟送出 →','From the heart →'),24,240,22,'#f2ecd9');
         txt(ctx,D,P('外膜','Outer layer'),74,513,22);
         txt(ctx,D,vein?P('肌層較薄','Thinner muscle'):P('肌層較厚','Thicker muscle'),304,513,22);
         txt(ctx,D,P('內膜','Inner lining'),573,513,22);
         line(ctx,[[104,485],[119,403]],'#d5a59b',1.5);
         line(ctx,[[350,485],[346,392]],'#d5a59b',1.5);
         line(ctx,[[618,485],[620,410]],'#e7c896',1.5);
+        if(vein){
+          // Name the valve that is actually drawn, beside the heart-side cusps.
+          const v=at(VESSEL_MAIN,VEIN_VALVES.far);
+          txt(ctx,D,P('靜脈瓣','Venous valve'),v.x-6,v.y-87,22,'#fde047','right');
+          line(ctx,[[v.x-12,v.y-79],[v.x,v.y-53]],'#fde047',1.5);
+        }
+      }else{
+        const mid=at(CAPILLARY,CAPILLARY.length/2),w=capillaryRadius(CAPILLARY.length/2)+CAPILLARY_WALL;
+        txt(ctx,D,P('最細處：只容一顆紅血球通過','Narrowest: room for just one red cell'),mid.x,mid.y-w-46,22,'#fde047','center');
+        line(ctx,[[mid.x,mid.y-w-38],[mid.x,mid.y-w-4]],'#fde047',1.5);
+        const wallAt=at(CAPILLARY,CAPILLARY.length*.79),ww=capillaryRadius(CAPILLARY.length*.79)+CAPILLARY_WALL;
+        line(ctx,[[wallAt.x,wallAt.y+ww-3],[wallAt.x,wallAt.y+ww+38]],'#d4daa8',1.5);
+        txt(ctx,D,P('管壁：只有一層細胞','Wall: a single cell layer'),wallAt.x,wallAt.y+ww+66,22,'#d4daa8','center');
+        txt(ctx,D,P('小動脈端 →','Arteriole end →'),24,410,22,'#f2ecd9');
+        txt(ctx,D,P('→ 小靜脈端','→ Venule end'),936,410,22,'#f2ecd9','right');
       }
       const note=s.vessel==='vein'?(s.squeeze?P('肌肉擠壓：靠心端開、遠心端關；放鬆時相反。','Muscle squeeze: heart-side opens, far-side closes; release reverses them.'):
-        P('慢速壓力示意：順流推開瓣葉，回流傾向使瓣葉閉合。','Slowed pressure demo: forward flow opens; reflux tendency closes.')):
-        s.vessel==='capillary'?P('一層內皮・紅血球逐顆通過，留在管內。','One endothelial layer · cells pass singly inside the lumen.'):
-          P('管壁局部擴張後回彈；動脈沒有靜脈瓣。','Local wall expansion and recoil; no venous valves in arteries.');
+        P('順流時瓣膜被推開；血液想倒流時，瓣膜閉合擋住，血流停住。','Forward flow pushes the valves open; when blood tends to flow back, they close and the flow stops.')):
+        s.vessel==='capillary'?P('管壁只有一層細胞；紅血球排成單列、流得最慢，留在管內。','The wall is one cell thick; red cells pass in single file, slowest of all, and stay inside.'):
+          P('血流快又有脈動：管內擠滿血球，只是快到看不清單顆；動脈沒有靜脈瓣。','Fast, pulsing flow: the lumen is packed with cells, but they move too fast to see one by one. Arteries have no venous valves.');
       textWrap(ctx,D,note,24,560,912,22);
     }
     if(D.status)D.status(s.vessel==='vein'?(s.squeeze?(motion.forward?P('擠壓送血：靠心端瓣膜開，遠心端瓣膜關。','Squeeze: heart-side valve opens; far-side valve closes.'):
       P('放鬆充血：靠心端瓣膜關，遠心端瓣膜開。','Refill: heart-side valve closes; far-side valve opens.')):
       (motion.forward?P('順流壓力推開瓣膜 → 血液朝心臟流。','Forward pressure opens valves → flow toward the heart.'):
-        P('回流傾向使瓣膜閉合 → 阻止血液倒流。','Reflux tendency closes valves → backflow blocked.'))):
+        P('瓣膜閉合 → 擋住倒流，血液暫停。','Valves closed → backflow blocked; blood pauses.'))):
       s.circuit==='lung'?P('肺循環：動脈較少氧，靜脈富氧。','Pulmonary circuit: oxygen-poor arteries, oxygen-rich veins.'):
       P('體循環：動脈富氧，靜脈較少氧。','Systemic circuit: oxygen-rich arteries, oxygen-poor veins.'));
   }
-  function drawVesselModel(ctx,s,t,D,veinParticles){
-    const vein=s.vessel==='vein', cap=s.vessel==='capillary', oxygen=s.circuit==='lung'?(vein?1:.25):(vein?.25:1);
-    if(cap){
-      const routes=[-1,0,1].map(k=>curve([[72,340],[285,340+k*146],[668,340+k*146],[894,340]]));
-      tubes(ctx,routes,[10,10,10],0,1);
-      ctx.save();clipTubes(ctx,routes,[10,10,10]);
-      routes.forEach((r,k)=>renderCells(ctx,cells(r,t+k*.6,[0],37,15,7),oxygen));ctx.restore();
-      return;
+  // Capillary close-up: a single gently winding vessel. Lumen half-width is
+  // 34 px at the ends and 20 px at the waist; a red cell is 42 px across, so at
+  // the waist it just fits and is pressed slightly longer (area kept).
+  const CAPILLARY=curve([[70,330],[330,250],[630,410],[890,330]],140);
+  const CAPILLARY_WALL=9, CAPILLARY_CELL=21, CAPILLARY_SPEED=24;
+  function capillaryRadius(d){return 34-14*Math.exp(-Math.pow((d-CAPILLARY.length/2)/140,2));}
+  function capillaryCells(t){
+    const n=12,L=CAPILLARY.length+80,weights=Array.from({length:n},(_,i)=>.72+.56*scatter(i+517));
+    const total=weights.reduce((a,b)=>a+b,0);let offset=0;
+    return weights.map(w=>{const base=offset;offset+=w/total*L;return mod(base+CAPILLARY_SPEED*t,L)-40;});
+  }
+  function blendedRbc(ctx,r,oxygen){
+    rbc(ctx,0,0,r,.25,Math.PI/2);
+    const bright=smooth((oxygen-.25)/.75);
+    if(bright>.01){ctx.save();ctx.globalAlpha=bright;rbc(ctx,0,0,r,1,Math.PI/2);ctx.restore();}
+  }
+  function drawCapillary(ctx,s,t){
+    const ss=CAPILLARY.samples,R=capillaryRadius,side=(extra,sign)=>ss.map(p=>({x:p.x+p.nx*(R(p.d)+extra)*sign,y:p.y+p.ny*(R(p.d)+extra)*sign}));
+    const band=extra=>{const a=side(extra,1),b=side(extra,-1).reverse();ctx.beginPath();[...a,...b].forEach((q,i)=>ctx[i?'lineTo':'moveTo'](q.x,q.y));ctx.closePath();};
+    // One endothelial layer (same colours as the lymph close-up cartoon).
+    band(CAPILLARY_WALL);ctx.fillStyle='#d4daa8';ctx.fill();ctx.strokeStyle='#6c8b5b';ctx.lineWidth=2;ctx.stroke();
+    band(0);ctx.fillStyle=gradient(ctx,0,250,0,410,[[0,'#f7edc5'],[1,'#e6d8a5']]);ctx.fill();
+    ctx.strokeStyle='#9aa874';ctx.lineWidth=1.2;ctx.stroke();
+    for(const sign of [1,-1])for(let d=sign>0?42:81;d<CAPILLARY.length-10;d+=78){
+      const p=at(CAPILLARY,d),r=R(d);
+      line(ctx,[[p.x+p.nx*r*sign,p.y+p.ny*r*sign],[p.x+p.nx*(r+CAPILLARY_WALL)*sign,p.y+p.ny*(r+CAPILLARY_WALL)*sign]],'#6c8b5b',1.6);
+      const q=at(CAPILLARY,d+39);
+      if(d+39<CAPILLARY.length-8){ctx.save();ctx.translate(q.x+q.nx*(R(d+39)+CAPILLARY_WALL*.5)*sign,q.y+q.ny*(R(d+39)+CAPILLARY_WALL*.5)*sign);ctx.rotate(q.angle);
+        ellipse(ctx,0,0,9,3.1,'#879165');ctx.restore();}
     }
+    const lung=s.circuit==='lung';
+    ctx.save();band(0);ctx.clip();
+    for(const d of capillaryCells(t)){
+      if(d<-30||d>CAPILLARY.length+30)continue;
+      const p=at(CAPILLARY,d),room=R(clamp(d,0,CAPILLARY.length))-1,across=Math.min(1,room/CAPILLARY_CELL),along=1/Math.pow(across,.8);
+      const u=clamp(d/CAPILLARY.length),oxygen=lung?mix(.25,1,u):mix(1,.25,u);
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.scale(along,across);blendedRbc(ctx,CAPILLARY_CELL,oxygen);ctx.restore();
+    }
+    ctx.restore();
+  }
+  // Artery: packed blood moving fast enough that single cells smear into
+  // streaks. Speed surges with each pulse; the centre runs a little faster.
+  function arteryFlow(ctx,routes,radii,t,oxygen){
+    ctx.save();clipTubes(ctx,routes,radii);
+    ctx.fillStyle=oxygen>.6?'#b3212d':'#6c1d2a';ctx.fillRect(0,0,960,600);
+    const travel=pulseDisplacement(t)*6;
+    routes.forEach((route,k)=>{
+      const R=k?23:42;
+      for(let lane=-R+3;lane<=R-3;lane+=5){
+        const profile=1-.42*Math.pow(lane/R,2),pitch=64+44*scatter(k*97+lane*3.1+400),count=Math.ceil((route.length+140)/pitch);
+        for(let i=0;i<count;i++){
+          const seed=k*1009+(lane+60)*37+i,len=24+56*scatter(seed+11);
+          const d0=mod(i*pitch+scatter(seed)*pitch*.8+travel*profile*(k?.82:1),count*pitch)-70;
+          const pts=[];for(let d=Math.max(0,d0);d<=Math.min(route.length,d0+len);d+=8)pts.push(at(route,d,lane));
+          if(pts.length<2)continue;
+          const light=scatter(seed+29)>.45;
+          line(ctx,pts,light?(oxygen>.6?'rgba(255,150,138,.30)':'rgba(196,96,104,.30)'):'rgba(58,6,14,.34)',3.2+2.6*scatter(seed+47));
+        }
+      }
+    });
+    joinedPath(ctx,routes,radii);ctx.lineJoin='round';
+    for(let band=6;band>0;band--){ctx.lineWidth=band*3;ctx.strokeStyle='rgba(40,6,10,.06)';ctx.stroke();}
+    ctx.restore();
+  }
+  function drawVesselModel(ctx,s,t,D,pool){
+    const vein=s.vessel==='vein', cap=s.vessel==='capillary', oxygen=s.circuit==='lung'?(vein?1:.25):(vein?.25:1);
+    if(cap){drawCapillary(ctx,s,t);return;}
     const motion=veinMotion(t,s.squeeze), radius=vein?d=>48-10*motion.contraction*Math.exp(-Math.pow((d-460)/145,2)):
       d=>39+7*pulseProfile(d,t);
     const branch=vein?VEIN_BRANCH:VESSEL_BRANCH;
@@ -596,25 +693,23 @@
       }
     }
     tubes(ctx,routes,rr,vein?9:24,7);
-    ctx.save();clipTubes(ctx,routes,rr);
-    const time=vein?motion.distance/24:pulseDisplacement(t)/46;
-    // Three/four staggered lanes; distinct branch starts after its junction.
-    const mainCells=vein?veinParticles.filter(p=>p.d>=0&&p.d<=VESSEL_MAIN.length).map(p=>({...p,...at(VESSEL_MAIN,p.d,p.lane)})):
-      cells(VESSEL_MAIN,time,[-26,-8,10,28],37,46,8);
-    renderCells(ctx,mainCells,oxygen);
-    const branchCells=cells(branch,t,[-9,9],38,vein?-24:46,7).filter(p=>p.d>93);
-    renderCells(ctx,branchCells,oxygen);ctx.restore();
-    if(vein){
-      // Return flow is right-to-left; rotate the valve section to face it.
-      [250,665].forEach(d=>{const p=at(VESSEL_MAIN,d);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle+Math.PI/2);
-        venousLeaflets(ctx,radius(d),d===250?motion.downstreamAperture:motion.upstreamAperture);ctx.restore();});
+    if(!vein)arteryFlow(ctx,routes,rr,t,oxygen);
+    else{
+      ctx.save();clipTubes(ctx,routes,rr);
+      const place=(route,list)=>list.map(p=>({...p,...at(route,p.d,p.lane)}));
+      renderCells(ctx,place(VESSEL_MAIN,pool.main.cells.filter(p=>p.d>=-20&&p.d<=VESSEL_MAIN.length+20)),oxygen);
+      for(const p of place(VEIN_BRANCH,pool.branch.cells)){ctx.save();ctx.globalAlpha=clamp((p.d-96)/24);rbc(ctx,p.x,p.y,p.r,oxygen,p.angle+p.tilt);ctx.restore();}
+      ctx.restore();
+      // Valves are drawn last so the cusps are never hidden behind cells.
+      venousValve(ctx,VESSEL_MAIN,VEIN_VALVES.heart,radius(VEIN_VALVES.heart),motion.downstreamAperture);
+      venousValve(ctx,VESSEL_MAIN,VEIN_VALVES.far,radius(VEIN_VALVES.far),motion.upstreamAperture);
     }
     // Cross-sectional rim at the cut end displays three concentric tissue layers.
     const end=VESSEL_MAIN.samples[0], r=radius(0);
     ctx.save();ctx.translate(end.x,end.y);ctx.rotate(end.angle);
     ellipse(ctx,0,0,16,r+(vein?16:31),'#b88078','#edb59d',1);
     ellipse(ctx,0,0,12,r+(vein?9:24),'#a44f5b','#e79b91',1);
-    ellipse(ctx,0,0,9,r+3,'#e3bc87');ellipse(ctx,0,0,7,r,'#c4b783');ctx.restore();
+    ellipse(ctx,0,0,9,r+3,'#e3bc87');ellipse(ctx,0,0,7,r,vein?'#c4b783':(oxygen>.6?'#9e1f2b':'#5e1a26'));ctx.restore();
   }
 
   const CROPS={rbc:[.49,.34,.10,.13],wbc:[.414,.493,.10,.14],platelet:[.829,.863,.049,.067],plasma:[0,0,1,1]};
@@ -817,6 +912,6 @@
     render:Object.freeze({tubes,clipTubes,rbc,renderCells,venousLeaflets}),
     // Read-only numerical hooks let the optional validator exercise the SAME
     // geometry used by rendering, rather than a second approximate model.
-    geometry:Object.freeze({curve,at,cells,pulseProfile,pulseDisplacement,veinMotion,stepVein,
+    geometry:Object.freeze({curve,at,cells,pulseProfile,pulseDisplacement,veinMotion,stepVein,veinVelocity,capillary:CAPILLARY,capillaryRadius,capillaryCell:CAPILLARY_CELL,veinValves:VEIN_VALVES,
       vesselMain:VESSEL_MAIN,vesselBranch:VESSEL_BRANCH,bloodMain:BLOOD_MAIN,bloodBranch:BLOOD_BRANCH,heartRegions:HEART_REGIONS,hemostasisRoute:REPAIR_ROUTE})});
 })(globalThis);
