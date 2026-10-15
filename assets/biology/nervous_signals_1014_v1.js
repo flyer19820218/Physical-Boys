@@ -27,7 +27,6 @@ function eyes(c,x,y,s,mood='happy',look=[0,0]){
 function smile(c,x,y,w,open=false){c.save();c.strokeStyle=C.ink;c.lineWidth=Math.max(2,w*.18);c.lineCap='round';
   if(open){c.beginPath();c.arc(x,y-w*.15,w*.55,.1*Math.PI,.9*Math.PI);c.closePath();c.fillStyle='#8a2f3c';c.fill();c.stroke();}
   else{c.beginPath();c.arc(x,y-w*.32,w*.55,.18*Math.PI,.82*Math.PI);c.stroke();}c.restore();}
-function blush(c,x,y,r){c.save();c.globalAlpha=.5;ellipse(c,x,y,r,r*.6,'#f59aa8');c.restore();}
 function sparkle(c,x,y,s,color=C.yellow){c.save();c.translate(x,y);c.beginPath();for(let i=0;i<8;i++){const r=i%2?s*.32:s,a=i*Math.PI/4-Math.PI/2;c.lineTo(Math.cos(a)*r,Math.sin(a)*r);}c.closePath();c.fillStyle=color;c.fill();c.restore();}
 function glow(c,x,y,r,color=C.cyan,a=.55){c.save();const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,'rgba(85,233,255,0)');c.globalAlpha=a;c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,TAU);c.fill();c.restore();}
 function pathLength(pts){let L=0;for(let i=1;i<pts.length;i++)L+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);return L;}
@@ -57,29 +56,61 @@ const senses=[
  {name:P('耳','Ear'),stim:P('聲音','Sound'),rec:P('內耳受器','Inner-ear receptors'),loc:P('聲波使耳內構造振動，內耳的受器接收刺激，再傳送神經訊息。','Sound causes vibrations. Receptors in the inner ear detect them and send nerve signals.')},
  {name:P('鼻','Nose'),stim:P('氣味','Odour'),rec:P('嗅覺受器','Smell receptors'),loc:P('鼻腔上方嗅黏膜中的受器，接收氣味物質的化學刺激。','Receptors in the olfactory lining at the top of the nasal cavity detect odour chemicals.')},
  {name:P('舌','Tongue'),stim:P('味道','Taste'),rec:P('味蕾受器','Taste-bud receptors'),loc:P('味蕾中的受器接收溶在唾液中的物質，不是舌頭每個部位只能感覺一種味道。','Taste-bud receptors detect substances dissolved in saliva. Tongue regions are not restricted to single tastes.')},
- {name:P('皮膚','Skin'),stim:P('溫度、觸碰與壓力','Temperature, touch and pressure'),rec:P('皮膚受器','Skin receptors'),loc:P('皮膚中有不同的受器，能接收溫度、碰觸、壓力及傷害等刺激。','Different skin receptors detect temperature, touch, pressure and potentially damaging stimuli.')}
+ {name:P('皮膚','Skin'),stim:P('溫度、觸碰與壓力','Heat, touch, pressure'),node:P('冷熱觸壓','Heat, touch'),rec:P('皮膚受器','Skin receptors'),loc:P('皮膚中有不同的受器，能接收溫度、碰觸、壓力及傷害等刺激。','Different skin receptors detect temperature, touch, pressure and potentially damaging stimuli.')}
 ];
-const FACE={x:225,y:300,r:132};
-const ORGAN=[[FACE.x+FACE.r*.38,FACE.y-FACE.r*.06,34],[FACE.x-FACE.r*1.0,FACE.y+12,36],[FACE.x,FACE.y+FACE.r*.2,28],[FACE.x,FACE.y+FACE.r*.56,30],[398,452,46]];
-function kidFace(c,t,sel){
-  const {x,y,r}=FACE;
-  for(const side of [-1,1]){ellipse(c,x+side*r*.98,y+12,r*.2,r*.3,C.skin,C.ink,3);ellipse(c,x+side*r*.98,y+12,r*.09,r*.16,C.skinDark);}
-  circle(c,x,y,r,C.skin,C.ink,4);
-  c.save();c.beginPath();c.arc(x,y,r,0,TAU);c.clip();
-  c.beginPath();c.moveTo(x-r*1.1,y-r*.15);c.bezierCurveTo(x-r*.9,y-r*1.25,x+r*.9,y-r*1.25,x+r*1.1,y-r*.2);c.lineTo(x+r*.7,y-r*.5);c.quadraticCurveTo(x+r*.35,y-r*.32,x+r*.05,y-r*.55);c.quadraticCurveTo(x-r*.3,y-r*.3,x-r*.75,y-r*.45);c.closePath();
-  c.fillStyle=C.hair;c.fill();c.restore();circle(c,x,y,r,null,C.ink,4);
-  eyes(c,x,y-r*.06,r*.12,sel===0?'surprised':'happy',[0,0]);
-  c.beginPath();c.moveTo(x-4,y+r*.1);c.quadraticCurveTo(x+12,y+r*.24,x-6,y+r*.27);c.strokeStyle=C.ink;c.lineWidth=3;c.lineCap='round';c.stroke();
-  c.beginPath();c.moveTo(x-r*.28,y+r*.44);c.quadraticCurveTo(x,y+r*.74,x+r*.28,y+r*.44);c.closePath();c.fillStyle='#8a2f3c';c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
-  ellipse(c,x,y+r*.6,r*.15,r*.08,'#f48fa6');
-  blush(c,x-r*.55,y+r*.2,r*.12);blush(c,x+r*.55,y+r*.2,r*.12);
-  // A raised hand touching a warm cup (skin receptors).
-  const hx=398,hy=452;
-  c.save();c.translate(hx,hy);c.rotate(-.25);
-  for(let k=0;k<4;k++){c.beginPath();c.roundRect(-26+k*14,-62,12,40,6);c.fillStyle=C.skin;c.fill();c.strokeStyle=C.ink;c.lineWidth=2.5;c.stroke();}
-  c.beginPath();c.roundRect(-30,-30,60,52,18);c.fillStyle=C.skin;c.fill();c.stroke();
-  c.beginPath();c.ellipse(-34,-6,10,20,-.7,0,TAU);c.fillStyle=C.skin;c.fill();c.stroke();c.restore();
-  D.round(c,328,468,46,40,8,C.orange,C.ink);for(let i=0;i<3;i++)line(c,[[338+i*12,462],[334+i*12+Math.sin(t*3+i)*4,448],[340+i*12,434]],'#fbd38d',3);
+// No person: five sense-organ tiles. Tap one to zoom into its receptors.
+const ORGAN_TILES=[[30,62,199,140],[241,62,199,140],[30,214,199,140],[241,214,199,140],[30,366,410,140]];
+function iconEye(c,x,y,t){
+  circle(c,x+70,y-30,10,C.yellow,C.ink,2);for(let i=0;i<8;i++){const a=i*TAU/8+t*.3;line(c,[[x+70+Math.cos(a)*14,y-30+Math.sin(a)*14],[x+70+Math.cos(a)*19,y-30+Math.sin(a)*19]],C.yellow,2);}
+  c.save();c.setLineDash([5,5]);c.lineDashOffset=-t*18;line(c,[[x+60,y-22],[x+6,y-2]],'rgba(253,224,71,.8)',2);c.restore();
+  c.beginPath();c.moveTo(x-50,y);c.quadraticCurveTo(x,y-40,x+50,y);c.quadraticCurveTo(x,y+40,x-50,y);c.closePath();
+  c.fillStyle='#f6f3ea';c.fill();c.save();c.clip();circle(c,x,y,18,'#5aa9e6',C.ink,2.5);circle(c,x,y,8,C.ink);circle(c,x-6,y-6,4,'#ffffff');c.restore();
+  c.beginPath();c.moveTo(x-50,y);c.quadraticCurveTo(x,y-40,x+50,y);c.quadraticCurveTo(x,y+40,x-50,y);c.closePath();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
+  for(const k of [-.55,-.2,.2,.55])line(c,[[x+k*50,y-20+Math.abs(k)*12],[x+k*62,y-30+Math.abs(k)*10]],C.ink,3);
+}
+function iconEar(c,x,y,t){
+  for(let i=0;i<3;i++){const r=14+((t*30+i*14)%42);c.beginPath();c.arc(x-84,y+4,r,-.55,.55);c.strokeStyle=`rgba(253,224,71,${Math.max(0,1-r/58)})`;c.lineWidth=3;c.stroke();}
+  c.beginPath();c.moveTo(x+6,y-44);c.bezierCurveTo(x+40,y-48,x+46,y-8,x+32,y+12);c.bezierCurveTo(x+22,y+28,x+12,y+26,x+10,y+40);c.bezierCurveTo(x+6,y+52,x-14,y+50,x-16,y+34);
+  c.bezierCurveTo(x-18,y+16,x-30,y+8,x-30,y-12);c.bezierCurveTo(x-30,y-34,x-18,y-44,x+6,y-44);c.closePath();c.fillStyle=C.skin;c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
+  c.beginPath();c.moveTo(x-12,y-26);c.bezierCurveTo(x+14,y-36,x+28,y-10,x+16,y+6);c.bezierCurveTo(x+8,y+16,x-2,y+10,x,y);c.strokeStyle=C.skinDark;c.lineWidth=4;c.lineCap='round';c.stroke();
+  ellipse(c,x-6,y+8,7,9,'#b9785a',C.ink,2);
+}
+function iconNose(c,x,y,t){
+  c.beginPath();c.moveTo(x-7,y-42);c.quadraticCurveTo(x-10,y,x-32,y+16);c.quadraticCurveTo(x-40,y+34,x-18,y+36);c.quadraticCurveTo(x,y+44,x+18,y+36);c.quadraticCurveTo(x+40,y+34,x+32,y+16);c.quadraticCurveTo(x+10,y,x+7,y-42);c.closePath();
+  c.fillStyle=C.skin;c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
+  ellipse(c,x-13,y+28,8,4.5,'#b9785a');ellipse(c,x+13,y+28,8,4.5,'#b9785a');
+  const cols=['#fb923c','#f472b6','#a78bfa','#4ade80'];
+  for(let i=0;i<4;i++){const side=i%2?1:-1,u=mod(t*.4+i*.25),px=mix(x+side*78,x+side*14,u),py=mix(y+40,y+30,u)+Math.sin(u*TAU)*6;c.save();c.globalAlpha=1-u*.6;circle(c,px,py,5,cols[i],C.ink,1.5);c.restore();}
+}
+function iconTongue(c,x,y,t){
+  D.round(c,x-46,y-38,92,16,8,'#8a2f3c',C.ink);
+  c.beginPath();c.moveTo(x-38,y-26);c.lineTo(x+38,y-26);c.bezierCurveTo(x+46,y+10,x+30,y+42,x,y+42);c.bezierCurveTo(x-30,y+42,x-46,y+10,x-38,y-26);c.closePath();
+  c.fillStyle='#f48fa6';c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
+  line(c,[[x,y-18],[x,y+22]],'#d9668a',3);
+  for(const [dx,dy] of [[-22,-10],[-14,6],[-20,20],[22,-10],[14,6],[20,20],[-8,-14],[8,-14]])circle(c,x+dx,y+dy,3.5,'#f9c0cf');
+  const u=mod(t*.5);c.save();c.globalAlpha=1-u*.5;sweatDrop(c,x+62,mix(y-36,y-6,u),7);c.restore();
+}
+function iconSkin(c,x,y,t){
+  for(let i=0;i<3;i++){const yy=y-44+i*12;c.beginPath();for(let xx=x-60;xx<=x+60;xx+=6)c.lineTo(xx,yy+Math.sin(xx*.2+t*4)*3);c.strokeStyle='rgba(251,146,60,.75)';c.lineWidth=3;c.stroke();}
+  D.round(c,x-72,y-8,144,18,4,'#f1c9a5',C.ink);D.round(c,x-72,y+10,144,44,4,'#e8a9a1',C.ink);
+  for(const hx of [x-44,x+38])line(c,[[hx,y+30],[hx+4,y-8],[hx+12,y-26]],'#5b3a29',3);
+  line(c,[[x-6,y+6],[x-2,y+30],[x+60,y+44]],C.ink,7);line(c,[[x-6,y+6],[x-2,y+30],[x+60,y+44]],SENSE_COL,4);
+  sparkle(c,x-6,y+4,9+Math.sin(t*4)*2,C.yellow);
+}
+const ORGAN_ICONS=[iconEye,iconEar,iconNose,iconTongue,iconSkin];
+function organTile(c,i,t,sel){
+  const [x,y,w,h]=ORGAN_TILES[i],q=senses[i];
+  if(sel){c.save();c.shadowColor='rgba(253,224,71,.55)';c.shadowBlur=18;D.round(c,x,y,w,h,16,'#24493f');c.restore();c.save();c.lineWidth=4;c.strokeStyle=C.yellow;c.beginPath();c.roundRect(x,y,w,h,16);c.stroke();c.restore();}
+  else D.round(c,x,y,w,h,16,C.panel,'#47675d');
+  D.hit(x,y,w,h,'sense',i);
+  if(i<4){
+    ORGAN_ICONS[i](c,x+w/2,y+56,t);
+    const a=D.tr(q.name),b=D.tr(q.stim),sep=D.tr(P('：',': ')),wa=measure(c,a+sep,22),wb=measure(c,b,22),x0=x+w/2-(wa+wb)/2;
+    text(c,a+sep,x0,y+126,22,sel?C.yellow:C.white);text(c,b,x0+wa,y+126,22,C.yellow);
+  }else{
+    iconSkin(c,x+100,y+78,t);
+    text(c,q.name,x+200,y+46,22,sel?C.yellow:C.white);wrap(c,q.stim,x+200,y+80,196,22,C.yellow);
+  }
 }
 function zoomEye(c,t){
   circle(c,515,215,22,C.yellow,C.ink,3);for(let i=0;i<8;i++){const a=i*TAU/8+t*.3;line(c,[[515+Math.cos(a)*30,215+Math.sin(a)*30],[515+Math.cos(a)*40,215+Math.sin(a)*40]],C.yellow,3);}
@@ -129,23 +160,23 @@ function zoomSkin(c,t){
   ellipse(c,590,250,16,26,on?C.cyan:'#f6e3b4',C.ink,2.5);for(let k=1;k<4;k++)ellipse(c,590,250,16-k*4,26-k*6,null,'#c9a36a',1.5);
   for(const a of [-.6,-.2,.2,.6])line(c,[[720,300],[720+Math.sin(a)*24,230]],on?C.cyan:C.nerve,4);
   for(let k=0;k<5;k++)ellipse(c,830,300,20-k*3.5,14-k*2.5,k%2?'#f6e3b4':'#efd39b',C.ink,1.5);
-  D.round(c,690,110,60,58,10,C.orange,C.ink);for(let i=0;i<3;i++)line(c,[[700+i*16,104],[696+i*16+Math.sin(t*3+i)*4,88],[702+i*16,72]],'#fbd38d',3);
-  for(let i=0;i<3;i++){const u=mod(t*.6+i/3);line(c,[[700+i*18,170+u*40],[708+i*18,178+u*40]],'#fb923c',3);}
+  D.round(c,750,110,60,58,10,C.orange,C.ink);for(let i=0;i<3;i++)line(c,[[760+i*16,104],[756+i*16+Math.sin(t*3+i)*4,88],[762+i*16,72]],'#fbd38d',3);
+  for(let i=0;i<3;i++){const u=mod(t*.6+i/3);line(c,[[760+i*18,170+u*40],[768+i*18,178+u*40]],'#fb923c',3);}
   line(c,[[590,276],[600,335],[900,335]],C.ink,10);line(c,[[590,276],[600,335],[900,335]],C.nerve,6);line(c,[[720,300],[720,335]],C.nerve,5);line(c,[[830,314],[830,335]],C.nerve,5);
   signal(c,[[720,300],[720,335],[900,335]],(hit-.35)*1.6);
 }
 const ZOOMS=[zoomEye,zoomEar,zoomNose,zoomTongue,zoomSkin];
 function drawSenses(c,s,t){
   const q=senses[s.sense];
-  text(c,P('點臉上的器官，看受器怎麼接收','Tap an organ to see its receptors'),30,40,24,C.yellow);
-  kidFace(c,t,s.sense);
-  ORGAN.forEach(([x,y,r],i)=>{D.hit(x-r,y-r,r*2,r*2,'sense',i);if(i===s.sense){c.save();c.setLineDash([7,6]);c.lineDashOffset=-t*20;circle(c,x,y,r+4*Math.sin(t*4),null,C.yellow,4);c.restore();}});
-  const [ox,oy]=ORGAN[s.sense];line(c,[[ox+(s.sense===1?-10:20),oy],[460,140]],'rgba(253,224,71,.55)',2);
+  text(c,P('點一個感覺器官，看受器怎麼接收','Tap an organ to see its receptors'),30,40,24,C.yellow);
+  senses.forEach((_,i)=>organTile(c,i,t,i===s.sense));
   panel(c,460,62,470,320);c.save();c.beginPath();c.roundRect(462,64,466,316,15);c.clip();ZOOMS[s.sense](c,t);c.restore();
   brain(c,s.sense===2?830:888,s.sense===2?84:126,24,mod(t*.45)>.85||mod(t*.4)>.88);
   text(c,q.stim,480,100,22,C.yellow);text(c,q.rec,480,368,22,C.cyan);
-  const names=[q.stim,P('受器接收','Receptor detects'),P('神經訊息','Nerve signal'),P('腦','Brain')],idx=Math.floor(t*.8)%4;
-  names.forEach((p,i)=>{const x=460+i*121;node(c,p,x,404,108,76,i===idx,i===0?C.yellow:C.cyan);if(i)arrow(c,x-12,442,x-2,442,C.cyan,3);});
+  const names=[q.node||q.stim,P('受器接收','Receptor detects'),P('神經訊息','Nerve signal'),P('腦','Brain')],idx=Math.floor(t*.8)%4;
+  // Widths follow the longest label each box must hold (e.g. "Receptor").
+  const FW=[112,118,108,92];let fx=460;
+  names.forEach((p,i)=>{node(c,p,fx,404,FW[i],76,i===idx,i===0?C.yellow:C.cyan);if(i)arrow(c,fx-12,442,fx-2,442,C.cyan,3);fx+=FW[i]+13;});
   wrap(c,P('感覺器官把刺激變成神經訊息，不是把東西送進腦。','Sense organs turn stimuli into nerve signals; they do not send the thing itself to the brain.'),30,548,900,22,C.cyan);
 }
 
