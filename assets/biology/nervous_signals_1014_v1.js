@@ -112,34 +112,43 @@ function organTile(c,i,t,sel){
     text(c,q.name,x+200,y+46,22,sel?C.yellow:C.white);wrap(c,q.stim,x+200,y+80,196,22,C.yellow);
   }
 }
+// One shared clock for every sense, so the four cards under the picture light up
+// exactly when the picture reaches that step: stimulus → receptor → nerve signal → brain.
+const SENSE_PERIOD=4.8,SENSE_AT=[0,.3,.5,.8];
+function senseCycle(t){const u=mod(t/SENSE_PERIOD);return{u,stage:u<SENSE_AT[1]?0:u<SENSE_AT[2]?1:u<SENSE_AT[3]?2:3};}
+const stimulusFade=u=>u<SENSE_AT[1]?1:clamp(1-(u-SENSE_AT[1])/.12);   // stimulus shown in step 1, then fades
+const receptorOn=u=>u>=SENSE_AT[1];
+const nerveProgress=u=>(u-SENSE_AT[2])/(SENSE_AT[3]-SENSE_AT[2]);      // 0→1 only during step 3
 function zoomEye(c,t){
   circle(c,515,215,22,C.yellow,C.ink,3);for(let i=0;i<8;i++){const a=i*TAU/8+t*.3;line(c,[[515+Math.cos(a)*30,215+Math.sin(a)*30],[515+Math.cos(a)*40,215+Math.sin(a)*40]],C.yellow,3);}
   circle(c,690,225,92,'#f6f3ea',C.ink,4);
   c.beginPath();c.arc(690,225,82,-.95,.95);c.strokeStyle='#f29bb0';c.lineWidth=14;c.stroke();
   ellipse(c,612,225,14,34,'#a9dcf3',C.ink,3);ellipse(c,598,225,8,22,C.ink);
-  const hit=mod(t*.45),rays=[[[545,200],[612,212],[770,230]],[[545,225],[612,225],[770,230]],[[545,250],[612,238],[770,230]]];
-  for(const r of rays){line(c,r,'rgba(253,224,71,.85)',3);const [x,y]=along(r,hit<.5?hit*2:1);circle(c,x,y,5,C.yellow);}
-  for(let i=-3;i<=3;i++){const a=i*.18,rx=690+Math.cos(a)*82,ry=225+Math.sin(a)*82;circle(c,rx,ry,5,hit>.45?C.cyan:'#c76f86');}
-  const nerve=[[772,225],[820,205],[860,170],[880,148]];nerveLine(c,nerve,8);signal(c,nerve,(hit-.5)*2);
+  const {u}=senseCycle(t),rays=[[[545,200],[612,212],[770,230]],[[545,225],[612,225],[770,230]],[[545,250],[612,238],[770,230]]];
+  for(const r of rays){line(c,r,'rgba(253,224,71,.85)',3);if(u<SENSE_AT[2]){const [x,y]=along(r,Math.min(1,u/SENSE_AT[1]));circle(c,x,y,5,C.yellow);}}
+  for(let i=-3;i<=3;i++){const a=i*.18,rx=690+Math.cos(a)*82,ry=225+Math.sin(a)*82;circle(c,rx,ry,5,receptorOn(u)?C.cyan:'#c76f86');}
+  const nerve=[[772,225],[820,205],[860,170],[880,148]];nerveLine(c,nerve,8);signal(c,nerve,nerveProgress(u));
 }
 function zoomEar(c,t){
   D.round(c,490,190,40,60,10,'#9aa6b0',C.ink);c.beginPath();c.moveTo(530,195);c.lineTo(560,170);c.lineTo(560,270);c.lineTo(530,245);c.closePath();c.fillStyle='#c4ccd3';c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
-  for(let i=0;i<3;i++){const r=20+((t*40+i*24)%72);c.beginPath();c.arc(560,220,r,-.6,.6);c.strokeStyle=`rgba(253,224,71,${1-r/95})`;c.lineWidth=3;c.stroke();}
+  const {u}=senseCycle(t),k=stimulusFade(u);
+  for(let i=0;i<3;i++){const r=20+((t*40+i*24)%72);c.beginPath();c.arc(560,220,r,-.6,.6);c.strokeStyle=`rgba(253,224,71,${(1-r/95)*k})`;c.lineWidth=3;c.stroke();}
   c.beginPath();c.moveTo(640,150);c.bezierCurveTo(600,150,600,300,650,300);c.bezierCurveTo(690,300,690,250,665,240);c.bezierCurveTo(645,230,660,190,680,195);c.lineTo(680,160);c.closePath();c.fillStyle=C.skin;c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
   D.round(c,672,212,70,22,10,'#e8b996',C.ink);
-  const v=Math.sin(t*10)*2;line(c,[[744+v,200],[744-v,246]],'#f4a6b8',6);
-  const hit=mod(t*.45),spiral=[];for(let i=0;i<=60;i++){const a=i/60*TAU*2.2,r=34-i*.45;spiral.push([800+Math.cos(a)*r,230+Math.sin(a)*r]);}
-  line(c,spiral,C.ink,10);line(c,spiral,hit>.4?C.cyan:'#f4a6b8',6);
-  const nerve=[[832,214],[858,180],[880,150]];nerveLine(c,nerve,8);signal(c,nerve,(hit-.5)*2);
+  const v=Math.sin(t*10)*2*k;line(c,[[744+v,200],[744-v,246]],'#f4a6b8',6);
+  const spiral=[];for(let i=0;i<=60;i++){const a=i/60*TAU*2.2,r=34-i*.45;spiral.push([800+Math.cos(a)*r,230+Math.sin(a)*r]);}
+  line(c,spiral,C.ink,10);line(c,spiral,receptorOn(u)?C.cyan:'#f4a6b8',6);
+  const nerve=[[832,214],[858,180],[880,150]];nerveLine(c,nerve,8);signal(c,nerve,nerveProgress(u));
 }
 function zoomNose(c,t){
   c.beginPath();c.moveTo(560,110);c.quadraticCurveTo(600,170,640,250);c.quadraticCurveTo(660,300,620,310);c.lineTo(580,330);c.lineTo(900,330);c.lineTo(900,110);c.closePath();c.fillStyle=C.skin;c.fill();c.strokeStyle=C.ink;c.lineWidth=4;c.stroke();
   c.beginPath();c.moveTo(640,300);c.quadraticCurveTo(700,230,700,170);c.quadraticCurveTo(760,140,860,160);c.quadraticCurveTo(870,250,820,310);c.closePath();c.fillStyle='#e79a9a';c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
-  const patch=[[715,165],[750,150],[790,148],[830,155]],hit=mod(t*.4);
-  line(c,patch,C.ink,14);line(c,patch,hit>.6?C.cyan:C.receptor,9);
+  const patch=[[715,165],[750,150],[790,148],[830,155]],{u}=senseCycle(t);
+  line(c,patch,C.ink,14);line(c,patch,receptorOn(u)?C.cyan:C.receptor,9);
   D.round(c,490,300,64,34,8,'#fbbf6a',C.ink);ellipse(c,522,300,26,8,'#fde68a',C.ink,2);
-  for(let i=0;i<5;i++){const path=[[520,290],[600,280],[660,300],[690,240],[730+i*20,170]],u=mod(t*.4+i*.2);const [x,y]=along(path,u);circle(c,x,y,6,['#fb923c','#f472b6','#a78bfa','#fde047','#4ade80'][i],C.ink,1.5);}
-  const nerve=[[770,148],[785,120],[805,96]];nerveLine(c,nerve,7);signal(c,nerve,(hit-.6)*2.5);
+  // Odour molecules drift up to the smell receptors during step 1, then rest there.
+  if(u<SENSE_AT[2])for(let i=0;i<5;i++){const path=[[520,290],[600,280],[660,300],[690,240],[730+i*20,170]],w=clamp((u-i*.025)/(SENSE_AT[1]-.1));const [x,y]=along(path,w);circle(c,x,y,6,['#fb923c','#f472b6','#a78bfa','#fde047','#4ade80'][i],C.ink,1.5);}
+  const nerve=[[770,148],[785,120],[805,96]];nerveLine(c,nerve,7);signal(c,nerve,nerveProgress(u));
 }
 function zoomTongue(c,t){
   c.beginPath();c.moveTo(500,330);c.quadraticCurveTo(520,250,640,250);c.quadraticCurveTo(740,250,740,300);c.quadraticCurveTo(740,340,690,350);c.lineTo(500,350);c.closePath();c.fillStyle='#f48fa6';c.fill();c.strokeStyle=C.ink;c.lineWidth=4;c.stroke();
@@ -147,23 +156,24 @@ function zoomTongue(c,t){
   circle(c,660,272,9,null,C.yellow,3);line(c,[[668,265],[735,205]],C.yellow,2);
   circle(c,800,190,82,'#f8c9d4',C.ink,4);
   c.save();c.beginPath();c.arc(800,190,78,0,TAU);c.clip();
-  for(let i=-3;i<=3;i++){c.beginPath();c.ellipse(800+i*12,205,9,46,i*.12,0,TAU);c.fillStyle=mod(t*.45)>.5?'#9be7f7':'#f3e4b0';c.fill();c.strokeStyle=C.ink;c.lineWidth=2;c.stroke();}
+  const {u}=senseCycle(t);
+  for(let i=-3;i<=3;i++){c.beginPath();c.ellipse(800+i*12,205,9,46,i*.12,0,TAU);c.fillStyle=receptorOn(u)?'#9be7f7':'#f3e4b0';c.fill();c.strokeStyle=C.ink;c.lineWidth=2;c.stroke();}
   c.restore();
   ellipse(c,800,152,10,6,'#f48fa6',C.ink,2);
-  for(let i=0;i<4;i++){const u=mod(t*.45+i*.25),y=mix(100,150,u);circle(c,790+i*7,y,4,'#7dd3fc',C.ink,1.2);}
-  const nerve=[[800,250],[840,290],[880,300],[900,270]],hit=mod(t*.45);nerveLine(c,nerve,7);signal(c,nerve,(hit-.5)*2);
-  D.round(c,525,120,60,40,10,'#c084fc',C.ink);for(let i=0;i<3;i++){const u=mod(t*.5+i/3);circle(c,555,mix(165,245,u),4,'#7dd3fc');}
+  if(u<SENSE_AT[2])for(let i=0;i<4;i++){const y=mix(100,150,clamp((u-i*.04)/(SENSE_AT[1]-.12)));circle(c,790+i*7,y,4,'#7dd3fc',C.ink,1.2);}
+  const nerve=[[800,250],[840,290],[880,300],[900,270]];nerveLine(c,nerve,7);signal(c,nerve,nerveProgress(u));
+  D.round(c,525,120,60,40,10,'#c084fc',C.ink);if(u<SENSE_AT[1])for(let i=0;i<3;i++){const w=mod(u/SENSE_AT[1]*2+i/3);circle(c,555,mix(165,245,w),4,'#7dd3fc');}
 }
 function zoomSkin(c,t){
   D.round(c,480,170,430,40,6,'#f1c9a5',C.ink);D.round(c,480,210,430,140,6,'#e8a9a1',C.ink);
-  const hit=mod(t*.45),on=hit>.35;
+  const {u}=senseCycle(t),on=receptorOn(u),k=stimulusFade(u);
   ellipse(c,590,250,16,26,on?C.cyan:'#f6e3b4',C.ink,2.5);for(let k=1;k<4;k++)ellipse(c,590,250,16-k*4,26-k*6,null,'#c9a36a',1.5);
   for(const a of [-.6,-.2,.2,.6])line(c,[[720,300],[720+Math.sin(a)*24,230]],on?C.cyan:C.nerve,4);
   for(let k=0;k<5;k++)ellipse(c,830,300,20-k*3.5,14-k*2.5,k%2?'#f6e3b4':'#efd39b',C.ink,1.5);
   D.round(c,750,110,60,58,10,C.orange,C.ink);for(let i=0;i<3;i++)line(c,[[760+i*16,104],[756+i*16+Math.sin(t*3+i)*4,88],[762+i*16,72]],'#fbd38d',3);
-  for(let i=0;i<3;i++){const u=mod(t*.6+i/3);line(c,[[760+i*18,170+u*40],[768+i*18,178+u*40]],'#fb923c',3);}
+  c.save();c.globalAlpha=k;for(let i=0;i<3;i++){const w=mod(t*.6+i/3);line(c,[[760+i*18,170+w*40],[768+i*18,178+w*40]],'#fb923c',3);}c.restore();
   line(c,[[590,276],[600,335],[900,335]],C.ink,10);line(c,[[590,276],[600,335],[900,335]],C.nerve,6);line(c,[[720,300],[720,335]],C.nerve,5);line(c,[[830,314],[830,335]],C.nerve,5);
-  signal(c,[[720,300],[720,335],[900,335]],(hit-.35)*1.6);
+  signal(c,[[720,300],[720,335],[900,335]],nerveProgress(u));
 }
 const ZOOMS=[zoomEye,zoomEar,zoomNose,zoomTongue,zoomSkin];
 function drawSenses(c,s,t){
@@ -171,9 +181,10 @@ function drawSenses(c,s,t){
   text(c,P('點一個感覺器官，看受器怎麼接收','Tap an organ to see its receptors'),30,40,24,C.yellow);
   senses.forEach((_,i)=>organTile(c,i,t,i===s.sense));
   panel(c,460,62,470,320);c.save();c.beginPath();c.roundRect(462,64,466,316,15);c.clip();ZOOMS[s.sense](c,t);c.restore();
-  brain(c,s.sense===2?830:888,s.sense===2?84:126,24,mod(t*.45)>.85||mod(t*.4)>.88);
+  const {stage}=senseCycle(t);
+  brain(c,s.sense===2?830:888,s.sense===2?84:126,24,stage===3);
   text(c,q.stim,480,100,22,C.yellow);text(c,q.rec,480,368,22,C.cyan);
-  const names=[q.node||q.stim,P('受器接收','Receptor detects'),P('神經訊息','Nerve signal'),P('腦','Brain')],idx=Math.floor(t*.8)%4;
+  const names=[q.node||q.stim,P('受器接收','Receptor detects'),P('神經訊息','Nerve signal'),P('腦','Brain')],idx=stage;
   // Widths follow the longest label each box must hold (e.g. "Receptor").
   const FW=[112,118,108,92];let fx=460;
   names.forEach((p,i)=>{node(c,p,fx,404,FW[i],76,i===idx,i===0?C.yellow:C.cyan);if(i)arrow(c,fx-12,442,fx-2,442,C.cyan,3);fx+=FW[i]+13;});
@@ -287,8 +298,18 @@ function effector(c,t,effect,active){
     text(c,P('汗腺','Sweat gland'),856,490,22,C.deep,'center');
   }
 }
+// One clock drives the cards and the signal. The "nervous system" card covers the whole
+// trip through both neurons; the effector card lights only when the signal arrives.
+const JOURNEY_PERIOD=6,JOURNEY_AT=[0,.18,.76];
+const J_SENSE=[.18,.42],J_HAND=[.42,.52],J_MOTOR=[.52,.76];
+function journeyClock(s,t){
+  if(s.step<0){const U=mod(t/JOURNEY_PERIOD);return{U,stage:U<JOURNEY_AT[1]?0:U<JOURNEY_AT[2]?1:2};}
+  const a=JOURNEY_AT[s.step],b=s.step<2?JOURNEY_AT[s.step+1]:1;   // a chosen step loops on its own part
+  return{U:a+mod(t/((b-a)*JOURNEY_PERIOD))*(b-a),stage:s.step};
+}
+const within=(U,[a,b])=>U>=a&&U<b,frac=(U,[a,b])=>(U-a)/(b-a);
 function drawJourney(c,s,t){
-  const stage=s.step<0?Math.floor(t*.7)%3:s.step,u=mod(t*.7),gland=s.effect==='gland';
+  const {U,stage}=journeyClock(s,t),gland=s.effect==='gland';
   // Heat reaching the skin receptor.
   circle(c,82,330,26,C.yellow,C.ink,3);for(let i=0;i<8;i++){const a=i*TAU/8+t*.2;line(c,[[82+Math.cos(a)*34,330+Math.sin(a)*34],[82+Math.cos(a)*44,330+Math.sin(a)*44]],C.yellow,3);}
   for(let i=0;i<3;i++){const y=380+i*16;c.beginPath();for(let x=60;x<=150;x+=6)c.lineTo(x,y+Math.sin(x*.2+t*4)*3);c.strokeStyle='rgba(251,146,60,.7)';c.lineWidth=3;c.stroke();}
@@ -296,19 +317,17 @@ function drawJourney(c,s,t){
   text(c,P('皮膚','Skin'),262,492,22,C.deep,'center');
   // Central nervous system: where the two neurons hand the message over.
   D.round(c,316,84,330,178,18,stage===1?'#21524a':'#1c3d34',stage===1?C.cyan:'#5c8a7c');
-  brain(c,346,120,20,stage===1);text(c,P('中樞神經（腦、脊髓）','CNS (brain, spinal cord)'),374,128,22,C.white);
+  brain(c,346,120,20,within(U,J_HAND));text(c,P('中樞神經（腦、脊髓）','CNS (brain, spinal cord)'),374,128,22,C.white);
   // Effector first, so the outgoing fibre stays visible where it reaches the gland.
   effector(c,t,s.effect,stage===2);
-  const sFibre=neuronPath(c,SENSORY,SENSE_COL,stage===1&&u<.7);
-  const mFibre=neuronPath(c,gland?MOTOR_GLAND:MOTOR,MOTOR_COL,stage===2);
+  const sFibre=neuronPath(c,SENSORY,SENSE_COL,within(U,J_SENSE));
+  const mFibre=neuronPath(c,gland?MOTOR_GLAND:MOTOR,MOTOR_COL,within(U,J_MOTOR));
   c.save();c.setLineDash([5,5]);circle(c,HANDOVER[0],HANDOVER[1],32,null,C.yellow,2.5);c.restore();
   sparkle(c,RECEPTOR[0],RECEPTOR[1],stage===0?17:11,stage===0?C.yellow:'#a3863a');if(stage===0)glow(c,RECEPTOR[0],RECEPTOR[1],32,C.yellow,.6);
-  if(stage===1){
-    signal(c,sFibre,u/.75);
-    // The message crosses the small gap to the next neuron; the fibres stay apart.
-    if(u>.75){const k=(u-.75)/.25;glow(c,HANDOVER[0],HANDOVER[1],30,C.cyan,.5);for(const dy of [-7,0,7])circle(c,mix(478,496,mod(k+dy*.05)),HANDOVER[1]+dy,3.5,C.cyan);}
-  }
-  if(stage===2)signal(c,mFibre,u);
+  if(within(U,J_SENSE))signal(c,sFibre,frac(U,J_SENSE));
+  // The message crosses the small gap to the next neuron; the fibres stay apart.
+  if(within(U,J_HAND)){const k=frac(U,J_HAND);glow(c,HANDOVER[0],HANDOVER[1],30,C.cyan,.5);for(const dy of [-7,0,7])circle(c,mix(478,496,clamp(k*1.25-Math.abs(dy)*.02)),HANDOVER[1]+dy,3.5,C.cyan);}
+  if(within(U,J_MOTOR))signal(c,mFibre,frac(U,J_MOTOR));
   text(c,P('感覺神經元（傳入）','Sensory neuron (in)'),34,240,22,SENSE_COL);
   text(c,P('運動神經元（傳出）','Motor neuron (out)'),700,300,22,MOTOR_COL);
   text(c,P('交接處','Hand-over'),HANDOVER[0],252,22,C.yellow,'center');
@@ -398,7 +417,7 @@ const tabs=[
   body:P('用同一套接收、整合、反應的流程，比較肌肉動作與腺體分泌。','Compare muscle movement and gland secretion using the same detect–integrate–respond model.'),
   closure:P('動器不只有肌肉，腺體也是動器。完整反應需要受器、傳訊與整合、動器共同完成。','Effectors include glands as well as muscles. A complete response requires detection, signaling and integration, then an effector.'),
   sources:[],init:()=>({running:true,effect:'muscle',step:-1}),controls:()=>[choice(P('動器','Effector'),'effect',[['muscle',P('肌肉收縮','Muscle contracts')],['gland',P('汗腺分泌','Sweat gland secretes')]]),stepControls(journey)],
-  explain:s=>({title:journey[s.step<0?Math.floor(s.elapsed*.7)%3:s.step],text:s.effect==='muscle'?P('皮膚受器接收溫度刺激，訊息由感覺神經元傳到中樞神經；中樞整合後，再由另一條運動神經元把訊息傳到肌肉，肌肉收縮產生動作。傳入和傳出是兩條不同的神經元。此圖只呈現分工，不等同特定反射弧。','Skin receptors detect temperature. A sensory neuron carries the message to the central nervous system; after integration, a different motor neuron carries it to a muscle, which contracts to produce movement. The incoming and outgoing paths are two different neurons. This diagram shows roles, not a specific reflex arc.'):P('一樣由感覺神經元傳入、中樞整合，再由另一條傳出的神經元把訊息送到汗腺；汗腺分泌汗液，並不是肌肉收縮。汗液蒸發有助散熱。','Again a sensory neuron carries the message in and the CNS integrates it; a different outgoing neuron then reaches the sweat gland, which secretes rather than contracts. Evaporation of sweat helps heat loss.')}),draw:drawJourney},
+  explain:s=>({title:journey[journeyClock(s,s.elapsed||0).stage],text:s.effect==='muscle'?P('皮膚受器接收溫度刺激，訊息由感覺神經元傳到中樞神經；中樞整合後，再由另一條運動神經元把訊息傳到肌肉，肌肉收縮產生動作。傳入和傳出是兩條不同的神經元。此圖只呈現分工，不等同特定反射弧。','Skin receptors detect temperature. A sensory neuron carries the message to the central nervous system; after integration, a different motor neuron carries it to a muscle, which contracts to produce movement. The incoming and outgoing paths are two different neurons. This diagram shows roles, not a specific reflex arc.'):P('一樣由感覺神經元傳入、中樞整合，再由另一條傳出的神經元把訊息送到汗腺；汗腺分泌汗液，並不是肌肉收縮。汗液蒸發有助散熱。','Again a sensory neuron carries the message in and the CNS integrates it; a different outgoing neuron then reaches the sweat gland, which secretes rather than contracts. Evaporation of sweat helps heat loss.')}),draw:drawJourney},
  {id:'reaction',title:P('看到就能立刻動？','Can you react instantly?'),sub:P('反應時間與紀錄','Reaction time and records'),hook:P('不要預猜！等畫面真的變綠，再按「反應」。多做幾次，結果一樣嗎？','Do not guess! Wait until the panel turns green, then respond. Are repeated results identical?'),
   body:P('這是螢幕視覺反應練習。真實接尺實驗要記直尺落下的距離；本練習記的是畫面變色到按鍵的時間。','This is an on-screen visual reaction task. The physical ruler experiment records falling distance; this task records the interval from colour change to your press.'),
   closure:P('刺激接收、訊息整合與肌肉反應都需要時間。練習、注意力與測量方式可能影響結果。','Detection, integration and muscle responses take time. Practice, attention and the measurement method can affect results.'),
