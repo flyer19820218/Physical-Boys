@@ -34,7 +34,14 @@ function along(pts,u){const L=pathLength(pts);let d=clamp(u)*L;for(let i=1;i<pts
 // A nerve signal: a glowing dot that travels; it marks the message, not a moving substance.
 function signal(c,pts,u,r=9){if(u<0||u>1)return;const [x,y]=along(pts,u);glow(c,x,y,r*2.6);D.sphere(c,x,y,r,C.cyan);}
 function nerveLine(c,pts,w=7){line(c,pts,C.ink,w+4);line(c,pts,C.nerve,w);}
-function arrow(c,x1,y1,x2,y2,color,w=3){line(c,[[x1,y1],[x2,y2]],color,w);const a=Math.atan2(y2-y1,x2-x1),l=12;line(c,[[x2-l*Math.cos(a-.5),y2-l*Math.sin(a-.5)],[x2,y2],[x2-l*Math.cos(a+.5),y2-l*Math.sin(a+.5)]],color,w);}
+function arrow(c,x1,y1,x2,y2,color,w=3.5){
+  const a=Math.atan2(y2-y1,x2-x1),dist=Math.hypot(x2-x1,y2-y1),hl=Math.min(11,Math.max(8,dist*.46)),hw=hl*.66;
+  line(c,[[x1,y1],[x2-hl*.7*Math.cos(a),y2-hl*.7*Math.sin(a)]],color,w);
+  c.save();c.beginPath();c.moveTo(x2,y2);
+  c.lineTo(x2-hl*Math.cos(a)+hw*Math.sin(a),y2-hl*Math.sin(a)-hw*Math.cos(a));
+  c.lineTo(x2-hl*Math.cos(a)-hw*Math.sin(a),y2-hl*Math.sin(a)+hw*Math.cos(a));
+  c.closePath();c.fillStyle=color;c.fill();c.restore();
+}
 function brain(c,x,y,s,active){
   if(active)glow(c,x,y,s*1.6,C.cyan,.6);
   c.save();c.translate(x,y);
@@ -43,8 +50,19 @@ function brain(c,x,y,s,active){
   for(const [a,b,d] of [[-.55,-.35,.25],[-.2,.05,.2],[.3,-.4,.22],[.45,.15,.2],[-.6,.3,.18]]){c.beginPath();c.arc(a*s,b*s,d*s,.2,2.6);c.strokeStyle='#c76f86';c.lineWidth=2.5;c.stroke();}
   c.restore();
 }
-function node(c,p,x,y,w,h,active,color=C.cyan){D.round(c,x,y,w,h,14,active?color:C.panel,active?C.white:'#47675d');
-  const lines=Math.min(2,Math.ceil(measure(c,D.tr(p),22)/(w-18)));wrap(c,p,x+10,y+h/2+(lines>1?-4:8),w-18,22,active?C.deep:C.white);}
+function splitLines(c,str,maxW,size=22){
+  c.save();c.font=`700 ${size}px "Noto Sans TC", "JetBrains Mono", sans-serif`;
+  const isEn=/[A-Za-z]/.test(str),tokens=isEn?(str.match(/[A-Za-z0-9]+(?:['’–-][A-Za-z0-9]+)*|\s+|[^A-Za-z0-9\s]/g)||[]):Array.from(str);
+  const rows=[];let row='';
+  for(const tk of tokens){if(c.measureText(row+tk).width>maxW&&row.trim()){rows.push(row.trimEnd());row=tk.trimStart();}else row+=tk;}
+  if(row.trim())rows.push(row.trimEnd());
+  c.restore();return rows;
+}
+function node(c,p,x,y,w,h,active,color=C.cyan){
+  D.round(c,x,y,w,h,14,active?color:C.panel,active?C.white:'#47675d');
+  const rows=splitLines(c,D.tr(p),w-12,22),lh=27,y0=y+h/2-(rows.length-1)*lh/2+8;
+  rows.forEach((r,i)=>text(c,r,x+w/2,y0+i*lh,22,active?C.deep:C.white,'center'));
+}
 function measure(c,str,size){c.save();c.font=`700 ${size}px "Noto Sans TC"`;const w=c.measureText(str).width;c.restore();return w;}
 function panel(c,x,y,w,h,fill=C.panel){D.round(c,x,y,w,h,16,fill,'#47675d');}
 const choice=(label,key,items)=>({label,items:items.map(([value,text])=>({key,value,label:text}))});
@@ -76,11 +94,45 @@ function iconEar(c,x,y,t){
   ellipse(c,x-6,y+8,7,9,'#b9785a',C.ink,2);
 }
 function iconNose(c,x,y,t){
-  c.beginPath();c.moveTo(x-7,y-42);c.quadraticCurveTo(x-10,y,x-32,y+16);c.quadraticCurveTo(x-40,y+34,x-18,y+36);c.quadraticCurveTo(x,y+44,x+18,y+36);c.quadraticCurveTo(x+40,y+34,x+32,y+16);c.quadraticCurveTo(x+10,y,x+7,y-42);c.closePath();
-  c.fillStyle=C.skin;c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
-  ellipse(c,x-13,y+28,8,4.5,'#b9785a');ellipse(c,x+13,y+28,8,4.5,'#b9785a');
+  c.save();
+  // Unified front/3/4 cute nose: smooth rounded bridge top + nose tip + left/right nostril wings (鼻翼)
+  const g=c.createRadialGradient(x-4,y+10,4,x,y+10,38);
+  g.addColorStop(0,'#fde8d2');g.addColorStop(1,C.skin);
+  c.beginPath();
+  c.moveTo(x-14,y-36);
+  c.quadraticCurveTo(x,y-42,x+14,y-36);
+  c.quadraticCurveTo(x+11,y-14,x+19,y+2);
+  c.bezierCurveTo(x+38,y+10,x+38,y+32,x+19,y+34);
+  c.quadraticCurveTo(x+9,y+35,x,y+39);
+  c.quadraticCurveTo(x-9,y+35,x-19,y+34);
+  c.bezierCurveTo(x-38,y+32,x-38,y+10,x-19,y+2);
+  c.quadraticCurveTo(x-11,y-14,x-14,y-36);
+  c.closePath();
+  c.fillStyle=g;c.fill();
+  // Soft shadow along the underside of the nose tip and wings
+  c.beginPath();c.ellipse(x,y+28,24,8,0,0,TAU);c.fillStyle='rgba(201,140,104,.38)';c.fill();
+  // Outer nose contour (leaving the very top brow transition soft)
+  c.beginPath();
+  c.moveTo(x-14,y-36);
+  c.quadraticCurveTo(x-11,y-14,x-19,y+2);
+  c.bezierCurveTo(x-38,y+10,x-38,y+32,x-19,y+34);
+  c.quadraticCurveTo(x-9,y+35,x,y+39);
+  c.quadraticCurveTo(x+9,y+35,x+19,y+34);
+  c.bezierCurveTo(x+38,y+32,x+38,y+10,x+19,y+2);
+  c.quadraticCurveTo(x+11,y-14,x+14,y-36);
+  c.strokeStyle=C.ink;c.lineWidth=3;c.lineCap='round';c.lineJoin='round';c.stroke();
+  // Alar grooves separating the round nose tip (鼻頭) from the side wings (鼻翼)
+  c.beginPath();c.arc(x-14,y+18,10,1.2*Math.PI,1.82*Math.PI);c.strokeStyle=C.skinDark;c.lineWidth=2.5;c.stroke();
+  c.beginPath();c.arc(x+14,y+18,10,1.18*Math.PI,1.8*Math.PI);c.stroke();
+  // Nose bridge & tip 3D highlight
+  line(c,[[x,y-28],[x,y+4]],'rgba(255,252,246,.7)',4.5);
+  circle(c,x,y+16,8.5,'rgba(255,252,246,.6)');
+  // Teardrop nostrils tucked under the nose tip
+  ellipse(c,x-14,y+28,7,4,'#4a2518',C.ink,1.8,.3);
+  ellipse(c,x+14,y+28,7,4,'#4a2518',C.ink,1.8,-.3);
+  c.restore();
   const cols=['#fb923c','#f472b6','#a78bfa','#4ade80'];
-  for(let i=0;i<4;i++){const side=i%2?1:-1,u=mod(t*.4+i*.25),px=mix(x+side*78,x+side*14,u),py=mix(y+40,y+30,u)+Math.sin(u*TAU)*6;c.save();c.globalAlpha=1-u*.6;circle(c,px,py,5,cols[i],C.ink,1.5);c.restore();}
+  for(let i=0;i<4;i++){const side=i%2?1:-1,u=mod(t*.4+i*.25),px=mix(x+side*74,x+side*14,u),py=mix(y+42,y+29,u)+Math.sin(u*TAU)*5;c.save();c.globalAlpha=1-u*.55;circle(c,px,py,5,cols[i],C.ink,1.5);c.restore();}
 }
 function iconTongue(c,x,y,t){
   D.round(c,x-46,y-38,92,16,8,'#8a2f3c',C.ink);
@@ -141,14 +193,52 @@ function zoomEar(c,t){
   const nerve=[[832,214],[858,180],[880,150]];nerveLine(c,nerve,8);signal(c,nerve,nerveProgress(u));
 }
 function zoomNose(c,t){
-  c.beginPath();c.moveTo(560,110);c.quadraticCurveTo(600,170,640,250);c.quadraticCurveTo(660,300,620,310);c.lineTo(580,330);c.lineTo(900,330);c.lineTo(900,110);c.closePath();c.fillStyle=C.skin;c.fill();c.strokeStyle=C.ink;c.lineWidth=4;c.stroke();
-  c.beginPath();c.moveTo(640,300);c.quadraticCurveTo(700,230,700,170);c.quadraticCurveTo(760,140,860,160);c.quadraticCurveTo(870,250,820,310);c.closePath();c.fillStyle='#e79a9a';c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
-  const patch=[[715,165],[750,150],[790,148],[830,155]],{u}=senseCycle(t);
-  line(c,patch,C.ink,14);line(c,patch,receptorOn(u)?C.cyan:C.receptor,9);
-  D.round(c,490,300,64,34,8,'#fbbf6a',C.ink);ellipse(c,522,300,26,8,'#fde68a',C.ink,2);
-  // Odour molecules drift up to the smell receptors during step 1, then rest there.
-  if(u<SENSE_AT[2])for(let i=0;i<5;i++){const path=[[520,290],[600,280],[660,300],[690,240],[730+i*20,170]],w=clamp((u-i*.025)/(SENSE_AT[1]-.1));const [x,y]=along(path,w);circle(c,x,y,6,['#fb923c','#f472b6','#a78bfa','#fde047','#4ade80'][i],C.ink,1.5);}
-  const nerve=[[770,148],[785,120],[805,96]];nerveLine(c,nerve,7);signal(c,nerve,nerveProgress(u));
+  // Unmistakable side-profile face & nose cutaway facing left:
+  // forehead → brow → nasal root → prominent nose bridge → rounded nose tip → nostril & wing → philtrum & upper lip.
+  c.beginPath();
+  c.moveTo(638,74);
+  c.quadraticCurveTo(626,104,634,126);
+  c.quadraticCurveTo(584,174,536,222);
+  c.bezierCurveTo(518,240,528,264,562,264);
+  c.lineTo(622,264);
+  c.quadraticCurveTo(606,284,616,304);
+  c.quadraticCurveTo(598,314,616,334);
+  c.lineTo(906,334);
+  c.lineTo(906,74);
+  c.closePath();
+  c.fillStyle=C.skin;c.fill();c.strokeStyle=C.ink;c.lineWidth=4;c.lineJoin='round';c.stroke();
+  // Side-profile eyebrow & closed smiling eye above the nose root so the face orientation is 100% instant
+  c.beginPath();c.moveTo(646,102);c.quadraticCurveTo(664,95,682,103);c.strokeStyle=C.hair;c.lineWidth=4;c.lineCap='round';c.stroke();
+  c.beginPath();c.arc(664,118,11,.15*Math.PI,.85*Math.PI);c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
+  // Subtle mouth corner line below upper lip
+  line(c,[[614,310],[638,308]],C.ink,3);
+  // Internal nasal cavity (鼻腔): drawn inside the profile with realistic flesh thickness along the bridge & tip
+  c.beginPath();
+  c.moveTo(584,256);
+  c.quadraticCurveTo(604,224,638,194);
+  c.quadraticCurveTo(674,162,722,152);
+  c.lineTo(830,154);
+  c.quadraticCurveTo(874,164,874,220);
+  c.quadraticCurveTo(874,268,850,292);
+  c.lineTo(662,282);
+  c.quadraticCurveTo(632,278,610,262);
+  c.lineTo(584,256);
+  c.closePath();
+  c.fillStyle='#e79a9a';c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
+  // Dark oval nostril opening (鼻孔) at the base of the nose + subtle nostril wing curve (鼻翼) on the outer skin
+  ellipse(c,578,258,13,5,'#4a2518',C.ink,2.5,-.06);
+  c.beginPath();c.arc(572,246,10,1.15*Math.PI,1.88*Math.PI);c.strokeStyle=C.skinDark;c.lineWidth=2.6;c.lineCap='round';c.stroke();
+  // Curved nasal conchae folds (鼻甲) inside the nasal cavity
+  c.beginPath();c.moveTo(684,210);c.quadraticCurveTo(754,190,826,204);c.strokeStyle='#c96d75';c.lineWidth=3.5;c.lineCap='round';c.stroke();
+  c.beginPath();c.moveTo(672,246);c.quadraticCurveTo(750,228,832,242);c.stroke();
+  // Olfactory epithelium / smell receptors (嗅黏膜／嗅覺受器) at the roof of the nasal cavity + sensory cilia
+  const patch=[[715,156],[750,148],[790,147],[828,154]],{u}=senseCycle(t),on=receptorOn(u);
+  for(let i=0;i<7;i++){const cx=720+i*17,cy=153+(i===0||i===6?4:0);line(c,[[cx,cy],[cx-3,cy+15]],on?C.cyan:C.receptor,2.2);line(c,[[cx,cy],[cx+3,cy+15]],on?C.cyan:C.receptor,2.2);}
+  line(c,patch,C.ink,14);line(c,patch,on?C.cyan:C.receptor,9);
+  // Warm aromatic dish in front of the nose + odour molecules drifting into the nostril and up to the receptors
+  D.round(c,476,304,64,32,8,'#fbbf6a',C.ink);ellipse(c,508,304,26,8,'#fde68a',C.ink,2);
+  if(u<SENSE_AT[2])for(let i=0;i<5;i++){const path=[[508,292],[546,274],[578,256],[646,208],[726+i*22,165]],w=clamp((u-i*.025)/(SENSE_AT[1]-.1));const [x,y]=along(path,w);circle(c,x,y,6,['#fb923c','#f472b6','#a78bfa','#fde047','#4ade80'][i],C.ink,1.5);}
+  const nerve=[[770,147],[785,120],[805,96]];nerveLine(c,nerve,7);signal(c,nerve,nerveProgress(u));
 }
 function zoomTongue(c,t){
   c.beginPath();c.moveTo(500,330);c.quadraticCurveTo(520,250,640,250);c.quadraticCurveTo(740,250,740,300);c.quadraticCurveTo(740,340,690,350);c.lineTo(500,350);c.closePath();c.fillStyle='#f48fa6';c.fill();c.strokeStyle=C.ink;c.lineWidth=4;c.stroke();
@@ -161,19 +251,22 @@ function zoomTongue(c,t){
   c.restore();
   ellipse(c,800,152,10,6,'#f48fa6',C.ink,2);
   if(u<SENSE_AT[2])for(let i=0;i<4;i++){const y=mix(100,150,clamp((u-i*.04)/(SENSE_AT[1]-.12)));circle(c,790+i*7,y,4,'#7dd3fc',C.ink,1.2);}
-  const nerve=[[800,250],[840,290],[880,300],[900,270]];nerveLine(c,nerve,7);signal(c,nerve,nerveProgress(u));
+  const nerve=[[800,250],[842,292],[888,296],[906,244],[902,184],[890,144]];nerveLine(c,nerve,7);signal(c,nerve,nerveProgress(u));
   D.round(c,525,120,60,40,10,'#c084fc',C.ink);if(u<SENSE_AT[1])for(let i=0;i<3;i++){const w=mod(u/SENSE_AT[1]*2+i/3);circle(c,555,mix(165,245,w),4,'#7dd3fc');}
 }
 function zoomSkin(c,t){
-  D.round(c,480,170,430,40,6,'#f1c9a5',C.ink);D.round(c,480,210,430,140,6,'#e8a9a1',C.ink);
+  D.round(c,480,170,396,40,6,'#f1c9a5',C.ink);D.round(c,480,210,396,140,6,'#e8a9a1',C.ink);
   const {u}=senseCycle(t),on=receptorOn(u),k=stimulusFade(u);
   ellipse(c,590,250,16,26,on?C.cyan:'#f6e3b4',C.ink,2.5);for(let k=1;k<4;k++)ellipse(c,590,250,16-k*4,26-k*6,null,'#c9a36a',1.5);
   for(const a of [-.6,-.2,.2,.6])line(c,[[720,300],[720+Math.sin(a)*24,230]],on?C.cyan:C.nerve,4);
-  for(let k=0;k<5;k++)ellipse(c,830,300,20-k*3.5,14-k*2.5,k%2?'#f6e3b4':'#efd39b',C.ink,1.5);
-  D.round(c,750,110,60,58,10,C.orange,C.ink);for(let i=0;i<3;i++)line(c,[[760+i*16,104],[756+i*16+Math.sin(t*3+i)*4,88],[762+i*16,72]],'#fbd38d',3);
-  c.save();c.globalAlpha=k;for(let i=0;i<3;i++){const w=mod(t*.6+i/3);line(c,[[760+i*18,170+w*40],[768+i*18,178+w*40]],'#fb923c',3);}c.restore();
-  line(c,[[590,276],[600,335],[900,335]],C.ink,10);line(c,[[590,276],[600,335],[900,335]],C.nerve,6);line(c,[[720,300],[720,335]],C.nerve,5);line(c,[[830,314],[830,335]],C.nerve,5);
-  signal(c,[[720,300],[720,335],[900,335]],nerveProgress(u));
+  for(let k=0;k<5;k++)ellipse(c,820,300,20-k*3.5,14-k*2.5,k%2?'#f6e3b4':'#efd39b',C.ink,1.5);
+  D.round(c,740,110,60,58,10,C.orange,C.ink);for(let i=0;i<3;i++)line(c,[[750+i*16,104],[746+i*16+Math.sin(t*3+i)*4,88],[752+i*16,72]],'#fbd38d',3);
+  c.save();c.globalAlpha=k;for(let i=0;i<3;i++){const w=mod(t*.6+i/3);line(c,[[750+i*18,170+w*40],[758+i*18,178+w*40]],'#fb923c',3);}c.restore();
+  const trunk=[[590,276],[600,335],[892,335],[896,230],[890,144]];
+  nerveLine(c,trunk,6);
+  nerveLine(c,[[720,300],[720,335]],5);
+  nerveLine(c,[[820,314],[820,335]],5);
+  signal(c,[[720,300],[720,335],[892,335],[896,230],[890,144]],nerveProgress(u));
 }
 const ZOOMS=[zoomEye,zoomEar,zoomNose,zoomTongue,zoomSkin];
 function drawSenses(c,s,t){
@@ -185,52 +278,80 @@ function drawSenses(c,s,t){
   brain(c,s.sense===2?830:888,s.sense===2?84:126,24,stage===3);
   text(c,q.stim,480,100,22,C.yellow);text(c,q.rec,480,368,22,C.cyan);
   const names=[q.node||q.stim,P('受器接收','Receptor detects'),P('神經訊息','Nerve signal'),P('腦','Brain')],idx=stage;
-  // Widths follow the longest label each box must hold (e.g. "Receptor").
-  const FW=[112,118,108,92];let fx=460;
-  names.forEach((p,i)=>{node(c,p,fx,404,FW[i],76,i===idx,i===0?C.yellow:C.cyan);if(i)arrow(c,fx-12,442,fx-2,442,C.cyan,3);fx+=FW[i]+13;});
+  // Widths fit 4-char Chinese labels on one line and keep 26px gaps for unmistakable arrows.
+  const FW=[102,114,108,68],GAP=26;let fx=460;
+  names.forEach((p,i)=>{node(c,p,fx,404,FW[i],76,i===idx,i===0?C.yellow:C.cyan);if(i)arrow(c,fx-GAP+3,442,fx-3,442,C.cyan,4);fx+=FW[i]+GAP;});
   wrap(c,P('感覺器官把刺激變成神經訊息，不是把東西送進腦。','Sense organs turn stimuli into nerve signals; they do not send the thing itself to the brain.'),30,548,900,22,C.cyan);
 }
 
 // ── Tab 2: neuron, nerve fibres, nerve ─────────────────────────────────────
 const SOMA={x:255,y:300,r:60};
-const DENDRITES=(()=>{const out=[];const grow=(x,y,a,len,w,depth,seed)=>{const x2=x+Math.cos(a)*len,y2=y+Math.sin(a)*len;out.push({pts:[[x,y],[mix(x,x2,.5)+Math.sin(seed)*6,mix(y,y2,.5)+Math.cos(seed)*6],[x2,y2]],w,depth});
-  if(depth<2)for(const d of [-.45,.42])grow(x2,y2,a+d+Math.sin(seed*3)*.12,len*.62,w*.62,depth+1,seed*1.7+d);};
-  [2.4,2.9,3.4,3.9,1.75,4.55].forEach((a,i)=>grow(SOMA.x+Math.cos(a)*SOMA.r*.85,SOMA.y+Math.sin(a)*SOMA.r*.85,a,70,11,0,i+1));return out;})();
+function makeDendrites(cx,cy,r,angles,len=70,w0=11,maxDepth=2){
+  const out=[];
+  const grow=(x,y,a,l,w,depth,seed)=>{
+    const x2=x+Math.cos(a)*l,y2=y+Math.sin(a)*l;
+    out.push({pts:[[x,y],[mix(x,x2,.5)+Math.sin(seed)*5*(l/70),mix(y,y2,.5)+Math.cos(seed)*5*(l/70)],[x2,y2]],w,depth});
+    if(depth<maxDepth)for(const d of [-.45,.42])grow(x2,y2,a+d+Math.sin(seed*3)*.1,l*.62,w*.64,depth+1,seed*1.7+d);
+  };
+  angles.forEach((a,i)=>grow(cx+Math.cos(a)*r*.84,cy+Math.sin(a)*r*.84,a,len,w0,0,i+1));
+  return out;
+}
+function drawSomaShape(c,cx,cy,r,colLight,colMain,face=true,phase=.4){
+  const g=c.createRadialGradient(cx-r*.33,cy-r*.36,Math.max(2,r*.1),cx,cy,r*1.2);
+  g.addColorStop(0,colLight);g.addColorStop(1,colMain);
+  // Stationary 5-lobed multipolar soma (no +t rotation!)
+  c.beginPath();
+  for(let i=0;i<=40;i++){const a=i/40*TAU,rad=r*(1+.07*Math.sin(a*5+phase));c[i?'lineTo':'moveTo'](cx+Math.cos(a)*rad,cy+Math.sin(a)*rad);}
+  c.closePath();c.fillStyle=g;c.fill();c.strokeStyle=C.ink;c.lineWidth=Math.max(2.5,r*.058);c.stroke();
+  const nr=r*.33,nx=cx-r*.1,ny=cy+r*.32;
+  circle(c,nx,ny,nr,'#8e6fd1',C.ink,Math.max(1.8,r*.042));
+  circle(c,nx+nr*.25,ny-nr*.2,nr*.3,'#c4b5fd');
+  if(face){eyes(c,cx+r*.07,cy-r*.32,Math.max(3.2,r*.115),'happy',[.6,0]);smile(c,cx+r*.1,cy-r*.07,Math.max(6.5,r*.23));}
+}
+function drawTerminalFan(c,end,prev,color,scale=1,spread=[-0.7,-0.35,0,0.35,0.7]){
+  const ang=Math.atan2(end[1]-prev[1],end[0]-prev[0]);
+  for(const d of spread){
+    const m=[end[0]+Math.cos(ang+d*.7)*22*scale,end[1]+Math.sin(ang+d*.7)*22*scale];
+    const tip=[end[0]+Math.cos(ang+d)*38*scale,end[1]+Math.sin(ang+d)*38*scale];
+    line(c,[end,m,tip],C.ink,Math.max(4,7*scale));
+    line(c,[end,m,tip],color,Math.max(2.5,4.5*scale));
+    circle(c,tip[0],tip[1],Math.max(4,5.8*scale),color,C.ink,Math.max(1.6,2.2*scale));
+  }
+}
+const DENDRITES=makeDendrites(SOMA.x,SOMA.y,SOMA.r,[2.4,2.9,3.4,3.9,1.75,4.55],70,11,2);
 const AXON=(()=>{const p=[];for(let x=SOMA.x+SOMA.r*.9;x<=790;x+=10)p.push([x,SOMA.y+Math.sin((x-300)/70)*10]);return p;})();
 const TERMINALS=[-.7,-.35,0,.35,.7].map(a=>{const s=AXON[AXON.length-1];return[[s[0],s[1]],[s[0]+40,s[1]+a*40],[s[0]+70,s[1]+a*75]];});
 function neuronBody(c,t,face=true){
-  const g=c.createRadialGradient(SOMA.x-20,SOMA.y-22,6,SOMA.x,SOMA.y,SOMA.r*1.2);g.addColorStop(0,'#eef6ff');g.addColorStop(1,'#9fc5ec');
-  c.beginPath();for(let i=0;i<=36;i++){const a=i/36*TAU,r=SOMA.r*(1+.06*Math.sin(a*5+t));c[i?'lineTo':'moveTo'](SOMA.x+Math.cos(a)*r,SOMA.y+Math.sin(a)*r);}c.closePath();c.fillStyle=g;c.fill();c.strokeStyle=C.ink;c.lineWidth=3.5;c.stroke();
-  circle(c,SOMA.x-6,SOMA.y+20,20,'#8e6fd1',C.ink,2.5);circle(c,SOMA.x-1,SOMA.y+16,6,'#c4b5fd');
-  if(face){eyes(c,SOMA.x+4,SOMA.y-20,7,'happy',[.6,0]);smile(c,SOMA.x+6,SOMA.y-4,14);}
+  drawSomaShape(c,SOMA.x,SOMA.y,SOMA.r,'#eef6ff','#9fc5ec',face,.4);
 }
 // A nerve: the long fibres of several neurons run side by side inside one
 // wrapping sheath. Cell bodies lie outside the bundle; each fibre carries its
 // own signal, so the dots travel at different times.
-const NERVE_SOMAS=[[118,150],[166,225],[104,300],[160,375],[116,450]];
+const NERVE_SOMAS=[[114,164],[178,232],[106,304],[178,376],[114,448]];
 const NERVE_FIBRES=NERVE_SOMAS.map(([x,y],i)=>{
-  const lane=300+(i-2)*11,pts=[],tx=880,ty=118+i*70;
-  for(let k=0;k<=12;k++){const u=k/12,a=1-u;pts.push([a*a*a*(x+22)+3*a*a*u*260+3*a*u*u*320+u*u*u*380,a*a*a*y+3*a*a*u*y+3*a*u*u*lane+u*u*u*lane]);}
+  const lane=300+(i-2)*11,pts=[],tx=862,ty=118+i*70;
+  for(let k=0;k<=12;k++){const u=k/12,a=1-u;pts.push([a*a*a*(x+20)+3*a*a*u*260+3*a*u*u*320+u*u*u*380,a*a*a*y+3*a*a*u*y+3*a*u*u*lane+u*u*u*lane]);}
   for(let xx=390;xx<=760;xx+=10)pts.push([xx,lane+Math.sin((xx-380)/55+i*1.3)*2.5]);
-  for(let k=1;k<=12;k++){const u=k/12,a=1-u;pts.push([a*a*a*760+3*a*a*u*810+3*a*u*u*840+u*u*u*tx,a*a*a*lane+3*a*a*u*lane+3*a*u*u*ty+u*u*u*ty]);}
-  return{pts,soma:[x,y],end:[tx,ty]};});
+  for(let k=1;k<=12;k++){const u=k/12,a=1-u;pts.push([a*a*a*760+3*a*a*u*805+3*a*u*u*832+u*u*u*tx,a*a*a*lane+3*a*a*u*lane+3*a*u*u*ty+u*u*u*ty]);}
+  const dens=makeDendrites(x,y,21,[2.3,2.85,3.4,3.95,1.75,4.55],17,4,1);
+  return{pts,soma:[x,y],end:[tx,ty],dens};});
 function drawNerve(c,t){
   for(const f of NERVE_FIBRES){line(c,f.pts,C.ink,9);line(c,f.pts,'#bcd8f3',5);}
   // Sheath drawn over the fibres (translucent) so they read as wrapped inside.
   c.save();c.beginPath();c.roundRect(370,262,404,76,38);c.fillStyle='rgba(233,215,168,.42)';c.fill();c.lineWidth=4;c.strokeStyle='#e9d7a8';c.stroke();c.restore();
   c.save();c.beginPath();c.roundRect(370,262,404,76,38);c.lineWidth=1.5;c.strokeStyle=C.ink;c.stroke();c.restore();
   NERVE_FIBRES.forEach((f,i)=>{
-    for(const a of [2.3,2.9,3.5,4.0]){const [x,y]=f.soma;line(c,[[x,y],[x+Math.cos(a)*34,y+Math.sin(a)*30],[x+Math.cos(a)*48,y+Math.sin(a)*42-6]],C.ink,6);line(c,[[x,y],[x+Math.cos(a)*34,y+Math.sin(a)*30],[x+Math.cos(a)*48,y+Math.sin(a)*42-6]],'#bcd8f3',3);}
-    const g=c.createRadialGradient(f.soma[0]-7,f.soma[1]-8,3,f.soma[0],f.soma[1],26);g.addColorStop(0,'#eef6ff');g.addColorStop(1,'#9fc5ec');
-    circle(c,f.soma[0],f.soma[1],22,g,C.ink,3);circle(c,f.soma[0]-3,f.soma[1]+5,8,'#8e6fd1',C.ink,2);
-    ellipse(c,f.end[0]+22,f.end[1],22,12,'#f472b6',C.ink,2.5);circle(c,f.end[0],f.end[1],6,'#bcd8f3',C.ink,2);
+    for(const d of f.dens){line(c,d.pts,C.ink,d.w+2.6);line(c,d.pts,'#bcd8f3',d.w);}
+    drawSomaShape(c,f.soma[0],f.soma[1],21,'#eef6ff','#9fc5ec',true,.4);
+    ellipse(c,f.end[0]+42,f.end[1],20,12,'#f472b6',C.ink,2.5);
+    drawTerminalFan(c,f.end,f.pts[f.pts.length-2],'#bcd8f3',.58,[-.55,-.27,0,.27,.55]);
     signal(c,f.pts,mod(t*.3+i*.21),7);
   });
   // Cross-section of the nerve: many fibre ends inside one wrapping.
   line(c,[[600,338],[600,404]],C.yellow,3);circle(c,600,470,64,'#e9d7a8',C.ink,4);
   for(const [dx,dy] of [[0,0],[-22,-12],[22,-12],[-22,14],[22,14],[0,-26],[0,27],[-38,1],[38,1]])circle(c,600+dx,470+dy,10,'#bcd8f3',C.ink,2);
-  text(c,P('神經元','Neurons'),40,112,22,'#bcd8f3');
-  text(c,P('神經纖維','Nerve fibres'),200,122,22,'#bcd8f3');line(c,[[236,130],[256,160]],'#bcd8f3',2);
+  text(c,P('神經元','Neurons'),36,92,22,'#bcd8f3');line(c,[[82,100],[102,126]],'#bcd8f3',2);
+  text(c,P('神經纖維','Nerve fibres'),210,122,22,'#bcd8f3');line(c,[[246,130],[266,162]],'#bcd8f3',2);
   text(c,P('神經（外面有膜包住）','Nerve (wrapped together)'),400,248,22,C.yellow);
   wrap(c,P('橫切面：一條神經裡有很多條神經纖維','Cross-section: one nerve holds many nerve fibres'),684,452,250,22,C.yellow);
   wrap(c,P('神經：許多神經元的神經纖維集合成束',"Nerve: many neurons' fibres in one bundle"),40,520,500,22,C.white);
@@ -261,24 +382,51 @@ function drawNeuron(c,s,t){
 
 // ── Tab 3: receptor → nervous system → effector ────────────────────────────
 const journey=[P('受器：接收刺激','Receptor: detects'),P('神經系統：傳導與整合','Nerves relay, CNS integrates'),P('動器：產生反應','Effector: responds')];
-// No person: only the receptor, two SEPARATE neurons and the effector.
-// Sensory neuron (blue) carries the message in; the central nervous system
-// integrates; a different motor neuron (orange) carries it out. The two never
-// touch: a visible gap marks the hand-over.
+// Both sensory and motor neurons use the exact same canonical multipolar neuron
+// morphology (branched dendrites + 5-lobed stationary soma with nucleus & cute face +
+// long axon + 5-branched axon terminals), never simplified into plain circles.
 const SENSE_COL='#a5b4fc',MOTOR_COL='#fdba74';
-const RECEPTOR=[170,452],HANDOVER=[486,198];
-const SENSORY={den:[[170,452],[184,402],[205,348]],soma:[205,330],axon:[[205,330],[250,282],[316,246],[396,214],[452,198]]};
-const MOTOR={den:[[514,196],[528,198],[540,198]],soma:[556,198],axon:[[556,198],[600,222],[634,262],[684,330],[736,394],[776,428]]};
+const RECEPTOR=[170,452],HANDOVER=[486,192];
+const SENSORY={
+  den:[[170,452],[186,396],[208,336]],
+  soma:[208,336],
+  somaLight:'#eef6ff',
+  dendriteAngles:[2.25,2.68,3.12,3.56,4.0],
+  axon:[[208,336],[256,280],[320,240],[392,208],[444,192]]
+};
+const MOTOR={
+  den:[[518,192],[540,192],[566,192]],
+  soma:[566,192],
+  somaLight:'#fff7ed',
+  dendriteAngles:[2.42,2.78,3.14,3.5,3.86],
+  axon:[[566,192],[606,220],[640,262],[686,330],[732,390],[766,422]]
+};
 // To a sweat gland the outgoing fibre ends on the coiled gland, not on the skin surface.
-const MOTOR_GLAND={...MOTOR,axon:[[556,198],[600,222],[634,262],[684,330],[708,400],[704,468]]};
-function neuronPath(c,n,color,glow){
+const MOTOR_GLAND={...MOTOR,axon:[[566,192],[606,220],[640,262],[684,330],[706,396],[704,454]]};
+function neuronPath(c,n,color,glowOn){
+  const col=glowOn?'#fef9c3':color;
+  // Branched dendrites radiating from the 5-lobed soma (same structure as Tab 2 neuron)
+  const somaDens=makeDendrites(n.soma[0],n.soma[1],27,n.dendriteAngles,24,4.8,1);
+  for(const d of somaDens){line(c,d.pts,C.ink,d.w+3);line(c,d.pts,col,d.w);}
+  // Main pathway fibre (sensory receptor trunk + axon, or motor dendrites + axon)
   const fibre=[...n.den,...n.axon.slice(1)];
-  line(c,fibre,C.ink,10);line(c,fibre,glow?'#fef9c3':color,6);
-  const start=n.den[0];for(const a of [-2.3,-1.6,-.9,2.6])line(c,[start,[start[0]+Math.cos(a)*22,start[1]+Math.sin(a)*14]],color,3);
-  const end=n.axon[n.axon.length-1],prev=n.axon[n.axon.length-2],ang=Math.atan2(end[1]-prev[1],end[0]-prev[0]);
-  for(const d of [-.6,0,.6]){const tx=end[0]+Math.cos(ang+d)*20,ty=end[1]+Math.sin(ang+d)*20;line(c,[end,[tx,ty]],C.ink,7);line(c,[end,[tx,ty]],color,4);circle(c,tx,ty,6,color,C.ink,2);}
-  const g=c.createRadialGradient(n.soma[0]-6,n.soma[1]-7,3,n.soma[0],n.soma[1],24);g.addColorStop(0,'#ffffff');g.addColorStop(1,color);
-  circle(c,n.soma[0],n.soma[1],20,g,C.ink,3);circle(c,n.soma[0]-2,n.soma[1]+4,7,'#8e6fd1',C.ink,2);
+  line(c,fibre,C.ink,11);line(c,fibre,col,6.5);
+  // If sensory neuron starts at the skin receptor, draw branched receptor dendrites in the skin too
+  if(Math.hypot(n.den[0][0]-n.soma[0],n.den[0][1]-n.soma[1])>60){
+    const start=n.den[0];
+    for(const a of [1.1,1.65,2.15,.65]){
+      const m=[start[0]+Math.cos(a)*16,start[1]+Math.sin(a)*12];
+      for(const da of [-.35,.35]){
+        const tip=[m[0]+Math.cos(a+da)*14,m[1]+Math.sin(a+da)*10];
+        line(c,[start,m,tip],C.ink,5.5);line(c,[start,m,tip],col,3);
+      }
+    }
+  }
+  // 5-branched axon terminals with synaptic bulbs (matching Tab 2)
+  const end=n.axon[n.axon.length-1],prev=n.axon[n.axon.length-2];
+  drawTerminalFan(c,end,prev,col,.66,[-.66,-.33,0,.33,.66]);
+  // Stationary 5-lobed multipolar cell body with purple nucleus + cute face (matching Tab 2)
+  drawSomaShape(c,n.soma[0],n.soma[1],27,n.somaLight,color,true,.4);
   return fibre;
 }
 function sweatDrop(c,x,y,r){c.beginPath();c.moveTo(x,y-r*1.7);c.bezierCurveTo(x+r*.9,y-r*.6,x+r,y+r*.1,x+r,y+r*.3);c.arc(x,y+r*.3,r,0,Math.PI);c.bezierCurveTo(x-r,y+r*.1,x-r*.9,y-r*.6,x,y-r*1.7);c.closePath();
@@ -322,15 +470,15 @@ function drawJourney(c,s,t){
   effector(c,t,s.effect,stage===2);
   const sFibre=neuronPath(c,SENSORY,SENSE_COL,within(U,J_SENSE));
   const mFibre=neuronPath(c,gland?MOTOR_GLAND:MOTOR,MOTOR_COL,within(U,J_MOTOR));
-  c.save();c.setLineDash([5,5]);circle(c,HANDOVER[0],HANDOVER[1],32,null,C.yellow,2.5);c.restore();
+  c.save();c.setLineDash([5,5]);circle(c,HANDOVER[0],HANDOVER[1],28,null,C.yellow,2.5);c.restore();
   sparkle(c,RECEPTOR[0],RECEPTOR[1],stage===0?17:11,stage===0?C.yellow:'#a3863a');if(stage===0)glow(c,RECEPTOR[0],RECEPTOR[1],32,C.yellow,.6);
   if(within(U,J_SENSE))signal(c,sFibre,frac(U,J_SENSE));
   // The message crosses the small gap to the next neuron; the fibres stay apart.
-  if(within(U,J_HAND)){const k=frac(U,J_HAND);glow(c,HANDOVER[0],HANDOVER[1],30,C.cyan,.5);for(const dy of [-7,0,7])circle(c,mix(478,496,clamp(k*1.25-Math.abs(dy)*.02)),HANDOVER[1]+dy,3.5,C.cyan);}
+  if(within(U,J_HAND)){const k=frac(U,J_HAND);glow(c,HANDOVER[0],HANDOVER[1],30,C.cyan,.5);for(const dy of [-7,0,7])circle(c,mix(472,502,clamp(k*1.25-Math.abs(dy)*.02)),HANDOVER[1]+dy,3.5,C.cyan);}
   if(within(U,J_MOTOR))signal(c,mFibre,frac(U,J_MOTOR));
   text(c,P('感覺神經元（傳入）','Sensory neuron (in)'),34,240,22,SENSE_COL);
   text(c,P('運動神經元（傳出）','Motor neuron (out)'),700,300,22,MOTOR_COL);
-  text(c,P('交接處','Hand-over'),HANDOVER[0],252,22,C.yellow,'center');
+  text(c,P('交接處','Hand-over'),HANDOVER[0],248,22,C.yellow,'center');
   node(c,journey[0],30,516,280,48,stage===0,C.yellow);
   node(c,journey[1],316,22,330,48,stage===1,C.cyan);
   node(c,journey[2],650,516,280,48,stage===2,MOTOR_COL);
@@ -340,19 +488,61 @@ function drawJourney(c,s,t){
   wrap(c,P('是兩條不同的神經元：在中樞交接訊息，不是同一條來回。','Two different neurons meet in the CNS; not one neuron going there and back.'),30,592,900,22,C.cyan);
 }
 
-// ── Tab 4: reaction-time practice (timing logic unchanged) ────────────────
-function cartoonHand(c,x,y,flip,open){c.save();c.translate(x,y);c.scale(flip?-1:1,1);
-  c.beginPath();c.roundRect(-70,-22,70,44,20);c.fillStyle=C.skin;c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
-  c.save();c.translate(-2,-12);c.rotate(open?-.5:-.15);c.beginPath();c.roundRect(0,-8,46,16,8);c.fillStyle=C.skin;c.fill();c.stroke();c.restore();
-  c.save();c.translate(-2,12);c.rotate(open?.5:.15);c.beginPath();c.roundRect(0,-8,40,16,8);c.fillStyle=C.skin;c.fill();c.stroke();c.restore();c.restore();}
+// ── Tab 4: reaction-time practice ─────────────────────────────────────────
+// 手部直接由老師提供的接尺線稿描成向量（assets/biology/ruler_hands_1017_v1.js），輪廓與手指關係照原圖；
+// 這裡只在外層加色：暖膚色底 + 手指陰影 + 棕色墨線。直尺（刻度、數字）仍由程式畫，數字與 0 cm 才準。
+const RH_INK='#3b2214',RH_SKIN=['#ffe3cc','#f1c3a0'],RH_SHADE='#e0a984';
+const RH={s:.64,x0:196,y0:140,top:40,rw:36.4};
+function rhX(x,rl){return RH.x0+(x-rl)*RH.s;}
+function rhY(y,dy){return RH.y0+(y-RH.top+(dy||0))*RH.s;}
+function rhPath(c,polys,rl,dy){
+  c.beginPath();
+  for(const p of polys){c.moveTo(rhX(p[0],rl),rhY(p[1],dy));for(let k=2;k<p.length;k+=2)c.lineTo(rhX(p[k],rl),rhY(p[k+1],dy));c.closePath();}
+}
+// layer: topA/topC/botA/botC；rl = 該圖中直尺左緣的原圖 x；dy = 整隻手上下平移（原圖像素）
+function drawTracedHand(c,layer,rl,dy){
+  const T=globalThis.RulerHandsTrace&&globalThis.RulerHandsTrace[layer];if(!T)return;
+  const isTop=layer.indexOf('top')===0,g=c.createLinearGradient(0,rhY(isTop?40:400,dy),0,rhY(isTop?180:570,dy));
+  g.addColorStop(0,RH_SKIN[0]);g.addColorStop(1,RH_SKIN[1]);
+  c.save();
+  rhPath(c,T.s,rl,dy);c.fillStyle=g;c.fill('evenodd');
+  for(const fp of T.f){rhPath(c,fp,rl,dy);c.fillStyle=RH_SHADE;c.fill('evenodd');}
+  rhPath(c,T.i,rl,dy);c.fillStyle=RH_INK;c.fill('evenodd');
+  c.lineJoin='round';c.lineWidth=.5;c.strokeStyle=RH_INK;c.stroke();
+  c.restore();
+}
+// 直尺：top/bottom 為原圖 y（左圖 130.5～454.8，右圖 247.7～572），30 cm 尺，0 在下緣；skip = 被手擋住、不標示的刻度數字
+function drawRulerBody(c,top,bottom,skip){
+  const xl=RH.x0,xr=RH.x0+RH.rw*RH.s,yt=rhY(top),yb=rhY(bottom),cm=(yb-yt)/30;
+  c.save();
+  c.fillStyle='#fde68a';c.fillRect(xl,yt,xr-xl,yb-yt);
+  c.strokeStyle=RH_INK;c.lineWidth=2.4;c.lineJoin='round';c.strokeRect(xl,yt,xr-xl,yb-yt);
+  c.restore();
+  for(let i=1;i<30;i++){
+    const ty=yb-i*cm,len=i%10===0?14:i%5===0?10:6;
+    line(c,[[xr-len,ty],[xr,ty]],RH_INK,1.6);
+    if((i===10||i===20)&&!(skip&&skip.includes(i)))text(c,String(i),xr+8,ty+7,20,C.white);
+  }
+  // 0 cm：標籤在左側，引線畫在手的後面
+  line(c,[[RH.x0-26,yb],[xl,yb]],C.muted,2);
+  text(c,'0 cm',RH.x0-30,yb+7,22,C.white,'right');
+}
 function drawReaction(c,s,t){
-  panel(c,20,80,390,415);text(c,P('實體接尺：記錄落下距離','Ruler drop: record the distance'),40,118,22,C.yellow);
-  const drop=s.phase==='done'?28:0;
-  D.round(c,190,150+drop,36,290,6,'#fde68a',C.ink);for(let i=0;i<=28;i+=2){const y=430+drop-i*10;line(c,[[190,y],[i%10?202:212,y]],C.ink,2);if(i%10===0)text(c,String(i),232,y+7,22,C.white);}
-  cartoonHand(c,234,170,true,false);
-  cartoonHand(c,166,430,false,s.phase!=='done');
-  text(c,'cm',252,476,22,C.muted);
-  if(s.phase==='done')arrow(c,150,250,150,300,C.cyan,3);
+  panel(c,20,80,390,415);text(c,P('實體接尺：記錄落下距離','Ruler drop: record the distance'),40,112,22,C.yellow);
+  // idle/wait/early = 左圖（上手夾尺）；go = 剛放手；done = 右圖（尺已落下、下手夾住）
+  const RA=188.2,RC=508.3;
+  if(s.phase==='done'){
+    drawRulerBody(c,247.7,572,[10]);
+    for(const lx of [510,520.5,531,541.5])line(c,[[rhX(lx,RC),rhY(192)],[rhX(lx,RC),rhY(232)]],'#94a3b8',2);
+    drawTracedHand(c,'topC',RC,0);drawTracedHand(c,'botC',RC,0);
+    arrow(c,130,300,130,360,C.cyan,3.5);
+  }else if(s.phase==='go'){
+    drawRulerBody(c,130.5,454.8);
+    drawTracedHand(c,'topC',RC,-26);drawTracedHand(c,'botA',RA,0);
+  }else{
+    drawRulerBody(c,130.5,454.8);
+    drawTracedHand(c,'topA',RA,0);drawTracedHand(c,'botA',RA,0);
+  }
   const go=s.phase==='go',fill=go?C.green:s.phase==='early'?'#7c3a1d':C.panel,stroke=go?C.white:s.phase==='wait'?C.orange:'#47675d';
   D.round(c,450,80,490,415,24,fill,stroke);c.save();c.lineWidth=go?6:4;c.strokeStyle=stroke;c.beginPath();c.roundRect(450,80,490,415,24);c.stroke();c.restore();
   const msg=go?P('現在！','NOW!'):s.phase==='wait'?P('等待……','Wait…'):s.phase==='early'?P('太早了','Too soon'):s.phase==='done'?P(`${s.response} 毫秒`,`${s.response} ms`):P('先按開始','Press start');
@@ -376,9 +566,11 @@ function water(c,x,color,kind,t){
 }
 function handDown(c,x,tip,flip){
   D.round(c,x-22,60,44,tip-150,18,C.skin,C.ink);
+  D.round(c,x-26,58,52,22,10,flip?'#3fb3a3':'#fb923c',C.ink);
   c.beginPath();c.roundRect(x-36,tip-120,72,70,24);c.fillStyle=C.skin;c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();
-  for(let k=0;k<4;k++){c.beginPath();c.roundRect(x-31+k*16,tip-62,14,k===0||k===3?50:62,7);c.fillStyle=C.skin;c.fill();c.stroke();}
+  for(let k=0;k<4;k++){const fh=k===0||k===3?50:62,fx=x-31+k*16;c.beginPath();c.roundRect(fx,tip-62,14,fh,7);c.fillStyle=C.skin;c.fill();c.stroke();ellipse(c,fx+7,tip-62+fh-6,3.5,4,'#fff5ee');}
   c.save();c.translate(x+(flip?-36:36),tip-96);c.rotate(flip?.6:-.6);c.beginPath();c.roundRect(-8,0,16,44,8);c.fillStyle=C.skin;c.fill();c.stroke();c.restore();
+  c.save();c.globalAlpha=.38;ellipse(c,x,tip-88,14,8,'#f59aa8');c.restore();
 }
 function feeling(c,x,y,warm,label){
   D.round(c,x-70,y-34,140,60,18,'#fdf6e3',C.ink);c.beginPath();c.moveTo(x-10,y+26);c.lineTo(x,y+44);c.lineTo(x+10,y+26);c.fillStyle='#fdf6e3';c.fill();
@@ -397,6 +589,227 @@ function drawAdaptation(c,s,t){
   if(p>=1){const [l,r]=pos;feeling(c,l-(s.transfer?70:0),150,!s.transfer,s.transfer?P('涼','Cool'):P('暖','Warm'));feeling(c,r+(s.transfer?70:0),150,s.transfer,s.transfer?P('暖','Warm'):P('涼','Cool'));}
   text(c,P('溫度計在中間水盆：讀數不變','The thermometer in the middle reads the same'),480,548,22,C.muted,'center');
   text(c,P('老師準備安全水溫；時間壓縮的示意','Teacher checks safe temperatures; time-compressed model'),30,580,22,C.cyan);
+}
+
+// ── Tab 6: persistence of vision (視覺暫留) & visual fatigue / afterimage (視覺疲勞與後像) ──
+function drawCageMotif(c,cx,cy,scale=1){
+  c.save();c.translate(cx,cy);c.scale(scale,scale);
+  // Classic domed birdcage (鳥籠)
+  c.strokeStyle='#1e293b';c.lineWidth=3.2;c.lineCap='round';c.lineJoin='round';
+  // Top hanging ring
+  c.beginPath();c.arc(0,-66,8,0,TAU);c.stroke();
+  // Dome arch + flat base
+  c.beginPath();
+  c.moveTo(-48,46);c.lineTo(-48,-8);
+  c.bezierCurveTo(-48,-46,-24,-58,0,-58);
+  c.bezierCurveTo(24,-58,48,-46,48,-8);
+  c.lineTo(48,46);c.closePath();
+  c.stroke();
+  // Vertical cage bars
+  for(const bx of [-32,-16,0,16,32]){
+    const topY=-56+Math.abs(bx)*.32;
+    line(c,[[bx,topY],[bx,46]],'#1e293b',2.6);
+  }
+  // Horizontal rail + base tray
+  line(c,[[-48,-8],[48,-8]],'#1e293b',2.8);
+  D.round(c,-54,44,108,10,4,'#64748b','#1e293b');
+  c.restore();
+}
+function drawBirdMotif(c,cx,cy,scale=1,bodyCol='#38bdf8',wingCol='#0284c7'){
+  c.save();c.translate(cx,cy);c.scale(scale,scale);
+  // Cute perching songbird (小鳥)
+  // Tail feathers
+  c.beginPath();c.moveTo(-18,8);c.lineTo(-40,22);c.lineTo(-34,4);c.closePath();
+  c.fillStyle=wingCol;c.fill();c.strokeStyle=C.ink;c.lineWidth=2.5;c.stroke();
+  // Plump body + head
+  ellipse(c,-2,6,22,16,bodyCol,C.ink,2.8,-.12);
+  circle(c,16,-8,13,bodyCol,C.ink,2.8);
+  // Cute wing
+  ellipse(c,-4,6,13,8,wingCol,C.ink,2.2,-.2);
+  // Beak + eye + legs
+  c.beginPath();c.moveTo(27,-11);c.lineTo(39,-7);c.lineTo(27,-3);c.closePath();
+  c.fillStyle='#fb923c';c.fill();c.strokeStyle=C.ink;c.lineWidth=2;c.stroke();
+  circle(c,19,-10,2.8,C.ink);circle(c,18,-11,1,'#ffffff');
+  line(c,[[-4,21],[-8,34]],'#d97706',2.5);line(c,[[6,21],[4,34]],'#d97706',2.5);
+  c.restore();
+}
+function drawFatigueTarget(c,cx,cy,kind,afterimage=false,alpha=1){
+  c.save();c.translate(cx,cy);c.globalAlpha=alpha;
+  // Complementary color pairs (紅⇄青綠, 綠⇄洋紅紅, 黃⇄藍):
+  if(kind==='apple'){
+    const bodyCol=afterimage?'#2dd4bf':'#ef4444';   // 紅蘋果 ➔ 青綠後像
+    const leafCol=afterimage?'#f43f5e':'#22c55e';   // 綠葉 ➔ 紅／洋紅後像
+    const stemCol=afterimage?'#cbd5e1':'#78350f';
+    // Stem
+    line(c,[[0,-54],[6,-82]],stemCol,6);
+    // Leaf
+    c.beginPath();c.moveTo(4,-68);c.quadraticCurveTo(36,-92,56,-64);c.quadraticCurveTo(30,-44,4,-68);c.closePath();
+    c.fillStyle=leafCol;c.fill();c.strokeStyle=afterimage?'#99f6e4':C.ink;c.lineWidth=afterimage?1.5:3;c.stroke();
+    // Plump Apple Body
+    c.beginPath();
+    c.moveTo(0,-54);
+    c.bezierCurveTo(-48,-76,-86,-24,-68,36);
+    c.bezierCurveTo(-54,80,-16,84,0,68);
+    c.bezierCurveTo(16,84,54,80,68,36);
+    c.bezierCurveTo(86,-24,48,-76,0,-54);
+    c.closePath();
+    c.fillStyle=bodyCol;c.fill();c.strokeStyle=afterimage?'#99f6e4':C.ink;c.lineWidth=afterimage?1.5:3.2;c.stroke();
+    if(!afterimage)ellipse(c,-32,-18,12,24,'rgba(255,255,255,.32)',null,1,-.25);
+  }else{
+    // 黃月亮＋藍夜空 ➔ 藍月亮＋黃背景後像
+    const bgCol=afterimage?'#fef08a':'#1d4ed8';
+    const moonCol=afterimage?'#3b82f6':'#fde047';
+    circle(c,0,4,82,bgCol,afterimage?'#fde047':C.ink,afterimage?2:3.2);
+    // Symmetrical crescent moon opening to the left + star inside the opening
+    c.beginPath();
+    c.arc(-4,4,52,-.72*Math.PI,.72*Math.PI,false);
+    c.bezierCurveTo(14,32,14,-24,-4+52*Math.cos(-.72*Math.PI),4+52*Math.sin(-.72*Math.PI));
+    c.closePath();
+    c.fillStyle=moonCol;c.fill();
+    sparkle(c,-36,4,13,moonCol);
+  }
+  // Central fixation cross (+) that students stare at!
+  line(c,[[-9,4],[9,4]],'#0f172a',3.2);
+  line(c,[[0,-5],[0,13]],'#0f172a',3.2);
+  c.restore();
+}
+function drawVision(c,s,t){
+  if(s.exp==='persistence'){
+    text(c,P('視覺暫留：影像消失後，視覺印象仍短暫停留約 0.1 秒','Persistence of vision: an image lingers for ~0.1 s after it disappears'),30,40,24,C.yellow);
+    panel(c,24,62,442,438);
+    panel(c,490,62,446,438);
+    text(c,P('雙面旋轉卡（一面鳥、一面籠）','Two-sided spinning card'),44,98,22,C.yellow);
+    text(c,P('眼睛與腦看到的畫面','What your eyes and brain perceive'),512,98,22,C.yellow);
+
+    // Top reference miniatures of Front (正面：小鳥) and Back (背面：鳥籠)
+    D.round(c,48,112,182,102,12,'#fdf6e3',C.ink);
+    drawBirdMotif(c,94,162,.58);
+    text(c,P('正面：鳥','Front: bird'),172,170,20,C.deep,'center');
+
+    D.round(c,258,112,182,102,12,'#fdf6e3',C.ink);
+    drawCageMotif(c,302,164,.52);
+    text(c,P('背面：籠','Back: cage'),384,170,20,C.deep,'center');
+
+    // Bottom spinning thaumatrope card (籠中鳥旋轉卡)
+    const speed=s.speed==='fast'?72:s.speed==='slow'?3.2:0;
+    const ang=speed?t*speed:0, flipScale=Math.cos(ang);
+    const cx=245,cy=348,r=86;
+    if(s.speed==='fast'){
+      // High-speed spinning strings (vibrating rapidly)
+      const vib=Math.sin(t*75)*2.2;
+      line(c,[[56,cy],[cx-r,cy+vib]],'#f43f5e',4);
+      line(c,[[cx+r,cy-vib],[434,cy]],'#f43f5e',4);
+      // Outer high-speed spin orbit lines
+      c.save();c.setLineDash([6,5]);
+      c.beginPath();c.ellipse(cx,cy,r+18,30,0,0,TAU);
+      c.strokeStyle=C.cyan;c.lineWidth=2.8;c.stroke();
+      c.restore();
+      // Full-width spinning card disk + fast-whirring foreshortened flip ring + superimposed bird-in-cage!
+      circle(c,cx,cy,r,'#fdf6e3',C.ink,3.5);
+      // Fast-flipping 3D rim ghost to show high-speed rotation
+      for(const phase of [0,1.05]){
+        const rx=Math.max(6,r*Math.abs(Math.cos(ang+phase)));
+        c.save();c.beginPath();c.ellipse(cx,cy,rx,r,0,0,TAU);
+        c.strokeStyle='rgba(15,23,42,.22)';c.lineWidth=2;c.stroke();c.restore();
+      }
+      // Both bird and cage appear superimposed right on the fast-spinning card (with high-speed shimmer)!
+      const aCage=.82+.18*Math.sin(ang), aBird=.82-.18*Math.sin(ang);
+      c.save();c.globalAlpha=aCage;drawCageMotif(c,cx,cy+6,.92);c.restore();
+      c.save();c.globalAlpha=aBird;drawBirdMotif(c,cx,cy+6,.92);c.restore();
+      // Horizontal speed streaks across the spinning card
+      for(const sy of [-54,0,54]){
+        const sx=Math.sin(ang+sy)*24;
+        line(c,[[cx-42+sx,cy+sy],[cx+42+sx,cy+sy]],'rgba(85,233,255,.38)',2);
+      }
+    }else{
+      // Still or slow flip: card physically narrows with cos(ang) and shows only one side at a time
+      line(c,[[56,cy],[cx-r*Math.abs(flipScale),cy]],'#f43f5e',4);
+      line(c,[[cx+r*Math.abs(flipScale),cy],[434,cy]],'#f43f5e',4);
+      if(s.speed==='slow'){
+        c.save();c.setLineDash([5,5]);
+        c.beginPath();c.ellipse(cx,cy,r+14,26,0,0,TAU);
+        c.strokeStyle='rgba(242,236,217,.45)';c.lineWidth=2.5;c.stroke();
+        c.restore();
+      }
+      c.save();c.translate(cx,cy);c.scale(Math.max(.08,Math.abs(flipScale)),1);
+      circle(c,0,0,r,'#fdf6e3',C.ink,3.5);
+      if(flipScale>=0)drawBirdMotif(c,0,4,.95);
+      else drawCageMotif(c,0,6,.92);
+      c.restore();
+    }
+    text(c,s.speed==='fast'?P('快速旋轉中（兩面疊合！）','Spinning fast (merged!)'):s.speed==='slow'?P('慢速翻轉中','Flipping slowly'):P('靜止（正面）','Still (front)'),cx,474,22,s.speed==='fast'?C.yellow:C.white,'center');
+
+    // Right Panel: Perceived image in the brain!
+    const px=713,py=268;
+    circle(c,px,py,108,'#fdf6e3',s.speed==='fast'?C.cyan:C.ink,s.speed==='fast'?5:3.5);
+    if(s.speed==='still'){
+      drawBirdMotif(c,px,py+4,1.08);
+    }else if(s.speed==='slow'){
+      if(flipScale>=0)drawBirdMotif(c,px,py+4,1.08);
+      else drawCageMotif(c,px,py+6,1.02);
+    }else{
+      // Fast spin: Persistence of vision superimposes BOTH the bird and the cage ("籠中鳥")!
+      drawCageMotif(c,px,py+6,1.02);
+      drawBirdMotif(c,px,py+6,1.02);
+    }
+    const statusMsg=s.speed==='fast'
+      ?P('籠中鳥！（前一張影像還沒消失就疊上下一張）','Bird in the cage! (Images overlap before fading)')
+      :s.speed==='slow'
+      ?P('鳥與鳥籠輪流出現（間隔太久，無法疊合）','Bird and cage alternate (too slow to merge)')
+      :P('只看到單面圖案','Only one side is seen');
+    wrap(c,statusMsg,512,418,404,22,s.speed==='fast'?C.yellow:C.white);
+    D.round(c,24,518,912,62,12,C.panel,'#47675d');
+    text(c,P('正片後像：視覺暫留看到的顏色與原物相同。例：雨滴成線、揮動仙女棒、卡通與電影。','Positive afterimage: same colour as the object (e.g., rain streaks, sparklers, animation).'),42,557,22,C.cyan);
+    return;
+  }
+
+  // Experiment 2: Visual Fatigue & Complementary Negative Afterimage (視覺疲勞與互補色負片後像)
+  text(c,P('視覺疲勞：凝視鮮豔圖案後看白紙，浮現顏色互補的「負片後像」','Visual fatigue: staring at bright colours reveals a complementary afterimage'),30,40,24,C.yellow);
+  panel(c,24,62,442,416);
+  panel(c,490,62,446,416);
+  text(c,P('① 凝視區：盯住中心「＋」字','1. Stare at the center + cross'),44,98,22,C.yellow);
+  text(c,P('② 白紙區：移開視線看這裡','2. Look at the white paper here'),512,98,22,C.yellow);
+
+  // Left card: Dark neutral backing with vivid high-saturation stimulus
+  D.round(c,52,114,386,274,16,'#152e27','#47675d');
+  drawFatigueTarget(c,245,248,s.target,false,1);
+  const progress=s.step==='stare'?clamp((t-s.stepStart)/12):1;
+  // Fatigue progress bar at bottom of left panel
+  D.round(c,52,404,386,18,9,'#0f241e','#47675d');
+  D.round(c,54,406,Math.max(12,382*progress),14,7,progress>=1?C.yellow:C.cyan);
+  text(c,s.step==='stare'
+    ?P(`受器持續受刺激（疲勞累積 ${Math.round(progress*100)}%）`,`Receptors adapting (${Math.round(progress*100)}%)`)
+    :P('受器已產生視覺疲勞 → 請看右側白紙！','Fatigue reached → look at white paper!'),245,454,22,progress>=1||s.step==='white'?C.yellow:C.white,'center');
+
+  // Right card: Crisp White Paper (#f8fafc) where the complementary negative afterimage floats!
+  D.round(c,518,114,390,274,16,'#f8fafc',s.step==='white'?C.cyan:C.ink);
+  if(s.step==='white'){
+    // Ghostly complementary-color afterimage slowly pulsing/fading on the white sheet
+    const fade=.62+.16*Math.sin(t*2.5);
+    drawFatigueTarget(c,713,248,s.target,true,fade);
+    text(c,s.target==='apple'
+      ?P('浮現「青綠蘋果＋紅葉」負片後像！','A cyan-green apple with a red leaf appears!')
+      :P('浮現「藍月亮＋黃底」負片後像！','A blue moon on a yellow background appears!'),713,440,22,C.yellow,'center');
+  }else{
+    // Fixation cross on blank white paper waiting for step 2
+    line(c,[[704,252],[722,252]],'#334155',3);
+    line(c,[[713,243],[713,261]],'#334155',3);
+    text(c,P('盯完左圖後，點上方「② 看白紙」','After staring, tap "2. Look at white paper"'),713,440,22,C.muted,'center');
+  }
+
+  // Bottom Complementary Color Legend (互補色對照表：紅⇄綠、藍⇄黃、黑⇄白)
+  D.round(c,24,494,912,86,12,C.panel,'#47675d');
+  text(c,P('負片後像（互補色）：','Negative afterimage:'),42,546,22,C.cyan);
+  const pairs=[
+    ['#ef4444','#2dd4bf',P('紅 ⇄ 綠','Red ⇄ Green'),336],
+    ['#3b82f6','#fde047',P('藍 ⇄ 黃','Blue ⇄ Yellow'),564],
+    ['#1e293b','#f8fafc',P('黑 ⇄ 白','Black ⇄ White'),794]
+  ];
+  for(const [c1,c2,lbl,px] of pairs){
+    circle(c,px-58,538,13,c1,C.white,2);
+    circle(c,px-26,538,13,c2,C.white,2);
+    text(c,lbl,px,546,22,C.white);
+  }
 }
 
 const tabs=[
@@ -436,7 +849,49 @@ const tabs=[
   sources:[],init:()=>({running:true,transfer:false,fromPos:[165,795],start:0}),
   act(s,k,v){const p=Math.min(Math.max((s.elapsed-s.start)/1.5,0),1),dest=s.transfer?[425,520]:[165,795];s.fromPos=s.fromPos.map((x,i)=>x+(dest[i]-x)*p);s.transfer=v;s.start=s.elapsed;},
   controls:()=>[choice(P('手的位置','Hands'),'transfer',[[false,P('先接觸兩端','Outer basins first')],[true,P('一起移到中間','Both to the middle')]])],
-  explain:s=>({title:s.transfer?P('相同水溫，感覺相對','Same temperature, relative sensations'):P('先前刺激不同','Different prior stimuli'),text:s.transfer?P('先接觸溫水的手，移到中間常覺得較冷；先接觸涼水的手，移到中間常覺得較暖。','The hand from warm water often feels cooler in the middle; the hand from cool water often feels warmer.'):P('兩手先接觸不同溫度的水；比較前先保持中間水盆的溫度相同。','The hands first encounter different temperatures. Keep the middle basin unchanged for the comparison.')}),draw:drawAdaptation}
+  explain:s=>({title:s.transfer?P('相同水溫，感覺相對','Same temperature, relative sensations'):P('先前刺激不同','Different prior stimuli'),text:s.transfer?P('先接觸溫水的手，移到中間常覺得較冷；先接觸涼水的手，移到中間常覺得較暖。','The hand from warm water often feels cooler in the middle; the hand from cool water often feels warmer.'):P('兩手先接觸不同溫度的水；比較前先保持中間水盆的溫度相同。','The hands first encounter different temperatures. Keep the middle basin unchanged for the comparison.')}),draw:drawAdaptation},
+ {id:'vision',title:P('影像怎麼還在？','Why does the image stay?'),sub:P('視覺暫留與視覺疲勞','Persistence and visual fatigue'),
+  hook:P('快速翻轉一面畫鳥、一面畫鳥籠的卡片，為什麼小鳥會進到籠子裡？盯著紅蘋果看 20 秒再看白紙，為什麼會浮現「綠蘋果」？','Spin a card with a bird on one side and a cage on the other—why does the bird appear inside the cage? Stare at a red apple for 20 seconds, then look at white paper—why does a green apple appear?'),
+  body:P('切換「視覺暫留」與「視覺疲勞」兩個實驗：觀察快速旋轉雙面卡如何疊合成「籠中鳥」（正片後像），以及長時間凝視鮮豔圖案後在白紙上浮現的互補色「負片後像」。','Switch between Persistence of Vision and Visual Fatigue: see how a fast-spinning card merges a bird and cage (positive afterimage), and how staring at bright colours produces a complementary negative afterimage on white paper.'),
+  closure:P('視覺印象在刺激消失後仍短暫停留（視覺暫留）；若受器長時間受同一色光刺激而疲勞，移開視線看白紙會出現形狀相同、顏色互補的負片後像。','Visual impressions linger briefly after a stimulus ends (persistence of vision). When colour receptors fatigue from prolonged staring, looking at white paper reveals a complementary-colour negative afterimage.'),
+  reading:P('凝視物體後移開視線，影像仍短暫留存的現象稱為後像。若只短暫觀看，因視覺暫留而出現與原物顏色相同的「正片後像」，例如快速旋轉籠中鳥卡片、雨滴連成細線、卡通與電影的連續畫面。若長時間凝視鮮豔色塊（約 20 秒），負責該色光的視覺受器產生疲勞，改看白紙時該色光反應減弱，便會看到互補色的「負片後像」：紅配綠、藍配黃、黑配白。','An image remaining briefly after looking away is an afterimage. Brief viewing produces a positive afterimage of the same colour through persistence of vision—as in a bird-in-cage thaumatrope, rain streaks, and animation. Prolonged staring (about 20 s) fatigues specific colour receptors; looking at white paper then produces a complementary negative afterimage: red with green, blue with yellow, and black with white.'),
+  sources:[],
+  init:()=>({running:true,exp:'persistence',speed:'fast',target:'apple',step:'stare',stepStart:0}),
+  act(s,k,v){
+    s[k]=v;
+    if(k==='exp'||k==='target'){s.step='stare';s.stepStart=s.elapsed||0;}
+    if(k==='step')s.stepStart=s.elapsed||0;
+  },
+  controls:s=>s.exp==='persistence'
+    ?[
+      choice(P('實驗切換','Experiment'),'exp',[['persistence',P('視覺暫留：籠中鳥','Persistence: Bird in cage')],['fatigue',P('視覺疲勞：互補色後像','Visual fatigue: Afterimage')]]),
+      choice(P('翻轉速度','Spin speed'),'speed',[['still',P('靜止看單面','Still')],['slow',P('慢速翻轉','Slow flip')],['fast',P('快速旋轉','Fast spin')]])
+    ]
+    :[
+      choice(P('實驗切換','Experiment'),'exp',[['persistence',P('視覺暫留：籠中鳥','Persistence: Bird in cage')],['fatigue',P('視覺疲勞：互補色後像','Visual fatigue: Afterimage')]]),
+      choice(P('凝視圖案','Target'),'target',[['apple',P('紅蘋果＋綠葉','Red apple & green leaf')],['moon',P('黃月亮＋藍夜空','Yellow moon & blue sky')]]),
+      choice(P('實驗步驟','Step'),'step',[['stare',P('① 凝視左圖中心','1. Stare at center')],['white',P('② 看右側白紙','2. Look at white paper')]])
+    ],
+  explain:s=>s.exp==='persistence'
+    ?({
+      title:s.speed==='fast'?P('視覺暫留：兩面影像疊合成「籠中鳥」','Persistence of vision: bird and cage merge'):P('翻轉太慢時，兩面影像不會疊合','When flipped slowly, the two sides do not merge'),
+      text:s.speed==='fast'
+        ?P('當卡片快速旋轉，正面「小鳥」的視覺印象還沒消失（約停留 0.1 秒），背面「鳥籠」的影像就傳到腦中，兩者疊合看起來就像小鳥關在籠子裡！','When the card spins rapidly, the impression of the bird lingers (~0.1 s) while the cage arrives, so the brain perceives the bird inside the cage.')
+        :P('靜止或慢速翻轉時，前一張影像已經消失才出現下一張，因此只會輪流看到單獨的小鳥或空的鳥籠。','When still or flipping slowly, one image fades before the next arrives, so you only see the bird or the empty cage in turn.')
+    })
+    :({
+      title:s.step==='white'?P('視覺疲勞：白紙上浮現互補色「負片後像」','Visual fatigue: complementary afterimage on white paper'):P('凝視中心「＋」字，讓特定色光受器疲勞','Stare at the + cross to fatigue colour receptors'),
+      text:s.step==='white'
+        ?P(s.target==='apple'
+          ?'久看紅蘋果與綠葉後，接收紅光與綠光的受器分別疲勞；移到白紙（反射各種色光）時，疲勞受器反應減弱，腦中便浮現互補色「青綠蘋果＋紅葉」的負片後像。'
+          :'久看黃月亮與藍底後，移到白紙時，疲勞受器反應減弱，腦中便浮現互補色「藍月亮＋黃底」的負片後像。',
+          s.target==='apple'
+          ?'After staring at the red apple and green leaf, those colour receptors fatigue. On white paper, the complementary cyan-green apple and red leaf appear.'
+          :'After staring at the yellow moon on blue, looking at white paper reveals the complementary blue moon on yellow.')
+        :P('請專心盯住左側圖案中央的「＋」字約 15～20 秒不要眨眼或移開，再點選「② 看右側白紙」觀察後像。','Fix your gaze on the center + of the left figure for 15–20 seconds, then select "2. Look at white paper" to observe the afterimage.')
+    }),
+  draw:drawVision}
 ];
+const tabsHost=document.getElementById('lessonTabs');if(tabsHost)tabsHost.style.setProperty('--tab-count','3');
 B.register({id:'nervous',title:P('神經訊息：刺激到反應','Nerve signals: from stimulus to response'),subtitle:P('受器、神經元、動器，與可以親自記錄的反應練習','Receptors, neurons, effectors and your own reaction records'),cover:'assets/covers/biology_nervous_1009_v1.jpg',tabs});
 })();
