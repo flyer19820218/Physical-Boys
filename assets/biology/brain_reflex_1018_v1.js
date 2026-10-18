@@ -64,42 +64,31 @@ function legend(c,items,x,y,w,size=22){for(const [color,p] of items){circle(c,x+
 const choice=(label,key,items)=>({label,items:items.map(([value,text])=>({key,value,label:text}))});
 const stepControls=names=>choice(P('訊息位置','Signal position'),'step',[[-1,P('連續觀察','Continuous')],...names.map((p,i)=>[i,p])]);
 
-// ── brain, sagittal section (face to the left) ─────────────────────────────
-function cerebrumPath(c){c.beginPath();c.moveTo(118,318);c.bezierCurveTo(80,230,130,120,250,100);c.bezierCurveTo(360,80,470,110,505,200);c.bezierCurveTo(525,250,510,300,470,315);c.bezierCurveTo(430,330,400,322,370,318);c.bezierCurveTo(330,350,260,362,200,352);c.bezierCurveTo(160,346,128,338,118,318);c.closePath();}
-function cerebellumPath(c){c.beginPath();c.ellipse(448,352,78,52,-.12,0,TAU);}
-function stemPath(c){c.beginPath();c.moveTo(338,300);c.bezierCurveTo(330,330,318,360,328,392);c.bezierCurveTo(334,420,350,440,354,470);c.lineTo(392,470);c.bezierCurveTo(396,430,404,400,404,360);c.bezierCurveTo(404,330,400,310,396,300);c.closePath();}
-function cordPath(c){c.beginPath();c.moveTo(354,468);c.bezierCurveTo(356,510,360,545,362,578);c.lineTo(386,578);c.bezierCurveTo(388,545,390,510,392,468);c.closePath();}
-function gyri(c){
-  c.save();cerebrumPath(c);c.clip();c.lineCap='round';
-  for(let y=104;y<364;y+=24)for(let x=86;x<536;x+=30){
-    const ox=x+((y/24)%2)*15,a=Math.sin(ox*.05+y*.09)*1.6+Math.cos(y*.031)*1.2,l=22;
-    const x1=ox-Math.cos(a)*l,y1=y-Math.sin(a)*l,x2=ox+Math.cos(a)*l,y2=y+Math.sin(a)*l,mx=ox+Math.sin(a)*10,my=y-Math.cos(a)*10;
-    c.beginPath();c.moveTo(x1,y1);c.quadraticCurveTo(mx,my,x2,y2);c.strokeStyle='#c9627f';c.lineWidth=3.2;c.stroke();
-    c.beginPath();c.moveTo(x1+1.5,y1+2.5);c.quadraticCurveTo(mx+1.5,my+2.5,x2+1.5,y2+2.5);c.strokeStyle='rgba(255,226,233,.55)';c.lineWidth=1.4;c.stroke();
-  }
-  c.restore();
+// ── brain picture with part masks (coordinates in the original 2000×1493 picture) ──
+const BRAIN_PARTS={
+  cerebellum:[[1229,857],[1286,800],[1414,793],[1500,829],[1571,914],[1600,971],[1643,1000],[1671,1086],[1643,1186],[1571,1257],[1471,1293],[1357,1293],[1286,1257],[1257,1171],[1243,1086],[1214,1000],[1207,914]],
+  stem:[[986,829],[1086,800],[1186,800],[1207,886],[1214,1000],[1243,1086],[1257,1171],[1279,1257],[1293,1357],[1300,1443],[1200,1443],[1157,1286],[1114,1229],[1057,1186],[1000,1114],[971,1000],[957,914]],
+  cord:[[1190,1443],[1305,1443],[1305,1493],[1190,1493]]
+};
+const MASKED={};
+function polyPath(g,pts,k){g.moveTo(pts[0][0]*k,pts[0][1]*k);for(const q of pts.slice(1))g.lineTo(q[0]*k,q[1]*k);g.closePath();}
+// A copy of the picture darkened everywhere except the chosen region (keep=null: no darkening).
+function maskedPic(name,id,polys,keepInside){
+  const key=name+'|'+id;if(MASKED[key])return MASKED[key];const im=pic(name);if(!im)return null;
+  const cv=document.createElement('canvas');cv.width=im.naturalWidth;cv.height=im.naturalHeight;const g=cv.getContext('2d');g.drawImage(im,0,0);
+  g.globalCompositeOperation='source-atop';g.fillStyle='rgba(17,38,31,.6)';g.beginPath();
+  if(keepInside)g.rect(0,0,cv.width,cv.height);for(const pts of polys)polyPath(g,pts,name==='brain_sagittal.png'?cv.width/2000:cv.width/1493);
+  g.fill(keepInside?'evenodd':'nonzero');return MASKED[key]=cv;
 }
-function drawBrain(c,{hl=null,t=0,cord=true}={}){
-  const beat=.5+.5*Math.sin(t*4);
-  const finish=(key,path)=>{
-    c.save();path(c);c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();c.restore();
-    if(hl&&hl!==key){c.save();path(c);c.fillStyle='rgba(17,38,31,.58)';c.fill();c.restore();}
-    if(hl===key){c.save();path(c);c.shadowColor=C.yellow;c.shadowBlur=16+12*beat;c.strokeStyle=C.yellow;c.lineWidth=5;c.stroke();c.restore();}
-  };
-  let g;
-  if(cord){c.save();cordPath(c);g=c.createLinearGradient(354,0,392,0);g.addColorStop(0,'#d9a93e');g.addColorStop(.5,'#f8d777');g.addColorStop(1,'#d9a93e');c.fillStyle=g;c.fill();c.restore();finish('cord',cordPath);}
-  c.save();stemPath(c);g=c.createLinearGradient(318,0,406,0);g.addColorStop(0,'#d8b45c');g.addColorStop(.45,'#f6e1a4');g.addColorStop(1,'#cfa64f');c.fillStyle=g;c.fill();c.clip();
-  for(const y of [352,366,380,394,408])line(c,[[318,y],[352,y+5]],'rgba(150,110,40,.55)',2);c.restore();finish('stem',stemPath);
-  c.save();cerebellumPath(c);g=c.createRadialGradient(430,330,8,448,352,92);g.addColorStop(0,'#fcd0a8');g.addColorStop(.55,C.cerebellum);g.addColorStop(1,'#d77c42');c.fillStyle=g;c.fill();c.clip();c.lineCap='round';
-  for(let r=14;r<112;r+=8){c.beginPath();c.arc(398,352,r,-1.15,1.15);c.strokeStyle='rgba(176,88,38,.8)';c.lineWidth=2.4;c.stroke();}
-  line(c,[[398,352],[478,352]],'#fde9d4',8);for(const [x,y] of [[500,318],[510,352],[500,388],[468,322],[468,384]])line(c,[[440,352],[x,y]],'#fde9d4',4);
-  c.restore();finish('cerebellum',cerebellumPath);
-  c.save();cerebrumPath(c);g=c.createRadialGradient(260,170,20,300,230,270);g.addColorStop(0,'#fde0e6');g.addColorStop(.45,C.cerebrum);g.addColorStop(1,'#dd7b95');c.fillStyle=g;c.fill();c.restore();
-  gyri(c);
-  // medial landmarks of a midline section: the band joining the hemispheres, and the deep centre above the brainstem
-  c.save();cerebrumPath(c);c.clip();c.beginPath();c.moveTo(200,268);c.bezierCurveTo(220,212,380,196,428,252);c.lineCap='round';c.strokeStyle='#c46f88';c.lineWidth=24;c.stroke();c.strokeStyle='#fde6eb';c.lineWidth=17;c.stroke();
-  ellipse(c,338,288,40,22,'#f2c0a6','#c98a74',2.5);c.restore();
-  finish('cerebrum',cerebrumPath);
+function brainPic(hl){
+  if(!hl)return pic('brain_sagittal.png');
+  if(hl==='cerebrum')return maskedPic('brain_sagittal.png','cerebrum',[BRAIN_PARTS.cerebellum,BRAIN_PARTS.stem,BRAIN_PARTS.cord],false);
+  return maskedPic('brain_sagittal.png',hl,[BRAIN_PARTS[hl]],true);
+}
+// Draw the brain so that the original pixel (0,0) lands at (x,y) with k canvas px per original px.
+function drawBrainPic(c,x,y,k,hl,t=0){
+  const im=brainPic(hl);if(!im)return;c.drawImage(im,x,y,2000*k,1493*k);
+  if(hl==='cerebellum'||hl==='stem'){c.save();c.beginPath();for(const q of BRAIN_PARTS[hl].map((q,i)=>[x+q[0]*k,y+q[1]*k]))c.lineTo(...q);c.closePath();c.shadowColor=C.yellow;c.shadowBlur=12+8*Math.sin(t*4);c.strokeStyle=rgba(C.yellow,.85);c.lineWidth=3;c.stroke();c.restore();}
 }
 
 // ── Tab 1: three control centres ───────────────────────────────────────────
@@ -109,7 +98,7 @@ const parts=[
  {key:'cerebellum',name:P('小腦','Cerebellum'),text:P('小腦協調肌肉運動、維持身體平衡；不是主導思考與記憶的構造。','The cerebellum coordinates muscle movements and balance; it is not the main centre for thinking and memory.'),
   rows:[['balance',P('維持身體平衡','Keeps the body balanced')],['run',P('協調肌肉運動，動作才流暢','Coordinates muscles for smooth movement')],['nobulb',P('不是主導思考與記憶的地方','Not the main centre for thinking or memory')]]},
  {key:'stem',name:P('腦幹','Brainstem'),text:P('腦幹連接腦與脊髓，參與心跳、呼吸等生命功能，也參與部分頭部反射。','The brainstem connects the brain and spinal cord, helps regulate vital functions such as breathing and heart rate, and mediates some head reflexes.'),
-  rows:[['heart',P('調節心跳','Regulates heart rate')],['lungs',P('調節呼吸','Regulates breathing')],['updown',P('連接腦與脊髓','Links the brain and spinal cord')],['eye',P('參與部分頭部反射（如瞳孔）','Some head reflexes, e.g. pupils')]]}
+  rows:[['heart',P('調節心跳','Regulates heart rate')],['lungs',P('調節呼吸','Regulates breathing')],['updown',P('連接腦與脊髓','Links the brain and spinal cord')],['eye',P('參與部分頭部反射（如瞳孔）','Some head reflexes (pupils)')]]}
 ];
 function icon(c,kind,x,y,t){
   c.save();c.lineCap='round';c.lineJoin='round';
@@ -134,13 +123,13 @@ function drawCross(c,t,y0){
 }
 function drawBrainTab(c,s,t){
   panel(c,20,20,552,560);
-  drawBrain(c,{hl:parts[s.part].key,t});
-  text(c,P('脊髓','Spinal cord'),400,560,22,C.muted);
+  drawBrainPic(c,36,110,.26,parts[s.part].key,t);
+  line(c,[[396,540],[364,500]],C.muted,2);text(c,P('脊髓','Spinal cord'),400,560,22,C.muted);
   text(c,P('◀ 前方（臉）','◀ Front (face)'),40,560,22,C.muted);
-  D.hit(100,90,420,230,'part',0);D.hit(325,300,72,170,'part',2);D.hit(372,318,156,86,'part',1);
-  pill(c,parts[0].name,48,40,{active:s.part===0,anchor:[205,150],hit:['part',0],maxX:560});
-  pill(c,parts[1].name,430,440,{active:s.part===1,anchor:[478,388],hit:['part',1],maxX:560});
-  pill(c,parts[2].name,150,430,{active:s.part===2,anchor:[338,410],hit:['part',2],maxX:560});
+  D.hit(60,120,480,200,'part',0);D.hit(285,318,90,167,'part',2);D.hit(350,316,120,130,'part',1);
+  pill(c,parts[0].name,48,40,{active:s.part===0,anchor:[218,214],hit:['part',0],maxX:560});
+  pill(c,parts[1].name,440,470,{active:s.part===1,anchor:[413,409],hit:['part',1],maxX:560});
+  pill(c,parts[2].name,150,470,{active:s.part===2,anchor:[322,396],hit:['part',2],maxX:560});
   const p=parts[s.part];panel(c,590,20,350,560);
   text(c,p.name,615,74,34,C.yellow);
   let y=100;
@@ -150,21 +139,16 @@ function drawBrainTab(c,s,t){
 
 // ── Tab 2: central and peripheral systems ──────────────────────────────────
 const mirror=pts=>pts.map(([x,y])=>[460-x,y]);
-const ARM=[[230,160],[205,160],[172,166],[150,212],[125,265],[110,320],[100,362]],LEG=[[230,345],[214,360],[200,400],[192,460],[190,510],[188,558]];
-const FINGERS=[[[100,362],[88,388]],[[100,362],[99,392]],[[100,362],[110,389]]];
-const TRUNK_NERVES=[190,214,238,262,286,310].map(y=>[[230,y],[205,y+6],[178,y+16]]);
-const CRANIAL=[[[218,94],[204,108],[192,118]],[[226,96],[220,114]]];
-const PNS=[ARM,LEG,...FINGERS,...TRUNK_NERVES,...CRANIAL].flatMap(p=>[p,mirror(p)]);
-const LIMBS=[ARM,mirror(ARM),LEG,mirror(LEG)];
-function drawBody(c){
-  const body='#27483e',edge='#5d8274';
-  const limbs=[[[[170,160],[125,265],[100,368]],30],[[[290,160],[335,265],[360,368]],30],[[[200,350],[192,460],[188,556]],38],[[[260,350],[268,460],[272,556]],38]];
-  for(const [pts,w] of limbs)line(c,pts,edge,w+5);for(const [pts,w] of limbs)line(c,pts,body,w);
-  line(c,[[230,110],[230,142]],edge,34);line(c,[[230,110],[230,144]],body,28);
-  D.round(c,158,136,144,226,34,body,edge);circle(c,230,76,48,body,edge,2.5);
-  circle(c,100,376,16,body,edge,2);circle(c,360,376,16,body,edge,2);ellipse(c,182,566,24,12,body,edge,2);ellipse(c,278,566,24,12,body,edge,2);
+// Full-body picture (original 1493×2000): k canvas px per original px, placed at (BX,BY).
+const BK=.285,BX=27,BY=5.5,BM=(x,y)=>[BX+x*BK,BY+y*BK];
+const BODY_CNS=[[[757,75],[815,95],[835,150],[815,210],[770,228],[757,1090],[740,1090],[728,228],[690,210],[675,150],[695,95]]];
+const ARM_O=[[714,429],[600,471],[529,543],[486,686],[457,857],[429,1000],[407,1114],[386,1200]],LEG_O=[[743,1000],[700,1086],[664,1171],[650,1357],[657,1514],[650,1643],[643,1786],[636,1871]];
+const flipO=pts=>pts.map(([x,y])=>[1494-x,y]);
+const LIMBS=[ARM_O,flipO(ARM_O),LEG_O,flipO(LEG_O)].map(p=>p.map(q=>BM(...q)));
+function bodyPic(view){
+  if(view==='central')return maskedPic('nervous_system_body.png','cns',BODY_CNS,true);
+  return pic('nervous_system_body.png');
 }
-function smallBrain(c,x,y){ellipse(c,x,y,34,26,C.cerebrum,C.ink,2.5);for(const [a,b,r] of [[-14,-8,9],[4,-12,9],[18,0,8],[-8,8,8],[10,10,7]]){c.beginPath();c.arc(x+a,y+b,r,.3,2.7);c.strokeStyle='#c9627f';c.lineWidth=2;c.stroke();}}
 function drawCordSection(c,cx,cy,s=1){
   c.save();c.translate(cx,cy);c.scale(s,s);
   ellipse(c,0,0,64,52,'#f2d48a',C.ink,3);
@@ -174,10 +158,10 @@ function drawCordSection(c,cx,cy,s=1){
 }
 function drawCnsZoom(c,t){
   text(c,P('腦＋脊髓','Brain + spinal cord'),505,68,30,C.yellow);
-  glow(c,650,300,230,C.yellow,.12+.06*Math.sin(t*3));
-  c.save();c.translate(440,58);c.scale(.7,.7);drawBrain(c,{t});c.restore();
-  pill(c,P('腦','Brain'),830,160,{active:true,anchor:[772,190]});
-  pill(c,P('脊髓','Spinal cord'),790,400,{active:true,anchor:[712,422]});
+  glow(c,700,280,230,C.yellow,.12+.06*Math.sin(t*3));
+  drawBrainPic(c,500,110,.21,null,t);
+  pill(c,P('腦','Brain'),850,130,{active:true,anchor:[836,215]});
+  pill(c,P('脊髓','Spinal cord'),790,440,{active:true,anchor:[762,418]});
   wrap(c,P('中樞負責整合訊息','The CNS integrates signals'),505,525,410,26,C.cyan);
 }
 function drawPnsZoom(c,t){
@@ -205,18 +189,17 @@ function drawBoneZoom(c,t){
 }
 function drawSystem(c,s,t){
   const cns=s.view==='central',pns=s.view==='peripheral',bone=s.view==='bone';
-  panel(c,20,20,440,560);drawBody(c);
-  for(const p of PNS)nerve(c,p,{w:pns?5:3.5,alpha:pns?1:.35});
+  panel(c,20,20,440,560);
+  if(cns)glow(c,240,180,170,C.yellow,.18+.08*Math.sin(t*3));
+  const bp=bodyPic(s.view);if(bp)c.drawImage(bp,BX,BY,1493*BK,2000*BK);
+  if(cns){c.save();c.shadowColor=C.yellow;c.shadowBlur=14+8*Math.sin(t*3);line(c,[BM(748,230),BM(748,1080)],rgba('#ffe58a',.75),4);c.restore();}
   if(pns)LIMBS.forEach((p,i)=>signal(c,[...p].reverse(),((t*.45)+i*.25)%1,C.cyan,7));
-  if(cns)glow(c,230,200,170,C.yellow,.2+.1*Math.sin(t*3));
-  line(c,[[230,98],[230,345]],C.ink,cns?15:12);line(c,[[230,98],[230,345]],cns?'#ffe58a':C.nerve,cns?10:8);
-  smallBrain(c,230,70);
-  if(bone)for(let y=104;y<346;y+=17)D.round(c,218,y,24,13,4,C.bone,C.boneDark);
+  if(bone)for(let y=BM(0,240)[1];y<BM(0,1080)[1];y+=12)D.round(c,231,y,16,9,3,rgba(C.bone,.9),C.boneDark);
   // magnifier from the body to the zoom panel
   c.save();c.setLineDash([8,7]);c.strokeStyle=rgba(C.yellow,.75);c.lineWidth=2.5;
   let a,b;
-  if(cns){c.beginPath();c.roundRect(182,22,96,334,18);c.stroke();a=[278,40];b=[278,350];}
-  else{const [x,y]=pns?[125,265]:[230,250];c.beginPath();c.arc(x,y,30,0,TAU);c.stroke();a=[x+21,y-21];b=[x+21,y+21];}
+  if(cns){c.beginPath();c.roundRect(200,22,80,304,18);c.stroke();a=[280,40];b=[280,320];}
+  else{const [x,y]=pns?BM(457,857):[239,200];c.beginPath();c.arc(x,y,30,0,TAU);c.stroke();a=[x+21,y-21];b=[x+21,y+21];}
   c.beginPath();c.moveTo(...a);c.lineTo(480,40);c.moveTo(...b);c.lineTo(480,560);c.stroke();c.restore();
   panel(c,480,20,460,560);
   if(cns)drawCnsZoom(c,t);else if(pns)drawPnsZoom(c,t);else drawBoneZoom(c,t);
@@ -259,7 +242,7 @@ function drawWithdraw(c,s,t){
   const lift=isReflex?(i===4?ease(u*2):0):1,contract=(i===4)?ease(u*2):isReflex?0:.3,pose=armPose(lift),sens=sensoryPath(pose);
   drawPot(c,t);
   // the brain and the pathways to it
-  c.save();c.translate(428,3);c.scale(.3,.3);drawBrain(c,{hl:isReflex?null:(i===1?'cerebrum':null),t,cord:false});c.restore();
+  drawBrainPic(c,453,49,.07,isReflex?null:(i===1?'cerebrum':null),t);
   if(isReflex){nerve(c,UP,{w:4,alpha:.4,dash:[8,8]});text(c,P('稍後才上傳大腦','Reaches the brain later'),420,74,22,C.muted,'right');}
   else{nerve(c,UP,{w:5});nerve(c,DOWN,{w:5});
     if(i===1){glow(c,518,70,70,C.pink,.45+.2*Math.sin(t*6));pill(c,P('好燙！好痛！','Ouch, hot!'),250,50,{active:true,color:C.pink,size:24,maxX:420});}
@@ -352,7 +335,7 @@ function drawPupil(c,s,t){
   panel(c,520,20,420,560);
   text(c,P('反射路徑：經過腦幹','Reflex path: via the brainstem'),540,62,24,C.yellow);
   c.save();c.setLineDash([6,8]);ellipse(c,775,262,165,130,null,rgba(C.muted,.45),2.5);c.restore();
-  c.save();c.translate(662,124);c.scale(.45,.45);drawBrain(c,{hl:'stem',t,cord:false});c.restore();
+  drawBrainPic(c,711,197,.1,'stem',t);
   if(s.bright){c.save();c.setLineDash([10,8]);c.lineDashOffset=-t*30;for(const dy of [-22,0,22])line(c,[[540,262+dy*1.6],[606,266+dy*.3]],rgba(C.yellow,.7),3);c.restore();}
   text(c,P('光','Light'),548,214,22,C.yellow);
   circle(c,640,268,28,'#f7f3ea',C.ink,2.5);ellipse(c,614,268,7,15,'#7a4f26',C.ink,2);text(c,P('眼','Eye'),640,234,22,C.white,'center');
