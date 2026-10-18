@@ -11,6 +11,10 @@ const C={white:'#f2ecd9',yellow:'#fde047',cyan:'#55e9ff',green:'#4ade80',orange:
 const TAU=Math.PI*2,clamp=n=>Math.max(0,Math.min(1,n)),mix=(a,b,u)=>a+(b-a)*u,ease=u=>1-Math.pow(1-clamp(u),3);
 const rgba=(hex,a)=>{const n=parseInt(hex.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;};
 
+// ── AI teaching illustrations (Gemini, background removed; see brain_reflex_ai_1018/sources.md) ──
+const AI_DIR='assets/biology/brain_reflex_ai_1018/',PICS={};
+function pic(name){let im=PICS[name];if(!im){im=new Image();im.onload=()=>B.draw();im.src=AI_DIR+name;PICS[name]=im;}return im.complete&&im.naturalWidth?im:null;}
+
 // ── drawing kit ────────────────────────────────────────────────────────────
 function line(c,pts,color,w=3){D.line(c,pts,color,w);}
 function circle(c,x,y,r,fill,stroke,w=3){c.beginPath();c.arc(x,y,r,0,TAU);if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}
@@ -193,17 +197,11 @@ function drawPnsZoom(c,t){
 }
 function drawBoneZoom(c,t){
   wrap(c,P('脊椎是骨骼，脊髓藏在裡面','Vertebrae are bone; the cord sits inside'),505,66,415,26,C.yellow);
-  c.save();c.translate(0,-18);
-  const nL=[[668,334],[632,356],[590,384]],nR=mirror(nL).map(([x,y])=>[x+960,y]);
-  drawCordSection(c,710,318,.7);nerve(c,nL,{w:8});nerve(c,nR,{w:8});
-  signal(c,[...nL].reverse(),(t*.5)%1,C.cyan,6);signal(c,[...nR].reverse(),(t*.5+.5)%1,C.cyan,6);
-  const arch=[[646,412],[626,330],[660,246],[710,230],[760,246],[794,330],[774,412]],trL=[[640,318],[574,296]],trR=[[780,318],[846,296]],spine=[[710,234],[710,150]];
-  for(const [p,w] of [[arch,44],[trL,34],[trR,34],[spine,32]])line(c,p,C.boneDark,w);
-  for(const [p,w] of [[arch,36],[trL,26],[trR,26],[spine,24]])line(c,p,C.bone,w);
-  c.save();c.beginPath();c.ellipse(710,430,98,60,0,0,TAU);const g=c.createRadialGradient(690,410,10,710,430,100);g.addColorStop(0,'#fbf5e4');g.addColorStop(1,'#d9cba4');c.fillStyle=g;c.fill();c.strokeStyle=C.boneDark;c.lineWidth=4;c.stroke();c.clip();
-  for(let i=0;i<46;i++){const a=i*2.4,r=(i*37%90);circle(c,710+Math.cos(a)*r,430+Math.sin(a)*r*.58,2.6,'rgba(168,152,122,.55)');}c.restore();
-  c.restore();
-  legend(c,[[C.bone,P('脊椎骨：骨骼，在外保護','Vertebra: bone that protects')],['#f2d48a',P('脊髓：神經組織，在內傳訊','Spinal cord: nervous tissue')],[C.nerve,P('脊神經：由脊髓發出，從骨縫穿出','Spinal nerves: exit between bones')]],505,500,420,22);
+  const vim=pic('vertebra_section.png'),VS=.44,VX=710-500*VS,VY=300-380*VS;
+  if(vim)c.drawImage(vim,VX,VY,1000*VS,746*VS);
+  const nL=[[556,285],[622,291],[657,300]],nR=nL.map(([x,y])=>[1420-x,y]);
+  signal(c,nL,(t*.5)%1,C.cyan,6);signal(c,nR,(t*.5+.5)%1,C.cyan,6);
+  legend(c,[['#e6d6b4',P('脊椎骨：骨骼，在外保護','Vertebra: bone that protects')],['#f3e4dc',P('脊髓：神經組織，在內傳訊','Spinal cord: nervous tissue')],['#efd98a',P('脊神經：由脊髓發出，從骨縫穿出','Spinal nerves: exit between bones')]],505,500,420,22);
 }
 function drawSystem(c,s,t){
   const cns=s.view==='central',pns=s.view==='peripheral',bone=s.view==='bone';
@@ -289,42 +287,37 @@ function drawWithdraw(c,s,t){
 }
 
 // ── Tab 4: knee-jerk reflex ────────────────────────────────────────────────
-const HIP=[250,262],KNEE=[560,262];
-const K_SENS=[[430,238],[392,224],[330,224],[285,220],[262,212]],K_MOTOR=[[262,236],[292,248],[340,254],[400,254],[440,250]];
+const KS=.66,KX=-40,KY=60,KM=(x,y)=>[KX+x*KS,KY+y*KS],PIVOT=KM(645,255);
+const K_SENS=[[500,165],[431,151],[341,136],[277,113],[256,67]].map(p=>KM(...p)),K_MOTOR=[[262,82],[282,131],[362,167],[449,182],[508,179]].map(p=>KM(...p)),K_REC=KM(500,165),K_SPINE=[KM(249,18),KM(262,110)];
 const IN_SENS=[[706,124],[732,116],[767,123]],IN_INTER=[[767,123],[780,170],[753,214]],IN_MOTOR=[[753,214],[730,228],[704,234]];
-function hammer(c,x,y,ang){c.save();c.translate(x,y);c.rotate(ang);c.scale(-1,1);D.round(c,-4,8,8,112,4,'#c8d0cc',C.ink);c.beginPath();c.moveTo(-6,-18);c.lineTo(34,-4);c.quadraticCurveTo(40,0,34,4);c.lineTo(-6,18);c.quadraticCurveTo(-14,0,-6,-18);c.closePath();c.fillStyle=C.orange;c.fill();c.strokeStyle=C.ink;c.lineWidth=2.5;c.stroke();c.restore();}
+function rotAbout(p,o,a){const dx=p[0]-o[0],dy=p[1]-o[1];return[o[0]+dx*Math.cos(a)-dy*Math.sin(a),o[1]+dx*Math.sin(a)+dy*Math.cos(a)];}
 function drawKnee(c,s,t){
   const dt=t-s.start,on=s.tapped&&dt<2.6,dk=dt-.55;
   // the kick follows the motor signal (slowed model); same swing shape as before
   const angle=s.tapped&&dk>0&&dk<2?-.75*Math.sin(Math.min(dk,1)*Math.PI):0;
-  const d=[Math.sin(-angle),Math.cos(angle)],foot=[KNEE[0]+d[0]*180,KNEE[1]+d[1]*180],perp=[d[1],-d[0]];
   const kickC=angle?Math.min(1,-angle/.5):0;
-  // chair, trunk and head
-  line(c,[[214,300],[200,110]],'#6d8a7a',14);line(c,[[230,322],[230,530]],'#6d8a7a',12);line(c,[[500,322],[500,530]],'#6d8a7a',12);
-  c.save();c.setLineDash([8,7]);c.strokeStyle=rgba(C.yellow,.55);c.lineWidth=2.5;c.beginPath();c.moveTo(262,224);c.lineTo(712,132);c.moveTo(262,224);c.lineTo(712,222);c.stroke();c.restore();
-  line(c,[[255,250],[272,112]],'#2a7f73',98);line(c,[[255,250],[272,112]],C.shirt,90);
-  circle(c,284,58,38,C.skin,C.skinDark,3);c.beginPath();c.arc(284,52,40,Math.PI*1.05,Math.PI*1.95);c.strokeStyle='#5b3a29';c.lineWidth=14;c.stroke();
-  nerve(c,[[258,244],[268,112]],{w:7});for(let y=124;y<244;y+=16)line(c,[[255+(244-y)*.08,y],[273+(244-y)*.08,y]],rgba(C.bone,.7),3);
-  D.round(c,205,296,320,26,8,'#6d8a7a','#8fb0a0');
-  // leg
-  const toe=[foot[0]+perp[0]*62+d[0]*8,foot[1]+perp[1]*62+d[1]*8];
-  line(c,[KNEE,foot],C.skinDark,60);line(c,[foot,toe],C.skinDark,44);line(c,[KNEE,foot],C.skin,54);line(c,[foot,toe],C.skin,38);
-  line(c,[HIP,KNEE],C.skinDark,78);line(c,[HIP,KNEE],C.skin,72);line(c,[[236,262],[372,262]],'#35607a',80);
-  circle(c,KNEE[0],KNEE[1],36,C.skin);
-  const g=c.createLinearGradient(0,222,0,266);g.addColorStop(0,'#f08a8a');g.addColorStop(1,'#b8414d');ellipse(c,420,244,128,22+kickC*6,g,'#7d2532',2.5);
-  for(let k=-2;k<=2;k++){c.beginPath();c.moveTo(304,244+k*6);c.quadraticCurveTo(420,244+k*8,536,244+k*6);c.strokeStyle='rgba(255,210,210,.4)';c.lineWidth=1.5;c.stroke();}
-  line(c,[[540,246],[572,248]],C.bone,9);ellipse(c,580,250,14,18,C.bone,C.boneDark,2.5);
-  const tib=[KNEE[0]+d[0]*48+perp[0]*20,KNEE[1]+d[1]*48+perp[1]*20],tap=[(582+tib[0])/2,(266+tib[1])/2];
-  line(c,[[582,266],tib],C.bone,8);
-  // signals along the thigh
+  // table, then the dashed zoom lines behind the leg
+  line(c,[[96,246],[96,540]],'#6d8a7a',12);line(c,[[290,246],[290,540]],'#6d8a7a',12);line(c,[[96,480],[290,480]],'#6d8a7a',8);
+  D.round(c,64,224,246,24,8,'#6d8a7a','#8fb0a0');
+  c.save();c.setLineDash([8,7]);c.strokeStyle=rgba(C.yellow,.55);c.lineWidth=2.5;c.beginPath();c.moveTo(...K_SENS[4]);c.lineTo(712,132);c.moveTo(...K_SENS[4]);c.lineTo(712,222);c.stroke();c.restore();
+  // the leg: lower leg turns about the knee, thigh layer on top hides the joint seam
+  const thigh=pic('leg_thigh.png'),lower=pic('leg_lower.png');
+  // joint flesh under both layers, so no gap opens behind the knee during the kick
+  c.save();c.globalAlpha=.9;ellipse(c,PIVOT[0]-14,PIVOT[1]+8,26,30,'#e8c2b2');c.restore();
+  if(lower){c.save();c.translate(...PIVOT);c.rotate(angle);c.translate(-PIVOT[0],-PIVOT[1]);c.drawImage(lower,KX,KY,1000*KS,746*KS);c.restore();}
+  if(thigh)c.drawImage(thigh,KX,KY,1000*KS,746*KS);
+  if(kickC)glow(c,...KM(420,170),90,C.pink,.35*kickC);
+  // spinal cord in the lower back
+  nerve(c,K_SPINE,{w:7});
   nerve(c,K_SENS,{w:5});nerve(c,K_MOTOR,{w:5,color:'#f7b2c9'});
-  if(on&&dt<.18)glow(c,430,238,44,C.yellow,.6);
-  circle(c,430,238,9,C.yellow,C.ink,2);
+  if(on&&dt<.18)glow(c,...K_REC,44,C.yellow,.6);
+  circle(c,...K_REC,9,C.yellow,C.ink,2);
   if(on){signal(c,K_SENS,dt/.22,C.cyan);signal(c,K_MOTOR,(dt-.5)/.3,C.pink);}
-  // hammer
-  const k=s.tapped?(dt<.1?dt/.1:Math.max(0,1-(dt-.1)/.35)):0,tilt=mix(-.9,-.45,k),off=mix(60,0,k);
-  hammer(c,tap[0]+40*Math.cos(tilt)+off,tap[1]+40*Math.sin(tilt)+off*.2,tilt);
-  if(!s.tapped){line(c,[[612,388],tap],C.muted,2);text(c,P('輕敲：膝蓋下方的肌腱','Tap: tendon below the kneecap'),612,410,22,C.white);}
+  // reflex hammer taps the tendon below the kneecap
+  const tap=rotAbout(KM(680,282),PIVOT,angle),k=s.tapped?(dt<.1?dt/.1:Math.max(0,1-(dt-.1)/.35)):0;
+  const hm=pic('reflex_hammer.png'),tip=[mix(tap[0]+78,tap[0]+2,k),mix(tap[1]-6,tap[1],k)],tilt=mix(-.9,-.35,k);
+  if(hm){c.save();c.translate(...tip);c.rotate(tilt);c.drawImage(hm,0,-29,66,195);c.restore();}
+  if(!s.tapped){line(c,[[500,398],tap],C.muted,2);text(c,P('輕敲：膝蓋下方的肌腱','Tap: tendon below the kneecap'),500,420,22,C.white);}
   // spinal cord inset
   circle(c,800,175,100,'#0f221c',C.edge,3);
   if(on&&dt>.28&&dt<.5)glow(c,800,175,110,C.yellow,.45);
@@ -332,31 +325,12 @@ function drawKnee(c,s,t){
   nerve(c,IN_SENS,{w:5});nerve(c,IN_INTER,{w:5});nerve(c,IN_MOTOR,{w:5,color:'#f7b2c9'});ellipse(c,730,117,10,7,C.nerve,C.ink,2);
   if(on){signal(c,IN_SENS,(dt-.2)/.1,C.cyan,7);signal(c,IN_INTER,(dt-.3)/.1,C.yellow,7);signal(c,IN_MOTOR,(dt-.4)/.1,C.pink,7);}
   const lab=P('脊髓：反射中樞','Spinal cord: reflex centre'),lw=measure(c,lab,22)+28;pill(c,lab,800-lw/2,24,{active:true,size:22});
-  // legend
   legend(c,[[C.yellow,P('肌肉內受器','Receptor in muscle')]],30,572,300);
   legend(c,[[C.cyan,P('感覺訊息進脊髓','Sensory signal to cord')]],340,572,300);
   legend(c,[[C.pink,P('運動訊息回肌肉','Motor signal to muscle')]],650,572,300);
 }
 
 // ── Tab 5: pupil light reflex ──────────────────────────────────────────────
-function eyeShape(c,x,y){c.beginPath();c.moveTo(x-215,y);c.bezierCurveTo(x-120,y-195,x+120,y-195,x+215,y);c.bezierCurveTo(x+120,y+180,x-120,y+180,x-215,y);c.closePath();}
-function drawEye(c,x,y,R,pr){
-  c.save();eyeShape(c,x,y);let g=c.createRadialGradient(x,y,R*.6,x,y,230);g.addColorStop(0,'#fbf8f1');g.addColorStop(1,'#e6cbbf');c.fillStyle=g;c.fill();c.clip();
-  g=c.createRadialGradient(x,y,pr,x,y,R);g.addColorStop(0,'#a0703a');g.addColorStop(.35,'#7a4f26');g.addColorStop(.85,'#4a2f17');g.addColorStop(1,'#24170c');circle(c,x,y,R,g);
-  for(let i=0;i<140;i++){const a=i/140*TAU,w=Math.sin(i*2.3)*.05,m=(pr+R)/2;c.beginPath();c.moveTo(x+Math.cos(a)*(pr+3),y+Math.sin(a)*(pr+3));c.quadraticCurveTo(x+Math.cos(a+w)*m,y+Math.sin(a+w)*m,x+Math.cos(a)*(R-6),y+Math.sin(a)*(R-6));c.strokeStyle=i%3?'rgba(255,214,160,.17)':'rgba(30,18,8,.28)';c.lineWidth=2;c.stroke();}
-  c.save();c.beginPath();c.arc(x,y,pr+(R-pr)*.35,0,TAU);c.strokeStyle='rgba(255,210,150,.35)';c.lineWidth=3;c.setLineDash([6,5]);c.stroke();c.restore();
-  circle(c,x,y,R,null,'#1a1009',5);circle(c,x,y,pr,'#0b1a15');
-  c.globalAlpha=.85;circle(c,x-R*.32,y-R*.36,R*.13,'#ffffff');c.globalAlpha=.5;circle(c,x+R*.2,y+R*.22,R*.05,'#ffffff');c.globalAlpha=1;
-  g=c.createLinearGradient(0,y-160,0,y-60);g.addColorStop(0,'rgba(60,30,20,.45)');g.addColorStop(1,'rgba(60,30,20,0)');c.fillStyle=g;c.fillRect(x-230,y-170,460,110);
-  c.restore();
-  c.save();eyeShape(c,x,y);c.strokeStyle='#3a2418';c.lineWidth=5;c.stroke();
-  c.beginPath();c.moveTo(x-190,y-40);c.bezierCurveTo(x-100,y-230,x+100,y-230,x+190,y-40);c.strokeStyle='rgba(120,70,50,.55)';c.lineWidth=3;c.stroke();
-  const P0=[x-215,y],P1=[x-120,y-195],P2=[x+120,y-195],P3=[x+215,y];c.lineCap='round';
-  for(let i=1;i<14;i++){const u=i/14,v=1-u,px=v*v*v*P0[0]+3*v*v*u*P1[0]+3*v*u*u*P2[0]+u*u*u*P3[0],py=v*v*v*P0[1]+3*v*v*u*P1[1]+3*v*u*u*P2[1]+u*u*u*P3[1];
-    const tx=3*v*v*(P1[0]-P0[0])+6*v*u*(P2[0]-P1[0])+3*u*u*(P3[0]-P2[0]),ty=3*v*v*(P1[1]-P0[1])+6*v*u*(P2[1]-P1[1])+3*u*u*(P3[1]-P2[1]),L=Math.hypot(tx,ty),nx=ty/L,ny=-tx/L;
-    c.beginPath();c.moveTo(px,py);c.quadraticCurveTo(px+nx*12,py+ny*12,px+nx*18+tx/L*8,py+ny*18+ty/L*8);c.strokeStyle='#2a1a12';c.lineWidth=3;c.stroke();}
-  c.restore();
-}
 function lamp(c,x,y,on,t){if(on){glow(c,x,y,70,C.yellow,.5+.1*Math.sin(t*3));for(let i=0;i<8;i++){const a=i*TAU/8;line(c,[[x+Math.cos(a)*26,y+Math.sin(a)*26],[x+Math.cos(a)*34,y+Math.sin(a)*34]],C.yellow,3);}}
   circle(c,x,y-2,18,on?C.yellow:'#5d7068',C.ink,2.5);D.round(c,x-9,y+14,18,12,3,C.muted,C.ink);}
 function drawPupil(c,s,t){
@@ -364,12 +338,16 @@ function drawPupil(c,s,t){
   const R=140,pr=r*R/170;
   D.round(c,20,20,480,560,16,s.bright?'#21402f':'#0d1d18',C.edge);
   if(s.bright){c.save();c.setLineDash([10,9]);c.lineDashOffset=-t*30;for(const [a,b] of [[[86,86],[200,230]],[[96,72],[250,210]],[[74,98],[160,250]]])line(c,[a,b],rgba(C.yellow,.55),3);c.restore();}
-  c.save();c.beginPath();c.roundRect(36,112,448,412,40);const g=c.createRadialGradient(260,320,40,260,320,300);g.addColorStop(0,'#f3cfae');g.addColorStop(1,'#c99470');c.fillStyle=g;c.fill();c.restore();
-  drawEye(c,260,320,R,pr);
-  if(!s.bright){c.save();c.beginPath();c.roundRect(36,112,448,412,40);c.fillStyle='rgba(11,26,21,.38)';c.fill();c.restore();}
+  // eye: bright-light picture as base; the pupil disc grows over it, and the dim-light picture fades in when fully dilated
+  const ES=.5,EX=260-508*ES,EY=320-380*ES,pImg=52+(r-37)/(80-37)*(114-52),prC=pImg*ES;
+  const eb=pic('eye_bright.png'),ed=pic('eye_dim.png');
+  if(eb){c.drawImage(eb,EX,EY,1000*ES,746*ES);
+    const g=c.createRadialGradient(260,320,prC*.86,260,320,prC+2);g.addColorStop(0,'rgba(16,10,8,1)');g.addColorStop(1,'rgba(16,10,8,0)');c.fillStyle=g;c.beginPath();c.arc(260,320,prC+2,0,TAU);c.fill();
+    const k=clamp((pImg-98)/16);if(ed&&k>0){c.globalAlpha=k;c.drawImage(ed,EX,EY,1000*ES,746*ES);c.globalAlpha=1;}
+    circle(c,236,296,6,'rgba(255,255,255,.7)');}
   lamp(c,62,64,s.bright,t);text(c,s.bright?P('較亮','Brighter'):P('較暗','Dimmer'),106,72,24,s.bright?C.yellow:C.muted);
-  pill(c,P('虹膜','Iris'),360,40,{active:true,anchor:[336,230],maxX:490});
-  pill(c,P('中央開口＝瞳孔','Central opening = pupil'),120,536,{active:true,anchor:[260,320+pr-4],maxX:490});
+  pill(c,P('虹膜','Iris'),360,40,{active:true,anchor:[322,242],maxX:490});
+  pill(c,P('中央開口＝瞳孔','Central opening = pupil'),120,536,{active:true,anchor:[260,320+prC-3],maxX:490});
   // the reflex pathway through the brainstem
   panel(c,520,20,420,560);
   text(c,P('反射路徑：經過腦幹','Reflex path: via the brainstem'),540,62,24,C.yellow);
