@@ -273,32 +273,25 @@ function drawSystem(c,s,t){
 // ── Tab 3: withdrawal reflex and later awareness ───────────────────────────
 const reflex=[P('受器接收熱刺激','Receptors detect heat'),P('感覺神經元','Sensory neuron'),P('脊髓整合訊息','Spinal cord integrates'),P('運動神經元','Motor neuron'),P('肌肉收縮、縮手','Muscle contracts: withdraw')];
 const aware=[P('脊髓：上傳訊息','Spinal cord: sends upward'),P('大腦：感覺與決定','Cerebrum: perception and decision'),P('脊髓：傳下控制訊息','Spinal cord: relays commands'),P('運動神經元','Motor neuron'),P('動器：肌肉','Effector: muscle')];
-const SHOULDER=[420,198],ELBOW=[300,330],CORD=[520,318];
-const INTER=[[495,280],[505,312],[486,346]],MOTOR=[[486,346],[456,366],[420,340],[384,292],[362,262]];
+// Arm picture (AI, original 2000×1116) split at the elbow; the forearm layer turns about the elbow.
+const AK=.253,AX=38.4,AY=188.5,AM=(x,y)=>[AX+x*AK,AY+y*AK],ELBOW=AM(1090,575),SHOULDER=AM(1480,215),BICEPS=AM(1270,420),CORD=[520,318];
+const INTER=[[495,280],[505,312],[486,346]],MOTOR=[[486,346],[456,366],[420,340],[384,302],BICEPS];
 const UP=[[498,282],[530,262],[548,226],[552,186],[540,150],[520,92]],DOWN=[[506,92],[524,150],[516,206],[500,252],[490,300],[486,346]];
-function armPose(lift){const L=Math.hypot(135,90),a=Math.atan2(90,-135)+lift*.9,wrist=[ELBOW[0]+Math.cos(a)*L,ELBOW[1]+Math.sin(a)*L],h=a-.45,dir=[Math.cos(h),Math.sin(h)];
-  return{wrist,dir,palm:[wrist[0]+dir[0]*26,wrist[1]+dir[1]*26],tip:[wrist[0]+dir[0]*70,wrist[1]+dir[1]*70]};}
-function sensoryPath(pose){return[pose.tip,pose.palm,pose.wrist,[ELBOW[0]+6,ELBOW[1]-14],[362,250],[410,212],[440,236],[456,262],[478,272],[495,280]];}
+function armPose(lift){const a=lift*.8,R=q=>rotAbout(AM(...q),ELBOW,a);return{a,tip:R([345,1070]),palm:R([470,930]),wrist:R([575,775])};}
+function sensoryPath(pose){return[pose.tip,pose.palm,pose.wrist,ELBOW,AM(1290,380),SHOULDER,[440,248],[456,262],[478,272],[495,280]];}
 function drawPot(c,t){
   // pot on a gas stove (AI picture, 460×498): lid rim lands just under the fingertips
-  const im=pic('hot_pot.png'),k=.36,X=76,Y=417;
-  glow(c,150,541,70+6*Math.sin(t*9),C.orange,.3+.08*Math.sin(t*13));
+  const im=pic('hot_pot.png'),k=.36,X=46,Y=417;
+  glow(c,120,541,70+6*Math.sin(t*9),C.orange,.3+.08*Math.sin(t*13));
   if(im)c.drawImage(im,X,Y,460*k,498*k);
-  c.save();c.lineCap='round';for(const [x,ph] of [[96,0],[118,1.8]]){c.beginPath();for(let n=0;n<=10;n++){const yy=456-n*6-((t*30+ph*10)%18),xx=x+Math.sin(n*.8+t*3+ph)*5;n?c.lineTo(xx,yy):c.moveTo(xx,yy);}c.strokeStyle='rgba(242,236,217,.4)';c.lineWidth=3;c.stroke();}c.restore();
+  c.save();c.lineCap='round';for(const [x,ph] of [[66,0],[88,1.8]]){c.beginPath();for(let n=0;n<=10;n++){const yy=456-n*6-((t*30+ph*10)%18),xx=x+Math.sin(n*.8+t*3+ph)*5;n?c.lineTo(xx,yy):c.moveTo(xx,yy);}c.strokeStyle='rgba(242,236,217,.4)';c.lineWidth=3;c.stroke();}c.restore();
 }
 function drawArm(c,pose,contract){
-  circle(c,SHOULDER[0],SHOULDER[1],34,C.skin,C.skinDark,3);
-  line(c,[SHOULDER,ELBOW],C.skinDark,62);line(c,[ELBOW,pose.wrist],C.skinDark,48);
-  line(c,[SHOULDER,ELBOW],C.skin,56);line(c,[ELBOW,pose.wrist],C.skin,42);
-  const {dir,palm,tip}=pose,n=[-dir[1],dir[0]];
-  for(const k of [-1.5,-.5,.5,1.5]){const base=[palm[0]+n[0]*k*7,palm[1]+n[1]*k*7],end=[tip[0]+n[0]*k*9-dir[0]*Math.abs(k)*6,tip[1]+n[1]*k*9-dir[1]*Math.abs(k)*6];line(c,[base,end],C.skinDark,12);line(c,[base,end],C.skin,8);}
-  const th=[[palm[0]+n[0]*16,palm[1]+n[1]*16],[palm[0]+n[0]*30+dir[0]*14,palm[1]+n[1]*30+dir[1]*14]];line(c,th,C.skinDark,14);line(c,th,C.skin,10);
-  ellipse(c,palm[0],palm[1],28,22,C.skin,C.skinDark,3,Math.atan2(dir[1],dir[0]));
-  const mid=[(SHOULDER[0]+ELBOW[0])/2,(SHOULDER[1]+ELBOW[1])/2],ang=Math.atan2(ELBOW[1]-SHOULDER[1],ELBOW[0]-SHOULDER[0]),ry=15+contract*9;
-  c.save();c.translate(mid[0],mid[1]);c.rotate(ang);
-  const g=c.createLinearGradient(0,-8-ry,0,-8+ry);g.addColorStop(0,'#f08a8a');g.addColorStop(1,'#b8414d');ellipse(c,0,-8,58,ry,g,'#7d2532',2.5);
-  for(let k=-2;k<=2;k++){c.beginPath();c.moveTo(-46,-8+k*ry*.3);c.quadraticCurveTo(0,-8+k*ry*.42,46,-8+k*ry*.3);c.strokeStyle='rgba(255,210,210,.45)';c.lineWidth=1.5;c.stroke();}
-  c.restore();
+  const up=pic('arm_upper.png'),fo=pic('arm_forearm.png');
+  c.save();c.globalAlpha=.9;ellipse(c,ELBOW[0],ELBOW[1],15,19,'#e8c2b2');c.restore();
+  if(fo){c.save();c.translate(...ELBOW);c.rotate(pose.a);c.translate(-ELBOW[0],-ELBOW[1]);c.drawImage(fo,AX,AY,2000*AK,1116*AK);c.restore();}
+  if(up)c.drawImage(up,AX,AY,2000*AK,1116*AK);
+  if(contract)glow(c,...BICEPS,60,C.pink,.35*contract);
 }
 function drawWithdraw(c,s,t){
   const isReflex=s.mode==='reflex',names=isReflex?reflex:aware,color=isReflex?C.cyan:C.pink;
@@ -325,8 +318,8 @@ function drawWithdraw(c,s,t){
   circle(c,rec[0],rec[1],8,C.yellow,C.ink,2);
   if(isReflex){if(i===1)signal(c,sens,u,color);if(i===2)signal(c,INTER,u,color);if(i===3)signal(c,MOTOR,u,color);}
   else{if(i===0)signal(c,UP,u,color);if(i===2)signal(c,DOWN,u,color);if(i===3)signal(c,MOTOR,u,color);}
-  if(i===4){const m=[(SHOULDER[0]+ELBOW[0])/2,(SHOULDER[1]+ELBOW[1])/2];glow(c,m[0],m[1],70,color,.3+.2*Math.sin(t*8));}
-  text(c,P('受器','Receptor'),mix(20,30,lift),mix(410,352,lift),22,C.yellow);
+  if(i===4)glow(c,...BICEPS,70,color,.3+.2*Math.sin(t*8));
+  text(c,P('受器','Receptor'),20,mix(410,330,lift),22,C.yellow);
   text(c,P('肌肉（動器）','Muscle (effector)'),345,230,22,C.white,'right');
   text(c,P('動畫已放慢，不能比較真實傳導速度','Slowed: not a real conduction speed'),254,592,22,C.cyan);
   // the pathway as a vertical chain
