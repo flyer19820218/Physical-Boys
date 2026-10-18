@@ -219,22 +219,22 @@ function drawGrowth(c,s,t){
 // ── Tab 5: nervous vs endocrine ────────────────────────────────────────────
 function drawCompare(c,s,t){
   const nerveOn=s.mode==='nerve';
-  panel(c,20,20,450,560);panel(c,490,20,450,560);
+  panel(c,20,20,450,545);panel(c,490,20,450,545);
   // left: nervous system picture (746×1000), one signal along a fixed path to the hand
-  const NK=.46,NX=245-746*NK/2,NY=80,N=(x,y)=>[NX+x*NK,NY+y*NK];
+  const NK=.5,NX=245-746*NK/2,NY=70,N=(x,y)=>[NX+x*NK,NY+y*NK];
   const nim=pic(BR_DIR+'nervous_system_body.png');if(nim){c.save();c.globalAlpha=nerveOn?1:.35;c.drawImage(nim,NX,NY,746*NK,1000*NK);c.restore();}
   const route=[[378,80],[374,150],[374,214],[357,214],[300,235],[264,271],[243,343],[228,428],[214,500],[203,557],[193,600]].map(p=>N(...p));
   if(nerveOn){for(let k=0;k<2;k++)signal(c,route,mod(t*.45+k*.5),C.cyan,8);const h=route[route.length-1];ring(c,h[0],h[1],16,t,C.cyan);}
-  text(c,P('神經：沿專線傳到特定對象','Nerves: a private line to one target'),245,58,24,nerveOn?C.cyan:C.muted,'center');
-  // right: endocrine body, hormones from the adrenal glands spread through the blood
-  const EK=.6,EX0=715-BODY_SRC[2]*EK/2,EY0=80,EB=(x,y)=>[EX0+(x-BODY_SRC[0])*EK,EY0+(y-BODY_SRC[1])*EK];
-  drawBody(c,EX0,EY0,EK,nerveOn?.35:1);
-  const src=EB(358,470),ends=[[352,95],[200,330],[505,330],[150,690],[555,690],[300,770],[410,770],[330,320]].map(p=>EB(...p));
-  if(!nerveOn){ring(c,...src,14,t,C.orange);ends.forEach((e,i)=>{const mid=[(src[0]+e[0])/2+(i%2?14:-14),(src[1]+e[1])/2];const path=[src,mid,e];for(let k=0;k<2;k++){const u=mod(t*.28+k*.5+i*.13);const [x,y]=along(path,u);circle(c,x,y,6,C.orange,C.ink,1.5);}});
-    const heart=ends[7];ring(c,heart[0],heart[1],14,t+1,C.green);text(c,P('作用對象','Target'),heart[0]+24,heart[1]-14,22,C.green);}
-  text(c,P('內分泌：激素隨血液到全身','Hormones: carried everywhere in blood'),715,58,24,nerveOn?C.muted:C.orange,'center');
+  text(c,P('神經：沿專線傳到特定對象','Nerves: a direct line to one target'),245,58,24,nerveOn?C.cyan:C.muted,'center');
+  // right: full endocrine body at the same figure height as the nervous-system body (both ≈433 px tall)
+  const EK=.396,EX0=715-529*EK/2,EY0=NY+35*NK,EB=(x,y)=>[EX0+x*EK,EY0+y*EK];
+  const eim=pic(E_DIR+'endocrine_body_full.png');if(eim){c.save();c.globalAlpha=nerveOn?.35:1;c.drawImage(eim,EX0,EY0,529*EK,1204*EK);c.restore();}
+  const src=EB(232,436),ends=[[265,60],[60,650],[470,650],[215,1160],[318,1160],[215,880],[318,880],[300,300]].map(p=>EB(...p));
+  if(!nerveOn){ring(c,...src,12,t,C.orange);ends.forEach((e,i)=>{const mid=[(src[0]+e[0])/2+(i%2?14:-14),(src[1]+e[1])/2];const path=[src,mid,e];for(let k=0;k<2;k++){const u=mod(t*.28+k*.5+i*.13);const [x,y]=along(path,u);circle(c,x,y,6,C.orange,C.ink,1.5);}});
+    const heart=ends[7];ring(c,heart[0],heart[1],12,t+1,C.green);pill(c,P('作用對象','Target'),810,heart[1]-60,{active:true,color:C.green,size:22,anchor:heart,maxX:935});pill(c,P('腎上腺','Adrenal gland'),800,src[1]+40,{active:true,color:C.orange,size:22,anchor:src,maxX:935});}
+  text(c,P('內分泌：激素隨血液到全身','Hormones: carried in blood'),715,58,24,nerveOn?C.muted:C.orange,'center');
   D.round(c,40,540,880,0,0);
-  text(c,P('播放速度不代表真實快慢','Playback speed is not real speed'),480,592,22,C.muted,'center');
+  text(c,P('播放速度不代表真實快慢','Playback speed is not real speed'),480,594,22,C.muted,'center');
 }
 
 const tabs=[

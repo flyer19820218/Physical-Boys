@@ -7,6 +7,7 @@
 | 本機檔名 | 用途 | 提示詞重點 | 處理與備註 |
 |---|---|---|---|
 | endocrine_body.png | 全身內分泌腺位置 | Front view of a full human body as a smooth semi-transparent mannequin … pituitary, thyroid, adrenal glands on the kidneys, pancreas | 老師刻意截到大腿（下方無內分泌腺）；卵巢、睪丸位置以圓圈標示，人體圖不畫生殖器官。 |
+| endocrine_body_full.png | 「兩套訊息一起協調」：全身版，與全身神經圖同高並排 | 同上（老師提供的完整版） | 截圖來源，去框、去腳下陰影。 |
 | thyroid_back.png | 甲狀腺與副甲狀腺 | Back view of the human thyroid gland … four small round parathyroid glands | 去白底。 |
 | kidneys_adrenals.png | 腎上腺 | A pair of human kidneys … small triangular adrenal gland sitting on top | 截圖來源，去框。 |
 | liver_pancreas.png | 胰臟、肝臟；血糖調節 | Human liver, gallbladder, pancreas and duodenum, front view | 截圖來源，去框、去地面陰影。 |
