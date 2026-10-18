@@ -140,11 +140,12 @@ function drawBrainTab(c,s,t){
 // ── Tab 2: central and peripheral systems ──────────────────────────────────
 const mirror=pts=>pts.map(([x,y])=>[460-x,y]);
 // Full-body picture (original 1493×2000): k canvas px per original px, placed at (BX,BY).
-const BK=.285,BX=27,BY=5.5,BM=(x,y)=>[BX+x*BK,BY+y*BK];
+const BODY_LAYOUT={wide:{k:.285,x:27,y:5.5},narrow:{k:.25,x:-57,y:42}};
+let BK=.285,BX=27,BY=5.5;const BM=(x,y)=>[BX+x*BK,BY+y*BK];
 const BODY_CNS=[[[757,75],[815,95],[835,150],[815,210],[770,228],[757,1090],[740,1090],[728,228],[690,210],[675,150],[695,95]]];
 const ARM_O=[[714,429],[600,471],[529,543],[486,686],[457,857],[429,1000],[407,1114],[386,1200]],LEG_O=[[743,1000],[700,1086],[664,1171],[650,1357],[657,1514],[650,1643],[643,1786],[636,1871]];
 const flipO=pts=>pts.map(([x,y])=>[1494-x,y]);
-const LIMBS=[ARM_O,flipO(ARM_O),LEG_O,flipO(LEG_O)].map(p=>p.map(q=>BM(...q)));
+const LIMBS_O=[ARM_O,flipO(ARM_O),LEG_O,flipO(LEG_O)];
 function bodyPic(view){
   if(view==='central')return maskedPic('nervous_system_body.png','cns',BODY_CNS,true);
   return pic('nervous_system_body.png');
@@ -164,20 +165,83 @@ function drawCnsZoom(c,t){
   pill(c,P('脊髓','Spinal cord'),790,440,{active:true,anchor:[762,418]});
   wrap(c,P('中樞負責整合訊息','The CNS integrates signals'),505,525,410,26,C.cyan);
 }
-function drawPnsZoom(c,t){
-  wrap(c,P('一條神經＝許多神經纖維成束','One nerve = many nerve fibres in a bundle'),505,66,415,26,C.yellow);
-  const cx=640,cy=300,R=108;
-  for(let i=0;i<9;i++){const y=cy-70+i*17.5,k=i-4,strand=[[846,y],[880,y+k*3],[926,y+k*7]];nerve(c,strand,{w:5});if(i%3===1)signal(c,[...strand].reverse(),((t*.5)+i*.17)%1,C.cyan,6);}
-  c.save();c.beginPath();c.roundRect(cx,cy-90,212,180,22);const g=c.createLinearGradient(0,cy-90,0,cy+90);g.addColorStop(0,'#c8ad72');g.addColorStop(.45,'#ecd9a8');g.addColorStop(1,'#b0924f');c.fillStyle=g;c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();c.restore();
-  for(let i=0;i<5;i++)line(c,[[cx+20,cy-62+i*31],[cx+200,cy-62+i*31]],'rgba(120,90,40,.45)',2);
-  circle(c,cx,cy,R,'#efe0b8',C.ink,3);
-  for(const [fx,fy,fr] of [[cx-40,cy-38,40],[cx+42,cy-30,38],[cx-28,cy+44,40],[cx+48,cy+50,34]]){
-    circle(c,fx,fy,fr,'#d6b56d',C.ink,2);
-    for(let yy=-fr+9;yy<fr;yy+=12.5)for(let xx=-fr+9;xx<fr;xx+=12.5){const ox=xx+((Math.round(yy)%2)?3:0);if(Math.hypot(ox,yy)<fr-7){circle(c,fx+ox,fy+yy,5.4,'#fbe7a6','#8a6a2a',1.2);circle(c,fx+ox,fy+yy,2.1,'#c98d2c');}}
+// ── Peripheral view: the same nerve-bundle cartoon as the "nerve signals" unit (nervous_signals_1014_v1.js),
+// geometry copied unchanged and drawn at NB_K; labels are written at full size outside the scaled drawing.
+const mod=(n,d=1)=>((n%d)+d)%d;
+function eyes(c,x,y,s,mood='happy',look=[0,0]){
+  for(const side of [-1,1]){const ex=x+side*s*1.18;
+    if(mood==='closed'){c.beginPath();c.arc(ex,y-s*.2,s*.75,.15*Math.PI,.85*Math.PI);c.strokeStyle=C.ink;c.lineWidth=s*.34;c.lineCap='round';c.stroke();continue;}
+    ellipse(c,ex,y,s*.86,s,'#fbfdfb',C.ink,Math.max(1.6,s*.2));
+    const pr=mood==='surprised'?s*.36:s*.55;circle(c,ex+look[0]*s*.28,y+look[1]*s*.3,pr,C.ink);circle(c,ex+look[0]*s*.28-pr*.35,y+look[1]*s*.3-pr*.4,pr*.38,'#ffffff');
+    if(mood==='hot')line(c,[[ex+side*s*1.05,y-s*1.12],[ex-side*s*.75,y-s*1.55]],C.ink,s*.3);
   }
-  pill(c,P('神經纖維','Nerve fibre'),505,436,{active:true,anchor:[612,346],size:22});
-  pill(c,P('一條神經','One nerve'),790,160,{active:true,anchor:[800,212],size:22});
-  wrap(c,P('腦神經從腦發出，脊神經從脊髓發出；它們把訊息送進、送出中樞。','Cranial nerves leave the brain and spinal nerves leave the cord; they carry signals into and out of the CNS.'),505,512,415,22,C.white);
+}
+function smile(c,x,y,w,open=false){c.save();c.strokeStyle=C.ink;c.lineWidth=Math.max(2,w*.18);c.lineCap='round';
+  if(open){c.beginPath();c.arc(x,y-w*.15,w*.55,.1*Math.PI,.9*Math.PI);c.closePath();c.fillStyle='#8a2f3c';c.fill();c.stroke();}
+  else{c.beginPath();c.arc(x,y-w*.32,w*.55,.18*Math.PI,.82*Math.PI);c.stroke();}c.restore();}
+function makeDendrites(cx,cy,r,angles,len=70,w0=11,maxDepth=2){
+  const out=[];
+  const grow=(x,y,a,l,w,depth,seed)=>{
+    const x2=x+Math.cos(a)*l,y2=y+Math.sin(a)*l;
+    out.push({pts:[[x,y],[mix(x,x2,.5)+Math.sin(seed)*5*(l/70),mix(y,y2,.5)+Math.cos(seed)*5*(l/70)],[x2,y2]],w,depth});
+    if(depth<maxDepth)for(const d of [-.45,.42])grow(x2,y2,a+d+Math.sin(seed*3)*.1,l*.62,w*.64,depth+1,seed*1.7+d);
+  };
+  angles.forEach((a,i)=>grow(cx+Math.cos(a)*r*.84,cy+Math.sin(a)*r*.84,a,len,w0,0,i+1));
+  return out;
+}
+function drawSomaShape(c,cx,cy,r,colLight,colMain,face=true,phase=.4){
+  const g=c.createRadialGradient(cx-r*.33,cy-r*.36,Math.max(2,r*.1),cx,cy,r*1.2);
+  g.addColorStop(0,colLight);g.addColorStop(1,colMain);
+  // Stationary 5-lobed multipolar soma (no +t rotation!)
+  c.beginPath();
+  for(let i=0;i<=40;i++){const a=i/40*TAU,rad=r*(1+.07*Math.sin(a*5+phase));c[i?'lineTo':'moveTo'](cx+Math.cos(a)*rad,cy+Math.sin(a)*rad);}
+  c.closePath();c.fillStyle=g;c.fill();c.strokeStyle=C.ink;c.lineWidth=Math.max(2.5,r*.058);c.stroke();
+  const nr=r*.33,nx=cx-r*.1,ny=cy+r*.32;
+  circle(c,nx,ny,nr,'#8e6fd1',C.ink,Math.max(1.8,r*.042));
+  circle(c,nx+nr*.25,ny-nr*.2,nr*.3,'#c4b5fd');
+  if(face){eyes(c,cx+r*.07,cy-r*.32,Math.max(3.2,r*.115),'happy',[.6,0]);smile(c,cx+r*.1,cy-r*.07,Math.max(6.5,r*.23));}
+}
+function drawTerminalFan(c,end,prev,color,scale=1,spread=[-0.7,-0.35,0,0.35,0.7]){
+  const ang=Math.atan2(end[1]-prev[1],end[0]-prev[0]);
+  for(const d of spread){
+    const m=[end[0]+Math.cos(ang+d*.7)*22*scale,end[1]+Math.sin(ang+d*.7)*22*scale];
+    const tip=[end[0]+Math.cos(ang+d)*38*scale,end[1]+Math.sin(ang+d)*38*scale];
+    line(c,[end,m,tip],C.ink,Math.max(4,7*scale));
+    line(c,[end,m,tip],color,Math.max(2.5,4.5*scale));
+    circle(c,tip[0],tip[1],Math.max(4,5.8*scale),color,C.ink,Math.max(1.6,2.2*scale));
+  }
+}
+const NERVE_SOMAS=[[114,164],[178,232],[106,304],[178,376],[114,448]];
+const NERVE_FIBRES=NERVE_SOMAS.map(([x,y],i)=>{
+  const lane=300+(i-2)*11,pts=[],tx=862,ty=118+i*70;
+  for(let k=0;k<=12;k++){const u=k/12,a=1-u;pts.push([a*a*a*(x+20)+3*a*a*u*260+3*a*u*u*320+u*u*u*380,a*a*a*y+3*a*a*u*y+3*a*u*u*lane+u*u*u*lane]);}
+  for(let xx=390;xx<=760;xx+=10)pts.push([xx,lane+Math.sin((xx-380)/55+i*1.3)*2.5]);
+  for(let k=1;k<=12;k++){const u=k/12,a=1-u;pts.push([a*a*a*760+3*a*a*u*805+3*a*u*u*832+u*u*u*tx,a*a*a*lane+3*a*a*u*lane+3*a*u*u*ty+u*u*u*ty]);}
+  const dens=makeDendrites(x,y,21,[2.3,2.85,3.4,3.95,1.75,4.55],17,4,1);
+  return{pts,soma:[x,y],end:[tx,ty],dens};});
+const NB_K=.72,NB_X=238,NB_Y=58,NB=(x,y)=>[NB_X+x*NB_K,NB_Y+y*NB_K];
+function drawPnsZoom(c,t){
+  c.save();c.translate(NB_X,NB_Y);c.scale(NB_K,NB_K);
+  for(const f of NERVE_FIBRES){line(c,f.pts,C.ink,9);line(c,f.pts,'#bcd8f3',5);}
+  c.save();c.beginPath();c.roundRect(370,262,404,76,38);c.fillStyle='rgba(233,215,168,.42)';c.fill();c.lineWidth=4;c.strokeStyle='#e9d7a8';c.stroke();c.restore();
+  c.save();c.beginPath();c.roundRect(370,262,404,76,38);c.lineWidth=1.5;c.strokeStyle=C.ink;c.stroke();c.restore();
+  NERVE_FIBRES.forEach((f,i)=>{
+    for(const d of f.dens){line(c,d.pts,C.ink,d.w+2.6);line(c,d.pts,'#bcd8f3',d.w);}
+    drawSomaShape(c,f.soma[0],f.soma[1],21,'#eef6ff','#9fc5ec',true,.4);
+    ellipse(c,f.end[0]+42,f.end[1],20,12,'#f472b6',C.ink,2.5);
+    drawTerminalFan(c,f.end,f.pts[f.pts.length-2],'#bcd8f3',.58,[-.55,-.27,0,.27,.55]);
+    signal(c,f.pts,mod(t*.3+i*.21),C.cyan,7);
+  });
+  line(c,[[600,338],[600,404]],C.yellow,3);circle(c,600,470,64,'#e9d7a8',C.ink,4);
+  for(const [dx,dy] of [[0,0],[-22,-12],[22,-12],[-22,14],[22,14],[0,-26],[0,27],[-38,1],[38,1]])circle(c,600+dx,470+dy,10,'#bcd8f3',C.ink,2);
+  c.restore();
+  text(c,P('神經：很多條神經纖維包在一起','A nerve: many fibres wrapped together'),268,58,24,C.yellow);
+  text(c,P('神經元','Neurons'),262,124,22,'#bcd8f3');line(c,[NB(82,100),NB(102,126)],'#bcd8f3',2);
+  text(c,P('神經纖維','Nerve fibres'),380,150,22,'#bcd8f3');line(c,[[412,158],NB(266,162)],'#bcd8f3',2);
+  text(c,P('神經（外面有膜包住）','Nerve (wrapped together)'),498,240,22,C.yellow);
+  wrap(c,P('橫切面：一條神經裡有很多條神經纖維','Cross-section: one nerve holds many nerve fibres'),728,382,200,22,C.yellow);
+  wrap(c,P('神經：許多神經元的神經纖維集合成束',"Nerve: many neurons' fibres in one bundle"),268,506,650,22,C.white);
+  D.round(c,262,540,420,34,8,C.panel);text(c,P('亮起＝訊息傳到，不是物質整顆移動','Glow = signal arriving, not a substance moving'),274,564,22,C.cyan);
 }
 function drawBoneZoom(c,t){
   wrap(c,P('脊椎是骨骼，脊髓藏在裡面','Vertebrae are bone; the cord sits inside'),505,66,415,26,C.yellow);
@@ -189,19 +253,20 @@ function drawBoneZoom(c,t){
 }
 function drawSystem(c,s,t){
   const cns=s.view==='central',pns=s.view==='peripheral',bone=s.view==='bone';
-  panel(c,20,20,440,560);
+  ({k:BK,x:BX,y:BY}=BODY_LAYOUT[pns?'narrow':'wide']);const PX=pns?250:480;
+  panel(c,20,20,PX-40,560);
   if(cns)glow(c,240,180,170,C.yellow,.18+.08*Math.sin(t*3));
   const bp=bodyPic(s.view);if(bp)c.drawImage(bp,BX,BY,1493*BK,2000*BK);
   if(cns){c.save();c.shadowColor=C.yellow;c.shadowBlur=14+8*Math.sin(t*3);line(c,[BM(748,230),BM(748,1080)],rgba('#ffe58a',.75),4);c.restore();}
-  if(pns)LIMBS.forEach((p,i)=>signal(c,[...p].reverse(),((t*.45)+i*.25)%1,C.cyan,7));
+  if(pns)LIMBS_O.forEach((p,i)=>signal(c,p.map(q=>BM(...q)).reverse(),((t*.45)+i*.25)%1,C.cyan,7));
   if(bone)for(let y=BM(0,240)[1];y<BM(0,1080)[1];y+=12)D.round(c,231,y,16,9,3,rgba(C.bone,.9),C.boneDark);
   // magnifier from the body to the zoom panel
   c.save();c.setLineDash([8,7]);c.strokeStyle=rgba(C.yellow,.75);c.lineWidth=2.5;
   let a,b;
   if(cns){c.beginPath();c.roundRect(200,22,80,304,18);c.stroke();a=[280,40];b=[280,320];}
-  else{const [x,y]=pns?BM(457,857):[239,200];c.beginPath();c.arc(x,y,30,0,TAU);c.stroke();a=[x+21,y-21];b=[x+21,y+21];}
-  c.beginPath();c.moveTo(...a);c.lineTo(480,40);c.moveTo(...b);c.lineTo(480,560);c.stroke();c.restore();
-  panel(c,480,20,460,560);
+  else{const [x,y]=pns?BM(457,857):[239,200];c.beginPath();c.arc(x,y,pns?24:30,0,TAU);c.stroke();a=[x+21,y-21];b=[x+21,y+21];}
+  c.beginPath();c.moveTo(...a);c.lineTo(PX,40);c.moveTo(...b);c.lineTo(PX,560);c.stroke();c.restore();
+  panel(c,PX,20,940-PX,560);
   if(cns)drawCnsZoom(c,t);else if(pns)drawPnsZoom(c,t);else drawBoneZoom(c,t);
 }
 
