@@ -215,12 +215,11 @@ function armPose(lift){const L=Math.hypot(135,90),a=Math.atan2(90,-135)+lift*.9,
   return{wrist,dir,palm:[wrist[0]+dir[0]*26,wrist[1]+dir[1]*26],tip:[wrist[0]+dir[0]*70,wrist[1]+dir[1]*70]};}
 function sensoryPath(pose){return[pose.tip,pose.palm,pose.wrist,[ELBOW[0]+6,ELBOW[1]-14],[362,250],[410,212],[440,236],[456,262],[478,272],[495,280]];}
 function drawPot(c,t){
-  glow(c,140,500,110,C.orange,.22);
-  for(let i=0;i<6;i++){const x=84+i*22,h=24+7*Math.sin(t*9+i*1.7);for(const [k,col] of [[1,C.orange],[.55,C.yellow]]){c.beginPath();c.moveTo(x-9*k,560);c.quadraticCurveTo(x-6*k,560-h*.6*k,x,560-h*k);c.quadraticCurveTo(x+6*k,560-h*.6*k,x+9*k,560);c.closePath();c.fillStyle=col;c.fill();}}
-  D.round(c,62,558,156,16,5,'#3d4f49','#6d8a7a');
-  c.save();c.beginPath();c.roundRect(70,470,140,80,12);const g=c.createLinearGradient(70,0,210,0);g.addColorStop(0,'#8a9a96');g.addColorStop(.35,'#e3eae8');g.addColorStop(1,'#6f7f7b');c.fillStyle=g;c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();c.restore();
-  line(c,[[210,490],[252,478]],'#2f3b37',11);ellipse(c,140,469,76,12,'#c9d3d1',C.ink,3);circle(c,140,457,7,'#2f3b37');
-  c.save();c.lineCap='round';for(const [x,ph] of [[92,0],[114,1.8],[200,3.1]]){c.beginPath();for(let k=0;k<=12;k++){const yy=452-k*6-((t*30+ph*10)%18),xx=x+Math.sin(k*.8+t*3+ph)*5;k?c.lineTo(xx,yy):c.moveTo(xx,yy);}c.strokeStyle='rgba(242,236,217,.45)';c.lineWidth=3;c.stroke();}c.restore();
+  // pot on a gas stove (AI picture, 460×498): lid rim lands just under the fingertips
+  const im=pic('hot_pot.png'),k=.36,X=76,Y=417;
+  glow(c,150,541,70+6*Math.sin(t*9),C.orange,.3+.08*Math.sin(t*13));
+  if(im)c.drawImage(im,X,Y,460*k,498*k);
+  c.save();c.lineCap='round';for(const [x,ph] of [[96,0],[118,1.8]]){c.beginPath();for(let n=0;n<=10;n++){const yy=456-n*6-((t*30+ph*10)%18),xx=x+Math.sin(n*.8+t*3+ph)*5;n?c.lineTo(xx,yy):c.moveTo(xx,yy);}c.strokeStyle='rgba(242,236,217,.4)';c.lineWidth=3;c.stroke();}c.restore();
 }
 function drawArm(c,pose,contract){
   circle(c,SHOULDER[0],SHOULDER[1],34,C.skin,C.skinDark,3);
@@ -264,7 +263,7 @@ function drawWithdraw(c,s,t){
   if(i===4){const m=[(SHOULDER[0]+ELBOW[0])/2,(SHOULDER[1]+ELBOW[1])/2];glow(c,m[0],m[1],70,color,.3+.2*Math.sin(t*8));}
   text(c,P('受器','Receptor'),mix(20,30,lift),mix(410,352,lift),22,C.yellow);
   text(c,P('肌肉（動器）','Muscle (effector)'),345,230,22,C.white,'right');
-  text(c,P('動畫已放慢，不能比較真實傳導速度','Slowed: not a real conduction speed'),240,592,22,C.cyan);
+  text(c,P('動畫已放慢，不能比較真實傳導速度','Slowed: not a real conduction speed'),254,592,22,C.cyan);
   // the pathway as a vertical chain
   names.forEach((p,k)=>{const y=30+k*106;if(k){arrow(c,795,y-20,795,y-2,k<=i?color:C.edge,3.5);}node(c,p,650,y,290,84,k===i,color);});
 }

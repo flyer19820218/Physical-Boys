@@ -12,5 +12,6 @@
 | vertebra_section.png | 脊椎骨與脊髓橫切面 | Medical illustration of a human vertebra cross-section seen from above, showing the spinal cord inside the vertebral canal with the butterfly-shaped gray matter, and spinal nerves exiting on both sides … No text, no labels. Plain solid white background. | **科學修正：原圖脊髓上下顛倒**（深的前正中裂朝向棘突、細長的後角朝向椎體）。已將脊髓橢圓區域上下翻轉，使前正中裂朝向椎體；骨骼與神經未改。之後去白底。 |
 | brain_sagittal.png | 腦的正中剖面（大腦、小腦、腦幹） | Medical illustration of a human brain, mid-sagittal section, side view facing left … No text, no labels, no arrows. Plain solid white background. | 去白底。點選構造時，以手描多邊形把其他區域壓暗（大腦／小腦／腦幹）。也用於中樞放大、縮手反射與瞳孔反射的小腦圖。 |
 | nervous_system_body.png | 全身神經系統（中樞與周圍神經） | Medical illustration of the human nervous system, full body front view … No text, no labels. Plain solid white background. | 去白底。「腦與脊髓」時壓暗腦與脊髓以外的部分；周圍神經的訊息光點與脊椎骨塊由 Canvas 疊加。 |
+| hot_pot.png | 縮手反射：瓦斯爐上的燙鍋 | Realistic illustration of a stainless steel cooking pot with a lid on a small portable gas stove, blue and orange flames under the pot, a little steam rising from the lid, side view. No hands, no people, no text. Plain solid white background. | 去灰白底、去除地面陰影、裁切；Canvas 另加火光閃爍與蒸氣動畫。 |
 
 處理程式：去背以「與邊框相連的近白區域」為背景，依亮度轉為透明度並去除白邊；原圖保留於老師端。
