@@ -13,8 +13,8 @@
 | liver_pancreas.png | 胰臟、肝臟；血糖調節 | Human liver, gallbladder, pancreas and duodenum, front view | 截圖來源，去框、去地面陰影。 |
 | islet.png | 胰島 | Microscopic illustration of pancreatic tissue … islet of Langerhans … capillary | 截圖來源，去框。中央淺色細胞群為胰島，周圍為腺泡。 |
 | ovaries.png | 卵巢 | Human female reproductive organs, front view: uterus, fallopian tubes and two ovaries | 去白底。 |
-| testes.png | 睪丸 | Anatomical illustration of the two human testes inside the scrotum, front cross-section view | 截圖暫存版，待原始檔替換。 |
-| frog_stage1–5.png | 蛙的發育 | Five stages of frog metamorphosis in one row … | 截圖暫存版，逐階段裁切；待原始檔替換。 |
-| butterfly_stage1–4.png | 蝴蝶的發育 | Four stages of butterfly complete metamorphosis in one row … | 截圖暫存版，逐階段裁切；待原始檔替換。 |
+| testes.png | 睪丸 | Anatomical illustration of the two human testes inside the scrotum, front cross-section view | 老師放大後截圖（Gemini 無法下載原檔），去框。 |
+| frog_stage1–5.png | 蛙的發育 | Five stages of frog metamorphosis in one row … | 老師放大後截圖（Gemini 無法下載原檔），去框、逐階段裁切、去腳下陰影。 |
+| butterfly_stage1–4.png | 蝴蝶的發育 | Four stages of butterfly complete metamorphosis in one row … | 老師放大後截圖（Gemini 無法下載原檔），去框、逐階段裁切、去腳下陰影。 |
 
 腦垂腺放大圖與全身神經圖沿用 ../brain_reflex_ai_1018/（brain_sagittal.png、nervous_system_body.png）。
