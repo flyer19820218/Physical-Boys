@@ -18,4 +18,4 @@
 | mint_plant.png | 營養器官繁殖觀察：薄荷 | Whole mint plant in a pot | 去白底（只畫植株，不畫觀察結果） |
 | kalanchoe_plant.png | 營養器官繁殖觀察：落地生根 | Whole Kalanchoe pinnata plant in a pot | 去白底（只畫植株，不畫觀察結果） |
 
-- 待補：香蕉與吸芽。
+| banana_suckers.png | 兩種生殖與香蕉案例：吸芽 | Banana plant with fruit bunch, young suckers growing from the base of the mother plant | 去白底與葉間白縫 |
