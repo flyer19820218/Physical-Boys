@@ -201,7 +201,8 @@ function drawAnimals(c,s,t){
 }
 
 // ── skin picture landmarks (skin_section.png 687×596) ──────────────────────
-const SK={vessels:[[8,170],[60,205],[130,262],[260,245],[380,232],[470,215],[580,198],[680,185]],pore:[250,140],gland:[265,410],
+// vessels: the front face only (x ≥ 140); the slanted left face is a cut surface, so no flow is drawn there.
+const SK={vessels:[[142,266],[260,247],[380,233],[470,216],[580,199],[680,186]],pore:[250,140],gland:[265,410],
   muscle:[[480,330],[560,250]]};
 function skinPic(c,x,y,w,file='skin_section.png',alpha=1){const im=pic(T_DIR+file);if(!im)return null;const k=w/687;c.save();c.globalAlpha=alpha;c.drawImage(im,x,y,687*k,596*k);c.restore();return(px,py)=>[x+px*k,y+py*k];}
 // The skin picture fades into a copy whose vessels are widened (heat) or narrowed (cold); only the vessels differ.
