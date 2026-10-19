@@ -12,4 +12,10 @@
 | potato_sprouts.png | 根、莖、葉繁殖：馬鈴薯（塊莖） | Potato tuber with sprouts growing from its eyes | 去白底與陰影 |
 | sweet_potato_root.png | 根、莖、葉繁殖：番薯（塊根） | Sweet potato storage root with leafy shoots at one end and roots | 去白底、根間白縫與陰影 |
 
-- 待補：番薯莖插枝、蝴蝶蘭、組織培養瓶、薄荷、落地生根植株、香蕉與吸芽。
+| sweet_potato_cutting.png | 根、莖、葉繁殖：番薯（莖） | Cut sweet potato vine, lower stem buried, new roots from the nodes | 去白底與陰影 |
+| orchid_pot.png | 組織培養：蝴蝶蘭 | Pink Phalaenopsis in a white pot | 去白底（保留白色花盆） |
+| culture_flasks.png | 組織培養：培養瓶 | Three glass culture flasks with medium and tiny orchid plantlets | 去白底；玻璃內部改為淡色半透明，避免 JPEG 雜點 |
+| mint_plant.png | 營養器官繁殖觀察：薄荷 | Whole mint plant in a pot | 去白底（只畫植株，不畫觀察結果） |
+| kalanchoe_plant.png | 營養器官繁殖觀察：落地生根 | Whole Kalanchoe pinnata plant in a pot | 去白底（只畫植株，不畫觀察結果） |
+
+- 待補：香蕉與吸芽。
