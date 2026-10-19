@@ -403,13 +403,13 @@ function drawSpecies(c,s,t){
   const q=SPECIES.find(o=>o.id===s.species)||SPECIES[0],tt=Math.max(0,t-s.start),z=ease(tt/.8);
   panel(c,20,20,500,270);
   const f=place(c,A_DIR+q.file,30,30,480,250,{cover:!!q.cover});
+  const ZR=[20,306,920,274];panel(c,...ZR);
+  const inner=[30,316,900,254];
+  if(f){const box=f.rect(q.box);dashedBox(c,box);connectors(c,box,lerpRect(box,inner,z),.55);}
   panel(c,540,20,400,270);
   text(c,q.name,740,58,26,C.yellow,'center');
   q.route.forEach((p,i)=>{const y=74+i*52;if(i)arrow(c,740,y-12,740,y+1,C.pink,4);node(c,p,560,y,360,40,i===0||i===3,i===0?C.pink:C.cyan);});
   // the close-up, opened from the boxed region
-  const ZR=[20,306,920,274];panel(c,...ZR);
-  const inner=[30,316,900,254];
-  if(f){const box=f.rect(q.box);dashedBox(c,box);connectors(c,box,lerpRect(box,inner,z),.55);}
   c.save();c.beginPath();c.roundRect(...inner,12);c.clip();
   c.globalAlpha=z;q.zoom(c,inner,t);c.restore();
   D.round(c,...inner,12,null,rgba(C.yellow,.8));
