@@ -252,7 +252,7 @@ function drawMeiosis(c,s,t){
 }
 
 // ── Tab 5: one set from each gamete, two sets in the zygote ───────────────
-const SPECIES=[{name:P('人類','Human'),body:46,n:23,file:'assets/biology/temperature_ai_1018/body_urinary.png',grey:true},{name:P('豌豆','Pea'),body:14,n:7,file:CD+'pea_plant.png'},{name:P('黑猩猩','Chimpanzee'),body:48,n:24,file:'assets/biology/responses_ai_1018/chimp_termites.jpg',cover:true}];
+const SPECIES=[{name:P('人類','Human'),body:46,n:23,file:'assets/biology/temperature_ai_1018/body_urinary.png',grey:true},{name:P('豌豆','Pea'),body:14,n:7,file:CD+'pea_plant.png?v=20261019b'},{name:P('黑猩猩','Chimpanzee'),body:48,n:24,file:'assets/biology/responses_ai_1018/chimp_termites.jpg',cover:true}];
 function glyphs(c,cx,cy,R,n,paired,colors=[PINK,CYAN],a=1){
   const cols=Math.ceil(Math.sqrt(n)*1.25),rows=Math.ceil(n/cols),sx=R*1.38/cols,sy=R*1.3/rows;
   c.save();c.globalAlpha=a;
