@@ -215,18 +215,18 @@
   }
 
   const artwork = [
-    { file: 'skin_original.png', name: bi('康軒原圖：皮膚與黏膜阻隔', 'Kang Hsuan artwork: skin and mucosal barriers'), page: 114, figure: '3-25', crop: [0.20, 0.18, 0.43, 0.73] },
-    { file: 'phagocyte_original.png', name: bi('康軒原圖：突破屏障與吞噬', 'Kang Hsuan artwork: barrier breach and phagocytosis'), page: 115, figure: '3-26A', crop: [0.45, 0.19, 0.43, 0.73] },
-    { file: 'inflammation_original.png', name: bi('康軒原圖：局部發炎與白血球聚集', 'Kang Hsuan artwork: inflammation and cell recruitment'), page: 115, figure: '3-26B', crop: [0.36, 0.12, 0.49, 0.70] },
-    { file: 'antibody.png', name: bi('康軒原圖：專一性防禦的兩種作用', 'Kang Hsuan artwork: two specific defense mechanisms'), page: 116, figure: '3-27', crop: [0.35, 0.09, 0.61, 0.80] },
-    { file: 'antibody.png', name: bi('康軒原圖：先回顧專一性防禦', 'Kang Hsuan artwork: recall target-specific defenses'), page: 116, figure: '3-27', crop: [0.35, 0.09, 0.61, 0.80] }
+    { file: 'skin_original.png', name: bi('課本原圖：皮膚與黏膜阻隔', 'Textbook artwork: skin and mucosal barriers'), page: 114, figure: '3-25', crop: [0.20, 0.18, 0.43, 0.73] },
+    { file: 'phagocyte_original.png', name: bi('課本原圖：突破屏障與吞噬', 'Textbook artwork: barrier breach and phagocytosis'), page: 115, figure: '3-26A', crop: [0.45, 0.19, 0.43, 0.73] },
+    { file: 'inflammation_original.png', name: bi('課本原圖：局部發炎與白血球聚集', 'Textbook artwork: inflammation and cell recruitment'), page: 115, figure: '3-26B', crop: [0.36, 0.12, 0.49, 0.70] },
+    { file: 'antibody.png', name: bi('課本原圖：專一性防禦的兩種作用', 'Textbook artwork: two specific defense mechanisms'), page: 116, figure: '3-27', crop: [0.35, 0.09, 0.61, 0.80] },
+    { file: 'antibody.png', name: bi('課本原圖：先回顧專一性防禦', 'Textbook artwork: recall target-specific defenses'), page: 116, figure: '3-27', crop: [0.35, 0.09, 0.61, 0.80] }
   ];
   const bookCaptions = [
     bi('這是課本的皮膜屏障示意，外側病原體與內側組織被分開。角色和箭頭是教學比喻，並不是顯微實拍。切到模型，觀察完整、破損與呼吸道黏膜的差別。', 'This textbook illustration separates outside microbes from inside tissue. Characters and arrows are teaching metaphors, not microscopy. Switch to the model to compare intact skin, a break and airway mucosa.'),
     bi('先找皮膜的缺口，再看病原體進入後，白血球如何伸出細胞膜包圍它。漫畫嘴巴是吞噬的比喻，白血球並沒有嘴巴；新增模型分段顯示移出血管、膜包圍、閉合與囊內分解。', 'Locate the barrier opening and white cells enclosing invaders. The cartoon mouth is a metaphor: white blood cells do not have mouths. The model separates vessel exit, membrane enclosure, sealing and degradation inside a vesicle.'),
     bi('課本把皮膚表面的局部紅腫，和下方血管、白血球聚集放在一起。先對照整張圖，再用模型逐項比較血流增加、液體滲出與白血球移動。', 'The textbook connects surface redness and swelling with the vessel and cell recruitment below. Compare the whole figure, then separate blood delivery, fluid leakage and cell movement in the model.'),
     bi('課本左側表示處理受感染細胞，右側表示抗體作用。炮台、武器與表情是擬人比喻；真正抗體是會結合特定抗原部位的蛋白質，不是射擊子彈。模型顯示結合與協助清除。', 'The left panel represents action on infected cells and the right antibody action. Weapons and expressions are metaphors. Actual antibodies are proteins that bind particular antigenic sites, not projectiles. The model shows binding and assisted removal.'),
-    bi('先用圖 3-27 回顧「目標要相符」。本頁新畫的曲線延伸課本第 117 頁的記憶概念，並不是從此原圖擷取的實測圖。切到模型比較遇甲、再遇甲與改遇乙。', 'Use figure 3-27 to recall target matching. This tab’s new curves explain the memory concept on page 117; they are not measured graphs extracted from this artwork. Compare A, A again, and a different target B in the model.')
+    bi('先用課本原圖回顧「目標要相符」。本頁新畫的曲線延伸課本的記憶概念，並不是從此原圖擷取的實測圖。切到模型比較遇甲、再遇甲與改遇乙。', 'Use the textbook artwork to recall target matching. This tab’s new curves explain the textbook memory concept; they are not measured graphs extracted from this artwork. Compare A, A again, and a different target B in the model.')
   ];
   function label(ctx, D, pair, x, y, max = 300, color = C.white, size = 22) {
     return textLines(ctx, D.tr(pair), x, y, max, size, color);
@@ -258,7 +258,7 @@
       if (fitted) D.hit(fitted.x, fitted.y, fitted.w, fitted.h, 'view', 'focus');
       else label(ctx, D, bi('原圖載入中', 'Loading original artwork'), 330, 275, 300);
     }
-    footer(ctx, D, bi(`康軒｜課本第 ${a.page} 頁，圖 ${a.figure}｜點原圖可放大`, `Kang Hsuan | textbook p. ${a.page}, fig. ${a.figure} | tap to zoom`));
+    footer(ctx, D, bi('課本原圖｜點原圖可放大', 'Textbook original | tap to zoom'));
     D.status(bi('課本原圖：靜態觀察；互動過程請選「模型」', 'Original artwork: static observation; select Model for processes'));
     return true;
   }

@@ -137,11 +137,11 @@
         if(s.view===1&&pics.length){
           const p=selected(s);c.fillStyle=C.bg;c.fillRect(0,0,960,600);text(c,D,p.name,28,36,904,24,C.yellow);
           D.image(c,p.file,24,84,912,426);
-          text(c,D,P(`課本原圖｜第 ${p.page} 頁・獨立顯示，未疊加模型`,`Textbook original | p. ${p.page}; displayed separately`),28,552,904,22,C.muted);
+          text(c,D,P(`課本原圖・獨立顯示，未疊加模型`,`Textbook original; displayed separately`),28,552,904,22,C.muted);
         }else def.draw(c,s,Math.max(0,finite(time)),D);
         c.restore();
       },
-      explain(s){if(s.view===1&&pics.length){const p=selected(s);return {title:p.name,text:p.text||P('觀察課本原圖，再切回模型比較。原圖依老師回報的康軒使用同意提供，非開放授權。','Observe the textbook original, then compare with the model. Permission is reported by the teacher; this is not an open licence.')};}return def.explain(s);}
+      explain(s){if(s.view===1&&pics.length){const p=selected(s);return {title:p.name,text:p.text||P('觀察課本原圖，再切回模型比較。原圖依老師回報的使用同意提供，非開放授權。','Observe the textbook original, then compare with the model. Permission is reported by the teacher; this is not an open licence.')};}return def.explain(s);}
     };
   }
   const setChoice=(s,k,v,ranges)=>{if(Object.hasOwn(ranges,k)){const [a,b]=ranges[k];s[k]=clamp(Math.round(finite(v,a)),a,b);s.elapsed=0;}};
