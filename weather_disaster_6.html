@@ -2734,8 +2734,20 @@
       const yy = y + 300 + i * 48, on = i === CS.lv;
       c.fillStyle = on ? 'rgba(77,210,255,0.22)' : 'rgba(246,243,234,0.05)'; e_rr(c, L, yy, R - L, 40, 8); c.fill();
       if (on) { c.strokeStyle = AF.COLD; c.lineWidth = 2; e_rr(c, L, yy, R - L, 40, 8); c.stroke(); }
-      wwTxt(c, tr(q.zh, q.en), L + 10, yy + 26, on ? AF.COLD : WW.WHITE, 16, 'left', 128);
-      wwTxt(c, tr(q.rz.replace('臺北最低溫', '').trim(), q.re.replace('Taipei low ', '')), R - 10, yy + 26, on ? AF.COLD : WW.DIM, 15, 'right', 140);
+      const nm = tr(q.zh, q.en), rng = tr(q.rz.replace('臺北最低溫', '').trim(), q.re.replace('Taipei low ', '')), nc = on ? AF.COLD : WW.WHITE;
+      c.font = wwFont(15); const nmax = R - L - 20 - c.measureText(rng).width - 10;   /* 名稱可用寬度：不壓到右邊的溫度範圍 */
+      c.font = wwFont(16);
+      if (c.measureText(nm).width <= Math.max(128, nmax)) wwTxt(c, nm, L + 10, yy + 26, nc, 16, 'left', 128);
+      else {   /* 英文名稱太長：改 14 px；一行放得下就維持原位，放不下才平均分成兩行（仍在 40 px 高的列內） */
+        c.font = wwFont(14); const words = nm.split(' ');
+        if (c.measureText(nm).width <= nmax) wwTxt(c, nm, L + 10, yy + 26, nc, 14);
+        else {
+          let best = 1, bw = 1e9;
+          for (let k = 1; k < words.length; k++) { const w = Math.max(c.measureText(words.slice(0, k).join(' ')).width, c.measureText(words.slice(k).join(' ')).width); if (w < bw) { bw = w; best = k; } }
+          wwTxt(c, words.slice(0, best).join(' '), L + 10, yy + 17, nc, 14); wwTxt(c, words.slice(best).join(' '), L + 10, yy + 32, nc, 14);
+        }
+      }
+      wwTxt(c, rng, R - 10, yy + 26, on ? AF.COLD : WW.DIM, 15, 'right', 140);
     });
   }
   function csGo(k) { CS.lv = k; csUI(); }
