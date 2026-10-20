@@ -360,6 +360,7 @@ function drawSexKey(c,k){
   text(c,P('第 1～22 對','Pairs 1–22: autosomes'),44,244,22,C.white);text(c,P('體染色體，男女都一樣','same in both sexes'),44,278,22,C.muted);
   D.round(c,30,316,280,112,10,'rgba(253,224,71,.1)',rgba(C.yellow,.7));
   const h23=wrap(c,P('第 23 對：性染色體','Pair 23: sex chromosomes'),44,346,252,22,C.yellow,28);text(c,P('女生 XX　男生 XY','Female XX, male XY'),44,346+h23+(h23>28?6:10),22,C.white);
+  if(h23<=28)text(c,P('Y 比 X 小很多','Y is much smaller than X'),44,414,22,C.muted); // English: the two-line title leaves no room; the caption says it
   D.round(c,30,438,280,138,10,k>=1?'rgba(85,233,255,.08)':'rgba(11,26,21,.45)',k>=1?rgba(C.cyan,.6):C.edge);
   text(c,P('配子只有 23 條','Gametes have 23'),44,468,22,C.white);
   text(c,P('精子：22＋X 或 22＋Y','Sperm: 22+X or 22+Y'),44,504,22,SPERM);text(c,P('卵：22＋X','Egg: 22+X'),44,540,22,EGG);
