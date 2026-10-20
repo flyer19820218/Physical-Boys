@@ -44,7 +44,7 @@
   }
   function paintMount(){
     active('mountChoices',mount.material,i=>materials[i][0]);
-    $('mountMaterial').textContent=mount.material==='elodea'?tr('清水＋薄葉片；保留葉綠體原有綠色。','Water and a thin leaf; retain natural green chloroplasts.'):tr('依老師講義：先滴一滴亞甲藍，再放標本。','Follow the handout: methylene blue first, then the specimen.');
+    $('mountMaterial').textContent=mount.material==='elodea'?tr('清水＋薄葉片；保留葉綠體原有綠色。','Water and a thin leaf; retain natural green chloroplasts.'):tr('先滴一滴亞甲藍，再放標本。','Methylene blue first, then the specimen.');
     const list=$('mountSteps');list.replaceChildren();steps.forEach((s,i)=>{const li=document.createElement('li');li.textContent=tr(...s);li.className=i<mount.step?'done':i===mount.step?'current':'';list.append(li);});
     const next=$('mountNext');next.disabled=mount.busy||mount.step>=5;
     next.textContent=mount.busy?tr('操作中：','In progress: ')+tr(...steps[mount.step-1]):mount.badCover?tr('重新斜放蓋玻片','Lower coverslip correctly'):mount.step>=5?tr('玻片完成','Slide complete'):tr('下一步：','Next: ')+tr(...steps[mount.step]);
