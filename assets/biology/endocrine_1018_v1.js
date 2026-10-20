@@ -105,7 +105,7 @@ const glands=[
  {name:P('胰島','Pancreatic islets'),at:[[368,462]],where:P('位置：散布在胰臟裡的細胞群','Location: cell groups scattered in the pancreas'),file:E_DIR+'liver_pancreas.png',spots:[[600,440,70]],islet:true,
   text:P('胰島是散布在胰臟內的細胞群。胰島素使血糖下降，升糖素使血糖上升；胰臟還有分泌消化液的外分泌部分。','Islets are groups of cells within the pancreas. Insulin lowers blood glucose; glucagon raises it. Other pancreatic cells also release digestive secretions.')},
  {name:P('卵巢','Ovaries'),at:[[318,612],[390,612]],where:P('位置：骨盆腔內，左右各一','Location: in the pelvis, one on each side'),file:E_DIR+'ovaries.png',spots:[[225,290,62],[762,290,62]],
-  text:P('卵巢分泌動情素等激素，參與生殖與第二性徵的發育。發育時間與外觀有個體差異，不用拿同學互相比較。','Ovaries release hormones such as estrogens, contributing to reproduction and secondary sex characteristics. Development varies; do not compare classmates’ bodies.')},
+  text:P('卵巢分泌動情素等激素，參與生殖與第二性徵的發育。發育時間與外觀有個體差異，不用拿同學互相比較。','Ovaries release hormones such as estrogens, contributing to reproduction and secondary sex characteristics. Development varies; do not compare classmates\' bodies.')},
  {name:P('睪丸','Testes'),at:[[352,706]],where:P('位置：陰囊內，左右各一','Location: in the scrotum, one on each side'),file:E_DIR+'testes.png',spots:[[330,380,90],[690,340,90]],
   text:P('睪丸分泌雄性激素，參與生殖與第二性徵的發育。人體圖上不畫生殖器官，只用圓圈標出位置；右邊是器官放大圖。','Testes produce androgens involved in reproduction and secondary sex characteristics. The body picture shows only the position; the organ is enlarged on the right.')}
 ];

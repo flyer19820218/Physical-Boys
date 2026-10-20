@@ -6,7 +6,7 @@ const glands=[
  {name:P('副甲狀腺','Parathyroids'),file:'Im2917.png',pos:[.49,.24],text:P('位於甲狀腺的背面，通常有四小顆。副甲狀腺素參與調節血鈣；不是甲狀腺的另一個名稱。','Usually four small glands behind the thyroid. Parathyroid hormone helps regulate blood calcium; these glands are not another name for the thyroid.')},
  {name:P('腎上腺','Adrenals'),file:'Im2929.png',pos:[.55,.51],text:P('在兩個腎臟上方。緊急狀況時，腎上腺素使心跳與呼吸加快、血糖上升，幫助身體應付變化；腎上腺不是腎臟。','Above the kidneys. During an emergency, adrenaline increases heart and breathing rates and blood glucose, helping the body respond. Adrenal glands are not kidneys.')},
  {name:P('胰島','Pancreatic islets'),file:'Im2928.png',pos:[.51,.53],text:P('胰島是散布在胰臟內的細胞群。胰島素使血糖下降，升糖素使血糖上升；胰臟還有分泌消化液的外分泌部分。','Islets are groups of cells within the pancreas. Insulin lowers blood glucose; glucagon raises it. Other pancreatic cells also release digestive secretions.')},
- {name:P('卵巢','Ovaries'),file:'Im2925.png',pos:[.50,.71],text:P('卵巢分泌動情素等激素，參與生殖與第二性徵的發育。發育時間與外觀有個體差異，不用拿同學互相比較。','Ovaries release hormones such as estrogens, contributing to reproduction and secondary sex characteristics. Development varies; do not compare classmates’ bodies.')},
+ {name:P('卵巢','Ovaries'),file:'Im2925.png',pos:[.50,.71],text:P('卵巢分泌動情素等激素，參與生殖與第二性徵的發育。發育時間與外觀有個體差異，不用拿同學互相比較。','Ovaries release hormones such as estrogens, contributing to reproduction and secondary sex characteristics. Development varies; do not compare classmates\' bodies.')},
  {name:P('睪丸','Testes'),file:'Im2926.png',pos:null,text:P('睪丸分泌雄性激素，參與生殖與第二性徵的發育。左圖為含卵巢的人體示意，睪丸另外拉出原圖，不把位置畫到卵巢上。','Testes produce androgens involved in reproduction and secondary sex characteristics. The left body diagram shows ovaries, so testes are shown separately, not placed over the ovaries.')}
 ];
 const tabs=[

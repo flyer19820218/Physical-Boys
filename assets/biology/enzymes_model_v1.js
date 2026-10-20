@@ -25,7 +25,7 @@
  s.motion=null;
  }
  function tick(u,dt){if(!u.running)return;u.phase+=clamp(dt,0,.15)/4;if(u.phase>=1){u.phase=1;if(u.tab===0||pairs.find(p=>p.id===u.enzyme).target===u.substrate)u.cycles++;u.running=false;}}
- const labTitles=[['等量唾液','Equal saliva'],['只煮甲組','Boil A only'],['冷卻再加澱粉','Cool before starch'],['等量澱粉','Equal starch'],['溫水中作用','React in warm water'],['加入本氏液','Add Benedict’s'],['共同加熱檢驗','Heat both to test'],['比較結果','Compare results']];
+ const labTitles=[['等量唾液','Equal saliva'],['只煮甲組','Boil A only'],['冷卻再加澱粉','Cool before starch'],['等量澱粉','Equal starch'],['溫水中作用','React in warm water'],['加入本氏液','Add Benedict\'s'],['共同加熱檢驗','Heat both to test'],['比較結果','Compare results']];
  function fullBox(w,h){const portrait=h>w;const availW=portrait?w-16:w-372,availH=portrait?h*.57-148:h-156;return {width:Math.min(availW,availH*960/620),height:Math.min(availW*620/960,availH),left:portrait?8:356};}
  const api={clamp,smooth,pairs,phSpecs,tempRate,phRate,create,createLab,can,act,advance,tick,labTitles,fullBox};root.EnzymesModel=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

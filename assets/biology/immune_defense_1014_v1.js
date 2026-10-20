@@ -229,7 +229,7 @@
   const memoryCaptions = [
     bi('第一次對甲建立專一性反應需要過程。曲線先較低，再逐漸升高；這不是完全沒有任何防禦，前兩道防線仍可工作。', 'Developing the first specific response to A takes a process: the curve begins lower and rises later. This does not mean no defense at all; barriers and innate responses can still act.'),
     bi('已有與甲相符的免疫記憶，再遇甲時通常能更快建立較強的對應反應。記憶不是把時間變成零，也不是保證不感染；虛線是初次反應參考。', 'With matching memory of A, A again generally produces a faster, stronger corresponding response. Memory does not reduce response time to zero or guarantee no infection. The dashed curve is the first-response reference.'),
-    bi('甲的記憶仍可能存在，但本例乙的抗原不同、不相符，因此不能直接套用成乙的較快記憶反應。此時看的是「對乙」的反應；不是身體失去甲的全部記憶。', 'Memory of A may remain, but B has a distinct, nonmatching antigen in this example. A’s memory cannot simply become a faster memory response to B. The plotted response is to B, not the loss of all memory of A.')
+    bi('甲的記憶仍可能存在，但本例乙的抗原不同、不相符，因此不能直接套用成乙的較快記憶反應。此時看的是「對乙」的反應；不是身體失去甲的全部記憶。', 'Memory of A may remain, but B has a distinct, nonmatching antigen in this example. A\'s memory cannot simply become a faster memory response to B. The plotted response is to B, not the loss of all memory of A.')
   ];
   function primaryCurve(q) {
     if (q < 0.18) return 0.035;

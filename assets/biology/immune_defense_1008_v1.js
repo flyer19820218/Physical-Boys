@@ -226,7 +226,7 @@
     bi('先找皮膜的缺口，再看病原體進入後，白血球如何伸出細胞膜包圍它。漫畫嘴巴是吞噬的比喻，白血球並沒有嘴巴；新增模型分段顯示移出血管、膜包圍、閉合與囊內分解。', 'Locate the barrier opening and white cells enclosing invaders. The cartoon mouth is a metaphor: white blood cells do not have mouths. The model separates vessel exit, membrane enclosure, sealing and degradation inside a vesicle.'),
     bi('課本把皮膚表面的局部紅腫，和下方血管、白血球聚集放在一起。先對照整張圖，再用模型逐項比較血流增加、液體滲出與白血球移動。', 'The textbook connects surface redness and swelling with the vessel and cell recruitment below. Compare the whole figure, then separate blood delivery, fluid leakage and cell movement in the model.'),
     bi('課本左側表示處理受感染細胞，右側表示抗體作用。炮台、武器與表情是擬人比喻；真正抗體是會結合特定抗原部位的蛋白質，不是射擊子彈。模型顯示結合與協助清除。', 'The left panel represents action on infected cells and the right antibody action. Weapons and expressions are metaphors. Actual antibodies are proteins that bind particular antigenic sites, not projectiles. The model shows binding and assisted removal.'),
-    bi('先用課本原圖回顧「目標要相符」。本頁新畫的曲線延伸課本的記憶概念，並不是從此原圖擷取的實測圖。切到模型比較遇甲、再遇甲與改遇乙。', 'Use the textbook artwork to recall target matching. This tab’s new curves explain the textbook memory concept; they are not measured graphs extracted from this artwork. Compare A, A again, and a different target B in the model.')
+    bi('先用課本原圖回顧「目標要相符」。本頁新畫的曲線延伸課本的記憶概念，並不是從此原圖擷取的實測圖。切到模型比較遇甲、再遇甲與改遇乙。', 'Use the textbook artwork to recall target matching. This tab\'s new curves explain the textbook memory concept; they are not measured graphs extracted from this artwork. Compare A, A again, and a different target B in the model.')
   ];
   function label(ctx, D, pair, x, y, max = 300, color = C.white, size = 22) {
     return textLines(ctx, D.tr(pair), x, y, max, size, color);
@@ -521,7 +521,7 @@
   const memoryCaptions = [
     bi('第一次對甲建立專一性反應需要過程。曲線先較低，再逐漸升高；這不是完全沒有任何防禦，前兩道防線仍可工作。', 'Developing the first specific response to A takes a process: the curve begins lower and rises later. This does not mean no defense at all; barriers and innate responses can still act.'),
     bi('已有與甲相符的免疫記憶，再遇甲時通常能更快建立較強的對應反應。記憶不是把時間變成零，也不是保證不感染；虛線是初次反應參考。', 'With matching memory of A, A again generally produces a faster, stronger corresponding response. Memory does not reduce response time to zero or guarantee no infection. The dashed curve is the first-response reference.'),
-    bi('甲的記憶仍可能存在，但本例乙的抗原不同、不相符，因此不能直接套用成乙的較快記憶反應。此時看的是「對乙」的反應；不是身體失去甲的全部記憶。', 'Memory of A may remain, but B has a distinct, nonmatching antigen in this example. A’s memory cannot simply become a faster memory response to B. The plotted response is to B, not the loss of all memory of A.')
+    bi('甲的記憶仍可能存在，但本例乙的抗原不同、不相符，因此不能直接套用成乙的較快記憶反應。此時看的是「對乙」的反應；不是身體失去甲的全部記憶。', 'Memory of A may remain, but B has a distinct, nonmatching antigen in this example. A\'s memory cannot simply become a faster memory response to B. The plotted response is to B, not the loss of all memory of A.')
   ];
   function primaryCurve(q) {
     if (q < 0.18) return 0.035;

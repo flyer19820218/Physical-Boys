@@ -26,7 +26,7 @@
       text:['以海平面為 0，這裡用上、下各約 10 公里比較生物圈的尺度。近景把厚度放大 4 倍，方便觀察；這不是生命分布的硬邊界，也不表示每個深度都有同樣多的生物。','Sea level is zero. We use about 10 km above and below it to compare the scale of the biosphere. This close-up exaggerates thickness fourfold for clarity. These are not hard limits of life, nor is life equally abundant at every depth.'],
       tag:['局部剖面 · 厚度放大 4 倍','Local section · Thickness ×4'], scale:['上下合計約 20 km','About 20 km from top to bottom']},
     {at:seconds(44), end:DURATION, zh:'我們的地球', en:'Our whole Earth', title:['生命住在「蘋果皮」般的薄層','Life lives in an apple-peel-thin layer'],
-      text:['如果地球縮成直徑 10 公分、蘋果般大小，上下合計約 20 公里的範圍就只有約 0.16 毫米厚。相對整顆地球，生物圈就像薄薄的蘋果皮！蘋果是比例比喻，不代表真正果皮固定有這個厚度。地球綠色薄層已恢復比例；藍色光暈只是光影。','If Earth were apple-sized, 10 cm across, the roughly 20 km layer would be only about 0.16 mm thick. Compared with the whole planet, the biosphere is like a thin apple peel! This is a scale analogy, not a measurement of actual apple skin. Earth’s green layer is back to scale; its blue glow is lighting.'],
+      text:['如果地球縮成直徑 10 公分、蘋果般大小，上下合計約 20 公里的範圍就只有約 0.16 毫米厚。相對整顆地球，生物圈就像薄薄的蘋果皮！蘋果是比例比喻，不代表真正果皮固定有這個厚度。地球綠色薄層已恢復比例；藍色光暈只是光影。','If Earth were apple-sized, 10 cm across, the roughly 20 km layer would be only about 0.16 mm thick. Compared with the whole planet, the biosphere is like a thin apple peel! This is a scale analogy, not a measurement of actual apple skin. Earth\'s green layer is back to scale; its blue glow is lighting.'],
       tag:['衛星合成紋理 · 立體地球','Satellite mosaic · 3D Earth'], scale:['地球直徑約 12,742 km','Earth diameter ≈ 12,742 km']}
   ];
   function sceneAt(time, yaw=0, pitch=0) {

@@ -27,7 +27,7 @@
  function render(){
   E.pause();
   pointers.clear();gesture=null;
-  document.documentElement.lang=s.lang==='zh'?'zh-Hant':'en';document.title=tr('食物的旅程｜Physical-Boys','Food’s journey | Physical-Boys');
+  document.documentElement.lang=s.lang==='zh'?'zh-Hant':'en';document.title=tr('食物的旅程｜Physical-Boys','Food\'s journey | Physical-Boys');
   document.querySelectorAll('[data-zh]').forEach(el=>el.textContent=el.dataset[s.lang]);document.querySelectorAll('[data-language]').forEach(b=>{b.classList.toggle('active',b.dataset.language===s.lang);b.setAttribute('aria-pressed',b.dataset.language===s.lang);});
   const tabs=[[['先看整條路','See the whole route'],['消化道概論','Digestive tract overview']],[['跟著這一口','Follow this bite'],['逐站消化與吸收','Digestion and absorption at each stop']]];
   $('tabs').innerHTML=tabs.map((t,i)=>`<button type="button" id="story-tab-${i}" class="tab-btn${s.page===i?' active':''}" role="tab" aria-selected="${s.page===i}" aria-controls="story-lesson" tabindex="${s.page===i?0:-1}" data-action="page" data-value="${i}"><span class="tab-main">${esc(T(t[0]))}</span><span class="tab-sub">${esc(T(t[1]))}</span></button>`).join('');

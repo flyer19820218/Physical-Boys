@@ -366,7 +366,7 @@ function drawDiversity(c,s,t){
   if(wave>0)pill(c,P('同一種病原來了','The same pathogen arrives'),330,86,{active:wave<1,color:C.orange,maxX:930});
   panel(c,20,486,920,94);
   const res=asex?P('子代特徵幾乎相同：同一種病原來了，可能全部都受影響','Offspring are nearly identical: one pathogen may affect them all'):P('子代各有差異：有些受影響、有些存活','Offspring differ: some are affected, some survive');
-  wrap(c,tt>5.6?res:(asex?P('一個親代，不經配子結合：子代和親代很相似','One parent, no gametes: offspring closely resemble it'):P('兩個親代的遺傳物質重新組合：子代各不相同','Two parents’ genes recombine: each offspring differs')),40,526,880,22,tt>5.6?(asex?C.orange:C.green):C.white);
+  wrap(c,tt>5.6?res:(asex?P('一個親代，不經配子結合：子代和親代很相似','One parent, no gametes: offspring closely resemble it'):P('兩個親代的遺傳物質重新組合：子代各不相同','Two parents\' genes recombine: each offspring differs')),40,526,880,22,tt>5.6?(asex?C.orange:C.green):C.white);
   text(c,P('概念模型：顏色只代表特徵不同，數量不是實際比例','Concept model: colours only mark different traits; numbers are not real ratios'),40,570,22,C.muted);
 }
 const BAN_SPOTS=[[320,880],[440,830],[615,830],[735,700],[915,800]];

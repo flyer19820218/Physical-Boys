@@ -111,7 +111,7 @@
   }
   const oldLymphParagraph = P(
     '依課本的簡化模型，部分組織液回到血管，部分進入鄰近淋巴管。實際淨流量依組織、壓力與狀態而異；本圖不固定分配比例，也不表示每一條微血管都同樣回收。',
-    'In the textbook’s simplified model, some tissue fluid returns directly to blood and some enters nearby lymphatics. Net flow depends on tissue, pressure and state; the model assigns no fixed fractions or identical behaviour to every capillary.'
+    'In the textbook\'s simplified model, some tissue fluid returns directly to blood and some enters nearby lymphatics. Net flow depends on tissue, pressure and state; the model assigns no fixed fractions or identical behaviour to every capillary.'
   );
   function approvedLymphText(original) {
     if (!isPair(original)) return original;

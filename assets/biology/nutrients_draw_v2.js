@@ -158,7 +158,7 @@
     if(lab.motion?.type!=='bath'&&!(lab.motion?.type==='reagent'&&lab.motion.target===i))label(c,tr(l,i===0?'甲：待測組':'乙：清水',i===0?'A: sample':'B: water'),x,top-38,150);
    }
    bath(c,lab,true);
-   if(!lab.inBath&&!lab.motion?.type?.includes('bath')){bottle(c,lab.kind);label(c,tr(l,'本氏液','Benedict’s'),95,506,170,'#55e9ff');}
+   if(!lab.inBath&&!lab.motion?.type?.includes('bath')){bottle(c,lab.kind);label(c,tr(l,'本氏液','Benedict\'s'),95,506,170,'#55e9ff');}
    label(c,tr(l,'隔水加熱','Water bath'),711,38,320,'#fde047');
    label(c,Math.round(lab.temperature)+' °C',711,564,180,'#55e9ff');
    if(lab.prepared){label(c,lab.reagents.every(Boolean)?tr(l,'每管共 6 mL','6 mL per tube'):tr(l,'樣本各 3 mL','3 mL samples'),285,548,275);}

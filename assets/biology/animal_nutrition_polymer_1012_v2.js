@@ -77,7 +77,7 @@
   const approachX=ease(p,0,.15),approachY=ease(p,.15,.30),lift=ease(p,.66,.80),out=ease(p,.80,1),split=out;
   const x=195+285*approachX+240*out,y=235+53*approachY-110*lift;c.save();c.translate(x,y);c.scale(1.4,1.4);D.lipid(c,0,0,split);c.restore();
   if(p>=.5&&p<.66){c.strokeStyle=D.C.yellow;c.lineWidth=3;for(const side of [-1,0,1]){c.beginPath();c.moveTo(x+side*42-7,y);c.lineTo(x+side*42+7,y);c.stroke();}}
-  const names=[['靠近','Approach'],['形狀吻合、結合','Matching shape and binding'],['切開脂質的連結','Break the fat’s links'],['釋放甘油與脂肪酸；酵素保留','Release glycerol and fatty acids; enzyme remains']];
+  const names=[['靠近','Approach'],['形狀吻合、結合','Matching shape and binding'],['切開脂質的連結','Break the fat\'s links'],['釋放甘油與脂肪酸；酵素保留','Release glycerol and fatty acids; enzyme remains']];
   if(p>=.98){D.text(c,tr('甘油','Glycerol'),630,315,24,D.C.green,'center',150);D.text(c,tr('三條脂肪酸','Three fatty acids'),810,315,24,D.C.green,'center',270);}
   D.text(c,tr(...names[G.stage(p)]),480,588,25,D.C.green,'center',900);D.text(c,tr('國中簡化模型；真實消化產物也包括單酸甘油酯','Simplified model; real products also include monoglycerides'),480,636,22,D.C.muted,'center',915);
  }

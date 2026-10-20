@@ -24,11 +24,11 @@
 
   const CHAMBERS = [
     { id: 'ra', name: P('右心房', 'Right atrium'),
-      text: P('接收上、下大靜脈帶回的較少氧血液，再送進右心室。圖上位於觀眾左側，卻是這個人的右側。', 'Receives oxygen-poor blood through the superior and inferior venae cavae and passes it to the right ventricle. It is on the viewer’s left, but the person’s right.') },
+      text: P('接收上、下大靜脈帶回的較少氧血液，再送進右心室。圖上位於觀眾左側，卻是這個人的右側。', 'Receives oxygen-poor blood through the superior and inferior venae cavae and passes it to the right ventricle. It is on the viewer\'s left, but the person\'s right.') },
     { id: 'rv', name: P('右心室', 'Right ventricle'),
       text: P('收縮時把較少氧的血液送入肺動脈，到肺部進行氣體交換。它不直接把血送到全身。', 'Contracts to send oxygen-poor blood into the pulmonary artery for gas exchange in the lungs. It does not pump directly to the whole body.') },
     { id: 'la', name: P('左心房', 'Left atrium'),
-      text: P('接收肺靜脈帶回的富氧血，再送進左心室。解剖上的左側，在這張前視圖的觀眾右側。', 'Receives oxygen-rich blood returning through the pulmonary veins and passes it to the left ventricle. Anatomical left is on the viewer’s right in this frontal view.') },
+      text: P('接收肺靜脈帶回的富氧血，再送進左心室。解剖上的左側，在這張前視圖的觀眾右側。', 'Receives oxygen-rich blood returning through the pulmonary veins and passes it to the left ventricle. Anatomical left is on the viewer\'s right in this frontal view.') },
     { id: 'lv', name: P('左心室', 'Left ventricle'),
       text: P('收縮時把富氧血送入主動脈，供應全身組織。它的肌肉壁比右心室厚，能產生體循環需要的較高壓力。', 'Contracts to send oxygen-rich blood into the aorta for body tissues. Its thicker muscle wall generates the higher pressure required for systemic circulation.') },
     { id: 'av', name: P('房室瓣', 'Atrioventricular valves'),
@@ -119,14 +119,14 @@
     },
     {
       id: 'circulation', main: P('跟一顆紅血球走', 'Follow one red cell'), sub: P('體循環＋肺循環', 'Systemic + pulmonary'),
-      heading: P('一顆紅血球的完整旅行', 'One red cell’s complete journey'),
+      heading: P('一顆紅血球的完整旅行', 'One red cell\'s complete journey'),
       hook: P('從左心室出發，回到同一個地方之前，會經過肺幾次？追蹤同一顆紅血球，不要在半途換車。', 'Starting in the left ventricle, how many lung visits occur before returning? Follow the same red cell for the entire trip.'),
       lead: P('體循環和肺循環連在一起。紅血球走在心臟與血管內，先把氧送到組織，再回右心、到肺補氧，最後回左心。', 'Systemic and pulmonary circuits are connected. A red cell stays in heart chambers and vessels, supplies body tissues, returns to the right heart, gains oxygen in the lungs and returns to the left heart.'),
       paragraphs: [
         P('完整路線：左心室、主動脈／小動脈、組織微血管、小靜脈／上、下大靜脈、右心房、右心室、肺動脈、肺部微血管、肺靜脈、左心房，再回左心室。', 'Complete route: left ventricle, aorta / arterioles, body capillaries, venules / venae cavae, right atrium, right ventricle, pulmonary artery, lung capillaries, pulmonary veins, left atrium, and back to the left ventricle.'),
         P('體循環由左心室送出、回右心房。組織細胞使用氧與養分進行代謝；氧氣從微血管擴散出去，細胞產生的二氧化碳與廢物則進入血液。', 'The systemic circuit runs from left ventricle to right atrium. Tissue cells use oxygen and nutrients; oxygen diffuses out of capillaries and carbon dioxide and wastes enter blood.'),
         P('肺循環由右心室送出、回左心房。在肺部，肺泡中的氧氣進入血液；血中的二氧化碳進肺泡，再呼出體外。肺泡是空氣的空間，紅血球不會游進肺泡。', 'The pulmonary circuit runs from right ventricle to left atrium. Oxygen enters blood from alveoli; carbon dioxide enters alveoli and is exhaled. Alveoli are air spaces, not places where red cells swim.'),
-        P('每個小分子的擴散取決於兩側的濃度或分壓差。放大窗中的 O₂ 與 CO₂ 比紅血球小；其形狀特別放大供辨認，不代表真實分子與細胞的尺寸比例。', 'Diffusion follows each molecule’s concentration or partial-pressure difference. O₂ and CO₂ symbols are smaller than red cells, but deliberately enlarged for recognition; molecular and cellular dimensions are not to scale.'),
+        P('每個小分子的擴散取決於兩側的濃度或分壓差。放大窗中的 O₂ 與 CO₂ 比紅血球小；其形狀特別放大供辨認，不代表真實分子與細胞的尺寸比例。', 'Diffusion follows each molecule\'s concentration or partial-pressure difference. O₂ and CO₂ symbols are smaller than red cells, but deliberately enlarged for recognition; molecular and cellular dimensions are not to scale.'),
         P('二氧化碳不全掛在紅血球上。補充：大部分在運輸過程中轉成碳酸氫根，主要由血漿運送；這裡只呈現兩側交換，不把每顆 CO₂ 畫成紅血球的乘客。', 'Carbon dioxide is not all carried on red cells. Extension: much is converted to bicarbonate and transported in plasma. The model shows exchange without attaching every CO₂ symbol to a red cell.')
       ],
       question: P('肝臟、腎臟和小腸絨毛的細胞也需要交換物質：它們與微血管之間，除了氣體，還可能交換什麼？', 'Liver, kidney and intestinal-villus cells also exchange substances with blood. What might cross their capillaries besides gases?'),
