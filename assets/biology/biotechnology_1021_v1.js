@@ -94,7 +94,7 @@ function at(c,file,x,y,w,o={}){if(o.screen&&file.startsWith('fish_')){const st=B
 const pt=(r,fx,fy)=>[r.x+fx*r.w,r.y+fy*r.h];
 
 // ── small icons ────────────────────────────────────────────────────────────
-function sugar(c,x,y,s=9,a=1){c.save();c.globalAlpha*=a;c.beginPath();for(let i=0;i<6;i++){const q=i*TAU/6-Math.PI/2;c[i?'lineTo':'moveTo'](x+Math.cos(q)*s,y+Math.sin(q)*s);}c.closePath();c.fillStyle='#f5c542';c.fill();c.strokeStyle='#fff3a8';c.lineWidth=1.6;c.stroke();c.restore();}
+function sugar(c,x,y,s=9,a=1,edge='#fff3a8'){c.save();c.globalAlpha*=a;c.beginPath();for(let i=0;i<6;i++){const q=i*TAU/6-Math.PI/2;c[i?'lineTo':'moveTo'](x+Math.cos(q)*s,y+Math.sin(q)*s);}c.closePath();c.fillStyle='#f5c542';c.fill();c.strokeStyle=edge;c.lineWidth=1.8;c.stroke();c.restore();}
 function co2(c,x,y,s=5,a=1){c.save();c.globalAlpha*=a;D.sphere(c,x-s*1.9,y,s,'#f472b6');D.sphere(c,x+s*1.9,y,s,'#f472b6');D.sphere(c,x,y,s*1.3,'#7d8f88');c.restore();}
 function alcohol(c,x,y,s=5,a=1){c.save();c.globalAlpha*=a;D.sphere(c,x-s*1.6,y,s,'#7d8f88');D.sphere(c,x,y-s*.6,s,'#7d8f88');D.sphere(c,x+s*1.6,y+s*.2,s*.95,'#f472b6');D.sphere(c,x+s*2.6,y-s*.5,s*.6,C.white);c.restore();}
 function lacticDot(c,x,y,a=1){c.save();c.globalAlpha*=a;circle(c,x,y,4.2,C.orange,rgba(C.white,.7),1.2);c.restore();}
@@ -126,10 +126,14 @@ const DOUGH_TEXT=[
  P('酵母菌是單細胞的真菌。它把醣分解，得到生活需要的能量，同時放出二氧化碳；氧氣不夠時，還會產生酒精。這就是發酵作用。','Yeast is a single-celled fungus. It breaks sugar down for the energy it needs and gives off carbon dioxide; when oxygen runs short it also makes alcohol. This is fermentation.'),
  P('麵團有黏性和彈性，把二氧化碳包住，形成許多小氣泡。氣泡越來越多、越來越大，麵團就膨大、變蓬鬆。','Dough is sticky and stretchy, so it traps the carbon dioxide in many little bubbles. As the bubbles multiply and grow, the dough swells and turns fluffy.'),
  P('烘烤時，酵母菌被高溫殺死，酒精受熱揮發；氣泡的位置被固定下來，就是麵包裡的小孔洞。','In the oven the heat kills the yeast and the alcohol evaporates; the bubbles are set in place and become the little holes in the bread.')];
-const GLUTEN=(()=>{const R=rng(41),o=[];for(let i=0;i<16;i++){const x=LX+R()*LW,y=LY+R()*LH,a=R()*TAU,l=90+R()*120;o.push([[x,y],[x+Math.cos(a)*l*.5+(R()-.5)*60,y+Math.sin(a)*l*.5+(R()-.5)*60],[x+Math.cos(a)*l,y+Math.sin(a)*l]]);}return o;})();
+const SPECK=(()=>{const R=rng(41),o=[];for(let i=0;i<90;i++)o.push([LX+R()*LW,LY+R()*LH,1.2+R()*2.2,R()<.5]);return o;})();
 const SUGARS=(()=>{const R=rng(7),o=[];for(let i=0;i<18;i++)o.push([LX+30+R()*(LW-60),LY+28+R()*(LH-56),R()*TAU,i%YEASTS.length]);return o;})();
 const BUBBLES=[[255,318,34],[408,300,26],[560,444,30],[94,486,28],[246,506,36],[420,430,22],[560,300,20],[96,300,18]];
-function inLens(c,draw){c.save();c.beginPath();c.roundRect(LX,LY,LW,LH,18);c.clip();c.fillStyle='#10261f';c.fillRect(LX,LY,LW,LH);draw();c.restore();D.round(c,LX,LY,LW,LH,18,null,rgba(C.white,.75));}
+// The magnified dough: dough-coloured (pale crumb once baked) with flour specks.
+function inLens(c,draw,baked){c.save();c.beginPath();c.roundRect(LX,LY,LW,LH,18);c.clip();
+  c.fillStyle=baked?'#ead6ad':'#d6bb8c';c.fillRect(LX,LY,LW,LH);
+  SPECK.forEach(([x,y,r,light])=>circle(c,x,y,r,light?'rgba(255,250,235,.5)':'rgba(120,85,45,.22)',null));
+  draw();c.restore();D.round(c,LX,LY,LW,LH,18,null,rgba(C.white,.75));}
 function drawDough(c,s,t){
   const {k,tau}=stageClock(s,t,4,6);s.shown=k;
   const rise=k<2?0:k===2?smooth(tau/3.5):1;
@@ -145,22 +149,21 @@ function drawDough(c,s,t){
   const fi=k<2?0:k===2?1:2,fx=FX[fi]+FW/2;
   dashed(c,[[fx-40,FY+FH+44],[LX+140,LY]],rgba(C.yellow,.6));dashed(c,[[fx+40,FY+FH+44],[LX+LW-140,LY]],rgba(C.yellow,.6));
   inLens(c,()=>{
-    GLUTEN.forEach(g=>{c.save();c.beginPath();c.moveTo(...g[0]);c.quadraticCurveTo(...g[1],...g[2]);c.strokeStyle='rgba(214,186,140,.28)';c.lineWidth=4;c.stroke();c.restore();});
-    if(k===3){const g=c.createLinearGradient(0,LY+LH,0,LY);g.addColorStop(0,'rgba(251,146,60,.38)');g.addColorStop(.6,'rgba(251,146,60,.06)');g.addColorStop(1,'rgba(251,146,60,0)');c.fillStyle=g;c.fillRect(LX,LY,LW,LH);
-      for(let i=0;i<7;i++){const x=LX+40+i*80,ph=t*1.6+i;c.save();c.globalAlpha=.55;c.beginPath();for(let j=0;j<=10;j++){const y=LY+LH-6-j*9;c[j?'lineTo':'moveTo'](x+5*Math.sin(ph+j*.8),y);}c.strokeStyle=C.orange;c.lineWidth=2.5;c.stroke();c.restore();}}
-    // bubbles (growing in step 3, fixed as holes in step 4)
+    // the oven's heat: the dough glows warm from the edges
+    if(k===3){c.save();c.globalAlpha=.55+.15*Math.sin(t*2);c.shadowColor=C.orange;c.shadowBlur=40;c.lineWidth=26;c.strokeStyle='rgba(251,146,60,.55)';c.beginPath();c.roundRect(LX-10,LY-10,LW+20,LH+20,24);c.stroke();c.restore();}
+    // gas bubbles in the dough (growing in step 3, set as holes in step 4): a cavity with a stretched dough wall
     if(k>=2)BUBBLES.forEach(([x,y,r],i)=>{const g=k===3?1:smooth((tau-.3-i*.25)/2.8),rr=r*g;if(rr<1)return;
-      circle(c,x,y,rr,k===3?'rgba(11,26,21,.75)':'rgba(242,236,217,.07)',k===3?'rgba(214,186,140,.85)':rgba(C.white,.7),2.2);
-      if(k===2){c.save();c.beginPath();c.arc(x-rr*.25,y-rr*.25,rr*.55,Math.PI*1.1,Math.PI*1.6);c.strokeStyle=rgba(C.white,.6);c.lineWidth=2;c.stroke();c.restore();
-        for(let j=0;j<Math.round(rr/9);j++){const q=t*.9+j*2.1+i;co2(c,x+rr*.45*Math.cos(q),y+rr*.45*Math.sin(q*1.3),3.4,.85);}}});
-    // yeast
-    YEASTS.forEach((y,i)=>{at(c,y.file,y.x,y.y,y.w,{alpha:k===3?.45:1});if(k===3){c.save();c.globalAlpha=.5;ellipse(c,y.x,y.y,y.w*.42,y.w*.36,'rgba(11,26,21,.55)',null);c.restore();}});
+      circle(c,x,y,rr,k===3?'rgba(150,108,60,.55)':'rgba(110,78,42,.5)',k===3?'#f7ead0':'#f1deb8',3);
+      c.save();c.beginPath();c.arc(x,y,rr*.78,Math.PI*1.05,Math.PI*1.55);c.strokeStyle='rgba(255,250,235,.6)';c.lineWidth=2.5;c.stroke();c.restore();
+      if(k===2)for(let j=0;j<Math.round(rr/9);j++){const q=t*.9+j*2.1+i;co2(c,x+rr*.45*Math.cos(q),y+rr*.45*Math.sin(q*1.3),3.4,.95);}});
+    // yeast (killed by the heat in step 4: faded)
+    c.save();c.shadowColor='rgba(70,45,20,.55)';c.shadowBlur=8;YEASTS.forEach(y=>at(c,y.file,y.x,y.y,y.w,{alpha:k===3?.35:1}));c.restore();
     // sugar travelling into the yeast, CO2 and alcohol coming out
     SUGARS.forEach(([sx,sy,ph,yi],i)=>{const Y=YEASTS[yi];
-      if(k===0){sugar(c,sx+3*Math.sin(t*1.3+ph),sy+3*Math.cos(t+ph),8);return;}
+      if(k===0){sugar(c,sx+3*Math.sin(t*1.3+ph),sy+3*Math.cos(t+ph),8,1,'#6b4a12');return;}
       if(k===3)return;
       const p=mod(t*.22+i/SUGARS.length);
-      if(p<.5){const u=smooth(p/.5),q=lerpP([sx,sy],[Y.x,Y.y],u);sugar(c,q[0],q[1],8,1-u*.7);}
+      if(p<.5){const u=smooth(p/.5),q=lerpP([sx,sy],[Y.x,Y.y],u);sugar(c,q[0],q[1],8,1-u*.7,'#6b4a12');}
       else{const u=(p-.5)/.5,dir=ph,ox=Y.x+Math.cos(dir)*(Y.w*.3+u*90),oy=Y.y+Math.sin(dir)*(Y.w*.25+u*70);
         if(k===2){const bb=BUBBLES[i%BUBBLES.length],q=lerpP([Y.x,Y.y],[bb[0],bb[1]],smooth(u));co2(c,q[0],q[1],4,1-u*.6);}
         else if(i%3===2)alcohol(c,ox,oy,4.2,1-u);else co2(c,ox,oy,4.5,1-u*.8);}});
@@ -169,8 +172,8 @@ function drawDough(c,s,t){
     if(k<2){cpill(c,P('酵母菌','Yeast'),YEASTS[0].x,YEASTS[0].y+70,{color:C.white});}
     if(k===0)cpill(c,P('醣','Sugar'),SUGARS[3][0],SUGARS[3][1]+16,{color:'#f5c542'});
     if(k===2)cpill(c,P('二氧化碳的氣泡','CO₂ bubbles'),BUBBLES[0][0],BUBBLES[0][1]+44,{color:C.white});
-    if(k===3){cpill(c,P('留下的孔洞','Holes left behind'),BUBBLES[1][0],BUBBLES[1][1]+34,{color:'#d6ba8c'});cpill(c,P('酒精揮發','Alcohol evaporates'),LX+LW/2,LY+18,{color:C.muted});}
-  });
+    if(k===3){cpill(c,P('留下的孔洞','Holes left behind'),BUBBLES[1][0],BUBBLES[1][1]+34,{color:'#f7ead0'});cpill(c,P('酒精揮發','Alcohol evaporates'),LX+LW/2,LY+18,{color:C.white});cpill(c,P('高溫烘烤','Oven heat'),LX+LW-110,LY+LH-56,{color:C.orange,active:true});}
+  },k===3);
   // legend: the fermentation flow
   panel(c,620,LY,310,LH);
   const hi=[[0,1],[0,1,2,3],[2],[3]][k],row=(i,y)=>{const on=hi.includes(i);if(on)D.round(c,630,y-28,290,44,10,rgba(C.yellow,.12),null);return on;};
@@ -215,8 +218,7 @@ function microbe(c,kind,cx,cy,t){
   [[-55,64,-50,-40],[10,56,14,-66],[70,64,74,-24]].forEach(([x0,y0,x1,y1],i)=>{line(c,[[cx+x0,cy+y0],[cx+x1,cy+y1]],'#e9e1c4',4);circle(c,cx+x1,cy+y1,13,'#d9e77a','#a3b247',2);
     for(let j=0;j<14;j++){const a=j*TAU/14;for(let m=1;m<=3;m++)circle(c,cx+x1+Math.cos(a)*(13+m*6),cy+y1+Math.sin(a)*(13+m*6),3,'#c8d96a',null);}
     for(let m=0;m<3;m++){const p=mod(t*.3+i/3+m/3);circle(c,cx+x1+18+p*70*Math.cos(m*2+i),cy+y1-6-p*50,4,rgba('#c8d96a',1-p),null);}});
-  // broken-down pieces of protein and starch leaving the threads
-  for(let i=0;i<8;i++){const p=mod(t*.35+i/8),x=cx-90+i*24,y=cy+86-p*70;circle(c,x+6*Math.sin(t*2+i),y,3.6,rgba(i%2?'#fde047':'#f472b6',(1-p)*.9),null);}
+
 }
 function drawFoods(c,s,t){
   const {k}=stageClock(s,t,4,6);s.shown=k;
@@ -228,6 +230,11 @@ function drawFoods(c,s,t){
   dashed(c,[[40+k*226+105,256],[cx,cy-r]],rgba(C.yellow,.6));
   c.save();c.beginPath();c.arc(cx,cy,r,0,TAU);c.clip();c.fillStyle='#10261f';c.fillRect(cx-r,cy-r,2*r,2*r);microbe(c,f.draw,cx,cy,t);c.restore();
   circle(c,cx,cy,r,null,C.yellow,4);
+  // name every kind of thing drawn in the circle
+  const KEY={koji:[[(c,x,y)=>{circle(c,x,y,7,'#d9e77a','#a3b247',1.5);},P('孢子','Spores'),'#d9e77a',cy-r+6],[(c,x,y)=>{line(c,[[x-9,y+5],[x,y-4],[x+9,y+3]],'#e9e1c4',3);},P('菌絲','Hyphae'),'#e9e1c4',cy+r-46]],
+    lacto:[[(c,x,y)=>sugar(c,x,y,8),P('醣','Sugar'),'#f5c542',cy-r+6],[(c,x,y)=>lacticDot(c,x,y),P('乳酸','Lactic acid'),C.orange,cy+r-46]],
+    yeast:[[(c,x,y)=>co2(c,x,y,4),P('二氧化碳','Carbon dioxide'),C.white,cy+r-46]]}[f.draw];
+  KEY.forEach(([icon,p,col,y])=>{const w=measure(c,p,22)+28+30,x=cx-w/2;D.round(c,x,y,w,40,20,'rgba(11,26,21,.9)',rgba(col,.8));icon(c,x+22,y+20);text(c,p,x+40,y+28,22,col);});
   const X0=318,XR=916;panel(c,X0-18,290,XR-X0+38,290);
   text(c,f.microbe,X0,334,26,C.yellow);const pw=measure(c,f.microbe,26);
   pill(c,f.kind,X0+12+pw,308,{color:f.kc,active:true});
@@ -528,12 +535,12 @@ function drawDolly(c,s,t){
   if(k===0){[0,1,2].forEach(i=>dashed(c,[[SX[i]+SW/2,SY+SH+82],[480,362]],rgba(SHEEP[i].col,.7),2.5,[7,6],-t*18));text(c,P('生下來的小羊，會像哪一隻？','Which ewe will the lamb look like?'),480,400,30,C.yellow,'center');text(c,P('1996 年，英國','Britain, 1996'),480,450,22,C.muted,'center');return;}
   if(k>=1&&k<=3){
     // donor cell
-    if(k===1){const u=smooth(fade(tau,0,1.4));dashed(c,[[SX[0]+SW/2,SY+SH+80],[DONOR[0],DONOR[1]-64]],rgba(C.yellow,.6));
+    if(k===1){const u=smooth(fade(tau,0,1.4));dashed(c,[[SX[0]+SW/2,SY+SH+80],[DONOR[0],DONOR[1]-64]],rgba(C.yellow,.7),2.5,[7,6],-t*18);
       bodyCell(c,DONOR[0],DONOR[1],u);if(u>.5)pulse(c,DONOR[0],DONOR[1],t,C.yellow,22);
       cpill(c,P('乳腺細胞（體細胞）','Udder cell (body cell)'),DONOR[0],DONOR[1]+78,{color:C.yellow});
       line(c,[[DONOR[0]+26,DONOR[1]],[DONOR[0]+84,DONOR[1]]],C.yellow,2);text(c,P('細胞核','Nucleus'),DONOR[0]+90,DONOR[1]+8,22,C.yellow);}
     if(k===2){bodyCell(c,DONOR[0],DONOR[1],.55);
-      dashed(c,[[SX[1]+SW/2,SY+SH+80],[EGGP[0],EGGP[1]-96]],rgba(EGG,.6));
+      dashed(c,[[SX[1]+SW/2,SY+SH+80],[EGGP[0],EGGP[1]-96]],rgba(EGG,.7),2.5,[7,6],-t*18);
       const out=smooth(fade(tau,1.2,1.4));eggCell(c,EGGP[0],EGGP[1],{nuc:1});
       const tube=[720,340],tip=lerpP(tube,[EGGP[0]+34,EGGP[1]-24],smooth(fade(tau,.4,.8)));
       needle(c,780,310,tip[0],tip[1]);
