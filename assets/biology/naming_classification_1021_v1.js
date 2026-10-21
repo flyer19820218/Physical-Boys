@@ -113,13 +113,13 @@ kingdoms:{
  reading:P(`本單元用五界的分法：原核生物界、原生生物界、真菌界、植物界、動物界。判斷時看細胞有沒有細胞核、細胞壁、葉綠體，以及身體的構造和取得養分的方式，不能只看顏色、大小或名字。\n\n補充：這個流程是為了這一課的例子整理出來的，不是所有生物的標準流程。現代科學家還會比較 DNA，有人把生物分成三域，五界不是唯一的分法。\n\n補充：病毒外面是蛋白質外殼，裡面有 DNA 或 RNA；沒有完整的細胞，必須利用別的生物的細胞才能增殖，所以不放在五界裡。病毒不是細菌，也不是縮小的細胞。`,`This unit uses the five-kingdom scheme: prokaryotes, protists, fungi, plants and animals. To decide, look at whether the cells have a nucleus, a cell wall and chloroplasts, and at body structure and how the organism gets nutrients, not just colour, size or name.\n\nExtra: this flow chart was built for the examples in this lesson and is not a standard procedure for all organisms. Scientists also compare DNA, and some divide life into three domains; five kingdoms is not the only scheme.\n\nExtra: a virus is a protein coat around DNA or RNA. It has no complete cell and needs another organism's cells to reproduce, so it is not placed in the five kingdoms. A virus is not a bacterium or a tiny cell.`),
  closure:P(`五界用細胞核、細胞壁、葉綠體和身體構造來分：沒有細胞核是原核生物；有細胞核、有細胞壁、沒有葉綠體是真菌；有葉綠體、有根莖葉是植物；沒有細胞壁、多細胞是動物；其餘簡單的是原生生物。綠色或長在地上，都不是判斷的依據。`,`The five kingdoms are sorted by nucleus, cell wall, chloroplasts and body structure: no nucleus means prokaryote; a nucleus and wall without chloroplasts means fungus; chloroplasts with roots, stems and leaves means plant; no wall and a many-celled body means animal; the remaining simple organisms are protists. Being green or living on land is not a criterion.`),
  kingdomNames:[P(`原核生物界`,`Prokaryotes`),P(`原生生物界`,`Protists`),P(`真菌界`,`Fungi`),P(`植物界`,`Plants`),P(`動物界`,`Animals`)],
- // specimens. pic = file in naming_ai_1021/ (null = chalk icon drawn in code). flags: nucleus, wall, chloroplast, organized (roots/stems/leaves for plants; tissues & organs for animals)
+ // specimens. pic = file in naming_ai_1021/ (chalk icons only remain as an unused fallback). flags: nucleus, wall, chloroplast, organized (roots/stems/leaves for plants; tissues & organs for animals)
  specimens:[
-  {id:'nostoc',name:P(`念珠藻`,`Nostoc`),pic:null,icon:'beads',kingdom:0,flags:{nucleus:false,wall:true,chloroplast:false,organized:false}},
+  {id:'nostoc',name:P(`念珠藻`,`Nostoc`),pic:'nostoc.png',icon:'beads',kingdom:0,flags:{nucleus:false,wall:true,chloroplast:false,organized:false}},
   {id:'sealettuce',name:P(`石蓴`,`Sea lettuce`),pic:'sea_lettuce.png',kingdom:1,flags:{nucleus:true,wall:true,chloroplast:true,organized:false}},
   {id:'stinkhorn',name:P(`竹蓀`,`Stinkhorn`),pic:'stinkhorn.png',kingdom:2,flags:{nucleus:true,wall:true,chloroplast:false,organized:false}},
-  {id:'fern',name:P(`蕨`,`Fern`),pic:null,icon:'fern',kingdom:3,flags:{nucleus:true,wall:true,chloroplast:true,organized:true}},
-  {id:'seastar',name:P(`海星`,`Sea star`),pic:null,icon:'seastar',kingdom:4,flags:{nucleus:true,wall:false,chloroplast:false,organized:true}}
+  {id:'fern',name:P(`蕨`,`Fern`),pic:'fern.png',icon:'fern',kingdom:3,flags:{nucleus:true,wall:true,chloroplast:true,organized:true}},
+  {id:'seastar',name:P(`海星`,`Sea star`),pic:'seastar.png',icon:'seastar',kingdom:4,flags:{nucleus:true,wall:false,chloroplast:false,organized:true}}
  ],
  // decision flow (drawn as a tree). Each node: question text and where yes / no lead (node index or kingdom as {k:n}).
  flow:[
@@ -323,7 +323,7 @@ function clockD(s,t,durs){const st=s.start||0;if(s.phase>=0)return{k:s.phase,u:e
 
 // ── pictures ───────────────────────────────────────────────────────────────
 const AI='assets/biology/naming_ai_1021/',PICS={};
-const SIZE={'cat_tabby.png':[397,530],'horse_bay.png':[624,552],'wolf.png':[660,512],'coyote.png':[552,465],'marten_yellow_throated.png':[668,499],'marten_american.png':[656,352],
+const SIZE={'nostoc.png':[590,345],'fern.png':[582,546],'seastar.png':[575,546],'cat_tabby.png':[397,530],'horse_bay.png':[624,552],'wolf.png':[660,512],'coyote.png':[552,465],'marten_yellow_throated.png':[668,499],'marten_american.png':[656,352],
  'serow.png':[587,584],'longhorn_beetle.png':[518,534],'sea_lettuce.png':[512,597],'stinkhorn.png':[374,607],'dragonfly.png':[476,340],'fly.png':[296,282],'silverfish.png':[458,393],
  'dog_chihuahua.png':[432,463],'dog_great_dane.png':[581,537],'spider.png':[318,396],'crab.png':[448,329],'snail.png':[363,196],'cat_longhair.png':[494,603],'cat_shorthair.png':[421,567]};
 // Soft radial glow behind each picture (never a hard-edged light box); stronger for subjects that read weakly on the board.
@@ -579,7 +579,7 @@ function drawTable(c,s,t){
   const {k,tau}=stageClock(s,t,5,4.6);s.shown=k;
   const X0=158,CW=156,Y0=150,RH=86;
   KG.kingdomNames.forEach((nm,j)=>{const cx=X0+j*CW+CW/2;
-    if(j===1)place(c,'sea_lettuce.png',cx-50,24,100,78);else if(j===2)place(c,'stinkhorn.png',cx-50,24,100,78);else ICON[['beads',null,null,'fern','seastar'][j]](c,cx,62,.5,t);
+    place(c,['nostoc.png','sea_lettuce.png','stinkhorn.png','fern.png','seastar.png'][j],cx-50,24,100,78);
     text(c,nm,cx,134,22,C.white,'center');});
   line(c,[[16,Y0],[944,Y0]],rgba(C.white,.5),2);
   for(let j=0;j<5;j++)line(c,[[X0+j*CW,Y0+8],[X0+j*CW,Y0+5*RH-8]],rgba(C.white,.14),2);
