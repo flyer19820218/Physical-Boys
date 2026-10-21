@@ -70,7 +70,7 @@ function partial(pts,u){const L=[];let total=0;for(let i=1;i<pts.length;i++){con
 
 // ── pictures ───────────────────────────────────────────────────────────────
 const AI='assets/biology/mendel_ai_1020/',PEA_PLANT='assets/biology/cell_division_ai_1019/pea_plant.png',PICS={};
-const HAVE_POLLINATION=false; // set true once the hand-pollination illustration (prompt M4) is in mendel_ai_1020/
+const HAVE_POLLINATION=true; // the hand-pollination illustration (prompt M4) is in mendel_ai_1020/ (2026-10-21)
 function pic(path){let im=PICS[path];if(!im){im=new Image();im.onload=()=>B.draw();im.onerror=()=>{im.failed=true;};im.src=path;PICS[path]=im;}return im.complete&&im.naturalWidth?im:null;}
 function place(c,path,bx,by,bw,bh,{alpha=1}={}){
   const im=pic(path);if(!im)return null;const k=Math.min(bw/im.naturalWidth,bh/im.naturalHeight),w=im.naturalWidth*k,h=im.naturalHeight*k,x=bx+(bw-w)/2,y=by+(bh-h)/2;
@@ -186,8 +186,10 @@ function drawGenerations(c,s,t){
   text(c,P('孟德爾的豌豆實驗','Mendel\'s pea crosses'),36,50,22,C.yellow);
   steps(c,GEN_NAMES,k,34,64,272,42,8);
   if(k===0){
-    if(!HAVE_POLLINATION||!place(c,AI+'hand_pollination.png',30,276,280,178)){node(c,P('① 除去雄蕊','1 Remove the stamens'),40,290,260,64,false);node(c,P('② 刷上另一株的花粉','2 Brush on other pollen'),40,370,260,64,false);}
-    wrap(c,P('先除去花的雄蕊，再把另一株的花粉刷到柱頭上。','Remove the stamens, then brush on pollen from the other plant.'),36,476,268,22,C.white,30);
+    const hp=HAVE_POLLINATION?place(c,AI+'hand_pollination.png',30,276,280,178):null;
+    if(!hp){node(c,P('① 除去雄蕊','1 Remove the stamens'),40,290,260,64,false);node(c,P('② 刷上另一株的花粉','2 Brush on other pollen'),40,370,260,64,false);}
+    else[0,1].forEach(i=>{const x=hp.x+i*hp.w/2+16,y=hp.y+16;circle(c,x,y,13,C.yellow,C.ink,2);c.save();c.font=MONO(20);c.fillStyle=C.ink;c.textAlign='center';c.textBaseline='middle';c.fillText(String(i+1),x,y+1);c.restore();});
+    wrap(c,P('① 除去花的雄蕊；② 把另一株的花粉刷到柱頭上。','① Remove the stamens. ② Brush on pollen from the other plant.'),36,476,268,22,C.white,30);
   }else if(k<3){
     text(c,P('基因的寫法','Writing the alleles'),36,300,22,C.yellow);
     chip(c,52,334,'T',PLAIN,30);text(c,P('高莖（顯性）','Tall (dominant)'),78,342,22,C.green);
