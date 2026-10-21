@@ -451,6 +451,8 @@ Landscape 16:9. Four items in a row, with wide gaps between them. 1) Laver (a re
 Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, pure white background with no shadow and no scenery. Generous empty margin around and between the subjects. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.
 ```
 
+（註記）MB0～MB8 這 9 張圖已於 2026-10-22 收到並處理，對應檔案見 `microorganisms_ai_1021/sources.md`。
+
 ---
 
 ## 第四課　真菌：看不見的網，怎麼吃飯？

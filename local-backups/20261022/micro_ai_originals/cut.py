@@ -27,12 +27,12 @@ JOBS = [
         {'xsplit': [500, 1000, 1650]}),
     ('paramecia', G + 'kyyt1qkyyt1qkyyt.jpeg', 'gray',  1.0,  ['paramecium_a', 'paramecium_b', 'paramecium_c'],
         {'order': 'paramecia', 't1': 45}),
-    ('cyano',     G + 'i0gn73i0gn73i0gn.jpeg', 'gray',  1.0,  ['nostoc_chain', 'oscillatoria'], {'fill_pockets': 150, 'fill_xmin': .5, 'veil': {'F': (225, 235, 238), 'sat': (16, 34), 'dist': (50, 80), 'xmax': .5}}),
+    ('cyano',     G + 'i0gn73i0gn73i0gn.jpeg', 'gray',  1.0,  ['nostoc_chain', 'oscillatoria'], {'clear_pockets': (3, 150), 'clear_xmin': .5, 'solid': .1, 'veil': {'F': (225, 235, 238), 'sat': (16, 34), 'dist': (50, 80), 'xmax': .5}}),
     ('rain',      G + 'rs6r1xrs6r1xrs6r.jpeg', 'gray',  .9,   ['nostoc_dry', 'nostoc_wet'], {'fade': (14, 62)}),
     ('amoebae',   G + '26xteb26xteb26xt.jpeg', 'gray',  1.0,  ['amoeba_moving', 'amoeba_engulfing'], {}),
     ('diatoms',   G + 'ku35ltku35ltku35.jpeg', 'gray',  1.0,  ['diatom_%02d' % i for i in range(1, 14)], {'order': 'diatoms'}),
-    ('kelp',      G + 'p43nlvp43nlvp43n.jpeg', 'white', .85,  ['kelp'], {}),
-    ('fungi_algae', G + '90x5nr90x5nr90x5.jpeg', 'white', 1.0, ['red_alga', 'nori', 'shiitake', 'reishi'], {}),
+    ('kelp',      G + 'p43nlvp43nlvp43n.jpeg', 'white', .62,  ['kelp'], {}),
+    ('fungi_algae', G + '90x5nr90x5nr90x5.jpeg', 'white', 1.0, ['red_alga', 'nori', 'shiitake', 'reishi'], {'clear_pockets': (2, 6000), 'pocket_tol': 20, 'erase': [(200, 958, 480, 1010)]}),
 ]
 
 def bg_color(a):
@@ -58,6 +58,20 @@ def cut(a, kind, opt):
             if 'veil' in opt:      # the translucent sheath is close to the backdrop colour: not a hole
                 pk &= (np.arange(pk.shape[1]) >= opt['veil'].get('xmax', 1) * pk.shape[1])[None, :]
             bgmask |= pk
+    if opt.get('clear_pockets'):
+        # tiny background-coloured gaps that Gemini left between two neighbouring cells (the gap is open to the
+        # backdrop on both sides but a few pixels of it are walled in by anti-aliasing): clear them as well
+        lo, hi = opt['clear_pockets']
+        enc = (dist < opt.get('pocket_tol', tol)) & ~bgmask
+        lab4, n4 = ndi.label(enc, structure=np.ones((3, 3)))
+        sz4 = ndi.sum(enc, lab4, index=np.arange(1, n4 + 1))
+        pk = np.isin(lab4, [i for i, s_ in enumerate(sz4, 1) if lo <= s_ <= hi])
+        pk[:, :int(opt.get('clear_xmin', 0) * a.shape[1])] = False
+        print('   cleared tiny pockets:', int(pk.sum()), 'px')
+        bgmask |= pk
+    for (ex0, ey0, ex1, ey1) in opt.get('erase', []):
+        # things Gemini added that do not belong to the subject (a puddle ripple under the rock)
+        bgmask[ey0:ey1, ex0:ex1] = True
     # soft ring
     W = opt.get('ring', 3)
     d_to_bg = ndi.distance_transform_edt(~bgmask)
@@ -132,21 +146,6 @@ def cut(a, kind, opt):
         lowa = inside & (alpha < v.get('floor', .17))
         alpha = np.where(lowa, v.get('floor', .17), alpha)
         rgb = np.where(lowa[..., None], Fv, rgb)
-    if opt.get('fill_pockets'):
-        # tiny background-coloured gaps enclosed inside the subject (a gap drawn between two cells): paint them over
-        import cv2
-        pocket = (dist < tol) & ~bgmask
-        pocket[:, :int(opt.get('fill_xmin', 0) * a.shape[1])] = False
-        lab3, n3 = ndi.label(pocket, structure=np.ones((3, 3)))
-        sz3 = ndi.sum(pocket, lab3, index=np.arange(1, n3 + 1))
-        mind = ndi.minimum(d_to_bg, lab3, index=np.arange(1, n3 + 1))
-        m = np.isin(lab3, [i for i, (s, d) in enumerate(zip(sz3, mind), 1) if 3 <= s <= opt['fill_pockets']])
-        m = ndi.binary_dilation(m, iterations=2)
-        if m.any():
-            inp = cv2.inpaint(np.clip(rgb, 0, 255).astype(np.uint8), m.astype(np.uint8) * 255, 4, cv2.INPAINT_TELEA)
-            rgb = np.where(m[..., None], inp, rgb).astype(np.float32)
-            alpha = np.where(m, 1, alpha)
-            print('   filled pockets:', int(m.sum()), 'px')
     return rgb, alpha, bg, bgmask
 
 def order_comps(comps, how, shape):
@@ -171,7 +170,7 @@ for name, f, kind, scale, subjects, opt in JOBS:
     im = Image.open(U + f).convert('RGB')
     a = np.asarray(im)
     rgb, alpha, bg, bgmask = cut(a, kind, opt)
-    solid = alpha > .3
+    solid = alpha > opt.get('solid', .3)
     big = ndi.binary_dilation(solid, iterations=opt.get('merge', 14))
     lab, n = ndi.label(big)
     comps = []
