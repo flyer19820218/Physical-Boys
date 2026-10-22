@@ -16,7 +16,7 @@ const N=4,PER=7;
 const DRY='nostoc_dry.png',WET='nostoc_wet.png';
 const [DW,DH]=K.SIZE[DRY],[WW,WH]=K.SIZE[WET];
 // both pictures: same width and the same bottom line (their soil bottoms coincide)
-const IX=30,IW=700,BOT=528,AX=IX+IW/2;
+const IX=30,IW=700,BOT=528,AX=IX+IW/2,SUNX=660,SUNY=100;
 const dryR={x:IX,y:BOT-IW*DH/DW,w:IW,h:IW*DH/DW},wetR={x:IX,y:BOT-IW*WH/WW,w:IW,h:IW*WH/WW};
 // measured points (fractions of each picture)
 const CRUST=[[.292,.198],[.586,.192],[.247,.396],[.552,.422],[.373,.647],[.817,.543]];   // dark crust blobs (dry)
@@ -59,8 +59,8 @@ function cloud(c,x,y,s,a){
   c.restore();
 }
 function sun(c,x,y,t,a){
-  if(a<=0)return;c.save();c.globalAlpha*=a;glow(c,x,y,62,C.yellow,.45);
-  for(let i=0;i<12;i++){const an=i/12*TAU+t*.22;line(c,[[x+Math.cos(an)*34,y+Math.sin(an)*34],[x+Math.cos(an)*48,y+Math.sin(an)*48]],C.yellow,3);}
+  if(a<=0)return;c.save();c.globalAlpha*=a;glow(c,x,y,62,C.yellow,.38+.12*Math.sin(t*2.4));
+  for(let i=0;i<12;i++){const an=i/12*TAU+t*.45,l=46+4*Math.sin(t*3+i*1.7);line(c,[[x+Math.cos(an)*34,y+Math.sin(an)*34],[x+Math.cos(an)*l,y+Math.sin(an)*l]],C.yellow,3);}
   circle(c,x,y,26,C.yellow,null);c.restore();
 }
 
@@ -83,9 +83,9 @@ function draw(c,s,t){
   const absorb=follow(V,'abs',k===1?1:k===2?1-w:0,dt,4);
 
   // ── sky ──
-  sun(c,690,100,t,su);
+  sun(c,SUNX,SUNY,t,su);
   const cd=Math.sin(t*.3)*10;
-  cloud(c,230+cd,96,1,cl);cloud(c,520-cd,92,.95,cl);
+  cloud(c,262+cd,96,1,cl);cloud(c,520-cd,92,.95,cl);
 
   // ── the rain mushroom: dry and wet pictures, cross-fading with a swell ──
   const breathe=1+.006*Math.sin(t*1.6)*w;
@@ -108,34 +108,34 @@ function draw(c,s,t){
   // ── labels per step ──
   // step 0: drought
   const a0=A(0,.6);
-  if(a0>0){const b=box(c,P(`雨來菇：縮成黑色的殼（休眠）`,`Rain mushroom: shrunk into black crusts (dormant)`),40,166,{w:560,col:C.white,a:a0});
+  if(a0>0){const b=box(c,P(`雨來菇：縮成黑色的殼（休眠）`,`Rain mushroom: shrunk into black crusts\n(dormant)`),40,166,{w:560,col:C.white,a:a0});
     leader(c,[b.x+70,b.y+b.h],fp(dR,CRUST[0]),C.white,a0);leader(c,[Math.min(b.x+b.w-40,420),b.y+b.h],fp(dR,CRUST[1]),C.white,a0);}
   // sun label (steps 0 and 3)
   const sa=Math.max(A(0,.9),A(3,.9));
-  if(sa>0){c.save();c.globalAlpha*=sa;text(c,P(`陽光`,`Sunlight`),690,176,22,C.yellow,'center');c.restore();}
+  if(sa>0){c.save();c.globalAlpha*=sa;text(c,P(`陽光`,`Sunlight`),SUNX-58,108,22,C.yellow,'right');c.restore();}
   // step 1: rain
   const a1=A(1,.8),a1b=A(1,1.6);
-  if(a1>0){c.save();c.globalAlpha*=a1;text(c,P(`雨雲`,`Rain clouds`),640,84,22,'#c7d6df');c.restore();
+  if(a1>0){c.save();c.globalAlpha*=a1;text(c,P(`雨雲`,`Rain clouds`),30,84,22,'#c7d6df');c.restore();
     box(c,P(`雨滴`,`Raindrops`),40,150,{w:200,col:'#a5dcff',a:a1});}
   if(a1b>0){const b=box(c,P(`水滲進雨來菇`,`Water seeps into the rain mushroom`),300,174,{w:420,col:C.cyan,a:a1b});
     leader(c,[b.x+Math.min(140,b.w/2),b.y+b.h],fp(dR,CRUST[1]),C.cyan,a1b);}
   // step 2: swelling, turning green
   const a2=A(2,2.6),a2b=A(2,3.2);
-  if(a2>0){const b=box(c,P(`雨來菇吸飽水，膨脹`,`The rain mushroom fills with water and swells`),40,150,{w:260,col:C.cyan,a:a2});
+  if(a2>0){const b=box(c,P(`雨來菇吸飽水，膨脹`,`Rain mushroom: full of water, swells`),40,140,{w:244,col:C.cyan,a:a2});
     c.save();c.globalAlpha*=a2;const pu=(t*.9)%1;
     [[WET_CROWN,0,-1],[WET_LEFT,-1,-.35],[WET_RIGHT,1,-.35]].forEach(([f,ux,uy])=>{const [x,y]=fp(wR,f),n=Math.hypot(ux,uy),dx=ux/n,dy=uy/n,o=8+pu*10;
       arrow(c,x+dx*o,y+dy*o,x+dx*(o+28),y+dy*(o+28),rgba(C.cyan,1-pu*.5),3);});
     const cr=fp(wR,WET_CROWN);text(c,P(`膨脹`,`Swells`),cr[0]+22,cr[1]-24,22,C.cyan);c.restore();}
-  if(a2b>0){const b=box(c,P(`顏色變綠`,`Turns green`),528,178,{w:200,col:C.green,a:a2b});leader(c,[b.x+30,b.y+b.h],fp(wR,WET_GREEN),C.green,a2b);}
+  if(a2b>0){const b=box(c,P(`顏色變綠`,`Turns green`),560,150,{w:200,col:C.green,a:a2b});leader(c,[b.x+30,b.y+b.h],fp(wR,WET_GREEN),C.green,a2b);}
   // water drops on the wet colony (steps 2 and 3)
   const wd=Math.max(A(2,3.4),A(3,1.1))*wa;
   if(wd>0){const b=box(c,P(`水珠`,`Water drops`),40,536,{w:200,col:'#a5dcff',a:wd});leader(c,[b.x+b.w/2,b.y],fp(wR,WET_DROP),'#a5dcff',wd);}
   // step 3: photosynthesis again
   const a3=A(3,1.1);
   if(a3>0){c.save();c.globalAlpha*=a3;
-    [WET_TOP,WET_GREEN,[.78,.42]].forEach((f,i)=>{const [x,y]=fp(wR,f);dashed(c,[[690-20,100+16],[x,y]],rgba(C.yellow,.9),3,[10,8],-t*24-i*6);});
+    [WET_TOP,WET_GREEN,[.78,.42]].forEach((f,i)=>{const [x,y]=fp(wR,f);dashed(c,[[SUNX-20,SUNY+16],[x,y]],rgba(C.yellow,.9),3,[10,8],-t*24-i*6);});
     c.restore();
-    const b=box(c,P(`雨來菇又能行光合作用`,`The rain mushroom photosynthesizes again`),40,150,{w:260,col:C.green,a:A(3,1.6)});
+    const b=box(c,P(`雨來菇又能行光合作用`,`Rain mushroom: photosynthesizing again`),40,140,{w:268,col:C.green,a:A(3,1.6)});
     leader(c,[b.x+b.w-30,b.y+b.h],fp(wR,[.36,.33]),C.green,A(3,1.6));}
   // the soil is not part of the rain mushroom (all steps)
   const so=[mix(fp(dR,CRACK)[0],fp(wR,WET_SOIL)[0],w),mix(fp(dR,CRACK)[1],fp(wR,WET_SOIL)[1],w)];
@@ -149,7 +149,7 @@ function draw(c,s,t){
   const ACOL=[C.muted,C.cyan,C.cyan,C.green];
   const tRows=rowsOf(c,P(`雨來菇的狀態`,`Rain mushroom`),TW),aRows=ACT.map(p=>rowsOf(c,p,TW)),nA=Math.max(...aRows.map(r=>r.length));
   const sRows=rowsOf(c,P(`只學分類，\n不教採食`,`For classifying only, not for picking to eat`),TW);
-  const PY=140,PH=32+tRows.length*28+44+66+110+nA*28+18+sRows.length*28;
+  const PY=72,PH=32+tRows.length*28+44+66+110+nA*28+18+sRows.length*28;
   D.round(c,PX,PY,PW,PH,14,'rgba(11,26,21,.8)',C.edge);
   let y=PY+32;
   tRows.forEach((r,i)=>text(c,r,PM,y+i*28,22,C.white,'center'));

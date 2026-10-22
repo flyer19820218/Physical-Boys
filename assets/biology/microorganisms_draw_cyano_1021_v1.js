@@ -225,10 +225,11 @@ function draw(c,s,t){
     // thumbnail names (and "prokaryote" tags in step 3)
     const tn=small;
     if(tn>.05){c.save();c.globalAlpha*=tn*a23;
-      const nx=nr.x+nr.w/2,ox=or.x+or.w/2;
-      text(c,P(`念珠藻`,`Nostoc`),nx,nr.y+nr.h+26,22,C.white,'center');text(c,P(`顫藻`,`Oscillatoria`),ox,or.y+or.h+26,22,C.white,'center');c.restore();
-      const pa=A(3,1.4)*tn;if(pa>0){c.save();c.globalAlpha*=pa;text(c,P(`原核生物`,`Prokaryote`),nx,nr.y+nr.h+52,22,C.orange,'center');text(c,P(`原核生物`,`Prokaryote`),ox,or.y+or.h+52,22,C.orange,'center');c.restore();}}
-    const CX=455,CY=300,CR=135*mix(.3,1,ease(ca));
+      // names sit at the thumbnails' final places (they fade, they do not ride along while the pictures resize)
+      const nT=nosRect(LAY[2]),oT=oscRect(LAY[2]),nx=nT.x+nT.w/2,ox=oT.x+oT.w/2;
+      text(c,P(`念珠藻`,`Nostoc`),nx,nT.y+nT.h+26,22,C.white,'center');text(c,P(`顫藻`,`Oscillatoria`),ox,oT.y+oT.h+26,22,C.white,'center');c.restore();
+      const pa=A(3,1.4)*tn;if(pa>0){c.save();c.globalAlpha*=pa;text(c,P(`原核生物`,`Prokaryote`),nx,nT.y+nT.h+52,22,C.orange,'center');text(c,P(`原核生物`,`Prokaryote`),ox,oT.y+oT.h+52,22,C.orange,'center');c.restore();}}
+    const CX=455,CY=286,CR=128*mix(.3,1,ease(ca));
     if(ca>0){
       // where the enlarged cell comes from: a box on one cell of the Nostoc thumbnail, dashed lines to the big cell
       const zc=fp(nr,NOS_CELL_Z),zr=HET_R*nr.w+5;
@@ -243,15 +244,15 @@ function draw(c,s,t){
         [-.95,-.62,-.3].forEach(an=>{const ex=CX+CR*Math.cos(an),ey=CY+CR*Math.sin(an);dashed(c,[[SX-18,SY+14],[ex,ey]],rgba(C.yellow,.9),3,[10,8],-t*24);});
         text(c,P(`光`,`Light`),SX,SY-50,22,C.yellow,'center');c.restore();}
       c.save();c.globalAlpha*=ca;cyanoCell(c,CX,CY,CR,t,{pig:1,lit:la,dna:A(3,.6)});c.restore();
-      block(c,P(`一個念珠藻細胞（放大）`,`One Nostoc cell (enlarged)`),CX-30,140,{w:300,col:C.white,align:'center',a:ca});
+      block(c,P(`一個念珠藻細胞（放大）`,`One Nostoc cell (enlarged)`),CX-30,132,{w:300,col:C.white,align:'center',a:ca});
       // below the cell: step 2 pigments; step 3 pigments + DNA
       const p2=A(2,1.1),p3=A(3,.9);
-      let below=478;
-      if(p2>0){const b=block(c,P(`光合作用的色素：散布在細胞內`,`Pigments for photosynthesis: spread through the cell`),CX,478,{w:380,col:C.green,align:'center',a:p2});
+      let below=456;
+      if(p2>0){const b=block(c,P(`光合作用的色素：散布在細胞內`,`Pigments for photosynthesis: spread through the cell`),CX,456,{w:380,col:C.green,align:'center',a:p2});
         leader(c,[CX,b.y0-4],[CX+CR*PIG[3][0]*1.02,CY+CR*PIG[3][1]*1.02],C.green,p2);below=Math.max(below,b.y1);}
-      if(p3>0){const b1=block(c,P(`色素`,`Pigments`),330,478,{w:150,col:C.green,align:'center',a:p3});
+      if(p3>0){const b1=block(c,P(`色素`,`Pigments`),330,456,{w:150,col:C.green,align:'center',a:p3});
         leader(c,[330,b1.y0-4],[CX+CR*PIG[3][0]*1.02,CY+CR*PIG[3][1]*1.02],C.green,p3);
-        const b2=block(c,P(`DNA：沒有核膜包住`,`DNA: no nuclear envelope`),540,478,{w:220,col:C.orange,align:'center',a:p3});
+        const b2=block(c,P(`DNA：沒有核膜包住`,`DNA: no nuclear envelope`),540,456,{w:220,col:C.orange,align:'center',a:p3});
         leader(c,[540,b2.y0-4],[CX+CR*.24,CY+CR*.2],C.orange,p3);below=Math.max(below,b1.y1,b2.y1);}
       // key sentence pills
       const kp2=A(2,1.8),kp3=A(3,1.6);
@@ -268,10 +269,10 @@ function draw(c,s,t){
       const b1=block(c,P(`比較：藻類的細胞`,`Compare: an algal cell`),MX,y,{w:W,col:C.white,align:'center'});y=b1.y1+26;
       const b2=block(c,P(`（真核生物）`,`(a eukaryote)`),MX,y,{w:W,col:C.muted,align:'center'});y=b2.y1+34;
       const hiN=A(3,.6),hiC=A(2,.6);
-      const nb=block(c,P(`細胞核：DNA 有核膜包住`,`Nucleus: DNA wrapped in an envelope`),MX,y,{w:W,col:mixCol(hiN),align:'center'});
+      const nb=block(c,P(`細胞核：\nDNA 有核膜包住`,`Nucleus: DNA wrapped in an envelope`),MX,y,{w:W,col:mixCol(hiN),align:'center'});
       const cyC=nb.y1+22+72,cells=algaCell(c,MX,cyC,96,72,t,hiC,hiN);
       leader(c,[MX,nb.y1+6],[cells.nuc[0]+2,cells.nuc[1]-30],C.pink,1);
-      const cb=block(c,P(`葉綠體：色素集中在這裡`,`Chloroplasts: pigments gathered here`),MX,cyC+72+40,{w:W,col:mixCol(hiC,C.green),align:'center'});
+      const cb=block(c,P(`葉綠體：\n色素集中在這裡`,`Chloroplasts: pigments gathered here`),MX,cyC+72+40,{w:W,col:mixCol(hiC,C.green),align:'center'});
       leader(c,[MX,cb.y0-6],[cells.chl[0],cells.chl[1]+11],C.green,1);
       c.restore();}
   }

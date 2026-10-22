@@ -35,7 +35,7 @@ const T={
  psize:P(`草履蟲：約 150～300 µm（示意，非同比例）`,`Paramecium: about 150 to 300 µm (schematic, not to scale)`),
  bact:P(`細菌`,`Bacterium`),para:P(`草履蟲`,`Paramecium`),
  rows:[[[true,P(`有 DNA`,`Has DNA`)],[false,P(`沒有核膜`,`No nuclear envelope`)]],
-       [[true,P(`有 DNA`,`Has DNA`)],[true,P(`有核膜（DNA 在細胞核裡）`,`Nuclear envelope (DNA in a nucleus)`)]]],
+       [[true,P(`有 DNA`,`Has DNA`)],[true,P(`有核膜（DNA 在細胞核裡）`,`Nuclear envelope: a nucleus`)]]],
  verdict:[P(`原核生物`,`Prokaryote`),P(`真核生物`,`Eukaryote`)],
  size1:P(`大小不是標準：草履蟲雖然小，也是真核生物`,`Size is not the test: a Paramecium is small, yet it is a eukaryote`),
  size2:P(`真實大小：細菌約 1～數 µm，草履蟲約 150～300 µm（畫面為示意，非同比例）`,`Real sizes: a bacterium is about 1 to a few µm, a Paramecium about 150 to 300 µm (the picture is schematic, not to scale)`)};
@@ -184,7 +184,7 @@ function draw(c,s,t){
   // step 3: the two panels and their headings, drawn first so the pictures sit on top
   if(k===2)[[20,T.bact,0],[500,T.para,1]].forEach(([x,p,i])=>{
     const a=fade(tau,.2,.5)*out;c.save();c.globalAlpha*=a;D.round(c,x,8,440,460,16,'rgba(11,26,21,.35)',C.edge);
-    D.round(c,x+150,16,140,40,20,'rgba(11,26,21,.92)',rgba(i?C.cyan:C.orange,.85));text(c,p,x+220,44,22,i?C.cyan:C.orange,'center');c.restore();
+    const pw=measure(c,p,22)+44;D.round(c,x+220-pw/2,16,pw,40,20,'rgba(11,26,21,.92)',rgba(i?C.cyan:C.orange,.85));text(c,p,x+220,44,22,i?C.cyan:C.orange,'center');c.restore();
     D.hit(x,8,440,460,'phase',i);});
   // the Paramecium (all steps; hidden in step 1)
   const pr=lerpR(paraAt(from,k),paraAt(k,from),u);

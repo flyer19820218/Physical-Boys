@@ -14,7 +14,7 @@
  * bluish components for the stars and the nucleus, Hough circles for the food vacuoles), in picture pixels.
  */
 (()=>{'use strict';
-const K=window.MicroKit,{P,C,D,text,measure,splitLines,circle,glow,arrow,dashed,line,marker,fade,ease,smooth,mix,clamp,mod,rgba,stageClock,pic,AI,SIZE,TAU,rng}=K;
+const K=window.MicroKit,{P,C,D,text,measure,splitLines,circle,glow,arrow,dashed,line,fade,ease,smooth,mix,clamp,mod,rgba,stageClock,pic,AI,SIZE,TAU,rng}=K;
 const N=4,PER=8,FILE='paramecium_c.png',[IW,IH]=SIZE[FILE];
 const R0={x:110,y:84,w:740},K0=R0.w/IW;                       // picture rect at camera scale 1
 const VIEWS=[{s:1,dx:0,dy:0},{s:1,dx:0,dy:0},{s:1,dx:0,dy:0},{s:.78,dx:-66,dy:44}];
@@ -86,6 +86,8 @@ function label(c,p,x,y,{align='left',col=C.yellow,a=1,to=[],w=300,size=22}={}){
   c.restore();
 }
 const clamp2=(v,a,b)=>Math.max(a,Math.min(b,v));
+// numbered marker (the kit's marker with a 22 px digit)
+function mark(c,x,y,n,t,col){if(t!=null)K.pulse(c,x,y,t,col,18);circle(c,x,y,16,col,C.ink,2);c.save();c.font=K.MONO(22);c.fillStyle=C.ink;c.textAlign='center';c.textBaseline='middle';c.fillText(String(n),x,y+1);c.restore();}
 
 // ── picture layers ─────────────────────────────────────────────────────────
 function picture(c,cam,a=1){
@@ -251,7 +253,7 @@ function step3(c,cam,t,tau,a){
   ROWS.forEach(([ti,sub],i)=>{
     const on=i===hi,rows=splitLines(c,D.tr(sub),PW-74,22),hgt=i===3?150:Math.max(96,40+rows.length*28+14);
     D.round(c,PX+10,y,PW-20,hgt-10,12,on?rgba(C.yellow,.16):'rgba(28,61,52,.55)',on?C.yellow:rgba(C.edge,.9));
-    marker(c,PX+34,y+26,i+1,on?t:null,14,on?C.yellow:C.muted);
+    mark(c,PX+34,y+26,i+1,on?t:null,on?C.yellow:C.muted);
     text(c,ti,PX+58,y+34,24,on?C.yellow:C.white);
     rows.forEach((r,j)=>text(c,r,PX+58,y+64+j*28,22,on?C.white:C.muted));
     if(i===3)division(c,PX+PW/2+10,y+hgt-50,t,1);
@@ -263,7 +265,7 @@ function step3(c,cam,t,tau,a){
   // [target on the picture, marker offset in canvas px]: markers stand beside the structure, a short leader points at it
   const spots=[[[M(cam,top.x-120,top.y+6),[0,-34]]],[[M(cam,566,150),[-34,-34]],[M(cam,690,140),[-28,-46]]],[[M(cam,...STARS[0].c),[-58,-62]],[M(cam,...STARS[1].c),[30,-74]]]];
   spots.forEach((ps,i)=>ps.forEach(([[x,y],[ox,oy]])=>{const on=i===hi,col=on?C.yellow:C.muted;c.save();c.globalAlpha*=a;
-    line(c,[[x+ox,y+oy],[x,y]],col,2);circle(c,x,y,4.5,col,C.ink,1.5);marker(c,x+ox,y+oy,i+1,on?t:null,14,col);c.restore();}));
+    line(c,[[x+ox,y+oy],[x,y]],col,2);circle(c,x,y,4.5,col,C.ink,1.5);mark(c,x+ox,y+oy,i+1,on?t:null,col);c.restore();}));
   label(c,P(`細胞核`,`Nucleus`),330,520,{align:'center',col:C.white,a,to:[M(cam,NUC[0]-20,NUC[1]+30)]});
 }
 const STEPS=[step0,step1,step2,step3];

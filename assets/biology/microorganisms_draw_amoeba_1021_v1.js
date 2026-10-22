@@ -35,7 +35,7 @@ const FOOD_C=[164.8,323.2];
 const HIDE=[[82,288],[83,306],[93,327],[99,335],[119,354],[150,373],[174,382],[200,382],[228,376],[238,371],[248,362],[253,362],[256,359],[258,345],[253,340],[252,335],[240,324],[227,316],[216,305],[214,300],[199,283],[193,281],[179,272],[165,267],[149,264],[123,264],[113,267],[106,267],[100,264],[97,265],[86,276]];
 const ALGA=[[128,275],[122,282],[122,286],[125,293],[145,304],[153,316],[148,320],[144,320],[126,309],[119,308],[113,310],[110,316],[111,332],[115,336],[117,342],[127,354],[131,356],[134,360],[139,361],[144,365],[154,368],[158,371],[174,374],[199,373],[207,369],[211,363],[210,352],[191,335],[191,331],[193,329],[196,332],[205,336],[214,335],[219,329],[219,322],[213,309],[197,291],[184,282],[165,274],[153,271],[141,271]];
 const ALGA_C=[172.7,327.3];
-const INSIDE=[335,238],IN_SC=.55;                                                // where the food vacuole goes: free cytoplasm between the notch and the pale circle
+const INSIDE=[336,236],IN_SC=.66;                                                // where the food vacuole goes: free cytoplasm between the notch and the pale circle
 const ARM_UP=[[262,196],[170,196],[80,214],[30,244]],ARM_LO=[[262,420],[170,412],[90,392],[38,360]];   // along the two left pseudopods, towards their tips
 const START=[-300,345];                                                          // food starts here (picture px, left of the picture)
 
@@ -57,12 +57,18 @@ function mvT(c,T){c.translate(MX+T,MY);c.rotate(ROT);c.scale(MK,MK);c.translate(
 function MM(T,u,v){const ca=Math.cos(ROT),sa=Math.sin(ROT),x=u-MW/2,y=v-MH/2;return[MX+T+MK*(ca*x-sa*y),MY+MK*(sa*x+ca*y)];}
 const armStretch=(c,f)=>{const k=f-1;c.translate(BASE[0],BASE[1]);c.transform(1+k*AX[0]*AX[0],k*AX[0]*AX[1],k*AX[0]*AX[1],1+k*AX[1]*AX[1],0,0);c.translate(-BASE[0],-BASE[1]);};
 const tipM=f=>ap(S_BASE+(S_TIP-S_BASE)*f,-8);
+// The two pieces (body, stretched arm) are put together at full opacity on a scratch canvas first, then drawn with
+// the fade alpha, so the 4 px overlap never shows as a lighter seam while the picture fades.
+let OC=null;
 function moving(c,T,f,a){
   const im=pic(AI+MV);if(!im||a<=0)return;
-  c.save();c.globalAlpha*=a;mvT(c,T);
-  c.save();c.beginPath();c.rect(-400,-400,MW+800,MH+800);BAND.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.clip('evenodd');c.drawImage(im,0,0,MW,MH);c.restore();
-  c.save();armStretch(c,f);path(c,BAND_ARM);c.clip();c.drawImage(im,0,0,MW,MH);c.restore();
-  c.restore();
+  if(!OC){OC=document.createElement('canvas');OC.width=960;OC.height=600;}
+  const o=OC.getContext('2d');o.setTransform(1,0,0,1,0,0);o.clearRect(0,0,960,600);
+  o.save();mvT(o,T);
+  o.save();o.beginPath();o.rect(-400,-400,MW+800,MH+800);BAND.forEach((p,i)=>i?o.lineTo(p[0],p[1]):o.moveTo(p[0],p[1]));o.closePath();o.clip('evenodd');o.drawImage(im,0,0,MW,MH);o.restore();
+  o.save();armStretch(o,f);path(o,BAND_ARM);o.clip();o.drawImage(im,0,0,MW,MH);o.restore();
+  o.restore();
+  c.save();c.globalAlpha*=a;c.drawImage(OC,0,0,960,600);c.restore();
 }
 // cytoplasm granules streaming from the body into the arm (picture px, drawn under the same transform)
 const GRAINS=Array.from({length:16},(_,i)=>{const r=rng(70+i);return{ph:i/16,q:(r()-.5)*2,r:7+r()*3};});
@@ -137,7 +143,7 @@ function draw(c,s,t){
   if(k===0)mvState={f:arm0(tau),T:0,vis:1};else if(k===1)mvState=crawl(tau);else mvState=s.amMv||{f:.72,T:0,vis:1};
   if(k<2)s.amMv={f:mvState.f,T:mvState.T,vis:mvState.vis};
   if(wE<1)moving(c,mvState.T,mvState.f,(1-wE)*mvState.vis);
-  if(k===1&&wE<1)grains(c,mvState.T,mvState.f,t,(1-wE)*mvState.vis*aNew*(crawl(tau).phase==='out'?1:.55));
+  if(k===1&&wE<1)grains(c,mvState.T,mvState.f,t,(1-wE)*mvState.vis*aNew);
 
   // food state on the engulfing picture
   let foodHidden=false,food=null;
@@ -151,11 +157,14 @@ function draw(c,s,t){
     food={q,u,mem,gone,x,y};
   }else if(k===3){
     const q=mod(tau,PER),mv=smooth(fade(q,.6,2.0)),dig=fade(q,2.8,3.2),gone=fade(q,7.2,.7),back=fade(q,0,.4);
-    const x=mix(FOOD_C[0],INSIDE[0],mv),y=mix(FOOD_C[1],INSIDE[1],mv),sc=mix(1,IN_SC,mv)*mix(1,.78,dig);
+    const x=mix(FOOD_C[0],INSIDE[0],mv),y=mix(FOOD_C[1],INSIDE[1],mv),sc=mix(1,IN_SC,mv)*mix(1,.86,dig);
     engulfing(c,wE,true);
     const al=wE*(1-gone)*(from===2?1:back);
-    cutout(c,FOOD,FOOD_C,x,y,sc,al,ALGA);
-    cutout(c,ALGA,ALGA_C,x+(ALGA_C[0]-FOOD_C[0])*sc,y+(ALGA_C[1]-FOOD_C[1])*sc,sc*mix(1,.42,dig),al*mix(1,.18,dig));
+    // the vacuole: the picture's own membrane+food, the food area covered with membrane grey (sampled), then the shrinking food on top
+    cutout(c,FOOD,FOOD_C,x,y,sc,al);
+    if(dig>0)inE(c,()=>{c.save();c.globalAlpha*=al*Math.min(1,dig*4);c.translate(x,y);c.scale(sc,sc);c.translate(-FOOD_C[0],-FOOD_C[1]);
+      path(c,ALGA);c.fillStyle='#aeb1b6';c.fill();c.strokeStyle='#aeb1b6';c.lineWidth=3;c.stroke();c.restore();});
+    cutout(c,ALGA,ALGA_C,x+(ALGA_C[0]-FOOD_C[0])*sc,y+(ALGA_C[1]-FOOD_C[1])*sc,sc*mix(1,.5,dig),al*mix(1,.35,dig));
     food={q,mv,dig,gone,x,y,sc,al};
   }else if(wE>0)engulfing(c,wE,false);
 
@@ -185,16 +194,20 @@ function over1(c,t,tau,a){
   label(c,P(`偽足`,`Pseudopod`),818,300,{col:C.yellow,a:a*st.vis,to:[[tx-24,ty+2]]});
   // flow arrow along the arm axis
   const [b0x,b0y]=MM(st.T,...ap(-360,-8)),[b1x,b1y]=MM(st.T,...ap(S_BASE+(S_TIP-S_BASE)*st.f-60,-8));
-  const fa=a*st.vis*(st.phase==='out'?1:.45);
+  const fa=a*st.vis;
   c.save();c.globalAlpha*=fa;dashed(c,[[b0x,b0y],[b1x-14,b1y]],rgba(C.pink,.95),3,[10,7],-t*30);arrow(c,b1x-22,b1y,b1x,b1y,C.pink,3.5);c.restore();
   label(c,P(`細胞質流向偽足`,`Cytoplasm flows\ninto the pseudopod`),668,470,{col:C.pink,a:fa,to:[[(b0x+b1x)/2+60,b1y+4]]});
   // where the nucleus started, and how far the cell has moved
   const [n0x,n0y]=MM(0,NUC_M[0],NUC_M[1]),[n1x]=MM(st.T,NUC_M[0],NUC_M[1]),r=NUC_M[2]*MK;
   const ga=a*st.vis*clamp(st.T/10);
-  if(ga>0){c.save();c.globalAlpha*=ga;c.setLineDash([6,5]);circle(c,n0x,n0y,r,null,rgba(C.white,.9),2.5);c.restore();
-    c.save();c.globalAlpha*=ga;line(c,[[n0x,544],[n0x,524]],C.white,2.5);if(n1x-n0x>14)arrow(c,n0x,534,n1x,534,C.white,3.5);c.restore();
-    label(c,P(`整個細胞往前移動`,`The whole cell moves on`),n0x-14,580,{align:'left',col:C.white,a:ga});
-    label(c,P(`原本的位置`,`Where it started`),n0x-r-10,n0y-r-12,{align:'right',col:C.white,a:ga,to:[[n0x-r*.7,n0y-r*.7]]});}
+  if(ga>0){
+    // dashed ghost of the nucleus where it started (dark, so it shows on the pale cytoplasm), dashed drops to a ruler below
+    c.save();c.globalAlpha*=ga;c.setLineDash([7,5]);circle(c,n0x,n0y,r,null,rgba(C.ink,.85),3);
+    c.setLineDash([4,6]);line(c,[[n0x,n0y+r],[n0x,526]],rgba(C.ink,.6),4);line(c,[[n0x,n0y+r],[n0x,526]],rgba(C.white,.9),2);
+    line(c,[[n1x,n0y+r],[n1x,526]],rgba(C.ink,.6),4);line(c,[[n1x,n0y+r],[n1x,526]],rgba(C.white,.9),2);c.restore();
+    c.save();c.globalAlpha*=ga;line(c,[[n0x,526],[n0x,550]],C.white,3);if(n1x-n0x>14)arrow(c,n0x,538,n1x,538,C.white,3.5);c.restore();
+    label(c,P(`原本的位置`,`Where it started`),n0x-12,546,{align:'right',col:C.white,a:ga});
+    label(c,P(`整個細胞往前移動`,`The whole cell moves on`),Math.max(n1x,n0x+20)+12,546,{align:'left',col:C.white,a:ga});}
 }
 function over2(c,t,fd,a){
   const ua=fade(fd.q,1.0,.5)*(1-fd.gone),grow=fade(fd.q,1.0,2.2);
@@ -214,7 +227,7 @@ function over3(c,t,fd,a){
     NUTS.forEach(n=>{const u=clamp((fd.dig*3.2-n.del)/2.2);if(u<=0)return;const d=n.d*ease(u)*EK,x=vx+Math.cos(n.ang)*d,y=vy+Math.sin(n.ang)*d*.8;
       c.save();c.globalAlpha*=a*(1-fd.gone)*Math.min(1,u*4)*(1-.5*u);circle(c,x,y,4,C.yellow,C.ink,1.2);c.restore();});
     label(c,P(`養分`,`Nutrients`),762,300,{align:'center',col:C.yellow,a:a*(1-fd.gone)*fade(fd.dig,.15,.2),to:[[vx+36,vy+10]]});
-    label(c,P(`消化：食物變成養分，\n留在細胞裡`,`Digestion: food becomes\nnutrients that stay in the cell`),40,540,{col:C.yellow,a:a*(1-fd.gone)*fade(fd.dig,.15,.2),w:300});
+    label(c,P(`消化：食物變成養分，\n留在細胞裡`,`Digestion: food becomes\nnutrients that stay in the cell`),40,540,{col:C.yellow,a:a*(1-fd.gone)*fade(fd.dig,.15,.2),w:380});
   }
 }
 window.MicroDraw.amoeba=draw;
