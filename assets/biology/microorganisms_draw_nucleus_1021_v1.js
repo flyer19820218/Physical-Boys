@@ -181,6 +181,11 @@ function draw(c,s,t){
   const {from,u}=track(s,'nucL',k,t,1.0),out=held?1:1-fade(tau,PER-.45,.45),settle=clamp((u-.6)/.4);
   const L=(i,lab)=>fade(tau,lab,.5)*settle*out;    // label alpha, delayed
 
+  // step 3: the two panels and their headings, drawn first so the pictures sit on top
+  if(k===2)[[20,T.bact,0],[500,T.para,1]].forEach(([x,p,i])=>{
+    const a=fade(tau,.2,.5)*out;c.save();c.globalAlpha*=a;D.round(c,x,8,440,460,16,'rgba(11,26,21,.35)',C.edge);
+    D.round(c,x+150,16,140,40,20,'rgba(11,26,21,.92)',rgba(i?C.cyan:C.orange,.85));text(c,p,x+220,44,22,i?C.cyan:C.orange,'center');c.restore();
+    D.hit(x,8,440,460,'phase',i);});
   // the Paramecium (all steps; hidden in step 1)
   const pr=lerpR(paraAt(from,k),paraAt(k,from),u);
   if(pr.a>.01){if(k>0&&u>.95)glow(c,pr.x+pr.w*NUC_C[0],pr.y+pr.h*NUC_C[1],pr.w*.3,C.cyan,.10);
@@ -194,7 +199,7 @@ function draw(c,s,t){
     c.save();c.globalAlpha*=ta;D.round(c,THUMB.x,THUMB.y,THUMB.w,THUMB.h,12,'rgba(11,26,21,.75)',rgba(C.white,.55));c.restore();
     const tcx=THUMB.x+THUMB.w/2,tcy=THUMB.y+THUMB.h/2+Math.sin(t*1.3)*2;
     rod(c,tcx,tcy,ROD_ANG,150,ta);
-    tag(c,T.thumb,THUMB.x+THUMB.w/2,THUMB.y+THUMB.h+8,{col:C.muted,maxW:250,a:ta*out});
+    tag(c,T.thumb,THUMB.x+THUMB.w/2,THUMB.y+THUMB.h+8,{col:C.muted,maxW:200,a:ta*out});
     const fu=ease((tau-.35)/1.1),reveal=fade(tau,1.05,.5);
     if(tau>.35&&reveal<1){const fx=mix(tcx,g.cx,fu),fy=mix(tcy,g.cy,fu);rod(c,fx,fy,mix(ROD_ANG,0,fu),mix(150,2*g.a,fu),(1-reveal)*.95);}
     cell(c,g,t,{alpha:reveal*(held?1:mix(1,.0,fade(tau,PER-.45,.45))),dnaGlow:fade(tau,2.6,.5)*(.5+.5*Math.sin(t*3))});
@@ -203,20 +208,16 @@ function draw(c,s,t){
     tag(c,T.mem,400,166,{tgt:P_MEM(g),a:la(1),maxW:200});
     tag(c,T.cyto,232,446,{align:'right',tgt:P_CYTO(g),a:la(2),maxW:180});
     tag(c,T.dna,600,166,{col:C.pink,tgt:P_DNA_TOP(g,t),a:la(3),size:24});
-    tag(c,T.noEnv,520,450,{col:C.orange,tgt:P_DNA_BOT(g,t),a:la(4),maxW:360});
+    tag(c,T.noEnv,520,450,{col:C.orange,tgt:P_DNA_BOT(g,t),a:la(4),maxW:470});
     tag(c,T.flag,850,236,{tgt:flagPt(g,.55,t),a:la(5),maxW:160});
     tag(c,T.bsize,480,546,{col:C.muted,a:la(5),maxW:900});
   } else {
     // the cell drawn small (slides away in step 2, back in step 3)
-    const cf=CELL[from===0&&k===2?0:from],ct=CELL[k],cu=u;
+    const cf=CELL[from],ct=CELL[k],cu=u;
     const g=geo(mix(cf.x,ct.x,cu),mix(cf.y,ct.y,cu),mix(cf.s,ct.s,cu));
-    cell(c,g,t,{alpha:mix(cf.a,ct.a,cu)*(k===2?1:1),dnaGlow:k===2?fade(tau,1.6,.5)*(.5+.5*Math.sin(t*3)):0});
+    cell(c,g,t,{alpha:mix(cf.a,ct.a,cu),dnaGlow:k===2?fade(tau,1.6,.5)*(.5+.5*Math.sin(t*3)):0});
     if(k===2){
-      // panels, headings, labels on the pictures
-      [[20,T.bact,0],[500,T.para,1]].forEach(([x,p,i])=>{
-        const a=fade(tau,.2,.5)*out;c.save();c.globalAlpha*=a;D.round(c,x,8,440,452,16,'rgba(11,26,21,.35)',C.edge);
-        D.round(c,x+150,16,140,40,20,'rgba(11,26,21,.92)',rgba(i?C.cyan:C.orange,.85));text(c,p,x+220,44,22,i?C.cyan:C.orange,'center');c.restore();
-        D.hit(x,8,440,452,'phase',i);});
+      // labels on the pictures
       tag(c,T.dna,215,276,{col:C.pink,tgt:P_DNA_BOT(g,t),a:L(0,1.2)});
       nucOutline(c,prB,L(0,1.2),t,2.5);
       tag(c,T.nuc,730,276,{col:C.cyan,tgt:ppt(prB,NUC_BOT),a:L(0,1.2)});
@@ -226,7 +227,7 @@ function draw(c,s,t){
         T.rows[side].forEach(([ok,p],j)=>{const a=L(0,1.8+j*.6+side*.3),dy=(1-ease(a))*10;if(a<=0)return;
           check(c,x+30,340+j*46+dy,ok,a);c.save();c.globalAlpha*=a;rowsOf(c,p,370).forEach((r,m)=>text(c,r,x+54,348+j*46+dy+m*28,22,C.white));c.restore();});
         const va=L(0,3.2+side*.4),pop=1+.25*(1-ease(va)),col=side?C.cyan:C.orange,vw=measure(c,T.verdict[side],24)+40;
-        if(va>0){c.save();c.globalAlpha*=va;c.translate(x+200,428);c.scale(pop,pop);
+        if(va>0){c.save();c.globalAlpha*=va;c.translate(x+200,436);c.scale(pop,pop);
           D.round(c,-vw/2,-22,vw,44,22,col,C.white);text(c,T.verdict[side],0,9,24,C.ink,'center');c.restore();}
       });
       const ba=L(0,4.4);
@@ -249,7 +250,7 @@ function draw(c,s,t){
       zoom(c,zx,zy,R,kk,out,t);
       if(zu>.98){
         const map=f=>[ZC[0]+(f[0]*PW-NUC_C[0]*PW)*ZK,ZC[1]+(f[1]*PH-NUC_C[1]*PH)*ZK];
-        tag(c,T.zoom,598,128,{col:C.white,a:L(0,2.0)});
+        tag(c,T.zoom,612,272,{col:C.white,a:L(0,2.0)});
         tag(c,T.dnaIn,940,116,{align:'right',col:C.pink,tgt:map([.585,.47]),a:L(0,2.4),maxW:230});
         tag(c,T.env,940,436,{align:'right',col:C.cyan,tgt:map(NUC_LR),a:L(0,2.8),maxW:230});
       }

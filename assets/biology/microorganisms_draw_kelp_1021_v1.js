@@ -82,7 +82,7 @@ const CELLS=[];
   CELLS.push({x,y:rw.y,w:rw.w,h:rw.h,outer:!!rw.outer,nuc:[(.3+.4*R())*rw.w,(.35+.3*R())*rw.h],ch,top:ri===0});}});})();
 const wave=(x,t)=>4*Math.sin(t*1.1+x/80);
 function findCell(fx,fy,outer){let best=null,bd=1e9;CELLS.forEach(cl=>{if(!!cl.outer!==outer)return;const d=Math.hypot(cl.x+cl.w/2-fx,cl.y+cl.h/2-fy);if(d<bd){bd=d;best=cl;}});return best;}
-const C_CELL=findCell(10,18,false),C_NUC=findCell(-80,-18,false),C_CHL=findCell(30,-49,true),C_SURF=findCell(70,-49,true);
+const C_CELL=findCell(96,18,false),C_NUC=findCell(104,-18,false),C_CHL=findCell(100,49,true),C_SURF=findCell(70,-49,true);
 const cellXY=(cl,dx,dy,t)=>[M.x+cl.x+dx,M.y+cl.y+dy+wave(cl.x+cl.w/2,t)];
 function section(c,t,a,{dots=0,beams=0,hl=0}={}){
   if(a<=0)return;
@@ -121,11 +121,11 @@ function over0(c,a,tau,t,L){
   connector(c,L,t,a);section(c,t,a,{hl:fade(tau,1,.5)});
   c.save();c.globalAlpha*=a;
   cpill(c,P(`葉片的切面放大（示意）`,`Blade cross-section, magnified (schematic)`),M.x,28,{color:C.white,minX:300,maxX:944});
-  text(c,P(`海水`,`Sea water`),M.x,M.y-110,22,C.cyan,'center');
+  text(c,P(`海水`,`Seawater`),M.x,M.y-110,22,C.cyan,'center');
   const lx=790;
-  tag(c,P(`細胞`,`Cell`),lx,170,...cellXY(C_CELL,C_CELL.w-4,C_CELL.h/2,t),C.yellow,fade(tau,1,.5),{w:150});
-  tag(c,P(`細胞核`,`Nucleus`),lx,258,...cellXY(C_NUC,C_NUC.nuc[0]+1,C_NUC.nuc[1]+1,t),C.pink,fade(tau,1.5,.5),{w:150});
-  tag(c,P(`葉綠體`,`Chloroplast`),lx,346,...cellXY(C_CHL,C_CHL.ch[0][0]+1,C_CHL.ch[0][1]+1,t),GOLDLAB,fade(tau,2,.5),{w:150});
+  tag(c,P(`細胞核`,`Nucleus`),lx,196,...cellXY(C_NUC,C_NUC.nuc[0]+1,C_NUC.nuc[1]+1,t),C.pink,fade(tau,1.5,.5),{w:150});
+  tag(c,P(`細胞`,`Cell`),lx,282,...cellXY(C_CELL,C_CELL.w-3,C_CELL.h/2,t),C.yellow,fade(tau,1,.5),{w:150});
+  tag(c,P(`葉綠體`,`Chloroplast`),lx,364,...cellXY(C_CHL,C_CHL.ch[0][0]+1,C_CHL.ch[0][1]+1,t),GOLDLAB,fade(tau,2,.5),{w:150});
   const B=[[P(`多細胞：由很多細胞組成`,`Multicellular: made of many cells`),C.yellow,true],[P(`可以長到好幾公尺`,`Can grow several metres long`),C.green,false],[P(`長在海裡的岩石上`,`Grows on rocks in the sea`),C.white,false]];
   B.forEach(([p,col,act],i)=>{const ba=fade(tau,2.5+i*.4,.5);if(ba<=0)return;c.save();c.globalAlpha*=ba;cpill(c,p,M.x,436+i*54,{color:col,active:act,minX:300,maxX:944});c.restore();});
   c.restore();
@@ -135,7 +135,7 @@ const GOLDLAB='#e0b456';
 const PARTS=[
  {p:P(`葉片狀的藻體`,`Leaf-like blade`),col:C.green,ly:96,tgt:[232,790]},
  {p:P(`柄`,`Stalk`),col:C.cyan,ly:366,tgt:[184,1095],bracket:[1006,1184]},
- {p:P(`固著器`,`Holdfast`),col:C.orange,ly:442,tgt:[250,1262],note:P(`像根，但只負責把海帶固定在岩石上，不是維管束植物的根`,`Looks like a root, but it only fastens the kelp to a rock; it is not the root of a vascular plant`)}];
+ {p:P(`固著器`,`Holdfast`),col:C.orange,ly:442,tgt:[250,1262],note:P(`像根，但只負責把海帶\n固定在岩石上，\n不是維管束植物的根`,`Looks like a root, but it only fastens the kelp to a rock; it is not the root of a vascular plant`)}];
 function over1(c,s,a,tau,t,L){
   if(a<=0)return;
   c.save();c.globalAlpha*=a;
@@ -180,7 +180,7 @@ function over2(c,a,tau,t,L){
   absorbDots(c,L,t,a*fade(tau,.6,.6));
   c.save();c.globalAlpha*=a;
   cpill(c,P(`葉片的切面放大（示意）`,`Blade cross-section, magnified (schematic)`),M.x,28,{color:C.white,minX:300,maxX:944});
-  const lx=790;
+  const lx=780;
   c.save();c.globalAlpha*=fade(tau,1.2,.5);sun(c,766,96,15,t);text(c,P(`陽光`,`Sunlight`),800,104,22,C.yellow);c.restore();
   c.save();c.globalAlpha*=fade(tau,.6,.5);glow(c,lx+6,164,12,C.cyan,.6);circle(c,lx+6,164,5,C.cyan,null);
   textBlock(c,P(`水和養分`,`Water and\nnutrients`),lx+22,172,130,C.cyan);c.restore();
@@ -203,11 +203,14 @@ function over3(c,a,tau,t){
   text(c,P(`海帶`,`Kelp`),868,358,22,C.green,'center');
   // conclusion card
   const ca=fade(tau,2.6,.6);
-  if(ca>0){c.save();c.globalAlpha*=ca;D.round(c,282,14,436,290,16,'rgba(11,26,21,.88)',C.yellow);
-    text(c,P(`原生生物不是「小」才算`,`A protist does not have to be small`),500,56,26,C.yellow,'center');
-    textBlock(c,P(`要看有沒有細胞核，是不是藻類或原生動物等。`,`What counts: a nucleus, and being an alga, a protozoan or the like.`),300,98,400,C.white);
-    cpill(c,P(`草履蟲：原生動物，有細胞核`,`Paramecium: a protozoan, has a nucleus`),500,180,{color:C.cyan,minX:290,maxX:710});
-    cpill(c,P(`海帶：藻類，有細胞核`,`Kelp: an alga, has a nucleus`),500,236,{color:C.green,minX:290,maxX:710});
+  if(ca>0){c.save();c.globalAlpha*=ca;
+    const tr=rowsOf(c,P(`原生生物不是「小」才算`,`A protist does not\nhave to be small`),400,26),br=rowsOf(c,P(`要看有沒有細胞核，\n是不是藻類或原生動物等。`,`What counts: a nucleus, and being an alga, a protozoan or the like.`),400);
+    const yb=52+tr.length*32+6,yc=yb+br.length*29-10,h=yc+108-14;
+    D.round(c,282,14,436,h,16,'rgba(11,26,21,.88)',C.yellow);
+    tr.forEach((r,i)=>text(c,r,500,52+i*32,26,C.yellow,'center'));
+    br.forEach((r,i)=>text(c,r,500,yb+i*29,22,C.white,'center'));
+    cpill(c,P(`草履蟲：原生動物，有細胞核`,`Paramecium: a protozoan, has a nucleus`),500,yc,{color:C.cyan,minX:290,maxX:710});
+    cpill(c,P(`海帶：藻類，有細胞核`,`Kelp: an alga, has a nucleus`),500,yc+52,{color:C.green,minX:290,maxX:710});
     c.restore();}
   // axis
   const ga=fade(tau,.6,.8),xe=mix(AX.x0,AX.x0+AX.step*5,ga);
@@ -217,7 +220,7 @@ function over3(c,a,tau,t){
   const ma=fade(tau,1.3,.5);
   if(ma>0){c.save();c.globalAlpha*=ma;
     const px=axX(.2),k0=axX(2000),k1=axX(5000);
-    dashed(c,[[140,250+bob],[px,AX.y-14]],rgba(C.cyan,.8),2);
+    dashed(c,[[px,288],[px,AX.y-14]],rgba(C.cyan,.8),2);
     circle(c,px,AX.y,9,C.cyan,C.ink,2);
     D.round(c,k0,AX.y-9,k1-k0,18,9,C.green,C.ink);
     dashed(c,[[868,368],[(k0+k1)/2,AX.y-14]],rgba(C.green,.8),2);
@@ -242,19 +245,20 @@ function draw(c,s,t){
   s.shown=k;if(k!==1)s.kelPart=null;
   const {from,u,ov}=track(s,k,t);
   const out=held?1:1-fade(tau,PER-.45,.45);
-  const oa=j=>(j===k?out*clamp((t-s.kelT-.5)/.6):0)+(j===from&&from!==k?1-ov:0);
+  const dl=(k===3||from===3)?.95:.5,oa=j=>(j===k?out*clamp((t-s.kelT-dl)/.6):0)+(j===from&&from!==k?1-ov:0);
   const A=LK[from],B=LK[k],L={ox:mix(A.ox,B.ox,u),oy:mix(A.oy,B.oy,u),sc:mix(A.sc,B.sc,u)};
   const left=mix(from===3?0:1,k===3?0:1,u);
   // left column: sea water, rock, the whole kelp
   seaPanel(c,left,16,8,266,584);
-  if(left>0){c.save();c.globalAlpha*=left;pill(c,P(`海水`,`Sea water`),26,18,{color:C.cyan});c.restore();}
   rock(c,140,606,100,40,left);
-  if(left>.3){c.save();c.globalAlpha*=clamp((left-.3)/.7);pill(c,P(`岩石`,`Rock`),206,548,{color:C.white});c.restore();}
   kelp(c,L,t,1);
   over0(c,oa(0),k===0?tau:9,t,L);
   over1(c,s,oa(1),k===1?tau:9,t,L);
   over2(c,oa(2),k===2?tau:9,t,L);
   over3(c,oa(3),k===3?tau:9,t);
+  // names in the left column, last so nothing is drawn over them
+  if(left>0){c.save();c.globalAlpha*=left;pill(c,P(`海水`,`Seawater`),162,100,{color:C.cyan,maxX:280});c.restore();}
+  if(left>.3){c.save();c.globalAlpha*=clamp((left-.3)/.7);pill(c,P(`岩石`,`Rock`),206,548,{color:C.white});c.restore();}
 }
 window.MicroDraw.kelp=draw;
 })();

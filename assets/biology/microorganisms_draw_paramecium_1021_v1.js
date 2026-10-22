@@ -54,9 +54,10 @@ const ROOTS=(()=>{const pts=BODY,out=[];let acc=0,next=0;const L=[];
   // smooth the normals over neighbours so cilia fan out evenly round corners
   return out.map((r,i)=>{let nx=0,ny=0;for(let j=-2;j<=2;j++){const q=out[(i+j+out.length)%out.length];nx+=q.nx;ny+=q.ny;}const n=Math.hypot(nx,ny);return{...r,nx:nx/n,ny:ny/n,tx:-ny/n,ty:nx/n};});})();
 function nearestEdge(p){let best=null,bd=1e9;ROOTS.forEach(r=>{const d=Math.hypot(r.x-p[0],r.y-p[1]);if(d<bd){bd=d;best=r;}});return best;}
-STARS.forEach(s=>{s.exit=nearestEdge(s.c);});
+// water leaves through a pore on the edge next to each star (picked: lower edge for the left star, upper edge for the right one)
+STARS[0].exit=nearestEdge([214,546]);STARS[1].exit=nearestEdge([848,38]);
 // where water seeps in (fractions of the outline)
-const SEEP=[.03,.17,.31,.47,.62,.77,.9].map(f=>ROOTS[Math.floor(f*ROOTS.length)]);
+const SEEP=[[300,186],[500,140],[720,42],[985,80],[960,240],[700,412],[480,505],[120,520],[50,410]].map(nearestEdge);
 
 // camera: picture pixel -> canvas
 function camAt(s,k,t){
@@ -72,14 +73,15 @@ function inPic(c,cam,fn){c.save();c.translate(cam.dx+cam.s*R0.x,cam.dy+cam.s*R0.
 const path=(c,poly)=>{c.beginPath();poly.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();};
 
 // ── labels ─────────────────────────────────────────────────────────────────
-// Text rows start at baseline y; a leader runs from the nearest side of the text box to each target.
+// Text rows start at baseline y; a leader runs from the nearest side of the text box to each target
+// (a dark under-stroke keeps it visible where it crosses the pale cell).
 function label(c,p,x,y,{align='left',col=C.yellow,a=1,to=[],w=300,size=22}={}){
   if(a<=0)return;
   const rows=D.tr(p).split('\n').flatMap(seg=>splitLines(c,seg,w,size)),lh=Math.round(size*1.3);
   const bw=Math.max(...rows.map(r=>measure(c,r,size))),bx=align==='left'?x:align==='right'?x-bw:x-bw/2,by=y-size*.8,bh=(rows.length-1)*lh+size*1.05;
   c.save();c.globalAlpha*=a;
   to.forEach(([tx,ty])=>{const sx=clamp2(tx,bx-6,bx+bw+6),sy=clamp2(ty,by-4,by+bh+4);
-    if(Math.hypot(tx-sx,ty-sy)>8){line(c,[[sx,sy],[tx,ty]],rgba(col,.9),2);circle(c,tx,ty,4.5,col,C.ink,1.5);}});
+    if(Math.hypot(tx-sx,ty-sy)>8){line(c,[[sx,sy],[tx,ty]],rgba(C.ink,.55),4.5);line(c,[[sx,sy],[tx,ty]],rgba(col,.95),2);circle(c,tx,ty,4.5,col,C.ink,1.5);}});
   rows.forEach((r,i)=>text(c,r,align==='left'?x:align==='right'?x:x,y+i*lh,size,col,align));
   c.restore();
 }
@@ -138,7 +140,7 @@ function vacuole(c,x,y,r,a=1,dots=null){
 // ── zoom circle: a few cilia rowing (step 1) ──────────────────────────────
 function ciliaZoom(c,cam,t,a){
   if(a<=0)return;
-  const src=ROOTS[Math.floor(ROOTS.length*.57)],[sx,sy]=M(cam,src.x+src.nx*12,src.y+src.ny*12),ZX=832,ZY=478,ZR=74;
+  const src=nearestEdge([875,326]),[sx,sy]=M(cam,src.x+src.nx*12,src.y+src.ny*12),ZX=832,ZY=478,ZR=74;
   c.save();c.globalAlpha*=a;
   circle(c,sx,sy,13,null,C.yellow,2.5);
   const ang=Math.atan2(ZY-sy,ZX-sx),ox=Math.cos(ang),oy=Math.sin(ang);
@@ -197,16 +199,19 @@ function step1(c,cam,t,tau,a){
   // groove outline glow
   c.save();c.globalAlpha*=a*(.55+.45*Math.sin(t*3));c.strokeStyle=C.yellow;c.lineWidth=3;c.lineCap='round';c.lineJoin='round';c.beginPath();
   GROOVE.forEach((g,i)=>{const [X,Y]=M(cam,g[0],g[1]);i?c.lineTo(X,Y):c.moveTo(X,Y);});c.setLineDash([3,7]);c.stroke();c.restore();
-  label(c,P(`食物（細菌等）`,`Food (bacteria etc.)`),620,42,{col:C.orange,a,to:[M(cam,575,0)]});
+  // the leader follows the newest particle on its way in, then the particles inside the new vacuole
+  let fp=null;for(const p of FOODP){const u=(q-p.t0)/2.3;if(u>0&&u<1)fp=M(cam,...alongPath(foodPath(p),ease(u)));}
+  if(!fp)fp=form>0?[VX,VY]:M(cam,560,8);
+  label(c,P(`食物（細菌等）`,`Food (bacteria etc.)`),620,42,{col:C.orange,a:a*fadeOut,to:[fp]});
   label(c,P(`口溝`,`Oral groove`),300,150,{align:'right',col:C.yellow,a,to:[M(cam,548,180)]});
   label(c,P(`食物泡`,`Food vacuoles`),640,470,{col:C.orange,a,to:[[VX+MS(cam,NEWR)*.7,VY+MS(cam,NEWR)*.7],M(cam,764.5,340),M(cam,450,455)]});
-  if(form>0&&move<1)label(c,P(`形成食物泡`,`A food vacuole forms`),300,190,{align:'right',col:C.orange,a:a*form*(1-move),to:[[VX-MS(cam,NEWR),VY]]});
+  if(form>0&&move<1)label(c,P(`形成食物泡`,`A food vacuole forms`),300,104,{align:'right',col:C.orange,a:a*form*(1-move),to:[[VX-MS(cam,NEWR),VY]]});
 }
 function step2(c,cam,t,tau,a){
   if(a<=0)return;
   // water seeping in all round
-  SEEP.forEach((r,i)=>{const u=mod(t*.55+i*.37),o=36-u*44,[x0,y0]=M(cam,r.x+r.nx*o,r.y+r.ny*o),[x1,y1]=M(cam,r.x+r.nx*(o-16),r.y+r.ny*(o-16));
-    c.save();c.globalAlpha*=a*Math.sin(Math.PI*u);arrow(c,x0,y0,x1,y1,C.cyan,2.5);c.restore();});
+  SEEP.forEach((r,i)=>{const u=mod(t*.5+i*.29),o=58-u*52,[x0,y0]=M(cam,r.x+r.nx*o,r.y+r.ny*o),[x1,y1]=M(cam,r.x+r.nx*(o-30),r.y+r.ny*(o-30));
+    c.save();c.globalAlpha*=a*Math.sin(Math.PI*u);arrow(c,x0,y0,x1,y1,C.cyan,3);c.restore();});
   // contraction: ring flash + drops out where the star is closest to the edge
   STARS.forEach(st=>{
     const [cx,cy]=M(cam,...st.c),f=starScale(st,t),k=contracting(st,t);
@@ -219,33 +224,32 @@ function step2(c,cam,t,tau,a){
   });
   const [L,Rr]=STARS,eR=Rr.exit;
   label(c,P(`伸縮泡`,`Contractile\nvacuole`),118,540,{align:'center',col:C.cyan,a,to:[M(cam,206,470)]});
-  label(c,P(`伸縮泡`,`Contractile vacuole`),936,58,{align:'right',col:C.cyan,a,to:[M(cam,905,120)]});
-  label(c,P(`多餘的水排出去`,`Extra water\npumped out`),560,52,{align:'right',col:C.cyan,a,to:[M(cam,eR.x+eR.nx*30-10,eR.y+eR.ny*30)]});
-  label(c,P(`水不斷滲進細胞`,`Water keeps\nseeping in`),660,470,{col:C.cyan,a,to:[M(cam,SEEP[3].x+SEEP[3].nx*14,SEEP[3].y+SEEP[3].ny*14)]});
+  label(c,P(`伸縮泡`,`Contractile\nvacuole`),836,262,{col:C.cyan,a,to:[M(cam,935,198)]});
+  label(c,P(`多餘的水排出去`,`Extra water\npumped out`),752,58,{col:C.cyan,a,w:190,to:[M(cam,eR.x+eR.nx*24,eR.y+eR.ny*24)]});
+  const sp=SEEP[5];label(c,P(`水不斷滲進細胞`,`Water keeps\nseeping in`),660,480,{col:C.cyan,a,to:[M(cam,sp.x+sp.nx*30,sp.y+sp.ny*30)]});
 }
 // row i of the step-4 panel: [title, sub, which structures light up]
 const ROWS=[[P(`移動`,`Moving`),P(`纖毛擺動`,`Beating cilia`)],[P(`攝食`,`Feeding`),P(`口溝、食物泡`,`Oral groove, food vacuoles`)],
   [P(`排水`,`Removing water`),P(`伸縮泡`,`Contractile vacuoles`)],[P(`繁殖`,`Reproducing`),P(`細胞分裂成兩個`,`The cell splits into two`)]];
 function division(c,x,y,t,a){
-  // schematic fission of a small copy of the same picture: whole -> pinched -> two cells (loops every 4.4 s)
+  // schematic: one cell -> two cells (small copies of the same picture); the arrow pulses, the two new cells drift apart a little
   const im=pic(AI+FILE);if(!im)return;
-  const q=mod(t,4.4),w=96,h=w*IH/IW,pinch=smooth(fade(q,.8,1.2)),split=fade(q,2.2,.6),gap=pinch*16;
+  const w1=84,h1=w1*IH/IW,w2=64,h2=w2*IH/IW,q=mod(t,3),sep=6*smooth(fade(q,.4,1.2))-6*smooth(fade(q,2.4,.6));
   c.save();c.globalAlpha*=a;
-  if(split<1){c.save();c.globalAlpha*=1-split;
-    [-1,1].forEach(sd=>{c.save();c.beginPath();c.ellipse(x+sd*(w*.27+gap/2),y,w*.31,h*.62,0,0,TAU);c.clip();c.drawImage(im,x-w/2+sd*gap/2,y-h/2,w,h);c.restore();});
-    c.restore();}
-  if(split>0){const w2=76,h2=w2*IH/IW;c.save();c.globalAlpha*=split;[-1,1].forEach(sd=>c.drawImage(im,x+sd*(w2/2+8)-w2/2,y-h2/2,w2,h2));c.restore();}
+  c.drawImage(im,x-120-w1/2,y-h1/2,w1,h1);
+  c.save();c.globalAlpha*=.6+.4*Math.sin(t*4);arrow(c,x-68,y,x-24,y,C.yellow,3);c.restore();
+  c.drawImage(im,x+44-w2/2,y-h2-2-sep,w2,h2);c.drawImage(im,x+44-w2/2,y+2+sep,w2,h2);
   c.restore();
 }
 function step3(c,cam,t,tau,a){
   if(a<=0)return;
   const hi=Math.floor(mod(tau,8.8)/2.2),PX=616,PW=330;
   c.save();c.globalAlpha*=a;
-  D.round(c,PX,22,PW,556,16,'rgba(11,26,21,.72)',C.edge);
+  D.round(c,PX,22,PW,520,16,'rgba(11,26,21,.72)',C.edge);
   text(c,P(`一個細胞，做所有事`,`One cell does it all`),PX+PW/2,58,24,C.white,'center');
   let y=82;
   ROWS.forEach(([ti,sub],i)=>{
-    const on=i===hi,rows=splitLines(c,D.tr(sub),PW-74,22),hgt=i===3?156:Math.max(96,40+rows.length*28+14);
+    const on=i===hi,rows=splitLines(c,D.tr(sub),PW-74,22),hgt=i===3?150:Math.max(96,40+rows.length*28+14);
     D.round(c,PX+10,y,PW-20,hgt-10,12,on?rgba(C.yellow,.16):'rgba(28,61,52,.55)',on?C.yellow:rgba(C.edge,.9));
     marker(c,PX+34,y+26,i+1,on?t:null,14,on?C.yellow:C.muted);
     text(c,ti,PX+58,y+34,24,on?C.yellow:C.white);
@@ -256,8 +260,10 @@ function step3(c,cam,t,tau,a){
   c.restore();
   // numbered markers on the picture
   const top=ROOTS.reduce((b,r)=>r.y<b.y?r:b,ROOTS[0]);
-  const spots=[[M(cam,top.x-120,top.y-26)],[M(cam,560,150),M(cam,NEWV[0]+60,NEWV[1]-40)],[M(cam,...STARS[0].c),M(cam,...STARS[1].c)]];
-  spots.forEach((ps,i)=>ps.forEach(([x,y])=>{c.save();c.globalAlpha*=a;marker(c,x,y,i+1,i===hi?t:null,14,i===hi?C.yellow:C.muted);c.restore();}));
+  // [target on the picture, marker offset in canvas px]: markers stand beside the structure, a short leader points at it
+  const spots=[[[M(cam,top.x-120,top.y+6),[0,-34]]],[[M(cam,566,150),[-34,-34]],[M(cam,690,140),[-28,-46]]],[[M(cam,...STARS[0].c),[-58,-62]],[M(cam,...STARS[1].c),[30,-74]]]];
+  spots.forEach((ps,i)=>ps.forEach(([[x,y],[ox,oy]])=>{const on=i===hi,col=on?C.yellow:C.muted;c.save();c.globalAlpha*=a;
+    line(c,[[x+ox,y+oy],[x,y]],col,2);circle(c,x,y,4.5,col,C.ink,1.5);marker(c,x+ox,y+oy,i+1,on?t:null,14,col);c.restore();}));
   label(c,P(`細胞核`,`Nucleus`),330,520,{align:'center',col:C.white,a,to:[M(cam,NUC[0]-20,NUC[1]+30)]});
 }
 const STEPS=[step0,step1,step2,step3];

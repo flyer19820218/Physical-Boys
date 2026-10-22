@@ -53,7 +53,7 @@ function wrapRows(c,str,w){
 // Lines of one cell, wrapped to the column width (a line with a mark leaves room for the icon).
 function cellRows(c,cell){
   const out=[];cell.forEach(it=>{const w=CW-2*PAD-(it.mark!==undefined?ICON:0);
-    wrapRows(c,D.tr(it.p),w).forEach((r,q)=>out.push({r,mark:q===0?it.mark:undefined,ind:it.mark!==undefined,sub:!!it.sub}));});
+    wrapRows(c,D.tr(it.p),w).forEach((r,q)=>out.push({r,mark:q===0?it.mark:undefined,tone:it.mark,ind:it.mark!==undefined,sub:!!it.sub}));});
   return out;
 }
 let LAY=null;
@@ -112,8 +112,8 @@ function draw(c,s,t){
     c.save();c.globalAlpha*=mix(.4,1,o)*mix(.35,1,pop);
     rows.forEach((row,q)=>{const yb=y0+q*LH+20,tx=x+PAD+(row.ind?ICON:0);
       if(row.mark===true)tick(c,x+PAD+12,yb-7,12);else if(row.mark===false)cross(c,x+PAD+12,yb-7,12);
-      const col2=row.mark===true?YES:row.mark===false?NO:row.sub?C.muted:C.white;
-      text(c,row.r,tx,yb,22,o>.5||row.mark!==undefined||row.sub?col2:C.white);});
+      const col2=row.tone===true?YES:row.tone===false?NO:row.sub?C.muted:C.white;
+      text(c,row.r,tx,yb,22,col2);});
     c.restore();}));
 
   // yellow frame on the lit column (drawn last, slides with the easing)

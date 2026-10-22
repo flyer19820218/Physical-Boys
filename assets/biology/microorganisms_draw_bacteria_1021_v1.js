@@ -40,13 +40,15 @@ const CARDS=[
    {title:P(`大腸桿菌`,`E. coli`),desc:P(`多數無害，只有少數菌株會讓人生病`,`Most strains harmless; only a few make people sick`),cols:[GOOD,BAD]}]},
  {col:2,head:P(`螺旋狀（舉例）：`,`Spiral (example):`),items:[
    {title:P(`幽門螺旋桿菌`,`Helicobacter pylori`),desc:P(`可能和胃病有關`,`May be linked to stomach disease`),cols:[BAD]}]}];
-const LEGEND=[[GOOD,P(`有益`,`Helpful`)],[BAD,P(`可能讓人生病`,`May make people sick`)]];
+const LEGEND=[[GOOD,P(`有益`,`Helpful`)],[BAD,P(`可能\n讓人生病`,`May make people sick`)]];
 const BANNER=P(`同一種外形，有益、有害的都有：只看外形，不能判斷好壞`,`One shape holds helpful and harmful kinds: shape alone cannot tell good from bad`);
 
 // ── helpers ────────────────────────────────────────────────────────────────
 // Wrapped rows. Chinese: no lonely last character; break after '，' or '：' nearest the middle when it fits.
 function rowsOf(c,p,w,size=22){
-  const str=D.tr(p),rows=splitLines(c,str,w,size);
+  const str=D.tr(p);
+  if(str.includes('\n')){const parts=str.split('\n');if(parts.every(q=>measure(c,q,size)<=w))return parts;return splitLines(c,str.replace(/\n/g,''),w,size);}
+  const rows=splitLines(c,str,w,size);
   if(rows.length!==2||/[A-Za-z]{3}/.test(str))return rows;
   const fits=r=>measure(c,r,size)<=w,mid=str.length/2;let best=null;
   for(let i=1;i<str.length-1;i++)if(/[，：、]/.test(str[i])){const a=str.slice(0,i+1),b=str.slice(i+1);if(fits(a)&&fits(b)&&(!best||Math.abs(i+1-mid)<Math.abs(best[0].length-mid)))best=[a,b];}

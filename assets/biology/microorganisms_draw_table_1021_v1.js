@@ -149,9 +149,9 @@ function drawAnswers(c,k,tau,t,a){
 
 // ── answer banner ──────────────────────────────────────────────────────────
 function drawBanner(c,k,tau,t,a){
-  const L=layout(c),y=L.banY,BAN_H=L.banH,s=SUBJ[k],v=ease((tau-ansTime(k))/.5);
+  const L=layout(c),y=L.banY,BAN_H=L.banH,s=SUBJ[k],r=(tau-ansTime(k))/.6,v=ease(clamp(r*2-1)),ph=1-clamp(r*2);// '?' leaves first, then the answer comes in
   c.save();c.globalAlpha*=a;
-  if(v<1){c.save();c.globalAlpha*=1-v;c.setLineDash([8,7]);D.round(c,RX,y,RW,BAN_H,14,'rgba(11,26,21,.5)',rgba(C.muted,.55));c.setLineDash([]);
+  if(ph>0){c.save();c.globalAlpha*=ph;c.setLineDash([8,7]);D.round(c,RX,y,RW,BAN_H,14,'rgba(11,26,21,.5)',rgba(C.muted,.55));c.setLineDash([]);
     text(c,P(`答案：？`,`Answer: ?`),RX+RW/2,y+BAN_H/2+9,24,rgba(C.muted,.9),'center');c.restore();}
   if(v>0){c.save();c.globalAlpha*=v;
     D.round(c,RX,y,RW,BAN_H,14,rgba(C.yellow,.13),C.yellow);sweep(c,RX,y,RW,BAN_H,t+.3,14,.14,.35);
@@ -190,13 +190,14 @@ function draw(c,s,t){
   // remember the previous step so a change cross-fades instead of jumping
   const st=s.tb||(s.tb={}),key=k+'|'+(held?s.start:'loop');
   if(st.key!==key){if(st.key!==undefined&&t-st.lastT<.3&&t>=st.lastT){st.fromK=st.k;st.fromTau=st.tau;st.from=t;}else st.from=-99;st.key=key;}
-  const x=clamp((t-st.from)/.55),xi=ease(x),fromOn=x<1;
+  // 0.8 s: the old step leaves during the first half, the new one arrives during the second half (no overlap)
+  const x=clamp((t-st.from)/.8),xi=ease(x),fromOn=x<1,aOut=1-ease(clamp(x*2)),aIn=fromOn?ease(clamp(x*2-1)):1;
   st.k=k;st.tau=tau;st.lastT=t;
 
   panel(c,20,20,300,560);panel(c,330,20,610,560);
-  // left: subject, sliding
-  if(fromOn)drawSubject(c,st.fromK,st.fromTau,t,1-xi,-50*xi);
-  drawSubject(c,k,tau,t,fromOn?xi:1,fromOn?50*(1-xi):0);
+  // left: subject slides out to the left, the next slides in from the right
+  if(fromOn&&aOut>0)drawSubject(c,st.fromK,st.fromTau,t,aOut,-60*(1-aOut));
+  if(aIn>0)drawSubject(c,k,tau,t,aIn,60*(1-aIn));
   const NOTE=P(`AI 插圖，示意，非同比例`,`AI illustration,\nnot to scale`),nr=rowsOf(c,NOTE,270);
   nr.forEach((row,q)=>text(c,row,170,566-(nr.length-1-q)*26,22,C.muted,'center'));
 
@@ -205,10 +206,8 @@ function draw(c,s,t){
   const mixed=cs.map((q,j)=>fromOn?{dim:mix(cf[j].dim,q.dim,xi),ans:mix(cf[j].ans,q.ans,xi)}:q);
   drawCards(c,mixed,t,1);
   drawRowFrames(c,k,tau,t,1);
-  if(fromOn)drawAnswers(c,st.fromK,st.fromTau,t,1-xi);
-  drawAnswers(c,k,tau,t,fromOn?xi:1);
-  if(fromOn)drawBanner(c,st.fromK,st.fromTau,t,1-xi);
-  drawBanner(c,k,tau,t,fromOn?xi:1);
+  if(fromOn&&aOut>0){drawAnswers(c,st.fromK,st.fromTau,t,aOut);drawBanner(c,st.fromK,st.fromTau,t,aOut);}
+  if(aIn>0){drawAnswers(c,k,tau,t,aIn);drawBanner(c,k,tau,t,aIn);}
 
   // header nudge before the first evidence: a ring breathes around the question
   if(tau<evTime(k,0)){const w=measure(c,P(`這是哪一界？三選一`,`Which kingdom? Pick one of three`),24);glow(c,RX+w/2,40,w*.6,C.yellow,.08+.05*Math.sin(t*4));}

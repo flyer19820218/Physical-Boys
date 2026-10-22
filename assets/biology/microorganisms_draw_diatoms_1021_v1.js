@@ -253,7 +253,7 @@ function over3(c,a,tau,t,poses){
   wrap(c,P(`水中食物鏈（示意）`,`Aquatic food chain (schematic)`),X,40,290,24,C.yellow,30,'center');
   const box1=cpill(c,P(`矽藻`,`Diatoms`),X,100,{active:true,color:C.yellow,maxX:944,minX:650});
   const st=pill(c,P(`起點`,`Start`),box1.x+box1.w+8,100,{color:C.orange,size:22,maxX:944});
-  textBlock(c,P(`行光合作用，製造養分`,`Photosynthesize and make food`),X,174,290,C.green,{align:'center'});
+  textBlock(c,P(`行光合作用，製造養分`,`Photosynthesize\nand make food`),X,174,290,C.green,{align:'center'});
   // dashed link from the label to one floating diatom
   const p=poses[4];if(p){dashed(c,[[box1.x-6,box1.y+box1.h/2],[p.x+26,p.y]],rgba(C.yellow,.8),2,[6,6],-t*10);circle(c,p.x+26,p.y,4.5,C.yellow,C.ink,1.5);}
   const steps=[[P(`水中的小動物`,`Small water animals`),290],[P(`魚`,`Fish`),420]];
@@ -274,7 +274,7 @@ function draw(c,s,t){
   s.shown=k;if(k!==0)s.diaG=null;
   const {from,u,ov}=track(s,k,t);
   const out=held?1:1-fade(tau,PER-.45,.45);
-  const oa=j=>(j===k?out*clamp((t-s.diaT-.5)/.6):0)+(j===from&&from!==k?1-ov:0);
+  const oa=j=>(j===k?out*clamp((t-s.diaT-.8)/.6):0)+(j===from&&from!==k?1-ov:0);
   const poses={};for(let id=1;id<=13;id++)poses[id]=pose(id,from,k,u,t);
 
   over3pre(c,oa(3),t);

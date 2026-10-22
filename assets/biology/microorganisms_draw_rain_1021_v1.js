@@ -121,7 +121,7 @@ function draw(c,s,t){
     leader(c,[b.x+Math.min(140,b.w/2),b.y+b.h],fp(dR,CRUST[1]),C.cyan,a1b);}
   // step 2: swelling, turning green
   const a2=A(2,2.6),a2b=A(2,3.2);
-  if(a2>0){const b=box(c,P(`雨來菇吸飽水，膨脹`,`The rain mushroom fills with water and swells`),40,170,{w:210,col:C.cyan,a:a2});
+  if(a2>0){const b=box(c,P(`雨來菇吸飽水，膨脹`,`The rain mushroom fills with water and swells`),40,150,{w:260,col:C.cyan,a:a2});
     c.save();c.globalAlpha*=a2;const pu=(t*.9)%1;
     [[WET_CROWN,0,-1],[WET_LEFT,-1,-.35],[WET_RIGHT,1,-.35]].forEach(([f,ux,uy])=>{const [x,y]=fp(wR,f),n=Math.hypot(ux,uy),dx=ux/n,dy=uy/n,o=8+pu*10;
       arrow(c,x+dx*o,y+dy*o,x+dx*(o+28),y+dy*(o+28),rgba(C.cyan,1-pu*.5),3);});
@@ -135,7 +135,7 @@ function draw(c,s,t){
   if(a3>0){c.save();c.globalAlpha*=a3;
     [WET_TOP,WET_GREEN,[.78,.42]].forEach((f,i)=>{const [x,y]=fp(wR,f);dashed(c,[[690-20,100+16],[x,y]],rgba(C.yellow,.9),3,[10,8],-t*24-i*6);});
     c.restore();
-    const b=box(c,P(`雨來菇又能行光合作用`,`The rain mushroom photosynthesizes again`),40,170,{w:210,col:C.green,a:A(3,1.6)});
+    const b=box(c,P(`雨來菇又能行光合作用`,`The rain mushroom photosynthesizes again`),40,150,{w:260,col:C.green,a:A(3,1.6)});
     leader(c,[b.x+b.w-30,b.y+b.h],fp(wR,[.36,.33]),C.green,A(3,1.6));}
   // the soil is not part of the rain mushroom (all steps)
   const so=[mix(fp(dR,CRACK)[0],fp(wR,WET_SOIL)[0],w),mix(fp(dR,CRACK)[1],fp(wR,WET_SOIL)[1],w)];
@@ -148,7 +148,7 @@ function draw(c,s,t){
   const ACT=[P(`休眠`,`Dormant`),P(`開始吸水`,`Taking up water`),P(`膨脹、變綠`,`Swelling, greening`),P(`光合作用`,`Photosynthesis`)];
   const ACOL=[C.muted,C.cyan,C.cyan,C.green];
   const tRows=rowsOf(c,P(`雨來菇的狀態`,`Rain mushroom`),TW),aRows=ACT.map(p=>rowsOf(c,p,TW)),nA=Math.max(...aRows.map(r=>r.length));
-  const sRows=rowsOf(c,P(`只學分類，不教採食`,`For classifying only, not for picking to eat`),TW);
+  const sRows=rowsOf(c,P(`只學分類，\n不教採食`,`For classifying only, not for picking to eat`),TW);
   const PY=140,PH=32+tRows.length*28+44+66+110+nA*28+18+sRows.length*28;
   D.round(c,PX,PY,PW,PH,14,'rgba(11,26,21,.8)',C.edge);
   let y=PY+32;

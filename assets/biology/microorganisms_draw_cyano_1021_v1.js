@@ -27,7 +27,7 @@ const NOS_CELL_Z=[.4624,.3166];                 // the ordinary cell drawn enlar
 const Z0={sx:565,sy:314,half:125};
 const Z0_RIM=[595,368],Z0_CELL=[627,285];       // picture pixels: lower sheath edge; ordinary cell
 // Oscillatoria: thread runs from the top-right tip to the bottom-left tip; one disc-shaped cell (centre, axis).
-const OSC_TIP=[.96,.03],OSC_THREAD=[.364,.69];
+const OSC_TIP=[.96,.03],OSC_THREAD=[.364,.69],OSC_SWAY=[.856,.172];   // centre of the thread near the top
 const Z1={sx:545,sy:619,half:120};             // zoom window of step 1, centred on one disc
 const DISC={c:[545.4,619.2],len:100,thick:28.6,ax:[.757,.653]};   // across-the-thread direction
 
@@ -82,8 +82,8 @@ function cyanoCell(c,x,y,r,t,{pig=1,lit=0,dna=0}={}){
   // pigment granules: dark teal dots like the stipple on the Gemini cells; they light up when light shines (step 2)
   PIG.forEach(([u,v,ph,s])=>{
     const px=x+u*r*1.02,py=y+v*r*1.02,tw=.5+.5*Math.sin(t*2.2+ph);
-    circle(c,px,py,3.4*s,rgba('#1f5a5e',.85*pig),null);
-    if(lit>0)circle(c,px,py,2.6*s,rgba('#8ff5c9',lit*(.35+.65*tw)*pig),null);});
+    circle(c,px,py,4.6*s,rgba('#1d5650',.9*pig),null);circle(c,px,py,2.6*s,rgba('#3fae8a',.95*pig),null);
+    if(lit>0){circle(c,px,py,7*s,rgba('#8ff5c9',.25*lit*tw*pig),null);circle(c,px,py,2.8*s,rgba('#b8ffd9',lit*(.35+.65*tw)*pig),null);}});
   c.restore();
   // DNA: a tangled loop in the middle of the cytoplasm, no envelope around it
   if(dna>0){c.save();c.globalAlpha*=dna;c.lineJoin='round';c.lineCap='round';
@@ -96,7 +96,7 @@ function cyanoCell(c,x,y,r,t,{pig=1,lit=0,dna=0}={}){
   c.save();c.beginPath();c.arc(x,y,r-5,Math.PI*1.08,Math.PI*1.45);c.strokeStyle=rgba('#e8fbff',.55);c.lineWidth=4;c.lineCap='round';c.stroke();c.restore();
 }
 // Algal cell (eukaryote) for comparison: cell wall, chloroplasts, nucleus with its envelope and DNA inside.
-const CHL=[[-.55,-.25,.5],[-.2,.55,-.2],[.45,.42,.35],[.62,-.18,-.5],[.05,-.62,.1]];
+const CHL=[[-.55,-.25,.5],[-.2,.55,-.2],[.45,.42,.35],[.62,-.18,-.5],[.4,-.56,.3]];
 function algaCell(c,x,y,rx,ry,t,hiChl,hiNuc){
   glow(c,x,y,rx*1.2,C.green,.08);
   const g=c.createRadialGradient(x-rx*.3,y-ry*.35,4,x,y,rx);g.addColorStop(0,'#5d8f6a');g.addColorStop(1,'#2f5a40');
@@ -168,7 +168,7 @@ function draw(c,s,t){
       // nitrogen gas drifting into the heterocyst (Extra)
       const hz=zm(Z0.sx,Z0.sy),na=Math.min(za,A(0,1.6));
       if(na>0){c.save();c.beginPath();c.arc(ZC[0],ZC[1],ZR-2,0,TAU);c.clip();c.globalAlpha*=na;
-        [[700,430],[660,447],[738,402],[616,442]].forEach(([x0,y0],i)=>{const q=((t*.32+i*.25)%1),u=ease(q),x=mix(x0,hz[0],u),y=mix(y0,hz[1]+12,u),al=Math.min(1,q*5)*(1-clamp((q-.78)/.22));
+        [[748,428],[712,454],[772,388],[680,462]].forEach(([x0,y0],i)=>{const q=((t*.32+i*.25)%1),u=ease(q),x=mix(x0,hz[0],u),y=mix(y0,hz[1]+12,u),al=Math.min(1,q*5)*(1-clamp((q-.78)/.22));
           c.save();c.globalAlpha*=al;circle(c,x-5,y,5.5,'#dbe9ff','#5f7c9c',1.5);circle(c,x+5,y,5.5,'#dbe9ff','#5f7c9c',1.5);c.restore();});
         c.restore();
         block(c,P(`氮氣 N₂`,`Nitrogen gas N₂`),ZC[0],ZC[1]+ZR+30,{w:220,col:'#dbe9ff',align:'center',a:na});}
@@ -193,11 +193,10 @@ function draw(c,s,t){
     // sway: a double-headed arc beyond the top tip; glide: a double arrow beside the lower thread
     const ma=A(1,1.2),tip=op(OSC_TIP);
     if(ma>0){c.save();c.globalAlpha*=ma;
-      const ang=Math.atan2(tip[1]-sw.cy,tip[0]-sw.cx),R=Math.hypot(tip[0]-sw.cx,tip[1]-sw.cy)+44;
-      c.beginPath();c.arc(sw.cx,sw.cy,R,ang-.11,ang+.11);c.strokeStyle=C.orange;c.lineWidth=3;c.stroke();
-      [-1,1].forEach(sg=>{const a2=ang+sg*.11,x=sw.cx+R*Math.cos(a2),y=sw.cy+R*Math.sin(a2),tx=-Math.sin(a2)*sg,ty=Math.cos(a2)*sg;arrow(c,x-tx*10,y-ty*10,x+tx*4,y+ty*4,C.orange,3);});
-      const lx=sw.cx+(R+18)*Math.cos(ang),ly=sw.cy+(R+18)*Math.sin(ang);
-      text(c,P(`左右擺動`,`Sways`),Math.max(lx,520),Math.max(58,ly+30),22,C.orange);
+      // sway: two arrows across the upper thread (one on each side), pulsing outward with the swing
+      const up=op(OSC_SWAY),px=-OSC_AX[1],py=OSC_AX[0],sg=Math.sin(t*1.25);   // (px,py): across the thread, towards lower right
+      [-1,1].forEach(sd=>{const o=40+(sd*sg>0?8*Math.abs(sg):0);arrow(c,up[0]+px*sd*o,up[1]+py*sd*o,up[0]+px*sd*(o+30),up[1]+py*sd*(o+30),C.orange,3);});
+      text(c,P(`左右擺動`,`Sways`),up[0]+px*84,up[1]+py*84+8,22,C.orange);
       const g0=[175,506],g1=[232,441],gx=OSC_AX[0]*sw.g*1.6,gy=OSC_AX[1]*sw.g*1.6;
       arrow(c,(g0[0]+g1[0])/2+gx,(g0[1]+g1[1])/2+gy,g1[0]+gx,g1[1]+gy,C.orange,3);arrow(c,(g0[0]+g1[0])/2+gx,(g0[1]+g1[1])/2+gy,g0[0]+gx,g0[1]+gy,C.orange,3);
       text(c,P(`慢慢滑動`,`Glides slowly`),236,532,22,C.orange);
@@ -215,7 +214,7 @@ function draw(c,s,t){
       const la=Math.min(za,A(1,.9)),dc=zm(...DISC.c),dl=DISC.len*ZR/Z1.half,dk=DISC.thick*ZR/Z1.half,ang=Math.atan2(DISC.ax[1],DISC.ax[0]),pu=.5+.5*Math.sin(t*3);
       if(la>0){c.save();c.globalAlpha*=la;c.translate(...dc);c.rotate(ang);c.beginPath();c.roundRect(-dl/2-3,-dk/2-2,dl+6,dk+4,dk/2);c.fillStyle=rgba(C.yellow,.12+.1*pu);c.fill();c.strokeStyle=C.yellow;c.lineWidth=2.5+1.5*pu;c.stroke();c.restore();}
       const end=[dc[0]+DISC.ax[0]*(dl/2+4),dc[1]+DISC.ax[1]*(dl/2+4)];
-      const db=block(c,P(`圓盤狀的細胞`,`Disc-shaped\ncell`),ZC[0]+ZR+14,end[1]+16,{w:130,col:C.yellow,a:la});
+      const db=block(c,P(`圓盤狀的細胞`,`Disc-shaped\ncell`),ZC[0]+ZR+12,end[1]+16,{w:140,col:C.yellow,a:la});
       leader(c,[db.x0-6,end[1]+4],end,C.yellow,la);
     }
   }
@@ -238,13 +237,13 @@ function draw(c,s,t){
       block(c,P(`放大`,`Zoom`),262,218,{w:80,col:C.white,align:'center',a:ca});
       // light (step 2)
       const la=A(2,.7);
-      if(la>0){const SX=640,SY=122;c.save();c.globalAlpha*=la;glow(c,SX,SY,46,C.yellow,.45);
+      if(la>0){const SX=622,SY=104;c.save();c.globalAlpha*=la;glow(c,SX,SY,46,C.yellow,.45);
         for(let i=0;i<10;i++){const an=i/10*TAU+t*.25;line(c,[[SX+Math.cos(an)*28,SY+Math.sin(an)*28],[SX+Math.cos(an)*38,SY+Math.sin(an)*38]],C.yellow,3);}
         circle(c,SX,SY,22,C.yellow,null);
         [-.95,-.62,-.3].forEach(an=>{const ex=CX+CR*Math.cos(an),ey=CY+CR*Math.sin(an);dashed(c,[[SX-18,SY+14],[ex,ey]],rgba(C.yellow,.9),3,[10,8],-t*24);});
-        text(c,P(`光`,`Light`),SX,86,22,C.yellow,'center');c.restore();}
+        text(c,P(`光`,`Light`),SX,SY-50,22,C.yellow,'center');c.restore();}
       c.save();c.globalAlpha*=ca;cyanoCell(c,CX,CY,CR,t,{pig:1,lit:la,dna:A(3,.6)});c.restore();
-      block(c,P(`一個念珠藻細胞（放大）`,`One Nostoc cell (enlarged)`),CX,140,{w:300,col:C.white,align:'center',a:ca});
+      block(c,P(`一個念珠藻細胞（放大）`,`One Nostoc cell (enlarged)`),CX-30,140,{w:300,col:C.white,align:'center',a:ca});
       // below the cell: step 2 pigments; step 3 pigments + DNA
       const p2=A(2,1.1),p3=A(3,.9);
       let below=478;
@@ -272,7 +271,7 @@ function draw(c,s,t){
       const nb=block(c,P(`細胞核：DNA 有核膜包住`,`Nucleus: DNA wrapped in an envelope`),MX,y,{w:W,col:mixCol(hiN),align:'center'});
       const cyC=nb.y1+22+72,cells=algaCell(c,MX,cyC,96,72,t,hiC,hiN);
       leader(c,[MX,nb.y1+6],[cells.nuc[0]+2,cells.nuc[1]-30],C.pink,1);
-      const cb=block(c,P(`葉綠體：色素集中在這裡`,`Chloroplasts: pigments gathered here`),MX,cyC+72+40,{w:W,col:mixCol(hiC,C.green)});
+      const cb=block(c,P(`葉綠體：色素集中在這裡`,`Chloroplasts: pigments gathered here`),MX,cyC+72+40,{w:W,col:mixCol(hiC,C.green),align:'center'});
       leader(c,[MX,cb.y0-6],[cells.chl[0],cells.chl[1]+11],C.green,1);
       c.restore();}
   }
