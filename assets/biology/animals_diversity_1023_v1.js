@@ -1,0 +1,204 @@
+/* Animals: does resemblance mean close kinship? · teacher-requested V5 remake, 2026-10-23.
+ * Four tabs, eight views (the plan is assets/biology/animals_diversity_plan_1023.md):
+ *   phyla:         0 phyla (six groups, what evidence?)
+ *   arthropods:    0 legs (count legs, not wings), 1 molt (why molt to grow?)
+ *   vertebrates:   0 swim (seven animals, five classes), 1 frog (gills to lungs)
+ *   adaptation:    0 covering (feather, scale, hair), 1 egret (feathers and wings), 2 nurse (cow elephant and calf)
+ * Pictures: animals_ai_1023/ (AI illustrations made by the teacher with Gemini, not photographs) and six cut-outs of unit 2.
+ * Each view is drawn by its own module, animals_draw_<name>_1023_v1.js, which registers window.AnimalsDraw[name];
+ * the page text, steps, captions, picture labels (LAB, also window.AnimalsKit.LAB) and multiple-choice checks live here.
+ * Shared helpers: animals_kit_1023_v1.js. Replaces the animals_diversity entry of biodiversity_lessons_1010_v1.js (left there, unused).
+ */
+(()=>{'use strict';
+const K=window.AnimalsKit,B=K.B,P=K.P,C=K.C,choice=K.choice,steps=K.steps;
+
+// ── picture labels used by the drawing modules (zh, en) ────────────────────
+const LAB={
+ jellyfish:P(`月水母`,`Moon jelly`),planarian:P(`渦蟲`,`Planarian`),octopus:P(`章魚`,`Octopus`),earthworm:P(`蚯蚓`,`Earthworm`),crab:P(`蟹`,`Crab`),seastar:P(`海星`,`Sea star`),
+ dragonfly:P(`蜻蜓`,`Dragonfly`),fly:P(`蒼蠅`,`Fly`),silverfish:P(`衣魚`,`Silverfish`),spider:P(`蜘蛛`,`Spider`),snail:P(`蝸牛`,`Snail`),
+ seahorse:P(`海馬`,`Seahorse`),frog:P(`蛙`,`Frog`),turtle:P(`斑龜`,`Pond turtle`),penguin:P(`帝企鵝`,`Emperor penguin`),orca:P(`虎鯨`,`Killer whale`),bat:P(`蝙蝠`,`Bat`),platypus:P(`鴨嘴獸`,`Platypus`),
+ egret:P(`小白鷺`,`Little egret`),elephant:P(`亞洲象`,`Asian elephant`),
+ cnidaria:P(`刺絲胞動物`,`Cnidarian`),flatworm:P(`扁形動物`,`Flatworm`),mollusc:P(`軟體動物`,`Mollusc`),annelid:P(`環節動物`,`Annelid`),arthropod:P(`節肢動物`,`Arthropod`),echinoderm:P(`棘皮動物`,`Echinoderm`),
+ evCnidocyte:P(`刺絲胞`,`Cnidocytes`),evFlat:P(`腹背扁平`,`Flattened body`),evSoft:P(`柔軟身體、肌肉足`,`Soft body, muscular foot`),evRings:P(`環狀分節`,`Ring-like segments`),evExo:P(`外骨骼、分節附肢`,`Exoskeleton, jointed limbs`),evSpines:P(`棘與管足`,`Spines and tube feet`),
+ notOnly:P(`不能只看`,`Do not judge only by`),notSwim:P(`會游泳`,`swimming`),notLong:P(`細長像蟲`,`a long wormy body`),notShell:P(`有沒有殼`,`having a shell`),notColor:P(`顏色與外形`,`colour and shape`),
+ noVertebrae:P(`沒有脊椎骨：不是一個門`,`No backbone: not one phylum`),
+ legPair:P(`對步足`,`pairs of legs`),legs:P(`步足`,`Walking legs`),wings:P(`翅膀（不算腳）`,`Wings (not legs)`),claw:P(`螯足（第一對）`,`Claws (first pair)`),
+ thorax:P(`胸部`,`Thorax`),head:P(`頭`,`Head`),abdomen:P(`腹部`,`Abdomen`),cephalothorax:P(`頭胸部`,`Cephalothorax`),
+ noJoint:P(`沒有關節的腳`,`A foot without joints`),muscleFoot:P(`肌肉足`,`Muscular foot`),notArthropod:P(`不是節肢動物`,`Not an arthropod`),
+ insect:P(`昆蟲`,`Insect`),arachnid:P(`蜘蛛`,`Spider`),crustacean:P(`蟹`,`Crab`),
+ count:P(`數量`,`Count`),total:P(`共`,`Total`),
+ shell:P(`蟬蛻殼`,`Cicada shell`),emerging:P(`剛羽化`,`Just emerged`),adult:P(`成蟬`,`Adult cicada`),oldShell:P(`舊殼`,`Old shell`),newBody:P(`新的身體`,`New body`),
+ exoskeleton:P(`外骨骼`,`Exoskeleton`),outgrown:P(`外骨骼不會變大`,`The exoskeleton does not grow`),molt:P(`蛻殼`,`Molting`),
+ softNew:P(`新殼還軟`,`New shell still soft`),hardNew:P(`新殼變硬`,`New shell hardens`),notStretch:P(`不是把舊殼拉大`,`The old shell is not stretched`),
+ fish:P(`魚類`,`Fish`),amphibian:P(`兩生類`,`Amphibians`),reptile:P(`爬蟲類`,`Reptiles`),bird:P(`鳥類`,`Birds`),mammal:P(`哺乳類`,`Mammals`),
+ gills:P(`鰓`,`Gills`),lungs:P(`肺`,`Lungs`),moistSkin:P(`潮濕的皮膚`,`Moist skin`),scales:P(`鱗片`,`Scales`),bonyPlates:P(`骨板`,`Bony plates`),
+ feathers:P(`羽毛`,`Feathers`),flipper:P(`鰭狀翅膀`,`Flipper-like wing`),hair:P(`毛髮`,`Hair`),milk:P(`乳汁`,`Milk`),eggLaying:P(`卵生`,`Lays eggs`),
+ flies:P(`會飛`,`Flies`),swims:P(`會游泳`,`Swims`),notDecisive:P(`不是單獨的判準`,`Not a deciding clue alone`),
+ egg:P(`卵`,`Eggs`),tadpole:P(`蝌蚪`,`Tadpole`),hindLegs:P(`長後腿`,`Hind legs`),foreLegs:P(`長前腿`,`Fore legs`),tail:P(`尾巴`,`Tail`),froglet:P(`幼蛙`,`Froglet`),adultFrog:P(`成蛙`,`Adult frog`),
+ inWater:P(`在水中`,`In water`),gillToLung:P(`鰓換成肺`,`Gills give way to lungs`),sizeNote:P(`示意：大小不能比較`,`Schematic: sizes cannot be compared`),
+ featherClose:P(`羽毛`,`Feather`),scaleClose:P(`鱗片`,`Scales`),furClose:P(`毛髮`,`Hair`),
+ warmth:P(`保暖`,`Keeps warm`),flight:P(`參與飛行`,`Helps flight`),waterLoss:P(`減少水分散失`,`Cuts water loss`),
+ primaries:P(`初級飛羽`,`Primary flight feathers`),secondaries:P(`次級飛羽`,`Secondary flight feathers`),wingTip:P(`翅尖`,`Wing tip`),body:P(`身體`,`Body`),
+ airSac:P(`氣囊（示意）`,`Air sacs (schematic)`),lungSchem:P(`肺（示意）`,`Lung (schematic)`),airSacNote:P(`氣囊協助通氣，氣體交換在肺`,`Air sacs help ventilation; gas exchange is in the lungs`),
+ notAllFly:P(`不是所有鳥都能飛`,`Not every bird flies`),
+ cow:P(`母象`,`Mother`),calf:P(`小象`,`Calf`),nursing:P(`吸奶`,`Nursing`),mammaryGland:P(`乳汁哺育`,`Fed with milk`),notLiveBirth:P(`核心是哺乳，不是胎生`,`The core is milk, not live birth`),
+ evidence:P(`證據`,`Evidence`),schematic:P(`示意`,`Schematic`),aiNote:P(`AI 插圖，非實拍`,`AI illustration, not a photo`),sizeNoReal:P(`大小不代表真實大小`,`Sizes are not real sizes`)
+};
+K.LAB=LAB;window.AnimalsLabels=LAB;
+
+// ── phyla / 0: six groups, what evidence? ──────────────────────────────────
+const PH_SHORT=[P(`水母`,`Jellyfish`),P(`渦蟲`,`Planarian`),P(`章魚`,`Octopus`),P(`蚯蚓`,`Earthworm`),P(`蟹`,`Crab`),P(`海星`,`Sea star`)];
+const PH_NAMES=[P(`水母：刺絲胞動物，證據是刺絲胞`,`Moon jelly: a cnidarian, the evidence is cnidocytes`),P(`渦蟲：扁形動物，證據是腹背扁平`,`Planarian: a flatworm, the evidence is a flattened body`),P(`章魚：軟體動物，證據是柔軟的身體與肌肉足`,`Octopus: a mollusc, the evidence is a soft body and a muscular foot`),P(`蚯蚓：環節動物，證據是環狀分節`,`Earthworm: an annelid, the evidence is ring-like segments`),P(`蟹：節肢動物，證據是外骨骼與分節附肢`,`Crab: an arthropod, the evidence is an exoskeleton and jointed limbs`),P(`海星：棘皮動物，證據是棘與管足`,`Sea star: an echinoderm, the evidence is spines and tube feet`)];
+const PH_TEXT=[
+ P(`水母的觸手與身體有刺絲胞，可以捕食和防禦；消化腔只有一個開口。證據是刺絲胞，所以是刺絲胞動物。不能只看「會游泳」：會游泳的動物很多，不能因此分在同一類。`,`A moon jelly has cnidocytes on its tentacles and body for catching prey and for defence, and its digestive cavity has only one opening. The evidence is the cnidocytes, so it is a cnidarian. Do not judge only by swimming: many unrelated animals swim, so swimming cannot put them in one group.`),
+ P(`渦蟲的身體腹背扁平，沒有骨骼，是扁形動物。不能只看「細長像蟲」：細長的蟲不都是環節動物。`,`A planarian has a body flattened from back to belly and no skeleton: a flatworm. Do not judge only by a long wormy shape: not every wormy animal is an annelid.`),
+ P(`章魚的身體柔軟、不分節，有肌肉構成的足（8 條腕就是特化的足），是軟體動物。不能只看「有沒有殼」：章魚沒有明顯的外殼，仍是軟體動物。`,`An octopus has a soft, unsegmented body and a muscular foot (its eight arms are a specialised foot): a mollusc. Do not judge only by having a shell: an octopus has no obvious shell and is still a mollusc.`),
+ P(`蚯蚓的身體由許多環節重複排成，靠體壁肌肉伸縮移動，是環節動物。不能只看「細長」：渦蟲也細長，卻沒有環節。`,`An earthworm is built of many repeated rings and moves by contracting its body-wall muscles: an annelid. Do not judge only by a long body: a planarian is long too, but has no rings.`),
+ P(`蟹有外骨骼，身體和附肢都分節，是節肢動物。不能只看「有殼」：要把外骨骼和分節的附肢一起看。這和第二課的蟹是同一張圖。`,`A crab has an exoskeleton, and both its body and its limbs are jointed: an arthropod. Do not judge only by having a shell: look at the exoskeleton and the jointed limbs together. This is the same picture of the crab as in the naming lesson.`),
+ P(`海星表面有棘，腹面有一排排管足，是棘皮動物。不能只看顏色與外形：海星在海裡，看起來像花，但牠是動物。最後想一想：蚯蚓、章魚、蟹都沒有脊椎骨，但是牠們分屬不同的門。沒有脊椎骨不是一個門，只是共同「缺少」同一項構造。`,`A sea star has spines on its surface and rows of tube feet underneath: an echinoderm. Do not judge only by colour and shape: a sea star lives in the sea and looks like a flower, but it is an animal. One last thought: earthworm, octopus and crab all lack a backbone, yet they belong to different phyla. "No backbone" is not one phylum; it is only a shared lack of one structure.`)];
+
+// ── arthropods / 0: count legs, not wings ──────────────────────────────────
+const LG_SHORT=[P(`蜻蜓`,`Dragonfly`),P(`蒼蠅`,`Fly`),P(`衣魚`,`Silverfish`),P(`蜘蛛`,`Spider`),P(`蟹`,`Crab`),P(`蝸牛`,`Snail`)];
+const LG_NAMES=[P(`蜻蜓：三對步足，長在胸部`,`Dragonfly: three pairs of legs, on the thorax`),P(`蒼蠅：三對步足，翅膀不算腳`,`Fly: three pairs of legs; wings are not legs`),P(`衣魚：三對步足，沒有翅膀`,`Silverfish: three pairs of legs, no wings`),P(`蜘蛛：四對步足，長在頭胸部`,`Spider: four pairs of legs, on the cephalothorax`),P(`蟹：五對步足，第一對是螯足`,`Crab: five pairs of legs, the first pair are claws`),P(`蝸牛：沒有關節的腳，不是節肢動物`,`Snail: a foot without joints, not an arthropod`)];
+const LG_TEXT=[
+ P(`蜻蜓是昆蟲：身體分頭、胸、腹三部分，六隻腳（三對步足）都從胸部長出來。牠有兩對翅膀，但是翅膀不算腳。`,`A dragonfly is an insect: its body has a head, a thorax and an abdomen, and its six legs (three pairs) all grow from the thorax. It has two pairs of wings, but wings are not legs.`),
+ P(`蒼蠅也是昆蟲，三對步足長在胸部。牠只有一對翅膀，翅膀一樣不算腳。數的是步足，不是翅膀。`,`A fly is an insect too, with three pairs of legs on the thorax. It has only one pair of wings, and wings still do not count as legs. We count legs, not wings.`),
+ P(`衣魚沒有翅膀，但是牠有三對步足長在胸部，身體分頭、胸、腹，也是昆蟲。有沒有翅膀，不是判斷昆蟲的條件。`,`A silverfish has no wings, but it has three pairs of legs on the thorax and a head, thorax and abdomen: it is an insect too. Having wings or not is not what decides an insect.`),
+ P(`蜘蛛有四對步足（八隻腳），長在頭胸部，身體只分頭胸部和腹部兩部分。牠是節肢動物，但不是昆蟲。`,`A spider has four pairs of legs (eight legs) on the cephalothorax, and its body has only two parts, the cephalothorax and the abdomen. It is an arthropod, but not an insect.`),
+ P(`蟹有五對步足，第一對變成螯足，也算步足（所以共十隻）。身體分成頭胸部和腹部，外面是外骨骼。`,`A crab has five pairs of legs, and the first pair have become claws, which still count as legs (ten in all). Its body is divided into a cephalothorax and an abdomen, covered by an exoskeleton.`),
+ P(`蝸牛沒有關節的腳，只有一塊肌肉足貼著地面爬行，身體外有殼，是軟體動物。腳沒有分節，也不用「對」來數，所以牠不是節肢動物。`,`A snail has a foot without joints: one muscular foot that glides along the ground, with a shell on its back. It is a mollusc. Its foot is not jointed and cannot be counted in pairs, so it is not an arthropod.`)];
+
+// ── arthropods / 1: why molt to grow ───────────────────────────────────────
+const ML_SHORT=[P(`殼不會變大`,`Shell does not grow`),P(`蛻去舊殼`,`Leave the old shell`),P(`新殼還軟`,`New shell is soft`),P(`變硬成蟲`,`Hardens, adult`)];
+const ML_NAMES=[P(`外骨骼不會跟著身體變大`,`An exoskeleton does not grow with the body`),P(`蛻殼：身體從舊殼裡爬出來`,`Molting: the body crawls out of the old shell`),P(`剛羽化：新殼還軟，翅膀還沒變硬`,`Just emerged: the new shell is soft and the wings are not yet hard`),P(`新殼變硬，翅膀展開，成蟲`,`The new shell hardens, the wings open: an adult`)];
+const ML_TEXT=[
+ P(`節肢動物的外骨骼又硬又不能拉長。身體長大了，舊殼卻不會跟著變大，所以要長大，就得把舊殼脫掉。`,`The exoskeleton of an arthropod is hard and cannot stretch. When the body grows, the old shell does not grow with it, so to grow the animal has to shed its old shell.`),
+ P(`蟬的舊殼從背部裂開，身體慢慢從裡面爬出來，留下一個空殼。這叫蛻殼。重點：不是把舊殼拉大，而是脫掉舊的、換上新的。`,`The old shell of a cicada splits along the back and the body slowly crawls out, leaving an empty shell behind. This is molting. The key idea: the old shell is not stretched larger; it is shed and replaced by a new one.`),
+ P(`剛羽化的蟬，新的外殼還軟，翅膀還沒變硬，舊殼還在旁邊。這一張圖裡，舊殼和新的身體在同一張圖上。`,`A newly emerged cicada has a soft new shell and wings that have not hardened yet, with the old shell still beside it. In this picture the old shell and the new body are in the same image.`),
+ P(`過一陣子，新的外殼變硬，翅膀展開，就是成蟬。蟹和蜻蜓長大時也要蛻殼。（三張圖的樹枝不同，不是同一隻蟬的連續照片。）`,`After a while the new shell hardens and the wings spread: an adult cicada. Crabs and dragonflies also molt as they grow. (The branches differ in the three pictures, so they are not photos of one cicada over time.)`)];
+
+// ── vertebrates / 0: seven animals, five classes ───────────────────────────
+const SW_SHORT=[P(`魚類`,`Fish`),P(`兩生類`,`Amphibian`),P(`爬蟲類`,`Reptile`),P(`鳥類`,`Bird`),P(`哺乳類`,`Mammals`)];
+const SW_NAMES=[P(`海馬：用鰓呼吸，是魚類`,`Seahorse: breathes with gills, a fish`),P(`蛙：幼體用鰓，成體用肺，是兩生類`,`Frog: gills when young, lungs as an adult, an amphibian`),P(`斑龜：用肺呼吸，體表有鱗與骨板，是爬蟲類`,`Pond turtle: breathes with lungs, scales and bony plates, a reptile`),P(`企鵝：有羽毛，是鳥類`,`Penguin: has feathers, a bird`),P(`虎鯨、蝙蝠、鴨嘴獸：都是哺乳類`,`Killer whale, bat, platypus: all mammals`)];
+const SW_TEXT=[
+ P(`海馬用鰓呼吸，身體有一圈圈骨板，是硬骨魚。牠的外形不像一般的魚，不影響分類。會游泳不是魚的證據：下面還有別的游泳高手。`,`A seahorse breathes with gills and has rings of bony plates: a bony fish. Its shape is unlike an ordinary fish, but that does not change its class. Swimming is not the evidence for a fish: there are other swimmers below.`),
+ P(`蛙的幼體（蝌蚪）用鰓呼吸，成體用肺，潮濕的皮膚也幫忙交換氣體，所以多數蛙離不開潮濕的環境。這樣「一生有水中和陸上兩段」的動物是兩生類。`,`A tadpole breathes with gills; an adult frog uses lungs, and its moist skin helps with gas exchange, so most frogs stay near moisture. Animals with an aquatic and a land stage in one life are amphibians.`),
+ P(`斑龜用肺呼吸，體表有鱗片，背上有骨板，是爬蟲類。常在水邊生活，不代表牠用鰓呼吸。`,`A pond turtle breathes with lungs, has scales and a shell of bony plates: a reptile. Living near water does not mean it breathes with gills.`),
+ P(`帝企鵝身上有羽毛，用肺呼吸，是鳥類。牠的翅膀是鰭狀的，適合游泳，不會飛，也還是鳥，不會因此變成魚。`,`An emperor penguin has feathers and breathes with lungs: a bird. Its wings are flipper-like and good for swimming; it cannot fly and is still a bird, not a fish.`),
+ P(`虎鯨在海裡、蝙蝠會飛、鴨嘴獸會生蛋，看起來差很多，但是牠們都用肺呼吸，母體都分泌乳汁哺育幼體，身體有毛髮（虎鯨的毛很少，不容易看到）。所以都是哺乳類。會游泳、會飛、卵生，都不是單獨的判準：鴨嘴獸卵生，仍是哺乳類。`,`A killer whale lives in the sea, a bat flies and a platypus lays eggs, which look very different, yet all breathe with lungs, the mothers feed their young with milk, and their bodies have hair (a killer whale has very little, hard to see). So all are mammals. Swimming, flying and laying eggs are not deciding clues on their own: a platypus lays eggs and is still a mammal.`)];
+
+// ── vertebrates / 1: life of a frog ────────────────────────────────────────
+const FR_SHORT=[P(`卵`,`Eggs`),P(`蝌蚪`,`Tadpole`),P(`長後腿`,`Hind legs`),P(`長前腿`,`Fore legs`),P(`成蛙`,`Adult`)];
+const FR_NAMES=[P(`卵：產在水中`,`Eggs: laid in water`),P(`蝌蚪：用鰓呼吸，在水中游`,`Tadpole: breathes with gills, swims in water`),P(`長出後腿：還有尾巴`,`Hind legs appear: still a tail`),P(`長前腿，尾巴縮短：鰓換成肺`,`Fore legs and a shorter tail: gills give way to lungs`),P(`成蛙：用肺，皮膚幫忙`,`Adult frog: lungs, with help from the skin`)];
+const FR_TEXT=[
+ P(`多數蛙把卵產在水裡，卵團外面包著透明的膠質。（這一組圖是示意，大小不能比較，也不是同一隻蛙的連續照片。）`,`Most frogs lay their eggs in water, in a clump covered by clear jelly. (These pictures are a schematic; sizes cannot be compared and they are not photos of one frog over time.)`),
+ P(`卵孵出蝌蚪。蝌蚪有尾巴，用鰓呼吸，在水中游，看起來像小魚，但牠不是魚。`,`The eggs hatch into tadpoles. A tadpole has a tail, breathes with gills and swims in water. It looks like a little fish, but it is not a fish.`),
+ P(`蝌蚪先長出後腿，尾巴還在，仍然住在水裡。`,`The tadpole grows its hind legs first. The tail is still there and it still lives in water.`),
+ P(`接著長出前腿，尾巴慢慢縮短。同時，鰓慢慢換成肺。（這一張圖是示意，沒有畫出縮短中的尾巴。）`,`Then the fore legs grow and the tail slowly shortens. At the same time the gills give way to lungs. (This picture is a schematic and does not show the shortening tail.)`),
+ P(`成蛙用肺呼吸，潮濕的皮膚也能幫忙交換氣體，所以多數成蛙離不開潮濕的環境。一生從鰓換成肺，是兩生類的特徵。`,`An adult frog breathes with lungs, and its moist skin helps with gas exchange, so most adult frogs stay near moisture. Changing from gills to lungs during life is a trait of amphibians.`)];
+
+// ── adaptation / 0: feather, scale, hair ───────────────────────────────────
+const CV_SHORT=[P(`三塊近拍`,`Three close-ups`),P(`羽毛`,`Feathers`),P(`鱗片`,`Scales`),P(`毛髮`,`Hair`)];
+const CV_NAMES=[P(`羽毛、鱗片、毛髮：並排看`,`Feathers, scales, hair: side by side`),P(`羽毛：保暖，也參與飛行`,`Feathers: keep warm and help flight`),P(`鱗片：減少水分散失`,`Scales: cut water loss`),P(`毛髮：保暖`,`Hair: keeps warm`)];
+const CV_TEXT=[
+ P(`三塊近拍：羽毛、鱗片、毛髮，都長在動物的體表，卻長得不一樣。牠們的作用一樣嗎？一個一個看。（三張都是 AI 插圖，不是實拍。）`,`Three close-ups: feathers, scales and hair all cover the outside of animals, yet they look different. Do they do the same job? Look at them one by one. (All three are AI illustrations, not photos.)`),
+ P(`羽毛是鳥類的體表。羽毛層裡留著空氣，可以保暖；翅膀上的長羽毛，還能參與飛行。`,`Feathers cover birds. A layer of feathers holds air and keeps the bird warm, and the long feathers on the wings take part in flight.`),
+ P(`爬蟲類體表的鱗片又乾又硬，可以減少身體水分散失，保護身體。（魚的鱗片構造不同，主要是保護身體。）`,`The scales of reptiles are dry and hard, helping to cut water loss and protect the body. (Fish scales are built differently and mainly protect the body.)`),
+ P(`哺乳類的體表有毛髮，毛髮間留著空氣，可以保暖。毛的多寡因種類而異。每一類體表都有多樣性：這是作用不同，不是排高低。`,`Mammals have hair, and the air held between the hairs keeps them warm. How much hair there is differs from species to species. Every kind of covering varies: these are different jobs, not a ranking.`)];
+
+// ── adaptation / 1: egret, feathers and wings ──────────────────────────────
+const EG_SHORT=[P(`站姿`,`Standing`),P(`展翅飛羽`,`Flight feathers`),P(`保暖與飛行`,`Warmth and flight`),P(`不會飛的鳥`,`Flightless bird`)];
+const EG_NAMES=[P(`站姿：全身都是羽毛`,`Standing: feathers all over the body`),P(`展翅：看飛羽排列`,`Wings open: see the flight feathers`),P(`羽毛保暖，也幫忙飛行`,`Feathers keep warm and help flight`),P(`不是所有鳥都能飛`,`Not every bird can fly`)];
+const EG_TEXT=[
+ P(`小白鷺站著的時候，從頭到身體都是白色的羽毛，頸和腿很細長。鳥的身體覆蓋著羽毛。`,`A standing little egret has white feathers from head to body, with a long thin neck and long legs. A bird's body is covered with feathers.`),
+ P(`展開翅膀，翅膀上排著一排排長羽毛，叫飛羽。靠翅尖的是初級飛羽，靠身體的是次級飛羽。飛羽一片壓著一片，排成一個寬寬的翅面。（標記是程式依圖量好的示意。）`,`With the wings open, long feathers are lined up along the wing: the flight feathers. Those near the wing tip are the primaries and those near the body are the secondaries. They overlap one another and form a broad wing surface. (The labels are schematic marks placed by measuring the picture.)`),
+ P(`身體的羽毛留著空氣，保暖；翅膀上的飛羽，幫忙飛行。鳥還有肺和氣囊：氣囊協助通氣，氣體交換仍在肺裡進行，氣囊不是取代肺。（肺與氣囊是程式畫的示意。）`,`Body feathers hold air and keep the bird warm; the flight feathers on the wings help it fly. A bird also has lungs and air sacs: the air sacs help ventilation, but gas exchange still takes place in the lungs; the air sacs do not replace the lungs. (The lungs and air sacs are a schematic drawn in code.)`),
+ P(`不是所有鳥都能飛。企鵝的翅膀是鰭狀的，適合在水中游泳，不會飛，但牠身上有羽毛，仍然是鳥。`,`Not every bird can fly. A penguin's wings are flipper-like and suited to swimming; it cannot fly, but it has feathers and is still a bird.`)];
+
+// ── adaptation / 2: elephant and calf, nursing ─────────────────────────────
+const NU_SHORT=[P(`母象與小象`,`Mother and calf`),P(`靠近吸奶`,`Calf nursing`),P(`乳汁哺育`,`Fed with milk`),P(`不是胎生`,`Not live birth`)];
+const NU_NAMES=[P(`母象與小象`,`A mother elephant and her calf`),P(`小象靠近母象前腿後方吸奶`,`The calf nurses behind the mother's front leg`),P(`哺乳類的母體用乳汁哺育幼體`,`A mammal mother feeds her young with milk`),P(`哺乳是核心特徵，不是胎生`,`Nursing is the key trait, not live birth`)];
+const NU_TEXT=[
+ P(`這是一頭亞洲象的母象和小象。小象貼在母象身邊，一起走。（AI 插圖，兩頭象的大小只是構圖，不是真實比例。）`,`This is a mother Asian elephant and her calf. The calf stays close beside its mother and walks with her. (An AI illustration; the sizes of the two elephants are only for the composition, not real proportions.)`),
+ P(`小象把頭湊到母象前腿的後方，這裡是象吸奶的位置。小象靠母象的乳汁長大。`,`The calf puts its head behind the mother's front leg, the place where elephants nurse. The calf grows on its mother's milk.`),
+ P(`哺乳類的母體有乳腺，分泌乳汁，用乳汁哺育幼體。鴨嘴獸也是：牠生蛋，孵出來的幼體也吃母親的乳汁。`,`A mammal mother has mammary glands that make milk, and she feeds her young with it. A platypus does too: she lays eggs, and the young that hatch also drink her milk.`),
+ P(`哺乳是哺乳類的核心特徵，不是胎生。象是胎生，鴨嘴獸卵生，兩者都是哺乳類。不要說所有哺乳類都胎生。`,`Nursing is the key trait of mammals, not live birth. An elephant gives live birth and a platypus lays eggs; both are mammals. Do not say that all mammals give live birth.`)];
+
+// ── fallback drawing while a module is missing ─────────────────────────────
+const stub=(name,n,short)=>(c,s,t)=>{const {k}=K.stageClock(s,t,n,6);s.shown=k;
+ K.panel(c,40,40,880,520,'#16332b');
+ K.text(c,P(`動畫製作中`,`Animation in progress`),480,270,40,C.yellow,'center');
+ K.text(c,short[k],480,330,28,C.white,'center');
+ K.text(c,P(`（${name}）`,`(${name})`),480,372,22,C.muted,'center');
+ K.pulse(c,480,440,t,C.cyan,14);};
+const dr=(name,n,short)=>(c,s,t)=>((window.AnimalsDraw&&window.AnimalsDraw[name])||stub(name,n,short))(c,s,t);
+
+// ── tabs ───────────────────────────────────────────────────────────────────
+const viewAct=(s,k,v)=>{s[k]=v;if(k==='view'){s.phase=-1;s.start=s.elapsed;}if(k==='phase')s.start=s.elapsed;};
+const pick=(s)=>s.phase<0?(s.shown||0):s.phase;
+const ARTH_TABS=[P(`數一數，幾隻腳`,`Count the legs`),P(`長大為什麼要蛻殼`,`Why molt to grow`)];
+const VERT_TABS=[P(`七種動物，各是哪一類`,`Seven animals, which class`),P(`蛙的一生：鰓到肺`,`Life of a frog: gills to lungs`)];
+const ADAPT_TABS=[P(`羽毛、鱗片、毛髮`,`Feathers, scales, hair`),P(`小白鷺：羽毛與翅膀`,`Little egret: feathers and wings`),P(`母象與小象：哺乳`,`Mother and calf: nursing`)];
+const VIEW=(tabsArr)=>choice(P(`觀察`,`View`),'view',tabsArr.map((n,i)=>[i,n]));
+
+const tabs=[
+{id:'phyla',title:P(`殼、分節與步足的線索`,`Clues of shells, segments and legs`),sub:P(`動物的主要類群`,`Major animal groups`),
+ hook:P(`蚯蚓軟軟長長的，章魚有八條腕，螃蟹披著硬殼，牠們都沒有脊椎骨。那「沒有脊椎骨」是不是就代表牠們是同一類？如果不是，我們還能用什麼來分？今天，我們一種一種看牠們身上的證據：刺絲胞、扁平的身體、肌肉足、環狀分節、外骨骼、管足。`,`An earthworm is soft and long, an octopus has eight arms, and a crab wears a hard shell, and none of them has a backbone. Does "no backbone" mean they are all one kind? If not, what else can we use to sort them? Today we look at the evidence on each body: cnidocytes, a flat body, a muscular foot, rings, an exoskeleton, tube feet.`),
+ body:P(`「六個類群，看什麼證據」一步看一種動物：一條證據，加上「不能只看什麼」。按步驟鈕可以停在任一種，也可以連續播放。`,`"Six groups: what evidence?" shows one animal per step: one piece of evidence, plus "what not to judge by". The step buttons stop on any animal, or you can play all.`),
+ reading:P(`動物的主要類群：水母是刺絲胞動物，觸手與身體有刺絲胞，消化腔只有一個開口。渦蟲是扁形動物，腹背扁平。章魚是軟體動物，身體柔軟不分節，有肌肉構成的足，有沒有殼不是單獨的判準。蚯蚓是環節動物，身體由許多環節重複排成。蟹是節肢動物，有外骨骼，身體與附肢都分節。海星是棘皮動物，表面有棘，腹面有管足。\n\n沒有脊椎骨不是一個門，只是共同缺少同一項構造。分類要看多項構造證據，不看單一特徵，例如顏色、會不會游泳、有沒有殼。\n\n注意：圖是 AI 畫的教學插圖，不是實拍照片，大小不代表真實大小。`,`The main animal groups: a moon jelly is a cnidarian, with cnidocytes on tentacles and body and a digestive cavity with one opening. A planarian is a flatworm with a flattened body. An octopus is a mollusc with a soft unsegmented body and a muscular foot; having a shell is not a deciding clue. An earthworm is an annelid, built of many repeated rings. A crab is an arthropod with an exoskeleton and a jointed body and limbs. A sea star is an echinoderm with spines on the surface and tube feet underneath.\n\n"No backbone" is not one phylum, only a shared lack of one structure. Classify with several structural clues, not one feature such as colour, swimming or a shell.\n\nNote: the pictures are AI teaching illustrations, not photographs, and their sizes do not show real sizes.`),
+ closure:P(`沒有脊椎骨不是一個門。分類要看多項構造證據：刺絲胞、扁平的身體、肌肉足、環狀分節、外骨骼與分節附肢、棘與管足，不能只看顏色、會不會游泳或有沒有殼。`,`"No backbone" is not one phylum. Classify with several structural clues: cnidocytes, a flat body, a muscular foot, rings, an exoskeleton with jointed limbs, spines and tube feet, never colour, swimming or a shell alone.`),
+ quiz:[
+  {q:P(`蚯蚓、章魚和蟹都沒有脊椎骨，下列哪一句最合理？`,`Earthworm, octopus and crab all lack a backbone. Which statement is most reasonable?`),options:[P(`牠們同屬「無脊椎動物門」`,`They all belong to one "invertebrate phylum"`),P(`沒有脊椎骨只是共同缺少，不是一個門，要看其他構造證據才能分`,`Lacking a backbone is only a shared lack, not one phylum; other structural evidence is needed to sort them`),P(`沒有脊椎骨的動物都是節肢動物`,`All animals without a backbone are arthropods`),P(`沒有脊椎骨，就不算動物`,`Without a backbone it is not an animal`)],answer:1,why:P(`蚯蚓是環節動物，章魚是軟體動物，蟹是節肢動物，是三個不同的門。`,`The earthworm is an annelid, the octopus a mollusc and the crab an arthropod: three different phyla.`),hint:P(`看「六個類群，看什麼證據」最後一步。`,`See the last step of "Six groups: what evidence?".`)},
+  {q:P(`蟹的硬殼，怎樣才算是節肢動物的證據？`,`When is the hard shell of a crab evidence for an arthropod?`),options:[P(`只要有硬殼就是節肢動物`,`Any hard shell makes an arthropod`),P(`只要生活在海裡就是節肢動物`,`Living in the sea makes an arthropod`),P(`外骨骼，加上身體與附肢都分節，要一起看`,`An exoskeleton, together with a jointed body and limbs, looked at as a set`),P(`只看顏色紅不紅`,`Whether it is red`)],answer:2,why:P(`節肢動物的證據是外骨骼加上分節的身體與附肢；單看「有殼」不夠。`,`The evidence for an arthropod is an exoskeleton plus a jointed body and limbs; "has a shell" alone is not enough.`),hint:P(`看「六個類群，看什麼證據」第 5 步。`,`See step 5 of "Six groups: what evidence?".`)},
+  {q:P(`章魚沒有明顯的外殼，為什麼仍是軟體動物？`,`An octopus has no obvious shell. Why is it still a mollusc?`),options:[P(`因為牠生活在海裡`,`Because it lives in the sea`),P(`因為有 8 條腕`,`Because it has eight arms`),P(`因為會游泳`,`Because it swims`),P(`因為身體柔軟、不分節，有肌肉構成的足；有沒有殼不是單獨的判準`,`Because it has a soft unsegmented body and a muscular foot; having a shell is not a deciding clue alone`)],answer:3,why:P(`軟體動物看柔軟身體與肌肉足；有些軟體動物有殼，有些沒有。`,`Molluscs are judged by a soft body and a muscular foot; some have a shell and some do not.`),hint:P(`看「六個類群，看什麼證據」第 3 步。`,`See step 3 of "Six groups: what evidence?".`)}],
+ sources:[],init:()=>({running:true,view:0,phase:-1,start:0}),
+ controls:s=>[steps(PH_SHORT)],
+ act:viewAct,
+ explain:s=>{const k=pick(s);return{title:PH_NAMES[k],text:PH_TEXT[k]};},
+ draw:(c,s,t)=>dr('phyla',6,PH_SHORT)(c,s,t)},
+{id:'arthropods',title:P(`數的是步足，不是翅膀`,`Count legs, not wings`),sub:P(`節肢動物比較`,`Comparing arthropods`),
+ hook:P(`蜘蛛有八隻腳，比昆蟲的六隻腳多，那牠是不是比較大的昆蟲？蜻蜓有四片翅膀，要不要也算進去數？蝸牛也有一隻腳，牠和蜘蛛、蟹是親戚嗎？今天，我們來數腳，也看看為什麼節肢動物長大時，非得換一次殼。`,`A spider has eight legs, more than the six of an insect, so is it just a bigger insect? A dragonfly has four wings; should we count them too? A snail has a foot, so is it a relative of spiders and crabs? Today we count legs, and also see why an arthropod has to change its shell to grow.`),
+ body:P(`先看「數一數，幾隻腳」：蜻蜓、蒼蠅、衣魚、蜘蛛、蟹、蝸牛，一種一種點出腳來數；再看「長大為什麼要蛻殼」：從蟬的蛻殼看外骨骼。可以用上方的「觀察」切換。`,`First "Count the legs": dragonfly, fly, silverfish, spider, crab and snail, with each leg marked and counted. Then "Why molt to grow": the exoskeleton, seen in a cicada. Use "View" above to switch.`),
+ reading:P(`節肢動物：身體與附肢分節，有外骨骼。昆蟲有三對步足，長在胸部，身體分頭、胸、腹；有些有翅膀，有些沒有（衣魚）。翅膀不算腳。蜘蛛有四對步足，長在頭胸部，身體分頭胸部和腹部，不是昆蟲。蟹有五對步足，第一對是螯足，也算步足。蝸牛是軟體動物，有一塊沒有關節的肌肉足，不是節肢動物。\n\n蛻殼：外骨骼又硬又不能拉長，身體長大時，要脫掉舊殼，換上新殼。新殼剛長出時還軟，過一陣子才變硬。蟹和蜻蜓也蛻殼。\n\n注意：圖是 AI 畫的教學插圖，大小不代表真實大小；標在圖上的數字是程式標出的示意。`,`Arthropods: a jointed body and limbs, and an exoskeleton. Insects have three pairs of legs on the thorax and a head, thorax and abdomen; some have wings and some do not (silverfish). Wings are not legs. Spiders have four pairs of legs on the cephalothorax and a cephalothorax and abdomen; they are not insects. Crabs have five pairs of legs, the first pair being claws, which still count as legs. A snail is a mollusc with one muscular foot without joints; it is not an arthropod.\n\nMolting: the exoskeleton is hard and cannot stretch, so when the body grows the animal sheds the old shell and puts on a new one. A new shell is soft at first and hardens after a while. Crabs and dragonflies molt too.\n\nNote: the pictures are AI teaching illustrations and sizes do not show real sizes; the numbers on the pictures are marks placed by code.`),
+ closure:P(`數的是步足，不是翅膀：昆蟲三對，蜘蛛四對，蟹五對（含螯足）；蝸牛的腳沒有關節，不是節肢動物。外骨骼不會跟著身體變大，所以節肢動物長大要蛻殼。`,`Count legs, not wings: insects have three pairs, spiders four, crabs five (claws included); a snail's foot has no joints, so it is not an arthropod. An exoskeleton does not grow with the body, so arthropods molt to grow.`),
+ quiz:[
+  {q:P(`蜘蛛有八隻腳，牠是比較大的昆蟲嗎？`,`A spider has eight legs. Is it just a bigger insect?`),options:[P(`是，腳多就是更大的昆蟲`,`Yes, more legs means a bigger insect`),P(`不是，蜘蛛有四對步足、身體分兩部分；昆蟲有三對步足、身體分三部分`,`No, a spider has four pairs of legs and two body parts; an insect has three pairs and three body parts`),P(`不是，蜘蛛沒有外骨骼`,`No, a spider has no exoskeleton`),P(`是，只要有腳的動物都是昆蟲`,`Yes, any animal with legs is an insect`)],answer:1,why:P(`蜘蛛和昆蟲都是節肢動物，但步足對數和身體分部不同，蜘蛛不是昆蟲。`,`Spiders and insects are both arthropods, but the legs and body parts differ; a spider is not an insect.`),hint:P(`看「數一數，幾隻腳」第 4 步。`,`See step 4 of "Count the legs".`)},
+  {q:P(`蜻蜓有兩對翅膀，數腳的時候要算進去嗎？`,`A dragonfly has two pairs of wings. Should they be counted when counting legs?`),options:[P(`要，翅膀也是腳`,`Yes, wings are legs`),P(`不要，翅膀不算腳；蜻蜓有三對步足`,`No, wings are not legs; a dragonfly has three pairs of legs`),P(`要，這樣蜻蜓共有五對`,`Yes, so a dragonfly has five pairs`),P(`沒有翅膀的才是昆蟲`,`Only wingless animals are insects`)],answer:1,why:P(`數的是步足，不是翅膀；衣魚沒有翅膀，也是昆蟲。`,`We count legs, not wings; a silverfish has no wings and is still an insect.`),hint:P(`看「數一數，幾隻腳」第 1～3 步。`,`See steps 1 to 3 of "Count the legs".`)},
+  {q:P(`蟬為什麼要蛻殼？`,`Why does a cicada molt?`),options:[P(`因為舊殼會跟著身體慢慢變大，變大到一定程度才換`,`Because the old shell grows slowly with the body until it is swapped`),P(`外骨骼又硬又不能拉長，身體長大就要脫掉舊殼`,`Because the exoskeleton is hard and cannot stretch, so the old shell must be shed as the body grows`),P(`因為舊殼髒了要換新的`,`Because the old shell is dirty`),P(`因為蛻殼才能長出腳`,`Because legs only grow after molting`)],answer:1,why:P(`外骨骼不會跟著身體變大；蛻殼不是把舊殼拉大，而是脫掉舊的、換上新的。`,`An exoskeleton does not grow with the body; molting does not stretch the old shell, it replaces it with a new one.`),hint:P(`看「長大為什麼要蛻殼」第 1、2 步。`,`See steps 1 and 2 of "Why molt to grow".`)}],
+ sources:[],init:()=>({running:true,view:0,phase:-1,start:0}),
+ controls:s=>[VIEW(ARTH_TABS),steps(s.view===1?ML_SHORT:LG_SHORT)],
+ act:viewAct,
+ explain:s=>{const k=pick(s);return s.view===1?{title:ML_NAMES[k],text:ML_TEXT[k]}:{title:LG_NAMES[k],text:LG_TEXT[k]};},
+ draw:(c,s,t)=>s.view===1?dr('molt',4,ML_SHORT)(c,s,t):dr('legs',6,LG_SHORT)(c,s,t)},
+{id:'vertebrates',title:P(`會游泳，不保證是魚`,`Swimming does not guarantee a fish`),sub:P(`脊椎動物分類`,`Classifying vertebrates`),
+ hook:P(`企鵝在水裡穿梭，海馬在水草間漂浮，虎鯨在大海裡游，牠們都在水裡。那牠們是同一類嗎？如果不是，哪一種是魚？哪一種是鳥？哪一種是哺乳類？今天，我們換一種看法：不問在哪裡生活，改看用什麼呼吸、體表長什麼、怎麼養小孩。`,`A penguin darts through the water, a seahorse drifts among weeds and a killer whale swims the open sea. They are all in the water, so are they one kind? If not, which is the fish, which is the bird, and which is the mammal? Today we look differently: not where it lives, but how it breathes, what covers its body and how it raises its young.`),
+ body:P(`先看「七種動物，各是哪一類」：海馬、蛙、斑龜、企鵝，最後是虎鯨、蝙蝠與鴨嘴獸；再看「蛙的一生：鰓到肺」。可以用上方的「觀察」切換。`,`First "Seven animals, which class": seahorse, frog, pond turtle, penguin, and finally killer whale, bat and platypus. Then "Life of a frog: gills to lungs". Use "View" above to switch.`),
+ reading:P(`脊椎動物分成魚類、兩生類、爬蟲類、鳥類、哺乳類，要看多項構造證據。魚類用鰓呼吸。兩生類的幼體用鰓、成體用肺，皮膚潮濕、也幫忙氣體交換。爬蟲類用肺呼吸，體表有鱗片。鳥類有羽毛。哺乳類用肺呼吸，有毛髮，母體分泌乳汁哺育幼體。\n\n會游泳、會飛、卵生，都不是單獨的判準：企鵝會游泳但是鳥類，蝙蝠會飛但是哺乳類，鴨嘴獸卵生但是哺乳類。不要說所有哺乳類都胎生。\n\n蛙的一生：卵、蝌蚪（用鰓）、長後腿、長前腿（鰓換成肺）、成蛙（用肺，皮膚幫忙）。\n\n注意：圖是 AI 畫的教學插圖，大小不代表真實大小；蛙的一生五張圖是示意，大小不能比較。`,`Vertebrates are sorted into fish, amphibians, reptiles, birds and mammals using several structural clues. Fish breathe with gills. Amphibian larvae use gills and adults use lungs, with moist skin also helping gas exchange. Reptiles breathe with lungs and have scales. Birds have feathers. Mammals breathe with lungs, have hair, and the mother feeds her young with milk.\n\nSwimming, flying and laying eggs are not deciding clues on their own: a penguin swims but is a bird, a bat flies but is a mammal, a platypus lays eggs but is a mammal. Do not say that all mammals give live birth.\n\nLife of a frog: eggs, tadpole (gills), hind legs, fore legs (gills give way to lungs), adult frog (lungs, with help from the skin).\n\nNote: the pictures are AI teaching illustrations and sizes do not show real sizes; the five frog pictures are a schematic and their sizes cannot be compared.`),
+ closure:P(`分類看呼吸器官、體表和哺育，不只看生活在哪裡、會不會游泳或飛。海馬是魚，蛙是兩生類，斑龜是爬蟲類，企鵝是鳥，虎鯨、蝙蝠和鴨嘴獸都是哺乳類。`,`Classify by the breathing organ, the body covering and how young are fed, not only by where an animal lives or whether it swims or flies. The seahorse is a fish, the frog an amphibian, the pond turtle a reptile, the penguin a bird, and the killer whale, bat and platypus are all mammals.`),
+ quiz:[
+  {q:P(`企鵝、海馬、虎鯨都在水裡生活，哪一句最合理？`,`A penguin, a seahorse and a killer whale all live in water. Which statement is most reasonable?`),options:[P(`都在水裡，所以是同一類`,`They all live in water, so they are one class`),P(`看呼吸、體表和哺育：海馬是魚，企鵝是鳥，虎鯨是哺乳類`,`Check breathing, covering and feeding: the seahorse is a fish, the penguin a bird, the killer whale a mammal`),P(`會游泳的都是魚`,`Everything that swims is a fish`),P(`虎鯨有鰭，所以是魚`,`The killer whale has fins, so it is a fish`)],answer:1,why:P(`生活環境不是單獨的判準；海馬用鰓，企鵝有羽毛，虎鯨用肺並以乳汁哺育幼體。`,`Habitat is not a deciding clue alone; the seahorse uses gills, the penguin has feathers, and the killer whale uses lungs and feeds its young with milk.`),hint:P(`看「七種動物，各是哪一類」第 1、4、5 步。`,`See steps 1, 4 and 5 of "Seven animals, which class".`)},
+  {q:P(`鴨嘴獸會生蛋，為什麼仍是哺乳類？`,`A platypus lays eggs. Why is it still a mammal?`),options:[P(`因為母體分泌乳汁哺育幼體，並有毛髮、用肺呼吸`,`Because the mother feeds her young with milk, and it has hair and breathes with lungs`),P(`因為牠有嘴巴`,`Because it has a mouth`),P(`所有哺乳類都會生蛋`,`All mammals lay eggs`),P(`因為牠住在水邊`,`Because it lives near water`)],answer:0,why:P(`卵生不是單獨的判準；哺乳類的核心特徵是母體以乳汁哺育幼體。不是所有哺乳類都胎生。`,`Laying eggs is not a deciding clue; the key trait of mammals is that the mother feeds her young with milk. Not all mammals give live birth.`),hint:P(`看「七種動物，各是哪一類」第 5 步。`,`See step 5 of "Seven animals, which class".`)},
+  {q:P(`蛙的蝌蚪和成蛙，呼吸的構造有什麼不同？`,`How does the breathing of a tadpole differ from that of an adult frog?`),options:[P(`都用鰓`,`Both use gills`),P(`蝌蚪用肺，成蛙用鰓`,`The tadpole uses lungs and the adult uses gills`),P(`蝌蚪用鰓，成蛙用肺，潮濕的皮膚也能幫忙`,`The tadpole uses gills and the adult uses lungs, with moist skin helping`),P(`都只用皮膚`,`Both use only skin`)],answer:2,why:P(`蛙一生中，鰓換成肺，這是兩生類的特徵。`,`In a frog's life gills give way to lungs, which is a trait of amphibians.`),hint:P(`看「蛙的一生：鰓到肺」第 2、4、5 步。`,`See steps 2, 4 and 5 of "Life of a frog: gills to lungs".`)}],
+ sources:[],init:()=>({running:true,view:0,phase:-1,start:0}),
+ controls:s=>[VIEW(VERT_TABS),steps(s.view===1?FR_SHORT:SW_SHORT)],
+ act:viewAct,
+ explain:s=>{const k=pick(s);return s.view===1?{title:FR_NAMES[k],text:FR_TEXT[k]}:{title:SW_NAMES[k],text:SW_TEXT[k]};},
+ draw:(c,s,t)=>s.view===1?dr('frog',5,FR_SHORT)(c,s,t):dr('swim',5,SW_SHORT)(c,s,t)},
+{id:'adaptation',title:P(`構造的組合，幫上什麼忙？`,`What do combined structures do?`),sub:P(`環境與構造`,`Environment and structures`),
+ hook:P(`羽毛、鱗片和毛髮，都在動物的外表，那牠們的作用一樣嗎？小白鷺的羽毛，除了保暖，和飛行有關係嗎？象媽媽與小象，又是靠什麼把小象養大？今天，我們把「構造」和「功能」連起來看，而不是把動物排出高低。`,`Feathers, scales and hair all cover animals' bodies, so do they do the same job? Besides keeping warm, do a little egret's feathers have something to do with flight? And how does a mother elephant raise her calf? Today we connect structure with function, instead of ranking animals as higher or lower.`),
+ body:P(`先看「羽毛、鱗片、毛髮」；再看「小白鷺：羽毛與翅膀」：飛羽怎麼排；最後看「母象與小象：哺乳」。可以用上方的「觀察」切換。`,`First "Feathers, scales, hair". Then "Little egret: feathers and wings": how the flight feathers are arranged. Finally "Mother and calf: nursing". Use "View" above to switch.`),
+ reading:P(`構造與功能：羽毛保暖，也參與飛行；爬蟲類的鱗片減少水分散失；毛髮保暖。每一類體表都有多樣性，不能用單一例子代表所有物種，也不是把類群排成高低。\n\n小白鷺：翅膀上的長羽毛叫飛羽，靠翅尖的是初級飛羽，靠身體的是次級飛羽。鳥有肺和氣囊：氣囊協助通氣，氣體交換仍在肺裡，氣囊不是取代肺。不是所有鳥都能飛，企鵝的翅膀是鰭狀，適合游泳。\n\n哺乳：哺乳類的母體分泌乳汁，用乳汁哺育幼體；這是哺乳類的核心特徵，不是胎生。象是胎生，鴨嘴獸卵生，兩者都是哺乳類。\n\n注意：圖是 AI 畫的教學插圖，大小不代表真實大小；飛羽標記與肺、氣囊的圖是程式畫的示意。`,`Structure and function: feathers keep warm and also take part in flight; the scales of reptiles cut water loss; hair keeps warm. Every kind of covering varies, so one example cannot stand for all species, and groups are not ranked higher or lower.\n\nLittle egret: the long feathers on the wing are the flight feathers; those near the wing tip are the primaries and those near the body are the secondaries. Birds have lungs and air sacs: the air sacs help ventilation, gas exchange is still in the lungs, and the air sacs do not replace the lungs. Not every bird flies; a penguin's wings are flippers suited to swimming.\n\nNursing: a mammal mother makes milk and feeds her young with it; this is the key trait of mammals, not live birth. An elephant gives live birth and a platypus lays eggs; both are mammals.\n\nNote: the pictures are AI teaching illustrations and sizes do not show real sizes; the flight-feather marks and the lungs and air sacs are a schematic drawn in code.`),
+ closure:P(`把構造和功能連起來看：羽毛保暖也幫忙飛行，鱗片減少水分散失，毛髮保暖；氣囊協助通氣，肺才進行氣體交換；哺乳類用乳汁哺育幼體，不一定要胎生。這是作用不同，不是排高低。`,`Connect structure with function: feathers keep warm and help flight, scales cut water loss, hair keeps warm; air sacs help ventilation while the lungs do the gas exchange; mammals feed their young with milk and need not give live birth. These are different jobs, not a ranking.`),
+ quiz:[
+  {q:P(`羽毛、鱗片、毛髮都覆蓋身體，下列哪一句最合理？`,`Feathers, scales and hair all cover the body. Which statement is most reasonable?`),options:[P(`三者作用完全一樣`,`All three do exactly the same job`),P(`有毛髮的動物比有鱗片的高等`,`Animals with hair are higher than animals with scales`),P(`三者的作用不完全一樣，要把構造和功能連起來看，不是排高低`,`The jobs are not all the same; connect structure with function instead of ranking`),P(`它們只是為了好看`,`They are only for looks`)],answer:2,why:P(`羽毛保暖又參與飛行，爬蟲類的鱗片減少水分散失，毛髮保暖；每一類仍有多樣性。`,`Feathers keep warm and help flight, reptile scales cut water loss, hair keeps warm; each kind still varies.`),hint:P(`看「羽毛、鱗片、毛髮」最後一步。`,`See the last step of "Feathers, scales, hair".`)},
+  {q:P(`鳥的氣囊有什麼功用？`,`What do the air sacs of a bird do?`),options:[P(`取代肺，進行所有氣體交換`,`They replace the lungs and do all the gas exchange`),P(`協助通氣，氣體交換仍在肺裡`,`They help ventilation; gas exchange is still in the lungs`),P(`儲存食物`,`They store food`),P(`讓鳥浮在水面上`,`They keep the bird afloat on water`)],answer:1,why:P(`氣囊協助空氣流通，但不是取代肺。`,`Air sacs help air flow through, but they do not replace the lungs.`),hint:P(`看「小白鷺：羽毛與翅膀」第 3 步。`,`See step 3 of "Little egret: feathers and wings".`)},
+  {q:P(`關於哺乳類，下列哪一句正確？`,`Which statement about mammals is correct?`),options:[P(`所有哺乳類都胎生`,`All mammals give live birth`),P(`母體用乳汁哺育幼體是核心特徵；鴨嘴獸卵生，仍是哺乳類`,`The mother feeding her young with milk is the key trait; a platypus lays eggs and is still a mammal`),P(`會生蛋的動物就不是哺乳類`,`An animal that lays eggs cannot be a mammal`),P(`胎生的動物都是哺乳類`,`Every animal that gives live birth is a mammal`)],answer:1,why:P(`哺乳的核心是乳汁哺育，不是胎生；鴨嘴獸卵生，也是哺乳類。`,`The key is feeding with milk, not live birth; a platypus lays eggs and is also a mammal.`),hint:P(`看「母象與小象：哺乳」最後一步。`,`See the last step of "Mother and calf: nursing".`)}],
+ sources:[],init:()=>({running:true,view:0,phase:-1,start:0}),
+ controls:s=>[VIEW(ADAPT_TABS),steps(s.view===2?NU_SHORT:s.view===1?EG_SHORT:CV_SHORT)],
+ act:viewAct,
+ explain:s=>{const k=pick(s);return s.view===2?{title:NU_NAMES[k],text:NU_TEXT[k]}:s.view===1?{title:EG_NAMES[k],text:EG_TEXT[k]}:{title:CV_NAMES[k],text:CV_TEXT[k]};},
+ draw:(c,s,t)=>s.view===2?dr('nurse',4,NU_SHORT)(c,s,t):s.view===1?dr('egret',4,EG_SHORT)(c,s,t):dr('covering',4,CV_SHORT)(c,s,t)}
+];
+B.register({id:'animals_diversity',title:P(`動物：長得像，親緣就近嗎？`,`Animals: does resemblance mean close kinship?`),subtitle:P(`動物類群、節肢動物、脊椎動物與構造比較`,`Animal groups, arthropods, vertebrates and comparative structures`),cover:'assets/covers/biology_animals_diversity_1023_v1.jpg',
+ assetDir:'assets/biology/animals_ai_1023/',family:P(`地球上的生物`,`Life on Earth`),bookName:P(`生物`,`Life`),tabs});
+})();
