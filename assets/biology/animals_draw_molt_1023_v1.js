@@ -47,7 +47,7 @@ const T={
  example:P(`實例：蟬蛻殼`,`Example: a cicada shell`),
  emptyShell:P(`舊的外骨骼（空殼）`,`Old exoskeleton (empty shell)`),backSplit:P(`背部裂開`,`Split along the back`),
  back:P(`背部`,`Back`),wing:P(`翅膀`,`Wing`),enlarged:P(`放大`,`enlarged`),
- shedIt:P(`而是脫掉舊的、換上新的`,`It is shed and replaced by a new one`),
+ shedIt:P(`而是脫掉舊的、\n換上新的`,`It is shed and replaced by a new one`),
  wingSoft:P(`翅膀還沒變硬`,`Wings not yet hard`),wingsOpen:P(`翅膀展開`,`Wings spread`),
  legs6:P(`6 隻腳：看得到 5 隻`,`6 legs: 5 can be seen`),hidden6:P(`第 6 隻被身體遮住`,`Leg 6 is hidden by the body`),
  alsoMolt:P(`蟹和蜻蜓長大也要蛻殼`,`Crabs and dragonflies also molt to grow`),
@@ -189,7 +189,7 @@ function step1(c,tau,t){
   c.save();c.globalAlpha*=fade(tau,.8,.5);const [bx,by]=mp(r,SH,...SH_BODY);const eb=fitText(c,T.emptyShell,334,180,248,C.white);leadFrom(c,eb,bx,by,C.white);c.restore();
   // key idea card
   c.save();c.globalAlpha*=fade(tau,3.2,.6);
-  const w=258,x=330,r1=rowsOf(c,L('notStretch','不是把舊殼拉大','The old shell is not stretched'),w-28,22),r2=rowsOf(c,T.shedIt,w-28,22),lh=30,h=(r1.length+r2.length)*lh+30,y=Math.min(300,458-h);
+  const w=270,x=326,r1=rowsOf(c,L('notStretch','不是把舊殼拉大','The old shell is not stretched'),w-28,22),r2=rowsOf(c,T.shedIt,w-28,22),lh=30,h=(r1.length+r2.length)*lh+30,y=Math.min(300,458-h);
   D.round(c,x,y,w,h,16,'rgba(11,26,21,.92)',null);c.save();c.beginPath();c.roundRect(x,y,w,h,16);c.strokeStyle=rgba(YELLOW,.85);c.lineWidth=2;c.stroke();c.restore();
   r1.forEach((s,j)=>text(c,s,x+14,y+34+j*lh,22,C.white));r2.forEach((s,j)=>text(c,s,x+14,y+40+(r1.length+j)*lh,22,YELLOW));
   c.restore();
