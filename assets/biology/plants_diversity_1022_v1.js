@@ -87,7 +87,7 @@ const FL_TEXT=[
 const ZM_SHORT=[P(`葉背`,`Underside`),P(`孢子囊堆`,`Sorus`),P(`孢子囊`,`Sporangium`),P(`孢子`,`Spores`),P(`不是種子`,`Not a seed`)];
 const ZM_NAMES=[P(`葉背的小點在哪裡`,`Where are the dots on the underside`),P(`拉近：小點是孢子囊堆`,`Zoom in: a dot is a sorus`),P(`再拉近：孢子囊打開了`,`Closer: a sporangium opens`),P(`孢子散出來`,`Spores are released`),P(`孢子不是種子`,`A spore is not a seed`)];
 const ZM_TEXT=[
- P(`先回到葉背。小圖裡的框，框出要放大的地方：一個小點。`,`Back to the underside. The box in the small picture marks the place to enlarge: one dot.`),
+ P(`先回到葉背。黃色的框，框出要放大的地方：一個小點。`,`Back to the underside. The yellow box marks the place to enlarge: one dot.`),
  P(`放大以後，小點是許多孢子囊聚成的孢子囊堆。它不是蟲卵，也不是種子。`,`Enlarged, a dot is a sorus, many sporangia gathered together. It is not a clutch of insect eggs and not a seed.`),
  P(`再放大，每個孢子囊像一顆小球。成熟時它會裂開，把孢子彈出來。（AI 插圖，不是真實顯微照片。）`,`Enlarged again, each sporangium looks like a tiny ball. When ripe it splits open and flings out the spores. (An AI illustration, not a real micrograph.)`),
  P(`孢子是很小、褐色的小粒，隨風散開。孢子是單一細胞。`,`Spores are tiny brown specks that are carried off by the wind. A spore is a single cell.`),
