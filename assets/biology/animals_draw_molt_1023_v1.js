@@ -160,7 +160,7 @@ function step0(c,tau,t,held){
     for(const sgn of [-1,1]){K.arrow(c,cx+sgn*(bw/2-40),cy-40,cx+sgn*(bw/2-6),cy-40,YELLOW,3);K.arrow(c,cx+sgn*(bw/2-40),cy+40,cx+sgn*(bw/2-6),cy+40,YELLOW,3);}
     c.restore();}
   // exoskeleton label
-  c.save();c.globalAlpha*=fade(tau,.3,.5);const xl=fitText(c,T.exoSch,320,70,262,C.white);leadFrom(c,xl,SX0+SW-90,SY0+2,C.white);c.restore();
+  c.save();c.globalAlpha*=fade(tau,.3,.5);const xl=fitText(c,T.exoSch,300,68,290,C.white);leadFrom(c,xl,SX0+SW-90,SY0+2,C.white);c.restore();
   // growth counter: pink markers 1..5
   const gl=T.grow,gw=measure(c,gl,22),mx0=Math.max(40,cx-(gw+12+5*40)/2);
   text(c,gl,mx0,SY0+SH0+52,22,C.white);
@@ -189,9 +189,9 @@ function step1(c,tau,t){
   c.save();c.globalAlpha*=fade(tau,.8,.5);const [bx,by]=mp(r,SH,...SH_BODY);const eb=fitText(c,T.emptyShell,334,180,248,C.white);leadFrom(c,eb,bx,by,C.white);c.restore();
   // key idea card
   c.save();c.globalAlpha*=fade(tau,3.2,.6);
-  const w=248,x=334,y=300,r1=rowsOf(c,L('notStretch','不是把舊殼拉大','The old shell is not stretched'),w-28,24),r2=rowsOf(c,T.shedIt,w-28,24),lh=32,h=(r1.length+r2.length)*lh+30;
+  const w=258,x=330,r1=rowsOf(c,L('notStretch','不是把舊殼拉大','The old shell is not stretched'),w-28,22),r2=rowsOf(c,T.shedIt,w-28,22),lh=30,h=(r1.length+r2.length)*lh+30,y=Math.min(300,458-h);
   D.round(c,x,y,w,h,16,'rgba(11,26,21,.92)',null);c.save();c.beginPath();c.roundRect(x,y,w,h,16);c.strokeStyle=rgba(YELLOW,.85);c.lineWidth=2;c.stroke();c.restore();
-  r1.forEach((s,j)=>text(c,s,x+14,y+36+j*lh,24,C.white));r2.forEach((s,j)=>text(c,s,x+14,y+44+(r1.length+j)*lh,24,YELLOW));
+  r1.forEach((s,j)=>text(c,s,x+14,y+34+j*lh,22,C.white));r2.forEach((s,j)=>text(c,s,x+14,y+40+(r1.length+j)*lh,22,YELLOW));
   c.restore();
   labelsAt(c,1,INS.y+INS.h+18,tau,2.2);
 }
@@ -222,11 +222,9 @@ function step3(c,tau,t){
   c.save();c.globalAlpha*=la;const lp=fitText(c,T.legs6,RX,y,RW,PINK,{active:true});y=lp.y+lp.h+10;
   const hp=fitText(c,T.hidden6,RX,y,RW,PINK,{dashedBorder:true});y=hp.y+hp.h+16;c.restore();
   c.save();c.globalAlpha*=fade(tau,3.6,.5);
-  const rows=rowsOf(c,T.alsoMolt,RW);rows.forEach((s,j)=>text(c,s,RX,y+22+j*28,22,C.white));y+=rows.length*28+8;
-  const bh=Math.max(40,452-y-30);
-  [['crab.png','crab','蟹','Crab'],['dragonfly.png','dragonfly','蜻蜓','Dragonfly']].forEach(([f,k,zh,en],j)=>{const x=RX+j*(RW/2);
-    const ir=fitRect(f,x+6,y,RW/2-12,bh);drawIn(c,f,{...ir,y:ir.y+2.5*Math.sin(t*1.6+j*1.3)});text(c,L(k,zh,en),x+RW/4,y+bh+24,22,C.white,'center');});
+  const rows=rowsOf(c,T.alsoMolt,RW);rows.forEach((s,j)=>text(c,s,RX,y+22+j*28,22,C.white));y+=rows.length*28+12;
   c.restore();
+  c.save();c.globalAlpha*=fade(tau,2.2,.5);rowsOf(c,T.marks,RW).forEach((s,j)=>text(c,s,RX,y+22+j*28,22,C.muted));c.restore();
 }
 const STEPS=[step0,step1,step2,step3];
 
@@ -252,7 +250,6 @@ function scene(c,k,tau,t,a,held){
   STEPS[k](c,tau,t,held);
   header(c,k);
   text(c,L('aiNote','AI 插圖，非實拍','AI illustration, not a photo'),940,40,22,C.muted,'right');
-  if(k===3){c.save();c.globalAlpha*=fade(tau,2.2,.5);text(c,T.marks,940,466,22,C.muted,'right');c.restore();}
   c.restore();
 }
 
