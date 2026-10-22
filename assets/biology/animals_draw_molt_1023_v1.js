@@ -157,7 +157,6 @@ function step0(c,tau,t,held){
   c.restore();
   // body pushes on the wall (yellow arrows) once it is full
   if(isFull){const pa=.55+.45*pulse;c.save();c.globalAlpha*=pa;
-    [[cx,cy-bh/2+16,cx,SY0+WALL+2],[cx,cy+bh/2-16,cx,SY0+SH0-WALL-2],[cx-bw/2+16,cy,SX0+WALL+2,cy],[cx+bw/2-16,cy,SX0+SW-WALL-2,cy]].forEach(([a,b,x2,y2])=>{});
     for(const sgn of [-1,1]){K.arrow(c,cx+sgn*(bw/2-40),cy-40,cx+sgn*(bw/2-6),cy-40,YELLOW,3);K.arrow(c,cx+sgn*(bw/2-40),cy+40,cx+sgn*(bw/2-6),cy+40,YELLOW,3);}
     c.restore();}
   // exoskeleton label
