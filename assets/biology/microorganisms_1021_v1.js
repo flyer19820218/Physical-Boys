@@ -13,14 +13,14 @@ const K=window.MicroKit,B=K.B,P=K.P,C=K.C,choice=K.choice,steps=K.steps;
 const BACT_SHORT=[P(`球狀`,`Round`),P(`桿狀`,`Rod`),P(`螺旋狀`,`Spiral`),P(`外形不等於好壞`,`Shape is not good or bad`)];
 const BACT_NAMES=[P(`球狀：球菌`,`Round: cocci`),P(`桿狀：桿菌`,`Rod-shaped: bacilli`),P(`螺旋狀：螺旋菌`,`Spiral: spirilla`),P(`外形不等於好壞`,`Shape does not tell good from bad`)];
 const BACT_TEXT=[
- P(`球狀的細菌叫球菌。有的成堆聚在一起，像一串葡萄；有的連成一條鏈，像一串珠子。單一個細菌很小，大約 1～數 µm（示意，非同比例）。`,`Round bacteria are called cocci. Some pile up in clusters like a bunch of grapes; others join into chains like a string of beads. A single bacterium is tiny, about 1 to a few µm (schematic, not to scale).`),
+ P(`球狀的細菌叫球菌。有的成堆聚在一起，像一串葡萄；有的連成一條鏈，像一串珠子。單一個細菌很小，大約 0.5～5 µm（示意，非同比例）。`,`Round bacteria are called cocci. Some pile up in clusters like a bunch of grapes; others join into chains like a string of beads. A single bacterium is tiny, about 0.5 to 5 µm (schematic, not to scale).`),
  P(`桿狀的細菌叫桿菌，身體像一根短短的小棒子，常常一大群聚在一起。`,`Rod-shaped bacteria are called bacilli. Each one looks like a short little stick, and they often gather in large groups.`),
  P(`螺旋狀的細菌叫螺旋菌，身體彎彎曲曲，像一條小彈簧。`,`Spiral bacteria are called spirilla. The body is twisted and curved, like a tiny spring.`),
  P(`同一種外形，有益和有害的菌都有。例如：有些乳酸菌是桿狀，可以用來做優格；桿狀的大腸桿菌多數無害，只有少數菌株會讓人生病；螺旋狀的幽門螺旋桿菌，可能和胃病有關。只看外形，不能判斷一種細菌是好是壞。`,`One shape holds both helpful and harmful kinds. For example: some lactic acid bacteria are rod-shaped and are used to make yogurt; rod-shaped Escherichia coli is harmless in most strains, and only a few strains make people sick; the spiral Helicobacter pylori may be linked to stomach disease. From shape alone we cannot tell whether a bacterium is good or bad.`)];
 const NUC_SHORT=[P(`細菌細胞`,`Bacterial cell`),P(`草履蟲細胞`,`Paramecium cell`),P(`比一比`,`Compare`)];
 const NUC_NAMES=[P(`細菌細胞：DNA 沒有核膜包住`,`Bacterial cell: DNA with no nuclear envelope`),P(`草履蟲細胞：細胞核有核膜`,`Paramecium cell: the nucleus has an envelope`),P(`有核膜，還是沒有核膜？`,`With or without a nuclear envelope?`)];
 const NUC_TEXT=[
- P(`細菌細胞的最外面是細胞壁，裡面是細胞膜。DNA 集中在細胞質中央的一個區域，但沒有核膜把它包起來，所以沒有細胞核。有些細菌還有鞭毛，用來游動。`,`A bacterial cell has a cell wall on the outside and a cell membrane inside it. The DNA is gathered in one region in the middle of the cytoplasm, but no nuclear envelope wraps around it, so there is no nucleus. Some bacteria also have a flagellum for swimming.`),
+ P(`細菌細胞的最外面是細胞壁，裡面是細胞膜。DNA 集中在細胞質中央的一個區域，但沒有核膜把它包起來，所以沒有細胞核。有些細菌還有鞭毛，用來游動（圖中的鞭毛是示意）。`,`A bacterial cell has a cell wall on the outside and a cell membrane inside it. The DNA is gathered in one region in the middle of the cytoplasm, but no nuclear envelope wraps around it, so there is no nucleus. Some bacteria also have a flagellum for swimming (the flagellum in the picture is schematic).`),
  P(`草履蟲的細胞核有核膜包著，DNA 在核膜裡面。草履蟲大約 150～300 µm，比細菌大很多；但大小不是分類的標準。`,`The nucleus of a Paramecium is wrapped in a nuclear envelope, with the DNA inside it. A Paramecium is about 150 to 300 µm, much bigger than a bacterium, but size is not the criterion for classifying.`),
  P(`DNA 有核膜包住，叫細胞核，這種細胞是真核生物；沒有核膜、但有 DNA，是原核生物。大小不是標準：草履蟲雖然很小，也是真核生物。`,`DNA wrapped in a nuclear envelope forms a nucleus, and such cells belong to eukaryotes. DNA with no nuclear envelope belongs to prokaryotes. Size is not the criterion: a Paramecium is small, yet it is a eukaryote.`)];
 
@@ -59,7 +59,7 @@ const DIA_NAMES=[P(`玻璃般的外殼，形狀很多`,`A glassy shell in many s
 const DIA_TEXT=[
  P(`矽藻有一層像玻璃一樣透明、堅硬的外殼。補充：外殼的主要成分是二氧化矽。形狀很多：圓形放射狀、舟形、三角形、V 形、針形……。矽藻大約 10～200 µm（示意，非同比例）。`,`A diatom has a transparent, hard shell like glass. Extra: the shell is made mainly of silicon dioxide. The shapes are many: round and radiating, boat-shaped, triangular, V-shaped, needle-shaped and more. A diatom is about 10 to 200 µm (schematic, not to scale).`),
  P(`矽藻的外殼是由兩片殼組成的，像盒子的蓋子和盒身套在一起，細胞就裝在裡面。`,`A diatom's shell is made of two halves that fit together like the lid and the body of a box, with the cell inside.`),
- P(`殼裡面有金褐色的葉綠體，能行光合作用，自己製造養分。矽藻有細胞核，是真核生物，所以屬於原生生物。`,`Inside the shell are golden-brown chloroplasts that carry out photosynthesis and make food. A diatom has a nucleus and is a eukaryote, so it belongs to the protists.`),
+ P(`殼裡面有金褐色的葉綠體，能行光合作用，自己製造養分。矽藻有細胞核（圖中沒有畫出），是真核生物，所以屬於原生生物。`,`Inside the shell are golden-brown chloroplasts that carry out photosynthesis and make food. A diatom has a nucleus (not drawn in the picture) and is a eukaryote, so it belongs to the protists.`),
  P(`矽藻浮在水中，能行光合作用，又是許多水中小動物的食物，所以是水中食物鏈的起點。（示意）`,`Diatoms float in water, photosynthesize, and are food for many small aquatic animals, so they are where the aquatic food chain starts. (Schematic)`)];
 const KELP_SHORT=[P(`大型多細胞藻類`,`Large multicellular alga`),P(`構造`,`Parts`),P(`直接吸收`,`Absorbs directly`),P(`比大小`,`Sizes`)];
 const KELP_NAMES=[P(`大型的多細胞藻類`,`A large multicellular alga`),P(`構造：葉片狀的藻體、柄、固著器`,`Parts: blade, stalk and holdfast`),P(`身體表面直接吸收水和養分`,`The body surface takes up water and nutrients directly`),P(`比大小：從草履蟲到海帶`,`Comparing sizes: from Paramecium to kelp`)];
@@ -67,19 +67,19 @@ const KELP_TEXT=[
  P(`海帶是大型的多細胞藻類，長在海裡的岩石上，可以長到好幾公尺。它的細胞有細胞核，能行光合作用。`,`Kelp is a large multicellular alga that grows on rocks in the sea and can reach several metres. Its cells have nuclei and it photosynthesizes.`),
  P(`海帶的身體分成葉片狀的藻體、柄和固著器。固著器像根，但只負責把海帶固定在岩石上，不是維管束植物的根。`,`A kelp body has a leaf-like blade, a stalk and a holdfast. The holdfast looks like a root, but it only fastens the kelp to a rock; it is not the root of a vascular plant.`),
  P(`海帶沒有維管束，水和養分由整個身體表面直接吸收；葉片狀的藻體能行光合作用，製造養分。`,`Kelp has no vascular tissue. Water and nutrients are taken up directly through the whole body surface, and the blade carries out photosynthesis to make food.`),
- P(`草履蟲約 0.2 mm，海帶可達數公尺，差了上萬倍（示意比例）。原生生物不是小才算，要看有沒有細胞核，是不是藻類或原生動物等。`,`A Paramecium is about 0.2 mm and kelp can reach several metres, a difference of tens of thousands of times (schematic scale). A protist does not have to be small; what counts is having a nucleus and being an alga, a protozoan or the like.`)];
+ P(`草履蟲約 0.2 mm，海帶可達數公尺，差了上萬倍（示意比例）。原生生物不是小才算，要看有沒有細胞核，是不是藻類或原生動物等。`,`A Paramecium is about 0.2 mm and kelp can reach several metres, a difference of about ten thousand times or more (schematic scale). A protist does not have to be small; what counts is having a nucleus and being an alga, a protozoan or the like.`)];
 
 const TABLE_SHORT=[P(`雨來菇`,`Rain mushroom`),P(`紅藻／紫菜`,`Red alga / nori`),P(`香菇`,`Shiitake`),P(`靈芝`,`Reishi`)];
-const TABLE_NAMES=[P(`雨來菇：原核生物界`,`Rain mushroom: prokaryotes`),P(`紅藻與紫菜：原生生物界`,`Red alga and nori: protists`),P(`香菇：真菌界`,`Shiitake: fungi`),P(`靈芝：真菌界`,`Reishi: fungi`)];
+const TABLE_NAMES=[P(`雨來菇`,`Rain mushroom`),P(`紅藻與紫菜`,`Red alga and nori`),P(`香菇`,`Shiitake`),P(`靈芝`,`Reishi`)];
 const TABLE_TEXT=[
- P(`證據：沒有細胞核，DNA 沒有核膜包住；能行光合作用，但沒有葉綠體。雨來菇是藍綠菌，所以屬於原核生物界。這一課只教分類，不教採食。`,`Evidence: no nucleus, with the DNA not wrapped in an envelope; photosynthesis, but without chloroplasts. The rain mushroom is a cyanobacterium, so it belongs to the prokaryotes. This lesson teaches classification only, not gathering food.`),
- P(`證據：有細胞核，也有葉綠體，能行光合作用。紫菜是紅藻加工成片的，所以紅藻和紫菜都屬於原生生物界。`,`Evidence: a nucleus, and chloroplasts for photosynthesis. Nori is red alga processed into sheets, so both the red alga and nori belong to the protists.`),
+ P(`證據：沒有細胞核，DNA 沒有核膜包住；能行光合作用，但沒有葉綠體；有細胞壁，成分和真核生物的不同。雨來菇是藍綠菌，所以屬於原核生物界。這一課只教分類，不教採食。`,`Evidence: no nucleus, with the DNA not wrapped in an envelope; photosynthesis, but without chloroplasts; a cell wall, made of different material from that of eukaryotes. The rain mushroom is a cyanobacterium, so it belongs to the prokaryotes. This lesson teaches classification only, not gathering food.`),
+ P(`證據：有細胞核，也有葉綠體，能行光合作用，有細胞壁。紫菜是用薄片狀的紅藻加工成片的，所以紅藻和紫菜都屬於原生生物界。`,`Evidence: a nucleus, chloroplasts for photosynthesis, and a cell wall. Nori is made by processing a thin, sheet-like red alga into sheets, so both the red alga and nori belong to the protists.`),
  P(`證據：有細胞核；沒有葉綠體，不能行光合作用；有細胞壁，從外界吸收養分。香菇屬於真菌界。`,`Evidence: a nucleus; no chloroplasts, so no photosynthesis; a cell wall, and nutrients absorbed from outside. Shiitake belongs to the fungi.`),
  P(`證據和香菇一樣：有細胞核、沒有葉綠體、有細胞壁、從外界吸收養分，屬於真菌界。名字或用途，都不能改變牠的分類。這一課只教分類。`,`The evidence matches shiitake: a nucleus, no chloroplasts, a cell wall, and nutrients absorbed from outside, so it belongs to the fungi. Its name or uses cannot change its classification. This lesson teaches classification only.`)];
 const COMP_SHORT=[P(`原核生物界`,`Prokaryotes`),P(`原生生物界`,`Protists`),P(`真菌界`,`Fungi`)];
 const COMP_NAMES=[P(`原核生物界`,`Kingdom of prokaryotes`),P(`原生生物界`,`Kingdom of protists`),P(`真菌界`,`Kingdom of fungi`)];
 const COMP_TEXT=[
- P(`沒有細胞核（DNA 沒有核膜包住）。營養方式：藍綠菌能行光合作用，許多細菌從外界獲得養分。多數有細胞壁。例子：乳酸菌、大腸桿菌、念珠藻、顫藻。`,`No nucleus (the DNA has no envelope). Nutrition: cyanobacteria photosynthesize, and many bacteria take nutrients from outside. Most have a cell wall. Examples: lactic acid bacteria, E. coli, Nostoc, Oscillatoria.`),
+ P(`沒有細胞核（DNA 沒有核膜包住）。營養方式：藍綠菌能行光合作用，許多細菌從外界獲得養分。多數有細胞壁，成分和真核生物的不同。例子：乳酸菌、大腸桿菌、念珠藻、顫藻。`,`No nucleus (the DNA has no envelope). Nutrition: cyanobacteria photosynthesize, and many bacteria take nutrients from outside. Most have a cell wall, made of different material from that of eukaryotes. Examples: lactic acid bacteria, E. coli, Nostoc, Oscillatoria.`),
  P(`有細胞核。營養方式：藻類行光合作用，原生動物攝食。細胞壁：藻類有，草履蟲、變形蟲沒有。例子：草履蟲、變形蟲、矽藻、海帶、紅藻。`,`A nucleus. Nutrition: algae photosynthesize, protozoa ingest food. Cell wall: algae have one; Paramecium and Amoeba do not. Examples: Paramecium, Amoeba, diatoms, kelp, red algae.`),
  P(`有細胞核。營養方式：沒有葉綠體，從外界吸收養分。有細胞壁。例子：酵母菌、香菇、靈芝。`,`A nucleus. Nutrition: no chloroplasts; nutrients are absorbed from outside. A cell wall. Examples: yeast, shiitake, reishi.`)];
 

@@ -247,16 +247,16 @@ function step3(c,cam,t,tau,a){
   if(a<=0)return;
   const hi=Math.floor(mod(tau,8.8)/2.2),PX=616,PW=330;
   c.save();c.globalAlpha*=a;
-  D.round(c,PX,22,PW,520,16,'rgba(11,26,21,.72)',C.edge);
+  D.round(c,PX,22,PW,562,16,'rgba(11,26,21,.72)',C.edge);
   text(c,P(`一個細胞，做所有事`,`One cell does it all`),PX+PW/2,58,24,C.white,'center');
   let y=82;
   ROWS.forEach(([ti,sub],i)=>{
-    const on=i===hi,rows=splitLines(c,D.tr(sub),PW-74,22),hgt=i===3?150:Math.max(96,40+rows.length*28+14);
+    const on=i===hi,rows=splitLines(c,D.tr(sub),PW-74,22),hgt=i===3?186:Math.max(96,40+rows.length*28+14);
     D.round(c,PX+10,y,PW-20,hgt-10,12,on?rgba(C.yellow,.16):'rgba(28,61,52,.55)',on?C.yellow:rgba(C.edge,.9));
     mark(c,PX+34,y+26,i+1,on?t:null,on?C.yellow:C.muted);
     text(c,ti,PX+58,y+34,24,on?C.yellow:C.white);
     rows.forEach((r,j)=>text(c,r,PX+58,y+64+j*28,22,on?C.white:C.muted));
-    if(i===3)division(c,PX+PW/2+10,y+hgt-50,t,1);
+    if(i===3)division(c,PX+PW/2+10,y+hgt-58,t,1);
     if(i<3)D.hit(PX+10,y,PW-20,hgt-10,'phase',i);
     y+=hgt;});
   c.restore();

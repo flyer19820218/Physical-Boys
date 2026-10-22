@@ -1,7 +1,7 @@
 /* Microorganisms · "Three bacterial shapes" canvas (cells tab, view 0), 2026-10-22.
  * The three groups of the MB1 illustration (cocci_cluster + cocci_chain, rods, spirals) stand in three columns.
  * Steps 1-3: the current column widens (the others shrink and dim), a caption says what the shape looks like,
- * and one single bacterium is ringed in cyan (the key below: "one bacterium, about 1 to a few µm, schematic").
+ * and one single bacterium is ringed in cyan (the key below: "one bacterium, about 0.5 to 5 µm, schematic").
  * Step 4: the rods and the spirals carry example cards (helpful / may make people sick); the cocci stay dim.
  * Column widths ease from one step to the next, so the pictures slide and grow instead of jumping.
  * Every ring / outline position is a fraction of its picture, measured from the PNGs:
@@ -31,7 +31,7 @@ const CAP=[
  [P(`成堆：像一串葡萄`,`Clusters: like a bunch of grapes`),P(`連成鏈：像一串珠子`,`Chains: like a string of beads`)],
  [P(`像短短的小棒子，常常一大群聚在一起`,`Like short little sticks, often in large groups`)],
  [P(`彎彎曲曲，像一條小彈簧`,`Twisted and curved, like a tiny spring`)]];
-const KEY_ONE=P(`圈起來的是一個細菌：約 1～數 µm`,`Ringed: one bacterium, about 1 to a few µm`);
+const KEY_ONE=P(`圈起來的是一個細菌：約 0.5～5 µm`,`Ringed: one bacterium, about 0.5 to 5 µm`);
 const KEY_NOTE=P(`（AI 示意圖，非同比例）`,`(AI sketch, not to scale)`);
 const GOOD=C.green,BAD=C.orange;
 const CARDS=[

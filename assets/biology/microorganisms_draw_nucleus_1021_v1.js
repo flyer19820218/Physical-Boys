@@ -29,7 +29,7 @@ const T={
  thumb:P(`一個桿菌，放大剖開看（示意）`,`One rod, enlarged and cut open (schematic)`),
  wall:P(`細胞壁`,`Cell wall`),mem:P(`細胞膜`,`Cell membrane`),cyto:P(`細胞質`,`Cytoplasm`),
  dna:P(`DNA`,`DNA`),noEnv:P(`沒有核膜把 DNA 包起來`,`No nuclear envelope around the DNA`),flag:P(`鞭毛`,`Flagellum`),
- bsize:P(`細菌：約 1～數 µm（示意，非同比例）`,`Bacterium: about 1 to a few µm (schematic, not to scale)`),
+ bsize:P(`細菌：約 0.5～5 µm（示意，非同比例）`,`Bacterium: about 0.5 to 5 µm (schematic, not to scale)`),
  nuc:P(`細胞核`,`Nucleus`),cilia:P(`纖毛`,`Cilia`),zoom:P(`放大`,`Zoom`),
  env:P(`核膜`,`Nuclear envelope`),dnaIn:P(`DNA：在核膜裡面`,`DNA: inside the envelope`),
  psize:P(`草履蟲：約 150～300 µm（示意，非同比例）`,`Paramecium: about 150 to 300 µm (schematic, not to scale)`),
@@ -38,7 +38,7 @@ const T={
        [[true,P(`有 DNA`,`Has DNA`)],[true,P(`有核膜（DNA 在細胞核裡）`,`Nuclear envelope: a nucleus`)]]],
  verdict:[P(`原核生物`,`Prokaryote`),P(`真核生物`,`Eukaryote`)],
  size1:P(`大小不是標準：草履蟲雖然小，也是真核生物`,`Size is not the test: a Paramecium is small, yet it is a eukaryote`),
- size2:P(`真實大小：細菌約 1～數 µm，草履蟲約 150～300 µm（畫面為示意，非同比例）`,`Real sizes: a bacterium is about 1 to a few µm, a Paramecium about 150 to 300 µm (the picture is schematic, not to scale)`)};
+ size2:P(`真實大小：細菌約 0.5～5 µm，草履蟲約 150～300 µm（畫面為示意，非同比例）`,`Real sizes: a bacterium is about 0.5 to 5 µm, a Paramecium about 150 to 300 µm (the picture is schematic, not to scale)`)};
 const DNA_COL='#7a3f97',DNA_CORE='#e2c3f2';
 const PINK={hi:'#f9e6e0',lo:'#e2b7b0',wallT:'#dcaaa5',wallB:'#b98583',edge:'#7a5862',mem:'#f8e6df',memIn:'#c29190',flag:'#cf9b9c'};
 
