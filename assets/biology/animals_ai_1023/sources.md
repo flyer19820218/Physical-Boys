@@ -87,3 +87,14 @@ kit 另外載入第二課的 `dragonfly.png`（476×340）、`fly.png`（296×28
 ## 2026-10-23 更新：AN1、AN5b 新版
 
 老師重生後，同一支 `cut_animals_1023.py` 重切（`python3 cut_animals_1023.py . AN1 AN5b`）。AN1：水母與渦蟲視覺大小相近，渦蟲橫放。AN5b：5 個階段全部朝右、一條地平線，幼蛙有尾巴殘段且約為成蛙的一半大。上面「待重生」的兩條問題已解決；舊版（第一版）可由 git 歷史取回。去背邊緣貼到 `#1c3d34` 看過，沒有灰框。
+
+## 變態三張圖（資優觀察 meta，等老師用 Gemini 生圖，尚未到）
+
+變態三張圖：老師以 Gemini 生成的 AI 教學插圖，非照片；大小不代表真實大小。咒語 MT1～MT3 在 `../biodiversity_ai_prompts_1021.md` 第六課最後。圖到了之後由整備代理依本課流程去背（MT1、MT2 白底，MT3 灰底 #808080），並把尺寸補進 kit 的 `SIZE` 與本檔檔案表。
+
+| 編號 | 內容 | 底色 | 預定檔名（放在本資料夾，.png） |
+|---|---|---|---|
+| MT1 | 鳳蝶四階段 | 白 | butterfly_egg／butterfly_larva／butterfly_pupa／butterfly_adult |
+| MT2 | 蝗蟲（稻蝗）四階段 | 白 | grasshopper_egg／grasshopper_nymph_1／grasshopper_nymph_2／grasshopper_adult |
+| MT3 | 衣魚三階段 | 灰 | silverfish_egg／silverfish_young／silverfish_adult |
+

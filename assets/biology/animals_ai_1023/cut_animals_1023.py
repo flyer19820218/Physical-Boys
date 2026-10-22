@@ -39,6 +39,9 @@ JOBS = [
     ('AN7',  'AN7_gemini_original.jpg',  'gray',  1.0, ['egret_stand', 'egret_fly'], {'pockets': True}),
     ('AN8',  'AN8_gemini_original.jpg',  'white', 1.0, ['elephant'], {'pockets': True, 'clear_pockets': (4, 400000), 'pocket_tol': 14}),
     ('AN9',  'AN9_gemini_original.jpg',  'white', 1.0, ['feather', 'scales', 'fur'], {'killwhite': (222, 1), 'kwdist': 8}),
+    ('MT1',  'MT1_gemini_original.jpg',  'white', 1.0, ['butterfly_egg', 'butterfly_larva', 'butterfly_pupa', 'butterfly_adult'], {}),
+    ('MT2',  'MT2_gemini_original.jpg',  'white', 1.0, ['grasshopper_egg', 'grasshopper_nymph_1', 'grasshopper_nymph_2', 'grasshopper_adult'], {}),
+    ('MT3',  'MT3_gemini_original.jpg',  'gray',  1.0, ['silverfish_egg', 'silverfish_young', 'silverfish_young_2', 'silverfish_adult'], {'minarea': 300, 'merge': 14, 'xsplit': [350, 900, 1150]}),
 ]
 
 def bg_color(a):

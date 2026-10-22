@@ -109,7 +109,7 @@ AI 畫生物常見的錯，我在每一段的「檢查」裡寫出來了，收�
 
 ### 第六課　動物：長得像，親緣就近嗎？
 
-`biology_animals_diversity.html`　10 段必要＋1 段可選
+`biology_animals_diversity.html`　13 段必要＋1 段可選（含資優觀察用的 MT1～MT3）
 
 | 編號 | 畫面 | 必要？ | 底色 |
 |---|---|---|---|
@@ -124,6 +124,9 @@ AI 畫生物常見的錯，我在每一段的「檢查」裡寫出來了，收�
 | AN7 | 小白鷺：站姿與展翅 | 必要 | 灰底 |
 | AN8 | 母象與小象（哺乳） | 必要 | 白底 |
 | AN9 | 三種體表：羽毛、鱗片、毛髮（近拍） | 必要 | 白底 |
+| MT1 | 鳳蝶的一生：四個階段（資優觀察） | 必要 | 白底 |
+| MT2 | 蝗蟲的一生：四個階段（資優觀察） | 必要 | 白底 |
+| MT3 | 衣魚的一生：三個階段（資優觀察） | 必要 | 灰底 |
 
 ## 分工
 
@@ -812,6 +815,39 @@ Style: detailed scientific illustration in a clean, semi-realistic hand-painted 
 ```
 Landscape 16:9. Three close-up swatches of animal body coverings, each shown as a square patch with soft irregular edges, same size, with wide gaps between them. LEFT: overlapping bird contour feathers in brown and white, with a visible central shaft and fine barbs. MIDDLE: the horny scales of a reptile, small, overlapping, olive-green scales in neat rows. RIGHT: dense brown mammal fur, with fine individual hairs, some longer guard hairs and a softer undercoat.
 Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, pure white background with no shadow and no scenery. Generous empty margin around and between the subjects. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.
+```
+
+### MT1　鳳蝶的一生：四個階段（資優觀察用，白底）
+
+用途：「數的是步足，不是翅膀」分頁的資優觀察「變態」：完全變態（卵、幼蟲、蛹、成蟲）。補充內容，不是國中必考。
+
+檢查：四個階段從左到右排在同一條地平線上、間隔寬；卵在柑橘類的葉子上；幼蟲綠色；蛹棕綠色、掛在一小段短枝上；成蟲是黃黑相間的鳳蝶，翅膀展開；幼蟲不要畫成像成蟲。
+
+```
+Landscape 16:9. Four stages of the life cycle of a swallowtail butterfly, from left to right on one common ground line, side view, with wide gaps between them. 1) A tiny round pale egg laid on the surface of a green citrus leaf. 2) A plump green caterpillar (larva) with a smooth soft body, climbing on a citrus leaf. 3) A brown-green chrysalis (pupa) hanging from a short twig, held by a thin silk girdle. 4) An adult swallowtail butterfly with yellow and black wings spread open.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, pure white background with no shadow and no scenery. Generous empty margin around and between the subjects. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.
+```
+
+### MT2　蝗蟲的一生：四個階段（資優觀察用，白底）
+
+用途：同一資優觀察：不完全變態（卵、若蟲、成蟲，沒有蛹）。補充內容，不是國中必考。
+
+檢查：四個階段從左到右排在同一條地平線上、間隔寬，若蟲與成蟲都朝右、形狀相近；第一個是泥土裡的卵囊；小若蟲沒有翅膀；大一點的若蟲只有短短的翅芽；成蟲才有完整的翅膀；都是六隻腳、後腳粗壯。
+
+```
+Landscape 16:9. Four stages of the life cycle of a rice grasshopper (Oxya), from left to right on one common ground line, with wide gaps between them. 1) An egg pod, a small brownish capsule-like case lying in a patch of soil. 2) A small young nymph, wingless, looking like a miniature adult, side view facing right. 3) A larger nymph with short wing buds on its back, side view facing right. 4) A full adult grasshopper with fully developed wings folded along its body, side view facing right. All grasshoppers have six legs with enlarged hind legs, and a similar green-brown shape.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, pure white background with no shadow and no scenery. Generous empty margin around and between the subjects. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.
+```
+
+### MT3　衣魚的一生：三個階段（資優觀察用，灰底）
+
+用途：同一資優觀察：無變態（卵、幼體、成體，形狀相同）。補充內容，不是國中必考。
+
+檢查：三個階段從左到右、間隔寬；幼體約是成蟲長度的四分之一，形狀與成蟲相同；都是六隻腳、三條尾絲、沒有翅膀；身體有細小的銀灰色鱗片。
+
+```
+Landscape 16:9. Three stages of the life cycle of a silverfish, from left to right on one common ground line, with wide gaps between them. 1) A tiny oval pale egg. 2) A young silverfish about one quarter of the adult's length, with exactly the same shape as the adult. 3) An adult silverfish, a flat, tapering, silvery body covered in fine scales, long antennae, six legs and three tail filaments at the rear. No wings at any stage.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, medium grey background (#808080) with no shadow and no scenery. Generous empty margin around and between the subjects. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.
 ```
 
 ---
