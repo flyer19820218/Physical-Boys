@@ -42,7 +42,7 @@ const RAIN_TEXT=[
 const PARA_SHORT=[P(`纖毛游泳`,`Cilia swimming`),P(`口溝與食物泡`,`Oral groove and food vacuole`),P(`伸縮泡排水`,`Contractile vacuoles`),P(`一個細胞做所有事`,`One cell does it all`)];
 const PARA_NAMES=[P(`纖毛擺動，游泳`,`Cilia beat and the cell swims`),P(`口溝把食物送進去，形成食物泡`,`The oral groove sweeps food in to form food vacuoles`),P(`伸縮泡把多餘的水排出去`,`Contractile vacuoles pump out extra water`),P(`一個細胞，做所有生命活動`,`One cell carries out every life activity`)];
 const PARA_TEXT=[
- P(`草履蟲全身長滿纖毛。纖毛像小槳一樣協調地擺動，推著牠在水裡旋轉前進。草履蟲大約 150～300 µm（示意，非同比例）。`,`A Paramecium is covered with cilia. The cilia beat together like tiny oars and push the cell forward in a spin through the water. A Paramecium is about 150 to 300 µm (schematic, not to scale).`),
+ P(`草履蟲全身長滿纖毛。纖毛像小槳一樣協調地擺動，推著牠在水裡游動。草履蟲大約 150～300 µm（示意，非同比例）。`,`A Paramecium is covered with cilia. The cilia beat together like tiny oars and push the cell through the water. A Paramecium is about 150 to 300 µm (schematic, not to scale).`),
  P(`口溝周圍的纖毛，把細菌等小食物掃進口溝。食物在細胞內被一小團膜包起來，形成食物泡，食物泡裡的食物慢慢被消化。`,`The cilia around the oral groove sweep small food such as bacteria into the groove. Inside the cell, a small bubble of membrane wraps around the food and forms a food vacuole, where the food is slowly digested.`),
  P(`草履蟲生活在淡水裡，水會不斷滲進細胞。兩個星形的伸縮泡輪流收縮，把多餘的水排出去，細胞才不會脹破。`,`A Paramecium lives in fresh water, and water keeps seeping into the cell. Its two star-shaped contractile vacuoles contract in turn and pump the extra water out, so the cell does not swell and burst.`),
  P(`草履蟲只有一個細胞，卻能攝食（口溝、食物泡）、排水（伸縮泡）、移動（纖毛），還能繁殖：細胞分裂成兩個。一個細胞，就能完成所有生命活動。`,`A Paramecium has only one cell, yet it feeds (oral groove, food vacuoles), gets rid of water (contractile vacuoles), moves (cilia) and even reproduces by splitting into two cells. One cell can carry out every life activity.`)];
@@ -51,7 +51,7 @@ const AMOE_NAMES=[P(`偽足伸出`,`A pseudopod reaches out`),P(`細胞質流向
 const AMOE_TEXT=[
  P(`變形蟲沒有固定的形狀。牠把細胞的一部分向外伸出去，伸出去的部分叫偽足。變形蟲大約 100～500 µm，不同種類差很多（示意，非同比例）。`,`An Amoeba has no fixed shape. It pushes part of the cell outward, and that part is called a pseudopod. An Amoeba is about 100 to 500 µm, and different kinds vary a lot (schematic, not to scale).`),
  P(`細胞質流向偽足，整個細胞就跟著一點一點往前移動。變形蟲沒有腳，也沒有纖毛，是靠偽足和細胞質的流動在爬。`,`The cytoplasm flows into the pseudopod and the whole cell follows, bit by bit. An Amoeba has no legs and no cilia; it crawls by means of pseudopods and flowing cytoplasm.`),
- P(`遇到小生物或碎屑，偽足會從兩邊伸出去，把食物包圍起來。`,`When it meets a small organism or a bit of debris, pseudopods reach out on both sides and surround the food.`),
+ P(`遇到小生物或碎屑，兩邊的偽足會把食物圍起來（圖為另一隻正在進食的變形蟲）。`,`When it meets a small organism or a bit of debris, pseudopods on both sides surround the food (the picture shows another Amoeba that is feeding).`),
  P(`被包起來的食物，在細胞內形成食物泡。食物泡裡的食物被消化，養分留在細胞裡，用來生存和生長。`,`The enclosed food forms a food vacuole inside the cell. The food in it is digested, and the nutrients stay in the cell for living and growing.`)];
 
 const DIA_SHORT=[P(`玻璃般的外殼`,`Glassy shell`),P(`兩片殼`,`Two halves`),P(`金褐色葉綠體`,`Golden-brown chloroplasts`),P(`食物鏈的起點`,`Start of the food chain`)];
