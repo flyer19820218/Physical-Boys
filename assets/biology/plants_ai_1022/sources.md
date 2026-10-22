@@ -102,3 +102,13 @@
   - https://openstax.org/books/biology-2e/pages/26-1-evolution-of-seed-plants （種子植物）
   - https://openstax.org/books/biology-2e/pages/26-3-angiosperms （被子植物）
 - 主程式文字沒有寫任何確切的高度、孢子大小或花粉管長度等數字。
+
+## 2026-10-23 胚珠補充（OV1～OV3）
+
+咒語在 `assets/biology/plants_ovule_ai_prompts_1023.md`，原圖備份 `local-backups/20261023/plants_ovule_originals/OV{1,2,3}_gemini_original.jpg`，去背仍用 `cut_plants_1022.py`（job OV1～OV3）。
+
+| 檔 | 來源 | 內容 | 已知事項 |
+|---|---|---|---|
+| ovule.png (861×1216) | OV1 | 單一倒生胚珠縱切：珠孔在下方、珠柄從右側繞下、兩層珠被、空的胚囊 | 胚囊裡沒有細胞與核（8 個核由程式疊上）；上端是切開的合點端 |
+| ovary_multi.png (607×1318) | OV2 | 子房縱切：5 顆胚珠排成一直排、接在左側胎座，上接花柱與柱頭 | 5 顆；胚珠本身畫得簡化，沒有可分辨的珠孔 |
+| pea_pod.png (2007×716) | OV3 | 剖開的豌豆莢，6 顆豆各有細柄 | 原圖底下有灰色陰影，去背後再用「低飽和且連到透明區」的規則清掉 |

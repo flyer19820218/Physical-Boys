@@ -21,6 +21,7 @@ from scipy import ndimage as ndi
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
 U = ROOT + '/local-backups/20261022/plants_ai_originals/'
+U2 = ROOT + '/local-backups/20261023/plants_ovule_originals/'
 OUT = sys.argv[1] if len(sys.argv) > 1 else HERE
 ONLY = set(sys.argv[2:])
 os.makedirs(OUT, exist_ok=True)
@@ -41,6 +42,9 @@ JOBS = [
     ('PL10', 'PL10_gemini_original.jpg', 'white', 1.0, ['peanut_seed', 'corn_kernel'], {'t1': 38}),
     ('PL11', 'PL11_gemini_original.jpg', 'white', 1.0, ['dicot_root', 'monocot_root'], {'R': 2, 't1': 38, 'clear_pockets': (6, 400000), 'pocket_tol': 18, 'killwhite': (232, 1)}),
     ('PL12', 'PL12_gemini_original.jpg', 'white', 1.0, ['flower_3petal', 'flower_5petal'], {'t1': 36}),
+    ('OV1', 'OV1_gemini_original.jpg', 'white', 1.0, ['ovule'], {'t1': 36}),
+    ('OV2', 'OV2_gemini_original.jpg', 'white', 1.0, ['ovary_multi'], {'t1': 36}),
+    ('OV3', 'OV3_gemini_original.jpg', 'white', 1.0, ['pea_pod'], {'t1': 36}),
     ('PL13', 'PL13_gemini_original.jpg', 'white', 1.0, ['germ_1', 'germ_2', 'germ_3', 'germ_4'], {'fade': (14, 62), 'clear_pockets': (400, 400000), 'pocket_tol': 14}),
 ]
 
@@ -217,7 +221,7 @@ def defringe(rgba, R=3):
 report = {}
 for name, f, kind, scale, subjects, opt in JOBS:
     if ONLY and name not in ONLY: continue
-    im = Image.open(U + f).convert('RGB')
+    im = Image.open((U2 if f.startswith('OV') else U) + f).convert('RGB')
     a = np.asarray(im)
     rgb, alpha, bg, bgmask = cut(a, kind, opt)
     for (lx0, ly0, lx1, ly1) in opt.get('cutlines', []):
