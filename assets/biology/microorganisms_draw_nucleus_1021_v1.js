@@ -45,6 +45,7 @@ const PINK={hi:'#f9e6e0',lo:'#e2b7b0',wallT:'#dcaaa5',wallB:'#b98583',edge:'#7a5
 // ── helpers ────────────────────────────────────────────────────────────────
 function rowsOf(c,p,w,size=22){
   const str=D.tr(p),rows=splitLines(c,str,w,size);
+  for(let i=0;i<rows.length-1;i++)if(/\($/.test(rows[i])){rows[i]=rows[i].slice(0,-1).trimEnd();rows[i+1]='('+rows[i+1];}
   if(rows.length!==2||/[A-Za-z]{3}/.test(str))return rows;
   const fits=r=>measure(c,r,size)<=w,mid=str.length/2;let best=null;
   for(let i=1;i<str.length-1;i++)if(/[，：、]/.test(str[i])){const a=str.slice(0,i+1),b=str.slice(i+1);if(fits(a)&&fits(b)&&(!best||Math.abs(i+1-mid)<Math.abs(best[0].length-mid)))best=[a,b];}
@@ -199,12 +200,12 @@ function draw(c,s,t){
     c.save();c.globalAlpha*=ta;D.round(c,THUMB.x,THUMB.y,THUMB.w,THUMB.h,12,'rgba(11,26,21,.75)',rgba(C.white,.55));c.restore();
     const tcx=THUMB.x+THUMB.w/2,tcy=THUMB.y+THUMB.h/2+Math.sin(t*1.3)*2;
     rod(c,tcx,tcy,ROD_ANG,150,ta);
-    tag(c,T.thumb,THUMB.x+THUMB.w/2,THUMB.y+THUMB.h+8,{col:C.muted,maxW:200,a:ta*out});
+    tag(c,T.thumb,THUMB.x+THUMB.w/2,THUMB.y+THUMB.h+8,{col:C.muted,maxW:222,a:ta*out});
     const fu=ease((tau-.35)/1.1),reveal=fade(tau,1.05,.5);
     if(tau>.35&&reveal<1){const fx=mix(tcx,g.cx,fu),fy=mix(tcy,g.cy,fu);rod(c,fx,fy,mix(ROD_ANG,0,fu),mix(150,2*g.a,fu),(1-reveal)*.95);}
     cell(c,g,t,{alpha:reveal*(held?1:mix(1,.0,fade(tau,PER-.45,.45))),dnaGlow:fade(tau,2.6,.5)*(.5+.5*Math.sin(t*3))});
     const la=i=>L(0,1.6+i*.38);
-    tag(c,T.wall,232,214,{align:'right',tgt:P_WALL(g),a:la(0),maxW:180});
+    tag(c,T.wall,232,228,{align:'right',tgt:P_WALL(g),a:la(0),maxW:180});
     tag(c,T.mem,400,166,{tgt:P_MEM(g),a:la(1),maxW:200});
     tag(c,T.cyto,232,446,{align:'right',tgt:P_CYTO(g),a:la(2),maxW:180});
     tag(c,T.dna,600,166,{col:C.pink,tgt:P_DNA_TOP(g,t),a:la(3),size:24});
@@ -250,7 +251,7 @@ function draw(c,s,t){
       zoom(c,zx,zy,R,kk,out,t);
       if(zu>.98){
         const map=f=>[ZC[0]+(f[0]*PW-NUC_C[0]*PW)*ZK,ZC[1]+(f[1]*PH-NUC_C[1]*PH)*ZK];
-        tag(c,T.zoom,612,272,{col:C.white,a:L(0,2.0)});
+        tag(c,T.zoom,588,272,{col:C.white,a:L(0,2.0)});
         tag(c,T.dnaIn,940,116,{align:'right',col:C.pink,tgt:map([.585,.47]),a:L(0,2.4),maxW:230});
         tag(c,T.env,940,436,{align:'right',col:C.cyan,tgt:map(NUC_LR),a:L(0,2.8),maxW:230});
       }

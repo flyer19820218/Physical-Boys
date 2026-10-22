@@ -49,6 +49,7 @@ function rowsOf(c,p,w,size=22){
   const str=D.tr(p);
   if(str.includes('\n')){const parts=str.split('\n');if(parts.every(q=>measure(c,q,size)<=w))return parts;return splitLines(c,str.replace(/\n/g,''),w,size);}
   const rows=splitLines(c,str,w,size);
+  for(let i=0;i<rows.length-1;i++)if(/\($/.test(rows[i])){rows[i]=rows[i].slice(0,-1).trimEnd();rows[i+1]='('+rows[i+1];}
   if(rows.length!==2||/[A-Za-z]{3}/.test(str))return rows;
   const fits=r=>measure(c,r,size)<=w,mid=str.length/2;let best=null;
   for(let i=1;i<str.length-1;i++)if(/[，：、]/.test(str[i])){const a=str.slice(0,i+1),b=str.slice(i+1);if(fits(a)&&fits(b)&&(!best||Math.abs(i+1-mid)<Math.abs(best[0].length-mid)))best=[a,b];}

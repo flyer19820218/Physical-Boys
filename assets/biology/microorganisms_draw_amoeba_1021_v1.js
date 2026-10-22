@@ -211,7 +211,11 @@ function over1(c,t,tau,a){
 }
 function over2(c,t,fd,a){
   const ua=fade(fd.q,1.0,.5)*(1-fd.gone),grow=fade(fd.q,1.0,2.2);
-  curvedArrow(c,ARM_UP,grow,C.yellow,a*ua);curvedArrow(c,ARM_LO,grow,C.yellow,a*ua);
+  // idle: the arrows breathe, and a ring pulses round the forming food vacuole
+  const br=grow>=1?.6+.4*Math.sin(t*3.2):1;
+  curvedArrow(c,ARM_UP,grow,C.yellow,a*ua*br);curvedArrow(c,ARM_LO,grow,C.yellow,a*ua*br);
+  if(fd.mem>0){const [cx,cy]=ME(...FOOD_C),u=mod(t*.7);c.save();c.globalAlpha*=a*fd.mem*(1-fd.gone)*(1-u);
+    K.ellipse(c,cx,cy,(92+u*34)*EK,(56+u*26)*EK,null,C.orange,3.5,.47);c.restore();}
   label(c,P(`偽足`,`Pseudopod`),232,172,{align:'right',col:C.yellow,a:a*ua,to:[ME(150,190)]});
   label(c,P(`偽足`,`Pseudopod`),232,470,{align:'right',col:C.yellow,a:a*ua,to:[ME(150,420)]});
   const [fx,fy]=ME(fd.x,fd.y);
@@ -221,10 +225,12 @@ function over2(c,t,fd,a){
 const NUTS=Array.from({length:12},(_,i)=>{const r=rng(200+i);return{ang:i/12*TAU+r()*.4,d:40+r()*45,del:r()*1.2};});
 function over3(c,t,fd,a){
   const [vx,vy]=ME(fd.x,fd.y);
+  // idle: a ring pulses round the vacuole while it digests
+  if(fd.mv>=1){const u=mod(t*.7);c.save();c.globalAlpha*=a*fd.al*(1-u)*.9;K.ellipse(c,vx,vy,(70+u*24)*fd.sc*EK*1.3,(44+u*16)*fd.sc*EK*1.3,null,C.orange,2.5,.47);c.restore();}
   label(c,P(`食物泡`,`Food vacuole`),720,66,{align:'center',col:C.orange,a:a*fd.al,to:[[vx,vy-30*fd.sc*EK*1.4]]});
   if(fd.mv>0&&fd.mv<1){c.save();c.globalAlpha*=a*.9;const [ax,ay]=ME(FOOD_C[0]+40,FOOD_C[1]-20);dashed(c,[[ax,ay],[vx-30,vy+12]],rgba(C.orange,.8),2.5,[6,5],-t*14);c.restore();}
   if(fd.dig>0){
-    NUTS.forEach(n=>{const u=clamp((fd.dig*3.2-n.del)/2.2);if(u<=0)return;const d=n.d*ease(u)*EK,x=vx+Math.cos(n.ang)*d,y=vy+Math.sin(n.ang)*d*.8;
+    NUTS.forEach(n=>{const u=clamp((fd.dig*3.2-n.del)/2.2);if(u<=0)return;const ang=n.ang+t*.18,d=(n.d*ease(u)+4*Math.sin(t*1.7+n.del*5))*EK,x=vx+Math.cos(ang)*d,y=vy+Math.sin(ang)*d*.8;   // the nutrients keep drifting slowly in the cytoplasm
       c.save();c.globalAlpha*=a*(1-fd.gone)*Math.min(1,u*4)*(1-.5*u);circle(c,x,y,4,C.yellow,C.ink,1.2);c.restore();});
     label(c,P(`養分`,`Nutrients`),762,300,{align:'center',col:C.yellow,a:a*(1-fd.gone)*fade(fd.dig,.15,.2),to:[[vx+36,vy+10]]});
     label(c,P(`消化：食物變成養分，\n留在細胞裡`,`Digestion: food becomes\nnutrients that stay in the cell`),40,540,{col:C.yellow,a:a*(1-fd.gone)*fade(fd.dig,.15,.2),w:380});
