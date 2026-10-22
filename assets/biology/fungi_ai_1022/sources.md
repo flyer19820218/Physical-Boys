@@ -68,3 +68,16 @@
 - **青黴孢子鏈**：只說「頂端串著孢子」，不寫數量、不寫長度；圖是示意。
 - **橘子上的黴**：標「青黴（藍綠色黴斑）」；頁面註明圖是 AI 示意，不確認是哪一個種。
 - 黑黴與青黴形成孢子的方式不同：黑黴＝柄頂的孢子囊裡面裝孢子；青黴＝刷子枝頂端串著孢子鏈，動畫分開講。
+
+## 補充：木耳與蕈類種類（2026-10-23）
+老師看到「蕈類有很多種，只教香菇太少」，要求補文字，並說木耳沒有圖，所以請 Gemini 生了一張。
+- **木耳（Gemini AI 插圖）**：原圖 `local-backups/20261023/fungi_ai_originals/woodear_gemini_1023.jpg`（2576×1438，白底，無文字、無浮水印）。一張圖三個物件：長在枯木上的新鮮木耳、乾木耳、玻璃碗裡泡開的木耳。
+- **提示詞**（老師貼給 Gemini）：Landscape 16:9, plain pure white background, soft even studio lighting, realistic educational illustration, no text, no labels, no numbers, no arrows, no watermark, no logo. Two groups, clearly separated by a wide empty white gap in the middle. Left group: a short piece of dead dark-brown tree log with rough bark, with a small cluster of fresh wood ear fungus (Auricularia) growing from it. Each fruiting body is ear-shaped, wavy and slightly cup-like, translucent dark brown to blackish, soft and jelly-like, with a finely velvety upper surface and a smooth, glossy, faintly veined lower surface. There are no cap, no gills and no stalk. Right group: on the left, a small pile of dried wood ear: tiny, hard, dark, curled and wrinkled pieces. On the right, a clear glass bowl of water holding soaked wood ear, which has swollen to several times the size, soft, glossy, ear-shaped and translucent. The dried pile and the soaked bowl sit side by side on the same white surface. All items are fully inside the frame with generous margins, with no cropping and a clean silhouette against the white background.
+- **處理**（程式在 `local-backups/20261023/fungi_ai_originals/`）：
+  | 檔案 | 像素 | 內容 | 處理 |
+  |---|---|---|---|
+  | `woodear_log.png` | 902×823 | 枯木＋新鮮木耳 | `cut_woodear_1023.py`（同 `cut_fungi_1022.py`：白底連通去背＋3 px 軟邊）→ `defringe_fungi_1022.py` 去白邊 |
+  | `woodear_dry.png` | 489×299 | 乾木耳 | `refine_woodear_1023.py`：落影是淡的中性灰，所以只取「深色或有顏色」的像素（min(RGB)<170 或飽和度>24），以連通區域選取；→ 去白邊 |
+  | `woodear_soaked.png` | 636×467 | 玻璃碗＋泡開的木耳 | `refine_woodear_1023.py`：輪廓取深色或有顏色的像素（碗底以下門檻 200→150 漸降，排除落影）；輪廓內的玻璃用「白底顏色轉透明度」保持半透明，褐色木耳（高飽和或深色）保持不透明；碗底線以下比底線更淡的像素淡出；去白邊略過（半透明） |
+- **其他蕈類圖**：`shiitake.png`、`reishi.png` 從第三課 `microorganisms_ai_1021/` 複製，`stinkhorn.png` 從第二課 `naming_ai_1021/` 複製，沒有再處理（來源與處理見各自的 `sources.md`），複製進來只是讓「蕈類的種類」畫面從同一個資料夾載圖。
+- **待老師看**：新鮮木耳畫成圓盤狀、有點像小杯子，上表面有細絨毛，顏色褐中帶紅；真木耳通常更薄、邊緣波浪皺褶、偏黑褐色半透明。泡開的木耳在碗裡偏褐色。畫面標「AI 教學示意」，不當成實拍；大小只是示意（乾的小、泡開的大，沒有寫倍數）。玻璃碗的底部右側有一點淡淡的落影殘留。
