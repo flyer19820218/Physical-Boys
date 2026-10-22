@@ -234,7 +234,7 @@ function division(c,x,y,t,a){
   if(split<1){c.save();c.globalAlpha*=1-split;
     [-1,1].forEach(sd=>{c.save();c.beginPath();c.ellipse(x+sd*(w*.27+gap/2),y,w*.31,h*.62,0,0,TAU);c.clip();c.drawImage(im,x-w/2+sd*gap/2,y-h/2,w,h);c.restore();});
     c.restore();}
-  if(split>0){c.save();c.globalAlpha*=split;[-1,1].forEach(sd=>c.drawImage(im,x+sd*48-38,y-30*IH/IW*76/60/1.27,76,76*IH/IW));c.restore();}
+  if(split>0){const w2=76,h2=w2*IH/IW;c.save();c.globalAlpha*=split;[-1,1].forEach(sd=>c.drawImage(im,x+sd*(w2/2+8)-w2/2,y-h2/2,w2,h2));c.restore();}
   c.restore();
 }
 function step3(c,cam,t,tau,a){
@@ -276,8 +276,7 @@ function draw(c,s,t){
   if(picture(c,cam)){stars(c,cam,t,sOn);cilia(c,cam,t,cOn);}
   if(from!==k&&aOld>0)STEPS[from](c,cam,t,PER,aOld);
   STEPS[k](c,cam,t,tau,aNew);
-  if(k!==3||from!==3)text(c,SIZE_NOTE,20,36,22,rgba(C.muted,(k===3?1-cam.u:1)*.95));
-  if(k===3)text(c,SIZE_NOTE,20,36,22,rgba(C.muted,0));
+  text(c,SIZE_NOTE,20,36,22,C.muted);
 }
 window.MicroDraw.paramecium=draw;
 })();
