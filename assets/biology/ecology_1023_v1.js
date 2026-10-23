@@ -54,7 +54,13 @@ const LAB={
  // succession
  bareSoil:P(`保留土壤的裸地`,`Bare ground with soil`),bareRock:P(`沒有土壤的裸岩`,`Bare rock without soil`),pioneer:P(`先鋒`,`Pioneers`),herbs:P(`草本`,`Herbs`),shrubs:P(`灌木`,`Shrubs`),trees:P(`林木`,`Trees`),
  lichen:P(`地衣`,`Lichen`),moss:P(`苔蘚`,`Moss`),seeds:P(`種子`,`Seeds`),roots:P(`根`,`Roots`),thinSoil:P(`薄土`,`Thin soil`),thickSoil:P(`土變厚`,`Soil thickens`),
- origin:P(`起點`,`Starting point`),notOneTree:P(`不是一株草長成樹`,`Not one herb growing into a tree`),notFixedPath:P(`路徑不固定`,`The path is not fixed`),camphor:P(`樟樹`,`Camphor tree`)
+ origin:P(`起點`,`Starting point`),notOneTree:P(`不是一株草長成樹`,`Not one herb growing into a tree`),notFixedPath:P(`路徑不固定`,`The path is not fixed`),camphor:P(`樟樹`,`Camphor tree`),
+ rock:P(`岩石`,`Rock`),rockShort:P(`裸岩`,`Bare rock`),groundShort:P(`有土的裸地`,`Ground with soil`),noSoil:P(`沒有土壤`,`No soil`),
+ seedlings:P(`草本幼苗`,`Herb seedlings`),lichenMoss:P(`地衣、苔蘚`,`Lichen and moss`),seedsRoots:P(`種子、根`,`Seeds, roots`),litter:P(`落葉`,`Fallen leaves`),
+ rootsLitter:P(`根、落葉`,`Roots, fallen leaves`),canopy:P(`樹冠`,`Canopy`),shade:P(`遮住部分的光`,`Shades some light`),lessLight:P(`林下光變少`,`Less light below`),
+ composition:P(`群集組成`,`Community makeup`),soilDepth:P(`土壤厚度`,`Soil depth`),groundLight:P(`地面的光`,`Light at ground`),waterHeld:P(`保水`,`Water held`),
+ firstChange:P(`先到的生物改變環境`,`Early arrivals change conditions`),soilHolds:P(`土裡可能還有種子、根`,`The soil may still hold seeds and roots`),
+ compositionChange:P(`演替：群集的組成改變`,`Succession: the community makeup changes`),treeExample:P(`林木，例如樟樹`,`Trees, e.g. camphor tree`)
 };
 K.LAB=LAB;window.EcologyLabels=LAB;
 
