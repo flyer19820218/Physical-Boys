@@ -18,7 +18,7 @@ const LAB={
  aiNote:P(`AI 插圖，非實拍`,`AI illustration, not a photo`),schematic:P(`示意`,`Schematic`),sizeNoReal:P(`大小不代表真實大小`,`Sizes are not real sizes`),
  // effects on each side
  gain:P(`得益`,`Gains`),loss:P(`受害`,`Harmed`),noEffect:P(`看不出明顯影響`,`No evident effect`),plus:P(`＋`,`+`),minus:P(`−`,`−`),zero:P(`0`,`0`),
- signLegend:P(`＋ 得益　− 受害　0 看不出明顯影響`,`+ gains  − harmed  0 no evident effect`),signNote:P(`正負號描述利害，不是死亡百分比`,`Signs describe effects, not death percentages`),
+ signLegend:P(`＋ 得益　− 受害　0 看不出明顯影響`,`+ gains · − harmed · 0 no evident effect`),signNote:P(`正負號描述利害，不是死亡百分比`,`Signs describe effects, not death percentages`),
  // relationships
  predation:P(`掠食`,`Predation`),competition:P(`競爭`,`Competition`),mutualism:P(`互利共生`,`Mutualism`),commensalism:P(`片利共生`,`Commensalism`),parasitism:P(`寄生`,`Parasitism`),symbiosis:P(`共生：長期住在一起`,`Symbiosis: living together over time`),
  predator:P(`掠食者`,`Predator`),prey:P(`獵物`,`Prey`),host:P(`寄主`,`Host`),parasite:P(`寄生者`,`Parasite`),pest:P(`害蟲`,`Pest`),enemy:P(`天敵`,`Natural enemy`),
