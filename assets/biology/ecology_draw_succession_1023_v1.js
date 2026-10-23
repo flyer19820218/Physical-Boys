@@ -1,23 +1,26 @@
-/* Ecology lesson 1 · "succession" canvas (succession tab, view 0), 2026-10-23.
+/* Ecology lesson 1 · "succession" canvas (succession tab, view 0), 2026-10-23 (v1, transparent pictures).
  * Five stages (bare ground → pioneers → herbs → shrubs → trees) × two starting points (s.origin 0 soil, 1 bare rock).
  * Layout (one frame shared by every stage; only the picture, the bars and the tags change, with cross-fades):
  *   top     a stage track of five pills (current = yellow, passed = green outline); stage 0/1 names follow the origin.
- *   left    the scene panel (16,72,452×462): the teacher's Gemini AI scene pictures (outdoor background kept, not cut out),
- *           cropped and clipped with rounded corners. Portrait pictures 1000×1116 use the crop x 60..940, y 100..1000 so
- *           the soil block sits at the same place in every picture; SU4_woodland 1000×558 uses x 130..870 (all three trees),
- *           top-aligned, and the band under it holds a name card: EC8_camphor_tree + "Trees, e.g. camphor tree".
- *           origin 0: SU1_soil → SU2_seedling → SU3_herb → SU3_shrub → SU4_woodland
- *           origin 1: SU1_rock → SU2_lichen  → SU3_herb → SU3_shrub → SU4_woodland
- *           Every visible thing in a picture has a name tag with a leader (anchors measured on the pictures once, in
- *           picture pixels). Seeds in the soil (stage 0, origin 0) are not in the picture: drawn here and named.
+ *   left    the scene (x 16..468): the teacher's Gemini AI blocks, background removed (transparent PNG), pasted straight
+ *           on the board colour (no frame, no crop). All 800-wide blocks use one scale (0.45) and one centre (x 242),
+ *           and their block bottom row (PIL: last row whose opaque width > 60 %) sits on one ground line GY, so the block
+ *           never jumps during a cross-fade. SU4_forest 1000×495 is drawn 452 wide on the same ground line; the free space
+ *           above it holds a name card: EC8_camphor_tree + "Trees, e.g. camphor tree".
+ *           origin 0: SU1_soil → SU2_seedling → SU3_herb → SU3_shrub → SU4_forest
+ *           origin 1: SU1_rock → SU2_lichen  → SU3_herb → SU3_shrub → SU4_forest
+ *           Every visible thing has a name tag with a leader; anchors were measured on the PNGs (picture pixels).
+ *           Not in the pictures, so drawn here and named: seeds in the soil (origin 0, stage 0), herb seedlings on the soil
+ *           (origin 0, stage 1; the cut-out removed them) and moss tufts on the rock top (origin 1, stage 1; also removed).
+ *           "Rock" is tagged only where rock shows: SU1_soil, SU1_rock, SU2_seedling, SU2_lichen, SU4_forest.
  *   right   "Community makeup": one schematic bar per group (no numbers); origin 0 rows herbs / shrubs / trees,
  *           origin 1 adds lichen and moss. Under it three schematic meters: soil depth, water held, light at ground.
  *           Then "Early arrivals change conditions": cause pill → effect pill for this stage; the meter that changes glows.
  *           Stage 4 adds "The path is not fixed".
- *   bottom  "AI illustration, not a photo" + "Schematic" under the picture; "Succession: the community makeup changes"
+ *   bottom  "AI illustration, not a photo · Schematic" under the scene; "Succession: community makeup changes"
  *           (stage 4: "Not one herb growing into a tree").
- * No years, no numbers on any bar. s.shown = stage every frame. Held stages keep moving (slow zoom, pulses, flowing leaders).
- * Switching s.origin drops any cross-fade, so the two starting points never mix on screen.
+ * No years, no numbers on any bar. s.shown = stage every frame. Held stages keep moving (slow breathing, pulses, sway,
+ * flowing leaders). Switching s.origin drops any cross-fade, so the two starting points never mix on screen.
  */
 (()=>{'use strict';
 const K=window.EcologyKit,{P,C,D,TAU,clamp,mix,mod,smooth,rgba,text,measure,glow,circle,ellipse,dim,stageClock}=K;
@@ -26,28 +29,31 @@ const N=5,PER=7,CW=960,MOVE=1.2;
 const YELLOW=C.yellow,WHITE=C.white,ORANGE=C.orange,GREEN=C.green,CYAN=C.cyan,GREY='#9fb3a8',BROWN='#c08a52',SEED='#f1d27a';
 
 // ── geometry ───────────────────────────────────────────────────────────────
-const PX=16,PY=72,PW=452,PH=462;                       // scene panel
+const PX=16,PY=72,PW=452,PH=462;                       // scene area
 const RX=486,RW=CW-16-RX;                               // right column
-const PORT={crop:[60,100,880,900]},WIDE={crop:[130,0,740,558]};
-const rectOf=f=>f==='SU4_woodland.jpg'?{x:PX,y:PY,w:PW,h:PW*558/740}:{x:PX,y:PY,w:PW,h:PH};
-const cropOf=f=>f==='SU4_woodland.jpg'?WIDE.crop:PORT.crop;
+const SCX=PX+PW/2,GY=526,S800=.45,FOREST='SU4_forest.png',S4=PW/1000;
+// block bottom row of each picture (PIL: last row whose opaque width > 60 % of the picture)
+const BOT={'SU1_rock.png':814,'SU1_soil.png':809,'SU2_lichen.png':807,'SU2_seedling.png':804,'SU3_herb.png':817,'SU3_shrub.png':986,'SU4_forest.png':475};
+function rectOf(f){const [W,H]=dim(f),sc=f===FOREST?S4:S800;return{x:SCX-W*sc/2,y:GY-BOT[f]*sc,w:W*sc,h:H*sc,s:sc};}
 // picture pixel → canvas
-function mapPt(f,ix,iy){const r=rectOf(f),[x0,y0,cw,ch]=cropOf(f);return[r.x+(ix-x0)*r.w/cw,r.y+(iy-y0)*r.h/ch];}
+function mapPt(f,ix,iy){const r=rectOf(f);return[r.x+ix*r.s,r.y+iy*r.s];}
 
 // pictures per origin and stage
-const FILES=[['SU1_soil.jpg','SU2_seedling.jpg','SU3_herb.jpg','SU3_shrub.jpg','SU4_woodland.jpg'],
-             ['SU1_rock.jpg','SU2_lichen.jpg','SU3_herb.jpg','SU3_shrub.jpg','SU4_woodland.jpg']];
+const FILES=[['SU1_soil.png','SU2_seedling.png','SU3_herb.png','SU3_shrub.png',FOREST],
+             ['SU1_rock.png','SU2_lichen.png','SU3_herb.png','SU3_shrub.png',FOREST]];
 // name tags on each picture: [label key, anchor in picture px, tag x, tag y, align]
 const TAGS={
- 'SU1_soil.jpg':[['seeds',[520,380],26,84,'left'],['roots',[390,420],140,84,'left'],['soil',[760,300],458,84,'right'],['rock',[330,800],26,472,'left']],
- 'SU1_rock.jpg':[['noSoil',[500,248],242,84,'center'],['rockShort',[400,640],26,472,'left']],
- 'SU2_seedling.jpg':[['seedlings',[300,212],26,78,'left'],['soil',[760,320],458,78,'right'],['rock',[330,800],26,472,'left']],
- 'SU2_lichen.jpg':[['lichen',[330,395],26,78,'left'],['moss',[580,238],458,78,'right'],['rock',[330,800],26,472,'left']],
- 'SU3_herb.jpg':[['herbs',[330,330],26,78,'left'],['litter',[385,572],458,286,'right'],['soil',[300,720],26,370,'left'],['rock',[300,945],26,478,'left']],
- 'SU3_shrub.jpg':[['shrubs',[262,250],26,78,'left'],['herbs',[835,470],458,166,'right'],['litter',[260,565],26,282,'left'],['roots',[480,720],458,370,'right'],['soil',[250,900],26,472,'left']],
- 'SU4_woodland.jpg':[['trees',[700,95],458,78,'right'],['herbs',[255,262],26,224,'left'],['soil',[640,340],458,252,'right'],['rock',[700,452],458,318,'right']]};
-// seeds drawn in the soil layer of SU1_soil (picture px; the soil band is y 245..500)
-const SEEDS=[[230,330,.4],[330,455,1.1],[520,380,0],[610,470,2],[760,350,.7],[455,300,1.6],[820,445,2.4],[180,430,.2]];
+ 'SU1_soil.png':[['seeds',[390,100],24,98,'left'],['roots',[262,205],136,98,'left'],['soil',[650,150],460,98,'right'],['rock',[300,600],24,470,'left']],
+ 'SU1_rock.png':[['noSoil',[360,12],242,96,'center'],['rockShort',[330,560],24,470,'left']],
+ 'SU2_seedling.png':[['seedlings',[110,30],24,98,'left'],['soil',[650,150],460,98,'right'],['rock',[300,600],24,470,'left']],
+ 'SU2_lichen.png':[['moss',[190,18],24,98,'left'],['lichen',[686,320],460,98,'right'],['rock',[300,600],24,470,'left']],
+ 'SU3_herb.png':[['herbs',[250,200],24,98,'left'],['litter',[243,443],24,318,'left'],['soil',[300,620],24,440,'left']],
+ 'SU3_shrub.png':[['shrubs',[186,257],24,78,'left'],['herbs',[686,429],460,300,'right'],['litter',[286,514],24,300,'left'],['roots',[400,686],460,400,'right'],['soil',[129,857],24,470,'left']],
+ 'SU4_forest.png':[['trees',[500,80],242,262,'center'],['herbs',[150,285],24,262,'left'],['soil',[600,360],460,262,'right'],['rock',[450,450],20,486,'left']]};
+// drawn by program (picture px): seeds in the SU1_soil soil band, seedlings on the SU2_seedling soil top, moss on the SU2_lichen rock top
+const SEEDS=[[120,140,.4],[250,230,1.1],[390,100,0],[470,250,2],[600,180,.7],[700,110,1.6],[330,170,2.4],[160,262,.2]];
+const SPROUTS=[[110,44],[210,44],[300,46],[385,46],[470,42],[620,42],[705,44]];
+const MOSS=[[190,26],[290,18],[530,36],[640,38]];
 
 // community makeup (schematic 0..1 per row; no numbers are shown)
 const ROWS=[[['herbs',GREEN],['shrubs','#a3e635'],['trees','#34d399']],
@@ -78,23 +84,27 @@ function leader(c,r,ax,ay,t,col){
   c.save();c.setLineDash([6,5]);c.lineDashOffset=-t*18;K.line(c,[[sx,ey],[ax,ay]],rgba(C.deep,.85),5);K.line(c,[[sx,ey],[ax,ay]],rgba(col,.95),2.5);c.restore();
   circle(c,ax,ay,6,col,C.deep,2);const u=mod(t*.7);circle(c,ax,ay,6+u*10,null,rgba(col,.8*(1-u)),2);
 }
-function scene(c,f,a,t){if(a<=0.002)return;const r=rectOf(f),[x0,y0,cw,ch]=cropOf(f),[W,H]=dim(f);
-  const z=1+.012*(1+Math.sin(t*.45)),zx=r.x+r.w/2,zy=r.y+r.h/2;
-  c.save();c.globalAlpha*=a;c.beginPath();c.roundRect(r.x,r.y,r.w,r.h,14);c.clip();
-  c.translate(zx,zy);c.scale(z,z);c.translate(-zx,-zy);
-  K.drawIn(c,f,r,{crop:[x0/W,y0/H,cw/W,ch/H]});c.restore();
-  c.save();c.globalAlpha*=a;D.round(c,r.x,r.y,r.w,r.h,14,null,C.edge);c.restore();}
+function scene(c,f,a,t){if(a<=0.002)return;const r=rectOf(f),z=1+.004*(1+Math.sin(t*.45)),bx=SCX,by=GY;
+  c.save();c.globalAlpha*=a;
+  ellipse(c,SCX,GY+6,r.w*.46,10,rgba(C.deep,.55),null);               // ground shadow under the block
+  c.translate(bx,by);c.scale(z,z);c.translate(-bx,-by);K.drawIn(c,f,r);c.restore();}
 function seeds(c,f,a,t){withA(c,a,()=>SEEDS.forEach(([ix,iy,ph])=>{const [x,y]=mapPt(f,ix,iy),g=.5+.5*Math.sin(t*2.2+ph);
   glow(c,x,y,12,SEED,.25+.25*g);ellipse(c,x,y,5.5,3.8,SEED,C.deep,1.5,ph);}));}
+function sprouts(c,f,a,t){withA(c,a,()=>SPROUTS.forEach(([ix,iy],i)=>{const [x,y]=mapPt(f,ix,iy),h=16+(i%3)*4,sw=Math.sin(t*1.6+i)*2.5,tx=x+sw,ty=y-h;
+  K.sline(c,[[x,y],[x+sw*.4,y-h*.5],[tx,ty]],'#2f7a3a',4);K.sline(c,[[x,y],[x+sw*.4,y-h*.5],[tx,ty]],'#86d46a',2.4);
+  ellipse(c,tx-6,ty+1,7,3.4,'#7cc95b',C.deep,1.2,-.5);ellipse(c,tx+6,ty+1,7,3.4,'#9be07a',C.deep,1.2,.5);}));}
+function moss(c,f,a,t){withA(c,a,()=>MOSS.forEach(([ix,iy],i)=>{const [x,y]=mapPt(f,ix,iy),b=.5+.5*Math.sin(t*1.8+i);
+  const r=K.rng(90+i);for(let q=0;q<9;q++){const dx=(r()-.5)*30,dy=(r()-.5)*6-2,rr=4+r()*3;circle(c,x+dx,y+dy,rr+b*.6,q%2?'#6fa83a':'#9ccc4f',rgba(C.deep,.6),1);}}));}
 function tags(c,f,a,t){withA(c,a,()=>(TAGS[f]||[]).forEach(([key,[ix,iy],x,y,al])=>{
   const [ax,ay]=mapPt(f,ix,iy),col=key==='seeds'?SEED:key==='rock'||key==='rockShort'||key==='noSoil'?WHITE:key==='soil'?BROWN:key==='lichen'?ORANGE:GREEN;
   const p=L(key,key,key),w=measure(c,p,22)+28,bx=al==='right'?x-w:al==='center'?x-w/2:x;
   leader(c,{x:bx,y,w,h:40},ax,ay,t,col);tag(c,p,x,y,{al,col});}));}
-function camphorCard(c,a,t){withA(c,a,()=>{const y=PY+PW*558/740+10,h=PY+PH-y;
-  D.round(c,PX+8,y,PW-16,h,12,'rgba(11,26,21,.85)',rgba('#34d399',.7));
+function camphorCard(c,a,t){withA(c,a,()=>{const y=PY+14,h=104,x=PX+8,w=PW-16;
+  D.round(c,x,y,w,h,12,'rgba(11,26,21,.85)',rgba('#34d399',.7));
   const ih=h-14,iw=ih*dim('EC8_camphor_tree.png')[0]/dim('EC8_camphor_tree.png')[1],sw=Math.sin(t*1.1)*.02;
-  c.save();c.translate(PX+28+iw/2,y+7+ih);c.rotate(sw);K.drawIn(c,'EC8_camphor_tree.png',{x:-iw/2,y:-ih,w:iw,h:ih});c.restore();
-  K.wrap(c,L('treeExample','林木，例如樟樹','Trees, e.g. camphor tree'),PX+44+iw,y+h/2+8-(measure(c,L('treeExample','',''),22)>PW-90-iw?15:0),PW-90-iw,22,'#34d399',30);});}
+  c.save();c.translate(x+20+iw/2,y+7+ih);c.rotate(sw);K.drawIn(c,'EC8_camphor_tree.png',{x:-iw/2,y:-ih,w:iw,h:ih});c.restore();
+  const p=L('treeExample','林木，例如樟樹','Trees, e.g. camphor tree'),tw=w-iw-56,two=measure(c,p,22)>tw;
+  K.wrap(c,p,x+iw+36,y+h/2+8-(two?15:0),tw,22,'#34d399',30);});}
 
 // stage track
 function track(c,o,k,t){
@@ -132,13 +142,12 @@ function draw(c,s,t){
   track(c,o,k,t);
 
   // ── scene panel
-  D.round(c,PX,PY,PW,PH,14,C.panel,C.edge);
   const fIn=files[k],fOut=moving?files[st.from]:null;
   if(fOut&&fOut!==fIn){const aIn=smooth(clamp(x*2)),aOut=1-smooth(clamp(x*2-1));scene(c,fOut,aOut,t);scene(c,fIn,aIn,t);}
   else scene(c,fIn,1,t);
   // seeds drawn into the soil picture (origin 0, stage 0)
-  if(o===0)seeds(c,files[0],wSeq(0),t);
-  // camphor name card under the woodland picture
+  if(o===0){seeds(c,files[0],wSeq(0),t);sprouts(c,files[1],wOf(1),t);}else moss(c,files[1],wOf(1),t);
+  // camphor name card above the forest picture
   camphorCard(c,wSeq(4),t);
   // name tags: per stage (the same picture may serve two stages only across origins, so stage weight is enough)
   for(let j=0;j<N;j++)tags(c,files[j],wSeq(j),t);
