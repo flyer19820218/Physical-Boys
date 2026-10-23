@@ -68,6 +68,6 @@
 ## 進度
 
 - [x] 計畫、範圍（老師 2026-10-23）
-- [ ] 封面、首頁卡片、頁面骨架、`ecology_kit_1023_v1.js`、`ecology_1023_v1.js`
-- [ ] bridge　- [ ] levels　- [ ] quadrat　- [ ] recapture　- [ ] balance　- [ ] capacity　- [ ] succession
-- [ ] QA、`PROGRESS.md`、commit／push
+- [x] 封面、首頁卡片、頁面骨架、`ecology_kit_1023_v1.js`、`ecology_1023_v1.js`
+- [x] bridge　- [x] levels　- [x] quadrat　- [x] recapture　- [x] balance　- [x] capacity　- [x] succession
+- [x] QA、`PROGRESS.md`、commit／push
