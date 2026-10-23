@@ -35,7 +35,7 @@ const LAB={
  feathers:P(`羽毛`,`Feathers`),flipper:P(`鰭狀翅膀`,`Flipper-like wing`),hair:P(`毛髮`,`Hair`),milk:P(`乳汁`,`Milk`),eggLaying:P(`卵生`,`Lays eggs`),
  flies:P(`會飛`,`Flies`),swims:P(`會游泳`,`Swims`),notDecisive:P(`不是單獨的判準`,`Not a deciding clue alone`),
  egg:P(`卵`,`Eggs`),tadpole:P(`蝌蚪`,`Tadpole`),hindLegs:P(`長後腿`,`Hind legs`),foreLegs:P(`長前腿`,`Fore legs`),tail:P(`尾巴`,`Tail`),froglet:P(`幼蛙`,`Froglet`),adultFrog:P(`成蛙`,`Adult frog`),
- inWater:P(`在水中`,`In water`),gillToLung:P(`鰓換成肺`,`Gills give way to lungs`),sizeNote:P(`示意：大小不能比較`,`Schematic: sizes cannot be compared`),
+ inWater:P(`在水中`,`In water`),gillToLung:P(`鰓換成肺`,`Gills give way to lungs`),sizeNote:P(`示意：大小只是大約`,`Schematic: sizes are approximate`),
  featherClose:P(`羽毛`,`Feather`),scaleClose:P(`鱗片`,`Scales`),furClose:P(`毛髮`,`Hair`),
  warmth:P(`保暖`,`Keeps warm`),flight:P(`參與飛行`,`Helps flight`),waterLoss:P(`減少水分散失`,`Cuts water loss`),
  primaries:P(`初級飛羽`,`Primary flight feathers`),secondaries:P(`次級飛羽`,`Secondary flight feathers`),wingTip:P(`翅尖`,`Wing tip`),body:P(`身體`,`Body`),
@@ -130,10 +130,10 @@ const SW_TEXT=[
 const FR_SHORT=[P(`卵`,`Eggs`),P(`蝌蚪`,`Tadpole`),P(`長後腿`,`Hind legs`),P(`長前腿`,`Fore legs`),P(`成蛙`,`Adult`)];
 const FR_NAMES=[P(`卵：產在水中`,`Eggs: laid in water`),P(`蝌蚪：用鰓呼吸，在水中游`,`Tadpole: breathes with gills, swims in water`),P(`長出後腿：還有尾巴`,`Hind legs appear: still a tail`),P(`長前腿，尾巴縮短：鰓換成肺`,`Fore legs and a shorter tail: gills give way to lungs`),P(`成蛙：用肺，皮膚幫忙`,`Adult frog: lungs, with help from the skin`)];
 const FR_TEXT=[
- P(`多數蛙把卵產在水裡，卵團外面包著透明的膠質。（這一組圖是示意，大小不能比較，也不是同一隻蛙的連續照片。）`,`Most frogs lay their eggs in water, in a clump covered by clear jelly. (These pictures are a schematic; sizes cannot be compared and they are not photos of one frog over time.)`),
+ P(`多數蛙把卵產在水裡，卵團外面包著透明的膠質。（這一組圖是示意，大小只是大約，也不是同一隻蛙的連續照片。）`,`Most frogs lay their eggs in water, in a clump covered by clear jelly. (These pictures are a schematic; sizes are only approximate and they are not photos of one frog over time.)`),
  P(`卵孵出蝌蚪。蝌蚪有尾巴，用鰓呼吸，在水中游，看起來像小魚，但牠不是魚。`,`The eggs hatch into tadpoles. A tadpole has a tail, breathes with gills and swims in water. It looks like a little fish, but it is not a fish.`),
  P(`蝌蚪先長出後腿，尾巴還在，仍然住在水裡。`,`The tadpole grows its hind legs first. The tail is still there and it still lives in water.`),
- P(`接著長出前腿，尾巴慢慢縮短。同時，鰓慢慢換成肺。（這一張圖是示意，沒有畫出縮短中的尾巴。）`,`Then the fore legs grow and the tail slowly shortens. At the same time the gills give way to lungs. (This picture is a schematic and does not show the shortening tail.)`),
+ P(`接著長出前腿，尾巴慢慢縮短。同時，鰓慢慢換成肺。（這一張圖是示意，畫的是尾巴縮短中的幼蛙。）`,`Then the fore legs grow and the tail slowly shortens. At the same time the gills give way to lungs. (This picture is a schematic of a froglet whose tail is shortening.)`),
  P(`成蛙用肺呼吸，潮濕的皮膚也能幫忙交換氣體，所以多數成蛙離不開潮濕的環境。一生從鰓換成肺，是兩生類的特徵。`,`An adult frog breathes with lungs, and its moist skin helps with gas exchange, so most adult frogs stay near moisture. Changing from gills to lungs during life is a trait of amphibians.`)];
 
 // ── adaptation / 0: feather, scale, hair ───────────────────────────────────
