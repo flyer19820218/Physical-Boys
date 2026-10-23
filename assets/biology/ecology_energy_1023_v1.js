@@ -70,6 +70,7 @@ const LAB={
  buried:P(`埋藏`,`Buried`),fossilFuel:P(`化石燃料`,`Fossil fuel`),burning:P(`燃燒`,`Burning`),supplement:P(`補充`,`Supplement`),
  cycle:P(`循環`,`Cycles`),oneWay:P(`單向`,`One way`),matter:P(`物質（碳）`,`Matter (carbon)`),energy:P(`能量`,`Energy`),enters:P(`進來`,`Enters`),
  n2:P(`氮氣`,`Nitrogen gas`),nitrogen:P(`氮`,`Nitrogen`),nodule:P(`根瘤`,`Root nodule`),rhizobia:P(`根瘤菌`,`Nodule bacteria`),legume:P(`豆科植物`,`Legume`),usableN:P(`植物能吸收的含氮物質`,`Nitrogen compounds plants can absorb`),protein:P(`蛋白質`,`Protein`),
+ ecosphere:P(`生態瓶`,`Ecosphere (sealed bottle)`),water:P(`水`,`Water`),waterPlant:P(`水草`,`Water plant`),shrimp:P(`小蝦`,`Shrimp`),sealed:P(`密封`,`Sealed`),onlyLightIn:P(`只有光能進來`,`Only light gets in`),bottleFood:P(`瓶中的小生態系`,`A tiny ecosystem in a bottle`),
  camphor:P(`樟樹`,`Camphor tree`),sunlightIn:P(`陽光進來`,`Sunlight in`),heatOut:P(`熱散失`,`Heat lost`)
 };
 K.LAB=LAB;window.EcologyLabels=LAB;
@@ -167,7 +168,7 @@ const CM_NAMES=[P(`能量從陽光進來，最後變成熱`,`Energy enters as li
 const CM_TEXT=[
  P(`能量從陽光進來，沿著食物鏈一層層傳，每一層都有一部分變成熱散失，散失的熱不會再變回食物裡的能量。所以能量是單向流動，要靠陽光不斷補充。`,`Energy enters as sunlight and passes along the food chain, and at every level part becomes heat that is lost; lost heat does not turn back into energy in food. Energy therefore flows one way and needs sunlight to keep supplying it.`),
  P(`碳從空氣進入生產者，傳給消費者，遺體與排遺給分解者，呼吸再回到空氣，又可以被生產者用。所以碳是循環的。`,`Carbon goes from air into producers, to consumers, and through remains and waste to decomposers, and respiration returns it to the air, where producers can use it again. So carbon cycles.`),
- P(`左邊的能量是一條直線：陽光進來，熱散失。右邊的碳是一個圈。就算是封閉的生態瓶，物質可以循環，也還是需要光這個能量輸入，所以不是永動機。`,`On the left energy is a straight line: sunlight in, heat out. On the right carbon is a loop. Even a closed ecosphere, where matter can cycle, still needs light as an energy input, so it is not a perpetual-motion machine.`)];
+ P(`左邊的能量是一條直線：陽光進來，熱散失。右邊的碳是一個圈。下方是「生態瓶」：把水、水草（生產者）、小蝦（消費者）和細菌（分解者）封在一個玻璃瓶裡，做成瓶中的小生態系，只讓光進去。瓶裡的物質可以循環，但還是需要光這個能量輸入，沒有光，水草不能行光合作用，整個瓶子就撐不久，所以不是永動機。`,`On the left energy is a straight line: sunlight in, heat out. On the right carbon is a loop. Below is an "ecosphere": water, water plants (producers), shrimp (consumers) and bacteria (decomposers) sealed in a glass bottle as a tiny ecosystem, with only light let in. Matter can cycle inside, but it still needs light as an energy input; without light the plants cannot photosynthesise and the bottle cannot last, so it is not a perpetual-motion machine.`)];
 
 // ── carbon-cycle / 2 (nitrogen, supplement) ────────────────────────────────
 const NT_SHORT=[P(`空氣中的氮`,`Nitrogen in air`),P(`根瘤菌`,`Nodule bacteria`),P(`沿食物鏈`,`Along the chain`),P(`回到環境`,`Returns`)];
