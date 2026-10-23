@@ -67,3 +67,13 @@ Style: detailed scientific illustration in a clean, semi-realistic hand-painted 
 - EC21 → 換進 `mutual` 動畫的「第二個例子」；根瘤菌不重複。
 - EC22 → `biocontrol` 第 1 步旁的課本例子；EC23 → `compete` 種內競爭加一張動物例子。
 - 這幾張到齊前，已排好的動畫先用現有圖做完；圖到了再重開對應的 Opus 動畫一次改一個。
+
+## 重生：EC11 鮣魚與鯊魚（EC24，白底）
+
+原圖鯊魚背上多了一個圓形放射紋圓盤，位置與形狀不對。重生後換掉 `EC11_remora_shark.png`（舊圖先備份）。
+檢查：鮣魚頭頂有一塊橢圓形、橫向板狀紋的吸盤，吸盤貼在鯊魚身側；鯊魚身上沒有其他圓盤、沒有吸盤以外的附著物；鮣魚約為鯊魚的五分之一長；不流血、鯊魚嘴閉著。
+
+```
+Landscape 16:9. A blacktip reef shark swimming in side view, mouth closed, grey-brown back and pale belly, black-tipped fins. A single small remora (Echeneis naucrates), slender dark grey body about one fifth of the shark's length, is attached flat against the shark's flank just behind the gill slits, head pointing forward in the same direction as the shark. On the top of the remora's head is its oval, flat sucker plate with fine parallel horizontal ridges (lamellae), pressed against the shark's skin; the sucker is oval and the same width as the remora's head, not round and not large. No other disc, circle, or object on the shark. Side view, the pair centred.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, pure white background with no shadow and no scenery. Generous empty margin around the subjects. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.
+```
