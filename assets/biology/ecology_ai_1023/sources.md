@@ -39,3 +39,11 @@
 - `EC4_vole`、`EC5_sparrow`、`EC13_mantis_grasshopper`：細毛／細腳邊緣偶有淺色點，貼上後要放大看。
 - `EC9_beetles_sap`：連樹皮方塊整塊保留，不是單獨的甲蟲。
 - `EC2_meadow_scene.jpg`、封面 `../../covers/biology_ecology_1023_v1.jpg`：整張不去背、不裁切，寬 1672 px。
+
+## 演替分頁 SU 系列（Gemini 生成，2026-10-23 收圖）
+AI 插圖，非實拍。保留原本的戶外背景，不去背；原圖左右各一塊，已從中線切成單張，縮到寬 1000 px。
+- `SU1_rock.jpg` 裸岩（起點：岩石）／`SU1_soil.jpg` 有土壤的岩面（起點：土壤）
+- `SU2_lichen.jpg` 地衣＋苔蘚附著岩面／`SU2_seedling.jpg` 土壤上的草本幼苗
+- `SU3_herb.jpg` 草本群落（草、開花植物）／`SU3_shrub.jpg` 灌木幼樹（有厚土壤）
+- `SU4_woodland.jpg` 樹林斷面（整張，寬圖 1000×558）
+- 提醒：土壤層由 SU1 到 SU4 逐步變厚；SU3_herb 的下方有石灰色底層，SU3_shrub 沒有，作為「從土壤開始」對照時需留意。

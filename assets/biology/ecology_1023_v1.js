@@ -48,6 +48,9 @@ const LAB={
  predators:P(`天敵`,`Predators`),snake:P(`黑眉錦蛇`,`Black-browed ratsnake`),eagle:P(`大冠鷲`,`Crested serpent eagle`),owl:P(`領角鴞`,`Collared scops owl`),
  increase:P(`增加`,`Increase`),decrease:P(`減少`,`Decrease`),unchanged:P(`不變`,`No change`),
  food:P(`食物`,`Food`),space:P(`空間`,`Space`),season:P(`季節`,`Season`),capacity:P(`環境負荷量`,`Carrying capacity`),more:P(`較多`,`More`),fewer:P(`較少`,`Fewer`),notFixedCap:P(`不是永遠固定的上限`,`Not a permanent fixed limit`),
+ foodGrass:P(`食物（草）`,`Food (grass)`),grassMore:P(`草多`,`Plenty of grass`),grassLess:P(`草少`,`Little grass`),changes:P(`會改變`,`Changes`),notOnlyFood:P(`不只看食物`,`Not only food`),
+ onlyCompare:P(`只比較較多、較少，不是真實數字`,`Compares more and fewer only; not real numbers`),exceedNote:P(`數量超過負荷量之後會怎麼變？還需要更多資料`,`What happens when numbers pass it? More data is needed`),
+ drySeason:P(`乾季`,`Dry season`),wetSeason:P(`雨季`,`Wet season`),
  // succession
  bareSoil:P(`保留土壤的裸地`,`Bare ground with soil`),bareRock:P(`沒有土壤的裸岩`,`Bare rock without soil`),pioneer:P(`先鋒`,`Pioneers`),herbs:P(`草本`,`Herbs`),shrubs:P(`灌木`,`Shrubs`),trees:P(`林木`,`Trees`),
  lichen:P(`地衣`,`Lichen`),moss:P(`苔蘚`,`Moss`),seeds:P(`種子`,`Seeds`),roots:P(`根`,`Roots`),thinSoil:P(`薄土`,`Thin soil`),thickSoil:P(`土變厚`,`Soil thickens`),
