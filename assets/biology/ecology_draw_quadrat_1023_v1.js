@@ -5,7 +5,7 @@
  *  0 too many: the whole meadow, every clump sways and breathes; "Study site" pill + one short line; a "Grass" tag.
  *  1 place and count: three equal white frames drop (fade + small bounce) one after another at set-specific places
  *    (random-looking, same size, no overlap); the clumps inside light up one by one with number badges 1, 2, 3 …;
- *    a count pill ("4 plants") on each frame; outside clumps fade to faint. Pills: Quadrat / Placed at random / Same size.
+ *    a count pill ("4 plants") under each frame; clumps about 75 px tall in 220 px frames (4 × 2 slots, never overlapping); outside clumps fade to faint. Pills: Quadrat / Placed at random / Same size.
  *  2 mean: the frames shrink into a column on the right (clumps kept), the meadow dims; yellow flowing arrows from the
  *    three count pills into the big equation (a + b + c) ÷ 3 = mean (K.MONO).
  *  3 scale up: the meadow comes back smaller with a 4 × 2 grid; the three frames slide into three grid cells, cells are
@@ -25,19 +25,20 @@ const fmt=v=>Number.isInteger(v)?String(v):v.toFixed(1);
 
 // ── grass pictures: base point x as a fraction of width (PIL: lowest opaque row) ─
 const GRASS=[{f:'EC3_foxtail.png',bx:.56},{f:'EC3_miscanthus.png',bx:.50},{f:'EC3_rice.png',bx:.40}];
-const HU=.19;                                   // clump height in cell units (1 cell = 1 quadrat side)
+const HU=.34;                                   // clump height in cell units (1 cell = 1 quadrat side; 220 px cell -> 75 px clump)
 
 // ── the study site: 4 × 2 cells; quadrat top-left corners per set (cell units) ─
 const COLS=4,ROWS=2;
 const QPOS=[[[.25,.15],[1.7,.85],[2.85,.2]],[[.1,.9],[1.3,.05],[2.6,.75]],[[.55,.6],[1.8,.12],[2.95,.92]]];
 const SNAP=QPOS.map(set=>set.map(([x,y])=>[Math.max(0,Math.min(COLS-1,Math.round(x))),Math.max(0,Math.min(ROWS-1,Math.round(y)))]));
 // slots inside a quadrat (local 0..1): 3 columns × 3 rows of clump bases
-const SLOTS=[];for(const y of[.37,.59,.81])for(const x of[.2,.5,.8])SLOTS.push([x,y]);
+// slots inside a quadrat (local 0..1): 4 columns x 2 rows of clump bases; row 1 tops (.94-.34=.60) stay below row 0 bases (.47)
+const SLOTS=[];for(const y of[.47,.94])for(const x of[.14,.38,.62,.86])SLOTS.push([x,y]);
 
 // background clumps: one fixed scatter for the whole meadow (same for every set)
 const BG=(()=>{const r=K.rng(1023),out=[];
-  for(let n=0;n<400&&out.length<46;n++){const x=.12+r()*3.76,y=.26+r()*1.68;
-    if(out.every(p=>Math.hypot(p.x-x,(p.y-y)*1.3)>.27))out.push({x,y,g:Math.floor(r()*3),s:.86+r()*.28,ph:r()*TAU,fl:r()<.5});}
+  for(let n=0;n<600&&out.length<30;n++){const x=.12+r()*3.76,y=.44+r()*1.5;
+    if(out.every(p=>Math.abs(p.x-x)>.3||Math.abs(p.y-y)>.42))out.push({x,y,g:Math.floor(r()*3),s:.9+r()*.2,ph:r()*TAU,fl:r()<.5});}
   return out;})();
 const SPECK=(()=>{const r=K.rng(77),out=[];for(let i=0;i<190;i++)out.push([r()*COLS,r()*ROWS,1+r()*2.2,r()<.5]);return out;})();
 const CACHE={};
@@ -49,7 +50,7 @@ function build(set){
   const quads=pos.map(([qx,qy],i)=>{const r=K.rng(500+set*10+i),idx=SLOTS.map((_,j)=>j);
     for(let j=idx.length-1;j>0;j--){const m=Math.floor(r()*(j+1));[idx[j],idx[m]]=[idx[m],idx[j]];}
     const pick=idx.slice(0,q[i]).sort((a,b)=>a-b);
-    return{qx,qy,n:q[i],cl:pick.map(j=>({x:SLOTS[j][0]+(r()-.5)*.06,y:SLOTS[j][1]+(r()-.5)*.04,g:Math.floor(r()*3),s:1,ph:r()*TAU,fl:r()<.5}))};});
+    return{qx,qy,n:q[i],cl:pick.map(j=>({x:SLOTS[j][0]+(r()-.5)*.03,y:SLOTS[j][1]-r()*.03,g:Math.floor(r()*3),s:1,ph:r()*TAU,fl:r()<.5}))};});
   return CACHE[set]={bg,quads,q};
 }
 
@@ -104,11 +105,11 @@ const plantsP=n=>{const p=L('plants','株','plants');return[`${n} ${p[0]}`,n===1
 const DROP=i=>.2+i*1.5;                            // step 1: frame i lands
 const LIT=(i,j)=>DROP(i)+.55+j*.14;                 // step 1: clump j of frame i lights up
 const COUNT=(i,n)=>DROP(i)+.55+n*.14+.15;           // step 1: the count pill appears
-const bgA=(k,tau)=>k===0?1:k===1?1-.6*fade(tau,.1,.8):.4;
+const bgA=(k,tau)=>k===0?1:k===1?1-.45*fade(tau,.1,.8):.55;
 const fieldA=k=>k===2?.13:1;
 const frameA=(k,i,tau)=>k===0?0:k===1?fade(tau,DROP(i),.45):1;
 const fillA=k=>k>=2?.94:0;
-const clumpIn=(k,i,j,tau)=>k===0?1:k===1?(tau>=LIT(i,j)?mix(.4,1,fade(tau,LIT(i,j),.25)):.4):1;
+const clumpIn=(k,i,j,tau)=>k===0?1:k===1?(tau>=LIT(i,j)?mix(.55,1,fade(tau,LIT(i,j),.25)):.55):1;
 const badgeA=(k,i,j,tau)=>k===1?fade(tau,LIT(i,j),.25):0;
 const swayAmp=k=>k===0?.075:.045;
 function dropY(k,i,tau){if(k!==1)return 0;const p=clamp((tau-DROP(i))/.45),b=clamp((tau-DROP(i)-.45)/.3);return -40*(1-ease(p))+(b>0&&b<1?-7*Math.sin(b*Math.PI):0);}
@@ -140,7 +141,7 @@ function scene(c,set,G,t){
       c.strokeStyle=WHITE;c.lineWidth=3+1.2*pu;c.strokeRect(RF.x,RF.y,RF.w,RF.h);c.restore();});
     // number badges while counting (step 1)
     Q.cl.forEach((cl,j)=>{const ba=mix(badgeA(a,i,j,ta),badgeA(b,i,j,tb),u);if(ba<=0)return;
-      const bx=R.x+cl.x*R.w-HU*R.w*.42,by=R.y+cl.y*R.h-HU*R.w*.86;
+      const bx=R.x+cl.x*R.w,by=R.y+cl.y*R.h-HU*R.w-2;
       if(tb-LIT(i,j)<.6&&b===1)glow(c,bx,by,26,YELLOW,.5*(1-fade(tb,LIT(i,j)+.2,.4)));badge(c,bx,by,j+1,ba);});
   });
   return{F,rects,S};
@@ -173,7 +174,7 @@ function lab1(c,g,tau,t,a){withA(c,a,()=>{
   // count pill on each frame
   g.S.quads.forEach((Q,i)=>{const R=g.rects[i];withA(c,fade(tau,COUNT(i,Q.n),.35),()=>{
     const s=1+.05*Math.sin(t*2.6+i)*(tau<COUNT(i,Q.n)+1?1:.4);
-    tag(c,plantsP(Q.n),R.x+R.w/2,R.y-24*s,{al:'center',col:YELLOW,active:true,size:28});});});
+    tag(c,plantsP(Q.n),R.x+R.w/2,R.y+R.h+8+3*(s-1)/.05,{al:'center',col:YELLOW,active:true,size:28});});});
 });}
 
 const EQ={x:60,y:276,size:46};
@@ -204,11 +205,11 @@ const RX=632;
 function lab3(c,g,tau,t,a){withA(c,a,()=>{
   const q=g.S.q,avg=(q[0]+q[1]+q[2])/3,est=avg*QAREA(),F=g.F,uu=F.w/COLS,set=g.set;
   const p=tag(c,L('estimate','估計','Estimate'),24,18,{col:YELLOW,active:true,size:30});
-  tag(c,L('about','約','about'),p.x+p.w+14,22,{col:YELLOW,active:tau>=3.6&&tau<5});
+  tag(c,L('about','約','about'),p.x+p.w+14,22,{col:YELLOW,active:tau>=1.6&&tau<3.2});
   tag(c,SITE(),F.x,F.y-50,{col:WHITE});
   // cells 1–8 numbered in turn; the five unsampled cells show ≈ mean
   const samp=SNAP[set].map(([x,y])=>y*COLS+x);
-  for(let j=0;j<ROWS;j++)for(let i=0;i<COLS;i++){const n=j*COLS+i,t0=.5+n*.32,cx=F.x+i*uu,cy=F.y+j*uu;
+  for(let j=0;j<ROWS;j++)for(let i=0;i<COLS;i++){const n=j*COLS+i,t0=.3+n*.14,cx=F.x+i*uu,cy=F.y+j*uu;
     withA(c,fade(tau,t0,.35),()=>{
       if(!samp.includes(n)){const s=`≈ ${fmt(avg)}`,w=measure(c,s,26,MONO)+22;
         D.round(c,cx+uu/2-w/2,cy+uu/2-18,w,40,12,'rgba(11,26,21,.82)',rgba(YELLOW,.55));
@@ -221,17 +222,17 @@ function lab3(c,g,tau,t,a){withA(c,a,()=>{
   withA(c,fade(tau,.8,.5),()=>{const b=tag(c,L('quadrat','樣方','Quadrat'),F.x+F.w,F.y+F.h+10,{al:'right',col:WHITE});
     const sx=b.x-34,sy=b.y+b.h/2;c.save();c.strokeStyle=WHITE;c.lineWidth=3;c.strokeRect(sx,sy-11,22,22);c.restore();});
   // equation: mean × 8 = estimate
-  withA(c,fade(tau,3.2,.6),()=>{
+  withA(c,fade(tau,.8,.5),()=>{
     const s1=`${fmt(avg)} × ${QAREA()}`,sz=56,y1=226;
     text(c,s1,RX,y1,sz,WHITE,'left',MONO);
     const mx=RX+measure(c,fmt(avg),sz,MONO)/2,ex=RX+measure(c,`${fmt(avg)} × `,sz,MONO)+measure(c,String(QAREA()),sz,MONO)/2;
     tag(c,L('mean','平均','Mean'),mx,y1+18,{al:'center',col:YELLOW});
     tag(c,L('times8','8 倍','8 times'),ex+10,y1+18,{al:'center',col:WHITE});});
-  withA(c,fade(tau,4.0,.6),()=>{const y=372,s=`= ${fmt(est)}`;
+  withA(c,fade(tau,1.1,.5),()=>{const y=372,s=`= ${fmt(est)}`;
     glow(c,RX+90,y-22,120+8*Math.sin(t*1.7),YELLOW,.18);
     text(c,s,RX,y,64,YELLOW,'left',MONO);const w=measure(c,s,64,MONO);text(c,L('plants','株','plants'),RX+w+14,y,32,YELLOW);
     tag(c,L('estimate','估計','Estimate'),RX,y+22,{col:YELLOW});});
-  withA(c,fade(tau,4.8,.6),()=>K.wrap(c,L('notCensus','估計值，不是精確普查','An estimate, not an exact census'),F.x,F.y+F.h+92,F.w-150,22,ORANGE));
+  withA(c,fade(tau,2.2,.5),()=>K.wrap(c,L('notCensus','估計值，不是精確普查','An estimate, not an exact census'),F.x,F.y+F.h+92,F.w-150,22,ORANGE));
 });}
 
 const LABS=[lab0,lab1,lab2,lab3];
