@@ -5,14 +5,15 @@
  *   left    the scene (x 16..468): the teacher's Gemini AI blocks, background removed (transparent PNG), pasted straight
  *           on the board colour (no frame, no crop). All 800-wide blocks use one scale (0.45) and one centre (x 242),
  *           and their block bottom row (PIL: last row whose opaque width > 60 %) sits on one ground line GY, so the block
- *           never jumps during a cross-fade. SU4_forest 1000×495 is drawn 452 wide on the same ground line; the free space
- *           above it holds a name card: EC8_camphor_tree + "Trees, e.g. camphor tree".
+ *           never jumps during a cross-fade. SU3_thin 676×689 (herbs on a thin soil over bare rock) uses the same 0.45 scale,
+ *           so it is narrower. SU4_forest 1000×649 (dense woodland, thick soil, pale weathered rock at the bottom) is drawn
+ *           452 wide on the same ground line; the space above it holds a name card: EC8_camphor_tree + "Trees, e.g. camphor tree".
  *           origin 0: SU1_soil → SU2_seedling → SU3_herb → SU3_shrub → SU4_forest
- *           origin 1: SU1_rock → SU2_lichen  → SU3_herb → SU3_shrub → SU4_forest
+ *           origin 1: SU1_rock → SU2_lichen  → SU3_thin → SU3_shrub → SU4_forest
  *           Every visible thing has a name tag with a leader; anchors were measured on the PNGs (picture pixels).
  *           Not in the pictures, so drawn here and named: seeds in the soil (origin 0, stage 0), herb seedlings on the soil
  *           (origin 0, stage 1; the cut-out removed them) and moss tufts on the rock top (origin 1, stage 1; also removed).
- *           "Rock" is tagged only where rock shows: SU1_soil, SU1_rock, SU2_seedling, SU2_lichen, SU4_forest.
+ *           "Rock" is tagged only where rock shows: SU1_soil, SU1_rock, SU2_seedling, SU2_lichen, SU3_thin, SU4_forest.
  *   right   "Community makeup": one schematic bar per group (no numbers); origin 0 rows herbs / shrubs / trees,
  *           origin 1 adds lichen and moss. Under it three schematic meters: soil depth, water held, light at ground.
  *           Then "Early arrivals change conditions": cause pill → effect pill for this stage; the meter that changes glows.
@@ -33,14 +34,14 @@ const PX=16,PY=72,PW=452,PH=462;                       // scene area
 const RX=486,RW=CW-16-RX;                               // right column
 const SCX=PX+PW/2,GY=526,S800=.45,FOREST='SU4_forest.png',S4=PW/1000;
 // block bottom row of each picture (PIL: last row whose opaque width > 60 % of the picture)
-const BOT={'SU1_rock.png':814,'SU1_soil.png':809,'SU2_lichen.png':807,'SU2_seedling.png':804,'SU3_herb.png':817,'SU3_shrub.png':986,'SU4_forest.png':475};
+const BOT={'SU1_rock.png':814,'SU1_soil.png':809,'SU2_lichen.png':807,'SU2_seedling.png':804,'SU3_herb.png':817,'SU3_shrub.png':986,'SU3_thin.png':684,'SU4_forest.png':643};
 function rectOf(f){const [W,H]=dim(f),sc=f===FOREST?S4:S800;return{x:SCX-W*sc/2,y:GY-BOT[f]*sc,w:W*sc,h:H*sc,s:sc};}
 // picture pixel → canvas
 function mapPt(f,ix,iy){const r=rectOf(f);return[r.x+ix*r.s,r.y+iy*r.s];}
 
 // pictures per origin and stage
 const FILES=[['SU1_soil.png','SU2_seedling.png','SU3_herb.png','SU3_shrub.png',FOREST],
-             ['SU1_rock.png','SU2_lichen.png','SU3_herb.png','SU3_shrub.png',FOREST]];
+             ['SU1_rock.png','SU2_lichen.png','SU3_thin.png','SU3_shrub.png',FOREST]];
 // name tags on each picture: [label key, anchor in picture px, tag x, tag y, align]
 const TAGS={
  'SU1_soil.png':[['seeds',[390,100],24,98,'left'],['roots',[262,205],136,98,'left'],['soil',[650,150],460,98,'right'],['rock',[300,600],24,470,'left']],
@@ -49,7 +50,9 @@ const TAGS={
  'SU2_lichen.png':[['moss',[190,18],24,98,'left'],['lichen',[686,320],460,98,'right'],['rock',[300,600],24,470,'left']],
  'SU3_herb.png':[['herbs',[250,200],24,98,'left'],['litter',[243,443],24,318,'left'],['soil',[300,620],24,440,'left']],
  'SU3_shrub.png':[['shrubs',[186,257],24,78,'left'],['herbs',[686,429],460,300,'right'],['litter',[286,514],24,300,'left'],['roots',[400,686],460,400,'right'],['soil',[129,857],24,470,'left']],
- 'SU4_forest.png':[['trees',[500,80],242,262,'center'],['herbs',[150,285],24,262,'left'],['soil',[600,360],460,262,'right'],['rock',[450,450],20,486,'left']]};
+ 'SU3_thin.png':[['herbs',[220,40],24,150,'left'],['soilThin',[300,85],460,150,'right'],['rock',[330,400],24,470,'left']],
+ 'SU4_forest.png':[['trees',[300,150],24,194,'left'],['herbsFerns',[433,400],24,356,'left'],['litter',[556,428],460,356,'right'],
+   ['soil',[250,490],24,420,'left'],['roots',[500,522],460,420,'right'],['rock',[400,610],24,484,'left']]};
 // drawn by program (picture px): seeds in the SU1_soil soil band, seedlings on the SU2_seedling soil top, moss on the SU2_lichen rock top
 const SEEDS=[[120,140,.4],[250,230,1.1],[390,100,0],[470,250,2],[600,180,.7],[700,110,1.6],[330,170,2.4],[160,262,.2]];
 const SPROUTS=[[110,44],[210,44],[300,46],[385,46],[470,42],[620,42],[705,44]];
@@ -61,7 +64,7 @@ const ROWS=[[['herbs',GREEN],['shrubs','#a3e635'],['trees','#34d399']],
 const AB=[[[0,0,0],[.4,0,0],[.9,0,0],[.55,.75,0],[.25,.35,.85]],
           [[0,0,0,0,0],[.75,.5,0,0,0],[.35,.45,.8,0,0],[.15,.3,.5,.75,0],[.1,.3,.25,.35,.85]]];
 // environment meters (schematic): soil depth, water held, light at ground
-const ENV=[{soil:[.35,.38,.62,.8,.9],water:[.3,.35,.6,.75,.85]},{soil:[0,.12,.45,.7,.86],water:[.05,.15,.5,.7,.82]}];
+const ENV=[{soil:[.35,.38,.62,.8,.9],water:[.3,.35,.6,.75,.85]},{soil:[0,.12,.3,.7,.86],water:[.05,.15,.35,.7,.82]}];
 const LIGHT=[1,1,.88,.6,.25];
 // cause → effect per stage; meter index that glows (0 soil, 1 water, 2 light)
 const CAUSE=o=>[o?[['noSoil'],null,-1]:[['soilHolds'],null,-1],
@@ -96,7 +99,7 @@ function sprouts(c,f,a,t){withA(c,a,()=>SPROUTS.forEach(([ix,iy],i)=>{const [x,y
 function moss(c,f,a,t){withA(c,a,()=>MOSS.forEach(([ix,iy],i)=>{const [x,y]=mapPt(f,ix,iy),b=.5+.5*Math.sin(t*1.8+i);
   const r=K.rng(90+i);for(let q=0;q<9;q++){const dx=(r()-.5)*30,dy=(r()-.5)*6-2,rr=4+r()*3;circle(c,x+dx,y+dy,rr+b*.6,q%2?'#6fa83a':'#9ccc4f',rgba(C.deep,.6),1);}}));}
 function tags(c,f,a,t){withA(c,a,()=>(TAGS[f]||[]).forEach(([key,[ix,iy],x,y,al])=>{
-  const [ax,ay]=mapPt(f,ix,iy),col=key==='seeds'?SEED:key==='rock'||key==='rockShort'||key==='noSoil'?WHITE:key==='soil'?BROWN:key==='lichen'?ORANGE:GREEN;
+  const [ax,ay]=mapPt(f,ix,iy),col=key==='seeds'?SEED:key==='rock'||key==='rockShort'||key==='noSoil'?WHITE:key==='soil'||key==='soilThin'?BROWN:key==='lichen'?ORANGE:GREEN;
   const p=L(key,key,key),w=measure(c,p,22)+28,bx=al==='right'?x-w:al==='center'?x-w/2:x;
   leader(c,{x:bx,y,w,h:40},ax,ay,t,col);tag(c,p,x,y,{al,col});}));}
 function camphorCard(c,a,t){withA(c,a,()=>{const y=PY+14,h=104,x=PX+8,w=PW-16;
