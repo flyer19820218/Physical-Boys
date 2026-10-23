@@ -122,8 +122,8 @@
   function make(o,def) {
     o=o||{};const pics=o.pics||[],selected=s=>pics[clamp(Math.round(finite(s.photo)),0,pics.length-1)];
     return {...o,modelKind:def.kind,init:()=>({running:true,elapsed:0,view:0,photo:0,angle:0,pitch:32,spin:true,...def.initial,...(o.initial||{})}),
-      sources:o.sources!==undefined?o.sources:pics.map(p=>({name:p.name,page:p.page})),
-      controls(s){const gs=s.view===1&&pics.length?[]:def.controls(s);if(s.view===1&&pics.length>1)gs.push(choices(P('原圖比較','Compare originals'),'photo',pics.map(q=>q.name)));if(s.view!==1&&(typeof def.three==='function'?def.three(s):def.three))gs.push(rotationControls(s));if(pics.length)gs.unshift(choices(P('圖像','Image view'),'view',[P('互動模型','Interactive model'),P('課本原圖','Textbook original')]));return gs;},
+      sources:o.sources!==undefined?o.sources:pics.map(p=>({name:p.name,page:p.page,ai:!!p.ai})),
+      controls(s){const gs=s.view===1&&pics.length?[]:def.controls(s);if(s.view===1&&pics.length>1)gs.push(choices(pics.some(q=>q.ai)?P('圖像比較','Compare images'):P('原圖比較','Compare originals'),'photo',pics.map(q=>q.name)));if(s.view!==1&&(typeof def.three==='function'?def.three(s):def.three))gs.push(rotationControls(s));if(pics.length)gs.unshift(choices(P('圖像','Image view'),'view',[P('互動模型','Interactive model'),pics.every(q=>q.ai)?P('教學插圖','Illustration'):pics.some(q=>q.ai)?P('插圖與原圖','Illustrations and originals'):P('課本原圖','Textbook original')]));return gs;},
       act(s,key,value){
         if(key==='view'){s.view=Number(value)===1&&pics.length?1:0;return;}
         if(key==='photo'){s.photo=clamp(Math.round(finite(value)),0,pics.length-1);return;}
@@ -137,7 +137,7 @@
         if(s.view===1&&pics.length){
           const p=selected(s);c.fillStyle=C.bg;c.fillRect(0,0,960,600);text(c,D,p.name,28,36,904,24,C.yellow);
           D.image(c,p.file,24,84,912,426);
-          text(c,D,P(`課本原圖・獨立顯示，未疊加模型`,`Textbook original; displayed separately`),28,552,904,22,C.muted);
+          text(c,D,p.ai?P(`AI 教學插圖（非實拍）・獨立顯示，未疊加模型`,`AI teaching illustration, not a photograph; displayed separately`):P(`課本原圖・獨立顯示，未疊加模型`,`Textbook original; displayed separately`),28,552,904,22,C.muted);
         }else def.draw(c,s,Math.max(0,finite(time)),D);
         c.restore();
       },

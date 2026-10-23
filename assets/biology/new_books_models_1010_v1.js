@@ -6,10 +6,10 @@ const colors=['#55e9ff','#fb923c','#4ade80','#f472b6','#fde047'];
 function header(c,title){D.text(c,title,30,42,{color:'#fde047',size:28,max:900});}
 function note(c,p,x,y,w,color='#f2ecd9'){return D.wrap(c,p,x,y,w,{size:24,line:34,color});}
 function panel(c,x,y,w,h){D.round(c,x,y,w,h,14,'#1c3d34','#6a9787');}
-function source(q){return {name:q.name,page:q.page,figure:q.figure||'照片'};}
+function source(q){return {name:q.name,page:q.page,figure:q.figure||'照片',ai:!!q.ai};}
 function gallery(o){return {...o,noPause:true,init:()=>({pick:0,compare:false,running:false}),sources:o.pics.map(source),
- controls:s=>[group(P('觀察原圖','Original images'),o.pics.map((q,i)=>item(q.name,'pick',i))),group(P('畫面','View'),[item(P('單張放大','Single close-up'),'compare',false),...(o.pics.length>1?[item(P('兩張比較','Compare two'),'compare',true)]:[])])],
- draw(c,s){header(c,o.title);const q=o.pics[s.pick];if(s.compare&&o.pics.length>1){const r=o.pics[(s.pick+1)%o.pics.length];[q,r].forEach((p,i)=>{D.round(c,24+i*472,72,448,450,14,'#f8f6eb');D.image(c,p.file,38+i*472,88,420,394);D.text(c,p.name,248+i*472,512,{align:'center',color:'#143a2e',max:420});});}else {D.round(c,24,68,912,478,14,'#f8f6eb');D.image(c,q.file,40,82,880,446);}D.text(c,P('拖曳／雙指縮放查看細節','Drag / pinch to inspect details'),480,581,{align:'center',size:22,max:900,color:'#55e9ff'});},
+ controls:s=>[group(o.pics.some(q=>q.ai)?P('觀察圖像','Images'):P('觀察原圖','Original images'),o.pics.map((q,i)=>item(q.name,'pick',i))),group(P('畫面','View'),[item(P('單張放大','Single close-up'),'compare',false),...(o.pics.length>1?[item(P('兩張比較','Compare two'),'compare',true)]:[])])],
+ draw(c,s){header(c,o.title);const q=o.pics[s.pick];if(s.compare&&o.pics.length>1){const r=o.pics[(s.pick+1)%o.pics.length];[q,r].forEach((p,i)=>{D.round(c,24+i*472,72,448,450,14,p.ai?'#1c3d34':'#f8f6eb');D.image(c,p.file,38+i*472,88,420,394);D.text(c,p.name,248+i*472,512,{align:'center',color:p.ai?'#f2ecd9':'#143a2e',max:420});});}else {D.round(c,24,68,912,478,14,q.ai?'#1c3d34':'#f8f6eb');D.image(c,q.file,40,82,880,446);}D.text(c,P('拖曳／雙指縮放查看細節','Drag / pinch to inspect details'),480,581,{align:'center',size:22,max:900,color:'#55e9ff'});},
  explain:s=>({title:o.pics[s.pick].name,text:o.pics[s.pick].text}),act(s,k,v){s[k]=v;}};}
 function sequence(o){const phase=s=>s.running?Math.floor(s.elapsed/3)%o.steps.length:s.step;return {...o,init:()=>({step:0,running:false,elapsed:0}),sources:(o.pics||[]).map(source),
  controls:s=>[group(P('操作流程','Explore the sequence'),o.steps.map((q,i)=>item(q.name,'step',i))),group(P('播放','Playback'),[item(P('循環演示','Play sequence'),'auto',true)])],
