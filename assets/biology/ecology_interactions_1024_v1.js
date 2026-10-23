@@ -79,7 +79,7 @@ const MU_NAMES=[P(`小丑魚住進海葵的觸手裡`,`A clownfish lives among a
 const MU_TEXT=[
  P(`小丑魚長時間躲在海葵的觸手之間。這種兩種生物長期住在一起的關係，叫共生。共生有好幾種，要再看各自得失才能分。（AI 插圖，非實拍。）`,`A clownfish spends long periods among an anemone's tentacles. Two kinds of organisms living together over time is called symbiosis. There are several kinds, which we tell apart by what each side gains or loses. (AI illustration, not a photo.)`),
  P(`小丑魚得到保護和住處，敵人不容易靠近；海葵也可能因小丑魚趕走一些吃牠的魚而受益。雙方都得到好處。`,`The clownfish gains protection and a home, since enemies find it hard to approach; the anemone may also benefit because the clownfish drives off some fish that feed on it. Both sides gain.`),
- P(`雙方都得益，叫互利共生，記＋／＋。共生不等於互利：片利共生和寄生也是共生，要看雙方各自得失才分得出來。`,`When both sides gain it is mutualism, marked + / +. Symbiosis does not always mean mutual benefit: commensalism and parasitism are symbiosis too, and only what each side gains or loses tells them apart.`)];
+ P(`雙方都得益，叫互利共生，記＋／＋。清潔魚得到食物，大魚身上的寄生蟲和髒物被清掉，也是互利共生。共生不等於互利：片利共生和寄生也是共生，要看雙方各自得失才分得出來。`,`When both sides gain it is mutualism, marked + / +. A cleaner fish gets food while the large fish has parasites and debris removed, which is mutualism too. Symbiosis does not always mean mutual benefit: commensalism and parasitism are symbiosis too, and only what each side gains or loses tells them apart.`)];
 
 // ── symbiosis / commens ────────────────────────────────────────────────────
 const CM_SHORT=[P(`長在樹上`,`Growing on a tree`),P(`貼在鯊魚身上`,`On a shark`),P(`0 的意思`,`What 0 means`)];
