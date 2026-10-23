@@ -34,6 +34,7 @@ const LAB={
  sparrow:P(`麻雀`,`Sparrow`),sparrowFlock:P(`約 8 隻麻雀`,`About 8 sparrows`),sameSpecies:P(`同種`,`Same species`),sameTime:P(`同時`,`Same time`),samePlace:P(`同地`,`Same place`),
  grass:P(`草`,`Grass`),grasshopper:P(`蚱蜢`,`Grasshopper`),butterfly:P(`蝴蝶`,`Butterfly`),web:P(`蜘蛛網`,`Spider web`),mushroom:P(`蕈類`,`Mushrooms`),log:P(`枯木`,`Dead log`),
  puddle:P(`水坑`,`Puddle`),soil:P(`土壤`,`Soil`),light:P(`光`,`Light`),air:P(`空氣`,`Air`),living:P(`生物`,`Living things`),nonliving:P(`非生物環境`,`Nonliving environment`),
+ otherSpecies:P(`不同種`,`Different species`),ecoParts:P(`生物＋非生物環境＋互相作用`,`Organisms + nonliving environment + interactions`),
  onlyOrganisms:P(`群集只算生物`,`A community counts organisms only`),eats:P(`被吃`,`Eaten`),decomposes:P(`分解`,`Decomposes`),
  // quadrat
  quadrat:P(`樣方`,`Quadrat`),plants:P(`株`,`plants`),mean:P(`平均`,`Mean`),site:P(`研究區`,`Study site`),times8:P(`8 倍`,`8 times`),estimate:P(`估計`,`Estimate`),about:P(`約`,`about`),
