@@ -6,6 +6,7 @@
 - 提示詞：`../ecology_ai_prompts_1023.md`（EC0～EC16，英文咒語；檔頭的單元規畫已過時，以 `../ecology_plan_1023.md` v2 為準）。
 - 這批圖還沒有接進任何課；課本原圖 `../ecology_originals_1010_v1/` 沒有刪除，現行四課仍在使用。
 - 這批 18 張全部都有，不缺。
+- 補圖（2026-10-23）：`EC4_rabbit.png`（臺灣野兔，初級消費者，食物網「兔」卡片用），Gemini 生成，白底去背 1091×1183；原圖 `local-backups/20261023/ecology_ai_originals/EC4_rabbit_gemini_original.jpg`；重跑：`python3 -I cut_ecology_1023.py <原圖資料夾> rabbit`。耳朵邊緣有極細的淺色點，貼在黑板底上看不出。
 
 ## 原圖與輸出對照
 
