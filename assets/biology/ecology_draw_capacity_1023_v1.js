@@ -4,7 +4,7 @@
  *   left   a meadow panel: sky, ground line GY, soil band. 10 grass clumps (EC3_foxtail 549 × 919 / EC3_miscanthus 774 × 1141,
  *          alternating, bottom of the picture = ground, PIL: opaque to the bottom row) sway; 8 field mice (EC4_vole 634 × 568,
  *          feet at 491/568, faces left, some mirrored) bob on the ground. Tags: "Food (grass)" with a leader to one clump,
- *          "Field mouse" with a leader to one mouse. AI note + "Schematic" in the soil band.
+ *          "Field mouse" with a leader to one mouse (both present in every step). AI note + "Schematic" in the soil band.
  *   right  two bars: "Food (grass)" (green) → "Carrying capacity" (yellow, dashed top line). No scale, no numbers;
  *          the level words "More" / "Fewer" are written inside the fill (22 px, measured, fits both languages).
  *  0 plenty of food: all 10 clumps, 8 mice; both bars high, "More".
@@ -33,8 +33,8 @@ const GRASS=Array.from({length:10},(_,i)=>{const r=K.rng(40+i),fox=i%2===0;
 const VOLES=[[86,0,0],[146,1,1],[206,0,0],[268,1,0],[322,0,1],[384,1,0],[442,0,1],[502,1,0]].map(([x,row,flip],i)=>({x,y:GY+(row?22:8),flip:!!flip,ph:i*1.3}));
 // which clumps / mice are there in each step
 const G_ON=[[0,1,2,3,4,5,6,7,8,9],[1,5,8],[0,2,4,5,7,9]];
-const V_ON=[[0,1,2,3,4,5,6,7],[1,4,6],[0,2,4,6,7]];
-const GTAG=5,VTAG=6;
+const V_ON=[[0,1,2,3,4,5,6,7],[1,4,6],[0,2,3,4,6]];
+const GTAG=5,VTAG=4;                                     // tagged clump / mouse: present in every step
 const LEVEL=[{food:.86,cap:.8},{food:.3,cap:.32},{food:.6,cap:.56}];
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -80,9 +80,8 @@ function bar(c,b,lv,col,word,t,dashTop){
   c.fillStyle=rgba(col,.85);c.beginPath();c.moveTo(b.x,BY1);c.lineTo(b.x,top+rip);
   c.quadraticCurveTo(b.x+b.w/2,top-rip,b.x+b.w,top+rip);c.lineTo(b.x+b.w,BY1);c.closePath();c.fill();c.restore();
   if(dashTop){c.save();c.setLineDash([10,7]);c.lineDashOffset=-t*24;K.line(c,[[b.x-14,top],[b.x+b.w+14,top]],YELLOW,3.5);c.restore();}
-  if(word&&word.a>0)withA(c,word.a,()=>{let s=22;const cx=b.x+b.w/2;
-    while(s>18&&measure(c,word.p,s)>b.w-12)s--;            // fits at 22 px in both languages (checked); floor kept at 22 by design
-    text(c,word.p,cx,top+34,s,C.deep,'center');});
+  // level word inside the fill: 22 px; measured widest is "Fewer" ≈ 62 px < bar 90 px, so it never needs shrinking
+  if(word&&word.a>0)withA(c,word.a,()=>text(c,word.p,b.x+b.w/2,top+34,22,C.deep,'center'));
   return top;
 }
 
@@ -124,7 +123,7 @@ function draw(c,s,t){
   c.restore();
   // season icon: step 1 sun (dry season); step 2 sun ↔ cloud
   const sx=MX+56,sy=MY+52,cyc=mod(t/6.4);
-  const wetA=clamp(Math.sin(cyc*TAU-Math.PI/2)*1.6+.5);
+  const wetA=clamp(Math.sin(cyc*TAU-Math.PI/2)*6+.5);           // short cross-fade, so the two season tags barely overlap
   sun(c,sx,sy,t,w1+w2*(1-wetA));cloud(c,sx,sy,t,w2*wetA);
   if(w2>0&&fi===3)withA(c,w2,()=>glow(c,sx,sy,60,CYAN,.2+.08*Math.sin(t*4)));
 
@@ -143,8 +142,10 @@ function draw(c,s,t){
     withA(c,wetA,()=>tag(c,L('wetSeason','雨季','Wet season'),sx+46,sy+4,{col:CYAN}));});
   // space + predator tags
   withA(c,w2,()=>{const r=tag(c,L('space','空間','Space'),MX+MW/2+150,196-20,{al:'center',col:CYAN,active:fi===1});if(fi===1)ring(c,r,t,CYAN);
-    const pr=tag(c,L('predators','天敵','Predators'),MX+MW-12,GY-170,{al:'right',col:ORANGE,active:fi===2});if(fi===2)ring(c,pr,t,ORANGE);
-    tag(c,L('snake','黑眉錦蛇','Black-browed ratsnake'),MX+MW-12,GY-124,{al:'right',col:WHITE});});
+    // stacked above the mouse tag (which sits at y ≈ 325–365); a leader drops from the name to the snake
+    const nm=tag(c,L('snake','黑眉錦蛇','Black-browed ratsnake'),MX+MW-12,GY-168,{al:'right',col:WHITE});
+    const lx=sn.x+sn.w*.62;K.line(c,[[lx,nm.y+nm.h],[lx,sn.y+18]],rgba(ORANGE,.85),2.5);
+    const pr=tag(c,L('predators','天敵','Predators'),MX+MW-12,GY-214,{al:'right',col:ORANGE,active:fi===2});if(fi===2)ring(c,pr,t,ORANGE);});
   // AI note in the soil band
   {const ai=L('aiNote','AI 插圖，非實拍','AI illustration, not a photo'),w=measure(c,ai,22)+20;
     D.round(c,MX+10,GY+32,w,34,10,'rgba(11,26,21,.8)',null);text(c,ai,MX+20,GY+56,22,C.muted);
