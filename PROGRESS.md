@@ -52,6 +52,11 @@
 - 瀏覽器自動要的 `favicon.ico` 會 404，不影響內容。要不要放一個？
 - 遺傳四課的封面會多一個 404（`assets/biology/assets/covers/…`）：共用外殼把封面設成 CSS 變數，被當成相對於 CSS 檔的路徑。封面本身用 `<img>` 顯示正常，不影響畫面；要修得動共用的 `new_books_shell_1010_v1.js`。
 
+## 生物圈與生態關係（換圖進行中，2026-10-23）
+
+- 現有四課 17 分頁尚未改動。18 張 Gemini 插圖已去背入庫：`assets/biology/ecology_ai_1023/`（對照與瑕疵見 `sources.md`），原圖在 `local-backups/20261023/ecology_ai_originals/`。
+- 規畫見 `assets/biology/ecology_plan_1023.md`（v2）：一課一個新對話，階段 1 只換圖；L3、L4 封面待老師決定。
+
 ## 注意事項
 
 - 老師的電腦本機落後 GitHub（2026-10-20 時）。要在電腦上改教材之前，先 `git pull`；本機未提交的 `weather_cloud_rain_2` 相關四個檔案要先 stash 或刪除，否則會擋住 pull。

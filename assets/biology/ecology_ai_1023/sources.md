@@ -3,7 +3,7 @@
 - 生成工具：Google Gemini（老師生成並提供，2026-10-23）。性質：AI 教學插圖，非實拍照片；顏色與細節是人工畫的，大小不代表真實大小；頁面上要標「AI 插圖／教學示意」。
 - 原始檔：`local-backups/20261023/ecology_ai_originals/`（18 張，檔名 `ECx_gemini_original.jpg`，原圖 2576×1438；EC8 為 1792×2400）。
 - 處理程式：`cut_ecology_1023.py`（本資料夾）。白底／灰底去背、去白邊、依左右空隙切成單張，最長邊縮到 1400 px。重跑：`python3 -I cut_ecology_1023.py <原圖資料夾>`。
-- 提示詞：`../ecology_plan_1023.md`（EC0～EC16，英文咒語）。
+- 提示詞：`../ecology_ai_prompts_1023.md`（EC0～EC16，英文咒語；檔頭的單元規畫已過時，以 `../ecology_plan_1023.md` v2 為準）。
 - 這批圖還沒有接進任何課；課本原圖 `../ecology_originals_1010_v1/` 沒有刪除，現行四課仍在使用。
 - 這批 18 張全部都有，不缺。
 
