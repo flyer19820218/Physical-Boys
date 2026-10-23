@@ -63,5 +63,5 @@
 ## 進度
 
 - [x] 計畫、共用工具、補圖（EC17 稻田、EC18 腐木）、主程式（文字、題目、資料）、預覽頁
-- [x] energy　- [x] pyramid　- [x] web　- [x] remove　- [x] arrow　- [ ] roles　- [ ] leafdecay　- [ ] carbon　- [ ] compare　- [ ] nitrogen
+- [x] energy　- [x] pyramid　- [x] web　- [x] remove　- [x] arrow　- [x] roles　- [ ] leafdecay　- [ ] carbon　- [ ] compare　- [ ] nitrogen
 - [ ] QA（`qa_page`、`qa_text`、`smoke`）、換掉正式頁、首頁、`PROGRESS.md`、commit／push
