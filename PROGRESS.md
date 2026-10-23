@@ -1,6 +1,6 @@
 # 工作進度（PROGRESS）
 
-最後更新：2026-10-23（生物圈與生態第 1 課重做完；地球上的生物六課已重做完）
+最後更新：2026-10-24（生物圈與生態第 1、2 課重做完；地球上的生物六課已重做完）
 
 規則請看 `AGENTS.md`；這份只記「做到哪了、還有什麼沒做」。細節請用 `git log` 查。
 每完成一個單元或一批修改，就更新這份：**只改下面的表與清單，不要一直往下加長**。
@@ -67,7 +67,16 @@
 - 第 1 課「生命住在多薄的一層？」（`biology_ecology_environment.html`）整課重做：`ecology_1023_v1.js`＋共用工具 `ecology_kit_1023_v1.js`＋7 個動畫檔 `ecology_draw_*_1023_v1.js`（bridge、levels、quadrat、recapture、balance、capacity、succession；動畫由 Opus 一次一個、其餘 Sonnet）。5 個分頁：橋接頁（不重複前面的生物圈厚度）、組成層次、樣方與捉放法、族群收支與環境負荷量、演替（5 階段×土壤／裸岩兩種起點）。封面與首頁卡片已換。`qa_page`、`qa_text`、`smoke` 通過（只剩已知封面 404 與外殼 15～16px 字）；各動畫作者另做 10.3／10.4／10.5 檢查。
 - 圖：18 張 Gemini 插圖已去背（`assets/biology/ecology_ai_1023/`，對照與瑕疵見 `sources.md`）；演替用 SU1～SU4 共 7 張場景圖（不去背，原本帶戶外背景）。
 - **待老師看**：各動畫 Opus 多加的標籤（見各自報告，balance 7 個、capacity 9 個、succession 20 個）；SU4 林木的土壤看起來比 SU3 薄，與「土壤逐漸變厚」矛盾，可能要重生；裸岩路徑從地衣苔蘚直接跳到厚土的草本圖，圖上略跳；單元名稱「生命住在多薄的一層？」要不要改（要改得動第 2～4 課導覽與首頁）。
-- 第 2～4 課（共 12 分頁）尚未改動；L3、L4 封面待老師決定。規畫見 `assets/biology/ecology_plan_1023.md`（v2）、第 1 課計畫 `ecology_l1_plan_1023.md`。
+- 第 3～4 課尚未重做；L3、L4 封面待老師決定。規畫見 `assets/biology/ecology_plan_1023.md`（v2）、第 1 課計畫 `ecology_l1_plan_1023.md`。
+
+
+## 生物圈與生態關係 第 2 課重做完（2026-10-24）
+
+- 第 2 課「一片葉子如何養活整個網？」（`biology_ecology_energy.html`，開發預覽 `…_1023_preview1.html` 內容相同）整課重做：主程式 `ecology_energy_1023_v1.js`（4 分頁、10 個觀察的文字、選擇題與共用資料 `K.WEB／K.RM／K.enVals`）＋共用工具 `ecology_kit_1023_v1.js`（可載入他課的圖，寫成 `'folder/file.png'`）＋10 個動畫 `ecology_draw_*_1023_v1.js`（roles、leafdecay、arrow、web、remove、energy、pyramid、carbon、compare、nitrogen；Opus 一次一個）。計畫 `ecology_l2_plan_1023.md`。每個觀察都有「連續播放＋步驟鈕」。老師 10-23 同意做多少推多少，所以動畫是逐個上線。
+- 新圖（老師 Gemini）：`EC17_paddy_scene.jpg` 稻田全景（食物網與移走一種的背景）、`EC18_log_decay.png` 腐木（分解者；下緣有淡陰影線，動畫載入時壓掉灰邊），紀錄在 `ecology_ai_1023/sources.md`；咒語 `ecology_l2_prompts_1023.md`。
+- 科學：分解者＝蕈類與細菌，蚯蚓是腐食動物；能量以稻 8000 單位為例（5／10／20% 時下三層 400/20/1、800/80/8、1600/320/64），標「約」「常用估計」；食物網「移走一種」只示意方向；碳循環補充含埋藏與燃燒（不寫年數、不講氣候變遷）；氮循環標補充（根瘤菌）。
+- 檢查：`smoke`、`qa_text` 通過；`qa_page` 只剩已知封面 404 與外殼 15～16px 字；各動畫作者另做 10.3／10.4／10.5。
+- **待老師看**：Opus 自己加的標籤與句子（昆蟲、物質沒有消失、植物的根、小苗、不是分解者、為什麼這麼少、稻田這條鏈、能量一層比一層少、能量不會倒、個體數、不能直接用、互利共生、提供養分、較慢、較快、封閉的生態瓶也需要光等），目前直接寫在各動畫檔，未併入主程式 `LAB`。已知：`EC10_legume_nodules.png` 根之間有白底殘留，氮動畫載入時以程式清除，之後可重新去背。
 
 ## 注意事項
 
