@@ -121,14 +121,15 @@
   }
   // Foodweb card icons: cut-out AI teaching illustrations; falls back to figure() until loaded or on error.
   const FIG_IMG={},FIG_DIR='assets/biology/ecology_ai_1023/';
-  function figureImg(c,x,y,file,kind,color,scale=1) {
+  // fit=[maxW,maxH,dy] overrides the foodweb card box (default 120×88×scale centred at y−12).
+  function figureImg(c,x,y,file,kind,color,scale=1,fit) {
     let im=FIG_IMG[file];
     if(!im&&typeof Image!=='undefined'){im=FIG_IMG[file]=new Image();im.onload=()=>{try{window.LivingBook&&window.LivingBook.draw&&window.LivingBook.draw();}catch(e){}};im.onerror=()=>{im.failed=true;};im.src=FIG_DIR+file;}
     if(!im||im.failed||!im.complete||!im.naturalWidth)return figure(c,x,y,kind,color,scale);
     // y is figure's y (card centre − 8). Card spans centre−70..+76; label glyphs start ≈ centre+30.
     // Fit within 120×88 centred at card centre−20 (y−12): stays inside the card and clear of the label.
-    const k=Math.min(120/im.naturalWidth,88/im.naturalHeight)*scale,w=im.naturalWidth*k,h=im.naturalHeight*k;
-    c.drawImage(im,x-w/2,y-12-h/2,w,h);
+    const [fw,fh,dy]=fit||[120*scale,88*scale,-12],k=Math.min(fw/im.naturalWidth,fh/im.naturalHeight),w=im.naturalWidth*k,h=im.naturalHeight*k;
+    c.drawImage(im,x-w/2,y+dy-h/2,w,h);
   }
   function make(o,def) {
     o=o||{};const pics=o.pics||[],selected=s=>pics[clamp(Math.round(finite(s.photo)),0,pics.length-1)];
@@ -196,7 +197,7 @@
     act(s,k,v){if(k==='trial'){s.trial=(s.trial+1)%8;s.elapsed=0;}else setChoice(s,k,v,{method:[0,1],n:[2,5],M:[1,60],caught:[1,60],R:[0,60],assumption:[0,1]});},
     draw(c,s,t,D){frame(c,D,s.method?P('標記比例，能推回總數嗎？','Can a marked fraction estimate the total?'):P('先算平均，再依面積換算','Find the mean, then scale by area'));
       if(!s.method){const ids=sampleIndices(s.n,s.trial),q=quadratEstimate(ids.map(i=>sampleCounts[i]),8);
-        for(let i=0;i<8;i++){const x=45+(i%4)*220,y=104+Math.floor(i/4)*176;D.round(c,x,y,205,156,8,C.panel,ids.includes(i)?C.yellow:C.muted);for(let j=0;j<sampleCounts[i];j++)figure(c,x+35+(j%3)*65,y+50+Math.floor(j/3)*55,0,C.green,.63);D.text(c,P(`${sampleCounts[i]} 株`,`${sampleCounts[i]} plants`),x+110,y+140,{align:'center',size:22});if(ids.includes(i))dot(c,x+12+((t*60)%175),y+9,5,C.yellow);}
+        for(let i=0;i<8;i++){const x=45+(i%4)*220,y=104+Math.floor(i/4)*176;D.round(c,x,y,205,156,8,C.panel,ids.includes(i)?C.yellow:C.muted);for(let j=0;j<sampleCounts[i];j++)figureImg(c,x+35+(j%3)*65,y+50+Math.floor(j/3)*55,'EC3_rice.png',0,C.green,.63,[60,46,-10]);D.text(c,P(`${sampleCounts[i]} 株`,`${sampleCounts[i]} plants`),x+110,y+140,{align:'center',size:22});if(ids.includes(i))dot(c,x+12+((t*60)%175),y+9,5,C.yellow);}
         text(c,D,P(`平均 ${fmt(q.mean)} 株／區 × 8 區 ≈ ${fmt(q.total)} 株`,`Mean ${fmt(q.mean)} plants/quadrat × 8 quadrats ≈ ${fmt(q.total)} plants`),36,493,888,26,C.yellow);
       }else{
         const valid=markRecapture(s.M,s.caught,s.R),cols=10;
