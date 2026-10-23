@@ -59,7 +59,7 @@ Style: detailed scientific illustration in a clean, semi-realistic hand-painted 
 
 ## 收圖進度
 
-2026-10-24：EC19、EC20、EC22、EC23 已收圖並去背（`ecology_ai_1023/EC19_ladybird_aphids.png`、`EC20_wasp_caterpillar.png`、`EC22_ducks_paddy.png`、`EC23_stags_duel.png`）。**EC21 清潔魚與大魚還沒有。** EC20 的毛蟲是夜蛾類樣子，不要寫成菜粉蝶幼蟲。
+2026-10-24：EC19～EC23 全部已收圖並去背（`ecology_ai_1023/EC19_ladybird_aphids.png`、`EC20_wasp_caterpillar.png`、`EC22_ducks_paddy.png`、`EC23_stags_duel.png`）。EC21 也已收圖（`EC21_cleaner_grouper.png`，小魚在嘴前、看不到寄生蟲）。 EC20 的毛蟲是夜蛾類樣子，不要寫成菜粉蝶幼蟲。
 
 ## 生好之後怎麼用（主對話）
 

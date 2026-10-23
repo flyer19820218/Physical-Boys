@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""第 3 課補圖 EC19、EC20、EC22、EC23（2026-10-24）：去背、去白邊、整張保留，每張一個畫面。
+"""第 3 課補圖 EC19～EC23（2026-10-24）：去背、去白邊、整張保留，每張一個畫面。
 用法：python3 cut_ecology_l3_1024.py <原圖資料夾>   （資料夾內要有 EC19_ladybird_gemini_original.jpg 等四張）
 去背函式與 cut_ecology_1023.py 相同。
 """
@@ -14,6 +14,7 @@ MAXSIDE = 1400
 SPEC = {
  "EC19_ladybird":  ("EC19_ladybird_gemini_original.jpg", "EC19_ladybird_aphids.png", 14),
  "EC20_wasp":      ("EC20_wasp_gemini_original.jpg", "EC20_wasp_caterpillar.png", 14),
+ "EC21_cleaner":   ("EC21_cleaner_gemini_original.jpg", "EC21_cleaner_grouper.png", 14),
  "EC22_ducks":     ("EC22_ducks_gemini_original.jpg", "EC22_ducks_paddy.png", 14),
  "EC23_stags":     ("EC23_stags_gemini_original.jpg", "EC23_stags_duel.png", 14),
 }
