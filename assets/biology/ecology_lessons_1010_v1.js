@@ -236,7 +236,7 @@
         pics: [leaf1AI, leaf2AI, leaf3AI, leaf4AI, noduleCarbonAI, pic('Im278_1357.png', P('碳循環地景原圖（未含頁面箭頭）', 'Carbon-cycle landscape original (without page arrows)'), 132, P('萃取影像保留課本地景與生物圖像，不含PDF文字層的過程標籤及完整箭頭。請勿把底圖當成完整碳循環；機制由獨立新增模型呈現。', 'This extracted image retains landscape and organisms but not the PDF text-layer process labels or complete arrows. It is not a complete carbon-cycle diagram; mechanisms appear in the separate added model.'))], pages: [132, 133], initial: { path: 0 }
       })
     ] },
-    { id: 'ecology_interactions', title: P('一起生活，一定互相幫忙嗎？', 'Does living together always help both sides?'), subtitle: P('生物交互關係與生物防治', 'Biological interactions and biological control'), cover: 'Im2081_4577.png', coverSource: { page: 136 }, tabs: [
+    { id: 'ecology_interactions', title: P('一起生活，一定互相幫忙嗎？', 'Does living together always help both sides?'), subtitle: P('生物交互關係與生物防治', 'Biological interactions and biological control'), cover: '../../covers/biology_ecology_interactions_1023_v1.jpg', coverSource: { ai: true }, tabs: [
       lesson(E.relations, {
         id: 'predation', title: P('追逐牽動誰？', 'Who is affected by a chase?'), sub: P('掠食與族群影響', 'Predation and population effects'),
         hook: P('曉臻老師問：獵物變少，掠食者一定在同一瞬間、同一比例變少嗎？', 'Ms Xiaozhen asks: if prey decline, must predators decline at the same instant and by the same fraction?'),
@@ -278,7 +278,7 @@
         pics: [waspAI, pic('Im2102_4676.png', P('瓢蟲捕食照片', 'Ladybird feeding photograph'), 138, P('課本生物防治的取食例子。一次捕食影像不能證明整田有效、完全無害或可免除後續監測。', 'A feeding example from textbook biological control. One image does not demonstrate field-wide success, zero harm or no need for monitoring.'))], pages: [134, 138], initial: { relation: 5 }
       })
     ] },
-    { id: 'ecology_habitats', title: P('換個環境，誰能住下來？', 'Who can live in a different habitat?'), subtitle: P('陸域、水域與校園調查', 'Land, water and schoolyard investigations'), cover: 'Im2180_5300.png', coverSource: { page: 151 }, tabs: [
+    { id: 'ecology_habitats', title: P('換個環境，誰能住下來？', 'Who can live in a different habitat?'), subtitle: P('陸域、水域與校園調查', 'Land, water and schoolyard investigations'), cover: '../../covers/biology_ecology_habitats_1023_v1.jpg', coverSource: { ai: true }, tabs: [
       lesson(E.habitat, {
         id: 'land-habitats', title: P('雨量與溫度', 'Rainfall and temperature'), sub: P('陸域生態系', 'Terrestrial ecosystems'),
         hook: P('曉臻老師問：沙漠一定很熱、凍原一定沒有生命嗎？', 'Ms Xiaozhen asks: must deserts be hot and tundra be lifeless?'),
