@@ -48,6 +48,6 @@
 
 ## 進度
 
-- [ ] 計畫、主程式、預覽頁
-- [ ] chase　- [ ] lag　- [ ] compete　- [ ] resource　- [ ] mutual　- [ ] commens　- [ ] parasite　- [ ] relations　- [ ] biocontrol　- [ ] risk
+- [x] 計畫、主程式、預覽頁
+- [x] chase　- [x] lag　- [x] compete　- [x] resource　- [ ] mutual　- [ ] commens　- [ ] parasite　- [ ] relations　- [ ] biocontrol　- [ ] risk
 - [ ] QA、換掉正式頁、`PROGRESS.md`、commit／push
