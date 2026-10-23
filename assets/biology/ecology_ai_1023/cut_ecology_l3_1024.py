@@ -15,6 +15,7 @@ SPEC = {
  "EC19_ladybird":  ("EC19_ladybird_gemini_original.jpg", "EC19_ladybird_aphids.png", 14),
  "EC20_wasp":      ("EC20_wasp_gemini_original.jpg", "EC20_wasp_caterpillar.png", 14),
  "EC21_cleaner":   ("EC21_cleaner_gemini_original.jpg", "EC21_cleaner_grouper.png", 14),
+ "EC24_remora":    ("EC24_remora_shark_gemini_original.jpg", "EC24_remora_shark.png", 14),
  "EC22_ducks":     ("EC22_ducks_gemini_original.jpg", "EC22_ducks_paddy.png", 14),
  "EC23_stags":     ("EC23_stags_gemini_original.jpg", "EC23_stags_duel.png", 14),
 }
