@@ -34,7 +34,7 @@ const RM=[
  {id:'rice',   direct:{grasshopper:'down',vole:'down'},later:{frog:'down',snake:'down',eagle:'down'}},
  {id:'grasshopper',direct:{rice:'up',frog:'down'},later:{snake:'buffer'}},
  {id:'frog',   direct:{grasshopper:'up',snake:'buffer'},later:{rice:'down'}},
- {id:'snake',  direct:{frog:'up',vole:'up',eagle:'down'},later:{grasshopper:'down',rice:'down'}}];
+ {id:'snake',  direct:{frog:'up',vole:'up',eagle:'down'},later:{grasshopper:'down'}}];
 K.WEB=WEB;K.RM=RM;
 
 // ── picture and canvas labels used by the drawing modules (zh, en) ─────────
@@ -122,7 +122,7 @@ const RM_LATER=[
  P(`接著，吃它們的澤蛙、蛇、大冠鷲也跟著變少：影響沿箭頭一路往上傳。`,`Next, the frogs, snakes and eagles that eat them also decrease: the effect travels up the arrows.`),
  P(`蛇還有田鼷鼠可吃，影響被緩衝；但稻田裡的食物平衡已經改變。`,`Snakes can still eat field mice, so the effect is buffered; but the balance in the paddy has changed.`),
  P(`蚱蜢變多，會吃掉更多稻，稻可能因此變少。`,`More grasshoppers eat more rice, so rice may decrease.`),
- P(`澤蛙變多，會吃掉更多蚱蜢；蚱蜢變少，稻又比較不會被啃。方向只是示意，實際大小還要看其他食物與環境。`,`More frogs eat more grasshoppers, and fewer grasshoppers mean less rice is eaten. The directions are schematic; real sizes depend on other foods and conditions.`)];
+ P(`澤蛙變多，會吃掉更多蚱蜢，蚱蜢變少。稻同時受到田鼷鼠變多（吃更多稻）和蚱蜢變少（被啃較少）兩種相反的影響，方向不一定，要更多資料才能判斷。畫面只示意方向，不是數字。`,`More frogs eat more grasshoppers, so grasshoppers decrease. Rice is affected in two opposite ways at once, by more field mice (eating more rice) and fewer grasshoppers (less rice eaten), so its direction is unclear and needs more data. The picture shows direction only, not numbers.`)];
 const rmText=s=>{const r=s.rm||0;return[
  P(`稻田裡的食物網：稻是生產者，蚱蜢和田鼷鼠吃稻，澤蛙吃蚱蜢，蛇吃澤蛙和田鼷鼠，大冠鷲吃蛇。用上方的「移走」選一種。`,`The paddy food web: rice is the producer; grasshoppers and field mice eat rice; frogs eat grasshoppers; snakes eat frogs and field mice; eagles eat snakes. Use "Remove" above to choose one.`),
  P(`假設${RM_SPEC[r][0]}突然全部不見了。（只示意方向，不是數字。）`,`Suppose all the ${RM_SPEC[r][1]} suddenly disappear. (Direction only, not numbers.)`),
