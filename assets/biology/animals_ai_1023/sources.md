@@ -88,13 +88,42 @@ kit 另外載入第二課的 `dragonfly.png`（476×340）、`fly.png`（296×28
 
 老師重生後，同一支 `cut_animals_1023.py` 重切（`python3 cut_animals_1023.py . AN1 AN5b`）。AN1：水母與渦蟲視覺大小相近，渦蟲橫放。AN5b：5 個階段全部朝右、一條地平線，幼蛙有尾巴殘段且約為成蛙的一半大。上面「待重生」的兩條問題已解決；舊版（第一版）可由 git 歷史取回。去背邊緣貼到 `#1c3d34` 看過，沒有灰框。
 
-## 變態三張圖（資優觀察 meta，等老師用 Gemini 生圖，尚未到）
+## 2026-10-23：變態三張圖 MT1～MT3
 
-變態三張圖：老師以 Gemini 生成的 AI 教學插圖，非照片；大小不代表真實大小。咒語 MT1～MT3 在 `../biodiversity_ai_prompts_1021.md` 第六課最後。圖到了之後由整備代理依本課流程去背（MT1、MT2 白底，MT3 灰底 #808080），並把尺寸補進 kit 的 `SIZE` 與本檔檔案表。
+三張都是老師以 Gemini 生成的 AI 教學插圖，非照片；大小不代表真實大小。咒語見 `../biodiversity_ai_prompts_1021.md` 第六課最後。用同一支 `cut_animals_1023.py` 去背（`python3 cut_animals_1023.py . MT1 MT2 MT3`）。
 
-| 編號 | 內容 | 底色 | 預定檔名（放在本資料夾，.png） |
-|---|---|---|---|
-| MT1 | 鳳蝶四階段 | 白 | butterfly_egg／butterfly_larva／butterfly_pupa／butterfly_adult |
-| MT2 | 蝗蟲（稻蝗）四階段 | 白 | grasshopper_egg／grasshopper_nymph_1／grasshopper_nymph_2／grasshopper_adult |
-| MT3 | 衣魚三階段 | 灰 | silverfish_egg／silverfish_young／silverfish_adult |
+### 原圖對照
+
+| 編號 | 原圖（Gemini 下載檔名） | 備份 | 尺寸 | 底色 | 由左到右 |
+|---|---|---|---|---|---|
+| MT1 | 283bf070-image.jpg | `local-backups/20261023/animals_ai_originals/MT1_gemini_original.jpg` | 2576×1438 | 白 | butterfly_egg / larva / pupa / adult |
+| MT2 | fe094dad-image.jpg | `…/MT2_gemini_original.jpg` | 2576×1438 | 白 | grasshopper_egg / nymph_1 / nymph_2 / adult |
+| MT3 | f5181ee1-image.jpg | `…/MT3_gemini_original.jpg` | 2576×1438 | 灰 #808080 | silverfish_egg / young / young_2 / adult |
+
+### 檔案表（像素尺寸＝kit 的 SIZE）
+
+| 檔名 | 尺寸 | 畫的是什麼 | 用途 | 處理與備註 |
+|---|---|---|---|---|
+| butterfly_egg.png | 349×250 | 綠葉背面上一顆淡綠色圓卵 | 鳳蝶：卵 | 白底洪水填色；連葉一起切 |
+| butterfly_larva.png | 687×349 | 綠色幼蟲趴在斜放的細枝上 | 鳳蝶：幼蟲 | 連枝；蟲腹與枝之間的白縫用封閉區清除，頭下一小塊白點用 `erase_near` 清掉 |
+| butterfly_pupa.png | 327×576 | 褐綠色蛹，用絲線掛在細枝上（枝在上方） | 鳳蝶：蛹 | 連枝與絲線（細白線保留）；蛹與絲之間三角白縫已清 |
+| butterfly_adult.png | 879×614 | 黃色翅膀的寬翅鳳蝶，翅展開 | 鳳蝶：成蟲 | 洪水填色（無門檻），淡黃翅面完整保留；圖上看不到腳 |
+| grasshopper_egg.png | 444×240 | 土堆上一個破開的褐色卵囊 | 蝗蟲：卵 | 連土堆；土堆邊緣較碎，屬原圖畫法 |
+| grasshopper_nymph_1.png | 361×231 | 較小的綠色若蟲，側面朝右，翅芽極短 | 蝗蟲：若蟲 1 | 腿與身體間的白縫已清 |
+| grasshopper_nymph_2.png | 560×344 | 較大的綠色若蟲，翅芽明顯 | 蝗蟲：若蟲 2 | 同上 |
+| grasshopper_adult.png | 877×473 | 成蟲，側面朝右，半透明長翅 | 蝗蟲：成蟲 | 翅膜保留半透明；不使用門檻 |
+| silverfish_egg.png | 118×106 | 約 5 顆米色橢圓卵聚成一堆 | 衣魚：卵 | 合併成一張（`xsplit`）；卵間灰縫用小封閉區清除 |
+| silverfish_young.png | 388×200 | 較小的銀白色幼體，頭朝右 | 衣魚：幼體（小） | 灰底洪水填色，無灰框 |
+| silverfish_young_2.png | 401×267 | 較大的幼體，頭朝右 | 衣魚：幼體（大） | 同上 |
+| silverfish_adult.png | 1032×485 | 成體，灰色鱗片斑點，頭朝右，三條尾鬚與兩條觸角 | 衣魚：成體 | 同上；不開 `pockets`（開了會把頭頸圈與尾基的灰洞挖穿） |
+
+貼到 `#1c3d34` 與 `#11261f` 各看過一次：邊緣沒有灰框、白框，銀色身體沒有被吃掉。
+
+### 已知問題
+
+1. **MT3 有兩隻幼體**（silverfish_young 與 silverfish_young_2），大小不同、形態相近；動畫要用就一起用，不要只拿其中一隻當成「幼體」又另編一個階段。
+2. **成蟲與幼體畫風略有不同**：衣魚成體的鱗片斑點質感、顏色比兩隻幼體深很多；蝗蟲成蟲與若蟲、鳳蝶成蟲與前三階段也有筆觸差別。階段之間用淡入淡出，不要做成連續變形。
+3. **鳳蝶成蟲圖上看不到腳**：文字不要寫腳數，也不要說「看圖數腳」。
+4. 蝗蟲卵圖是破開的卵囊加土堆，不是單顆卵；衣魚卵只畫了約 5 顆。
+5. 灰底圖的邊緣有細鋸齒（同 AN 系列），放大到 2 倍以上才看得出。
 
