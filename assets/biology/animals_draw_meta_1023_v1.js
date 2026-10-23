@@ -1,4 +1,4 @@
-/* Animals · "Advanced: metamorphosis" canvas (arthropods tab, view 2), 2026-10-23. Extra content, not required.
+/* Animals · "Metamorphosis (extra)" canvas (arthropods tab, view 2), 2026-10-23. Extra content, not required.
  * Four steps; pictures MT1–MT3 (AI teaching illustrations, not photos) plus unit-2 fly / dragonfly and the cicada shell.
  *  0 Complete (swallowtail): egg → larva → pupa → adult appear one by one, joined by arrows, names under each.
  *    A process lane under the names: white "hatch", pink "molt" arrows (larva also gets a pink "molts, grows a bit" loop).
@@ -14,7 +14,7 @@
  * Row layout: the four pictures of a step share one scale (the scale of the teacher's sheet) and are fitted into 960 px
  *   with kit fitRect boxes proportional to their widths. Labels on the pictures are placed by the program: the pictures
  *   are drawn once off-screen and each label takes the free spot with the fewest opaque pixels near its target.
- * Every step: "Advanced (extra)" pill top right, "AI illustration, not a photo" bottom right, "marks are schematic".
+ * Every step: "Extra" pill top right, "AI illustration, not a photo" bottom right, "marks are schematic".
  * Step changes (0.9 s): old step fades out, new fades in.
  */
 (()=>{'use strict';
@@ -44,7 +44,7 @@ const THORAX={[S1]:[259,84],[S2]:[242,112],[SA]:[669,186]};
 
 // ── labels added by this module (LAB has the stage and group names) ────────
 const T={
- advanced:P(`資優（補充）`,`Advanced (extra)`),
+ advanced:P(`補充`,`Extra`),
  marks:P(`程式畫的箭頭與標記：示意`,`Arrows and marks drawn in code: schematic`),
  exB:P(`例：鳳蝶`,`Example: swallowtail`),exG:P(`例：蝗蟲`,`Example: grasshopper`),exS:P(`例：衣魚`,`Example: silverfish`),
  all3:P(`三種放在一起比`,`The three side by side`),
