@@ -548,3 +548,41 @@ Style: detailed scientific illustration in a clean, semi-realistic hand-painted 
 - 圖中生物的物種（例如田鼷鼠、澤蛙、領角鴞）是我依臺灣常見種挑的，Gemini 畫出來若不像，不一定是錯，**只要科學特徵對、頁面標「示意」就好**；但請老師看過是否為學生熟悉的種類。
 - 「約 10%」、「0.16 mm」這類數字：本課只用「約 10%」。第一單元的蘋果數字**不再重複**。
 - 所有圖都是 AI 教學插圖，不是實拍；頁面要依 AGENTS 第九定律之二標示「AI 插圖／教學示意」，並保留咒語記錄。
+
+---
+
+## 補充：演替分頁的 5 個階段圖（SU1～SU4，2026-10-23）
+
+演替動畫的起點（保留土壤的裸地、沒有土壤的裸岩）與階段（先鋒、草本、灌木、林木）。同一組「切面方塊」風格（和 EC1 一致），方塊一樣大、土層逐漸變厚。白底、無字。生好貼回，說編號（SU1～SU4）。
+
+共同尾巴（每段都要）：
+`Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, pure white background with no shadow and no scenery. Generous empty margin around and between the subjects. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.`
+
+### SU1 起點：裸岩／保留土壤的裸地
+```
+Landscape 16:9. Two clean rectangular cross-section blocks of ground, exactly the same size and the same side-view composition, with a wide gap between them. LEFT: bare rock with no soil: a solid block of grey fractured bedrock with rough weathered surface, a few small cracks, nothing growing on it at all. RIGHT: bare ground that has kept its soil: a block with a flat bare surface of brown mineral soil about one quarter of the block height, with a few tiny seeds and fine pale roots visible inside the soil, a few small pebbles on top, no plants growing above the surface, and the rock below the soil.
+(then the common Style paragraph)
+```
+
+### SU2 先鋒：地衣與苔蘚／先長出的小草
+```
+Landscape 16:9. Two clean rectangular cross-section blocks, exactly the same size and the same side-view composition as a bare-rock block and a bare-soil block, with a wide gap between them. LEFT: grey bedrock block whose top surface is covered with patches of crustose lichen (grey-green, pale orange and yellow, flat and crusty) and a few small cushions of green moss, with a very thin dark layer of new soil in the cracks, no other plants. RIGHT: soil block with a surface that shows several small green seedlings and short thin grass blades, scattered, each only a few centimetres tall, soil layer about one quarter of the block height, fine roots visible in the soil.
+(then the common Style paragraph)
+```
+
+### SU3 草本變多／灌木進來
+```
+Landscape 16:9. Two clean rectangular cross-section blocks, exactly the same size and the same side-view composition, with a wide gap between them. LEFT: a block of dense herbaceous vegetation: many grasses (foxtail, silver grass) and a few small yellow and white wildflowers covering the surface, a thicker layer of dark brown topsoil about one third of the block height, a mat of fine roots in the soil, a little leaf litter on top. RIGHT: a shrub stage: two or three young shrubs about knee to waist height (Mallotus japonicus with broad rounded leaves) standing among clumps of grass, topsoil about one third of the block height and dark with some fallen leaves, roots of the shrubs visible in the soil.
+(then the common Style paragraph)
+```
+
+### SU4 林木長成
+```
+Landscape 16:9. One clean rectangular cross-section block in the same size and side-view composition as the others, centred. A young woodland: two or three young broadleaf trees (camphor trees, Cinnamomum camphora) with clear trunks and rounded crowns that reach above the block, shade-loving ferns and a carpet of moss on the ground below them, a deep layer of dark humus-rich soil about two fifths of the block height with a layer of fallen leaves on top, tree roots visible in the soil.
+(then the common Style paragraph)
+```
+
+### 生圖後我會檢查
+- 同一張裡兩塊方塊一樣大、構圖一致；土層厚度由 SU1（薄）到 SU4（最厚）逐漸增加。
+- 沒有人、動物、房子、路標；SU1 左邊的裸岩上**不能**有任何植物，SU1 右邊地面上**不能**有植物。
+- 地衣是貼在岩面上的扁平色塊，不要畫成花或菇。
