@@ -100,6 +100,12 @@ def shrink(im):
     w, h = im.size; s = MAXSIDE / max(w, h)
     return im.resize((round(w*s), round(h*s)), Image.LANCZOS) if s < 1 else im
 
+# 補圖：兔子（食物網「兔」卡片用，2026-10-23）。只跑這一張：python3 cut_ecology_1023.py <原圖資料夾> rabbit
+if sys.argv[2:] == ["rabbit"]:
+    im = to_rgba(os.path.join(SRC, "EC4_rabbit_gemini_original.jpg"), "white", 14)
+    piece = shrink(trim(im)); piece.save(os.path.join(OUT, "EC4_rabbit.png"), optimize=True)
+    print("EC4_rabbit.png", piece.size); sys.exit(0)
+
 report = {}
 for code, (kind, names) in SPEC.items():
     p = os.path.join(SRC, f"{code}_gemini_original.jpg")
