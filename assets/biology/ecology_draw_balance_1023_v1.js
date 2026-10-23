@@ -167,7 +167,6 @@ function bandVoles(c,t,a){withA(c,a,()=>{
   const dx=ax+48;circle(c,dx,cy,DR+1.5,rgba(C.deep,.8),null);circle(c,dx,cy,DR*(1+.08*Math.sin(t*2.4)),WHITE,null);
   tag(c,ONE_DOT,dx+DR+12,cy-20,{col:WHITE});
   K.text(c,L('vole','田鼷鼠','Field mouse'),PX+98,cy+62,22,GREY,'center');
-  tag(c,L('schematic','示意','Schematic'),PX+PW-10,PY+PH-48,{al:'right',col:GREY});
 });}
 function bandPredators(c,t,a){withA(c,a,()=>{
   tag(c,L('predators','天敵','Predators'),PX+12,BAND_Y+2,{col:ORANGE});
@@ -176,7 +175,6 @@ function bandPredators(c,t,a){withA(c,a,()=>{
     K.place(c,f,PX+16,y-22,70,44);
     text(c,L(key,zh,en),PX+100,y+8,22,WHITE);
   });
-  tag(c,L('schematic','示意','Schematic'),PX+PW-10,PY+PH-48,{al:'right',col:GREY});
 });}
 
 // ── ledger ─────────────────────────────────────────────────────────────────
@@ -296,7 +294,8 @@ function draw(c,s,t){
   withA(c,w5,()=>K.wrap(c,NOTE,20,534,920,22,C.muted));
   // AI note
   withA(c,1-w5,()=>{const ai=L('aiNote','AI 插圖，非實拍','AI illustration, not a photo'),w=measure(c,ai,22)+20;
-    D.round(c,14,560,w,34,10,'rgba(11,26,21,.8)',null);text(c,ai,24,584,22,C.muted);});
+    D.round(c,14,560,w,34,10,'rgba(11,26,21,.8)',null);text(c,ai,24,584,22,C.muted);
+    tag(c,L('schematic','示意','Schematic'),14+w+10,557,{col:GREY});});
 }
 window.EcologyDraw.balance=draw;
 })();
