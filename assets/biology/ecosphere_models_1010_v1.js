@@ -119,6 +119,17 @@
     else {line(c,[[-35,4],[-10,-12],[0,0],[13,-12],[37,4]],color,6);dot(c,0,0,7,color);}
     c.restore();
   }
+  // Foodweb card icons: cut-out AI teaching illustrations; falls back to figure() until loaded or on error.
+  const FIG_IMG={},FIG_DIR='assets/biology/ecology_ai_1023/';
+  function figureImg(c,x,y,file,kind,color,scale=1) {
+    let im=FIG_IMG[file];
+    if(!im&&typeof Image!=='undefined'){im=FIG_IMG[file]=new Image();im.onload=()=>{try{window.LivingBook&&window.LivingBook.draw&&window.LivingBook.draw();}catch(e){}};im.onerror=()=>{im.failed=true;};im.src=FIG_DIR+file;}
+    if(!im||im.failed||!im.complete||!im.naturalWidth)return figure(c,x,y,kind,color,scale);
+    // y is figure's y (card centre − 8). Card spans centre−70..+76; label glyphs start ≈ centre+30.
+    // Fit within 120×88 centred at card centre−20 (y−12): stays inside the card and clear of the label.
+    const k=Math.min(120/im.naturalWidth,88/im.naturalHeight)*scale,w=im.naturalWidth*k,h=im.naturalHeight*k;
+    c.drawImage(im,x-w/2,y-12-h/2,w,h);
+  }
   function make(o,def) {
     o=o||{};const pics=o.pics||[],selected=s=>pics[clamp(Math.round(finite(s.photo)),0,pics.length-1)];
     return {...o,modelKind:def.kind,init:()=>({running:true,elapsed:0,view:0,photo:0,angle:0,pitch:32,spin:true,...def.initial,...(o.initial||{})}),
@@ -243,7 +254,7 @@
     draw(c,s,t,D){frame(c,D,s.mode?P('能量向前傳遞，最終散熱','Energy passes onward and ultimately dissipates as heat'):P('箭頭：食物 → 取食者','Arrows: food → consumer'));
       if(!s.mode){const pos=[[145,300],[440,183],[797,300],[440,394]];
         for(const [a,b] of foodEdges.slice(0,s.network?4:2)){const x=pos[a],y=pos[b],dx=y[0]-x[0],dy=y[1]-x[1],len=Math.hypot(dx,dy),ux=dx/len,uy=dy/len,trim=Math.min(78/Math.abs(ux),76/Math.abs(uy))+12;flow(c,[x[0]+ux*trim,x[1]+uy*trim],[y[0]-ux*trim,y[1]-uy*trim],t,C.yellow,s.plant?4:1);}
-        pos.forEach(([x,y],i)=>{if(i===3&&!s.network)return;D.round(c,x-78,y-70,156,146,18,C.panel,C.green);figure(c,x,y-8,[0,2,3,4][i],i===0?C.green:C.orange,i===0&&!s.plant?.55:1);text(c,D,foodNodes[i],x-65,y+52,135,24);});
+        pos.forEach(([x,y],i)=>{if(i===3&&!s.network)return;D.round(c,x-78,y-70,156,146,18,C.panel,C.green);{const f=['EC3_rice.png',null,'EC6_eagle.png','EC4_vole.png'][i],k=[0,2,3,4][i],col=i===0?C.green:C.orange,sc=i===0&&!s.plant?.55:1;if(f)figureImg(c,x,y-8,f,k,col,sc);else figure(c,x,y-8,k,col,sc);}text(c,D,foodNodes[i],x-65,y+52,135,24);});
         text(c,D,P('生產者的資源變化會沿食物關係傳遞','Changes in producer resources affect linked consumers'),28,510,904,24,C.blue);
       }else{const b=energyBudget(s.plant?1000:500,s.efficiency/100);const labels=[P('生產者','Producers'),P('初級消費者','Primary consumers'),P('次級消費者','Secondary consumers')];
         b.levels.forEach((v,i)=>{const x=35+i*315;box(c,D,labels[i],x,115,260,94,C.green);text(c,D,P(`${fmt(v)} 能量單位`,`${fmt(v)} energy units`),x,257,270,24,C.yellow);D.round(c,x,283,260,28,5,C.panel);D.round(c,x,283,Math.max(2,v/1000*260),28,5,C.yellow);if(i<2)flow(c,[x+265,165],[x+306,165],t,C.yellow,1);flow(c,[x+110,336],[x+110,418],t,C.orange,2);});
