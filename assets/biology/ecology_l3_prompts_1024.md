@@ -57,6 +57,10 @@ Landscape 16:9. Two adult male sika deer (Cervus nippon) of the same species and
 Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, pure white background with no shadow and no scenery. Generous empty margin around the subjects. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.
 ```
 
+## 收圖進度
+
+2026-10-24：EC19、EC20、EC22、EC23 已收圖並去背（`ecology_ai_1023/EC19_ladybird_aphids.png`、`EC20_wasp_caterpillar.png`、`EC22_ducks_paddy.png`、`EC23_stags_duel.png`）。**EC21 清潔魚與大魚還沒有。** EC20 的毛蟲是夜蛾類樣子，不要寫成菜粉蝶幼蟲。
+
 ## 生好之後怎麼用（主對話）
 
 - EC19、EC20 → 換進 `biocontrol` 動畫的第 2、3 步（天敵作用在目標上）；EC20 也放進 `parasite` 第 2 步（寄生蜂產卵 → 幼蟲 → 蜂繭）。
