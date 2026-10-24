@@ -17,6 +17,8 @@ MAXSIDE = 1400
 SCENES = {
  "BD4": ("BD4_gemini_original.jpg", "BD4_reef.jpg"),
  "BD5": ("BD5_gemini_original.jpg", "BD5_mosaic.jpg"),
+ "BD9a": ("BD9a_gemini_original.png", "BD9a_rainforest.jpg"),
+ "BD9b": ("BD9b_gemini_original.png", "BD9b_palm_plantation.jpg"),
 }
 # 封面：輸出到 assets/covers/
 COVERS = {
@@ -30,13 +32,15 @@ SHEETS = {
  "BD3":  ("BD3_gemini_original_b.jpg", ["BD3_honeybee.png", "BD3_dragonfly.png", "BD3_swallowtail.png", "BD3_cricket.png"], 8),
  "BD6":  ("BD6_gemini_original_a.jpg", ["BD6_blue_magpie.png", "BD6_muntjac.png", "BD6_swinhoes_pheasant.png", "BD6_macaque.png"], 14),
  "BD8a": ("BD8a_gemini_original.jpg", ["BD8_cotton.png", "BD8_silk_cocoons.png", "BD8_timber.png"], 14),
+ "BD8b": ("BD8b_gemini_original.png", ["BD8_rubber_tapping.png", "BD8_yew.png", "BD8_bamboo.png"], 14),
+ "BD7":  ("BD7_gemini_original.png", ["BD7_chub.png", "BD7_mayfly_nymph.png", "BD7_dipper.png", "BD7_river_snail.png"], 14),
 }
 
 # 手動分界（原圖 x，依連通區塊重心分組）：
-MANUAL = {"BD3": [341, 684, 1035], "BD6": [360, 690, 1010], "BD8a": [450, 920]}
+MANUAL = {"BD3": [341, 684, 1035], "BD6": [360, 690, 1010], "BD8a": [450, 920], "BD8b": [330, 690], "BD7": [330, 540, 790]}
 
-NOENCLOSED = {"BD6": -6, "BD8a": -6}
-ANTILEAK = {"BD6", "BD8a"}   # 主體本身有大片白色（白尾、棉花、蠶繭）：只去掉與邊緣相連的背景
+NOENCLOSED = {"BD6": -6, "BD8a": -6, "BD8b": -6}
+ANTILEAK = {"BD6", "BD8a", "BD8b"}   # 主體本身有大片白色（白尾、棉花、蠶繭）：只去掉與邊緣相連的背景
 
 def bgmask(a, thr, pure_min=120, anti_leak=False):
     rgb = a[..., :3].astype(np.int16)
@@ -78,6 +82,17 @@ def to_rgba(path, thr, pure_min=120, anti_leak=False):
     alpha = ndi.gaussian_filter(fg.astype(np.float32), 0.9)
     alpha = np.clip((alpha - 0.2) / 0.6, 0, 1)
     return Image.fromarray(np.dstack([a, (alpha * 255).astype(np.uint8)]), "RGBA")
+
+# 去背後仍殘留的近白像素（針葉之間、筍殼邊緣的白縫）：這幾張的主體沒有白色，直接去掉
+KEYWHITE = {"BD8_yew.png", "BD8_bamboo.png"}
+def key_white(im):
+    a = np.array(im); rgb = a[..., :3].astype(np.int16)
+    white = (rgb.min(axis=2) > 200) & ((rgb.max(axis=2) - rgb.min(axis=2)) < 35)
+    white = ndi.binary_dilation(white, iterations=1) & (rgb.min(axis=2) > 170)
+    al = np.where(white, 0, a[..., 3]).astype(np.float32)
+    al = ndi.gaussian_filter(al, 0.7)
+    a[..., 3] = np.clip((al - 40) * 255 / 175, 0, 255).astype(np.uint8)
+    return Image.fromarray(a, "RGBA")
 
 def trim(im):
     bb = im.getchannel("A").point(lambda v: 255 if v > 16 else 0).getbbox()
@@ -122,7 +137,7 @@ report = {}
 for code, (fn, out) in SCENES.items():
     if ONLY and code not in ONLY: continue
     im = Image.open(os.path.join(SRC, fn)).convert("RGB")
-    im = im.resize((1672, round(im.height * 1672 / im.width)), Image.LANCZOS)
+    if im.width > 1672 or code in ("BD4", "BD5"): im = im.resize((1672, round(im.height * 1672 / im.width)), Image.LANCZOS)   # 不放大（BD9 原圖只有 1024 寬）
     im.save(os.path.join(OUT, out), quality=88, optimize=True)
     report[code] = [out, *im.size]; print(code, out, im.size)
 for code, (fn, out) in COVERS.items():
@@ -137,6 +152,7 @@ for code, (fn, outs, thr) in SHEETS.items():
     im = to_rgba(os.path.join(SRC, fn), thr, NOENCLOSED.get(code, 120), code in ANTILEAK)
     parts = split_by_components(im, MANUAL[code]) if code in MANUAL else split_cols(im, len(outs))
     for name, part in zip(outs, parts):
+        if name in KEYWHITE: part = key_white(part)
         piece = shrink(trim(part))
         piece.save(os.path.join(OUT, name), optimize=True)
         report[name] = [name, *piece.size]; print(code, name, piece.size)
