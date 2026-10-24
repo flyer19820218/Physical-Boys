@@ -48,7 +48,7 @@ const LAB={
  openSite:P(`開闊處`,`Open site`),shadeSite:P(`遮蔭處`,`Shaded site`),quadrat:P(`樣框`,`Quadrat frame`),stopwatch:P(`碼表`,`Stopwatch`),thermometer:P(`溫度計`,`Thermometer`),lightMeter:P(`光度計`,`Light meter`),humidity:P(`濕度`,`Humidity`),hygrometer:P(`濕度計`,`Hygrometer`),
  sameArea:P(`範圍一樣`,`Same area`),sameTime:P(`時間一樣`,`Same time`),sameMethod:P(`方法一樣`,`Same method`),unfair:P(`不公平`,`Unfair`),fair:P(`公平`,`Fair`),record:P(`記錄`,`Record`),
  placeDateTime:P(`地點、日期、時間`,`Place, date, time`),noPicking:P(`不拔植物`,`Do not uproot plants`),noDanger:P(`不翻動、不捕捉危險生物`,`Do not disturb or catch dangerous animals`),noRoad:P(`不靠近車道`,`Keep away from roads`),noWater:P(`不靠近水邊`,`Keep away from water edges`),
- unsureTraits:P(`不確定先記特徵，不急著猜名字`,`If unsure, record traits first`),isItShade:P(`是遮蔭，還是找比較久？`,`Shade, or just searching longer?`),
+ unsureTraits:P(`不確定先記特徵，不急著猜名字`,`If unsure, record traits first rather than guessing a name`),isItShade:P(`是遮蔭，還是找比較久？`,`Shade, or just searching longer?`),
  seen:P(`我看到的`,`What I saw`),inferred:P(`我推論的`,`What I infer`),notProven:P(`還沒證明`,`Not yet proven`),maybeHidden:P(`可能躲起來`,`May be hiding`),notSeenNotAbsent:P(`沒看到，不等於不存在`,`Not seeing is not the same as absent`),
  repeat:P(`重複調查`,`Repeat the survey`),trial:P(`第幾次`,`Trial`),chance:P(`偶然`,`Chance`),moreFactors:P(`遮蔭處同時也不一樣的條件`,`Other differences at the shaded site`),soil:P(`土壤`,`Soil`),changeOne:P(`下一次：一次只改一個條件`,`Next: change one condition at a time`),
  // settle
