@@ -104,8 +104,8 @@ const RL_TEXT=[
  P(`螳螂吃蚱蜢：掠食者得益、獵物受害。吃掉對方，是這一種關係的過程。`,`A mantis eats a grasshopper: the predator gains and the prey is harmed. Eating the other animal is the process of this relationship.`),
  P(`獨角仙與鍬形蟲搶樹液：雙方都因為資源被分走而受影響。競爭不一定是打架，兩棵樹搶光也是競爭。`,`A rhinoceros beetle and a stag beetle compete for sap, and both are affected because the resource is shared out. Competition does not need fighting; two trees competing for light also compete.`),
  P(`小丑魚與海葵：雙方都得益。共生不等於互利，所以互利共生只是共生的一種。`,`A clownfish and an anemone: both gain. Symbiosis is not always mutual, so mutualism is only one kind of symbiosis.`),
- P(`鳥巢蕨與樹、鮣魚與鯊魚：一方得益，另一方在這個情境看不出明顯影響。0 要靠證據，不是看起來親密就算。`,`A bird's-nest fern and a tree, a remora and a shark: one side gains and the other shows no evident effect here. A 0 needs evidence; looking close is not enough.`),
- P(`菟絲子與寄主、寄生蜂與毛蟲：寄生者得益、寄主受害。和掠食的符號相同，差在過程。`,`Dodder and its host, a wasp and a caterpillar: the parasite gains and the host is harmed. The signs match predation; the process differs.`)];
+ P(`鮣魚與鯊魚：鮣魚得益，鯊魚在這個情境看不出明顯影響；鳥巢蕨與樹也是同一類。0 要靠證據，不是看起來親密就算。`,`A remora and a shark: the remora gains and the shark shows no evident effect here; a bird's-nest fern and a tree are the same kind. A 0 needs evidence; looking close is not enough.`),
+ P(`菟絲子與寄主：寄生者得益、寄主受害；寄生蜂與毛蟲也是。和掠食的符號相同，差在過程。`,`Dodder and its host: the parasite gains and the host is harmed; a wasp and a caterpillar are the same kind. The signs match predation; the process differs.`)];
 
 // ── biocontrol / biocontrol ────────────────────────────────────────────────
 const BC_SHORT=[P(`有問題嗎`,`Is there a problem`),P(`選天敵`,`Choose an enemy`),P(`作用在目標`,`It acts on the target`),P(`前後都要看`,`Check before and after`)];
