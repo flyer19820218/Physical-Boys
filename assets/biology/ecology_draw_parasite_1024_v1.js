@@ -101,23 +101,26 @@ function cleaned(file){
       if(lum>150&&mx-mn<70)light[i]=1;
       if(o.T&&mn>o.T&&mx-mn<28){const x=i%W,y=(i-x)/W;
         if(o.box?(x>=o.box[0]&&x<o.box[2]&&y>=o.box[1]&&y<o.box[3]):!(keep&&keep[i]))pk[i]=1;}}
-    const nb=(i,f)=>{const x=i%W;if(x>0)f(i-1);if(x<W-1)f(i+1);if(i>=W)f(i-W);if(i<n-W)f(i+W);};
+    // 4-neighbours of pixel i into out (returns count); no closures in the hot loops
+    const NB=new Int32Array(4);
+    const nbs=i=>{let m=0;const x=i%W;if(x>0)NB[m++]=i-1;if(x<W-1)NB[m++]=i+1;if(i>=W)NB[m++]=i-W;if(i<n-W)NB[m++]=i+W;return m;};
     // (1) background connected to transparency
     let h=0,e=0;
     for(let i=0;i<n;i++)if(a[i*4+3]<20)q[e++]=i;
     const tr=e;
-    while(h<e){const i=q[h++];nb(i,k=>{if(bg[k]&&!rm[k]){rm[k]=1;q[e++]=k;}});}
+    while(h<e){const i=q[h++],m=nbs(i);for(let z=0;z<m;z++){const k=NB[z];if(bg[k]&&!rm[k]){rm[k]=1;q[e++]=k;}}}
     const flood=e-tr;
     // (2) 2 px of pale rim from transparency or removed background
-    let fr=q.slice(0,e);
-    for(let it=0;it<2;it++){const nx=[];for(const i of fr)nb(i,k=>{if(!rm[k]&&light[k]&&a[k*4+3]>=20){rm[k]=1;nx.push(k);}});fr=nx;}
+    let fr=Array.from(q.subarray(0,e));
+    for(let it=0;it<2;it++){const nx=[];for(const i of fr){const m=nbs(i);for(let z=0;z<m;z++){const k=NB[z];if(!rm[k]&&light[k]&&a[k*4+3]>=20){rm[k]=1;nx.push(k);}}}fr=nx;}
     // (3) enclosed pockets >= 30 px, then 2 px of light rim around them
     let pc=0;
-    if(o.T){const seen=new Uint8Array(n);let grow=[];
-      for(let s0=0;s0<n;s0++){if(!pk[s0]||rm[s0]||seen[s0])continue;h=0;e=0;q[e++]=s0;seen[s0]=1;
-        while(h<e){const i=q[h++];nb(i,k=>{if(pk[k]&&!rm[k]&&!seen[k]){seen[k]=1;q[e++]=k;}});}
-        if(e>=30)for(let z=0;z<e;z++){rm[q[z]]=1;grow.push(q[z]);pc++;}}
-      for(let it=0;it<2;it++){const nx=[];for(const i of grow)nb(i,k=>{if(!rm[k]&&light[k]&&!(keep&&keep[k])){rm[k]=1;nx.push(k);pc++;}});grow=nx;}}
+    if(o.T){const seen=new Uint8Array(n),cq=new Int32Array(n);let grow=[];
+      for(let s0=0;s0<n;s0++){if(!pk[s0]||rm[s0]||seen[s0])continue;let ch=0,ce=0;cq[ce++]=s0;seen[s0]=1;
+        while(ch<ce){const i=cq[ch++],m=nbs(i);for(let z=0;z<m;z++){const k=NB[z];if(pk[k]&&!rm[k]&&!seen[k]){seen[k]=1;cq[ce++]=k;}}}
+        if(ce>=30)for(let z=0;z<ce;z++){grow.push(cq[z]);pc++;}}
+      for(const i of grow)rm[i]=1;
+      for(let it=0;it<2;it++){const nx=[];for(const i of grow){const m=nbs(i);for(let z=0;z<m;z++){const k=NB[z];if(!rm[k]&&light[k]&&!(keep&&keep[k])){rm[k]=1;nx.push(k);pc++;}}}grow=nx;}}
     let cnt=0;for(let i=0;i<n;i++)if(rm[i]){a[i*4+3]=0;cnt++;}
     g.putImageData(d,0,0);
     if(o.fade){g.save();g.globalCompositeOperation='destination-out';
@@ -167,7 +170,7 @@ function nutrientFlow(c,R,t,per=3,size=1){
     const s=pts[0],v=mod(t*.8+i*.37);glow(c,s[0],s[1],12*size,GREEN,.35+.25*Math.sin(t*2.4+i));
     circle(c,s[0],s[1],(10+12*v)*size,null,rgba(GREEN,.7*(1-v)),2);
     for(let j=0;j<per;j++){const u=mod(t/3.4+i*.21+j/per),p=along(pts,u),a=u<.12?u/.12:u>.88?(1-u)/.12:1;
-      glow(c,p[0],p[1],11*size,WHITE,.55*a);circle(c,p[0],p[1],3.6*size,rgba(WHITE,.95*a),rgba('#6b5a3c',.8*a),1.2);}
+      glow(c,p[0],p[1],16*size,WHITE,.7*a);circle(c,p[0],p[1],5.2*size,rgba(WHITE,a),rgba(C.ink,.9*a),2);}
     const e=pts[pts.length-1],w=mod(t*.6+i*.29);circle(c,e[0],e[1],(6+14*w)*size,null,rgba(WHITE,.55*(1-w)),2);
   });
 }
@@ -232,16 +235,17 @@ function draw(c,s,t){
   const held=s.phase>=0;
 
   // step-1 sub-stages (a eggs 0-2.7 s, b larvae 2.7-5.4 s, c cocoons 5.4-8 s); held steps loop, so c fades back to a
-  const ct=k===1?(held?mod(tau,PER):Math.min(tau,PER-.001)):PER-.001;
+  const ct=k===1?(held?mod(tau,PER):Math.min(tau,PER-.001)):(moving&&st.from===1&&st.ct1!==undefined?st.ct1:PER-.001);
+  if(k===1)st.ct1=ct;                                                            // a move away from step 1 keeps its last sub-stage
   const ramp=(v,a,b)=>clamp((v-a)/(b-a));
-  const wrapIn=held&&k===1?ramp(ct,7.4,8):0;
+  const wrapIn=held&&(k===1||st.from===1)?ramp(ct,7.4,8):0;
   const sA=Math.max(1-ramp(ct,2.4,3.0),wrapIn),sB=Math.min(ramp(ct,2.4,3.0),1-ramp(ct,5.1,5.7)),sC=Math.min(ramp(ct,5.1,5.7),1-wrapIn);
   const wEC20=1-sC;                                                              // EC20 visible in a and b
 
   // ── pictures ──
   withA(c,A([0,2],.0),()=>picIn(c,DOD,RD));
   withA(c,A([1],.0)*wEC20,()=>{const bob=1.2*Math.sin(t*1.3);picIn(c,WASP,{x:R_W1.x,y:R_W1.y+bob,w:R_W1.w,h:R_W1.h});});
-  const aC=A([1,2],0)*(k===1?(moving&&st.from===2?mix(1,sC,u):sC):1);
+  const aC=A([1,2],0)*(k===1?(moving&&st.from===2?mix(1,sC,u):sC):(moving&&st.from===1?mix(sC,1,u):1));
   withA(c,aC,()=>{
     const br=1+.006*Math.sin(t*1.6),cx=RC.x+RC.w/2,cy=RC.y+RC.h/2;c.save();c.translate(cx,cy);c.scale(br,br);c.translate(-cx,-cy);picIn(c,COC,RC);c.restore();});
 
@@ -273,11 +277,11 @@ function draw(c,s,t){
     const tip=wp(...W_TIP),v=mod(t*.8);circle(c,tip[0],tip[1],8+14*v,null,rgba(YELLOW,.8*(1-v)),2.5);glow(c,tip[0],tip[1],14,YELLOW,.5);
     EGG.forEach((e,i)=>{const t0=.5+i*.5,q=clamp((ct-t0)/.8),dst=[win[0]+e[0]*wr[0]/120,win[1]+e[1]*wr[1]/40];
       if(ct<t0)return;const ctl=[(tip[0]+dst[0])/2+10,tip[1]-6],p=K.bez(tip,ctl,dst,smooth(q));
-      c.save();c.translate(p[0],p[1]);c.rotate(.5);K.ellipse(c,0,0,6,3.6,'#f6eccd',rgba('#8a7650',.9),1.4);c.restore();});
+      c.save();c.translate(p[0],p[1]);c.rotate(.5);K.ellipse(c,0,0,8,5,'#f6eccd',rgba('#8a7650',.9),1.4);c.restore();});
   });
   withA(c,A([1],.3)*sB,()=>{                                                   // larvae grow and wiggle inside (schematic)
     const g=.45+.55*ramp(ct,2.6,5.0);
-    EGG.forEach((e,i)=>grub(c,win[0]+e[0]*wr[0]/120,win[1]+e[1]*wr[1]/40,30*g,(i%2?.3:-.25),t+i*.8));});
+    EGG.forEach((e,i)=>grub(c,win[0]+e[0]*wr[0]/120,win[1]+e[1]*wr[1]/40,40*g,(i%2?.3:-.25),t+i*.8));});
   const catA=wp(...W_CAT),catC=cp(RC,...C_CAT);
   withA(c,A([1],.3),()=>{                                                      // stage pill (eggs / larvae / cocoons) with leader
     const tw=(p,a,anc,ph)=>withA(c,a,()=>{const q=tag(c,p,14,352,{col:WHITE});leader(c,[q.x+q.w/2,q.y],anc,WHITE,t+ph);});
@@ -305,9 +309,9 @@ function draw(c,s,t){
     strip(c,620,CW-34,y+76,kind,t+ph,...labs);
     let yy=y+150;for(const [q,col] of lines)yy+=lwrap(c,q,RX2+18,yy,RW2-36,22,col,30);
   };
-  withA(c,A([2],1.4),()=>box(66,214,L('parasitism','寄生','Parasitism'),0,'pa',[[NEW.paLong,WHITE],[NEW.paNot,MUTED]],[L('parasite','寄生者','Parasite'),L('host','寄主','Host')]));
-  withA(c,A([2],2.2),()=>box(292,184,L('predation','掠食','Predation'),.6,'pr',[[NEW.prEat,WHITE]],[L('predator','掠食者','Predator'),L('prey','獵物','Prey')]));
-  withA(c,A([2],2.6),()=>{const Y=496;K.sline(c,[[620,Y],[CW-40,Y]],rgba(WHITE,.55),3);
+  withA(c,A([2],1.4),()=>box(60,236,L('parasitism','寄生','Parasitism'),0,'pa',[[NEW.paLong,WHITE],[NEW.paNot,MUTED]],[L('parasite','寄生者','Parasite'),L('host','寄主','Host')]));
+  withA(c,A([2],2.2),()=>box(306,170,L('predation','掠食','Predation'),.6,'pr',[[NEW.prEat,WHITE]],[L('predator','掠食者','Predator'),L('prey','獵物','Prey')]));
+  withA(c,A([2],2.6),()=>{const Y=494;K.sline(c,[[620,Y],[CW-40,Y]],rgba(WHITE,.55),3);
     c.save();c.fillStyle=rgba(WHITE,.7);c.beginPath();c.moveTo(CW-26,Y);c.lineTo(CW-42,Y-8);c.lineTo(CW-42,Y+8);c.closePath();c.fill();c.restore();
     text(c,L('time','時間','Time'),608,Y+8,22,MUTED,'right');});
   withA(c,A([2],3.4),()=>{const p=tag(c,NEW.signsFirst,RX2,516,{col:YELLOW,minX:RX2});if(k===2)pulseRing(c,p,t+.5,YELLOW);});
