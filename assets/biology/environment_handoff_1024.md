@@ -9,14 +9,14 @@
 - 共用：`environment_kit_1024_v1.js`（包 EcologyKit，含新圖 SIZE、顏色語意、標籤）。
 - 主程式：`environment_diversity_1024_v1.js`（4 分頁、文字、選擇題、「課本照片」檢視；每個動畫的步驟文字在 `VIEWS`）。尚未動到正式頁 `biology_environmental_diversity.html`。
 - 預覽頁：`biology_environmental_diversity_1024_preview1.html`（每做完一個動畫，在 `environment_diversity_1024_v1.js` 那行之前加一行 `environment_draw_<名>_1024_v1.js?v=20261024-v1`）。
-- 動畫完成：`count`、`composition`、`worth`、`frogs`（都已提交）。
+- 動畫完成：`count`、`composition`、`worth`、`frogs`、`response`（都已提交）。
 
-## 第 1 課還沒做的動畫（6 個；frogs 已完成，表中保留說明）
+## 第 1 課還沒做的動畫（5 個；frogs、response 已完成，表中保留說明）
 
 | 動畫 | 狀態 | 要用的圖（`environment_ai_1024/` 除非另註） |
 |---|---|---|
 | `frogs` | **已完成並驗收**（見下方，勿重做） | BD1_ladybird_*.png 六隻；EC19 七星瓢蟲 |
-| `response` | 未做 | BD1 瓢蟲沿用 |
+| `response` | **已完成並驗收**（左群用 orange0，右群 patch／black2red／pale；勿重做） | BD1 瓢蟲 |
 | `mosaic` | 未做 | BD5_mosaic.jpg |
 | `residents` | 未做 | BD6 四種、BD7 四種（BD7_chub/mayfly_nymph/dipper/river_snail）、ecology_ai_1023 的 HB2、HB4、HB6、HB7、HB8、EC16 |
 | `uses` | 未做 | BD2 稻米四款、BD8_cotton/silk_cocoons/timber、BD8_rubber_tapping/yew/bamboo |
