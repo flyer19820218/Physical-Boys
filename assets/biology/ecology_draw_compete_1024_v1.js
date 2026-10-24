@@ -1,6 +1,6 @@
 /* Ecology lesson 3 · "compete" canvas (competition tab, view 0), 2026-10-24. Competition = a shared resource that is not enough.
  * Only who loses what (− / −, relative to having no rival); no food-chain arrow, no eaten/eater roles, no energy (lesson 2).
- * Pictures (K.SIZE, measured with PIL): EC9_beetles_sap 1400x1167, EC3_rice 590x1096.
+ * Pictures (K.SIZE, measured with PIL): EC9_beetles_sap 1400x1167, EC3_rice 590x1096, EC23_stags_duel 1400x454.
  * EC9 is cut out (trunk on transparency) with a 1-3 px pale rim; EC3 has the same rim plus opaque near-white pockets between
  * leaves and panicle (min RGB > 215, sat < 30, ~9.5k px). Cleanup (PIL test): EC9 only light low-saturation pixels within 2 px of
  * transparency (~3.6k px, rim only, sap highlights kept); EC3 also treats the near-white pockets as transparency (grains kept).
@@ -10,34 +10,50 @@
  * Three steps, 8 s each; s.shown = step. Elements carry the steps they live in; a step change fades only what changes.
  *  0 shared + limited: EC9 large (slow sway), sap drops fall from the drip; "Tree sap" pill with leader; dashed "want" lines
  *    from both beetle heads to the sap; right column: tick "Shared resource", tick "Limited", bracket → "Competition".
- *  1 same species: EC9 fades out; two rice plants (one mirrored) sway close together; yellow light rays from the "Light" pill
- *    pulse onto both crowns; cyan water drops sink from the soil surface between them to both root clumps; a dashed
- *    overlap zone where the leaves cross ("Space"); "Same species", two "Rice" pills, an orange − disc for each + "Harmed"; legend.
+ *  1 same species, two examples side by side (a faint divider at x 480; "Same species" pill spans both):
+ *    left "Plants": two smaller rice plants (one mirrored) sway close together; light rays from the "Light" pill to both crowns;
+ *    water drops from the soil between them to both roots; dashed overlap zone ("Space"); two "Rice" pills; − + "Harmed" each.
+ *    right "Animals" (fades in from 3.2 s): EC23 two sika stags, antlers locked, the whole picture leans a few px left/right
+ *    (skew about the ground line = a slow shove, no fight marks); one pink heart above the antlers, "Only one mate", dashed
+ *    "want" lines from both heads; a "Sika deer" pill with leader for each stag; − + "Harmed" under each. Then RIVAL as one
+ *    orange line under both examples, and the legend.
  *  2 different species: back to EC9; "Rhinoceros beetle" / "Stag beetle" pills with leaders; pulsing rings at both heads; "Different
  *    species"; an orange − disc + "Harmed" under each beetle (below the picture); right card: sign legend, RIVAL lines, sign note.
- * Labels from K.LAB; new labels defined here as P(): RIVAL.
+ * EC23 (cut out; PIL test): paper-white pockets between the antlers (x 600..830, y <= 235) are flooded from transparency;
+ *   the pale watercolour grass wash (y >= 345, sat < 60) fades out smoothly (alpha x (232-min)/52); elsewhere only the 2 px
+ *   light rim. EC23 anchors (picture px): stag backs (330,60) (1070,60), ears (625,165) (810,165), antler crown x 715, top y 18.
+ * Labels from K.LAB; new labels defined here as P(): RIVAL, RIVAL1 (same sentence on one line), SIKA, MATE, PLANTS, ANIMALS.
  */
 (()=>{'use strict';
 const K=window.EcologyKit,{P,C,D,clamp,mix,mod,smooth,ease,rgba,text,measure,glow,circle}=K;
 const L=(k,zh,en)=>(K.LAB&&K.LAB[k])||P(zh,en);
 const RIVAL=[P('− 是和沒有對手時比，','− means less to use'),P('能用的資源變少','than with no rival')];   // new label, two lines (not in K.LAB)
+const RIVAL1=P('− 是和沒有對手時比，能用的資源變少','− means less to use than with no rival');     // the same sentence on one line (step 1)
+const SIKA=P('梅花鹿','Sika deer'),MATE=P('只有一個配偶','Only one mate'),PLANTS=P('植物','Plants'),ANIMALS=P('動物','Animals');
+const PINK=C.pink;
 const N=3,PER=8,CW=960,MOVE=.8;
 const WHITE=C.white,YELLOW=C.yellow,CYAN=C.cyan,ORANGE=C.orange,MUTED=C.muted,SAP='#e0a04a';
 
 // ── layout ────────────────────────────────────────────────────────────────
-const EC9='EC9_beetles_sap.png',RICE='EC3_rice.png';
+const EC9='EC9_beetles_sap.png',RICE='EC3_rice.png',STAG='EC23_stags_duel.png';
 const PR=K.fitRect(EC9,30,20,600,490);                              // 587.8 x 490 at x 36.1
 const ep=(px,py)=>[PR.x+px/1400*PR.w,PR.y+py/1167*PR.h];
 const SAP_TOP=ep(700,250),DRIP=ep(703,1090),RH_HEAD=ep(540,600),RH_BODY=ep(150,600),ST_HEAD=ep(930,640),ST_BODY=ep(1200,650);
 const RC=795,RX0=650;                                               // right column centre / left edge
-// rice: height 440 from y 60; plant A stem at x 370, plant B (mirrored) stem at x 530 (soil mounds touch: too close)
-const RH=440,RW=RH*590/1096,RY=60,RKS=RH/1096;
-const RA={x:370-240*RKS,y:RY,w:RW,h:RH},RB={x:530-(590-240)*RKS,y:RY,w:RW,h:RH};
+// rice (step 1, left half): height 340 from y 110; plant A stem at x 178, plant B (mirrored) stem at x 302 (soil mounds touch)
+// picture extent: x 30..582 from the stem at 240, so the pair spans x 113..367; flanks x 10..100 and 380..470 stay free for labels
+const RH=340,RW=RH*590/1096,RY=110,RKS=RH/1096;
+const RA={x:178-240*RKS,y:RY,w:RW,h:RH},RB={x:302-(590-240)*RKS,y:RY,w:RW,h:RH};
 const rp=(r,mir,px,py)=>[r.x+(mir?590-px:px)*RKS,r.y+py*RKS];
 const ROOT_A=rp(RA,0,240,1010),ROOT_B=rp(RB,1,240,1010),BASE_A=rp(RA,0,240,975),BASE_B=rp(RB,1,240,975);
 const TIPS_A=[[220,20],[470,70],[20,190]].map(q=>rp(RA,0,...q)),TIPS_B=[[220,20],[470,70],[20,190]].map(q=>rp(RB,1,...q));
-const ZONE={x:450,y:225,rx:62,ry:96};                               // where the two crowns overlap
-const LC=130;
+const ZQ=rp(RA,0,439,411),ZONE={x:ZQ[0],y:ZQ[1],rx:155*RKS,ry:239*RKS};  // where the two crowns overlap (same picture spot as before)
+const SOIL=rp(RA,0,439,1017);                                        // soil surface between the plants
+const LC=55,RFL=425;                                                 // rice flank centres
+// stags (step 1, right half): x 495..955, y 150..299
+const DR={x:495,y:150,w:460,h:460*454/1400},dp=(px,py)=>[DR.x+px/1400*DR.w,DR.y+py/454*DR.h];
+const BACK_L=dp(330,60),BACK_R=dp(1070,60),EAR_L=dp(625,165),EAR_R=dp(810,165),HEART=[dp(715,0)[0],126];
+const DISC_L=dp(330,0)[0],DISC_R=dp(1070,0)[0],DY=356;
 
 // ── picture rim cleanup (once per picture, only 2 px deep; EC3 also clears its near-white pockets) ──
 const CLEAN={};
@@ -45,12 +61,17 @@ function cleaned(file){
   if(CLEAN[file])return CLEAN[file];const im=K.pic(K.src(file));if(!im)return null;
   try{const W=im.naturalWidth,H=im.naturalHeight,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');g.drawImage(im,0,0);
     const d=g.getImageData(0,0,W,H),a=d.data,n=W*H,dep=new Uint8Array(n).fill(255),q=new Int32Array(n);let h=0,e=0;
-    const pockets=file===RICE;
+    const pockets=file===RICE,stag=file===STAG;
     const light=i=>{const j=i*4,r=a[j],gg=a[j+1],b=a[j+2];return a[j+3]>=20&&(r+gg+b)/3>150&&Math.max(r,gg,b)-Math.min(r,gg,b)<70;};
     const white=i=>{const j=i*4,r=a[j],gg=a[j+1],b=a[j+2];return Math.min(r,gg,b)>215&&Math.max(r,gg,b)-Math.min(r,gg,b)<30;};
+    const grass=i=>stag&&i>=345*W,antler=i=>{const x=i%W,y=(i-x)/W;return stag&&x>=600&&x<=830&&y<=235;};
     for(let i=0;i<n;i++)if(a[i*4+3]<20||(pockets&&white(i))){dep[i]=0;q[e++]=i;}
-    while(h<e){const i=q[h++];if(dep[i]>=2)continue;const x=i%W;
-      for(const k of [x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W])if(k>=0&&k<n&&dep[k]===255&&light(k)){dep[k]=dep[i]+1;q[e++]=k;}}
+    while(h<e){const i=q[h++],dd=dep[i],x=i%W;
+      for(const k of [x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W]){if(k<0||k>=n||dep[k]!==255)continue;
+        if(antler(k)&&white(k)){dep[k]=0;q[e++]=k;}                     // EC23: paper-white pockets between the antlers
+        else if(dd<2&&light(k)&&!grass(k)){dep[k]=dd+1;q[e++]=k;}}}
+    if(stag)for(let i=345*W;i<n;i++){const j=i*4,r=a[j],gg=a[j+1],b=a[j+2],mx=Math.max(r,gg,b),mn=Math.min(r,gg,b);   // grass wash fades
+      if(a[j+3]>=20&&mx-mn<60)a[j+3]=Math.round(a[j+3]*clamp((232-mn)/52));}
     for(let i=0;i<n;i++)if(dep[i]<255)a[i*4+3]=0;
     g.putImageData(d,0,0);CLEAN[file]=cv;}catch(err){CLEAN[file]=im;}
   return CLEAN[file];
@@ -58,7 +79,7 @@ function cleaned(file){
 function picIn(c,file,r,flip=false){
   const cv=cleaned(file);
   if(!cv){K.drawIn(c,file,r,{flip});return;}
-  c.save();if(flip){c.translate(r.x*2+r.w,0);c.scale(-1,1);}c.drawImage(cv,r.x,r.y,r.w,r.h);c.restore();
+  c.save();if(flip){c.translate(r.x*2+r.w,0);c.scale(-1,1);}if(file===STAG)c.imageSmoothingQuality='high';c.drawImage(cv,r.x,r.y,r.w,r.h);c.restore();
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────
@@ -100,6 +121,15 @@ function sapDrops(c,t){                                              // drops ga
 function swayPic(c,t,amp){                                           // EC9 with a slow breathing sway about the trunk foot
   const sw=amp*Math.sin(t*1.3),sc=1+.006*Math.sin(t*1.7),fx=PR.x+PR.w/2,fy=PR.y+PR.h;
   c.save();c.translate(fx,fy);c.rotate(sw);c.scale(sc,sc);c.translate(-fx,-fy);picIn(c,EC9,PR);c.restore();
+}
+function heart(c,x,y,s,fill,stroke){                                 // a heart of half-width s, tip at y+s
+  c.save();c.beginPath();c.moveTo(x,y+s);
+  c.bezierCurveTo(x-s*1.25,y+s*.15,x-s*1.05,y-s*1.05,x,y-s*.42);c.bezierCurveTo(x+s*1.05,y-s*1.05,x+s*1.25,y+s*.15,x,y+s);c.closePath();
+  if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=3;c.stroke();}c.restore();
+}
+function stags(c,t){                                                  // a slow shove: the pair leans together, feet stay put
+  const sk=.022*Math.sin(t*1.6)+.008*Math.sin(t*3.7),gy=DR.y+DR.h;
+  c.save();c.transform(1,0,-sk,1,sk*gy,0);picIn(c,STAG,DR);c.restore();
 }
 function ricePlant(c,r,mir,base,t,ph){
   const sw=.012*Math.sin(t*1.25+ph);
@@ -150,44 +180,67 @@ function draw(c,s,t){
     if(k===0)pulseRing(c,p,t,YELLOW);
   });
 
-  // ── step 1: two rice plants ──
-  const riceA=A([1],0);
-  withA(c,riceA,()=>{
-    ricePlant(c,RB,true,BASE_B,t,1.7);ricePlant(c,RA,false,BASE_A,t,0);
+  // ── step 1: same species, two examples (rice left, sika stags right) ──
+  withA(c,A([1],0),()=>{                                              // divider + kingdom headings
+    c.save();c.setLineDash([4,10]);K.line(c,[[480,74],[480,452]],rgba(WHITE,.22),2);c.restore();
+    text(c,PLANTS,20,90,22,MUTED);text(c,ANIMALS,950,90,22,MUTED,'right');
   });
+  withA(c,A([1],0),()=>{ricePlant(c,RB,true,BASE_B,t,1.7);ricePlant(c,RA,false,BASE_A,t,0);});
   withA(c,A([1],.6),()=>{                                            // light: rays from the pill to both crowns
-    const lp=tag(c,L('light','光','Light'),CW/2,8,{al:'center',col:YELLOW});
-    const o=[CW/2,lp.y+lp.h+2];glow(c,o[0],o[1],46,YELLOW,.35+.15*Math.sin(t*3));
+    const lp=tag(c,L('light','光','Light'),240,62,{al:'center',col:YELLOW,minX:110,maxX:370});
+    const o=[240,lp.y+lp.h+2];glow(c,o[0],o[1],34,YELLOW,.35+.15*Math.sin(t*3));
     [...TIPS_A,...TIPS_B].forEach((p,i)=>{const a=.45+.4*Math.max(0,Math.sin(t*2.4-i*.9));
-      c.save();c.globalAlpha*=a;dline(c,o,p,YELLOW,t*1.4,3,[10,8]);c.restore();circle(c,p[0],p[1],4+2*a,rgba(YELLOW,.9));});
+      c.save();c.globalAlpha*=a;dline(c,o,p,YELLOW,t*1.4,3,[10,8]);c.restore();circle(c,p[0],p[1],3.5+2*a,rgba(YELLOW,.9));});
   });
-  withA(c,A([1],1.4),()=>{                                           // water: drops sink from between the plants to both roots
-    const src=[450,468];
-    for(let i=0;i<6;i++){const q=mod(t/2.2+i/6),to=i%2?ROOT_B:ROOT_A,mid=[mix(src[0],to[0],.5),src[1]+6];
+  withA(c,A([1],1.2),()=>{                                           // water: drops sink from between the plants to both roots
+    const src=SOIL;
+    for(let i=0;i<6;i++){const q=mod(t/2.2+i/6),to=i%2?ROOT_B:ROOT_A,mid=[mix(src[0],to[0],.5),src[1]+5];
       const p=K.bez(src,mid,to,smooth(q)),a=q<.15?q/.15:q>.85?(1-q)/.15:1;
-      c.save();c.globalAlpha*=a;c.beginPath();c.moveTo(p[0],p[1]-9);c.quadraticCurveTo(p[0]+6,p[1]-1,p[0],p[1]+5);c.quadraticCurveTo(p[0]-6,p[1]-1,p[0],p[1]-9);
+      c.save();c.globalAlpha*=a;c.beginPath();c.moveTo(p[0],p[1]-8);c.quadraticCurveTo(p[0]+5,p[1]-1,p[0],p[1]+4);c.quadraticCurveTo(p[0]-5,p[1]-1,p[0],p[1]-8);
       c.fillStyle=CYAN;c.fill();c.restore();}
-    for(const r of [ROOT_A,ROOT_B]){const v=mod(t*.6);K.ellipse(c,r[0],r[1]+8,18+14*v,7+5*v,null,rgba(CYAN,.8*(1-v)),2.5);}
-    const p=tag(c,L('water','水','Water'),LC,452,{al:'center',col:CYAN});
-    dline(c,[p.x+p.w,p.y+p.h/2],[ROOT_A[0]-24,ROOT_A[1]+2],CYAN,t);
+    for(const r of [ROOT_A,ROOT_B]){const v=mod(t*.6);K.ellipse(c,r[0],r[1]+6,14+11*v,5+4*v,null,rgba(CYAN,.8*(1-v)),2.5);}
+    const p=tag(c,L('water','水','Water'),LC,418,{al:'center',col:CYAN,maxX:110});
+    dline(c,[p.x+p.w,p.y+p.h/2],[ROOT_A[0]-20,ROOT_A[1]+2],CYAN,t);
   });
-  withA(c,A([1],2.2),()=>{                                           // space: dashed overlap zone
+  withA(c,A([1],1.8),()=>{                                           // space: dashed overlap zone
     c.save();c.setLineDash([9,7]);c.lineDashOffset=-t*10;K.ellipse(c,ZONE.x,ZONE.y,ZONE.rx+2*Math.sin(t*2),ZONE.ry,'rgba(242,236,217,.06)',rgba(WHITE,.9),3);c.restore();
-    const p=tag(c,L('space','空間','Space'),RC,120,{al:'center',col:WHITE,minX:700});
-    dline(c,[p.x,p.y+p.h/2],[ZONE.x+ZONE.rx,ZONE.y-20],WHITE,t);
+    const p=tag(c,L('space','空間','Space'),RFL,120,{al:'center',col:WHITE,minX:378,maxX:472});
+    dline(c,[p.x,p.y+p.h/2],[ZONE.x+ZONE.rx,ZONE.y-16],WHITE,t);
   });
   withA(c,A([1],.3),()=>{
-    const p=tag(c,L('sameSpecies','同種','Same species'),LC,26,{al:'center',col:YELLOW,active:true,size:26,maxX:300});
+    const p=tag(c,L('sameSpecies','同種','Same species'),480,10,{al:'center',col:YELLOW,active:true,size:26});
     if(k===1)pulseRing(c,p,t,YELLOW);
-    const a=tag(c,L('rice','水稻','Rice'),LC,200,{al:'center',col:WHITE,maxX:300});
-    const b=tag(c,L('rice','水稻','Rice'),RC+40,200,{al:'center',col:WHITE,minX:700});
+  });
+  withA(c,A([1],.9),()=>{
+    const a=tag(c,L('rice','水稻','Rice'),LC,196,{al:'center',col:WHITE,maxX:110});
+    const b=tag(c,L('rice','水稻','Rice'),RFL,228,{al:'center',col:WHITE,minX:378,maxX:472});
     dline(c,[a.x+a.w,a.y+a.h/2],rp(RA,0,100,400),WHITE,t);dline(c,[b.x,b.y+b.h/2],rp(RB,1,100,400),WHITE,t);
   });
-  const pop1=k===1&&!moving?clamp((tau-3.0)/.6):1;
-  withA(c,A([1],3.0),()=>{
-    for(const [x,o] of [[LC,0],[RC+40,.4]]){signDisc(c,x,318,36,ORANGE,t+o,pop1);text(c,L('loss','受害','Harmed'),x,392,24,ORANGE,'center');}
+  const pop1=k===1&&!moving?clamp((tau-2.6)/.6):1;
+  withA(c,A([1],2.6),()=>{
+    for(const [x,o] of [[LC,0],[RFL,.4]]){signDisc(c,x,318,30,ORANGE,t+o,pop1);text(c,L('loss','受害','Harmed'),x,382,24,ORANGE,'center');}
   });
-  withA(c,A([1],3.8),()=>{tag(c,L('signLegend','＋ 得益　− 受害　0 看不出明顯影響','+ gains  − harmed  0 no evident effect'),CW/2,516,{al:'center',col:WHITE});});
+  // animals: two sika stags, one mate
+  withA(c,A([1],3.2),()=>{stags(c,t);});
+  withA(c,A([1],3.8),()=>{
+    const a=tag(c,SIKA,500,104,{col:WHITE,minX:492,maxX:700});
+    const b=tag(c,SIKA,952,104,{al:'right',col:WHITE,minX:760,maxX:952});
+    leader(c,[a.x+a.w*.6,a.y+a.h],BACK_L,WHITE,t);leader(c,[b.x+b.w*.4,b.y+b.h],BACK_R,WHITE,t+.5);
+  });
+  withA(c,A([1],4.4),()=>{                                           // one mate, both want it
+    for(const [e,o] of [[EAR_L,0],[EAR_R,.6]]){dline(c,e,[HEART[0]+(e[0]<HEART[0]?-12:12),HEART[1]+6],WHITE,t+o,2.5,[5,7]);circle(c,e[0],e[1],4,WHITE,C.ink,2);   // small dots: keep the antlers visible
+      const v=mod(t*.8+o);circle(c,e[0],e[1],5+v*8,null,rgba(WHITE,.6*(1-v)),2);}
+    const b=1+.07*Math.sin(t*2.6);glow(c,HEART[0],HEART[1],34,PINK,.35);
+    const u=mod(t*.55);circle(c,HEART[0],HEART[1]+1,22+u*14,null,rgba(PINK,.7*(1-u)),2.5);
+    heart(c,HEART[0],HEART[1]+2,15*b,PINK,C.ink);
+    tag(c,MATE,HEART[0],60,{al:'center',col:PINK,minX:500,maxX:940});
+  });
+  const pop3=k===1&&!moving?clamp((tau-5.2)/.6):1;
+  withA(c,A([1],5.2),()=>{
+    for(const [x,o] of [[DISC_L,.2],[DISC_R,.6]]){signDisc(c,x,DY,28,ORANGE,t+o,pop3);text(c,L('loss','受害','Harmed'),x,DY+60,24,ORANGE,'center');}
+  });
+  withA(c,A([1],6.0),()=>{text(c,RIVAL1,480,492,22,ORANGE,'center');});
+  withA(c,A([1],6.6),()=>{tag(c,L('signLegend','＋ 得益　− 受害　0 看不出明顯影響','+ gains  − harmed  0 no evident effect'),CW/2,516,{al:'center',col:WHITE});});
 
   // ── step 2: two species at the same sap ──
   withA(c,A([2],.6),()=>{

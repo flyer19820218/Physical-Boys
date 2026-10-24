@@ -56,10 +56,10 @@ const LG_TEXT=[
 
 // ── competition / compete ──────────────────────────────────────────────────
 const CP_SHORT=[P(`搶同一個資源`,`One shared resource`),P(`同種競爭`,`Within a species`),P(`不同種競爭`,`Between species`)];
-const CP_NAMES=[P(`共用而且不夠分的資源`,`A shared resource that is not enough`),P(`同一種生物之間也會競爭`,`Organisms of one species compete too`),P(`不同種生物也會競爭`,`Different species compete too`)];
+const CP_NAMES=[P(`共用而且不夠分的資源`,`A shared resource that is not enough`),P(`同種的植物、動物之間都會競爭`,`Plants and animals compete within their own species`),P(`不同種生物也會競爭`,`Different species compete too`)];
 const CP_TEXT=[
  P(`樹幹流出的樹液就那麼一點，好幾隻昆蟲都想吃。兩個條件要同時成立才算競爭：大家都需要同一個資源，而這個資源又不夠分。（AI 插圖，非實拍。）`,`Only a little sap flows from the trunk, yet several insects want it. Competition needs both conditions: they all need the same resource, and there is not enough of it. (AI illustration, not a photo.)`),
- P(`兩株水稻種得太近，要搶光、水和土裡的養分，也要搶空間。這是同一種生物之間的競爭，叫種內競爭。動物也一樣，例如爭奪食物或配偶。`,`Two rice plants growing too close fight for light, water, nutrients in the soil and space. This is competition within one species. Animals do the same, for example over food or mates.`),
+ P(`兩株水稻種得太近，要搶光、水和土裡的養分，也要搶空間。動物也一樣：兩隻公梅花鹿角抵著角，爭的是同一個配偶，而配偶只有一個。這些都是同一種生物之間的競爭，叫種內競爭；雙方都記 −，意思是和沒有對手時比，能用的資源變少。（AI 插圖，非實拍。）`,`Two rice plants growing too close fight for light, water, nutrients in the soil and space. Animals do the same: two sika stags lock antlers over the same mate, and there is only one. These are competition within one species; both sides are −, meaning each has less to use than with no rival. (AI illustration, not a photo.)`),
  P(`獨角仙和鍬形蟲是不同種，卻都想吃同一處的樹液，這是種間競爭。雙方都是 −，意思是和沒有對手比起來，能利用的資源變少，不是一定會死。`,`A rhinoceros beetle and a stag beetle are different species but want the sap at the same spot, which is competition between species. Both sides are −, meaning each can use less than if the other were absent, not that either must die.`)];
 
 // ── competition / resource ─────────────────────────────────────────────────
