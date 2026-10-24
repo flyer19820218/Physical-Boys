@@ -77,3 +77,13 @@ Style: detailed scientific illustration in a clean, semi-realistic hand-painted 
 Landscape 16:9. A blacktip reef shark swimming in side view, mouth closed, grey-brown back and pale belly, black-tipped fins. A single small remora (Echeneis naucrates), slender dark grey body about one fifth of the shark's length, is attached flat against the shark's flank just behind the gill slits, head pointing forward in the same direction as the shark. On the top of the remora's head is its oval, flat sucker plate with fine parallel horizontal ridges (lamellae), pressed against the shark's skin; the sucker is oval and the same width as the remora's head, not round and not large. No other disc, circle, or object on the shark. Side view, the pair centred.
 Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, pure white background with no shadow and no scenery. Generous empty margin around the subjects. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.
 ```
+
+## 重生：EC12 蜂繭與毛蟲（EC25，白底，可選）
+
+原圖毛蟲的頭和胸足畫得像尖牙、利爪，蜂繭在旁邊葉子上。重生後可換掉 `EC12_wasp_cocoons.png`（舊圖先備份；菟絲子 EC12_dodder 不用重畫）。
+檢查：毛蟲頭小、圓、沒有尖牙；胸足短小；十來個小白黃色橢圓繭成簇貼在毛蟲身側與背上；毛蟲不流血、不破；只有一隻毛蟲、一片菜葉。
+
+```
+Landscape 16:9. A single green caterpillar of a cabbage-feeding moth, plump, resting still on a piece of green cabbage leaf, with a small rounded head, no fangs, tiny short true legs and soft stubby prolegs. Clustered on its flank and back, and a few on the leaf right beside it, are about a dozen tiny pale yellow-white oval silk cocoons of a parasitic wasp, each smaller than the caterpillar's head, stuck together in a small group. The caterpillar is intact, no wound, no blood. Side view, the caterpillar and cocoons centred.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, pure white background with no shadow and no scenery. Generous empty margin around the subject. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.
+```
