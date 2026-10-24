@@ -169,5 +169,5 @@
 
 - [x] 老師看過計畫、圖全部到齊並入庫（2026-10-24）
 - [ ] 主程式、預覽頁、`stub`
-- [ ] fairtest　- [ ] evidence　- [ ] oxygen　- [ ] settle　- [ ] climate　- [ ] adapt　- [ ] mountain　- [ ] pondstream　- [ ] estuary　- [ ] tide　- [ ] oceanlight
-- [ ] QA（`qa_page`、`qa_text`、`smoke`）、換掉正式頁、`PROGRESS.md`、commit／push
+- [x] fairtest　- [x] evidence　- [x] oxygen　- [x] settle　- [x] climate　- [x] adapt　- [x] mountain　- [x] pondstream　- [x] estuary　- [x] tide　- [x] oceanlight
+- [x] QA（`qa_page`、`qa_text`、`smoke`）、換掉正式頁、`PROGRESS.md`、commit／push

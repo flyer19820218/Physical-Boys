@@ -67,7 +67,7 @@
 - 第 1 課「生命住在多薄的一層？」（`biology_ecology_environment.html`）整課重做：`ecology_1023_v1.js`＋共用工具 `ecology_kit_1023_v1.js`＋7 個動畫檔 `ecology_draw_*_1023_v1.js`（bridge、levels、quadrat、recapture、balance、capacity、succession；動畫由 Opus 一次一個、其餘 Sonnet）。5 個分頁：橋接頁（不重複前面的生物圈厚度）、組成層次、樣方與捉放法、族群收支與環境負荷量、演替（5 階段×土壤／裸岩兩種起點）。封面與首頁卡片已換。`qa_page`、`qa_text`、`smoke` 通過（只剩已知封面 404 與外殼 15～16px 字）；各動畫作者另做 10.3／10.4／10.5 檢查。
 - 圖：18 張 Gemini 插圖已去背（`assets/biology/ecology_ai_1023/`，對照與瑕疵見 `sources.md`）；演替用 SU1～SU4 共 7 張場景圖（不去背，原本帶戶外背景）。
 - **待老師看**：各動畫 Opus 多加的標籤（見各自報告，balance 7 個、capacity 9 個、succession 20 個）；SU4 林木的土壤看起來比 SU3 薄，與「土壤逐漸變厚」矛盾，可能要重生；裸岩路徑從地衣苔蘚直接跳到厚土的草本圖，圖上略跳；單元名稱「生命住在多薄的一層？」要不要改（要改得動第 2～4 課導覽與首頁）。
-- 第 4 課尚未重做；L4 封面待老師決定。規畫見 `assets/biology/ecology_plan_1023.md`（v2）、第 1 課計畫 `ecology_l1_plan_1023.md`。
+- 第 4 課已重做（見下方「第 4 課（最後一課）」）。規畫見 `assets/biology/ecology_plan_1023.md`（v2）、第 1 課計畫 `ecology_l1_plan_1023.md`。
 
 
 ## 生物圈與生態關係 第 2 課重做完（2026-10-24）
@@ -87,10 +87,12 @@
 - 順手修：第 2 課頁面章節導覽第一項原本誤連到自己，已改回第 1 課。
 - **待老師看**：Opus 自己加的標籤與句子，直接寫在各動畫檔，未併入 `LAB`：chase「追捕也可能撲空」；lag「示意，不是量測資料」「被吃得多」「現實中還有別的食物、疾病、遷移，也不是固定的週期」；compete「− 是和沒有對手時比，能用的資源變少」「只有一個配偶」「梅花鹿」「植物」「動物」；resource「夠分」「− 比較輕，甚至看不出競爭」等；mutual「保護和住處」「敵人不容易靠近」「共生不等於互利」等；commens「高處、受光的位置」「附生不等於寄生」「吸盤」等；parasite「寄主的養分」「幼蟲鑽出來，在毛蟲身上結繭」「先看符號，再看過程」等；relations「掠食、寄生同為＋／−，差在過程」；biocontrol「損失？」「示意，不是結果」「同樣大小的框」；risk「要先評估：它會影響誰？」「這個例子不是生物防治」「步驟」等。另外：biocontrol 前後各 5 隻與 2 隻毛蟲的示意是否適合、毛蟲只標「毛蟲」、EC25 毛蟲口器仍偏尖。
 
-## 生物圈與生態關係 第 4 課（最後一課）規劃中（2026-10-24）
+## 生物圈與生態關係 第 4 課（最後一課）已重做並換上正式頁（2026-10-24）
 
 - 第 4 課「換個環境，誰能住下來？」（`biology_ecology_habitats.html`）規劃草案：`assets/biology/ecology_l4_plan_1024.md`（4 分頁、11 個動畫：climate、adapt、mountain、pondstream、oxygen、estuary、tide、oceanlight、fairtest、evidence、settle；Opus 一次一個）、補圖咒語 `ecology_l4_prompts_1024.md`（HB1～HB9 必要、HB10～HB11 可選）。舊版是可旋轉的 3D 隨機地景，整個換成步驟式動畫。
 - 2026-10-24 老師同意開工；HB1～HB18 全部到齊並入庫（`ecology_ai_1023/`，`sources.md`「第四課補圖」）。計畫已加第 11 個動畫 `mountain`（山地林相，補充）。接著：主程式與預覽頁，再依序做動畫（Opus 一次一個）。
+- 2026-10-24 **第 4 課 11 個動畫全部完成並進 main**：主程式 `ecology_habitats_1024_v1.js`、預覽頁 `biology_ecology_habitats_1024_preview1.html` 已換上正式頁 `biology_ecology_habitats.html`；動畫 `ecology_draw_<名稱>_1024_v1.js`（fairtest、evidence、oxygen、settle、climate、adapt、mountain、pondstream、estuary、tide、oceanlight，Opus 一次一個）。`qa_text`、`smoke` 通過；`qa_page` 只剩已知的封面 404（第 3 課同樣）與外殼 15～16px 控制項字。HB12～HB18 咒語為重建版，在 `ecology_l4_prompts_1024.md`。
+- **待老師看**：Opus 自己加的標籤與句子，直接寫在各動畫檔，未併入 `LAB`：fairtest「只找一下、範圍小」「找很久、範圍大」「開闊 4 隻」「遮蔭 12 隻」，表格數字（52000/6000 lux、31/27 °C、55/80 %）為示意；evidence「昆蟲數量」「遮蔭讓昆蟲變多」「推論需要更多證據」「活動時間不同」「不好辨認」「第幾次」「這次開闊處比較多」「土也不同」（較涼用「較冷」）；oxygen「空氣中的氧」「溶氧受這些條件影響」「生物活動」「一次只改水溫」「魚游到水面附近」「較多／較少」「天亮前最少」；settle「想搬家」「有牠能吃的」「得益／受害」與收束句；climate「溫度不變」「雨量不變」「沙漠＝乾，不一定熱」；adapt「同一類難題，不同的解法」「矮灌木、地衣」；mountain「越高越冷，霧也多了」「更冷，樹長不高」「圓柏」「箭竹」；pondstream「輕的東西被沖走」「越深越暗」「照到水底」「底質」「岸邊」「常見於池塘／溪流」（表格第一行用「水流」）；estuary「水位上升／下降」「鹹水往上游推」「河水推回海邊」「泥灘露出」「在泥灘覓食」；tide「岩岸」「沙灘」「水窪變鹹」（說明欄寫「鹽度也可能改變」，用字不一致）「漲潮時又被水淹過」；oceanlight「淺／深」「小丑魚與海葵」「殘骸」「沒有日光，不等於沒有生命」「有些生物利用化學能，不是日光」。另：HB2／HB3 遠景小動物是否蓋掉（adapt 已在載入時蓋掉）、estuary 連續播放一輪約 47 秒。
 
 ## 人類與環境（三課）動畫重做規劃中（2026-10-24）
 
