@@ -1,4 +1,4 @@
-# 生物圈與生態關係 第 4 課「換個環境，誰能住下來？」重做計畫（2026-10-24，草案，等老師點頭才開工）
+# 生物圈與生態關係 第 4 課「換個環境，誰能住下來？」重做計畫（2026-10-24，老師已同意開工；圖已全部到齊）
 
 這是「生物圈與生態關係」的**最後一課**。檔案：`biology_ecology_habitats.html`（正式頁，之後換）、預覽 `biology_ecology_habitats_1024_preview1.html`。
 主程式 `ecology_habitats_1024_v1.js`（Sonnet）；共用工具沿用 `ecology_kit_1023_v1.js`；動畫 `ecology_draw_<名稱>_1024_v1.js`（Opus 一次一個，註冊為 `window.EcologyDraw[name]`）。
@@ -18,45 +18,49 @@
 - 第 2 課：食物鏈／網、能量、碳氮循環。淡水分頁**不畫食物鏈**（EC14 的水蚤、米蝦、鯽魚只當「這種環境的居民」）；落葉進水只提一句「岸邊落葉是水裡有機物的來源」。
 - 第 3 課：互利／片利／寄生／競爭／生物防治／外來種。**大口黑鱸（EC14b）不用**（外來種已在第 3 課出現過）。
 
-## 四個分頁、十個動畫
+## 四個分頁、十一個動畫
 
 | 分頁（id） | 鉤子（沿用舊版） | 觀察（動畫模組） | 步驟數 |
 |---|---|---|---|
-| land-habitats　雨量與溫度 | 沙漠一定很熱、凍原一定沒有生命嗎？ | 0 `climate` 雨量×溫度地圖；1 `adapt` 同一個難題，不同解法 | 4；4 |
+| land-habitats　雨量與溫度 | 沙漠一定很熱、凍原一定沒有生命嗎？ | 0 `climate` 雨量×溫度地圖；1 `adapt` 同一個難題，不同解法；2 `mountain` 爬山像往北走（補充） | 4；4；3 |
 | freshwater　池塘與溪流 | 都是淡水，為什麼溪流和池塘看到的生物不一樣？ | 0 `pondstream` 同為淡水，條件不同；1 `oxygen` 水裡的氧從哪來（選項 `s.warm`） | 4；3 |
 | coasts-ocean　河海交界到深海 | 漲潮時住處被水淹、退潮時又露出來，生物要面對哪些改變？ | 0 `estuary` 淡水遇上海水；1 `tide` 潮間帶：一天兩次露出來；2 `oceanlight` 光往下走（選項 `s.clear`） | 4；3；4 |
 | schoolyard-survey　校園就是研究場 | 陰影下看到的昆蟲比較多，是因為陰影，還是你在那裡找比較久？ | 0 `fairtest` 公平比較；1 `evidence` 看到的、推論的、還不知道的；2 `settle` 能不能住下來（單元收束） | 5；4；4 |
 
-共 10 個動畫。`settle` 是這個單元的總收束（條件／食物／鄰居三道關），如果額度不夠**最先砍**，其餘九個就是完整一課。
+共 11 個動畫。`settle` 是這個單元的總收束（條件／食物／鄰居三道關），如果額度不夠**最先砍**，其餘十個就是完整一課。
 
 ### 做的順序（一次一個 Opus；沒有新圖的先做，其他等老師的圖）
 
 1. 不需要新圖：`fairtest` → `evidence` → `oxygen` → `settle`
-2. 等 HB1～HB3：`climate` → `adapt`
-3. 等 HB4、HB5：`pondstream`
-4. 等 HB6～HB8：`estuary` → `tide`
-5. 等 HB9：`oceanlight`
+2. 圖已到齊：`climate` → `adapt` → `mountain`
+3. `pondstream`
+4. `estuary` → `tide`
+5. `oceanlight`
+（順序以教學先後為準；因為圖都到了，沒有等圖的卡關。）
 
 ## 圖
 
 **現有（`ecology_ai_1023/`，不再生）**：`EC1_sunny_dry`／`EC1_shady_moist`（兩塊校園地面：向陽乾、背陰濕）、`EC2_meadow_scene`（草原）、`EC14a_daphnia`／`EC14a_shrimp`、`EC14b_crucian`、`EC16_spoonbill_stand`／`fly`、`EC10_clownfish_anemone`、`EC4_grasshopper`／`caterpillar`、`EC15_field_snail`／`apple_snail`／`egg_mass`、`EC9_beetles_sap`、`EC19_ladybird_aphids`、`SU2_lichen`、`animals_ai_1023/jellyfish.png`；封面 `assets/covers/biology_ecology_habitats_1023_v1.jpg`（已換，不動）。
-**要老師補（Gemini，咒語在 `ecology_l4_prompts_1024.md`）**：
+**新圖（老師 Gemini，2026-10-24 全部到齊，已去背入庫於 `ecology_ai_1023/`，紀錄在 `sources.md`「第四課補圖」；`SIZE` 已寫進 kit）**：
 
-| 編號 | 內容 | 用在 | 必要？ |
-|---|---|---|---|
-| HB1 | 森林（雨多又暖）全幅場景 | climate | 必要 |
-| HB2 | 沙漠全幅場景（仙人掌、蜥蜴、遠處一隻單峰駱駝） | climate、adapt | 必要 |
-| HB3 | 凍原全幅場景（地衣、矮灌木、莎草，一隻馴鹿） | climate、adapt | 必要 |
-| HB4 | 溪流全幅場景（淺而清、石頭、急流、岸邊落葉） | pondstream | 必要 |
-| HB5 | 池塘全幅場景（靜水、浮葉、岸邊挺水植物、泥底） | pondstream | 必要 |
-| HB6 | 紅樹林河口退潮全幅場景（泥灘、支柱根、小水道） | estuary、tide | 必要 |
-| HB7 | 彈塗魚（白底去背） | estuary、tide | 必要 |
-| HB8 | 招潮蟹（白底去背，雄蟹一大一小螯） | estuary、tide | 必要 |
-| HB9 | 大王具足蟲（白底去背） | oceanlight | 必要 |
-| HB10 | 岩岸潮間帶場景（藤壺、笠螺、潮池） | tide（讓學生看到潮間帶不只河口） | 可選 |
-| HB11 | 深海熱泉與管蟲（補充） | oceanlight 第 4 步 | 可選（沒有就程式畫示意＋標「補充」） |
+| 編號 | 檔名 | 用在 |
+|---|---|---|
+| HB1 | `HB1_forest.jpg` 森林 | climate |
+| HB2 | `HB2_desert.jpg` 沙漠（遠處駱駝太小，不放大） | climate、adapt（仙人掌） |
+| HB3 | `HB3_tundra.jpg` 凍原（遠處馴鹿太小，不放大） | climate、adapt（矮灌木、地衣） |
+| HB4／HB5 | `HB4_stream.jpg`、`HB5_pond.jpg` | pondstream |
+| HB6 | `HB6_mangrove.jpg` 紅樹林河口退潮 | estuary、tide |
+| HB7／HB8 | `HB7_mudskipper.png`、`HB8_fiddler_crab.png` | estuary、tide |
+| HB9 | `HB9_giant_isopod.png` | oceanlight |
+| HB10 | `HB10_rocky_shore.jpg` 岩岸潮間帶 | tide |
+| HB11 | `HB11_vent.jpg` 熱泉（右側石頭有一個小記號，使用前蓋掉） | oceanlight 第 4 步 |
+| HB12／HB13 | `HB12_camel.png`、`HB13_reindeer.png` | adapt（駱駝、馴鹿放大） |
+| HB14 | `HB14_mountain.jpg` 山地林相全景 | mountain |
+| HB15～HB18 | `HB15_lowland.jpg`、`HB16_cloudforest.jpg`、`HB17_fir.jpg`、`HB18_alpine.jpg` | mountain（各帶近景） |
 
-全幅場景一律 ≥ 1672 寬、不去背；去背圖照 `cut_ecology_1024.py`（沿用 `cut_ecology_1023.py`）處理，紀錄寫進 `ecology_ai_1023/sources.md`。**圖沒到之前，動畫不要用別的圖頂**。
+**現有（`ecology_ai_1023/`，不再生）**：`EC1_sunny_dry`／`EC1_shady_moist`、`EC2_meadow_scene`、`EC14a_daphnia`／`shrimp`、`EC14b_crucian`、`EC16_spoonbill_stand`／`fly`、`EC10_clownfish_anemone`、`EC4_grasshopper`／`caterpillar`、`EC15_field_snail`／`apple_snail`／`egg_mass`、`SU2_lichen`、`animals_ai_1023/jellyfish.png`；封面 `assets/covers/biology_ecology_habitats_1023_v1.jpg`（已換，不動）。
+
+處理程式 `ecology_ai_1023/cut_ecology_l4_1024.py`。
 
 ## 各動畫（步驟文字、`LAB` 標籤在主程式；這裡只寫畫面要做什麼）
 
@@ -72,10 +76,16 @@
 
 **adapt（4 步）**　攝影機式的局部放大（像第 1 課 `levels` 的做法）：先看整張風景，再鏡頭推到一個生物。每步右側一張小卡「難題 → 解法」。
 1 沙漠，難題＝缺水：鏡頭推到仙人掌（HB2）；莖粗大、葉變成刺（標「莖：儲水」「刺：減少水分散失」）。
-2 沙漠動物：推到駱駝；標「駝峰：儲存脂肪，不是水」（寫在畫面上，打破迷思）。
+2 沙漠動物：駱駝（`HB12_camel.png`，另貼在風景上、不用遠景的小駱駝）；標「駝峰：儲存脂肪，不是水」（寫在畫面上，打破迷思）。
 3 凍原，難題＝冷、生長季短：推到矮灌木與地衣（HB3，SU2_lichen 可當放大小圖）；標「貼地生長」「地衣」。
-4 凍原動物：推到馴鹿；標「厚毛」。最後 4 張縮圖並排，標「同一類難題，不同的解法」（水／冷兩種難題）。
-座標用 PIL 量一次寫進常數。**不寫沒有依據的數字**（不寫氣溫、雨量毫米）。
+4 凍原動物：馴鹿（`HB13_reindeer.png`）；標「厚毛」。最後 4 張縮圖並排，標「同一類難題，不同的解法」（水／冷兩種難題）。
+座標用 PIL 量一次寫進常數。HB2／HB3 風景上遠處那隻小動物要先蓋掉或不露出，避免和放大的重複。**不寫沒有依據的數字**（不寫氣溫、雨量毫米）。
+
+**mountain（3 步，補充）**　「爬山像往北走」：同一座山，越高越冷，林相跟著變。底圖 HB14（山地林相全景），右上一支溫度計（暖橘→冷青）隨鏡頭往上升而變色，旁邊近景小卡 HB15～HB18 依序出現。
+1 山腳：低海拔闊葉林（HB15 近景卡），標「較暖」。
+2 往上：針闊混合與霧林（HB16）、再上冷杉林（HB17）；標「越高越冷，霧也多了」。
+3 山頂：矮灌叢與草坡（HB18）；標「更冷，樹長不高」。畫面一直掛「示意：各帶是漸變，不是固定海拔界線」，**不寫海拔數字**。
+標「補充」；不寫樹種的科學名稱以外的細節（檜木、冷杉、圓柏、箭竹只當名字）。
 
 ### 分頁 2　池塘與溪流
 
@@ -149,16 +159,15 @@
 - 透光深度受水的清澈度影響，**不寫 200 公尺當固定界線**；深海生物可利用沉降的有機碎屑；熱泉有利用化學能的生產者（補充）；大王具足蟲是清除者、消費者，不叫分解者。
 - 校園調查：沒觀察到不等於不存在；兩地比較不能證明因果；重複調查有助分辨偶然；安全與不傷害生物。
 
-## 待老師決定
+## 已決定與待看
 
-1. 十個動畫的內容與順序（尤其 `adapt` 是否保留；它和第六課「構造與環境」可能略有重疊，只講沙漠與凍原的難題，不講一般適應）。
-2. 新圖 HB1～HB9 必要、HB10～HB11 可選；老師看完咒語再決定要不要全生。
-3. `settle` 要不要做（單元收束，額度不夠第一個砍）。
-4. 臺灣山地林相：只放延伸閱讀，不做動畫（要做的話需要再補一張山景圖）。
+- 2026-10-24 老師同意：`adapt` 保留（只講沙漠與凍原的難題）、新增 `mountain`（山地林相，補充）、全部圖已到齊，開工。
+- `settle`（單元收束）仍照計畫做，額度不夠時最先砍。
+- 待老師看（做完再問）：各動畫 Opus 多加的標籤與句子；HB2／HB3 遠景的小動物是否蓋掉。
 
 ## 進度
 
-- [ ] 老師看過計畫
+- [x] 老師看過計畫、圖全部到齊並入庫（2026-10-24）
 - [ ] 主程式、預覽頁、`stub`
-- [ ] fairtest　- [ ] evidence　- [ ] oxygen　- [ ] settle　- [ ] climate　- [ ] adapt　- [ ] pondstream　- [ ] estuary　- [ ] tide　- [ ] oceanlight
+- [ ] fairtest　- [ ] evidence　- [ ] oxygen　- [ ] settle　- [ ] climate　- [ ] adapt　- [ ] mountain　- [ ] pondstream　- [ ] estuary　- [ ] tide　- [ ] oceanlight
 - [ ] QA（`qa_page`、`qa_text`、`smoke`）、換掉正式頁、`PROGRESS.md`、commit／push

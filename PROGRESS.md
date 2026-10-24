@@ -89,8 +89,8 @@
 
 ## 生物圈與生態關係 第 4 課（最後一課）規劃中（2026-10-24）
 
-- 第 4 課「換個環境，誰能住下來？」（`biology_ecology_habitats.html`）規劃草案：`assets/biology/ecology_l4_plan_1024.md`（4 分頁、10 個動畫：climate、adapt、pondstream、oxygen、estuary、tide、oceanlight、fairtest、evidence、settle；Opus 一次一個）、補圖咒語 `ecology_l4_prompts_1024.md`（HB1～HB9 必要、HB10～HB11 可選）。舊版是可旋轉的 3D 隨機地景，整個換成步驟式動畫。
-- **等老師**：看過計畫與咒語；生 HB 系列圖。沒有新圖需求的 fairtest、evidence、oxygen、settle 可以先做。主程式 `ecology_habitats_1024_v1.js` 與預覽頁尚未開始。
+- 第 4 課「換個環境，誰能住下來？」（`biology_ecology_habitats.html`）規劃草案：`assets/biology/ecology_l4_plan_1024.md`（4 分頁、11 個動畫：climate、adapt、mountain、pondstream、oxygen、estuary、tide、oceanlight、fairtest、evidence、settle；Opus 一次一個）、補圖咒語 `ecology_l4_prompts_1024.md`（HB1～HB9 必要、HB10～HB11 可選）。舊版是可旋轉的 3D 隨機地景，整個換成步驟式動畫。
+- 2026-10-24 老師同意開工；HB1～HB18 全部到齊並入庫（`ecology_ai_1023/`，`sources.md`「第四課補圖」）。計畫已加第 11 個動畫 `mountain`（山地林相，補充）。接著：主程式與預覽頁，再依序做動畫（Opus 一次一個）。
 
 ## 注意事項
 
