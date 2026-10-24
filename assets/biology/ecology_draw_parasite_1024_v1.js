@@ -2,10 +2,12 @@
  * harmed (+ / −). Same signs as predation; the difference is the process (a parasite depends on a living host over time,
  * a predator eats its prey). No food-chain arrow, no eaten/eater arrow, no energy (lesson 2). The wasp larvae do end up
  * killing the caterpillar; this is said plainly, without gore.
- * Pictures (K.SIZE, measured with PIL): EC12_dodder 1125x1204, EC20_wasp_caterpillar 1400x651, EC12_wasp_cocoons 1018x522.
+ * Pictures (K.SIZE, measured with PIL): EC12_dodder 1125x1204, EC20_wasp_caterpillar 1400x651, EC25_wasp_cocoons 1400x543
+ * (a caterpillar with a cluster of wasp cocoons on its back and two or three on the leaf; drawn mirrored so its head is on
+ * the left like EC20; its caterpillar is labelled only "Caterpillar").
  * The caterpillar in EC20 is labelled only "Caterpillar" (it looks like a noctuid larva, not a cabbage-white larva).
  * Cleanup (PIL test, once per picture): (1) near-white background left on the cut-out (min RGB > 225, max-min < 22) that is
- * connected to transparency -> transparent (dodder 27.3k px, EC20 1.6k, cocoons 1.2k); (2) 2 px into light low-saturation
+ * connected to transparency -> transparent (dodder 27.3k px, EC20 1.6k, EC25 1.2k); (2) 2 px into light low-saturation
  * pixels (lum > 150, max-min < 70) next to that -> transparent (pale rim); (3) enclosed background pockets (min RGB > T,
  * max-min < 28, >= 30 px, plus 2 px of light rim): dodder T 165 outside the six flower clusters (also removes a grey-white
  * blob inside a loop at (690,820)); EC20 T 200 only in the box (640,140)-(770,230) (white gap between the wasp legs and the
@@ -14,14 +16,15 @@
  *   Nutrient paths: traced with PIL along the orange strands (shortest path through the orange mask, centre-weighted),
  *   each starting on the green host stem and ending at a dodder flower cluster (DFLOW).
  * EC20 anchors: ovipositor tip (838,245), wasp abdomen (790,165), caterpillar flank (1000,300), "inside" window centre (640,345).
- * Cocoons anchors: cocoon cluster (580,320), caterpillar (800,120).
+ * EC25 anchors (picture px, before mirroring): cocoon cluster on the back (540,140), caterpillar rear flank (350,300).
  * Three steps, 8 s each; s.shown = step. Elements carry the steps they live in; a step change fades only what changes.
  *  0 dodder: dodder large (left); white nutrient dots run from the host stem along the dodder stems to its flowers; right
  *    column: Dodder card (+, "Gets", nutrients from the host), "Nutrients" pill, "Thin stems twine around the host" pill,
  *    Host plant card (−, "Harmed", nutrients taken away), "Parasitism: + / −" tag.
  *  1 wasp: three sub-stages inside the step (loop when held), shown on a time bar ① eggs laid ② larvae feed ③ cocoons:
  *    a EC20, eggs slide from the ovipositor tip into a dashed "inside" window; b small cream larvae grow and wiggle in the
- *    window (schematic); c crossfade to EC12 cocoons, "Wasp cocoons" pill. Right cards: Parasitic wasp (+, its larvae get
+ *    window (schematic); c crossfade to EC25 (cocoons on the caterpillar's back), "Wasp cocoons" pill, "The larvae come out and spin
+ *    cocoons on it". Right cards: Parasitic wasp (+, its larvae get
  *    food from the caterpillar), Caterpillar (−, fed on by the larvae, usually dies in the end).
  *  2 + / −: dodder and cocoons small on the left with + / − rows; right: "Parasitism and predation: both + / −", two time
  *    strips (parasite and host lines run side by side for a long time, nutrient dots hop across; predator and prey lines
@@ -32,8 +35,9 @@
 (()=>{'use strict';
 const K=window.EcologyKit,{P,C,D,clamp,mix,mod,smooth,ease,rgba,text,measure,glow,circle}=K;
 const L=(k,zh,en)=>(K.LAB&&K.LAB[k])||P(zh,en);
-const DOD='EC12_dodder.png',WASP='EC20_wasp_caterpillar.png',COC='EC12_wasp_cocoons.png';
+const DOD='EC12_dodder.png',WASP='EC20_wasp_caterpillar.png',COC='EC25_wasp_cocoons.png';
 if(!K.SIZE[WASP])K.SIZE[WASP]=[1400,651];
+if(!K.SIZE[COC])K.SIZE[COC]=[1400,543];
 // new labels (not in K.LAB)
 const NEW={
   gets:P('得到','Gets'),
@@ -47,6 +51,7 @@ const NEW={
   catLoss2:P('最後常會死亡','Usually dies in the end'),
   eggs:P('卵','Eggs'),
   larvae:P('幼蟲','Larvae'),
+  onBack:P('幼蟲鑽出來，在毛蟲身上結繭','The larvae come out and spin cocoons on it'),
   inside:P('虛線框內：示意毛蟲體內','Dashed outline: inside the caterpillar (schematic)'),
   st1:P('① 產卵','① Eggs laid'),st2:P('② 幼蟲取食','② Larvae feed'),st3:P('③ 結繭','③ Cocoons'),
   both:P('寄生和掠食：都是 ＋／−','Parasitism and predation: both + / −'),
@@ -62,10 +67,10 @@ const WHITE=C.white,YELLOW=C.yellow,CYAN=C.cyan,GREEN=C.green,ORANGE=C.orange,MU
 // ── layout ────────────────────────────────────────────────────────────────
 const R_D0=K.fitRect(DOD,14,12,500,576),R_D2=K.fitRect(DOD,14,14,220,236);        // 500x535.1 at y 32.5 / 220x235.5
 const R_W1=K.fitRect(WASP,14,14,580,380);                                           // 580x269.7 at y 69.2
-const R_C1=K.fitRect(COC,14,14,580,380),R_C2=K.fitRect(COC,14,262,220,140);          // 580x297.4 at y 55.3 / 220x112.8
+const R_C1=K.fitRect(COC,14,14,580,380),R_C2=K.fitRect(COC,14,262,220,140);          // 580x225 at y 91.5 / 220x85.3 at y 289.3
 const dp=(R,px,py)=>[R.x+px/1125*R.w,R.y+py/1204*R.h];
 const wp=(px,py)=>[R_W1.x+px/1400*R_W1.w,R_W1.y+py/651*R_W1.h];
-const cp=(R,px,py)=>[R.x+px/1018*R.w,R.y+py/522*R.h];
+const cp=(R,px,py)=>[R.x+(1400-px)/1400*R.w,R.y+py/543*R.h];                     // EC25 is drawn mirrored (head left, like EC20)
 const D_STRAND=[990,190],D_COIL=[560,876],D_LEAF=[950,800],D_STEM=[545,750];
 const FLOWERS=[[350,345],[800,315],[585,540],[850,605],[265,660],[350,800]];
 // nutrient paths (picture px): host stem -> along dodder stems -> flower cluster (PIL shortest path in the orange mask)
@@ -77,7 +82,7 @@ const DFLOW=[
   [[462,392],[476,401],[495,422],[520,422],[545,425],[570,433],[595,445],[620,465],[645,485],[670,471],[691,446],[705,421],[716,396],[733,371],[757,348],[782,337],[790,330]]
 ];
 const W_TIP=[838,245],W_WASP=[790,165],W_CAT=[1000,300],W_WIN=[640,345],W_WR=[250,78];
-const C_COC=[580,320],C_CAT=[800,120];
+const C_COC=[540,140],C_CAT=[350,300];
 const RX0=530,RX1=610;                                                              // right columns (steps 0 / 1)
 
 // ── picture cleanup (once per picture) ────────────────────────────────────
@@ -130,7 +135,8 @@ function cleaned(file){
   }catch(err){CLEAN[file]=im;}
   return CLEAN[file];
 }
-function picIn(c,file,r){const cv=cleaned(file);if(!cv){K.drawIn(c,file,r);return;}c.drawImage(cv,r.x,r.y,r.w,r.h);}
+function picIn(c,file,r){const cv=cleaned(file);if(!cv){K.drawIn(c,file,r,{flip:file===COC});return;}
+  if(file===COC){c.save();c.translate(r.x*2+r.w,0);c.scale(-1,1);c.drawImage(cv,r.x,r.y,r.w,r.h);c.restore();}else c.drawImage(cv,r.x,r.y,r.w,r.h);}
 
 // ── helpers ───────────────────────────────────────────────────────────────
 const withA=(c,a,fn)=>{if(a<=0.002)return;c.save();c.globalAlpha*=Math.min(1,a);fn();c.restore();};
@@ -285,8 +291,9 @@ function draw(c,s,t){
   const catA=wp(...W_CAT),catC=cp(RC,...C_CAT);
   withA(c,A([1],.3),()=>{                                                      // stage pill (eggs / larvae / cocoons) with leader
     const tw=(p,a,anc,ph)=>withA(c,a,()=>{const q=tag(c,p,14,352,{col:WHITE});leader(c,[q.x+q.w/2,q.y],anc,WHITE,t+ph);});
-    tw(NEW.eggs,sA*(1-wrapIn),[win[0]-wr[0]*.4,win[1]],0);tw(NEW.larvae,sB,[win[0]-wr[0]*.45,win[1]+4],.3);tw(L('cocoons','蜂繭','Wasp cocoons'),sC,cp(RC,...C_COC),.6);
-    withA(c,Math.max(sA*(1-wrapIn),sB),()=>text(c,NEW.inside,14,424,22,MUTED));
+    tw(NEW.eggs,wrapIn>0?0:sA*ramp(ct,0,.5),[win[0]-wr[0]*.4,win[1]],0);tw(NEW.larvae,sB,[win[0]-wr[0]*.45,win[1]+4],.3);tw(L('cocoons','蜂繭','Wasp cocoons'),sC,cp(RC,...C_COC),.6);
+    withA(c,wrapIn>0?0:Math.max(sA*ramp(ct,0,.5),sB),()=>text(c,NEW.inside,14,424,22,MUTED));
+    withA(c,sC,()=>text(c,NEW.onBack,14,424,22,MUTED));
   });
   withA(c,A([1],.8),()=>card(RX1,14,CW-12-RX1,196,L('wasp','寄生蜂','Parasitic wasp'),wp(...W_WASP),0,false,NEW.gets,[[NEW.waspGain,WHITE]],k===1?pop(1.2):1,1-sC));
   withA(c,A([1],1.6),()=>{const anc=K.lerpP(catA,catC,sC);

@@ -90,11 +90,11 @@ const CM_TEXT=[
  P(`一方得益、另一方看不出明顯影響，叫片利共生，記＋／0。0 只是「這個情境看不出明顯影響」，不是任何時間、任何條件都絕對沒有影響，要靠觀察證據。`,`When one side gains and the other shows no evident effect it is commensalism, marked + / 0. The 0 only means no evident effect in this situation, not no effect ever under any conditions; it needs observational evidence.`)];
 
 // ── symbiosis / parasite ───────────────────────────────────────────────────
-const PA_SHORT=[P(`纏住寄主`,`Twined on a host`),P(`蜂繭與毛蟲`,`Cocoons and caterpillar`),P(`寄生與掠食`,`Parasitism and predation`)];
+const PA_SHORT=[P(`纏住寄主`,`Twined on a host`),P(`卵、幼蟲到繭`,`Eggs, larvae, cocoons`),P(`寄生與掠食`,`Parasitism and predation`)];
 const PA_NAMES=[P(`菟絲子纏在別的植物上`,`Dodder twines around another plant`),P(`寄生蜂：卵、幼蟲到繭`,`Parasitic wasp: eggs, larvae, cocoons`),P(`＋／− 一樣，過程不同`,`Same + / −, different process`)];
 const PA_TEXT=[
  P(`菟絲子沒有葉子，細細的莖纏在別的植物上，從那棵植物取得養分。得益的是寄生者菟絲子，受害的是寄主，記＋／−。寄生通常是長時間依賴寄主，不一定立刻殺死牠。（AI 插圖，非實拍。）`,`Dodder has no leaves; its thin stems twine around another plant and take nutrients from it. The parasite, dodder, gains and the host is harmed, marked + / −. Parasites usually depend on a host over time and do not always kill it at once. (AI illustration, not a photo.)`),
- P(`某些寄生蜂把卵產在毛蟲身上或體內，幼蟲取食毛蟲，長大結成小小的繭。這種寄生的幼蟲，最後常會使寄主死亡，所以不能說寄生都不會殺死寄主。（AI 插圖，非實拍。）`,`Some parasitic wasps lay eggs on or in a caterpillar; the larvae feed on it and then spin small cocoons. The larvae of this kind of parasite usually end up killing the host, so we cannot say parasites never kill their hosts. (AI illustration, not a photo.)`),
+ P(`某些寄生蜂把卵產在毛蟲身上或體內，幼蟲取食毛蟲，長大後鑽出來，在毛蟲身上結成小小的繭。這種寄生的幼蟲，最後常會使寄主死亡，所以不能說寄生都不會殺死寄主。（AI 插圖，非實拍。）`,`Some parasitic wasps lay eggs on or in a caterpillar; the larvae feed on it, then come out and spin small cocoons on it. The larvae of this kind of parasite usually end up killing the host, so we cannot say parasites never kill their hosts. (AI illustration, not a photo.)`),
  P(`寄生和掠食都是一方得益、一方受害，符號都是＋／−。差別在過程：掠食者吃掉獵物，寄生者通常長時間靠在寄主身上取得養分。所以要先看符號，再看生活方式。`,`Parasitism and predation both have one side gaining and one harmed, so both are + / −. They differ in process: a predator eats its prey, while a parasite usually lives on a host and takes nutrients over time. Look at the signs first, then at the way of life.`)];
 
 // ── symbiosis / relations ──────────────────────────────────────────────────
