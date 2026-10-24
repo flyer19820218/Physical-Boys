@@ -1,6 +1,6 @@
 # 工作進度（PROGRESS）
 
-最後更新：2026-10-24（生物圈與生態第 1、2、3 課重做完；地球上的生物六課已重做完）
+最後更新：2026-10-24（生物圈與生態第 1、2、3 課重做完；地球上的生物六課已重做完；人類與環境三課規劃完成）
 
 規則請看 `AGENTS.md`；這份只記「做到哪了、還有什麼沒做」。細節請用 `git log` 查。
 每完成一個單元或一批修改，就更新這份：**只改下面的表與清單，不要一直往下加長**。
@@ -91,6 +91,13 @@
 
 - 第 4 課「換個環境，誰能住下來？」（`biology_ecology_habitats.html`）規劃草案：`assets/biology/ecology_l4_plan_1024.md`（4 分頁、11 個動畫：climate、adapt、mountain、pondstream、oxygen、estuary、tide、oceanlight、fairtest、evidence、settle；Opus 一次一個）、補圖咒語 `ecology_l4_prompts_1024.md`（HB1～HB9 必要、HB10～HB11 可選）。舊版是可旋轉的 3D 隨機地景，整個換成步驟式動畫。
 - 2026-10-24 老師同意開工；HB1～HB18 全部到齊並入庫（`ecology_ai_1023/`，`sources.md`「第四課補圖」）。計畫已加第 11 個動畫 `mountain`（山地林相，補充）。接著：主程式與預覽頁，再依序做動畫（Opus 一次一個）。
+
+## 人類與環境（三課）動畫重做規劃中（2026-10-24）
+
+- 計畫：`assets/biology/environment_plan_1024.md`（三課 13 個舊分頁→新版 14 個分頁、37 個動畫，P1 29／P2 2／P3 6；47 條生圖 prompts、約 97 個檔案）；生圖機器可讀版 `assets/biology/environment_ai_manifest_1024.jsonl`。老師要請 Antigravity 一次性生圖。
+- 做法同生態四課：每個觀察一個步驟式動畫（Opus 一次一個）、AI 插圖＋課本原照留在「照片」檢視；舊檔 `environment_lessons_1010_v1.js` 保留。
+- **待老師看**：計畫 §7（三課新標題提案、第 3 課「整合」分頁要不要做、第 1 課用瓢蟲取代斯文豪氏赤蛙、原住民族內容不用 AI 生成人物與器物、課本原照授權仍未確認）。
+- 接下來：老師回覆 §7 → Antigravity 生圖 → Sonnet 處理圖片、kit、主程式、預覽頁 → Opus 動畫（先做不需要新圖的 `count`、`composition`、`conc`、`assess`、`track`）。
 
 ## 注意事項
 
