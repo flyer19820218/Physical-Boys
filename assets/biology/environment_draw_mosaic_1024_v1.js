@@ -53,10 +53,10 @@ const REG=[
   anchor:[560,421],blk:{x:30,y:224,al:'left'},cond:[['flow',P('水流','Flow')],['temp',P('溫度','Temperature')]]},
  {id:'farm',name:P('農田','Farmland'),tint:'#bbf7d0',
   poly:[[240,300],[400,285],[600,290],[780,300],[800,330],[750,380],[720,410],[700,470],[600,495],[450,500],[300,495],[240,480]],
-  anchor:[600,330],blk:{x:150,y:132,al:'left'},cond:[['light',P('光照','Light')],['irrig',P('灌溉','Irrigation')]]},
+  anchor:[600,330],blk:{x:150,y:132,al:'left'},cond:[['light',P('光','Light')],['water',P('水','Water')]]},
  {id:'grass',name:P('草地','Grassland'),tint:'#d9f99d',
   poly:[[760,385],[900,370],[1050,375],[1200,410],[1370,470],[1370,520],[1300,520],[1150,505],[1000,480],[870,470],[760,460],[720,430]],
-  anchor:[1000,430],blk:{x:628,y:218,al:'right'},cond:[['light',P('光照','Light')],['rain',P('雨水','Rainfall')]]},
+  anchor:[1000,430],blk:{x:628,y:218,al:'right'},cond:[['light',P('光','Light')],['water',P('水','Water')]]},
  {id:'forest',name:P('森林','Forest'),tint:'#22c55e',
   poly:[[700,280],[800,240],[950,215],[1100,195],[1250,170],[1370,150],[1370,470],[1250,440],[1150,400],[1050,365],[900,345],[760,335]],
   anchor:[1250,330],lead:true,blk:{x:628,y:48,al:'right'},cond:[['shade',P('遮蔭','Shade')],['temp',P('溫度','Temperature')]]}
