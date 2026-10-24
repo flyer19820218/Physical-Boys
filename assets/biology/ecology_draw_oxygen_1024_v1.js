@@ -127,7 +127,7 @@ function draw(c,s,t){
     RAPB.forEach((b,i)=>{if(i/RAPB.length>f+.05)return;const u=mod(t/2.4+b.o),y=surfY(b.x,t,1)+4+u*b.d;bubble(c,b.x+b.dx*u,y,1.2+b.r*Math.sqrt(u),Math.sin(Math.PI*u)**.6);});
   });
   // step 2: plants, leaf bubbles by day, bubbles drawn into the organisms at night
-  const fx=300+140*Math.sin(t*.42),cv=Math.cos(t*.42),sx=Math.abs(cv)<.09?.25*Math.sign(cv||1):Math.max(-1,Math.min(1,cv*3)),fy=st.fy+6*Math.sin(t*1.3);
+  const fx=300+140*Math.sin(t*.42),cv=Math.cos(t*.42),sx=cv>=0?1:-1,fy=st.fy+6*Math.sin(t*1.3);
   const mouth=[fx+sx*FW*MOUTH[0],fy+FH*MOUTH[1]];
   withA(c,a2,()=>{
     drawPlants(c,t);
@@ -218,8 +218,8 @@ function draw(c,s,t){
     const end=pt(1);circle(c,end[0],end[1],5,CYAN);K.pulse(c,end[0],end[1],t+.4,CYAN,6);
   });
   withA(c,A(2,.4,2),()=>{tag(c,L('waterPlant','水草','Water plants'),330,456,{col:GREEN});});
-  withA(c,A(2,.6,2)*day,()=>{const p=tag(c,L('photosynthesis','光合作用放出氧','Photosynthesis releases oxygen'),TK.x+16,194,{col:YELLOW,active:true,maxX:TK.x+TK.w-8});pulseRing(c,p,t,YELLOW);});
-  withA(c,A(2,.6,2)*(1-day),()=>{const p=tag(c,L('respire','呼吸用掉氧','Respiration uses oxygen'),TK.x+TK.w-16,384,{al:'right',col:WHITE,active:true,minX:TK.x+8});pulseRing(c,p,t,WHITE);});
+  withA(c,A(2,.6,2)*(day>.5?1:0),()=>{const p=tag(c,L('photosynthesis','光合作用放出氧','Photosynthesis releases oxygen'),TK.x+16,194,{col:YELLOW,active:true,maxX:TK.x+TK.w-8});pulseRing(c,p,t,YELLOW);});
+  withA(c,A(2,.6,2)*(day>.5?0:1),()=>{const p=tag(c,L('respire','呼吸用掉氧','Respiration uses oxygen'),TK.x+TK.w-16,384,{al:'right',col:WHITE,active:true,minX:TK.x+8});pulseRing(c,p,t,WHITE);});
 }
 window.EcologyDraw.oxygen=draw;
 })();
