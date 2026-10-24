@@ -39,3 +39,11 @@
 - `worth` 第 3 步用潮間帶封面當背景放森林動物，可能怪；第 1 步小圖沒有名字。
 - 瓢蟲換成斯文豪氏赤蛙的決定、不放原住民文化 AI 圖、課本原圖授權，見計畫 §7。
 - 預覽頁封面 404（`assets/biology/assets/covers/...`）是共用外殼既有行為，第 10 單元同樣有，不影響顯示。
+
+
+## 第 2 課進度（2026-10-25）
+
+- 圖片全部處理完（`environment_ai_1024/TH*`，腳本 `cut_environment_l2_1024.py`，紀錄在 `sources.md` 檔尾；TH8、TH14b 是程式衍生）、kit 已登記尺寸、主程式 `environment_threats_1024_v1.js`、預覽頁 `biology_environmental_threats_1024_preview1.html`（14 個動畫目前都是「動畫製作中」占位）。正式頁 `biology_environmental_threats.html` 還是舊版，等 14 個動畫做完再換（同第 1 課：預覽頁複製成正式頁、首頁卡片、導覽）。
+- 動畫順序（一次一個 Opus）：`conc` → `judge` → `edge` → `fragment` → `harvest` → `pathway` → `stages` → `sources` → `chain` → `bioacc` → `magnify` → `shift` → `coral` → `timing`。做完一個，在預覽頁主程式那行之前加一行 `environment_draw_<名>_1024_v1.js?v=20261025-v1`。
+- 完成：（尚無）
+- 第 3 課：圖 18 條到齊（CV*），圖片處理、主程式、預覽頁、動畫（含新增第 5 分頁 `casefile`）都還沒開始。老師已決定採用三課新標題、第 3 課做 `casefile`。
