@@ -87,6 +87,11 @@
 - 順手修：第 2 課頁面章節導覽第一項原本誤連到自己，已改回第 1 課。
 - **待老師看**：Opus 自己加的標籤與句子，直接寫在各動畫檔，未併入 `LAB`：chase「追捕也可能撲空」；lag「示意，不是量測資料」「被吃得多」「現實中還有別的食物、疾病、遷移，也不是固定的週期」；compete「− 是和沒有對手時比，能用的資源變少」「只有一個配偶」「梅花鹿」「植物」「動物」；resource「夠分」「− 比較輕，甚至看不出競爭」等；mutual「保護和住處」「敵人不容易靠近」「共生不等於互利」等；commens「高處、受光的位置」「附生不等於寄生」「吸盤」等；parasite「寄主的養分」「幼蟲鑽出來，在毛蟲身上結繭」「先看符號，再看過程」等；relations「掠食、寄生同為＋／−，差在過程」；biocontrol「損失？」「示意，不是結果」「同樣大小的框」；risk「要先評估：它會影響誰？」「這個例子不是生物防治」「步驟」等。另外：biocontrol 前後各 5 隻與 2 隻毛蟲的示意是否適合、毛蟲只標「毛蟲」、EC25 毛蟲口器仍偏尖。
 
+## 生物圈與生態關係 第 4 課（最後一課）規劃中（2026-10-24）
+
+- 第 4 課「換個環境，誰能住下來？」（`biology_ecology_habitats.html`）規劃草案：`assets/biology/ecology_l4_plan_1024.md`（4 分頁、10 個動畫：climate、adapt、pondstream、oxygen、estuary、tide、oceanlight、fairtest、evidence、settle；Opus 一次一個）、補圖咒語 `ecology_l4_prompts_1024.md`（HB1～HB9 必要、HB10～HB11 可選）。舊版是可旋轉的 3D 隨機地景，整個換成步驟式動畫。
+- **等老師**：看過計畫與咒語；生 HB 系列圖。沒有新圖需求的 fairtest、evidence、oxygen、settle 可以先做。主程式 `ecology_habitats_1024_v1.js` 與預覽頁尚未開始。
+
 ## 注意事項
 
 - 老師的電腦本機落後 GitHub（2026-10-20 時）。要在電腦上改教材之前，先 `git pull`；本機未提交的 `weather_cloud_rain_2` 相關四個檔案要先 stash 或刪除，否則會擋住 pull。
