@@ -1,15 +1,15 @@
 /* Ecology lesson 3 · "commens" canvas (symbiosis tab, view 1), 2026-10-24. Commensalism = one side gains, the other shows
  * no evident effect in this situation (+ / 0). Only what each side gets; no food-chain arrow, no eaten/eater roles (lesson 2);
  * the shark never eats the remora. "Growing on a host is not parasitism" is one small tag only (parasitism is the next view).
- * Pictures (K.SIZE, measured with PIL): EC11_nest_fern 1071x1376, EC11_remora_shark 1229x493. Both are cut out with a 1-2 px
+ * Pictures (K.SIZE, measured with PIL): EC11_nest_fern 1071x1376, EC24_remora_shark 1400x523. Both are cut out with a 1-2 px
  * pale rim (fern edge pixels: 79 % lum > 170). Cleanup (PIL test): light low-saturation pixels (lum > 150, max-min < 70) within
- * 2 px of transparency -> transparent (fern ~9.0k px, shark ~2.3k px). The fern trunk is cut flat at the top and ends in a pale
+ * 2 px of transparency -> transparent (fern ~9.0k px, shark ~2.5k px; EC24 fin tips, belly and tail checked). The fern trunk is cut flat at the top and ends in a pale
  * jagged edge at the bottom, so its top 90 px and bottom 150 px fade out (alpha ramp) instead of ending in a hard line.
  * Fern anchors (picture px): leaf tip right (1000,470), leaves in the light (420,330) (640,380) (250,380) (880,520) (150,640),
  *   roots on the bark (560,900), lower trunk (640,1150), trunk under the roots for the magnifier (600,1180).
- * Shark anchors (picture px): remora body (550,215), remora head top (372,183), remora mouth (335,205), shark mouth (150,318),
- *   shark tail stock (1000,230), shark flank for the magnifier (760,300).
- * Note: the AI picture has a round ribbed disc above the remora's head; it is not labelled (see report).
+ * EC24 anchors (picture px): oval sucker disc centre (464,225), half-axes 58 x 20; remora mouth (407,230); remora body (580,245);
+ *   shark mouth / jaw (160,322); shark tail stock (1180,270); shark flank for the magnifier (950,300). The remora clings behind
+ *   the gill slits, head to the left like the shark, about a quarter of the shark's length.
  * Three steps, 8 s each; s.shown = step. Elements carry the steps they live in; a step change fades only what changes.
  *  0 on a tree: fern large (left); yellow light rays run from a "Light" pill down to the leaves; right column: fern card
  *    (leader, green + disc, "Gets" a high, lit spot), tree card (leader, grey 0 disc, "0 No evident effect", "In this example"),
@@ -24,7 +24,8 @@
 (()=>{'use strict';
 const K=window.EcologyKit,{P,C,D,clamp,mix,mod,smooth,ease,rgba,text,measure,glow,circle}=K;
 const L=(k,zh,en)=>(K.LAB&&K.LAB[k])||P(zh,en);
-const FERN='EC11_nest_fern.png',SHARK='EC11_remora_shark.png';
+const FERN='EC11_nest_fern.png',SHARK='EC24_remora_shark.png';
+if(!K.SIZE[SHARK])K.SIZE[SHARK]=[1400,523];
 // new labels (not in K.LAB)
 const NEW={
   gets:P('得到','Gets'),
@@ -48,11 +49,11 @@ const ZERO_TXT=()=>{const ne=L('noEffect','看不出明顯影響','No evident ef
 
 // ── layout ────────────────────────────────────────────────────────────────
 const R_F0=K.fitRect(FERN,14,12,440,576),R_F2=K.fitRect(FERN,14,12,290,380);       // 440x565.3 at y 17.3 / 290x372.6 at y 15.7
-const R_S1=K.fitRect(SHARK,14,14,932,280),R_S2=K.fitRect(SHARK,330,30,610,245);     // 697.9x280 at x 131 / 610x244.7 at y 30.2
+const R_S1=K.fitRect(SHARK,14,10,932,350),R_S2=K.fitRect(SHARK,330,30,610,245);     // 932x348.2 at y 10.9 / 610x227.9 at y 38.6
 const fp=(R,px,py)=>[R.x+px/1071*R.w,R.y+py/1376*R.h];
-const sp=(R,px,py)=>[R.x+px/1229*R.w,R.y+py/493*R.h];
+const sp=(R,px,py)=>[R.x+px/1400*R.w,R.y+py/523*R.h];
 const F_TIP=[880,520],F_LIGHT=[[420,330],[640,380],[250,380],[760,520],[150,640]],F_ROOT=[560,900],F_TRUNK=[640,1150],F_LOOK=[600,1180];
-const S_REM=[550,215],S_HEAD=[372,183],S_RMOUTH=[335,205],S_MOUTH=[150,318],S_TAIL=[1000,230],S_LOOK=[760,300];
+const S_REM=[580,245],S_SUCK=[464,225],SUCK_R=[58,20],S_RMOUTH=[407,230],S_MOUTH=[160,322],S_TAIL=[1180,270],S_LOOK=[950,300];
 const RX0=486;                                                                      // right column (step 0)
 
 // ── picture rim cleanup (once per picture, 2 px deep; fern trunk ends fade out) ──
@@ -169,8 +170,8 @@ function draw(c,s,t){
   withA(c,A([0],5.2),()=>{const p=tag(c,NEW.epiphyte,RX0,436,{col:YELLOW,minX:RX0});if(k===0)pulseRing(c,p,t+.4,YELLOW);});
 
   // ── step 1: remora on a shark ──
-  withA(c,A([1],1.6),()=>{const p=tag(c,NEW.sucker,326,30,{al:'center',col:WHITE});const h=sp(RS,...S_HEAD);leader(c,[p.x+p.w/2,p.y+p.h],h,WHITE,t+.2);
-    const v=mod(t*.5);K.ellipse(c,h[0],h[1],10+14*v,5+7*v,null,rgba(CYAN,.85*(1-v)),2.5);});
+  withA(c,A([1],1.6),()=>{const p=tag(c,NEW.sucker,300,40,{al:'center',col:WHITE});const h=sp(RS,...S_SUCK),kk=RS.w/1400;leader(c,[p.x+p.w/2,p.y+p.h],[h[0],h[1]-SUCK_R[1]*kk-4],WHITE,t+.2);
+    const v=mod(t*.5);K.ellipse(c,h[0],h[1],SUCK_R[0]*kk+3+12*v,SUCK_R[1]*kk+2+6*v,null,rgba(CYAN,.85*(1-v)),2.5);});
   withA(c,A([1],2.6),()=>{
     const m=sp(RS,...S_MOUTH),r=sp(RS,...S_RMOUTH),cp=[m[0]-46,(m[1]+r[1])/2-4];
     for(let i=0;i<6;i++){const q=mod(t/3.2+i/6),p=K.bez(m,cp,r,q),a=q<.15?q/.15:q>.85?(1-q)/.15:1;
@@ -179,8 +180,8 @@ function draw(c,s,t){
       if(q>.88){const v=(q-.88)/.12;circle(c,r[0],r[1],5+9*v,null,rgba(CYAN,.8*(1-v)),2);}}
     const p=tag(c,NEW.scraps,14,40,{col:WHITE});const mid=K.bez(m,cp,r,.3);leader(c,[p.x+60,p.y+p.h],mid,WHITE,t+.6);
   });
-  withA(c,A([1],.8),()=>card(14,312,170,L('remora','鮣魚','Remora'),sp(RS,...S_REM),0,{pop:k===1?pop(1.4):1,lines:[[NEW.ride,WHITE],[NEW.mayEat,WHITE]]},456,true));
-  withA(c,A([1],4.4),()=>card(490,312,170,L('shark','鯊魚','Shark'),sp(RS,...S_TAIL),.9,{zero:true,pop:k===1?pop(4.8):1,note:NEW.inSitu},458,true));
+  withA(c,A([1],.8),()=>card(14,372,170,L('remora','鮣魚','Remora'),sp(RS,...S_REM),0,{pop:k===1?pop(1.4):1,lines:[[NEW.ride,WHITE],[NEW.mayEat,WHITE]]},456,true));
+  withA(c,A([1],4.4),()=>card(490,372,170,L('shark','鯊魚','Shark'),sp(RS,...S_TAIL),.9,{zero:true,pop:k===1?pop(4.8):1,note:NEW.inSitu},458,true));
 
   // ── step 2: two examples, + / 0 ──
   const look=mod(t,6)/6,onTree=look<.5,lw=clamp(3*Math.sin(Math.PI*mod(look*2)));         // magnifier alternates: tree 0-3 s, shark 3-6 s
