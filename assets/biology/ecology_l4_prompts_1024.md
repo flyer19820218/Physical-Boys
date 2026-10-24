@@ -116,3 +116,71 @@ Style: detailed scientific illustration in a clean, semi-realistic hand-painted 
 Landscape 16:9. A deep-sea hydrothermal vent on a dark seafloor: a rugged black chimney venting a plume of dark mineral-rich water, dense clusters of white tubes with red feathery plumes of giant tube worms around its base, a few pale crabs on the rock, the surrounding water deep blue-black, dimly lit so that the vent and worms are clearly visible. No fish, no submarine, no people.
 Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Full-bleed scene filling the whole frame, no border. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature.
 ```
+
+
+## HB12～HB18（重建版，2026-10-24）
+
+以下七段是依實際入庫的圖重寫的咒語（原對話中的逐字版已遺失，內容與用途一致，不保證能生出一模一樣的圖）。HB12、HB13 為白底去背；HB14～HB18 為全幅場景。用法同上，整段（含 Style 兩句）一起貼。
+
+### HB12　單峰駱駝（必要，白底，沙漠 adapt 用）
+
+檢查：一隻單峰駱駝、側面全身、單一駝峰、四肢比例正確；只有一隻。
+
+```
+Landscape 16:9. A single dromedary camel with exactly one hump in side view, standing, full body visible, correct proportions with long legs, long curved neck, sandy-brown coat. The animal is centred and fully visible.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, pure white background with no shadow and no scenery. Generous empty margin around the subject. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.
+```
+
+### HB13　馴鹿（必要，白底，凍原 adapt 用）
+
+檢查：一隻馴鹿、側面全身、厚毛、有分叉的角；只有一隻。
+
+```
+Landscape 16:9. A single reindeer (caribou) in side view, standing, full body visible, with a thick grey-brown winter-style coat, a pale thick mane at the neck and branched antlers. The animal is centred and fully visible.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate anatomy and natural colours. Isolated on a plain, flat, pure white background with no shadow and no scenery. Generous empty margin around the subject. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature, no border.
+```
+
+### HB14　臺灣山地林相全景（補充，全幅）
+
+檢查：從山腳到山頂的連續山坡；各帶是漸變，不要明顯的分界線；不要人、房子、路。
+
+```
+Landscape 16:9. A panoramic view of a subtropical high mountain in Taiwan from foothills to summit: warm green broadleaf forest at the bottom, gradually changing to mixed forest with drifting mist, then dark conifer fir forest, then low shrubs and grassy slopes with bare rock near the summit under a cool sky. The zones blend gradually into each other with no sharp lines. No people, no buildings, no roads.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate vegetation and natural colours. Full-bleed scene filling the whole frame, no border. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature.
+```
+
+### HB15　山腳闊葉林近景（補充，全幅）
+
+檢查：潮濕溫暖的亞熱帶闊葉林，樹幹有蕨類與苔蘚；不要人、動物。
+
+```
+Landscape 16:9. A warm humid lowland subtropical broadleaf forest in Taiwan seen from a low eye-level view: tall evergreen broadleaf trees, tree ferns and ferns, mossy trunks, soft light through the canopy. No people, no buildings, no paths, no animals.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate vegetation and natural colours. Full-bleed scene filling the whole frame, no border. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature.
+```
+
+### HB16　針闊混合與霧林近景（補充，全幅）
+
+檢查：霧氣瀰漫的山地森林，針葉樹與闊葉樹混生，樹上附生苔蘚。
+
+```
+Landscape 16:9. A misty montane cloud forest in Taiwan at mid elevation: conifers (such as cypress) mixed with broadleaf trees, thick drifting mist between the trunks, moss and epiphytes hanging on the branches, cool damp atmosphere. No people, no buildings, no paths, no animals.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate vegetation and natural colours. Full-bleed scene filling the whole frame, no border. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature.
+```
+
+### HB17　冷杉林近景（補充，全幅）
+
+檢查：高山冷杉純林，林下較開闊，空氣清冷。
+
+```
+Landscape 16:9. A cold high-mountain fir forest in Taiwan: dense stands of dark green fir trees with conical crowns, a fairly open forest floor with short grass and fallen needles, cool clear light with a little mist. No people, no buildings, no paths, no animals.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate vegetation and natural colours. Full-bleed scene filling the whole frame, no border. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature.
+```
+
+### HB18　高山矮灌叢與草坡（補充，全幅）
+
+檢查：接近山頂：低矮的圓柏灌叢、箭竹草坡、裸露岩石；樹長不高；遠方有稜線。
+
+```
+Landscape 16:9. A windswept alpine summit zone in Taiwan: low creeping juniper shrubs, slopes of bamboo grass, bare grey rock outcrops and scree, no tall trees, distant ridgelines under a cool pale sky. No people, no buildings, no paths, no animals.
+Style: detailed scientific illustration in a clean, semi-realistic hand-painted style like a modern biology textbook, soft even lighting, accurate vegetation and natural colours. Full-bleed scene filling the whole frame, no border. Absolutely no text, no letters, no numbers, no labels, no arrows, no logos, no watermark, no signature.
+```
