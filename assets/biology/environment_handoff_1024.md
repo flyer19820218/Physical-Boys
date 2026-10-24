@@ -9,9 +9,9 @@
 - 共用：`environment_kit_1024_v1.js`（包 EcologyKit，含新圖 SIZE、顏色語意、標籤）。
 - 主程式：`environment_diversity_1024_v1.js`（4 分頁、文字、選擇題、「課本照片」檢視；每個動畫的步驟文字在 `VIEWS`）。尚未動到正式頁 `biology_environmental_diversity.html`。
 - 預覽頁：`biology_environmental_diversity_1024_preview1.html`（每做完一個動畫，在 `environment_diversity_1024_v1.js` 那行之前加一行 `environment_draw_<名>_1024_v1.js?v=20261024-v1`）。
-- 動畫完成：`count`、`composition`、`worth`、`frogs`、`response`、`mosaic`、`residents`、`uses`（都已提交）。
+- 動畫完成：`count`、`composition`、`worth`、`frogs`、`response`、`mosaic`、`residents`、`uses`、`green`（都已提交）。
 
-## 第 1 課還沒做的動畫（2 個；frogs、response、mosaic、residents、uses 已完成，表中保留說明）
+## 第 1 課還沒做的動畫（1 個；frogs、response、mosaic、residents、uses、green 已完成，表中保留說明）
 
 | 動畫 | 狀態 | 要用的圖（`environment_ai_1024/` 除非另註） |
 |---|---|---|
@@ -20,7 +20,7 @@
 | `mosaic` | **已完成並驗收**（農田／草地的水條件分別寫「灌溉」「雨水」，待老師確認） | BD5_mosaic.jpg |
 | `residents` | **已完成並驗收**（森林步驟背景用 HB1_forest，圖像來源要補；英文第 4 步駱駝被藍鵲名字遮住一部分，小問題） | BD6 四種、BD7 四種（BD7_chub/mayfly_nymph/dipper/river_snail）、ecology_ai_1023 的 HB2、HB4、HB6、HB7、HB8、EC16 |
 | `uses` | **已完成並驗收**（第 4 步四碗米各掛一個性狀＝示意，待老師確認；耐寒、耐淹是代理補的；黃色用在「研究價值」） | BD2 稻米四款、BD8_cotton/silk_cocoons/timber、BD8_rubber_tapping/yew/bamboo |
-| `green` | 未做 | BD9a_rainforest.jpg、BD9b_palm_plantation.jpg（1024 寬，未放大） |
+| `green` | **已完成並驗收**（分割線改成「點圖移動」，因外殼不傳拖曳；B 寫「3 個框，看到 1 個樣子」待老師確認） | BD9a_rainforest.jpg、BD9b_palm_plantation.jpg（1024 寬，未放大） |
 | `boundary`（P3，可最後） | 未做 | ecology_ai_1023/HB5_pond.jpg、BD5 |
 
 做法（每個動畫都一樣，一次只開一個 Opus）：給代理 §8、該動畫段落、`VIEWS.<名>` 文字、範本 `environment_draw_count_1024_v1.js`；代理只新增 `environment_draw_<名>_1024_v1.js` 並在預覽頁加一行 script，跑 `qa_text.cjs`、`qa_page.cjs`、中英文逐步截圖；代理不 commit，主對話看過截圖再 commit／push。
