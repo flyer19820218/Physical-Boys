@@ -1191,9 +1191,9 @@ Style: detailed scientific illustration in a clean, semi-realistic hand-painted 
 
 - [x] 讀 `AGENTS.md`、`PROGRESS.md`、三課現況，寫這份計畫（2026-10-24）
 - [ ] 老師看過計畫、回覆 §7
-- [ ] Antigravity 生圖（§5）、圖片處理與入庫
-- [ ] `environment_kit_1024_v1.js`、三個主程式、三個預覽頁、`stub`
-- 第 1 課動畫：[ ] count　[ ] composition　[ ] worth　[ ] frogs　[ ] response　[ ] mosaic　[ ] residents　[ ] uses　[ ] green　[ ] boundary
+- [ ] Antigravity 生圖（§5）、圖片處理與入庫（第 1 課 BD 系列已全部到齊並入庫；第 2、3 課未開始）
+- [ ] `environment_kit_1024_v1.js`（已做）、三個主程式與預覽頁（第 1 課已做，第 2、3 課未做）、`stub`（已做）
+- 第 1 課動畫：[x] count　[x] composition　[x] worth　[ ] frogs（半成品，見 environment_handoff_1024.md）　[ ] response　[ ] mosaic　[ ] residents　[ ] uses　[ ] green　[ ] boundary
 - 第 2 課動畫：[ ] conc　[ ] judge　[ ] edge　[ ] fragment　[ ] harvest　[ ] pathway　[ ] stages　[ ] sources　[ ] chain　[ ] bioacc　[ ] magnify　[ ] shift　[ ] coral　[ ] timing
 - 第 3 課動畫：[ ] assess　[ ] track　[ ] clues　[ ] casefile　[ ] turtle　[ ] toolbox　[ ] fishway　[ ] corridor　[ ] monitor　[ ] tradeoff　[ ] season　[ ] citizen　[ ] materials
 - [ ] QA（`qa_page`、`qa_text`、`smoke`）、換掉三個正式頁、首頁卡片與封面、`PROGRESS.md`、commit／push

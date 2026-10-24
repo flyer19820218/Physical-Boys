@@ -96,6 +96,8 @@
 
 ## 人類與環境（三課）動畫重做規劃中（2026-10-24）
 
+**交接：第 1 課進行中，詳見 `assets/biology/environment_handoff_1024.md`**（圖、kit、主程式、預覽頁、count／composition／worth 已完成；frogs 半成品；其餘 6 個動畫未做；第 2、3 課未開始）。
+
 - 計畫：`assets/biology/environment_plan_1024.md`（三課 13 個舊分頁→新版 14 個分頁、37 個動畫，P1 29／P2 2／P3 6；47 條生圖 prompts、約 97 個檔案）；生圖機器可讀版 `assets/biology/environment_ai_manifest_1024.jsonl`。老師要請 Antigravity 一次性生圖。
 - 做法同生態四課：每個觀察一個步驟式動畫（Opus 一次一個）、AI 插圖＋課本原照留在「照片」檢視；舊檔 `environment_lessons_1010_v1.js` 保留。
 - **待老師看**：計畫 §7（三課新標題提案、第 3 課「整合」分頁要不要做、第 1 課用瓢蟲取代斯文豪氏赤蛙、原住民族內容不用 AI 生成人物與器物、課本原照授權仍未確認）。
