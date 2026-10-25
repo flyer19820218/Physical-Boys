@@ -1,13 +1,13 @@
 // 伽利略星球入口：載入資料、建立畫面層、（可用時）建立 3D 場景、處理網址路由。
-// 改版時請同步更新 index_museum.html、本檔與下面兩個 import 的 ?v= 版本字串。
-import { createUI } from './ui.js?v=20261026l';
-import { startLaunch } from './launch.js?v=20261026l';
+// 改版時請同步更新 index.html（首頁）、本檔與下面兩個 import 的 ?v= 版本字串。
+import { createUI } from './ui.js?v=20261026m';
+import { startLaunch } from './launch.js?v=20261026m';
 
-const VERSION = '20261026l';
+const VERSION = '20261026m';
 
 const CONFIG = {
-  // 舊版清單的位置。新首頁取代 index.html 之後，請改成 'index_classic.html'。
-  classicUrl: 'index.html',
+  // 舊版清單（原本的首頁）。伽利略星球已經是 index.html。
+  classicUrl: 'index_classic.html',
   // 課程在新分頁開啟（沿用目前首頁行為；3D 狀態不會因為上課而丟掉）。
   lessonTarget: '_blank',
   dataUrl: 'assets/museum/data/lessons.json',
@@ -29,8 +29,10 @@ function saveLang(l) {
   try { localStorage.setItem('galileo.lang', l); } catch (e) { /* ignore */ }
 }
 
-// 開場（煙霧＋歡迎詞＋太空梭飛進來）：每次開啟瀏覽器只播一次；直接連到某一館時不播。
-// ?intro=1 強制播放、?intro=0 不播。
+// 開場（煙霧＋歡迎詞＋太空梭飛進來）：同一台裝置 3 小時內只播一次（從課程分頁按回首頁不會一直重播）；
+// 直接連到某一館時不播。?intro=1 強制播放、?intro=0 不播。
+const INTRO_KEY = 'galileo.introAt';
+const INTRO_GAP = 3 * 60 * 60 * 1000;
 function shouldIntro() {
   const q = params.get('intro');
   if (q === '0') return false;
@@ -38,7 +40,11 @@ function shouldIntro() {
   if (reducedMotion) return false;
   const h = location.hash.replace(/^#\/?/, '');
   if (h && h !== 'planet') return false;
-  try { if (sessionStorage.getItem('galileo.introSeen') === '1') return false; } catch (e) { /* ignore */ }
+  try {
+    if (sessionStorage.getItem('galileo.introSeen') === '1') return false;
+    const t = +localStorage.getItem(INTRO_KEY) || 0;
+    if (Date.now() - t < INTRO_GAP) return false;
+  } catch (e) { /* ignore */ }
   return true;
 }
 const launch = shouldIntro() ? startLaunch({ lang: loadLang() }) : null;
@@ -57,7 +63,7 @@ async function main() {
     if (launchDone) return;
     launchDone = true;
     document.body.classList.remove('launching');
-    try { sessionStorage.setItem('galileo.introSeen', '1'); } catch (e) { /* ignore */ }
+    try { sessionStorage.setItem('galileo.introSeen', '1'); localStorage.setItem(INTRO_KEY, String(Date.now())); } catch (e) { /* ignore */ }
   }
   if (launch) launch.onSkip(() => { launch.skip(); if (scene) scene.skipIntro(); endLaunch(); });
   async function runLaunch() {

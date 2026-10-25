@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""解析 index.html，產生 assets/museum/data/lessons.json（伽利略星球首頁的資料來源）。
+"""解析 index_classic.html（舊版清單，課程卡片都在這裡），產生 assets/museum/data/lessons.json（伽利略星球首頁的資料來源）。
 
 用法（在專案根目錄）：
     python3 tools/museum/build_lessons.py            # 產生檔案並印出警告
@@ -16,7 +16,7 @@ import subprocess
 import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-INDEX = os.path.join(ROOT, 'index.html')
+INDEX = os.path.join(ROOT, 'index_classic.html')
 OUT = os.path.join(ROOT, 'assets', 'museum', 'data', 'lessons.json')
 
 # 館的固定資料（順序＝星球上的順序；顏色沿用首頁 :root 色票）
@@ -131,7 +131,7 @@ def build():
 
     total = sum(len(u['lessons']) for h in halls_out for u in h['units'])
     data = {
-        'note': '由 tools/museum/build_lessons.py 從 index.html 產生，請勿手改。',
+        'note': '由 tools/museum/build_lessons.py 從 index_classic.html 產生，請勿手改。',
         'total': total,
         'halls': halls_out,
     }
@@ -146,7 +146,7 @@ def main():
         if old != text:
             print('lessons.json 已過期：請執行 python3 tools/museum/build_lessons.py')
             sys.exit(1)
-        print('lessons.json 與 index.html 一致（%d 課）' % data['total'])
+        print('lessons.json 與 index_classic.html 一致（%d 課）' % data['total'])
         return
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     open(OUT, 'w', encoding='utf-8').write(text)

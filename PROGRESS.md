@@ -4,9 +4,10 @@
 
 規則請看 `AGENTS.md`；這份只記「做到哪了、還有什麼沒做」。細節請用 `git log` 查。
 每完成一個單元或一批修改，就更新這份：**只改下面的表與清單，不要一直往下加長**。
-新首頁「伽利略星球」的計畫與交接：`galileo-planet/HANDOFF.md`（等生物最後一課完成、老師說 GO 才開工；開工前請先讀它）。
+**首頁已換成「伽利略星球」**（2026-10-26 上線，`index.html`）。原本的清單首頁改名為 `index_classic.html`（右上角「舊版清單」連過去）。
+**新增或修改課程卡片：改 `index_classic.html`，再跑 `python3 tools/museum/build_lessons.py`**（產生 `assets/museum/data/lessons.json`，星球上才會出現）；不要在 `index.html` 加卡片。交接：`galileo-planet/HANDOFF.md`。
 
-## 教材現況（以首頁為準）
+## 教材現況（以 `index_classic.html` 的卡片為準）
 
 | 科目 | 單元數 | 備註 |
 |---|---|---|

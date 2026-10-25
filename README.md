@@ -134,7 +134,7 @@
 
 ## 課程單元與互動教材目錄
 
-> 本目錄以首頁 `index.html` 的實際上線內容為準。
+> 本目錄以課程清單 `index_classic.html` 的實際上線內容為準（首頁 `index.html` 是伽利略星球，課程資料由 `tools/museum/build_lessons.py` 從清單產生）。
 
 ### 🍎 物理與力學館 (Physics)
 

@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自然科學</title>
+<meta name="description" content="自然科學：以 HTML5 動畫、可操作模型、探究任務與即時回饋連結生物、物理、化學、地球科學、天文與數學。Bilingual interactive STEM education for middle school science.">
+<meta name="keywords" content="STEM, STEM education, interactive science, middle school science, biology, physics simulation, chemistry simulation, Earth science, astronomy, bilingual education, inquiry-based learning, HTML5, Canvas, 國中自然, 互動教學, 生物, 物理, 化學, 地球科學, 天文, 雙語教育">
+<meta name="author" content="soulrunning">
+
+<!-- iOS App 主畫面圖示與 Favicon -->
+<link rel="apple-touch-icon" href="%E7%89%A9%E7%90%86%E8%AA%B2%E7%A8%8B.png">
+<link rel="icon" type="image/png" href="%E7%89%A9%E7%90%86%E8%AA%B2%E7%A8%8B.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Kalam:wght@700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #16241f;
+    --bg-panel: #1e2f27;
+    --bg-panel-hover: #24382f;
+    --chalk-white: #f6f3ea;
+    --chalk-muted: #9fb0a8;
+    --chalk-yellow: #f2d675;
+    --chalk-teal: #7fc8c4;
+    --chalk-coral: #f0955c;
+    --chalk-blue: #6fa8f2;
+    --chalk-green: #a8e6cf;
+    --chalk-purple: #d4a5a5;
+    --rule-color: rgba(246, 243, 234, 0.14);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--bg-base);
+    background-image:
+      radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 2px 3px;
+    color: var(--chalk-white);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 20px;
+    line-height: 1.6;
+    padding: 0 0 80px;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 40px 24px 0;
+  }
+
+  header.hero {
+    text-align: center;
+    padding-bottom: 28px;
+    border-bottom: 2px dashed var(--rule-color);
+  }
+
+  .eyebrow {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    letter-spacing: 0.25em;
+    color: var(--chalk-teal);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  h1 {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 700;
+    font-size: clamp(36px, 6vw, 52px);
+    margin: 0 0 16px;
+    color: var(--chalk-yellow);
+    letter-spacing: 2px;
+  }
+
+  .hero p {
+    color: var(--chalk-muted);
+    font-size: 20px;
+    margin: 0;
+  }
+
+  /* 學科大館切換按鈕列 */
+  .subject-nav {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin: 32px 0 10px;
+    flex-wrap: wrap;
+  }
+
+  .sub-btn {
+    background: var(--bg-panel);
+    color: var(--chalk-muted);
+    border: 2px solid var(--rule-color);
+    padding: 12px 28px;
+    font-size: 19px;
+    font-weight: 700;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sub-btn:hover {
+    background: var(--bg-panel-hover);
+    color: var(--chalk-white);
+    transform: translateY(-2px);
+  }
+
+  .sub-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--chalk-white);
+    border-color: var(--chalk-yellow);
+    box-shadow: 0 0 18px rgba(242, 214, 117, 0.25);
+    transform: scale(1.05);
+  }
+
+  /* 學科展館區域控制 */
+  .subject-section {
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .subject-section.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .wave-divider {
+    display: block;
+    width: 100%;
+    height: 36px;
+    margin: 36px 0 28px;
+    overflow: hidden;
+  }
+  .wave-divider path {
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 900;
+    stroke-dashoffset: 900;
+    animation: draw-wave 1.8s ease-out forwards;
+  }
+  @keyframes draw-wave {
+    to { stroke-dashoffset: 0; }
+  }
+
+  section.category {
+    margin-bottom: 16px;
+  }
+
+  .cat-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .cat-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 20px;
+    padding: 4px 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  h2 {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 700;
+    font-size: 26px;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+
+  .cat-count {
+    font-size: 16px;
+    color: var(--chalk-muted);
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid var(--rule-color);
+    border-radius: 999px;
+    padding: 2px 14px;
+    margin-left: auto;
+  }
+
+  .cards {
+    list-style: none;
+    margin: 0 0 40px;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 18px;
+  }
+
+  .card {
+    display: block;
+    height: 100%;
+    background: var(--bg-panel);
+    border: 1.5px dashed var(--rule-color);
+    border-radius: 12px;
+    padding: 20px 22px;
+    text-decoration: none;
+    color: var(--chalk-white);
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .card:hover {
+    background: var(--bg-panel-hover);
+    transform: translateY(-2px);
+  }
+
+  /* 施工中卡片樣式：降低彩度與鼠標提示 */
+  .card-disabled {
+    cursor: default;
+    opacity: 0.65;
+  }
+  .card-disabled:hover {
+    background: var(--bg-panel);
+    transform: none;
+  }
+
+  .card-title {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 21px;
+    font-weight: 700;
+    display: inline-block;
+    position: relative;
+  }
+
+  .card:not(.card-disabled) .card-title::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -3px;
+    width: 0;
+    height: 2px;
+    background: currentColor;
+    transition: width 0.25s ease;
+  }
+  .card:not(.card-disabled):hover .card-title::after { width: 100%; }
+
+  .card-sub {
+    display: block;
+    font-size: 17px;
+    color: var(--chalk-muted);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  .empty-note {
+    grid-column: 1 / -1;
+    padding: 24px;
+    background: rgba(255,255,255,0.03);
+    border: 1px dashed var(--rule-color);
+    border-radius: 10px;
+    color: var(--chalk-muted);
+    font-size: 19px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* 主題色彩設定 */
+  .c-1 .cat-head h2, .c-1 .cat-num, .c-1 .card-title { color: var(--chalk-green); }
+  .c-2 .cat-head h2, .c-2 .cat-num, .c-2 .card-title { color: var(--chalk-teal); }
+  .c-3 .cat-head h2, .c-3 .cat-num, .c-3 .card-title { color: var(--chalk-yellow); }
+  .c-4 .cat-head h2, .c-4 .cat-num, .c-4 .card-title { color: var(--chalk-coral); }
+  .c-5 .cat-head h2, .c-5 .cat-num, .c-5 .card-title { color: var(--chalk-purple); }
+  .c-6 .cat-head h2, .c-6 .cat-num, .c-6 .card-title { color: var(--chalk-blue); }
+  .c-7 .cat-head h2, .c-7 .cat-num, .c-7 .card-title { color: var(--chalk-green); }
+  .c-8 .cat-head h2, .c-8 .cat-num, .c-8 .card-title { color: var(--chalk-coral); }
+  .c-9 .cat-head h2, .c-9 .cat-num, .c-9 .card-title { color: var(--chalk-yellow); }
+  .c-10 .cat-head h2, .c-10 .cat-num, .c-10 .card-title { color: var(--chalk-teal); }
+
+  .card-thumb {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin-top: 14px;
+    border: 1px solid var(--rule-color);
+  }
+
+  footer {
+    text-align: center;
+    color: var(--chalk-muted);
+    font-size: 16px;
+    padding-top: 24px;
+    border-top: 2px dashed var(--rule-color);
+  }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 30px 16px 0; }
+    .cards { grid-template-columns: 1fr; }
+    .sub-btn { padding: 10px 18px; font-size: 16px; }
+  }
+  .language-switcher {
+    position: fixed;
+    top: 16px;
+    right: 18px;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px;
+    border: 1px solid var(--rule-color);
+    border-radius: 999px;
+    background: rgba(22, 36, 31, 0.94);
+    box-shadow: 0 8px 24px rgba(0,0,0,.16);
+    backdrop-filter: blur(8px);
+  }
+  /* iOS Safari：避免 fixed＋半透明濾鏡產生整頁 GPU 垂直接縫。 */
+  @supports (-webkit-touch-callout: none) {
+    html, body {
+      background-image: none;
+      background-color: var(--bg-base);
+    }
+    .language-switcher {
+      position: absolute;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background: rgb(22, 36, 31);
+    }
+  }
+  .language-switcher span {
+    color: var(--chalk-teal);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 0 4px;
+  }
+  .lang-btn {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--chalk-muted);
+    padding: 7px 12px;
+    font: 700 14px 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+  }
+  .lang-btn.active {
+    color: var(--bg-base);
+    background: var(--chalk-teal);
+  }
+  .stem-tags {
+    margin-top: 14px;
+    color: var(--chalk-teal);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+  @media (max-width: 768px) {
+    .language-switcher { position: static; width: max-content; margin: 12px auto 0; }
+  }
+  /* 回到新首頁（伽利略星球） */
+  .galileo-link {
+    position: absolute;
+    top: 16px;
+    left: 18px;
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 20px;
+    border: 2px solid var(--chalk-yellow, #f2d675);
+    border-radius: 999px;
+    background: rgb(22, 36, 31);
+    color: var(--chalk-yellow, #f2d675);
+    font: 700 22px 'Noto Sans TC', sans-serif;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(11, 26, 21, .3);
+  }
+  .galileo-link:hover, .galileo-link:focus-visible { background: var(--chalk-yellow, #f2d675); color: rgb(22, 36, 31); }
+  @media (max-width: 768px) {
+    .galileo-link { position: static; display: flex; width: max-content; margin: 12px auto 0; }
+  }
+</style>
+<meta name="physical-boys-menu-version" content="static-covers-electrochem-1008-v6">
+<link rel="stylesheet" href="assets/index_static_covers_ipad3_1008_v2.css">
+</head>
+<body class="index-static-covers">
+<div class="wrap">
+  <a class="galileo-link" id="galileoLink" href="index.html" data-zh="🪐 回到伽利略星球" data-en="🪐 Back to Galileo Planet">🪐 回到伽利略星球</a>
+  <div class="language-switcher" role="group" aria-label="Language 語言">
+    <span>Language</span>
+    <button class="lang-btn active" type="button" data-index-lang="zh" aria-pressed="true">中文</button>
+    <button class="lang-btn" type="button" data-index-lang="en" aria-pressed="false">English</button>
+  </div>
+
+  <header class="hero">
+    <span class="eyebrow" id="heroEyebrow">📐 Bilingual STEM Interactive Curriculum 📊</span>
+    <h1 id="heroTitle">自然科學</h1>
+    <p id="heroDescription">把抽象概念變成可操作、可旋轉、可驗證的互動模型；以高解析度動畫、探究任務與即時回饋，連結生物、物理、化學、地球科學、天文與數學。</p>
+    <div class="stem-tags" id="stemTags">STEM 教育 · 探究式學習 · 互動模擬 · 雙語科學</div>
+    
+    <!-- 設計師與回饋信箱區塊 -->
+    <div style="margin-top: 16px; font-size: 16px; color: var(--chalk-muted); font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif;">
+        <span id="designerLabel" style="color: var(--chalk-green); font-weight: 700;">soulrunning設計</span> ｜ <span id="feedbackLabel">回饋信箱</span>：<a href="mailto:flyer19820218@gmail.com" style="color: var(--chalk-teal); text-decoration: none;">flyer19820218@gmail.com</a>
+    </div>
+
+    <!-- 學科分館按鈕：融入學科代表性圖示 -->
+    <nav class="subject-nav">
+      <button class="sub-btn" data-zh="🌱 🔬 生物與環境" data-en="🌱 🔬 Biology & Environment" onclick="switchSubject('biology', this)">🌱 🔬 生物與環境</button>
+      <button class="sub-btn active" data-zh="🍎 ⚡ 物理與力學" data-en="🍎 ⚡ Physics & Mechanics" onclick="switchSubject('physics', this)" style="border-color: var(--chalk-yellow); color: var(--chalk-yellow);">🍎 ⚡ 物理與力學</button>
+      <button class="sub-btn" data-zh="🧪 ⚗️ 化學與反應" data-en="🧪 ⚗️ Chemistry" onclick="switchSubject('chemistry', this)">🧪 ⚗️ 化學與反應</button>
+      <button class="sub-btn" data-zh="🌍 🔭 地科與天文" data-en="🌍 🔭 Earth & Space Science" onclick="switchSubject('earth', this)">🌍 🔭 地科與天文</button>
+    </nav>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- 🍎 ⚡ 物理館 (十大核心單元)                  -->
+  <!-- ========================================== -->
+  <div id="physics" class="subject-section active">
+    <!-- 一、密度 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-green);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-1">
+      <div class="cat-head">
+        <span class="cat-num">01</span>
+        <h2>⚖️ 密度與質量</h2>
+        <span class="cat-count">3 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="density_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/density_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">實驗室安全與長度測量</span><span class="card-sub">📏 7大器材操作防呆、錯視對比、直尺精密度實戰與平均值剔除 ★</span></span></a></li>
+        <li><a class="card" href="density_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/density_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">質量與體積的測量</span><span class="card-sub">⚖️ 質量重量差異、天平秤重實戰、三大排水法與量筒視差檢定 ★</span></span></a></li>
+        <li><a class="card" href="density_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/density_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">密度的核心意義與計算</span><span class="card-sub">📊 切塊密度分析、唸法意義、萬用黑板計算機與純物質 M-V 圖解剖 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 二、波動與聲波 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-teal);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-2">
+      <div class="cat-head">
+        <span class="cat-num">02</span>
+        <h2>🌊 波動與聲波</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="waves_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/waves_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">波的傳遞與力學波</span><span class="card-sub">〰️ 橫波、縱波與介質運動模擬示範</span></span></a></li>
+        <li><a class="card" href="waves_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/waves_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">聲波傳播與聲速計算</span><span class="card-sub">📐 介質差異、溫度對聲速影響與公式計算</span></span></a></li>
+        <li><a class="card" href="waves_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/waves_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">回聲原理與兩山試題</span><span class="card-sub">⛰️ 回聲條件、表面漫射動畫與經典兩山距離計算</span></span></a></li>
+        <li><a class="card" href="waves_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/waves_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">聲音三要素與共振</span><span class="card-sub">🔔 響度、音調、音色互動實驗、水杯敲吹考題與共振現象</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 三、光學與透鏡 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-yellow);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-3">
+      <div class="cat-head">
+        <span class="cat-num">03</span>
+        <h2>💡 光學與透鏡</h2>
+        <span class="cat-count">6 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="optics_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/optics_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">光的直進與針孔成像</span><span class="card-sub">🔦 動態模擬針孔成像與光線直進原理</span></span></a></li>
+        <li><a class="card" href="optics_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/optics_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">平面鏡成像與反射定律</span><span class="card-sub">🪞 虛像定位、曲面鏡視野與雷射反射定律 ★</span></span></a></li>
+        <li><a class="card" href="optics_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/optics_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">光的折射與全反射</span><span class="card-sub">💎 偏折規律、水池變淺解析與海市蜃樓模擬</span></span></a></li>
+        <li><a class="card" href="optics_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/optics_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">光學透鏡與視力矯正</span><span class="card-sub">👓 凸透鏡與凹透鏡成像規律、近視與遠視光路分析</span></span></a></li>
+        <li><a class="card" href="optics_5.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/optics_5.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">光與顏色</span><span class="card-sub">🌈 色光三原色、物體顏色呈現與濾光片解析</span></span></a></li>
+        <li><a class="card" href="optics_max1.html" target="_blank"><span class="card-art cover-unavailable" aria-hidden="true"></span><span class="card-copy"><span class="card-title">進階光學：連續反射解析</span><span class="card-sub">📐 雙平面鏡夾角反射與虛像個數公式探究</span><span class="card-note" data-cover-zh="封面待補；教材可正常開啟" data-cover-en="Cover pending; lesson available">封面待補；教材可正常開啟</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 四、熱力學 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-coral);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-4">
+      <div class="cat-head">
+        <span class="cat-num">04</span>
+        <h2>🔥 熱學與熱力學</h2>
+        <span class="cat-count">5 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="thermo_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/thermo_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">溫度與溫度計</span><span class="card-sub">🌡️ 溫度計原理、攝氏華氏比例換算與自製水溫度計計算</span></span></a></li>
+        <li><a class="card" href="thermo_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/thermo_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">熱量與熱平衡基礎</span><span class="card-sub">☕ 熱傳遞方向、1卡定義與理想熱平衡溫度計算</span></span></a></li>
+        <li><a class="card" href="thermo_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/thermo_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">比熱與圖形斜率分析</span><span class="card-sub">📈 質量×比熱圖形斜率分析、熱量散失進階試題解析</span></span></a></li>
+        <li><a class="card" href="thermo_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/thermo_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">熱傳播的三種方式</span><span class="card-sub">💨 傳導、對流與輻射互動模擬與生活實例全解析</span></span></a></li>
+        <li><a class="card" href="thermo_5.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/thermo_5.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">熱對物質的影響與化學反應</span><span class="card-sub">❄️ 冰晶氫鍵微觀解密、4°C水的特例、脫水變色與長效沸騰曲線 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 五、基礎力學 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-purple);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-5">
+      <div class="cat-head">
+        <span class="cat-num">05</span>
+        <h2>🧲 基礎力學與壓力</h2>
+        <span class="cat-count">5 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="mechanics_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/mechanics_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">力的本質與彈簧</span><span class="card-sub">⚖️ 質量重力差異、接觸與超距力、虎克定律與串並聯拉力賽 ★</span></span></a></li>
+        <li><a class="card" href="mechanics_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/mechanics_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">力的合成、分解與平衡</span><span class="card-sub">🎯 向量拔河、靜力平衡檯、平行四邊形雷達與斜面滑塊解析 ★</span></span></a></li>
+        <li><a class="card" href="mechanics_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/mechanics_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">無所不在的摩擦力</span><span class="card-sub">🛹 微觀咬合探測、最大靜摩擦 V-t 圖推箱實戰與變因控制 ★</span></span></a></li>
+        <li><a class="card" href="mechanics_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/mechanics_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">壓力與液體壓力</span><span class="card-sub">📌 固體壓力計算、液體深度影響、連通管與帕斯卡原理解析 ★</span></span></a></li>
+        <li><a class="card" href="mechanics_5.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/mechanics_5.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">大氣壓力與浮力</span><span class="card-sub">💨 馬德堡拔河、托里切利氣壓計、阿基米德原理與沉浮觀念挑戰 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 六、運動學 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-blue);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-6">
+      <div class="cat-head">
+        <span class="cat-num">06</span>
+        <h2>📐 直線運動學</h2>
+        <span class="cat-count">5 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="kinematics.html" target="_blank"><span class="card-art"><img src="assets/index_covers/kinematics_1008_v2/kinematics.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">位置、路徑長與位移</span><span class="card-sub">📍 從數線座標到操場、時鐘秒針的幾何分析與隨堂練習</span></span></a></li>
+        <li><a class="card" href="kinematics_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/kinematics_1008_v1/kinematics_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">平均速率、速度與 V-T 圖</span><span class="card-sub">🚗 雙車動態對照、面積位移與經典折返運動解析</span></span></a></li>
+        <li><a class="card" href="kinematics_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/kinematics_1008_v1/kinematics_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">等速度與加速度運動</span><span class="card-sub">🚄 動態黑板教學版：加速度與等速度運動觀念剖析</span></span></a></li>
+        <li><a class="card" href="kinematics_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/kinematics_1008_v1/kinematics_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">等加速度運動（上集）</span><span class="card-sub">⏱️ 1:1 大螢幕模擬器：打點計時器、伽利略斜面觀念建立</span></span></a></li>
+        <li><a class="card" href="kinematics_5.html" target="_blank"><span class="card-art"><img src="assets/index_covers/kinematics_1008_v1/kinematics_5.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">等加速度與自由落體（下集）</span><span class="card-sub">📉 等加速度四大公式應用與自由落體深度定義解析</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 七、牛頓力學與圓周運動 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-green);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-7">
+      <div class="cat-head">
+        <span class="cat-num">07</span>
+        <h2>🍎 牛頓力學與圓周運動</h2>
+        <span class="cat-count">5 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="newton_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/newton_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">牛頓第一運動定律與慣性</span><span class="card-sub">🚌 伽利略斜面思想實驗、動者恆動與公車加減速生活慣性模擬 ★</span></span></a></li>
+        <li><a class="card" href="newton_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/newton_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">牛頓第二運動定律與 F=ma</span><span class="card-sub">🚀 外力與加速度正反比關係、重量換算牛頓 N 與太空梭質量測量 ★</span></span></a></li>
+        <li><a class="card" href="newton_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/first_visible_1008_v2/newton_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">牛頓第三運動定律與視重</span><span class="card-sub">⛵ 雙木塊受力隔離圖、滑板拉繩對抗、帆船迷思與電梯超失重解析 ★</span><span class="card-note" data-cover-zh="短片開頭清楚畫面，不播放" data-cover-en="First clear opening scene; no playback">短片開頭清楚畫面，不播放</span></span></a></li>
+        <li><a class="card" href="newton_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/first_visible_1008_v2/newton_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">圓周運動與萬有引力</span><span class="card-sub">🛰️ 向心力與切線飛行、交流道轉彎斜坡分析與距離平方反比定律 ★</span><span class="card-note" data-cover-zh="短片開頭清楚畫面，不播放" data-cover-en="First clear opening scene; no playback">短片開頭清楚畫面，不播放</span></span></a></li>
+        <li><a class="card" href="newton_5.html" target="_blank"><span class="card-art"><img src="assets/index_covers/first_visible_1008_v2/newton_5.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">力矩與靜力平衡</span><span class="card-sub">🎯 支點力臂與轉動效應、順逆時針力矩與靜力平衡條件 ★</span><span class="card-note" data-cover-zh="短片開頭清楚畫面，不播放" data-cover-en="First clear opening scene; no playback">短片開頭清楚畫面，不播放</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 八、功與能 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-coral);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-8">
+      <div class="cat-head">
+        <span class="cat-num">08</span>
+        <h2>⚡ 功與能</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="work_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/work_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">功的定義與功率</span><span class="card-sub">🏋️ 正功與負功定義、施力與位移夾角分析與功率計算 ★</span></span></a></li>
+        <li><a class="card" href="work_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/work_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">動能與重力位能</span><span class="card-sub">🎢 U型軌道動能位能互換、質量與速率平方正比關係 ★</span></span></a></li>
+        <li><a class="card" href="work_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/work_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">力學能守恆定律</span><span class="card-sub">🔄 單擺擺盪動位能互換模擬、🪂 自由落體與 🔥 焦耳熱功當量實驗 ★</span></span></a></li>
+        <li><a class="card" href="work_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/first_visible_1008_v2/work_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">簡單機械與機械效率</span><span class="card-sub">🔩 功的原理：省力必定費距離、銳角拔釘演練與輪軸斜面解析 ★</span><span class="card-note" data-cover-zh="短片開頭清楚畫面，不播放" data-cover-en="First clear opening scene; no playback">短片開頭清楚畫面，不播放</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 九、基礎電學與電路 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-yellow);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-9">
+      <div class="cat-head">
+        <span class="cat-num">09</span>
+        <h2>💡 基礎電學與電路</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="electronics_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/electronics_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">靜電現象與基本電路</span><span class="card-sub">⚡ 摩擦起電、靜電感應與基礎電路元件觀察 ★</span></span></a></li>
+        <li><a class="card" href="electronics_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/electronics_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">電壓本質與電路三態</span><span class="card-sub">🔋 水流模型對比、電路三態與危險短路模擬 ★</span></span></a></li>
+        <li><a class="card" href="electronics_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/electronics_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">串並聯電路與電流</span><span class="card-sub">🌊 電流定義、電表測量法則與歷屆經典考題 ★</span></span></a></li>
+        <li><a class="card" href="electronics_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/electronics_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">電阻與歐姆定律</span><span class="card-sub">🚧 微觀碰撞、V-I關係圖與未知電阻測量實戰 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 十、電與磁 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-teal);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-10">
+      <div class="cat-head">
+        <span class="cat-num">10</span>
+        <h2>🧭 電與磁</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="magnetism_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/magnetism_1008_v1/magnetism_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">磁力與磁場</span><span class="card-sub">🧲 磁極互動、磁疇、磁力線、指南針與地球磁場互動解析 ★</span></span></a></li>
+        <li><a class="card" href="electromagnetism_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/magnetism_1008_v1/electromagnetism_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">電生磁與電磁鐵</span><span class="card-sub">⚡ 奧斯特實驗、右手定則、線圈磁場疊加、電磁鐵起重機與電話聽筒動畫 ★</span></span></a></li>
+        <li><a class="card" href="electric_motor_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/magnetism_1008_v1/electric_motor_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">磁力與電動機</span><span class="card-sub">⚙️ 右手開掌定則、平行導線交互作用、帶電粒子運動、分裂環換向與直流電動機動畫 ★</span></span></a></li>
+        <li><a class="card" href="electromagnetic_induction_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/magnetism_1008_v1/electromagnetic_induction_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">電磁感應與交流電</span><span class="card-sub">⚡ 法拉第與冷次定律、發電機、變壓器、感應加熱與高中資優計算 ★</span></span></a></li>
+      </ul>
+    </section>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 🧪 ⚗️ 化學館                                 -->
+  <!-- ========================================== -->
+  <div id="chemistry" class="subject-section">
+    
+    <!-- 第一單元：空氣與溶液 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-yellow);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-3">
+      <div class="cat-head">
+        <span class="cat-num">01</span>
+        <h2>🧪 空氣與溶液</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="concerntration_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/concerntration_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">物質的性質與分離</span><span class="card-sub">⚗️ 物理與化學變化、純物質與混合物、過濾法與結晶法實戰模擬 ★</span></span></a></li>
+        <li><a class="card" href="concerntration_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/concerntration_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">三大濃度的計算</span><span class="card-sub">📊 水溶液與飽和、重量百分濃度、體積百分濃度與 ppm 計算機 ★</span></span></a></li>
+        <li><a class="card" href="concerntration_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/concerntration_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">溶解度與飽和濃度</span><span class="card-sub">📈 溶解度與溶解量區別、溫度溶解度曲線與降溫結晶進階題 ★</span></span></a></li>
+        <li><a class="card" href="concerntration_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/concerntration_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">空氣與氣體製備</span><span class="card-sub">🎈 空氣組成比例、雙氧水製氧與排水集氣裝置圖、二氧化碳檢驗 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 第二單元：原子與元素週期表 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-teal);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-2">
+      <div class="cat-head">
+        <span class="cat-num">02</span>
+        <h2>⚛️ 原子與元素週期表</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="atomics_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/atomics_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">純物質與元素</span><span class="card-sub">💎 物質分類、拉瓦節電解水、部首玄機與常見金屬非金屬解析 ★</span></span></a></li>
+        <li><a class="card" href="atomics_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/atomics_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">原子模型與週期表</span><span class="card-sub">🗺️ 微觀科學史演進、18x7 週期表地圖規律與四大家族密碼 ★</span></span></a></li>
+        <li><a class="card" href="atomics_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/atomics_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">微粒計算與同位素</span><span class="card-sub">🧮 質子中子電子比較、離子數目計算機與同素異形體特性解析 ★</span></span></a></li>
+        <li><a class="card" href="atomics_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/atomics_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">物質結構與化學式</span><span class="card-sub">🔗 微觀三大結構導電性、離子轉譯器、乙醇立體結構與解題特區 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 第三單元：化學反應與方程式平衡 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-green);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-1">
+      <div class="cat-head">
+        <span class="cat-num">03</span>
+        <h2>⚖️ 化學反應與方程式平衡</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="chem_reaction_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/chem_reaction_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">化學反應與質量守恆</span><span class="card-sub">⚖️ 四大現象、煙火動畫、碳燃燒微觀視角與密閉系統沉澱實驗 ★</span></span></a></li>
+        <li><a class="card" href="chem_reaction_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/chem_reaction_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">化學反應式與平衡係數</span><span class="card-sub">📝 書寫原則、觀察法、代數法與資優氧化還原法互動推導 ★</span></span></a></li>
+        <li><a class="card" href="chem_reaction_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/chem_reaction_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">原子量、分子量與莫耳</span><span class="card-sub">🧮 碳-12標準、分子量計算、亞佛加厥數與莫耳質量雙向轉換 ★</span></span></a></li>
+        <li><a class="card" href="chem_reaction_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/chem_reaction_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">化學計量與反應計算</span><span class="card-sub">🧪 係數比＝莫耳數比、質量與莫耳換算路徑、限量試劑判定 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 第四單元：氧化還原反應 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-coral);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-4">
+      <div class="cat-head">
+        <span class="cat-num">04</span>
+        <h2>🔥 氧化與還原反應</h2>
+        <span class="cat-count">3 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="redox_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/redox_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">狹義的氧化還原與活性</span><span class="card-sub">🔥 6 大元素虛擬燃燒實驗室、金屬活性順序與酸鹼性規律 ★</span></span></a></li>
+        <li><a class="card" href="redox_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/redox_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">氧化還原的競爭法則與電子轉移</span><span class="card-sub">🧪 碳還原氧化銅微觀模擬、氧化劑還原劑判定與資優挑戰 ★</span></span></a></li>
+        <li><a class="card" href="redox_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/redox_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">金屬冶煉與生活防護</span><span class="card-sub">🏭 高爐煉鐵化學交響曲、生鐵鋼熟鐵解析與生活氧化還原防護 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 第五單元：電解質、酸、鹼與鹽類 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-purple);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-5">
+      <div class="cat-head">
+        <span class="cat-num">05</span>
+        <h2>⚗️ 電解質、酸、鹼與鹽類</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="electrolyte_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/electrolyte_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">電解質與微觀解離說</span><span class="card-sub">⚡ 巨觀導電實驗、封閉迴路、電解水氣泡 2:1 與離子移動微觀解離模擬 ★</span></span></a></li>
+        <li><a class="card" href="electrolyte_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/electrolyte_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">常見的酸與鹼與濃酸危機</span><span class="card-sub">🔥 三大強酸與弱酸性質、方糖碳化實驗與濃酸稀釋防呆安全模擬 ★</span></span></a></li>
+        <li><a class="card" href="electrolyte_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/electrolyte_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">莫耳濃度、稀釋與 pH 值計算</span><span class="card-sub">🥤 標準溶液配製儀表板、稀釋混合計算與極端 pH 值挑戰 ★</span></span></a></li>
+        <li><a class="card" href="electrolyte_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/electrolyte_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">酸鹼中和、滴定與常見鹽類</span><span class="card-sub">💧 自動滴定變色實驗機、常見鹽類圖鑑與酸鹼中和計量演練 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 第六單元：反應速率與化學平衡 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-blue);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-6">
+      <div class="cat-head">
+        <span class="cat-num">06</span>
+        <h2>⚡ 反應速率與化學平衡</h2>
+        <span class="cat-count">3 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="chem_reaction_balance_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/chem_reaction_balance_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">反應速率與碰撞學說</span><span class="card-sub">⏱️ 直觀感受、有效碰撞條件、四大影響變因與硫代硫酸鈉經典實驗 ★</span></span></a></li>
+        <li><a class="card" href="chem_reaction_balance_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/chem_reaction_balance_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">活化能與催化劑</span><span class="card-sub">🔥 跨越反應門檻、催化劑的魔法與四大特性、生活與工業應用 ★</span></span></a></li>
+        <li><a class="card" href="chem_reaction_balance_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/chem_reaction_balance_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">可逆反應與動態平衡</span><span class="card-sub">⚖️ 巨觀靜止與微觀沸騰、濃度/溫度/壓力破壞平衡、鐘乳石與血液緩衝 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 第七單元：有機化學與生活分子 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-green);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-7">
+      <div class="cat-head">
+        <span class="cat-num">07</span>
+        <h2>🧬 有機化學與生活分子</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="organics_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/organics_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">有機物基礎與木材乾餾</span><span class="card-sub">🧪 歷史定義與例外盲盒、乾餾產物檢驗、同分異構物 3D 結構 ★</span></span></a></li>
+        <li><a class="card" href="organics_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/organics_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">常見有機物 (烴、醇、酸、酯)</span><span class="card-sub">⛽ 沸點分離分餾塔、酸醇微觀解離對比與 🍌 果香酯化脫水拼圖 ★</span></span></a></li>
+        <li><a class="card" href="organics_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/organics_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">聚合物與衣料纖維</span><span class="card-sub">🔗 單體聚合鎖鏈動畫、熱塑熱固加熱對比與 🔥 布料鑑識燃燒實驗 ★</span></span></a></li>
+        <li><a class="card" href="organics_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/organics_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">食品化學與清潔劑</span><span class="card-sub">🍳 蛋白質不可逆變性、皂化大釜煉金術與 🦠 肥皂微胞去污攻擊戰 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 第八單元：電化學與化學電池 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-coral);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-8">
+      <div class="cat-head">
+        <span class="cat-num">08</span>
+        <h2>🔋 電化學與化學電池</h2>
+        <span class="cat-count">5 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="electric_energy_power_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/electrochem_1008_v1/electric_energy_power_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">電能與電功率</span><span class="card-sub">⚡ 電能三大效應、E=IVt 推導、串並聯電能計算、電功率與電器標示 ★</span></span></a></li>
+        <li><a class="card" href="electric_power_transmission_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/electrochem_1008_v1/electric_power_transmission_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">電力輸送與電費</span><span class="card-sub">🔌 直流與交流、高壓輸電線損、一度電與電費、家庭 110 V／220 V 配電與接地安全 ★</span></span></a></li>
+        <li><a class="card" href="electrical_safety_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/electrochem_1008_v1/electrical_safety_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">短路與用電安全</span><span class="card-sub">🔥 短路與過載、導線發熱、保險絲與斷路器、觸電防護及延長線額定電流互動解析 ★</span></span></a></li>
+        <li><a class="card" href="galvanic_batteries_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/electrochem_1008_v1/galvanic_batteries_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">化學電池</span><span class="card-sub">🔋 賈法尼與伏打科學史、氧化還原、鋅銅電池、鹽橋與常見電池互動解析 ★</span></span></a></li>
+        <li><a class="card" href="electrolysis_5.html" target="_blank"><span class="card-art"><img src="assets/index_covers/electrochem_1008_v1/electrolysis_5.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">電解與電鍍</span><span class="card-sub">⚡ 導電與電極、電解水、硫酸銅電解與電鍍工業的互動解析 ★</span></span></a></li>
+      </ul>
+    </section>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 🌍 🔭 地科與天文館                              -->
+  <!-- ========================================== -->
+  <div id="earth" class="subject-section">
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-blue);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-6">
+      <div class="cat-head">
+        <span class="cat-num">01</span>
+        <h2>🌍 水與陸地</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="earth_water_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/earth_water_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">地球上的水與地下水</span><span class="card-sub">🌊 四大層圈、水體分布、海水鹽度、冰川海平面、地下水面與超抽危機 ★</span></span></a></li>
+        <li><a class="card" href="earth_landforms_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/earth_landforms_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">地貌的改變與外營力</span><span class="card-sub">⛰️ 內外營力、風化作用、河流剖面與冰川、風、海浪地形配對 ★</span></span></a></li>
+        <li><a class="card" href="earth_coastline_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/earth_coastline_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">海岸線與動態平衡</span><span class="card-sub">🏖️ 泥沙收支、海退海進、河口供沙與水庫、防波堤工程衝擊 ★</span></span></a></li>
+        <li><a class="card" href="earth_rocks_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/earth_rocks_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">岩石家族與變身循環</span><span class="card-sub">🪨 礦物鑑定、火成岩冷卻、沉積與變質作用、三大岩類循環拼圖 ★</span></span></a></li>
+      </ul>
+    </section>
+
+
+    <!-- 第二單元：板塊運動與地球歷史 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-coral);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-4">
+      <div class="cat-head">
+        <span class="cat-num">02</span>
+        <h2>🌋 板塊運動與地球歷史</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="earth_interior_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/earth_interior_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">地球內部構造與板塊動力</span><span class="card-sub">🌍 地殼、地函、地核、岩石圈與軟流圈，搭配熱對流與板塊運動圖解 ★</span></span></a></li>
+        <li><a class="card" href="earth_plates_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/earth_plates_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">板塊交界與地表變動</span><span class="card-sub">🌊 全球板塊、海底擴張、隱沒、造山與地震火山分布的互動圖解 ★</span></span></a></li>
+        <li><a class="card" href="earth_strata_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/earth_strata_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">岩層密碼與地球歷史</span><span class="card-sub">🪨 褶皺、斷層、地質事件時光機與代表性化石年代判讀 ★</span></span></a></li>
+        <li><a class="card" href="earth_taiwan_quake_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/earth_taiwan_quake_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">臺灣的板塊與地震</span><span class="card-sub">🇹🇼 臺灣造山、震源震央、規模與震度、地震密集區與防災判斷 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 第三單元：太空的世界 -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-yellow);">
+      <path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/>
+    </svg>
+    <section class="category c-3">
+      <div class="cat-head">
+        <span class="cat-num">03</span>
+        <h2>🌌 太空的世界</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li>
+          <a class="card" href="astronomy_universe_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/astronomy_universe_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy">
+            <span class="card-title">宇宙尺度與太陽系</span>
+            <span class="card-sub">🌌 從宇宙、銀河系一路縮放到太陽系、地球與月球，建立天體尺度與宇宙空間概念 ★</span>
+          </span></a>
+        </li>
+        <li>
+          <a class="card" href="astronomy_earth_motion_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/astronomy_earth_motion_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy">
+            <span class="card-title">地球自轉、公轉與四季</span>
+            <span class="card-sub">🌍 晝夜交替、時刻、太陽東升西落、地球公轉與四季成因互動解析 ★</span>
+          </span></a>
+        </li>
+        <li>
+          <a class="card" href="astronomy_sunpath_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/astronomy_sunpath_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy">
+            <span class="card-title">太陽運行與天球模型</span>
+            <span class="card-sub">☀️ 太陽日周運動、季節日照路徑與天球方位模型互動解析 ★</span>
+          </span></a>
+        </li>
+        <li>
+          <a class="card" href="astronomy_moon_phases_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/astronomy_moon_phases_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy">
+            <span class="card-title">月相、日月食與潮汐</span>
+            <span class="card-sub">🌙 月相與觀測時間、日食、月食、5° 軌道傾角與潮汐週期互動解析 ★</span>
+          </span></a>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 第四單元：大氣與天氣（僅上架已完成的小單元） -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-teal);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-2">
+      <div class="cat-head">
+        <span class="cat-num">04</span>
+        <h2>🌦️ 大氣與天氣</h2>
+        <span class="cat-count">6 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="weather_atmosphere_1.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/weather_atmosphere_1.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">地球的大氣</span><span class="card-sub">🌍 空氣的重量與氣壓、大氣成分與分層、有無大氣的對照，以及汙染與酸雨實驗互動解析 ★</span></span></a></li>
+        <li><a class="card" href="weather_cloud_rain_2.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/weather_cloud_rain_2.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">水氣與雲雨</span><span class="card-sub">☁️ 相對溼度與露點、上升的空氣如何成雲、三種雲，以及霧露霜與雨雪霰的實驗互動解析 ★</span></span></a></li>
+        <li><a class="card" href="weather_wind_3.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/weather_wind_3.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">氣壓與風</span><span class="card-sub">🌬️ 氣壓差形成風、風向與風速、等壓線疏密，以及科氏力與 3D 高低氣壓的互動解析 ★</span></span></a></li>
+        <li><a class="card" href="weather_airmass_front_4.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/weather_airmass_front_4.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">氣團與鋒面</span><span class="card-sub">🌦️ 兩大氣團與冬夏季風、迎風面與背風面、冷鋒暖鋒的剖面，以及滯留鋒與梅雨的互動解析 ★</span></span></a></li>
+        <li><a class="card" href="weather_forecast_5.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/weather_forecast_5.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">氣象資訊</span><span class="card-sub">🌦️ 地面、高空、雷達與衛星觀測，看懂天氣圖當預報員，紫外線指數與警特報的互動解析 ★</span></span></a></li>
+        <li><a class="card" href="weather_disaster_6.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/weather_disaster_6.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">臺灣常見的災變天氣</span><span class="card-sub">🌦️ 寒潮與寒害、梅雨與滯留鋒、颱風的生成與路徑，加上資優特集：颱風眼與螺旋雨帶的互動解析 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <!-- 第五單元：全球氣候變遷（僅上架已完成的小單元） -->
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-green);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-1">
+      <div class="cat-head">
+        <span class="cat-num">05</span>
+        <h2>🌏 全球氣候變遷</h2>
+        <span class="cat-count">2 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="climate_ocean_7.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/climate_ocean_7.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">海洋與大氣</span><span class="card-sub">🌊 風推動洋流、黑潮與臺灣附近的洋流、波浪與海嘯，以及海洋酸化的互動解析 ★</span></span></a></li>
+        <li><a class="card" href="climate_change_8.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/climate_change_8.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">溫室效應與氣候變遷</span><span class="card-sub">🌡️ 看得見的溫室效應、一百多年的暖化紀錄、海平面與物種遷移，以及減緩、調適與淨零排放的互動解析 ★</span></span></a></li>
+      </ul>
+    </section>
+  </div>
+
+  <!-- 🌱 🔬 生物科學館：僅上架老師已確認的小單元 -->
+  <div id="biology" class="subject-section">
+    <svg class="wave-divider" viewBox="0 0 800 36" preserveAspectRatio="none" style="color: var(--chalk-green);"><path d="M0,18 C 100,0 200,36 300,18 C 400,0 500,36 600,18 C 700,0 800,36 800,18" stroke="currentColor"/></svg>
+    <section class="category c-7">
+      <div class="cat-head">
+        <span class="cat-num">01</span>
+        <h2>🌱 生命科學緒論</h2>
+        <span class="cat-count">3 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="biology_intro.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/biology_intro.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">生命與科學方法</span><span class="card-sub">🌱 酵母菌對照實驗、五個生命現象精美圖解、生存條件與互動生物圈 ★</span></span></a></li>
+        <li><a class="card" href="biology_microscope.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/biology_microscope.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">顯微鏡與微小世界</span><span class="card-sub">🔬 器材辨認、倍率與調焦、倒像、移動小生物追蹤；全螢幕操作 ★</span></span></a></li>
+        <li><a class="card" href="biology_cells.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/biology_cells.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">細胞與玻片製作</span><span class="card-sub">🔬 真實細胞照片、形狀與功能、玻片製作；40／100／400 倍顯微操作與觸控移片 ★</span></span></a></li>
+      </ul>
+    </section>
+    <section class="category c-7">
+      <div class="cat-head">
+        <span class="cat-num">02</span>
+        <h2>🔬 組成生物的層次與尺度</h2>
+        <span class="cat-count">3 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="biology_matter_transport.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/biology_matter_transport.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">生命的材料與細胞膜</span><span class="card-sub">💧 大小分子、細胞膜、擴散與滲透；植物不脹破、質壁分離與紅血球溶血 ★</span></span></a></li>
+        <li><a class="card" href="biology_organization.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/biology_organization.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">從一個細胞到一個生命</span><span class="card-sub">🧬 真實顯微觀察、細胞分工與組織；人體與植物圖像層次、全螢幕觸控講解 ★</span></span></a></li>
+        <li><a class="card" href="biology_scale.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/biology_scale.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">生命的尺度</span><span class="card-sub">🔍 約略尺寸、長度單位與科學記號；真實影像、觀察工具比較及全螢幕觸控 ★</span></span></a></li>
+      </ul>
+    </section>
+    <section class="category c-7" data-biology-nutrients-entry>
+      <div class="cat-head">
+        <span class="cat-num">03</span>
+        <h2>🍚 養分與生命</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="biology_nutrients.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/biology_nutrients.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">食物中的養分</span><span class="card-sub">🧪 六大養分、熱量與餐盤；碘液、本氏液實驗台，等量對照與全螢幕觸控 ★</span></span></a></li>
+        <li><a class="card" href="biology_enzymes.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/biology_enzymes.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">酵素與生命的反應</span><span class="card-sub">🧬 分解與合成、受質吻合、溫度與酸鹼活性；唾液澱粉酶實驗與全螢幕觸控 ★</span></span></a></li>
+        <li><a class="card" href="biology_photosynthesis.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/biology_photosynthesis.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">植物的營養方式</span><span class="card-sub">🌿 植物剖面與物質運輸、光合作用、氣孔原圖；遮光葉片澱粉檢驗與全螢幕觸控 ★</span></span></a></li>
+        <li><a class="card" href="biology_animal_nutrition.html" target="_blank"><span class="card-art"><img src="assets/index_covers/menu_1008_v2/biology_animal_nutrition.jpg" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">動物的營養方式</span><span class="card-sub">🐿️ 消化器官逐站導覽、消化液、蠕動、絨毛吸收與養分利用；全螢幕觸控講解 ★</span></span></a></li>
+      </ul>
+    </section>
+    <section class="category c-7" data-biology-transport-entry>
+      <div class="cat-head">
+        <span class="cat-num">04</span>
+        <h2>🌳 生物的運輸與防禦</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="biology_plant_structure.html" target="_blank"><span class="card-art"><img src="assets/biology/ch4_plant_structure_1008_v1/hollow_maple_native2.png" alt="" loading="lazy" decoding="async" width="960" height="640"></span><span class="card-copy"><span class="card-title">植物的運輸構造</span><span class="card-sub">🌳 木質部與韌皮部運輸、真實莖切片、年輪與中空樹；全螢幕觸控講解 ★</span></span></a></li>
+        <li><a class="card" href="biology_plant_transport.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_plant_1008_v1.png" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">植物體內物質的運輸</span><span class="card-sub">💧 根毛吸水、蒸散作用、蔗糖供需與雙向運輸；染液實驗、整株原圖追蹤與全螢幕觸控 ★</span></span></a></li>
+        <li><a class="card" href="biology_human_transport.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_human_1008_v1.png" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">人體內物質的運輸</span><span class="card-sub">❤️ 心臟原圖定位與放大、血管及血液；紅血球循環旅程、淋巴回流與脈搏實測 ★</span></span></a></li>
+        <li><a class="card" href="biology_immune_defense.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_immune_1014_v1.png" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">人體的防禦作用</span><span class="card-sub">🛡️ 皮膚與黏膜、吞噬逐格和發炎；抗原抗體形狀配對、免疫記憶與全螢幕觸控 ★</span></span></a></li>
+      </ul>
+    </section>
+    <section class="category c-7" data-biology-coordination-entry>
+      <div class="cat-head">
+        <span class="cat-num">05</span>
+        <h2>🧠 協調與感應</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="biology_nervous_signals.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_nervous_1009_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">神經訊息：刺激到反應</span><span class="card-sub">🧬 感覺器官與受器、神經元原圖放大、肌肉與腺體；反應時間與溫度感覺練習 ★</span></span></a></li>
+        <li><a class="card" href="biology_brain_reflex.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_brain_1018_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="933"></span><span class="card-copy"><span class="card-title">腦與反射：訊息怎麼走？</span><span class="card-sub">🧠 腦部原圖局部放大、脊髓與脊椎；縮手反射與意識分路、膝跳與瞳孔 ★</span></span></a></li>
+        <li><a class="card" href="biology_endocrine.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_endocrine_1009_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">內分泌：血液裡的協調訊息</span><span class="card-sub">🩸 腺體定位與原圖放大、激素運送與作用對象；胰島素、升糖素及生長發育 ★</span></span></a></li>
+        <li><a class="card" href="biology_responses.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_responses_1009_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">動植物的感應：不只有移動</span><span class="card-sub">🌿 動物行為、向光與向地生長、捲鬚與閉葉；照片的光源方向探究 ★</span></span></a></li>
+      </ul>
+    </section>
+
+
+    <section class="category c-7" data-biology-homeostasis-entry>
+      <div class="cat-head">
+        <span class="cat-num">06</span>
+        <h2>🌡️ 生物的恆定性</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="biology_temperature_homeostasis.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_temperature_1009_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">恆定與體溫：穩定不是不變</span><span class="card-sub">🌡️ 恆定範圍、器官合作、內溫與外溫；流汗蒸發、血管與發抖調節 ★</span></span></a></li>
+        <li><a class="card" href="biology_respiration.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_respiration_1009_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">呼吸與氣體：空氣如何到達細胞？</span><span class="card-sub">🫁 空氣路徑、肺泡交換、橫膈與呼吸運動；細胞呼吸、各類生物及氣體檢驗 ★</span></span></a></li>
+        <li><a class="card" href="biology_glucose_homeostasis.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_glucose_1009_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">血糖調節：燃料如何供應？</span><span class="card-sub">🍚 葡萄糖的供應與儲存；胰島素、升糖素、肝臟與腎上腺素的方向比較 ★</span></span></a></li>
+        <li><a class="card" href="biology_excretion_water.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_water_balance_1009_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">排泄與水分：留下需要的，排出多餘的</span><span class="card-sub">💧 代謝廢物、泌尿器官、過濾與再吸收；體內水分、動植物的保水構造 ★</span></span></a></li>
+      </ul>
+    </section>
+
+    <section class="category c-7" data-biology-reproduction-entry>
+      <div class="cat-head">
+        <span class="cat-num">07</span>
+        <h2>🌸 生殖與生命延續</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="biology_cell_division.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_reproduction_cells_1009_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">細胞分裂：變多，又不亂套</span><span class="card-sub">🔬 原圖放大、染色體複製與分配；細胞分裂、減數分裂及受精恢復染色體套數 ★</span></span></a></li>
+        <li><a class="card" href="biology_asexual_reproduction.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_reproduction_asexual_1009_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">無性生殖：不靠種子，也能延續</span><span class="card-sub">🌱 分裂、出芽、斷裂、孢子與營養器官繁殖；組織培養、兩週觀察與香蕉遺傳多樣性 ★</span></span></a></li>
+        <li><a class="card" href="biology_reproduction_humans.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_reproduction_humans_1009_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">動物與人類生殖：新生命如何開始？</span><span class="card-sub">🐣 受精與胚胎發育分類、繁殖行為及蛋的構造；人體原圖、著床與母胎物質交換 ★</span></span></a></li>
+        <li><a class="card" href="biology_reproduction_flowers.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_reproduction_flowers_1009_v1.jpg" alt="" loading="lazy" decoding="async" width="1672" height="941"></span><span class="card-copy"><span class="card-title">開花植物生殖：從花到果實與種子</span><span class="card-sub">🌸 花的構造、授粉、花粉管與受精；子房與胚珠發育、授粉媒介及花的觀察 ★</span></span></a></li>
+      </ul>
+    </section>
+    <section class="category c-7">
+      <div class="cat-head">
+        <span class="cat-num">08</span>
+        <h2>🧬 遺傳與生物技術</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="biology_mendel_inheritance.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_mendel_inheritance_1019_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">遺傳：消失的表徵去哪了？</span><span class="card-sub">從豌豆實驗到配子、基因型與機率；圖解、互動操作與解說 ★</span></span></a></li>
+        <li><a class="card" href="biology_human_inheritance.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_human_inheritance_1019_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">人類遺傳：各帶一份，怎麼組合？</span><span class="card-sub">ABO 血型、染色體模型與獨立機率；圖解、互動操作與解說 ★</span></span></a></li>
+        <li><a class="card" href="biology_mutations.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_mutations_1019_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">突變：遺傳訊息改了一點之後</span><span class="card-sub">變化的位置、影響與是否傳到下一代；圖解、互動操作與解說 ★</span></span></a></li>
+        <li><a class="card" href="biology_biotechnology.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_biotechnology_1019_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">生物技術：借用生命的能力</span><span class="card-sub">發酵、基因轉殖、複製與育種；圖解、互動操作與解說 ★</span></span></a></li>
+      </ul>
+    </section>
+    <section class="category c-7">
+      <div class="cat-head">
+        <span class="cat-num">09</span>
+        <h2>🌎 地球上的生物</h2>
+        <span class="cat-count">6 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="biology_fossils_evolution.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_fossils_evolution_1021_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">化石：石頭裡留下了什麼？</span><span class="card-sub">遺體、活動痕跡與環境的證據；圖解、互動操作與解說 ★</span></span></a></li>
+        <li><a class="card" href="biology_naming_classification.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_naming_classification_1021_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">命名與分類：替生命找座標</span><span class="card-sub">學名、分類層級、五界與檢索；圖解、互動操作與解說 ★</span></span></a></li>
+        <li><a class="card" href="biology_microorganisms.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_microorganisms_1021_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">原核與原生生物：小世界，大差異</span><span class="card-sub">細菌、草履蟲、藍綠菌、矽藻與海帶；圖解、互動操作與解說 ★</span></span></a></li>
+        <li><a class="card" href="biology_fungi.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_fungi_1022_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">真菌：看不見的網，怎麼吃飯？</span><span class="card-sub">菌絲、外部消化、發酵與孢子；圖解、互動操作與解說 ★</span></span></a></li>
+        <li><a class="card" href="biology_plants_diversity.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_plants_diversity_1022_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">植物：水、種子與果實的線索</span><span class="card-sub">蘚苔、蕨類、種子植物與構造比較；圖解、互動操作與解說 ★</span></span></a></li>
+        <li><a class="card" href="biology_animals_diversity.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_animals_diversity_1023_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">動物：長得像，親緣就近嗎？</span><span class="card-sub">身體構造、脊椎與分類證據；圖解、互動操作與解說 ★</span></span></a></li>
+      </ul>
+    </section>
+    <section class="category c-7">
+      <div class="cat-head">
+        <span class="cat-num">10</span>
+        <h2>🌿 生物圈與生態關係</h2>
+        <span class="cat-count">4 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="biology_ecology_environment.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_ecology_1023_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">生命住在多薄的一層？</span><span class="card-sub">個體到生態系、樣方與捉放法、族群收支及演替；圖解、互動操作與解說 ★</span></span></a></li>
+        <li><a class="card" href="biology_ecology_energy.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_ecology_energy_1023_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">一片葉子如何養活整個網？</span><span class="card-sub">生產者、消費者、分解者、食物鏈與食物網；能量傳遞及碳循環互動 ★</span></span></a></li>
+        <li><a class="card" href="biology_ecology_interactions.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_ecology_interactions_1023_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">一起生活，一定互相幫忙嗎？</span><span class="card-sub">掠食、競爭、共生與寄生、生物防治；動畫、圖解與正負影響比較 ★</span></span></a></li>
+        <li><a class="card" href="biology_ecology_habitats.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_ecology_habitats_1023_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">換個環境，誰能住下來？</span><span class="card-sub">森林、草原、沙漠、凍原、淡水與海洋；3D 棲地及校園調查紀錄 ★</span></span></a></li>
+      </ul>
+    </section>
+    <section class="category c-7">
+      <div class="cat-head">
+        <span class="cat-num">11</span>
+        <h2>♻️ 人類與環境</h2>
+        <span class="cat-count">3 個</span>
+      </div>
+      <ul class="cards">
+        <li><a class="card" href="biology_environmental_diversity.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_environmental_diversity_1024_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">生命的多樣，怎麼看、怎麼比？</span><span class="card-sub">遺傳、物種與生態系多樣性，與生物的價值 ★</span></span></a></li>
+        <li><a class="card" href="biology_environmental_threats.html" target="_blank"><span class="card-art"><img src="assets/covers/biology_environmental_threats_1024_v1.jpg" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">生命的家，是怎麼被改變的？</span><span class="card-sub">棲地破碎、過度利用與外來種、汙染、生物放大與氣候變動 ★</span></span></a></li>
+        <li><a class="card" href="biology_environmental_conservation.html" target="_blank"><span class="card-art"><img src="assets/biology/environment_originals_1010_v1/Im1_16.png" alt="" loading="lazy" decoding="async"></span><span class="card-copy"><span class="card-title">保育與永續生活</span><span class="card-sub">魚梯與廊道、物種與棲地保育、生活行動與文化脈絡；原圖比較及觀察紀錄 ★</span></span></a></li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>
+    <span id="footerText">物理與自然教學實驗室 © 自然科學與數理互動教學總庫</span>
+  </footer>
+
+</div>
+
+<script>
+  // 學科分館平滑切換控制語法
+  function switchSubject(subjectId, btnElement) {
+    document.querySelectorAll('.sub-btn').forEach(btn => {
+      btn.classList.remove('active');
+      btn.style.borderColor = 'var(--rule-color)';
+      btn.style.color = 'var(--chalk-muted)';
+    });
+
+    document.querySelectorAll('.subject-section').forEach(sec => {
+      sec.classList.remove('active');
+    });
+
+    document.getElementById(subjectId).classList.add('active');
+    btnElement.classList.add('active');
+
+    if (subjectId === 'physics') {
+      btnElement.style.borderColor = 'var(--chalk-yellow)';
+      btnElement.style.color = 'var(--chalk-yellow)';
+    } else if (subjectId === 'chemistry') {
+      btnElement.style.borderColor = 'var(--chalk-coral)';
+      btnElement.style.color = 'var(--chalk-coral)';
+    } else if (subjectId === 'earth') {
+      btnElement.style.borderColor = 'var(--chalk-blue)';
+      btnElement.style.color = 'var(--chalk-blue)';
+    } else if (subjectId === 'biology') {
+      btnElement.style.borderColor = 'var(--chalk-green)';
+      btnElement.style.color = 'var(--chalk-green)';
+    }
+  }
+
+  const INDEX_CARD_EN = {"density_1.html":["Laboratory Safety & Length Measurement","📏 Seven lab-tool safeguards, visual-error checks, ruler precision, and reliable averaging ★"],"density_2.html":["Measuring Mass & Volume","⚖️ Mass vs. weight, balance practice, three displacement methods, and graduated-cylinder parallax checks ★"],"density_3.html":["Density: Meaning & Calculations","📊 Cutting-material investigations, density language, an interactive calculator, and mass-volume graph analysis ★"],"waves_1.html":["Wave Propagation & Mechanical Waves","〰️ Interactive models of transverse waves, longitudinal waves, and particle motion"],"waves_2.html":["Sound Propagation & Speed","📐 Media, temperature effects, and sound-speed calculations"],"waves_3.html":["Echoes & the Two-Cliff Problem","⛰️ Echo conditions, diffuse reflection, and a classic distance challenge"],"waves_4.html":["Pitch, Loudness, Timbre & Resonance","🔔 Interactive sound variables, glass experiments, and resonance"],"optics_1.html":["Rectilinear Light & Pinhole Imaging","🔦 Dynamic pinhole-camera simulation and straight-line light propagation"],"optics_2.html":["Plane Mirrors & Reflection","🪞 Virtual-image location, curved-mirror fields of view, and laser reflection ★"],"optics_3.html":["Refraction & Total Internal Reflection","💎 Refraction patterns, apparent depth, and mirage simulations"],"optics_4.html":["Lenses & Vision Correction","👓 Converging and diverging lenses, image formation, myopia, and hyperopia"],"optics_5.html":["Light & Color","🌈 Additive primary colors, object color, and optical filters"],"optics_max1.html":["Advanced Optics: Multiple Reflections","📐 Two-mirror angle investigations and virtual-image counting"],"thermo_1.html":["Temperature & Thermometers","🌡️ Thermometer principles, Celsius-Fahrenheit conversion, and calibration problems"],"thermo_2.html":["Heat & Thermal Equilibrium","☕ Heat-flow direction, the calorie, and ideal equilibrium calculations"],"thermo_3.html":["Specific Heat & Graph Slopes","📈 Mass-specific-heat relationships, graph slopes, and heat-loss extensions"],"thermo_4.html":["Conduction, Convection & Radiation","💨 Interactive heat-transfer models and real-life applications"],"thermo_5.html":["Thermal Effects on Matter","❄️ Ice structure, the 4°C water anomaly, dehydration, and heating curves ★"],"mechanics_1.html":["Forces & Springs","⚖️ Mass vs. weight, contact and non-contact forces, Hooke's law, and spring networks ★"],"mechanics_2.html":["Force Composition, Resolution & Balance","🎯 Vector tug-of-war, equilibrium tables, parallelogram vectors, and inclined planes ★"],"mechanics_3.html":["Friction Everywhere","🛹 Microscopic contact, maximum static friction, velocity-time analysis, and controlled variables ★"],"mechanics_4.html":["Pressure & Fluid Pressure","📌 Solid pressure, depth effects, communicating vessels, and Pascal's principle ★"],"mechanics_5.html":["Atmospheric Pressure & Buoyancy","💨 Magdeburg hemispheres, Torricelli's barometer, Archimedes' principle, and floating ★"],"kinematics.html":["Position, Path Length & Displacement","📍 Number lines, tracks, clock hands, geometric reasoning, and quick practice"],"kinematics_2.html":["Average Speed, Velocity & v–t Graphs","🚗 Two-car comparisons, displacement from area, and turnaround motion"],"kinematics_3.html":["Uniform & Accelerated Motion","🚄 Dynamic chalkboard models of constant velocity and acceleration"],"kinematics_4.html":["Constant Acceleration I","⏱️ Full-scale ticker timers and Galileo's inclined-plane reasoning"],"kinematics_5.html":["Constant Acceleration II & Free Fall","📉 Four motion equations and a precise model of free fall"],"newton_1.html":["Newton's First Law & Inertia","🚌 Galileo's thought experiment, constant motion, and inertia on accelerating vehicles ★"],"newton_2.html":["Newton's Second Law & F = ma","🚀 Force-acceleration relationships, weight in newtons, and measuring mass in space ★"],"newton_3.html":["Newton's Third Law & Apparent Weight","⛵ Free-body diagrams, action-reaction pairs, sailboat myths, and elevator motion ★"],"newton_4.html":["Circular Motion & Gravitation","🛰️ Centripetal force, tangential motion, banked roads, and inverse-square gravity ★"],"newton_5.html":["Torque & Static Equilibrium","🎯 Pivots, lever arms, rotational effects, and equilibrium conditions ★"],"work_1.html":["Work & Power","🏋️ Positive and negative work, force-displacement angles, and power calculations ★"],"work_2.html":["Kinetic & Gravitational Potential Energy","🎢 Energy transformations and mass-speed-squared relationships ★"],"work_3.html":["Conservation of Mechanical Energy","🔄 Pendulum energy, free fall, and Joule's mechanical equivalent of heat ★"],"work_4.html":["Simple Machines & Efficiency","🔩 The work principle, nail-puller practice, wheel-and-axle systems, and inclined planes ★"],"electronics_1.html":["Electrostatics & Basic Circuits","⚡ Charging by friction, electrostatic induction, and circuit-component observation ★"],"electronics_2.html":["Voltage & Three Circuit States","🔋 Water-flow analogy, open and closed circuits, and dangerous short circuits ★"],"electronics_3.html":["Series/Parallel Circuits & Current","🌊 Electric current, ammeter rules, and classic exam problems ★"],"electronics_4.html":["Resistance & Ohm's Law","🚧 Microscopic collisions, V–I graphs, and unknown-resistance measurement ★"],"magnetism_1.html":["Magnetic Forces & Fields","🧲 Poles, domains, field lines, compasses, and Earth's magnetic field ★"],"electromagnetism_2.html":["Current-Generated Magnetism & Electromagnets","⚡ Oersted's experiment, right-hand rules, field superposition, cranes, and telephone receivers ★"],"electric_motor_3.html":["Magnetic Force & Electric Motors","⚙️ Right-hand palm rule, parallel-current forces, charged particles, split-ring commutation, and interactive DC motors ★"],"electromagnetic_induction_4.html":["Electromagnetic Induction & AC","⚡ Faraday and Lenz laws, generators, transformers, induction heating, and high-school extension calculations ★"],"concerntration_1.html":["Properties & Separation of Matter","⚗️ Physical and chemical changes, pure substances, mixtures, filtration, and crystallization ★"],"concerntration_2.html":["Three Ways to Express Concentration","📊 Solutions, saturation, mass percent, volume percent, and ppm calculators ★"],"concerntration_3.html":["Solubility & Saturation","📈 Solubility curves, dissolved amount, and cooling crystallization challenges ★"],"concerntration_4.html":["Air & Gas Preparation","🎈 Air composition, oxygen preparation, water displacement, and carbon-dioxide tests ★"],"atomics_1.html":["Pure Substances & Elements","💎 Classifying matter, Lavoisier's water electrolysis, and metals vs. nonmetals ★"],"atomics_2.html":["Atomic Models & the Periodic Table","🗺️ The history of atomic models, periodic patterns, and major element families ★"],"atomics_3.html":["Subatomic Particles & Isotopes","🧮 Protons, neutrons, electrons, ion calculations, and allotropes ★"],"atomics_4.html":["Structures of Matter & Chemical Formulas","🔗 Conductivity models, ion notation, 3D ethanol structure, and problem solving ★"],"chem_reaction_1.html":["Chemical Reactions & Conservation of Mass","⚖️ Reaction evidence, fireworks, microscopic combustion, and closed-system precipitation ★"],"chem_reaction_2.html":["Chemical Equations & Balancing","📝 Writing rules, inspection, algebraic methods, and redox extensions ★"],"chem_reaction_3.html":["Atomic Mass, Molecular Mass & the Mole","🧮 Carbon-12, molecular mass, Avogadro's number, and molar-mass conversions ★"],"chem_reaction_4.html":["Stoichiometry & Reaction Calculations","🧪 Coefficient = mole ratios, mass–mole pathways, and limiting reagents ★"],"redox_1.html":["Oxidation, Reduction & Reactivity","🔥 Virtual combustion, metal activity, and oxide acid-base patterns ★"],"redox_2.html":["Redox Competition & Electron Transfer","🧪 Copper-oxide reduction, oxidizing/reducing agents, and advanced challenges ★"],"redox_3.html":["Metal Smelting & Corrosion Protection","🏭 Blast-furnace chemistry, iron and steel, and everyday redox protection ★"],"electrolyte_1.html":["Electrolytes & Ionic Dissociation","⚡ Conductivity, closed circuits, 2:1 water electrolysis, and microscopic ion motion ★"],"electrolyte_2.html":["Common Acids, Bases & Concentrated-Acid Safety","🔥 Strong and weak acids, sugar dehydration, and safe dilution ★"],"electrolyte_3.html":["Molarity, Dilution & pH","🥤 Standard solutions, dilution and mixing, and extreme-pH challenges ★"],"electrolyte_4.html":["Neutralization, Titration & Salts","💧 Automated titration, common salts, and acid-base stoichiometry ★"],"chem_reaction_balance_1.html":["Reaction Rates & Collision Theory","⏱️ Effective collisions, four rate factors, and a classic thiosulfate experiment ★"],"chem_reaction_balance_2.html":["Activation Energy & Catalysts","🔥 Reaction thresholds, catalyst properties, and real-world applications ★"],"chem_reaction_balance_3.html":["Reversible Reactions & Dynamic Equilibrium","⚖️ Microscopic dynamics, concentration/temperature/pressure changes, caves, and blood buffers ★"],"organics_1.html":["Organic Chemistry & Wood Distillation","🧪 Definitions and exceptions, dry-distillation products, and 3D isomers ★"],"organics_2.html":["Hydrocarbons, Alcohols, Acids & Esters","⛽ Fractional distillation, acid-alcohol comparison, and fruity ester formation ★"],"organics_3.html":["Polymers & Textile Fibers","🔗 Monomer-polymer animation, thermoplastics vs. thermosets, and fiber testing ★"],"organics_4.html":["Food Chemistry & Detergents","🍳 Protein denaturation, soap making, and micelle cleaning ★"],"electric_energy_power_1.html":["Electrical Energy & Power","⚡ Three effects of electricity, deriving E = IVt, circuit energy, power, and appliance ratings ★"],"electric_power_transmission_2.html":["Power Transmission & Electricity Cost","🔌 AC/DC, high-voltage transmission, line loss, kilowatt-hours, 110/220 V wiring, and grounding ★"],"electrical_safety_3.html":["Short Circuits & Electrical Safety","🔥 Overload, heating wires, fuses, breakers, electric shock, and extension-cord current ratings ★"],"galvanic_batteries_4.html":["Galvanic Cells","🔋 Galvani and Volta, redox, zinc-copper cells, salt bridges, and common batteries ★"],"electrolysis_5.html":["Electrolysis & Electroplating","⚡ Electrodes, water electrolysis, copper-sulfate electrolysis, and industrial electroplating ★"],"earth_water_1.html":["Earth's Water & Groundwater","🌊 Earth systems, water distribution, salinity, glaciers, water tables, and overpumping ★"],"earth_landforms_2.html":["Changing Landforms & External Processes","⛰️ Internal/external forces, weathering, rivers, glaciers, wind, and waves ★"],"earth_coastline_3.html":["Coastlines & Dynamic Equilibrium","🏖️ Sediment budgets, transgression/regression, dams, and breakwater impacts ★"],"earth_rocks_4.html":["Rock Families & the Rock Cycle","🪨 Mineral identification, igneous cooling, sedimentation, metamorphism, and the rock cycle ★"],"earth_interior_1.html":["Earth's Interior & Plate Dynamics","🌍 Crust, mantle, core, lithosphere, asthenosphere, convection, and plate motion ★"],"earth_plates_2.html":["Plate Boundaries & Surface Change","🌊 Global plates, seafloor spreading, subduction, mountain building, earthquakes, and volcanoes ★"],"earth_strata_3.html":["Rock-Layer Records & Earth History","🪨 Folds, faults, geologic-event sequencing, and index-fossil dating ★"],"earth_taiwan_quake_4.html":["Taiwan's Plate Tectonics & Earthquakes","🇹🇼 Orogeny, focus and epicenter, magnitude and intensity, hazard zones, and preparedness ★"],"astronomy_universe_1.html":["Cosmic Scale & the Solar System","🌌 Zoom from the universe and Milky Way to the Solar System, Earth, and Moon ★"],"astronomy_earth_motion_2.html":["Earth's Rotation, Revolution & Seasons","🌍 Day and night, time, apparent solar motion, revolution, and the seasons ★"],"astronomy_sunpath_3.html":["Solar Paths & the Celestial Sphere","☀️ Daily solar motion, seasonal daylight paths, and celestial-sphere directions ★"],"astronomy_moon_phases_4.html":["Moon Phases, Eclipses & Tides","🌙 Lunar phases and observing times, eclipses, the 5° orbital tilt, and tidal cycles ★"]};
+  const INDEX_CATEGORY_EN = {"⚖️ 密度與質量":"⚖️ Density & Measurement","🌊 波動與聲波":"🌊 Waves & Sound","💡 光學與透鏡":"💡 Optics & Lenses","🔥 熱學與熱力學":"🔥 Thermal Physics","🧲 基礎力學與壓力":"🧲 Forces, Pressure & Fluids","📐 直線運動學":"📐 Linear Kinematics","🍎 牛頓力學與圓周運動":"🍎 Newtonian Mechanics","⚡ 功與能":"⚡ Work & Energy","💡 基礎電學與電路":"💡 Electricity & Circuits","🧭 電與磁":"🧭 Electricity & Magnetism","🧪 空氣與溶液":"🧪 Air & Solutions","⚛️ 原子與元素週期表":"⚛️ Atoms & the Periodic Table","⚖️ 化學反應與方程式平衡":"⚖️ Chemical Reactions & Equations","🔥 氧化與還原反應":"🔥 Oxidation & Reduction","⚗️ 電解質、酸、鹼與鹽類":"⚗️ Electrolytes, Acids, Bases & Salts","⚡ 反應速率與化學平衡":"⚡ Reaction Rates & Equilibrium","🧬 有機化學與生活分子":"🧬 Organic & Everyday Chemistry","🔋 電化學與化學電池":"🔋 Electrochemistry & Batteries","🌍 水與陸地":"🌍 Water & Land","🌋 板塊運動與地球歷史":"🌋 Plate Tectonics & Earth History","🌌 太空的世界":"🌌 Space & Astronomy"};
+  INDEX_CARD_EN['biology_intro.html'] = ['Life and Scientific Method', '🌱 Controlled yeast experiment, five illustrated life processes, survival conditions, and an interactive biosphere ★'];
+  INDEX_CARD_EN['biology_microscope.html'] = ['Microscopy and the Microscopic World', '🔬 Instrument recognition, magnification and focus, inverted images, and organism tracking with fullscreen controls ★'];
+  INDEX_CARD_EN['biology_cells.html'] = ['Cells and Microscope Slides', '🔬 Real cell micrographs, shape and function, slide preparation, and touch-controlled microscopy at 40/100/400× ★'];
+  INDEX_CATEGORY_EN['🌱 生命科學緒論'] = '🌱 Introduction to Life Science';
+  INDEX_CARD_EN['biology_matter_transport.html'] = ['The Materials of Life and Cell Membranes', '💧 Molecules, cell membranes, diffusion and osmosis; wall-supported plant swelling, plasmolysis, and RBC hemolysis ★'];
+  INDEX_CARD_EN['biology_organization.html'] = ['From One Cell to a Living Organism', '🧬 Real micrographs, cell specialization and tissues; illustrated human and plant hierarchies with full-screen touch teaching ★'];
+  INDEX_CARD_EN['biology_scale.html'] = ['The Scale of Life', '🔍 Approximate dimensions, units and scientific notation; real images, tool comparisons and full-screen touch exploration ★'];
+  INDEX_CATEGORY_EN['🔬 組成生物的層次與尺度'] = '🔬 Biological Organization and Scale';
+  INDEX_CARD_EN['biology_nutrients.html'] = ['Nutrients in Food', '🧪 Six nutrients, energy and meal variety; iodine and Benedict labs with equal-volume controls and full-screen touch operation ★'];
+  INDEX_CARD_EN['biology_enzymes.html'] = ['Enzymes and Life\'s Reactions', '🧬 Breakdown and synthesis, substrate matching, temperature and pH; salivary amylase lab with full-screen touch operation ★'];
+  INDEX_CARD_EN['biology_photosynthesis.html'] = ['Plant Nutrition', '🌿 Plant cutaway and transport, photosynthesis and original stoma diagrams; shaded-leaf starch test with full-screen touch operation ★'];
+  INDEX_CARD_EN['biology_animal_nutrition.html'] = ['Animal Nutrition', '🐿️ Guided organ tour, digestive juices, peristalsis, villus absorption and nutrient use; full-screen touch explanation ★'];
+  INDEX_CATEGORY_EN['🍚 養分與生命'] = '🍚 Nutrients and Life';
+  INDEX_CARD_EN['biology_plant_structure.html'] = ['Plant Transport Structures', '🌳 Xylem and phloem transport, stem micrographs, growth rings and hollow trees; full-screen touch teaching ★'];
+  INDEX_CARD_EN['biology_plant_transport.html'] = ['Transport within Plants', '💧 Root-hair uptake, transpiration and source–sink sucrose transport; dye investigation and whole-plant tracking with full-screen touch controls ★'];
+  INDEX_CARD_EN['biology_human_transport.html'] = ['Transport within Humans', '❤️ Original heart figures with focused zoom, vessels and blood; red-cell circulation, lymph return and real pulse measurements ★'];
+  INDEX_CARD_EN['biology_immune_defense.html'] = ['Human Defence', '🛡️ Skin and mucosa, stepwise phagocytosis and inflammation; antigen–antibody shape matching and immune memory with full-screen touch controls ★'];
+  INDEX_CATEGORY_EN['🌳 生物的運輸與防禦'] = '🌳 Transport and Defence';
+  INDEX_CATEGORY_EN['🧠 協調與感應'] = '🧠 Coordination and Responses';
+  INDEX_CARD_EN['biology_nervous_signals.html'] = ['Nerve Signals: From Stimulus to Response', '🧬 Receptors, original neuron close-ups, muscles and glands; reaction records and temperature sensations ★'];
+  INDEX_CARD_EN['biology_brain_reflex.html'] = ['Brain and Reflexes: Where Do Signals Go?', '🧠 Original brain close-ups, spinal cord versus vertebrae; withdrawal, conscious pathways, knee jerk and pupils ★'];
+  INDEX_CARD_EN['biology_endocrine.html'] = ['Endocrine Signals: Coordination through Blood', '🩸 Original gland close-ups, hormone transport, glucose balance, insulin and glucagon; growth and development ★'];
+  INDEX_CARD_EN['biology_responses.html'] = ['Responses in Animals and Plants', '🌿 Animal behavior, phototropism, gravitropism, tendrils and leaf folding; original photo-based light investigation ★'];
+  INDEX_CATEGORY_EN['🌡️ 生物的恆定性'] = '🌡️ Homeostasis';
+  INDEX_CATEGORY_EN['🌸 生殖與生命延續'] = '🌸 Reproduction and continuity';
+  INDEX_CARD_EN['biology_temperature_homeostasis.html'] = ["Homeostasis and body temperature", "Close-ups, active models, explanations, touch controls and observations ★"];
+  INDEX_CARD_EN['biology_respiration.html'] = ["Respiration and gas exchange", "Close-ups, active models, explanations, touch controls and observations ★"];
+  INDEX_CARD_EN['biology_glucose_homeostasis.html'] = ["Blood glucose regulation", "Close-ups, active models, explanations, touch controls and observations ★"];
+  INDEX_CARD_EN['biology_excretion_water.html'] = ["Excretion and water balance", "Close-ups, active models, explanations, touch controls and observations ★"];
+  INDEX_CARD_EN['biology_cell_division.html'] = ["Cell division and chromosome sets", "Close-ups, reproduction models, observation activities and concept checks ★"];
+  INDEX_CARD_EN['biology_asexual_reproduction.html'] = ["Asexual reproduction", "Close-ups, reproduction models, observation activities and concept checks ★"];
+  INDEX_CARD_EN['biology_reproduction_humans.html'] = ["Animal and human reproduction", "Close-ups, reproduction models, observation activities and concept checks ★"];
+  INDEX_CARD_EN['biology_reproduction_flowers.html'] = ["Flowering plant reproduction", "Close-ups, reproduction models, observation activities and concept checks ★"];
+  INDEX_CATEGORY_EN["🧬 遺傳與生物技術"] = "🧬 Inheritance and biotechnology";
+  INDEX_CARD_EN["biology_mendel_inheritance.html"] = ["Inheritance: where did the hidden trait go?","From peas to gametes, genotypes and probability; illustrations, interactive exploration and explanations ★"];
+  INDEX_CARD_EN["biology_human_inheritance.html"] = ["Human inheritance: one contribution from each parent","ABO inheritance, chromosomes and independent probability; illustrations, interactive exploration and explanations ★"];
+  INDEX_CARD_EN["biology_mutations.html"] = ["Mutations: when inherited information changes","Location, effects and transmission to offspring; illustrations, interactive exploration and explanations ★"];
+  INDEX_CARD_EN["biology_biotechnology.html"] = ["Biotechnology: using living systems","Fermentation, gene transfer, cloning and breeding; illustrations, interactive exploration and explanations ★"];
+  INDEX_CATEGORY_EN["🌎 地球上的生物"] = "🌎 Life on Earth";
+  INDEX_CARD_EN["biology_fossils_evolution.html"] = ["Fossils: what remains in stone?","Remains, traces and evidence of past environments; illustrations, interactive exploration and explanations ★"];
+  INDEX_CARD_EN["biology_naming_classification.html"] = ["Naming and classification: locating living things","Scientific names, ranks, five kingdoms and keys; illustrations, interactive exploration and explanations ★"];
+  INDEX_CARD_EN["biology_microorganisms.html"] = ["Prokaryotes and protists: small worlds, large differences","Bacteria, Paramecium, cyanobacteria, diatoms and kelp; illustrations, interactive exploration and explanations ★"];
+  INDEX_CARD_EN["biology_fungi.html"] = ["Fungi: how does the hidden network feed?","Hyphae, external digestion, fermentation and spores; illustrations, interactive exploration and explanations ★"];
+  INDEX_CARD_EN["biology_plants_diversity.html"] = ["Plants: clues from water, seeds and fruits","Bryophytes, ferns, seed plants and comparative structures; illustrations, interactive exploration and explanations ★"];
+  INDEX_CARD_EN["biology_animals_diversity.html"] = ["Animals: does resemblance mean close kinship?","Body structures, vertebrae and classification evidence; illustrations, interactive exploration and explanations ★"];
+  INDEX_CATEGORY_EN["🌿 生物圈與生態關係"] = "🌿 Biosphere and ecological relationships";
+  INDEX_CARD_EN["biology_ecology_environment.html"] = ["How thin is Earth's living layer?","Individuals to ecosystems, quadrats and mark-recapture, population balance and succession; illustrations, interactive exploration and explanations ★"];
+  INDEX_CARD_EN["biology_ecology_energy.html"] = ["How can a leaf support a whole food web?","Producers, consumers, decomposers, food webs, energy transfer and carbon-cycle interactions ★"];
+  INDEX_CARD_EN["biology_ecology_interactions.html"] = ["Does living together always help both sides?","Predation, competition, symbiosis and biological control; illustrations, animations and sign comparisons ★"];
+  INDEX_CARD_EN["biology_ecology_habitats.html"] = ["Who can live in a different habitat?","Land and water ecosystems, 3D habitat scenarios and schoolyard survey records ★"];
+  INDEX_CATEGORY_EN["♻️ 人類與環境"] = "♻️ Humans and the environment";
+  INDEX_CARD_EN["biology_environmental_diversity.html"] = ["How do we look at and compare the variety of life?","Genetic, species and ecosystem diversity, and the value of life ★"];
+  INDEX_CARD_EN["biology_environmental_threats.html"] = ["How are the homes of living things being changed?","Habitat fragmentation, overuse and introduced species, pollution, biomagnification and climate change ★"];
+  INDEX_CARD_EN["biology_environmental_conservation.html"] = ["Conservation and sustainable living","Fishways, corridors, species and habitat protection, everyday actions and cultural context; originals and observation records ★"];
+  INDEX_CATEGORY_EN["🌦️ 大氣與天氣"] = "🌦️ Atmosphere & Weather";
+  INDEX_CATEGORY_EN["🌏 全球氣候變遷"] = "🌏 Global Climate Change";
+  INDEX_CARD_EN["weather_atmosphere_1.html"] = ["Earth's Atmosphere","🌍 The weight and pressure of air, composition and layers, a world with and without air, and pollution and acid-rain labs ★"];
+  INDEX_CARD_EN["weather_cloud_rain_2.html"] = ["Water Vapour, Clouds and Rain","☁️ Relative humidity and dew point, how rising air makes clouds, the three cloud types, and fog, dew, frost, rain, snow and graupel labs ★"];
+  INDEX_CARD_EN["weather_wind_3.html"] = ["Air Pressure and Wind","🌬️ How pressure differences make wind, wind direction and speed, reading isobars, and the Coriolis effect with 3D highs and lows ★"];
+  INDEX_CARD_EN["weather_airmass_front_4.html"] = ["Air Masses and Fronts","🌦️ The two great air masses and the monsoons, windward and lee sides, cold and warm fronts in cross-section, and stationary fronts and the plum rain ★"];
+  INDEX_CARD_EN["weather_forecast_5.html"] = ["Weather Information","🌦️ Surface, upper-air, radar and satellite observations, reading weather charts as a forecaster, the UV index and weather warnings ★"];
+  INDEX_CARD_EN["weather_disaster_6.html"] = ["Severe Weather in Taiwan","🌦️ Cold surges, the plum rain, how typhoons form and where they go, plus an advanced special on the eye and spiral rainbands ★"];
+  INDEX_CARD_EN["climate_ocean_7.html"] = ["The Ocean and the Atmosphere","🌊 Wind-driven currents, the Kuroshio and the seas around Taiwan, waves and tsunamis, and ocean acidification ★"];
+  INDEX_CARD_EN["climate_change_8.html"] = ["The Greenhouse Effect and Climate Change","🌡️ The greenhouse effect made visible, 140 years of warming records, rising seas and moving species, plus mitigation, adaptation and net zero ★"];
+  const INDEX_COPY = {
+    zh: {
+      title: '自然科學',
+      eyebrow: '📐 Bilingual STEM Interactive Curriculum 📊',
+      hero: '自然科學',
+      description: '把抽象概念變成可操作、可旋轉、可驗證的互動模型；以高解析度動畫、探究任務與即時回饋，連結生物、物理、化學、地球科學、天文與數學。',
+      tags: 'STEM 教育 · 探究式學習 · 互動模擬 · 雙語科學',
+      designer: 'soulrunning設計',
+      feedback: '回饋信箱',
+      footer: '物理與自然教學實驗室 © 自然科學與數理互動教學總庫'
+    },
+    en: {
+      title: 'Science',
+      eyebrow: '📐 Bilingual STEM Interactive Curriculum 📊',
+      hero: 'Science',
+      description: 'Turn abstract ideas into models students can manipulate, rotate, test, and explain—through high-resolution simulations, inquiry tasks, and immediate feedback across biology, physics, chemistry, Earth science, astronomy, and mathematics.',
+      tags: 'STEM Education · Inquiry-Based Learning · Interactive Simulations · Bilingual Science',
+      designer: 'Designed by soulrunning',
+      feedback: 'Feedback',
+      footer: 'Physics & Science Learning Lab'
+    }
+  };
+
+  function setIndexLanguage(lang) {
+    const selected = lang === 'en' ? 'en' : 'zh';
+    const copy = INDEX_COPY[selected];
+    document.documentElement.lang = selected === 'en' ? 'en' : 'zh-Hant';
+    document.title = copy.title;
+    document.getElementById('heroEyebrow').textContent = copy.eyebrow;
+    document.getElementById('heroTitle').textContent = copy.hero;
+    document.getElementById('heroDescription').textContent = copy.description;
+    document.getElementById('stemTags').textContent = copy.tags;
+    document.getElementById('designerLabel').textContent = copy.designer;
+    document.getElementById('feedbackLabel').textContent = copy.feedback;
+    document.getElementById('footerText').textContent = copy.footer;
+
+    document.querySelectorAll('.sub-btn[data-zh]').forEach(btn => {
+      btn.textContent = btn.dataset[selected];
+    });
+
+    document.querySelectorAll('.cat-head h2').forEach(heading => {
+      if (!heading.dataset.zh) heading.dataset.zh = heading.textContent.trim();
+      heading.textContent = selected === 'en'
+        ? (INDEX_CATEGORY_EN[heading.dataset.zh] || heading.dataset.zh)
+        : heading.dataset.zh;
+    });
+
+    document.querySelectorAll('.cat-count').forEach(count => {
+      if (!count.dataset.zh) count.dataset.zh = count.textContent.trim();
+      const number = count.dataset.zh.match(/\d+/)?.[0] || '';
+      count.textContent = selected === 'en' ? number + (number === '1' ? ' lesson' : ' lessons') : count.dataset.zh;
+    });
+
+    document.querySelectorAll('a.card[href]').forEach(card => {
+      const href = card.getAttribute('href');
+      const title = card.querySelector('.card-title');
+      const sub = card.querySelector('.card-sub');
+      if (!title || !sub) return;
+      if (!title.dataset.zh) title.dataset.zh = title.textContent.trim();
+      if (!sub.dataset.zh) sub.dataset.zh = sub.textContent.trim();
+      const translated = INDEX_CARD_EN[href];
+      title.textContent = selected === 'en' && translated ? translated[0] : title.dataset.zh;
+      sub.textContent = selected === 'en' && translated ? translated[1] : sub.dataset.zh;
+    });
+
+    document.querySelectorAll('[data-index-lang]').forEach(btn => {
+      const active = btn.dataset.indexLang === selected;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-pressed', String(active));
+    });
+  }
+
+  document.querySelectorAll('[data-index-lang]').forEach(btn => {
+    btn.addEventListener('click', () => setIndexLanguage(btn.dataset.indexLang));
+  });
+  setIndexLanguage('zh');
+
+</script>
+<script>document.querySelectorAll('[data-index-lang]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.indexLang==='en'?'coverEn':'coverZh';document.querySelectorAll('[data-cover-zh]').forEach(el=>el.textContent=el.dataset[key]);}));</script>
+<script>document.querySelectorAll('[data-index-lang]').forEach(function (btn) { btn.addEventListener('click', function () { var a = document.getElementById('galileoLink'); if (a) a.textContent = a.dataset[btn.dataset.indexLang === 'en' ? 'en' : 'zh']; }); });</script>
+<script>
+  // index_classic.html#biology 這類網址：直接開啟該科的總覽（課程頁的回總覽箭頭現在連到伽利略星球 index.html#biology）
+  (function () {
+    var id = (location.hash || '').replace('#', '');
+    if (['physics', 'chemistry', 'earth', 'biology'].indexOf(id) === -1) return;
+    var btn = document.querySelector('.sub-btn[onclick*="\'' + id + '\'"]');
+    if (!btn || typeof switchSubject !== 'function') return;
+    switchSubject(id, btn);
+    var nav = document.querySelector('.subject-nav');
+    if (nav && nav.scrollIntoView) nav.scrollIntoView({ block: 'start' });
+  })();
+</script>
+</body>
+</html>
