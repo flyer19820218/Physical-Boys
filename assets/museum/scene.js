@@ -387,7 +387,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
     const halfH = Math.atan(Math.tan(halfV) * camera.aspect);
     const half = Math.min(halfV, halfH);
-    return R / Math.sin(0.8 * half) ;
+    return R / Math.sin(0.64 * half);
   }
   function hallDistance() {
     const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
@@ -507,6 +507,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     canvas.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lastInteract = performance.now();
+    if (handlers.onInteract) handlers.onInteract();
     if (pointers.size === 1) {
       drag = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now(), moved: false, lastT: performance.now() };
       dragging = true;
