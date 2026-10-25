@@ -50,7 +50,7 @@ const T={
  fishway:P('魚梯','Fishway'),pools:P('一格一格的水池','Pool by pool'),
  ent:P('入口','Entrance'),outflow:P('流出的水吸引魚','The outflow draws fish'),
  exit:P('出口','Exit'),oneStep:P('一格的落差','One step\'s drop'),
- barHead:P('能通過的落差（長度只是示意）','Drops each can pass (lengths are schematic)'),
+ barHead:P('能通過的落差（示意，不分高低）','Drops each can pass (schematic, no ranking)'),
  res:[P('鰻魚','Eel'),P('吻鰕虎','Goby'),P('苦花','Taiwan chub'),P('米蝦','Shrimp')],
  ev:[P('找到入口','Finds the entrance'),P('順利通過','Gets through'),P('到上游產卵並存活','Breeds and survives upstream')],
  check:L('toCheck','待查','To check'),
@@ -63,7 +63,7 @@ const T={
  leg:[[['drop',P('橘色：擋路的落差','Orange: the drop')],['fish',P('魚形：程式畫的剪影','Drawn fish shapes')]],
       [['ladder',P('綠色：魚梯（連通）','Green: connection')],['before',P('小圖：加魚梯以前','Before the fishway')]],
       [['flow',P('白色流線：從魚梯流出的水','White lines: outflow')],['door',P('綠圈：入口','Green ring: entrance')]],
-      [['bar',P('長條：能通過的落差','Bars: drops passed')],['nodata',P('長度只是示意，不代表任何真實數據','Schematic, not data')]],
+      [['bar',P('長條：能通過的落差','Bars: drops passed')],['nodata',P('示意：長度相同，不比高低，也不是真實數據','Schematic: equal length, no ranking, not data')]],
       [['cyan',P('青色：追蹤的證據','Cyan: evidence')],['dash',P('白色虛線：待查','Dashed: to check')]]],
  foot:P('魚梯只作連通的示意，不表示流速、坡度或尺寸','Connection only: no flow, slope or size shown'),
  ai:L('aiNote','AI 插圖，非實拍','AI illustration, not a photo')
@@ -95,7 +95,7 @@ const S_IN=CP([960,452]),S_ENT=CP([846,432]),S_EXIT=CP([66,188]);
 const STEP_BR={x:cx3(588),y0:cy3(264),y1:cy3(304)};
 // bars area (step 3)
 const BARS={x:16,y:CC.y+CC.h+8,w:620,h:486-(CC.y+CC.h+8)};
-const BARLEN=[.74,.52,.9,.36];                                         // schematic only, not data
+const BARLEN=[.7,.7,.7,.7];                                         // equal on purpose: no ranking implied
 const BARPIC=[EEL,GOBY,CHUB,SHRIMP];
 // step 4 boxes
 const EVX=28,EVW=212,EV_BOT=392;
