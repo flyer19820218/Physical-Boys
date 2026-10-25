@@ -127,3 +127,11 @@
 - **課程卡片的唯一來源是 `index_classic.html`**：`tools/museum/build_lessons.py` 改讀它；新增課程後一定要重跑（`--check` 可檢查是否過期）。`index.html` 開頭有註解提醒。
 - 課程頁不用改：房子連 `index.html`（星球），回總覽箭頭連 `index.html#physics` 等（直接進館、不播開場）。
 - 開場改成同一台裝置 3 小時內只播一次（localStorage `galileo.introAt`），從課程分頁按回首頁不會一直重播。
+
+## 2026-10-26 開場旁白（BreezyVoice）：程式已就緒，等老師的錄音（版本 20261026n）
+- 台詞與字幕：`assets/museum/audio/intro_lines.json`（8 句；`tts` 給 BreezyVoice 念，`sub` 是字幕；「伽」在台詞裡寫「加」）。
+- 老師在 Mac 用 BreezyVoice 錄 01～08.wav（指令範本見 AGENTS.md 第十四律），拖進對話後執行
+  `python3 tools/museum/build_narration.py <wav 資料夾>` → 產生 `intro_zh.mp3`＋`intro_zh.json`（剪頭尾空白、統一音量、排好時間）。
+- `narration.js`：有 `intro_zh.json` 才啟用（只在中文介面；`?voice=0` 關閉）。流程：煙霧＋歡迎詞 →「🚀 出發！」按鈕（iPad 規定聲音要按一下才能播）→ 登機兩句（字幕）→ 倒數 3、2、1（畫面大字）→ 念「出發」那一刻煙霧散開、開始飛 → 飛行中與抵達各一句字幕。
+  沒有音檔、英文介面或播放失敗時，開場照舊無聲、自動進行。點軌道上的太空梭重飛時，從「出發」開始念。
+- 用假的音檔（嗶聲）測過整條流程：字幕、倒數、起飛時間點、結束都正確；測完已刪除，**尚未放真的錄音**。

@@ -1110,6 +1110,47 @@ function animateX() {
 
 ---
 
+# 🎙️ 第十四律｜旁白配音：BreezyVoice（老師 2026-10-26 指示）
+
+> 老師原話：「曉臻不能用了，我們用新招。」「可以幫我把這個錄音軟體放在 agents 裡嗎，不然我記不起來他的名字，每次都要找好久。」
+
+- **配音軟體叫 BreezyVoice**（聯發科做的臺灣華語語音合成，可以用一段參考錄音模仿聲音）。裝在**老師的 Mac** 上：`~/BreezyVoice`，虛擬環境 `.venv`，參考聲音用 `data/` 裡的第一個 `.wav`。
+- 以前的「曉臻」語音（微軟 zh-TW-HsiaoChenNeural）**不再使用**。
+- 雲端的 AI 跑不了 BreezyVoice：**AI 只負責寫台詞與指令**，老師貼到 Mac 的終端機錄；錄好的 `01.wav、02.wav…` 再拖進對話交給 AI 處理（`Claude outputs/` 不進 git，所以檔案要用拖的）。
+
+## 指令範本（只改 `OUT` 的資料夾名稱和台詞）
+
+```bash
+cd ~/BreezyVoice && source .venv/bin/activate
+export PYTHONUTF8=1
+REF=$(ls data/*.wav | head -1)
+OUT="$HOME/Documents/ChatGPT/Physical-Boys/Claude outputs/<名稱>_voice_breezy"
+mkdir -p "$OUT"
+cat > lines.txt <<'EOF'
+第一句台詞。
+第二句台詞。
+EOF
+i=0
+while IFS= read -r line; do
+  i=$((i+1)); n=$(printf "%02d" $i)
+  echo "=== $n：$line"
+  python single_inference.py --content_to_synthesize "$line" --speaker_prompt_audio_path "$REF" --output_path "$OUT/$n.wav" < /dev/null 2>&1 | grep -E "Elapsed|Generated|Error|Traceback"
+done < lines.txt
+echo "全部完成"
+for f in "$OUT"/*.wav; do echo "▶ $(basename "$f")"; afplay "$f"; done
+open "$OUT"
+```
+
+## 台詞怎麼寫
+
+- **一行一句、一句一個檔**（`01.wav`、`02.wav`…），哪句不滿意只重錄那一句。需要和畫面對拍的（例如倒數「三、二、一」）要**拆成單獨的句子**。
+- **數字寫成國字**（「每秒十七點二公尺」），不要放英文、單位符號或表情符號。
+- **破音字換同音字**，字幕仍用正確的字：例如「伽利略」在台詞裡寫「**加**利略」（「伽」常被念錯）。
+- 網頁上一定要同時有字幕；聲音要等使用者按一下才能播（iPad 的規定），所以有配音的地方要設計一個「按下開始」的按鈕。
+- 伽利略星球開場的台詞與字幕：`assets/museum/audio/intro_lines.json`；錄好的檔案用 `python3 tools/museum/build_narration.py <wav 資料夾>` 接成 `intro_zh.mp3` 並算好字幕時間。
+
+---
+
 # ✅ V5 最後檢查清單
 
 每次交付前逐項確認：

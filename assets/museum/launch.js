@@ -1,8 +1,8 @@
 // 開場：滿版煙霧裡浮出歡迎詞，煙霧往外散開後，露出 3D 場景（太空梭以光速飛進星球）。
 // 只用 2D canvas 畫煙霧（約 46 團，事先畫好 4 種煙團貼圖），3D 還在載入時也能先動。
 const TXT = {
-  zh: { l1: '歡迎搭乘光速太空梭', l2: '來到<b>伽利略星球</b>', wait: '引擎啟動中', go: '出發！', skip: '跳過' },
-  en: { l1: 'Welcome aboard the light-speed shuttle', l2: 'to <b>Galileo Planet</b>', wait: 'Starting engines', go: 'Lift off!', skip: 'Skip' },
+  zh: { l1: '歡迎搭乘光速太空梭', l2: '來到<b>伽利略星球</b>', wait: '引擎啟動中', ready: '準備好了！', board: '登機中', goBtn: '🚀 出發！', go: '出發！', skip: '跳過' },
+  en: { l1: 'Welcome aboard the light-speed shuttle', l2: 'to <b>Galileo Planet</b>', wait: 'Starting engines', ready: 'Ready!', board: 'Boarding', goBtn: '🚀 Lift off!', go: 'Lift off!', skip: 'Skip' },
 };
 
 function makePuff(rgb, seed) {
@@ -41,6 +41,7 @@ export function startLaunch({ lang = 'zh', minMs = 3200 } = {}) {
   const status = root.querySelector('.launch-status .st');
   status.textContent = t.wait;
   const skipBtn = root.querySelector('#launchSkip');
+  const goBtn = root.querySelector('#launchGo');
   skipBtn.textContent = t.skip;
   root.setAttribute('aria-label', t.l1 + ' ' + t.l2.replace(/<[^>]+>/g, ''));
   root.hidden = false;
@@ -149,18 +150,44 @@ export function startLaunch({ lang = 'zh', minMs = 3200 } = {}) {
     minShown,
     textShown,
     done: donePromise,
-    // 先顯示「出發！」，0.4 秒後煙霧散開；散開的那一刻呼叫 onStart（讓 3D 開始飛）
-    part(onStart) {
+    // 先顯示「出發！」，delay 毫秒後煙霧散開；散開的那一刻呼叫 onStart（讓 3D 開始飛）
+    part(onStart, delay = 400) {
       if (partT || done) return donePromise;
       status.textContent = t.go;
+      root.classList.remove('counting');
       root.classList.add('go');
-      setTimeout(() => {
+      const go = () => {
         if (done) return;
         partT = performance.now();
         root.classList.add('parting');
         if (onStart) onStart();
-      }, 400);
+      };
+      if (delay > 0) setTimeout(go, delay); else go();
       return donePromise;
+    },
+    // 有旁白時：顯示「出發」按鈕，等使用者按（聲音一定要等使用者按一下才能播）。onTap 在點擊當下直接呼叫
+    showGo(onTap) {
+      if (done) return;
+      status.textContent = t.ready;
+      root.classList.add('ready');
+      goBtn.textContent = t.goBtn;
+      goBtn.hidden = false;
+      goBtn.onclick = () => {
+        goBtn.hidden = true;
+        goBtn.onclick = null;
+        root.classList.remove('ready');
+        status.textContent = t.board;
+        if (onTap) onTap();
+      };
+      requestAnimationFrame(() => { try { goBtn.focus({ preventScroll: true }); } catch (e) { /* ignore */ } });
+    },
+    // 倒數：中央的大字（3、2、1）
+    count(text) {
+      if (done) return;
+      status.textContent = text;
+      root.classList.remove('counting');
+      void root.offsetWidth; // 重新觸發彈跳動畫
+      root.classList.add('counting');
     },
     skip: finish,
     onSkip(cb) { onSkipCb = cb; },

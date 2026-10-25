@@ -1,9 +1,10 @@
 // 伽利略星球入口：載入資料、建立畫面層、（可用時）建立 3D 場景、處理網址路由。
 // 改版時請同步更新 index.html（首頁）、本檔與下面兩個 import 的 ?v= 版本字串。
-import { createUI } from './ui.js?v=20261026m';
-import { startLaunch } from './launch.js?v=20261026m';
+import { createUI } from './ui.js?v=20261026n';
+import { startLaunch } from './launch.js?v=20261026n';
+import { loadNarration } from './narration.js?v=20261026n';
 
-const VERSION = '20261026m';
+const VERSION = '20261026n';
 
 const CONFIG = {
   // 舊版清單（原本的首頁）。伽利略星球已經是 index.html。
@@ -48,6 +49,12 @@ function shouldIntro() {
   return true;
 }
 const launch = shouldIntro() ? startLaunch({ lang: loadLang() }) : null;
+// 開場旁白（BreezyVoice 錄的中文）：只有中文介面才播；還沒有音檔就是 null，開場照舊無聲
+const narrP = loadLang() === 'zh' && params.get('voice') !== '0'
+  ? loadNarration({ base: 'assets/museum/audio/', ver: VERSION })
+  : Promise.resolve(null);
+let narrReady = null;
+narrP.then(n => { narrReady = n; });
 
 function withTimeout(promise, ms, label) {
   return Promise.race([
@@ -65,12 +72,33 @@ async function main() {
     document.body.classList.remove('launching');
     try { sessionStorage.setItem('galileo.introSeen', '1'); localStorage.setItem(INTRO_KEY, String(Date.now())); } catch (e) { /* ignore */ }
   }
-  if (launch) launch.onSkip(() => { launch.skip(); if (scene) scene.skipIntro(); endLaunch(); });
+  if (launch) launch.onSkip(() => { if (narrReady) narrReady.stop(); launch.skip(); if (scene) scene.skipIntro(); endLaunch(); });
   async function runLaunch() {
     if (!launch || launchDone) return;
     const flying = !!(scene && scene.beginIntro());
     await launch.minShown;
     if (launchDone) { if (scene) scene.skipIntro(); return; }
+    const narr = flying ? await narrP : null;
+    if (launchDone) return;
+    if (narr) {
+      // 有旁白：等使用者按「出發」→ 旁白開始 → 倒數 3、2、1 → 念到「出發」那一刻煙霧散開、開始飛
+      launch.showGo(() => {
+        let launched = false;
+        const doLaunch = () => {
+          if (launched || launchDone) return;
+          launched = true;
+          launch.part(() => scene.playIntro(endLaunch), 0);
+        };
+        narr.play(null, c => {
+          if (c.role === 'count') launch.count(c.sub);
+          else if (c.role === 'launch') doLaunch();
+        }).then(ok => { if (!ok) doLaunch(); });
+        const lc = narr.cues.lines.find(c => c.role === 'launch');
+        setTimeout(doLaunch, ((lc ? lc.start : 6) + 4) * 1000); // 保險：音檔卡住也會出發
+      });
+      await launch.done;
+      return;
+    }
     launch.part(() => { if (flying) scene.playIntro(endLaunch); });
     await launch.done;
     if (!flying) endLaunch();
@@ -156,10 +184,16 @@ async function main() {
         onInteract: () => document.body.classList.add('touched'),
         onHallPick: id => go(id),
         onStatuePick: id => ui.showScientist(id),
-        onShuttlePick: () => { // 點太空梭：再飛一次
+        onShuttlePick: () => { // 點太空梭：再飛一次（有旁白就從「出發」開始念）
           if (route.mode !== 'planet' || !launchDone || !scene.beginIntro()) return;
           document.body.classList.add('launching');
-          scene.playIntro(() => document.body.classList.remove('launching'));
+          const done = () => document.body.classList.remove('launching');
+          const narr = loadLang() === 'zh' ? narrReady : null;
+          if (!narr) { scene.playIntro(done); return; }
+          let go = false;
+          const fly = () => { if (!go) { go = true; scene.playIntro(done); } };
+          narr.play('06', c => { if (c.role === 'launch') fly(); }).then(ok => { if (!ok) fly(); });
+          setTimeout(fly, 1500);
         },
         onUnitPick: (hallId, unitId) => go(hallId + '/' + unitId),
         onExhibitPick: unitId => {
