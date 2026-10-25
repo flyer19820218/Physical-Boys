@@ -1,8 +1,8 @@
 // 伽利略星球入口：載入資料、建立畫面層、（可用時）建立 3D 場景、處理網址路由。
 // 改版時請同步更新 index_museum.html、本檔與下面兩個 import 的 ?v= 版本字串。
-import { createUI } from './ui.js?v=20261026i';
+import { createUI } from './ui.js?v=20261026j';
 
-const VERSION = '20261026i';
+const VERSION = '20261026j';
 
 const CONFIG = {
   // 舊版清單的位置。新首頁取代 index.html 之後，請改成 'index_classic.html'。
@@ -39,6 +39,10 @@ async function main() {
   const res = await fetch(CONFIG.dataUrl + '?v=' + VERSION);
   if (!res.ok) throw new Error('lessons.json ' + res.status);
   const data = await res.json();
+  try {
+    const sr = await fetch(CONFIG.dataUrl.replace('lessons.json', 'scientists.json') + '?v=' + VERSION);
+    if (sr.ok) data.scientists = await sr.json();
+  } catch (e) { /* 沒有科學家簡介也能用 */ }
 
   let scene = null;
   let route = { mode: 'planet' };
@@ -103,12 +107,14 @@ async function main() {
     scene = await mod.createScene({
       canvas,
       halls: data.halls,
+      scientists: data.scientists || {},
       reducedMotion,
       quality: QUALITY,
       debugEl: DEBUG ? debugEl : null,
       handlers: {
         onInteract: () => document.body.classList.add('touched'),
         onHallPick: id => go(id),
+        onStatuePick: id => ui.showScientist(id),
         onUnitPick: (hallId, unitId) => go(hallId + '/' + unitId),
         onExhibitPick: unitId => {
           if (route.mode !== 'hall') return;
@@ -164,6 +170,8 @@ async function main() {
     get route() { return route; },
     get has3D() { return !!scene; },
     data,
+    get scene() { return scene; },
+    get ui() { return ui; },
   };
 }
 

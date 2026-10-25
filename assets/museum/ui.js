@@ -390,8 +390,35 @@ export function createUI({ data, config, lang, handlers }) {
     if (state.focusUnit) setFocusUnit(state.focusUnit);
   }
 
+  // ---------- 科學家簡介卡（點雕像或石碑） ----------
+  const sciCard = $('sciCard');
+  let sciHall = null;
+  function renderSci() {
+    if (!sciHall || !data.scientists || !data.scientists[sciHall]) return;
+    const sc = data.scientists[sciHall][state.lang] || data.scientists[sciHall].zh;
+    const hall = data.halls.find(h => h.id === sciHall);
+    sciCard.style.setProperty('--hall-color', hall.color);
+    $('sciKicker').textContent = (state.lang === 'en' ? hall.en : hall.zh) + (state.lang === 'en' ? ' Hall' : '館');
+    $('sciName').textContent = sc.name;
+    $('sciYears').textContent = sc.years;
+    $('sciRole').textContent = sc.role;
+    $('sciText').textContent = sc.text;
+    $('sciClose').setAttribute('aria-label', state.lang === 'en' ? 'Close' : '關閉');
+  }
+  function showScientist(hallId) {
+    sciHall = hallId;
+    renderSci();
+    sciCard.hidden = false;
+    $('sciClose').focus();
+  }
+  function closeScientist() { sciCard.hidden = true; sciHall = null; }
+  $('sciClose').addEventListener('click', closeScientist);
+  sciCard.addEventListener('click', e => { if (e.target === sciCard) closeScientist(); });
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && !sciCard.hidden) closeScientist(); });
+
   function setLang(next) {
     state.lang = next;
+    renderSci();
     const keep = state.activeIndex;
     applyStrings();
     if (state.hall) {
@@ -475,7 +502,7 @@ export function createUI({ data, config, lang, handlers }) {
   applyStrings();
 
   return {
-    setLang, showPlanet, showHall, scrollToUnit, setFocusUnit, placeFocusLabel, setPlates, setNo3D,
+    setLang, showScientist, showPlanet, showHall, scrollToUnit, setFocusUnit, placeFocusLabel, setPlates, setNo3D,
     notice, showPlates, strings: () => T(), reportSheet,
     get lang() { return state.lang; },
     get hall() { return state.hall; },

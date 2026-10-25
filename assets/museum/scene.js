@@ -158,13 +158,18 @@ function statueParts(hall) {
   P(new THREE.CylinderGeometry(0.3, 0.55, 1.5, 10), M(0, 2.3, 0), STONE);                // 長袍
   P(new THREE.SphereGeometry(0.42, 10, 6), Ms(0, 3.0, 0, 1.15, 0.55, 0.85), STONE);      // 肩
   P(new THREE.SphereGeometry(0.31, 12, 8), M(0, 3.45, 0), STONE);                        // 頭
-  P(new THREE.ConeGeometry(0.2, 0.5, 6), M(0, 3.1, 0.2, Math.PI, 0, 0), STONE);          // 鬍子
+  if (hall.id !== 'physics') P(new THREE.ConeGeometry(0.2, 0.5, 6), M(0, 3.1, 0.2, Math.PI, 0, 0), STONE); // 鬍子
   P(new THREE.CylinderGeometry(0.1, 0.12, 0.95, 7), M(0.62, 3.45, 0, 0, 0, -0.55), STONE); // 舉起的手臂
-  if (hall.id === 'physics') {          // 伽利略：望遠鏡；牛頓的蘋果放在座上
-    P(new THREE.CylinderGeometry(0.09, 0.16, 1.7, 8), M(1.15, 4.25, 0, 0, 0, -0.95), 0xc9a24a);
-    P(new THREE.CylinderGeometry(0.11, 0.11, 0.12, 8), M(0.55, 3.62, 0, 0, 0, -0.95), 0x6b4f3a);
-    P(new THREE.SphereGeometry(0.2, 8, 6), M(0.62, 0.7, 0.62), 0xe0483a);
-    P(new THREE.CylinderGeometry(0.02, 0.02, 0.14, 4), M(0.62, 0.92, 0.62), 0x5a3a22, true);
+  // 說明牌的立架（石碑面朝前方、上傾，從上往下看也讀得到）
+  P(new THREE.CylinderGeometry(0.07, 0.09, 0.95, 6), M(-0.85, 0.47, 1.7), STONE2);
+  P(new THREE.CylinderGeometry(0.07, 0.09, 0.95, 6), M(0.85, 0.47, 1.7), STONE2);
+  P(new THREE.BoxGeometry(2.3, 0.1, 1.46), M(0, 1.1, 1.7, 0.61, 0, 0), STONE2);
+  if (hall.id === 'physics') {          // 牛頓：假髮、舉著蘋果；座上放稜鏡
+    for (let i = 0; i < 8; i++) P(new THREE.SphereGeometry(0.17, 8, 6), M(Math.cos(i * 0.785) * 0.3, 3.38 + 0.04 * (i % 2), Math.sin(i * 0.785) * 0.3 - 0.05), 0xe6e0d6);
+    P(new THREE.SphereGeometry(0.3, 10, 8), M(0, 3.3, -0.2), 0xe6e0d6);
+    P(new THREE.SphereGeometry(0.23, 10, 8), M(1.0, 4.0, 0), 0xe0483a);
+    P(new THREE.CylinderGeometry(0.02, 0.02, 0.16, 4), M(1.0, 4.27, 0), 0x5a3a22, true);
+    P(new THREE.CylinderGeometry(0.32, 0.32, 0.16, 3), M(0.5, 0.85, 0.55, Math.PI / 2, 0.4, 0), 0xa8e6ff);
   } else if (hall.id === 'chemistry') {  // 拉瓦節：高舉燒瓶
     P(new THREE.SphereGeometry(0.34, 10, 8), M(1.0, 4.0, 0), 0xf0955c);
     P(new THREE.CylinderGeometry(0.1, 0.1, 0.45, 8), M(1.0, 4.45, 0), 0xf6d3bb);
@@ -340,10 +345,13 @@ function pickKind(hallId, x) {
 // ---------- 地形：球外與地標共用 ----------
 function makeTerrain(hallDirs) {
   const ctx = { roads: null, nodes: null };
+  let lastIdx = 0;
   const arcTo = (d, pts) => { // 到折線的最短弧長（先每隔幾點粗找，再細找）
     let bi = 0, bd = -2;
     for (let k = 0; k < pts.length; k += 6) { const p = pts[k]; const dd = d.x * p.x + d.y * p.y + d.z * p.z; if (dd > bd) { bd = dd; bi = k; } }
-    for (let k = Math.max(0, bi - 6); k <= Math.min(pts.length - 1, bi + 6); k++) { const p = pts[k]; const dd = d.x * p.x + d.y * p.y + d.z * p.z; if (dd > bd) bd = dd; }
+    let bk = bi;
+    for (let k = Math.max(0, bi - 6); k <= Math.min(pts.length - 1, bi + 6); k++) { const p = pts[k]; const dd = d.x * p.x + d.y * p.y + d.z * p.z; if (dd > bd) { bd = dd; bk = k; } }
+    lastIdx = bk;
     return R * Math.acos(clamp(bd, -1, 1));
   };
   function terrain(d) {
@@ -356,19 +364,19 @@ function makeTerrain(hallDirs) {
     const mask = smooth(0.5, 0.78, bestDot); // 館的區域：整塊都是陸地，館與館之間才有海
     n += mask * 0.55;
     let e = n > 0.5 ? 0.1 + 1.0 * Math.pow(smooth(0.72, 1.3, n), 1.4) : 0; // 丘陵起伏
-    let rd = 99, nd = 99, pd = 99;
+    let rd = 99, nd = 99, pd = 99, ri = 0;
     if (ctx.roads && mask > 0.05) {
       pd = R * Math.acos(clamp(bestDot, -1, 1));
-      rd = arcTo(d, ctx.roads[best]);
+      rd = arcTo(d, ctx.roads[best]); ri = lastIdx;
       let bn = -2;
       for (const p of ctx.nodes[best]) { const dd = d.x * p.x + d.y * p.y + d.z * p.z; if (dd > bn) bn = dd; }
       nd = R * Math.acos(clamp(bn, -1, 1));
       if (n > 0.5) { // 廣場、道路、單元站周圍壓平
-        const flat = Math.max(1 - smooth(1.9, 3.0, pd), 1 - smooth(0.45, 1.4, rd), 1 - smooth(0.9, 1.8, nd));
+        const flat = Math.max(1 - smooth(1.9, 3.0, pd), 1 - smooth(1.2, 2.6, rd), 1 - smooth(1.4, 2.8, nd));
         e = lerp(e, E_FLAT, flat);
       }
     }
-    return { n, e, hall: best, mask, rd, nd, pd };
+    return { n, e, hall: best, mask, rd, nd, pd, ri };
   }
   terrain.ctx = ctx;
   return terrain;
@@ -393,7 +401,7 @@ function expDir(b, p, S) {
 }
 
 // ---------- 場景 ----------
-export async function createScene({ canvas, halls, reducedMotion, quality, debugEl, handlers }) {
+export async function createScene({ canvas, halls, scientists = {}, reducedMotion, quality, debugEl, handlers }) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x000000, 0);
   const dprCap = quality === 'low' ? 1 : quality === 'mid' ? 1.5 : 2;
@@ -456,7 +464,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
   const planet = new THREE.Group();
   scene.add(planet);
   const planetMeshes = [];
-  const HEXF = clamp(parseInt(new URLSearchParams(location.search).get('hex') || '100', 10) || 100, 16, 150);
+  const HEXF = clamp(parseInt(new URLSearchParams(location.search).get('hex') || '120', 10) || 120, 16, 160);
   let cellCount = 0;
   {
     // 1) 細分正二十面體，取得所有頂點（每個頂點＝一片磚的中心）與三角形
@@ -524,8 +532,8 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       return [base.clone().multiplyScalar(0.86), base.clone(), base.clone().lerp(new THREE.Color(0xfff6e0), 0.22)];
     });
     const OCEAN = [new THREE.Color(0x1d5a88), new THREE.Color(0x25679a)], SHORE = new THREE.Color(0x3f9cc4), SAND = new THREE.Color(0xf0e2b0);
-    const PLAZA = new THREE.Color(0xe9e2cf), ROAD = new THREE.Color(0xfff0c8), NODE_C = hallCol.map(c => c.clone().multiplyScalar(0.55));
-    const roadHalf = 0.3, nodeR = 0.62; // 單位：球面弧長
+    const ROADB = new THREE.Color(0xd8cdb0), EDGE = new THREE.Color(0xffffff), DASH = new THREE.Color(0xf2c94c), PLAZA = new THREE.Color(0xe9e2cf), ROAD = new THREE.Color(0xeee3c6), NODE_C = hallCol.map(c => c.clone().multiplyScalar(0.55));
+    const roadHalf = 0.9, nodeR = 1.1; // 單位：球面弧長
     const cosRoad = Math.cos(roadHalf / R), cosNode = Math.cos(nodeR / R);
 
     // 4) 組出六角形網格：每片 7 個頂點（中心＋6 角）、6 個三角形
@@ -561,7 +569,11 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
         const pal = landPal[tr.hall];
         c = pal[tr.e > 0.78 ? 2 : (hash3(v * 0.013, 1.7, 2.9) > 0.5 ? 1 : 0)];
         if (tr.nd < nodeR) c = NODE_C[tr.hall];
-        else if (tr.rd < roadHalf) c = ROAD;
+        else if (tr.rd < roadHalf) {
+          if (tr.rd > 0.72) c = EDGE;                                               // 路邊白線
+          else if (tr.rd < 0.12 && Math.floor(tr.ri / 8) % 2 === 0) c = DASH;       // 中央黃色虛線
+          else c = ((v * 2654435761) >>> 0) % 5 < 2 ? ROADB : ROAD;                  // 路面磁磚
+        }
         else if (tr.pd < 1.9) c = PLAZA;
       }
       const jit = 0.93 + 0.14 * hash3(v * 0.37, 3.1, 0.7);
@@ -659,7 +671,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       tan.copy(E).multiplyScalar(Math.cos(a)).addScaledVector(Np, Math.sin(a));
       dd.copy(n).multiplyScalar(Math.cos(r)).addScaledVector(tan, Math.sin(r)).normalize();
       const t = terrain(dd);
-      if (t.hall !== hi || t.mask < 0.55 || t.n < 0.62 || t.rd < 1.7 || t.nd < 2.4 || t.pd < 3.4) continue;
+      if (t.hall !== hi || t.mask < 0.55 || t.n < 0.62 || t.rd < 2.8 || t.nd < 3.0 || t.pd < 3.6) continue;
       if (placed.some(pp => pp.dot(dd) > Math.cos(1.55 / R))) continue;
       placed.push(dd.clone());
       const q = new THREE.Quaternion().setFromUnitVectors(up, dd).multiply(new THREE.Quaternion().setFromAxisAngle(up, hash3(tries, hi, 1.1) * TAU));
@@ -700,6 +712,47 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     });
   }
 
+  // ----- 雕像與石碑（球外一座、進館後地圖起點一座，共用同一份幾何與貼圖） -----
+  function plaqueTexture(hall) {
+    const sci = (scientists[hall.id] || {});
+    const zh = sci.zh || { name: hall.zh, years: '', role: '' }, en = sci.en || { name: '' };
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 320;
+    const x = c.getContext('2d');
+    x.fillStyle = '#e6e0d0'; x.fillRect(0, 0, 512, 320);
+    x.lineWidth = 14; x.strokeStyle = hall.color; x.strokeRect(7, 7, 498, 306);
+    x.fillStyle = '#16241f'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.font = 'bold 84px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+    x.fillText(zh.name, 256, 92);
+    x.font = 'bold 40px "Helvetica Neue",Arial,sans-serif';
+    x.fillText(en.name, 256, 160);
+    x.font = '34px "Helvetica Neue",Arial,sans-serif';
+    x.fillStyle = '#4a5a52';
+    x.fillText(zh.years, 256, 212);
+    x.font = 'bold 30px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+    x.fillStyle = '#16241f';
+    x.fillText('點一下看介紹  Tap to read', 256, 268);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    return t;
+  }
+  function statueInstance(hall, sg, tex) {
+    const grp = new THREE.Group();
+    grp.add(new THREE.Mesh(sg.body, toonMat), new THREE.Mesh(sg.hull, hullMat));
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 1.31), new THREE.MeshBasicMaterial({ map: tex }));
+    plane.position.set(0, 1.1 + Math.sin(0.96) * 0.08, 1.7 + Math.cos(0.96) * 0.08);
+    plane.rotation.x = -0.96;
+    plane.userData.statueHall = hall.id;
+    grp.add(plane);
+    const px = new THREE.Mesh(new THREE.BoxGeometry(2.2, 4.6, 2.2), hiddenMat);
+    px.position.y = 2.3;
+    px.userData.statueHall = hall.id;
+    grp.add(px);
+    return { grp, proxies: [plane, px] };
+  }
+  const statueProxiesPlanet = [];
+
   // ----- 四座館（只剩地圖；球外靠顏色分區，不再蓋建築） -----
   const hallObjs = [];
   const unitIndex = new Map(); // unitId -> {hall, index}
@@ -714,9 +767,11 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(E, n, Zl));
     planet.add(g);
     const sg = buildMerged(statueParts(hall), 0.06);
-    const iconP = new THREE.Group();
-    iconP.add(new THREE.Mesh(sg.body, toonMat), new THREE.Mesh(sg.hull, hullMat));
+    const plaqueTex = plaqueTexture(hall);
+    const stP = statueInstance(hall, sg, plaqueTex);
+    const iconP = stP.grp;
     g.add(iconP);
+    statueProxiesPlanet.push(...stP.proxies);
 
     const anchor = new THREE.Object3D();
     anchor.position.y = 6.0;
@@ -744,8 +799,8 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     }
     const pathHolder = new THREE.Group();
     map.add(pathHolder);
-    const iconMap = new THREE.Group();
-    iconMap.add(new THREE.Mesh(sg.body, toonMat), new THREE.Mesh(sg.hull, hullMat));
+    const stM = statueInstance(hall, sg, plaqueTex);
+    const iconMap = stM.grp;
     iconMap.scale.setScalar(0.8);
     map.add(iconMap);
 
@@ -816,7 +871,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     });
 
     hallObjs.push({
-      hall, group: g, map, anchor, icon: iconP, iconMap, exhibits, exProxies, gates, gateProxies, focusRing, pathHolder, N,
+      hall, group: g, map, anchor, icon: iconP, iconMap, statueProxies: stM.proxies, exhibits, exProxies, gates, gateProxies, focusRing, pathHolder, N,
       q: new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(E, bases[hi].Np, n)).invert(),
       focus: 0, layoutV: null, nodes: [],
     });
@@ -836,23 +891,26 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       e.group.position.set(p.x, 0, p.z);
       h.nodes.push(new THREE.Vector3(p.x, 0, p.z));
     });
-    // 路：沿曲線切成小方塊，合成一個網格
+    // 路：沿曲線切成小方塊（含白色路邊線與黃色中央虛線），合成一個網格
     const parts = [];
-    const col = new THREE.Color(0xfff0c8);
+    const col = new THREE.Color(0xeee3c6), colB = new THREE.Color(0xd8cdb0), edgeC = new THREE.Color(0xffffff), dashC = new THREE.Color(0xf2c94c);
     const steps = 70;
-    for (let s = 0; s < steps; s++) {
-      const t0 = -0.05 + (1.1 * s) / steps, t1 = -0.05 + (1.1 * (s + 1)) / steps;
+    for (let s2 = 0; s2 < steps; s2++) {
+      const t0 = -0.05 + (1.1 * s2) / steps, t1 = -0.05 + (1.1 * (s2 + 1)) / steps;
       const a = curve(t0), b = curve(t1);
       const len = Math.hypot(b.x - a.x, b.z - a.z);
       const ang = Math.atan2(b.x - a.x, b.z - a.z);
-      parts.push({
-        g: new THREE.BoxGeometry(0.62, 0.06, len + 0.08),
-        m: new THREE.Matrix4().compose(
-          new THREE.Vector3((a.x + b.x) / 2, 0.04, (a.z + b.z) / 2),
-          new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ang, 0)),
-          new THREE.Vector3(1, 1, 1)),
-        color: col, noHull: true,
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ang, 0));
+      const mx = (a.x + b.x) / 2, mz = (a.z + b.z) / 2, px = Math.cos(ang), pz = -Math.sin(ang);
+      const add = (w, hgt, l, off, y, color) => parts.push({
+        g: new THREE.BoxGeometry(w, hgt, l),
+        m: new THREE.Matrix4().compose(new THREE.Vector3(mx + px * off, y, mz + pz * off), q, new THREE.Vector3(1, 1, 1)),
+        color, noHull: true,
       });
+      add(1.75, 0.06, len + 0.08, 0, 0.04, s2 % 2 ? colB : col);
+      add(0.13, 0.08, len + 0.08, 0.8, 0.05, edgeC);
+      add(0.13, 0.08, len + 0.08, -0.8, 0.05, edgeC);
+      if (s2 % 2 === 0) add(0.14, 0.09, len * 0.85, 0, 0.055, dashC);
     }
     h.pathHolder.children.slice().forEach(c => { c.geometry.dispose(); h.pathHolder.remove(c); });
     const mg = buildMerged(parts, 0);
@@ -1081,8 +1139,12 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     scene.updateMatrixWorld(true);
     raycaster.setFromCamera(ndc, camera);
     if (state.mode === 'planet' && groundBlend() > 0.5) {
-      const hit = raycaster.intersectObjects(signSprites, false)[0];
-      if (hit && handlers.onUnitPick) handlers.onUnitPick(hit.object.userData.hallId, hit.object.userData.unitId);
+      const hit = raycaster.intersectObjects(signSprites.concat(statueProxiesPlanet), false)[0];
+      if (hit) {
+        const u = hit.object.userData;
+        if (u.statueHall) handlers.onStatuePick && handlers.onStatuePick(u.statueHall);
+        else if (handlers.onUnitPick) handlers.onUnitPick(u.hallId, u.unitId);
+      }
     } else if (state.mode === 'planet') {
       const pt = raycaster.ray.intersectSphere(pickSphere, tmpV);
       if (pt) {
@@ -1093,10 +1155,11 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       }
     } else if (state.mode === 'hall' && state.hallVis >= 0) {
       const h = hallObjs[state.hallVis];
-      const hit = raycaster.intersectObjects(h.exProxies.concat(h.gateProxies), false)[0];
+      const hit = raycaster.intersectObjects(h.exProxies.concat(h.gateProxies, h.statueProxies), false)[0];
       if (hit) {
         const d = hit.object.userData;
-        if (d.gateHall) handlers.onHallPick(d.gateHall);
+        if (d.statueHall) handlers.onStatuePick && handlers.onStatuePick(d.statueHall);
+        else if (d.gateHall) handlers.onHallPick(d.gateHall);
         else { focusUnit(d.unitId, false); handlers.onExhibitPick(d.unitId); }
       }
     }
@@ -1360,6 +1423,15 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     focusUnit,
     setSheetFraction(f, axis) { state.sheetF = clamp(f, 0, 0.9); state.sheetAxis = axis === 'x' ? 'x' : 'y'; invalidate(); },
     stats,
+    // 檢查用：回傳某個東西在畫面上的位置（像素）
+    debugScreen(kind, id) {
+      applyVisibility(); applyCamera(); scene.updateMatrixWorld(true);
+      const v = new THREE.Vector3();
+      if (kind === 'unit') { const i = unitIndex.get(id); hallObjs[i.hall].exhibits[i.index].sprite.getWorldPosition(v); }
+      else { const h = hallObjs[halls.findIndex(x => x.id === id)]; h.statueProxies[0].getWorldPosition(v); }
+      v.project(camera);
+      return { x: (v.x * 0.5 + 0.5) * W, y: (-v.y * 0.5 + 0.5) * H };
+    },
     destroy() {
       if (raf) cancelAnimationFrame(raf);
       running = false;
