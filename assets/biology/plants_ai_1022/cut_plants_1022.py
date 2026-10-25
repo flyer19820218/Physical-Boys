@@ -22,6 +22,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
 U = ROOT + '/local-backups/20261022/plants_ai_originals/'
 U2 = ROOT + '/local-backups/20261023/plants_ovule_originals/'
+U3 = ROOT + '/local-backups/20261026/plants_gymno_originals/'   # OV4, GY1-GY3 (png)
 OUT = sys.argv[1] if len(sys.argv) > 1 else HERE
 ONLY = set(sys.argv[2:])
 os.makedirs(OUT, exist_ok=True)
@@ -45,6 +46,10 @@ JOBS = [
     ('OV1', 'OV1_gemini_original.jpg', 'white', 1.0, ['ovule'], {'t1': 36}),
     ('OV2', 'OV2_gemini_original.jpg', 'white', 1.0, ['ovary_multi'], {'t1': 36}),
     ('OV3', 'OV3_gemini_original.jpg', 'white', 1.0, ['pea_pod'], {'t1': 36}),
+    ('OV4', 'OV4_gemini_original.png', 'white', 1.0, ['ovary_single'], {'t1': 36, 'flip': True}),   # mirrored: free gap on the right, as the zoomed ovule.png (tube arrives from the right)
+    ('GY1', 'GY1_gemini_original.png', 'white', 1.0, ['pine_shoot_spring'], {'t1': 40, 'clear_pockets': (3, 400000), 'pocket_tol': 24, 'killwhite': (222, 1)}),
+    ('GY2', 'GY2_gemini_original.png', 'white', 1.0, ['pine_pollen'], {'t1': 36}),
+    ('GY3', 'GY3_gemini_original.png', 'white', 1.0, ['pine_scale_ovule'], {'t1': 36}),
     ('PL13', 'PL13_gemini_original.jpg', 'white', 1.0, ['germ_1', 'germ_2', 'germ_3', 'germ_4'], {'fade': (14, 62), 'clear_pockets': (400, 400000), 'pocket_tol': 14}),
 ]
 
@@ -221,7 +226,7 @@ def defringe(rgba, R=3):
 report = {}
 for name, f, kind, scale, subjects, opt in JOBS:
     if ONLY and name not in ONLY: continue
-    im = Image.open((U2 if f.startswith('OV') else U) + f).convert('RGB')
+    im = Image.open((U3 if f.startswith(('OV4', 'GY')) else U2 if f.startswith('OV') else U) + f).convert('RGB')
     a = np.asarray(im)
     rgb, alpha, bg, bgmask = cut(a, kind, opt)
     for (lx0, ly0, lx1, ly1) in opt.get('cutlines', []):
@@ -266,6 +271,7 @@ for name, f, kind, scale, subjects, opt in JOBS:
         out = np.dstack([np.clip(rgb, 0, 255).astype(np.uint8), (al * 255).astype(np.uint8)])[y0:y1, x0:x1]
         out = defringe(out, opt.get('R', 3))
         img = Image.fromarray(out, 'RGBA')
+        if opt.get('flip'): img = img.transpose(Image.FLIP_LEFT_RIGHT)
         w, h = img.size
         if scale != 1:
             img = img.resize((round(w * scale), round(h * scale)), Image.LANCZOS)
