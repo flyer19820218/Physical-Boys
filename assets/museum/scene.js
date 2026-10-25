@@ -15,6 +15,7 @@ const MAP_Y = 0.16;           // 地圖面高度（相對館的平台）
 const DISC_R = 14.4;          // 地圖底盤半徑
 // 地圖在兩種版型下需要塞進畫面的半寬、半高（世界單位）
 const EXT = { v: { ex: 6.8, ey: 11.4 }, h: { ex: 12.4, ey: 6.8 } };
+const PROP_COUNT = 64;       // 每館的特色小景數量
 const E_FLAT = 0.2;           // 廣場、道路、單元站壓平後的高度
 const GATE_EMOJI = { physics: '⚛️', chemistry: '🧪', earth: '🌍', biology: '🧬' };
 
@@ -184,24 +185,156 @@ function statueParts(hall) {
   return parts;
 }
 
-// ---------- 各館的特色小景（散在館的區域，不壓到路） ----------
-function propParts(hall, kind) {
+// ---------- 各館的特色小景（散在館的區域，不壓到路）：每種都是多個零件拼成 ----------
+const GREENS = [0x3f9a4d, 0x4fae60, 0x66c274, 0x37893f];
+function treeParts(P, rnd, kind) {
+  const trunk = (h, r0, r1) => P(new THREE.CylinderGeometry(r0, r1, h, 7), M(0, h / 2, 0), 0x7a5a3a);
+  if (kind === 'pine') {
+    trunk(0.8, 0.09, 0.15);
+    [[0.9, 0.95, 0.9], [0.72, 0.8, 1.45], [0.54, 0.7, 1.9], [0.32, 0.6, 2.3]].forEach(([r, h, y], i) => P(new THREE.ConeGeometry(r, h, 9), M(0, y, 0), i % 2 ? 0x3b8f55 : 0x2f7d4a));
+  } else if (kind === 'bush') {
+    for (let i = 0; i < 3; i++) P(new THREE.IcosahedronGeometry(0.34 + 0.14 * rnd(i), 1), M((rnd(i + 3) - 0.5) * 0.7, 0.3, (rnd(i + 6) - 0.5) * 0.7), GREENS[i % 4]);
+  } else {
+    const sakura = kind === 'sakura';
+    trunk(1.15, 0.1, 0.18);
+    P(new THREE.CylinderGeometry(0.05, 0.08, 0.6, 5), M(0.22, 1.35, 0, 0, 0, -0.7), 0x7a5a3a);
+    const cols = sakura ? [0xf7a8c4, 0xf2c0d4, 0xf59ab8, 0xfbd0de] : GREENS;
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * TAU + rnd(i) * 0.6, rr = i === 0 ? 0 : 0.42 + 0.18 * rnd(i + 9);
+      P(new THREE.IcosahedronGeometry(0.5 + 0.22 * rnd(i + 2), 1), M(Math.cos(a) * rr, 1.55 + 0.42 * (i % 3) * 0.55 + 0.18 * rnd(i + 4), Math.sin(a) * rr), cols[i % 4]);
+    }
+  }
+}
+function mushroomParts(P, rnd) {
+  [[0, 0, 0.5, 0xe06a5a], [0.75, 0.3, 0.34, 0xe0b25a], [-0.55, 0.4, 0.28, 0xe06a5a]].forEach(([x, z, s, c]) => {
+    P(new THREE.CylinderGeometry(0.09 * s * 2, 0.13 * s * 2, 1.0 * s, 7), M(x, 0.5 * s, z), 0xf2ecd9);
+    P(new THREE.SphereGeometry(0.8 * s, 12, 7, 0, TAU, 0, Math.PI / 2), M(x, 1.0 * s, z), c);
+    for (let i = 0; i < 4; i++) P(new THREE.IcosahedronGeometry(0.07 * s * 2, 0), M(x + Math.cos(i * 1.6) * 0.45 * s, 1.0 * s + 0.4 * s, z + Math.sin(i * 1.6) * 0.45 * s), 0xfff4e0);
+  });
+}
+function propParts(hall, kind, rnd) {
   const hc = new THREE.Color(hall.color), parts = [];
   const P = (g, m, c) => parts.push({ g, m, color: new THREE.Color(c) });
-  if (hall.id === 'physics') {
-    if (kind === 0) { P(new THREE.CylinderGeometry(0.5, 0.6, 0.7, 10), M(0, 0.35, 0), 0xe9dfc4); P(new THREE.SphereGeometry(0.55, 10, 6, 0, TAU, 0, Math.PI / 2), M(0, 0.7, 0), hc); P(new THREE.CylinderGeometry(0.07, 0.1, 0.8, 6), M(0.2, 1.1, 0, 0, 0, -0.9), 0xc9a24a); }
-    else { P(new THREE.CylinderGeometry(0.06, 0.14, 2.2, 6), M(0, 1.1, 0), 0xcfc8b4); P(new THREE.SphereGeometry(0.2, 8, 6), M(0, 2.3, 0), hc); P(new THREE.TorusGeometry(0.4, 0.04, 5, 14), M(0, 1.6, 0, Math.PI / 2, 0, 0), 0xb8862b); }
+  if (hall.id === 'biology') {
+    if (kind === 'mushroom') mushroomParts(P, rnd); else treeParts(P, rnd, kind);
+  } else if (hall.id === 'physics') {
+    if (kind === 'dome') {
+      P(new THREE.CylinderGeometry(0.55, 0.68, 0.85, 14), M(0, 0.42, 0), 0xe9dfc4);
+      P(new THREE.SphereGeometry(0.64, 16, 8, 0, TAU, 0, Math.PI / 2), M(0, 0.85, 0), hc);
+      P(new THREE.BoxGeometry(0.16, 0.2, 0.9), M(0, 1.2, 0.18, -0.7, 0, 0), 0x2a3a35);
+      P(new THREE.CylinderGeometry(0.06, 0.1, 1.0, 8), M(0, 1.35, 0.3, -1.0, 0, 0), 0xc9a24a);
+      P(new THREE.BoxGeometry(0.22, 0.4, 0.06), M(0, 0.22, 0.68), 0x6b4f3a);
+    } else if (kind === 'dish') {
+      P(new THREE.CylinderGeometry(0.07, 0.12, 1.1, 8), M(0, 0.55, 0), 0xcfc8b4);
+      P(new THREE.SphereGeometry(0.85, 16, 8, 0, TAU, Math.PI * 0.69, Math.PI * 0.31), M(0, 1.4, 0, -0.9, 0, 0), 0xf4f4ee);
+      P(new THREE.CylinderGeometry(0.025, 0.025, 0.8, 5), M(0, 1.9, 0.4, -0.9, 0, 0), 0xcfc8b4);
+      P(new THREE.SphereGeometry(0.1, 8, 6), M(0, 2.25, 0.62), hc);
+    } else if (kind === 'pendulum') {
+      for (const sx of [-0.7, 0.7]) P(new THREE.CylinderGeometry(0.05, 0.07, 1.9, 6), M(sx, 0.95, 0), 0x7a5a3a);
+      P(new THREE.BoxGeometry(1.6, 0.09, 0.12), M(0, 1.9, 0), 0x7a5a3a);
+      P(new THREE.CylinderGeometry(0.012, 0.012, 1.3, 4), M(0.2, 1.25, 0, 0, 0, -0.3), 0xefe5c6);
+      P(new THREE.SphereGeometry(0.2, 10, 8), M(0.42, 0.6, 0), 0xc9a24a);
+      P(new THREE.SphereGeometry(0.2, 10, 8), M(-0.1, 0.2, 0.6), 0xe0483a);
+    } else if (kind === 'magnet') {
+      P(new THREE.TorusGeometry(0.5, 0.17, 8, 16, Math.PI), M(0, 0.62, 0), 0xb0b6b3);
+      P(new THREE.CylinderGeometry(0.17, 0.17, 0.62, 10), M(-0.5, 0.31, 0), 0xe0483a);
+      P(new THREE.CylinderGeometry(0.17, 0.17, 0.62, 10), M(0.5, 0.31, 0), 0x3a7be0);
+      P(new THREE.CylinderGeometry(0.19, 0.19, 0.14, 10), M(-0.5, 0.07, 0), 0xcfd5d2);
+      P(new THREE.CylinderGeometry(0.19, 0.19, 0.14, 10), M(0.5, 0.07, 0), 0xcfd5d2);
+    } else if (kind === 'prism') {
+      P(new THREE.CylinderGeometry(0.6, 0.6, 0.25, 3), M(0, 0.62, 0, Math.PI / 2, 0, 0), 0xa8e6ff);
+      [0xe0483a, 0xf2a03a, 0xf2e03a, 0x4fae60, 0x3a7be0, 0x8a5ae0].forEach((c, i) => P(new THREE.BoxGeometry(1.1, 0.045, 0.045), M(0.95, 0.45 + i * 0.045, 0.02 * i, 0, 0, -0.1 + i * 0.045), c));
+      P(new THREE.BoxGeometry(0.9, 0.04, 0.04), M(-0.9, 0.6, 0), 0xfff3e6);
+    } else { // tesla
+      P(new THREE.CylinderGeometry(0.12, 0.28, 1.5, 10), M(0, 0.75, 0), 0xcfc8b4);
+      P(new THREE.TorusGeometry(0.5, 0.11, 8, 18), M(0, 1.65, 0, Math.PI / 2, 0, 0), 0xd9d2bc);
+      P(new THREE.SphereGeometry(0.25, 10, 8), M(0, 2.0, 0), hc);
+      [[0.3, 1.1, 0.5], [-0.35, 1.4, 0.6], [0.1, 0.95, -0.7]].forEach(([x, y, r]) => P(new THREE.BoxGeometry(0.05, 0.5, 0.05), M(x, y, 0.1, 0, 0, r), 0xfff06a));
+    }
   } else if (hall.id === 'chemistry') {
-    if (kind === 0) { P(new THREE.CylinderGeometry(0.18, 0.8, 1.3, 10), M(0, 0.65, 0), hc); P(new THREE.CylinderGeometry(0.2, 0.2, 0.6, 8), M(0, 1.6, 0), 0xf6d3bb); P(new THREE.SphereGeometry(0.22, 8, 6), M(0, 2.1, 0), 0xfff3e6); }
-    else { P(new THREE.CylinderGeometry(0.25, 0.32, 1.8, 8), M(0, 0.9, 0), 0xb8785a); P(new THREE.CylinderGeometry(0.3, 0.26, 0.15, 8), M(0, 1.85, 0), 0x6b4f3a); P(new THREE.IcosahedronGeometry(0.22, 0), M(0.1, 2.3, 0), 0xf2f0ea); }
-  } else if (hall.id === 'earth') {
-    if (kind === 0) { P(new THREE.ConeGeometry(1.0, 1.8, 7), M(0, 0.9, 0), 0x8f7358); P(new THREE.ConeGeometry(0.45, 0.7, 7), M(0, 1.65, 0), 0xf4f7f8); }
-    else { P(new THREE.ConeGeometry(0.9, 1.1, 8), M(0, 0.55, 0), 0x7a5f4a); P(new THREE.CylinderGeometry(0.3, 0.3, 0.08, 8), M(0, 1.12, 0), 0xf26b3a); P(new THREE.IcosahedronGeometry(0.16, 0), M(0.15, 1.35, 0), 0xf26b3a); }
-  } else {
-    if (kind === 0) { P(new THREE.CylinderGeometry(0.1, 0.14, 0.8, 6), M(0, 0.4, 0), 0x7a5a3a); P(new THREE.IcosahedronGeometry(0.55, 1), M(0, 1.15, 0), 0x4fae60); P(new THREE.IcosahedronGeometry(0.35, 1), M(0.3, 1.55, 0.1), 0x66c274); }
-    else { P(new THREE.CylinderGeometry(0.1, 0.13, 0.5, 6), M(0, 0.25, 0), 0xf2ecd9); P(new THREE.SphereGeometry(0.4, 10, 6, 0, TAU, 0, Math.PI / 2), M(0, 0.5, 0), 0xe06a5a); P(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 6), M(0.8, 0.25, 0.3), 0xf2ecd9); P(new THREE.SphereGeometry(0.28, 10, 6, 0, TAU, 0, Math.PI / 2), M(0.8, 0.5, 0.3), 0xe0b25a); }
+    if (kind === 'erlenmeyer') {
+      P(new THREE.CylinderGeometry(0.2, 0.9, 1.2, 14), M(0, 0.6, 0), 0xcfeee8);
+      P(new THREE.CylinderGeometry(0.2, 0.62, 0.55, 14), M(0, 0.28, 0), hc);
+      P(new THREE.CylinderGeometry(0.2, 0.2, 0.75, 10), M(0, 1.55, 0), 0xcfeee8);
+      P(new THREE.CylinderGeometry(0.2, 0.17, 0.2, 8), M(0, 2.0, 0), 0x8a5a3a);
+      [[0.1, 2.35, 0.1], [-0.12, 2.7, 0], [0.08, 3.05, 0.05]].forEach(([x, y, z], i) => P(new THREE.IcosahedronGeometry(0.1 + 0.03 * i, 1), M(x, y, z), 0xfff3e6));
+    } else if (kind === 'round') {
+      P(new THREE.SphereGeometry(0.58, 14, 10), M(0, 1.05, 0), 0xcfeee8);
+      P(new THREE.SphereGeometry(0.52, 12, 8, 0, TAU, Math.PI / 2, Math.PI / 2), M(0, 1.05, 0), hc);
+      P(new THREE.CylinderGeometry(0.15, 0.15, 0.7, 9), M(0, 1.85, 0), 0xcfeee8);
+      P(new THREE.TorusGeometry(0.5, 0.035, 5, 16), M(0, 0.62, 0, Math.PI / 2, 0, 0), 0x8f8f88);
+      for (let i = 0; i < 3; i++) P(new THREE.CylinderGeometry(0.035, 0.035, 0.8, 5), M(Math.cos(i * 2.094) * 0.48, 0.3, Math.sin(i * 2.094) * 0.48, Math.sin(i * 2.094) * 0.35, 0, -Math.cos(i * 2.094) * 0.35), 0x8f8f88);
+    } else if (kind === 'rack') {
+      P(new THREE.BoxGeometry(1.7, 0.09, 0.55), M(0, 0.45, 0), 0x9a7048);
+      P(new THREE.BoxGeometry(1.7, 0.09, 0.55), M(0, 1.05, 0), 0x9a7048);
+      for (const sx of [-0.8, 0.8]) P(new THREE.BoxGeometry(0.09, 1.0, 0.5), M(sx, 0.5, 0), 0x7a5a3a);
+      [0xf0955c, 0x4fae60, 0x3a9be0, 0xe05aa0, 0xf2d675].forEach((c, i) => {
+        P(new THREE.CylinderGeometry(0.13, 0.13, 1.0, 9), M(-0.68 + i * 0.34, 0.95, 0), 0xcfeee8);
+        P(new THREE.CylinderGeometry(0.1, 0.1, 0.45 + 0.05 * i, 9), M(-0.68 + i * 0.34, 0.72 + 0.025 * i, 0), c);
+      });
+    } else if (kind === 'crystal') {
+      [[0, 0, 0, 0.55, 0], [0.55, 0.2, 0.3, 0.4, 0.3], [-0.5, 0.1, -0.2, 0.45, -0.35], [0.1, 0.1, 0.6, 0.3, 0.2]].forEach(([x, z, y2, s, tilt], i) =>
+        P(new THREE.IcosahedronGeometry(0.4, 0), Ms(x, 0.5 + y2 * 0.3, z, s * 0.9, s * 3.0, s * 0.9, 0, i, tilt), [0xb48cff, 0x7fe0ff, 0xff9fd0, 0xf0955c][i]));
+    } else if (kind === 'chimney') {
+      P(new THREE.CylinderGeometry(0.3, 0.42, 2.3, 10), M(0, 1.15, 0), 0xb8785a);
+      for (const y of [0.6, 1.3, 1.9]) P(new THREE.TorusGeometry(0.34 - y * 0.03, 0.04, 5, 14), M(0, y, 0, Math.PI / 2, 0, 0), 0x6b4f3a);
+      P(new THREE.CylinderGeometry(0.38, 0.3, 0.18, 10), M(0, 2.35, 0), 0x6b4f3a);
+      [[0, 2.85, 0, 0.3], [0.18, 3.35, 0.05, 0.42], [-0.1, 3.95, 0, 0.56]].forEach(([x, y, z, r]) => P(new THREE.IcosahedronGeometry(r, 1), M(x, y, z), 0xe2dfdb));
+    } else { // bunsen
+      P(new THREE.CylinderGeometry(0.38, 0.45, 0.16, 12), M(0, 0.08, 0), 0x8f8f88);
+      P(new THREE.CylinderGeometry(0.1, 0.12, 1.0, 9), M(0, 0.65, 0), 0xbfc7c4);
+      P(new THREE.CylinderGeometry(0.15, 0.15, 0.2, 9), M(0, 0.4, 0), 0x6b4f3a);
+      P(new THREE.ConeGeometry(0.17, 0.6, 9), M(0, 1.45, 0), 0xf26b3a);
+      P(new THREE.ConeGeometry(0.1, 0.38, 8), M(0, 1.4, 0), 0xffd34a);
+    }
+  } else { // earth
+    if (kind === 'volcano') {
+      P(new THREE.CylinderGeometry(1.95, 2.1, 0.12, 16), M(0, 0.06, 0), 0x4a3a33);
+      P(new THREE.CylinderGeometry(0.4, 1.5, 1.6, 14), M(0, 0.9, 0), 0x6e5546);
+      P(new THREE.CylinderGeometry(0.34, 0.7, 0.5, 14), M(0, 1.45, 0), 0x5a4438);
+      P(new THREE.CylinderGeometry(0.45, 0.45, 0.1, 14), M(0, 1.7, 0), 0xff7a2e);
+      P(new THREE.CylinderGeometry(0.3, 0.3, 0.12, 14), M(0, 1.74, 0), 0xffc15a);
+      for (let i = 0; i < 3; i++) {
+        const az = i * 2.2 + 0.4;
+        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -az, 0)).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.62)));
+        parts.push({ g: new THREE.BoxGeometry(1.15, 0.05, 0.16 + 0.05 * i), m: new THREE.Matrix4().compose(new THREE.Vector3(Math.cos(az) * 0.95, 0.88, Math.sin(az) * 0.95), q, new THREE.Vector3(1, 1, 1)), color: new THREE.Color(0xff6a2a) });
+      }
+      [[0, 2.2, 0, 0.36], [0.2, 2.75, 0.05, 0.5], [-0.15, 3.4, 0, 0.66]].forEach(([x, y, z, r]) => P(new THREE.IcosahedronGeometry(r, 1), M(x, y, z), 0xd8d4d0));
+    } else if (kind === 'mountain') {
+      P(new THREE.ConeGeometry(1.35, 2.0, 8), M(0, 1.0, 0), 0x8f7358);
+      P(new THREE.ConeGeometry(0.95, 1.4, 7), M(0.8, 0.7, 0.45), 0x9a7e62);
+      P(new THREE.ConeGeometry(0.85, 1.2, 7), M(-0.7, 0.6, -0.35), 0x85694e);
+      P(new THREE.ConeGeometry(0.62, 0.9, 8), M(0, 1.6, 0), 0xf5f8fa);
+      P(new THREE.ConeGeometry(0.4, 0.55, 7), M(0.8, 1.15, 0.45), 0xf5f8fa);
+      [[1.3, -0.5, 0.3], [-1.1, 0.8, 0.25]].forEach(([x, z, s]) => P(new THREE.DodecahedronGeometry(s, 0), M(x, s * 0.7, z), 0x9a9a92));
+    } else if (kind === 'strata') {
+      const cols = [0x9c7a54, 0xc29a67, 0x8a6a48, 0xd0b080, 0x7a5c40, 0xb88f5e, 0xcfa86e];
+      cols.forEach((c, i) => P(new THREE.CylinderGeometry(0.85 - i * 0.05 + 0.04, 0.9 - i * 0.05, 0.3, 12), M(0.03 * (i % 3), 0.15 + i * 0.3, 0.02 * (i % 2)), c));
+      P(new THREE.IcosahedronGeometry(0.4, 1), Ms(0, 2.25, 0, 1.2, 0.5, 1.0), 0x66c274);
+    } else if (kind === 'boulders') {
+      [[0, 0, 0.55], [0.8, 0.3, 0.38], [-0.6, 0.5, 0.3], [0.2, -0.7, 0.28]].forEach(([x, z, s], i) => P(new THREE.DodecahedronGeometry(s, 0), Ms(x, s * 0.7, z, 1, 0.8, 1, i, i * 2, 0), i % 2 ? 0x9a9a92 : 0xb0a898));
+    } else { // weather station
+      P(new THREE.CylinderGeometry(0.05, 0.07, 1.9, 6), M(0, 0.95, 0), 0xf4f4ee);
+      P(new THREE.BoxGeometry(0.8, 0.05, 0.05), M(0, 1.95, 0), 0xcfc8b4);
+      P(new THREE.BoxGeometry(0.05, 0.05, 0.8), M(0, 1.95, 0), 0xcfc8b4);
+      for (const [x, z] of [[0.4, 0], [-0.4, 0], [0, 0.4], [0, -0.4]]) P(new THREE.SphereGeometry(0.1, 8, 6, 0, TAU, 0, Math.PI), M(x, 1.95, z), 0xe0483a);
+      P(new THREE.BoxGeometry(0.62, 0.5, 0.5), M(0.65, 0.35, 0), 0xf4f4ee);
+      P(new THREE.BoxGeometry(0.66, 0.06, 0.54), M(0.65, 0.63, 0), hc);
+    }
   }
   return parts;
+}
+const PROP_KINDS = {
+  physics: [['dome', 2], ['dish', 2], ['pendulum', 2], ['magnet', 2], ['prism', 2], ['tesla', 2]],
+  chemistry: [['erlenmeyer', 3], ['round', 2], ['rack', 2], ['crystal', 3], ['chimney', 2], ['bunsen', 2]],
+  earth: [['volcano', 3], ['mountain', 4], ['strata', 2], ['boulders', 2], ['weather', 1]],
+  biology: [['broad', 4], ['pine', 3], ['sakura', 2], ['bush', 2], ['mushroom', 2]],
+};
+function pickKind(hallId, x) {
+  const list = PROP_KINDS[hallId], total = list.reduce((a, b) => a + b[1], 0);
+  let t = x * total;
+  for (const [k, w] of list) { if ((t -= w) < 0) return k; }
+  return list[0][0];
 }
 
 // ---------- 地形：球外與地標共用 ----------
@@ -268,7 +401,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
   const PR_STEPS = [2, 1.5, 1.25, 1];
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(40, 1, 1, 800);
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.4, 800);
 
   const gradient = makeGradient();
   const toonMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradient });
@@ -493,6 +626,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
   const landmarks = new THREE.Group();
   planet.add(landmarks);
   const signs = new Map(); // unitId -> [{sprite, h, ex}]
+  const signSprites = [];
   function addSign(unitId, sprite, h, ex) {
     let a = signs.get(unitId);
     if (!a) { a = []; signs.set(unitId, a); }
@@ -513,23 +647,27 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(u.emoji), transparent: true, depthWrite: false }));
       sp.position.copy(dir).multiplyScalar(rad + 1.95);
       sp.scale.set(1.1, 1.1, 1);
+      sp.userData = { hallId: hall.id, unitId: u.id };
+      signSprites.push(sp);
       landmarks.add(sp);
       addSign(u.id, sp, 1.1, null);
     });
     // 特色小景：散在館的區域，避開路、站與廣場
     const placed = [], tan = new THREE.Vector3(), dd = new THREE.Vector3();
-    for (let tries = 0; placed.length < 18 && tries < 600; tries++) {
-      const a = hash3(hi * 9.1, tries * 1.37, 2.2) * TAU, r = 0.28 + 0.52 * Math.sqrt(hash3(hi * 3.3, tries * 0.71, 5.5));
+    for (let tries = 0; placed.length < PROP_COUNT && tries < 2400; tries++) {
+      const a = hash3(hi * 9.1, tries * 1.37, 2.2) * TAU, r = 0.22 + 0.7 * Math.sqrt(hash3(hi * 3.3, tries * 0.71, 5.5));
       tan.copy(E).multiplyScalar(Math.cos(a)).addScaledVector(Np, Math.sin(a));
       dd.copy(n).multiplyScalar(Math.cos(r)).addScaledVector(tan, Math.sin(r)).normalize();
       const t = terrain(dd);
-      if (t.hall !== hi || t.mask < 0.6 || t.n < 0.62 || t.rd < 1.5 || t.nd < 2.0 || t.pd < 3.2) continue;
-      if (placed.some(pp => pp.dot(dd) > Math.cos(2.0 / R))) continue;
+      if (t.hall !== hi || t.mask < 0.55 || t.n < 0.62 || t.rd < 1.7 || t.nd < 2.4 || t.pd < 3.4) continue;
+      if (placed.some(pp => pp.dot(dd) > Math.cos(1.55 / R))) continue;
       placed.push(dd.clone());
       const q = new THREE.Quaternion().setFromUnitVectors(up, dd).multiply(new THREE.Quaternion().setFromAxisAngle(up, hash3(tries, hi, 1.1) * TAU));
-      const sc = 0.85 + 0.5 * hash3(tries, hi, 4.4);
+      const kind = pickKind(hall.id, hash3(tries * 0.7, hi, 8.8));
+      const big = (kind === 'volcano' || kind === 'mountain') ? 1.15 : 0.85;
+      const sc = big + 0.45 * hash3(tries, hi, 4.4);
       const bm = new THREE.Matrix4().compose(dd.clone().multiplyScalar(R + t.e - 0.05), q, new THREE.Vector3(sc, sc, sc));
-      for (const pt of propParts(hall, placed.length % 2)) { pt.m = bm.clone().multiply(pt.m); parts.push(pt); }
+      for (const pt of propParts(hall, kind, k => hash3(tries * 1.9 + k, hi * 2.3, 6.1))) { pt.m = bm.clone().multiply(pt.m); parts.push(pt); }
     }
     const mg = buildMerged(parts, 0.05);
     landmarks.add(new THREE.Mesh(mg.body, toonMat), new THREE.Mesh(mg.hull, hullMat));
@@ -793,15 +931,37 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     return clamp(Math.max(dH, dV), 18, 160);
   }
   const posP = new THREE.Vector3(), posH = new THREE.Vector3(), tgtH = new THREE.Vector3();
+  const posG = new THREE.Vector3(), tgtG = new THREE.Vector3(), upV = new THREE.Vector3(), tgtV = new THREE.Vector3();
+  let groundH = R + 0.3;
+  const GROUND = { camH: 3.0, back: 3.4, look: 7.5, lookDrop: 0.2 };
+  const minZoomP = () => (R * 1.0) / planetDistance();
+  // 0＝在太空看星球，1＝站在路上走（放大到靠近地面時）
+  function groundBlend() { return smooth(R * 2.4, R * 1.35, planetDistance() * state.zoomP) * (1 - state.k); }
+  const gDir = new THREE.Vector3(), gQ = new THREE.Quaternion();
+  function groundTargetH() { // 鏡頭下方與前方的地面高度，鏡頭要在其上
+    gQ.copy(planet.quaternion).invert();
+    gDir.set(0, -0.3, 1).normalize().applyQuaternion(gQ);
+    const e1 = terrain(gDir).e;
+    gDir.set(0, 0.0, 1).normalize().applyQuaternion(gQ);
+    const e2 = terrain(gDir).e;
+    gDir.set(0, 0.35, 1).normalize().applyQuaternion(gQ);
+    return R + Math.max(e1, e2, terrain(gDir).e);
+  }
   function applyCamera() {
     posP.set(0, 0, planetDistance() * state.zoomP);
+    const g = groundBlend();
+    posG.set(0, -GROUND.back, groundH + GROUND.camH);
+    tgtG.set(0, GROUND.look, groundH - GROUND.lookDrop);
     const dH = hallDistance() * state.zoomH;
     tgtH.set(pan.x, pan.y, PLATEAU_TOP + MAP_Y);
     // 鏡頭從南側往北看，近的在畫面下方，帶一點立體感
     posH.set(0, -Math.sin(HALL_PITCH) * dH, Math.cos(HALL_PITCH) * dH).add(tgtH);
+    posP.lerp(posG, g);                       // 太空 → 地面
     camera.position.lerpVectors(posP, posH, state.k);
-    camera.up.set(0, 1, 0);
-    camera.lookAt(lerp(0, tgtH.x, state.k), lerp(0, tgtH.y, state.k), lerp(0, tgtH.z, state.k));
+    tgtV.set(0, 0, 0).lerp(tgtG, g);
+    upV.set(0, 1, 0).lerp(new THREE.Vector3(0, 0, 1), g).normalize();
+    camera.up.copy(upV);
+    camera.lookAt(lerp(tgtV.x, tgtH.x, state.k), lerp(tgtV.y, tgtH.y, state.k), lerp(tgtV.z, tgtH.z, state.k));
     const shift = state.k * (state.sheetF / 2);
     if (state.sheetAxis === 'x') camera.setViewOffset(W, H, -shift * W, 0, W, H);
     else camera.setViewOffset(W, H, 0, shift * H, W, H);
@@ -826,20 +986,40 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
   }
 
   // ----- 飛行 -----
-  function startFlight(toQ, toK, instant, dip = 0, toHallIdx = -1) {
+  function startFlight(toQ, toK, instant, dip = 0, toHallIdx = -1, keepZoom = false) {
     const fromQ = planet.quaternion.clone();
     const target = toQ.clone();
     if (fromQ.dot(target) < 0) target.set(-target.x, -target.y, -target.z, -target.w);
     omega.set(0, 0, 0);
     if (instant || reducedMotion) {
       planet.quaternion.copy(target);
+      if (!keepZoom) state.zoomP = 1;
       state.k = toK;
       if (toHallIdx >= 0) state.hallVis = toHallIdx;
       flight = null;
     } else {
-      flight = { t0: performance.now(), dur: dip ? 1700 : 1200, fromQ, toQ: target, fromK: state.k, toK, dip, toHallIdx, swapped: false };
+      flight = { t0: performance.now(), dur: dip ? 1700 : keepZoom ? 800 : 1200, fromQ, toQ: target, fromK: state.k, toK, dip, toHallIdx, swapped: false, fromZoom: state.zoomP, toZoom: keepZoom ? state.zoomP : 1 };
     }
     invalidate();
+  }
+  // 放大到地面時，自動轉到最近的一個單元站前面，面向路的前進方向（單元編號增加的方向）
+  let walkSnapped = false;
+  function snapToNearestStop() {
+    const inv = new THREE.Quaternion().copy(planet.quaternion).invert();
+    const v0 = new THREE.Vector3(0, 0, 1).applyQuaternion(inv);
+    let bh = 0, bi = 0, bd = -2;
+    hallNodes.forEach((arr, h) => arr.forEach((p, i) => { const d = p.dot(v0); if (d > bd) { bd = d; bh = h; bi = i; } }));
+    const p = hallNodes[bh][bi].clone();
+    const t = bases[bh].Np.clone().multiplyScalar(-1);
+    t.addScaledVector(p, -t.dot(p)).normalize();
+    const r = new THREE.Vector3().crossVectors(t, p);
+    const al = 4.0 / R;
+    const T = new THREE.Vector3(0, Math.sin(al), Math.cos(al));
+    const tT = new THREE.Vector3(0, Math.cos(al), -Math.sin(al));
+    const rT = new THREE.Vector3().crossVectors(tT, T);
+    const A = new THREE.Matrix4().makeBasis(r, t, p), B = new THREE.Matrix4().makeBasis(rT, tT, T);
+    const Q = new THREE.Quaternion().setFromRotationMatrix(B.multiply(A.invert()));
+    startFlight(Q, 0, false, 0, -1, true);
   }
   function flyToHall(id, instant) {
     const i = halls.findIndex(h => h.id === id);
@@ -900,7 +1080,10 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     camera.updateMatrixWorld(true);
     scene.updateMatrixWorld(true);
     raycaster.setFromCamera(ndc, camera);
-    if (state.mode === 'planet') {
+    if (state.mode === 'planet' && groundBlend() > 0.5) {
+      const hit = raycaster.intersectObjects(signSprites, false)[0];
+      if (hit && handlers.onUnitPick) handlers.onUnitPick(hit.object.userData.hallId, hit.object.userData.unitId);
+    } else if (state.mode === 'planet') {
       const pt = raycaster.ray.intersectSphere(pickSphere, tmpV);
       if (pt) {
         tmpV.applyQuaternion(planetInv.copy(planet.quaternion).invert()).normalize();
@@ -945,7 +1128,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       const [a, b] = [...pointers.values()];
       const d = Math.hypot(a.x - b.x, a.y - b.y);
       if (pinchStart > 0) {
-        const z = clamp(pinchZoom * (pinchStart / d), state.mode === 'planet' ? 0.62 : 0.4, state.mode === 'planet' ? 1.5 : 1.35);
+        const z = clamp(pinchZoom * (pinchStart / d), state.mode === 'planet' ? minZoomP() : 0.4, state.mode === 'planet' ? 1.5 : 1.35);
         if (state.mode === 'planet') state.zoomP = z; else state.zoomH = z;
         invalidate();
       }
@@ -959,8 +1142,9 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     const dt = Math.max(1, now - drag.lastT) / 1000;
     drag.x = e.clientX; drag.y = e.clientY; drag.lastT = now;
     if (state.mode === 'planet') {
-      const speed = 1 / (0.42 * Math.min(W, H));
-      const axis = new THREE.Vector3(dy, dx, 0);
+      const speed = (1 / (0.42 * Math.min(W, H))) * Math.max(0.18, state.zoomP);
+      const walking = groundBlend() > 0.5;  // 站在地面時：上下＝往前後走，左右＝轉向
+      const axis = walking ? new THREE.Vector3(dy, 0, -dx * 1.4) : new THREE.Vector3(dy, dx, 0);
       const angle = axis.length() * speed;
       rotatePlanet(axis, angle);
       if (!reducedMotion) omega.lerp(axis.normalize().multiplyScalar(angle / dt), 0.5);
@@ -993,7 +1177,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
   canvas.addEventListener('wheel', e => {
     e.preventDefault();
     const f = Math.exp(e.deltaY * 0.0012);
-    if (state.mode === 'planet') state.zoomP = clamp(state.zoomP * f, 0.62, 1.5);
+    if (state.mode === 'planet') state.zoomP = clamp(state.zoomP * f, minZoomP(), 1.5);
     else {
       state.zoomH = clamp(state.zoomH * f, 0.4, 1.35);
       if (state.zoomH >= 0.92) panT.set(0, 0);
@@ -1024,6 +1208,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       const u = Math.min(1, (now - flight.t0) / flight.dur);
       const e = ease(u);
       planet.quaternion.copy(flight.fromQ).slerp(flight.toQ, e);
+      state.zoomP = lerp(flight.fromZoom, flight.toZoom, e);
       state.k = Math.max(0, lerp(flight.fromK, flight.toK, e) - flight.dip * Math.sin(Math.PI * e));
       if (flight.toHallIdx >= 0 && !flight.swapped && u >= 0.5) { flight.swapped = true; state.hallVis = flight.toHallIdx; }
       if (u >= 1) { if (flight.toHallIdx >= 0) state.hallVis = flight.toHallIdx; flight = null; } else active = true;
@@ -1034,7 +1219,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
         omega.multiplyScalar(Math.exp(-dt / 0.55));
         if (omega.length() < 0.03) omega.set(0, 0, 0);
         active = true;
-      } else if (state.mode === 'planet' && !dragging && now - lastInteract > 450 && !reducedMotion) {
+      } else if (state.mode === 'planet' && !dragging && now - lastInteract > 450 && !reducedMotion && groundBlend() < 0.05) {
         const q = planet.quaternion;
         const cur = tmpV.set(0, 1, 0).applyQuaternion(q);
         const want = tmpN.set(0, Math.cos(TILT), Math.sin(TILT));
@@ -1047,6 +1232,16 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
         }
       }
       if (pointers.size > 0) active = true;
+    }
+    { // 剛放大到地面時，自動站到最近的單元站前面
+      const gb = groundBlend();
+      if (gb < 0.08) walkSnapped = false;
+      else if (gb > 0.25 && !walkSnapped && !flight && state.mode === 'planet') { walkSnapped = true; snapToNearestStop(); active = true; }
+    }
+    // 站在地面時，鏡頭高度跟著地形慢慢起伏
+    if (groundBlend() > 0.02) {
+      const ht = groundTargetH();
+      if (Math.abs(ht - groundH) > 0.004) { groundH += (ht - groundH) * (1 - Math.exp(-dt / 0.12)); active = true; }
     }
     // 地圖版面隨螢幕形狀調整
     const wv = wantVertical();
@@ -1079,7 +1274,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
   function emitFrame() {
     if (!handlers.onFrame) return;
     const info = {};
-    const sceneHidden = state.k > 0.3;
+    const sceneHidden = state.k > 0.3 || groundBlend() > 0.12;
     info.plates = hallObjs.map((h, i) => {
       h.anchor.getWorldPosition(tmpV);
       tmpN.copy(hallDirs[i]).applyQuaternion(planet.quaternion);
