@@ -7,7 +7,8 @@ import * as THREE from './vendor/three.module.min.js';
 
 const R = 10;                 // 星球半徑
 const PLATEAU_TOP = R + 0.2;  // 館的平台頂面離球心的距離
-const TILT = 0.35;            // 星球預設的「北極朝向觀眾」傾角
+const TILT = 0.35;
+const BASE_FOV = 40;           // 一般視角；開場加速時會暫時拉寬            // 星球預設的「北極朝向觀眾」傾角
 const TAU = Math.PI * 2;
 const INK = 0x0b1a15;         // 描邊色（不用純黑）
 const HALL_PITCH = 0.42;      // 館層鏡頭與正上方的夾角（弧度）；0＝完全俯視
@@ -15,7 +16,7 @@ const MAP_Y = 0.16;           // 地圖面高度（相對館的平台）
 const DISC_R = 14.4;          // 地圖底盤半徑
 // 地圖在兩種版型下需要塞進畫面的半寬、半高（世界單位）
 const EXT = { v: { ex: 6.8, ey: 11.4 }, h: { ex: 12.4, ey: 6.8 } };
-const PROP_COUNT = 64;       // 每館的特色小景數量
+const PROP_COUNT = 120;      // 每館的特色小景數量（縮小、加密，球的輪廓才不會被撐開）
 const E_FLAT = 0.2;           // 廣場、道路、單元站壓平後的高度
 const GATE_EMOJI = { physics: '⚛️', chemistry: '🧪', earth: '🌍', biology: '🧬' };
 
@@ -220,6 +221,7 @@ function mushroomParts(P, rnd) {
 function propParts(hall, kind, rnd) {
   const hc = new THREE.Color(hall.color), parts = [];
   const P = (g, m, c) => parts.push({ g, m, color: new THREE.Color(c) });
+  if (TREE_KINDS.has(kind)) { treeParts(P, rnd, kind); return parts; }
   if (hall.id === 'biology') {
     if (kind === 'mushroom') mushroomParts(P, rnd); else treeParts(P, rnd, kind);
   } else if (hall.id === 'physics') {
@@ -231,7 +233,7 @@ function propParts(hall, kind, rnd) {
       P(new THREE.BoxGeometry(0.22, 0.4, 0.06), M(0, 0.22, 0.68), 0x6b4f3a);
     } else if (kind === 'dish') {
       P(new THREE.CylinderGeometry(0.07, 0.12, 1.1, 8), M(0, 0.55, 0), 0xcfc8b4);
-      P(new THREE.SphereGeometry(0.85, 16, 8, 0, TAU, Math.PI * 0.69, Math.PI * 0.31), M(0, 1.4, 0, -0.9, 0, 0), 0xf4f4ee);
+      P(new THREE.CylinderGeometry(0.85, 0.22, 0.32, 18), M(0, 1.4, 0, -0.9, 0, 0), 0xf4f4ee);
       P(new THREE.CylinderGeometry(0.025, 0.025, 0.8, 5), M(0, 1.9, 0.4, -0.9, 0, 0), 0xcfc8b4);
       P(new THREE.SphereGeometry(0.1, 8, 6), M(0, 2.25, 0.62), hc);
     } else if (kind === 'pendulum') {
@@ -284,7 +286,7 @@ function propParts(hall, kind, rnd) {
       P(new THREE.CylinderGeometry(0.3, 0.42, 2.3, 10), M(0, 1.15, 0), 0xb8785a);
       for (const y of [0.6, 1.3, 1.9]) P(new THREE.TorusGeometry(0.34 - y * 0.03, 0.04, 5, 14), M(0, y, 0, Math.PI / 2, 0, 0), 0x6b4f3a);
       P(new THREE.CylinderGeometry(0.38, 0.3, 0.18, 10), M(0, 2.35, 0), 0x6b4f3a);
-      [[0, 2.85, 0, 0.3], [0.18, 3.35, 0.05, 0.42], [-0.1, 3.95, 0, 0.56]].forEach(([x, y, z, r]) => P(new THREE.IcosahedronGeometry(r, 1), M(x, y, z), 0xe2dfdb));
+      [[0, 2.7, 0, 0.24], [0.14, 3.05, 0.05, 0.32], [-0.08, 3.45, 0, 0.4]].forEach(([x, y, z, r]) => P(new THREE.IcosahedronGeometry(r, 1), M(x, y, z), 0xe2dfdb));
     } else { // bunsen
       P(new THREE.CylinderGeometry(0.38, 0.45, 0.16, 12), M(0, 0.08, 0), 0x8f8f88);
       P(new THREE.CylinderGeometry(0.1, 0.12, 1.0, 9), M(0, 0.65, 0), 0xbfc7c4);
@@ -304,7 +306,7 @@ function propParts(hall, kind, rnd) {
         const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -az, 0)).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.62)));
         parts.push({ g: new THREE.BoxGeometry(1.15, 0.05, 0.16 + 0.05 * i), m: new THREE.Matrix4().compose(new THREE.Vector3(Math.cos(az) * 0.95, 0.88, Math.sin(az) * 0.95), q, new THREE.Vector3(1, 1, 1)), color: new THREE.Color(0xff6a2a) });
       }
-      [[0, 2.2, 0, 0.36], [0.2, 2.75, 0.05, 0.5], [-0.15, 3.4, 0, 0.66]].forEach(([x, y, z, r]) => P(new THREE.IcosahedronGeometry(r, 1), M(x, y, z), 0xd8d4d0));
+      [[0, 2.05, 0, 0.26], [0.16, 2.45, 0.05, 0.34], [-0.1, 2.9, 0, 0.42]].forEach(([x, y, z, r]) => P(new THREE.IcosahedronGeometry(r, 1), M(x, y, z), 0xd8d4d0));
     } else if (kind === 'mountain') {
       P(new THREE.ConeGeometry(1.35, 2.0, 8), M(0, 1.0, 0), 0x8f7358);
       P(new THREE.ConeGeometry(0.95, 1.4, 7), M(0.8, 0.7, 0.45), 0x9a7e62);
@@ -330,11 +332,13 @@ function propParts(hall, kind, rnd) {
   return parts;
 }
 const PROP_KINDS = {
-  physics: [['dome', 2], ['dish', 2], ['pendulum', 2], ['magnet', 2], ['prism', 2], ['tesla', 2]],
-  chemistry: [['erlenmeyer', 3], ['round', 2], ['rack', 2], ['crystal', 3], ['chimney', 2], ['bunsen', 2]],
-  earth: [['volcano', 3], ['mountain', 4], ['strata', 2], ['boulders', 2], ['weather', 1]],
+  physics: [['dome', 2], ['dish', 2], ['pendulum', 2], ['magnet', 2], ['prism', 2], ['tesla', 2], ['broad', 2], ['bush', 3], ['pine', 1]],
+  chemistry: [['erlenmeyer', 3], ['round', 2], ['rack', 2], ['crystal', 3], ['chimney', 1], ['bunsen', 2], ['bush', 2], ['broad', 1]],
+  earth: [['volcano', 1], ['mountain', 3], ['strata', 2], ['boulders', 3], ['weather', 1], ['pine', 3]],
   biology: [['broad', 4], ['pine', 3], ['sakura', 2], ['bush', 2], ['mushroom', 2]],
 };
+const TREE_KINDS = new Set(['broad', 'pine', 'sakura', 'bush']);
+const HERO_KIND = { physics: 'tesla', chemistry: 'erlenmeyer', earth: 'volcano', biology: 'broad' }; // 每館先放兩個大一點的代表物
 function pickKind(hallId, x) {
   const list = PROP_KINDS[hallId], total = list.reduce((a, b) => a + b[1], 0);
   let t = x * total;
@@ -409,13 +413,13 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   const PR_STEPS = [2, 1.5, 1.25, 1];
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.4, 800);
+  const camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.4, 900);
 
   const gradient = makeGradient();
   const toonMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradient });
   const hullMat = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide });
   const planetMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradient, transparent: true });
-  const planetHullMat = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide, transparent: true });
+  const planetHullMat = new THREE.MeshBasicMaterial({ color: 0x0f3333, side: THREE.BackSide, transparent: true }); // 星球外框用深青，和大氣光暈接得起來
   const hiddenMat = new THREE.MeshBasicMaterial({ visible: false });
 
   scene.add(new THREE.HemisphereLight(0xe8f4ff, 0x20322b, 1.35));
@@ -423,19 +427,44 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   sun.position.set(-16, 22, 30);
   scene.add(sun);
 
-  // 星星（不跟著星球轉）
+  // 星星：三層大小、帶一點顏色；整組跟著鏡頭移動（像很遠的天空），不跟著星球轉
+  const starGroup = new THREE.Group();
+  scene.add(starGroup);
+  const starMats = [];
   {
-    const n = 260, arr = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++) {
-      const u = Math.random() * TAU, v = Math.acos(2 * Math.random() - 1), r = 200 + Math.random() * 160;
-      arr[i * 3] = r * Math.sin(v) * Math.cos(u);
-      arr[i * 3 + 1] = r * Math.sin(v) * Math.sin(u);
-      arr[i * 3 + 2] = r * Math.cos(v) - 80;
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(arr, 3));
-    scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xf6f3ea, size: 1.6, sizeAttenuation: true, transparent: true, opacity: 0.75, depthWrite: false })));
+    const sc = document.createElement('canvas');
+    sc.width = sc.height = 64;
+    const sx = sc.getContext('2d');
+    const gr = sx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.22, 'rgba(255,255,255,0.9)');
+    gr.addColorStop(0.55, 'rgba(255,255,255,0.2)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    sx.fillStyle = gr; sx.fillRect(0, 0, 64, 64);
+    const starTex = new THREE.CanvasTexture(sc);
+    const tints = [0xf6f3ea, 0xfff1c9, 0xc9f4ff, 0xffd6e4];
+    const c = new THREE.Color();
+    [[1100, 1.6, 0.8], [300, 2.8, 0.9], [70, 4.6, 1]].forEach(([n, size, op]) => {
+      const arr = new Float32Array(n * 3), ca = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        const u = Math.random() * TAU, v = Math.acos(2 * Math.random() - 1), r = 330 + Math.random() * 120;
+        arr[i * 3] = r * Math.sin(v) * Math.cos(u);
+        arr[i * 3 + 1] = r * Math.sin(v) * Math.sin(u);
+        arr[i * 3 + 2] = r * Math.cos(v);
+        c.set(tints[i % 4]).multiplyScalar(0.65 + 0.35 * Math.random());
+        ca[i * 3] = c.r; ca[i * 3 + 1] = c.g; ca[i * 3 + 2] = c.b;
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+      g.setAttribute('color', new THREE.BufferAttribute(ca, 3));
+      const mat = new THREE.PointsMaterial({ size, map: starTex, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: op, depthWrite: false, fog: false });
+      mat.userData.base = op;
+      mat.userData.tw = 1;
+      starMats.push(mat);
+      const pts = new THREE.Points(g, mat);
+      pts.frustumCulled = false;
+      starGroup.add(pts);
+    });
   }
+  scene.fog = new THREE.Fog(0xd2efe6, 900, 1800); // 只有走在地面上時才拉近（遠景淡淡的霧）
 
   // 四座館的方向：正四面體頂點
   const hallDirs = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]].map(v => new THREE.Vector3(...v).normalize());
@@ -527,11 +556,17 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     // 3) 配色用的調色盤
     const tc3 = new THREE.Color();
     const hallCol = halls.map(h => new THREE.Color(h.color));
-    const landPal = hallCol.map((c, i) => {
-      const base = c.clone(); if (halls[i].id === 'earth') base.lerp(new THREE.Color(0xffffff), 0.12);
-      return [base.clone().multiplyScalar(0.86), base.clone(), base.clone().lerp(new THREE.Color(0xfff6e0), 0.22)];
+    // 每館四種相近的色調，用低頻雜訊分成一塊一塊的田野
+    const tones = hallCol.map((c, i) => {
+      const hsl = {}; c.getHSL(hsl);
+      if (halls[i].id === 'earth') hsl.l = Math.min(0.8, hsl.l + 0.05);
+      const mk = (dh, ds, dl) => new THREE.Color().setHSL((hsl.h + dh + 1) % 1, clamp(hsl.s + ds, 0, 1), clamp(hsl.l + dl, 0, 1));
+      return [mk(0, 0, 0), mk(0.012, 0.03, -0.075), mk(-0.01, -0.05, 0.075), mk(0.035, -0.12, -0.035)];
     });
-    const OCEAN = [new THREE.Color(0x1d5a88), new THREE.Color(0x25679a)], SHORE = new THREE.Color(0x3f9cc4), SAND = new THREE.Color(0xf0e2b0);
+    const ROCK = hallCol.map(c => c.clone().lerp(new THREE.Color(0xa89f8e), 0.55)), SNOW = new THREE.Color(0xf6f8f4);
+    const ACCENT_HEX = { physics: [0xf6b088, 0xfff6e0, 0xe8c65a], chemistry: [0xfde047, 0xfff6e0, 0xb48cff], earth: [0xf5f8fa, 0xc9d3dc, 0x7bc47a], biology: [0xf7a8c4, 0xfff6e0, 0xfde047] };
+    const ACC = halls.map(h => (ACCENT_HEX[h.id] || ACCENT_HEX.biology).map(x => new THREE.Color(x)));
+    const DEEP = new THREE.Color(0x0f4a66), SHALLOW = new THREE.Color(0x2c93b4), FOAM = new THREE.Color(0xa6e6ea), GLINT = new THREE.Color(0x6fc6dc), SAND = new THREE.Color(0xf0e2b0);
     const ROADB = new THREE.Color(0xd8cdb0), EDGE = new THREE.Color(0xffffff), DASH = new THREE.Color(0xf2c94c), PLAZA = new THREE.Color(0xe9e2cf), ROAD = new THREE.Color(0xeee3c6), NODE_C = hallCol.map(c => c.clone().multiplyScalar(0.55));
     const roadHalf = 0.9, nodeR = 1.1; // 單位：球面弧長
     const cosRoad = Math.cos(roadHalf / R), cosNode = Math.cos(nodeR / R);
@@ -562,21 +597,31 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
         ring[b + 1] = r0; ang[b + 1] = a0;
       }
       // 顏色
-      let c;
-      if (tr.n <= 0.5) c = tr.n > 0.44 ? SHORE : OCEAN[(v * 7919) % 2];
-      else if (tr.n < 0.56) c = SAND;
+      let c, bevel = 0.9; // bevel：六角磚邊角比中心暗一點，近看才看得出一片一片
+      if (tr.n <= 0.5) {
+        bevel = 0.97;
+        c = tc3.copy(DEEP).lerp(SHALLOW, smooth(0.16, 0.5, tr.n));
+        if (tr.n > 0.474) c.lerp(FOAM, 0.75);                                     // 岸邊浪花
+        else if (hash3(v * 0.21, 4.1, 1.3) < 0.035) c.lerp(GLINT, 0.6);           // 水面反光
+      } else if (tr.n < 0.56) c = SAND;
       else {
-        const pal = landPal[tr.hall];
-        c = pal[tr.e > 0.78 ? 2 : (hash3(v * 0.013, 1.7, 2.9) > 0.5 ? 1 : 0)];
-        if (tr.nd < nodeR) c = NODE_C[tr.hall];
+        const hh = tr.hall, tn = tones[hh];
+        const pn = vnoise(x * 6.5 + hh * 3.1, y * 6.5 + 1.3, z * 6.5 + 7.7) + 0.22 * (vnoise(x * 21 + 5, y * 21, z * 21 + 2) - 0.5);
+        c = tc3.copy(tn[pn < 0.36 ? 1 : pn < 0.6 ? 0 : pn < 0.78 ? 2 : 3]);
+        if (tr.e > 0.62) c.lerp(ROCK[hh], 0.7 * smooth(0.62, 0.95, tr.e));       // 山坡露出岩石
+        if (tr.e > 0.98) c.lerp(SNOW, smooth(0.98, 1.08, tr.e));                  // 山頂積雪
+        if (tr.n < 0.6) c.lerp(SAND, 0.35);                                       // 靠海邊偏沙色
+        if (tr.nd < nodeR) { c = NODE_C[hh]; bevel = 0.96; }
         else if (tr.rd < roadHalf) {
+          bevel = 0.97;
           if (tr.rd > 0.72) c = EDGE;                                               // 路邊白線
           else if (tr.rd < 0.12 && Math.floor(tr.ri / 8) % 2 === 0) c = DASH;       // 中央黃色虛線
           else c = ((v * 2654435761) >>> 0) % 5 < 2 ? ROADB : ROAD;                  // 路面磁磚
         }
-        else if (tr.pd < 1.9) c = PLAZA;
+        else if (tr.pd < 1.9) { c = PLAZA; bevel = 0.95; }
+        else if (tr.e < 0.9 && hash3(v * 0.73, 2.2, 5.9) < 0.022) c = ACC[hh][Math.floor(hash3(v * 0.31, 9.1, 0.4) * 3) % 3]; // 小花、小石
       }
-      const jit = 0.93 + 0.14 * hash3(v * 0.37, 3.1, 0.7);
+      const jit = 0.95 + 0.1 * hash3(v * 0.37, 3.1, 0.7);
       const r8 = Math.min(255, Math.round(c.r * jit * 255)), g8 = Math.min(255, Math.round(c.g * jit * 255)), b8 = Math.min(255, Math.round(c.b * jit * 255));
       const base = v * 7;
       const rc = R + tr.e;
@@ -586,7 +631,9 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
         const rr = R + ce[t], o = (base + 1 + k) * 3;
         pos[o] = cx[t] * rr; pos[o + 1] = cy[t] * rr; pos[o + 2] = cz[t] * rr;
       }
-      for (let k = 0; k < 7; k++) { const o = (base + k) * 3; col[o] = r8; col[o + 1] = g8; col[o + 2] = b8; }
+      col[base * 3] = r8; col[base * 3 + 1] = g8; col[base * 3 + 2] = b8;
+      const rb = Math.round(r8 * bevel), gb8 = Math.round(g8 * bevel), bb = Math.round(b8 * bevel);
+      for (let k = 1; k < 7; k++) { const o = (base + k) * 3; col[o] = rb; col[o + 1] = gb8; col[o + 2] = bb; }
       for (let k = 0; k < 6; k++) {
         const o = v * 18 + k * 3;
         index[o] = base; index[o + 1] = base + 1 + k; index[o + 2] = base + 1 + ((k + 1) % 6);
@@ -600,39 +647,97 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     const body = new THREE.Mesh(geo, planetMat);
     body.frustumCulled = false;
     // 外框：一顆稍大的暗色球（只描出輪廓，不吃三角形）
-    const outline = new THREE.Mesh(new THREE.IcosahedronGeometry(R + 0.42, 5), planetHullMat);
+    const outline = new THREE.Mesh(new THREE.IcosahedronGeometry(R + 0.3, 5), planetHullMat);
     planet.add(body, outline);
     planetMeshes.push(body, outline);
   }
 
+  // ----- 大氣：外圈光暈（背面）＋貼著地表邊緣的一層薄霧（正面），都用加法混色 -----
+  const atmoU = { uStrength: { value: 1 } };
+  const atmoVS = `varying vec3 vN; varying vec3 vP;
+    void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vP = mv.xyz; vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * mv; }`;
+  const atmoOuter = new THREE.Mesh(new THREE.SphereGeometry(R * 1.3, 72, 36), new THREE.ShaderMaterial({
+    uniforms: atmoU, vertexShader: atmoVS,
+    fragmentShader: `uniform float uStrength; varying vec3 vN; varying vec3 vP;
+      void main() {
+        float d = max(0.0, dot(normalize(vN), normalize(vP)));
+        float i = pow(d, 2.4);
+        vec3 c = mix(vec3(0.10, 0.42, 0.50), vec3(0.55, 0.92, 0.98), i);
+        gl_FragColor = vec4(c * i * 0.9 * uStrength, 1.0);
+        #include <colorspace_fragment>
+      }`,
+    side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  }));
+  atmoOuter.renderOrder = 5;
+  const atmoInner = new THREE.Mesh(new THREE.SphereGeometry(R * 1.045, 96, 48), new THREE.ShaderMaterial({
+    uniforms: atmoU, vertexShader: atmoVS,
+    fragmentShader: `uniform float uStrength; varying vec3 vN; varying vec3 vP;
+      void main() {
+        float f = 1.0 - max(0.0, dot(normalize(vN), -normalize(vP)));
+        float i = pow(f, 3.0);
+        gl_FragColor = vec4(vec3(0.30, 0.70, 0.80) * i * 0.55 * uStrength, 1.0);
+        #include <colorspace_fragment>
+      }`,
+    side: THREE.FrontSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  }));
+  atmoInner.renderOrder = 6;
+  scene.add(atmoOuter, atmoInner);
 
-  // ----- 雲 -----
-  const clouds = (() => {
+  // ----- 走在地面上時的天空（從地平線的淺青到頭頂的深青） -----
+  const skyU = { uTop: { value: new THREE.Color(0x3d8f97) }, uHor: { value: new THREE.Color(0xd2efe6) }, uUp: { value: new THREE.Vector3(0, 0, 1) }, uAlpha: { value: 0 } };
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(500, 32, 16), new THREE.ShaderMaterial({
+    uniforms: skyU,
+    vertexShader: `varying vec3 vD; void main() { vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform vec3 uTop; uniform vec3 uHor; uniform vec3 uUp; uniform float uAlpha; varying vec3 vD;
+      void main() {
+        float h = dot(normalize(vD), uUp);
+        gl_FragColor = vec4(mix(uHor, uTop, smoothstep(-0.05, 0.45, h)), uAlpha);
+        #include <colorspace_fragment>
+      }`,
+    side: THREE.BackSide, transparent: true, depthWrite: false,
+  }));
+  sky.renderOrder = -10;
+  sky.frustumCulled = false;
+  sky.visible = false;
+  scene.add(sky);
+  let starFade = 1;
+
+
+  // ----- 雲：小朵、成串，壓扁貼著星球，會慢慢飄 -----
+  const clouds = new THREE.Group();
+  planet.add(clouds);
+  {
     const blobs = [];
     const dir = new THREE.Vector3();
     let guard = 0;
-    while (blobs.length < 22 && guard++ < 600) {
+    while (blobs.length < 120 && guard++ < 1500) {
       dir.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1).normalize();
-      if (hallDirs.some(h => dir.dot(h) > 0.93)) continue; // 不要遮到館
-      const centre = dir.clone().multiplyScalar(R + 4.4 + Math.random() * 0.8);
-      const tangent = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0.3)).normalize();
-      const count = 3 + Math.floor(Math.random() * 2);
-      for (let i = 0; i < count && blobs.length < 22; i++) {
-        blobs.push({ p: centre.clone().addScaledVector(tangent, (i - count / 2) * 1.05), s: 0.6 + Math.random() * 0.6 });
+      if (hallDirs.some(h => dir.dot(h) > 0.965)) continue; // 不要一開始就蓋在雕像上
+      const centre = dir.clone().multiplyScalar(R + 2.7 + Math.random() * 0.8);
+      const tangent = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0.3, 1, 0.2)).normalize();
+      const side = new THREE.Vector3().crossVectors(dir, tangent);
+      const count = 3 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < count && blobs.length < 120; i++) {
+        const mid = 1 - Math.abs(i - (count - 1) / 2) / count;
+        blobs.push({
+          p: centre.clone().addScaledVector(tangent, (i - (count - 1) / 2) * 0.62).addScaledVector(side, (Math.random() - 0.5) * 0.45).addScaledVector(dir, mid * 0.2),
+          s: (0.3 + Math.random() * 0.22) * (0.7 + 0.55 * mid),
+          dir: dir.clone(),
+        });
       }
     }
-    const mesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: gradient }), blobs.length);
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
-    blobs.forEach((b, i) => {
-      q.setFromEuler(new THREE.Euler(Math.random() * 3, Math.random() * 3, Math.random() * 3));
-      sc.set(b.s * 1.5, b.s * 0.85, b.s * 1.1);
-      m.compose(b.p, q, sc);
+    const mesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 2), new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: gradient }), blobs.length);
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    blobs.forEach((bb, i) => {
+      q.setFromUnitVectors(up, bb.dir);
+      sc.set(bb.s * 1.35, bb.s * 0.78, bb.s * 1.1);
+      m.compose(bb.p, q, sc);
       mesh.setMatrixAt(i, m);
     });
     mesh.instanceMatrix.needsUpdate = true;
-    planet.add(mesh);
-    return mesh;
-  })();
+    mesh.frustumCulled = false;
+    clouds.add(mesh);
+  }
 
   // ----- 球外的單元地標（只看不能點）：站在路上的每一站，立著用封面做的小牌子 -----
   const landmarks = new THREE.Group();
@@ -666,24 +771,88 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     });
     // 特色小景：散在館的區域，避開路、站與廣場
     const placed = [], tan = new THREE.Vector3(), dd = new THREE.Vector3();
-    for (let tries = 0; placed.length < PROP_COUNT && tries < 2400; tries++) {
+    for (let tries = 0; placed.length < PROP_COUNT && tries < 6000; tries++) {
       const a = hash3(hi * 9.1, tries * 1.37, 2.2) * TAU, r = 0.22 + 0.7 * Math.sqrt(hash3(hi * 3.3, tries * 0.71, 5.5));
       tan.copy(E).multiplyScalar(Math.cos(a)).addScaledVector(Np, Math.sin(a));
       dd.copy(n).multiplyScalar(Math.cos(r)).addScaledVector(tan, Math.sin(r)).normalize();
       const t = terrain(dd);
       if (t.hall !== hi || t.mask < 0.55 || t.n < 0.62 || t.rd < 2.8 || t.nd < 3.0 || t.pd < 3.6) continue;
-      if (placed.some(pp => pp.dot(dd) > Math.cos(1.55 / R))) continue;
+      if (placed.some(pp => pp.dot(dd) > Math.cos(1.2 / R))) continue;
       placed.push(dd.clone());
       const q = new THREE.Quaternion().setFromUnitVectors(up, dd).multiply(new THREE.Quaternion().setFromAxisAngle(up, hash3(tries, hi, 1.1) * TAU));
-      const kind = pickKind(hall.id, hash3(tries * 0.7, hi, 8.8));
-      const big = (kind === 'volcano' || kind === 'mountain') ? 1.15 : 0.85;
-      const sc = big + 0.45 * hash3(tries, hi, 4.4);
+      const hero = placed.length <= 2;
+      const kind = hero ? HERO_KIND[hall.id] : pickKind(hall.id, hash3(tries * 0.7, hi, 8.8));
+      const big = (kind === 'volcano' || kind === 'mountain') ? 0.72 : 0.5;
+      const sc = hero ? 1.05 : big + 0.32 * hash3(tries, hi, 4.4);
       const bm = new THREE.Matrix4().compose(dd.clone().multiplyScalar(R + t.e - 0.05), q, new THREE.Vector3(sc, sc, sc));
       for (const pt of propParts(hall, kind, k => hash3(tries * 1.9 + k, hi * 2.3, 6.1))) { pt.m = bm.clone().multiply(pt.m); parts.push(pt); }
     }
     const mg = buildMerged(parts, 0.05);
     landmarks.add(new THREE.Mesh(mg.body, toonMat), new THREE.Mesh(mg.hull, hullMat));
   });
+
+  // ----- 地面細節：草叢、小花、小石頭（InstancedMesh：一種形狀一次畫完，近看地面才不會空空的） -----
+  {
+    const DETAIL = {
+      physics: { tuft: 2400, pebble: 700, flower: 0.14, grass: [0x8aa64a, 0x9bb85a, 0x7c9a40], bloom: [0xfff6e0, 0xf6b088, 0xfde68a], rock: [0xb8ad94, 0xcfc4a8] },
+      chemistry: { tuft: 1500, pebble: 1500, flower: 0.18, grass: [0x8f9a52, 0xa0a060, 0x7f8a48], bloom: [0xfde047, 0xfff6e0], rock: [0xb48cff, 0x7fe0ff, 0xc98a6a, 0xd8b4a0] },
+      earth: { tuft: 1500, pebble: 2000, flower: 0.12, grass: [0x6f9a6a, 0x5f8a62, 0x7fa874], bloom: [0xf5f8fa, 0xc9f4ff], rock: [0x9a9a92, 0xb0a898, 0x8a8f96, 0xc9c4bb] },
+      biology: { tuft: 3200, pebble: 500, flower: 0.38, grass: [0x3f9a4d, 0x4fae60, 0x66c274, 0x37893f], bloom: [0xf7a8c4, 0xfff6e0, 0xfde047, 0xf59ab8], rock: [0x9a9a92, 0xb0a898] },
+    };
+    const white = new THREE.Color(0xffffff);
+    const tuftG = buildMerged([
+      { g: new THREE.ConeGeometry(0.055, 0.34, 4, 1, true), m: M(0, 0.17, 0), color: white },
+      { g: new THREE.ConeGeometry(0.05, 0.3, 4, 1, true), m: M(0.06, 0.14, 0.02, 0, 0, -0.4), color: white },
+      { g: new THREE.ConeGeometry(0.05, 0.28, 4, 1, true), m: M(-0.05, 0.13, 0.03, 0.35, 0, 0.35), color: white },
+    ], 0).body;
+    const pebbleG = new THREE.IcosahedronGeometry(0.11, 0);
+    const bloomG = new THREE.IcosahedronGeometry(0.05, 0);
+    const detailMat = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: gradient });
+    const lists = { tuft: [], pebble: [], bloom: [] };
+    const up = new THREE.Vector3(0, 1, 0), dd = new THREE.Vector3(), tan = new THREE.Vector3(), pv = new THREE.Vector3(), sv = new THREE.Vector3();
+    const q = new THREE.Quaternion(), qs = new THREE.Quaternion(), mtx = new THREE.Matrix4();
+    halls.forEach((hall, hi) => {
+      const spec = DETAIL[hall.id] || DETAIL.biology;
+      const { n, Np, E } = bases[hi];
+      for (const kind of ['tuft', 'pebble']) {
+        const want = spec[kind], salt = kind === 'tuft' ? 0 : 50;
+        let got = 0;
+        for (let tries = 0; got < want && tries < want * 4; tries++) {
+          const a = hash3(hi * 5.3 + salt, tries * 0.917, 3.3) * TAU, r = 0.05 + 0.95 * Math.sqrt(hash3(hi * 1.7, tries * 1.311 + salt, 8.1));
+          tan.copy(E).multiplyScalar(Math.cos(a)).addScaledVector(Np, Math.sin(a));
+          dd.copy(n).multiplyScalar(Math.cos(r)).addScaledVector(tan, Math.sin(r)).normalize();
+          const t = terrain(dd);
+          if (t.hall !== hi || t.n < 0.57 || t.mask < 0.3 || t.rd < 1.05 || t.nd < 1.35 || t.pd < 2.15) continue;
+          if (kind === 'tuft' && t.e > 0.95) continue; // 山頂積雪處不長草
+          got++;
+          const h3 = hash3(tries * 0.37, hi + 2.2, kind === 'tuft' ? 1.9 : 4.7);
+          q.setFromUnitVectors(up, dd).multiply(qs.setFromAxisAngle(up, h3 * TAU));
+          const sz = kind === 'tuft' ? 0.75 + 0.7 * h3 : 0.6 + 1.0 * h3;
+          pv.copy(dd).multiplyScalar(R + t.e - (kind === 'tuft' ? 0.03 : 0.04));
+          sv.set(sz, kind === 'tuft' ? sz : sz * 0.62, sz);
+          mtx.compose(pv, q, sv);
+          const pal = kind === 'tuft' ? spec.grass : spec.rock;
+          lists[kind].push(mtx.clone(), pal[Math.floor(h3 * 997) % pal.length]);
+          if (kind === 'tuft' && hash3(tries * 0.53, hi, 6.6) < spec.flower) {
+            pv.copy(dd).multiplyScalar(R + t.e + 0.29 * sz);
+            mtx.compose(pv, q, sv.set(sz, sz, sz));
+            lists.bloom.push(mtx.clone(), spec.bloom[Math.floor(hash3(tries, hi, 2.7) * 997) % spec.bloom.length]);
+          }
+        }
+      }
+    });
+    const cc = new THREE.Color();
+    for (const [geo, list] of [[tuftG, lists.tuft], [pebbleG, lists.pebble], [bloomG, lists.bloom]]) {
+      const cnt = list.length / 2;
+      if (!cnt) continue;
+      const im = new THREE.InstancedMesh(geo, detailMat, cnt);
+      for (let i = 0; i < cnt; i++) { im.setMatrixAt(i, list[i * 2]); im.setColorAt(i, cc.set(list[i * 2 + 1])); }
+      im.instanceMatrix.needsUpdate = true;
+      if (im.instanceColor) im.instanceColor.needsUpdate = true;
+      im.frustumCulled = false;
+      landmarks.add(im);
+    }
+  }
 
   // 封面縮圖（約 5 KB 一張）載入後換掉表情符號；載不到就維持表情符號
   function loadCovers() {
@@ -930,6 +1099,211 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     });
   }
 
+  // ----- 光速太空梭：開場載著大家飛進來，之後繞著星球慢慢轉 -----
+  const shuttle = new THREE.Group();
+  const flames = [];
+  let shuttleProxy;
+  {
+    const parts = [];
+    const P = (g, m, c, noHull) => parts.push({ g, m, color: new THREE.Color(c), noHull });
+    const BODY = 0xf2ecd9;
+    P(new THREE.CylinderGeometry(0.3, 0.34, 1.5, 16), M(0, 0, 0, Math.PI / 2, 0, 0), BODY);                  // 機身
+    P(new THREE.ConeGeometry(0.3, 0.7, 16), M(0, 0, 1.1, Math.PI / 2, 0, 0), BODY);                          // 機鼻
+    P(new THREE.CylinderGeometry(0.345, 0.345, 0.14, 16), M(0, 0, 0.28, Math.PI / 2, 0, 0), 0xfde047, true); // 黃色腰帶
+    P(new THREE.SphereGeometry(0.22, 14, 8, 0, TAU, 0, Math.PI / 2), Ms(0, 0.2, 0.62, 1, 0.55, 1.5), 0x38bdf8, true); // 駕駛艙窗
+    const wingShape = new THREE.Shape();
+    wingShape.moveTo(0.22, 0.45); wingShape.lineTo(1.15, -0.5); wingShape.lineTo(1.15, -0.72); wingShape.lineTo(0.22, -0.7); wingShape.closePath();
+    const wingR = new THREE.Matrix4().makeRotationX(Math.PI / 2).setPosition(0, -0.08, 0);
+    const wingL = new THREE.Matrix4().makeRotationZ(Math.PI).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)).setPosition(0, -0.14, 0);
+    P(new THREE.ExtrudeGeometry(wingShape, { depth: 0.06, bevelEnabled: false }), wingR, 0xe6e0d0);
+    P(new THREE.ExtrudeGeometry(wingShape, { depth: 0.06, bevelEnabled: false }), wingL, 0xe6e0d0);
+    P(new THREE.BoxGeometry(0.09, 0.1, 0.26), M(1.12, -0.11, -0.6), 0xf2d675, true);   // 翼尖：四館的顏色
+    P(new THREE.BoxGeometry(0.09, 0.1, 0.26), M(-1.12, -0.11, -0.6), 0xa8e6cf, true);
+    const finShape = new THREE.Shape();
+    finShape.moveTo(-0.75, 0.25); finShape.lineTo(-0.75, 0.95); finShape.lineTo(-0.45, 0.95); finShape.lineTo(-0.05, 0.25); finShape.closePath();
+    P(new THREE.ExtrudeGeometry(finShape, { depth: 0.06, bevelEnabled: false }), new THREE.Matrix4().makeRotationY(-Math.PI / 2).setPosition(0.03, 0, 0), BODY);
+    P(new THREE.BoxGeometry(0.075, 0.12, 0.3), M(0, 0.72, -0.55), 0xf0955c, true);
+    P(new THREE.BoxGeometry(0.075, 0.12, 0.38), M(0, 0.52, -0.45), 0x6fa8f2, true);
+    const nozzles = [[0, 0.1], [-0.17, -0.08], [0.17, -0.08]];
+    nozzles.forEach(([x, y]) => P(new THREE.CylinderGeometry(0.1, 0.14, 0.24, 12), M(x, y, -0.84, Math.PI / 2, 0, 0), 0x4a5a52));
+    const sg2 = buildMerged(parts, 0.035);
+    shuttle.add(new THREE.Mesh(sg2.body, toonMat), new THREE.Mesh(sg2.hull, hullMat));
+    const fOut = new THREE.MeshBasicMaterial({ color: 0x55e9ff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+    const fIn = new THREE.MeshBasicMaterial({ color: 0xfff3c4, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+    const fOutG = new THREE.ConeGeometry(0.11, 0.8, 10).translate(0, 0.4, 0).rotateX(-Math.PI / 2);
+    const fInG = new THREE.ConeGeometry(0.065, 0.5, 8).translate(0, 0.25, 0).rotateX(-Math.PI / 2);
+    nozzles.forEach(([x, y]) => {
+      const fg = new THREE.Group();
+      fg.position.set(x, y, -0.96);
+      fg.add(new THREE.Mesh(fOutG, fOut), new THREE.Mesh(fInG, fIn));
+      shuttle.add(fg);
+      flames.push(fg);
+    });
+    shuttleProxy = new THREE.Mesh(new THREE.SphereGeometry(2.2, 8, 6), hiddenMat);
+    shuttle.add(shuttleProxy);
+    shuttle.scale.setScalar(0.62);
+    shuttle.visible = false;
+    scene.add(shuttle);
+  }
+
+  // 光速星流：一條條細長的光，從畫面中心往外拉（只在開場出現）
+  const WARP_N = 600;
+  const warp = (() => {
+    const pos = new Float32Array(WARP_N * 12), colA = new Float32Array(WARP_N * 12), idx = new Uint32Array(WARP_N * 6);
+    const data = [];
+    const tints = [[0.95, 0.93, 0.86], [0.45, 0.9, 1.0], [0.99, 0.86, 0.3], [0.7, 0.98, 0.88]];
+    for (let i = 0; i < WARP_N; i++) {
+      data.push({ a: Math.random() * TAU, r: 7 + Math.pow(Math.random(), 0.7) * 60, z: -Math.random() * 340, w: 0.05 + Math.random() * 0.09, k: 0.6 + Math.random() * 0.8, c: tints[Math.random() < 0.6 ? 0 : 1 + Math.floor(Math.random() * 3)] });
+      const b4 = i * 4;
+      idx.set([b4, b4 + 1, b4 + 2, b4, b4 + 2, b4 + 3], i * 6);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.BufferAttribute(colA, 3));
+    g.setIndex(new THREE.BufferAttribute(idx, 1));
+    const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+    mesh.frustumCulled = false;
+    mesh.visible = false;
+    mesh.renderOrder = 8;
+    scene.add(mesh);
+    function update(cam, vLen, dz, bright) {
+      const L0 = clamp(vLen * 0.05, 0.05, 46);
+      for (let i = 0; i < WARP_N; i++) {
+        const d = data[i];
+        d.z += dz;
+        if (d.z > 4) d.z -= 344;
+        const cx = cam.x + Math.cos(d.a) * d.r, cy = cam.y + Math.sin(d.a) * d.r;
+        const hz = cam.z + d.z, tz = hz - L0 * d.k;
+        const tx = -Math.sin(d.a) * d.w, ty = Math.cos(d.a) * d.w;
+        const o = i * 12;
+        pos[o] = cx - tx; pos[o + 1] = cy - ty; pos[o + 2] = hz;
+        pos[o + 3] = cx + tx; pos[o + 4] = cy + ty; pos[o + 5] = hz;
+        pos[o + 6] = cx + tx; pos[o + 7] = cy + ty; pos[o + 8] = tz;
+        pos[o + 9] = cx - tx; pos[o + 10] = cy - ty; pos[o + 11] = tz;
+        const f = bright * smooth(4, -24, d.z) * smooth(-344, -260, d.z);
+        for (let k = 0; k < 2; k++) { colA[o + k * 3] = d.c[0] * f; colA[o + k * 3 + 1] = d.c[1] * f; colA[o + k * 3 + 2] = d.c[2] * f; }
+        for (let k = 6; k < 12; k++) colA[o + k] = 0;
+      }
+      g.attributes.position.needsUpdate = true;
+      g.attributes.color.needsUpdate = true;
+    }
+    return { mesh, update };
+  })();
+
+  // 開場：鏡頭從很遠的地方以光速衝過來、慢慢煞車；太空梭在前面帶路，最後繞進軌道
+  const INTRO = { far: 640, dur: 5600 };
+  const ORB_R = 15, ORB_W = 0.16, ORB_END = -4.0, ORB_IN = 0.6, ORB_U = 0.62;
+  const ORB_K = (ORB_IN - ORB_END - ORB_W * (INTRO.dur / 1000) * (1 - ORB_U)) / ((1 - ORB_U) * (1 - ORB_U));
+  const qOrb = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.42, 0, 0.2));
+  let intro = null;
+  let shuttleTheta = ORB_END, shuttleRoll = 0;
+  const shPos = new THREE.Vector3(), shPos2 = new THREE.Vector3(), shDir = new THREE.Vector3(), shPrev = new THREE.Vector3(0, 0, -1);
+  const _c = new THREE.Vector3(), _ch = new THREE.Vector3(), camI = new THREE.Vector3();
+  const orbitPos = (th, out) => out.set(ORB_R * Math.cos(th), 0, ORB_R * Math.sin(th)).applyQuaternion(qOrb);
+  function introCam(u, out) {
+    const sw = 1 - u;
+    return out.set(Math.sin(u * 6.0) * 0.9 * sw, (1.2 + Math.cos(u * 4.3) * 0.5) * sw, planetDistance() + INTRO.far * Math.pow(sw, 2.4));
+  }
+  const introSpeed = u => 2.4 * INTRO.far / (INTRO.dur / 1000) * Math.pow(1 - u, 1.4);
+  function shuttleAt(u, out) {
+    introCam(u, _c);
+    const ahead = 6.2 + 30 * Math.pow(smooth(0.25, 1.0, u), 1.5);
+    _ch.set(_c.x + Math.sin(u * 9) * 0.25, _c.y - 1.05 + Math.sin(u * 7) * 0.12, _c.z - ahead);
+    orbitPos(ORB_END + ORB_W * (INTRO.dur / 1000) * (1 - u) + ORB_K * (1 - u) * (1 - u), out);
+    return out.lerp(_ch, 1 - smooth(0.5, 0.9, u));
+  }
+  function poseShuttle(pos, dir, dt, bankBias) {
+    shuttle.position.copy(pos);
+    // 轉彎時往內側傾
+    const turn = shPrev.x * dir.z - shPrev.z * dir.x;
+    shPrev.copy(dir);
+    const target = clamp(-turn / Math.max(dt, 1e-3) * 0.6 + bankBias, -0.9, 0.9);
+    shuttleRoll += (target - shuttleRoll) * (1 - Math.exp(-dt / 0.25));
+    tmpLook.copy(pos).add(dir);
+    shuttle.lookAt(tmpLook);
+    shuttle.rotateZ(shuttleRoll);
+  }
+  const tmpLook = new THREE.Vector3();
+  function flicker(power) {
+    for (const f of flames) {
+      const j = 0.82 + 0.36 * Math.random();
+      f.scale.set(1, 1, power * j);
+    }
+  }
+  function updateIntro(dt, now) {
+    const flying = intro.phase === 'fly';
+    const u = intro.fixedU != null ? intro.fixedU : flying ? Math.min(1, (now - intro.t0) / INTRO.dur) : 0;
+    intro.u = u;
+    planet.quaternion.copy(intro.qStart).slerp(intro.qEnd, 1 - Math.pow(1 - u, 2.2));
+    introCam(u, camI);
+    const v = introSpeed(u);
+    warp.mesh.visible = true;
+    warp.update(camI, v, flying ? v * dt : 0, smooth(12, 150, v));
+    shuttleAt(u, shPos);
+    shuttleAt(Math.min(1, u + 0.004), shPos2);
+    shDir.subVectors(shPos2, shPos);
+    if (shDir.lengthSq() < 1e-8) shDir.set(0, 0, -1);
+    shDir.normalize();
+    poseShuttle(shPos, shDir, dt, 0);
+    flicker(1 + 2.2 * smooth(20, 200, v));
+    clouds.rotation.y += dt * 0.012;
+    if (u >= 1 && intro.fixedU == null) { endIntro(now); return true; }
+    return flying && intro.fixedU == null;
+  }
+  function endIntro(now) {
+    if (!intro) return;
+    const cb = intro.onDone;
+    planet.quaternion.copy(intro.qEnd);
+    intro = null;
+    warp.mesh.visible = false;
+    shuttleTheta = ORB_END;
+    lastWake = now;
+    if (cb) cb();
+  }
+  function beginIntro() {
+    if (reducedMotion) return false;
+    flight = null;
+    omega.set(0, 0, 0);
+    state.mode = 'planet'; state.k = 0; state.zoomP = 1;
+    const qEnd = planet.quaternion.clone();
+    const qStart = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -2.6).multiply(qEnd);
+    intro = { phase: 'hold', t0: 0, u: 0, qStart, qEnd, onDone: null };
+    shuttle.visible = true;
+    invalidate();
+    return true;
+  }
+  function playIntro(onDone) {
+    if (!intro) { if (onDone) onDone(); return; }
+    intro.phase = 'fly';
+    intro.t0 = performance.now();
+    intro.onDone = onDone || null;
+    invalidate();
+  }
+  function skipIntro() {
+    if (!intro) return;
+    intro.onDone = null;
+    endIntro(performance.now());
+    invalidate();
+  }
+
+  // 沒有人操作時的小動畫（雲飄、太空梭繞行、星星呼吸）；兩分鐘沒動作就停下來省電，並以每秒約 30 格繪製
+  const AMBIENT_MS = 120000;
+  let lastWake = performance.now(), onlyAmbient = false;
+  function ambientOn(now) { return !reducedMotion && state.mode === 'planet' && state.k < 0.04 && now - lastWake < AMBIENT_MS; }
+  function ambientStep(dt, now) {
+    clouds.rotation.y += dt * 0.012;
+    shuttleTheta -= ORB_W * dt;
+    const t = now / 1000;
+    starMats.forEach((m, i) => { m.userData.tw = i === 0 ? 1 : 0.8 + 0.2 * Math.sin(t * (1.1 + i * 0.7) + i * 2.1); });
+    flicker(1);
+  }
+  function orbitShuttle(dt) {
+    orbitPos(shuttleTheta, shPos);
+    orbitPos(shuttleTheta - 0.01, shPos2);
+    shDir.subVectors(shPos2, shPos).normalize();
+    poseShuttle(shPos, shDir, Math.max(dt, 0.016), 0.35);
+  }
+
   // ----- 視角狀態 -----
   const state = {
     mode: 'planet',     // 目前的目標：planet | hall
@@ -967,7 +1341,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     invalidate();
   }
   function planetDistance() {
-    const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
+    const halfV = THREE.MathUtils.degToRad(BASE_FOV / 2);
     const halfH = Math.atan(Math.tan(halfV) * camera.aspect);
     const half = Math.min(halfV, halfH);
     return R / Math.sin(0.64 * half);
@@ -980,7 +1354,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   }
   function wantVertical() { const { fw, fh } = freeFractions(); return W * fw < H * fh * 1.05; }
   function hallDistance() {
-    const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
+    const halfV = THREE.MathUtils.degToRad(BASE_FOV / 2);
     const tanV = Math.tan(halfV), tanH = tanV * camera.aspect;
     const { fw, fh } = freeFractions();
     const ext = state.curV ? EXT.v : EXT.h;
@@ -1006,6 +1380,18 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     return R + Math.max(e1, e2, terrain(gDir).e);
   }
   function applyCamera() {
+    if (intro) {
+      const u = intro.u || 0;
+      introCam(u, camera.position);
+      const fov = BASE_FOV + 26 * Math.pow(1 - u, 1.6);
+      if (Math.abs(camera.fov - fov) > 1e-4) camera.fov = fov;
+      const r = 0.07 * Math.sin(u * 5.2) * (1 - u);
+      camera.up.set(Math.sin(r), Math.cos(r), 0);
+      camera.lookAt(0, 0, 0);
+      camera.setViewOffset(W, H, 0, 0, W, H);
+      return;
+    }
+    if (camera.fov !== BASE_FOV) camera.fov = BASE_FOV;
     posP.set(0, 0, planetDistance() * state.zoomP);
     const g = groundBlend();
     posG.set(0, -GROUND.back, groundH + GROUND.camH);
@@ -1032,8 +1418,21 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     planetMat.opacity = planetHullMat.opacity = 1 - ek;
     planetMeshes.forEach(m => { m.visible = ek < 0.99; });
     landmarks.visible = k < 0.5;
+    const gbv = groundBlend();
+    const atmoK = (1 - ek) * (1 - smooth(0.15, 0.6, gbv));
+    atmoU.uStrength.value = atmoK;
+    atmoOuter.visible = atmoInner.visible = atmoK > 0.01;
+    const skyA = intro ? 0 : smooth(0.45, 0.95, gbv);
+    skyU.uAlpha.value = skyA;
+    sky.visible = skyA > 0.01;
+    starFade = 1 - skyA;
+    starMats.forEach(m => { m.opacity = m.userData.base * m.userData.tw * starFade; });
+    starGroup.visible = starFade > 0.01;
+    scene.fog.near = lerp(900, 6, skyA);
+    scene.fog.far = lerp(1800, 30, skyA);
+    shuttle.visible = !!intro || (state.mode === 'planet' && k < 0.3 && gbv < 0.35);
     hallObjs.forEach(h => { h.icon.visible = k < 0.5; });
-    clouds.visible = k < 0.35;
+    clouds.visible = k < 0.35 && groundBlend() < 0.4; // 雲很低：走在地面上時收起來，才不會擋住視線
     hallObjs.forEach((h, i) => {
       const isVis = i === state.hallVis;
       h.group.visible = k < 0.55 || isVis;
@@ -1132,12 +1531,16 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     planet.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(axis.clone().normalize(), angle));
   }
   function onTap(cx, cy) {
-    if (flight) return;
+    if (flight || intro) return;
     const rect = canvas.getBoundingClientRect();
     ndc.set(((cx - rect.left) / rect.width) * 2 - 1, -((cy - rect.top) / rect.height) * 2 + 1);
     camera.updateMatrixWorld(true);
     scene.updateMatrixWorld(true);
     raycaster.setFromCamera(ndc, camera);
+    if (state.mode === 'planet' && shuttle.visible && handlers.onShuttlePick && raycaster.intersectObject(shuttleProxy, false).length) {
+      handlers.onShuttlePick();
+      return;
+    }
     if (state.mode === 'planet' && groundBlend() > 0.5) {
       const hit = raycaster.intersectObjects(signSprites.concat(statueProxiesPlanet), false)[0];
       if (hit) {
@@ -1166,6 +1569,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   }
 
   canvas.addEventListener('pointerdown', e => {
+    if (intro) return;
     canvas.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lastInteract = performance.now();
@@ -1213,7 +1617,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
       if (!reducedMotion) omega.lerp(axis.normalize().multiplyScalar(angle / dt), 0.5);
     } else if (state.mode === 'hall') {
       // 拖曳＝平移地圖
-      const wpp = (2 * hallDistance() * state.zoomH * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / H;
+      const wpp = (2 * hallDistance() * state.zoomH * Math.tan(THREE.MathUtils.degToRad(BASE_FOV / 2))) / H;
       const ext = state.curV ? EXT.v : EXT.h;
       pan.x = clamp(pan.x - dx * wpp, -ext.ex, ext.ex);
       pan.y = clamp(pan.y + dy * wpp, -ext.ey, ext.ey);
@@ -1239,6 +1643,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   canvas.addEventListener('pointercancel', endPointer);
   canvas.addEventListener('wheel', e => {
     e.preventDefault();
+    if (intro) return;
     const f = Math.exp(e.deltaY * 0.0012);
     if (state.mode === 'planet') state.zoomP = clamp(state.zoomP * f, minZoomP(), 1.5);
     else {
@@ -1259,6 +1664,8 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   const tmpN = new THREE.Vector3();
 
   function invalidate() {
+    lastWake = performance.now();
+    onlyAmbient = false;
     if (running) return;
     running = true;
     last = performance.now();
@@ -1266,6 +1673,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   }
 
   function update(dt, now) {
+    if (intro) return updateIntro(dt, now);
     let active = false;
     if (flight) {
       const u = Math.min(1, (now - flight.t0) / flight.dur);
@@ -1331,6 +1739,9 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
         }
       }
     }
+    if (ambientOn(now)) { ambientStep(dt, now); onlyAmbient = !active; active = true; }
+    else onlyAmbient = false;
+    if (shuttle.visible) orbitShuttle(dt);
     return active;
   }
 
@@ -1359,15 +1770,20 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
 
   function frame(now) {
     raf = 0;
+    const ambientFrame = onlyAmbient;
+    if (ambientFrame && now - last < 30) { raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
     last = now;
     const active = update(dt, now);
     applyVisibility();
     applyCamera();
+    starGroup.position.copy(camera.position);
+    sky.position.copy(camera.position);
+    skyU.uUp.value.copy(camera.position).normalize();
     scene.updateMatrixWorld(true);
     emitFrame();
     renderer.render(scene, camera);
-    if (!quality) { // 品質自動降級：只降不升
+    if (!quality && !ambientFrame && !onlyAmbient) { // 品質自動降級：只降不升（背景小動畫刻意 30 fps，不算）
       qSamples.push(dt);
       if (qSamples.length >= 70) {
         const avg = qSamples.reduce((a, b) => a + b, 0) / qSamples.length;
@@ -1418,16 +1834,24 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   invalidate();
 
   return {
+    beginIntro,
+    playIntro,
+    skipIntro,
     flyToHall,
     flyToPlanet,
     focusUnit,
     setSheetFraction(f, axis) { state.sheetF = clamp(f, 0, 0.9); state.sheetAxis = axis === 'x' ? 'x' : 'y'; invalidate(); },
     stats,
+    // 檢查用：直接設定星球角度（尤拉角，弧度）與縮放
+    debugPose(rx, ry, rz, zoom = 1) { flight = null; omega.set(0, 0, 0); planet.quaternion.setFromEuler(new THREE.Euler(rx, ry, rz)); state.zoomP = zoom; lastInteract = performance.now() + 1e9; invalidate(); },
+    // 檢查用：把開場停在某個進度 u（0～1）
+    debugIntro(u) { if (!intro) beginIntro(); intro.phase = 'fly'; intro.fixedU = u; invalidate(); },
     // 檢查用：回傳某個東西在畫面上的位置（像素）
     debugScreen(kind, id) {
       applyVisibility(); applyCamera(); scene.updateMatrixWorld(true);
       const v = new THREE.Vector3();
-      if (kind === 'unit') { const i = unitIndex.get(id); hallObjs[i.hall].exhibits[i.index].sprite.getWorldPosition(v); }
+      if (kind === 'shuttle') shuttle.getWorldPosition(v);
+      else if (kind === 'unit') { const i = unitIndex.get(id); hallObjs[i.hall].exhibits[i.index].sprite.getWorldPosition(v); }
       else { const h = hallObjs[halls.findIndex(x => x.id === id)]; h.statueProxies[0].getWorldPosition(v); }
       v.project(camera);
       return { x: (v.x * 0.5 + 0.5) * W, y: (-v.y * 0.5 + 0.5) * H };

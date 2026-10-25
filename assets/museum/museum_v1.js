@@ -1,8 +1,9 @@
 // 伽利略星球入口：載入資料、建立畫面層、（可用時）建立 3D 場景、處理網址路由。
 // 改版時請同步更新 index_museum.html、本檔與下面兩個 import 的 ?v= 版本字串。
-import { createUI } from './ui.js?v=20261026j';
+import { createUI } from './ui.js?v=20261026k';
+import { startLaunch } from './launch.js?v=20261026k';
 
-const VERSION = '20261026j';
+const VERSION = '20261026k';
 
 const CONFIG = {
   // 舊版清單的位置。新首頁取代 index.html 之後，請改成 'index_classic.html'。
@@ -28,6 +29,20 @@ function saveLang(l) {
   try { localStorage.setItem('galileo.lang', l); } catch (e) { /* ignore */ }
 }
 
+// 開場（煙霧＋歡迎詞＋太空梭飛進來）：每次開啟瀏覽器只播一次；直接連到某一館時不播。
+// ?intro=1 強制播放、?intro=0 不播。
+function shouldIntro() {
+  const q = params.get('intro');
+  if (q === '0') return false;
+  if (q === '1') return true;
+  if (reducedMotion) return false;
+  const h = location.hash.replace(/^#\/?/, '');
+  if (h && h !== 'planet') return false;
+  try { if (sessionStorage.getItem('galileo.introSeen') === '1') return false; } catch (e) { /* ignore */ }
+  return true;
+}
+const launch = shouldIntro() ? startLaunch({ lang: loadLang() }) : null;
+
 function withTimeout(promise, ms, label) {
   return Promise.race([
     promise,
@@ -36,6 +51,25 @@ function withTimeout(promise, ms, label) {
 }
 
 async function main() {
+  let scene = null;
+  let launchDone = !launch;
+  function endLaunch() {
+    if (launchDone) return;
+    launchDone = true;
+    document.body.classList.remove('launching');
+    try { sessionStorage.setItem('galileo.introSeen', '1'); } catch (e) { /* ignore */ }
+  }
+  if (launch) launch.onSkip(() => { launch.skip(); if (scene) scene.skipIntro(); endLaunch(); });
+  async function runLaunch() {
+    if (!launch || launchDone) return;
+    const flying = !!(scene && scene.beginIntro());
+    await launch.minShown;
+    if (launchDone) { if (scene) scene.skipIntro(); return; }
+    launch.part(() => { if (flying) scene.playIntro(endLaunch); });
+    await launch.done;
+    if (!flying) endLaunch();
+  }
+
   const res = await fetch(CONFIG.dataUrl + '?v=' + VERSION);
   if (!res.ok) throw new Error('lessons.json ' + res.status);
   const data = await res.json();
@@ -44,7 +78,6 @@ async function main() {
     if (sr.ok) data.scientists = await sr.json();
   } catch (e) { /* 沒有科學家簡介也能用 */ }
 
-  let scene = null;
   let route = { mode: 'planet' };
 
   const parseHash = () => {
@@ -103,7 +136,9 @@ async function main() {
   const canvas = document.getElementById('scene');
   const debugEl = document.getElementById('debug');
   try {
-    const mod = await withTimeout(import('./scene.js?v=' + VERSION), 20000, 'scene import');
+    const modP = withTimeout(import('./scene.js?v=' + VERSION), 20000, 'scene import');
+    if (launch && !launchDone) await launch.textShown;
+    const mod = await modP;
     scene = await mod.createScene({
       canvas,
       halls: data.halls,
@@ -115,6 +150,11 @@ async function main() {
         onInteract: () => document.body.classList.add('touched'),
         onHallPick: id => go(id),
         onStatuePick: id => ui.showScientist(id),
+        onShuttlePick: () => { // 點太空梭：再飛一次
+          if (route.mode !== 'planet' || !launchDone || !scene.beginIntro()) return;
+          document.body.classList.add('launching');
+          scene.playIntro(() => document.body.classList.remove('launching'));
+        },
         onUnitPick: (hallId, unitId) => go(hallId + '/' + unitId),
         onExhibitPick: unitId => {
           if (route.mode !== 'hall') return;
@@ -145,6 +185,7 @@ async function main() {
       try { seen = localStorage.getItem('galileo.iosHint') === '1'; localStorage.setItem('galileo.iosHint', '1'); } catch (e) { /* ignore */ }
       if (!seen) ui.notice(ui.strings().ios, 7000);
     }
+    runLaunch();
   } catch (err) {
     console.warn('[galileo] 3D 無法使用，改用簡易模式：', err);
     failTo2D(String(err && err.message || err));
@@ -162,6 +203,7 @@ async function main() {
     a.textContent = ui.strings().classicLink;
     box.appendChild(a);
     ui.notice(box, 9000);
+    runLaunch();
   }
 
   // 提供給檢查腳本與除錯用
@@ -177,6 +219,8 @@ async function main() {
 
 main().catch(err => {
   console.error('[galileo] 啟動失敗', err);
+  if (launch) launch.skip();
+  document.body.classList.remove('launching');
   const n = document.getElementById('notice');
   if (n) {
     n.hidden = false;
