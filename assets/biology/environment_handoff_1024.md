@@ -53,5 +53,5 @@
 - 第 3 課：圖片處理（`cut_environment_l3_1024.py`、`_report_environment_l3_1024.json`、sources.md 第 3 課段落）、kit SIZE、主程式 `environment_conservation_1024_v1.js`（5 分頁）、預覽頁 `biology_environmental_conservation_1024_preview1.html` 已完成；13 個動畫目前都是「動畫製作中」占位。正式頁 `biology_environmental_conservation.html` 還是舊的（動畫做完再換，並更新首頁卡片：新標題「保育，怎麼知道有沒有效？」、封面 `assets/covers/biology_environmental_conservation_1024_v1.jpg`）。
 - 分頁與動畫：`conservation-evidence`：turtle、toolbox、assess；`habitat-connections`：fishway、corridor、monitor；`everyday-actions`：track(選項 s.action)、tradeoff、citizen；`traditional-knowledge`：season、clues、materials；`synthesis`：casefile。
 - 動畫順序（一次一個 Opus）：`assess` → `track` → `clues` → `casefile` → `turtle` → `toolbox` → `fishway` → `corridor` → `monitor` → `tradeoff` → `season` → `citizen` → `materials`。做完一個，在預覽頁主程式那行之前加一行 `environment_draw_<名>_1024_v1.js?v=20261025-v1`。
-- 完成：`assess`、`track`、`clues`
+- 完成：`assess`、`track`、`clues`、`casefile`
 - 已知：CV5b 構圖與 CV5a 不一致（fishway 要對位或切換，不要淡入淡出）；CV1_juvenile 原圖是成體姿勢，不要標大小。
