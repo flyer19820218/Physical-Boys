@@ -125,7 +125,7 @@ const SW_TEXT=[
 
 // ── water / 1: pollination of a gymnosperm (pine): wind, a naked ovule, the pollination droplet, a slow pollen tube ──
 // (2026-10-26: replaces the one-ovule and many-ovules views, which moved to the flowering-plant reproduction page, flowers_ovule_1026_v1.js)
-const GY_SHORT=[P(`雄毬果與雌毬果`,`Male and female cones`),P(`花粉帶氣囊`,`Pollen with air sacs`),P(`裸露的胚珠`,`A naked ovule`),P(`傳粉滴`,`Pollination droplet`),P(`花粉管慢慢長`,`A slow pollen tube`),P(`受精`,`Fertilization`),P(`長成種子`,`Becomes a seed`)];
+const GY_SHORT=[P(`雄毬果與雌毬果`,`Two kinds of cones`),P(`花粉帶氣囊`,`Pollen with air sacs`),P(`裸露的胚珠`,`A naked ovule`),P(`傳粉滴`,`Pollination droplet`),P(`花粉管慢慢長`,`A slow pollen tube`),P(`受精`,`Fertilization`),P(`長成種子`,`Becomes a seed`)];
 const GY_NAMES=[P(`春天的松：雄毬果放花粉，雌毬果等花粉`,`A pine in spring: male cones shed pollen, a female cone waits`),P(`花粉有兩個氣囊，靠風飄`,`Pollen has two air sacs and drifts on the wind`),P(`鱗片上的胚珠：裸露，沒有子房包著`,`The ovule on a scale: naked, with no ovary around it`),P(`傳粉滴：黏住花粉，拉進珠孔`,`The pollination droplet: it catches pollen and draws it into the micropyle`),P(`花粉管慢慢長，要大約一年`,`The pollen tube grows slowly, about a year`),P(`精細胞和卵結合：受精`,`A sperm cell joins the egg: fertilization`),P(`受精卵長成胚，胚珠長成帶翅的種子`,`The zygote becomes the embryo and the ovule becomes a winged seed`)];
 const GY_TEXT=[
  P(`春天，松的新枝下部長出一簇簇黃色的雄毬果，成熟時放出大量花粉。新枝頂端有小小的雌毬果，這時還很小，鱗片上的胚珠在等花粉來。（枝條與毬果是 AI 插圖；雄毬果的數量不是固定的。）`,`In spring a pine's new shoot carries clusters of yellow male cones near its base, which shed huge amounts of pollen when ripe. At the tip of the shoot is a small female cone; it is still young, and the ovules on its scales are waiting for pollen. (The shoot and cones are an AI illustration; the number of male cones varies.)`),
