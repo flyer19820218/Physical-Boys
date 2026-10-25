@@ -222,7 +222,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     let guard = 0;
     while (blobs.length < 68 && guard++ < 600) {
       dir.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1).normalize();
-      if (hallDirs.some(h => dir.dot(h) > 0.84)) continue;
+      if (hallDirs.some(h => dir.dot(h) > 0.9)) continue;
       const centre = dir.clone().multiplyScalar(R + 3.6 + Math.random() * 0.8);
       const tangent = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0.3)).normalize();
       const count = 3 + Math.floor(Math.random() * 3);
@@ -634,7 +634,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
         h.alpha += da * (1 - Math.exp(-dt / 0.13));
         active = true;
       } else if (!dragging) h.alpha = h.alphaTarget;
-      h.ring.rotation.y = -h.alpha; // phi' = phi − alpha（見 PLAN）
+      h.ring.rotation.y = h.alpha; // 繞 y 軸轉 θ 會讓角度 phi 變成 phi − θ，所以 phi' = phi − alpha
       for (const e of h.exhibits) {
         const ds = e.target - e.size, dh = e.hopTarget - e.hop;
         if (Math.abs(ds) > 0.005 || Math.abs(dh) > 0.005) {

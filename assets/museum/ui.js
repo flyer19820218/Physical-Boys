@@ -420,7 +420,9 @@ export function createUI({ data, config, lang, handlers }) {
       const el = plateEls[it.id];
       if (!el) return;
       el.classList.toggle('is-hidden', !it.show);
-      el.style.transform = 'translate3d(' + Math.round(it.x) + 'px,' + Math.round(it.y) + 'px,0) translate(-50%,-115%)';
+      const half = (el.offsetWidth || 160) / 2 + 8;
+      const x = Math.min(Math.max(it.x, half), Math.max(half, (window.innerWidth || 390) - half));
+      el.style.transform = 'translate3d(' + Math.round(x) + 'px,' + Math.round(it.y) + 'px,0) translate(-50%,-115%)';
     });
   }
   function setNo3D(flag) {

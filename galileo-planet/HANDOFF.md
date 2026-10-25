@@ -8,8 +8,8 @@
 |---|---|---|---|---|
 | 規劃 | `PLAN.md`、`HANDOFF.md` | 完成 | 2026-10-25 | （見日誌） |
 | 前置 | 各課左上角「回單元總覽」箭頭 | 完成（139 課） | 2026-10-25 | `a5255b7` |
-| P0 | 資料與檢查（`lessons.json`、`check_museum.cjs`） | 進行中 | 2026-10-26 本對話 | — |
-| P1 | 星球與漫遊 | 進行中 | 2026-10-26 本對話 | — |
+| P0 | 資料與檢查（`lessons.json`、`check_museum.cjs`） | 資料完成（`d7721ac`）；`check_museum.cjs` 未寫 | 2026-10-26 本對話 | — |
+| P1 | 星球與漫遊 | 進行中：畫面層＋3D 已可跑（headless 目視通過）；缺 iPhone 15 實測 | 2026-10-26 本對話 | — |
 | P2 | 物理與化學展品 | 未開工 | — | — |
 | P3 | 地科與生物展窗 | 未開工 | — | — |
 | P4 | 氛圍 | 未開工 | — | — |
@@ -81,5 +81,8 @@
 - 已完成前置：每課左上角房子右邊加「回單元總覽」箭頭（`assets/back_nav_1025_v1.css`＋每頁 `a.back-fab`，連到 `index.html#physics` 等；`index.html` 末尾有一小段 hash 處理）。commit `a5255b7`，驗證桌機與手機寬度四科各一課。限制：有電影封面的課，封面還在時房子與箭頭都被封面蓋住，點掉封面才能按（原設計）。
 - 首頁沒列出的 10 頁（6 個 `…_preview1.html`、`mirrior_1`、`skyball`、`sun_trajectory_Tai`、`sun_trajectory_northpole`）沒加箭頭。若有人把預覽檔複製成正式檔，箭頭會消失；補法：重跑同樣的腳本邏輯（在 `home-fab` 後插入 `a.back-fab`、在 `home_nav_1011_v1.css` 後插入 `back_nav_1025_v1.css` 連結，已有的略過）。
 - 還沒做、也不屬於這個計畫：「下一頁」按鈕（老師說等生物最後一個單元完成再做）。
-- 尚無任何 `index_museum.html` 或 `assets/museum/` 程式碼；P0 還沒開始。
+- 2026-10-26：P0 資料完成；P1 完成 `index_museum.html`、`assets/museum/{museum.css,ui.js,museum_v1.js,scene.js}`、`vendor/three.module.min.js`（r170，老師手動下載附上，因雲端環境連不到 npm）。模組合併成 ui.js／museum_v1.js／scene.js 三檔，不是 PLAN 原本的拆法。
+- 改版必同步更新版本字串 `?v=`：`index_museum.html`、`museum_v1.js`（含 VERSION 與 ui.js import）。目前 `20261026b`。
+- headless（SwiftShader）檢查：星球、四館、館內展品圈、焦點展品轉到正前方皆正常；雲端 FPS 無意義。待老師用 iPhone 15 開 `index_museum.html?debug=1` 回報 FPS／calls／tris。
+- 下一步：`tools/museum/check_museum.cjs`、P2 器材展品（目前展品是底座＋emoji 暫代）、星球上館與雲的視覺微調。
 - 待老師確認的問題見 `PLAN.md` §10。
