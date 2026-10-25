@@ -1149,6 +1149,24 @@ open "$OUT"
 - 網頁上一定要同時有字幕；聲音要等使用者按一下才能播（iPad 的規定），所以有配音的地方要設計一個「按下開始」的按鈕。
 - 伽利略星球開場的台詞與字幕：`assets/museum/audio/intro_lines.json`；錄好的檔案用 `python3 tools/museum/build_narration.py <wav 資料夾>` 接成 `intro_zh.mp3` 並算好字幕時間。
 
+## 故障排除：每一句都出現 `_spropack ... __thread_bss ... offset field is not zero`
+
+- 2026-10-26 發生過：新版 macOS 拒絕載入 scipy 裡的 PROPACK（Fortran 擴充），結果**一個 wav 都沒產生**（最後顯示 `no matches found`）。BreezyVoice 用不到 PROPACK。
+- 快速修法（把那 4 個 `.so` 改名成 `.so.bak`，換成空殼；復原只要把 `.bak` 改回來）：
+
+```bash
+cd ~/BreezyVoice && source .venv/bin/activate
+P="$(python -c 'import scipy, os; print(os.path.dirname(scipy.__file__))')/sparse/linalg/_propack"
+for m in _spropack _dpropack _cpropack _zpropack; do
+  for f in "$P"/$m.cpython-*-darwin.so; do [ -e "$f" ] && mv "$f" "$f.bak"; done
+  printf 'def __getattr__(name):\n    def _missing(*a, **k):\n        raise RuntimeError("PROPACK unavailable on this Mac")\n    return _missing\n' > "$P/$m.py"
+done
+python -c "import scipy.sparse.linalg; print('✅ scipy 修好了')"
+python -c "import transformers.models.clip.modeling_clip; print('✅ 可以錄音了')"
+```
+
+- 如果還有別的 `.so` 載不進來：正式解法是用 Python 3.11 以上重建 BreezyVoice 的 `.venv`，並裝 scipy 1.16 以上（scipy 1.16 起不支援 Python 3.10）。參考：scipy issue #25635。
+
 ---
 
 # ✅ V5 最後檢查清單
