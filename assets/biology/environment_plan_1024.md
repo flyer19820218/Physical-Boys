@@ -1195,5 +1195,5 @@ Style: detailed scientific illustration in a clean, semi-realistic hand-painted 
 - [ ] `environment_kit_1024_v1.js`（已做）、三個主程式與預覽頁（第 1 課已做，第 2、3 課未做）、`stub`（已做）
 - 第 1 課動畫：[x] count　[x] composition　[x] worth　[x] frogs　[x] response　[x] mosaic　[x] residents　[x] uses　[x] green　[x] boundary
 - 第 2 課動畫：[x] conc　[x] judge　[x] edge　[x] fragment　[x] harvest　[x] pathway　[x] stages　[x] sources　[x] chain　[x] bioacc　[x] magnify　[x] shift　[x] coral　[x] timing
-- 第 3 課動畫：[ ] assess　[ ] track　[ ] clues　[ ] casefile　[ ] turtle　[ ] toolbox　[ ] fishway　[ ] corridor　[ ] monitor　[ ] tradeoff　[ ] season　[ ] citizen　[ ] materials
+- 第 3 課動畫：[x] assess　[x] track　[x] clues　[x] casefile　[x] turtle　[x] toolbox　[x] fishway　[x] corridor　[x] monitor　[x] tradeoff　[x] season　[x] citizen　[x] materials
 - [ ] QA（`qa_page`、`qa_text`、`smoke`）、換掉三個正式頁、首頁卡片與封面、`PROGRESS.md`、commit／push
