@@ -82,7 +82,11 @@
 - 首頁沒列出的 10 頁（6 個 `…_preview1.html`、`mirrior_1`、`skyball`、`sun_trajectory_Tai`、`sun_trajectory_northpole`）沒加箭頭。若有人把預覽檔複製成正式檔，箭頭會消失；補法：重跑同樣的腳本邏輯（在 `home-fab` 後插入 `a.back-fab`、在 `home_nav_1011_v1.css` 後插入 `back_nav_1025_v1.css` 連結，已有的略過）。
 - 還沒做、也不屬於這個計畫：「下一頁」按鈕（老師說等生物最後一個單元完成再做）。
 - 2026-10-26：P0 資料完成；P1 完成 `index_museum.html`、`assets/museum/{museum.css,ui.js,museum_v1.js,scene.js}`、`vendor/three.module.min.js`（r170，老師手動下載附上，因雲端環境連不到 npm）。模組合併成 ui.js／museum_v1.js／scene.js 三檔，不是 PLAN 原本的拆法。
-- 改版必同步更新版本字串 `?v=`：`index_museum.html`、`museum_v1.js`（含 VERSION 與 ui.js import）。目前 `20261026b`。
+- 改版必同步更新版本字串 `?v=`：`index_museum.html`、`museum_v1.js`（含 VERSION 與 ui.js import）。目前 `20261026e`。
 - headless（SwiftShader）檢查：星球、四館、館內展品圈、焦點展品轉到正前方皆正常；雲端 FPS 無意義。待老師用 iPhone 15 開 `index_museum.html?debug=1` 回報 FPS／calls／tris。
 - 下一步：`tools/museum/check_museum.cjs`、P2 器材展品（目前展品是底座＋emoji 暫代）、星球上館與雲的視覺微調。
 - 待老師確認的問題見 `PLAN.md` §10。
+
+- 2026-10-26（晚）：依 PLAN §11 完成——球外 39 個單元地標（只看不能點）、進館轉成平面地圖（彎路＋編號單元站＋通往隔壁館的出口，館到館會先浮到星球外再降落）、寬螢幕（寬高比≥1.2 且寬≥700）卡片改左側直排。地圖直式／橫式依「扣掉卡片後的可用區」自動切換。拖曳＝平移地圖、滾輪／雙指＝縮放。
+- 尚未做：走過打勾與「下一站」記錄（localStorage）、出口上的館名文字（目前只有表情符號）、物理／化學器材模型（P2）、`tools/museum/check_museum.cjs`。
+- 場景現況：展品＝底座＋emoji；球外地標＝小塔＋emoji。

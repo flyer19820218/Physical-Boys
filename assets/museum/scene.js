@@ -1,8 +1,8 @@
 // 伽利略星球的 3D 場景（Three.js r170，卡通描邊，全部用程式碼拼幾何，不用外部模型或貼圖）。
-// 規格與預算見 galileo-planet/PLAN.md §4、§5。重點：
+// 規格見 galileo-planet/PLAN.md §4、§5、§11。重點：
+//   - 球外：39 個單元地標佈滿四個館的區域（只看不能點，點到就是點那一館）
+//   - 進館：鏡頭轉成近乎正上方，球體淡出，剩下這一館的「平面地圖」（彎路＋單元站＋通往隔壁館的出口）
 //   - render-on-demand：沒有動作時完全停止繪圖（0 fps）
-//   - 館的建築、展品底座都合併成「一個本體＋一個描邊」，控制 draw calls
-//   - 館內展品只在目前那一館顯示
 import * as THREE from './vendor/three.module.min.js';
 
 const R = 10;                 // 星球半徑
@@ -10,10 +10,16 @@ const PLATEAU_TOP = R + 0.2;  // 館的平台頂面離球心的距離
 const TILT = 0.35;            // 星球預設的「北極朝向觀眾」傾角
 const TAU = Math.PI * 2;
 const INK = 0x0b1a15;         // 描邊色（不用純黑）
-const HALL_PITCH = 0.72;      // 館層鏡頭俯角（弧度）
+const HALL_PITCH = 0.42;      // 館層鏡頭與正上方的夾角（弧度）；0＝完全俯視
+const MAP_Y = 0.16;           // 地圖面高度（相對館的平台）
+const DISC_R = 14.4;          // 地圖底盤半徑
+// 地圖在兩種版型下需要塞進畫面的半寬、半高（世界單位）
+const EXT = { v: { ex: 6.8, ey: 11.4 }, h: { ex: 12.4, ey: 6.8 } };
+const GATE_EMOJI = { physics: '⚛️', chemistry: '🧪', earth: '🌍', biology: '🧬' };
 
 const clamp = THREE.MathUtils.clamp;
 const lerp = THREE.MathUtils.lerp;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const ease = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 // ---------- 小工具：雜訊、合併幾何、材質 ----------
@@ -64,13 +70,13 @@ function expandGeo(geo, w) {
 }
 
 // parts: [{g: BufferGeometry, m: Matrix4, color: Color, noHull?: boolean}]
-// 回傳 {body, hull}：body 帶頂點色（平面著色），hull 是放大一圈的描邊外殼。
+// 回傳 {body, hull}：body 帶頂點色（平面著色），hull 是各零件各自放大一圈的描邊外殼。
 function buildMerged(parts, hullWidth) {
   const pos = [], nor = [], col = [], hpos = [];
   for (const p of parts) {
     const g = p.g.index ? p.g.toNonIndexed() : p.g.clone();
     g.applyMatrix4(p.m);
-    g.computeVertexNormals(); // 沒有共用頂點，所以每個三角形各有自己的法線＝平面著色
+    g.computeVertexNormals();
     const pa = g.attributes.position.array, na = g.attributes.normal.array;
     for (let i = 0; i < pa.length; i++) { pos.push(pa[i]); nor.push(na[i]); }
     for (let i = 0; i < pa.length / 3; i++) col.push(p.color.r, p.color.g, p.color.b);
@@ -107,21 +113,60 @@ function emojiTexture(ch) {
   emojiCache.set(ch, t);
   return t;
 }
+const numCache = new Map();
+function numberTexture(n, hex) {
+  const key = n + ':' + hex;
+  if (numCache.has(key)) return numCache.get(key);
+  const c = document.createElement('canvas');
+  c.width = c.height = 96;
+  const x = c.getContext('2d');
+  x.fillStyle = '#16241f';
+  x.beginPath(); x.arc(48, 48, 42, 0, TAU); x.fill();
+  x.lineWidth = 7; x.strokeStyle = hex; x.stroke();
+  x.fillStyle = '#f6f3ea';
+  x.font = 'bold 50px "Noto Sans TC","Helvetica Neue",Arial,sans-serif';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(String(n), 48, 52);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  numCache.set(key, t);
+  return t;
+}
+
+// ---------- 地形：球外與地標共用 ----------
+function makeTerrain(hallDirs) {
+  return function terrain(d) {
+    let n = fbm(d.x * 1.8 + 4.2, d.y * 1.8 + 1.7, d.z * 1.8 + 9.1);
+    let flat = false, best = -1, bestDot = -2;
+    hallDirs.forEach((hd, i) => {
+      const dd = d.dot(hd);
+      if (dd > bestDot) { bestDot = dd; best = i; }
+      if (dd > 0.95) flat = true;
+    });
+    const mask = smooth(0.5, 0.78, bestDot); // 館的區域：整塊都是陸地，館與館之間才有海
+    n += mask * 0.55;
+    let e = n > 0.5 ? Math.min(0.8, 0.22 + (n - 0.5) * 1.2) : 0;
+    if (flat) e = 0.2;
+    return { n, e, hall: best, mask };
+  };
+}
 
 // ---------- 場景 ----------
 export async function createScene({ canvas, halls, reducedMotion, quality, debugEl, handlers }) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x000000, 0);
-  const dprCap = quality === 'low' ? 1 : quality === 'mid' ? 1.5 : quality === 'high' ? 2 : 2;
+  const dprCap = quality === 'low' ? 1 : quality === 'mid' ? 1.5 : 2;
   let pixelRatio = Math.min(window.devicePixelRatio || 1, dprCap);
   const PR_STEPS = [2, 1.5, 1.25, 1];
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(40, 1, 1, 600);
+  const camera = new THREE.PerspectiveCamera(40, 1, 1, 800);
 
   const gradient = makeGradient();
   const toonMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradient });
   const hullMat = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide });
+  const planetMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradient, transparent: true });
+  const planetHullMat = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide, transparent: true });
   const hiddenMat = new THREE.MeshBasicMaterial({ visible: false });
 
   scene.add(new THREE.HemisphereLight(0xe8f4ff, 0x20322b, 1.35));
@@ -133,10 +178,10 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
   {
     const n = 260, arr = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
-      const u = Math.random() * TAU, v = Math.acos(2 * Math.random() - 1), r = 160 + Math.random() * 120;
+      const u = Math.random() * TAU, v = Math.acos(2 * Math.random() - 1), r = 200 + Math.random() * 160;
       arr[i * 3] = r * Math.sin(v) * Math.cos(u);
       arr[i * 3 + 1] = r * Math.sin(v) * Math.sin(u);
-      arr[i * 3 + 2] = r * Math.cos(v) - 60;
+      arr[i * 3 + 2] = r * Math.cos(v) - 80;
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(arr, 3));
@@ -145,16 +190,19 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
 
   // 四座館的方向：正四面體頂點
   const hallDirs = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]].map(v => new THREE.Vector3(...v).normalize());
+  const terrain = makeTerrain(hallDirs);
   const N0 = new THREE.Vector3(0, 1, 0);
   function basisOf(n) {
     const Np = N0.clone().sub(n.clone().multiplyScalar(N0.dot(n))).normalize();
     const E = new THREE.Vector3().crossVectors(Np, n);
     return { n, Np, E };
   }
+  const bases = hallDirs.map(basisOf);
 
   // ----- 星球本體 -----
   const planet = new THREE.Group();
   scene.add(planet);
+  const planetMeshes = [];
   {
     const geo = new THREE.IcosahedronGeometry(R, 7);
     const pos = geo.attributes.position;
@@ -162,48 +210,40 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     const colors = new Float32Array(pos.count * 3);
     const hullPos = new Float32Array(pos.count * 3);
     const dir = new THREE.Vector3(), tmpC = new THREE.Color();
-    const field = d => {
-      let n = fbm(d.x * 1.8 + 4.2, d.y * 1.8 + 1.7, d.z * 1.8 + 9.1);
-      let boost = 0, flat = false;
-      for (const hd of hallDirs) {
-        const dd = d.dot(hd);
-        if (dd > 0.78) boost = Math.max(boost, (dd - 0.78) * 5);
-        if (dd > 0.94) flat = true;
-      }
-      n += boost;
-      let e = n > 0.5 ? Math.min(1, 0.22 + (n - 0.5) * 2.4) : 0;
-      if (flat) e = 0.2;
-      return { n, e };
-    };
     const hex = h => tmpC.setHex(h).clone();
     const OCEAN = [hex(0x2f7fb3), hex(0x3a8fc2)], SHALLOW = hex(0x62c0cf), SAND = hex(0xe9dca2);
     const GRASS = [hex(0x74c26d), hex(0x5eab5a)], FOREST = hex(0x3f8f4f), ROCK = hex(0xa9a08a), ICE = hex(0xf3f7f8);
+    const hallCol = halls.map(h => new THREE.Color(h.color));
     for (let f = 0; f < faces; f++) {
-      let ne = 0, ee = 0, ly = 0;
+      let ne = 0, ee = 0, ly = 0, mk = 0;
+      const hallVotes = [0, 0, 0, 0];
       for (let k = 0; k < 3; k++) {
         const i = f * 3 + k;
         dir.set(pos.getX(i), pos.getY(i), pos.getZ(i)).normalize();
-        const { n, e } = field(dir);
-        const polar = Math.abs(dir.y) > 0.88;
-        const eh = polar ? Math.max(e, 0.12) : e;
+        const t = terrain(dir);
+        const polar = Math.abs(dir.y) > 0.9;
+        const eh = polar ? Math.max(t.e, 0.12) : t.e;
         pos.setXYZ(i, dir.x * (R + eh), dir.y * (R + eh), dir.z * (R + eh));
-        ne += n; ee += eh; ly += Math.abs(dir.y);
+        ne += t.n; ee += eh; ly += Math.abs(dir.y); mk += t.mask; hallVotes[t.hall]++;
       }
-      ne /= 3; ee /= 3; ly /= 3;
+      ne /= 3; ee /= 3; ly /= 3; mk /= 3;
       const r = hash3(f * 0.37, f * 0.91, 3.3);
       let c;
-      if (ly > 0.88) c = ICE;
+      if (ly > 0.9) c = ICE;
       else if (ee <= 0.001) c = ne > 0.44 ? SHALLOW : OCEAN[r > 0.5 ? 1 : 0];
       else if (ee < 0.3) c = SAND;
       else if (ee < 0.62) c = GRASS[r > 0.5 ? 1 : 0];
       else if (ee < 0.88) c = FOREST;
       else c = ROCK;
+      if (ee > 0.001 && ly <= 0.9) { // 各館的陸地帶一點館色，從遠處就分得出四個區域
+        c = c.clone().lerp(hallCol[hallVotes.indexOf(Math.max(...hallVotes))], 0.3 * mk);
+      }
       for (let k = 0; k < 3; k++) {
         const i = f * 3 + k;
         colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
       }
     }
-    geo.computeVertexNormals(); // 平面著色
+    geo.computeVertexNormals();
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
       const len = Math.hypot(x, y, z), s = (len + 0.28) / len;
@@ -212,22 +252,24 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     const hullGeo = new THREE.BufferGeometry();
     hullGeo.setAttribute('position', new THREE.BufferAttribute(hullPos, 3));
-    planet.add(new THREE.Mesh(geo, toonMat), new THREE.Mesh(hullGeo, hullMat));
+    const a = new THREE.Mesh(geo, planetMat), b = new THREE.Mesh(hullGeo, planetHullMat);
+    planet.add(a, b);
+    planetMeshes.push(a, b);
   }
 
-  // ----- 雲（一個 InstancedMesh，進館後隱藏） -----
+  // ----- 雲 -----
   const clouds = (() => {
     const blobs = [];
     const dir = new THREE.Vector3();
     let guard = 0;
-    while (blobs.length < 68 && guard++ < 600) {
+    while (blobs.length < 44 && guard++ < 600) {
       dir.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1).normalize();
-      if (hallDirs.some(h => dir.dot(h) > 0.9)) continue;
-      const centre = dir.clone().multiplyScalar(R + 3.6 + Math.random() * 0.8);
+      if (hallDirs.some(h => dir.dot(h) > 0.93)) continue; // 不要遮到館
+      const centre = dir.clone().multiplyScalar(R + 4.4 + Math.random() * 0.8);
       const tangent = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0.3)).normalize();
-      const count = 3 + Math.floor(Math.random() * 3);
-      for (let i = 0; i < count && blobs.length < 68; i++) {
-        blobs.push({ p: centre.clone().addScaledVector(tangent, (i - count / 2) * 1.05), s: 0.7 + Math.random() * 0.7 });
+      const count = 3 + Math.floor(Math.random() * 2);
+      for (let i = 0; i < count && blobs.length < 44; i++) {
+        blobs.push({ p: centre.clone().addScaledVector(tangent, (i - count / 2) * 1.05), s: 0.6 + Math.random() * 0.6 });
       }
     }
     const mesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: gradient }), blobs.length);
@@ -243,6 +285,35 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     return mesh;
   })();
 
+  // ----- 球外的單元地標（只看不能點） -----
+  const landmarks = new THREE.Group();
+  planet.add(landmarks);
+  halls.forEach((hall, hi) => {
+    const { n, Np, E } = bases[hi];
+    const col = new THREE.Color(hall.color);
+    const parts = [];
+    const N = hall.units.length;
+    const tan = new THREE.Vector3(), dir = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    hall.units.forEach((u, i) => {
+      const ang = 0.34 + 0.5 * Math.sqrt((i + 0.5) / N);       // 離館中心的角度：0.34～0.84 弧度
+      const az = i * 2.39996 + hi * 1.3;                          // 黃金角螺旋，分佈均勻
+      tan.copy(E).multiplyScalar(Math.cos(az)).addScaledVector(Np, Math.sin(az));
+      dir.copy(n).multiplyScalar(Math.cos(ang)).addScaledVector(tan, Math.sin(ang)).normalize();
+      const e = Math.max(terrain(dir).e, 0.1);
+      const rad = R + e - 0.12;
+      const q = new THREE.Quaternion().setFromUnitVectors(up, dir);
+      const base = new THREE.Matrix4().compose(dir.clone().multiplyScalar(rad), q, new THREE.Vector3(1, 1, 1));
+      parts.push({ g: new THREE.CylinderGeometry(0.32, 0.42, 1.2, 8), m: base.clone().multiply(M(0, 0.6, 0)), color: new THREE.Color(0xefe5c6) });
+      parts.push({ g: new THREE.ConeGeometry(0.56, 0.85, 8), m: base.clone().multiply(M(0, 1.6, 0)), color: col.clone() });
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(u.emoji), transparent: true, depthWrite: false }));
+      sp.position.copy(dir).multiplyScalar(rad + 2.5);
+      sp.scale.set(1.55, 1.55, 1);
+      landmarks.add(sp);
+    });
+    const mg = buildMerged(parts, 0.05);
+    landmarks.add(new THREE.Mesh(mg.body, toonMat), new THREE.Mesh(mg.hull, hullMat));
+  });
+
   // ----- 四座館 -----
   const hallObjs = [];
   const hallProxies = [];
@@ -251,13 +322,13 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
   halls.forEach((hall, hi) => {
     const col = new THREE.Color(hall.color);
     const hex = hall.color;
-    const parts = [];
-    const P = (g, m, c, noHull) => parts.push({ g, m, color: new THREE.Color(c), noHull });
-    // 平台
-    P(new THREE.CylinderGeometry(5.2, 5.7, 3.2, 28), M(0, -1.52, 0), col.clone().multiplyScalar(0.55));
-    P(new THREE.CylinderGeometry(5.0, 5.0, 0.12, 28), M(0, 0.02, 0), 0xefe5c6, true);
-    P(new THREE.CylinderGeometry(2.55, 2.55, 0.1, 22), M(0, 0.08, 0), col.clone().multiplyScalar(0.85), true);
-    // 建築（腳邊在 y≈0.1；半徑控制在約 2.2 以內，留給外圈展品）
+    const baseParts = [], bldParts = [];
+    const PB = (g, m, c, noHull) => baseParts.push({ g, m, color: new THREE.Color(c), noHull });
+    const P = (g, m, c) => bldParts.push({ g, m, color: new THREE.Color(c) });
+    // 平台（球外看得到；進館後讓位給地圖）
+    PB(new THREE.CylinderGeometry(5.2, 5.7, 3.2, 28), M(0, -1.52, 0), col.clone().multiplyScalar(0.55));
+    PB(new THREE.CylinderGeometry(5.0, 5.0, 0.12, 28), M(0, 0.02, 0), 0xefe5c6, true);
+    // 建築
     if (hall.id === 'physics') {            // 伽利略的觀星台
       P(new THREE.CylinderGeometry(1.7, 1.9, 1.5, 16), M(0, 0.85, 0), 0xe9dfc4);
       P(new THREE.SphereGeometry(1.7, 16, 8, 0, TAU, 0, Math.PI / 2), M(0, 1.6, 0), hex);
@@ -285,11 +356,16 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
         P(new THREE.IcosahedronGeometry(0.62, 1), M(sx * 1.75, 1.4, -0.55), 0x4fae60);
       }
     }
-    const { body, hull } = buildMerged(parts, 0.07);
+    const bm = buildMerged(baseParts, 0.07);
+    const bd = buildMerged(bldParts, 0.07);
 
     const g = new THREE.Group();
-    g.add(new THREE.Mesh(body, toonMat), new THREE.Mesh(hull, hullMat));
-    const { n, Np, E } = basisOf(hallDirs[hi]);
+    const baseG = new THREE.Group();
+    baseG.add(new THREE.Mesh(bm.body, toonMat), new THREE.Mesh(bm.hull, hullMat));
+    const bldG = new THREE.Group();
+    bldG.add(new THREE.Mesh(bd.body, toonMat), new THREE.Mesh(bd.hull, hullMat));
+    g.add(baseG, bldG);
+    const { n, E } = bases[hi];
     const Zl = new THREE.Vector3().crossVectors(E, n);
     g.position.copy(n).multiplyScalar(PLATEAU_TOP);
     g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(E, n, Zl));
@@ -305,19 +381,35 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     anchor.position.y = 5.6;
     g.add(anchor);
 
-    // 展品圈
-    const ring = new THREE.Group();
-    ring.position.y = 0.08;
-    ring.visible = false;
-    g.add(ring);
+    // ----- 平面地圖（進館後才看得到） -----
+    const map = new THREE.Group();
+    map.position.y = MAP_Y;
+    map.visible = false;
+    g.add(map);
+
+    // 底盤：米色紙面＋館色邊框，一次合成
+    {
+      const mp = [
+        { g: new THREE.CylinderGeometry(DISC_R + 0.55, DISC_R + 0.8, 0.5, 48), m: M(0, -0.28, 0), color: col.clone().multiplyScalar(0.6) },
+        { g: new THREE.CylinderGeometry(DISC_R, DISC_R, 0.14, 48), m: M(0, -0.07, 0), color: new THREE.Color(0xefe5c6), noHull: true },
+      ];
+      // 地圖上的小裝飾：館色小圓點，散在紙面上
+      for (let i = 0; i < 26; i++) {
+        const a = hash3(i * 1.7, hi * 3.1, 1.3) * TAU, r = 3 + hash3(i * 2.3, hi, 7.7) * (DISC_R - 4);
+        mp.push({ g: new THREE.CylinderGeometry(0.22 + hash3(i, hi, 2) * 0.2, 0.22 + hash3(i, hi, 2) * 0.2, 0.04, 8), m: M(Math.cos(a) * r, 0.0, Math.sin(a) * r), color: col.clone().lerp(new THREE.Color(0xefe5c6), 0.55), noHull: true });
+      }
+      const mm = buildMerged(mp, 0.08);
+      map.add(new THREE.Mesh(mm.body, toonMat), new THREE.Mesh(mm.hull, hullMat));
+    }
+    const pathHolder = new THREE.Group();
+    map.add(pathHolder);
+
+    // 單元站
     const N = hall.units.length;
-    const ringR = clamp(1.15 / Math.sin(Math.PI / N), 3.0, 4.2);
     const exhibits = [];
     const exProxies = [];
     hall.units.forEach((u, i) => {
-      const phi = (i * TAU) / N;
       const ex = new THREE.Group();
-      ex.position.set(ringR * Math.cos(phi), 0, ringR * Math.sin(phi));
       const pp = [];
       pp.push({ g: new THREE.CylinderGeometry(0.62, 0.8, 0.55, 14), m: M(0, 0.28, 0), color: new THREE.Color(0xefe5c6) });
       pp.push({ g: new THREE.CylinderGeometry(0.72, 0.72, 0.1, 14), m: M(0, 0.6, 0), color: col.clone() });
@@ -327,12 +419,16 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       sprite.position.y = 1.75;
       sprite.scale.set(1.5, 1.5, 1);
       ex.add(sprite);
-      const ep = new THREE.Mesh(new THREE.SphereGeometry(1.15, 8, 6), hiddenMat);
-      ep.position.y = 1.2;
+      const badge = new THREE.Sprite(new THREE.SpriteMaterial({ map: numberTexture(i + 1, hex), transparent: true, depthWrite: false }));
+      badge.position.set(0.95, 0.75, 0.75);
+      badge.scale.set(0.62, 0.62, 1);
+      ex.add(badge);
+      const ep = new THREE.Mesh(new THREE.SphereGeometry(1.25, 8, 6), hiddenMat);
+      ep.position.y = 1.1;
       ep.userData.unitId = u.id;
       ex.add(ep);
-      ring.add(ex);
-      exhibits.push({ group: ex, sprite, phi, size: 1.5, target: 1.5, hop: 0, hopTarget: 0 });
+      map.add(ex);
+      exhibits.push({ group: ex, sprite, size: 1.5, target: 1.5, hop: 0, hopTarget: 0 });
       exProxies.push(ep);
       unitIndex.set(u.id, { hall: hi, index: i });
     });
@@ -341,26 +437,111 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       new THREE.MeshBasicMaterial({ color: hex, side: THREE.DoubleSide, transparent: true, opacity: 0.95 }),
     );
     focusRing.position.y = 0.04;
-    ring.add(focusRing);
+    map.add(focusRing);
 
-    const basis = new THREE.Matrix4().makeBasis(E, Np, n);
+    // 通往隔壁館的出口
+    const gates = [];
+    const gateProxies = [];
+    halls.forEach((other, oj) => {
+      if (oj === hi) return;
+      const gc = new THREE.Color(other.color);
+      const gp = [
+        { g: new THREE.BoxGeometry(0.55, 2.4, 0.55), m: M(-1.2, 1.2, 0), color: gc.clone() },
+        { g: new THREE.BoxGeometry(0.55, 2.4, 0.55), m: M(1.2, 1.2, 0), color: gc.clone() },
+        { g: new THREE.BoxGeometry(3.0, 0.55, 0.65), m: M(0, 2.55, 0), color: gc.clone() },
+        { g: new THREE.CylinderGeometry(1.7, 1.9, 0.18, 16), m: M(0, 0.09, 0.2), color: new THREE.Color(0xefe5c6), noHull: true },
+      ];
+      const gm = buildMerged(gp, 0.06);
+      const gg = new THREE.Group();
+      gg.add(new THREE.Mesh(gm.body, toonMat), new THREE.Mesh(gm.hull, hullMat));
+      const gs = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(GATE_EMOJI[other.id] || '🚪'), transparent: true, depthWrite: false }));
+      gs.position.set(0, 4.1, 0);
+      gs.scale.set(1.9, 1.9, 1);
+      gg.add(gs);
+      const gx = new THREE.Mesh(new THREE.BoxGeometry(3.4, 4.6, 2.2), hiddenMat);
+      gx.position.y = 2.3;
+      gx.userData.gateHall = other.id;
+      gg.add(gx);
+      gg.scale.setScalar(0.74);
+      map.add(gg);
+      gates.push({ group: gg, toIndex: oj });
+      gateProxies.push(gx);
+    });
+
     hallObjs.push({
-      hall, group: g, ring, anchor, exhibits, exProxies, focusRing, ringR, N,
-      q: new THREE.Quaternion().setFromRotationMatrix(basis).invert(), // 讓這座館正對鏡頭的星球姿態
-      alpha: 0, alphaTarget: 0, focus: 0,
+      hall, group: g, baseG, bldG, map, anchor, exhibits, exProxies, gates, gateProxies, focusRing, pathHolder, N,
+      q: new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(E, bases[hi].Np, n)).invert(),
+      focus: 0, layoutV: null, nodes: [], start: new THREE.Vector3(),
     });
   });
+
+  // ----- 地圖版面：彎路與單元站（直式螢幕走直路，橫式螢幕走橫路） -----
+  const pathMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradient });
+  function layoutHall(h, vertical) {
+    h.layoutV = vertical;
+    const N = h.N;
+    const waves = clamp(N / 3.4, 1.6, 3.4);
+    const curve = t => vertical
+      ? { x: 3.2 * Math.sin(t * Math.PI * waves), z: (t - 0.5) * 2 * 7.6 }
+      : { x: (t - 0.5) * 2 * 8.6, z: 3.0 * Math.sin(t * Math.PI * waves) };
+    // 單元站
+    h.nodes = [];
+    h.exhibits.forEach((e, i) => {
+      const t = N === 1 ? 0.5 : i / (N - 1);
+      const p = curve(t);
+      e.group.position.set(p.x, 0, p.z);
+      h.nodes.push(new THREE.Vector3(p.x, 0, p.z));
+    });
+    // 路：沿曲線切成小方塊，合成一個網格
+    const parts = [];
+    const col = new THREE.Color(0xfff0c8);
+    const steps = 70;
+    for (let s = 0; s < steps; s++) {
+      const t0 = -0.05 + (1.1 * s) / steps, t1 = -0.05 + (1.1 * (s + 1)) / steps;
+      const a = curve(t0), b = curve(t1);
+      const len = Math.hypot(b.x - a.x, b.z - a.z);
+      const ang = Math.atan2(b.x - a.x, b.z - a.z);
+      parts.push({
+        g: new THREE.BoxGeometry(0.62, 0.06, len + 0.08),
+        m: new THREE.Matrix4().compose(
+          new THREE.Vector3((a.x + b.x) / 2, 0.04, (a.z + b.z) / 2),
+          new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ang, 0)),
+          new THREE.Vector3(1, 1, 1)),
+        color: col, noHull: true,
+      });
+    }
+    h.pathHolder.children.slice().forEach(c => { c.geometry.dispose(); h.pathHolder.remove(c); });
+    const mg = buildMerged(parts, 0);
+    h.pathHolder.add(new THREE.Mesh(mg.body, pathMat));
+    placeFocus(h);
+    // 建築縮小後放在路的起點外側
+    const s0 = curve(0);
+    h.start.set(vertical ? s0.x : s0.x - 3.4, 0, vertical ? s0.z - 3.2 : s0.z);
+    // 出口：沿著「隔壁館所在的方向」放在地圖邊緣
+    const { E, Np } = bases[hallObjs.indexOf(h)];
+    const ext = vertical ? EXT.v : EXT.h;
+    h.gates.forEach(gt => {
+      const od = hallDirs[gt.toIndex];
+      let dx = od.dot(E), dz = -od.dot(Np); // 本地 x 往右、z 往螢幕下方
+      const len = Math.hypot(dx, dz) || 1; dx /= len; dz /= len;
+      const k = Math.min((ext.ex - 1.2) / Math.max(Math.abs(dx), 1e-3), (ext.ey - 1.4) / Math.max(Math.abs(dz), 1e-3));
+      gt.group.position.set(dx * k, 0, dz * k);
+    });
+  }
 
   // ----- 視角狀態 -----
   const state = {
     mode: 'planet',     // 目前的目標：planet | hall
-    hall: -1,
+    hall: -1,           // 目標館
+    hallVis: -1,        // 畫面上正在顯示的館（館到館的飛行途中才會和 hall 不同）
     k: 0,               // 0＝星球視角，1＝館視角（飛行中連續變化）
     zoomP: 1,
     zoomH: 1,
     sheetF: 0,
     sheetAxis: 'y',
+    curV: true,         // 目前地圖是直式還是橫式
   };
+  const pan = new THREE.Vector2(), panT = new THREE.Vector2();
   let flight = null;
   const omega = new THREE.Vector3();
   let dragging = false;
@@ -390,31 +571,61 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     const half = Math.min(halfV, halfH);
     return R / Math.sin(0.64 * half);
   }
+  function freeFractions() {
+    return {
+      fw: state.sheetAxis === 'x' ? Math.max(0.3, 1 - state.sheetF) : 1,
+      fh: state.sheetAxis === 'y' ? Math.max(0.3, 1 - state.sheetF) : 1,
+    };
+  }
+  function wantVertical() { const { fw, fh } = freeFractions(); return W * fw < H * fh * 1.05; }
   function hallDistance() {
     const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
-    const tanH = Math.tan(halfV) * camera.aspect;
-    const freeW = state.sheetAxis === 'x' ? Math.max(0.3, 1 - state.sheetF) : 1;
-    const freeH = state.sheetAxis === 'y' ? Math.max(0.3, 1 - state.sheetF) : 1;
-    const dH = 6.3 / (0.92 * tanH * freeW);
-    const dV = 5.2 / (Math.tan(halfV) * freeH * 0.92);
-    return clamp(Math.max(dH, dV), 16, 70);
+    const tanV = Math.tan(halfV), tanH = tanV * camera.aspect;
+    const { fw, fh } = freeFractions();
+    const ext = state.curV ? EXT.v : EXT.h;
+    const dH = ext.ex / (0.95 * tanH * fw);
+    const dV = ext.ey / (0.95 * tanV * fh);
+    return clamp(Math.max(dH, dV), 18, 160);
   }
-  const posP = new THREE.Vector3(), posH = new THREE.Vector3(), tgtH = new THREE.Vector3(0, 0.9, PLATEAU_TOP);
+  const posP = new THREE.Vector3(), posH = new THREE.Vector3(), tgtH = new THREE.Vector3();
   function applyCamera() {
     posP.set(0, 0, planetDistance() * state.zoomP);
     const dH = hallDistance() * state.zoomH;
-    posH.set(0, Math.sin(HALL_PITCH) * dH, Math.cos(HALL_PITCH) * dH).add(tgtH);
+    tgtH.set(pan.x, pan.y, PLATEAU_TOP + MAP_Y);
+    // 鏡頭從南側往北看，近的在畫面下方，帶一點立體感
+    posH.set(0, -Math.sin(HALL_PITCH) * dH, Math.cos(HALL_PITCH) * dH).add(tgtH);
     camera.position.lerpVectors(posP, posH, state.k);
-    const tx = 0, ty = lerp(0, tgtH.y, state.k), tz = lerp(0, tgtH.z, state.k);
     camera.up.set(0, 1, 0);
-    camera.lookAt(tx, ty, tz);
+    camera.lookAt(lerp(0, tgtH.x, state.k), lerp(0, tgtH.y, state.k), lerp(0, tgtH.z, state.k));
     const shift = state.k * (state.sheetF / 2);
     if (state.sheetAxis === 'x') camera.setViewOffset(W, H, -shift * W, 0, W, H);
     else camera.setViewOffset(W, H, 0, shift * H, W, H);
   }
 
+  // 依 k 決定誰看得到：球、地標、館的平台與建築、地圖
+  function applyVisibility() {
+    const k = state.k;
+    const ek = smooth(0.45, 0.95, k);
+    planetMat.opacity = planetHullMat.opacity = 1 - ek;
+    planetMeshes.forEach(m => { m.visible = ek < 0.99; });
+    landmarks.visible = k < 0.5;
+    clouds.visible = k < 0.35;
+    hallObjs.forEach((h, i) => {
+      const isVis = i === state.hallVis;
+      h.group.visible = k < 0.55 || isVis;
+      h.baseG.visible = k < 0.7 || !isVis;
+      h.map.visible = isVis && k > 0.5;
+      const mScale = isVis ? smooth(0.5, 0.95, k) : 0;
+      h.map.scale.setScalar(Math.max(0.001, mScale));
+      // 建築：球外在平台正中央；進館後縮小移到地圖起點
+      const b = isVis ? smooth(0.45, 1, k) : 0;
+      h.bldG.position.set(h.start.x * b, MAP_Y * b, h.start.z * b);
+      h.bldG.scale.setScalar(lerp(1, 0.42, b));
+    });
+  }
+
   // ----- 飛行 -----
-  function startFlight(toQ, toK, instant) {
+  function startFlight(toQ, toK, instant, dip = 0, toHallIdx = -1) {
     const fromQ = planet.quaternion.clone();
     const target = toQ.clone();
     if (fromQ.dot(target) < 0) target.set(-target.x, -target.y, -target.z, -target.w);
@@ -422,46 +633,50 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     if (instant || reducedMotion) {
       planet.quaternion.copy(target);
       state.k = toK;
+      if (toHallIdx >= 0) state.hallVis = toHallIdx;
       flight = null;
-      settle();
     } else {
-      flight = { t0: performance.now(), dur: 1200, fromQ, toQ: target, fromK: state.k, toK };
+      flight = { t0: performance.now(), dur: dip ? 1700 : 1200, fromQ, toQ: target, fromK: state.k, toK, dip, toHallIdx, swapped: false };
     }
     invalidate();
-  }
-  function settle() {
-    clouds.visible = state.k < 0.35;
-    if (state.mode === 'planet') hallObjs.forEach(h => { h.ring.visible = false; });
   }
   function flyToHall(id, instant) {
     const i = halls.findIndex(h => h.id === id);
     if (i < 0) return;
+    const fromHall = state.mode === 'hall' && state.hall >= 0 && state.hall !== i && state.k > 0.5;
     state.mode = 'hall';
     state.hall = i;
-    hallObjs.forEach((h, j) => { h.ring.visible = j === i; });
-    startFlight(hallObjs[i].q, 1, instant);
+    pan.set(0, 0); panT.set(0, 0);
+    if (fromHall) startFlight(hallObjs[i].q, 1, instant, 0.62, i); // 館到館：先浮到星球外再降落
+    else {
+      state.hallVis = i;
+      startFlight(hallObjs[i].q, 1, instant, 0, i);
+    }
   }
   function flyToPlanet(instant) {
-    const base = state.mode === 'hall' && state.hall >= 0 ? hallObjs[state.hall].q : planet.quaternion;
+    const base = state.hall >= 0 && state.k > 0.5 ? hallObjs[state.hall].q : planet.quaternion;
     state.mode = 'planet';
     startFlight(uprightOf(base), 0, instant);
-    if (state.hall >= 0) hallObjs[state.hall].ring.visible = true; // 離館的飛行途中還看得到，settle 後才隱藏
   }
 
   // ----- 展品焦點 -----
+  function placeFocus(h) {
+    const nd = h.nodes[h.focus];
+    if (nd) h.focusRing.position.set(nd.x, 0.04, nd.z);
+  }
   function focusUnit(unitId, instant) {
     const info = unitIndex.get(unitId);
     if (!info) return;
     const h = hallObjs[info.hall];
-    const ex = h.exhibits;
     h.focus = info.index;
-    // 讓該展品轉到最前面（畫面下方）：phi_i − alpha = π/2
-    let target = ex[info.index].phi - Math.PI / 2;
-    target += TAU * Math.round((h.alpha - target) / TAU); // 取最近的等價角度
-    h.alphaTarget = target;
-    if (instant || reducedMotion) h.alpha = target;
-    ex.forEach((e, i) => { e.target = i === info.index ? 2.05 : 1.5; e.hopTarget = i === info.index ? 0.35 : 0; });
-    h.focusRing.position.set(ex[info.index].group.position.x, 0.04, ex[info.index].group.position.z);
+    h.exhibits.forEach((e, i) => { e.target = i === info.index ? 2.05 : 1.5; e.hopTarget = i === info.index ? 0.35 : 0; });
+    const nd = h.nodes[info.index];
+    if (nd) {
+      h.focusRing.position.set(nd.x, 0.04, nd.z);
+      // 放大看地圖時，鏡頭跟著移到這一站；整張地圖都看得到時就置中
+      if (state.zoomH < 0.92) panT.set(nd.x, -nd.z); else panT.set(0, 0);
+      if (instant || reducedMotion) pan.copy(panT);
+    }
     invalidate();
   }
 
@@ -485,25 +700,15 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     if (state.mode === 'planet') {
       const hit = raycaster.intersectObjects(hallProxies, false)[0];
       if (hit) handlers.onHallPick(halls[hit.object.userData.hallIndex].id);
-    } else if (state.mode === 'hall') {
-      const h = hallObjs[state.hall];
-      const hit = raycaster.intersectObjects(h.exProxies, false)[0];
+    } else if (state.mode === 'hall' && state.hallVis >= 0) {
+      const h = hallObjs[state.hallVis];
+      const hit = raycaster.intersectObjects(h.exProxies.concat(h.gateProxies), false)[0];
       if (hit) {
-        const unitId = hit.object.userData.unitId;
-        focusUnit(unitId, false);
-        handlers.onExhibitPick(unitId);
+        const d = hit.object.userData;
+        if (d.gateHall) handlers.onHallPick(d.gateHall);
+        else { focusUnit(d.unitId, false); handlers.onExhibitPick(d.unitId); }
       }
     }
-  }
-  function snapRing() {
-    const h = hallObjs[state.hall];
-    if (!h) return;
-    const step = TAU / h.N;
-    const idx = ((Math.round((h.alpha + Math.PI / 2) / step) % h.N) + h.N) % h.N;
-    const unitId = h.hall.units[idx].id;
-    const prev = h.focus;
-    focusUnit(unitId, false);
-    if (idx !== prev) handlers.onFocusChange(unitId);
   }
 
   canvas.addEventListener('pointerdown', e => {
@@ -532,7 +737,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       const [a, b] = [...pointers.values()];
       const d = Math.hypot(a.x - b.x, a.y - b.y);
       if (pinchStart > 0) {
-        const z = clamp(pinchZoom * (pinchStart / d), state.mode === 'planet' ? 0.62 : 0.8, state.mode === 'planet' ? 1.5 : 1.35);
+        const z = clamp(pinchZoom * (pinchStart / d), state.mode === 'planet' ? 0.62 : 0.4, state.mode === 'planet' ? 1.5 : 1.35);
         if (state.mode === 'planet') state.zoomP = z; else state.zoomH = z;
         invalidate();
       }
@@ -552,9 +757,12 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       rotatePlanet(axis, angle);
       if (!reducedMotion) omega.lerp(axis.normalize().multiplyScalar(angle / dt), 0.5);
     } else if (state.mode === 'hall') {
-      const h = hallObjs[state.hall];
-      h.alpha += dx / (0.3 * Math.min(W, H));
-      h.alphaTarget = h.alpha;
+      // 拖曳＝平移地圖
+      const wpp = (2 * hallDistance() * state.zoomH * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / H;
+      const ext = state.curV ? EXT.v : EXT.h;
+      pan.x = clamp(pan.x - dx * wpp, -ext.ex, ext.ex);
+      pan.y = clamp(pan.y + dy * wpp, -ext.ey, ext.ey);
+      panT.copy(pan);
     }
     invalidate();
   });
@@ -566,8 +774,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       const wasTap = !drag.moved && performance.now() - drag.t < 600;
       dragging = false;
       if (wasTap) { omega.set(0, 0, 0); onTap(e.clientX, e.clientY); }
-      else if (state.mode === 'hall') snapRing();
-      else if (performance.now() - drag.lastT > 90) omega.set(0, 0, 0); // 停住再放開就不要慣性
+      else if (state.mode === 'planet' && performance.now() - drag.lastT > 90) omega.set(0, 0, 0);
       drag = null;
     }
     if (pointers.size < 2) pinchStart = 0;
@@ -579,7 +786,10 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     e.preventDefault();
     const f = Math.exp(e.deltaY * 0.0012);
     if (state.mode === 'planet') state.zoomP = clamp(state.zoomP * f, 0.62, 1.5);
-    else state.zoomH = clamp(state.zoomH * f, 0.8, 1.35);
+    else {
+      state.zoomH = clamp(state.zoomH * f, 0.4, 1.35);
+      if (state.zoomH >= 0.92) panT.set(0, 0);
+    }
     invalidate();
   }, { passive: false });
   canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); handlers.onContextLost && handlers.onContextLost(); });
@@ -606,9 +816,9 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       const u = Math.min(1, (now - flight.t0) / flight.dur);
       const e = ease(u);
       planet.quaternion.copy(flight.fromQ).slerp(flight.toQ, e);
-      state.k = lerp(flight.fromK, flight.toK, e);
-      clouds.visible = state.k < 0.35;
-      if (u >= 1) { flight = null; settle(); } else active = true;
+      state.k = Math.max(0, lerp(flight.fromK, flight.toK, e) - flight.dip * Math.sin(Math.PI * e));
+      if (flight.toHallIdx >= 0 && !flight.swapped && u >= 0.5) { flight.swapped = true; state.hallVis = flight.toHallIdx; }
+      if (u >= 1) { if (flight.toHallIdx >= 0) state.hallVis = flight.toHallIdx; flight = null; } else active = true;
     } else {
       if (!dragging && omega.lengthSq() > 1e-6) {
         const ang = omega.length() * dt;
@@ -628,17 +838,22 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
           active = true;
         }
       }
-      if (pointers.size > 0 && !flight) active = true; // 手指還按著就維持更新（避免漏掉最後一幀）
+      if (pointers.size > 0) active = true;
     }
-    // 展品圈轉動與跳動
+    // 地圖版面隨螢幕形狀調整
+    const wv = wantVertical();
+    if (wv !== state.curV) { state.curV = wv; }
+    const hv = hallObjs[state.hallVis];
+    if (hv && hv.layoutV !== state.curV) layoutHall(hv, state.curV);
+    // 鏡頭平移
+    if (!dragging && (Math.abs(panT.x - pan.x) > 0.01 || Math.abs(panT.y - pan.y) > 0.01)) {
+      const k = 1 - Math.exp(-dt / 0.14);
+      pan.x += (panT.x - pan.x) * k; pan.y += (panT.y - pan.y) * k;
+      active = true;
+    }
+    // 單元站的跳動與放大
     for (const h of hallObjs) {
-      if (!h.ring.visible) continue;
-      const da = h.alphaTarget - h.alpha;
-      if (Math.abs(da) > 0.002 && !dragging) {
-        h.alpha += da * (1 - Math.exp(-dt / 0.13));
-        active = true;
-      } else if (!dragging) h.alpha = h.alphaTarget;
-      h.ring.rotation.y = h.alpha; // 繞 y 軸轉 θ 會讓角度 phi 變成 phi − θ，所以 phi' = phi − alpha
+      if (!h.map.visible) continue;
       for (const e of h.exhibits) {
         const ds = e.target - e.size, dh = e.hopTarget - e.hop;
         if (Math.abs(ds) > 0.005 || Math.abs(dh) > 0.005) {
@@ -664,13 +879,13 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       tmpV.project(camera);
       return { id: h.hall.id, x: (tmpV.x * 0.5 + 0.5) * W, y: (-tmpV.y * 0.5 + 0.5) * H, show };
     });
-    if (state.mode === 'hall' && !flight && state.hall >= 0) {
-      const h = hallObjs[state.hall];
+    if (state.mode === 'hall' && !flight && state.hallVis >= 0) {
+      const h = hallObjs[state.hallVis];
       const ex = h.exhibits[h.focus];
       if (ex) {
         ex.sprite.getWorldPosition(tmpV);
         tmpV.project(camera);
-        info.focus = { x: (tmpV.x * 0.5 + 0.5) * W, y: (-tmpV.y * 0.5 + 0.5) * H - 30, show: true };
+        info.focus = { x: (tmpV.x * 0.5 + 0.5) * W, y: (-tmpV.y * 0.5 + 0.5) * H - 34, show: true };
       }
     } else info.focus = { x: 0, y: 0, show: false };
     handlers.onFrame(info);
@@ -681,11 +896,12 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
     last = now;
     const active = update(dt, now);
+    applyVisibility();
     applyCamera();
+    scene.updateMatrixWorld(true);
     emitFrame();
     renderer.render(scene, camera);
-    // 品質自動降級：只降不升
-    if (!quality) {
+    if (!quality) { // 品質自動降級：只降不升
       qSamples.push(dt);
       if (qSamples.length >= 70) {
         const avg = qSamples.reduce((a, b) => a + b, 0) / qSamples.length;
@@ -730,7 +946,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
   // ----- 啟動 -----
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas); else window.addEventListener('resize', resize);
   resize();
-  settle();
+  state.curV = wantVertical();
   invalidate();
 
   return {
