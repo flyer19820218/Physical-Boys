@@ -1,8 +1,8 @@
 // 伽利略星球入口：載入資料、建立畫面層、（可用時）建立 3D 場景、處理網址路由。
 // 改版時請同步更新 index_museum.html、本檔與下面兩個 import 的 ?v= 版本字串。
-import { createUI } from './ui.js?v=20261026f';
+import { createUI } from './ui.js?v=20261026g';
 
-const VERSION = '20261026f';
+const VERSION = '20261026g';
 
 const CONFIG = {
   // 舊版清單的位置。新首頁取代 index.html 之後，請改成 'index_classic.html'。

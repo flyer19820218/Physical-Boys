@@ -15,6 +15,7 @@ const MAP_Y = 0.16;           // 地圖面高度（相對館的平台）
 const DISC_R = 14.4;          // 地圖底盤半徑
 // 地圖在兩種版型下需要塞進畫面的半寬、半高（世界單位）
 const EXT = { v: { ex: 6.8, ey: 11.4 }, h: { ex: 12.4, ey: 6.8 } };
+const E_FLAT = 0.2;           // 廣場、道路、單元站壓平後的高度
 const GATE_EMOJI = { physics: '⚛️', chemistry: '🧪', earth: '🌍', biology: '🧬' };
 
 const clamp = THREE.MathUtils.clamp;
@@ -133,9 +134,86 @@ function numberTexture(n, hex) {
   return t;
 }
 
+function Ms(x, y, z, sx, sy, sz, rx = 0, ry = 0, rz = 0) {
+  return new THREE.Matrix4().compose(
+    new THREE.Vector3(x, y, z),
+    new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)),
+    new THREE.Vector3(sx, sy, sz));
+}
+function roundRectPath(x, a, b, w, h, r) {
+  x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r);
+  x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath();
+}
+
+// ---------- 各館的科學家雕像（球外在館中心，進館後在地圖起點）----------
+const STONE = 0xe6e0d0, STONE2 = 0xcfc8b4;
+function statueParts(hall) {
+  const hc = new THREE.Color(hall.color), parts = [];
+  const P = (g, m, c, noHull) => parts.push({ g, m, color: new THREE.Color(c), noHull });
+  P(new THREE.CylinderGeometry(2.0, 2.0, 0.1, 24), M(0, 0.05, 0), 0xd9d2bc, true);       // 廣場石板
+  P(new THREE.BoxGeometry(1.7, 0.45, 1.7), M(0, 0.33, 0), STONE2);
+  P(new THREE.BoxGeometry(1.2, 1.0, 1.2), M(0, 1.05, 0), STONE);
+  P(new THREE.BoxGeometry(0.75, 0.3, 0.06), M(0, 1.0, 0.63), hc);                        // 館色銘牌
+  P(new THREE.CylinderGeometry(0.3, 0.55, 1.5, 10), M(0, 2.3, 0), STONE);                // 長袍
+  P(new THREE.SphereGeometry(0.42, 10, 6), Ms(0, 3.0, 0, 1.15, 0.55, 0.85), STONE);      // 肩
+  P(new THREE.SphereGeometry(0.31, 12, 8), M(0, 3.45, 0), STONE);                        // 頭
+  P(new THREE.ConeGeometry(0.2, 0.5, 6), M(0, 3.1, 0.2, Math.PI, 0, 0), STONE);          // 鬍子
+  P(new THREE.CylinderGeometry(0.1, 0.12, 0.95, 7), M(0.62, 3.45, 0, 0, 0, -0.55), STONE); // 舉起的手臂
+  if (hall.id === 'physics') {          // 伽利略：望遠鏡；牛頓的蘋果放在座上
+    P(new THREE.CylinderGeometry(0.09, 0.16, 1.7, 8), M(1.15, 4.25, 0, 0, 0, -0.95), 0xc9a24a);
+    P(new THREE.CylinderGeometry(0.11, 0.11, 0.12, 8), M(0.55, 3.62, 0, 0, 0, -0.95), 0x6b4f3a);
+    P(new THREE.SphereGeometry(0.2, 8, 6), M(0.62, 0.7, 0.62), 0xe0483a);
+    P(new THREE.CylinderGeometry(0.02, 0.02, 0.14, 4), M(0.62, 0.92, 0.62), 0x5a3a22, true);
+  } else if (hall.id === 'chemistry') {  // 拉瓦節：高舉燒瓶
+    P(new THREE.SphereGeometry(0.34, 10, 8), M(1.0, 4.0, 0), 0xf0955c);
+    P(new THREE.CylinderGeometry(0.1, 0.1, 0.45, 8), M(1.0, 4.45, 0), 0xf6d3bb);
+    P(new THREE.CylinderGeometry(0.13, 0.11, 0.12, 8), M(1.0, 4.72, 0), 0x8a5a3a);
+    P(new THREE.IcosahedronGeometry(0.1, 0), M(0.82, 4.95, 0.1), 0xfff3e6);
+    P(new THREE.IcosahedronGeometry(0.07, 0), M(1.12, 5.15, 0), 0xfff3e6);
+  } else if (hall.id === 'earth') {      // 魏格納：捧著地球儀（大陸可以拼起來）
+    P(new THREE.SphereGeometry(0.42, 12, 8), M(1.0, 4.0, 0), 0x4f8ee0);
+    P(new THREE.IcosahedronGeometry(0.2, 0), M(1.18, 4.12, 0.2), 0x7bc47a);
+    P(new THREE.IcosahedronGeometry(0.17, 0), M(0.82, 3.9, 0.28), 0x7bc47a);
+    P(new THREE.CylinderGeometry(0.05, 0.1, 0.3, 6), M(1.0, 3.5, 0), 0xb8862b, true);
+  } else {                               // 達爾文：手拿葉子，腳邊有隻加拉巴哥象龜
+    P(new THREE.SphereGeometry(0.3, 8, 6), Ms(1.0, 4.0, 0, 1.2, 0.35, 0.9, 0, 0, 0.5), 0x4fae60);
+    P(new THREE.SphereGeometry(0.62, 12, 8), Ms(1.55, 0.45, 0.4, 1.2, 0.6, 1.45), 0x5f8f4a);
+    P(new THREE.SphereGeometry(0.2, 8, 6), M(1.55, 0.5, 1.35), 0x9bc27a);
+    for (const [dx, dz] of [[-0.45, 0.1], [0.45, 0.1], [-0.4, 0.8], [0.4, 0.8]]) P(new THREE.CylinderGeometry(0.1, 0.12, 0.25, 6), M(1.55 + dx, 0.14, dz), 0x9bc27a, true);
+  }
+  return parts;
+}
+
+// ---------- 各館的特色小景（散在館的區域，不壓到路） ----------
+function propParts(hall, kind) {
+  const hc = new THREE.Color(hall.color), parts = [];
+  const P = (g, m, c) => parts.push({ g, m, color: new THREE.Color(c) });
+  if (hall.id === 'physics') {
+    if (kind === 0) { P(new THREE.CylinderGeometry(0.5, 0.6, 0.7, 10), M(0, 0.35, 0), 0xe9dfc4); P(new THREE.SphereGeometry(0.55, 10, 6, 0, TAU, 0, Math.PI / 2), M(0, 0.7, 0), hc); P(new THREE.CylinderGeometry(0.07, 0.1, 0.8, 6), M(0.2, 1.1, 0, 0, 0, -0.9), 0xc9a24a); }
+    else { P(new THREE.CylinderGeometry(0.06, 0.14, 2.2, 6), M(0, 1.1, 0), 0xcfc8b4); P(new THREE.SphereGeometry(0.2, 8, 6), M(0, 2.3, 0), hc); P(new THREE.TorusGeometry(0.4, 0.04, 5, 14), M(0, 1.6, 0, Math.PI / 2, 0, 0), 0xb8862b); }
+  } else if (hall.id === 'chemistry') {
+    if (kind === 0) { P(new THREE.CylinderGeometry(0.18, 0.8, 1.3, 10), M(0, 0.65, 0), hc); P(new THREE.CylinderGeometry(0.2, 0.2, 0.6, 8), M(0, 1.6, 0), 0xf6d3bb); P(new THREE.SphereGeometry(0.22, 8, 6), M(0, 2.1, 0), 0xfff3e6); }
+    else { P(new THREE.CylinderGeometry(0.25, 0.32, 1.8, 8), M(0, 0.9, 0), 0xb8785a); P(new THREE.CylinderGeometry(0.3, 0.26, 0.15, 8), M(0, 1.85, 0), 0x6b4f3a); P(new THREE.IcosahedronGeometry(0.22, 0), M(0.1, 2.3, 0), 0xf2f0ea); }
+  } else if (hall.id === 'earth') {
+    if (kind === 0) { P(new THREE.ConeGeometry(1.0, 1.8, 7), M(0, 0.9, 0), 0x8f7358); P(new THREE.ConeGeometry(0.45, 0.7, 7), M(0, 1.65, 0), 0xf4f7f8); }
+    else { P(new THREE.ConeGeometry(0.9, 1.1, 8), M(0, 0.55, 0), 0x7a5f4a); P(new THREE.CylinderGeometry(0.3, 0.3, 0.08, 8), M(0, 1.12, 0), 0xf26b3a); P(new THREE.IcosahedronGeometry(0.16, 0), M(0.15, 1.35, 0), 0xf26b3a); }
+  } else {
+    if (kind === 0) { P(new THREE.CylinderGeometry(0.1, 0.14, 0.8, 6), M(0, 0.4, 0), 0x7a5a3a); P(new THREE.IcosahedronGeometry(0.55, 1), M(0, 1.15, 0), 0x4fae60); P(new THREE.IcosahedronGeometry(0.35, 1), M(0.3, 1.55, 0.1), 0x66c274); }
+    else { P(new THREE.CylinderGeometry(0.1, 0.13, 0.5, 6), M(0, 0.25, 0), 0xf2ecd9); P(new THREE.SphereGeometry(0.4, 10, 6, 0, TAU, 0, Math.PI / 2), M(0, 0.5, 0), 0xe06a5a); P(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 6), M(0.8, 0.25, 0.3), 0xf2ecd9); P(new THREE.SphereGeometry(0.28, 10, 6, 0, TAU, 0, Math.PI / 2), M(0.8, 0.5, 0.3), 0xe0b25a); }
+  }
+  return parts;
+}
+
 // ---------- 地形：球外與地標共用 ----------
 function makeTerrain(hallDirs) {
-  return function terrain(d) {
+  const ctx = { roads: null, nodes: null };
+  const arcTo = (d, pts) => { // 到折線的最短弧長（先每隔幾點粗找，再細找）
+    let bi = 0, bd = -2;
+    for (let k = 0; k < pts.length; k += 6) { const p = pts[k]; const dd = d.x * p.x + d.y * p.y + d.z * p.z; if (dd > bd) { bd = dd; bi = k; } }
+    for (let k = Math.max(0, bi - 6); k <= Math.min(pts.length - 1, bi + 6); k++) { const p = pts[k]; const dd = d.x * p.x + d.y * p.y + d.z * p.z; if (dd > bd) bd = dd; }
+    return R * Math.acos(clamp(bd, -1, 1));
+  };
+  function terrain(d) {
     let n = fbm(d.x * 1.8 + 4.2, d.y * 1.8 + 1.7, d.z * 1.8 + 9.1);
     let best = -1, bestDot = -2;
     hallDirs.forEach((hd, i) => {
@@ -144,9 +222,23 @@ function makeTerrain(hallDirs) {
     });
     const mask = smooth(0.5, 0.78, bestDot); // 館的區域：整塊都是陸地，館與館之間才有海
     n += mask * 0.55;
-    const e = n > 0.5 ? 0.1 + 0.24 * smooth(0.5, 1.3, n) : 0;
-    return { n, e, hall: best, mask };
-  };
+    let e = n > 0.5 ? 0.1 + 1.0 * Math.pow(smooth(0.72, 1.3, n), 1.4) : 0; // 丘陵起伏
+    let rd = 99, nd = 99, pd = 99;
+    if (ctx.roads && mask > 0.05) {
+      pd = R * Math.acos(clamp(bestDot, -1, 1));
+      rd = arcTo(d, ctx.roads[best]);
+      let bn = -2;
+      for (const p of ctx.nodes[best]) { const dd = d.x * p.x + d.y * p.y + d.z * p.z; if (dd > bn) bn = dd; }
+      nd = R * Math.acos(clamp(bn, -1, 1));
+      if (n > 0.5) { // 廣場、道路、單元站周圍壓平
+        const flat = Math.max(1 - smooth(1.9, 3.0, pd), 1 - smooth(0.45, 1.4, rd), 1 - smooth(0.9, 1.8, nd));
+        e = lerp(e, E_FLAT, flat);
+      }
+    }
+    return { n, e, hall: best, mask, rd, nd, pd };
+  }
+  terrain.ctx = ctx;
+  return terrain;
 }
 
 // ---------- 路徑：球面與平面地圖共用同一條曲線 ----------
@@ -225,6 +317,8 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     hallRoad.push(pts);
   });
 
+  terrain.ctx.roads = hallRoad; terrain.ctx.nodes = hallNodes;
+
   // ----- 星球本體：六角形磚塊（預設約 10 萬片；?hex=NN 可調，NN 為頻率，磚數≈10×NN²） -----
   const planet = new THREE.Group();
   scene.add(planet);
@@ -297,7 +391,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       return [base.clone().multiplyScalar(0.86), base.clone(), base.clone().lerp(new THREE.Color(0xfff6e0), 0.22)];
     });
     const OCEAN = [new THREE.Color(0x1d5a88), new THREE.Color(0x25679a)], SHORE = new THREE.Color(0x3f9cc4), SAND = new THREE.Color(0xf0e2b0);
-    const ROAD = new THREE.Color(0xfff0c8), NODE_C = hallCol.map(c => c.clone().multiplyScalar(0.55));
+    const PLAZA = new THREE.Color(0xe9e2cf), ROAD = new THREE.Color(0xfff0c8), NODE_C = hallCol.map(c => c.clone().multiplyScalar(0.55));
     const roadHalf = 0.3, nodeR = 0.62; // 單位：球面弧長
     const cosRoad = Math.cos(roadHalf / R), cosNode = Math.cos(nodeR / R);
 
@@ -332,13 +426,10 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       else if (tr.n < 0.56) c = SAND;
       else {
         const pal = landPal[tr.hall];
-        c = pal[tr.n > 1.28 ? 2 : (hash3(v * 0.013, 1.7, 2.9) > 0.5 ? 1 : 0)];
-        if (tr.mask > 0.02) { // 路與單元站
-          const hd = hallRoad[tr.hall], nd = hallNodes[tr.hall];
-          let best = -1;
-          for (let k = 0; k < nd.length; k++) { const d = x * nd[k].x + y * nd[k].y + z * nd[k].z; if (d > cosNode) { c = NODE_C[tr.hall]; best = 1; break; } }
-          if (best < 0) for (let k = 0; k < hd.length; k++) { if (x * hd[k].x + y * hd[k].y + z * hd[k].z > cosRoad) { c = ROAD; break; } }
-        }
+        c = pal[tr.e > 0.78 ? 2 : (hash3(v * 0.013, 1.7, 2.9) > 0.5 ? 1 : 0)];
+        if (tr.nd < nodeR) c = NODE_C[tr.hall];
+        else if (tr.rd < roadHalf) c = ROAD;
+        else if (tr.pd < 1.9) c = PLAZA;
       }
       const jit = 0.93 + 0.14 * hash3(v * 0.37, 3.1, 0.7);
       const r8 = Math.min(255, Math.round(c.r * jit * 255)), g8 = Math.min(255, Math.round(c.g * jit * 255)), b8 = Math.min(255, Math.round(c.b * jit * 255));
@@ -398,11 +489,18 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     return mesh;
   })();
 
-  // ----- 球外的單元地標（只看不能點）：站在路上的每一站 -----
+  // ----- 球外的單元地標（只看不能點）：站在路上的每一站，立著用封面做的小牌子 -----
   const landmarks = new THREE.Group();
   planet.add(landmarks);
+  const signs = new Map(); // unitId -> [{sprite, h, ex}]
+  function addSign(unitId, sprite, h, ex) {
+    let a = signs.get(unitId);
+    if (!a) { a = []; signs.set(unitId, a); }
+    a.push({ sprite, h, ex });
+  }
   halls.forEach((hall, hi) => {
     const col = new THREE.Color(hall.color);
+    const { n, Np, E } = bases[hi];
     const parts = [];
     const up = new THREE.Vector3(0, 1, 0);
     hall.units.forEach((u, i) => {
@@ -410,17 +508,59 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       const rad = R + terrain(dir).e - 0.05;
       const q = new THREE.Quaternion().setFromUnitVectors(up, dir);
       const base = new THREE.Matrix4().compose(dir.clone().multiplyScalar(rad), q, new THREE.Vector3(1, 1, 1));
-      parts.push({ g: new THREE.CylinderGeometry(0.26, 0.34, 0.9, 8), m: base.clone().multiply(M(0, 0.45, 0)), color: new THREE.Color(0xefe5c6) });
-      parts.push({ g: new THREE.ConeGeometry(0.46, 0.7, 8), m: base.clone().multiply(M(0, 1.25, 0)), color: col.clone() });
+      parts.push({ g: new THREE.CylinderGeometry(0.42, 0.5, 0.16, 10), m: base.clone().multiply(M(0, 0.08, 0)), color: col.clone() });
+      parts.push({ g: new THREE.CylinderGeometry(0.07, 0.09, 1.3, 6), m: base.clone().multiply(M(0, 0.8, 0)), color: new THREE.Color(0xcfc8b4) });
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(u.emoji), transparent: true, depthWrite: false }));
-      sp.position.copy(dir).multiplyScalar(rad + 2.2);
-      sp.scale.set(1.35, 1.35, 1);
+      sp.position.copy(dir).multiplyScalar(rad + 1.95);
+      sp.scale.set(1.1, 1.1, 1);
       landmarks.add(sp);
+      addSign(u.id, sp, 1.1, null);
     });
+    // 特色小景：散在館的區域，避開路、站與廣場
+    const placed = [], tan = new THREE.Vector3(), dd = new THREE.Vector3();
+    for (let tries = 0; placed.length < 18 && tries < 600; tries++) {
+      const a = hash3(hi * 9.1, tries * 1.37, 2.2) * TAU, r = 0.28 + 0.52 * Math.sqrt(hash3(hi * 3.3, tries * 0.71, 5.5));
+      tan.copy(E).multiplyScalar(Math.cos(a)).addScaledVector(Np, Math.sin(a));
+      dd.copy(n).multiplyScalar(Math.cos(r)).addScaledVector(tan, Math.sin(r)).normalize();
+      const t = terrain(dd);
+      if (t.hall !== hi || t.mask < 0.6 || t.n < 0.62 || t.rd < 1.5 || t.nd < 2.0 || t.pd < 3.2) continue;
+      if (placed.some(pp => pp.dot(dd) > Math.cos(2.0 / R))) continue;
+      placed.push(dd.clone());
+      const q = new THREE.Quaternion().setFromUnitVectors(up, dd).multiply(new THREE.Quaternion().setFromAxisAngle(up, hash3(tries, hi, 1.1) * TAU));
+      const sc = 0.85 + 0.5 * hash3(tries, hi, 4.4);
+      const bm = new THREE.Matrix4().compose(dd.clone().multiplyScalar(R + t.e - 0.05), q, new THREE.Vector3(sc, sc, sc));
+      for (const pt of propParts(hall, placed.length % 2)) { pt.m = bm.clone().multiply(pt.m); parts.push(pt); }
+    }
     const mg = buildMerged(parts, 0.05);
     landmarks.add(new THREE.Mesh(mg.body, toonMat), new THREE.Mesh(mg.hull, hullMat));
   });
 
+  // 封面縮圖（約 5 KB 一張）載入後換掉表情符號；載不到就維持表情符號
+  function loadCovers() {
+    const ver = (import.meta.url.split('?')[1] || '');
+    halls.forEach(hall => {
+      hall.units.forEach(u => {
+        const img = new Image();
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = 204; c.height = 140;
+          const x = c.getContext('2d');
+          x.fillStyle = hall.color; roundRectPath(x, 0, 0, 204, 140, 14); x.fill();
+          x.save(); roundRectPath(x, 7, 7, 190, 126, 9); x.clip(); x.drawImage(img, 7, 7, 190, 126); x.restore();
+          x.lineWidth = 3; x.strokeStyle = '#0b1a15'; roundRectPath(x, 1.5, 1.5, 201, 137, 13); x.stroke();
+          const tex = new THREE.CanvasTexture(c);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          for (const { sprite, h, ex } of signs.get(u.id) || []) {
+            sprite.material.map = tex; sprite.material.needsUpdate = true;
+            if (ex) { ex.aspect = 204 / 140; sprite.scale.set(ex.size * ex.aspect, ex.size, 1); }
+            else sprite.scale.set(h * 204 / 140, h, 1);
+          }
+          invalidate();
+        };
+        img.src = new URL('./thumbs/' + u.id + '.jpg' + (ver ? '?' + ver : ''), import.meta.url).href;
+      });
+    });
+  }
 
   // ----- 四座館（只剩地圖；球外靠顏色分區，不再蓋建築） -----
   const hallObjs = [];
@@ -435,10 +575,13 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     g.position.copy(n).multiplyScalar(PLATEAU_TOP);
     g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(E, n, Zl));
     planet.add(g);
-
+    const sg = buildMerged(statueParts(hall), 0.06);
+    const iconP = new THREE.Group();
+    iconP.add(new THREE.Mesh(sg.body, toonMat), new THREE.Mesh(sg.hull, hullMat));
+    g.add(iconP);
 
     const anchor = new THREE.Object3D();
-    anchor.position.y = 3.4;
+    anchor.position.y = 6.0;
     g.add(anchor);
 
     // ----- 平面地圖（進館後才看得到） -----
@@ -463,6 +606,10 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     }
     const pathHolder = new THREE.Group();
     map.add(pathHolder);
+    const iconMap = new THREE.Group();
+    iconMap.add(new THREE.Mesh(sg.body, toonMat), new THREE.Mesh(sg.hull, hullMat));
+    iconMap.scale.setScalar(0.8);
+    map.add(iconMap);
 
     // 單元站
     const N = hall.units.length;
@@ -488,7 +635,9 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       ep.userData.unitId = u.id;
       ex.add(ep);
       map.add(ex);
-      exhibits.push({ group: ex, sprite, size: 1.5, target: 1.5, hop: 0, hopTarget: 0 });
+      const exObj = { group: ex, sprite, size: 1.5, target: 1.5, hop: 0, hopTarget: 0, aspect: 1 };
+      exhibits.push(exObj);
+      addSign(u.id, sprite, null, exObj);
       exProxies.push(ep);
       unitIndex.set(u.id, { hall: hi, index: i });
     });
@@ -529,7 +678,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     });
 
     hallObjs.push({
-      hall, group: g, map, anchor, exhibits, exProxies, gates, gateProxies, focusRing, pathHolder, N,
+      hall, group: g, map, anchor, icon: iconP, iconMap, exhibits, exProxies, gates, gateProxies, focusRing, pathHolder, N,
       q: new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(E, bases[hi].Np, n)).invert(),
       focus: 0, layoutV: null, nodes: [],
     });
@@ -571,6 +720,8 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     const mg = buildMerged(parts, 0);
     h.pathHolder.add(new THREE.Mesh(mg.body, pathMat));
     placeFocus(h);
+    const sp0 = curve(-0.16);
+    h.iconMap.position.set(sp0.x, 0, sp0.z);
     // 出口：沿著「隔壁館所在的方向」放在地圖邊緣
     const { E, Np } = bases[hallObjs.indexOf(h)];
     const ext = vertical ? EXT.v : EXT.h;
@@ -663,6 +814,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     planetMat.opacity = planetHullMat.opacity = 1 - ek;
     planetMeshes.forEach(m => { m.visible = ek < 0.99; });
     landmarks.visible = k < 0.5;
+    hallObjs.forEach(h => { h.icon.visible = k < 0.5; });
     clouds.visible = k < 0.35;
     hallObjs.forEach((h, i) => {
       const isVis = i === state.hallVis;
@@ -915,7 +1067,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
         if (Math.abs(ds) > 0.005 || Math.abs(dh) > 0.005) {
           const k = 1 - Math.exp(-dt / 0.09);
           e.size += ds * k; e.hop += dh * k;
-          e.sprite.scale.set(e.size, e.size, 1);
+          e.sprite.scale.set(e.size * e.aspect, e.size, 1);
           e.sprite.position.y = 1.75 + e.hop;
           active = true;
         }
@@ -998,6 +1150,8 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
       'geo ' + s.geometries + '  tex ' + s.textures + '  pr ' + s.pixelRatio + '\n' +
       s.mode + ' k=' + s.k;
   }
+
+  loadCovers();
 
   // ----- 啟動 -----
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas); else window.addEventListener('resize', resize);
