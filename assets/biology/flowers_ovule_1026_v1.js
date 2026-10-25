@@ -15,7 +15,7 @@ const K=window.PlantsKit;if(!K||!window.LivingBook)return;
 const P=K.P,C=K.C,choice=K.choice,steps=K.steps;
 
 // ── view 0: one ovule (8 steps) ────────────────────────────────────────────
-const OV_SHORT=[P(`整個子房`,`Whole ovary`),P(`沿腔壁找胚珠`,`Tube follows the wall`),P(`胚珠構造`,`Ovule`),P(`八個核`,`Eight nuclei`),P(`管到珠孔`,`Tube at micropyle`),P(`兩個精細胞`,`Two sperm cells`),P(`雙重受精`,`Double fertilization`),P(`變成種子`,`Becomes a seed`)];
+const OV_SHORT=[P(`整個子房`,`Whole ovary`),P(`沿腔壁找胚珠`,`Along the wall`),P(`胚珠構造`,`Ovule`),P(`八個核`,`Eight nuclei`),P(`管到珠孔`,`Tube at micropyle`),P(`兩個精細胞`,`Two sperm cells`),P(`雙重受精`,`Double fertilization`),P(`變成種子`,`Becomes a seed`)];
 const OV_NAMES=[P(`只有一顆胚珠的子房：柱頭、花柱、子房腔、胚珠`,`An ovary with one ovule: stigma, style, ovary cavity, ovule`),
  P(`花粉管出了花柱，沿著子房腔壁，一路找到胚珠`,`The pollen tube leaves the style and follows the wall of the ovary cavity to the ovule`),
  P(`一顆胚珠的構造：珠柄、珠被、珠孔、胚囊`,`Inside one ovule: stalk, integuments, micropyle, embryo sac`),

@@ -140,7 +140,7 @@ function partialP(Q,d){const out=[];for(let i=0;i<Q.pts.length&&Q.L[i]<d;i++)out
 // U px (ovule.png): along the placenta from the right, over the stalk base, up the stalk, across the narrowest gap,
 // along the lower side of the right lobe, into the micropyle, into a synergid
 const TUBE_P=[[1150,1199],[900,1199],[700,1199],[640,1199],[606,1196],[575,1186],[550,1166],[537,1145],[543,1122],[557,1103],[571,1087],
-  [584,1072],[597,1057],[611,1042],[624,1027],[634,1010],[628,982],[612,958],[595,963],[580,973],[565,982],[550,989],[535,996],[520,1000],
+  [584,1072],[597,1057],[611,1042],[622,1024],[627,1003],[622,980],[610,966],[595,964],[580,973],[565,982],[550,989],[535,996],[520,1000],
   [505,1005],[488,1008],[470,1009],[455,1000],[446,978],[438,950],[424,922],[408,900],[404,880],[409,866],[424,828],[441,798],[446,778]];
 const PATH=spline(TUBE_P);
 const near=(x,y)=>nearP(PATH,x,y),along=d=>alongP(PATH,d),partial=d=>partialP(PATH,d);
@@ -300,7 +300,7 @@ function ripplesO(c,t,a){
   if(a<=0)return;const q=kO();c.save();c.globalAlpha*=a;
   wallPath(c);c.clip();c.setLineDash([7/q,6/q]);
   for(let i=0;i<3;i++){const u=mod(t*.42+i/3),r=18+u*240;
-    c.beginPath();c.arc(RIP[0],RIP[1],r,0,TAU);c.strokeStyle=rgba(SYN.lab,.8*(1-u));c.lineWidth=2.2/q;c.stroke();}
+    c.beginPath();c.arc(RIP[0],RIP[1],r,0,TAU);c.strokeStyle=rgba('#f59e0b',.6*(1-u));c.lineWidth=2.4/q;c.stroke();}
   c.setLineDash([]);glow(c,RIP[0],RIP[1],22,SYN.lab,.3+.15*Math.sin(t*2.2));
   c.restore();
 }
@@ -342,13 +342,13 @@ function routeMap(c,t,a){
   // the frame: screen x 286..960, y 0..600 in O px
   const o=(sx,sy)=>[(cam.ix+(sx-cam.sx)/cam.k-U0[0])*M+O0[0],(cam.iy+(sy-cam.sy)/cam.k-U0[1])*M+O0[1]];
   const [x0,y0]=o(286,0),[x1,y1]=o(960,600),fx0=Math.max(0,x0),fy0=Math.max(0,y0),fx1=Math.min(OW,x1),fy1=Math.min(OH,y1);
-  c.save();c.setLineDash([4,3]);c.strokeStyle=C.white;c.lineWidth=1.6;c.strokeRect(tx+fx0*kT,ty+fy0*kT,(fx1-fx0)*kT,(fy1-fy0)*kT);c.restore();
+  const fr=[tx+fx0*kT,ty+fy0*kT,(fx1-fx0)*kT,(fy1-fy0)*kT];c.save();c.strokeStyle=rgba(C.deep,.85);c.lineWidth=3.6;c.strokeRect(...fr);c.setLineDash([5,3]);c.strokeStyle=C.white;c.lineWidth=2;c.strokeRect(...fr);c.restore();
   text(c,T.route,bx+bw/2,ty+th+29,20,C.muted,'center');
   c.restore();
 }
 
 // ── texts drawn on the canvas ──────────────────────────────────────────────
-const SHORT=[P(`整個子房`,`Whole ovary`),P(`沿腔壁找胚珠`,`Tube follows the wall`),P(`胚珠構造`,`Ovule`),P(`八個核`,`Eight nuclei`),P(`管到珠孔`,`Tube at micropyle`),P(`兩個精細胞`,`Two sperm cells`),P(`雙重受精`,`Double fertilization`),P(`變成種子`,`Becomes a seed`)];
+const SHORT=[P(`整個子房`,`Whole ovary`),P(`沿腔壁找胚珠`,`Along the wall`),P(`胚珠構造`,`Ovule`),P(`八個核`,`Eight nuclei`),P(`管到珠孔`,`Tube at micropyle`),P(`兩個精細胞`,`Two sperm cells`),P(`雙重受精`,`Double fertilization`),P(`變成種子`,`Becomes a seed`)];
 const STEPCOL=[STRUCT,TUBE,STRUCT,C.yellow,TUBE,C.cyan,C.pink,COAT];
 const T={
  // steps 0-1
@@ -359,7 +359,7 @@ const T={
  pollen:P(`一粒花粉`,`A pollen grain`),tube1:P(`花粉管（示意）`,`Pollen tube (schematic)`),
  wallHug:P(`子房腔壁：\n花粉管貼著它長`,`Cavity wall:\nthe tube hugs it`),
  signal1:P(`化學訊號（示意）：\n胚珠幫忙引路`,`Chemical signals\n(schematic) from\nthe ovule guide it`),
- nope:P(`× 不會直線穿過\n空空的子房腔`,`× Not straight across\nthe empty cavity`),
+ nope:P(`× 不會直線穿過\n空空的子房腔`,`× Not straight across the empty cavity`),
  phase:[P(`一粒花粉落在柱頭上`,`A pollen grain lands on the stigma`),
    P(`① 花粉管沿著花柱中間的通道往下長`,`1. The tube grows down the channel in the style`),
    P(`② 出了花柱：貼著子房腔壁往下爬`,`2. Out of the style, it creeps along the cavity wall`),
@@ -370,7 +370,7 @@ const T={
  // steps 2-7 (as in the 1022 module)
  integ:P(`珠被（2 層）`,`Integuments (2 layers)`),nucellus:P(`珠心`,`Nucellus`),sac:P(`胚囊`,`Embryo sac`),micro:P(`珠孔`,`Micropyle`),
  stalk:P(`珠柄`,`Stalk`),chalaza:P(`合點端`,`Chalazal end`),placenta:P(`胎座（示意）`,`Placenta (schematic)`),
- wallPlac:P(`子房腔壁\n（胎座，示意）`,`Cavity wall\n(placenta, schematic)`),
+ wallPlac:P(`子房腔壁（胎座）`,`Cavity wall\n(placenta)`),
  anatropous:P(`倒生胚珠：珠孔朝下，\n朝向胎座、靠近珠柄`,`Anatropous ovule: the micropyle faces down, towards the placenta, next to the stalk`),
  egg:P(`卵`,`Egg`),syn:P(`助細胞`,`Synergid`),syn2:P(`助細胞 ×2`,`Synergids ×2`),central:P(`中央細胞`,`Central cell`),polar:P(`極核 ×2`,`Polar nuclei ×2`),
  anti:P(`反足細胞`,`Antipodal cells`),
@@ -395,7 +395,7 @@ const T={
  gone:P(`助細胞、反足細胞：消失`,`Synergids and antipodals: gone`),
  noteAI:P(`胚珠圖：AI 插圖，\n非實拍`,`Ovule: AI illustration,\nnot a photo`),noteAIov:P(`子房圖：AI 插圖，\n非實拍`,`Ovary: AI illustration,\nnot a photo`),
  time:P(`時間已壓縮：\n實際常要好幾個小時`,`Time is compressed:\nit often takes hours`),
- note:[P(`子房縱切面`,`Ovary cut lengthwise`),P(`花粉管路線：示意`,`Tube route: schematic`),P(`胎座：示意`,`Placenta: schematic`),P(`細胞與核：示意`,`Cells and nuclei: schematic`),P(`花粉管路線：示意`,`Tube route: schematic`),
+ note:[P(`子房縱切面`,`Ovary cut lengthwise`),P(`花粉管路線：示意`,`Tube route: schematic`),P(`胎座：示意`,`Placenta: schematic`),P(`細胞與核：示意`,`Cells and nuclei: schematic`),P(`花粉管路線、胎座：示意`,`Tube route, placenta: schematic`),
    P(`細胞與核：示意`,`Cells and nuclei: schematic`),P(`細胞與核：示意`,`Cells and nuclei: schematic`),P(`胚與胚乳：示意`,`Embryo, endosperm: schematic`)]
 };
 function notes(c,k){
@@ -537,12 +537,12 @@ function draw(c,s,t){
     c.restore();
     // left panel: what is happening now, then signals and the wrong way
     const ph=d1<=0?0:d1<L1_MOUTH?1:d1<L1_FLOOR?2:d1<L1_END-.5?3:4,t0=[0,T1A,tauOf(L1_MOUTH),tauOf(L1_FLOOR),tauOf(L1_END)][ph];
-    const capH=Math.max(...T.phase.map(p=>rowsOf(c,p,LW).length))*29;
-    c.save();c.globalAlpha*=la*fade(tau,ph?t0:.3,.4);textBlock(c,T.phase[ph],LX,92,LW,ph===4?C.green:C.yellow);c.restore();
-    let yl=92-22+capH+26;
+    const capH=Math.max(...T.phase.map(p=>rowsOf(c,p,LW).length))*29,capY=LP.y+12+fitH(c,SHORT[1],LW)+34;
+    c.save();c.globalAlpha*=la*fade(tau,ph?t0:.3,.4);textBlock(c,T.phase[ph],LX,capY,LW,ph===4?C.green:C.yellow);c.restore();
+    let yl=capY-22+capH+18;
     tagBox(c,T.signal1,LX,yl,LW,SO(66,650),SYN.lab,tA(2.8));
     yl+=fitH(c,T.signal1,LW)+16;
-    if(d1>=L1_MOUTH&&yl+fitH(c,T.nope,LW)<noteTop)tagBox(c,T.nope,LX,yl,LW,SO(XMARK[0]-12,XMARK[1]),NOPE,tA(tauOf(L1_MOUTH)+.6));
+    if(d1>=L1_MOUTH&&yl+fitH(c,T.nope,LW)<noteTop)tagBox(c,T.nope,LX,yl,LW,SO(XMARK[0]-20,XMARK[1]),NOPE,tA(tauOf(L1_MOUTH)+.6));
   }
   if(k===2){
     tagBox(c,T.integ,LX,110,LW,[S(36,560),S(93,560)],STRUCT,a*fade(tau,1.1,.5));
@@ -590,9 +590,9 @@ function draw(c,s,t){
     tagBox(c,T.signal,LX,170,LW,S(372,820),SYN.lab,a*fade(tau,1.0,.5));
     tagBox(c,T.micro,LX,300,LW,S(392,968),C.yellow,a);
     if(tubeD>60){const p=along(tubeD-35);tagBox(c,T.spermIn,LX,380,LW,S(p.x,p.y),C.cyan,a*fade(tau,1.9,.5));}
-    tagBox(c,T.stalk,RX+40,300,RW-40,S(668,1020),STALK,a);
-    {const p=along(Math.min(tubeD,near(820,1199)));tagBox(c,T.tube,RX-10,380,RW+10,S(p.x,p.y-8),TUBE,a*clamp(tubeD/120));}
-    tagBox(c,T.wallPlac,RX+20,486,RW-20,S(960,1245),PLAC,a);
+    tagBox(c,T.stalk,RX+40,300,RW-40,S(650,1060),STALK,a);
+    {const p=along(Math.min(tubeD,near(820,1199)));tagBox(c,T.tube,RX-10,372,RW+10,S(p.x,p.y-8),TUBE,a*clamp(tubeD/120));}
+    tagBox(c,T.wallPlac,300,470,256,S(380,1250),PLAC,a);
   }
   if(k===5){
     tagBox(c,T.egg,LX,120,LW,S(354,668),EGG.lab,a);
