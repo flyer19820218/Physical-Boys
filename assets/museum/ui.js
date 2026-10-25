@@ -200,13 +200,17 @@ export function createUI({ data, config, lang, handlers }) {
     if (notify && prevUnit !== c.unitId) handlers.onUnitChange(c.unitId, 'scroll');
   }
 
+  function isSide() { return body.classList.contains('layout-side'); }
+
   function computeActive() {
     if (!state.cards.length) return;
-    const max = cardsEl.scrollWidth - cardsEl.clientWidth;
-    if (cardsEl.scrollLeft >= max - 2) { setActive(state.cards.length - 1, true); return; }
+    const v = isSide();
+    const max = v ? cardsEl.scrollHeight - cardsEl.clientHeight : cardsEl.scrollWidth - cardsEl.clientWidth;
+    const pos = v ? cardsEl.scrollTop : cardsEl.scrollLeft;
+    if (pos >= max - 2) { setActive(state.cards.length - 1, true); return; }
     let best = 0, bestD = Infinity;
     state.cards.forEach((c, i) => {
-      const d = Math.abs(c.el.offsetLeft - (cardsEl.scrollLeft + 16));
+      const d = Math.abs((v ? c.el.offsetTop : c.el.offsetLeft) - (pos + (v ? 4 : 16)));
       if (d < bestD) { bestD = d; best = i; }
     });
     setActive(best, true);
@@ -225,7 +229,9 @@ export function createUI({ data, config, lang, handlers }) {
     const c = state.cards[index];
     if (!c) return;
     state.lockUntil = performance.now() + (smooth ? 800 : 200);
-    cardsEl.scrollTo({ left: Math.max(0, c.el.offsetLeft - 16), behavior: smooth ? 'smooth' : 'auto' });
+    const behavior = smooth ? 'smooth' : 'auto';
+    if (isSide()) cardsEl.scrollTo({ top: Math.max(0, c.el.offsetTop - 4), behavior });
+    else cardsEl.scrollTo({ left: Math.max(0, c.el.offsetLeft - 16), behavior });
     setActive(index, false);
   }
   function scrollToUnit(unitId, smooth) {
@@ -240,8 +246,8 @@ export function createUI({ data, config, lang, handlers }) {
   $('cardPrev').addEventListener('click', () => step(-1));
   $('cardNext').addEventListener('click', () => step(1));
   cardsEl.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); step(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); step(-1); }
   });
 
   // ---------- 收合 ----------
@@ -251,9 +257,31 @@ export function createUI({ data, config, lang, handlers }) {
     handle.setAttribute('aria-expanded', String(!collapsed));
   });
   function reportSheet() {
-    const f = sheet.hidden ? 0 : Math.max(0, (window.innerHeight - sheet.getBoundingClientRect().top) / window.innerHeight);
-    handlers.onSheetFraction && handlers.onSheetFraction(f);
+    let f = 0, axis = 'y';
+    if (!sheet.hidden) {
+      const r = sheet.getBoundingClientRect();
+      if (isSide()) { axis = 'x'; f = Math.max(0, r.right / window.innerWidth); }
+      else f = Math.max(0, (window.innerHeight - r.top) / window.innerHeight);
+    }
+    handlers.onSheetFraction && handlers.onSheetFraction(f, axis);
   }
+  // 版面依實際寬高比切換：寬大於高（平板橫放、電腦）→ 卡片在左側直排；其餘在底部橫滑
+  function updateLayout() {
+    const w = window.innerWidth, h = window.innerHeight;
+    const side = w >= 700 && w / h >= 1.2;
+    if (side === body.classList.contains('layout-side')) return false;
+    body.classList.toggle('layout-side', side);
+    return true;
+  }
+  let layoutTimer = 0;
+  window.addEventListener('resize', () => {
+    clearTimeout(layoutTimer);
+    layoutTimer = setTimeout(() => {
+      if (updateLayout() && state.activeIndex >= 0) scrollToIndex(state.activeIndex, false);
+      reportSheet();
+    }, 120);
+  });
+  window.addEventListener('orientationchange', () => window.dispatchEvent(new Event('resize')));
   if ('ResizeObserver' in window) new ResizeObserver(reportSheet).observe(sheet);
   sheet.addEventListener('transitionend', reportSheet);
   window.addEventListener('resize', reportSheet);
@@ -443,6 +471,7 @@ export function createUI({ data, config, lang, handlers }) {
     if (!state.no3d) Object.values(plateEls).forEach(el => el.classList.toggle('is-hidden', !show));
   }
 
+  updateLayout();
   applyStrings();
 
   return {

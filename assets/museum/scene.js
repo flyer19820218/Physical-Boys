@@ -359,6 +359,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     zoomP: 1,
     zoomH: 1,
     sheetF: 0,
+    sheetAxis: 'y',
   };
   let flight = null;
   const omega = new THREE.Vector3();
@@ -392,9 +393,10 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
   function hallDistance() {
     const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
     const tanH = Math.tan(halfV) * camera.aspect;
-    const free = Math.max(0.3, 1 - state.sheetF);
-    const dH = 6.3 / (0.92 * tanH);
-    const dV = (5.2 / (Math.tan(halfV) * free * 0.92));
+    const freeW = state.sheetAxis === 'x' ? Math.max(0.3, 1 - state.sheetF) : 1;
+    const freeH = state.sheetAxis === 'y' ? Math.max(0.3, 1 - state.sheetF) : 1;
+    const dH = 6.3 / (0.92 * tanH * freeW);
+    const dV = 5.2 / (Math.tan(halfV) * freeH * 0.92);
     return clamp(Math.max(dH, dV), 16, 70);
   }
   const posP = new THREE.Vector3(), posH = new THREE.Vector3(), tgtH = new THREE.Vector3(0, 0.9, PLATEAU_TOP);
@@ -406,8 +408,9 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     const tx = 0, ty = lerp(0, tgtH.y, state.k), tz = lerp(0, tgtH.z, state.k);
     camera.up.set(0, 1, 0);
     camera.lookAt(tx, ty, tz);
-    const shift = state.k * (state.sheetF / 2) * H;
-    camera.setViewOffset(W, H, 0, shift, W, H);
+    const shift = state.k * (state.sheetF / 2);
+    if (state.sheetAxis === 'x') camera.setViewOffset(W, H, -shift * W, 0, W, H);
+    else camera.setViewOffset(W, H, 0, shift * H, W, H);
   }
 
   // ----- 飛行 -----
@@ -734,7 +737,7 @@ export async function createScene({ canvas, halls, reducedMotion, quality, debug
     flyToHall,
     flyToPlanet,
     focusUnit,
-    setSheetFraction(f) { state.sheetF = clamp(f, 0, 0.9); invalidate(); },
+    setSheetFraction(f, axis) { state.sheetF = clamp(f, 0, 0.9); state.sheetAxis = axis === 'x' ? 'x' : 'y'; invalidate(); },
     stats,
     destroy() {
       if (raf) cancelAnimationFrame(raf);
