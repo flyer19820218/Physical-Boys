@@ -45,5 +45,5 @@
 
 - 圖片全部處理完（`environment_ai_1024/TH*`，腳本 `cut_environment_l2_1024.py`，紀錄在 `sources.md` 檔尾；TH8、TH14b 是程式衍生）、kit 已登記尺寸、主程式 `environment_threats_1024_v1.js`、預覽頁 `biology_environmental_threats_1024_preview1.html`（14 個動畫目前都是「動畫製作中」占位）。正式頁 `biology_environmental_threats.html` 還是舊版，等 14 個動畫做完再換（同第 1 課：預覽頁複製成正式頁、首頁卡片、導覽）。
 - 動畫順序（一次一個 Opus）：`conc` → `judge` → `edge` → `fragment` → `harvest` → `pathway` → `stages` → `sources` → `chain` → `bioacc` → `magnify` → `shift` → `coral` → `timing`。做完一個，在預覽頁主程式那行之前加一行 `environment_draw_<名>_1024_v1.js?v=20261025-v1`。
-- 完成：`judge`、`conc`、`edge`、`fragment`、`harvest`、`pathway`、`stages`、`sources`、`chain`（第 3 步拿掉「小魚→大魚」食物鏈箭頭，避免與 magnify 的「往上濃度變高」矛盾）
+- 完成：`judge`、`conc`、`edge`、`fragment`、`harvest`、`pathway`、`stages`、`sources`、`chain`、`bioacc`（第 3 步拿掉「小魚→大魚」食物鏈箭頭，避免與 magnify 的「往上濃度變高」矛盾）
 - 第 3 課：圖 18 條到齊（CV*），圖片處理、主程式、預覽頁、動畫（含新增第 5 分頁 `casefile`）都還沒開始。老師已決定採用三課新標題、第 3 課做 `casefile`。
