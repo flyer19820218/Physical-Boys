@@ -3379,10 +3379,300 @@
   /* @@TAB3-END */
 
   /* @@TAB4-BEGIN  cl（造山壓縮機）—— 動畫代理只改這個區塊與對應的 #cl-stage 內的控制項 */
-  const CL = { W: 960, H: 540 };
-  function clDraw(c, t, dt) { e_label(c, tr('動畫製作中：造山壓縮機', 'Animation in progress: cl'), 480, 270, '#f6f3ea', 24, 'center', true, 640); }
-  function clUI() { const st = document.getElementById('cl-status'); if (st) st.innerHTML = ''; }
-  function clEnter() {}
+  /* 大陸碰撞橫切剖面（示意圖，不依真實比例）：兩塊大陸地殼被左右兩側的「壓縮機」推向中間。
+     擠壓程度 s（0–1）：總寬度 L = L0 ×（1 − R·s）。縮短掉的面積 L0·H0·R·s 全部轉成中間的增厚（高斯形隆起 b(x)），
+     其中 UP 的比例往上長成山、其餘往下長成山根，所以岩層面積守恆（不會憑空變多或消失）。
+     每一欄的「材料座標」ξ(x) = ∫T dx /(H0·L0)：中間增厚的地方被擠得比較窄，化石、褶皺都跟著材料座標走。
+     褶皺：岩層上下位移 d = 振幅 × sin(2πNξ − π/2)（ξ=0.5 正好是背斜頂），振幅隨 s 變大、中間比兩側大。 */
+  const CL = { W: 960, H: 540, CX: 480, Y0: 232, H0: 108, L0: 780, R: 0.42, SIG: 80, UP: 0.42, N: 9, SNOW: 174 };
+  const CL_LAY = ['#ecd59a', '#dcbb7f', '#c9a265', '#b78a52', '#a37645', '#8d6740'];   /* 大陸地殼＝沙黃褐：同色系深淺條紋＝層理 */
+  const CL_PINK = '#f472b6', CL_CYAN = '#55e9ff', CL_GREEN = '#4ade80';
+  /* 化石的材料位置：[ξ, 在地殼厚度中的比例 f（0＝地表）, 種類 0 貝殼／1 菊石] —— 都在最上面兩層（原本的海底沉積） */
+  const CL_FOS = [[0.115, 0.13, 0], [0.235, 0.27, 1], [0.33, 0.11, 0], [0.395, 0.24, 1], [0.47, 0.05, 0], [0.57, 0.14, 1], [0.665, 0.26, 1], [0.775, 0.12, 1], [0.885, 0.26, 0]];
+  const CLS = { s: 0, auto: false, dir: 1, hold: 0, touched: false, ghost: false, pct: -1, mov: 0, ph: 0, drag: null };
+  let CL_G = null;
+
+  /* ── 幾何 ── */
+  function clGeo() {
+    const s = CLS.s / 100;
+    if (CL_G && CL_G.s === s) return CL_G;
+    const { CX, Y0, H0, L0, R, SIG, UP, N } = CL, n = 180;
+    const L = L0 * (1 - R * s), xl = CX - L / 2, xr = CX + L / 2, dx = L / n;
+    const xs = [], b = [];
+    for (let i = 0; i <= n; i++) { const x = xl + dx * i; xs.push(x); b.push(Math.exp(-0.5 * Math.pow((x - CX) / SIG, 2))); }
+    let ib = 0; for (let i = 1; i <= n; i++) ib += (b[i] + b[i - 1]) / 2 * dx;
+    const A = L0 * R * s * H0 / ib;                         /* 縮短的面積 ÷ ∫b ＝ 中間最厚處多出來的厚度 */
+    const T = b.map(v => H0 + A * v), xi = [0];
+    for (let i = 1; i <= n; i++) xi.push(xi[i - 1] + (T[i] + T[i - 1]) / 2 * dx / (H0 * L0));
+    const k1 = 1 / xi[n]; for (let i = 0; i <= n; i++) xi[i] *= k1;
+    const fa = Math.min(1, s * 1.5);
+    const sm = u => { u = kClamp(u, 0, 1); return u * u * (3 - 2 * u); };
+    const d = xi.map((u, i) => fa * (8 + 12 * b[i]) * sm(u / 0.07) * sm((1 - u) / 0.07) * Math.sin(2 * Math.PI * N * u - Math.PI / 2));
+    const top0 = b.map(v => Y0 - UP * A * v);
+    CL_G = { s, n, L, xl, xr, dx, xs, b, A, T, xi, d, top0 };
+    return CL_G;
+  }
+  /* 第 i 欄、厚度比例 f 的 y（f=0 地表、f=1 地殼底部；褶皺位移往下逐漸減弱） */
+  const clYi = (G, i, f) => G.top0[i] + f * G.T[i] - G.d[i] * (1 - 0.82 * f);
+  function clYx(G, x, f) {
+    const u = kClamp((x - G.xl) / G.dx, 0, G.n - 1e-6), i = Math.floor(u), w = u - i;
+    return kLerp(clYi(G, i, f), clYi(G, i + 1, f), w);
+  }
+  /* 材料座標 ξ → 現在的 x、y */
+  function clAt(G, u, f) {
+    let a = 0, z = G.n;
+    while (z - a > 1) { const m = (a + z) >> 1; if (G.xi[m] < u) a = m; else z = m; }
+    const w = (u - G.xi[a]) / Math.max(1e-9, G.xi[z] - G.xi[a]);
+    return [kLerp(G.xs[a], G.xs[z], w), kLerp(clYi(G, a, f), clYi(G, z, f), w)];
+  }
+  function clPoly(c, pts) { c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); }
+  function clLine(G, f) { return G.xs.map((x, i) => [x, clYi(G, i, f)]); }
+  function clStage(p) { return p < 5 ? 0 : p < 30 ? 1 : p < 65 ? 2 : 3; }
+
+  /* ── 操作 ── */
+  function clTouch() { CLS.touched = true; CLS.auto = false; }
+  function clSet(v) { CLS.s = kClamp(v, 0, 100); }
+  function clSlide(v) { clTouch(); clSet(+v); clUI(); }
+  function clGhost() { clTouch(); CLS.ghost = !CLS.ghost; clUI(); }
+  function clReset() { clTouch(); clSet(0); clUI(); }
+  function clPlay() {
+    if (CLS.auto) clTouch();
+    else { CLS.touched = true; CLS.auto = true; CLS.dir = CLS.s >= 99.5 ? -1 : 1; CLS.hold = 0; }
+    clUI();
+  }
+  function clAutoStart() { CLS.auto = true; CLS.dir = 1; CLS.hold = 0.6; clSet(0); clUI(); }
+  function clEnter() { clPointer(); if (!CLS.touched) clAutoStart(); else clUI(); }
+  let clPtr = false;
+  function clPointer() {
+    const cv = document.getElementById('clCanvas'); if (!cv || clPtr) return; clPtr = true;
+    cv.style.touchAction = 'pan-y'; cv.style.cursor = 'ew-resize';
+    cv.addEventListener('pointerdown', e => {
+      clTouch();
+      CLS.drag = { x: kCanvasPt(cv, e, CL.W, CL.H).x, s: CLS.s, id: e.pointerId };
+      try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+      clUI();
+    });
+    cv.addEventListener('pointermove', e => {
+      const g = CLS.drag; if (!g || g.id !== e.pointerId) return;
+      const x = kCanvasPt(cv, e, CL.W, CL.H).x, k = g.x < CL.CX ? 1 : -1;
+      clSet(g.s + k * (x - g.x) / 2.5);   /* 往中間拖＝擠壓，往外拖＝放鬆 */
+    });
+    const up = e => { if (CLS.drag && CLS.drag.id === e.pointerId) CLS.drag = null; };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  }
+  function clTick(dt) {
+    const prev = CLS.s;
+    if (CLS.auto) {
+      if (CLS.hold > 0) { CLS.hold -= dt; if (CLS.hold <= 0) CLS.dir = CLS.s >= 99.5 ? -1 : 1; }
+      else if (CLS.dir > 0) { clSet(CLS.s + dt * 100 / 8.5); if (CLS.s >= 100) CLS.hold = 2; }
+      else { clSet(CLS.s - dt * 100 / 2.6); if (CLS.s <= 0) CLS.hold = 0.8; }
+    }
+    CLS.mov = kLerp(CLS.mov, CLS.s > prev + 1e-6 ? 1 : 0, Math.min(1, dt * 6));
+    CLS.ph += dt * (1 + 2 * CLS.mov);
+    if (Math.round(CLS.s) !== CLS.pct) clUI();
+  }
+
+  /* ── 小工具 ── */
+  function clArrow(c, x1, y1, x2, y2, col, w, head) {
+    e_arrow(c, x1, y1, x2, y2, 'rgba(16,36,29,0.85)', w + 4, head + 5);
+    e_arrow(c, x1, y1, x2, y2, col, w, head);
+  }
+  function clDim(c, x1, y1, x2, y2, col, dash) {
+    c.save(); if (dash) c.setLineDash([8, 6]);
+    [['rgba(16,36,29,0.8)', 6], [col, 2.6]].forEach(([k, w]) => { c.strokeStyle = k; c.lineWidth = w; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); });
+    c.restore();
+    const a = Math.atan2(y2 - y1, x2 - x1);
+    [[x1, y1, a + Math.PI], [x2, y2, a]].forEach(([x, y, r]) => {
+      c.fillStyle = col; c.beginPath(); c.moveTo(x, y);
+      c.lineTo(x - 11 * Math.cos(r - 0.45), y - 11 * Math.sin(r - 0.45)); c.lineTo(x - 11 * Math.cos(r + 0.45), y - 11 * Math.sin(r + 0.45)); c.closePath(); c.fill();
+    });
+  }
+  function clLeader(c, x1, y1, x2, y2, col) {
+    c.save(); c.lineCap = 'round';
+    c.strokeStyle = 'rgba(16,36,29,0.8)'; c.lineWidth = 5; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+    c.strokeStyle = col; c.lineWidth = 2.2; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+    c.fillStyle = col; c.beginPath(); c.arc(x2, y2, 4, 0, Math.PI * 2); c.fill(); c.restore();
+  }
+  function clA(c, a, fn) { if (a <= 0.003) return; c.save(); c.globalAlpha *= Math.min(1, a); fn(); c.restore(); }
+  /* 化石剪影（原創，粉筆風）：0 扇形貝殼、1 菊石螺旋 */
+  function clFossil(c, x, y, ang, kind, r) {
+    c.save(); c.translate(x, y); c.rotate(ang); c.lineJoin = 'round'; c.lineCap = 'round';
+    c.fillStyle = '#f6f0dc'; c.strokeStyle = '#5b4126'; c.lineWidth = 1.7;
+    if (kind === 0) {
+      c.beginPath(); c.moveTo(0, r * 0.6); c.arc(0, r * 0.6, r * 1.15, Math.PI + 0.42, 2 * Math.PI - 0.42); c.closePath(); c.fill(); c.stroke();
+      for (let k = -2; k <= 2; k++) { const a = -Math.PI / 2 + k * 0.42; c.beginPath(); c.moveTo(0, r * 0.6); c.lineTo(r * 1.05 * Math.cos(a), r * 0.6 + r * 1.05 * Math.sin(a)); c.stroke(); }
+      c.fillRect(-r * 0.35, r * 0.5, r * 0.7, r * 0.28); c.strokeRect(-r * 0.35, r * 0.5, r * 0.7, r * 0.28);
+    } else {
+      c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.beginPath();
+      for (let k = 0; k <= 60; k++) { const a = k * 0.21, rr = r * 0.92 * Math.exp(-a * 0.16); const px = rr * Math.cos(a), py = rr * Math.sin(a); if (k) c.lineTo(px, py); else c.moveTo(px, py); }
+      c.stroke();
+      for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5; c.beginPath(); c.moveTo(r * 0.62 * Math.cos(a), r * 0.62 * Math.sin(a)); c.lineTo(r * 0.95 * Math.cos(a), r * 0.95 * Math.sin(a)); c.stroke(); }
+    }
+    c.restore();
+  }
+
+  /* ── 剖面 ── */
+  function clScene(c, G, t) {
+    const { W, Y0, H0 } = CL;
+    /* 地函（橘紅） */
+    let g = c.createLinearGradient(0, Y0 + H0 - 20, 0, 540);
+    g.addColorStop(0, '#a3432a'); g.addColorStop(1, '#6a2417');
+    c.fillStyle = g; c.fillRect(0, Y0 + H0 - 20, W, 540 - (Y0 + H0 - 20));
+    /* 岩層：六層封閉多邊形 */
+    const lines = []; for (let k = 0; k <= 6; k++) lines.push(clLine(G, k / 6));
+    for (let k = 0; k < 6; k++) {
+      c.fillStyle = CL_LAY[k]; clPoly(c, lines[k].concat(lines[k + 1].slice().reverse())); c.closePath(); c.fill();
+    }
+    /* 層理細紋 */
+    c.save(); c.strokeStyle = 'rgba(90,60,30,0.32)'; c.lineWidth = 1.5;
+    for (let k = 0; k < 6; k++) { clPoly(c, clLine(G, (k + 0.5) / 6)); c.stroke(); }
+    c.strokeStyle = 'rgba(255,248,225,0.28)'; c.lineWidth = 1.5;
+    for (let k = 1; k < 6; k++) { clPoly(c, lines[k]); c.stroke(); }
+    c.restore();
+    const outline = lines[0].concat(lines[6].slice().reverse());
+    /* 雪頂：只在地表高過雪線的地方 */
+    const hi = Math.min(...lines[0].map(p => p[1]));
+    if (hi < CL.SNOW) {
+      c.save(); clPoly(c, outline); c.closePath(); c.clip();
+      c.beginPath(); c.moveTo(0, 0);
+      for (let x = 0; x <= W; x += 8) c.lineTo(x, CL.SNOW + 5 * Math.sin(x * 0.11) + 3 * Math.sin(x * 0.29));
+      c.lineTo(W, 0); c.closePath();
+      c.fillStyle = 'rgba(246,248,250,0.92)'; c.fill(); c.restore();
+    }
+    /* 右邊這塊大陸地殼略深一點，好分辨兩個板塊 */
+    const [xs] = clAt(G, 0.5, 0);
+    c.save(); clPoly(c, outline); c.closePath(); c.clip();
+    c.fillStyle = 'rgba(60,35,15,0.13)'; c.fillRect(xs, 0, W - xs, 540); c.restore();
+    /* 化石 */
+    CL_FOS.forEach(([u, f, kind]) => {
+      const [x, y] = clAt(G, u, f), [x1, y1] = clAt(G, u - 0.006, f), [x2, y2] = clAt(G, u + 0.006, f);
+      clFossil(c, x, y, Math.atan2(y2 - y1, x2 - x1), kind, 8.5);
+    });
+    /* 輪廓：地表（白粉筆）、邊緣 */
+    c.strokeStyle = 'rgba(246,243,234,0.9)'; c.lineWidth = 2.5; c.lineJoin = 'round'; clPoly(c, lines[0]); c.stroke();
+    c.strokeStyle = 'rgba(246,243,234,0.45)'; c.lineWidth = 2; clPoly(c, lines[6]); c.stroke();
+    /* 板塊交界（橘）：兩塊大陸地殼在中間碰在一起 */
+    const sp = []; for (let k = 0; k <= 12; k++) sp.push(clAt(G, 0.5, k / 12));
+    c.strokeStyle = 'rgba(16,36,29,0.6)'; c.lineWidth = 6; clPoly(c, sp); c.stroke();
+    c.strokeStyle = '#fb923c'; c.lineWidth = 3.5; clPoly(c, sp); c.stroke();
+    /* 兩側的壓縮機 */
+    [[0, G.xl - 3, 1], [G.xr + 3, W, -1]].forEach(([a, b, k]) => {
+      const w = b - a; if (w < 6) return;
+      c.fillStyle = '#2c5045'; c.fillRect(a, Y0, w, H0);
+      c.save(); c.beginPath(); c.rect(a, Y0, w, H0); c.clip();
+      c.strokeStyle = 'rgba(246,243,234,0.12)'; c.lineWidth = 2;
+      for (let x = a - H0; x < b; x += 16) { c.beginPath(); c.moveTo(x, Y0 + H0); c.lineTo(x + H0, Y0); c.stroke(); }
+      c.restore();
+      c.strokeStyle = 'rgba(246,243,234,0.85)'; c.lineWidth = 2.5; c.strokeRect(a, Y0, w, H0);
+      c.fillStyle = '#c8d6d0'; c.fillRect(k > 0 ? b - 7 : a, Y0 - 4, 7, H0 + 8);
+      const mx = (a + b) / 2, wob = 5 * CLS.mov * Math.sin(CLS.ph * 6);
+      e_label(c, tr('擠壓', 'Push'), mx, Y0 + 40, CL_CYAN, 16, 'center', true, Math.max(40, w - 12));
+      clArrow(c, mx - 24 * k + wob * k, Y0 + 72, mx + 24 * k + wob * k, Y0 + 72, CL_CYAN, 5, 16);
+    });
+  }
+
+  function clDraw(c, t, dt) {
+    clPointer(); clTick(dt);
+    const G = clGeo(), { CX, Y0, H0, L0 } = CL, p = CLS.s, s = p / 100, st = clStage(p);
+    clScene(c, G, t);
+    const xl0 = CX - L0 / 2, xr0 = CX + L0 / 2;
+    /* 原始地表（虛線）＋比較 */
+    if (CLS.ghost) {
+      c.save(); c.setLineDash([12, 8]);
+      [['rgba(16,36,29,0.85)', 6], [CL_PINK, 3]].forEach(([k, w]) => {
+        c.strokeStyle = k; c.lineWidth = w;
+        c.beginPath(); c.moveTo(xl0, Y0); c.lineTo(xr0, Y0); c.moveTo(xl0, Y0 + H0); c.lineTo(xr0, Y0 + H0); c.stroke();
+      });
+      c.restore();
+      e_label(c, tr('原始地表', 'Original ground'), 950, Y0 - 12, CL_PINK, 15, 'right');
+      e_label(c, tr('原始地殼底部', 'Original crust base'), 950, Y0 + H0 + 26, CL_PINK, 15, 'right');
+      const mx = CX + 30, ty = clYx(G, mx, 0), by = clYx(G, mx, 1);
+      if (Y0 - ty > 26) {
+        clDim(c, mx, Y0 - 3, mx, ty + 3, CL_PINK);
+        e_label(c, tr('高出原本地表', 'Higher than before'), mx + 12, (Y0 + ty) / 2 + 6, CL_PINK, 15, 'left');
+      }
+      if (by - (Y0 + H0) > 26) {
+        clDim(c, mx, Y0 + H0 + 3, mx, by - 3, CL_PINK);
+        e_label(c, tr('底部更深', 'Base goes deeper'), mx + 12, (Y0 + H0 + by) / 2 + 6, CL_PINK, 15, 'left');
+      }
+    }
+    /* 厚度尺：中間（現在）與邊緣（原本厚度） */
+    {
+      const x = CX - 50, ty = clYx(G, x, 0), by = clYx(G, x, 1), my = (ty + by) / 2 + 6;
+      clDim(c, x, ty + 4, x, by - 4, CL_GREEN);
+      e_label(c, p < 5 ? tr('地殼厚度', 'Crust thickness') : tr('厚度：增加', 'Thickness: more'), x - 12, my, CL_GREEN, 15, 'right');
+      if (p >= 5) {
+        const x2 = G.xr - 18, t2 = clYx(G, x2, 0), b2 = clYx(G, x2, 1);
+        clDim(c, x2, t2 + 4, x2, b2 - 4, '#f6f3ea');
+        e_label(c, tr('原本厚度', 'Original thickness'), x2 - 12, (t2 + b2) / 2 + 6, '#f6f3ea', 15, 'right');
+      }
+    }
+    /* 大陸地殼標籤 */
+    [[G.xl + 16, 'left'], [G.xr - 30, 'right']].forEach(([x, al]) => e_label(c, tr('大陸地殼', 'Continental crust'), x, clYx(G, x + (al === 'left' ? 60 : -60), 1) - 12, '#fde68a', 15, al, true, 150));
+    /* 板塊交界 */
+    if (p >= 5) {
+      const [x, y] = clAt(G, 0.5, 1);
+      e_label(c, tr('板塊交界', 'Plate boundary'), x, y + 26, '#fdba74', 15, 'center');
+    }
+    /* 寬度：原本 vs 現在 */
+    clDim(c, xl0, 494, xr0, 494, 'rgba(246,243,234,0.75)', true);
+    e_label(c, tr('原本寬度', 'Original width'), CX, 500, '#f6f3ea', 15, 'center');
+    clDim(c, G.xl, 522, G.xr, 522, CL_CYAN);
+    e_label(c, p < 5 ? tr('現在寬度', 'Width now') : tr(`寬度：縮短 ${Math.round(CL.R * p)}%`, `Width: ${Math.round(CL.R * p)}% shorter`), CX, 528, CL_CYAN, 15, 'center');
+    e_label(c, tr('地函', 'Mantle'), 900, 456, '#fdba74', 17, 'center');
+    /* 褶皺：背斜／向斜 */
+    clA(c, kClamp((p - 22) / 10, 0, 1), () => {
+      [[1 / 6, tr('背斜：向上拱', 'Anticline: arches up')], [8 / 9, tr('向斜：向下凹', 'Syncline: sags down')]].forEach(([u, s1]) => {
+        const [x, y] = clAt(G, u, 0), ly = Math.min(y - 30, Y0 - 70);
+        clLeader(c, x, ly + 6, x, y - 3, '#ffe066');
+        e_label(c, s1, x, ly, '#ffe066', 15, 'center');
+      });
+    });
+    if (p < 12) e_label(c, tr('近乎水平的岩層', 'Nearly flat rock layers'), CX, Y0 - 34, '#ffe066', 16, 'center');
+    /* 山脈＋海洋化石被抬高 */
+    const peak = G.xs.reduce((m, x, i) => clYi(G, i, 0) < m[1] ? [x, clYi(G, i, 0)] : m, [CX, 1e9]);
+    clA(c, kClamp((p - 55) / 10, 0, 1), () => e_label(c, tr('山脈', 'Mountain range'), peak[0], peak[1] - 30, CL_GREEN, 19, 'center'));
+    clA(c, kClamp((p - 60) / 10, 0, 1), () => {
+      let best = null;
+      CL_FOS.forEach(([u, f]) => { const q = clAt(G, u, f); if (!best || q[1] < best[1]) best = q; });
+      clLeader(c, 662, 112, best[0] + 9, best[1] - 6, '#f6f3ea');
+      e_label(c, tr('海洋化石被抬高', 'Marine fossils lifted up'), 668, 106, '#f6f3ea', 16, 'left');
+    });
+    /* 固定標籤 */
+    e_label(c, tr('大陸碰撞剖面', 'Continental collision: cross-section'), 20, 34, '#ffe066', 20, 'left');
+    e_label(c, tr('示意圖：不依真實比例；實際造山要上千萬年', 'Diagram: not to scale. Real mountain building takes tens of millions of years.'), 20, 60, '#f6f3ea', 15, 'left');
+    const tags = [tr('尚未擠壓', 'Not squeezed yet'), tr('岩層開始彎曲', 'Layers start to bend'), tr('明顯褶皺', 'Clear folds'), tr('山脈成形', 'Mountains form')];
+    e_label(c, tags[st], 940, 34, '#ffe066', 19, 'right');
+    const lg = tr('＝海洋生物化石', '= marine fossil'), lw = e_w(c, lg, 15);
+    e_label(c, lg, 940, 64, '#f6f3ea', 15, 'right');
+    clFossil(c, 940 - lw - 34, 58, 0, 1, 8); clFossil(c, 940 - lw - 14, 60, 0, 0, 8);
+  }
+
+  function clUI() {
+    const p = Math.round(CLS.s); CLS.pct = p;
+    const pb = document.getElementById('cl-play');
+    if (pb) { pb.innerHTML = CLS.auto ? tr('⏸ 暫停', '⏸ Pause') : tr('▶️ 自動推擠', '▶️ Auto push'); pb.classList.toggle('active', CLS.auto); }
+    const gb = document.getElementById('cl-ghost'); if (gb) gb.classList.toggle('active', CLS.ghost);
+    const sl = document.getElementById('cl-slider'); if (sl && +sl.value !== p) sl.value = p;
+    const vv = document.getElementById('cl-val'); if (vv) vv.textContent = p + '%';
+    const st = document.getElementById('cl-status'); if (!st) return;
+    const G = clGeo(), k = clStage(p);
+    const wid = Math.round(100 * G.L / CL.L0), thk = ((CL.H0 + G.A) / CL.H0).toFixed(1);
+    const auto = CLS.auto ? `<span class="good">▶ ${tr('自動示範中：擠壓程度從 0% 慢慢推到 100%，停一下再退回 0%，然後循環。拖曳滑桿、按任何按鈕或在畫布上左右拖，就換你操作。', 'Auto demo: the squeeze grows slowly from 0% to 100%, pauses, goes back to 0% and repeats. Drag the slider, press any button or drag sideways on the picture to take over.')}</span><br>` : '';
+    const surf = [tr('平坦', 'flat'), tr('小起伏', 'gentle bumps'), tr('隆起變高', 'rising'), tr('山脈', 'mountain range')][k];
+    const line = tr(`擠壓程度：<b>${p}%</b>　｜　水平寬度：<b>${p < 5 ? '原本' : '縮短'}</b>（約原本的 ${wid}%）　｜　地殼厚度：<b>${p < 5 ? '原本' : '增加'}</b>（最厚處約原本的 ${thk} 倍）　｜　地表：<b>${surf}</b>`,
+      `Squeeze: <b>${p}%</b>　|　Width: <b>${p < 5 ? 'unchanged' : 'shorter'}</b> (about ${wid}% of the original)　|　Crust thickness: <b>${p < 5 ? 'unchanged' : 'greater'}</b> (thickest part about ${thk}× the original)　|　Surface: <b>${surf}</b>`);
+    const msg = [
+      tr('<b>尚未擠壓</b>：兩塊大陸地殼的岩層近乎水平，上層是海底沉積的岩層，裡面有海洋生物化石。', '<b>Not squeezed yet</b>: the layers of both continental plates are nearly flat. The top layers formed on the seafloor and hold marine fossils.'),
+      tr('<b>岩層開始彎曲</b>：兩側推擠，水平寬度開始縮短，原本水平的岩層開始彎曲。', '<b>Layers start to bend</b>: pushed from both sides, the crust starts to get narrower and the flat layers begin to bend.'),
+      tr('<b>明顯褶皺</b>：岩層彎成一連串向上拱的<b>背斜</b>和向下凹的<b>向斜</b>，中間的地殼變厚，地表開始隆起。', '<b>Clear folds</b>: the layers bend into arches (<b>anticlines</b>) and troughs (<b>synclines</b>); the middle of the crust thickens and the surface starts to rise.'),
+      tr('<b>山脈成形</b>：縮短的寬度變成了厚度——地表向上隆起成高聳的褶皺山脈（如喜馬拉雅山脈），底下也向下長出厚厚的「山根」；原本在海底的化石被抬到山上。', '<b>Mountains form</b>: the lost width has turned into thickness. The surface rises into a high fold mountain range (like the Himalayas) and a thick "root" grows downward beneath it. Fossils from the old seafloor are lifted onto the mountains.')
+    ][k];
+    const why = tr('兩邊都是大陸地殼，密度較小、不容易下沉，所以只能<b>縮短、增厚、隆起</b>。', 'Both sides are continental crust: low density, so neither sinks easily. The crust can only <b>shorten, thicken and rise</b>.');
+    const note = tr('（示意圖，不依真實比例；百分比與倍數只是畫面上的示意，實際造山要上千萬年）', '(Diagram, not to scale. The percentages are only for this picture; real mountain building takes tens of millions of years.)');
+    st.innerHTML = auto + line + '<br>' + msg + '<br>' + why + ' ' + note;
+  }
   /* @@TAB4-END */
 
   /* @@TAB5-BEGIN  ev（全球地震火山 2D 圖）—— 動畫代理只改這個區塊與對應的 #ev-stage 內的控制項 */
