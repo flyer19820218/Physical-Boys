@@ -7,7 +7,7 @@
  *   view 0, one ovule, 8 steps: PlantsDraw.flowerOvule (flowers_draw_ovule_1026_v1.js). Steps 0-1 are new: the whole ovary
  *     with ONE ovule (ovary_single.png, AI illustration, mirrored) and the pollen tube following the wall of the ovary
  *     cavity to the micropyle; steps 2-7 are the former 6 steps (ovule.png zoom, 8 nuclei, double fertilization, seed).
- *   view 1, many ovules, 5 steps: PlantsDraw.multi (plants_draw_multi_1022_v1.js, unchanged).
+ *   view 1, many ovules, 5 steps: PlantsDraw.multi (plants_draw_multi_1022_v1.js; tube routes redone 2026-10-26).
  * Page text, step names, the multiple-choice checks and the wiring live here; picture labels live in the draw modules.
  */
 (()=>{'use strict';
@@ -34,7 +34,7 @@ const OV_TEXT=[
  P(`第一個精細胞（n）和卵（n）結合，成為受精卵（2n），會長成胚。第二個精細胞（n）和中央細胞的 2 個極核（n＋n）結合，成為 3n 的細胞，會長成胚乳。一條花粉管，兩次結合，這叫雙重受精，是被子植物的特色。`,`The first sperm cell (n) joins the egg (n) and becomes the zygote (2n), which grows into the embryo. The second sperm cell (n) joins the 2 polar nuclei (n + n) of the central cell and becomes a 3n cell, which grows into the endosperm. One pollen tube, two unions: this is double fertilization, a feature of angiosperms.`),
  P(`受精卵分裂成胚；3n 的細胞分裂成胚乳，儲存養分；珠被變成種皮；整個胚珠變成種子。助細胞和反足細胞不再需要，會消失。有些種子（像玉米）的胚乳留著，有些（像花生）胚乳的養分被子葉吸走。`,`The zygote divides into the embryo; the 3n cell divides into the endosperm, which stores food; the integuments become the seed coat; and the whole ovule becomes a seed. The synergids and antipodals are no longer needed and disappear. In some seeds (such as corn) the endosperm stays, while in others (such as peanut) its food is taken up by the seed leaves.`)];
 
-// ── view 1: many ovules (5 steps, unchanged module) ────────────────────────
+// ── view 1: many ovules (5 steps) ────────────────────────
 const MU_SHORT=[P(`5 顆胚珠`,`Five ovules`),P(`花粉落下`,`Pollen lands`),P(`一管一胚珠`,`One tube each`),P(`算一算`,`Count`),P(`種子數`,`Seeds`)];
 const MU_NAMES=[P(`多胚珠的子房：5 顆胚珠接在胎座上`,`An ovary with many ovules: 5 ovules on the placenta`),P(`花粉落在柱頭，各自長出花粉管`,`Pollen lands on the stigma and each grain grows a tube`),P(`一條花粉管，找一顆胚珠`,`One pollen tube finds one ovule`),P(`算一算：5 顆胚珠要 5 粒花粉、10 個精細胞`,`Count: 5 ovules need 5 pollen grains and 10 sperm cells`),P(`受精的胚珠變成種子，子房變成果實`,`Fertilized ovules become seeds and the ovary becomes a fruit`)];
 const MU_TEXT=[

@@ -10,11 +10,17 @@
  *     2 y 554..669 x ..365, 3 y 693..812 x ..362, 4 y 835..954 x ..368, 5 y 974..1086 x ..389; left end x ~250
  *     where the stalk joins; each has a small beak on the free right end = micropyle, tip at (380,506) (376,632)
  *     (373,767) (375,905) (390,1035); gaps between neighbouring ovules at x 300: y 540, 681, 823, 964.
+ *     Tube routes (2026-10-26, measured from a tissue / cavity split of the picture bounded by its dark outlines):
+ *     right edge of the placenta band ≈ x 242 (y 410..435), 227→188 (446..560), 172..176 (585..690), 151..163
+ *     (746..870), 155..181 (896..1016); a cavity pocket sits above each ovule, its lower corner bulging into the band
+ *     at (245,438) (190,560) (155,705) (151,855) (178,1010); below it the stalk runs to the ovule's left end (stalk
+ *     mouths on the band at y 436..447, 579..585, 729..745, 879..897, 1023..1045). See ROUTE.
  *   pea_pod.png: 6 peas, centres (549,406) (780,422) (981,424) (1182,428) (1385,424) (1587,412), radius ~85.
  * Colours, the same in the whole lesson: sperm cells cyan #55e9ff, egg pink, central cell purple, pollen tube yellow.
  *  0 the ovary: stigma, style, ovary, placenta, 5 ovules numbered 1..5;
  *  1 zoom on the stigma: 5 pollen grains land, each grows one tube; tally pollen 5, tubes 5;
- *  2 zoom out: the 5 tubes go down the style, along the placenta, split up, each to the micropyle of its own ovule;
+ *  2 zoom out: the 5 tubes go down the style and, as a bundle, down the placenta on the wall; each leaves the bundle
+ *    by a smooth curve onto the stalk of its own ovule and follows the stalk and the ovule's surface to its micropyle;
  *  3 zoom on the ovules: tallies tick up (5 pollen, 5 tubes); ovule by ovule the tube releases 2 sperm cells,
  *    sperm 1 → egg, sperm 2 → central cell; tally sperm 10, unions 10 (5 eggs + 5 central cells); n ovules → n, 2n;
  *  4 fruit: state A all 5 fertilized → 5 seeds; state B (clearly switched, own heading) ovule 4 got no tube → no seed,
@@ -35,9 +41,8 @@ const TUBE=C.yellow,TUBE_EDGE='#a16207',GRAIN='#facc15',STRUCT='#efe6c8',PLAC='#
 const OVC=[[311,478],[307,611],[306,752],[309,894],[319,1030]];
 const ORX=[61,58,56,59,70],ORY=[48,57,60,60,56];
 const NUB=[[380,506],[376,632],[373,767],[375,905],[390,1035]];
-const GAP=[0,540,681,823,964];
 const GX=[350,327,306,285,262],GY=-3,GR=11;          // pollen grain j serves ovule j (rightmost grain → top ovule)
-const SL=[329,317,305,293,281],PL=[0,232,221,210,199]; // lanes in the style; lanes along the placenta
+const SL=[329,317,305,293,281];                       // lanes in the style
 const EGGP=[],CENP=[];
 OVC.forEach((c,j)=>{const n=NUB[j],d=Math.hypot(n[0]-c[0],n[1]-c[1]),u=[(n[0]-c[0])/d,(n[1]-c[1])/d];
   EGGP.push([c[0]+u[0]*(d-46),c[1]+u[1]*(d-46)]);CENP.push([c[0]-u[0]*14,c[1]-u[1]*14]);});
@@ -78,19 +83,36 @@ function tagBox(c,p,x,y,maxW,targets,col,a=1,o={}){
 }
 const stepA=(held,tau,t0=0)=>held?fade(tau,t0,.5):fade(tau,t0,.5)*(1-fade(tau,PER-.4,.4));
 
-// ── tube paths (image px): grain → style lane → along the placenta → gap above the ovule → its micropyle ─
-function spline(pts,n=10){const out=[];
-  for(let i=0;i<pts.length-1;i++){const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+// ── tube paths (image px): grain → style lane → along the placenta → its own stalk → over the ovule → its micropyle ─
+// Catmull-Rom spline through pts; pre/post: extra points before the first / after the last (they set the end tangents)
+function spline(pts,n=10,pre,post){const out=[];
+  for(let i=0;i<pts.length-1;i++){const p0=pts[i-1]||pre||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||post||p2;
     for(let j=0;j<n;j++){const u=j/n,u2=u*u,u3=u2*u;
       out.push([0,1].map(d=>.5*(2*p1[d]+(-p0[d]+p2[d])*u+(2*p0[d]-5*p1[d]+4*p2[d]-p3[d])*u2+(-p0[d]+3*p1[d]-3*p2[d]+p3[d])*u3)));}}
-  out.push(pts[pts.length-1]);
-  const L=[0];for(let i=1;i<out.length;i++)L.push(L[i-1]+Math.hypot(out[i][0]-out[i-1][0],out[i][1]-out[i-1][1]));
+  out.push(pts[pts.length-1]);return track(out);}
+function track(out){const L=[0];for(let i=1;i<out.length;i++)L.push(L[i-1]+Math.hypot(out[i][0]-out[i-1][0],out[i][1]-out[i-1][1]));
   return{pts:out,L,len:L[L.length-1]};}
-const PATHS=GX.map((g,j)=>{const s=SL[j],[nx,ny]=NUB[j];
-  const P0=[[g,GY+6],[g,14],[s,70],[s,160],[s,290]];
-  if(j===0)return spline(P0.concat([[336,360],[372,402],[404,446],[402,486],[nx+4,ny]]));
-  const x=PL[j],G=GAP[j];
-  return spline(P0.concat([[s-10,345],[x+20,395],[x,440],[x,G-26],[x+16,G],[300,G],[360,G+3],[398,G+22],[404,(G+ny)/2+6],[nx+4,ny]]));});
+// ROUTE[j]: tube j below the style (x,y pairs about 12 px apart, after (SL[j],290)), measured on ovary_multi.png.
+// The 5 tubes leave the style as one bundle, cross the top of the ovary and run down the placenta band on the left
+// wall, 7.5 px apart, the tube of the top ovule outermost (7-9 px inside the band's edge, so its edge lies on the
+// outline); below each stalk the rest close up to the edge again. Tube j follows the edge of the pocket above ovule j
+// round its lower corner onto the stalk, rides up the ovule's shoulder onto its outer surface (7 px outside the
+// outline), round the free end to the beak, and ends at the micropyle. Smooth (largest turn about 20° per 8 px of
+// tube), never over another ovule or a number marker.
+const ROUTE=[
+ [327.6,301.9,324.7,313.6,320.2,324.7,314.2,335.1,306.8,344.6,298.6,353.3,289.7,361.3,280.4,369,271,376.4,261.6,384,252.7,392,244.5,400.8,238,410.9,235.5,422.5,238.4,434.1,245.9,443.3,256.6,448.6,268.5,448.6,279.4,443.7,289.3,436.8,299.7,430.8,311.2,427.5,323.1,427.4,334.7,430.5,345.4,435.9,355,443.1,363.4,451.7,370.2,461.6,375.3,472.4,379,483.9,381.6,495.6,382.6,507.5],
+ [315.4,301.9,312.3,313.4,307.5,324.4,301.3,334.6,294,344.1,285.9,352.9,277.4,361.3,268.6,369.4,259.7,377.5,251,385.7,242.6,394.3,234.9,403.5,228,413.2,221.7,423.4,215.7,433.8,210.1,444.4,205.7,455.6,202.7,467.1,200,478.8,196.1,490.1,191,501,186.3,512,183.5,523.6,182.1,535.5,181.7,547.5,183.9,559.2,189.7,569.7,198.1,578.1,208.4,584.2,220,587,231.7,585.2,241.7,578.8,249.8,569.9,257.9,561.2,267.5,554,278.6,549.5,290.4,548,302.3,549.2,314,552,325.2,556.3,335.7,561.9,345.4,569,353.9,577.4,360.9,587.1,366.6,597.6,371.5,608.5,375.8,619.7,378.9,631.3],
+ [303.2,301.8,299.8,313.2,294.8,324,288.4,334.1,281.1,343.5,273.2,352.5,264.9,361.1,256.5,369.6,248.1,378.1,239.9,386.8,232.1,395.7,224.8,405.2,218.2,415.1,211.9,425.3,205.9,435.6,200.6,446.3,196.8,457.6,194.1,469.3,191.1,480.8,186.7,491.9,181.7,502.7,177.3,513.8,174.1,525.4,171.3,537,168,548.4,164.1,559.7,160.7,571.2,158.5,582.9,158,594.8,158.8,606.7,160.1,618.6,160.6,630.5,159.5,642.4,157,654,153.9,665.6,152,677.4,151.3,689.3,149.4,701.1,151.1,712.8,157.6,722.7,166.8,730.2,177.4,735.7,188.9,739,200.7,739.4,211.9,735.5,220.9,727.7,227.6,717.8,234,707.8,242,698.9,251.9,692.3,263.1,688.2,274.9,686.4,286.8,686.3,298.7,687.7,310.3,690.5,321.4,694.7,331.9,700.4,341.4,707.6,349.8,716.1,356.9,725.7,363,735.9,368.6,746.5,373.3,757.4,375.9,769],
+ [291,301.9,287.2,313.3,281.8,324.1,275.2,334.3,267.9,343.9,260.1,353.1,252.1,362.1,244,371.1,236,380.1,228.1,389.3,220.7,398.8,213.7,408.7,207.2,418.8,200.9,429.1,195,439.6,190.4,450.8,187.4,462.5,184.7,474.3,180.9,485.7,175.9,496.7,171.1,507.8,167.7,519.4,165,531.2,161.9,542.8,158,554.3,154.3,565.7,151.6,577.5,150.4,589.5,150.8,601.6,152,613.6,153,625.6,152.6,637.7,150.4,649.6,147.2,661.2,144.1,672.9,141.8,684.8,140.4,696.8,139.3,708.8,138.2,720.8,137.3,732.9,137,744.9,137.8,757,140,768.8,142.9,780.6,145.5,792.4,146.6,804.4,146.4,816.4,145.8,828.5,145.5,840.6,145,852.6,147.1,864.5,154,874.3,163.7,881.4,174.7,886.3,186.5,889,198.5,888.9,209.7,884.5,218.4,876.3,224.6,865.9,230.3,855.3,237.6,845.7,247,838.1,257.9,833,269.6,830.2,281.6,829,293.7,829.2,305.6,831,317.2,834.3,328.3,839.1,338.5,845.5,347.7,853.4,355.6,862.5,362.4,872.4,368.6,882.8,374.2,893.5,378.1,904.9],
+ [278.8,301.8,274.8,313.2,269.3,323.9,262.8,334.1,255.7,343.9,248.2,353.3,240.6,362.7,232.8,371.9,225.2,381.2,217.7,390.7,210.6,400.5,203.9,410.5,197.5,420.7,191,430.9,185.3,441.5,181.3,452.9,178.7,464.7,175.9,476.4,171.6,487.7,166.4,498.6,162.1,509.9,159.3,521.6,156.8,533.4,153.4,545,149.4,556.3,145.8,567.9,143.6,579.7,142.8,591.8,143.4,603.8,144.7,615.8,145.5,627.8,144.7,639.9,142.1,651.6,138.8,663.3,135.9,675,133.9,686.9,132.6,698.9,131.5,710.9,130.5,722.9,129.7,734.9,129.5,747,130.6,759,132.9,770.8,135.9,782.5,138.3,794.4,139.1,806.4,138.6,818.4,137.7,830.5,137,842.5,136.7,854.6,136.9,866.7,137.6,878.7,138.6,890.7,140.2,902.7,142.8,914.4,146.9,925.8,151.8,936.8,156.6,947.9,160.4,959.4,163.3,971.1,166.3,982.7,168.6,994.6,170.5,1006.5,176.1,1017.1,185.2,1024.9,196.1,1030,207.9,1032.5,219.9,1031.7,230.7,1026.6,238.8,1017.7,244.1,1006.9,249.4,996.1,256.8,986.5,266.3,979.2,277.3,974.2,289,971.1,300.9,969.6,313,969.7,324.9,971.3,336.5,974.5,347.6,979.4,357.7,985.9,366.7,993.9,374.7,1003,381.9,1012.7,388.4,1022.8,393.2,1033.8]];
+const PATHS=GX.map((g,j)=>{const s=SL[j];
+  // the style part keeps its shape exactly: same points, and the same next point as before closes its last segment
+  const nxt=j?[s-10,345]:[336,360],head=spline([[g,GY+6],[g,14],[s,70],[s,160],[s,290]],10,undefined,nxt);
+  const R=[[s,290]];for(let i=0;i<ROUTE[j].length;i+=2)R.push([ROUTE[j][i],ROUTE[j][i+1]]);
+  // leave (s,290) in the direction the style part arrives in (no corner)
+  const dx=nxt[0]-s,dy=nxt[1]-160,dl=Math.hypot(dx,dy),c=Math.hypot(R[1][0]-s,R[1][1]-290);
+  const tail=spline(R,6,[R[1][0]-2*c*dx/dl,R[1][1]-2*c*dy/dl]);
+  return track(head.pts.concat(tail.pts.slice(1)));});
 function along(path,d){d=Math.max(0,Math.min(path.len,d));const {pts,L}=path;let i=1;while(i<L.length-1&&L[i]<d)i++;
   const u=(d-L[i-1])/((L[i]-L[i-1])||1),a=pts[i-1],b=pts[i];return{x:mix(a[0],b[0],u),y:mix(a[1],b[1],u),ang:Math.atan2(b[1]-a[1],b[0]-a[0])};}
 function partial(path,d){const out=[];for(let i=0;i<path.pts.length&&path.L[i]<d;i++)out.push(path.pts[i]);const e=along(path,d);out.push([e.x,e.y]);return out;}
@@ -349,7 +371,7 @@ function draw(c,s,t){
     tagBox(c,T.tubes,712,40,230,S(SL[2]+14,200),TUBE,a*fade(tau,1.4,.5));
     tagBox(c,T.micro,712,250,230,S(NUB[0][0]+6,NUB[0][1]),C.yellow,a*fade(tau,ARRIVE[0],.5));
     {const j=4,ps=spermInTube(j,tubeD[j]),pp=ps[0];tagBox(c,T.sperm2,712,330,230,S(pp.x,pp.y),C.cyan,a*fade(tau,2.2,.5));}
-    tagBox(c,T.placenta,300,300,112,S(138,840),PLAC,a*fade(tau,1.8,.5));
+    tagBox(c,T.placenta,300,300,112,S(118,840),PLAC,a*fade(tau,1.8,.5));   // beside the tubes on the band
     c.save();c.globalAlpha*=a*fade(tau,2.6,.5);fitText(c,T.route,712,500,230,C.muted);c.restore();
   }
   if(k===3){
@@ -362,7 +384,7 @@ function draw(c,s,t){
     textBlock(c,T.unionsSum(ne,nc),LX,y-2,LW,C.white);
     c.restore();
     banner(c,T.rule,C.yellow,stepA(held,tau,TO(4)+1.1));
-    tagBox(c,T.tubeS,735,20,209,S(372,402),TUBE,a);
+    tagBox(c,T.tubeS,735,20,209,S(335,430.5),TUBE,a);   // on tube 1, over the top of ovule 1
     tagBox(c,T.s1egg,735,140,209,S(EGGP[1][0]+8,EGGP[1][1]),EGG.lab,a*fade(tau,TO(0),.5));
     tagBox(c,T.s2cen,735,228,209,S(CENP[2][0],CENP[2][1]-16),CEN.lab,a*fade(tau,TO(0)+.2,.5));
     tagBox(c,T.micro,735,340,209,S(NUB[2][0]+3,NUB[2][1]+2),C.yellow,a);
