@@ -20,6 +20,7 @@ fs.mkdirSync(outDir, { recursive: true });
 
 const DT = 1000 / FPS;
 let frameNo = 0;
+const marks = {};
 
 (async () => {
   const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -130,6 +131,7 @@ let frameNo = 0;
   async function hallShot(h) {
     const id = h.id, cs = h.color;
     const segStart = frameNo / FPS;
+    marks[id] = segStart;
     const capOn = () => ev(([t, c]) => { window.__pm.cap(t, 1); }, [h.caption]);
     await ev(([h, id]) => { window.__galileo.scene.debugSigns(true); window.__galileo.scene.faceHall(id); window.__pm.tag(`${h.name}<small>${h.sub}</small>`, h.color, 0); }, [h, id]);
     // 1) 星球轉到這一館 0.9s
@@ -159,7 +161,7 @@ let frameNo = 0;
 
   // ---------- 段落 5：34 個單元 ----------
   await ev(() => { const s = window.__galileo.scene; s.debugSigns(true); window.__pm.tag(null, null, 0); window.__pm.cap('四座科學館，三十四個單元，一百三十九堂課。', 1); });
-  const spin0 = 0.5;
+  marks.counts = frameNo / FPS;
   await run(0.6, async u => { await ev(([f]) => window.__galileo.scene.debugPose(0.38, 2.4 + f, 0, 1), [u * 0.3]); await ev(o => window.__pm.fx(o), 1 - u); });
   await run(timeline.counts.sec, async (u, t) => {
     await ev(([f]) => window.__galileo.scene.debugPose(0.38, 2.7 + f, 0, 1), [u * 2.2]);
@@ -167,13 +169,14 @@ let frameNo = 0;
     await ev(([a, b, c, o]) => window.__pm.stats([[a, '座科學館'], [b, '個單元'], [c, '堂課']], o), [Math.round(4 * E2(k)), Math.round(34 * E2(k)), Math.round(139 * E2(k)), Math.min(1, u * 6)]);
   });
   // ---------- 段落 6：結尾 ----------
+  marks.outro = frameNo / FPS;
   await ev(() => { window.__pm.stats(null, 0); window.__pm.cap('轉動星球，走進展館，用玩的學科學！', 1); });
   await run(timeline.outro.sec, async (u, t) => {
     await ev(([f]) => window.__galileo.scene.debugPose(0.38, 4.9 + f, 0, 1), [u * 1.5]);
     await ev(o => window.__pm.end('<h1>伽利略星球</h1><p>Galileo Planet · 國中自然 34 單元</p><p>flyer19820218.github.io/Physical-Boys</p>', o), Math.min(1, u * 3));
   });
   await run(0.7, async u => { await ev(o => window.__pm.fx(o), u); });
-  fs.writeFileSync(path.join(outDir, 'meta.json'), JSON.stringify({ fps: FPS, frames: frameNo, introEnd, aspect }));
+  fs.writeFileSync(path.join(outDir, 'meta.json'), JSON.stringify({ fps: FPS, frames: frameNo, introEnd, aspect, marks }));
   console.log('DONE frames', frameNo);
   await browser.close();
 })().catch(e => { console.error('FAILED', e); process.exit(1); });
