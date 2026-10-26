@@ -528,7 +528,7 @@ function drawRulerBody(c,top,bottom,skip){
   text(c,'0 cm',RH.x0-30,yb+7,22,C.white,'right');
 }
 function drawReaction(c,s,t){
-  panel(c,20,80,390,415);text(c,P('實體接尺：記錄落下距離','Ruler drop: record the distance'),40,112,22,C.yellow);
+  panel(c,20,80,390,415);text(c,P('實體接尺：量落下距離','Ruler drop: measure the distance'),40,112,22,C.yellow);
   // idle/wait/early = 左圖（上手夾尺）；go = 剛放手；done = 右圖（尺已落下、下手夾住）
   const RA=188.2,RC=508.3;
   if(s.phase==='done'){
@@ -831,11 +831,11 @@ const tabs=[
   closure:P('動器不只有肌肉，腺體也是動器。完整反應需要受器、傳訊與整合、動器共同完成。','Effectors include glands as well as muscles. A complete response requires detection, signaling and integration, then an effector.'),
   sources:[],init:()=>({running:true,effect:'muscle',step:-1}),controls:()=>[choice(P('動器','Effector'),'effect',[['muscle',P('肌肉收縮','Muscle contracts')],['gland',P('汗腺分泌','Sweat gland secretes')]]),stepControls(journey)],
   explain:s=>({title:journey[journeyClock(s,s.elapsed||0).stage],text:s.effect==='muscle'?P('皮膚受器接收溫度刺激，訊息由感覺神經元傳到中樞神經；中樞整合後，再由另一條運動神經元把訊息傳到肌肉，肌肉收縮產生動作。傳入和傳出是兩條不同的神經元。此圖只呈現分工，不等同特定反射弧。','Skin receptors detect temperature. A sensory neuron carries the message to the central nervous system; after integration, a different motor neuron carries it to a muscle, which contracts to produce movement. The incoming and outgoing paths are two different neurons. This diagram shows roles, not a specific reflex arc.'):P('一樣由感覺神經元傳入、中樞整合，再由另一條傳出的神經元把訊息送到汗腺；汗腺分泌汗液，並不是肌肉收縮。汗液蒸發有助散熱。','Again a sensory neuron carries the message in and the CNS integrates it; a different outgoing neuron then reaches the sweat gland, which secretes rather than contracts. Evaporation of sweat helps heat loss.')}),draw:drawJourney},
- {id:'reaction',title:P('看到就能立刻動？','Can you react instantly?'),sub:P('反應時間與紀錄','Reaction time and records'),hook:P('不要預猜！等畫面真的變綠，再按「反應」。多做幾次，結果一樣嗎？','Do not guess! Wait until the panel turns green, then respond. Are repeated results identical?'),
-  body:P('這是螢幕視覺反應練習。真實接尺實驗要記直尺落下的距離；本練習記的是畫面變色到按鍵的時間。','This is an on-screen visual reaction task. The physical ruler experiment records falling distance; this task records the interval from colour change to your press.'),
+ {id:'reaction',title:P('看到就能立刻動？','Can you react instantly?'),sub:P('反應時間','Reaction time'),hook:P('不要預猜！等畫面真的變綠，再按「反應」。多做幾次，結果一樣嗎？','Do not guess! Wait until the panel turns green, then respond. Are repeated results identical?'),
+  body:P('這是螢幕視覺反應練習。真實接尺實驗看的是直尺落下的距離；本練習量的是畫面變色到按鍵的時間。','This is an on-screen visual reaction task. The physical ruler experiment uses the falling distance; this task measures the interval from colour change to your press.'),
   closure:P('刺激接收、訊息整合與肌肉反應都需要時間。練習、注意力與測量方式可能影響結果。','Detection, integration and muscle responses take time. Practice, attention and the measurement method can affect results.'),
-  reading:P('接尺時，受試者手臂平放桌上，拇指與食指對準 0 cm 但不碰尺；主試者不預告放手時刻。記錄落下距離，重複五次，再交換角色。不要把掉尺距離直接當成時間。這裡的毫秒數包含畫面更新與裝置輸入延遲，不是診斷工具，也不能拿不同裝置的成績當能力排名。','In the ruler task, rest the arm on the table and align thumb and index finger with 0 cm without touching the ruler. The tester releases it without warning. Record falling distance, repeat five times, then exchange roles. Distance is not time. On-screen milliseconds include display and input delays: they are not diagnostic and should not rank ability across devices.'),
-  record:P('做五次：結果有沒有變化？注意力、預猜或裝置延遲，可能怎樣影響結果？另做實體接尺時，請記錄距離與單位。','Try five times. How do attention, guessing and device delays affect the results? For a physical ruler test, record distance and units.'),
+  reading:P('接尺時，受試者手臂平放桌上，拇指與食指對準 0 cm 但不碰尺；主試者不預告放手時刻。量落下距離，重複五次，再交換角色。不要把掉尺距離直接當成時間。這裡的毫秒數包含畫面更新與裝置輸入延遲，不是診斷工具，也不能拿不同裝置的成績當能力排名。','In the ruler task, rest the arm on the table and align thumb and index finger with 0 cm without touching the ruler. The tester releases it without warning. Measure the falling distance, repeat five times, then exchange roles. Distance is not time. On-screen milliseconds include display and input delays: they are not diagnostic and should not rank ability across devices.'),
+  
   sources:[],noPause:true,init:()=>({running:true,phase:'idle',scores:[],trial:0}),
   controls:s=>[{label:P('操作','Task'),items:[{label:P('開始等待','Start waiting'),key:'start',value:true,disabled:s.phase==='wait'||s.phase==='go'},{label:P('反應！','Respond!'),key:'respond',value:true,disabled:s.phase==='idle'||s.phase==='done'||s.phase==='early'}]}],
   act(s,k){if(k==='start'){s.phase='wait';s.trial++;s.due=performance.now()+2000+Math.random()*2500;s.response=0;}if(k==='respond'){if(s.phase==='wait')s.phase='early';else if(s.phase==='go'){s.response=Math.round(performance.now()-s.onset);s.scores.push(s.response);s.scores=s.scores.slice(-5);s.phase='done';}}},
@@ -893,5 +893,5 @@ const tabs=[
   draw:drawVision}
 ];
 const tabsHost=document.getElementById('lessonTabs');if(tabsHost)tabsHost.style.setProperty('--tab-count','3');
-B.register({id:'nervous',title:P('神經訊息：刺激到反應','Nerve signals: from stimulus to response'),subtitle:P('受器、神經元、動器，與可以親自記錄的反應練習','Receptors, neurons, effectors and your own reaction records'),cover:'assets/covers/biology_nervous_1009_v1.jpg',tabs});
+B.register({id:'nervous',title:P('神經訊息：刺激到反應','Nerve signals: from stimulus to response'),subtitle:P('受器、神經元、動器，與可以親自嘗試的反應練習','Receptors, neurons, effectors and a reaction task you can try yourself'),cover:'assets/covers/biology_nervous_1009_v1.jpg',tabs});
 })();
