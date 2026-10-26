@@ -326,48 +326,190 @@ function drawWithdraw(c,s,t){
   names.forEach((p,k)=>{const y=30+k*106;if(k){arrow(c,795,y-20,795,y-2,k<=i?color:C.edge,3.5);}node(c,p,650,y,290,84,k===i,color);});
 }
 
-// ── Tab 4: knee-jerk reflex ────────────────────────────────────────────────
-const KS=.66,KX=-40,KY=60,KM=(x,y)=>[KX+x*KS,KY+y*KS],PIVOT=KM(645,255);
-const K_SENS=[[500,165],[431,151],[341,136],[277,113],[256,67]].map(p=>KM(...p)),K_MOTOR=[[262,82],[282,131],[362,167],[449,182],[508,179]].map(p=>KM(...p)),K_REC=KM(500,165),K_SPINE=[KM(249,18),KM(262,110)];
-const IN_SENS=[[706,124],[732,116],[767,123]],IN_INTER=[[767,123],[780,170],[753,214]],IN_MOTOR=[[753,214],[730,228],[704,234]];
+// ── Tab 4: knee-jerk (patellar stretch) reflex ─────────────────────────────
+// Teacher-authorised redesign 2026-10-26. Left, the leg picture shows WHERE: the quadriceps with
+// its muscle spindle, the nerve route to the lower back, the tendon pull chain and the kick.
+// Right, a zoom shows HOW: muscle fibres with a spindle (receptor) and motor endings (effector),
+// and a spinal-cord section where the sensory neuron synapses directly on the motor neuron
+// (one synapse, no interneuron). Slowed model; sizes not to scale.
+const KS=.64,KX=-92,KY=130,KM=(x,y)=>[KX+x*KS,KY+y*KS],PIVOT=KM(645,255);
+// leg-picture anchors, given in the original 1000×746 picture coordinates
+const K_QUAD=[[360,134],[400,124],[450,121],[500,124],[550,134],[595,150],[630,168],[650,186],[657,198],[630,201],[590,195],[540,187],[480,176],[420,163],[380,152]].map(p=>KM(...p));
+const K_QA=KM(380,143),K_QB=KM(645,186),K_SPINDLE=KM(506,151),K_RING=KM(528,158),K_CORDLEG=[KM(249,2),KM(252,60)];
+const K_ROUTE=[[506,151],[470,142],[420,132],[372,122],[334,105],[298,85],[270,66],[252,54]].map(p=>KM(...p));
+const K_QT=[KM(634,195),KM(652,201),KM(667,209)],K_PAT=KM(673,227),K_PT_TOP=KM(678,246),K_PT_BOT=KM(673,305),K_TAP=KM(688,284);
+// right panel: muscle zoom block, then the spinal-cord section (turned so its back side faces left, like the body)
+const KB={x:604,y:66,w:328,h:166,cx:768},K_FIB=[[86,12],[112,12],[184,12],[210,12]],K_SPX=730,K_SPY=148;
+const KCX=766,KCY=470,KCS=1.2,K_SYN=[777,441],K_SOMA=[790,437];
+const K_SENS_PANEL=[[702,180],[652,214],[628,238],[628,382],[642,402],[672,414],[700,428],[718,437],[740,445],[762,446],K_SYN];
+const K_MOT_PANEL=[K_SOMA,[810,426],[838,410],[884,400],[910,384],[910,236],[910,100]];
+// slowed timeline after the tap (seconds): start/end of each step, and the loop used when stepping by hand
+const K_STEPS=[[0,.8],[.8,1.8],[1.8,2.9],[2.9,3.6],[3.6,4.7],[4.7,6.6]],K_LOOP=[[0,.8],[.05,1.85],[1.8,2.9],[2.9,3.6],[3.6,4.7],[4.6,6.6]],K_END=6.6;
+const K_TEXT=[P('輕敲膝蓋下方的髕腱','A gentle tap on the patellar tendon below the kneecap'),
+ P('股四頭肌被拉長，肌梭產生訊息','The quadriceps is stretched: its muscle spindles send a signal'),
+ P('感覺神經元把訊息傳入脊髓','The sensory neuron carries the signal into the spinal cord'),
+ P('在脊髓內直接連到運動神經元','In the spinal cord it passes straight to a motor neuron'),
+ P('運動神經元把訊息傳回同一塊肌肉','The motor neuron carries it back to the same muscle'),
+ P('股四頭肌收縮，經肌腱拉動小腿踢出','The quadriceps contracts; its tendon pulls the lower leg forward')];
+const K_SHORT=[P('① 輕敲髕腱','① Tap the tendon'),P('② 肌肉被拉長','② Muscle stretched'),P('③ 傳入脊髓','③ Into the cord'),P('④ 突觸相連','④ Synapse'),P('⑤ 傳回肌肉','⑤ Back to the muscle'),P('⑥ 收縮踢腿','⑥ Contract and kick')];
 function rotAbout(p,o,a){const dx=p[0]-o[0],dy=p[1]-o[1];return[o[0]+dx*Math.cos(a)-dy*Math.sin(a),o[1]+dx*Math.sin(a)+dy*Math.cos(a)];}
+const kSmooth=(a,b,x)=>{const u=clamp((x-a)/(b-a));return u*u*(3-2*u);};
+// T = seconds into the slowed timeline (-1 before any tap); k = highlighted step (6 = finished)
+function kTime(s,t){
+  if(!s.tapped)return{T:-1,k:-1};
+  const dt=Math.max(0,t-s.start);
+  if(s.step>=0){const [a,b]=K_LOOP[s.step],len=b-a;return{T:a+Math.min(dt%(len+.7),len),k:s.step};}
+  const T=Math.min(dt,K_END);return{T,k:T>=K_END?6:K_STEPS.findIndex(([a,b])=>T>=a&&T<b)};
+}
+function kState(T){
+  const hammer=T<0?0:T<.12?T/.12:Math.max(0,1-(T-.12)/.4);
+  const stretch=T<0?0:kSmooth(.12,.45,T)*(1-kSmooth(1.55,1.85,T));
+  const fire=T>=.9&&T<1.85?.65+.35*Math.sin((T-.9)*18):0;
+  const u=clamp((T-4.75)/1.8),kick=T<0?0:Math.sin(Math.PI*u);
+  const contract=T<0?0:clamp(1.4*Math.sin(Math.PI*clamp((T-4.65)/1.85)));
+  return{hammer,stretch,fire,angle:-.75*kick,contract,sens:(T-1.85)/1.0,syn:T>=2.85&&T<3.65,mot:(T-3.6)/1.05};
+}
+function kOffset(pts,d){return pts.map((p,i)=>{const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)],dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1;return[p[0]-dy/L*d,p[1]+dx/L*d];});}
+function kChevrons(c,pts,color,n=3,size=7){
+  for(let i=1;i<=n;i++){const u=i/(n+1),a=along(pts,u-.03),b=along(pts,u+.03),[x,y]=along(pts,u),ang=Math.atan2(b[1]-a[1],b[0]-a[0]);
+    c.save();c.translate(x,y);c.rotate(ang);c.beginPath();c.moveTo(-size*.55,-size);c.lineTo(size*.55,0);c.lineTo(-size*.55,size);
+    c.lineJoin='round';c.lineCap='round';c.strokeStyle=C.ink;c.lineWidth=5;c.stroke();c.strokeStyle=color;c.lineWidth=2.6;c.stroke();c.restore();}
+}
+// a neuron drawn as a coloured fibre; bright while its signal is travelling
+function kNeuron(c,pts,color,on,w=5){nerve(c,pts,{w,color,alpha:on?1:.5});}
+function kBadge(c,n,x,y,st){ // st: 0 not yet, 1 now, 2 done
+  if(st===1)glow(c,x,y,34,C.yellow,.55);
+  circle(c,x,y,16,st===1?C.yellow:st===2?'#8f8a4a':'rgba(11,26,21,.92)',st===1?C.white:rgba(C.yellow,.85),2.5);
+  text(c,String(n),x,y+8,22,st===0?C.yellow:C.deep,'center');
+  D.hit(x-20,y-20,40,40,'step',n-1);
+}
+// muscle-axis transform for the quadriceps overlay: along×fa, across×fp (about the hip end)
+function kQuadPt(p,fa,fp){const ux=K_QB[0]-K_QA[0],uy=K_QB[1]-K_QA[1],L=Math.hypot(ux,uy),ax=ux/L,ay=uy/L,dx=p[0]-K_QA[0],dy=p[1]-K_QA[1],al=dx*ax+dy*ay,pe=-dx*ay+dy*ax;return[K_QA[0]+ax*al*fa-ay*pe*fp,K_QA[1]+ay*al*fa+ax*pe*fp];}
+function kFibre(c,y,h,f){
+  const x0=KB.cx-210*f,x1=KB.cx+210*f,g=c.createLinearGradient(0,y-h,0,y+h);
+  g.addColorStop(0,'#eba08f');g.addColorStop(.5,'#cf6e60');g.addColorStop(1,'#9e473e');
+  c.save();c.beginPath();c.roundRect(x0,y-h,x1-x0,2*h,h);c.fillStyle=g;c.fill();c.strokeStyle='rgba(70,22,18,.85)';c.lineWidth=1.5;c.stroke();c.clip();
+  const sp=9*f;c.strokeStyle='rgba(96,30,24,.5)';c.lineWidth=1.8;
+  for(let x=KB.cx-Math.ceil((KB.cx-x0)/sp)*sp;x<x1;x+=sp){c.beginPath();c.moveTo(x,y-h);c.lineTo(x,y+h);c.stroke();}
+  c.restore();
+}
+function kSpindle(c,x,y,L,r,S,fire){
+  c.save();c.beginPath();c.moveTo(x-L/2,y);c.bezierCurveTo(x-L/4,y-r*1.25,x+L/4,y-r*1.25,x+L/2,y);c.bezierCurveTo(x+L/4,y+r*1.25,x-L/4,y+r*1.25,x-L/2,y);c.closePath();
+  c.fillStyle='rgba(248,232,220,.95)';c.fill();c.strokeStyle='#b07c6e';c.lineWidth=2;c.stroke();c.restore();
+  for(const d of [-4,4])line(c,[[x-L*.44,y+d*.3],[x-L*.22,y+d],[x+L*.22,y+d],[x+L*.44,y+d*.3]],'#d38c7d',3);
+  const w=26*(1+.5*S),n=6,pts=[];for(let i=0;i<=n*12;i++){const u=i/(n*12);pts.push([x-w+2*w*u,y+Math.sin(u*n*TAU)*r*.9]);}
+  if(fire>0)glow(c,x,y,64,C.yellow,.6*fire);
+  line(c,pts,C.ink,6);line(c,pts,fire>0||S>.3?C.yellow:'#d9bb45',3.4);
+}
+function kMuscleZoom(c,st,t){
+  const S=st.stretch,Ct=st.contract,f=1+.12*S-.1*Ct,X=x=>KB.cx+(x-KB.cx)*f;
+  D.round(c,KB.x,KB.y,KB.w,KB.h,16,'#2a1c18',rgba(C.yellow,.75));
+  c.save();c.beginPath();c.roundRect(KB.x+2,KB.y+2,KB.w-4,KB.h-4,14);c.clip();
+  if(Ct>0)glow(c,KB.cx,KB.y+KB.h/2,220,C.pink,.45*Ct);
+  for(const [y,h] of K_FIB)kFibre(c,y,h*(1-.12*S+.2*Ct),f);
+  const spx=X(K_SPX);kSpindle(c,spx,K_SPY,206*f,13,S,st.fire);
+  // motor endings on the ordinary muscle fibres (the effector side)
+  const mOn=st.mot>=0&&st.mot<1.15||Ct>0,ends=[[882,K_FIB[0][0]],[866,K_FIB[1][0]],[858,K_FIB[2][0]],[876,K_FIB[3][0]]].map(([x,y])=>[X(x),y]);
+  kNeuron(c,[[910,KB.y+KB.h],[910,K_FIB[0][0]]],C.pink,mOn,5);
+  for(const e of ends){kNeuron(c,[[910,e[1]],e],C.pink,mOn,4);ellipse(c,e[0],e[1],9,5,C.pink,C.ink,1.8);}
+  // the sensory ending leaves the spindle
+  kNeuron(c,[[spx,K_SPY+12],...K_SENS_PANEL.slice(0,3)],C.cyan,st.sens>=-.1&&st.sens<1.1,5);
+  c.restore();
+  // what the muscle is doing now: a dark tag with arrows (outward = stretched, inward = shortening)
+  if(S>.05||Ct>.05){const on=S>.05,lab=on?P('被拉長','Stretched'):P('收縮變短','Shortening'),col=on?C.white:C.pink,a=on?S:Ct;
+    c.save();c.globalAlpha=Math.min(1,a*1.5);const b=pill(c,lab,KB.cx-(measure(c,lab,22)+28)/2,KB.y+KB.h-46,{color:col,size:22,maxX:KB.x+KB.w});
+    const y=b.y+b.h/2;for(const sd of [-1,1]){const x0=sd<0?b.x-6:b.x+b.w+6,x1=x0+sd*44;if(on)arrow(c,x0,y,x1,y,col,4.5);else arrow(c,x1,y,x0,y,col,4.5);}
+    c.restore();}
+}
+function kCord(c,st,t){
+  if(st.syn)glow(c,K_SYN[0],K_SYN[1],70,C.yellow,.45+.25*Math.sin(t*10));
+  c.save();c.translate(KCX,KCY);c.rotate(-Math.PI/2);drawCordSection(c,0,0,KCS);c.restore();
+  const sOn=st.sens>=-.1&&st.sens<1.1,mOn=st.mot>=-.1&&st.mot<1.15;
+  kNeuron(c,K_SENS_PANEL.slice(2),C.cyan,sOn||st.syn,5);
+  ellipse(c,672,414,15,10,'#bdf3fb',C.ink,2.5); // sensory neuron cell body, outside the cord
+  kNeuron(c,K_MOT_PANEL,C.pink,mOn,5);
+  circle(c,K_SYN[0],K_SYN[1],6,C.cyan,C.ink,2); // sensory ending touching the motor neuron = the one synapse
+  circle(c,K_SOMA[0],K_SOMA[1],11,st.syn||mOn?C.pink:'#e9a3c4',C.ink,2.5);
+}
+function kLines(c,p,x,y,size,color,lh){D.tr(p).split('\n').forEach((r,i)=>text(c,r,x,y+i*lh,size,color));}
 function drawKnee(c,s,t){
-  const dt=t-s.start,on=s.tapped&&dt<2.6,dk=dt-.55;
-  // the kick follows the motor signal (slowed model); same swing shape as before
-  const angle=s.tapped&&dk>0&&dk<2?-.75*Math.sin(Math.min(dk,1)*Math.PI):0;
-  const kickC=angle?Math.min(1,-angle/.5):0;
-  // table, then the dashed zoom lines behind the leg
-  line(c,[[96,246],[96,540]],'#6d8a7a',12);line(c,[[290,246],[290,540]],'#6d8a7a',12);line(c,[[96,480],[290,480]],'#6d8a7a',8);
-  D.round(c,64,224,246,24,8,'#6d8a7a','#8fb0a0');
-  c.save();c.setLineDash([8,7]);c.strokeStyle=rgba(C.yellow,.55);c.lineWidth=2.5;c.beginPath();c.moveTo(...K_SENS[4]);c.lineTo(712,132);c.moveTo(...K_SENS[4]);c.lineTo(712,222);c.stroke();c.restore();
-  // the leg: lower leg turns about the knee, thigh layer on top hides the joint seam
+  const {T,k}=kTime(s,t),st=kState(T),angle=st.angle,S=st.stretch,Ct=st.contract,R=p=>rotAbout(p,PIVOT,angle);
+  const stepOf=n=>k<0?0:k===6||n<k?2:n===k?1:0;
+  // examination table
+  line(c,[[30,313],[30,588]],'#6d8a7a',10);line(c,[[238,313],[238,588]],'#6d8a7a',10);
+  D.round(c,16,289,250,24,8,'#6d8a7a','#8fb0a0');
+  // the leg: lower leg turns about the knee; the thigh layer on top hides the joint seam
   const thigh=pic('leg_thigh.png'),lower=pic('leg_lower.png');
-  // joint flesh under both layers, so no gap opens behind the knee during the kick
   c.save();c.globalAlpha=.9;ellipse(c,PIVOT[0]-14,PIVOT[1]+8,26,30,'#e8c2b2');c.restore();
   if(lower){c.save();c.translate(...PIVOT);c.rotate(angle);c.translate(-PIVOT[0],-PIVOT[1]);c.drawImage(lower,KX,KY,1000*KS,746*KS);c.restore();}
   if(thigh)c.drawImage(thigh,KX,KY,1000*KS,746*KS);
-  if(kickC)glow(c,...KM(420,170),90,C.pink,.35*kickC);
-  // spinal cord in the lower back
-  nerve(c,K_SPINE,{w:7});
-  nerve(c,K_SENS,{w:5});nerve(c,K_MOTOR,{w:5,color:'#f7b2c9'});
-  if(on&&dt<.18)glow(c,...K_REC,44,C.yellow,.6);
-  circle(c,...K_REC,9,C.yellow,C.ink,2);
-  if(on){signal(c,K_SENS,dt/.22,C.cyan);signal(c,K_MOTOR,(dt-.5)/.3,C.pink);}
-  // reflex hammer taps the tendon below the kneecap
-  const tap=rotAbout(KM(680,282),PIVOT,angle),k=s.tapped?(dt<.1?dt/.1:Math.max(0,1-(dt-.1)/.35)):0;
-  const hm=pic('reflex_hammer.png'),tip=[mix(tap[0]+78,tap[0]+2,k),mix(tap[1]-6,tap[1],k)],tilt=mix(-.9,-.35,k);
+  // quadriceps = the effector and home of the receptor: outlined; stretched (yellow) / contracting (pink)
+  const fa=1+.05*S-.05*Ct,fp=1-.06*S+.16*Ct,quad=K_QUAD.map(p=>kQuadPt(p,fa,fp));
+  c.save();c.beginPath();quad.forEach((p,i)=>c[i?'lineTo':'moveTo'](...p));c.closePath();
+  c.fillStyle=Ct>0?rgba(C.pink,.12+.4*Ct):S>0?rgba(C.yellow,.1+.15*S):rgba(C.white,.1);c.fill();
+  c.lineJoin='round';c.strokeStyle=C.ink;c.lineWidth=5;c.stroke();c.strokeStyle=Ct>0?C.pink:S>0?C.yellow:C.white;c.lineWidth=2.5;c.stroke();c.restore();
+  const Q=u=>kQuadPt([mix(K_QA[0],K_QB[0],u),mix(K_QA[1],K_QB[1],u)],fa,fp);
+  if(Ct>.1){arrow(c,...Q(.95),...Q(.7),C.white,4);arrow(c,...Q(.05),...Q(.3),C.white,4);}
+  // pull chain, drawn when it matters: the tapped tendon (step 1) and the pull on the shin (step 6)
+  const ptBot=R(K_PT_BOT),dent=st.hammer>.6?(st.hammer-.6)*8:0,ptMid=[mix(K_PT_TOP[0],ptBot[0],.55)-dent,mix(K_PT_TOP[1],ptBot[1],.55)];
+  if(T>=0&&T<.8){const a=1-kSmooth(.55,.8,T);c.save();c.globalAlpha=a;line(c,[K_PT_TOP,ptMid,ptBot],C.ink,9);line(c,[K_PT_TOP,ptMid,ptBot],C.yellow,5);c.restore();}
+  if(Ct>.1){c.save();c.globalAlpha=Math.min(1,Ct*1.5);
+    for(const pts of [K_QT,[K_PT_TOP,ptBot]]){line(c,pts,C.ink,9);line(c,pts,C.white,5);}
+    ellipse(c,K_PAT[0],K_PAT[1],7,13,rgba(C.bone,.5),C.white,3,-.2);
+    arrow(c,...K_QT[2],K_QT[0][0]-4,K_QT[0][1]-2,C.pink,4.5);arrow(c,...ptBot,K_PT_TOP[0],K_PT_TOP[1]+8,C.pink,4.5);
+    // the lower leg swings forward
+    c.setLineDash([9,7]);c.strokeStyle=C.white;c.lineWidth=3;c.beginPath();c.arc(...PIVOT,300,1.2,.66,true);c.stroke();c.setLineDash([]);
+    const e=[PIVOT[0]+300*Math.cos(.66),PIVOT[1]+300*Math.sin(.66)];arrow(c,e[0]-9,e[1]+12,e[0]+3,e[1]-5,C.white,4);c.restore();}
+  // spinal cord in the lower back, and the two separate routes along the thigh
+  nerve(c,K_CORDLEG,{w:8});
+  const sensLeg=kOffset(K_ROUTE,5),motLeg=[...kOffset(K_ROUTE,-5).reverse(),KM(548,168)];
+  const sOn=st.sens>=-.1&&st.sens<1.1,mOn=st.mot>=-.1&&st.mot<1.15||Ct>0;
+  kNeuron(c,sensLeg,C.cyan,sOn,4);kNeuron(c,motLeg,C.pink,mOn,4);
+  const mEnd=motLeg[motLeg.length-1],mDir=Math.atan2(K_QB[1]-K_QA[1],K_QB[0]-K_QA[0]);
+  for(const d of [-.75,0,.75]){const tip=[mEnd[0]+Math.cos(mDir+d)*13,mEnd[1]+Math.sin(mDir+d)*13];line(c,[mEnd,tip],C.ink,5);line(c,[mEnd,tip],mOn?C.pink:rgba(C.pink,.6),3);circle(c,...tip,3.5,C.pink,C.ink,1.5);}
+  kChevrons(c,sensLeg.slice(2,6),sOn?C.cyan:rgba(C.cyan,.8),1,7);kChevrons(c,motLeg.slice(1,4),mOn?C.pink:rgba(C.pink,.8),1,7);
+  // the receptor: a muscle spindle inside the quadriceps belly (magnified on the right)
+  c.save();c.translate(...K_SPINDLE);c.rotate(mDir);if(st.fire>0)glow(c,0,0,30,C.yellow,.7*st.fire);ellipse(c,0,0,12*(1+.25*S),4.5,C.yellow,C.ink,2);c.restore();
+  if(st.sens>=0&&st.sens<=1)signal(c,sensLeg,st.sens,C.cyan,7);
+  if(st.mot>=0&&st.mot<=1)signal(c,motLeg,st.mot,C.pink,7);
+  // magnifier: dashed ring on the thigh → muscle zoom
+  c.save();c.setLineDash([8,7]);c.strokeStyle=rgba(C.yellow,.85);c.lineWidth=2.5;c.beginPath();c.arc(...K_RING,26,0,TAU);c.stroke();
+  c.beginPath();c.moveTo(K_RING[0]+14,K_RING[1]-22);c.lineTo(KB.x,KB.y+18);c.moveTo(K_RING[0]+20,K_RING[1]+17);c.lineTo(KB.x,KB.y+KB.h);c.stroke();c.restore();
+  // reflex hammer taps the patellar tendon below the kneecap
+  const tap=R(K_TAP),hk=st.hammer,hm=pic('reflex_hammer.png'),tip=[mix(tap[0]+78,tap[0]+2,hk),mix(tap[1]-6,tap[1],hk)],tilt=mix(-.9,-.35,hk);
+  if(T<0)glow(c,...tap,26,C.yellow,.35+.2*Math.sin(t*4));
+  if(T>=.1&&T<.4)glow(c,...tap,40,C.white,.7*(1-(T-.1)/.3));
   if(hm){c.save();c.translate(...tip);c.rotate(tilt);c.drawImage(hm,0,-29,66,195);c.restore();}
-  if(!s.tapped){line(c,[[500,398],tap],C.muted,2);text(c,P('輕敲：膝蓋下方的肌腱','Tap: tendon below the kneecap'),500,420,22,C.white);}
-  // spinal cord inset
-  circle(c,800,175,100,'#0f221c',C.edge,3);
-  if(on&&dt>.28&&dt<.5)glow(c,800,175,110,C.yellow,.45);
-  drawCordSection(c,800,175,1.3);
-  nerve(c,IN_SENS,{w:5});nerve(c,IN_INTER,{w:5});nerve(c,IN_MOTOR,{w:5,color:'#f7b2c9'});ellipse(c,730,117,10,7,C.nerve,C.ink,2);
-  if(on){signal(c,IN_SENS,(dt-.2)/.1,C.cyan,7);signal(c,IN_INTER,(dt-.3)/.1,C.yellow,7);signal(c,IN_MOTOR,(dt-.4)/.1,C.pink,7);}
-  const lab=P('脊髓：反射中樞','Spinal cord: reflex centre'),lw=measure(c,lab,22)+28;pill(c,lab,800-lw/2,24,{active:true,size:22});
-  legend(c,[[C.yellow,P('肌肉內受器','Receptor in muscle')]],30,572,300);
-  legend(c,[[C.cyan,P('感覺訊息進脊髓','Sensory signal to cord')]],340,572,300);
-  legend(c,[[C.pink,P('運動訊息回肌肉','Motor signal to muscle')]],650,572,300);
+  D.hit(tip[0]-20,tip[1]-80,110,120,'tap',true);
+  if(T<0){line(c,[[378,440],[tap[0]+6,tap[1]+8]],C.muted,2);kLines(c,P('輕敲：\n膝蓋下方的肌腱','Tap: the tendon\nbelow the kneecap'),372,466,22,C.white,30);}
+  // ── right panel: the reflex arc, magnified ──
+  panel(c,592,12,352,580);
+  kMuscleZoom(c,st,t);
+  kCord(c,st,t);
+  if(st.sens>=0&&st.sens<=1)signal(c,[[K_SPX,K_SPY+12],...K_SENS_PANEL],st.sens,C.cyan,8);
+  if(st.mot>=0&&st.mot<=1)signal(c,[...K_MOT_PANEL.slice(0,-1),[910,K_FIB[1][0]],[870,K_FIB[1][0]]],st.mot,C.pink,8);
+  kChevrons(c,[[628,238],[628,292]],C.cyan,1,8);kChevrons(c,[[910,292],[910,238]],C.pink,1,8);
+  legend(c,[[C.yellow,P('肌梭：肌肉內的受器','Receptor in muscle')],[C.cyan,P('感覺神經元：傳入','Sensory neuron: in')],[C.pink,P('運動神經元：傳出','Motor neuron: out')]],648,262,250,22);
+  // labels
+  const spl=pill(c,P('肌梭（受器）','Muscle spindle (receptor)'),KB.x+40,18,{active:stepOf(1)===1,color:C.yellow,size:22,maxX:KB.x+KB.w});
+  line(c,[[K_SPX+18,spl.y+spl.h],[K_SPX+8,K_SPY-12]],C.yellow,2.5);circle(c,K_SPX+8,K_SPY-12,4,C.yellow);
+  const lab=P('脊髓：反射中樞','Spinal cord: reflex centre'),lw=measure(c,lab,22)+28;pill(c,lab,KCX-lw/2,550,{active:true,size:22});
+  const sy=P('突觸','Synapse'),syw=measure(c,sy,22),sx=KCX-(syw+40)/2+40;
+  text(c,sy,sx,382,22,st.syn?C.yellow:C.white);line(c,[[K_SYN[0],394],[K_SYN[0],K_SYN[1]-8]],C.white,2);
+  text(c,P('脊髓','Spinal cord'),18,124,22,C.white);
+  pill(c,P('股四頭肌（動器）','Quadriceps (effector)'),192,100,{active:Ct>0,color:C.pink,size:22,anchor:K_QUAD[2],maxX:560});
+  // numbered steps on the picture, and the current step written at the top
+  kBadge(c,1,tap[0]+44,tap[1]-46,stepOf(0));
+  kBadge(c,2,KB.x+20,38,stepOf(1));
+  kBadge(c,3,628,350,stepOf(2));
+  kBadge(c,4,sx-22,374,stepOf(3));
+  kBadge(c,5,910,350,stepOf(4));
+  kBadge(c,6,176,120,stepOf(5));
+  if(k<0)wrap(c,P('先預測：輕敲髕腱後，小腿會怎麼動？','Predict: after a gentle tap on the tendon, how will the lower leg move?'),20,44,540,24,C.white);
+  else{const done=k===6;circle(c,36,36,20,done?C.green:C.yellow,C.white,2);
+    if(done)line(c,[[26,37],[33,45],[47,28]],C.deep,4);else text(c,String(k+1),36,45,24,C.deep,'center');
+    wrap(c,done?P('被拉長的股四頭肌，就是收縮、踢腿的那一塊','The stretched quadriceps is the very muscle that contracts and kicks'):K_TEXT[k],66,45,516,24,done?C.green:C.yellow);}
+  kLines(c,P('動畫已放慢\n非真實比例','Slowed model,\nnot to scale'),46,546,22,C.muted,30);
 }
 
 // ── Tab 5: pupil light reflex ──────────────────────────────────────────────
@@ -408,7 +550,7 @@ const tabs=[
  {id:'brain',title:P('指揮不是一人包辦','Different control centres'),sub:P('大腦、小腦與腦幹','Cerebrum, cerebellum, brainstem'),hook:P('騎腳踏車保持平衡、記住路線、持續呼吸，都是大腦同一個地方做的嗎？','Do balance, remembering a route and breathing use the same part of the brain?'),body:P('點選構造或圖上的標籤：左邊看它在腦的哪個位置，右邊看它負責什麼。','Tap a part or its label: the left shows where it sits in the brain, the right shows what it does.'),closure:P('大腦處理許多意識活動；小腦協調與平衡；腦幹參與維持生命的功能。','The cerebrum supports many conscious activities; the cerebellum coordinates and balances; the brainstem supports vital functions.'),sources:[],init:()=>({running:true,part:0}),controls:s=>[choice(P('選擇構造','Select a part'),'part',parts.map((p,i)=>[i,p.name]))],explain:s=>({title:parts[s.part].name,text:parts[s.part].text}),draw:drawBrainTab},
  {id:'system',title:P('脊髓不是脊椎','Spinal cord is not bone'),sub:P('中樞與周圍神經','Central and peripheral systems'),hook:P('背後一節一節的骨頭，和裡面傳訊息的構造，是同一種東西嗎？','Are the segmented bones in your back the same structure as the signal-carrying cord inside?'),body:P('神經系統依構造與功能分為中樞神經系統、周圍神經系統。切換觀察，分清保護構造和傳訊構造。','Distinguish the central and peripheral nervous systems, then compare protective bones with signal-carrying tissue.'),closure:P('中樞是腦與脊髓；周圍是腦神經與脊神經。脊椎是骨骼，保護脊髓。','The CNS is the brain and spinal cord; the PNS includes cranial and spinal nerves. Vertebrae are bones that protect the spinal cord.'),reading:P('周圍神經連接中樞與受器、動器。脊髓既能傳遞訊息，也能整合一些反射；腦神經不等於中樞神經。課本把神經分成腦神經與脊神經，是依它們從哪裡發出，不是說神經本身就是腦或脊髓。','Peripheral nerves connect the CNS with receptors and effectors. The spinal cord relays signals and integrates some reflexes. Cranial nerves are not the CNS: the names cranial and spinal nerves refer to where the nerves emerge, not to being the brain or cord themselves.'),sources:[],init:()=>({running:true,view:'central'}),controls:s=>[choice(P('觀察','View'),'view',[['central',P('腦與脊髓','Brain and cord')],['peripheral',P('周圍神經','Peripheral nerves')],['bone',P('脊椎保護','Vertebral protection')]])],explain:s=>({title:s.view==='bone'?P('骨骼在外，神經組織在內','Bone outside, nervous tissue inside'):s.view==='central'?P('中樞神經系統','Central nervous system'):P('周圍神經系統','Peripheral nervous system'),text:s.view==='bone'?P('脊椎骨圍成保護通道，脊髓在其中；兩者的組成與功能不同。','Vertebrae form a protective canal around the spinal cord. Their tissues and functions differ.'):s.view==='central'?P('腦與脊髓負責整合訊息；脊髓也把許多身體訊息傳向腦、傳回身體。','The brain and spinal cord integrate signals. The spinal cord also relays many signals between brain and body.'):P('腦神經、脊神經把受器的訊息帶往中樞，並把控制訊息帶向肌肉或腺體。','Cranial and spinal nerves carry receptor signals toward the CNS and control signals toward muscles or glands.')}),draw:drawSystem},
  {id:'withdraw',title:P('先縮手，再覺得痛','Withdraw, then feel pain'),sub:P('反射與意識活動','Reflex and conscious actions'),hook:P('碰到燙物時，還沒想好「要縮手」，手就縮回來了。大腦沒收到訊息嗎？','A hand withdraws from heat before you decide to move. Does that mean the brain receives no signal?'),body:P('只觀察模型，不要故意碰燙物。比較快速縮手的脊髓反射，以及之後傳向大腦的感覺與處理。','Observe the model only; never deliberately touch hot objects. Compare spinal withdrawal with later awareness and conscious action.'),closure:P('反射不必先由大腦作意識決定；訊息仍可傳向大腦，形成感覺與後續反應。','A reflex does not require a conscious cerebral decision first. Signals can still reach the brain for awareness and later responses.'),reading:P('縮手反射的途徑：皮膚受器、感覺神經元、脊髓、運動神經元、肌肉。訊息也可從脊髓上傳到大腦，使人感覺疼痛，並決定後續處理。不是所有反射都由脊髓負責；例如瞳孔對光反射涉及腦幹。動畫用較慢速度分解，不能用播放時間比較真實神經傳導速度。','Withdrawal involves skin receptors, sensory neurons, the spinal cord, motor neurons and muscles. Signals also ascend to the cerebrum for pain perception and later decisions. Not every reflex is spinal: the pupil light reflex involves the brainstem. Slowed teaching animations do not measure real conduction speeds.'),sources:[],init:()=>({running:true,step:-1,mode:'reflex'}),controls:s=>[choice(P('途徑','Pathway'),'mode',[['reflex',P('縮手反射','Withdrawal reflex')],['aware',P('意識與後續處理','Awareness and action')]]),stepControls(s.mode==='reflex'?reflex:aware)],explain:s=>({title:s.mode==='reflex'?P('脊髓先整合，手先縮回','Spinal integration: hand withdraws first'):P('訊息仍會上傳大腦','Signals also ascend to the cerebrum'),text:s.mode==='reflex'?P('依序追蹤受器、感覺神經元、脊髓、運動神經元、動器；不把大腦排在縮手反射的必經順序內。','Trace receptor, sensory neuron, spinal cord, motor neuron and effector. A conscious cerebral decision is not a required step before withdrawal.'):P('脊髓把訊息上傳大腦；感覺疼痛並決定處理後，控制訊息可經脊髓與運動神經元到肌肉。','The spinal cord sends signals to the cerebrum. After pain perception and a decision, commands can travel via the cord and motor neurons to muscles.')}),draw:drawWithdraw},
- {id:'knee',title:P('敲一下，腿自己動','A tap makes the leg move'),sub:P('膝跳反射','Knee-jerk reflex'),hook:P('坐好、讓小腿懸空，輕敲膝蓋下方，為什麼小腿會抬起？','With the lower leg hanging freely, why can a gentle tap below the knee make it kick?'),body:P('老師示範輕敲髕腱；刺激使肌肉被拉長，肌肉中的受器產生訊息，經脊髓反射造成肌肉收縮。','A teacher gently taps the patellar tendon. The resulting muscle stretch activates receptors within the muscle, leading to a spinal reflex and contraction.'),closure:P('膝跳反射由脊髓整合；受器在被拉伸的肌肉內，不是把髕腱本身當作受器。','The knee jerk is integrated in the spinal cord. Its receptors are in the stretched muscle, not the tendon itself.'),sources:[],init:()=>({running:true,tapped:false,start:0}),controls:s=>[{label:P('示範','Demonstration'),items:[{label:P('輕敲一次','Tap gently once'),key:'tap',value:true}]}],act(s,k){if(k==='tap'){s.tapped=true;s.start=s.elapsed;}},explain:s=>({title:s.tapped?P('肌肉收縮，小腿向前','Contraction moves the lower leg forward'):P('小腿懸空，先預測','Lower leg free: predict first'),text:P('這是放慢的機制示意，不是反射速度測量。實作由老師指導，輕敲即可，不能用力敲骨頭或當作診斷。','This is a slowed mechanism model, not a reflex-speed measurement. A teacher supervises gentle tapping; do not hit bones forcefully or use it diagnostically.')}),draw:drawKnee},
+ {id:'knee',title:P('敲一下，腿自己動','A tap makes the leg move'),sub:P('膝跳反射','Knee-jerk reflex'),hook:P('坐好、讓小腿懸空，輕敲膝蓋下方，為什麼小腿會抬起？','With the lower leg hanging freely, why can a gentle tap below the knee make it kick?'),body:P('老師示範輕敲髕腱：股四頭肌被拉長，肌肉裡的肌梭（受器）產生訊息，經脊髓直接傳回同一塊肌肉，使它收縮、小腿踢出。可用「逐步看」一步一步觀察。','A teacher gently taps the patellar tendon. The quadriceps is stretched, muscle spindles (receptors) inside it send a signal, and the spinal cord sends it straight back to the same muscle, which contracts and kicks the lower leg. Use "Step through" to watch one step at a time.'),closure:P('膝跳反射由脊髓整合：受器（肌梭）在被拉長的股四頭肌內，不是髕腱本身；訊息傳回同一塊肌肉，使它收縮。','The knee jerk is integrated in the spinal cord. Its receptors (muscle spindles) are inside the stretched quadriceps, not in the tendon itself, and the signal returns to that same muscle, which contracts.'),reading:P('膝跳反射的路徑：輕敲髕腱，股四頭肌瞬間被拉長 → 肌梭（肌肉裡的受器）產生訊息 → 感覺神經元把訊息傳入腰部的脊髓 → 在脊髓內直接與運動神經元相接，只經過一個突觸，中間沒有中間神經元 → 運動神經元把訊息傳回同一塊股四頭肌 → 肌肉收縮，經肌腱拉動小腿向前。同時，脊髓裡另有抑制性的中間神經元讓大腿後側的肌肉放鬆，小腿才踢得出去（圖中沒有畫出）。動畫已放慢，大小也不是真實比例。','The knee-jerk pathway: a tap on the patellar tendon briefly stretches the quadriceps → muscle spindles (receptors inside the muscle) send a signal → a sensory neuron carries it into the spinal cord in the lower back → there it connects directly to a motor neuron across a single synapse, with no interneuron in between → the motor neuron carries the signal back to the same quadriceps → the muscle contracts and, through the tendon, pulls the lower leg forward. At the same time, separate inhibitory interneurons in the cord relax the muscles at the back of the thigh so the leg can kick (not drawn). The animation is slowed and sizes are not to scale.'),sources:[],init:()=>({running:true,tapped:false,start:0,step:-1}),controls:s=>[{label:P('示範','Demonstration'),items:[{label:P('輕敲一次','Tap gently once'),key:'tap',value:true}]},choice(P('逐步看','Step through'),'step',K_SHORT.map((p,i)=>[i,p]))],act(s,k,v){if(k==='tap'){s.tapped=true;s.step=-1;s.start=s.elapsed;}else if(k==='step'){s.tapped=true;s.step=v;s.start=s.elapsed;}},explain:s=>{const k=kTime(s,s.elapsed||0).k;return{title:k<0?P('小腿懸空，先預測','Lower leg free: predict first'):k===6?P('股四頭肌收縮，小腿向前','The quadriceps contracts: the lower leg moves forward'):P('訊息走一圈，回到同一塊肌肉','The signal loops back to the same muscle'),text:P('這是放慢的機制示意，不是反射速度測量；大小也不是真實比例。實作由老師指導，輕敲即可，不能用力敲骨頭或當作診斷。','This is a slowed mechanism model, not a reflex-speed measurement, and sizes are not to scale. A teacher supervises gentle tapping; do not hit bones forcefully or use it diagnostically.')};},draw:drawKnee},
  {id:'pupil',title:P('光強了，入口縮小','Bright light, smaller opening'),sub:P('瞳孔對光反射','Pupil light reflex'),hook:P('眼睛的黑色開口大小會變，是你刻意思考後才動的嗎？','Do you consciously decide to change the size of the dark opening in your eye?'),body:P('切換環境光，觀察放慢的瞳孔變化模型，並追蹤訊息經過腦幹的反射路徑；瞳孔是虹膜中央的開口。','Switch the light, watch a slowed model of the pupil, and trace the reflex path through the brainstem. The pupil is an opening in the iris.'),closure:P('瞳孔對光反射涉及腦幹，並非所有反射都由脊髓負責。','The pupil light reflex involves the brainstem; not every reflex is integrated in the spinal cord.'),sources:[],init:()=>({running:true,bright:false,fromRadius:80,start:0}),act(s,k,v){const p=Math.min(Math.max((s.elapsed-s.start)/1.2,0),1),target=s.bright?37:80;s.fromRadius=s.fromRadius+(target-s.fromRadius)*p;s.bright=v;s.start=s.elapsed;},controls:s=>[choice(P('環境光','Light'),'bright',[[false,P('較暗','Dimmer')],[true,P('較亮','Brighter')]])],explain:s=>({title:s.bright?P('較亮：瞳孔縮小','Brighter: pupil constricts'):P('較暗：瞳孔較大','Dimmer: pupil enlarges'),text:P('改變瞳孔大小的是虹膜的肌肉；中央開口不是一塊黑色組織。請不要用強光直照眼睛做實驗。','Iris muscles change the opening\'s size; the pupil is not a piece of black tissue. Do not shine intense light into eyes as an experiment.')}),draw:drawPupil}
 ];
 B.register({id:'brain',title:P('腦與反射：訊息怎麼走？','Brain and reflexes: where do signals go?'),subtitle:P('大腦、小腦、腦幹怎麼分工，反射為什麼比「想」還快','How the brain shares the work, and why reflexes beat thinking'),cover:'assets/covers/biology_brain_1018_v1.jpg',tabs});
