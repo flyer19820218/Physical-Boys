@@ -1,15 +1,21 @@
 /* Plants · "Many ovules: one pollen tube for each ovule" canvas (water tab, view 2), 2026-10-23.
- * The ovary is ovary_multi.png (teacher's Gemini AI illustration, 607×1318: an ovary cut lengthwise, stigma and style on
- * top, 5 ovules in one column, each on a stalk from the placenta on the left wall). The pea pod is pea_pod.png
+ * The ovary is ovary_multi_1027.png (teacher's Gemini AI illustration, 607×1318: an ovary cut lengthwise, stigma and
+ * style on top, 5 ovules in one column, each on a stalk from the placenta on the left wall; = ovary_multi.png with the
+ * small beaks on the far right ends of the ovules removed, unbeak_ovary_multi_1027.py, nothing else changed). The two
+ * integuments of every ovule are open at the LEFT end, beside the stalk: that mouth is the micropyle (2026-10-27,
+ * teacher: the tube follows the picture to the micropyle, it does not wrap round the ovule). The pea pod is pea_pod.png
  * (AI illustration, 2007×716, 6 peas). Pollen grains, pollen tubes, sperm cells, egg, central cell, seeds, the fruit
  * colour, the number markers and the tube routes are schematic, drawn here. Positions on the pictures were measured
  * from their alpha channel and colours (see the constants below):
- *   ovary_multi.png: stigma lip y 8..50 (x 223..388 at y 25), style x 266..345 (y 80..240), ovary from y ~330,
+ *   ovary_multi_1027.png: stigma lip y 8..50 (x 223..388 at y 25), style x 266..345 (y 80..240), ovary from y ~330,
  *     locule top y ~380 (x 250..360); placenta = pale wavy band x ~105..180 along the left wall, locule from x ~185;
  *     ovules (dark outline at x 300, top/bottom; right outline on the centre row): 1 y 430..526 x ..372,
  *     2 y 554..669 x ..365, 3 y 693..812 x ..362, 4 y 835..954 x ..368, 5 y 974..1086 x ..389; left end x ~250
- *     where the stalk joins; each has a small beak on the free right end = micropyle, tip at (380,506) (376,632)
- *     (373,767) (375,905) (390,1035); gaps between neighbouring ovules at x 300: y 540, 681, 823, 964.
+ *     where the stalk joins; far right ends (old beak tips, ORE) x 380 376 373 375 390; gaps between neighbouring
+ *     ovules at x 300: y 540, 681, 823, 964. Micropyle = mouth between the rounded ends of the inner integument line
+ *     (upper / lower tip): (281,445)/(266,474), (251,576)/(240,615), (235.5,722)/(228.5,764), (233.5,866)/(230.5,910),
+ *     (252,1009)/(254,1050); the stalk neck opens into it. NUB = where the tube enters, on the stalk's upper side
+ *     under the upper tip. Egg 32 px in from the middle of the mouth along the ovule's axis, central cell beyond it.
  *     Tube routes (2026-10-26, measured from a tissue / cavity split of the picture bounded by its dark outlines):
  *     right edge of the placenta band ≈ x 242 (y 410..435), 227→188 (446..560), 172..176 (585..690), 151..163
  *     (746..870), 155..181 (896..1016); a cavity pocket sits above each ovule, its lower corner bulging into the band
@@ -20,7 +26,7 @@
  *  0 the ovary: stigma, style, ovary, placenta, 5 ovules numbered 1..5;
  *  1 zoom on the stigma: 5 pollen grains land, each grows one tube; tally pollen 5, tubes 5;
  *  2 zoom out: the 5 tubes go down the style and, as a bundle, down the placenta on the wall; each leaves the bundle
- *    by a smooth curve onto the stalk of its own ovule and follows the stalk and the ovule's surface to its micropyle;
+ *    by a smooth curve onto the stalk of its own ovule and follows the stalk into the micropyle next to it;
  *  3 zoom on the ovules: tallies tick up (5 pollen, 5 tubes); ovule by ovule the tube releases 2 sperm cells,
  *    sperm 1 → egg, sperm 2 → central cell; tally sperm 10, unions 10 (5 eggs + 5 central cells); n ovules → n, 2n;
  *  4 fruit: state A all 5 fertilized → 5 seeds; state B (clearly switched, own heading) ovule 4 got no tube → no seed,
@@ -31,7 +37,7 @@
 (()=>{'use strict';
 const K=window.PlantsKit,{P,C,D,text,measure,splitLines,circle,ellipse,glow,line,dashed,stageClock,fade,smooth,mix,clamp,mod,rgba,TAU}=K;
 const N=5,PER=8;
-const FILE='ovary_multi.png',[IW,IH]=K.SIZE[FILE];
+const FILE='ovary_multi_1027.png',[IW,IH]=K.SIZE[FILE];
 const POD='pea_pod.png',[PW,PH]=K.SIZE[POD];
 // colours
 const EGG={fill:'#f9a8d4',edge:'#db2777',lab:C.pink};
@@ -40,12 +46,13 @@ const TUBE=C.yellow,TUBE_EDGE='#a16207',GRAIN='#facc15',STRUCT='#efe6c8',PLAC='#
 // ── geometry of the picture (image px, measured) ───────────────────────────
 const OVC=[[311,478],[307,611],[306,752],[309,894],[319,1030]];
 const ORX=[61,58,56,59,70],ORY=[48,57,60,60,56];
-const NUB=[[380,506],[376,632],[373,767],[375,905],[390,1035]];
+const NUB=[[275.5,452.5],[249,588],[235,735],[234,879.5],[254,1021.5]];   // micropyle: where the tube enters the mouth
+const ORE=[380,376,373,375,390];                                            // far (right) end of each ovule, x
 const GX=[350,327,306,285,262],GY=-3,GR=11;          // pollen grain j serves ovule j (rightmost grain → top ovule)
 const SL=[329,317,305,293,281];                       // lanes in the style
-const EGGP=[],CENP=[];
-OVC.forEach((c,j)=>{const n=NUB[j],d=Math.hypot(n[0]-c[0],n[1]-c[1]),u=[(n[0]-c[0])/d,(n[1]-c[1])/d];
-  EGGP.push([c[0]+u[0]*(d-46),c[1]+u[1]*(d-46)]);CENP.push([c[0]-u[0]*14,c[1]-u[1]*14]);});
+// egg: 32 px into the ovule from the middle of the mouth, along the ovule's axis; central cell (35,13) further in
+const EGGP=[[302.8,472.3],[276.3,604.1],[263.6,748.4],[263.8,891.8],[285,1030.8]];
+const CENP=EGGP.map(([x,y])=>[x+35,y+13]);
 const PEAS=[[549,406],[780,422],[981,424],[1182,428],[1385,424],[1587,412]];
 // ── cameras: image point (ix,iy) shown at screen (sx,sy), scale k ─────────
 const CF={k:.445,ix:303,iy:659,sx:560,sy:300};
@@ -92,19 +99,19 @@ function spline(pts,n=10,pre,post){const out=[];
   out.push(pts[pts.length-1]);return track(out);}
 function track(out){const L=[0];for(let i=1;i<out.length;i++)L.push(L[i-1]+Math.hypot(out[i][0]-out[i-1][0],out[i][1]-out[i-1][1]));
   return{pts:out,L,len:L[L.length-1]};}
-// ROUTE[j]: tube j below the style (x,y pairs about 12 px apart, after (SL[j],290)), measured on ovary_multi.png.
+// ROUTE[j]: tube j below the style (x,y pairs about 12 px apart, after (SL[j],290)), measured on the picture.
 // The 5 tubes leave the style as one bundle, cross the top of the ovary and run down the placenta band on the left
 // wall, 7.5 px apart, the tube of the top ovule outermost (7-9 px inside the band's edge, so its edge lies on the
 // outline); below each stalk the rest close up to the edge again. Tube j follows the edge of the pocket above ovule j
-// round its lower corner onto the stalk, rides up the ovule's shoulder onto its outer surface (7 px outside the
-// outline), round the free end to the beak, and ends at the micropyle. Smooth (largest turn about 20° per 8 px of
-// tube), never over another ovule or a number marker.
+// round its lower corner onto its own stalk, runs along the stalk (on its middle where the stalk is narrow) and ends
+// in the mouth of the integuments next to the stalk = the micropyle (NUB[j], just under the upper integument tip).
+// Smooth (largest turn about 20° per 8 px of tube), never over another ovule or a number marker.
 const ROUTE=[
- [327.6,301.9,324.7,313.6,320.2,324.7,314.2,335.1,306.8,344.6,298.6,353.3,289.7,361.3,280.4,369,271,376.4,261.6,384,252.7,392,244.5,400.8,238,410.9,235.5,422.5,238.4,434.1,245.9,443.3,256.6,448.6,268.5,448.6,279.4,443.7,289.3,436.8,299.7,430.8,311.2,427.5,323.1,427.4,334.7,430.5,345.4,435.9,355,443.1,363.4,451.7,370.2,461.6,375.3,472.4,379,483.9,381.6,495.6,382.6,507.5],
- [315.4,301.9,312.3,313.4,307.5,324.4,301.3,334.6,294,344.1,285.9,352.9,277.4,361.3,268.6,369.4,259.7,377.5,251,385.7,242.6,394.3,234.9,403.5,228,413.2,221.7,423.4,215.7,433.8,210.1,444.4,205.7,455.6,202.7,467.1,200,478.8,196.1,490.1,191,501,186.3,512,183.5,523.6,182.1,535.5,181.7,547.5,183.9,559.2,189.7,569.7,198.1,578.1,208.4,584.2,220,587,231.7,585.2,241.7,578.8,249.8,569.9,257.9,561.2,267.5,554,278.6,549.5,290.4,548,302.3,549.2,314,552,325.2,556.3,335.7,561.9,345.4,569,353.9,577.4,360.9,587.1,366.6,597.6,371.5,608.5,375.8,619.7,378.9,631.3],
- [303.2,301.8,299.8,313.2,294.8,324,288.4,334.1,281.1,343.5,273.2,352.5,264.9,361.1,256.5,369.6,248.1,378.1,239.9,386.8,232.1,395.7,224.8,405.2,218.2,415.1,211.9,425.3,205.9,435.6,200.6,446.3,196.8,457.6,194.1,469.3,191.1,480.8,186.7,491.9,181.7,502.7,177.3,513.8,174.1,525.4,171.3,537,168,548.4,164.1,559.7,160.7,571.2,158.5,582.9,158,594.8,158.8,606.7,160.1,618.6,160.6,630.5,159.5,642.4,157,654,153.9,665.6,152,677.4,151.3,689.3,149.4,701.1,151.1,712.8,157.6,722.7,166.8,730.2,177.4,735.7,188.9,739,200.7,739.4,211.9,735.5,220.9,727.7,227.6,717.8,234,707.8,242,698.9,251.9,692.3,263.1,688.2,274.9,686.4,286.8,686.3,298.7,687.7,310.3,690.5,321.4,694.7,331.9,700.4,341.4,707.6,349.8,716.1,356.9,725.7,363,735.9,368.6,746.5,373.3,757.4,375.9,769],
- [291,301.9,287.2,313.3,281.8,324.1,275.2,334.3,267.9,343.9,260.1,353.1,252.1,362.1,244,371.1,236,380.1,228.1,389.3,220.7,398.8,213.7,408.7,207.2,418.8,200.9,429.1,195,439.6,190.4,450.8,187.4,462.5,184.7,474.3,180.9,485.7,175.9,496.7,171.1,507.8,167.7,519.4,165,531.2,161.9,542.8,158,554.3,154.3,565.7,151.6,577.5,150.4,589.5,150.8,601.6,152,613.6,153,625.6,152.6,637.7,150.4,649.6,147.2,661.2,144.1,672.9,141.8,684.8,140.4,696.8,139.3,708.8,138.2,720.8,137.3,732.9,137,744.9,137.8,757,140,768.8,142.9,780.6,145.5,792.4,146.6,804.4,146.4,816.4,145.8,828.5,145.5,840.6,145,852.6,147.1,864.5,154,874.3,163.7,881.4,174.7,886.3,186.5,889,198.5,888.9,209.7,884.5,218.4,876.3,224.6,865.9,230.3,855.3,237.6,845.7,247,838.1,257.9,833,269.6,830.2,281.6,829,293.7,829.2,305.6,831,317.2,834.3,328.3,839.1,338.5,845.5,347.7,853.4,355.6,862.5,362.4,872.4,368.6,882.8,374.2,893.5,378.1,904.9],
- [278.8,301.8,274.8,313.2,269.3,323.9,262.8,334.1,255.7,343.9,248.2,353.3,240.6,362.7,232.8,371.9,225.2,381.2,217.7,390.7,210.6,400.5,203.9,410.5,197.5,420.7,191,430.9,185.3,441.5,181.3,452.9,178.7,464.7,175.9,476.4,171.6,487.7,166.4,498.6,162.1,509.9,159.3,521.6,156.8,533.4,153.4,545,149.4,556.3,145.8,567.9,143.6,579.7,142.8,591.8,143.4,603.8,144.7,615.8,145.5,627.8,144.7,639.9,142.1,651.6,138.8,663.3,135.9,675,133.9,686.9,132.6,698.9,131.5,710.9,130.5,722.9,129.7,734.9,129.5,747,130.6,759,132.9,770.8,135.9,782.5,138.3,794.4,139.1,806.4,138.6,818.4,137.7,830.5,137,842.5,136.7,854.6,136.9,866.7,137.6,878.7,138.6,890.7,140.2,902.7,142.8,914.4,146.9,925.8,151.8,936.8,156.6,947.9,160.4,959.4,163.3,971.1,166.3,982.7,168.6,994.6,170.5,1006.5,176.1,1017.1,185.2,1024.9,196.1,1030,207.9,1032.5,219.9,1031.7,230.7,1026.6,238.8,1017.7,244.1,1006.9,249.4,996.1,256.8,986.5,266.3,979.2,277.3,974.2,289,971.1,300.9,969.6,313,969.7,324.9,971.3,336.5,974.5,347.6,979.4,357.7,985.9,366.7,993.9,374.7,1003,381.9,1012.7,388.4,1022.8,393.2,1033.8]];
+ [327.6,301.6,324.9,313,320.6,323.9,314.8,334.1,307.8,343.5,299.8,352.1,291.2,360,282.1,367.5,273,374.8,263.8,382.2,255,389.9,246.7,398.2,239.7,407.6,236,418.6,237.3,430.2,243.3,440.2,252.8,447,263.9,450.5,275.5,452.5],
+ [315.4,302,312.2,313.7,307.3,324.8,301,335.1,293.5,344.6,285.3,353.5,276.6,362,267.7,370.2,258.8,378.4,250,386.7,241.6,395.5,233.9,404.8,227,414.8,220.7,425.2,214.6,435.7,209.2,446.5,205,457.9,202.2,469.6,199.2,481.4,194.9,492.7,189.8,503.7,185.4,515,183.2,526.9,182.2,539,182.4,551.1,185.7,562.7,192.6,572.6,201.9,580.3,212.9,585.4,224.8,587.6,236.9,587.9,249,588],
+ [303.2,301.7,299.9,313.1,294.8,323.9,288.5,333.9,281.2,343.3,273.3,352.3,265.1,360.9,256.8,369.3,248.4,377.8,240.2,386.4,232.4,395.4,225.1,404.8,218.5,414.6,212.2,424.8,206.2,435,200.9,445.6,197,456.9,194.3,468.4,191.3,480,187.1,491.1,182.1,501.8,177.6,512.9,174.4,524.3,171.6,535.9,168.3,547.3,164.5,558.6,161,569.9,158.7,581.6,157.9,593.4,158.6,605.3,159.9,617.1,160.6,629,159.8,640.9,157.4,652.5,154.3,664,152.1,675.7,151.7,687.6,150.4,699.4,151.3,711.1,157,721.5,165.9,729.3,176.5,734.7,187.9,738.1,199.7,739.4,211.5,738.5,223.2,736.4,235,735],
+ [291,301.9,287.2,313.3,281.8,324.1,275.3,334.2,267.9,343.8,260.2,353.1,252.2,362.1,244.1,371,236,380,228.2,389.2,220.7,398.7,213.8,408.6,207.3,418.8,200.9,429,195,439.5,190.4,450.7,187.4,462.4,184.7,474.2,181,485.6,176,496.6,171.2,507.7,167.7,519.2,165.1,531,162,542.7,158.1,554.1,154.3,565.6,151.7,577.3,150.4,589.3,150.7,601.4,152,613.4,153,625.4,152.6,637.5,150.4,649.3,147.3,661,144.2,672.7,141.9,684.5,140.4,696.5,139.3,708.5,138.2,720.5,137.3,732.6,137,744.6,137.7,756.7,139.9,768.5,142.9,780.2,145.4,792,146.6,804,146.4,816.1,145.8,828.2,145.7,840.2,145.5,852.3,147.6,864.1,154.3,874.1,164.1,881,175.4,885.3,187.1,887.9,199.2,888.7,211,886.8,222.5,883.1,234,879.5],
+ [278.8,301.8,274.8,313.2,269.3,323.9,262.8,334.1,255.7,343.8,248.3,353.3,240.6,362.6,232.9,371.8,225.3,381.2,217.8,390.6,210.7,400.4,204,410.4,197.5,420.6,191.1,430.8,185.4,441.4,181.4,452.7,178.8,464.5,176,476.2,171.7,487.5,166.5,498.4,162.2,509.6,159.3,521.3,156.8,533.1,153.5,544.7,149.5,556,145.9,567.5,143.7,579.4,142.8,591.4,143.4,603.4,144.7,615.4,145.5,627.4,144.7,639.4,142.2,651.2,138.9,662.8,136,674.5,134,686.4,132.7,698.4,131.6,710.4,130.5,722.4,129.7,734.4,129.5,746.5,130.5,758.5,132.8,770.3,135.8,782,138.2,793.8,139.1,805.8,138.7,817.8,137.7,829.9,137,841.9,136.7,853.9,136.9,866,137.5,878,138.5,890,140,902,142.6,913.8,146.6,925.1,151.5,936.1,156.3,947.2,160.2,958.6,163.1,970.3,166.1,982,168.7,993.7,170.9,1005.6,176.1,1016.4,185,1024.4,195.9,1029.5,207.7,1031.9,219.7,1032.3,231.6,1030.2,242.8,1025.9,254,1021.5]];
 const PATHS=GX.map((g,j)=>{const s=SL[j];
   // the style part keeps its shape exactly: same points, and the same next point as before closes its last segment
   const nxt=j?[s-10,345]:[336,360],head=spline([[g,GY+6],[g,14],[s,70],[s,160],[s,290]],10,undefined,nxt);
@@ -330,7 +337,7 @@ function draw(c,s,t){
     const r=(tau-t0)/.8;if(r>0&&r<1)circle(c,tip.x,tip.y,8+r*30,null,rgba(TUBE,.95*(1-r)),lw(2.5));});
   c.restore();
   // screen-space flashes
-  if(k===2)GX.forEach((_,j)=>flash(c,X(NUB[j][0]+4),Y(NUB[j][1]),6,(tau-ARRIVE[j])/.9,C.yellow));
+  if(k===2)GX.forEach((_,j)=>flash(c,X(NUB[j][0]),Y(NUB[j][1]),6,(tau-ARRIVE[j])/.9,C.yellow));
   if(k===3)GX.forEach((_,j)=>{flash(c,X(EGGP[j][0]),Y(EGGP[j][1]),8,(tau-TO(j)-T_EGG)/.9,C.yellow);flash(c,X(CENP[j][0]),Y(CENP[j][1]),12,(tau-TO(j)-T_CEN)/.9,C.yellow);});
 
   // ── markers on the ovules ──
@@ -347,7 +354,7 @@ function draw(c,s,t){
     tagBox(c,T.stigma,712,10,230,S(352,22),STRUCT,a*fade(tau,.5,.5));
     tagBox(c,T.style,712,90,230,S(343,190),STRUCT,a*fade(tau,1.1,.5));
     tagBox(c,T.ovary,712,190,230,S(588,700),FRUIT,a*fade(tau,1.7,.5));
-    tagBox(c,T.ovules,712,300,230,OVC.map((o,j)=>S(NUB[j][0]-12,o[1]-ORY[j]*.55)),OVL,a*fade(tau,2.9,.5));
+    tagBox(c,T.ovules,712,300,230,OVC.map((o,j)=>S(ORE[j]-12,o[1]-ORY[j]*.55)),OVL,a*fade(tau,2.9,.5));
     tagBox(c,T.placenta,300,440,112,S(138,840),PLAC,a*fade(tau,2.3,.5));
   }
   if(k===1){
@@ -369,7 +376,7 @@ function draw(c,s,t){
     c.globalAlpha=keep*fade(tau,1.6,.5);const r=fitText(c,D.tr(T.arrived(n)),LX,y,LW,C.yellow,{active:n===5});y=r.y+r.h+30;
     c.globalAlpha=keep*fade(tau,Math.max(...ARRIVE)+.3,.5);textBlock(c,T.s2b,LX,y,LW,C.white);c.restore();
     tagBox(c,T.tubes,712,40,230,S(SL[2]+14,200),TUBE,a*fade(tau,1.4,.5));
-    tagBox(c,T.micro,712,250,230,S(NUB[0][0]+6,NUB[0][1]),C.yellow,a*fade(tau,ARRIVE[0],.5));
+    tagBox(c,T.micro,712,250,230,S(NUB[3][0]+1,NUB[3][1]-4),C.yellow,a*fade(tau,ARRIVE[3],.5));   // mouth of ovule 4, over its top
     {const j=4,ps=spermInTube(j,tubeD[j]),pp=ps[0];tagBox(c,T.sperm2,712,330,230,S(pp.x,pp.y),C.cyan,a*fade(tau,2.2,.5));}
     tagBox(c,T.placenta,300,300,112,S(118,840),PLAC,a*fade(tau,1.8,.5));   // beside the tubes on the band
     c.save();c.globalAlpha*=a*fade(tau,2.6,.5);fitText(c,T.route,712,500,230,C.muted);c.restore();
@@ -384,10 +391,10 @@ function draw(c,s,t){
     textBlock(c,T.unionsSum(ne,nc),LX,y-2,LW,C.white);
     c.restore();
     banner(c,T.rule,C.yellow,stepA(held,tau,TO(4)+1.1));
-    tagBox(c,T.tubeS,735,20,209,S(335,430.5),TUBE,a);   // on tube 1, over the top of ovule 1
-    tagBox(c,T.s1egg,735,140,209,S(EGGP[1][0]+8,EGGP[1][1]),EGG.lab,a*fade(tau,TO(0),.5));
-    tagBox(c,T.s2cen,735,228,209,S(CENP[2][0],CENP[2][1]-16),CEN.lab,a*fade(tau,TO(0)+.2,.5));
-    tagBox(c,T.micro,735,340,209,S(NUB[2][0]+3,NUB[2][1]+2),C.yellow,a);
+    tagBox(c,T.tubeS,735,20,209,S(238.5,411),TUBE,a);   // on tube 1, where it comes down to the placenta
+    tagBox(c,T.s1egg,735,104,209,S(EGGP[2][0]+3,EGGP[2][1]-10),EGG.lab,a*fade(tau,TO(0),.5));   // leaders clear the other cells
+    tagBox(c,T.s2cen,735,430,209,S(CENP[3][0],CENP[3][1]-16),CEN.lab,a*fade(tau,TO(0)+.2,.5));
+    tagBox(c,T.micro,735,236,209,S(NUB[3][0]+1,NUB[3][1]-4),C.yellow,a);
     // +2 per ovule when its sperm cells are released
     OVC.forEach((o,j)=>{const u=(tau-TO(j))/1.2;if(u<=0||u>=1)return;c.save();c.globalAlpha*=1-u;fitText(c,'+2',X(448),Y(o[1])-u*16-18,80,C.cyan);c.restore();});
   }
