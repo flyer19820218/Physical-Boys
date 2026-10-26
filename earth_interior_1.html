@@ -3141,24 +3141,34 @@
      ================================================================== */
   const LY = { W: 960, H: 540, x0: 214, x1: 756, y0: 70, k: 1.0, OC: 7, CC: 40, LITH: 100, ASTH: 250, MAX: 400, SEA: 4 };
   LY.y = d => LY.y0 + d * LY.k;
-  const LYS = { mode: 'comp', t: 0 };
+  const LYS = { mode: 'comp', t: 0, since: 0 };
   /* 地殼厚度：左半海洋 7 km，中間（大陸邊緣）慢慢變厚，右半大陸 40 km */
   function lyCrust(x) { const a = 448, b = 528; return x <= a ? LY.OC : x >= b ? LY.CC : kLerp(LY.OC, LY.CC, kEase((x - a) / (b - a))); }
   function lySurf(x) { return x < 470 ? LY.y0 + LY.SEA : LY.y0 - 2 - 4 * Math.max(0, Math.sin((x - 470) / 40)) * (x > 540 ? 1 : (x - 470) / 70); }
-  function lyMode(m) { LYS.mode = m; lyUI(); }
+  function lyMode(m) { if (LYS.mode !== m) LYS.since = 0; LYS.mode = m; lyUI(); }
   function lyUI() {
     ['comp', 'phys', 'both'].forEach(m => { const b = document.getElementById('ly-' + m); if (b) b.classList.toggle('active', LYS.mode === m); });
     const st = document.getElementById('ly-status'); if (!st) return;
     const M = {
       comp: ['<b>依組成物質</b>：地殼和地函都是岩石，但成分不同。海洋地殼約 7 km、大陸地殼約 40 km，下面全部都是地函（一直到約 2900 km）。', '<b>By composition</b>: the crust and mantle are both rock, but of different make-up. Oceanic crust is about 7 km thick and continental crust about 40 km; everything below is mantle (down to about 2900 km).'],
       phys: ['<b>依物理性質</b>：上面約 100 km 堅硬的岩石是<b>岩石圈</b>，整塊一起移動；下面是<b>軟流圈</b>，溫度接近岩石熔點、可塑，會極緩慢地流動。', '<b>By physical properties</b>: the top ~100 km of rigid rock is the <b>lithosphere</b>, which moves as one piece; below it the <b>asthenosphere</b>, near the melting point of rock and plastic, flows extremely slowly.'],
-      both: ['<b>兩種一起看</b>：岩石圈的底（約 100 km）比地殼的底（7～40 km）深很多。<b>岩石圈＝地殼＋地函最上部</b>；軟流圈在<b>地函</b>裡面。', '<b>Both together</b>: the base of the lithosphere (~100 km) is much deeper than the base of the crust (7–40 km). <b>Lithosphere = crust + uppermost mantle</b>; the asthenosphere lies inside the <b>mantle</b>.']
+      both: ['<b>兩種一起看</b>：左邊<b>依組成物質分 3 層</b>（地殼、地函、地核），右邊<b>依物理性質分 2 層</b>（岩石圈、軟流圈）。岩石圈的底（約 100 km）比地殼的底（7～40 km）深很多：<b>岩石圈＝地殼＋地函最上部</b>；軟流圈在<b>地函</b>裡面。', '<b>Both together</b>: on the left, <b>3 layers by composition</b> (crust, mantle, core); on the right, <b>2 layers by physical properties</b> (lithosphere, asthenosphere). The base of the lithosphere (~100 km) is much deeper than the base of the crust (7–40 km). <b>Lithosphere = crust + uppermost mantle</b>; the asthenosphere lies inside the <b>mantle</b>.']
     }[LYS.mode];
     st.innerHTML = tr(M[0], M[1]);
   }
   /* 右邊的括號（物理性質）、左邊的括號（組成） */
-  function lyBracket(c, x, y0, y1, side, col) {
-    const w = 10 * side; c.strokeStyle = col; c.lineWidth = 2.5; c.beginPath(); c.moveTo(x, y0 + 1); c.lineTo(x + w, y0 + 1); c.lineTo(x + w, y1 - 1); c.lineTo(x, y1 - 1); c.stroke();
+  /* 粗框：一層一個框，框線會「畫出來」（p＝0～1），框裡寫名字和補充 */
+  function lyBox(c, x, y0, y1, w, col, p, name, lines) {
+    if (p <= 0) return; const h = y1 - y0, per = 2 * (w + h);
+    c.save(); c.globalAlpha = Math.min(1, p * 1.6);
+    c.fillStyle = 'rgba(13,32,26,0.88)'; e_rr(c, x, y0, w, h, 8); c.fill();
+    c.fillStyle = col; c.globalAlpha *= 0.14; e_rr(c, x, y0, w, h, 8); c.fill(); c.globalAlpha = Math.min(1, p * 1.6);
+    c.setLineDash([per * Math.min(1, p), per]); c.strokeStyle = col; c.lineWidth = 5; c.lineJoin = 'round'; e_rr(c, x, y0, w, h, 8); c.stroke(); c.setLineDash([]);
+    const n = lines.length, mid = (y0 + y1) / 2, big = h < 56 ? 17 : 21, gap = 17;
+    const top = mid - ((n ? n * gap : 0) - (h < 56 && n ? gap : 0)) / 2 + big * 0.35;
+    if (h < 56 && n) { e_txt(c, name, x + 12, mid + big * 0.35, col, big, 'left', w * 0.42); e_txt(c, lines[0], x + w - 10, mid + 5, col, 12, 'right', w * 0.58 - 14); }
+    else { e_txt(c, name, x + w / 2, top - (n ? 6 : 0), col, big, 'center', w - 14); lines.forEach((s, i) => e_txt(c, s, x + w / 2, top + 14 + i * gap, '#e6ece8', 13, 'center', w - 12)); }
+    c.restore();
   }
   function lyDraw(c, t, dt) {
     LYS.t += dt; const m = LYS.mode, X0 = LY.x0, X1 = LY.x1, yMax = LY.y(LY.MAX), phys = m !== 'comp', both = m === 'both';
@@ -3176,34 +3186,44 @@
     if (phys) { c.fillStyle = 'rgba(255,255,255,0.75)'; for (let x = X0 + off - 60; x < X1; x += 60) if (x > X0 + 4 && x < X1 - 8) { const s = Math.min(lySurf(x), LY.y0); c.beginPath(); c.moveTo(x, s - 1); c.lineTo(x + 6, s - 1); c.lineTo(x + 3, s - 8); c.closePath(); c.fill(); }
       for (let i = 0; i < 70; i++) { const d = LY.LITH + 4 + labH(i + 5) * (LY.ASTH - LY.LITH - 8), sp = 14 * (1 - (d - LY.LITH) / (LY.ASTH - LY.LITH)) + 2, x = X0 + ((labH(i + 6) * (X1 - X0) + LYS.t * sp) % (X1 - X0)); c.fillStyle = 'rgba(255,226,190,0.7)'; c.beginPath(); c.arc(x, LY.y(d), 2.2, 0, Math.PI * 2); c.fill(); } }
     else { c.fillStyle = 'rgba(255,255,255,0.5)'; for (let i = 0; i < 12; i++) { const x = X0 + 6 + ((i * 22 + LYS.t * 10) % (470 - X0 - 12)); c.fillRect(x, LY.y0 - 1, 8, 1.2); } }
+    /* 地核：在 400 km 下面用「斷開」符號接一小段（沒有照比例） */
+    const CORE = { y0: 492, y1: 528 };
+    if (!phys || both) {
+      const g = c.createLinearGradient(0, CORE.y0, 0, CORE.y1); g.addColorStop(0, '#ffcf4a'); g.addColorStop(1, '#ff9f2e'); c.fillStyle = g; c.fillRect(X0, CORE.y0, X1 - X0, CORE.y1 - CORE.y0);
+      c.fillStyle = '#9c4a30'; c.fillRect(X0, yMax, X1 - X0, CORE.y0 - yMax);
+      c.save(); c.strokeStyle = '#f6f3ea'; c.lineWidth = 2; c.fillStyle = '#1b2d26';
+      [479, 487].forEach(yy => { c.beginPath(); for (let i = 0, x = X0 - 6; x <= X1 + 6; i++, x += 12) { const y = yy + (i % 2 ? -4 : 4); i ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke(); });
+      c.restore();
+      e_label(c, tr('地核：約 2900 km 到地心（約 6370 km）——中間省略，沒有照比例', 'Core: ~2900 km to the centre (~6370 km) — gap skipped, not to scale'), (X0 + X1) / 2, CORE.y1 - 10, '#4a2a08', 13, 'center', false, 520);
+    }
     /* 交界線 */
     const dash = (y, col, w) => { c.save(); c.setLineDash([8, 6]); c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(X0, y); c.lineTo(X1, y); c.stroke(); c.restore(); };
     if (phys) { dash(LY.y(LY.LITH), '#f6f3ea', both ? 3 : 2.5); dash(LY.y(LY.ASTH), 'rgba(255,190,150,0.9)', 2); }
-    c.strokeStyle = 'rgba(246,243,234,0.6)'; c.lineWidth = 2; c.strokeRect(X0, LY.y0 - 8, X1 - X0, yMax - LY.y0 + 8);
+    c.strokeStyle = 'rgba(246,243,234,0.6)'; c.lineWidth = 2; c.strokeRect(X0, LY.y0 - 8, X1 - X0, yMax - LY.y0 + 8); if (!phys || both) c.strokeRect(X0, CORE.y0, X1 - X0, CORE.y1 - CORE.y0);
     /* 深度刻度（左邊） */
     c.fillStyle = '#f6f3ea'; c.font = 'bold 13px "JetBrains Mono"'; c.textAlign = 'right'; c.strokeStyle = 'rgba(246,243,234,0.8)'; c.lineWidth = 1.5;
     [0, 100, 200, 300, 400].forEach(d => { const y = LY.y(d); c.beginPath(); c.moveTo(X0 - 6, y); c.lineTo(X0, y); c.stroke(); c.fillText(d + ' km', X0 - 9, y + 5); }); c.textAlign = 'left';
     e_txt(c, tr('海洋', 'Ocean'), 300, LY.y0 - 14, '#8cc0ff', 15, 'center', 80); e_txt(c, tr('大陸', 'Continent'), 640, LY.y0 - 14, '#9fd9a7', 15, 'center', 100);
-    /* 左邊：依組成（括號＋名字；地殼的厚度直接寫在地殼旁邊） */
+    /* 粗框出現的順序：「兩種一起看」先左邊三層、再右邊兩層，一個一個畫出來 */
+    LYS.since += dt; const S = LYS.since, rv = k => kClamp((S - k * 0.45) / 0.5, 0, 1);
+    const LC = { crust: '#e3cfa6', mantle: '#ffb38a', core: '#ffcf4a', lith: '#9fd8ff', asth: '#ff7f61' };
+    /* 左邊：依組成物質分 3 層 */
     if (!phys || both) {
-      const lx = 18, bx = 126, yc = LY.y(LY.CC);
-      lyBracket(c, bx, LY.y0 - 8, yc, -1, '#e3cfa6'); lyBracket(c, bx, yc, yMax, -1, '#ffb38a');
-      e_label(c, tr('地殼', 'Crust'), lx, LY.y0 + 18, '#e3cfa6', 18, 'left', true, 90);
-      e_label(c, tr('地函', 'Mantle'), lx, 250, '#ffb38a', 18, 'left', true, 90);
-      e_txt(c, tr('一直到', 'down to'), lx, 276, '#ffb38a', 13, 'left', 100); e_txt(c, tr('約 2900 km', '~2900 km'), lx, 294, '#ffb38a', 13, 'left', 100);
+      const lx = 14, lw = 134, yc = LY.y(LY.CC);
+      e_label(c, tr('依組成物質：3 層', 'By composition: 3'), lx + lw / 2, 34, '#ffe066', 15, 'center', true, lw + 30);
+      lyBox(c, lx, LY.y0 - 8, yc - 2, lw, LC.crust, rv(0), tr('地殼', 'Crust'), [tr('7～40 km', '7–40 km')]);
+      lyBox(c, lx, yc + 2, 486, lw, LC.mantle, rv(1), tr('地函', 'Mantle'), [tr('地殼底部', 'crust base'), tr('到約 2900 km', 'to ~2900 km')]);
+      lyBox(c, lx, CORE.y0, CORE.y1, lw, LC.core, rv(2), tr('地核', 'Core'), [tr('到地心', 'to centre')]);
       if (!both) { e_label(c, tr('海洋地殼 約 7 km', 'Oceanic crust ~7 km'), 330, LY.y(32), '#d7dade', 14, 'center', true, 170); e_ln(c, 330, LY.y(18), 330, LY.y(9), '#d7dade', 1.5);
         e_label(c, tr('大陸地殼 約 40 km', 'Continental crust ~40 km'), 650, LY.y(26), '#4a3a22', 14, 'center', false, 190); }
     }
-    /* 右邊：依物理性質 */
+    /* 右邊：依物理性質分 2 層 */
     if (phys) {
-      const rx = X1 + 6, y1 = LY.y(LY.LITH), y2 = LY.y(LY.ASTH);
-      lyBracket(c, rx, LY.y0 - 8, y1, 1, '#f6f3ea'); lyBracket(c, rx, y1, y2, 1, '#ffb38a');
-      e_label(c, tr('岩石圈', 'Lithosphere'), rx + 20, (LY.y0 + y1) / 2 - 2, '#f6f3ea', 18, 'left', true, 170);
-      e_txt(c, tr('約 100 km，堅硬', '~100 km, rigid'), rx + 20, (LY.y0 + y1) / 2 + 22, '#cfdad5', 13, 'left', 170);
-      e_label(c, tr('軟流圈', 'Asthenosphere'), rx + 20, (y1 + y2) / 2 - 2, '#ffb38a', 18, 'left', true, 170);
-      e_txt(c, tr('可塑、極緩慢流動', 'plastic, flows slowly'), rx + 20, (y1 + y2) / 2 + 22, '#ffb38a', 13, 'left', 170);
-      e_txt(c, tr('約 100～250 km', '~100–250 km'), rx + 20, (y1 + y2) / 2 + 40, '#ffb38a', 13, 'left', 170);
-      if (!both) e_txt(c, tr('地函的其他部分', 'Rest of the mantle'), rx + 20, (y2 + yMax) / 2 + 5, '#d9a58c', 14, 'left', 170);
+      const rx = X1 + 14, rw = LY.W - rx - 12, y1 = LY.y(LY.LITH), y2 = LY.y(LY.ASTH), k0 = both ? 3 : 0;
+      e_label(c, tr('依物理性質：2 層', 'By properties: 2'), rx + rw / 2, 34, '#ffe066', 15, 'center', true, rw + 10);
+      lyBox(c, rx, LY.y0 - 8, y1 - 2, rw, LC.lith, rv(k0), tr('岩石圈', 'Lithosphere'), both ? [tr('約 100 km，堅硬', '~100 km, rigid'), tr('＝地殼＋地函最上部', '= crust + top mantle')] : [tr('約 100 km，堅硬', '~100 km, rigid'), tr('整塊一起移動', 'moves as one piece')]);
+      lyBox(c, rx, y1 + 2, y2, rw, LC.asth, rv(k0 + 1), tr('軟流圈', 'Asthenosphere'), [tr('約 100～250 km', '~100–250 km'), tr('可塑、極緩慢流動', 'plastic, slow flow'), tr('在地函裡面', 'inside the mantle')]);
+      if (!both) e_txt(c, tr('地函的其他部分', 'Rest of the mantle'), rx + rw / 2, (y2 + yMax) / 2 + 5, '#d9a58c', 14, 'center', rw);
       if (both) { e_label(c, tr('岩石圈 ＝ 地殼 ＋ 地函最上部', 'Lithosphere = crust + uppermost mantle'), (X0 + X1) / 2, LY.y(70), '#ffe066', 16, 'center', true, 360); e_label(c, tr('軟流圈在地函裡面', 'The asthenosphere is inside the mantle'), (X0 + X1) / 2, LY.y(180), '#ffe066', 16, 'center', true, 360); }
       else e_label(c, tr('岩石圈整塊一起移動 →', 'The lithosphere moves as one piece →'), (X0 + X1) / 2, LY.y(64), '#f6f3ea', 15, 'center', true, 330);
     }
