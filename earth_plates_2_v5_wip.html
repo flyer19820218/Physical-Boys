@@ -3045,10 +3045,337 @@
   /* @@TAB2-END */
 
   /* @@TAB3-BEGIN  sb（隱沒帶與地震深度）—— 動畫代理只改這個區塊與對應的 #sb-stage 內的控制項 */
-  const SB = { W: 960, H: 540 };
-  function sbDraw(c, t, dt) { e_label(c, tr('動畫製作中：隱沒帶與地震深度', 'Animation in progress: sb'), 480, 270, '#f6f3ea', 24, 'center', true, 640); }
-  function sbUI() { const st = document.getElementById('sb-status'); if (st) st.innerHTML = ''; }
-  function sbEnter() {}
+  /* 隱沒帶橫切剖面（示意圖，不依真實比例）：左邊海洋、右邊大陸、下面地函。
+     四個步驟逐步疊加：① 比密度 → ② 板塊靠近（海洋板塊彎折隱沒、出現海溝）→ ③ 看地震（淺→中→深）→ ④ 看火山。
+     板塊上表面 sbTop(x)：海底水平 → 彎折段 → 斜直線；隱沒程度 p（0–1）把彎折量與板塊前端一起放大。
+     深度尺是分段刻度（0／70／300／700 km，淺／中／深三層的界線），上段放大，所以畫面上要註明不依真實比例。 */
+  const SB = { W: 960, H: 540, SL: 100, FL: 172, TH: 26, XB: 320, XK: 440, K: 0.8, XT: 400, XE: 765, VX: 590, VY: 88, MX: 560, MY: 268 };
+  const SB_STEPS = ['dens', 'move', 'quake', 'volc'];
+  const SB_DUR = [3.8, 4.4, 4.6, 6.2];                               /* 自動示範每步停留秒數（最後一步含結尾停頓） */
+  const SB_QC = ['#bae6fd', '#5aa9ff', '#a78bfa'];                   /* 地震＝藍點：淺層淡藍、中層藍、深層藍紫 */
+  const SB_OC = '#7d93a6', SB_CC = '#c9a46a';                        /* 海洋地殼＝藍灰、大陸地殼＝沙黃褐 */
+  const SB_DEP = [[0, 100], [70, 250], [300, 360], [700, 480]];      /* 深度尺：km → 畫布 y（分段） */
+  const SBS = { step: 0, age: 0, auto: false, touched: false, ph: 0 };
+  const SB_LAND = [[400, 193], [430, 150], [470, 100], [520, 90], [600, 86], [760, 84], [960, 88]];
+  const SB_LBOT = [[960, 196], [520, 200], [440, 220], [420, 205.3]];
+
+  function sbTop(x) {
+    const { FL, XB, XK, K } = SB;
+    if (x <= XB) return FL;
+    if (x <= XK) return FL + K * (x - XB) * (x - XB) / (2 * (XK - XB));
+    return FL + K * (XK - XB) / 2 + K * (x - XK);
+  }
+  function sbSlope(x) { const { XB, XK, K } = SB; return x <= XB ? 0 : x <= XK ? K * (x - XB) / (XK - XB) : K; }
+  function sbXofY(y) { let a = SB.XB, b = SB.XE + 40; for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (sbTop(m) < y) a = m; else b = m; } return (a + b) / 2; }
+  function sbNorm(m) { const l = Math.hypot(1, m); return [-m / l, 1 / l]; }
+  function sbAge(k) { return SBS.step > k ? 99 : SBS.step === k ? SBS.age : -1; }
+  const sbIn = (a, t0, d) => a < 0 ? 0 : kClamp((a - t0) / (d || 0.6), 0, 1);
+  function sbP() { const a = sbAge(1); return a < 0 ? 0 : kEase(sbIn(a, 0.3, 2.4)); }
+  const sbXEnd = p => SB.XT + p * (SB.XE - SB.XT);
+  const sbY = (x, p) => SB.FL + p * (sbTop(x) - SB.FL);
+  function sbA(c, a, fn) { if (a <= 0.003) return; c.save(); c.globalAlpha *= Math.min(1, a); fn(); c.restore(); }
+
+  /* 地震震源（隱沒程度 p=1 的位置）：沿下沉板塊、在上表面內側一點；淺層另有兩個在大陸地殼前緣 */
+  const SB_Q = (() => {
+    const Q = [], zones = [[200, 214, 228, 243], [268, 296, 324, 350], [384, 414, 444, 472]];
+    zones.forEach((ys, k) => ys.forEach(y => {
+      const x = sbXofY(y), [nx, ny] = sbNorm(sbSlope(x));
+      Q.push({ x: x + nx * 9, y: y + ny * 9, k, slab: true });
+    }));
+    Q.splice(0, 0, { x: 436, y: 165, k: 0, slab: false }, { x: 458, y: 188, k: 0, slab: false });
+    return Q;
+  })();
+
+  /* ── 操作 ── */
+  function sbTouch() { SBS.touched = true; SBS.auto = false; }
+  function sbMode(m) { sbTouch(); const i = SB_STEPS.indexOf(m); SBS.step = i < 0 ? 0 : i; SBS.age = 0; sbUI(); }
+  function sbAutoStart() { SBS.auto = true; SBS.step = 0; SBS.age = 0; sbUI(); }
+  function sbPlay() { if (SBS.auto) { sbTouch(); sbUI(); } else { SBS.touched = true; sbAutoStart(); } }
+  function sbEnter() { sbPointer(); if (!SBS.touched) sbAutoStart(); else sbUI(); }
+  let sbPtr = false;
+  function sbPointer() {
+    const cv = document.getElementById('sbCanvas'); if (!cv || sbPtr) return; sbPtr = true;
+    cv.style.touchAction = 'pan-y';
+    cv.addEventListener('pointerdown', () => { if (SBS.auto) { sbTouch(); sbUI(); } else SBS.touched = true; });
+  }
+  function sbTick(dt) {
+    SBS.age += dt;
+    if (SBS.auto && SBS.age >= SB_DUR[SBS.step]) { SBS.step = (SBS.step + 1) % 4; SBS.age = 0; sbUI(); }
+    if (SBS.step >= 1) SBS.ph += dt;
+  }
+
+  /* ── 小工具 ── */
+  function sbArrow(c, x1, y1, x2, y2, col, w, head) {
+    e_arrow(c, x1, y1, x2, y2, 'rgba(16,36,29,0.85)', w + 4, head + 5);
+    e_arrow(c, x1, y1, x2, y2, col, w, head);
+  }
+  function sbLeader(c, x1, y1, x2, y2, col) {
+    c.save(); c.lineCap = 'round';
+    c.strokeStyle = 'rgba(16,36,29,0.8)'; c.lineWidth = 5; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+    c.strokeStyle = col; c.lineWidth = 2.2; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+    c.fillStyle = col; c.beginPath(); c.arc(x2, y2, 4, 0, Math.PI * 2); c.fill(); c.restore();
+  }
+  /* 數字（密度、深度）用 JetBrains Mono 粗體，底下鋪深色底板 */
+  function sbMono(c, s, x, y, col, size, align) {
+    c.font = `bold ${size}px "JetBrains Mono", "Noto Sans TC", monospace`;
+    const w = c.measureText(s).width, lx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    c.fillStyle = 'rgba(13, 32, 26, 0.86)'; e_rr(c, lx - 6, y - size * 0.86 - 3, w + 12, size * 1.15 + 6, 6); c.fill();
+    c.fillStyle = col; c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.fillText(s, lx, y);
+  }
+  function sbPoly(c, pts) { c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); }
+  function sbBez(u) {   /* 熔融區 → 火山口 的岩漿通道 */
+    const P = [[SB.MX, SB.MY - 28], [566, 170], [584, 110], [SB.VX, 44]], v = 1 - u;
+    return [0, 1].map(j => v * v * v * P[0][j] + 3 * v * v * u * P[1][j] + 3 * v * u * u * P[2][j] + u * u * u * P[3][j]);
+  }
+
+  /* ── 剖面 ── */
+  function sbScene(c, t) {
+    const { W, SL, TH } = SB, p = sbP(), xe = sbXEnd(p);
+    /* 地函（橘紅） */
+    let g = c.createLinearGradient(0, 176, 0, 540);
+    g.addColorStop(0, '#a3432a'); g.addColorStop(1, '#6a2417');
+    c.fillStyle = g; c.fillRect(0, 176, W, 540 - 176);
+    /* 海水 */
+    g = c.createLinearGradient(0, SL, 0, 194);
+    g.addColorStop(0, 'rgba(56,150,190,0.6)'); g.addColorStop(1, 'rgba(24,78,104,0.85)');
+    c.fillStyle = g; c.fillRect(0, SL, 520, 194 - SL);
+    c.strokeStyle = '#55e9ff'; c.lineWidth = 3; c.beginPath();
+    for (let x = 0; x <= 470; x += 6) { const y = SL + 2.5 * Math.sin(x / 34 + t * 1.6); if (x === 0) c.moveTo(x, y); else c.lineTo(x, y); }
+    c.stroke();
+    /* 海洋板塊（海洋地殼）：隱沒程度 p 越大，彎得越多、插得越深 */
+    const top = [], bot = [];
+    for (let x = 0; ; x += 4) {
+      const xx = Math.min(x, xe), y = sbY(xx, p), [nx, ny] = sbNorm(p * sbSlope(xx));
+      top.push([xx, y]); bot.push([xx + nx * TH, y + ny * TH]);
+      if (xx >= xe) break;
+    }
+    c.fillStyle = SB_OC; sbPoly(c, top.concat(bot.slice().reverse())); c.closePath(); c.fill();
+    /* 板塊上的紋路：跟著板塊往隱沒帶移動（步驟②起） */
+    c.save(); c.strokeStyle = 'rgba(28,46,60,0.55)'; c.lineWidth = 3; c.lineCap = 'round';
+    const gap = 34, off = (SBS.ph * 30) % gap;
+    for (let x = off; x < xe - 8; x += gap) {
+      const y = sbY(x, p), [nx, ny] = sbNorm(p * sbSlope(x)), a = 7, b = TH - 7;
+      c.beginPath(); c.moveTo(x + nx * a, y + ny * a); c.lineTo(x + nx * b, y + ny * b); c.stroke();
+    }
+    c.restore();
+    c.strokeStyle = '#c9dae8'; c.lineWidth = 3; c.lineJoin = 'round'; sbPoly(c, top); c.stroke();
+    /* 大陸地殼 */
+    g = c.createLinearGradient(0, 84, 0, 220);
+    g.addColorStop(0, '#d9b77c'); g.addColorStop(1, '#9c7a4a');
+    c.fillStyle = g; sbPoly(c, SB_LAND.concat(SB_LBOT)); c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(246,243,234,0.8)'; c.lineWidth = 2.5; sbPoly(c, SB_LAND); c.stroke();
+    /* 板塊交界（隱沒帶上緣）：橘線，隨板塊插入而延伸 */
+    if (p > 0.01) {
+      const pts = top.filter(([x]) => x >= SB.XT);
+      c.strokeStyle = '#fb923c'; c.lineWidth = 3.5; sbPoly(c, pts); c.stroke();
+    }
+  }
+
+  /* ① 比密度：天平上兩個同樣大小的方塊 */
+  function sbBalance(c, t, a) {
+    const BX = 236, BY = 316, L = 90, S = 44;
+    const tilt = 0.15 * kEase(sbIn(a, 0.5, 1.1)) + 0.012 * Math.sin(t * 2.4) * sbIn(a, 1.6, 0.4);
+    const cs = Math.cos(tilt), sn = Math.sin(tilt);
+    const lx = BX - L * cs, ly = BY + L * sn, rx = BX + L * cs, ry = BY - L * sn;
+    /* 支架 */
+    c.strokeStyle = '#f6f3ea'; c.lineWidth = 4; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(BX, BY); c.lineTo(BX, 394); c.stroke();
+    c.beginPath(); c.moveTo(BX - 34, 394); c.lineTo(BX + 34, 394); c.stroke();
+    c.fillStyle = '#f6f3ea'; c.beginPath(); c.moveTo(BX, BY - 6); c.lineTo(BX - 9, BY + 10); c.lineTo(BX + 9, BY + 10); c.closePath(); c.fill();
+    c.lineWidth = 5; c.beginPath(); c.moveTo(lx, ly); c.lineTo(rx, ry); c.stroke();
+    /* 吊繩＋方塊 */
+    [[lx, ly, SB_OC, '3.0'], [rx, ry, SB_CC, '2.7']].forEach(([x, y, col, s]) => {
+      c.strokeStyle = 'rgba(246,243,234,0.8)'; c.lineWidth = 2; c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + 18); c.stroke();
+      c.fillStyle = col; c.fillRect(x - S / 2, y + 18, S, S);
+      c.strokeStyle = '#f6f3ea'; c.lineWidth = 2; c.strokeRect(x - S / 2, y + 18, S, S);
+      c.font = 'bold 17px "JetBrains Mono", "Noto Sans TC", monospace';
+      c.fillStyle = '#10241d'; c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.fillText(s, x, y + 18 + S / 2 + 6); c.textAlign = 'left';
+    });
+    e_label(c, tr('同樣大小：海洋地殼比較重', 'Same size: oceanic crust is heavier'), BX, 432, '#f6f3ea', 15, 'center', true, 320);
+    e_label(c, tr('→ 密度大的會沉', '→ The denser one sinks'), BX, 458, '#ffe066', 18, 'center', true, 320);
+  }
+
+  /* ③ 地震 */
+  function sbQuakes(c, t, a) {
+    /* 深度尺 */
+    sbA(c, sbIn(a, 0, 0.5), () => {
+      const RX = 24;
+      e_label(c, tr('深度', 'Depth'), RX - 4, 86, '#f6f3ea', 15, 'left');
+      for (let k = 0; k < 3; k++) {
+        c.strokeStyle = 'rgba(16,36,29,0.85)'; c.lineWidth = 10; c.beginPath(); c.moveTo(RX, SB_DEP[k][1]); c.lineTo(RX, SB_DEP[k + 1][1]); c.stroke();
+        c.strokeStyle = SB_QC[k]; c.lineWidth = 6; c.beginPath(); c.moveTo(RX, SB_DEP[k][1] + 1.5); c.lineTo(RX, SB_DEP[k + 1][1] - 1.5); c.stroke();
+      }
+      SB_DEP.forEach(([km, y], i) => {
+        c.strokeStyle = '#f6f3ea'; c.lineWidth = 3; c.beginPath(); c.moveTo(RX - 8, y); c.lineTo(RX + 8, y); c.stroke();
+        const s = i === 3 ? tr('最深約 700 km', 'max ≈ 700 km') : `${km} km`;
+        sbMono(c, s, RX + 14, y + 6, '#f6f3ea', 15, 'left');
+      });
+    });
+    /* 震源連線（描線） */
+    const L = SB_Q.filter(q => q.slab), f = sbIn(a, 0.5 + SB_Q.length * 0.14, 1.0);
+    if (f > 0) {
+      let tot = 0; const seg = [];
+      for (let i = 1; i < L.length; i++) { const d = Math.hypot(L[i].x - L[i - 1].x, L[i].y - L[i - 1].y); seg.push(d); tot += d; }
+      let left = tot * f;
+      c.save(); c.setLineDash([9, 7]); c.lineCap = 'round';
+      [['rgba(16,36,29,0.85)', 6], ['#f6f3ea', 2.6]].forEach(([col, w]) => {
+        let rem = left; c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(L[0].x, L[0].y);
+        for (let i = 1; i < L.length && rem > 0; i++) {
+          const u = Math.min(1, rem / seg[i - 1]);
+          c.lineTo(kLerp(L[i - 1].x, L[i].x, u), kLerp(L[i - 1].y, L[i].y, u)); rem -= seg[i - 1];
+        }
+        c.stroke();
+      });
+      c.restore();
+    }
+    /* 震源：由淺到深依序出現，之後一直閃 */
+    SB_Q.forEach((q, i) => {
+      const pop = sbIn(a, 0.4 + i * 0.14, 0.35); if (pop <= 0) return;
+      const col = SB_QC[q.k], u = (t * 0.55 + labH(i + 5)) % 1;
+      if (u < 0.45) {
+        c.strokeStyle = col; c.globalAlpha = (1 - u / 0.45) * pop; c.lineWidth = 2.5;
+        c.beginPath(); c.arc(q.x, q.y, 6 + 18 * u / 0.45, 0, Math.PI * 2); c.stroke(); c.globalAlpha = 1;
+      }
+      const r = 6.5 * (pop < 1 ? 0.4 + 0.9 * Math.sin(pop * Math.PI * 0.75) : 1) * (1 + 0.15 * Math.max(0, 1 - u * 6));
+      c.fillStyle = '#10241d'; c.beginPath(); c.arc(q.x, q.y, r + 2, 0, Math.PI * 2); c.fill();
+      c.fillStyle = col; c.beginPath(); c.arc(q.x, q.y, r, 0, Math.PI * 2); c.fill();
+    });
+    /* 標籤 */
+    sbA(c, sbIn(a, 0.6, 0.5), () => e_label(c, tr('淺層地震', 'Shallow quakes'), 345, 282, SB_QC[0], 16, 'center', true, 150));
+    sbA(c, sbIn(a, 1.2, 0.5), () => e_label(c, tr('中層地震', 'Mid-depth quakes'), 512, 386, SB_QC[1], 16, 'center', true, 150));
+    sbA(c, sbIn(a, 1.8, 0.5), () => e_label(c, tr('深層地震', 'Deep quakes'), 652, 496, SB_QC[2], 16, 'center', true, 150));
+    sbA(c, sbIn(a, 0.6 + SB_Q.length * 0.14, 0.6), () => {
+      const ls = currentLang === 'en' ? ['Joined up, the foci trace', 'the slope of the sinking plate'] : ['震源連起來', '＝下沉板塊的斜面'];
+      ls.forEach((s, i) => e_label(c, s, 812, 296 + i * 25, i ? '#ffe066' : '#f6f3ea', 16, 'center', true, 250));
+    });
+  }
+
+  /* ④ 火山 */
+  function sbVolcano(c, t, a) {
+    const { VX, VY, MX, MY } = SB;
+    const gm = kEase(sbIn(a, 0, 1.0)), gc = sbIn(a, 0.6, 0.9), gv = kEase(sbIn(a, 1.2, 0.9)), gs = sbIn(a, 2.0, 0.8);
+    /* 下沉板塊上方地函局部熔融 */
+    const pulse = 0.5 + 0.5 * Math.sin(t * 2.4);
+    kBlob(c, '#fb923c', MX, MY, 58 * gm, 0.5 + 0.15 * pulse);
+    if (gm > 0.02) {
+      const g = c.createRadialGradient(MX - 4, MY - 8, 2, MX, MY, 32 * gm);
+      g.addColorStop(0, '#ffe08a'); g.addColorStop(0.55, '#fb923c'); g.addColorStop(1, '#c2410c');
+      c.fillStyle = g; c.beginPath(); c.ellipse(MX, MY, 24 * gm, 32 * gm, -0.15, 0, Math.PI * 2); c.fill();
+    }
+    /* 岩漿通道（描線） */
+    if (gc > 0) {
+      c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+      [['rgba(16,36,29,0.75)', 10], ['#fb923c', 6]].forEach(([col, w]) => {
+        c.strokeStyle = col; c.lineWidth = w; c.beginPath();
+        for (let i = 0; i <= 40; i++) { const u = i / 40 * gc, [x, y] = sbBez(u); if (i) c.lineTo(x, y); else c.moveTo(x, y); }
+        c.stroke();
+      });
+      c.restore();
+      /* 往上冒的岩漿 */
+      for (let i = 0; i < 5; i++) {
+        const u = ((t * 0.32 + i / 5) % 1); if (u > gc) continue;
+        const [x, y] = sbBez(u);
+        c.fillStyle = '#fff3c4'; c.globalAlpha = Math.sin(Math.PI * u) * 0.95; c.beginPath(); c.arc(x, y, 3.6, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+      }
+    }
+    /* 火山（從地表長出來） */
+    if (gv > 0) {
+      const h = 52 * gv, B = 48 * (0.5 + 0.5 * gv), pk = VY - h, cr = 7 * gv;
+      const g = c.createLinearGradient(0, pk, 0, VY);
+      g.addColorStop(0, '#b4563a'); g.addColorStop(1, '#7a3b28');
+      c.fillStyle = g; c.beginPath(); c.moveTo(VX - B, VY); c.lineTo(VX - cr, pk); c.lineTo(VX + cr, pk); c.lineTo(VX + B, VY); c.closePath(); c.fill();
+      c.strokeStyle = 'rgba(246,243,234,0.7)'; c.lineWidth = 2; c.beginPath(); c.moveTo(VX - B, VY); c.lineTo(VX - cr, pk); c.lineTo(VX + cr, pk); c.lineTo(VX + B, VY); c.stroke();
+      /* 火山口的岩漿 */
+      kBlob(c, '#fb923c', VX, pk + 2, 16 + 4 * pulse, 0.8 * gv);
+      c.fillStyle = '#ffd08a'; c.beginPath(); c.ellipse(VX, pk + 1, cr + 1, 3.5, 0, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = '#fb923c'; c.lineWidth = 3.5; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(VX - 3, pk + 2); c.quadraticCurveTo(VX - 10, pk + 16, VX - 14, pk + 26 * gv); c.stroke();
+    }
+    /* 煙 */
+    if (gs > 0) for (let i = 0; i < 6; i++) {
+      const u = (t * 0.28 + i / 6) % 1, x = VX + 4 + u * 46 + 6 * Math.sin(t + i), y = VY - 52 - u * 52;
+      kBlob(c, '#cbd5e1', x, y, 9 + 16 * u, 0.42 * (1 - u) * gs);
+    }
+    /* 標籤 */
+    sbA(c, sbIn(a, 0.5, 0.5), () => e_label(c, tr('部分熔融', 'Partial melting'), 604, 246, '#ffe066', 16, 'left', true, 160));
+    sbA(c, sbIn(a, 1.0, 0.5), () => e_label(c, tr('岩漿上升', 'Magma rises'), 556, 152, '#fdba74', 16, 'right', true, 120));
+    sbA(c, sbIn(a, 1.6, 0.5), () => e_label(c, tr('火山', 'Volcano'), 652, 54, '#f87171', 18, 'left', true, 120));
+    /* 海溝 ↔ 火山 的距離 */
+    const gd = sbIn(a, 2.0, 0.8);
+    if (gd > 0) {
+      const y = 22, x2 = kLerp(SB.XT, VX, kEase(gd));
+      c.save(); c.setLineDash([6, 6]);
+      [['rgba(16,36,29,0.85)', 5], ['#ffe066', 2]].forEach(([col, w]) => { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(SB.XT, y); c.lineTo(SB.XT, 96); c.stroke(); });
+      c.restore();
+      c.save(); c.lineCap = 'round';
+      [['rgba(16,36,29,0.85)', 6], ['#ffe066', 3]].forEach(([col, w]) => { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(SB.XT, y); c.lineTo(x2, y); c.stroke(); });
+      c.restore();
+      if (gd >= 1) {
+        c.strokeStyle = '#ffe066'; c.lineWidth = 3; c.beginPath(); c.moveTo(VX, y - 7); c.lineTo(VX, y + 7); c.stroke();
+        e_label(c, tr('離海溝一段距離', 'Far from the trench'), 490, 46, '#ffe066', 15, 'center', true, 160);
+      }
+    }
+  }
+
+  function sbDraw(c, t, dt) {
+    sbPointer(); sbTick(dt);
+    const a0 = sbAge(0), a1 = sbAge(1), a2 = sbAge(2), a3 = sbAge(3);
+    sbScene(c, t);
+    if (a3 >= 0) sbVolcano(c, t, a3);
+    if (a2 >= 0) sbQuakes(c, t, a2);
+    /* ② 板塊靠近：兩個方向箭頭＋海溝＋隱沒 */
+    sbA(c, sbIn(a1, 0, 0.6), () => {
+      const w = 6 * Math.sin(t * 2.2);
+      sbArrow(c, 140 + w, 134, 300 + w, 134, '#f6f3ea', 6, 20);
+      sbArrow(c, 930 - w, 62, 800 - w, 62, '#f6f3ea', 6, 20);
+      e_label(c, tr('箭頭＝方向；實際每年只移動數公分，動畫已加速', 'Arrows = direction. Real plates move only a few cm a year; the animation is sped up.'), 20, 528, '#f6f3ea', 15, 'left', true, 700);
+    });
+    sbA(c, sbIn(a1, 1.6, 0.6), () => {
+      e_label(c, tr('海溝', 'Trench'), 356, 162, '#55e9ff', 17, 'center', true, 90);
+      sbLeader(c, 372, 168, 399, 189, '#55e9ff');
+    });
+    sbA(c, sbIn(a1, 2.2, 0.6), () => {
+      const s = tr('海洋板塊向下隱沒', 'Oceanic plate sinks'), x = 830, y = 394;
+      e_label(c, s, x, y, '#f6f3ea', 16, 'center', true, 200);
+      sbLeader(c, x - 50, y + 8, 742, 452, '#f6f3ea');
+    });
+    /* ① 比密度 */
+    if (a0 >= 0) sbBalance(c, t, a0);
+    /* 固定標籤 */
+    e_label(c, tr('隱沒帶剖面', 'Subduction zone: cross-section'), 20, 34, '#ffe066', 20, 'left');
+    e_label(c, tr('示意圖：不依真實比例', 'Diagram: not to scale'), 20, 60, '#f6f3ea', 15, 'left');
+    const tags = [tr('① 比密度', '① Compare density'), tr('② 板塊靠近', '② Plates approach'), tr('③ 看地震', '③ Earthquakes'), tr('④ 看火山', '④ Volcanoes')];
+    e_label(c, tags[SBS.step], 940, 34, '#ffe066', 19, 'right');
+    e_label(c, tr('海水', 'Seawater'), 92, 162, '#f6f3ea', 15, 'center');
+    e_label(c, tr('地函', 'Mantle'), 900, 250, '#fdba74', 18, 'center');
+    e_label(c, tr('海洋地殼', 'Oceanic crust'), 232, 226, '#dbe7f1', 16, 'center');
+    e_label(c, tr('大陸地殼', 'Continental crust'), 820, 126, '#fde68a', 16, 'center');
+    /* ① 的密度數字（之後的步驟保留） */
+    sbA(c, sbIn(a0, 0.1, 0.5), () => {
+      sbMono(c, tr('平均密度 約 3.0 g/cm³', 'Avg. density ≈ 3.0 g/cm³'), 232, 254, '#dbe7f1', 17, 'center');
+      sbMono(c, tr('平均密度 約 2.7 g/cm³', 'Avg. density ≈ 2.7 g/cm³'), 820, 160, '#fde68a', 17, 'center');
+    });
+  }
+
+  function sbUI() {
+    const k = SBS.step;
+    SB_STEPS.forEach((m, i) => { const b = document.getElementById('sb-' + m); if (b) b.classList.toggle('active', i === k); });
+    const pb = document.getElementById('sb-play');
+    if (pb) { pb.innerHTML = SBS.auto ? tr('⏸ 暫停', '⏸ Pause') : tr('▶️ 自動示範', '▶️ Auto demo'); pb.classList.toggle('active', SBS.auto); }
+    const st = document.getElementById('sb-status'); if (!st) return;
+    const auto = SBS.auto ? `<span class="good">▶ ${tr('自動示範中：① → ② → ③ → ④ 依序播放，再從頭循環。按任何步驟按鈕或點畫布，就換你操作。', 'Auto demo: steps ① → ② → ③ → ④ play in turn, then start again. Press any step button or tap the picture to take over.')}</span><br>` : '';
+    const name = [tr('比密度', 'Compare density'), tr('板塊靠近', 'Plates approach'), tr('看地震', 'Earthquakes'), tr('看火山', 'Volcanoes')][k];
+    const msg = [
+      tr('海洋地殼平均密度約 3.0 g/cm³，大陸地殼約 2.7 g/cm³。兩者互相推擠時，<b>密度大的海洋地殼會往下沉</b>。', 'Oceanic crust has an average density of about 3.0 g/cm³; continental crust about 2.7 g/cm³. When they push together, <b>the denser oceanic crust sinks</b>.'),
+      tr('海洋板塊較密，向下隱沒到地函，交界處被往下拉成深凹的<b>海溝</b>。', 'The oceanic plate is denser, so it sinks into the mantle, and the boundary is dragged down into a deep <b>trench</b>.'),
+      tr('海溝附近多為淺層地震，越往大陸內側震源越深，最深約 700 km；<b>震源連起來剛好是下沉板塊的斜面</b>。', 'Quakes near the trench are mostly shallow; farther inland the focus gets deeper, down to about 700 km. <b>Joined up, the foci trace the slope of the sinking plate.</b>'),
+      tr('下沉板塊使上方地函局部熔融，岩漿上升，在<b>大陸側、離海溝有一段距離</b>的地方形成火山。', 'The sinking plate makes the mantle above it partly melt; magma rises and forms volcanoes <b>on the continental side, some distance from the trench</b>.')
+    ][k];
+    const q = tr('？', '?');
+    const line = tr(`步驟 <b>${'①②③④'[k]} ${name}</b>　｜　下沉板塊：<b>海洋</b>　｜　交界地形：<b>${k >= 1 ? '海溝' : q}</b>　｜　大陸側：<b>${k >= 3 ? '火山' : q}</b>`,
+      `Step <b>${'①②③④'[k]} ${name}</b>　|　Sinking plate: <b>oceanic</b>　|　Landform at the boundary: <b>${k >= 1 ? 'trench' : q}</b>　|　Continental side: <b>${k >= 3 ? 'volcanoes' : q}</b>`);
+    st.innerHTML = auto + line + '<br>' + msg;
+  }
   /* @@TAB3-END */
 
   /* @@TAB4-BEGIN  cl（造山壓縮機）—— 動畫代理只改這個區塊與對應的 #cl-stage 內的控制項 */
