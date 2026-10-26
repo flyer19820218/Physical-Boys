@@ -39,7 +39,7 @@ const marks = {};
   // 時鐘預設會跟著真實時間跑，所以載入一開始就先把它停住，之後只由 runFor 推進
   const tI = Date.now();
   await page.goto(BASE + 'index.html?intro=' + (TAIL ? 0 : 1) + '&voice=0&promo=1', { waitUntil: 'commit' });
-  for (let m = 600; ; m += 600) { try { await page.clock.pauseAt(Date.now() - tI + m); break; } catch (e) { if (m > 6000) throw e; } }
+  for (let m = 600; ; m = m * 2) { try { await page.clock.pauseAt(Date.now() - tI + m); break; } catch (e) { if (m > 120000) throw e; } }
   await page.waitForFunction(() => document.readyState !== 'loading' && !!document.getElementById('launch'), null, { polling: 200 });
 
   // 錄影用的疊層：字幕、計數、點擊圈、轉場白閃
