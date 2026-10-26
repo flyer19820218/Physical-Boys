@@ -9,11 +9,11 @@
   const note=(zh,en)=>bi(zh,en,'p','class="ps-note"');
   const p=(zh,en)=>bi(zh,en,'p');
   const state={lang:'zh',tab:0,expanded:null,raf:0,last:0,time:0,loaded:false,images:{},errors:[],labs:{
-    network:{part:'leaf',focus:'xylem',sink:'root',playing:false,zoom:1,dx:0,dy:0},
+    network:{part:'leaf',focus:'xylem',sink:'root',playing:false,auto:true,zoom:1,dx:0,dy:0},
     positions:{part:'leaf',focus:'none',playing:false,zoom:1,dx:0,dy:0},
     microscopy:{kind:'sunflower',detail:'whole',focus:'none',playing:false,zoom:1,dx:0,dy:0,answer:null},
-    growth:{detail:'model',focus:'none',phase:0,targetPhase:0,playing:false,selectedYear:0,zoom:1,dx:0,dy:0},
-    cases:{kind:'normal',stage:0,playing:false,elapsed:0,prediction:null,hollowProgress:1,hollowStarted:false,zoom:1,dx:0,dy:0}
+    growth:{detail:'model',focus:'none',phase:0,targetPhase:0,playing:false,auto:true,hold:0,selectedYear:0,zoom:1,dx:0,dy:0},
+    cases:{kind:'normal',stage:0,playing:false,auto:true,elapsed:0,prediction:null,hollowProgress:1,hollowStarted:false,zoom:1,dx:0,dy:0}
   }};
   const keys=Object.keys(state.labs);
   const pages=[
@@ -39,12 +39,12 @@
   }
   function mount(){
     document.getElementById('lessonTabs').innerHTML=pages.map((page,i)=>`<button type="button" class="tab-btn${i===0?' active':''}" data-tab="${i}" aria-pressed="${i===0}">${bi(...page.main,'span','class="tab-main"')}${bi(...page.sub,'span','class="tab-sub"')}</button>`).join('');
-    document.getElementById('lessons').innerHTML=pages.map((page,i)=>`<section class="lesson" data-page="${i}"${i?' hidden':''}>${bi(...page.heading,'h2')}<div class="hook-box"><div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師" data-alt-zh="曉臻老師" data-alt-en="Teacher Xiaozhen"></div><div class="hook-content">${bi('曉臻老師說：','Teacher Xiaozhen asks:','div','class="hook-title"')}${bi(...page.hook,'div','class="hook-text"')}</div></div>${bi(...page.lead,'p','class="lead"')}<div class="ps-lab" id="lab-${page.key}" data-lab="${page.key}" style="--ar:1.5"><aside class="ps-controls">${btn('⛶ 全螢幕講解／操作','⛶ Full-screen exploration','expand','', 'full-btn')}${controls(page.key)}<div class="button-row">${btn('還原畫面','Reset view','reset-view')}</div>${note('單指拖曳、雙指縮放；點圖上的構造或左側名稱看解說。','Drag with one finger; pinch with two. Tap a structure or its name for an explanation.')}</aside><div class="ps-stage"><div class="ps-canvas-wrap"><canvas width="960" height="640" class="ps-canvas" tabindex="0" aria-label="${escape(page.heading[0])}" data-label-zh="${escape(page.heading[0])}" data-label-en="${escape(page.heading[1])}"></canvas></div><div class="ps-caption" aria-live="polite"><h3 data-caption-title></h3><p data-caption-text></p></div><div class="ps-credit" data-credit></div></div></div>${extra(page.key)}<div class="ps-closure">${bi('記住這一句：','Remember:','b')} ${bi(...page.closure)}</div></section>`).join('');
+    document.getElementById('lessons').innerHTML=pages.map((page,i)=>`<section class="lesson" data-page="${i}"${i?' hidden':''}>${bi(...page.heading,'h2')}<div class="hook-box"><div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師" data-alt-zh="曉臻老師" data-alt-en="Teacher Xiaozhen"></div><div class="hook-content">${bi('曉臻老師說：','Teacher Xiaozhen asks:','div','class="hook-title"')}${bi(...page.hook,'div','class="hook-text"')}</div></div>${bi(...page.lead,'p','class="lead"')}<div class="ps-lab" id="lab-${page.key}" data-lab="${page.key}" style="--ar:1.5"><aside class="ps-controls">${btn('⛶ 全螢幕講解／操作','⛶ Full-screen exploration','expand','', 'full-btn')}${controls(page.key)}<div class="button-row">${btn('還原畫面','Reset view','reset-view')}</div>${note('點圖上的構造或左側名稱看解說；雙指放大後才可拖曳移動。','Tap a structure or its name for an explanation. Pinch to zoom in before dragging the view.')}</aside><div class="ps-stage"><div class="ps-canvas-wrap"><canvas width="960" height="640" class="ps-canvas" tabindex="0" aria-label="${escape(page.heading[0])}" data-label-zh="${escape(page.heading[0])}" data-label-en="${escape(page.heading[1])}"></canvas></div><div class="ps-caption" aria-live="polite"><h3 data-caption-title></h3><p data-caption-text></p></div><div class="ps-credit" data-credit></div></div></div>${extra(page.key)}<div class="ps-closure">${bi('記住這一句：','Remember:','b')} ${bi(...page.closure)}</div></section>`).join('');
     document.getElementById('sourceList').innerHTML=Object.entries(M.sources).map(([key,s])=>`<div class="source-item"><a href="${PATH+s[0]}" target="_blank" rel="noopener"><img src="${PATH+s[0]}" alt="${escape(s[3])}" loading="lazy"></a><div>${bi(s[3],s[4],'strong')}${bi('課本原圖','Textbook original','div')}<a href="${PATH+s[0]}" target="_blank" rel="noopener">${bi('開啟原圖','Open original image')}</a></div></div>`).join('');
     document.getElementById('sourceList').querySelectorAll('img').forEach((im,i)=>{const s=Object.values(M.sources)[i];im.dataset.altZh=s[3];im.dataset.altEn=s[4];});
     document.querySelectorAll('[data-tab]').forEach(e=>e.addEventListener('click',()=>switchTab(+e.dataset.tab)));
     document.querySelectorAll('[data-lang]').forEach(e=>e.addEventListener('click',()=>setLang(e.dataset.lang)));
-    const enterLesson=()=>{document.getElementById('introScreen').hidden=true;drawCurrent();};
+    const enterLesson=()=>{document.getElementById('introScreen').hidden=true;drawCurrent();autoStart();};
     if(window.LivingBookCover)window.LivingBookCover.mount(document.getElementById('introScreen'),{id:'structure',cover:PATH+'hollow_maple_native2.png'},enterLesson);
     else document.getElementById('introScreen').addEventListener('click',enterLesson);
     document.querySelectorAll('[data-lab]').forEach(lab=>{
@@ -53,7 +53,7 @@
       attachTouch(key,canvas);
     });
     document.addEventListener('keydown',e=>{if(e.key==='Escape')exitExpanded();});
-    document.addEventListener('visibilitychange',()=>{if(document.hidden){stopLoop();for(const key of keys)state.labs[key].playing=false;for(const view of pointers.values())view.clear();}else update();});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden){stopLoop();for(const key of keys)state.labs[key].playing=false;for(const view of pointers.values())view.clear();}else{update();autoStart();}});
     applyLang();update();
   }
   const say=(zh,en)=>state.lang==='en'?en:zh;
@@ -69,7 +69,7 @@
     document.querySelector('.floating-lang-container').setAttribute('aria-label',say('語言切換','Language'));
   }
   function setLang(lang){if(!['zh','en'].includes(lang))return;state.lang=lang;applyLang();update();}
-  function switchTab(i){if(!pages[i])return;stopLoop();state.labs[keys[state.tab]].playing=false;exitExpanded();state.tab=i;state.last=0;document.querySelectorAll('[data-page]').forEach(e=>e.hidden=+e.dataset.page!==i);document.querySelectorAll('[data-tab]').forEach(e=>{e.classList.toggle('active',+e.dataset.tab===i);e.setAttribute('aria-pressed',String(+e.dataset.tab===i));});update();}
+  function switchTab(i){if(!pages[i])return;stopLoop();state.labs[keys[state.tab]].playing=false;exitExpanded();state.tab=i;state.last=0;document.querySelectorAll('[data-page]').forEach(e=>e.hidden=+e.dataset.page!==i);document.querySelectorAll('[data-tab]').forEach(e=>{e.classList.toggle('active',+e.dataset.tab===i);e.setAttribute('aria-pressed',String(+e.dataset.tab===i));});update();autoStart();}
   let returnFocus=null;
   function exitExpanded(){if(state.expanded){document.getElementById('lab-'+state.expanded).classList.remove('is-expanded');state.expanded=null;document.body.classList.remove('ps-fullscreen-open');if(returnFocus)returnFocus.focus();returnFocus=null;update();}}
   function expand(key,button){if(state.expanded===key){exitExpanded();return;}exitExpanded();state.expanded=key;returnFocus=button;document.getElementById('lab-'+key).classList.add('is-expanded');document.body.classList.add('ps-fullscreen-open');update();}
@@ -79,25 +79,22 @@
     if(action==='focus'){
       s.focus=value;
       if(key==='microscopy')s.detail='bundle';
-      if(key==='growth'){s.detail='trunk';s.playing=false;}
+      if(key==='growth'){s.detail='trunk';s.playing=false;s.auto=false;}
     }
     if(action==='part'){s.part=value;s.focus=key==='positions'?'none':s.focus;s.zoom=1;s.dx=0;s.dy=0;}
     if(action==='sink'&&key==='network'){s.sink=value;s.focus='phloem';s.part='stem';s.zoom=1;s.dx=0;s.dy=0;s.playing=true;state.time=0;state.last=0;}
-    if(action==='kind'){s.kind=value;s.focus='none';s.zoom=1;s.dx=0;s.dy=0;if(key==='microscopy')s.answer=null;if(key==='cases'){s.stage=0;s.elapsed=0;s.prediction=null;s.playing=false;s.hollowProgress=1;s.hollowStarted=false;}}
-    if(action==='detail'){s.detail=value;s.focus='none';s.zoom=1;s.dx=0;s.dy=0;if(key==='growth')s.playing=false;}
+    if(action==='kind'){s.kind=value;s.focus='none';s.zoom=1;s.dx=0;s.dy=0;if(key==='microscopy')s.answer=null;if(key==='cases'){s.stage=0;s.elapsed=0;s.prediction=null;s.playing=false;s.auto=false;s.hollowProgress=1;s.hollowStarted=false;}}
+    if(action==='detail'){s.detail=value;s.focus='none';s.zoom=1;s.dx=0;s.dy=0;if(key==='growth'){s.playing=false;s.auto=false;}}
     if(action==='play'){
-      if(key==='growth'){s.detail='model';if(s.phase>=10){s.phase=0;s.targetPhase=0;}s.targetPhase=10;}
-      if(key==='network'&&s.part==='root')s.part='stem';
-      if(key==='cases'&&s.kind==='hollow'&&!s.playing&&(!s.hollowStarted||s.stage>=2)){s.hollowProgress=0;s.hollowStarted=true;s.stage=0;s.elapsed=0;}
-      s.playing=!s.playing;
-      if(key==='cases'&&s.stage>=2){s.stage=0;s.elapsed=0;}
+      if(s.playing){s.playing=false;s.auto=false;}
+      else{s.auto=true;prepareAuto(key,s,true);s.playing=true;}
     }
-    if(action==='season'){s.detail='model';s.targetPhase=Math.min(10,Math.floor(Math.max(s.phase,s.targetPhase))+1);s.playing=true;}
-    if(action==='growth-reset'){s.phase=0;s.targetPhase=0;s.playing=false;s.selectedYear=0;s.detail='model';}
-    if(action==='stage'){s.stage=Math.min(2,s.stage+1);s.elapsed=0;}
-    if(action==='case-reset'){s.stage=0;s.elapsed=0;s.playing=false;s.prediction=null;s.hollowProgress=1;s.hollowStarted=false;}
-    if(action==='answer')s.answer=value;
-    if(action==='predict')s.prediction=value;
+    if(action==='season'){s.auto=false;s.detail='model';s.targetPhase=Math.min(10,Math.floor(Math.max(s.phase,s.targetPhase))+1);s.playing=true;}
+    if(action==='growth-reset'){s.auto=false;s.hold=0;s.phase=0;s.targetPhase=0;s.playing=false;s.selectedYear=0;s.detail='model';}
+    if(action==='stage'){s.auto=false;s.stage=Math.min(2,s.stage+1);s.elapsed=0;}
+    if(action==='case-reset'){s.auto=false;s.stage=0;s.elapsed=0;s.playing=false;s.prediction=null;s.hollowProgress=1;s.hollowStarted=false;}
+    if(action==='answer'){s.answer=value;s.auto=false;}
+    if(action==='predict'){s.prediction=value;s.auto=false;}
     update();ensureLoop();
   }
   function caption(key){const s=state.labs[key];
@@ -145,21 +142,28 @@
       }
     }drawCurrent();}
   const hitAreas=new Map(),pointers=new Map(),touchStart=new Map();
-  function drawCurrent(){const key=keys[state.tab],s=state.labs[key],canvas=document.getElementById('lab-'+key)?.querySelector('canvas');if(!canvas)return;const ctx=canvas.getContext('2d');
+  function drawCurrent(){const key=keys[state.tab],s=state.labs[key],canvas=document.getElementById('lab-'+key)?.querySelector('canvas');if(!canvas)return;const ctx=canvas.getContext('2d');canvas.classList.toggle('is-zoomed',s.zoom>1.01);
     if(!state.loaded){ctx.clearRect(0,0,960,640);ctx.fillStyle='#f7f5eb';ctx.fillRect(0,0,960,640);ctx.fillStyle='#183c31';ctx.font='700 26px "Noto Sans TC"';ctx.fillText(say(state.errors.length?'圖像載入失敗，請檢查素材路徑。':'課本原圖載入中…',state.errors.length?'Image load failed. Please check the asset paths.':'Loading textbook figures…'),28,60);return;}
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,960,640);ctx.translate(480+s.dx,320+s.dy);ctx.scale(s.zoom,s.zoom);ctx.translate(-480,-320);hitAreas.set(key,M.draw(ctx,state.images,key,s,state.lang,state.time));ctx.restore();
   }
   function stopLoop(){if(state.raf)cancelAnimationFrame(state.raf);state.raf=0;state.last=0;}
+  const ANIMATED=new Set(['network','growth','cases']);
+  function prepareAuto(key,s,fromButton){
+    if(key==='network'&&fromButton&&s.part==='root')s.part='stem';
+    if(key==='growth'){s.detail='model';s.hold=0;if(s.phase>=10){s.phase=0;s.selectedYear=0;}s.targetPhase=10;}
+    if(key==='cases'){const done=fromButton?s.stage>=2:(s.stage>=2&&s.elapsed>=5);if(done||(s.kind==='hollow'&&!s.hollowStarted)){s.stage=0;s.elapsed=0;if(s.kind==='hollow'){s.hollowProgress=0;s.hollowStarted=true;}}}
+  }
+  function autoStart(){const key=keys[state.tab],s=state.labs[key];if(!ANIMATED.has(key)||!state.loaded||document.hidden)return;if(s.auto&&!s.playing){prepareAuto(key,s,false);s.playing=true;state.last=0;update();}ensureLoop();}
   function ensureLoop(){if(state.raf||document.hidden||!state.loaded||!state.labs[keys[state.tab]].playing)return;state.raf=requestAnimationFrame(tick);}
   function tick(now){state.raf=0;if(document.hidden)return;const s=state.labs[keys[state.tab]];if(!s.playing)return;const dt=state.last?Math.min(.1,(now-state.last)/1000):0;state.last=now;state.time+=dt;
-    if(keys[state.tab]==='growth'){s.phase=Math.min(s.targetPhase,s.phase+dt*.65);if(s.phase>=s.targetPhase)s.playing=false;update();}
-    else if(keys[state.tab]==='cases'){s.elapsed+=dt;if(s.kind==='hollow')s.hollowProgress=Math.min(1,s.hollowProgress+dt/3);if(s.elapsed>=5&&s.stage<2){s.stage++;s.elapsed=0;update();}if(s.stage===2&&s.elapsed>=5){s.playing=false;update();}drawCurrent();}
+    if(keys[state.tab]==='growth'){s.phase=Math.min(s.targetPhase,s.phase+dt*.65);if(s.phase>=s.targetPhase){if(!s.auto)s.playing=false;else if(s.targetPhase<10)s.targetPhase=10;else{s.hold+=dt;if(s.hold>=1.5){s.hold=0;s.phase=0;s.selectedYear=0;}}}update();}
+    else if(keys[state.tab]==='cases'){s.elapsed+=dt;if(s.kind==='hollow')s.hollowProgress=Math.min(1,s.hollowProgress+dt/3);if(s.elapsed>=5&&s.stage<2){s.stage++;s.elapsed=0;update();}if(s.stage===2&&s.elapsed>=5){if(s.auto){s.stage=0;s.elapsed=0;if(s.kind==='hollow'){s.hollowProgress=0;s.hollowStarted=true;}}else s.playing=false;update();}drawCurrent();}
     else drawCurrent();
     ensureLoop();
   }
   function tap(key,x,y){const s=state.labs[key],u=(x-480-s.dx)/s.zoom+480,v=(y-320-s.dy)/s.zoom+320;
     const area=(hitAreas.get(key)||[]).find(p=>p.key==='year'?Math.hypot(u-p.cx,v-p.cy)>=p.inner&&Math.hypot(u-p.cx,v-p.cy)<=p.outer:((u-p.x)/p.rx)**2+((v-p.y)/p.ry)**2<=1.4);
-    if(area){if(area.key==='year'){s.selectedYear=area.year;s.playing=false;}else s.focus=area.key;update();}
+    if(area){if(area.key==='year'){s.selectedYear=area.year;s.playing=false;s.auto=false;}else s.focus=area.key;update();}
     else if(key==='microscopy'&&s.detail==='whole'){s.detail='bundle';update();}
   }
   function attachTouch(key,canvas){const ps=new Map();pointers.set(key,ps);const coords=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*960/r.width,y:(e.clientY-r.top)*640/r.height};};let gesture=null;
@@ -167,14 +171,16 @@
     canvas.addEventListener('pointerdown',e=>{e.preventDefault();const c=coords(e);ps.set(e.pointerId,c);touchStart.set(key,{...c,moved:false,pinch:ps.size>1});canvas.setPointerCapture(e.pointerId);snapshot();});
     canvas.addEventListener('pointermove',e=>{if(!ps.has(e.pointerId))return;e.preventDefault();const c=coords(e);ps.set(e.pointerId,c);const s=state.labs[key],start=touchStart.get(key);if(start&&Math.hypot(c.x-start.x,c.y-start.y)>8)start.moved=true;const list=[...ps.values()];
       if(list.length>=2&&gesture?.distance){if(start)start.pinch=true;const mid={x:(list[0].x+list[1].x)/2,y:(list[0].y+list[1].y)/2},oldMid={x:(gesture.a.x+gesture.b.x)/2,y:(gesture.a.y+gesture.b.y)/2};s.zoom=Math.max(1,Math.min(4,gesture.zoom*Math.hypot(list[1].x-list[0].x,list[1].y-list[0].y)/gesture.distance));const factor=s.zoom/gesture.zoom;s.dx=mid.x-480-(oldMid.x-480-gesture.dx)*factor;s.dy=mid.y-320-(oldMid.y-320-gesture.dy)*factor;}
-      else if(gesture){s.dx=gesture.dx+c.x-gesture.a.x;s.dy=gesture.dy+c.y-gesture.a.y;}
+      else if(gesture&&s.zoom>1.01&&start&&start.moved){s.dx=gesture.dx+c.x-gesture.a.x;s.dy=gesture.dy+c.y-gesture.a.y;}
+      else return;
+      if(s.zoom<=1.01){s.zoom=1;s.dx=0;s.dy=0;}
       s.dx=Math.max(-480*s.zoom,Math.min(480*s.zoom,s.dx));s.dy=Math.max(-320*s.zoom,Math.min(320*s.zoom,s.dy));drawCurrent();
     });
     const end=e=>{if(!ps.has(e.pointerId))return;const start=touchStart.get(key),c=coords(e);if(e.type==='pointerup'&&start&&!start.moved&&!start.pinch)tap(key,c.x,c.y);ps.delete(e.pointerId);snapshot();if(!ps.size)touchStart.delete(key);};
     canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);canvas.addEventListener('lostpointercapture',end);
-    canvas.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const s=state.labs[key];s.zoom=Math.max(1,Math.min(4,s.zoom*(e.deltaY<0?1.1:.9)));drawCurrent();},{passive:false});
+    canvas.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const s=state.labs[key];s.zoom=Math.max(1,Math.min(4,s.zoom*(e.deltaY<0?1.1:.9)));if(s.zoom<=1.01){s.zoom=1;s.dx=0;s.dy=0;}else{s.dx=Math.max(-480*s.zoom,Math.min(480*s.zoom,s.dx));s.dy=Math.max(-320*s.zoom,Math.min(320*s.zoom,s.dy));}drawCurrent();},{passive:false});
   }
-  async function load(){await Promise.all(Object.entries(M.sources).map(([key,value])=>new Promise(resolve=>{const im=new Image();im.onload=()=>{state.images[key]=im;resolve();};im.onerror=()=>{state.errors.push(value[0]);resolve();};im.src=PATH+value[0];})));state.loaded=!state.errors.length;update();ensureLoop();if(document.fonts){await document.fonts.ready;drawCurrent();}}
+  async function load(){await Promise.all(Object.entries(M.sources).map(([key,value])=>new Promise(resolve=>{const im=new Image();im.onload=()=>{state.images[key]=im;resolve();};im.onerror=()=>{state.errors.push(value[0]);resolve();};im.src=PATH+value[0];})));state.loaded=!state.errors.length;update();autoStart();if(document.fonts){await document.fonts.ready;drawCurrent();}}
   globalThis.PlantStructure={state,setLang,switchTab,act,tap,drawCurrent,stopLoop,exitExpanded};
   mount();load();
 })();
