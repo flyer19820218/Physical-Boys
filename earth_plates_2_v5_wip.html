@@ -1086,7 +1086,7 @@
           <button class="action-btn btn-green" id="dv-play" type="button" onclick="dvPlay()" data-zh="▶️ 自動拉開" data-en="▶️ Auto pull">▶️ 自動拉開</button>
           <button class="action-btn " id="dv-reset" type="button" onclick="dvReset()" data-zh="↻ 重置" data-en="↻ Reset">↻ 重置</button>
         </div>
-        <div class="ctrl-row"><div class="ctrl-slider"><span class="ctrl-name" data-zh="分離程度" data-en="Separation">分離程度</span><input type="range" id="dv-slider" min="0" max="100" value="45" oninput="dvSlide(this.value)" aria-label="Separation"><output id="dv-val">45%</output></div></div>
+        <div class="ctrl-row" id="dv-srow"><div class="ctrl-slider"><span class="ctrl-name" data-zh="分離程度" data-en="Separation">分離程度</span><input type="range" id="dv-slider" min="0" max="100" value="45" oninput="dvSlide(this.value)" aria-label="Separation"><output id="dv-val">45%</output></div></div>
         <div class="wb-status" id="dv-status"></div>
       </div>
     </div>
@@ -2721,10 +2721,327 @@
   /* @@TAB1-END */
 
   /* @@TAB2-BEGIN  dv（海底擴張與冰島）—— 動畫代理只改這個區塊與對應的 #dv-stage 內的控制項 */
-  const DV = { W: 960, H: 540 };
-  function dvDraw(c, t, dt) { e_label(c, tr('動畫製作中：海底擴張與冰島', 'Animation in progress: dv'), 480, 270, '#f6f3ea', 24, 'center', true, 640); }
-  function dvUI() { const st = document.getElementById('dv-status'); if (st) st.innerHTML = ''; }
-  function dvEnter() {}
+  /* 海底擴張剖面：分離程度 amt（0–100）決定「新地殼」向外長到哪裡（off）與中央裂隙寬（gap）。
+     地殼年齡只跟離中洋脊的距離有關（越遠越老），所以年齡條帶固定在中洋脊兩側；
+     真正在移動的是地殼本身（小紋路隨 off 向外漂），原本的老地殼被推向兩側。 */
+  const DV = { W: 960, H: 540, CX: 480, SEA: 56, TOP: 250, BOT: 306, OFF0: 18, OFFMAX: 312, BAND: 82 };
+  const DVS = { mode: 'ocean', amt: 45, auto: false, play: false, touched: false, hold: 0, pct: -1, ph: 0, mov: 0, drag: null };
+  const DV_BANDS = ['#c9dae8', '#a3b9cc', '#839aaf', '#687f94', '#4f6377'];   /* 海洋地殼＝藍灰：同色系，越亮越年輕 */
+  const DV_QK = '#5aa9ff';                                                       /* 地震＝藍點（與分頁一相同） */
+  const DV_IMG = new Image(); DV_IMG.src = 'earth_plates_2_iceland_age.png';      /* 1448×1086 */
+  /* 冰島年代圖：裁掉四周空白海面（只裁空白，不變形），以下座標都是用程式量原圖得到的像素位置 */
+  const DV_ICE = { sx: 280, sy: 36, sw: 980, sh: 960, x: 240, y: 60, h: 470 };
+  DV_ICE.s = DV_ICE.h / DV_ICE.sh; DV_ICE.w = DV_ICE.sw * DV_ICE.s;
+  const DV_RIFT = [   /* 粉紅「年代最年輕」帶的中線＝裂谷帶（西支、東支、北支） */
+    [[455, 612], [530, 578], [582, 558], [636, 510], [690, 458], [750, 412], [820, 422], [880, 412], [930, 380], [965, 338]],
+    [[758, 690], [738, 650], [748, 610], [768, 585], [833, 535], [862, 500], [905, 455], [950, 400], [985, 335]],
+    [[965, 338], [985, 335], [990, 280], [990, 200], [1000, 130], [1012, 75]]
+  ];
+  /* 原圖 y=300 這一條橫線上量到的顏色（x 範圍）：黃 607–891、綠 892–915、粉紅 917–1064、綠 1065–1106、黃 1107–1224 */
+  const DV_TR = { y: 300, axis: 990, seg: [[607, 891, '#fded57'], [892, 915, '#d6e4b2'], [916, 1064, '#eb9ba5'], [1065, 1106, '#d6e4b2'], [1107, 1224, '#fded57']] };
+  const dvMx = ix => DV_ICE.x + (ix - DV_ICE.sx) * DV_ICE.s;
+  const dvMy = iy => DV_ICE.y + (iy - DV_ICE.sy) * DV_ICE.s;
+
+  const dvOff = () => DV.OFF0 + DV.OFFMAX * DVS.amt / 100;
+  const dvGap = () => 3 + 9 * DVS.amt / 100;
+  function dvTop(d) {
+    d = Math.abs(d); const g = dvGap() + 18;
+    let y = DV.TOP - 40 * Math.exp(-Math.pow(d / 150, 2));
+    if (d < g) y += 10 * (1 - d / g);       /* 脊頂中央的裂谷凹槽 */
+    return y;
+  }
+
+  /* ── 操作 ── */
+  function dvTouch() { DVS.touched = true; DVS.auto = false; }
+  function dvMode(m) { dvTouch(); DVS.mode = m; DVS.play = false; dvUI(); }
+  function dvPlay() {
+    dvTouch();
+    if (DVS.play) DVS.play = false;
+    else { DVS.mode = 'ocean'; if (DVS.amt >= 99.5) DVS.amt = 0; DVS.play = true; }
+    dvUI();
+  }
+  function dvReset() { dvTouch(); DVS.play = false; DVS.amt = 0; dvUI(); }
+  function dvSlide(v) { dvTouch(); DVS.play = false; DVS.amt = kClamp(+v, 0, 100); dvUI(); }
+  function dvAutoStart() { DVS.auto = true; DVS.play = false; DVS.mode = 'ocean'; DVS.amt = 0; DVS.hold = 0.8; dvUI(); }
+  function dvEnter() { dvPointer(); if (!DVS.touched) dvAutoStart(); else dvUI(); }
+  let dvPtr = false;
+  function dvPointer() {
+    const cv = document.getElementById('dvCanvas'); if (!cv || dvPtr) return; dvPtr = true;
+    cv.style.touchAction = 'pan-y';
+    cv.addEventListener('pointerdown', e => {
+      dvTouch(); DVS.play = false;
+      if (DVS.mode === 'ocean') {
+        DVS.drag = { x: kCanvasPt(cv, e, DV.W, DV.H).x, a: DVS.amt, id: e.pointerId };
+        try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+      }
+      dvUI();
+    });
+    cv.addEventListener('pointermove', e => {
+      const g = DVS.drag;
+      cv.style.cursor = DVS.mode === 'ocean' ? 'ew-resize' : 'default';
+      if (!g || g.id !== e.pointerId) return;
+      const x = kCanvasPt(cv, e, DV.W, DV.H).x, k = x >= DV.CX ? 1 : -1;
+      DVS.amt = kClamp(g.a + k * (x - g.x) / 3, 0, 100);   /* 往外拖＝拉開，往內推＝合起 */
+    });
+    const up = e => { if (DVS.drag && DVS.drag.id === e.pointerId) DVS.drag = null; };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  }
+  function dvTick(dt) {
+    const prev = DVS.amt;
+    if (DVS.auto && DVS.mode === 'ocean') {
+      if (DVS.hold > 0) { DVS.hold -= dt; if (DVS.hold <= 0 && DVS.amt >= 100) { DVS.amt = 0; DVS.hold = 0.8; } }
+      else { DVS.amt = Math.min(100, DVS.amt + dt * 14); if (DVS.amt >= 100) DVS.hold = 1.8; }
+    } else if (DVS.play) {
+      DVS.amt = Math.min(100, DVS.amt + dt * 12);
+      if (DVS.amt >= 100) { DVS.play = false; DVS.pct = -1; }
+    }
+    DVS.mov = kLerp(DVS.mov, DVS.amt > prev + 1e-6 ? 1 : 0, Math.min(1, dt * 6));
+    DVS.ph += dt * (1 + 1.4 * DVS.mov);
+    if (Math.round(DVS.amt) !== DVS.pct) dvUI();
+  }
+
+  /* ── 小工具 ── */
+  function dvLeader(c, x1, y1, x2, y2, col) {
+    c.save(); c.lineCap = 'round';
+    c.strokeStyle = 'rgba(16,36,29,0.8)'; c.lineWidth = 5; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+    c.strokeStyle = col; c.lineWidth = 2.2; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+    c.fillStyle = col; c.beginPath(); c.arc(x2, y2, 4, 0, Math.PI * 2); c.fill(); c.restore();
+  }
+  function dvW(c, s, size) { c.font = `bold ${size}px "Noto Sans TC", "JetBrains Mono"`; return c.measureText(s).width; }
+  function dvLines(c, lines, x, y, col, size, gap, align) { lines.forEach((s, i) => e_label(c, s, x, y + i * (gap || size + 9), col, size, align || 'left', true, 210)); }
+  function dvArrow(c, x1, y, x2, col, w, head) {   /* 粉筆箭頭：先描深色邊再畫亮色 */
+    e_arrow(c, x1, y, x2, y, 'rgba(16,36,29,0.85)', w + 4, head + 5);
+    e_arrow(c, x1, y, x2, y, col, w, head);
+  }
+
+  /* ── 海底擴張剖面 ── */
+  function dvCrustPoly(c, side, d1, d2, col) {
+    if (d2 <= d1) return;
+    c.fillStyle = col; c.beginPath();
+    const st = 3;
+    for (let d = d1; ; d += st) { const dd = Math.min(d, d2); const x = DV.CX + side * dd; if (d === d1) c.moveTo(x, dvTop(dd)); else c.lineTo(x, dvTop(dd)); if (dd >= d2) break; }
+    c.lineTo(DV.CX + side * d2, DV.BOT); c.lineTo(DV.CX + side * d1, DV.BOT); c.closePath(); c.fill();
+  }
+  function dvOcean(c, t) {
+    const { CX, SEA, BOT, BAND } = DV, off = dvOff(), gap = dvGap(), a = DVS.amt / 100;
+    /* 海水 */
+    let g = c.createLinearGradient(0, SEA, 0, BOT);
+    g.addColorStop(0, 'rgba(56,150,190,0.55)'); g.addColorStop(1, 'rgba(24,78,104,0.75)');
+    c.fillStyle = g; c.fillRect(0, SEA, DV.W, BOT - SEA);
+    c.strokeStyle = '#55e9ff'; c.lineWidth = 3; c.beginPath();
+    for (let x = 0; x <= DV.W; x += 8) { const y = SEA + 2.5 * Math.sin(x / 38 + t * 1.6); if (x === 0) c.moveTo(x, y); else c.lineTo(x, y); }
+    c.stroke();
+    /* 地函（橘紅） */
+    g = c.createLinearGradient(0, BOT, 0, DV.H);
+    g.addColorStop(0, '#a3432a'); g.addColorStop(1, '#6a2417');
+    c.fillStyle = g; c.fillRect(0, BOT, DV.W, DV.H - BOT);
+    /* 地函裡緩慢上升、往中央匯集的岩漿粒子 */
+    for (let i = 0; i < 28; i++) {
+      const P = 6 + labH(i + 1) * 5, u = (DVS.ph / P + labH(i + 40)) % 1;
+      const x0 = 120 + labH(i + 3) * 720, y = 534 - u * 200;
+      const x = kLerp(x0, CX + (x0 - CX) * 0.12, kEase(u)), al = Math.sin(Math.PI * u);
+      kBlob(c, '#fb923c', x, y, 11, 0.55 * al);
+      c.globalAlpha = 0.9 * al; c.fillStyle = '#ffd08a'; c.beginPath(); c.arc(x, y, 2.6, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+    }
+    /* 岩漿庫＋上升通道 */
+    const pulse = 0.5 + 0.5 * Math.sin(t * 2.2);
+    kBlob(c, '#fb923c', CX, 344, 120, 0.45 + 0.15 * pulse);
+    g = c.createRadialGradient(CX, 338, 4, CX, 344, 74);
+    g.addColorStop(0, '#ffe08a'); g.addColorStop(0.55, '#fb923c'); g.addColorStop(1, '#c2410c');
+    c.fillStyle = g; c.beginPath(); c.ellipse(CX, 344, 74, 26, 0, 0, Math.PI * 2); c.fill();
+    e_arrow(c, CX, 494, CX, 384, 'rgba(255,224,102,0.9)', 5, 16);
+    /* 海洋地殼：中央新地殼依年齡分條帶（越外越暗），外側是原本的老地殼 */
+    [-1, 1].forEach(sd => {
+      for (let j = 0; j * BAND < off; j++) dvCrustPoly(c, sd, Math.max(gap, j * BAND), Math.min(off, (j + 1) * BAND), DV_BANDS[Math.min(j, 3)]);
+      dvCrustPoly(c, sd, off, 560, DV_BANDS[4]);
+      /* 地殼紋路：跟著地殼一起向外漂 */
+      c.fillStyle = 'rgba(17,38,52,0.42)';
+      for (let i = 0; ; i++) {
+        const f = 6 + i * 12, d = off - f; if (d <= gap + 3) break;
+        const yt = dvTop(d), y = yt + 9 + labH(i * 3.1 + 7) * (BOT - yt - 18);
+        c.fillRect(CX + sd * d - 3, y, 6, 2.4);
+      }
+      for (let i = 0; ; i++) {
+        const d = off + 5 + i * 14; if (d > 500) break;
+        const yt = dvTop(d), y = yt + 9 + labH(i * 7.3 + 50) * (BOT - yt - 18);
+        c.fillRect(CX + sd * d - 3, y, 6, 2.4);
+      }
+    });
+    /* 中央裂隙：岩漿從下方填入 */
+    g = c.createLinearGradient(0, dvTop(0), 0, 340);
+    g.addColorStop(0, '#ffe08a'); g.addColorStop(1, '#fb923c');
+    c.fillStyle = g; c.fillRect(CX - gap, dvTop(0) - 1, gap * 2, 336 - dvTop(0));
+    kBlob(c, '#ffcf66', CX, dvTop(0) + 2, 18 + 4 * pulse + 6 * a, 0.75);
+    for (let i = 0; i < 4; i++) {       /* 裂隙裡往上冒的岩漿 */
+      const u = (DVS.ph * 0.55 + i / 4) % 1, y = 336 - u * (336 - dvTop(0));
+      c.fillStyle = '#fff3c4'; c.globalAlpha = Math.sin(Math.PI * u); c.beginPath(); c.arc(CX, y, Math.max(1.6, gap * 0.5), 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+    }
+    /* 地殼輪廓 */
+    c.strokeStyle = 'rgba(246,243,234,0.75)'; c.lineWidth = 2.5;
+    [-1, 1].forEach(sd => {
+      c.beginPath(); for (let d = gap; d <= 500; d += 3) { const x = CX + sd * d; if (d === gap) c.moveTo(x, dvTop(d)); else c.lineTo(x, dvTop(d)); } c.stroke();
+      c.beginPath(); c.moveTo(CX + sd * gap, BOT); c.lineTo(CX + sd * 500, BOT); c.stroke();
+    });
+    /* 淺層地震：中洋脊附近、地殼淺處的藍點 */
+    [[-1, 0, 0], [1, 0, 1.3], [-1, 1, 0.7], [1, 1, 2]].forEach(([sd, k, o]) => {
+      const d = gap + 10 + k * 15, x = CX + sd * d, y = dvTop(d) + 15 + k * 11;
+      const u = ((t + o) / 2.6) % 1;
+      if (u < 0.55) {
+        const r = 6 + 22 * (u / 0.55);
+        c.strokeStyle = DV_QK; c.globalAlpha = 1 - u / 0.55; c.lineWidth = 2.5; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke(); c.globalAlpha = 1;
+      }
+      c.fillStyle = '#10241d'; c.beginPath(); c.arc(x, y, 6.5, 0, Math.PI * 2); c.fill();
+      c.fillStyle = DV_QK; c.beginPath(); c.arc(x, y, 5, 0, Math.PI * 2); c.fill();
+    });
+    /* 板塊移動方向箭頭（加速示意） */
+    const AY = 222;
+    dvArrow(c, CX - 170, AY, CX - 380, '#f6f3ea', 6, 20);
+    dvArrow(c, CX + 170, AY, CX + 380, '#f6f3ea', 6, 20);
+    if (DVS.mov > 0.05) {
+      c.globalAlpha = DVS.mov;
+      for (let i = 0; i < 3; i++) {
+        const u = (t * 0.9 + i / 3) % 1, d = 185 + u * 160;
+        [-1, 1].forEach(sd => { c.fillStyle = '#ffe066'; c.beginPath(); c.arc(CX + sd * d, AY, 4.5, 0, Math.PI * 2); c.fill(); });
+      }
+      c.globalAlpha = 1;
+    }
+
+    /* ── 文字 ── */
+    const pct = Math.round(DVS.amt);
+    e_label(c, tr('海底擴張：中洋脊剖面（示意圖）', 'Seafloor spreading at a mid-ocean ridge (diagram)'), 20, 36, '#ffe066', 20, 'left');
+    e_label(c, tr(`分離程度 ${pct}%`, `Separation ${pct}%`), 940, 36, '#55e9ff', 18, 'right');
+    e_label(c, tr('海水', 'Seawater'), 26, 104, '#f6f3ea', 17, 'left');
+    e_label(c, tr('中洋脊', 'Mid-ocean ridge'), 300, 148, '#ffe066', 18, 'center');
+    dvLeader(c, 300, 156, CX - 92, dvTop(92) - 3, '#ffe066');
+    const thin = off < 80, yd = thin ? (gap + off) / 2 : Math.max(gap + 46, 62);
+    e_label(c, tr('最年輕（新地殼）', 'Youngest (new crust)'), 668, 148, '#f6f3ea', 17, 'center');
+    dvLeader(c, 668, 156, CX + yd, dvTop(yd) + (thin ? 42 : 30), '#f6f3ea');
+    e_label(c, tr('向兩側移動', 'Moving apart'), CX + 275, AY - 22, '#f6f3ea', 15, 'center');
+    const LY = 286;
+    const oldMid = (off + 480) / 2;
+    e_label(c, tr('最老', 'Oldest'), CX + oldMid, LY, '#f6f3ea', 15, 'center', true, 480 - off - 16);
+    e_label(c, tr('海洋地殼', 'Oceanic crust'), CX - oldMid, LY, '#f6f3ea', 15, 'center', true, 480 - off - 16);
+    if (off > 120) e_label(c, tr('較老', 'Older'), CX + Math.min(off - 30, BAND * 1.5), LY, '#f6f3ea', 15, 'center');
+    e_label(c, tr('岩漿上升', 'Magma rises'), CX + 92, 351, '#ffe066', 16, 'left');
+    e_label(c, tr('地函', 'Mantle'), 34, 452, '#fdba74', 18, 'left');
+    /* 圖例：地震 */
+    const qx = 772, qy = 452;
+    c.fillStyle = DV_QK; c.beginPath(); c.arc(qx, qy - 6, 6, 0, Math.PI * 2); c.fill();
+    e_label(c, tr('淺層地震', 'Shallow quake'), qx + 14, qy, '#f6f3ea', 15, 'left');
+    e_label(c, tr('箭頭＝方向；實際每年只移動數公分，動畫已加速', 'Arrows = direction. Real plates move only a few cm a year; the animation is sped up.'), CX, 524, '#f6f3ea', 15, 'center', true, 920);
+  }
+
+  /* ── 冰島案例：真實岩石年代圖 ＋ 標註 ── */
+  function dvIce(c, t) {
+    const I = DV_ICE;
+    e_label(c, tr('冰島：大西洋中洋脊露出海面', 'Iceland: the Mid-Atlantic Ridge above sea level'), DV.CX, 40, '#ffe066', 20, 'center');
+    /* 黑板邊框 */
+    c.fillStyle = '#0b1a15'; e_rr(c, I.x - 12, I.y - 12, I.w + 24, I.h + 24, 12); c.fill();
+    c.strokeStyle = '#3f6f5f'; c.lineWidth = 6; e_rr(c, I.x - 9, I.y - 9, I.w + 18, I.h + 18, 10); c.stroke();
+    if (!(DV_IMG.complete && DV_IMG.naturalWidth)) {
+      e_label(c, tr('冰島岩石年代圖載入中…', 'Loading the Iceland rock-age map…'), DV.CX, 300, '#f6f3ea', 18, 'center');
+      return;
+    }
+    c.drawImage(DV_IMG, I.sx, I.sy, I.sw, I.sh, I.x, I.y, I.w, I.h);
+    c.strokeStyle = 'rgba(246,243,234,0.6)'; c.lineWidth = 2; c.strokeRect(I.x - 1, I.y - 1, I.w + 2, I.h + 2);
+
+    /* 裂谷帶（中洋脊）：沿粉紅帶中線的橘色流動虛線 */
+    c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
+    DV_RIFT.forEach(L => {
+      c.beginPath(); L.forEach(([ix, iy], i) => { const x = dvMx(ix), y = dvMy(iy); if (i) c.lineTo(x, y); else c.moveTo(x, y); });
+      c.setLineDash([]); c.strokeStyle = 'rgba(16,36,29,0.75)'; c.lineWidth = 7; c.stroke();
+      c.setLineDash([12, 8]); c.lineDashOffset = -t * 22; c.strokeStyle = '#fb923c'; c.lineWidth = 4; c.stroke();
+    });
+    c.restore();
+
+    /* 東西向剖面線＋從中洋脊往兩側漂開的點（對稱） */
+    const ty = dvMy(DV_TR.y), ax = dvMx(DV_TR.axis), x0 = I.x, x1 = I.x + I.w;
+    c.save(); c.setLineDash([9, 7]);
+    c.strokeStyle = 'rgba(16,36,29,0.7)'; c.lineWidth = 5; c.beginPath(); c.moveTo(x0, ty); c.lineTo(x1, ty); c.stroke();
+    c.strokeStyle = '#f6f3ea'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(x0, ty); c.lineTo(x1, ty); c.stroke();
+    c.restore();
+    for (let i = 0; i < 5; i++) {
+      const u = (t * 0.22 + i / 5) % 1, al = Math.min(1, (1 - u) * 3, u * 8);
+      [[-1, ax - x0], [1, x1 - ax]].forEach(([sd, span]) => {
+        const x = ax + sd * u * span;
+        c.globalAlpha = al; c.fillStyle = '#10241d'; c.beginPath(); c.arc(x, ty, 6.5, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#f6f3ea'; c.beginPath(); c.arc(x, ty, 4.6, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+      });
+    }
+    /* 兩側板塊箭頭（欄位內） */
+    const wob = 6 * Math.sin(t * 2);
+    dvArrow(c, 222, ty, 36 - wob, '#f6f3ea', 6, 20);
+    dvArrow(c, 738, ty, 924 + wob, '#f6f3ea', 6, 20);
+    e_label(c, tr('北美板塊', 'North American Plate'), 122, ty - 20, '#f6f3ea', 16, 'center', true, 200);
+    e_label(c, tr('向西', 'moves west'), 122, ty + 36, '#f6f3ea', 15, 'center', true, 200);
+    e_label(c, tr('歐亞板塊', 'Eurasian Plate'), 838, ty - 20, '#f6f3ea', 16, 'center', true, 200);
+    e_label(c, tr('向東', 'moves east'), 838, ty + 36, '#f6f3ea', 15, 'center', true, 200);
+
+    /* 標註（放在左右欄，用引線指到圖上，不蓋住原圖） */
+    const RX = 746;
+    const rift = currentLang === 'en' ? ['Mid-ocean ridge', '(rift zone)'] : ['中洋脊／裂谷帶'];
+    dvLines(c, rift, RX, rift.length > 1 ? 74 : 90, '#fb923c', 17);
+    dvLeader(c, RX - 6, rift.length > 1 ? 70 : 84, dvMx(1003), dvMy(120), '#fb923c');
+    e_label(c, tr('較古老', 'Older'), RX, ty - 52, '#ffe066', 17, 'left');
+    dvLeader(c, RX - 6, ty - 58, dvMx(1160), ty - 2, '#ffe066');
+    e_label(c, tr('較古老', 'Older'), 30, ty - 52, '#ffe066', 17, 'left');
+    dvLeader(c, 30 + dvW(c, tr('較古老', 'Older'), 17) + 8, ty - 58, dvMx(700), ty - 2, '#ffe066');
+    const yl = currentLang === 'en' ? ['Youngest in', 'the centre'] : ['中央較年輕'];
+    dvLines(c, yl, RX, 262, '#f472b6', 17);
+    dvLeader(c, RX - 6, 256, dvMx(950), dvMy(420), '#f472b6');
+
+    /* 剖面條：沿白色虛線量到的顏色順序 */
+    const SX = RX, SW = 190, sy = 338, tot = DV_TR.seg[4][1] - DV_TR.seg[0][0];
+    e_label(c, tr('沿白色虛線看', 'Along the white line'), SX, sy - 14, '#f6f3ea', 15, 'left', true, 200);
+    DV_TR.seg.forEach(([a, b, col]) => { c.fillStyle = col; c.fillRect(SX + (a - DV_TR.seg[0][0]) / tot * SW, sy, (b - a + 1) / tot * SW, 22); });
+    c.strokeStyle = '#f6f3ea'; c.lineWidth = 2; c.strokeRect(SX, sy, SW, 22);
+    const sax = SX + (DV_TR.axis - DV_TR.seg[0][0]) / tot * SW;
+    c.fillStyle = '#fb923c'; c.beginPath(); c.moveTo(sax, sy + 26); c.lineTo(sax - 7, sy + 38); c.lineTo(sax + 7, sy + 38); c.closePath(); c.fill();
+    e_label(c, tr('西', 'W'), SX, sy + 54, '#f6f3ea', 15, 'left');
+    e_label(c, tr('東', 'E'), SX + SW, sy + 54, '#f6f3ea', 15, 'right');
+    e_label(c, tr('中洋脊', 'ridge'), sax, sy + 58, '#fb923c', 15, 'center');
+    dvLines(c, currentLang === 'en' ? ['Old → young → old:', 'mirror image'] : ['老 → 新 → 老', '兩側對稱'], SX, sy + 88, '#ffe066', 15, 22);
+
+    /* 左欄下方：加速說明；英文版另附圖例翻譯 */
+    dvLines(c, currentLang === 'en' ? ['Arrows = direction.', 'Real plates move only', 'a few cm a year', '(animation sped up).'] : ['箭頭＝板塊移動方向', '實際每年只移動數公分', '（動畫已加速）'], 20, 290, '#f6f3ea', 15, 23);
+    if (currentLang === 'en') {
+      e_label(c, 'Map key (in Chinese):', 20, 392, '#f6f3ea', 15, 'left', true, 210);
+      [['#eb9ba5', 'Youngest'], ['#d6e4b2', 'Middle age'], ['#fded57', 'Oldest']].forEach(([col, s], i) => {
+        const y = 420 + i * 28;
+        c.fillStyle = col; c.fillRect(22, y - 15, 22, 18); c.strokeStyle = '#f6f3ea'; c.lineWidth = 1.5; c.strokeRect(22, y - 15, 22, 18);
+        e_label(c, s, 54, y, '#f6f3ea', 15, 'left');
+      });
+    }
+  }
+
+  function dvDraw(c, t, dt) {
+    dvPointer(); dvTick(dt);
+    if (DVS.mode === 'ice') dvIce(c, t); else dvOcean(c, t);
+  }
+  function dvUI() {
+    DVS.pct = Math.round(DVS.amt);
+    const ocean = DVS.mode === 'ocean', run = DVS.auto || DVS.play;
+    const bo = document.getElementById('dv-ocean'), bi = document.getElementById('dv-ice');
+    if (bo) bo.classList.toggle('active', ocean); if (bi) bi.classList.toggle('active', !ocean);
+    const pb = document.getElementById('dv-play');
+    if (pb) { pb.innerHTML = run ? tr('⏸ 暫停', '⏸ Pause') : tr('▶️ 自動拉開', '▶️ Auto pull'); pb.classList.toggle('active', run); }
+    const sl = document.getElementById('dv-slider'); if (sl && +sl.value !== DVS.pct) sl.value = DVS.pct;
+    const vv = document.getElementById('dv-val'); if (vv) vv.textContent = ocean ? DVS.pct + '%' : '—';
+    const row = document.getElementById('dv-srow'); if (row) row.style.display = ocean ? '' : 'none';
+    const st = document.getElementById('dv-status'); if (!st) return;
+    const auto = DVS.auto ? `<span class="good">▶ ${tr('自動示範中：分離程度從 0% 慢慢拉到 100%，再重新開始。拖曳滑桿、按任何按鈕或點畫布，就換你操作。', 'Auto demo: the separation grows slowly from 0% to 100%, then starts again. Drag the slider, press any button or tap the picture to take over.')}</span><br>` : '';
+    const line = ocean
+      ? tr(`模式：<b>海底擴張</b>　｜　分離程度：<b>${DVS.pct}%</b>　｜　交界地形：<b>中洋脊</b>　｜　中央地殼：<b>最新</b>　｜　板塊方向：<b>向兩側</b>`,
+        `Mode: <b>Seafloor spreading</b>　|　Separation: <b>${DVS.pct}%</b>　|　Landform: <b>mid-ocean ridge</b>　|　Crust in the middle: <b>newest</b>　|　Plate motion: <b>apart, to both sides</b>`)
+      : tr('模式：<b>冰島案例</b>　｜　分離程度：<b>—</b>　｜　交界地形：<b>中洋脊（裂谷帶）</b>　｜　中央地殼：<b>最新</b>　｜　板塊方向：<b>向兩側</b>（北美板塊向西、歐亞板塊向東）',
+        'Mode: <b>Iceland case</b>　|　Separation: <b>—</b>　|　Landform: <b>mid-ocean ridge (rift zone)</b>　|　Crust in the middle: <b>newest</b>　|　Plate motion: <b>apart</b> (North American Plate west, Eurasian Plate east)');
+    const msg = ocean
+      ? tr(`分離程度 ${DVS.pct}%：兩側海洋地殼向外分開，中央裂隙${DVS.pct < 30 ? '還很窄' : DVS.pct < 70 ? '變寬了' : '更寬'}，地函岩漿上升、冷卻成新地殼；分得越開，新地殼越多。<b>中央最新，向外越老。</b>`,
+        `Separation ${DVS.pct}%: the oceanic crust moves outward on both sides, the central gap is ${DVS.pct < 30 ? 'still narrow' : DVS.pct < 70 ? 'wider' : 'wider still'}, and mantle magma rises and cools into new crust. The farther apart, the more new crust. <b>Youngest in the middle, older toward the sides.</b>`)
+      : tr('冰島正好位在大西洋中洋脊上，這段中洋脊在這裡露出海面。橘色虛線是裂谷帶：島中央（粉紅）的岩石年代最年輕，往東、西兩側先變成居中（淺綠），再變成最古老（黃）。<b>中央最新，向外越老。</b>',
+        'Iceland sits right on the Mid-Atlantic Ridge, where the ridge rises above the sea. The orange dashed line is the rift zone: rock in the centre (pink) is youngest, then middle-aged (light green), then oldest (yellow) toward both east and west. <b>Youngest in the middle, older toward the sides.</b>');
+    st.innerHTML = auto + line + '<br>' + msg;
+  }
   /* @@TAB2-END */
 
   /* @@TAB3-BEGIN  sb（隱沒帶與地震深度）—— 動畫代理只改這個區塊與對應的 #sb-stage 內的控制項 */
