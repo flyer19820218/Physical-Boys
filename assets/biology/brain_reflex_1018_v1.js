@@ -284,7 +284,7 @@ const W_MUS=[[1030,512],[1074,488],[1117,457],[1157,417],[1196,381],[1236,354],[
   [1461,342],[1433,377],[1398,421],[1358,457],[1319,484],[1279,512],[1240,532],[1200,547],[1160,555],[1121,532],[1077,512]].map(p=>AM(...p));
 const W_D=AM(1030,512),W_P=AM(1485,306),W_MEND=AM(1326,453);
 // spinal-cord inset drawn upright: back (dorsal) side up, front (ventral) side down
-const CS=1.15,W_GANG=[458,247],W_SYN=[492,281],W_ISOMA=[500,311],W_MSOMA=[488,350],W_IEND=[491,341];
+const CS=1.15,W_GANG=[458,247],W_SYN=[492,281],W_ISOMA=[501,309],W_MSOMA=[488,350],W_IEND=[490,333];
 const UPPER=[[322,294.5],[342,276],[362,259],[382,248],[404,240],[430,238],W_GANG,[478,259],W_SYN]; // sensory route along the top of the upper arm to the dorsal root
 const INTER=[W_SYN,[497,296],W_ISOMA,[497,328],W_IEND],MOTOR=[W_MSOMA,[486,374],[470,390],[440,389],[414,366],[397,338],[385,318]];
 const UP=[[494,279],[503,266],[509,252],[514,232],[521,205],[528,178],[531,158],[527,130],[521,100]],DOWN=[[537,100],[542,130],[546,158],[548,190],[546,222],[538,256],[531,290],[528,322],[518,342],[497,350]];
@@ -319,6 +319,9 @@ function drawMuscle(c,Ct,fa,fp,acting){
 // motor endings spreading into the muscle
 function wFan(c,end,prev,on){const dir=Math.atan2(end[1]-prev[1],end[0]-prev[0]),col=on?C.pink:rgba(C.pink,.6);
   for(const d of [-.75,0,.75]){const tip=[end[0]+Math.cos(dir+d)*13,end[1]+Math.sin(dir+d)*13];line(c,[end,tip],C.ink,5);line(c,[end,tip],col,3);circle(c,...tip,3.5,C.pink,C.ink,1.5);}}
+// a neuron cell body (withdraw and knee tabs): type colour with a purple nucleus, same nucleus style as drawSomaShape
+const NUC='#8e6fd1',NUC_HI='#c4b5fd';
+function cellBody(c,x,y,rx,ry,fill,rot=0){ellipse(c,x,y,rx,ry,fill,C.ink,2.5,rot);const nr=Math.min(rx,ry)*.42;circle(c,x,y,nr,NUC,C.ink,1.8);circle(c,x+nr*.25,y-nr*.2,nr*.3,NUC_HI);}
 function drawWithdraw(c,s,t){
   const isReflex=s.mode==='reflex',names=isReflex?reflex:aware,color=isReflex?C.cyan:C.pink;
   const phase=t*.7,i=s.step<0?Math.floor(phase)%5:s.step,u=phase%1;
@@ -351,9 +354,9 @@ function drawWithdraw(c,s,t){
     kChevrons(c,UP.slice(3,7),C.cyan,1,7);kChevrons(c,DOWN.slice(2,6),C.pink,1,7);
     text(c,P('上傳','Up'),510,196,22,C.cyan,'right');text(c,P('傳下','Down'),558,196,22,C.pink);}
   kChevrons(c,[pose.palm,pose.wrist],C.cyan,1,7);kChevrons(c,UPPER.slice(3,6),C.cyan,1,7);kChevrons(c,MOTOR.slice(3,5),C.pink,1,7);
-  ellipse(c,...W_GANG,13,9,'#bdf3fb',C.ink,2.5); // sensory neuron cell body, outside the cord
-  circle(c,...W_ISOMA,6,C.green,C.ink,2);         // interneuron cell body
-  circle(c,...W_MSOMA,9,mOn?C.pink:'#e9a3c4',C.ink,2.5);
+  cellBody(c,...W_GANG,17,12,'#bdf3fb',.42);       // sensory neuron cell body, outside the cord
+  cellBody(c,...W_ISOMA,12,12,C.green);            // interneuron cell body
+  cellBody(c,...W_MSOMA,13,13,mOn?C.pink:'#e9a3c4'); // motor neuron cell body
   circle(c,...W_SYN,5,C.cyan,C.ink,2);circle(c,...W_IEND,4,C.green,C.ink,1.5); // the two synapses
   // receptor and the travelling message
   const rec=pose.tip;
@@ -366,6 +369,7 @@ function drawWithdraw(c,s,t){
   pill(c,P('肌肉（動器）','Muscle (effector)'),140,180,{active:i===4,color:C.pink,size:22,anchor:mus[5],maxX:400});
   if(!isReflex)wrap(c,P('手已先縮回，之後才覺得痛','The hand has already pulled back. The pain comes later.'),20,118,420,24,C.yellow);
   legend(c,[[C.cyan,P('感覺神經元：傳入','Sensory neuron: in')],[C.green,P('中間神經元：整合','Interneuron: integrates')],[C.pink,P('運動神經元：傳出','Motor neuron: out')]],254,480,380,22);
+  legend(c,[[NUC,P('細胞核','Nucleus')]],512,480,128,22);
   text(c,P('動畫已放慢，不能比較真實傳導速度','Slowed: not a real conduction speed'),254,592,22,C.cyan);
   // the pathway as a vertical chain
   names.forEach((p,k)=>{const y=30+k*106;if(k){arrow(c,795,y-20,795,y-2,k<=i?color:C.edge,3.5);}node(c,p,650,y,290,84,k===i,color);});
@@ -385,7 +389,7 @@ const K_ROUTE=[[506,151],[470,142],[420,132],[372,122],[334,105],[298,85],[270,6
 const K_QT=[KM(634,195),KM(652,201),KM(667,209)],K_PAT=KM(673,227),K_PT_TOP=KM(678,246),K_PT_BOT=KM(673,305),K_TAP=KM(688,284);
 // right panel: muscle zoom block, then the spinal-cord section (turned so its back side faces left, like the body)
 const KB={x:604,y:66,w:328,h:166,cx:768},K_FIB=[[86,12],[112,12],[184,12],[210,12]],K_SPX=730,K_SPY=148;
-const KCX=766,KCY=470,KCS=1.2,K_SYN=[777,441],K_SOMA=[790,437];
+const KCX=766,KCY=470,KCS=1.2,K_SYN=[777,441],K_SOMA=[795,435];
 const K_SENS_PANEL=[[702,180],[652,214],[628,238],[628,382],[642,402],[672,414],[700,428],[718,437],[740,445],[762,446],K_SYN];
 const K_MOT_PANEL=[K_SOMA,[810,426],[838,410],[884,400],[910,384],[910,236],[910,100]];
 // slowed timeline after the tap (seconds): start/end of each step, and the loop used when stepping by hand
@@ -471,10 +475,10 @@ function kCord(c,st,t){
   c.save();c.translate(KCX,KCY);c.rotate(-Math.PI/2);drawCordSection(c,0,0,KCS);c.restore();
   const sOn=st.sens>=-.1&&st.sens<1.1,mOn=st.mot>=-.1&&st.mot<1.15;
   kNeuron(c,K_SENS_PANEL.slice(2),C.cyan,sOn||st.syn,5);
-  ellipse(c,672,414,15,10,'#bdf3fb',C.ink,2.5); // sensory neuron cell body, outside the cord
+  cellBody(c,672,414,19,13,'#bdf3fb',.42); // sensory neuron cell body, outside the cord
   kNeuron(c,K_MOT_PANEL,C.pink,mOn,5);
+  cellBody(c,...K_SOMA,14,14,st.syn||mOn?C.pink:'#e9a3c4'); // motor neuron cell body
   circle(c,K_SYN[0],K_SYN[1],6,C.cyan,C.ink,2); // sensory ending touching the motor neuron = the one synapse
-  circle(c,K_SOMA[0],K_SOMA[1],11,st.syn||mOn?C.pink:'#e9a3c4',C.ink,2.5);
 }
 function kLines(c,p,x,y,size,color,lh){D.tr(p).split('\n').forEach((r,i)=>text(c,r,x,y+i*lh,size,color));}
 function drawKnee(c,s,t){
@@ -539,6 +543,10 @@ function drawKnee(c,s,t){
   const spl=pill(c,P('肌梭（受器）','Muscle spindle (receptor)'),KB.x+40,18,{active:stepOf(1)===1,color:C.yellow,size:22,maxX:KB.x+KB.w});
   line(c,[[K_SPX+18,spl.y+spl.h],[K_SPX+8,K_SPY-12]],C.yellow,2.5);circle(c,K_SPX+8,K_SPY-12,4,C.yellow);
   const lab=P('脊髓：反射中樞','Spinal cord: reflex centre'),lw=measure(c,lab,22)+28;pill(c,lab,KCX-lw/2,550,{active:true,size:22});
+  // the nucleus inside the motor neuron's cell body
+  const nl=P('細胞核','Nucleus'),nw=measure(c,nl,22)+28,nx=Math.min(Math.max(830,936-nw),940-nw);
+  const n0=[nx+16,506],nd=Math.hypot(n0[0]-K_SOMA[0],n0[1]-K_SOMA[1]),n1=[K_SOMA[0]+(n0[0]-K_SOMA[0])/nd*8.5,K_SOMA[1]+(n0[1]-K_SOMA[1])/nd*8.5];
+  line(c,[n0,n1],C.ink,5);line(c,[n0,n1],NUC_HI,2.5);pill(c,nl,nx,504,{color:NUC_HI,size:22,maxX:940});
   const sy=P('突觸','Synapse'),syw=measure(c,sy,22),sx=KCX-(syw+40)/2+40;
   text(c,sy,sx,382,22,st.syn?C.yellow:C.white);line(c,[[K_SYN[0],394],[K_SYN[0],K_SYN[1]-8]],C.white,2);
   text(c,P('脊髓','Spinal cord'),18,124,22,C.white);
