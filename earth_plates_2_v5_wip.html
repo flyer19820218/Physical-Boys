@@ -1403,6 +1403,7 @@
       <div class="controls">
         <p class="pl-hint" data-zh="👉 點選「聚焦」，其餘資訊會淡化，降低視覺負擔。" data-en="👉 Press a focus button and the rest fades to keep things easy to read.">👉 點選「聚焦」，其餘資訊會淡化，降低視覺負擔。</p>
         <div class="ctrl-row">
+          <button class="action-btn btn-green" id="ev-auto" type="button" onclick="evAuto()" data-zh="▶️ 自動示範" data-en="▶️ Auto demo">▶️ 自動示範</button>
           <button class="action-btn mode-btn" id="ev-all" type="button" onclick="evMode('all')" data-zh="🌍 綜合圖" data-en="🌍 Combined">🌍 綜合圖</button>
           <button class="action-btn mode-btn" id="ev-quake" type="button" onclick="evMode('quake')" data-zh="🔵 聚焦地震" data-en="🔵 Focus: earthquakes">🔵 聚焦地震</button>
           <button class="action-btn mode-btn" id="ev-volc" type="button" onclick="evMode('volc')" data-zh="🔴 聚焦火山" data-en="🔴 Focus: volcanoes">🔴 聚焦火山</button>
@@ -3676,10 +3677,266 @@
   /* @@TAB4-END */
 
   /* @@TAB5-BEGIN  ev（全球地震火山 2D 圖）—— 動畫代理只改這個區塊與對應的 #ev-stage 內的控制項 */
-  const EV = { W: 960, H: 540 };
-  function evDraw(c, t, dt) { e_label(c, tr('動畫製作中：全球地震火山 2D 圖', 'Animation in progress: ev'), 480, 270, '#f6f3ea', 24, 'center', true, 640); }
-  function evUI() { const st = document.getElementById('ev-status'); if (st) st.innerHTML = ''; }
-  function evEnter() {}
+  /* 四張圖都是 1672×941（16:9），直接鋪滿 960×540。下列座標都是在畫布座標中，對著圖上實際位置量的。
+     圖上配色：地震＝藍點 #0657b6、火山＝紅點 #d60a16、板塊交界＝橘線 #fa9606（和本頁約定一致）。
+     聚焦圖：被聚焦的保留原色，其餘壓暗（暗紅／深藍），底圖轉灰。 */
+  const EV = {
+    W: 960, H: 540, FADE: 0.6, HOLD: 4.6, PANEL: 482,
+    ORDER: ['all', 'quake', 'volc', 'bound'],
+    SRC: { all: 'earth_plates_2_evidence_all.png', quake: 'earth_plates_2_evidence_quakes.png',
+           volc: 'earth_plates_2_evidence_volcanoes.png', bound: 'earth_plates_2_evidence_boundaries.png' },
+    COL: { quake: '#0657b6', volc: '#d60a16', bound: '#fa9606', hi: '#ffe066' },
+    /* 環太平洋：智利南端 → 南美西岸 → 中美 → 北美西岸 → 阿拉斯加 → 阿留申 → 堪察加 → 日本 → 臺灣 → 菲律賓 → 新幾內亞 → 東加 → 紐西蘭 */
+    RING: [[622, 402], [630, 350], [625, 320], [610, 282], [605, 246], [580, 225], [550, 200], [530, 175], [510, 155], [490, 138], [480, 115],
+           [462, 93], [450, 95], [425, 115], [395, 131], [362, 114], [341, 97], [330, 108], [318, 124], [305, 150], [293, 172], [259, 197],
+           [258, 225], [262, 250], [280, 260], [300, 262], [325, 275], [355, 290], [390, 300], [405, 312], [400, 340], [385, 370], [370, 395], [350, 415]],
+    /* 大西洋中洋脊：北到南 */
+    MAR: [[835, 15], [820, 42], [787, 62], [760, 85], [740, 110], [747, 145], [747, 160], [720, 185], [705, 205], [710, 230], [730, 255],
+          [742, 285], [740, 320], [747, 360], [775, 390], [782, 415]],
+    /* 歐亞地震帶：地圖以太平洋為中心，所以被切成右（地中海）左（中東→喜馬拉雅→蘇門答臘）兩段 */
+    EUR_R: [[780, 170], [820, 160], [850, 152], [880, 160], [910, 170], [940, 185]],
+    EUR_L: [[60, 160], [90, 170], [130, 185], [150, 185], [160, 165], [190, 180], [210, 190], [215, 210]],
+    TW: [258, 192],
+    /* 圖上中文板塊名稱的中心（英文版蓋上英文名） */
+    PLATES: [
+      [['Eurasian Plate'], [176, 89, 245, 104]], [['North American', 'Plate'], [498, 82, 588, 100]],
+      [['Philippine', 'Sea Plate'], [318, 174, 380, 206]], [['Pacific Plate'], [402, 226, 497, 243]],
+      [['Indian', 'Plate'], [148, 224, 215, 238]], [['African', 'Plate'], [72, 297, 141, 315]],
+      [['Australian Plate'], [252, 327, 322, 345]], [['Nazca', 'Plate'], [552, 320, 602, 357]],
+      [['South', 'American', 'Plate'], [646, 289, 697, 327]], [['Antarctic Plate'], [467, 450, 547, 467]]
+    ]  };
+  const EVS = { mode: 'all', from: 'all', p: 1, auto: false, touched: false, hold: 0, img: null, bad: false };
+
+  /* ── 圖片：第一次進分頁才載入；四張都好了才畫 ── */
+  function evLoad() {
+    if (EVS.img) return;
+    EVS.img = {};
+    EV.ORDER.forEach(k => {
+      const im = new Image();
+      im.onerror = () => { EVS.bad = true; };
+      im.src = EV.SRC[k];
+      EVS.img[k] = im;
+    });
+  }
+  const evOk = k => { const im = EVS.img && EVS.img[k]; return !!im && im.complete && im.naturalWidth > 0; };
+
+  /* ── 路徑工具：累積長度、沿線取點 ── */
+  function evCum(P) { if (P.cum) return P.cum; const a = [0]; for (let i = 1; i < P.length; i++) a.push(a[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1])); P.cum = a; return a; }
+  function evAt(P, s) {
+    const cum = evCum(P); let i = 1;
+    while (i < P.length - 1 && cum[i] < s) i++;
+    const w = kClamp((s - cum[i - 1]) / Math.max(1e-6, cum[i] - cum[i - 1]), 0, 1);
+    return [kLerp(P[i - 1][0], P[i][0], w), kLerp(P[i - 1][1], P[i][1], w)];
+  }
+  /* 一顆黃色光點沿著帶子跑，後面拖一段漸淡的光（只是指示位置，不是資料） */
+  function evComet(c, P, t, speed, a, off) {
+    const cum = evCum(P), L = cum[cum.length - 1], loop = L + 160;
+    const head = ((t * speed + (off || 0)) % loop + loop) % loop;
+    const N = 22, step = 9;
+    c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+    e_glow(c, EV.COL.hi, 14);
+    for (let k = 0; k < N; k++) {
+      const s1 = head - k * step, s2 = head - (k + 1) * step;
+      if (s1 < 0 || s2 > L) continue;
+      const p1 = evAt(P, Math.min(L, s1)), p2 = evAt(P, Math.max(0, s2));
+      c.globalAlpha = a * 0.85 * (1 - k / N);
+      c.strokeStyle = EV.COL.hi; c.lineWidth = 6 - 3.5 * k / N;
+      c.beginPath(); c.moveTo(p1[0], p1[1]); c.lineTo(p2[0], p2[1]); c.stroke();
+    }
+    if (head <= L) {
+      const h = evAt(P, head);
+      c.globalAlpha = a; c.fillStyle = '#fffbe0';
+      c.beginPath(); c.arc(h[0], h[1], 5.5, 0, Math.PI * 2); c.fill();
+    }
+    e_noglow(c); c.restore();
+  }
+  /* 脈動圓圈：一圈一圈往外擴散 */
+  function evPulse(c, x, y, t, a, col) {
+    c.save(); c.strokeStyle = col || EV.COL.hi;
+    for (let k = 0; k < 2; k++) {
+      const f = ((t * 0.7 + k * 0.5) % 1);
+      c.globalAlpha = a * (1 - f); c.lineWidth = 3.5 - 2 * f;
+      c.beginPath(); c.arc(x, y, 7 + 22 * f, 0, Math.PI * 2); c.stroke();
+    }
+    c.globalAlpha = a; c.lineWidth = 2.5;
+    c.beginPath(); c.arc(x, y, 6, 0, Math.PI * 2); c.stroke();
+    c.restore();
+  }
+  /* 多行標籤（每行各自鋪底） */
+  function evTag(c, lines, x, y, col, size, a) {
+    c.save(); c.globalAlpha = a;
+    lines.forEach((s, i) => e_label(c, s, x, y + i * (size + 5), col, size, 'center'));
+    c.restore();
+  }
+
+  /* ── 各模式的標示 ── */
+  /* a：光點與光線的透明度；b：文字標籤與圓圈的透明度（切換時舊的先消失、新的才出現，字不會疊在一起）。
+     環太平洋光點在三種模式都有，另外畫（evDraw），切換時不會閃。 */
+  function evMarks(c, m, t, a, b) {
+    const tw = EV.TW;
+    if (b > 0.01 && m !== 'bound') {
+      const ring = m === 'quake' ? [tr('環太平洋', 'Pacific'), tr('地震帶', 'Ring of Fire')]
+        : m === 'volc' ? [tr('環太平洋', 'Pacific'), tr('火山帶', 'Ring of Fire')]
+        : [tr('環太平洋', 'Pacific'), tr('火山地震帶', 'Ring of Fire')];
+      evTag(c, ring, 462, 300, EV.COL.hi, 16, b);
+    }
+    if (b > 0.01 && (m === 'all' || m === 'volc')) {
+      evPulse(c, tw[0], tw[1], t, b);
+      c.save(); c.globalAlpha = b; e_arrow(c, 233, 170, 249, 184, EV.COL.hi, 2.5, 9); c.restore();
+      evTag(c, [tr('臺灣', 'Taiwan')], 220, 166, EV.COL.hi, 15, b);
+    }
+    if (m === 'quake' && a > 0.01) {
+      evComet(c, EV.EUR_L, t, 70, a);
+      evComet(c, EV.EUR_R, t, 70, a, 60);
+      if (b > 0.01) {
+        evPulse(c, 190, 180, t, b);
+        c.save(); c.globalAlpha = b; e_arrow(c, 172, 147, 184, 168, EV.COL.hi, 2.5, 9); c.restore();
+        evTag(c, [tr('歐亞地震帶', 'Eurasian belt')], 150, 140, EV.COL.hi, 15, b);
+      }
+    }
+    if (m === 'bound' && a > 0.01) {
+      evComet(c, EV.MAR, t, 120, a);
+      if (b > 0.01) {
+        evPulse(c, 742, 285, t, b);
+        c.save(); c.globalAlpha = b; e_arrow(c, 778, 284, 754, 285, EV.COL.hi, 2.5, 9); c.restore();
+        evTag(c, currentLang === 'en' ? ['Mid-Atlantic', 'Ridge'] : ['大西洋', '中洋脊'], 822, 280, EV.COL.hi, 15, b);
+      }
+    }
+  }
+
+  /* 英文版：用一塊底蓋住圖上的中文板塊名（底的範圍＝中文字範圍與英文字範圍的聯集），再寫英文 */
+  function evPlateEn(c, ls, b) {
+    const sz = 15, lh = 19, cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2;
+    const w = Math.max(...ls.map(s => e_w(c, s, sz))), h = ls.length * lh;
+    const x0 = Math.min(b[0] - 4, cx - w / 2 - 6), x1 = Math.max(b[2] + 4, cx + w / 2 + 6);
+    const y0 = Math.min(b[1] - 4, cy - h / 2 - 3), y1 = Math.max(b[3] + 4, cy + h / 2 + 3);
+    c.fillStyle = 'rgba(13, 32, 26, 0.93)'; e_rr(c, x0, y0, x1 - x0, y1 - y0, 7); c.fill();
+    ls.forEach((s, i) => e_txt(c, s, cx, cy - h / 2 + lh * (i + 0.5) + sz * 0.36, '#f6f3ea', sz, 'center'));
+  }
+
+  const EV_NAME = m => ({ all: tr('綜合圖', 'Combined map'), quake: tr('聚焦：地震', 'Focus: earthquakes'),
+    volc: tr('聚焦：火山', 'Focus: volcanoes'), bound: tr('聚焦：板塊交界', 'Focus: plate boundaries') })[m];
+  const EV_KEY = m => ({
+    all: tr('藍點（地震）、紅點（火山）和橘線（板塊交界）常常出現在同一個地方', 'Blue dots (quakes), red dots (volcanoes) and orange lines (boundaries) often overlap'),
+    quake: tr('地震不是到處都有：集中在板塊交界附近，排成細長的帶狀', 'Earthquakes are not everywhere: they gather along plate boundaries in long, narrow belts'),
+    volc: tr('火山也排成帶狀，常和地震在一起；最明顯的是環太平洋火山帶', 'Volcanoes also form belts, often with quakes; the clearest is the Pacific Ring of Fire'),
+    bound: tr('交界線和地震、火山的帶子高度重疊；交界也會在海洋正中央（中洋脊）', 'Boundaries match the quake and volcano belts; some run down the middle of an ocean (ridges)')
+  })[m];
+  const EV_KCOL = { all: '#f6f3ea', quake: '#55e9ff', volc: '#f472b6', bound: '#fb923c' };
+
+  /* ── 底部面板：重點一句＋雙語圖例（蓋住圖片原本只有中文的圖例） ── */
+  function evPanel(c, m, e) {
+    const Y = EV.PANEL;
+    c.fillStyle = '#16302a'; c.fillRect(0, Y, EV.W, EV.H - Y);
+    c.fillStyle = EV_KCOL[m]; c.globalAlpha = 0.8; c.fillRect(0, Y, EV.W, 2); c.globalAlpha = 1;
+    if (EVS.auto) { c.fillStyle = EV.COL.hi; c.fillRect(0, Y, EV.W * kClamp(EVS.hold / EV.HOLD, 0, 1), 3); }
+    c.save(); c.globalAlpha = 0.35 + 0.65 * e;
+    e_txt(c, EV_KEY(m), EV.W / 2, Y + 24, EV_KCOL[m], 17, 'center', 920);
+    c.restore();
+    /* 圖例：聚焦哪一項就亮，其餘照圖上的樣子畫成暗色 */
+    const items = [
+      { k: 'quake', s: tr('地震', 'Earthquake') }, { k: 'volc', s: tr('火山', 'Volcano') },
+      { k: 'bound', s: tr('板塊交界', 'Plate boundary') }
+    ];
+    const extra = m === 'all' ? tr('黃色光點＝標示位置', 'yellow glow = pointer') : tr('暗色＝淡化　黃色光點＝標示位置', 'dark = faded   yellow glow = pointer');
+    const sz = 15, gap = 26, sym = 22;
+    const ws = items.map(it => sym + e_w(c, it.s, sz));
+    const wx = e_w(c, extra, sz);
+    let x = (EV.W - (ws.reduce((a, b) => a + b, 0) + gap * 3 + wx)) / 2;
+    const yy = Y + 47, ym = yy - 5;
+    items.forEach((it, i) => {
+      const on = m === 'all' || m === it.k;
+      const col = on ? EV.COL[it.k] : (it.k === 'volc' ? '#5a1c22' : it.k === 'quake' ? '#1d3150' : EV.COL[it.k]);
+      if (it.k === 'bound') {
+        c.strokeStyle = col; c.lineWidth = 5; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(x + 1, ym); c.lineTo(x + 16, ym); c.stroke();
+      } else {
+        c.fillStyle = col; c.beginPath(); c.arc(x + 8, ym, 6.5, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = on ? '#f6f3ea' : 'rgba(246,243,234,0.45)'; c.lineWidth = 1.6; c.stroke();
+      }
+      e_txt(c, it.s, x + sym, yy, on ? '#f6f3ea' : '#9fb3aa', sz, 'left');
+      x += ws[i] + gap;
+    });
+    e_txt(c, extra, x, yy, '#cfdad5', sz, 'left');
+  }
+
+  function evDraw(c, t, dt) {
+    evLoad();
+    const m = EVS.mode, f = EVS.from;
+    if (!evOk(m) || !evOk(f)) {
+      const msg = EVS.bad ? tr('地圖圖片載入失敗，請重新整理頁面', 'Could not load the map. Please reload the page.') : tr('地圖載入中…', 'Loading map…');
+      e_label(c, msg, EV.W / 2, EV.H / 2, '#f6f3ea', 22, 'center');
+      if (!EVS.bad) for (let i = 0; i < 8; i++) {
+        c.fillStyle = `rgba(255,224,102,${((i / 8 + t * 1.2) % 1).toFixed(2)})`;
+        const a = i * Math.PI / 4;
+        c.beginPath(); c.arc(EV.W / 2 + 28 * Math.cos(a), EV.H / 2 + 50 + 28 * Math.sin(a), 5, 0, Math.PI * 2); c.fill();
+      }
+      return;
+    }
+    /* 自動示範：每張停 HOLD 秒，依序 綜合→地震→火山→交界，循環 */
+    if (EVS.auto) {
+      EVS.hold += dt;
+      if (EVS.hold >= EV.HOLD) { EVS.hold = 0; evSet(EV.ORDER[(EV.ORDER.indexOf(m) + 1) % 4]); evUI(); }
+    }
+    EVS.p = Math.min(1, EVS.p + dt / EV.FADE);
+    const e = kEase(EVS.p), M = EVS.mode, F = EVS.from;
+    /* 交叉淡入淡出 */
+    if (e < 1) c.drawImage(EVS.img[F], 0, 0, EV.W, EV.H);
+    c.save(); c.globalAlpha = e; c.drawImage(EVS.img[M], 0, 0, EV.W, EV.H); c.restore();
+    /* 英文版：把圖上的中文板塊名蓋上英文 */
+    if (currentLang === 'en') EV.PLATES.forEach(([ls, b]) => evPlateEn(c, ls, b));
+    const ringA = (F !== 'bound' ? 1 - e : 0) + (M !== 'bound' ? e : 0);
+    if (ringA > 0.01) evComet(c, EV.RING, t, 150, Math.min(1, ringA));
+    if (F !== M && e < 1) evMarks(c, F, t, 1 - e, Math.max(0, 1 - 2 * e));
+    evMarks(c, M, t, e, F === M ? 1 : Math.max(0, 2 * e - 1));
+    /* 左上角：目前看的是哪一張 */
+    e_label(c, EV_NAME(M), 70, 42, EV_KCOL[M], 17, 'left');
+    if (EVS.auto) {
+      const w = e_w(c, EV_NAME(M), 17);
+      e_label(c, tr(`▶ 自動示範 ${EV.ORDER.indexOf(M) + 1}/4`, `▶ Auto demo ${EV.ORDER.indexOf(M) + 1}/4`), 70 + w + 22, 42, EV.COL.hi, 15, 'left');
+    }
+    evPanel(c, M, e);
+  }
+
+  /* ── 操作 ── */
+  function evSet(m) {
+    if (m === EVS.mode) return;
+    if (EVS.p >= 0.5) EVS.from = EVS.mode;
+    EVS.mode = m; EVS.p = 0;
+  }
+  function evTouch() { EVS.touched = true; EVS.auto = false; }
+  function evMode(m) { evTouch(); evSet(m); evUI(); }
+  function evAuto() {
+    if (EVS.auto) evTouch();
+    else { EVS.touched = true; EVS.auto = true; EVS.hold = 0; }
+    evUI();
+  }
+  function evAutoStart() { EVS.auto = true; EVS.hold = 0; EVS.mode = 'all'; EVS.from = 'all'; EVS.p = 1; evUI(); }
+  let evPtr = false;
+  function evPointer() {
+    const cv = document.getElementById('evCanvas'); if (!cv || evPtr) return; evPtr = true;
+    cv.addEventListener('pointerdown', () => { if (EVS.auto) { evTouch(); evUI(); } else EVS.touched = true; });
+  }
+  function evEnter() { evLoad(); evPointer(); if (!EVS.touched) evAutoStart(); else evUI(); }
+  function evUI() {
+    EV.ORDER.forEach(k => { const b = document.getElementById('ev-' + k); if (b) b.classList.toggle('active', EVS.mode === k); });
+    const ab = document.getElementById('ev-auto');
+    if (ab) { ab.innerHTML = EVS.auto ? tr('⏸ 暫停', '⏸ Pause') : tr('▶️ 自動示範', '▶️ Auto demo'); ab.classList.toggle('active', EVS.auto); }
+    const st = document.getElementById('ev-status'); if (!st) return;
+    const auto = EVS.auto ? `<span class="good">▶ ${tr('自動示範中：綜合圖 → 聚焦地震 → 聚焦火山 → 聚焦交界，每張約 4～5 秒，然後循環。按任何按鈕或點一下地圖，就換你操作。', 'Auto demo: combined → earthquakes → volcanoes → boundaries, about 4 to 5 seconds each, then it repeats. Press any button or tap the map to take over.')}</span><br>` : '';
+    const msg = {
+      all: tr('<b>綜合圖</b>：藍點＝地震、紅點＝火山、橘線＝板塊交界。三者常常出現在同一個地方，而不是平均散在整個地球上。',
+              '<b>Combined map</b>: blue dots = earthquakes, red dots = volcanoes, orange lines = plate boundaries. All three often show up in the same places instead of being spread evenly over the Earth.'),
+      quake: tr('<b>聚焦地震</b>：地震不是均勻散布，而是沿著板塊交界排成細長的<b>帶狀</b>。最密集的是<b>環太平洋</b>，另一條是從地中海經過喜馬拉雅山的<b>歐亞地震帶</b>。',
+                '<b>Focus on earthquakes</b>: earthquakes are not spread evenly; they line up along plate boundaries in long, narrow <b>belts</b>. The busiest is the <b>Pacific Ring of Fire</b>; another is the <b>Eurasian belt</b> from the Mediterranean through the Himalayas.'),
+      volc: tr('<b>聚焦火山</b>：活火山也呈<b>帶狀</b>，常和地震出現在一起，許多沿著<b>環太平洋</b>排列（臺灣也在這條帶上）。但並不是每一段板塊交界都有火山。',
+               '<b>Focus on volcanoes</b>: active volcanoes also form <b>belts</b> and often appear with earthquakes; many line the <b>Pacific Ring of Fire</b> (Taiwan is on it too). Not every plate boundary has volcanoes, though.'),
+      bound: tr('<b>聚焦交界</b>：把橘色交界線和前面兩張比一比，地震與火山大多落在交界附近，三者<b>高度重疊</b>。交界不一定沿著海岸線，例如<b>大西洋中洋脊</b>就在海洋的正中央。',
+                '<b>Focus on boundaries</b>: compare the orange lines with the two maps before. Most earthquakes and volcanoes sit near the boundaries; the three <b>overlap closely</b>. A boundary does not have to follow a coastline: the <b>Mid-Atlantic Ridge</b> runs down the middle of the ocean.')
+    }[EVS.mode];
+    const note = tr('（黃色光點與圓圈只是標示位置用；地圖上的藍點、紅點與橘線才是資料。）', '(The yellow glow and circles only point things out; the blue dots, red dots and orange lines are the data.)');
+    st.innerHTML = auto + msg + '<br>' + note;
+  }
   /* @@TAB5-END */
 
   /* ==================================================================
