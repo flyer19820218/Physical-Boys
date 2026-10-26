@@ -2014,6 +2014,39 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     stats,
     // 檢查用：直接設定星球角度（尤拉角，弧度）與縮放
     debugPose(rx, ry, rz, zoom = 1) { flight = null; omega.set(0, 0, 0); planet.quaternion.setFromEuler(new THREE.Euler(rx, ry, rz)); state.zoomP = zoom; lastInteract = performance.now() + 1e9; invalidate(); },
+    // 錄影用：站在某座館雕像前方 a 單位處，面向雕像（a 越小越靠近）
+    debugWalk(hallId, a, beta = 0) {
+      const hi = halls.findIndex(h => h.id === hallId);
+      if (hi < 0) return;
+      const { n, E } = bases[hi];
+      const Zl = new THREE.Vector3().crossVectors(E, n).normalize();
+      const ps = n.clone().normalize();
+      const ang = a / R;
+      const dirT = Zl.clone().multiplyScalar(Math.cos(beta)).addScaledVector(E, Math.sin(beta));
+      const f = ps.clone().multiplyScalar(Math.cos(ang)).addScaledVector(dirT, Math.sin(ang)).normalize();
+      const t = ps.clone().addScaledVector(f, -ps.dot(f)).normalize();
+      const r = new THREE.Vector3().crossVectors(t, f);
+      const Q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(r, t, f).invert());
+      flight = null; omega.set(0, 0, 0);
+      state.mode = 'planet'; state.k = 0; state.zoomP = minZoomP();
+      planet.quaternion.copy(Q);
+      walkSnapped = true; lastInteract = performance.now() + 1e9;
+      groundH = groundTargetH();
+      invalidate();
+    },
+    // 錄影用：把星球轉到某座館正對鏡頭（含傾斜），回傳 true
+    faceHall(hallId) {
+      const hi = halls.findIndex(h => h.id === hallId);
+      if (hi < 0) return false;
+      state.mode = 'planet';
+      const want = new THREE.Vector3(0, Math.sin(0.28), Math.cos(0.28)).normalize();
+      startFlight(new THREE.Quaternion().setFromUnitVectors(bases[hi].n.clone().normalize(), want), 0, false, 0, -1);
+      return true;
+    },
+    // 錄影用：顯示／隱藏路邊的單元看板
+    debugSigns(v) { signSprites.forEach(sp => { sp.visible = !!v; }); invalidate(); },
+    // 錄影用：目前模式與狀態
+    debugState() { return { mode: state.mode, k: state.k, zoomP: state.zoomP, gb: groundBlend(), flight: !!flight, intro: !!intro }; },
     // 檢查用：把開場停在某個進度 u（0～1）
     debugIntro(u) { if (!intro) beginIntro(); intro.phase = 'fly'; intro.fixedU = u; invalidate(); },
     // 檢查用：回傳某個東西在畫面上的位置（像素）
