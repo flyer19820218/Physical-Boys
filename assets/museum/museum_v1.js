@@ -1,10 +1,10 @@
 // 伽利略星球入口：載入資料、建立畫面層、（可用時）建立 3D 場景、處理網址路由。
 // 改版時請同步更新 index.html（首頁）、本檔與下面兩個 import 的 ?v= 版本字串。
-import { createUI } from './ui.js?v=20261026n';
-import { startLaunch } from './launch.js?v=20261026n';
-import { loadNarration } from './narration.js?v=20261026n';
+import { createUI } from './ui.js?v=20261026o';
+import { startLaunch } from './launch.js?v=20261026o';
+import { loadNarration } from './narration.js?v=20261026o';
 
-const VERSION = '20261026n';
+const VERSION = '20261026o';
 
 const CONFIG = {
   // 舊版清單（原本的首頁）。伽利略星球已經是 index.html。
@@ -30,10 +30,10 @@ function saveLang(l) {
   try { localStorage.setItem('galileo.lang', l); } catch (e) { /* ignore */ }
 }
 
-// 開場（煙霧＋歡迎詞＋太空梭飛進來）：同一台裝置 3 小時內只播一次（從課程分頁按回首頁不會一直重播）；
+// 開場（煙霧＋歡迎詞＋太空梭飛進來）：每次重新開啟網頁都播一次（同一分頁內從課程按回首頁不重播）；
 // 直接連到某一館時不播。?intro=1 強制播放、?intro=0 不播。
 const INTRO_KEY = 'galileo.introAt';
-const INTRO_GAP = 3 * 60 * 60 * 1000;
+const INTRO_GAP = 0; // 0 = 每次重新開啟網頁都播（同一分頁內回到首頁不重播，由 sessionStorage 擋）
 function shouldIntro() {
   const q = params.get('intro');
   if (q === '0') return false;
