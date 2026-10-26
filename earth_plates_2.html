@@ -2726,7 +2726,7 @@
      地殼年齡只跟離中洋脊的距離有關（越遠越老），所以年齡條帶固定在中洋脊兩側；
      真正在移動的是地殼本身（小紋路隨 off 向外漂），原本的老地殼被推向兩側。 */
   const DV = { W: 960, H: 540, CX: 480, SEA: 56, TOP: 250, BOT: 306, OFF0: 18, OFFMAX: 312, BAND: 82 };
-  const DVS = { mode: 'ocean', amt: 45, auto: false, play: false, touched: false, hold: 0, pct: -1, ph: 0, mov: 0, drag: null };
+  const DVS = { mode: 'ocean', amt: 45, auto: false, play: false, touched: false, hold: 0, pct: -1, ph: 0, mov: 0, cv: 0, drag: null };
   const DV_BANDS = ['#c9dae8', '#a3b9cc', '#839aaf', '#687f94', '#4f6377'];   /* 海洋地殼＝藍灰：同色系，越亮越年輕 */
   const DV_QK = '#5aa9ff';                                                       /* 地震＝藍點（與分頁一相同） */
   const DV_IMG = new Image(); DV_IMG.src = 'earth_plates_2_iceland_age.png';      /* 1448×1086 */
@@ -2798,6 +2798,7 @@
     }
     DVS.mov = kLerp(DVS.mov, DVS.amt > prev + 1e-6 ? 1 : 0, Math.min(1, dt * 6));
     DVS.ph += dt * (1 + 1.4 * DVS.mov);
+    DVS.cv += dt * (24 + 66 * DVS.mov);   /* 地函對流流速：拉開時加快（示意，不依比例） */
     if (Math.round(DVS.amt) !== DVS.pct) dvUI();
   }
 
@@ -2823,6 +2824,68 @@
     for (let d = d1; ; d += st) { const dd = Math.min(d, d2); const x = DV.CX + side * dd; if (d === d1) c.moveTo(x, dvTop(dd)); else c.lineTo(x, dvTop(dd)); if (dd >= d2) break; }
     c.lineTo(DV.CX + side * d2, DV.BOT); c.lineTo(DV.CX + side * d1, DV.BOT); c.closePath(); c.fill();
   }
+  /* ── 地函熱對流（示意，不依比例）：右圈＝圓角矩形路徑，左圈鏡像 ── */
+  const DV_CV = { X0: 26, X1: 410, Y0: 330, Y1: 486, R: 50, GAP: 64, HOT: '#ffd166', COLD: '#93a9c2' };
+  let dvCvPath = null;
+  function dvCvBuild() {   /* 以「離中洋脊的距離 d、深度 y」取樣；起點在內側下方，流向：上升 → 往外 → 下沉 → 往內 */
+    const { X0, X1, Y0, Y1, R } = DV_CV, P = [];
+    const seg = (x1, y1, x2, y2) => { const n = Math.max(2, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / 4)); for (let i = 0; i < n; i++) P.push([x1 + (x2 - x1) * i / n, y1 + (y2 - y1) * i / n]); };
+    const arc = (cx, cy, a1, a2) => { const n = 14; for (let i = 0; i < n; i++) { const a = a1 + (a2 - a1) * i / n; P.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]); } };
+    const H = Math.PI / 2;
+    seg(X0, Y1 - R, X0, Y0 + R); arc(X0 + R, Y0 + R, Math.PI, Math.PI + H);
+    seg(X0 + R, Y0, X1 - R, Y0); arc(X1 - R, Y0 + R, -H, 0);
+    seg(X1, Y0 + R, X1, Y1 - R); arc(X1 - R, Y1 - R, 0, H);
+    seg(X1 - R, Y1, X0 + R, Y1); arc(X0 + R, Y1 - R, H, Math.PI);
+    const L = [0]; for (let i = 1; i <= P.length; i++) { const a = P[i - 1], b = P[i % P.length]; L.push(L[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1])); }
+    dvCvPath = { P, L, len: L[P.length] };
+  }
+  function dvCvAt(s) {   /* 弧長 s → [d, y, 方向dx, 方向dy] */
+    const { P, L, len } = dvCvPath; s = ((s % len) + len) % len;
+    let lo = 0, hi = P.length; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (L[m] <= s) lo = m; else hi = m; }
+    const a = P[lo], b = P[(lo + 1) % P.length], f = (s - L[lo]) / ((L[lo + 1] - L[lo]) || 1), l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, (b[0] - a[0]) / l, (b[1] - a[1]) / l];
+  }
+  function dvCvHeat(d, y) {   /* 1＝熱（中洋脊下方），0＝冷（遠處下沉處）；底部回流在內側被加熱 */
+    const xn = kClamp((d - DV_CV.X0) / (DV_CV.X1 - DV_CV.X0), 0, 1);
+    return kClamp(1 - kEase(xn) * (y < (DV_CV.Y0 + DV_CV.Y1) / 2 ? 1 : 0.92), 0, 1);
+  }
+  function dvConvect(c) {
+    if (!dvCvPath) dvCvBuild();
+    const { P, len } = dvCvPath, { CX } = DV, G = DV_CV;
+    c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+    [-1, 1].forEach(sd => {
+      /* 流線底帶：依冷熱著色 */
+      for (let i = 0; i < P.length; i += 3) {
+        const a = P[i], b = P[(i + 3) % P.length], h = dvCvHeat(a[0], a[1]);
+        c.strokeStyle = kMix(G.COLD, G.HOT, h); c.globalAlpha = 0.3; c.lineWidth = 20;
+        c.beginPath(); c.moveTo(CX + sd * a[0], a[1]); c.lineTo(CX + sd * b[0], b[1]); c.stroke();
+      }
+      c.globalAlpha = 1;
+      /* 沿流線前進的粗箭頭 */
+      const n = Math.floor(len / G.GAP);
+      for (let k = 0; k < n; k++) {
+        const s = DVS.cv + k * len / n, [d, y, ux0, uy] = dvCvAt(s), ux = ux0 * sd, x = CX + sd * d;
+        const col = kMix(G.COLD, G.HOT, dvCvHeat(d, y));
+        c.beginPath(); for (let q = 0; q <= 6; q++) { const p = dvCvAt(s - 24 + q * 3); if (q) c.lineTo(CX + sd * p[0], p[1]); else c.moveTo(CX + sd * p[0], p[1]); }
+        c.strokeStyle = 'rgba(16,36,29,0.75)'; c.lineWidth = 9; c.stroke();
+        c.strokeStyle = col; c.lineWidth = 5; c.stroke();
+        const hx = x + ux * 9, hy = y + uy * 9, px = -uy, py = ux;
+        c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx - ux * 18 + px * 10, hy - uy * 18 + py * 10); c.lineTo(hx - ux * 18 - px * 10, hy - uy * 18 - py * 10); c.closePath();
+        c.strokeStyle = 'rgba(16,36,29,0.85)'; c.lineWidth = 4; c.stroke(); c.fillStyle = col; c.fill();
+      }
+    });
+    c.restore();
+  }
+  function dvConvLabels(c) {
+    const { CX } = DV, G = DV_CV, en = currentLang === 'en';
+    e_label(c, tr('地函', 'Mantle'), 96, 376, '#fdba74', 18, 'left');
+    e_label(c, tr('熱對流示意，不依比例', 'Convection sketch, not to scale'), 96, 401, '#f6f3ea', 13, 'left');
+    e_label(c, tr('熱的地函物質上升', 'Hot mantle rock rises'), CX - 48, 442, G.HOT, 15, 'right');
+    e_label(c, tr('在岩石圈底下往兩側流動', 'Flows sideways under the lithosphere'), CX + 215, 368, G.HOT, 15, 'center');
+    e_label(c, tr('冷卻後下沉', 'Cools and sinks'), 96, 458, G.COLD, 15, 'left');
+    e_label(c, tr('冷卻後下沉', 'Cools and sinks'), CX + G.X1 - 22, 458, G.COLD, 15, 'right');
+    e_label(c, tr('原因：地函對流拖著板塊往兩側分離', 'Cause: mantle convection drags the plates apart'), 940, 104, '#fdba74', en ? 15 : 16, 'right');
+  }
   function dvOcean(c, t) {
     const { CX, SEA, BOT, BAND } = DV, off = dvOff(), gap = dvGap(), a = DVS.amt / 100;
     /* 海水 */
@@ -2836,14 +2899,8 @@
     g = c.createLinearGradient(0, BOT, 0, DV.H);
     g.addColorStop(0, '#a3432a'); g.addColorStop(1, '#6a2417');
     c.fillStyle = g; c.fillRect(0, BOT, DV.W, DV.H - BOT);
-    /* 地函裡緩慢上升、往中央匯集的岩漿粒子 */
-    for (let i = 0; i < 28; i++) {
-      const P = 6 + labH(i + 1) * 5, u = (DVS.ph / P + labH(i + 40)) % 1;
-      const x0 = 120 + labH(i + 3) * 720, y = 534 - u * 200;
-      const x = kLerp(x0, CX + (x0 - CX) * 0.12, kEase(u)), al = Math.sin(Math.PI * u);
-      kBlob(c, '#fb923c', x, y, 11, 0.55 * al);
-      c.globalAlpha = 0.9 * al; c.fillStyle = '#ffd08a'; c.beginPath(); c.arc(x, y, 2.6, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
-    }
+    /* 地函熱對流：中洋脊下方上升 → 岩石圈底下往兩側流 → 遠處冷卻下沉（左右各一圈） */
+    dvConvect(c);
     /* 岩漿庫＋上升通道 */
     const pulse = 0.5 + 0.5 * Math.sin(t * 2.2);
     kBlob(c, '#fb923c', CX, 344, 120, 0.45 + 0.15 * pulse);
@@ -2923,10 +2980,10 @@
     e_label(c, tr('最老', 'Oldest'), CX + oldMid, LY, '#f6f3ea', 15, 'center', true, 480 - off - 16);
     e_label(c, tr('海洋地殼', 'Oceanic crust'), CX - oldMid, LY, '#f6f3ea', 15, 'center', true, 480 - off - 16);
     if (off > 120) e_label(c, tr('較老', 'Older'), CX + Math.min(off - 30, BAND * 1.5), LY, '#f6f3ea', 15, 'center');
-    e_label(c, tr('岩漿上升', 'Magma rises'), CX + 92, 351, '#ffe066', 16, 'left');
-    e_label(c, tr('地函', 'Mantle'), 34, 452, '#fdba74', 18, 'left');
+    e_label(c, tr('岩漿上升', 'Magma rises'), CX + 52, 412, '#ffe066', 16, 'left');
+    dvConvLabels(c);
     /* 圖例：地震 */
-    const qx = 772, qy = 452;
+    const qx = 34, qy = 146;
     c.fillStyle = DV_QK; c.beginPath(); c.arc(qx, qy - 6, 6, 0, Math.PI * 2); c.fill();
     e_label(c, tr('淺層地震', 'Shallow quake'), qx + 14, qy, '#f6f3ea', 15, 'left');
     e_label(c, tr('箭頭＝方向；實際每年只移動數公分，動畫已加速', 'Arrows = direction. Real plates move only a few cm a year; the animation is sped up.'), CX, 524, '#f6f3ea', 15, 'center', true, 920);
@@ -3037,8 +3094,8 @@
       : tr('模式：<b>冰島案例</b>　｜　分離程度：<b>—</b>　｜　交界地形：<b>中洋脊（裂谷帶）</b>　｜　中央地殼：<b>最新</b>　｜　板塊方向：<b>向兩側</b>（北美板塊向西、歐亞板塊向東）',
         'Mode: <b>Iceland case</b>　|　Separation: <b>—</b>　|　Landform: <b>mid-ocean ridge (rift zone)</b>　|　Crust in the middle: <b>newest</b>　|　Plate motion: <b>apart</b> (North American Plate west, Eurasian Plate east)');
     const msg = ocean
-      ? tr(`分離程度 ${DVS.pct}%：兩側海洋地殼向外分開，中央裂隙${DVS.pct < 30 ? '還很窄' : DVS.pct < 70 ? '變寬了' : '更寬'}，地函岩漿上升、冷卻成新地殼；分得越開，新地殼越多。<b>中央最新，向外越老。</b>`,
-        `Separation ${DVS.pct}%: the oceanic crust moves outward on both sides, the central gap is ${DVS.pct < 30 ? 'still narrow' : DVS.pct < 70 ? 'wider' : 'wider still'}, and mantle magma rises and cools into new crust. The farther apart, the more new crust. <b>Youngest in the middle, older toward the sides.</b>`)
+      ? tr(`分離程度 ${DVS.pct}%：兩側海洋地殼向外分開，中央裂隙${DVS.pct < 30 ? '還很窄' : DVS.pct < 70 ? '變寬了' : '更寬'}，地函岩漿上升、冷卻成新地殼；分得越開，新地殼越多。<b>中央最新，向外越老。</b><br><b>為什麼會分開？</b>地函內部受熱的物質較輕而上升，到岩石圈底下往兩側流動，在遠處冷卻變重後下沉，形成左右兩個對流圈（熱對流示意，不依比例）。<b>地函對流拖著板塊往兩側分離。</b>`,
+        `Separation ${DVS.pct}%: the oceanic crust moves outward on both sides, the central gap is ${DVS.pct < 30 ? 'still narrow' : DVS.pct < 70 ? 'wider' : 'wider still'}, and mantle magma rises and cools into new crust. The farther apart, the more new crust. <b>Youngest in the middle, older toward the sides.</b><br><b>Why do they separate?</b> Heated mantle rock is lighter and rises, flows sideways under the lithosphere, then cools, becomes denser and sinks far away, making two convection cells, one on each side (convection sketch, not to scale). <b>Mantle convection drags the plates apart.</b>`)
       : tr('冰島正好位在大西洋中洋脊上，這段中洋脊在這裡露出海面。橘色虛線是裂谷帶：島中央（粉紅）的岩石年代最年輕，往東、西兩側先變成居中（淺綠），再變成最古老（黃）。<b>中央最新，向外越老。</b>',
         'Iceland sits right on the Mid-Atlantic Ridge, where the ridge rises above the sea. The orange dashed line is the rift zone: rock in the centre (pink) is youngest, then middle-aged (light green), then oldest (yellow) toward both east and west. <b>Youngest in the middle, older toward the sides.</b>');
     st.innerHTML = auto + line + '<br>' + msg;
