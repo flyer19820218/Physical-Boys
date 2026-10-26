@@ -13,13 +13,15 @@ const outDir = process.argv[3] || '/tmp/promo_frames_' + aspect;
 const FPS = +(process.argv[4] && !process.argv[4].startsWith('--') ? process.argv[4] : 24);
 const onlyArg = process.argv.find(a => a.startsWith('--only='));
 const only = onlyArg ? onlyArg.split('=')[1] : null;
+const tailArg = process.argv.find(a => a.startsWith('--tail='));
+const TAIL = tailArg ? +tailArg.split('=')[1] : null; // 只重拍「總結＋結尾」，從第幾格開始
 const BASE = process.env.PROMO_BASE || 'http://localhost:8765/';
 const VIEW = aspect === 'v' ? { width: 720, height: 1280 } : { width: 1280, height: 720 };
 const timeline = JSON.parse(fs.readFileSync(path.join(__dirname, 'timeline.json'), 'utf8'));
 fs.mkdirSync(outDir, { recursive: true });
 
 const DT = 1000 / FPS;
-let frameNo = 0;
+let frameNo = TAIL || 0;
 const marks = {};
 
 (async () => {
@@ -34,7 +36,11 @@ const marks = {};
     window.cancelAnimationFrame = id => { q = q.filter(x => x[0] !== id); };
     window.__tick = () => { const l = q; q = []; const t = performance.now(); for (const [, cb] of l) { try { cb(t); } catch (e) { console.error(e); } } return l.length; };
   });
-  await page.goto(BASE + 'index.html?intro=1&voice=0&promo=1', { waitUntil: 'domcontentloaded' });
+  // 時鐘預設會跟著真實時間跑，所以載入一開始就先把它停住，之後只由 runFor 推進
+  const tI = Date.now();
+  await page.goto(BASE + 'index.html?intro=' + (TAIL ? 0 : 1) + '&voice=0&promo=1', { waitUntil: 'commit' });
+  await page.clock.pauseAt(Date.now() - tI + 400);
+  await page.waitForFunction(() => document.readyState !== 'loading' && !!document.getElementById('launch'), null, { polling: 200 });
 
   // 錄影用的疊層：字幕、計數、點擊圈、轉場白閃
   await page.evaluate(() => {
@@ -50,7 +56,7 @@ const marks = {};
       #pm .stat { background: rgba(8,24,22,.66); border: 3px solid rgba(255,224,102,.9); border-radius: 22px; padding: .5em .9em; text-align: center; color: #fff; min-width: 4.2em; }
       #pm .stat b { display: block; font-size: var(--bigfs); line-height: 1; color: #ffe066; font-weight: 900; }
       #pm .stat span { font-size: var(--smfs); font-weight: 700; }
-      #pm .end { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); text-align: center; color: #fff; opacity: 0; width: 90%; }
+      #pm .end { position: absolute; left: 50%; top: 46%; transform: translate(-50%,-50%); text-align: center; color: #fff; opacity: 0; width: max-content; max-width: 92%; padding: .5em 1.1em .6em; border-radius: 28px; background: rgba(8,24,22,.78); border: 3px solid rgba(255,224,102,.9); }
       #pm .end h1 { margin: 0; font-size: var(--titfs); color: #ffe066; text-shadow: 0 4px 16px rgba(0,0,0,.55); letter-spacing: .08em; }
       #pm .end p { margin: .4em 0 0; font-size: var(--urlfs); font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
       #pm .tag { position: absolute; left: 50%; top: 16%; transform: translateX(-50%); opacity: 0; text-align: center; color: #fff; font-weight: 800; white-space: nowrap;
@@ -101,6 +107,8 @@ const marks = {};
   const E2 = t => 1 - Math.pow(1 - t, 2.2);
   const ev = (fn, arg) => page.evaluate(fn, arg);
 
+  let introEnd = 0;
+  if (!TAIL) {
   // ---------- 段落 0：開場動畫（煙霧、歡迎詞、太空梭飛進星球） ----------
   // 歡迎詞淡入約 1.9 秒；之後 3D 場景才開始建（建的時候時鐘暫停，影片不會卡住）
   await ev(() => window.__pm.cap('歡迎來到伽利略星球！', 1));
@@ -125,9 +133,9 @@ const marks = {};
   console.log('intro done at', (frameNo / FPS).toFixed(1));
   await ev(() => { window.__pm.cap(null, 1); });
   await run(0.9, null);
-  const introEnd = frameNo / FPS;
 
   // ---------- 段落 1～4：四座館 ----------
+  }
   async function hallShot(h) {
     const id = h.id, cs = h.color;
     const segStart = frameNo / FPS;
@@ -145,7 +153,7 @@ const marks = {};
     await run(2.1, null);
     // 4) 白閃轉場 → 走路視角 2.4s：朝雕像走過去
     await run(0.2, async u => { await ev(o => window.__pm.fx(o), u); });
-    await ev(([id, a]) => { const s = window.__galileo.scene; s.debugSigns(false); s.debugWalk(id, a, 0); window.__pm.tag(`${h.name}<small>走到科學家雕像前</small>`, h.color, 1); }, [id, h.a0]);
+    await ev(([id, a, html, col]) => { const s = window.__galileo.scene; s.debugSigns(false); s.debugWalk(id, a, 0); window.__pm.tag(html, col, 1); }, [id, h.a0, `${h.name}<small>走到科學家雕像前</small>`, h.color]);
     await run(0.2, async u => { await ev(o => window.__pm.fx(o), 1 - u); });
     await run(2.2, async u => { await ev(([id, a]) => window.__galileo.scene.debugWalk(id, a, 0), [id, h.a0 + (h.a1 - h.a0) * E(u)]); });
     // 5) 科學家卡片
@@ -157,8 +165,9 @@ const marks = {};
     await run(0.2, null);
     console.log('hall', id, 'seg sec', (frameNo / FPS - segStart).toFixed(1), 'ends at', (frameNo / FPS).toFixed(1));
   }
-  for (const h of timeline.halls) await hallShot(h);
+  if (!TAIL) for (const h of timeline.halls) await hallShot(h);
 
+  if (TAIL) { while (!(await ev(() => !!(window.__galileo && window.__galileo.scene)))) { await page.waitForTimeout(500); await page.evaluate(() => window.__tick()); } await advance(3000); }
   // ---------- 段落 5：34 個單元 ----------
   await ev(() => { const s = window.__galileo.scene; s.debugSigns(true); window.__pm.tag(null, null, 0); window.__pm.cap('四座科學館，三十四個單元，一百三十九堂課。', 1); });
   marks.counts = frameNo / FPS;
@@ -176,7 +185,7 @@ const marks = {};
     await ev(o => window.__pm.end('<h1>伽利略星球</h1><p>Galileo Planet · 國中自然 34 單元</p><p>flyer19820218.github.io/Physical-Boys</p>', o), Math.min(1, u * 3));
   });
   await run(0.7, async u => { await ev(o => window.__pm.fx(o), u); });
-  fs.writeFileSync(path.join(outDir, 'meta.json'), JSON.stringify({ fps: FPS, frames: frameNo, introEnd, aspect, marks }));
+  if (!TAIL) fs.writeFileSync(path.join(outDir, 'meta.json'), JSON.stringify({ fps: FPS, frames: frameNo, introEnd, aspect, marks }));
   console.log('DONE frames', frameNo);
   await browser.close();
 })().catch(e => { console.error('FAILED', e); process.exit(1); });
