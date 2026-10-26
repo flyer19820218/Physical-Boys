@@ -271,14 +271,27 @@ function drawSystem(c,s,t){
 }
 
 // ── Tab 3: withdrawal reflex and later awareness ───────────────────────────
+// Teacher-authorised refinement 2026-10-26, same colour code as the knee tab: receptor yellow, sensory neuron
+// cyan, interneuron green, motor neuron pink. In the cord section (back side up) the sensory neuron enters on
+// the back (dorsal) side and passes the message to an interneuron; the motor neuron leaves on the front
+// (ventral) side and ends inside the upper-arm muscle, which shortens and thickens as the forearm lifts.
 const reflex=[P('受器接收熱刺激','Receptors detect heat'),P('感覺神經元','Sensory neuron'),P('脊髓整合訊息','Spinal cord integrates'),P('運動神經元','Motor neuron'),P('肌肉收縮、縮手','Muscle contracts: withdraw')];
 const aware=[P('脊髓：上傳訊息','Spinal cord: sends upward'),P('大腦：感覺與決定','Cerebrum: perception and decision'),P('脊髓：傳下控制訊息','Spinal cord: relays commands'),P('運動神經元','Motor neuron'),P('動器：肌肉','Effector: muscle')];
 // Arm picture (AI, original 2000×1116) split at the elbow; the forearm layer turns about the elbow.
 const AK=.253,AX=38.4,AY=188.5,AM=(x,y)=>[AX+x*AK,AY+y*AK],ELBOW=AM(1090,575),SHOULDER=AM(1480,215),BICEPS=AM(1270,420),CORD=[520,318];
-const INTER=[[495,280],[505,312],[486,346]],MOTOR=[[486,346],[456,366],[420,340],[384,302],BICEPS];
-const UP=[[498,282],[530,262],[548,226],[552,186],[540,150],[520,92]],DOWN=[[506,92],[524,150],[516,206],[500,252],[490,300],[486,346]];
-function armPose(lift){const a=lift*.8,R=q=>rotAbout(AM(...q),ELBOW,a);return{a,tip:R([345,1070]),palm:R([470,930]),wrist:R([575,775])};}
-function sensoryPath(pose){return[pose.tip,pose.palm,pose.wrist,ELBOW,AM(1290,380),SHOULDER,[440,248],[456,262],[478,272],[495,280]];}
+// upper-arm muscle outline, measured on the arm picture; it shortens toward its shoulder end W_P
+const W_MUS=[[1030,512],[1074,488],[1117,457],[1157,417],[1196,381],[1236,354],[1275,330],[1315,310],[1354,296],[1394,294],[1433,294],[1465,300],[1485,306],
+  [1461,342],[1433,377],[1398,421],[1358,457],[1319,484],[1279,512],[1240,532],[1200,547],[1160,555],[1121,532],[1077,512]].map(p=>AM(...p));
+const W_D=AM(1030,512),W_P=AM(1485,306),W_MEND=AM(1326,453);
+// spinal-cord inset drawn upright: back (dorsal) side up, front (ventral) side down
+const CS=1.15,W_GANG=[458,247],W_SYN=[492,281],W_ISOMA=[500,311],W_MSOMA=[488,350],W_IEND=[491,341];
+const UPPER=[[322,294.5],[342,276],[362,259],[382,248],[404,240],[430,238],W_GANG,[478,259],W_SYN]; // sensory route along the top of the upper arm to the dorsal root
+const INTER=[W_SYN,[497,296],W_ISOMA,[497,328],W_IEND],MOTOR=[W_MSOMA,[486,374],[470,390],[440,389],[414,366],[397,338],[385,318]];
+const UP=[[494,279],[503,266],[509,252],[514,232],[521,205],[528,178],[531,158],[527,130],[521,100]],DOWN=[[537,100],[542,130],[546,158],[548,190],[546,222],[538,256],[531,290],[528,322],[518,342],[497,350]];
+function armPose(lift){const a=lift*.8,R=q=>rotAbout(AM(...q),ELBOW,a);return{a,tip:R([345,1070]),palm:R([470,930]),wrist:R([575,775]),top:R([939,504])};}
+function sensoryPath(pose){return[pose.tip,pose.palm,pose.wrist,pose.top,...UPPER];}
+// muscle-axis transform about the shoulder end: along×fa, across×fp
+function wMusPt(p,fa,fp){const ux=W_D[0]-W_P[0],uy=W_D[1]-W_P[1],L=Math.hypot(ux,uy),ax=ux/L,ay=uy/L,dx=p[0]-W_P[0],dy=p[1]-W_P[1],al=dx*ax+dy*ay,pe=-dx*ay+dy*ax;return[W_P[0]+ax*al*fa-ay*pe*fp,W_P[1]+ay*al*fa+ax*pe*fp];}
 function drawPot(c,t){
   // pot on a gas stove (AI picture, 460×498): lid rim lands just under the fingertips
   const im=pic('hot_pot.png'),k=.36,X=46,Y=417;
@@ -286,41 +299,73 @@ function drawPot(c,t){
   if(im)c.drawImage(im,X,Y,460*k,498*k);
   c.save();c.lineCap='round';for(const [x,ph] of [[66,0],[88,1.8]]){c.beginPath();for(let n=0;n<=10;n++){const yy=456-n*6-((t*30+ph*10)%18),xx=x+Math.sin(n*.8+t*3+ph)*5;n?c.lineTo(xx,yy):c.moveTo(xx,yy);}c.strokeStyle='rgba(242,236,217,.4)';c.lineWidth=3;c.stroke();}c.restore();
 }
-function drawArm(c,pose,contract){
+function drawArm(c,pose){
   const up=pic('arm_upper.png'),fo=pic('arm_forearm.png');
   c.save();c.globalAlpha=.9;ellipse(c,ELBOW[0],ELBOW[1],15,19,'#e8c2b2');c.restore();
   if(fo){c.save();c.translate(...ELBOW);c.rotate(pose.a);c.translate(-ELBOW[0],-ELBOW[1]);c.drawImage(fo,AX,AY,2000*AK,1116*AK);c.restore();}
   if(up)c.drawImage(up,AX,AY,2000*AK,1116*AK);
-  if(contract)glow(c,...BICEPS,60,C.pink,.35*contract);
 }
+// the effector: outlined upper-arm muscle; contracting = pink, shorter and thicker, with inward arrows
+function drawMuscle(c,Ct,fa,fp,acting){
+  const mus=W_MUS.map(p=>wMusPt(p,fa,fp));
+  if(Ct>0)glow(c,...wMusPt(BICEPS,fa,fp),66,C.pink,.35*Ct);
+  c.save();c.beginPath();mus.forEach((p,k)=>c[k?'lineTo':'moveTo'](...p));c.closePath();
+  c.fillStyle=Ct>0?rgba(C.pink,.12+.4*Ct):rgba(C.white,.1);c.fill();
+  c.lineJoin='round';c.strokeStyle=C.ink;c.lineWidth=5;c.stroke();c.strokeStyle=Ct>0?C.pink:C.white;c.lineWidth=2.5;c.stroke();c.restore();
+  if(acting&&Ct>.1){const Q=u=>wMusPt([mix(W_D[0],W_P[0],u),mix(W_D[1],W_P[1],u)],fa,fp);
+    c.save();c.globalAlpha=Math.min(1,Ct*1.5);arrow(c,...Q(.03),...Q(.27),C.white,4);arrow(c,...Q(.97),...Q(.73),C.white,4);c.restore();}
+  return mus;
+}
+// motor endings spreading into the muscle
+function wFan(c,end,prev,on){const dir=Math.atan2(end[1]-prev[1],end[0]-prev[0]),col=on?C.pink:rgba(C.pink,.6);
+  for(const d of [-.75,0,.75]){const tip=[end[0]+Math.cos(dir+d)*13,end[1]+Math.sin(dir+d)*13];line(c,[end,tip],C.ink,5);line(c,[end,tip],col,3);circle(c,...tip,3.5,C.pink,C.ink,1.5);}}
 function drawWithdraw(c,s,t){
   const isReflex=s.mode==='reflex',names=isReflex?reflex:aware,color=isReflex?C.cyan:C.pink;
   const phase=t*.7,i=s.step<0?Math.floor(phase)%5:s.step,u=phase%1;
-  const lift=isReflex?(i===4?ease(u*2):0):1,contract=(i===4)?ease(u*2):isReflex?0:.3,pose=armPose(lift),sens=sensoryPath(pose);
+  // reflex: the forearm lifts at step 5. Awareness: the hand is already withdrawn; at step 5 the muscle
+  // contracts once more on the brain's command
+  const pulse=!isReflex&&i===4?Math.sin(Math.PI*clamp(u*1.25)):0;
+  const lift=isReflex?(i===4?ease(u*2):0):1+.08*pulse,Ct=isReflex?(i===4?ease(u*2):0):.35+.65*pulse;
+  const pose=armPose(lift),sens=sensoryPath(pose),fa=1-.12*Ct,fp=1+.28*Ct,mEnd=wMusPt(W_MEND,fa,fp),motor=[...MOTOR,mEnd];
   drawPot(c,t);
   // the brain and the pathways to it
   drawBrainPic(c,453,49,.07,isReflex?null:(i===1?'cerebrum':null),t);
-  if(isReflex){nerve(c,UP,{w:4,alpha:.4,dash:[8,8]});text(c,P('稍後才上傳大腦','Reaches the brain later'),420,74,22,C.muted,'right');}
-  else{nerve(c,UP,{w:5});nerve(c,DOWN,{w:5});
-    if(i===1){glow(c,518,70,70,C.pink,.45+.2*Math.sin(t*6));pill(c,P('好燙！好痛！','Ouch, hot!'),250,50,{active:true,color:C.pink,size:24,maxX:420});}
-    else text(c,P('大腦：感覺與決定','Cerebrum: feel and decide'),420,74,22,C.pink,'right');}
-  // spinal cord inset
+  if(isReflex)text(c,P('稍後才上傳大腦','Reaches the brain later'),420,74,22,C.muted,'right');
+  else if(i===1){glow(c,518,70,70,C.pink,.45+.2*Math.sin(t*6));pill(c,P('好燙！好痛！','Ouch, hot!'),250,50,{active:true,color:C.pink,size:24,maxX:420});}
+  else text(c,P('大腦：感覺與決定','Cerebrum: feel and decide'),420,74,22,C.pink,'right');
+  // the arm, then the spinal-cord inset over the shoulder
+  const cordGlow=isReflex?(i===2?C.green:null):(i===0?C.cyan:i===2?C.pink:null);
+  if(cordGlow)glow(c,CORD[0],CORD[1],100,cordGlow,.35+.2*Math.sin(t*6));
+  drawArm(c,pose);
   circle(c,CORD[0],CORD[1],88,'#0f221c',C.edge,3);
-  if((isReflex&&i===2)||(!isReflex&&(i===0||i===2)))glow(c,CORD[0],CORD[1],100,color,.35+.2*Math.sin(t*6));
-  drawCordSection(c,CORD[0],CORD[1],1);
+  drawCordSection(c,CORD[0],CORD[1],CS);
   text(c,P('脊髓（橫切面放大）','Spinal cord (section)'),CORD[0],CORD[1]+114,22,C.muted,'center');
-  drawArm(c,pose,contract);
-  nerve(c,sens,{w:5});nerve(c,INTER,{w:5});nerve(c,MOTOR,{w:5,color:'#f7b2c9'});
-  ellipse(c,456,262,11,8,C.nerve,C.ink,2.5);
+  const mus=drawMuscle(c,Ct,fa,fp,i===4);
+  // neurons: bright while the message is on them
+  const sOn=isReflex&&i===1,iOn=isReflex&&i===2,mOn=i>=3;
+  nerve(c,sens,{w:5,color:C.cyan,alpha:sOn?1:.5});
+  nerve(c,INTER,{w:5,color:C.green,alpha:iOn?1:.5});
+  nerve(c,motor,{w:5,color:C.pink,alpha:mOn?1:.5});wFan(c,mEnd,motor[motor.length-2],mOn);
+  if(isReflex){nerve(c,UP,{w:4,color:C.cyan,alpha:.45,dash:[8,8]});kChevrons(c,UP.slice(3,7),rgba(C.cyan,.6),1,7);}
+  else{nerve(c,UP,{w:5,color:C.cyan,alpha:i===0?1:.5});nerve(c,DOWN,{w:5,color:C.pink,alpha:i===2?1:.5});
+    kChevrons(c,UP.slice(3,7),C.cyan,1,7);kChevrons(c,DOWN.slice(2,6),C.pink,1,7);
+    text(c,P('上傳','Up'),510,196,22,C.cyan,'right');text(c,P('傳下','Down'),558,196,22,C.pink);}
+  kChevrons(c,[pose.palm,pose.wrist],C.cyan,1,7);kChevrons(c,UPPER.slice(3,6),C.cyan,1,7);kChevrons(c,MOTOR.slice(3,5),C.pink,1,7);
+  ellipse(c,...W_GANG,13,9,'#bdf3fb',C.ink,2.5); // sensory neuron cell body, outside the cord
+  circle(c,...W_ISOMA,6,C.green,C.ink,2);         // interneuron cell body
+  circle(c,...W_MSOMA,9,mOn?C.pink:'#e9a3c4',C.ink,2.5);
+  circle(c,...W_SYN,5,C.cyan,C.ink,2);circle(c,...W_IEND,4,C.green,C.ink,1.5); // the two synapses
   // receptor and the travelling message
   const rec=pose.tip;
-  if((isReflex&&i===0)){glow(c,rec[0],rec[1],46,C.yellow,.5+.3*Math.sin(t*8));}
+  if(isReflex&&i===0)glow(c,rec[0],rec[1],46,C.yellow,.5+.3*Math.sin(t*8));
   circle(c,rec[0],rec[1],8,C.yellow,C.ink,2);
-  if(isReflex){if(i===1)signal(c,sens,u,color);if(i===2)signal(c,INTER,u,color);if(i===3)signal(c,MOTOR,u,color);}
-  else{if(i===0)signal(c,UP,u,color);if(i===2)signal(c,DOWN,u,color);if(i===3)signal(c,MOTOR,u,color);}
-  if(i===4)glow(c,...BICEPS,70,color,.3+.2*Math.sin(t*8));
-  text(c,P('受器','Receptor'),20,mix(410,330,lift),22,C.yellow);
-  text(c,P('肌肉（動器）','Muscle (effector)'),345,230,22,C.white,'right');
+  if(isReflex){if(i===1)signal(c,sens,u,C.cyan);if(i===2)signal(c,INTER,u,C.green);if(i===3)signal(c,motor,u,C.pink);}
+  else{if(i===0)signal(c,UP,u,C.cyan);if(i===2)signal(c,DOWN,u,C.pink);if(i===3)signal(c,motor,u,C.pink);}
+  // labels with leader lines, the awareness caption and the colour key
+  pill(c,P('受器','Receptor'),24,330,{active:isReflex&&i===0,color:C.yellow,size:22,anchor:rec,maxX:240});
+  pill(c,P('肌肉（動器）','Muscle (effector)'),140,180,{active:i===4,color:C.pink,size:22,anchor:mus[5],maxX:400});
+  if(!isReflex)wrap(c,P('手已先縮回，之後才覺得痛','The hand has already pulled back. The pain comes later.'),20,118,420,24,C.yellow);
+  legend(c,[[C.cyan,P('感覺神經元：傳入','Sensory neuron: in')],[C.green,P('中間神經元：整合','Interneuron: integrates')],[C.pink,P('運動神經元：傳出','Motor neuron: out')]],254,480,380,22);
   text(c,P('動畫已放慢，不能比較真實傳導速度','Slowed: not a real conduction speed'),254,592,22,C.cyan);
   // the pathway as a vertical chain
   names.forEach((p,k)=>{const y=30+k*106;if(k){arrow(c,795,y-20,795,y-2,k<=i?color:C.edge,3.5);}node(c,p,650,y,290,84,k===i,color);});
