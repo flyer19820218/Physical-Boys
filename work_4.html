@@ -1140,6 +1140,7 @@
     const TURN = Math.PI * 2;
     const W_N = 90;                       // 重物 90 N
     const ratio = R / r;                  // = 3
+    const sgn = onAxle ? 1 : -1;          // 轉向：施力在軸上＝前側往下；施力在輪上＝後側（左邊）往下，整組反過來轉
 
     /* 施力在輪上：轉滿一圈（重物升 2πr）。
        施力在軸上：重物掛在大輪上、一圈要升 2πR，畫布放不下，
@@ -1148,6 +1149,7 @@
     const spd = onAxle ? 0.32 : 0.3;
     const th = (animTime * spd) % (AMAX * 1.3);
     const ang = Math.min(th, AMAX);
+    const rot = sgn * ang;                // 畫圖用的有號角度
 
     label4(ctx, tr('① 基本構造：大輪和小軸鎖在同一根軸上，一起轉',
                    '① Basic structure: wheel and axle fixed on ONE shaft, turning together'),
@@ -1162,24 +1164,25 @@
     /* ── 軸承座 + 貫穿全場的同一根軸 ── */
     bearing25(ctx, 82, AY, 11);
     bearing25(ctx, 470, AY, 11);
-    cyl25(ctx, SH0, WX - TH, AY, 10, '#8d9c95', ang, 0);          // 大輪後面那一段
-    cyl25(ctx, WX - TH - 16, WX - TH, AY, 17, '#a3b8b0', ang, 0); // 輪轂（夾住軸）
+    cyl25(ctx, SH0, WX - TH, AY, 10, '#8d9c95', rot, 0);          // 大輪後面那一段
+    cyl25(ctx, WX - TH - 16, WX - TH, AY, 17, '#a3b8b0', rot, 0); // 輪轂（夾住軸）
 
     const rx = R * SQ, RG = R + 9, P2 = Math.PI / 2;
 
     /* 施力在軸上：重物的繩繞在大輪上，從「往上轉」的那一側（後側）垂下 */
     const lift = onAxle ? R * ang : r * ang;
     const wTop = 372 - lift;
-    const loadX = onAxle ? WX - TH / 2 - rx : DRX - r * SQ;
-    line4(ctx, loadX, AY, loadX, wTop, '#d8e6e0', 3);
+    const loadX = onAxle ? WX - TH / 2 - rx : DRX + r * SQ;   // 輪的繩在左邊、軸的繩在右邊
+    if (onAxle) line4(ctx, loadX, AY, loadX, wTop, '#d8e6e0', 3);
 
-    /* 施力在輪上：繩子繞在大輪的輪緣上，從「往下轉」的前側垂下（畫在捲筒後面，捲筒會蓋住繩子起點） */
-    const wfx = WX - TH / 2 + rx;
+    /* 施力在輪上：手拉大輪輪緣上的繩，繩子從左邊（往下轉的那一側）垂下；
+       重物掛在小軸右邊（往上轉的那一側）。兩條繩在相反兩側，力矩方向才會相反。 */
+    const wfx = WX - TH / 2 - rx;       // 左邊（後側）：這一側往下轉
     const wHandY = 262 + R * ang;
     if (!onAxle) line4(ctx, wfx, AY, wfx, wHandY - 14, '#d8e6e0', 3);
 
     /* 大輪 */
-    disc25(ctx, WX, AY, R, TH, '#4dd2ff', ang, 8);
+    disc25(ctx, WX, AY, R, TH, '#4dd2ff', rot, 8);
     {
       /* 大輪的輪緣上繞著繩：畫一條溝 */
       ctx.save(); ctx.strokeStyle = 'rgba(216,230,224,0.75)'; ctx.lineWidth = 3;
@@ -1188,10 +1191,12 @@
     }
 
     /* 小軸（捲筒）直接貼在大輪的面上：同一塊東西 */
-    cyl25(ctx, DX0, DX1, AY, r, '#ff8040', ang, 4);
-    helix25(ctx, DX0 + 14, AY, r, 15, 3.0, '#d8e6e0', ang, -1);
+    cyl25(ctx, DX0, DX1, AY, r, '#ff8040', rot, 4);
+    helix25(ctx, DX0 + 14, AY, r, 15, 3.0, '#d8e6e0', rot, -1);
     /* 軸從捲筒前面穿出去，接到右邊的軸承 */
-    cyl25(ctx, DX1, SH1, AY, 10, '#8d9c95', ang, 3);
+    cyl25(ctx, DX1, SH1, AY, 10, '#8d9c95', rot, 3);
+    /* 施力在輪上：重物的繩繞在小軸的前側（右邊），往上收 */
+    if (!onAxle) line4(ctx, loadX, AY, loadX, wTop, '#d8e6e0', 3);
 
     /* ── 施力點 ── */
     let handY = 0;
@@ -1208,15 +1213,15 @@
       handY = wHandY;
       handMark4(ctx, wfx, handY, true);
       arrow4(ctx, wfx, handY + 18, wfx, handY + 56, '#ff8040', 6, 15);
-      label4(ctx, `F = ${W_N / ratio} N`, wfx - 14, handY + 46, '#ff8040', 20, 'right');
+      label4(ctx, `F = ${W_N / ratio} N`, wfx - 16, handY + 46, '#ff8040', 20, 'right');
     }
 
     /* 轉向箭頭：擺在捲筒和右軸承中間 */
     ctx.save();
     ctx.strokeStyle = '#33cc99'; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.ellipse(408, AY, 22, 48, 0, -2.5, 1.4); ctx.stroke();
-    const ea = 1.4;
-    arrow4(ctx, 408 + 22 * Math.cos(ea - 0.22), AY + 48 * Math.sin(ea - 0.22),
+    const ea = onAxle ? 1.4 : -2.5, ed = onAxle ? -0.22 : 0.22;   // 施力在輪上：箭頭反向
+    arrow4(ctx, 408 + 22 * Math.cos(ea + ed), AY + 48 * Math.sin(ea + ed),
                 408 + 22 * Math.cos(ea), AY + 48 * Math.sin(ea), '#33cc99', 4, 13);
     ctx.restore();
 
