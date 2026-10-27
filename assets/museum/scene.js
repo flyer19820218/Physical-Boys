@@ -4,6 +4,7 @@
 //   - 進館：鏡頭轉成近乎正上方，球體淡出，剩下這一館的「平面地圖」（彎路＋單元站＋通往隔壁館的出口）
 //   - render-on-demand：沒有動作時完全停止繪圖（0 fps）
 import * as THREE from './vendor/three.module.min.js';
+import { buildShuttle } from './shuttle3d.js?v=20261027k';
 
 const R = 10;                 // 星球半徑
 const PLATEAU_TOP = R + 0.2;  // 館的平台頂面離球心的距離
@@ -1261,41 +1262,14 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   const flames = [];
   let shuttleProxy;
   {
-    const parts = [];
-    const P = (g, m, c, noHull) => parts.push({ g, m, color: new THREE.Color(c), noHull });
-    const BODY = 0xf2ecd9;
-    P(new THREE.CylinderGeometry(0.3, 0.34, 1.5, 16), M(0, 0, 0, Math.PI / 2, 0, 0), BODY);                  // 機身
-    P(new THREE.ConeGeometry(0.3, 0.7, 16), M(0, 0, 1.1, Math.PI / 2, 0, 0), BODY);                          // 機鼻
-    P(new THREE.CylinderGeometry(0.345, 0.345, 0.14, 16), M(0, 0, 0.28, Math.PI / 2, 0, 0), 0xfde047, true); // 黃色腰帶
-    P(new THREE.SphereGeometry(0.22, 14, 8, 0, TAU, 0, Math.PI / 2), Ms(0, 0.2, 0.62, 1, 0.55, 1.5), 0x38bdf8, true); // 駕駛艙窗
-    const wingShape = new THREE.Shape();
-    wingShape.moveTo(0.22, 0.45); wingShape.lineTo(1.15, -0.5); wingShape.lineTo(1.15, -0.72); wingShape.lineTo(0.22, -0.7); wingShape.closePath();
-    const wingR = new THREE.Matrix4().makeRotationX(Math.PI / 2).setPosition(0, -0.08, 0);
-    const wingL = new THREE.Matrix4().makeRotationZ(Math.PI).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)).setPosition(0, -0.14, 0);
-    P(new THREE.ExtrudeGeometry(wingShape, { depth: 0.06, bevelEnabled: false }), wingR, 0xe6e0d0);
-    P(new THREE.ExtrudeGeometry(wingShape, { depth: 0.06, bevelEnabled: false }), wingL, 0xe6e0d0);
-    P(new THREE.BoxGeometry(0.09, 0.1, 0.26), M(1.12, -0.11, -0.6), 0xf2d675, true);   // 翼尖：四館的顏色
-    P(new THREE.BoxGeometry(0.09, 0.1, 0.26), M(-1.12, -0.11, -0.6), 0xa8e6cf, true);
-    const finShape = new THREE.Shape();
-    finShape.moveTo(-0.75, 0.25); finShape.lineTo(-0.75, 0.95); finShape.lineTo(-0.45, 0.95); finShape.lineTo(-0.05, 0.25); finShape.closePath();
-    P(new THREE.ExtrudeGeometry(finShape, { depth: 0.06, bevelEnabled: false }), new THREE.Matrix4().makeRotationY(-Math.PI / 2).setPosition(0.03, 0, 0), BODY);
-    P(new THREE.BoxGeometry(0.075, 0.12, 0.3), M(0, 0.72, -0.55), 0xf0955c, true);
-    P(new THREE.BoxGeometry(0.075, 0.12, 0.38), M(0, 0.52, -0.45), 0x6fa8f2, true);
-    const nozzles = [[0, 0.1], [-0.17, -0.08], [0.17, -0.08]];
-    nozzles.forEach(([x, y]) => P(new THREE.CylinderGeometry(0.1, 0.14, 0.24, 12), M(x, y, -0.84, Math.PI / 2, 0, 0), 0x4a5a52));
-    const sg2 = buildMerged(parts, 0.035);
-    shuttle.add(new THREE.Mesh(sg2.body, toonMat), new THREE.Mesh(sg2.hull, hullMat));
-    const fOut = new THREE.MeshBasicMaterial({ color: 0x55e9ff, transparent: true, opacity: 0.85, depthWrite: false, fog: false, ...GLOW_BLEND });
-    const fIn = new THREE.MeshBasicMaterial({ color: 0xfff3c4, transparent: true, opacity: 0.95, depthWrite: false, fog: false, ...GLOW_BLEND });
-    const fOutG = new THREE.ConeGeometry(0.11, 0.8, 10).translate(0, 0.4, 0).rotateX(-Math.PI / 2);
-    const fInG = new THREE.ConeGeometry(0.065, 0.5, 8).translate(0, 0.25, 0).rotateX(-Math.PI / 2);
-    nozzles.forEach(([x, y]) => {
-      const fg = new THREE.Group();
-      fg.position.set(x, y, -0.96);
-      fg.add(new THREE.Mesh(fOutG, fOut), new THREE.Mesh(fInG, fIn));
-      shuttle.add(fg);
-      flames.push(fg);
-    });
+    // 外觀＝蟲洞段那一台高畫質太空梭（shuttle3d.js 共用模型，20261027k）；位置、縮放、軌道、轉彎傾斜、點擊重播都和原本一樣
+    const sh3 = buildShuttle(THREE, { anisotropy: Math.min(4, renderer.capabilities.getMaxAnisotropy()) });
+    sh3.U.uRimCol.value.setRGB(0.2, 0.26, 0.3);      // 淡淡的冷色輪廓光（取代卡通描邊，在星球前也看得清楚）
+    sh3.U.uRimDir.value.set(0, 1, 0);
+    sh3.U.uTailCol.value.setRGB(0.16, 0.28, 0.5);    // 尾焰照亮機尾
+    sh3.setThrust(1, 0, 0.45);
+    shuttle.add(sh3.group);
+    flames.push(...sh3.flames);                      // flicker() 照舊用 scale.z 調整火焰長度
     shuttleProxy = new THREE.Mesh(new THREE.SphereGeometry(2.2, 8, 6), hiddenMat);
     shuttle.add(shuttleProxy);
     shuttle.scale.setScalar(0.62);

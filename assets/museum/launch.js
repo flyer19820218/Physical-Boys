@@ -32,6 +32,8 @@ function makePuff(rgb, seed) {
   return c;
 }
 
+import { buildShuttle, makeAtlas, freeAtlas, wingHalf, bodyAt, ENGINES, BELL, FIN, WING, Z0 } from './shuttle3d.js?v=20261027k';
+
 // ---------- 蟲洞段：《星際效應》式的 Ellis 蟲洞（真的光線追蹤＋重力透鏡） ----------
 // 給學生的科普：電影裡的蟲洞不是「隧道」，而是一顆「水晶球」。
 //   這裡畫的是 Ellis 蟲洞：ds² = −dt² + dl² + (b² + l²)(dθ² + sin²θ dφ²)，喉嚨半徑 b（取 1），r² = b² + l²。
@@ -89,9 +91,30 @@ export const WORM = {
   SHIP_SEP: 1.0,      // 鏡頭與太空梭沿軸向的間距（喉嚨半徑＝1），整段固定
   SHIP_H: 0.24,       // 航線在蟲洞軸（鏡頭）下方多遠；SHIP_H / SHIP_SEP ≈ 太空梭在球心下方的視角正切（約 13.5°：一開始壓在球緣，之後在球面前方）
   SHIP_DX: 0.03,      // 航線往右偏離軸多少（一點點，讓機頭微微斜向球心；仍是平行於軸的直線）
-  SHIP_LEN: 0.22,     // 太空梭大小（翼展，喉嚨半徑＝1）
-  SHIP_THICK: 0.18,   // 機身厚度／長度：從後上方看，俯視圖沿機身壓成 sinα + SHIP_THICK·cosα（α＝視線與機身的夾角＝鏡頭俯角）
+  SHIP_LEN: 0.265,    // 太空梭大小（喉嚨半徑＝1；模型翼展 ≈ 0.9 × SHIP_LEN）。20261027k 改成機尾視角後由 0.22 放大（畫面高度佔比回到約 0.14）
   FLASH: 0.8,         // 出洞閃光的峰值（原本 0.95）
+  // ---- 太空梭 3D 機尾視角（20261027k）：模型與 scene.js 共用（shuttle3d.js），這裡只管蟲洞段的鏡頭、擺動、受光 ----
+  //   鏡頭仰角（從機尾後上方往下看的角度）＝ atan(SHIP_H / SHIP_SEP) ≈ 13.5°，由上面已定案的位置決定（物理：追隨鏡頭在後上方）；
+  //   SHIP_ELEV_ADD 讓機身再往前壓一點（看到更多背面），等效仰角 ≈ 13.5° + SHIP_ELEV_ADD。
+  SHIP3D: 'auto',     // 'auto'：能用 WebGL 就用 3D；'off'：一律用 2D 機尾近似畫法
+  SHIP_DELAY: 150,    // 開場後多久開始在背景載入 three.js、建太空梭（ms；歡迎詞時分段建好、暖機一格；要趕在 3D 星球開始建之前）
+  SHIP_ELEV_ADD: 3,   // 仰角微調（度，機頭往下壓）；0＝機身完全平行蟲洞軸
+  SHIP_BANK: 1.5,     // 擺動幅度（度）：滾轉（bank）
+  SHIP_PITCH: 0.9,    //                 俯仰（pitch）
+  SHIP_YAW: 1.0,      //                 偏航（yaw）
+  SHIP_SWAY_T: [4.3, 3.5, 4.9],   // 三個擺動的主週期（秒；各自再疊一個 0.57 倍週期的小波，低頻、平滑、不抖）
+  SHIP_VIB: 0.4,      // 推進震動（畫面上的振幅，CSS px；高頻小幅）
+  SHIP_VIB_TUNNEL: 2.4,  // 穿越段震動放大倍數
+  BREATH: 1.3,        // 鏡頭呼吸式晃動：太空梭處的位移（CSS px）；球比較遠，只動約 1/4（視差＝景深），和擺動不同相位
+  FLAME_LEN: 1.5,     // 尾焰長度（模型單位；機身全長約 2.4）
+  FLAME_BOOST: 1.7,   // 穿越加速時尾焰拉長、變亮的倍數
+  KEY_K: 1.0,         // 主光（前方蟲洞球的暖光；穿過喉嚨後是另一邊星系的暖白光）強度
+  RIM_K: 1.0,         // 邊緣光強度（機翼前緣、機身輪廓的暖橘色光邊；球緣光掃過時更亮）
+  TAIL_K: 1.0,        // 尾焰照亮機尾（底板、尾翼下緣、整流罩後端）的強度
+  SHIP_PR: 2,         // 太空梭渲染器像素比上限（跟著蟲洞 GL 的降檔一起降）
+  SHIP_AA: true,      // 抗鋸齒（MSAA；建立後無法切換，降檔時改降像素比）
+  SHIP_K_PORTRAIT: 1.2,  // 直式畫面再放大一點（機尾視角是寬的，直式時高度佔比偏小）
+  SHIP_BOX: [1.45, 1.35, 2.35],   // 太空梭畫布涵蓋的範圍（u 的倍數：左右、上、下；下方留給往鏡頭噴的尾焰）
   // ---- 高清 GL 路徑（20261027i） ----
   GL: 'auto',         // 'auto'：能用 WebGL 就用；'off'：一律用 CPU；'force'：連軟體模擬的 GL 也用（測試用）。網址 ?gl=0／?gl=force 同義
   QUALITY: 'auto',    // 'auto'（第一秒依幀時間自動降檔）｜'high'｜'medium'
@@ -474,7 +497,7 @@ function freeCpuSky() { SK.TEX = null; SK.ready = false; WARM_S = null; PREP_CAC
 // 和畫面尺寸無關的預算：模組載入後利用閒置時間一點一點先算好。
 //   K 表（約 10～20 ms）兩條路徑都要；兩張天空貼圖（約 300～400 ms、常駐約 7.7 MB＋暫存約 14 MB）只有 CPU 退回路徑要，
 //   GL 路徑可用時就不算（天空在 GPU 上程序生成）。GL 建立失敗或 context lost 時才補算。
-export const warpStats = { warmMs: 0, prepMs: 0, frameMs: 0, ready: false, res: '', path: '', gl: {} };
+export const warpStats = { warmMs: 0, prepMs: 0, frameMs: 0, ready: false, res: '', path: '', gl: {}, ship: {} };
 let WARM_K = null, WARM_S = null;
 const skyNeeded = () => !HD.want || HD.state === 'failed' || HD.state === 'lost';
 function refreshReady() { warpStats.ready = !!KT.lo && (SK.ready || !skyNeeded()); return warpStats.ready; }
@@ -572,208 +595,256 @@ function buildRhoTable(D, lc, roll) {
   }
 }
 
-// ---------- 太空梭（原創造型，從上方看，機頭朝 −y） ----------
-// shuttle(ctx, x, y, u, roll, glow, opt)：u＝尺寸單位（機身全長約 2.5u）；roll＝旋轉角；glow＝引擎火焰 0～1
-// opt（可省略）：light 光源方向（螢幕角度，預設右上）、lk 光源強度、sx/sy 沿翼展／沿機身的縮放（透視）、
-//               dim 變暗、red 紅移、alpha 透明度、rim 受光側的邊緣光顏色 [r,g,b]（預設暖橘）
-let SPR = null;
-const SP_XL = 1.25, SP_YT = -1.42, SP_YB = 1.34;
-function pBody(c) {
-  c.beginPath();
-  c.moveTo(0, -1.33);
-  c.bezierCurveTo(0.12, -1.31, 0.225, -1.08, 0.245, -0.72);
-  c.lineTo(0.258, 0.98); c.lineTo(0.205, 1.07); c.lineTo(-0.205, 1.07); c.lineTo(-0.258, 0.98); c.lineTo(-0.245, -0.72);
-  c.bezierCurveTo(-0.225, -1.08, -0.12, -1.31, 0, -1.33);
-  c.closePath();
+// ---------- 太空梭（20261027k：機尾視角的真 3D；造型與 scene.js 共用 shuttle3d.js） ----------
+// 姿態 pose（makeWarp 的 poseAt 算，3D 與 2D 退回畫法共用）：
+//   cx, cy, f：畫面上的球心與焦距（CSS px）；pos：太空梭在相機座標的位置（喉嚨半徑＝1；相機在原點、看 −Z、+Y 往上）；
+//   s：模型 1 單位＝多少喉嚨半徑；bank/pitch/yaw：擺動（弧度）；power：推力；flameLen：尾焰長度；vis：淡入；
+//   light：受光（key 球光／星系光、hemi 天空、fill 背後的冷光、rim 邊緣光、tail 尾焰照亮機尾）；x, y, u：畫面位置與尺寸單位（px）
+// 機頭（模型 +Z）朝畫面深處（相機 −Z）＝沿蟲洞軸、對準球心；鏡頭在它後上方 → 看到的是機尾。
+function rotM(yaw, pitch, bank) {            // R = Ry(yaw)·Rx(pitch)·Rz(bank)（和 THREE 的 Euler 'YXZ' 相同）
+  const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch), cb = Math.cos(bank), sb = Math.sin(bank);
+  return [cy * cb + sy * sp * sb, -cy * sb + sy * sp * cb, sy * cp, cp * sb, cp * cb, -sp, -sy * cb + cy * sp * sb, sy * sb + cy * sp * cb, cy * cp];
 }
-// 機翼：一整片圓滑的 S 形（ogee）三角翼，翼尖微微下削
-function wingLE(c, s, move) {
-  if (move) c.moveTo(s * 0.2, -0.78); else c.lineTo(s * 0.2, -0.78);
-  c.bezierCurveTo(s * 0.3, -0.18, s * 0.5, 0.36, s * 1.04, 0.74);
-}
-function pWings(c) {
-  c.beginPath();
-  wingLE(c, 1, true);
-  c.quadraticCurveTo(s1(1.12), 0.8, s1(1.1), 0.9);
-  c.lineTo(0.86, 0.94); c.quadraticCurveTo(0.5, 0.9, 0.24, 1.0);
-  c.lineTo(-0.24, 1.0); c.quadraticCurveTo(-0.5, 0.9, -0.86, 0.94); c.lineTo(-1.1, 0.9);
-  c.quadraticCurveTo(-1.12, 0.8, -1.04, 0.74);
-  c.bezierCurveTo(-0.5, 0.36, -0.3, -0.18, -0.2, -0.78);
-  c.closePath();
-}
-function s1(x) { return x; }
-// 引擎整流罩（機尾兩側的小鼓包）
-function pPods(c) {
-  for (const s of [-1, 1]) {
-    c.moveTo(s * 0.2, 0.7);
-    c.quadraticCurveTo(s * 0.3, 0.86, s * 0.27, 1.05);
-    c.lineTo(s * 0.17, 1.05);
-    c.quadraticCurveTo(s * 0.17, 0.86, s * 0.2, 0.7);
-    c.closePath();
-  }
-}
-function pFin(c) {
-  c.beginPath();
-  c.moveTo(0, 0.36); c.lineTo(0.034, 0.74); c.lineTo(0.03, 1.15); c.lineTo(-0.03, 1.15); c.lineTo(-0.034, 0.74);
-  c.closePath();
-}
-function silhouette(c) {
-  pWings(c); c.fill();
-  pBody(c); c.fill();
-  c.beginPath(); pPods(c); c.fill();
-  pFin(c); c.fill();
-}
-function paintShuttle(c, Lx, Ly) {
-  c.lineJoin = 'round'; c.lineCap = 'round';
-  // 機翼：白色隔熱瓦，翼根到翼尖微暗
-  const wg = c.createLinearGradient(0, 0, 1.15, 0);
-  wg.addColorStop(0, '#e9e5da'); wg.addColorStop(0.55, '#d6d2c6'); wg.addColorStop(1, '#b9b6ac');
-  c.save(); c.scale(1, 1);
-  c.fillStyle = wg;
-  pWings(c); c.fill();
-  // 機翼的分段線、副翼
-  c.save(); pWings(c); c.clip();
-  c.strokeStyle = 'rgba(70,76,74,0.45)'; c.lineWidth = 0.014;
-  c.beginPath();
-  for (const s of [-1, 1]) {
-    c.moveTo(s * 0.26, 0.8); c.quadraticCurveTo(s * 0.6, 0.76, s * 1.0, 0.8);
-    c.moveTo(s * 0.62, 0.78); c.lineTo(s * 0.62, 0.95);
-    c.moveTo(s * 0.27, 0.3); c.lineTo(s * 0.6, 0.5);
-  }
-  c.stroke();
-  // 機翼前緣：黑色隔熱瓦（沿前緣的粗線，被機翼裁掉一半）
-  c.strokeStyle = '#272d2b'; c.lineWidth = 0.13;
-  c.beginPath();
-  for (const s of [-1, 1]) { wingLE(c, s, true); c.quadraticCurveTo(s * 1.12, 0.8, s * 1.1, 0.9); }
-  c.stroke();
-  c.strokeStyle = 'rgba(120,128,124,0.5)'; c.lineWidth = 0.02;   // 黑瓦與白瓦的交界亮線
-  c.save(); c.translate(0, 0.075);
-  c.beginPath();
-  for (const s of [-1, 1]) wingLE(c, s, true);
-  c.stroke(); c.restore();
-  // 翼根陰影（和機身交接處）
-  const ao = c.createLinearGradient(0.24, 0, 0.5, 0);
-  ao.addColorStop(0, 'rgba(40,46,44,0.38)'); ao.addColorStop(1, 'rgba(40,46,44,0)');
-  c.fillStyle = ao; c.fillRect(0.2, -0.7, 0.32, 1.8);
-  const ao2 = c.createLinearGradient(-0.24, 0, -0.5, 0);
-  ao2.addColorStop(0, 'rgba(40,46,44,0.38)'); ao2.addColorStop(1, 'rgba(40,46,44,0)');
-  c.fillStyle = ao2; c.fillRect(-0.52, -0.7, 0.32, 1.8);
-  c.restore();
-  c.restore();
-  // 主引擎（三個噴口：上中一個、下兩個）
-  const bell = (x, y0, y1, w0, w1) => {
-    const bgd = c.createLinearGradient(x - w1, 0, x + w1, 0);
-    bgd.addColorStop(0, '#262b2a'); bgd.addColorStop(0.35 + 0.2 * Lx, '#a7aca8'); bgd.addColorStop(0.7, '#4a504e'); bgd.addColorStop(1, '#1f2423');
-    c.fillStyle = bgd;
-    c.beginPath(); c.moveTo(x - w0, y0); c.lineTo(x + w0, y0); c.quadraticCurveTo(x + w1 * 0.9, (y0 + y1) / 2, x + w1, y1); c.lineTo(x - w1, y1); c.quadraticCurveTo(x - w1 * 0.9, (y0 + y1) / 2, x - w0, y0); c.closePath(); c.fill();
-    c.fillStyle = 'rgba(205,240,255,0.9)';
-    c.beginPath(); c.ellipse(x, y1, w1 * 0.92, 0.018, 0, 0, TAU); c.fill();
+function shipProj(P) {
+  const M = rotM(Math.PI + P.yaw, P.pitch, P.bank), s = P.s, t = P.pos, f = P.f, cx = P.cx, cy = P.cy;
+  return (X, Y, Z) => {
+    const wx = t[0] + s * (M[0] * X + M[1] * Y + M[2] * Z), wy = t[1] + s * (M[3] * X + M[4] * Y + M[5] * Z), wz = t[2] + s * (M[6] * X + M[7] * Y + M[8] * Z);
+    const k = f / Math.max(1e-3, -wz);
+    return [cx + wx * k, cy - wy * k, k];
   };
-  c.fillStyle = '#3b413f'; c.fillRect(-0.18, 1.02, 0.36, 0.09);   // 機尾襟翼
-  bell(-0.115, 1.06, 1.25, 0.04, 0.072);
-  bell(0.115, 1.06, 1.25, 0.04, 0.072);
-  // 機身：圓筒的明暗，高光偏向光源
-  const hx = Math.max(0.2, Math.min(0.8, 0.5 + 0.28 * Lx));
-  const bgr = c.createLinearGradient(-0.26, 0, 0.26, 0);
-  bgr.addColorStop(0, '#80857f'); bgr.addColorStop(Math.max(0.05, hx - 0.3), '#c9c5ba'); bgr.addColorStop(hx, '#f7f4ec');
-  bgr.addColorStop(Math.min(0.95, hx + 0.3), '#c4c0b5'); bgr.addColorStop(1, '#757a75');
-  c.fillStyle = bgr; pBody(c); c.fill();
-  c.save(); pBody(c); c.clip();
-  // 機鼻帽（深灰碳纖維）
-  const ng = c.createLinearGradient(0, -1.34, 0, -1.12);
-  ng.addColorStop(0, '#3c4240'); ng.addColorStop(0.75, '#5b605d'); ng.addColorStop(1, 'rgba(91,96,93,0)');
-  c.fillStyle = ng; c.fillRect(-0.3, -1.4, 0.6, 0.3);
-  // 背脊（細長的亮條）與機身分段線
-  const sg = c.createLinearGradient(-0.05, 0, 0.05, 0);
-  sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(0.5, 'rgba(255,255,250,0.35)'); sg.addColorStop(1, 'rgba(255,255,255,0)');
-  c.fillStyle = sg; c.fillRect(-0.05, -0.6, 0.1, 1.5);
-  c.strokeStyle = 'rgba(64,70,68,0.55)'; c.lineWidth = 0.015;
-  c.beginPath();
-  for (const y of [-0.62, -0.25, 0.12, 0.5, 0.86]) { c.moveTo(-0.26, y); c.quadraticCurveTo(0, y - 0.035, 0.26, y); }
-  c.moveTo(-0.15, -0.25); c.lineTo(-0.15, 0.5); c.moveTo(0.15, -0.25); c.lineTo(0.15, 0.5);
-  c.stroke();
-  c.fillStyle = 'rgba(52,58,56,0.5)';                        // 兩個小小的姿態控制噴嘴
-  for (const s of [-1, 1]) { c.beginPath(); c.arc(s * 0.17, -1.0, 0.018, 0, TAU); c.fill(); }
-  c.restore();
-  // 駕駛艙窗（四片深色玻璃）
-  const wgl = c.createLinearGradient(0, -0.94, 0, -0.78);
-  wgl.addColorStop(0, '#2f4756'); wgl.addColorStop(1, '#0e171c');
-  c.fillStyle = wgl;
-  c.beginPath(); c.moveTo(-0.16, -0.8); c.lineTo(-0.115, -0.935); c.lineTo(0.115, -0.935); c.lineTo(0.16, -0.8); c.quadraticCurveTo(0, -0.77, -0.16, -0.8); c.closePath(); c.fill();
-  c.strokeStyle = '#cfcbc0'; c.lineWidth = 0.018;
-  c.beginPath(); c.moveTo(0, -0.935); c.lineTo(0, -0.78); c.moveTo(-0.075, -0.935); c.lineTo(-0.09, -0.785); c.moveTo(0.075, -0.935); c.lineTo(0.09, -0.785); c.stroke();
-  c.strokeStyle = 'rgba(235,250,255,0.75)'; c.lineWidth = 0.014;   // 玻璃反光
-  c.beginPath(); c.moveTo(-0.1 + 0.05 * Lx, -0.915); c.lineTo(-0.035 + 0.05 * Lx, -0.915); c.stroke();
-  // 軌道機動吊艙
-  const pg = c.createLinearGradient(-0.24, 0, 0.24, 0);
-  pg.addColorStop(0, '#9a9e98'); pg.addColorStop(0.5 + 0.2 * Lx, '#f1eee5'); pg.addColorStop(1, '#8c918b');
-  c.fillStyle = pg; c.beginPath(); pPods(c); c.fill();
-  c.strokeStyle = 'rgba(60,66,64,0.45)'; c.lineWidth = 0.012; c.beginPath(); pPods(c); c.stroke();
-  // 垂尾：落在機身上的影子＋刀片
-  c.save(); pBody(c); c.clip();
-  c.translate(-Lx * 0.09, -Ly * 0.05 + 0.02);
-  c.fillStyle = 'rgba(30,36,34,0.35)'; pFin(c); c.fill();
-  c.restore();
-  const fg = c.createLinearGradient(-0.035, 0, 0.035, 0);
-  fg.addColorStop(0, Lx < 0 ? '#f4f1e8' : '#7e837e'); fg.addColorStop(1, Lx < 0 ? '#7e837e' : '#f4f1e8');
-  c.fillStyle = fg; pFin(c); c.fill();
-  c.strokeStyle = '#2d3331'; c.lineWidth = 0.02; c.beginPath(); c.moveTo(0, 0.37); c.lineTo(0, 0.72); c.stroke();   // 垂尾前緣
-  // 機身側緣細線
-  c.strokeStyle = 'rgba(48,54,52,0.5)'; c.lineWidth = 0.012; pBody(c); c.stroke();
 }
-function shuttle(ctx, x, y, u, roll, glow, opt) {
-  const o = opt || {};
-  const sx = o.sx || 1, sy = o.sy || 1, lk = o.lk == null ? 0.8 : o.lk, red = o.red || 0, dim = o.dim || 0;
-  const la = (o.light == null ? -0.9 : o.light) - roll, Lx = Math.cos(la), Ly = Math.sin(la);
-  const m = ctx.getTransform(), S = Math.hypot(m.a, m.b) || 1;
-  const ppu = Math.max(6, u * S * Math.max(sx, sy) * 1.3);
-  const cw = Math.ceil(2 * SP_XL * ppu) + 4, ch = Math.ceil((SP_YB - SP_YT) * ppu) + 4;
-  if (!SPR) SPR = [document.createElement('canvas'), document.createElement('canvas')];
-  for (const c of SPR) if (c.width < cw || c.height < ch) { c.width = Math.max(c.width, cw + 32); c.height = Math.max(c.height, ch + 32); }
-  const ox = cw / 2, oy = -SP_YT * ppu + 2;
-  const a = SPR[0].getContext('2d'), b = SPR[1].getContext('2d');
-  for (const c of [a, b]) { c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.clearRect(0, 0, cw + 2, ch + 2); c.setTransform(ppu, 0, 0, ppu, ox, oy); }
-  paintShuttle(a, Lx, Ly);
-  // 受光：光源側偏暖、背光側偏冷暗
-  a.globalCompositeOperation = 'source-atop';
-  const lg = a.createLinearGradient(-Lx * 1.3, -Ly * 1.3, Lx * 1.3, Ly * 1.3);
-  lg.addColorStop(0, `rgba(6,18,24,${0.62 + 0.25 * dim})`); lg.addColorStop(0.5, `rgba(20,30,32,${0.14 + 0.3 * dim})`); const lc = o.rim || [255, 140, 60];
-  lg.addColorStop(1, `rgba(${lc[0]},${lc[1]},${lc[2]},${0.3 * lk})`);
-  a.fillStyle = lg; a.fillRect(-2, -2, 4, 4);
-  // 邊緣光：剪影減去往背光方向平移的剪影
-  b.fillStyle = o.rim ? `rgb(${o.rim[0]},${o.rim[1]},${o.rim[2]})` : 'rgb(255,158,72)'; silhouette(b);
-  b.globalCompositeOperation = 'destination-out';
-  b.translate(-Lx * 0.095, -Ly * 0.095); silhouette(b);
-  a.setTransform(1, 0, 0, 1, 0, 0);
-  a.globalCompositeOperation = 'lighter'; a.globalAlpha = Math.min(1, lk * 1.25);
-  a.drawImage(SPR[1], 0, 0, cw, ch, 0, 0, cw, ch);
-  a.globalAlpha = 1;
-  if (red > 0.01) { a.globalCompositeOperation = 'source-atop'; a.fillStyle = `rgba(70,10,4,${0.82 * red})`; a.fillRect(0, 0, cw, ch); }
-  // 畫到主畫布：先火焰（加亮），再機身
-  ctx.save();
-  ctx.translate(x, y); ctx.rotate(roll); ctx.scale(sx, sy);
-  if (o.alpha != null) ctx.globalAlpha *= o.alpha;
-  ctx.globalCompositeOperation = 'lighter';
-  const fl = 0.85 + 0.15 * glow, fk = 1 - 0.8 * red;
-  const cOut = red > 0.5 ? '255,96,40' : '90,170,255', cMid = red > 0.5 ? '255,170,110' : '170,220,255';
-  for (const [ex, ey, sc] of [[-0.115, 1.25, 1], [0.115, 1.25, 1], [0, 1.24, 1.08]]) {
-    const len = (1.0 + 0.55 * glow) * sc * u, wd = 0.085 * sc * u, X0 = ex * u, Y0 = ey * u;
-    let gr = ctx.createLinearGradient(0, Y0, 0, Y0 + len);
-    gr.addColorStop(0, `rgba(${cMid},${0.85 * fl * fk})`); gr.addColorStop(0.35, `rgba(${cOut},${0.45 * fl * fk})`); gr.addColorStop(1, `rgba(${cOut},0)`);
-    ctx.fillStyle = gr;
-    ctx.beginPath(); ctx.moveTo(X0 - wd, Y0); ctx.quadraticCurveTo(X0 - wd * 1.25, Y0 + len * 0.35, X0, Y0 + len); ctx.quadraticCurveTo(X0 + wd * 1.25, Y0 + len * 0.35, X0 + wd, Y0); ctx.closePath(); ctx.fill();
-    gr = ctx.createLinearGradient(0, Y0, 0, Y0 + len * 0.45);
-    gr.addColorStop(0, `rgba(255,255,255,${0.95 * fk})`); gr.addColorStop(1, `rgba(${cMid},0)`);
-    ctx.fillStyle = gr;
-    ctx.beginPath(); ctx.moveTo(X0 - wd * 0.5, Y0); ctx.quadraticCurveTo(X0 - wd * 0.55, Y0 + len * 0.2, X0, Y0 + len * 0.45); ctx.quadraticCurveTo(X0 + wd * 0.55, Y0 + len * 0.2, X0 + wd * 0.5, Y0); ctx.closePath(); ctx.fill();
+const rgbS = (c, k = 1, a = 1) => `rgba(${Math.round(Math.min(255, c[0] * k))},${Math.round(Math.min(255, c[1] * k))},${Math.round(Math.min(255, c[2] * k))},${a})`;
+// 2D 退回畫法（WebGL／three.js 不能用時）：把同一組 3D 輪廓用同一台相機投影到畫面，依遠近順序填色（近似的機尾視角）
+function ship2D(c, P) {
+  const pr = shipProj(P), Lt = P.light, u = P.u;
+  // 簡化受光：頂面（法向量朝上）與側面
+  const lit = (alb, ny) => {
+    const k = [0, 1, 2].map(i => alb[i] / 255 * (Lt.hemi[i] * Lt.hemiI * (0.55 + 0.45 * ny) * 0.55 + Lt.key[i] * Lt.keyI * Math.max(0, Lt.keyDir[1] * ny) * 0.32 + Lt.fill[i] * Lt.fillI * 0.3));
+    return k.map(v => 255 * Math.min(1, Math.pow(Math.max(0, v), 1 / 1.2)));
+  };
+  const poly = pts => { c.beginPath(); pts.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]))); c.closePath(); };
+  c.save();
+  c.globalAlpha *= P.vis;
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  // 機翼（頂面；從翼尖往翼根，透視下翼尖略高）
+  const WH = wingHalf(14), dh = Math.tan(WING.dihedral * DEG), wyOf = x => WING.y + WING.t / 2 + Math.abs(x) * dh;
+  const top = lit([222, 218, 208], 1), side = lit([200, 196, 188], 0.2);
+  for (const sd of [-1, 1]) {
+    const up = WH.map(([x, y2]) => pr(sd * x, wyOf(x), Z0 - y2)), dn = WH.map(([x, y2]) => pr(sd * x, wyOf(x) - WING.t * (1 - 0.55 * Math.min(1, x / 1.12)), Z0 - y2));
+    poly(dn); c.fillStyle = '#2a2f2f'; c.fill();                       // 機翼厚度（後緣、翼端的側面）
+    poly(up);
+    const g = c.createLinearGradient(up[0][0], up[0][1], up[20][0], up[20][1]);
+    g.addColorStop(0, rgbS(top)); g.addColorStop(1, rgbS(top, 0.86));
+    c.fillStyle = g; c.fill();
+    c.beginPath(); for (let i = 1; i <= 19; i++) (i > 1 ? c.lineTo(up[i][0], up[i][1]) : c.moveTo(up[i][0], up[i][1]));
+    c.strokeStyle = '#272d2b'; c.lineWidth = Math.max(1, 0.05 * u); c.stroke();                 // 前緣黑瓦
+    c.globalCompositeOperation = 'lighter'; c.strokeStyle = rgbS(Lt.rim, 255, 0.5); c.lineWidth = Math.max(0.8, 0.02 * u); c.stroke(); c.globalCompositeOperation = 'source-over';
   }
-  const hg = ctx.createRadialGradient(0, 1.3 * u, 0, 0, 1.3 * u, 0.85 * u);
-  hg.addColorStop(0, `rgba(${cMid},${0.4 * fl * fk})`); hg.addColorStop(1, `rgba(${cOut},0)`);
-  ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 1.3 * u, 0.85 * u, 0, TAU); ctx.fill();
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.drawImage(SPR[0], 0, 0, cw, ch, -ox / ppu * u, -oy / ppu * u, cw / ppu * u, ch / ppu * u);
-  ctx.restore();
+  // 機身：截面環由機頭往機尾一圈圈疊（近的蓋遠的）＝機身的輪廓
+  const ST = [-1.3, -1.2, -1.05, -0.9, -0.72, -0.4, -0.05, 0.3, 0.65, 0.98, 1.07], NS = 18;
+  const ring = y2 => { const b = bodyAt(y2), yc = (b.yt + b.yb) / 2, hh = (b.yt - b.yb) / 2, out = []; for (let j = 0; j < NS; j++) { const a = j / NS * TAU, cs = Math.cos(a), sn = Math.sin(a), n = sn > 0 ? 2.5 : 4.5; out.push(pr(b.w * Math.sign(cs) * Math.pow(Math.abs(cs), 2 / n), yc + hh * Math.sign(sn) * Math.pow(Math.abs(sn), 2 / n), Z0 - y2)); } return out; };
+  const tb = pr(0, 0.245, Z0 - 0.2), bb = pr(0, -0.2, Z0 - 1.07), bodyTop = lit([233, 230, 221], 1), bodySide = lit([214, 211, 202], 0.15);
+  const bg = c.createLinearGradient(0, tb[1], 0, bb[1]);
+  bg.addColorStop(0, rgbS(bodyTop)); bg.addColorStop(0.62, rgbS(bodySide)); bg.addColorStop(0.8, '#33393a'); bg.addColorStop(1, '#262b2b');
+  c.fillStyle = bg;
+  for (const y2 of ST) { poly(ring(y2)); c.fill(); }
+  // 酬載艙門線、分段線（頂面）
+  c.strokeStyle = 'rgba(64,70,68,0.5)'; c.lineWidth = Math.max(0.6, 0.012 * u);
+  c.beginPath();
+  for (const x of [-0.15, 0, 0.15]) { const a = pr(x, 0.248, Z0 + 0.62), b = pr(x, 0.248, Z0 - 0.86); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); }
+  for (const y2 of [-0.25, 0.12, 0.5, 0.86]) { const a = pr(-0.25, 0.2, Z0 - y2), m = pr(0, 0.25, Z0 - y2), b = pr(0.25, 0.2, Z0 - y2); c.moveTo(a[0], a[1]); c.quadraticCurveTo(2 * m[0] - (a[0] + b[0]) / 2, 2 * m[1] - (a[1] + b[1]) / 2, b[0], b[1]); }
+  c.stroke();
+  // 整流罩
+  for (const s of [-1, 1]) {
+    const a = pr(s * 0.215, 0.205, Z0 - 0.7), b = pr(s * 0.215, 0.205, Z0 - 1.0);
+    c.strokeStyle = rgbS(bodyTop, 0.92); c.lineWidth = 0.11 * u; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke();
+  }
+  // 機尾底板＋噴口
+  poly(ring(1.07)); c.fillStyle = '#2b3030'; c.fill();
+  const B = BELL;
+  for (const [x, y] of ENGINES) {
+    const e = []; for (let j = 0; j < 16; j++) { const a = j / 16 * TAU; e.push(pr(x + Math.cos(a) * B.r1, y + Math.sin(a) * B.r1, B.z1)); }
+    poly(e); c.fillStyle = '#3c4244'; c.fill();
+    const ce = pr(x, y, B.z1), rr = B.r1 * 0.85 * ce[2] * P.s;
+    const hg = c.createRadialGradient(ce[0], ce[1], 0, ce[0], ce[1], rr);
+    hg.addColorStop(0, 'rgba(240,250,255,1)'); hg.addColorStop(0.6, 'rgba(150,200,255,0.95)'); hg.addColorStop(1, 'rgba(60,110,200,0.9)');
+    c.fillStyle = hg; c.beginPath(); c.arc(ce[0], ce[1], rr, 0, TAU); c.fill();
+  }
+  // 垂直尾翼（從後面看是一片薄刀：兩個側面＋後緣）
+  const F = FIN, fc = [[F.rootLE, F.yBase], [F.tipLE, F.yBase + F.h], [F.tipTE, F.yBase + F.h], [F.rootTE, F.yBase]];
+  for (const s of [-1, 1]) {
+    poly(fc.map(([y2, y], i) => pr(s * (i === 1 || i === 2 ? F.t1 : F.t0) / 2, y, Z0 - y2)));
+    c.fillStyle = s > 0 ? rgbS(side, 0.9) : rgbS(side, 1.05); c.fill();
+  }
+  poly([pr(F.t0 / 2, F.yBase, Z0 - F.rootTE), pr(F.t1 / 2, F.yBase + F.h, Z0 - F.tipTE), pr(-F.t1 / 2, F.yBase + F.h, Z0 - F.tipTE), pr(-F.t0 / 2, F.yBase, Z0 - F.rootTE)]);
+  c.fillStyle = rgbS(side, 0.75); c.fill();
+  // 尾焰（加亮）：從噴口往鏡頭方向噴；外焰＋白熱內焰＋光暈
+  c.globalCompositeOperation = 'lighter';
+  for (const [x, y] of ENGINES) {
+    const b0 = pr(x, y, B.z1), b1 = pr(x, y, B.z1 - P.flameLen * 0.85), wd = B.r1 * b0[2] * P.s;
+    const dx = b1[0] - b0[0], dy = b1[1] - b0[1], dl = Math.hypot(dx, dy) || 1, nx = -dy / dl, ny = dx / dl;
+    let g = c.createLinearGradient(b0[0], b0[1], b1[0], b1[1]);
+    g.addColorStop(0, 'rgba(170,220,255,0.6)'); g.addColorStop(0.4, 'rgba(90,170,255,0.28)'); g.addColorStop(1, 'rgba(90,170,255,0)');
+    c.fillStyle = g; c.beginPath(); c.moveTo(b0[0] + nx * wd, b0[1] + ny * wd); c.quadraticCurveTo(b0[0] + dx * 0.4 + nx * wd * 1.3, b0[1] + dy * 0.4 + ny * wd * 1.3, b1[0], b1[1]); c.quadraticCurveTo(b0[0] + dx * 0.4 - nx * wd * 1.3, b0[1] + dy * 0.4 - ny * wd * 1.3, b0[0] - nx * wd, b0[1] - ny * wd); c.closePath(); c.fill();
+    g = c.createRadialGradient(b0[0], b0[1], 0, b0[0], b0[1], 0.42 * b0[2] * P.s);
+    g.addColorStop(0, `rgba(170,215,255,${0.28 * P.power})`); g.addColorStop(1, 'rgba(90,170,255,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(b0[0], b0[1], 0.42 * b0[2] * P.s, 0, TAU); c.fill();
+  }
+  c.restore();
 }
+
+// ---- 3D 太空梭的小渲染器（透明背景、只涵蓋太空梭周圍；疊在蟲洞 GL 畫布上，用 CSS 位移跟著走） ----
+//   歡迎詞時在背景分段建好：載入 three（和 scene.js 同一個模組，不會重複下載）→ 建 renderer → 紋理 → 模型 → 編譯著色器 → 用正式尺寸暖機畫一格。
+//   蟲洞開始的那一格決定這次用 3D 還是 2D（中途不切換，避免跳一下）。結束／跳過／出錯：dispose 全部、forceContextLoss、移除畫布。
+const SH = { state: 'off', T: null, gen: null, timer: 0, cv: null, ren: null, scene: null, cam: null, m: null, key: null, hemi: null, fill: null, w: 0, h: 0, pr: 0, gl: null, root: null };
+function shipFail(e) {
+  if (SH.state === 'failed' || SH.state === 'off' || SH.state === 'released') return;
+  console.warn('[launch] 太空梭 3D 無法使用，改用 2D 畫法：', e && e.message || e);
+  warpStats.ship.error = String(e && e.message || e);
+  shipDispose();
+  SH.state = 'failed';
+}
+function shipDispose() {
+  if (SH.timer) { clearTimeout(SH.timer); SH.timer = 0; }
+  SH.gen = null;
+  try { if (SH.m) SH.m.dispose(); } catch (e) { /* ignore */ }
+  if (SH.ren) {
+    try { SH.ren.dispose(); SH.ren.forceContextLoss(); } catch (e) { /* ignore */ }
+    warpStats.ship.lost = !!(SH.gl && SH.gl.isContextLost && SH.gl.isContextLost());
+  }
+  if (SH.cv && SH.cv.parentNode) SH.cv.parentNode.removeChild(SH.cv);
+  SH.cv = SH.ren = SH.scene = SH.cam = SH.m = SH.key = SH.hemi = SH.fill = SH.gl = null;
+  SH.w = SH.h = SH.pr = 0;
+}
+function shipRelease() {
+  const was = SH.state;
+  shipDispose();
+  SH.root = null;
+  SH.state = was === 'off' ? 'off' : 'released';
+  freeAtlas();
+}
+function shipInit(root, ref) {
+  shipRelease();
+  warpStats.ship = {};
+  if (WORM.SHIP3D === 'off' || !HD.want) { SH.state = 'off'; return; }
+  SH.state = 'building'; SH.root = root;
+  const cv = SH.cv = document.createElement('canvas');
+  cv.setAttribute('aria-hidden', 'true');
+  Object.assign(cv.style, { inset: 'auto', left: '0', top: '0', width: '1px', height: '1px', display: 'none', pointerEvents: 'none', transformOrigin: '0 0', willChange: 'transform' });
+  root.insertBefore(cv, ref);
+  const t0 = performance.now();
+  SH.timer = setTimeout(() => {
+    SH.timer = 0;
+    if (SH.state !== 'building') return;
+    import('./vendor/three.module.min.js').then(T => {
+      if (SH.state !== 'building') return;
+      SH.T = T; warpStats.ship.importMs = Math.round(performance.now() - t0);
+      SH.gen = shipBuild();
+      shipPump();
+    }).catch(shipFail);
+  }, WORM.SHIP_DELAY);
+}
+function shipPump() {
+  SH.timer = 0;
+  if (SH.state !== 'building' || !SH.gen) return;
+  const t0 = performance.now();
+  try {
+    while (performance.now() - t0 < 8) { const r = SH.gen.next(); if (r.done) return; if (r.value === 'wait') break; }
+  } catch (e) { shipFail(e); return; }
+  SH.timer = setTimeout(shipPump, 16);
+}
+function shipLevelPR() {
+  const dpr = Math.min(2, Math.max(1, (typeof window !== 'undefined' && window.devicePixelRatio) || 1));
+  const lv = HD.levels ? HD.levels[HD.level] : null;
+  return Math.max(0.75, Math.min(WORM.SHIP_PR, dpr, lv ? lv.s : dpr));
+}
+function* shipBuild() {
+  const T = SH.T, S = warpStats.ship, tB = performance.now();
+  let busy = 0;
+  const step = (name, fn) => { const t = performance.now(); fn(); const d = performance.now() - t; busy += d; S[name] = Math.round(d * 10) / 10; };
+  step('rendererMs', () => {
+    const ren = SH.ren = new T.WebGLRenderer({ canvas: SH.cv, alpha: true, antialias: WORM.SHIP_AA, premultipliedAlpha: true, depth: true, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance', failIfMajorPerformanceCaveat: !HD.force });
+    SH.gl = ren.getContext();
+    ren.setClearColor(0x000000, 0); ren.setPixelRatio(1);
+    SH.cv.addEventListener('webglcontextlost', shipLost);
+  });
+  yield 'wait';
+  step('atlasMs', () => makeAtlas());
+  yield 'wait';
+  step('modelMs', () => {
+    const m = SH.m = buildShuttle(T, { anisotropy: Math.min(8, SH.ren.capabilities.getMaxAnisotropy()), flameLen: 1 });
+    S.tris = m.tris;
+    const sc = SH.scene = new T.Scene();
+    sc.add(m.group);
+    SH.hemi = new T.HemisphereLight(0x8fb0bd, 0x0e0d0d, 1); sc.add(SH.hemi);
+    SH.key = new T.DirectionalLight(0xffa060, 2); sc.add(SH.key);
+    SH.fill = new T.DirectionalLight(0x80a0aa, 0.5); SH.fill.position.set(0, 0.6, 1); sc.add(SH.fill);
+    SH.cam = new T.PerspectiveCamera(30, 1, 0.02, 30);
+    SH.cam.matrixAutoUpdate = false;
+  });
+  yield 'wait';
+  step('compileMs', () => SH.ren.compile(SH.scene, SH.cam));
+  yield 'wait';
+  // 暖機：用正式尺寸、開場的姿勢先畫一格（畫布還看不見；紋理上傳、MSAA 緩衝配置、管線都在這時完成），蟲洞開始時不卡
+  step('warmMs', () => {
+    const root = SH.root, W = Math.max(1, root ? root.clientWidth : 800), H = Math.max(1, root ? root.clientHeight : 600);
+    shipRender(makeWarp(WARP_MS).poseAt(0.4, W, H), W, H, 0);
+    SH.gl.flush();
+  });
+  S.buildMs = Math.round(busy); S.buildWallMs = Math.round(performance.now() - tB);
+  SH.state = 'ready';
+}
+function shipLost(e) { if (e && e.preventDefault) e.preventDefault(); shipFail(new Error('webglcontextlost')); }
+// 蟲洞開始了但 3D 還沒建好：three 已載入就當場做完；還在下載就這次用 2D
+function shipFinishNow() {
+  if (SH.state !== 'building') return SH.state === 'ready';
+  if (!SH.gen) return false;
+  if (SH.timer) { clearTimeout(SH.timer); SH.timer = 0; }
+  const t0 = performance.now();
+  try { while (!SH.gen.next().done) { /* run */ } } catch (e) { shipFail(e); }
+  warpStats.ship.finishNowMs = Math.round(performance.now() - t0);
+  return SH.state === 'ready';
+}
+// 一格：只畫太空梭周圍的方框（離軸投影，和全畫面相機完全一致），畫布用 CSS 放到正確位置
+function shipRender(P, W, H, wt) {
+  const T = SH.T, ren = SH.ren, m = SH.m, u = P.u;
+  const pr = shipLevelPR();
+  const bx0 = P.x - WORM.SHIP_BOX[0] * u, bx1 = P.x + WORM.SHIP_BOX[0] * u, by0 = P.y - WORM.SHIP_BOX[1] * u, by1 = P.y + WORM.SHIP_BOX[2] * u;
+  const nw = Math.ceil((bx1 - bx0) * pr) + 2, nh = Math.ceil((by1 - by0) * pr) + 2;
+  if (pr !== SH.pr || nw > SH.w || nh > SH.h || W !== SH.vw || H !== SH.vh) {   // 只在需要時重新配置（變大、降檔、畫面尺寸改變）；出洞後縮小不重配
+    SH.vw = W; SH.vh = H;
+    SH.pr = pr; SH.w = Math.ceil(nw * 1.08 / 8) * 8; SH.h = Math.ceil(nh * 1.08 / 8) * 8;
+    ren.setSize(SH.w, SH.h, false);
+  }
+  const cw = SH.w / pr, ch = SH.h / pr;
+  const x0 = Math.floor((P.x - cw / 2) * pr) / pr, y0 = Math.floor((by0 - (ch - (by1 - by0)) / 2) * pr) / pr;
+  const n = 0.02, f = P.f;
+  SH.cam.projectionMatrix.makePerspective((x0 - P.cx) / f * n, (x0 + cw - P.cx) / f * n, (P.cy - y0) / f * n, (P.cy - y0 - ch) / f * n, n, 30);
+  SH.cam.projectionMatrixInverse.copy(SH.cam.projectionMatrix).invert();
+  const g = m.group;
+  g.position.set(P.pos[0], P.pos[1], P.pos[2]);
+  g.rotation.set(P.pitch, Math.PI + P.yaw, P.bank, 'YXZ');
+  g.scale.setScalar(P.s);
+  for (const fl of m.flames) fl.scale.set(1, 1, P.flameLen);
+  m.setThrust(P.power, P.time, P.haloI);
+  const L = P.light;
+  SH.key.color.setRGB(L.key[0], L.key[1], L.key[2]); SH.key.intensity = L.keyI;
+  SH.key.position.set(L.keyDir[0], L.keyDir[1], L.keyDir[2]);
+  SH.hemi.color.setRGB(L.hemi[0], L.hemi[1], L.hemi[2]); SH.hemi.intensity = L.hemiI;
+  SH.fill.color.setRGB(L.fill[0], L.fill[1], L.fill[2]); SH.fill.intensity = L.fillI;
+  m.U.uRimCol.value.setRGB(L.rim[0], L.rim[1], L.rim[2]);
+  m.U.uRimDir.value.set(L.keyDir[0], L.keyDir[1], L.keyDir[2]).normalize();
+  m.U.uTailCol.value.setRGB(L.tail[0], L.tail[1], L.tail[2]);
+  ren.render(SH.scene, SH.cam);
+  const st = SH.cv.style;
+  st.width = cw + 'px'; st.height = ch + 'px';
+  st.transform = `translate(${x0}px,${y0}px)`;
+  st.opacity = String(Math.max(0, Math.min(1, wt)));
+  if (wt > 0.003) st.display = '';
+  const S = warpStats.ship;
+  S.calls = ren.info.render.calls; S.triangles = ren.info.render.triangles; S.size = SH.w + 'x' + SH.h; S.pr = pr;
+}
+export const shipState = () => SH.state;
 
 function flashAlpha(p) {
   if (p <= 0) return 0;
@@ -816,7 +887,8 @@ function ringFill(ctx, cx, cy, r, w, rgb, a, spread = 2.6) {
 //   ‧ 防閃爍：用 dFdx/dFdy 算每個像素在天空上涵蓋多大（透鏡壓縮處很大）→ 噪聲的高頻層淡出成平均值、星點層淡出成
 //     「平均亮度」、旋臂與核球先做等效的模糊；壓到極限（球邊緣、光線繞無數圈）就換成整片天空的平均色（建好時用 GPU 算一次）。
 //   ‧ 球緣細暖光＋色散、球外光暈、暗角、色調曲線（有肩部、不爆白）、抖色（避免暗部色階）都在同一個 shader。
-//   ‧ 太空梭畫在一張只有它那麼大的 2D 畫布（全解析度），用 CSS 位移跟著走；出洞閃光是一個 div（不佔畫布記憶體）。
+//   ‧ 太空梭（20261027k）：shuttle3d.js 的 3D 模型，用另一個小 Three.js 渲染器（透明、只涵蓋太空梭周圍、離軸投影）畫，CSS 位移跟著走；
+//     3D 不能用時退回 2D 機尾近似畫法（畫在只有它那麼大的 2D 畫布）。出洞閃光是一個 div（不佔畫布記憶體）。
 // 記憶體（iPad Pro 12.9" 橫式 2560×1919 最壞情況）：GL 畫布 19.7 MB（瀏覽器合成時可能再多一份）、太空梭畫布約 4.6 MB、
 //   紋理 0.27 MB。CPU 退回路徑則要常駐 7.7 MB 的天空貼圖＋計算時約 14 MB 暫存。蟲洞段結束／跳過時全部釋放（loseContext）。
 // 退回：GL 不可用、建立失敗、highp 不支援、shader 編譯失敗、context lost、?gl=0 → 自動改用上面的 CPU 路徑（不會空白）。
@@ -1153,6 +1225,7 @@ function hdFail(err) {
   console.warn('[launch] 蟲洞高清模式無法使用，改用 CPU 繪圖：', err && err.message || err);
   warpStats.gl.error = String(err && err.message || err);
   hdDispose(false);
+  shipRelease();                                   // CPU 路徑一律用 2D 太空梭
   HD.state = 'failed';
   refreshReady(); scheduleWarm(0);                 // 補算 CPU 路徑的天空貼圖
 }
@@ -1369,6 +1442,7 @@ export function hdInit(root, below) {
   Object.assign(fl.style, { position: 'absolute', inset: '0', background: 'rgb(228,252,250)', opacity: '0', pointerEvents: 'none' });
   const ref = below && below.parentNode === root ? below.nextSibling : root.firstChild;
   root.insertBefore(glc, ref); root.insertBefore(sc, ref); root.insertBefore(fl, ref);
+  shipInit(root, fl);                              // 3D 太空梭的小渲染器（在閃光層下面、GL 蟲洞畫布上面）
   HD.gen = hdBuild();
   const step = () => {
     HD.timer = 0;
@@ -1395,7 +1469,7 @@ function hdFinishNow() {
 export function hdRelease() {
   const had = HD.want;
   hdDispose(true);
-  SPR = null;
+  shipRelease();
   HD.root = null; HD.levels = null; HD.ft = []; HD.lastNow = 0;
   HD.state = had ? 'released' : 'off';
 }
@@ -1450,27 +1524,59 @@ export function makeWarp(warpMs) {
     const sk = tau > TS ? WORM.SHAKE * Math.exp(-(lc * lc) / 0.25) : 0;
     return [sk * (0.6 * Math.sin(tau * 71) + 0.4 * Math.sin(tau * 43.7)), sk * (0.6 * Math.sin(tau * 59.3 + 1) + 0.4 * Math.sin(tau * 37.1))];
   };
-  // 太空梭（後上方的追隨鏡頭；等速直線開進球心，穿過後在另一邊的星空裡繼續往前飛）：兩條路徑共用
-  const drawShip = (c, tau, cx, cy, f) => {
-    const vis = smooth(tau / 0.45);                                            // 不淡出：穿過喉嚨後仍看得到，最後被出洞閃光吞沒
-    if (vis <= 0.01) return null;
-    const P = shipAt(tau);
-    const x = cx + P.X * f, y = cy + P.Y * f;
-    // 機頭＝前進方向＝沿蟲洞軸；平行於視軸的直線在畫面上指向消失點（球心）→ 機頭永遠對準球心，不側滑
-    const heading = Math.atan2(cy - y, cx - x) + Math.PI / 2;
-    // 透視縮短：機身沿軸，視線與機身的夾角＝太空梭偏離球心的視角 α（鏡頭俯角）→ 頂面投影 sinα、機身厚度投影 T·cosα
-    const ta = Math.hypot(P.X, P.Y), ca = 1 / Math.sqrt(1 + ta * ta), sy = Math.min(1, ta * ca + WORM.SHIP_THICK * ca);
-    const near = smooth(1 - P.ls / 3);                                         // 越接近喉嚨（及穿過後），受另一邊的暖光照得越多
-    const rim = [lerp(150, 255, near), lerp(186, 190, near), lerp(215, 136, near)].map(Math.round);
-    const u = WORM.SHIP_LEN / 2.5 * f / P.D;
-    // 引擎：穩定發光、只有很慢的輕微脈動（不閃爍）
-    const glow = 0.8 + 0.07 * Math.sin(TAU * 1.1 * tau) + 0.03 * Math.sin(TAU * 2.3 * tau + 1.3);
-    if (c) shuttle(c, x, y, u, heading, glow, {
-      sx: 1, sy, light: Math.atan2(cy - y, cx - x), lk: 0.4 + 0.55 * near, rim,
-      dim: 0.12, alpha: vis,
-    });
-    return { x, y, u };
+  // 太空梭的姿態與受光（後上方的追隨鏡頭；等速直線開進球心，穿過後在另一邊的星空裡繼續往前飛）：3D 與 2D 兩種畫法共用
+  //   位置、間距、等速、時序都由上面的 shipAt 決定（已定案）；這裡只加：機尾視角的 3D 姿態、很輕的擺動與推進震動、鏡頭呼吸、隨時間緩變的受光
+  const sway = (A, Tp, ph, t) => A * DEG * (0.72 * Math.sin(TAU * t / Tp + ph) + 0.28 * Math.sin(TAU * t / (Tp * 0.57) + ph * 2.3 + 1.1));
+  const breath = t => {                                                        // 鏡頭呼吸（太空梭處的位移，CSS px）；和擺動不同週期、不同相位
+    const b = WORM.BREATH;
+    return [b * (0.7 * Math.sin(TAU * t / 5.7 + 1.9) + 0.3 * Math.sin(TAU * t / 3.1 + 0.3)), b * 0.8 * (0.7 * Math.sin(TAU * t / 4.6 + 3.0) + 0.3 * Math.sin(TAU * t / 2.7 + 1.2))];
   };
+  const vignetteAt = (x, y, W, H) => {                                         // 和 GL shader 的暗角一樣（蓋不到太空梭畫布，要自己補）
+    const hy = Math.hypot(W, H), vt = Math.min(1, Math.max(0, (Math.hypot(x - W / 2, y - H * 0.56) - 0.2 * hy) / (0.42 * hy)));
+    return vt < 0.6 ? 0.22 * vt / 0.6 : 0.22 + 0.44 * (vt - 0.6) / 0.4;
+  };
+  const poseAt = (tau, W, H, Lay) => {
+    const Ly = Lay || layoutOf(W, H), f = Ly.f, cx = Ly.cx, cy = Ly.cy;
+    const P = shipAt(tau), lc = camL(tau), s = WORM.SHIP_LEN / 2.5 * (H > W ? WORM.SHIP_K_PORTRAIT : 1), u = s * f / P.D;
+    const t = tau, pxU = P.D / f;
+    // 穿越段（推力加大、震動稍大）；出洞後慢慢收油
+    const tun = smooth((tau - TS) / TU), post = smooth((tau - TE) / 1.0);
+    const thrust = tun * (1 - 0.6 * post);
+    const vA = WORM.SHIP_VIB * (1 + (WORM.SHIP_VIB_TUNNEL - 1) * thrust);
+    const vx = vA * (0.6 * Math.sin(TAU * 19.3 * t) + 0.4 * Math.sin(TAU * 27.1 * t + 1.3)), vy = vA * (0.6 * Math.sin(TAU * 23.7 * t + 0.7) + 0.4 * Math.sin(TAU * 31.3 * t + 2.1));
+    const [bx, by] = breath(t);
+    const x = cx + P.X * f + vx + bx, y = cy + P.Y * f + vy + by;
+    const pos = [WORM.SHIP_DX + (vx + bx) * pxU, -WORM.SHIP_H - (vy + by) * pxU, -P.D];
+    // 受光：離喉嚨越近，前方球裡（另一邊）的暖光越強；穿過喉嚨後（ls < 0）改成正前方星系的暖白光、整個被暖光包住
+    //   球越大（視半徑 a），照過來的光越多：亮度 ∝ 球的立體角 ∝ sin²a（相對於開始時 A_START）
+    const gal = smooth(-P.ls / 1.1), warm = Math.max(gal, 0.55 * tun);
+    let Rs = -1, sk = 4;
+    if (lc > 0.02) { const ac = Math.asin(1 / Math.sqrt(1 + lc * lc)); sk = Math.min(4, Math.pow(Math.sin(ac) / Math.sin(WORM.A_START * DEG), 2)); if (ac < 80 * DEG) Rs = f * Math.tan(ac); }
+    const rS = Math.hypot(P.X, P.Y) * f, sweep = Rs > 0 ? Math.exp(-Math.pow((Rs - rS) / (0.4 * u), 2)) : 0;   // 球緣光掃過機身
+    const va = vignetteAt(x, y, W, H), dimV = 1 - 0.9 * va;
+    let kd = P.ls > 0 ? [-WORM.SHIP_DX, WORM.SHIP_H, -Math.max(0.25, P.ls)] : [0, 0.05, -1];
+    const kl = Math.hypot(kd[0], kd[1], kd[2]); kd = kd.map(v => v / kl);
+    kd = [lerp(kd[0], 0, gal), lerp(kd[1], 0.12, gal), lerp(kd[2], -1, gal)];
+    const keyC = [1.0, lerp(0.55, 0.86, warm), lerp(0.28, 0.68, warm)];
+    const light = {
+      key: keyC, keyI: WORM.KEY_K * dimV * (0.4 + 0.25 * sk + 0.6 * sweep + 0.7 * gal), keyDir: kd,
+      hemi: [lerp(0.44, 0.7, warm), lerp(0.52, 0.55, warm), lerp(0.58, 0.47, warm)], hemiI: dimV * (1.3 + 0.35 * warm),
+      fill: [0.5, 0.66, 0.72], fillI: dimV * 0.75 * (1 - 0.45 * gal),
+      rim: keyC.map(v => v * WORM.RIM_K * dimV * (0.45 + 0.35 * sk + 1.3 * sweep + 0.4 * gal)),
+      tail: [0.32, 0.55, 1.0].map(v => v * WORM.TAIL_K * 0.5 * (1 + 0.6 * thrust)),
+    };
+    const power = (1 + (WORM.FLAME_BOOST - 1) * thrust) * (1 + 0.04 * Math.sin(TAU * 1.1 * t) + 0.02 * Math.sin(TAU * 2.3 * t + 1.3));
+    return {
+      cx, cy, f, pos, s, u, x, y, time: t,
+      bank: sway(WORM.SHIP_BANK, WORM.SHIP_SWAY_T[0], 0.4, t),
+      pitch: WORM.SHIP_ELEV_ADD * DEG + sway(WORM.SHIP_PITCH, WORM.SHIP_SWAY_T[1], 2.1, t),
+      yaw: sway(WORM.SHIP_YAW, WORM.SHIP_SWAY_T[2], 4.0, t),
+      power, flameLen: WORM.FLAME_LEN * (1 + (WORM.FLAME_BOOST - 1) * 0.8 * thrust), haloI: 0.38 * power * (1 - 0.5 * va),
+      vis: smooth(tau / 0.45), light,                                           // 不淡出：穿過喉嚨後仍看得到，最後被出洞閃光吞沒
+      sky: [bx * P.D / (P.D + Math.max(0.6, Math.abs(lc)) + 1), by * P.D / (P.D + Math.max(0.6, Math.abs(lc)) + 1)],   // 球比較遠 → 呼吸時動得少（視差）
+    };
+  };
+  let shipMode = '';                                                           // 這次蟲洞用 '3d' 或 '2d'（第一格決定，中途不切換）
 
   // GL 路徑的一格：天空畫在全解析度 GL 畫布；太空梭畫在跟著它走的小畫布；閃光是 div
   function drawHD(W, H, tau, wt, p) {
@@ -1493,7 +1599,8 @@ export function makeWarp(warpMs) {
     hdSize(W, H);
     const lv = HD.levels[HD.level];
     warpStats.gl.level = HD.level; warpStats.gl.q = lv.q; warpStats.gl.size = HD.size; warpStats.res = HD.size;
-    const L = layoutOf(W, H), lc = camL(tau), [ox, oy] = shake(tau, lc), E = expo(tau);
+    const L = layoutOf(W, H), lc = camL(tau), E = expo(tau), PS = poseAt(tau, W, H, L);
+    let [ox, oy] = shake(tau, lc); ox += PS.sky[0]; oy += PS.sky[1];
     if (wt > 0.003) {
       const s = HD.glc.width / W;
       hdUniforms({ mode: 0, Wd: HD.glc.width, Hd: HD.glc.height, W, H, s, lc, roll: WORM.ROLL * DEG * Math.min(1.3, tau / T), ox, oy, exp: E.exp, rim: E.rim, f: L.f, cx: L.cx, cy: L.cy });
@@ -1501,22 +1608,23 @@ export function makeWarp(warpMs) {
       if (!HD.visible) { HD.glc.style.visibility = 'visible'; HD.glc.style.display = ''; HD.visible = true; }
     }
     HD.glc.style.opacity = String(Math.max(0, Math.min(1, wt)));
-    // 太空梭：只有它那麼大的畫布（全解析度），用 CSS 位移放到正確位置
-    const sc = HD.shipc, info = wt > 0.003 ? drawShip(null, tau, L.cx, L.cy, L.f) : null;
-    if (info) {
-      const sd = Math.min(2, Math.max(1, window.devicePixelRatio || 1)), R = Math.ceil(3.2 * info.u) + 4;
-      const need = Math.ceil(2 * R * sd);
+    // 太空梭：3D（自己的小渲染器）或 2D 退回畫法（只有它那麼大的 2D 畫布）；兩者都用 CSS 位移放到正確位置
+    if (!shipMode && wt > 0.003) { shipMode = shipFinishNow() ? '3d' : '2d'; warpStats.ship.mode = shipMode; }
+    const sc = HD.shipc, vis = wt > 0.003 && PS.vis > 0.01;
+    if (shipMode === '3d' && SH.state === 'ready') {
+      try { const ts = performance.now(); shipRender(PS, W, H, vis ? wt * PS.vis : 0); warpStats.ship.frameMs = +(performance.now() - ts).toFixed(2); }
+      catch (e) { shipFail(e); shipMode = '2d'; warpStats.ship.mode = '2d'; }
+    } else if (shipMode === '3d') { shipMode = '2d'; warpStats.ship.mode = '2d'; }
+    if (shipMode === '2d' && vis) {
+      const sd = Math.min(2, Math.max(1, window.devicePixelRatio || 1)), u = PS.u;
+      const bw = 2 * WORM.SHIP_BOX[0] * u, bh = (WORM.SHIP_BOX[1] + WORM.SHIP_BOX[2]) * u, need = Math.ceil(Math.max(bw, bh) * sd) + 8;
       if (!HD.sctx || need > sc.width) { sc.width = sc.height = need; HD.sctx = sc.getContext('2d'); }
-      const ox0 = Math.floor((info.x - R) * sd) / sd, oy0 = Math.floor((info.y - R) * sd) / sd, cw = sc.width / sd;
+      const cw = sc.width / sd, ox0 = Math.floor((PS.x - cw / 2) * sd) / sd, oy0 = Math.floor((PS.y - WORM.SHIP_BOX[1] * u - (cw - bh) / 2) * sd) / sd;
       const c = HD.sctx;
       c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
       c.clearRect(0, 0, sc.width, sc.height);
       c.setTransform(sd, 0, 0, sd, -ox0 * sd, -oy0 * sd);
-      drawShip(c, tau, L.cx, L.cy, L.f);
-      // 暗角（GL 畫布上的暗角蓋不到這張）：在太空梭所在位置補上一樣的暗度
-      const vt = Math.min(1, Math.max(0, (Math.hypot(info.x - W / 2, info.y - H * 0.56) - 0.2 * Math.hypot(W, H)) / (0.42 * Math.hypot(W, H))));
-      const va = vt < 0.6 ? 0.22 * vt / 0.6 : 0.22 + 0.44 * (vt - 0.6) / 0.4;
-      if (va > 0.01) { c.globalCompositeOperation = 'source-atop'; c.fillStyle = `rgba(6,12,10,${va.toFixed(3)})`; c.fillRect(ox0, oy0, cw, cw); c.globalCompositeOperation = 'source-over'; }
+      ship2D(c, PS);
       sc.style.width = sc.style.height = cw + 'px';
       sc.style.transform = `translate(${ox0}px,${oy0}px)`;
       sc.style.opacity = String(Math.max(0, Math.min(1, wt)));
@@ -1548,8 +1656,9 @@ export function makeWarp(warpMs) {
     if (!ready) warmStep(performance.now() - tIn > 3 ? 0 : 12);   // 還沒在閒置時間算完：每格最多再算約 12 ms（這一格若剛做過尺寸預算就先不算）
     const tStart = performance.now();
     const { cx, cy, f } = D.L;
-    const lc = camL(tau);
-    const [ox, oy] = shake(tau, lc);                // 穿過喉嚨那一下的微晃（不發光）
+    const lc = camL(tau), PS = poseAt(tau, W, H, D.L);
+    let [ox, oy] = shake(tau, lc);                  // 穿過喉嚨那一下的微晃（不發光）
+    ox += PS.sky[0]; oy += PS.sky[1];               // 鏡頭呼吸（球比太空梭遠，動得少）
 
     ctx.save();
     ctx.globalAlpha = wt;
@@ -1589,13 +1698,14 @@ export function makeWarp(warpMs) {
     }
 
     ctx.translate(-ox, -oy);
-    drawShip(ctx, tau, cx, cy, f);                  // 和 GL 路徑一樣不跟著微晃（我們和它一起飛，相對位置平順）
+    if (PS.vis > 0.01) ship2D(ctx, PS);              // 2D 機尾近似畫法；和 GL 路徑一樣不跟著穿越微晃（我們和它一起飛，相對位置平順）
     ctx.drawImage(D.vg, 0, 0, W, H);                // 暗角
     ctx.restore();
     drawFlash(ctx, W, H, p);
     warpStats.frameMs = performance.now() - tStart;
   }
   draw.mode = '';
+  draw.poseAt = poseAt;
   return draw;
 }
 
