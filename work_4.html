@@ -432,6 +432,7 @@
   let t2_arm_eff = 30, t2_arm_res = 5, t2_res_force = 600;
   let t3_mode = 'wheel';
   let t3_wheel_item = 'pencil';
+  let t3_force = 'wheel';           // 輪軸基本構造：施力在輪上 / 施力在軸上
 
   // 分頁四互動控制變數
   let t4_mode = 'inclined';
@@ -544,17 +545,25 @@
       badge.textContent = tr('轉動機械', 'Rotational Machines');
       
       dynamicControls.innerHTML = `
-        <div style="display:flex; justify-content:center; gap:16px; margin-bottom:16px; flex-wrap:wrap;">
-          <button class="btn-switch ${t3_mode==='wheel'?'active':''}" onclick="setTab3Mode('wheel', this)">${tr('輪軸生活實例解剖', 'Wheel & Axle Anatomy')}</button>
+        <div id="t3-mode-row" style="display:flex; justify-content:center; gap:16px; margin-bottom:16px; flex-wrap:wrap;">
+          <button class="btn-switch ${t3_mode==='wheel'?'active':''}" onclick="setTab3Mode('wheel', this)">${tr('輪軸：構造與生活實例', 'Wheel & Axle: Structure & Examples')}</button>
           <button class="btn-switch ${t3_mode==='pulley'?'active':''}" onclick="setTab3Mode('pulley', this)">${tr('定滑輪 vs 動滑輪', 'Fixed vs Movable Pulley')}</button>
         </div>
-        <div id="wheel-sub-controls" style="display:${t3_mode==='wheel'?'flex':'none'}; justify-content:center; gap:8px; flex-wrap:wrap;">
-          <button class="btn-switch ${t3_wheel_item==='copter'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('copter', this)">${tr('竹蜻蜓 / 擀麵棍 🚁', 'Bamboo-copter 🚁')}</button>
-          <button class="btn-switch ${t3_wheel_item==='pencil'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('pencil', this)">${tr('削鉛筆機 ✏️', 'Pencil Sharpener ✏️')}</button>
-          <button class="btn-switch ${t3_wheel_item==='faucet'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('faucet', this)">${tr('水龍頭 🚰', 'Faucet 🚰')}</button>
-          <button class="btn-switch ${t3_wheel_item==='doorknob'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('doorknob', this)">${tr('喇叭門把 🚪', 'Doorknob 🚪')}</button>
-          <button class="btn-switch ${t3_wheel_item==='screwdriver'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('screwdriver', this)">${tr('螺絲起子 🪛', 'Screwdriver 🪛')}</button>
-          <button class="btn-switch ${t3_wheel_item==='wheel'?'active':''}" style="font-size:16px; padding:6px 12px;" onclick="setWheelItem('wheel', this)">${tr('方向盤 ☸️', 'Steering Wheel ☸️')}</button>
+        <div id="wheel-sub-controls" style="display:${t3_mode==='wheel'?'flex':'none'}; flex-direction:column; align-items:center; gap:12px;">
+          <div id="t3-force-row" style="display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:21px; font-weight:700; color:var(--chalk-white);">${tr('① 基本構造｜施力點：', '① Basic structure | Effort on:')}</span>
+            <button class="btn-switch ${t3_force==='wheel'?'active':''}" onclick="setForcePoint('wheel', this)">${tr('施力在輪上（省力）', 'the wheel (saves force)')}</button>
+            <button class="btn-switch ${t3_force==='axle'?'active':''}" onclick="setForcePoint('axle', this)">${tr('施力在軸上（費力省距離）', 'the axle (saves distance)')}</button>
+          </div>
+          <div id="t3-item-row" style="display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:21px; font-weight:700; color:var(--chalk-white);">${tr('② 生活實例：', '② Real-life examples:')}</span>
+            <button class="btn-switch ${t3_wheel_item==='pencil'?'active':''}" style="font-size:18px; padding:6px 12px;" onclick="setWheelItem('pencil', this)">${tr('削鉛筆機 ✏️', 'Pencil Sharpener ✏️')}</button>
+            <button class="btn-switch ${t3_wheel_item==='faucet'?'active':''}" style="font-size:18px; padding:6px 12px;" onclick="setWheelItem('faucet', this)">${tr('水龍頭 🚰', 'Faucet 🚰')}</button>
+            <button class="btn-switch ${t3_wheel_item==='doorknob'?'active':''}" style="font-size:18px; padding:6px 12px;" onclick="setWheelItem('doorknob', this)">${tr('喇叭門把 🚪', 'Doorknob 🚪')}</button>
+            <button class="btn-switch ${t3_wheel_item==='screwdriver'?'active':''}" style="font-size:18px; padding:6px 12px;" onclick="setWheelItem('screwdriver', this)">${tr('螺絲起子 🪛', 'Screwdriver 🪛')}</button>
+            <button class="btn-switch ${t3_wheel_item==='wheel'?'active':''}" style="font-size:18px; padding:6px 12px;" onclick="setWheelItem('wheel', this)">${tr('方向盤 ☸️', 'Steering Wheel ☸️')}</button>
+            <button class="btn-switch ${t3_wheel_item==='copter'?'active':''}" style="font-size:18px; padding:6px 12px;" onclick="setWheelItem('copter', this)">${tr('擀麵棍 / 竹蜻蜓 🚁', 'Rolling pin / Bamboo-copter 🚁')}</button>
+          </div>
         </div>
       `;
 
@@ -665,43 +674,70 @@
     animTime += 0.02;
 
     const GY = 330;                       // 地面
-    const START = 120;
-    const travel = 24 * t1_s;             // 位移 1～10 m → 24～240 px
-    const prog = (animTime % 2.4) / 2.4;
+    const START = 74;
+    const travel = 46 * t1_s;             // 位移 1～10 m → 46～460 px（用滿左半邊的地面）
+
+    /* 節奏放慢：一輪約 7 秒（60 fps）。
+       先站定 0.5 秒 → 平順推 4.6 秒 → 停在終點 1.4 秒（讀數字）→ 淡出、回到起點淡入。 */
+    const T_WAIT = 0.6, T_MOVE = 5.5, T_HOLD = 1.7, T_FADE = 0.6;
+    const CYCLE = T_WAIT + T_MOVE + T_HOLD + T_FADE;
+    const tc = animTime % CYCLE;
+    let prog, alpha = 1;
+    if (tc < T_WAIT) prog = 0;
+    else if (tc < T_WAIT + T_MOVE) {
+      const u = (tc - T_WAIT) / T_MOVE;
+      prog = u * u * (3 - 2 * u);         // 起步、收尾都放慢
+    } else prog = 1;
+    if (tc > CYCLE - T_FADE) alpha = Math.max(0, 1 - (tc - (CYCLE - T_FADE)) / (T_FADE * 0.5));
+    if (tc < T_WAIT) alpha = Math.min(1, tc / (T_WAIT * 0.6));
     const bx = START + travel * prog;
+    const dNow = t1_s * prog;             // 目前推了幾公尺
+    const wNow = t1_f * dNow;             // 目前已作的功
 
     txt4(ctx, tr('功的黃金鐵律：施力 × 距離 = 功，機械只能換，不能省',
                  'The Golden Rule: Work = Force × Distance. Machines trade, never save'),
          24, 34, '#f6f3ea', 23);
 
-    /* ── 地面與位移標尺 ── */
-    line4(ctx, 60, GY, 620, GY, '#a3b8b0', 4);
-    hatch4(ctx, 60, GY, 560, 12, 'rgba(163,184,176,0.45)', 14, 1.4);
+    /* ── 即時計數：推多遠、作了多少功 ── */
+    label4(ctx, tr(`已推動 d = ${dNow.toFixed(1)} m`, `Moved d = ${dNow.toFixed(1)} m`),
+           40, 92, '#ffe066', 21, 'left', true, 270);
+    label4(ctx, `${tr('已作功', 'Work so far')} W = F × d = ${t1_f} × ${dNow.toFixed(1)} = ${Math.round(wNow)} J`,
+           40, 128, '#33cc99', 21, 'left', true, 560);
 
-    dash4(ctx, START, GY + 34, START + travel, GY + 34, '#ffe066', 2);
+    /* ── 地面與位移標尺 ── */
+    line4(ctx, 30, GY, 620, GY, '#a3b8b0', 4);
+    hatch4(ctx, 30, GY, 590, 12, 'rgba(163,184,176,0.45)', 14, 1.4);
+
+    dash4(ctx, START, GY + 34, START + travel, GY + 34, 'rgba(255,224,102,0.45)', 2);
     line4(ctx, START, GY + 24, START, GY + 44, '#ffe066', 2);
     line4(ctx, START + travel, GY + 24, START + travel, GY + 44, '#ffe066', 2);
-    dim4(ctx, START + 2, GY + 34, START + travel - 2, GY + 34, '#ffe066');
-    label4(ctx, `${tr('位移', 'Distance')}  S = ${t1_s} m`, START + travel / 2, GY + 70, '#ffe066', 20, 'center');
+    /* 已經走過的那一段：實心亮黃，跟著箱子長 */
+    if (travel * prog > 6) {
+      ctx.save(); ctx.globalAlpha = alpha;
+      line4(ctx, START, GY + 34, START + travel * prog, GY + 34, '#ffe066', 5);
+      ctx.restore();
+    }
+    label4(ctx, `${tr('位移', 'Distance')}  S = ${t1_s} m`,
+           Math.max(START + 90, START + travel / 2), GY + 74, '#ffe066', 20, 'center');
 
+    ctx.save(); ctx.globalAlpha = alpha;
     /* ── 重物 ── */
     crate4(ctx, bx, GY - 82, 82, 82, '#4dd2ff', tr('重物', 'Load'));
 
     /* ── 推的人 ── */
     drawChalkPerson(ctx, bx - 46, GY, 0, 'push', '#33cc99', 1);
 
-    /* ── 施力箭頭：長度跟著 F 走（20 N → 37 px，100 N → 82 px）──
-       畫在箱子「上方」，不是人跟箱子中間——那裡只有 46 px，
-       箭頭一長就會壓到人的頭。 */
+    /* ── 施力箭頭：長度跟著 F 走，畫在箱子上方 ── */
     const aLen = 26 + t1_f * 0.56;
     const ay = GY - 104;
-    arrow4(ctx, bx - 4 - aLen, ay, bx + 30, ay, '#ff8040', 7, 17);
-    label4(ctx, `F = ${t1_f} N`, bx - 4 - aLen, ay - 20, '#ff8040', 20);
+    arrow4(ctx, bx + 48 - aLen, ay, bx + 82, ay, '#ff8040', 7, 17);
+    label4(ctx, `F = ${t1_f} N`, bx + 48 - aLen, ay - 20, '#ff8040', 20);
+    ctx.restore();
 
     /* ── 分隔 ── */
     dash4(ctx, 632, 70, 632, 400, 'rgba(255,255,255,0.22)', 2, [6, 8]);
 
-    /* ══ 右側：把功畫成一塊面積 ══ */
+    /* ══ 右側：把功畫成一塊面積（跟著箱子一格一格長出來）══ */
     const OX = 700, OY = 356;             // 座標原點
     const bw = 22 * t1_s;                 // 寬 ∝ 位移
     const bh = 1.5 * t1_f;                // 高 ∝ 施力
@@ -715,14 +751,21 @@
     txt4(ctx, 'F (N)', OX + 10, 108, '#a3b8b0', 18);
     txt4(ctx, 'S (m)', 940, OY + 24, '#a3b8b0', 18, 'right');
 
-    /* 面積本體 */
-    const g = ctx.createLinearGradient(OX, OY - bh, OX, OY);
-    g.addColorStop(0, 'rgba(255, 224, 102, 0.85)');
-    g.addColorStop(1, 'rgba(255, 128, 64, 0.55)');
-    glow4(ctx, '#ffe066', 14);
-    ctx.fillStyle = g; ctx.fillRect(OX, OY - bh, bw, bh);
-    noglow4(ctx);
-    hatch4(ctx, OX, OY - bh, bw, bh, 'rgba(17,38,31,0.35)', 11, 1.4);
+    /* 面積本體：先畫淡的「整塊」，再把已作的功塗滿 */
+    ctx.fillStyle = 'rgba(255, 224, 102, 0.12)';
+    ctx.fillRect(OX, OY - bh, bw, bh);
+    const fw = bw * prog;
+    if (fw > 0.5) {
+      ctx.save(); ctx.globalAlpha = alpha;
+      const g = ctx.createLinearGradient(OX, OY - bh, OX, OY);
+      g.addColorStop(0, 'rgba(255, 224, 102, 0.85)');
+      g.addColorStop(1, 'rgba(255, 128, 64, 0.55)');
+      glow4(ctx, '#ffe066', 14);
+      ctx.fillStyle = g; ctx.fillRect(OX, OY - bh, fw, bh);
+      noglow4(ctx);
+      hatch4(ctx, OX, OY - bh, fw, bh, 'rgba(17,38,31,0.35)', 11, 1.4);
+      ctx.restore();
+    }
     ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 2.5;
     ctx.strokeRect(OX, OY - bh, bw, bh);
 
@@ -732,8 +775,7 @@
     label4(ctx, `${t1_f} N`, OX - 16, OY - bh + 7, '#ff8040', 18, 'right');
     label4(ctx, `${t1_s} m`, OX + bw, OY + 32, '#4dd2ff', 18, 'center');
 
-    /* 數字 */
-    /* 面積上方的數字：靠左寫，但量過寬度、必要時往左收，絕不出界 */
+    /* 數字：量過寬度、必要時往左收，絕不出界 */
     const wtxt = `W = F × S = ${work} J`;
     let wx = OX + 4;
     if (wx + w4(ctx, wtxt, 22) > 946) wx = 946 - w4(ctx, wtxt, 22);
@@ -1001,7 +1043,7 @@
   // ============== 分頁三：輪軸與滑輪 ==============
   function setTab3Mode(mode, btn) {
     t3_mode = mode;
-    document.querySelectorAll('.btn-switch').forEach(b => b.classList.remove('active'));
+    document.getElementById('t3-mode-row').querySelectorAll('.btn-switch').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('wheel-sub-controls').style.display = (mode === 'wheel') ? 'flex' : 'none';
     updateTab3();
@@ -1009,8 +1051,18 @@
 
   function setWheelItem(item, btn) {
     t3_wheel_item = item;
-    document.getElementById('wheel-sub-controls').querySelectorAll('.btn-switch').forEach(b => b.classList.remove('active'));
+    document.getElementById('t3-item-row').querySelectorAll('.btn-switch').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    updateTab3();
+  }
+
+  /* 輪軸基本構造：施力在輪上（F = W × r/R）或施力在軸上（F = W × R/r） */
+  function setForcePoint(fp, btn) {
+    t3_force = fp;
+    animTime = 0;
+    const row = document.getElementById('t3-force-row');
+    if (row) row.querySelectorAll('.btn-switch').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
     updateTab3();
   }
 
@@ -1032,12 +1084,22 @@
       if (t3_wheel_item === 'doorknob') info = tr('<b>🚪 喇叭門把解剖：</b>外表大圓球握把為【輪 (R)】，內部貫穿木門連動鎖舌之金屬軸為【軸 (r)】。<b class="hl-yellow">轉動大輪開門，輕鬆省力！</b>', '<b>🚪 Doorknob:</b> Knob = Wheel (R), Spindle = Axle (r). <b class="hl-yellow">Effort on wheel: Saves force!</b>');
       if (t3_wheel_item === 'screwdriver') info = tr('<b>🪛 螺絲起子解剖：</b>塑膠粗手柄為【輪 (R)】，金屬細長桿端為【軸 (r)】。<b class="hl-yellow">握粗柄轉動，克服強大阻力！</b>', '<b>🪛 Screwdriver:</b> Handle = Wheel (R), Metal shaft = Axle (r). <b class="hl-yellow">Effort on wheel: Saves force!</b>');
       if (t3_wheel_item === 'wheel') info = tr('<b>☸️ 汽車方向盤解剖：</b>外圍大握圈為【輪 (R)】，中心轉向金屬柱為【軸 (r)】。<b class="hl-yellow">以小施力帶動笨重車輪轉向！</b>', '<b>☸️ Steering Wheel:</b> Rim = Wheel (R), Steering column = Axle (r). <b class="hl-yellow">Effort on wheel: Saves force!</b>');
+      const onAxle = (t3_force === 'axle');
+      const fpInfo = onAxle
+        ? tr('<b>① 施力在軸上：</b>手拉小軸 r，重物掛在大輪 R 上。<b class="hl-coral">費力、省距離</b>：力是 3 倍，手只走 3 分之一。',
+             '<b>① Effort on the axle:</b> hand pulls the small axle r, load hangs on the big wheel R. <b class="hl-coral">More force, less distance</b>: 3× the force, 1/3 the hand travel.')
+        : tr('<b>① 施力在輪上：</b>手轉大輪 R，重物掛在小軸 r 上。<b class="hl-yellow">省力、費距離</b>：力只要 3 分之一，手走 3 倍遠。',
+             '<b>① Effort on the wheel:</b> hand turns the big wheel R, load hangs on the small axle r. <b class="hl-yellow">Less force, more distance</b>: 1/3 the force, 3× the hand travel.');
+      const fml = onAxle
+        ? '<div class="val-badge">F = <div class="math-fraction"><span class="num">R</span><span class="den">r</span></div> × W</div>'
+        : '<div class="val-badge">F = <div class="math-fraction"><span class="num">r</span><span class="den">R</span></div> × W</div>';
       dynamicStats.innerHTML = `
-        <div class="stat-row" style="padding:10px 20px;"><span>${info}</span></div>
+        <div class="stat-row" style="padding:10px 20px;"><span>${fpInfo}</span></div>
         <div class="stat-row">
-          <span><b>${tr('物理平衡鐵律：', 'Equilibrium Formula:')}</b> F × R = W × r 👉 </span>
-          <div class="val-badge">F = <div class="math-fraction"><span class="num">r</span><span class="den">R</span></div> × W</div>
+          <span><b>${tr('物理平衡鐵律：', 'Equilibrium Formula:')}</b> ${onAxle ? 'F × r = W × R' : 'F × R = W × r'} 👉 </span>
+          ${fml}
         </div>
+        <div class="stat-row" style="padding:10px 20px;"><span>${tr('<b>② 生活實例</b>——', '<b>② Real life</b> — ')}${info}</span></div>
       `;
     }
   }
@@ -1055,7 +1117,7 @@
        ——那一圈的長度就是圓周，再用下面同一把尺的長條做對照。
      ══════════════════════════════════════════════════════════════ */
   const WHEEL_ITEMS = {
-    copter:      { zh: '竹蜻蜓 / 擀麵棍', en: 'Bamboo-copter / rolling pin' },
+    copter:      { zh: '擀麵棍 / 竹蜻蜓', en: 'Rolling pin / bamboo-copter' },
     pencil:      { zh: '削鉛筆機',       en: 'Pencil sharpener' },
     faucet:      { zh: '水龍頭',         en: 'Faucet' },
     doorknob:    { zh: '喇叭門把',       en: 'Doorknob' },
@@ -1068,35 +1130,50 @@
     animTime += 0.03;
     if (t3_mode === 'pulley') { drawPulleys(); return; }
 
-    const AY = 150;                       // 軸心高度
-    const WX = 176, R = 74;               // 大輪：手握的地方
-    const DX = 380, r = 28;               // 小軸：捲繩的捲筒
+    const onAxle = (t3_force === 'axle');
+    const AY = 160;                       // 軸心高度
+    const WX = 170, R = 75, TH = 15;      // 大輪：前端面在 WX，厚 TH
+    const r = 25, DL = 120;               // 小軸（捲筒）：直接焊在大輪前面，R = 3r
+    const DX0 = WX, DX1 = WX + DL;        // 捲筒的後端（貼著輪面）→ 前端
+    const SH0 = 70, SH1 = 484;            // 同一根軸，從左軸承貫穿到右軸承
+    const DRX = WX + 70;                  // 捲筒上繩子的位置
     const TURN = Math.PI * 2;
-    const th = (animTime * 0.9) % (TURN * 1.22);
-    const ang = Math.min(th, TURN);       // 轉滿一圈就停一下，再從頭轉
-    const lift = r * ang;                 // 重物升 r×θ：一圈 = 2πr = 176 px
+    const W_N = 90;                       // 重物 90 N
+    const ratio = R / r;                  // = 3
 
-    txt4(ctx, tr('輪軸：大輪和小軸鎖在同一根軸上，輪轉一圈，軸也轉一圈',
-                 'Wheel & axle: locked on one shaft — one turn of the wheel is one turn of the axle'),
-         24, 30, '#f6f3ea', 23);
-    label4(ctx, tr('手握輪緣繞一圈走 2πR，重物只升 2πr —— 省下來的力，全部由距離補回去',
-                   'Hand walks 2πR around the rim; the load rises only 2πr'),
-           24, 62, '#d8e6e0', 19);
+    /* 施力在輪上：轉滿一圈（重物升 2πr）。
+       施力在軸上：重物掛在大輪上、一圈要升 2πR，畫布放不下，
+       只轉到重物碰到輪子下緣為止（約 0.29 圈），一樣照真實比例。 */
+    const AMAX = onAxle ? (372 - (AY + R + 6)) / R : TURN;
+    const spd = onAxle ? 0.32 : 0.9;
+    const th = (animTime * spd) % (AMAX * 1.3);
+    const ang = Math.min(th, AMAX);
 
-    /* 軸承座 */
-    bearing25(ctx, 116, AY, 11);
-    bearing25(ctx, 462, AY, 11);
-    /* 貫穿的軸心 */
-    cyl25(ctx, 108, 476, AY, 10, '#8d9c95', ang, 0);
+    label4(ctx, tr('① 基本構造：大輪和小軸鎖在同一根軸上，一起轉',
+                   '① Basic structure: wheel and axle fixed on ONE shaft, turning together'),
+           24, 30, '#f6f3ea', 23, 'left', false, 912);
+    const fTxt = onAxle
+      ? tr(`施力在軸上：F = W × R/r = ${W_N} × ${ratio} = ${W_N * ratio} N（費力、省距離）`,
+           `Effort on the AXLE: F = W × R/r = ${W_N} × ${ratio} = ${W_N * ratio} N (more force, less distance)`)
+      : tr(`施力在輪上：F = W × r/R = ${W_N} × 1/${ratio} = ${W_N / ratio} N（省力、費距離）`,
+           `Effort on the WHEEL: F = W × r/R = ${W_N} × 1/${ratio} = ${W_N / ratio} N (less force, more distance)`);
+    label4(ctx, fTxt, 24, 62, onAxle ? '#ff8040' : '#ffe066', 20, 'left', true, 912);
 
-    /* 小軸（捲筒）先畫，大輪在它前面 */
-    cyl25(ctx, DX - 58, DX + 10, AY, r, '#ff8040', ang, 4);
-    helix25(ctx, DX - 46, AY, r, 15, 2.0, '#d8e6e0', ang, -1);
+    /* ── 軸承座 + 貫穿全場的同一根軸 ── */
+    bearing25(ctx, 82, AY, 11);
+    bearing25(ctx, 470, AY, 11);
+    cyl25(ctx, SH0, WX - TH, AY, 10, '#8d9c95', ang, 0);          // 大輪後面那一段
+    cyl25(ctx, WX - TH - 16, WX - TH, AY, 17, '#a3b8b0', ang, 0); // 輪轂（夾住軸）
 
-    /* ── 手握在輪緣上，跟著輪子繞 ──
-       轉到「後面」那半圈的時候，手是被輪子擋住的。
-       不分前後一律畫在最上面，等於又犯了同時看到兩個面的毛病。 */
     const rx = R * SQ, RG = R + 9, P2 = Math.PI / 2;
+
+    /* 施力在軸上：重物的繩繞在大輪上，從「往上轉」的那一側（後側）垂下 */
+    const lift = onAxle ? R * ang : r * ang;
+    const wTop = 372 - lift;
+    const loadX = onAxle ? WX - TH / 2 - rx : DRX - r * SQ;
+    line4(ctx, loadX, AY, loadX, wTop, '#d8e6e0', 3);
+
+    /* 施力在輪上：手握輪緣，後半圈先畫（被輪擋住） */
     const handFront = Math.cos(ang) > 0;
     const grip = (front) => {
       ctx.save(); ctx.lineCap = 'round';
@@ -1107,132 +1184,296 @@
       else ctx.ellipse(WX, AY, RG * SQ, RG, 0, P2, P2 * 3);
       ctx.stroke(); ctx.restore();
     };
-    const hand = (front) => {
-      const hx = WX + RG * SQ * Math.cos(ang), hy = AY + RG * Math.sin(ang);
-      if (front) { glow4(ctx, '#ffe066', 14); ctx.fillStyle = '#ffe066'; }
-      else ctx.fillStyle = 'rgba(255,224,102,0.32)';
-      ctx.beginPath(); ctx.ellipse(hx, hy, 12, 15, 0, 0, Math.PI * 2); ctx.fill();
-      noglow4(ctx);
-      ctx.strokeStyle = front ? '#11261f' : 'rgba(17,38,31,0.4)'; ctx.lineWidth = 2; ctx.stroke();
-    };
-    grip(false);
-    if (!handFront) hand(false);
-    disc25(ctx, WX, AY, R, 15, '#4dd2ff', ang, 8);
-    grip(true);
-    if (handFront) hand(true);
+    const hx = WX + RG * SQ * Math.cos(ang), hy = AY + RG * Math.sin(ang);
+    if (!onAxle) { grip(false); if (!handFront) handMark4(ctx, hx, hy, false); }
 
-    /* 轉向箭頭：擺在輪和捲筒中間的空檔 */
+    /* 大輪 */
+    disc25(ctx, WX, AY, R, TH, '#4dd2ff', ang, 8);
+    if (onAxle) {
+      /* 大輪的輪緣上繞著繩：畫一條溝 */
+      ctx.save(); ctx.strokeStyle = 'rgba(216,230,224,0.75)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(WX - TH / 2, AY, rx, R, 0, P2 * 0.6, P2 * 3.2); ctx.stroke();
+      ctx.restore();
+    }
+    if (!onAxle) grip(true);
+
+    /* 小軸（捲筒）直接貼在大輪的面上：同一塊東西 */
+    cyl25(ctx, DX0, DX1, AY, r, '#ff8040', ang, 4);
+    helix25(ctx, DX0 + 14, AY, r, 15, 3.0, '#d8e6e0', ang, -1);
+    /* 軸從捲筒前面穿出去，接到右邊的軸承 */
+    cyl25(ctx, DX1, SH1, AY, 10, '#8d9c95', ang, 3);
+
+    /* ── 施力點 ── */
+    let handY = 0;
+    if (onAxle) {
+      /* 手拉捲筒上的繩：從「往下轉」的前側垂下 */
+      const fx = DRX + r * SQ;
+      handY = 286 + r * ang;
+      line4(ctx, fx, AY, fx, handY - 14, '#d8e6e0', 3);
+      handMark4(ctx, fx, handY, true);
+      arrow4(ctx, fx, handY + 18, fx, handY + 68, '#ff8040', 6, 15);
+      label4(ctx, `F = ${W_N * ratio} N`, fx + 16, handY + 52, '#ff8040', 20);
+    } else {
+      if (handFront) {
+        handMark4(ctx, hx, hy, true);
+        const tx = -RG * SQ * Math.sin(ang), ty = RG * Math.cos(ang);
+        const tl = Math.hypot(tx, ty) || 1;
+        arrow4(ctx, hx + tx / tl * 16, hy + ty / tl * 16, hx + tx / tl * 50, hy + ty / tl * 50, '#ff8040', 5, 13);
+      }
+    }
+
+    /* 轉向箭頭：擺在捲筒和右軸承中間 */
     ctx.save();
     ctx.strokeStyle = '#33cc99'; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.ellipse(282, AY, 24, 50, 0, -2.5, 1.4); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(408, AY, 22, 48, 0, -2.5, 1.4); ctx.stroke();
     const ea = 1.4;
-    arrow4(ctx, 282 + 24 * Math.cos(ea - 0.22), AY + 50 * Math.sin(ea - 0.22),
-                282 + 24 * Math.cos(ea), AY + 50 * Math.sin(ea), '#33cc99', 4, 13);
+    arrow4(ctx, 408 + 22 * Math.cos(ea - 0.22), AY + 48 * Math.sin(ea - 0.22),
+                408 + 22 * Math.cos(ea), AY + 48 * Math.sin(ea), '#33cc99', 4, 13);
     ctx.restore();
 
-    /* 半徑標示：畫在圓盤外面，不然會被輪輻蓋掉 */
-    dim4(ctx, WX - 62, AY, WX - 62, AY - R, '#4dd2ff');
-    dash4(ctx, WX - 68, AY - R, WX - 20, AY - R, 'rgba(77,210,255,0.45)', 1.5, [4, 5]);
+    /* 半徑標示 */
+    dim4(ctx, WX - 64, AY, WX - 64, AY - R, '#4dd2ff');
+    dash4(ctx, WX - 70, AY - R, WX - 20, AY - R, 'rgba(77,210,255,0.45)', 1.5, [4, 5]);
     label4(ctx, tr('大輪 R', 'Wheel R'), WX - 74, AY - R / 2 + 6, '#4dd2ff', 19, 'right');
-    dim4(ctx, DX + 46, AY, DX + 46, AY - r, '#ff8040');
-    dash4(ctx, DX + 12, AY - r, DX + 52, AY - r, 'rgba(255,128,64,0.45)', 1.5, [4, 5]);
-    label4(ctx, tr('小軸 r', 'Axle r'), DX + 58, AY - r / 2 + 6, '#ff8040', 19);
+    dim4(ctx, DX1 + 22, AY, DX1 + 22, AY - r, '#ff8040');
+    dash4(ctx, DX1 + 6, AY - r, DX1 + 28, AY - r, 'rgba(255,128,64,0.45)', 1.5, [4, 5]);
+    label4(ctx, tr('小軸 r', 'Axle r'), DX1 + 32, AY - r / 2 + 6, '#ff8040', 19);
 
-    /* ── 小軸上的繩：重物升 r×θ，這一段是照真實比例畫的 ── */
-    const wx = DX - 24, wTop = 372 - lift;
-    line4(ctx, wx, AY + r, wx, wTop, '#d8e6e0', 3);
-    crate4(ctx, wx - 23, wTop, 46, 46, '#33cc99', 'W');
-    dash4(ctx, wx + 26, 372, wx + 66, 372, 'rgba(51,204,153,0.5)', 1.5, [4, 5]);
-    dash4(ctx, wx + 26, wTop, wx + 66, wTop, 'rgba(51,204,153,0.5)', 1.5, [4, 5]);
-    dim4(ctx, wx + 54, 372, wx + 54, wTop, '#33cc99');
-    label4(ctx, tr('重物升 2πr', 'load rises 2πr'), wx + 70, 300, '#33cc99', 19);
+    /* ── 重物：照真實比例升 ── */
+    crate4(ctx, loadX - 23, wTop, 46, 46, '#33cc99', 'W');
+    const dmx = onAxle ? loadX - 38 : loadX + 40;   // 施力在軸上：尺標放左邊，避開手和 F
+    const dS = onAxle ? -1 : 1;
+    dash4(ctx, loadX + 26 * dS, 372, dmx + 8 * dS, 372, 'rgba(51,204,153,0.5)', 1.5, [4, 5]);
+    dash4(ctx, loadX + 26 * dS, wTop, dmx + 8 * dS, wTop, 'rgba(51,204,153,0.5)', 1.5, [4, 5]);
+    if (lift > 24) dim4(ctx, dmx, 372, dmx, wTop, '#33cc99');
+    if (lift > 24) label4(ctx, onAxle ? 'Rθ' : '2πr', onAxle ? dmx - 8 : dmx + 10, (372 + wTop) / 2 + 7, '#33cc99', 19, onAxle ? 'right' : 'left');
 
-    /* ── 轉了幾圈：數字寫出來，學生才對得上「一圈」 ── */
+    /* ── 同一把尺：手走的距離 vs 重物升的距離 ── */
+    const BX = 400, BW = 190;
+    const frac = Math.min(ang / AMAX, 1);
     label4(ctx, tr(`已轉 ${(ang / TURN).toFixed(2)} 圈`, `${(ang / TURN).toFixed(2)} turns`),
-           236, 250, '#ffe066', 21);
+           BX, 276, '#f6f3ea', 20, 'left', true, 190);
+    const handLen = onAxle ? BW / ratio : BW;
+    const loadLen = onAxle ? BW : BW / ratio;
+    ctx.fillStyle = 'rgba(255,224,102,0.22)'; rr4(ctx, BX, 288, handLen, 16, 5); ctx.fill();
+    ctx.fillStyle = '#ffe066'; rr4(ctx, BX, 288, handLen * frac, 16, 5); ctx.fill();
+    label4(ctx, onAxle ? tr('手拉（軸 r）', 'hand pulls (axle r)') : tr('手走 2πR', 'hand: 2πR'),
+           BX, 326, '#ffe066', 19, 'left', true, 190);
+    ctx.fillStyle = 'rgba(51,204,153,0.22)'; rr4(ctx, BX, 336, loadLen, 16, 5); ctx.fill();
+    ctx.fillStyle = '#33cc99'; rr4(ctx, BX, 336, loadLen * frac, 16, 5); ctx.fill();
+    label4(ctx, onAxle ? tr('重物升（輪 R）', 'load rises (wheel R)') : tr('重物升 2πr', 'load: 2πr'),
+           BX, 374, '#33cc99', 19, 'left', true, 190);
+    const capC = onAxle ? '#ff8040' : '#33cc99';
+    label4(ctx, onAxle ? tr(`力是 ${ratio} 倍`, `${ratio}× the force`)
+                       : tr(`手走 ${ratio} 倍遠`, `hand: ${ratio}× the path`),
+           BX, 406, capC, 20, 'left', true, 190);
+    label4(ctx, onAxle ? tr(`距離省 ${ratio} 倍`, `hand moves ${ratio}× less`)
+                       : tr(`力只要 ${ratio} 分之一`, `force: only 1/${ratio}`),
+           BX, 432, capC, 20, 'left', true, 190);
 
-    /* ── 同一把尺：手走的一圈 vs 重物升的一圈 ── */
-    const BX = 24, BW = 262;                     // BW 代表 2πR
-    label4(ctx, tr('轉一圈，兩邊走的距離', 'One turn, one scale'), BX, 282, '#f6f3ea', 19);
-    const frac = Math.min(ang / TURN, 1);
-    ctx.fillStyle = 'rgba(255,224,102,0.22)';
-    rr4(ctx, BX, 296, BW, 20, 5); ctx.fill();
-    ctx.fillStyle = '#ffe066'; rr4(ctx, BX, 296, BW * frac, 20, 5); ctx.fill();
-    label4(ctx, tr('手走 2πR', 'hand: 2πR'), BX + 4, 338, '#ffe066', 19);
-    const bw2 = BW * r / R;
-    ctx.fillStyle = 'rgba(51,204,153,0.22)';
-    rr4(ctx, BX, 352, bw2, 20, 5); ctx.fill();
-    ctx.fillStyle = '#33cc99'; rr4(ctx, BX, 352, bw2 * frac, 20, 5); ctx.fill();
-    label4(ctx, tr('重物升 2πr', 'load: 2πr'), BX + 4, 394, '#33cc99', 19);
-    const adv = (R / r).toFixed(1);
-    label4(ctx, tr(`手走 ${adv} 倍遠 → 力只要 ${adv} 分之一`,
-                   `${adv}× the path → ${adv}× less force`),
-           BX, 428, '#33cc99', 20, 'left', true, 380);
-
-    drawWheelItem(t3_wheel_item, 770, 206, ang);
+    /* 左右分隔 */
+    dash4(ctx, 604, 84, 604, 430, 'rgba(255,255,255,0.18)', 2, [6, 8]);
+    drawWheelItem(t3_wheel_item, 786, 206, animTime * 0.55);
   }
 
-  /* 六個生活實例，全部用同一套 2.5D 骨架：
-     一根水平軸，上面串著一個「大輪 R」和一個「小軸 r」。
-     外觀各不相同，但骨架一模一樣——這正是要讓學生看見的事。 */
+  /* 施力點：黃色的手（後面那一側畫淡） */
+  function handMark4(c, x, y, front) {
+    if (front) { glow4(c, '#ffe066', 14); c.fillStyle = '#ffe066'; }
+    else c.fillStyle = 'rgba(255,224,102,0.32)';
+    c.beginPath(); c.ellipse(x, y, 12, 15, 0, 0, Math.PI * 2); c.fill();
+    noglow4(c);
+    c.strokeStyle = front ? '#11261f' : 'rgba(17,38,31,0.4)'; c.lineWidth = 2; c.stroke();
+  }
+
+  /* 六個生活實例：藍 = 輪 R、橘 = 軸 r、黃手 = 施力點。
+     每一件都要看得出「輪和軸真的接在一起」。 */
   function drawWheelItem(item, cx, cy, ang) {
     const it = WHEEL_ITEMS[item] || WHEEL_ITEMS.pencil;
-    label4(ctx, tr(it.zh, it.en), cx, 92, '#f6f3ea', 21, 'center');
+    label4(ctx, tr('② 生活實例：', '② Real life: ') + tr(it.zh, it.en), cx, 92, '#f6f3ea', 21, 'center', false, 340);
 
-    const BIG = '#4dd2ff', SML = '#ff8040';
+    const BIG = '#4dd2ff', SML = '#ff8040', GRY = '#8d9c95';
+    const P2 = Math.PI / 2;
+    const tags = [];                      // 標籤最後才畫，才不會被零件蓋掉
+    let onAxle = false;
     ctx.save();
 
     if (item === 'screwdriver') {
-      /* 粗握把 = 大輪，細刀桿 = 小軸，同一根軸 */
-      cyl25(ctx, cx - 92, cx - 16, cy, 44, BIG, ang, 6);
-      cyl25(ctx, cx - 16, cx + 84, cy, 12, SML, ang, 3);
+      /* 粗握把 = 大輪，金屬桿 = 小軸；桿子插進握把前端的金屬套 */
+      cyl25(ctx, cx - 40, cx + 96, cy, 10, SML, ang, 3);           // 桿子（先畫，後端藏在握把裡）
+      cyl25(ctx, cx - 120, cx - 30, cy, 40, BIG, ang, 6);          // 握把
+      cyl25(ctx, cx - 30, cx - 14, cy, 15, GRY, ang, 0);           // 金屬套
+      cyl25(ctx, cx - 14, cx + 96, cy, 10, SML, ang, 3);           // 露出來的桿子
       ctx.fillStyle = '#d8e6e0';
       ctx.beginPath();
-      ctx.moveTo(cx + 84, cy - 12); ctx.lineTo(cx + 106, cy - 5);
-      ctx.lineTo(cx + 106, cy + 5); ctx.lineTo(cx + 84, cy + 12);
+      ctx.moveTo(cx + 96, cy - 10); ctx.lineTo(cx + 118, cy - 4);
+      ctx.lineTo(cx + 118, cy + 4); ctx.lineTo(cx + 96, cy + 10);
       ctx.closePath(); ctx.fill();
+      /* 手握在握把上：手指繞著握把轉 */
+      const a = ang, front = Math.cos(a) > 0;
+      handMark4(ctx, cx - 75 + 40 * SQ * Math.cos(a), cy + 40 * Math.sin(a), front);
+      tags.push([tr('輪 R（握把）', 'Wheel R (handle)'), cx - 75, cy - 58, BIG]);
+      tags.push([tr('軸 r（金屬桿）', 'Axle r (shaft)'), cx + 52, cy + 48, SML]);
 
     } else if (item === 'wheel') {
-      /* 方向盤：盤面朝駕駛，轉向柱往後 */
-      cyl25(ctx, cx - 108, cx + 10, cy, 22, SML, ang, 4);   // 轉向柱 = 小軸
-      disc25(ctx, cx + 34, cy, 80, 15, BIG, ang, 3);
+      /* 方向盤：握圈 + 三根輻條 + 中心輪轂，中間是空的；轉向柱接在輪轂後面 */
+      const RW = 92, k = 0.6, rxw = RW * k;
+      cyl25(ctx, cx - 136, cx - 4, cy, 14, SML, ang, 3);           // 轉向柱 = 小軸
+      /* 握圈的厚度：往後錯開一點的暗圈 */
+      ctx.save();
+      ctx.lineWidth = 14; ctx.strokeStyle = 'rgba(20,90,120,0.9)';
+      ctx.beginPath(); ctx.ellipse(cx - 6, cy, rxw, RW, 0, 0, Math.PI * 2); ctx.stroke();
+      /* 三根輻條（下、左上、右上），跟著轉 */
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 3; i++) {
+        const a = ang + P2 + i * Math.PI * 2 / 3;
+        const ex = cx + rxw * Math.cos(a), ey = cy + RW * Math.sin(a);
+        ctx.strokeStyle = 'rgba(17,38,31,0.7)'; ctx.lineWidth = 15;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.strokeStyle = lighten4(BIG, 0.1); ctx.lineWidth = 10;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); ctx.stroke();
+      }
+      /* 握圈本體 */
+      ctx.lineWidth = 13; ctx.strokeStyle = BIG;
+      glow4(ctx, BIG, 10);
+      ctx.beginPath(); ctx.ellipse(cx, cy, rxw, RW, 0, 0, Math.PI * 2); ctx.stroke();
+      noglow4(ctx);
+      ctx.lineWidth = 2.5; ctx.strokeStyle = lighten4(BIG, 0.45);
+      ctx.beginPath(); ctx.ellipse(cx, cy, rxw + 5, RW + 5, 0, -2.6, -0.5); ctx.stroke();
+      ctx.restore();
+      /* 輪轂 */
+      ctx.fillStyle = lighten4(BIG, 0.25);
+      ctx.beginPath(); ctx.ellipse(cx, cy, 20, 26, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#11261f'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = SML;
+      ctx.beginPath(); ctx.ellipse(cx, cy, 8, 10, 0, 0, Math.PI * 2); ctx.fill();
+      /* 雙手握在 10 點和 2 點鐘 */
+      for (const off of [-2.55, -0.6]) {
+        const a = ang + off;
+        handMark4(ctx, cx + rxw * Math.cos(a), cy + RW * Math.sin(a), true);
+      }
+      tags.push([tr('輪 R（握圈）', 'Wheel R (rim)'), cx + 74, cy + 128, BIG]);
+      tags.push([tr('軸 r（轉向柱）', 'Axle r (column)'), cx - 92, cy + 48, SML]);
 
     } else if (item === 'faucet') {
-      /* 水龍頭：轉軸是鉛直的，整組轉 90° 再畫。
-         把手本來就是「四根」——手抓哪一根，那一點繞出來的圓就是 R。
-         改成實心圓盤是把這件事藏起來，不能這樣偷懶。 */
-      ctx.translate(cx, cy + 16); ctx.rotate(-Math.PI / 2);
-      cyl25(ctx, -92, 16, 0, 13, SML, ang, 3);      // 閥桿 = 小軸
-      spokes25(ctx, 40, 0, 62, BIG, ang, 4, 10);    // 十字把手 = 大輪 R
-      ctx.rotate(Math.PI / 2);
-      /* 出水口 */
-      ctx.fillStyle = '#8d9c95';
-      rr4(ctx, -14, 34, 28, 58, 8); ctx.fill();
-      rr4(ctx, -14, 84, 82, 24, 10); ctx.fill();
-      ctx.strokeStyle = '#4dd2ff'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(62, 98); ctx.lineTo(62, 114); ctx.stroke();
+      /* 水龍頭：轉軸是「鉛直」的。閥桿從本體頂端伸出，十字把手鎖在閥桿頂。 */
+      const HY = cy - 54, L = 72, kf = 0.38;      // 把手高度、手臂長、俯視壓扁比
+      const BT = cy + 12;                          // 本體頂面
+      /* 牆與進水管 */
+      ctx.fillStyle = 'rgba(163,184,176,0.14)';
+      ctx.fillRect(cx - 168, cy - 40, 22, 190);
+      ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 2; ctx.strokeRect(cx - 168, cy - 40, 22, 190);
+      bar4(ctx, cx - 146, BT + 30, 124, 22, GRY, 8);
+      /* 本體（直立圓柱） */
+      const bodyCyl = () => {
+        const g = ctx.createLinearGradient(cx - 30, 0, cx + 30, 0);
+        g.addColorStop(0, 'rgba(0,0,0,0.25)'); g.addColorStop(0.35, GRY);
+        g.addColorStop(0.6, lighten4(GRY, 0.25)); g.addColorStop(1, 'rgba(0,0,0,0.3)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(cx - 30, BT); ctx.lineTo(cx - 30, BT + 74);
+        ctx.ellipse(cx, BT + 74, 30, 11, 0, Math.PI, 0, true);
+        ctx.lineTo(cx + 30, BT); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#c4d0ca'; ctx.lineWidth = 2; ctx.stroke();
+      };
+      /* 出水管：從本體側面接出去再往下彎 */
+      ctx.save();
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#c4d0ca'; ctx.lineWidth = 24;
+      ctx.beginPath(); ctx.moveTo(cx + 10, BT + 34); ctx.lineTo(cx + 104, BT + 34);
+      ctx.quadraticCurveTo(cx + 122, BT + 34, cx + 122, BT + 56); ctx.stroke();
+      ctx.strokeStyle = GRY; ctx.lineWidth = 19;
+      ctx.beginPath(); ctx.moveTo(cx + 10, BT + 34); ctx.lineTo(cx + 104, BT + 34);
+      ctx.quadraticCurveTo(cx + 122, BT + 34, cx + 122, BT + 56); ctx.stroke();
+      ctx.restore();
+      bodyCyl();
+      ctx.fillStyle = lighten4(GRY, 0.3);
+      ctx.beginPath(); ctx.ellipse(cx, BT, 30, 11, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#c4d0ca'; ctx.lineWidth = 2; ctx.stroke();
+      /* 水流：淡白色，往下流動 */
+      ctx.save();
+      ctx.strokeStyle = 'rgba(216,236,246,0.6)'; ctx.lineWidth = 7;
+      ctx.setLineDash([12, 8]); ctx.lineDashOffset = -(animTime * 60) % 20;
+      ctx.beginPath(); ctx.moveTo(cx + 122, BT + 68); ctx.lineTo(cx + 122, BT + 124); ctx.stroke();
+      ctx.restore();
+      /* 閥桿 = 小軸 r（直立的圓柱，從本體頂面中心長出來） */
+      const sg = ctx.createLinearGradient(cx - 11, 0, cx + 11, 0);
+      sg.addColorStop(0, 'rgba(0,0,0,0.3)'); sg.addColorStop(0.4, SML);
+      sg.addColorStop(0.65, lighten4(SML, 0.3)); sg.addColorStop(1, 'rgba(0,0,0,0.35)');
+      ctx.fillStyle = sg; ctx.fillRect(cx - 11, HY, 22, BT - HY);
+      ctx.fillStyle = lighten4(SML, 0.15);
+      ctx.beginPath(); ctx.ellipse(cx, BT, 11, 4, 0, 0, Math.PI); ctx.fill();
+      /* 閥桿上的轉動記號 */
+      ctx.strokeStyle = 'rgba(17,38,31,0.55)'; ctx.lineWidth = 3;
+      const mx = cx + 9 * Math.sin(ang * 1.0);
+      ctx.beginPath(); ctx.moveTo(mx, HY + 14); ctx.lineTo(mx, BT - 6); ctx.stroke();
+      /* 十字把手 = 大輪 R：四根手臂都接在中心輪轂上 */
+      ctx.save(); ctx.setLineDash([5, 6]);
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.ellipse(cx, HY, L, L * kf, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+      const arms = [0, 1, 2, 3].map(i => ang + i * P2).sort((a, b) => Math.sin(a) - Math.sin(b));
+      const drawArm = (a) => {
+        const ex = cx + L * Math.cos(a), ey = HY + L * kf * Math.sin(a);
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = 'rgba(17,38,31,0.6)'; ctx.lineWidth = 15;
+        ctx.beginPath(); ctx.moveTo(cx, HY); ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.strokeStyle = BIG; ctx.lineWidth = 11;
+        ctx.beginPath(); ctx.moveTo(cx, HY); ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.fillStyle = lighten4(BIG, 0.3);
+        ctx.beginPath(); ctx.ellipse(ex, ey, 10, 8, 0, 0, Math.PI * 2); ctx.fill();
+      };
+      arms.filter(a => Math.sin(a) < 0).forEach(drawArm);   // 後面的手臂
+      /* 輪轂：鎖在閥桿頂端 */
+      ctx.fillStyle = lighten4(BIG, 0.1);
+      ctx.fillRect(cx - 16, HY - 6, 32, 12);
+      ctx.beginPath(); ctx.ellipse(cx, HY + 6, 16, 6, 0, 0, Math.PI); ctx.fill();
+      ctx.fillStyle = lighten4(BIG, 0.35);
+      ctx.beginPath(); ctx.ellipse(cx, HY - 6, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#11261f'; ctx.lineWidth = 1.5; ctx.stroke();
+      arms.filter(a => Math.sin(a) >= 0).forEach(drawArm);  // 前面的手臂
+      /* 手捏在其中一根手臂的末端 */
+      const ha = ang;
+      handMark4(ctx, cx + L * Math.cos(ha), HY + L * kf * Math.sin(ha) - 4, true);
+      tags.push([tr('輪 R（十字把手）', 'Wheel R (handle)'), cx - 166, HY - 28, BIG, 'left']);
+      tags.push([tr('軸 r（閥桿）', 'Axle r (stem)'), cx - 22, cy - 2, SML, 'right']);
 
     } else if (item === 'doorknob') {
-      /* 喇叭鎖：門在後面，轉軸穿過門 */
+      /* 喇叭鎖：門（半透明看得到裡面）→ 方軸穿過門 → 門把底座 → 頸部 → 球形握把 */
+      cyl25(ctx, cx - 150, cx - 40, cy, 10, SML, ang, 3);          // 方軸 = 小軸（穿過門）
       ctx.fillStyle = 'rgba(163,184,176,0.16)';
-      rr4(ctx, cx - 142, cy - 118, 62, 240, 6); ctx.fill();
+      rr4(ctx, cx - 150, cy - 96, 56, 218, 6); ctx.fill();
       ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 3;
-      rr4(ctx, cx - 142, cy - 118, 62, 240, 6); ctx.stroke();
-      cyl25(ctx, cx - 108, cx + 2, cy, 13, SML, ang, 3);
-      disc25(ctx, cx + 40, cy, 58, 32, BIG, ang, 0);
-      ctx.fillStyle = 'rgba(17,38,31,0.55)';
-      ctx.beginPath(); ctx.ellipse(cx + 40, cy, 58 * SQ * 0.3, 58 * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+      rr4(ctx, cx - 150, cy - 96, 56, 218, 6); ctx.stroke();
+      disc25(ctx, cx - 86, cy, 30, 8, GRY, ang, 0);                // 門上的底座
+      cyl25(ctx, cx - 86, cx - 30, cy, 18, BIG, ang, 0);           // 頸部
+      cyl25(ctx, cx - 30, cx + 34, cy, 58, BIG, ang, 0);           // 球形握把 = 大輪
+      ctx.fillStyle = 'rgba(17,38,31,0.6)';
+      ctx.beginPath(); ctx.ellipse(cx + 34, cy, 7, 12, 0, 0, Math.PI * 2); ctx.fill();   // 鑰匙孔
+      ctx.strokeStyle = 'rgba(17,38,31,0.55)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(cx + 34, cy);
+      ctx.lineTo(cx + 34 + 58 * SQ * Math.cos(ang) * 0.8, cy + 58 * Math.sin(ang) * 0.8); ctx.stroke();
+      const front = Math.cos(ang) > 0;
+      handMark4(ctx, cx + 2 + 58 * SQ * Math.cos(ang), cy + 58 * Math.sin(ang), front);
+      tags.push([tr('輪 R（握把）', 'Wheel R (knob)'), cx + 10, cy - 74, BIG]);
+      tags.push([tr('軸 r（穿過門）', 'Axle r (spindle)'), cx - 92, cy + 112, SML]);
 
     } else if (item === 'copter') {
-      /* 擀麵棍：中間粗的是大輪，兩端細握把是小軸 */
-      cyl25(ctx, cx - 146, cx - 84, cy, 14, SML, ang, 3);
-      cyl25(ctx, cx - 84, cx + 70, cy, 54, BIG, ang, 6);
-      cyl25(ctx, cx + 70, cx + 134, cy, 14, SML, ang, 3);
+      /* 擀麵棍：中間粗的滾筒是大輪 R，兩端細握把是小軸 r；手握在兩端 → 施力在軸上 */
+      onAxle = true;
+      cyl25(ctx, cx - 150, cx - 76, cy, 14, SML, ang, 3);
+      cyl25(ctx, cx - 86, cx + 70, cy, 54, BIG, ang, 6);
+      cyl25(ctx, cx + 64, cx + 140, cy, 14, SML, ang, 3);
+      handMark4(ctx, cx - 116, cy - 6, true);
+      handMark4(ctx, cx + 108, cy - 6, true);
+      line4(ctx, cx - 170, cy + 56, cx + 160, cy + 56, 'rgba(216,230,224,0.35)', 3);  // 桌面／麵團
+      tags.push([tr('輪 R（滾筒）', 'Wheel R (roller)'), cx - 8, cy - 72, BIG]);
+      tags.push([tr('軸 r（握把）', 'Axle r (handles)'), cx + 100, cy + 86, SML]);
 
     } else {
-      /* 削鉛筆機：機身是 2.5D 的盒子，右側伸出軸，
-         手搖把的「迴轉半徑」才是大輪 R，中心的刀輪是小軸 r。 */
-      const bx = cx - 132, bw = 144, bh = 146, dep = 28;
+      /* 削鉛筆機：手搖把、軸、刀輪「在同一條軸線上」。
+         盒子往右上退，軸線放在盒子深度的一半：y = cy - dep/2。 */
+      const bx = cx - 146, bw = 140, bh = 146, dep = 28;
+      const AYs = cy - dep / 2;
       ctx.fillStyle = 'rgba(163,184,176,0.13)';
       ctx.beginPath();
       ctx.moveTo(bx, cy - bh / 2); ctx.lineTo(bx + dep, cy - bh / 2 - dep);
@@ -1253,39 +1494,49 @@
       ctx.moveTo(bx + bw + dep, cy - bh / 2 - dep); ctx.lineTo(bx + bw + dep, cy + bh / 2 - dep);
       ctx.lineTo(bx + bw, cy + bh / 2);
       ctx.stroke();
-      /* 前面開一個窗，看得到裡面的刀輪 */
+      /* 前面開一道長窗：看得到刀輪和軸一路連到右邊 */
+      const wl = bx + 22, wr = bx + bw + 4;
       ctx.save();
-      ctx.beginPath(); ctx.ellipse(bx + bw / 2, cy, 38, 42, 0, 0, Math.PI * 2); ctx.clip();
-      ctx.fillStyle = 'rgba(11,26,21,0.85)'; ctx.fillRect(bx, cy - bh, bw, bh * 2);
-      cyl25(ctx, bx + bw / 2 - 24, bx + bw / 2, cy, 28, SML, ang * 1.6, 4);
+      rr4(ctx, wl, AYs - 36, wr - wl, 72, 14); ctx.clip();
+      ctx.fillStyle = 'rgba(11,26,21,0.88)'; ctx.fillRect(wl, AYs - 40, wr - wl, 80);
+      cyl25(ctx, bx + 60, bx + bw + dep, AYs, 8, GRY, ang * 1.6, 0);   // 軸心
+      cyl25(ctx, bx + 34, bx + 88, AYs, 26, SML, ang * 1.6, 4);        // 刀輪 = 小軸 r
       ctx.restore();
-      ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.ellipse(bx + bw / 2, cy, 38, 42, 0, 0, Math.PI * 2); ctx.stroke();
-      /* 鉛筆插孔 */
+      ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 2.5;
+      rr4(ctx, wl, AYs - 36, wr - wl, 72, 14); ctx.stroke();
+      /* 鉛筆從左邊插進刀輪 */
       ctx.fillStyle = '#ffe066';
-      rr4(ctx, bx - 34, cy - 9, 40, 18, 4); ctx.fill();
-      /* 右側伸出的軸 + 手搖把 */
-      const sx = bx + bw + dep + 24;
-      cyl25(ctx, sx - 32, sx, cy - dep, 10, SML, ang * 1.6, 3);
-      const CR = 80, a = ang * 1.6;
+      rr4(ctx, bx - 38, AYs - 9, 54, 18, 4); ctx.fill();
+      ctx.fillStyle = '#e8c9a0';
+      ctx.beginPath(); ctx.moveTo(bx + 16, AYs - 9); ctx.lineTo(bx + 34, AYs); ctx.lineTo(bx + 16, AYs + 9); ctx.fill();
+      /* 同一根軸從側面穿出來，接手搖把 */
+      const sxe = bx + bw + dep / 2, sx = sxe + 30;
+      cyl25(ctx, sxe, sx, AYs, 9, GRY, ang * 1.6, 0);
+      const CR = 78, a = ang * 1.6;
       ctx.save(); ctx.setLineDash([5, 6]);
       ctx.strokeStyle = 'rgba(77,210,255,0.4)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.ellipse(sx, cy - dep, CR * SQ, CR, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(sx, AYs, CR * SQ, CR, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
-      const hxp = sx + CR * SQ * Math.cos(a), hyp = cy - dep + CR * Math.sin(a);
+      const hxp = sx + CR * SQ * Math.cos(a), hyp = AYs + CR * Math.sin(a);
+      ctx.lineCap = 'round';
       ctx.strokeStyle = BIG; ctx.lineWidth = 11;
-      ctx.beginPath(); ctx.moveTo(sx, cy - dep); ctx.lineTo(hxp, hyp); ctx.stroke();
-      ctx.fillStyle = BIG;
-      ctx.beginPath(); ctx.ellipse(hxp, hyp, 12, 18, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = lighten4(BIG, 0.3); ctx.lineWidth = 2; ctx.stroke();
-      label4(ctx, tr('手搖的迴轉半徑 = R', 'crank radius = R'), sx - 20, cy - dep + CR + 30, BIG, 18, 'center');
+      ctx.beginPath(); ctx.moveTo(sx, AYs); ctx.lineTo(hxp, hyp); ctx.stroke();
+      ctx.fillStyle = lighten4(BIG, 0.2);
+      ctx.beginPath(); ctx.ellipse(sx, AYs, 9, 12, 0, 0, Math.PI * 2); ctx.fill();   // 搖把輪轂
+      handMark4(ctx, hxp, hyp, true);
+      tags.push([tr('軸 r（刀輪）', 'Axle r (cutter)'), bx + 6, cy + bh / 2 + 32, SML, 'left']);
+      tags.push([tr('輪 R（搖把半徑）', 'Wheel R (crank)'), 952, cy + bh / 2 + 32, BIG, 'right']);
     }
     ctx.restore();
 
-    label4(ctx, tr('藍色 = 手碰到的大輪 R', 'Blue = the big wheel R you touch'),
-           cx, 352, '#4dd2ff', 19, 'center', true, 352);
-    label4(ctx, tr('橘色 = 真正做事的小軸 r', 'Orange = the small axle r doing the work'),
-           cx, 382, '#ff8040', 19, 'center', true, 352);
+    for (const t of tags) label4(ctx, t[0], t[1], t[2], t[3], 19, t[4] || 'center', true, 170);
+
+    /* 圖例：施力點在哪，就決定省力還是省時 */
+    label4(ctx, tr('藍 = 輪 R　橘 = 軸 r　黃 = 手', 'Blue = wheel R   Orange = axle r   Yellow = hand'),
+           cx, 384, '#f6f3ea', 19, 'center', true, 330);
+    label4(ctx, onAxle ? tr('手在軸上 → 費力、省距離', 'Hand on the axle → more force, less distance')
+                       : tr('手在輪上 → 省力、費距離', 'Hand on the wheel → less force, more distance'),
+           cx, 416, onAxle ? '#ff8040' : '#ffe066', 19, 'center', true, 330);
   }
 
   /* ══════════════════════════════════════════════════════════════
