@@ -7,13 +7,15 @@
  const labs={iodine:M.createLab('iodine'),benedict:M.createLab('benedict')};
  const meals=Object.fromEntries(M.foods.map(f=>[f.id,0]));
  const uiCache={};
- /* Auto-play: each lab replays its own experiment steps (model actions unchanged); step buttons only jump.
-    dur = approximate seconds for the canvas progress bar; hold = seconds to stay after the step finishes. */
+ /* Auto-play: each lab loops through its stages (model actions unchanged) and then moves on to the next sample.
+    Step buttons only jump/replay. Each step = one or more phases; hold = seconds to stay after a phase finishes; dur = approximate seconds of the step (progress bar). */
  const STEPS={
-  iodine:[{id:'look',z:'看樣本',e:'Look at samples',dur:2.4,hold:2.4},{id:'prepare',z:'各一滴',e:'One drop each',dur:1.8,hold:1.8},{id:'a',z:'甲：滴碘液',e:'A: iodine drop',dur:3,hold:.6},{id:'b',z:'乙：滴碘液',e:'B: iodine drop',dur:3,hold:.6},{id:'compare',z:'觀察、想一想',e:'Observe and think',dur:6,hold:6}],
-  benedict:[{id:'look',z:'看樣本',e:'Look at samples',dur:2.4,hold:2.4},{id:'prepare',z:'各放 3 mL',e:'3 mL each',dur:1.8,hold:1.8},{id:'a',z:'甲：加本氏液',e:'A: add reagent',dur:3,hold:.6},{id:'b',z:'乙：加本氏液',e:'B: add reagent',dur:3,hold:.6},{id:'mix',z:'輕輕混合',e:'Mix gently',dur:2.8,hold:.6},{id:'bath',z:'移入水浴',e:'Into the bath',dur:2.8,hold:.6},{id:'heat',z:'隔水加熱',e:'Heat in bath',dur:10.6,hold:.6},{id:'compare',z:'觀察、想一想',e:'Observe and think',dur:6,hold:6}]
+  iodine:[{z:'看樣本',e:'Look at samples',dur:2.4,ph:[{id:'look',hold:2.4}]},{z:'各一滴',e:'One drop each',dur:1.8,ph:[{id:'prepare',hold:1.8}]},{z:'甲：滴碘液',e:'A: iodine drop',dur:3,ph:[{id:'a',hold:.6}]},{z:'乙：滴碘液',e:'B: iodine drop',dur:3,ph:[{id:'b',hold:.6}]},{z:'觀察、想一想',e:'Observe and think',dur:6,ph:[{id:'compare',hold:6}]}],
+  benedict:[{z:'準備樣本',e:'Prepare samples',dur:4.2,ph:[{id:'look',hold:2.4},{id:'prepare',hold:1.8}]},{z:'加本氏液',e:'Add reagent',dur:6,ph:[{id:'a',hold:.6},{id:'b',hold:.6}]},{z:'混合、移入水浴',e:'Mix, into the bath',dur:5.6,ph:[{id:'mix',hold:.6},{id:'bath',hold:.6}]},{z:'隔水加熱',e:'Heat in bath',dur:10.6,ph:[{id:'heat',hold:.6}]},{z:'觀察、想一想',e:'Observe and think',dur:6,ph:[{id:'compare',hold:6}]}]
  };
- const play={iodine:{step:0,t:0,wait:0},benedict:{step:0,t:0,wait:0}};
+ const play={iodine:{step:0,phase:0,t:0,wait:0},benedict:{step:0,phase:0,t:0,wait:0}};
+ // Samples shown in turn (all model samples except plain water, which is already the control B).
+ const CYCLE=M.samples.filter(x=>x.id!=='water').map(x=>x.id);
  const tr=(a,b)=>lang==='zh'?a:b;
  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const bi=(a,b,tag='span',cls='')=>`<${tag}${cls?` class="${cls}"`:''} data-zh="${esc(a)}" data-en="${esc(b)}">${esc(tr(a,b))}</${tag}>`;
@@ -32,20 +34,18 @@
  <div class="lab-controls"><div class="control-block">
  <button type="button" class="action-btn full-btn" data-expand="lab-${kind}">${tr('⛶ 全螢幕操作','⛶ Full-screen lab')}</button>
  <div class="local-language"><button type="button" class="lang-btn" data-language="zh">中文</button><button type="button" class="lang-btn" data-language="en">EN</button></div>
- ${bi(ben?'先預測，再準備':'先看樣本，再預測',ben?'Predict, then prepare':'Inspect, then predict','h3')}
- <label for="sample-${kind}">${tr('甲組的待測樣本','Sample in group A')}</label>
- <select id="sample-${kind}">${M.samples.map(s=>`<option value="${s.id}"${s.id===labs[kind].sample?' selected':''}>${named(s)}</option>`).join('')}</select>
- <div class="choice-row"><button class="choice" type="button" data-predict="${kind}:1">${tr('預測：呈陽性','Predict: positive')}</button><button class="choice" type="button" data-predict="${kind}:0">${tr('預測：呈陰性','Predict: negative')}</button></div>
+ <h3>${tr('甲組的待測樣本','Sample in group A')}</h3>
+ <div class="lab-sample-now metric" id="sample-${kind}" aria-live="polite"></div>
  <p class="small-note">${tr('陽性＝檢出本次要找的成分。乙組固定為清水，兩組操作量相同。','Positive means detecting the substance tested. Group B is always water; quantities and treatment match.')}</p>
- ${ben?'':`<p class="small-note">${tr('玻片預覽的是處理後的樣本液，不是整塊食物。選好樣本，先預測、再確認，才加入碘液。','The slides preview processed sample liquid, not whole food. Choose a sample, predict and confirm before adding iodine.')}</p>`}
+ ${ben?'':`<p class="small-note">${tr('玻片預覽的是處理後的樣本液，不是整塊食物。動畫會輪流換樣本：先看樣本，再加入碘液，最後觀察、想一想。','The slides preview processed sample liquid, not whole food. The animation takes the samples in turn: look first, then add iodine, then observe and think.')}</p>`}
  </div><div class="control-block">
  <h3>${tr('實驗步驟','Experiment steps')}</h3>
  <div class="lab-actions lab-steps" id="steps-${kind}">${STEPS[kind].map((s,i)=>`<button type="button" class="action-btn step-btn" data-step="${kind}:${i}">${i+1}　${tr(s.z,s.e)}</button>`).join('')}</div>
- <p class="small-note">${tr('動畫會自動播放並重複；點步驟編號，可以跳到那一步。','The animation plays and repeats automatically. Tap a step number to jump to that step.')}</p>
+ <p class="small-note">${tr('動畫會自動播放，並輪流換樣本；點步驟編號，可以從那一步重播。','The animation plays automatically and takes the samples in turn. Tap a step number to replay from that step.')}</p>
  </div></div><div class="lab-view"><canvas id="canvas-${kind}" width="960" height="620" aria-label="${tr(ben?'本氏液檢驗實驗動畫':'碘液檢驗實驗動畫',ben?'Benedict\'s test animation':'Iodine test animation')}"></canvas><div class="lab-status" id="status-${kind}" role="status" aria-live="polite"></div>
  <p class="lab-mode-note">${tr('原創 2.5D 教學模型 · 時間壓縮 · 非真實濃度測量','Original 2.5D teaching model · compressed time · not a concentration measurement')}</p></div></div>
  <div id="result-${kind}" class="concept" hidden></div>
- <div class="table-scroll"><table class="record-table"><caption>${tr('觀察結果','Observation results')}</caption><thead><tr><th>${tr('樣本','Sample')}</th><th>${tr('預測','Prediction')}</th><th>${tr('觀察','Observation')}</th><th>${tr('清水對照','Water control')}</th></tr></thead><tbody id="records-${kind}"></tbody></table></div>`;}
+ <div class="table-scroll"><table class="record-table"><caption>${tr('觀察結果','Observation results')}</caption><thead><tr><th>${tr('樣本','Sample')}</th><th>${tr('觀察','Observation')}</th><th>${tr('清水對照','Water control')}</th></tr></thead><tbody id="records-${kind}"></tbody></table></div>`;}
  function build(){
  uiCache.iodine=null;uiCache.benedict=null;
  $('lessonTabs').innerHTML=specs.map((s,i)=>`<button class="tab-btn${i===tab?' active':''}" type="button" data-tab="${i}" aria-selected="${i===tab}">${bi(s[0],s[1],'span','tab-main')}${bi(s[2],s[3],'span','tab-sub')}</button>`).join('');
@@ -71,7 +71,7 @@
  </section>
  <section class="lesson" id="lesson-2"${tab!==2?' hidden':''}>
  ${hook('飯看起來白白的，如何證明裡面有澱粉？只有待測組變色，就一定可信嗎？','How can we test for starch in white rice? Is a color change meaningful without a control?')}
- ${bi('碘液：用清水對照，找出澱粉','Iodine: investigate starch with a water control','h2')}${bi('白紙上的甲玻片顯示處理後的樣本液，乙玻片為清水，各一滴；先預測並確認，再各滴一滴碘液。不需要加熱。','On white paper, slide A previews one drop of processed sample and B one drop of water. Predict and confirm, then add one iodine drop to each. No heating.','p','lead')}
+ ${bi('碘液：用清水對照，找出澱粉','Iodine: investigate starch with a water control','h2')}${bi('白紙上的甲玻片顯示處理後的樣本液，乙玻片為清水，各一滴；先觀察、想一想，再各滴一滴碘液。不需要加熱。','On white paper, slide A previews one drop of processed sample and B one drop of water. Observe and think first, then add one iodine drop to each. No heating.','p','lead')}
  ${labHTML('iodine')}<p class="safety">${tr('檢驗液不能入口。用過的食物不可食用；避免碘液接觸眼睛與衣物。','Never taste reagents or tested foods. Keep iodine away from eyes and clothing.')}</p>
  </section>
  <section class="lesson" id="lesson-3"${tab!==3?' hidden':''}>
@@ -97,8 +97,8 @@
  let serving=50;
  function paintLabel(mass=serving){serving=mass;const c=40*mass/100,p=6*mass/100,f=10*mass/100,k=M.energy(c,p,f);$('label-facts').innerHTML=[[tr('吃下的份數','Servings eaten'),mass/50],[tr('醣類','Carbohydrates'),c+' g'],[tr('蛋白質','Protein'),p+' g'],[tr('脂質','Lipids'),f+' g'],[tr('吃下的熱量','Energy eaten'),k+' '+tr('大卡','kcal')]].map(([a,b])=>`<div>${a}<b>${b}</b></div>`).join('');$('label-conclusion').textContent=tr(mass===50?'一份是 137 大卡；整包有兩份，不是只有 137 大卡。':'整包是 274 大卡＝137 大卡 × 2 份。',mass===50?'One serving supplies 137 kcal. The whole pack contains two servings.':'Whole pack: 274 kcal = 137 kcal × 2 servings.');document.querySelectorAll('[data-serving]').forEach(b=>b.classList.toggle('active',Number(b.dataset.serving)===mass));}
  function paintMeal(){const chosen=M.foods.filter(f=>meals[f.id]>0);M.foods.forEach(f=>{$('count-'+f.id).textContent=meals[f.id];$('plate-'+f.id).classList.toggle('selected',meals[f.id]>0);});const groups=new Set(chosen.map(f=>f.group));const missing=[['grain','全穀雜糧','Grains'],['protein','豆魚蛋肉等蛋白質來源','Protein sources'],['vegetable','蔬菜','Vegetables'],['fruit','水果','Fruit'],['water','飲水','Water']].filter(([g])=>!groups.has(g));$('meal-feedback').innerHTML=chosen.length?`<strong>${tr('已選入：','Selected: ')}${chosen.map(named).join(tr('、',', '))}</strong><p>${missing.length?tr('可以再想想：','Consider also: ')+missing.map(v=>v[lang==='zh'?1:2]).join(tr('、',', ')):tr('目前涵蓋這份練習的主要食物類型；份量、乳品或其他鈣來源等仍需另外評估。','The main categories in this exercise are covered; portions, dairy or other calcium sources still need consideration.')}</p><p>${tr('選入數字只記錄選擇次數；不表示建議份數或營養足夠。','Counts record choices, not recommended portions or nutritional adequacy.')}</p>`:tr('先選入你想吃的食物，再檢查多樣性；不是把每樣都加到最多。','Choose foods, then review variety. Adding the maximum of everything is not the goal.');}
- function status(kind){const s=labs[kind],ben=kind==='benedict',id=STEPS[kind][play[kind].step].id;
-  if(id==='look')return ben?tr('先選樣本並預測；接著準備甲、乙兩組。','Choose a sample and predict. Next, both groups are prepared.'):tr('玻片顯示樣本液預覽，尚未加碘液。先選樣本並預測；接著甲、乙各一滴。','Slides preview sample liquid without iodine. Choose a sample and predict. Next, one drop on each slide.');
+ function status(kind){const s=labs[kind],ben=kind==='benedict',p=play[kind],id=STEPS[kind][p.step].ph[p.phase].id;
+  if(id==='look')return ben?tr('先看這次的樣本。想一想：加熱後，甲和乙會一樣嗎？','Look at this sample first. Think: after heating, will A and B look the same?'):tr('玻片顯示處理後的樣本液，尚未加碘液。想一想：加了碘液，甲和乙會一樣嗎？','The slides show processed sample liquid, no iodine yet. Think: after iodine, will A and B look the same?');
   if(id==='prepare')return ben?tr('甲放入 3 mL 樣本，乙放入 3 mL 清水；接著各加 3 mL 本氏液。','A gets 3 mL of sample and B 3 mL of water. Next, 3 mL of Benedict\'s reagent in each.'):tr('甲是一滴樣本液，乙是一滴清水；接著各滴一滴碘液。','A holds one drop of sample and B one drop of water. Next, one iodine drop on each.');
   if(id==='compare')return tr('觀察、想一想：甲和清水對照乙比起來，有什麼不同？','Observe and think: how does A compare with the water control B?');
   if(s.motion)return tr({reagent:'檢驗液從管尖垂直加入，兩組都需等量。',mix:'輕輕混合，不把試管口朝向人。',bath:'兩管移入水浴，不直接碰火。',heat:'隔水加熱中；留意甲、乙的差異。'}[s.motion.type],{reagent:'Reagent flows vertically from the tip. Use equal quantities.',mix:'Mix gently with tube openings away from people.',bath:'Move both tubes into the water bath, not the flame.',heat:'Heating in the bath. Compare A with B.'}[s.motion.type]);
@@ -107,20 +107,24 @@
   if(ben&&!s.mixed)return tr('已等量加液，接著輕輕混合。','Equal reagent added. Mix gently next.');
   if(ben&&!s.inBath)return tr('混合完成，接著移入水浴。','Mixed. Move into the water bath.');
   return tr('準備完成，接著隔水加熱。','Ready for water-bath heating.');}
- function updateLab(kind){const s=labs[kind],step=play[kind].step,signature=JSON.stringify([lang,s.sample,s.prediction,s.prepared,s.reagents,s.mixed,s.inBath,s.complete,s.motion?.type,s.records.length,step]);if(uiCache[kind]===signature)return;uiCache[kind]=signature;document.querySelectorAll(`[data-predict^="${kind}:"]`).forEach(b=>{const v=b.dataset.predict.endsWith(':1');b.classList.toggle('active',s.prediction===v);b.setAttribute('aria-pressed',s.prediction===v);});document.querySelectorAll(`[data-step^="${kind}:"]`).forEach(b=>{const on=Number(b.dataset.step.split(':')[1])===step;b.classList.toggle('primary',on);if(on)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});$('status-'+kind).textContent=status(kind);
+ function updateLab(kind){const s=labs[kind],step=play[kind].step,signature=JSON.stringify([lang,s.sample,s.prepared,s.reagents,s.mixed,s.inBath,s.complete,s.motion?.type,s.records.length,step,play[kind].phase]);if(uiCache[kind]===signature)return;uiCache[kind]=signature;const si=CYCLE.indexOf(s.sample);$('sample-'+kind).textContent=named(M.sampleOf(s))+(si>=0?tr(`（第 ${si+1}／${CYCLE.length} 種）`,` (${si+1} of ${CYCLE.length})`):'');document.querySelectorAll(`[data-step^="${kind}:"]`).forEach(b=>{const on=Number(b.dataset.step.split(':')[1])===step;b.classList.toggle('primary',on);if(on)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});$('status-'+kind).textContent=status(kind);
  $('result-'+kind).hidden=!s.complete;if(s.complete){const pos=M.positive(s);const observed=kind==='iodine'?(pos?tr('甲：藍黑色；乙：保持碘液的黃褐色。','A: blue-black; B: iodine stays yellow-brown.'):tr('甲、乙：都未出現藍黑色。','Neither A nor B turned blue-black.')):(pos?tr('甲：產生黃橙至磚紅色沉澱；乙：維持藍色，沒有同樣沉澱。','A: yellow-orange to brick-red precipitate; B: stays blue without that precipitate.'):tr('甲、乙：加熱後仍為藍色，沒有本氏液陽性沉澱。','After heating, A and B remain blue without a positive Benedict\'s precipitate.'));$('result-'+kind).innerHTML=`<strong>${observed}</strong><p>${pos?tr('在這個樣本中檢出','Detected in this example sample: ')+tr(kind==='iodine'?'澱粉。':'還原糖。',kind==='iodine'?'starch.':'reducing sugar.'):tr('這次未檢出要找的成分，不代表「完全沒有養分」。','The target substance was not detected. This does not mean the sample has no nutrients.')}</p><p class="small-note">${tr('食物結果是選定樣本的教學示例；真實檢驗受成熟度、濃度及本身顏色影響。','Food outcomes represent selected teaching samples. Ripeness, concentration and natural color affect actual tests.')}</p>`;}
- $('records-'+kind).innerHTML=s.records.length?s.records.map(r=>`<tr><td>${named(M.samples.find(x=>x.id===r.sample))}</td><td>${r.prediction===null?'—':r.prediction?tr('陽性','Positive'):tr('陰性','Negative')}</td><td>${r.positive?tr('陽性','Positive'):tr('陰性','Negative')}</td><td>${tr('陰性','Negative')}</td></tr>`).join(''):`<tr><td colspan="4">${tr('播到「觀察、想一想」時，這裡會列出結果；換一種樣本再看一次，比較看看。','Results appear here at “Observe and think”. Choose another sample and compare.')}</td></tr>`;}
+ $('records-'+kind).innerHTML=s.records.length?s.records.map(r=>`<tr><td>${named(M.samples.find(x=>x.id===r.sample))}</td><td>${r.positive?tr('陽性','Positive'):tr('陰性','Negative')}</td><td>${tr('陰性','Negative')}</td></tr>`).join(''):`<tr><td colspan="3">${tr('播到「觀察、想一想」時，這裡會列出結果；動畫會輪流換樣本，比較看看。','Results appear here at “Observe and think”. The samples change in turn, so compare them.')}</td></tr>`;}
  function drawLab(kind){const c=$('canvas-'+kind).getContext('2d'),st=STEPS[kind],p=play[kind],n=st.length,w=960/n;D.draw(c,labs[kind],lang);
   // Playback bar on the top edge (step segments), drawn after the apparatus so nothing covers it.
   c.save();for(let i=0;i<n;i++){const f=i<p.step?1:i>p.step?0:Math.min(1,p.t/st[i].dur);c.fillStyle='rgba(242,236,217,.22)';c.fillRect(i*w+3,0,w-6,8);if(f>0){c.fillStyle='#fde047';c.fillRect(i*w+3,0,(w-6)*f,8);}}c.restore();}
- function enterStep(kind,i){const s=labs[kind],id=STEPS[kind][i].id;play[kind]={step:i,t:0,wait:0};
+ function enterPhase(kind,i,j){const s=labs[kind],id=STEPS[kind][i].ph[j].id,p=play[kind];if(j===0)p.t=0;p.step=i;p.phase=j;p.wait=0;
   if(id==='prepare')s.prepared=true;
   else if(['a','b','mix','bath','heat'].includes(id))M.act(s,id);
   else if(id==='compare'&&s.complete&&!s.recorded){M.act(s,'record');const last=s.records[s.records.length-1];s.records=s.records.filter(r=>r===last||r.sample!==last.sample);}}
- function goTo(kind,i){const s=labs[kind],pred=s.prediction;M.reset(s);s.prediction=pred;
-  for(let k=0;k<i;k++){enterStep(kind,k);let guard=0;while(s.motion&&guard++<400)M.advance(s,.1);}
-  enterStep(kind,i);}
- function stepClock(kind,dt){const s=labs[kind],p=play[kind],st=STEPS[kind];p.t+=dt;if(s.motion)return;p.wait+=dt;if(p.wait<st[p.step].hold)return;if(p.step+1<st.length)enterStep(kind,p.step+1);else goTo(kind,0);}
+ // Put the lab in the state where step i begins (earlier phases fast-forwarded), then play on from there.
+ function goTo(kind,i){const s=labs[kind];M.reset(s);
+  for(let k=0;k<i;k++)STEPS[kind][k].ph.forEach((_,j)=>{enterPhase(kind,k,j);let guard=0;while(s.motion&&guard++<400)M.advance(s,.1);});
+  enterPhase(kind,i,0);}
+ function stepClock(kind,dt){const s=labs[kind],p=play[kind],st=STEPS[kind];p.t+=dt;if(s.motion)return;p.wait+=dt;if(p.wait<st[p.step].ph[p.phase].hold)return;
+  if(p.phase+1<st[p.step].ph.length)enterPhase(kind,p.step,p.phase+1);
+  else if(p.step+1<st.length)enterPhase(kind,p.step+1,0);
+  else{s.sample=CYCLE[(CYCLE.indexOf(s.sample)+1)%CYCLE.length];goTo(kind,0);}}
  // Which lab (if any) lives in the visible lesson — read from the DOM, not a hard-coded tab number (AGENTS 10.1).
  const activeKind=()=>{const c=$('lesson-'+tab)?.querySelector('canvas[id^="canvas-"]');return c?c.id.slice(7):null;};
  function stop(){if(raf)cancelAnimationFrame(raf);raf=0;lastTime=0;}
@@ -140,8 +144,6 @@
  document.querySelectorAll('[data-energy]').forEach(b=>b.addEventListener('click',()=>{const v=b.dataset.energy==='equal'?[10,10,10]:[50,30,5];['carb','protein','fat'].forEach((id,i)=>$('macro-'+id).value=v[i]);paintEnergy();}));
  document.querySelectorAll('[data-serving]').forEach(b=>b.addEventListener('click',()=>paintLabel(Number(b.dataset.serving))));document.querySelectorAll('[data-meal]').forEach(b=>b.addEventListener('click',()=>{const [id,d]=b.dataset.meal.split(':');meals[id]=M.clamp(meals[id]+Number(d),0,3);paintMeal();}));
  for(const kind of ['iodine','benedict']){
-  $('sample-'+kind).addEventListener('change',e=>{labs[kind].sample=e.target.value;jump(kind,0);});
-  document.querySelectorAll(`[data-predict^="${kind}:"]`).forEach(b=>b.addEventListener('click',()=>{labs[kind].prediction=b.dataset.predict.endsWith(':1');updateLab(kind);}));
   document.querySelectorAll(`[data-step^="${kind}:"]`).forEach(b=>b.addEventListener('click',()=>jump(kind,Number(b.dataset.step.split(':')[1]))));
  }
  }
