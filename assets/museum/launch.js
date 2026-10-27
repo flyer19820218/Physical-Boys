@@ -83,14 +83,14 @@ export const WORM = {
   STARS_HERE: 4600,   // 我們這邊全天的星數（稀疏）
   STARS_THERE: 17000, // 另一邊全天的星數（密）
   ROLL: 5,            // 整段天空緩慢旋轉的角度（度）
-  // 太空梭：從後上方的追隨鏡頭看，沿直線（極微的弧）飛向球心。蟲洞沒有質量、沒有潮汐力 → 不繞圈、不拉長、不變紅
-  SHIP_S0: 1.0,       // 一開始太空梭在鏡頭前方多遠（喉嚨半徑＝1）；越大，沒入球時相對一開始越不會縮太小（約 0.35 倍）
-  SHIP_H: 0.3,        // 鏡頭比太空梭的航線高多少（越大，太空梭在畫面越下面）
-  SHIP_X: 0.08,       // 一開始稍微偏右，之後慢慢修正對準（很微的弧）
-  SHIP_LEN: 0.2,      // 太空梭長度
-  SHIP_IN: 0.9,       // 接近段（前 5.25 秒）的這個比例時太空梭穿過喉嚨
-  SHIP_POW: 2.2,      // 太空梭拉開距離的曲線（越大，前段停留在近處越久）
-  SHIP_FORE: 0.5,     // 從後上方看的機身縮短（俯視圖沿機身方向壓扁）
+  // 太空梭（20261027j）：蟲洞沒有重力、沒有吸力、沒有潮汐力 → 太空梭靠引擎、機頭對準喉嚨、沿一條平行於蟲洞軸的直線等速開進去；
+  //   追隨鏡頭在它後上方、軸向間距固定 → 太空梭在畫面下方的位置與大小大致不變，是球在變大、迎面而來。
+  //   穿過喉嚨後它在另一邊的星空裡繼續往前飛（畫在球裡），出洞後鏡頭滑行減速、它照樣等速 → 慢慢往消失點縮小、被閃光吞沒。
+  SHIP_SEP: 1.0,      // 鏡頭與太空梭沿軸向的間距（喉嚨半徑＝1），整段固定
+  SHIP_H: 0.24,       // 航線在蟲洞軸（鏡頭）下方多遠；SHIP_H / SHIP_SEP ≈ 太空梭在球心下方的視角正切（約 13.5°：一開始壓在球緣，之後在球面前方）
+  SHIP_DX: 0.03,      // 航線往右偏離軸多少（一點點，讓機頭微微斜向球心；仍是平行於軸的直線）
+  SHIP_LEN: 0.22,     // 太空梭大小（翼展，喉嚨半徑＝1）
+  SHIP_THICK: 0.18,   // 機身厚度／長度：從後上方看，俯視圖沿機身壓成 sinα + SHIP_THICK·cosα（α＝視線與機身的夾角＝鏡頭俯角）
   FLASH: 0.8,         // 出洞閃光的峰值（原本 0.95）
   // ---- 高清 GL 路徑（20261027i） ----
   GL: 'auto',         // 'auto'：能用 WebGL 就用；'off'：一律用 CPU；'force'：連軟體模擬的 GL 也用（測試用）。網址 ?gl=0／?gl=force 同義
@@ -1403,10 +1403,13 @@ export const hdState = () => HD.state;
 const hdUsable = () => HD.state === 'ready' && !!HD.gl;
 
 // 蟲洞段的流程（總長 warpMs，預設 6 秒）：
-//   接近段（前 warpMs − TUNNEL_S 秒）：後上方的追隨鏡頭慢慢靠近蟲洞，太空梭機頭對準球心、沿直線往前飛，越來越小，沒入球裡。
-//     蟲洞不螺旋：螺旋墜入是「黑洞」的模型（吸積盤、繞轉、時間膨脹變紅）；Ellis 蟲洞沒有質量、沒有潮汐力，所以不繞圈、不拉長、不變紅。
-//   穿越段（最後 TUNNEL_S 秒）：鏡頭自己加速穿過喉嚨——球越來越大、佔滿畫面，另一邊的天空向前展開。不發光。
-//   之後 p > 0：出洞閃光（drawFlash）。
+//   接近段（前 warpMs − TUNNEL_S 秒）：太空梭靠引擎、機頭對準球心，沿平行於蟲洞軸的直線等速前進；追隨鏡頭在它後上方、
+//     軸向間距固定 → 太空梭在畫面下方的位置與大小大致不變，是蟲洞球迎面變大（「開進去」，不是「被吸進去」）。
+//     蟲洞沒有吸力：Ellis 蟲洞 g_tt = −1，沒有重力、沒有潮汐力，靜止的東西不會自己掉進去。
+//     螺旋墜入、加速掉入、時間膨脹變紅、潮汐拉長，都是黑洞或重力井的模型。
+//   穿越段（最後 TUNNEL_S 秒）：鏡頭從接近段的速度接著加速穿過喉嚨，太空梭同步推進、仍在前方同樣的間距；
+//     它先穿過喉嚨（約第 5.8 秒），之後畫在球裡、在另一邊的星空裡往前飛。球越來越大、佔滿畫面。不發光。
+//   之後 p > 0：出洞閃光（drawFlash）；鏡頭滑行減速，太空梭維持等速 → 往消失點慢慢縮小、被閃光吞沒。
 export function makeWarp(warpMs) {
   const T = Math.max(1, warpMs / 1000);
   const TS = Math.max(1, T - WORM.TUNNEL_S);        // 接近段；之後鏡頭自己穿過喉嚨
@@ -1414,20 +1417,28 @@ export function makeWarp(warpMs) {
   let key = '', D = null;
 
   // 相機在蟲洞軸上的位置 l（> 0 我們這邊，< 0 另一邊）
+  //   接近段：等速（v0）從球視半徑 A_START 靠近到 A_END；穿越段：從 v0 接著 ease-in 加速穿過喉嚨（速度連續、不頓）；出洞後滑行減速。
+  const TU = WORM.TUNNEL_S, TE = TS + TU, PP = WORM.PUSH_POW;
+  const v0 = (lE - lS) / TS;                                  // < 0：往喉嚨
+  const dX = WORM.L_EXIT - lE - v0 * TU;                      // 穿越段在等速之外多走的距離
+  const vT = v0 + dX * PP / TU;                               // 穿越段結束時的速度
   const camL = tau => {
-    if (tau <= TS) { const x = tau / TS; return lerp(lS, lE, 0.35 * x + 0.65 * smooth(x)); }   // 慢慢靠近
-    const q = Math.min(1, (tau - TS) / WORM.TUNNEL_S);
-    let l = lE + (WORM.L_EXIT - lE) * Math.pow(q, WORM.PUSH_POW);                              // ease-in：越來越快地穿過喉嚨
-    if (tau > T) { const v = (WORM.L_EXIT - lE) * WORM.PUSH_POW / WORM.TUNNEL_S, x = Math.min(2, tau - T); l += v * x * (1 - 0.25 * x); }  // 出洞後繼續滑行
+    if (tau <= TS) return lS + v0 * tau;
+    const s = Math.min(TU, tau - TS);
+    let l = lE + v0 * s + dX * Math.pow(s / TU, PP);
+    if (tau > TE) { const x = Math.min(2, tau - TE); l += vT * x * (1 - 0.25 * x); }      // 出洞後繼續滑行（減速）
     return l;
   };
-  // 太空梭和鏡頭的距離：一開始就在鏡頭前不遠處，之後加速往前飛（距離越拉越大 → 在畫面上越來越小），tin 時剛好到達喉嚨
-  const tin = WORM.SHIP_IN * TS, S0 = WORM.SHIP_S0, sepIn = camL(tin);
+  // 太空梭在軸上的位置：一直在鏡頭前方 SHIP_SEP（接近段＝等速；穿越段和我們一起推進、間距不變）；
+  //   出洞後鏡頭滑行減速，太空梭維持等速（vT）→ 間距慢慢拉開
+  const lsAt = tau => tau <= TE ? camL(tau) - WORM.SHIP_SEP : camL(TE) - WORM.SHIP_SEP + vT * (tau - TE);
+  // 投影（Ellis 蟲洞裡小角度的光線）：離軸 h 的點，在相機看來偏離球心 tanα ≈ h / D，
+  //   D = r_c r_s (atan l_c − atan l_s)，r = √(1 + l²)。兩者都離喉嚨很遠時 D → l_c − l_s（平直空間）；
+  //   太空梭穿過喉嚨、在另一邊時，光線穿過喉嚨過來 → D 變大一點（看起來略小、略靠近球心，而且一定在球裡）。
   const shipAt = tau => {
-    const x = Math.max(0, tau / tin);
-    const sep = x <= 1 ? S0 + (sepIn - S0) * Math.pow(x, WORM.SHIP_POW) : sepIn + (sepIn - S0) * WORM.SHIP_POW * (x - 1);
-    const xo = WORM.SHIP_X * Math.pow(Math.max(0, 1 - x), 2);                                   // 很微的弧：慢慢修正對準球心
-    return { zs: camL(tau) - sep, sep, X: xo / sep, Y: WORM.SHIP_H / sep };
+    const lc = camL(tau), ls = lsAt(tau);
+    const D = Math.hypot(1, lc) * Math.hypot(1, ls) * (Math.atan(lc) - Math.atan(ls));
+    return { ls, D, X: WORM.SHIP_DX / D, Y: WORM.SHIP_H / D };
   };
   // 曝光曲線（球裡另一邊的天空、球緣光）：平順增加，穿越時最亮（GL 路徑；CPU 路徑只套球緣光）
   const expo = tau => {
@@ -1439,18 +1450,23 @@ export function makeWarp(warpMs) {
     const sk = tau > TS ? WORM.SHAKE * Math.exp(-(lc * lc) / 0.25) : 0;
     return [sk * (0.6 * Math.sin(tau * 71) + 0.4 * Math.sin(tau * 43.7)), sk * (0.6 * Math.sin(tau * 59.3 + 1) + 0.4 * Math.sin(tau * 37.1))];
   };
-  // 太空梭（後上方的追隨鏡頭，沿直線飛向球心、越來越小，最後沒入球裡）：兩條路徑共用
+  // 太空梭（後上方的追隨鏡頭；等速直線開進球心，穿過後在另一邊的星空裡繼續往前飛）：兩條路徑共用
   const drawShip = (c, tau, cx, cy, f) => {
-    const vis = smooth(tau / 0.45) * (1 - smooth((tau - tin) / 0.5)) * (tau < TS ? 1 : 0);
+    const vis = smooth(tau / 0.45);                                            // 不淡出：穿過喉嚨後仍看得到，最後被出洞閃光吞沒
     if (vis <= 0.01) return null;
-    const P = shipAt(tau), Pa = shipAt(tau - 0.03), Pb = shipAt(tau + 0.03);
+    const P = shipAt(tau);
     const x = cx + P.X * f, y = cy + P.Y * f;
-    const heading = Math.atan2((Pb.Y - Pa.Y), (Pb.X - Pa.X)) + Math.PI / 2;   // 機頭＝前進方向（對準球心）
-    const near = smooth(1 - P.zs / 3);                                         // 越接近喉嚨，受球裡暖光照得越多
+    // 機頭＝前進方向＝沿蟲洞軸；平行於視軸的直線在畫面上指向消失點（球心）→ 機頭永遠對準球心，不側滑
+    const heading = Math.atan2(cy - y, cx - x) + Math.PI / 2;
+    // 透視縮短：機身沿軸，視線與機身的夾角＝太空梭偏離球心的視角 α（鏡頭俯角）→ 頂面投影 sinα、機身厚度投影 T·cosα
+    const ta = Math.hypot(P.X, P.Y), ca = 1 / Math.sqrt(1 + ta * ta), sy = Math.min(1, ta * ca + WORM.SHIP_THICK * ca);
+    const near = smooth(1 - P.ls / 3);                                         // 越接近喉嚨（及穿過後），受另一邊的暖光照得越多
     const rim = [lerp(150, 255, near), lerp(186, 190, near), lerp(215, 136, near)].map(Math.round);
-    const u = WORM.SHIP_LEN / 2.5 * f / P.sep;
-    if (c) shuttle(c, x, y, u, heading, 0.6 + 0.4 * Math.sin(tau * 23) * Math.sin(tau * 7.3), {
-      sx: 1, sy: WORM.SHIP_FORE, light: Math.atan2(cy - y, cx - x), lk: 0.4 + 0.55 * near, rim,
+    const u = WORM.SHIP_LEN / 2.5 * f / P.D;
+    // 引擎：穩定發光、只有很慢的輕微脈動（不閃爍）
+    const glow = 0.8 + 0.07 * Math.sin(TAU * 1.1 * tau) + 0.03 * Math.sin(TAU * 2.3 * tau + 1.3);
+    if (c) shuttle(c, x, y, u, heading, glow, {
+      sx: 1, sy, light: Math.atan2(cy - y, cx - x), lk: 0.4 + 0.55 * near, rim,
       dim: 0.12, alpha: vis,
     });
     return { x, y, u };
@@ -1572,9 +1588,8 @@ export function makeWarp(warpMs) {
       }
     }
 
-    drawShip(ctx, tau, cx, cy, f);
-
     ctx.translate(-ox, -oy);
+    drawShip(ctx, tau, cx, cy, f);                  // 和 GL 路徑一樣不跟著微晃（我們和它一起飛，相對位置平順）
     ctx.drawImage(D.vg, 0, 0, W, H);                // 暗角
     ctx.restore();
     drawFlash(ctx, W, H, p);
