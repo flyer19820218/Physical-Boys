@@ -4,7 +4,7 @@
  const groups={tract:F.route.map(r=>r[0]),glands:['salivary','liver','gall','pancreas']};
  const zoomSeconds=1.2,tourSeconds=6;
  const crops={...F.crops,liver:[230,635,400,260],gall:[285,735,265,210]};
- const pixels={...Atlas.pixels,rectum:[530,1340]};
+ const pixels={...Atlas.pixels,rectum:[516,1340]};
  function record(id){
   if(id==='rectum')return {id,name:['直腸','Rectum'],copy:[['先暫存糞便','Store feces'],['糞便先在直腸暫存，最後經肛門排出。','Feces are stored in the rectum, then leave through the anus.']]};
   const o=A.organs.find(o=>o.id===id);return {...o,copy:D.organCopy[id]};

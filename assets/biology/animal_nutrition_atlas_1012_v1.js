@@ -1,7 +1,8 @@
 (function(root){'use strict';
  const D=root.AnimalDraw,A=root.AnimalData,original={draw:D.anatomy,labels:D.anatomyLabels,transform:D.anatomyTransform};
  // Coordinates are calibrated to this ORIGINAL AI plate, never to the old SVG.
- const placement={x:280,y:25,w:400,h:600},pixels={mouth:[380,262],pharynx:[495,293],esophagus:[550,520],stomach:[617,765],small:[529,1075],large:[701,1125],anus:[516,1430],salivary:[519,234],liver:[400,747],gall:[375,823],pancreas:[549,892]};
+ const placement={x:280,y:25,w:400,h:600},pixels={mouth:[410,252],pharynx:[503,335],esophagus:[533,520],stomach:[655,790],small:[555,1085],large:[719,1125],anus:[517,1438],salivary:[519,234],liver:[400,747],gall:[379,819],pancreas:[549,892]};
+ // 2026-10-27: markers re-measured on the ORIGINAL plate so each ring sits on the lumen centre line (not on a wall/edge). Plate, placement and organ labels are unchanged.
  const usesAtlas=s=>s.anatomyView==='atlas'&&!s.zoomOrgan;
  D.anatomyTransform=s=>usesAtlas(s)?placement:original.transform(s);
  D.anatomyLabels=s=>usesAtlas(s)?original.labels(s).map(b=>({...b,x:b.left?16:699,w:245})):original.labels(s);
