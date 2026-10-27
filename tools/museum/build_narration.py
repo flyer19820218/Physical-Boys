@@ -9,7 +9,7 @@
 
 時間怎麼排（和 scene.js 的開場飛行配合）：
   - 登機的兩句接著念（中間停 0.35 秒）
-  - 「太空梭目前正穿越蟲洞」那一刻畫面切進蟲洞隧道，至少停 4.2 秒（讓時空隧道演完）
+  - 「太空梭目前正穿越蟲洞」那一刻畫面切進蟲洞隧道，至少停 6.0 秒（螺旋 5.25 秒＋穿過隧道 0.75 秒）
   - 「穿越成功」那一刻閃光、太空梭開始飛（飛行 5.6 秒）
   - 飛行中那句緊接在「穿越成功」後面
   - （舊版的「三、二、一、出發」role=count 仍可處理，每 1 秒一拍）
@@ -26,7 +26,7 @@ import tempfile
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 AUD = os.path.join(ROOT, 'assets', 'museum', 'audio')
 FLIGHT = 5.6  # 與 scene.js 的 INTRO.dur（毫秒）一致
-WARP_MIN = 4.2  # 蟲洞段最短秒數（與 launch.js 的 WARP_MS 一致）
+WARP_MIN = 6.0  # 蟲洞段最短秒數（與 launch.js 的 WARP_MS 一致）：螺旋 5.25 秒＋穿過隧道 0.75 秒
 
 
 def run(cmd):

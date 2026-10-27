@@ -39,10 +39,10 @@ function makePuff(rgb, seed) {
 //      第一次＝盤面本身（含擋在陰影前面那條）；第二次＝繞過黑洞的透鏡像（上方的「帽子」、下方的細弧）。
 //      存下盤面半徑、方位角，以及都卜勒＋重力紅移的亮度 g^k（左側迎向我們→亮白，右側遠離→暗橙）。
 //   3. 每一格只把盤面紋理依半徑轉一個角度（內圈快、外圈慢），查表填色 → 一張小 ImageData → 多層縮小再放大當光暈。
-// 太空梭在和盤面不同的傾斜軌道上，機頭沿切線、繞約 2.5 圈、一圈比一圈小；
+// 太空梭在和盤面不同的傾斜軌道上，機頭沿切線、繞約 1.5 圈，最後 0.75 秒穿過時空隧道、一圈比一圈小；
 // 繞到後方時位置被透鏡往外推（沿著帽子的形狀繞過頂端）、被陰影遮住；最後紅移、變暗、被拉長，沒入陰影。
 const TAU = Math.PI * 2;
-export const WARP_MS = 4200;          // 蟲洞段長度（有旁白時以旁白時間表為準，與 build_narration.py 的 WARP_MIN 一致）
+export const WARP_MS = 6000;          // 蟲洞段長度（有旁白時以旁白時間表為準，與 build_narration.py 的 WARP_MIN 一致）
 const smooth = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -54,14 +54,15 @@ export const GARG = {
   DOPPLER: 3.0,      // 亮度 ∝ g^DOPPLER：越大左右亮暗差越明顯
   EXPOSURE: 0.95,    // 盤面整體曝光
   RING: 0.42,        // 光子環亮度
-  SPIN_S: 2.4,       // 內緣轉一圈的秒數（外圈依克卜勒 r^1.5 變慢）
+  SPIN_S: 4.8,       // 內緣轉一圈的秒數（外圈依克卜勒 r^1.5 變慢）
   FIT_W: 0.5,        // 盤面外緣半寬占畫面寬度的比例上限（橫式）
   FIT_W_PORTRAIT: 0.7, // 直式：讓盤面外緣超出左右兩邊（電影式裁切），黑洞才不會太小
   FIT_H: 0.385,      // 帽子上緣到中心占畫面高度的比例上限
   CY: 0.575,         // 黑洞中心的高度（畫面比例；上方留給 DOM 大字）
   BLOOM: 0.85,       // 光暈強度
   // 太空梭
-  TURNS: 2.3,        // 繞幾圈才進去（2～3 圈）
+  TURNS: 1.5,        // 繞幾圈才進去
+  TUNNEL_S: 0.75,    // 最後穿過時空隧道的秒數（含在蟲洞段總長裡）
   R0: 19,            // 起始軌道半徑
   R_END: 2.6,        // 結束時的半徑（已在陰影裡）
   ORBIT_TILT: 0.30,  // 軌道橢圓的扁度（螢幕上的短軸／長軸）
@@ -604,8 +605,58 @@ function buildOrbit(R0) {
   return { N, th, Rr };
 }
 
+// 穿過時空隧道（0.75 秒）：鏡頭衝進陰影後，一圈圈光環與放射的光絲從中心往外噴，暖橘 → 白藍，越來越快
+const TUN_STREAKS = (() => {
+  const r = rng(77), a = [];
+  for (let i = 0; i < 260; i++) a.push({ ang: r() * TAU, z0: r(), v: 0.6 + r() * 1.0, hue: 24 + r() * 26 + (r() < 0.12 ? 160 : 0), len: 0.03 + r() * 0.07, tw: 0.25 + r() * 0.2 });
+  return a;
+})();
+function drawTunnel(ctx, W, H, cx, cy, x, q, wt) {
+  const A = smooth(q / 0.55) * wt;
+  if (A <= 0.003) return;
+  const big = Math.hypot(W, H), rmin = big * 0.012, rmax = big * 0.6;
+  const ph = x * 0.9 + x * x * 1.8, rad = r => rmin + Math.pow(r, 2.3) * rmax;
+  ctx.save();
+  // 暗色底（黑洞畫面淡出的同時蓋上去），中心偏暖
+  const g0 = ctx.createRadialGradient(cx, cy, 0, cx, cy, big * 0.7);
+  g0.addColorStop(0, `rgba(78,36,14,${0.92 * A})`);
+  g0.addColorStop(0.4, `rgba(24,13,10,${0.92 * A})`);
+  g0.addColorStop(1, `rgba(8,10,9,${0.96 * A})`);
+  ctx.fillStyle = g0; ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.translate(cx, cy); ctx.rotate(x * 0.55);
+  ctx.lineCap = 'round';
+  // 光環：往外飛，每圈畫兩次（寬而淡的光暈＋細而亮的芯），顏色從暖橘到近白
+  for (let i = 0; i < 18; i++) {
+    const f = (i / 18 + ph * 0.28) % 1, r = rad(f), al = A * Math.pow(Math.sin(Math.PI * f), 1.2);
+    ctx.strokeStyle = `hsla(${26 + 26 * f},95%,${50 + 30 * f}%,${al * 0.16})`;
+    ctx.lineWidth = 8 + 26 * f * f;
+    ctx.beginPath(); ctx.ellipse(0, 0, r, r * 0.94, 0, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = `hsla(${34 + 24 * f},90%,${70 + 22 * f}%,${al * 0.38})`;
+    ctx.lineWidth = 1 + 2.4 * f;
+    ctx.beginPath(); ctx.ellipse(0, 0, r, r * 0.94, 0, 0, TAU); ctx.stroke();
+  }
+  // 光絲：略帶旋轉的放射曲線，越靠外越長越亮
+  for (const s of TUN_STREAKS) {
+    const z = (s.z0 + ph * s.v * 0.5) % 1, z0 = Math.max(0, z - s.len * (1 + 3 * q));
+    const r1 = rad(z), r0 = rad(z0), a1 = s.ang + s.tw * z, a0 = s.ang + s.tw * z0, am = (a0 + a1) / 2, rm = (r0 + r1) / 2;
+    ctx.strokeStyle = `hsla(${s.hue},88%,${72 + 18 * z}%,${A * (0.06 + 0.5 * z * z)})`;
+    ctx.lineWidth = 0.5 + 1.7 * z;
+    ctx.beginPath(); ctx.moveTo(Math.cos(a0) * r0, Math.sin(a0) * r0);
+    ctx.quadraticCurveTo(Math.cos(am) * rm, Math.sin(am) * rm, Math.cos(a1) * r1, Math.sin(a1) * r1); ctx.stroke();
+  }
+  // 盡頭的亮光
+  const gr = big * (0.12 + 0.06 * q), g1 = ctx.createRadialGradient(0, 0, 0, 0, 0, gr);
+  g1.addColorStop(0, `rgba(255,248,232,${0.95 * A})`);
+  g1.addColorStop(0.35, `rgba(255,196,120,${0.55 * A})`);
+  g1.addColorStop(1, 'rgba(255,150,70,0)');
+  ctx.fillStyle = g1; ctx.beginPath(); ctx.arc(0, 0, gr, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+
 export function makeWarp(warpMs) {
   const T = Math.max(1, warpMs / 1000);
+  const TS = Math.max(1, T - GARG.TUNNEL_S);        // 螺旋段；之後是隧道
   let ORB = null, orbKey = '';
   const TH0 = Math.PI * 0.76;          // 從左前方出現，往畫面下方（靠近我們）繞過去
   let key = '', D = null, gen = null;
@@ -644,11 +695,12 @@ export function makeWarp(warpMs) {
     }
     const L = layoutOf(W, H), { cx, cy, ppm } = L;
     if (orbKey !== k) { orbKey = k; ORB = buildOrbit(Math.min(GARG.R0, (W * 0.5 - 1.6 * GARG.SHUTTLE_U * ppm) / ppm / 0.94)); }   // 窄螢幕：起始圈縮小，太空梭不出畫面
-    const uT = tau / T;
-    const zoom = 1 + 12 * Math.pow(p, 1.7);                  // 出洞：鏡頭衝進陰影（平常保持 1，大圖才走快速路徑）
+    const uT = tau / TS;
+    const q = Math.min(1, Math.max(0, (tau - TS) / GARG.TUNNEL_S));   // 隧道進度 0→1
+    const zoom = (1 + 5 * q * q * q) * (1 + 12 * Math.pow(p, 1.7));                  // 出洞：鏡頭衝進陰影（平常保持 1，大圖才走快速路徑）
 
     ctx.save();
-    ctx.globalAlpha = wt;
+    ctx.globalAlpha = wt * (1 - smooth(q));           // 穿過隧道時，黑洞的畫面隨鏡頭衝進陰影而淡出
     if (zoom > 1.0001) { ctx.translate(cx, cy); ctx.scale(zoom, zoom); ctx.translate(-cx, -cy); }
     if (D.bg) ctx.drawImage(D.bg, 0, 0, W, H);      // 星空＋暖色光霧＋暗角（都預先畫好）
     else { ctx.fillStyle = 'rgb(11,22,19)'; ctx.fillRect(0, 0, W, H); }
@@ -719,6 +771,7 @@ export function makeWarp(warpMs) {
     if (sh && sh.front) shuttle(ctx, sh.x, sh.y, sh.u, sh.heading, sh.glow, sh.o);
     ctx.restore();
 
+    if (q > 0) drawTunnel(ctx, W, H, cx, cy, tau - TS, q, wt);
     drawFlash(ctx, W, H, p);
   };
 }

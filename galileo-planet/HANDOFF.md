@@ -171,3 +171,9 @@ BreezyVoice 錄好 01–08.wav → `tools/museum/build_narration.py` → `assets
 - **效能**（headless Chromium 軟體繪圖、1280×800 半解析度）：每格約 4～6 ms；尺寸相關的預算約 110～290 ms（分段執行，每格最多約 9 ms 預算，最長單段約 20～30 ms）；光子表與盤面紋理在模組載入後的閒置時間先算好（requestIdleCallback，Safari 用 setTimeout 退而求其次）。
 - **可調參數都在 `launch.js` 的 `GARG`**：`INCL`（視角，90＝正側面）、`R_IN/R_OUT`（盤面內外緣）、`DOPPLER`（左右亮暗差）、`EXPOSURE`、`RING`（光子環）、`SPIN_S`（內緣轉一圈秒數）、`FIT_W/FIT_W_PORTRAIT/FIT_H/CY`（大小與位置；上方留給 DOM 大字）、`BLOOM`、`TURNS`、`R0/R_END`、`ORBIT_TILT`、`SHUTTLE_U`、`LENS_K`。顏色在 `lut()` 的 stops。
 - 不放年份、不放數字；大字仍由 index.html 的 `.warp-ui` 負責，黑洞中心在畫面 57.5% 高，帽子不會被大字蓋住（橫式、直式都看過）。
+
+## 2026-10-27 節奏放慢＋穿過時空隧道（版本 20261027g）
+- 老師說轉太快、到視界就消失：蟲洞段由 4.2 秒拉長到 **6.0 秒**（`WARP_MS`、`build_narration.py` 的 `WARP_MIN`）＝ 螺旋 5.25 秒 ＋ **穿過時空隧道 0.75 秒**（`GARG.TUNNEL_S`）。
+- 螺旋圈數 `TURNS` 2.3 → **1.5**；吸積盤轉速 `SPIN_S` 2.4 → 4.8（慢一半）。
+- 隧道（`drawTunnel`）：鏡頭衝進陰影（黑洞畫面放大並淡出），暖橘→近白的光環與略帶旋轉的光絲從中心往外噴、越來越快，接出洞閃光。
+- 旁白：現有 `intro_zh.mp3` 在「穿越蟲洞」句後插入 1.8 秒空檔（ffmpeg），`intro_zh.json` 後面各句時間 +1.8 秒；之後曉臻重錄時 `build_narration.py` 會依 `WARP_MIN=6.0` 自動排出同樣的間隔。
