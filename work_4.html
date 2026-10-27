@@ -1144,8 +1144,8 @@
     /* 施力在輪上：轉滿一圈（重物升 2πr）。
        施力在軸上：重物掛在大輪上、一圈要升 2πR，畫布放不下，
        只轉到重物碰到輪子下緣為止（約 0.29 圈），一樣照真實比例。 */
-    const AMAX = onAxle ? (372 - (AY + R + 6)) / R : TURN;
-    const spd = onAxle ? 0.32 : 0.9;
+    const AMAX = onAxle ? (372 - (AY + R + 6)) / R : 100 / R;   // 施力在輪上：手往下拉 100 px 為止
+    const spd = onAxle ? 0.32 : 0.3;
     const th = (animTime * spd) % (AMAX * 1.3);
     const ang = Math.min(th, AMAX);
 
@@ -1173,29 +1173,19 @@
     const loadX = onAxle ? WX - TH / 2 - rx : DRX - r * SQ;
     line4(ctx, loadX, AY, loadX, wTop, '#d8e6e0', 3);
 
-    /* 施力在輪上：手握輪緣，後半圈先畫（被輪擋住） */
-    const handFront = Math.cos(ang) > 0;
-    const grip = (front) => {
-      ctx.save(); ctx.lineCap = 'round';
-      ctx.strokeStyle = front ? '#ffe066' : 'rgba(255,224,102,0.3)';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      if (front) ctx.ellipse(WX, AY, RG * SQ, RG, 0, -P2, P2);
-      else ctx.ellipse(WX, AY, RG * SQ, RG, 0, P2, P2 * 3);
-      ctx.stroke(); ctx.restore();
-    };
-    const hx = WX + RG * SQ * Math.cos(ang), hy = AY + RG * Math.sin(ang);
-    if (!onAxle) { grip(false); if (!handFront) handMark4(ctx, hx, hy, false); }
+    /* 施力在輪上：繩子繞在大輪的輪緣上，從「往下轉」的前側垂下（畫在捲筒後面，捲筒會蓋住繩子起點） */
+    const wfx = WX - TH / 2 + rx;
+    const wHandY = 262 + R * ang;
+    if (!onAxle) line4(ctx, wfx, AY, wfx, wHandY - 14, '#d8e6e0', 3);
 
     /* 大輪 */
     disc25(ctx, WX, AY, R, TH, '#4dd2ff', ang, 8);
-    if (onAxle) {
+    {
       /* 大輪的輪緣上繞著繩：畫一條溝 */
       ctx.save(); ctx.strokeStyle = 'rgba(216,230,224,0.75)'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.ellipse(WX - TH / 2, AY, rx, R, 0, P2 * 0.6, P2 * 3.2); ctx.stroke();
       ctx.restore();
     }
-    if (!onAxle) grip(true);
 
     /* 小軸（捲筒）直接貼在大輪的面上：同一塊東西 */
     cyl25(ctx, DX0, DX1, AY, r, '#ff8040', ang, 4);
@@ -1214,12 +1204,11 @@
       arrow4(ctx, fx, handY + 18, fx, handY + 68, '#ff8040', 6, 15);
       label4(ctx, `F = ${W_N * ratio} N`, fx + 16, handY + 52, '#ff8040', 20);
     } else {
-      if (handFront) {
-        handMark4(ctx, hx, hy, true);
-        const tx = -RG * SQ * Math.sin(ang), ty = RG * Math.cos(ang);
-        const tl = Math.hypot(tx, ty) || 1;
-        arrow4(ctx, hx + tx / tl * 16, hy + ty / tl * 16, hx + tx / tl * 50, hy + ty / tl * 50, '#ff8040', 5, 13);
-      }
+      /* 手拉大輪輪緣上的繩：往下，力小（F = W×r/R），手走得遠 */
+      handY = wHandY;
+      handMark4(ctx, wfx, handY, true);
+      arrow4(ctx, wfx, handY + 18, wfx, handY + 56, '#ff8040', 6, 15);
+      label4(ctx, `F = ${W_N / ratio} N`, wfx - 14, handY + 46, '#ff8040', 20, 'right');
     }
 
     /* 轉向箭頭：擺在捲筒和右軸承中間 */
@@ -1246,7 +1235,7 @@
     dash4(ctx, loadX + 26 * dS, 372, dmx + 8 * dS, 372, 'rgba(51,204,153,0.5)', 1.5, [4, 5]);
     dash4(ctx, loadX + 26 * dS, wTop, dmx + 8 * dS, wTop, 'rgba(51,204,153,0.5)', 1.5, [4, 5]);
     if (lift > 24) dim4(ctx, dmx, 372, dmx, wTop, '#33cc99');
-    if (lift > 24) label4(ctx, onAxle ? 'Rθ' : '2πr', onAxle ? dmx - 8 : dmx + 10, (372 + wTop) / 2 + 7, '#33cc99', 19, onAxle ? 'right' : 'left');
+    if (lift > 24) label4(ctx, onAxle ? 'Rθ' : 'rθ', onAxle ? dmx - 8 : dmx + 10, (372 + wTop) / 2 + 7, '#33cc99', 19, onAxle ? 'right' : 'left');
 
     /* ── 同一把尺：手走的距離 vs 重物升的距離 ── */
     const BX = 400, BW = 190;
@@ -1257,11 +1246,11 @@
     const loadLen = onAxle ? BW : BW / ratio;
     ctx.fillStyle = 'rgba(255,224,102,0.22)'; rr4(ctx, BX, 288, handLen, 16, 5); ctx.fill();
     ctx.fillStyle = '#ffe066'; rr4(ctx, BX, 288, handLen * frac, 16, 5); ctx.fill();
-    label4(ctx, onAxle ? tr('手拉（軸 r）', 'hand pulls (axle r)') : tr('手走 2πR', 'hand: 2πR'),
+    label4(ctx, onAxle ? tr('手拉（軸 r）', 'hand pulls (axle r)') : tr('手拉（輪 R）', 'hand pulls (wheel R)'),
            BX, 326, '#ffe066', 19, 'left', true, 190);
     ctx.fillStyle = 'rgba(51,204,153,0.22)'; rr4(ctx, BX, 336, loadLen, 16, 5); ctx.fill();
     ctx.fillStyle = '#33cc99'; rr4(ctx, BX, 336, loadLen * frac, 16, 5); ctx.fill();
-    label4(ctx, onAxle ? tr('重物升（輪 R）', 'load rises (wheel R)') : tr('重物升 2πr', 'load: 2πr'),
+    label4(ctx, onAxle ? tr('重物升（輪 R）', 'load rises (wheel R)') : tr('重物升（軸 r）', 'load rises (axle r)'),
            BX, 374, '#33cc99', 19, 'left', true, 190);
     const capC = onAxle ? '#ff8040' : '#33cc99';
     label4(ctx, onAxle ? tr(`力是 ${ratio} 倍`, `${ratio}× the force`)
@@ -2638,23 +2627,28 @@
       dim4(ctx, tx, by + 20, tx + tw, by + 20, '#4dd2ff');
 
       /* ── 捲上去的螺桿 ── */
-      const CX = 700, CR = 38, CTOP = by - th - 14, CH = th + 28;
+      const CX = 700, CR = 38, RY = 12, CTOP = by - th - 14, CH = th + 28;
       const gg = ctx.createLinearGradient(CX - CR, 0, CX + CR, 0);
       gg.addColorStop(0, 'rgba(0,0,0,0.35)');
       gg.addColorStop(0.4, '#5c6b64');
       gg.addColorStop(1, 'rgba(0,0,0,0.35)');
-      ctx.fillStyle = gg; ctx.fillRect(CX - CR, CTOP, CR * 2, CH);
-      ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 2.5;
-      ctx.strokeRect(CX - CR, CTOP, CR * 2, CH);
+      /* 柱身：兩側直線 + 底部圓弧（有底面的弧線，才看得出是立體的圓柱） */
+      ctx.fillStyle = gg; ctx.strokeStyle = '#a3b8b0'; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(CX - CR, CTOP); ctx.lineTo(CX - CR, CTOP + CH);
+      ctx.ellipse(CX, CTOP + CH, CR, RY, 0, Math.PI, 0, true);
+      ctx.lineTo(CX + CR, CTOP); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      /* 頂面 */
       ctx.fillStyle = '#1e2f27';
-      ctx.beginPath(); ctx.ellipse(CX, CTOP, CR, 11, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(CX, CTOP, CR, RY, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
       const pitch = (CH - 20) / turns;
       const total = turns * 2 * Math.PI * prog;
       const thread = (wantFront) => {
         ctx.beginPath(); let pen = false;
         for (let a = 0; a <= total; a += 0.07) {
-          const y = CTOP + 10 + (a / (2 * Math.PI)) * pitch;
+          const y = CTOP + 10 + (a / (2 * Math.PI)) * pitch + RY * 0.8 * Math.cos(a);
           const xx = CX + CR * Math.sin(a);
           const isFront = Math.cos(a) > 0;
           if (isFront === wantFront) { if (pen) ctx.lineTo(xx, y); else { ctx.moveTo(xx, y); pen = true; } }
