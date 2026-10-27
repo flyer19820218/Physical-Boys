@@ -1,10 +1,11 @@
 // 伽利略星球入口：載入資料、建立畫面層、（可用時）建立 3D 場景、處理網址路由。
 // 改版時請同步更新 index.html（首頁）、本檔與下面兩個 import 的 ?v= 版本字串。
-import { createUI } from './ui.js?v=20261027a';
-import { startLaunch } from './launch.js?v=20261027a';
-import { loadNarration } from './narration.js?v=20261027a';
+import { createUI } from './ui.js?v=20261027c';
+import { startLaunch, WARP_MS } from './launch.js?v=20261027c';
+import { createSfx } from './sfx.js?v=20261027c';
+import { loadNarration } from './narration.js?v=20261027c';
 
-const VERSION = '20261027a';
+const VERSION = '20261027c';
 
 const CONFIG = {
   // 舊版清單（原本的首頁）。伽利略星球已經是 index.html。
@@ -66,12 +67,12 @@ function withTimeout(promise, ms, label) {
 async function main() {
   let scene = null;
   let launchDone = !launch;
-  function endLaunch() {
+  let endLaunch = function () {
     if (launchDone) return;
     launchDone = true;
     document.body.classList.remove('launching');
     try { sessionStorage.setItem('galileo.introSeen', '1'); localStorage.setItem(INTRO_KEY, String(Date.now())); } catch (e) { /* ignore */ }
-  }
+  };
   if (launch) launch.onSkip(() => { if (narrReady) narrReady.stop(); launch.skip(); if (scene) scene.skipIntro(); endLaunch(); });
   async function runLaunch() {
     if (!launch || launchDone) return;
@@ -81,24 +82,45 @@ async function main() {
     const narr = flying ? await narrP : null;
     if (launchDone) return;
     if (narr) {
-      // 有旁白：等使用者按「出發」→ 旁白開始 → 倒數 3、2、1 → 念到「出發」那一刻煙霧散開、開始飛
+      // 有旁白：等使用者按「出發」→ 旁白開始 → 念到「穿越蟲洞」畫面切進時空隧道 → 念到「穿越成功」閃光、開始飛
       launch.showGo(() => {
-        let launched = false;
+        let launched = false, warped = false;
+        const sfx = createSfx(); // 一定要在點擊的處理函式裡直接建立（iPad 才會出聲）；失敗就是 null，照樣無聲播放
+        const wcue = narr.cues.lines.find(c => c.role === 'wormhole' || c.role === 'count');
+        const lcue = narr.cues.lines.find(c => c.role === 'launch');
+        const warpMs = wcue && lcue ? Math.max(1500, (lcue.start - wcue.start) * 1000) : WARP_MS;
+        const doWarp = () => {
+          if (warped || launched || launchDone) return;
+          warped = true;
+          launch.warp(warpMs);
+          if (sfx) sfx.warpStart(warpMs / 1000);
+        };
         const doLaunch = () => {
           if (launched || launchDone) return;
+          doWarp(); // 保險：萬一沒收到「穿越」那句，也先進蟲洞再出洞
           launched = true;
+          if (sfx) sfx.warpEnd();
           launch.part(() => scene.playIntro(endLaunch), 0);
         };
+        const prevEnd = endLaunch;
+        endLaunch = () => { prevEnd(); if (sfx) sfx.stop(); }; // 開場結束（或跳過）時關掉音效
         narr.play(null, c => {
-          if (c.role === 'count') launch.count(c.sub);
+          if (c.role === 'wormhole' || (c.role === 'count' && !warped)) doWarp(); // 舊版錄音的「三」也當成進蟲洞的訊號
           else if (c.role === 'launch') doLaunch();
-        }).then(ok => { if (!ok) doLaunch(); });
-        const lc = narr.cues.lines.find(c => c.role === 'launch');
-        setTimeout(doLaunch, ((lc ? lc.start : 6) + 4) * 1000); // 保險：音檔卡住也會出發
+        }).then(ok => {
+          if (ok) return;
+          doWarp(); // 播放失敗：照樣演完蟲洞再出發
+          setTimeout(doLaunch, warpMs);
+        });
+        setTimeout(doLaunch, ((lcue ? lcue.start : 6) + 4) * 1000); // 保險：音檔卡住也會出發
       });
       await launch.done;
       return;
     }
+    // 沒有旁白：直接演一段蟲洞（無聲）再出發
+    launch.warp(WARP_MS);
+    await new Promise(r => setTimeout(r, WARP_MS));
+    if (launchDone) return;
     launch.part(() => { if (flying) scene.playIntro(endLaunch); });
     await launch.done;
     if (!flying) endLaunch();
@@ -184,7 +206,7 @@ async function main() {
         onInteract: () => document.body.classList.add('touched'),
         onHallPick: id => go(id),
         onStatuePick: id => ui.showScientist(id),
-        onShuttlePick: () => { // 點太空梭：再飛一次（有旁白就從「出發」開始念）
+        onShuttlePick: () => { // 點太空梭：再飛一次（有旁白就從「飛行中」那句開始念，不含蟲洞）
           if (route.mode !== 'planet' || !launchDone || !scene.beginIntro()) return;
           document.body.classList.add('launching');
           const done = () => document.body.classList.remove('launching');
@@ -192,7 +214,8 @@ async function main() {
           if (!narr) { scene.playIntro(done); return; }
           let go = false;
           const fly = () => { if (!go) { go = true; scene.playIntro(done); } };
-          narr.play('06', c => { if (c.role === 'launch') fly(); }).then(ok => { if (!ok) fly(); });
+          const fc = narr.cues.lines.find(c => c.role === 'flight') || narr.cues.lines.find(c => c.role === 'launch');
+          narr.play(fc ? fc.id : null, c => { if (c.role === 'flight' || c.role === 'launch') fly(); }).then(ok => { if (!ok) fly(); });
           setTimeout(fly, 1500);
         },
         onUnitPick: (hallId, unitId) => go(hallId + '/' + unitId),

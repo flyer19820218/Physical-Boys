@@ -6,6 +6,8 @@ export async function loadNarration({ base, ver }) {
     if (!r.ok) return null;
     const cues = await r.json();
     if (!cues || !Array.isArray(cues.lines) || !cues.lines.length) return null;
+    // 舊版錄音（念「三、二、一」）和蟲洞畫面對不上：先不用，等新的錄音（含「穿越蟲洞」那句）換上去才啟用
+    if (!cues.lines.some(c => c.role === 'wormhole')) return null;
     const audio = new Audio();
     audio.preload = 'auto';
     audio.src = base + 'intro_zh.mp3?v=' + ver;
@@ -35,8 +37,8 @@ function makeNarration(audio, cues) {
       if (t >= c.start && !fired.has(c.id)) { fired.add(c.id); if (onCue) onCue(c); }
       if (t >= c.start - 0.05 && t < c.end + 0.4) cur = c;
     }
-    // 倒數與「出發」用大字顯示在畫面中央，不另外出字幕
-    show(cur && cur.role !== 'count' && cur.role !== 'launch' ? cur.sub : '');
+    // 穿越蟲洞與「穿越成功」用畫面上的大字顯示，不另外出字幕
+    show(cur && cur.role !== 'count' && cur.role !== 'launch' && cur.role !== 'wormhole' ? cur.sub : '');
     raf = requestAnimationFrame(tick);
   }
   function stop() {

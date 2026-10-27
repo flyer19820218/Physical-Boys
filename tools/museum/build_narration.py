@@ -9,9 +9,10 @@
 
 時間怎麼排（和 scene.js 的開場飛行配合）：
   - 登機的兩句接著念（中間停 0.35 秒）
-  - 倒數「三、二、一、出發」每 1 秒一拍（念得比較長就往後推）
-  - 「出發」那一刻煙霧散開、太空梭開始飛（飛行 5.6 秒）
-  - 飛行中那句緊接在「出發」後面
+  - 「太空梭目前正穿越蟲洞」那一刻畫面切進蟲洞隧道，至少停 4.2 秒（讓時空隧道演完）
+  - 「穿越成功」那一刻閃光、太空梭開始飛（飛行 5.6 秒）
+  - 飛行中那句緊接在「穿越成功」後面
+  - （舊版的「三、二、一、出發」role=count 仍可處理，每 1 秒一拍）
   - 抵達那句：等飛行結束（或上一句念完）才開始
 每句的頭尾空白會先剪掉，音量用 loudnorm 統一。
 """
@@ -25,6 +26,7 @@ import tempfile
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 AUD = os.path.join(ROOT, 'assets', 'museum', 'audio')
 FLIGHT = 5.6  # 與 scene.js 的 INTRO.dur（毫秒）一致
+WARP_MIN = 4.2  # 蟲洞段最短秒數（與 launch.js 的 WARP_MS 一致）
 
 
 def run(cmd):
@@ -55,11 +57,17 @@ def main():
             run(['ffmpeg', '-y', '-i', f, '-af', trim + ',areverse,' + trim + ',areverse', '-ac', '1', '-ar', '44100', o])
             clips.append((ln, o, duration(o)))
 
-        cues, prev_end, beat, launch_at = [], 0.0, None, None
+        cues, prev_end, beat, launch_at, warp_at = [], 0.0, None, None, None
         for ln, o, d in clips:
             role = ln['role']
             if role == 'board':
                 start = 0.3 if not cues else prev_end + 0.35
+            elif role == 'wormhole':
+                start = prev_end + 0.6
+                warp_at = start
+            elif role == 'launch' and warp_at is not None:
+                start = max(warp_at + WARP_MIN, prev_end + 0.5)
+                launch_at = start
             elif role in ('count', 'launch'):
                 start = prev_end + 0.6 if beat is None else max(beat + 1.0, prev_end + 0.12)
                 beat = start
