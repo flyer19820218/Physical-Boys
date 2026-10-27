@@ -138,3 +138,6 @@
 
 ## 進場旁白（2026-10-26 完成）
 BreezyVoice 錄好 01–08.wav → `tools/museum/build_narration.py` → `assets/museum/audio/intro_zh.mp3` + `intro_zh.json`。重錄某句：重錄該 wav 後重跑 build_narration（需全部八個 wav）。
+
+## 進場旁白改用曉臻（2026-10-27）
+改用 edge-tts zh-TW-HsiaoChenNeural（rate +10%, pitch +5Hz，與 finance_daily_news 相同）。使用者在 Mac 上雙擊 `tools/voice/錄曉臻開場白.command`（zip 版保留執行權限）錄出 01～08.mp3 → 轉 wav → `tools/museum/build_narration.py`。
