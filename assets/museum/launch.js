@@ -32,42 +32,65 @@ function makePuff(rgb, seed) {
   return c;
 }
 
-// ---------- 蟲洞段：巨人黑洞（Schwarzschild 光線追蹤的吸積盤＋重力透鏡） ----------
-// 做法（一次預算、每格只查表）：
-//   1. 光子軌道表：u = 1/r 對「掃過的角度 φ」與「撞擊參數 b」的表（d²u/dφ² = −u + 3u²，M = 1），約 600 條光線。
-//   2. 每個畫面像素（半解析度、2×2 超取樣）算出它的光線第一次、第二次穿過盤面的位置：
-//      第一次＝盤面本身（含擋在陰影前面那條）；第二次＝繞過黑洞的透鏡像（上方的「帽子」、下方的細弧）。
-//      存下盤面半徑、方位角，以及都卜勒＋重力紅移的亮度 g^k（左側迎向我們→亮白，右側遠離→暗橙）。
-//   3. 每一格只把盤面紋理依半徑轉一個角度（內圈快、外圈慢），查表填色 → 一張小 ImageData → 多層縮小再放大當光暈。
-// 太空梭在和盤面不同的傾斜軌道上，機頭沿切線、繞約 1.5 圈，最後 0.75 秒穿過時空隧道、一圈比一圈小；
-// 繞到後方時位置被透鏡往外推（沿著帽子的形狀繞過頂端）、被陰影遮住；最後紅移、變暗、被拉長，沒入陰影。
-const TAU = Math.PI * 2;
+// ---------- 蟲洞段：《星際效應》式的 Ellis 蟲洞（真的光線追蹤＋重力透鏡） ----------
+// 給學生的科普：電影裡的蟲洞不是「隧道」，而是一顆「水晶球」。
+//   這裡畫的是 Ellis 蟲洞：ds² = −dt² + dl² + (b² + l²)(dθ² + sin²θ dφ²)，喉嚨半徑 b（取 1），r² = b² + l²。
+//   l > 0 是我們的宇宙，l < 0 是另一個宇宙，l = 0 是喉嚨。它沒有質量、沒有事件視界，本身也不發光。
+//   從遠處看，喉嚨是一顆透明的球：球裡是「另一邊宇宙的天空」（光線穿過喉嚨過來），
+//   球外是我們這邊的星空，被彎曲的空間偏折（重力透鏡）——越靠近球的邊緣扭曲越厲害，星星被拉成一圈圈弧線。
+//   穿越時不會有發亮的隧道：只會看到另一邊的天空越來越大、佔滿整個視野，我們的天空縮到身後。
+//   放射光絲的「時空隧道」是科幻的傳統畫法，不是物理。
+//   參考：James, von Tunzelmann, Franklin & Thorne〈Visualizing Interstellar's Wormhole〉Am. J. Phys. 83, 486。
+// 光線怎麼算：
+//   光線的守恆量（撞擊參數）B：dφ/dl = B / ( r √(r² − B²) )。相機在 l_c、像素和「朝蟲洞中心的方向」夾角 α → B = r_c sin α。
+//   B < b：光穿過喉嚨，看到另一邊；B > b：在 r = B 轉彎折回，看到我們這邊；B 很接近 b 的光會繞喉嚨好幾圈 → 球邊緣的環形條紋。
+//   掃過的總角度 φ = K(B) − F(|l_c|, B)（朝喉嚨走）或 F(|l_c|, B)（背著喉嚨走）：
+//     K(B)：整條路徑（與相機無關，模組載入後在閒置時間做成表）；F：相機到無窮遠（每格現算，16 點高斯積分）。
+//   畫面對蟲洞中心旋轉對稱 → 每格只要算一條「離中心距離 → φ」的表，再逐像素查兩張天空貼圖（低解析度畫布，最後放大）。
+const TAU = Math.PI * 2, DEG = Math.PI / 180;
 export const WARP_MS = 6000;          // 蟲洞段長度（有旁白時以旁白時間表為準，與 build_narration.py 的 WARP_MIN 一致）
 const smooth = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
 const lerp = (a, b, t) => a + (b - a) * t;
 
-// ===== 可調參數（長度單位＝黑洞質量 M；陰影半徑 √27 ≈ 5.2） =====
-export const GARG = {
-  INCL: 83.5,        // 視線和盤面法線的夾角（度）：90＝正側面；越小越能看到盤面上側
-  R_IN: 6,           // 吸積盤內緣（最內穩定圓軌道 6M）
-  R_OUT: 21,         // 吸積盤外緣
-  DOPPLER: 3.0,      // 亮度 ∝ g^DOPPLER：越大左右亮暗差越明顯
-  EXPOSURE: 0.95,    // 盤面整體曝光
-  RING: 0.42,        // 光子環亮度
-  SPIN_S: 4.8,       // 內緣轉一圈的秒數（外圈依克卜勒 r^1.5 變慢）
-  FIT_W: 0.5,        // 盤面外緣半寬占畫面寬度的比例上限（橫式）
-  FIT_W_PORTRAIT: 0.7, // 直式：讓盤面外緣超出左右兩邊（電影式裁切），黑洞才不會太小
-  FIT_H: 0.385,      // 帽子上緣到中心占畫面高度的比例上限
-  CY: 0.575,         // 黑洞中心的高度（畫面比例；上方留給 DOM 大字）
-  BLOOM: 0.85,       // 光暈強度
-  // 太空梭
-  TURNS: 1.5,        // 繞幾圈才進去
-  TUNNEL_S: 0.75,    // 最後穿過時空隧道的秒數（含在蟲洞段總長裡）
-  R0: 19,            // 起始軌道半徑
-  R_END: 2.6,        // 結束時的半徑（已在陰影裡）
-  ORBIT_TILT: 0.30,  // 軌道橢圓的扁度（螢幕上的短軸／長軸）
-  SHUTTLE_U: 1.55,   // 太空梭尺寸（M）
-  LENS_K: 0.55,      // 太空梭繞到後方時的透鏡位移強度
+// ===== 可調參數（長度單位＝喉嚨半徑 b） =====
+export const WORM = {
+  // 鏡頭與構圖
+  FOV: 50,            // 水平視野（度）；橫式時球會撞到上方大字，就自動拉廣角（見 TOP_SAFE）
+  CY: 0.575,          // 蟲洞中心的高度（畫面比例；上方留給 DOM 大字）
+  TOP_SAFE: 0.17,     // 接近段最大的球（含邊緣光）上緣不高過畫面高度的這個比例
+  A_START: 14,        // 接近段開始時球的視半徑（度）——相機慢慢靠近
+  A_END: 20,          // 接近段結束（開始穿越）時球的視半徑（度）
+  TUNNEL_S: 0.75,     // 最後穿過喉嚨的秒數（含在蟲洞段總長裡）
+  L_EXIT: -0.9,       // 穿過後相機到達的位置（負＝另一個宇宙）
+  PUSH_POW: 2.4,      // 推進的加速感（越大越晚才衝）
+  SHAKE: 2.2,         // 穿過喉嚨那一下的微晃（CSS px）
+  // 光線查表
+  RES_W: 360,         // 低解析度畫布寬度上限
+  RES_PIX: 110000,    // 低解析度畫布像素上限（直式時寬度會再縮）
+  MIP_BIAS: 0.45,     // 切向的模糊程度（越小越銳利，也越容易閃爍）
+  MIP_RAD: 0.8,       // 徑向（被透鏡壓縮的方向）的模糊程度
+  EDGE_PHI: 0.2,      // 每個低解析度像素 φ 變化超過這個（弧度）→ 直接用整片天空的平均色（球邊緣不閃爍）
+  // 球的邊緣光
+  RIM: 0.4,           // 邊緣光亮度
+  RIM_W: 2.0,         // 邊緣光寬度（CSS px）
+  DISPERSION: 1.3,    // 色散：紅、藍光環錯開的距離（CSS px）
+  HALO: 0.13,         // 球外很淡的暖色光暈
+  // 天空
+  GAL_R: 50,          // 另一邊螺旋星系的角半徑（度）
+  GAL_INC: 57,        // 星系盤面傾角（度）
+  GAL_PA: 28,         // 星系長軸方向（度）
+  GAL_OFF: 6,         // 星系中心偏離正前方的角度（度）
+  STARS_HERE: 4600,   // 我們這邊全天的星數（稀疏）
+  STARS_THERE: 17000, // 另一邊全天的星數（密）
+  ROLL: 5,            // 整段天空緩慢旋轉的角度（度）
+  // 太空梭：從後上方的追隨鏡頭看，沿直線（極微的弧）飛向球心。蟲洞沒有質量、沒有潮汐力 → 不繞圈、不拉長、不變紅
+  SHIP_S0: 0.6,       // 一開始太空梭在鏡頭前方多遠（喉嚨半徑＝1）
+  SHIP_H: 0.18,       // 鏡頭比太空梭的航線高多少（越大，太空梭在畫面越下面）
+  SHIP_X: 0.05,       // 一開始稍微偏右，之後慢慢修正對準（很微的弧）
+  SHIP_LEN: 0.1,      // 太空梭長度
+  SHIP_IN: 0.86,      // 接近段（前 5.25 秒）的這個比例時太空梭穿過喉嚨
+  SHIP_FORE: 0.5,     // 從後上方看的機身縮短（俯視圖沿機身方向壓扁）
+  FLASH: 0.8,         // 出洞閃光的峰值（原本 0.95）
 };
 
 // ---------- 小工具 ----------
@@ -75,314 +98,453 @@ function rng(seed) {
   let a = seed >>> 0;
   return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
-const BC = Math.sqrt(27);             // 陰影（臨界撞擊參數）
-
-// ---------- 1. 光子軌道表（與畫面尺寸無關，整個模組共用一份） ----------
-const PT = { B0: 0.02, DB: 0.02, BMAX: 24.5, DP: 0.0125, NB: 0, NP: 0, T: null };
-function* photonTable() {
-  if (PT.T) return PT;
-  let lastY = performance.now();
-  const NB = Math.ceil((PT.BMAX - PT.B0) / PT.DB) + 2, NP = Math.ceil((TAU + 0.08) / PT.DP) + 2;
-  const T = new Float32Array(NB * NP), h0 = PT.DP;
-  const f = u => -u + 3 * u * u;
-  for (let i = 0; i < NB; i++) {
-    const b = PT.B0 + i * PT.DB, row = i * NP;
-    let u = 0, v = 1 / b, st = 0;
-    T[row] = 0;
-    for (let j = 1; j < NP; j++) {
-      if (st) { T[row + j] = st; continue; }
-      const ns = Math.min(24, 1 + Math.ceil(Math.abs(v) * h0 / 0.004)), h = h0 / ns;
-      for (let s = 0; s < ns; s++) {
-        const k1u = v, k1v = f(u);
-        const k2u = v + 0.5 * h * k1v, k2v = f(u + 0.5 * h * k1u);
-        const k3u = v + 0.5 * h * k2v, k3v = f(u + 0.5 * h * k2u);
-        const k4u = v + h * k3v, k4v = f(u + h * k3u);
-        u += h / 6 * (k1u + 2 * k2u + 2 * k3u + k4u);
-        v += h / 6 * (k1v + 2 * k2v + 2 * k3v + k4v);
-        if (u >= 0.5 || u < 0) break;
-      }
-      if (u >= 0.5) st = 1; else if (u < 0) st = -1;
-      T[row + j] = st || u;
-    }
-    if (performance.now() - lastY > 6) { yield; lastY = performance.now(); }
-  }
-  PT.NB = NB; PT.NP = NP; PT.T = T;
-  return PT;
-}
-// 光線（撞擊參數 b）掃過 φ 時的 u = 1/r；−1＝已經逃走，≥0.5＝已經掉進去
-function tabU(b, ph) {
-  const { T, NB, NP } = PT;
-  let fb = (b - PT.B0) / PT.DB; if (fb < 0) fb = 0;
-  const ib = fb | 0; if (ib >= NB - 1) return -1;
-  const fp = ph / PT.DP, ip = fp | 0; if (ip >= NP - 1) return -1;
-  const tb = fb - ib, tp = fp - ip, o = ib * NP + ip;
-  const a = T[o], c = T[o + 1], d = T[o + NP], e = T[o + NP + 1];
-  if (a < 0 || c < 0 || d < 0 || e < 0 || a >= 0.5 || c >= 0.5 || d >= 0.5 || e >= 0.5) {
-    return tb < 0.5 ? (tp < 0.5 ? a : c) : (tp < 0.5 ? d : e);
-  }
-  return (a * (1 - tp) + c * tp) * (1 - tb) + (d * (1 - tp) + e * tp) * tb;
-}
-
-// ---------- 2. 吸積盤紋理（半徑 × 方位角，4 層模糊度） ----------
-const NR = 96, NA = 1024, AM = NA - 1, NLOD = 4;
-let DISK_TEX = null;
-function* diskTexture() {
-  if (DISK_TEX) return DISK_TEX;
-  let lastY = performance.now();
-  const { R_IN, R_OUT } = GARG, R = rng(20261027);
-  // 週期性的 2D 值雜訊（方位角方向週期 PA）：格子沿方位角很長、沿半徑很短 → 沿盤面流動的細絲
-  const lattice = (PA, PRr) => { const g = new Float32Array(PA * (PRr + 1)); for (let i = 0; i < g.length; i++) g[i] = R(); return { PA, PRr, g }; };
-  const oct = [lattice(9, 20), lattice(17, 44), lattice(33, 90), lattice(61, 150)];
-  const amp = [0.5, 0.3, 0.2, 0.14];
-  const sm = t => t * t * (3 - 2 * t);
-  const noise = (L, fa, fr) => {
-    const x = fa * L.PA, y = fr * L.PRr;
-    const ix = Math.floor(x), iy = Math.min(L.PRr - 1, Math.floor(y)), tx = sm(x - ix), ty = sm(y - iy);
-    const x0 = ((ix % L.PA) + L.PA) % L.PA, x1 = (x0 + 1) % L.PA;
-    const g = L.g, r0 = iy * L.PA, r1 = (iy + 1) * L.PA;
-    return lerp(lerp(g[r0 + x0], g[r0 + x1], tx), lerp(g[r1 + x0], g[r1 + x1], tx), ty);
+// 3D 值雜訊（用方向向量取樣：天球上沒有接縫、極點也不會怪）
+function makeNoise(seed) {
+  const R = rng(seed), P = new Uint8Array(512), V = new Float32Array(256);
+  for (let i = 0; i < 256; i++) { P[i] = i; V[i] = R(); }
+  for (let i = 255; i > 0; i--) { const j = (R() * (i + 1)) | 0, t = P[i]; P[i] = P[j]; P[j] = t; }
+  for (let i = 0; i < 256; i++) P[i + 256] = P[i];
+  const n = (x, y, z) => {
+    const X = Math.floor(x), Y = Math.floor(y), Z = Math.floor(z);
+    let fx = x - X, fy = y - Y, fz = z - Z;
+    fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy); fz = fz * fz * (3 - 2 * fz);
+    const xi = X & 255, yi = Y & 255, zi = Z & 255;
+    const a = P[xi] + yi, b = P[xi + 1] + yi;
+    const aa = P[a] + zi, ab = P[a + 1] + zi, ba = P[b] + zi, bb = P[b + 1] + zi;
+    const x00 = V[P[aa]] + (V[P[ba]] - V[P[aa]]) * fx, x10 = V[P[ab]] + (V[P[bb]] - V[P[ab]]) * fx;
+    const x01 = V[P[aa + 1]] + (V[P[ba + 1]] - V[P[aa + 1]]) * fx, x11 = V[P[ab + 1]] + (V[P[bb + 1]] - V[P[ab + 1]]) * fx;
+    const y0 = x00 + (x10 - x00) * fy, y1 = x01 + (x11 - x01) * fy;
+    return y0 + (y1 - y0) * fz;
   };
-  // 半徑方向的細環紋（每一格亂數，稍微抹平）
-  const ring = new Float32Array(NR);
-  for (let i = 0; i < NR; i++) ring[i] = 0.55 + 0.9 * R();
-  for (let pass = 0; pass < 2; pass++) for (let i = 1; i < NR - 1; i++) ring[i] = 0.25 * ring[i - 1] + 0.5 * ring[i] + 0.25 * ring[i + 1];
-  // 幾團比較亮的熱點（沿方位角拉長）
-  const blobs = [];
-  for (let k = 0; k < 14; k++) blobs.push({ r: R(), a: R(), wr: 0.015 + 0.03 * R(), wa: 0.03 + 0.08 * R(), s: 0.5 + 0.9 * R() });
-  const tex = new Float32Array(NLOD * NR * NA);
-  for (let i = 0; i < NR; i++) {
-    const fr = (i + 0.5) / NR, r = R_IN + (R_OUT - R_IN) * fr;
-    const twist = 0.9 * Math.log(r / R_IN);       // 讓細絲略帶螺旋
-    for (let j = 0; j < NA; j++) {
-      const fa = j / NA;
-      let n = 0;
-      for (let o = 0; o < oct.length; o++) n += amp[o] * noise(oct[o], (fa + twist * (o + 1) * 0.07) % 1, fr);
-      n = n / 1.14;                                // 0～1
-      let v = ring[i] * (0.32 + 1.25 * Math.pow(n, 1.6));
-      for (const B of blobs) {
-        const dr = fr - B.r;
-        if (dr * dr > 9 * B.wr * B.wr) continue;
-        let da = Math.abs(fa - B.a); da = Math.min(da, 1 - da);
-        if (da > 3 * B.wa) continue;
-        v += B.s * Math.exp(-(da * da) / (B.wa * B.wa) - (dr * dr) / (B.wr * B.wr));
-      }
-      tex[i * NA + j] = v;
-    }
-    if (performance.now() - lastY > 6) { yield; lastY = performance.now(); }
-  }
-  // 模糊層（給透鏡壓縮得很密的地方用，避免閃爍）
-  const tmp = new Float32Array(NR * NA);
-  for (let l = 1; l < NLOD; l++) {
-    const src = (l - 1) * NR * NA, dst = l * NR * NA, s = 1 << (l - 1);
-    for (let i = 0; i < NR; i++) for (let j = 0; j < NA; j++) {
-      tmp[i * NA + j] = 0.25 * tex[src + i * NA + ((j - s) & AM)] + 0.5 * tex[src + i * NA + j] + 0.25 * tex[src + i * NA + ((j + s) & AM)];
-    }
-    for (let i = 0; i < NR; i++) {
-      const i0 = Math.max(0, i - s), i1 = Math.min(NR - 1, i + s);
-      for (let j = 0; j < NA; j++) tex[dst + i * NA + j] = 0.25 * tmp[i0 * NA + j] + 0.5 * tmp[i * NA + j] + 0.25 * tmp[i1 * NA + j];
-    }
-    yield;
-  }
-  DISK_TEX = tex;
-  return tex;
+  return (x, y, z, oct) => {        // fbm，回傳約 0～1
+    let s = 0, a = 0.5, f = 1, t = 0;
+    for (let o = 0; o < oct; o++) { s += a * n(x * f + o * 17.3, y * f - o * 9.1, z * f + o * 5.7); t += a; a *= 0.5; f *= 2.03; }
+    return s / t;
+  };
 }
 
-// 亮度 → 顏色（暗紅 → 橙 → 琥珀 → 近白）。存成 Uint32（ABGR），alpha＝最大通道，給 lighter 疊加用
-const LN = 2048, LUT_SCALE = 160;
-let LUT = null;
-function lut() {
-  if (LUT) return LUT;
-  const stops = [[0, 0, 0, 0], [0.1, 62, 16, 5], [0.27, 170, 80, 30], [0.44, 240, 154, 76], [0.6, 255, 196, 126], [0.76, 255, 230, 188], [0.9, 255, 245, 226], [1, 255, 252, 246]];
-  LUT = new Uint32Array(LN);
-  for (let i = 0; i < LN; i++) {
-    const I = i / LUT_SCALE, v = 1 - Math.exp(-I * 0.9);
-    let k = 1; while (k < stops.length - 1 && stops[k][0] < v) k++;
-    const A = stops[k - 1], B = stops[k], t = Math.min(1, Math.max(0, (v - A[0]) / (B[0] - A[0])));
-    const r = lerp(A[1], B[1], t), g = lerp(A[2], B[2], t), b = lerp(A[3], B[3], t);
+// ---------- 1. 光線積分 ----------
+// K(B)：整條光線掃過的角度（與相機位置無關）
+//   B < 1：K = 2∫₀^∞ B dw / √(1 + (1−B²) sinh²w)      （代換 l = √(1−B²) sinh w）
+//   B > 1：K = 2∫₀^∞ B dw / √(1 + (B²−1) cosh²w)      （代換 l = √(B²−1) cosh w，轉折點的 1/√ 奇異消失）
+//   兩個被積函數都是平滑的偶函數 → 梯形法就非常準。表格用 v = ln|B − 1| 均勻取樣，B → 1 時（繞很多圈）也夠細。
+const KT = { N: 1024, VMIN: -16, VHI: 1.8, lo: null, hi: null };
+function* kTable() {
+  if (KT.lo) return;
+  let lastY = performance.now();
+  const h = 0.02, NW = 1001, S2 = new Float64Array(NW), C2 = new Float64Array(NW), EW = new Float64Array(NW);
+  for (let i = 0; i < NW; i++) { const s = Math.sinh(i * h), c = Math.cosh(i * h); S2[i] = s * s; C2[i] = c * c; EW[i] = Math.exp(-i * h); }
+  const integ = (k2, A) => {          // ∫₀^∞ dw / √(1 + k2·A(w))，尾巴用 2e^{−w}/√k2 補上
+    let s = 0.5 / Math.sqrt(1 + k2 * A[0]);
+    for (let i = 1; i < NW; i++) {
+      const fi = 1 / Math.sqrt(1 + k2 * A[i]);
+      if (k2 * A[i] > 1e7) return (s + 0.5 * fi) * h + 2 * EW[i] / Math.sqrt(k2);
+      s += fi;
+    }
+    return s * h;
+  };
+  const { N, VMIN, VHI } = KT, lo = new Float32Array(N), hi = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const B1 = 1 - Math.exp(VMIN + (0 - VMIN) * i / (N - 1));
+    lo[i] = 2 * B1 * integ(Math.max(1e-30, 1 - B1 * B1), S2);
+    const B2 = 1 + Math.exp(VMIN + (VHI - VMIN) * i / (N - 1));
+    hi[i] = 2 * B2 * integ(B2 * B2 - 1, C2);
+    if (performance.now() - lastY > 6) { yield; lastY = performance.now(); }
+  }
+  KT.lo = lo; KT.hi = hi;
+}
+function kOf(B) {
+  const { N, VMIN, VHI, lo, hi } = KT;
+  let f, T;
+  if (B < 1) { f = (Math.log(1 - B) - VMIN) / (0 - VMIN) * (N - 1); T = lo; }
+  else { f = B === 1 ? 0 : (Math.log(B - 1) - VMIN) / (VHI - VMIN) * (N - 1); T = hi; }
+  if (!(f > 0)) return T[0];
+  if (f >= N - 1) return T[N - 1];
+  const i = f | 0, t = f - i;
+  return T[i] + (T[i + 1] - T[i]) * t;
+}
+// F(L, B) = ∫_L^∞ B dl / ( √(1+l²) √(l²+1−B²) )：相機（|l| = L）到無窮遠掃過的角度。代換 l = L + c(1−x)/x → 平滑，16 點高斯積分。
+const GL = (() => {
+  const n = 16, X = new Float64Array(n), Wt = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    let x = Math.cos(Math.PI * (i + 0.75) / (n + 0.5)), dp = 0;
+    for (let it = 0; it < 60; it++) {
+      let p0 = 1, p1 = x;
+      for (let k = 2; k <= n; k++) { const p2 = ((2 * k - 1) * x * p1 - (k - 1) * p0) / k; p0 = p1; p1 = p2; }
+      dp = n * (x * p1 - p0) / (x * x - 1);
+      const dx = p1 / dp; x -= dx;
+      if (Math.abs(dx) < 1e-15) break;
+    }
+    X[i] = 0.5 * (1 - x); Wt[i] = 1 / ((1 - x * x) * dp * dp);   // 映到 (0,1)：權重 2/((1−x²)P'²) × ½
+  }
+  return { X, W: Wt };
+})();
+function fOf(L, B) {
+  const c = 1 + L, r2 = 1 - B * B, X = GL.X, Wt = GL.W;
+  let s = 0;
+  for (let k = 0; k < 16; k++) {
+    const x = X[k], l = L + c * (1 - x) / x, l2 = l * l;
+    s += Wt[k] * c / (x * x * Math.sqrt(1 + l2) * Math.sqrt(l2 + r2));
+  }
+  return B * s;
+}
+// 相機位置 ↔ 球的視半徑：sin α_c = b / r_c
+const lOfAngle = a => Math.sqrt(Math.max(0, 1 / Math.pow(Math.sin(a * DEG), 2) - 1));
+
+// ---------- 2. 兩邊的天空貼圖（程序生成，不用外部圖檔） ----------
+// 座標：以相機視軸為極軸的經緯貼圖。d＝離「重要極點」的角度（我們這邊＝蟲洞正後方，另一邊＝穿過去的正前方），ψ＝繞視軸的方位角。
+// 靠近極點的列格子比較少（每格接近正方形）；d < D1 用細格（給畫面直接看到的區域），其餘粗格（只出現在被壓縮的環裡）。
+// 另外做 8 層縮圖（mip）：透鏡把天空壓得很密的地方取比較糊的那層，畫面才不會閃爍。
+const SK = { NC: 2048, CB: 11, D1: 60 * DEG, S1: 0.16 * DEG, S2: 0.5 * DEG, NL: 8, N1: 0, NR: 0, lv: null, per: 0, TEX: null, ready: false };
+SK.N1 = Math.round(SK.D1 / SK.S1); SK.NR = SK.N1 + Math.round((Math.PI - SK.D1) / SK.S2);
+const rowOf = d => { const r = d < SK.D1 ? d / SK.S1 : SK.N1 + (d - SK.D1) / SK.S2; return r < 0 ? 0 : r > SK.NR - 0.001 ? SK.NR - 0.001 : r; };
+const dOfRow = r => (r < SK.N1 ? r * SK.S1 : Math.min(Math.PI, SK.D1 + (r - SK.N1) * SK.S2));
+const stepOf = d => (d < SK.D1 ? SK.S1 : SK.S2);
+function skyLayout() {
+  if (SK.lv) return;
+  const lv = [];
+  let rows = SK.NR, ncol = new Uint16Array(rows), off = 0;
+  for (let r = 0; r < rows; r++) {
+    const d = dOfRow(r + 0.5), want = TAU * Math.sin(d) / stepOf(d);
+    let n = 4; while (n < want && n < SK.NC) n <<= 1;
+    ncol[r] = n;
+  }
+  for (let k = 0; k < SK.NL; k++) {
+    if (k) {
+      const prev = lv[k - 1], R2 = Math.ceil(prev.rows / 2), nc = new Uint16Array(R2);
+      for (let r = 0; r < R2; r++) {
+        const a = prev.ncol[2 * r], b = 2 * r + 1 < prev.rows ? prev.ncol[2 * r + 1] : a;
+        nc[r] = Math.max(1, Math.min(a, b) >> 1);
+      }
+      rows = R2; ncol = nc;
+    }
+    const o = new Int32Array(rows), sh = new Uint8Array(rows);
+    for (let r = 0; r < rows; r++) { o[r] = off; off += ncol[r]; sh[r] = SK.CB - Math.round(Math.log2(ncol[r])); }
+    lv.push({ rows, ncol, off: o, sh });
+  }
+  SK.lv = lv; SK.per = off;
+}
+
+// 另一邊的螺旋星系
+function galaxyModel() {
+  const off = WORM.GAL_OFF * DEG, dir = -2.25;                  // 中心稍微偏左上
+  const c = [Math.sin(off) * Math.cos(dir), Math.sin(off) * Math.sin(dir), Math.cos(off)];
+  let e1 = [c[2], 0, -c[0]]; const n1 = Math.hypot(...e1); e1 = e1.map(v => v / n1);
+  const e2 = [c[1] * e1[2] - c[2] * e1[1], c[2] * e1[0] - c[0] * e1[2], c[0] * e1[1] - c[1] * e1[0]];
+  const pa = WORM.GAL_PA * DEG, ca = Math.cos(pa), sa = Math.sin(pa);
+  return { c, a: e1.map((v, i) => ca * v + sa * e2[i]), b: e2.map((v, i) => -sa * e1[i] + ca * v), Rg: Math.tan(WORM.GAL_R * DEG), ci: Math.cos(WORM.GAL_INC * DEG) };
+}
+
+// 天空的「漫射光」（底色、銀河帶、星雲、星系）：在半解析度的格子上算，之後雙線性放大
+function makeDiffuse(side) {
+  const nz = makeNoise(side ? 9173 : 3301), nz2 = makeNoise(side ? 5519 : 7741);
+  if (!side) {
+    // 我們這邊：深綠黑，加一道很淡的銀河帶（斜斜地從蟲洞後方經過，透鏡扭曲時看得出彎）
+    const dl = 17 * DEG, g = 40 * DEG;
+    const N = [Math.cos(dl) * Math.cos(g), Math.cos(dl) * Math.sin(g), -Math.sin(dl)];
+    return (x, y, z, o) => {
+      const n = nz(x * 2.6, y * 2.6, z * 2.6, 3);
+      let r = 10.5, gg = 21, b = 18.2;
+      const k = 0.86 + 0.28 * n; r *= k; gg *= k; b *= k;
+      const t = N[0] * x + N[1] * y + N[2] * z;
+      const band = Math.exp(-(t * t) / 0.016);
+      if (band > 0.01) {
+        const cl = nz2(x * 5.5, y * 5.5, z * 5.5, 4);
+        const rift = Math.exp(-((t - 0.015) * (t - 0.015)) / 0.0005) * (0.45 + 0.55 * nz(x * 9, y * 9, z * 9, 2));
+        const I = band * (0.25 + 1.1 * cl * cl) * (1 - 0.6 * rift);
+        r += I * 30; gg += I * 40; b += I * 37;
+      }
+      o[0] = r; o[1] = gg; o[2] = b;
+    };
+  }
+  // 另一邊：偏暖（琥珀、玫瑰紫），有一個大的螺旋星系
+  const G = galaxyModel(), { c, a, b: bb, Rg, ci } = G;
+  return (x, y, z, o) => {
+    let r = 19, gg = 10.5, b = 17;
+    const cz = c[0] * x + c[1] * y + c[2] * z;
+    const hz = Math.exp((cz - 1) / 0.3);                          // 星系周圍的琥珀色光霧
+    r += 34 * hz; gg += 19 * hz; b += 9 * hz;
+    const n1 = nz(x * 2.2, y * 2.2, z * 2.2, 3), n2 = nz2(x * 4.4, y * 4.4, z * 4.4, 3);
+    const rose = Math.max(0, n1 - 0.5), amb = Math.max(0, n2 - 0.56);
+    r += rose * rose * 300 + amb * amb * 260; gg += rose * rose * 80 + amb * amb * 140; b += rose * rose * 230 + amb * amb * 50;
+    if (cz > 0.3) {
+      const X = (a[0] * x + a[1] * y + a[2] * z) / cz / Rg, Y = (bb[0] * x + bb[1] * y + bb[2] * z) / cz / Rg;
+      const Yd = Y / ci, rr = Math.hypot(X, Yd);
+      if (rr < 1.6) {
+        const rs = Math.hypot(X, Y / 0.82);
+        const bulge = 2.4 * Math.exp(-Math.pow(rs / 0.035, 0.8)) + 0.7 * Math.exp(-rs / 0.1);
+        const ang = Math.atan2(Yd, X), ph = ang - Math.log(rr + 0.015) / 0.32;
+        const q = nz(x * 16, y * 16, z * 16, 3), q2 = nz2(x * 34, y * 34, z * 34, 1);
+        const w = 1.3 * (q - 0.5);
+        const arm = Math.pow(0.5 + 0.5 * Math.cos(2 * ph + w), 3);
+        const lane = Math.pow(0.5 + 0.5 * Math.cos(2 * ph + 0.8 + w), 16);
+        const disk = Math.exp(-rr / 0.27) * smooth((1.3 - rr) / 0.5) * smooth(rr / 0.05);
+        const armI = disk * (0.2 + 1.7 * arm * (0.5 + q));
+        const dust = 1 - 0.7 * lane * smooth(rr / 0.06) * smooth((1.15 - rr) / 0.35);
+        const hii = disk * arm * arm * Math.pow(Math.max(0, q2 - 0.6) / 0.4, 2) * 2.2;
+        const outer = smooth(rr / 0.6);                             // 外圈偏淡紫
+        r += (bulge * 255 + armI * lerp(235, 205, outer) * 0.55) * dust + hii * 255 + 0.06 * Math.exp(-rs / 0.5) * 255;
+        gg += (bulge * 196 + armI * lerp(200, 185, outer) * 0.55) * dust + hii * 92 + 0.06 * Math.exp(-rs / 0.5) * 170;
+        b += (bulge * 140 + armI * lerp(215, 245, outer) * 0.55) * dust + hii * 150 + 0.06 * Math.exp(-rs / 0.5) * 110;
+      }
+    }
+    o[0] = r; o[1] = gg; o[2] = b;
+  };
+}
+
+// 一顆星「點」到貼圖（第 0 層，雙線性分配，總亮度守恆）
+function splat(F0, lv0, x, y, z, I, cr, cg, cb) {
+  const d = Math.acos(Math.max(-1, Math.min(1, z)));
+  let psi = Math.atan2(y, x); if (psi < 0) psi += TAU;
+  const st = stepOf(d), amp = I * (SK.S1 / st) * (SK.S1 / st);
+  const rf = rowOf(d) - 0.5, r0 = Math.floor(rf), fr = rf - r0;
+  for (let k = 0; k < 2; k++) {
+    const rr = r0 + k, wr = k ? fr : 1 - fr;
+    if (rr < 0 || rr >= lv0.rows || wr <= 0) continue;
+    const n = lv0.ncol[rr], cf = psi / TAU * n - 0.5, c0 = Math.floor(cf), fc = cf - c0, base = lv0.off[rr] * 3;
+    const i0 = base + (((c0 % n) + n) % n) * 3, i1 = base + (((c0 + 1) % n + n) % n) * 3;
+    const a0 = amp * wr * (1 - fc), a1 = amp * wr * fc;
+    F0[i0] += a0 * cr; F0[i0 + 1] += a0 * cg; F0[i0 + 2] += a0 * cb;
+    F0[i1] += a1 * cr; F0[i1 + 1] += a1 * cg; F0[i1 + 2] += a1 * cb;
+  }
+}
+// 亮星的光暈：在切平面上撒一圈高斯分布的點
+function haloSplat(F0, lv0, x, y, z, I, cr, cg, cb, rad) {
+  let ux = -y, uy = x, uz = 0; let nn = Math.hypot(ux, uy); if (nn < 1e-6) { ux = 1; uy = 0; nn = 1; } ux /= nn; uy /= nn;
+  const vx = y * uz - z * uy, vy = z * ux - x * uz, vz = x * uy - y * ux;
+  for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) {
+    if (!i && !j) continue;
+    const wgt = Math.exp(-(i * i + j * j) / 2) * 0.1, a = i * rad / 2, b = j * rad / 2;
+    let px = x + a * ux + b * vx, py = y + a * uy + b * vy, pz = z + a * uz + b * vz;
+    const m = Math.hypot(px, py, pz); px /= m; py /= m; pz /= m;
+    splat(F0, lv0, px, py, pz, I * wgt, cr, cg, cb);
+  }
+}
+// 貼圖產生的內層迴圈（放在一般函式裡，JavaScript 引擎才最佳化得好）
+function fillRow(F0, TR, G, a0, a1, tg, GC, n, ob) {
+  for (let i = 0; i < GC * 3; i++) TR[i] = G[a0 + i] + (G[a1 + i] - G[a0 + i]) * tg;   // 先在列方向內插
+  const sc = GC / n;
+  for (let c = 0; c < n; c++) {
+    const cf = (c + 0.5) * sc - 0.5, cc = Math.floor(cf), tc = cf - cc, i0 = ((cc + GC) % GC) * 3, i1 = ((cc + 1) % GC) * 3, oi = ob + c * 3;
+    F0[oi] = TR[i0] + (TR[i1] - TR[i0]) * tc; F0[oi + 1] = TR[i0 + 1] + (TR[i1 + 1] - TR[i0 + 1]) * tc; F0[oi + 2] = TR[i0 + 2] + (TR[i1 + 2] - TR[i0 + 2]) * tc;
+  }
+}
+function mipRow(Fk, Mx, P, Q, ot, nt, os, ns, rw) {
+  const lg = Math.round(Math.log2(ns / nt)), wgt = rw * nt / ns;
+  for (let c = 0; c < ns; c++) {
+    const t = ot + (c >> lg) * 3, s = os + c * 3;
+    Fk[t] += P[s] * wgt; Fk[t + 1] += P[s + 1] * wgt; Fk[t + 2] += P[s + 2] * wgt;
+    if (Q[s] > Mx[t]) Mx[t] = Q[s]; if (Q[s + 1] > Mx[t + 1]) Mx[t + 1] = Q[s + 1]; if (Q[s + 2] > Mx[t + 2]) Mx[t + 2] = Q[s + 2];
+  }
+}
+const toneC = x => (x < 190 ? x : 190 + 65 * (1 - Math.exp(-(x - 190) / 65)));
+// 縮圖層：平均之外保留一點最亮值（cm）→ 被透鏡壓得很密的地方，星星還看得到一點閃光（不會全糊成一片）
+function packRange(F, Mx, cm, TEX, ob, i0, i1) {
+  for (let i = i0; i < i1; i++) {
+    let r = F[i * 3], g = F[i * 3 + 1], b = F[i * 3 + 2];
+    if (cm > 0) { r += cm * (Mx[i * 3] - r); g += cm * (Mx[i * 3 + 1] - g); b += cm * (Mx[i * 3 + 2] - b); }
     const m = Math.max(r, g, b);
-    if (m < 0.5) { LUT[i] = 0; continue; }
-    const s = 255 / m;
-    LUT[i] = ((Math.round(m) & 255) << 24 | (Math.round(b * s) & 255) << 16 | (Math.round(g * s) & 255) << 8 | (Math.round(r * s) & 255)) >>> 0;
+    if (m > 200) { const k = Math.min(0.6, (m - 200) / 900); r += (m - r) * k; g += (m - g) * k; b += (m - b) * k; }   // 太亮的地方偏白
+    r = toneC(r); g = toneC(g); b = toneC(b);
+    TEX[ob + i] = (255 << 24 | (b & 255) << 16 | (g & 255) << 8 | (r & 255)) >>> 0;
   }
-  return LUT;
 }
-
-function layoutOf(W, H) {
-  const ppm = Math.min(W * (W < H ? GARG.FIT_W_PORTRAIT : GARG.FIT_W) / GARG.R_OUT, H * GARG.FIT_H / 10.6);
-  return { cx: W / 2, cy: H * GARG.CY, ppm };
-}
-
-// ---------- 3. 依畫面尺寸預算（分段執行，每格只做一點，不卡主執行緒） ----------
-function* prepare(Wd, Hd, Lc, S, out) {
-  const tStart = performance.now();
-  const cxd = Lc.cx * S, cyd = Lc.cy * S, ppmd = Lc.ppm * S;
-  // 背景星空（含透鏡扭曲的星點）
-  const bg = document.createElement('canvas'); bg.width = Wd; bg.height = Hd;
-  const g = bg.getContext('2d');
-  const sky = g.createRadialGradient(cxd, cyd, 0, cxd, cyd, Math.hypot(Wd, Hd) * 0.62);
-  sky.addColorStop(0, 'rgb(12,17,15)'); sky.addColorStop(0.45, 'rgb(10,20,17)'); sky.addColorStop(1, 'rgb(13,30,25)');
-  g.fillStyle = sky; g.fillRect(0, 0, Wd, Hd);
-  const R = rng(4242);
-  g.globalCompositeOperation = 'lighter';
-  for (let k = 0; k < 7; k++) {   // 很淡的星雲
-    const x = R() * Wd, y = R() * Hd, rr = (0.25 + 0.35 * R()) * Math.max(Wd, Hd);
-    const n = g.createRadialGradient(x, y, 0, x, y, rr);
-    const warm = R() < 0.3;
-    n.addColorStop(0, warm ? 'rgba(90,52,30,0.07)' : 'rgba(30,86,74,0.08)'); n.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = n; g.fillRect(0, 0, Wd, Hd);
-  }
-  const E = 7.6, nStar = Math.round(Wd * Hd / 1100);
-  for (let k = 0; k < nStar; k++) {
-    const sx = (R() * Wd - cxd) / ppmd, sy = (R() * Hd - cyd) / ppmd;
-    const beta = Math.hypot(sx, sy) + 1e-3, ux = sx / beta, uy = sy / beta;
-    const mag = Math.pow(R(), 3.2), hue = R();
-    const col = hue < 0.2 ? [255, 214, 170] : hue < 0.4 ? [190, 214, 255] : [240, 244, 236];
-    const q = Math.sqrt(beta * beta + 4 * E * E);
-    for (const th of [(beta + q) / 2, (beta - q) / 2]) {
-      const at = Math.abs(th);
-      if (at < BC * 1.08) continue;
-      const qx = ux * th, qy = uy * th;
-      if (at < 12.5 || (Math.abs(qy) < 3.2 && Math.abs(qx) < GARG.R_OUT + 2)) continue;   // 被盤面與光暈蓋住的星不畫
-      const tan = Math.min(5, at / beta), rad = Math.min(2, Math.abs(0.5 + beta / (2 * q)));
-      const mu = Math.min(6, tan * rad);
-      const a = Math.min(1, (0.18 + 0.82 * mag) * Math.sqrt(mu) * (th < 0 ? 0.6 : 1));
-      if (a < 0.06) continue;
-      const x = cxd + ux * th * ppmd, y = cyd + uy * th * ppmd, s = (0.32 + 0.75 * mag) * Math.max(0.6, S * 1.4);
-      g.save(); g.translate(x, y); g.rotate(Math.atan2(uy, ux));
-      g.scale(Math.max(1, rad), Math.max(1, tan));
-      g.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${a})`;
-      g.beginPath(); g.arc(0, 0, s, 0, TAU); g.fill();
-      if (mag > 0.75) {
-        const hg = g.createRadialGradient(0, 0, 0, 0, 0, s * 5);
-        hg.addColorStop(0, `rgba(${col[0]},${col[1]},${col[2]},${a * 0.35})`); hg.addColorStop(1, 'rgba(0,0,0,0)');
-        g.fillStyle = hg; g.beginPath(); g.arc(0, 0, s * 5, 0, TAU); g.fill();
-      }
-      g.restore();
+const STAR_COL = [[200, 220, 255], [235, 240, 255], [255, 250, 238], [255, 230, 190], [255, 200, 150]];
+function* skyTexture(side, TEX, base, SC) {
+  let lastY = performance.now();
+  const tick = () => performance.now() - lastY > 6;
+  const lv = SK.lv, lv0 = lv[0], zs = side ? 1 : -1;
+  // (a) 漫射光：半解析度格子
+  const GR = Math.ceil(SK.NR / 2), GC = 320, G = SC.G || (SC.G = new Float32Array(GR * GC * 3)), diff = makeDiffuse(side), o = [0, 0, 0];
+  for (let r = 0; r < GR; r++) {
+    const d = dOfRow((r + 0.5) * 2), sd = Math.sin(d), cd = Math.cos(d) * zs;
+    for (let c = 0; c < GC; c++) {
+      const p = (c + 0.5) / GC * TAU;
+      diff(sd * Math.cos(p), sd * Math.sin(p), cd, o);
+      const i = (r * GC + c) * 3; G[i] = o[0]; G[i + 1] = o[1]; G[i + 2] = o[2];
     }
+    if (tick()) { yield; lastY = performance.now(); }
   }
-  g.globalCompositeOperation = 'lighter';           // 黑洞周圍的暖色光霧
-  const hz = g.createRadialGradient(cxd, cyd, BC * ppmd, cxd, cyd, 15 * ppmd);
-  hz.addColorStop(0, 'rgba(255,140,60,0.10)'); hz.addColorStop(0.5, 'rgba(200,90,40,0.04)'); hz.addColorStop(1, 'rgba(200,90,40,0)');
-  g.fillStyle = hz; g.fillRect(0, 0, Wd, Hd);
-  g.globalCompositeOperation = 'source-over';        // 暗角（電影感，也讓上方大字更好讀）
-  const hyp = Math.hypot(Wd, Hd), vg = g.createRadialGradient(Wd / 2, Hd * 0.55, hyp * 0.22, Wd / 2, Hd * 0.55, hyp * 0.62);
-  vg.addColorStop(0, 'rgba(6,12,10,0)'); vg.addColorStop(1, 'rgba(6,12,10,0.62)');
-  g.fillStyle = vg; g.fillRect(0, 0, Wd, Hd);
-  out.bg = bg;
-  warpStats.stage = { bg: performance.now() - tStart };
-  yield;
-  yield* warmGen();                                 // 光子表與盤面紋理（通常已在閒置時間先算好）
-  warpStats.stage.pt = performance.now() - tStart;
-  const tex = DISK_TEX;
-  lut();
-  warpStats.stage.tex = performance.now() - tStart;
-  yield;
-  // 每個像素的盤面查表資料
-  const { R_IN, R_OUT, DOPPLER, RING } = GARG;
-  const inc = GARG.INCL * Math.PI / 180, cosI = Math.cos(inc), sinI = Math.sin(inc);
-  const bx0 = Math.max(0, Math.floor(cxd - (R_OUT + 3) * ppmd)), bx1 = Math.min(Wd, Math.ceil(cxd + (R_OUT + 3) * ppmd));
-  const by0 = Math.max(0, Math.floor(cyd - 14 * ppmd)), by1 = Math.min(Hd, Math.ceil(cyd + 12 * ppmd));
-  const bw = bx1 - bx0, bh = by1 - by0, NPX = bw * bh;
-  const idx = new Uint32Array(NPX), base = new Float32Array(NPX);
-  const w0 = new Float32Array(NPX), t0 = new Uint32Array(NPX), a0 = new Uint16Array(NPX), r0 = new Uint8Array(NPX);
-  const w1 = new Float32Array(NPX), t1 = new Uint32Array(NPX), a1 = new Uint16Array(NPX), r1 = new Uint8Array(NPX);
-  const DR = (R_OUT - R_IN) / NR, prof = r => smooth((r - R_IN) / 0.55) * Math.pow(R_IN / r, 1.75) * (1 - smooth((r - R_OUT * 0.5) / (R_OUT * 0.5)));
-  const SXo = [0.25, 0.75], SYo = [0.3, 0.7], NS = SXo.length;   // 每個像素 2 個對角取樣
-  const RW = 0.075, RC = BC + 0.07;
-  // 每層暫存：命中數、權重、紋理座標、範圍
-  const hc = [0, 0], hw = [0, 0], hr = [0, 0], ha = [0, 0], rmn = [0, 0], rmx = [0, 0], amx = [0, 0];
-  let n = 0, lastY = performance.now();
-  for (let py = by0; py < by1; py++) {
-    for (let px = bx0; px < bx1; px++) {
-      hc[0] = hc[1] = 0; hw[0] = hw[1] = 0;
-      let bs = 0;
-      for (let s = 0; s < NS; s++) {
-        const X = (px + SXo[s] - cxd) / ppmd, Yu = (cyd - py - SYo[s]) / ppmd;
-        const b = Math.sqrt(X * X + Yu * Yu);
-        if (b < 0.03 || b > PT.BMAX - 0.1) continue;
-        const cA = X / b, sA = Yu / b;
-        const dop = 1 / (1 + 0.42 * cA);          // 光子環的左右亮暗
-        const dd = (b - RC) / RW;
-        if (dd > -1 && dd < 1) bs += RING * (1 - dd * dd) * dop * dop * dop / NS;
-        else if (dd >= 1 && dd < 6) bs += RING * 0.035 * (1 - (dd - 1) / 4) * dop * dop / NS;
-        const ph1 = Math.atan2(cosI, -sA * sinI);
-        for (let L = 0; L < 2; L++) {
-          const ph = ph1 + L * Math.PI;
-          const u = tabU(b, ph);
-          if (u < 0 || u >= 0.5) break;
-          const r = 1 / u;
-          if (r < R_IN || r > R_OUT) continue;
-          const sp = Math.sin(ph), cp = Math.cos(ph);
-          const dx = sp * cA, dy = -cp * sinI + sp * sA * cosI;
-          let psi = Math.atan2(dy, dx); if (psi < 0) psi += TAU;
-          const gg = Math.sqrt(1 - 3 / r) / (1 + Math.sqrt(1 / (r * r * r)) * b * sinI * cA);
-          const wgt = Math.pow(gg, DOPPLER) * prof(r) * (L ? 0.75 : 1);
-          const ai = psi / TAU * NA;
-          if (hc[L] === 0) { hr[L] = r; ha[L] = ai; rmn[L] = rmx[L] = r; amx[L] = 0; }
-          else {
-            if (r < rmn[L]) rmn[L] = r; if (r > rmx[L]) rmx[L] = r;
-            let da = Math.abs(ai - ha[L]); if (da > NA / 2) da = NA - da; if (da > amx[L]) amx[L] = da;
+  // (b) 放大到第 0 層
+  const F0 = SC.F0 || (SC.F0 = new Float32Array(lv0.off[lv0.rows - 1] * 3 + lv0.ncol[lv0.rows - 1] * 3));   // 每格都會被覆寫，不必清零
+  const TR = new Float32Array(GC * 3);
+  for (let r = 0; r < lv0.rows; r++) {
+    const gf = Math.min(GR - 1.001, Math.max(0, (r + 0.5) / 2 - 0.5)), g0 = gf | 0, tg = gf - g0, n = lv0.ncol[r], ob = lv0.off[r] * 3;
+    const a0 = g0 * GC * 3, a1 = a0 + GC * 3;
+    fillRow(F0, TR, G, a0, a1, tg, GC, n, ob);
+    if (tick()) { yield; lastY = performance.now(); }
+  }
+  // (c) 星星
+  const R = rng(side ? 424242 : 171717), uni = () => { const z = 2 * R() - 1, p = TAU * R(), s = Math.sqrt(1 - z * z); return [s * Math.cos(p), s * Math.sin(p), z]; };
+  const nStar = side ? WORM.STARS_THERE : WORM.STARS_HERE;
+  const Gm = side ? galaxyModel() : null;
+  const dl = 17 * DEG, gA = 40 * DEG, NB = [Math.cos(dl) * Math.cos(gA), Math.cos(dl) * Math.sin(gA), -Math.sin(dl)];
+  const extra = side ? 7000 : 2600;
+  for (let k = 0; k < nStar + extra; k++) {
+    let v = uni();
+    if (k >= nStar) {             // 額外的星：集中在銀河帶（這邊）或星系盤（那邊）
+      for (let tries = 0; tries < 40; tries++) {
+        v = uni();
+        if (side) {
+          const cz = Gm.c[0] * v[0] + Gm.c[1] * v[1] + Gm.c[2] * v[2];
+          if (cz > 0.3) {
+            const X = (Gm.a[0] * v[0] + Gm.a[1] * v[1] + Gm.a[2] * v[2]) / cz / Gm.Rg, Y = (Gm.b[0] * v[0] + Gm.b[1] * v[1] + Gm.b[2] * v[2]) / cz / Gm.Rg / Gm.ci;
+            if (R() < Math.exp(-Math.hypot(X, Y) / 0.35)) break;
           }
-          hc[L]++; hw[L] += wgt;
-          break;
+        } else {
+          const t = NB[0] * v[0] + NB[1] * v[1] + NB[2] * v[2];
+          if (R() < Math.exp(-(t * t) / 0.012)) break;
         }
       }
-      if (hc[0] === 0 && hc[1] === 0 && bs <= 0) continue;
-      idx[n] = (py - by0) * bw + (px - bx0);
-      base[n] = bs;
-      for (let L = 0; L < 2; L++) {
-        let w = 0, t = 0, a = 0, rb = 0;
-        if (hc[L]) {
-          w = hw[L] / NS;
-          rb = Math.min(NR - 1, Math.max(0, ((hr[L] - R_IN) / DR) | 0));
-          const fp = Math.max((rmx[L] - rmn[L]) / DR, amx[L]) * 2;
-          let lod = hc[L] < 2 ? 1 : fp < 1.5 ? 0 : fp < 3 ? 1 : fp < 6 ? 2 : 3;
-          t = lod * NR * NA + rb * NA; a = (ha[L] | 0) & AM;
-        }
-        if (L === 0) { w0[n] = w; t0[n] = t; a0[n] = a; r0[n] = rb; } else { w1[n] = w; t1[n] = t; a1[n] = a; r1[n] = rb; }
-      }
-      n++;
     }
-    if (performance.now() - lastY > 6) { yield; lastY = performance.now(); }
+    const m = R(), I = side ? 40 + 420 * Math.pow(m, 8) + (m > 0.996 ? 900 : 0) : 22 + 300 * Math.pow(m, 10) + (m > 0.997 ? 1100 : 0);
+    const h = R(), col = side ? STAR_COL[h < 0.12 ? 0 : h < 0.3 ? 1 : h < 0.55 ? 2 : h < 0.82 ? 3 : 4] : STAR_COL[h < 0.25 ? 0 : h < 0.55 ? 1 : h < 0.8 ? 2 : h < 0.95 ? 3 : 4];
+    const x = v[0], y = v[1], z = v[2] * zs;
+    splat(F0, lv0, x, y, z, I, col[0] / 255, col[1] / 255, col[2] / 255);
+    if (I > 400) haloSplat(F0, lv0, x, y, z, I, col[0] / 255, col[1] / 255, col[2] / 255, (0.35 + 0.0004 * I) * DEG);
+    if ((k & 255) === 0 && tick()) { yield; lastY = performance.now(); }
   }
-  const disk = document.createElement('canvas'); disk.width = bw; disk.height = bh;
-  const dctx = disk.getContext('2d');
-  const img = dctx.createImageData(bw, bh);
-  const blooms = [];
-  let pw = bw, ph = bh;
-  for (let k = 0; k < 4; k++) { pw = Math.max(2, Math.ceil(pw / 2)); ph = Math.max(2, Math.ceil(ph / 2)); const c = document.createElement('canvas'); c.width = pw; c.height = ph; blooms.push(c); }
-  const acc = document.createElement('canvas'); acc.width = blooms[0].width; acc.height = blooms[0].height;
-  Object.assign(out, {
-    ready: true, acc, n, idx, base, w0, t0, a0, r0, w1, t1, a1, r1, tex,
-    disk, dctx, img, px32: new Uint32Array(img.data.buffer), blooms,
-    box: [bx0 / S, by0 / S, bw / S, bh / S], rot: new Int32Array(NR),
-    prepMs: performance.now() - tStart,
-  });
-  warpStats.prepMs = out.prepMs; warpStats.active = n;
-  return out;
+  // (d) 色調壓縮＋打包＋縮圖
+  const pack = function* (F, L, Mx, cm) {
+    const ob = base + L.off[0], n = F.length / 3;
+    for (let i = 0; i < n; i += 65536) { packRange(F, Mx, cm, TEX, ob, i, Math.min(n, i + 65536)); if (tick()) { yield; lastY = performance.now(); } }
+  };
+  // 整片天空的平均色（依每格的立體角加權）：給光線繞了無數圈的球邊緣用，放在貼圖最後面
+  const avg = new Float32Array(3);
+  let wsum = 0;
+  for (let r = 0; r < lv0.rows; r++) {
+    const d = dOfRow(r + 0.5), n = lv0.ncol[r], wgt = stepOf(d) * Math.sin(d) / n, ob = lv0.off[r] * 3;
+    for (let c = 0; c < n; c++) { avg[0] += F0[ob + c * 3] * wgt; avg[1] += F0[ob + c * 3 + 1] * wgt; avg[2] += F0[ob + c * 3 + 2] * wgt; }
+    wsum += wgt * n;
+    if ((r & 31) === 0 && tick()) { yield; lastY = performance.now(); }
+  }
+  for (let i = 0; i < 3; i++) avg[i] /= wsum;
+  packRange(avg, null, 0, TEX, 2 * SK.per + side, 0, 1);
+  yield* pack(F0, lv0, null, 0);
+  let P = F0, Q = F0;          // P：純平均；Q：區塊內最亮值
+  const CM = [0, 0.3, 0.25, 0.18, 0.1, 0.04, 0, 0];
+  for (let k = 1; k < SK.NL; k++) {
+    const A = lv[k - 1], B = lv[k], nk = (B.off[B.rows - 1] - B.off[0] + B.ncol[B.rows - 1]) * 3, a0 = A.off[0], b0 = B.off[0];
+    const Fk = SC['F' + k] ? SC['F' + k].fill(0) : (SC['F' + k] = new Float32Array(nk)), Mx = SC['M' + k] ? SC['M' + k].fill(0) : (SC['M' + k] = new Float32Array(nk));
+    for (let r = 0; r < B.rows; r++) {
+      const nt = B.ncol[r], ot = (B.off[r] - b0) * 3;
+      const two = 2 * r + 1 < A.rows;
+      mipRow(Fk, Mx, P, Q, ot, nt, (A.off[2 * r] - a0) * 3, A.ncol[2 * r], two ? 0.5 : 1);
+      if (two) mipRow(Fk, Mx, P, Q, ot, nt, (A.off[2 * r + 1] - a0) * 3, A.ncol[2 * r + 1], 0.5);
+      if ((r & 7) === 0 && tick()) { yield; lastY = performance.now(); }
+    }
+    yield* pack(Fk, B, Mx, CM[k]);
+    P = Fk; Q = Mx;
+    if (tick()) { yield; lastY = performance.now(); }
+  }
 }
-export const warpStats = { prepMs: 0, active: 0, stage: null };
-// 和畫面尺寸無關的預算（光子表、盤面紋理）：模組載入後利用閒置時間一點一點先算好；共用同一個產生器
+function* skyTextures() {
+  if (SK.ready) return;
+  skyLayout();
+  const TEX = new Uint32Array(SK.per * 2 + 2);
+  for (let i = 0; i < TEX.length; i += 131072) { TEX.fill(0xff131611, i, i + 131072); yield; }   // 先分段寫一遍：大陣列第一次寫入時才真正配置記憶體，一次寫完會卡一下
+  const SC = {};                 // 暫存陣列兩邊共用（少配置記憶體 → 少一次大的垃圾回收卡頓）
+  yield* skyTexture(0, TEX, 0, SC);
+  yield* skyTexture(1, TEX, SK.per, SC);
+  SK.TEX = TEX; SK.ready = true;
+}
+
+// 和畫面尺寸無關的預算（K 表、兩張天空）：模組載入後利用閒置時間一點一點先算好；共用同一個產生器
+export const warpStats = { warmMs: 0, prepMs: 0, frameMs: 0, ready: false, res: '' };
 let WARM = null;
 function warmGen() {
-  if (!WARM) WARM = (function* () { yield* photonTable(); yield* diskTexture(); lut(); })();
+  if (!WARM) WARM = (function* () {
+    const g = (function* () { yield* kTable(); yield* skyTextures(); })();
+    let busy = 0;                                   // 實際花掉的計算時間（分段加總）
+    while (true) { const s = performance.now(), r = g.next(); busy += performance.now() - s; if (r.done) break; yield; }
+    warpStats.warmMs = busy; warpStats.ready = true;
+  })();
   return WARM;
 }
 if (typeof window !== 'undefined') {
+  // 開場時主執行緒很忙（3D 場景在建），閒置時間很少 → 最多等約 60 ms 就一定做一小段（約 10 ms），通常歡迎詞還沒播完就算好了
   const step = dl => {
-    const g = warmGen(), t0 = performance.now();
-    while (performance.now() - t0 < 8 && (!dl || dl.timeRemaining() > 2)) { if (g.next().done) return; }
+    const g = warmGen(), t0 = performance.now(), bud = dl && !dl.didTimeout ? Math.min(12, Math.max(5, dl.timeRemaining())) : 11;
+    while (performance.now() - t0 < bud) { if (g.next().done) return; }
     later();
   };
-  const later = () => (window.requestIdleCallback ? window.requestIdleCallback(step, { timeout: 2000 }) : setTimeout(step, 60));
-  setTimeout(later, 1200);
+  const later = () => setTimeout(() => (window.requestIdleCallback ? window.requestIdleCallback(step, { timeout: 50 }) : step()), 4);
+  setTimeout(later, 300);
+}
+
+// ---------- 3. 依畫面尺寸的資料（每個像素離中心的距離索引、方位角欄位） ----------
+function layoutOf(W, H) {
+  const { FOV, CY, TOP_SAFE, A_END } = WORM;
+  const cy = H * CY;
+  const fFov = (W / 2) / Math.tan(FOV / 2 * DEG);
+  const fTop = Math.min(cy - TOP_SAFE * H, (H - cy) * 0.96) / (Math.tan(A_END * DEG) * 1.06);
+  return { cx: W / 2, cy, f: Math.min(fFov, fTop) };
 }
 const PREP_CACHE = new Map();
+function prepare(W, H, Wd) {
+  const t0 = performance.now();
+  const L = layoutOf(W, H);
+  const lw = Math.max(32, Math.min(WORM.RES_W, Wd, Math.round(Math.sqrt(WORM.RES_PIX * W / H)))), lh = Math.max(24, Math.round(lw * H / W));
+  const k = lw / W, cxl = L.cx * k, cyl = L.cy * k, fl = L.f * k;
+  const NP = lw * lh, RI = new Uint16Array(NP), CI = new Uint16Array(NP);
+  let rmax = 0;
+  for (let j = 0; j < lh; j++) for (let i = 0; i < lw; i++) {
+    const dx = i + 0.5 - cxl, dy = j + 0.5 - cyl, rho = Math.hypot(dx, dy), e = Math.round(rho * 4);
+    let ps = Math.atan2(dy, dx); if (ps < 0) ps += TAU;
+    RI[j * lw + i] = e; CI[j * lw + i] = Math.floor(ps / TAU * SK.NC) & (SK.NC - 1);
+    if (e > rmax) rmax = e;
+  }
+  const NE = rmax + 2, SA = new Float64Array(NE), RHO = new Float32Array(NE);
+  for (let e = 0; e < NE; e++) { RHO[e] = e / 4; SA[e] = Math.sin(Math.atan(e / 4 / fl)); }
+  const lo = document.createElement('canvas'); lo.width = lw; lo.height = lh;
+  const lctx = lo.getContext('2d'), img = lctx.createImageData(lw, lh);
+  // 暗角（電影感，也讓上方大字更好讀）
+  const vg = document.createElement('canvas'); vg.width = 96; vg.height = Math.max(32, Math.round(96 * H / W));
+  const g = vg.getContext('2d'), hyp = Math.hypot(vg.width, vg.height);
+  const gr = g.createRadialGradient(vg.width / 2, vg.height * 0.56, hyp * 0.2, vg.width / 2, vg.height * 0.56, hyp * 0.62);
+  gr.addColorStop(0, 'rgba(6,12,10,0)'); gr.addColorStop(0.6, 'rgba(6,12,10,0.22)'); gr.addColorStop(1, 'rgba(6,12,10,0.66)');
+  g.fillStyle = gr; g.fillRect(0, 0, vg.width, vg.height);
+  const D = {
+    L, lw, lh, k, fl, NP, RI, CI, NE, SA, RHO, lo, lctx, img, px32: new Uint32Array(img.data.buffer), vg,
+    PHI: new Float64Array(NE), SIDE: new Uint8Array(NE), OFF: new Int32Array(NE), SH: new Uint8Array(NE), FLA: new Int32Array(NE),
+  };
+  warpStats.prepMs = performance.now() - t0; warpStats.res = lw + 'x' + lh;
+  return D;
+}
+
+// 每一格：相機在 lc 時，「離中心距離 → 天空貼圖的哪一格」的表
+function buildRhoTable(D, lc, roll) {
+  const { NE, SA, RHO, PHI, SIDE, OFF, SH, FLA } = D;
+  const L = Math.abs(lc), rc = Math.sqrt(1 + lc * lc), toward = lc > 0;
+  for (let e = 0; e < NE; e++) {
+    const B = rc * SA[e];
+    if (toward) { PHI[e] = kOf(B) - fOf(L, B); SIDE[e] = B < 1 ? 1 : 0; }   // 朝喉嚨：B<1 穿過去（另一邊），B>1 折回（這邊）
+    else { PHI[e] = fOf(L, B); SIDE[e] = 1; }                                // 已在另一邊、背著喉嚨看出去
+  }
+  const lv = SK.lv, NL = SK.NL, bias = WORM.MIP_BIAS, rollC = Math.round(roll / TAU * SK.NC);
+  // 球的邊緣（B = 1）附近 ±1.25 個低解析度像素：光線繞了無數圈，取兩邊天空的平均色 → 邊緣不會一格一格地閃
+  const eEdge = toward && rc > 1 ? 4 * D.fl * Math.tan(Math.asin(1 / rc)) : -99;
+  for (let e = 0; e < NE; e++) {
+    const side = SIDE[e];
+    let phi = PHI[e] % TAU; if (phi < 0) phi += TAU;
+    let flip = 0; if (phi > Math.PI) { phi = TAU - phi; flip = 1; }
+    const d = side ? phi : Math.PI - phi, st = stepOf(d);
+    // 這一格在貼圖上的大小（徑向：φ 隨距離變化多快；切向：繞一圈的周長）→ 選 mip 層
+    const ea = e > 0 && SIDE[e - 1] === side ? e - 1 : e, eb = e < NE - 1 && SIDE[e + 1] === side ? e + 1 : e;
+    const dphi = eb > ea ? Math.abs(PHI[eb] - PHI[ea]) / ((eb - ea) / 4) : 1e3;
+    const foot = Math.max(dphi / st * WORM.MIP_RAD, Math.sin(d) / (Math.max(0.5, RHO[e]) * st) * bias);
+    let k = 0; if (foot > 2) k = Math.min(NL - 1, Math.floor(Math.log2(foot)));
+    if (Math.abs(e - eEdge) < 5 || dphi > WORM.EDGE_PHI) k = NL - 1;
+    if (k === NL - 1) { OFF[e] = 2 * SK.per + side; SH[e] = SK.CB; FLA[e] = 0; continue; }   // 壓到最密：整片天空的平均色
+    const Lk = lv[k], r = Math.min(Lk.rows - 1, Math.floor(rowOf(d)) >> k);
+    OFF[e] = side * SK.per + Lk.off[r]; SH[e] = Lk.sh[r]; FLA[e] = (flip ? SK.NC / 2 : 0) + rollC;
+  }
+}
 
 // ---------- 太空梭（原創造型，從上方看，機頭朝 −y） ----------
 // shuttle(ctx, x, y, u, roll, glow, opt)：u＝尺寸單位（機身全長約 2.5u）；roll＝旋轉角；glow＝引擎火焰 0～1
-// opt（可省略）：light 光源方向（螢幕角度，預設右上）、lk 光源強度、sx/sy 沿翼展／沿機身的縮放（透視、潮汐拉長）、
-//               dim 變暗、red 紅移、alpha 透明度
+// opt（可省略）：light 光源方向（螢幕角度，預設右上）、lk 光源強度、sx/sy 沿翼展／沿機身的縮放（透視）、
+//               dim 變暗、red 紅移、alpha 透明度、rim 受光側的邊緣光顏色 [r,g,b]（預設暖橘）
 let SPR = null;
 const SP_XL = 1.25, SP_YT = -1.42, SP_YB = 1.34;
 function pBody(c) {
@@ -544,10 +706,11 @@ function shuttle(ctx, x, y, u, roll, glow, opt) {
   // 受光：光源側偏暖、背光側偏冷暗
   a.globalCompositeOperation = 'source-atop';
   const lg = a.createLinearGradient(-Lx * 1.3, -Ly * 1.3, Lx * 1.3, Ly * 1.3);
-  lg.addColorStop(0, `rgba(6,18,24,${0.62 + 0.25 * dim})`); lg.addColorStop(0.5, `rgba(20,30,32,${0.14 + 0.3 * dim})`); lg.addColorStop(1, `rgba(255,140,60,${0.3 * lk})`);
+  lg.addColorStop(0, `rgba(6,18,24,${0.62 + 0.25 * dim})`); lg.addColorStop(0.5, `rgba(20,30,32,${0.14 + 0.3 * dim})`); const lc = o.rim || [255, 140, 60];
+  lg.addColorStop(1, `rgba(${lc[0]},${lc[1]},${lc[2]},${0.3 * lk})`);
   a.fillStyle = lg; a.fillRect(-2, -2, 4, 4);
   // 邊緣光：剪影減去往背光方向平移的剪影
-  b.fillStyle = 'rgb(255,158,72)'; silhouette(b);
+  b.fillStyle = o.rim ? `rgb(${o.rim[0]},${o.rim[1]},${o.rim[2]})` : 'rgb(255,158,72)'; silhouette(b);
   b.globalCompositeOperation = 'destination-out';
   b.translate(-Lx * 0.095, -Ly * 0.095); silhouette(b);
   a.setTransform(1, 0, 0, 1, 0, 0);
@@ -583,196 +746,133 @@ function shuttle(ctx, x, y, u, roll, glow, opt) {
 
 function drawFlash(ctx, W, H, p) {
   if (p <= 0) return;
-  const fl = p < 0.45 ? Math.pow(p / 0.45, 1.5) * 0.95 : 0.95 * Math.pow(1 - (p - 0.45) / 0.55, 1.6);
+  const pk = WORM.FLASH;
+  const fl = p < 0.45 ? Math.pow(p / 0.45, 1.5) * pk : pk * Math.pow(1 - (p - 0.45) / 0.55, 1.6);
   if (fl <= 0.003) return;
   ctx.fillStyle = `rgba(228,252,250,${fl})`;
   ctx.fillRect(0, 0, W, H);
 }
 
-// 太空梭的螺旋：半徑一圈比一圈小，角速度越裡面越快；最後 20% 因時間膨脹而變慢、紅移
-function buildOrbit(R0) {
-  const N = 720, th = new Float32Array(N + 1), Rr = new Float32Array(N + 1);
-  const { R_END, TURNS } = GARG;
-  let acc = 0, prev = 0;
-  for (let i = 0; i <= N; i++) {
-    const u = i / N;
-    Rr[i] = R_END + (R0 - R_END) * Math.pow(1 - u, 1.2);
-    const om = Math.pow(Rr[i], -0.6) * (1 - 0.65 * smooth((u - 0.78) / 0.22));
-    if (i) acc += 0.5 * (om + prev) / N;
-    th[i] = acc; prev = om;
+// 細環（徑向近似高斯），只填環本身那一圈，不填整個畫面
+function ringFill(ctx, cx, cy, r, w, rgb, a, spread = 2.6) {
+  const r0 = Math.max(0, r - spread * w), r1 = r + spread * w;
+  const g = ctx.createRadialGradient(cx, cy, r0, cx, cy, r1);
+  for (let i = 0; i <= 8; i++) {
+    const t = i / 8, x = (r0 + t * (r1 - r0) - r) / w;
+    g.addColorStop(t, `rgba(${rgb},${(a * Math.exp(-x * x)).toFixed(4)})`);
   }
-  for (let i = 0; i <= N; i++) th[i] *= TURNS * TAU / acc;
-  return { N, th, Rr };
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(cx, cy, r1, 0, TAU); if (r0 > 0) ctx.arc(cx, cy, r0, 0, TAU, true); ctx.fill();
 }
 
-// 穿過時空隧道（0.75 秒）：鏡頭衝進陰影後，一圈圈光環與放射的光絲從中心往外噴，暖橘 → 白藍，越來越快
-const TUN_STREAKS = (() => {
-  const r = rng(77), a = [];
-  for (let i = 0; i < 260; i++) a.push({ ang: r() * TAU, z0: r(), v: 0.6 + r() * 1.0, hue: 24 + r() * 26 + (r() < 0.12 ? 160 : 0), len: 0.03 + r() * 0.07, tw: 0.25 + r() * 0.2 });
-  return a;
-})();
-function drawTunnel(ctx, W, H, cx, cy, x, q, wt) {
-  const A = smooth(q / 0.55) * wt;
-  if (A <= 0.003) return;
-  const big = Math.hypot(W, H), rmin = big * 0.012, rmax = big * 0.6;
-  const ph = x * 0.9 + x * x * 1.8, rad = r => rmin + Math.pow(r, 2.3) * rmax;
-  ctx.save();
-  // 暗色底（黑洞畫面淡出的同時蓋上去），中心偏暖
-  const g0 = ctx.createRadialGradient(cx, cy, 0, cx, cy, big * 0.7);
-  g0.addColorStop(0, `rgba(78,36,14,${0.92 * A})`);
-  g0.addColorStop(0.4, `rgba(24,13,10,${0.92 * A})`);
-  g0.addColorStop(1, `rgba(8,10,9,${0.96 * A})`);
-  ctx.fillStyle = g0; ctx.fillRect(0, 0, W, H);
-  ctx.globalCompositeOperation = 'lighter';
-  ctx.translate(cx, cy); ctx.rotate(x * 0.55);
-  ctx.lineCap = 'round';
-  // 光環：往外飛，每圈畫兩次（寬而淡的光暈＋細而亮的芯），顏色從暖橘到近白
-  for (let i = 0; i < 18; i++) {
-    const f = (i / 18 + ph * 0.28) % 1, r = rad(f), al = A * Math.pow(Math.sin(Math.PI * f), 1.2);
-    ctx.strokeStyle = `hsla(${26 + 26 * f},95%,${50 + 30 * f}%,${al * 0.16})`;
-    ctx.lineWidth = 8 + 26 * f * f;
-    ctx.beginPath(); ctx.ellipse(0, 0, r, r * 0.94, 0, 0, TAU); ctx.stroke();
-    ctx.strokeStyle = `hsla(${34 + 24 * f},90%,${70 + 22 * f}%,${al * 0.38})`;
-    ctx.lineWidth = 1 + 2.4 * f;
-    ctx.beginPath(); ctx.ellipse(0, 0, r, r * 0.94, 0, 0, TAU); ctx.stroke();
-  }
-  // 光絲：略帶旋轉的放射曲線，越靠外越長越亮
-  for (const s of TUN_STREAKS) {
-    const z = (s.z0 + ph * s.v * 0.5) % 1, z0 = Math.max(0, z - s.len * (1 + 3 * q));
-    const r1 = rad(z), r0 = rad(z0), a1 = s.ang + s.tw * z, a0 = s.ang + s.tw * z0, am = (a0 + a1) / 2, rm = (r0 + r1) / 2;
-    ctx.strokeStyle = `hsla(${s.hue},88%,${72 + 18 * z}%,${A * (0.06 + 0.5 * z * z)})`;
-    ctx.lineWidth = 0.5 + 1.7 * z;
-    ctx.beginPath(); ctx.moveTo(Math.cos(a0) * r0, Math.sin(a0) * r0);
-    ctx.quadraticCurveTo(Math.cos(am) * rm, Math.sin(am) * rm, Math.cos(a1) * r1, Math.sin(a1) * r1); ctx.stroke();
-  }
-  // 盡頭的亮光
-  const gr = big * (0.12 + 0.06 * q), g1 = ctx.createRadialGradient(0, 0, 0, 0, 0, gr);
-  g1.addColorStop(0, `rgba(255,248,232,${0.95 * A})`);
-  g1.addColorStop(0.35, `rgba(255,196,120,${0.55 * A})`);
-  g1.addColorStop(1, 'rgba(255,150,70,0)');
-  ctx.fillStyle = g1; ctx.beginPath(); ctx.arc(0, 0, gr, 0, TAU); ctx.fill();
-  ctx.restore();
-}
-
+// 蟲洞段的流程（總長 warpMs，預設 6 秒）：
+//   接近段（前 warpMs − TUNNEL_S 秒）：後上方的追隨鏡頭慢慢靠近蟲洞，太空梭機頭對準球心、沿直線往前飛，越來越小，沒入球裡。
+//     蟲洞不螺旋：螺旋墜入是「黑洞」的模型（吸積盤、繞轉、時間膨脹變紅）；Ellis 蟲洞沒有質量、沒有潮汐力，所以不繞圈、不拉長、不變紅。
+//   穿越段（最後 TUNNEL_S 秒）：鏡頭自己加速穿過喉嚨——球越來越大、佔滿畫面，另一邊的天空向前展開。不發光。
+//   之後 p > 0：出洞閃光（drawFlash）。
 export function makeWarp(warpMs) {
   const T = Math.max(1, warpMs / 1000);
-  const TS = Math.max(1, T - GARG.TUNNEL_S);        // 螺旋段；之後是隧道
-  let ORB = null, orbKey = '';
-  const TH0 = Math.PI * 0.76;          // 從左前方出現，往畫面下方（靠近我們）繞過去
-  let key = '', D = null, gen = null;
+  const TS = Math.max(1, T - WORM.TUNNEL_S);        // 接近段；之後鏡頭自己穿過喉嚨
+  const lS = lOfAngle(WORM.A_START), lE = lOfAngle(WORM.A_END);
+  let key = '', D = null;
 
-  // u∈[0,1] → 太空梭在畫面上的位置（以 M 為單位、y 向下）、深度、是否在黑洞前方
-  const orbitAt = uu => {
-    const f = Math.min(1, Math.max(0, uu)) * ORB.N, i = Math.min(ORB.N - 1, f | 0), t = f - i;
-    const R = lerp(ORB.Rr[i], ORB.Rr[i + 1], t), th = TH0 - lerp(ORB.th[i], ORB.th[i + 1], t);
-    let X = R * Math.cos(th), Y = GARG.ORBIT_TILT * R * Math.sin(th);
-    const depth = R * Math.sin(th);                 // >0：在黑洞前方
-    let mag = 1;
-    if (depth < 0) {                               // 在後方：被透鏡往外推（沿著帽子的形狀）
-      const beta = Math.hypot(X, Y) + 1e-4, E2 = GARG.LENS_K * 4 * (-depth);
-      const thp = (beta + Math.sqrt(beta * beta + 4 * E2)) / 2;
-      mag = thp / beta; X *= mag; Y *= mag;
-    }
-    return { X, Y, R, th, depth, mag };
+  // 相機在蟲洞軸上的位置 l（> 0 我們這邊，< 0 另一邊）
+  const camL = tau => {
+    if (tau <= TS) { const x = tau / TS; return lerp(lS, lE, 0.35 * x + 0.65 * smooth(x)); }   // 慢慢靠近
+    const q = Math.min(1, (tau - TS) / WORM.TUNNEL_S);
+    let l = lE + (WORM.L_EXIT - lE) * Math.pow(q, WORM.PUSH_POW);                              // ease-in：越來越快地穿過喉嚨
+    if (tau > T) { const v = (WORM.L_EXIT - lE) * WORM.PUSH_POW / WORM.TUNNEL_S, x = Math.min(2, tau - T); l += v * x * (1 - 0.25 * x); }  // 出洞後繼續滑行
+    return l;
+  };
+  // 太空梭在軸上的位置（同一個 l 座標）：等速略加速地飛向喉嚨，tin 時穿過，之後在另一邊繼續飛、變小、淡出
+  // 太空梭和鏡頭的距離：一開始就在鏡頭前不遠處，之後加速往前飛（距離越拉越大 → 在畫面上越來越小），tin 時剛好到達喉嚨
+  const tin = WORM.SHIP_IN * TS, S0 = WORM.SHIP_S0, sepIn = camL(tin);
+  const shipAt = tau => {
+    const x = Math.max(0, tau / tin);
+    const sep = x <= 1 ? S0 + (sepIn - S0) * Math.pow(x, 1.7) : sepIn + (sepIn - S0) * 1.7 * (x - 1);
+    const xo = WORM.SHIP_X * Math.pow(Math.max(0, 1 - x), 2);                                   // 很微的弧：慢慢修正對準球心
+    return { zs: camL(tau) - sep, sep, X: xo / sep, Y: WORM.SHIP_H / sep };
   };
 
-  // tau：進蟲洞後的秒數；w：淡入 0→1；p：出洞進度 0→1；dt：秒（這一版用 tau 決定畫面，不依賴 dt）
+  // tau：進蟲洞後的秒數；w：淡入 0→1；p：出洞進度 0→1；dt：秒（畫面只由 tau 決定）
   return function draw(ctx, W, H, tau, w, p, dt) {
     const wt = w * (p < 0.4 ? 1 : 1 - smooth((p - 0.4) / 0.45));
     if (wt <= 0.003) { drawFlash(ctx, W, H, p); return; }
     const m = ctx.getTransform(), S = Math.hypot(m.a, m.b) || 1;
-    const Wd = Math.max(1, Math.round(W * S)), Hd = Math.max(1, Math.round(H * S));
-    const k = Wd + 'x' + Hd;
+    const Wd = Math.max(1, Math.round(W * S)), k = W + 'x' + H + '@' + Wd;
+    const tIn = performance.now();
     if (k !== key) {
       key = k;
       D = PREP_CACHE.get(k) || null;
-      if (!D) { D = {}; gen = prepare(Wd, Hd, layoutOf(W, H), S, D); PREP_CACHE.clear(); PREP_CACHE.set(k, D); }
-      else gen = null;
+      if (!D) { D = prepare(W, H, Wd); PREP_CACHE.clear(); PREP_CACHE.set(k, D); }
     }
-    if (gen) {                                     // 分段預算：每格最多約 9 ms
-      const t0 = performance.now();
-      while (gen && performance.now() - t0 < 9) { if (gen.next().done) gen = null; }
+    const ready = SK.ready && KT.lo;
+    if (!ready) {                                  // 還沒在閒置時間算完：每格最多再算約 12 ms（這一格若剛做過尺寸預算就先不算）
+      const g = warmGen(), t0 = performance.now(), bud = t0 - tIn > 3 ? 0 : 12;
+      while (performance.now() - t0 < bud) { if (g.next().done) break; }
     }
-    const L = layoutOf(W, H), { cx, cy, ppm } = L;
-    if (orbKey !== k) { orbKey = k; ORB = buildOrbit(Math.min(GARG.R0, (W * 0.5 - 1.6 * GARG.SHUTTLE_U * ppm) / ppm / 0.94)); }   // 窄螢幕：起始圈縮小，太空梭不出畫面
-    const uT = tau / TS;
-    const q = Math.min(1, Math.max(0, (tau - TS) / GARG.TUNNEL_S));   // 隧道進度 0→1
-    const zoom = (1 + 5 * q * q * q) * (1 + 12 * Math.pow(p, 1.7));                  // 出洞：鏡頭衝進陰影（平常保持 1，大圖才走快速路徑）
+    const tStart = performance.now();
+    const { cx, cy, f } = D.L;
+    const lc = camL(tau);
+    // 穿過喉嚨那一下的微晃（不發光）
+    const sk = tau > TS ? WORM.SHAKE * Math.exp(-(lc * lc) / 0.25) : 0;
+    const ox = sk * (0.6 * Math.sin(tau * 71) + 0.4 * Math.sin(tau * 43.7)), oy = sk * (0.6 * Math.sin(tau * 59.3 + 1) + 0.4 * Math.sin(tau * 37.1));
 
     ctx.save();
-    ctx.globalAlpha = wt * (1 - smooth(q));           // 穿過隧道時，黑洞的畫面隨鏡頭衝進陰影而淡出
-    if (zoom > 1.0001) { ctx.translate(cx, cy); ctx.scale(zoom, zoom); ctx.translate(-cx, -cy); }
-    if (D.bg) ctx.drawImage(D.bg, 0, 0, W, H);      // 星空＋暖色光霧＋暗角（都預先畫好）
-    else { ctx.fillStyle = 'rgb(11,22,19)'; ctx.fillRect(0, 0, W, H); }
-
-    // 太空梭狀態
-    const us = Math.min(1, uT);
-    const vis = smooth(tau / 0.35) * (1 - smooth((us - 0.86) / 0.13)) * (uT < 1 ? 1 : 0);
-    let sh = null;
-    if (vis > 0.01) {
-      const P = orbitAt(us), Pa = orbitAt(us - 0.004), Pb = orbitAt(us + 0.004);
-      const red = smooth((us - 0.7) / 0.3);
-      const front = P.depth >= 0, back = smooth(-P.depth / 4);              // 在後方的程度（0～1，過交點時平順）
-      const pf = 1 / (1 - Math.max(-0.4, Math.min(0.4, P.depth / 50)));     // 越靠近鏡頭越大
-      const heading = Math.atan2(Pb.Y - Pa.Y, Pb.X - Pa.X) + Math.PI / 2;    // 機頭＝畫面上的前進切線方向
-      // 透視：沿機身／沿翼展的縮短（用軌道面的投影，稍微放寬免得太扁）
-      const AV = 0.55, st = Math.sin(P.th), ct = Math.cos(P.th);
-      const fNose = Math.sqrt(st * st + AV * AV * ct * ct), fWing = Math.sqrt(ct * ct + AV * AV * st * st);
-      const stretch = 1 + 0.42 * red * red;                                // 潮汐：沿切線拉長一點
-      const x = cx + P.X * ppm, y = cy + P.Y * ppm;
-      sh = {
-        front, x, y, u: GARG.SHUTTLE_U * ppm * pf * Math.min(1.35, Math.sqrt(P.mag)), heading,
-        o: { sx: fWing * (1 - 0.16 * red * red), sy: fNose * stretch, light: Math.atan2(cy - y, cx - x),
-          lk: Math.min(1.2, 0.45 + 5.5 / Math.max(3, P.R)) * (1 - 0.45 * back), dim: Math.max(0.1 * red, 0.6 * back), red,
-          alpha: Math.min(1, vis * 1.15) * (1 - 0.3 * back) },
-        glow: 0.6 + 0.4 * Math.sin(tau * 23) * Math.sin(tau * 7.3),
-      };
+    ctx.globalAlpha = wt;
+    ctx.fillStyle = 'rgb(11,22,19)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.translate(ox, oy);
+    if (ready && SK.ready) {
+      // 光線查表 → 逐像素取兩張天空貼圖
+      buildRhoTable(D, lc, WORM.ROLL * DEG * Math.min(1.3, tau / T));
+      const { NP, RI, CI, OFF, SH, FLA, px32 } = D, TEX = SK.TEX, MASK = SK.NC - 1;
+      for (let i = 0; i < NP; i++) { const e = RI[i]; px32[i] = TEX[OFF[e] + (((CI[i] + FLA[e]) & MASK) >> SH[e])]; }
+      D.lctx.putImageData(D.img, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(D.lo, 0, 0, W, D.lh / D.k);
+    } else if (lc > 0.02) {                        // 貼圖還沒好（很少見）：先畫一顆暗暗的暖色球頂著
+      const Rs = f * Math.tan(Math.asin(1 / Math.sqrt(1 + lc * lc)));
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Rs);
+      g.addColorStop(0, 'rgb(70,42,40)'); g.addColorStop(0.25, 'rgb(36,20,28)'); g.addColorStop(1, 'rgb(48,28,34)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, Rs, 0, TAU); ctx.fill();
     }
-    if (sh && !sh.front) shuttle(ctx, sh.x, sh.y, sh.u, sh.heading, sh.glow, sh.o);
 
-    // 事件視界的陰影（極深的綠黑，不用純黑）
-    ctx.fillStyle = 'rgb(5,8,7)';
-    ctx.beginPath(); ctx.arc(cx, cy, BC * ppm * 1.004, 0, TAU); ctx.fill();
-
-    if (D.ready) {
-      // 每一格：盤面紋理依半徑轉動（克卜勒：內圈快），查表填色
-      const { n, idx, base, w0, t0, a0, r0, w1, t1, a1, r1, tex, px32, rot } = D;
-      const { R_IN, R_OUT, SPIN_S } = GARG, DR = (R_OUT - R_IN) / NR;
-      const sp = tau * (1 + 2.5 * p);
-      for (let i = 0; i < NR; i++) { const r = R_IN + (i + 0.5) * DR; rot[i] = Math.floor(sp / SPIN_S * Math.pow(R_IN / r, 1.5) * NA); }
-      const ex = GARG.EXPOSURE * LUT_SCALE, LU = LUT, LMAX = LN - 1;
-      for (let q = 0; q < n; q++) {
-        let I = base[q], ww = w0[q];
-        if (ww > 0) I += ww * tex[t0[q] + ((a0[q] - rot[r0[q]]) & AM)];
-        ww = w1[q];
-        if (ww > 0) I += ww * tex[t1[q] + ((a1[q] - rot[r1[q]]) & AM)];
-        let li = (I * ex) | 0; if (li > LMAX) li = LMAX;
-        px32[idx[q]] = LU[li];
+    // 球的邊緣光：兩邊天空的光在喉嚨邊緣疊在一起，細而亮；紅藍微微錯開（色散）；外面一圈很淡的暖色光暈
+    if (lc > 0.02) {
+      const ac = Math.asin(1 / Math.sqrt(1 + lc * lc));
+      if (ac < 72 * DEG) {
+        const Rs = f * Math.tan(ac), rw = WORM.RIM_W, dd = WORM.DISPERSION, A = WORM.RIM;
+        ctx.globalCompositeOperation = 'lighter';
+        ringFill(ctx, cx, cy, Rs * 1.012, Rs * 0.16, '255,176,120', WORM.HALO, 2.4);          // 外側光暈
+        ringFill(ctx, cx, cy, Rs * 0.95, Rs * 0.05, '255,190,140', WORM.HALO * 0.6, 2.2);     // 內側柔光
+        ringFill(ctx, cx, cy, Rs + dd, rw, '255,70,30', A * 0.85);
+        ringFill(ctx, cx, cy, Rs, rw, '120,190,110', A * 0.7);
+        ringFill(ctx, cx, cy, Rs - dd, rw, '60,90,255', A * 0.55);
+        ringFill(ctx, cx, cy, Rs, rw * 0.45, '255,236,210', A * 0.6);
+        ctx.globalCompositeOperation = 'source-over';
       }
-      D.dctx.putImageData(D.img, 0, 0);
-      // 光暈：一路縮小一半，各層（＋橫向光芒）先疊在一張半尺寸的小畫布上，主畫布只疊一次
-      let src = D.disk;
-      for (const c of D.blooms) { const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(src, 0, 0, c.width, c.height); src = c; }
-      const acc = D.acc, g = acc.getContext('2d'), aw = acc.width, ah = acc.height, B = GARG.BLOOM;
-      g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, aw, ah);
-      g.globalCompositeOperation = 'lighter';
-      [0.32, 0.42, 0.55, 0.75].forEach((a, i) => { g.globalAlpha = Math.min(1, a * B); g.drawImage(D.blooms[i], 0, 0, aw, ah); });
-      const [bx, by, bw, bh] = D.box, cyA = (cy + 1.35 * ppm - by) / bh * ah;   // 光芒對準陰影前方那條最亮的盤面
-      g.globalAlpha = Math.min(1, 0.22 * B);                                  // 很淡的橫向光芒（鏡頭感）
-      g.drawImage(D.blooms[3], -aw * 0.7, cyA - ah * 0.06, aw * 2.4, ah * 0.12);
-      g.globalAlpha = Math.min(1, 0.12 * B);
-      g.drawImage(D.blooms[2], -aw * 0.1, cyA - ah * 0.025, aw * 1.2, ah * 0.05);
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.drawImage(D.disk, bx, by, bw, bh);
-      ctx.drawImage(acc, bx, by, bw, bh);
-      ctx.globalCompositeOperation = 'source-over';
     }
 
-    if (sh && sh.front) shuttle(ctx, sh.x, sh.y, sh.u, sh.heading, sh.glow, sh.o);
-    ctx.restore();
+    // 太空梭：後上方的追隨鏡頭，太空梭沿直線飛向球心、越來越小，最後沒入球裡
+    const vis = smooth(tau / 0.45) * (1 - smooth((tau - tin) / 0.5)) * (tau < TS ? 1 : 0);
+    if (vis > 0.01) {
+      const P = shipAt(tau), Pa = shipAt(tau - 0.03), Pb = shipAt(tau + 0.03);
+      const x = cx + P.X * f, y = cy + P.Y * f;
+      const heading = Math.atan2((Pb.Y - Pa.Y), (Pb.X - Pa.X)) + Math.PI / 2;   // 機頭＝前進方向（對準球心）
+      const near = smooth(1 - P.zs / 3);                                         // 越接近喉嚨，受球裡暖光照得越多
+      const rim = [lerp(150, 255, near), lerp(186, 190, near), lerp(215, 136, near)].map(Math.round);
+      shuttle(ctx, x, y, WORM.SHIP_LEN / 2.5 * f / P.sep, heading, 0.6 + 0.4 * Math.sin(tau * 23) * Math.sin(tau * 7.3), {
+        sx: 1, sy: WORM.SHIP_FORE, light: Math.atan2(cy - y, cx - x), lk: 0.4 + 0.55 * near, rim,
+        dim: 0.12, alpha: vis,
+      });
+    }
 
-    if (q > 0) drawTunnel(ctx, W, H, cx, cy, tau - TS, q, wt);
+    ctx.translate(-ox, -oy);
+    ctx.drawImage(D.vg, 0, 0, W, H);                // 暗角
+    ctx.restore();
     drawFlash(ctx, W, H, p);
+    warpStats.frameMs = performance.now() - tStart;
   };
 }
 
@@ -839,6 +939,10 @@ export function startLaunch({ lang = 'zh', minMs = 3200 } = {}) {
     const dt = Math.min(0.05, (now - lastT) / 1000);
     lastT = now;
     const tau = (now - start) / 1000;
+    if (!warpT && !warpStats.ready) {               // 歡迎詞與煙霧的時候，順便每格算一小段蟲洞的天空（約 4 ms）
+      const g = warmGen(), t1 = performance.now();
+      while (performance.now() - t1 < 4) { if (g.next().done) break; }
+    }
     const p = partT ? Math.min(1, (now - partT) / (warpT ? 1500 : 1300)) : 0;
     const w = warpT ? smooth((now - warpT) / 900) : 0; // 蟲洞隧道淡入（煙霧同時淡出）
     ctx.clearRect(0, 0, W, H);
