@@ -1129,46 +1129,76 @@ function animateX() {
 
 ---
 
-# 🎙️ 第十四律｜旁白配音：BreezyVoice（老師 2026-10-26 指示）
+# 🎙️ 第十四律｜旁白配音：曉臻為主、BreezyVoice 備用（老師 2026-10-27 更新）
 
-> 老師原話：「曉臻不能用了，我們用新招。」「可以幫我把這個錄音軟體放在 agents 裡嗎，不然我記不起來他的名字，每次都要找好久。」
+> 老師原話：「可以幫我整理一下怎麼用微軟曉臻錄音嗎，然後幫我寫在 agents 裡。」（2026-10-26 曾一度改用 BreezyVoice；2026-10-27 曉臻恢復可用，**之後一律先用曉臻**。）
+> 老師不喜歡打終端機指令：**給老師的錄音方式一律做成「雙擊就跑」的小工具**，不要叫老師貼一長串指令。
 
-- **配音軟體叫 BreezyVoice**（聯發科做的臺灣華語語音合成，可以用一段參考錄音模仿聲音）。裝在**老師的 Mac** 上：`~/BreezyVoice`，虛擬環境 `.venv`，參考聲音用 `data/` 裡的第一個 `.wav`。
-- 以前的「曉臻」語音（微軟 zh-TW-HsiaoChenNeural）**不再使用**。
-- 雲端的 AI 跑不了 BreezyVoice：**AI 只負責寫台詞與指令**，老師貼到 Mac 的終端機錄；錄好的 `01.wav、02.wav…` 再拖進對話交給 AI 處理（`Claude outputs/` 不進 git，所以檔案要用拖的）。
+## 14.1 曉臻是什麼
 
-## 指令範本（只改 `OUT` 的資料夾名稱和台詞）
+- **曉臻＝微軟的台灣華語神經語音 `zh-TW-HsiaoChenNeural`**，用免費的 Python 套件 **edge-tts** 呼叫（不用 API key）。
+- 老師的固定設定（和老師的 finance_daily_news 財經快報相同）：**語速 `+10%`、音調 `+5Hz`**。
+- 雲端的 AI 連不到微軟的語音伺服器，**錄音要在老師的 Mac 上跑**；AI 負責寫台詞、做好雙擊工具、收到 mp3 後接檔與對字幕。
+
+## 14.2 標準流程（AI 照做）
+
+1. **寫台詞**：存成一行一句的 `.txt`（規則見 14.4）。
+2. **做雙擊工具**：
+
+   ```bash
+   python3 tools/voice/make_xiaozhen_tool.py <台詞.txt> <工具名稱>          # 例：曉臻開場白
+   python3 tools/voice/make_xiaozhen_tool.py <台詞.txt> <工具名稱> +0% +0Hz  # 想改語速／音調時
+   ```
+
+   產出 `tools/voice/<工具名稱>.zip`，**用 SendUserFile 傳給老師**（zip 會保留可執行權限；直接傳 `.command` 會失去權限、打不開）。範本是 `tools/voice/xiaozhen_template.command`。
+3. **老師在 Mac 上**：下載 → 雙擊解壓 → 雙擊 `<工具名稱>.command`。
+   - 第一次若出現「無法打開，來自未識別的開發者」：**按右鍵 →「打開」→「打開」**。
+   - 工具會自動安裝 edge-tts（只有第一次）、錄好 `01.mp3、02.mp3…`，放在**桌面「<工具名稱>」資料夾**，錄完自動打開資料夾並播第一句。
+4. **老師把 mp3 拖進對話** → AI 轉成 wav（`ffmpeg -i 01.mp3 -ar 44100 -ac 1 01.wav`）再後製：
+   - 伽利略星球開場：`python3 tools/museum/build_narration.py <wav 資料夾>` → `assets/museum/audio/intro_zh.mp3`＋`intro_zh.json`（字幕時間），再升版本號、實測、推送。
+5. 哪句不滿意就**只改那一句的台詞**、重做工具重錄，再整組重新接檔。
+
+## 14.3 手動備案（老師的終端機已裝好 edge-tts 時）
+
+```bash
+pip3 install --user edge-tts          # 只有第一次需要
+edge-tts --voice zh-TW-HsiaoChenNeural --rate=+10% --pitch=+5Hz --text "各位乘客，歡迎搭乘光速太空梭！" --write-media ~/Desktop/01.mp3
+```
+
+## 14.4 台詞怎麼寫（曉臻、BreezyVoice 都適用）
+
+- **一行一句、一句一個檔**（`01`、`02`…），哪句不滿意只重錄那一句。需要和畫面對拍的（例如倒數「三、二、一」）要**拆成單獨的句子**。
+- **數字寫成國字**（「每秒十七點二公尺」），不要放英文、單位符號或表情符號。
+- **破音字換同音字**，字幕仍用正確的字：例如「伽利略」在台詞裡寫「**加**利略」（「伽」常被念錯）。台詞（`tts`）和字幕（`sub`）分開存。
+- 網頁上一定要同時有字幕；聲音要等使用者按一下才能播（iPad 的規定），所以有配音的地方要設計一個「按下開始」的按鈕。
+- 伽利略星球開場的台詞與字幕：`assets/museum/audio/intro_lines.json`（2026-10-27 起為曉臻版）。
+
+## 14.5 備用：BreezyVoice（曉臻不能用時才用）
+
+- **BreezyVoice**＝聯發科的臺灣華語語音合成，可用一段參考錄音模仿聲音。裝在**老師的 Mac**：`~/BreezyVoice`，虛擬環境 `.venv`，參考聲音用 `data/` 裡的第一個 `.wav`。很慢：第一句要先載入模型，等很久是正常的。
+- `promo/` 的兩支宣傳短片（2026-10-26）旁白目前仍是 BreezyVoice 的聲音。
+
+指令範本（只改 `OUT` 的資料夾名稱和台詞）：
 
 ```bash
 cd ~/BreezyVoice && source .venv/bin/activate
 export PYTHONUTF8=1
+M=$(find . -maxdepth 4 -type d -name matcha -not -path "./.venv/*" | head -1)
+[ -n "$M" ] && export PYTHONPATH="$(cd "$(dirname "$M")" && pwd):$PYTHONPATH"
 REF=$(ls data/*.wav | head -1)
 OUT="$HOME/Documents/ChatGPT/Physical-Boys/Claude outputs/<名稱>_voice_breezy"
 mkdir -p "$OUT"
-cat > lines.txt <<'EOF'
-第一句台詞。
-第二句台詞。
-EOF
+printf '%s\n' "第一句台詞。" "第二句台詞。" > lines.txt
 i=0
 while IFS= read -r line; do
   i=$((i+1)); n=$(printf "%02d" $i)
   echo "=== $n：$line"
-  python single_inference.py --content_to_synthesize "$line" --speaker_prompt_audio_path "$REF" --output_path "$OUT/$n.wav" < /dev/null 2>&1 | grep -E "Elapsed|Generated|Error|Traceback"
+  python single_inference.py --content_to_synthesize "$line" --speaker_prompt_audio_path "$REF" --output_path "$OUT/$n.wav" < /dev/null 2>&1 | tail -2
 done < lines.txt
-echo "全部完成"
-for f in "$OUT"/*.wav; do echo "▶ $(basename "$f")"; afplay "$f"; done
-open "$OUT"
+echo "全部完成"; open "$OUT"
 ```
 
-## 台詞怎麼寫
-
-- **一行一句、一句一個檔**（`01.wav`、`02.wav`…），哪句不滿意只重錄那一句。需要和畫面對拍的（例如倒數「三、二、一」）要**拆成單獨的句子**。
-- **數字寫成國字**（「每秒十七點二公尺」），不要放英文、單位符號或表情符號。
-- **破音字換同音字**，字幕仍用正確的字：例如「伽利略」在台詞裡寫「**加**利略」（「伽」常被念錯）。
-- 網頁上一定要同時有字幕；聲音要等使用者按一下才能播（iPad 的規定），所以有配音的地方要設計一個「按下開始」的按鈕。
-- 伽利略星球開場的台詞與字幕：`assets/museum/audio/intro_lines.json`；錄好的檔案用 `python3 tools/museum/build_narration.py <wav 資料夾>` 接成 `intro_zh.mp3` 並算好字幕時間。
-
-## 故障排除：每一句都出現 `... __thread_bss ... offset field is not zero`
+### BreezyVoice 故障排除：每一句都出現 `... __thread_bss ... offset field is not zero`
 
 - 2026-10-26 發生過：新版 macOS 拒絕載入 scipy 裡幾個用 Fortran 編的零件（先是 `_spropack`，再來 `_cobyla`），結果**一個 wav 都沒產生**（最後顯示 `no matches found`）。BreezyVoice 用不到這些零件（是 transformers 順便載入的）。
 - 修法：自動找出 scipy 裡所有載不進來的 `.so`，改名成 `.so.bak`、換成空殼（復原只要把 `.bak` 改回來）：
@@ -1178,8 +1208,15 @@ cd ~/BreezyVoice && source .venv/bin/activate
 python - <<'PY'
 import os, importlib.util, scipy
 root = os.path.dirname(scipy.__file__)
-STUB = ('def __getattr__(name):\n    if name.startswith("__"):\n        raise AttributeError(name)\n'
-        '    def _missing(*a, **k):\n        raise RuntimeError("this scipy part cannot load on this Mac")\n    return _missing\n')
+STUB = '''class _S:
+    def __getattr__(self, n):
+        if n.startswith('__'): raise AttributeError(n)
+        return _S()
+    def __call__(self, *a, **k): raise RuntimeError('stub')
+def __getattr__(n):
+    if n.startswith('__'): raise AttributeError(n)
+    return _S()
+'''
 n = 0
 for dp, dn, fn in os.walk(root):
     for f in fn:
@@ -1199,6 +1236,8 @@ PY
 python -c "import scipy.optimize, transformers.models.clip.modeling_clip; print('✅ 可以錄音了')"
 ```
 
+- 空殼必須是「問什麼都接得住」的版本（上面的 `_S`）；只回傳函式的舊空殼會出現 `'function' object has no attribute 'intvar'`（2026-10-26 遇過）。
+- 之後若出現 `No module named 'matcha'`：用 14.5 範本裡找 matcha、設定 `PYTHONPATH` 的那兩行。
 - 如果還有別的 `.so` 載不進來：正式解法是用 Python 3.11 以上重建 BreezyVoice 的 `.venv`，並裝 scipy 1.16 以上（scipy 1.16 起不支援 Python 3.10）。參考：scipy issue #25635。
 
 ---
