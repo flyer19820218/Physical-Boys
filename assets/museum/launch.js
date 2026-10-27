@@ -32,9 +32,9 @@ function makePuff(rgb, seed) {
   return c;
 }
 
-// ---------- 蟲洞：用 2D canvas 畫「時空隧道」 ----------
-// 一串往觀眾衝過來的光環（螺旋亮弧＋偶爾夾一個倒轉的時鐘環）、中央往外噴的光束、盡頭的亮光，
-// 隧道會左右彎曲、整體慢慢旋轉；太空梭（背面剪影）在隧道裡搖擺前進。出洞時加速、閃光。
+// ---------- 蟲洞：用 2D canvas 畫「時空漩渦」 ----------
+// 時空漩渦：斜著看的漏斗（等高圈、倒轉時鐘環、4 條螺旋臂、被吸進去的光點），中央是發亮的喉口。
+// 太空梭機頭永遠朝著前進的切線方向，繞約 2.6 圈、一圈比一圈小地轉進喉口。出洞時加速、閃光。
 const TAU = Math.PI * 2;
 export const WARP_MS = 4200;          // 蟲洞段長度（有旁白時以旁白時間表為準，與 build_narration.py 的 WARP_MIN 一致）
 const smooth = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
@@ -48,16 +48,18 @@ function drawFlash(ctx, W, H, p) {
   ctx.fillRect(0, 0, W, H);
 }
 
-function makeWarp() {
-  const N = 22, Z = 6.2, ZN = 0.13;
-  const lines = [];
-  for (let j = 0; j < 72; j++) lines.push({ a: Math.random() * TAU, q: Math.random(), v: 0.5 + Math.random() * 0.9, h: [175, 190, 48, 300][j % 4] });
-  let dist = 0;
-
-  function bend(z, tau, W, H) {
-    const f = Math.min(1, Math.max(0, (z - ZN) / Z));
-    return [W / 2 + Math.sin(tau * 0.8 + z * 0.55) * W * 0.11 * f, H / 2 + Math.cos(tau * 0.65 + z * 0.45) * H * 0.08 * f];
-  }
+export function makeWarp(warpMs) {
+  const TILT = 0.66;                // 漩渦斜著看：橢圓的扁度（1＝正上方俯視）
+  const TURNS = 2.6;                // 太空梭繞幾圈才進去（2～3 圈意思意思）
+  const PARTS = 150;
+  const parts = [];
+  const spawn = (pt, first) => {
+    pt.r = first ? Math.random() : 0.75 + Math.random() * 0.25; // 以 Rmax 為 1
+    pt.a = Math.random() * TAU;
+    pt.h = [175, 190, 48, 300, 265][(Math.random() * 5) | 0];
+    pt.px = pt.py = null;
+  };
+  for (let j = 0; j < PARTS; j++) { const pt = {}; spawn(pt, true); parts.push(pt); }
 
   // 太空梭（從上方看、機鼻朝向隧道盡頭）：和星球上那台同一組顏色——米白機身、黃色腰帶、藍色駕駛艙、翼尖黃與薄荷綠
   function shuttle(ctx, x, y, u, roll, glow) {
@@ -103,119 +105,127 @@ function makeWarp() {
     ctx.restore();
   }
 
-  // tau：進蟲洞後的秒數；w：隧道淡入 0→1；p：出洞進度 0→1；dt：秒
+  // tau：進蟲洞後的秒數；w：漩渦淡入 0→1；p：出洞進度 0→1；dt：秒
   return function draw(ctx, W, H, tau, w, p, dt) {
     const hyp = Math.hypot(W, H), big = Math.max(W, H);
-    const sp = (0.8 + 2.6 * Math.pow(Math.min(1, tau / 2.5), 2)) * (1 + 7 * p * p);
-    dist += dt * sp;
     const wt = w * (p < 0.4 ? 1 : 1 - smooth((p - 0.4) / 0.45));
     if (wt <= 0.003) { drawFlash(ctx, W, H, p); return; }
-    const [vx, vy] = bend(ZN + Z, tau, W, H);
+    const cx = W / 2, cy = H * 0.55;
+    const Rmax = Math.min(W * 0.44, H * 0.58);
+    const rc = big * 0.04;                    // 喉口（入口）的半徑
+    const sp = 1 + 7 * p * p;                 // 出洞時一切加速
+    const E = (r, a) => [cx + Math.cos(a) * r, cy + Math.sin(a) * r * TILT]; // 圓 → 斜看的橢圓
 
     ctx.save();
-    ctx.globalAlpha = 1;
-    // 背景：盡頭偏紫、外圍深黛綠（不用純黑）
-    const bg = ctx.createRadialGradient(vx, vy, 0, vx, vy, hyp * 0.62);
-    bg.addColorStop(0, `rgba(78,64,150,${0.95 * wt})`);
-    bg.addColorStop(0.32, `rgba(26,48,84,${0.95 * wt})`);
+    // 背景：中心偏紫、外圍深黛綠（不用純黑）
+    const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.7);
+    bg.addColorStop(0, `rgba(84,66,160,${0.95 * wt})`);
+    bg.addColorStop(0.3, `rgba(26,48,84,${0.95 * wt})`);
     bg.addColorStop(1, `rgba(11,26,21,${wt})`);
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
-
-    // 整個隧道一起慢慢旋轉、輕微搖晃（像在鑽進去）
-    ctx.translate(W / 2, H / 2);
-    ctx.rotate(tau * 0.1 + Math.sin(tau * 0.9) * 0.05 + p * 0.6);
-    ctx.translate(-W / 2, -H / 2);
     ctx.globalCompositeOperation = 'lighter';
     ctx.lineCap = 'round';
 
-    // 光環：由遠到近畫（近的蓋在上面）
-    const F = hyp * 0.5 * 0.16;
-    const order = [];
-    for (let i = 0; i < N; i++) {
-      const z = ZN + ((((i / N) * Z - dist) % Z) + Z) % Z;
-      order.push([z, i]);
+    // 漏斗的等高圈：越靠近中心越密越亮，虛線跟著旋轉（越裡面轉越快）
+    for (let k = 1; k <= 9; k++) {
+      const f = k / 9, r = rc + (Rmax - rc) * Math.pow(f, 1.7);
+      const h = 175 + 145 * (0.5 + 0.5 * Math.sin(k * 0.8 + tau * 1.1));
+      const al = wt * (0.22 + 0.55 * Math.pow(1 - f, 1.3)) * Math.min(1, tau / 0.6);
+      ctx.strokeStyle = `hsla(${h},88%,64%,${al})`;
+      ctx.lineWidth = 1.2 + 3.2 * (1 - f);
+      ctx.setLineDash([r * 0.5, r * 0.28]);
+      ctx.lineDashOffset = -tau * sp * (30 + 140 * (1 - f));
+      ctx.beginPath(); ctx.ellipse(cx, cy, r, r * TILT, 0, 0, TAU); ctx.stroke();
     }
-    order.sort((a, b) => b[0] - a[0]);
-    for (const [z, i] of order) {
-      const R = F / z, f = Math.min(1, (z - ZN) / Z);
-      const [cx, cy] = bend(z, tau, W, H);
-      const a = wt * Math.min(1, (1 - f) * 4) * Math.min(1, (z - ZN) / 0.35);
-      if (a <= 0.01) continue;
-      const accent = i % 5 === 2;
-      const h = accent ? 48 : 175 + 145 * (0.5 + 0.5 * Math.sin(i * 0.6 + tau * 1.2));
-      const col = (al, l = 62) => `hsla(${h},${accent ? 95 : 90}%,${accent ? 68 : l}%,${al})`;
-      const lw = 1.4 + 13 * Math.min(1, R / (hyp * 0.5));
-      ctx.lineWidth = lw;
-      ctx.strokeStyle = col(a * 0.22);
-      ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
-      ctx.strokeStyle = col(a * 0.9);
-      const th = tau * 0.9 + i * 0.37 + 0.7 / z;
-      for (let k = 0; k < 3; k++) {
-        ctx.beginPath(); ctx.arc(cx, cy, R, th + k * 2.0944, th + k * 2.0944 + 1.15); ctx.stroke();
-      }
-      if (i % 6 === 0) { // 時鐘環：刻度＋倒轉的指針
-        ctx.strokeStyle = `hsla(48,95%,80%,${a * 0.85})`;
-        ctx.lineWidth = Math.max(1, lw * 0.6);
-        ctx.beginPath();
-        for (let k = 0; k < 12; k++) {
-          const ang = k * TAU / 12, r1 = R * (k % 3 === 0 ? 0.8 : 0.88), r2 = R * 0.96;
-          ctx.moveTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1);
-          ctx.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2);
-        }
-        ctx.stroke();
-        const mA = -tau * 9 - i, hA = -tau * 0.75 - i;
-        ctx.lineWidth = Math.max(1.5, lw * 0.9);
-        ctx.beginPath();
-        ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(mA) * R * 0.78, cy + Math.sin(mA) * R * 0.78);
-        ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(hA) * R * 0.52, cy + Math.sin(hA) * R * 0.52);
-        ctx.stroke();
-      }
-    }
+    ctx.setLineDash([]);
 
-    // 中央往外噴的光束
-    for (const L of lines) {
-      L.q += dt * L.v * (0.45 + sp * 0.35);
-      if (L.q > 1) { L.q -= 1; L.a = Math.random() * TAU; }
-      const q = L.q, r0 = hyp * (0.03 + 0.72 * Math.pow(q, 2.2));
-      const len = hyp * (0.02 + 0.3 * q * q) * (0.6 + 0.13 * sp);
-      const cx = lerp(vx, W / 2, q), cy = lerp(vy, H / 2, q), dx = Math.cos(L.a), dy = Math.sin(L.a);
-      const al = wt * q * 0.8 * Math.min(1, tau / 1.2);
-      if (al <= 0.01) continue;
-      ctx.strokeStyle = `hsla(${L.h},85%,76%,${al})`;
-      ctx.lineWidth = 0.7 + 3 * q;
+    // 時鐘環：三圈刻度，朝反方向慢慢轉（時間倒流的感覺）
+    for (const [fr, dir] of [[0.5, -1], [0.78, 1], [1.02, -1]]) {
+      const r = rc + (Rmax - rc) * Math.pow(fr, 1.2), a0 = dir * tau * 0.5 * sp;
+      ctx.strokeStyle = `hsla(48,95%,80%,${wt * 0.75 * Math.min(1, tau / 0.8)})`;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(cx + dx * r0, cy + dy * r0);
-      ctx.lineTo(cx + dx * (r0 + len), cy + dy * (r0 + len));
+      for (let k = 0; k < 12; k++) {
+        const ang = a0 + k * TAU / 12, [x1, y1] = E(r * (k % 3 === 0 ? 0.9 : 0.95), ang), [x2, y2] = E(r * 1.0, ang);
+        ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+      }
       ctx.stroke();
     }
-    ctx.restore();
 
-    // 盡頭的亮光（出洞時膨脹）
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    const gr = big * (0.07 + 0.012 * Math.sin(tau * 6)) * (1 + 7 * p * p);
-    const core = ctx.createRadialGradient(vx, vy, 0, vx, vy, gr);
-    core.addColorStop(0, `rgba(235,252,255,${0.95 * wt})`);
+    // 螺旋臂：4 條對數螺線，整個漩渦朝同一個方向轉
+    for (let arm = 0; arm < 4; arm++) {
+      const h = [175, 265, 300, 48][arm];
+      for (let seg = 0; seg < 36; seg++) {
+        const r1 = rc + (Rmax * 1.02 - rc) * (seg / 36), r2 = rc + (Rmax * 1.02 - rc) * ((seg + 1) / 36);
+        const th = arm * TAU / 4 + 2.4 * Math.log(r1 / rc + 1) - tau * 0.9 * sp;
+        const th2 = arm * TAU / 4 + 2.4 * Math.log(r2 / rc + 1) - tau * 0.9 * sp;
+        const [x1, y1] = E(r1, th), [x2, y2] = E(r2, th2), f = seg / 36;
+        ctx.strokeStyle = `hsla(${h},85%,70%,${wt * 0.5 * (1 - f) * Math.min(1, tau / 0.9)})`;
+        ctx.lineWidth = 1 + 4 * (1 - f);
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      }
+    }
+
+    // 被吸進去的光點：沿螺線往中心掉，越近越快
+    for (const q of parts) {
+      const f = Math.min(1, Math.max(0, q.r));
+      q.r -= dt * sp * (0.05 + 0.5 * Math.pow(1 - f, 2.2));
+      q.a += dt * sp * (0.5 + 3.2 * Math.pow(1 - f, 1.6));
+      if (q.r <= rc / Rmax * 0.6) { spawn(q, false); continue; }
+      const [x, y] = E(q.r * Rmax, q.a);
+      if (q.px != null) {
+        ctx.strokeStyle = `hsla(${q.h},85%,78%,${wt * Math.min(1, 0.25 + (1 - f)) * 0.9})`;
+        ctx.lineWidth = 0.8 + 2.2 * (1 - f);
+        ctx.beginPath(); ctx.moveTo(q.px, q.py); ctx.lineTo(x, y); ctx.stroke();
+      }
+      q.px = x; q.py = y;
+    }
+
+    // 太空梭：機頭永遠朝著前進的切線方向，繞 TURNS 圈、一圈比一圈小地轉進喉口
+    const T = Math.max(1, warpMs / 1000);
+    const u = Math.min(1, tau / T);
+    const path = uu => {
+      const r = Rmax * 0.94 * Math.pow(1 - uu, 1.15), a = 3.3 + TAU * TURNS * Math.pow(uu, 1.45);
+      const [x, y] = E(r, a);
+      return [x, y, r, a];
+    };
+    const [sx, sy, sr, sa] = path(u);
+    const vis = smooth(tau / 0.5) * smooth((1 - u) / 0.1) * wt;     // 剛進來淡入、到喉口時縮小消失
+    if (vis > 0.01) {
+      // 尾跡：沿著走過的路，漸漸變淡
+      for (let k = 26; k >= 1; k--) {
+        const u1 = Math.max(0, u - k * 0.009), u2 = Math.max(0, u - (k - 1) * 0.009);
+        const [x1, y1] = path(u1), [x2, y2] = path(u2), f = 1 - k / 26;
+        ctx.strokeStyle = `hsla(${190 - 140 * f},95%,72%,${vis * 0.65 * f * f})`;
+        ctx.lineWidth = Math.max(1, big * 0.006 * f);
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      const [nx, ny] = path(Math.min(1, u + 0.004)), [mx, my] = path(Math.max(0, u - 0.004));
+      const heading = Math.atan2(ny - my, nx - mx) + Math.PI / 2;      // 機身的「上」＝機頭，轉到前進方向
+      const near = 0.28 + 0.72 * (sr / (Rmax * 0.94));
+      const size = big * 0.046 * near * (1 + 0.2 * Math.sin(sa));      // 越靠近喉口越小；在畫面下側（離我們近）稍大
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, vis * 1.2);
+      shuttle(ctx, sx, sy, size, heading, 0.5 + 0.5 * Math.sin(tau * 11));
+      ctx.restore();
+      ctx.globalCompositeOperation = 'lighter';
+    }
+
+    // 喉口：發亮的入口，邊緣一圈亮環（出洞時膨脹）
+    const gr = big * (0.085 + 0.012 * Math.sin(tau * 6)) * (1 + 7 * p * p);
+    const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, gr);
+    core.addColorStop(0, `rgba(240,253,255,${0.95 * wt})`);
     core.addColorStop(0.35, `rgba(120,235,255,${0.5 * wt})`);
     core.addColorStop(1, 'rgba(85,233,255,0)');
     ctx.fillStyle = core;
-    ctx.beginPath(); ctx.arc(vx, vy, gr, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx, cy, gr, gr * Math.max(TILT, 0.8), 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = `rgba(210,250,255,${0.85 * wt})`;
+    ctx.lineWidth = 2.5 + 2 * Math.sin(tau * 8);
+    ctx.beginPath(); ctx.ellipse(cx, cy, rc * (1 + 3 * p * p), rc * TILT * (1 + 3 * p * p), 0, 0, TAU); ctx.stroke();
     ctx.restore();
 
-    // 太空梭：隧道裡搖擺前進；出洞時往亮光衝過去
-    const sw = Math.min(1, tau / 0.9) * wt;
-    if (sw > 0.01) {
-      const u0 = big * 0.062 * Math.min(1, 0.55 + hyp / 2600);
-      const sx0 = W / 2 + Math.sin(tau * 1.3) * W * 0.025, sy0 = H * 0.66 + Math.cos(tau * 1.7) * H * 0.012;
-      const e = smooth(p / 0.7);
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, sw * 1.2);
-      shuttle(ctx, lerp(sx0, vx, e), lerp(sy0, vy, e), u0 * (1 - 0.85 * e), Math.sin(tau * 0.9) * 0.16 + Math.sin(tau * 2.3) * 0.04, 0.5 + 0.5 * Math.sin(tau * 11));
-      ctx.restore();
-    }
-
-    // 出洞閃光
     drawFlash(ctx, W, H, p);
   };
 }
@@ -380,7 +390,7 @@ export function startLaunch({ lang = 'zh', minMs = 3200 } = {}) {
     warp(ms) {
       if (warpT || partT || done) return;
       warpMs = Math.max(1500, ms || WARP_MS);
-      warpDraw = makeWarp();
+      warpDraw = makeWarp(warpMs);
       capEl.textContent = t.warp;
       warpT = performance.now();
       root.classList.remove('ready', 'counting');

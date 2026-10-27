@@ -155,3 +155,9 @@ BreezyVoice 錄好 01–08.wav → `tools/museum/build_narration.py` → `assets
 
 ## 進場旁白改用曉臻（2026-10-27）
 改用 edge-tts zh-TW-HsiaoChenNeural（rate +10%, pitch +5Hz，與 finance_daily_news 相同）。使用者在 Mac 上雙擊 `tools/voice/錄曉臻開場白.command`（zip 版保留執行權限）錄出 01～08.mp3 → 轉 wav → `tools/museum/build_narration.py`。
+
+## 2026-10-27 蟲洞改成螺旋漩渦（版本 20261027e）
+- 老師指正：進黑洞不是直直衝進去。`launch.js` 的 `makeWarp(warpMs)` 重畫：斜著看的漏斗（等高圈、倒轉時鐘環、4 條螺旋臂、被吸進去的光點），中央是發亮的喉口。
+- 太空梭沿螺旋繞約 2.6 圈（`TURNS`）轉進喉口；機頭永遠朝著前進的切線方向（用路徑前後取點算朝向），半徑越小機身越小，尾跡沿軌道。
+- 時間 = `warpMs`（旁白版是「穿越蟲洞」到「穿越成功」那段，約 4.2 秒）。要改圈數改 `TURNS`。
+- 不放年份、不放數字。
