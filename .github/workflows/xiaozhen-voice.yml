@@ -1,0 +1,106 @@
+# 曉臻自動錄音：不用在 Mac 上雙擊、不用拖 mp3。
+#   ① 伽利略星球開場白：改 assets/museum/audio/intro_lines.json 的 tts 並推上去（或到 Actions 頁手動按 Run workflow，target 填 intro）
+#      → 自動錄 mp3 → build_narration.py 接成 intro_zh.mp3/json → 升首頁版本號 → 自動 commit 回 main
+#   ② 其他台詞：把台詞存成 tools/voice/lines/<名稱>.txt（一行一句）並推上去，或手動 Run workflow、target 填 <名稱>
+#      → 錄好的 mp3 放在 tools/voice/out/<名稱>/01.mp3、02.mp3…
+name: 曉臻自動錄音
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'intro＝伽利略星球開場白；其他＝tools/voice/lines/<名稱>.txt 的名稱'
+        default: 'intro'
+      rate:
+        description: '語速'
+        default: '+10%'
+      pitch:
+        description: '音調'
+        default: '+5Hz'
+  push:
+    branches: [main]
+    paths:
+      - 'assets/museum/audio/intro_lines.json'
+      - 'tools/voice/lines/*.txt'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: xiaozhen-voice
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RATE: ${{ github.event.inputs.rate || '+10%' }}
+      PITCH: ${{ github.event.inputs.pitch || '+5Hz' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安裝 edge-tts
+        run: pip install -U edge-tts
+
+      - name: 決定要錄哪些
+        id: what
+        env:
+          TARGET: ${{ github.event.inputs.target }}
+        run: |
+          set -e
+          targets=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            targets="${TARGET:-intro}"
+          else
+            changed=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" 2>/dev/null || true)
+            echo "$changed" | grep -q '^assets/museum/audio/intro_lines.json$' && targets="intro"
+            for f in $(echo "$changed" | grep '^tools/voice/lines/.*\.txt$' || true); do
+              n=$(basename "$f" .txt); targets="$targets $n"
+            done
+          fi
+          echo "要錄：$targets"
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+
+      - name: 錄音
+        if: steps.what.outputs.targets != ''
+        run: |
+          set -e
+          for t in ${{ steps.what.outputs.targets }}; do
+            if [ "$t" = "intro" ]; then
+              python3 tools/voice/render_voice.py assets/museum/audio/intro_lines.json "$RUNNER_TEMP/intro_mp3" "$RATE" "$PITCH"
+              mkdir -p "$RUNNER_TEMP/intro_wav"
+              for f in "$RUNNER_TEMP"/intro_mp3/*.mp3; do
+                ffmpeg -loglevel error -y -i "$f" -ar 44100 -ac 1 "$RUNNER_TEMP/intro_wav/$(basename "${f%.mp3}").wav"
+              done
+              python3 tools/museum/build_narration.py "$RUNNER_TEMP/intro_wav"
+              # 升首頁版本號，瀏覽器才不會讀到舊的旁白
+              OLD=$(grep -oP "const VERSION = '\K[^']+" assets/museum/museum_v1.js)
+              NEW=$(date -u +%Y%m%d%H%M)
+              sed -i "s/$OLD/$NEW/g" index.html assets/museum/museum_v1.js
+            else
+              python3 tools/voice/render_voice.py "tools/voice/lines/$t.txt" "tools/voice/out/$t" "$RATE" "$PITCH"
+            fi
+          done
+
+      - name: 存回 main
+        if: steps.what.outputs.targets != ''
+        run: |
+          set -e
+          rm -rf tools/museum/__pycache__
+          git config user.name "曉臻自動錄音"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A assets index.html tools/voice/out
+          if git diff --cached --quiet; then echo "沒有變更"; exit 0; fi
+          git commit -m "曉臻自動錄音：${{ steps.what.outputs.targets }}"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1

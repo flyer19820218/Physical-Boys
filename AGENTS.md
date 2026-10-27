@@ -1134,6 +1134,17 @@ function animateX() {
 > 老師原話：「可以幫我整理一下怎麼用微軟曉臻錄音嗎，然後幫我寫在 agents 裡。」（2026-10-26 曾一度改用 BreezyVoice；2026-10-27 曉臻恢復可用，**之後一律先用曉臻**。）
 > 老師不喜歡打終端機指令：**給老師的錄音方式一律做成「雙擊就跑」的小工具**，不要叫老師貼一長串指令。
 
+## 14.0 最快的方式：GitHub Actions 自動錄音（2026-10-27 起優先使用）
+
+老師不用在 Mac 上雙擊、不用拖 mp3：**台詞推上 GitHub，GitHub 的伺服器自己用曉臻錄好、接檔、升版本號，再自動 commit 回 main。**（雲端 AI 的沙箱連不到微軟語音，但 GitHub 的伺服器可以。）
+
+- **伽利略星球開場白**：改 `assets/museum/audio/intro_lines.json` 的 `tts`（字幕改 `sub`）並 push 到 main → 工作流程 `.github/workflows/xiaozhen-voice.yml` 自動：錄 mp3 → 轉 wav → `tools/museum/build_narration.py` → 更新 `intro_zh.mp3/json` → 升 `index.html`／`museum_v1.js` 的版本號 → commit「曉臻自動錄音」。約 1～3 分鐘；**完成後先 `git pull` 再做別的修改**。
+- **其他台詞**：存成 `tools/voice/lines/<名稱>.txt`（一行一句）並 push → mp3 出現在 `tools/voice/out/<名稱>/01.mp3…`。
+- **手動觸發／改語速音調**：GitHub 網頁 → Actions →「曉臻自動錄音」→ Run workflow（target 填 `intro` 或 `<名稱>`，語速預設 `+10%`、音調預設 `+5Hz`）。手機的 GitHub App 也能按。
+- 錄音腳本 `tools/voice/render_voice.py` 只有一個動作：台詞 → mp3，失敗會重試 5 次；工作流程失敗時到 Actions 頁看紅字，通常是微軟暫時限流，再按一次 Run workflow。
+- 下面 14.2～14.3（Mac 雙擊工具）改為**備案**：Actions 連續失敗、或老師要在沒有 GitHub 的情況下錄時才用。
+- 台詞怎麼寫（14.4）一樣適用。
+
 ## 14.1 曉臻是什麼
 
 - **曉臻＝微軟的台灣華語神經語音 `zh-TW-HsiaoChenNeural`**，用免費的 Python 套件 **edge-tts** 呼叫（不用 API key）。
