@@ -44,7 +44,7 @@ LQ.addStatic('photosynthesis',{
   Q(P(`柵狀葉肉和海綿狀葉肉，構造上有什麼不同？`,`How do palisade and spongy mesophyll differ in structure?`),
    [P(`柵狀較緊密，海綿狀氣隙多`,`Palisade is denser, spongy has more air space`),P(`柵狀有氣隙，海綿狀較緊密`,`Palisade has air spaces, spongy is denser`),P(`只有海綿狀葉肉才有葉綠體`,`Only spongy mesophyll ever has chloroplasts`),P(`兩者在構造上完全沒有差別`,`There is no structural difference between them`)],0,
    P(`柵狀葉肉常較緊密；海綿狀葉肉有較多氣隙；兩者都能有葉綠體。`,`Palisade cells are often densely packed, while spongy mesophyll has larger air spaces; both can contain chloroplasts.`),
-   P(`按「柵狀葉肉」和「海綿狀葉肉」，比較細胞排列的疏密。`,`Press "Palisade mesophyll" and "Spongy mesophyll" and compare how tightly the cells are packed.`))],
+   P(`看步驟 3「柵狀葉肉 → 海綿狀葉肉」，比較細胞排列的疏密。`,`Watch step 3 "Palisade mesophyll → Spongy mesophyll" and compare how tightly the cells are packed.`))],
  '#lesson-2':[
   Q(P(`光合作用的原料是什麼？`,`What are the raw materials of photosynthesis?`),
    [P(`氧氣和葡萄糖`,`Oxygen and glucose`),P(`水和二氧化碳`,`Water and carbon dioxide`),P(`光和葉綠素`,`Light and chlorophyll`),P(`泥土和肥料`,`Soil and fertilizer`)],1,
@@ -111,7 +111,7 @@ LQ.addStatic('photosynthesis',{
   Q(P(`同一片葉，一段受光、一段遮光。滴碘液後，藍黑色最可能出現在哪裡？`,`One part of a leaf got light and one part was shaded. Where will the blue-black colour most likely appear after adding iodine?`),
    [P(`遮光區`,`The shaded region`),P(`受光區`,`The exposed region`),P(`兩區一樣`,`Both regions equally`),P(`兩區都不變色`,`Neither region`)],1,
    P(`受光區能行光合作用，製造並儲存澱粉，遇碘液變藍黑；遮光區的澱粉已被消耗。`,`The exposed region photosynthesizes and stores starch, which turns blue-black with iodine; starch in the shaded region has been used up.`),
-   P(`想想只有哪一區有光，再依序按「下一步：雙面遮光」做完實驗。`,`Think about which region gets light, then press "Next: Cover both sides" and run the experiment through.`)),
+   P(`想想只有哪一區有光，再看步驟 1～5 把實驗自動做完。`,`Think about which region gets light, then watch steps 1–5 as the experiment runs through.`)),
   Q(P(`葉片滴碘液後變藍黑色，是什麼的證據？`,`A leaf turns blue-black after iodine is added. What is that evidence of?`),
    [P(`有澱粉`,`Starch is present`),P(`有葡萄糖`,`Glucose is present`),P(`碘液本身變成了養分`,`The iodine itself became a nutrient`),P(`直接看見了光合作用`,`Photosynthesis was seen directly`)],0,
    P(`藍黑色是有澱粉的證據，不是直接看見光合作用，也不是碘液變出了養分。`,`Blue-black is evidence of starch, not a direct view of photosynthesis and not food produced by iodine.`),
@@ -132,6 +132,6 @@ LQ.addStatic('photosynthesis',{
   Q(P(`「同葉遮光」這組證據，最不超過證據的結論是什麼？`,`For the "Partly shaded leaf" evidence, which conclusion stays within the evidence?`),
    [P(`已證明光合作用的所有條件`,`It proves every condition of photosynthesis`),P(`碘液把葡萄糖染成藍黑色`,`Iodine stains glucose blue-black`),P(`所有葉子都不需要光`,`No leaf needs light`),P(`光照與澱粉形成有關`,`Light is linked to starch formation`)],3,
    P(`同葉遮光只能支持被檢驗的條件，也就是光照，與澱粉形成有關。`,`The shaded-leaf evidence supports only the condition tested, light, in starch formation.`),
-   P(`按「同葉遮光」，再比較「這組結果能支持什麼？」下面的三個結論。`,`Press "Partly shaded leaf" and compare the three conclusions under "What does it support?".`))]
+   P(`看步驟 1「同葉遮光」，等畫面揭曉「這組結果能支持什麼？」下面三個結論的判斷。`,`Watch step 1 "Partly shaded leaf" and wait for the verdicts on the three conclusions under "What does it support?".`))]
 });
 })();
