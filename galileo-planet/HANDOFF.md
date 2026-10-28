@@ -251,3 +251,7 @@ BreezyVoice 錄好 01–08.wav → `tools/museum/build_narration.py` → `assets
 - Actions 的「錄音」步驟回 127＝找不到指令；原因推測是 `ubuntu-latest` 換成 Ubuntu 26 後沒有預裝 ffmpeg／ffprobe。`xiaozhen-voice.yml` 在錄音前加「安裝 ffmpeg」步驟（沒有才 apt 安裝）。
 - 修好後到 GitHub → Actions → 曉臻自動錄音 → Run workflow（target 填 intro）重跑一次；成功會有作者「曉臻自動錄音」的 commit。
 - 第二次失敗（exit code 128）：「存回 main」步驟的 `git add -A … tools/voice/out`，錄 intro 時該資料夾不存在，git 回 128。已改成目錄存在才 add。
+
+## 2026-10-28 自動錄音第一次成功
+- 修了 ffmpeg（127）與 `tools/voice/out` 不存在（128）後，Actions 跑成功：commit「曉臻自動錄音：intro」（作者「曉臻自動錄音」）重接了 `intro_zh.mp3/json`，並把首頁版本升成時間戳 `202610280503`（`index.html`、`museum_v1.js` 的 import 與 `VERSION`）。「穿越蟲洞」→「穿越成功」間隔 6.0 秒，與蟲洞段一致。
+- 注意：`shuttle3d.js` 在 `launch.js`、`scene.js` 內的 import 字串是固定的 `?v=20261027l`，機器人**不會**更新它。以後改 `shuttle3d.js` 要手動把這兩處的 `?v=` 一起升（否則瀏覽器可能讀到舊的太空梭模型）。
