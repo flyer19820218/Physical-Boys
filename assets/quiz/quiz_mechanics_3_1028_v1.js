@@ -1,0 +1,72 @@
+/* Multiple-choice practice for mechanics_3.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('mechanics_3',{
+ '#tab-micro':[
+  Q(P(`摩擦力的方向有什麼規則？`,`What is the rule for the direction of friction?`),
+   [P(`與運動或運動趨勢相同`,`Matches the motion direction`),P(`永遠垂直地面向上`,`Always straight up from ground`),P(`永遠指向物體重心`,`Always toward the center`),P(`與運動或運動趨勢相反`,`Opposes motion or its tendency`)],3,
+   P(`摩擦力的方向永遠與物體的運動方向或運動趨勢相反，你往右推，摩擦力就向左。`,`Friction always opposes the motion or its tendency: push right and friction points left.`),
+   P(`摩擦力是在「抵抗」。`,`Friction is "resisting".`)),
+  Q(P(`在顯微鏡下，摩擦力主要是怎麼產生的？`,`Under a microscope, how does friction mainly arise?`),
+   [P(`表面過於光滑吸住`,`Smooth surfaces sucking`),P(`空氣把物體壓住`,`Air pressing the object`),P(`磁力把兩物吸引`,`Magnetism pulling them`),P(`表面凹凸互相咬合`,`Surface bumps interlock`)],3,
+   P(`看似平滑的表面在顯微鏡下充滿凹凸的鋸齒，互相咬合拉扯時就產生阻力。`,`Surfaces that look smooth are jagged under a microscope, and when the teeth interlock and drag, resistance appears.`),
+   P(`放大看接觸面。`,`Look closely at the contact surfaces.`)),
+  Q(P(`溜冰鞋在冰上比在柏油路上好滑，主要因為什麼？`,`Why do skates glide better on ice than on asphalt?`),
+   [P(`冰面較粗糙，摩擦力小`,`Ice is rougher, less friction`),P(`冰面較光滑，摩擦力小`,`Ice is smoother, less friction`),P(`冰面較光滑，摩擦力大`,`Ice is smoother, more friction`),P(`冰面較粗糙，摩擦力大`,`Ice is rougher, more friction`)],1,
+   P(`冰面比柏油路光滑，接觸面的鋸齒咬合較少，摩擦力小，所以容易滑行。`,`Ice is smoother than asphalt, so fewer teeth interlock and the friction is smaller, making gliding easy.`),
+   P(`越光滑咬合越少。`,`Smoother means less interlocking.`))],
+ '#tab-graph':[
+  Q(P(`推不動箱子時，靜摩擦力與外力的關係是什麼？`,`When a box cannot be pushed, how do static friction and the applied force compare?`),
+   [P(`靜摩擦力大於外力`,`Friction exceeds the applied force`),P(`靜摩擦力小於外力`,`Friction is below the applied force`),P(`靜摩擦力等於外力`,`Friction equals the applied force`),P(`靜摩擦力永遠為零`,`Friction stays at zero always`)],2,
+   P(`物體靜止時合力為零，靜摩擦力等於外力，並且會隨外力增大而增大。`,`At rest the net force is zero, so static friction equals the applied force and grows with it.`),
+   P(`靜止代表合力為零。`,`At rest means net force is zero.`)),
+  Q(P(`外力突破最大靜摩擦力、箱子滑動後，摩擦力會怎樣？`,`Once the push beats the maximum static friction and the box slides, what happens to the friction?`),
+   [P(`繼續隨外力增大`,`It keeps rising with the push`),P(`變成比原來更大`,`It becomes bigger than before`),P(`瞬間變成零`,`It becomes zero at once`),P(`掉下來成固定值`,`It drops to a constant value`)],3,
+   P(`滑動後是動摩擦力，數值瞬間掉下來，變成固定不變的值，所以推動後會覺得較輕鬆。`,`Sliding friction is kinetic friction: it drops at once to a fixed value, so the box feels easier to push once moving.`),
+   P(`推動之後好像變輕鬆了。`,`It feels easier once it moves.`)),
+  Q(P(`最大靜摩擦力與動摩擦力的大小關係是什麼？`,`How do the maximum static friction and kinetic friction compare?`),
+   [P(`動摩擦力較大`,`Kinetic friction is larger`),P(`兩者永遠相等`,`They are exactly equal`),P(`靜摩擦力較大`,`Static friction is larger`),P(`兩者永遠為零`,`Both are always zero`)],2,
+   P(`最大靜摩擦力通常大於動摩擦力，所以剛推動的瞬間最吃力。`,`Maximum static friction is usually larger than kinetic friction, so the instant of starting to push is hardest.`),
+   P(`剛推動時最吃力。`,`The start is the hardest part.`))],
+ '#tab-var':[
+  Q(P(`在木塊上方加砝碼，最大靜摩擦力會怎樣？`,`What happens to the maximum static friction when masses are added on top of the block?`),
+   [P(`變小，因為正向力變大`,`Falls as normal force rises`),P(`變大，因為正向力變大`,`Rises as normal force rises`),P(`不變，與正向力無關`,`Unchanged, normal force is moot`),P(`變大，因為面積變大`,`Rises as the area increases`)],1,
+   P(`加砝碼使正向力增加，最大靜摩擦力與正向力成正比，所以變大。`,`Adding masses raises the normal force, and the maximum static friction is proportional to it, so it rises.`),
+   P(`摩擦力與正向力有關。`,`Friction depends on the normal force.`)),
+  Q(P(`同一木塊分別用大面與小面接觸桌面（其他條件相同），最大靜摩擦力有何差別？`,`The same block rests on its large face or its small face (all else equal). How do the maximum static frictions differ?`),
+   [P(`大面接觸比較大`,`Larger with the large face`),P(`小面接觸比較大`,`Larger with the small face`),P(`只有一面有摩擦`,`Only one face has friction`),P(`兩者幾乎一樣大`,`Practically about the same`)],3,
+   P(`在一般乾摩擦近似下，摩擦力與接觸面積幾乎無關，翻面後最大靜摩擦力大致不變。`,`Under ordinary dry friction, friction hardly depends on contact area, so flipping the block barely changes it.`),
+   P(`先想正向力有沒有改變。`,`First ask whether the normal force changed.`)),
+  Q(P(`同一木塊放在光滑塑膠、木板、粗砂紙上，哪一個最大靜摩擦力最大？`,`The same block sits on smooth plastic, a wooden board, or rough sandpaper. Which gives the largest maximum static friction?`),
+   [P(`木板`,`The wooden board`),P(`粗砂紙`,`Rough sandpaper`),P(`光滑塑膠`,`Smooth plastic`),P(`三者一樣大`,`All three the same`)],1,
+   P(`接觸面越粗糙，摩擦係數越大，最大靜摩擦力越大，所以粗砂紙最大。`,`The rougher the surface, the larger the friction coefficient and the maximum static friction, so sandpaper gives the most.`),
+   P(`越粗糙，越難拉動。`,`The rougher, the harder to pull.`))],
+ '#tab-bike':[
+  Q(P(`腳踏車輪胎加深胎紋，目的是什麼？`,`Why deepen the tread on bicycle tires?`),
+   [P(`減少摩擦力，更省力`,`Less friction, saves effort`),P(`增加車子的總重量`,`Adds weight to the bicycle`),P(`讓輪胎變得更輕盈`,`Makes the tires lighter`),P(`增加摩擦，防止打滑`,`More friction, stops slips`)],3,
+   P(`胎紋增加輪胎與地面的摩擦力，防止打滑，煞車也更安全。`,`Treads increase tire-to-road friction, preventing slips and making braking safer.`),
+   P(`這是要增加還是減少摩擦力？`,`Is this to increase or decrease friction?`)),
+  Q(P(`鏈條上潤滑油，目的是什麼？`,`Why oil a bicycle chain?`),
+   [P(`增加摩擦力，防止滑脫`,`More friction, prevents slip`),P(`讓鏈條變得更重`,`Makes the chain heavier`),P(`減少摩擦力，節省能量`,`Less friction, saves energy`),P(`讓鏈條變成磁鐵`,`Turns the chain magnetic`)],2,
+   P(`潤滑油讓接觸面更光滑，減少摩擦力與熱能浪費。`,`Oil makes the contact smoother, cutting friction and wasted heat.`),
+   P(`鏈條需要滑順。`,`The chain should run smoothly.`)),
+  Q(P(`下列哪一個做法是為了「增加」摩擦力？`,`Which of these is done to INCREASE friction?`),
+   [P(`軸承內塗潤滑油`,`Oiling inside a bearing`),P(`船身做成流線型`,`Streamlining a ship hull`),P(`冰刀磨得很光滑`,`Polishing an ice skate`),P(`雪地輪胎裝雪鏈`,`Snow chains on the tires`)],3,
+   P(`雪鏈增加輪胎與雪地的摩擦力；潤滑、流線型、磨光都是為了減少摩擦。`,`Snow chains raise tire-to-snow friction; lubricating, streamlining and polishing all reduce friction.`),
+   P(`防止打滑。`,`To stop slipping.`))],
+ '#tab-prob':[
+  Q(P(`60 kg 的冰箱在平地至少要 30 kgw 才推得動。壓在牆上，最少要多大推力才不會掉下來？`,`A 60 kg fridge needs at least 30 kgw to be pushed on flat ground. Pressed on a wall, what is the least push that stops it falling?`),
+   [P(`120 kgw`,`120 kgw`),P(`60 kgw`,`60 kgw`),P(`30 kgw`,`30 kgw`),P(`180 kgw`,`180 kgw`)],0,
+   P(`最大靜摩擦力是正向力的一半（30：60）。牆上需 60 kgw 的摩擦力抵抗重力，所以正向力（推力）＝ 60 × 2 ＝ 120 kgw。`,`Maximum static friction is half the normal force (30 : 60). On the wall 60 kgw of friction must balance the weight, so the push (normal force) = 60 × 2 = 120 kgw.`),
+   P(`摩擦力要等於重力，且為正向力的一半。`,`Friction must equal the weight and is half the normal force.`)),
+  Q(P(`疊放的 A、B 靜止。A 的彈簧讀數 80 gw，地面對 B 的摩擦力 300 gw，B 的彈簧讀數是多少？`,`Stacked blocks A and B are at rest. A's spring reads 80 gw and the ground friction on B is 300 gw. What does B's spring read?`),
+   [P(`220 gw`,`220 gw`),P(`300 gw`,`300 gw`),P(`380 gw`,`380 gw`),P(`80 gw`,`80 gw`)],2,
+   P(`A 受向左 80 gw 的摩擦，反作用使 B 受 A 向右 80 gw；B 向右總力 ＝ 80 ＋ 300 ＝ 380 gw，彈簧拉力 F ＝ 380 gw。`,`A feels 80 gw of friction leftward, so by reaction B feels 80 gw from A rightward; the rightward total on B is 80 + 300 = 380 gw, so the spring pulls with F = 380 gw.`),
+   P(`先分析上面的 A，再用作用力與反作用力看 B。`,`Analyze A first, then use action-reaction for B.`)),
+  Q(P(`四塊重量各為 W 的木塊夾在左右牆間靜止，每面牆給的摩擦力是多少？`,`Four blocks of weight W each are pressed between two walls at rest. How much friction does each wall provide?`),
+   [P(`2W`,`2W`),P(`W`,`W`),P(`4W`,`4W`),P(`3W`,`3W`)],0,
+   P(`把四塊視為整體，總重 4W，由左右兩面牆平均分擔，每面牆提供向上的摩擦力 2W。`,`Treat the four blocks as one: total weight 4W is shared equally by the two walls, so each provides 2W of upward friction.`),
+   P(`把相連木塊當成整體。`,`Treat the connected blocks as one body.`))]
+});
+})();
