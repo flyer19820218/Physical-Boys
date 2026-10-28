@@ -2753,12 +2753,45 @@
   };
   window.teachOnTab = function (tabId) { if (T.on) enterTab(tabId, false); };
 
-  /* 語言切換：原本的 setLanguage 會把「接觸」那一步的球重設，所以老師模式下那一步從頭再播；其他步驟不受影響 */
-  document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => {
-    if (!T.on || T.done) return;
-    const st = stage(), s = st && st.steps[T.si];
-    if (s && s.relang) { const was = T.paused; jump(T.si); if (was) setPaused(true); paint(); }
-  }));
+  /* 語言切換：原本的 setLanguage 在分頁四會呼叫 operateContact()，把兩球接觸的狀態整個重設（老師模式那一步會從頭重播、
+     學生操作的球也會被收回去）。這裡在外面包一層：保存接觸狀態 → 呼叫原函式（文字照常換語言）→ 還原狀態並只重寫狀態文字。
+     老師模式的步驟、計時、暫停都不碰，所以不會重播；其他分頁與原函式本身完全沒動。 */
+  (function () {
+    const orig = window.setLanguage;
+    if (typeof orig !== 'function') return;
+    const el = id => document.getElementById(id);
+    function contactText() {
+      if (t4_contactState === 0) return tr('兩個一樣大的導體球，都還是電中性', 'Two identical conducting spheres, both neutral');
+      const neg = t4_contactState === -1;
+      if (t4_cPhase === 'touching') return neg ? tr('接觸！多出來的電子互相排斥，沿著接觸點流到 B 球', 'Touching! The extra electrons repel each other and flow into B')
+                                                : tr('接觸！B 球的電子被 A 球的正電吸過去', 'Touching! B\'s electrons are pulled across into A');
+      if (t4_cPhase === 'joined') return tr('電荷已經平分：兩球各 4 個。現在可以分開了', 'Charge is shared: 4 each. You can separate them now');
+      if (t4_cPhase === 'separated') {
+        const s = neg ? tr('負', 'negative') : tr('正', 'positive');
+        return tr(`分開！兩球一樣大 → 電荷平分，各帶 4 個${s}電荷，分佈完全相同`, `Separated! Equal spheres share equally: 4 ${s} charges each, identical distribution`);
+      }
+      return neg ? tr('A 球帶 8 個負電荷，B 球電中性 —— 還沒碰到', 'A carries 8 negative charges, B is neutral — not touching yet')
+                 : tr('A 球帶 8 個正電荷，B 球電中性 —— 還沒碰到', 'A carries 8 positive charges, B is neutral — not touching yet');
+    }
+    window.setLanguage = function (lang) {
+      const keep = currentTab === 'tab4' && t4_mode === 'contact';
+      let sv = null;
+      if (keep) {
+        const bT = el('btn-c-touch'), bS = el('btn-c-sep'), st = el('t4-status');
+        sv = { state: t4_contactState, phase: t4_cPhase, anim: t4_cAnim, flyers: t4_cFlyers, qA: t4_qA, qB: t4_qB, color: st.style.color,
+               bT: bT && [bT.disabled, bT.classList.contains('active')], bS: bS && [bS.disabled, bS.classList.contains('active')] };
+      }
+      const r = orig.apply(this, arguments);
+      if (sv) {
+        t4_contactState = sv.state; t4_cPhase = sv.phase; t4_cAnim = sv.anim; t4_cFlyers = sv.flyers; t4_qA = sv.qA; t4_qB = sv.qB;
+        const bT = el('btn-c-touch'), bS = el('btn-c-sep'), st = el('t4-status');
+        if (bT) { bT.disabled = sv.bT[0]; bT.classList.toggle('active', sv.bT[1]); }
+        if (bS) { bS.disabled = sv.bS[0]; bS.classList.toggle('active', sv.bS[1]); }
+        st.textContent = contactText(); st.style.color = sv.color;
+      }
+      return r;
+    };
+  })();
 
   /* ── 一次性的準備：每個舞台加一條控制列，學生專用的控制列在老師模式收起來 ── */
   function buildBar(id) {
