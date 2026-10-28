@@ -1,0 +1,72 @@
+/* Multiple-choice practice for concerntration_3.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('concerntration_3',{
+ '#tab1':[
+  Q(P(`20°C 時糖的溶解度為 36 g／100 g 水。100 g 水中加入 15 g 糖，實際溶解量是多少？`,`At 20°C sugar dissolves up to 36 g per 100 g water. If 15 g is added to 100 g water, how much actually dissolves?`),
+   [P(`15 g，杯底沒有剩`,`15 g, nothing left over`),P(`36 g，杯底剩 21 g`,`36 g, 21 g left over`),P(`15 g，杯底剩 21 g`,`15 g, 21 g left over`),P(`36 g，杯底沒有剩`,`36 g, nothing left over`)],0,
+   P(`15 g 小於上限 36 g，所以全部溶解（未飽和），溶解量是 15 g，溶解度仍是 36 g／100 g 水。`,`15 g is below the 36 g limit, so it all dissolves (unsaturated): the dissolved amount is 15 g while the solubility stays 36 g per 100 g water.`),
+   P(`先比較加入量與上限。`,`Compare the amount added with the limit.`)),
+  Q(P(`同樣條件下加入 50 g 糖，杯底會留下多少未溶的糖？`,`Under the same conditions 50 g of sugar is added. How much undissolved sugar is left at the bottom?`),
+   [P(`36 g`,`36 g`),P(`50 g`,`50 g`),P(`14 g`,`14 g`),P(`86 g`,`86 g`)],2,
+   P(`最多溶 36 g，50 − 36 ＝ 14 g 留在杯底；溶液已飽和。`,`At most 36 g dissolves, so 50 − 36 = 14 g stays at the bottom; the solution is saturated.`),
+   P(`加入量減去溶解度上限。`,`Amount added minus the limit.`)),
+  Q(P(`溶解度與溶解量最主要的差別是什麼？`,`What is the main difference between solubility and dissolved amount?`),
+   [P(`溶解度是上限比例`,`Solubility is a limit ratio`),P(`溶解量是上限比例`,`Dissolved amount is a limit`),P(`兩者永遠相同大小`,`The two are always equal`),P(`溶解度隨水量改變`,`Solubility follows water amount`)],0,
+   P(`溶解度是定溫下每 100 g 水的極限比例；溶解量是實際溶進去的公克數，會隨水量與加入量改變。`,`Solubility is the limit per 100 g water at a set temperature; the dissolved amount is the grams actually dissolved and varies with water and amount added.`),
+   P(`一個是上限，一個是實際數。`,`One is a limit, the other an actual amount.`))],
+ '#tab2':[
+  Q(P(`20°C 時 36 g 糖溶於 100 g 水恰好飽和。溶解度與重量百分濃度分別是多少？`,`At 20°C, 36 g of sugar in 100 g water is just saturated. What are the solubility and the weight percent concentration?`),
+   [P(`36 g／100 g 水；36.0%`,`36 g/100 g water; 36.0%`),P(`36 g／100 g 水；26.5%`,`36 g/100 g water; 26.5%`),P(`36 g／136 g 水；26.5%`,`36 g/136 g water; 26.5%`),P(`26.5 g／100 g 水；36%`,`26.5 g/100 g water; 36%`)],1,
+   P(`溶解度分母是純水：36 g／100 g 水；濃度分母是整杯溶液：36 ÷ (36＋100) × 100% ＝ 26.5%（不是 36%）。`,`Solubility divides by pure water: 36 g per 100 g water. Concentration divides by the whole solution: 36 ÷ (36 + 100) × 100% = 26.5% (not 36%).`),
+   P(`溶解度分母是「純水」，濃度分母是「全體溶液」。`,`Solubility divides by pure water; concentration divides by the whole solution.`)),
+  Q(P(`同一題中，水量減半成 50 g，最多能溶解多少糖？溶解度是否改變？`,`In the same problem the water is halved to 50 g. How much sugar can dissolve, and does solubility change?`),
+   [P(`最多 36 g；溶解度不變`,`Up to 36 g; unchanged`),P(`最多 18 g；溶解度減半`,`Up to 18 g; halves`),P(`最多 18 g；溶解度不變`,`Up to 18 g; unchanged`),P(`最多 72 g；溶解度加倍`,`Up to 72 g; doubles`)],2,
+   P(`水少一半，最多溶 18 g，但溶解度是極限比例，仍是 36 g／100 g 水。`,`With half the water at most 18 g dissolves, but solubility is a limit ratio and stays 36 g per 100 g water.`),
+   P(`溶解度像最高速限，不隨車子變少而改變。`,`Solubility is like a speed limit and does not change with fewer cars.`)),
+  Q(P(`為什麼飽和糖水的濃度不是 36%？`,`Why is the concentration of saturated sugar water not 36%?`),
+   [P(`分母應該只用糖的重`,`The denominator is the sugar`),P(`分母要用整杯溶液`,`The denominator is the solution`),P(`分子應該用水的重`,`The numerator is the water`),P(`因為糖不會溶解`,`Because sugar does not dissolve`)],1,
+   P(`濃度的分母必須是溶質加溶劑的總重 136 g，不是只有水的 100 g，所以是 26.5%。`,`The denominator must be the total weight of solute plus solvent, 136 g, not just the 100 g of water, giving 26.5%.`),
+   P(`整杯溶液有多重？`,`How heavy is the whole solution?`))],
+ '#tab3':[
+  Q(P(`硝酸鉀的溶解度與溫度的關係是什麼？`,`How does the solubility of potassium nitrate depend on temperature?`),
+   [P(`溫度越高溶解度越小`,`Higher temperature, lower`),P(`溫度變化幾乎無影響`,`Temperature hardly matters`),P(`溫度越低溶解度越大`,`Lower temperature, higher`),P(`溫度越高溶解度越大`,`Higher temperature, higher`)],3,
+   P(`大部分固體（如硝酸鉀）溫度愈高，水分子運動愈劇烈，溶解度大幅上升。`,`For most solids such as potassium nitrate, higher temperature means more vigorous water molecules and a much larger solubility.`),
+   P(`大多數固體胃口隨溫度變大。`,`Most solids dissolve more as it gets hotter.`)),
+  Q(P(`食鹽的溶解度曲線有什麼特點？`,`What is notable about the solubility curve of table salt?`),
+   [P(`幾乎是一條水平線`,`It is almost totally flat`),P(`隨溫度急遽往上升`,`It rises steeply with heat`),P(`隨溫度逐漸往下降`,`It slowly drops with heat`),P(`溫度越低溶解越多`,`It rises as it gets colder`)],0,
+   P(`食鹽的溶解度受溫度影響極小，曲線幾乎水平。`,`The solubility of salt is hardly affected by temperature, so its curve is nearly flat.`),
+   P(`溫度對它幾乎沒有作用。`,`Temperature has almost no effect on it.`)),
+  Q(P(`下列哪一類物質的溶解度會隨溫度升高而下降？`,`Which kind of substance becomes less soluble as the temperature rises?`),
+   [P(`所有的固體`,`All solids`),P(`所有的氣體`,`All gases`),P(`所有的液體`,`All liquids`),P(`所有的鹽類`,`All salts`)],1,
+   P(`氣體的溶解度隨溫度升高而下降（熱水藏不住氣體），少數固體如氫氧化鈣也是。`,`Gas solubility falls as temperature rises (hot water cannot hold gases), as does that of a few solids such as calcium hydroxide.`),
+   P(`熱汽水會比較快沒氣。`,`Warm soda goes flat faster.`))],
+ '#tab4':[
+  Q(P(`硝酸鉀 60°C 溶解度 110 g、20°C 溶解度 30 g（每 100 g 水）。100 g 水的飽和溶液從 60°C 降到 20°C，析出多少晶體？`,`Potassium nitrate dissolves 110 g at 60°C and 30 g at 20°C per 100 g water. A saturated solution with 100 g water cools from 60°C to 20°C. How much crystal appears?`),
+   [P(`110 g`,`110 g`),P(`80 g`,`80 g`),P(`30 g`,`30 g`),P(`140 g`,`140 g`)],1,
+   P(`析出量 ＝ 高溫溶解度 − 低溫溶解度 ＝ 110 − 30 ＝ 80 g。`,`Crystals = high-temperature solubility − low-temperature solubility = 110 − 30 = 80 g.`),
+   P(`兩個溶解度相減。`,`Subtract the two solubilities.`)),
+  Q(P(`同一題中，若水量是 200 g，降溫後析出多少晶體？`,`In the same problem, if the water is 200 g, how much crystal appears after cooling?`),
+   [P(`160 g`,`160 g`),P(`80 g`,`80 g`),P(`320 g`,`320 g`),P(`40 g`,`40 g`)],0,
+   P(`析出量與水量成正比：80 × 200 ÷ 100 ＝ 160 g。`,`The crystals are proportional to the water: 80 × 200 ÷ 100 = 160 g.`),
+   P(`水量變 2 倍，析出量也是 2 倍。`,`Doubling the water doubles the crystals.`)),
+  Q(P(`熱的飽和溶液冷卻後，為什麼會有晶體析出？`,`Why do crystals appear when a hot saturated solution cools?`),
+   [P(`低溫時溶質變重了`,`The solute gets heavier cold`),P(`低溫時水會變不見`,`The water disappears cold`),P(`低溫時溶解度變小`,`Solubility drops when cool`),P(`低溫時溶解度變大`,`Solubility rises when cool`)],2,
+   P(`降溫後水的溶解度下降，多出來超過低溫極限的溶質就析出成晶體。`,`Cooling lowers the solubility, so solute beyond the new, lower limit crystallizes out.`),
+   P(`胃口變小了。`,`The water's appetite shrank.`))],
+ '#tab5':[
+  Q(P(`工廠想製造溶有最多二氧化碳的超級汽水，應在什麼條件下灌裝？`,`A factory wants super-fizzy soda with the most dissolved CO₂. Under what conditions should it bottle it?`),
+   [P(`高溫加高壓`,`High temp and high pressure`),P(`低溫加低壓`,`Low temp and low pressure`),P(`低溫加高壓`,`Low temp and high pressure`),P(`高溫加低壓`,`High temp and low pressure`)],2,
+   P(`氣體溶解度隨溫度降低而增加、隨壓力增加而增加，所以低溫＋高壓可溶最多二氧化碳。`,`Gas solubility rises as temperature falls and as pressure rises, so low temperature plus high pressure dissolves the most CO₂.`),
+   P(`要把氣體壓進水裡，又讓它不想跑出來。`,`Press the gas in and keep it from wanting to leave.`)),
+  Q(P(`汽水開瓶「啵」一聲後大量冒泡，主要因為什麼？`,`Why does soda foam up after the bottle is opened with a "pop"?`),
+   [P(`壓力降低，溶解度驟降`,`Pressure falls, solubility drops`),P(`壓力升高，溶解度驟降`,`Pressure rises, solubility drops`),P(`溫度升高，溶解度驟增`,`Heat rises, solubility rises`),P(`水變少了，汽水被濃縮`,`Less water concentrates it`)],0,
+   P(`開瓶後壓力降回一大氣壓，二氧化碳的溶解度暴跌，多餘的氣體就化為氣泡冒出。`,`On opening, the pressure falls back to 1 atm and CO₂ solubility plunges, so the excess gas escapes as bubbles.`),
+   P(`開瓶前後哪個量變了？`,`Which quantity changed on opening?`)),
+  Q(P(`潛水員急速上浮容易得潛水夫病，原因是什麼？`,`Why are divers who surface too quickly prone to decompression sickness?`),
+   [P(`血液中氮氣溶解度驟增`,`Nitrogen solubility soars`),P(`血液中氮氣溶解度驟降`,`Nitrogen solubility drops`),P(`血液中氧氣被完全用盡`,`Oxygen is used up entirely`),P(`海水把氧氣壓進血管`,`Seawater pushes oxygen in`)],1,
+   P(`上浮太快水壓驟減，血液中的氮氣溶解度暴降，氮氣在血管中化為氣泡。`,`Surfacing too fast cuts the water pressure, nitrogen solubility in the blood plunges, and nitrogen bubbles form in the vessels.`),
+   P(`就像汽水開瓶。`,`Just like opening soda.`))]
+});
+})();

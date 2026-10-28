@@ -1,0 +1,72 @@
+/* Multiple-choice practice for magnetism_1.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('magnetism_1',{
+ '#tab-pole':[
+  Q(P(`細線懸吊的磁鐵靜止後，指向北方的那一端稱為什麼？`,`A magnet hung on a thread comes to rest. What is its north-pointing end called?`),
+   [P(`S 極（指南極）`,`S pole (south-seeking)`),P(`中性區的中央`,`The neutral center zone`),P(`N 極（指北極）`,`N pole (north-seeking)`),P(`磁力線的終點`,`The end of field lines`)],2,
+   P(`懸吊磁鐵受地磁影響，指向北方的一端稱為指北極（N 極），指向南方的稱為指南極（S 極）。`,`A suspended magnet is aligned by Earth's field: the end pointing north is the N pole and the end pointing south is the S pole.`),
+   P(`指北，就叫 N 極。`,`It points north, so it is the N pole.`)),
+  Q(P(`兩塊磁鐵的 N 極與 N 極靠近時，會發生什麼事？`,`What happens when the N poles of two magnets are brought close?`),
+   [P(`互相排斥`,`They repel one another`),P(`互相吸引`,`They attract each other`),P(`完全沒有作用`,`Nothing happens at all`),P(`先吸引後排斥`,`Attract first, then repel`)],0,
+   P(`同名極相斥、異名極相吸，所以 N 與 N 互相排斥。`,`Like poles repel and unlike poles attract, so N and N repel.`),
+   P(`同名還是異名？`,`Like or unlike poles?`)),
+  Q(P(`將一塊磁鐵等分成三段，總共會出現幾個 N 極與幾個 S 極？`,`If a magnet is cut into 3 equal pieces, how many N and S poles will there be in total?`),
+   [P(`1 個 N 極、1 個 S 極`,`1 N pole and 1 S pole`),P(`3 個 N 極、0 個 S 極`,`3 N poles and 0 S poles`),P(`3 個 N 極、3 個 S 極`,`3 N poles and 3 S poles`),P(`2 個 N 極、2 個 S 極`,`2 N poles and 2 S poles`)],2,
+   P(`每一段切斷後都會成為具備完整雙極的新磁鐵，所以共 3 個 N 極與 3 個 S 極。`,`Each piece becomes a new complete magnet with two poles, so there are 3 N poles and 3 S poles in total.`),
+   P(`切斷時磁極會不會消失？每一段是不是都是獨立的磁鐵？`,`Do poles disappear when cut? Is each piece an independent magnet?`))],
+ '#tab-mag':[
+  Q(P(`下列哪一組都是磁性物質？`,`Which group contains only magnetic materials?`),
+   [P(`銅、鋁、金`,`Copper, aluminum, gold`),P(`鐵、鋁、銅`,`Iron, aluminum, copper`),P(`鐵、鈷、鎳`,`Iron, cobalt, nickel`),P(`鎳、銀、鋅`,`Nickel, silver, zinc`)],2,
+   P(`能被磁鐵吸引並被磁化的磁性物質有鐵、鈷、鎳及其合金。`,`The materials that are attracted and magnetized are iron, cobalt, nickel and their alloys.`),
+   P(`三種金屬的名字都是「金」字旁。`,`All three have the metal radical.`)),
+  Q(P(`高溫加熱或劇烈撞擊磁鐵，為什麼會使它失去磁性？`,`Why does strong heating or hard knocking make a magnet lose its magnetism?`),
+   [P(`磁疇排列被破壞了`,`Domain alignment is disrupted`),P(`磁鐵內的鐵被燒完了`,`The iron inside burns away`),P(`磁鐵變得過於太重`,`The magnet gets too heavy`),P(`磁極永遠都被切斷了`,`Its poles get cut off for good`)],0,
+   P(`磁疇排列整齊時整體有磁性；加熱或撞擊使磁疇回到凌亂，磁性就消失。`,`Aligned domains give the magnet its magnetism; heat or impact scrambles them and the magnetism is lost.`),
+   P(`小磁區的排列變得凌亂。`,`The tiny magnetic regions become disordered.`)),
+  Q(P(`工廠要製造能長時間吸在冰箱上的造型磁鐵，內部應該選軟鐵還是鋼？`,`A factory makes fridge magnets for long-term use. Should it use soft iron or steel?`),
+   [P(`軟鐵，磁性長久保存`,`Soft iron keeps magnetism`),P(`鋼，磁性很容易消失`,`Steel loses it very easily`),P(`軟鐵，不可能被磁化`,`Soft iron cannot magnetize`),P(`鋼，磁性可長久保存`,`Steel keeps its magnetism`)],3,
+   P(`鋼是硬磁性物質，不易磁化但磁化後磁性可長久保存，適合做永久磁鐵；軟鐵磁性容易消失。`,`Steel is a hard magnetic material: hard to magnetize but it keeps its magnetism long, ideal for permanent magnets; soft iron loses it easily.`),
+   P(`軟鐵的磁性容易消失，鋼的可以長久保存。`,`Soft iron loses magnetism easily; steel retains it.`))],
+ '#tab-line':[
+  Q(P(`磁鐵外部的磁力線方向如何？`,`What is the direction of field lines outside a magnet?`),
+   [P(`S極出發到N極`,`From the S pole to the N pole`),P(`順時針繞磁鐵轉`,`Clockwise around the magnet`),P(`N極出發到S極`,`From the N pole to the S pole`),P(`沿直線射向遠方`,`Straight out to far away`)],2,
+   P(`磁鐵外部的磁力線由 N 極出發，回到 S 極，形成封閉曲線。`,`Outside the magnet, field lines run from the N pole to the S pole as closed curves.`),
+   P(`外部由 N 出發。`,`Outside, they start at N.`)),
+  Q(P(`磁力線較密集的地方，代表磁場怎樣？`,`What does a region of denser field lines indicate?`),
+   [P(`磁場較強`,`The field is stronger`),P(`磁場較弱`,`The field is weaker`),P(`磁場方向反轉`,`The field reverses`),P(`沒有磁場存在`,`There is no field there`)],0,
+   P(`磁力線的疏密代表磁場強弱，越密集磁場越強。`,`The density of field lines shows field strength: the denser, the stronger.`),
+   P(`疏密程度就是強弱。`,`Density shows strength.`)),
+  Q(P(`長條形磁鐵正中央的磁力線非常稀疏，代表什麼？`,`Field lines are very sparse at the exact center of a bar magnet. What does this mean?`),
+   [P(`該處磁場最為強烈`,`The field there is strongest`),P(`該處的磁場方向相反`,`The field there is reversed`),P(`該處就是 N 極本身`,`That spot is the N pole`),P(`該處磁場非常微弱`,`The field there is weak`)],3,
+   P(`稀疏表示磁場微弱（中性區），磁力主要集中在兩端磁極。`,`Sparse lines mean a weak field (the neutral zone); the magnetic force is concentrated at the two poles.`),
+   P(`磁力線的「疏密程度」代表磁場的什麼特性？`,`What property of the field does line density represent?`))],
+ '#tab-compass':[
+  Q(P(`空間中某點的磁場方向是怎麼定義的？`,`How is the direction of the magnetic field at a point defined?`),
+   [P(`指南針 S 極所指的方向`,`Where a compass S pole points`),P(`磁鐵 S 極所在的方向`,`The direction of the S pole`),P(`指南針 N 極所指的方向`,`Where a compass N pole points`),P(`磁鐵 N 極所在的方向`,`The direction of the N pole`)],2,
+   P(`將指南針放在磁場中，其 N 極所指的方向就是該點的磁場方向。`,`Place a compass in the field: the direction its N pole points is the field direction at that point.`),
+   P(`用指南針來定義。`,`It is defined using a compass.`)),
+  Q(P(`磁場方向與該點磁力線的關係是什麼？`,`How is the field direction related to the field line at that point?`),
+   [P(`垂直於該處磁力線`,`Perpendicular to the line`),P(`與磁力線方向相反`,`Opposite to the line`),P(`與磁力線沒有關係`,`Unrelated to the line`),P(`沿磁力線切線方向`,`Along the line tangent`)],3,
+   P(`磁場方向與該點磁力線的切線方向一致，小磁針會順著切線轉動。`,`The field direction matches the tangent of the field line there, so a small needle turns along the tangent.`),
+   P(`切線方向就是瞬間飛出去的方向。`,`The tangent is the direction of instantly flying off.`)),
+  Q(P(`小磁針放在磁鐵外部正中央的上方，磁針的 N 極會指向哪個方向？`,`A small compass sits directly above the center of a bar magnet. Which way does its N pole point?`),
+   [P(`平行磁鐵，朝向 N 極`,`Parallel, toward the N pole`),P(`平行磁鐵，朝向 S 極`,`Parallel, toward the S pole`),P(`垂直向上，遠離磁鐵`,`Straight up, away from it`),P(`垂直向下，朝向磁鐵`,`Straight down, toward it`)],1,
+   P(`該處磁力線從 N 極走向 S 極，切線方向平行磁鐵並朝向 S 極，所以磁針 N 極指向 S 極那端。`,`Field lines there run from N to S, so the tangent is parallel to the magnet pointing toward the S pole, and the needle's N pole points that way.`),
+   P(`磁力線是從 N 極出發走向 S 極。`,`Field lines go from the N pole to the S pole.`))],
+ '#tab-earth':[
+  Q(P(`為什麼指南針的 N 極會指向地理北方？`,`Why does a compass N pole point to geographic north?`),
+   [P(`地球是一顆大磁鐵`,`Earth is a giant magnet`),P(`北方的空氣比較輕`,`Northern air is lighter`),P(`北極的冰層吸引磁針`,`Polar ice attracts it`),P(`磁針受到地心引力`,`Gravity pulls the needle`)],0,
+   P(`地球本身是一顆巨大的磁鐵，周圍有地磁場，指南針的 N 極被地磁場拉向北方。`,`The Earth is a huge magnet surrounded by a geomagnetic field that turns the compass N pole to the north.`),
+   P(`地球周圍有地磁場。`,`Earth is surrounded by a magnetic field.`)),
+  Q(P(`地理北極附近的地磁極實際上是什麼極？`,`What kind of magnetic pole actually lies near the geographic North Pole?`),
+   [P(`地磁 N 極`,`A geomagnetic N pole`),P(`地磁中性區`,`A neutral magnetic zone`),P(`地磁 S 極`,`A geomagnetic S pole`),P(`沒有任何磁極`,`No magnetic pole at all`)],2,
+   P(`指南針 N 極被吸向北方，由異名相吸可知北方附近是 S 極；地理北極附近是地磁 S 極。`,`The compass N pole is attracted north, so by unlike-poles-attract the pole near geographic north is an S pole.`),
+   P(`異名極才會相吸。`,`Only unlike poles attract.`)),
+  Q(P(`地球外部的磁力線方向如何？`,`What is the direction of Earth's external field lines?`),
+   [P(`從北方流向南方`,`From north to south`),P(`在赤道上往東流`,`Eastward on the equator`),P(`朝著地心垂直流`,`Toward the Earth center`),P(`從南方流向北方`,`From south to north`)],3,
+   P(`地磁 N 極在地理南極附近，磁力線由南半球出發，流向北半球的地磁 S 極，所以是從南流向北。`,`The geomagnetic N pole is near the geographic south, so lines leave the southern hemisphere and flow to the geomagnetic S pole in the north: south to north.`),
+   P(`磁力線永遠從 N 極出發。`,`Field lines always leave from an N pole.`))]
+});
+})();

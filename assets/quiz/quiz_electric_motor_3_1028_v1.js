@@ -1,0 +1,72 @@
+/* Multiple-choice practice for electric_motor_3.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('electric_motor_3',{
+ '#tab-palm':[
+  Q(P(`通電導線在磁場中所受的磁力，方向有什麼特性？`,`What is special about the direction of the magnetic force on a live wire in a field?`),
+   [P(`垂直電流與磁場`,`Perpendicular to both I and B`),P(`與電流方向相同`,`Same direction as the current`),P(`與磁場方向相同`,`Same direction as the field`),P(`與磁場方向相反`,`Opposite to the field direction`)],0,
+   P(`磁力 F 一定同時垂直於電流 I 與磁場 B，所以要用右手開掌定則判斷。`,`The force F is always perpendicular to both the current I and the field B, hence the right-hand open-palm rule.`),
+   P(`B ⟂ I、I ⟂ F、F ⟂ B。`,`B ⟂ I, I ⟂ F, F ⟂ B.`)),
+  Q(P(`玩四驅車時把電池裝反，車子為什麼會倒退？`,`Why does a toy car run backward when its battery is put in reversed?`),
+   [P(`電流反向，磁場也消失`,`Current reverses, field vanishes`),P(`電流反向，馬達停止了`,`Current reverses, motor stops`),P(`電流反向，磁力也反向`,`Current reverses, so does force`),P(`電流反向，磁力變兩倍`,`Current reverses, force doubles`)],2,
+   P(`電流方向反轉，在同一磁場中受力方向也反轉，馬達就反向轉動，車子倒退。`,`Reversing the current reverses the force in the same field, so the motor spins the other way and the car backs up.`),
+   P(`改變電流方向，受力方向會跟著變嗎？`,`Does the force direction change with the current direction?`)),
+  Q(P(`磁場由東向西、電流由南向北，導線往哪個方向受力？`,`The field points from east to west and the current from south to north. Which way is the wire pushed?`),
+   [P(`向上，離開地面`,`Upward, off the ground`),P(`向下，朝向地面`,`Downward, to the ground`),P(`向東，沿著水平`,`East, along the ground`),P(`向南，沿著水平`,`South, along the ground`)],0,
+   P(`四指指西（磁場）、大拇指指北（電流），掌心朝上，受力方向為向上。`,`Fingers point west (field), thumb north (current), the palm faces up, so the force is upward.`),
+   P(`四指指向西方，大拇指指向北方，掌心朝上還是朝下？`,`Fingers west, thumb north: does the palm face up or down?`))],
+ '#tab-force-examples':[
+  Q(P(`兩條平行導線的電流方向相同，會發生什麼事？`,`Two parallel wires carry current in the same direction. What happens?`),
+   [P(`互相吸引`,`They attract each other`),P(`互相排斥`,`They repel each other`),P(`完全沒有作用`,`They do not interact`),P(`先吸引再排斥`,`Attract first, then repel`)],0,
+   P(`每條導線都是磁場來源，也受另一條的磁力；同方向電流互相吸引。`,`Each wire is both a field source and a target of the other's force; currents in the same direction attract.`),
+   P(`每條導線都同時是來源與對象。`,`Each wire is both source and target.`)),
+  Q(P(`兩條平行導線的電流方向相反，會互相吸引還是排斥？`,`Two parallel wires carry currents in opposite directions. Do they attract or repel?`),
+   [P(`互相吸引`,`They attract each other`),P(`完全沒有作用`,`They do not interact`),P(`互相排斥`,`They repel each other`),P(`會繞著對方轉`,`They orbit each other`)],2,
+   P(`同方向電流相吸，反方向電流相斥，所以相反電流的導線互相排斥。`,`Currents in the same direction attract and in opposite directions repel, so opposite currents repel.`),
+   P(`把其中一條的電流翻轉，再用右手開掌定則。`,`Flip one current, then use the open-palm rule.`)),
+  Q(P(`電子向右進入垂直穿入畫面的磁場，最初會往上彎還是往下彎？`,`An electron enters a field pointing into the page while moving right. Does it first bend up or down?`),
+   [P(`往上彎`,`Curves upward`),P(`往下彎`,`Curves downward`),P(`不會彎曲`,`Stays straight`),P(`向右加速`,`Speeds up right`)],1,
+   P(`先當成正電荷判斷再把受力反轉：電子受力向下，離開磁場後不再受磁力，沿直線等速前進。`,`Judge it as a positive charge, then reverse the force: the electron is pushed downward, and after leaving the field it moves in a straight line at constant speed.`),
+   P(`電子帶負電，方向要反過來。`,`The electron is negative, so reverse the direction.`))],
+ '#tab-motor-struct':[
+  Q(P(`直流電動機中，半圓形集電環的作用是什麼？`,`What is the job of the split-ring commutator in a DC motor?`),
+   [P(`每半圈切換磁場方向`,`Flips field each half turn`),P(`把電能轉成熱能`,`Turns electric energy to heat`),P(`固定線圈不讓轉動`,`Holds the coil perfectly still`),P(`每半圈切換電流方向`,`Flips current each half turn`)],3,
+   P(`集電環隨線圈轉動，每半圈切換一次線圈的電流方向，馬達才能持續朝同一方向旋轉。`,`The commutator turns with the coil and reverses the coil current every half turn, so the motor keeps spinning the same way.`),
+   P(`要讓力矩方向一直一致。`,`The torque direction must stay the same.`)),
+  Q(P(`電刷為什麼通常用石墨（碳）製作，而不用銅或鐵？`,`Why are brushes usually made of graphite instead of copper or iron?`),
+   [P(`導電又質硬能耐磨`,`It conducts and is hard`),P(`不導電能避免短路`,`It insulates to stop shorts`),P(`有磁性能吸住線圈`,`It is magnetic and grips`),P(`導電又質軟能潤滑`,`It conducts and lubricates`)],3,
+   P(`石墨導電性好，質地軟又有潤滑作用，能減少與集電環的摩擦和磨損。`,`Graphite conducts well and is soft and slippery, reducing friction and wear on the commutator.`),
+   P(`電刷要一直摩擦旋轉的集電環。`,`The brush rubs the spinning commutator all the time.`)),
+  Q(P(`直流電動機中，「場磁鐵」的作用是什麼？`,`In a DC motor, what does the "field magnet" do?`),
+   [P(`把電流送進線圈裡面`,`Feeds current into the coil`),P(`切換線圈的電流方向`,`Reverses the coil current`),P(`把動能轉成電能`,`Converts motion to electricity`),P(`提供穩定均勻的磁場`,`Gives a steady uniform field`)],3,
+   P(`場磁鐵固定在兩側，提供穩定、均勻的磁場 B，讓通電的電樞受力旋轉。`,`The field magnets sit on both sides and supply a steady, uniform field B so the current-carrying armature is pushed round.`),
+   P(`固定不動的外加磁鐵。`,`The fixed, external magnets.`))],
+ '#tab-motor-anim':[
+  Q(P(`線圈水平時，左右兩邊受力的方向有什麼特點？`,`When the coil is horizontal, how do the forces on its two sides compare?`),
+   [P(`兩邊都向上，抬高線圈`,`Both up, lifting the coil`),P(`兩邊都向下，壓低線圈`,`Both down, pressing coil`),P(`兩邊都為零，不受力`,`Both zero, no force here`),P(`一上一下，形成力矩`,`One up, one down: torque`)],3,
+   P(`兩邊電流方向相反，所受磁力一上一下，形成讓線圈轉動的力矩。`,`The currents on the two sides are opposite, so the forces are one up and one down, forming a torque that turns the coil.`),
+   P(`電流一邊朝內，一邊朝外。`,`The current goes in on one side and out on the other.`)),
+  Q(P(`若把半圓形集電環換成完整圓環，馬達還能順利旋轉嗎？`,`If the split ring is replaced by a full ring, can the motor still spin smoothly?`),
+   [P(`能，轉得更快更穩`,`Yes, faster and steadier`),P(`不能，原地擺盪`,`No, it rocks at one spot`),P(`能，但方向反轉`,`Yes, but it runs backward`),P(`不能，馬達會爆炸`,`No, the motor overheats`)],1,
+   P(`完整圓環不能換向，線圈轉過半圈後力矩反向，只會在垂直位置附近來回擺盪。`,`A full ring cannot reverse the current, so after half a turn the torque reverses and the coil just rocks around the vertical position.`),
+   P(`轉過半圈，原本向上的力會變成向下。`,`After half a turn the upward force becomes downward.`)),
+  Q(P(`馬達線圈轉到垂直位置時，電流為何會短暫為零？`,`Why does the coil current briefly drop to zero at the vertical position?`),
+   [P(`電刷正對環的缺口`,`Brushes sit at the ring gap`),P(`電池剛好沒有電了`,`The battery just ran out`),P(`磁場剛好被關掉了`,`The field is just switched off`),P(`線圈剛好變成斷路`,`The coil just snaps open`)],0,
+   P(`線圈垂直時電刷剛好對準集電環的缺口，電流瞬間為零，但慣性讓線圈繼續轉過去。`,`At the vertical position the brushes meet the gap in the commutator so the current is briefly zero, but inertia carries the coil through.`),
+   P(`想想電刷與集電環的位置。`,`Think about where the brushes and rings are.`))],
+ '#tab-motor-power':[
+  Q(P(`馬達受力公式 F ＝ I × L × B 中，哪一個做法能讓力變大？`,`In F = I × L × B, which action makes the force larger?`),
+   [P(`減小電流 I`,`Decrease the current I`),P(`減弱磁場 B`,`Weaken the magnet B`),P(`增大電流 I`,`Increase the current I`),P(`縮短導線長度 L`,`Shorten the length L`)],2,
+   P(`F 與 I、L、B 都成正比，增大電流、增加匝數（增加 L）、增強磁場都能使馬達力量變大。`,`F is proportional to I, L and B, so more current, more turns (more L) and a stronger field all increase the force.`),
+   P(`F 與 I、L、B 成正比。`,`F is proportional to I, L and B.`)),
+  Q(P(`下列哪一項無法讓馬達轉得更快、力量更大？`,`Which of these does NOT make a motor spin faster and stronger?`),
+   [P(`換成較弱的磁鐵`,`Fit a weaker magnet`),P(`換成較高電壓電池`,`Fit a bigger battery`),P(`纏繞更多圈線圈`,`Add more coil turns`),P(`換成釹鐵硼磁鐵`,`Fit a neodymium magnet`)],0,
+   P(`弱磁鐵使 B 變小，力變小；高電壓增大電流、多匝數增加受力導線、釹鐵硼磁鐵使 B 變大，都能增強。`,`A weaker magnet lowers B and the force; higher voltage raises the current, more turns add wire in the field, and neodymium raises B, all of which strengthen the motor.`),
+   P(`哪一項讓 I、N、B 之一變小？`,`Which one lowers I, N or B?`)),
+  Q(P(`增加線圈匝數，為什麼能讓馬達更有力？`,`Why does adding coil turns make a motor stronger?`),
+   [P(`導線電阻會變成零`,`Wire resistance drops to zero`),P(`磁鐵會被磁化得更強`,`The magnet gets more magnetic`),P(`電池容量自動變大`,`The battery capacity grows`),P(`有更多導線同時受力`,`More wire is pushed at once`)],3,
+   P(`匝數增加，相當於好幾倍的導線同時在磁場中受力推動電樞。`,`More turns means several times as much wire is pushed by the field at the same time.`),
+   P(`每一圈導線都受力。`,`Every turn of wire feels a force.`))]
+});
+})();

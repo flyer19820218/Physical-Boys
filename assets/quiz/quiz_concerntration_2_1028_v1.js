@@ -1,0 +1,72 @@
+/* Multiple-choice practice for concerntration_2.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('concerntration_2',{
+ '#tab1':[
+  Q(P(`「溶解度」代表的是什麼？`,`What does "solubility" describe?`),
+   [P(`杯中實際溶解的公克數`,`Grams actually dissolved now`),P(`整杯溶液的總重量大小`,`Total weight of the solution`),P(`每100g水最多溶解`,`Max solute in 100 g of water`),P(`糖放入水中的總重量`,`Weight of sugar after adding`)],2,
+   P(`溶解度是這杯水的極限比例，通常以 g／100 g 水表示：定溫下 100 g 水最多能溶解多少溶質。`,`Solubility is the limit ratio, usually given in g per 100 g water: the most solute that 100 g of water can dissolve at a set temperature.`),
+   P(`溶解度像是最高速限。`,`Solubility is like a speed limit.`)),
+  Q(P(`25°C 時糖的溶解度為 12 g／100 g 水。只有 50 g 水時，飽和能溶解多少糖？`,`At 25°C sugar dissolves up to 12 g per 100 g water. With only 50 g of water, how much sugar can dissolve at saturation?`),
+   [P(`12 g`,`12 g`),P(`6 g`,`6 g`),P(`24 g`,`24 g`),P(`3 g`,`3 g`)],1,
+   P(`水量減半，溶解量也減半：12 × 50 ÷ 100 ＝ 6 g，但溶解度仍是 12 g／100 g 水。`,`Half the water dissolves half as much: 12 × 50 ÷ 100 = 6 g, while the solubility is still 12 g per 100 g water.`),
+   P(`溶解量和水量成正比。`,`Dissolved amount scales with the water.`)),
+  Q(P(`100 g 水中加入 15 g 糖攪拌後（溶解度 12 g／100 g 水），杯底會留下多少未溶的糖？`,`15 g of sugar is stirred into 100 g water (solubility 12 g per 100 g water). How much sugar stays undissolved?`),
+   [P(`12 g`,`12 g`),P(`15 g`,`15 g`),P(`0 g`,`0 g`),P(`3 g`,`3 g`)],3,
+   P(`最多只能溶 12 g，所以 15 − 12 ＝ 3 g 糖會留在杯底，溶液已經飽和。`,`At most 12 g dissolves, so 15 − 12 = 3 g stays at the bottom; the solution is saturated.`),
+   P(`先找出最多能溶多少。`,`First find the most that can dissolve.`))],
+ '#tab2':[
+  Q(P(`25°C 時 12 g 糖溶於 100 g 水恰好飽和。這杯糖水的溶解度與重量百分濃度各是多少？`,`At 25°C, 12 g of sugar in 100 g water is just saturated. What are the solubility and the weight percent concentration?`),
+   [P(`12 g／100 g 水；12.0%`,`12 g/100 g water; 12.0%`),P(`12 g／100 g 水；10.7%`,`12 g/100 g water; 10.7%`),P(`12 g／112 g 水；10.7%`,`12 g/112 g water; 10.7%`),P(`10.7 g／100 g 水；12%`,`10.7 g/100 g water; 12%`)],1,
+   P(`溶解度的分母是純水：12 g／100 g 水；濃度的分母是整杯溶液：12 ÷ (12＋100) × 100% ＝ 10.7%。`,`Solubility divides by pure water: 12 g per 100 g water. Concentration divides by the whole solution: 12 ÷ (12 + 100) × 100% = 10.7%.`),
+   P(`溶解度分母是「純水」，濃度分母是「全體溶液」。`,`Solubility divides by pure water; concentration divides by the whole solution.`)),
+  Q(P(`同一題中，水量減半成 50 g，糖的溶解度會改變嗎？`,`In the same problem, the water is halved to 50 g. Does the solubility of sugar change?`),
+   [P(`減半，變成 6 g／100 g 水`,`Halves to 6 g per 100 g`),P(`加倍，變成 24 g／100 g 水`,`Doubles to 24 g per 100 g`),P(`變成 12 g／50 g 水`,`Becomes 12 g per 50 g`),P(`不變，仍是 12 g／100 g 水`,`No, still 12 g per 100 g`)],3,
+   P(`溶解度是一種極限比例標示，就像最高速限，不會因車子（水量）變少而改變；改變的是溶解量，最多溶 6 g。`,`Solubility is a limit ratio, like a speed limit, and does not change when the water amount changes; only the dissolved amount drops, to at most 6 g.`),
+   P(`最高速限不會因為車子變少而改變。`,`A speed limit does not change with fewer cars.`)),
+  Q(P(`12 g 糖溶於 88 g 水，重量百分濃度是多少？`,`12 g of sugar is dissolved in 88 g of water. What is the weight percent concentration?`),
+   [P(`13.6%`,`13.6%`),P(`12%`,`12%`),P(`10.7%`,`10.7%`),P(`88%`,`88%`)],1,
+   P(`濃度 ＝ 12 ÷ (12＋88) × 100% ＝ 12%；13.6% 是把分母誤用成水的重量 88 g。`,`Concentration = 12 ÷ (12 + 88) × 100% = 12%; 13.6% comes from wrongly dividing by the water weight, 88 g.`),
+   P(`分母是溶質加溶劑。`,`The denominator is solute plus solvent.`))],
+ '#tab3':[
+  Q(P(`酒瓶標示「5 度」代表什麼意思？`,`What does a bottle label "5 degrees" mean?`),
+   [P(`整瓶共含有5mL酒精`,`The whole bottle: 5 mL`),P(`100mL含5mL酒精`,`5 mL alcohol per 100 mL`),P(`每100g含5g的酒精`,`5 g alcohol per 100 g`),P(`酒精重量是水的5倍`,`Alcohol outweighs water 5×`)],1,
+   P(`酒精度數是體積百分濃度：每 100 mL 酒中含有 5 mL 純酒精，即 5 %vol。`,`Alcohol degrees are volume percent: every 100 mL of drink holds 5 mL of pure alcohol, i.e. 5 %vol.`),
+   P(`溶質和溶劑都是液體時，改用體積。`,`When both are liquids, use volume.`)),
+  Q(P(`30 mL 純酒精加入 120 mL 水，體積百分濃度是多少？`,`30 mL of pure alcohol is added to 120 mL of water. What is the volume percent concentration?`),
+   [P(`25%`,`25%`),P(`20%`,`20%`),P(`80%`,`80%`),P(`30%`,`30%`)],1,
+   P(`30 ÷ (30＋120) × 100% ＝ 20%；25% 是把分母誤用成水的體積。`,`30 ÷ (30 + 120) × 100% = 20%; 25% comes from wrongly dividing by the water volume.`),
+   P(`總體積是 150 mL。`,`The total volume is 150 mL.`)),
+  Q(P(`58 度高粱酒表示什麼？`,`What does 58-degree sorghum liquor mean?`),
+   [P(`每 100 mL 含 58 mL 酒精`,`58 mL alcohol per 100 mL`),P(`每 100 mL 含 42 mL 酒精`,`42 mL alcohol per 100 mL`),P(`每 58 mL 含 100 mL 酒精`,`100 mL alcohol per 58 mL`),P(`每 100 g 含 58 g 酒精`,`58 g alcohol per 100 g`)],0,
+   P(`58 度即 58 %vol：每 100 mL 中有 58 mL 純酒精，超過一半是酒精。`,`58 degrees is 58 %vol: 58 mL of pure alcohol in every 100 mL, more than half.`),
+   P(`單位是體積，不是重量。`,`The unit is volume, not weight.`))],
+ '#tab4':[
+  Q(P(`1 ppm 等於下列哪一個換算？`,`Which conversion is equal to 1 ppm?`),
+   [P(`1 g／1 L 水溶液`,`1 g per 1 L of solution`),P(`1 mg／1 L 水溶液`,`1 mg per 1 L of solution`),P(`1 mg／1 mL 水溶液`,`1 mg per 1 mL of solution`),P(`1 kg／1 L 水溶液`,`1 kg per 1 L of solution`)],1,
+   P(`1 ppm ＝ 1 mg／1 kg ＝ 1 mg／1 L（水溶液）：百萬分之一。`,`1 ppm = 1 mg per 1 kg = 1 mg per 1 L of aqueous solution: one part per million.`),
+   P(`1 kg ＝ 1,000,000 mg。`,`1 kg = 1,000,000 mg.`)),
+  Q(P(`牙膏的氟濃度為 1450 ppm，則 1 kg 牙膏中含有多少氟？`,`A toothpaste has 1450 ppm fluoride. How much fluoride is in 1 kg of it?`),
+   [P(`1450 g`,`1450 g`),P(`1.45 mg`,`1.45 mg`),P(`145 mg`,`145 mg`),P(`1450 mg`,`1450 mg`)],3,
+   P(`1 ppm ＝ 1 mg／kg，所以 1450 ppm 就是每 1 kg 含 1450 mg（1.45 g）氟。`,`1 ppm = 1 mg per kg, so 1450 ppm means 1450 mg (1.45 g) of fluoride per kg.`),
+   P(`1 ppm 是每公斤 1 毫克。`,`1 ppm is 1 mg per kg.`)),
+  Q(P(`空氣中二氧化碳為 400 ppm，則 1 m³ 空氣含有多少二氧化碳？`,`Carbon dioxide in air is 400 ppm. How much CO₂ is in 1 m³ of air?`),
+   [P(`400 m³`,`400 m³`),P(`400 cm³`,`400 cm³`),P(`0.4 cm³`,`0.4 cm³`),P(`40 cm³`,`40 cm³`)],1,
+   P(`400 ppm ＝ 每 1,000,000 m³ 空氣有 400 m³，換成 1 m³ 就是 400 cm³（0.4 L）。`,`400 ppm means 400 m³ per 1,000,000 m³ of air; for 1 m³ that is 400 cm³ (0.4 L).`),
+   P(`1 m³ ＝ 1,000,000 cm³。`,`1 m³ = 1,000,000 cm³.`))],
+ '#tab5':[
+  Q(P(`計算機輸入溶質 20 g、水 80 g，重量百分濃度是多少？`,`The calculator has 20 g of solute and 80 g of water. What is the weight percent concentration?`),
+   [P(`20%`,`20%`),P(`25%`,`25%`),P(`80%`,`80%`),P(`16%`,`16%`)],0,
+   P(`20 ÷ (20＋80) × 100% ＝ 20%；25% 是用水的重量 80 g 當分母。`,`20 ÷ (20 + 80) × 100% = 20%; 25% comes from using the water weight, 80 g, as the denominator.`),
+   P(`先算整杯溶液的重量。`,`First find the weight of the whole solution.`)),
+  Q(P(`5 L 水溶液中含有 15 mg 的微量溶質，濃度是多少 ppm？`,`A 5 L aqueous solution contains 15 mg of solute. What is the concentration in ppm?`),
+   [P(`75 ppm`,`75 ppm`),P(`15 ppm`,`15 ppm`),P(`0.3 ppm`,`0.3 ppm`),P(`3.0 ppm`,`3.0 ppm`)],3,
+   P(`ppm ＝ mg／L ＝ 15 ÷ 5 ＝ 3 ppm；75 ppm 是把兩數字相乘。`,`ppm = mg per L = 15 ÷ 5 = 3 ppm; 75 ppm comes from multiplying instead of dividing.`),
+   P(`用 mg 除以 L。`,`Divide mg by L.`)),
+  Q(P(`計算重量百分濃度時，分母要用哪一個數值？`,`When calculating weight percent concentration, which value is the denominator?`),
+   [P(`只有溶劑的重量`,`The solvent weight alone`),P(`只有溶質的重量`,`The solute weight alone`),P(`溶質與溶劑重量差`,`Solute minus solvent weight`),P(`溶質加溶劑的總重`,`Solute plus solvent weight`)],3,
+   P(`濃度的分母必須是整杯溶液的總重（溶質＋溶劑）。`,`The denominator must be the weight of the whole solution (solute + solvent).`),
+   P(`整杯溶液包含什麼？`,`What does the whole solution contain?`))]
+});
+})();

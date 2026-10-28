@@ -1,0 +1,72 @@
+/* Multiple-choice practice for electromagnetism_2.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('electromagnetism_2',{
+ '#tab-straight':[
+  Q(P(`奧斯特在 1820 年發現了什麼現象？`,`What did Oersted discover in 1820?`),
+   [P(`磁鐵使導線自己發熱`,`A magnet heats up a wire`),P(`指南針使電流增大`,`A compass raises the current`),P(`導線使磁鐵失去磁性`,`A wire demagnetizes a magnet`),P(`通電使指南針偏轉`,`A wire deflects a compass`)],3,
+   P(`導線通電時旁邊的指南針發生偏轉，證明電流會產生磁場（電流的磁效應）。`,`A compass near a live wire deflects, showing that an electric current produces a magnetic field.`),
+   P(`電流周圍藏著磁場。`,`A magnetic field hides around a current.`)),
+  Q(P(`長直導線通電後，周圍的磁力線是什麼形狀？`,`What shape are the field lines around a long straight live wire?`),
+   [P(`與導線平行的直線`,`Straight lines parallel to it`),P(`從導線向外的放射線`,`Rays pointing out from it`),P(`繞導線的長方形框`,`Rectangles around the wire`),P(`以導線為心的同心圓`,`Concentric circles about it`)],3,
+   P(`長直導線的磁力線是以導線為圓心的同心圓，方向與電流垂直，越靠近導線磁場越強。`,`The field lines are concentric circles around the wire, perpendicular to the current, and stronger closer to the wire.`),
+   P(`磁場與電流方向互相垂直。`,`The field is perpendicular to the current.`)),
+  Q(P(`鉛直導線電流由下向上，導線「東方」的小磁針 N 極會指向哪裡？`,`A vertical wire carries current upward. Where does the N pole of a small compass east of the wire point?`),
+   [P(`南方`,`South`),P(`北方`,`North`),P(`東方`,`East`),P(`西方`,`West`)],1,
+   P(`右手大拇指朝上，四指逆時針彎曲；在導線東側，磁場的切線方向朝北，所以磁針 N 極指向北方。`,`With the right thumb up the fingers curl counterclockwise; east of the wire the field points north, so the needle's N pole points north.`),
+   P(`用右手大拇指朝上，四指會呈現逆時針旋轉。`,`Right thumb up, fingers curl counterclockwise.`))],
+ '#tab-loop':[
+  Q(P(`長直導線彎成圓形線圈後，線圈中心的磁場有什麼變化？`,`After a straight wire is bent into a loop, what happens to the field at the center?`),
+   [P(`各段磁場互相抵消`,`The segments cancel each other`),P(`磁場完全消失掉了`,`The field vanishes completely`),P(`磁場方向不斷亂變`,`The field direction keeps flipping`),P(`各段磁場疊加增強`,`The segments add and strengthen`)],3,
+   P(`線圈中心區域所有圓段產生的磁場方向一致，互相疊加，產生極強的磁場。`,`At the center all the segments produce fields in the same direction, so they add up to a very strong field.`),
+   P(`中心區域磁場方向一致。`,`The fields point the same way at the center.`)),
+  Q(P(`判斷圓形線圈磁極的右手定則，是怎麼做的？`,`How does the right-hand rule for the poles of a loop work?`),
+   [P(`四指順電流，大拇指指 S 極`,`Fingers follow current, thumb S`),P(`大拇指順電流，四指指 N 極`,`Thumb follows current, fingers N`),P(`四指握磁場，大拇指指電流`,`Fingers on field, thumb current`),P(`四指順電流，大拇指指 N 極`,`Fingers follow current, thumb N`)],3,
+   P(`線圈專用右手定則：四指順著電流彎曲，大拇指所指的方向就是 N 極。`,`For loops: curl the fingers along the current and the thumb points to the N pole.`),
+   P(`大拇指代表 N 極。`,`The thumb stands for the N pole.`)),
+  Q(P(`圓形線圈電流為「順時針」時，線圈正面（靠近我們的一面）是什麼磁極？`,`The current in a loop flows clockwise. What pole is the front face, the side facing us?`),
+   [P(`S 極`,`South pole`),P(`N 極`,`North pole`),P(`中性區`,`Neutral zone`),P(`沒有磁極`,`Neither pole`)],0,
+   P(`四指順時針彎曲，大拇指穿入紙面，背面是 N 極，所以正面是 S 極。`,`Fingers curl clockwise and the thumb points into the page, so the back is the N pole and the front is the S pole.`),
+   P(`大拇指是指向自己，還是穿入紙面？`,`Does the thumb point at you or into the page?`))],
+ '#tab-solenoid':[
+  Q(P(`螺線管可以看成什麼東西疊合在一起？`,`A solenoid can be seen as a stack of what?`),
+   [P(`許多條直導線`,`Many straight wires`),P(`許多塊條形磁鐵`,`Many bar magnets`),P(`許多個圓形線圈`,`Many circular loops`),P(`許多顆電池`,`Many separate cells`)],2,
+   P(`螺線管是許多圓形線圈疊合，通電後各線圈的磁場互相疊加、增強。`,`A solenoid is many loops stacked together, and their fields add up and strengthen when current flows.`),
+   P(`把線圈一圈圈疊起來。`,`Stack the loops one after another.`)),
+  Q(P(`螺線管表面電流向下，四指向下彎曲，大拇指朝左，哪一端是 N 極？`,`A solenoid's surface current flows downward; the curled fingers point down and the thumb points left. Which end is the N pole?`),
+   [P(`左端`,`The left end`),P(`右端`,`The right end`),P(`正中央`,`The middle`),P(`兩端都不是`,`Neither end`)],0,
+   P(`大拇指所指的方向就是 N 極，所以左端是 N 極。`,`The thumb points to the N pole, so the left end is the N pole.`),
+   P(`大拇指代表 N 極。`,`The thumb marks the N pole.`)),
+  Q(P(`螺線管通電後，把電流方向反轉，周圍的小磁針會怎樣？`,`The current in an energized solenoid is reversed. What happens to the nearby compass needles?`),
+   [P(`全部保持原來方向`,`All keep their direction`),P(`指針變得來回亂轉`,`They spin around randomly`),P(`全部反轉 180 度`,`All flip by 180 degrees`),P(`指針全部轉 90 度`,`All turn by 90 degrees`)],2,
+   P(`電流反向，大拇指（N 極）方向也反向，N、S 極互換，所以小磁針全部反轉 180 度。`,`Reversing the current reverses the thumb direction, so the N and S poles swap and every needle flips 180 degrees.`),
+   P(`電流方向改變，大拇指的方向會不會跟著改變？`,`If the current reverses, does the thumb direction change too?`))],
+ '#tab-crane':[
+  Q(P(`電磁鐵是在螺線管內插入什麼製成的？`,`An electromagnet is made by inserting what into a solenoid?`),
+   [P(`銅棒芯`,`A copper rod core`),P(`軟鐵芯`,`A soft iron core`),P(`塑膠棒`,`A plastic rod core`),P(`玻璃棒`,`A glass rod core`)],1,
+   P(`在螺線管內插入軟鐵芯，通電時軟鐵被磁化，與線圈磁場疊加，磁力大增。`,`A soft iron core inside the solenoid is magnetized when current flows and adds to the coil's field, greatly increasing the force.`),
+   P(`要容易被磁化的材料。`,`A material that magnetizes easily.`)),
+  Q(P(`下列哪一種做法無法增強電磁鐵的磁力？`,`Which of these does NOT strengthen an electromagnet?`),
+   [P(`增加線圈的匝數`,`Using more coil turns`),P(`減少線圈的匝數`,`Using fewer coil turns`),P(`增加電流的大小`,`Increasing the current`),P(`插入軟鐵作鐵芯`,`Inserting a soft iron core`)],1,
+   P(`增加匝數、增加電流、插入鐵芯都能增強磁力；減少匝數反而讓磁力變弱。`,`More turns, more current and an iron core all strengthen it; fewer turns weaken it.`),
+   P(`三大要素：匝數、電流、鐵芯。`,`Three factors: turns, current, core.`)),
+  Q(P(`起重機的軟鐵芯換成鋼，會引發什麼問題？`,`What problem arises if a crane's soft iron core is replaced with steel?`),
+   [P(`斷電後車子仍黏著`,`Cars stay stuck after power-off`),P(`通電後完全沒有磁力`,`No force at all with power on`),P(`斷電後立刻釋放車子`,`Cars drop at once on power-off`),P(`線圈會變成導體`,`The coil turns into a conductor`)],0,
+   P(`鋼是硬磁性物質，被磁化後斷電仍保有磁性，汽車掉不下來，失去隨意控制吸放的功能。`,`Steel is a hard magnetic material that keeps its magnetism after power-off, so the car cannot be released and on/off control is lost.`),
+   P(`鋼磁化後，斷電磁性會不會消失？`,`After magnetization does steel lose its magnetism when power is cut?`))],
+ '#tab-phone':[
+  Q(P(`電話的話筒（麥克風）把聲音轉換成什麼？`,`A telephone transmitter (microphone) converts sound into what?`),
+   [P(`固定大小的電流`,`A steady electric current`),P(`大小改變的電流`,`Varying electric current`),P(`大小改變的磁鐵`,`A magnet of varying size`),P(`溫度改變的水流`,`Water of varying heat`)],1,
+   P(`聲波震動使碳粉忽鬆忽緊，電阻改變，於是聲波變成大小改變的電流。`,`Sound makes the carbon grains loosen and tighten, changing the resistance, so the sound becomes a varying current.`),
+   P(`聲音震動讓電阻改變。`,`Sound vibration changes the resistance.`)),
+  Q(P(`聽筒內的電磁鐵磁力為何忽強忽弱？`,`Why does the electromagnet in the receiver pull weaker and stronger?`),
+   [P(`鐵芯一直在變長變短`,`The core keeps changing length`),P(`線圈匝數不斷地改變`,`The turns keep changing`),P(`磁鐵每秒都換位置`,`The magnet keeps moving`),P(`輸入的電流大小在變`,`The input current varies`)],3,
+   P(`話筒送來的電流大小不斷變化，電磁鐵的磁力也跟著忽強忽弱，帶動金屬片震動發聲。`,`The current from the transmitter keeps changing, so the electromagnet pulls weaker and stronger and drives the metal diaphragm to vibrate.`),
+   P(`磁力跟電流大小有關。`,`The force depends on the current.`)),
+  Q(P(`電話通話中，能量依序是怎麼轉換的？`,`During a phone call, how is the energy converted in order?`),
+   [P(`聲能、電能、磁能、聲能`,`Sound, electric, magnetic, sound`),P(`聲能、磁能、電能、聲能`,`Sound, magnetic, electric, sound`),P(`電能、聲能、磁能、電能`,`Electric, sound, magnetic, electric`),P(`光能、電能、聲能、光能`,`Light, electric, sound, light`)],0,
+   P(`話筒把聲能變成電能，電流在聽筒電磁鐵產生磁能，再推動振膜還原成聲能。`,`The transmitter turns sound into electricity, the receiver's electromagnet makes magnetic energy, and that moves the diaphragm back into sound.`),
+   P(`先收音，再傳送，最後發聲。`,`First pick up, then transmit, finally sound.`))]
+});
+})();
