@@ -1527,6 +1527,37 @@
     sc.tick = (i, local) => { if (local >= 800 && t2_animPhase === 'idle') startRubbing(); };
   }
 
+  /* 接地的電子轉移（tab3／tab4／tab6 共用）：固定 4 顆電子依序走完全程就停，
+     時間一律用該步驟已播放的毫秒數 local 算，不用 Date.now()。
+     pts 是導線路徑；傳回目前在線上的球、已出發數、已到達數、全部走完的時間 doneAt。 */
+  const E1_G = { n: 4, start: 400, gap: 500 };
+  function e1_gBalls(local, pts, speed, start) {
+    const segs = []; let L = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const d = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+      segs.push(d); L += d;
+    }
+    const s0 = start === undefined ? E1_G.start : start;
+    const out = { balls: [], started: 0, arrived: 0, doneAt: s0 + (E1_G.n - 1) * E1_G.gap + L / speed };
+    for (let k = 0; k < E1_G.n; k++) {
+      const u = (local - (s0 + k * E1_G.gap)) * speed;
+      if (u < 0) continue;
+      out.started++;
+      if (u >= L) { out.arrived++; continue; }
+      let r = u, i = 0;
+      while (i < segs.length - 1 && r > segs[i]) { r -= segs[i]; i++; }
+      const f = segs[i] ? r / segs[i] : 0;
+      out.balls.push({ x: pts[i].x + (pts[i + 1].x - pts[i].x) * f,
+                       y: pts[i].y + (pts[i + 1].y - pts[i].y) * f,
+                       a: Math.min(1, (L - u) / 28) });
+    }
+    return out;
+  }
+  function e1_gDraw(ctx, balls, r) {
+    balls.forEach(b => { ctx.globalAlpha = b.a; e_ball(ctx, b.x, b.y, r, '#4dd2ff', true); });
+    ctx.globalAlpha = 1;
+  }
+
   // --- TAB 3: Induction 4 Steps ---
   let t3_rodType = -1, t3_step = 0, t3_electrons = [], t3_flowAnimFrames = []; 
   function initTab3() {
@@ -1548,13 +1579,8 @@
     t3_step = step;
     const cx = 250, cy = 150;
     if (step === 2) {
-      t3_flowAnimFrames = []; 
-      if (t3_rodType === -1) {
-        let removed = 0;
-        while (t3_electrons.length > 2) { t3_electrons.pop(); t3_flowAnimFrames.push({ type: 'out', x: cx + 45, y: cy, delay: removed * 20, done: false }); removed++; }
-      } else {
-        for(let i=0; i<4; i++) { t3_flowAnimFrames.push({ type: 'in', x: cx + 120, y: cy + 100, delay: i * 20, done: false }); }
-      }
+      /* 電子數量由 renderTab3 依 4 顆球的出發／到達逐顆增減 */
+      t3_flowAnimFrames = [];
     } else if (step === 3 || step === 4) {
       t3_flowAnimFrames = []; let targetCount = (t3_rodType === -1) ? 2 : 10;
       while (t3_electrons.length > targetCount) t3_electrons.pop();
@@ -1620,6 +1646,17 @@
     if (t3_step === 1) { if (t3_rodType === -1) minX = cx + 30; else maxX = cx - 30; }
     else if (t3_step === 2 || t3_step === 3) { if (t3_rodType === -1) minX = cx + 46; else maxX = cx + 46; }
 
+    /* 步驟二的 4 顆電子：負棒＝金屬右端 → 導線 → 接地；正棒＝接地 → 導線 → 金屬 */
+    const gx = cx + BW / 2 + 120, gy = cy + BH / 2 + 118, wy = cy - 30;
+    let g3 = null;
+    if (t3_step === 2) {
+      const pts = t3_rodType === -1 ? [{ x: cx + 60, y: wy }, { x: gx, y: wy }, { x: gx, y: gy }]
+                                    : [{ x: gx, y: gy }, { x: gx, y: wy }, { x: cx + 50, y: wy }];
+      g3 = e1_gBalls(E1_DEF.tab3.local, pts, 0.32);
+      if (t3_rodType === -1) { while (t3_electrons.length > 6 - g3.started) t3_electrons.pop(); }
+      else { while (t3_electrons.length < 6 + g3.arrived) t3_electrons.push({ x: cx + 46, y: wy, vx: (Math.random() - 0.5) * 2.5, vy: (Math.random() - 0.5) * 2.5 }); }
+    }
+
     t3_electrons.forEach(e => {
       e.x += e.vx; e.y += e.vy;
       if (e.x < minX) { e.x = minX; e.vx = Math.abs(e.vx); }
@@ -1634,20 +1671,23 @@
 
     /* 步驟二：接地線 + 電子流向 */
     if (t3_step === 2) {
-      const gx = cx + BW / 2 + 120, gy = cy + BH / 2 + 118;
       e_ln(ctx, cx + BW / 2, cy - 30, gx, cy - 30, '#a3b8b0', 5);
       e_ln(ctx, gx, cy - 30, gx, gy, '#a3b8b0', 5);
       for (let i = 0; i < 3; i++) e_ln(ctx, gx - 30 + i * 8, gy + 10 + i * 9, gx + 30 - i * 8, gy + 10 + i * 9, '#a3b8b0', 4);
       e_label(ctx, tr('接地', 'Ground'), gx, gy - 16, '#a3b8b0', 20, 'center');
-      const f = (Date.now() / 420) % 1;
-      const fx = t3_rodType === -1 ? cx + BW / 2 + 20 + f * 100 : gx - 20 - f * 100;
-      e_ball(ctx, fx, cy - 30, 11, '#4dd2ff', true);
-      if (t3_rodType === -1) {
-        e_arrow(ctx, cx + BW / 2 + 16, cy - 74, gx - 10, cy - 74, '#4dd2ff', 3.5, 13);
-        e_label(ctx, tr('e⁻ 流出去', 'e⁻ out'), (cx + BW / 2 + gx) / 2, cy - 88, '#4dd2ff', 20, 'center');
-      } else {
-        e_arrow(ctx, gx - 10, cy - 74, cx + BW / 2 + 16, cy - 74, '#4dd2ff', 3.5, 13);
-        e_label(ctx, tr('e⁻ 流進來', 'e⁻ in'), (cx + BW / 2 + gx) / 2, cy - 88, '#4dd2ff', 20, 'center');
+      e1_gDraw(ctx, g3.balls, 11);
+      /* 箭頭與標籤只在轉移進行中出現，4 顆走完後淡出，不暗示持續流動 */
+      const fade = Math.max(0, Math.min(1, 1 - (E1_DEF.tab3.local - g3.doneAt) / 500));
+      if (fade > 0) {
+        ctx.globalAlpha = fade;
+        if (t3_rodType === -1) {
+          e_arrow(ctx, cx + BW / 2 + 16, cy - 74, gx - 10, cy - 74, '#4dd2ff', 3.5, 13);
+          e_label(ctx, tr('e⁻ 流出去', 'e⁻ out'), (cx + BW / 2 + gx) / 2, cy - 88, '#4dd2ff', 20, 'center');
+        } else {
+          e_arrow(ctx, gx - 10, cy - 74, cx + BW / 2 + 16, cy - 74, '#4dd2ff', 3.5, 13);
+          e_label(ctx, tr('e⁻ 流進來', 'e⁻ in'), (cx + BW / 2 + gx) / 2, cy - 88, '#4dd2ff', 20, 'center');
+        }
+        ctx.globalAlpha = 1;
       }
     }
 
@@ -1852,11 +1892,18 @@
       e_ln(ctx, gx, SY, gx, gy, '#a3b8b0', 5);
       for (let i = 0; i < 3; i++) e_ln(ctx, gx - 28 + i * 8, gy + 8 + i * 9, gx + 28 - i * 8, gy + 8 + i * 9, '#a3b8b0', 4);
       e_label(ctx, tr('接地', 'Ground'), gx + 22, gy + 4, '#a3b8b0', 20);
-      const f = (Date.now() / 450) % 1;
-      const fx = t4_e_rodType === -1 ? SX + 80 + f * 120 : gx - 10 - f * 120;
-      e_ball(ctx, fx, SY, 11, '#4dd2ff', true);
-      e_label(ctx, t4_e_rodType === -1 ? tr('e⁻ 流出去', 'e⁻ out') : tr('e⁻ 流進來', 'e⁻ in'),
-              SX + 140, SY - 40, '#4dd2ff', 20, 'center');
+      /* 4 顆電子依序走完就停：負棒＝金屬盤 → 接地；正棒＝接地 → 金屬盤 */
+      const pts = t4_e_rodType === -1 ? [{ x: SX + 70, y: SY }, { x: gx, y: SY }, { x: gx, y: gy }]
+                                      : [{ x: gx, y: gy }, { x: gx, y: SY }, { x: SX + 70, y: SY }];
+      const g4 = e1_gBalls(E1_DEF.tab4.local, pts, 0.32);
+      e1_gDraw(ctx, g4.balls, 11);
+      const fade = Math.max(0, Math.min(1, 1 - (E1_DEF.tab4.local - g4.doneAt) / 500));
+      if (fade > 0) {
+        ctx.globalAlpha = fade;
+        e_label(ctx, t4_e_rodType === -1 ? tr('e⁻ 流出去', 'e⁻ out') : tr('e⁻ 流進來', 'e⁻ in'),
+                SX + 140, SY - 40, '#4dd2ff', 20, 'center');
+        ctx.globalAlpha = 1;
+      }
     }
 
     const NOTE = [
@@ -2000,7 +2047,7 @@
     t6_forceSetCharge(q);
     t6_rodType = rod; t6_dist = dist; t6_isGrounded = !!ground;
     t6_updatePhysics(false);
-    t6_flowingParticles = [];
+    t6_flowingParticles = []; t6_gflow = null;
     t6_updateChargeUI();
   }
   /* 原本學生拖滑桿：這裡改成每隔一段時間推進 10 格，電子流才會像手拖時那樣冒出來 */
@@ -2082,12 +2129,33 @@
         if (diffLeaf < -5) t6_spawnFlow(Math.abs(diffLeaf)/5, [T6_P_PLATE, T6_P_STEM, T6_P_LEAF]);
         else if (diffLeaf > 5) t6_spawnFlow(Math.abs(diffLeaf)/5, [T6_P_LEAF, T6_P_STEM, T6_P_PLATE]);
       } else {
+        /* 接地：不再源源不絕冒電子；固定 4 顆依序走完（負電淨增＝流出去、反之流進來），金屬的電荷隨球逐顆變化 */
         let diffTotal = (target_Q_plate + target_Q_leaf) - (t6_visual_Q_plate + t6_visual_Q_leaf);
-        if (diffTotal > 5) t6_spawnFlow(Math.abs(diffTotal)/5, [T6_P_LEAF, T6_P_STEM, T6_P_PLATE, T6_P_WIRE_1, T6_P_WIRE_2, T6_P_GROUND]);
-        else if (diffTotal < -5) t6_spawnFlow(Math.abs(diffTotal)/5, [T6_P_GROUND, T6_P_WIRE_2, T6_P_WIRE_1, T6_P_PLATE]);
+        if (Math.abs(diffTotal) > 5) {
+          t6_gflow = { t0: E1_DEF.tab6.local, out: diffTotal > 0,
+                       fp: t6_visual_Q_plate, fl: t6_visual_Q_leaf, tp: target_Q_plate, tl: target_Q_leaf };
+        }
+      }
+    }
+    if (!t6_isGrounded) t6_gflow = null;
+    if (t6_gflow) {
+      const g = t6_gflowState();
+      if (g.arrived >= E1_G.n && E1_DEF.tab6.local - t6_gflow.t0 >= g.doneAt) { t6_gflow = null; }
+      else {
+        const k = (t6_gflow.out ? g.started : g.arrived) / E1_G.n;
+        t6_visual_Q_plate = t6_gflow.fp + (t6_gflow.tp - t6_gflow.fp) * k;
+        t6_visual_Q_leaf = t6_gflow.fl + (t6_gflow.tl - t6_gflow.fl) * k;
+        return;
       }
     }
     t6_visual_Q_plate = target_Q_plate; t6_visual_Q_leaf = target_Q_leaf;
+  }
+  let t6_gflow = null;
+  const T6_G_SPEED = 0.45, T6_G_START = 300;
+  function t6_gflowState() {
+    const pts = t6_gflow.out ? [T6_P_LEAF, T6_P_STEM, T6_P_PLATE, T6_P_WIRE_1, T6_P_WIRE_2, T6_P_GROUND]
+                             : [T6_P_GROUND, T6_P_WIRE_2, T6_P_WIRE_1, T6_P_PLATE];
+    return e1_gBalls(E1_DEF.tab6.local - t6_gflow.t0, pts, T6_G_SPEED, T6_G_START);
   }
 
   function t6_spawnFlow(count, pathArray) {
@@ -2160,6 +2228,8 @@
       } else { t6_flowingParticles.splice(i, 1); }
     }
     e_noglow(ctx);
+    /* 接地的 4 顆電子：走完就沒有了 */
+    if (t6_gflow) e1_gDraw(ctx, t6_gflowState().balls, 8);
 
     /* 上下兩端現在各帶多少電：數字寫出來，資優生才對得上物理 */
     e_label(ctx, tr(`金屬盤 ${t6_visual_Q_plate > 0 ? '+' : ''}${t6_visual_Q_plate.toFixed(0)}`,
@@ -2185,13 +2255,13 @@
             slots: [{ b: 0, d: 9500 }, { b: 1, d: 9500 }] },
     tab3: { cv: 'cvs-tab3',
             btns: [['靠近', 'Approach'], ['接地', 'Ground'], ['移開手', 'Hand off'], ['移開棒', 'Rod off']],
-            slots: [4600, 4200, 3800, 5200, 4600, 4200, 3800, 5200].map((d, i) => ({ b: i % 4, d })),
+            slots: [4600, 5000, 3800, 5200, 4600, 5000, 3800, 5200].map((d, i) => ({ b: i % 4, d })),
             btnSlot: (b, cur) => (cur >= 4 ? 4 : 0) + b },
     tab4: { cv: 'cvs-tab4',
             btns: [['A 球負電', 'A negative'], ['A 球正電', 'A positive'], ['驗電器 負棒', 'Scope: − rod'], ['驗電器 正棒', 'Scope: + rod']],
             slots: [{ b: 0, d: 11500 }, { b: 1, d: 11500 }]
-                   .concat([1500, 3200, 3200, 3200, 4500].map(d => ({ b: 2, d })))
-                   .concat([1500, 3200, 3200, 3200, 4500].map(d => ({ b: 3, d }))) },
+                   .concat([1500, 3200, 4600, 3200, 4500].map(d => ({ b: 2, d })))
+                   .concat([1500, 3200, 4600, 3200, 4500].map(d => ({ b: 3, d }))) },
     tab5: { cv: 'cvs-tab5',
             btns: [['異性相吸', 'Unlike attract'], ['電量加大', 'More charge'], ['距離拉遠', 'Farther apart'], ['同性相斥', 'Like repel']],
             slots: [{ b: 0, d: 7000 }, { b: 1, d: 7000 }, { b: 2, d: 8000 }, { b: 3, d: 7000 }] },
