@@ -250,3 +250,4 @@ BreezyVoice 錄好 01–08.wav → `tools/museum/build_narration.py` → `assets
 ## 2026-10-28 自動錄音第一次失敗（exit code 127）→ 補裝 ffmpeg
 - Actions 的「錄音」步驟回 127＝找不到指令；原因推測是 `ubuntu-latest` 換成 Ubuntu 26 後沒有預裝 ffmpeg／ffprobe。`xiaozhen-voice.yml` 在錄音前加「安裝 ffmpeg」步驟（沒有才 apt 安裝）。
 - 修好後到 GitHub → Actions → 曉臻自動錄音 → Run workflow（target 填 intro）重跑一次；成功會有作者「曉臻自動錄音」的 commit。
+- 第二次失敗（exit code 128）：「存回 main」步驟的 `git add -A … tools/voice/out`，錄 intro 時該資料夾不存在，git 回 128。已改成目錄存在才 add。
