@@ -1,11 +1,11 @@
 // 伽利略星球入口：載入資料、建立畫面層、（可用時）建立 3D 場景、處理網址路由。
 // 改版時請同步更新 index.html（首頁）、本檔與下面兩個 import 的 ?v= 版本字串。
-import { createUI } from './ui.js?v=20261027l';
-import { startLaunch, WARP_MS } from './launch.js?v=20261027l';
-import { createSfx } from './sfx.js?v=20261027l';
-import { loadNarration } from './narration.js?v=20261027l';
+import { createUI } from './ui.js?v=202610280503';
+import { startLaunch, WARP_MS } from './launch.js?v=202610280503';
+import { createSfx } from './sfx.js?v=202610280503';
+import { loadNarration } from './narration.js?v=202610280503';
 
-const VERSION = '20261027l';
+const VERSION = '202610280503';
 
 const CONFIG = {
   // 舊版清單（原本的首頁）。伽利略星球已經是 index.html。
