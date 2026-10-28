@@ -557,23 +557,59 @@
       .home-fab { top: 8px; left: 8px; width: 42px; height: 42px; }
       .home-fab svg { width: 20px; height: 20px; }
     }
-
-  /* ── 切入即自動播放（AGENTS 10.6）：步驟編號鈕單列 ＋ 畫布頂端無字進度條 ── */
-  .e3-prog { position: absolute; left: 0; right: 0; top: 0; height: 4px; z-index: 3; background: rgba(242, 236, 217, 0.12); pointer-events: none; }
-  .e3-prog i { display: block; height: 100%; width: 0; background: var(--chalk-yellow); }
-  .controls.e3-bar { padding: 8px 10px; margin-bottom: 0; display: flex; flex-direction: column; gap: 6px; }
-  .e3-steps { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none; justify-content: center; align-items: center; }
-  .e3-steps::-webkit-scrollbar { display: none; }
-  .e3-steps .action-btn.e3-step { flex: 1 1 0; width: auto; min-width: 0; min-height: 36px; padding: 3px 10px; gap: 6px; font-size: 15px; line-height: 1.25; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; }
-  .e3-step-t { font-size: 15px; }
-  .e3-step-n { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; border-radius: 50%; background: rgba(242, 236, 217, 0.16); font-weight: 800; line-height: 1; }
-  .e3-step.active .e3-step-n { background: rgba(11, 26, 21, 0.22); }
-  .e3-now { display: none; font-size: 18px; font-weight: 700; color: var(--chalk-yellow); line-height: 1.35; text-align: center; }
-  @media (max-width: 720px) {
-    .e3-steps .action-btn.e3-step { padding: 3px 4px; min-width: 36px; gap: 0; }
-    .e3-step-t { display: none; }
-    .e3-now { display: block; }
+  /* ==================================================================
+     老師講解／學生操作 雙模式（外層加法：學生操作＝原本的樣子，沒有改任何一個原有規則）
+     ================================================================== */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 22px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-muted); border: 2px dashed var(--rule-color);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
   }
+  .mode-pill:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: var(--chalk-muted); text-align: center; line-height: 1.5; max-width: 900px; }
+
+  /* 老師講解的控制列（只在老師模式出現；學生模式整條不顯示）：放在畫布正下方，取代被收起來的學生控制列 */
+  .teach-bar {
+    display: none; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(13, 32, 26, 0.72); border: 2px solid var(--rule-color); border-top: none;
+    border-radius: 0 0 12px 12px; padding: 16px 20px 18px; margin-bottom: 16px;
+  }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--bg-base); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--bg-base); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-chips { flex: 1 1 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+  .teach-chip {
+    min-height: 44px; padding: 4px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-muted); border: 2px dashed var(--rule-color);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-chip .teach-n { display: inline-block; min-width: 1.2em; text-align: center; margin-right: 2px; }
+  .teach-chip:hover:not(.on) { background: var(--bg-panel-hover); color: var(--chalk-white); border-color: var(--chalk-white); }
+  .teach-chip.past { color: var(--chalk-green); border-color: rgba(51, 204, 153, 0.55); }
+  .teach-chip.on { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 12px rgba(255, 224, 102, 0.4); }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生用的控制列（電流大小、剪斷、滑桿、電表接法、選題、開關…）收起來；子分頁標籤留著當進度指示但不能點 */
+  body.mode-teacher .std-only { display: none !important; }
+  .canvas-container { scroll-margin-top: 88px; }   /* 讓出右上角懸浮的語言切換鈕 */
+  @media (max-width: 520px) {
+    .mode-pill { padding: 8px 18px; font-size: 19px; }
+    .teach-bar { padding: 14px 12px 16px; }
+  }
+  body.mode-teacher .sub-tabs { pointer-events: none; }
   </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -601,6 +637,14 @@
     <h1 data-zh="⚡ 第三單元：串並聯電路與電流" data-en="⚡ Circuits & Electric Current">⚡ 第三單元：串並聯電路與電流</h1>
     <p data-zh="電流定義計算、電壓與電流分配規律、實戰考題特訓" data-en="Current Definition, Voltage & Current Division Laws, Practical Exam Practice">電流定義計算、電壓與電流分配規律、實戰考題特訓</p>
   </header>
+
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays through on its own; pause, replay, or tap a step number to jump. Student: the original hands-on activities.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+  </div>
 
   <!-- 🌟 主分頁（無數字標號） -->
   <div class="tabs">
@@ -650,7 +694,14 @@
         <div class="canvas-container">
           <canvas id="cvs-t1" width="960" height="450"></canvas>
         </div>
-        <div class="controls e3-bar" id="bar-tab1"></div>
+        <div class="controls">
+          <div class="ctrl-caption" data-zh="把電流調大一點，看一秒通過幾顆電子" data-en="Turn the current up and watch the count per second">把電流調大一點，看一秒通過幾顆電子</div>
+          <div class="btn-group">
+            <button class="action-btn active" id="btn-t1-lo" onclick="setT1Rate(0)" data-zh="電流小" data-en="Small current">電流小</button>
+            <button class="action-btn" id="btn-t1-mid" onclick="setT1Rate(1)" data-zh="電流中" data-en="Medium">電流中</button>
+            <button class="action-btn btn-red" id="btn-t1-hi" onclick="setT1Rate(2)" data-zh="電流大" data-en="Large">電流大</button>
+          </div>
+        </div>
       </div>
       <div class="content-box">
         <h2 data-zh="💡 觀念解析" data-en="💡 Conceptual Analysis">💡 觀念解析</h2>
@@ -726,7 +777,13 @@
         <div class="canvas-container">
           <canvas id="cvs-t2" width="960" height="440"></canvas>
         </div>
-        <div class="controls e3-bar" id="bar-tab2"></div>
+        <div class="controls">
+          <div class="ctrl-caption" data-zh="三個安培計串在同一條路上" data-en="Three ammeters in the one path">三個安培計串在同一條路上</div>
+          <div class="btn-group">
+            <button class="action-btn active" onclick="setT2Break(false)" data-zh="接好的串聯電路" data-en="Intact series circuit">接好的串聯電路</button>
+            <button class="action-btn btn-red" id="btn-t2-break" onclick="setT2Break(true)" data-zh="✂️ 把中間剪斷" data-en="✂️ Cut it in the middle">✂️ 把中間剪斷</button>
+          </div>
+        </div>
       </div>
       <div class="content-box">
         <h2 data-zh="💡 觀念解析" data-en="💡 Conceptual Analysis">💡 觀念解析</h2>
@@ -787,7 +844,7 @@
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
         <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
-        <div class="hook-text"><span data-zh="水管分岔，分出去的水量加起來一定等於進來的水量——電路也一樣。" data-en="At a pipe junction the branch flows add up to the incoming flow — a circuit is no different.">水管分岔，分出去的水量加起來一定等於進來的水量——電路也一樣。</span><br><span data-zh="看上面那條支路的電流由小變大（步驟編號可以重看），主線的安培計怎麼跟著跳：" data-en="Watch the top branch current go from small to large (use the step numbers to replay) and see how the main ammeter follows: ">看上面那條支路的電流由小變大（步驟編號可以重看），主線的安培計怎麼跟著跳：</span><b data-zh="I = I₁ + I₂" data-en="I = I₁ + I₂">I = I₁ + I₂</b><span data-zh="，一顆電子都不會憑空不見。" data-en=" — not one electron goes missing.">，一顆電子都不會憑空不見。</span></div>
+        <div class="hook-text"><span data-zh="水管分岔，分出去的水量加起來一定等於進來的水量——電路也一樣。" data-en="At a pipe junction the branch flows add up to the incoming flow — a circuit is no different.">水管分岔，分出去的水量加起來一定等於進來的水量——電路也一樣。</span><br><span data-zh="拉動滑桿改變上面那條支路的電流，看主線的安培計怎麼跟著跳：" data-en="Drag the slider to change the top branch and watch the main ammeter follow: ">拉動滑桿改變上面那條支路的電流，看主線的安培計怎麼跟著跳：</span><b data-zh="I = I₁ + I₂" data-en="I = I₁ + I₂">I = I₁ + I₂</b><span data-zh="，一顆電子都不會憑空不見。" data-en=" — not one electron goes missing.">，一顆電子都不會憑空不見。</span></div>
       </div>
     </div>
     <div class="sub-tabs">
@@ -801,7 +858,15 @@
         <div class="canvas-container">
           <canvas id="cvs-t3" width="960" height="450"></canvas>
         </div>
-        <div class="controls e3-bar" id="bar-tab3"></div>
+        <div class="controls">
+          <div class="control-row">
+            <div style="font-weight: 700;">
+              <span data-zh="上面那條支路的電流 I₁：" data-en="Top branch current I₁: ">上面那條支路的電流 I₁：</span>
+              <span id="t3-val-branch" class="mono">0.6 A</span>
+            </div>
+            <input type="range" id="t3-rng-branch" min="1" max="12" value="6" step="1">
+          </div>
+        </div>
       </div>
       <div class="content-box">
         <h2 data-zh="💡 觀念解析" data-en="💡 Conceptual Analysis">💡 觀念解析</h2>
@@ -862,9 +927,14 @@
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
         <div class="hook-title" data-zh="曉臻老師的實驗室規矩" data-en="Ms. Xiaozhen's lab rule">曉臻老師的實驗室規矩</div>
-        <div class="hook-text"><span data-zh="安培計要串、伏特計要並——這不是背的規定，是" data-en="Ammeter in series, voltmeter in parallel. That is not a rule to memorise, it is ">安培計要串、伏特計要並——這不是背的規定，是</span><b data-zh="它們內部長得不一樣" data-en="a consequence of what is inside them">它們內部長得不一樣</b><span data-zh="。" data-en=".">。</span><br><span data-zh="這一頁直接把兩種電表剖開給你看，再觀察「設計錯誤」時，接錯會發生什麼事（用步驟編號重看）。" data-en="This page cuts both meters open, then shows what happens when the design is wrong. Watch, think, and use the step numbers to replay.">這一頁直接把兩種電表剖開給你看，再觀察「設計錯誤」時，接錯會發生什麼事（用步驟編號重看）。</span></div>
+        <div class="hook-text"><span data-zh="安培計要串、伏特計要並——這不是背的規定，是" data-en="Ammeter in series, voltmeter in parallel. That is not a rule to memorise, it is ">安培計要串、伏特計要並——這不是背的規定，是</span><b data-zh="它們內部長得不一樣" data-en="a consequence of what is inside them">它們內部長得不一樣</b><span data-zh="。" data-en=".">。</span><br><span data-zh="這一頁直接把兩種電表剖開給你看，再按「設計錯誤」看看接錯會發生什麼事。" data-en="This page cuts both meters open, then lets you flip the design to the wrong one and watch what happens.">這一頁直接把兩種電表剖開給你看，再按「設計錯誤」看看接錯會發生什麼事。</span></div>
       </div>
     </div>
+    <div class="sub-tabs">
+      <div class="sub-tab-btn active" id="btn-t4-model" onclick="setSubTab(4, 'model')" data-zh="測量接線示範" data-en="Wiring Demonstration">測量接線示範</div>
+      <div class="sub-tab-btn" id="btn-t4-why" onclick="setSubTab(4, 'why')" data-zh="內阻設計探究" data-en="Inspect Internal Resistance">內阻設計探究</div>
+    </div>
+
     <!-- 視圖一：操作示範 -->
     <div id="view-t4-model" class="grid-2">
       <div class="content-box">
@@ -872,7 +942,12 @@
         <div class="canvas-container">
           <canvas id="cvs-t4" width="960" height="410"></canvas>
         </div>
-        <div class="controls e3-bar" id="bar-tab4"></div>
+        <div class="controls" style="text-align:center;">
+          <div class="btn-group" style="margin-top:0;">
+            <button class="action-btn active" id="btn-t4-ammeter" onclick="setT4Meter('ammeter')" data-zh="安培計接法" data-en="Toggle: Ammeter">安培計接法</button>
+            <button class="action-btn" id="btn-t4-voltmeter" onclick="setT4Meter('voltmeter')" data-zh="伏特計接法" data-en="Toggle: Voltmeter">伏特計接法</button>
+          </div>
+        </div>
       </div>
       <div class="content-box">
         <h2 data-zh="💡 觀念解析" data-en="💡 Conceptual Analysis">💡 觀念解析</h2>
@@ -897,10 +972,19 @@
     <!-- 視圖二：內阻探究 -->
     <div id="view-t4-why" class="grid-2" style="display: none;">
       <div class="content-box">
-         <div class="canvas-container">
+         <div class="controls" style="text-align:center; margin-top:-4px; margin-bottom: 0;">
+           <div class="btn-group" style="margin-top:0;">
+             <button class="action-btn active btn-teal" id="btn-t4-why-a" onclick="setT4Why('ammeter')" data-zh="安培計內阻探究" data-en="Ammeter Resistance">安培計內阻探究</button>
+             <button class="action-btn" id="btn-t4-why-v" onclick="setT4Why('voltmeter')" data-zh="伏特計內阻探究" data-en="Voltmeter Resistance">伏特計內阻探究</button>
+           </div>
+           <div class="btn-group" style="margin-top:10px; border-top: 1px dashed var(--rule-color); padding-top: 10px;">
+             <button class="action-btn active" id="btn-t4-why-design-correct" onclick="setT4WhyDesign('correct')">✅ 設計正確 (內阻極小)</button>
+             <button class="action-btn" id="btn-t4-why-design-wrong" onclick="setT4WhyDesign('wrong')">❌ 設計錯誤 (內阻極大)</button>
+           </div>
+         </div>
+         <div class="canvas-container" style="margin-top: 14px; margin-bottom: 0;">
            <canvas id="cvs-t4-why" width="960" height="450"></canvas>
          </div>
-         <div class="controls e3-bar" id="bar-tab4b"></div>
       </div>
 
       <!-- 右側文字解說：安培計 -->
@@ -917,7 +1001,7 @@
              </li>
              <li style="margin-top: 10px; color: var(--chalk-red); border-left: 4px solid var(--chalk-red); padding-left: 10px;">
                <b data-zh="❌ 若設計錯誤 (內阻極大)：" data-en="❌ Design Fault (High Internal R): ">❌ 若設計錯誤 (內阻極大)：</b><br>
-               <span data-zh="看「設計錯誤」那一步，電子流速大幅減緩，燈泡變暗熄滅。測量儀表切忌干擾原本電路！" data-en="In the 'Fault' step the current drops sharply and the bulb dims or goes out from the excessive insertion resistance!">看「設計錯誤」那一步，電子流速大幅減緩，燈泡變暗熄滅。測量儀表切忌干擾原本電路！</span>
+               <span data-zh="點擊「設計錯誤」，電子流速大幅減緩，燈泡變暗熄滅。測量儀表切忌干擾原本電路！" data-en="Selecting 'Fault' shows drastic current attenuation. Bulbs dim or extinguish due to excessive insertion resistance!">點擊「設計錯誤」，電子流速大幅減緩，燈泡變暗熄滅。測量儀表切忌干擾原本電路！</span>
              </li>
          </ul>
       </div>
@@ -936,7 +1020,7 @@
              </li>
              <li style="margin-top: 10px; color: var(--chalk-red); border-left: 4px solid var(--chalk-red); padding-left: 10px;">
                <b data-zh="❌ 若設計錯誤 (內阻極小)：" data-en="❌ Design Fault (Low Internal R): ">❌ 若設計錯誤 (內阻極小)：</b><br>
-               <span data-zh="看「設計錯誤」那一步，電流全部湧入伏特計形成短路！燈泡熄滅且儀表瞬間燒毀！" data-en="In the 'Fault' step the load is short-circuited through the meter, extinguishing the bulb and destroying the instrument!">看「設計錯誤」那一步，電流全部湧入伏特計形成短路！燈泡熄滅且儀表瞬間燒毀！</span>
+               <span data-zh="點擊「設計錯誤」，電流全部湧入伏特計形成短路！燈泡熄滅且儀表瞬間燒毀！" data-en="Selecting 'Fault' short-circuits the load through the meter, extinguishing the bulb and destroying the instrument!">點擊「設計錯誤」，電流全部湧入伏特計形成短路！燈泡熄滅且儀表瞬間燒毀！</span>
              </li>
          </ul>
       </div>
@@ -958,7 +1042,13 @@
         <div class="canvas-container">
           <canvas id="cvs-t5" width="960" height="390"></canvas>
         </div>
-        <div class="controls e3-bar" id="bar-tab5"></div>
+        <div class="controls" style="margin-bottom: 0;">
+          <div class="control-row" style="justify-content: center;">
+            <button class="action-btn active" id="btn-q1" onclick="loadT5Quiz(0)" data-zh="題型一" data-en="Problem 1">題型一</button>
+            <button class="action-btn" id="btn-q2" onclick="loadT5Quiz(1)" data-zh="題型二" data-en="Problem 2">題型二</button>
+            <button class="action-btn" id="btn-q3" onclick="loadT5Quiz(2)" data-zh="題型三" data-en="Problem 3">題型三</button>
+          </div>
+        </div>
       </div>
       
       <div class="content-box">
@@ -979,7 +1069,7 @@
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
         <div class="hook-title" data-zh="曉臻老師的進階挑戰" data-en="Ms. Xiaozhen's extension">曉臻老師的進階挑戰</div>
-        <div class="hook-text"><span data-zh="導線裡的電子，一秒其實只爬幾公釐——比螞蟻還慢。" data-en="Electrons in a wire creep along at a few millimetres per second, slower than an ant.">導線裡的電子，一秒其實只爬幾公釐——比螞蟻還慢。</span><br><span data-zh="那為什麼開關一按燈就亮？因為亮燈靠的不是" data-en="So why does the lamp light the instant you flip the switch? Because what arrives is not ">那為什麼開關一按燈就亮？因為亮燈靠的不是</span><b data-zh="那顆電子跑到燈泡" data-en="that electron reaching the lamp">那顆電子跑到燈泡</b><span data-zh="，而是「開始推」的訊號幾乎以光速傳過去。看開關合上的那一瞬間。" data-en="; it is the push signal, racing along at nearly light speed. Watch the instant the switch closes.">，而是「開始推」的訊號幾乎以光速傳過去。看開關合上的那一瞬間。</span></div>
+        <div class="hook-text"><span data-zh="導線裡的電子，一秒其實只爬幾公釐——比螞蟻還慢。" data-en="Electrons in a wire creep along at a few millimetres per second, slower than an ant.">導線裡的電子，一秒其實只爬幾公釐——比螞蟻還慢。</span><br><span data-zh="那為什麼開關一按燈就亮？因為亮燈靠的不是" data-en="So why does the lamp light the instant you flip the switch? Because what arrives is not ">那為什麼開關一按燈就亮？因為亮燈靠的不是</span><b data-zh="那顆電子跑到燈泡" data-en="that electron reaching the lamp">那顆電子跑到燈泡</b><span data-zh="，而是「開始推」的訊號幾乎以光速傳過去。按下去看看。" data-en="; it is the push signal, racing along at nearly light speed. Press and watch.">，而是「開始推」的訊號幾乎以光速傳過去。按下去看看。</span></div>
       </div>
     </div>
     <div class="grid-2">
@@ -988,7 +1078,12 @@
         <div class="canvas-container">
           <canvas id="cvs-t6" width="960" height="470"></canvas>
         </div>
-        <div class="controls e3-bar" id="bar-tab6"></div>
+        <div class="controls">
+          <div class="ctrl-caption" data-zh="按下去，同時盯著黃色訊號和藍色電子" data-en="Press, then watch the yellow signal and the blue electrons at the same time">按下去，同時盯著黃色訊號和藍色電子</div>
+          <div class="btn-group">
+            <button class="action-btn btn-teal" id="btn-t6-go" onclick="setT6Go()" data-zh="🔌 合上開關" data-en="🔌 Close the switch">🔌 合上開關</button>
+          </div>
+        </div>
       </div>
       <div class="content-box">
         <h2 data-zh="💡 觀念解析" data-en="💡 Conceptual Analysis">💡 觀念解析</h2>
@@ -1041,10 +1136,11 @@
     loadQuiz(3, t3_idx);
     loadT5Quiz(t5_idx);
     setT4Why(t4_why_mode);
-    e3RefreshText();
   }
 
   let currentTab = 'tab1';
+  let animFrames = {};
+  let globalFrameCount = 0;
 
   const COLOR_BG = '#0b1a15'; 
   const COLOR_WHITE = '#f6f3ea'; 
@@ -1067,36 +1163,41 @@
     const targetBtn = document.getElementById(`tab-btn-${tabId}`);
     if (targetBtn) targetBtn.classList.add('active');
 
-    e3Stop();
+    for (let id in animFrames) { cancelAnimationFrame(animFrames[id]); }
 
-    if (tabId === 'tab1') initCvsT1();
-    if (tabId === 'tab2') initCvsT2();
-    if (tabId === 'tab3') initCvsT3();
-    if (tabId === 'tab4') { initCvsT4(); initCvsT4Why(); }
+    if (tabId === 'tab1') { if(document.getElementById('view-t1-model').style.display !== 'none') initCvsT1(); }
+    if (tabId === 'tab2') { if(document.getElementById('view-t2-model').style.display !== 'none') initCvsT2(); }
+    if (tabId === 'tab3') { if(document.getElementById('view-t3-model').style.display !== 'none') initCvsT3(); }
+    if (tabId === 'tab4') { 
+       if(document.getElementById('view-t4-model').style.display !== 'none') initCvsT4(); 
+       if(document.getElementById('view-t4-why').style.display !== 'none') initCvsT4Why(); 
+    }
     if (tabId === 'tab5') { loadT5Quiz(t5_idx); initCvsT5(); }
     if (tabId === 'tab6') initCvsT6();
-    /* 分頁一～三另有「計算挑戰」視圖：停在那裡時沒有畫布，就不啟動動畫 */
-    const qv = document.getElementById(`view-${tabId.replace('tab', 't')}-quiz`);
-    if (!qv || qv.style.display === 'none') e3Start(tabId);
+    if (typeof teachOnTab === 'function') teachOnTab(tabId);   /* 老師講解模式：切到新分頁就從頭自動播 */
   }
 
-  /* 分頁一～三：動畫視圖 ⇄ 計算挑戰視圖（挑戰是題庫，不是動畫）。
-     回到動畫視圖就從第 1 步重新自動播放，離開就停掉唯一的那條迴圈。 */
   function setSubTab(tab, sub) {
     document.getElementById(`btn-t${tab}-model`).classList.remove('active');
-    const secondBtn = document.getElementById(`btn-t${tab}-quiz`);
-    if (secondBtn) secondBtn.classList.remove('active');
+    let secondBtn = document.getElementById(`btn-t${tab}-quiz`) || document.getElementById(`btn-t${tab}-why`);
+    if(secondBtn) secondBtn.classList.remove('active');
+    
     document.getElementById(`btn-t${tab}-${sub}`).classList.add('active');
 
     document.getElementById(`view-t${tab}-model`).style.display = 'none';
-    const secondView = document.getElementById(`view-t${tab}-quiz`);
-    if (secondView) secondView.style.display = 'none';
+    let secondView = document.getElementById(`view-t${tab}-quiz`) || document.getElementById(`view-t${tab}-why`);
+    if(secondView) secondView.style.display = 'none';
+    
     document.getElementById(`view-t${tab}-${sub}`).style.display = 'grid';
 
-    if (sub === 'model') { initCvsT1_3(tab); e3Start('tab' + tab); }
-    else e3Stop();
+    if (tab === 1) { if (sub === 'model') initCvsT1(); else cancelAnimationFrame(animFrames['tab1']); }
+    if (tab === 2) { if (sub === 'model') initCvsT2(); else cancelAnimationFrame(animFrames['tab2']); }
+    if (tab === 3) { if (sub === 'model') initCvsT3(); else cancelAnimationFrame(animFrames['tab3']); }
+    if (tab === 4) {
+        if (sub === 'model') { initCvsT4(); cancelAnimationFrame(animFrames['tab4why']); } 
+        else { initCvsT4Why(); cancelAnimationFrame(animFrames['tab4']); }
+    }
   }
-  function initCvsT1_3(tab) { if (tab === 1) initCvsT1(); else if (tab === 2) initCvsT2(); else if (tab === 3) initCvsT3(); }
 
   // ==============================================
   // 🌟 標準化電學符號與流動引擎
@@ -2044,9 +2145,13 @@
                         y: CY - RR + 12 + Math.random() * (RR * 2 - 24) });
       }
     }
+    let last = performance.now();
 
-    E3_DEF.tab1.frame = function () {
-      const dt = E3.dt / 1000, time = E3.now / 1000;
+    function render() {
+      if (currentTab !== 'tab1' || document.getElementById('view-t1-model').style.display === 'none') return;
+      const now = performance.now();
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      globalFrameCount++; const time = globalFrameCount / 60;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       e_pen(ctx);
 
@@ -2075,7 +2180,9 @@
                       'Current = charge crossing per second:  I = Q ÷ t'),
               480, 430, COLOR_GREEN, 20, 'center', true, 700);
 
-    };
+      animFrames['tab1'] = requestAnimationFrame(render);
+    }
+    render();
   }
 
   function initCvsT2() {
@@ -2086,8 +2193,9 @@
     const B1 = 330, B2 = 630;                     /* 兩顆燈泡，對稱於 480 */
     const A1 = 120, A2 = 480, A3 = 840;           /* 三個安培計，都坐在導線上 */
 
-    E3_DEF.tab2.frame = function () {
-      const time = E3.now / 1000;
+    function render() {
+      if (currentTab !== 'tab2' || document.getElementById('view-t2-model').style.display === 'none') return;
+      globalFrameCount++; const time = globalFrameCount / 60;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       e_pen(ctx);
 
@@ -2145,7 +2253,9 @@
              'Current is the same everywhere: I = I₁ = I₂ — all three needles agree'),
         480, 420, t2_break ? COLOR_RED : COLOR_GREEN, 22, 'center', true, 900);
 
-    };
+      animFrames['tab2'] = requestAnimationFrame(render);
+    }
+    render();
   }
 
   function initCvsT3() {
@@ -2154,8 +2264,9 @@
     const L = 120, R = 840, TOPB = 148, MIDB = 256, BOT = 382;
     const BAT_L = 420, BAT_R = 540;
 
-    E3_DEF.tab3.frame = function () {
-      const time = E3.now / 1000;
+    function render() {
+      if (currentTab !== 'tab3' || document.getElementById('view-t3-model').style.display === 'none') return;
+      globalFrameCount++; const time = globalFrameCount / 60;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       e_pen(ctx);
 
@@ -2198,17 +2309,25 @@
                       `Total = sum of the branches: ${it.toFixed(1)} = ${i1.toFixed(1)} + ${i2.toFixed(1)} (both branches see the full 3.0 V)`),
               480, 428, COLOR_GREEN, 21, 'center', true, 920);
 
-    };
+      animFrames['tab3'] = requestAnimationFrame(render);
+    }
+    render();
   }
 
+  function setT4Meter(m) {
+    t4_meter = m;
+    document.getElementById('btn-t4-ammeter').classList.toggle('active', m === 'ammeter');
+    document.getElementById('btn-t4-voltmeter').classList.toggle('active', m === 'voltmeter');
+  }
   function initCvsT4() {
     const cvs = document.getElementById('cvs-t4'); if (!cvs) return;
     const ctx = cvs.getContext('2d');
     const L = 180, R = 780, TOP = 170, BOT = 336, VY = 72;
     const BAT_L = 420, BAT_R = 540;
 
-    E3_DEF.tab4.fm = function () {
-      const time = E3.now / 1000;
+    function render() {
+      if (currentTab !== 'tab4' || document.getElementById('view-t4-model').style.display === 'none') return;
+      globalFrameCount++; const time = globalFrameCount / 60;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       e_pen(ctx);
 
@@ -2249,7 +2368,9 @@
              'A voltmeter bridges the two ends, reading the voltage the bulb drops'),
         480, 392, COLOR_GREEN, 21, 'center', true, 900);
 
-    };
+      animFrames['tab4'] = requestAnimationFrame(render);
+    }
+    render();
   }
 
   // 🌟 TAB 4 WHY: 安培計與伏特計內阻探究動畫
@@ -2258,8 +2379,16 @@
 
   function setT4Why(m) {
     t4_why_mode = m;
+    document.getElementById('btn-t4-why-a').classList.toggle('active', m === 'ammeter');
+    document.getElementById('btn-t4-why-v').classList.toggle('active', m === 'voltmeter');
     document.getElementById('desc-t4-why-a').style.display = (m === 'ammeter') ? 'flex' : 'none';
     document.getElementById('desc-t4-why-v').style.display = (m === 'voltmeter') ? 'flex' : 'none';
+  }
+
+  function setT4WhyDesign(d) {
+    t4_why_design = d;
+    document.getElementById('btn-t4-why-design-correct').classList.toggle('active', d === 'correct');
+    document.getElementById('btn-t4-why-design-wrong').classList.toggle('active', d === 'wrong');
   }
 
   function initCvsT4Why() {
@@ -2267,8 +2396,9 @@
     const ctx = cvs.getContext('2d');
     const L = 120, R = 840, TOP = 296, BOT = 388;
 
-    E3_DEF.tab4.fw = function () {
-      const time = E3.now / 1000;
+    function render() {
+      if (currentTab !== 'tab4' || document.getElementById('view-t4-why').style.display === 'none') return;
+      globalFrameCount++; const time = globalFrameCount / 60;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       e_pen(ctx);
 
@@ -2299,15 +2429,18 @@
                : tr('內阻變很小 → 電流全走電表，燈泡被短路熄滅，電表燒毀', 'Resistance now tiny → the current all takes the meter, shorting the bulb and killing the meter')),
         480, 434, ok ? COLOR_GREEN : COLOR_RED, 20, 'center', true, 900);
 
-    };
+      animFrames['tab4why'] = requestAnimationFrame(render);
+    }
+    render();
   }
 
   function initCvsT5() {
     const cvs = document.getElementById('cvs-t5'); if (!cvs) return;
     const ctx = cvs.getContext('2d');
 
-    E3_DEF.tab5.frame = function () {
-      const time = E3.now / 1000;
+    function render() {
+      if (currentTab !== 'tab5') return;
+      globalFrameCount++; const time = globalFrameCount / 60;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       e_pen(ctx);
       ctx.strokeStyle = COLOR_DIM; ctx.lineWidth = 3;
@@ -2398,7 +2531,9 @@
       }
 
       e_legend(ctx, 24, 34, '藍球＝電子，從負極出發', 'blue = electrons, leaving the − terminal');
-    };
+      animFrames['tab5'] = requestAnimationFrame(render);
+    }
+    render();
   }
 
   // ==============================================
@@ -2572,6 +2707,10 @@
 
   function loadT5Quiz(idx) {
     t5_idx = idx; t5_answered = false;
+    document.getElementById('btn-q1').classList.toggle('active', idx === 0);
+    document.getElementById('btn-q2').classList.toggle('active', idx === 1);
+    document.getElementById('btn-q3').classList.toggle('active', idx === 2);
+    
     let q = t5_tasks[idx];
     document.getElementById('q-title').textContent = currentLang === 'en' ? q.title_en : q.title_zh;
     document.getElementById('q-desc').innerHTML = currentLang === 'en' ? q.desc_en : q.desc_zh;
@@ -2597,13 +2736,43 @@
     document.getElementById('q-explain').style.display = 'block';
   }
 
+  function setT1Rate(r) {
+    t1_rate = r;
+    ['lo', 'mid', 'hi'].forEach((k, i) => {
+      const b = document.getElementById('btn-t1-' + k);
+      if (b) b.classList.toggle('active', i === r);
+    });
+    t1_count = 0; t1_window = 0;   /* 換速度就重新數，不然讀數會是上一段的殘留 */
+  }
+  function setT2Break(on) {
+    t2_break = on;
+    const b = document.getElementById('btn-t2-break');
+    if (b) b.classList.toggle('active', on);
+  }
+  function setT3Branch(v) {
+    t3_branch = v;
+    const s = document.getElementById('t3-rng-branch');
+    if (s && +s.value !== v) s.value = v;
+    const lab = document.getElementById('t3-val-branch');
+    if (lab) lab.textContent = (v / 10).toFixed(1) + ' A';
+  }
+  function setT6Go() {
+    t6_t = 0; t6_running = true;
+    const b = document.getElementById('btn-t6-go');
+    if (b) b.classList.add('active');
+  }
   function initCvsT6() {
     const cvs = document.getElementById('cvs-t6'); if (!cvs) return;
     const ctx = cvs.getContext('2d');
     const L = 130, R = 830, TOP = 190, BOT = 372;
+    let last = performance.now();
 
-    E3_DEF.tab6.frame = function () {
-      const time = E3.now / 1000;
+    function render() {
+      if (currentTab !== 'tab6') return;
+      const now = performance.now();
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      globalFrameCount++; const time = globalFrameCount / 60;
+      if (t6_running) t6_t += dt;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       e_pen(ctx);
 
@@ -2667,152 +2836,9 @@
                       'The blue electrons crawl a few mm per second — the lamp lights at once for a different reason'),
               480, 452, COLOR_ELECTRON, 19, 'center', true, 900);
 
-    };
-  }
-
-  /* ==================================================================
-     切入即自動播放（AGENTS 10.6）
-     只有這一條 requestAnimationFrame：離開分頁或 document.hidden 就停，回來接著播。
-     每個分頁＝一個 scene：slots 是時間軸上的小段，b 是它屬於哪一顆步驟編號鈕，
-     s() 在進入該段時把原本要學生按的選項（電流大小、剪斷、滑桿、電表接法…）自動設好；
-     tick(i, local) 讓連續的數值（支路電流、開關後經過的時間）跟著時間走。
-     動畫的畫法與文字全部沿用原本的，這裡只負責「什麼時候換成哪一個狀態」。
-     ================================================================== */
-  const E3 = { tab: null, raf: 0, last: 0, now: 0, dt: 0 };
-  let t4_view = 'model';
-  function t4Show(v) {
-    t4_view = v;
-    document.getElementById('view-t4-model').style.display = v === 'model' ? 'grid' : 'none';
-    document.getElementById('view-t4-why').style.display = v === 'why' ? 'grid' : 'none';
-  }
-  let t3_from = 6, t3_to = 6;
-  const t1s = r => () => { t1_rate = r; t1_count = 0; t1_window = 0; };   /* 換速度就重新數 */
-  const t2s = on => () => { t2_break = on; };
-  const t3s = target => () => { t3_from = t3_branch; t3_to = target; };
-  const t4s = (view, mode, design) => () => {
-    t4Show(view);
-    if (view === 'model') t4_meter = mode; else { setT4Why(mode); t4_why_design = design; }
-  };
-  const t5s = i => () => loadT5Quiz(i);
-  const E3_DEF = {
-    tab1: { cvs: ['cvs-t1'], bars: ['bar-tab1'],
-            btns: [['電流小', 'Small current'], ['電流中', 'Medium'], ['電流大', 'Large']],
-            slots: [{ b: 0, d: 9000, s: t1s(0) }, { b: 1, d: 9000, s: t1s(1) }, { b: 2, d: 9500, s: t1s(2) }] },
-    tab2: { cvs: ['cvs-t2'], bars: ['bar-tab2'],
-            btns: [['接好的串聯', 'Intact series'], ['把中間剪斷', 'Cut in the middle']],
-            slots: [{ b: 0, d: 10000, s: t2s(false) }, { b: 1, d: 9500, s: t2s(true) }] },
-    tab3: { cvs: ['cvs-t3'], bars: ['bar-tab3'],
-            btns: [['I₁ 小', 'Small I₁'], ['I₁ 中', 'Medium I₁'], ['I₁ 大', 'Large I₁']],
-            slots: [{ b: 0, d: 8000, s: t3s(2) }, { b: 1, d: 8000, s: t3s(6) }, { b: 2, d: 9000, s: t3s(12) }],
-            /* 原本要學生拉的滑桿：依序自動拉到小、中、大 */
-            tick: (i, local) => { const p = Math.min(1, local / 2200); t3_branch = Math.round(t3_from + (t3_to - t3_from) * p); } },
-    tab4: { cvs: ['cvs-t4', 'cvs-t4-why'], bars: ['bar-tab4', 'bar-tab4b'],
-            btns: [['安培計接法', 'Ammeter wiring'], ['伏特計接法', 'Voltmeter wiring'],
-                   ['安培計內阻', 'Ammeter resistance'], ['伏特計內阻', 'Voltmeter resistance']],
-            slots: [{ b: 0, d: 8000, s: t4s('model', 'ammeter') },
-                    { b: 1, d: 8000, s: t4s('model', 'voltmeter') },
-                    { b: 2, d: 7000, s: t4s('why', 'ammeter', 'correct') },
-                    { b: 2, d: 8000, s: t4s('why', 'ammeter', 'wrong') },
-                    { b: 3, d: 7000, s: t4s('why', 'voltmeter', 'correct') },
-                    { b: 3, d: 8500, s: t4s('why', 'voltmeter', 'wrong') }],
-            frame: function () { const f = t4_view === 'model' ? E3_DEF.tab4.fm : E3_DEF.tab4.fw; if (f) f(); } },
-    tab5: { cvs: ['cvs-t5'], bars: ['bar-tab5'],
-            btns: [['題型一', 'Problem 1'], ['題型二', 'Problem 2'], ['題型三', 'Problem 3']],
-            slots: [{ b: 0, d: 18000, s: t5s(0) }, { b: 1, d: 18000, s: t5s(1) }, { b: 2, d: 18000, s: t5s(2) }] },
-    tab6: { cvs: ['cvs-t6'], bars: ['bar-tab6'],
-            btns: [['開關還開著', 'Switch open'], ['合上開關', 'Close the switch'], ['電子只爬一點', 'Electrons barely move']],
-            slots: [{ b: 0, d: 4000, s: () => {} }, { b: 1, d: 5000, s: () => {} }, { b: 2, d: 9000, s: () => {} }],
-            /* 原本要學生按的「合上開關」：第 1 步還開著，第 2 步合上並從 0 ms 起算，第 3 步接著算下去 */
-            tick: (i, local) => {
-              if (i === 0) { t6_running = false; t6_t = 0; }
-              else { t6_running = true; t6_t = (i === 1 ? 0 : 5) + local / 1000; }
-            } }
-  };
-  Object.keys(E3_DEF).forEach(tab => {
-    const sc = E3_DEF[tab]; sc.idx = 0; sc.local = 0; sc.starts = []; sc.total = 0;
-    sc.slots.forEach(sl => { sc.starts.push(sc.total); sc.total += sl.d; });
-  });
-
-  function e3Build() {
-    Object.keys(E3_DEF).forEach(tab => {
-      const sc = E3_DEF[tab];
-      sc.btnEls = []; sc.nowEls = []; sc.progEls = [];
-      sc.bars.forEach((barId, k) => {
-        const bar = document.getElementById(barId);
-        const row = document.createElement('div'); row.className = 'e3-steps';
-        const els = sc.btns.map((nm, i) => {
-          const b = document.createElement('button');
-          b.type = 'button'; b.className = 'action-btn e3-step'; b.id = `e3-${tab}-${k}-${i}`;
-          const n = document.createElement('span'); n.className = 'e3-step-n'; n.textContent = String(i + 1);
-          const t = document.createElement('span'); t.className = 'e3-step-t';
-          t.setAttribute('data-zh', nm[0]); t.setAttribute('data-en', nm[1]); t.textContent = nm[0];
-          b.appendChild(n); b.appendChild(t);
-          b.setAttribute('aria-label', `${i + 1} ${nm[0]} / ${nm[1]}`);
-          b.addEventListener('click', () => e3Jump(tab, i));
-          row.appendChild(b); return b;
-        });
-        sc.btnEls.push(els);
-        const now = document.createElement('div'); now.className = 'e3-now'; sc.nowEls.push(now);
-        bar.appendChild(row); bar.appendChild(now);
-      });
-      sc.cvs.forEach(id => {
-        const prog = document.createElement('div'); prog.className = 'e3-prog'; prog.innerHTML = '<i></i>';
-        document.getElementById(id).parentNode.appendChild(prog); sc.progEls.push(prog.firstChild);
-      });
-    });
-  }
-
-  function e3Mark(sc) {
-    const b = sc.slots[sc.idx].b;
-    sc.btnEls.forEach(els => els.forEach((el, i) => el.classList.toggle('active', i === b)));
-    sc.nowEls.forEach(el => { el.textContent = `${'①②③④⑤'[b]} ${tr(sc.btns[b][0], sc.btns[b][1])}`; });
-  }
-
-  function e3Enter(sc, i) {
-    sc.idx = i; sc.local = 0;
-    sc.slots[i].s();
-    if (sc.tick) sc.tick(i, 0);
-    e3Mark(sc);
-  }
-
-  function e3Jump(tab, b) {
-    const sc = E3_DEF[tab];
-    if (E3.tab !== tab || !sc.frame) return;
-    e3Enter(sc, sc.slots.findIndex(s => s.b === b));
-    if (!E3.raf) e3Run();
-  }
-
-  function e3Loop(ts) {
-    E3.raf = requestAnimationFrame(e3Loop);
-    const sc = E3_DEF[E3.tab];
-    if (!sc || !sc.frame) return;
-    let dt = Math.min(50, Math.max(0, ts - E3.last)); E3.last = ts;
-    if (document.getElementById('introScreen')) dt = 0;      // 封面還在：先不推進，進教室才開始播
-    E3.dt = dt; E3.now += dt; sc.local += dt;
-    if (sc.local >= sc.slots[sc.idx].d) e3Enter(sc, (sc.idx + 1) % sc.slots.length);
-    if (sc.tick) sc.tick(sc.idx, sc.local);
-    sc.frame();
-    const w = (((sc.starts[sc.idx] + sc.local) / sc.total) * 100).toFixed(1) + '%';
-    sc.progEls.forEach(el => { el.style.width = w; });
-  }
-
-  function e3Run() {
-    cancelAnimationFrame(E3.raf); E3.raf = 0;
-    if (document.hidden || !E3.tab) return;
-    E3.last = performance.now();
-    E3.raf = requestAnimationFrame(e3Loop);
-  }
-  function e3Stop() { cancelAnimationFrame(E3.raf); E3.raf = 0; E3.tab = null; }
-  function e3Start(tab) {
-    e3Stop(); E3.tab = tab;
-    e3Enter(E3_DEF[tab], 0);
-    e3Run();
-  }
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(E3.raf); E3.raf = 0; } else e3Run(); });
-
-  /* 語言切換：畫布每格重畫，不必處理；只有寫進 DOM 的字（步驟名稱）要換 */
-  function e3RefreshText() {
-    const sc = E3_DEF[E3.tab]; if (sc && sc.btnEls) e3Mark(sc);
+      animFrames['tab6'] = requestAnimationFrame(render);
+    }
+    render();
   }
 
   /* ── 第六定律：開場封面（靜態圖，點一下就進教室）── */
@@ -2826,10 +2852,333 @@
 
   // 🌟 啟動初始化
   window.addEventListener('DOMContentLoaded', () => {
-    e3Build();
+    const s3 = document.getElementById('t3-rng-branch');
+    if (s3) s3.addEventListener('input', e => setT3Branch(parseInt(e.target.value)));
     loadQuiz(1, 0); loadQuiz(2, 0); loadQuiz(3, 0);
     switchTab('tab1');
   });
+  window.addEventListener('load', () => {
+    if (currentTab === 'tab1' && document.getElementById('view-t1-model').style.display !== 'none') {
+      initCvsT1();
+    }
+  });
+</script>
+<script>
+/* ==================================================================
+   老師講解模式（外層加法）
+     ・學生操作＝原本的互動，上面的主程式、七張畫布、文字、題庫完全沒動
+     ・老師講解：按下去就自動連續播放
+         六個分頁各一個舞台：把原本要學生按的按鈕（電流大小、剪斷中間、I₁ 滑桿、安培計／伏特計接法、
+         內阻探究的設計正確／錯誤、三種題型、合上開關…）依序自動按一遍；每一步停多久，照 STAGE 表
+         可以暫停、從頭重播，也可以點控制列上的步驟編號跳到那一步
+     ・怎麼接：直接呼叫原本的處理函式（setT1Rate、setT2Break、setT3Branch、setSubTab、setT4Meter、
+         setT4Why、setT4WhyDesign、loadT5Quiz、checkT5Answer、setT6Go），不改任何動畫的畫法與計時
+     ・每一步一開始都把「該步驟的完整狀態」設好，所以跳到任一步，狀態和真的播到那一步完全一樣
+     ・暫停：把原本迴圈的 requestAnimationFrame 暫時扣住，畫面就停住（原版動畫是用畫格數計時，所以一起凍結）
+     ・分頁五「先猜猜看」：停 12 秒、倒數，時間到才公布正解（不替學生選答案）；老師若自己點了選項，照原本流程給對錯回饋，
+         讀完回饋再換下一題；每題至少停 20 秒
+     ・切語言：原本的 setLang 會把題目卡重畫（已公布的答案會被清掉），老師模式下在外層包一層保存／還原，演示不會重播
+     ・切回學生模式時，把畫面還原成「剛按下老師講解」那一刻的樣子
+     ・本頁沒有接地、也沒有電子「有限轉移」的畫面：電路裡的電子是持續流動（電池電路的持續電流），不受 4 顆限制
+   ================================================================== */
+(function () {
+  'use strict';
+
+  /* 每個分頁要播哪個舞台 */
+  const TAB_STAGES = { tab1: ['t1'], tab2: ['t2'], tab3: ['t3'], tab4: ['t4'], tab5: ['t5'], tab6: ['t6'] };
+  /* 舞台 → 畫布 id（控制列放在畫布正下方；分頁四有兩個視圖，各放一條） */
+  const STAGE_CVS = { t1: ['cvs-t1'], t2: ['cvs-t2'], t3: ['cvs-t3'], t4: ['cvs-t4', 'cvs-t4-why'], t5: ['cvs-t5'], t6: ['cvs-t6'] };
+
+  const GUESS_MS = 12000;   // 「先猜猜看」停多久再公布（毫秒）
+  const FEEDBACK_MS = 8000; // 公布（或老師點選項）之後，留多久讓大家讀解析
+
+  const $ = id => document.getElementById(id);
+  const T = { on: false, tab: null, stage: null, si: 0, local: 0, S: { f: [] }, paused: false, done: false, last: 0, raf: 0 };
+
+  /* ── 暫停：扣住原本迴圈的 requestAnimationFrame（畫面凍結），繼續時再放行 ── */
+  const nativeRAF = window.requestAnimationFrame.bind(window);
+  const nativeCAF = window.cancelAnimationFrame.bind(window);
+  const held = new Map(), alias = new Map(); let fakeId = 1e9;
+  window.requestAnimationFrame = function (cb) {
+    if (T.on && T.paused) { const id = ++fakeId; held.set(id, cb); return id; }
+    return nativeRAF(cb);
+  };
+  window.cancelAnimationFrame = function (id) {
+    if (held.has(id)) { held.delete(id); return; }
+    if (alias.has(id)) { nativeCAF(alias.get(id)); alias.delete(id); return; }
+    nativeCAF(id);
+  };
+  function flushHeld() {
+    held.forEach((cb, id) => { alias.set(id, nativeRAF(cb)); });
+    held.clear();
+    setTimeout(() => alias.clear(), 250);
+  }
+  function setPaused(v) { T.paused = !!v; if (!T.paused) flushHeld(); }
+  function redrawOnce() {                       // 暫停中補畫一格（讓畫布文字跟著語言換），畫完仍是凍結
+    const cbs = Array.from(held.values()); held.clear();
+    cbs.forEach(cb => { try { cb(performance.now()); } catch (e) { /* ignore */ } });
+  }
+
+  /* ── 子分頁視圖：只在「真的要換」的時候才呼叫原本的 setSubTab（避免同一張畫布多開一條迴圈） ── */
+  const viewShown = (n, sub) => { const e = $('view-t' + n + '-' + sub); return !!e && e.style.display !== 'none'; };
+  const viewNow = n => viewShown(n, 'model') ? 'model' : (n === 4 ? 'why' : 'quiz');
+  function showView(n, sub) {
+    if (viewShown(n, sub)) return false;
+    setSubTab(n, sub);
+    return true;
+  }
+  const model = n => () => { showView(n, 'model'); };
+
+  /* ── 舞台與步驟表 ──
+     step = { zh, en, d（這一步總共停多久，毫秒）, enter（一開始做的事：把這一步的完整狀態設好）,
+              acts（[毫秒, 動作] 依時間做的事）, tick（逐格做的事，例如滑桿慢慢拉）, note（控制列上的提示文字） } */
+  const STAGE = {};
+
+  /* 分頁一：電流小、中、大 */
+  const t1s = r => () => { model(1)(); if (t1_rate !== r) setT1Rate(r); };
+  STAGE.t1 = { steps: [
+    { zh: '電流小', en: 'Small current', d: 9000, enter: t1s(0) },
+    { zh: '電流中', en: 'Medium', d: 9000, enter: t1s(1) },
+    { zh: '電流大', en: 'Large current', d: 9500, enter: t1s(2) }
+  ] };
+
+  /* 分頁二：接好的串聯，再把中間剪斷（剪斷是原本學生要按的那一下，在這一步的 1.2 秒） */
+  STAGE.t2 = { steps: [
+    { zh: '接好的串聯', en: 'Intact series', d: 10000, enter: () => { model(2)(); setT2Break(false); } },
+    { zh: '把中間剪斷', en: 'Cut in the middle', d: 10500, enter: () => { model(2)(); setT2Break(false); }, acts: [[1200, () => setT2Break(true)]] }
+  ] };
+
+  /* 分頁三：I₁ 滑桿慢慢拉到小、中、大（原本學生拖的那根），逐格呼叫原本的 setT3Branch */
+  const t3ramp = (from, to, ms) => local => {
+    const p = Math.min(1, local / ms), v = Math.round(from + (to - from) * p);
+    if (t3_branch !== v) setT3Branch(v);
+  };
+  const t3s = (from, to) => ({ enter: () => { model(3)(); setT3Branch(from); }, tick: t3ramp(from, to, 2200) });
+  STAGE.t3 = { steps: [
+    Object.assign({ zh: 'I₁ 調小', en: 'Small I₁', d: 8000 }, t3s(6, 2)),
+    Object.assign({ zh: 'I₁ 調中', en: 'Medium I₁', d: 8000 }, t3s(2, 6)),
+    Object.assign({ zh: 'I₁ 調大', en: 'Large I₁', d: 9000 }, t3s(6, 12))
+  ] };
+
+  /* 分頁四：兩個視圖（測量接線示範、內阻設計探究）依序接力，每一步先把視圖與模式設成「該步驟的樣子」 */
+  const t4m = m => () => {
+    if (showView(4, 'model')) scrollToStage('t4'); if (t4_meter !== m) setT4Meter(m);
+    if (t4_why_mode !== 'ammeter') setT4Why('ammeter'); if (t4_why_design !== 'correct') setT4WhyDesign('correct');   /* 看不到的另一個視圖維持原本一進來的樣子，跳步驟時狀態才一致 */
+  };
+  const t4w = (m, dsn) => () => {
+    if (showView(4, 'why')) scrollToStage('t4');
+    if (t4_meter !== 'voltmeter') setT4Meter('voltmeter');   /* 接線示範那邊停在第二步的樣子（伏特計接法） */
+    if (t4_why_mode !== m) setT4Why(m);
+    if (t4_why_design !== dsn) setT4WhyDesign(dsn);
+  };
+  STAGE.t4 = { steps: [
+    { zh: '安培計接法', en: 'Ammeter wiring', d: 8000, enter: t4m('ammeter') },
+    { zh: '伏特計接法', en: 'Voltmeter wiring', d: 8000, enter: t4m('voltmeter') },
+    { zh: '安培計・設計正確', en: 'Ammeter · correct', d: 7000, enter: t4w('ammeter', 'correct') },
+    { zh: '安培計・設計錯誤', en: 'Ammeter · faulty', d: 8000, enter: t4w('ammeter', 'wrong') },
+    { zh: '伏特計・設計正確', en: 'Voltmeter · correct', d: 7000, enter: t4w('voltmeter', 'correct') },
+    { zh: '伏特計・設計錯誤', en: 'Voltmeter · faulty', d: 8500, enter: t4w('voltmeter', 'wrong') }
+  ] };
+
+  /* 分頁五：三題輪播。先猜 12 秒（倒數），時間到公布正解；老師若先點了選項，照原本的對錯回饋，讀完才換題 */
+  function t5Selected() {                          // 目前已公布的是哪個選項（沒公布＝-1）
+    if (!t5_answered) return -1;
+    const w = document.querySelector('#q-options .quiz-opt-btn.wrong');
+    return w ? +w.id.slice(4) : t5_tasks[t5_idx].ans;
+  }
+  const t5s = i => ({
+    d: GUESS_MS + FEEDBACK_MS,
+    enter: () => { loadT5Quiz(i); },
+    acts: [[GUESS_MS, () => { if (!t5_answered) checkT5Answer(t5_tasks[i].ans); }]],
+    tick: (local, S) => {                          // 不論是我公布的還是老師點的，回饋出現後至少再留 FEEDBACK_MS
+      if (t5_answered && S.ans == null) { S.ans = local; S.until = local + FEEDBACK_MS; }
+    },
+    note: (local, S) => t5_answered
+      ? tr('✔ 答案與解析已公布，請同學對照左邊的電路圖', '✔ Answer and explanation revealed; check them against the diagram')
+      : tr('💬 請同學先猜一猜（' + Math.max(0, Math.ceil((GUESS_MS - local) / 1000)) + ' 秒後公布）',
+           '💬 Ask the class to guess (' + Math.max(0, Math.ceil((GUESS_MS - local) / 1000)) + 's to the reveal)')
+  });
+  STAGE.t5 = { steps: [
+    Object.assign({ zh: '題型一', en: 'Problem 1' }, t5s(0)),
+    Object.assign({ zh: '題型二', en: 'Problem 2' }, t5s(1)),
+    Object.assign({ zh: '題型三', en: 'Problem 3' }, t5s(2))
+  ] };
+
+  /* 分頁六：開關還開著 → 合上開關（原本學生按的那一下）→ 接著看電子只爬一點。
+     原版的 setT6Go 只會「合上」，沒有「再打開」，所以回到「還開著」要直接把那兩個變數放回去 */
+  const T6_CLOSE_AT = 800, T6_STEP2 = 6000;
+  function t6Open() { t6_running = false; t6_t = 0; const b = $('btn-t6-go'); if (b) b.classList.remove('active'); }
+  STAGE.t6 = { steps: [
+    { zh: '開關還開著', en: 'Switch open', d: 4000, enter: t6Open },
+    { zh: '合上開關', en: 'Close the switch', d: T6_STEP2, enter: t6Open, acts: [[T6_CLOSE_AT, () => setT6Go()]] },
+    { zh: '電子只爬一點', en: 'Electrons barely move', d: 9000, enter: () => { setT6Go(); t6_t = (T6_STEP2 - T6_CLOSE_AT) / 1000; } }
+  ] };
+
+  Object.keys(STAGE).forEach(id => {
+    const st = STAGE[id]; st.id = id; st.starts = []; st.total = 0;
+    st.steps.forEach(s => { s.acts = s.acts || []; st.starts.push(st.total); st.total += s.d; });
+  });
+
+  /* ── 進入老師模式時記下原本的樣子，離開時用原本的函式還原 ── */
+  let SNAP = null;
+  function snapshot() {
+    SNAP = { t1: t1_rate, t2: t2_break, t3: t3_branch, t4m: t4_meter, t4wm: t4_why_mode, t4wd: t4_why_design,
+             t5i: t5_idx, t5s: t5Selected(), t6r: t6_running, t6t: t6_t, views: [1, 2, 3, 4].map(viewNow) };
+  }
+  function restore() {
+    const s = SNAP; if (!s) return;
+    if (t1_rate !== s.t1) setT1Rate(s.t1);
+    if (t2_break !== s.t2) setT2Break(s.t2);
+    if (t3_branch !== s.t3) setT3Branch(s.t3);
+    if (t4_meter !== s.t4m) setT4Meter(s.t4m);
+    if (t4_why_mode !== s.t4wm) setT4Why(s.t4wm);
+    if (t4_why_design !== s.t4wd) setT4WhyDesign(s.t4wd);
+    [1, 2, 3, 4].forEach(n => { if (viewNow(n) !== s.views[n - 1]) setSubTab(n, s.views[n - 1]); });
+    loadT5Quiz(s.t5i); if (s.t5s >= 0) checkT5Answer(s.t5s);
+    t6_running = s.t6r; t6_t = s.t6t;
+    const b = $('btn-t6-go'); if (b) b.classList.toggle('active', !!s.t6r);
+  }
+
+  /* ── 舞台前進 ── */
+  function startStep(i) {
+    const st = T.stage; if (!st) return;
+    T.si = i; T.local = 0; T.S = { f: [] }; T.done = false;
+    const s = st.steps[i]; if (s.enter) s.enter();
+    if (s.tick) s.tick(0, T.S);
+    paint();
+  }
+  function jump(i) { setPaused(false); startStep(i); }   // 每一步開頭都是完整狀態，跳過去就和真的播到那裡一樣
+  function enterTab(tab) {
+    T.tab = tab; setPaused(false);
+    const id = (TAB_STAGES[tab] || [])[0];
+    T.stage = id ? STAGE[id] : null;
+    if (T.stage) { startStep(0); scrollToStage(id); }
+  }
+  function scrollToStage(id) {
+    const ids = STAGE_CVS[id] || [];
+    for (const cid of ids) {
+      const c = $(cid), el = c && c.closest('.canvas-container');
+      if (el && el.offsetParent !== null) { if (el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    }
+  }
+
+  /* ── 主迴圈：只有這一條（用原生的 requestAnimationFrame，不受暫停影響；分頁藏起來時瀏覽器自己會停） ── */
+  function tick() {
+    if (!T.on) return;
+    T.raf = nativeRAF(tick);
+    const now = performance.now();
+    const real = Math.max(0, now - (T.last || now)); T.last = now;
+    let dt = T.paused ? 0 : Math.min(real, 100);
+    if ($('introScreen')) dt = 0;                   // 封面還在：先不推進，進教室才開始播
+    const st = T.stage;
+    if (st && !T.done && dt > 0) {
+      const s = st.steps[T.si];
+      T.local += dt;
+      s.acts.forEach((a, k) => { if (!T.S.f[k] && T.local >= a[0]) { T.S.f[k] = 1; a[1](); } });
+      if (s.tick) s.tick(T.local, T.S);
+      if (T.local >= Math.max(s.d, T.S.until || 0)) {
+        if (T.si + 1 < st.steps.length) startStep(T.si + 1);
+        else { T.done = true; T.local = s.d; }
+      }
+    }
+    paint();
+  }
+
+  /* ── 控制列的文字、步驟編號與進度條 ── */
+  function paint() {
+    document.querySelectorAll('.teach-bar').forEach(bar => {
+      const st = STAGE[bar.dataset.stage], live = !!T.stage && T.stage === st;
+      let note = '';
+      if (live && T.paused) note = tr('⏸ 已暫停', '⏸ Paused');
+      else if (live && T.done) note = tr('✔ 講解完畢；可按「從頭重播」，或點上方的編號回到任一步', '✔ Done. Press Replay, or tap a number to revisit a step');
+      else if (live && st.steps[T.si].note) note = st.steps[T.si].note(T.local, T.S);
+      const p = live ? (T.done ? 100 : Math.min(100, Math.round((st.starts[T.si] + Math.min(T.local, st.steps[T.si].d)) / st.total * 100))) : 0;
+      const pauseTxt = T.paused ? tr('▶ 繼續', '▶ Resume') : tr('⏸ 暫停', '⏸ Pause');
+      const sig = [note, p, pauseTxt, live, live ? T.si : -1, live && T.done, currentLang].join('|');
+      if (bar._sig === sig) return;
+      bar._sig = sig;
+      const pb = bar.querySelector('[data-act="pause"]'), rb = bar.querySelector('[data-act="replay"]');
+      pb.textContent = pauseTxt; pb.disabled = !live || T.done;
+      rb.textContent = tr('↺ 從頭重播', '↺ Replay'); rb.classList.toggle('hot', live && T.done);
+      bar.querySelector('.teach-fill').style.width = p + '%';
+      bar.querySelector('.teach-note').textContent = note;
+      bar.querySelectorAll('.teach-chip').forEach((c, i) => {
+        c.classList.toggle('on', live && i === T.si && !T.done);
+        c.classList.toggle('past', live && (i < T.si || (T.done && i === T.si)));
+      });
+    });
+  }
+
+  /* ── 按鈕：暫停／重播／跳到第幾步 ── */
+  function onBar(e) {
+    if (!T.on) return;
+    const bar = e.target.closest('.teach-bar'); if (!bar || STAGE[bar.dataset.stage] !== T.stage) return;
+    const chip = e.target.closest('.teach-chip');
+    if (chip) { jump(+chip.dataset.i); paint(); return; }
+    const b = e.target.closest('.teach-btn'); if (!b) return;
+    if (b.dataset.act === 'pause') { if (!T.done) setPaused(!T.paused); }
+    else { setPaused(false); startStep(0); scrollToStage(T.stage.id); }
+    paint();
+  }
+
+  /* ── 切換模式 ── */
+  window.setMode = function (m) {
+    const teacher = m === 'teacher';
+    if (teacher === T.on) return;
+    $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
+    $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
+    document.body.classList.toggle('mode-teacher', teacher);
+    if (teacher) {
+      snapshot();
+      T.on = true; T.last = 0; enterTab(currentTab);
+      nativeCAF(T.raf); T.raf = nativeRAF(tick);
+    } else {
+      nativeCAF(T.raf); T.on = false; T.paused = false; flushHeld();
+      T.stage = null;
+      restore();                                   // 回到學生操作：一切還原成剛按下老師講解那一刻的樣子
+    }
+  };
+  window.teachOnTab = function (tabId) { if (T.on) enterTab(tabId); };
+
+  /* 語言切換：原本的 setLang 會順手把分頁五的題目卡重畫（已公布的答案、對錯標記會被清掉），
+     老師模式下先記下來、重畫完再放回去；其他演示狀態與計時都不受影響，所以不會重播。
+     暫停中時補畫一格，讓畫布上的字跟著換 */
+  const origSetLang = window.setLang;
+  window.setLang = function () {
+    if (!T.on) return origSetLang.apply(this, arguments);
+    const sel = t5Selected();
+    const r = origSetLang.apply(this, arguments);
+    if (sel >= 0 && !t5_answered) checkT5Answer(sel);
+    if (T.paused) redrawOnce();
+    paint();
+    return r;
+  };
+
+  /* ── 一次性的準備：每個舞台加控制列，學生專用的控制列在老師模式收起來 ── */
+  function buildBar(id, cvsId) {
+    const st = STAGE[id], cvs = $(cvsId), cc = cvs && cvs.closest('.canvas-container'); if (!cc) return;
+    const bar = document.createElement('div');
+    bar.className = 'teach-bar'; bar.dataset.stage = id;
+    let chips = '';
+    st.steps.forEach((s, i) => {
+      chips += '<button type="button" class="teach-chip" data-i="' + i + '"><b class="teach-n">' + (i + 1) + '</b> <span data-zh="' + s.zh + '" data-en="' + s.en + '">' + s.zh + '</span></button>';
+    });
+    bar.innerHTML = '<button type="button" class="teach-btn" data-act="pause"></button><button type="button" class="teach-btn" data-act="replay"></button>' +
+                    '<div class="teach-track"><div class="teach-fill"></div></div><div class="teach-chips">' + chips + '</div><div class="teach-note" aria-live="polite"></div>';
+    bar.addEventListener('click', onBar);
+    cc.insertAdjacentElement('afterend', bar);
+  }
+  Object.keys(STAGE).forEach(id => STAGE_CVS[id].forEach(c => buildBar(id, c)));
+
+  const hide = el => { if (el) el.classList.add('std-only'); };
+  hide($('btn-t1-lo').closest('.controls'));                    // 分頁一：電流小／中／大
+  hide($('btn-t2-break').closest('.controls'));                 // 分頁二：接好的串聯／剪斷
+  hide($('t3-rng-branch').closest('.controls'));                // 分頁三：I₁ 滑桿
+  hide($('btn-t4-ammeter').closest('.controls'));               // 分頁四（接線示範）：安培計／伏特計接法
+  hide($('btn-t4-why-a').closest('.controls'));                 // 分頁四（內阻探究）：兩種電表、設計正確／錯誤
+  hide($('btn-q1').closest('.controls'));                       // 分頁五：題型一／二／三（老師模式由程式換題）
+  hide($('btn-t6-go').closest('.controls'));                    // 分頁六：合上開關
+})();
 </script>
 </body>
 </html>
