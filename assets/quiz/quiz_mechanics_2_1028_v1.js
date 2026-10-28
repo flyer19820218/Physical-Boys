@@ -1,0 +1,72 @@
+/* Multiple-choice practice for mechanics_2.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('mechanics_2',{
+ '#tab-tug':[
+  Q(P(`左邊 30 gw、右邊 80 gw 拉同一個木塊，合力是多少？`,`A block is pulled 30 gw to the left and 80 gw to the right. What is the resultant force?`),
+   [P(`50 gw 向右`,`50 gw to the right`),P(`110 gw 向右`,`110 gw to the right`),P(`50 gw 向左`,`50 gw to the left`),P(`110 gw 向左`,`110 gw to the left`)],0,
+   P(`同一直線上反向兩力相減：80 − 30 = 50 gw，方向朝向較大的力（向右）。`,`Opposite forces on one line subtract: 80 − 30 = 50 gw, toward the larger force (right).`),
+   P(`反向要相減，方向看大力。`,`Opposite forces subtract; the larger one decides the direction.`)),
+  Q(P(`力的圖示（箭頭線段）包含哪三要素？`,`What three elements does a force arrow show?`),
+   [P(`作用點方向和大小`,`Point, direction, size`),P(`質量、體積、顏色`,`Mass, volume and color`),P(`溫度、時間、速度`,`Heat, time and distance`),P(`形狀、重量、材質`,`Shape, weight, surface`)],0,
+   P(`力的三要素是作用點（起點）、方向（箭頭）、大小（線段長度）。`,`The three elements are the point of application (start), direction (arrowhead) and size (length).`),
+   P(`箭頭的起點、指向、長度各代表什麼？`,`What do the start, the pointing and the length each stand for?`)),
+  Q(P(`同一直線上兩個反向的力，合力的方向如何決定？`,`For two opposite forces on one line, how is the direction of the resultant decided?`),
+   [P(`朝向較大的力`,`Toward the larger force`),P(`朝向較小的力`,`Toward the smaller force`),P(`朝向兩力正中`,`Between the two forces`),P(`與兩力互相垂直`,`Perpendicular to both`)],0,
+   P(`反向相減後，合力方向與較大的力相同。`,`After subtracting, the resultant points the same way as the larger force.`),
+   P(`拔河誰力氣大，繩子往誰那邊跑？`,`In tug-of-war the rope goes toward whichever side is stronger.`))],
+ '#tab-eq':[
+  Q(P(`兩個力要達成平衡，必須同時滿足哪三個條件？`,`Which three conditions must two forces meet to be balanced?`),
+   [P(`大小相等同向同線`,`Equal, same way, same line`),P(`大小相等反向不同線`,`Equal, opposite, offset`),P(`大小相等反向同線`,`Equal, opposite, same line`),P(`大小不同反向同線`,`Unequal, opposite, same line`)],2,
+   P(`二力平衡要同時滿足：大小相等、方向相反、作用在同一直線上，缺一不可。`,`Two-force balance needs all three: equal size, opposite direction and the same line.`),
+   P(`三個條件缺一不可。`,`All three conditions are required.`)),
+  Q(P(`書本重力 50 gw 靜止在桌上，桌面對書的支撐力是多少？`,`A book weighing 50 gw rests on a table. How large is the table's support force on it?`),
+   [P(`50 gw 向下`,`50 gw downward`),P(`100 gw 向上`,`100 gw upward`),P(`25 gw 向上`,`25 gw upward`),P(`50 gw 向上`,`50 gw upward`)],3,
+   P(`書靜止（合力為零），支撐力與重力大小相等、方向相反：50 gw 向上。`,`The book is at rest (zero resultant), so the support is equal and opposite to the weight: 50 gw upward.`),
+   P(`靜止代表合力為零。`,`At rest means the resultant is zero.`)),
+  Q(P(`物體受三個力而平衡時，其中任意兩力的合力和第三力有什麼關係？`,`When an object is balanced under three forces, how does the resultant of any two relate to the third?`),
+   [P(`和第三力成平衡`,`Balances the third force`),P(`和第三力同方向`,`Points along the third`),P(`和第三力成直角`,`Is at right angles to it`),P(`一定等於零力`,`Is always exactly zero`)],0,
+   P(`三力平衡時，任意兩力的合力必定與第三個力成二力平衡（大小相等、方向相反）。`,`Under three-force balance, the resultant of any two is equal and opposite to the third.`),
+   P(`把三力平衡變成二力平衡來想。`,`Turn the three-force problem into a two-force problem.`))],
+ '#tab-vector':[
+  Q(P(`兩個力大小固定，夾角越小，合力會怎樣？`,`Two forces have fixed sizes. As the angle between them decreases, what happens to the resultant?`),
+   [P(`合力越小`,`The resultant drops`),P(`合力不變`,`The resultant is fixed`),P(`合力為零`,`The resultant is zero`),P(`合力越大`,`The resultant grows`)],3,
+   P(`夾角越小，合力越大；夾角 0° 時同向，合力最大。`,`The smaller the angle, the larger the resultant; at 0° the forces align and it is greatest.`),
+   P(`夾角 0° 與 180° 各是什麼情況？`,`What do angles of 0° and 180° mean?`)),
+  Q(P(`3 gw 與 4 gw 兩力夾角 0°（同向），合力是多少？`,`Forces of 3 gw and 4 gw act at 0° (same direction). What is the resultant?`),
+   [P(`7 gw`,`7 gw`),P(`1 gw`,`1 gw`),P(`5 gw`,`5 gw`),P(`12 gw`,`12 gw`)],0,
+   P(`同向時合力相加：3 + 4 = 7 gw。`,`Same-direction forces add: 3 + 4 = 7 gw.`),
+   P(`夾角 0° 就是同向。`,`An angle of 0° means the same direction.`)),
+  Q(P(`6 gw 與 8 gw 兩力夾角 180°（反向），合力是多少？`,`Forces of 6 gw and 8 gw act at 180° (opposite). What is the resultant?`),
+   [P(`2 gw`,`2 gw`),P(`14 gw`,`14 gw`),P(`10 gw`,`10 gw`),P(`0 gw`,`0 gw`)],0,
+   P(`反向時合力相減：8 − 6 = 2 gw。`,`Opposite forces subtract: 8 − 6 = 2 gw.`),
+   P(`夾角 180° 是兩力最小的合力。`,`At 180° the resultant is at its minimum.`))],
+ '#tab-comp':[
+  Q(P(`斜斜向上拉行李箱的力，可以分解成哪兩個分力？`,`The slanted pull on a suitcase can be resolved into which two components?`),
+   [P(`兩個大小相同的力`,`Two forces of equal size`),P(`水平與垂直分力`,`Horizontal, vertical parts`),P(`兩個互相平行的力`,`Two forces in parallel`),P(`一個變大的新力`,`One bigger brand-new force`)],1,
+   P(`傾斜的力可用長方形分解成互相垂直的水平分力（往前拉）與垂直分力（往上提）。`,`A slanted force can be resolved with a rectangle into perpendicular horizontal (pulling forward) and vertical (lifting up) components.`),
+   P(`把力拆成 X 軸和 Y 軸。`,`Split the force along the X and Y axes.`)),
+  Q(P(`總施力大小固定，拉力的角度越平緩，哪一個分力越大？`,`With a fixed total force, as the pulling angle becomes flatter, which component grows?`),
+   [P(`水平分力越大`,`Horizontal part larger`),P(`垂直分力越大`,`Vertical part larger`),P(`兩分力同樣大`,`Both parts stay equal`),P(`水平分力變零`,`Horizontal part is zero`)],0,
+   P(`角度越平緩，水平分力越大，垂直分力越小。`,`The flatter the angle, the larger the horizontal component and the smaller the vertical one.`),
+   P(`完全水平的拉力，全部都是水平分力。`,`A fully horizontal pull is all horizontal component.`)),
+  Q(P(`把行李箱的拉桿壓低，拉力變得更水平時，往前的分力怎樣？`,`You lower the suitcase handle so the pull is flatter. What happens to the forward component?`),
+   [P(`往前的分力變小`,`Forward part gets smaller`),P(`往上的分力變大`,`Upward part gets larger`),P(`往前的分力變大`,`Forward part gets larger`),P(`兩個分力都消失`,`Both parts vanish fully`)],2,
+   P(`拉力越平緩，水平（往前）分力越大，所以行李箱更好拉。`,`A flatter pull gives a larger horizontal (forward) component, so the suitcase pulls more easily.`),
+   P(`往前就是水平方向。`,`Forward means horizontal.`))],
+ '#tab-incline':[
+  Q(P(`斜面坡度越陡，物體的下滑力會怎樣？`,`As an incline gets steeper, what happens to the sliding force on an object?`),
+   [P(`下滑力越小`,`Sliding force drops`),P(`下滑力不變`,`Sliding force is fixed`),P(`下滑力越大`,`Sliding force grows`),P(`下滑力為零`,`Sliding force is zero`)],2,
+   P(`斜面越陡，平行斜面的下滑力越大，物體越容易滑落。`,`The steeper the slope, the greater the force along it and the easier the object slides.`),
+   P(`陡坡上車子下滑力暴增。`,`On a steep slope the sliding force surges.`)),
+  Q(P(`斜面坡度越陡，壓在斜面上的垂直壓迫力會怎樣？`,`As an incline gets steeper, what happens to the force pressing into the slope?`),
+   [P(`壓迫力越大`,`Pressing force grows`),P(`壓迫力越小`,`Pressing force shrinks`),P(`壓迫力不變`,`Pressing force is fixed`),P(`壓迫力加倍`,`Pressing force doubles`)],1,
+   P(`斜面越陡，垂直斜面的壓迫力反而越小；越平緩則越大。`,`The steeper the slope, the smaller the pressing force; the flatter, the larger.`),
+   P(`一個分力增加時，另一個會消長。`,`When one component grows, the other shrinks.`)),
+  Q(P(`斜面給物體的正向力 N，是哪一個力的反作用力？`,`The normal force N from an incline on an object is the reaction to which force?`),
+   [P(`物體沿斜面的下滑力`,`The sliding force on it`),P(`物體受到的整個重力`,`The whole weight itself`),P(`物體產生的摩擦力`,`The friction it produces`),P(`物體對斜面的壓力`,`The press on the incline`)],3,
+   P(`壓迫力會產生反作用力，也就是斜面給予物體的正向力 N。`,`The pressing force has a reaction force, the normal force N that the incline gives the object.`),
+   P(`作用力與反作用力作用在不同物體上。`,`Action and reaction act on different objects.`))]
+});
+})();

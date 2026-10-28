@@ -1,0 +1,72 @@
+/* Multiple-choice practice for thermo_4.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('thermo_4',{
+ '#tab2':[
+  Q(P(`湯匙靠近火鍋的一端先熱，傳導時粒子有沒有整排跑到手上？`,`The end of a spoon near the hot pot heats first. In conduction, do the particles travel all the way to your hand?`),
+   [P(`粒子整排移到手上`,`The particles move to the hand`),P(`粒子留原處傳能量`,`Particles stay, energy moves`),P(`粒子變成熱順著跑`,`Particles change into heat`),P(`火焰把粒子吹過去`,`Flames blow particles across`)],1,
+   P(`傳導時粒子只在原處振動，相鄰粒子互相作用傳遞能量，物質沒有整體移動。`,`In conduction the particles only vibrate in place and pass energy to neighbors; the material does not move as a whole.`),
+   P(`能量走，粒子不搬家。`,`The energy travels; the particles stay.`)),
+  Q(P(`同樣加熱的條件下，哪一種棒子傳熱到遠端最快？`,`Under the same heating, which rod passes heat to its far end fastest?`),
+   [P(`木棒`,`Wooden rod`),P(`玻璃棒`,`Glass rod`),P(`塑膠棒`,`Plastic rod`),P(`銅棒`,`Copper rod`)],3,
+   P(`導熱快慢：銅 > 鐵 > 玻璃 > 木頭，金屬通常最快。`,`Conduction speed: copper > iron > glass > wood; metals are usually fastest.`),
+   P(`金屬是熱的良導體。`,`Metals are good heat conductors.`)),
+  Q(P(`金屬導熱特別快的原因是什麼？`,`Why do metals conduct heat especially fast?`),
+   [P(`表面光亮把熱反射`,`A shiny surface reflects it`),P(`體積通常都比較小`,`Metals are usually smaller`),P(`自由電子幫忙傳熱`,`Free electrons help move it`),P(`熔點比木頭還要高`,`They melt at higher temps`)],2,
+   P(`金屬除了粒子的振動傳遞，還有可自由移動的電子協助搬運能量。`,`Besides particle vibration, metals have free-moving electrons that help carry energy.`),
+   P(`金屬裡有一種可以自由移動的粒子。`,`Metals contain particles that can move freely.`))],
+ '#tab3':[
+  Q(P(`水從底部加熱，整杯水為什麼很快都變熱？`,`Why does a whole cup of water get hot quickly when heated from the bottom?`),
+   [P(`受熱變輕所以上升`,`Warm fluid gets lighter, rises`),P(`受熱變重所以下沉`,`Warm fluid gets heavier, sinks`),P(`熱會自己往上跑掉`,`The heat floats up by itself`),P(`水分子被火吸過去`,`The fire pulls water molecules`)],0,
+   P(`底部的水受熱膨脹、密度變小而上升，冷水下沉補位，形成循環。`,`Heated water at the bottom expands, becomes less dense and rises while cold water sinks in, forming a loop.`),
+   P(`上升的是密度小的暖流體。`,`The part that rises is the less dense warm fluid.`)),
+  Q(P(`只加熱上層的水，下層為什麼仍然很冷？`,`Why does the lower water stay cold when only the top layer is heated?`),
+   [P(`暖水在上方會下沉`,`Warm water on top sinks fast`),P(`熱一定會自動往下`,`Heat always spreads downward`),P(`上層的水立刻結冰`,`The top layer freezes at once`),P(`暖水在上方很穩定`,`Warm water on top stays calm`)],3,
+   P(`暖流體本來就在上方，分層反而穩定，不容易形成整杯循環。`,`Warm fluid already on top makes a stable layer, so a full circulation hardly forms.`),
+   P(`暖的比較輕，輕的在上面。`,`Warm means lighter, and lighter things stay on top.`)),
+  Q(P(`下列哪一個敘述最符合「對流」？`,`Which statement best describes convection?`),
+   [P(`流體移動帶著能量`,`Moving fluid carries energy`),P(`粒子原地振動傳能`,`Fixed particles pass energy`),P(`電磁波直接傳送能`,`Waves carry energy directly`),P(`不須物質穿過真空`,`Energy leaps across vacuum`)],0,
+   P(`對流是流體整體移動，帶著能量一起循環。`,`Convection is the bulk movement of a fluid carrying energy around.`),
+   P(`判斷時先問：物質有沒有整體移動？`,`First ask: does the material move as a whole?`))],
+ '#tab4':[
+  Q(P(`冷氣機裝在房間的哪個位置，最容易形成完整氣流循環？`,`Where should an air conditioner be mounted to create a full airflow loop in a room?`),
+   [P(`裝在地板附近`,`Set it down near the floor`),P(`裝在沙發旁邊`,`Put it low beside the sofa`),P(`裝在窗台下方`,`Hang it low on the wall`),P(`裝在天花板邊`,`Mount it near the ceiling`)],3,
+   P(`冷空氣密度大，容易下沉，冷氣裝在高處，上方暖空氣被帶回冷氣附近，形成循環。`,`Cold air is dense and sinks, so a high unit lets warm air from above flow back to it in a loop.`),
+   P(`冷空氣往下沉。`,`Cold air sinks.`)),
+  Q(P(`暖氣機裝在房間的哪個位置，最容易形成完整氣流循環？`,`Where should a heater be placed to create a full airflow loop in a room?`),
+   [P(`裝在地板附近`,`Set it down near the floor`),P(`裝在天花板附近`,`Mount it near the ceiling`),P(`裝在窗台上方`,`Hang it high on the wall`),P(`裝在櫃子頂端`,`Put it on top of a cabinet`)],0,
+   P(`暖空氣密度小，容易上升，暖氣裝在低處，下方冷空氣補進暖氣附近，形成循環。`,`Warm air is less dense and rises, so a low heater draws in cold air from below and makes a loop.`),
+   P(`暖空氣往上升。`,`Warm air rises.`)),
+  Q(P(`冷氣適合裝在高處，主要是因為什麼？`,`Why is a high position suited to an air conditioner?`),
+   [P(`冷空氣密度小會上升`,`Cold air is thin and rises`),P(`冷空氣完全不流動`,`Cold air never moves at all`),P(`冷空氣會被牆吸收`,`Cold air is soaked by walls`),P(`冷空氣密度大會下沉`,`Cold air is dense and sinks`)],3,
+   P(`冷空氣密度較大，容易向下移動，從高處吹出能帶動整個房間循環。`,`Cold air is denser and moves downward, so blowing it from above drives circulation through the room.`),
+   P(`密度大的流體往哪個方向移動？`,`Which way does a denser fluid move?`))],
+ '#tab5':[
+  Q(P(`太陽的熱傳到地球，主要是靠哪一種方式？`,`By which method does the Sun's heat mainly reach Earth?`),
+   [P(`傳導`,`Conduction`),P(`對流`,`Convection`),P(`蒸發`,`Diffusion`),P(`輻射`,`Radiation`)],3,
+   P(`太陽和地球之間幾乎是真空，只有輻射（電磁波）能傳遞能量。`,`Space is nearly a vacuum, so only radiation (electromagnetic waves) can carry the energy.`),
+   P(`中間幾乎沒有物質。`,`There is almost no matter in between.`)),
+  Q(P(`關於輻射傳熱，下列哪一個敘述正確？`,`Which statement about heat transfer by radiation is correct?`),
+   [P(`必須要有空氣`,`Air must be present`),P(`不用任何介質`,`No medium is needed`),P(`必須要有液體`,`A liquid must be there`),P(`必須要有固體`,`A solid must touch it`)],1,
+   P(`輻射以電磁波傳遞能量，不需要物質當介質，真空中也行。`,`Radiation carries energy by electromagnetic waves and needs no medium, even in a vacuum.`),
+   P(`把腔室抽成真空，輻射有沒有中斷？`,`Did the radiation stop when the chamber was evacuated?`)),
+  Q(P(`相同照射條件下，黑色霧面與銀亮表面，哪一個升溫較快？`,`Under the same illumination, which warms faster: a matte black or a shiny silver surface?`),
+   [P(`黑色霧面升溫較快`,`Matte black warms faster`),P(`銀亮表面升溫較快`,`Shiny silver warms faster`),P(`兩者升溫完全一樣`,`Both warm up identically`),P(`兩者都不會升溫`,`Neither of them warms up`)],0,
+   P(`黑色霧面通常吸收較多輻射，所以升溫較快；銀亮表面會反射較多。`,`A matte black surface usually absorbs more radiation and warms faster; a shiny surface reflects more.`),
+   P(`被吸收的能量才會讓物體升溫。`,`Only absorbed energy warms the object.`))],
+ '#tab1':[
+  Q(P(`火鍋湯汁翻滾、上下循環，這屬於哪一種熱傳方式？`,`The broth in a hot pot churns and circulates up and down. Which kind of heat transfer is this?`),
+   [P(`傳導`,`Conduction`),P(`輻射`,`Radiation`),P(`對流`,`Convection`),P(`蒸發`,`Diffusion`)],2,
+   P(`流體整體移動、帶著能量循環，是對流。`,`A fluid moving as a whole and carrying energy around is convection.`),
+   P(`先問：物質有沒有整體移動？`,`First ask: does the material move as a whole?`)),
+  Q(P(`保溫瓶的真空夾層主要擋住哪兩條熱傳路線？`,`Which two heat routes does the vacuum layer of a thermos mainly block?`),
+   [P(`輻射與對流`,`Radiation, convection`),P(`傳導與輻射`,`Conduction, radiation`),P(`傳導與對流`,`Conduction, convection`),P(`三條路全擋`,`All of the three paths`)],2,
+   P(`真空中沒有物質，傳導與對流都無法進行；輻射不需要介質，要靠銀亮內壁反射。`,`A vacuum has no matter, so conduction and convection cannot occur; radiation needs no medium and is handled by the shiny wall.`),
+   P(`真空裡有沒有物質可以接觸或流動？`,`Is there any matter in a vacuum to touch or flow?`)),
+  Q(P(`保溫瓶的銀亮內壁，主要是在阻擋哪一條熱傳路線？`,`Which heat route does the shiny inner wall of a thermos mainly block?`),
+   [P(`傳導`,`Conduction`),P(`對流`,`Convection`),P(`輻射`,`Radiation`),P(`三種都擋`,`All three`)],2,
+   P(`銀亮表面會反射輻射，減少以電磁波散失的熱。`,`A shiny surface reflects radiation and cuts the heat lost as electromagnetic waves.`),
+   P(`銀亮表面吸收少、反射多。`,`A shiny surface absorbs little and reflects much.`))]
+});
+})();
