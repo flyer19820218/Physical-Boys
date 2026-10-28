@@ -51,4 +51,6 @@ LQ.addStatic=function(unit,bank){
   Object.entries(bank).forEach(([sel,qs])=>mounts.push({sel,qs,key:unit+':'+sel,host:null}));
   watch();mountAll();
 };
+// Pages that build their own container after load (e.g. optics_1's quiz mode) call this once the container exists.
+LQ.refresh=mountAll;
 })();

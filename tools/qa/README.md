@@ -16,6 +16,7 @@
 | `node tools/qa/qa_page.cjs 頁面.html ...` | 每個分頁、中英文各跑一次：JS 錯誤、字體、封面無字、未定義函式、Base64／純黑／MathJax、1080px、畫布 1 秒像素差（閒置不動的會點按鈕或拖曳再量）、Hook 頭像、英文版殘留中文、控制項高度 | 每頁約 1～3 分鐘 |
 | `node tools/qa/qa_text.cjs 頁面.html ...` | 攔截畫布 `fillText`：字壓字、字超出畫布、小於 13px 的字、幾乎不動的畫布 | 每頁約 30 秒 |
 | `node tools/qa/smoke.cjs [頁面.html ...]` | 逐頁載入掃描：JS 錯誤、英文畫面是否還有彎撇號（不給頁面就掃全部） | 每頁約 3 秒 |
+| `node tools/qa/mcq_check.cjs 題庫檔.js ...` | 選擇題題庫的選項長度檢查（AGENTS 8.2／8.3）：每題字數差距、正解是否唯一最長／最短、整檔比例、正解字母分布（中英文各量） | 數秒 |
 | `node tools/qa/fix_apostrophes.cjs . [--write]` | 把英文字串的彎撇號換成直撇號（預設只預覽） | 數秒 |
 
 ## 看結果的注意事項
