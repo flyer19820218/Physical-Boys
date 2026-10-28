@@ -165,8 +165,8 @@
 
 | 批 | 課號 | 科目 | 課程（檔名） | 完成 |
 |---|---|---|---|---|
-| 1 | 1–10 | 物理 | density_1、density_2、density_3、waves_1、waves_2、waves_3、waves_4、optics_1、optics_2、optics_3 | ☐ |
-| 2 | 11–20 | 物理 | optics_4、optics_5、optics_max1、thermo_1、thermo_2、thermo_3、thermo_4、thermo_5、mechanics_1、mechanics_2 | ☐ |
+| 1 | 1–10 | 物理 | density_1、density_2、density_3、waves_1、waves_2、waves_3、waves_4、optics_1、optics_2、optics_3 | ☑ |
+| 2 | 11–20 | 物理 | optics_4、optics_5、optics_max1、thermo_1、thermo_2、thermo_3、thermo_4、thermo_5、mechanics_1、mechanics_2 | ☑ |
 | 3 | 21–30 | 物理 | mechanics_3、mechanics_4、mechanics_5、kinematics、kinematics_2、kinematics_3、kinematics_4、kinematics_5、newton_1、newton_2 | ☐ |
 | 4 | 31–40 | 物理 | newton_3、newton_4、newton_5、work_1、work_2、work_3、work_4、electronics_1、electronics_2、electronics_3 | ☐ |
 | 5 | 41–50 | 物理／化學 | electronics_4、magnetism_1、electromagnetism_2、electric_motor_3、electromagnetic_induction_4、concerntration_1、concerntration_2、concerntration_3、concerntration_4、atomics_1 | ☐ |
@@ -184,7 +184,9 @@
 
 - **基準（2026-10-28，只量了生物 JS 題庫 23 個檔、552 題；其他科目還沒量）**：正解為唯一最長 20%、唯一最短 14%，各題選項差距超過規定（最長與最短相差 >30%，短選項 ≤10 字則 >3 字）的占 25%。整體接近隨機，但分課差很大，**最偏的（超過 35% 上限）**：`coordination_homeostasis` 71%（17 題，內分泌／血糖／神經／呼吸／向性的第一批題）、`reproduction_flowers` 56%、`temperature_homeostasis` 45%、`reproduction_humans` 42%，`asexual_reproduction` 35% 在邊界；「最短就是答案」偏高的是 `immune_defense` 41%、`plant_transport` 32%、`nutrients` 27%、`asexual_reproduction` 26%。差距超標最多的是 `matter_transport` 41%、`coordination_homeostasis` 41%、`temperature_homeostasis` 40%、`organization` 38%、`plant_transport` 36%。老師若想先修學生最容易抓到的，可以把最偏的幾課提前（內分泌、血糖、神經、呼吸、向性、體溫、無性生殖在第 12 批，人類與花的生殖在第 13 批）。
 - 之前 10-26 的選擇題紀錄寫過「選項長度已調平衡」，從這次量測看並沒有達到規則；這批重整以 8.2 的數字為準。
-- 各批結果：（尚未開始）
+- 各批結果：
+  - **第 1、2 批（第 1–20 課，物理，2026-10-28）**：20 課裡只有 `density_1`（1 題）、`density_2`（2 題）有選擇題，都是 3 選項、按鈕寫在 HTML 裡、答錯／答對各跳一段說明（沒有獨立的「提示」步驟）；其餘 18 課的題目是輸入數字（`waves_2`、`thermo_3` 的問題三部曲）、互動操作或三類別按鈕（`thermo_4` 傳導／對流／輻射），沒有會被「選最長」猜中的選項，不需要改。改前：`density_1` 唯一的題目正解是唯一最長（13 字對 12、12 字）；`density_2` 第 1 題正解按鈕的字尾直接寫了「(正確答案)」（最嚴重的洩漏，已拿掉）；第 2 題是數字選項，長度相同。改後：`density_1` 三個選項 13／14／12 字（正解居中），英文 30／33／29 字元；題幹、答對答錯說明、正解位置（A、B、B）都沒動。`node --check` 通過。
+  - 少於 5 題的課，整課比例沒有意義，只看每題規則；整批合計仍要看。
 
 ## 注意事項
 
