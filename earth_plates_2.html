@@ -3258,7 +3258,7 @@
   const SB_QC = ['#bae6fd', '#5aa9ff', '#a78bfa'];                   /* 地震＝藍點：淺層淡藍、中層藍、深層藍紫 */
   const SB_OC = '#7d93a6', SB_CC = '#c9a46a';                        /* 海洋地殼＝藍灰、大陸地殼＝沙黃褐 */
   const SB_DEP = [[0, 100], [70, 250], [300, 360], [700, 480]];      /* 深度尺：km → 畫布 y（分段） */
-  const SBS = { step: 0, age: 0, auto: false, touched: false, ph: 0, cv: 0 };
+  const SBS = { step: 0, age: 0, auto: false, touched: false, ph: 0, cv: 0, cvR: 0 };
   const SB_LAND = [[400, 193], [430, 150], [470, 100], [520, 90], [600, 86], [760, 84], [960, 88]];
   const SB_LBOT = [[960, 196], [520, 200], [440, 220], [420, 205.3]];
 
@@ -3311,7 +3311,8 @@
     SBS.age += dt;
     if (SBS.auto && SBS.age >= SB_DUR[SBS.step]) { SBS.step = (SBS.step + 1) % SB_STEPS.length; SBS.age = 0; sbUI(); }
     if (SBS.step >= 1) SBS.ph += dt;
-    SBS.cv += dt * 42;   /* 對流流速（示意，不依比例） */
+    SBS.cv += dt * 42 * (1 + 0.4 * Math.sin(SBS.ph * 0.7));        /* 對流流速（示意，不依比例）：忽快忽慢，左右兩圈錯開 */
+    SBS.cvR += dt * 42 * (1 + 0.4 * Math.sin(SBS.ph * 0.7 + 2.1));
   }
 
   /* ── 小工具 ── */
@@ -3338,61 +3339,75 @@
      一圈流線：左邊熱的地函上升 → 在海洋板塊底下往右流（帶著板塊走）→ 在海溝處順著下沉板塊往下 → 底部往回流、再被加熱。
      下沉那段沿著「完全隱沒時的板塊」平行（離板塊 100 px），所以板塊還沒沉的時候，對流已經在那裡了（原因在前、結果在後）。 */
   const SB_CV = { XL: 52, YT: 272, YB: 496, R: 36, OFF: 100, XD: 320, XE: 600, HOT: '#ffd166', COLD: '#93a9c2', GAP: 70 };
-  let sbCvPath = null;
+  let sbCvLoops = null;
   function sbCvBuild() {
-    const { XL, YT, YB, R, OFF, XD, XE } = SB_CV, P = [], Ht = [], H = Math.PI / 2;
-    const seg = (x1, y1, x2, y2, h1, h2) => { const n = Math.max(2, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / 4)); for (let i = 0; i < n; i++) { const u = i / n; P.push([x1 + (x2 - x1) * u, y1 + (y2 - y1) * u]); Ht.push(h1 + (h2 - h1) * u); } };
-    const arc = (cx, cy, a1, a2, h1, h2) => { const n = 12; for (let i = 0; i < n; i++) { const u = i / n, a = a1 + (a2 - a1) * u; P.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]); Ht.push(h1 + (h2 - h1) * u); } };
-    seg(XL, YB - R, XL, YT + R, 0.85, 1);                                  /* 左邊上升（熱） */
-    arc(XL + R, YT + R, Math.PI, Math.PI + H, 1, 0.95);
-    seg(XL + R, YT, XD, YT, 0.95, 0.55);                                    /* 板塊底下往右流（慢慢冷卻） */
-    let last = null;
-    for (let x = XD; x <= XE + 0.01; x += 6) {                              /* 順著下沉板塊往下（冷） */
-      const [nx, ny] = sbNorm(sbSlope(x)), q = [x + nx * OFF, sbTop(x) + ny * OFF];
-      P.push(q); Ht.push(0.5 - 0.42 * (x - XD) / (XE - XD)); last = q;
-    }
-    const tx = 1 / Math.hypot(1, SB.K), ty = SB.K * tx;                     /* 板塊斜面的方向 */
-    const p0 = last, p1 = [p0[0] + 46 * tx, p0[1] + 46 * ty], p3 = [500, YB], p2 = [p3[0] + 52, YB];
-    for (let i = 1; i <= 16; i++) {                                         /* 掉頭：U 形彎 */
-      const u = i / 16, v = 1 - u;
-      P.push([0, 1].map(j => v * v * v * p0[j] + 3 * v * v * u * p1[j] + 3 * v * u * u * p2[j] + u * u * u * p3[j]));
-      Ht.push(0.08 + 0.1 * u);
-    }
-    seg(500, YB, XL + R, YB, 0.2, 0.85);                                    /* 底部往回流（慢慢被加熱） */
-    arc(XL + R, YB - R, H, Math.PI, 0.85, 0.85);
-    const L = [0];
-    for (let i = 1; i <= P.length; i++) { const a = P[i - 1], b = P[i % P.length]; L.push(L[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1])); }
-    sbCvPath = { P, Ht, L, len: L[P.length] };
+    const G = SB_CV, R = G.R, H = Math.PI / 2, loops = [];
+    const mk = () => {
+      const P = [], Ht = [];
+      return {
+        P, Ht,
+        seg(x1, y1, x2, y2, h1, h2) { const n = Math.max(2, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / 4)); for (let i = 0; i < n; i++) { const u = i / n; P.push([x1 + (x2 - x1) * u, y1 + (y2 - y1) * u]); Ht.push(h1 + (h2 - h1) * u); } },
+        arc(cx, cy, a1, a2, h1, h2) { const n = 12; for (let i = 0; i < n; i++) { const u = i / n, a = a1 + (a2 - a1) * u; P.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]); Ht.push(h1 + (h2 - h1) * u); } },
+        hook(p0, p1, p2, p3, h1, h2) { for (let i = 1; i <= 16; i++) { const u = i / 16, v = 1 - u; P.push([0, 1].map(j => v * v * v * p0[j] + 3 * v * v * u * p1[j] + 3 * v * u * u * p2[j] + u * u * u * p3[j])); Ht.push(h1 + (h2 - h1) * u); } },
+        done() { const L = [0]; for (let i = 1; i <= P.length; i++) { const a = P[i - 1], b = P[i % P.length]; L.push(L[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1])); } return { P, Ht, L, len: L[P.length] }; }
+      };
+    };
+    /* 左圈：海洋板塊底下。外側上升 → 往右流（帶著板塊走）→ 順著下沉板塊往下 → 底部回流 */
+    { const o = mk(), { XL, YT, YB, OFF, XD, XE } = G;
+      o.seg(XL, YB - R, XL, YT + R, 0.85, 1); o.arc(XL + R, YT + R, Math.PI, Math.PI + H, 1, 0.95);
+      o.seg(XL + R, YT, XD, YT, 0.95, 0.55);
+      let last = null;
+      for (let x = XD; x <= XE + 0.01; x += 6) { const [nx, ny] = sbNorm(sbSlope(x)), q = [x + nx * OFF, sbTop(x) + ny * OFF]; o.P.push(q); o.Ht.push(0.5 - 0.42 * (x - XD) / (XE - XD)); last = q; }
+      const tx = 1 / Math.hypot(1, SB.K), ty = SB.K * tx;
+      o.hook(last, [last[0] + 46 * tx, last[1] + 46 * ty], [552, YB], [500, YB], 0.08, 0.18);
+      o.seg(500, YB, XL + R, YB, 0.2, 0.85); o.arc(XL + R, YB - R, H, Math.PI, 0.85, 0.85);
+      loops.push(o.done()); }
+    /* 右圈：大陸底下的地函楔。右側上升 → 在大陸底下往海溝流 → 被下沉板塊拖著往下 → 底部往右回流（逆時針） */
+    { const o = mk(), XR = 900, YT2 = 249, YB2 = 390, OFF2 = 45, X0 = 520, X1 = 640;
+      o.seg(XR, YB2 - R, XR, YT2 + R, 0.85, 1); o.arc(XR - R, YT2 + R, 0, -H, 1, 0.95);
+      const m = sbSlope(X0), l = Math.hypot(1, m), sx = X0 + m / l * OFF2;          /* 順著板塊上表面（上方一點）的起點 */
+      o.seg(XR - R, YT2, sx, YT2, 0.95, 0.5);
+      let last = null;
+      for (let x = X0; x <= X1 + 0.01; x += 6) { const q = [x + sbSlope(x) / Math.hypot(1, sbSlope(x)) * OFF2, sbTop(x) - OFF2 / Math.hypot(1, sbSlope(x))]; o.P.push(q); o.Ht.push(0.5 - 0.4 * (x - X0) / (X1 - X0)); last = q; }
+      const tx = 1 / Math.hypot(1, SB.K), ty = SB.K * tx, p3 = [last[0] + 48, YB2];
+      o.hook(last, [last[0] + 30 * tx, last[1] + 30 * ty], [p3[0] - 30, YB2], p3, 0.1, 0.2);
+      o.seg(p3[0], YB2, XR - R, YB2, 0.2, 0.85); o.arc(XR - R, YB2 - R, H, 0, 0.85, 0.85);
+      loops.push(o.done()); }
+    sbCvLoops = loops;
   }
-  function sbCvAt(s) {   /* 弧長 s → [x, y, 方向dx, 方向dy, 熱度] */
-    const { P, Ht, L, len } = sbCvPath; s = ((s % len) + len) % len;
+  function sbCvAt(lp, s) {   /* 弧長 s → [x, y, 方向dx, 方向dy, 熱度, 弧長比例] */
+    const { P, Ht, L, len } = lp; s = ((s % len) + len) % len;
     let lo = 0, hi = P.length; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (L[m] <= s) lo = m; else hi = m; }
     const a = P[lo], b = P[(lo + 1) % P.length], f = (s - L[lo]) / ((L[lo + 1] - L[lo]) || 1), l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, (b[0] - a[0]) / l, (b[1] - a[1]) / l, Ht[lo] + (Ht[(lo + 1) % P.length] - Ht[lo]) * f];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, (b[0] - a[0]) / l, (b[1] - a[1]) / l, Ht[lo] + (Ht[(lo + 1) % P.length] - Ht[lo]) * f, s / len];
   }
-  function sbConvect(c, alpha) {
+  /* 對流「一直在變」：流速忽快忽慢（兩圈錯開）、流線微微起伏、熱的團塊沿著流線一波一波傳過去 */
+  function sbConvect(c, alpha, t) {
     if (alpha <= 0.003) return;
-    if (!sbCvPath) sbCvBuild();
-    const { P, Ht, len } = sbCvPath, G = SB_CV;
+    if (!sbCvLoops) sbCvBuild();
+    const G = SB_CV;
     c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
-    /* 流線底帶：依冷熱著色 */
-    for (let i = 0; i < P.length; i += 3) {
-      const a = P[i], b = P[(i + 3) % P.length];
-      c.globalAlpha = 0.3 * alpha; c.strokeStyle = kMix(G.COLD, G.HOT, Ht[i]); c.lineWidth = 20;
-      c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke();
-    }
-    /* 沿流線前進的粗箭頭 */
-    c.globalAlpha = alpha;
-    const n = Math.floor(len / G.GAP);
-    for (let k = 0; k < n; k++) {
-      const s = SBS.cv + k * len / n, [x, y, ux, uy, h] = sbCvAt(s), col = kMix(G.COLD, G.HOT, h);
-      c.beginPath(); for (let q = 0; q <= 6; q++) { const p = sbCvAt(s - 24 + q * 4); if (q) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }
-      c.strokeStyle = 'rgba(16,36,29,0.75)'; c.lineWidth = 9; c.stroke();
-      c.strokeStyle = col; c.lineWidth = 5; c.stroke();
-      const hx = x + ux * 9, hy = y + uy * 9, px = -uy, py = ux;
-      c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx - ux * 18 + px * 10, hy - uy * 18 + py * 10); c.lineTo(hx - ux * 18 - px * 10, hy - uy * 18 - py * 10); c.closePath();
-      c.strokeStyle = 'rgba(16,36,29,0.85)'; c.lineWidth = 4; c.stroke(); c.fillStyle = col; c.fill();
-    }
+    sbCvLoops.forEach((lp, li) => {
+      const { P, Ht, L, len } = lp, ph = li ? SBS.cvR : SBS.cv;
+      const wy = (x, y) => y + 4 * Math.sin(0.016 * x + 0.9 * t + 0.02 * y + li * 1.7);
+      const hh = (h, u) => kClamp(h + 0.24 * Math.sin(6.283 * (u * 2 - t * 0.12 + li * 0.35)), 0, 1);
+      for (let i = 0; i < P.length; i += 3) {
+        const a = P[i], b = P[(i + 3) % P.length];
+        c.globalAlpha = 0.3 * alpha; c.strokeStyle = kMix(G.COLD, G.HOT, hh(Ht[i], L[i] / len)); c.lineWidth = 20;
+        c.beginPath(); c.moveTo(a[0], wy(a[0], a[1])); c.lineTo(b[0], wy(b[0], b[1])); c.stroke();
+      }
+      c.globalAlpha = alpha;
+      const n = Math.floor(len / G.GAP);
+      for (let k = 0; k < n; k++) {
+        const s = ph + k * len / n, p0 = sbCvAt(lp, s), x = p0[0], y = wy(p0[0], p0[1]), ux = p0[2], uy = p0[3], col = kMix(G.COLD, G.HOT, hh(p0[4], p0[5]));
+        c.beginPath(); for (let q = 0; q <= 6; q++) { const p = sbCvAt(lp, s - 24 + q * 4); if (q) c.lineTo(p[0], wy(p[0], p[1])); else c.moveTo(p[0], wy(p[0], p[1])); }
+        c.strokeStyle = 'rgba(16,36,29,0.75)'; c.lineWidth = 9; c.stroke();
+        c.strokeStyle = col; c.lineWidth = 5; c.stroke();
+        const hx = x + ux * 9, hy = y + uy * 9, px = -uy, py = ux;
+        c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx - ux * 18 + px * 10, hy - uy * 18 + py * 10); c.lineTo(hx - ux * 18 - px * 10, hy - uy * 18 - py * 10); c.closePath();
+        c.strokeStyle = 'rgba(16,36,29,0.85)'; c.lineWidth = 4; c.stroke(); c.fillStyle = col; c.fill();
+      }
+    });
     c.restore();
   }
   function sbBez(u) {   /* 熔融區 → 火山口 的岩漿通道 */
@@ -3408,7 +3423,7 @@
     g.addColorStop(0, '#a3432a'); g.addColorStop(1, '#6a2417');
     c.fillStyle = g; c.fillRect(0, 176, W, 540 - 176);
     /* 地函熱對流（只在 ②） */
-    sbConvect(c, sbConvAlpha());
+    sbConvect(c, sbConvAlpha(), t);
     /* 海水 */
     g = c.createLinearGradient(0, SL, 0, 194);
     g.addColorStop(0, 'rgba(56,150,190,0.6)'); g.addColorStop(1, 'rgba(24,78,104,0.85)');
@@ -3641,8 +3656,12 @@
       sbA(c, cva * sbIn(a1, 2.4, 0.6), () => e_label(c, tr('冷卻變重，往下沉', 'Cools, gets denser, sinks'), 352, 404, SB_CV.COLD, 15, 'center', true, 230));
       sbA(c, cva * sbIn(a1, 2.8, 0.6), () => e_label(c, tr('回流，再慢慢變熱', 'Flows back and slowly heats up'), 280, 466, SB_CV.COLD, 15, 'center', true, 260));
       sbA(c, cva * sbIn(a1, 1.8, 0.6), () => {
-        const ls = en ? ['Cause: mantle convection', 'carries the oceanic plate toward the continent'] : ['原因：地函熱對流', '帶著海洋板塊往大陸靠近'];
-        ls.forEach((s, i) => e_label(c, s, 940, 292 + i * 26, '#fdba74', 16, 'right', true, 330));
+        const ls = en ? ['Cause: mantle convection', 'carries the oceanic plate', 'toward the continent'] : ['原因：地函熱對流', '帶著海洋板塊', '往大陸靠近'];
+        ls.forEach((s, i) => e_label(c, s, 940, 436 + i * 26, '#fdba74', 16, 'right', true, 200));
+      });
+      sbA(c, cva * sbIn(a1, 2.0, 0.6), () => {
+        const ls = en ? ['Mantle under the continent', 'also keeps circulating'] : ['大陸底下的地函', '也在對流，而且一直在變'];
+        ls.forEach((s, i) => e_label(c, s, 800, 306 + i * 24, SB_CV.HOT, 15, 'center', true, 180));
       });
     }
     /* ② 板塊靠近：兩個方向箭頭＋海溝＋隱沒（對流出現之後才出現；⑤ 實例不畫，免得壓到山脈） */
@@ -3671,7 +3690,7 @@
     const tags = [tr('① 比密度', '① Compare density'), tr('② 熱對流與板塊靠近', '② Convection and approach'), tr('③ 看地震', '③ Earthquakes'), tr('④ 看火山', '④ Volcanoes'), tr('⑤ 實例：安地斯山脈', '⑤ Example: the Andes')];
     e_label(c, tags[SBS.step], 940, 34, '#ffe066', 19, 'right');
     e_label(c, ex ? tr('太平洋', 'Pacific Ocean') : tr('海水', 'Seawater'), 92, 162, '#f6f3ea', 15, 'center');
-    e_label(c, tr('地函', 'Mantle'), 900, 250, '#fdba74', 18, 'center');
+    if (cva > 0.01) e_label(c, tr('地函', 'Mantle'), 912, 522, '#fdba74', 18, 'center'); else e_label(c, tr('地函', 'Mantle'), 900, 250, '#fdba74', 18, 'center');
     e_label(c, ex ? tr('納茲卡板塊（海洋地殼）', 'Nazca Plate') : tr('海洋地殼', 'Oceanic crust'), 232, 226, '#dbe7f1', 16, 'center', true, 250);
     e_label(c, ex ? tr('南美洲板塊（大陸地殼）', 'South American Plate') : tr('大陸地殼', 'Continental crust'), 820, 126, '#fde68a', 16, 'center', true, 250);
     /* ① 的密度數字（之後的步驟保留） */
