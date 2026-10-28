@@ -562,6 +562,32 @@
       .home-fab { top: 8px; left: 8px; width: 42px; height: 42px; }
       .home-fab svg { width: 20px; height: 20px; }
     }
+
+  /* ── 切入即自動播放（AGENTS 10.6）：步驟編號鈕單列 ＋ 畫布頂端無字進度條 ── */
+  .e4-prog { position: absolute; left: 0; right: 0; top: 0; height: 4px; z-index: 3; background: rgba(242, 236, 217, 0.12); pointer-events: none; }
+  .e4-prog i { display: block; height: 100%; width: 0; background: var(--chalk-yellow); }
+  .controls.e4-bar { padding: 8px 10px; margin-bottom: 0; display: flex; flex-direction: column; gap: 6px; }
+  .controls.e4-bar .ctrl-caption { font-size: 16px; line-height: 1.4; margin: 0; }
+  .e4-steps { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none; justify-content: center; align-items: center; }
+  .e4-steps::-webkit-scrollbar { display: none; }
+  .e4-steps .action-btn.e4-step { flex: 1 1 0; width: auto; min-width: 0; min-height: 36px; padding: 3px 10px; gap: 6px; font-size: 15px; line-height: 1.25; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; }
+  .e4-step-t { font-size: 15px; }
+  .e4-step-n { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; border-radius: 50%; background: rgba(242, 236, 217, 0.16); font-weight: 800; line-height: 1; }
+  .e4-step.active .e4-step-n { background: rgba(11, 26, 21, 0.22); }
+  .e4-now { display: none; font-size: 18px; font-weight: 700; color: var(--chalk-yellow); line-height: 1.35; text-align: center; }
+  @media (max-width: 720px) {
+    .e4-steps .action-btn.e4-step { padding: 3px 4px; min-width: 36px; gap: 0; }
+    .e4-step-t { display: none; }
+    .e4-now { display: block; }
+  }
+  /* 串並聯推導：目前播到哪一行，就在那一行底下鋪一層淡黃（不加 padding，不推動版面） */
+  .e4-hl { border-radius: 8px; transition: background .25s ease, box-shadow .25s ease; }
+  .e4-hl.on { background: rgba(255, 224, 102, 0.13); box-shadow: 0 0 0 4px rgba(255, 224, 102, 0.13); }
+  /* 考題：選項只是展示，不能點 */
+  #q-options .quiz-opt-btn { cursor: default; pointer-events: none; }
+  .canvas-container.quiz-figure { margin-bottom: 0; border-radius: 12px 12px 0 0; }
+  #bar-tab5q { margin-bottom: 16px; border-color: var(--chalk-teal); }
+  #bar-tab3, #bar-tab3b { margin-bottom: 12px; }
   </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -628,32 +654,8 @@
         <div class="canvas-container">
           <canvas id="cvs-tab1" width="960" height="470"></canvas>
         </div>
-        <div class="controls">
-          <div class="ctrl-caption" data-zh="四個變數，一次只動一個，盯著下面那條電阻長條看" data-en="Four factors — change one at a time and watch the resistance bar below">四個變數，一次只動一個，盯著下面那條電阻長條看</div>
-          <div class="control-row">
-            <div style="width: 118px; font-weight: 700;" data-zh="材質" data-en="Material">材質</div>
-            <div class="btn-group" style="margin-top: 0;">
-              <button class="action-btn active" id="btn-mat-ag" onclick="setT1Material('ag', 1)" data-zh="銀 Ag" data-en="Silver (Ag)">銀 Ag</button>
-              <button class="action-btn" id="btn-mat-cu" onclick="setT1Material('cu', 1.5)" data-zh="銅 Cu" data-en="Copper (Cu)">銅 Cu</button>
-              <button class="action-btn" id="btn-mat-fe" onclick="setT1Material('fe', 4)" data-zh="鐵 Fe" data-en="Iron (Fe)">鐵 Fe</button>
-            </div>
-          </div>
-          <div class="ctrl-sep"></div>
-          <div class="control-row">
-            <div style="width: 118px; font-weight: 700;"><span data-zh="截面積" data-en="Area">截面積</span> <span class="mono">A</span></div>
-            <input type="range" id="t1-area" min="1" max="3" value="2" step="0.1" data-aria-label="Cross-Section Area">
-            <div class="mono" style="width: 86px; text-align: right;" id="t1-val-a">2.0 倍</div>
-          </div>
-          <div class="control-row">
-            <div style="width: 118px; font-weight: 700;"><span data-zh="長度" data-en="Length">長度</span> <span class="mono">L</span></div>
-            <input type="range" id="t1-length" min="1" max="3" value="2" step="0.1" data-aria-label="Wire Length">
-            <div class="mono" style="width: 86px; text-align: right;" id="t1-val-l">2.0 倍</div>
-          </div>
-          <div class="control-row">
-            <div style="width: 118px; font-weight: 700;"><span data-zh="溫度" data-en="Temp.">溫度</span> <span class="mono">T</span></div>
-            <input type="range" id="t1-temp" min="0" max="100" value="20" step="1" data-aria-label="Temperature">
-            <div class="mono" style="width: 86px; text-align: right;" id="t1-val-t">20 °C</div>
-          </div>
+        <div class="controls e4-bar" id="bar-tab1">
+          <div class="ctrl-caption" data-zh="四個變數，一次只動一個，盯著畫面下方那條電阻長條看（步驟編號可以重看）" data-en="Four factors, one at a time — watch the resistance bar at the bottom of the picture (use the step numbers to replay)">四個變數，一次只動一個，盯著畫面下方那條電阻長條看（步驟編號可以重看）</div>
         </div>
       </div>
       <div class="content-box">
@@ -685,7 +687,7 @@
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
         <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
-        <div class="hook-text"><span data-zh="電壓是" data-en="Voltage is the ">電壓是</span><b data-zh="推力" data-en="push">推力</b><span data-zh="、電阻是" data-en=", resistance is the ">、電阻是</span><b data-zh="阻力" data-en="drag">阻力</b><span data-zh="，電流就是這兩個拔河的結果。" data-en="; the current is the result of that tug-of-war.">，電流就是這兩個拔河的結果。</span><br><span data-zh="拉兩根滑桿：電壓拉大電流跟著變大，電阻拉大電流反而變小。一條公式就寫完了 —— V ＝ I × R。" data-en="Drag the two sliders: more voltage means more current, more resistance means less. One formula says it all — V = I × R.">拉兩根滑桿：電壓拉大電流跟著變大，電阻拉大電流反而變小。一條公式就寫完了 —— V ＝ I × R。</span></div>
+        <div class="hook-text"><span data-zh="電壓是" data-en="Voltage is the ">電壓是</span><b data-zh="推力" data-en="push">推力</b><span data-zh="、電阻是" data-en=", resistance is the ">、電阻是</span><b data-zh="阻力" data-en="drag">阻力</b><span data-zh="，電流就是這兩個拔河的結果。" data-en="; the current is the result of that tug-of-war.">，電流就是這兩個拔河的結果。</span><br><span data-zh="看電壓、電阻依序變大（步驟編號可以重看）：電壓變大電流跟著變大，電阻變大電流反而變小。一條公式就寫完了 —— V ＝ I × R。" data-en="Watch voltage and then resistance step up (use the step numbers to replay): more voltage means more current, more resistance means less. One formula says it all — V = I × R.">看電壓、電阻依序變大（步驟編號可以重看）：電壓變大電流跟著變大，電阻變大電流反而變小。一條公式就寫完了 —— V ＝ I × R。</span></div>
       </div>
     </div>
     <div class="grid-layout">
@@ -694,18 +696,8 @@
         <div class="canvas-container">
           <canvas id="cvs-tab2" width="960" height="470"></canvas>
         </div>
-        <div class="controls">
+        <div class="controls e4-bar" id="bar-tab2">
           <div class="ctrl-caption" data-zh="電壓是推力、電阻是阻力，電流是這兩個拔河的結果" data-en="Voltage pushes, resistance drags — the current is the result">電壓是推力、電阻是阻力，電流是這兩個拔河的結果</div>
-          <div class="control-row">
-            <div style="width: 150px; font-weight: 700; color: var(--chalk-teal);"><span data-zh="電壓" data-en="Voltage">電壓</span> <span class="mono">V</span></div>
-            <input type="range" id="t2-v" min="1" max="10" value="6" step="1" data-aria-label="Voltage">
-            <div class="mono" style="width: 76px; text-align: right;" id="t2-v-val">6 V</div>
-          </div>
-          <div class="control-row">
-            <div style="width: 150px; font-weight: 700; color: var(--chalk-coral);"><span data-zh="電阻" data-en="Resistance">電阻</span> <span class="mono">R</span></div>
-            <input type="range" id="t2-r" min="1" max="10" value="3" step="1" data-aria-label="Resistance">
-            <div class="mono" style="width: 76px; text-align: right;" id="t2-r-val">3 Ω</div>
-          </div>
         </div>
       </div>
       <div class="content-box">
@@ -761,16 +753,17 @@
         <div class="canvas-container" style="height: 200px; display:flex; justify-content:center; align-items:center;">
            <canvas id="cvs-tab3-series" width="960" height="360"></canvas>
         </div>
+        <div class="controls e4-bar" id="bar-tab3"></div>
         <div style="font-size: 20px; line-height: 1.8;">
-          <span data-zh="1. 根據串聯電壓分配：" data-en="1. Voltage distribution in series:">1. 根據串聯電壓分配：</span><br>
-          <span class="mono" style="color: var(--chalk-yellow); margin-left: 20px;">V<sub>總</sub> = V₁ + V₂</span><br>
-          <span data-zh="2. 依據歐姆定律替換 (V = I × R)：" data-en="2. Substitute Ohm's law (V = I × R):">2. 依據歐姆定律替換 (<span class="mono">V = I × R</span>)：</span><br>
-          <span class="mono" style="color: var(--chalk-yellow); margin-left: 20px;">I<sub>總</sub> × R<sub>總</sub> = I₁ × R₁ + I₂ × R₂</span><br>
-          <span data-zh="3. 因串聯電流處處相等 (I總 = I₁ = I₂)，同除以電流：" data-en="3. Since current is uniform (I = I₁ = I₂), divide by current:">3. 因為串聯電流處處相等 (<span class="mono">I<sub>總</sub> = I₁ = I₂</span>)，兩邊同除以電流得到：</span><br>
+          <div class="e4-hl" data-hl="s0"><span data-zh="1. 根據串聯電壓分配：" data-en="1. Voltage distribution in series:">1. 根據串聯電壓分配：</span><br>
+          <span class="mono" style="color: var(--chalk-yellow); margin-left: 20px;">V<sub>總</sub> = V₁ + V₂</span></div>
+          <div class="e4-hl" data-hl="s1"><span data-zh="2. 依據歐姆定律替換 (V = I × R)：" data-en="2. Substitute Ohm's law (V = I × R):">2. 依據歐姆定律替換 (<span class="mono">V = I × R</span>)：</span><br>
+          <span class="mono" style="color: var(--chalk-yellow); margin-left: 20px;">I<sub>總</sub> × R<sub>總</sub> = I₁ × R₁ + I₂ × R₂</span></div>
+          <div class="e4-hl" data-hl="s2"><span data-zh="3. 因串聯電流處處相等 (I總 = I₁ = I₂)，同除以電流：" data-en="3. Since current is uniform (I = I₁ = I₂), divide by current:">3. 因為串聯電流處處相等 (<span class="mono">I<sub>總</sub> = I₁ = I₂</span>)，兩邊同除以電流得到：</span><br>
           <div class="formula-box" style="margin-top:10px; color: var(--chalk-coral);">
              <span class="mono">R<sub>總</sub> = R₁ + R₂</span>
-          </div>
-          <div style="color: var(--chalk-muted); font-size: 17px; text-align:center;" data-zh="💡 結論：總阻礙直接相加，越串越大。" data-en="💡 Conclusion: Resistances add up directly; series increases total resistance.">💡 結論：電阻像接力賽，總阻礙直接相加，越串越大。</div>
+          </div></div>
+          <div class="e4-hl" data-hl="s3" style="color: var(--chalk-muted); font-size: 17px; text-align:center;" data-zh="💡 結論：總阻礙直接相加，越串越大。" data-en="💡 Conclusion: Resistances add up directly; series increases total resistance.">💡 結論：電阻像接力賽，總阻礙直接相加，越串越大。</div>
         </div>
       </div>
 
@@ -780,18 +773,19 @@
         <div class="canvas-container" style="height: 200px; display:flex; justify-content:center; align-items:center;">
            <canvas id="cvs-tab3-parallel" width="960" height="360"></canvas>
         </div>
+        <div class="controls e4-bar" id="bar-tab3b"></div>
         <div style="font-size: 20px; line-height: 1.8;">
-          <span data-zh="1. 根據並聯電流分流：" data-en="1. Current division in parallel:">1. 根據並聯電流分流：</span><br>
-          <span class="mono" style="color: var(--chalk-yellow); margin-left: 20px;">I<sub>總</sub> = I₁ + I₂</span><br>
-          <span data-zh="2. 依據歐姆定律替換 (I = V / R)：" data-en="2. Substitute Ohm's law (I = V / R):">2. 依據歐姆定律替換 (<span style="display:inline-flex; align-items:center;"><span class="mono">I = </span><span class="math-fraction"><span class="num mono">V</span><span class="den mono">R</span></span></span>)：</span><br>
+          <div class="e4-hl" data-hl="p0"><span data-zh="1. 根據並聯電流分流：" data-en="1. Current division in parallel:">1. 根據並聯電流分流：</span><br>
+          <span class="mono" style="color: var(--chalk-yellow); margin-left: 20px;">I<sub>總</sub> = I₁ + I₂</span></div>
+          <div class="e4-hl" data-hl="p1"><span data-zh="2. 依據歐姆定律替換 (I = V / R)：" data-en="2. Substitute Ohm's law (I = V / R):">2. 依據歐姆定律替換 (<span style="display:inline-flex; align-items:center;"><span class="mono">I = </span><span class="math-fraction"><span class="num mono">V</span><span class="den mono">R</span></span></span>)：</span><br>
           <div style="display:flex; align-items:center; color: var(--chalk-yellow); margin-left: 20px;">
               <span class="math-fraction"><span class="num mono">V<sub>總</sub></span><span class="den mono">R<sub>總</sub></span></span>
               <span class="mono" style="margin: 0 8px;">=</span>
               <span class="math-fraction"><span class="num mono">V₁</span><span class="den mono">R₁</span></span>
               <span class="mono" style="margin: 0 8px;">+</span>
               <span class="math-fraction"><span class="num mono">V₂</span><span class="den mono">R₂</span></span>
-          </div>
-          <span data-zh="3. 因並聯電壓相等 (V總 = V₁ = V₂)，同除以電壓：" data-en="3. Since branch voltages are equal (V = V₁ = V₂), divide by voltage:">3. 因為並聯各分支電壓相等 (<span class="mono">V<sub>總</sub> = V₁ = V₂</span>)，兩邊同除以電壓得到：</span><br>
+          </div></div>
+          <div class="e4-hl" data-hl="p2"><span data-zh="3. 因並聯電壓相等 (V總 = V₁ = V₂)，同除以電壓：" data-en="3. Since branch voltages are equal (V = V₁ = V₂), divide by voltage:">3. 因為並聯各分支電壓相等 (<span class="mono">V<sub>總</sub> = V₁ = V₂</span>)，兩邊同除以電壓得到：</span><br>
           <div class="formula-box" style="margin-top:10px; color: var(--chalk-teal);">
              <div style="display:flex; align-items:center; justify-content:center;">
               <span class="math-fraction"><span class="num mono">1</span><span class="den mono">R<sub>總</sub></span></span>
@@ -800,8 +794,8 @@
               <span class="mono" style="margin: 0 8px;">+</span>
               <span class="math-fraction"><span class="num mono">1</span><span class="den mono">R₂</span></span>
              </div>
-          </div>
-          <div style="color: var(--chalk-muted); font-size: 17px; text-align:center;" data-zh="💡 結論：總阻礙變小，越並越小。" data-en="💡 Conclusion: Total resistance decreases; parallel reduces overall resistance.">💡 結論：電阻像多開收費站，總阻礙變小，越並越小。</div>
+          </div></div>
+          <div class="e4-hl" data-hl="p3" style="color: var(--chalk-muted); font-size: 17px; text-align:center;" data-zh="💡 結論：總阻礙變小，越並越小。" data-en="💡 Conclusion: Total resistance decreases; parallel reduces overall resistance.">💡 結論：電阻像多開收費站，總阻礙變小，越並越小。</div>
         </div>
       </div>
     </div>
@@ -822,6 +816,7 @@
         <div class="canvas-container" style="flex: 1; display: flex; align-items: center;">
           <canvas id="cvs-tab4-circuit" width="960" height="300"></canvas>
         </div>
+        <div class="controls e4-bar" id="bar-tab4"></div>
         <ul class="note-ul" style="margin-top: 10px;">
             <li><b style="color:var(--chalk-yellow);" data-zh="歐姆式導體 (金屬線)：" data-en="Ohmic Conductor (Metal Wire): ">歐姆式導體 (金屬線)：</b><span data-zh="電阻值為定值，電壓與電流成完美正比關係。" data-en="Resistance remains constant; voltage is directly proportional to current.">電阻值為定值。電壓與電流成完美的正比關係。</span></li>
             <li><b style="color:var(--chalk-teal);" data-zh="非歐姆式導體 (LED)：" data-en="Non-Ohmic Conductor (LED): ">非歐姆式導體 (LED)：</b><span data-zh="電阻值非定值。需達特定啟動電壓才會導通，導通後電流呈非線性暴增。" data-en="Resistance varies. Requires a threshold activation voltage before conducting non-linearly.">電阻值非定值。需達到特定啟動電壓才會導通，導通後電流會呈指數型暴增。</span></li>
@@ -832,6 +827,7 @@
         <div class="canvas-container" style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px;">
           <canvas id="cvs-tab4-graph" width="960" height="420"></canvas>
         </div>
+        <div class="controls e4-bar" id="bar-tab4b"></div>
       </div>
     </div>
   </div>
@@ -842,14 +838,9 @@
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
         <div class="hook-title" data-zh="曉臻老師的實驗桌" data-en="At Ms. Xiaozhen's bench">曉臻老師的實驗桌</div>
-        <div class="hook-text"><span data-zh="桌上有一顆沒有標示的電阻，怎麼知道它幾歐姆？" data-en="There is an unmarked resistor on the bench. How do you find its value?">桌上有一顆沒有標示的電阻，怎麼知道它幾歐姆？</span><br><span data-zh="用" data-en="Put a ">用</span><b data-zh="伏特計量兩端的電壓、安培計量通過的電流" data-en="voltmeter across it and an ammeter in the path">伏特計量兩端的電壓、安培計量通過的電流</b><span data-zh="，V 除以 I 就是答案。先自己算，再按下揭曉。" data-en="; V divided by I is the answer. Work it out first, then press reveal.">，V 除以 I 就是答案。先自己算，再按下揭曉。</span></div>
+        <div class="hook-text"><span data-zh="桌上有一顆沒有標示的電阻，怎麼知道它幾歐姆？" data-en="There is an unmarked resistor on the bench. How do you find its value?">桌上有一顆沒有標示的電阻，怎麼知道它幾歐姆？</span><br><span data-zh="用" data-en="Put a ">用</span><b data-zh="伏特計量兩端的電壓、安培計量通過的電流" data-en="voltmeter across it and an ammeter in the path">伏特計量兩端的電壓、安培計量通過的電流</b><span data-zh="，V 除以 I 就是答案。先想一想、自己算，再看揭曉（步驟編號可以重看）。" data-en="; V divided by I is the answer. Think and work it out first, then watch the reveal (use the step numbers to replay).">，V 除以 I 就是答案。先想一想、自己算，再看揭曉（步驟編號可以重看）。</span></div>
       </div>
     </div>
-    <div class="sub-tabs">
-      <div class="sub-tab-btn active" id="btn-t5-measure" onclick="setSubTab(5, 'measure')" data-zh="歐姆定律測量實戰" data-en="Measure Resistance">歐姆定律測量實戰</div>
-      <div class="sub-tab-btn" id="btn-t5-quiz" onclick="setSubTab(5, 'quiz')" data-zh="串並聯綜合考題特訓" data-en="Exam Practice">串並聯綜合考題特訓</div>
-    </div>
-
     <!-- 視圖一：測量實戰 -->
     <div id="view-t5-measure" class="grid-layout">
       <div class="content-box">
@@ -857,9 +848,7 @@
         <div class="canvas-container">
           <canvas id="cvs-tab5-measure" width="960" height="420"></canvas>
         </div>
-        <div class="controls">
-          <button class="action-btn" onclick="generateT5Problem()" data-zh="🔄 重新測量一組新數據" data-en="🔄 Generate New Data">🔄 重新測量一組新數據</button>
-        </div>
+        <div class="controls e4-bar" id="bar-tab5m"></div>
       </div>
       <div class="content-box" style="border-color: var(--chalk-yellow); padding: 0;">
         <div class="task-card" style="border: none; background: transparent;">
@@ -887,9 +876,6 @@
               <span class="mono"> = </span>
               <span class="mono" id="t5-calc-ans" style="color: var(--chalk-yellow); font-size: 24px;">? Ω</span>
             </div>
-          </div>
-          <div style="text-align: right; margin-top: 16px;">
-            <button class="action-btn" id="btn-t5-solve" onclick="solveT5Problem()" style="border-color: var(--chalk-green); color: var(--chalk-green);" data-zh="揭曉解答" data-en="Reveal Solution">揭曉解答</button>
           </div>
         </div>
       </div>
@@ -928,21 +914,12 @@
         <!-- 右欄：測驗區 -->
         <div class="content-box" style="padding: 0; border-color: var(--rule-color);">
           <div class="task-card" style="border: none; background: transparent; padding: 20px;">
-            <div class="controls" style="margin-bottom: 14px; background: transparent; border: none; padding: 0;">
-              <div class="control-row" style="justify-content: flex-start; flex-wrap: wrap; gap: 8px;">
-                <button class="action-btn active" id="btn-q1" onclick="loadT5Quiz(0)" style="padding: 6px 14px; font-size:16px;" data-zh="題型一" data-en="Problem 1">題型一</button>
-                <button class="action-btn" id="btn-q2" onclick="loadT5Quiz(1)" style="padding: 6px 14px; font-size:16px;" data-zh="題型二" data-en="Problem 2">題型二</button>
-                <button class="action-btn" id="btn-q3" onclick="loadT5Quiz(2)" style="padding: 6px 14px; font-size:16px;" data-zh="題型三" data-en="Problem 3">題型三</button>
-                <button class="action-btn" id="btn-q4" onclick="loadT5Quiz(3)" style="padding: 6px 14px; font-size:16px;" data-zh="題型四" data-en="Problem 4">題型四</button>
-                <button class="action-btn" id="btn-q5" onclick="loadT5Quiz(4)" style="padding: 6px 14px; font-size:16px;" data-zh="題型五" data-en="Problem 5">題型五</button>
-              </div>
-            </div>
-            
             <h2 id="q-title" style="color: var(--chalk-yellow); border:none; margin-bottom:10px;">題型載入中...</h2>
             <!-- 考題電路圖：緊貼題目，眼睛不用跳來跳去 -->
             <div class="canvas-container quiz-figure">
               <canvas id="cvs-t5-quiz" width="960" height="400"></canvas>
             </div>
+            <div class="controls e4-bar" id="bar-tab5q"></div>
             
             <!-- 階段一：想一想 -->
             <div class="poe-block poe-think">
@@ -950,9 +927,6 @@
               <div class="poe-content" id="q-desc" style="margin-bottom: 10px;"></div>
               <div id="q-options"></div>
             </div>
-
-            <!-- 提示按鈕 -->
-            <button class="hint-btn" id="btn-q-hint" onclick="showT5Hint()" data-zh="👉 需要提示嗎？" data-en="👉 Need a Hint?">👉 需要提示嗎？</button>
 
             <!-- 階段二：提示引導 -->
             <div class="poe-block poe-act" id="q-hint-block" style="display:none;">
@@ -991,11 +965,11 @@
       el.textContent = (currentLang === 'en') ? el.getAttribute('data-en') : el.getAttribute('data-zh');
     });
 
-    loadT5Quiz(t5_quiz_idx);
+    renderT5Quiz();
+    e4RefreshText();
   }
 
   let currentTab = 'tab1';
-  let animFrames = {};
 
   const COLOR_BG = '#0b1a15'; const COLOR_WHITE = '#f6f3ea'; const COLOR_DIM = '#a3b8b0';
   const COLOR_YELLOW = '#ffe066'; const COLOR_TEAL = '#4dd2ff'; const COLOR_ORANGE = '#ff8040';
@@ -1012,32 +986,7 @@
     const targetBtn = document.getElementById(`tab-btn-${tabId}`);
     if (targetBtn) targetBtn.classList.add('active');
 
-    for (let id in animFrames) { cancelAnimationFrame(animFrames[id]); }
-
-    if (tabId === 'tab1') initTab1();
-    if (tabId === 'tab2') initTab2();
-    if (tabId === 'tab3') initTab3();
-    if (tabId === 'tab4') initTab4();
-    if (tabId === 'tab5') {
-        if(document.getElementById('view-t5-measure').style.display !== 'none') initTab5Measure();
-        if(document.getElementById('view-t5-quiz').style.display !== 'none') { loadT5Quiz(0); initCvsT5Quiz(); }
-    }
-  }
-
-  function setSubTab(tab, sub) {
-    document.getElementById(`btn-t${tab}-measure`).classList.remove('active');
-    document.getElementById(`btn-t${tab}-quiz`).classList.remove('active');
-    document.getElementById(`btn-t${tab}-${sub}`).classList.add('active');
-
-    document.getElementById(`view-t${tab}-measure`).style.display = 'none';
-    document.getElementById(`view-t${tab}-quiz`).style.display = 'none';
-    document.getElementById(`view-t${tab}-${sub}`).style.display = 'grid';
-
-    if (sub === 'measure') {
-        initTab5Measure(); cancelAnimationFrame(animFrames['tab5quiz']);
-    } else {
-        loadT5Quiz(0); initCvsT5Quiz(); cancelAnimationFrame(animFrames['tab5measure']);
-    }
+    e4Start(tabId);      /* 切進哪一頁，就從那一頁的第 1 步自動播放；動畫迴圈永遠只有一條 */
   }
 
   // 共用繪圖組件
@@ -1971,13 +1920,9 @@
   }
 
   // --- TAB 1: 微觀電阻本質 ---
-  let t1_matCoef = 1;
-  function setT1Material(mat, coef) {
-    t1_matCoef = coef;
-    document.getElementById('btn-mat-ag').classList.toggle('active', mat === 'ag');
-    document.getElementById('btn-mat-cu').classList.toggle('active', mat === 'cu');
-    document.getElementById('btn-mat-fe').classList.toggle('active', mat === 'fe');
-  }
+  /* 原本是材質鈕＋三根滑桿；現在由自動示範依序設定（預設值同原本：銀、A 2.0、L 2.0、T 20） */
+  let t1_matCoef = 1, t1_A = 2, t1_L = 2, t1_T = 20;
+  function setT1Material(mat, coef) { t1_matCoef = coef; }
 
   function initTab1() {
     const cvs = document.getElementById('cvs-tab1'); if (!cvs) return;
@@ -1995,17 +1940,12 @@
     }
 
     function render() {
-      if (currentTab !== 'tab1') return;
-      time += 1 / 60;
+      const dt = E4.dt / 1000;                    /* 真實時間（秒），不是 frame 數 */
+      time += dt;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       e_pen(ctx);
 
-      const A = parseFloat(document.getElementById('t1-area').value);
-      const L = parseFloat(document.getElementById('t1-length').value);
-      const T = parseFloat(document.getElementById('t1-temp').value);
-      document.getElementById('t1-val-a').textContent = A.toFixed(1) + tr(' 倍', '×');
-      document.getElementById('t1-val-l').textContent = L.toFixed(1) + tr(' 倍', '×');
-      document.getElementById('t1-val-t').textContent = T.toFixed(0) + ' °C';
+      const A = t1_A, L = t1_L, T = t1_T;
 
       /* 原版的電阻式子原封不動：材質 × 長度 ÷ 截面積 ×（溫度加成） */
       const Rv = (t1_matCoef * L / A) * (1 + T * 0.02);
@@ -2045,26 +1985,28 @@
       }
 
       /* ── 電子（藍）：往左漂移，撞到正離子就閃一下、慢慢換到旁邊那一道 ── */
-      const step = speed * 7.2 / 60;              /* 每一格前進幾 px（原本的 3 倍） */
+      const step = speed * 7.2 * dt;              /* 這一格前進幾 px（原本每 1/60 秒 speed×7.2/60，速率不變） */
+      const ease = 1 - Math.pow(0.88, dt * 60);
       for (const el of els) {
         el.f -= step / len;
         if (el.f < 0) { el.f += 1; el.y = el.ty = Math.random(); }
-        el.y += (el.ty - el.y) * 0.12;
+        el.y += (el.ty - el.y) * ease;
         const ex = x0 + 10 + el.f * (len - 20);
         const ey = inT + 4 + el.y * (inH - 8);
         if (el.flash <= 0) {
           for (const io of ions) {
             if (Math.abs(io.x - ex) < 10 && Math.abs(io.y - ey) < 10) {
-              el.flash = 10;
+              el.flash = 10 / 60;
               el.ty = Math.min(1, Math.max(0, el.y + (el.y > 0.5 ? -1 : 1) * (0.18 + Math.random() * 0.14)));
               break;
             }
           }
         }
         if (el.flash > 0) {
-          el.flash--;
-          ctx.strokeStyle = `rgba(255,77,77,${0.15 + el.flash / 12})`; ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.arc(ex, ey, 6 + (10 - el.flash) * 0.8, 0, Math.PI * 2); ctx.stroke();
+          el.flash = Math.max(0, el.flash - dt);
+          const fl = el.flash * 60;               /* 還原成「剩幾格」，畫法與原本相同 */
+          ctx.strokeStyle = `rgba(255,77,77,${0.15 + fl / 12})`; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(ex, ey, 6 + (10 - fl) * 0.8, 0, Math.PI * 2); ctx.stroke();
         }
         /* 比電路圖裡的電子小一號：這裡是放大到原子尺度的剖面，大圈圈會擠出管壁 */
         e_ball(ctx, ex, ey, 4.6, E_BLUE, false);
@@ -2101,12 +2043,12 @@
       e_label(ctx, tr('（溫度的效果在這裡放大過，方便觀察）', '(the temperature effect is exaggerated here so you can see it)'),
               480, 458, COLOR_DIM, 17, 'center', true, 560);
 
-      animFrames['tab1'] = requestAnimationFrame(render);
     }
-    render();
+    E4_DEF.tab1.frame = render;
   }
 
   // --- TAB 2: 歐姆定律與反比關係 ---
+  let t2_v = 6, t2_r = 3;      /* 原本是兩根滑桿；預設值同原本（6 V、3 Ω） */
   function initTab2() {
     const cvs = document.getElementById('cvs-tab2'); if (!cvs) return;
     const ctx = cvs.getContext('2d');
@@ -2115,16 +2057,14 @@
     const BAT_L = 265, BAT_R = 385, RES_X = 325;
 
     function render() {
-      if (currentTab !== 'tab2') return;
-      time += 1 / 60;
+      const dt = E4.dt / 1000;
+      time += dt;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       e_pen(ctx);
 
-      const v = parseInt(document.getElementById('t2-v').value);
-      const r = parseInt(document.getElementById('t2-r').value);
+      const v = t2_v;
+      const r = t2_r;
       const i = v / r;
-      document.getElementById('t2-v-val').textContent = v + ' V';
-      document.getElementById('t2-r-val').textContent = r + ' Ω';
       const box = document.getElementById('t2-calc-i');
       if (box) box.textContent = i.toFixed(1) + ' A';
 
@@ -2139,7 +2079,7 @@
       /* 電子：從負極（電池左端）出發，能量全部掉在電阻上 */
       const loop = [{ x: BAT_L, y: BOT }, { x: L, y: BOT }, { x: L, y: 261 }, { x: L, y: TOP },
                     { x: RES_X, y: TOP }, { x: Rt, y: TOP }, { x: Rt, y: BOT }, { x: BAT_R, y: BOT }];
-      dist += i * 52 / 60;
+      dist += i * 52 * dt;
       e_flow(ctx, loop, 46, dist, [{ x: RES_X, y: TOP, amount: 1 }]);
 
       /* 元件最後畫，才不會被電子埋掉 */
@@ -2174,9 +2114,8 @@
                       'More voltage → more current; more resistance → less current'),
               320, 438, COLOR_GREEN, 20, 'center', true, 560);
 
-      animFrames['tab2'] = requestAnimationFrame(render);
     }
-    render();
+    E4_DEF.tab2.frame = render;
   }
 
   // --- TAB 3: 等效電阻推導 ---
@@ -2188,8 +2127,7 @@
     const R1 = 6, R2 = 6, VS = 12;
 
     function render() {
-      if (currentTab !== 'tab3') return;
-      time += 1 / 60;
+      time += E4.dt / 1000;
       ctxS.clearRect(0, 0, cvsS.width, cvsS.height);
       ctxP.clearRect(0, 0, cvsP.width, cvsP.height);
       e_pen(ctxS); e_pen(ctxP);
@@ -2251,12 +2189,12 @@
                        'One more lane: each branch gets the full 12 V, the total current doubles, so the total resistance halves'),
               480, 336, COLOR_GREEN, 20, 'center', true, 920);
 
-      animFrames['tab3'] = requestAnimationFrame(render);
     }
-    render();
+    E4_DEF.tab3.frame = render;
   }
 
   // --- TAB 4: 歐姆與非歐姆 V-I 圖合併版 ---
+  let t4_vv = 0.2;
   function initTab4() {
     const cvsC = document.getElementById('cvs-tab4-circuit'); if (!cvsC) return;
     const ctxC = cvsC.getContext('2d');
@@ -2268,16 +2206,16 @@
     const ledI = v => (v < 1.8 ? 0 : Math.pow(v - 1.8, 2) * 4.8);
 
     function render() {
-      if (currentTab !== 'tab4') return;
-      time += 1 / 60;
+      const dt = E4.dt / 1000;
+      time += dt;
       ctxC.clearRect(0, 0, cvsC.width, cvsC.height);
       ctxG.clearRect(0, 0, cvsG.width, cvsG.height);
       e_pen(ctxC); e_pen(ctxG);
 
       /* 電壓只往上升、升到頂停一下就從頭再來。不可以來回掃——
-         電壓往下降再往上升，學生會以為是交流電，這一課還沒教。 */
-      const cyc = (time / 6.5) % 1;
-      const vv = 0.2 + 5.3 * Math.min(1, cyc / 0.85);
+         電壓往下降再往上升，學生會以為是交流電，這一課還沒教。
+         （電壓值 t4_vv 由自動播放的時間軸給：同樣是 0.2 → 5.5 V、同樣的速度，升到頂停數秒再重來） */
+      const vv = t4_vv;
 
       /* ── 上：兩個電路 ── */
       e_legend(ctxC, 24, 34, '藍球＝電子，從負極出發', 'blue = electrons, out of the − terminal');
@@ -2287,7 +2225,7 @@
       ];
       rows.forEach((rw, k) => {
         const bl = rw.cx - 58, br = rw.cx + 58;
-        dist[k] += rw.cur * 150 / 60;
+        dist[k] += rw.cur * 150 * dt;
         e_wire(ctxC, [{ x: rw.x0, y: rw.bot }, { x: rw.x0, y: rw.top }, { x: rw.cx - 32, y: rw.top }], 7, '#5c6763');
         e_wire(ctxC, [{ x: rw.cx + 32, y: rw.top }, { x: rw.x1, y: rw.top }, { x: rw.x1, y: rw.bot }, { x: br, y: rw.bot }], 7, '#5c6763');
         e_wire(ctxC, [{ x: bl, y: rw.bot }, { x: rw.x0, y: rw.bot }], 7, '#5c6763');
@@ -2358,9 +2296,8 @@
                        "The resistor's R never changes; the LED's R keeps changing — that is what non-ohmic means"),
               480, 396, COLOR_GREEN, 20, 'center', true, 900);
 
-      animFrames['tab4'] = requestAnimationFrame(render);
     }
-    render();
+    E4_DEF.tab4.frame = render;
   }
 
   // --- TAB 5: 電阻測量與綜合學習單 ---
@@ -2379,7 +2316,6 @@
     document.getElementById('t5-calc-i').textContent = '--';
     document.getElementById('t5-calc-ans').textContent = '? Ω';
     document.getElementById('t5-calc-ans').style.color = 'var(--chalk-yellow)';
-    document.getElementById('btn-t5-solve').disabled = false;
   }
 
   function solveT5Problem() {
@@ -2387,12 +2323,11 @@
     document.getElementById('t5-calc-i').textContent = t5_prob_i.toFixed(1);
     document.getElementById('t5-calc-ans').textContent = t5_prob_r + ' Ω';
     document.getElementById('t5-calc-ans').style.color = 'var(--chalk-green)';
-    document.getElementById('btn-t5-solve').disabled = true;
     t5_solved = true;
   }
 
+  let t5_drawMeasure = () => {}, t5_drawQuiz = () => {};
   function initTab5Measure() {
-    generateT5Problem();
     const cvs = document.getElementById('cvs-tab5-measure'); if (!cvs) return;
     const ctx = cvs.getContext('2d');
     let time = 0;
@@ -2401,8 +2336,8 @@
     let distM = 0, distV = 0;
 
     function render() {
-      if (currentTab !== 'tab5' || document.getElementById('view-t5-measure').style.display === 'none') return;
-      time += 1 / 60;
+      const dt = E4.dt / 1000;
+      time += dt;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       e_pen(ctx);
 
@@ -2419,8 +2354,8 @@
 
       const loop = [{ x: BAT_L, y: BOT }, { x: L, y: BOT }, { x: L, y: 273 }, { x: L, y: TOP },
                     { x: RES_X, y: TOP }, { x: Rt, y: TOP }, { x: Rt, y: BOT }, { x: BAT_R, y: BOT }];
-      distM += t5_prob_i * 150 / 60;
-      distV += t5_prob_i * 150 / 60 * 0.035;     /* 伏特計內阻極大：有電流，但只有主線的零頭 */
+      distM += t5_prob_i * 150 * dt;
+      distV += t5_prob_i * 150 * dt * 0.035;     /* 伏特計內阻極大：有電流，但只有主線的零頭 */
       e_flow(ctx, loop, 48, distM, [{ x: RES_X, y: TOP, amount: 1 }]);
       /* 伏特計那一條：跟電阻並聯，電子一樣由左往右走、一樣在「元件」上掉能量，只是非常非常慢 */
       e_flow(ctx, [{ x: 340, y: TOP }, { x: 340, y: VY }, { x: RES_X, y: VY }, { x: 620, y: VY }, { x: 620, y: TOP }],
@@ -2447,9 +2382,8 @@
                       'Measure the volts, measure the amps — the resistance has nowhere to hide: R = V ÷ I'),
               480, 400, COLOR_GREEN, 21, 'center', true, 900);
 
-      animFrames['tab5measure'] = requestAnimationFrame(render);
     }
-    render();
+    t5_drawMeasure = render;
   }
 
   // 🌟 TAB 5 Quiz Data (雙語與 POE 完整結構)
@@ -2506,54 +2440,37 @@
     }
   ];
 
-  let t5_quiz_idx = 0; let t5_quiz_answered = false;
+  /* 題目、選項、提示、解析的文字都沿用原本的；原本要學生點的「題型鈕、選項、需要提示嗎」
+     全部改成自動輪播：phase 0＝想一想（題目＋選項）、1＝破題引導出現、2＝揭曉正解與解析。 */
+  let t5_quiz_idx = 0, t5_phase = 0;
 
-  function loadT5Quiz(idx) {
-    t5_quiz_idx = idx; t5_quiz_answered = false;
-    for(let i=0; i<5; i++) {
-        document.getElementById(`btn-q${i+1}`).classList.toggle('active', idx === i);
-    }
-    
-    let q = t5_quizzes[idx];
+  function renderT5Quiz() {
+    const q = t5_quizzes[t5_quiz_idx];
     document.getElementById('q-title').textContent = currentLang === 'en' ? q.title_en : q.title_zh;
     document.getElementById('q-desc').innerHTML = currentLang === 'en' ? q.desc_en : q.desc_zh;
     document.getElementById('q-guide').innerHTML = currentLang === 'en' ? q.guide_en : q.guide_zh;
-    
+
     let optHtml = "";
-    let options = currentLang === 'en' ? q.options_en : q.options_zh;
-    options.forEach((opt, i) => { 
-      optHtml += `<button class="quiz-opt-btn" id="opt-${i}" onclick="checkT5QuizAnswer(${i})">( ${String.fromCharCode(65+i)} ) ${opt}</button>`; 
+    const options = currentLang === 'en' ? q.options_en : q.options_zh;
+    options.forEach((opt, i) => {
+      const hit = t5_phase >= 2 && i === q.ans;
+      optHtml += `<div class="quiz-opt-btn${hit ? ' correct' : ''}" id="opt-${i}">( ${String.fromCharCode(65+i)} ) ${opt}</div>`;
     });
     document.getElementById('q-options').innerHTML = optHtml;
-    
-    document.getElementById('btn-q-hint').style.display = 'block';
-    document.getElementById('q-hint-block').style.display = 'none';
-    document.getElementById('q-explain-block').style.display = 'none';
-  }
 
-  function showT5Hint() {
-    document.getElementById('btn-q-hint').style.display = 'none';
-    document.getElementById('q-hint-block').style.display = 'block';
-  }
-
-  function checkT5QuizAnswer(optIndex) {
-    if(t5_quiz_answered) return; t5_quiz_answered = true;
-    let correctIdx = t5_quizzes[t5_quiz_idx].ans;
-    for(let i=0; i<4; i++) {
-      let btn = document.getElementById(`opt-${i}`);
-      if(i === correctIdx) btn.classList.add('correct');
-      else if(i === optIndex) btn.classList.add('wrong');
+    document.getElementById('q-hint-block').style.display = t5_phase >= 1 ? 'block' : 'none';
+    if (t5_phase >= 2) {
+      document.getElementById('q-explain-text').innerHTML = currentLang === 'en' ? q.explain_en : q.explain_zh;
+      document.getElementById('q-explain-block').style.display = 'block';
+    } else {
+      document.getElementById('q-explain-block').style.display = 'none';
     }
-    document.getElementById('q-explain-text').innerHTML = currentLang === 'en' ? t5_quizzes[t5_quiz_idx].explain_en : t5_quizzes[t5_quiz_idx].explain_zh;
-    document.getElementById('q-explain-block').style.display = 'block';
-    
-    document.getElementById('btn-q-hint').style.display = 'none';
-    document.getElementById('q-hint-block').style.display = 'block';
   }
+  function setT5Quiz(idx, phase) { t5_quiz_idx = idx; t5_phase = phase; renderT5Quiz(); }
 
   function initCvsT5Quiz() {
     /* 考題電路圖：老師指定用「考卷上的標準電路圖」，不放電子動畫——學生考試時看到的就是這種圖。
-       （第十條 10.3「畫布要動」在這張圖豁免；畫面照常每格重畫，切換語言、切換題型才會即時更新。） */
+       （第十條 10.3「畫布要動」在這張圖豁免；畫面照常每格重畫，切換語言、換下一題就會即時更新。） */
     const cvs = document.getElementById('cvs-t5-quiz'); if (!cvs) return;
     const ctx = cvs.getContext('2d');
     const WIRE = '#dfe7e2', RES = COLOR_ORANGE;
@@ -2592,7 +2509,6 @@
     }
 
     function render() {
-      if (currentTab !== 'tab5' || document.getElementById('view-t5-quiz').style.display === 'none') return;
       ctx.clearRect(0, 0, cvs.width, cvs.height);
       e_pen(ctx);
       const q = t5_quiz_idx;
@@ -2637,12 +2553,160 @@
         bat(480, BOT, '10V');
       }
 
-      animFrames['tab5quiz'] = requestAnimationFrame(render);
     }
-    render();
+    t5_drawQuiz = render;
   }
 
-  // 🌟 啟動初始化
+  /* ==================================================================
+     切入即自動播放（AGENTS 10.6）
+     只有這一條 requestAnimationFrame：離開分頁或 document.hidden 就停，回來接著播。
+     每個分頁＝一個 scene：slots 是時間軸上的小段，b 是它屬於哪一顆步驟編號鈕，
+     s() 在進入該段時把原本要學生操作的東西（材質鈕、滑桿、新數據、揭曉、題型鈕…）自動設好；
+     tick(i, local) 讓連續的數值（滑桿、電壓掃描）跟著時間走。
+     動畫的畫法與文字全部沿用原本的，這裡只負責「什麼時候換成哪一個狀態」。
+     ================================================================== */
+  const E4 = { tab: null, raf: 0, last: 0, dt: 0 };
+  const t1s = (mat, coef) => () => { setT1Material(mat, coef); t1_A = 2; t1_L = 2; t1_T = 20; };
+  const t2s = () => { t2_v = 6; t2_r = 3; };
+  const ramp = (local, ms) => Math.min(1, local / ms);
+  /* 歐姆／非歐姆：同一條電壓掃描（0.2 → 5.5 V，原速 6.5 s × 0.85），切成三段；升到頂停數秒才重來 */
+  const T4_FULL = 6500 * 0.85;
+  const t4seg = (v0, v1, hold) => ({ v0, v1, ramp: (v1 - v0) / 5.3 * T4_FULL, d: (v1 - v0) / 5.3 * T4_FULL + (hold || 0) });
+  const t4a = t4seg(0.2, 1.8), t4b = t4seg(1.8, 3.6), t4c = t4seg(3.6, 5.5, 4200);
+  let t5_view = 'measure';
+  function t5Show(v) {
+    t5_view = v;
+    document.getElementById('view-t5-measure').style.display = v === 'measure' ? 'grid' : 'none';
+    document.getElementById('view-t5-quiz').style.display = v === 'quiz' ? 'grid' : 'none';
+  }
+  const t5m = fn => () => { t5Show('measure'); fn(); };
+  const t5q = (idx, phase) => () => { t5Show('quiz'); setT5Quiz(idx, phase); };
+  const t5qs = (idx, b) => [{ b, d: 5800, s: t5q(idx, 0) }, { b, d: 4200, s: t5q(idx, 1) }, { b, d: 7000, s: t5q(idx, 2) }];
+  const t3hl = key => () => {
+    document.querySelectorAll('#tab3 .e4-hl').forEach(el => el.classList.toggle('on', el.getAttribute('data-hl') === key));
+  };
+  const E4_DEF = {
+    tab1: { cvs: ['cvs-tab1'], bars: ['bar-tab1'],
+            btns: [['材質', 'Material'], ['長度 L', 'Length L'], ['截面積 A', 'Area A'], ['溫度 T', 'Temp. T']],
+            slots: [{ b: 0, d: 3600, s: t1s('ag', 1) }, { b: 0, d: 3600, s: t1s('cu', 1.5) }, { b: 0, d: 4200, s: t1s('fe', 4) },
+                    { b: 1, d: 9000, s: t1s('ag', 1) }, { b: 2, d: 9000, s: t1s('ag', 1) }, { b: 3, d: 9000, s: t1s('ag', 1) }],
+            /* 原本要學生拉的滑桿：依序自動拉（範圍同原本 L、A：1→3，T：0→100 °C），拉到底停一下 */
+            tick: (i, local) => {
+              if (i === 3) t1_L = 1 + 2 * ramp(local, 6200);
+              if (i === 4) t1_A = 1 + 2 * ramp(local, 6200);
+              if (i === 5) t1_T = Math.round(100 * ramp(local, 6200));
+            } },
+    tab2: { cvs: ['cvs-tab2'], bars: ['bar-tab2'],
+            btns: [['電壓 V', 'Voltage V'], ['電阻 R', 'Resistance R']],
+            slots: [{ b: 0, d: 10000, s: t2s }, { b: 1, d: 10000, s: t2s }],
+            /* 原本的兩根滑桿（1～10，整數）：先拉電壓、再拉電阻 */
+            tick: (i, local) => {
+              const n = 1 + Math.min(9, Math.floor(ramp(local, 7500) * 10));
+              if (i === 0) t2_v = n; else t2_r = n;
+            } },
+    tab3: { cvs: ['cvs-tab3-series', 'cvs-tab3-parallel'], bars: ['bar-tab3', 'bar-tab3b'],
+            btns: [['串聯', 'Series'], ['並聯', 'Parallel']],
+            slots: [{ b: 0, d: 3800, s: t3hl('s0') }, { b: 0, d: 3800, s: t3hl('s1') }, { b: 0, d: 3800, s: t3hl('s2') }, { b: 0, d: 3800, s: t3hl('s3') },
+                    { b: 1, d: 3800, s: t3hl('p0') }, { b: 1, d: 3800, s: t3hl('p1') }, { b: 1, d: 3800, s: t3hl('p2') }, { b: 1, d: 5200, s: t3hl('p3') }] },
+    tab4: { cvs: ['cvs-tab4-circuit', 'cvs-tab4-graph'], bars: ['bar-tab4', 'bar-tab4b'],
+            btns: [['電壓升起', 'Voltage rises'], ['LED 導通', 'LED turns on'], ['電流暴增', 'Current surges']],
+            slots: [Object.assign({ b: 0, s: () => {} }, t4a), Object.assign({ b: 1, s: () => {} }, t4b), Object.assign({ b: 2, s: () => {} }, t4c)],
+            tick: (i, local, sl) => { t4_vv = sl.v0 + (sl.v1 - sl.v0) * ramp(local, sl.ramp); } },
+    tab5: { cvs: ['cvs-tab5-measure', 'cvs-t5-quiz'], bars: ['bar-tab5m', 'bar-tab5q'],
+            btns: [['測量實戰', 'Measure R'], ['題型一·二', 'Problems 1–2'], ['題型三·四', 'Problems 3–4'], ['題型五', 'Problem 5']],
+            /* 測量：自動量兩組新數據（各自先讀數、再揭曉）；考題：依序輪播 想一想 → 提示 → 揭曉 */
+            slots: [{ b: 0, d: 4800, s: t5m(generateT5Problem) }, { b: 0, d: 5200, s: t5m(solveT5Problem) },
+                    { b: 0, d: 4800, s: t5m(generateT5Problem) }, { b: 0, d: 5200, s: t5m(solveT5Problem) }]
+                   .concat(t5qs(0, 1), t5qs(1, 1), t5qs(2, 2), t5qs(3, 2), t5qs(4, 3)),
+            frame: () => { if (t5_view === 'measure') t5_drawMeasure(); else t5_drawQuiz(); } }
+  };
+  Object.keys(E4_DEF).forEach(tab => {
+    const sc = E4_DEF[tab]; sc.idx = 0; sc.local = 0; sc.starts = []; sc.total = 0;
+    sc.slots.forEach(sl => { sc.starts.push(sc.total); sc.total += sl.d; });
+  });
+
+  function e4Build() {
+    Object.keys(E4_DEF).forEach(tab => {
+      const sc = E4_DEF[tab];
+      sc.btnEls = []; sc.nowEls = []; sc.progEls = [];
+      sc.bars.forEach((barId, k) => {
+        const bar = document.getElementById(barId);
+        const row = document.createElement('div'); row.className = 'e4-steps';
+        const els = sc.btns.map((nm, i) => {
+          const b = document.createElement('button');
+          b.type = 'button'; b.className = 'action-btn e4-step'; b.id = `e4-${tab}-${k}-${i}`;
+          const n = document.createElement('span'); n.className = 'e4-step-n'; n.textContent = String(i + 1);
+          const t = document.createElement('span'); t.className = 'e4-step-t';
+          t.setAttribute('data-zh', nm[0]); t.setAttribute('data-en', nm[1]); t.textContent = nm[0];
+          b.appendChild(n); b.appendChild(t);
+          b.setAttribute('aria-label', `${i + 1} ${nm[0]} / ${nm[1]}`);
+          b.addEventListener('click', () => e4Jump(tab, i));
+          row.appendChild(b); return b;
+        });
+        sc.btnEls.push(els);
+        const now = document.createElement('div'); now.className = 'e4-now'; sc.nowEls.push(now);
+        bar.appendChild(row); bar.appendChild(now);
+      });
+      sc.cvs.forEach(id => {
+        const prog = document.createElement('div'); prog.className = 'e4-prog'; prog.innerHTML = '<i></i>';
+        document.getElementById(id).parentNode.appendChild(prog); sc.progEls.push(prog.firstChild);
+      });
+    });
+  }
+
+  function e4Mark(sc) {
+    const b = sc.slots[sc.idx].b;
+    sc.btnEls.forEach(els => els.forEach((el, i) => el.classList.toggle('active', i === b)));
+    sc.nowEls.forEach(el => { el.textContent = `${'①②③④⑤'[b]} ${tr(sc.btns[b][0], sc.btns[b][1])}`; });
+  }
+
+  function e4Enter(sc, i) {
+    sc.idx = i; sc.local = 0;
+    sc.slots[i].s();
+    if (sc.tick) sc.tick(i, 0, sc.slots[i]);
+    e4Mark(sc);
+  }
+
+  function e4Jump(tab, b) {
+    const sc = E4_DEF[tab];
+    if (E4.tab !== tab || !sc.frame) return;
+    e4Enter(sc, sc.slots.findIndex(s => s.b === b));
+    if (!E4.raf) e4Run();
+  }
+
+  function e4Loop(ts) {
+    E4.raf = requestAnimationFrame(e4Loop);
+    const sc = E4_DEF[E4.tab];
+    if (!sc || !sc.frame) return;
+    let dt = Math.min(50, Math.max(0, ts - E4.last)); E4.last = ts;
+    if (document.getElementById('introScreen')) dt = 0;      // 封面還在：先不推進，進教室才開始播
+    E4.dt = dt; sc.local += dt;
+    if (sc.local >= sc.slots[sc.idx].d) e4Enter(sc, (sc.idx + 1) % sc.slots.length);
+    if (sc.tick) sc.tick(sc.idx, sc.local, sc.slots[sc.idx]);
+    sc.frame();
+    const w = (((sc.starts[sc.idx] + sc.local) / sc.total) * 100).toFixed(1) + '%';
+    sc.progEls.forEach(el => { el.style.width = w; });
+  }
+
+  function e4Run() {
+    cancelAnimationFrame(E4.raf); E4.raf = 0;
+    if (document.hidden || !E4.tab) return;
+    E4.last = performance.now();
+    E4.raf = requestAnimationFrame(e4Loop);
+  }
+  function e4Stop() { cancelAnimationFrame(E4.raf); E4.raf = 0; E4.tab = null; }
+  function e4Start(tab) {
+    e4Stop(); E4.tab = tab;
+    e4Enter(E4_DEF[tab], 0);
+    e4Run();
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(E4.raf); E4.raf = 0; } else e4Run(); });
+
+  /* 語言切換：畫布每格重畫，不必處理；只有寫進 DOM 的字（步驟名稱）要換 */
+  function e4RefreshText() {
+    const sc = E4_DEF[E4.tab]; if (sc && sc.btnEls) e4Mark(sc);
+  }
+
   /* ── 第六定律：開場封面（靜態圖，點一下就進教室）── */
   function dismissIntro() {
     const el = document.getElementById('introScreen');
@@ -2653,10 +2717,10 @@
   function introClick() { dismissIntro(); }
 
   window.addEventListener('DOMContentLoaded', () => {
+    e4Build();
+    initTab1(); initTab2(); initTab3(); initTab4(); initTab5Measure(); initCvsT5Quiz();
+    renderT5Quiz();
     switchTab('tab1');
-  });
-  window.addEventListener('load', () => {
-    if (currentTab === 'tab1') initTab1();
   });
 </script>
 </body>
