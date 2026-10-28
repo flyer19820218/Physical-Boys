@@ -246,3 +246,7 @@ BreezyVoice 錄好 01–08.wav → `tools/museum/build_narration.py` → `assets
 - **記憶體（iPad Pro 13" 橫式最壞情況）**：GL 畫布 2752×2064 ≈ 22.7 MB（舊 19.7；合成時可能再一份）、煙霧畫布 1376×1032 ≈ 5.7 MB（舊 1.4）＋抖色底圖 5.7 MB（蟲洞淡入完就放掉）、太空梭 ≤ 約 4.6 MB、紋理 0.27 MB；峰值約比 20261027k 多 13 MB，結束時全部釋放（`#launch` 只剩 1 張畫布）。WebGL context 數不變（最多 3 個）。
 - **數字（headless Chromium＋SwiftShader 軟體 GL，不代表 iPad）**：1600×1000 每格 GPU 時間（draw＋readPixels 同步）改前 2.06～2.31 s、改後 2.32～2.74 s（約 +10～20%，主要是星點預濾波在軟體模擬裡較貴；真 GPU 上只多幾個 ALU 指令）；iPad Pro 12.9" 另多 14% 像素（2560→2732），自動選檔會接住。蟲洞段每格 CPU 端中位數 0.9～2.9 ms。煙霧 1 倍在軟體 2D 中位數 33 → 67 ms/格（4 倍像素），iPad 上靠煙霧自動降檔保底。iPad A12 是否穩定 ≥ 45 fps 需老師實機看。
 - 驗證：橫式 1600×1000、直式 820×1180 各 9 格（煙霧、τ＝0.4／2.8／5.0／5.5／5.75／6.0／6.2／閃光）＋3D 光速飛行與抵達，改前（e9bbbf6）／改後並排迭代 3 輪以上；1366×1024@2x 近景；完整流程（無聲、旁白、跳過、重播點太空梭、蟲洞中直橫轉換、`?gl=0`）皆無 JS 錯誤，結束後 `hdState()='released'`、`shipState()='released'`、`#launch` 只剩 1 張畫布。
+
+## 2026-10-28 自動錄音第一次失敗（exit code 127）→ 補裝 ffmpeg
+- Actions 的「錄音」步驟回 127＝找不到指令；原因推測是 `ubuntu-latest` 換成 Ubuntu 26 後沒有預裝 ffmpeg／ffprobe。`xiaozhen-voice.yml` 在錄音前加「安裝 ffmpeg」步驟（沒有才 apt 安裝）。
+- 修好後到 GitHub → Actions → 曉臻自動錄音 → Run workflow（target 填 intro）重跑一次；成功會有作者「曉臻自動錄音」的 commit。
