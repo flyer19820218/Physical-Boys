@@ -4,7 +4,7 @@
 //   - 進館：鏡頭轉成近乎正上方，球體淡出，剩下這一館的「平面地圖」（彎路＋單元站＋通往隔壁館的出口）
 //   - render-on-demand：沒有動作時完全停止繪圖（0 fps）
 import * as THREE from './vendor/three.module.min.js';
-import { buildShuttle } from './shuttle3d.js?v=20261027k';
+import { buildShuttle } from './shuttle3d.js?v=20261027l';
 
 const R = 10;                 // 星球半徑
 const PLATEAU_TOP = R + 0.2;  // 館的平台頂面離球心的距離
@@ -1790,7 +1790,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   // ----- 迴圈（render-on-demand） -----
   let raf = 0, last = 0, running = false;
   const frameTimes = [];
-  let qSamples = [];
+  let qSamples = [], loopFrames = 0;
   let lastDebug = 0;
   const tmpV = new THREE.Vector3();
   const tmpN = new THREE.Vector3();
@@ -1800,6 +1800,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     onlyAmbient = false;
     if (running) return;
     running = true;
+    loopFrames = 0;
     last = performance.now();
     raf = requestAnimationFrame(frame);
   }
@@ -1915,7 +1916,10 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     scene.updateMatrixWorld(true);
     emitFrame();
     renderer.render(scene, camera);
-    if (!quality && !ambientFrame && !onlyAmbient) { // 品質自動降級：只降不升（背景小動畫刻意 30 fps，不算）
+    // 品質自動降級：只降不升（背景小動畫刻意 30 fps，不算）。
+    //   20261027l：迴圈剛啟動的前 8 格（著色器第一次用、紋理上傳）與開場光速飛行的前 30%（約 1.7 秒：這時開場的蟲洞畫布與出洞閃光還疊在上面、
+    //   開場資源正在釋放）不算，免得開場那一下把整個星球的解析度白白降一級、之後再也升不回來。
+    if (++loopFrames > 8 && !(intro && intro.u < 0.3) && !quality && !ambientFrame && !onlyAmbient) {
       qSamples.push(dt);
       if (qSamples.length >= 70) {
         const avg = qSamples.reduce((a, b) => a + b, 0) / qSamples.length;

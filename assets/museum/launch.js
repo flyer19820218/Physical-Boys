@@ -32,7 +32,7 @@ function makePuff(rgb, seed) {
   return c;
 }
 
-import { buildShuttle, makeAtlas, freeAtlas, wingHalf, bodyAt, ENGINES, BELL, FIN, WING, Z0 } from './shuttle3d.js?v=20261027k';
+import { buildShuttle, makeAtlas, freeAtlas, wingHalf, bodyAt, ENGINES, BELL, FIN, WING, Z0 } from './shuttle3d.js?v=20261027l';
 
 // ---------- 蟲洞段：《星際效應》式的 Ellis 蟲洞（真的光線追蹤＋重力透鏡） ----------
 // 給學生的科普：電影裡的蟲洞不是「隧道」，而是一顆「水晶球」。
@@ -111,7 +111,7 @@ export const WORM = {
   KEY_K: 1.0,         // 主光（前方蟲洞球的暖光；穿過喉嚨後是另一邊星系的暖白光）強度
   RIM_K: 1.0,         // 邊緣光強度（機翼前緣、機身輪廓的暖橘色光邊；球緣光掃過時更亮）
   TAIL_K: 1.0,        // 尾焰照亮機尾（底板、尾翼下緣、整流罩後端）的強度
-  SHIP_PR: 2,         // 太空梭渲染器像素比上限（跟著蟲洞 GL 的降檔一起降）
+  SHIP_PR: 3,         // 太空梭渲染器像素比上限（跟著蟲洞 GL 的降檔一起降；20261027l：2 → 3，和 GL 畫布的 3x 上限一致，iPad 仍是 2）
   SHIP_AA: true,      // 抗鋸齒（MSAA；建立後無法切換，降檔時改降像素比）
   SHIP_K_PORTRAIT: 1.2,  // 直式畫面再放大一點（機尾視角是寬的，直式時高度佔比偏小）
   SHIP_BOX: [1.45, 1.35, 2.35],   // 太空梭畫布涵蓋的範圍（u 的倍數：左右、上、下；下方留給往鏡頭噴的尾焰）
@@ -119,9 +119,14 @@ export const WORM = {
   GL: 'auto',         // 'auto'：能用 WebGL 就用；'off'：一律用 CPU；'force'：連軟體模擬的 GL 也用（測試用）。網址 ?gl=0／?gl=force 同義
   QUALITY: 'auto',    // 'auto'（第一秒依幀時間自動降檔）｜'high'｜'medium'
   GL_SCALE: 0,        // 0＝自動：裝置像素比（最多 2），太慢就降到 1.5、1.0；> 0 固定倍率（測試用）
-  GL_MAXSIDE: 2560,   // GL 畫布長邊上限（裝置像素）
+  GL_MAXSIDE: 2800,   // GL 畫布長邊上限（裝置像素）。20261027l：2560 → 2800（iPad Pro 12.9" 橫式 1366×1024@2x＝2732、13" 1376×1032@2x＝2752 不再被縮）
+  GL_PIXMAX: 6.0e6,   // GL 畫布總像素上限（≈ 2800×2100；手機 3x 也在這個預算內）
+  GL_DPR_MAX: 3,      // 倍率上限（20261027i 是 2；3x 的手機在像素預算內就用原生解析度）
+  // ---- 畫質（20261027l） ----
+  PIX_AA: true,       // 星點、十字光芒、球緣細環做「像素方框預濾波」（總光量不變；次像素移動時不跳、細線不鋸齒）
   GL_DELAY: 250,      // 開場後多久開始在背景建 GL（ms）
-  FPS_MIN: 45,        // 低於這個幀率就降一檔
+  FPS_MIN: 45,        // 前 2.5 秒低於這個幀率（持續約 1 秒）就降一檔
+  FPS_LATE: 38,       // 之後（星系近景、最重的那段）低於這個幀率才降（20261027i 是 30）
   PHI_N: 1024,        // 每格上傳的光線表長度（兩列：B<1、B>1）
   STAR_SIG: 0.55,     // 星點大小（高斯 σ，CSS px）
   STAR_GAMMA: 0.35,   // 星點被透鏡壓縮時變暗的程度（1＝物理的放大率 μ；越小，球裡的星越亮、越像點點閃光）
@@ -754,7 +759,7 @@ function shipPump() {
   SH.timer = setTimeout(shipPump, 16);
 }
 function shipLevelPR() {
-  const dpr = Math.min(2, Math.max(1, (typeof window !== 'undefined' && window.devicePixelRatio) || 1));
+  const dpr = Math.min(WORM.GL_DPR_MAX, Math.max(1, (typeof window !== 'undefined' && window.devicePixelRatio) || 1));
   const lv = HD.levels ? HD.levels[HD.level] : null;
   return Math.max(0.75, Math.min(WORM.SHIP_PR, dpr, lv ? lv.s : dpr));
 }
@@ -774,6 +779,7 @@ function* shipBuild() {
   step('modelMs', () => {
     const m = SH.m = buildShuttle(T, { anisotropy: Math.min(8, SH.ren.capabilities.getMaxAnisotropy()), flameLen: 1 });
     S.tris = m.tris;
+    m.mats.body.dithering = m.mats.dark.dithering = true;   // 20261027l：機身受光漸層抖色（暗部不出現色階；只在蟲洞段這一份材質）
     const sc = SH.scene = new T.Scene();
     sc.add(m.group);
     SH.hemi = new T.HemisphereLight(0x8fb0bd, 0x0e0d0d, 1); sc.add(SH.hemi);
@@ -876,7 +882,7 @@ function ringFill(ctx, cx, cy, r, w, rgb, a, spread = 2.6) {
 // --------------------------------------------------------------------------------------
 // 架構：
 //   ‧ 一張全解析度 WebGL 畫布（WebGL2 優先、沒有就 WebGL1）疊在原本半解析度的煙霧畫布上；寬高＝容器 CSS 像素 × 倍率
-//     （倍率＝min(裝置像素比, 2)，長邊 ≤ GL_MAXSIDE；第一秒依實際幀時間自動降到 1.5／1.0 倍、高→中品質）。
+//     （20261027l：倍率＝min(裝置像素比, 3)，長邊 ≤ GL_MAXSIDE 2800、總像素 ≤ GL_PIXMAX；依「持續」的幀時間自動降檔、誤降可回升一次，見 hdAuto）。
 //   ‧ 光線：每格在 CPU 算一條「撞擊參數 B → 掃過角度 φ」表（兩列 × PHI_N：B<1 以 ln(1−B)、B>1 以 ln(B−1) 為座標，
 //     邊緣 B→1 也夠細），打包成 24 位元定點放進 RGBA8 紋理（8 KB；不用浮點紋理 → iOS 沒有浮點線性取樣也沒關係），
 //     shader 用 NEAREST 取兩點自己做線性內插。每像素：α → B = r_c sin α → 查 φ → 出射方向 (sinφ cosψ, sinφ sinψ, cosφ)。
@@ -889,7 +895,7 @@ function ringFill(ctx, cx, cy, r, w, rgb, a, spread = 2.6) {
 //   ‧ 球緣細暖光＋色散、球外光暈、暗角、色調曲線（有肩部、不爆白）、抖色（避免暗部色階）都在同一個 shader。
 //   ‧ 太空梭（20261027k）：shuttle3d.js 的 3D 模型，用另一個小 Three.js 渲染器（透明、只涵蓋太空梭周圍、離軸投影）畫，CSS 位移跟著走；
 //     3D 不能用時退回 2D 機尾近似畫法（畫在只有它那麼大的 2D 畫布）。出洞閃光是一個 div（不佔畫布記憶體）。
-// 記憶體（iPad Pro 12.9" 橫式 2560×1919 最壞情況）：GL 畫布 19.7 MB（瀏覽器合成時可能再多一份）、太空梭畫布約 4.6 MB、
+// 記憶體（20261027l，iPad Pro 13" 橫式 2752×2064 最壞情況）：GL 畫布 22.7 MB（瀏覽器合成時可能再多一份）、太空梭畫布約 4.6 MB、煙霧畫布＋抖色底圖各 5.7 MB（底圖蟲洞淡入完就放掉）、
 //   紋理 0.27 MB。CPU 退回路徑則要常駐 7.7 MB 的天空貼圖＋計算時約 14 MB 暫存。蟲洞段結束／跳過時全部釋放（loseContext）。
 // 退回：GL 不可用、建立失敗、highp 不支援、shader 編譯失敗、context lost、?gl=0 → 自動改用上面的 CPU 路徑（不會空白）。
 // ======================================================================================
@@ -932,6 +938,10 @@ uniform float uMode;    // 0 畫面；1、2 等距長方圖（算平均色用）
 uniform vec3 uVig;
 #define PI 3.14159265
 uniform float uSig;
+// 20261027l 畫質：
+uniform vec2 uSigE;     // 星點的像素面積預濾波：σ_eff²（CSS px²，＝σ² + 一個裝置像素的方框變異數 1/12）、峰值補償 σ²/σ_eff²
+uniform vec2 uSpk;      // 十字光芒：橫向預濾波寬度 w（CSS px）、亮度補償（總光量不變）
+uniform float uDith;    // 抖色倍率 ＝ 1 ÷ 這張畫布在合成時的有效不透明度（淡入、出洞閃光蓋住時，最後輸出仍有 ±1 LSB 的三角分布抖色）
 
 vec4 hash42(vec2 p) {
   vec4 p4 = fract(vec4(p.xyxy) * vec4(0.1031, 0.1030, 0.0973, 0.1099));
@@ -999,11 +1009,12 @@ vec3 starCell(vec2 g, vec2 cell, vec4 Ji, float seed, float fill, vec3 pk, float
   vec2 s = vec2(Ji.x * dg.x + Ji.y * dg.y, Ji.z * dg.x + Ji.w * dg.y);
   float r2 = dot(s, s);
   float p = pk.x + pk.y * pow(h.w, pk.z);
-  float I = exp(-r2 * (0.5 / (uSig * uSig)));
+  float I = exp(-r2 * (0.5 / uSigE.x)) * uSigE.y;                // 高斯點 ⊛ 像素方框（總光量不變；次像素移動時亮度不跳）
   if (p > 1.1) {
     vec2 as = abs(s);
+    vec2 ap = sqrt(as * as + uSpk.x * uSpk.x) - uSpk.x;           // 光芒的橫向剖面也做像素預濾波（細線不鋸齒、不閃）
     float L = 2.5 + 8.0 * min(1.0, p - 1.1);
-    I += 0.22 * (exp(-as.y * 2.4 - as.x / L) + exp(-as.x * 2.4 - as.y / L)) + 0.06 * exp(-sqrt(r2) * 0.4);
+    I += 0.22 * uSpk.y * (exp(-ap.y * 2.4 - as.x / L) + exp(-ap.x * 2.4 - as.y / L)) + 0.06 * exp(-sqrt(r2) * 0.4);
   }
   float win = 1.0 - smoothstep(0.55, 0.8, dl);
   vec4 h2 = hash42(cell + seed + 71.7);
@@ -1018,7 +1029,7 @@ vec3 starLayer(vec2 g, vec2 jx, vec2 jy, float seed, float fill, vec3 pk, float 
   float mE = mu * min(pow(mu, uExp.z - 1.0), 10.0) * uExp.w;      // 壓縮處稍微保留星光（最多 10 倍），不會整圈發白
   float T = dot(jx, jx) + dot(jy, jy);
   float sv = sqrt(0.5 * (T + sqrt(max(T * T - 4.0 * ad * ad, 0.0))));
-  float ws = 1.0 - smoothstep(0.5, 0.8, 3.0 * uSig * sv);
+  float ws = 1.0 - smoothstep(0.5, 0.8, 3.0 * sqrt(uSigE.x) * sv);
   float meanPk = pk.x + pk.y / (pk.z + 1.0);
   mean = mix(vec3(0.93, 0.95, 1.0), vec3(1.0, 0.93, 0.85), warm) * (fill * meanPk * 2.0 * PI * uSig * uSig * aref * mE / mu);
   vec3 acc = vec3(0.0);
@@ -1160,12 +1171,13 @@ vec3 tone(vec3 c) {
   vec3 hi = 0.745 + 0.255 * (1.0 - exp(-(c - 0.745) / 0.255));                   // 肩部：亮部慢慢壓到 1，不爆白
   return mix(c, hi, step(0.745, c));
 }
-float ring(float r, float r0, float w) { float x = (r - r0) / w; return exp(-x * x); }
-
+// 細環（徑向高斯）＋像素方框預濾波：exp(−x²/w²) 的變異數 w²/2 再加一個裝置像素的 1/12 → 寬度 √(w²+1/6)、亮度 × w/√(w²+1/6)（總光量不變）
+float ring(float r, float r0, float w) { float w2 = w * w + 0.1667; float x = r - r0; return exp(-x * x / w2) * w * inversesqrt(w2); }
 void main() {
   vec2 fc = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
-  vec3 D; float side; float rho = 0.0;
-  if (uMode > 0.5) {
+  vec3 col, D, dx, dy;
+  float side, rho = 0.0;
+  if (uMode > 0.5) {                                              // 等距長方全天圖（建好時算平均色用）
     float lon = fc.x / uRes.x * 2.0 * PI, lat = fc.y / uRes.y * PI;
     D = vec3(sin(lat) * cos(lon), sin(lat) * sin(lon), cos(lat));
     side = uMode - 1.0;
@@ -1180,17 +1192,21 @@ void main() {
     float sp = sin(phi);
     D = vec3(sp * cos(psi), sp * sin(psi), cos(phi));
   }
-  vec3 dx = dFdx(D), dy = dFdy(D);
-  float fp = max(length(dx), length(dy));                         // 每像素在天空上的寬度（弧度）
-  vec3 col;
+  dx = dFdx(D); dy = dFdy(D);
+  float fp = max(length(dx), length(dy));
+  // 天空（漫射光＋星點；依像素涵蓋淡成平均色）。兩邊天空的交界（B＝1）：光線繞了無數圈＝兩邊天空的平均色，
+  //   按像素被交界圓切開的面積比例混合，1～3 像素內平順地接回原本的天空（交界不鋸齒；舊版是 2×2 像素塊一階一階的）
+  float am = smoothstep(0.08, 0.35, fp);
   if (side < 0.5) {
     float t = dot(BANDN, D);
-    col = skyHere(D, fp) + cubeStars(D, dx, dy, 0.0, exp(-t * t / 0.02));
-    col = mix(col, uM0, smoothstep(0.08, 0.35, fp)) * uExp.y;
+    col = mix(skyHere(D, fp) + cubeStars(D, dx, dy, 0.0, exp(-t * t / 0.02)), uM0, am) * uExp.y;
   } else {
     float cz = dot(uGc, D);
-    col = skyThereBg(D, fp) + galaxy(D, dx, dy) + cubeStars(D, dx, dy, 1.0, 0.45 + 0.55 * smoothstep(0.2, 0.95, cz));
-    col = mix(col, uM1, smoothstep(0.08, 0.35, fp)) * uExp.x;
+    col = mix(skyThereBg(D, fp) + galaxy(D, dx, dy) + cubeStars(D, dx, dy, 1.0, 0.45 + 0.55 * smoothstep(0.2, 0.95, cz)), uM1, am) * uExp.x;
+  }
+  if (uMode < 0.5 && uRim.x > 0.0) {
+    float de = abs(rho - uRim.x);
+    if (de < 3.0) col = mix(col, mix(uM0 * uExp.y, uM1 * uExp.x, clamp(uRim.x - rho + 0.5, 0.0, 1.0)), 1.0 - smoothstep(1.0, 3.0, de));
   }
   if (uMode > 0.5) { FRAG = vec4(col * 0.25, 1.0); return; }
   col = tone(col);
@@ -1208,7 +1224,7 @@ void main() {
   float va = vt < 0.6 ? 0.22 * vt / 0.6 : 0.22 + 0.44 * (vt - 0.6) / 0.4;
   col = mix(col, vec3(0.0235, 0.047, 0.039), va);
   vec4 hd = hash42(fc);
-  col += (hd.x + hd.y - 1.0) * (1.0 / 255.0);                    // 抖色：暗部漸層不出現色階
+  col += (hd.x + hd.y - 1.0) * (uDith / 255.0);                   // 三角分布抖色（÷ 合成時的不透明度）：暗部漸層不出現色階
   FRAG = vec4(col, 1.0);
 }`;
 
@@ -1216,7 +1232,7 @@ const HD = {
   want: false, state: 'off', force: false, root: null, below: null, glc: null, gl: null, v2: false,
   shipc: null, sctx: null, flash: null, prog: null, vs: null, fs: null, buf: null, tPhi: null, tNz: null, U: null,
   gen: null, timer: 0, N: 1024, phiBuf: null, mean0: [0.05, 0.09, 0.08], mean1: [0.2, 0.12, 0.13],
-  levels: null, level: 0, lastNow: 0, ft: [], lastDrop: 0, shipW: 0, shipH: 0, visible: false, size: '',
+  levels: null, level: 0, lastNow: 0, ft: [], nFr: 0, skip: 0, slowWin: 0, fastWin: 0, upTried: false, lock: false, cat: 0, t0: 0, shipW: 0, shipH: 0, visible: false, size: '',
 };
 const PH_MIN = -2, PH_RANGE = 64;
 function glParam() { try { return new URLSearchParams(location.search).get('gl'); } catch (e) { return null; } }
@@ -1272,7 +1288,7 @@ function* hdBuild() {
   }
   S.linkBlockMs = performance.now() - tl; S.compileMs = performance.now() - tc;
   const U = HD.U = {};
-  for (const n of ['uRes', 'uC', 'uF', 'uS', 'uRc', 'uToward', 'uRoll', 'uTab', 'uPk', 'uPhi', 'uNz', 'uGc', 'uGa', 'uGb', 'uG', 'uQ', 'uExp', 'uRim', 'uHalo', 'uM0', 'uM1', 'uAref', 'uGal', 'uMode', 'uVig', 'uSig']) U[n] = gl.getUniformLocation(prog, n);
+  for (const n of ['uRes', 'uC', 'uF', 'uS', 'uRc', 'uToward', 'uRoll', 'uTab', 'uPk', 'uPhi', 'uNz', 'uGc', 'uGa', 'uGb', 'uG', 'uQ', 'uExp', 'uRim', 'uHalo', 'uM0', 'uM1', 'uAref', 'uGal', 'uMode', 'uVig', 'uSig', 'uSigE', 'uSpk', 'uDith']) U[n] = gl.getUniformLocation(prog, n);
   HD.buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, HD.buf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   HD.N = WORM.PHI_N; HD.phiBuf = new Uint8Array(HD.N * 2 * 4);
@@ -1329,19 +1345,19 @@ function hdLost(e) {
 }
 // 品質檔（由高到低）；第一秒依幀時間往下降
 function hdLevels() {
-  const dpr = Math.min(2, Math.max(1, (typeof window !== 'undefined' && window.devicePixelRatio) || 1));
+  const dpr = Math.min(WORM.GL_DPR_MAX, Math.max(1, (typeof window !== 'undefined' && window.devicePixelRatio) || 1));
   let L;
   if (WORM.GL_SCALE > 0) L = [{ s: WORM.GL_SCALE, q: WORM.QUALITY === 'medium' ? 'medium' : 'high' }];
   else {
-    L = [{ s: dpr, q: 'high' }, { s: Math.min(dpr, 1.5), q: 'high' }, { s: Math.min(dpr, 1.5), q: 'medium' }, { s: 1, q: 'medium' }, { s: 0.75, q: 'medium' }];
+    L = [{ s: dpr, q: 'high' }, { s: Math.min(dpr, 2), q: 'high' }, { s: Math.min(dpr, 1.5), q: 'high' }, { s: Math.min(dpr, 1.5), q: 'medium' }, { s: 1, q: 'medium' }, { s: 0.75, q: 'medium' }];
     if (WORM.QUALITY !== 'auto') L = L.filter(l => l.q === WORM.QUALITY);
     L = L.filter((l, i) => !i || l.s !== L[i - 1].s || l.q !== L[i - 1].q);
   }
-  HD.levels = L; HD.level = 0;
+  HD.levels = L; HD.level = 0; hdAutoReset();
 }
 function hdSize(W, H) {
   const lv = HD.levels[HD.level];
-  const s = Math.min(lv.s, WORM.GL_MAXSIDE / Math.max(W, H));
+  const s = Math.min(lv.s, WORM.GL_MAXSIDE / Math.max(W, H), Math.sqrt(WORM.GL_PIXMAX / (W * H)));
   const w = Math.max(1, Math.round(W * s)), h = Math.max(1, Math.round(H * s));
   if (HD.glc.width !== w || HD.glc.height !== h) { HD.glc.width = w; HD.glc.height = h; }
   HD.size = w + 'x' + h;
@@ -1365,6 +1381,16 @@ function hdPhiTable(lc) {
   return v1;
 }
 let GALM = null;
+// 十字光芒橫向剖面 exp(−2.4|y|) 換成 exp(−2.4(√(y²+w²)−w)) 之後，乘上這個係數讓總光量不變
+const SPK_CACHE = new Map();
+function spikeNorm(w) {
+  if (!(w > 0)) return 1;
+  const k = w.toFixed(4);
+  if (SPK_CACHE.has(k)) return SPK_CACHE.get(k);
+  let a = 0, b = 0;
+  for (let i = 0; i < 2000; i++) { const y = (i + 0.5) * 0.005; a += Math.exp(-2.4 * y); b += Math.exp(-2.4 * (Math.sqrt(y * y + w * w) - w)); }
+  const r = a / b; SPK_CACHE.set(k, r); return r;
+}
 function hdUniforms(o) {
   const gl = HD.gl, U = HD.U, lv = HD.levels ? HD.levels[HD.level] : { q: 'high' };
   gl.viewport(0, 0, o.Wd, o.Hd);
@@ -1387,6 +1413,12 @@ function hdUniforms(o) {
   gl.uniform4f(U.uQ, hi ? 3 : 2, hi ? 7 : 4, 1, hi ? 1 : 0);
   gl.uniform4f(U.uExp, o.exp, 1, WORM.STAR_GAMMA, WORM.STAR_GAIN);
   gl.uniform1f(U.uSig, WORM.STAR_SIG);
+  // 像素預濾波（20261027l）：一個裝置像素＝1/s CSS px，方框的變異數 1/(12 s²)
+  const sg2 = WORM.STAR_SIG * WORM.STAR_SIG, se2 = sg2 + (WORM.PIX_AA ? 1 / (12 * s * s) : 0);
+  gl.uniform2f(U.uSigE, se2, sg2 / se2);
+  const pw = WORM.PIX_AA ? 0.2887 / s : 0;
+  gl.uniform2f(U.uSpk, pw, spikeNorm(pw));
+  gl.uniform1f(U.uDith, 1 / Math.max(0.2, o.vis == null ? 1 : o.vis));
   gl.uniform2f(U.uGal, WORM.GAL_GRAIN, WORM.GAL_CLUSTER);
   // 球緣
   let Rs = -1;
@@ -1470,11 +1502,69 @@ export function hdRelease() {
   const had = HD.want;
   hdDispose(true);
   shipRelease();
-  HD.root = null; HD.levels = null; HD.ft = []; HD.lastNow = 0;
+  HD.root = null; HD.levels = null; hdAutoReset();
   HD.state = had ? 'released' : 'off';
 }
 export const hdState = () => HD.state;
 const hdUsable = () => HD.state === 'ready' && !!HD.gl;
+
+// ---- 自動選檔（20261027l） ----
+// 舊版：第一個 1.8 秒以「≥ 4 格、≥ 0.35 秒」為窗看中位數 → 4 格裡只要 2 格是暖機尖峰（GL 畫布第一次顯示、太空梭第一格、
+//   煙霧與 3D 星球同時在跑），中位數就是尖峰 → 白白降一檔，而且只降不升。
+// 新版：
+//   ‧ 暖機：蟲洞開始的前 AUTO.SKIP_N 格、前 AUTO.SKIP_MS 毫秒不算；每次換檔後再跳過 3 格（重配畫布那一格）。
+//   ‧ 單格超過 AUTO.HITCH 毫秒（分頁切走、垃圾回收、主執行緒被別的工作卡住）不算：降解析度救不了那種卡。
+//   ‧ 以時間為窗（≥ AUTO.WIN_MS、≥ AUTO.WIN_N 格），看第 40 百分位：至少六成的格子都慢才算慢（單一尖峰推不動）。
+//     連續 2 個窗都慢（約 1 秒）才降一檔；慢到門檻的 2.2 倍以上（明顯的弱裝置）一個窗就降，4 倍以上一次降兩檔。
+//   ‧ 很慢的裝置不必等窗：連續 3 格都超過 70 ms 就直接降兩檔（不會讓學生看幾秒幻燈片）。
+//   ‧ 門檻：前 AUTO.LATE 秒 45 fps（FPS_MIN）；之後（星系近景最重的那段）FPS_LATE。
+//   ‧ 升檔回復：降檔後連續 2 個窗的第 90 百分位都貼著螢幕更新率（< AUTO.UP_MS），表示剛剛是誤判 → 回升到第一次降檔前那一檔，只試一次；
+//     只在「第一次降檔發生在前 2.5 秒、而且還沒到 3.6 秒（星系近景之前）」時才試：後段是因為畫面變重而降，回升一定又慢。
+//     回升後又慢就降回去並鎖住。
+const AUTO = { SKIP_N: 6, SKIP_MS: 300, HITCH: 250, WIN_MS: 450, WIN_N: 8, LATE: 2.5, UP_MS: 17.6, UP_BY: 3.6, CAT_MS: 70 };
+function hdAutoReset() { Object.assign(HD, { ft: [], lastNow: 0, nFr: 0, skip: 0, slowWin: 0, fastWin: 0, upTried: false, lock: false, cat: 0, t0: 0, pre: null, dropEarly: false }); }
+function hdDrop(n, why, tau) {
+  const to = Math.min(HD.levels.length - 1, HD.level + n);
+  if (to === HD.level) return;
+  if (HD.pre == null) { HD.pre = HD.level; HD.dropEarly = tau < AUTO.LATE; }   // 第一次降檔前的那一檔（誤判時回升到這裡）
+  HD.level = to; HD.skip = 3; HD.ft = []; HD.slowWin = HD.fastWin = HD.cat = 0;
+  if (HD.upTried) HD.lock = true;
+  (warpStats.gl.drops || (warpStats.gl.drops = [])).push(tau.toFixed(2) + 's ' + why + '→L' + HD.level);
+}
+function hdAuto(now, tau) {
+  const iv = HD.lastNow ? now - HD.lastNow : 0;
+  HD.lastNow = now;
+  if (!HD.t0) HD.t0 = now;
+  HD.nFr = (HD.nFr || 0) + 1;
+  if (iv) warpStats.gl.lastFt = +iv.toFixed(1);
+  if (WORM.GL_SCALE > 0 || !HD.levels || HD.levels.length < 2) return;
+  if (HD.nFr <= AUTO.SKIP_N || now - HD.t0 < AUTO.SKIP_MS || !iv) return;
+  if (HD.skip > 0) { HD.skip--; return; }
+  HD.cat = iv > AUTO.CAT_MS ? HD.cat + 1 : 0;                     // 連續 3 格都很慢（含超過 HITCH 的）：明顯的弱裝置，不等窗
+  if (HD.cat >= 3) { hdDrop(2, 'cat ' + iv.toFixed(0) + 'ms', tau); return; }
+  if (iv > AUTO.HITCH) return;                                     // 單一長卡頓（切分頁、垃圾回收）不算
+  const late = tau >= AUTO.LATE, thr = 1000 / (late ? WORM.FPS_LATE : WORM.FPS_MIN);
+  HD.ft.push(iv);
+  const span = HD.ft.reduce((x, y) => x + y, 0);
+  if (HD.ft.length < AUTO.WIN_N || span < AUTO.WIN_MS) return;
+  const a = HD.ft.slice().sort((x, y) => x - y), q40 = a[Math.floor(a.length * 0.4)], q90 = a[Math.min(a.length - 1, Math.floor(a.length * 0.9))];
+  HD.ft = [];
+  (warpStats.gl.wins || (warpStats.gl.wins = [])).push(tau.toFixed(2) + ':' + q40.toFixed(1) + '/' + q90.toFixed(1));
+  if (warpStats.gl.wins.length > 40) warpStats.gl.wins.shift();
+  if (q40 > thr) {
+    HD.fastWin = 0;
+    if (q40 > 4 * thr) hdDrop(2, 'q40 ' + q40.toFixed(1) + 'ms', tau);
+    else if (q40 > 2.2 * thr || ++HD.slowWin >= 2) hdDrop(1, 'q40 ' + q40.toFixed(1) + 'ms', tau);
+    return;
+  }
+  HD.slowWin = 0;
+  if (HD.level > 0 && !HD.upTried && !HD.lock && HD.dropEarly && tau < AUTO.UP_BY && q90 < AUTO.UP_MS) {
+    if (++HD.fastWin >= 2) {
+      HD.level = Math.min(HD.level - 1, HD.pre == null ? HD.level - 1 : HD.pre); HD.upTried = true; HD.skip = 3; HD.fastWin = 0;
+      (warpStats.gl.drops || (warpStats.gl.drops = [])).push(tau.toFixed(2) + 's up q90 ' + q90.toFixed(1) + 'ms→L' + HD.level);
+    }
+  } else HD.fastWin = 0;
+}
 
 // 蟲洞段的流程（總長 warpMs，預設 6 秒）：
 //   接近段（前 warpMs − TUNNEL_S 秒）：太空梭靠引擎、機頭對準球心，沿平行於蟲洞軸的直線等速前進；追隨鏡頭在它後上方、
@@ -1581,21 +1671,8 @@ export function makeWarp(warpMs) {
   // GL 路徑的一格：天空畫在全解析度 GL 畫布；太空梭畫在跟著它走的小畫布；閃光是 div
   function drawHD(W, H, tau, wt, p) {
     const now = performance.now(), t0 = now;
-    // 自動選檔：第一秒（淡入、煙霧還在）每 10 格看一次幀時間中位數，低於 FPS_MIN 就降一檔；之後只有嚴重掉幀（< 30 fps）才降
-    if (HD.lastNow) HD.ft.push(Math.min(500, now - HD.lastNow));      // 很慢的格也要算進去
-    HD.lastNow = now;
-    if (WORM.GL_SCALE <= 0 && HD.level < HD.levels.length - 1) {
-      const early = tau < 1.8, span = HD.ft.reduce((x, y) => x + y, 0);
-      if (HD.ft.length >= 4 && span >= (early ? 350 : 700)) {     // 以時間為窗（很慢的時候格數少，也照樣判斷）
-        const a = HD.ft.slice().sort((x, y) => x - y), med = a[a.length >> 1];
-        if (med > (early ? 1000 / WORM.FPS_MIN : 34)) {
-          HD.level++; HD.lastDrop = now;
-          (warpStats.gl.drops || (warpStats.gl.drops = [])).push(tau.toFixed(2) + 's ' + med.toFixed(1) + 'ms→L' + HD.level);
-        }
-        HD.ft = [];
-      }
-    }
-    if (HD.ft.length) warpStats.gl.lastFt = +HD.ft[HD.ft.length - 1].toFixed(1);
+    // 自動選檔（20261027l 改寫）：只看「持續」的慢，不被暖機或單一尖峰誤導；之後若證實是誤降，回升一次
+    hdAuto(now, tau);
     hdSize(W, H);
     const lv = HD.levels[HD.level];
     warpStats.gl.level = HD.level; warpStats.gl.q = lv.q; warpStats.gl.size = HD.size; warpStats.res = HD.size;
@@ -1603,7 +1680,7 @@ export function makeWarp(warpMs) {
     let [ox, oy] = shake(tau, lc); ox += PS.sky[0]; oy += PS.sky[1];
     if (wt > 0.003) {
       const s = HD.glc.width / W;
-      hdUniforms({ mode: 0, Wd: HD.glc.width, Hd: HD.glc.height, W, H, s, lc, roll: WORM.ROLL * DEG * Math.min(1.3, tau / T), ox, oy, exp: E.exp, rim: E.rim, f: L.f, cx: L.cx, cy: L.cy });
+      hdUniforms({ mode: 0, Wd: HD.glc.width, Hd: HD.glc.height, W, H, s, lc, roll: WORM.ROLL * DEG * Math.min(1.3, tau / T), ox, oy, exp: E.exp, rim: E.rim, f: L.f, cx: L.cx, cy: L.cy, vis: wt * (1 - flashAlpha(p)) });
       HD.gl.drawArrays(HD.gl.TRIANGLES, 0, 3);
       if (!HD.visible) { HD.glc.style.visibility = 'visible'; HD.glc.style.display = ''; HD.visible = true; }
     }
@@ -1727,17 +1804,54 @@ export function startLaunch({ lang = 'zh', minMs = 3200 } = {}) {
 
   const cv = root.querySelector('canvas');
   const ctx = cv.getContext('2d');
-  let dpr = 0.5; // 煙霧本來就是糊的：用一半解析度畫再放大，省很多力氣（蟲洞走 CPU 退回路徑時才提高到 1）
+  // 煙霧畫布的解析度（20261027l）：原本一律 0.5 倍（半解析度再放大 → 在 iPad 上是 4×4 裝置像素一格，歡迎詞周圍的煙有塊狀感）。
+  //   現在先用 SMOKE_DPR[0]（1 倍＝每 CSS px 一格；iPad 2x 螢幕上只放大 2 倍，煙本來就是柔的，看不出差別，塊狀消失），
+  //   畫面很大（CSS 像素超過 SMOKE_PIX）時從 0.75 開始；煙霧階段每 0.5 秒看一次幀時間（第 40 百分位，前 10 格與單格 > 250 ms 不算），
+  //   連續兩次慢於 1/45 秒就降一檔（1 → 0.75 → 0.5，0.5 就是舊版）。蟲洞走 CPU 退回路徑時一律 1 倍（同舊版）。
+  const SMOKE_DPR = [1, 0.75, 0.5], SMOKE_PIX = 1.8e6;
+  let sLv = 0;
+  let dpr = SMOKE_DPR[0];
   const CPU_DPR = 1;
   let W = 1, H = 1;
+  const sMon = { n: 0, ft: [], slow: 0, last: 0 };
+  // 底色漸層（深綠、中心略亮）：自己算並加上 ±1 LSB 的三角分布抖色，畫成一張圖（瀏覽器的 canvas 漸層多半不抖色，
+  //   8 位元下暗綠漸層會一圈一圈出現色階）。只在尺寸改變時重算；蟲洞淡入完成後就放掉。
+  let bg = null;
+  function makeBg() {
+    const w = cv.width, h = cv.height;
+    if (bg && bg.width === w && bg.height === h) return;
+    bg = bg || document.createElement('canvas');
+    bg.width = w; bg.height = h;
+    const bx = bg.getContext('2d'), img = bx.createImageData(w, h), px = new Uint32Array(img.data.buffer);
+    const cx = w / 2, cy = h * 0.45, R = Math.hypot(w, h) * 0.6;
+    const C = [[36, 68, 59], [23, 45, 39], [11, 26, 21]];
+    let seed = 1234567;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) >>> 8) / 16777216;
+    for (let y = 0; y < h; y++) {
+      const dy = (y + 0.5 - cy) * (y + 0.5 - cy);
+      for (let x = 0; x < w; x++) {
+        const t = Math.min(1, Math.sqrt((x + 0.5 - cx) * (x + 0.5 - cx) + dy) / R);
+        const u = t < 0.55 ? t / 0.55 : (t - 0.55) / 0.45, a = t < 0.55 ? C[0] : C[1], b = t < 0.55 ? C[1] : C[2];
+        const n = rnd() + rnd() - 1;
+        const r = a[0] + (b[0] - a[0]) * u + n + 0.5, g = a[1] + (b[1] - a[1]) * u + n + 0.5, bl = a[2] + (b[2] - a[2]) * u + n + 0.5;
+        px[y * w + x] = (255 << 24 | (bl & 255) << 16 | (g & 255) << 8 | (r & 255)) >>> 0;
+      }
+    }
+    bx.putImageData(img, 0, 0);
+  }
   // 蟲洞高清（GL）：在歡迎詞與煙霧時就在背景建好；蟲洞段畫在另一張全解析度畫布上（疊在這張上面）
   hdInit(root, cv);
+  let cpuMode = false, bgOn = true;
   function resize() {
     W = Math.max(1, root.clientWidth);
     H = Math.max(1, root.clientHeight);
+    if (cpuMode) dpr = CPU_DPR;
+    else { if (!sLv && W * H > SMOKE_PIX) sLv = 1; dpr = SMOKE_DPR[sLv]; }
     cv.width = Math.round(W * dpr);
     cv.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (bgOn) makeBg();
+    warpStats.smoke = { dpr, lv: sLv, size: cv.width + 'x' + cv.height, drops: warpStats.smoke ? warpStats.smoke.drops : [] };
   }
   resize();
   window.addEventListener('resize', resize);
@@ -1778,16 +1892,27 @@ export function startLaunch({ lang = 'zh', minMs = 3200 } = {}) {
     if (!warpT && !warpStats.ready) warmStep(4);  // 歡迎詞與煙霧的時候，順便每格算一小段（K 表；CPU 路徑才要的天空貼圖）
     const p = partT ? Math.min(1, (now - partT) / (warpT ? 1500 : 1300)) : 0;
     const w = warpT ? smooth((now - warpT) / 900) : 0; // 蟲洞隧道淡入（煙霧同時淡出）
+    // 煙霧階段的解析度自動降檔（見 SMOKE_DPR）
+    if (!warpT && !partT && !cpuMode && sLv < SMOKE_DPR.length - 1) {
+      const iv = sMon.last ? now - sMon.last : 0;
+      sMon.last = now;
+      if (++sMon.n > 10 && iv && iv < 250) {
+        sMon.ft.push(iv);
+        if (sMon.ft.reduce((x, y) => x + y, 0) >= 500 && sMon.ft.length >= 8) {
+          const a = sMon.ft.sort((x, y) => x - y), q40 = a[Math.floor(a.length * 0.4)];
+          sMon.ft = [];
+          if (q40 > 1000 / 45 && ++sMon.slow >= 2) { sLv++; sMon.slow = 0; sMon.n = 0; resize(); warpStats.smoke.drops.push(tau.toFixed(2) + 's ' + q40.toFixed(1) + 'ms→' + dpr); }
+          else if (q40 <= 1000 / 45) sMon.slow = 0;
+        }
+      }
+    }
     ctx.clearRect(0, 0, W, H);
     const baseA = (partT ? Math.pow(1 - p, 2) : 1) * (1 - w);
-    if (baseA > 0.002) {
-      const g = ctx.createRadialGradient(W / 2, H * 0.45, 0, W / 2, H * 0.45, Math.hypot(W, H) * 0.6);
-      g.addColorStop(0, `rgba(36,68,59,${baseA})`);
-      g.addColorStop(0.55, `rgba(23,45,39,${baseA})`);
-      g.addColorStop(1, `rgba(11,26,21,${baseA})`);
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, H);
-    }
+    if (baseA > 0.002 && bg) {
+      ctx.globalAlpha = baseA;
+      ctx.drawImage(bg, 0, 0, W, H);
+      ctx.globalAlpha = 1;
+    } else if (bg && (w >= 1 || p >= 1)) { bgOn = false; bg.width = bg.height = 0; bg = null; }   // 底色不再出現：放掉
     const hd = Math.hypot(W, H) * 0.5, big = Math.max(W, H);
     for (const q of puffs) {
       const inA = Math.min(1, Math.max(0, (tau - q.delay) / 1.1));
@@ -1810,7 +1935,7 @@ export function startLaunch({ lang = 'zh', minMs = 3200 } = {}) {
     if (warpT) {
       const wtau = (now - warpT) / 1000;
       warpDraw(ctx, W, H, wtau, w, p, dt);
-      if (warpDraw.mode === 'cpu' && dpr < CPU_DPR) { dpr = CPU_DPR; resize(); }   // CPU 退回路徑：畫布提高到 1 倍（下一格生效）
+      if (warpDraw.mode === 'cpu' && !cpuMode) { cpuMode = true; if (dpr !== CPU_DPR) resize(); }   // CPU 退回路徑：畫布固定 1 倍（下一格生效）
     }
     if (partT && !warpT && p < 0.35) { // 衝出煙霧的一下閃光
       ctx.fillStyle = `rgba(200,245,240,${0.2 * Math.sin(Math.PI * p / 0.35)})`;
@@ -1830,6 +1955,7 @@ export function startLaunch({ lang = 'zh', minMs = 3200 } = {}) {
     hdRelease();                                   // GL 物件、畫布全部釋放
     freeCpuSky();
     cv.width = cv.height = 1;
+    if (bg) { bg.width = bg.height = 0; bg = null; } bgOn = false;
     root.hidden = true;
     root.classList.remove('show', 'go', 'parting', 'warping', 'warp-go');
     resolveDone();
