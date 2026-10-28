@@ -1,6 +1,6 @@
 # 工作進度（PROGRESS）
 
-最後更新：2026-10-26（生物單元拿掉「我的觀察紀錄」改選擇題；第五課改教松的授粉、胚珠補充搬到生殖課；2026-10-24 為止：生物圈與生態第 1、2、3 課重做完；地球上的生物六課已重做完；人類與環境三課規劃完成）
+最後更新：2026-10-28（新增「練習題選項長度重整」每 10 課一批計畫；2026-10-26：生物單元拿掉「我的觀察紀錄」改選擇題；第五課改教松的授粉、胚珠補充搬到生殖課；2026-10-24 為止：生物圈與生態第 1、2、3 課重做完；地球上的生物六課已重做完；人類與環境三課規劃完成）
 
 規則請看 `AGENTS.md`；這份只記「做到哪了、還有什麼沒做」。細節請用 `git log` 查。
 每完成一個單元或一批修改，就更新這份：**只改下面的表與清單，不要一直往下加長**。
@@ -156,6 +156,35 @@
 - 大陸碰撞：地殼下方左右各一圈熱對流，在碰撞處下沉，外側上升，加「原因：熱對流把板塊往中間推」；地殼變厚時蓋住中間那一段（對流在地殼後面）。山脈標籤加「例：喜馬拉雅山脈」；「地函」標籤挪到右下角。
 - 文字：隱沒帶與碰撞兩頁的說明、「畫面要抓三件事」補上原因、補充區新增「實例：安地斯山脈」卡片（安地斯長度寫「約七千公里」，納茲卡速率沒寫數字，因為查不到可靠數字）。測驗題與答案沒動。
 - 檢查：截圖看過中英文各步驟與各擠壓程度；全步驟文字框重疊檢查（中英）無重疊；JS 語法無誤。這台沙箱沒有 Google Fonts，字寬以系統 Noto CJK 代替，英文寬度請老師上線後再看一眼。
+
+## 練習題選項長度重整（2026-10-28 起，每 10 課一批）
+
+- 起因：學生發現「選最長的敘述就是答案」。老師要求全站 139 課（物理 45、化學 31、地科 20、生物 43）重新整理選項長度。**規則、授權範圍與每批流程見 `AGENTS.md` 8.2**；這裡只記批次與實測數字。
+- 課號依 `index_classic.html` 卡片順序（物理→化學→地科→生物）。每批做完：勾 ☐、在下方「實測紀錄」補一行（整課「唯一最長／唯一最短」比例、差距超標題數）、commit 並 push。
+- 題目位置：生物第 97–122 課的題庫是 `assets/biology/quiz_*_1026_v1.js`（`Q(P(中,英),[選項],正解索引,解答,提示)`）；第 123–139 課（遺傳、生物技術、地球上的生物、生態、人類與環境）的題庫在各單元自己的 JS／資料檔，開工時用 `grep` 找；物理、化學、地科的題目寫在各課 HTML 裡，格式不統一（`.practice-box[data-ans]`、`checkQuiz(題號,'A')`、`quizContainer` 由 JS 產生等），每批先看過格式再寫量測腳本。
+
+| 批 | 課號 | 科目 | 課程（檔名） | 完成 |
+|---|---|---|---|---|
+| 1 | 1–10 | 物理 | density_1、density_2、density_3、waves_1、waves_2、waves_3、waves_4、optics_1、optics_2、optics_3 | ☐ |
+| 2 | 11–20 | 物理 | optics_4、optics_5、optics_max1、thermo_1、thermo_2、thermo_3、thermo_4、thermo_5、mechanics_1、mechanics_2 | ☐ |
+| 3 | 21–30 | 物理 | mechanics_3、mechanics_4、mechanics_5、kinematics、kinematics_2、kinematics_3、kinematics_4、kinematics_5、newton_1、newton_2 | ☐ |
+| 4 | 31–40 | 物理 | newton_3、newton_4、newton_5、work_1、work_2、work_3、work_4、electronics_1、electronics_2、electronics_3 | ☐ |
+| 5 | 41–50 | 物理／化學 | electronics_4、magnetism_1、electromagnetism_2、electric_motor_3、electromagnetic_induction_4、concerntration_1、concerntration_2、concerntration_3、concerntration_4、atomics_1 | ☐ |
+| 6 | 51–60 | 化學 | atomics_2、atomics_3、atomics_4、chem_reaction_1、chem_reaction_2、chem_reaction_3、chem_reaction_4、redox_1、redox_2、redox_3 | ☐ |
+| 7 | 61–70 | 化學 | electrolyte_1、electrolyte_2、electrolyte_3、electrolyte_4、chem_reaction_balance_1、chem_reaction_balance_2、chem_reaction_balance_3、organics_1、organics_2、organics_3 | ☐ |
+| 8 | 71–80 | 化學／地科 | organics_4、electric_energy_power_1、electric_power_transmission_2、electrical_safety_3、galvanic_batteries_4、electrolysis_5、earth_water_1、earth_landforms_2、earth_coastline_3、earth_rocks_4 | ☐ |
+| 9 | 81–90 | 地科 | earth_interior_1、earth_plates_2、earth_strata_3、earth_taiwan_quake_4、astronomy_universe_1、astronomy_earth_motion_2、astronomy_sunpath_3、astronomy_moon_phases_4、weather_atmosphere_1、weather_cloud_rain_2 | ☐ |
+| 10 | 91–100 | 地科／生物 | weather_wind_3、weather_airmass_front_4、weather_forecast_5、weather_disaster_6、climate_ocean_7、climate_change_8、biology_intro、biology_microscope、biology_cells、biology_matter_transport | ☐ |
+| 11 | 101–110 | 生物 | biology_organization、biology_scale、biology_nutrients、biology_enzymes、biology_photosynthesis、biology_animal_nutrition、biology_plant_structure、biology_plant_transport、biology_human_transport、biology_immune_defense | ☐ |
+| 12 | 111–120 | 生物 | biology_nervous_signals、biology_brain_reflex、biology_endocrine、biology_responses、biology_temperature_homeostasis、biology_respiration、biology_glucose_homeostasis、biology_excretion_water、biology_cell_division、biology_asexual_reproduction | ☐ |
+| 13 | 121–130 | 生物 | biology_reproduction_humans、biology_reproduction_flowers、biology_mendel_inheritance、biology_human_inheritance、biology_mutations、biology_biotechnology、biology_fossils_evolution、biology_naming_classification、biology_microorganisms、biology_fungi | ☐ |
+| 14 | 131–139 | 生物 | biology_plants_diversity、biology_animals_diversity、biology_ecology_environment、biology_ecology_energy、biology_ecology_interactions、biology_ecology_habitats、biology_environmental_diversity、biology_environmental_threats、biology_environmental_conservation | ☐ |
+
+### 實測紀錄
+
+- **基準（2026-10-28，只量了生物 JS 題庫 23 個檔、552 題；其他科目還沒量）**：正解為唯一最長 20%、唯一最短 14%，各題選項差距超過規定（最長與最短相差 >30%，短選項 ≤10 字則 >3 字）的占 25%。整體接近隨機，但分課差很大，**最偏的（超過 35% 上限）**：`coordination_homeostasis` 71%（17 題，內分泌／血糖／神經／呼吸／向性的第一批題）、`reproduction_flowers` 56%、`temperature_homeostasis` 45%、`reproduction_humans` 42%，`asexual_reproduction` 35% 在邊界；「最短就是答案」偏高的是 `immune_defense` 41%、`plant_transport` 32%、`nutrients` 27%、`asexual_reproduction` 26%。差距超標最多的是 `matter_transport` 41%、`coordination_homeostasis` 41%、`temperature_homeostasis` 40%、`organization` 38%、`plant_transport` 36%。老師若想先修學生最容易抓到的，可以把最偏的幾課提前（內分泌、血糖、神經、呼吸、向性、體溫、無性生殖在第 12 批，人類與花的生殖在第 13 批）。
+- 之前 10-26 的選擇題紀錄寫過「選項長度已調平衡」，從這次量測看並沒有達到規則；這批重整以 8.2 的數字為準。
+- 各批結果：（尚未開始）
 
 ## 注意事項
 
