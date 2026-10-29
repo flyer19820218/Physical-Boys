@@ -76,7 +76,7 @@ LQ.add('human',{
    P(`葡萄糖穿過絨毛上皮進入微血管，沿肝門靜脈到肝臟，部分可儲存為肝糖，接著才分配到全身。`,`Glucose crosses the villus lining into capillaries and goes by the hepatic portal vein to the liver, where some can be stored as glycogen, before it is shared with the body.`),
    P(`在「選器官供血支路」按「小腸」，看支路經過哪裡。`,`Under "Choose an organ supply branch" press "Small intestine" and see where the branch passes.`)),
   Q(P(`血液要完成「送到細胞」才算運輸成功，下面哪一項最完整？`,`Transport is only complete once materials reach the cells. Which statement is the most complete?`),
-   [P(`養分進入細胞，廢物由血液帶走`,`Nutrients enter the cells and the blood carries wastes away`),P(`養分只要進入血管裡就算完成了`,`Nutrients are done as soon as they have entered a vessel`),P(`血液只負責運送，細胞完全用不到`,`Blood only delivers and cells never use any of it at all`),P(`廢物會一直留在細胞裡不被帶走`,`Wastes just stay in the cells and are never carried away`)],0,
+   [P(`養分進入細胞，廢物由血液帶走`,`Nutrients enter cells, and the blood carries wastes away`),P(`養分只要進入血管裡就算完成了`,`Nutrients are done as soon as they have entered a vessel`),P(`血液只負責運送，細胞完全用不到`,`Blood only delivers and cells never use any of it at all`),P(`廢物會一直留在細胞裡不被帶走`,`Wastes just stay in the cells and are never carried away`)],0,
    P(`氧氣與葡萄糖經組織液進入細胞參與呼吸作用；二氧化碳再進入血液，由血液送到肺排出。`,`Oxygen and glucose enter cells through tissue fluid for respiration; carbon dioxide then returns to the blood and is carried to the lungs.`),
    P(`在「完整路線／六大物質交換區」按「組織」。`,`Under "Whole circuit / six exchange regions" press "Body tissues".`))],
  lymph:[
