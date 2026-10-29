@@ -1,0 +1,72 @@
+/* Multiple-choice practice for astronomy_sunpath_3.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('astronomy_sunpath_3',{
+ '.panel:nth-child(3)':[
+  Q(P(`北半球夏至時，北回歸線上的晝和夜哪一個比較長？從圖上怎麼看出來？`,`At the June solstice, is day or night longer at the Tropic of Cancer, and how can you tell from the picture?`),
+   [P(`夜較長，藍色夜區比黃色晝區長`,`Night longer; blue section exceeds yellow`),P(`晝夜等長，黃色與藍色一樣長`,`Equal; yellow and blue sections match`),P(`無法判斷，圖上看不出晝夜長短`,`Cannot tell; the picture shows no lengths`),P(`晝較長，黃色晝區比藍色夜區長`,`Day longer; yellow section exceeds blue`)],3,
+   P(`黃色晝區＞藍色夜區，所以晝長夜短；北回歸線上大約白晝 13.5 小時、黑夜 10.5 小時。`,`Yellow day part > blue night part, so days are longer: about 13.5 h of daylight and 10.5 h of night at the Tropic of Cancer.`),
+   P(`比較黃色（日照）和藍色（黑夜）路段的長短。`,`Compare the length of the yellow (day) and blue (night) parts.`)),
+  Q(P(`北半球冬至時，北極圈內會出現什麼現象？`,`What happens inside the Arctic Circle at the December solstice?`),
+   [P(`整天都有太陽，出現永晝`,`Sunlight all day long: polar day`),P(`晝夜等長，各為十二小時`,`Day equals night: 12 hours each`),P(`太陽只出現一小段時間`,`Sun appears only for a short while`),P(`整天不見太陽，出現永夜`,`No sunlight all day: polar night`)],3,
+   P(`北極圈內整天都轉不進日照區，出現永夜；同一時間南極圈內出現永晝。`,`It never rotates into daylight, giving polar night; at the same time the Antarctic Circle has polar day.`),
+   P(`冬至時北極背向太陽；北極圈附近的地方自轉一圈，會不會轉進日照區？`,`At the December solstice the North Pole leans away; does a place in the Arctic Circle rotate into sunlight?`)),
+  Q(P(`春分、秋分時，地球上各地的晝夜長短有什麼特色？為什麼？`,`At the equinoxes, how long are day and night everywhere, and why?`),
+   [P(`各地晝長夜短，因為直射赤道`,`Days exceed nights everywhere; Sun on equator`),P(`各地晝夜等長，因為直射北回歸線`,`Day equals night everywhere; Sun on the Tropic`),P(`只有赤道晝夜等長，其他地方不等`,`Only the equator has equal day and night times`),P(`各地晝夜等長，因為直射赤道`,`Day equals night everywhere; Sun is on equator`)],3,
+   P(`太陽直射赤道，日夜分界線通過南北兩極，每一條緯線都一半在白天、一半在黑夜，所以各地晝夜等長。`,`The Sun is overhead at the equator and the day–night line passes through both poles, so every latitude is half in day and half in night.`),
+   P(`春、秋分太陽直射哪裡？日夜分界線通過兩極嗎？`,`Where is the Sun overhead at the equinoxes? Does the day–night line pass through the poles?`))],
+ '.panel:nth-child(4)':[
+  Q(P(`太陽仰角 30° 時，照射地表面積是直射的幾倍？單位面積接收的能量剩多少？`,`At a solar altitude of 30°, how many times larger is the lit area than with direct rays, and how much energy per unit area is left?`),
+   [P(`約 2 倍，單位面積能量變兩倍`,`Twice the area, double the energy per unit`),P(`約 2 倍，單位面積能量剩一半`,`Twice the area, half the energy per unit`),P(`約 0.5 倍，單位面積能量剩一半`,`Half the area, half the energy per unit`),P(`約 0.5 倍，單位面積能量變兩倍`,`Half the area, double the energy per unit`)],1,
+   P(`照射面積 ＝ 1 ÷ sin 30° ＝ 2 倍，單位面積能量只剩 50%。`,`Lit area = 1 ÷ sin 30° = 2 times, so only 50% of the energy reaches each unit area.`),
+   P(`照射面積 ＝ 1 ÷ sin(仰角)；sin 30° ＝ 0.5。`,`Lit area = 1 ÷ sin(altitude); sin 30° = 0.5.`)),
+  Q(P(`台灣（北回歸線）夏至、冬至正午的太陽仰角各約幾度？哪一個季節比較熱？`,`What is the noon solar altitude in Taiwan (Tropic of Cancer) at the two solstices, and which season is warmer?`),
+   [P(`夏至約 90°、冬至約 43°；夏至較熱`,`June 90°, Dec 43°; June is warmer`),P(`夏至約 43°、冬至約 90°；冬至較熱`,`June 43°, Dec 90°; Dec is warmer`),P(`夏至約 90°、冬至約 43°；冬至較熱`,`June 90°, Dec 43°; Dec is warmer`),P(`夏至約 43°、冬至約 90°；夏至較熱`,`June 43°, Dec 90°; June is warmer`)],0,
+   P(`夏至仰角大、陽光直射，能量集中，所以比較熱。`,`In June the Sun is high and direct, so its energy is concentrated and it is warmer.`),
+   P(`看上面的表。`,`Look at the table above.`)),
+  Q(P(`有人說「夏天比較熱是因為地球離太陽比較近」，你會怎麼回答？`,`Someone says "summer is hot because Earth is closer to the Sun". How would you answer?`),
+   [P(`對，夏天地球在近日點最靠近太陽`,`Yes; in summer Earth is at perihelion`),P(`對，因為夏天太陽本身會變得更亮`,`Yes; the Sun itself brightens in summer`),P(`對，只有赤道附近的季節才是這樣`,`Yes; only the equator has such seasons`),P(`不對，夏天地球反在遠日點的附近`,`No; in summer Earth sits near aphelion`)],3,
+   P(`北半球夏天時地球反而在遠日點附近；四季主要是因為地軸傾斜，讓太陽直射、斜射（仰角）改變。`,`In the northern summer Earth is near aphelion; seasons come mainly from the tilted axis changing the angle of sunlight.`),
+   P(`想想北半球夏天時，地球在公轉軌道的哪裡。`,`Where is Earth on its orbit during northern summer?`))],
+ '.panel:nth-child(5)':[
+  Q(P(`為什麼北極星整晚看起來幾乎不動？`,`Why does Polaris seem to stay still all night?`),
+   [P(`它非常接近自轉軸向北延伸的方向`,`It lies nearly along Earth's rotation axis`),P(`它離地球特別近，所以看起來不動`,`It is the nearest star, so it seems still`),P(`它沒有在發光，所以看起來不動`,`It gives off no light, so it seems still`),P(`它是繞著地球公轉的唯一一顆星`,`It is the only star that orbits the planet`)],0,
+   P(`北極星非常接近天北極；地球自轉時它幾乎就在軸上，所以看起來幾乎不動，其他星星則繞著它轉。`,`Polaris is very close to the north celestial pole; it stays almost on the axis as Earth turns, while other stars circle it.`),
+   P(`地球自轉軸往北延伸，指向哪裡？`,`Where does Earth's axis point if extended north?`)),
+  Q(P(`天球上的星星為什麼看起來由東向西移動？星星真的在繞地球嗎？`,`Why do stars seem to move east to west? Do they really circle Earth?`),
+   [P(`是，星星真的每天繞地球一圈`,`Yes; the stars really circle Earth each day`),P(`是，因為地球靜止不動而星星轉`,`Yes; Earth stays still while stars revolve`),P(`不是，地球公轉造成每晚視運動`,`No; Earth's revolution causes apparent motion`),P(`不是，是地球自轉造成的視運動`,`No; Earth's rotation causes apparent motion`)],3,
+   P(`地球由西向東自轉，站在地面上的我們看到天球上的星星往相反方向，由東向西作視運動。`,`Earth rotates west to east, so from the ground the stars appear to move the opposite way, east to west.`),
+   P(`比較「宇宙真實視角」和「天球模型」：真正在轉的是誰？`,`Compare the real-space view with the celestial-sphere model: what is really turning?`)),
+  Q(P(`在台灣看北極星，它離北方地平線大約多高？`,`Seen from Taiwan, about how high above the northern horizon is Polaris?`),
+   [P(`約 90°`,`About 90°`),P(`約 23°`,`About 23°`),P(`約 45°`,`About 45°`),P(`約 66°`,`About 66°`)],1,
+   P(`台灣在北緯約 22～25°，北極星高度約等於緯度，大約在北方地平線上 23° 左右。`,`Taiwan is at about 22–25° N and Polaris's altitude roughly equals latitude, so it is about 23° up.`),
+   P(`北極星的高度大約等於觀測地的緯度。`,`Polaris's altitude roughly equals the observer's latitude.`))],
+ '.panel:nth-child(6)':[
+  Q(P(`台灣夏至時，太陽從哪個方位升起？正午在哪裡？`,`At the June solstice in Taiwan, where does the Sun rise and where is it at noon?`),
+   [P(`東偏南升起；正午太陽低在南方`,`Rises south of east; low in south at noon`),P(`東偏北升起；正午太陽近頭頂`,`Rises north of east; overhead at noon`),P(`正東升起；正午太陽近頭頂`,`Rises due east; near overhead at noon`),P(`正南升起；正午太陽低在北方`,`Rises due south; stands north at noon`)],1,
+   P(`夏至太陽東偏北升起、西偏北落下；正午太陽幾乎在頭頂，影子最短。`,`At the June solstice the Sun rises north of east and sets north of west; at noon it is almost overhead and shadows are shortest.`),
+   P(`看四季太陽軌跡表，或把季節切到夏至看【地表視角】。`,`Check the seasonal sun-path table, or switch to June solstice in the ground view.`)),
+  Q(P(`春分、秋分時，太陽從哪裡升起、在哪裡落下？晝夜如何？`,`At the equinoxes, where does the Sun rise and set, and how are day and night?`),
+   [P(`正東升起、正西落下；晝夜約等長`,`From due east to due west; days equal nights`),P(`東偏北升起、西偏北落下；晝長夜短`,`North of east to north of west; long days`),P(`東偏南升起、西偏南落下；晝短夜長`,`South of east to south of west; short days`),P(`正南升起、正北落下；晝夜約等長`,`From due south to due north; day equals night`)],0,
+   P(`春秋分太陽直射赤道：從正東升起、正西落下；正午在南方（台灣），晝夜大約等長。`,`At the equinoxes the Sun is over the equator: rising due east, setting due west, in the south at noon from Taiwan, with about equal day and night.`),
+   P(`春秋分太陽直射赤道，太陽軌跡就是天赤道。`,`At the equinoxes the Sun is over the equator and its path is the celestial equator.`)),
+  Q(P(`把觀測者緯度改成「雪梨 (34°S)」，正午的太陽在南方還是北方？`,`Set the latitude to Sydney (34°S). Is the noon Sun in the south or the north?`),
+   [P(`北方天空，面向北方才看得到`,`North sky; face north to see it`),P(`南方天空，面向南方才看得到`,`South sky; face south to see it`),P(`頭頂正上方，抬頭就能看到`,`Overhead; just look straight up`),P(`東方天空，面向東方才看得到`,`East sky; face east to see it`)],0,
+   P(`南半球的觀測者要面向北方才看得到正午的太陽，季節也跟北半球相反。`,`A southern observer faces north to see the noon Sun, and the seasons are the reverse of the north's.`),
+   P(`在南半球，天北極在地平線下，天南極在地平線上。`,`In the south the north celestial pole is below the horizon and the south pole above.`))],
+ '.panel:nth-child(7)':[
+  Q(P(`冬至時，台灣正午的影子朝哪個方向？跟夏至比是長還是短？`,`At the December solstice, which way does a noon shadow point in Taiwan, and is it longer or shorter than in June?`),
+   [P(`朝北方，比夏至長很多`,`Points north, much longer than June`),P(`朝南方，比夏至長很多`,`Points south, much longer than June`),P(`朝北方，比夏至短很多`,`Points north, much shorter than June`),P(`朝東方，和夏至一樣長`,`Points east, as long as in June`)],0,
+   P(`影子朝北方，是一年中最長的（約與身高等長）；夏至正午太陽在頭頂，幾乎看不到影子。`,`The shadow points north and is the longest of the year (about your height); in June the noon Sun is overhead and there is almost no shadow.`),
+   P(`冬至時太陽在南方而且比較低。`,`At the December solstice the Sun is in the south and lower.`)),
+  Q(P(`把現象串起來：夏至時，從「直射緯度」一路推到「正午影子」，哪個順序正確？`,`Chain the phenomena at the June solstice from direct-ray latitude to the noon shadow. Which order is correct?`),
+   [P(`晝長夜短 → 直射北回歸線 → 正午太陽近頭頂 → 影子最短`,`Long days → direct at Tropic → Sun near overhead → shortest shadow`),P(`直射北回歸線 → 正午太陽近頭頂 → 晝長夜短 → 影子最短`,`Direct at Tropic → Sun near overhead → long days → shortest shadow`),P(`直射北回歸線 → 晝長夜短 → 影子最短 → 正午太陽近頭頂`,`Direct at Tropic → long days → shortest shadow → Sun near overhead`),P(`直射北回歸線 → 晝長夜短 → 正午太陽近頭頂 → 影子最短`,`Direct at Tropic → long days → Sun near overhead → shortest shadow`)],3,
+   P(`直射北回歸線 → 北回歸線晝長夜短 → 太陽東偏北升、西偏北落 → 正午太陽在頭頂 → 影子最短。`,`Direct rays at the Tropic of Cancer → long days → sunrise north of east → overhead noon Sun → shortest shadow.`),
+   P(`直射哪裡 → 晝夜？→ 方位？→ 正午太陽？→ 影子？`,`Direct rays → day and night → direction → noon Sun → shadow?`)),
+  Q(P(`為什麼冬至的太陽運動軌跡比夏至短、位置也比較低？`,`Why is the Sun's path shorter and lower at the December solstice than in June?`),
+   [P(`直射北回歸線，軌跡偏北、正午仰角最高`,`Direct at Cancer: path north, high noon`),P(`直射赤道，軌跡通過天頂、正午仰角最高`,`Direct at equator: path overhead, high noon`),P(`地球離太陽變遠，太陽軌跡自己縮小`,`Earth moves away, so the path shrinks`),P(`直射南回歸線，軌跡偏南、正午仰角最低`,`Direct at Capricorn: path south, low noon`)],3,
+   P(`冬至直射南回歸線，太陽軌跡偏南，在地平線上方的部分較短（晝短夜長），正午仰角最低（約 43°）。`,`With the Sun overhead at the Tropic of Capricorn, its path shifts south: less of it is above the horizon and the noon altitude is lowest (about 43°).`),
+   P(`冬至時陽光直射南回歸線，北半球是斜射。`,`At the December solstice the Sun is over the Tropic of Capricorn, so the north gets oblique rays.`))]
+});
+})();
