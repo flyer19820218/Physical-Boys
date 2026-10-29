@@ -363,15 +363,16 @@ function propParts(hall, kind, rnd) {
 const PROP_KINDS = {
   // 物理館：單元站上已經有「和單元內容相關的小物品」，通用小景只留少量樹與灌木當景觀（20261029b）
   physics: [['broad', 3], ['bush', 4], ['pine', 2]],
-  chemistry: [['erlenmeyer', 3], ['round', 2], ['rack', 2], ['crystal', 3], ['chimney', 1], ['bunsen', 2], ['bush', 2], ['broad', 1]],
+  // 化學館：單元站已有小物品（燒瓶、燒杯、高爐都在站上），通用小景只留少量礦物結晶與樹叢當景觀（20261029d）
+  chemistry: [['crystal', 3], ['bush', 3], ['broad', 2]],
   // 地科館：單元站已有小物品（含火山、氣象站），通用小景只留少量山、巨石、松樹當景觀（20261029c）
   earth: [['mountain', 2], ['boulders', 3], ['pine', 4]],
   biology: [['broad', 4], ['pine', 3], ['sakura', 2], ['bush', 2], ['mushroom', 2]],
 };
 const TREE_KINDS = new Set(['broad', 'pine', 'sakura', 'bush']);
-const HERO_KIND = { physics: 'broad', chemistry: 'erlenmeyer', earth: 'mountain', biology: 'broad' }; // 每館先放兩個大一點的代表物
+const HERO_KIND = { physics: 'broad', chemistry: 'crystal', earth: 'mountain', biology: 'broad' }; // 每館先放兩個大一點的代表物
 // 每館的造景數量與「離單元站至少多遠」（球面弧長）。有單元小物品的館：造景少、離站遠，不壓到小物品
-const PROP_RULE = { physics: { count: 34, nd: 3.6 }, earth: { count: 30, nd: 3.6 } };
+const PROP_RULE = { physics: { count: 34, nd: 3.6 }, chemistry: { count: 32, nd: 3.6 }, earth: { count: 30, nd: 3.6 } };
 function pickKind(hallId, x) {
   const list = PROP_KINDS[hallId], total = list.reduce((a, b) => a + b[1], 0);
   let t = x * total;
@@ -933,10 +934,283 @@ function itemClimate(K) {
   return 0.06 + H;
 }
 
+// ---------- 化學館的單元小物品（20261029d）----------
+// 鏡頭幾乎是從上往下看（HALL_PITCH），所以化學的物品多半「攤平」擺：分子模型、週期表、比色卡從上面就看得清楚
+const CH = {
+  glassL: 0xcfeef5, tube: 0xbfe3ea, cork: 0xb5523b, carbon: 0x3d4448, oxy: 0xe0483a, hyd: 0xf7f8f2, bond: 0xcfd6d3,
+  brick: 0xa45a40, brickD: 0x7e4433, hot: 0xff7a2e, hotY: 0xffc43a, iron: 0x8d969b, zinc: 0xa9b2b6, copper: 0xd27a3e,
+  cuso4: 0x3f8fe0, pink: 0xff6fb5, paper: 0xfbfaf4,
+};
+// 旋轉體（玻璃器材的外形）：pts＝[[半徑, 高], ...]，24 段
+function lathe(K, pts, x, y, z, c, o = {}) {
+  K.add(new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), o.seg || 24), M(x, y, z), c, o);
+}
+// 從第 k0 個零件起，整組套上矩陣 m（先在自己的座標拼好，再擺位置／傾斜）
+// 小氣泡：只有幾個像素大，用二十面體就夠圓
+function bubble(K, x, y, z, r) { K.add(new THREE.IcosahedronGeometry(r, 0), M(x, y, z), IC.white, { noHull: true }); }
+function xform(K, k0, m) { for (let i = k0; i < K.parts.length; i++) K.parts[i].m = m.clone().multiply(K.parts[i].m); }
+// 錐形瓶：玻璃外殼＋裡面的液體（液面高 lv），s＝縮放
+function erlen(K, x, y, z, s, liq, lv, o = {}) {
+  const P = [[0, 0], [0.29, 0], [0.305, 0.03], [0.28, 0.11], [0.11, 0.43], [0.085, 0.48], [0.085, 0.62], [0.1, 0.645]].map(([r, h]) => [r * s, h * s]);
+  lathe(K, P, x, y, z, IC.glass, { glass: true, alpha: 0.38, seg: o.seg });
+  const rAt = h => (h <= 0.11 ? 0.28 : 0.28 - (h - 0.11) * (0.17 / 0.32)) - 0.018;
+  lathe(K, [[0, 0.012], [0.275, 0.012], [rAt(Math.min(lv, 0.11)), Math.min(lv, 0.11)], ...(lv > 0.11 ? [[rAt(lv), lv]] : []), [0, lv]].map(([r, h]) => [r * s, h * s]), x, y, z, liq, { seg: o.seg });
+  K.torus(0.1 * s, 0.012 * s, x, y + 0.645 * s, z, IC.white, { rs: 4, ts: 20, noHull: true });
+  return 0.645 * s;
+}
+// 燒杯：玻璃杯身（開口）＋杯底＋液體＋杯口
+function beaker(K, x, y, z, r, h, liq, lv, seg = 28) {
+  K.cyl(r, r * 0.97, h, x, y + h / 2, z, IC.glass, { glass: true, alpha: 0.36, open: true, seg });
+  if (lv > 0) K.cyl(r - 0.016, r * 0.97 - 0.016, lv, x, y + 0.012 + lv / 2, z, liq, { seg });
+  else K.cyl(r * 0.97, r * 0.97, 0.012, x, y + 0.006, z, IC.glass, { glass: true, alpha: 0.36, seg });
+  K.torus(r, 0.016, x, y + h, z, IC.white, { rs: 4, ts: seg, noHull: true });
+}
+// 球棍模型的「棍」：兩顆原子之間的鍵；n＝2 是雙鍵（兩根並排，間距 off，往 side 方向錯開）
+function bond(K, a, b, n = 1, side = [0, 0, 1], off = 0.04) {
+  for (let i = 0; i < n; i++) {
+    const t = n === 1 ? 0 : (i - 0.5) * 2 * off;
+    K.rod([a[0] + side[0] * t, a[1] + side[1] * t, a[2] + side[2] * t], [b[0] + side[0] * t, b[1] + side[1] * t, b[2] + side[2] * t], 0.024, CH.bond, { seg: 8 });
+  }
+}
+
+// 1 空氣與溶液：雙氧水＋二氧化錳製氧（錐形瓶＋薊頭漏斗）→ 導管 → 水槽裡倒立的集氣瓶（排水集氣法）＋一杯硫酸銅溶液
+function itemAirGas(K) {
+  const fx = -0.56, fz = -0.12;
+  erlen(K, fx, 0, fz, 1.05, 0xd9f0f6, 0.2, { seg: 20 });
+  K.cyl(0.2, 0.22, 0.025, fx, 0.03, fz, 0x3b3b3b, { noHull: true, seg: 20 });                     // 瓶底的二氧化錳（黑色粉末）
+  for (const [x, y, z] of [[0.08, 0.1, 0.06], [-0.07, 0.15, -0.04], [0.02, 0.19, 0.1]]) bubble(K, fx + x, y, fz + z, 0.026);
+  const ty = 0.68;
+  K.cyl(0.1, 0.082, 0.1, fx, ty, fz, CH.cork);                                                   // 橡皮塞
+  K.rod([fx - 0.035, 0.12, fz], [fx - 0.035, 1.12, fz], 0.02, CH.tube, { seg: 12 });               // 薊頭漏斗
+  lathe(K, [[0.02, 0], [0.1, 0.1], [0.12, 0.17], [0.135, 0.2]], fx - 0.035, 1.1, fz, IC.glass, { glass: true, alpha: 0.5, seg: 20 });
+  K.torus(0.135, 0.012, fx - 0.035, 1.3, fz, IC.white, { rs: 4, ts: 20, noHull: true });
+  // 水槽（玻璃）＋水
+  const tx = 0.42, tz = 0.12, tr = 0.5, th = 0.34;
+  K.cyl(tr, tr, th, tx, th / 2, tz, IC.glass, { glass: true, alpha: 0.32, open: true, seg: 36 });
+  K.cyl(tr - 0.012, tr - 0.012, 0.26, tx, 0.13, tz, IC.water, { glass: true, alpha: 0.5, seg: 32 });
+  K.torus(tr, 0.018, tx, th, tz, IC.white, { rs: 4, ts: 32, noHull: true });
+  // 倒立的集氣瓶：上半是收集到的氧氣，下半還有水
+  const bx = tx + 0.1, bz = tz - 0.06, b0 = 0.08, bh = 0.66;
+  K.cyl(0.17, 0.17, bh, bx, b0 + bh / 2, bz, IC.glass, { glass: true, alpha: 0.42, seg: 24 });
+  K.cyl(0.155, 0.155, 0.24, bx, b0 + 0.12, bz, IC.water, { glass: true, alpha: 0.55, seg: 24 });
+  K.torus(0.17, 0.016, bx, b0 + bh, bz, IC.white, { rs: 4, ts: 24, noHull: true });
+  for (const [x, y, z] of [[0.02, 0.16, 0.02], [-0.04, 0.26, -0.03], [0.05, 0.4, 0.04], [-0.02, 0.52, 0]]) bubble(K, bx + x, y, bz + z, 0.035);
+  // 導管：從橡皮塞往上、越過水槽邊、伸進水裡到集氣瓶口下面
+  K.tube([[fx + 0.035, ty, fz], [fx + 0.04, 0.92, fz], [fx + 0.2, 1.0, fz], [0.02, 0.92, fz], [0.08, 0.5, fz + 0.06], [0.12, 0.08, bz], [bx - 0.04, 0.05, bz]], 0.026, CH.tube, { n: 28, rs: 5 });
+  // 前面一小杯藍色的硫酸銅溶液＋玻璃棒
+  beaker(K, -0.28, 0, 0.6, 0.17, 0.32, CH.cuso4, 0.2, 20);
+  K.rod([-0.33, 0.06, 0.62], [-0.12, 0.5, 0.48], 0.016, IC.white, { seg: 12 });
+  return 1.32;
+}
+
+// 2 原子與元素週期表：斜放的週期表看板（四大家族上色）＋氦原子模型（2 質子、2 中子、2 電子）
+function itemAtomTable(K, hc) {
+  const k0 = K.parts.length, P = 0.096, W = 18 * P + 0.12, D = 7 * P + 0.12;
+  K.box(W, 0.05, D, 0, 0, 0, IC.ink);                                                            // 看板（深色底，格子才明顯）
+  const fam = c => (c === 1 ? 0xe86a5a : c === 2 ? 0xf2a03a : c <= 12 ? 0xdcd6c4 : c <= 16 ? 0xa9dca0 : c === 17 ? 0x5fb8e6 : 0xb48cff);
+  for (let r = 1; r <= 7; r++) for (let c = 1; c <= 18; c++) {
+    if (r === 1 && c !== 1 && c !== 18) continue;
+    if (r <= 3 && c > 2 && c < 13) continue;
+    const col = r === 1 && c === 1 ? IC.white : fam(c);
+    K.add(new THREE.PlaneGeometry(P * 0.86, P * 0.86), M(-W / 2 + 0.06 + (c - 0.5) * P, 0.027, -D / 2 + 0.06 + (r - 0.5) * P, -Math.PI / 2, 0, 0), col, { noHull: true });
+  }
+  xform(K, k0, M(0, 0.36, -0.44, 0.42, 0, 0));                                                    // 往鏡頭斜（後緣抬高）
+  for (const s of [-1, 1]) K.box(0.08, 0.36, 0.08, s * 0.7, 0.18, -0.36, hc);                      // 看板的腳（館色）
+  K.box(1.52, 0.06, 0.08, 0, 0.12, -0.36, hc);
+  // 氦原子模型（立在前面的細桿上）
+  const ax = 0, ay = 0.66, az = 0.5;
+  K.cyl(0.2, 0.24, 0.06, ax, 0.03, az, hc);
+  K.cyl(0.022, 0.022, ay - 0.1, ax, (ay - 0.1) / 2 + 0.05, az, IC.steel, { seg: 20 });
+  [[0.045, 0.03, 0.02, IC.red], [-0.045, -0.02, 0.025, IC.red], [-0.01, 0.045, -0.04, 0xc9cdd2], [0.015, -0.05, -0.035, 0xc9cdd2]]
+    .forEach(([x, y, z, c]) => K.sph(0.062, ax + x, ay + y, az + z, c, { ws: 16, hs: 10 }));
+  const orb = (tz, ex) => {
+    const m = new THREE.Matrix4().makeTranslation(ax, ay, az).multiply(new THREE.Matrix4().makeRotationZ(tz)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+    K.add(new THREE.TorusGeometry(0.36, 0.014, 4, 36), m, 0x7fb2d6);
+    const e = new THREE.Vector3(Math.cos(ex) * 0.36, Math.sin(ex) * 0.36, 0).applyMatrix4(m);
+    K.sph(0.05, e.x, e.y, e.z, IC.blue, { ws: 16, hs: 10 });
+  };
+  orb(0.62, 0.9); orb(-0.62, 3.6);
+  return ay + 0.42;
+}
+
+// 3 化學反應與方程式：托盤上用球棍模型排出 C ＋ O₂ → CO₂（兩邊原子數一樣：質量守恆）
+function itemReaction(K, hc) {
+  const tw = 2.1, td = 0.52;
+  K.box(tw, 0.08, td, 0, 0.04, 0.02, IC.cream);
+  K.box(tw + 0.04, 0.05, 0.05, 0, 0.065, td / 2 + 0.03, hc);
+  K.box(tw + 0.04, 0.05, 0.05, 0, 0.065, -td / 2 + 0.01, hc);
+  const y = 0.08, rC = 0.14, rO = 0.13, Z = 0.02, A = { ws: 16, hs: 12 }, sym = hc.clone().multiplyScalar(0.78); // 符號用深一點的館色，在米色托盤上才看得清楚
+  K.sph(rC, -0.84, y + rC, Z, CH.carbon, A);                                                      // C
+  K.box(0.24, 0.06, 0.07, -0.56, y + 0.04, Z, sym); K.box(0.07, 0.06, 0.24, -0.56, y + 0.04, Z, sym); // ＋
+  const o1 = [-0.38, y + rO, Z], o2 = [-0.12, y + rO, Z];                                          // O＝O
+  K.sph(rO, ...o1, CH.oxy, A); K.sph(rO, ...o2, CH.oxy, A); bond(K, o1, o2, 2, [0, 1, 0]);
+  K.box(0.16, 0.06, 0.08, 0.08, y + 0.04, Z, sym);                                                 // →
+  K.add(new THREE.ConeGeometry(0.13, 0.17, 20), M(0.24, y + 0.04, Z, 0, 0, -Math.PI / 2).multiply(Ms(0, 0, 0, 0.4, 1, 1)), sym);
+  const a = [0.47, y + rO, Z], c = [0.72, y + rC, Z], b = [0.97, y + rO, Z];                       // O＝C＝O
+  K.sph(rO, ...a, CH.oxy, A); K.sph(rC, ...c, CH.carbon, A); K.sph(rO, ...b, CH.oxy, A);
+  bond(K, a, c, 2, [0, 1, 0]); bond(K, c, b, 2, [0, 1, 0]);
+  // 托盤後面一根小火柴（碳燃燒）
+  K.rod([-0.86, 0.1, -0.36], [-0.5, 0.1, -0.5], 0.022, IC.wood, { seg: 12 });
+  K.sph(0.035, -0.5, 0.1, -0.5, IC.red, { ws: 12, hs: 8 });
+  K.add(new THREE.ConeGeometry(0.05, 0.16, 16), M(-0.47, 0.19, -0.51), IC.orange, { noHull: true });
+  return 0.5;
+}
+
+// 4 氧化與還原：高爐煉鐵（爐身、送料斜坡、爐頂的煙）→ 出鐵口流出紅熱的鐵水 → 鐵水桶；旁邊一疊鐵錠
+function itemFurnace(K) {
+  const fx = -0.3, fz = -0.32;
+  lathe(K, [[0.36, 0], [0.4, 0.22], [0.42, 0.42], [0.34, 0.9], [0.26, 1.28], [0, 1.28]], fx, 0, fz, CH.brick, { seg: 28 });
+  for (const y of [0.62, 1.02]) K.torus(y < 0.8 ? 0.39 : 0.31, 0.022, fx, y, fz, IC.metalD, { rs: 4, ts: 24 });
+  K.torus(0.5, 0.035, fx, 0.36, fz, IC.steel, { rs: 4, ts: 32 });                                  // 熱風環管
+  K.cyl(0.12, 0.14, 0.12, fx, 1.33, fz, IC.metalD);
+  [[0.0, 1.5, 0.0, 0.12], [0.08, 1.66, -0.06, 0.14]].forEach(([x, y, z, r]) => K.sph(r, fx + x, y, fz + z, 0xd8d4d0, { ws: 12, hs: 8 }));
+  // 熱風爐（右後方兩座圓頂高塔），用熱風管接到爐身的環管
+  for (const [x, z, h] of [[0.34, -0.66, 1.0], [0.68, -0.34, 0.86]]) {
+    K.cyl(0.17, 0.18, h, x, h / 2, z, 0xd9d2c4);
+    K.add(new THREE.SphereGeometry(0.17, 20, 5, 0, TAU, 0, Math.PI / 2), M(x, h, z), 0xb9b2a4);
+  }
+  K.tube([[0.34, 0.5, -0.66], [0.5, 0.42, -0.5], [0.68, 0.5, -0.34]], 0.04, IC.steel, { n: 12, rs: 6 });
+  K.tube([[0.5, 0.42, -0.5], [0.2, 0.4, -0.4], [fx + 0.48, 0.36, fz - 0.1]], 0.04, IC.steel, { n: 12, rs: 6 });
+  // 出鐵口 → 鐵水溝（紅熱）→ 鐵水桶
+  const cz0 = fz + 0.38, cz1 = 0.5;
+  K.box(0.2, 0.08, cz1 - cz0, fx, 0.04, (cz0 + cz1) / 2, IC.metalD);
+  K.box(0.12, 0.02, cz1 - cz0 + 0.02, fx, 0.085, (cz0 + cz1) / 2, CH.hot, { noHull: true });
+  K.box(0.07, 0.022, cz1 - cz0, fx, 0.092, (cz0 + cz1) / 2, CH.hotY, { noHull: true });
+  K.cyl(0.08, 0.08, 0.1, fx, 0.12, cz0 - 0.02, 0x3b2a22, { seg: 20, rx: Math.PI / 2, noHull: true });
+  const lx = fx, lz = 0.76;
+  K.cyl(0.26, 0.21, 0.3, lx, 0.15, lz, 0x4a4f55, { seg: 28 });
+  K.cyl(0.235, 0.235, 0.02, lx, 0.29, lz, CH.hot, { seg: 28, noHull: true });
+  K.cyl(0.14, 0.14, 0.022, lx, 0.295, lz, CH.hotY, { seg: 24, noHull: true });
+  for (const s of [-1, 1]) K.box(0.08, 0.06, 0.06, lx + s * 0.27, 0.22, lz, IC.metalD);
+  K.rod([fx, 0.1, cz1 - 0.02], [lx, 0.28, lz - 0.16], 0.03, CH.hot, { seg: 12, noHull: true });
+  // 一疊鐵錠（右前方）
+  const ix = 0.48, iz = 0.32;
+  for (const [x, y, z, r] of [[-0.1, 0, -0.04, 0], [0.1, 0, -0.04, 0], [0, 0.09, -0.04, Math.PI / 2]]) {
+    prism(K, [[-0.08, 0], [0.08, 0], [0.06, 0.09], [-0.06, 0.09]], -0.2, 0.4, CH.iron);           // 梯形斷面的鐵錠
+    xform(K, K.parts.length - 1, M(ix + x, y, iz + z, 0, r, 0));
+  }
+  return 1.8;
+}
+
+// 5 電解質、酸鹼與鹽類：鐵架上的滴定管 → 錐形瓶（酚酞變粉紅）＋前面一排 pH 比色卡
+function itemTitration(K, hc) {
+  const sx = -0.42, sz = -0.42, fx = 0.02, fz = -0.12;
+  K.box(0.86, 0.06, 0.56, -0.18, 0.03, -0.2, IC.metalD);
+  K.box(0.36, 0.012, 0.36, fx, 0.066, fz, IC.white, { noHull: true });                             // 白色墊片（看清楚顏色）
+  K.cyl(0.032, 0.032, 1.8, sx, 0.9, sz, IC.steel, { seg: 20 });
+  // 滴定管：玻璃管、裡面的鹼液、活栓、尖嘴，用夾子夾在鐵架上
+  const bt = 1.78, bb = 0.8;
+  K.cyl(0.05, 0.05, bt - bb, fx, (bt + bb) / 2, fz, IC.glass, { glass: true, alpha: 0.45, seg: 20 });
+  K.cyl(0.038, 0.038, 0.62, fx, bb + 0.31, fz, 0xd8eef8, { seg: 20 });
+  for (let i = 0; i < 8; i++) K.box(i % 2 ? 0.03 : 0.05, 0.008, 0.008, fx - 0.015, bb + 0.1 + i * 0.1, fz + 0.051, IC.ink, { noHull: true });
+  K.cyl(0.03, 0.03, 0.12, fx, bb - 0.04, fz, IC.glass, { glass: true, alpha: 0.5, seg: 20 });
+  K.box(0.14, 0.035, 0.035, fx, bb - 0.05, fz, IC.blue);                                            // 活栓
+  K.add(new THREE.ConeGeometry(0.03, 0.12, 20), M(fx, bb - 0.16, fz, Math.PI, 0, 0), IC.glass, { glass: true, alpha: 0.5 });
+  K.sph(0.022, fx, bb - 0.28, fz, 0xd8eef8, { ws: 16, hs: 12, noHull: true });                      // 一滴
+  for (const y of [1.0, 1.55]) {
+    K.rod([sx, y, sz], [fx, y, fz], 0.016, IC.metalD, { seg: 10 });
+    K.cyl(0.07, 0.07, 0.06, fx, y, fz, hc, { seg: 20 });
+  }
+  erlen(K, fx, 0.072, fz, 0.95, CH.pink, 0.17);
+  // pH 比色卡：1（紅）→ 7（綠）→ 14（紫），斜斜朝鏡頭
+  const k0 = K.parts.length;
+  K.box(1.62, 0.04, 0.26, 0, 0, 0, IC.white);
+  const PH = [0xe23b2e, 0xee5a2c, 0xf3862f, 0xf6b23a, 0xf2d63a, 0xc9dc48, 0x8fcf4e, 0x4fbf5a, 0x3fae86, 0x3a9bb0, 0x3a7be0, 0x4a5bd0, 0x6a4bc0, 0x7a3aa0];
+  PH.forEach((c, i) => K.box(0.1, 0.012, 0.16, -0.75 + i * 0.1154, 0.024, 0.01, c, { noHull: true }));
+  xform(K, k0, M(0, 0.1, 0.68, 0.38, 0, 0));
+  K.box(1.4, 0.1, 0.08, 0, 0.05, 0.64, hc);
+  return bt + 0.04;
+}
+
+// 6 反應速率與化學平衡：能量山坡模型（紅色高山＝沒有催化劑，綠色低山＝有催化劑，小球要翻過活化能）
+//   ＋燒杯放在畫了 X 的紙上（硫代硫酸鈉實驗，溶液變混濁看不到 X）＋碼表
+function itemRate(K, hc) {
+  // 能量山坡（正面輪廓擠出），整塊往後仰
+  const z0 = -0.78, D = 0.26, zf = z0 + D, X0 = -0.86, X1 = 0.86;
+  const prof = bump => {
+    const pts = [[X0, 0]];
+    for (let i = 0; i <= 28; i++) {
+      const x = X0 + (X1 - X0) * i / 28, t = Math.min(1, Math.max(0, (x + 0.3) / 0.6)), base = 0.36 + (0.14 - 0.36) * t * t * (3 - 2 * t);
+      pts.push([x, base + bump * Math.exp(-((x + 0.02) ** 2) / 0.05)]);
+    }
+    pts.push([X1, 0]);
+    return pts;
+  };
+  const k0 = K.parts.length;
+  prism(K, prof(0.62), z0, D, hc);
+  prism(K, prof(0.26), zf, 0.05, IC.green);
+  K.sph(0.085, -0.66, 0.36 + 0.085, zf - 0.04, IC.red, { ws: 16, hs: 12 });
+  tiltBack(K, k0, 0.55, z0, zf + 0.05, X1);
+  // 燒杯＋X 紙
+  const bx = -0.46, bz = 0.38;
+  K.box(0.52, 0.012, 0.52, bx, 0.006, bz, CH.paper, { noHull: true });
+  for (const r of [0.785, -0.785]) K.box(0.36, 0.006, 0.05, bx, 0.015, bz, IC.ink, { ry: r, noHull: true });
+  K.cyl(0.19, 0.185, 0.36, bx, 0.192, bz, IC.glass, { glass: true, alpha: 0.32, open: true, seg: 28 });
+  K.cyl(0.175, 0.175, 0.24, bx, 0.14, bz, 0xf0d860, { glass: true, alpha: 0.72, seg: 28 });   // 混濁的淡黃色溶液（X 快看不到了）
+  K.torus(0.19, 0.016, bx, 0.372, bz, IC.white, { rs: 4, ts: 28, noHull: true });
+  // 碼表（平躺、稍微朝鏡頭）
+  const k1 = K.parts.length;
+  K.cyl(0.3, 0.3, 0.09, 0, 0, 0, IC.steel, { seg: 40 });
+  K.cyl(0.26, 0.26, 0.012, 0, 0.05, 0, IC.white, { seg: 40, noHull: true });
+  for (let i = 0; i < 12; i++) { const a = i * TAU / 12; K.box(0.016, 0.008, i % 3 ? 0.035 : 0.06, Math.sin(a) * 0.21, 0.058, -Math.cos(a) * 0.21, IC.ink, { ry: -a, noHull: true }); }
+  K.box(0.02, 0.01, 0.2, 0.06, 0.065, -0.06, IC.red, { ry: -0.6, noHull: true });
+  K.cyl(0.02, 0.02, 0.02, 0, 0.068, 0, IC.ink, { seg: 20, noHull: true });
+  K.cyl(0.05, 0.05, 0.08, 0, 0, -0.33, IC.metalD, { seg: 20, rx: Math.PI / 2 });
+  K.cyl(0.07, 0.07, 0.05, 0, 0, -0.39, hc, { seg: 20, rx: Math.PI / 2 });
+  xform(K, k1, M(0.42, 0.14, 0.36, 0.3, -0.25, 0));
+  return 1.0;
+}
+
+// 7 有機化學與生活分子：乙醇（酒精）的球棍模型，立在細桿上（黑＝碳、紅＝氧、白＝氫）
+function itemOrganic(K, hc) {
+  K.cyl(0.26, 0.3, 0.07, -0.08, 0.035, 0.05, hc, { seg: 28 });
+  K.cyl(0.026, 0.026, 0.62, -0.08, 0.38, 0.05, IC.steel, { seg: 20 });
+  const C1 = [-0.36, 0.78, 0.04], C2 = [0.08, 0.92, -0.04], O = [0.48, 0.74, 0.08], HO = [0.74, 0.92, 0.18];
+  const away = (p, d, L) => { const v = new THREE.Vector3(...d).normalize().multiplyScalar(L); return [p[0] + v.x, p[1] + v.y, p[2] + v.z]; };
+  const H = [away(C1, [-0.8, 0.45, 0.1], 0.36), away(C1, [-0.1, -0.35, 0.95], 0.36), away(C1, [-0.15, -0.3, -0.95], 0.36),
+    away(C2, [-0.05, 0.6, 0.8], 0.36), away(C2, [0.1, 0.55, -0.85], 0.36), HO];
+  bond(K, C1, C2); bond(K, C2, O); bond(K, O, HO);
+  for (const h of H.slice(0, 3)) bond(K, C1, h);
+  for (const h of H.slice(3, 5)) bond(K, C2, h);
+  const A = { ws: 16, hs: 12 };
+  K.sph(0.17, ...C1, CH.carbon, A); K.sph(0.17, ...C2, CH.carbon, A); K.sph(0.155, ...O, CH.oxy, A);
+  for (const h of H) K.sph(0.1, ...h, CH.hyd, { ws: 12, hs: 9 });
+  return 1.3;
+}
+
+// 8 電化學與化學電池：鋅銅電池（鋅片在硫酸鋅、銅片在藍色硫酸銅、中間鹽橋）用導線接到後面的伏特計
+function itemCell(K, hc) {
+  const zx = -0.5, cx = 0.5, bz = 0.16, br = 0.27, bh = 0.46;
+  beaker(K, zx, 0, bz, br, bh, 0xe6f3f6, 0.32);
+  beaker(K, cx, 0, bz, br, bh, CH.cuso4, 0.32);
+  const pz = bz - 0.06;
+  K.box(0.2, 0.56, 0.03, zx - 0.06, 0.37, pz, CH.zinc);                                            // 鋅片（−）
+  K.box(0.2, 0.56, 0.03, cx + 0.06, 0.37, pz, CH.copper);                                          // 銅片（＋）
+  // 鹽橋：倒 U 形管（裝著白色的鹽溶液凝膠），兩腳插進兩杯
+  const sz = bz + 0.1, sy = 0.5, sr = 0.42;
+  K.torus(sr, 0.045, 0, sy, sz, IC.cream, { rx: 0, arc: Math.PI, ts: 24, rs: 8 });
+  for (const s of [-1, 1]) K.cyl(0.045, 0.045, 0.32, s * sr, sy - 0.16, sz, IC.cream, { seg: 20 });
+  // 伏特計（後方）
+  const vx = 0, vz = -0.62;
+  K.box(0.56, 0.24, 0.34, vx, 0.12, vz, 0x3f5552);
+  K.box(0.46, 0.012, 0.24, vx, 0.246, vz + 0.01, IC.white, { noHull: true });
+  for (let i = 0; i < 7; i++) { const a = -0.9 + i * 0.3; K.box(0.012, 0.006, 0.04, vx + Math.sin(a) * 0.16, 0.254, vz + 0.08 - Math.cos(a) * 0.16, IC.ink, { ry: -a, noHull: true }); }
+  K.box(0.012, 0.008, 0.17, vx + 0.04, 0.258, vz + 0.0, IC.red, { ry: -0.3, noHull: true });
+  for (const [s, c] of [[-1, 0x2f3638], [1, IC.red]]) K.cyl(0.035, 0.035, 0.08, vx + s * 0.2, 0.28, vz + 0.12, c, { seg: 20 });
+  // 導線：鋅片 → 黑色（−）端子；銅片 → 紅色（＋）端子
+  K.tube([[zx - 0.06, 0.65, pz], [zx - 0.06, 0.82, pz - 0.1], [-0.36, 0.55, -0.42], [-0.2, 0.32, vz + 0.12]], 0.024, 0x2f3638, { n: 28, rs: 6 });
+  K.tube([[cx + 0.06, 0.65, pz], [cx + 0.06, 0.82, pz - 0.1], [0.36, 0.55, -0.42], [0.2, 0.32, vz + 0.12]], 0.024, IC.red, { n: 28, rs: 6 });
+  return 0.9;
+}
+
 const UNIT_ITEMS = {
   physics: {
     'physics-01': itemBalance, 'physics-02': itemTuningFork, 'physics-03': itemOptics, 'physics-04': itemHeat, 'physics-05': itemPressure,
     'physics-06': itemIncline, 'physics-07': itemOrbit, 'physics-08': itemCoaster, 'physics-09': itemCircuit, 'physics-10': itemMagnet,
+  },
+  chemistry: {
+    'chemistry-01': itemAirGas, 'chemistry-02': itemAtomTable, 'chemistry-03': itemReaction, 'chemistry-04': itemFurnace,
+    'chemistry-05': itemTitration, 'chemistry-06': itemRate, 'chemistry-07': itemOrganic, 'chemistry-08': itemCell,
   },
   earth: {
     'earth-01': itemWaterLand, 'earth-02': itemPlates, 'earth-03': itemSpace, 'earth-04': itemWeather, 'earth-05': itemClimate,
