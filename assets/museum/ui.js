@@ -5,7 +5,7 @@ const STR = {
   zh: {
     title: '伽利略星球',
     sub: 'Galileo Planet',
-    hint3d: '拖曳轉動星球，點選一座館；雙指放大可以走在路上',
+    hint3d: '拖曳轉動星球，點選一座館；雙指放大可以走在星球上',
     hint2d: '點選一座館',
     hall: n => n + '館',
     lessons: n => n + ' 課',
@@ -27,7 +27,7 @@ const STR = {
   en: {
     title: 'Galileo Planet',
     sub: '伽利略星球',
-    hint3d: 'Drag to spin the planet, tap a hall; pinch in to walk the roads',
+    hint3d: 'Drag to spin the planet, tap a hall; pinch in to walk on the surface',
     hint2d: 'Tap a hall',
     hall: n => n + ' Hall',
     lessons: n => n + (n === 1 ? ' lesson' : ' lessons'),

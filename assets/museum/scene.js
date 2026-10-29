@@ -1,7 +1,8 @@
 // 伽利略星球的 3D 場景（Three.js r170，卡通描邊，全部用程式碼拼幾何，不用外部模型或貼圖）。
 // 規格見 galileo-planet/PLAN.md §4、§5、§11。重點：
 //   - 球外：39 個單元地標佈滿四個館的區域（只看不能點，點到就是點那一館）
-//   - 進館：鏡頭轉成近乎正上方，球體淡出，剩下這一館的「平面地圖」（彎路＋單元站＋通往隔壁館的出口）
+//   - 進館：鏡頭轉成近乎正上方，球體淡出，剩下這一館的「平面地圖」（領土＋單元站＋通往隔壁館的出口）
+//   - 領土：每館陸地切成 N 塊（N＝單元數），一個單元一塊；見 makeTerrain 與 territorySlots
 //   - render-on-demand：沒有動作時完全停止繪圖（0 fps）
 import * as THREE from './vendor/three.module.min.js';
 import { buildShuttle } from './shuttle3d.js?v=20261027l';
@@ -18,7 +19,7 @@ const DISC_R = 14.4;          // 地圖底盤半徑
 // 地圖在兩種版型下需要塞進畫面的半寬、半高（世界單位）
 const EXT = { v: { ex: 6.8, ey: 11.4 }, h: { ex: 12.4, ey: 6.8 } };
 const PROP_COUNT = 120;      // 每館的特色小景數量（縮小、加密，球的輪廓才不會被撐開）
-const E_FLAT = 0.2;           // 廣場、道路、單元站壓平後的高度
+const E_FLAT = 0.2;           // 廣場、單元站壓平後的高度
 // 畫布是透明的（後面是 CSS 星雲）。一般的加法混色會把 alpha 也加成 1，背景就被蓋成暗色。
 // GLOW_BLEND_A：顏色相加、alpha 也相加（著色器輸出的 alpha＝亮度，屬於正常的預乘透明）
 // GLOW_BLEND：顏色相加、alpha 不動（給星流、火焰這種一般材質用）
@@ -122,26 +123,6 @@ function emojiTexture(ch) {
   emojiCache.set(ch, t);
   return t;
 }
-const numCache = new Map();
-function numberTexture(n, hex) {
-  const key = n + ':' + hex;
-  if (numCache.has(key)) return numCache.get(key);
-  const c = document.createElement('canvas');
-  c.width = c.height = 96;
-  const x = c.getContext('2d');
-  x.fillStyle = '#16241f';
-  x.beginPath(); x.arc(48, 48, 42, 0, TAU); x.fill();
-  x.lineWidth = 7; x.strokeStyle = hex; x.stroke();
-  x.fillStyle = '#f6f3ea';
-  x.font = 'bold 50px "Noto Sans TC","Helvetica Neue",Arial,sans-serif';
-  x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.fillText(String(n), 48, 52);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  numCache.set(key, t);
-  return t;
-}
-
 function Ms(x, y, z, sx, sy, sz, rx = 0, ry = 0, rz = 0) {
   return new THREE.Matrix4().compose(
     new THREE.Vector3(x, y, z),
@@ -197,7 +178,7 @@ function statueParts(hall) {
   return parts;
 }
 
-// ---------- 各館的特色小景（散在館的區域，不壓到路）：每種都是多個零件拼成 ----------
+// ---------- 各館的特色小景（散在館的區域，不壓到單元站）：每種都是多個零件拼成 ----------
 const GREENS = [0x3f9a4d, 0x4fae60, 0x66c274, 0x37893f];
 function treeParts(P, rnd, kind) {
   const trunk = (h, r0, r1) => P(new THREE.CylinderGeometry(r0, r1, h, 7), M(0, h / 2, 0), 0x7a5a3a);
@@ -353,18 +334,23 @@ function pickKind(hallId, x) {
 }
 
 // ---------- 地形：球外與地標共用 ----------
+// 領土的「領域扭曲」：把方向用 fbm 推一下再找最近的種子，邊界就會彎彎曲曲（不是直線 Voronoi）
+const TERR_WARP = 0.36, TERR_WF = 2.6;
+function warpDir(d, a, out) {
+  const f = TERR_WF, x = d.x, y = d.y, z = d.z;
+  return out.set(
+    x + a * (fbm(x * f + 11.3, y * f + 2.9, z * f + 5.1) - 0.5),
+    y + a * (fbm(x * f + 3.7, y * f + 8.2, z * f + 1.4) - 0.5),
+    z + a * (fbm(x * f + 7.9, y * f + 5.6, z * f + 9.3) - 0.5)).normalize();
+}
+const HALL_SEP = Math.sqrt(8 / 3); // 正四面體兩頂點（單位向量）的距離
+const TERR_SHADE_DL = [0, -0.12, 0.06, -0.06]; // 領土的四階明暗（HSL 的 L 差）
 function makeTerrain(hallDirs) {
-  const ctx = { roads: null, nodes: null };
-  let lastIdx = 0;
-  const arcTo = (d, pts) => { // 到折線的最短弧長（先每隔幾點粗找，再細找）
-    let bi = 0, bd = -2;
-    for (let k = 0; k < pts.length; k += 6) { const p = pts[k]; const dd = d.x * p.x + d.y * p.y + d.z * p.z; if (dd > bd) { bd = dd; bi = k; } }
-    let bk = bi;
-    for (let k = Math.max(0, bi - 6); k <= Math.min(pts.length - 1, bi + 6); k++) { const p = pts[k]; const dd = d.x * p.x + d.y * p.y + d.z * p.z; if (dd > bd) { bd = dd; bk = k; } }
-    lastIdx = bk;
-    return R * Math.acos(clamp(bd, -1, 1));
-  };
-  function terrain(d) {
+  // ctx.seeds[館][i]：第 i 個單元領土的種子方向（球面單位向量）
+  const ctx = { seeds: null };
+  const w = new THREE.Vector3(), w2 = new THREE.Vector3();
+  // full＝false：只要高度（六角磚的角），不算領土，省時間
+  function terrain(d, full = true) {
     let n = fbm(d.x * 1.8 + 4.2, d.y * 1.8 + 1.7, d.z * 1.8 + 9.1);
     let best = -1, bestDot = -2;
     hallDirs.forEach((hd, i) => {
@@ -374,31 +360,70 @@ function makeTerrain(hallDirs) {
     const mask = smooth(0.5, 0.78, bestDot); // 館的區域：整塊都是陸地，館與館之間才有海
     n += mask * 0.55;
     let e = n > 0.5 ? 0.1 + 1.0 * Math.pow(smooth(0.72, 1.3, n), 1.4) : 0; // 丘陵起伏
-    let rd = 99, nd = 99, pd = 99, ri = 0;
-    if (ctx.roads && mask > 0.05) {
+    let nd = 99, pd = 99, hall = best, ter = -1, bd = 99;
+    if (ctx.seeds && mask > 0.05) {
       pd = R * Math.acos(clamp(bestDot, -1, 1));
-      rd = arcTo(d, ctx.roads[best]); ri = lastIdx;
+      // 最近的單元站（沒扭曲的距離）：站的周圍壓平
       let bn = -2;
-      for (const p of ctx.nodes[best]) { const dd = d.x * p.x + d.y * p.y + d.z * p.z; if (dd > bn) bn = dd; }
+      for (const p of ctx.seeds[best]) { const dd = d.x * p.x + d.y * p.y + d.z * p.z; if (dd > bn) bn = dd; }
       nd = R * Math.acos(clamp(bn, -1, 1));
-      if (n > 0.5) { // 廣場、道路、單元站周圍壓平
-        const flat = Math.max(1 - smooth(1.9, 3.0, pd), 1 - smooth(1.2, 2.6, rd), 1 - smooth(1.4, 2.8, nd));
+      if (n > 0.5) { // 廣場、單元站周圍壓平
+        const flat = Math.max(1 - smooth(1.9, 3.0, pd), 1 - smooth(1.4, 2.8, nd));
         e = lerp(e, E_FLAT, flat);
+        if (full) {
+          // 館與館的交界也一起扭曲
+          warpDir(d, TERR_WARP, w);
+          let o1 = -2, o2 = -2;
+          hallDirs.forEach((hd, i) => { const q = w.dot(hd); if (q > o1) { o2 = o1; o1 = q; hall = i; } else if (q > o2) o2 = q; });
+          bd = ((o1 - o2) / HALL_SEP) * R;
+          // 單元站附近扭曲得少一點，站一定落在自己領土的中間
+          let r1 = -2;
+          for (const p of ctx.seeds[hall]) { const q = d.x * p.x + d.y * p.y + d.z * p.z; if (q > r1) r1 = q; }
+          const k = smooth(0.75, 2.0, R * Math.acos(clamp(r1, -1, 1)));
+          w2.copy(d).lerp(w, k).normalize();
+          // 只找最近兩個種子：屬於哪一塊、離國界多遠（弧長）
+          const ss = ctx.seeds[hall];
+          let i1 = -1, i2 = -1, a1 = -2, a2 = -2;
+          for (let i = 0; i < ss.length; i++) { const q = w2.dot(ss[i]); if (q > a1) { a2 = a1; i2 = i1; a1 = q; i1 = i; } else if (q > a2) { a2 = q; i2 = i; } }
+          ter = i1;
+          if (i2 >= 0) bd = Math.min(bd, ((a1 - a2) / ss[i1].distanceTo(ss[i2])) * R);
+        }
       }
     }
-    return { n, e, hall: best, mask, rd, nd, pd, ri };
+    return { n, e, hall, mask, nd, pd, ter, bd };
   }
   terrain.ctx = ctx;
   return terrain;
 }
 
-// ---------- 路徑：球面與平面地圖共用同一條曲線 ----------
+// ---------- 領土：種子位置（地圖座標，直式） ----------
 const SPHERE_S = 0.82; // 地圖座標 → 球面弧長的縮放
-function curveFor(vertical, N) {
-  const waves = clamp(N / 3.4, 1.6, 3.4);
-  return t => vertical
-    ? { x: 3.2 * Math.sin(t * Math.PI * waves), z: (t - 0.5) * 2 * 7.6 }
-    : { x: (t - 0.5) * 2 * 8.6, z: 3.0 * Math.sin(t * Math.PI * waves) };
+// 每館固定一串「空位」：照順序繞著雕像一圈一圈往外排（順時針、從上方開始），
+// 只依位置編號用固定的偽隨機抖動 → 之後新增單元只是多佔下一個空位，舊領土不會動。
+// 空位必須：在館內地圖的可視範圍內（EXT.v）、避開中央廣場與出口、在陸地上、屬於這一館。
+const SLOT_RINGS = [[[3.3, 4.8, 6], [5.1, 8.7, 11], [5.5, 10.3, 14]], [[3.0, 5.6, 9], [4.4, 7.4, 14], [5.2, 9.4, 18], [4.6, 9.8, 20]]];
+function territorySlots(hi, b, gatesV, landOk) {
+  const out = [];
+  let k = 0;
+  SLOT_RINGS.forEach((rings, pass) => {
+    const ms = pass ? 2.2 : 3.1, salt = pass ? 50 : 0; // 第一輪排得寬鬆，滿了才用第二輪補空隙
+    let a0 = -Math.PI / 2;
+    for (const [rx, rz, n] of rings) {
+      for (let j = 0; j < n; j++, k++) {
+        const a = a0 + (j / n) * TAU;
+        const x = rx * Math.cos(a) + (hash3(k * 1.7 + salt, 3.1, 0.9) - 0.5) * 0.9;
+        const z = rz * Math.sin(a) + (hash3(k * 2.3 + salt, 7.7, 4.1) - 0.5) * 0.9;
+        if (Math.abs(x) > EXT.v.ex - 1.4 || Math.abs(z) > EXT.v.ey - 1.6) continue;
+        if (x * x + z * z < 2.8 * 2.8) continue;                          // 中央廣場（雕像）
+        if (gatesV.some(g => Math.hypot(x - g.x, z - g.z) < 2.7)) continue; // 出口
+        if (out.some(p => Math.hypot(x - p.x, z - p.z) < ms)) continue;
+        if (!landOk(x, z)) continue;
+        out.push({ x, z });
+      }
+      a0 += Math.PI / n;
+    }
+  });
+  return out;
 }
 // 地圖上 (x,z)（x 往右、z 往螢幕下方）→ 這一館中心附近的球面方向
 function expDir(b, p, S) {
@@ -483,35 +508,72 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   }
   const bases = hallDirs.map(basisOf);
 
-  // ----- 沿路與單元站在球面上的位置（球外看得到的路，和進館後的平面地圖是同一條） -----
-  const hallNodes = [], hallRoad = [];
-  halls.forEach((hall, hi) => {
-    const N = hall.units.length, curve = curveFor(true, N), b = bases[hi];
-    hallNodes.push(hall.units.map((u, i) => expDir(b, curve(N === 1 ? 0.5 : i / (N - 1)), SPHERE_S)));
-    const pts = [];
-    for (let s = 0; s <= 240; s++) pts.push(expDir(b, curve(-0.04 + (1.08 * s) / 240), SPHERE_S));
-    hallRoad.push(pts);
-  });
+  // ----- 出口位置（地圖座標，直式）：沿著「隔壁館所在的方向」放在地圖邊緣 -----
+  function gatePositions(hi) {
+    const { E, Np } = bases[hi], ext = EXT.v;
+    return hallDirs.map((od, oj) => {
+      if (oj === hi) return null;
+      let dx = od.dot(E), dz = -od.dot(Np); // 本地 x 往右、z 往螢幕下方
+      const len = Math.hypot(dx, dz) || 1; dx /= len; dz /= len;
+      const k = Math.min((ext.ex - 1.2) / Math.max(Math.abs(dx), 1e-3), (ext.ey - 1.4) / Math.max(Math.abs(dz), 1e-3));
+      return { x: dx * k, z: dz * k, toIndex: oj };
+    }).filter(Boolean);
+  }
 
-  terrain.ctx.roads = hallRoad; terrain.ctx.nodes = hallNodes;
+  // ----- 領土種子＝單元站：球面方向（hallNodes）與地圖座標（hallSeedsV，直式）是同一組點 -----
+  const hallNodes = [], hallSeedsV = [];
+  {
+    const wv = new THREE.Vector3();
+    halls.forEach((hall, hi) => {
+      const b = bases[hi];
+      const landOk = (x, z) => {
+        const d = expDir(b, { x, z }, SPHERE_S);
+        if (terrain(d, false).n < 0.64) return false;
+        warpDir(d, TERR_WARP, wv);
+        let o = 0, od = -2;
+        hallDirs.forEach((hd, i) => { const q = wv.dot(hd); if (q > od) { od = q; o = i; } });
+        return o === hi;
+      };
+      const slots = territorySlots(hi, b, gatePositions(hi), landOk);
+      if (slots.length < hall.units.length) console.warn('[galileo] ' + hall.id + ' 館的領土空位不夠：' + slots.length + ' < ' + hall.units.length);
+      const pts = hall.units.map((u, i) => slots[i] || { x: 0, z: -2.4 - 0.1 * i });
+      hallSeedsV.push(pts);
+      hallNodes.push(pts.map(p => expDir(b, p, SPHERE_S)));
+    });
+  }
+  terrain.ctx.seeds = hallNodes;
+  // 相鄰的領土用不同明暗（四階，種子靠得近就避開已用過的那一階）
+  const hallShade = hallSeedsV.map(ps => {
+    const sh = [];
+    ps.forEach((p, i) => {
+      const used = new Set();
+      for (let j = 0; j < i; j++) if (Math.hypot(p.x - ps[j].x, p.z - ps[j].z) < 6.5) used.add(sh[j]);
+      let k = 0; while (used.has(k) && k < 3) k++;
+      sh.push(k);
+    });
+    return sh;
+  });
 
   // ----- 地面配色：星球和館內平面地圖共用同一套 -----
   const groundColor = (() => {
     const tc3 = new THREE.Color();
     const hallCol = halls.map(h => new THREE.Color(h.color));
-    // 每館四種相近的色調，用低頻雜訊分成一塊一塊的田野
+    // 領土：同一館同色系，四階明暗（hallShade）讓相鄰的領土分得出來；每塊裡面再用低頻雜訊分兩種很接近的田野色
+    const SHADE_DL = TERR_SHADE_DL;
     const tones = hallCol.map((c, i) => {
       const hsl = {}; c.getHSL(hsl);
       if (halls[i].id === 'earth') hsl.l = Math.min(0.8, hsl.l + 0.05);
       const mk = (dh, ds, dl) => new THREE.Color().setHSL((hsl.h + dh + 1) % 1, clamp(hsl.s + ds, 0, 1), clamp(hsl.l + dl, 0, 1));
-      return [mk(0, 0, 0), mk(0.012, 0.03, -0.075), mk(-0.01, -0.05, 0.075), mk(0.035, -0.12, -0.035)];
+      return SHADE_DL.map((dl, k) => [mk(0.008 * k, 0.02 * (k & 1), dl), mk(0.008 * k + 0.01, -0.03, dl + 0.02)]);
     });
+    const BORDER = hallCol.map(c => c.clone().lerp(new THREE.Color(0xfbf7ea), 0.72)); // 國界：淺色細線
+    const BORDER_W = 0.15, BORDER_SH = 0.36;                                         // 線寬、線旁陰影（球面弧長）
     const ROCK = hallCol.map(c => c.clone().lerp(new THREE.Color(0xa89f8e), 0.55)), SNOW = new THREE.Color(0xf6f8f4);
     const ACCENT_HEX = { physics: [0xf6b088, 0xfff6e0, 0xe8c65a], chemistry: [0xfde047, 0xfff6e0, 0xb48cff], earth: [0xf5f8fa, 0xc9d3dc, 0x7bc47a], biology: [0xf7a8c4, 0xfff6e0, 0xfde047] };
     const ACC = halls.map(h => (ACCENT_HEX[h.id] || ACCENT_HEX.biology).map(x => new THREE.Color(x)));
     const DEEP = new THREE.Color(0x0f4a66), SHALLOW = new THREE.Color(0x2c93b4), FOAM = new THREE.Color(0xa6e6ea), GLINT = new THREE.Color(0x6fc6dc), SAND = new THREE.Color(0xf0e2b0);
-    const ROADB = new THREE.Color(0xd8cdb0), EDGE = new THREE.Color(0xffffff), DASH = new THREE.Color(0xf2c94c), PLAZA = new THREE.Color(0xe9e2cf), ROAD = new THREE.Color(0xeee3c6), NODE_C = hallCol.map(c => c.clone().multiplyScalar(0.55));
-    const roadHalf = 0.9, nodeR = 1.1; // 單位：球面弧長
+    const PLAZA = new THREE.Color(0xe9e2cf), NODE_C = hallCol.map(c => c.clone().multiplyScalar(0.55));
+    const nodeR = 1.1; // 單位：球面弧長
     const out = [0, 0, 0, 0.9];
     // tr：terrain() 的結果；x,y,z：球面方向；v：這片磚的編號（只拿來做雜訊）。回傳 [r,g,b（0～255）, 邊角暗度]
     return (tr, x, y, z, v) => {
@@ -523,20 +585,16 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
         else if (hash3(v * 0.21, 4.1, 1.3) < 0.035) c.lerp(GLINT, 0.6);           // 水面反光
       } else if (tr.n < 0.56) c = SAND;
       else {
-        const hh = tr.hall, tn = tones[hh];
+        const hh = tr.hall, tn = tones[hh][tr.ter >= 0 ? hallShade[hh][tr.ter] : 0];
         const pn = vnoise(x * 6.5 + hh * 3.1, y * 6.5 + 1.3, z * 6.5 + 7.7) + 0.22 * (vnoise(x * 21 + 5, y * 21, z * 21 + 2) - 0.5);
-        c = tc3.copy(tn[pn < 0.36 ? 1 : pn < 0.6 ? 0 : pn < 0.78 ? 2 : 3]);
+        c = tc3.copy(tn[pn < 0.55 ? 0 : 1]);
         if (tr.e > 0.62) c.lerp(ROCK[hh], 0.7 * smooth(0.62, 0.95, tr.e));       // 山坡露出岩石
         if (tr.e > 0.98) c.lerp(SNOW, smooth(0.98, 1.08, tr.e));                  // 山頂積雪
         if (tr.n < 0.6) c.lerp(SAND, 0.35);                                       // 靠海邊偏沙色
         if (tr.nd < nodeR) { c = NODE_C[hh]; bevel = 0.96; }
-        else if (tr.rd < roadHalf) {
-          bevel = 0.97;
-          if (tr.rd > 0.72) c = EDGE;                                               // 路邊白線
-          else if (tr.rd < 0.12 && Math.floor(tr.ri / 8) % 2 === 0) c = DASH;       // 中央黃色虛線
-          else c = ((v * 2654435761) >>> 0) % 5 < 2 ? ROADB : ROAD;                  // 路面磁磚
-        }
         else if (tr.pd < 1.9) { c = PLAZA; bevel = 0.95; }
+        else if (tr.bd < BORDER_W) { c = BORDER[hh]; bevel = 0.97; }              // 國界線
+        else if (tr.bd < BORDER_SH) c.multiplyScalar(0.8);                        // 國界旁一圈稍暗，線更清楚
         else if (tr.e < 0.9 && hash3(v * 0.73, 2.2, 5.9) < 0.022) c = ACC[hh][Math.floor(hash3(v * 0.31, 9.1, 0.4) * 3) % 3]; // 小花、小石
       }
       const jit = 0.95 + 0.1 * hash3(v * 0.37, 3.1, 0.7);
@@ -602,7 +660,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
       let z = vz[tri[t * 3]] + vz[tri[t * 3 + 1]] + vz[tri[t * 3 + 2]];
       const l = Math.hypot(x, y, z); x /= l; y /= l; z /= l;
       cx[t] = x; cy[t] = y; cz[t] = z;
-      ce[t] = terrain(tmp.set(x, y, z)).e;
+      ce[t] = terrain(tmp.set(x, y, z), false).e;
     }
     // 每個頂點周圍的三角形
     const cnt = new Uint32Array(nv + 1);
@@ -758,7 +816,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     clouds.add(mesh);
   }
 
-  // ----- 球外的單元地標（只看不能點）：站在路上的每一站，立著用封面做的小牌子 -----
+  // ----- 球外的單元地標：每塊領土中央一站，立著用封面做的小牌子 -----
   const landmarks = new THREE.Group();
   planet.add(landmarks);
   const signs = new Map(); // unitId -> [{sprite, h, ex}]
@@ -791,14 +849,14 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
       landmarks.add(sp);
       addSign(u.id, sp, 1.1, null);
     });
-    // 特色小景：散在館的區域，避開路、站與廣場
+    // 特色小景：散在館的區域，避開單元站、廣場與國界線
     const placed = [], tan = new THREE.Vector3(), dd = new THREE.Vector3();
     for (let tries = 0; placed.length < PROP_COUNT && tries < 6000; tries++) {
       const a = hash3(hi * 9.1, tries * 1.37, 2.2) * TAU, r = 0.22 + 0.7 * Math.sqrt(hash3(hi * 3.3, tries * 0.71, 5.5));
       tan.copy(E).multiplyScalar(Math.cos(a)).addScaledVector(Np, Math.sin(a));
       dd.copy(n).multiplyScalar(Math.cos(r)).addScaledVector(tan, Math.sin(r)).normalize();
       const t = terrain(dd);
-      if (t.hall !== hi || t.mask < 0.55 || t.n < 0.62 || t.rd < 2.8 || t.nd < 3.0 || t.pd < 3.6) continue;
+      if (t.hall !== hi || t.mask < 0.55 || t.n < 0.62 || t.nd < 3.0 || t.pd < 3.6 || t.bd < 0.55) continue;
       if (placed.some(pp => pp.dot(dd) > Math.cos(1.2 / R))) continue;
       placed.push(dd.clone());
       const q = new THREE.Quaternion().setFromUnitVectors(up, dd).multiply(new THREE.Quaternion().setFromAxisAngle(up, hash3(tries, hi, 1.1) * TAU));
@@ -806,7 +864,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
       const kind = hero ? HERO_KIND[hall.id] : pickKind(hall.id, hash3(tries * 0.7, hi, 8.8));
       const big = (kind === 'volcano' || kind === 'mountain') ? 0.72 : 0.5;
       const sc = hero ? 1.05 : big + 0.32 * hash3(tries, hi, 4.4);
-      propRecs.push({ dd: dd.clone(), kind, sc, ang: hash3(tries, hi, 1.1) * TAU, tries, hi, e: t.e, rd: t.rd, nd: t.nd });
+      propRecs.push({ dd: dd.clone(), kind, sc, ang: hash3(tries, hi, 1.1) * TAU, tries, hi, e: t.e, nd: t.nd, bd: t.bd });
       const bm = new THREE.Matrix4().compose(dd.clone().multiplyScalar(R + t.e - 0.05), q, new THREE.Vector3(sc, sc, sc));
       for (const pt of propParts(hall, kind, k => hash3(tries * 1.9 + k, hi * 2.3, 6.1))) { pt.m = bm.clone().multiply(pt.m); parts.push(pt); }
     }
@@ -834,7 +892,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     detailGeo = { tuft: tuftG, pebble: pebbleG, bloom: bloomG, mat: detailMat };
     const lists = { tuft: [], pebble: [], bloom: [] };
     const up = new THREE.Vector3(0, 1, 0), dd = new THREE.Vector3(), tan = new THREE.Vector3(), pv = new THREE.Vector3(), sv = new THREE.Vector3();
-    const q = new THREE.Quaternion(), qs = new THREE.Quaternion(), mtx = new THREE.Matrix4();
+    const q = new THREE.Quaternion(), qs = new THREE.Quaternion(), mtx = new THREE.Matrix4(), tintC = new THREE.Color();
     halls.forEach((hall, hi) => {
       const spec = DETAIL[hall.id] || DETAIL.biology;
       const { n, Np, E } = bases[hi];
@@ -846,7 +904,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
           tan.copy(E).multiplyScalar(Math.cos(a)).addScaledVector(Np, Math.sin(a));
           dd.copy(n).multiplyScalar(Math.cos(r)).addScaledVector(tan, Math.sin(r)).normalize();
           const t = terrain(dd);
-          if (t.hall !== hi || t.n < 0.57 || t.mask < 0.3 || t.rd < 1.05 || t.nd < 1.35 || t.pd < 2.15) continue;
+          if (t.hall !== hi || t.n < 0.57 || t.mask < 0.3 || t.nd < 1.35 || t.pd < 2.15 || t.bd < 0.42) continue;
           if (kind === 'tuft' && t.e > 0.95) continue; // 山頂積雪處不長草
           got++;
           const h3 = hash3(tries * 0.37, hi + 2.2, kind === 'tuft' ? 1.9 : 4.7);
@@ -856,7 +914,8 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
           sv.set(sz, kind === 'tuft' ? sz : sz * 0.62, sz);
           mtx.compose(pv, q, sv);
           const pal = kind === 'tuft' ? spec.grass : spec.rock;
-          const colr = pal[Math.floor(h3 * 997) % pal.length];
+          let colr = pal[Math.floor(h3 * 997) % pal.length];
+          if (kind === 'tuft' && t.ter >= 0) colr = tintC.set(colr).offsetHSL(0, 0, TERR_SHADE_DL[hallShade[hi][t.ter]] * 0.8).getHex(); // 草也跟著領土分明暗
           lists[kind].push(mtx.clone(), colr);
           detailRecs.push({ dd: dd.clone(), kind, sz, ang: h3 * TAU, e: t.e, color: colr });
           if (kind === 'tuft' && hash3(tries * 0.53, hi, 6.6) < spec.flower) {
@@ -980,7 +1039,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     map.visible = false;
     g.add(map);
 
-    // 地圖的內容（地面、路線、站牌、雕像、出口）放在 content 裡；橫式螢幕時整個轉 90 度
+    // 地圖的內容（地面與領土、站牌、雕像、出口）放在 content 裡；橫式螢幕時整個轉 90 度
     const content = new THREE.Group();
     map.add(content);
     // 底盤：館色邊框（地面本身是「攤平的星球」，第一次用到時才建，見 ensureGround）
@@ -988,8 +1047,6 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
       const mm = buildMerged([{ g: new THREE.CylinderGeometry(DISC_R + 0.55, DISC_R + 0.8, 0.5, 64), m: M(0, -0.5, 0), color: col.clone().multiplyScalar(0.6) }], 0.08);
       map.add(new THREE.Mesh(mm.body, toonMat), new THREE.Mesh(mm.hull, hullMat));
     }
-    const pathHolder = new THREE.Group();
-    content.add(pathHolder);
     const stM = statueInstance(hall, sg, plaqueTex);
     const iconMap = stM.grp;
     iconMap.scale.setScalar(0.8);
@@ -1010,10 +1067,6 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
       sprite.position.y = 1.75;
       sprite.scale.set(1.5, 1.5, 1);
       ex.add(sprite);
-      const badge = new THREE.Sprite(new THREE.SpriteMaterial({ map: numberTexture(i + 1, hex), transparent: true, depthWrite: false }));
-      badge.position.set(0.95, 0.75, 0.75);
-      badge.scale.set(0.62, 0.62, 1);
-      ex.add(badge);
       const ep = new THREE.Mesh(new THREE.SphereGeometry(1.25, 8, 6), hiddenMat);
       ep.position.y = 1.1;
       ep.userData.unitId = u.id;
@@ -1063,56 +1116,28 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
 
     hallObjs.push({
       hall, group: g, map, content, ground: null, laid: false, nodesV: [], gatesV: [], statueV: null,
-      anchor, icon: iconP, iconMap, statueProxies: stM.proxies, exhibits, exProxies, gates, gateProxies, focusRing, pathHolder, N,
+      anchor, icon: iconP, iconMap, statueProxies: stM.proxies, exhibits, exProxies, gates, gateProxies, focusRing, N,
       q: new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(E, bases[hi].Np, n)).invert(),
       focus: 0, layoutV: null, nodes: [],
     });
   });
 
-  // ----- 地圖版面：一律先用「直式」排好（和星球上的路是同一條），橫式螢幕就把整張地圖轉 90 度 -----
-  const pathMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradient });
+  // ----- 地圖版面：一律先用「直式」排好（和星球上的領土是同一組點），橫式螢幕就把整張地圖轉 90 度 -----
   const HS = 1 / SPHERE_S; // 球面長度 → 地圖長度
   function layoutBase(h) {
-    const N = h.N, curve = curveFor(true, N);
+    const hi = hallObjs.indexOf(h);
     h.nodesV = h.exhibits.map((e, i) => {
-      const p = curve(N === 1 ? 0.5 : i / (N - 1));
+      const p = hallSeedsV[hi][i];
       e.group.position.set(p.x, 0, p.z);
       return new THREE.Vector3(p.x, 0, p.z);
     });
-    // 路面本身畫在地面磚上（跟星球上一模一樣），這裡再補上清楚的白色路邊線與黃色虛線
-    const parts = [];
-    const edgeC = new THREE.Color(0xffffff), dashC = new THREE.Color(0xf2c94c);
-    const steps = 90;
-    for (let s2 = 0; s2 < steps; s2++) {
-      const t0 = -0.04 + (1.08 * s2) / steps, t1 = -0.04 + (1.08 * (s2 + 1)) / steps;
-      const a = curve(t0), b = curve(t1);
-      const len = Math.hypot(b.x - a.x, b.z - a.z);
-      const ang = Math.atan2(b.x - a.x, b.z - a.z);
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ang, 0));
-      const mx = (a.x + b.x) / 2, mz = (a.z + b.z) / 2, px = Math.cos(ang), pz = -Math.sin(ang);
-      const add = (w, l, off, color) => parts.push({
-        g: new THREE.BoxGeometry(w, 0.05, l),
-        m: new THREE.Matrix4().compose(new THREE.Vector3(mx + px * off, 0.03, mz + pz * off), q, new THREE.Vector3(1, 1, 1)),
-        color, noHull: true,
-      });
-      add(0.15, len + 0.06, 0.98, edgeC);
-      add(0.15, len + 0.06, -0.98, edgeC);
-      if (s2 % 2 === 0) add(0.15, len * 0.8, 0, dashC);
-    }
-    const mg = buildMerged(parts, 0);
-    h.pathHolder.add(new THREE.Mesh(mg.body, pathMat));
-    const sp0 = curve(-0.16);
-    h.statueV = new THREE.Vector3(sp0.x, 0, sp0.z);
+    // 雕像在中央廣場（館的正中心）
+    h.statueV = new THREE.Vector3(0, 0, 0);
     h.iconMap.position.copy(h.statueV);
-    // 出口：沿著「隔壁館所在的方向」放在地圖邊緣
-    const { E, Np } = bases[hallObjs.indexOf(h)];
-    const ext = EXT.v;
+    const gp = gatePositions(hi);
     h.gatesV = h.gates.map(gt => {
-      const od = hallDirs[gt.toIndex];
-      let dx = od.dot(E), dz = -od.dot(Np); // 本地 x 往右、z 往螢幕下方
-      const len = Math.hypot(dx, dz) || 1; dx /= len; dz /= len;
-      const k = Math.min((ext.ex - 1.2) / Math.max(Math.abs(dx), 1e-3), (ext.ey - 1.4) / Math.max(Math.abs(dz), 1e-3));
-      gt.group.position.set(dx * k, 0, dz * k);
+      const p = gp.find(g => g.toIndex === gt.toIndex);
+      gt.group.position.set(p.x, 0, p.z);
       return gt.group.position.clone();
     });
     h.laid = true;
@@ -1214,8 +1239,8 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
       const rad = Math.hypot(pv.x, pv.z);
       if (rad > DISC_R - 1.0 || zoneK(pv.x, pv.z) > 0.01) continue;
       const sc = rec.sc * HS * 0.85, foot = (FOOT[rec.kind] || 0.8) * sc;
-      // 地圖是近看，大的造景（火山、山）不可以壓到路和站牌
-      if (rec.rd * HS - foot < 1.7 || rec.nd * HS - foot < 2.2) continue;
+      // 地圖是近看，大的造景（火山、山）不可以壓到站牌和國界線
+      if (rec.nd * HS - foot < 2.2 || rec.bd * HS - foot < 0.2) continue;
       const y = heightAt(rec.e, pv.x, pv.z, rad) - 0.05 * HS;
       const bm = new THREE.Matrix4().compose(pv.set(pv.x, y, pv.z), qY.setFromAxisAngle(UP, rec.ang), sv.set(sc, sc, sc));
       for (const pt of propParts(halls[rec.hi], rec.kind, k => hash3(rec.tries * 1.9 + k, rec.hi * 2.3, 6.1))) { pt.m = bm.clone().multiply(pt.m); parts.push(pt); }
@@ -1498,7 +1523,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   let groundH = R + 0.3;
   const GROUND = { camH: 3.0, back: 3.4, look: 7.5, lookDrop: 0.2 };
   const minZoomP = () => (R * 1.0) / planetDistance();
-  // 0＝在太空看星球，1＝站在路上走（放大到靠近地面時）
+  // 0＝在太空看星球，1＝站在地面上走（放大到靠近地面時）
   function groundBlend() { return smooth(R * 2.4, R * 1.35, planetDistance() * state.zoomP) * (1 - state.k); }
   const gDir = new THREE.Vector3(), gQ = new THREE.Quaternion();
   function groundTargetH() { // 鏡頭下方與前方的地面高度，鏡頭要在其上
@@ -1590,7 +1615,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     }
     invalidate();
   }
-  // 放大到地面時，自動轉到最近的一個單元站前面，面向路的前進方向（單元編號增加的方向）
+  // 放大到地面時，自動轉到最近的一個單元站前面（面向地圖的上方）
   let walkSnapped = false;
   function snapToNearestStop() {
     const inv = new THREE.Quaternion().copy(planet.quaternion).invert();
@@ -1650,6 +1675,15 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     invalidate();
   }
 
+  // 館內地圖座標（直式）→ 這一點屬於哪個單元的領土（海、沙灘、別館、廣場都回傳 null）
+  function unitAtMap(h, p) {
+    const hi = hallObjs.indexOf(h);
+    if (Math.hypot(p.x, p.z) > DISC_R - 0.3) return null;
+    const tr = terrain(expDir(bases[hi], p, SPHERE_S));
+    if (tr.n < 0.56 || tr.hall !== hi || tr.ter < 0 || tr.pd < 1.9) return null;
+    return h.hall.units[tr.ter] ? h.hall.units[tr.ter].id : null;
+  }
+
   // ----- 輸入：拖曳、雙指縮放、滾輪、點擊 -----
   const pointers = new Map();
   let drag = null, pinchStart = 0, pinchZoom = 1;
@@ -1696,6 +1730,11 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
         if (d.statueHall) handlers.onStatuePick && handlers.onStatuePick(d.statueHall);
         else if (d.gateHall) handlers.onHallPick(d.gateHall);
         else { focusUnit(d.unitId, false); handlers.onExhibitPick(d.unitId); }
+      } else if (h.ground) {
+        // 點到地面：落在哪一塊領土就選哪個單元
+        const gh = raycaster.intersectObject(h.ground.children[0], false)[0];
+        const u = gh && unitAtMap(h, h.content.worldToLocal(gh.point.clone()));
+        if (u) { focusUnit(u, false); handlers.onExhibitPick(u); }
       }
     }
   }
@@ -2021,12 +2060,32 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
       startFlight(new THREE.Quaternion().setFromUnitVectors(bases[hi].n.clone().normalize(), want), 0, false, 0, -1);
       return true;
     },
-    // 錄影用：顯示／隱藏路邊的單元看板
+    // 錄影用：顯示／隱藏單元看板
     debugSigns(v) { signSprites.forEach(sp => { sp.visible = !!v; }); invalidate(); },
     // 錄影用：目前模式與狀態
     debugState() { return { mode: state.mode, k: state.k, zoomP: state.zoomP, gb: groundBlend(), flight: !!flight, intro: !!intro }; },
     // 檢查用：把開場停在某個進度 u（0～1）
     debugIntro(u) { if (!intro) beginIntro(); intro.phase = 'fly'; intro.fixedU = u; invalidate(); },
+    // 檢查用：領土資訊（每館的種子地圖座標、各領土在館內地圖可視範圍裡的面積、種子是否落在自己的領土中）
+    debugTerritories() {
+      return halls.map((hall, hi) => {
+        const b = bases[hi], N = hall.units.length, area = new Array(N).fill(0), STEP = 0.2;
+        let land = 0, other = 0;
+        for (let z = -EXT.v.ey; z <= EXT.v.ey; z += STEP) for (let x = -EXT.v.ex; x <= EXT.v.ex; x += STEP) {
+          const tr = terrain(expDir(b, { x, z }, SPHERE_S));
+          if (tr.n <= 0.5) continue;
+          land++;
+          if (tr.hall === hi && tr.ter >= 0) area[tr.ter] += STEP * STEP; else other++;
+        }
+        const seeds = hallSeedsV[hi].map((p, i) => {
+          const tr = terrain(hallNodes[hi][i]);
+          return { x: +p.x.toFixed(2), z: +p.z.toFixed(2), own: tr.hall === hi && tr.ter === i, border: +tr.bd.toFixed(2), land: tr.n > 0.56 };
+        });
+        return { id: hall.id, units: N, territories: new Set(seeds.map((s, i) => i)).size, area: area.map(a => +a.toFixed(1)), seeds, shade: hallShade[hi] };
+      });
+    },
+    // 檢查用：館內地圖上 (x,z)（直式座標）屬於哪個單元
+    debugUnitAt(hallId, x, z) { const h = hallObjs[halls.findIndex(q => q.id === hallId)]; return unitAtMap(h, { x, z }); },
     // 檢查用：回傳某個東西在畫面上的位置（像素）
     debugScreen(kind, id) {
       applyVisibility(); applyCamera(); scene.updateMatrixWorld(true);
