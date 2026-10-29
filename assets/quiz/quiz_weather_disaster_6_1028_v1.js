@@ -1,0 +1,72 @@
+/* Multiple-choice practice for weather_disaster_6.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('weather_disaster_6',{
+ '.panel:nth-child(3)':[
+  Q(P(`氣象署預測明天臺北的最低溫是 9 °C，新聞應該說是哪一種冷空氣？`,`The forecast low for Taipei tomorrow is 9 °C. What should the news call it?`),
+   [P(`颱風，氣溫低於 10 °C`,`A typhoon, below 10 °C`),P(`梅雨，氣溫低於 10 °C`,`A plum rain, below 10 °C`),P(`暖流，氣溫高於 10 °C`,`A warm spell, above 10 °C`),P(`寒流，氣溫低於 10 °C`,`A cold surge, below 10 °C`)],3,
+   P(`臺北站日最低溫在 10 °C 以下，就達到寒流（寒潮）的標準。`,`A daily low of 10 °C or below at Taipei station meets the cold-surge standard.`),
+   P(`對照分級：10 °C 以下是什麼？`,`Check the grades: what is 10 °C or below?`)),
+  Q(P(`寒潮的冷空氣是從哪裡來的？`,`Where does the cold air of a cold surge come from?`),
+   [P(`蒙古、西伯利亞的冷氣團`,`The Mongolian and Siberian cold air`),P(`太平洋海面上空的暖氣團`,`The warm air over the Pacific Ocean`),P(`赤道附近的熱帶海洋氣團`,`The tropical air near the equator`),P(`南海北部海面上的暖氣團`,`The warm air over the South China Sea`)],0,
+   P(`來自蒙古、西伯利亞的大陸冷氣團。它勢力強大、快速南下時，就形成寒潮。`,`From the continental cold air mass over Mongolia and Siberia. When it is strong and surges south quickly, it becomes a cold surge.`),
+   P(`想想看臺灣的北方、大陸上有什麼氣團？`,`Think: which air mass sits on the continent north of Taiwan?`)),
+  Q(P(`寒流來時，為什麼要特別注意洗澡時的通風？`,`Why should you be careful about ventilation when showering during a cold surge?`),
+   [P(`門窗大開，瓦斯完全燃燒生二氧化碳`,`Open windows, gas makes carbon dioxide`),P(`門窗緊閉，瓦斯完全燃燒生氧氣`,`Shut windows, gas burns and makes oxygen`),P(`門窗大開，瓦斯不完全燃燒生一氧化碳`,`Open windows, gas makes carbon monoxide`),P(`門窗緊閉，瓦斯不完全燃燒生一氧化碳`,`Shut windows, gas makes carbon monoxide`)],3,
+   P(`天冷時門窗緊閉，瓦斯熱水器在通風不良處燃燒不完全，會產生一氧化碳，容易中毒。`,`With windows shut, a gas heater in a poorly ventilated place burns incompletely and makes carbon monoxide, which can poison you.`),
+   P(`天冷時大家會怎麼做門窗？瓦斯燃燒不完全會產生什麼？`,`What do people do with windows when it is cold? What does incomplete gas burning make?`))],
+ '.panel:nth-child(4)':[
+  Q(P(`梅雨發生在一年中的什麼時候？`,`When in the year does the plum rain happen?`),
+   [P(`盛夏，約 7～8 月`,`Midsummer, around July to August`),P(`春末夏初，約 5～6 月`,`Late spring, around May to June`),P(`深秋，約 10～11 月`,`Late autumn, around Oct to Nov`),P(`隆冬，約 12～1 月`,`Midwinter, around Dec to Jan`)],1,
+   P(`春末夏初，大約 5～6 月。這時冷、暖氣團勢力相當，在華南到臺灣一帶形成滯留鋒。`,`Late spring to early summer, roughly May–June, when the two air masses are evenly matched and a stationary front forms from southern China to Taiwan.`),
+   P(`冷、暖氣團什麼時候勢力相當？`,`When are the cold and warm air masses evenly matched?`)),
+  Q(P(`為什麼梅雨季常連續好幾天下雨，不像冷鋒下一兩天就停？`,`Why does the plum rain last for days, unlike a cold front that passes in a day or two?`),
+   [P(`滯留鋒移動很快，不會停留`,`The stationary front is fast and moves on`),P(`冷鋒移動緩慢，停留很久`,`The cold front is slow and lingers on`),P(`冷鋒移動很快，不會停留`,`The cold front is fast and moves along`),P(`滯留鋒移動緩慢，停留很久`,`The stationary front is slow and lingers`)],3,
+   P(`冷、暖氣團勢力相當，誰也推不動誰，滯留鋒移動緩慢，在同一個地方停留很久，所以連續數日陰雨。`,`The two air masses are evenly matched, so the stationary front moves slowly and lingers in one place, giving days of rain.`),
+   P(`滯留鋒的「滯留」是什麼意思？`,`What does "stationary" mean in a stationary front?`)),
+  Q(P(`梅雨季的豪大雨，在山區容易引起什麼災害？`,`What hazard can plum-rain downpours cause in the mountains?`),
+   [P(`山崩、土石流`,`Landslides, debris flows`),P(`火山、地震、海嘯`,`Volcanoes and earthquakes`),P(`沙塵、霾害`,`Dust storms and hazy air`),P(`乾旱、缺水`,`Drought and water shortage`)],0,
+   P(`泡了好幾天水的山坡容易發生山崩、土石流。另外連續性降雨也容易造成農作物損失。`,`Slopes soaked for days give landslides and debris flows. Long spells of rain also cause crop losses.`),
+   P(`泡了好幾天水的山坡會怎樣？`,`What happens to a slope soaked for days?`))],
+ '.panel:nth-child(5)':[
+  Q(P(`颱風的能量主要是從哪裡來的？`,`Where does a typhoon get most of its energy?`),
+   [P(`水氣蒸發時吸收的熱量`,`Heat absorbed as vapour evaporates`),P(`冷空氣下沉時產生的熱量`,`Heat made as cold air sinks down`),P(`陸地吸收陽光後放出的熱量`,`Heat given off by sunlit land masses`),P(`水氣凝結時釋放的熱量`,`Heat released as vapour condenses`)],3,
+   P(`熱帶海洋蒸發大量水氣，上升凝結成雲時放熱，加熱空氣、讓對流持續，這就是颱風的能量來源。`,`The tropical ocean evaporates lots of water, which releases heat as it condenses into cloud, warming the air and keeping the convection going.`),
+   P(`水蒸氣凝結成雲時，會吸熱還是放熱？`,`When water vapour condenses into cloud, does it absorb or release heat?`)),
+  Q(P(`從衛星雲圖上看，北半球的颱風怎麼旋轉？`,`Seen on a satellite image, which way does a Northern Hemisphere typhoon spin?`),
+   [P(`逆時針，因為是低氣壓`,`Anticlockwise, because it is a low`),P(`順時針，因為是低氣壓`,`Clockwise, because it is a low`),P(`逆時針，因為是高氣壓`,`Anticlockwise, because it is a high`),P(`順時針，因為是高氣壓`,`Clockwise, because it is a high`)],0,
+   P(`颱風是低氣壓中心，流入的空氣在北半球往右偏，形成逆時針的環流。`,`A typhoon is a low; inflowing air is turned to the right in the Northern Hemisphere, making an anticlockwise circulation.`),
+   P(`颱風是高氣壓還是低氣壓？北半球的低氣壓怎麼轉？`,`Is a typhoon a high or a low? How does a northern low spin?`)),
+  Q(P(`颱風往北移到緯度較高處，或登陸以後，為什麼會減弱？`,`Why does a typhoon weaken at higher latitudes or after landfall?`),
+   [P(`得到更多海水供應的水氣量`,`It gains more vapour from the sea`),P(`得到更多溫暖海水的熱量`,`It gains more heat from warm seawater`),P(`缺少海水供應的水氣與熱量`,`It loses the sea's vapour and heat`),P(`缺少來自高空的冷空氣`,`It loses the cold air from high above`)],2,
+   P(`緯度愈高海水愈冷，供應的水氣和熱量變少；陸地缺乏水氣，地形又破壞颱風結構。少了能量來源，颱風就減弱。`,`Higher latitudes mean cooler sea and less vapour and heat; land lacks vapour and terrain breaks up the storm. Without its energy source the typhoon weakens.`),
+   P(`颱風長大需要什麼？這兩個地方缺少了什麼？`,`What does a typhoon need to grow? What do these two places lack?`))],
+ '.panel:nth-child(6)':[
+  Q(P(`颱風從東方海面接近臺灣時，哪裡的雨勢通常比較大？為什麼？`,`When a typhoon approaches from the east, where is the rain usually heaviest, and why?`),
+   [P(`東部，因為是迎風坡`,`The east, because it is windward`),P(`西部，因為是迎風坡`,`The west, because it is windward`),P(`東部，因為是背風坡`,`The east, because it is leeward`),P(`西部，因為是背風坡`,`The west, because it is leeward`)],0,
+   P(`東部（花蓮、臺東）是迎風坡，氣流受地形抬升、凝結降雨，雨勢較大；西部受中央山脈屏障，風雨較小。`,`The east (Hualien and Taitung) faces the wind; air forced up the slopes condenses into heavy rain, while the Central Range shelters the west.`),
+   P(`哪一邊是迎風坡？氣流被山擋住會怎樣？`,`Which side is windward? What happens to air blocked by mountains?`)),
+  Q(P(`什麼是「西北颱」？為什麼容易淹水？`,`What is a "north-wester" typhoon, and why does it cause floods?`),
+   [P(`中心過南部海面，東南風灌入河口`,`Centre over the south sea, wind floods rivers`),P(`中心過北部海面，東北風吹離河口`,`Centre over the north sea, wind leaves rivers`),P(`中心過南部海面，西南風吹離河口`,`Centre over the south sea, wind leaves rivers`),P(`中心過北部海面，西北風灌入河口`,`Centre over the north sea, wind floods rivers`)],3,
+   P(`颱風中心經過北部海面往西北走，北部吹強勁西北風，直接從河口灌入，河水不易宣洩而淹水；遇大潮還會海水倒灌。`,`The centre passes the northern sea heading north-west, so a strong north-westerly blows in through the river mouths, water cannot drain and floods; high tide adds seawater backflow.`),
+   P(`中心經過北部海面時，逆時針旋轉的颱風在北部吹什麼風？`,`With the centre over the northern sea, what wind does an anticlockwise typhoon blow in the north?`)),
+  Q(P(`颱風越過中央山脈到了臺灣海峽，為什麼西部反而風雨變大？`,`The typhoon has crossed the Central Range into the Taiwan Strait. Why does the west now get more wind and rain?`),
+   [P(`引進東北氣流，西部成了背風面`,`Draws in north-east flow; west is leeward`),P(`引進西南氣流，西部成了迎風面`,`Draws in south-west flow; west is windward`),P(`引進西南氣流，西部成了背風面`,`Draws in south-west flow; west is leeward`),P(`引進東北氣流，西部成了迎風面`,`Draws in north-east flow; west is windward`)],1,
+   P(`颱風到了臺灣海峽，引進帶來大量水氣的西南氣流；西部變成迎風面，所以風雨加大。`,`In the Strait the typhoon draws in south-westerly flow full of moisture; the west becomes the windward side, so its wind and rain increase.`),
+   P(`颱風在海峽時，會帶來哪個方向的氣流？西部變成什麼坡？`,`What flow direction does a typhoon in the Strait bring? What slope does the west become?`))],
+ '.panel:nth-child(7)':[
+  Q(P(`颱風的剖面圖為什麼中間的雲最高最厚，外圍比較薄？`,`Why is the cloud tallest and thickest in the middle of a typhoon's cross-section?`),
+   [P(`空氣大多在外圍猛烈下沉`,`Most air sinks violently at the outskirts`),P(`空氣大多在眼牆猛烈上升`,`Most air rises violently at the eyewall`),P(`空氣大多在眼牆猛烈下沉`,`Most air sinks violently at the eyewall`),P(`空氣大多在外圍猛烈上升`,`Most air rises violently at the outskirts`)],1,
+   P(`四周的空氣往中心流入，大部分在眼牆猛烈上升，凝結成最高、最厚的積雨雲；越往外上升的空氣越少，雨帶越矮。`,`Air flowing in from all sides mostly rises violently at the eyewall, building the tallest, thickest cumulonimbus; further out less air rises and the rainbands are lower.`),
+   P(`空氣在哪裡上升得最多、最強？`,`Where does air rise the most and the hardest?`)),
+  Q(P(`颱風的雨帶為什麼是一條條螺旋，中間還有沒下雨的空隙？`,`Why are a typhoon's rainbands spirals, with rain-free gaps between them?`),
+   [P(`內轉得慢外轉得快，旁邊有空氣上升`,`Slow inside, fast outside; air rises beside`),P(`內轉得快外轉得慢，旁邊有空氣上升`,`Fast inside, slow outside; air rises beside`),P(`內轉得快外轉得慢，旁邊有空氣下沉`,`Fast inside, slow outside; air sinks beside`),P(`內轉得慢外轉得快，旁邊有空氣下沉`,`Slow inside, fast outside; air sinks beside`)],2,
+   P(`颱風裡面轉得快、外面轉得慢，雲團被拉成螺旋；雨帶裡空氣上升，旁邊必須有乾燥的空氣下沉補位，形成雨帶之間的空隙。`,`The typhoon spins faster inside than outside, stretching clouds into spirals; air rises in the bands and dry air must sink beside them, making the gaps.`),
+   P(`颱風裡面和外面誰轉得快？空氣往上衝之後，旁邊會發生什麼？`,`Which spins faster, inside or outside? When air rushes up, what happens beside it?`)),
+  Q(P(`颱風眼裡為什麼風小、天氣晴朗？`,`Why is the eye of a typhoon calm and clear?`),
+   [P(`空氣上升冷卻，雲不斷增多`,`Air rises and cools, cloud keeps growing`),P(`空氣下沉增溫，雲蒸發掉`,`Air sinks and warms, cloud evaporates`),P(`空氣下沉冷卻，雲不斷增多`,`Air sinks and cools, cloud keeps growing`),P(`空氣上升增溫，雲蒸發掉`,`Air rises and warms, cloud evaporates`)],1,
+   P(`往中心流的空氣轉得太快，擠不進眼牆而往上衝；眼裡的空氣下沉、被壓縮增溫，雲蒸發掉，所以風小、少雲。`,`Inflowing air spins too fast to get past the eyewall and rises instead; air in the eye sinks and warms as it is compressed, so cloud evaporates: light wind and little cloud.`),
+   P(`眼牆把什麼擋在外面？眼裡的空氣是往上還是往下？`,`What does the eyewall keep out? Does air in the eye go up or down?`))]
+});
+})();
