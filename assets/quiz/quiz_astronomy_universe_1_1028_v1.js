@@ -1,0 +1,72 @@
+/* Multiple-choice practice for astronomy_universe_1.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('astronomy_universe_1',{
+ '.panel:nth-child(3)':[
+  Q(P(`「太陽系是一個星系」這句話對嗎？`,`Is the statement "The Solar System is a galaxy" correct?`),
+   [P(`對，太陽系就是包含全部恆星的星系`,`Yes; it contains all the galaxy's stars`),P(`對，因為太陽系裡也有很多行星`,`Yes; because it has many planets in it`),P(`不對，太陽系是以太陽為中心的系統`,`No; it is a system around a single star`),P(`對，因為太陽系比銀河系還要大`,`Yes; since it is bigger than the galaxy`)],2,
+   P(`太陽系是以太陽這顆恆星為中心的系統；銀河系才是包含大量恆星的星系。`,`The Solar System is centred on the Sun, a star; the Milky Way is the galaxy containing vast numbers of stars.`),
+   P(`旅程中，太陽系是被包在銀河系裡面的下一層。`,`On the journey, the Solar System is the next level contained inside the Milky Way.`)),
+  Q(P(`把「宇宙、恆星、行星、衛星、星系」由大到小排好，哪一個正確？`,`Which order of universe, star, planet, moon and galaxy goes from largest to smallest?`),
+   [P(`宇宙 → 恆星 → 星系 → 行星 → 衛星`,`Universe → star → galaxy → planet → moon`),P(`宇宙 → 星系 → 恆星 → 行星 → 衛星`,`Universe → galaxy → star → planet → moon`),P(`宇宙 → 星系 → 行星 → 恆星 → 衛星`,`Universe → galaxy → planet → star → moon`),P(`星系 → 宇宙 → 恆星 → 行星 → 衛星`,`Galaxy → universe → star → planet → moon`)],1,
+   P(`宇宙 → 星系（銀河系）→ 恆星（太陽）→ 行星（地球）→ 衛星（月球）。`,`Universe → galaxy (Milky Way) → star (Sun) → planet (Earth) → moon (the Moon).`),
+   P(`想想剛才的旅程：宇宙 → 銀河系 → 太陽系 → 地球 → 月球。`,`Recall the journey: universe → Milky Way → Solar System → Earth → Moon.`)),
+  Q(P(`在地球上可以看到月亮在發光，所以月球是一種恆星。這句話對嗎？`,`We can see the Moon shining, so the Moon is a star. Is that right?`),
+   [P(`不對，月球不發光，只反射太陽光`,`No; it only reflects the Sun's light`),P(`對，因為月球是太陽系裡最亮的星星`,`Yes; it is the brightest star we see`),P(`對，因為月亮自己也會發光發熱呢`,`Yes; it makes its own heat and light`),P(`對，因為月球繞著太陽在旋轉運行`,`Yes; it circles the Sun like a star`)],0,
+   P(`月球是繞地球運行的衛星，本身不會發光；月光是月球表面反射的太陽光。`,`The Moon is a satellite orbiting Earth and makes no light of its own; moonlight is reflected sunlight.`),
+   P(`恆星是可以自行發光、發熱的天體。`,`A star is a body that makes its own light and heat.`))],
+ '.panel:nth-child(4)':[
+  Q(P(`參宿四距離約 640 光年，代表它「640 歲」嗎？`,`Betelgeuse is about 640 light-years away. Does that mean it is "640 years old"?`),
+   [P(`是，光年就是用來表示年齡的單位`,`Yes; light-years are units of its age`),P(`是，因為光走了 640 年才到地球`,`Yes; light took 640 years to get here`),P(`不是，640 光年是距離，不是年齡`,`No; 640 ly is a distance, not an age`),P(`不是，但它的壽命是 640 光年`,`No; but it lives for 640 light-years`)],2,
+   P(`640 光年是距離；我們看到的是約 640 年前從參宿四出發的光。`,`640 light-years is a distance; we see light that left Betelgeuse about 640 years ago.`),
+   P(`光年描述的是距離，不是年齡。`,`A light-year describes distance, not age.`)),
+  Q(P(`1 光年大約是多少公里？用光速算算看。`,`About how many kilometres is 1 light-year? Work it out from the speed of light.`),
+   [P(`約 10 億公里`,`About 10 billion km`),P(`約 10 兆公里`,`About 10 trillion km`),P(`約 10 萬公里`,`About 10 million km`),P(`約 1 兆公里`,`About 10 thousand km`)],1,
+   P(`30 萬 × 3150 萬 ≈ 9.5 × 10¹² 公里，約 10 兆公里。`,`300,000 × 31.5 million ≈ 9.5 × 10¹² km, about 10 trillion km.`),
+   P(`光速約每秒 30 萬公里；一年大約有 3150 萬秒。`,`Light travels about 300,000 km per second; a year has about 31.5 million seconds.`)),
+  Q(P(`太陽系裡的距離為什麼常用天文單位（au），而不用光年？`,`Why are distances inside the Solar System given in astronomical units (au) rather than light-years?`),
+   [P(`光年數字太小，用 au 比較好算`,`Light-year numbers are tiny, au is handier`),P(`光年數字太大，用 au 比較好算`,`Light-year numbers are huge, au is handier`),P(`au 比光年準確，所以全部改用 au`,`The au is more exact than the light-year`),P(`光年只能用來量時間，而不能量距離`,`Light-years only measure time, not distance`)],0,
+   P(`海王星約 30 au，還不到 0.001 光年，用 au 比較好算；恆星之間更遠，才用光年。`,`Neptune at 30 au is under 0.001 ly, so au is handier; stars are far more distant, so light-years are used for them.`),
+   P(`1 au 是地球到太陽的平均距離，海王星離太陽約 30 au。`,`1 au is the average Earth–Sun distance; Neptune is about 30 au from the Sun.`))],
+ '.panel:nth-child(5)':[
+  Q(P(`若銀河系側視呈很薄的盤狀，為什麼從地球看天空會有一條銀河光帶？`,`If the Milky Way is a thin disk seen from the side, why do we see a band of light across the sky from Earth?`),
+   [P(`銀河系本身是一條很細長的帶狀雲氣團`,`The galaxy is itself a thin band of cloud`),P(`太陽光照到大氣層，在夜空中形成光帶`,`Sunlight lights the air and forms a band`),P(`我們身在盤內，沿盤面看穿過大量恆星`,`We are inside the disk, seeing many stars`),P(`月亮反射的光在天空中被拉長成光帶`,`Moonlight stretches out into a sky band`)],2,
+   P(`我們身在銀河系盤面內部，沿盤面方向看出去時，視線穿過大量恆星，因此形成密集光帶。`,`We are inside the disk; looking along it sends our sight through many stars, forming a dense band.`),
+   P(`地球和太陽系本來就在銀河系的盤面內。`,`Earth and the Solar System already lie inside the Milky Way's disk.`)),
+  Q(P(`從「俯視」和「側視」看銀河系，各會看到什麼特徵？`,`What features does the Milky Way show from the top and from the side?`),
+   [P(`俯視有旋臂與棒狀核心，側視呈盤狀`,`Top: spiral arms and bar; side: a disk`),P(`俯視呈盤狀，側視有旋臂與棒狀核心`,`Top: a disk; side: spiral arms and bar`),P(`俯視與側視都是完美的圓形球狀體`,`Top and side: both a perfect round ball`),P(`俯視為橢圓團塊，側視為不規則雲塊`,`Top: oval clump; side: irregular cloud`)],0,
+   P(`俯視：螺旋狀旋臂，中央有棒狀核心；側視：中央凸起的盤狀，外圍略為翹起扭曲。直徑約 10 萬光年。`,`Top: spiral arms with a central bar. Side: a disk with a central bulge and slightly warped edges. About 100,000 ly across.`),
+   P(`在上面切換俯視、側視看看。`,`Switch between the top view and the side view above.`)),
+  Q(P(`星系依外觀可以分成哪三類？銀河系屬於哪一類？`,`What three kinds of galaxy are there by shape, and which kind is the Milky Way?`),
+   [P(`橢圓、螺旋、不規則；銀河系是橢圓`,`Elliptical, spiral, irregular; ours is elliptical`),P(`橢圓、螺旋、不規則；銀河系不規則`,`Elliptical, spiral, irregular; ours is irregular`),P(`橢圓、螺旋、不規則；銀河系是螺旋`,`Elliptical, spiral, irregular; ours is spiral`),P(`圓形、方形、三角形；銀河系是圓形`,`Round, square, triangular; ours is round`)],2,
+   P(`銀河系和仙女座大星系是螺旋星系；大麥哲倫星系是不規則星系。`,`The Milky Way and Andromeda are spirals; the Large Magellanic Cloud is irregular.`),
+   P(`星系是宇宙構成的基本單位。`,`Galaxies are the basic units that make up the universe.`))],
+ '.panel:nth-child(6)':[
+  Q(P(`木星體積很大，所以它應該屬於「類地行星」嗎？`,`Jupiter is very large, so should it be classified as a "terrestrial planet"?`),
+   [P(`不是，木星是類木行星，密度較小`,`No; it is a giant planet with low density`),P(`是，因為木星的體積比地球大很多`,`Yes; it is far bigger than Earth in volume`),P(`是，因為木星的質量非常非常龐大`,`Yes; its mass is huge, so it counts too`),P(`是，因為木星有堅硬岩石的地表`,`Yes; it has a hard rocky ground surface`)],0,
+   P(`木星屬類木行星，主要由氣體與液體構成，體積與質量大、平均密度較小。`,`Jupiter is a giant planet made mainly of gases and fluids, with large volume and mass but low average density.`),
+   P(`分類不只看「大不大」，還看主要組成、密度、質量與體積特徵。`,`Classification depends not just on size but on composition, density, mass and volume.`)),
+  Q(P(`太陽系的成員中，哪些繞太陽運行？哪些繞行星運行？`,`Which Solar System members orbit the Sun, and which orbit a planet?`),
+   [P(`繞太陽：衛星、小天體；繞行星：行星、矮行星`,`Sun: moons, small bodies; Planet: planets, dwarf planets`),P(`繞太陽：行星、矮行星、小天體；繞行星：衛星`,`Sun: planets, dwarf planets, small bodies; Planet: moons`),P(`繞太陽：衛星、行星；繞行星：矮行星、小天體`,`Sun: moons, planets; Planet: dwarf planets, small bodies`),P(`繞太陽：只有行星；繞行星：衛星、矮行星、小天體`,`Sun: planets only; Planet: moons, dwarf planets, bodies`)],1,
+   P(`繞太陽：八大行星、矮行星、小天體；繞行星：衛星（如月球繞地球）。`,`Around the Sun: the planets, dwarf planets and small bodies. Around a planet: moons (e.g. the Moon around Earth).`),
+   P(`看「太陽系成員與運行方式」表，或在「太陽系的其他成員」按「衛星」。`,`Check the members table or press "moons" in the other-members section.`)),
+  Q(P(`彗星靠近太陽時，彗尾朝哪個方向？`,`When a comet nears the Sun, which way does its tail point?`),
+   [P(`朝向太陽，越靠近太陽越明顯`,`Toward the Sun, and clearer when nearer`),P(`朝向彗星前進方向，總是拖在前面`,`Ahead of the comet along its orbit path`),P(`垂直於太陽方向，會一直上下擺動`,`Sideways to the Sun, swaying up and down`),P(`背向太陽，越靠近太陽越明顯`,`Away from the Sun, and clearer when near`)],3,
+   P(`彗尾是被太陽風吹出來的，總是背向太陽；越靠近太陽，彗尾越明顯。`,`The tail is blown out by the solar wind, so it always points away from the Sun and grows as the comet nears it.`),
+   P(`彗尾是被太陽風吹出來的。`,`The tail is blown out by the solar wind.`))],
+ '.panel:nth-child(7)':[
+  Q(P(`金星離太陽比水星遠，為什麼平均表面溫度反而更高？`,`Venus is farther from the Sun than Mercury. Why is its average surface temperature higher?`),
+   [P(`金星比水星更靠近太陽，所以溫度更高`,`It is closer to the Sun than Mercury is`),P(`金星自轉速度非常極快，摩擦產生大量的熱`,`It spins so fast that friction makes heat`),P(`金星大氣濃厚富含二氧化碳，溫室效應強`,`Dense CO₂ atmosphere traps heat strongly`),P(`金星表面有非常多的火山，持續噴出熔岩`,`Many volcanoes keep pouring out hot lava`)],2,
+   P(`金星大氣非常濃厚、富含二氧化碳，強烈溫室效應使熱量不易散失，因此溫度高於水星。`,`Venus has a very dense, carbon-dioxide-rich atmosphere; a strong greenhouse effect traps heat, so it is hotter than Mercury.`),
+   P(`除了距離太陽，行星的大氣也會影響保溫能力。`,`Besides distance from the Sun, a planet's atmosphere affects how well it holds heat.`)),
+  Q(P(`實驗做出來的行星尺上，類地行星和類木行星的分布疏密有什麼差異？`,`On the planet ruler from the lab, how does the spacing of terrestrial and giant planets differ?`),
+   [P(`類地行星較疏遠，類木行星較密集`,`Giant planets close, terrestrial far apart`),P(`兩類行星分布的疏密完全一樣平均`,`All planets are spaced exactly the same way`),P(`類地行星較密集，類木行星較疏遠`,`Terrestrial planets close, giants far apart`),P(`所有行星都擠在太陽旁邊很近的地方`,`All planets crowd in very close to the Sun`)],2,
+   P(`類地行星彼此較密集，類木行星彼此較疏遠；兩顆相鄰行星的間距隨著離太陽越遠而越拉越大。`,`Terrestrial planets are close together and giants far apart; the gap between neighbours grows with distance from the Sun.`),
+   P(`把平均距離乘以 10 公分標在 3.5 公尺的細線上，也可以看「距離比例」。`,`Mark average distance × 10 cm on a 3.5 m line, or view the distance scale.`)),
+  Q(P(`太陽系行星中直徑最大的是哪一顆？最小的是哪一顆？哪一顆的大小與地球最相近？`,`Which planet is largest, which smallest, and which is closest to Earth's size?`),
+   [P(`最大土星、最小火星、最像地球是金星`,`Largest Saturn, smallest Mars, closest Venus`),P(`最大木星、最小水星、最像地球是火星`,`Largest Jupiter, smallest Mercury, closest Mars`),P(`最大木星、最小水星、最像地球是金星`,`Largest Jupiter, smallest Mercury, closest Venus`),P(`最大木星、最小金星、最像地球是水星`,`Largest Jupiter, smallest Venus, closest Mercury`)],2,
+   P(`最大是木星（10.97），最小是水星（0.38），金星（0.95）跟地球大小最相近。`,`Largest: Jupiter (10.97); smallest: Mercury (0.38); Venus (0.95) is closest to Earth's size.`),
+   P(`看太陽系天體表的「直徑」欄（地球＝1），或切到「行星大小」。`,`Check the diameter column (Earth = 1) or switch to planet sizes.`))]
+});
+})();
