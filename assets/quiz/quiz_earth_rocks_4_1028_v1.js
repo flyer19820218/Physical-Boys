@@ -1,0 +1,67 @@
+/* Multiple-choice practice for earth_rocks_4.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('earth_rocks_4',{
+ '.panel:nth-child(3)':[
+  Q(P(`下列哪一項描述的是「礦物」，而不是「岩石」？`,`Which description fits a "mineral" rather than a "rock"?`),
+   [P(`天然固體，有規則排列與成分`,`Natural solid; orderly atoms, set mix`),P(`許多不同顆粒聚合，排列不規則`,`Many mixed grains with no fixed pattern`),P(`岩漿冷卻凝固後得到的任何東西`,`Anything formed when magma cools down`),P(`實驗室人工合成的任何結晶體`,`Any crystal made artificially in a lab`)],0,
+   P(`礦物是組成岩石的基本單位，具有規則的原子排列和特定化學組成；岩石是一種或多種礦物聚在一起。`,`A mineral is the basic unit of rock, with orderly atoms and a definite composition; a rock is one or more minerals together.`),
+   P(`花岡岩裡有石英、長石、雲母，哪個是「零件」，哪個是「由零件組成」？`,`Granite contains quartz, feldspar and mica. Which is the part and which is the whole?`)),
+  Q(P(`一塊礦物，硬幣（約 3.5）刮不出刻痕，但小刀片（約 5.5）刮得出刻痕。它的硬度最可能是多少？`,`A coin (about 3.5) cannot scratch a mineral, but a knife blade (about 5.5) can. What is its likely hardness?`),
+   [P(`在 3.5 和 5.5 之間`,`Between 3.5 and 5.5 on the scale`),P(`大於 5.5，比小刀片還要硬`,`Above 5.5, harder than the blade`),P(`小於 3.5，比硬幣還要軟`,`Below 3.5, softer than the coin`),P(`小於 2.5，比指甲還要軟`,`Below 2.5, softer than a nail`)],0,
+   P(`硬幣刮不動，表示礦物比硬幣硬（大於 3.5）；小刀片刮得動，表示比小刀片軟（小於 5.5）。`,`The coin fails, so the mineral is harder than 3.5; the blade scratches it, so it is softer than 5.5.`),
+   P(`硬度小的會被刮傷。硬幣刮不動，表示礦物比硬幣軟還是硬？`,`The softer one gets scratched. If the coin fails, is the mineral softer or harder?`)),
+  Q(P(`為什麼不能只用「顏色」來判斷岩石或礦物的種類？`,`Why can colour alone not identify a rock or mineral?`),
+   [P(`外表會風化，不同種類會相似`,`Weathering changes it; some look alike`),P(`顏色太過鮮豔，所以肉眼看不清楚`,`Colours are too bright to see properly`),P(`所有礦物的顏色其實全部都一樣`,`Every mineral has exactly the same colour`),P(`顏色只有在室內才會發生改變`,`Colour only changes when it is indoors`)],0,
+   P(`石英和方解石都是白色、半透明，所以要再配合硬度、化學反應（滴稀鹽酸）一起判斷。`,`Quartz and calcite are both white and translucent, so hardness and chemical tests (dilute acid) are needed too.`),
+   P(`石英和方解石看起來一樣嗎？岩石放在戶外很久，外表會怎樣？`,`Do quartz and calcite look alike? What happens to rock left outdoors for years?`)),
+  Q(P(`滴稀鹽酸會冒出氣泡的礦物是哪一個？`,`Which mineral fizzes when dilute hydrochloric acid is dropped on it?`),
+   [P(`石英砂`,`Quartz`),P(`方解石`,`Calcite`),P(`長石類`,`Biotite`),P(`黑雲母`,`Olivine`)],1,
+   P(`方解石的成分是碳酸鈣，遇酸會放出二氧化碳而冒泡；石英不會。`,`Calcite is calcium carbonate and releases carbon dioxide with acid; quartz does not react.`),
+   P(`碳酸鈣遇到酸會產生氣體。`,`Calcium carbonate gives off a gas with acid.`))],
+ '.panel:nth-child(4)':[
+  Q(P(`花岡岩的礦物顆粒很大，安山岩的顆粒卻很小。主要原因是什麼？`,`Granite has large crystals but andesite has tiny ones. What is the main reason?`),
+   [P(`地底深處冷卻較慢，晶體能長大`,`Slow cooling deep down let crystals grow`),P(`花岡岩裡含有比較多的石英礦物`,`Granite holds a lot more quartz minerals`),P(`花岡岩形成時地表壓力突然驟減`,`Pressure dropped suddenly at the surface`),P(`花岡岩的岩漿在地表冷卻得較快`,`Its magma cooled faster at the surface`)],0,
+   P(`冷卻越慢，礦物顆粒越大；安山岩噴出地表很快冷卻，來不及長出大結晶。`,`The slower the cooling, the larger the crystals; andesite erupts and cools fast, with no time to grow big ones.`),
+   P(`地底深處和地表，哪裡冷得比較慢？晶體需要時間嗎？`,`Which cools more slowly, deep underground or at the surface? Do crystals need time?`)),
+  Q(P(`玄武岩上常有許多小孔洞，這些孔洞是怎麼形成的？`,`Basalt often has many small holes. How do they form?`),
+   [P(`雨水慢慢把岩石溶解成洞穴`,`Rainwater slowly dissolved holes in it`),P(`大顆粒礦物掉落後留下孔洞`,`Large grains dropped out leaving holes`),P(`岩漿冷卻很慢，氣體全跑光了`,`Slow cooling let all the gas get out`),P(`壓力驟減，氣泡沒逸散就凝固`,`Pressure fell; bubbles froze in place`)],3,
+   P(`噴出地表時壓力驟減，岩漿中的氣體形成氣泡，凝固時還沒逸散就留下孔洞，說明玄武岩冷卻很快。`,`Pressure drops at the surface, gas forms bubbles, and they are trapped as the lava solidifies quickly.`),
+   P(`想想打開汽水瓶蓋的情形。凝固快慢會影響氣泡能不能逃走。`,`Think of opening a soda bottle. How fast it solidifies decides whether bubbles escape.`)),
+  Q(P(`野外有兩塊火成岩：甲的顆粒粗大，乙的顆粒細小。下列推論哪一個正確？`,`Two igneous rocks: A has coarse grains, B has fine grains. Which inference is correct?`),
+   [P(`甲的顏色一定比乙更深`,`A must be darker in colour than B`),P(`甲的岩漿冷卻得比乙慢`,`A's magma cooled slower than B's`),P(`乙在地底深處冷卻較慢`,`B cooled slower deep underground`),P(`甲是噴出地表後冷卻的`,`A cooled after erupting at surface`)],1,
+   P(`顆粒越大，表示冷卻越慢、晶體生長的時間越長；顏色深淺和冷卻快慢沒有直接關係。`,`Larger grains mean slower cooling and more growth time; colour is not directly linked to cooling speed.`),
+   P(`判斷冷卻快慢要看顆粒大小，不是顏色深淺。`,`Cooling speed is judged by grain size, not by colour.`))],
+ '.panel:nth-child(5)':[
+  Q(P(`沉積物變成沉積岩的過程中，「膠結」指的是什麼？`,`In forming sedimentary rock, what does "cementation" mean?`),
+   [P(`上面的重量把顆粒壓緊，擠出水`,`Overlying weight squeezes grains together`),P(`析出的礦物填滿孔隙，黏住顆粒`,`Dissolved minerals fill gaps, gluing sand`),P(`高溫高壓使礦物重新排列結晶`,`Heat and pressure recrystallize minerals`),P(`風和水把顆粒搬到別的地方去`,`Wind and water carry grains somewhere else`)],1,
+   P(`壓密是把顆粒壓緊、擠出水；膠結則靠沉澱的礦物（如碳酸鈣）當作膠水。`,`Compaction squeezes grains and drives out water; cementation uses precipitated minerals such as calcium carbonate as glue.`),
+   P(`「膠」像膠水。什麼東西能把一粒粒泥沙黏成一整塊？`,`"Cement" is like glue. What sticks loose grains into one block?`)),
+  Q(P(`頁岩深埋地下，受到高溫、高壓但沒有熔化，礦物重新排列。最可能變成哪一種岩石？`,`Shale buried deep is heated and squeezed without melting, and its minerals realign. Which rock does it most likely become?`),
+   [P(`玄武岩`,`Basalt`),P(`板岩`,`Slate`),P(`花岡岩`,`Granite`),P(`燧石`,`Chert`)],1,
+   P(`沒有熔化、只受高溫高壓使礦物重新排列，形成的是變質岩；頁岩變質成板岩。`,`Heat and pressure without melting make metamorphic rock; shale becomes slate.`),
+   P(`高溫高壓但沒有熔化，會形成哪一大類岩石？`,`Heat and pressure with no melting makes which major rock type?`)),
+  Q(P(`一塊變質岩裡，片狀礦物都排成「垂直」的一片片。當時岩石最可能受到哪個方向的壓力？`,`Platy minerals in a metamorphic rock stand upright in layers. From which direction was it most likely squeezed?`),
+   [P(`由上往下的垂直方向`,`From above, pushing downward`),P(`沿著礦物排列的方向`,`Along the line of the minerals`),P(`無法判斷，排列與受力無關`,`Unclear; unrelated to any force`),P(`左右兩側的水平方向`,`From the left and right sides`)],3,
+   P(`片狀礦物會排成和壓力方向垂直，所以垂直排列代表壓力來自水平方向。`,`Platy minerals line up perpendicular to the pressure, so upright layers mean horizontal pressure.`),
+   P(`回想黏土實驗：從上面壓時亮片排成水平，從左右壓時呢？`,`In the clay experiment, pressing from above laid flakes flat. What about from the sides?`))],
+ '.panel:nth-child(6)':[
+  Q(P(`一塊沉積岩要變成火成岩，需要經過哪兩個作用？`,`Which two processes turn a sedimentary rock into an igneous rock?`),
+   [P(`壓密、膠結 → 冷卻結晶`,`Compaction, then cooling and crystallizing`),P(`變質作用 → 冷卻結晶`,`Metamorphism, then cooling and crystallizing`),P(`風化侵蝕 → 冷卻結晶`,`Weathering, then cooling and crystallizing`),P(`熔融成岩漿 → 冷卻結晶`,`Melting down, then cooling and crystallizing`)],3,
+   P(`火成岩直接來自岩漿，沉積岩必須先熔融成岩漿，岩漿再冷卻結晶才成為火成岩。`,`Igneous rock comes straight from magma, so sedimentary rock must first melt, then cool and crystallize.`),
+   P(`火成岩由什麼冷卻凝固而來？固體要先變成那種東西需要什麼？`,`Igneous rock cools from what? What must a solid first become?`)),
+  Q(P(`變質岩要變成沉積岩，最短的途徑是下列哪一個？`,`What is the shortest route from a metamorphic rock to a sedimentary rock?`),
+   [P(`風化侵蝕 → 壓密、膠結`,`Weathering, then compaction and cementation`),P(`變質作用 → 壓密、膠結`,`Metamorphism, then compaction and cementation`),P(`熔融成岩漿 → 冷卻結晶`,`Melting down, then cooling and crystallizing`),P(`冷卻結晶 → 風化侵蝕`,`Crystallizing, then weathering and erosion`)],0,
+   P(`變質岩先經風化侵蝕變成沉積物，沉積物再壓密、膠結成沉積岩，中間不需要熔化。`,`The rock weathers into sediment, which is compacted and cemented into sedimentary rock; no melting is needed.`),
+   P(`沉積岩由什麼經壓密、膠結形成？固體岩石先要變成什麼？`,`Sedimentary rock forms from what? What must solid rock first become?`)),
+  Q(P(`板岩受到更高的溫度和壓力而變成片岩，這說明了什麼？`,`Slate changes to schist under higher heat and pressure. What does this show?`),
+   [P(`變質岩已經不會再改變`,`It can never change again after this`),P(`必須先熔化才能再改變`,`It must melt first before changing again`),P(`會直接就變成沉積岩石`,`It turns directly into sedimentary rock`),P(`可再度變質，程度更高`,`It can change again, to a higher grade`)],3,
+   P(`任何岩石只要在沒有熔化的情況下受到更高溫高壓，礦物就會再重新排列，如板岩 → 片岩 → 片麻岩。`,`Any rock under higher heat and pressure without melting realigns again, e.g. slate → schist → gneiss.`),
+   P(`變質作用條件是高溫、高壓、沒有熔化。變質岩遇到這些條件還會被影響嗎？`,`Metamorphism needs heat, pressure and no melting. Can existing metamorphic rock still be affected?`)),
+  Q(P(`大理岩熔化成岩漿，再冷卻凝固。得到的是哪一類岩石？`,`Marble melts into magma, then cools and solidifies. Which rock type results?`),
+   [P(`變質岩`,`A metamorphic rock`),P(`沉積岩`,`A sedimentary rock`),P(`還是大理岩`,`Still just marble`),P(`火成岩`,`A new igneous rock`)],3,
+   P(`熔化再冷卻凝固就是火成岩的形成方式，和原本是什麼岩石無關。`,`Melting then cooling is how igneous rock forms, whatever the original rock was.`),
+   P(`新岩石的種類由什麼過程決定，而不是原本的岩石種類？`,`What process, not the original rock, decides the new rock type?`))]
+});
+})();
