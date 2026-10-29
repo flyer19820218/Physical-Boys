@@ -364,13 +364,14 @@ const PROP_KINDS = {
   // 物理館：單元站上已經有「和單元內容相關的小物品」，通用小景只留少量樹與灌木當景觀（20261029b）
   physics: [['broad', 3], ['bush', 4], ['pine', 2]],
   chemistry: [['erlenmeyer', 3], ['round', 2], ['rack', 2], ['crystal', 3], ['chimney', 1], ['bunsen', 2], ['bush', 2], ['broad', 1]],
-  earth: [['volcano', 1], ['mountain', 3], ['strata', 2], ['boulders', 3], ['weather', 1], ['pine', 3]],
+  // 地科館：單元站已有小物品（含火山、氣象站），通用小景只留少量山、巨石、松樹當景觀（20261029c）
+  earth: [['mountain', 2], ['boulders', 3], ['pine', 4]],
   biology: [['broad', 4], ['pine', 3], ['sakura', 2], ['bush', 2], ['mushroom', 2]],
 };
 const TREE_KINDS = new Set(['broad', 'pine', 'sakura', 'bush']);
-const HERO_KIND = { physics: 'broad', chemistry: 'erlenmeyer', earth: 'volcano', biology: 'broad' }; // 每館先放兩個大一點的代表物
+const HERO_KIND = { physics: 'broad', chemistry: 'erlenmeyer', earth: 'mountain', biology: 'broad' }; // 每館先放兩個大一點的代表物
 // 每館的造景數量與「離單元站至少多遠」（球面弧長）。有單元小物品的館：造景少、離站遠，不壓到小物品
-const PROP_RULE = { physics: { count: 34, nd: 3.6 } };
+const PROP_RULE = { physics: { count: 34, nd: 3.6 }, earth: { count: 30, nd: 3.6 } };
 function pickKind(hallId, x) {
   const list = PROP_KINDS[hallId], total = list.reduce((a, b) => a + b[1], 0);
   let t = x * total;
@@ -722,10 +723,223 @@ function itemMagnet(K) {
   return 1.0;
 }
 
+// ---------- 地科館的單元小物品（20261029c）----------
+const EC = {
+  rock: 0x8a8f96, rockD: 0x6b7178, sand: 0xd8b878, soil: 0xa87a52, soilD: 0x86603f, grass: 0x7bc47a, grassD: 0x5fa862,
+  aquifer: 0x7fb2d6, sea: 0x4f9fe0, snow: 0xf5f8fa, lava: 0xff7a2e, smoke: 0xd8d4d0, navy: 0x2c3e66, ice: 0xdff6ff,
+};
+// 球面上的一小片（大陸、冰帽）：扁的橢球貼在球面上，法線方向 v
+function cap(K, cx, cy, cz, R, v, s, c, flat = 0.35) {
+  const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), v);
+  const p = new THREE.Vector3(cx, cy, cz).addScaledVector(v, R * 0.99);
+  K.add(new THREE.SphereGeometry(s, 16, 6, 0, TAU, 0, Math.PI / 2), new THREE.Matrix4().compose(p, q, new THREE.Vector3(1, flat, 1)), c, { noHull: true }); // 半球（同 16×12 球的密度）
+}
+// 切面模型往後仰（像博物館的展示模型）：從第 k0 個零件起，以後下緣 z=z0 為軸往後仰 ang，前緣被墊高；下面補一塊木頭楔形台。
+// 鏡頭是斜斜往下看的，直立的正面在畫面上很扁；仰起來以後正面的地層才看得清楚
+function tiltBack(K, k0, ang, z0, zf, W) {
+  const T = new THREE.Matrix4().makeTranslation(0, 0, z0).multiply(new THREE.Matrix4().makeRotationX(-ang)).multiply(new THREE.Matrix4().makeTranslation(0, 0, -z0));
+  for (let i = k0; i < K.parts.length; i++) K.parts[i].m = T.clone().multiply(K.parts[i].m);
+  const D = zf - z0, fy = D * Math.sin(ang), fz = z0 + D * Math.cos(ang);
+  const sh = new THREE.Shape([new THREE.Vector2(z0, 0), new THREE.Vector2(fz, 0), new THREE.Vector2(fz, fy)]);
+  K.add(new THREE.ExtrudeGeometry(sh, { depth: 2 * W, bevelEnabled: false }), M(W, 0, 0, 0, -Math.PI / 2, 0), IC.woodD);
+  return fy;
+}
+// 雨滴：上尖下圓（旋轉體，20 段）
+function drop(K, x, y, z, r, c) {
+  const pts = [];
+  for (let i = 0; i <= 5; i++) { const t = i / 5 * Math.PI; pts.push(new THREE.Vector2(Math.sin(t) * r * (0.35 + 0.65 * t / Math.PI), r * 1.25 - i / 5 * r * 2.2)); }
+  pts[0].x = 0; pts[5].x = 0;
+  K.add(new THREE.LatheGeometry(pts, 20), M(x, y, z), c, { noHull: true });
+}
+// 正面輪廓（xy 平面的點）往 z 方向擠出成一塊（z 從 z0 到 z0+d）
+function prism(K, pts, z0, d, c, o = {}) {
+  const sh = new THREE.Shape(pts.map(p => new THREE.Vector2(p[0], p[1])));
+  K.add(new THREE.ExtrudeGeometry(sh, { depth: d, bevelEnabled: false, curveSegments: 4 }), M(0, 0, z0), c, o);
+}
+
+// 1 水與陸地：地層切面方塊（頂面有河流切出的河谷，正面看得到地層與地下水面）＋一口小井
+const SECTION_TILT = 0.5; // 切面模型往後仰的角度（弧度）
+function itemWaterLand(K) {
+  const W = 0.8, z0 = -0.3, D = 0.9, zf = z0 + D;         // 方塊：x −0.8～0.8，z −0.3～0.6（之後整塊往後仰）
+  const vx = -0.2, vt = 0.3, vb = 0.07, yv = 0.6, yt = 0.84; // 河谷：中心 x、上緣半寬、谷底半寬、谷底高、地表高
+  prism(K, [[-W, 0], [W, 0], [W, 0.18], [-W, 0.18]], z0, D, EC.rock);                 // 岩盤
+  prism(K, [[-W, 0.18], [W, 0.18], [W, 0.4], [-W, 0.4]], z0, D, EC.aquifer);         // 含水層（地下水面以下）
+  prism(K, [[-W, 0.4], [W, 0.4], [W, 0.54], [-W, 0.54]], z0, D, EC.sand);            // 砂礫層
+  const soil = (y0, y1, c) => {                                                       // 河谷兩岸的土層（兩塊，中間切出 V 形谷）
+    const k = (vt - vb) / (yt - yv), half = y => vb + Math.max(0, y - yv) * k;
+    prism(K, [[-W, y0], [vx - half(y0), y0], [vx - half(y1), y1], [-W, y1]], z0, D, c);
+    prism(K, [[vx + half(y0), y0], [W, y0], [W, y1], [vx + half(y1), y1]], z0, D, c);
+  };
+  prism(K, [[-W, 0.54], [W, 0.54], [W, yv], [-W, yv]], z0, D, EC.soilD);
+  soil(yv, 0.78, EC.soil);
+  soil(0.78, yt, EC.grass);
+  K.box(vb * 2 + 0.04, 0.03, D, vx, yv + 0.015, 0, EC.sea, { noHull: true });          // 河流
+  // 地下水面：正面一條深藍線
+  K.box(W * 2, 0.022, 0.012, 0, 0.4, zf + 0.006, 0x2f6fb0, { noHull: true });
+  // 井：井口在地表（右前），正面看得到井筒一直通到含水層
+  const wx = 0.5, wz = zf - 0.2;
+  K.cyl(0.15, 0.16, 0.14, wx, yt + 0.07, wz, 0xb7b2a6);
+  K.cyl(0.105, 0.105, 0.012, wx, yt + 0.142, wz, 0x2c4f6e, { noHull: true });
+  for (const s of [-1, 1]) K.cyl(0.022, 0.022, 0.42, wx + s * 0.15, yt + 0.21, wz, IC.woodD, { seg: 20 });
+  prism(K, [[wx - 0.24, yt + 0.4], [wx + 0.24, yt + 0.4], [wx, yt + 0.58]], wz - 0.16, 0.32, 0xd9634a);           // 屋頂（三角柱，山牆朝前）
+  K.rod([wx, yt + 0.4, wz], [wx, yt + 0.2, wz], 0.006, IC.ink, { seg: 8, noHull: true });
+  K.cyl(0.04, 0.032, 0.06, wx, yt + 0.19, wz, IC.woodD, { seg: 20, noHull: true });
+  K.box(0.07, yt - 0.3, 0.012, wx, (yt + 0.3) / 2, zf + 0.007, 0x3b4a52, { noHull: true });             // 正面的井筒
+  K.box(0.07, 0.1, 0.014, wx, 0.35, zf + 0.008, 0x2f6fb0, { noHull: true });                             // 井底的地下水
+  // 左岸兩棵小樹
+  for (const [x, z, s] of [[-0.62, -0.28, 1], [-0.68, 0.18, 0.8]]) {
+    K.cyl(0.025, 0.03, 0.12 * s, x, yt + 0.06 * s, z, 0x7a5a3a, { seg: 20 });
+    K.add(new THREE.ConeGeometry(0.13 * s, 0.32 * s, 20), M(x, yt + 0.12 * s + 0.16 * s, z), 0x3b8f55);
+  }
+  const fy = tiltBack(K, 0, SECTION_TILT, z0, zf, W);
+  return fy + yt * Math.cos(SECTION_TILT) + 0.5;
+}
+
+// 2 板塊運動與地球歷史：兩塊板塊相撞（海洋板塊隱沒到大陸板塊下面）；大陸隆起山脈、冒煙的小火山，正面有含化石的地層
+function itemPlates(K) {
+  const z0 = -0.3, D = 0.84, zf = z0 + D, T = 0.74;                          // 板塊頂面高 T（拉高一點，俯視時正面的地層才看得清楚）
+  // 隱沒的海洋板塊（正面看是一條往左下斜插的帶子）
+  prism(K, [[0.92, 0.36], [0.92, T - 0.12], [0.28, T - 0.12], [-0.46, 0.0], [-0.14, 0.0], [0.34, 0.36]], z0, D, 0x5d6b7c);
+  K.box(0.64, 0.08, D, 0.6, T - 0.08, 0, EC.sea);                                    // 海水
+  // 大陸板塊：一層一層的地層，右邊貼著隱沒帶的斜面
+  const yk = T - 0.12, xr = y => (y >= yk ? 0.28 : -0.46 + (y / yk) * 0.74);
+  const band = (y0, y1, c) => prism(K, [[-0.92, y0], [xr(y0), y0], ...(y0 < yk && y1 > yk ? [[0.28, yk]] : []), [xr(y1), y1], [-0.92, y1]], z0, D, c);
+  band(0, 0.16, 0x7a5c40); band(0.16, 0.3, 0xc29a67); band(0.3, 0.5, 0xe6d6a8); band(0.5, 0.66, 0xa8724e); band(0.66, T, EC.grassD);
+  // 正面：淺色化石層裡的菊石（螺旋）與三葉蟲
+  const fy = 0.4, fz = zf + 0.004;
+  for (const x of [-0.76, -0.42]) {
+    const pts = [];
+    for (let k = 0; k <= 30; k++) { const t = k / 30 * 2.2 * TAU, r = 0.014 + 0.066 * k / 30; pts.push([x + r * Math.cos(t), fy + r * Math.sin(t), fz]); }
+    K.tube(pts, 0.013, 0x6b4a2e, { n: 30, rs: 4, noHull: true, type: 'catmullrom' });
+  }
+  K.sph(0.065, -0.12, fy, fz - 0.004, 0x6b4a2e, { sx: 0.75, sy: 1.2, sz: 0.25, noHull: true, ws: 16, hs: 12 });
+  for (let i = 0; i < 3; i++) K.box(0.11, 0.011, 0.012, -0.12, fy - 0.045 + i * 0.045, fz + 0.01, 0xe6d6a8, { noHull: true });
+  // 山脈（靠近相撞處隆起，偏後方）
+  for (const [x, z, r, h] of [[0.02, -0.06, 0.26, 0.52], [-0.28, -0.12, 0.2, 0.4], [0.12, 0.26, 0.18, 0.36], [-0.2, 0.18, 0.17, 0.3]]) {
+    K.add(new THREE.ConeGeometry(r, h, 20), M(x, T + h / 2, z), 0x8f7358);
+    K.add(new THREE.ConeGeometry(r * 0.42, h * 0.42, 20), M(x, T + h * 0.79 + 0.005, z), EC.snow, { noHull: true });
+  }
+  // 冒煙的小火山（大陸這一側、偏前方）
+  const vx = -0.62, vz = 0.2, vh = 0.32;
+  K.cyl(0.08, 0.28, vh, vx, T + vh / 2, vz, 0x6e5546);
+  K.cyl(0.065, 0.065, 0.02, vx, T + vh + 0.005, vz, EC.lava, { noHull: true });
+  K.rod([vx + 0.07, T + vh - 0.02, vz + 0.04], [vx + 0.2, T + 0.06, vz + 0.12], 0.026, EC.lava, { seg: 12, noHull: true });
+  [[0.02, 0.1, -0.02, 0.07], [0.07, 0.22, -0.05, 0.085], [0.04, 0.36, -0.09, 0.1]].forEach(([x, y, z, r]) => K.sph(r, vx + x, T + vh + y, vz + z, EC.smoke, { ws: 16, hs: 12 }));
+  // 海洋板塊往左推的箭頭
+  K.box(0.24, 0.03, 0.08, 0.7, T, 0.24, IC.white, { noHull: true });
+  K.add(new THREE.ConeGeometry(0.08, 0.16, 20), M(0.5, T, 0.24, 0, 0, Math.PI / 2), IC.white, { noHull: true });
+  const lift = tiltBack(K, 0, SECTION_TILT, z0, zf, 0.92);
+  return lift + (T + vh) * Math.cos(SECTION_TILT) + 0.4;
+}
+
+// 3 太空的世界：太陽（小）、地軸傾斜的地球、月亮，立在深藍星空底座上＋一台天文望遠鏡
+function itemSpace(K) {
+  const bx = -0.22, bz = -0.12;
+  K.cyl(0.66, 0.7, 0.08, bx, 0.04, bz, EC.navy, { seg: 40 });
+  for (let i = 0; i < 11; i++) {                                                     // 星星：底座上的小亮點（平面圓片）
+    const a = i * 2.4, r = 0.22 + 0.38 * ((i * 0.37) % 1);
+    K.add(new THREE.CircleGeometry(0.022, 10), M(bx + Math.cos(a) * r, 0.082, bz + Math.sin(a) * r, -Math.PI / 2, 0, 0), IC.yellow, { noHull: true });
+  }
+  const post = (x, z, h) => K.cyl(0.026, 0.026, h, x, 0.08 + h / 2, z, IC.brass, { seg: 20 });
+  // 太陽
+  post(-0.64, -0.34, 0.66);
+  K.sph(0.24, -0.64, 0.98, -0.34, 0xf6b23a, { ws: 16, hs: 12 });
+  // 地球：地軸傾斜（白色細桿）、藍色海洋＋綠色大陸
+  const ex = -0.06, ey = 0.86, ez = -0.06, tilt = 0.41, er = 0.22, zAxis = new THREE.Vector3(0, 0, 1);
+  post(ex, ez, 0.52);
+  const ax = [Math.sin(tilt), Math.cos(tilt)];
+  K.rod([ex - ax[0] * 0.34, ey - ax[1] * 0.34, ez], [ex + ax[0] * 0.34, ey + ax[1] * 0.34, ez], 0.014, IC.white, { seg: 12 });
+  K.sph(er, ex, ey, ez, 0x3a86e0, { rz: -tilt, ws: 16, hs: 12 });
+  for (const [th, ph, s] of [[0.9, 0.9, 0.13], [1.7, 1.9, 0.11], [1.3, 3.6, 0.12]]) {
+    cap(K, ex, ey, ez, er, new THREE.Vector3(Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)).applyAxisAngle(zAxis, -tilt), s, IC.green);
+  }
+  // 月亮
+  post(0.36, -0.4, 0.6);
+  K.sph(0.09, 0.36, 0.77, -0.4, 0xd5d3cc, { ws: 16, hs: 12 });
+  // 天文望遠鏡（右前方，鏡筒朝後上方的天空）
+  const tx = 0.62, tz = 0.44, ty = 0.54;
+  for (const a of [0.4, 2.5, 4.6]) K.rod([tx, ty, tz], [tx + Math.cos(a) * 0.3, 0, tz + Math.sin(a) * 0.3], 0.018, IC.metalD, { seg: 12 });
+  K.cyl(0.045, 0.045, 0.08, tx, ty + 0.02, tz, IC.metalD, { seg: 20 });
+  const dir = new THREE.Vector3(-0.35, 0.62, -0.7).normalize();
+  const at = t => [tx + dir.x * t, ty + 0.08 + dir.y * t, tz + dir.z * t];
+  K.rod(at(-0.3), at(0.45), 0.075, IC.white, { seg: 24, r2: 0.06 });
+  K.rod(at(0.39), at(0.47), 0.088, IC.blue, { seg: 24 });
+  K.rod(at(-0.3), at(-0.4), 0.03, IC.ink, { seg: 20 });
+  return 1.24;
+}
+
+// 4 大氣與天氣：百葉箱＋風向標與風杯風速計＋一朵下雨的雲
+function itemWeather(K) {
+  // 百葉箱（白色、四腳、正面一片一片的百葉、斜屋頂）
+  const bx = -0.5, bz = -0.06, by = 0.5, bw = 0.6, bh = 0.52, bd = 0.5;
+  for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) K.cyl(0.028, 0.028, by, bx + dx * (bw / 2 - 0.06), by / 2, bz + dz * (bd / 2 - 0.06), IC.white, { seg: 20 });
+  K.box(bw, bh, bd, bx, by + bh / 2, bz, IC.white);
+  for (let i = 0; i < 7; i++) K.box(bw - 0.1, 0.02, 0.03, bx, by + 0.06 + i * 0.064, bz + bd / 2 + 0.01, 0xb9c4ce, { noHull: true, rx: -0.5 });
+  prism(K, [[bx - bw / 2 - 0.06, by + bh], [bx + bw / 2 + 0.06, by + bh], [bx, by + bh + 0.22]], bz - bd / 2 - 0.05, bd + 0.1, 0xeef1f3);
+  // 風向標＋風杯風速計（後方的高桿）
+  const px = 0.36, pz = -0.44, top = 1.5;
+  K.cyl(0.08, 0.1, 0.06, px, 0.03, pz, IC.metalD);
+  K.cyl(0.026, 0.026, top, px, top / 2, pz, IC.steel, { seg: 20 });
+  const vy = 1.14;                                                                    // 風向標：箭頭指向風吹來的方向
+  K.box(0.6, 0.03, 0.03, px + 0.02, vy, pz, IC.ink);
+  K.add(new THREE.ConeGeometry(0.07, 0.18, 20), M(px - 0.34, vy, pz, 0, 0, Math.PI / 2), IC.red);
+  K.box(0.18, 0.16, 0.014, px + 0.28, vy + 0.03, pz, IC.red);
+  K.cyl(0.035, 0.035, 0.04, px, top, pz, IC.metalD, { seg: 20 });
+  for (let i = 0; i < 3; i++) {
+    const a = i * TAU / 3 + 0.3, ex = px + Math.cos(a) * 0.27, ez = pz + Math.sin(a) * 0.27;
+    K.rod([px, top, pz], [ex, top, ez], 0.012, IC.metalD, { seg: 8 });
+    K.add(new THREE.SphereGeometry(0.075, 16, 6, 0, TAU, 0, Math.PI / 2), M(ex, top, ez, 0, -a, Math.PI / 2), IC.blue);
+  }
+  // 雲（右前方）＋雨滴＋地上的小水窪
+  const cx = 0.42, cz = 0.16, cy = 1.06;
+  [[0, 0.02, 0, 0.24], [-0.23, -0.04, 0.03, 0.17], [0.23, -0.03, -0.02, 0.18]].forEach(([x, y, z, r]) => K.add(new THREE.SphereGeometry(r, 16, 6, 0, TAU, 0, Math.PI / 2), Ms(cx + x, cy - 0.1 + y, cz + z, 1, 1.1, 1), 0xf4f6f8)); // 雲（半球，底下平）
+  K.cyl(0.36, 0.3, 0.08, cx, cy - 0.12, cz, 0xc9d3dc, { seg: 24 });
+  K.cyl(0.02, 0.02, cy - 0.16, cx - 0.12, (cy - 0.16) / 2, cz - 0.1, IC.steel, { seg: 20 });                     // 雲的支架（模型）
+  for (const [x, y] of [[-0.2, 0.74], [0.02, 0.62], [0.22, 0.76], [-0.1, 0.4], [0.14, 0.3]]) drop(K, cx + x, y, cz + 0.3 + (0.9 - y) * 0.7, 0.055, 0x2f7fd0); // 雨往前斜落，俯視時才不會被雲擋住
+  K.cyl(0.3, 0.3, 0.02, cx, 0.01, cz + 0.62, 0x8fd3f0, { seg: 28, noHull: true });
+  return top + 0.05;
+}
+
+// 5 全球氣候變遷：桌上型地球儀＋一攤正在融化的冰塊＋溫度計（紅色液柱偏高）
+function itemClimate(K) {
+  // 地球儀
+  const gx = -0.4, gz = -0.14, gy = 0.86, gr = 0.4, tilt = 0.41, zAxis = new THREE.Vector3(0, 0, 1);
+  K.cyl(0.26, 0.3, 0.08, gx, 0.04, gz, IC.woodD);
+  K.cyl(0.035, 0.05, 0.4, gx, 0.28, gz, IC.brass, { seg: 20 });
+  K.torus(gr + 0.05, 0.02, gx, gy, gz, IC.brass, { rx: 0, rz: -tilt - Math.PI * 0.1, arc: Math.PI * 1.2, ts: 28, rs: 6 });
+  K.sph(gr, gx, gy, gz, 0x3a86e0);
+  for (const [th, ph, s] of [[1.0, 1.3, 0.2], [1.6, 0.2, 0.16], [1.2, 2.6, 0.17]]) {
+    cap(K, gx, gy, gz, gr, new THREE.Vector3(Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)).applyAxisAngle(zAxis, -tilt), s, IC.green);
+  }
+  cap(K, gx, gy, gz, gr, new THREE.Vector3(0, 1, 0).applyAxisAngle(zAxis, -tilt), 0.14, EC.snow);   // 北極的冰帽（縮小了）
+  // 融化的冰塊（右前方）：一攤水，上面幾塊冰
+  const ix = 0.34, iz = 0.44;
+  K.cyl(0.42, 0.42, 0.02, ix, 0.01, iz, 0x8fd3f0, { seg: 32, noHull: true });
+  for (const [x, z, s, r] of [[-0.08, -0.06, 0.28, 0.3], [0.16, 0.06, 0.2, -0.5], [-0.12, 0.18, 0.14, 0.9]]) {
+    K.box(s, s * 0.8, s, ix + x, s * 0.4 + 0.02, iz + z, EC.ice, { ry: r });
+    K.box(s * 0.7, 0.02, s * 0.7, ix + x, s * 0.8 + 0.03, iz + z, 0xffffff, { ry: r, noHull: true });
+  }
+  // 溫度計（右後方）：白色板子上的玻璃管，紅色液柱偏高、頂端是粉紅的高溫區
+  const tx = 0.58, tz = -0.38, H = 1.5;
+  K.box(0.3, 0.06, 0.22, tx, 0.03, tz, IC.metalD);
+  K.box(0.24, H, 0.05, tx, 0.06 + H / 2, tz, IC.white);
+  K.box(0.24, 0.24, 0.052, tx, 0.06 + H - 0.22, tz, 0xf6c1b8, { noHull: true });
+  K.cyl(0.036, 0.036, H - 0.24, tx, 0.18 + (H - 0.24) / 2, tz + 0.04, IC.glass, { seg: 20 });
+  K.sph(0.07, tx, 0.18, tz + 0.045, IC.red, { ws: 16, hs: 12 });
+  const top = 0.06 + H - 0.24;
+  K.cyl(0.024, 0.024, top - 0.2, tx, 0.2 + (top - 0.2) / 2, tz + 0.065, IC.red, { seg: 20, noHull: true });
+  for (let i = 0; i < 11; i++) K.box(i % 5 ? 0.045 : 0.08, 0.014, 0.01, tx - 0.07 - (i % 5 ? 0 : 0.017), 0.32 + i * 0.11, tz + 0.03, IC.ink, { noHull: true });
+  K.add(new THREE.ConeGeometry(0.05, 0.1, 20), M(tx + 0.11, top + 0.02, tz + 0.06, 0, 0, Math.PI / 2), IC.red, { noHull: true });
+  return 0.06 + H;
+}
+
 const UNIT_ITEMS = {
   physics: {
     'physics-01': itemBalance, 'physics-02': itemTuningFork, 'physics-03': itemOptics, 'physics-04': itemHeat, 'physics-05': itemPressure,
     'physics-06': itemIncline, 'physics-07': itemOrbit, 'physics-08': itemCoaster, 'physics-09': itemCircuit, 'physics-10': itemMagnet,
+  },
+  earth: {
+    'earth-01': itemWaterLand, 'earth-02': itemPlates, 'earth-03': itemSpace, 'earth-04': itemWeather, 'earth-05': itemClimate,
   },
 };
 const ITEM_PLINTH = { r: 1.22, h: 0.3 }; // 有小物品的單元站：矮而寬的圓台
