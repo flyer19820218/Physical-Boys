@@ -170,7 +170,7 @@
 | 3 | 21–30 | 物理 | mechanics_3、mechanics_4、mechanics_5、kinematics、kinematics_2、kinematics_3、kinematics_4、kinematics_5、newton_1、newton_2 | ☑ |
 | 4 | 31–40 | 物理 | newton_3、newton_4、newton_5、work_1、work_2、work_3、work_4、electronics_1、electronics_2、electronics_3 | ☑ |
 | 5 | 41–50 | 物理／化學 | electronics_4、magnetism_1、electromagnetism_2、electric_motor_3、electromagnetic_induction_4、concerntration_1、concerntration_2、concerntration_3、concerntration_4、atomics_1 | ☑ |
-| 6 | 51–60 | 化學 | atomics_2、atomics_3、atomics_4、chem_reaction_1、chem_reaction_2、chem_reaction_3、chem_reaction_4、redox_1、redox_2、redox_3 | ☐ |
+| 6 | 51–60 | 化學 | atomics_2、atomics_3、atomics_4、chem_reaction_1、chem_reaction_2、chem_reaction_3、chem_reaction_4、redox_1、redox_2、redox_3 | ☑ |
 | 7 | 61–70 | 化學 | electrolyte_1、electrolyte_2、electrolyte_3、electrolyte_4、chem_reaction_balance_1、chem_reaction_balance_2、chem_reaction_balance_3、organics_1、organics_2、organics_3 | ☐ |
 | 8 | 71–80 | 化學／地科 | organics_4、electric_energy_power_1、electric_power_transmission_2、electrical_safety_3、galvanic_batteries_4、electrolysis_5、earth_water_1、earth_landforms_2、earth_coastline_3、earth_rocks_4 | ☐ |
 | 9 | 81–90 | 地科 | earth_interior_1、earth_plates_2、earth_strata_3、earth_taiwan_quake_4、astronomy_universe_1、astronomy_earth_motion_2、astronomy_sunpath_3、astronomy_moon_phases_4、weather_atmosphere_1、weather_cloud_rain_2 | ☐ |
@@ -194,6 +194,10 @@
     - **B. 就地改（題目本來就是四選一或附圖，圖上標了 A／B／C，不能搬走）**：`kinematics`（圓形操場、時鐘兩題原本只有 3 個選項，各補第 4 個；其餘題目選項本來就等長）、`newton_5`（五題都附標示 A／B／C 的力臂圖：選項改成等長、補第 4 個選項，並在 Q2 門的圖與 Q5 圓球上階梯的圖上補了 D 箭頭；Q3 正解改成 D）。這兩課答對／答錯的說明仍是舊的內建說明（會直接顯示答案，沒有獨立的「提示」步驟）。
     - **C. 只重排選項與正解位置、補長度（題目與圖都是原來的）**：`work_1`（Q1 正解 D→A；Q1、Q2 的正解 `0 J` 原本是唯一最短，已補同長度的干擾選項；Q3、Q5 的英文選項長度也調）、`work_2`（Q3 選項長度，中英文差距原本 8 對 16）、`work_3`（正解原本 B、B、B、A、B，已重排成 D、A、C、B、D；Q2 英文選項原本 13 對 24 字元）、`work_4`（正解原本 C、B、B、B、B，已重排成 A、C、D、B、A；Q1 英文 `Bottle opener` 改 `Cap opener`）、`electronics_4`（正解原本 B、C、B、B、B，已重排成 D、A、C、B、A）。
   - **這三批要老師特別看的地方**：①新題庫的題幹與干擾選項都是我寫的（延續原課的題目與數字，部分補了新題）；物理數字我逐題算過，但請老師抽看。②`mechanics_3`、`mechanics_4` 保留原本帶畫布的「解題三部曲」面板（第九法則：不刪原圖、動畫、操作），選擇題另外加在旁邊。③`electromagnetism_2` 本來沒有中英文切換，題庫只在網頁語言為英文時才切換，頁面上看不到切換鈕。④`electric_motor_3` 的 EN 按鈕本來就壞（按鈕是 `.lang-btn`、程式綁的是 `.lang-pill`），我沒動它，只是題庫在 `html lang=en` 時會正確切英文。⑤`electronics_2` 的 `setLang` 補了一行 `document.documentElement.lang`，轉接器才跟得上語言。⑥B、C 兩類的課答錯後仍直接顯示正解（`work_3`、`work_4`、`electronics_3` 的題型題、`electronics_4`），沒有改成「先給提示、可再選」；若老師要一致，再轉成轉接器（但這幾課的圖與題號綁在一起，要重做畫布與題目配對）。⑦`electronics_2` 的「電池電壓特訓」是畫布挑戰，沒動。
+  - **第 6 批（第 51–60 課，化學，2026-10-29；老師：「繼續6~10 gogogo」）**：10 課全部用轉接器（`LessonQuiz.addStatic`）寫新題庫，共 219 題（`atomics_2` 18、`atomics_3` 22、`atomics_4` 22、`chem_reaction_1` 19、`chem_reaction_2` 25、`chem_reaction_3` 29、`chem_reaction_4` 24、`redox_1` 20、`redox_2` 19、`redox_3` 21），題庫在 `assets/quiz/quiz_<課名>_1028_v1.js`。`tools/qa/mcq_check.cjs`：10 個檔中英文「唯一最長」「唯一最短」都是 0%、差距超標 0 題，正解字母各檔大致平均。逐頁逐分頁逐題逐選項在瀏覽器實測（答錯出提示、答對出解答、切英文、無新的 JS 錯誤）全過。
+    - **舊的練習題都改成四選一（原題轉成選擇題，舊介面與 JS 已拿掉）**：`chem_reaction_1`（質量守恆三道計算題）、`chem_reaction_3`（原子量 3、分子量 6、莫耳數量 3、莫耳質量 3，共 15 題）、`chem_reaction_4`（跨單位 6 題、限量試劑資優 3 題中的 3 題）、`redox_1`（3 個觀念題）、`redox_2`（4 道挑戰）、`redox_3`（蘋果維他命 C 一題）。`atomics_2/3/4` 與 `chem_reaction_2` 原本沒有練習題，各分頁新寫 4–6 題。
+    - **沒動的東西**：`atomics_4` 的容器互動遊戲與 quizBoard、各頁的畫布實驗台與互動模擬器都原樣保留（第九法則）。`chem_reaction_1`、`chem_reaction_3`、`chem_reaction_4` 拿掉舊題後不再用到的 `reveal()`／`openSubTab()`／`switchPractice()` 函式一併刪除；`chem_reaction_1`、`chem_reaction_2`、`chem_reaction_3` 的 `setLang` 補了一行 `document.documentElement.lang`，轉接器才跟得上語言。`redox_*` 原本的 `.practice-*` CSS 規則還留在檔裡（沒有任何元素在用）。
+    - **請老師特別看**：①題幹與干擾選項是我依各頁教學文字寫的，化學計算我逐題算過（`chem_reaction_4` 的三道資優限量試劑題的答案沿用原頁解答，我重新驗算過 X＝17、Y＝180、A＝22、C＝81 g、C＝25 g）。②`chem_reaction_4` 刪掉「跨單位進階計算實戰」「資優專區」兩個面板時，面板開頭那句「化學藥品以公克稱重，但反應看莫耳」的導言也一起不見了（同樣的意思在「質量與莫耳的運算路徑」面板裡有）。③`redox_1` 的 `#lab` 分頁題目（鎂、銅、硫的現象）是我依實驗紀錄表寫的，請確認與老師實驗一致。④`atomics_2` 的 `assets/covers/atomics_2_cover_v1.jpg` 本來就不存在（404），與這批無關，沒補。
 
 ## 注意事項
 
