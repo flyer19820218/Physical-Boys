@@ -1,0 +1,72 @@
+/* Multiple-choice practice for astronomy_earth_motion_2.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('astronomy_earth_motion_2',{
+ '.panel:nth-child(3)':[
+  Q(P(`如果地球停止自轉，但太陽仍照著地球，同一地點還會每天規律出現白天、黑夜交替嗎？`,`If Earth stopped rotating while the Sun still shone on it, would one place still have a regular daily day–night cycle?`),
+   [P(`會，因為太陽照著所以仍然每天有晝夜`,`Yes; sunlight still brings day and night`),P(`會，因為地球公轉也會帶來晝夜交替`,`Yes; orbiting alone makes day and night`),P(`不會，同一地點不會每天依序穿過晝夜`,`No; a place no longer passes day to night`),P(`不會，但整個地球會永遠一直是白天`,`No; but all of Earth would stay in daylight`)],2,
+   P(`沒有自轉，同一地點就不會每天規律由日照區轉入背光區，因此不會有約一天一次的晝夜交替。`,`Without rotation a place would not move regularly from lit to dark each day, so the once-a-day cycle would not occur.`),
+   P(`晝夜兩半仍然存在，但同一地點還會不會依序穿過它們？`,`The day and night halves still exist, but would a place still pass through them in turn?`)),
+  Q(P(`從北極上空俯視，地球的自轉方向是順時鐘還是逆時鐘？自轉一周大約要多久？`,`Seen from above the North Pole, does Earth rotate clockwise or counterclockwise, and how long is one rotation?`),
+   [P(`逆時鐘，約一日一周`,`Counterclockwise, 1 day`),P(`順時鐘，約一日一周`,`Clockwise, taking 1 day`),P(`逆時鐘，約一年一周`,`Counterclockwise, 1 year`),P(`順時鐘，約一年一周`,`Clockwise, taking 1 year`)],0,
+   P(`地球由西向東自轉（逆時鐘），一周約一日，所以每天會輪到一次白天、一次黑夜。`,`Earth rotates west to east (counterclockwise), once in about a day, so each place gets one day and one night daily.`),
+   P(`地球由西向東自轉；看右上角的小窗。`,`Earth rotates west to east; see the small window at the top right.`)),
+  Q(P(`畫面中北極背向太陽。為什麼北極圈附近可出現永夜？`,`The North Pole tilts away from the Sun. Why can polar night occur near the Arctic Circle?`),
+   [P(`地球離太陽太遠，所以那裡一直都沒有光`,`Earth is simply too far from the Sun there`),P(`地軸傾斜，北極圈內轉一圈仍在背光區`,`Axis tilt leaves the Arctic Circle in dark`),P(`太陽熄滅了好幾個月，因此出現了永夜`,`The Sun goes out for several months there`),P(`月球擋住了陽光，使得極圈一直黑暗`,`The Moon blocks the sunlight at the poles`)],1,
+   P(`地軸傾斜 23.5°，北極背向太陽時，北極圈內即使自轉一整圈也一直留在背光半邊，出現永夜；南極圈內則是永晝。`,`With a 23.5° tilt, when the North Pole leans away, places inside the Arctic Circle stay in the dark half all day; the Antarctic Circle has polar day.`),
+   P(`想像北極圈裡的一點跟著自轉繞一整圈：有沒有機會轉進日照區？`,`Imagine a point in the Arctic Circle turning once around: does it ever enter sunlight?`))],
+ '.panel:nth-child(4)':[
+  Q(P(`為什麼 B 是日落，而 D 是日出？`,`Why is B sunset while D is sunrise?`),
+   [P(`B 正從日半球進入夜半球，所以是日落`,`B enters the night side, so it is sunset`),P(`B 正從夜半球進入日半球，所以是日落`,`B enters the day side, so it is sunset`),P(`B 離太陽最近，所以此時是日落時間`,`B is closest to the Sun, so it is sunset`),P(`B 正對著月亮方向，所以是日落時間`,`B faces the Moon, so it is sunset time`)],0,
+   P(`B 正從日半球進入夜半球，所以是日落；D 正從夜半球進入日半球，所以是日出。`,`B is moving from the day hemisphere into the night hemisphere (sunset); D moves from night into day (sunrise).`),
+   P(`先確認地球由西向東自轉，再看 B、D 分別從哪一半轉到哪一半。`,`First confirm Earth rotates west to east, then see which half B and D move from and to.`)),
+  Q(P(`A、C 兩個位置的時間分別為幾點？`,`What time is it at A and at C?`),
+   [P(`A 是午夜 12 時，C 是中午 12 時`,`A is 12 midnight and C is 12 noon`),P(`A 是上午 6 時，C 是下午 6 時`,`A is 6 a.m. and C is 6 p.m. sharp`),P(`A 是下午 6 時，C 是上午 6 時`,`A is 6 p.m. and C is 6 a.m. sharp`),P(`A 是中午 12 時，C 是午夜 12 時`,`A is 12 noon and C is 12 midnight`)],3,
+   P(`A 正對太陽是中午 12 時；C 背對太陽是午夜 12 時。`,`A faces the Sun, so 12 noon; C faces away, so 12 midnight.`),
+   P(`A 正對太陽，C 背對太陽。`,`A faces the Sun and C faces away from it.`)),
+  Q(P(`地球自轉一周約 24 小時。經度每差 15°，時間大約差幾小時？`,`Earth rotates once in about 24 hours. About how many hours does 15° of longitude make?`),
+   [P(`約 2 小時`,`About 2 hours`),P(`約 1 小時`,`About 1 hour`),P(`約 15 小時`,`About 15 hours`),P(`約 1 天`,`About 1 day`)],1,
+   P(`360° ÷ 24 ＝ 15°，地球每小時大約轉 15°，所以經度每差 15°，時間差約 1 小時。東邊先進入白天，時刻較快。`,`360° ÷ 24 = 15°, so Earth turns about 15° an hour; 15° of longitude makes about 1 hour, and places to the east are ahead.`),
+   P(`360° ÷ 24 小時 ＝ ？`,`What is 360° ÷ 24 hours?`))],
+ '.panel:nth-child(5)':[
+  Q(P(`每天看到太陽東升西落，是太陽真的每天繞地球一圈嗎？`,`We see the Sun rise in the east and set in the west each day. Is the Sun really orbiting Earth once a day?`),
+   [P(`不是，地球自轉造成的視運動`,`No; Earth's rotation makes it appear so`),P(`是，太陽真的每天繞著地球轉`,`Yes; the Sun really circles Earth daily`),P(`是，因為地球固定不動而太陽在轉`,`Yes; Earth stays still, the Sun moves`),P(`不是，地球公轉造成的視運動`,`No; Earth's revolution makes it appear`)],0,
+   P(`東升西落主要是地球自轉造成的視覺效果：地球西向東轉，太陽看起來向相反方向由東向西移動。`,`The daily motion is an apparent effect of Earth's rotation: Earth turns west to east, so the Sun seems to move east to west.`),
+   P(`想像坐在向前行駛的車內，路旁房子看起來往哪個方向移動？`,`Sitting in a moving car, which way do roadside houses seem to move?`)),
+  Q(P(`面向南方站著。早上的太陽在哪一邊？中午、傍晚呢？`,`Face south. Where is the Sun in the morning, at noon and in the evening?`),
+   [P(`早上西邊，中午最高，傍晚東邊`,`Morning west, noon highest, evening east`),P(`早上東邊，中午最低，傍晚北邊`,`Morning east, noon lowest, evening north`),P(`早上南邊，中午最高，傍晚北邊`,`Morning south, noon highest, night north`),P(`早上東邊，中午最高，傍晚西邊`,`Morning east, noon highest, evening west`)],3,
+   P(`早上太陽在東邊（左手邊），中午升到最高，傍晚落到西邊（右手邊）：太陽看起來由東向西移動。`,`In the morning the Sun is east (your left), highest at noon, and sets in the west (your right): it appears to move east to west.`),
+   P(`面向南方時，左手邊是東、右手邊是西。`,`Facing south, your left is east and your right is west.`)),
+  Q(P(`月亮和星星也會東升西落嗎？為什麼？`,`Do the Moon and the stars also rise in the east and set in the west? Why?`),
+   [P(`不會，因為只有太陽才會東升西落`,`No; only the Sun rises and sets each day`),P(`會，這是地球自轉造成的視運動`,`Yes; Earth's spin makes them rise and set`),P(`會，因為月亮與星星都繞著地球轉`,`Yes; the Moon and stars circle the Earth`),P(`不會，月亮和星星一直固定不動`,`No; the Moon and stars never seem to move`)],1,
+   P(`東升西落是地球由西向東自轉造成的視運動，所以太陽、月亮、星星看起來都由東向西移動。`,`Rising and setting is the apparent motion from Earth turning west to east, so the Sun, Moon and stars all seem to move east to west.`),
+   P(`想想到底是誰在轉。`,`Think about what is actually turning.`))],
+ '.panel:nth-child(6)':[
+  Q(P(`地球公轉到軌道另一側時，地軸是否會「轉過去」繼續朝向太陽？`,`When Earth reaches the other side of its orbit, does its axis turn over to keep pointing toward the Sun?`),
+   [P(`會，地軸每個月都轉向太陽一次`,`Yes; the axis turns toward the Sun monthly`),P(`會，地軸永遠追著太陽的方向轉`,`Yes; the axis always tracks the Sun round`),P(`不會，因為地軸每天都垂直於軌道`,`No; the axis stays upright to the orbit`),P(`不會，一年中地軸方向近似固定`,`No; the axis direction stays nearly fixed`)],3,
+   P(`一年中地軸方向近似固定，因此有時北半球傾向太陽、有時背向太陽，造成季節性的日照差異。`,`The axis direction stays nearly fixed, so the Northern Hemisphere sometimes tilts toward the Sun and sometimes away, causing seasons.`),
+   P(`觀察四個位置的地軸線是不是互相平行。`,`Check whether the axis lines at the four positions are parallel.`)),
+  Q(P(`北半球夏至時，地球自轉軸的北端朝向太陽還是遠離太陽？夏至大約在國曆幾月幾日？`,`At the June solstice, does the north end of Earth's axis point toward or away from the Sun, and about when is it?`),
+   [P(`遠離太陽；約 6 月 20～22 日`,`Away from the Sun; about June 20–22`),P(`朝向太陽；約 12 月 21～23 日`,`Toward the Sun; about Dec 21–23`),P(`遠離太陽；約 12 月 21～23 日`,`Away from the Sun; about Dec 21–23`),P(`朝向太陽；約 6 月 20～22 日`,`Toward the Sun; about June 20–22`)],3,
+   P(`夏至時軸北端朝向太陽，大約在 6 月 20～22 日；冬至時軸北端遠離太陽，大約在 12 月 21～23 日。`,`At the June solstice the north end points toward the Sun (about June 20–22); at the December solstice it points away (about Dec 21–23).`),
+   P(`看四個位置的地軸，以及知識快遞的表。`,`Look at the axis at the four positions and at the reference table.`)),
+  Q(P(`什麼是公轉軸？地球的自轉軸和公轉軸夾多少度？`,`What is the orbital axis, and what angle does Earth's rotation axis make with it?`),
+   [P(`垂直於軌道面的軸；自轉軸傾斜 66.5°`,`Axis perpendicular to the orbital plane; tilt 66.5°`),P(`平行於軌道面的軸；自轉軸傾斜 23.5°`,`Axis parallel to the orbital plane; tilt 23.5°`),P(`垂直於軌道面的軸；自轉軸傾斜 23.5°`,`Axis perpendicular to the orbital plane; tilt 23.5°`),P(`沿著軌道前進的軸；自轉軸傾斜 90°`,`Axis pointing along the orbital path; tilt 90°`)],2,
+   P(`公轉軸是通過地心、與公轉軌道面垂直的軸線；自轉軸相對於公轉軸傾斜 23.5°。`,`The orbital axis passes through Earth's centre perpendicular to the orbital plane; the rotation axis is tilted 23.5° from it.`),
+   P(`打開「23.5° 標示」看右下角的小圖。`,`Turn on the 23.5° marker and look at the small diagram at the lower right.`))],
+ '.panel:nth-child(7)':[
+  Q(P(`同一束太陽光，為什麼斜射時地表升溫通常比直射慢？`,`Why does the ground usually warm more slowly under oblique rays than direct rays of the same beam?`),
+   [P(`斜射時太陽發出的光量變得少了許多`,`The Sun gives off less light when slanted`),P(`能量分散在較大地面，單位面積較少`,`Energy spreads over a larger ground area`),P(`斜射時光被地表完全反射回到太空`,`Slanted light is reflected back to space`),P(`斜射的光速度比較慢，所以會比較冷`,`Slanted rays move slower, so it is cooler`)],1,
+   P(`斜射時，同一束光的能量分散在較大的面積，單位面積獲得的能量較少；直射較集中，地表較容易升溫。`,`With oblique rays the same energy spreads over a larger area, so each unit area gets less; direct rays are more concentrated.`),
+   P(`不是光變少了，而是同一束能量落在多大的面積上。`,`The light is not less; it is about how large an area the same energy covers.`)),
+  Q(P(`若地球自轉軸垂直於地球公轉軌道面（傾斜 0 度），地球的晝夜長短與四季氣候會如何變化？`,`If Earth's axis were perpendicular to its orbital plane (0° tilt), what would happen to day length and the seasons?`),
+   [P(`晝夜長短固定，四季變得更明顯`,`Day length is fixed, seasons get stronger`),P(`晝夜長短每天變化，四季更分明`,`Day length varies daily, clear seasons`),P(`晝夜長短固定，沒有四季變化`,`Day length stays fixed, with no seasons`),P(`夏天極晝更久，冬天極夜更久`,`Polar day and night would each last longer`)],2,
+   P(`太陽會一直直射赤道，各地的晝夜長短固定，也不會有四季的變化。`,`The Sun would always be overhead at the equator, so day length would stay the same everywhere and there would be no seasons.`),
+   P(`在 B 按「地軸改成 0°」，看直射點一年中還會不會南北移動。`,`In B press "axis 0°" and see whether the direct-ray point still moves north–south.`)),
+  Q(P(`夏至時，太陽直射哪一條緯線？此時北半球和南半球各是什麼季節？`,`At the June solstice, which latitude gets direct rays, and what season is it in each hemisphere?`),
+   [P(`北回歸線；北半球夏季，南半球冬季`,`Tropic of Cancer; north summer, south winter`),P(`南回歸線；北半球夏季，南半球冬季`,`Tropic of Capricorn; north summer, south winter`),P(`赤道；兩半球都是溫暖的春季`,`Equator; both hemispheres have mild spring`),P(`北回歸線；北半球冬季，南半球夏季`,`Tropic of Cancer; north winter, south summer`)],0,
+   P(`太陽直射北回歸線（北緯 23.5°）；北半球是夏季，南半球因太陽斜射、氣溫較低，是冬季。`,`The Sun is overhead at the Tropic of Cancer (23.5° N); the north has summer while the south, with oblique rays, has winter.`),
+   P(`在 B 按「夏至」，看直射點和左上角的直射緯度。`,`In B press "June solstice" and look at the direct-ray point and latitude at the top left.`))]
+});
+})();
