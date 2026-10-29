@@ -1,0 +1,72 @@
+/* Multiple-choice practice for earth_plates_2.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('earth_plates_2',{
+ '.panel:nth-child(3)':[
+  Q(P(`在世界地圖上，大西洋正中央有一條板塊交界。關於板塊交界的位置，下列哪一項正確？`,`On the world map, a plate boundary runs through the middle of the Atlantic. Which statement about boundary locations is correct?`),
+   [P(`全都沿著大陸的海岸線分布`,`All follow the continents' coastlines`),P(`有些在海底，有些穿過陸地`,`Some under the sea, some across land`),P(`全部都在陸地上，海裡沒有`,`All lie on land, none in the ocean`),P(`就等於國與國之間的邊界線`,`Same as the borders between countries`)],1,
+   P(`板塊交界是岩石圈破裂的界線，不是地表看得到的線，所以不等於海岸線，也不等於國界。`,`A plate boundary is where the lithosphere breaks, not a visible line, so it is neither the coastline nor a national border.`),
+   P(`轉動地球儀，看看橘線有沒有跑到海中央，或切過陸地。`,`Rotate the globe: does the orange line run through mid-ocean or cut across land?`)),
+  Q(P(`臺灣位在哪兩個板塊的交界？`,`Taiwan sits on the boundary between which two plates?`),
+   [P(`太平洋板塊與北美板塊`,`Pacific and North American`),P(`歐亞板塊與印度板塊`,`Eurasian and Indian-Australian`),P(`菲律賓海板塊與太平洋板塊`,`Philippine Sea and Pacific`),P(`歐亞板塊與菲律賓海板塊`,`Eurasian and Philippine Sea`)],3,
+   P(`臺灣正好在歐亞板塊與菲律賓海板塊的交界上，所以地震與造山活動特別頻繁。`,`Taiwan lies right on the Eurasian–Philippine Sea boundary, so quakes and mountain building are frequent.`),
+   P(`用「找臺灣」看看臺灣兩側各是哪一個板塊。`,`Use "find Taiwan" and see which plate lies on each side.`)),
+  Q(P(`地球儀上，大多數火山都沿著板塊交界排列，但夏威夷的火山卻在太平洋中央。這張圖顯示的是什麼？`,`Most volcanoes line up along plate boundaries, yet Hawaii's are in the middle of the Pacific. What does the map show?`),
+   [P(`夏威夷其實位在兩板塊交界上`,`Hawaii lies on a boundary between plates`),P(`火山只會出現在海岸線附近`,`Volcanoes occur only near the coastlines`),P(`地球儀上的火山位置畫錯了`,`The volcano positions on it are wrong`),P(`多數靠近交界，夏威夷是例外`,`Most are near boundaries; Hawaii is not`)],3,
+   P(`夏威夷在太平洋板塊中間，附近沒有交界線，所以不能說火山一定出現在交界上。`,`Hawaii is in the middle of the Pacific Plate with no boundary nearby, so volcanoes do not always occur at boundaries.`),
+   P(`回想「地震火山」圖層：夏威夷的紅點附近有沒有橘色交界線？`,`Recall the quake–volcano layer: is there an orange boundary near the red dot of Hawaii?`))],
+ '.panel:nth-child(4)':[
+  Q(P(`兩個海底板塊互相分離時，中央的裂隙會發生什麼事？`,`When two oceanic plates move apart, what happens at the central rift?`),
+   [P(`海水灌入裂隙，把地殼溶解掉`,`Seawater floods in and dissolves crust`),P(`兩側的地殼被擠壓而向上隆起`,`The crust on both sides is pushed up`),P(`岩漿上升冷卻，成新海洋地殼`,`Magma rises and cools into new crust`),P(`舊的海洋地殼往下沉入地函中`,`Old oceanic crust sinks into mantle`)],2,
+   P(`板塊拉開讓地函的岩漿有路上來，冷卻後成為新地殼，長期累積形成中洋脊。`,`Spreading lets mantle magma rise and cool into new crust, building a mid-ocean ridge over time.`),
+   P(`「分離」之後空出來的地方，下面有什麼可以補上去？`,`After the plates separate, what can fill the gap from below?`)),
+  Q(P(`在大西洋，從中洋脊往西每隔一段距離鑽取海底岩石。哪一個位置的地殼最老？`,`In the Atlantic, rock is drilled at intervals westward from the mid-ocean ridge. Where is the crust oldest?`),
+   [P(`離中洋脊 100 km 處`,`100 km from the ridge`),P(`離中洋脊 900 km 處`,`900 km from the ridge`),P(`離中洋脊 400 km 處`,`400 km from the ridge`),P(`正好位在中洋脊的軸上`,`Right on the ridge axis`)],1,
+   P(`新地殼在中洋脊生成後隨板塊向兩側移動，離得越遠，形成的時間越久，所以越老。`,`New crust forms at the ridge and moves outward, so the farther away, the older it is.`),
+   P(`新地殼在哪裡生成？生成後會往哪個方向走？`,`Where is new crust made, and which way does it travel afterwards?`)),
+  Q(P(`地函熱對流與板塊分離有什麼關係？`,`How is mantle convection related to plates moving apart?`),
+   [P(`熱對流使板塊受熱，所以自己膨脹分開`,`Heated plates simply expand and split apart`),P(`熱地函上升後兩側流動，拖著板塊分離`,`Rising hot rock flows out and drags plates`),P(`冷的地函物質向上推，直接把板塊頂開`,`Cold mantle rock shoves the plates apart`),P(`對流只發生在海水中，和板塊毫無關係`,`Convection happens only in seawater here`)],1,
+   P(`地函在岩石圈底下流動時，會帶著上方的板塊一起往兩側移動，中間的裂隙再由岩漿補上。`,`Mantle flowing under the lithosphere carries the plates sideways, and magma fills the rift.`),
+   P(`熱的物質上升之後往哪裡流？板塊在它上面會怎樣？`,`Where does rising hot material flow, and what happens to the plate above it?`))],
+ '.panel:nth-child(5)':[
+  Q(P(`海洋地殼與大陸地殼互相推擠時，為什麼通常是海洋地殼往下隱沒？`,`When oceanic and continental crust collide, why does the oceanic crust usually subduct?`),
+   [P(`海洋地殼比較厚，所以比較重`,`Oceanic crust is thicker, so it is heavier`),P(`海洋地殼密度較大（約3.0）`,`Its average density is higher at 3.0 g/cm³`),P(`海水壓在海洋地殼上，所以下沉`,`Seawater presses on top and forces it down`),P(`大陸地殼比較硬，所以不會移動`,`Continental crust is harder and stays put`)],1,
+   P(`海洋地殼平均密度約 3.0 g/cm³，大陸地殼約 2.7 g/cm³，密度大的像重物沉入水中，被拉成深凹的海溝。`,`Oceanic crust (about 3.0 g/cm³) is denser than continental (about 2.7), so it sinks, forming a deep trench.`),
+   P(`決定誰下沉的不是厚薄。比較「比密度」裡兩種地殼的數值。`,`Thickness does not decide. Compare the density values of the two crusts.`)),
+  Q(P(`在隱沒帶，從海溝往大陸內側，地震的震源深度有什麼變化？`,`In a subduction zone, how does earthquake focal depth change from the trench inland?`),
+   [P(`越往內陸震源越淺`,`Foci get shallower inland`),P(`越往內陸震源越深`,`Foci get deeper inland`),P(`各處的深度都差不多`,`Depth is about the same`),P(`海溝處最深，往內陸漸淺`,`Deepest at the trench`)],1,
+   P(`板塊斜斜往大陸下方下沉，越往內陸位置越深；震源連起來剛好描出下沉板塊的斜面。`,`The plate dives obliquely beneath the continent, so foci trace its sloping surface and deepen inland.`),
+   P(`這個板塊離開海溝後是斜斜往下走，還是平平往前走？`,`After leaving the trench, does the plate go down at a slant or move level?`)),
+  Q(P(`在海洋板塊隱沒的地方，火山通常出現在哪裡？`,`Where do volcanoes usually occur at a place where oceanic crust subducts?`),
+   [P(`大陸側，離海溝有段距離`,`Continental side, away from the trench`),P(`正好就在海溝的最底部`,`Right at the very bottom of the trench`),P(`位在海洋板塊的正中央`,`Right in the middle of the oceanic plate`),P(`在遠離隱沒帶的大陸中心`,`Deep inside the continent, far inland`)],0,
+   P(`下沉板塊到一定深度，使上方地函部分熔融，岩漿再往上冒出，所以火山不在海溝正上方。`,`The sinking plate partly melts the mantle above it at depth, and magma rises, so volcanoes are not right over the trench.`),
+   P(`下沉的板塊要沉到多深，才會讓上方的地函熔融？`,`How deep must the plate sink before the mantle above melts?`))],
+ '.panel:nth-child(6)':[
+  Q(P(`兩塊大陸地殼互相碰撞時，交界處的地殼會怎麼變化？`,`When two continental plates collide, how does the crust at the boundary change?`),
+   [P(`寬度變長、厚度變薄、地表下陷`,`Wider, thinner, and the ground sinks`),P(`寬度縮短、厚度增加、地表隆起`,`Narrower, thicker, and the ground rises`),P(`寬度縮短、厚度變薄、地表下陷`,`Narrower, thinner, and the ground sinks`),P(`寬度厚度都不變，整片側向滑動`,`Unchanged in size, sliding sideways only`)],1,
+   P(`強烈的擠壓讓地殼向上隆起並向下增厚，岩層彎曲成褶皺，形成高聳的山脈。`,`Strong squeezing lifts and thickens the crust, folding the rock layers into high mountains.`),
+   P(`想像從左右兩邊擠壓一疊柔軟的厚紙板，寬度與高度會怎樣？`,`Imagine squeezing a stack of soft cardboard from both sides. What happens to its width and height?`)),
+  Q(P(`海洋地殼與大陸地殼碰撞會隱沒，為什麼兩塊大陸地殼碰撞卻會造出高山？`,`Oceanic crust subducts, so why do two continental plates colliding build high mountains?`),
+   [P(`大陸地殼的密度都很大，一起下沉`,`Both are very dense and sink together`),P(`大陸地殼比海洋地殼薄，被擠成山`,`It is thinner than oceanic crust here`),P(`兩塊大陸地殼密度都小，難以下沉`,`Both continental, light, resist sinking`),P(`大陸之間的海水把地殼頂高了`,`Seawater between them pushes crust upward`)],2,
+   P(`誰下沉取決於密度，兩塊大陸地殼都較輕，無法深深隱沒，只好縮短、增厚、隆起成山脈。`,`Sinking depends on density; both continental crusts are light and cannot subduct, so they shorten, thicken and rise into mountains.`),
+   P(`回想誰該往下沉的判斷標準，再比較兩塊大陸地殼的密度。`,`Recall what decides which sinks, then compare the densities of the two continental crusts.`)),
+  Q(P(`喜馬拉雅山的高處為什麼找得到海洋生物的化石？`,`Why can marine fossils be found high in the Himalayas?`),
+   [P(`原本是海底，岩層被擠壓推高`,`It was seafloor, squeezed up by impact`),P(`海水曾漲到山頂，後來又退去了`,`The sea once reached the summit and left`),P(`海洋生物自己慢慢爬到山上去`,`Sea creatures climbed up by themselves`),P(`火山噴發時把化石噴到山頂上`,`Eruptions threw seafloor fossils uphill`)],0,
+   P(`含海洋化石的岩層原本在海底，大陸碰撞時被擠壓、褶皺並向上隆起，成了世界屋脊的一部分。`,`Fossil-bearing rock layers began on the seafloor and were squeezed, folded and lifted by the collision.`),
+   P(`化石藏在岩層裡。這些岩層原本形成在哪裡，後來受到什麼力量？`,`Fossils lie in rock layers. Where did these layers form, and what force acted later?`))],
+ '.panel:nth-child(7)':[
+  Q(P(`把全球的地震點、火山點和板塊交界畫在同一張圖上，會發現什麼？`,`Plotting world earthquakes, volcanoes and plate boundaries on one map, what do you find?`),
+   [P(`地震和火山平均散布在世界各地`,`Spread out evenly across the whole world`),P(`多成帶狀，且與板塊交界高度重疊`,`Mostly belts that overlap plate boundaries`),P(`地震集中板塊中央，火山在海岸線`,`Quakes mid-plate, volcanoes at coastlines`),P(`只有火山沿交界，地震與交界無關`,`Volcanoes follow boundaries; quakes do not`)],1,
+   P(`交界是板塊相對運動最明顯的地方，岩層容易斷裂錯動，也常有岩漿活動，所以地震與火山常在那裡出現。`,`Boundaries are where plates move relative to each other, so rock fractures and magma activity are common there.`),
+   P(`用「聚焦」功能，分別看地震、火山，再看交界線。`,`Use "focus" to view quakes, volcanoes, then boundaries separately.`)),
+  Q(P(`太平洋周圍有一圈地震與火山特別多的地帶，叫做什麼？`,`What is the ring of frequent earthquakes and volcanoes around the Pacific called?`),
+   [P(`大西洋中洋脊帶`,`Mid-Atlantic Ridge`),P(`喜馬拉雅山脈帶`,`Himalayan mountain belt`),P(`夏威夷火山鏈`,`Hawaiian Islands chain`),P(`環太平洋火山帶`,`Pacific Ring of Fire`)],3,
+   P(`太平洋四周有許多板塊交界，板塊在那裡隱沒或擠壓，所以地震與火山沿著邊緣排成一圈。`,`Many plate boundaries surround the Pacific where plates subduct or press together, forming a ring of quakes and volcanoes.`),
+   P(`在綜合圖上看太平洋的邊緣，藍點和紅點排成什麼形狀？`,`On the combined map, what shape do the blue and red dots form around the Pacific?`)),
+  Q(P(`一位學生說：「一個地方地震很多，那裡附近很可能有板塊交界。」這個推論合理嗎？`,`A student says: "A place with many earthquakes probably lies near a plate boundary." Is this reasonable?`),
+   [P(`不合理，地震與板塊交界毫無關係`,`No, quakes have nothing to do with plates`),P(`合理，地震常集中在板塊交界附近`,`Yes, quakes cluster near plate boundaries`),P(`不合理，地震只發生在板塊正中央`,`No, quakes only happen in plate centres`),P(`不合理，板塊交界只出現在海底`,`No, boundaries exist only on the seafloor`)],1,
+   P(`地震帶與板塊交界高度重疊，臺灣在歐亞板塊與菲律賓海板塊交界附近，地震特別多；夏威夷這類少數例外需要另外解釋。`,`Quake belts overlap plate boundaries; Taiwan has many quakes near the Eurasian–Philippine Sea boundary. Exceptions like Hawaii need separate explanations.`),
+   P(`回想地圖上藍點與橘線的位置關係。`,`Recall how the blue dots relate to the orange lines on the map.`))]
+});
+})();
