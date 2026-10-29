@@ -20,6 +20,9 @@ const DISC_R = 14.4;          // 地圖底盤半徑
 const EXT = { v: { ex: 6.8, ey: 11.4 }, h: { ex: 12.4, ey: 6.8 } };
 const PROP_COUNT = 120;      // 每館的特色小景數量（縮小、加密，球的輪廓才不會被撐開）
 const E_FLAT = 0.2;           // 廣場、單元站壓平後的高度
+const PLANET_ITEM_S = 0.75;   // 單元小物品在球面上的縮放（館內地圖＝1）
+const PLANET_SIGN_H = 0.72;   // 有小物品時，球面上封面小牌子的高度（原本 1.1）
+const MAP_SIGN = { size: 0.9, focus: 1.15, gap: 0.12, back: 0.7 }; // 館內地圖：封面小牌子的高度、選中時的高度、和物品在畫面上的間隔、往後（北）退多少
 // 畫布是透明的（後面是 CSS 星雲）。一般的加法混色會把 alpha 也加成 1，背景就被蓋成暗色。
 // GLOW_BLEND_A：顏色相加、alpha 也相加（著色器輸出的 alpha＝亮度，屬於正常的預乘透明）
 // GLOW_BLEND：顏色相加、alpha 不動（給星流、火焰這種一般材質用）
@@ -79,33 +82,72 @@ function expandGeo(geo, w) {
   return geo;
 }
 
-// parts: [{g: BufferGeometry, m: Matrix4, color: Color, noHull?: boolean}]
-// 回傳 {body, hull}：body 帶頂點色（平面著色），hull 是各零件各自放大一圈的描邊外殼。
-function buildMerged(parts, hullWidth) {
+// 沿「同一位置的平均面法線」往外推 w：粗細一致的描邊外殼（細長零件用；expandGeo 對細長零件幾乎沒有描邊）
+function inflateGeo(g, w) {
+  const pa = g.attributes.position.array, n = pa.length / 3;
+  const acc = new Map(), keys = new Array(n);
+  const ax = new THREE.Vector3(), bx = new THREE.Vector3(), cx = new THREE.Vector3();
+  for (let t = 0; t + 2 < n; t += 3) {
+    ax.fromArray(pa, t * 3); bx.fromArray(pa, t * 3 + 3); cx.fromArray(pa, t * 3 + 6);
+    cx.sub(bx); bx.sub(ax); bx.cross(cx);
+    const l = bx.length();
+    for (let k = 0; k < 3; k++) {
+      const i = (t + k) * 3;
+      const key = Math.round(pa[i] * 2e3) + ',' + Math.round(pa[i + 1] * 2e3) + ',' + Math.round(pa[i + 2] * 2e3);
+      keys[t + k] = key;
+      let a = acc.get(key);
+      if (!a) { a = [0, 0, 0]; acc.set(key, a); }
+      if (l > 1e-12) { a[0] += bx.x / l; a[1] += bx.y / l; a[2] += bx.z / l; }
+    }
+  }
+  const out = new Float32Array(pa.length);
+  for (let i = 0; i < n; i++) {
+    const a = acc.get(keys[i]), l = Math.hypot(a[0], a[1], a[2]) || 1;
+    out[i * 3] = pa[i * 3] + w * a[0] / l; out[i * 3 + 1] = pa[i * 3 + 1] + w * a[1] / l; out[i * 3 + 2] = pa[i * 3 + 2] + w * a[2] / l;
+  }
+  return out;
+}
+
+// parts: [{g: BufferGeometry, m: Matrix4, color: Color, noHull?: boolean, glass?: boolean}]
+// 回傳 {body, hull, glass}：body 帶頂點色（平面著色），hull 是各零件各自放大一圈的描邊外殼；
+// glass＝標了 glass 的零件（半透明另畫，沒有描邊；沒有就是 null）。
+// opt.inflate：描邊改用 inflateGeo（粗細一致）。
+function buildMerged(parts, hullWidth, opt = {}) {
   const pos = [], nor = [], col = [], hpos = [];
+  const gpos = [], gnor = [], gcol = [];
   for (const p of parts) {
     const g = p.g.index ? p.g.toNonIndexed() : p.g.clone();
     g.applyMatrix4(p.m);
     g.computeVertexNormals();
     const pa = g.attributes.position.array, na = g.attributes.normal.array;
-    for (let i = 0; i < pa.length; i++) { pos.push(pa[i]); nor.push(na[i]); }
-    for (let i = 0; i < pa.length / 3; i++) col.push(p.color.r, p.color.g, p.color.b);
-    if (hullWidth > 0 && !p.noHull) {
-      const h = expandGeo(g.clone(), hullWidth);
-      const ha = h.attributes.position.array;
-      for (let i = 0; i < ha.length; i++) hpos.push(ha[i]);
-      h.dispose();
+    const P = p.glass ? gpos : pos, N = p.glass ? gnor : nor, C = p.glass ? gcol : col;
+    for (let i = 0; i < pa.length; i++) { P.push(pa[i]); N.push(na[i]); }
+    for (let i = 0; i < pa.length / 3; i++) { C.push(p.color.r, p.color.g, p.color.b); if (p.glass) C.push(p.alpha == null ? 0.4 : p.alpha); }
+    if (hullWidth > 0 && !p.noHull && !p.glass) {
+      if (opt.inflate) {
+        const ha = inflateGeo(g, hullWidth);
+        for (let i = 0; i < ha.length; i++) hpos.push(ha[i]);
+      } else {
+        const h = expandGeo(g.clone(), hullWidth);
+        const ha = h.attributes.position.array;
+        for (let i = 0; i < ha.length; i++) hpos.push(ha[i]);
+        h.dispose();
+      }
     }
     g.dispose();
     p.g.dispose();
   }
-  const body = new THREE.BufferGeometry();
-  body.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  body.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
-  body.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  const mk = (P, N, C, cs) => {
+    const b = new THREE.BufferGeometry();
+    b.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+    b.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+    b.setAttribute('color', new THREE.Float32BufferAttribute(C, cs));
+    return b;
+  };
+  const body = mk(pos, nor, col, 3);
   const hull = new THREE.BufferGeometry();
   hull.setAttribute('position', new THREE.Float32BufferAttribute(hpos, 3));
-  return { body, hull };
+  return { body, hull, glass: gpos.length ? mk(gpos, gnor, gcol, 4) : null }; // 玻璃的顏色帶 alpha（每個零件各自的透明度）
 }
 
 const emojiCache = new Map();
@@ -319,18 +361,387 @@ function propParts(hall, kind, rnd) {
   return parts;
 }
 const PROP_KINDS = {
-  physics: [['dome', 2], ['dish', 2], ['pendulum', 2], ['magnet', 2], ['prism', 2], ['tesla', 2], ['broad', 2], ['bush', 3], ['pine', 1]],
+  // 物理館：單元站上已經有「和單元內容相關的小物品」，通用小景只留少量樹與灌木當景觀（20261029b）
+  physics: [['broad', 3], ['bush', 4], ['pine', 2]],
   chemistry: [['erlenmeyer', 3], ['round', 2], ['rack', 2], ['crystal', 3], ['chimney', 1], ['bunsen', 2], ['bush', 2], ['broad', 1]],
   earth: [['volcano', 1], ['mountain', 3], ['strata', 2], ['boulders', 3], ['weather', 1], ['pine', 3]],
   biology: [['broad', 4], ['pine', 3], ['sakura', 2], ['bush', 2], ['mushroom', 2]],
 };
 const TREE_KINDS = new Set(['broad', 'pine', 'sakura', 'bush']);
-const HERO_KIND = { physics: 'tesla', chemistry: 'erlenmeyer', earth: 'volcano', biology: 'broad' }; // 每館先放兩個大一點的代表物
+const HERO_KIND = { physics: 'broad', chemistry: 'erlenmeyer', earth: 'volcano', biology: 'broad' }; // 每館先放兩個大一點的代表物
+// 每館的造景數量與「離單元站至少多遠」（球面弧長）。有單元小物品的館：造景少、離站遠，不壓到小物品
+const PROP_RULE = { physics: { count: 34, nd: 3.6 } };
 function pickKind(hallId, x) {
   const list = PROP_KINDS[hallId], total = list.reduce((a, b) => a + b[1], 0);
   let t = x * total;
   for (const [k, w] of list) { if ((t -= w) < 0) return k; }
   return list[0][0];
+}
+
+// ---------- 單元小物品：每館一張「單元 → 小物品」的表 ----------
+// 新增一館：在 UNIT_ITEMS 補一張表（單元 id → 函式），函式照下面的寫法用 K 拼零件、回傳物品頂端高度。
+// 座標：原點＝底座頂面中心，y 往上，+z 朝鏡頭（地圖的螢幕下方），+x 往右；物品大約落在半徑 1.15、高 1.2～1.9 之內。
+// 零件規格：圓柱至少 20 段、球至少 16×12 段；每件（不含描邊）約 3000 個三角形以內。
+const IC = {
+  wood: 0xc99a62, woodD: 0x8a6342, brass: 0xd9b25a, steel: 0xcfd6d3, metalD: 0x55605c, cream: 0xf2ecd9,
+  red: 0xe0483a, blue: 0x3a7be0, glass: 0xd4f1f7, water: 0x5fb8e6, ink: 0x2f4a52, white: 0xf7f8f2,
+  orange: 0xf6a13a, yellow: 0xffe27a, green: 0x4fae60,
+};
+function itemKit() {
+  const parts = [];
+  const up = new THREE.Vector3(0, 1, 0), va = new THREE.Vector3(), vb = new THREE.Vector3();
+  const K = {
+    parts,
+    add(g, m, c, o = {}) { parts.push({ g, m, color: new THREE.Color(c), noHull: !!o.noHull, glass: !!o.glass, alpha: o.alpha }); },
+    // 圓柱：中心在 (x,y,z)
+    cyl(rt, rb, h, x, y, z, c, o = {}) { K.add(new THREE.CylinderGeometry(rt, rb, h, o.seg || 22, 1, !!o.open), M(x, y, z, o.rx || 0, o.ry || 0, o.rz || 0), c, o); },
+    sph(r, x, y, z, c, o = {}) {
+      const g = new THREE.SphereGeometry(r, o.ws || 20, o.hs || 14);
+      K.add(g, Ms(x, y, z, o.sx || 1, o.sy || 1, o.sz || 1, o.rx || 0, o.ry || 0, o.rz || 0), c, o);
+    },
+    box(w, h, d, x, y, z, c, o = {}) { K.add(new THREE.BoxGeometry(w, h, d), M(x, y, z, o.rx || 0, o.ry || 0, o.rz || 0), c, o); },
+    // 環：預設躺平（在 xz 平面上）
+    torus(r, t, x, y, z, c, o = {}) {
+      K.add(new THREE.TorusGeometry(r, t, o.rs || 8, o.ts || 28, o.arc || TAU), M(x, y, z, o.rx == null ? Math.PI / 2 : o.rx, o.ry || 0, o.rz || 0), c, o);
+    },
+    // 兩點之間的細桿
+    rod(a, b, r, c, o = {}) {
+      va.set(...a); vb.set(...b);
+      const len = va.distanceTo(vb), q = new THREE.Quaternion().setFromUnitVectors(up, vb.clone().sub(va).normalize());
+      const m = new THREE.Matrix4().compose(va.clone().add(vb).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1));
+      K.add(new THREE.CylinderGeometry(r, o.r2 == null ? r : o.r2, len, o.seg || 20, 1, !!o.open), m, c, o);
+    },
+    // 沿著一串點的管子（導線、軌道、聲波弧）
+    tube(pts, r, c, o = {}) {
+      const curve = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p)), !!o.closed, o.type || 'centripetal');
+      K.add(new THREE.TubeGeometry(curve, o.n || 40, r, o.rs || 8, !!o.closed), new THREE.Matrix4(), c, o);
+      return curve;
+    },
+  };
+  return K;
+}
+
+// 1 密度與質量：等臂天平＋量筒
+function itemBalance(K) {
+  const bx = -0.4;
+  K.box(0.86, 0.1, 0.44, bx, 0.05, 0, IC.woodD);
+  K.cyl(0.05, 0.065, 1.08, bx, 0.64, 0, IC.brass);
+  K.box(1.24, 0.065, 0.08, bx, 1.2, 0, IC.brass);
+  K.sph(0.075, bx, 1.24, 0, IC.brass, { ws: 16, hs: 12 });
+  K.add(new THREE.ConeGeometry(0.035, 0.5, 16), M(bx, 0.93, 0.07, Math.PI, 0, 0), IC.ink);       // 指針
+  K.box(0.26, 0.05, 0.02, bx, 0.62, 0.075, IC.cream, { noHull: true });                           // 刻度板
+  for (const s of [-1, 1]) {
+    const px = bx + s * 0.58;
+    K.sph(0.035, px, 1.2, 0, IC.brass, { ws: 16, hs: 12 });
+    for (const a of [Math.PI / 2, Math.PI / 2 + 2.094, Math.PI / 2 + 4.189]) K.rod([px, 1.19, 0], [px + Math.cos(a) * 0.22, 0.64, Math.sin(a) * 0.22], 0.012, IC.metalD, { seg: 8, noHull: true });
+    K.cyl(0.28, 0.21, 0.06, px, 0.61, 0, IC.brass);
+  }
+  // 左盤：砝碼；右盤：待測的方塊
+  K.cyl(0.075, 0.075, 0.14, bx - 0.58, 0.71, 0, IC.steel);
+  K.cyl(0.03, 0.03, 0.05, bx - 0.58, 0.8, 0, IC.steel, { seg: 20 });
+  K.sph(0.035, bx - 0.58, 0.835, 0, IC.steel, { ws: 16, hs: 12 });
+  K.box(0.17, 0.17, 0.17, bx + 0.58, 0.725, 0, IC.blue);
+  // 量筒（玻璃、裝水、有刻度）
+  const cx = 0.78;
+  K.cyl(0.27, 0.29, 0.06, cx, 0.03, 0, IC.white);
+  K.cyl(0.175, 0.175, 1.26, cx, 0.69, 0, IC.glass, { glass: true, open: true, seg: 28 });
+  K.cyl(0.16, 0.16, 0.72, cx, 0.42, 0, IC.water, { seg: 28 });
+  K.torus(0.175, 0.02, cx, 1.32, 0, IC.white, { rs: 4, ts: 28 });
+  for (let i = 0; i < 10; i++) K.box(i % 2 ? 0.07 : 0.12, 0.014, 0.012, cx - (i % 2 ? 0.025 : 0), 0.2 + i * 0.11, 0.176, IC.ink, { noHull: true });
+  return 1.33;
+}
+
+// 2 波動與聲波：共鳴箱上的音叉＋往兩邊傳出去的聲波弧
+function itemTuningFork(K) {
+  K.box(1.1, 0.36, 0.48, 0, 0.18, 0, IC.wood);
+  K.box(0.02, 0.27, 0.36, 0.552, 0.18, 0, 0x3b2a1e, { noHull: true });                           // 共鳴箱的開口
+  K.cyl(0.07, 0.08, 0.08, -0.05, 0.4, 0, IC.metalD);
+  K.cyl(0.04, 0.04, 0.34, -0.05, 0.58, 0, IC.steel);
+  K.torus(0.15, 0.045, -0.05, 0.86, 0, IC.steel, { rx: 0, rz: Math.PI, arc: Math.PI, ts: 24 });   // U 形底
+  for (const s of [-1, 1]) K.cyl(0.045, 0.045, 0.78, -0.05 + s * 0.15, 1.25, 0, IC.steel, { seg: 20 });
+  // 小橡膠槌
+  K.rod([0.08, 0.38, 0.17], [0.5, 0.38, 0.3], 0.022, IC.woodD, { seg: 16 });
+  K.sph(0.085, 0.04, 0.4, 0.16, IC.red, { ws: 16, hs: 12, sx: 1.4 });
+  // 聲波：水平的弧（從上面看像「)))」），越外圈越細
+  const cyY = 1.42;
+  [0.42, 0.62, 0.82].forEach((r, i) => {
+    for (const s of [-1, 1]) {
+      const pts = [];
+      for (let k = 0; k <= 8; k++) { const t = -0.55 + 1.1 * k / 8; pts.push([-0.05 + s * r * Math.cos(t), cyY - i * 0.06, r * Math.sin(t)]); }
+      K.tube(pts, 0.032 - i * 0.006, 0x8fdcf2, { n: 18, rs: 6 });
+    }
+  });
+  return 1.64;
+}
+
+// 3 光學與透鏡：三稜鏡把白光分成彩虹＋立在支架上的凸透鏡
+function itemOptics(K) {
+  const px = -0.4, by = 0.42;
+  K.cyl(0.36, 0.36, 0.78, px, 0.39, 0, 0xbfeaf5, { seg: 3, ry: Math.PI });                       // 三稜鏡（上面看是三角形）
+  K.rod([-1.15, by, -0.02], [px - 0.16, by, 0.02], 0.026, IC.white, { seg: 12 });                // 白光
+  ['#e0483a', '#f2a03a', '#f2e03a', '#4fae60', '#3a9be0', '#7a5ae0'].forEach((c, i) => {
+    const a = 0.16 + i * 0.075, sx = px + 0.16, sz = 0.05;
+    K.rod([sx, by, sz], [sx + Math.cos(a) * 0.95, by - 0.01 * i, sz + Math.sin(a) * 0.95], 0.022, c, { seg: 10, noHull: true });
+  });
+  // 凸透鏡：鏡片＋金屬框＋支架（從上面看是中間厚、兩邊薄的透鏡剖面）
+  const lx = 0.32, lz = -0.42, ly = 0.98;
+  K.cyl(0.2, 0.23, 0.06, lx, 0.03, lz, IC.metalD);
+  K.cyl(0.035, 0.035, 0.58, lx, 0.35, lz, IC.steel, { seg: 20 });
+  K.sph(0.36, lx, ly, lz, 0x9fe3ff, { sz: 0.2, rx: -0.75, ws: 32, hs: 20 });                     // 鏡面往後仰，從上面看是一片圓透鏡
+  K.torus(0.36, 0.03, lx, ly, lz, IC.brass, { rx: -0.75, ts: 36, rs: 6 });
+  // 三道平行光穿過透鏡、在後面會聚到焦點（從上面看是一個「>」）
+  const fx = lx + 0.62, fy = ly - 0.12;
+  for (const dy of [-0.2, 0, 0.2]) {
+    K.rod([lx - 0.5, ly + dy, lz - dy * 0.4], [lx, ly + dy, lz - dy * 0.4], 0.016, IC.yellow, { seg: 8, noHull: true });
+    K.rod([lx, ly + dy, lz - dy * 0.4], [fx, fy, lz], 0.016, IC.yellow, { seg: 8, noHull: true });
+  }
+  K.sph(0.05, fx, fy, lz, 0xfff3b0, { ws: 16, hs: 12, noHull: true });
+  return 1.42;
+}
+
+// 4 熱學與熱力學：酒精燈＋三腳架＋陶瓷纖維網上的燒杯（插溫度計）
+function itemHeat(K) {
+  // 酒精燈與火焰
+  K.sph(0.25, 0, 0.19, 0, 0xd8eef2, { sy: 0.76, ws: 18, hs: 12 });
+  K.cyl(0.21, 0.23, 0.04, 0, 0.02, 0, 0xd8eef2);
+  K.cyl(0.09, 0.11, 0.1, 0, 0.39, 0, IC.brass);
+  K.cyl(0.025, 0.025, 0.06, 0, 0.47, 0, IC.white, { seg: 20, noHull: true });
+  K.add(new THREE.ConeGeometry(0.15, 0.5, 24), M(0, 0.73, 0), IC.orange);
+  K.add(new THREE.ConeGeometry(0.08, 0.28, 20), M(0, 0.63, 0.03), IC.yellow, { noHull: true });
+  // 三腳架（腳在左右與後方，前面留空看得到酒精燈）
+  const ty = 0.96;
+  K.torus(0.3, 0.026, 0, ty, 0, IC.metalD, { rs: 5, ts: 28 });
+  for (const a of [-Math.PI / 2, 0.2, Math.PI - 0.2]) K.rod([Math.cos(a) * 0.3, ty, Math.sin(a) * 0.3], [Math.cos(a) * 0.52, 0, Math.sin(a) * 0.52], 0.026, IC.metalD, { seg: 12 });
+  // 燒杯（玻璃）與水、氣泡
+  const b0 = ty + 0.03, br = 0.24;
+  K.cyl(br, br - 0.01, 0.52, 0, b0 + 0.26, 0, IC.glass, { glass: true, open: true, seg: 28 });
+  K.cyl(br - 0.01, br - 0.01, 0.012, 0, b0 + 0.006, 0, IC.glass, { glass: true, seg: 28 });
+  K.cyl(br - 0.02, br - 0.025, 0.34, 0, b0 + 0.18, 0, IC.water, { seg: 28 });
+  K.torus(br, 0.018, 0, b0 + 0.52, 0, IC.white, { rs: 4, ts: 28 });
+  // 火焰從杯底四周往上竄（從上面看得到）
+  for (const [a, h] of [[0.35, 0.42], [0.95, 0.5], [1.57, 0.56], [2.2, 0.5], [2.8, 0.42]]) {
+    const x = Math.cos(a) * (br + 0.05), z = Math.sin(a) * (br + 0.05), lean = 0.28;
+    K.add(new THREE.ConeGeometry(0.1, h, 16), M(x, b0 - 0.06 + h / 2, z, Math.sin(a) * lean, 0, -Math.cos(a) * lean), IC.orange);
+    K.add(new THREE.ConeGeometry(0.055, h * 0.62, 12), M(x * 1.06, b0 - 0.06 + h * 0.31, z * 1.06, Math.sin(a) * lean, 0, -Math.cos(a) * lean), IC.yellow, { noHull: true });
+  }
+  for (const [x, z] of [[0.1, 0.07], [-0.08, -0.06]]) K.sph(0.032, x, b0 + 0.36, z, IC.white, { ws: 16, hs: 12, noHull: true });
+  // 溫度計：插在水裡、斜靠在杯口，紅色液柱＋刻度
+  const a = [0.07, b0 + 0.08, 0.03], b = [-0.34, b0 + 1.0, -0.2];
+  K.rod(a, b, 0.042, IC.white, { seg: 20 });
+  const d = new THREE.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), L = d.length(); d.normalize();
+  const at = t => [a[0] + d.x * L * t, a[1] + d.y * L * t, a[2] + d.z * L * t];
+  K.sph(0.06, ...at(0.0), IC.red, { ws: 16, hs: 12 });
+  const f = new THREE.Vector3(0, 0, 1).addScaledVector(d, -d.z).normalize().multiplyScalar(0.034);        // 朝鏡頭那一面
+  const pa = at(0.04), pb = at(0.72);
+  K.rod([pa[0] + f.x, pa[1] + f.y, pa[2] + f.z], [pb[0] + f.x, pb[1] + f.y, pb[2] + f.z], 0.016, IC.red, { seg: 12, noHull: true });
+  for (let i = 1; i < 9; i++) { const p = at(0.1 + i * 0.1); K.add(new THREE.BoxGeometry(0.045, 0.012, 0.012), M(p[0] + f.x * 1.2, p[1] + f.y * 1.2, p[2] + f.z * 1.2, 0, Math.atan2(d.x, d.z) + Math.PI / 2, 0), IC.ink, { noHull: true }); }
+  return b0 + 1.0;
+}
+
+// 5 基礎力學與壓力：支架上的彈簧秤（掛砝碼）＋連通管（水面一樣高）
+function itemPressure(K) {
+  // 鐵架與彈簧秤
+  const sx = -0.55, sz = -0.3;
+  K.box(0.56, 0.06, 0.4, sx - 0.1, 0.03, sz, IC.metalD);
+  K.cyl(0.035, 0.035, 1.84, sx - 0.3, 0.95, sz, IC.steel, { seg: 20 });
+  K.rod([sx - 0.3, 1.82, sz], [sx + 0.02, 1.82, sz], 0.028, IC.steel, { seg: 20 });
+  K.torus(0.04, 0.012, sx, 1.77, sz, IC.steel, { rx: 0, rs: 4, ts: 12 });
+  K.cyl(0.095, 0.095, 0.62, sx, 1.42, sz, IC.glass, { glass: true, seg: 28 });
+  K.cyl(0.1, 0.1, 0.05, sx, 1.735, sz, IC.blue);
+  K.cyl(0.1, 0.1, 0.05, sx, 1.105, sz, IC.blue);
+  { const pts = []; for (let k = 0; k <= 64; k++) { const t = k / 64 * 9 * TAU; pts.push([sx + 0.055 * Math.cos(t), 1.7 - k / 64 * 0.36, sz + 0.055 * Math.sin(t)]); } K.tube(pts, 0.011, IC.steel, { n: 54, rs: 4, noHull: true, type: 'catmullrom' }); }
+  K.box(0.05, 0.02, 0.02, sx, 1.33, sz + 0.07, IC.red, { noHull: true });                        // 指針
+  for (let i = 0; i < 6; i++) K.box(0.05, 0.008, 0.01, sx - 0.035, 1.18 + i * 0.09, sz + 0.098, IC.ink, { noHull: true });
+  K.rod([sx, 1.33, sz], [sx, 0.95, sz], 0.012, IC.steel, { seg: 12 });
+  K.torus(0.035, 0.01, sx, 0.93, sz, IC.steel, { rx: 0, rs: 4, ts: 12 });
+  K.cyl(0.12, 0.12, 0.24, sx, 0.78, sz, IC.brass);
+  K.cyl(0.04, 0.04, 0.05, sx, 0.92, sz, IC.brass, { seg: 20 });
+  // 連通管：底下一根橫管，接四種形狀的玻璃管；水面同高（細紅虛線標出水平面）
+  const vz = 0.32, by = 0.12, wl = 0.66;
+  K.box(1.5, 0.06, 0.34, 0.25, 0.03, vz, IC.woodD);
+  K.rod([-0.42, by, vz], [0.92, by, vz], 0.075, IC.glass, { glass: true, seg: 24 });
+  K.rod([-0.42, by, vz], [0.92, by, vz], 0.06, IC.water, { seg: 20 });
+  const tubeX = [-0.35, 0.05, 0.45, 0.85];
+  K.cyl(0.075, 0.075, 0.82, tubeX[0], by + 0.41, vz, IC.glass, { glass: true, open: true });       // 直管
+  K.cyl(0.06, 0.06, wl - by, tubeX[0], (by + wl) / 2, vz, IC.water);
+  K.cyl(0.2, 0.06, 0.8, tubeX[1], by + 0.4, vz, IC.glass, { glass: true, open: true });            // 漏斗形
+  const rw = 0.06 + (0.2 - 0.06) * ((wl - by) / 0.8);
+  K.cyl(rw - 0.015, 0.05, wl - by, tubeX[1], (by + wl) / 2, vz, IC.water);
+  K.sph(0.17, tubeX[2], 0.42, vz, IC.glass, { glass: true, ws: 18, hs: 12 });                                      // 球形
+  K.cyl(0.06, 0.06, 0.3, tubeX[2], 0.8, vz, IC.glass, { glass: true, open: true });
+  K.sph(0.155, tubeX[2], 0.42, vz, IC.water, { ws: 16, hs: 12 });
+  K.cyl(0.05, 0.05, wl - 0.55, tubeX[2], (wl + 0.55) / 2, vz, IC.water);
+  K.rod([tubeX[3], by, vz], [tubeX[3] + 0.32, 0.95, vz], 0.065, IC.glass, { glass: true, open: true }); // 斜管
+  K.rod([tubeX[3], by, vz], [tubeX[3] + 0.32 * (wl - by) / 0.83, wl, vz], 0.052, IC.water);
+  for (let i = 0; i < 7; i++) K.box(0.11, 0.012, 0.012, -0.42 + i * 0.21, wl, vz - 0.22, IC.red, { noHull: true });
+  for (const x of [tubeX[0], tubeX[1]]) K.torus(x === tubeX[0] ? 0.075 : 0.2, 0.014, x, by + 0.82, vz, IC.white, { rs: 4, ts: 24, noHull: true });
+  return 1.85;
+}
+
+// 6 直線運動學：斜面＋打點計時器拉著紙帶的小車
+function itemIncline(K) {
+  const H = 1.0, L = 2.0, th = Math.atan2(H, L);
+  const sh = new THREE.Shape([new THREE.Vector2(-1, 0), new THREE.Vector2(1, 0), new THREE.Vector2(-1, H)]);
+  const wg = new THREE.ExtrudeGeometry(sh, { depth: 0.56, bevelEnabled: false });
+  K.add(wg, M(0, 0, -0.28), IC.wood);
+  // 斜面上的鋁軌（兩條）
+  const S = (u, h = 0, z = 0) => [-1 + u * L, H - u * H + h / Math.cos(th), z];   // 沿斜面 u∈[0,1]、離面 h
+  for (const z of [-0.17, 0.17]) K.rod(S(0.02, 0.02, z), S(0.98, 0.02, z), 0.022, IC.steel, { seg: 12 });
+  const slope = (u, h, z, rz = 0) => { const p = S(u, h, z); return M(p[0], p[1], p[2], 0, 0, -th + rz); };
+  // 打點計時器（夾在高的那一端）
+  K.add(new THREE.BoxGeometry(0.32, 0.17, 0.3), slope(0.09, 0.12, 0), 0x5a86b8);
+  K.add(new THREE.CylinderGeometry(0.07, 0.07, 0.03, 24), slope(0.09, 0.22, 0.03), IC.metalD);
+  K.add(new THREE.BoxGeometry(0.2, 0.025, 0.05), slope(0.15, 0.22, 0.03), IC.steel);
+  // 小車
+  const cu = 0.58;
+  K.add(new THREE.BoxGeometry(0.44, 0.13, 0.32), slope(cu, 0.15, 0), IC.red);
+  K.add(new THREE.BoxGeometry(0.16, 0.05, 0.2), slope(cu - 0.02, 0.24, 0), 0xf0f0e8);
+  for (const du of [-0.08, 0.08]) for (const z of [-0.17, 0.17]) K.add(new THREE.CylinderGeometry(0.065, 0.065, 0.045, 24), slope(cu + du, 0.075, z).multiply(M(0, 0, 0, Math.PI / 2, 0, 0)), IC.ink);
+  // 紙帶：從小車接到計時器，點的間距往小車那邊越來越密（越來越快）
+  const ta = 0.11, tb = cu - 0.11, tl = (tb - ta) * L / Math.cos(th);
+  const pm = S((ta + tb) / 2, 0.06, 0.03);
+  K.add(new THREE.BoxGeometry(tl, 0.008, 0.075), M(pm[0], pm[1], pm[2], 0, 0, -th), IC.white, { noHull: true });
+  let u = tb - 0.02, gap = 0.012;
+  while (u > ta + 0.05) {
+    const p = S(u, 0.066, 0.03);
+    K.add(new THREE.CylinderGeometry(0.013, 0.013, 0.006, 12), M(p[0], p[1], p[2], 0, 0, -th), IC.ink, { noHull: true });
+    u -= gap; gap += 0.011;
+  }
+  return H + 0.3;
+}
+
+// 7 牛頓力學與圓周運動：太陽＋行星軌道環（行星儀）＋一顆大蘋果
+function itemOrbit(K) {
+  const sy = 1.18, R0 = 0.78, tilt = 0.18;
+  K.cyl(0.28, 0.32, 0.07, 0, 0.035, -0.05, IC.woodD);
+  K.cyl(0.035, 0.035, sy - 0.25, 0, (sy - 0.25) / 2 + 0.06, -0.05, IC.brass, { seg: 20 });
+  K.sph(0.26, 0, sy, -0.05, 0xf6b23a, { ws: 20, hs: 14 });
+  K.torus(R0, 0.022, 0, sy, -0.05, 0xe8c65a, { rx: Math.PI / 2 + tilt, ts: 40, rs: 6 });
+  // 支撐軌道的兩根細臂
+  const ringPt = a => [Math.cos(a) * R0, sy - Math.sin(a) * R0 * Math.sin(tilt), -0.05 + Math.sin(a) * R0 * Math.cos(tilt)];
+  for (const a of [Math.PI * 0.95, -0.1]) K.rod([0, sy - 0.22, -0.05], ringPt(a), 0.012, IC.brass, { seg: 8 });
+  const pa = ringPt(0.75);
+  K.sph(0.12, ...pa, IC.blue, { ws: 16, hs: 12 });
+  K.sph(0.06, pa[0] + 0.05, pa[1] + 0.06, pa[2] + 0.06, IC.green, { ws: 16, hs: 12, noHull: true });
+  // 蘋果
+  const ax = -0.62, az = 0.46;
+  K.sph(0.27, ax, 0.24, az, IC.red, { sy: 0.88 });
+  K.rod([ax, 0.44, az], [ax + 0.04, 0.6, az - 0.02], 0.018, 0x6b4a2e, { seg: 12 });
+  K.sph(0.1, ax + 0.12, 0.56, az - 0.02, IC.green, { ws: 16, hs: 12, sx: 1.0, sy: 0.25, sz: 0.5, rz: -0.4 });
+  return sy + 0.3;
+}
+
+// 8 功與能：雲霄飛車軌道＋停在最高點的小車
+function itemCoaster(K) {
+  const curve = new THREE.CatmullRomCurve3([
+    [-1.0, 1.52, -0.5], [-0.72, 1.5, -0.38], [-0.42, 0.85, -0.1], [-0.14, 0.32, 0.24], [0.2, 0.62, 0.42],
+    [0.5, 0.92, 0.25], [0.8, 0.55, -0.1], [1.0, 0.3, -0.45]].map(p => new THREE.Vector3(...p)), false, 'centripetal');
+  const N = 56, pts = curve.getSpacedPoints(N), upv = new THREE.Vector3(0, 1, 0);
+  const frames = pts.map((p, i) => {
+    const t = curve.getTangentAt(i / N).normalize();
+    const n = new THREE.Vector3().crossVectors(t, upv).normalize();
+    const u = new THREE.Vector3().crossVectors(n, t).normalize();
+    return { p, t, n, u };
+  });
+  for (const s of [-1, 1]) K.tube(frames.map(f => f.p.clone().addScaledVector(f.n, s * 0.09).toArray()), 0.026, IC.red, { n: 56, rs: 6, type: 'catmullrom' });
+  frames.forEach((f, i) => {
+    if (i % 3) return;
+    K.add(new THREE.BoxGeometry(0.24, 0.02, 0.05), new THREE.Matrix4().makeBasis(f.n, f.u, f.t).setPosition(f.p.clone().addScaledVector(f.u, -0.02)), IC.woodD, { noHull: true });
+  });
+  for (const i of [2, 10, 19, 27, 34, 42, 51]) {
+    const p = frames[i].p;
+    K.cyl(0.028, 0.028, p.y - 0.03, p.x, (p.y - 0.03) / 2, p.z, IC.white, { seg: 20 });
+  }
+  // 小車
+  const f = frames[3], cp = f.p.clone().addScaledVector(f.u, 0.1);
+  const cm = new THREE.Matrix4().makeBasis(f.n, f.u, f.t).setPosition(cp);
+  K.add(new THREE.BoxGeometry(0.28, 0.15, 0.34), cm.clone(), IC.yellow);
+  K.add(new THREE.BoxGeometry(0.22, 0.08, 0.1), cm.clone().multiply(M(0, 0.1, -0.07)), IC.blue);
+  K.add(new THREE.BoxGeometry(0.22, 0.08, 0.1), cm.clone().multiply(M(0, 0.1, 0.08)), IC.blue);
+  for (const s of [-1, 1]) for (const dz of [-0.1, 0.1]) K.add(new THREE.CylinderGeometry(0.04, 0.04, 0.03, 20), cm.clone().multiply(M(s * 0.12, -0.06, dz, 0, 0, Math.PI / 2)), IC.ink, { noHull: true });
+  return 1.75;
+}
+
+// 9 基礎電學與電路：電池＋開關＋燈泡（看得到燈絲，台灣課本的燈泡畫法）用導線接成一圈
+function itemCircuit(K) {
+  K.box(1.96, 0.08, 1.2, 0, 0.04, 0, IC.wood);
+  const y0 = 0.08;
+  // 電池座與電池（＋極在右）
+  K.box(0.78, 0.08, 0.28, -0.22, y0 + 0.04, -0.3, 0x3f5552);
+  K.cyl(0.12, 0.12, 0.6, -0.22, y0 + 0.2, -0.3, 0x2e6f5e, { rz: Math.PI / 2 });
+  K.cyl(0.122, 0.122, 0.12, 0.02, y0 + 0.2, -0.3, IC.orange, { rz: Math.PI / 2 });
+  K.cyl(0.045, 0.045, 0.06, 0.11, y0 + 0.2, -0.3, IC.brass, { rz: Math.PI / 2, seg: 20 });
+  // 閘刀開關（合上）
+  const swx = -0.45, swz = 0.36;
+  K.box(0.46, 0.05, 0.18, swx, y0 + 0.025, swz, IC.white);
+  for (const dx of [-0.17, 0.17]) K.box(0.05, 0.08, 0.07, swx + dx, y0 + 0.09, swz, IC.brass);
+  K.box(0.38, 0.025, 0.05, swx, y0 + 0.12, swz, IC.steel);
+  K.cyl(0.03, 0.03, 0.12, swx + 0.2, y0 + 0.17, swz, IC.red, { seg: 20 });
+  // 燈座與燈泡：玻璃殼裡看得到燈絲（線圈）與兩根支架
+  const lx = 0.5, lz = -0.04, gy = y0 + 0.76;
+  K.cyl(0.17, 0.19, 0.12, lx, y0 + 0.06, lz, IC.metalD);
+  K.cyl(0.11, 0.11, 0.18, lx, y0 + 0.21, lz, IC.steel);
+  for (let i = 0; i < 2; i++) K.torus(0.115, 0.012, lx, y0 + 0.17 + i * 0.06, lz, IC.steel, { rs: 4, ts: 20, noHull: true });
+  K.sph(0.44, lx, gy, lz, 0xffd23a, { glass: true, alpha: 0.5, ws: 24, hs: 16 });
+  K.cyl(0.15, 0.11, 0.16, lx, y0 + 0.37, lz, 0xffd23a, { glass: true, alpha: 0.5, open: true });
+  K.cyl(0.03, 0.05, 0.16, lx, y0 + 0.38, lz, IC.white, { seg: 20, noHull: true });
+  for (const s of [-1, 1]) K.rod([lx + s * 0.03, y0 + 0.44, lz], [lx + s * 0.15, gy + 0.08, lz], 0.018, IC.metalD, { seg: 8, noHull: true });
+  { const pts = []; for (let k = 0; k <= 72; k++) { const t = k / 72; pts.push([lx - 0.15 + 0.3 * t, gy + 0.08 + 0.055 * Math.sin(t * 6 * TAU), lz + 0.055 * Math.cos(t * 6 * TAU)]); }
+    K.tube(pts, 0.032, 0xb0200f, { n: 64, rs: 4, noHull: true, type: 'catmullrom' }); }
+  // 導線：接成一個方形的迴路（電池 → 燈泡 → 開關 → 電池）
+  const wy = y0 + 0.03;
+  K.tube([[0.14, y0 + 0.2, -0.3], [0.3, wy, -0.3], [0.38, wy, -0.24], [0.42, wy, -0.08], [lx - 0.17, y0 + 0.06, lz]], 0.024, IC.red, { n: 24, rs: 6 });
+  K.tube([[lx, y0 + 0.06, lz + 0.18], [lx + 0.02, wy, 0.2], [lx - 0.05, wy, 0.36], [0.1, wy, 0.38], [swx + 0.17, y0 + 0.1, swz]], 0.024, 0x3b4744, { n: 28, rs: 6 });
+  K.tube([[swx - 0.17, y0 + 0.1, swz], [-0.76, wy, 0.32], [-0.8, wy, 0.1], [-0.72, wy, -0.24], [-0.55, y0 + 0.2, -0.3]], 0.024, 0x3b4744, { n: 28, rs: 6 });
+  return gy + 0.44;
+}
+
+// 10 電與磁：馬蹄形磁鐵（N 紅、S 藍，斜靠在木架上）＋羅盤（指針紅端指向 S 極）
+function itemMagnet(K) {
+  const mx = -0.3, tilt = -0.5, R0 = 0.28, tr = 0.11, armL = 0.55;
+  const mm = M(mx, 0.13, -0.05, tilt, 0, 0); // 磁鐵自己的座標：U 在 xy 平面、開口朝上
+  const P = (g, m, c) => K.add(g, mm.clone().multiply(m), c);
+  P(new THREE.TorusGeometry(R0, tr, 16, 28, Math.PI), M(0, tr, 0, 0, 0, Math.PI), 0xb0b6b3);
+  for (const s of [-1, 1]) {
+    P(new THREE.CylinderGeometry(tr, tr, armL * 0.5, 24), M(s * R0, tr + armL * 0.25, 0), 0xb0b6b3);
+    P(new THREE.CylinderGeometry(tr, tr, armL * 0.5, 24), M(s * R0, tr + armL * 0.75, 0), s < 0 ? IC.red : IC.blue);
+  }
+  K.box(0.95, 0.18, 0.12, mx, 0.09, -0.42, IC.woodD);                                            // 後面的木架
+  // 羅盤
+  const cx = 0.5, cz = 0.3;
+  K.cyl(0.34, 0.36, 0.12, cx, 0.06, cz, IC.brass, { seg: 40 });
+  K.cyl(0.3, 0.3, 0.02, cx, 0.12, cz, IC.white, { seg: 40, noHull: true });
+  K.torus(0.32, 0.025, cx, 0.13, cz, IC.brass, { rs: 8, ts: 40 });
+  for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; K.box(0.025, 0.012, 0.07, cx + Math.sin(a) * 0.24, 0.135, cz + Math.cos(a) * 0.24, IC.ink, { ry: a, noHull: true }); }
+  // 指針：紅端（N）指向磁鐵的藍色 S 極
+  const sp = new THREE.Vector3(0, tr + armL, 0).applyMatrix4(new THREE.Matrix4().makeTranslation(R0, 0, 0)).applyMatrix4(mm);
+  const ang = Math.atan2(sp.x - cx, sp.z - cz);
+  const nd = (half, c) => K.add(new THREE.ConeGeometry(0.05, 0.22, 4), M(cx, 0.15, cz, 0, ang, 0).multiply(M(0, 0, half * 0.11, half * Math.PI / 2, 0, 0)).multiply(Ms(0, 0, 0, 1, 1, 0.35)), c, { noHull: true });
+  nd(1, IC.red); nd(-1, IC.blue);
+  K.cyl(0.03, 0.03, 0.03, cx, 0.165, cz, IC.brass, { seg: 20, noHull: true });
+  return 1.0;
+}
+
+const UNIT_ITEMS = {
+  physics: {
+    'physics-01': itemBalance, 'physics-02': itemTuningFork, 'physics-03': itemOptics, 'physics-04': itemHeat, 'physics-05': itemPressure,
+    'physics-06': itemIncline, 'physics-07': itemOrbit, 'physics-08': itemCoaster, 'physics-09': itemCircuit, 'physics-10': itemMagnet,
+  },
+};
+const ITEM_PLINTH = { r: 1.22, h: 0.3 }; // 有小物品的單元站：矮而寬的圓台
+// 一個單元的小物品（含圓台）；沒有表就回傳 null（沿用原本的小底座）
+function unitItemParts(hall, unitId, withPlinth = true) {
+  const fn = (UNIT_ITEMS[hall.id] || {})[unitId];
+  if (!fn) return null;
+  const K = itemKit();
+  const h = fn(K, new THREE.Color(hall.color));
+  const y0 = withPlinth ? ITEM_PLINTH.h + 0.02 : 0.02;
+  for (const p of K.parts) p.m = new THREE.Matrix4().makeTranslation(0, y0, 0).multiply(p.m);
+  if (withPlinth) {
+    K.parts.push({ g: new THREE.CylinderGeometry(ITEM_PLINTH.r, ITEM_PLINTH.r + 0.08, ITEM_PLINTH.h, 40), m: M(0, ITEM_PLINTH.h / 2, 0), color: new THREE.Color(0xefe5c6) });
+    K.parts.push({ g: new THREE.CylinderGeometry(ITEM_PLINTH.r + 0.005, ITEM_PLINTH.r + 0.005, 0.05, 40, 1, true), m: M(0, ITEM_PLINTH.h - 0.04, 0), color: new THREE.Color(hall.color), noHull: true });
+  }
+  return { parts: K.parts, h: h + y0 };
 }
 
 // ---------- 地形：球外與地標共用 ----------
@@ -452,6 +863,9 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   const planetMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradient, transparent: true });
   const planetHullMat = new THREE.MeshBasicMaterial({ color: 0x0f3333, side: THREE.BackSide, transparent: true }); // 星球外框用深青，和大氣光暈接得起來
   const hiddenMat = new THREE.MeshBasicMaterial({ visible: false });
+  // 單元小物品的玻璃（量筒、燒杯、燈泡）：半透明、不寫深度，裡面的水和燈絲看得到
+  const glassMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradient, transparent: true, depthWrite: false }); // 透明度在頂點色的 alpha
+  const glassMesh = g => { const m = new THREE.Mesh(g, glassMat); m.renderOrder = 2; return m; };
 
   scene.add(new THREE.HemisphereLight(0xe8f4ff, 0x20322b, 1.35));
   const sun = new THREE.DirectionalLight(0xfff0d6, 2.2);
@@ -832,31 +1246,56 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
   halls.forEach((hall, hi) => {
     const col = new THREE.Color(hall.color);
     const { n, Np, E } = bases[hi];
-    const parts = [];
+    const parts = [], itemParts = [];
     const up = new THREE.Vector3(0, 1, 0);
     hall.units.forEach((u, i) => {
       const dir = hallNodes[hi][i];
       const rad = R + terrain(dir).e - 0.05;
-      const q = new THREE.Quaternion().setFromUnitVectors(up, dir);
-      const base = new THREE.Matrix4().compose(dir.clone().multiplyScalar(rad), q, new THREE.Vector3(1, 1, 1));
-      parts.push({ g: new THREE.CylinderGeometry(0.42, 0.5, 0.16, 10), m: base.clone().multiply(M(0, 0.08, 0)), color: col.clone() });
-      parts.push({ g: new THREE.CylinderGeometry(0.07, 0.09, 1.3, 6), m: base.clone().multiply(M(0, 0.8, 0)), color: new THREE.Color(0xcfc8b4) });
+      const item = unitItemParts(hall, u.id);
+      let signPos;
+      if (item) {
+        // 單元小物品：和館內地圖同一件，縮小放在領土中央；「地圖的上方」對齊球面的北方（Np），和進館後看到的方向一樣
+        const s = PLANET_ITEM_S;
+        const tN = Np.clone().addScaledVector(dir, -Np.dot(dir)).normalize();
+        const tE = new THREE.Vector3().crossVectors(tN, dir);
+        const basis = new THREE.Matrix4().makeBasis(tE, dir, tN.clone().negate());
+        const bm = basis.setPosition(dir.clone().multiplyScalar(rad)).multiply(new THREE.Matrix4().makeScale(s, s, s));
+        for (const pt of item.parts) { pt.m = bm.clone().multiply(pt.m); itemParts.push(pt); }
+        // 封面小牌子：立在物品後方（北邊）一根細桿上，從太空看不會蓋住物品
+        const foot = dir.clone().multiplyScalar(rad).addScaledVector(tN, (ITEM_PLINTH.r + 0.15) * s);
+        const top = foot.clone().addScaledVector(dir, item.h * s + 0.55);
+        parts.push({ g: new THREE.CylinderGeometry(0.035, 0.045, item.h * s + 0.55, 12), m: new THREE.Matrix4().compose(foot.clone().add(top).multiplyScalar(0.5), new THREE.Quaternion().setFromUnitVectors(up, dir), new THREE.Vector3(1, 1, 1)), color: new THREE.Color(0xcfc8b4) });
+        signPos = top.addScaledVector(dir, 0.42);
+      } else {
+        const q = new THREE.Quaternion().setFromUnitVectors(up, dir);
+        const base = new THREE.Matrix4().compose(dir.clone().multiplyScalar(rad), q, new THREE.Vector3(1, 1, 1));
+        parts.push({ g: new THREE.CylinderGeometry(0.42, 0.5, 0.16, 10), m: base.clone().multiply(M(0, 0.08, 0)), color: col.clone() });
+        parts.push({ g: new THREE.CylinderGeometry(0.07, 0.09, 1.3, 6), m: base.clone().multiply(M(0, 0.8, 0)), color: new THREE.Color(0xcfc8b4) });
+        signPos = dir.clone().multiplyScalar(rad + 1.95);
+      }
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(u.emoji), transparent: true, depthWrite: false }));
-      sp.position.copy(dir).multiplyScalar(rad + 1.95);
-      sp.scale.set(1.1, 1.1, 1);
+      sp.position.copy(signPos);
+      const sh = item ? PLANET_SIGN_H : 1.1;
+      sp.scale.set(sh, sh, 1);
       sp.userData = { hallId: hall.id, unitId: u.id };
       signSprites.push(sp);
       landmarks.add(sp);
-      addSign(u.id, sp, 1.1, null);
+      addSign(u.id, sp, sh, null);
     });
+    if (itemParts.length) {
+      const ig = buildMerged(itemParts, 0.022, { inflate: true });
+      landmarks.add(new THREE.Mesh(ig.body, toonMat), new THREE.Mesh(ig.hull, hullMat));
+      if (ig.glass) landmarks.add(glassMesh(ig.glass));
+    }
     // 特色小景：散在館的區域，避開單元站、廣場與國界線
+    const rule = PROP_RULE[hall.id] || { count: PROP_COUNT, nd: 3.0 };
     const placed = [], tan = new THREE.Vector3(), dd = new THREE.Vector3();
-    for (let tries = 0; placed.length < PROP_COUNT && tries < 6000; tries++) {
+    for (let tries = 0; placed.length < rule.count && tries < 6000; tries++) {
       const a = hash3(hi * 9.1, tries * 1.37, 2.2) * TAU, r = 0.22 + 0.7 * Math.sqrt(hash3(hi * 3.3, tries * 0.71, 5.5));
       tan.copy(E).multiplyScalar(Math.cos(a)).addScaledVector(Np, Math.sin(a));
       dd.copy(n).multiplyScalar(Math.cos(r)).addScaledVector(tan, Math.sin(r)).normalize();
       const t = terrain(dd);
-      if (t.hall !== hi || t.mask < 0.55 || t.n < 0.62 || t.nd < 3.0 || t.pd < 3.6 || t.bd < 0.55) continue;
+      if (t.hall !== hi || t.mask < 0.55 || t.n < 0.62 || t.nd < rule.nd || t.pd < 3.6 || t.bd < 0.55) continue;
       if (placed.some(pp => pp.dot(dd) > Math.cos(1.2 / R))) continue;
       placed.push(dd.clone());
       const q = new THREE.Quaternion().setFromUnitVectors(up, dd).multiply(new THREE.Quaternion().setFromAxisAngle(up, hash3(tries, hi, 1.1) * TAU));
@@ -1058,28 +1497,48 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     const exProxies = [];
     hall.units.forEach((u, i) => {
       const ex = new THREE.Group();
-      const pp = [];
-      pp.push({ g: new THREE.CylinderGeometry(0.62, 0.8, 0.55, 14), m: M(0, 0.28, 0), color: new THREE.Color(0xefe5c6) });
-      pp.push({ g: new THREE.CylinderGeometry(0.72, 0.72, 0.1, 14), m: M(0, 0.6, 0), color: col.clone() });
-      const mg = buildMerged(pp, 0.06);
-      ex.add(new THREE.Mesh(mg.body, toonMat), new THREE.Mesh(mg.hull, hullMat));
+      const item = unitItemParts(hall, u.id);
+      let signY = 1.75, signZ = 0, sz = 1.5, szF = 2.05;
+      if (item) {
+        // 單元小物品（含圓台）；封面小牌子縮小、抬到物品上方
+        const mg = buildMerged(item.parts, 0.035, { inflate: true });
+        const body = new THREE.Group();
+        body.add(new THREE.Mesh(mg.body, toonMat), new THREE.Mesh(mg.hull, hullMat));
+        if (mg.glass) body.add(glassMesh(mg.glass));
+        ex.add(body);
+        ex.userData.item = body;
+        // 鏡頭從南方斜斜往下看（HALL_PITCH）：畫面上的「高度」≈ y·sin(p) − z·cos(p)。
+        // 牌子放在物品後上方，牌子的下緣剛好高過物品在畫面上的最高點，就不會擋住物品
+        const sp = Math.sin(HALL_PITCH), cp = Math.cos(HALL_PITCH), pa = mg.body.attributes.position.array;
+        let top = 0;
+        for (let k = 0; k < pa.length; k += 3) if (pa[k + 1] > ITEM_PLINTH.h + 0.01) top = Math.max(top, pa[k + 1] * sp - pa[k + 2] * cp);
+        sz = MAP_SIGN.size; szF = MAP_SIGN.focus;
+        signZ = -MAP_SIGN.back;
+        signY = Math.max(item.h + 0.15, (top + MAP_SIGN.gap + sz / 2 + signZ * cp) / sp);
+      } else {
+        const pp = [];
+        pp.push({ g: new THREE.CylinderGeometry(0.62, 0.8, 0.55, 14), m: M(0, 0.28, 0), color: new THREE.Color(0xefe5c6) });
+        pp.push({ g: new THREE.CylinderGeometry(0.72, 0.72, 0.1, 14), m: M(0, 0.6, 0), color: col.clone() });
+        const mg = buildMerged(pp, 0.06);
+        ex.add(new THREE.Mesh(mg.body, toonMat), new THREE.Mesh(mg.hull, hullMat));
+      }
       const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(u.emoji), transparent: true, depthWrite: false }));
-      sprite.position.y = 1.75;
-      sprite.scale.set(1.5, 1.5, 1);
+      sprite.position.set(0, signY, signZ);
+      sprite.scale.set(sz, sz, 1);
       ex.add(sprite);
-      const ep = new THREE.Mesh(new THREE.SphereGeometry(1.25, 8, 6), hiddenMat);
-      ep.position.y = 1.1;
+      const ep = new THREE.Mesh(item ? new THREE.CylinderGeometry(1.35, 1.35, signY + sz * 0.6, 12) : new THREE.SphereGeometry(1.25, 8, 6), hiddenMat);
+      ep.position.y = item ? (signY + sz * 0.6) / 2 : 1.1;
       ep.userData.unitId = u.id;
       ex.add(ep);
       content.add(ex);
-      const exObj = { group: ex, sprite, size: 1.5, target: 1.5, hop: 0, hopTarget: 0, aspect: 1 };
+      const exObj = { group: ex, sprite, size: sz, target: sz, base: sz, focusSize: szF, signY, hop: 0, hopTarget: 0, aspect: 1 };
       exhibits.push(exObj);
       addSign(u.id, sprite, null, exObj);
       exProxies.push(ep);
       unitIndex.set(u.id, { hall: hi, index: i });
     });
     const focusRing = new THREE.Mesh(
-      new THREE.RingGeometry(0.98, 1.22, 28).rotateX(-Math.PI / 2),
+      (UNIT_ITEMS[hall.id] ? new THREE.RingGeometry(1.36, 1.62, 48) : new THREE.RingGeometry(0.98, 1.22, 28)).rotateX(-Math.PI / 2), // 有小物品的館：圓台較寬，光圈也跟著放大
       new THREE.MeshBasicMaterial({ color: hex, side: THREE.DoubleSide, transparent: true, opacity: 0.95 }),
     );
     focusRing.position.y = 0.04;
@@ -1663,7 +2122,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
     if (!info) return;
     const h = hallObjs[info.hall];
     h.focus = info.index;
-    h.exhibits.forEach((e, i) => { e.target = i === info.index ? 2.05 : 1.5; e.hopTarget = i === info.index ? 0.35 : 0; });
+    h.exhibits.forEach((e, i) => { e.target = i === info.index ? e.focusSize : e.base; e.hopTarget = i === info.index ? 0.35 : 0; });
     const nd = h.nodes[info.index];
     if (nd) {
       const nv = h.nodesV[info.index];
@@ -1906,7 +2365,7 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
           const k = 1 - Math.exp(-dt / 0.09);
           e.size += ds * k; e.hop += dh * k;
           e.sprite.scale.set(e.size * e.aspect, e.size, 1);
-          e.sprite.position.y = 1.75 + e.hop;
+          e.sprite.position.y = e.signY + e.hop + (e.size - e.base) / 2; // 放大時往上長，不往下蓋到物品
           active = true;
         }
       }
@@ -2083,6 +2542,34 @@ export async function createScene({ canvas, halls, scientists = {}, reducedMotio
         });
         return { id: hall.id, units: N, territories: new Set(seeds.map((s, i) => i)).size, area: area.map(a => +a.toFixed(1)), seeds, shade: hallShade[hi] };
       });
+    },
+    // 檢查用：館內放大到某個單元（zoom 越小越近），回傳 true
+    debugZoomUnit(unitId, zoom = 0.45) { if (!unitIndex.has(unitId)) return false; state.zoomH = clamp(zoom, 0.4, 1.35); focusUnit(unitId, true); handlers.onExhibitPick && handlers.onExhibitPick(unitId); return true; },
+    // 檢查用：館內畫面上 (cx,cy) 點下去會選到哪個單元（不觸發任何動作）
+    debugPick(cx, cy) {
+      if (state.mode !== 'hall' || state.hallVis < 0) return null;
+      const rect = canvas.getBoundingClientRect();
+      ndc.set(((cx - rect.left) / rect.width) * 2 - 1, -((cy - rect.top) / rect.height) * 2 + 1);
+      applyVisibility(); applyCamera(); camera.updateMatrixWorld(true); scene.updateMatrixWorld(true);
+      raycaster.setFromCamera(ndc, camera);
+      const h = hallObjs[state.hallVis];
+      const hit = raycaster.intersectObjects(h.exProxies.concat(h.gateProxies, h.statueProxies), false)[0];
+      if (hit) return hit.object.userData.unitId || hit.object.userData.gateHall || hit.object.userData.statueHall;
+      const gh = h.ground && raycaster.intersectObject(h.ground.children[0], false)[0];
+      return gh ? 'ground:' + unitAtMap(h, h.content.worldToLocal(gh.point.clone())) : null;
+    },
+    // 檢查用：每個單元小物品的三角形數（本體／描邊／玻璃）
+    debugItemTris() {
+      const tri = g => (g ? g.attributes.position.count / 3 : 0);
+      const out = {};
+      halls.forEach(hall => hall.units.forEach(u => {
+        const it = unitItemParts(hall, u.id);
+        if (!it) return;
+        const mg = buildMerged(it.parts, 0.035, { inflate: true });
+        out[u.id] = { body: tri(mg.body), hull: tri(mg.hull), glass: tri(mg.glass), h: +it.h.toFixed(2) };
+        mg.body.dispose(); mg.hull.dispose(); if (mg.glass) mg.glass.dispose();
+      }));
+      return out;
     },
     // 檢查用：館內地圖上 (x,z)（直式座標）屬於哪個單元
     debugUnitAt(hallId, x, z) { const h = hallObjs[halls.findIndex(q => q.id === hallId)]; return unitAtMap(h, { x, z }); },
