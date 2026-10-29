@@ -367,12 +367,13 @@ const PROP_KINDS = {
   chemistry: [['crystal', 3], ['bush', 3], ['broad', 2]],
   // 地科館：單元站已有小物品（含火山、氣象站），通用小景只留少量山、巨石、松樹當景觀（20261029c）
   earth: [['mountain', 2], ['boulders', 3], ['pine', 4]],
-  biology: [['broad', 4], ['pine', 3], ['sakura', 2], ['bush', 2], ['mushroom', 2]],
+  // 生物館：單元站已有小物品（花、樹苗、蘑菇都在站上），通用小景只留樹、灌木、櫻花當景觀，蘑菇拿掉（20261029e）
+  biology: [['broad', 4], ['bush', 3], ['sakura', 2], ['pine', 2]],
 };
 const TREE_KINDS = new Set(['broad', 'pine', 'sakura', 'bush']);
 const HERO_KIND = { physics: 'broad', chemistry: 'crystal', earth: 'mountain', biology: 'broad' }; // 每館先放兩個大一點的代表物
 // 每館的造景數量與「離單元站至少多遠」（球面弧長）。有單元小物品的館：造景少、離站遠，不壓到小物品
-const PROP_RULE = { physics: { count: 34, nd: 3.6 }, chemistry: { count: 32, nd: 3.6 }, earth: { count: 30, nd: 3.6 } };
+const PROP_RULE = { physics: { count: 34, nd: 3.6 }, chemistry: { count: 32, nd: 3.6 }, earth: { count: 30, nd: 3.6 }, biology: { count: 40, nd: 3.6 } };
 function pickKind(hallId, x) {
   const list = PROP_KINDS[hallId], total = list.reduce((a, b) => a + b[1], 0);
   let t = x * total;
@@ -1203,6 +1204,397 @@ function itemCell(K, hc) {
   return 0.9;
 }
 
+// ---------- 生物館的單元小物品（20261029e）----------
+// 同化學館：鏡頭幾乎從正上方看，所以多半攤平擺（細胞模型、餐盤、DNA、生態塔），立體的器官模型（心臟、肺）往後仰、斜向鏡頭
+const BI = {
+  leaf: 0x4fae60, leafD: 0x3f9a4d, leafL: 0x8fd45a, pink: 0xf59ab8, flesh: 0xf2a3a0, organ: 0xd8443a, organD: 0xb8352e,
+  vein: 0x3a6fd0, purple: 0x8a5ac8, soil: 0x86603f, bark: 0x6b4a2e, woodL: 0xe8c890, plate: 0xfbfaf4, yolk: 0xffb52e,
+  brain: 0xf4a7b9, brainD: 0xd97a93, lung: 0xf28a9c, lungD: 0xd25d74, cream: 0xf6efe0, feather: 0x8a5a3a,
+};
+// 葉子／花瓣：扁的橢球（L＝長、W＝寬，沿 x 方向；ry 轉向、rz 往上翹）
+function leafy(K, x, y, z, L, W, c, o = {}) {
+  K.sph(1, x, y, z, c, { sx: L / 2, sy: o.th || 0.025, sz: W / 2, rx: o.rx || 0, ry: o.ry || 0, rz: o.rz || 0, ws: o.ws || 12, hs: o.hs || 8, noHull: !!o.noHull });
+}
+// 一根細桿當支架，底下一塊館色小圓盤
+function post(K, x, z, h, hc, r = 0.04) {
+  K.cyl(r * 4, r * 4.6, 0.05, x, 0.025, z, hc, { seg: 22 });
+  K.cyl(r, r, h, x, h / 2, z, IC.steel, { seg: 16 });
+}
+
+// 1 生命科學緒論：複式顯微鏡（鏡臂在後、鏡筒往後上方斜，從鏡頭看得到載物台上的玻片）＋培養皿＋玻片
+function itemMicroscope(K, hc) {
+  const x0 = -0.24, body = IC.white, dark = 0x3a4448;
+  K.box(0.6, 0.09, 0.56, x0, 0.045, -0.16, body);                                                  // 鏡座
+  K.cyl(0.3, 0.3, 0.09, x0, 0.045, 0.12, body, { seg: 28 });
+  K.cyl(0.075, 0.075, 0.03, x0, 0.105, 0.12, IC.yellow, { seg: 20, noHull: true });                 // 光源
+  K.tube([[x0, 0.06, -0.36], [x0, 0.48, -0.44], [x0, 0.88, -0.32], [x0, 1.06, -0.1]], 0.085, body, { n: 20, rs: 8 }); // 鏡臂
+  K.box(0.2, 0.07, 0.26, x0, 0.5, -0.27, dark);
+  K.box(0.6, 0.05, 0.5, x0, 0.52, 0.1, dark);                                                       // 載物台
+  K.box(0.44, 0.012, 0.15, x0, 0.551, 0.12, IC.glass, { glass: true, alpha: 0.55 });                 // 玻片
+  K.cyl(0.045, 0.045, 0.01, x0, 0.56, 0.12, BI.purple, { seg: 20, noHull: true });                  // 染色的樣本
+  for (const s of [-1, 1]) K.box(0.04, 0.015, 0.2, x0 + s * 0.17, 0.555, 0.0, IC.steel, { noHull: true, ry: s * 0.2 }); // 壓片夾
+  K.box(0.24, 0.2, 0.34, x0, 1.04, 0.02, body);                                                     // 鏡頭座
+  K.cyl(0.13, 0.15, 0.06, x0, 0.91, 0.12, IC.steel, { seg: 24 });                                   // 旋轉盤
+  for (const [dx, dz, rz, rx, c] of [[0, 0, 0, 0, IC.red], [0.09, -0.05, 0.3, 0, IC.yellow], [-0.09, -0.05, -0.3, 0, IC.blue]]) {
+    K.cyl(0.04, 0.032, 0.2, x0 + dx, 0.78, 0.12 + dz, IC.steel, { seg: 16, rz, rx });               // 物鏡
+    K.cyl(0.042, 0.042, 0.02, x0 + dx * 0.8, 0.84, 0.12 + dz, c, { seg: 16, rz, noHull: true });
+  }
+  K.rod([x0, 1.1, -0.02], [x0, 1.48, -0.4], 0.07, body, { seg: 20 });                              // 鏡筒（往後上方斜）
+  K.rod([x0, 1.46, -0.38], [x0, 1.6, -0.52], 0.055, dark, { seg: 20 });                             // 目鏡
+  for (const s of [-1, 1]) {
+    K.cyl(0.14, 0.14, 0.05, x0 + s * 0.12, 0.36, -0.38, hc, { seg: 24, rz: Math.PI / 2 });          // 粗調節輪（館色）
+    K.cyl(0.075, 0.075, 0.04, x0 + s * 0.17, 0.36, -0.38, dark, { seg: 16, rz: Math.PI / 2 });      // 細調節輪
+  }
+  // 培養皿（右前）：黃色洋菜上長了幾個菌落
+  const px = 0.66, pz = 0.4;
+  K.cyl(0.27, 0.27, 0.07, px, 0.035, pz, IC.glass, { glass: true, alpha: 0.4, open: true, seg: 28 });
+  K.cyl(0.255, 0.255, 0.035, px, 0.0175, pz, 0xf3e3a0, { seg: 28 });
+  K.torus(0.27, 0.012, px, 0.07, pz, IC.white, { rs: 4, ts: 28, noHull: true });
+  for (const [x, z, r] of [[-0.1, -0.06, 0.04], [0.08, 0.05, 0.05], [-0.02, 0.12, 0.03], [0.1, -0.1, 0.035], [-0.13, 0.08, 0.025]]) K.sph(r, px + x, 0.04, pz + z, 0xf7f8f2, { sy: 0.5, ws: 10, hs: 6, noHull: true });
+  // 另一片玻片（右後）
+  K.box(0.44, 0.014, 0.15, 0.62, 0.007, -0.32, IC.glass, { glass: true, alpha: 0.6, ry: 0.35 });
+  K.cyl(0.05, 0.05, 0.01, 0.62, 0.018, -0.32, 0x5aa0e0, { seg: 20, noHull: true });
+  return 1.62;
+}
+
+// 2 組成生物的層次與尺度：植物細胞模型（細胞壁、液泡、細胞核、葉綠體）＋切開的動物細胞模型＋尺
+function itemCells(K, hc) {
+  // 植物細胞（左後）：一塊斜向鏡頭的板子
+  let k0 = K.parts.length;
+  const W = 0.9, D = 0.62, H = 0.13;
+  K.box(W, H, D, 0, 0, 0, BI.leafD);                                                                // 細胞壁
+  K.box(W - 0.08, H + 0.006, D - 0.08, 0, 0, 0, 0xdff3c4, { noHull: true });                         // 細胞質
+  K.sph(1, 0.08, H / 2 + 0.004, -0.01, 0xbfe6f5, { sx: 0.25, sy: 0.012, sz: 0.17, ws: 20, hs: 6, noHull: true }); // 液泡
+  K.sph(0.08, -0.27, H / 2 + 0.01, 0.14, BI.purple, { sy: 0.55, ws: 14, hs: 8 });                  // 細胞核
+  K.sph(0.028, -0.29, H / 2 + 0.04, 0.12, 0x5a3a90, { ws: 8, hs: 6, noHull: true });
+  for (const [x, z, r] of [[-0.3, -0.18, 0.4], [-0.08, -0.22, -0.2], [0.3, -0.18, 0.6], [0.36, 0.06, 1.4], [0.28, 0.2, 0.3], [-0.04, 0.2, -0.5], [-0.36, -0.02, 1.2]]) {
+    K.sph(1, x, H / 2 + 0.008, z, 0x2f8a3a, { sx: 0.06, sy: 0.022, sz: 0.032, ry: r, ws: 8, hs: 4, noHull: true }); // 葉綠體
+  }
+  xform(K, k0, M(-0.36, 0.5, -0.36, 0.5, 0.2, 0));
+  post(K, -0.36, -0.3, 0.44, hc);
+  // 動物細胞（右前）：切一半的球，看得到細胞核與粒線體
+  k0 = K.parts.length;
+  const r = 0.34;
+  K.add(new THREE.SphereGeometry(r, 22, 6, 0, TAU, Math.PI / 2, Math.PI / 2), M(0, 0, 0), BI.flesh); // 下半球（細胞膜）
+  K.cyl(r - 0.004, r - 0.004, 0.012, 0, -0.006, 0, 0xfbd8cb, { seg: 32, noHull: true });             // 切面（細胞質）
+  K.torus(r - 0.01, 0.014, 0, 0.002, 0, 0xe0707a, { rs: 4, ts: 32, noHull: true });
+  K.add(new THREE.SphereGeometry(0.11, 18, 6, 0, TAU, 0, Math.PI / 2), M(-0.05, 0, -0.04), BI.purple); // 細胞核
+  K.sph(0.035, -0.03, 0.08, -0.03, 0x5a3a90, { ws: 10, hs: 8, noHull: true });
+  for (const [x, z, ry] of [[0.17, -0.1, 0.5], [0.12, 0.17, -0.4], [-0.18, 0.15, 0.9], [0.0, -0.22, 0.1]]) K.sph(1, x, 0.012, z, 0xf08a3a, { sx: 0.07, sy: 0.025, sz: 0.032, ry, ws: 8, hs: 4 }); // 粒線體
+  xform(K, k0, M(0.42, 0.5, 0.26, 0.45, 0, 0));
+  post(K, 0.42, 0.22, 0.32, hc);
+  // 尺（左前）：生命的尺度
+  K.box(0.96, 0.025, 0.12, -0.3, 0.0125, 0.62, 0xf2d675, { ry: 0.12 });
+  for (let i = 0; i <= 10; i++) {
+    const t = -0.44 + i * 0.088, c = Math.cos(0.12), s = Math.sin(0.12);
+    K.box(0.01, 0.006, i % 5 ? 0.04 : 0.07, -0.3 + t * c, 0.028, 0.62 - t * s - 0.03, IC.ink, { ry: 0.12, noHull: true });
+  }
+  return 1.0;
+}
+
+// 3 養分與生命：餐盤（荷包蛋、花椰菜、雞腿、番茄）＋一碗白飯＋碘液與變藍黑的馬鈴薯片
+function itemNutrition(K, hc) {
+  const px = -0.26, pz = 0.1, py = 0.05;
+  K.cyl(0.56, 0.5, 0.05, px, 0.025, pz, BI.plate, { seg: 28 });
+  K.torus(0.53, 0.022, px, 0.05, pz, 0xbfe0d6, { rs: 4, ts: 32, noHull: true });
+  // 荷包蛋
+  K.sph(1, px - 0.06, py + 0.01, pz - 0.2, IC.white, { sx: 0.19, sy: 0.018, sz: 0.16, ry: 0.4, ws: 14, hs: 6 });
+  K.sph(0.07, px - 0.03, py + 0.025, pz - 0.19, BI.yolk, { sy: 0.55, ws: 14, hs: 8 });
+  // 花椰菜
+  K.cyl(0.04, 0.05, 0.12, px - 0.3, py + 0.06, pz + 0.08, 0xa8d878, { seg: 10 });
+  for (const [x, y, z, r] of [[0, 0.16, 0, 0.09], [0.08, 0.13, 0.05, 0.07], [-0.08, 0.13, 0.04, 0.07], [0.02, 0.13, -0.08, 0.07]]) K.add(new THREE.IcosahedronGeometry(r, 1), M(px - 0.3 + x, py + y, pz + 0.08 + z), 0x2f8a3a);
+  // 雞腿
+  K.sph(1, px + 0.14, py + 0.06, pz + 0.16, 0xb8783e, { sx: 0.15, sy: 0.07, sz: 0.1, ry: -0.5, ws: 12, hs: 8 });
+  K.rod([px + 0.24, py + 0.05, pz + 0.24], [px + 0.36, py + 0.05, pz + 0.33], 0.025, BI.cream, { seg: 10 });
+  K.sph(0.035, px + 0.37, py + 0.05, pz + 0.34, BI.cream, { ws: 10, hs: 8 });
+  // 番茄片
+  for (const [x, z] of [[0.18, -0.16], [0.28, -0.04]]) {
+    K.cyl(0.075, 0.075, 0.025, px + x, py + 0.0125, pz + z, IC.red, { seg: 20 });
+    K.cyl(0.05, 0.05, 0.004, px + x, py + 0.027, pz + z, 0xf6a08a, { seg: 16, noHull: true });
+  }
+  // 一碗白飯＋筷子（右後）
+  const bx = 0.6, bz = -0.36;
+  lathe(K, [[0, 0], [0.1, 0], [0.2, 0.06], [0.25, 0.16], [0.26, 0.2]], bx, 0, bz, hc, { seg: 24 });
+  K.sph(0.23, bx, 0.16, bz, 0xfffbf2, { sy: 0.45, ws: 20, hs: 8 });
+  for (const d of [0, 0.06]) K.rod([bx - 0.2 + d, 0.2, bz + 0.3], [bx + 0.24 + d, 0.22, bz - 0.06], 0.014, IC.woodD, { seg: 8 });
+  // 碘液＋變藍黑的馬鈴薯片（右前）：澱粉檢驗
+  const ix = 0.7, iz = 0.32;
+  K.cyl(0.08, 0.09, 0.24, ix, 0.12, iz, 0x8a4a22, { seg: 20 });
+  K.cyl(0.05, 0.05, 0.06, ix, 0.27, iz, 0x2f3638, { seg: 16 });
+  K.rod([ix, 0.3, iz], [ix, 0.42, iz], 0.02, IC.glass, { seg: 10 });
+  K.sph(0.035, ix, 0.44, iz, 0x2f3638, { ws: 10, hs: 8 });
+  K.cyl(0.15, 0.15, 0.04, ix - 0.26, 0.02, iz + 0.32, 0xf2e2a0, { seg: 24 });
+  K.cyl(0.075, 0.075, 0.006, ix - 0.25, 0.043, iz + 0.31, 0x2a2b5a, { seg: 18, noHull: true });
+  return 0.5;
+}
+
+// 4 生物的運輸與防禦：心臟模型（往後仰；主動脈紅、肺動脈與上腔靜脈藍）＋紅血球與白血球＋有年輪的樹幹切片
+function itemHeart(K, hc) {
+  const k0 = K.parts.length;
+  K.sph(1, 0, 0, 0, BI.organ, { sx: 0.3, sy: 0.36, sz: 0.25, rz: 0.4, ws: 16, hs: 10 });         // 心室
+  K.sph(0.15, 0.2, 0.27, -0.03, BI.organD, { ws: 12, hs: 8 });                                     // 右心房
+  K.sph(0.13, -0.17, 0.29, -0.1, BI.organD, { ws: 12, hs: 8 });                                    // 左心房
+  K.tube([[-0.02, 0.2, 0.02], [-0.02, 0.48, 0.0], [-0.12, 0.6, -0.04], [-0.28, 0.52, -0.08], [-0.33, 0.3, -0.1]], 0.07, IC.red, { n: 16, rs: 8 }); // 主動脈弓
+  for (const [x, y] of [[-0.06, 0.6], [-0.15, 0.62], [-0.23, 0.58]]) K.rod([x, y, -0.03], [x - 0.02, y + 0.13, -0.04], 0.022, IC.red, { seg: 8 });
+  K.tube([[0.08, 0.18, 0.16], [0.1, 0.38, 0.13], [0.01, 0.47, 0.06], [-0.15, 0.44, 0.02]], 0.06, BI.vein, { n: 16, rs: 8 }); // 肺動脈
+  K.rod([0.24, 0.32, -0.05], [0.24, 0.62, -0.05], 0.055, BI.vein, { seg: 16 });                    // 上腔靜脈
+  K.tube([[-0.04, 0.16, 0.24], [0.03, 0.0, 0.26], [0.0, -0.18, 0.2], [-0.08, -0.3, 0.12]], 0.016, 0xf6c24a, { n: 14, rs: 4, noHull: true }); // 冠狀血管
+  xform(K, k0, M(-0.3, 0.62, -0.08, -0.65, 0, 0));
+  post(K, -0.3, -0.02, 0.36, hc);
+  // 血球（右前）：紅血球像中間凹的圓盤，白血球圓圓的
+  for (const [x, z, rx] of [[0.32, 0.5, 0], [0.52, 0.66, 0.5], [0.16, 0.72, -0.4], [0.62, 0.4, 0.3]]) K.torus(0.075, 0.042, x, 0.05, z, 0xd43a3a, { rs: 5, ts: 12, rx: Math.PI / 2 + rx });
+  K.add(new THREE.IcosahedronGeometry(0.09, 1), M(0.4, 0.09, 0.28), 0xe9e0f6);
+  K.sph(0.05, 0.42, 0.13, 0.32, BI.purple, { ws: 10, hs: 8, noHull: true });
+  // 樹幹切片（右後）：年輪
+  const lx = 0.6, lz = -0.42;
+  K.cyl(0.3, 0.31, 0.14, lx, 0.07, lz, BI.bark, { seg: 22 });
+  K.cyl(0.27, 0.27, 0.004, lx, 0.142, lz, BI.woodL, { seg: 24, noHull: true });
+  for (const r of [0.07, 0.13, 0.19, 0.245]) K.add(new THREE.RingGeometry(r, r + 0.014, 24), M(lx, 0.146, lz, -Math.PI / 2, 0, 0), 0xb5824e, { noHull: true });
+  return 1.2;
+}
+
+// 5 協調與感應：大腦模型（左右兩個半球、腦溝、小腦）＋平放的神經元（樹突、髓鞘、軸突末梢）
+function itemBrain(K, hc) {
+  const cx = -0.12, cy = 0.66, cz = -0.12, sx = 0.2, sy = 0.2, sz = 0.36;
+  post(K, cx, cz - 0.08, cy - 0.12, hc, 0.05);
+  K.sph(1, cx, cy - 0.12, cz - 0.3, 0xe58ca3, { sx: 0.2, sy: 0.09, sz: 0.11, ws: 12, hs: 6 });     // 小腦
+  for (const s of [-1, 1]) {
+    const hx = cx + s * 0.205;
+    K.sph(1, hx, cy, cz, BI.brain, { sx, sy, sz, ws: 16, hs: 10 });
+    for (const off of [-0.1, 0, 0.1]) {                                                               // 腦溝：貼在半球表面的波浪線
+      const pts = [];
+      for (let k = 0; k <= 12; k++) {
+        const z = -0.28 + 0.56 * k / 12, dx = off * (1 - Math.abs(z) / sz * 0.5) + 0.025 * Math.sin(k * 1.9 + off * 30);
+        const q = 1 - (dx / sx) ** 2 - (z / sz) ** 2;
+        pts.push([hx + dx, cy + sy * Math.sqrt(Math.max(0, q)) + 0.006, cz + z]);
+      }
+      K.tube(pts, 0.013, BI.brainD, { n: 16, rs: 4, noHull: true });
+    }
+  }
+  // 神經元（前方平放）：細胞本體＋細胞核、樹突、包著髓鞘的軸突、末梢
+  const sx0 = -0.62, sz0 = 0.58, y = 0.05;
+  K.sph(0.1, sx0, y, sz0, 0xf6c84a, { sy: 0.5, ws: 12, hs: 6 });
+  K.sph(0.04, sx0, y + 0.04, sz0, BI.purple, { ws: 10, hs: 6, noHull: true });
+  for (const a of [1.7, 2.5, 3.3, 4.1, 4.9]) {
+    const ex = sx0 + Math.cos(a) * 0.24, ez = sz0 + Math.sin(a) * 0.22;
+    K.rod([sx0, y, sz0], [ex, y, ez], 0.02, 0xf6c84a, { seg: 6, r2: 0.01 });
+    K.rod([ex, y, ez], [ex + Math.cos(a + 0.5) * 0.09, y, ez + Math.sin(a + 0.5) * 0.09], 0.01, 0xf6c84a, { seg: 6, noHull: true });
+  }
+  const ax = [[sx0 + 0.08, y, sz0 - 0.02], [0.0, y, 0.52], [0.4, y, 0.5], [0.78, y, 0.36]];
+  K.tube(ax, 0.02, 0xf6c84a, { n: 16, rs: 5 });
+  const curve = new THREE.CatmullRomCurve3(ax.map(p => new THREE.Vector3(...p)), false, 'centripetal');
+  for (const t of [0.22, 0.4, 0.58, 0.76]) {
+    const a = curve.getPoint(t - 0.06), b = curve.getPoint(t + 0.06);
+    K.rod([a.x, a.y, a.z], [b.x, b.y, b.z], 0.042, 0xf2ecd9, { seg: 10 });                          // 髓鞘
+  }
+  for (const a of [-0.9, -0.2, 0.5]) {
+    const ex = 0.78 + Math.cos(a) * 0.14, ez = 0.36 + Math.sin(a) * 0.14;
+    K.rod([0.78, y, 0.36], [ex, y, ez], 0.012, 0xf6c84a, { seg: 6, noHull: true });
+    K.sph(0.03, ex, y, ez, 0xf6a13a, { ws: 8, hs: 6 });
+  }
+  return cy + sy + 0.05;
+}
+
+// 6 生物的恆定性：肺臟模型（氣管、支氣管、左右肺，往後仰）＋體溫計（紅色液柱停在 37 度附近）
+function itemLungs(K, hc) {
+  const k0 = K.parts.length;
+  K.cyl(0.065, 0.065, 0.36, 0, 0.92, 0, 0xf0e0d8, { seg: 16 });                                     // 氣管
+  for (let i = 0; i < 4; i++) K.torus(0.068, 0.013, 0, 0.8 + i * 0.08, 0, 0xe2c8bc, { rs: 4, ts: 16, noHull: true });
+  for (const s of [-1, 1]) {
+    K.rod([0, 0.76, 0], [s * 0.16, 0.6, 0.02], 0.045, 0xf0e0d8, { seg: 12 });                        // 支氣管
+    const lx = s * 0.27, sxl = s < 0 ? 0.23 : 0.21;
+    K.sph(1, lx, 0.42, 0, BI.lung, { sx: sxl, sy: 0.37, sz: 0.16, rz: -s * 0.12, ws: 18, hs: 12 });  // 肺
+    const surf = (x, y) => { const q = 1 - ((x - lx) / sxl) ** 2 - ((y - 0.42) / 0.37) ** 2; return 0.16 * Math.sqrt(Math.max(0, q)) + 0.008; };
+    const br = (pts) => K.tube(pts.map(([x, y]) => [x, y, surf(x, y)]), 0.014, BI.lungD, { n: 10, rs: 4, noHull: true });
+    br([[s * 0.15, 0.6], [s * 0.22, 0.48], [s * 0.26, 0.3], [s * 0.3, 0.16]]);                       // 肺上的支氣管分枝
+    br([[s * 0.22, 0.48], [s * 0.34, 0.42], [s * 0.4, 0.34]]);
+    br([[s * 0.24, 0.36], [s * 0.18, 0.24], [s * 0.16, 0.14]]);
+  }
+  K.add(new THREE.SphereGeometry(0.46, 22, 4, 0, TAU, 0, 0.75), Ms(0, -0.22, 0, 1, 0.5, 0.55), 0xc9705a); // 橫膈（圓頂）
+  xform(K, k0, M(-0.22, 0.32, -0.3, -0.6, 0, 0));
+  post(K, -0.22, -0.18, 0.24, hc);
+  // 體溫計（右前，平放）
+  const a = [0.2, 0.06, 0.66], b = [0.98, 0.06, 0.24];
+  K.rod(a, b, 0.042, IC.white, { seg: 16 });
+  K.sph(0.06, ...a, IC.red, { ws: 14, hs: 10 });
+  const at = t => [a[0] + (b[0] - a[0]) * t, 0.1, a[2] + (b[2] - a[2]) * t];
+  K.rod(at(0.04), at(0.62), 0.016, IC.red, { seg: 8, noHull: true });
+  for (let i = 0; i < 9; i++) { const p = at(0.18 + i * 0.09); K.box(0.012, 0.006, i % 2 ? 0.05 : 0.08, p[0], 0.09, p[2] - 0.02, IC.ink, { ry: Math.atan2(b[0] - a[0], b[2] - a[2]), noHull: true }); }
+  return 1.25;
+}
+
+// 7 生殖與生命延續：一朵花（花瓣、雄蕊、雌蕊，花面斜向鏡頭）種在小盆裡＋蜜蜂＋鳥巢裡的蛋
+function itemFlower(K, hc) {
+  const fx = -0.28, fz = -0.22;
+  lathe(K, [[0, 0], [0.17, 0], [0.22, 0.24], [0.25, 0.27], [0.23, 0.27]], fx, 0, fz, hc, { seg: 22 });  // 花盆
+  K.cyl(0.215, 0.215, 0.01, fx, 0.26, fz, BI.soil, { seg: 22, noHull: true });
+  K.tube([[fx, 0.25, fz], [fx + 0.02, 0.5, fz + 0.02], [fx, 0.7, fz + 0.08], [fx + 0.02, 0.84, fz + 0.12]], 0.03, BI.leafD, { n: 12, rs: 6 }); // 莖
+  leafy(K, fx + 0.17, 0.52, fz + 0.04, 0.32, 0.13, BI.leaf, { rz: 0.4, ry: -0.3, ws: 10, hs: 6 });
+  leafy(K, fx - 0.16, 0.44, fz + 0.02, 0.28, 0.12, BI.leaf, { rz: -0.45, ry: 0.4, ws: 10, hs: 6 });
+  const k0 = K.parts.length;
+  for (let i = 0; i < 5; i++) {                                                                       // 花瓣（往上翹一點）
+    const a = i * TAU / 5 + 0.3;
+    K.sph(1, Math.cos(a) * 0.2, 0.02, Math.sin(a) * 0.2, BI.pink, { sx: 0.19, sy: 0.03, sz: 0.13, ry: -a, rz: 0.3, ws: 10, hs: 6 });
+  }
+  K.sph(0.08, 0, 0.03, 0, 0xffe27a, { sy: 0.45, ws: 12, hs: 6 });
+  for (let i = 0; i < 6; i++) {                                                                       // 雄蕊：花絲＋花藥
+    const a = i * TAU / 6, e = [Math.cos(a) * 0.1, 0.15, Math.sin(a) * 0.1];
+    K.rod([0, 0.04, 0], e, 0.008, IC.cream, { seg: 5, open: true, noHull: true });
+    K.sph(0.026, ...e, 0xf2a03a, { ws: 6, hs: 4 });
+  }
+  K.rod([0, 0.04, 0], [0, 0.2, 0], 0.018, 0x7bc47a, { seg: 8 });                                     // 雌蕊
+  K.sph(0.032, 0, 0.21, 0, 0x5fa862, { ws: 10, hs: 8 });
+  xform(K, k0, M(fx + 0.02, 0.86, fz + 0.12, 0.45, 0, 0));
+  // 蜜蜂（右邊）
+  const bx = 0.36, by = 0.62, bz = -0.08;
+  K.sph(1, bx, by, bz, 0xf6c23a, { sx: 0.11, sy: 0.07, sz: 0.07, ws: 10, hs: 7 });
+  for (const d of [-0.03, 0.03]) K.cyl(0.072, 0.072, 0.025, bx + d, by, bz, 0x2f3638, { seg: 16, rz: Math.PI / 2, noHull: true });
+  K.sph(0.05, bx - 0.12, by + 0.01, bz, 0x2f3638, { ws: 10, hs: 8 });
+  for (const s of [-1, 1]) K.sph(1, bx + 0.02, by + 0.08, bz + s * 0.09, 0xeaf6fb, { sx: 0.06, sy: 0.012, sz: 0.1, ry: s * 0.4, ws: 8, hs: 4, glass: true, alpha: 0.75 });
+  K.cyl(0.012, 0.012, by - 0.04, bx + 0.12, (by - 0.04) / 2, bz - 0.06, IC.steel, { seg: 8 });      // 支架
+  // 鳥巢與蛋（右前）
+  const nx = 0.5, nz = 0.46;
+  K.torus(0.22, 0.075, nx, 0.08, nz, 0x9a7048, { rs: 5, ts: 16 });
+  K.cyl(0.2, 0.16, 0.06, nx, 0.04, nz, 0x7a5a3a, { seg: 18 });
+  for (const [x, z, r] of [[-0.06, -0.04, 0.4], [0.07, -0.03, -0.3], [0.0, 0.08, 1.2]]) K.sph(0.075, nx + x, 0.13, nz + z, 0xd6eef0, { sx: 1.3, ry: r, ws: 10, hs: 7 });
+  return 1.15;
+}
+
+// 8 遺傳與生物技術：躺在兩個支架上的 DNA 雙股螺旋（鹼基配對四種顏色）＋剝開的豌豆莢
+function itemDNA(K, hc) {
+  const X0 = -0.86, X1 = 0.86, cy = 0.62, cz = -0.12, Rr = 0.2, turns = 2;
+  const pt = (t, ph) => { const a = turns * TAU * t + ph; return [X0 + (X1 - X0) * t, cy + Rr * Math.cos(a), cz + Rr * Math.sin(a)]; };
+  for (const [ph, c] of [[0, 0x4a7fe0], [Math.PI, 0xe06a8a]]) {
+    const pts = [];
+    for (let k = 0; k <= 40; k++) pts.push(pt(k / 40, ph));
+    K.tube(pts, 0.038, c, { n: 44, rs: 6, type: 'catmullrom' });
+  }
+  const PAIR = [[0xf2c84a, 0x4fae60], [0xf28a3a, 0x8a5ac8]];
+  for (let i = 0; i < 16; i++) {
+    const t = (i + 0.5) / 16, a = pt(t, 0), b = pt(t, Math.PI), m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+    const [c1, c2] = PAIR[(i * 7 + (i >> 2)) % 2], flip = (i * 5) % 3 === 0;
+    K.rod(a, m, 0.022, flip ? c2 : c1, { seg: 6, open: true, noHull: true });
+    K.rod(m, b, 0.022, flip ? c1 : c2, { seg: 6, open: true, noHull: true });
+  }
+  for (const x of [-0.56, 0.56]) {                                                                    // 支架（館色）
+    K.cyl(0.13, 0.15, 0.05, x, 0.025, cz, hc, { seg: 20 });
+    K.cyl(0.035, 0.035, cy - Rr - 0.05, x, (cy - Rr - 0.05) / 2, cz, IC.steel, { seg: 12 });
+    K.torus(0.07, 0.02, x, cy - Rr - 0.04, cz, hc, { rx: 0, ry: Math.PI / 2, arc: Math.PI, rz: Math.PI, rs: 4, ts: 12 });
+  }
+  // 豌豆莢（前方）：剝開的半邊豆莢，裡面一排豌豆
+  const k0 = K.parts.length;
+  K.add(new THREE.SphereGeometry(1, 16, 5, 0, TAU, Math.PI / 2, Math.PI / 2), Ms(0, 0.1, 0, 0.42, 0.1, 0.13), 0x6fbf4a);
+  K.torus(1, 0.012, 0, 0.1, 0, 0x5aa83a, { rs: 4, ts: 24, noHull: true });
+  K.parts[K.parts.length - 1].m.multiply(Ms(0, 0, 0, 0.42, 0.13, 1));
+  for (let i = 0; i < 5; i++) K.sph(0.062, -0.26 + i * 0.13, 0.1, 0, BI.leafL, { ws: 9, hs: 6 });
+  K.rod([-0.42, 0.1, 0], [-0.52, 0.16, -0.03], 0.016, BI.leafD, { seg: 6 });
+  xform(K, k0, M(0.1, 0, 0.6, 0, 0.15, 0));
+  return cy + Rr + 0.05;
+}
+
+// 9 地球上的生物：紅色毒菇（真菌）＋蕨類的葉＋葉子上的瓢蟲＋放大鏡（觀察與分類）
+function itemDiversity(K, hc) {
+  // 蘑菇（左後）
+  for (const [x, z, s] of [[-0.55, -0.38, 1], [-0.28, -0.5, 0.6]]) {
+    K.cyl(0.07 * s, 0.09 * s, 0.32 * s, x, 0.16 * s, z, BI.cream, { seg: 14 });
+    K.add(new THREE.SphereGeometry(0.28 * s, 20, 6, 0, TAU, 0, Math.PI / 2), Ms(x, 0.3 * s, z, 1, 0.6, 1), IC.red);
+    for (let i = 0; i < 6; i++) {
+      const a = i * 1.15 + 0.3, rr = (i % 2 ? 0.17 : 0.1) * s, h = 0.3 * s + 0.6 * Math.sqrt(Math.max(0, (0.28 * s) ** 2 - rr * rr));
+      K.sph(0.032 * s, x + Math.cos(a) * rr, h, z + Math.sin(a) * rr, IC.white, { sy: 0.45, ws: 6, hs: 4, noHull: true });
+    }
+  }
+  // 蕨類的葉（右後，平放）：葉軸＋一對對羽片，越往尖端越小
+  const p0 = new THREE.Vector3(0.05, 0.04, 0.0), p1 = new THREE.Vector3(0.9, 0.1, -0.5);
+  K.rod(p0.toArray(), p1.toArray(), 0.016, 0x5a7a3a, { seg: 6 });
+  const dir = p1.clone().sub(p0), L = dir.length(), ang = Math.atan2(-dir.z, dir.x);
+  for (let i = 0; i < 7; i++) {
+    const t = 0.12 + i * 0.125, p = p0.clone().addScaledVector(dir, t), len = 0.3 * (1 - t * 0.7);
+    for (const s of [-1, 1]) {
+      const a = ang + s * 1.05;
+      leafy(K, p.x + Math.cos(a) * len / 2, p.y + 0.005, p.z - Math.sin(a) * len / 2, len, 0.07, BI.leafD, { ry: a, ws: 8, hs: 4 });
+    }
+  }
+  // 葉子上的瓢蟲（左前）
+  const lx = -0.38, lz = 0.4;
+  leafy(K, lx, 0.03, lz, 0.64, 0.34, 0x66c274, { ry: 0.35, ws: 16, hs: 6 });
+  K.rod([lx - 0.29, 0.06, lz + 0.1], [lx + 0.29, 0.06, lz - 0.1], 0.008, 0x4f9a50, { seg: 6, noHull: true });
+  const bx = lx + 0.04, bz = lz - 0.01;
+  K.add(new THREE.SphereGeometry(0.11, 16, 6, 0, TAU, 0, Math.PI / 2), Ms(bx, 0.055, bz, 1, 0.75, 0.9), IC.red);
+  K.sph(0.05, bx + 0.12, 0.07, bz - 0.04, 0x2f3638, { ws: 10, hs: 8 });
+  K.box(0.2, 0.012, 0.012, bx, 0.135, bz, 0x2f3638, { ry: 0.33, noHull: true });
+  for (const [x, z] of [[-0.04, 0.05], [0.04, 0.05], [-0.04, -0.05], [0.04, -0.05], [-0.07, 0]]) K.sph(0.022, bx + x, 0.12 - Math.abs(x) * 0.4, bz + z * 0.9, 0x2f3638, { sy: 0.4, ws: 6, hs: 4, noHull: true });
+  // 放大鏡（右前，平放）
+  const mx = 0.42, mz = 0.48;
+  K.torus(0.19, 0.03, mx, 0.04, mz, 0x2f4a52, { rs: 6, ts: 28 });
+  K.cyl(0.18, 0.18, 0.02, mx, 0.04, mz, 0xbfeaf5, { glass: true, alpha: 0.45, seg: 28 });
+  K.rod([mx + 0.17, 0.04, mz + 0.09], [mx + 0.48, 0.04, mz + 0.26], 0.035, IC.woodD, { seg: 12 });
+  return 0.5;
+}
+
+// 10 生物圈與生態關係：能量塔（生產者綠、初級消費者黃綠、高級消費者橘）上面放草、兔子、老鷹＋太陽
+function itemEcology(K, hc) {
+  const cx = 0.02, cz = -0.06, h = 0.16;
+  K.box(1.5, h, 1.0, cx, h / 2, cz, 0x6fbf6a);
+  K.box(1.0, h, 0.66, cx, h * 1.5, cz - 0.06, 0xc8dc5a);
+  K.box(0.5, h, 0.34, cx, h * 2.5, cz - 0.12, 0xf2a03a);
+  // 生產者：草叢
+  for (const [x, z] of [[-0.6, 0.3], [-0.35, 0.36], [-0.05, 0.36], [0.28, 0.34], [0.58, 0.28], [-0.62, -0.38], [0.62, -0.4]]) {
+    for (const [dx, dz, r] of [[0, 0, 0], [0.04, 0.02, 0.35], [-0.04, 0.02, -0.35]]) K.add(new THREE.ConeGeometry(0.03, 0.16, 5), M(cx + x + dx, h + 0.08, cz + z + dz, 0, 0, r), 0x2f8a3a, { noHull: true });
+  }
+  // 初級消費者：兔子
+  const rx = cx - 0.24, rz = cz + 0.17, ry = h * 2;
+  K.sph(1, rx, ry + 0.08, rz, 0xece6dc, { sx: 0.12, sy: 0.08, sz: 0.08, ws: 14, hs: 10 });
+  K.sph(0.06, rx + 0.12, ry + 0.13, rz, 0xece6dc, { ws: 12, hs: 8 });
+  for (const s of [-1, 1]) leafy(K, rx + 0.1, ry + 0.24, rz + s * 0.03, 0.14, 0.04, 0xf2c9c9, { rz: 1.2, rx: s * 0.3, ws: 8, hs: 6 });
+  K.sph(0.03, rx - 0.12, ry + 0.1, rz, IC.white, { ws: 8, hs: 6 });
+  // 高級消費者：老鷹（張開翅膀，從上面看最清楚）
+  const ex = cx, ey = h * 3 + 0.14, ez = cz - 0.12;
+  K.sph(1, ex, ey, ez, BI.feather, { sx: 0.06, sy: 0.05, sz: 0.13, ws: 12, hs: 8 });
+  K.sph(0.045, ex, ey + 0.03, ez + 0.13, IC.white, { ws: 10, hs: 8 });
+  K.add(new THREE.ConeGeometry(0.018, 0.05, 6), M(ex, ey + 0.02, ez + 0.19, Math.PI / 2, 0, 0), IC.yellow, { noHull: true });
+  for (const s of [-1, 1]) leafy(K, ex + s * 0.2, ey + 0.03, ez - 0.01, 0.36, 0.11, 0x6e4a2e, { rz: s * 0.15, ry: s * 0.12, ws: 10, hs: 6 });
+  leafy(K, ex, ey - 0.005, ez - 0.17, 0.08, 0.1, 0x6e4a2e, { ws: 8, hs: 6 });
+  K.cyl(0.012, 0.012, 0.12, ex, ey - 0.08, ez, IC.steel, { seg: 6 });
+  // 太陽（左後，能量的來源）
+  const sx = -0.78, sz = -0.6;
+  K.cyl(0.02, 0.02, 0.9, sx, 0.45, sz, IC.steel, { seg: 8 });
+  K.sph(0.15, sx, 0.92, sz, 0xf6b23a, { ws: 16, hs: 12 });
+  for (let i = 0; i < 8; i++) { const a = i * TAU / 8; K.add(new THREE.ConeGeometry(0.035, 0.1, 6), M(sx + Math.cos(a) * 0.21, 0.92, sz + Math.sin(a) * 0.21, 0, 0, 0).multiply(new THREE.Matrix4().makeRotationY(-a)).multiply(M(0, 0, 0, 0, 0, -Math.PI / 2)), IC.yellow, { noHull: true }); }
+  return h * 3 + 0.3;
+}
+
+// 11 人類與環境：在水邊覓食的黑面琵鷺（保育）＋土堆上的小樹苗＋資源回收桶
+function itemConservation(K, hc) {
+  // 水塘＋黑面琵鷺（左前），整組放大 1.3 倍
+  const px = -0.42, pz = 0.36, k0 = K.parts.length;
+  K.cyl(0.36, 0.38, 0.03, 0, 0.015, 0, 0x5fb8e6, { seg: 28, noHull: true });
+  const bx = -0.08, by = 0.3, bz = -0.02;
+  K.sph(1, bx, by, bz, IC.white, { sx: 0.16, sy: 0.09, sz: 0.09, rz: 0.15, ws: 16, hs: 10 });
+  for (const s of [-1, 1]) K.rod([bx + 0.02, by - 0.05, bz + s * 0.04], [bx + 0.03, 0.02, bz + s * 0.05], 0.011, 0x2f3638, { seg: 6 });
+  K.tube([[bx + 0.12, by + 0.03, bz], [bx + 0.18, by + 0.12, bz + 0.01], [bx + 0.22, by + 0.17, bz + 0.03]], 0.03, IC.white, { n: 8, rs: 6 });
+  K.sph(0.045, bx + 0.24, by + 0.19, bz + 0.03, IC.white, { ws: 12, hs: 8 });
+  K.sph(0.032, bx + 0.26, by + 0.19, bz + 0.05, 0x2f3638, { ws: 8, hs: 6, noHull: true });       // 黑臉
+  K.rod([bx + 0.27, by + 0.17, bz + 0.05], [bx + 0.4, by + 0.07, bz + 0.13], 0.014, 0x2f3638, { seg: 6 }); // 嘴
+  K.sph(1, bx + 0.42, by + 0.05, bz + 0.14, 0x2f3638, { sx: 0.05, sy: 0.012, sz: 0.036, ry: -0.5, ws: 10, hs: 6 }); // 湯匙狀的嘴尖
+  xform(K, k0, Ms(px, 0, pz, 1.3, 1.3, 1.3));
+  // 土堆＋樹苗（後方）
+  const tx = -0.08, tz = -0.46;
+  K.add(new THREE.SphereGeometry(0.34, 18, 5, 0, TAU, 0, Math.PI / 2), Ms(tx, 0, tz, 1, 0.4, 1), BI.soil);
+  K.rod([tx, 0.1, tz], [tx + 0.02, 0.66, tz + 0.02], 0.03, 0x7a5a3a, { seg: 8 });
+  for (const [a, y, l] of [[0.3, 0.66, 0.36], [2.4, 0.64, 0.34], [4.3, 0.56, 0.3], [5.4, 0.46, 0.26], [1.4, 0.48, 0.26]]) leafy(K, tx + Math.cos(a) * l * 0.45, y, tz + Math.sin(a) * l * 0.45, l, l * 0.5, BI.leaf, { ry: -a, rz: 0.3 });
+  // 資源回收桶（右邊）：藍色桶身、白色蓋子上綠色三個箭頭（回收標誌）
+  const rx = 0.6, rz = 0.0, rh = 0.48;
+  K.cyl(0.26, 0.22, rh, rx, rh / 2, rz, IC.blue, { seg: 24 });
+  K.cyl(0.28, 0.28, 0.05, rx, rh + 0.025, rz, IC.white, { seg: 24 });
+  for (let i = 0; i < 3; i++) {
+    const a = i * TAU / 3 + Math.PI / 2, mx = rx + Math.cos(a) * 0.09, mz = rz + Math.sin(a) * 0.09, ry = -a - Math.PI / 2;
+    K.box(0.15, 0.01, 0.035, mx, rh + 0.055, mz, 0x2f9a4d, { ry, noHull: true });
+    const tip = [mx + Math.cos(a + Math.PI / 2) * 0.09, rh + 0.055, mz + Math.sin(a + Math.PI / 2) * 0.09];
+    K.add(new THREE.ConeGeometry(0.05, 0.08, 3), M(tip[0], tip[1], tip[2], 0, ry, 0).multiply(M(0, 0, 0, 0, 0, -Math.PI / 2)).multiply(Ms(0, 0, 0, 1, 1, 0.25)), 0x2f9a4d, { noHull: true });
+  }
+  return 0.72;
+}
+
 const UNIT_ITEMS = {
   physics: {
     'physics-01': itemBalance, 'physics-02': itemTuningFork, 'physics-03': itemOptics, 'physics-04': itemHeat, 'physics-05': itemPressure,
@@ -1214,6 +1606,10 @@ const UNIT_ITEMS = {
   },
   earth: {
     'earth-01': itemWaterLand, 'earth-02': itemPlates, 'earth-03': itemSpace, 'earth-04': itemWeather, 'earth-05': itemClimate,
+  },
+  biology: {
+    'biology-01': itemMicroscope, 'biology-02': itemCells, 'biology-03': itemNutrition, 'biology-04': itemHeart, 'biology-05': itemBrain, 'biology-06': itemLungs,
+    'biology-07': itemFlower, 'biology-08': itemDNA, 'biology-09': itemDiversity, 'biology-10': itemEcology, 'biology-11': itemConservation,
   },
 };
 const ITEM_PLINTH = { r: 1.22, h: 0.3 }; // 有小物品的單元站：矮而寬的圓台
