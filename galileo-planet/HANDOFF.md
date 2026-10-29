@@ -88,7 +88,7 @@
   - 球外的封面小牌子位置跟著種子換了；「走過打勾／下一站」仍未做。
   - iPad 實機未測。
 - **下一步建議**：老師看過分支效果後再併入 main；第二步可做領土上的名稱或邊界立體化（如需要）。
-- 最後 commit：見本分支 `git log`（SHA 回報於對話）。
+- 最後 commit：`c3c39a2`（主要變更；本行更新為後續小 commit）。
 
 ### 2026-10-27（晚）　曉臻自動錄音（GitHub Actions）
 - 新增 `.github/workflows/xiaozhen-voice.yml`＋`tools/voice/render_voice.py`：改 `intro_lines.json` 的台詞並 push（或 Actions 頁手動 Run workflow），GitHub 自動錄曉臻 → 接成 `intro_zh.mp3/json` → 升版本號 → commit 回 main。老師不用再在 Mac 雙擊與拖檔。規則寫在 AGENTS 第十四律 14.0。
