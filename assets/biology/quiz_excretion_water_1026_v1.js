@@ -30,7 +30,7 @@ LQ.add('excretion_water',{
    P(`轉變在肝臟，形成尿液在腎臟；這兩項工作不能都交給膀胱。`,`The conversion happens in the liver and urine is formed in the kidneys; the bladder cannot be given both jobs.`),
    P(`在「生物」按「哺乳類：尿素」，看轉變和形成尿液各在哪裡。`,`Under "Organism" press "Mammals: urea" and see where the change and the urine forming each happen.`)),
   Q(P(`鳥類主要排尿酸，這樣做的好處是什麼？`,`Birds mainly excrete uric acid. What is the benefit?`),
-   [P(`排出時所需要的水分比較少`,`It needs less water to be removed out of the body`),P(`合成尿酸一點都不需要能量`,`Making uric acid needs no energy at all in the cell`),P(`尿酸毒性比氨更高所以更好`,`Uric acid is more toxic than ammonia, so is better`),P(`可把未吸收的食物殘渣變成尿酸`,`It can turn unabsorbed food residue into uric acid`)],0,
+   [P(`排出時所需要的水分比較少`,`It needs less water to be removed out of the body`),P(`合成尿酸一點都不需要能量`,`Making uric acid needs no energy at all in cells`),P(`尿酸毒性比氨更高所以更好`,`Uric acid is more toxic than ammonia, so is better`),P(`可把未吸收的食物殘渣變成尿酸`,`It can turn unabsorbed food residue into uric acid`)],0,
    P(`尿酸排出時所需水較少，但合成也需要能量；它來自代謝，和食物殘渣不同。`,`Uric acid needs less water to remove, but making it also costs energy; it comes from metabolism, unlike food residue.`),
    P(`在「生物」按「鳥類：尿酸」，讀它需要多少水。`,`Under "Organism" press "Birds: uric acid" and read how much water it needs.`)),
   Q(P(`不同生物排含氮廢物的形式不一樣，主要和什麼有關？`,`Different organisms remove nitrogen waste in different forms. What is this mainly related to?`),
