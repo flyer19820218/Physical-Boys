@@ -172,7 +172,7 @@
 | 5 | 41–50 | 物理／化學 | electronics_4、magnetism_1、electromagnetism_2、electric_motor_3、electromagnetic_induction_4、concerntration_1、concerntration_2、concerntration_3、concerntration_4、atomics_1 | ☑ |
 | 6 | 51–60 | 化學 | atomics_2、atomics_3、atomics_4、chem_reaction_1、chem_reaction_2、chem_reaction_3、chem_reaction_4、redox_1、redox_2、redox_3 | ☑ |
 | 7 | 61–70 | 化學 | electrolyte_1、electrolyte_2、electrolyte_3、electrolyte_4、chem_reaction_balance_1、chem_reaction_balance_2、chem_reaction_balance_3、organics_1、organics_2、organics_3 | ☑ |
-| 8 | 71–80 | 化學／地科 | organics_4、electric_energy_power_1、electric_power_transmission_2、electrical_safety_3、galvanic_batteries_4、electrolysis_5、earth_water_1、earth_landforms_2、earth_coastline_3、earth_rocks_4 | ☐ ☑ |
+| 8 | 71–80 | 化學／地科 | organics_4、electric_energy_power_1、electric_power_transmission_2、electrical_safety_3、galvanic_batteries_4、electrolysis_5、earth_water_1、earth_landforms_2、earth_coastline_3、earth_rocks_4 | ☑ |
 | 9 | 81–90 | 地科 | earth_interior_1、earth_plates_2、earth_strata_3、earth_taiwan_quake_4、astronomy_universe_1、astronomy_earth_motion_2、astronomy_sunpath_3、astronomy_moon_phases_4、weather_atmosphere_1、weather_cloud_rain_2 | ☐ |
 | 10 | 91–100 | 地科／生物 | weather_wind_3、weather_airmass_front_4、weather_forecast_5、weather_disaster_6、climate_ocean_7、climate_change_8、biology_intro、biology_microscope、biology_cells、biology_matter_transport | ☐ |
 | 11 | 101–110 | 生物 | biology_organization、biology_scale、biology_nutrients、biology_enzymes、biology_photosynthesis、biology_animal_nutrition、biology_plant_structure、biology_plant_transport、biology_human_transport、biology_immune_defense | ☐ |

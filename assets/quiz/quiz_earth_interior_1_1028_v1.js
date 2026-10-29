@@ -1,0 +1,72 @@
+/* Multiple-choice practice for earth_interior_1.html (2026-10-28): question, hint (shown when wrong), answer (shown when right).
+ * Rendered by ../biology/lesson_quiz_static_1026_v1.js. Option order is a fixed shuffle of the order written here. */
+(()=>{'use strict';
+const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
+LQ.addStatic('earth_interior_1',{
+ '.panel:nth-child(3)':[
+  Q(P(`科學家沒有挖到地心，為什麼仍能推測地球內部分成好幾層？`,`Scientists never dug to the Earth's centre. Why can they still infer layers inside it?`),
+   [P(`鑽井已經鑽穿地殼直接看到各層`,`Drilling has reached and shown each layer`),P(`地震波在各深度的速度都一樣`,`Waves keep the same speed at all depths`),P(`地震波在某深度速度突然改變`,`Seismic waves change speed at some depths`),P(`太空船能拍到地球內部的照片`,`Spacecraft photograph the Earth's interior`)],2,
+   P(`波在不同介質中速率不同，速度突然改變的地方就是物質改變的地方，用地震儀記錄到達時間就能推論。`,`Waves travel at different speeds in different materials, so a sudden change in speed marks a change in material; seismographs record the arrival times.`),
+   P(`波進入不同的介質，傳播速率會怎麼樣？`,`What happens to a wave's speed when it enters a different medium?`)),
+  Q(P(`S 波傳到地下約 2900 km 就消失了，而 S 波只能在固體中傳播。外核最可能是什麼狀態？`,`S waves vanish at about 2900 km depth, and S waves only travel through solids. What state is the outer core most likely in?`),
+   [P(`固態`,`Solid`),P(`液態`,`Liquid`),P(`氣態`,`Gaseous`),P(`冰凍`,`Frozen`)],1,
+   P(`S 波只能在固體裡傳，到約 2900 km 就傳不過去，所以推測地核外層是液態。`,`S waves only pass through solids and stop at about 2900 km, so the outer core is inferred to be liquid.`),
+   P(`S 波是橫波，它能穿過哪種狀態、傳不過哪種？`,`S waves are transverse waves. Which states can they pass through, and which not?`)),
+  Q(P(`科學家為什麼主要靠地震波，而不是往下挖來了解地球內部？`,`Why do scientists rely on seismic waves rather than digging to study the Earth's interior?`),
+   [P(`地球內部全是液態岩漿，所以無法鑽入`,`The interior is all liquid magma, undrillable`),P(`地球半徑只有 12 km，早已挖到底`,`Earth's radius is only 12 km, already reached`),P(`鑽井成本比地震波便宜太多，卻不夠準確`,`Drilling is far cheaper but not accurate enough`),P(`越深越熱壓力大，最深洞約 12 km`,`Heat and pressure rise; deepest hole is 12 km`)],3,
+   P(`最深的洞約 12 公里，連半徑（約 6370 km）的 0.2% 都不到，所以只能用地震波來「透視」。`,`The deepest hole is about 12 km, under 0.2% of the 6370 km radius, so seismic waves are used to "see" inside.`),
+   P(`比較最深的洞和地球半徑，再想想越深的環境變化。`,`Compare the deepest hole with the Earth's radius, then think about conditions deeper down.`))],
+ '.panel:nth-child(4)':[
+  Q(P(`地球內部三層中，哪一層主要由鐵、鎳等金屬組成？`,`Which of the three layers inside the Earth is mainly iron and nickel?`),
+   [P(`地殼`,`Crust`),P(`地核`,`Core`),P(`地函`,`Mantle`),P(`熔岩`,`Lava`)],1,
+   P(`地核主要是鐵、鎳，平均密度最大；地殼和地函主要是岩石。`,`The core is mostly iron and nickel and is the densest; the crust and mantle are mostly rock.`),
+   P(`最外面兩層都是岩石，平均密度最大的是哪一層？`,`The two outer layers are rock. Which layer has the greatest average density?`)),
+  Q(P(`地球三層的平均密度，由大到小排列，哪一個正確？`,`Which ranks the three layers by average density, highest to lowest?`),
+   [P(`地殼 ＞ 地函 ＞ 地核`,`Crust > mantle > core`),P(`地核 ＞ 地函 ＞ 地殼`,`Core > mantle > crust`),P(`地函 ＞ 地核 ＞ 地殼`,`Mantle > core > crust`),P(`地核 ＞ 地殼 ＞ 地函`,`Core > crust > mantle`)],1,
+   P(`地球形成初期大多熔融，密度大的鐵、鎳往中心沉，較輕的岩石留在外面，像密度柱裡重的沉在下面。`,`Early Earth was mostly molten, so dense iron and nickel sank to the centre while lighter rock stayed outside, like a density column.`),
+   P(`回想密度柱：鐵螺帽和軟木塞，哪個沉到底？`,`Recall the density column: which sinks, the iron nut or the cork?`)),
+  Q(P(`下列關於地球三層厚度的說法，哪一個正確？`,`Which statement about the thickness of the three layers is correct?`),
+   [P(`地殼最厚，因為我們就住在地殼上`,`The crust is thickest since we live on it`),P(`地函約 2900 km，所以它最厚`,`Mantle is ~2900 km, so it is thickest`),P(`三層厚度都差不多，沒有哪個特別厚`,`All three layers are about equally thick`),P(`地核約 3470 km，比地函還厚`,`Core is ~3470 km, thicker than mantle`)],3,
+   P(`地核厚約 6370 − 2900 ＝ 3470 km，地函約 2900 km，地殼只有約 7～40 km。`,`The core is about 6370 − 2900 = 3470 km, the mantle about 2900 km and the crust only 7–40 km.`),
+   P(`地核從約 2900 km 的交界一路到地心。用半徑（約 6370 km）算算看。`,`The core runs from about 2900 km depth to the centre. Use the radius (about 6370 km).`))],
+ '.panel:nth-child(5)':[
+  Q(P(`大陸地殼和海洋地殼比較，下列哪一個正確？`,`Compare continental and oceanic crust. Which statement is correct?`),
+   [P(`大陸地殼較厚，故密度也較大`,`Continental crust: thicker and more dense`),P(`大陸地殼較厚，但密度比較小`,`Continental crust: thicker but less dense`),P(`海洋地殼又厚又重，兩項較大`,`Oceanic crust: thicker and denser too`),P(`兩種地殼厚度和密度都相同`,`Both crusts are identical in every way`)],1,
+   P(`大陸地殼約 40 km、2.7 g/cm³；海洋地殼約 7 km、3.0 g/cm³。厚度只是距離，不能用來判斷密度。`,`Continental crust is about 40 km and 2.7 g/cm³; oceanic crust about 7 km and 3.0 g/cm³. Thickness does not tell density.`),
+   P(`厚度是上下的距離，密度是單位體積的質量，兩者是不同的概念。`,`Thickness is a distance; density is mass per volume. They are different ideas.`)),
+  Q(P(`一塊岩石質量 90 g，用排水法量得體積 30 cm³。它的密度和比較像的岩石是？`,`A rock has mass 90 g and, by water displacement, volume 30 cm³. What are its density and the most similar rock?`),
+   [P(`2.70 g/cm³，所以像花岡岩`,`2.70 g/cm³, so it is like granite`),P(`3.00 g/cm³，所以像花岡岩`,`3.00 g/cm³, so it is like granite`),P(`0.33 g/cm³，所以像玄武岩`,`0.33 g/cm³, so it is like basalt`),P(`3.00 g/cm³，所以像玄武岩`,`3.00 g/cm³, so it is like basalt`)],3,
+   P(`90 ÷ 30 ＝ 3.0 g/cm³，和海洋地殼的玄武岩（約 3.0）接近，花岡岩約 2.7。`,`90 ÷ 30 = 3.0 g/cm³, close to basalt of the oceanic crust (about 3.0); granite is about 2.7.`),
+   P(`密度 ＝ 質量 ÷ 體積，算出來再跟花岡岩、玄武岩比一比。`,`Density = mass ÷ volume. Calculate, then compare with granite and basalt.`)),
+  Q(P(`海洋地殼的玄武岩顆粒很小。根據之前學過的岩石，最合理的原因是什麼？`,`Basalt of the oceanic crust has tiny grains. What is the most reasonable cause?`),
+   [P(`岩漿噴出地表後很快冷卻`,`Magma erupted, then cooled quickly`),P(`岩漿在地底深處慢慢冷卻`,`Magma cooled slowly far underground`),P(`沉積物被一層層慢慢壓緊`,`Sediments pressed together in layers`),P(`原有岩石被高溫高壓改變`,`Heat and pressure changed old rock`)],0,
+   P(`玄武岩是火成岩，冷卻快所以晶體來不及長大；花岡岩在地底深處慢慢冷卻，顆粒大。`,`Basalt is igneous and cooled fast, so crystals could not grow; granite cooled slowly underground and has large grains.`),
+   P(`岩漿冷卻得快或慢，會讓顆粒大小有什麼不同？`,`How does fast or slow cooling change grain size?`))],
+ '.panel:nth-child(6)':[
+  Q(P(`為什麼不能說「岩石圈就是地殼」？`,`Why can we not say "the lithosphere is the crust"?`),
+   [P(`岩石圈是液態，地殼是固態`,`It is a liquid layer, while crust is solid`),P(`岩石圈在地核內，地殼在地函外`,`It lies inside the core, below the mantle`),P(`除地殼外，還包含地函最上部`,`It includes the upper mantle plus the crust`),P(`岩石圈只含大陸地殼，不含海洋地殼`,`It has only continental crust, no ocean crust`)],2,
+   P(`岩石圈依「硬不硬」分，包括地殼加上地函最上部的堅硬岩石，厚約 100 km，比地殼厚。`,`The lithosphere is defined by rigidity: the crust plus the rigid uppermost mantle, about 100 km thick.`),
+   P(`地殼只有幾十公里厚，岩石圈約 100 km，多出來的部分是什麼？`,`The crust is tens of km thick, the lithosphere about 100 km. What makes up the rest?`)),
+  Q(P(`關於軟流圈，下列哪一個說法正確？`,`Which statement about the asthenosphere is correct?`),
+   [P(`它是一整層液態的岩漿大海洋`,`A sea of liquid magma beneath the crust`),P(`它非常堅硬而且完全不會變形`,`Hard and it never deforms under stress`),P(`它每秒能流動好幾公尺的距離`,`It flows several meters every second`),P(`仍是固態，但可塑、緩慢流動`,`Solid but plastic, flowing very slowly`)],3,
+   P(`軟流圈接近岩石熔點，平均每年只流動數公分，所以「會流」不等於「是液體」。`,`It is near the melting point and flows only a few cm a year, so "flows" does not mean "liquid".`),
+   P(`想想瀝青實驗：摸起來硬的東西，時間夠長也會慢慢往下流。`,`Think of the pitch experiment: even hard-looking material can slowly flow.`)),
+  Q(P(`如果依「組成物質」分成地殼、地函、地核，軟流圈屬於哪一層？`,`If layers are divided by composition into crust, mantle and core, which one contains the asthenosphere?`),
+   [P(`地殼`,`The crust`),P(`地核`,`The core`),P(`地函`,`The mantle`),P(`大氣層`,`Atmosphere`)],2,
+   P(`軟流圈在地殼下方很深的地方，是地函的一部分；「岩石圈」是依物理性質分的層。`,`The asthenosphere lies deep below the crust and is part of the mantle; the "lithosphere" is a layer defined by physical properties.`),
+   P(`軟流圈在岩石圈（約 100 km）下方，地殼最厚也只有幾十公里。`,`The asthenosphere sits below the ~100 km lithosphere; the crust is only tens of km thick.`))],
+ '.panel:nth-child(7)':[
+  Q(P(`在地函的熱對流中，受熱與冷卻的物質分別怎麼移動？`,`In mantle convection, how do heated and cooled material move?`),
+   [P(`受熱的物質下沉，冷卻的物質上升`,`Heated sinks while cooled material rises`),P(`兩者都往上升，沒有下沉的物質`,`Both rise and nothing ever sinks down`),P(`受熱變輕而上升，冷卻變重而下沉`,`Heated rises (less dense); cooled sinks`),P(`兩者都停在原地，完全不會移動`,`Both stay in place and never move at all`)],2,
+   P(`受熱的物質密度變小往上升，到上方冷卻後密度變大再往下沉，形成循環。`,`Heated material becomes less dense and rises; after cooling it becomes denser and sinks, forming a cycle.`),
+   P(`回想熱對流，以及密度柱裡密度小的東西會在哪裡。`,`Recall convection, and where low-density material sits in a density column.`)),
+  Q(P(`板塊每年移動的距離大約是多少？`,`About how far do plates move each year?`),
+   [P(`幾公里，約像汽車開的速度`,`A few km, like a walking person`),P(`幾公分，約像指甲生長的速度`,`A few cm, like fingernail growth`),P(`幾百公尺，約像人走路的速度`,`A few hundred m, like a cyclist`),P(`完全不會移動，永遠固定不變`,`They never move, remaining fixed`)],1,
+   P(`軟流圈的對流極緩慢，板塊每年約幾公分，累積幾百萬年就能移動很遠，現在可用 GPS 測量。`,`Convection is very slow, a few cm per year, but over millions of years plates travel far; GPS can now measure it.`),
+   P(`地函裡的對流非常非常慢，動畫是加速過的。`,`Mantle convection is extremely slow; the animation is sped up.`)),
+  Q(P(`韋格納提出大陸漂移學說，當時卻沒有被接受，主要原因是什麼？`,`Wegener proposed continental drift but it was not accepted then. What was the main reason?`),
+   [P(`沒有證據，海岸線也拼不起來`,`There was no evidence and coasts mismatch`),P(`大西洋兩岸的化石完全不一樣`,`Fossils on both Atlantic sides differed`),P(`當時人們都已經相信大陸漂移`,`Everyone already believed continents drift`),P(`他說不出大陸移動的動力來源`,`He could not explain what moves continents`)],3,
+   P(`後來才知道，動力來自軟流圈的熱對流，板塊隨著它移動。`,`Later it was found that the driving force is convection in the asthenosphere, carrying plates along.`),
+   P(`他有海岸線、化石、古冰川的證據，還缺哪一個問題的答案？`,`He had coastline, fossil and glacier evidence. Which question was still unanswered?`))]
+});
+})();
