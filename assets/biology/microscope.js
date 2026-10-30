@@ -2,6 +2,7 @@
 (()=>{
   'use strict';
   let lang='zh',currentTab='scopeTypes',trackingRaf=0,lastTime=0;
+  const blurLayers={};
   const $=id=>document.getElementById(id);
   const tr=(zh,en)=>lang==='en'?en:zh;
   const keys=['scopeLab','scopeInversion','scopeTracking'];
@@ -114,7 +115,15 @@
     ctx.save();ctx.beginPath();ctx.arc(320,320,R,0,Math.PI*2);ctx.clip();
     const illumination=s.lamp/100*Math.sqrt(4/s.objective),shade=Math.round(55+190*illumination);
     const g=ctx.createRadialGradient(300,290,50,320,320,R);g.addColorStop(0,`rgb(${shade},${shade+5},${Math.max(0,shade-12)})`);g.addColorStop(1,`rgb(${Math.round(shade*.8)},${Math.round(shade*.83)},${Math.round(shade*.76)})`);ctx.fillStyle=g;ctx.fillRect(0,0,640,640);
-    ctx.save();ctx.filter=`blur(${Math.min(12,Math.abs(s.coarse+s.fine)*1.25*Math.sqrt(s.objective/4))}px)`;
+    const blurPx=Math.min(12,Math.abs(s.coarse+s.fine)*1.25*Math.sqrt(s.objective/4));
+    /* 備援：iPhone／iPad（Safari 引擎）沒有 ctx.filter，失焦模糊會完全不出現，旋鈕看起來像壞掉。
+       沒有 filter 時，先把標本畫在離屏圖層，再用加權位移疊圖做出同樣的模糊；有 filter 的瀏覽器路徑完全不變。 */
+    const stageCtx=ctx,nativeBlur=typeof ctx.filter==='string';
+    let layer=null;
+    ctx.save();
+    if(nativeBlur)ctx.filter=`blur(${blurPx}px)`;
+    else if(blurPx>.05){layer=blurLayers[id]||(blurLayers[id]=document.createElement('canvas'));layer.width=640;layer.height=640;}
+    ((ctx)=>{
     if(id==='scopeLab'){
       if(specimen==='plant'){for(let row=-5;row<=5;row++)for(let col=-5;col<=5;col++){
         const wx=col*16+(row%2)*7,wy=row*14;
@@ -126,6 +135,20 @@
       const p=imagePoint(s,-24,12);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.PI);ctx.font=`700 ${18*k}px "JetBrains Mono",monospace`;ctx.fillStyle='#473c2b';ctx.textAlign='center';ctx.textBaseline='middle';if(glyph==='digital')digitalDigits(ctx,7*k);else ctx.fillText(glyph,0,0);ctx.restore();
     }else{
       const o=organism(s),p=imagePoint(s,o.x,o.y);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(o.angle+Math.PI);swimBody(ctx,6*k);ctx.restore();
+    }
+    })(layer?layer.getContext('2d'):ctx);
+    if(layer){
+      /* 近似高斯模糊：橫向、縱向各一次 5 點二項式加權，用 lighter 疊加（等於加權平均），做兩輪；
+         每輪位移 = 模糊量 ÷ √2，總強度和 filter:blur(Npx) 相當。 */
+      const tmp=blurLayers[id+'Tmp']||(blurLayers[id+'Tmp']=document.createElement('canvas'));tmp.width=640;tmp.height=640;
+      const step=Math.max(.4,blurPx/Math.SQRT2),weights=[1,4,6,4,1];
+      const pass=(from,to,dx,dy)=>{
+        const c=to.getContext('2d');c.clearRect(0,0,640,640);c.globalCompositeOperation='lighter';
+        for(let t=-2;t<=2;t++){c.globalAlpha=weights[t+2]/16;c.drawImage(from,t*dx*step,t*dy*step);}
+        c.globalAlpha=1;c.globalCompositeOperation='source-over';
+      };
+      for(let round=0;round<2;round++){pass(layer,tmp,1,0);pass(tmp,layer,0,1);}
+      stageCtx.drawImage(layer,0,0);
     }
     ctx.restore();ctx.restore();
     ctx.beginPath();ctx.arc(320,320,R+3,0,Math.PI*2);ctx.strokeStyle='#718f83';ctx.lineWidth=9;ctx.stroke();
