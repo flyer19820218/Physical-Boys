@@ -3,7 +3,7 @@
 (()=>{'use strict';
 const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
 LQ.addStatic('astronomy_earth_motion_2',{
- '.panel:nth-child(3)':[
+ '.panel:nth-child(4)':[
   Q(P(`如果地球停止自轉，但太陽仍照著地球，同一地點還會每天規律出現白天、黑夜交替嗎？`,`If Earth stopped rotating while the Sun still shone on it, would one place still have a regular daily day–night cycle?`),
    [P(`會，因為太陽照著所以仍然每天有晝夜`,`Yes; sunlight still brings day and night`),P(`會，因為地球公轉也會帶來晝夜交替`,`Yes; orbiting alone makes day and night`),P(`不會，同一地點不會每天依序穿過晝夜`,`No; a place no longer passes day to night`),P(`不會，但整個地球會永遠一直是白天`,`No; but all of Earth would stay in daylight`)],2,
    P(`沒有自轉，同一地點就不會每天規律由日照區轉入背光區，因此不會有約一天一次的晝夜交替。`,`Without rotation a place would not move regularly from lit to dark each day, so the once-a-day cycle would not occur.`),
@@ -16,7 +16,7 @@ LQ.addStatic('astronomy_earth_motion_2',{
    [P(`地球離太陽太遠，所以那裡一直都沒有光`,`Earth is simply too far from the Sun there`),P(`地軸傾斜，北極圈內轉一圈仍在背光區`,`Axis tilt leaves the Arctic Circle in dark`),P(`太陽熄滅了好幾個月，因此出現了永夜`,`The Sun goes out for several months there`),P(`月球擋住了陽光，使得極圈一直黑暗`,`The Moon blocks the sunlight at the poles`)],1,
    P(`地軸傾斜 23.5°，北極背向太陽時，北極圈內即使自轉一整圈也一直留在背光半邊，出現永夜；南極圈內則是永晝。`,`With a 23.5° tilt, when the North Pole leans away, places inside the Arctic Circle stay in the dark half all day; the Antarctic Circle has polar day.`),
    P(`想像北極圈裡的一點跟著自轉繞一整圈：有沒有機會轉進日照區？`,`Imagine a point in the Arctic Circle turning once around: does it ever enter sunlight?`))],
- '.panel:nth-child(4)':[
+ '.panel:nth-child(5)':[
   Q(P(`為什麼 B 是日落，而 D 是日出？`,`Why is B sunset while D is sunrise?`),
    [P(`B 正從日半球進入夜半球，所以是日落`,`B enters the night side, so it is sunset`),P(`B 正從夜半球進入日半球，所以是日落`,`B enters the day side, so it is sunset`),P(`B 離太陽最近，所以此時是日落時間`,`B is closest to the Sun, so it is sunset`),P(`B 正對著月亮方向，所以是日落時間`,`B faces the Moon, so it is sunset time`)],0,
    P(`B 正從日半球進入夜半球，所以是日落；D 正從夜半球進入日半球，所以是日出。`,`B is moving from the day hemisphere into the night hemisphere (sunset); D moves from night into day (sunrise).`),
@@ -29,7 +29,7 @@ LQ.addStatic('astronomy_earth_motion_2',{
    [P(`約 2 小時`,`About 2 hours`),P(`約 1 小時`,`About 1 hour`),P(`約 15 小時`,`About 15 hours`),P(`約 1 天`,`About 1 day`)],1,
    P(`360° ÷ 24 ＝ 15°，地球每小時大約轉 15°，所以經度每差 15°，時間差約 1 小時。東邊先進入白天，時刻較快。`,`360° ÷ 24 = 15°, so Earth turns about 15° an hour; 15° of longitude makes about 1 hour, and places to the east are ahead.`),
    P(`360° ÷ 24 小時 ＝ ？`,`What is 360° ÷ 24 hours?`))],
- '.panel:nth-child(5)':[
+ '.panel:nth-child(6)':[
   Q(P(`每天看到太陽東升西落，是太陽真的每天繞地球一圈嗎？`,`We see the Sun rise in the east and set in the west each day. Is the Sun really orbiting Earth once a day?`),
    [P(`不是，地球自轉造成的視運動`,`No; Earth's rotation makes it appear so`),P(`是，太陽真的每天繞著地球轉`,`Yes; the Sun really circles Earth daily`),P(`是，因為地球固定不動而太陽在轉`,`Yes; Earth stays still, the Sun moves`),P(`不是，地球公轉造成的視運動`,`No; Earth's revolution makes it appear`)],0,
    P(`東升西落主要是地球自轉造成的視覺效果：地球西向東轉，太陽看起來向相反方向由東向西移動。`,`The daily motion is an apparent effect of Earth's rotation: Earth turns west to east, so the Sun seems to move east to west.`),
@@ -42,7 +42,7 @@ LQ.addStatic('astronomy_earth_motion_2',{
    [P(`不會，因為只有太陽才會東升西落`,`No; only the Sun rises and sets each day`),P(`會，這是地球自轉造成的視運動`,`Yes; Earth's spin makes them rise and set`),P(`會，因為月亮與星星都繞著地球轉`,`Yes; the Moon and stars circle the Earth`),P(`不會，月亮和星星一直固定不動`,`No; the Moon and stars never seem to move`)],1,
    P(`東升西落是地球由西向東自轉造成的視運動，所以太陽、月亮、星星看起來都由東向西移動。`,`Rising and setting is the apparent motion from Earth turning west to east, so the Sun, Moon and stars all seem to move east to west.`),
    P(`想想到底是誰在轉。`,`Think about what is actually turning.`))],
- '.panel:nth-child(6)':[
+ '.panel:nth-child(7)':[
   Q(P(`地球公轉到軌道另一側時，地軸是否會「轉過去」繼續朝向太陽？`,`When Earth reaches the other side of its orbit, does its axis turn over to keep pointing toward the Sun?`),
    [P(`會，地軸每個月都轉向太陽一次`,`Yes; the axis turns toward the Sun monthly`),P(`會，地軸永遠追著太陽的方向轉`,`Yes; the axis always tracks the Sun round`),P(`不會，因為地軸每天都垂直於軌道`,`No; the axis stays upright to the orbit`),P(`不會，一年中地軸方向近似固定`,`No; the axis direction stays nearly fixed`)],3,
    P(`一年中地軸方向近似固定，因此有時北半球傾向太陽、有時背向太陽，造成季節性的日照差異。`,`The axis direction stays nearly fixed, so the Northern Hemisphere sometimes tilts toward the Sun and sometimes away, causing seasons.`),
@@ -55,7 +55,7 @@ LQ.addStatic('astronomy_earth_motion_2',{
    [P(`垂直於軌道面的軸；自轉軸傾斜 66.5°`,`Axis perpendicular to the orbital plane; tilt 66.5°`),P(`平行於軌道面的軸；自轉軸傾斜 23.5°`,`Axis parallel to the orbital plane; tilt 23.5°`),P(`垂直於軌道面的軸；自轉軸傾斜 23.5°`,`Axis perpendicular to the orbital plane; tilt 23.5°`),P(`沿著軌道前進的軸；自轉軸傾斜 90°`,`Axis pointing along the orbital path; tilt 90°`)],2,
    P(`公轉軸是通過地心、與公轉軌道面垂直的軸線；自轉軸相對於公轉軸傾斜 23.5°。`,`The orbital axis passes through Earth's centre perpendicular to the orbital plane; the rotation axis is tilted 23.5° from it.`),
    P(`打開「23.5° 標示」看右下角的小圖。`,`Turn on the 23.5° marker and look at the small diagram at the lower right.`))],
- '.panel:nth-child(7)':[
+ '.panel:nth-child(8)':[
   Q(P(`同一束太陽光，為什麼斜射時地表升溫通常比直射慢？`,`Why does the ground usually warm more slowly under oblique rays than direct rays of the same beam?`),
    [P(`斜射時太陽發出的光量變得少了許多`,`The Sun gives off less light when slanted`),P(`能量分散在較大地面，單位面積較少`,`Energy spreads over a larger ground area`),P(`斜射時光被地表完全反射回到太空`,`Slanted light is reflected back to space`),P(`斜射的光速度比較慢，所以會比較冷`,`Slanted rays move slower, so it is cooler`)],1,
    P(`斜射時，同一束光的能量分散在較大的面積，單位面積獲得的能量較少；直射較集中，地表較容易升溫。`,`With oblique rays the same energy spreads over a larger area, so each unit area gets less; direct rays are more concentrated.`),
