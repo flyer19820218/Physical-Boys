@@ -139,5 +139,15 @@
     return { setMode, state: S, drivers, paint, get on() { return S.on; } };
   }
 
-  root.TeachMode = { create, sequence, tr, el };
+  /* 內容由 JS 動態產生的課：等 testFn() 成立（元素出現）才初始化，最多等 15 秒 */
+  function whenReady(testFn, cb) {
+    let tries = 0;
+    (function poll() {
+      let ok = false; try { ok = !!testFn(); } catch (e) {}
+      if (ok) return cb();
+      if (++tries < 150) root.setTimeout(poll, 100);
+    })();
+  }
+
+  root.TeachMode = { create, sequence, tr, el, whenReady };
 })(window);
