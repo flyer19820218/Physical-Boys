@@ -175,7 +175,7 @@ function inset(c,t,k,wet,capPulse){
   dashed(c,[[bx+bw,by],[PX,PY+300]],rgba(C.white,.7),2,[7,6],-t*10);
   dashed(c,[[bx+bw,by+bh],[PX,PY+PH-20]],rgba(C.white,.7),2,[7,6],-t*10);
   const L=LAB();
-  fitText(c,L.moss||P(`苔蘚`,`Moss`),IX+IW/2,562,220,C.green,{align:'center'});
+  fitText(c,L.moss||P(`蘚苔`,`Moss`),IX+IW/2,562,220,C.green,{align:'center'});
 }
 
 // ── left column: the step in a few words ───────────────────────────────────
@@ -248,7 +248,7 @@ function draw(c,s,t){
   tagBox(c,L.antheridium||P(`精子器（示意）`,`Antheridium (schematic)`),PX+16,PY+92,300,AX-ARX*.7,AY-ARY*.7,AWALL);
   tagBox(c,P(`頸卵器\n（示意）`,`Archegonium\n(schematic)`),RC,262,RW,GX+14,NECK_TOP+60,GWALL);
   tagBox(c,fert>.5?P(`受精卵`,`Fertilized egg`):(L.egg||P(`卵`,`Egg`)),RC,382,RW,EGG[0]+EGG_R,EGG[1],C.pink);
-  fitText(c,P(`放大：苔蘚的莖頂（示意）`,`Magnified: tip of a moss shoot (schematic)`),PX+PW/2,BASE+28,PW-20,'#a7e07c',{align:'center'});
+  fitText(c,P(`放大：蘚苔的莖頂（示意）`,`Magnified: tip of a moss shoot (schematic)`),PX+PW/2,BASE+28,PW-20,'#a7e07c',{align:'center'});
   // sperm
   const sp=k<2||(k===2&&tau<1.6)?[HOME[3].x,HOME[3].y]:swimmer;
   if(sp&&k<4)tagBox(c,L.sperm||P(`精子`,`Sperm`),k<2?AX+ARX+22:470,k<2?AY-14:PY+10,200,sp[0],sp[1],C.cyan);

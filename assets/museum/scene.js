@@ -206,7 +206,7 @@ function statueParts(hall) {
     P(new THREE.CylinderGeometry(0.13, 0.11, 0.12, 8), M(1.0, 4.72, 0), 0x8a5a3a);
     P(new THREE.IcosahedronGeometry(0.1, 0), M(0.82, 4.95, 0.1), 0xfff3e6);
     P(new THREE.IcosahedronGeometry(0.07, 0), M(1.12, 5.15, 0), 0xfff3e6);
-  } else if (hall.id === 'earth') {      // 魏格納：捧著地球儀（大陸可以拼起來）
+  } else if (hall.id === 'earth') {      // 韋格納：捧著地球儀（大陸可以拼起來）
     P(new THREE.SphereGeometry(0.42, 12, 8), M(1.0, 4.0, 0), 0x4f8ee0);
     P(new THREE.IcosahedronGeometry(0.2, 0), M(1.18, 4.12, 0.2), 0x7bc47a);
     P(new THREE.IcosahedronGeometry(0.17, 0), M(0.82, 3.9, 0.28), 0x7bc47a);

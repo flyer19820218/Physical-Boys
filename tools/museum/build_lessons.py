@@ -23,7 +23,7 @@ OUT = os.path.join(ROOT, 'assets', 'museum', 'data', 'lessons.json')
 HALLS = [
     {'id': 'physics', 'zh': '物理', 'en': 'Physics', 'sub': {'zh': '牛頓', 'en': 'Newton'}, 'color': '#f2d675'},
     {'id': 'chemistry', 'zh': '化學', 'en': 'Chemistry', 'sub': {'zh': '拉瓦節', 'en': 'Lavoisier'}, 'color': '#f0955c'},
-    {'id': 'earth', 'zh': '地科', 'en': 'Earth & Space', 'sub': {'zh': '魏格納', 'en': 'Wegener'}, 'color': '#6fa8f2'},
+    {'id': 'earth', 'zh': '地科', 'en': 'Earth & Space', 'sub': {'zh': '韋格納', 'en': 'Wegener'}, 'color': '#6fa8f2'},
     {'id': 'biology', 'zh': '生物', 'en': 'Biology', 'sub': {'zh': '達爾文', 'en': 'Darwin'}, 'color': '#a8e6cf'},
 ]
 

@@ -209,7 +209,7 @@ function over1(c,a,tau,t){
   connector(c,t,a);cells(c,t,a);
   c.save();c.globalAlpha*=a;
   const L=LAB();
-  fitText(c,P(`苔蘚的細胞放大（示意）`,`Moss cells, magnified (schematic)`),M.x,40,420,C.white,{align:'center'});
+  fitText(c,P(`蘚苔的細胞放大（示意）`,`Moss cells, magnified (schematic)`),M.x,40,420,C.white,{align:'center'});
   // right column on a dark card so the dimmed fern does not show through the words
   const lx=646;D.round(c,lx-12,96,960-lx-2,322,16,'rgba(11,26,21,.92)',rgba(C.edge,1));
   const top=COLS[Math.floor(COLS.length*.62)],film=[M.x+M.r*.55,FILM+12];
@@ -294,7 +294,7 @@ function draw(c,s,t){
   over3(c,oa(3),k===3?tau:9,t);
   // plant names on the soil, last so nothing covers them
   const L=LAB();
-  fitText(c,L.moss||P(`苔蘚`,`Moss`),155,548,240,C.green,{align:'center'});
+  fitText(c,L.moss||P(`蘚苔`,`Moss`),155,548,240,C.green,{align:'center'});
   c.save();c.globalAlpha*=Math.max(.35,fa);
   fitText(c,L.swordFern||P(`腎蕨`,`Sword fern`),760,548,240,C.green,{align:'center'});
   c.restore();

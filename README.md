@@ -15,7 +15,7 @@
 |---|---:|---:|---|
 | 🍎 物理與力學館（Physics） | 10 | 45 | 牛頓（Newton） |
 | 🧪 化學與反應館（Chemistry） | 8 | 31 | 拉瓦節（Lavoisier） |
-| 🌍 地科與天文館（Earth Science） | 5 | 20 | 魏格納（Wegener） |
+| 🌍 地科與天文館（Earth Science） | 5 | 20 | 韋格納（Wegener） |
 | 🌱 生物科學館（Biology） | 11 | 43 | 達爾文（Darwin） |
 | **合計** | **34** | **139** | |
 
