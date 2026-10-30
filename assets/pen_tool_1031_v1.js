@@ -9,7 +9,8 @@
  *   - 光點：按著一直亮、可寫字；放開後約 1 秒淡掉
  *   - 其他筆跡一筆一筆獨立保存，留到收回；收回（再點筆形鈕，或再點一次目前的工具）＝擦掉全部
  *   - 選取（像 GoodNotes 套索）：圈起來或點一下筆跡 → 拖著移動；點空白處取消選取
- *   - 橡皮擦：原子筆／螢光筆可只擦掉碰到的那一段；直線、虛線、圓碰到就整條擦掉
+ *   - 橡皮擦：預設「只擦一點點」（所有筆跡都只拿掉碰到的那一小段，含直線、虛線、圓）；
+ *     長按橡皮擦圖示跳出圖示選單，可改成「擦整條」（碰到就整筆擦掉）；整條模式時橡皮擦鈕右下角有紅點
  *   - 選了工具後畫面只畫不操作頁面；收回後頁面恢復原本操作
  *   - 手指、Apple Pencil、滑鼠、觸控電視都能用（Pointer Events）
  *   - 捲動頁面時自動清掉筆跡（避免舊筆跡蓋在新內容上）
@@ -49,7 +50,15 @@
     { id: 'select', label: '選取',
       icon: '<path d="M7.2 16.2C4.6 15 3.2 13 3.2 10.6 3.2 7.2 7 4.4 12 4.4s8.8 2.8 8.8 6.2-3.8 6.2-8.8 6.2c-1 0-1.9-.1-2.8-.3" stroke-dasharray="2.6 3.2"/><path d="M7.2 16.2c-1.6.7-2.2 2.2-1.6 3.6"/><circle cx="5.7" cy="20" r="1.1" fill="currentColor" stroke="none"/>' }
   ];
-  var FAB_ICON = '<path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.6 7.6"/><circle cx="11" cy="11" r="2"/>';
+  // 橡皮擦長按選單的兩個圖示
+  var ERASER_MODES = [
+    { id: 'part', label: '只擦一點點',
+      icon: '<path d="M3.5 12h4.2"/><path d="M16.3 12h4.2"/><circle cx="12" cy="12" r="3.6" stroke-dasharray="2 2.2"/>' },
+    { id: 'whole', label: '擦整條',
+      icon: '<path d="M3 12.5c2-5.5 4-5.5 6-2.5s4 3 6-1.5"/><path d="M15.2 14.6l5.4 5.4M20.6 14.6l-5.4 5.4"/>' }
+  ];
+  var LONG_PRESS_MS = 450;
+  var FAB_ICON ='<path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.6 7.6"/><circle cx="11" cy="11" r="2"/>';
 
   var CSS = [
     '#pt-layer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:' + Z_LAYER + ';pointer-events:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}',
@@ -68,6 +77,15 @@
     '@keyframes pt-in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}',
     '#pt-bar .pt-tool{width:40px;height:40px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;padding:0;margin:0;border:0;border-radius:50%;background:transparent;color:#f6f3ea;cursor:pointer;transition:background .12s ease,color .12s ease}',
     '#pt-bar .pt-tool svg{width:24px;height:24px;display:block;pointer-events:none}',
+    '#pt-bar .pt-tool{position:relative}',
+    '#pt-bar .pt-tool[data-mode="whole"]::after{content:"";position:absolute;right:4px;bottom:4px;width:9px;height:9px;box-sizing:border-box;border-radius:50%;background:#ff6b6b;border:2px solid rgba(17,38,31,.95)}',
+    '#pt-menu{position:fixed;z-index:' + (Z_LAYER + 2) + ';display:none;align-items:center;gap:4px;padding:5px;border-radius:26px;background:rgba(17,38,31,.97);border:2px solid rgba(255,224,102,.7);box-shadow:0 10px 28px rgba(0,0,0,.65);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}',
+    '#pt-menu.open{display:flex;animation:pt-pop .14s ease-out}',
+    '@keyframes pt-pop{from{opacity:0;transform:translateY(-6px) scale(.96)}to{opacity:1;transform:none}}',
+    '#pt-menu button{width:44px;height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;padding:0;margin:0;border:0;border-radius:50%;background:transparent;color:#f6f3ea;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}',
+    '#pt-menu button svg{width:26px;height:26px;display:block;pointer-events:none}',
+    '#pt-menu button:hover{background:rgba(255,224,102,.22)}',
+    '#pt-menu button.on{background:#ffe066;color:#11261f}',
     '#pt-bar .pt-tool:hover{background:rgba(255,224,102,.22)}',
     '#pt-bar .pt-tool.on{background:#ffe066;color:#11261f}',
     '#pt-bar .pt-sep{width:2px;height:24px;margin:0 6px;border-radius:2px;background:rgba(246,243,234,.28)}',
@@ -97,7 +115,7 @@
     t = Math.max(0, Math.min(1, t));
     return Math.hypot(px - (x0 + t * dx), py - (y0 + t * dy));
   }
-  function isFree(s) { return s.tool === 'pen' || s.tool === 'highlighter'; }
+  function isFree(s) { return !!s.pts; }   // 由一串點組成的筆跡（原子筆、螢光筆，以及被擦過的直線／虛線／圓）
 
   // 把畫到一半的原始點，轉成「平滑又密」的折線（間距約 3px），之後擦除、選取都靠這些點
   function densify(pts) {
@@ -216,6 +234,7 @@
     var laserStrokes = [];
     var raf = 0;
     var lastEraser = null;
+    var eraserMode = 'part';            // 橡皮擦模式：part＝只擦一點點（預設）、whole＝擦整條
     var curW = 0, curH = 0;
 
     // ---------- 工具列 ----------
@@ -234,12 +253,65 @@
       b.setAttribute('aria-label', t.label);
       b.setAttribute('data-tool', t.id);
       b.innerHTML = SVG_OPEN + t.icon + SVG_CLOSE;
+      var longFired = false, lpTimer = 0;
+      if (t.id === 'eraser') {               // 橡皮擦：長按跳出模式選單
+        b.setAttribute('data-mode', 'part');
+        b.addEventListener('pointerdown', function () {
+          longFired = false;
+          clearTimeout(lpTimer);
+          lpTimer = setTimeout(function () {
+            longFired = true;
+            if (tool !== 'eraser') { lastTool = 'eraser'; setTool('eraser'); }
+            showMenu();
+          }, LONG_PRESS_MS);
+        });
+        ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) {
+          b.addEventListener(ev, function () { clearTimeout(lpTimer); });
+        });
+        b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      }
       b.addEventListener('click', function () {
+        if (longFired) { longFired = false; return; }    // 長按觸發過選單，放開時不要當成點擊
         if (tool === t.id) closeAll(); else { lastTool = t.id; setTool(t.id); }
       });
       bar.appendChild(b);
       toolBtns[t.id] = b;
     });
+
+    // 橡皮擦模式選單（長按橡皮擦才出現；只有圖示）
+    var menu = el('div', 'pt-menu');
+    menu.setAttribute('role', 'menu');
+    var modeBtns = {};
+    ERASER_MODES.forEach(function (m) {
+      var b = el('button');
+      b.type = 'button';
+      b.setAttribute('aria-label', m.label);
+      b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + m.icon + SVG_CLOSE;
+      b.addEventListener('click', function () { setEraserMode(m.id); hideMenu(); });
+      menu.appendChild(b);
+      modeBtns[m.id] = b;
+    });
+    document.body.appendChild(menu);
+    function setEraserMode(id) {
+      eraserMode = id;
+      toolBtns.eraser.setAttribute('data-mode', id);
+      Object.keys(modeBtns).forEach(function (k) { modeBtns[k].classList.toggle('on', k === id); });
+    }
+    function showMenu() {
+      setEraserMode(eraserMode);
+      menu.classList.add('open');
+      var r = toolBtns.eraser.getBoundingClientRect(), mw = menu.offsetWidth;
+      var left = Math.max(8, Math.min(window.innerWidth - mw - 8, r.left + r.width / 2 - mw / 2));
+      menu.style.left = left + 'px';
+      menu.style.top = (r.bottom + 10) + 'px';
+    }
+    function hideMenu() { menu.classList.remove('open'); }
+    // 選單開著時，點旁邊任何地方只是把選單收起來，不會畫到東西
+    document.addEventListener('pointerdown', function (e) {
+      if (!menu.classList.contains('open') || menu.contains(e.target) || toolBtns.eraser.contains(e.target)) return;
+      hideMenu();
+      if (e.target === cLive) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
     bar.appendChild(el('span', null, 'pt-sep'));
     var colorWrap = el('div', null, 'pt-colors');
     var colorBtns = [];
@@ -268,6 +340,7 @@
     function setTool(id) {
       abortStroke();
       clearSelection();
+      hideMenu();
       tool = id;
       Object.keys(toolBtns).forEach(function (k) { toolBtns[k].classList.toggle('on', k === id); });
       cLive.classList.toggle('on', !!id);
@@ -298,6 +371,7 @@
     // 收回＝擦掉全部、恢復頁面操作
     function closeAll() {
       abortStroke();
+      hideMenu();
       open = false;
       tool = null;
       Object.keys(toolBtns).forEach(function (k) { toolBtns[k].classList.remove('on'); });
@@ -359,10 +433,10 @@
       ctx.strokeStyle = s.color;
       ctx.lineWidth = s.w;
       if (s.tool === 'highlighter') ctx.globalAlpha = 0.4;
+      if (s.tool === 'dash' || s.dash) { ctx.lineCap = 'butt'; ctx.setLineDash([s.w * 2.6, s.w * 2.4]); }
       if (isFree(s)) {
         if (s.dense) pathPoly(ctx, s.pts); else pathSmooth(ctx, s.pts);
       } else if (s.tool === 'line' || s.tool === 'dash') {
-        if (s.tool === 'dash') { ctx.lineCap = 'butt'; ctx.setLineDash([s.w * 2.6, s.w * 2.4]); }
         ctx.beginPath(); ctx.moveTo(s.x0, s.y0); ctx.lineTo(s.x1, s.y1);
       } else if (s.tool === 'circle') {
         var r = Math.hypot(s.x1 - s.x0, s.y1 - s.y0);
@@ -431,31 +505,45 @@
       xLive.lineWidth = 2;
       xLive.strokeStyle = 'rgba(246,243,234,.9)';
       xLive.fillStyle = 'rgba(17,38,31,.25)';
+      if (eraserMode === 'whole') xLive.setLineDash([6, 5]);   // 擦整條：圈圈是虛線
       xLive.beginPath(); xLive.arc(p.x, p.y, ERASER_R, 0, Math.PI * 2);
       xLive.fill(); xLive.stroke();
       xLive.restore();
     }
+    function toPoly(s) {                     // 直線／虛線／圓 → 一串密點，才能只擦掉一小段
+      var pts = [], i, n;
+      if (s.tool === 'circle') {
+        var r = Math.hypot(s.x1 - s.x0, s.y1 - s.y0);
+        n = Math.max(24, Math.ceil(2 * Math.PI * r / 3));
+        for (i = 0; i <= n; i++) { var a = i / n * Math.PI * 2; pts.push({ x: s.x0 + r * Math.cos(a), y: s.y0 + r * Math.sin(a) }); }
+      } else {
+        n = Math.max(1, Math.ceil(Math.hypot(s.x1 - s.x0, s.y1 - s.y0) / 3));
+        for (i = 0; i <= n; i++) pts.push({ x: s.x0 + (s.x1 - s.x0) * i / n, y: s.y0 + (s.y1 - s.y0) * i / n });
+      }
+      return { id: s.id, tool: 'pen', color: s.color, w: s.w, pts: pts, dense: true, dash: s.tool === 'dash' };
+    }
     function eraseAt(p) {
+      if (eraserMode === 'whole') {            // 擦整條：碰到的那一筆（或被擦開後分出來的那一段）整個拿掉，其他段不動
+        var kept = items.filter(function (s) { return itemDist(s, p.x, p.y) > ERASER_R + s.w / 2; });
+        if (kept.length !== items.length) { items = kept; renderAll(); }
+        return;
+      }
       var out = [], changed = false;
       items.forEach(function (s) {
-        if (isFree(s)) {
-          var rr = ERASER_R + s.w / 4, runs = [], run = [], hit = false;
-          for (var i = 0; i < s.pts.length; i++) {
-            var q = s.pts[i];
-            if (Math.hypot(q.x - p.x, q.y - p.y) <= rr) { hit = true; if (run.length) { runs.push(run); run = []; } }
-            else run.push(q);
-          }
-          if (!hit) { out.push(s); return; }
-          changed = true;
-          if (run.length) runs.push(run);
-          runs.forEach(function (r) {        // 只留下沒被擦到的那幾段
-            if (r.length >= 2) out.push({ id: nextId++, tool: s.tool, color: s.color, w: s.w, pts: r, dense: true });
-          });
-        } else if (itemDist(s, p.x, p.y) <= ERASER_R + s.w / 2) {
-          changed = true;                    // 直線、虛線、圓：碰到就整條擦掉
-        } else {
-          out.push(s);
+        if (itemDist(s, p.x, p.y) > ERASER_R + s.w / 2) { out.push(s); return; }   // 沒碰到
+        var t = isFree(s) ? s : toPoly(s);                                        // 只擦一點點：只拿掉被碰到的那一段
+        var rr = ERASER_R + s.w / 4, runs = [], run = [], hit = false;
+        for (var i = 0; i < t.pts.length; i++) {
+          var q = t.pts[i];
+          if (Math.hypot(q.x - p.x, q.y - p.y) <= rr) { hit = true; if (run.length) { runs.push(run); run = []; } }
+          else run.push(q);
         }
+        if (!hit) { out.push(s); return; }
+        changed = true;
+        if (run.length) runs.push(run);
+        runs.forEach(function (r) {
+          if (r.length >= 2) out.push({ id: nextId++, tool: t.tool, color: t.color, w: t.w, pts: r, dense: true, dash: t.dash });
+        });
       });
       if (changed) { items = out; renderAll(); }
     }
