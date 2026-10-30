@@ -45,7 +45,8 @@
         if (finished) return opts.doneNote ? tr(...opts.doneNote) : '';
         const n = steps[i].note; return n ? tr(...n) : '';
       },
-      done() { return finished; }
+      done() { return finished; },
+      setPaused(p) { if (opts.setPaused) opts.setPaused(p); }
     };
     return d;
   }
@@ -77,7 +78,7 @@
       b.addEventListener('click', e => {
         const btn = e.target.closest('.teach-btn'); if (!btn || !S.on) return;
         if (btn.dataset.act === 'pause') {
-          if (d.togglePause) d.togglePause(); else S.paused = !S.paused;
+          if (d.togglePause) d.togglePause(); else { S.paused = !S.paused; if (d.setPaused) d.setPaused(S.paused); }
         } else { S.paused = false; (d.restart || d.enter).call(d); }
         paint(true);
       });
