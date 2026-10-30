@@ -3,7 +3,7 @@
 (()=>{'use strict';
 const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
 LQ.addStatic('astronomy_moon_phases_4',{
- '.panel:nth-child(3)':[
+ '.panel:nth-child(4)':[
   Q(P(`21:00 看到半滿的月亮，是哪一個月相？`,`At 21:00 you see a half-lit Moon. Which phase is it?`),
    [P(`上弦月，適合 18:00～00:00 觀察`,`First quarter, best seen 18:00–00:00`),P(`下弦月，適合 18:00～00:00 觀察`,`Last quarter, best seen 18:00–00:00`),P(`上弦月，適合 00:00～06:00 觀察`,`First quarter, best seen 00:00–06:00`),P(`下弦月，適合 00:00～06:00 觀察`,`Last quarter, best seen 00:00–06:00`)],0,
    P(`上弦適合在 18:00～00:00 觀察；下弦適合在 00:00～06:00 觀察，所以 21:00 看到的是上弦月。`,`First quarter is seen 18:00–00:00 and last quarter 00:00–06:00, so a half Moon at 21:00 is first quarter.`),
@@ -24,7 +24,7 @@ LQ.addStatic('astronomy_moon_phases_4',{
    [P(`頭頂的是新月，其他地方是滿月`,`Overhead new Moon; elsewhere full Moon`),P(`頭頂的是滿月，其他地方是新月`,`Overhead full Moon; elsewhere new Moon`),P(`都是上弦月，各地同一天月相相同`,`All see first quarter; same worldwide`),P(`都是新月，各地同一天月相相同`,`All see new Moon; same phase worldwide`)],3,
    P(`全球同一天看到的月相相同，只是看得到的時刻不同。`,`Everyone sees the same phase on the same day, just at different times.`),
    P(`月相由日、地、月的相對位置決定，跟你站在地球哪個地方有關嗎？`,`Phase depends on the Sun–Earth–Moon positions. Does it depend on where you stand on Earth?`))],
- '.panel:nth-child(4)':[
+ '.panel:nth-child(5)':[
   Q(P(`為什麼日食發生時，只有地球上少數地區看得到？`,`Why can only a few places on Earth see a solar eclipse?`),
    [P(`太陽的光只能照到地球的一小部分`,`Sunlight only reaches a small part of Earth`),P(`月球的影子比整個地球小很多`,`The Moon's shadow is far smaller than Earth`),P(`只有赤道附近的地區才有日食`,`Only places near the equator get eclipses`),P(`日食時地球大部分地區都在夜晚`,`Most of Earth is in night during an eclipse`)],1,
    P(`月球的影子比地球小很多，只有月影掃過、而且是白天的地區才看得到日食。`,`The Moon's shadow is much smaller than Earth, so only daytime places the shadow sweeps over see the eclipse.`),
@@ -37,7 +37,7 @@ LQ.addStatic('astronomy_moon_phases_4',{
    [P(`對，白天的地方都會被月影覆蓋`,`True; all daytime places are in the shadow`),P(`對，因為太陽光會繞過月球照到`,`True; sunlight bends round the Moon to us`),P(`不對，只有夜晚的地區才看得到`,`False; only night-side places can see it`),P(`不對，只有月影蓋住的白天地區`,`False; only lit places inside the shadow`)],3,
    P(`只有位在白天、且剛好落在月球影子覆蓋的地區，才看得到日食。`,`Only places in daylight that are also covered by the Moon's shadow see the eclipse.`),
    P(`白天的地方都在月球的影子裡嗎？`,`Is every daytime place inside the Moon's shadow?`))],
- '.panel:nth-child(5)':[
+ '.panel:nth-child(6)':[
   Q(P(`日食和月食分別發生在農曆幾號前後？`,`Around which lunar dates do solar and lunar eclipses happen?`),
    [P(`日食在十五前後，月食在初一前後`,`Solar near day 15, lunar near day 1`),P(`日食在初八前後，月食在二十三前後`,`Solar near day 8, lunar near day 23`),P(`兩者都在初八前後，每月都會發生`,`Both near day 8, happening every month`),P(`日食在初一前後，月食在十五前後`,`Solar near day 1, lunar near day 15`)],3,
    P(`日食發生在朔（初一）、月食發生在望（十五）。`,`Solar eclipses occur at new Moon (day 1), lunar eclipses at full Moon (day 15).`),
@@ -54,7 +54,7 @@ LQ.addStatic('astronomy_moon_phases_4',{
    [P(`紅光被大氣全部散射，藍光照到月面`,`Red is scattered away; blue light hits the Moon`),P(`藍光被散射，紅橙光被折射到月面`,`Blue is scattered; red bends onto the Moon`),P(`月球表面本來就是紅色的岩石礦物`,`The Moon's rock is naturally red all over`),P(`地球反射的紅色海洋光照到月面`,`Red ocean light reflected by Earth lights it`)],1,
    P(`藍光較容易被大氣散射，剩下的紅橙光被大氣折射進本影、照到月面，所以月面呈紅棕色。`,`Blue light is scattered more; the remaining red-orange light is refracted into the umbra onto the Moon, making it reddish brown.`),
    P(`陽光穿過大氣層時，哪種顏色的光比較容易被散射？`,`When sunlight crosses the atmosphere, which colour is scattered more easily?`))],
- '.panel:nth-child(6)':[
+ '.panel:nth-child(7)':[
   Q(P(`農曆初八出現上弦月，這時通常是大潮還是小潮？`,`A first-quarter Moon occurs around lunar day 8. Is this usually a spring or neap tide?`),
    [P(`大潮，兩股引潮力互相疊加`,`Spring tide; effects add together`),P(`大潮，因為月球離地球最近`,`Spring tide; the Moon is nearest`),P(`小潮，因為此時太陽被擋住`,`Neap tide; the Sun is blocked off`),P(`小潮，兩股引潮力部分抵消`,`Neap tide; effects partly cancel`)],3,
    P(`上弦月時太陽—地球方向與地球—月球方向接近垂直，引潮效果部分抵消，因此潮差較小。`,`At first quarter the Sun and Moon directions are nearly perpendicular, so their tidal effects partly cancel and the range is smaller.`),

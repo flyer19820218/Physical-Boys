@@ -3,7 +3,7 @@
 (()=>{'use strict';
 const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
 LQ.addStatic('astronomy_universe_1',{
- '.panel:nth-child(3)':[
+ '.panel:nth-child(4)':[
   Q(P(`「太陽系是一個星系」這句話對嗎？`,`Is the statement "The Solar System is a galaxy" correct?`),
    [P(`對，太陽系就是包含全部恆星的星系`,`Yes; it contains all the galaxy's stars`),P(`對，因為太陽系裡也有很多行星`,`Yes; because it has many planets in it`),P(`不對，太陽系是以太陽為中心的系統`,`No; it is a system around a single star`),P(`對，因為太陽系比銀河系還要大`,`Yes; since it is bigger than the galaxy`)],2,
    P(`太陽系是以太陽這顆恆星為中心的系統；銀河系才是包含大量恆星的星系。`,`The Solar System is centred on the Sun, a star; the Milky Way is the galaxy containing vast numbers of stars.`),
@@ -16,7 +16,7 @@ LQ.addStatic('astronomy_universe_1',{
    [P(`不對，月球不發光，只反射太陽光`,`No; it only reflects the Sun's light`),P(`對，因為月球是太陽系裡最亮的星星`,`Yes; it is the brightest star we see`),P(`對，因為月亮自己也會發光發熱呢`,`Yes; it makes its own heat and light`),P(`對，因為月球繞著太陽在旋轉運行`,`Yes; it circles the Sun like a star`)],0,
    P(`月球是繞地球運行的衛星，本身不會發光；月光是月球表面反射的太陽光。`,`The Moon is a satellite orbiting Earth and makes no light of its own; moonlight is reflected sunlight.`),
    P(`恆星是可以自行發光、發熱的天體。`,`A star is a body that makes its own light and heat.`))],
- '.panel:nth-child(4)':[
+ '.panel:nth-child(5)':[
   Q(P(`參宿四距離約 640 光年，代表它「640 歲」嗎？`,`Betelgeuse is about 640 light-years away. Does that mean it is "640 years old"?`),
    [P(`是，光年就是用來表示年齡的單位`,`Yes; light-years are units of its age`),P(`是，因為光走了 640 年才到地球`,`Yes; light took 640 years to get here`),P(`不是，640 光年是距離，不是年齡`,`No; 640 ly is a distance, not an age`),P(`不是，但它的壽命是 640 光年`,`No; but it lives for 640 light-years`)],2,
    P(`640 光年是距離；我們看到的是約 640 年前從參宿四出發的光。`,`640 light-years is a distance; we see light that left Betelgeuse about 640 years ago.`),
@@ -29,7 +29,7 @@ LQ.addStatic('astronomy_universe_1',{
    [P(`光年數字太小，用 au 比較好算`,`Light-year numbers are tiny, au is handier`),P(`光年數字太大，用 au 比較好算`,`Light-year numbers are huge, au is handier`),P(`au 比光年準確，所以全部改用 au`,`The au is more exact than the light-year`),P(`光年只能用來量時間，而不能量距離`,`Light-years only measure time, not distance`)],0,
    P(`海王星約 30 au，還不到 0.001 光年，用 au 比較好算；恆星之間更遠，才用光年。`,`Neptune at 30 au is under 0.001 ly, so au is handier; stars are far more distant, so light-years are used for them.`),
    P(`1 au 是地球到太陽的平均距離，海王星離太陽約 30 au。`,`1 au is the average Earth–Sun distance; Neptune is about 30 au from the Sun.`))],
- '.panel:nth-child(5)':[
+ '.panel:nth-child(6)':[
   Q(P(`若銀河系側視呈很薄的盤狀，為什麼從地球看天空會有一條銀河光帶？`,`If the Milky Way is a thin disk seen from the side, why do we see a band of light across the sky from Earth?`),
    [P(`銀河系本身是一條很細長的帶狀雲氣團`,`The galaxy is itself a thin band of cloud`),P(`太陽光照到大氣層，在夜空中形成光帶`,`Sunlight lights the air and forms a band`),P(`我們身在盤內，沿盤面看穿過大量恆星`,`We are inside the disk, seeing many stars`),P(`月亮反射的光在天空中被拉長成光帶`,`Moonlight stretches out into a sky band`)],2,
    P(`我們身在銀河系盤面內部，沿盤面方向看出去時，視線穿過大量恆星，因此形成密集光帶。`,`We are inside the disk; looking along it sends our sight through many stars, forming a dense band.`),
@@ -42,7 +42,7 @@ LQ.addStatic('astronomy_universe_1',{
    [P(`橢圓、螺旋、不規則；銀河系是橢圓`,`Elliptical, spiral, irregular; ours is elliptical`),P(`橢圓、螺旋、不規則；銀河系不規則`,`Elliptical, spiral, irregular; ours is irregular`),P(`橢圓、螺旋、不規則；銀河系是螺旋`,`Elliptical, spiral, irregular; ours is spiral`),P(`圓形、方形、三角形；銀河系是圓形`,`Round, square, triangular; ours is round`)],2,
    P(`銀河系和仙女座大星系是螺旋星系；大麥哲倫星系是不規則星系。`,`The Milky Way and Andromeda are spirals; the Large Magellanic Cloud is irregular.`),
    P(`星系是宇宙構成的基本單位。`,`Galaxies are the basic units that make up the universe.`))],
- '.panel:nth-child(6)':[
+ '.panel:nth-child(7)':[
   Q(P(`木星體積很大，所以它應該屬於「類地行星」嗎？`,`Jupiter is very large, so should it be classified as a "terrestrial planet"?`),
    [P(`不是，木星是類木行星，密度較小`,`No; it is a giant planet with low density`),P(`是，因為木星的體積比地球大很多`,`Yes; it is far bigger than Earth in volume`),P(`是，因為木星的質量非常非常龐大`,`Yes; its mass is huge, so it counts too`),P(`是，因為木星有堅硬岩石的地表`,`Yes; it has a hard rocky ground surface`)],0,
    P(`木星屬類木行星，主要由氣體與液體構成，體積與質量大、平均密度較小。`,`Jupiter is a giant planet made mainly of gases and fluids, with large volume and mass but low average density.`),
@@ -55,7 +55,7 @@ LQ.addStatic('astronomy_universe_1',{
    [P(`朝向太陽，越靠近太陽越明顯`,`Toward the Sun, and clearer when nearer`),P(`朝向彗星前進方向，總是拖在前面`,`Ahead of the comet along its orbit path`),P(`垂直於太陽方向，會一直上下擺動`,`Sideways to the Sun, swaying up and down`),P(`背向太陽，越靠近太陽越明顯`,`Away from the Sun, and clearer when near`)],3,
    P(`彗尾是被太陽風吹出來的，總是背向太陽；越靠近太陽，彗尾越明顯。`,`The tail is blown out by the solar wind, so it always points away from the Sun and grows as the comet nears it.`),
    P(`彗尾是被太陽風吹出來的。`,`The tail is blown out by the solar wind.`))],
- '.panel:nth-child(7)':[
+ '.panel:nth-child(8)':[
   Q(P(`金星離太陽比水星遠，為什麼平均表面溫度反而更高？`,`Venus is farther from the Sun than Mercury. Why is its average surface temperature higher?`),
    [P(`金星比水星更靠近太陽，所以溫度更高`,`It is closer to the Sun than Mercury is`),P(`金星自轉速度非常極快，摩擦產生大量的熱`,`It spins so fast that friction makes heat`),P(`金星大氣濃厚富含二氧化碳，溫室效應強`,`Dense CO₂ atmosphere traps heat strongly`),P(`金星表面有非常多的火山，持續噴出熔岩`,`Many volcanoes keep pouring out hot lava`)],2,
    P(`金星大氣非常濃厚、富含二氧化碳，強烈溫室效應使熱量不易散失，因此溫度高於水星。`,`Venus has a very dense, carbon-dioxide-rich atmosphere; a strong greenhouse effect traps heat, so it is hotter than Mercury.`),

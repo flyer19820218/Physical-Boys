@@ -964,6 +964,41 @@
   #cs-stage { --ar: 1.7778; }
   #sy-stage { --ar: 1.2000; }
   #co-stage { --ar: 1.6667; }
+
+  /* ==================================================================
+     老師講解／學生操作 雙模式（外層加法：學生操作＝原本的樣子，沒有改任何一個原有規則）
+     ================================================================== */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 20px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-muted); border: 2px dashed var(--rule-color);
+    touch-action: manipulation; transition: all 0.2s;
+  }
+  .mode-pill:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: var(--chalk-dim); text-align: center; line-height: 1.5; max-width: 900px; }
+
+  /* 老師講解的控制列（只在老師模式出現；學生模式整條不顯示） */
+  .teach-bar { display: none; width: 100%; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--bg-base); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--bg-base); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生專用的按鈕與滑桿那幾列收起來；上方的步驟編號可以點（跳到那一步） */
+  body.mode-teacher .std-only { display: none !important; }
+  body.mode-teacher .mission-step { cursor: pointer; }
+  body.mode-teacher .mission-step:hover { border-color: var(--chalk-yellow); }
 </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -988,6 +1023,15 @@
     <h1 data-zh="晝夜、四季與天球模型" data-en="Daylight, Seasons and the Celestial Sphere">晝夜、四季與天球模型</h1>
     <div class="subtitle" data-zh="從巨觀現象到地表觀測的完美幾何解析" data-en="A geometric journey from global patterns to observations at Earth&#39;s surface">從巨觀現象到地表觀測的完美幾何解析</div>
   </header>
+
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays through on its own; pause, replay, or tap a step number to jump. Student: the original hands-on activities.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+  </div>
+
 
   <div class="tabs">
     <button class="tab-btn active" id="btn-tab-0" type="button" onclick="switchTab(0)">
@@ -1025,6 +1069,12 @@
     <p data-zh="固定觀察<span class='accent-cyan'>北回歸線（23.5°N）</span>上的同一地點。地球自轉一圈時，這個地點會依序穿過日照區與背光區。" data-en="Keep your eye on the same location at <span class='accent-cyan'>the Tropic of Cancer (23.5°N)</span>. As Earth completes one rotation, that location passes through the illuminated and dark hemispheres.">固定觀察<span class='accent-cyan'>北回歸線（23.5°N）</span>上的同一地點。地球自轉一圈時，這個地點會依序穿過日照區與背光區。</p>
     <p data-zh="北半球夏季時，這條緯線落在日照半球內的路程較長，因此<span class='accent-yellow'>晝長夜短</span>；冬季相反，形成<span class='accent-cyan'>晝短夜長</span>。" data-en="In Northern Hemisphere summer, this latitude traces a longer path through the illuminated hemisphere, so days are <span class='accent-yellow'>longer than nights</span>; winter is the reverse, producing <span class='accent-cyan'>shorter days and longer nights</span>.">北半球夏季時，這條緯線落在日照半球內的路程較長，因此<span class='accent-yellow'>晝長夜短</span>；冬季相反，形成<span class='accent-cyan'>晝短夜長</span>。</p>
     <div class="note-box" data-zh="👉 <strong>黃色</strong> 是一天中位於日照區的路段。<br>👉 <strong>藍色</strong> 是位於黑夜區的路段。" data-en="👉 <strong>Yellow</strong> marks the part of the daily path in daylight.<br>👉 <strong>Blue</strong> marks the part in darkness.">👉 <strong>黃色</strong> 是一天中位於日照區的路段。<br>👉 <strong>藍色</strong> 是位於黑夜區的路段。</div>
+    <div class="mission-row" style="--n: 4;">
+      <div class="mission-step scale-active" data-zh="<b>① 夏至</b><br>晝長夜短" data-en="<b>① Summer solstice</b><br>Long day"><b>① 夏至</b><br>晝長夜短</div>
+      <div class="mission-step" data-zh="<b>② 春／秋分</b><br>晝夜等長" data-en="<b>② Equinox</b><br>Equal day and night"><b>② 春／秋分</b><br>晝夜等長</div>
+      <div class="mission-step" data-zh="<b>③ 冬至</b><br>晝短夜長" data-en="<b>③ Winter solstice</b><br>Short day"><b>③ 冬至</b><br>晝短夜長</div>
+      <div class="mission-step" data-zh="<b>④ 比一比</b><br>三個節氣" data-en="<b>④ Compare</b><br>All three seasons"><b>④ 比一比</b><br>三個節氣</div>
+    </div>
     <div class="v5-panel teal v5-full fs-stage" id="dl-stage">
       <h2 data-zh="【互動】北回歸線觀察者的一天" data-en="[Interactive] One Day at the Tropic of Cancer">【互動】北回歸線觀察者的一天</h2>
       <p data-zh="選一個季節，按「⏸ 暫停／▶ 播放」或拖曳時間，跟著粉紅觀察者繞一圈；右邊的圓環是同一天的 24 小時。" data-en="Pick a season, then play or drag the time and follow the pink observer around once; the ring on the right shows the same 24 hours.">選一個季節，按「⏸ 暫停／▶ 播放」或拖曳時間，跟著粉紅觀察者繞一圈；右邊的圓環是同一天的 24 小時。</p>
@@ -1093,6 +1143,12 @@
     <p data-zh="⚠️ <strong class='accent-pink'>常見迷思破解：</strong>" data-en="⚠️ <strong class='accent-pink'>Common misconception:</strong>">⚠️ <strong class='accent-pink'>常見迷思破解：</strong></p>
     <p data-zh="四季的變化是因為地軸傾斜導致太陽的「<strong>直射與斜射（入射角）</strong>」改變，而<strong class='accent-yellow'>絕對不是因為地球距離太陽的遠近！</strong>地球公轉軌道接近正圓，距離差異對溫度的影響微乎其微。" data-en="Seasons change because Earth&#39;s axial tilt changes the Sun&#39;s <strong>angle of incidence (direct or oblique rays)</strong> — <strong class='accent-yellow'>not because Earth is nearer to or farther from the Sun!</strong> Earth&#39;s orbit is nearly circular, so the distance difference has very little effect on temperature.">四季的變化是因為地軸傾斜導致太陽的「<strong>直射與斜射（入射角）</strong>」改變，而<strong class='accent-yellow'>絕對不是因為地球距離太陽的遠近！</strong>地球公轉軌道接近正圓，距離差異對溫度的影響微乎其微。</p>
     <p data-zh="當同一束寬度的平行光打在地表時：<br>👉 <strong class='accent-orange'>直射（仰角大）：</strong> 照射面積小，能量集中，溫度高。<br>👉 <strong class='accent-cyan'>斜射（仰角小）：</strong> 照射面積大，能量分散，溫度低。" data-en="When parallel rays of the same width strike the ground:<br>👉 <strong class='accent-orange'>Direct rays (high solar altitude):</strong> smaller illuminated area, concentrated energy, higher temperature.<br>👉 <strong class='accent-cyan'>Oblique rays (low solar altitude):</strong> larger illuminated area, dispersed energy, lower temperature.">當同一束寬度的平行光打在地表時：<br>👉 <strong class='accent-orange'>直射（仰角大）：</strong> 照射面積小，能量集中，溫度高。<br>👉 <strong class='accent-cyan'>斜射（仰角小）：</strong> 照射面積大，能量分散，溫度低。</p>
+    <div class="mission-row" style="--n: 4;">
+      <div class="mission-step scale-active" data-zh="<b>① 直射</b><br>仰角 90°" data-en="<b>① Direct</b><br>Altitude 90°"><b>① 直射</b><br>仰角 90°</div>
+      <div class="mission-step" data-zh="<b>② 斜射</b><br>仰角 66°" data-en="<b>② Slanted</b><br>Altitude 66°"><b>② 斜射</b><br>仰角 66°</div>
+      <div class="mission-step" data-zh="<b>③ 更斜</b><br>仰角 43°" data-en="<b>③ More slanted</b><br>Altitude 43°"><b>③ 更斜</b><br>仰角 43°</div>
+      <div class="mission-step" data-zh="<b>④ 越斜</b><br>能量越分散" data-en="<b>④ Lower Sun</b><br>Energy spreads out"><b>④ 越斜</b><br>能量越分散</div>
+    </div>
     <div class="v5-panel yellow v5-full fs-stage" id="en-stage">
       <h2 data-zh="能量密度模擬" data-en="Energy-Density Simulation">能量密度模擬</h2>
       <p data-zh="拖曳「太陽仰角」，看同一束光照到的地面面積，和單位面積接收的能量怎麼變。" data-en="Drag Solar altitude and watch how the lit area and the energy per unit area change for the same beam.">拖曳「太陽仰角」，看同一束光照到的地面面積，和單位面積接收的能量怎麼變。</p>
@@ -1141,6 +1197,12 @@
         <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="真實宇宙是地球在轉；站到地面後，" data-en="In real space Earth rotates, ">真實宇宙是地球在轉；站到地面後，</span><b data-zh="我們卻看見整片星空反向移動。" data-en="yet from the ground the sky appears to move the other way.">我們卻看見整片星空反向移動。</b><span data-zh="切換兩個視角，把「真實運動」和「視運動」接起來。" data-en=" Switch views to connect true motion with apparent motion.">切換兩個視角，把「真實運動」和「視運動」接起來。</span></div>
       </div>
+    </div>
+    <div class="mission-row" style="--n: 4;">
+      <div class="mission-step scale-active" data-zh="<b>① 真實宇宙</b><br>3D 拖曳視角" data-en="<b>① Real space</b><br>Drag in 3D"><b>① 真實宇宙</b><br>3D 拖曳視角</div>
+      <div class="mission-step" data-zh="<b>② 北極上空</b><br>地球逆時針自轉" data-en="<b>② Above the pole</b><br>Earth turns counterclockwise"><b>② 北極上空</b><br>地球逆時針自轉</div>
+      <div class="mission-step" data-zh="<b>③ 天球模型</b><br>把星星投到球面" data-en="<b>③ Celestial sphere</b><br>Stars on one sphere"><b>③ 天球模型</b><br>把星星投到球面</div>
+      <div class="mission-step" data-zh="<b>④ 觀察者</b><br>站在球心看天" data-en="<b>④ Observer</b><br>Looking out from the center"><b>④ 觀察者</b><br>站在球心看天</div>
     </div>
     <div class="v5-panel cyan v5-full fs-stage" id="cs-stage">
       <h2 data-zh="天體理論：宇宙真實視角 vs 想像的天球" data-en="Celestial Theory: Real Space vs the Imagined Celestial Sphere">天體理論：宇宙真實視角 vs 想像的天球</h2>
@@ -1192,6 +1254,12 @@
         <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="只改一個緯度，" data-en="Change only the latitude and ">只改一個緯度，</span><b data-zh="地平線、天極高度和太陽軌跡會一起轉。" data-en="the horizon, celestial-pole altitude, and Sun path all shift together.">地平線、天極高度和太陽軌跡會一起轉。</b><span data-zh="試試北極、台灣、赤道與雪梨，找出規律。" data-en=" Compare the North Pole, Taiwan, the equator, and Sydney.">試試北極、台灣、赤道與雪梨，找出規律。</span></div>
       </div>
+    </div>
+    <div class="mission-row" style="--n: 4;">
+      <div class="mission-step scale-active" data-zh="<b>① 台灣</b><br>23.5°N" data-en="<b>① Taiwan</b><br>23.5°N"><b>① 台灣</b><br>23.5°N</div>
+      <div class="mission-step" data-zh="<b>② 赤道</b><br>0°" data-en="<b>② Equator</b><br>0°"><b>② 赤道</b><br>0°</div>
+      <div class="mission-step" data-zh="<b>③ 北極點</b><br>90°N" data-en="<b>③ North Pole</b><br>90°N"><b>③ 北極點</b><br>90°N</div>
+      <div class="mission-step" data-zh="<b>④ 換季節</b><br>夏至→春秋分→冬至" data-en="<b>④ Change season</b><br>Summer → equinox → winter"><b>④ 換季節</b><br>夏至→春秋分→冬至</div>
     </div>
     <div class="v5-panel pink v5-full fs-stage" id="sy-stage">
       <h2 data-zh="【互動】天球三視角連動" data-en="[Interactive] Three Linked Views">【互動】天球三視角連動</h2>
@@ -1269,6 +1337,12 @@
         <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="最後不要分開背五個結論：" data-en="For the finale, do not memorize five separate facts. ">最後不要分開背五個結論：</span><b data-zh="換一個季節，" data-en="Change the season ">換一個季節，</b><span data-zh="從直射緯度一路推到晝夜、日出日落、正午高度與影子。" data-en="and reason from direct-ray latitude to day length, sunrise and sunset, noon altitude, and shadow.">從直射緯度一路推到晝夜、日出日落、正午高度與影子。</span></div>
       </div>
+    </div>
+    <div class="mission-row" style="--n: 4;">
+      <div class="mission-step scale-active" data-zh="<b>① 夏至</b><br>直射北回歸線" data-en="<b>① Summer solstice</b><br>Direct at the Tropic of Cancer"><b>① 夏至</b><br>直射北回歸線</div>
+      <div class="mission-step" data-zh="<b>② 春／秋分</b><br>直射赤道" data-en="<b>② Equinox</b><br>Direct at the equator"><b>② 春／秋分</b><br>直射赤道</div>
+      <div class="mission-step" data-zh="<b>③ 冬至</b><br>直射南回歸線" data-en="<b>③ Winter solstice</b><br>Direct at the Tropic of Capricorn"><b>③ 冬至</b><br>直射南回歸線</div>
+      <div class="mission-step" data-zh="<b>④ 一張表</b><br>五個現象一起變" data-en="<b>④ One table</b><br>Five phenomena change together"><b>④ 一張表</b><br>五個現象一起變</div>
     </div>
     <div class="v5-panel orange v5-full fs-stage" id="co-stage">
       <h2 data-zh="【總整理】只換一個季節，五個現象一起變" data-en="[Summary] Change the season, and five phenomena change together">【總整理】只換一個季節，五個現象一起變</h2>
@@ -3267,6 +3341,7 @@
   function switchTab(idx) {
     document.querySelectorAll('.tabs .tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
     document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+    if (typeof teachOnTab === 'function') teachOnTab(idx);   /* 老師講解模式：切到新分頁就從頭自動播 */
   }
   function setLang(lang) {
     currentLang = lang;
@@ -3326,7 +3401,183 @@
   });
 
 </script>
+<script>
+/* ==================================================================
+   老師講解模式（外層加法）
+     ・學生操作＝原本的互動；畫布、動畫、所有原有控制函式完全沒動
+     ・老師講解：按下去就從目前分頁的頭開始自動連續播放。每一站只是「照學生按鈕的做法」
+       把狀態設好（呼叫原本就有的函式），不改任何畫法與節奏
+     ・可以暫停（連轉動中的動畫一起凍住）、從頭重播，也可以點上方的步驟編號跳到那一步
+       （每一站都是整個狀態重設，跟真的播到那一步完全一樣）
+     ・切分頁、切回學生模式時，會把畫面還原成原本一進來的樣子
+   ================================================================== */
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    /* ── 第 3 課：每個分頁的停靠點 ── */
+  const SEAS = ['summer', 'equinox', 'winter'];
+  let k1 = '', k2 = '';
+  const dlGo = (k) => { dl.season = k; DL_LAST = ''; dl.time = 12; dl.playing = true; dl.last = 0; dlUI(); };
+  const enGo = a => { enSlide(a); const r = $('energy-range'); if (r) r.value = a; };
+  const csGo = (sub, th, ph) => { cs.theta = th; cs.phi = ph; cs.dragging = false; switchT3(sub); };
+  const syGo = (lat, season) => { sy.lat = lat; sy.time = 12; sy.season = season; sy.playing = true; sy.last = 0; syUI(); };
+  const TABS = [
+    { stages: ['dl'], stops: [
+      { d: 14, go() { dlGo('summer'); } },
+      { d: 14, go() { dlGo('equinox'); } },
+      { d: 14, go() { dlGo('winter'); } },
+      { d: 21, go() { k1 = 'summer'; dlGo('summer'); }, upd(f) { const k = SEAS[Math.min(2, Math.floor(f * 3))]; if (k !== k1) { k1 = k; dlSeason(k); } } } ] },
+    { stages: ['en'], stops: [
+      { d: 8, go() { enGo(90); } },
+      { d: 8, go() { enGo(66); } },
+      { d: 8, go() { enGo(43); } },
+      { d: 12, go() { enGo(90); }, upd(f) { enGo(Math.round(90 - 75 * f)); } } ] },
+    { stages: ['cs'], stops: [
+      { d: 10, go() { csGo('sub1', 0, -Math.PI / 6); } },
+      { d: 10, go() { csGo('sub1', 0, -1.35); } },
+      { d: 10, go() { csGo('sub2', 0, -Math.PI / 6); } },
+      { d: 10, go() { csGo('sub2', 0, -Math.PI / 6); } } ] },
+    { stages: ['sy'], stops: [
+      { d: 14, go() { syGo(23.5, 'summer'); } },
+      { d: 14, go() { syGo(0, 'summer'); } },
+      { d: 14, go() { syGo(90, 'summer'); } },
+      { d: 21, go() { k2 = 'summer'; syGo(23.5, 'summer'); }, upd(f) { const k = SEAS[Math.min(2, Math.floor(f * 3))]; if (k !== k2) { k2 = k; setSyncSeason(k); } } } ] },
+    { stages: ['co'], stops: [
+      { d: 9, go() { coSeason('summer'); } },
+      { d: 9, go() { coSeason('equinox'); } },
+      { d: 9, go() { coSeason('winter'); } },
+      { d: 15, go() { k1 = 'summer'; coSeason('summer'); }, upd(f) { const k = SEAS[Math.min(2, Math.floor(f * 3))]; if (k !== k1) { k1 = k; coSeason(k); } } } ] }
+  ];
+  function RESET() {
+    dl.season = 'summer'; DL_LAST = ''; dl.time = 12; dl.playing = true; dl.last = 0; dlUI();
+    enGo(90); csGo('sub1', 0, -Math.PI / 6);
+    sy.lat = 23.5; sy.time = 12; sy.season = 'summer'; sy.playing = true; sy.last = 0; syUI();
+    coSeason('summer');
+  }
+  function FREEZE() { T.saved = { dl: dl.playing, sy: sy.playing }; dl.playing = false; sy.playing = false; dlUI(); syUI(); }
+  function THAW() { const s = T.saved; T.saved = null; if (!s) return; dl.playing = s.dl; sy.playing = s.sy; dl.last = sy.last = 0; dlUI(); syUI(); }
+
+  const T = { on: false, tab: 0, paused: false, last: 0, wait: 0, raf: 0, st: null, saved: null };
+
+  function mark(tab, idx) {
+    document.querySelectorAll('.panel').forEach((p, pi) => {
+      const ms = p.querySelectorAll('.mission-step');
+      ms.forEach((s, si) => s.classList.toggle('scale-active', si === (pi === tab ? Math.min(idx, ms.length - 1) : 0)));
+    });
+  }
+  function fullReset() { RESET(); mark(-1, 0); T.saved = null; }
+  function scrollToStage(id) {
+    const el = $(id + '-stage');
+    if (el && !el.classList.contains('fs-on') && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  const stopsOf = () => TABS[T.tab].stops;
+  function tourDo(i, scroll) {
+    const stops = stopsOf(), s = stops[i], st = T.st;
+    const prev = st.idx >= 0 ? stops[st.idx] : null;
+    st.idx = i; st.done = false; st.f = 0; st.late = false;
+    s.go(); T.wait = s.d;
+    mark(T.tab, i);
+    if (scroll || !prev || (prev.stage || TABS[T.tab].stages[0]) !== (s.stage || TABS[T.tab].stages[0])) scrollToStage(s.stage || TABS[T.tab].stages[0]);
+  }
+  function startTab(scroll) {
+    if (T.paused) { T.paused = false; T.saved = null; }
+    T.st = { idx: -1, done: false, f: 0, late: false };
+    tourDo(0, scroll); paint();
+  }
+  function enterTab(idx) { fullReset(); T.tab = idx; T.paused = false; startTab(true); }
+
+  function drive(dt) {
+    const st = T.st, stops = stopsOf(); if (T.paused || st.done) return;
+    const s = stops[st.idx];
+    T.wait -= dt;
+    st.f = clamp(1 - Math.max(0, T.wait) / s.d, 0, 1);
+    if (s.late && !st.late && st.f >= .55) { st.late = true; s.late(); }
+    if (s.upd) s.upd(st.f);
+    if (T.wait > 0) return;
+    if (st.idx + 1 >= stops.length) { st.done = true; st.f = 1; return; }
+    tourDo(st.idx + 1, false);
+  }
+  function tick() {
+    if (!T.on) return;
+    T.raf = requestAnimationFrame(tick);
+    const now = performance.now() / 1000, real = Math.max(0, now - (T.last || now)); T.last = now;
+    if (!T.st) return;
+    drive(Math.min(real, 0.1)); paint();
+  }
+  function stepName(tab, idx) {
+    const p = document.querySelectorAll('.panel')[tab], ms = p ? p.querySelectorAll('.mission-step') : [];
+    const s = stopsOf()[idx];
+    if (s && s.label) return tr(s.label[0], s.label[1]);
+    return ms[idx] ? ms[idx].innerText.replace(/\s+/g, ' ').trim() : '';
+  }
+  function paint() {
+    document.querySelectorAll('.teach-bar').forEach(bar => {
+      const st = T.st; if (!st) return;
+      const stops = stopsOf(), cur = stops[st.idx];
+      if (!TABS[T.tab].stages.includes(bar.dataset.stage)) return;
+      let note;
+      if (T.paused) note = tr('⏸ 已暫停', '⏸ Paused');
+      else if (st.done) note = tr('✔ 講解完畢；可按「從頭重播」，或點上方的編號回到任一步', '✔ Done. Press Replay, or tap a number above to revisit a step');
+      else note = tr('▶ 正在講：', '▶ Now: ') + stepName(T.tab, st.idx);
+      const pct = Math.round(clamp(st.done ? 1 : (st.idx + st.f) / stops.length, 0, 1) * 100);
+      const pauseTxt = T.paused ? tr('▶ 繼續', '▶ Resume') : tr('⏸ 暫停', '⏸ Pause');
+      const sig = [note, pct, pauseTxt, st.done, currentLang].join('|');
+      if (bar._sig === sig) return; bar._sig = sig;
+      const pb = bar.querySelector('[data-act="pause"]'), rb = bar.querySelector('[data-act="replay"]');
+      pb.textContent = pauseTxt; pb.disabled = st.done;
+      rb.textContent = tr('↺ 從頭重播', '↺ Replay'); rb.classList.toggle('hot', st.done);
+      bar.querySelector('.teach-fill').style.width = pct + '%';
+      bar.querySelector('.teach-note').textContent = note;
+    });
+  }
+  function onBar(e) {
+    const b = e.target.closest('.teach-btn'); if (!b || !T.on || !T.st) return;
+    if (b.dataset.act === 'pause') { if (T.paused) { T.paused = false; THAW(); } else { T.paused = true; FREEZE(); } }
+    else startTab(false);
+    paint();
+  }
+  function onStep(pi) {
+    return function (e) {
+      if (!T.on || !T.st || pi !== T.tab) return;
+      const el = e.target.closest('.mission-step'); if (!el) return;
+      const idx = Array.prototype.indexOf.call(el.parentNode.children, el);
+      if (idx < 0 || idx >= stopsOf().length) return;
+      T.paused = false; T.saved = null;
+      tourDo(idx, true); paint();
+    };
+  }
+  window.setMode = function (m) {
+    const teacher = m === 'teacher';
+    if (teacher === T.on) return;
+    $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
+    $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
+    document.body.classList.toggle('mode-teacher', teacher);
+    T.on = teacher;
+    if (teacher) {
+      const idx = Array.prototype.findIndex.call(document.querySelectorAll('.panel'), p => p.classList.contains('active'));
+      T.last = 0; enterTab(Math.max(0, idx));
+      cancelAnimationFrame(T.raf); T.raf = requestAnimationFrame(tick);
+    } else { cancelAnimationFrame(T.raf); T.paused = false; fullReset(); }
+  };
+  window.teachOnTab = function (idx) { if (T.on) enterTab(idx); };
+  window.__teachSetSaved = function (v) { T.saved = v; };
+  window.__teachSaved = function () { return T.saved; };
+
+  const allStages = []; TABS.forEach(t => t.stages.forEach(s => { if (!allStages.includes(s)) allStages.push(s); }));
+  allStages.forEach(id => {
+    const stage = $(id + '-stage'), ctrls = stage && stage.querySelector('.controls'); if (!ctrls) return;
+    const bar = document.createElement('div');
+    bar.className = 'teach-bar'; bar.dataset.stage = id;
+    bar.innerHTML = '<button type="button" class="teach-btn" data-act="pause"></button><button type="button" class="teach-btn" data-act="replay"></button><div class="teach-track"><div class="teach-fill"></div></div><div class="teach-note" aria-live="polite"></div>';
+    bar.addEventListener('click', onBar);
+    ctrls.insertBefore(bar, ctrls.firstChild);
+    ctrls.querySelectorAll('.ctrl-row').forEach(r => r.classList.add('std-only'));
+  });
+  document.querySelectorAll('.panel').forEach((p, pi) => { const row = p.querySelector('.mission-row'); if (row) row.addEventListener('click', onStep(pi)); });
+})();
+</script>
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
-<script defer src="assets/quiz/quiz_astronomy_sunpath_3_1028_v1.js?v=20261028-q1"></script>
+<script defer src="assets/quiz/quiz_astronomy_sunpath_3_1028_v1.js?v=20261031-m1"></script>
 </body>
 </html>

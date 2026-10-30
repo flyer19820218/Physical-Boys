@@ -1011,6 +1011,41 @@
   #m2-stage { --ar: 1.6552; }
   #m3-stage { --ar: 1.6667; }
   #m4-stage { --ar: 1.6667; }
+
+  /* ==================================================================
+     老師講解／學生操作 雙模式（外層加法：學生操作＝原本的樣子，沒有改任何一個原有規則）
+     ================================================================== */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 20px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-muted); border: 2px dashed var(--rule-color);
+    touch-action: manipulation; transition: all 0.2s;
+  }
+  .mode-pill:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: var(--chalk-dim); text-align: center; line-height: 1.5; max-width: 900px; }
+
+  /* 老師講解的控制列（只在老師模式出現；學生模式整條不顯示） */
+  .teach-bar { display: none; width: 100%; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--bg-base); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--bg-base); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生專用的按鈕與滑桿那幾列收起來；上方的步驟編號可以點（跳到那一步） */
+  body.mode-teacher .std-only { display: none !important; }
+  body.mode-teacher .mission-step { cursor: pointer; }
+  body.mode-teacher .mission-step:hover { border-color: var(--chalk-yellow); }
 </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -1035,6 +1070,15 @@
     <h1 data-zh="月相、日月食與潮汐" data-en="Moon Phases, Eclipses and Tides">月相、日月食與潮汐</h1>
     <div class="subtitle" data-zh="日地月相對運動｜月相五步＋日月食＋潮汐" data-en="Sun–Earth–Moon Motion | Lunar Phases, Eclipses &amp; Tides">日地月相對運動｜月相五步＋日月食＋潮汐</div>
   </header>
+
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays through on its own; pause, replay, or tap a step number to jump. Student: the original hands-on activities.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+  </div>
+
 
   <div class="tabs">
     <button class="tab-btn active" id="btn-tab-0" type="button" onclick="switchTab(0)">
@@ -1064,7 +1108,14 @@
         <div class="hook-text"><span data-zh="先抓住唯一不變的事：" data-en="Start with the one constant: ">先抓住唯一不變的事：</span><b data-zh="月球永遠一半亮、一半暗。" data-en="half of the Moon is always lit and half is dark. ">月球永遠一半亮、一半暗。</b><span data-zh="改變的是我們從地球看見亮面的比例。" data-en="What changes is the fraction of the lit side visible from Earth.">改變的是我們從地球看見亮面的比例。</span></div>
       </div>
     </div>
-    <div class="v5-panel teal v5-full lesson-panel">
+    <div class="mission-row" style="--n: 5;">
+      <div class="mission-step scale-active" data-zh="<b>① 月相來源</b><br>永遠一半亮" data-en="<b>① Why phases</b><br>Always half lit"><b>① 月相來源</b><br>永遠一半亮</div>
+      <div class="mission-step" data-zh="<b>② 東升西落</b><br>地球自轉" data-en="<b>② Rise and set</b><br>Earth rotates"><b>② 東升西落</b><br>地球自轉</div>
+      <div class="mission-step" data-zh="<b>③ 同步運動</b><br>朔望月約 29.53 天" data-en="<b>③ Synchronized</b><br>A month is 29.53 days"><b>③ 同步運動</b><br>朔望月約 29.53 天</div>
+      <div class="mission-step" data-zh="<b>④ 四大月相</b><br>朔、上弦、望、下弦" data-en="<b>④ Four phases</b><br>New, first quarter, full, last quarter"><b>④ 四大月相</b><br>朔、上弦、望、下弦</div>
+      <div class="mission-step" data-zh="<b>⑤ 會考判讀</b><br>先看東西" data-en="<b>⑤ Exam reasoning</b><br>East and west first"><b>⑤ 會考判讀</b><br>先看東西</div>
+    </div>
+    <div id="m1-lesson" class="v5-panel teal v5-full lesson-panel">
       <h2 data-zh="月相教學步驟" data-en="Lunar-Phase Learning Steps">月相教學步驟</h2>
       <div class="lesson-subtabs" id="moonLessonTabs">
           <button class="action-btn mode-btn lesson-subtab active" type="button" data-lesson="origin" data-zh="1 月相來源" data-en="1 Why Phases Form">1 月相來源</button>
@@ -1222,6 +1273,11 @@
         <div class="hook-text"><span data-zh="日食不是太陽消失，" data-en="During a solar eclipse the Sun does not disappear; ">日食不是太陽消失，</span><b data-zh="而是月球影子掃過地球。" data-en="the Moon&#39;s shadow sweeps across Earth. ">而是月球影子掃過地球。</b><span data-zh="比較全食、偏食與環食，關鍵都在觀察者穿過哪一區影子。" data-en="Total, partial, and annular eclipses depend on which shadow region reaches the observer.">比較全食、偏食與環食，關鍵都在觀察者穿過哪一區影子。</span></div>
       </div>
     </div>
+    <div class="mission-row" style="--n: 3;">
+      <div class="mission-step scale-active" data-zh="<b>① 日全食</b><br>月影完全蓋住太陽" data-en="<b>① Total</b><br>The Moon fully covers the Sun"><b>① 日全食</b><br>月影完全蓋住太陽</div>
+      <div class="mission-step" data-zh="<b>② 日偏食</b><br>只蓋住一部分" data-en="<b>② Partial</b><br>Only part is covered"><b>② 日偏食</b><br>只蓋住一部分</div>
+      <div class="mission-step" data-zh="<b>③ 日環食</b><br>太陽露出一圈" data-en="<b>③ Annular</b><br>A ring of Sun remains"><b>③ 日環食</b><br>太陽露出一圈</div>
+    </div>
     <div class="v5-panel orange v5-full fs-stage" id="m2-stage">
       <h2 data-zh="【同步】太空中的排列 → 地面看到的太陽" data-en="[Linked] Alignment in Space → Sun Seen from the Ground">【同步】太空中的排列 → 地面看到的太陽</h2>
       <p data-zh="左邊從北極上空看：月球擋在太陽和地球之間。月球帶著影子往東走，比觀察者跟著地球自轉還快，影子從西邊追上觀察者、往東掃過去；右邊是觀察者面向南方看到的太陽：月球從西邊（右）切進來、往東邊（左）移出去。" data-en="Left, seen from above the North Pole: the Moon sits between the Sun and Earth. It carries its shadow eastward faster than the observer turns with Earth, so the shadow catches up from the west and sweeps east. Right: the Sun seen facing south — the Moon enters from the west (right) and leaves to the east (left).">左邊從北極上空看：月球擋在太陽和地球之間。月球帶著影子往東走，比觀察者跟著地球自轉還快，影子從西邊追上觀察者、往東掃過去；右邊是觀察者面向南方看到的太陽：月球從西邊（右）切進來、往東邊（左）移出去。</p>
@@ -1343,7 +1399,12 @@
         <div class="hook-text"><span data-zh="月食一定在望附近，但不是每個滿月都月食。" data-en="A lunar eclipse occurs near full Moon, but not every full Moon is eclipsed. ">月食一定在望附近，但不是每個滿月都月食。</span><b data-zh="別忘了那個關鍵的 5° 軌道傾角。" data-en="The key is the Moon&#39;s 5° orbital tilt.">別忘了那個關鍵的 5° 軌道傾角。</b><span data-zh="" data-en=""></span></div>
       </div>
     </div>
-    <div class="v5-panel pink v5-full lesson-panel">
+    <div class="mission-row" style="--n: 3;">
+      <div class="mission-step scale-active" data-zh="<b>① 月食</b><br>月球進入地影" data-en="<b>① Lunar eclipse</b><br>Moon enters the shadow"><b>① 月食</b><br>月球進入地影</div>
+      <div class="mission-step" data-zh="<b>② 不是每月都有</b><br>軌道有傾斜" data-en="<b>② Not monthly</b><br>The orbit is tilted"><b>② 不是每月都有</b><br>軌道有傾斜</div>
+      <div class="mission-step" data-zh="<b>③ 血月為何紅</b><br>地球大氣折射" data-en="<b>③ Blood Moon</b><br>Earth's air bends light"><b>③ 血月為何紅</b><br>地球大氣折射</div>
+    </div>
+    <div id="m3-lesson" class="v5-panel pink v5-full lesson-panel">
       <h2 data-zh="月食教學步驟" data-en="Lunar-Eclipse Learning Steps">月食教學步驟</h2>
       <div class="lesson-subtabs" id="lunarLessonTabs">
           <button class="action-btn mode-btn lesson-subtab active" type="button" data-lunar="eclipse" data-zh="1 月食" data-en="1 Lunar Eclipse">1 月食</button>
@@ -1453,7 +1514,12 @@
         <div class="hook-text"><span data-zh="潮汐不只看月球在哪裡，" data-en="Tides depend not only on where the Moon is, ">潮汐不只看月球在哪裡，</span><b data-zh="還要把地球自轉、月球前進與太陽引潮力" data-en="but also on Earth&#39;s rotation, the Moon&#39;s advance, and the Sun&#39;s tidal force">還要把地球自轉、月球前進與太陽引潮力</b><span data-zh="一起放進同一張圖。" data-en=" — put them all in one picture.">一起放進同一張圖。</span></div>
       </div>
     </div>
-    <div class="v5-panel green v5-full lesson-panel">
+    <div class="mission-row" style="--n: 3;">
+      <div class="mission-step scale-active" data-zh="<b>① 滿潮慢 25 分</b><br>月球也在往前走" data-en="<b>① 25 min later</b><br>The Moon moves on"><b>① 滿潮慢 25 分</b><br>月球也在往前走</div>
+      <div class="mission-step" data-zh="<b>② 大潮與小潮</b><br>看地月日的位置" data-en="<b>② Spring &amp; neap</b><br>Depends on Sun–Earth–Moon"><b>② 大潮與小潮</b><br>看地月日的位置</div>
+      <div class="mission-step" data-zh="<b>③ 潮汐與生活</b><br>怎麼用潮汐" data-en="<b>③ Tides in life</b><br>Using the tides"><b>③ 潮汐與生活</b><br>怎麼用潮汐</div>
+    </div>
+    <div id="m4-lesson" class="v5-panel green v5-full lesson-panel">
       <h2 data-zh="潮汐教學步驟" data-en="Tide Learning Steps">潮汐教學步驟</h2>
       <div class="lesson-subtabs" id="tideLessonTabs">
           <button class="action-btn mode-btn lesson-subtab active" type="button" data-tide="delay" data-zh="1 滿潮慢 25 分" data-en="1 High Tide Is 25 min Later">1 滿潮慢 25 分</button>
@@ -3942,6 +4008,7 @@
     document.querySelectorAll('.tabs .tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
     document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === idx));
     [draw1, draw2, draw3, draw4][idx]();
+    if (typeof teachOnTab === 'function') teachOnTab(idx);   /* 老師講解模式：切到新分頁就從頭自動播 */
   }
   function setLang(lang) {
     currentLang = lang;
@@ -4010,7 +4077,179 @@
   });
 
 </script>
+<script>
+/* ==================================================================
+   老師講解模式（外層加法）
+     ・學生操作＝原本的互動；畫布、動畫、所有原有控制函式完全沒動
+     ・老師講解：按下去就從目前分頁的頭開始自動連續播放。每一站只是「照學生按鈕的做法」
+       把狀態設好（呼叫原本就有的函式），不改任何畫法與節奏
+     ・可以暫停（連轉動中的動畫一起凍住）、從頭重播，也可以點上方的步驟編號跳到那一步
+       （每一站都是整個狀態重設，跟真的播到那一步完全一樣）
+     ・切分頁、切回學生模式時，會把畫面還原成原本一進來的樣子
+   ================================================================== */
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    /* ── 第 4 課：每一站都是「照學生按鈕的做法」按原本就有的按鈕；d＝停留秒數 ── */
+  const clk = sel => { const e = document.querySelector(sel); if (e) e.click(); };
+  const m1Go = (lesson, day, speed, run) => {
+    clk('#moonLessonTabs [data-lesson="' + lesson + '"]'); clk('#speed1Btns [data-speed="' + speed + '"]');
+    S.day1 = day; document.getElementById('day1').value = day;
+    if (run) startContinuous1(); else { stopOneDay1(); draw1(); }
+  };
+  let ph = -1; const PH = ['0', '.25', '.5', '.75'];
+  const TABS = [
+    { stages: ['m1'], scroll: 'm1-lesson', stops: [
+      { d: 14, go() { m1Go('origin', 1, '.5', true); } },
+      { d: 14, go() { m1Go('daily', 8, '.5', true); } },
+      { d: 14, go() { m1Go('sync', 1, '1', true); } },
+      { d: 20, go() { ph = -1; m1Go('anchors', 1, '.5', false); }, upd(f) { const k = Math.min(3, Math.floor(f * 4)); if (k !== ph) { ph = k; clk('#phase1Btns [data-fraction="' + PH[k] + '"]'); } } },
+      { d: 14, go() { m1Go('exam', 1, '.5', false); clk('#phase1Btns [data-fraction=".25"]'); } } ] },
+    { stages: ['m2'], stops: ['total', 'partial', 'annular'].map(k => ({ d: 22, go() { clk('#solar2Btns [data-solar="' + k + '"]'); } })) },
+    { stages: ['m3'], scroll: 'm3-lesson', stops: ['eclipse', 'tilt', 'copper'].map(k => ({ d: 24, go() { clk('#lunarLessonTabs [data-lunar="' + k + '"]'); } })) },
+    { stages: ['m4'], scroll: 'm4-lesson', stops: [
+      { d: 22, go() { clk('#tideLessonTabs [data-tide="delay"]'); clk('#resetTide4'); } },
+      { d: 30, go() { clk('#tideLessonTabs [data-tide="spring"]'); clk('#resetSpring4'); } },
+      { d: 14, go() { clk('#tideLessonTabs [data-tide="life"]'); clk('#resetTide4'); } } ] }
+  ];
+  function RESET() {
+    m1Go('origin', 1, '.5', true);
+    clk('#solar2Btns [data-solar="total"]'); clk('#lunarLessonTabs [data-lunar="eclipse"]');
+    clk('#tideLessonTabs [data-tide="delay"]'); clk('#resetTide4'); clk('#resetSpring4');
+    document.querySelectorAll('#phase1Btns .phase-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+  }
+  function FREEZE() {
+    T.saved = { p1: S.play1, pu: S.playUntil1, s2: S.playSolar2, l3: S.playLunar3, t4: S.playTide4, sp: S.playSpring4 };
+    stopOneDay1(); setSolarPlay2(false); setLunarPlay3(false); setTidePlay4(false); setSpringPlay4(false);
+  }
+  function THAW() {
+    const s = T.saved; T.saved = null; if (!s) return;
+    S.playUntil1 = s.pu; S.play1 = s.p1; setPlayButton1(s.p1); setSolarPlay2(s.s2); setLunarPlay3(s.l3); setTidePlay4(s.t4); setSpringPlay4(s.sp);
+  }
+
+  const T = { on: false, tab: 0, paused: false, last: 0, wait: 0, raf: 0, st: null, saved: null };
+
+  function mark(tab, idx) {
+    document.querySelectorAll('.panel').forEach((p, pi) => {
+      const ms = p.querySelectorAll('.mission-step');
+      ms.forEach((s, si) => s.classList.toggle('scale-active', si === (pi === tab ? Math.min(idx, ms.length - 1) : 0)));
+    });
+  }
+  function fullReset() { RESET(); mark(-1, 0); T.saved = null; }
+  function scrollToStage(id) {
+    const el = $(id) || $(id + '-stage');
+    if (el && !el.classList.contains('fs-on') && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  const stopsOf = () => TABS[T.tab].stops;
+  function tourDo(i, scroll) {
+    const stops = stopsOf(), s = stops[i], st = T.st;
+    const prev = st.idx >= 0 ? stops[st.idx] : null;
+    st.idx = i; st.done = false; st.f = 0; st.late = false;
+    s.go(); T.wait = s.d;
+    mark(T.tab, i);
+    const tab = TABS[T.tab];
+    if (scroll || (!tab.scroll && (!prev || (prev.stage || tab.stages[0]) !== (s.stage || tab.stages[0])))) scrollToStage(tab.scroll || s.stage || tab.stages[0]);
+  }
+  function startTab(scroll) {
+    if (T.paused) { T.paused = false; T.saved = null; }
+    T.st = { idx: -1, done: false, f: 0, late: false };
+    tourDo(0, scroll); paint();
+  }
+  function enterTab(idx) { fullReset(); T.tab = idx; T.paused = false; startTab(true); }
+
+  function drive(dt) {
+    const st = T.st, stops = stopsOf(); if (T.paused || st.done) return;
+    const s = stops[st.idx];
+    T.wait -= dt;
+    st.f = clamp(1 - Math.max(0, T.wait) / s.d, 0, 1);
+    if (s.late && !st.late && st.f >= .55) { st.late = true; s.late(); }
+    if (s.upd) s.upd(st.f);
+    if (T.wait > 0) return;
+    if (st.idx + 1 >= stops.length) { st.done = true; st.f = 1; return; }
+    tourDo(st.idx + 1, false);
+  }
+  function tick() {
+    if (!T.on) return;
+    T.raf = requestAnimationFrame(tick);
+    const now = performance.now() / 1000, real = Math.max(0, now - (T.last || now)); T.last = now;
+    if (!T.st) return;
+    drive(Math.min(real, 0.1)); paint();
+  }
+  function stepName(tab, idx) {
+    const p = document.querySelectorAll('.panel')[tab], ms = p ? p.querySelectorAll('.mission-step') : [];
+    const s = stopsOf()[idx];
+    if (s && s.label) return tr(s.label[0], s.label[1]);
+    return ms[idx] ? ms[idx].innerText.replace(/\s+/g, ' ').trim() : '';
+  }
+  function paint() {
+    document.querySelectorAll('.teach-bar').forEach(bar => {
+      const st = T.st; if (!st) return;
+      const stops = stopsOf(), cur = stops[st.idx];
+      if (!TABS[T.tab].stages.includes(bar.dataset.stage)) return;
+      let note;
+      if (T.paused) note = tr('⏸ 已暫停', '⏸ Paused');
+      else if (st.done) note = tr('✔ 講解完畢；可按「從頭重播」，或點上方的編號回到任一步', '✔ Done. Press Replay, or tap a number above to revisit a step');
+      else note = tr('▶ 正在講：', '▶ Now: ') + stepName(T.tab, st.idx);
+      const pct = Math.round(clamp(st.done ? 1 : (st.idx + st.f) / stops.length, 0, 1) * 100);
+      const pauseTxt = T.paused ? tr('▶ 繼續', '▶ Resume') : tr('⏸ 暫停', '⏸ Pause');
+      const sig = [note, pct, pauseTxt, st.done, currentLang].join('|');
+      if (bar._sig === sig) return; bar._sig = sig;
+      const pb = bar.querySelector('[data-act="pause"]'), rb = bar.querySelector('[data-act="replay"]');
+      pb.textContent = pauseTxt; pb.disabled = st.done;
+      rb.textContent = tr('↺ 從頭重播', '↺ Replay'); rb.classList.toggle('hot', st.done);
+      bar.querySelector('.teach-fill').style.width = pct + '%';
+      bar.querySelector('.teach-note').textContent = note;
+    });
+  }
+  function onBar(e) {
+    const b = e.target.closest('.teach-btn'); if (!b || !T.on || !T.st) return;
+    if (b.dataset.act === 'pause') { if (T.paused) { T.paused = false; THAW(); } else { T.paused = true; FREEZE(); } }
+    else startTab(false);
+    paint();
+  }
+  function onStep(pi) {
+    return function (e) {
+      if (!T.on || !T.st || pi !== T.tab) return;
+      const el = e.target.closest('.mission-step'); if (!el) return;
+      const idx = Array.prototype.indexOf.call(el.parentNode.children, el);
+      if (idx < 0 || idx >= stopsOf().length) return;
+      T.paused = false; T.saved = null;
+      tourDo(idx, true); paint();
+    };
+  }
+  window.setMode = function (m) {
+    const teacher = m === 'teacher';
+    if (teacher === T.on) return;
+    $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
+    $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
+    document.body.classList.toggle('mode-teacher', teacher);
+    T.on = teacher;
+    if (teacher) {
+      const idx = Array.prototype.findIndex.call(document.querySelectorAll('.panel'), p => p.classList.contains('active'));
+      T.last = 0; enterTab(Math.max(0, idx));
+      cancelAnimationFrame(T.raf); T.raf = requestAnimationFrame(tick);
+    } else { cancelAnimationFrame(T.raf); T.paused = false; fullReset(); }
+  };
+  window.teachOnTab = function (idx) { if (T.on) enterTab(idx); };
+  window.__teachSetSaved = function (v) { T.saved = v; };
+  window.__teachSaved = function () { return T.saved; };
+
+  const allStages = []; TABS.forEach(t => t.stages.forEach(s => { if (!allStages.includes(s)) allStages.push(s); }));
+  allStages.forEach(id => {
+    const stage = $(id + '-stage'), ctrls = stage && stage.querySelector('.controls'); if (!ctrls) return;
+    const bar = document.createElement('div');
+    bar.className = 'teach-bar'; bar.dataset.stage = id;
+    bar.innerHTML = '<button type="button" class="teach-btn" data-act="pause"></button><button type="button" class="teach-btn" data-act="replay"></button><div class="teach-track"><div class="teach-fill"></div></div><div class="teach-note" aria-live="polite"></div>';
+    bar.addEventListener('click', onBar);
+    ctrls.insertBefore(bar, ctrls.firstChild);
+    ctrls.querySelectorAll('.ctrl-row').forEach(r => r.classList.add('std-only'));
+  });
+  document.querySelectorAll('.lesson-subtabs').forEach(r => r.classList.add('std-only'));
+  document.querySelectorAll('.panel').forEach((p, pi) => { const row = p.querySelector('.mission-row'); if (row) row.addEventListener('click', onStep(pi)); });
+})();
+</script>
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
-<script defer src="assets/quiz/quiz_astronomy_moon_phases_4_1028_v1.js?v=20261028-q1"></script>
+<script defer src="assets/quiz/quiz_astronomy_moon_phases_4_1028_v1.js?v=20261031-m1"></script>
 </body>
 </html>

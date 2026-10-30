@@ -3,7 +3,7 @@
 (()=>{'use strict';
 const LQ=window.LessonQuiz;if(!LQ||!LQ.addStatic)return;const {P,Q}=LQ;
 LQ.addStatic('astronomy_sunpath_3',{
- '.panel:nth-child(3)':[
+ '.panel:nth-child(4)':[
   Q(P(`北半球夏至時，北回歸線上的晝和夜哪一個比較長？從圖上怎麼看出來？`,`At the June solstice, is day or night longer at the Tropic of Cancer, and how can you tell from the picture?`),
    [P(`夜較長，藍色夜區比黃色晝區長`,`Night longer; blue section exceeds yellow`),P(`晝夜等長，黃色與藍色一樣長`,`Equal; yellow and blue sections match`),P(`無法判斷，圖上看不出晝夜長短`,`Cannot tell; the picture shows no lengths`),P(`晝較長，黃色晝區比藍色夜區長`,`Day longer; yellow section exceeds blue`)],3,
    P(`黃色晝區＞藍色夜區，所以晝長夜短；北回歸線上大約白晝 13.5 小時、黑夜 10.5 小時。`,`Yellow day part > blue night part, so days are longer: about 13.5 h of daylight and 10.5 h of night at the Tropic of Cancer.`),
@@ -16,7 +16,7 @@ LQ.addStatic('astronomy_sunpath_3',{
    [P(`各地晝長夜短，因為直射赤道`,`Days exceed nights everywhere; Sun on equator`),P(`各地晝夜等長，因為直射北回歸線`,`Day equals night everywhere; Sun on the Tropic`),P(`只有赤道晝夜等長，其他地方不等`,`Only the equator has equal day and night times`),P(`各地晝夜等長，因為直射赤道`,`Day equals night everywhere; Sun is on equator`)],3,
    P(`太陽直射赤道，日夜分界線通過南北兩極，每一條緯線都一半在白天、一半在黑夜，所以各地晝夜等長。`,`The Sun is overhead at the equator and the day–night line passes through both poles, so every latitude is half in day and half in night.`),
    P(`春、秋分太陽直射哪裡？日夜分界線通過兩極嗎？`,`Where is the Sun overhead at the equinoxes? Does the day–night line pass through the poles?`))],
- '.panel:nth-child(4)':[
+ '.panel:nth-child(5)':[
   Q(P(`太陽仰角 30° 時，照射地表面積是直射的幾倍？單位面積接收的能量剩多少？`,`At a solar altitude of 30°, how many times larger is the lit area than with direct rays, and how much energy per unit area is left?`),
    [P(`約 2 倍，單位面積能量變兩倍`,`Twice the area, double the energy per unit`),P(`約 2 倍，單位面積能量剩一半`,`Twice the area, half the energy per unit`),P(`約 0.5 倍，單位面積能量剩一半`,`Half the area, half the energy per unit`),P(`約 0.5 倍，單位面積能量變兩倍`,`Half the area, double the energy per unit`)],1,
    P(`照射面積 ＝ 1 ÷ sin 30° ＝ 2 倍，單位面積能量只剩 50%。`,`Lit area = 1 ÷ sin 30° = 2 times, so only 50% of the energy reaches each unit area.`),
@@ -29,7 +29,7 @@ LQ.addStatic('astronomy_sunpath_3',{
    [P(`對，夏天地球在近日點最靠近太陽`,`Yes; in summer Earth is at perihelion`),P(`對，因為夏天太陽本身會變得更亮`,`Yes; the Sun itself brightens in summer`),P(`對，只有赤道附近的季節才是這樣`,`Yes; only the equator has such seasons`),P(`不對，夏天地球反在遠日點的附近`,`No; in summer Earth sits near aphelion`)],3,
    P(`北半球夏天時地球反而在遠日點附近；四季主要是因為地軸傾斜，讓太陽直射、斜射（仰角）改變。`,`In the northern summer Earth is near aphelion; seasons come mainly from the tilted axis changing the angle of sunlight.`),
    P(`想想北半球夏天時，地球在公轉軌道的哪裡。`,`Where is Earth on its orbit during northern summer?`))],
- '.panel:nth-child(5)':[
+ '.panel:nth-child(6)':[
   Q(P(`為什麼北極星整晚看起來幾乎不動？`,`Why does Polaris seem to stay still all night?`),
    [P(`它非常接近自轉軸向北延伸的方向`,`It lies nearly along Earth's rotation axis`),P(`它離地球特別近，所以看起來不動`,`It is the nearest star, so it seems still`),P(`它沒有在發光，所以看起來不動`,`It gives off no light, so it seems still`),P(`它是繞著地球公轉的唯一一顆星`,`It is the only star that orbits the planet`)],0,
    P(`北極星非常接近天北極；地球自轉時它幾乎就在軸上，所以看起來幾乎不動，其他星星則繞著它轉。`,`Polaris is very close to the north celestial pole; it stays almost on the axis as Earth turns, while other stars circle it.`),
@@ -42,7 +42,7 @@ LQ.addStatic('astronomy_sunpath_3',{
    [P(`約 90°`,`About 90°`),P(`約 23°`,`About 23°`),P(`約 45°`,`About 45°`),P(`約 66°`,`About 66°`)],1,
    P(`台灣在北緯約 22～25°，北極星高度約等於緯度，大約在北方地平線上 23° 左右。`,`Taiwan is at about 22–25° N and Polaris's altitude roughly equals latitude, so it is about 23° up.`),
    P(`北極星的高度大約等於觀測地的緯度。`,`Polaris's altitude roughly equals the observer's latitude.`))],
- '.panel:nth-child(6)':[
+ '.panel:nth-child(7)':[
   Q(P(`台灣夏至時，太陽從哪個方位升起？正午在哪裡？`,`At the June solstice in Taiwan, where does the Sun rise and where is it at noon?`),
    [P(`東偏南升起；正午太陽低在南方`,`Rises south of east; low in south at noon`),P(`東偏北升起；正午太陽近頭頂`,`Rises north of east; overhead at noon`),P(`正東升起；正午太陽近頭頂`,`Rises due east; near overhead at noon`),P(`正南升起；正午太陽低在北方`,`Rises due south; stands north at noon`)],1,
    P(`夏至太陽東偏北升起、西偏北落下；正午太陽幾乎在頭頂，影子最短。`,`At the June solstice the Sun rises north of east and sets north of west; at noon it is almost overhead and shadows are shortest.`),
@@ -55,7 +55,7 @@ LQ.addStatic('astronomy_sunpath_3',{
    [P(`北方天空，面向北方才看得到`,`North sky; face north to see it`),P(`南方天空，面向南方才看得到`,`South sky; face south to see it`),P(`頭頂正上方，抬頭就能看到`,`Overhead; just look straight up`),P(`東方天空，面向東方才看得到`,`East sky; face east to see it`)],0,
    P(`南半球的觀測者要面向北方才看得到正午的太陽，季節也跟北半球相反。`,`A southern observer faces north to see the noon Sun, and the seasons are the reverse of the north's.`),
    P(`在南半球，天北極在地平線下，天南極在地平線上。`,`In the south the north celestial pole is below the horizon and the south pole above.`))],
- '.panel:nth-child(7)':[
+ '.panel:nth-child(8)':[
   Q(P(`冬至時，台灣正午的影子朝哪個方向？跟夏至比是長還是短？`,`At the December solstice, which way does a noon shadow point in Taiwan, and is it longer or shorter than in June?`),
    [P(`朝北方，比夏至長很多`,`Points north, much longer than June`),P(`朝南方，比夏至長很多`,`Points south, much longer than June`),P(`朝北方，比夏至短很多`,`Points north, much shorter than June`),P(`朝東方，和夏至一樣長`,`Points east, as long as in June`)],0,
    P(`影子朝北方，是一年中最長的（約與身高等長）；夏至正午太陽在頭頂，幾乎看不到影子。`,`The shadow points north and is the longest of the year (about your height); in June the noon Sun is overhead and there is almost no shadow.`),

@@ -925,6 +925,41 @@
   #so-stage { --ar: 1.7778; }
   #mb-stage { --ar: 1.7778; }
   #rs-stage { --ar: 1.7778; }
+
+  /* ==================================================================
+     老師講解／學生操作 雙模式（外層加法：學生操作＝原本的樣子，沒有改任何一個原有規則）
+     ================================================================== */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 20px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-muted); border: 2px dashed var(--rule-color);
+    touch-action: manipulation; transition: all 0.2s;
+  }
+  .mode-pill:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: var(--chalk-dim); text-align: center; line-height: 1.5; max-width: 900px; }
+
+  /* 老師講解的控制列（只在老師模式出現；學生模式整條不顯示） */
+  .teach-bar { display: none; width: 100%; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--bg-base); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--bg-base); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生專用的按鈕與滑桿那幾列收起來；上方的步驟編號可以點（跳到那一步） */
+  body.mode-teacher .std-only { display: none !important; }
+  body.mode-teacher .mission-step { cursor: pointer; }
+  body.mode-teacher .mission-step:hover { border-color: var(--chalk-yellow); }
 </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -949,6 +984,15 @@
     <h1 data-zh="宇宙尺度與太陽系" data-en="Scale of the Universe and the Solar System">宇宙尺度與太陽系</h1>
     <div class="subtitle" data-zh="從浩瀚宇宙一路縮放到月球，再把太陽系真正的距離與大小攤開來看。" data-en="Zoom from the vast universe down to the Moon, then explore the true distances and sizes in the Solar System.">從浩瀚宇宙一路縮放到月球，再把太陽系真正的距離與大小攤開來看。</div>
   </header>
+
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays through on its own; pause, replay, or tap a step number to jump. Student: the original hands-on activities.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+  </div>
+
 
   <div class="tabs">
     <button class="tab-btn active" id="btn-tab-0" type="button" onclick="switchTab(0)">
@@ -3166,6 +3210,7 @@
     zmStop(); lyStop();
     document.querySelectorAll('.tabs .tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
     document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+    if (typeof teachOnTab === 'function') teachOnTab(idx);   /* 老師講解模式：切到新分頁就從頭自動播 */
   }
   function setLang(lang) {
     currentLang = lang;
@@ -3219,7 +3264,184 @@
   });
 
 </script>
+<script>
+/* ==================================================================
+   老師講解模式（外層加法）
+     ・學生操作＝原本的互動；畫布、動畫、所有原有控制函式完全沒動
+     ・老師講解：按下去就從目前分頁的頭開始自動連續播放。每一站只是「照學生按鈕的做法」
+       把狀態設好（呼叫原本就有的函式），不改任何畫法與節奏
+     ・可以暫停（連轉動中的動畫一起凍住）、從頭重播，也可以點上方的步驟編號跳到那一步
+       （每一站都是整個狀態重設，跟真的播到那一步完全一樣）
+     ・切分頁、切回學生模式時，會把畫面還原成原本一進來的樣子
+   ================================================================== */
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    /* ── 第 1 課：每個分頁的停靠點。d＝停留秒數、go()＝把這一站的狀態整個設好（不看前一站）、upd(f)＝這一站進行中的連續變化 ── */
+  const zmSet = z => { const S = zoomState; S.running = false; S.mode = 'forward'; S.z = z; S.play = z ? 'here' : 'start'; S.teach = 'start'; S.teachOn = false; S.lastIdx = -1; zmUI(); };
+  const zmGlide = (i, f) => { if (i < 4 && f > .72) { zoomState.z = i + zmSmooth((f - .72) / .28); const r = $('zm-range'); if (r) r.value = Math.round(zoomState.z * 100); } };
+  const lyShow = (i, arrived) => { lyPick(i); if (arrived) { lightState.p = 1; lightState.btn = 'again'; lyUI(); } else lyPlay(); };
+  const SO_ST = (f, run) => { solarState.filter = f; solarState.running = run; solarState.last = 0; soUI(); };
+  const HAB = [0, 1, 3, 2];
+  const TABS = [
+    { stages: ['zm'], stops: [0, 1, 2, 3, 4].map(i => ({ d: i === 4 ? 9 : 10, go() { zmSet(i); }, upd(f) { zmGlide(i, f); } })) },
+    { stages: ['ly'], stops: [
+      { d: 8, go() { lyShow(0, false); } },
+      { d: 9, go() { lyShow(1, false); } },
+      { d: 10, go() { lyShow(2, false); } },
+      { d: 8, go() { lyShow(2, true); } } ] },
+    { stages: ['gx', 'gt'], stops: [
+      { d: 8, go() { gxView('top'); } },
+      { d: 8, go() { gxView('side'); } },
+      { d: 8, go() { gxView('side'); } },
+      { d: 8, go() { gxView('top'); }, stage: 'gt' } ] },
+    { stages: ['so', 'mb'], stops: [
+      { d: 8, go() { SO_ST('all', true); MB.sel = null; mbUI(); } },
+      { d: 8, go() { SO_ST('all', true); MB.sel = null; mbUI(); } },
+      { d: 9, go() { SO_ST('terrestrial', true); MB.sel = null; mbUI(); } },
+      { d: 9, go() { SO_ST('giant', true); MB.sel = null; mbUI(); } },
+      { d: 7, stage: 'mb', label: ['成員：行星', 'Members: planets'], go() { SO_ST('all', true); MB.sel = null; mbPick('planet'); } },
+      { d: 7, stage: 'mb', label: ['成員：矮行星', 'Members: dwarf planets'], go() { SO_ST('all', true); MB.sel = null; mbPick('dwarf'); } },
+      { d: 7, stage: 'mb', label: ['成員：太陽系小天體', 'Members: small bodies'], go() { SO_ST('all', true); MB.sel = null; mbPick('small'); } },
+      { d: 7, stage: 'mb', label: ['成員：衛星', 'Members: moons'], go() { SO_ST('all', true); MB.sel = null; mbPick('moon'); } } ] },
+    { stages: ['rs'], stops: [
+      { d: 9, go() { rsMode('distance'); habitPick(2); } },
+      { d: 9, go() { rsMode('size'); habitPick(2); } },
+      { d: 8, go() { rsMode('distance'); habitPick(2); } },
+      { d: 16, go() { rsMode('size'); habitPick(HAB[0]); }, upd(f) { habitPick(HAB[Math.min(3, Math.floor(f * 4))]); } } ] }
+  ];
+  function RESET() { zmReset(); lyPick(2); SO_ST('all', true); MB.sel = null; mbUI(); rsMode('distance'); habitPick(2); }
+  function FREEZE() {
+    T.saved = { ly: lightState.running, lp: lightState.p, so: solarState.running };
+    lightState.running = false; solarState.running = false; lyUI(); soUI();
+  }
+  function THAW() {
+    const s = T.saved; T.saved = null; if (!s) return;
+    if (s.ly) { lightState.p = s.lp; lightState.t0 = kNow() - s.lp * 2.5; lightState.running = true; }
+    solarState.running = s.so; solarState.last = 0; lyUI(); soUI();
+  }
+
+  const T = { on: false, tab: 0, paused: false, last: 0, wait: 0, raf: 0, st: null, saved: null };
+
+  function mark(tab, idx) {
+    document.querySelectorAll('.panel').forEach((p, pi) => {
+      const ms = p.querySelectorAll('.mission-step');
+      ms.forEach((s, si) => s.classList.toggle('scale-active', si === (pi === tab ? Math.min(idx, ms.length - 1) : 0)));
+    });
+  }
+  function fullReset() { RESET(); mark(-1, 0); T.saved = null; }
+  function scrollToStage(id) {
+    const el = $(id + '-stage');
+    if (el && !el.classList.contains('fs-on') && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  const stopsOf = () => TABS[T.tab].stops;
+  function tourDo(i, scroll) {
+    const stops = stopsOf(), s = stops[i], st = T.st;
+    const prev = st.idx >= 0 ? stops[st.idx] : null;
+    st.idx = i; st.done = false; st.f = 0; st.late = false;
+    s.go(); T.wait = s.d;
+    mark(T.tab, i);
+    if (scroll || !prev || (prev.stage || TABS[T.tab].stages[0]) !== (s.stage || TABS[T.tab].stages[0])) scrollToStage(s.stage || TABS[T.tab].stages[0]);
+  }
+  function startTab(scroll) {
+    if (T.paused) { T.paused = false; T.saved = null; }
+    T.st = { idx: -1, done: false, f: 0, late: false };
+    tourDo(0, scroll); paint();
+  }
+  function enterTab(idx) { fullReset(); T.tab = idx; T.paused = false; startTab(true); }
+
+  function drive(dt) {
+    const st = T.st, stops = stopsOf(); if (T.paused || st.done) return;
+    const s = stops[st.idx];
+    T.wait -= dt;
+    st.f = clamp(1 - Math.max(0, T.wait) / s.d, 0, 1);
+    if (s.late && !st.late && st.f >= .55) { st.late = true; s.late(); }
+    if (s.upd) s.upd(st.f);
+    if (T.wait > 0) return;
+    if (st.idx + 1 >= stops.length) { st.done = true; st.f = 1; return; }
+    tourDo(st.idx + 1, false);
+  }
+  function tick() {
+    if (!T.on) return;
+    T.raf = requestAnimationFrame(tick);
+    const now = performance.now() / 1000, real = Math.max(0, now - (T.last || now)); T.last = now;
+    if (!T.st) return;
+    drive(Math.min(real, 0.1)); paint();
+  }
+  function stepName(tab, idx) {
+    const p = document.querySelectorAll('.panel')[tab], ms = p ? p.querySelectorAll('.mission-step') : [];
+    const s = stopsOf()[idx];
+    if (s && s.label) return tr(s.label[0], s.label[1]);
+    return ms[idx] ? ms[idx].innerText.replace(/\s+/g, ' ').trim() : '';
+  }
+  function paint() {
+    document.querySelectorAll('.teach-bar').forEach(bar => {
+      const st = T.st; if (!st) return;
+      const stops = stopsOf(), cur = stops[st.idx];
+      if (!TABS[T.tab].stages.includes(bar.dataset.stage)) return;
+      let note;
+      if (T.paused) note = tr('⏸ 已暫停', '⏸ Paused');
+      else if (st.done) note = tr('✔ 講解完畢；可按「從頭重播」，或點上方的編號回到任一步', '✔ Done. Press Replay, or tap a number above to revisit a step');
+      else note = tr('▶ 正在講：', '▶ Now: ') + stepName(T.tab, st.idx);
+      const pct = Math.round(clamp(st.done ? 1 : (st.idx + st.f) / stops.length, 0, 1) * 100);
+      const pauseTxt = T.paused ? tr('▶ 繼續', '▶ Resume') : tr('⏸ 暫停', '⏸ Pause');
+      const sig = [note, pct, pauseTxt, st.done, currentLang].join('|');
+      if (bar._sig === sig) return; bar._sig = sig;
+      const pb = bar.querySelector('[data-act="pause"]'), rb = bar.querySelector('[data-act="replay"]');
+      pb.textContent = pauseTxt; pb.disabled = st.done;
+      rb.textContent = tr('↺ 從頭重播', '↺ Replay'); rb.classList.toggle('hot', st.done);
+      bar.querySelector('.teach-fill').style.width = pct + '%';
+      bar.querySelector('.teach-note').textContent = note;
+    });
+  }
+  function onBar(e) {
+    const b = e.target.closest('.teach-btn'); if (!b || !T.on || !T.st) return;
+    if (b.dataset.act === 'pause') { if (T.paused) { T.paused = false; THAW(); } else { T.paused = true; FREEZE(); } }
+    else startTab(false);
+    paint();
+  }
+  function onStep(pi) {
+    return function (e) {
+      if (!T.on || !T.st || pi !== T.tab) return;
+      const el = e.target.closest('.mission-step'); if (!el) return;
+      const idx = Array.prototype.indexOf.call(el.parentNode.children, el);
+      if (idx < 0 || idx >= stopsOf().length) return;
+      T.paused = false; T.saved = null;
+      tourDo(idx, true); paint();
+    };
+  }
+  window.setMode = function (m) {
+    const teacher = m === 'teacher';
+    if (teacher === T.on) return;
+    $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
+    $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
+    document.body.classList.toggle('mode-teacher', teacher);
+    T.on = teacher;
+    if (teacher) {
+      const idx = Array.prototype.findIndex.call(document.querySelectorAll('.panel'), p => p.classList.contains('active'));
+      T.last = 0; enterTab(Math.max(0, idx));
+      cancelAnimationFrame(T.raf); T.raf = requestAnimationFrame(tick);
+    } else { cancelAnimationFrame(T.raf); T.paused = false; fullReset(); }
+  };
+  window.teachOnTab = function (idx) { if (T.on) enterTab(idx); };
+  window.__teachSetSaved = function (v) { T.saved = v; };
+  window.__teachSaved = function () { return T.saved; };
+
+  const allStages = []; TABS.forEach(t => t.stages.forEach(s => { if (!allStages.includes(s)) allStages.push(s); }));
+  allStages.forEach(id => {
+    const stage = $(id + '-stage'), ctrls = stage && stage.querySelector('.controls'); if (!ctrls) return;
+    const bar = document.createElement('div');
+    bar.className = 'teach-bar'; bar.dataset.stage = id;
+    bar.innerHTML = '<button type="button" class="teach-btn" data-act="pause"></button><button type="button" class="teach-btn" data-act="replay"></button><div class="teach-track"><div class="teach-fill"></div></div><div class="teach-note" aria-live="polite"></div>';
+    bar.addEventListener('click', onBar);
+    ctrls.insertBefore(bar, ctrls.firstChild);
+    ctrls.querySelectorAll('.ctrl-row').forEach(r => r.classList.add('std-only'));
+  });
+  document.querySelectorAll('.panel').forEach((p, pi) => { const row = p.querySelector('.mission-row'); if (row) row.addEventListener('click', onStep(pi)); });
+})();
+</script>
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
-<script defer src="assets/quiz/quiz_astronomy_universe_1_1028_v1.js?v=20261028-q1"></script>
+<script defer src="assets/quiz/quiz_astronomy_universe_1_1028_v1.js?v=20261031-m1"></script>
 </body>
 </html>
