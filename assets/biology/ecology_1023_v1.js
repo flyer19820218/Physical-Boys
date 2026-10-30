@@ -53,10 +53,10 @@ const LAB={
  drySeason:P(`乾季`,`Dry season`),wetSeason:P(`雨季`,`Wet season`),
  // succession
  bareSoil:P(`保留土壤的裸地`,`Bare ground with soil`),bareRock:P(`沒有土壤的裸岩`,`Bare rock without soil`),pioneer:P(`先鋒`,`Pioneers`),herbs:P(`草本`,`Herbs`),shrubs:P(`灌木`,`Shrubs`),trees:P(`林木`,`Trees`),
- lichen:P(`地衣`,`Lichen`),moss:P(`苔蘚`,`Moss`),seeds:P(`種子`,`Seeds`),roots:P(`根`,`Roots`),thinSoil:P(`薄土`,`Thin soil`),thickSoil:P(`土變厚`,`Soil thickens`),
+ lichen:P(`地衣`,`Lichen`),moss:P(`蘚苔`,`Moss`),seeds:P(`種子`,`Seeds`),roots:P(`根`,`Roots`),thinSoil:P(`薄土`,`Thin soil`),thickSoil:P(`土變厚`,`Soil thickens`),
  origin:P(`起點`,`Starting point`),notOneTree:P(`不是一株草長成樹`,`Not one herb growing into a tree`),notFixedPath:P(`路徑不固定`,`The path is not fixed`),camphor:P(`樟樹`,`Camphor tree`),
  rock:P(`岩石`,`Rock`),rockShort:P(`裸岩`,`Bare rock`),groundShort:P(`有土的裸地`,`Ground with soil`),noSoil:P(`沒有土壤`,`No soil`),
- seedlings:P(`草本幼苗`,`Herb seedlings`),lichenMoss:P(`地衣、苔蘚`,`Lichen and moss`),seedsRoots:P(`種子、根`,`Seeds, roots`),litter:P(`落葉`,`Fallen leaves`),
+ seedlings:P(`草本幼苗`,`Herb seedlings`),lichenMoss:P(`地衣、蘚苔`,`Lichen and moss`),seedsRoots:P(`種子、根`,`Seeds, roots`),litter:P(`落葉`,`Fallen leaves`),
  rootsLitter:P(`根、落葉`,`Roots, fallen leaves`),canopy:P(`樹冠`,`Canopy`),shade:P(`遮住部分的光`,`Shades some light`),lessLight:P(`林下光變少`,`Less light below`),
  composition:P(`群集組成`,`Community makeup`),soilDepth:P(`土壤厚度`,`Soil depth`),groundLight:P(`地面的光`,`Light at ground`),waterHeld:P(`保水`,`Water held`),
  firstChange:P(`先到的生物改變環境`,`Early arrivals change conditions`),soilHolds:P(`土裡可能還有種子、根`,`The soil may still hold seeds and roots`),
@@ -124,12 +124,12 @@ const CP_TEXT=[
 const SU_SHORT=[P(`裸地`,`Bare ground`),P(`先鋒`,`Pioneers`),P(`草本`,`Herbs`),P(`灌木`,`Shrubs`),P(`林木`,`Trees`)];
 const suNames=s=>{const r=s.origin===1;return[
  r?P(`起點：沒有土壤的裸岩`,`Start: bare rock without soil`):P(`起點：保留土壤的裸地`,`Start: bare ground with soil`),
- r?P(`先鋒：地衣與苔蘚`,`Pioneers: lichen and moss`):P(`先鋒：先長出來的小草`,`Pioneers: the first small plants`),
+ r?P(`先鋒：地衣與蘚苔`,`Pioneers: lichen and moss`):P(`先鋒：先長出來的小草`,`Pioneers: the first small plants`),
  P(`草本變多`,`Herbs increase`),P(`灌木進來`,`Shrubs arrive`),P(`林木長成`,`Trees grow up`)];};
 const suText=s=>{const r=s.origin===1;return[
  r?P(`裸岩上沒有土壤，什麼植物也沒有。這是起點。（示意，不寫年數。）`,`Bare rock has no soil and no plants. This is the starting point. (Schematic; no years are given.)`)
   :P(`地面保留了土壤，看起來光禿禿的，但土裡可能還有種子、根和微生物。這是起點。（示意，不寫年數。）`,`The ground has kept its soil. It looks bare, but the soil may still hold seeds, roots and microbes. This is the starting point. (Schematic; no years are given.)`),
- r?P(`地衣與苔蘚先附在岩面上，慢慢累積一層薄薄的土。先到的生物改變了環境，後來的植物才有機會長在上面。`,`Lichen and moss attach to the rock first and slowly build a thin layer of soil. The first arrivals change the conditions, so later plants get a chance to establish.`)
+ r?P(`地衣與蘚苔先附在岩面上，慢慢累積一層薄薄的土。先到的生物改變了環境，後來的植物才有機會長在上面。`,`Lichen and moss attach to the rock first and slowly build a thin layer of soil. The first arrivals change the conditions, so later plants get a chance to establish.`)
   :P(`土裡的種子和根發芽，小草先長出來。有土壤的地方，常常能從草本開始。`,`Seeds and roots in the soil sprout and small plants come up first. Where soil remains, succession often starts with herbs.`),
  P(`草的種類和數量增加，根和落葉讓土壤變厚、能留住更多水。先到的生物改變了環境，也讓後來的物種比較容易建立。`,`The kinds and numbers of herbs increase, and roots and fallen leaves thicken the soil and hold more water. The first arrivals change the environment and make it easier for later species to establish.`),
  P(`草叢之間長出灌木，高一點的灌木遮住部分的光，一些喜歡全光的草本變少。群集的組成又改變了。`,`Shrubs grow up among the herbs. The taller shrubs shade part of the light, and some light-loving herbs become fewer. The composition of the community has changed again.`),
@@ -215,7 +215,7 @@ const tabs=[
 {id:'succession',title:P(`裸地怎麼變綠？`,`How does bare ground turn green?`),sub:P(`群集演替`,`Ecological succession`),
  hook:P(`崩塌後的坡地，或剛露出來的岩面，一開始什麼都沒有，後來卻長出草、灌木，最後變成樹林。這是原來的一株草慢慢長成大樹嗎？`,`A slope after a landslide, or a newly exposed rock face, starts with nothing, yet later grass and shrubs appear and finally woodland. Is that one original herb slowly growing into a tree?`),
  body:P(`演替是群集的組成隨時間改變，不是單一個體變成另一種。先來的生物和環境互相作用，可能改變土壤、光或水分，讓後來的物種比較容易建立。起點有沒有土壤、附近有沒有種子的來源、氣候和干擾，都會影響後來的變化。用「起點」切換有土壤的裸地和裸岩，再用步驟鈕看各個階段。`,`Succession is a change in the composition of a community over time, not one organism turning into another species. The first arrivals interact with the conditions and may change soil, light or water, making it easier for later species to establish. Whether the starting point has soil, whether seed sources lie nearby, and the climate and disturbance all affect what follows. Use "Starting point" to switch between bare ground with soil and bare rock, then use the step buttons to look at each stage.`),
- reading:P(`畫面是示意：階段只是一種可能的路徑，不是播放每一年真實發生的過程，也不寫固定年數。\n\n保留土壤的地方，土裡可能還有種子、根和微生物，常從草本開始；沒有土壤的裸岩，要先有地衣、苔蘚，慢慢累積薄薄的土，其他植物才長得住。不是所有的地方都照這個順序，也不是一定以森林結尾；起點、種子的來源、氣候和干擾都會改變路徑。場景圖是 AI 插圖，只是示意，不是實拍；草本幼苗、苔蘚與種子是程式加上去的示意。`,`The picture is schematic: the stages are one possible path, not a replay of what happens each year, and no fixed years are given.\n\nWhere soil remains, the soil may still hold seeds, roots and microbes, and succession often starts with herbs; on bare rock, lichen and moss come first and slowly build a thin soil before other plants can hold on. Not every place follows this order, and it does not always end as forest; the starting point, seed sources, climate and disturbance all change the path. The scene pictures are AI illustrations, schematic and not photographs; the herb seedlings, moss and seeds are added by program as schematics.`),
+ reading:P(`畫面是示意：階段只是一種可能的路徑，不是播放每一年真實發生的過程，也不寫固定年數。\n\n保留土壤的地方，土裡可能還有種子、根和微生物，常從草本開始；沒有土壤的裸岩，要先有地衣、蘚苔，慢慢累積薄薄的土，其他植物才長得住。不是所有的地方都照這個順序，也不是一定以森林結尾；起點、種子的來源、氣候和干擾都會改變路徑。場景圖是 AI 插圖，只是示意，不是實拍；草本幼苗、蘚苔與種子是程式加上去的示意。`,`The picture is schematic: the stages are one possible path, not a replay of what happens each year, and no fixed years are given.\n\nWhere soil remains, the soil may still hold seeds, roots and microbes, and succession often starts with herbs; on bare rock, lichen and moss come first and slowly build a thin soil before other plants can hold on. Not every place follows this order, and it does not always end as forest; the starting point, seed sources, climate and disturbance all change the path. The scene pictures are AI illustrations, schematic and not photographs; the herb seedlings, moss and seeds are added by program as schematics.`),
  closure:P(`演替改變的是群集的組成；起點條件和干擾會改變路徑。`,`Succession changes the composition of a community; starting conditions and disturbance change its path.`),
  quiz:[
   {q:P(`演替指的是什麼？`,`What does succession mean?`),options:[P('群集的組成隨時間改變','A community\'s make-up changes over time'),P('一株草慢慢長成一棵樹','One herb slowly growing into a big tree'),P('一種動物變成另一種動物','One animal slowly turning into another'),P('植物的數量永遠不變','The plant numbers never changing at all')],answer:0,why:P(`演替改變的是群集裡有哪些物種、各占多少，不是單一個體的變身。`,`Succession changes which species are in the community and how much of each there is; it is not one individual transforming.`),hint:P(`再讀一次畫面上的「不是一株草長成樹」。`,`Read again the line "not one herb growing into a tree".`)},

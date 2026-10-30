@@ -111,7 +111,7 @@ function camphorCard(c,a,t){withA(c,a,()=>{const y=PY+14,h=104,x=PX+8,w=PW-16;
 
 // stage track
 function track(c,o,k,t){
-  const names=[o?L('rockShort','裸岩','Bare rock'):L('groundShort','有土的裸地','Ground with soil'),o?L('lichenMoss','地衣、苔蘚','Lichen and moss'):L('seedlings','草本幼苗','Herb seedlings'),
+  const names=[o?L('rockShort','裸岩','Bare rock'):L('groundShort','有土的裸地','Ground with soil'),o?L('lichenMoss','地衣、蘚苔','Lichen and moss'):L('seedlings','草本幼苗','Herb seedlings'),
     L('herbs','草本','Herbs'),L('shrubs','灌木','Shrubs'),L('trees','林木','Trees')];
   const ws=names.map(p=>measure(c,p,22)+28),gap=34,tot=ws.reduce((a,b)=>a+b,0)+gap*4;let x=(CW-tot)/2;
   names.forEach((p,i)=>{const col=i===k?YELLOW:i<k?GREEN:GREY,r=tag(c,p,x,14,{col,active:i===k});if(i===k)ring(c,r,t,YELLOW);

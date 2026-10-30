@@ -107,7 +107,7 @@
     '光多、較乾，芒草叢占優勢。同一類環境因子在不同地方的大小不同，能住下來的生物也不同。教學示意，不是實際樣地。',
     'Plenty of light and drier ground, where silver grass dominates. The same kind of factor differs from place to place, and so do the organisms that can live there. A teaching illustration, not a real site.');
   const shadyAI = ai('EC1_shady_moist.png', '背陰潮濕的坡面（教學示意）', 'Shaded, damp slope (illustration)',
-    '光少、較濕，蕨類與苔蘚較多。和向陽乾燥的坡面比較，哪些環境因子不同？教學示意，不是實際樣地。',
+    '光少、較濕，蕨類與蘚苔較多。和向陽乾燥的坡面比較，哪些環境因子不同？教學示意，不是實際樣地。',
     'Less light and damper ground, with more ferns and mosses. Compared with the sunny dry slope, which factors differ? A teaching illustration, not a real site.');
   const daphniaAI = ai('EC14a_daphnia.png', '水蚤（水中的初級消費者）', 'Water flea (aquatic primary consumer)',
     '水蚤濾食水中微小的藻類，在池塘食物鏈中靠近前段。半透明的身體是教學示意的畫法。',
