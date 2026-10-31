@@ -71,15 +71,15 @@ LQ.addStatic('astronomy_sunpath_3',{
   Q(P(`白天時，太陽附近的星座明明在地平線上方，為什麼我們看不到？`,`In the daytime the constellations near the Sun are above the horizon. Why can't we see them?`),
    [P(`星座白天會停止發光`,`Stars stop shining by day`),P(`雲層白天擋住星座`,`Daytime clouds block them`),P(`星座躲到地平線下`,`They sink below the horizon`),P(`陽光太亮，蓋過星光`,`Sunlight is far too bright`)],3,
    P(`星座還在天上，星星也一直在發光，只是白天的天空被陽光照得太亮，暗暗的星光就看不到了。`,`The constellations are still up there and still shining; the daytime sky is simply far too bright for their faint light to show.`),
-   P(`在「🌐 完整天球」把時間拖到正午：右邊天球上，太陽旁邊的宮在不在地平面上方？`,`In the whole-sphere view, set the time to noon: on the right, are the signs next to the Sun above the horizon?`)),
+   P(`在「🌐 天球（台灣視角）」按「☀ 加上太陽」，把時間拖到正午：太陽旁邊的宮在不在地平面上方？`,`In the sky sphere, press "☀ Add the Sun" and set the time to noon: are the signs next to the Sun above the horizon?`)),
   Q(P(`某天太陽在天秤座前面。那一天的午夜，正南方附近的黃道星座最可能是哪一個？`,`On a certain day the Sun is in front of Libra. Around midnight that night, which zodiac sign is most likely due south?`),
    [P(`天秤座`,`Libra`),P(`巨蟹座`,`Cancer`),P(`雙魚座`,`Pisces`),P(`白羊座`,`Aries`)],3,
    P(`午夜時我們面向背對太陽的方向，正南方是和太陽相差約 180° 的星座：天秤座的對面是白羊座。天秤座那天和太陽一起在白天的天空。`,`At midnight we face away from the Sun, so the sign due south is the one about 180° from the Sun: opposite Libra is Aries. Libra is up in the daytime with the Sun.`),
-   P(`午夜時，你面向的方向和太陽相差幾度？在右邊天球的黃道上找天秤座的正對面。`,`At midnight, how far from the Sun's direction are you facing? Find the sign opposite Libra on the ecliptic of the sky sphere.`)),
+   P(`午夜時，你面向的方向和太陽相差幾度？在天球的黃道上找天秤座的正對面。`,`At midnight, how far from the Sun's direction are you facing? Find the sign opposite Libra on the sky sphere's ecliptic.`)),
   Q(P(`為什麼夏天和冬天的晚上，看到的星座不一樣？`,`Why do we see different constellations on summer nights and winter nights?`),
    [P(`地球公轉讓太陽換位置，夜晚那一半跟著換`,`Earth's orbit moves the Sun, so the night half changes`),P(`地軸傾斜讓星座換位置，冬天星座比較暗`,`Earth's tilt shifts the stars, so winter ones look dim`),P(`星座自己繞地球公轉，一年才繞完一整圈`,`The stars orbit Earth themselves, once in a year`),P(`地球自轉讓星座換位置，每晚看到的都不同`,`Earth's spin shifts the stars, so each night differs`)],0,
    P(`地球一年繞太陽公轉一圈，太陽看起來沿黃道往東移；我們晚上只看得到背對太陽的那一半，所以季節不同，夜空的星座也不同。`,`Earth orbits the Sun once a year, so the Sun seems to move east along the ecliptic; at night we only see the half facing away from the Sun, so the night sky changes with the seasons.`),
-   P(`播放「🌐 完整天球」：每轉完一圈換下一宮時，夜晚看得到（青色）的宮怎麼跟著換？`,`Play the whole-sphere view: each time a turn ends and the next sign begins, how do the night-visible (cyan) signs change?`)),
+   P(`在「🌐 天球（台灣視角）」加上太陽再播放：每轉完一圈換下一宮時，夜晚看得到（青色）的宮怎麼跟著換？`,`Add the Sun in the sky sphere and press play: each time a turn ends and the next sign begins, how do the night-visible (cyan) signs change?`)),
   Q(P(`用星象盤看同一天晚上：把時間從 20:00 撥到隔天 02:00，視窗裡的星空會往哪邊轉？`,`On the planisphere, keep the same date and turn the time from 20:00 to 02:00. Which way does the sky in the window turn?`),
    [P(`往東轉，東邊的星座先落下`,`Turns east; eastern signs set first`),P(`不會轉，只有太陽在移動`,`Doesn't turn; only the Sun moves`),P(`往西轉，西邊的星座先落下`,`Turns west; western signs set first`),P(`往北轉，繞到北方地平線下`,`Turns north, below the north horizon`)],2,
    P(`地球由西向東自轉，星空看起來由東向西轉：時間越晚，星座越往西移，西邊的先落下、東邊有新的升起。`,`Earth spins west to east, so the sky seems to turn east to west: the later it gets, the further west the signs move — western ones set and new ones rise in the east.`),
@@ -87,6 +87,10 @@ LQ.addStatic('astronomy_sunpath_3',{
   Q(P(`生日 10/31 的同學，星座書上是天蠍座。生日當晚午夜，正南方上中天的「實際」是哪一宮？`,`A student born on Oct 31 is a Scorpio in horoscope books. At midnight on that birthday, which sign is really due south at its highest?`),
    [P(`天蠍座`,`Scorpio`),P(`金牛座`,`Taurus`),P(`天秤座`,`Libra`),P(`白羊座`,`Aries`)],3,
    P(`10/31 太陽實際在天秤座（書上的天蠍晚一宮，因為歲差），午夜上中天是天秤往後 6 宮的白羊座。金牛座是直接拿書上的天蠍加 6 宮，少了歲差那一宮。`,`On Oct 31 the Sun is really in Libra (the book sign Scorpio is one sign later because of precession), so the sign due south at midnight is 6 signs on from Libra: Aries. Taurus comes from adding 6 to the book sign and forgetting precession.`),
-   P(`先找太陽「實際」在哪一宮，再往後推 6 宮；看「星象盤小提示」的驗算。`,`First find the sign the Sun is really in, then count 6 signs on; see the planisphere tip.`))]
+   P(`先找太陽「實際」在哪一宮，再往後推 6 宮；看「星象盤小提示」的驗算。`,`First find the sign the Sun is really in, then count 6 signs on; see the planisphere tip.`)),
+  Q(P(`在「🌐 天球（台灣視角）」按下「☀ 加上太陽」後，天球上亮起來的那一半是什麼？`,`After pressing "☀ Add the Sun" on the sky sphere, which half of the sphere lights up?`),
+   [P(`地平線上方的那一半：看得到的天空`,`The half above the horizon: visible sky`),P(`天赤道以北的那一半：北方的天空`,`The half north of the equator: north sky`),P(`以太陽為中心的那一半：白天的天空`,`The half centred on the Sun: daytime sky`),P(`黃道以南的那一半：冬天的天空`,`The half south of the ecliptic: winter sky`)],2,
+   P(`以太陽為中心、離太陽 90° 以內的那一半天球都被陽光照亮，是白天的天空，那裡的星座看不到；另一半是夜晚。地平線只決定台灣此刻看得到哪一半。`,`The half of the sphere within 90° of the Sun is lit — the daytime sky, where the signs cannot be seen; the other half is night. The horizon only decides which half Taiwan can see right now.`),
+   P(`亮起來的範圍跟著太陽走，不跟著地平線走；看日夜分界那條大圓的中心在哪裡。`,`The bright part follows the Sun, not the horizon; where is the centre of the day/night circle?`))]
 });
 })();
