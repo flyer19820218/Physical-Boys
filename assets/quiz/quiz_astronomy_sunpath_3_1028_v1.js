@@ -95,6 +95,10 @@ LQ.addStatic('astronomy_sunpath_3',{
   Q(P(`在台灣看，下列哪一個星座一天繞北極星轉出的圓，最接近頭頂？`,`Seen from Taiwan, which sign's daily circle around Polaris passes closest to overhead?`),
    [P(`天秤座`,`Libra`),P(`雙魚座`,`Pisces`),P(`處女座`,`Virgo`),P(`雙子座`,`Gemini`)],3,
    P(`雙子座在黃道最北的那一段（赤緯約 +23°），台灣在北緯 23.5°，所以它的圓幾乎經過頭頂，東偏北升起；處女、雙魚靠近天赤道，天秤稍偏南，都比較低。夏至太陽坐在雙子，所以夏至正午太陽也幾乎在頭頂。`,`Gemini lies on the northernmost stretch of the ecliptic (declination about +23°) and Taiwan is at 23.5° N, so its circle passes almost overhead and it rises north of east; Virgo and Pisces are near the celestial equator and Libra a little south, so they stay lower. The June Sun sits in Gemini, which is why the June noon Sun is nearly overhead.`),
-   P(`按「🔄 畫出星座一天的軌跡」再按「全部軌跡」，比一比哪個圓最高。`,`Press "🔄 Draw a sign's daily path", then "All paths", and compare which circle is highest.`))]
+   P(`按「🔄 畫出星座一天的軌跡」再按「全部軌跡」，比一比哪個圓最高。`,`Press "🔄 Draw a sign's daily path", then "All paths", and compare which circle is highest.`)),
+  Q(P(`從北極上空看，地軸像陀螺一樣慢慢畫圈（歲差），方向是哪一種？`,`Seen from above the North Pole, which way does Earth's axis slowly circle (precession)?`),
+   [P(`逆時針，和自轉方向相同`,`Counterclockwise, same as the spin`),P(`順時針，和公轉方向相同`,`Clockwise, same as the orbit`),P(`順時針，和自轉方向相反`,`Clockwise, opposite to the spin`),P(`不會轉，地軸永遠指向北極星`,`No turn; always toward Polaris`)],2,
+   P(`從北極上空看，地球自轉、公轉都是逆時針，歲差卻是順時針（和自轉相反），約 25,772 年一圈；所以北極星會換：約前 2800 年是右樞、現在是北極星、一萬多年後是織女星。`,`From above the North Pole, Earth's spin and orbit are counterclockwise but precession is clockwise (opposite to the spin), once every 25,772 years — so the pole star changes: Thuban around 2800 BC, Polaris now, Vega in over 10,000 years.`),
+   P(`在「🎓 延伸：歲差」播放年代，看天北極沿著圓往哪個方向走。`,`Play the years in the precession extension and watch which way the pole moves around the circle.`))]
 });
 })();
