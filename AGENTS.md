@@ -724,6 +724,10 @@ e_switchSym(ctx, L, SY, false);
 
 **同一個概念的不同接法，版面各算各的。** 共用的是繪圖函式與配色，不是座標。
 
+## 課程頁要允許雙指縮放（老師 2026-10-31 指示）
+
+老師上課常需要把畫面放大講解。課程頁的 viewport 一律寫成 `width=device-width, initial-scale=1, viewport-fit=cover`，**不要加** `maximum-scale`、`minimum-scale`、`user-scalable=no`。（`index.html` 星球首頁有自己的雙指操作，不在此列。）
+
 ## 光筆工具列（全站共用，新課程頁都要掛）
 
 **完整功能說明、技術架構、測試清單見專案根目錄 `pencil.md`；老師有新想法也記在那裡。**
