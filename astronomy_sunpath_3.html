@@ -3129,6 +3129,15 @@
     if (orbit) L.any(tr('地球公轉', 'Earth\'s orbit'), [[ep.x + 22, ep.y + 30, 'left'], [ep.x - 22, ep.y + 30, 'right'], [ep.x + 22, ep.y - 20, 'left'], [ep.x - 22, ep.y - 20, 'right'], ...[90, -90, 135, -135, 180].map(dl => { const q = pr(V3.mul(zdV(lam + 180 + dl), 0.48)); return [q.x, q.y + 6, 'center']; })], EM.GR, 15, true);
     else L.any(tr('地球', 'Earth'), [[CX + 34, CY + 34, 'left'], [CX - 34, CY + 34, 'right'], [CX + 34, CY - 26, 'left']], EM.CY, 15, true);
   }
+  /* 太陽當天的日行軌跡（赤緯 dec 固定、時角 H 轉一圈）→ 台灣地平座標；日出、日落的時角 ±H0 */
+  function zdDayLoc(dec, H) { const cd = Math.cos(dec), sd = Math.sin(dec), cf = Math.cos(ZD.LAT), sf = Math.sin(ZD.LAT);
+    return { E: -cd * Math.sin(H), N: sd * cf - cd * Math.cos(H) * sf, U: sd * sf + cd * Math.cos(H) * cf }; }
+  const zdH0 = dec => Math.acos(emClamp(-Math.tan(ZD.LAT) * Math.tan(dec), -1, 1));
+  function zdDir(l, rise) {   /* 日出／日落方位的說法（東偏南、正東…） */
+    const az = zdWrap(Math.atan2(l.E, l.N) / EM.DEG, 360), off = rise ? az - 90 : 270 - az;
+    if (Math.abs(off) < 2) return rise ? [tr('正東', 'due east'), az] : [tr('正西', 'due west'), az];
+    return rise ? [off > 0 ? tr('東偏南', 'south of east') : tr('東偏北', 'north of east'), az] : [off > 0 ? tr('西偏南', 'south of west') : tr('西偏北', 'north of west'), az];
+  }
   function zdSky(c, t) {
     const { OX, OY, OR, PIT } = ZD, cp = Math.cos(PIT), spt = Math.sin(PIT), lst = zdLST(), lam = zdLam(zd.d);
     const pr = l => ({ x: OX - OR * l.E, y: OY - OR * (l.U * cp - l.N * spt), U: l.U });
@@ -3150,10 +3159,17 @@
     for (const up of [false, true]) { c.save(); c.strokeStyle = ZD.ECL; c.lineWidth = up ? 3 : 1.4; c.globalAlpha = up ? 0.4 + 0.6 * vis : 0.22; c.setLineDash(up ? [] : [5, 5]); c.beginPath(); let pen = false;
       for (const q of pts) { if ((q.U >= 0) === up) { pen ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y); pen = true; } else pen = false; } c.stroke(); c.restore(); }
     ZD_STARS.forEach(s => { const q = pr(zdLocal(zdV(s.lam, s.bet), lst)); if (q.U < 0.02) return; c.fillStyle = `rgba(255,250,235,${0.9 * (1 - k)})`; c.beginPath(); c.arc(q.x, q.y, s.s * 1.1, 0, EM.TAU); c.fill(); });
+    /* 太陽今天的日行軌跡（黃虛線）：東邊升起 → 正南方最高 → 西邊落下 */
+    const sdec = zdEq(zdV(lam)).dec, dpts = []; for (let i = 0; i <= 240; i++) { const l = zdDayLoc(sdec, i / 240 * EM.TAU - Math.PI); dpts.push(pr(l)); }
+    for (const up of [false, true]) { c.save(); c.strokeStyle = EM.Y; c.lineWidth = up ? 2.2 : 1.2; c.globalAlpha = up ? 0.85 : 0.25; c.setLineDash([7, 6]); c.beginPath(); let pen = false;
+      for (const q of dpts) { if ((q.U >= 0) === up) { pen ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y); pen = true; } else pen = false; } c.stroke(); c.restore(); }
+    const H0 = zdH0(sdec), lr = zdDayLoc(sdec, -H0), ls = zdDayLoc(sdec, H0), qr = pr(lr), qs = pr(ls);
+    emDot(c, qr.x, qr.y, 3.6, EM.Y); emDot(c, qs.x, qs.y, 3.6, EM.Y);
     /* 觀察者、太陽 */
     spObserver(c, OX, OY - 4, 1, EM.PK);
     const s2 = pr(sun);
-    if (sun.U > 0) { auGlow(c, s2.x, s2.y, 120, '255,224,140', 0.35); auSun(c, s2.x, s2.y, 15, t); L.block(s2.x - 20, s2.y - 20, 40, 40); }
+    if (sun.U > 0) { auGlow(c, s2.x, s2.y, 120, '255,224,140', 0.35); auSun(c, s2.x, s2.y, 15, t); L.block(s2.x - 20, s2.y - 20, 40, 40);
+      L.any(tr('太陽', 'Sun'), [[s2.x + 22, s2.y + 6, 'left'], [s2.x - 22, s2.y + 6, 'right'], [s2.x, s2.y + 38, 'center'], [s2.x, s2.y - 26, 'center']], EM.Y, 15, true); }
     /* 固定的說明框 */
     e_label(c, tr('【站在台灣看】面向南方的天空', '[From Taiwan] Facing south'), 24, 432, EM.GR, 18, 'left', true, 330); L.block(14, 408, 340, 32);
     emBox(c, 14, 448, 256, 104); L.block(14, 448, 256, 104);
@@ -3168,13 +3184,19 @@
     [[{ E: 0, N: -1, U: 0 }, '南(S)', 'South (S)', 0, -12, 'center'], [{ E: 1, N: 0, U: 0 }, '東(E)', 'East (E)', -10, 6, 'right'], [{ E: -1, N: 0, U: 0 }, '西(W)', 'West (W)', 10, 6, 'left'], [{ E: 0, N: 1, U: 0 }, '北(N)', 'North (N)', 0, 24, 'center']].forEach(([v, zh, en, dx, dy, al]) => {
       const q = pr(v); emDot(c, q.x, q.y, 3.2, EM.GR); L.put(tr(zh, en), q.x + dx, q.y + dy, EM.GR, 15, al, true); });
     const zt = pr({ E: 0, N: 0, U: 1 }); L.put(tr('天頂', 'Zenith'), zt.x + 10, zt.y - 6, EM.MU, 14, 'left', true);
+    { const [dr] = zdDir(lr, true), [ds] = zdDir(ls, false);
+      L.any(tr('日出：', 'Sunrise: ') + dr, [[qr.x + 8, qr.y + 34, 'left'], [qr.x, qr.y + 52, 'center'], [qr.x + 12, qr.y - 14, 'left'], [qr.x - 8, qr.y + 34, 'right'], [qr.x + 8, qr.y + 70, 'left'], [qr.x + 30, qr.y - 30, 'left']], EM.Y, 14, true);
+      L.any(tr('日落：', 'Sunset: ') + ds, [[qs.x - 8, qs.y + 34, 'right'], [qs.x, qs.y + 52, 'center'], [qs.x - 12, qs.y - 14, 'right'], [qs.x + 8, qs.y + 34, 'left'], [qs.x - 8, qs.y + 70, 'right'], [qs.x - 30, qs.y - 30, 'right']], EM.Y, 14, true); }
+    emBox(c, 14, 566, 256, 70); L.block(14, 566, 256, 70);
+    c.save(); c.setLineDash([7, 6]); e_ln(c, 28, 592, 62, 592, EM.Y, 2.2); c.restore(); e_ln(c, 28, 620, 62, 620, ZD.ECL, 3);
+    e_label(c, tr('太陽今天走的路', 'The Sun\'s path today'), 72, 598, EM.Y, 15, 'left', false, 190);
+    e_label(c, tr('黃道（星座排的路）', 'Ecliptic (the zodiac)'), 72, 626, ZD.ECL, 15, 'left', false, 190);
     /* 地平線上的宮名 */
     const list = [];
     for (let j = 0; j < 12; j++) { const l = zdLocal(zdV(45 + 30 * j), lst); if (l.U > 0.04) list.push({ j, q: pr(l) }); }
     list.sort((a, b) => (b.j === mk) - (a.j === mk));
     list.forEach(({ j, q }) => { const hot = j === mk, col = hot ? (k > 0.5 ? 'rgba(255,224,102,0.55)' : EM.Y) : `rgba(246,243,234,${0.35 + 0.65 * (1 - k)})`;
       L.any(zdName(j), [[q.x, q.y - 12, 'center'], [q.x, q.y + 26, 'center'], [q.x + 14, q.y + 6, 'left'], [q.x - 14, q.y + 6, 'right'], [q.x, q.y - 34, 'center']], col, hot ? 18 : 15, true); });
-    if (sun.U > 0) L.any(tr('太陽', 'Sun'), [[s2.x + 22, s2.y + 6, 'left'], [s2.x - 22, s2.y + 6, 'right'], [s2.x, s2.y + 38, 'center']], EM.Y, 15, true);
   }
   /* ── 星象盤（planisphere）：同一份日期、時間狀態；以天北極為中心、赤緯等距投影（半徑＝K × (90° − 赤緯)）
        內盤（星空＋日期環）跟著恆星時轉；外圈時間環、地平線視窗固定。日期 d 的刻度放在赤經 α☉(d)＋180°，
@@ -3213,6 +3235,7 @@
     ZD_STARS.forEach(s => { const q = sky(zdV(s.lam, s.bet)); c.fillStyle = 'rgba(255,250,235,0.9)'; c.beginPath(); c.arc(q.x, q.y, s.s, 0, EM.TAU); c.fill(); });
     auStar(c, CX, CY, 3.2, '255,224,102', true);
     const sp = sky(zdV(lam));
+    { const rr = K * (90 - zdEq(zdV(lam)).dec / EM.DEG); c.save(); c.setLineDash([7, 6]); c.beginPath(); c.arc(CX, CY, rr, 0, EM.TAU); c.strokeStyle = 'rgba(255,224,102,0.85)'; c.lineWidth = 2; c.stroke(); c.restore(); }
     c.restore();
     /* 蓋板：地平線外面遮起來（半透明，看得出星空還在） */
     const hz = []; for (let i = 0; i <= 180; i++) { const A = i / 180 * EM.TAU; hz.push(loc(Math.sin(A), Math.cos(A), 0)); }
@@ -3231,7 +3254,9 @@
     const H0 = zd.t * 15 * EM.DEG, a1 = ringAt(H0, RD1 - 2), a2 = ringAt(H0, RT2 + 4);
     c.save(); e_ln(c, a1.x, a1.y, a2.x, a2.y, EM.Y, 3); c.restore(); emDot(c, a2.x, a2.y, 4, EM.Y);
     /* 角落的說明框（先排，字不會壓到） */
-    emBox(c, 12, 12, 262, 96); L.block(12, 12, 262, 96);
+    emBox(c, 12, 12, 262, 124); L.block(12, 12, 262, 124);
+    c.save(); c.setLineDash([7, 6]); e_ln(c, 26, 116, 56, 116, EM.Y, 2); c.restore();
+    e_label(c, tr('太陽今天走的路', 'The Sun\'s path today'), 64, 122, EM.Y, 15, 'left', false, 200);
     e_label(c, tr('【星象盤】台灣 23.5°N', '[Planisphere] Taiwan 23.5°N'), 26, 42, EM.GR, 17, 'left', false, 236);
     e_label(c, '📅 ' + zdDate(zd.d), 26, 70, EM.W, 17, 'left', false, 236);
     e_label(c, '🕒 ' + formatTime(zd.t), 26, 96, EM.W, 17, 'left', false, 236);
@@ -3244,7 +3269,7 @@
     e_label(c, sunL.U > 0 ? tr('在地平線上：白天', 'Above the horizon: daytime') : tr('在地平線下：夜晚', 'Below the horizon: night'), 26, 740, EM.MU, 15, 'left', false, 236);
     e_label(c, tr('外圈＝時間　內圈＝日期', 'Outer ring = time, inner = date'), 26, 768, EM.MU, 15, 'left', false, 236);
     emBox(c, 686, 680, 262, 108); L.block(686, 680, 262, 108);
-    const dk = zdWrap(mk - sk, 12);
+    const dk = Math.min(zdWrap(mk - sk, 12), zdWrap(sk - mk, 12));
     e_label(c, tr('正南方上中天：', 'Due south, highest:'), 700, 708, EM.MU, 15, 'left', false, 236);
     e_label(c, zdName(mk), 700, 740, kday > 0.5 ? 'rgba(255,224,102,0.6)' : EM.Y, 22, 'left', false, 236);
     e_label(c, dk === 6 ? tr('與太陽差 180°（約 6 個月）', '180° from the Sun (≈ 6 months)') : tr(`與太陽差 ${dk} 宮`, `${dk} sign${dk === 1 ? '' : 's'} from the Sun`), 700, 768, EM.GR, 15, 'left', false, 236);
