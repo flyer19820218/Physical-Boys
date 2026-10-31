@@ -91,6 +91,10 @@ LQ.addStatic('astronomy_sunpath_3',{
   Q(P(`在「🌐 天球（台灣視角）」按下「☀ 加上太陽」後，天球上亮起來的那一半是什麼？`,`After pressing "☀ Add the Sun" on the sky sphere, which half of the sphere lights up?`),
    [P(`地平線上方的那一半：看得到的天空`,`The half above the horizon: visible sky`),P(`天赤道以北的那一半：北方的天空`,`The half north of the equator: north sky`),P(`以太陽為中心的那一半：白天的天空`,`The half centred on the Sun: daytime sky`),P(`黃道以南的那一半：冬天的天空`,`The half south of the ecliptic: winter sky`)],2,
    P(`以太陽為中心、離太陽 90° 以內的那一半天球都被陽光照亮，是白天的天空，那裡的星座看不到；另一半是夜晚。地平線只決定台灣此刻看得到哪一半。`,`The half of the sphere within 90° of the Sun is lit — the daytime sky, where the signs cannot be seen; the other half is night. The horizon only decides which half Taiwan can see right now.`),
-   P(`亮起來的範圍跟著太陽走，不跟著地平線走；看日夜分界那條大圓的中心在哪裡。`,`The bright part follows the Sun, not the horizon; where is the centre of the day/night circle?`))]
+   P(`亮起來的範圍跟著太陽走，不跟著地平線走；看日夜分界那條大圓的中心在哪裡。`,`The bright part follows the Sun, not the horizon; where is the centre of the day/night circle?`)),
+  Q(P(`在台灣看，下列哪一個星座一天繞北極星轉出的圓，最接近頭頂？`,`Seen from Taiwan, which sign's daily circle around Polaris passes closest to overhead?`),
+   [P(`天秤座`,`Libra`),P(`雙魚座`,`Pisces`),P(`處女座`,`Virgo`),P(`雙子座`,`Gemini`)],3,
+   P(`雙子座在黃道最北的那一段（赤緯約 +23°），台灣在北緯 23.5°，所以它的圓幾乎經過頭頂，東偏北升起；處女、雙魚靠近天赤道，天秤稍偏南，都比較低。夏至太陽坐在雙子，所以夏至正午太陽也幾乎在頭頂。`,`Gemini lies on the northernmost stretch of the ecliptic (declination about +23°) and Taiwan is at 23.5° N, so its circle passes almost overhead and it rises north of east; Virgo and Pisces are near the celestial equator and Libra a little south, so they stay lower. The June Sun sits in Gemini, which is why the June noon Sun is nearly overhead.`),
+   P(`按「🔄 畫出星座一天的軌跡」再按「全部軌跡」，比一比哪個圓最高。`,`Press "🔄 Draw a sign's daily path", then "All paths", and compare which circle is highest.`))]
 });
 })();
