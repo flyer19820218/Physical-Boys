@@ -247,8 +247,11 @@
     pointer-events: none; background: #11261f;
     opacity: 0; transition: opacity .4s ease;
   }
-  .intro-screen.playing .intro-video { opacity: 1; }
-  .intro-screen.playing::before { animation: none; }
+  /* 影片開頭是「從全黑淡入」，一點擊就蓋上去會變成：封面→突然變黑→再亮起來（看起來彈兩次）。
+     所以點擊後靜止封面繼續撐著（推鏡只暫停、不歸零，避免畫面跳一下），
+     等影片淡入結束、畫面和封面一致（約 0.8 秒）才加 .video-on 換成影片。 */
+  .intro-screen.video-on .intro-video { opacity: 1; }
+  .intro-screen.playing::before { animation-play-state: paused; }
   .intro-screen::after {
     content: ""; position: absolute; inset: 0; z-index: -2;
     background: linear-gradient(180deg, rgba(1,11,11,.02) 34%, rgba(1,12,10,.22) 65%, rgba(1,12,10,.88) 100%),
@@ -2122,6 +2125,16 @@
     introStarted4 = true;
     el.classList.add('playing');
     v.addEventListener('ended', dismissIntro, { once: true });   // 片子放完就進教室
+    // 影片前 0.8 秒是從黑淡入：等它淡完、畫面跟封面一致，才把影片顯示出來（見 CSS 註解）
+    const FADE_IN_S = 0.8;
+    const showVideo = () => el.classList.add('video-on');
+    if (v.requestVideoFrameCallback) {
+      const wait = (now, meta) => (meta.mediaTime >= FADE_IN_S ? showVideo() : v.requestVideoFrameCallback(wait));
+      v.requestVideoFrameCallback(wait);
+    } else {
+      const onTime = () => { if (v.currentTime >= FADE_IN_S) { showVideo(); v.removeEventListener('timeupdate', onTime); } };
+      v.addEventListener('timeupdate', onTime);
+    }
     const p = v.play();
     if (p && p.catch) p.catch(() => dismissIntro());
     introTimer4 = setTimeout(dismissIntro, 12000);               // 真的卡住才用這個保險
