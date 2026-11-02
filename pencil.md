@@ -5,7 +5,7 @@
 
 - 最後更新：2026-10-31
 - 程式檔：`assets/pen_tool_1031_v1.js`（整個功能只有這一個檔，樣式、圖示、畫布全包在裡面）
-- 目前版本字串：`?v=20261031-p3`
+- 目前版本字串：`?v=20261102-p4`
 - **狀態：已掛到全部課程頁**（`index_classic.html` 卡片列出的 139 頁，2026-10-31）。
 
 ---
@@ -79,7 +79,7 @@
 每個課程頁 `</body>` 前加一行（沒有別的要加）：
 
 ```html
-<script src="assets/pen_tool_1031_v1.js?v=20261031-p3" defer></script>
+<script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
 ```
 
 **新做的課程頁一定要加這一行。** 不掛在 `index.html`（伽利略星球）、`index_classic.html`、`index_museum.html`、`*_preview*.html`、`*_backup*.html`、`local-backups/` 與子資料夾裡的頁面。

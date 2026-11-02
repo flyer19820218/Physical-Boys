@@ -63,6 +63,9 @@
   var CSS = [
     '#pt-layer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:' + Z_LAYER + ';pointer-events:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}',
     '#pt-layer canvas{position:absolute;top:0;left:0;pointer-events:none;-webkit-tap-highlight-color:transparent}',
+    // 防護：許多課程頁有全域 `canvas{背景色;虛線框;max-width;margin;aspect-ratio}`（給教材畫布用），
+    // 會把這四張透明覆蓋畫布變成一塊深色虛線面板蓋住畫面（redox_1 事故）。這裡一律壓回透明、無框、無邊距。
+    '#pt-layer canvas{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;margin:0!important;padding:0!important;max-width:none!important;max-height:none!important;min-width:0!important;min-height:0!important;aspect-ratio:auto!important;display:block!important;filter:none!important;transform:none!important}',
     '#pt-live.on{pointer-events:auto;touch-action:none;cursor:crosshair}',
     '#pt-fab,#pt-bar button{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}',
     '#pt-fab{position:fixed;top:16px;left:140px;z-index:' + (Z_LAYER + 1) + ';width:48px;height:48px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;padding:0;margin:0;border-radius:50%;cursor:pointer;',
