@@ -98,6 +98,7 @@ body.intro-locked { overflow: hidden; }
 .canvas-wrap { background: var(--canvas); border: 2px solid var(--cyan); border-radius: 10px; overflow: hidden; position: relative; }
 .rect-canvas { display: block; width: 100%; height: auto; aspect-ratio: 10 / 6; cursor: grab; }
 .rect-canvas:active { cursor: grabbing; }
+#poleCanvas, #poleCanvas:active { cursor: default; }
 
 /* V3 按鈕彈性設計 */
 .controls { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
@@ -211,7 +212,7 @@ body.intro-locked { overflow: hidden; }
           <li data-zh="指向北方的紅色端，稱為 <span class='nowrap'><strong style='color:var(--pole-n)'>指北極 (N 極)</strong></span>。" data-en="The red end pointing North is the <span class='nowrap'><strong style='color:var(--pole-n)'>North-seeking Pole (N)</strong></span>.">指向北方的紅色端，稱為 <span class="nowrap"><strong style="color:var(--pole-n)">指北極 (N 極)</strong></span>。</li>
           <li data-zh="指向南方的藍色端，稱為 <span class='nowrap'><strong style='color:var(--pole-s)'>指南極 (S 極)</strong></span>。" data-en="The blue end pointing South is the <span class='nowrap'><strong style='color:var(--pole-s)'>South-seeking Pole (S)</strong></span>.">指向南方的藍色端，稱為 <span class="nowrap"><strong style="color:var(--pole-s)">指南極 (S 極)</strong></span>。</li>
         </ul>
-        <div class="key-box" data-zh="💡 動手玩：在右側畫面中，按住並左右「撥轉」立體磁鐵，看看它放開後如何擺盪回南北向！" data-en="💡 Try it: Drag and 'spin' the 3D magnet on the right, and watch it swing back to North-South!">💡 動手玩：在右側畫面中，按住並左右「撥轉」立體磁鐵，看看它放開後如何擺盪回南北向！</div>
+        <div class="key-box" data-zh="💡 觀察：動畫會自動播放，撥轉幾次，磁鐵最後都擺回南北向。想再看一次，按畫面下方的步驟編號！" data-en="💡 Watch: the animation plays by itself. No matter how it is spun, the magnet swings back to North-South. Press a step number below to replay!">💡 觀察：動畫會自動播放，撥轉幾次，磁鐵最後都擺回南北向。想再看一次，按畫面下方的步驟編號！</div>
       </div>
 
       <div id="pole-interact" class="sub-tab-content">
@@ -239,19 +240,7 @@ body.intro-locked { overflow: hidden; }
       <h2 data-zh="【互動】磁極實驗室" data-en="[Interact] Pole Lab">【互動】磁極實驗室</h2>
       <div class="canvas-wrap"><canvas id="poleCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
       
-      <div class="controls" id="pole-controls-suspend">
-        <button id="spinBtn" class="action-btn success" data-zh="🌀 隨機強力撥轉" data-en="🌀 Random Spin">🌀 隨機強力撥轉</button>
-      </div>
-
-      <div class="controls" id="pole-controls-interact" style="display:none;">
-        <button class="action-btn pole-btn active-btn" data-action="attract" style="background:transparent; border: 2px solid var(--muted); color: var(--white);" data-zh="異名極靠近" data-en="Opposites Near">異名極靠近</button>
-        <button class="action-btn pole-btn" data-action="repel" style="background:transparent; border: 2px solid var(--muted); color: var(--white);" data-zh="同名極靠近" data-en="Likes Near">同名極靠近</button>
-      </div>
-      
-      <div class="controls" id="pole-controls-break" style="display:none;">
-        <button id="breakBtn" class="action-btn warning" data-zh="✂️ 切斷磁鐵" data-en="✂️ Cut Magnet">✂️ 切斷磁鐵</button>
-        <button id="resetBreakBtn" class="action-btn" style="background:#64748b; color:white;" data-zh="↺ 復原磁鐵" data-en="↺ Restore">↺ 復原磁鐵</button>
-      </div>
+      <div class="step-row" id="steps-pole" aria-label="步驟"></div>
       
       <div id="poleResult" class="result-box" data-zh="受地球磁場影響，懸吊磁鐵靜止後，紅色端必定指向北方。這就是指南針的原理。" data-en="Influenced by Earth's field, the red end points North when still. This is the compass principle.">受地球磁場影響，懸吊磁鐵靜止後，紅色端必定指向北方。這就是指南針的原理。</div>
     </article>
@@ -463,6 +452,7 @@ body.intro-locked { overflow: hidden; }
 <script>
 let currentLang = 'zh';
 let introClosed = false;
+let poleScene = null; // 磁極分頁目前播放中的場景（動畫模組 MagAnim.pole）
 function enterLesson() { if (introClosed) return; introClosed = true; const el = document.getElementById('introScreen'); if (!el) return; el.classList.add('exiting'); document.body.classList.remove('intro-locked'); setTimeout(() => el.remove(), 800); setTimeout(drawActive, 900); }
 (function () { const el = document.getElementById('introScreen'); if (!el) return; el.onclick = enterLesson; el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); enterLesson(); } }; el.focus && el.focus(); })();
 
@@ -476,13 +466,8 @@ function setLang(lang) {
   });
   
   // Update dynamic JS texts based on current state
-  const bAttract = document.querySelector('.pole-btn[data-action="attract"]');
-  if(bAttract && bAttract.classList.contains('active-btn')) {
-    document.getElementById('poleResult').innerHTML = tr('異名極 (N與S) 靠近時，會產生強烈的<strong class="accent-cyan">吸引力</strong>。', 'Opposite poles (N & S) <strong class="accent-cyan">ATTRACT</strong> strongly.');
-  } else if (document.querySelector('.pole-btn[data-action="repel"]')?.classList.contains('active-btn')) {
-    document.getElementById('poleResult').innerHTML = tr('同名極 (N與N，或S與S) 靠近時，會產生強烈的<strong class="accent-pink">排斥力</strong>。', 'Like poles (N & N, or S & S) <strong class="accent-pink">REPEL</strong> strongly.');
-  }
-  
+  if (poleScene && window.MagAnim && MagAnim.pole) MagAnim.pole.relang();
+
   if (magState.isMagnetized) {
     document.getElementById('magResult').innerHTML = tr('受外部磁場影響，磁疇變得<strong class="accent-cyan">規則排列</strong>，鐵塊暫時變成了磁鐵！', 'Influenced by external field, domains <strong class="accent-cyan">align orderly</strong>. The iron is temporarily a magnet!');
   } else if (document.getElementById('heatBtn').clickedOnce) {
@@ -745,155 +730,6 @@ function drawSymmetricFieldLines(ctx, poles, lineCount, radius, color = 'rgba(19
   }
   ctx.restore();
 }
-
-// ==========================================
-// 1. 磁極互動
-// ==========================================
-const poleState = { 
-  type: 'suspend', breakDist: 0, raf: 0,
-  sus: { angle: 0, v: 0, dragging: false }
-};
-
-function drawPoleCanvas(ctx) {
-  clear(ctx);
-  const cy = 300;
-  const sub = document.querySelector('#tab-pole .sub-tab-btn.active').dataset.sub;
-
-  if (sub === 'pole-suspend') {
-    const cx = 500, topY = 0, magY = 280;
-    
-    ctx.save(); 
-    ctx.fillStyle = '#2a4d40'; ctx.fillRect(cx - 200, 0, 400, 20); 
-    
-    ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(cx-180, magY); ctx.lineTo(cx+180, magY); ctx.stroke(); 
-    ctx.beginPath(); ctx.moveTo(cx-120, magY+105); ctx.lineTo(cx+120, magY-105); ctx.stroke(); 
-    ctx.beginPath(); ctx.moveTo(cx, 20); ctx.lineTo(cx, 550); ctx.stroke(); 
-    
-    label(ctx, tr('上', 'Up'), cx, 40, C.yellow, 'center', 24);
-    label(ctx, tr('下', 'Dn'), cx, 570, C.white, 'center', 22);
-    label(ctx, tr('北', 'N'), cx+140, magY-115, C.yellow, 'center', 26); 
-    label(ctx, tr('南', 'S'), cx-140, magY+115, C.white, 'center', 22); 
-    label(ctx, tr('東', 'E'), cx+220, magY, C.white, 'center', 22);
-    label(ctx, tr('西', 'W'), cx-220, magY, C.white, 'center', 22);
-    ctx.restore();
-
-    ctx.save(); ctx.strokeStyle='#fff'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(cx, topY+20); ctx.lineTo(cx, magY); ctx.stroke(); 
-    ctx.restore();
-
-    draw3DMagnet(ctx, cx, magY, 80, 24, 18, poleState.sus.angle); // 加大立體磁鐵
-    
-    if(poleState.sus.dragging) {
-      label(ctx, tr('放開以自由擺盪...', 'Release to swing...'), cx, 480, C.cyan, 'center', 24);
-    } else {
-      label(ctx, tr('磁鐵靜止後，紅色端必定指向北方', 'Red end points North when still'), cx, 480, C.yellow, 'center', 24);
-    }
-
-  } else if (sub === 'pole-interact') {
-    if(poleState.type === 'attract') {
-      drawMagnet(ctx, 150, 260, 300, 80, true);
-      drawMagnet(ctx, 550, 260, 300, 80, true);
-      ctx.save(); ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=2;
-      for(let i=1; i<=4; i++){
-        ctx.beginPath(); ctx.moveTo(450, 260+16*i); ctx.lineTo(550, 260+16*i); ctx.stroke();
-        if(i===2 || i===3) { ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.moveTo(505, 260+16*i-6); ctx.lineTo(515, 260+16*i); ctx.lineTo(505, 260+16*i+6); ctx.fill(); }
-      }
-      ctx.restore();
-    } else {
-      drawMagnet(ctx, 150, 260, 300, 80, false); 
-      drawMagnet(ctx, 550, 260, 300, 80, true);  
-      ctx.save(); ctx.strokeStyle='rgba(255,111,118,0.8)'; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.moveTo(450, 280); ctx.quadraticCurveTo(500, 280, 500, 200); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(550, 280); ctx.quadraticCurveTo(500, 280, 500, 200); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(450, 320); ctx.quadraticCurveTo(500, 320, 500, 400); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(550, 320); ctx.quadraticCurveTo(500, 320, 500, 400); ctx.stroke();
-      ctx.restore();
-    }
-  } else {
-    let gap = poleState.breakDist;
-    if(gap === 0) {
-      drawMagnet(ctx, 250, 260, 500, 80, true);
-      ctx.save(); ctx.strokeStyle='#fff'; ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(500,240); ctx.lineTo(500,360); ctx.stroke(); ctx.restore();
-    } else {
-      drawMagnet(ctx, 250 - gap, 260, 250, 80, true);
-      drawMagnet(ctx, 500 + gap, 260, 250, 80, true);
-      label(ctx, tr('斷裂處自動產生新磁極！', 'New poles form at the break!'), 500, 420, C.yellow, 'center', 26);
-    }
-  }
-}
-
-function animSuspend() {
-  const sub = document.querySelector('#tab-pole .sub-tab-btn.active')?.dataset.sub;
-  if(sub !== 'pole-suspend' || document.querySelector('.tab-content.active')?.id !== 'tab-pole') {
-      poleState.raf = 0; return; 
-  }
-
-  if(!poleState.sus.dragging) {
-    let a = poleState.sus.angle;
-    let target = 0; 
-    let diff = (target - a) % TAU;
-    if (diff > Math.PI) diff -= TAU;
-    if (diff < -Math.PI) diff += TAU;
-    
-    let force = diff * 0.05; 
-    poleState.sus.v += force;
-    poleState.sus.v *= 0.94; 
-    poleState.sus.angle += poleState.sus.v;
-  }
-  safeDraw('poleCanvas', drawPoleCanvas);
-  poleState.raf = requestAnimationFrame(animSuspend);
-}
-
-function initPoleEvents() {
-  const canvas = document.getElementById('poleCanvas');
-  let isDown = false; let lastX = 0;
-
-  function getClientX(e) { return e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX; }
-  
-  function handleDown(e) {
-      if (document.querySelector('#tab-pole .sub-tab-btn.active')?.dataset.sub === 'pole-suspend') {
-          isDown = true; lastX = getClientX(e); poleState.sus.dragging = true;
-      }
-  }
-  function handleMove(e) {
-      if (isDown) {
-          let cx = getClientX(e); let dx = cx - lastX;
-          poleState.sus.angle -= dx * 0.015; 
-          lastX = cx; poleState.sus.v = 0; 
-          if(e.cancelable) e.preventDefault();
-      }
-  }
-  function handleUp() { isDown = false; poleState.sus.dragging = false; }
-
-  canvas.addEventListener('mousedown', handleDown);
-  window.addEventListener('mousemove', handleMove);
-  window.addEventListener('mouseup', handleUp);
-
-  canvas.addEventListener('touchstart', handleDown, {passive: false});
-  window.addEventListener('touchmove', handleMove, {passive: false});
-  window.addEventListener('touchend', handleUp);
-
-  document.getElementById('spinBtn').addEventListener('click', () => {
-    poleState.sus.v = (Math.random() > 0.5 ? 1 : -1) * (0.4 + Math.random()*0.4);
-  });
-}
-
-function animBreak() { if(poleState.breakDist < 80) { poleState.breakDist += 5; safeDraw('poleCanvas', drawPoleCanvas); poleState.raf = requestAnimationFrame(animBreak); } }
-function animResetBreak() { if(poleState.breakDist > 0) { poleState.breakDist -= 5; safeDraw('poleCanvas', drawPoleCanvas); poleState.raf = requestAnimationFrame(animResetBreak); } else { poleState.breakDist = 0; safeDraw('poleCanvas', drawPoleCanvas); } }
-
-document.querySelectorAll('.pole-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.pole-btn').forEach(x => x.classList.remove('active-btn'));
-  b.classList.add('active-btn'); poleState.type = b.dataset.action;
-  if(poleState.type === 'attract') {
-    document.getElementById('poleResult').innerHTML = tr('異名極 (N與S) 靠近時，會產生強烈的<strong class="accent-cyan">吸引力</strong>。', 'Opposite poles (N & S) <strong class="accent-cyan">ATTRACT</strong> strongly.');
-  } else {
-    document.getElementById('poleResult').innerHTML = tr('同名極 (N與N，或S與S) 靠近時，會產生強烈的<strong class="accent-pink">排斥力</strong>。', 'Like poles (N & N, or S & S) <strong class="accent-pink">REPEL</strong> strongly.');
-  }
-  safeDraw('poleCanvas', drawPoleCanvas);
-}));
-document.getElementById('breakBtn').addEventListener('click', () => { cancelAnimationFrame(poleState.raf); animBreak(); });
-document.getElementById('resetBreakBtn').addEventListener('click', () => { cancelAnimationFrame(poleState.raf); animResetBreak(); });
 
 // ==========================================
 // 2. 磁化與保存
@@ -1208,11 +1044,10 @@ document.getElementById('xrayBtn').addEventListener('click', () => {
 // ==========================================
 function drawActive() {
   const id = document.querySelector('.tab-content.active')?.id;
-  if (id === 'tab-pole') { 
-    safeDraw('poleCanvas', drawPoleCanvas); 
+  if (id === 'tab-pole') {
     const sub = document.querySelector('#tab-pole .sub-tab-btn.active').dataset.sub;
-    if(sub === 'pole-suspend' && !poleState.raf) { poleState.raf = requestAnimationFrame(animSuspend); }
-  } else { cancelAnimationFrame(poleState.raf); poleState.raf = 0; }
+    if (window.MagAnim && MagAnim.pole && poleScene !== sub) { MagAnim.pole.activate(sub); poleScene = sub; }
+  } else if (poleScene) { MagAnim.pole.deactivate(); poleScene = null; }
   
   if (id === 'tab-mag') { initDomains(); safeDraw('magCanvas', drawMagCanvas); }
   if (id === 'tab-line') { lineState.tap = 0; document.getElementById('sprinkleBtn').textContent = tr('✨ 撒鐵粉 (0/4)', '✨ Sprinkle Filings (0/4)'); safeDraw('lineCanvas', drawLineCanvas); }
@@ -1233,14 +1068,7 @@ document.querySelectorAll('.sub-tab-btn').forEach(b => b.addEventListener('click
   parent.querySelectorAll('.sub-tab-content').forEach(x => x.classList.remove('active'));
   b.classList.add('active'); parent.querySelector(`#${b.dataset.sub}`)?.classList.add('active');
   
-  if(b.dataset.parent === 'tab-pole') {
-    document.getElementById('pole-controls-suspend').style.display = b.dataset.sub==='pole-suspend'?'flex':'none';
-    document.getElementById('pole-controls-interact').style.display = b.dataset.sub==='pole-interact'?'flex':'none';
-    document.getElementById('pole-controls-break').style.display = b.dataset.sub==='pole-break'?'flex':'none';
-    poleState.breakDist = 0; cancelAnimationFrame(poleState.raf); poleState.raf = 0;
-    if(b.dataset.sub === 'pole-suspend') poleState.raf = requestAnimationFrame(animSuspend);
-    else safeDraw('poleCanvas', drawPoleCanvas);
-  }
+  if(b.dataset.parent === 'tab-pole') { poleScene = null; setTimeout(drawActive, 0); }
   if(b.dataset.parent === 'tab-mag') {
     document.getElementById('mag-controls-process').style.display = b.dataset.sub==='mag-process'?'flex':'none';
     document.getElementById('mag-controls-store').style.display = b.dataset.sub==='mag-store'?'flex':'none';
@@ -1257,8 +1085,9 @@ document.querySelectorAll('.sub-tab-btn').forEach(b => b.addEventListener('click
 
 window.addEventListener('resize', () => setTimeout(drawActive, 100), { passive: true });
 window.addEventListener('orientationchange', () => setTimeout(drawActive, 180), { passive: true });
-window.addEventListener('load', () => { initPoleEvents(); initCompassEvents(); initFilings(); setLang('zh'); setTimeout(drawActive, 100); });
+window.addEventListener('load', () => { initCompassEvents(); initFilings(); setLang('zh'); setTimeout(drawActive, 100); });
 </script>
+<script defer src="magnetism_1_pole_1104_v1.js?v=20261104-p1"></script>
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
 <script defer src="assets/quiz/quiz_magnetism_1_1028_v1.js?v=20261028-q1"></script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
