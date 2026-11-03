@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title data-zh="核能發電：核分裂與核融合｜互動黑板教學" data-en="Nuclear Power: Fission and Fusion | Interactive Blackboard">核能發電：核分裂與核融合｜互動黑板教學</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #11261f;
+    --bg-panel: #17332a;
+    --bg-panel-hover: #1f4236;
+    --chalk-white: #f6f3ea;
+    --chalk-muted: #a3b8b0;
+    --chalk-yellow: #ffe066;
+    --chalk-teal: #4dd2ff;
+    --chalk-coral: #ff8040;
+    --chalk-green: #33cc99;
+    --rule-color: rgba(246, 243, 234, 0.22);
+    --shadow-dark: rgba(9, 20, 16, 0.9);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(60px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    background-color: var(--bg-base);
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0), radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+    background-size: 24px 24px, 16px 16px;
+    background-position: 0 0, 8px 8px;
+    color: var(--chalk-white);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 22px;
+    line-height: 1.65;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { width: 100%; max-width: 1080px; margin: 0 auto; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .nw { white-space: nowrap; }
+
+  header { text-align: center; margin-bottom: 24px; padding-top: 40px; padding-bottom: 16px; border-bottom: 3px solid var(--chalk-green); }
+  h1 { font-size: 48px; margin: 0 0 8px 0; color: var(--chalk-yellow); letter-spacing: 2px; font-weight: 700; line-height: 1.25; }
+  .subtitle { margin: 0; color: var(--chalk-teal); font-size: 24px; font-weight: 700; }
+
+  .language-switch {
+    position: fixed; z-index: 3000;
+    top: max(16px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right));
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border: 2px solid var(--chalk-teal); border-radius: 12px;
+    background: rgba(17, 38, 31, 0.96); box-shadow: 0 8px 24px var(--shadow-dark), 0 0 16px rgba(77, 210, 255, 0.2);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .language-label { color: var(--chalk-teal); font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; }
+  .lang-btn {
+    min-width: 58px; min-height: 48px; padding: 8px 12px;
+    border: 2px solid rgba(255, 255, 255, 0.35); border-radius: 9px;
+    background: var(--bg-base); color: var(--chalk-white);
+    font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700;
+    cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  .lang-btn.active { background: var(--chalk-teal); color: var(--bg-base); border-color: var(--chalk-teal); }
+  .lang-btn:focus-visible { outline: 3px solid rgba(255, 224, 102, 0.75); outline-offset: 3px; }
+
+  /* ── Hook 小單元（分頁鈕）：選中＝實心黃底＋深色字＋黃光；補充分頁換珊瑚色 ── */
+  .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 24px; }
+  .tab-btn {
+    min-height: 136px; padding: 20px 12px; gap: 6px; line-height: 1.4;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(255, 255, 255, 0.05); color: var(--chalk-muted);
+    border: 2px dashed var(--rule-color); border-radius: 10px;
+    cursor: pointer; transition: all 0.2s ease; text-align: center; font-family: inherit;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  .tab-hook { font-size: 22px; font-weight: 700; line-height: 1.38; }
+  .tab-sub { font-size: 17px; font-weight: 700; line-height: 1.3; opacity: 0.82; }
+  .tab-btn:hover { background: var(--bg-panel-hover); color: var(--chalk-white); border-color: var(--chalk-white); }
+  .tab-btn.active { background: var(--chalk-yellow); color: var(--bg-base); border: 3px solid var(--chalk-yellow); box-shadow: 0 0 20px rgba(255, 224, 102, 0.5); }
+  .tab-btn.active .tab-hook, .tab-btn.active .tab-sub { color: var(--bg-base); }
+  .tab-btn.active .tab-sub { opacity: 0.78; }
+  .tab-btn.danger-tab.active { background: var(--chalk-coral); border-color: var(--chalk-coral); box-shadow: 0 0 20px rgba(255, 128, 64, 0.5); }
+
+  .panel { background: var(--bg-panel); border: 2px solid var(--rule-color); border-radius: 16px; padding: 26px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); }
+  .tab-view { display: none; }
+  .tab-view.active { display: block; }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px dashed var(--rule-color); padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  h2 { margin: 0; font-size: 32px; color: var(--chalk-teal); line-height: 1.3; }
+  .sub-tag { font-size: 22px; color: var(--bg-base); background: var(--chalk-green); padding: 7px 20px; border-radius: 999px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .sub-tag.coral { background: var(--chalk-coral); }
+
+  /* ── 曉臻老師 Hook ── */
+  .hook-box {
+    display: flex; align-items: flex-start; gap: 18px;
+    background: linear-gradient(rgba(77, 210, 255, 0.08), rgba(77, 210, 255, 0.08)), var(--bg-panel);
+    border: 2px solid rgba(77, 210, 255, 0.4); border-left: 6px solid var(--chalk-teal);
+    border-radius: 12px; padding: 18px 22px; margin-bottom: 22px;
+  }
+  .xiaozhen-logo {
+    width: 88px; height: 88px; flex: 0 0 88px; overflow: hidden;
+    border: 4px solid #55e9ff; border-radius: 50%; background: rgba(11, 26, 21, 0.6);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .xiaozhen-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .hook-content { flex: 1 1 auto; min-width: 0; }
+  .hook-title { font-size: 26px; font-weight: 700; color: var(--chalk-teal); margin-bottom: 6px; }
+  .hook-text { font-size: 22px; line-height: 1.75; color: var(--chalk-white); }
+  .hook-text b { color: var(--chalk-yellow); }
+
+  /* ── 動畫舞台與步驟鈕 ── */
+  .stage-container { width: 100%; border: 2px solid var(--chalk-yellow); border-radius: 12px; overflow: hidden; background: #0d201a; position: relative; box-shadow: 0 4px 15px var(--shadow-dark); }
+  canvas { display: block; width: 100%; height: auto; aspect-ratio: 960 / 540; }
+  .step-row { display: flex; justify-content: center; gap: 8px; margin: 12px 0 20px; overflow-x: auto; padding-bottom: 2px; }
+  .step-btn {
+    flex: 0 0 auto; min-height: 44px; padding: 6px 14px;
+    font-family: inherit; font-size: 16px; font-weight: 700; line-height: 1.3;
+    border: 2px solid var(--chalk-teal); border-radius: 8px; background: transparent; color: var(--chalk-teal);
+    cursor: pointer; transition: 0.2s; touch-action: manipulation; -webkit-tap-highlight-color: transparent; white-space: nowrap;
+  }
+  .step-btn:hover { background: rgba(77, 210, 255, 0.16); }
+  .step-btn.active { background: var(--chalk-teal); color: var(--bg-base); }
+
+  /* ── 說明與收束 ── */
+  .note { font-size: 22px; color: var(--chalk-white); line-height: 1.85; background: rgba(0, 0, 0, 0.22); padding: 20px 24px; border-radius: 12px; border: 2px solid var(--rule-color); }
+  .note h3 { margin: 0 0 8px; font-size: 28px; color: var(--chalk-yellow); }
+  .note ul { margin: 6px 0 0; padding-left: 26px; }
+  .note li { margin-bottom: 10px; }
+  .note b { color: var(--chalk-yellow); }
+  .closure { margin-top: 22px; border: 2px solid var(--chalk-green); border-radius: 12px; background: rgba(51, 204, 153, 0.09); padding: 16px 24px; }
+  .closure h3 { margin: 0 0 6px; font-size: 28px; color: var(--chalk-green); }
+  .closure ul { margin: 0; padding-left: 26px; }
+  .closure li { margin: 6px 0; }
+  .formula-box { font-family: 'JetBrains Mono', monospace; background: rgba(0, 0, 0, 0.35); padding: 16px 24px; border-radius: 10px; border: 1px dashed var(--chalk-white); margin: 18px 0; text-align: center; font-size: 28px; color: var(--chalk-teal); }
+  .formula-box small { display: block; margin-top: 6px; font-family: 'Noto Sans TC', sans-serif; font-size: 22px; color: var(--chalk-white); font-weight: 500; }
+
+  .be-fig { margin: 0 0 18px; background: #0d201a; border: 2px solid var(--chalk-yellow); border-radius: 12px; padding: 10px 6px 4px; }
+  .be-svg { display: block; width: 100%; height: auto; }
+  .be-fig figcaption { text-align: center; color: var(--chalk-muted); font-size: 20px; padding: 2px 8px 8px; }
+
+  .table-wrap { overflow-x: auto; margin: 18px 0; }
+  .prop-table { width: 100%; min-width: 760px; border-collapse: collapse; background: rgba(255, 255, 255, 0.03); border-radius: 8px; overflow: hidden; }
+  .prop-table th, .prop-table td { padding: 12px 14px; text-align: left; vertical-align: top; border: 1px solid var(--rule-color); font-size: 21px; line-height: 1.6; }
+  .prop-table thead th { text-align: center; font-size: 24px; }
+  .prop-table thead th.fis { background: rgba(255, 128, 64, 0.2); color: var(--chalk-coral); }
+  .prop-table thead th.fus { background: rgba(77, 210, 255, 0.18); color: var(--chalk-teal); }
+  .prop-table tbody th { width: 17%; background: rgba(255, 255, 255, 0.06); color: var(--chalk-yellow); font-size: 21px; }
+
+  /* ── 補充：未來的新星 ── */
+  .fut-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0 0 18px; }
+  .fut-card { background: rgba(0, 0, 0, 0.22); border: 2px solid var(--rule-color); border-top: 5px solid var(--chalk-coral); border-radius: 12px; padding: 16px 20px; }
+  .fut-card h3 { margin: 0 0 6px; font-size: 26px; color: var(--chalk-coral); }
+  .fut-card p { margin: 0; font-size: 22px; line-height: 1.7; }
+  .fut-card b { color: var(--chalk-yellow); }
+  .react { font-family: 'JetBrains Mono', monospace; font-size: 23px; color: var(--chalk-teal); background: rgba(0, 0, 0, 0.3); border: 1px dashed var(--chalk-teal); border-radius: 8px; padding: 6px 10px; display: inline-block; margin: 6px 0; line-height: 1.6; }
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .timeline li { display: flex; gap: 14px; align-items: flex-start; margin: 0 0 12px; font-size: 22px; line-height: 1.7; }
+  .tl-date { flex: 0 0 auto; min-width: 150px; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 20px; color: var(--bg-base); background: var(--chalk-yellow); border-radius: 999px; padding: 3px 12px; margin-top: 3px; }
+  details.src { margin-top: 16px; border: 2px dashed var(--rule-color); border-radius: 10px; padding: 8px 16px; }
+  details.src summary { cursor: pointer; font-size: 22px; font-weight: 700; color: var(--chalk-muted); padding: 6px 0; }
+  details.src ul { margin: 6px 0 8px; padding-left: 24px; font-size: 20px; line-height: 1.7; color: var(--chalk-muted); }
+  details.src a { color: var(--chalk-teal); word-break: break-all; }
+
+  /* ── 電影式封面（點一下進入；封面上沒有任何文字）── */
+  .intro-screen {
+    position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center;
+    overflow: hidden; background: #11261f; cursor: pointer; isolation: isolate;
+    transition: opacity .7s ease, visibility .7s ease;
+  }
+  .intro-screen::before {
+    content: ""; position: absolute; inset: -3%; z-index: -4;
+    background: #11261f url("assets/covers/work_5_cover_1103_v1.jpg") center/cover no-repeat;
+    animation: introZoom 14s ease-out both;
+  }
+  .intro-screen::after {
+    content: ""; position: absolute; inset: 0; z-index: -2;
+    background: linear-gradient(180deg, rgba(1,11,11,.02) 34%, rgba(1,12,10,.22) 65%, rgba(1,12,10,.88) 100%);
+  }
+  .intro-play {
+    align-self: end; justify-self: center; margin-bottom: 9vh; width: 84px; height: 84px; border-radius: 50%;
+    border: 3px solid rgba(255, 224, 102, .9); background: rgba(17, 38, 31, .55);
+    display: grid; place-items: center; animation: introPulse 2.2s ease-in-out infinite;
+  }
+  .intro-play svg { width: 38px; height: 38px; fill: #ffe066; margin-left: 5px; }
+  .intro-screen.exiting { opacity: 0; visibility: hidden; pointer-events: none; }
+  @keyframes introZoom { from { transform: scale(1); } to { transform: scale(1.06); } }
+  @keyframes introPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 224, 102, .45); } 50% { box-shadow: 0 0 0 16px rgba(255, 224, 102, 0); } }
+  @media (prefers-reduced-motion: reduce) { .intro-screen::before, .intro-play { animation: none; } }
+  @media (max-aspect-ratio: 5/4) { .intro-screen::before { inset: 0; background-size: contain; background-position: center; } }
+
+  /* ── 窄螢幕 ── */
+  @media (max-width: 1000px) { .tabs { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 900px) { .tabs { grid-template-columns: 1fr 1fr; } .tab-btn { min-height: 118px; padding: 16px 12px; } .fut-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) {
+    h1 { font-size: 36px; }
+    .hook-box { gap: 14px; padding: 16px; }
+    .xiaozhen-logo { width: 72px; height: 72px; flex: 0 0 72px; }
+    .step-row { justify-content: flex-start; }
+    .timeline li { flex-direction: column; gap: 4px; }
+  }
+  @media (max-width: 520px) { .language-label { display: none; } .language-switch { top: 8px; right: 8px; padding: 6px; } .tabs { grid-template-columns: 1fr; } .panel { padding: 16px; } }
+</style>
+<link rel="stylesheet" href="assets/home_nav_1011_v1.css">
+<link rel="stylesheet" href="assets/back_nav_1025_v1.css">
+<link rel="stylesheet" href="assets/biology/lesson_quiz_static_1026_v1.css?v=20261028-q1">
+</head>
+<body>
+<a href="index.html" class="home-fab" aria-label="回首頁" title="回首頁 Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></a>
+<a href="index.html#physics" class="back-fab" aria-label="回單元總覽" title="回單元總覽 Back to overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></svg></a>
+
+<!-- 電影式封面：只有影像，沒有文字；點一下（或按 Enter）進入教材 -->
+<div class="intro-screen" id="introScreen" onclick="dismissIntro()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();dismissIntro();}" role="button" tabindex="0" aria-label="點一下進入教材">
+  <div class="intro-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3.5v17l14-8.5z"/></svg></div>
+</div>
+
+<div class="wrap">
+  <div class="language-switch" role="group" aria-label="語言切換">
+    <span class="language-label" data-zh="Language" data-en="Language">Language</span>
+    <button class="lang-btn active" type="button" data-lang="zh" aria-pressed="true">中文</button>
+    <button class="lang-btn" type="button" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+
+  <header>
+    <h1 data-zh="核能發電：核分裂與核融合" data-en="Nuclear Power: Fission and Fusion">核能發電：核分裂與核融合</h1>
+    <div class="subtitle" data-zh="從一顆中子，到一顆恆星" data-en="From one neutron to a star">從一顆中子，到一顆恆星</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab1" type="button">
+      <span class="tab-hook" data-zh="一顆中子的骨牌" data-en="One neutron, one domino">一顆中子的骨牌</span>
+      <span class="tab-sub" data-zh="核分裂與連鎖反應" data-en="Fission &amp; chain reaction">核分裂與連鎖反應</span>
+    </button>
+    <button class="tab-btn" data-tab="tab2" type="button">
+      <span class="tab-hook" data-zh="核電廠在燒開水" data-en="A nuclear plant boils water">核電廠在燒開水</span>
+      <span class="tab-sub" data-zh="從熱到電" data-en="From heat to electricity">從熱到電</span>
+    </button>
+    <button class="tab-btn" data-tab="tab3" type="button">
+      <span class="tab-hook" data-zh="太陽沒有在燃燒" data-en="The Sun isn't burning">太陽沒有在燃燒</span>
+      <span class="tab-sub" data-zh="核融合：太陽的反應" data-en="Fusion: the Sun's reaction">核融合：太陽的反應</span>
+    </button>
+    <button class="tab-btn" data-tab="tab4" type="button">
+      <span class="tab-hook" data-zh="拆開、合起來都放能" data-en="Split or join: both release energy">拆開、合起來都放能</span>
+      <span class="tab-sub" data-zh="分裂與融合比一比" data-en="Fission vs fusion">分裂與融合比一比</span>
+    </button>
+    <button class="tab-btn danger-tab" data-tab="tab5" type="button">
+      <span class="tab-hook" data-zh="未來的新星" data-en="A future star">未來的新星</span>
+      <span class="tab-sub" data-zh="人造太陽（補充）" data-en="Artificial Sun (extra)">人造太陽（補充）</span>
+    </button>
+  </div>
+
+  <!-- ═════════ 分頁一：核分裂 ═════════ -->
+  <div class="panel tab-view active" id="tab1">
+    <div class="panel-header">
+      <h2 data-zh="核分裂：一顆中子，推倒第一張骨牌" data-en="Fission: one neutron tips the first domino">核分裂：一顆中子，推倒第一張骨牌</h2>
+      <span class="sub-tag" data-zh="鈾-235" data-en="Uranium-235">鈾-235</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="1 公斤鈾-235 完全分裂放出的能量，大約等於燒掉 <b>3000 公噸的煤</b>！一個小小的原子核，怎麼藏得住這麼多能量？而且只要一顆<b>中子</b>，就能把它叫醒。" data-en="One kilogram of uranium-235, fully split, releases about as much energy as burning <b>3000 tonnes of coal</b>! How can a tiny nucleus hide so much energy? And a single <b>neutron</b> is enough to wake it up.">1 公斤鈾-235 完全分裂放出的能量，大約等於燒掉 <b>3000 公噸的煤</b>！一個小小的原子核，怎麼藏得住這麼多能量？而且只要一顆<b>中子</b>，就能把它叫醒。</div>
+      </div>
+    </div>
+    <div class="stage-container"><canvas id="cvs-fission" width="960" height="540"></canvas></div>
+    <div class="step-row">
+      <button class="step-btn active" id="btn-fission-1" type="button" onclick="W5.go('fission',1)" data-zh="1 中子來了" data-en="1 Neutron in">1 中子來了</button>
+      <button class="step-btn" id="btn-fission-2" type="button" onclick="W5.go('fission',2)" data-zh="2 原子核分裂" data-en="2 It splits">2 原子核分裂</button>
+      <button class="step-btn" id="btn-fission-3" type="button" onclick="W5.go('fission',3)" data-zh="3 連鎖反應" data-en="3 Chain reaction">3 連鎖反應</button>
+      <button class="step-btn" id="btn-fission-4" type="button" onclick="W5.go('fission',4)" data-zh="4 減速" data-en="4 Slow down">4 減速</button>
+      <button class="step-btn" id="btn-fission-5" type="button" onclick="W5.go('fission',5)" data-zh="5 控制" data-en="5 Control">5 控制</button>
+    </div>
+    <div class="note">
+      <h3 data-zh="看動畫時，想一想" data-en="While you watch, think about">看動畫時，想一想</h3>
+      <ul>
+        <li data-zh="鈾-235 的原子核又大又不穩定。吸收一顆<b>慢中子</b>後，它會裂成兩個較小的原子核，同時放出 2～3 顆新的中子。" data-en="A uranium-235 nucleus is large and unstable. After it absorbs a <b>slow neutron</b>, it splits into two smaller nuclei and releases 2–3 new neutrons.">鈾-235 的原子核又大又不穩定。吸收一顆<b>慢中子</b>後，它會裂成兩個較小的原子核，同時放出 2～3 顆新的中子。</li>
+        <li data-zh="分裂前後，<b>質量數和質子數都守恆</b>；但總質量少了約 0.1%，少掉的質量變成能量，<span class='nw mono'>E = mc²</span>。" data-en="Before and after the split, the <b>mass number and the number of protons are conserved</b>. But the total mass drops by about 0.1%, and the missing mass becomes energy: <span class='nw mono'>E = mc²</span>.">分裂前後，<b>質量數和質子數都守恆</b>；但總質量少了約 0.1%，少掉的質量變成能量，<span class="nw mono">E = mc²</span>。</li>
+        <li data-zh="1 公斤鈾-235 完全分裂，少掉的質量只有約 0.9 公克，大約是一個迴紋針的重量，卻放出約 8×10<sup>13</sup> 焦耳。" data-en="When 1 kg of uranium-235 splits completely, only about 0.9 g of mass disappears, roughly the weight of a paper clip, yet about 8×10<sup>13</sup> J is released.">1 公斤鈾-235 完全分裂，少掉的質量只有約 0.9 公克，大約是一個迴紋針的重量，卻放出約 8×10<sup>13</sup> 焦耳。</li>
+        <li data-zh="新放出的中子又去撞別的鈾核，就是<b>連鎖反應</b>。放任不管，會在瞬間釋放大量能量；核電廠用<b>水</b>讓快中子減速，再用<b>控制棒</b>吸收多餘的中子，把反應穩穩控制住。" data-en="The new neutrons hit other uranium nuclei: a <b>chain reaction</b>. Left alone, it releases huge energy in an instant. A nuclear plant uses <b>water</b> to slow fast neutrons and <b>control rods</b> to absorb extra neutrons, keeping the reaction steady.">新放出的中子又去撞別的鈾核，就是<b>連鎖反應</b>。放任不管，會在瞬間釋放大量能量；核電廠用<b>水</b>讓快中子減速，再用<b>控制棒</b>吸收多餘的中子，把反應穩穩控制住。</li>
+        <li data-zh="天然鈾只有約 0.7% 是鈾-235，核電廠的燃料要先「濃縮」到約 3～5%。" data-en="Only about 0.7% of natural uranium is uranium-235. Reactor fuel is first &quot;enriched&quot; to about 3–5%.">天然鈾只有約 0.7% 是鈾-235，核電廠的燃料要先「濃縮」到約 3～5%。</li>
+      </ul>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="慢中子 ＋ 鈾-235 → 兩個較小的原子核 ＋ 2～3 顆中子 ＋ 能量" data-en="Slow neutron + uranium-235 → two smaller nuclei + 2–3 neutrons + energy">慢中子 ＋ 鈾-235 → 兩個較小的原子核 ＋ 2～3 顆中子 ＋ 能量</li>
+        <li data-zh="放出的中子一代傳一代，就是連鎖反應" data-en="Neutrons pass the reaction on, generation after generation: a chain reaction">放出的中子一代傳一代，就是連鎖反應</li>
+        <li data-zh="水讓中子減速、控制棒吸收中子，讓平均每次分裂只引起 1 次新的分裂" data-en="Water slows neutrons and control rods absorb them, so each fission causes on average just 1 new fission">水讓中子減速、控制棒吸收中子，讓平均每次分裂只引起 1 次新的分裂</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═════════ 分頁二：核電廠 ═════════ -->
+  <div class="panel tab-view" id="tab2">
+    <div class="panel-header">
+      <h2 data-zh="核電廠：從原子核到插座" data-en="A nuclear plant: from nucleus to wall socket">核電廠：從原子核到插座</h2>
+      <span class="sub-tag" data-zh="能量轉換" data-en="Energy conversion">能量轉換</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="核電廠的「鍋爐」是反應爐，用鈾代替了瓦斯。後面的步驟，和火力發電廠幾乎一模一樣：<b>蒸氣推渦輪，渦輪帶動發電機</b>。你猜，核能最後有幾分之幾真的變成了電？" data-en="A nuclear plant's &quot;boiler&quot; is the reactor, with uranium in place of gas. The rest is almost the same as a coal-fired plant: <b>steam pushes a turbine, and the turbine drives a generator</b>. What fraction of the nuclear energy do you think ends up as electricity?">核電廠的「鍋爐」是反應爐，用鈾代替了瓦斯。後面的步驟，和火力發電廠幾乎一模一樣：<b>蒸氣推渦輪，渦輪帶動發電機</b>。你猜，核能最後有幾分之幾真的變成了電？</div>
+      </div>
+    </div>
+    <div class="stage-container"><canvas id="cvs-plant" width="960" height="540"></canvas></div>
+    <div class="step-row">
+      <button class="step-btn active" id="btn-plant-1" type="button" onclick="W5.go('plant',1)" data-zh="1 反應爐產熱" data-en="1 Reactor heat">1 反應爐產熱</button>
+      <button class="step-btn" id="btn-plant-2" type="button" onclick="W5.go('plant',2)" data-zh="2 產生蒸氣" data-en="2 Steam">2 產生蒸氣</button>
+      <button class="step-btn" id="btn-plant-3" type="button" onclick="W5.go('plant',3)" data-zh="3 推動渦輪" data-en="3 Turbine">3 推動渦輪</button>
+      <button class="step-btn" id="btn-plant-4" type="button" onclick="W5.go('plant',4)" data-zh="4 發電機" data-en="4 Generator">4 發電機</button>
+      <button class="step-btn" id="btn-plant-5" type="button" onclick="W5.go('plant',5)" data-zh="5 冷卻與輸電" data-en="5 Cooling &amp; grid">5 冷卻與輸電</button>
+    </div>
+    <div class="note">
+      <h3 data-zh="核電廠的能量旅行" data-en="The energy's journey">核電廠的能量旅行</h3>
+      <ul>
+        <li data-zh="能量轉換：<b>核能 → 熱能 → 蒸氣的動能 → 渦輪的動能 → 電能</b>。" data-en="Energy conversion: <b>nuclear energy → heat → kinetic energy of steam → kinetic energy of the turbine → electrical energy</b>.">能量轉換：<b>核能 → 熱能 → 蒸氣的動能 → 渦輪的動能 → 電能</b>。</li>
+        <li data-zh="反應爐只負責「產生熱」；後面推動渦輪、帶動發電機的步驟，和火力發電廠幾乎一樣。" data-en="The reactor's only job is to &quot;make heat&quot;. The steps that follow, a turbine driving a generator, are almost the same as in a coal-fired plant.">反應爐只負責「產生熱」；後面推動渦輪、帶動發電機的步驟，和火力發電廠幾乎一樣。</li>
+        <li data-zh="發電機的原理是<b>電磁感應</b>：磁鐵在線圈裡旋轉，線圈中就產生感應電流，輸出的是交流電。" data-en="A generator works by <b>electromagnetic induction</b>: a magnet spins inside coils and an induced current appears in them. The output is alternating current.">發電機的原理是<b>電磁感應</b>：磁鐵在線圈裡旋轉，線圈中就產生感應電流，輸出的是交流電。</li>
+        <li data-zh="約有 1/3 的熱變成電，其餘約 2/3 是<b>廢熱</b>，由冷卻水帶走。能量沒有消失，只是變得不好用了。" data-en="About 1/3 of the heat becomes electricity. The other 2/3 is <b>waste heat</b>, carried away by cooling water. The energy isn't lost; it just becomes less useful.">約有 1/3 的熱變成電，其餘約 2/3 是<b>廢熱</b>，由冷卻水帶走。能量沒有消失，只是變得不好用了。</li>
+        <li data-zh="圖中是「壓水式」反應爐：流過爐心的水（一次水）不直接去推渦輪，而是把熱傳給另一條管路的水（二次水）。另一種「沸水式」反應爐，則讓水在爐心直接沸騰成蒸氣。" data-en="The diagram shows a &quot;pressurized-water&quot; reactor: water flowing through the core (the primary loop) does not push the turbine itself; it passes its heat to water in a separate loop (the secondary loop). In the other type, a &quot;boiling-water&quot; reactor, water boils into steam right in the core.">圖中是「壓水式」反應爐：流過爐心的水（一次水）不直接去推渦輪，而是把熱傳給另一條管路的水（二次水）。另一種「沸水式」反應爐，則讓水在爐心直接沸騰成蒸氣。</li>
+      </ul>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="核電廠 ＝ 用核分裂的熱來燒開水，再用蒸氣發電" data-en="A nuclear plant uses the heat of fission to boil water, then makes electricity from the steam">核電廠 ＝ 用核分裂的熱來燒開水，再用蒸氣發電</li>
+        <li data-zh="發電機靠電磁感應，把轉動的動能變成電能" data-en="A generator uses electromagnetic induction to turn spinning kinetic energy into electrical energy">發電機靠電磁感應，把轉動的動能變成電能</li>
+        <li data-zh="只有約 1/3 變成電，其餘是廢熱：能量守恆，但不是都能用" data-en="Only about 1/3 becomes electricity and the rest is waste heat: energy is conserved, but not all of it is usable">只有約 1/3 變成電，其餘是廢熱：能量守恆，但不是都能用</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═════════ 分頁三：核融合（太陽） ═════════ -->
+  <div class="panel tab-view" id="tab3">
+    <div class="panel-header">
+      <h2 data-zh="核融合：太陽的反應" data-en="Fusion: the Sun's reaction">核融合：太陽的反應</h2>
+      <span class="sub-tag" data-zh="氫 → 氦" data-en="Hydrogen → helium">氫 → 氦</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="太陽已經發光約 46 億年，從來沒加過燃料。如果它是靠「燃燒」發光，最多只能亮<b>幾千年</b>。它到底用什麼在發光？答案是<b>核融合</b>。我們從太陽誕生的那一刻看起。" data-en="The Sun has shone for about 4.6 billion years without ever being refueled. If it shone by &quot;burning&quot;, it could last only <b>a few thousand years</b>. So what powers it? <b>Nuclear fusion</b>. Let's start from the moment the Sun was born.">太陽已經發光約 46 億年，從來沒加過燃料。如果它是靠「燃燒」發光，最多只能亮<b>幾千年</b>。它到底用什麼在發光？答案是<b>核融合</b>。我們從太陽誕生的那一刻看起。</div>
+      </div>
+    </div>
+    <div class="stage-container"><canvas id="cvs-sun" width="960" height="540"></canvas></div>
+    <div class="step-row">
+      <button class="step-btn active" id="btn-sun-1" type="button" onclick="W5.go('sun',1)" data-zh="1 星雲塌縮" data-en="1 Cloud collapses">1 星雲塌縮</button>
+      <button class="step-btn" id="btn-sun-2" type="button" onclick="W5.go('sun',2)" data-zh="2 越壓越熱" data-en="2 Heating up">2 越壓越熱</button>
+      <button class="step-btn" id="btn-sun-3" type="button" onclick="W5.go('sun',3)" data-zh="3 點火" data-en="3 Ignition">3 點火</button>
+      <button class="step-btn" id="btn-sun-4" type="button" onclick="W5.go('sun',4)" data-zh="4 氫變氦" data-en="4 H → He">4 氫變氦</button>
+      <button class="step-btn" id="btn-sun-5" type="button" onclick="W5.go('sun',5)" data-zh="5 穩定發光" data-en="5 Shining steadily">5 穩定發光</button>
+    </div>
+    <div class="note">
+      <h3 data-zh="太陽的一生從這裡開始" data-en="This is where the Sun's life begins">太陽的一生從這裡開始</h3>
+      <ul>
+        <li data-zh="約 46 億年前，一團主要由氫和氦組成的星雲，因為自己的重力而塌縮。重力位能變成熱能，中心越壓越熱。" data-en="About 4.6 billion years ago, a cloud made mostly of hydrogen and helium collapsed under its own gravity. Gravitational potential energy turned into heat, and the center got hotter and hotter.">約 46 億年前，一團主要由氫和氦組成的星雲，因為自己的重力而塌縮。重力位能變成熱能，中心越壓越熱。</li>
+        <li data-zh="中心溫度升到一千萬度以上，氫的原子核（質子）才能克服彼此的電斥力，撞在一起發生<b>核融合</b>：4 個氫核變成 1 個氦核。" data-en="Once the center passes ten million degrees, hydrogen nuclei (protons) can overcome their mutual electric repulsion and collide: <b>nuclear fusion</b>. Four hydrogen nuclei become one helium nucleus.">中心溫度升到一千萬度以上，氫的原子核（質子）才能克服彼此的電斥力，撞在一起發生<b>核融合</b>：4 個氫核變成 1 個氦核。</li>
+        <li data-zh="融合後總質量少了約 0.7%，少掉的質量變成能量。太陽每秒把約 6 億公噸的氫變成氦，其中約 400 萬公噸的質量變成了能量。" data-en="After fusion the total mass is about 0.7% smaller, and the missing mass becomes energy. Every second the Sun turns about 600 million tonnes of hydrogen into helium, and about 4 million tonnes of mass become energy.">融合後總質量少了約 0.7%，少掉的質量變成能量。太陽每秒把約 6 億公噸的氫變成氦，其中約 400 萬公噸的質量變成了能量。</li>
+        <li data-zh="太陽不會爆炸，也不會塌縮：重力向內擠、核融合產生的壓力向外推，兩者平衡。核融合讓它能亮約 100 億年，現在大約過了一半。" data-en="The Sun neither explodes nor collapses: gravity squeezes inward, the pressure from fusion pushes outward, and the two balance. Fusion lets it shine for about 10 billion years; it is roughly halfway.">太陽不會爆炸，也不會塌縮：重力向內擠、核融合產生的壓力向外推，兩者平衡。核融合讓它能亮約 100 億年，現在大約過了一半。</li>
+        <li data-zh="煤、石油、風力、水力、太陽能板……地球上絕大部分的能量，都是太陽的核融合送來的。" data-en="Coal, oil, wind, hydropower, solar panels... most of the energy on Earth was delivered by the Sun's fusion.">煤、石油、風力、水力、太陽能板……地球上絕大部分的能量，都是太陽的核融合送來的。</li>
+      </ul>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="星雲塌縮 → 越壓越熱 → 點火 → 穩定發光" data-en="Cloud collapses → heats up → ignition → shines steadily">星雲塌縮 → 越壓越熱 → 點火 → 穩定發光</li>
+        <li data-zh="4 個氫核 → 1 個氦核，少掉約 0.7% 的質量，變成能量" data-en="4 hydrogen nuclei → 1 helium nucleus, losing about 0.7% of the mass, which becomes energy">4 個氫核 → 1 個氦核，少掉約 0.7% 的質量，變成能量</li>
+        <li data-zh="重力向內、融合的壓力向外，讓太陽穩定地發光" data-en="Gravity inward and fusion pressure outward keep the Sun shining steadily">重力向內、融合的壓力向外，讓太陽穩定地發光</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═════════ 分頁四：比一比 ═════════ -->
+  <div class="panel tab-view" id="tab4">
+    <div class="panel-header">
+      <h2 data-zh="分裂與融合比一比" data-en="Fission vs fusion">分裂與融合比一比</h2>
+      <span class="sub-tag mono">E = mc²</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="把大的原子核拆小，放出能量；把小的原子核合大，<b>也</b>放出能量。兩個方向完全相反的反應，怎麼會同時成立？答案，藏在下面這條曲線裡。" data-en="Split a big nucleus and energy is released. Join small nuclei and energy is released <b>too</b>. How can two opposite processes both work? The answer is hidden in the curve below.">把大的原子核拆小，放出能量；把小的原子核合大，<b>也</b>放出能量。兩個方向完全相反的反應，怎麼會同時成立？答案，藏在下面這條曲線裡。</div>
+      </div>
+    </div>
+    <figure class="be-fig">
+<svg class="be-svg" viewBox="0 0 960 480" role="img" aria-label="每個核子的平均結合能與質量數的關係">
+<line x1="120" y1="380.0" x2="920" y2="380.0" stroke="rgba(246,243,234,0.14)" stroke-width="1.5" stroke-dasharray="6 7"/>
+<text x="106" y="387.0" text-anchor="end" fill="#a3b8b0" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700">0</text>
+<line x1="120" y1="311.1" x2="920" y2="311.1" stroke="rgba(246,243,234,0.14)" stroke-width="1.5" stroke-dasharray="6 7"/>
+<text x="106" y="318.1" text-anchor="end" fill="#a3b8b0" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700">2</text>
+<line x1="120" y1="242.2" x2="920" y2="242.2" stroke="rgba(246,243,234,0.14)" stroke-width="1.5" stroke-dasharray="6 7"/>
+<text x="106" y="249.2" text-anchor="end" fill="#a3b8b0" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700">4</text>
+<line x1="120" y1="173.3" x2="920" y2="173.3" stroke="rgba(246,243,234,0.14)" stroke-width="1.5" stroke-dasharray="6 7"/>
+<text x="106" y="180.3" text-anchor="end" fill="#a3b8b0" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700">6</text>
+<line x1="120" y1="104.4" x2="920" y2="104.4" stroke="rgba(246,243,234,0.14)" stroke-width="1.5" stroke-dasharray="6 7"/>
+<text x="106" y="111.4" text-anchor="end" fill="#a3b8b0" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700">8</text>
+<line x1="120.0" y1="380" x2="120.0" y2="388" stroke="#a3b8b0" stroke-width="2"/>
+<text x="120.0" y="412" text-anchor="middle" fill="#a3b8b0" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700">0</text>
+<line x1="286.7" y1="380" x2="286.7" y2="388" stroke="#a3b8b0" stroke-width="2"/>
+<text x="286.7" y="412" text-anchor="middle" fill="#a3b8b0" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700">50</text>
+<line x1="453.3" y1="380" x2="453.3" y2="388" stroke="#a3b8b0" stroke-width="2"/>
+<text x="453.3" y="412" text-anchor="middle" fill="#a3b8b0" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700">100</text>
+<line x1="620.0" y1="380" x2="620.0" y2="388" stroke="#a3b8b0" stroke-width="2"/>
+<text x="620.0" y="412" text-anchor="middle" fill="#a3b8b0" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700">150</text>
+<line x1="786.7" y1="380" x2="786.7" y2="388" stroke="#a3b8b0" stroke-width="2"/>
+<text x="786.7" y="412" text-anchor="middle" fill="#a3b8b0" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700">200</text>
+<line x1="120" y1="60" x2="120" y2="380" stroke="#f6f3ea" stroke-width="3"/>
+<line x1="120" y1="380" x2="930" y2="380" stroke="#f6f3ea" stroke-width="3"/>
+<rect x="120" y="426" width="186.7" height="36" rx="18" fill="rgba(77,210,255,0.22)" stroke="#4dd2ff" stroke-width="2"/>
+<text x="213.3" y="451" text-anchor="middle" fill="#4dd2ff" font-size="20" font-weight="700" data-zh="輕核：融合" data-en="Light: fusion">輕核：融合</text>
+<rect x="312.7" y="426" width="607.3" height="36" rx="18" fill="rgba(255,128,64,0.22)" stroke="#ff8040" stroke-width="2"/>
+<text x="616.3" y="451" text-anchor="middle" fill="#ff8040" font-size="20" font-weight="700" data-zh="重核：分裂" data-en="Heavy: fission">重核：分裂</text>
+<path d="M 126.7,341.8 L 130.0,291.5 L 133.3,136.5 L 140.0,196.4 L 150.0,157.5 L 160.0,115.5 L 173.3,105.1 L 186.7,103.4 L 200.0,95.5 L 220.0,86.5 L 253.3,85.5 L 306.7,77.2 L 326.7,77.2 L 386.7,80.0 L 426.7,86.9 L 453.3,83.1 L 520.0,86.9 L 590.0,93.1 L 653.3,88.9 L 720.0,91.4 L 813.3,108.9 L 903.3,118.6" fill="none" stroke="#33cc99" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="126.7" cy="341.8" r="8" fill="#4dd2ff" stroke="#0b1a15" stroke-width="2"/>
+<circle cx="133.3" cy="136.5" r="8" fill="#4dd2ff" stroke="#0b1a15" stroke-width="2"/>
+<circle cx="306.7" cy="77.2" r="10" fill="#ffe066" stroke="#0b1a15" stroke-width="2"/>
+<circle cx="426.7" cy="86.9" r="8" fill="#ff8040" stroke="#0b1a15" stroke-width="2"/>
+<circle cx="590.0" cy="93.1" r="8" fill="#ff8040" stroke="#0b1a15" stroke-width="2"/>
+<circle cx="903.3" cy="118.6" r="8" fill="#ff8040" stroke="#0b1a15" stroke-width="2"/>
+<text x="142.7" y="349.8" text-anchor="start" fill="#4dd2ff" font-size="20" font-weight="700" data-zh="氘" data-en="Deuterium" style="paint-order:stroke;stroke:#0d201a;stroke-width:5px;stroke-linejoin:round">氘</text>
+<text x="147.3" y="120.5" text-anchor="start" fill="#4dd2ff" font-size="20" font-weight="700" data-zh="氦-4" data-en="Helium-4" style="paint-order:stroke;stroke:#0d201a;stroke-width:5px;stroke-linejoin:round">氦-4</text>
+<text x="306.7" y="53.2" text-anchor="middle" fill="#ffe066" font-size="20" font-weight="700" data-zh="鐵附近：最穩定" data-en="Near iron: most stable" style="paint-order:stroke;stroke:#0d201a;stroke-width:5px;stroke-linejoin:round">鐵附近：最穩定</text>
+<text x="506.7" y="51.5" text-anchor="middle" fill="#ff8040" font-size="20" font-weight="700" data-zh="分裂的產物：氪-92、鋇-141" data-en="Fission products: Kr-92, Ba-141" style="paint-order:stroke;stroke:#0d201a;stroke-width:5px;stroke-linejoin:round">分裂的產物：氪-92、鋇-141</text>
+<text x="903.3" y="94.6" text-anchor="end" fill="#ff8040" font-size="20" font-weight="700" data-zh="鈾-235" data-en="Uranium-235" style="paint-order:stroke;stroke:#0d201a;stroke-width:5px;stroke-linejoin:round">鈾-235</text>
+<text transform="translate(30 225.0) rotate(-90)" text-anchor="middle" fill="#f6f3ea" font-size="20" font-weight="700" data-zh="每個核子的平均結合能（MeV）" data-en="Binding energy per nucleon (MeV)">每個核子的平均結合能（MeV）</text>
+<text x="520.0" y="492" text-anchor="middle" fill="#f6f3ea" font-size="20" font-weight="700" data-zh="質量數 A（質子＋中子的總數）" data-en="Mass number A (protons + neutrons)">質量數 A（質子＋中子的總數）</text>
+</svg>
+      <figcaption data-zh="每個核子（質子或中子）平均被束縛得多緊；數值為近似值，圖為教學示意。" data-en="How tightly each nucleon (proton or neutron) is bound, on average. Values are approximate; the graph is a teaching sketch.">每個核子（質子或中子）平均被束縛得多緊；數值為近似值，圖為教學示意。</figcaption>
+    </figure>
+    <div class="note">
+      <h3 data-zh="怎麼看這張圖" data-en="How to read the graph">怎麼看這張圖</h3>
+      <ul>
+        <li data-zh="縱軸越高，代表每個核子被束縛得越緊，原子核越<b>穩定</b>。" data-en="The higher the curve, the more tightly each nucleon is bound and the more <b>stable</b> the nucleus.">縱軸越高，代表每個核子被束縛得越緊，原子核越<b>穩定</b>。</li>
+        <li data-zh="核反應會往「更穩定」的方向走，多出來的能量就釋放出去：輕核<b>融合</b>（往右上走）、重核<b>分裂</b>（往左上走），<b>都會放出能量</b>。" data-en="Nuclear reactions move toward &quot;more stable&quot; nuclei, and the surplus energy is released: light nuclei <b>fuse</b> (moving up and right), heavy nuclei <b>split</b> (moving up and left). <b>Both release energy.</b>">核反應會往「更穩定」的方向走，多出來的能量就釋放出去：輕核<b>融合</b>（往右上走）、重核<b>分裂</b>（往左上走），<b>都會放出能量</b>。</li>
+        <li data-zh="鐵附近最穩定，所以鐵既不能靠融合、也不能靠分裂再放出能量。" data-en="Nuclei near iron are the most stable, so iron can release more energy neither by fusing nor by splitting.">鐵附近最穩定，所以鐵既不能靠融合、也不能靠分裂再放出能量。</li>
+      </ul>
+    </div>
+    <div class="formula-box">
+      <span>E = mc²</span>
+      <small data-zh="能量 ＝ 少掉的質量 × 光速的平方。光速 c ≈ 3×10<sup>8</sup> m/s，所以一點點質量，就是一大堆能量。" data-en="Energy = missing mass × (speed of light)². With c ≈ 3×10<sup>8</sup> m/s, a tiny bit of mass is a huge amount of energy.">能量 ＝ 少掉的質量 × 光速的平方。光速 c ≈ 3×10<sup>8</sup> m/s，所以一點點質量，就是一大堆能量。</small>
+    </div>
+    <div class="table-wrap">
+      <table class="prop-table">
+        <thead>
+          <tr>
+            <th data-zh="比較" data-en="Compare">比較</th>
+            <th class="fis" data-zh="核分裂" data-en="Fission">核分裂</th>
+            <th class="fus" data-zh="核融合" data-en="Fusion">核融合</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th data-zh="做法" data-en="What happens">做法</th>
+            <td data-zh="重核分成兩個較輕的核" data-en="A heavy nucleus splits into two lighter nuclei">重核分成兩個較輕的核</td>
+            <td data-zh="兩個輕核合成一個較重的核" data-en="Two light nuclei join into a heavier one">兩個輕核合成一個較重的核</td>
+          </tr>
+          <tr>
+            <th data-zh="燃料" data-en="Fuel">燃料</th>
+            <td data-zh="鈾-235、鈽-239" data-en="Uranium-235, plutonium-239">鈾-235、鈽-239</td>
+            <td data-zh="氫（太陽）；氘＋氚（人造太陽）" data-en="Hydrogen (the Sun); deuterium + tritium (artificial Sun)">氫（太陽）；氘＋氚（人造太陽）</td>
+          </tr>
+          <tr>
+            <th data-zh="啟動條件" data-en="Conditions">啟動條件</th>
+            <td data-zh="一顆慢中子就能引發，不需要高溫" data-en="One slow neutron can trigger it; no extreme heat needed">一顆慢中子就能引發，不需要高溫</td>
+            <td data-zh="需要一千萬度（太陽核心）到一億度（地球上）的高溫" data-en="Needs ten million degrees (the Sun's core) to a hundred million (on Earth)">需要一千萬度（太陽核心）到一億度（地球上）的高溫</td>
+          </tr>
+          <tr>
+            <th data-zh="每公斤燃料放出的能量" data-en="Energy per kg of fuel">每公斤燃料放出的能量</th>
+            <td data-zh="約 8×10<sup>13</sup> 焦耳（鈾-235）" data-en="About 8×10<sup>13</sup> J (uranium-235)">約 8×10<sup>13</sup> 焦耳（鈾-235）</td>
+            <td data-zh="約 6×10<sup>14</sup> 焦耳（氫變氦），約是鈾的 8 倍" data-en="About 6×10<sup>14</sup> J (hydrogen to helium), roughly 8 times uranium">約 6×10<sup>14</sup> 焦耳（氫變氦），約是鈾的 8 倍</td>
+          </tr>
+          <tr>
+            <th data-zh="主要產物" data-en="Main products">主要產物</th>
+            <td data-zh="兩個中等大小的原子核和中子，常有放射性（核廢料）" data-en="Two medium-sized nuclei plus neutrons, often radioactive (nuclear waste)">兩個中等大小的原子核和中子，常有放射性（核廢料）</td>
+            <td data-zh="氦（穩定、沒有放射性）和中子" data-en="Helium (stable, not radioactive) and neutrons">氦（穩定、沒有放射性）和中子</td>
+          </tr>
+          <tr>
+            <th data-zh="怎麼停下來" data-en="How it stops">怎麼停下來</th>
+            <td data-zh="插入控制棒，吸收中子" data-en="Insert control rods to absorb neutrons">插入控制棒，吸收中子</td>
+            <td data-zh="高溫高壓的條件一破壞，反應就立刻停止" data-en="Once the hot, dense conditions break down, the reaction stops at once">高溫高壓的條件一破壞，反應就立刻停止</td>
+          </tr>
+          <tr>
+            <th data-zh="人類用得到嗎" data-en="Can we use it?">人類用得到嗎</th>
+            <td data-zh="已經在發電（核電廠）" data-en="Already generating power (nuclear plants)">已經在發電（核電廠）</td>
+            <td data-zh="太陽天天在做；人類還沒做到（見「未來的新星」）" data-en="The Sun does it every day; humans haven't managed it yet (see &quot;A future star&quot;)">太陽天天在做；人類還沒做到（見「未來的新星」）</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="往「更穩定」走就會放能：輕核融合、重核分裂，都是這樣" data-en="Moving toward &quot;more stable&quot; releases energy: light nuclei fuse, heavy nuclei split">往「更穩定」走就會放能：輕核融合、重核分裂，都是這樣</li>
+        <li data-zh="放出的能量來自少掉的質量：E = mc²" data-en="The energy comes from the missing mass: E = mc²">放出的能量來自少掉的質量：E = mc²</li>
+        <li data-zh="同樣 1 公斤燃料，氫變氦放出的能量約是鈾-235 分裂的 8 倍" data-en="For the same 1 kg of fuel, hydrogen-to-helium fusion releases about 8 times the energy of uranium-235 fission">同樣 1 公斤燃料，氫變氦放出的能量約是鈾-235 分裂的 8 倍</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═════════ 分頁五：補充｜未來的新星－人造太陽 ═════════ -->
+  <div class="panel tab-view" id="tab5">
+    <div class="panel-header">
+      <h2 data-zh="未來的新星－人造太陽" data-en="A future star: the artificial Sun">未來的新星－人造太陽</h2>
+      <span class="sub-tag coral" data-zh="補充" data-en="Extra">補充</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="太陽靠自己巨大的重力，把氫壓在一起。地球上沒有那麼大的重力，如果想把太陽的反應<b>搬到地球上來發電</b>，要怎麼辦？目前人類的科技還沒有到位，但全世界都在努力。" data-en="The Sun squeezes hydrogen together with its own enormous gravity. Earth has no such gravity. How could we <b>bring the Sun's reaction down to Earth to make electricity</b>? Our technology isn't there yet, but the whole world is working on it.">太陽靠自己巨大的重力，把氫壓在一起。地球上沒有那麼大的重力，如果想把太陽的反應<b>搬到地球上來發電</b>，要怎麼辦？目前人類的科技還沒有到位，但全世界都在努力。</div>
+      </div>
+    </div>
+    <div class="fut-grid">
+      <div class="fut-card">
+        <h3 data-zh="怎麼點火？" data-en="How to ignite it?">怎麼點火？</h3>
+        <p data-zh="地球上選比較容易融合的燃料：<b>氘（重氫）＋氚（超重氫）</b>。<br><span class='react'><sup>2</sup>H + <sup>3</sup>H → <sup>4</sup>He + n + 17.6 MeV</span><br>需要約<b>一億度</b>的電漿，比太陽核心還熱。" data-en="On Earth we pick an easier fuel: <b>deuterium (heavy hydrogen) + tritium (super-heavy hydrogen)</b>.<br><span class='react'><sup>2</sup>H + <sup>3</sup>H → <sup>4</sup>He + n + 17.6 MeV</span><br>It needs plasma at about <b>a hundred million degrees</b>, hotter than the Sun's core.">地球上選比較容易融合的燃料：<b>氘（重氫）＋氚（超重氫）</b>。<br><span class="react"><sup>2</sup>H + <sup>3</sup>H → <sup>4</sup>He + n + 17.6 MeV</span><br>需要約<b>一億度</b>的電漿，比太陽核心還熱。</p>
+      </div>
+      <div class="fut-card">
+        <h3 data-zh="用什麼裝？" data-en="What can hold it?">用什麼裝？</h3>
+        <p data-zh="一億度沒有任何材料碰得起，所以用<b>強磁場</b>把電漿懸空關在甜甜圈形的「磁籠」裡（托卡馬克）。另一種做法是用<b>雷射</b>從四面八方打一顆燃料小球，瞬間壓縮它。" data-en="No material can touch a hundred million degrees, so <b>strong magnetic fields</b> hold the plasma floating inside a doughnut-shaped &quot;magnetic cage&quot; (a tokamak). Another approach fires <b>lasers</b> from all sides at a tiny fuel pellet to compress it in an instant.">一億度沒有任何材料碰得起，所以用<b>強磁場</b>把電漿懸空關在甜甜圈形的「磁籠」裡（托卡馬克）。另一種做法是用<b>雷射</b>從四面八方打一顆燃料小球，瞬間壓縮它。</p>
+      </div>
+      <div class="fut-card">
+        <h3 data-zh="燃料哪裡來？" data-en="Where does the fuel come from?">燃料哪裡來？</h3>
+        <p data-zh="氘：海水裡就有。氚：自然界很少，要在反應爐裡用中子打<b>鋰</b>，自己製造。" data-en="Deuterium: it is in seawater. Tritium: very rare in nature, so the reactor must make its own by hitting <b>lithium</b> with neutrons.">氘：海水裡就有。氚：自然界很少，要在反應爐裡用中子打<b>鋰</b>，自己製造。</p>
+      </div>
+      <div class="fut-card">
+        <h3 data-zh="為什麼還沒成功？" data-en="Why isn't it done yet?">為什麼還沒成功？</h3>
+        <p data-zh="還差三件事：①<b>淨能量</b>，發出的電要比整個系統用掉的電多；②<b>持續穩定</b>地反應；③反應爐壁要<b>耐得住高速中子</b>的長期撞擊。" data-en="Three things are still missing: ① <b>net energy</b>, meaning more electricity out than the whole system uses; ② reacting <b>steadily and continuously</b>; ③ reactor walls that can <b>withstand fast neutrons</b> for years.">還差三件事：①<b>淨能量</b>，發出的電要比整個系統用掉的電多；②<b>持續穩定</b>地反應；③反應爐壁要<b>耐得住高速中子</b>的長期撞擊。</p>
+      </div>
+    </div>
+    <div class="note">
+      <h3 data-zh="目前的進度（截至 2026 年）" data-en="Progress so far (as of 2026)">目前的進度（截至 2026 年）</h3>
+      <ul class="timeline">
+        <li><span class="tl-date" data-zh="2022 年 12 月" data-en="Dec 2022">2022 年 12 月</span><span data-zh="美國國家點火設施（NIF）首次讓核融合放出的能量，大於雷射打進燃料的能量。" data-en="The US National Ignition Facility (NIF) for the first time released more fusion energy than the laser energy delivered to the fuel.">美國國家點火設施（NIF）首次讓核融合放出的能量，大於雷射打進燃料的能量。</span></li>
+        <li><span class="tl-date" data-zh="2025 年 1 月" data-en="Jan 2025">2025 年 1 月</span><span data-zh="中國的 EAST 讓約一億度的電漿穩定維持了 1066 秒（約 18 分鐘）。" data-en="China's EAST kept a plasma of about a hundred million degrees stable for 1066 seconds (about 18 minutes).">中國的 EAST 讓約一億度的電漿穩定維持了 1066 秒（約 18 分鐘）。</span></li>
+        <li><span class="tl-date" data-zh="2025 年 4 月" data-en="Apr 2025">2025 年 4 月</span><span data-zh="NIF 一次實驗放出約 8.6 MJ（百萬焦耳），雷射打進去約 2.08 MJ。但製造那道雷射的整套設備，用掉的電遠多於此，所以還不能拿來發電。" data-en="One NIF shot released about 8.6 MJ (megajoules) from about 2.08 MJ of laser energy. But the equipment that makes the laser uses far more electricity than that, so it still can't generate power.">NIF 一次實驗放出約 8.6 MJ（百萬焦耳），雷射打進去約 2.08 MJ。但製造那道雷射的整套設備，用掉的電遠多於此，所以還不能拿來發電。</span></li>
+        <li><span class="tl-date" data-zh="2034～2039 年" data-en="2034–2039">2034～2039 年</span><span data-zh="法國的國際合作計畫 ITER，依 2024 年的新時程，預計 2034 年開始研究運轉，2039 年開始使用氘氚燃料。" data-en="ITER, the international project in France, plans under its 2024 schedule to begin research operation in 2034 and deuterium-tritium operation in 2039.">法國的國際合作計畫 ITER，依 2024 年的新時程，預計 2034 年開始研究運轉，2039 年開始使用氘氚燃料。</span></li>
+      </ul>
+      <details class="src">
+        <summary data-zh="資料來源" data-en="Sources">資料來源</summary>
+        <ul>
+          <li>ITER schedule: <a href="https://physicsworld.com/a/iter-fusion-reactor-hit-by-massive-decade-long-delay-and-e5bn-price-hike/" target="_blank" rel="noopener">Physics World, 3 July 2024</a>; <a href="https://www.iter.org/node/34983" target="_blank" rel="noopener">38th ITER Council, June 2026</a></li>
+          <li>NIF: <a href="https://lift.llnl.gov/news/llnl-experts-foster-national-fusion-energy-ecosystem-ife-star-conference" target="_blank" rel="noopener">Lawrence Livermore National Laboratory</a></li>
+          <li>EAST: <a href="https://english.cas.cn/newsroom/cas_media/202501/t20250121_899052.shtml" target="_blank" rel="noopener">Chinese Academy of Sciences, 21 January 2025</a></li>
+        </ul>
+      </details>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="人造太陽用氘＋氚融合成氦，需要約一億度的電漿，用強磁場或雷射來「關住」它" data-en="An artificial Sun fuses deuterium + tritium into helium, needing plasma at about a hundred million degrees, held by strong magnetic fields or lasers">人造太陽用氘＋氚融合成氦，需要約一億度的電漿，用強磁場或雷射來「關住」它</li>
+        <li data-zh="目前還差「淨能量、持續穩定、耐得住中子的材料」，所以還沒有核融合電廠" data-en="Net energy, steady operation, and neutron-resistant materials are still missing, so there is no fusion power plant yet">目前還差「淨能量、持續穩定、耐得住中子的材料」，所以還沒有核融合電廠</li>
+        <li data-zh="哪一天做到了，地球上就有了自己的一顆小太陽" data-en="The day it works, Earth will have a little Sun of its own">哪一天做到了，地球上就有了自己的一顆小太陽</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  let LANG = 'zh';
+  function tr(zhText, enText) { return LANG === 'en' ? enText : zhText; }
+
+  function applyTranslations() {
+    document.querySelectorAll('[data-zh][data-en]').forEach(el => { el.innerHTML = el.getAttribute('data-' + LANG); });
+    document.querySelectorAll('.lang-btn').forEach(b => {
+      const on = b.dataset.lang === LANG;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+  }
+  function setLanguage(lang) {
+    LANG = lang;
+    document.documentElement.lang = LANG === 'en' ? 'en' : 'zh-Hant';   /* 練習題轉接器看這個屬性 */
+    applyTranslations();
+  }
+  document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => setLanguage(b.dataset.lang)));
+
+  /* 每個分頁對應的動畫（tab4、tab5 是圖表與文字，沒有動畫） */
+  const TAB_ANIM = { tab1: 'fission', tab2: 'plant', tab3: 'sun', tab4: null, tab5: null };
+  let currentTab = 'tab1';
+
+  function startCurrent() {
+    if (!window.W5) return;
+    const a = TAB_ANIM[currentTab];
+    if (a) W5.start(a); else W5.stopAll();
+  }
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-view').forEach(v => v.classList.toggle('active', v.id === tab));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    if (!document.getElementById('introScreen')) startCurrent();   /* 封面還在的時候，動畫等進場後再開始 */
+  }
+  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+
+  /* ── 電影式封面 ── */
+  function dismissIntro() {
+    const el = document.getElementById('introScreen');
+    if (!el || el.classList.contains('exiting')) return;
+    el.classList.add('exiting');
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); startCurrent(); }, 720);
+  }
+
+  applyTranslations();
+</script>
+<script src="work_5_kit_1103_v1.js?v=20261103-a"></script>
+<script src="work_5_fission_1103_v1.js?v=20261103-a"></script>
+<script src="work_5_plant_1103_v1.js?v=20261103-a"></script>
+<script src="work_5_sun_1103_v1.js?v=20261103-a"></script>
+<script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
+<script defer src="assets/quiz/quiz_work_5_1103_v1.js?v=20261103-q1"></script>
+<script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
+</body>
+</html>
