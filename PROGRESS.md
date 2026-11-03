@@ -7,29 +7,11 @@
 **首頁已換成「伽利略星球」**（2026-10-26 上線，`index.html`）。原本的清單首頁改名為 `index_classic.html`（右上角「舊版清單」連過去）。
 **新增或修改課程卡片：改 `index_classic.html`，再跑 `python3 tools/museum/build_lessons.py`**（產生 `assets/museum/data/lessons.json`，星球上才會出現）；不要在 `index.html` 加卡片。交接：`galileo-planet/HANDOFF.md`。
 
-## 【進行中・多 Claude 協作】電學 electronics_1 調整（老師 2026-11-03 指示）
+## 電學 electronics_1 調整（老師 2026-11-03 指示，已完成）
 
-**多個 Claude 一起做，開工前先讀這一段；做完在下面「工作紀錄」加一行，完成後把狀態改掉。** 範圍只有 `electronics_1.html`（＋新檔 `electronics_1_polarize_1103_v1.js`），不碰其他檔。
-**老師授權（2026-11-03）：** 自由電子移動速度全部加快（學生沒耐心）。這屬於 AGENTS 第一定律 RED ZONE 的「速率」，老師已明確同意，**只限速度數值，座標、軌跡、方向、物理邏輯一律不動**。
-
-| # | 任務 | 負責 | 狀態 |
-|---|---|---|---|
-| 1 | 「庫侖定律」分頁移到第 2 個分頁（只換按鈕與面板順序，**id 仍是 `tab5`**，不改 `currentTab` 判斷） | Sonnet | 完成（待 QA） |
-| 2 | 全頁自由電子加速（約 ×2；漂移／流動球約 ×1.8；集中成常數 `E_SPEED_ROAM`、`E_SPEED_FLOW`） | Sonnet | 完成（待 QA） |
-| 3 | 感應起電分頁新增區塊「為什麼帶電體能吸引不帶電的黑板？」骨架＋雙語說明（畫布 `#cvs-tab3b`、步驟鈕、教學黑板文字） | Sonnet | 完成（待 QA） |
-| 4 | 上述區塊的 canvas 動畫模組 `electronics_1_polarize_1103_v1.js`（**Opus，一次只開一個**） | Opus | 完成（待 QA） |
-| 5 | QA：動畫有動（10.3）、中英、每個分頁、改動只含速度與順序 | Sonnet | 完成 |
-| 6 | 整合、commit、push main、更新本段 | 主對話 | 待辦 |
-
-**使用規則：** ①同一時間只有一個代理改 `electronics_1.html`（目前持有：—）。②代理不跑 git，commit 與 push 由主對話做。③動畫一律 Opus、其餘 Sonnet（AGENTS 13.5）。④疑似科學／教學順序問題不要自己改，寫進下面「待老師決定」。⑤工作紀錄寫：時間、誰、做了什麼、動了哪些檔、檢查結果。
-
-**介面約定（任務 3 與 4 共用，兩邊都照這個，不要各自改）：**
-- 檔案 `electronics_1_polarize_1103_v1.js`，頁面用 `<script src="electronics_1_polarize_1103_v1.js?v=20261103-v1" defer></script>` 載入（放在頁面現有 inline `<script>` 之後或 `defer`，要能用到頁面的全域函式 `tr`、`LANG`、`e_ball`、`e_txt`、`e_label`、`e_arrow`、`e_ln`、`e_rr`、`e_pen`、`e_stand`、`e_chargedRod`、`COLOR_*`、`animFrames`、`currentTab`）。
-- 畫布 `#cvs-tab3b`，`width="960" height="460"`，CSS 維持 `width:100%; height:auto`。
-- 模組提供兩個全域函式：`initPolarize()`（`initTab3` 結尾呼叫；**進分頁自動播放、連續循環**，迴圈只有一條，id 存 `animFrames['tab3b']`，離開分頁或 `document.hidden` 就停）、`polarizeGo(n)`（n=1..5，跳到第 n 步並接著播；步驟鈕呼叫）。頁面端一律用 `typeof` 或 `window.polarizeGo&&` 保護，模組沒載入也不會報錯。
-- 語言切換不另寫處理：每幀用 `tr('中文','English')` 重畫即可。進度條畫在畫布頂端（無文字）。
-- 五個步驟：①中性的黑板（正負電荷一樣多）②帶負電棒靠近，黑板內束縛電子被推開一點，近端出現＋、遠端出現－（局部分離，不是電子跑掉）③受力：近端異性電被吸引的力比遠端同性電被排斥的力大（箭頭長短＝庫侖定律「越近越大」）④黑板被吸向棒子（整體仍是中性）⑤拿開棒子，電荷回位。
-- 配色（AGENTS 2.2.1）：電子／負電荷藍 `#4dd2ff`、正電荷橘 `#ff8040`；畫布文字 ≥22px；不用純黑；不留白底。
+- 範圍：`electronics_1.html`＋新檔 `electronics_1_polarize_1103_v1.js`。分工：Sonnet 改頁面與 QA、Opus 做動畫（AGENTS 13.5）。**完整協作紀錄（任務表、介面約定、各代理的檢查數字）在 commit `876abb5` 的本檔**，用 `git show 876abb5:PROGRESS.md` 看。
+- ①「庫侖定律」移到第 2 個分頁（只換順序，id 仍是 `tab5`）。②全頁自由電子加速（老師授權，屬 RED ZONE「速率」，只改速度數值）：常數 `E_SPEED_ROAM = 2.0`、`E_SPEED_FLOW = 1.8`，要再調只改這兩個數字；實測每幀位移 tab1 ×1.96、tab3 ×1.88。③感應起電分頁新增「為什麼帶電體能吸引不帶電的黑板？」（局部電荷分離，五步自動循環，`initPolarize()`／`polarizeGo(n)`，第二輪自動換正棒）。
+- QA（Playwright）：JS 錯誤 0、404 0；改動只含速度／順序／新區塊；庫侖計算 80 組輸入與原檔零差異；各分頁動畫皆在動；1080／1024／820／390 版面通過。
 
 **待老師決定：**
 - 【加速後接地時間】接地球起始 400 ms 與球距 500 ms 沒動，整段接地只快約 ×1.24（單顆行程 ×1.8）；要整段約 ×1.8 需另調 `E_G.start`／`E_G.gap`（屬時間間隔，未授權，沒改）。
@@ -38,11 +20,6 @@
 - 【極化動畫・第二輪換正棒】`electronics_1_polarize_1103_v1.js` 第一輪用負棒、第二輪自動換正棒（近端出現−、遠端＋，結論相同），之後交替。步驟鈕不換棒，只跳步驟。若老師希望只用負棒，把 `draw()` 裡 `S.round % 2` 那行改成固定 −1 即可。
 - 【極化動畫・吊法】黑板用兩條平行吊線吊著，擺動時板面保持水平（平行四邊形），擺角約 29°、仍與棒子留約 75px 間隙；這是定性示意，擺角大小不代表真實受力。
 - 【加速後的時間差】老師模式（`TAB_STAGES`／`STAGE`）每一步的停留毫秒數沒動；電子加快後，動畫會比步驟停留時間早播完（多停一下，不會出現球還沒跑完就換下一步）。若想縮短老師模式的等待，要另外調 `STAGE.*` 的 `d`。
-
-**工作紀錄**（新的加在最下面）：
-- 2026-11-03 15:4x　主對話　建立本看板；已 clone repo 到 `/home/claude/physical-boys`；讀過 AGENTS.md（13.5 分工、10.1／10.3／10.6、11 SOP）。尚未改任何教材檔。
-- 2026-11-03 16:2x　Opus　任務 4：新增 `electronics_1_polarize_1103_v1.js`（只動這個檔＋本看板，未改 electronics_1.html）。五步自動循環（4.5／6.5／6.5／6.5／9 秒，最後一步含停留），第二輪換正棒。檢查（Playwright＋Chromium，Google Fonts 連不到，改餵 repo 內 `assets/biology/fonts/` 的 Noto Sans TC／JetBrains Mono，`document.fonts.check` 皆 true）：`node --check` 過；不點任何東西 1 秒像素差 中 45653／英 38436 px；5 個步驟鈕跳對步驟、只有一顆 active；切到分頁一再回來×3＋換語言、老師模式切換、模擬 document.hidden→visible，rAF 都維持一條（約 60 次／秒，離開時 0）；全狀態文字檢查（中英×正負棒×5 步×5 時間點）0 個字壓字／字壓圖／出界、全部 ≥22px；中英各步截圖看過；JS 錯誤 0。已知：教學黑板文字（Sonnet）寫的是「推開（或拉近）」，與動畫第二輪正棒一致。
-- 2026-11-03 Sonnet QA　任務5：Playwright＋Chrome（本機字體）。RED ZONE：`git diff` 只含分頁／導讀順序、E_SPEED_*（ROAM 2.0／FLOW 1.8）與其使用處、#pol-section、initTab3 一行、script 一行、pol CSS；tab5 面板逐字相同；座標／文字／公式／庫侖計算／題庫零改動。JS 錯誤 0、404 0、node --check 通過；六分頁順序與 active／currentTab 正確，3 輪來回後每分頁 rAF 迴圈各一條（tab3 兩條＝原畫布＋極化）；庫侖 80 組輸入與原檔讀數 0 差異；中英各畫布像素差皆 >0（摩擦／接觸／驗電器觸發後量；idle 的摩擦畫布本來靜態）；電子位移新／舊 tab1 ×1.96、tab3 ×1.88，不出框；接地球單顆行程 ×1.8，但整段完成 3185→2568 ms（只快 ×1.24，因起始 400＋間隔 500×3 ms 沒動）；極化區塊自動播放、5 鈕、中英、老師模式、來回切換皆正常；版面 1080／1024／820／390 無新增橫向捲軸。修復 2 處（electronics_1.html）：①`.pol-steps` 手機寬度第 1 顆鈕被擠出左邊捲不到（justify-content:center→flex-start＋首尾 auto margin）；②英文「local charge separation (polarization)」nowrap 在 390px 溢出，移除該 span 的 nowrap。
 
 **伽利略星球改版（2026-10-29 起，老師指示：好看、像科學館）進度：**
 - 已上線：①領土（版本 20261029a）：彎路拿掉，每館陸地切成「一單元一塊」的領土，海陸比例不變（陸地約 93%）。②物理館 10 個單元站換成內容相關的小物品、通用造景減量（版本 20261029b）。
