@@ -3451,6 +3451,10 @@
     const ex = X(G.ecx), ey = Y(G.ecy), er = G.er * KS;
     mpEarthTop(c, 'm2e', ex, ey, er, G.observerAngle, Math.PI / 2, { cs: t });
     c.save(); c.beginPath(); c.arc(ex, ey, er, 0, TAU); c.clip();
+    /* 地表的影子只畫在「半影錐真的蓋到地球」的地方：再裁成半影錐（同上面那兩條外側邊界光線）× 地球向陽的那一半（陽光從上面來，晝夜線＝通過地心的水平線）
+       → 月影還沒到、已經離開時地表沒有影子；進來時從地球邊緣長出來，離開時從邊緣縮掉 */
+    const penX = (x0, x1, y) => x0 + (x1 - x0) * (y - G.moonY) / (G.rayEndY - G.moonY);
+    c.beginPath(); c.moveTo(X(G.moonLeft), Y(G.moonY)); c.lineTo(X(penX(G.moonLeft, G.outerLeft, G.ecy)), ey); c.lineTo(X(penX(G.moonRight, G.outerRight, G.ecy)), ey); c.lineTo(X(G.moonRight), Y(G.moonY)); c.closePath(); c.clip();
     c.translate(ex, ey); c.rotate(-(G.shadowAngle - Math.PI / 2));
     c.fillStyle = 'rgba(150,170,190,0.30)'; c.beginPath(); c.ellipse(0, (G.shadowCenterY - G.ecy) * KS, G.surfaceOuter * KS, G.shadowDepth * KS, 0, 0, TAU); c.fill();
     c.fillStyle = G.annular ? 'rgba(6,14,18,0.45)' : 'rgba(4,8,12,0.9)'; c.beginPath(); c.ellipse(0, (G.coreCenterY - G.ecy) * KS, Math.max(2.5, G.surfaceCore) * KS, 4 * KS, 0, 0, TAU); c.fill();
