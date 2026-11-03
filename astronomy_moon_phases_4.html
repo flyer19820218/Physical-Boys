@@ -3411,15 +3411,32 @@
     G.observerSurface = polarPoint(ecx, ecy, R, G.observerAngle);
     G.inPenumbra = metric(polarPoint(ecx, ecy, R, Math.PI / 2 + rel)) <= 1;
     /* 月球（和影子）在哪：影子打在地表 shadowAngle 的地方；跑出地球邊緣以後，月球繼續直直往前走 */
-    const fs = G.shadowAngle, onEarth = fs >= 0 && fs <= Math.PI;
-    const mxNew = onEarth ? ecx + er * Math.cos(fs) : fs < 0 ? ecx + er - er * fs : ecx - er - er * (fs - Math.PI);
+    /* 月球的 x 由「觀察者剛好在畫出來的半影錐邊緣 ⇔ 剛進半影（右圖剛碰到太陽）」決定：
+       u = rel / contactAngle（−1～1 在半影裡），月心 x = 觀察者 x + u × 半影錐在觀察者深度的半寬（錐的尖端跟著落點，迭代幾次就收斂） */
+    const ob = G.observerSurface, u = rel / contactAngle, ayOf = x => { const d = x - ecx; return annular ? apexY : Math.max(apexY, (Math.abs(d) <= er ? ecy - Math.sqrt(er * er - d * d) : ecy) + 8); };
+    let mxNew = ob.x; for (let i = 0; i < 12; i++) mxNew = ob.x + u * moonR * (1 + (ob.y - moonY) / (ayOf(mxNew) - moonY));
+    const dxm = mxNew - ecx, onEarth = Math.abs(dxm) <= er;
+    G.shadowAngle = onEarth ? Math.acos(dxm / er) : dxm > 0 ? -(dxm - er) / er : Math.PI + (-dxm - er) / er;   /* 原本 mx 公式的反函數：地表落點的角度 */
+    const fs = G.shadowAngle;
     G.onEarth = onEarth; G.hitY = onEarth ? ecy - er * Math.sin(fs) : ecy + er;
     G.moonX = mxNew; G.rayEndY = Math.max(rayEndY, G.hitY + 16);
     /* 畫圖用：日全食、日偏食的本影尖端剛好碰到影子落在地表的地方（日環食的偽本影照原檔） */
-    G.apexY = annular ? apexY : Math.max(apexY, G.hitY + 8);
+    /* 跑出地球邊緣時尖端停在晝夜線（ecy）的高度，跟邊緣上的值接得起來，不會跳 */
+    G.apexY = annular ? apexY : Math.max(apexY, (onEarth ? G.hitY : ecy) + 8);
     const shift = moonR / (G.apexY - moonY) * (G.rayEndY - moonY);
     G.moonLeft = mxNew - moonR; G.moonRight = mxNew + moonR;
     G.outerLeft = G.moonLeft - shift; G.outerRight = G.moonRight + shift; G.innerLeft = G.moonRight - shift; G.innerRight = G.moonLeft + shift;
+    /* 影子有沒有真的落在地球向陽的那一半（跟上面畫的錐一樣：深度 y 的半寬 w(y)；地球在 y 的半弦長 c(y)；|月心 x − 地心 x| − w ≤ c 就碰到）
+       本影：月球 → 尖端（w > 0 才算）；偽本影：尖端以後（日環食，w > 0 才算）；半影：外側兩條光線 */
+    const kY = y => (y - moonY) / (G.apexY - moonY);
+    /* 回傳最先碰到的那一點在圓上的角度（碰不到＝null），虛線就指那裡 */
+    const coneHits = (w, rad) => { for (let i = 0; i <= 128; i++) { const y = ecy - rad + rad * i / 128, wy = w(y), cy = Math.sqrt(Math.max(0, rad * rad - (y - ecy) * (y - ecy)));
+      if (wy > 0 && Math.abs(mxNew - ecx) - wy <= cy) return Math.atan2(ecy - y, Math.max(-cy, Math.min(cy, mxNew - ecx))); } return null; };
+    const hitA = type === 'total' ? coneHits(y => moonR * (1 - kY(y)), er) : annular ? coneHits(y => moonR * (kY(y) - 1), er) : coneHits(y => moonR * (1 + kY(y)), G.observerRadius);
+    G.umbraOnEarth = type === 'total' && hitA !== null;
+    G.antumbraOnEarth = annular && hitA !== null;
+    G.penOnTropic = partial && hitA !== null;
+    G.footAngle = hitA;
     Object.assign(G, { sx, sy, sr, mr, maxOffset, viewTrack });
     /* 地面上看：月球從右（西）往左（東）滑過太陽 */
     G.mx = 1000 + mr - viewTrack * p; G.my = sy + maxOffset;
@@ -3457,7 +3474,8 @@
     c.beginPath(); c.moveTo(X(G.moonLeft), Y(G.moonY)); c.lineTo(X(penX(G.moonLeft, G.outerLeft, G.ecy)), ey); c.lineTo(X(penX(G.moonRight, G.outerRight, G.ecy)), ey); c.lineTo(X(G.moonRight), Y(G.moonY)); c.closePath(); c.clip();
     c.translate(ex, ey); c.rotate(-(G.shadowAngle - Math.PI / 2));
     c.fillStyle = 'rgba(150,170,190,0.30)'; c.beginPath(); c.ellipse(0, (G.shadowCenterY - G.ecy) * KS, G.surfaceOuter * KS, G.shadowDepth * KS, 0, 0, TAU); c.fill();
-    c.fillStyle = G.annular ? 'rgba(6,14,18,0.45)' : 'rgba(4,8,12,0.9)'; c.beginPath(); c.ellipse(0, (G.coreCenterY - G.ecy) * KS, Math.max(2.5, G.surfaceCore) * KS, 4 * KS, 0, 0, TAU); c.fill();
+    /* 中間的小黑點：日全食／日偏食＝本影真的碰到向陽面才畫；日環食＝偽本影真的碰到向陽面才畫 */
+    if (G.annular ? G.antumbraOnEarth : G.umbraOnEarth) { c.fillStyle = G.annular ? 'rgba(6,14,18,0.45)' : 'rgba(4,8,12,0.9)'; c.beginPath(); c.ellipse(0, (G.coreCenterY - G.ecy) * KS, Math.max(2.5, G.surfaceCore) * KS, 4 * KS, 0, 0, TAU); c.fill(); }
     c.restore();
     if (G.partial) { c.save(); c.strokeStyle = MP.GR; c.lineWidth = 2; c.setLineDash([7, 7]); c.beginPath(); c.arc(ex, ey, G.observerRadius * KS, 0, TAU); c.stroke(); c.restore(); e_label(c, tr('北迴歸線', 'Tropic of Cancer'), ex, Y(G.ecy + 40), MP.GR, 15, 'center', true); }
     mpObserver(c, ex, ey, G.observerRadius * KS, G.observerAngle, 0.75);
@@ -3471,9 +3489,14 @@
       c.save(); c.setLineDash([8, 8]); e_ln(c, X(700), Y(G.moonY + 20), X(700), Y(G.earthTop - 20), MP.VI, 3); c.restore();
       mpWrap(c, tr('離地球較遠', 'Farther from Earth'), X(700) - 10, Y(286), MP.VI, 16, 'right', 140);
     }
-    const kl = G.partial ? tr('北迴歸線只通過半影', 'Tropic of Cancer crosses only penumbra') : tr('本影落點很小', 'Umbra footprint is small'), kc = G.partial ? MP.OR : MP.CY;
-    const kn = mpWrap(c, kl, 16, Y(330), kc, 17, 'left', 170), kw = Math.min(170, e_w(c, kl, 17));
-    c.save(); c.globalAlpha = 0.7; c.setLineDash([4, 5]); const hp = polarPoint(ex, ey, er - 4, Math.max(0.15, Math.min(Math.PI - 0.15, G.shadowAngle))); e_ln(c, 16 + kw + 8, Y(330) - 6 + (kn - 1) * 11, hp.x, hp.y, kc, 1.6); c.restore();
+    /* 標籤＋虛線只在影子真的落在向陽面時出現，虛線指向真正的落點：
+       日全食＝本影落點（地表）；日環食＝偽本影落點（地表；本影到不了地面）；日偏食＝半影掃過北迴歸線的地方 */
+    const kOn = G.partial ? G.penOnTropic : G.annular ? G.antumbraOnEarth : G.umbraOnEarth;
+    if (kOn) {
+      const kl = G.partial ? tr('北迴歸線只通過半影', 'Tropic of Cancer crosses only penumbra') : G.annular ? tr('偽本影落點', 'Antumbra footprint') : tr('本影落點很小', 'Umbra footprint is small'), kc = G.partial ? MP.OR : MP.CY;
+      const kn = mpWrap(c, kl, 16, Y(330), kc, 17, 'left', 170), kw = Math.min(170, e_w(c, kl, 17));
+      c.save(); c.globalAlpha = 0.7; c.setLineDash([4, 5]); const hp = polarPoint(ex, ey, (G.partial ? G.observerRadius : G.er) * KS - (G.partial ? 0 : 4), G.footAngle); e_ln(c, 16 + kw + 8, Y(330) - 6 + (kn - 1) * 11, hp.x, hp.y, kc, 1.6); c.restore();
+    }
     e_label(c, tr('平行太陽光', 'Parallel sunlight'), 240, 74, MP.Y, 17, 'center', true);
     e_label(c, tr('太空中的排列', 'Alignment in Space'), 240, 34, MP.CY, 20, 'center', true);
     e_label(c, tr('↺ 地球自轉：逆時針', '↺ Earth rotation: counterclockwise'), 240, 512, MP.GR, 16, 'center', true);
