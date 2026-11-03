@@ -7,7 +7,7 @@
 **首頁已換成「伽利略星球」**（2026-10-26 上線，`index.html`）。原本的清單首頁改名為 `index_classic.html`（右上角「舊版清單」連過去）。
 **新增或修改課程卡片：改 `index_classic.html`，再跑 `python3 tools/museum/build_lessons.py`**（產生 `assets/museum/data/lessons.json`，星球上才會出現）；不要在 `index.html` 加卡片。交接：`galileo-planet/HANDOFF.md`。
 
-## 功與能 work_5「核能發電：核分裂與核融合」★（老師 2026-11-03 指示，製作中）
+## 功與能 work_5「核能發電：核分裂與核融合」★（老師 2026-11-03 指示，已完成）
 
 - 老師要求：「發電」單元以前刪掉了，想讓資優生多學；用 Opus 設計發電動畫；核融合用太陽的反應（從太陽誕生起）；現在科技還沒到位的寫在補充；補充標題「未來的新星－＊＊＊＊」。**四個字我解讀為「人造太陽」，請老師確認。** 另指示「STAR IT」＝標 ★（資優課）。
 - 新檔：`work_5.html`（5 分頁：核分裂／核電廠／太陽核融合／分裂融合比較（束縛能曲線、靜態示意圖）／補充：未來的新星）、`work_5_kit_1103_v1.js`（共用動畫骨架 W5）、`work_5_fission|plant|sun_1103_v1.js`（Opus 動畫）、`assets/quiz/quiz_work_5_1103_v1.js`（15 題）、封面 `assets/covers/work_5_cover_1103_v1.jpg`（程式繪製的暫用圖，可用同檔名 AI 插圖覆蓋；`work_5_cover_1103_gen.html` 是產生器）。
