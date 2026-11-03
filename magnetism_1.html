@@ -98,7 +98,7 @@ body.intro-locked { overflow: hidden; }
 .canvas-wrap { background: var(--canvas); border: 2px solid var(--cyan); border-radius: 10px; overflow: hidden; position: relative; }
 .rect-canvas { display: block; width: 100%; height: auto; aspect-ratio: 10 / 6; cursor: grab; }
 .rect-canvas:active { cursor: grabbing; }
-#poleCanvas, #poleCanvas:active { cursor: default; }
+#poleCanvas, #poleCanvas:active, #magCanvas, #magCanvas:active { cursor: default; }
 
 /* V3 按鈕彈性設計 */
 .controls { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
@@ -288,14 +288,8 @@ body.intro-locked { overflow: hidden; }
     <article class="panel">
       <h2 data-zh="【動畫】微觀世界下的磁化" data-en="[Anim] Micro-Magnetization">【動畫】微觀世界下的磁化</h2>
       <div class="canvas-wrap"><canvas id="magCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
-      <div class="controls" id="mag-controls-process">
-        <button id="magnetizeBtn" class="action-btn success" data-zh="🧲 靠近磁鐵 (磁化)" data-en="🧲 Near Magnet (Magnetize)">🧲 靠近磁鐵 (磁化)</button>
-        <button id="heatBtn" class="action-btn warning" data-zh="🔥 高溫加熱 (退磁)" data-en="🔥 Heat (Demagnetize)">🔥 高溫加熱 (退磁)</button>
-      </div>
-      <div class="controls" id="mag-controls-store" style="display:none;">
-        <button class="action-btn store-btn active-btn" data-type="bar" style="background:transparent; border: 2px solid var(--muted); color: var(--white);" data-zh="長條形保存法" data-en="Bar Magnet Storage">長條形保存法</button>
-        <button class="action-btn store-btn" data-type="u" style="background:transparent; border: 2px solid var(--muted); color: var(--white);" data-zh="U 字形保存法" data-en="U-Shape Storage">U 字形保存法</button>
-      </div>
+      <div class="step-row" id="steps-mag" aria-label="步驟"></div>
+      
       <div id="magResult" class="result-box" data-zh="鐵塊內部有許多小磁區(磁疇)，平常排列凌亂，整體不具磁性。" data-en="Iron contains small magnetic domains. Normally randomized, showing no net magnetism.">鐵塊內部有許多小磁區(磁疇)，平常排列凌亂，整體不具磁性。</div>
     </article>
   </div>
@@ -452,6 +446,7 @@ body.intro-locked { overflow: hidden; }
 <script>
 let currentLang = 'zh';
 let introClosed = false;
+let magScene = null; // 磁化與保存分頁目前播放中的場景（MagAnim.mag）
 let poleScene = null; // 磁極分頁目前播放中的場景（動畫模組 MagAnim.pole）
 function enterLesson() { if (introClosed) return; introClosed = true; const el = document.getElementById('introScreen'); if (!el) return; el.classList.add('exiting'); document.body.classList.remove('intro-locked'); setTimeout(() => el.remove(), 800); setTimeout(drawActive, 900); }
 (function () { const el = document.getElementById('introScreen'); if (!el) return; el.onclick = enterLesson; el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); enterLesson(); } }; el.focus && el.focus(); })();
@@ -468,13 +463,7 @@ function setLang(lang) {
   // Update dynamic JS texts based on current state
   if (poleScene && window.MagAnim && MagAnim.pole) MagAnim.pole.relang();
 
-  if (magState.isMagnetized) {
-    document.getElementById('magResult').innerHTML = tr('受外部磁場影響，磁疇變得<strong class="accent-cyan">規則排列</strong>，鐵塊暫時變成了磁鐵！', 'Influenced by external field, domains <strong class="accent-cyan">align orderly</strong>. The iron is temporarily a magnet!');
-  } else if (document.getElementById('heatBtn').clickedOnce) {
-    document.getElementById('magResult').innerHTML = tr('高溫或撞擊會破壞排列，使磁疇再度<strong class="accent-pink">混亂</strong>，失去磁性。', 'Heat or impact destroys alignment, causing domains to become <strong class="accent-pink">random</strong> again, losing magnetism.');
-  } else {
-    document.getElementById('magResult').innerHTML = tr('鐵塊內部有許多小磁區(磁疇)，平常排列凌亂，整體不具磁性。', 'Iron contains small magnetic domains. Normally randomized, showing no net magnetism.');
-  }
+  if (magScene && window.MagAnim && MagAnim.mag) MagAnim.mag.relang();
 
   const sBtn = document.getElementById('sprinkleBtn');
   const lRes = document.getElementById('lineResult');
@@ -730,61 +719,6 @@ function drawSymmetricFieldLines(ctx, poles, lineCount, radius, color = 'rgba(19
   }
   ctx.restore();
 }
-
-// ==========================================
-// 2. 磁化與保存
-// ==========================================
-const magState = { domains: [], isMagnetized: false, storeType: 'bar' };
-function initDomains() {
-  magState.domains = [];
-  for(let i=0; i<4; i++){ for(let j=0; j<8; j++){ magState.domains.push({x: 320+j*48, y: 240+i*38, a: Math.random()*TAU}); } }
-}
-function drawMagCanvas(ctx) {
-  clear(ctx);
-  if(document.getElementById('mag-process').classList.contains('active')) {
-    if(magState.isMagnetized) drawMagnet(ctx, 100, 230, 160, 140, true);
-    ctx.save(); ctx.fillStyle = '#444'; ctx.fillRect(300, 220, 400, 160); ctx.strokeStyle = '#888'; ctx.lineWidth = 4; ctx.strokeRect(300, 220, 400, 160); ctx.restore();
-    for(let d of magState.domains) {
-      let a = magState.isMagnetized ? 0 + (Math.random()-0.5)*0.3 : d.a;
-      ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(a);
-      ctx.fillStyle=C.poleS; ctx.fillRect(0, -10, 18, 20); ctx.fillStyle=C.poleN; ctx.fillRect(-18, -10, 18, 20); ctx.restore();
-    }
-    label(ctx, tr('鐵塊內部磁疇', 'Magnetic domains inside iron'), 500, 430, C.white, 'center', 24);
-  } else {
-    if(magState.storeType === 'bar') {
-      drawMagnet(ctx, 250, 150, 500, 80, true); drawMagnet(ctx, 250, 370, 500, 80, false); 
-      ctx.save(); ctx.fillStyle = '#777'; ctx.fillRect(200, 150, 50, 300); ctx.fillRect(750, 150, 50, 300); ctx.restore();
-      label(ctx, tr('軟鐵片', 'Soft Iron'), 170, 300, C.white, 'center', 22); label(ctx, tr('軟鐵片', 'Soft Iron'), 830, 300, C.white, 'center', 22);
-      ctx.save(); ctx.strokeStyle = C.cyan; ctx.lineWidth=3; ctx.setLineDash([5,5]);
-      ctx.beginPath(); ctx.moveTo(275, 190); ctx.lineTo(225, 190); ctx.lineTo(225, 410); ctx.lineTo(275, 410); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(725, 190); ctx.lineTo(775, 190); ctx.lineTo(775, 410); ctx.lineTo(725, 410); ctx.stroke(); ctx.restore();
-    } else {
-      ctx.save(); ctx.strokeStyle = '#aaa'; ctx.lineWidth = 60; ctx.setLineDash([]);
-      ctx.beginPath(); ctx.arc(500, 250, 120, Math.PI, TAU); ctx.stroke();
-      ctx.fillStyle = C.poleS; ctx.fillRect(350, 250, 60, 150); ctx.fillStyle = C.poleN; ctx.fillRect(590, 250, 60, 150); 
-      ctx.fillStyle = '#777'; ctx.fillRect(350, 400, 300, 40); ctx.restore();
-      label(ctx, 'S', 380, 325, '#fff', 'center', 34); label(ctx, 'N', 620, 325, '#fff', 'center', 34); label(ctx, tr('吸附軟鐵片', 'Attached soft iron'), 500, 480, C.white, 'center', 24);
-      ctx.save(); ctx.strokeStyle = C.cyan; ctx.lineWidth=3; ctx.setLineDash([5,5]);
-      ctx.beginPath(); ctx.moveTo(620, 350); ctx.lineTo(620, 420); ctx.lineTo(380, 420); ctx.lineTo(380, 350); ctx.stroke(); ctx.restore();
-    }
-  }
-}
-document.getElementById('magnetizeBtn').addEventListener('click', () => { 
-  magState.isMagnetized = true; 
-  document.getElementById('magResult').innerHTML= tr('受外部磁場影響，磁疇變得<strong class="accent-cyan">規則排列</strong>，鐵塊暫時變成了磁鐵！', 'Influenced by external field, domains <strong class="accent-cyan">align orderly</strong>. The iron is temporarily a magnet!'); 
-  safeDraw('magCanvas', drawMagCanvas); 
-});
-document.getElementById('heatBtn').addEventListener('click', () => { 
-  magState.isMagnetized = false; 
-  initDomains(); 
-  document.getElementById('heatBtn').clickedOnce = true;
-  document.getElementById('magResult').innerHTML= tr('高溫或撞擊會破壞排列，使磁疇再度<strong class="accent-pink">混亂</strong>，失去磁性。', 'Heat or impact destroys alignment, causing domains to become <strong class="accent-pink">random</strong> again, losing magnetism.'); 
-  safeDraw('magCanvas', drawMagCanvas); 
-});
-document.querySelectorAll('.store-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.store-btn').forEach(x => x.classList.remove('active-btn'));
-  b.classList.add('active-btn'); magState.storeType = b.dataset.type; safeDraw('magCanvas', drawMagCanvas);
-}));
 
 // ==========================================
 // 3. 磁力線分布 
@@ -1049,7 +983,10 @@ function drawActive() {
     if (window.MagAnim && MagAnim.pole && poleScene !== sub) { MagAnim.pole.activate(sub); poleScene = sub; }
   } else if (poleScene) { MagAnim.pole.deactivate(); poleScene = null; }
   
-  if (id === 'tab-mag') { initDomains(); safeDraw('magCanvas', drawMagCanvas); }
+  if (id === 'tab-mag') {
+    const sub = document.querySelector('#tab-mag .sub-tab-btn.active').dataset.sub;
+    if (window.MagAnim && MagAnim.mag && magScene !== sub) { MagAnim.mag.activate(sub); magScene = sub; }
+  } else if (magScene) { MagAnim.mag.deactivate(); magScene = null; }
   if (id === 'tab-line') { lineState.tap = 0; document.getElementById('sprinkleBtn').textContent = tr('✨ 撒鐵粉 (0/4)', '✨ Sprinkle Filings (0/4)'); safeDraw('lineCanvas', drawLineCanvas); }
   if (id === 'tab-compass') safeDraw('compassCanvas', drawCompassCanvas);
   if (id === 'tab-earth') safeDraw('earthCanvas', drawEarthCanvas);
@@ -1069,11 +1006,7 @@ document.querySelectorAll('.sub-tab-btn').forEach(b => b.addEventListener('click
   b.classList.add('active'); parent.querySelector(`#${b.dataset.sub}`)?.classList.add('active');
   
   if(b.dataset.parent === 'tab-pole') { poleScene = null; setTimeout(drawActive, 0); }
-  if(b.dataset.parent === 'tab-mag') {
-    document.getElementById('mag-controls-process').style.display = b.dataset.sub==='mag-process'?'flex':'none';
-    document.getElementById('mag-controls-store').style.display = b.dataset.sub==='mag-store'?'flex':'none';
-    safeDraw('magCanvas', drawMagCanvas);
-  }
+  if(b.dataset.parent === 'tab-mag') { magScene = null; setTimeout(drawActive, 0); }
   if(b.dataset.parent === 'tab-line') {
     document.getElementById('line-controls-bar').style.display = b.dataset.sub==='line-bar'?'flex':'none';
     initFilings(); lineState.tap = 0; document.getElementById('sprinkleBtn').textContent = tr('✨ 撒鐵粉 (0/4)', '✨ Sprinkle Filings (0/4)');
@@ -1088,6 +1021,7 @@ window.addEventListener('orientationchange', () => setTimeout(drawActive, 180), 
 window.addEventListener('load', () => { initCompassEvents(); initFilings(); setLang('zh'); setTimeout(drawActive, 100); });
 </script>
 <script defer src="magnetism_1_pole_1104_v1.js?v=20261104-p1"></script>
+<script defer src="magnetism_1_mag_1104_v1.js?v=20261104-m1"></script>
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
 <script defer src="assets/quiz/quiz_magnetism_1_1028_v1.js?v=20261028-q1"></script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
