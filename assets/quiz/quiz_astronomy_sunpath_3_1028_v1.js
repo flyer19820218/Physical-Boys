@@ -99,6 +99,10 @@ LQ.addStatic('astronomy_sunpath_3',{
   Q(P(`從北極上空看，地軸像陀螺一樣慢慢畫圈（歲差），方向是哪一種？`,`Seen from above the North Pole, which way does Earth's axis slowly circle (precession)?`),
    [P(`逆時針，和自轉方向相同`,`Counterclockwise, same as the spin`),P(`順時針，和公轉方向相同`,`Clockwise, same as the orbit`),P(`順時針，和自轉方向相反`,`Clockwise, opposite to the spin`),P(`不會轉，地軸永遠指向北極星`,`No turn; always toward Polaris`)],2,
    P(`從北極上空看，地球自轉、公轉都是逆時針，歲差卻是順時針（和自轉相反），約 25,772 年一圈；所以北極星會換：約前 2800 年是右樞、現在是北極星、一萬多年後是織女星。`,`From above the North Pole, Earth's spin and orbit are counterclockwise but precession is clockwise (opposite to the spin), once every 25,772 years — so the pole star changes: Thuban around 2800 BC, Polaris now, Vega in over 10,000 years.`),
-   P(`在「🎓 延伸：歲差」播放年代，看天北極沿著圓往哪個方向走。`,`Play the years in the precession extension and watch which way the pole moves around the circle.`))]
+   P(`在「🎓 延伸：歲差」播放年代，看天北極沿著圓往哪個方向走。`,`Play the years in the precession extension and watch which way the pole moves around the circle.`)),
+  Q(P(`從北極上空看，「太陽在水瓶座」的時候，地球在公轉軌道上的哪裡？`,`Seen from above the North Pole, where is Earth on its orbit when the Sun is "in Aquarius"?`),
+   [P(`在太陽和水瓶座的中間那段`,`Between the Sun and Aquarius`),P(`在太陽的另一側，朝向獅子座`,`Across the Sun, toward Leo`),P(`在軌道上最靠近水瓶座那一側`,`Nearest point to Aquarius`),P(`在太陽的旁邊，朝向天蠍座`,`Beside the Sun, toward Scorpius`)],1,
+   P(`從地球穿過太陽看過去，背後是水瓶座，所以地球、太陽、水瓶座排成一直線、太陽在中間：地球在太陽的另一側，朝向獅子座。用黃經算：太陽在 λ☉，地球就在 λ☉＋180°。`,`Looking from Earth through the Sun we see Aquarius behind it, so Earth, the Sun and Aquarius lie in a line with the Sun in the middle: Earth is across the Sun, toward Leo. In longitude: Sun at λ, Earth at λ + 180°.`),
+   P(`在「🧭 太陽小圈・星座大圈」點下方的水瓶座，看地球走到哪裡。`,`In "🧭 Sun, orbit & zodiac", tap Aquarius below and watch where Earth goes.`))]
 });
 })();
