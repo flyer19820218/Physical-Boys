@@ -36,6 +36,11 @@
   const GOOD = COL.green;
   const DUR = [6.5, 9.5, 8, 8, 8.5];             /* 總長 40.5 秒 */
 
+  /* 兩個 #hex 色混合，回傳 #hex（W5.ball 只吃 #hex） */
+  function mixHex(a, b, t) {
+    const A = [1, 3, 5].map(i => parseInt(a.substr(i, 2), 16)), B = [1, 3, 5].map(i => parseInt(b.substr(i, 2), 16));
+    return '#' + A.map((v, i) => Math.round(lerp(v, B[i], clamp01(t))).toString(16).padStart(2, '0')).join('');
+  }
   const L = (zh, en) => (typeof tr === 'function' ? tr(zh, en) : zh);
 
   /* ── 文字：一律走 W5.label / W5.pill；透明度太低時不畫（避免把看不見的字算進重疊檢查） ── */
@@ -108,7 +113,7 @@
   /* trail：由新到舊的位置陣列；fast 0..1 決定亮度與光暈 */
   function flyN(c, trail, r, fast, a) {
     if (a <= 0.02 || !trail.length) return;
-    const col = W5.mix(NEU, FASTN, fast);
+    const col = mixHex(NEU, FASTN, fast);
     c.save(); c.globalAlpha *= a; c.lineCap = 'round';
     const n = trail.length;
     for (let j = n - 1; j >= 1; j--) {
@@ -294,7 +299,16 @@
       c.strokeStyle = W5.rgba(ENE, 0.5 * (1 - k)); c.lineWidth = 2;
       c.beginPath(); c.arc(nx, CY, 20 + 420 * Math.pow(k, 0.75), 0, TAU); c.stroke(); c.restore();
     }
-    /* 3 顆快中子 */
+    /* 3 顆快中子：飛過的路徑留下虛線（配合「3 個快中子」的標示） */
+    if (split && u2 < 4.3) {
+      c.save(); c.globalAlpha *= 1 - seg(u2, 3.9, 4.3);
+      c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 2; c.setLineDash([6, 7]);
+      BIG.free.forEach((i, k) => {
+        const d = BIG.fdir[k], t0 = BIG.tgt[i], L0 = Math.min(V_FAST * dt, 700);
+        c.beginPath(); c.moveTo(CX + t0.x, CY + t0.y); c.lineTo(CX + t0.x + d.x * L0, CY + t0.y + d.y * L0); c.stroke();
+      });
+      c.restore();
+    }
     if (split) {
       BIG.free.forEach((i, k) => {
         const d = BIG.fdir[k], t0 = BIG.tgt[i], tr0 = [];
@@ -314,7 +328,8 @@
     const tr0 = [];
     for (let m = 0; m < 7; m++) tr0.push({ x: N_X0 + N_V * Math.max(0, t - m * 0.06), y });
     flyN(c, tr0, RP, 0, k * clamp01((tt - 0.05) / 0.3));
-    T(c, k * (1 - seg(tt, T_ABS - 0.9, T_ABS - 0.5)), L('慢中子', 'slow neutron'), x, y - 36, NEU, 22);
+    const lb = L('慢中子', 'slow neutron'), lw = W5.tw(c, lb, 22);
+    T(c, k * (1 - seg(tt, T_ABS - 0.9, T_ABS - 0.5)), lb, Math.max(x, lw / 2 + 8), y - 36, NEU, 22);
   }
 
   /* ═════════════════ 第 1 步 ═════════════════ */
@@ -357,23 +372,23 @@
     P(c, seg(u, 4.3, 4.7), L('1 個鈾核分裂約放出 200 MeV（兆電子伏特）', 'One uranium fission releases about 200 MeV (mega-electron-volts)'), 480, 118, ENE, 22);
     T(c, seg(u, 4.8, 5.2), L('約是 1 個碳原子燃燒放出能量的 5000 萬倍', 'about 50 million times the energy from burning one carbon atom'), 480, 162, ENE, 20);
     /* 守恆：等寬字、逐欄對齊 */
-    const ac = seg(u, 5.3, 5.7), X = 546 - 214 + 112;
+    const ac = seg(u, 5.3, 5.7), X = 434;
     T(c, ac, L('質量數：', 'Mass no.:'), X, 256, WHITE, 20, 'right');
     T(c, ac, '235 + 1 = 141 + 92 + 3 = 236', X + 6, 256, WHITE, 20, 'left', true);
     T(c, ac, L('質子數：', 'Protons:'), X, 290, PRO, 20, 'right');
     T(c, ac, ' 92 + 0 =  56 + 36 + 0 =  92', X + 6, 290, PRO, 20, 'left', true);
     T(c, seg(u, 5.8, 6.2), L('反應後總質量少了約 0.1%，少掉的質量變成能量（E = mc²）', 'Total mass drops by about 0.1%: the lost mass becomes energy (E = mc²)'), 480, 404, ENE, 20);
-    subtitle(c, seg(u, T_SC + 0.3, T_SC + 0.8), L('碎片高速飛出，撞擊周圍的原子，動能變成熱',
+    subtitle(c, seg(u, T_SC + 0.1, T_SC + 0.5), L('碎片高速飛出，撞擊周圍的原子，動能變成熱',
       'The fragments fly out at high speed, hit nearby atoms, and their kinetic energy becomes heat.'));
-    subtitle(c, 1 - seg(u, T_SC, T_SC + 0.3), L('原子核越晃越厲害，拉長、中間變細……',
+    subtitle(c, 1 - seg(u, T_SC - 0.3, T_SC), L('原子核越晃越厲害，拉長、中間變細……',
       'The nucleus wobbles harder, stretches, and pinches in the middle...'));
   }
 
   /* ═════════════════ 小原子核（第 3、4 步共用） ═════════════════ */
   const SN = (function () {
     const pts = sunflower(12, 6.6), type = new Array(12).fill('n');
-    [0, 3, 5, 8, 10].forEach(i => { type[i] = 'p'; });
-    const emit = [2, 7, 11];
+    [8, 11, 1, 4, 10].forEach(i => { type[i] = 'p'; });   /* 角度約每 72° 一顆，質子分散 */
+    const emit = [2, 6, 9];
     return { pts, type, emit, r: 7, R: 6.6 * Math.sqrt(12) + 7 };
   })();
   /* tf：分裂時刻（Infinity＝不分裂）；ang：碎片分開的方向 */
@@ -381,8 +396,9 @@
     const dt = t - tf, split = dt >= 0;
     if (!split) W5.glow(c, x, y, SN.R * 1.6, HEAT, 0.12);
     const ux = Math.cos(ang), uy = Math.sin(ang);
-    const off = split ? 10 + 22 * (1 - Math.exp(-dt / 0.5)) + 5 * dt : 0;
-    const fade = split ? 1 - 0.4 * clamp01(dt / 1.5) : 1;
+    const off = split ? 8 + 15 * (1 - Math.exp(-dt / 0.5)) + 2.5 * dt : 0;
+    const fade = split ? 1 - 0.35 * clamp01(dt / 1.5) : 1;
+    if (split && dt > 0.4) W5.glow(c, x, y, SN.R * 2.2, HEAT, (0.16 + 0.07 * Math.sin(t * 3 + seed)) * clamp01((dt - 0.4) / 0.6));   /* 留下的熱 */
     /* 快分裂時先晃一下 */
     const wob = (!split && dt > -0.35) ? 0.25 * (1 + dt / 0.35) * Math.sin((dt + 0.35) * 40) : 0;
     c.save(); c.globalAlpha *= fade;
@@ -440,7 +456,11 @@
       c.beginPath(); c.moveTo(n.x0, n.y0); c.lineTo(lerp(n.x0, n.x1, f), lerp(n.y0, n.y1, f)); c.stroke();
     });
     c.setLineDash([]);
-    NUC3.forEach((p, i) => smallNuc(c, p.x, p.y, u, CH.tf[i], hash(i * 17 + 3) * TAU, i + 1));
+    NUC3.forEach((p, i) => {
+      /* 上排的核：碎片左右分開，不往上撞到標題區 */
+      const h = hash(i * 17 + 3), ang = p.y < 175 ? (h < 0.5 ? 0 : Math.PI) + (h - 0.5) * 0.6 : h * TAU;
+      smallNuc(c, p.x, p.y, u, CH.tf[i], ang, i + 1);
+    });
     /* 第一顆中子 */
     if (u < CH.tf[0]) {
       const t1 = CH.tf[0], f = clamp01((u - CH.T0) / (t1 - CH.T0)), x = lerp(-10, NUC3[0].x - 12, f);
@@ -459,11 +479,9 @@
     legend(c, k, true);
     T(c, k * (1 - seg(u, CH.tf[0] - 0.2, CH.tf[0])), L('鈾-235', 'Uranium-235'), 480, 312, WHITE, 20);
     /* 計數 */
-    const pulse = t0 => 1 + 0.0 * t0;
     P(c, seg(u, CH.tf[0], CH.tf[0] + 0.3), L('第 1 次：1 個核分裂', 'Round 1: 1 fission'), 222, 428, WHITE, 22);
     P(c, seg(u, CH.g1, CH.g1 + 0.3), L('第 2 次：3 個', 'Round 2: 3'), 480, 428, WHITE, 22);
     P(c, seg(u, CH.g2, CH.g2 + 0.3), L('第 3 次：9 個', 'Round 3: 9'), 712, 428, WHITE, 22);
-    void pulse;
     /* 標題 → 警示 */
     const tw = CH.g2e + 0.5;
     P(c, k * (1 - seg(u, tw - 0.4, tw - 0.1)), L('連鎖反應', 'Chain reaction'), 480, 38, WHITE, 24);
@@ -509,8 +527,8 @@
       for (let i = 0; i < 4; i++) { const a = MV.pts[i], b = MV.pts[i + 1]; if (dSeg(x, y, a, b) < 44) return true; }
       for (const h of MV.hits) if (Math.hypot(x - h.hx, y - h.hy) < 60) return true;
       if (Math.hypot(x - 860, y - 150) < 70) return true;               /* 有標字的那顆 */
-      if (y < 132 && x > 30 && x < 470) return true;                     /* 「快中子」說明 */
-      if (y > 312 && y < 384 && x > 240 && x < 620) return true;        /* 「撞到氫」說明 */
+      if (y < 150 && x > 30 && x < 490) return true;                     /* 「快中子」說明 */
+      if (y > 284 && y < 404 && x > 200 && x < 660) return true;        /* 「撞到氫」說明 */
       if (y > 196 && y < 240 && x > 740 && x < 860) return true;        /* 「鈾-235」 */
       return false;
     };
@@ -572,7 +590,7 @@
     MV.hits.forEach((h, i) => {
       const dt = u - h.t, rec = dt > 0 ? 16 * (1 - Math.exp(-dt / 0.3)) : 0;
       const sh = dt > 0 ? 4 * Math.exp(-dt / 1.2) : 0;
-      const ox = h.hx - h.n.x * 19 * 0 - h.n.x * rec, oy = h.hy - h.n.y * rec;
+      const ox = h.hx - h.n.x * rec, oy = h.hy - h.n.y * rec;
       /* O 在 H 的另一側：分子中心 = H − n·(rO + rH·0.35) 的方向上 */
       const d = 15 + 9 * 0.35, bend = 1.82 / 2;
       const ang = Math.atan2(h.n.y, h.n.x) + bend;           /* 讓第一顆 H 剛好朝向中子 */
@@ -588,7 +606,7 @@
       }
     });
     /* 鈾-235 原子核 */
-    U4.forEach((p, i) => smallNuc(c, p.x, p.y, u, i === 1 ? MV.tA + 0.25 : Infinity, i === 1 ? -1.2 : 0, 30 + i));
+    U4.forEach((p, i) => smallNuc(c, p.x, p.y, u, i === 1 ? MV.tA + 0.25 : Infinity, i === 1 ? 0.35 : 0, 30 + i));
     /* 中子 */
     if (u < MV.tA) {
       const trl = []; for (let m = 0; m < 12; m++) { const q = nPos4(u - m * 0.022); trl.push(q); }
@@ -600,7 +618,7 @@
     /* 分裂後再射出的快中子 */
     const tfz = MV.tA + 0.25;
     if (u > tfz) {
-      [-0.9, 0.05, 0.85].forEach((an, j) => {
+      [-2.3, 0.2, 1.3].forEach((an, j) => {
         const trl = []; for (let m = 0; m < 10; m++) { const tm = Math.max(0, u - tfz - m * 0.025); trl.push({ x: UT.x + Math.cos(an) * 420 * tm, y: UT.y + Math.sin(an) * 420 * tm }); }
         const h = trl[0]; if (h.x < PANEL4.x + PANEL4.w + 20 && h.y > PANEL4.y - 20 && h.y < PANEL4.y + PANEL4.h + 20) flyN(c, trl, 7, 1, 1);
       });
@@ -608,12 +626,12 @@
     c.restore();
 
     legend(c, k, true);
-    P(c, k, L('水＝減速劑：讓快中子變成慢中子，鈾-235 才容易吸收', 'Water = moderator: fast neutrons become slow, easy for U-235 to absorb'), 480, 40, WATER, 22);
+    P(c, k, L('水＝減速劑：讓快中子變成慢中子，鈾-235 才容易吸收', 'Water = moderator: slow neutrons are easy for U-235 to absorb'), 530, 40, WATER, 22);
     T(c, k, L('水分子', 'water molecule'), 860, 108, WATER, 20);
     T(c, seg(u, 0.7, 1.0), L('快中子：不容易引起分裂', 'Fast neutron: hard to cause fission'), 250, 118, FASTN, 22);
     T(c, seg(u, MV.hits[0].t + 0.1, MV.hits[0].t + 0.4), L('撞到氫原子，速度變慢', 'Each hit on hydrogen slows it down'), 430, 330, H_COL, 22);
     T(c, seg(u, MV.hits[2].t + 0.4, MV.hits[2].t + 0.8), L('示意：實際約要撞 20 次', 'In reality: about 20 hits'), 430, 362, DIM, 20);
-    T(c, k, L('鈾-235', 'Uranium-235'), UT.x, 220, WHITE, 20);
+    T(c, k * (1 - seg(u, MV.tA + 0.2, MV.tA + 0.5)), L('鈾-235', 'Uranium-235'), UT.x, 220, WHITE, 20);
     if (u > MV.hits[2].t && u < MV.tA) {
       const q = nPos4(u);
       T(c, seg(u, MV.hits[2].t + 0.1, MV.hits[2].t + 0.4) * (1 - seg(u, MV.tA - 0.7, MV.tA - 0.4)), L('慢中子', 'slow neutron'), q.x, q.y - 28, NEU, 22);
@@ -640,7 +658,7 @@
     const fis = [], neu = [], abs = [];
     const q = [];
     const push = f => { q.push(f); q.sort((a, b) => a.t - b.t); };
-    push({ t: 0.25, x: RODS[1], y: 220, rod: 1, m: -1 }); push({ t: 0.45, x: RODS[2], y: 330, rod: 2, m: -1 });
+    [[0.2, 1, 220], [0.35, 2, 330], [0.5, 0, 280], [0.7, 3, 190]].forEach(([t, r, y]) => push({ t, x: RODS[r], y, rod: r, m: -1 }));
     [5.75, 6.05, 6.35].forEach((t, i) => push({ t, x: RODS[[0, 3, 1][i]], y: 180 + i * 90, rod: [0, 3, 1][i], m: 1 }));
     /* 第 2 階段的中子源：偶爾冒出的單顆中子（會被控制棒吃掉） */
     [3.3, 3.9, 4.5, 5.0].forEach((t, i) => {
@@ -670,12 +688,12 @@
       else neu.push({ t0, t1: t0 + Math.hypot(x1 - x0, y1 - y0) / VN, x0, y0, x1, y1, fate: 'esc' });
     }
     let guard = 0;
-    while (q.length && guard++ < 400) {
+    while (q.length && guard++ < 1200) {
       const f = q.shift(); if (f.t > END) break;
       fis.push(f);
       const st = stage5(f.t);
       const recent = fis.filter(g => g.t > f.t - 1.2).length;
-      let m = f.m >= 0 ? f.m : st === 0 ? (recent < 7 ? 2 : recent < 11 ? 1 : 0) : st === 1 ? 0 : 1;
+      let m = f.m >= 0 ? f.m : st === 0 ? (recent < 14 ? 2 : recent < 20 ? 1 : 0) : st === 1 ? 0 : 1;
       if (st === 2 && f.m < 0) m = 1;
       const n = 2 + (rnd() < 0.45 ? 1 : 0);
       for (let j = 0; j < n; j++) {
@@ -717,7 +735,7 @@
     c.strokeStyle = 'rgba(246,243,234,0.35)'; c.lineWidth = 1.5; W5.rr(c, x0, RY0, FW, RY1 - RY0, 10); c.stroke();
   }
   function ctlRod(c, x, tip) {
-    const x0 = x - CW / 2, top = 62;
+    const x0 = x - CW / 2, top = 70;
     const g = c.createLinearGradient(x0, 0, x0 + CW, 0);
     g.addColorStop(0, '#1f2a27'); g.addColorStop(0.4, '#4a5a55'); g.addColorStop(1, '#1a2421');
     c.fillStyle = g; W5.rr(c, x0, top, CW, tip - top, 5); c.fill();
@@ -738,7 +756,7 @@
     c.restore();
     /* 爐心亮度：最近的分裂越多越亮（橘紅） */
     let I = 0; SIM5.fis.forEach(f => { const d = u - f.t; if (d >= 0) I += Math.exp(-d / 0.7); });
-    const heat = clamp01(I / 9);
+    const heat = clamp01(I / 14);
     W5.glow(c, 320, 280, 360, HEAT, 0.42 * heat);
     RODS.forEach((x, i) => fuelRod(c, x, i, heat));
     /* 中子 */
@@ -753,7 +771,7 @@
     /* 分裂閃光 */
     SIM5.fis.forEach(f => { const d = u - f.t; if (d >= 0 && d < 1.2) flash(c, f.x, f.y, d, 34); });
     /* 控制棒（畫在中子之後：被吸收的中子消失在棒上） */
-    c.fillStyle = '#33423e'; W5.rr(c, 160, 54, 320, 12, 5); c.fill();
+    c.fillStyle = '#33423e'; W5.rr(c, 160, 64, 320, 11, 5); c.fill();
     c.strokeStyle = '#8fa39c'; c.lineWidth = 1.5; c.stroke();
     CRODS.forEach(x => ctlRod(c, x, tip));
     /* 吸收火花 */
@@ -788,6 +806,8 @@
       c.save(); c.globalAlpha *= a;
       const yy = 398, pulse = 0.5 + 0.5 * Math.sin(u * 6);
       flash(c, 650, yy, 0.25 + 0.15 * pulse, 26);
+      c.strokeStyle = ENE; c.lineWidth = 2.5; c.lineCap = 'round';   /* 小小的「分裂」爆星 */
+      for (let j = 0; j < 8; j++) { const an = j / 8 * TAU, r0 = 4, r1 = j % 2 ? 10 : 15; c.beginPath(); c.moveTo(650 + Math.cos(an) * r0, yy + Math.sin(an) * r0); c.lineTo(650 + Math.cos(an) * r1, yy + Math.sin(an) * r1); c.stroke(); }
       W5.arrow(c, 672, yy, 712, yy, DIM, 3, 10);
       for (let j = 0; j < nb; j++) { c.save(); if (faint) c.globalAlpha *= 0.35; W5.glow(c, 734 + j * 30, yy, 18, '#ffffff', 0.4 * pulse); nball(c, 734 + j * 30, yy, 9, NEU); c.restore(); }
       c.restore();
