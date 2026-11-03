@@ -38,7 +38,7 @@
   const ATOMS = [];
   for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
     ATOMS.push({ dx: 38 + c * 48, dy: 36 + r * 42,
-                 ph: (r * 4 + c) * 1.7, sp: 0.0024 + ((r * 4 + c) % 5) * 0.00035 });
+                 ph: (r * 4 + c) * 1.7, sp: (0.0024 + ((r * 4 + c) % 5) * 0.00035) * 0.5 });
   }
 
   const S = { step: 1, t: 0, round: 0, last: null, ctx: null, cvs: null, texts: [], shapes: [] };
