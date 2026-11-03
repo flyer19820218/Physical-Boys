@@ -7,6 +7,13 @@
 **首頁已換成「伽利略星球」**（2026-10-26 上線，`index.html`）。原本的清單首頁改名為 `index_classic.html`（右上角「舊版清單」連過去）。
 **新增或修改課程卡片：改 `index_classic.html`，再跑 `python3 tools/museum/build_lessons.py`**（產生 `assets/museum/data/lessons.json`，星球上才會出現）；不要在 `index.html` 加卡片。交接：`galileo-planet/HANDOFF.md`。
 
+## 電學 electronics_3「為什麼並聯電壓相等」動畫（老師 2026-11-03 指示，進行中）
+
+- 老師要求：不想讓學生死背；用動畫解釋並聯各支路電壓為何相等（每顆電子能量在哪裡花光？）。放在並聯分頁新增子分頁「為什麼電壓相等」（`view-t3-par`，畫布 `#cvs-t3v` 960×480，步驟鈕 `btn-pv-1..5` → `window.parVoltGo(n)`，進入點 `initParVolt()`，RAF 存 `animFrames['tab3v']`）。
+- 分工：Sonnet＝頁面骨架（已完成：子分頁、按鈕、黑板文字、`setSubTab`／`switchTab` 掛勾、`<script src="electronics_3_parvolt_1103_v1.js">`）；Opus＝動畫檔 `electronics_3_parvolt_1103_v1.js`（一個）；Sonnet＝QA；commit／push 由主對話。
+- 故事：①電子離開電池帶一份能量（3.0 V）②串聯：同一顆電子連過兩燈，能量分兩半（1.5＋1.5）③並聯：電子不能分身，分岔口只能選一條 ④選的那條只有一顆燈，整份能量在那顆燈花光 ⑤兩燈電壓都＝電池電壓；主線電子滿能量進、空手回。
+- 狀態：骨架完成；動畫檔 ⏳
+
 ## 電學 electronics_1 調整（老師 2026-11-03 指示，已完成）
 
 - 範圍：`electronics_1.html`＋新檔 `electronics_1_polarize_1103_v1.js`。分工：Sonnet 改頁面與 QA、Opus 做動畫（AGENTS 13.5）。**完整協作紀錄（任務表、介面約定、各代理的檢查數字）在 commit `876abb5` 的本檔**，用 `git show 876abb5:PROGRESS.md` 看。
