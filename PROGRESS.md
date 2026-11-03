@@ -7,6 +7,35 @@
 **首頁已換成「伽利略星球」**（2026-10-26 上線，`index.html`）。原本的清單首頁改名為 `index_classic.html`（右上角「舊版清單」連過去）。
 **新增或修改課程卡片：改 `index_classic.html`，再跑 `python3 tools/museum/build_lessons.py`**（產生 `assets/museum/data/lessons.json`，星球上才會出現）；不要在 `index.html` 加卡片。交接：`galileo-planet/HANDOFF.md`。
 
+## 【進行中・多 Claude 協作】電學 electronics_1 調整（老師 2026-11-03 指示）
+
+**多個 Claude 一起做，開工前先讀這一段；做完在下面「工作紀錄」加一行，完成後把狀態改掉。** 範圍只有 `electronics_1.html`（＋新檔 `electronics_1_polarize_1103_v1.js`），不碰其他檔。
+**老師授權（2026-11-03）：** 自由電子移動速度全部加快（學生沒耐心）。這屬於 AGENTS 第一定律 RED ZONE 的「速率」，老師已明確同意，**只限速度數值，座標、軌跡、方向、物理邏輯一律不動**。
+
+| # | 任務 | 負責 | 狀態 |
+|---|---|---|---|
+| 1 | 「庫侖定律」分頁移到第 2 個分頁（只換按鈕與面板順序，**id 仍是 `tab5`**，不改 `currentTab` 判斷） | Sonnet | 待辦 |
+| 2 | 全頁自由電子加速（約 ×2；漂移／流動球約 ×1.8；集中成常數 `E_SPEED_ROAM`、`E_SPEED_FLOW`） | Sonnet | 待辦 |
+| 3 | 感應起電分頁新增區塊「為什麼帶電體能吸引不帶電的黑板？」骨架＋雙語說明（畫布 `#cvs-tab3b`、步驟鈕、教學黑板文字） | Sonnet | 待辦 |
+| 4 | 上述區塊的 canvas 動畫模組 `electronics_1_polarize_1103_v1.js`（**Opus，一次只開一個**） | Opus | 待辦（等 3） |
+| 5 | QA：動畫有動（10.3）、中英、每個分頁、改動只含速度與順序 | Sonnet | 待辦（等 4） |
+| 6 | 整合、commit、push main、更新本段 | 主對話 | 待辦 |
+
+**使用規則：** ①同一時間只有一個代理改 `electronics_1.html`（目前持有：Sonnet（任務1～3））。②代理不跑 git，commit 與 push 由主對話做。③動畫一律 Opus、其餘 Sonnet（AGENTS 13.5）。④疑似科學／教學順序問題不要自己改，寫進下面「待老師決定」。⑤工作紀錄寫：時間、誰、做了什麼、動了哪些檔、檢查結果。
+
+**介面約定（任務 3 與 4 共用，兩邊都照這個，不要各自改）：**
+- 檔案 `electronics_1_polarize_1103_v1.js`，頁面用 `<script src="electronics_1_polarize_1103_v1.js?v=20261103-v1" defer></script>` 載入（放在頁面現有 inline `<script>` 之後或 `defer`，要能用到頁面的全域函式 `tr`、`LANG`、`e_ball`、`e_txt`、`e_label`、`e_arrow`、`e_ln`、`e_rr`、`e_pen`、`e_stand`、`e_chargedRod`、`COLOR_*`、`animFrames`、`currentTab`）。
+- 畫布 `#cvs-tab3b`，`width="960" height="460"`，CSS 維持 `width:100%; height:auto`。
+- 模組提供兩個全域函式：`initPolarize()`（`initTab3` 結尾呼叫；**進分頁自動播放、連續循環**，迴圈只有一條，id 存 `animFrames['tab3b']`，離開分頁或 `document.hidden` 就停）、`polarizeGo(n)`（n=1..5，跳到第 n 步並接著播；步驟鈕呼叫）。頁面端一律用 `typeof` 或 `window.polarizeGo&&` 保護，模組沒載入也不會報錯。
+- 語言切換不另寫處理：每幀用 `tr('中文','English')` 重畫即可。進度條畫在畫布頂端（無文字）。
+- 五個步驟：①中性的黑板（正負電荷一樣多）②帶負電棒靠近，黑板內束縛電子被推開一點，近端出現＋、遠端出現－（局部分離，不是電子跑掉）③受力：近端異性電被吸引的力比遠端同性電被排斥的力大（箭頭長短＝庫侖定律「越近越大」）④黑板被吸向棒子（整體仍是中性）⑤拿開棒子，電荷回位。
+- 配色（AGENTS 2.2.1）：電子／負電荷藍 `#4dd2ff`、正電荷橘 `#ff8040`；畫布文字 ≥22px；不用純黑；不留白底。
+
+**待老師決定：**（空）
+
+**工作紀錄**（新的加在最下面）：
+- 2026-11-03 15:4x　主對話　建立本看板；已 clone repo 到 `/home/claude/physical-boys`；讀過 AGENTS.md（13.5 分工、10.1／10.3／10.6、11 SOP）。尚未改任何教材檔。
+
 **伽利略星球改版（2026-10-29 起，老師指示：好看、像科學館）進度：**
 - 已上線：①領土（版本 20261029a）：彎路拿掉，每館陸地切成「一單元一塊」的領土，海陸比例不變（陸地約 93%）。②物理館 10 個單元站換成內容相關的小物品、通用造景減量（版本 20261029b）。
 - 做法與架構：`assets/museum/scene.js` 的 `UNIT_ITEMS`（每館一張「單元 id → 小物品函式」的表）、`itemKit()`、`unitItemParts()`；新增一館只要補那張表與零件函式，沒有表的館維持舊造景。通用小景在 `PROP_KINDS`／`PROP_RULE`（物理館已減到樹／灌木／松樹、34 個）。細節看 HANDOFF §7 最上面兩筆。
