@@ -467,6 +467,67 @@
   const THUMB = [[HRL * Math.cos(0.62) + 2, 36, HRL * Math.sin(0.62) + 8], [HRL * Math.cos(0.5), 76, HRL * Math.sin(0.5) + 9], [HRL * Math.cos(0.42) - 1, 108, HRL * Math.sin(0.42) + 10]];
   function handWorld(hs, x, y, z) { return handXf(hs)(x, y, z); }
 
+  // ═════════ 右手（圖片素材版） ═════════
+  // 素材：右手、握拳、拇指朝上；指背朝左、手腕在右下（380×355，透明底）。只旋轉／等比縮放／平移，絕不翻轉。
+  // 拇指朝左＝整張圖逆時針轉 90°（rotate(−π/2)，平面內旋轉，仍是右手）：指背轉到下方、手腕轉到右上。
+  // 擺法：手放在螺線管上方偏前，四指由下往上蓋住正面的線圈段（＝正面電流向上），大拇指貼著管頂朝左指向 N 端。
+  const HAND_IMG = new Image();
+  const HAND_SRC = 'assets/electromagnetism_2/hand_right_thumbup_1105_v1.png';
+  const HIMG = {
+    ax: 70, ay: 240,          // 四指正面的中心（定位錨點），對到管軸在手的位置
+    tip: [156, 4],            // 大拇指尖（給標籤與 B 箭頭）
+    finger: [62, 300],        // 四指正面偏右下（給「四指」標籤的引線）
+    s: 0.88,                  // 1 圖片像素＝0.88 畫面像素（四指蓋住正面大半段）
+    dx: 18                    // 往右挪一點：大拇指尖到管子左端留出 B 箭頭的長度
+  };
+  const handImgReady = () => HAND_IMG.complete && HAND_IMG.naturalWidth > 0;
+  HAND_IMG.onload = () => { if (S.scene && !S.raf) render(); };   // 暫停中載完也補畫一幀
+  HAND_IMG.src = HAND_SRC;
+  // 圖片座標 → 畫面座標
+  function handImgXf(c, hs) {
+    const a = P(c, hs.hx, 0, 0), o = { x: a.x + HIMG.dx, y: a.y - (hs.lift || 0) * c.ce };
+    const open = 1 - clamp(((hs.curl === undefined ? 1 : hs.curl) - 0.55) / 0.45, 0, 1);   // 還沒握緊時大拇指微微翹起
+    const rot = -Math.PI / 2 + open * 8 * DEG, sc = HIMG.s, cs = Math.cos(rot), sn = Math.sin(rot);
+    return { o, sc, rot, pt: (ix, iy) => { const dx = (ix - HIMG.ax) * sc, dy = (iy - HIMG.ay) * sc; return { x: o.x + dx * cs - dy * sn, y: o.y + dx * sn + dy * cs }; } };
+  }
+  // 緊貼四指右側、繞著管子的彎箭頭（橘＝電流方向）：正面由下往上＝四指彎的方向。half：'back' | 'front'
+  const CURL_R = SR + 18;
+  function curlArrow(ctx, c, hs, half) {
+    const a = hs.alpha * easeIO(seg(hs.curl === undefined ? 1 : hs.curl, 0.75, 1));
+    if (a <= 0.01) return;
+    const X = handImgXf(c, hs), edge = X.pt(HIMG.ax, 352);          // 指背最右緣
+    let xw = hs.hx; for (let i = 0; i < 40; i++) { if (P(c, xw, 0, 0).x >= edge.x + 14) break; xw += 4; }
+    const ring = (t0, t1) => { const o = []; for (let i = 0; i <= 30; i++) { const th = lerp(t0, t1, i / 30); o.push(P(c, xw, CURL_R * Math.cos(th), CURL_R * Math.sin(th))); } return o; };
+    // 線圈點 (x, R cosθ, R sinθ)：θ = π 在底部、π/2 在正面、0 在頂部；正面電流向上＝θ 遞減
+    const pts = half === 'front' ? ring(0.94 * Math.PI, 0.1 * Math.PI) : ring(-0.06 * Math.PI, -0.94 * Math.PI);
+    ctx.save(); ctx.globalAlpha = a * (half === 'front' ? 1 : 0.5); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#3a2416'; ctx.lineWidth = 8; polyline(ctx, pts); ctx.stroke();
+    ctx.strokeStyle = ORANGE; ctx.lineWidth = 5; polyline(ctx, pts); ctx.stroke();
+    if (half === 'front') { const e = pts[pts.length - 1], b = pts[pts.length - 3]; arrowHead(ctx, e.x, e.y, Math.atan2(e.y - b.y, e.x - b.x), ORANGE, 15); }
+    ctx.restore();
+  }
+  // 手：圖片載好就用圖，沒載好退回程式畫法
+  function drawHand(ctx, c, hs, layer) {
+    if (!hs || hs.alpha <= 0.01) return;
+    if (!handImgReady()) { drawRightHand(ctx, c, hs, layer); return; }
+    if (layer === 'back') { curlArrow(ctx, c, hs, 'back'); return; }
+    const X = handImgXf(c, hs);
+    ctx.save(); ctx.globalAlpha = hs.alpha;
+    ctx.translate(X.o.x, X.o.y); ctx.rotate(X.rot); ctx.scale(X.sc, X.sc);
+    ctx.drawImage(HAND_IMG, -HIMG.ax, -HIMG.ay);
+    ctx.restore();
+    curlArrow(ctx, c, hs, 'front');
+  }
+  // 標籤用的點（畫面座標）：大拇指尖、四指
+  function handTipPt(c, hs) {
+    if (handImgReady()) return handImgXf(c, hs).pt(HIMG.tip[0], HIMG.tip[1]);
+    const w = handWorld(hs, THUMB[2][0], THUMB[2][1], THUMB[2][2]); return P(c, w[0], w[1], w[2]);
+  }
+  function handFingerPt(c, hs) {
+    if (handImgReady()) return handImgXf(c, hs).pt(HIMG.finger[0], HIMG.finger[1]);
+    const w = handWorld(hs, HRL * Math.cos(-3.9), -12, HRL * Math.sin(-3.9)); return P(c, w[0], w[1], w[2]);
+  }
+
   // ═════════ 場景 1：什麼是螺線管 ═════════
   const SH = { cx: 380, cy: 300, e: 10 * DEG, hx: 80 };
   function shapeState(step, t) {
@@ -519,7 +580,7 @@
     const hand = s.hand;
     // 後層：背面導線 → 手指背面 → 管子 → 內部磁力線 → 各圈的 B → 正面導線 → 手
     drawCoil(ctx, c, cm, 'back', { amp: s.amp, dir, t });
-    drawRightHand(ctx, c, hand, 'back');
+    drawHand(ctx, c, hand, 'back');
     drawTube(ctx, c, s.tubeA, s.tint, true);
     drawField(ctx, c, { alpha: s.inA, dir, amp: 1, t, fr: 0, xg: SL / 2 + 8 - s.grow * (SL + 16), dots: s.grow > 0.98 });
     if (s.ringArr > 0.01) {
@@ -537,10 +598,11 @@
     }
     drawCoil(ctx, c, cm, 'front', { amp: s.amp, dir, t });
     drawCurArrows(ctx, c, cm, dir, s.amp);
-    drawRightHand(ctx, c, hand, 'front');
+    drawHand(ctx, c, hand, 'front');
     if (s.thumbArr > 0.01 && hand) {
-      const tp = handWorld(hand, THUMB[2][0], THUMB[2][1], THUMB[2][2]);
-      const a = P(c, tp[0] - 8, tp[1], tp[2]), b = P(c, -SL / 2 + 6, tp[1], tp[2]);
+      let a, b;
+      if (handImgReady()) { const tp = handTipPt(c, hand); a = { x: tp.x - 6, y: tp.y }; b = { x: P(c, -SL / 2 + 6, SR, 0).x, y: tp.y }; }
+      else { const tp = handWorld(hand, THUMB[2][0], THUMB[2][1], THUMB[2][2]); a = P(c, tp[0] - 8, tp[1], tp[2]); b = P(c, -SL / 2 + 6, tp[1], tp[2]); }
       ctx.save(); ctx.globalAlpha = s.thumbArr * hand.alpha; drawArrow3D(ctx, a.x, a.y, lerp(a.x, b.x, s.thumbArr), lerp(a.y, b.y, s.thumbArr), GREEN, 8, 18); ctx.restore();
     }
     // ── 標籤 ──
@@ -569,12 +631,12 @@
     }
     if (hand) {
       if (s.fingerTag > 0.01) {
-        const w = handWorld(hand, HRL * Math.cos(-3.9), -12, HRL * Math.sin(-3.9)), fp = P(c, w[0], w[1], w[2]);
+        const fp = handFingerPt(c, hand);
         leader(ctx, 700, 452, fp.x + 4, fp.y + 4, ORANGE, s.fingerTag * hand.alpha);
         tag(ctx, tr('四指＝電流方向', 'Fingers = current'), 750, 474, ORANGE, s.fingerTag * hand.alpha);
       }
       if (s.thumbTag > 0.01) {
-        const tp = handWorld(hand, THUMB[2][0], THUMB[2][1], THUMB[2][2]), p = P(c, tp[0], tp[1], tp[2]);
+        const p = handTipPt(c, hand);
         leader(ctx, 250, 118, p.x - 10, p.y - 10, GREEN, s.thumbTag * hand.alpha);
         tag(ctx, tr('大拇指＝內部 B 的方向', 'Thumb = direction of B inside'), 250, 100, GREEN, s.thumbTag * hand.alpha);
       }
@@ -836,6 +898,6 @@
     // 測試用：直接畫出某場景第 t 秒的畫面
     _frameAt(sceneId, t) { if (!SCENES[sceneId]) return null; S.scene = sceneId; S.t = t; render(); return SCENES[sceneId].total; },
     _info() { const o = {}; for (const k in SCENES) o[k] = { total: SCENES[k].total, starts: SCENES[k].starts.slice() }; return o; },
-    _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }
+    _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf, handImg: handImgReady() }; }
   };
 })();
