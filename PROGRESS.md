@@ -7,10 +7,11 @@
 **首頁已換成「伽利略星球」**（2026-10-26 上線，`index.html`）。原本的清單首頁改名為 `index_classic.html`（右上角「舊版清單」連過去）。
 **新增或修改課程卡片：改 `index_classic.html`，再跑 `python3 tools/museum/build_lessons.py`**（產生 `assets/museum/data/lessons.json`，星球上才會出現）；不要在 `index.html` 加卡片。交接：`galileo-planet/HANDOFF.md`。
 
-## 磁學 magnetism_1 V5 版面＋動畫重做（老師 2026-11-04 指示，本機已完成、**尚未推上線**）
+## 磁學 magnetism_1 V5 版面＋動畫重做（老師 2026-11-04 指示，已完成並推上線）
 
 - 範圍：`magnetism_1.html` 改 V5 版面（封面、Hook 小單元分頁、曉臻 Hook、單欄全寬）；5 個分頁動畫由 Opus 重做（RED ZONE 已授權），各一檔：`magnetism_1_pole_1104_v1.js`、`_mag_`、`_line_`、`_compass_`、`_earth_`。介面：`MagAnim.<tab>={activate,deactivate,relang}`，步驟鈕 ≤5。
 - QA（Playwright）：各場景中英文 1 秒像素差 >0、步驟鈕跳轉正確、離開分頁停止、1080／820／390 無橫向溢出、JS 錯誤 0。
+- 後續（2026-11-04）：①電磁鐵／迴紋針改畫成磁場沿長軸、迴紋針吸在磁極端，加迴紋針磁化放大圖；②地球分頁新增「補充：美麗的極光」（`earth-aurora` 5 步）；③加入 10.7 學生操作／老師講解（`magnetism_1_teach_1104_v1.js`，動畫模組以 `MagAnim.ctl` 接口配合；老師模式＝分頁內多段動畫自動接力）。已推上 main。
 - 待老師決定：①封面圖只有 960×640，全螢幕可能偏糊；②mag-store 步驟 3 Opus 加了「軟鐵適合做電磁鐵」（原頁沒有）；③是否推上 main。
 
 ## 功與能 work_5「核能發電：核分裂與核融合」★（老師 2026-11-03 指示，已完成）
