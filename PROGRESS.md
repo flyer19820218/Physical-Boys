@@ -15,8 +15,6 @@
 - QA（Playwright，真字體 NotoSansTC）：20 個場景（中英）像素差 >5 千、步驟鈕數量對、小字 0、JS 錯誤 0；老師模式實測（crane：暫停凍結、跳步、重播、連播換場景、播完停住、切回學生恢復循環）；390px 英文橫向溢出已修（`.step-row` 換行、h1 縮小）。`tools/qa/qa_page.cjs` 找 `.tab-btn`，V5 頁是 `.tab-button`，所以該工具對 V5 頁掃不到分頁（另案）。
 - 待老師決定：①**螺線管電流／N 極對應**：舊畫布畫反，新版依課本圖（正面電流向上→左 N）；②電流色用橘（AGENTS 2.2.1 寫紅，與紅 N 極衝突，整課一致用橘）；③封面圖只有 960×640；④拿掉互動（起重機滑桿、3D 拖曳等）改自動播放；⑤迴紋針數量為示意，非實測；⑥是否合併到 main。
 
-## 磁學 magnetism_1 V5 版面＋動畫重做（老師 2026-11-04 指示，本機已完成、**尚未推上線**）
-
 ## 電動機 electric_motor_3 V5 版面＋動畫重做（老師 2026-11-04 指示，已完成並推上 main）
 
 - 範圍：`electric_motor_3.html` 改 V5 版面（封面 `electric_motor_3.jpg`、Hook 小單元分頁、曉臻 Hook、單欄全寬、學生操作／老師講解 `electric_motor_3_teach_1104_v1.js`）；5 個分頁動畫由 Opus 重做，各一檔：`electric_motor_3_palm|force|struct|anim|power_1104_v1.js`。介面：`MotorAnim.<key>={activate,deactivate,relang,practice?,_info,_state}`，步驟鈕 ≤5。**馬達本體、符號、方向、題庫一律沿用原頁函式與文字**（老師：符號別亂修，台灣課本就這樣寫）；舊繪圖函式保留為備援。
