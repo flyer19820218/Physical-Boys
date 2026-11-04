@@ -254,8 +254,73 @@
     if (cur) runs.push(cur);
     return runs;
   }
-  // layer: 'back'（畫在導線之前）| 'front'（畫在導線之後）
+  // ═════════ 右手（圖片素材版） ═════════
+  // 素材：右手、握拳、拇指朝上；指背朝左、手腕在右下（380×355，透明底）。只旋轉／等比縮放／平移，絕不翻轉。
+  // 拇指朝上＝0°；電流向下時整張圖旋轉 180°（平面內旋轉，仍是右手）。
+  const HAND_IMG = new Image();
+  const HAND_SRC = 'assets/electromagnetism_2/hand_right_thumbup_1105_v1.png';
+  const HIMG = {
+    ax: 92, ay: 237,          // 圖上「導線軸心」與拳頭高度中點（對應世界座標 (0, yc, 0)）
+    k: 0.51,                  // 1 圖片像素＝0.51 世界單位
+    tip: [158, 14],           // 大拇指尖（給標籤）
+    // 拳頭上緣／下緣（圖片 y），以 x 每 10px 取樣（量自 PNG 的 alpha>128）
+    top: [214, 151, 141, 136, 132, 130, 128, 128, 128, 129, 130, 131, 131],
+    bot: [226, 279, 294, 314, 332, 339, 341, 340, 342, 345, 347, 346, 347]
+  };
+  const handImgReady = () => HAND_IMG.complete && HAND_IMG.naturalWidth > 0;
+  HAND_IMG.onload = () => { if (S.scene && !S.raf) render(); };   // 暫停中載完也補畫一幀
+  HAND_IMG.src = HAND_SRC;
+  function edgeAt(arr, ix) {
+    const i = clamp(ix / 10, 0, arr.length - 1), i0 = Math.floor(i), i1 = Math.min(arr.length - 1, i0 + 1);
+    return lerp(arr[i0], arr[i1], i - i0);
+  }
+  // 圖片座標 → 畫面座標
+  function handImgXf(c, hs) {
+    const sg = hs.sg, ox = sg * (hs.slide || 0);
+    const o = P(c, ox, hs.yc, 0), up = P(c, ox, hs.yc + 1, 0);
+    const sc = Math.hypot(up.x - o.x, up.y - o.y) * HIMG.k;               // 螢幕 px／圖片 px（等比）
+    const tilt = sg * (1 - clamp(hs.curl === undefined ? 1 : hs.curl, 0, 1)) * 10 * DEG;  // 還沒握緊時手微微張開
+    const rot = (sg > 0 ? 0 : Math.PI) + tilt;
+    const cs = Math.cos(rot), sn = Math.sin(rot);
+    return { o, sc, rot, pt: (ix, iy) => { const dx = (ix - HIMG.ax) * sc, dy = (iy - HIMG.ay) * sc; return { x: o.x + dx * cs - dy * sn, y: o.y + dx * sn + dy * cs }; } };
+  }
+  // hs.wire = { y0, y1, o, cap }：手前面要補畫的那條導線（拳頭上方的出口）
+  function drawHandImg(ctx, c, hs) {
+    const X = handImgXf(c, hs);
+    ctx.save(); ctx.globalAlpha *= hs.alpha;
+    ctx.translate(X.o.x, X.o.y); ctx.rotate(X.rot); ctx.scale(X.sc, X.sc);
+    ctx.drawImage(HAND_IMG, -HIMG.ax, -HIMG.ay);
+    ctx.restore();
+    // 導線從拳頭上方的開口穿出：在手的前面補畫一小段（只補導線寬度那一條，延伸進拳頭邊緣 7px）
+    const w = hs.wire; if (!w) return;
+    const a = P(c, 0, w.y0, 0), b = P(c, 0, w.y1, 0), hw = (w.o.rw || 8) * (a.f + b.f) / 2 + 3;
+    // 導線在圖片上的 x（反算），取該處拳頭的「畫面上緣」
+    const pw = P(c, 0, hs.yc, 0), cs = Math.cos(-X.rot), sn = Math.sin(-X.rot), dx = pw.x - X.o.x, dy = pw.y - X.o.y;
+    const ix = HIMG.ax + (dx * cs - dy * sn) / X.sc;
+    if (ix < 0 || ix > 120) return;                       // 導線不在拳頭範圍內就不用補
+    const edge = X.pt(ix, hs.sg > 0 ? edgeAt(HIMG.top, ix) : edgeAt(HIMG.bot, ix));
+    const yCut = edge.y + 7;
+    ctx.save(); ctx.globalAlpha *= hs.alpha;
+    ctx.beginPath(); ctx.rect(Math.min(a.x, b.x) - hw, 0, Math.abs(b.x - a.x) + 2 * hw, yCut); ctx.clip();
+    drawWire(ctx, c, w.y0, w.y1, w.o);
+    if (w.cap) drawWireCap(ctx, c, w.y1, w.cap);
+    // 開口的陰影：讓導線看起來是從拳頭裡穿出來
+    ctx.fillStyle = 'rgba(60,30,14,0.35)'; ctx.beginPath(); ctx.ellipse(a.x, yCut - 4, hw, 4, 0, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+  // 大拇指尖的畫面位置（給標籤）
+  function thumbTipPt(c, hs) {
+    if (handImgReady()) return handImgXf(c, hs).pt(HIMG.tip[0], HIMG.tip[1]);
+    return handPt(c, hs, HR * Math.cos(0.42), 100, HR * Math.sin(0.42) + 10);
+  }
+  // 手：圖片載好就用圖（只在 'front' 層畫一次），沒載好退回程式畫法
   function drawHand(ctx, c, hs, layer) {
+    if (!hs || hs.alpha <= 0.01) return;
+    if (handImgReady()) { if (layer === 'front') drawHandImg(ctx, c, hs); return; }
+    drawHandVec(ctx, c, hs, layer);
+  }
+  // 舊的程式畫法（圖片載入前的後備）。layer: 'back'（畫在導線之前）| 'front'（畫在導線之後）
+  function drawHandVec(ctx, c, hs, layer) {
     if (!hs || hs.alpha <= 0.01) return;
     const xf = handXf(hs), fingers = handGeom(hs.curl);
     const order = hs.sg > 0 ? [3, 2, 1, 0] : [0, 1, 2, 3];   // 由下往上畫（上面的手指離鏡頭較近）
@@ -543,7 +608,7 @@
     const s = ruleState(step, t);
     const c = cam(R2.cx, R2.cy, R2.e, 0, R2.s, 2400);
     const d = s.cur >= 0 ? 1 : -1, amp = Math.abs(s.cur);
-    const hands = s.hands.map(h => Object.assign({ yc: R2.yc }, h));
+    const hands = s.hands.map(h => Object.assign({ yc: R2.yc, wire: { y0: 0, y1: 420, o: { cur: s.cur, t } } }, h));
     const main = hands.length ? hands[hands.length - 1] : { sg: d, yc: R2.yc };
     const ringO = (i, part) => ({ part, alpha: 0.9, width: 2.6, d, amp: s.ringAmp * amp, t, dots: s.ringDots > 0.5, color: '#f2fbe9', arrowColor: GREEN, head: 13,
       arrowAt: [Math.PI * (i % 2 ? 0.28 : 0.72), Math.PI * (i % 2 ? 1.28 : 1.72)] });
@@ -564,15 +629,16 @@
     }
     // ── 標籤 ──
     if (s.thumbTag > 0.01 && hands.length === 1) {
-      const h = hands[0], tp = handPt(c, h, HR * Math.cos(0.42), 100, HR * Math.sin(0.42) + 10);
+      const h = hands[0], tp = thumbTipPt(c, h);
       const tx = h.sg > 0 ? 500 : 160, ty = h.sg > 0 ? 112 : 392;
       leader(ctx, tx + (h.sg > 0 ? -90 : 80), ty, tp.x, tp.y, ORANGE, s.thumbTag);
       tag(ctx, tr('大拇指＝電流方向', 'Thumb = current'), tx, ty, ORANGE, s.thumbTag);
     }
     if (s.fingerTag > 0.01 && hands.length === 1) {
       const h = hands[0], yy = P(c, 0, h.yc - 64 * h.sg, 0).y;
-      leader(ctx, 412, yy, R2.cx + 58, yy, GREEN, s.fingerTag * s.curlA);
-      tag(ctx, tr('四指彎曲方向', 'Finger curl'), 500, yy, GREEN, s.fingerTag * s.curlA);
+      const fx = h.sg > 0 && handImgReady() ? 580 : 500;    // 手圖的手腕在右下：標籤往右讓開
+      leader(ctx, fx - 88, yy, R2.cx + 58, yy, GREEN, s.fingerTag * s.curlA);
+      tag(ctx, tr('四指彎曲方向', 'Finger curl'), fx, yy, GREEN, s.fingerTag * s.curlA);
     }
     // 右側：俯視圖 或 對照
     const panelA = s.inset * (1 - s.cmp);
@@ -758,7 +824,7 @@
     const k = (s.e - SY.e0) / (Math.PI / 2 - SY.e0);
     const c = cam(SY.cx, lerp(362, 330, k), s.e, 0, 1, 2200);
     const cur = s.cur, d = cur >= 0 ? 1 : -1, amp = Math.abs(cur);
-    const hands = s.hands.map(h => Object.assign({ yc: SY.yc }, h));
+    const hands = s.hands.map(h => Object.assign({ yc: SY.yc, wire: { y0: -200, y1: 125, o: { cur, t }, cap: 8 } }, h));
     ctx.save(); ctx.globalAlpha = s.fade;
     const ro = (i, part) => ({ part, alpha: 1, width: 2.8, d, amp: s.ringAmp * amp, t, dots: true, arrowAt: [Math.PI * (i % 2 ? 0.25 : 0.75), Math.PI * (i % 2 ? 1.25 : 1.75)], head: 12 });
     SY.rings.forEach((r, i) => drawRing(ctx, c, r, SY.ringY, ro(i, 'back')));
@@ -972,6 +1038,6 @@
     // 測試用：直接畫出某場景第 t 秒的畫面
     _frameAt(sceneId, t) { if (!SCENES[sceneId]) return null; S.scene = sceneId; S.t = t; render(); return SCENES[sceneId].total; },
     _info() { const o = {}; for (const k in SCENES) o[k] = { total: SCENES[k].total, starts: SCENES[k].starts.slice() }; return o; },
-    _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }
+    _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf, handImg: handImgReady() }; }
   };
 })();
