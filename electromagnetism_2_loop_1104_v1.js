@@ -381,7 +381,61 @@
     if (cur) runs.push(cur);
     return runs;
   }
+  // ═════════ 右手（圖片素材版） ═════════
+  // 素材：右手、握拳、拇指朝上；指背朝左、手腕在右下（380×355，透明底）。只旋轉／等比縮放／平移，絕不翻轉。
+  // 拇指朝上＝0°；拇指朝下＝整張圖旋轉 180°（平面內旋轉，仍是右手）。
+  // 圖上拳頭正面的四指由左（指節）往右（指尖）彎＝前緣往右＝俯視逆時針，與 sg = +1 一致；轉 180° 後成俯視順時針。
+  // 手整隻放在圓心 B 箭頭的一側（拇指朝上在右、朝下在左），不遮住圓心的 B 箭頭與 N/S 標籤。
+  const HAND_IMG = new Image();
+  const HAND_SRC = 'assets/electromagnetism_2/hand_right_thumbup_1105_v1.png';
+  const HIMG = {
+    fist: [65, 245],          // 拳頭中心（旋轉、定位的錨點）
+    tip: [156, 4],            // 大拇指尖（給標籤）
+    finger: [40, 252],        // 四指正面（給「四指」標籤的引線）
+    s: 0.5                    // 1 圖片像素＝0.5 畫面像素
+  };
+  const handImgReady = () => HAND_IMG.complete && HAND_IMG.naturalWidth > 0;
+  HAND_IMG.onload = () => { if (S.scene && !S.raf) render(); };   // 暫停中載完也補畫一幀
+  HAND_IMG.src = HAND_SRC;
+  // 圖片座標 → 畫面座標（拳頭中心：拇指朝上時在圓心右上、朝下時在圓心左下）
+  function handImgXf(hs) {
+    const sg = hs.sg, F = sg > 0 ? [RU.cx + 72, RU.cy - 35] : [RU.cx - 76, RU.cy + 35];
+    const o = { x: F[0] + sg * (hs.slide || 0), y: F[1] };
+    const tilt = sg * (1 - clamp(hs.curl === undefined ? 1 : hs.curl, 0, 1)) * 10 * DEG;   // 還沒握緊時手微微張開
+    const rot = (sg > 0 ? 0 : Math.PI) + tilt, sc = HIMG.s, cs = Math.cos(rot), sn = Math.sin(rot);
+    return { o, sc, rot, pt: (ix, iy) => { const dx = (ix - HIMG.fist[0]) * sc, dy = (iy - HIMG.fist[1]) * sc; return { x: o.x + dx * cs - dy * sn, y: o.y + dx * sn + dy * cs }; } };
+  }
+  // 拳頭外圍的水平彎箭頭（橘＝電流方向）：提示四指順著電流彎。half：'back'（手後面那半圈）| 'front'
+  function curlArrow(ctx, X, hs, half) {
+    const a = hs.alpha * easeIO(seg(hs.curl === undefined ? 1 : hs.curl, 0.6, 1));
+    if (a <= 0.01) return;
+    const cx = X.o.x + hs.sg * 4, cy = X.o.y, rx = 60, ry = rx * Math.sin(RU.e);
+    const dir = -hs.sg;     // 俯視逆時針：前緣（畫面下方）往右＝橢圓參數遞減
+    const [a0, a1] = half === 'front' ? [0.12 * Math.PI, 0.88 * Math.PI] : [1.12 * Math.PI, 1.88 * Math.PI];
+    ctx.save(); ctx.globalAlpha = a; ctx.lineCap = 'round';
+    ctx.strokeStyle = '#3a2416'; ctx.lineWidth = 7; ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, a0, a1); ctx.stroke();
+    ctx.strokeStyle = ORANGE; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, a0, a1); ctx.stroke();
+    const ae = dir < 0 ? a0 : a1, px = cx + rx * Math.cos(ae), py = cy + ry * Math.sin(ae);
+    arrowHead(ctx, px, py, Math.atan2(ry * Math.cos(ae) * dir, -rx * Math.sin(ae) * dir), ORANGE, 14);
+    ctx.restore();
+  }
+  // 手：圖片載好就用圖，沒載好退回程式畫法
   function drawHand(ctx, c, hs, layer) {
+    if (!hs || hs.alpha <= 0.01) return;
+    if (!handImgReady()) { drawHandVec(ctx, c, hs, layer); return; }
+    const X = handImgXf(hs);
+    if (layer === 'back') { curlArrow(ctx, X, hs, 'back'); return; }
+    ctx.save(); ctx.globalAlpha = hs.alpha;
+    ctx.translate(X.o.x, X.o.y); ctx.rotate(X.rot); ctx.scale(X.sc, X.sc);
+    ctx.drawImage(HAND_IMG, -HIMG.fist[0], -HIMG.fist[1]);
+    ctx.restore();
+    curlArrow(ctx, X, hs, 'front');
+  }
+  // 標籤用的點：大拇指尖、四指
+  function handTipPt(c, hs) { return handImgReady() ? handImgXf(hs).pt(HIMG.tip[0], HIMG.tip[1]) : handPt(c, hs, HR * Math.cos(0.42), 108, HR * Math.sin(0.42) + 10); }
+  function handFingerPt(c, hs) { return handImgReady() ? handImgXf(hs).pt(HIMG.finger[0], HIMG.finger[1]) : handPt(c, hs, HR * 1.2, 9, HR * 1.6); }
+  // 舊的程式畫法（圖片載入前的後備）。layer: 'back' | 'front'
+  function drawHandVec(ctx, c, hs, layer) {
     if (!hs || hs.alpha <= 0.01) return;
     const xf = handXf(hs), fingers = handGeom(hs.curl), K = hs.k;
     const order = hs.sg > 0 ? [3, 2, 1, 0] : [0, 1, 2, 3];
@@ -674,16 +728,25 @@
     if (hands.length === 1) {
       const h = hands[0];
       if (s.fingerTag > 0.01) {
-        const fp = handPt(c, h, HR * 1.2, 9, HR * 1.6);
+        const fp = handFingerPt(c, h);
         const tx = 160, ty = h.sg > 0 ? 150 : 470;
         leader(ctx, tx, ty + (h.sg > 0 ? 18 : -18), fp.x, fp.y, ORANGE, s.fingerTag * h.alpha);
         tag(ctx, tr('四指＝電流方向', 'Fingers = current'), tx, ty, ORANGE, s.fingerTag * h.alpha);
       }
       if (s.thumbTag > 0.01) {
-        const tp = handPt(c, h, HR * Math.cos(0.42), 108, HR * Math.sin(0.42) + 10);
-        const tx = h.sg > 0 ? 590 : 545, ty = h.sg > 0 ? 120 : 452, ta = s.thumbTag * Math.min(1, h.alpha / 0.4);
-        leader(ctx, tx - 110, ty, tp.x + 10, tp.y, GREEN, ta);
-        tag(ctx, tr('大拇指＝圓心 B', 'Thumb = center B'), tx, ty, GREEN, ta);
+        const tp = handTipPt(c, h), ta = s.thumbTag * Math.min(1, h.alpha / 0.4), lt = tr('大拇指＝圓心 B', 'Thumb = center B');
+        if (handImgReady()) {
+          // 圖片手：拇指朝上時標在拇指尖右側；朝下時標在拇指尖下方（手的左下、N/S 標籤的左邊）
+          const w = textW(ctx, lt, 24) + 20;
+          const tx = h.sg > 0 ? tp.x + 34 + w / 2 : 150, ty = h.sg > 0 ? tp.y + 6 : 516;
+          if (h.sg > 0) leader(ctx, tx - w / 2, ty, tp.x + 8, tp.y + 2, GREEN, ta);
+          else leader(ctx, Math.min(tx + w / 2 - 24, tp.x - 6), ty - 18, tp.x, tp.y + 6, GREEN, ta);
+          tag(ctx, lt, tx, ty, GREEN, ta);
+        } else {
+          const tx = h.sg > 0 ? 590 : 545, ty = h.sg > 0 ? 120 : 452;
+          leader(ctx, tx - 110, ty, tp.x + 10, tp.y, GREEN, ta);
+          tag(ctx, lt, tx, ty, GREEN, ta);
+        }
       }
     }
     if (s.needles > 0.01 && step === 3) {
@@ -875,6 +938,6 @@
     },
     _frameAt(sceneId, t) { if (!SCENES[sceneId]) return null; S.scene = sceneId; S.t = t; render(); return SCENES[sceneId].total; },
     _info() { const o = {}; for (const k in SCENES) o[k] = { total: SCENES[k].total, starts: SCENES[k].starts.slice() }; return o; },
-    _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }
+    _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf, handImg: handImgReady() }; }
   };
 })();
