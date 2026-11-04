@@ -550,7 +550,7 @@
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'step-btn' + (k === S.step ? ' active' : '');
       b.textContent = `${k + 1} ${tr(st.b[0], st.b[1])}`;
-      b.addEventListener('click', () => { S.t = sc.starts[k] + 1e-4; S.step = -1; S.last = 0; render(); start(); });
+      b.addEventListener('click', () => { S.t = sc.starts[k] + 1e-4; S.step = -1; S.last = 0; S.endFired = false; render(); start(); });
       row.appendChild(b);
     });
   }
@@ -561,10 +561,13 @@
     S.raf = 0;
     if (!S.scene || document.hidden) return;
     if (!visible()) { S.last = 0; S.timer = setTimeout(() => { S.timer = 0; start(); }, 250); return; }
-    if (S.last) S.t += Math.min(0.1, (ts - S.last) / 1000);
+    if (S.last && !(MagAnim.ctl && MagAnim.ctl.paused)) S.t += Math.min(0.1, (ts - S.last) / 1000);
     S.last = ts;
     const sc = SCENES[S.scene];
-    if (S.t >= sc.total) S.t = 0;
+    if (S.t >= sc.total) {
+      // 老師講解模式（MagAnim.ctl.onEnd 有設定）：停在最後一格並通知一次；學生模式照舊循環
+      if (MagAnim.ctl && MagAnim.ctl.onEnd) { S.t = sc.total - 1e-3; if (!S.endFired) { S.endFired = true; MagAnim.ctl.onEnd(); } } else S.t = 0;
+    }
     render();
     S.raf = requestAnimationFrame(frame);
   }
@@ -584,7 +587,7 @@
     activate(sceneId) {
       if (!SCENES[sceneId]) sceneId = 'line-bar';
       stop();
-      S.scene = sceneId; S.t = 0; S.step = -1; S.last = 0;
+      S.scene = sceneId; S.t = 0; S.step = -1; S.last = 0; S.endFired = false;
       SCENES[sceneId].keys.forEach(k => { buildLines(k); filField(k); });  // 切入時一次建好快取，播放中不卡頓
       buildButtons(); render(); start();
     },
