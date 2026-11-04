@@ -7,6 +7,12 @@
 **首頁已換成「伽利略星球」**（2026-10-26 上線，`index.html`）。原本的清單首頁改名為 `index_classic.html`（右上角「舊版清單」連過去）。
 **新增或修改課程卡片：改 `index_classic.html`，再跑 `python3 tools/museum/build_lessons.py`**（產生 `assets/museum/data/lessons.json`，星球上才會出現）；不要在 `index.html` 加卡片。交接：`galileo-planet/HANDOFF.md`。
 
+## 電動機 electric_motor_3 V5 版面＋動畫重做（老師 2026-11-04 指示，已完成並推上 main）
+
+- 範圍：`electric_motor_3.html` 改 V5 版面（封面 `electric_motor_3.jpg`、Hook 小單元分頁、曉臻 Hook、單欄全寬、學生操作／老師講解 `electric_motor_3_teach_1104_v1.js`）；5 個分頁動畫由 Opus 重做，各一檔：`electric_motor_3_palm|force|struct|anim|power_1104_v1.js`。介面：`MotorAnim.<key>={activate,deactivate,relang,practice?,_info,_state}`，步驟鈕 ≤5。**馬達本體、符號、方向、題庫一律沿用原頁函式與文字**（老師：符號別亂修，台灣課本就這樣寫）；舊繪圖函式保留為備援。
+- QA（Playwright）：各場景中英文 1 秒像素差 >0、步驟鈕跳轉正確、切分頁 RAF 不疊加、老師模式 onEnd 只一次且暫停凍結、1080／820／390 無橫向溢出、JS 錯誤 0。
+- 待老師決定：①【YELLOW・方向不一致】「馬達慢動作運轉」左欄寫「磁場朝右、右側受力向下、左側向上」，但頁面 3D 馬達（N 在右）畫的是磁場朝左、右側向上；原頁就如此，未改文字也未改馬達，新動畫字幕暫避開方向用語。②極速馬達步驟 1、2 依公式（force 4、10）都是「微弱」，結果框初始字寫「中等」與公式不符（未改）。③極速馬達學生模式是「滑桿練習」而非自動循環。④頁面原有函式畫的小字（17–21px）未動。⑤Opus 新增的畫布標籤見各檔頭註解。⑥頁面 EN 鈕已改接 `.lang-pill`（原本 `.lang-btn` 與程式不符而壞掉）。
+
 ## 磁學 magnetism_1 V5 版面＋動畫重做（老師 2026-11-04 指示，已完成並推上線）
 
 - 範圍：`magnetism_1.html` 改 V5 版面（封面、Hook 小單元分頁、曉臻 Hook、單欄全寬）；5 個分頁動畫由 Opus 重做（RED ZONE 已授權），各一檔：`magnetism_1_pole_1104_v1.js`、`_mag_`、`_line_`、`_compass_`、`_earth_`。介面：`MagAnim.<tab>={activate,deactivate,relang}`，步驟鈕 ≤5。
