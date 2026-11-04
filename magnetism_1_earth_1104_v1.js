@@ -248,6 +248,46 @@
     ctx.restore();
   }
 
+  // ───────── 真實地球（NASA Blue Marble 去雲衛星合成圖，正射投影成圓盤；一次烘焙、之後只 drawImage）─────────
+  // 貼圖：assets/magnetism_1/earth_blue_marble_2048_v1.jpg（2048×1024 等距長方投影，來源見頁面「影像來源」）
+  const TEX = { ready: false, data: null, w: 2048, h: 1024, front: null, top: null };
+  (function loadTex() {
+    const im = new Image();
+    im.onload = () => {
+      try {
+        const c = document.createElement('canvas'); c.width = TEX.w; c.height = TEX.h;
+        const x = c.getContext('2d'); x.drawImage(im, 0, 0, TEX.w, TEX.h);
+        TEX.data = x.getImageData(0, 0, TEX.w, TEX.h).data;
+        TEX.front = bakeGlobe(ER * 2, 0, 105);      // 正面：赤道上空、中心經度 105°E（亞洲、印度洋、澳洲一帶）
+        TEX.top = bakeGlobe(TV_R * 2, 90, 74);      // 俯視北極：地磁 S 極（約 80°N、72°W）落在畫面左上方向
+        TEX.ready = true;
+      } catch (e) { TEX.ready = false; }
+    };
+    im.src = 'assets/magnetism_1/earth_blue_marble_2048_v1.jpg';
+  })();
+  // 正射投影：lat0／lon0 為視線中心；回傳 (2r)² 的離屏畫布（圓外透明），已含邊緣暗化
+  function bakeGlobe(r, lat0d, lon0d) {
+    const S = 2, N = r * S, c = document.createElement('canvas'); c.width = c.height = N;
+    const x = c.getContext('2d'), out = x.createImageData(N, N), o = out.data, d = TEX.data;
+    const p0 = lat0d * Math.PI / 180, sp = Math.sin(p0), cp = Math.cos(p0), l0 = lon0d * Math.PI / 180;
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const X = (i + 0.5) / N * 2 - 1, Y = 1 - (j + 0.5) / N * 2, rr = X * X + Y * Y;
+      if (rr > 1) continue;
+      const Z = Math.sqrt(1 - rr);
+      const lat = Math.asin(Math.max(-1, Math.min(1, Y * cp + Z * sp)));
+      let lon = l0 + Math.atan2(X, Z * cp - Y * sp);
+      let u = (lon / Math.PI + 1) / 2; u -= Math.floor(u);
+      const v = 0.5 - lat / Math.PI;
+      const tx = Math.min(TEX.w - 1, Math.floor(u * TEX.w)), ty = Math.min(TEX.h - 1, Math.floor(v * TEX.h)), k = (ty * TEX.w + tx) * 4;
+      const sh = 1.14 * (0.62 + 0.38 * Math.pow(Z, 0.55));      // 邊緣略暗，像球體；整體略提亮以便在黑板底上看清
+      const e = Math.sqrt(rr), a = e > 0.985 ? Math.max(0, (1 - e) / 0.015) : 1;
+      const q = (j * N + i) * 4;
+      o[q] = Math.min(255, d[k] * sh); o[q + 1] = Math.min(255, d[k + 1] * sh); o[q + 2] = Math.min(255, d[k + 2] * sh); o[q + 3] = 255 * a;
+    }
+    x.putImageData(out, 0, 0);
+    return c;
+  }
+
   // ───────── 地球、磁鐵、標籤 ─────────
   function earth(ctx, fillA = 1, glow = 0) {
     ctx.save();
@@ -256,10 +296,7 @@
     ctx.globalAlpha = fillA; ctx.fillStyle = EARTH_FILL; ctx.fill();
     ctx.globalAlpha = 1; ctx.lineWidth = 4; ctx.strokeStyle = CYAN; ctx.stroke();
     ctx.shadowBlur = 0;
-    ctx.globalAlpha = fillA; ctx.fillStyle = LAND;
-    ctx.beginPath(); ctx.ellipse(CX - 40, CY - 40, 60, 40, 0.5, 0, TAU); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(CX - 60, CY + 50, 30, 50, -0.3, 0, TAU); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(CX + 80, CY - 20, 50, 30, -0.5, 0, TAU); ctx.fill();
+    if (TEX.ready) { ctx.globalAlpha = fillA; ctx.drawImage(TEX.front, CX - ER, CY - ER, ER * 2, ER * 2); }
     ctx.restore();
   }
   // 透視：掃描線 scanY 以上為半透明（露出磁鐵），以下仍是不透明地球
@@ -671,18 +708,15 @@
   }
 
   // 俯視北極：地球圓盤、地磁 S 極、極光帶
-  const TV = { x: 470, y: 312, r: 225 };
+  const TV_R = 225;
+  const TV = { x: 470, y: 312, r: TV_R };
   const MP = { x: TV.x - 24, y: TV.y - 36 };                 // 地磁 S 極：離地理北極約 11°（225·sin11° ≈ 43 px）
   const OV = { x: MP.x + 14, y: MP.y };                      // 極光帶中心略偏夜側
   function topView(ctx, t) {
     ctx.save();
     ctx.beginPath(); ctx.arc(TV.x, TV.y, TV.r, 0, TAU); ctx.fillStyle = EARTH_FILL; ctx.fill();
     ctx.clip();
-    ctx.fillStyle = LAND;
-    ctx.beginPath(); ctx.ellipse(TV.x - 120, TV.y + 70, 80, 120, 0.6, 0, TAU); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(TV.x + 110, TV.y - 90, 110, 70, -0.5, 0, TAU); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(TV.x + 60, TV.y + 150, 90, 50, 0.3, 0, TAU); ctx.fill();
-    ctx.fillStyle = 'rgba(235,245,250,0.55)'; ctx.beginPath(); ctx.arc(TV.x, TV.y, 58, 0, TAU); ctx.fill();   // 北極海冰
+    if (TEX.ready) ctx.drawImage(TEX.top, TV.x - TV.r, TV.y - TV.r, TV.r * 2, TV.r * 2);   // 真實北極上空視角（NASA Blue Marble）
     const ng = ctx.createLinearGradient(TV.x - 20, 0, TV.x + 60, 0);                                          // 背向太陽的夜側
     ng.addColorStop(0, 'rgba(8,20,30,0)'); ng.addColorStop(1, 'rgba(8,20,30,0.6)');
     ctx.fillStyle = ng; ctx.fillRect(TV.x - 20, TV.y - TV.r, TV.r + 30, TV.r * 2);
