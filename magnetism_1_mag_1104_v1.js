@@ -130,8 +130,9 @@
   // ═════════ 場景 1：磁化（mag-process） ═════════
   const PB = { x: 330, y: 210, w: 440, h: 140, cols: 8, rows: 3 };
   const ND = PB.cols * PB.rows;
+  const RC = randSet(6, 91);
   const R0 = randSet(ND, 11), R1 = randSet(ND, 29), R2 = randSet(ND, 53);
-  const CLIPX = [490, 550, 610], TABLE = 500, CLIP_REST = TABLE - 52, CLIP_HANG = PB.y + PB.h + 2;
+  const CLIPX = [352, 738, 768], TABLE = 500, CLIP_REST = TABLE - 52, CLIP_HANG = PB.y + PB.h + 2;
   const MAG = { w: 220, h: 70, rest: 60, out: -260 };
   const wob = (t, i, amp) => amp * Math.sin(t * 1.7 + i * 1.3) + amp * 0.5 * Math.sin(t * 3.1 + i * 2.1);
 
@@ -213,6 +214,29 @@
     }
   }
 
+  // 迴紋針被磁化：放大右端那根迴紋針的一小段鐵絲，看裡面的磁疇
+  function drawClipZoom(ctx, s, t) {
+    const a = s.clipK[1];
+    if (a <= 0.02) return;
+    const cx = 890, cy = 398, R = 72;
+    ctx.save(); ctx.globalAlpha = a;
+    ctx.strokeStyle = YELLOW; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(782, 384); ctx.lineTo(cx - R + 2, cy - 14); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#0b1a15'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill();
+    ctx.strokeStyle = YELLOW; ctx.lineWidth = 4; ctx.stroke();
+    // 放大的鐵絲：上端貼著鐵釘 N 極 → 上 S、下 N
+    ctx.fillStyle = '#4f5a57'; rrect(ctx, cx - 26, cy - 58, 52, 116, 8); ctx.fill();
+    ctx.strokeStyle = '#a9b4b0'; ctx.lineWidth = 3; ctx.stroke();
+    for (let j = 0; j < 3; j++) {
+      const ang = angLerp(RC[j] + wob(t, j + 3, 0.14), Math.PI / 2 + wob(t, j, 0.04), s.poles);
+      domain(ctx, cx, cy - 36 + j * 36, ang, 30, 13);
+    }
+    label(ctx, 'S', cx + 48, cy - 40, C.poleS, 'center', 24);
+    label(ctx, 'N', cx + 48, cy + 44, C.poleN, 'center', 24);
+    wrapLabel(ctx, tr('迴紋針也被磁化（放大）', 'Clip magnetized too (zoom)'), cx, 500, 200, YELLOW, 22, 28, 'center');
+    ctx.restore();
+  }
+
   function drawProcess(ctx, step, t) {
     if (step === 4) return drawProcessSummary(ctx, t);
     const s = procState(step, t);
@@ -220,17 +244,17 @@
     legendDomain(ctx, 34, 96);
 
     // 桌面與迴紋針
-    line(ctx, [[440, TABLE + 2], [720, TABLE + 2]], 'rgba(242,236,217,0.45)', 3);
+    line(ctx, [[320, TABLE + 2], [790, TABLE + 2]], 'rgba(242,236,217,0.45)', 3);
     CLIPX.forEach((x, j) => {
       const k = s.clipK[j], y = lerp(CLIP_REST, CLIP_HANG + s.dy, k);
       clip(ctx, x + s.dx * k, y, k > 0.98 ? 0.06 * Math.sin(t * 3 + j) : 0);
     });
-    label(ctx, tr('迴紋針', 'Paper clips'), 650, 472, CHALK, 'left', 24);
+    label(ctx, tr('迴紋針', 'Paper clips'), 330, 472, CHALK, 'right', 24);
 
     // 火焰（在鐵釘下方左側）
     if (s.flame > 0) {
-      flame(ctx, 395, 470, 100, t, s.flame);
-      ctx.save(); ctx.globalAlpha = s.flame; label(ctx, tr('加熱', 'Heat'), 395, 494, ORANGE, 'center', 24); ctx.restore();
+      flame(ctx, 550, 470, 100, t, s.flame);
+      ctx.save(); ctx.globalAlpha = s.flame; label(ctx, tr('加熱', 'Heat'), 550, 494, ORANGE, 'center', 24); ctx.restore();
     }
 
     // 外加磁場方向
@@ -259,6 +283,7 @@
       ctx.restore();
     }
     drawHammer(ctx, s.hammer);
+    drawClipZoom(ctx, s, t);
     if (s.msg) label(ctx, s.msg, 500, 556, s.mc, 'center', 26);
   }
 
@@ -274,7 +299,7 @@
     ctx.save(); ctx.globalAlpha = a2;
     label(ctx, tr('排列整齊', 'Lined up'), bx[1] + bw / 2, 150, GREEN, 'center', 28);
     ironBlock(ctx, bx[1], by, bw, bh, 6, 2, SUM_R.map((r, i) => wob(t, i, 0.04)), '#4f5a57', 0);
-    [-60, 0, 60].forEach((o, j) => clip(ctx, bx[1] + bw / 2 + o, by + bh + 2, 0.06 * Math.sin(t * 3 + j)));
+    [-135, 105, 135].forEach((o, j) => clip(ctx, bx[1] + bw / 2 + o, by + bh + 2, 0.06 * Math.sin(t * 3 + j)));
     label(ctx, tr('有磁性', 'Magnetic'), bx[1] + bw / 2, 400, GREEN, 'center', 26);
     label(ctx, 'S', bx[1] - 20, by + bh / 2, C.poleS, 'center', 30);
     label(ctx, 'N', bx[1] + bw + 20, by + bh / 2, C.poleN, 'center', 30);
@@ -297,18 +322,19 @@
   const SR = [randSet(SN, 101), randSet(SN, 131)], SR2 = randSet(SN, 151);
   const STABLE = 450, SCLIP_REST = STABLE - 52, SCLIP_HANG = SBY + SBH + 2;
   const DOWN = Math.PI / 2;
+  const ROD = { w: 110, h: 150, cols: 2, rows: 3 };   // 步驟 1、2：直立鐵棒（磁極在上下兩端）
 
   // 回傳兩塊各自的 { angs, clipK, magY(null=無), status, sc }
   function storeState(step, t) {
     const out = [0, 1].map(() => ({ angs: [], clipK: [0, 0, 0], magY: null, status: '', sc: CHALK }));
-    const magIn = k => lerp(-150, 70, k);
+    const magIn = k => lerp(-150, 91, k);
     if (step === 0) {
       const my = magIn(easeIO(seg(t, 0, 1.4)));
       out.forEach(o => { o.magY = my; });
       for (let i = 0; i < SN; i++) {
         const kS = easeIO(seg(t, 1.5 + 0.05 * i, 2.3 + 0.05 * i));
         out[0].angs.push(angLerp(SR[0][i] + wob(t, i, 0.14), DOWN + wob(t, i, 0.04), kS));
-        const kH = easeIO(seg(t, 1.8 + 0.32 * i, 3.4 + 0.32 * i));
+        const kH = easeIO(seg(t, 1.8 + 0.64 * i, 3.4 + 0.64 * i));
         out[1].angs.push(angLerp(SR[1][i] + wob(t, i, 0.14), DOWN + wob(t, i, 0.04), kH));
       }
       out[0].clipK = [0, 1, 2].map(j => Math.pow(seg(t, 3.0 + 0.15 * j, 3.4 + 0.15 * j), 2));
@@ -376,6 +402,8 @@
     const st = storeState(step, t);
     SB.forEach((b, bi) => {
       const o = st[bi], cx = b.x + b.w / 2;
+      const g = step === 2 ? { x: b.x, y: SBY, w: b.w, h: SBH, cols: SCOLS, rows: SROWS }
+                           : { x: cx - ROD.w / 2, y: SBY, w: ROD.w, h: ROD.h, cols: ROD.cols, rows: ROD.rows };
       if (o.magY !== null && o.magY > -140) {
         const inView = o.magY >= 60;
         vMagnet(ctx, cx, o.magY, 64, 124, inView);
@@ -383,11 +411,11 @@
       }
       line(ctx, [[b.x + 20, STABLE + 2], [b.x + b.w - 20, STABLE + 2]], 'rgba(242,236,217,0.45)', 3);
       // 用途：磁場沿長軸，磁極在左右兩端，迴紋針吸在兩端；其餘步驟磁極在下方，吸在下面
-      (step === 2 ? [-150, 150, 118] : [-70, 0, 70]).forEach((off, j) => {
+      (step === 2 ? [-150, 150, 118] : [-30, 0, 30]).forEach((off, j) => {
         const k = o.clipK[j];
-        clip(ctx, cx + off, lerp(SCLIP_REST, SCLIP_HANG, k), k > 0.98 ? 0.06 * Math.sin(t * 3 + j + bi) : 0);
+        clip(ctx, cx + off, lerp(SCLIP_REST, g.y + g.h + 2, k), k > 0.98 ? 0.06 * Math.sin(t * 3 + j + bi) : 0);
       });
-      ironBlock(ctx, b.x, SBY, b.w, SBH, SCOLS, SROWS, o.angs, b.fill, 0);
+      ironBlock(ctx, g.x, g.y, g.w, g.h, g.cols, g.rows, o.angs, b.fill, 0);
       if (step === 2 && bi === 0) drawCoil(ctx, b, o.on, t);
       const name = step === 2 ? (bi === 0 ? tr('軟鐵 → 電磁鐵的鐵心', 'Soft iron → electromagnet core') : tr('鋼 → 永久磁鐵', 'Steel → permanent magnet'))
                               : tr(b.name[0], b.name[1]);
@@ -574,7 +602,7 @@
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'step-btn' + (k === S.step ? ' active' : '');
       b.textContent = `${k + 1} ${tr(st.b[0], st.b[1])}`;
-      b.addEventListener('click', () => { S.t = sc.starts[k] + 1e-4; S.step = -1; S.last = 0; render(); start(); });
+      b.addEventListener('click', () => { S.t = sc.starts[k] + 1e-4; S.step = -1; S.last = 0; S.endFired = false; render(); start(); });
       row.appendChild(b);
     });
   }
@@ -585,10 +613,13 @@
     S.raf = 0;
     if (!S.scene || document.hidden) return;
     if (!visible()) { S.last = 0; S.timer = setTimeout(() => { S.timer = 0; start(); }, 250); return; }
-    if (S.last) S.t += Math.min(0.1, (ts - S.last) / 1000);
+    if (S.last && !(MagAnim.ctl && MagAnim.ctl.paused)) S.t += Math.min(0.1, (ts - S.last) / 1000);
     S.last = ts;
     const sc = SCENES[S.scene];
-    if (S.t >= sc.total) S.t = 0;
+    if (S.t >= sc.total) {
+      // 老師講解模式（MagAnim.ctl.onEnd 有設定）：停在最後一格並通知一次；學生模式照舊循環
+      if (MagAnim.ctl && MagAnim.ctl.onEnd) { S.t = sc.total - 1e-3; if (!S.endFired) { S.endFired = true; MagAnim.ctl.onEnd(); } } else S.t = 0;
+    }
     render();
     S.raf = requestAnimationFrame(frame);
   }
@@ -608,7 +639,7 @@
     activate(sceneId) {
       if (!SCENES[sceneId]) sceneId = 'mag-process';
       stop();
-      S.scene = sceneId; S.t = 0; S.step = -1; S.last = 0;
+      S.scene = sceneId; S.t = 0; S.step = -1; S.last = 0; S.endFired = false;
       buildButtons(); render(); start();
     },
     deactivate() {
