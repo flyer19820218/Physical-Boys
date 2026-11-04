@@ -98,7 +98,7 @@ body.intro-locked { overflow: hidden; }
 .canvas-wrap { background: var(--canvas); border: 2px solid var(--cyan); border-radius: 10px; overflow: hidden; position: relative; }
 .rect-canvas { display: block; width: 100%; height: auto; aspect-ratio: 10 / 6; cursor: grab; }
 .rect-canvas:active { cursor: grabbing; }
-#poleCanvas, #poleCanvas:active, #magCanvas, #magCanvas:active, #lineCanvas, #lineCanvas:active { cursor: default; }
+#poleCanvas, #poleCanvas:active, #magCanvas, #magCanvas:active, #lineCanvas, #lineCanvas:active, #compassCanvas, #compassCanvas:active { cursor: default; }
 
 /* V3 按鈕彈性設計 */
 .controls { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
@@ -379,9 +379,10 @@ body.intro-locked { overflow: hidden; }
     </article>
 
     <article class="panel">
-      <h2 data-zh="【互動】隨動磁針與切線" data-en="[Interact] Follow-Compass & Tangent">【互動】隨動磁針與切線</h2>
+      <h2 data-zh="【動畫】磁針與切線" data-en="[Animation] Compass & Tangent">【動畫】磁針與切線</h2>
       <div class="canvas-wrap"><canvas id="compassCanvas" class="rect-canvas" width="1000" height="600"></canvas></div>
-      <div id="compassResult" class="result-box" data-zh="👆 <strong>直接在畫布上拖曳磁針！</strong> 觀察紅色 N 極如何精準順著切線方向轉動。" data-en="👆 <strong>Drag the compass on the canvas!</strong> Watch how the red N pole precisely aligns with the tangent direction.">👆 <strong>直接在畫布上拖曳磁針！</strong> 觀察紅色 N 極如何精準順著切線方向轉動。</div>
+      <div class="step-row" id="steps-compass" aria-label="步驟"></div>
+      <div id="compassResult" class="result-box" data-zh="動畫會自動播放。想重看哪一步，就按上面的編號，觀察紅色 N 極如何順著切線方向轉動。" data-en="The animation plays by itself. Press a number to replay a step and watch the red N pole follow the tangent.">動畫會自動播放。想重看哪一步，就按上面的編號，觀察紅色 N 極如何順著切線方向轉動。</div>
     </article>
   </div>
   
@@ -440,6 +441,7 @@ body.intro-locked { overflow: hidden; }
 let currentLang = 'zh';
 let introClosed = false;
 let magScene = null; // 磁化與保存分頁目前播放中的場景（MagAnim.mag）
+let compassScene = null; // 磁場與指南針分頁目前播放中的場景（MagAnim.compass）
 let lineScene = null; // 磁力線分頁目前播放中的場景（MagAnim.line）
 let poleScene = null; // 磁極分頁目前播放中的場景（動畫模組 MagAnim.pole）
 function enterLesson() { if (introClosed) return; introClosed = true; const el = document.getElementById('introScreen'); if (!el) return; el.classList.add('exiting'); document.body.classList.remove('intro-locked'); setTimeout(() => el.remove(), 800); setTimeout(drawActive, 900); }
@@ -460,6 +462,7 @@ function setLang(lang) {
   if (magScene && window.MagAnim && MagAnim.mag) MagAnim.mag.relang();
 
   if (lineScene && window.MagAnim && MagAnim.line) MagAnim.line.relang();
+  if (compassScene && window.MagAnim && MagAnim.compass) MagAnim.compass.relang();
 
   const xBtn = document.getElementById('xrayBtn');
   const eRes = document.getElementById('earthResult');
@@ -710,62 +713,7 @@ const lineState = { type: 'single' };
 // ==========================================
 // 4. 磁場與指南針
 // ==========================================
-const compassState = { c: {x: 500, y: 150}, dragging: false };
 const compassPoles = [{x: 370, y: 300, m: 80000}, {x: 630, y: 300, m: -80000}];
-function drawCompassCanvas(ctx) {
-  clear(ctx);
-  drawSymmetricFieldLines(ctx, compassPoles, 20, 2, 'rgba(85,233,255,0.35)', true);
-  drawMagnet(ctx, 350, 270, 300, 60, true);
-  
-  let B = getBField(compassState.c.x, compassState.c.y, compassPoles);
-  let angle = Math.atan2(B.by, B.bx); 
-  
-  if(document.getElementById('compass-tangent').classList.contains('active')) {
-    ctx.save(); ctx.strokeStyle = C.yellow; ctx.lineWidth=3; ctx.setLineDash([8,6]);
-    ctx.beginPath(); ctx.moveTo(compassState.c.x - Math.cos(angle)*80, compassState.c.y - Math.sin(angle)*80);
-    ctx.lineTo(compassState.c.x + Math.cos(angle)*80, compassState.c.y + Math.sin(angle)*80); ctx.stroke(); ctx.restore();
-    label(ctx, tr('磁力線切線方向 = 磁針 N 極方向', 'Tangent = Compass N pole direction'), compassState.c.x, compassState.c.y - 70, C.yellow, 'center', 20);
-  }
-  
-  drawCompass(ctx, compassState.c.x, compassState.c.y, angle, 40);
-}
-
-function initCompassEvents() {
-  const canvas = document.getElementById('compassCanvas');
-  let isDown = false;
-
-  function getPos(e) {
-      const r = canvas.getBoundingClientRect();
-      let cx = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
-      let cy = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
-      return { x: (cx - r.left) / r.width * 1000, y: (cy - r.top) / r.height * 600 };
-  }
-
-  function handleDown(e) {
-      const p = getPos(e);
-      if (Math.hypot(p.x - compassState.c.x, p.y - compassState.c.y) < 70) {
-          isDown = true; compassState.dragging = true;
-      }
-  }
-  function handleMove(e) {
-      if (isDown) {
-          const p = getPos(e);
-          compassState.c.x = p.x;
-          compassState.c.y = p.y;
-          safeDraw('compassCanvas', drawCompassCanvas);
-          if (e.cancelable) e.preventDefault();
-      }
-  }
-  function handleUp() { isDown = false; compassState.dragging = false; }
-
-  canvas.addEventListener('mousedown', handleDown);
-  window.addEventListener('mousemove', handleMove);
-  window.addEventListener('mouseup', handleUp);
-
-  canvas.addEventListener('touchstart', handleDown, {passive: false});
-  window.addEventListener('touchmove', handleMove, {passive: false});
-  window.addEventListener('touchend', handleUp);
-}
 
 // ==========================================
 // 5. 地球大磁鐵
@@ -895,7 +843,10 @@ function drawActive() {
     const sub = document.querySelector('#tab-line .sub-tab-btn.active').dataset.sub;
     if (window.MagAnim && MagAnim.line && lineScene !== sub) { MagAnim.line.activate(sub); lineScene = sub; }
   } else if (lineScene) { MagAnim.line.deactivate(); lineScene = null; }
-  if (id === 'tab-compass') safeDraw('compassCanvas', drawCompassCanvas);
+  if (id === 'tab-compass') {
+    const sub = document.querySelector('#tab-compass .sub-tab-btn.active').dataset.sub;
+    if (window.MagAnim && MagAnim.compass && compassScene !== sub) { MagAnim.compass.activate(sub); compassScene = sub; }
+  } else if (compassScene) { MagAnim.compass.deactivate(); compassScene = null; }
   if (id === 'tab-earth') safeDraw('earthCanvas', drawEarthCanvas);
 }
 
@@ -915,17 +866,18 @@ document.querySelectorAll('.sub-tab-btn').forEach(b => b.addEventListener('click
   if(b.dataset.parent === 'tab-pole') { poleScene = null; setTimeout(drawActive, 0); }
   if(b.dataset.parent === 'tab-mag') { magScene = null; setTimeout(drawActive, 0); }
   if(b.dataset.parent === 'tab-line') { lineScene = null; setTimeout(drawActive, 0); }
-  if(b.dataset.parent === 'tab-compass') safeDraw('compassCanvas', drawCompassCanvas);
+  if(b.dataset.parent === 'tab-compass') { compassScene = null; setTimeout(drawActive, 0); }
   if(b.dataset.parent === 'tab-earth') safeDraw('earthCanvas', drawEarthCanvas);
 }));
 
 window.addEventListener('resize', () => setTimeout(drawActive, 100), { passive: true });
 window.addEventListener('orientationchange', () => setTimeout(drawActive, 180), { passive: true });
-window.addEventListener('load', () => { initCompassEvents(); setLang('zh'); setTimeout(drawActive, 100); });
+window.addEventListener('load', () => { setLang('zh'); setTimeout(drawActive, 100); });
 </script>
 <script defer src="magnetism_1_pole_1104_v1.js?v=20261104-p1"></script>
 <script defer src="magnetism_1_mag_1104_v1.js?v=20261104-m1"></script>
 <script defer src="magnetism_1_line_1104_v1.js?v=20261104-l1"></script>
+<script defer src="magnetism_1_compass_1104_v1.js?v=20261104-c1"></script>
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
 <script defer src="assets/quiz/quiz_magnetism_1_1028_v1.js?v=20261028-q1"></script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
