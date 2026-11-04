@@ -724,6 +724,8 @@ function drawDirectionModel(ctx, x, y, fDir) {
   ctx.restore();
 }
 
+const HAND_IMG = new Image();
+HAND_IMG.src = 'assets/electric_motor_3_hand_1105_v1.png';
 function drawPalmHandCanvas(ctx) {
   clear(ctx);
   label(ctx, tr('右手開掌：三個方向兩兩垂直','Right hand: all three directions are perpendicular'), 500, 48, C.yellow, 'center', currentLang==='en'?24:29);
@@ -733,6 +735,13 @@ function drawPalmHandCanvas(ctx) {
   ctx.shadowBlur = 18;
   ctx.fillStyle = 'rgba(231,184,145,.94)';
 
+  // 2026-11-05 老師指定換成 Gemini 手圖（已去背；右手、掌心朝觀察者、四指向上、拇指向右）。
+  // 縮放 0.7，擺放成：中指軸線 x≈472、掌心中心≈(464,378)，讓下方 B／I／F 箭頭座標原封不動。圖沒載入時退回舊的程式畫法。
+  const useHandImg = HAND_IMG.complete && HAND_IMG.naturalWidth > 0;
+  if (useHandImg) {
+    ctx.drawImage(HAND_IMG, 350, 78, HAND_IMG.naturalWidth * 0.7, HAND_IMG.naturalHeight * 0.7);
+    ctx.shadowBlur = 0;
+  } else {
   // 只畫右手，不放人物。四指向上、拇指向右、掌心朝向觀察者。
   const parts = [
     [402, 438, 176, 128, 34], // 手腕
@@ -764,15 +773,16 @@ function drawPalmHandCanvas(ctx) {
   ctx.globalAlpha = .45;
   ctx.beginPath(); ctx.moveTo(376,424); ctx.bezierCurveTo(430,382,500,382,554,424); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(388,455); ctx.bezierCurveTo(438,430,492,432,530,462); ctx.stroke();
+  }
   ctx.restore();
 
   // 四指 B：向上。
   drawFlatArrow(ctx, 472, 328, 472, 104, C.green, 9, 23);
-  label(ctx, tr('四指 B','Fingers B'), 430, 126, C.green, 'right', 24);
+  label(ctx, tr('四指 B','Fingers B'), 386, 120, C.green, 'right', 24); // 2026-11-05 手圖換新後，標籤移到手外
 
   // 拇指 I：向右。
   drawFlatArrow(ctx, 506, 350, 742, 350, C.cyan, 9, 23);
-  label(ctx, tr('拇指 I','Thumb I'), 724, 316, C.cyan, 'right', 24);
+  label(ctx, tr('拇指 I','Thumb I'), 742, 280, C.cyan, 'right', 24);
 
   // 掌心 F：用 ⊙ 表示垂直穿出紙面。
   ctx.save();
@@ -783,8 +793,8 @@ function drawPalmHandCanvas(ctx) {
   ctx.fillStyle = C.pink;
   ctx.beginPath(); ctx.arc(463, 407, 13, 0, TAU); ctx.fill();
   ctx.restore();
-  label(ctx, tr('掌心 F ⊙','Palm F ⊙'), 302, 407, C.pink, 'left', 25);
-  label(ctx, tr('推出紙面','out of page'), 302, 441, C.pink, 'left', 20);
+  label(ctx, tr('掌心 F ⊙','Palm F ⊙'), 352, 407, C.pink, 'right', 25);
+  label(ctx, tr('推出紙面','out of page'), 352, 441, C.pink, 'right', 20);
 
   // 直角記號與結論：不是「大約垂直」，而是三組皆為 90°。
   ctx.save();
@@ -1245,6 +1255,12 @@ function renderMotorAssembly(ctx, a, options = {}) {
   structPath(ctx,winding,'rgba(88,42,16,.82)',12);
   structPath(ctx,winding,copper,7);
 
+  // 2026-11-05 老師指示：電流要比集電環／電刷先畫（跟線圈同一層），否則電流會浮在集電環上面。
+  // 多匝線圈是同一條串聯導線：同一時刻，每一匝都有同方向、同速率的電流。斷電瞬間不畫。
+  if(options.showCurrent && !(Math.abs(c)<.075)){
+    drawCurrentFlow(ctx,currentTurnLoops,c>=0?1:-1,options.currentStrength ?? 2);
+  }
+
   // 兩個自由端在軸心附近保持分離，再沿轉軸接到不同半片集電環。
   const firstEnd=winding[0], lastEnd=winding[winding.length-1];
   const frontA=structProject(firstEnd.x,firstEnd.y,firstEnd.z);
@@ -1291,8 +1307,7 @@ function renderMotorAssembly(ctx, a, options = {}) {
     drawArmatureCorner(ctx,'B',corner2d[1],500,320,C.cyan);
     drawArmatureCorner(ctx,'C',corner2d[2],500,320,C.pink);
     drawArmatureCorner(ctx,'D',corner2d[3],500,320,C.pink);
-    // 多匝線圈是同一條串聯導線：同一時刻，每一匝都有同方向、同速率的電流。
-    if(!disconnected) drawCurrentFlow(ctx,currentTurnLoops,direction,options.currentStrength ?? 2);
+    // （電流光點已提前到分裂環之前繪製，見上方）
     if(!disconnected && options.showForces){
       const sideAB={x:(corner2d[0].x+corner2d[1].x)/2,y:(corner2d[0].y+corner2d[1].y)/2};
       const sideCD={x:(corner2d[2].x+corner2d[3].x)/2,y:(corner2d[2].y+corner2d[3].y)/2};
