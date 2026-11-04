@@ -338,8 +338,9 @@
       const a = ph < 0 ? 0 : (on ? easeIO(ph / 0.45) : 1 - easeIO((ph - 1.6) / 0.45));
       const kc = ph < 0 ? 0 : (on ? Math.pow(seg(ph, 0.35, 0.75), 2) : 1 - Math.pow(seg(ph, 1.9, 2.3), 2));
       for (let i = 0; i < SN; i++) {
-        out[0].angs.push(angLerp(SR2[i] + wob(t, i, 0.14), DOWN + wob(t, i, 0.04), a));
-        out[1].angs.push(DOWN + wob(t, i, 0.04));
+        // 線圈沿鐵心長軸繞 → 磁場沿長軸（左右），磁疇轉成 N 朝右
+        out[0].angs.push(angLerp(SR2[i] + wob(t, i, 0.14), 0 + wob(t, i, 0.04), a));
+        out[1].angs.push(0 + wob(t, i, 0.04));
       }
       out[0].clipK = [kc, kc, kc]; out[1].clipK = [1, 1, 1];
       out[0].on = on;
@@ -381,7 +382,8 @@
         if (inView) label(ctx, tr('磁鐵', 'Magnet'), bi === 0 ? cx - 46 : cx + 46, o.magY + 62, CHALK, bi === 0 ? 'right' : 'left', 24);
       }
       line(ctx, [[b.x + 20, STABLE + 2], [b.x + b.w - 20, STABLE + 2]], 'rgba(242,236,217,0.45)', 3);
-      [-70, 0, 70].forEach((off, j) => {
+      // 用途：磁場沿長軸，磁極在左右兩端，迴紋針吸在兩端；其餘步驟磁極在下方，吸在下面
+      (step === 2 ? [-150, 150, 118] : [-70, 0, 70]).forEach((off, j) => {
         const k = o.clipK[j];
         clip(ctx, cx + off, lerp(SCLIP_REST, SCLIP_HANG, k), k > 0.98 ? 0.06 * Math.sin(t * 3 + j + bi) : 0);
       });
