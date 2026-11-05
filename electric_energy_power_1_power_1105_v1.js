@@ -6,7 +6,7 @@
  * 畫面是「場景時間 t 的純函式」，跳步、重播、換語言都和真的播到那裡一模一樣。
  *
  * ── 教學符號 ────────────────────────────────────────────────────────
- *   能量＝黃色小方塊，全程固定「1 格＝40 J」（圖例寫明）：40 W 燈泡每秒 1 格、800 W 吹風機每秒 20 格（剛好一列）；
+ *   能量＝藍色小方塊，全程固定「1 格＝40 J」（圖例寫明）：40 W 燈泡每秒 1 格、800 W 吹風機每秒 20 格（剛好一列）；
  *   10 s → 10 格（400 J）對 200 格（8000 J）；燈泡 200 s → 200 格（8000 J）。計數器每列 20 格＝800 J。
  *   藍球＝電子，從電源負極出發；方塊沿著同一方向（負極 → 下導線 → 元件）走進元件，在元件中心被轉換，
  *   再飛進下方「已使用電能」計數格。吹風機的電子比燈泡密、跑得快（電流較大，只做定性）。
@@ -41,7 +41,7 @@
   const K = {
     bg: '#0c1e19', white: '#f2ecd9', yellow: '#fde047', cyan: '#55e9ff', green: '#4ade80',
     orange: '#fb923c', pink: '#f472b6', muted: '#9fb3aa', wire: '#9fb3aa',
-    electron: '#4dd2ff', pos: '#ff8040', current: '#ff4d4d', energy: '#fde047', panel: '#123029'
+    electron: '#4dd2ff', pos: '#ff8040', current: '#ff4d4d', energy: '#4dd2ff', panel: '#123029'
   };
   const TAU = Math.PI * 2;
   const J_PER = 40;            // 1 格＝40 J
@@ -184,7 +184,7 @@
   function square(ctx, x, y, alpha, size) {
     if (alpha <= 0) return;
     ctx.save(); ctx.globalAlpha *= alpha; ctx.shadowColor = K.energy; ctx.shadowBlur = 8; ctx.fillStyle = K.energy;
-    rrect(ctx, x - size / 2, y - size / 2, size, size, 2); ctx.fill(); ctx.restore();
+    rrect(ctx, x - size / 2, y - size / 2, size, size, 2); ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(214,246,255,0.95)'; ctx.lineWidth = 1.6; ctx.stroke(); ctx.restore();
   }
   function ball(ctx, x, y, r, alpha) {
     ctx.save(); ctx.globalAlpha *= alpha; ctx.shadowColor = K.electron; ctx.shadowBlur = 8; ctx.fillStyle = K.electron;
@@ -447,7 +447,7 @@
   // ───────── 圖例、說明 ─────────
   function drawLegend(ctx) {
     const items = [[tr('藍球＝電子，從負極出發', 'Blue ball = electron, starts from −'), 'e'],
-      [tr('黃方塊＝能量，1 格＝40 J（教學符號）', 'Yellow square = 40 J of energy (symbol)'), 's']];
+      [tr('藍方塊＝能量，1 格＝40 J（教學符號）', 'Blue square = 40 J of energy (symbol)'), 's']];
     const z = 22, gapIcon = 26, gapItem = 40, maxW = W - 60;
     const wid = items.map(([s]) => gapIcon + textW(ctx, s, z));
     const rows = []; let cur = [], cw = 0;

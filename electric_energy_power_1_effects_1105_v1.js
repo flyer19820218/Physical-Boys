@@ -9,7 +9,7 @@
  *   電池在左（+ 在上、− 在下），上幹線 TOP、下幹線 BOT；三條直立支路 x＝380／600／820，
  *   元件框置中在支路上：吹風機（電熱絲）、充電電池（+ 在上，接電源 +）、電磁鐵（線圈＋鐵芯，右邊鐵釘）。
  *   電子（藍球）從電池負極出發：往下 → 下幹線往右 → 支路往上穿過元件 → 上幹線往左 → 回正極。
- *   每顆電子在「離開負極到元件」之間帶一個黃色能量方塊（貼在導線外側），在元件座標（支路中點）被吃掉；
+ *   每顆電子在「離開負極到元件」之間帶一個藍色能量方塊（貼在導線外側），在元件座標（支路中點）被吃掉；
  *   之後空手回電池。電子的路徑位置 s(t)＝(相位＋v·t) mod L，離開負極的時間＝t − s/v，所以
  *   「哪些電子帶方塊」「元件已經吃了幾個」都是 t 的解析式。
  *
@@ -35,7 +35,7 @@
   const K = {
     bg: '#0c1e19', white: '#f2ecd9', yellow: '#fde047', cyan: '#55e9ff', green: '#4ade80',
     orange: '#fb923c', pink: '#f472b6', muted: '#9fb3aa', wire: '#9fb3aa',
-    electron: '#4dd2ff', pos: '#ff8040', energy: '#fde047',
+    electron: '#4dd2ff', pos: '#ff8040', energy: '#4dd2ff',
     heat: '#fb923c', heatHot: '#ff6a3d', chem: '#4ade80', mag: '#d99bff',
     panel: '#123029', panelEdge: '#55746a', copper: '#d08a4a', iron: '#8e9a95'
   };
@@ -110,8 +110,8 @@
   const STEPS = [
     { dur: 8, b: ['能量來源', 'Source'],
       cap: ['電池把能量送進電路', 'The battery sends energy into the circuit'],
-      res: ['電池把能量送進電路。黃色小方塊是「能量」的教學符號，不代表實體粒子。',
-        'The battery sends energy into the circuit. Yellow squares symbolize "energy packets", not actual particles.'] },
+      res: ['電池把能量送進電路。藍色小方塊是「能量」的教學符號，不代表實體粒子。',
+        'The battery sends energy into the circuit. Blue squares symbolize "energy packets", not actual particles.'] },
     { dur: 8, b: ['熱效應', 'Heat'], hi: 0,
       cap: ['吹風機：電能變成內能，吹出熱風', 'Hair dryer: electrical energy becomes heat'],
       res: ['吹風機的電熱絲把電能轉換成內能，產生熱風。', 'The hair dryer converts electrical energy into internal energy (heat).'] },
@@ -173,7 +173,7 @@
   function rrect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
   function square(ctx, x, y, s, alpha) {
     ctx.save(); ctx.globalAlpha *= alpha; ctx.shadowColor = K.energy; ctx.shadowBlur = 10; ctx.fillStyle = K.energy;
-    rrect(ctx, x - s / 2, y - s / 2, s, s, 3); ctx.fill(); ctx.restore();
+    rrect(ctx, x - s / 2, y - s / 2, s, s, 3); ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(214,246,255,0.95)'; ctx.lineWidth = 1.6; ctx.stroke(); ctx.restore();
   }
   function electron(ctx, x, y, alpha) {
     ctx.save(); ctx.globalAlpha *= alpha; ctx.shadowColor = K.electron; ctx.shadowBlur = 8; ctx.fillStyle = K.electron;
@@ -359,7 +359,7 @@
 
   function drawLegend(ctx) {
     const a = tr('藍球＝電子，從負極出發', 'Blue ball = electron, starts from −');
-    const b = tr('黃方塊＝能量（教學符號）', 'Yellow square = energy (symbol)');
+    const b = tr('藍方塊＝能量（教學符號）', 'Blue square = energy (symbol)');
     const z = 22, gapIcon = 26, gapItem = 40;
     const wa = gapIcon + textW(ctx, a, z), wb = gapIcon + textW(ctx, b, z);
     const items = wa + gapItem + wb <= W - 60 ? [[[a, 'e'], [b, 's']]] : [[[a, 'e']], [[b, 's']]];

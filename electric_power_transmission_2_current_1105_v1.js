@@ -24,7 +24,7 @@
  *   3 一個週期  9 s  游標畫第 1 個週期時依序出現「正向半週期」「反向半週期」括號；走完一個週期後該週期高亮＋「一個週期」括號
  *   4 60 Hz     9 s  1 秒計時條填滿時，密集波畫滿 60 個週期、計數到 60；之後放大其中 1 個週期標「1/60 秒」；
  *                    電路裡電子快速小幅抖動、紅色雙頭箭頭表示方向快速來回
- *   5 燈仍會亮  8 s  交流；黃色能量方塊（教學符號）由電源沿上下導線送進燈泡後被轉換（燈絲發光，標「熱與光」）；
+ *   5 燈仍會亮  8 s  交流；藍色能量方塊（教學符號）由電源沿上下導線送進燈泡後被轉換（燈絲發光，標「熱與光」）；
  *                    I-t 圖上正、反向每個半週期旁都亮一顆小燈泡
  * 不出現 √2、峰值、有效值。
  * 播放規則（AGENTS 10.6，2026-11-05）：activate() 播第 1 步，每步播完停在最後一幀，不循環、不自動接下一步；
@@ -44,7 +44,7 @@
   const K = {
     bg: '#0c1e19', white: '#f2ecd9', yellow: '#fde047', cyan: '#55e9ff', green: '#4ade80',
     orange: '#fb923c', pink: '#f472b6', muted: '#9fb3aa', wire: '#9fb3aa',
-    electron: '#4dd2ff', pos: '#ff8040', current: '#ff4d4d', energy: '#fde047'
+    electron: '#4dd2ff', pos: '#ff8040', current: '#ff4d4d', energy: '#4dd2ff'
   };
   const TAU = Math.PI * 2;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -160,7 +160,7 @@
   function square(ctx, x, y, alpha, scale) {
     const s = 13 * (scale || 1);
     ctx.save(); ctx.globalAlpha *= alpha; ctx.shadowColor = K.energy; ctx.shadowBlur = 10; ctx.fillStyle = K.energy;
-    rrect(ctx, x - s / 2, y - s / 2, s, s, 3); ctx.fill(); ctx.restore();
+    rrect(ctx, x - s / 2, y - s / 2, s, s, 3); ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(214,246,255,0.95)'; ctx.lineWidth = 1.6; ctx.stroke(); ctx.restore();
   }
   // 紅色電流箭頭：中心 (x,y)，dir＝+1 往右、−1 往左；dbl＝雙頭
   function arrowH(ctx, x, y, dir, alpha, len, dbl) {
@@ -457,7 +457,7 @@
       [i === 0 ? tr('藍球＝電子，從負極出發', 'Blue ball = electron, starts from −') : tr('藍球＝電子，在導線裡來回', 'Blue ball = electron, moves back and forth'), 'e'],
       [tr('紅箭頭＝電流方向', 'Red arrow = current direction'), 'a']
     ];
-    if (i === 4) items.push([tr('黃方塊＝能量（教學符號）', 'Yellow square = energy (symbol)'), 's']);
+    if (i === 4) items.push([tr('藍方塊＝能量（教學符號）', 'Blue square = energy (symbol)'), 's']);
     const z = 22, gapIcon = 34, gapItem = 36, maxW = W - 60;
     const wid = items.map(([s]) => gapIcon + textW(ctx, s, z));
     const rows = []; let cur = [], cw = 0;

@@ -7,7 +7,7 @@
  *
  * ── 教學符號 ────────────────────────────────────────────────────────
  *   「1 C」＝一個藍色虛線圈裡放 4 顆藍球（電子），代表一大群電荷；圈外寫「1 C」。
- *   能量＝黃色小方塊，1 格＝1 J（1.5 J＝1 格＋半格）。方塊貼在電荷群的「迴路內側」。
+ *   能量＝藍色小方塊，1 格＝1 J（1.5 J＝1 格＋半格）。方塊貼在電荷群的「迴路內側」。
  *   電壓一律講成「每 1 C 帶多少 J」，不畫水位、高度。
  *
  * ── 電路（單迴路；第 3 步是兩個迴路並排，版面另算）──────────────────────
@@ -41,7 +41,7 @@
   const K = {
     bg: '#0c1e19', white: '#f2ecd9', yellow: '#fde047', cyan: '#55e9ff', green: '#4ade80',
     orange: '#fb923c', pink: '#f472b6', muted: '#9fb3aa', wire: '#9fb3aa',
-    electron: '#4dd2ff', pos: '#ff8040', energy: '#fde047', panel: '#123029'
+    electron: '#4dd2ff', pos: '#ff8040', energy: '#4dd2ff', panel: '#123029'
   };
   const RG = 22;           // 電荷群（1 C）虛線圈半徑
   const SQ = 13, PITCH = 17;   // 能量方塊邊長、格距
@@ -234,7 +234,7 @@
   function square(ctx, x, y, z, alpha, scale) {
     const s = SQ * (scale || 1), w = s * z;
     ctx.save(); ctx.globalAlpha *= alpha; ctx.shadowColor = K.energy; ctx.shadowBlur = 10; ctx.fillStyle = K.energy;
-    rrect(ctx, x - s / 2, y - s / 2, w, s, 3); ctx.fill(); ctx.restore();
+    rrect(ctx, x - s / 2, y - s / 2, w, s, 3); ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(214,246,255,0.95)'; ctx.lineWidth = 1.6; ctx.stroke(); ctx.restore();
   }
   function ball(ctx, x, y, r, alpha) {
     ctx.save(); ctx.globalAlpha *= alpha; ctx.shadowColor = K.electron; ctx.shadowBlur = 8; ctx.fillStyle = K.electron;
@@ -402,7 +402,7 @@
   function drawLegend(ctx) {
     const items = [
       [tr('藍球＝電子，從負極出發', 'Blue ball = electron, starts from −'), 'e'],
-      [tr('黃方塊＝能量（教學符號）', 'Yellow square = energy (symbol)'), 's'],
+      [tr('藍方塊＝能量（教學符號）', 'Blue square = energy (symbol)'), 's'],
       [tr('虛線圈＝1 C 電荷', 'Dashed ring = 1 C of charge'), 'g']
     ];
     const z = 22, gapIcon = 28, gapItem = 36, maxW = W - 60;
