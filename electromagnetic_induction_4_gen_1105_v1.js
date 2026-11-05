@@ -549,7 +549,7 @@
     const { p, a } = stepState(st, tl), ph = physics(mode, a, st.s);
     const hlIdx = st.parts ? Math.floor(tl / HL_T) % 5 : -1;
     const hlA = i => hlIdx === i ? 0.55 + 0.45 * Math.sin(tl * 6) ** 2 : 0;
-    // 由後往前：磁鐵、磁場、轉軸、線圈、引線、換向器／滑環、電刷、外電路
+    // 由後往前：磁鐵、磁場、轉軸、線圈、引線、換向器／滑環（z 小＝離觀眾近：先畫橘環 A，再畫粉環 D 蓋在前面）、電刷、外電路
     drawMagnet(ctx, -1, hlA(0));
     drawField(ctx, st.maxzero ? 0.4 : 0);           // 磁力線從 N 內側面出發，被 N 的前面擋住
     drawMagnet(ctx, 1, hlA(0));
@@ -559,7 +559,7 @@
     if (st.vel) drawVelocity(ctx, ph, 1);
     drawLeads(ctx, mode, a);
     if (mode === 'dc') drawSegments(ctx, a, hlA(2) || (st.swap ? 0.35 + 0.65 * clamp(1 - Math.abs(ph.c) / 0.3, 0, 1) : 0));
-    else { drawSlipRing(ctx, ACZ_D, '#ff78b7'); drawSlipRing(ctx, ACZ_A, '#ffb347'); if (hlA(2)) { ringHL(ctx, ACZ_A, hlA(2)); ringHL(ctx, ACZ_D, hlA(2)); } }
+    else { drawSlipRing(ctx, ACZ_A, '#ffb347'); drawSlipRing(ctx, ACZ_D, '#ff78b7'); if (hlA(2)) { ringHL(ctx, ACZ_A, hlA(2)); ringHL(ctx, ACZ_D, hlA(2)); } }
     const polA = st.parts ? 0 : clamp(Math.abs(ph.V) / 0.12, 0, 1);
     const swapGlow = st.swap ? clamp(1 - Math.abs(ph.c) / 0.3, 0, 1) : 0;
     drawBrush(ctx, mode, -1, hlA(3) || swapGlow, ph.V, polA);
