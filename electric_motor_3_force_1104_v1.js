@@ -331,7 +331,7 @@
   Object.values(SCENES).forEach(sc => { let a = 0; sc.starts = sc.steps.map(s => { const v = a; a += s.d; return v; }); sc.total = a; });
 
   // ═════════ 播放器（單一 RAF） ═════════
-  const S = { scene: null, t: 0, raf: 0, last: 0, step: -1, timer: 0, endFired: false };
+  const S = { scene: null, t: 0, raf: 0, last: 0, step: -1, timer: 0, endFired: false, delegate: false };
 
   function canvasCtx() { const c = document.getElementById('forceExamplesCanvas'); return c ? c.getContext('2d') : null; }
   function stepAt(sc, t) { let i = 0; while (i + 1 < sc.starts.length && t >= sc.starts[i + 1]) i++; return i; }
@@ -411,6 +411,11 @@
 
   MA.force = {
     activate(sceneId) {
+      // 'example-aurora'（補充：美麗的極光）由 electric_motor_3_aurora_1105_v1.js 播放，共用同一張畫布與步驟列
+      if (S.delegate && MA.aurora) { MA.aurora.deactivate(); S.delegate = false; }
+      if (sceneId === 'example-aurora' && MA.aurora) {
+        stop(); S.scene = null; S.step = -1; S.delegate = true; MA.aurora.activate(sceneId); return;
+      }
       if (!SCENES[sceneId]) sceneId = 'example-wires';
       stop();
       S.scene = sceneId; S.t = 0; S.step = -1; S.last = 0; S.endFired = false;
@@ -418,17 +423,19 @@
       buildButtons(); render(); start();
     },
     deactivate() {
+      if (S.delegate && MA.aurora) { MA.aurora.deactivate(); S.delegate = false; return; }
       stop();
       if (!S.scene) return;
       S.scene = null; S.step = -1;
       const row = document.getElementById('steps-force'); if (row) row.innerHTML = '';
     },
     relang() {
+      if (S.delegate && MA.aurora) { MA.aurora.relang(); return; }
       if (!S.scene) return;
       buildButtons(); S.step = -1; render(); start();
     },
     _frameAt(sceneId, t) { if (!SCENES[sceneId]) return null; S.scene = sceneId; S.t = t; render(); return SCENES[sceneId].total; },
-    _info() { const o = {}; for (const k in SCENES) o[k] = { total: SCENES[k].total, starts: SCENES[k].starts.slice() }; return o; },
-    _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }
+    _info() { const o = {}; for (const k in SCENES) o[k] = { total: SCENES[k].total, starts: SCENES[k].starts.slice() }; if (MA.aurora) Object.assign(o, MA.aurora._info()); return o; },
+    _state() { return S.delegate && MA.aurora ? MA.aurora._state() : { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }
   };
 })();
