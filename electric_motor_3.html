@@ -1170,18 +1170,22 @@ function shadeHex(hex,k){
   const n=parseInt(hex.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255;
   return `rgb(${Math.round(r*k)},${Math.round(g*k)},${Math.round(b*k)})`;
 }
-function drawCommutatorHalf(ctx, start, end, color, zNear=-292, zFar=-232, radius=43) {
-  const base=color===C.pink?'#ff78b7':'#ffb347', N=28;
-  for(let i=0;i<=N;i++){            // i=0 最靠線圈（zFar），i=N 最外端（zNear，看得到的端面）
+function drawCommutatorHalves(ctx, halves, zNear=-292, zFar=-232, radius=43) {
+  // 繪圖順序：由後（zFar）往前（zNear）逐片疊，「每一片兩個半圓一起畫」再換下一片；
+  // 不可以先把一個半片整根畫完再畫另一個，否則後畫那半的側面會蓋住前面那半的端面。
+  const N=28;
+  for(let i=0;i<=N;i++){
     const z=zFar+(zNear-zFar)*i/N, last=i===N, k=last?1:.55+.3*i/(N+1);
-    const pts=[];
-    for(let t=start;t<=end+.001;t+=.08) pts.push(structProject(radius*Math.cos(t),radius*Math.sin(t),z));
-    const e=structProject(radius*Math.cos(end),radius*Math.sin(end),z); pts.push(e);
-    ctx.save();
-    ctx.beginPath(); pts.forEach((q,j)=>j?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)); ctx.closePath();
-    ctx.fillStyle=shadeHex(base,k); ctx.fill();
-    if(last){ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=2;ctx.stroke();}
-    ctx.restore();
+    halves.forEach(h=>{
+      const base=h.color===C.pink?'#ff78b7':'#ffb347', pts=[];
+      for(let t=h.start;t<=h.end+.001;t+=.08) pts.push(structProject(radius*Math.cos(t),radius*Math.sin(t),z));
+      pts.push(structProject(radius*Math.cos(h.end),radius*Math.sin(h.end),z));
+      ctx.save();
+      ctx.beginPath(); pts.forEach((q,j)=>j?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)); ctx.closePath();
+      ctx.fillStyle=shadeHex(base,k); ctx.fill();
+      if(last){ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=2;ctx.stroke();}
+      ctx.restore();
+    });
   }
 }
 function drawCommutatorHub(ctx, z=-300){
@@ -1284,8 +1288,10 @@ function renderMotorAssembly(ctx, a, options = {}) {
 
   // 半片中心必須對準兩條軸心接線：相較電樞角度轉 90°，接點才不會落在絕緣縫。
   const gap=.12, ringPhase=a-Math.PI/2;
-  drawCommutatorHalf(ctx,ringPhase+gap,ringPhase+Math.PI-gap,C.orange,-300,-230,48);
-  drawCommutatorHalf(ctx,ringPhase+Math.PI+gap,ringPhase+TAU-gap,C.pink,-300,-230,48);
+  drawCommutatorHalves(ctx,[
+    {start:ringPhase+gap,end:ringPhase+Math.PI-gap,color:C.orange},
+    {start:ringPhase+Math.PI+gap,end:ringPhase+TAU-gap,color:C.pink}
+  ],-300,-230,48);
   drawCommutatorHub(ctx,-300);
 
   // 兩個電刷貼在分裂環兩側（照搬電磁感應頁的畫法）。
