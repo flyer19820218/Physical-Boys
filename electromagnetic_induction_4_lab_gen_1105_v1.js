@@ -448,7 +448,7 @@
     ls.forEach((s, i) => text(s, W / 2, y0 + i * 30, captionColor(), 24));
     // 怎麼玩提示
     if (S.hintA > 0.01) {
-      const s = tr('👆 左右拖曳，用手轉線圈', '👆 Drag left or right to turn the coil'), w = textW(s, 24) + 28, cx = CX, y = Math.max(sb + 28, 568);
+      const s = tr('👆 左右拖曳，用手轉線圈', '👆 Drag left or right to turn the coil'), w = textW(s, 24) + 28, cx = CX, y = Math.min(Math.max(sb + 28, 568), 576);   // 英文說明框會變 3 行：提示框不可被擠出畫布底邊
       const pulse = 0.75 + 0.25 * Math.sin(S.t * 4);
       ctx.save(); ctx.globalAlpha = S.hintA; ctx.fillStyle = PANEL; ctx.strokeStyle = C.cyan; ctx.lineWidth = 2;
       rrect(cx - w / 2, y - 19, w, 38, 10); ctx.fill(); ctx.stroke(); ctx.restore();
