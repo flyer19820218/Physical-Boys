@@ -1165,62 +1165,48 @@ function drawReferenceField(ctx, strength = 3) {
   label(ctx, '固定磁場 B：N → S', 500, 64, C.green, 'center', 24);
 }
 
+// 2026-11-05 老師指示：分裂環畫法照搬電磁感應頁（發電機）——圓柱形，半圓盤由後往前一片片疊出厚度，最前面一片描白邊。
+function shadeHex(hex,k){
+  const n=parseInt(hex.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255;
+  return `rgb(${Math.round(r*k)},${Math.round(g*k)},${Math.round(b*k)})`;
+}
 function drawCommutatorHalf(ctx, start, end, color, zNear=-292, zFar=-232, radius=43) {
-  const near=[], far=[];
-  for(let t=start;t<=end+.001;t+=.08){
-    near.push(structProject(radius*Math.cos(t),radius*Math.sin(t),zNear));
-    far.push(structProject(radius*Math.cos(t),radius*Math.sin(t),zFar));
+  const base=color===C.pink?'#ff78b7':'#ffb347', N=28;
+  for(let i=0;i<=N;i++){            // i=0 最靠線圈（zFar），i=N 最外端（zNear，看得到的端面）
+    const z=zFar+(zNear-zFar)*i/N, last=i===N, k=last?1:.55+.3*i/(N+1);
+    const pts=[];
+    for(let t=start;t<=end+.001;t+=.08) pts.push(structProject(radius*Math.cos(t),radius*Math.sin(t),z));
+    const e=structProject(radius*Math.cos(end),radius*Math.sin(end),z); pts.push(e);
+    ctx.save();
+    ctx.beginPath(); pts.forEach((q,j)=>j?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)); ctx.closePath();
+    ctx.fillStyle=shadeHex(base,k); ctx.fill();
+    if(last){ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=2;ctx.stroke();}
+    ctx.restore();
   }
-  ctx.save();
-  ctx.fillStyle=color; ctx.strokeStyle='rgba(255,255,255,.75)'; ctx.lineWidth=2;
-  ctx.beginPath();
-  far.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
-  near.slice().reverse().forEach(p=>ctx.lineTo(p.x,p.y));
-  ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.restore();
+}
+function drawCommutatorHub(ctx, z=-300){
+  const h=structProject(0,0,z);
+  ctx.save();ctx.fillStyle='#5f726b';ctx.beginPath();ctx.ellipse(h.x,h.y,9,8,0,0,TAU);ctx.fill();ctx.restore();
 }
 
-function drawBrush3D(ctx, side, z=-265, showContact=true) {
-  // 固定支架從下方立起，頂端向內突出的碳刷才是真正夾住分裂環的部位。
+function drawBrush3D(ctx, side, z=-265) {
+  // 2026-11-05 照搬電磁感應頁：小碳刷貼在分裂環側面 → 水平臂 → 立柱 → 端子；左電刷青框、右電刷紫框。
   const ringCenter=structProject(0,0,z);
   const contact=structProject(side*52,0,z);
-  const postOuterX=contact.x+side*72;
-  const postInnerX=contact.x+side*36;
-  const baseY=500;
-  const topY=contact.y-18;
-  const lipEndX=contact.x+side*3;
-  const holder=[
-    {x:postOuterX,y:baseY},
-    {x:postInnerX,y:baseY},
-    {x:postInnerX,y:contact.y+15},
-    {x:lipEndX,y:contact.y+10},
-    {x:lipEndX,y:contact.y-10},
-    {x:postInnerX,y:topY},
-    {x:postOuterX,y:contact.y+5}
-  ];
-  ctx.save();ctx.lineJoin='round';ctx.lineWidth=2.5;ctx.strokeStyle='rgba(255,255,255,.82)';
-  // 支架陰影讓左右兩座固定架呈現立體厚度。
-  ctx.fillStyle='#637872';ctx.beginPath();
-  holder.forEach((p,i)=>i?ctx.lineTo(p.x+9,p.y-7):ctx.moveTo(p.x+9,p.y-7));
-  ctx.closePath();ctx.fill();ctx.stroke();
-  const metal=ctx.createLinearGradient(postOuterX,topY,postInnerX,baseY);
-  metal.addColorStop(0,'#e6f2ee');metal.addColorStop(.48,'#aebfba');metal.addColorStop(1,'#71827c');
-  ctx.fillStyle=metal;ctx.beginPath();
-  holder.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
-  ctx.closePath();ctx.fill();ctx.stroke();
-  // 內側突出的小塊是碳刷接點。左側接點位於集電環後方，會被環遮住。
-  if(showContact){
-    ctx.fillStyle='#4f5d59';ctx.strokeStyle=C.white;ctx.lineWidth=2;
-    ctx.beginPath();ctx.roundRect(contact.x-10,contact.y-13,20,26,6);ctx.fill();ctx.stroke();
-    ctx.fillStyle=C.yellow;ctx.beginPath();ctx.arc(contact.x,contact.y,5.5,0,TAU);ctx.fill();
-  }
-  // 支架底座上的外部接線端子。
-  const terminal={x:postOuterX+side*10,y:baseY-8};
-  ctx.fillStyle='#859691';ctx.strokeStyle=C.white;ctx.beginPath();
-  ctx.roundRect(terminal.x-17,terminal.y-10,34,20,5);ctx.fill();ctx.stroke();
-  ctx.fillStyle=side<0?C.cyan:C.orange;ctx.beginPath();ctx.arc(terminal.x,terminal.y,7,0,TAU);ctx.fill();
+  const bx=contact.x+side*10, by=contact.y;       // 碳刷中心（內緣剛好壓在環上）
+  const post=bx+side*34, baseY=492;               // 支架立柱 x、端子 y
+  const col=side<0?'#55e9ff':'#dd8cff';
+  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle='#2b3a36';ctx.lineWidth=11;
+  ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(post,by);ctx.lineTo(post,baseY);ctx.stroke();
+  ctx.strokeStyle='#a9bab4';ctx.lineWidth=6;ctx.stroke();
+  ctx.fillStyle='#4f5d59';ctx.strokeStyle=col;ctx.lineWidth=3;
+  ctx.beginPath();ctx.roundRect(bx-12,by-14,24,28,5);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#859691';ctx.strokeStyle=C.white;ctx.lineWidth=2;
+  ctx.beginPath();ctx.roundRect(post-16,baseY-10,32,20,5);ctx.fill();ctx.stroke();
+  ctx.fillStyle=col;ctx.beginPath();ctx.arc(post,baseY,6,0,TAU);ctx.fill();
   ctx.restore();
-  return {contact,outer:{x:postOuterX,y:contact.y+5},terminal,ringCenter};
+  return {contact,outer:{x:post,y:by+5},terminal:{x:post,y:baseY},ringCenter};
 }
 
 function renderMotorAssembly(ctx, a, options = {}) {
@@ -1296,23 +1282,21 @@ function renderMotorAssembly(ctx, a, options = {}) {
   leadWire(frontA,elbowA,leadA,C.orange);
   leadWire(frontB,elbowB,leadB,C.pink);
 
-  // 後方左電刷先畫；接著由分裂環遮住它的接觸端，建立正確景深。
-  const brushL=drawBrush3D(ctx,-1,-265,false);
-
   // 半片中心必須對準兩條軸心接線：相較電樞角度轉 90°，接點才不會落在絕緣縫。
   const gap=.12, ringPhase=a-Math.PI/2;
   drawCommutatorHalf(ctx,ringPhase+gap,ringPhase+Math.PI-gap,C.orange,-300,-230,48);
   drawCommutatorHalf(ctx,ringPhase+Math.PI+gap,ringPhase+TAU-gap,C.pink,-300,-230,48);
+  drawCommutatorHub(ctx,-300);
 
-  // 前方右電刷最後畫；左右支架共同夾住中央分裂環。
-  const brushR=drawBrush3D(ctx,1,-265,true);
-  // 電池置於分裂環正下方，兩條導線精確接到符號的負、正極。
-  const batteryY=536, negX=367, posX=411;
-  ctx.save();ctx.lineWidth=5;ctx.lineCap='round';
-  ctx.strokeStyle=C.cyan;ctx.beginPath();ctx.moveTo(brushL.terminal.x,brushL.terminal.y);
-  ctx.bezierCurveTo(270,518,330,batteryY,negX,batteryY);ctx.stroke();
-  ctx.strokeStyle=C.orange;ctx.beginPath();ctx.moveTo(brushR.terminal.x,brushR.terminal.y);
-  ctx.bezierCurveTo(565,516,480,batteryY,posX,batteryY);ctx.stroke();ctx.restore();
+  // 兩個電刷貼在分裂環兩側（照搬電磁感應頁的畫法）。
+  const brushL=drawBrush3D(ctx,-1,-265);
+  const brushR=drawBrush3D(ctx,1,-265);
+  // 外電路（照搬電磁感應頁的灰色方框，把檢流計換成電池）：左端子 → 電池 − ；電池 + → 右端子。
+  const batteryY=536, mx=(brushL.terminal.x+brushR.terminal.x)/2, negX=mx-22, posX=mx+22;
+  ctx.save();ctx.strokeStyle='#9fb3aa';ctx.lineWidth=5;ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(brushL.terminal.x,brushL.terminal.y+10);ctx.lineTo(brushL.terminal.x,batteryY);ctx.lineTo(negX,batteryY);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(posX,batteryY);ctx.lineTo(brushR.terminal.x,batteryY);ctx.lineTo(brushR.terminal.x,brushR.terminal.y+10);ctx.stroke();
+  ctx.restore();
   ctx.fillStyle=C.white;ctx.fillRect(negX-4,batteryY-17,8,34);ctx.fillRect(posX-4,batteryY-27,8,54);
   label(ctx,'−',negX-13,batteryY,C.cyan,'right',23);label(ctx,'+',posX+13,batteryY,C.orange,'left',23);
 
@@ -1345,7 +1329,7 @@ function renderMotorAssembly(ctx, a, options = {}) {
     label(ctx,'一起轉：多圈電樞＋轉軸＋分裂環',500,104,C.yellow,'center',22);
   }
   label(ctx,'固定：場磁鐵＋電刷＋電源',500,580,C.white,'center',20);
-  label(ctx,'分裂環',350,472,C.orange,'right',20);
+  label(ctx,'分裂環',(brushL.ringCenter.x+brushR.ringCenter.x)/2,484,C.orange,'center',20);
   label(ctx,'左電刷',brushL.outer.x,brushL.outer.y-31,C.muted,'center',17);
   label(ctx,'右電刷',brushR.outer.x,brushR.outer.y-31,C.muted,'center',17);
 }
