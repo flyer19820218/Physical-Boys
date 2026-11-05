@@ -7,6 +7,8 @@
  * 與動畫模組的接口：EmiAnim.ctl = { paused, onEnd }；各模組 frame 迴圈讀 ctl.paused 凍結時間，
  *   在 stepStop＝false 且播到整個場景結尾時呼叫 ctl.onEnd() 一次；setStepStop(bool) 由本檔切換。
  * 進度條：讀各模組的 _info()（每場景 total）與 _state()（t）。
+ * 控制列（暫停／重播／進度條／說明）會被搬到目前分頁「動畫」的正上方（placeBar），邊看動畫邊看得到進度；
+ *   模式切換鈕（學生操作／老師講解）仍在頁首。
  */
 (function () {
   'use strict';
@@ -24,6 +26,11 @@
   const curMod = () => { const t = tabEl(); return t ? window.EmiAnim[MOD[t.id]] : null; };
   const eachMod = fn => Object.keys(MOD).forEach(t => { const m = window.EmiAnim[MOD[t]]; if (m && m.setStepStop) fn(m); });
 
+  // 把控制列放到目前分頁動畫畫布的正上方（每個分頁第一個 .canvas-wrap 就是教學動畫；實驗台在後面）
+  function placeBar() {
+    const bar = $('teachBar'), t = tabEl(), w = t && t.querySelector('.canvas-wrap');
+    if (bar && w && bar.nextElementSibling !== w) w.parentNode.insertBefore(bar, w);
+  }
   function clickFirstStep() {
     const t = tabEl(), b = t && t.querySelector('.step-row .step-btn'); if (b) b.click();
   }
@@ -32,8 +39,9 @@
     const ps = playSubs();
     if (ps.length && ps[0] !== curSub()) ps[0].click();      // 換子分頁：模組從 t＝0 重新啟動
     else clickFirstStep();                                   // 已在第一個場景：跳到第 1 步開頭
-    const t = tabEl(), cv = t && t.querySelector('canvas');
-    if (cv && cv.scrollIntoView) cv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    placeBar();
+    const bar = $('teachBar');
+    if (bar && bar.scrollIntoView) bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   function restartScene() {          // 離開老師模式：目前這個場景回到第 1 步（學生模式會播完第 1 步後停住）
     ctl.paused = false; const s = curSub();
@@ -52,6 +60,7 @@
     $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
     $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
     eachMod(mod => mod.setStepStop(!teacher));
+    placeBar();
     if (teacher) { ctl.onEnd = onEnd; restartTab(); }
     else { ctl.onEnd = null; T.due = 0; T.ended = false; restartScene(); $('teach-fill').style.width = '0'; }
   }
@@ -74,6 +83,7 @@
   }
   function tick() {
     if (!T.on) return;
+    placeBar();
     if (T.due && !ctl.paused && performance.now() >= T.due) {
       T.due = 0; const ps = playSubs(), i = ps.indexOf(curSub()); if (ps[i + 1]) ps[i + 1].click();
     }
@@ -93,7 +103,7 @@
   $('teach-pause').addEventListener('click', () => { ctl.paused = !ctl.paused; setPauseLabel(); });
   $('teach-replay').addEventListener('click', restartTab);
   // 切分頁：老師模式就從新分頁第一個場景播起（頁面本身的分頁處理先跑，這裡後跑）
-  document.querySelectorAll('.tab-button').forEach(b => b.addEventListener('click', () => { if (T.on) setTimeout(restartTab, 120); }));
+  document.querySelectorAll('.tab-button').forEach(b => b.addEventListener('click', () => { if (T.on) { setTimeout(placeBar, 0); setTimeout(restartTab, 120); } }));
   // 老師模式下自己點子分頁（例如直接點「交流發電機」）：從那個場景開頭連播，接力與進度照常
   document.querySelectorAll('.sub-tab-btn').forEach(b => b.addEventListener('click', () => { if (T.on) { T.due = 0; T.ended = false; } }));
   // 語言切換後更新暫停鍵文字（其餘文字由 data-zh/en 與 tick 更新）
