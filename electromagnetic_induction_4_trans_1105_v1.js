@@ -18,7 +18,7 @@
  *   4 降壓       8.0 s  [22.0] Nₚ＝8、Nₛ＝4 → 110 V × 4/8＝55 V；每匝 13.75 V；電流帶 Iₚ：Iₛ＝1：2
  *   5 直流電     9.0 s  [30.0] 電池（上端＋）＋開關：tl＝1.5 s 接通、5.5 s 切斷；Φ 指數上升／下降（τ＝0.35／0.28 s），
  *                              Vₛ＝−K·dΦ/dt → 接通負脈衝、切斷正脈衝，其餘時間 Vₛ＝0；右上圖橫軸＝時間 0–9 s。
- *                              切斷後停留約 2.5 s，再從第 1 步重播。
+ *                              切斷後停留約 2.5 s，停在最後一幀。
  * 每步開頭 0.35 s 淡入；右下角註明「真實市電 60 Hz，這裡放慢」（交流步驟）。
  *
  * ── 幾何與符號約定 ────────────────────────────────────────────
@@ -591,6 +591,7 @@
       row.appendChild(b);
     });
   }
+  let stepStop = true;
   function visible() { const c = cv(); return !!(c && c.getClientRects().length && c.getBoundingClientRect().width > 0); }
   function frame(ts) {
     S.raf = 0;
@@ -598,7 +599,15 @@
     if (!visible()) { S.last = 0; S.timer = setTimeout(() => { S.timer = 0; start(); }, 250); return; }
     if (S.last) S.t += Math.min(0.1, (ts - S.last) / 1000);
     S.last = ts;
-    if (S.t >= TOTAL) S.t = 0;
+    // AGENTS 10.6（2026-11-05）：學生模式一次只播一個步驟，播完停在該步最後一幀（不循環、不自動接下一步）。
+    // setStepStop(false)＝步驟間不停、連播到底再停住（老師講解用；本頁未做老師模式）。
+    {
+      // 以「上一幀正在播的步驟」為準；剛跳步或重畫（S.step＝-1）時才由 t 推算
+      let kk = S.step >= 0 ? S.step : 0;
+      if (S.step < 0) while (kk + 1 < starts.length && S.t >= starts[kk + 1]) kk++;
+      const end = stepStop ? (starts[kk + 1] !== undefined ? starts[kk + 1] : TOTAL) : TOTAL;
+      if (S.t >= end) { S.t = end - 1e-3; render(); return; }
+    }
     render();
     S.raf = requestAnimationFrame(frame);
   }
@@ -629,6 +638,7 @@
       lastResult = ''; S.step = -1;
       buildButtons(); render(); start();
     },
+    setStepStop(v) { stepStop = !!v; if (S.scene) start(); },
     _frameAt(sceneId, t) { void sceneId; stop(); S.scene = SC_ID; S.t = t; render(); return TOTAL; },
     _info() { return { transformer: { total: TOTAL, starts: starts.slice() } }; },
     _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }

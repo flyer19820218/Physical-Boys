@@ -14,7 +14,7 @@
  *   3 遠離      8.0 s  0.8–4.3 s 磁鐵由近而遠：9 → 1 條，安培計偏左；停下後回 0
  *   4 相對運動  8.0 s  磁鐵不動；0.6–3.4 s 線圈（連安培計）靠近（1 → 7 條）→ 偏右，4.4–7.2 s 線圈退回 → 偏左
  *   5 越快越大  9.5 s  慢（3.5 s）→ 快（1.0 s）→ 快＋匝數×2（1.0 s），右下角指針、左下「最大電流」長條比較；
- *                      7.0 s 後停留 2.5 s 再從第 1 步重播
+ *                      7.0 s 後停留 2.5 s（停在該步最後一幀）
  * ── 場景步驟表 lenz-law「一條原磁場＋一條反向感應磁場」，共 39.5 s ─────────
  *   1 N 靠近   7.5 s  0.6–6.4 s N 極靠近：B→，Bᵢ←，近端 N，線圈排斥磁鐵
  *   2 N 遠離   7.5 s  N 極遠離：B→，Bᵢ→，近端 S，線圈吸引磁鐵
@@ -22,7 +22,8 @@
  *   4 S 遠離   7.5 s  S 極遠離：B←，Bᵢ←，近端 N，吸引
  *   5 能量     9.5 s  0.4–3.0 s 手推 N 極進來（費力，線圈排斥）、3.4–6.0 s 手拉出去（費力，線圈吸引），
  *                      6.0 s 後停留 3.5 s：「反抗的是變化，不是永遠排斥；阻力把動能換成電能」
- * 最後一步播完（含停留）自動從第 1 步重播。
+ * 播放規則（AGENTS 10.6，2026-11-05）：進場播第 1 步，每步播完停在最後一幀，不循環、不自動接下一步；
+ * 按步驟鈕＝從該步開頭播到該步結束。setStepStop(false)＝步驟間不停、連播到底再停住（老師講解用）。
  *
  * ── 方向表（磁鐵在左、線圈在右、沿中心軸運動；x 軸向右為正）──────────────
  *   情況      穿過線圈的 B   通量變化  Bᵢ（線圈內）  近端極性  從磁鐵側看電流  線圈前側導線  安培計
@@ -586,6 +587,7 @@
       row.appendChild(b);
     });
   }
+  let stepStop = true;
   function visible() { const c = canvas(); return !!(c && c.getClientRects().length && c.getBoundingClientRect().width > 0); }
   function frame(ts) {
     S.raf = 0;
@@ -594,7 +596,15 @@
     if (S.last) S.t += Math.min(0.1, (ts - S.last) / 1000);
     S.last = ts;
     const sc = SCENES[S.scene];
-    if (S.t >= sc.total) S.t = 0;
+    // AGENTS 10.6（2026-11-05）：學生模式一次只播一個步驟，播完停在該步最後一幀（不循環、不自動接下一步）。
+    // setStepStop(false)＝步驟間不停、連播到底再停住（老師講解用；本頁未做老師模式）。
+    {
+      // 以「上一幀正在播的步驟」為準；剛跳步或重畫（S.step＝-1）時才由 t 推算
+      let kk = S.step >= 0 ? S.step : 0;
+      if (S.step < 0) while (kk + 1 < sc.starts.length && S.t >= sc.starts[kk + 1]) kk++;
+      const end = stepStop ? (sc.starts[kk + 1] !== undefined ? sc.starts[kk + 1] : sc.total) : sc.total;
+      if (S.t >= end) { S.t = end - 1e-3; render(); return; }
+    }
     render();
     S.raf = requestAnimationFrame(frame);
   }
@@ -625,6 +635,7 @@
       lastResult = ''; S.step = -1;
       buildButtons(); render(); start();
     },
+    setStepStop(v) { stepStop = !!v; if (S.scene) start(); },
     _frameAt(sceneId, t) { if (!SCENES[sceneId]) return null; S.scene = sceneId; S.t = t; render(); return SCENES[sceneId].total; },
     _info() { const o = {}; for (const k in SCENES) o[k] = { total: SCENES[k].total, starts: SCENES[k].starts.slice() }; return o; },
     _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }

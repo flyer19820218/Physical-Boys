@@ -18,7 +18,7 @@
  *   4 發熱       8.0 s  [22.0] heat＝min(1, tl/6)：鍋底由灰 → 暗紅 → 橘紅 → 白熱，水溫計上升、冒泡、冒蒸氣；
  *                              右欄 P＝I²R、I 與 I² 即時長條（I 反向時 I² 仍為正）
  *   5 能量鏈     8.0 s  [30.0] heat＝1；電能 → 改變的磁場 → 渦電流 → 熱 依序點亮（tl＝0.5／1.7／2.9／4.1 s），
- *                              「面板本身不燙，是鍋子自己發熱」「直流電不會」；停留到 8 s 後從第 1 步重播。
+ *                              「面板本身不燙，是鍋子自己發熱」「直流電不會」；停留到 8 s 後停住。
  * 每步開頭 0.35 s 淡入；右下角固定寫「實際上各國的交流電頻率不同，動畫降成 1 Hz 是為了方便觀察。」
  *
  * ── 座標與符號約定 ────────────────────────────────────────────
@@ -561,6 +561,7 @@
       row.appendChild(b);
     });
   }
+  let stepStop = true;
   function visible() { const c = cv(); return !!(c && c.getClientRects().length && c.getBoundingClientRect().width > 0); }
   function frame(ts) {
     S.raf = 0;
@@ -568,7 +569,15 @@
     if (!visible()) { S.last = 0; S.timer = setTimeout(() => { S.timer = 0; start(); }, 250); return; }
     if (S.last) S.t += Math.min(0.1, (ts - S.last) / 1000);
     S.last = ts;
-    if (S.t >= TOTAL) S.t = 0;
+    // AGENTS 10.6（2026-11-05）：學生模式一次只播一個步驟，播完停在該步最後一幀（不循環、不自動接下一步）。
+    // setStepStop(false)＝步驟間不停、連播到底再停住（老師講解用；本頁未做老師模式）。
+    {
+      // 以「上一幀正在播的步驟」為準；剛跳步或重畫（S.step＝-1）時才由 t 推算
+      let kk = S.step >= 0 ? S.step : 0;
+      if (S.step < 0) while (kk + 1 < starts.length && S.t >= starts[kk + 1]) kk++;
+      const end = stepStop ? (starts[kk + 1] !== undefined ? starts[kk + 1] : TOTAL) : TOTAL;
+      if (S.t >= end) { S.t = end - 1e-3; render(); return; }
+    }
     render();
     S.raf = requestAnimationFrame(frame);
   }
@@ -599,6 +608,7 @@
       lastResult = ''; S.step = -1;
       buildButtons(); render(); start();
     },
+    setStepStop(v) { stepStop = !!v; if (S.scene) start(); },
     _frameAt(sceneId, t) { void sceneId; stop(); S.scene = SC_ID; S.t = t; render(); return TOTAL; },
     _info() { return { cooker: { total: TOTAL, starts: starts.slice() } }; },
     _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }

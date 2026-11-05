@@ -15,7 +15,7 @@
  *   3 換接      8.0 s  8 s／圈慢動作；起點線圈 ∥ B；tl＝2 s、6 s 線圈 ⊥ B（ε＝0）時分裂環換接電刷，
  *                       面板顯示「線圈內電流反向、外電路方向不變、左電刷改貼另一片」
  *   4 波形      7.0 s  4 s／圈；波形填色＋「全部在 0 以上」
- *   5 反轉      9.0 s  反向旋轉 4 s／圈；負向脈衝（整條在 0 以下），最後停留後從第 1 步重播
+ *   5 反轉      9.0 s  反向旋轉 4 s／圈；負向脈衝（整條在 0 以下），最後停留後停住
  * ── 場景步驟表 ac-generator-model「交流發電機」，共 40.0 s ──────────────────
  *   1 構造      7.0 s  慢轉；強調 場磁鐵 → 電樞線圈 → 兩個滑環 → 電刷 → 外電路
  *   2 最大與零  8.0 s  8 s／圈慢動作；∥ B 時標「ε 最大」、⊥ B 時標「ε＝0」（機器旁＋小圖）
@@ -751,6 +751,7 @@
       row.appendChild(b);
     });
   }
+  let stepStop = true;
   function visible() { const c = cvM(); return !!(c && c.getClientRects().length && c.getBoundingClientRect().width > 0); }
   function frame(ts) {
     S.raf = 0;
@@ -759,7 +760,15 @@
     if (S.last) S.t += Math.min(0.1, (ts - S.last) / 1000);
     S.last = ts;
     const sc = SCENES[S.scene];
-    if (S.t >= sc.total) S.t = 0;
+    // AGENTS 10.6（2026-11-05）：學生模式一次只播一個步驟，播完停在該步最後一幀（不循環、不自動接下一步）。
+    // setStepStop(false)＝步驟間不停、連播到底再停住（老師講解用；本頁未做老師模式）。
+    {
+      // 以「上一幀正在播的步驟」為準；剛跳步或重畫（S.step＝-1）時才由 t 推算
+      let kk = S.step >= 0 ? S.step : 0;
+      if (S.step < 0) while (kk + 1 < sc.starts.length && S.t >= sc.starts[kk + 1]) kk++;
+      const end = stepStop ? (sc.starts[kk + 1] !== undefined ? sc.starts[kk + 1] : sc.total) : sc.total;
+      if (S.t >= end) { S.t = end - 1e-3; render(); return; }
+    }
     render();
     S.raf = requestAnimationFrame(frame);
   }
@@ -790,6 +799,7 @@
       lastResult = ''; S.step = -1;
       buildButtons(); render(); start();
     },
+    setStepStop(v) { stepStop = !!v; if (S.scene) start(); },
     _frameAt(sceneId, t) { if (!SCENES[sceneId]) return null; stop(); S.scene = sceneId; S.t = t; render(); return SCENES[sceneId].total; },
     _info() { const o = {}; for (const k in SCENES) o[k] = { total: SCENES[k].total, starts: SCENES[k].starts.slice() }; return o; },
     _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }
