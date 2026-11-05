@@ -9,7 +9,7 @@
  *   左欄：垂直數線（x=230），刻度 +110 V／0／−110 V；A 點（粉紅）、B 點（青）在數線上反向運動，兩點之間的橘線＝兩端距離。
  *         下方同一比例的「兩端差」縱軸（0、+220 V）。
  *   右側：上方 A、B 波形（零線 y=190）＋同步游標，游標點用虛線拉到數線上同高的點；下方「兩端差（A − B）」波形（零線 y=432，
- *         同比例，振幅為兩倍）。數值只用比例值 110、220、−110；不出現峰值、√2、有效值。不畫電子、電流與能量方塊。
+ *         同比例，振幅為兩倍）。數值只用比例值 110、220、−110（等比例示意，不引入瞬時值）。不畫電子、電流與能量方塊。
  *
  * ── 步驟表，共 41 s ─────────────────────────────────────────────
  *   1 方向相反 8 s  波形與數線登場，游標掃過，A、B 兩點沿數線反向運動（小箭頭標方向）
@@ -218,8 +218,8 @@
   }
   function arrowSmall(ctx, x, y, dir, color, alpha) {
     if (alpha <= 0.01) return;
-    // 放在刻度文字右側、數線左側（x 約 200）；dir −1＝往上
-    x = NX - 22;
+    // 放在點名稱（A／B）右邊；dir −1＝往上
+    x = NX + 52;
     ctx.save(); ctx.globalAlpha *= alpha; ctx.fillStyle = color;
     ctx.beginPath(); ctx.moveTo(x, y + dir * 16); ctx.lineTo(x - 7, y + dir * 4); ctx.lineTo(x + 7, y + dir * 4); ctx.closePath(); ctx.fill();
     ctx.restore();
@@ -230,14 +230,15 @@
     const yT = yOf(1, TY), yB = yOf(-1, TY);
     const a = i === 3 ? 1 : e;
     bracketV(ctx, BRX, yT, yB, K.orange, Math.max(a, i === 2 ? 0.25 : 0));
-    text(ctx, '110', BRX + 10, (yT + TY) / 2, K.yellow, 24, 'left', a);
-    text(ctx, '110', BRX + 10, (yB + TY) / 2, K.yellow, 24, 'left', a);
+    const la = i === 3 ? 0 : a;                          // 第 4 步那裡放電表，不寫 110
+    text(ctx, '110', BRX + 10, (yT + TY) / 2, K.yellow, 24, 'left', la);
+    text(ctx, '110', BRX + 10, (yB + TY) / 2, K.yellow, 24, 'left', la);
   }
 
   // ───────── 電表（第 4 步） ─────────
   function drawMeter(ctx, tl, ya, yb) {
     const a = clamp((tl - 0.6) / 0.6, 0, 1); if (a <= 0) return;
-    const mx = 330, my = TY, r = 24;
+    const mx = 334, my = TY, r = 24;
     // 兩條表筆：一條接 A 點、一條接 B 點
     poly(ctx, [{ x: mx - r * 0.7, y: my - r * 0.7 }, { x: (mx + NX) / 2 + 10, y: (my + ya) / 2 - 6 }, { x: NX + 8, y: ya }], K.pink, 3, a);
     poly(ctx, [{ x: mx - r * 0.7, y: my + r * 0.7 }, { x: (mx + NX) / 2 + 10, y: (my + yb) / 2 + 6 }, { x: NX + 8, y: yb }], K.cyan, 3, a);
@@ -282,23 +283,23 @@
     if (i === 3) drawMeter(ctx, tl, P.ya, P.yb);
     // 註記（每步一句）
     const na = clamp((tl - 1.2) / 0.5, 0, 1);
-    if (i === 0) textClamp(ctx, tr('一個往上，另一個就往下', 'One goes up, the other goes down'), 665, NOTE_Y, K.white, 24, 300, 970, na);
-    if (i === 1) textClamp(ctx, tr('兩端相距 110 + 110 = 220 V', 'Gap: 110 + 110 = 220 V'), 665, NOTE_Y, K.orange, 26, 300, 970, e);
+    if (i === 0) textClamp(ctx, tr('一個往上，另一個就往下', 'One goes up, the other goes down'), 580, NOTE_Y, K.white, 24, 380, 970, na);
+    if (i === 1) textClamp(ctx, tr('兩端相距 110 + 110 = 220 V', 'Gap: 110 + 110 = 220 V'), 580, NOTE_Y, K.orange, 26, 380, 970, e);
     if (i === 2) {
       const h = clamp((tl - 4.1) / 0.5, 0, 1);
       bracketH(ctx, XPEAK_A, XPEAK_B, TY - U - 16, K.yellow, clamp((tl - 0.8) / 0.4, 0, 1));
       textClamp(ctx, tr('半個週期', 'half a cycle'), (XPEAK_A + XPEAK_B) / 2, TY - U - 34, K.yellow, 24, 300, 970, clamp((tl - 0.8) / 0.4, 0, 1));
-      textClamp(ctx, tr('A＝−110 V，B＝＋110 V：仍差 220 V', 'A = −110 V, B = +110 V: still 220 V'), 665, NOTE_Y, K.orange, 24, 300, 970, h);
+      textClamp(ctx, tr('A＝−110 V，B＝＋110 V：仍差 220 V', 'A = −110 V, B = +110 V: still 220 V'), 580, NOTE_Y, K.orange, 24, 380, 970, h);
     }
     if (i === 3) {
-      textClamp(ctx, '220 V', 330, TY - 52, K.orange, 28, 290, 372, clamp((tl - 1.0) / 0.5, 0, 1));
-      textClamp(ctx, tr('從 −110 V 到 ＋110 V：相隔 220 V', 'From −110 V to +110 V: 220 V apart'), 665, NOTE_Y, K.orange, 24, 380, 970, na);
+      textClamp(ctx, '220 V', 334, TY - 52, K.orange, 28, 290, 372, clamp((tl - 1.0) / 0.5, 0, 1));
+      textClamp(ctx, tr('從 −110 V 到 ＋110 V：相隔 220 V', 'From −110 V to +110 V: 220 V apart'), 580, NOTE_Y, K.orange, 24, 380, 970, na);
     }
     if (i === 4) {
       const m = clamp((tl - 5.0) / 0.5, 0, 1);
       dblArrowV(ctx, XPEAK_A + 30, DY, yOf(2, DY), K.orange, m, 4);
       text(ctx, tr('兩倍', '×2'), XPEAK_A + 48, yOf(1.2, DY), K.orange, 26, 'left', m);
-      textClamp(ctx, tr('虛線＝單一條 A（同比例）', 'Dashed = wire A alone (same scale)'), 665, NOTE_Y, K.pink, 24, 300, 970, na);
+      textClamp(ctx, tr('虛線＝單一條 A（同比例）', 'Dashed = wire A alone (same scale)'), 580, NOTE_Y, K.pink, 24, 380, 970, na);
     }
     drawLegend(ctx, i);
   }
