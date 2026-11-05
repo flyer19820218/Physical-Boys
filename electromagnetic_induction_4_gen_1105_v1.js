@@ -382,7 +382,10 @@
     const a = pts[pts.length - 3], b = pts[pts.length - 1];
     arr(ctx, a.x, a.y, b.x, b.y, C.white, 6, 22, alpha);
     const m = pts[12];
-    void m; text(ctx, tr('外力轉動', 'Turned by an outside force'), 652, 146, C.white, 22, 'left', alpha);
+    // 標籤放左側空白處：線圈角標 A–D 轉到最高點時會掃過弧形箭頭右側（x≈650–720、y≈85–150）
+    void m;
+    text(ctx, tr('↻ 外力轉動', '↻ Turned by'), 24, 140, C.white, 22, 'left', alpha);
+    if (tr('', 'x') !== '') text(ctx, 'an outside force', 24, 170, C.white, 22, 'left', alpha);
   }
 
   // ───────── 右下「從前方看」小圖 ─────────
