@@ -577,7 +577,7 @@
   }
   function jumpTo(k) {
     if (!S.scene) return;
-    S.t = starts[k] + 1e-4; S.step = -1; S.last = 0;
+    S.t = starts[k] + 1e-4; S.step = -1; S.last = 0; S.ended = false;
     render(); start();
   }
   function buildButtons() {
@@ -597,7 +597,8 @@
     S.raf = 0;
     if (!S.scene || document.hidden) return;
     if (!visible()) { S.last = 0; S.timer = setTimeout(() => { S.timer = 0; start(); }, 250); return; }
-    if (S.last) S.t += Math.min(0.1, (ts - S.last) / 1000);
+    // 老師講解的暫停：EmiAnim.ctl.paused 為真時時間凍住（畫面是 t 的純函式，所以畫面也凍住）
+    if (S.last && !(window.EmiAnim.ctl && window.EmiAnim.ctl.paused)) S.t += Math.min(0.1, (ts - S.last) / 1000);
     S.last = ts;
     // AGENTS 10.6（2026-11-05）：學生模式一次只播一個步驟，播完停在該步最後一幀（不循環、不自動接下一步）。
     // setStepStop(false)＝步驟間不停、連播到底再停住（老師講解用；本頁未做老師模式）。
@@ -606,7 +607,13 @@
       let kk = S.step >= 0 ? S.step : 0;
       if (S.step < 0) while (kk + 1 < starts.length && S.t >= starts[kk + 1]) kk++;
       const end = stepStop ? (starts[kk + 1] !== undefined ? starts[kk + 1] : TOTAL) : TOTAL;
-      if (S.t >= end) { S.t = end - 1e-3; render(); return; }
+      if (S.t >= end) {
+        S.t = end - 1e-3; render();
+        // 老師講解（stepStop＝false）連播到整段結尾：通知一次，讓外層接力下一個場景或標示播完
+        const ctl = window.EmiAnim.ctl;
+        if (!stepStop && !S.ended && ctl && typeof ctl.onEnd === 'function') { S.ended = true; ctl.onEnd(); }
+        return;
+      }
     }
     render();
     S.raf = requestAnimationFrame(frame);
@@ -625,7 +632,7 @@
     activate(sceneId) {
       void sceneId;
       stop();
-      S.scene = SC_ID; S.t = 0; S.step = -1; S.last = 0; lastResult = '';
+      S.scene = SC_ID; S.t = 0; S.step = -1; S.last = 0; S.ended = false; lastResult = '';
       buildButtons(); render(); start();
     },
     deactivate() {
