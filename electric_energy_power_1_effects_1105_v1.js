@@ -381,6 +381,7 @@
     ls.forEach((l, i) => text(ctx, l, W / 2, y0 + i * 30, K.yellow, 24));
   }
   function drawProgress(ctx, t) {
+    if (window.AnimBar) { window.AnimBar.draw(ctx, W, STARTS, TOTAL, t); return; }   // 共用：畫布內的粗進度條
     ctx.save(); ctx.fillStyle = 'rgba(242,236,217,0.14)'; ctx.fillRect(0, 0, W, 6);
     ctx.fillStyle = K.yellow; ctx.fillRect(0, 0, W * clamp(t / TOTAL, 0, 1), 6);
     ctx.fillStyle = K.bg; STARTS.slice(1).forEach(s => ctx.fillRect(W * s / TOTAL - 2, 0, 4, 6));
