@@ -7,7 +7,7 @@
  * 固定數值：V = 6 V、I = 2 A、t = 5 s（第 5 步另用規格給的串聯／並聯數值）。
  *
  * ── 教學符號 ────────────────────────────────────────────────────────
- *   「1 C」＝藍色虛線圈裡 4 顆藍球（電子），代表一大群電荷。能量＝黃色小方塊，第 1～4 步 1 格＝1 J，
+ *   「1 C」＝藍色虛線圈裡 4 顆藍球（電子），代表一大群電荷。能量＝藍色小方塊，第 1～4 步 1 格＝1 J，
  *   第 5 步 1 格＝20 J（圖例跟著改寫）。電壓一律講成「每 1 C 帶多少 J」，不畫水位、高度。
  *
  * ── 電路（左半，x 130～500）───────────────────────────────────────────
@@ -45,7 +45,7 @@
   const K = {
     bg: '#0c1e19', white: '#f2ecd9', yellow: '#fde047', cyan: '#55e9ff', green: '#4ade80',
     orange: '#fb923c', pink: '#f472b6', muted: '#9fb3aa', wire: '#9fb3aa',
-    electron: '#4dd2ff', pos: '#ff8040', current: '#ff4d4d', energy: '#fde047', panel: '#123029'
+    electron: '#4dd2ff', pos: '#ff8040', current: '#ff4d4d', energy: '#4dd2ff', panel: '#123029'
   };
   const RG = 22;               // 電荷群（1 C）虛線圈半徑
   const SQ = 13, PITCH = 17;   // 能量方塊邊長、格距（電路上）
@@ -187,7 +187,7 @@
   function square(ctx, x, y, alpha, size) {
     const s = size || SQ;
     ctx.save(); ctx.globalAlpha *= alpha; ctx.shadowColor = K.energy; ctx.shadowBlur = 10; ctx.fillStyle = K.energy;
-    rrect(ctx, x - s / 2, y - s / 2, s, s, 3); ctx.fill(); ctx.restore();
+    rrect(ctx, x - s / 2, y - s / 2, s, s, 3); ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(214,246,255,0.95)'; ctx.lineWidth = 1.6; ctx.stroke(); ctx.restore();
   }
   function slotOutline(ctx, x, y, size, alpha) {
     const s = size || SQ;
@@ -514,9 +514,9 @@
   // ───────── 圖例 ─────────
   function drawLegend(ctx, i) {
     const items = i === 4
-      ? [[tr('黃方塊＝能量，1 格＝20 J', 'Yellow square = energy, 1 square = 20 J'), 's']]
+      ? [[tr('藍方塊＝能量，1 格＝20 J', 'Blue square = energy, 1 square = 20 J'), 's']]
       : [[tr('藍球＝電子，從負極出發', 'Blue ball = electron, starts from −'), 'e'],
-        [tr('黃方塊＝1 J 能量（教學符號）', 'Yellow square = 1 J of energy (symbol)'), 's'],
+        [tr('藍方塊＝1 J 能量（教學符號）', 'Blue square = 1 J of energy (symbol)'), 's'],
         [tr('虛線圈＝1 C 電荷', 'Dashed ring = 1 C of charge'), 'g']];
     const z = 22, gapIcon = 28, gapItem = 36, maxW = W - 60;
     const wid = items.map(([s]) => gapIcon + textW(ctx, s, z));

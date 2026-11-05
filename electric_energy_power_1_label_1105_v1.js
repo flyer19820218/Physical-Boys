@@ -6,7 +6,7 @@
  * 畫面是「場景時間 t 的純函式」，跳步、重播、換語言都和真的播到那裡一模一樣。
  *
  * ── 教學符號 ────────────────────────────────────────────────────────
- *   能量＝黃色小方塊（教學符號，不代表實體粒子）。1 格代表多少 J 會依步驟換一次，圖例每步都寫明：
+ *   能量＝藍色小方塊（教學符號，不代表實體粒子）。1 格代表多少 J 會依步驟換一次，圖例每步都寫明：
  *     第 2、3 步：1 格＝100 J → 吹風機每秒 8 格（800 J）；第 3 步把這 8 格用「每 1 C 帶 110 J」的尺切開 → 7.27 份 → 7.27 A。
  *     第 4、5 步：1 格＝8000 J（吹風機 10 秒）→ 3 分鐘：吹風機 18 格（144 kJ）、電熱水壺 27 格（216 kJ）、冷氣機 45 格（360 kJ）。
  *   藍球＝電子，從電源負極出發；方塊沿著同一方向（負極 → 下導線 → 右導線）走進吹風機，在吹風機中心被轉換。
@@ -35,7 +35,7 @@
   const K = {
     bg: '#0c1e19', white: '#f2ecd9', yellow: '#fde047', cyan: '#55e9ff', green: '#4ade80',
     orange: '#fb923c', pink: '#f472b6', muted: '#9fb3aa', wire: '#9fb3aa',
-    electron: '#4dd2ff', pos: '#ff8040', current: '#ff4d4d', energy: '#fde047', panel: '#123029'
+    electron: '#4dd2ff', pos: '#ff8040', current: '#ff4d4d', energy: '#4dd2ff', panel: '#123029'
   };
   const TAU = Math.PI * 2;
   const FA = 0.9, FB = 0.5;    // 方塊：沿導線走進元件的時間、從元件飛到計數格的時間（畫面秒）
@@ -164,7 +164,7 @@
   function square(ctx, x, y, alpha, size) {
     if (alpha <= 0) return;
     ctx.save(); ctx.globalAlpha *= alpha; ctx.shadowColor = K.energy; ctx.shadowBlur = 8; ctx.fillStyle = K.energy;
-    rrect(ctx, x - size / 2, y - size / 2, size, size, Math.min(4, size / 5)); ctx.fill(); ctx.restore();
+    rrect(ctx, x - size / 2, y - size / 2, size, size, Math.min(4, size / 5)); ctx.fill(); ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(214,246,255,0.95)'; ctx.lineWidth = 1.6; ctx.stroke(); ctx.restore();
   }
   function ball(ctx, x, y, r, alpha) {
     ctx.save(); ctx.globalAlpha *= alpha; ctx.shadowColor = K.electron; ctx.shadowBlur = 8; ctx.fillStyle = K.electron;
@@ -541,7 +541,7 @@
     const items = [];
     if (st.key !== 'compare') items.push([tr('藍球＝電子，從負極出發', 'Blue ball = electron, starts from −'), 'e']);
     const jt = st.J === 8000 ? '8000 J' : '100 J';
-    items.push([tr(`黃方塊＝能量，1 格＝${jt}（教學符號）`, `Yellow square = ${jt} of energy (symbol)`), 's']);
+    items.push([tr(`藍方塊＝能量，1 格＝${jt}（教學符號）`, `Blue square = ${jt} of energy (symbol)`), 's']);
     const z = 22, gapIcon = 28, gapItem = 40, maxW = W - 60;
     const wid = items.map(([s]) => gapIcon + textW(ctx, s, z));
     const rows = []; let cur = [], cw = 0;
