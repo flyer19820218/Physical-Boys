@@ -1286,6 +1286,8 @@ function renderMotorAssembly(ctx, a, options = {}) {
   leadWire(frontA,elbowA,leadA,C.orange);
   leadWire(frontB,elbowB,leadB,C.pink);
 
+  // 2026-11-05 老師指出：視角在右前方（oblique：x 右、z 遠），左電刷在分裂環背面那一側 → 必須先畫、被環蓋住；右電刷在正面，環之後再畫。
+  const brushL=drawBrush3D(ctx,-1,-265);
   // 半片中心必須對準兩條軸心接線：相較電樞角度轉 90°，接點才不會落在絕緣縫。
   const gap=.12, ringPhase=a-Math.PI/2;
   drawCommutatorHalves(ctx,[
@@ -1294,8 +1296,7 @@ function renderMotorAssembly(ctx, a, options = {}) {
   ],-300,-230,48);
   drawCommutatorHub(ctx,-300);
 
-  // 兩個電刷貼在分裂環兩側（照搬電磁感應頁的畫法）。
-  const brushL=drawBrush3D(ctx,-1,-265);
+  // 右電刷貼在分裂環正面（左電刷已在環之前畫好）。
   const brushR=drawBrush3D(ctx,1,-265);
   // 外電路（照搬電磁感應頁的灰色方框，把檢流計換成電池）：左端子 → 電池 − ；電池 + → 右端子。
   const batteryY=536, mx=(brushL.terminal.x+brushR.terminal.x)/2, negX=mx-22, posX=mx+22;
@@ -1415,6 +1416,11 @@ function drawMotorAnimCanvas(ctx) {
     ctx.strokeStyle = leftArmColor;
     ctx.beginPath(); ctx.moveTo(cx+pL1.x, cy+pL1.y); ctx.lineTo(cx+ringL1.x, cy+ringL1.y); ctx.stroke();
 
+    // 2026-11-05 老師指出：左電刷在集電環背面，要先畫（被環蓋住）；右電刷在正面，環之後再畫。
+    let brushL = proj(-50, 0, ringZ);
+    let brushR = proj(50, 0, ringZ);
+    ctx.fillStyle = '#888';
+    ctx.beginPath(); ctx.roundRect(cx+brushL.x-10, cy+brushL.y-20, 20, 40, 4); ctx.fill();
     // 畫集電環 (3D 透視圓弧)
     ctx.lineWidth = 18;
     // 右半環
@@ -1434,11 +1440,8 @@ function drawMotorAnimCanvas(ctx) {
     }
     ctx.stroke();
 
-    // 畫固定的電刷 (左右兩側)
-    let brushL = proj(-50, 0, ringZ);
-    let brushR = proj(50, 0, ringZ);
+    // 畫固定的電刷（左電刷已在環之前畫好；這裡畫右電刷）
     ctx.fillStyle = '#888';
-    ctx.beginPath(); ctx.roundRect(cx+brushL.x-10, cy+brushL.y-20, 20, 40, 4); ctx.fill();
     ctx.beginPath(); ctx.roundRect(cx+brushR.x-10, cy+brushR.y-20, 20, 40, 4); ctx.fill();
     label(ctx, '電刷', cx+brushL.x-40, cy+brushL.y, '#ccc', 'right', 20);
 

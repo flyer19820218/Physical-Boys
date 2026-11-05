@@ -558,11 +558,12 @@
     drawCoilCurrent(ctx, ph, st.parts ? 0.55 : 1);
     if (st.vel) drawVelocity(ctx, ph, 1);
     drawLeads(ctx, mode, a);
-    if (mode === 'dc') drawSegments(ctx, a, hlA(2) || (st.swap ? 0.35 + 0.65 * clamp(1 - Math.abs(ph.c) / 0.3, 0, 1) : 0));
-    else { drawSlipRing(ctx, ACZ_A, '#ffb347'); drawSlipRing(ctx, ACZ_D, '#ff78b7'); if (hlA(2)) { ringHL(ctx, ACZ_A, hlA(2)); ringHL(ctx, ACZ_D, hlA(2)); } }
+    // 2026-11-05 老師指出：視角在右前方，左電刷貼在換向器／滑環「背面」那一側，要先畫（被環蓋住）；右電刷在正面，最後畫。
     const polA = st.parts ? 0 : clamp(Math.abs(ph.V) / 0.12, 0, 1);
     const swapGlow = st.swap ? clamp(1 - Math.abs(ph.c) / 0.3, 0, 1) : 0;
     drawBrush(ctx, mode, -1, hlA(3) || swapGlow, ph.V, polA);
+    if (mode === 'dc') drawSegments(ctx, a, hlA(2) || (st.swap ? 0.35 + 0.65 * clamp(1 - Math.abs(ph.c) / 0.3, 0, 1) : 0));
+    else { drawSlipRing(ctx, ACZ_A, '#ffb347'); drawSlipRing(ctx, ACZ_D, '#ff78b7'); if (hlA(2)) { ringHL(ctx, ACZ_A, hlA(2)); ringHL(ctx, ACZ_D, hlA(2)); } }
     drawBrush(ctx, mode, 1, hlA(3) || swapGlow, -ph.V, polA);
     drawExt(ctx, mode, ph, st.parts ? 0.55 : 1, hlA(4));
     drawSpinArrow(ctx, st.s, 0.95);
