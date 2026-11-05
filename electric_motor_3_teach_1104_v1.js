@@ -20,6 +20,13 @@
   const activeIdx = () => subBtns().findIndex(b => b.classList.contains('active'));
   const tx = (zh, en) => (typeof tr === 'function' ? tr(zh, en) : zh);
 
+  // 2026-11-05 老師指示：暫停／重播／進度條要放在動畫旁邊，不要留在頁首的模式列。
+  // 老師模式下把 #teachBar 搬到目前分頁「步驟鈕」正下方（畫布下方），切分頁就跟著搬。
+  function placeBar() {
+    const bar = $('teachBar'), t = tabEl(); if (!bar || !t) return;
+    const row = t.querySelector('.step-row'); if (!row) return;
+    if (row.nextElementSibling !== bar) row.insertAdjacentElement('afterend', bar);
+  }
   function restartTab() {            // 回到該分頁第一段，從頭播
     ctl.paused = false; T.due = 0; T.ended = false; setPauseLabel();
     const bs = subBtns();
@@ -44,7 +51,7 @@
     document.body.classList.toggle('mode-teacher', teacher);
     $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
     $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
-    if (teacher) { ctl.onEnd = onEnd; restartTab(); }
+    if (teacher) { ctl.onEnd = onEnd; placeBar(); restartTab(); }
     else { ctl.onEnd = null; T.due = 0; T.ended = false; restartScene(); $('teach-fill').style.width = '0'; }
   }
   function setPauseLabel() {
@@ -84,7 +91,7 @@
   $('teach-pause').addEventListener('click', () => { ctl.paused = !ctl.paused; setPauseLabel(); });
   $('teach-replay').addEventListener('click', restartTab);
   // 切分頁：老師模式就從新分頁第一段播起（頁面本身的分頁處理先跑，這裡後跑）
-  document.querySelectorAll('.tab-button').forEach(b => b.addEventListener('click', () => { if (T.on) setTimeout(restartTab, 90); }));
+  document.querySelectorAll('.tab-button').forEach(b => b.addEventListener('click', () => { if (T.on) setTimeout(() => { placeBar(); restartTab(); }, 90); }));
   // 語言切換後更新暫停鍵文字（其餘文字由 data-zh/en 與 tick 更新）
   document.querySelectorAll('.lang-pill').forEach(b => b.addEventListener('click', () => setTimeout(setPauseLabel, 0)));
   setInterval(tick, 200);
