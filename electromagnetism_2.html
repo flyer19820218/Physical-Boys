@@ -759,13 +759,39 @@ function drawActive() {
     if (id === a.tab) {
       const btn = document.querySelector('#' + a.tab + ' .sub-tab-btn.active');
       const sub = btn ? btn.dataset.sub : a.tab + '-main';
-      if (mod && emScene[a.key] !== sub) { mod.activate(sub); emScene[a.key] = sub; }
+      if (mod && emScene[a.key] !== sub) { mod.activate(sub); emScene[a.key] = sub; if (mod.ctl && !isTeacherMode()) mod.ctl.resume(); }
     } else if (emScene[a.key]) {
       if (mod) mod.deactivate();
       emScene[a.key] = null;
     }
   });
 }
+
+/* 學生操作（AGENTS 10.6）：一次只播一個步驟，播完停在該步最後一幀；按步驟編號＝從那一步開頭播到該步結束。老師講解模式不受影響。 */
+function isTeacherMode() { return document.body.classList.contains('mode-teacher'); }
+(function () {
+  const STOP_EARLY = 0.12;      // 提早一點點暫停，確保停在該步最後一幀、不會跨進下一步
+  function tick() {
+    requestAnimationFrame(tick);
+    if (document.hidden || isTeacherMode()) return;
+    ANIMS.forEach(a => {
+      const m = window.EmAnim && EmAnim[a.key], scene = emScene[a.key];
+      if (!m || !m.ctl || !scene || !m._info) return;
+      const c = m.ctl; if (c.paused()) return;
+      const info = m._info()[scene]; if (!info || !info.starts) return;
+      const t = c.progress().t, st = info.starts; let i = 0;
+      while (i + 1 < st.length && t >= st[i + 1]) i++;
+      const end = (i + 1 < st.length ? st[i + 1] : info.total) - STOP_EARLY;
+      if (t >= end) c.pause();
+    });
+  }
+  document.addEventListener('click', e => {      // 按步驟編號：從該步開頭播
+    const b = e.target.closest && e.target.closest('.step-row .step-btn'); if (!b || isTeacherMode()) return;
+    const key = (b.closest('.step-row').id || '').replace('steps-', ''), m = window.EmAnim && EmAnim[key];
+    if (m && m.ctl) m.ctl.resume();
+  });
+  requestAnimationFrame(tick);
+})();
 
 document.querySelectorAll('.tab-button').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('.tab-button').forEach(x => x.classList.remove('active'));
