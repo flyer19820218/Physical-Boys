@@ -409,12 +409,18 @@
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else if (S.scene) start(); });
 
+  // 這幾個子分頁由獨立模組播放，共用同一張畫布與步驟列（S.delegate 存目前接手的模組名）：
+  //   'example-aurora'   → electric_motor_3_aurora_1105_v1.js   （MA.aurora）
+  //   'example-daynight' → electric_motor_3_daynight_1106_v1.js （MA.daynight）
+  //   'example-energy'   → electric_motor_3_energy_1106_v1.js   （MA.energy）
+  const DELEG = { 'example-aurora': 'aurora', 'example-daynight': 'daynight', 'example-energy': 'energy' };
+
   MA.force = {
     activate(sceneId) {
-      // 'example-aurora'（補充：美麗的極光）由 electric_motor_3_aurora_1105_v1.js 播放，共用同一張畫布與步驟列
-      if (S.delegate && MA.aurora) { MA.aurora.deactivate(); S.delegate = false; }
-      if (sceneId === 'example-aurora' && MA.aurora) {
-        stop(); S.scene = null; S.step = -1; S.delegate = true; MA.aurora.activate(sceneId); return;
+      if (S.delegate && MA[S.delegate]) { MA[S.delegate].deactivate(); S.delegate = false; }
+      const dk = DELEG[sceneId];
+      if (dk && MA[dk]) {
+        stop(); S.scene = null; S.step = -1; S.delegate = dk; MA[dk].activate(sceneId); return;
       }
       if (!SCENES[sceneId]) sceneId = 'example-wires';
       stop();
@@ -423,19 +429,19 @@
       buildButtons(); render(); start();
     },
     deactivate() {
-      if (S.delegate && MA.aurora) { MA.aurora.deactivate(); S.delegate = false; return; }
+      if (S.delegate && MA[S.delegate]) { MA[S.delegate].deactivate(); S.delegate = false; return; }
       stop();
       if (!S.scene) return;
       S.scene = null; S.step = -1;
       const row = document.getElementById('steps-force'); if (row) row.innerHTML = '';
     },
     relang() {
-      if (S.delegate && MA.aurora) { MA.aurora.relang(); return; }
+      if (S.delegate && MA[S.delegate]) { MA[S.delegate].relang(); return; }
       if (!S.scene) return;
       buildButtons(); S.step = -1; render(); start();
     },
     _frameAt(sceneId, t) { if (!SCENES[sceneId]) return null; S.scene = sceneId; S.t = t; render(); return SCENES[sceneId].total; },
-    _info() { const o = {}; for (const k in SCENES) o[k] = { total: SCENES[k].total, starts: SCENES[k].starts.slice() }; if (MA.aurora) Object.assign(o, MA.aurora._info()); return o; },
-    _state() { return S.delegate && MA.aurora ? MA.aurora._state() : { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }
+    _info() { const o = {}; for (const k in SCENES) o[k] = { total: SCENES[k].total, starts: SCENES[k].starts.slice() }; for (const dk of Object.values(DELEG)) if (MA[dk]) Object.assign(o, MA[dk]._info()); return o; },
+    _state() { return S.delegate && MA[S.delegate] ? MA[S.delegate]._state() : { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }
   };
 })();
