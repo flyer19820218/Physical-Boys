@@ -14,7 +14,7 @@
  * ── 版面 ────────────────────────────────────────────────────────────
  *   y≈58 本步一句說明（黃）。左杯 x 24–274、右杯 x 356–606；杯口 y=240、液面 y=300、杯底 y=470。
  *   左電極 Zn 中心 x=70、右電極（Zn 或 Cu）中心 x=560，寬 36、y 190–445。
- *   鹽橋：倒 U 形玻璃管，兩腳 x=244／386（各在杯內）、頂端外緣 y≈181、管口 y=438；「鹽橋」寫在兩杯之間 y≈330。
+ *   鹽橋：倒 U 形玻璃管，兩腳 x=250／380（各在杯內）、頂端外緣 y≈181、管口 y=438；「鹽橋」寫在兩杯之間 y≈330。
  *   外導線：電極頂 → 上導線 y=130 → 電壓表（中心 315,130，電子從表後面通過）。
  *   右導線末端可升降：斷開時懸在電極上方（真的留缺口），接上時碰到電極頂。
  *   標註：y=104「外導線」「電壓表」（導線上方）；y=170「斷開」；y=212 電極名稱（電極旁、杯口上方）；
@@ -123,8 +123,8 @@
   const E_PATH = mkPath([{ x: XL, y: 270 }, { x: XL, y: WY }, { x: XR, y: WY }, { x: XR, y: 270 }]);
   const RX = 630, RW = 350;                                       // 右欄
   const FT = { x: 660, y: 96, w: 300, h: 132 };                   // 蛙腿縮圖框
-  // 鹽橋：倒 U 形，中心線 左腳 x=244、右腳 x=386、轉角圓心 y=222、半徑 24、管口 y=438
-  const BLX = 244, BRX = 386, BCY = 222, BR = 24, BBY = 438, T_OUT = 17, T_IN = 12;
+  // 鹽橋：倒 U 形，中心線 左腳 x=250、右腳 x=380、轉角圓心 y=222、半徑 24、管口 y=438
+  const BLX = 250, BRX = 380, BCY = 222, BR = 24, BBY = 438, T_OUT = 17, T_IN = 12;
   function lanePts(o) {
     const R = BR + o, pts = [{ x: BLX - o, y: BBY }, { x: BLX - o, y: BCY }];
     for (let j = 1; j <= 8; j++) { const a = Math.PI + j / 8 * Math.PI / 2; pts.push({ x: BLX + BR + R * Math.cos(a), y: BCY + R * Math.sin(a) }); }
@@ -399,11 +399,11 @@
     CUPS.forEach(c => { innerClip(ctx, c, LIQ + 4); ctx.stroke(); });
     ctx.restore();
   }
-  function glowBridge(ctx, al) {                // 沿鹽橋兩側外緣的黃虛線
+  function glowBridge(ctx, al) {                // 鹽橋玻璃管壁上的黃虛線（不超出管外，避開電極標註）
     if (al <= 0.01) return;
     ctx.save(); ctx.globalAlpha *= al; ctx.strokeStyle = K.yellow; ctx.lineWidth = 3; ctx.setLineDash([8, 6]); ctx.lineJoin = 'round';
-    ctx.shadowColor = K.yellow; ctx.shadowBlur = 10;
-    [-(T_OUT + 5), T_OUT + 5].forEach(o => {
+    ctx.shadowColor = K.yellow; ctx.shadowBlur = 3;
+    [-(T_IN + 2.5), T_IN + 2.5].forEach(o => {
       const p = lanePts(o); ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); p.slice(1).forEach(q => ctx.lineTo(q.x, q.y)); ctx.stroke();
     });
     ctx.restore();
@@ -411,8 +411,8 @@
   function glowElectrodes(ctx, al) {
     if (al <= 0.01) return;
     ctx.save(); ctx.globalAlpha *= al; ctx.strokeStyle = K.yellow; ctx.lineWidth = 3; ctx.setLineDash([8, 6]);
-    ctx.shadowColor = K.yellow; ctx.shadowBlur = 10;
-    [XL, XR].forEach(x => { rrect(ctx, x - EW / 2 - 7, ETOP - 10, EW + 14, EBOT - ETOP + 16, 8); ctx.stroke(); });
+    ctx.shadowColor = K.yellow; ctx.shadowBlur = 3;
+    [XL, XR].forEach(x => { rrect(ctx, x - EW / 2 - 4, ETOP - 10, EW + 8, EBOT - ETOP + 16, 7); ctx.stroke(); });
     ctx.restore();
   }
   function mark(ctx, ok, x, y, alpha) {
@@ -554,10 +554,10 @@
     // 部件標註
     text(ctx, tr('電壓表', 'Voltmeter'), (MX + MW / 2 + XR) / 2, 104, K.white, 22, 'center', A(4.7));
     text(ctx, tr('外導線', 'Outer wire'), (XL + MX - MW / 2) / 2, 104, K.white, 22, 'center', A(5.3));
-    text(ctx, tr('鋅 Zn', 'Zinc (Zn)'), XL + EW / 2 + 10, 212, K.znHi, 22, 'left', A(3.4));
+    text(ctx, tr('鋅 Zn', 'Zinc (Zn)'), XL + EW / 2 + 12, 212, K.znHi, 22, 'left', A(3.4));
     S.els.filter(e => e.x === XR).forEach(e => {
-      if (e.kind === 'cu') text(ctx, tr('銅 Cu', 'Copper (Cu)'), XR - EW / 2 - 8, 212, K.cuHi, 22, 'right', e.a * A(3.6));
-      else text(ctx, tr('鋅 Zn', 'Zinc (Zn)'), XR - EW / 2 - 8, 212, K.znHi, 22, 'right', e.a * A(3.6));
+      if (e.kind === 'cu') text(ctx, tr('銅 Cu', 'Copper (Cu)'), XR - EW / 2 - 10, 212, K.cuHi, 22, 'right', e.a * A(3.6));
+      else text(ctx, tr('鋅 Zn', 'Zinc (Zn)'), XR - EW / 2 - 10, 212, K.znHi, 22, 'right', e.a * A(3.6));
     });
     // 溶液名稱（右杯在第 3 步跟著換：先淡出再淡入，字不交疊）
     const solA = A(2.6), lcx = (XL + EW / 2 + BLX - T_OUT) / 2, rcx = (BRX + T_OUT + XR - EW / 2) / 2, sw = BLX - T_OUT - (XL + EW / 2) - 16;
