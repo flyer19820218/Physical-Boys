@@ -9,7 +9,7 @@
  * ── 版面 ────────────────────────────────────────────────────────────
  *   y≈58 本步一句說明（黃）。左右兩個燒杯（簡化示意）：左杯 x 40–270（近無色溶液、鋅片 x 100–140），
  *   右杯 x 370–600（深藍綠溶液、銅片 x 530–570）；杯口 y=250、杯底 y=470、液面 y=290；電極 y 175–445。
- *   外導線（第 3 步起）：鋅片頂 → y=140 → 銅片頂。兩杯之間第 3 步起畫虛線「？」：分開的兩杯還缺一樣東西（下個分頁）。
+ *   外導線（第 3 步起）：鋅片頂 → y=140 → 銅片頂。第 5 步兩杯之間畫虛線「？」：分開的兩杯還缺一樣東西（下個分頁）。
  *   鋅原子在鋅片右側表面 (162,375)，離開後成為 Zn²⁺ 停在 (215,375)；Cu²⁺ 由 (420,375) 靠近銅片，成為銅原子貼在 (508,375)。
  *   右欄 x 640–980：本步重點（反應式、標註）；下方 y≈506/536：本步一句；y≈560/586：圖例。
  * ── 科學表示 ────────────────────────────────────────────────────────
@@ -230,8 +230,8 @@
   }
   function slot(ctx, x, y, al) {                 // 電子槽（空的）
     if (al <= 0.01) return;
-    ctx.save(); ctx.globalAlpha *= al; ctx.strokeStyle = 'rgba(214,246,255,0.8)'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
-    ctx.fillStyle = 'rgba(12,30,25,0.55)';
+    ctx.save(); ctx.globalAlpha *= al; ctx.strokeStyle = K.electron; ctx.lineWidth = 2.5; ctx.setLineDash([4, 3]);
+    ctx.fillStyle = 'rgba(12,30,25,0.88)';
     ctx.beginPath(); ctx.arc(x, y, 12, 0, TAU); ctx.fill(); ctx.stroke(); ctx.restore();
   }
   function ring(ctx, x, y, age, color, r0) {
@@ -284,14 +284,16 @@
 
   // ───────── 依時間算出狀態（純函式） ─────────
   // zn：鋅原子 → 鋅離子的進度；cu：銅離子 → 銅原子的進度；eL / eR：電極裡的電子（{x,y,a}）
+  // 原子⇄離子：先淡出、再淡入（不交疊，字不會壓字）
+  const swapOut = m => clamp(1 - 2 * m, 0, 1), swapIn = m => clamp(2 * m - 1, 0, 1);
   function state(i, tl) {
     const S = { znAtom: null, znIon: null, cuIon: null, cuAtom: null, eL: [], eR: [], wire: 0, flow: null,
-      dimL: 0, dimR: 0, slots: 0, xfer: -1, bridge: 0, hot: 0, rings: [] };
+      dimL: 0, dimR: 0, slots: 0, xfer: -1, xferK: null, bridge: 0, hot: 0, rings: [] };
     if (i === 0) {
       S.dimR = ease(tl / 0.8) * 0.62;
       const leave = ease((tl - 2.6) / 1.0), morph = ease((tl - 2.8) / 0.8);
       const p = { x: lerp(ZN_ATOM.x, ZN_ION.x, leave), y: AY };
-      S.znAtom = { x: p.x, y: p.y, a: 1 - morph }; S.znIon = { x: p.x, y: p.y + (tl > 3.6 ? 4 * Math.sin((tl - 3.6) * 1.8) : 0), a: morph };
+      S.znAtom = { x: p.x, y: p.y, a: swapOut(morph) }; S.znIon = { x: p.x, y: p.y + (tl > 3.6 ? 4 * Math.sin((tl - 3.6) * 1.8) : 0), a: swapIn(morph) };
       const split = ease((tl - 1.9) / 0.9);
       if (tl > 1.9) [352, 400].forEach((ty, k) => {
         const jig = tl > 2.8 ? 1.5 * Math.sin(tl * 5 + k * 2) : 0;
@@ -304,8 +306,8 @@
       S.znIon = { x: ZN_ION.x, y: AY, a: 1 };
       const go = ease((tl - 0.8) / 1.8), morph = ease((tl - 3.0) / 0.8);
       const ip = { x: lerp(CU_ION0.x, CX - EW / 2 - pillHalfC, go), y: AY };
-      S.cuIon = { x: lerp(ip.x, CU_ATOM.x, morph), y: AY + (tl < 0.8 ? 3 * Math.sin(tl * 2) : 0), a: 1 - morph };
-      S.cuAtom = { x: lerp(ip.x, CU_ATOM.x, morph), y: AY, a: morph };
+      S.cuIon = { x: lerp(ip.x, CU_ATOM.x, morph), y: AY + (tl < 0.8 ? 3 * Math.sin(tl * 2) : 0), a: swapOut(morph) };
+      S.cuAtom = { x: lerp(ip.x, CU_ATOM.x, morph), y: AY, a: swapIn(morph) };
       [352, 400].forEach((ty, k) => {
         const dn = ease((tl - 0.6 - k * 0.3) / 1.3), toS = ease((tl - 2.8) / 0.7);
         if (tl < 0.6 + k * 0.3) return;
@@ -316,12 +318,12 @@
     } else {
       S.znIon = { x: ZN_ION.x, y: AY + 4 * Math.sin(tl * 1.8), a: 1 };
       S.cuAtom = { x: CU_ATOM.x, y: AY, a: 1 };
-      S.bridge = i === 2 ? ease((tl - 1.6) / 0.6) : 1;
+      S.bridge = i === 4 ? ease((tl - 4.4) / 0.6) : 0;          // 「？」只在第 5 步出現（帶出下個分頁）
       S.wire = i === 2 ? ease((tl - 0.4) / 1.2) : 1;
       if (i === 2) S.flow = { front: 130 * (tl - 1.6), t: tl };
       if (i === 4) S.flow = { front: 1e9, t: tl + 8 };
-      if (i === 3) { S.slots = ease((tl - 0.5) / 0.5); S.xfer = ease((tl - 2.2) / 3.0); }
-      if (i === 4) S.hot = ease((tl - 4.6) / 0.5);
+      if (i === 3) { S.slots = ease((tl - 0.5) / 0.5); S.xferK = [ease((tl - 2.2) / 2.8), ease((tl - 2.7) / 2.8)]; S.xfer = S.xferK[1]; }
+      if (i === 4) S.hot = ease((tl - 4.4) / 0.6);
     }
     return S;
   }
@@ -347,11 +349,11 @@
     if (S.slots <= 0.01) return;
     SLOT_Y.forEach(y => { slot(ctx, ZX, y, S.slots); slot(ctx, CX, y, S.slots); });
     XF.forEach((P, k) => {
-      const kk = clamp(S.xfer, 0, 1), p = at(P, P.L * kk);
+      const kk = clamp(S.xferK[k], 0, 1), p = at(P, P.L * kk);
       const jig = (kk <= 0 || kk >= 1) ? 1.2 * Math.sin(tl * 5 + k * 2) : 0;
       ball(ctx, p.x + jig, p.y, 8, S.slots);
     });
-    if (S.xfer >= 1) SLOT_Y.forEach((y, k) => ring(ctx, CX, y, tl - 5.2 - k * 0.1, K.electron, 12));
+    if (S.xfer >= 1) SLOT_Y.forEach((y, k) => ring(ctx, CX, y, tl - 5.5 - k * 0.1, K.electron, 12));
   }
 
   // ───────── 共同的裝置畫面 ─────────
@@ -462,7 +464,7 @@
     let y = block(ctx, tr('電子數守恆', 'Electron conservation'), RX, 116, RW, K.green, 28, 'left', a(0.4), 36);
     const l1 = tr('鋅片：失去', 'Zn plate: loses'), l2 = tr('銅片：得到', 'Cu plate: gains');
     const sx = RX + Math.max(textW(ctx, l1, 24), textW(ctx, l2, 24)) + 30;
-    const y1 = y + 18, y2 = y1 + 50, gone = S.xfer > 0.02, came = S.xfer >= 1;
+    const y1 = y + 18, y2 = y1 + 50, gone = S.xferK && S.xferK[0] > 0.02, came = S.xfer >= 1;
     text(ctx, l1, RX, y1, K.znHi, 24, 'left', a(1.0));
     text(ctx, l2, RX, y2, K.cuHi, 24, 'left', a(1.4));
     [0, 1].forEach(k => {
@@ -470,7 +472,7 @@
       slot(ctx, x, y1, a(1.0)); if (!gone) ball(ctx, x, y1, 8, a(1.0));
       slot(ctx, x, y2, a(1.4)); if (came) ball(ctx, x, y2, 8, 1);
     });
-    if (came) [0, 1].forEach(k => ring(ctx, sx + 12 + k * 34, y2, tl - 5.2 - k * 0.1, K.electron, 12));
+    if (came) [0, 1].forEach(k => ring(ctx, sx + 12 + k * 34, y2, tl - 5.5 - k * 0.1, K.electron, 12));
     y = block(ctx, tr('失去 2 個＝得到 2 個', 'Lost 2 = gained 2'), RX, y2 + 56, RW, K.green, 26, 'left', a(5.6), 34);
     y = block(ctx, tr('一邊少兩個，', 'One side has two fewer,'), RX, y + 10, RW, K.white, 24, 'left', a(6.0));
     block(ctx, tr('另一邊就多兩個', 'the other has two more'), RX, y, RW, K.white, 24, 'left', a(6.0));
