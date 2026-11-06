@@ -409,10 +409,11 @@
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else if (S.scene) start(); });
 
-  // 這兩個子分頁由獨立模組播放，共用同一張畫布與步驟列（S.delegate 存目前接手的模組名）：
+  // 這幾個子分頁由獨立模組播放，共用同一張畫布與步驟列（S.delegate 存目前接手的模組名）：
   //   'example-aurora'   → electric_motor_3_aurora_1105_v1.js   （MA.aurora）
   //   'example-daynight' → electric_motor_3_daynight_1106_v1.js （MA.daynight）
-  const DELEG = { 'example-aurora': 'aurora', 'example-daynight': 'daynight' };
+  //   'example-energy'   → electric_motor_3_energy_1106_v1.js   （MA.energy）
+  const DELEG = { 'example-aurora': 'aurora', 'example-daynight': 'daynight', 'example-energy': 'energy' };
 
   MA.force = {
     activate(sceneId) {
