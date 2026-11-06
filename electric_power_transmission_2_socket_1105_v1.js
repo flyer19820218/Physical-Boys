@@ -8,7 +8,7 @@
  * ── 版面 ────────────────────────────────────────────────────────────
  *   第 1 步：三個插座面板並排（cx＝180／500／820），簡單圓角方形面板＋孔位（不畫任何品牌外觀）：
  *     110 V 二孔：窄孔 L（粉紅）、寬孔 N（青），沒有接地孔；110 V 接地三孔：多一個圓形 PE 孔（綠）；額定 125 V・15 A；
- *     220 V 專用：L1、L2 兩個一樣大的孔（都是活線，粉紅），加圓形 PE；額定 250 V・20 A。
+ *     220 V 專用：L1 橫孔、L2 直孔，兩孔夾 90°（台灣規格，110 V 平行插頭插不進去；都是活線，粉紅），加圓形 PE；額定 250 V・20 A。
  *   第 2～4 步：左欄＝這一步用的插座（cx=185）；右側＝電路示意：
  *     交流電源（x=440）→ 火線 L（粉紅，y=180，中途有斷路器符號 x 530～580）→ 金屬外殼電器（x 680～900，y 140～390，
  *     內有電熱元件 x=860）→ 中性線 N（青，y=340）回電源；接地線 PE（綠）從外殼右下角 (900,390) 往下接大地符號。
@@ -158,11 +158,12 @@
     ctx.strokeStyle = 'rgba(242,236,217,0.35)'; ctx.lineWidth = 2;
     rrect(ctx, cx - s / 2 + 14, cy - s / 2 + 14, s - 28, s - 28, 18); ctx.stroke();
     if (type === '220') {
-      slot(ctx, cx - 40, cy - 22, 44, 14, K.pink, hl.L || 0);
-      slot(ctx, cx + 40, cy - 22, 44, 14, K.pink, hl.L || 0);
+      // 台灣 220 V 插座：L1 橫孔（左下）、L2 直孔（右上），兩孔夾 90°，平行腳的 110 V 插頭插不進去
+      slot(ctx, cx - 34, cy - 4, 46, 14, K.pink, hl.L || 0);
+      slot(ctx, cx + 38, cy - 26, 14, 46, K.pink, hl.L || 0);
       roundHole(ctx, cx, cy + 42, 13, K.green, hl.PE || 0);
-      text(ctx, 'L1', cx - 40, cy - 56, K.pink, 24);
-      text(ctx, 'L2', cx + 40, cy - 56, K.pink, 24);
+      text(ctx, 'L1', cx - 34, cy - 32, K.pink, 24);
+      text(ctx, 'L2', cx + 38, cy - 66, K.pink, 24);
       text(ctx, 'PE', cx + 22, cy + 42, K.green, 22, 'left');
     } else {
       slot(ctx, cx - 36, cy - 22, 10, 50, K.pink, hl.L || 0);
@@ -178,8 +179,8 @@
   const STEPS = [
     { dur: 8, b: ['三種插座', '3 sockets'],
       cap: ['插孔不同，功能也不同', 'Different holes, different jobs'],
-      res: ['插孔不同，功能也不同：二孔沒有接地；三孔多一個接地孔 PE；220 V 專用插座用 L1、L2 與 PE。',
-        'Different sockets, different functions: 2-prong has no ground; 3-prong adds a ground pin (PE); the 220 V socket uses L1, L2 and PE.'] },
+      res: ['插孔不同，功能也不同：二孔沒有接地；三孔多一個接地孔 PE；220 V 專用插座用 L1、L2 與 PE。台灣的 220 V 插座兩孔呈 90° 夾角，110 V 的平行插頭插不進去，避免誤插。',
+        'Different sockets, different functions: 2-prong has no ground; 3-prong adds a ground pin (PE); the 220 V socket uses L1, L2 and PE. Taiwan\'s 220 V sockets set the two slots at 90°, so a 110 V plug cannot fit—this prevents mix-ups.'] },
     { dur: 8, b: ['正常迴路', 'Normal'],
       cap: ['正常：電流走 L、N，PE 沒有電流', 'Normal: current in L and N, none in PE'],
       res: ['正常使用時，火線 L 送電、中性線 N 讓電流回到電源；接地線 PE 連接金屬外殼，不承擔工作電流。',
@@ -203,7 +204,7 @@
   const SOCK3 = [
     { cx: 180, type: 'two', title: ['110 V 二孔', '110 V 2-prong'], l1: ['窄孔 L・寬孔 N', 'Narrow L · Wide N'], l2: ['沒有接地孔', 'No ground hole'], rate: '125 V・15 A', c2: K.orange },
     { cx: 500, type: 'three', title: ['110 V 接地三孔', '110 V 3-prong'], l1: ['窄孔 L・寬孔 N', 'Narrow L · Wide N'], l2: ['＋圓孔 PE（接地）', '+ round PE (ground)'], rate: '125 V・15 A', c2: K.green },
-    { cx: 820, type: '220', title: ['220 V 專用', '220 V dedicated'], l1: ['L1、L2 都是活線', 'L1, L2: both live'], l2: ['不分窄孔寬孔', 'No narrow/wide rule'], rate: '250 V・20 A', c2: K.pink }
+    { cx: 820, type: '220', title: ['220 V 專用', '220 V dedicated'], l1: ['L1、L2 都是活線', 'L1, L2: both live'], l2: ['兩孔夾 90°（台灣規格）', 'Slots at 90° (Taiwan)'], rate: '250 V・20 A', c2: K.pink }
   ];
   function drawThree(ctx, tl) {
     SOCK3.forEach((s, k) => {
