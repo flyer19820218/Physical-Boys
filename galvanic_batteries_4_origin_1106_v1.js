@@ -4,27 +4,36 @@
  * 單一場景 'origin'。畫布不綁事件；唯一控制是 #steps-origin 的 5 個步驟鈕；結果框 #originAnimResult。
  * 只依賴頁面的 tr()；常數與小工具都在本 IIFE 內（不碰舊程式的 C、label、line…）。
  * 畫面是「場景時間 t 的純函式」：電極位置、導線接點、指針角度、離子擺動、電子位置都只由 t 算出。
- * 畫風、金屬用色、字級與版面沿用同課的 galvani／volta 兩支。
+ * 畫風、金屬用色、字級與版面沿用同課的 galvani／volta 兩支；兩杯＋U 形鹽橋的畫法沿用 cell 那支
+ * （鋅杯＝硫酸鋅溶液、近無色；銅杯＝硫酸銅溶液、深藍綠半透明；鹽橋裡的離子只畫 ± 小圓點）。
+ *
+ * 2026-11-06 科學修正（老師）：兩極必須隔開（分成兩杯），電子才被迫走外導線、才有外電流；
+ *   泡在同一杯直接接觸，鋅會直接反應，沒有外電流。所以 5 步全部改成「兩杯隔開＋鹽橋」，
+ *   刪掉舊版「單杯、不用鹽橋」的錯誤說法。鹽橋細節留給下一分頁「鋅銅電池與鹽橋」。
  *
  * ── 版面 ────────────────────────────────────────────────────────────
- *   y≈58 本步一句說明（黃）。燒杯 x 160–500、杯口 y=240、杯底 y=470；液面 y=290（電極在液面下的部分加深色＋液面亮線）。
- *   左電極 Zn 中心 x=230、右電極（Zn 或 Cu）中心 x=430，寬 36、y 190–440。
- *   外導線：電極頂 → 上導線 y=130 → 電壓表（中心 330,130，置中於上導線，電子從表後面通過）。
+ *   y≈58 本步一句說明（黃）。左杯 x 24–274、右杯 x 356–606；杯口 y=240、液面 y=300、杯底 y=470。
+ *   左電極 Zn 中心 x=70、右電極（Zn 或 Cu）中心 x=560，寬 36、y 190–445。
+ *   鹽橋：倒 U 形玻璃管，兩腳 x=244／386（各在杯內）、頂端外緣 y≈181、管口 y=438；「鹽橋」寫在兩杯之間 y≈330。
+ *   外導線：電極頂 → 上導線 y=130 → 電壓表（中心 315,130，電子從表後面通過）。
  *   右導線末端可升降：斷開時懸在電極上方（真的留缺口），接上時碰到電極頂。
- *   左欄 x≤214：外導線、Zn、電解質標註；右電極標註 x 462 起、y=212；右欄 x 630–980：本步重點。
+ *   標註：y=104「外導線」「電壓表」（導線上方）；y=170「斷開」；y=212 電極名稱（電極旁、杯口上方）；
+ *   杯內液面上方 y≈270 溶液名稱。右欄 x 630–980：本步重點。
  *   下方 y≈506/536：本步一句；y≈574（或 560/586 兩列）：圖例。
  * ── 科學表示 ────────────────────────────────────────────────────────
  *   藍球＝電子，只畫在液面以上的電極與外導線裡（Zn → 外導線 → 電壓表 → Cu），不進溶液。
- *   橘＝正離子、紫＝負離子，只在電解質裡小幅擺動，不進導線；不指定是哪一種離子、不畫移動方向。
+ *   橘＝正離子、紫＝負離子，只在兩杯溶液與鹽橋裡小幅擺動，不進導線；不指定是哪一種離子、不畫移動方向。
  *   兩片鋅：只標示結果（指針不動、沒有持續電子流、兩片金屬一樣），不編機制。
  *   不寫反應式（下一分頁才講）、不寫電壓數值、不寫年份數字。
  *
  * ── 步驟表，共 42 s ─────────────────────────────────────────────
- *   1 換成燒杯   8 s  蛙腿縮圖（金屬＋濕潤的組織）→ 燒杯、電解質、兩片電極、電壓表、導線；右導線還沒接上（斷開），指針不動
- *   2 兩片鋅     8 s  右導線落下接上（閉合迴路），指針不動、沒有電子流；右欄「Zn＝Zn」
- *   3 鋅＋銅     9 s  右導線抬起、右鋅片升起淡出、銅片降下；接上 → 指針偏轉，電子從 Zn 經外導線流向 Cu
- *   4 分工       9 s  外導線發亮＝電子走這裡；電解質發亮＝離子在這裡（離子變成帶 ＋／− 的小圓）；同一杯電解質，不需要鹽橋
- *   5 條件整理   8 s  三個條件依序打勾（對應部位發亮），對照兩片鋅為什麼不行；帶出下一分頁「氧化與還原」
+ *   1 換成兩杯   8 s  蛙腿縮圖（金屬＋濕潤的組織）→ 兩杯電解質、兩片鋅、鹽橋、電壓表、導線；右導線還沒接上（斷開），指針不動
+ *   2 兩片鋅     8 s  兩杯都是鋅片＋硫酸鋅溶液；右導線落下接上（閉合迴路），指針不動、沒有電子流；右欄「Zn＝Zn」
+ *   3 鋅＋銅     9 s  右導線抬起、右鋅片升起淡出、右杯換成硫酸銅溶液、銅片降下；接上 → 指針偏轉，電子從 Zn 經外導線流向 Cu
+ *   4 分工       9 s  外導線發亮＝電子走這裡；兩杯溶液＋鹽橋發亮＝離子在這裡（離子變成帶 ＋／− 的小圓）；
+ *                    「兩極隔開：電子只能走外導線，才有外電流」＋對照句「同一杯、直接接觸：鋅直接反應，沒有外電流」（只用文字＋✗）
+ *   5 條件整理   8 s  四個條件依序打勾（不同金屬／電解質／兩極隔開（鹽橋連通）／閉合迴路，對應部位發亮），
+ *                    對照兩片鋅為什麼不行；帶出下一分頁「氧化與還原」
  * 播放規則（AGENTS 10.6，2026-11-05）：activate() 播第 1 步，每步播完停在最後一幀，不循環、不自動接下一步；
  * 按步驟鈕＝從該步開頭播到該步結束。setStepStop(false)＝連播到底再停（老師講解），到底時呼叫一次 GbAnim.ctl.onEnd()。
  * GbAnim.ctl.paused 為真時時間凍住。分頁被隱藏（canvas offsetWidth＝0）時不跑 rAF，每 250ms 檢查一次。
@@ -104,54 +113,69 @@
   }
 
   // ───────── 幾何 ─────────
-  const BX0 = 160, BX1 = 500, BRIM = 240, BBOT = 470, LIQ = 290;   // 燒杯與液面
-  const XL = 230, XR = 430, EW = 36, ETOP = 190, EBOT = 440;      // 電極
-  const WY = 130, MX = 330, MW = 124, MH = 74;                    // 上導線、電壓表
+  const BRIM = 240, BBOT = 470, LIQ = 300;                        // 杯口、杯底、液面
+  const CUPS = [{ x0: 24, x1: 274 }, { x0: 356, x1: 606 }];       // 左杯、右杯（隔開）
+  const SOL_ZN = [205, 228, 232, 0.10], SOL_CU = [28, 128, 140, 0.46];   // 硫酸鋅（近無色）、硫酸銅（深藍綠，同 cell）
+  const XL = 70, XR = 560, EW = 36, ETOP = 190, EBOT = 445;       // 電極
+  const WY = 130, MX = 315, MW = 124, MH = 74;                    // 上導線、電壓表
   const MPIV = { x: MX, y: WY + 22 }, NEEDLE = 40;
   const OPEN_Y = ETOP - 30;                                       // 右導線斷開時末端高度
-  const E_PATH = mkPath([{ x: XL, y: 238 }, { x: XL, y: WY }, { x: XR, y: WY }, { x: XR, y: 238 }]);
+  const E_PATH = mkPath([{ x: XL, y: 270 }, { x: XL, y: WY }, { x: XR, y: WY }, { x: XR, y: 270 }]);
   const RX = 630, RW = 350;                                       // 右欄
   const FT = { x: 660, y: 96, w: 300, h: 132 };                   // 蛙腿縮圖框
-  // 離子位置（避開電極：左側縫 160–212、中間 248–412、右側縫 448–500）；kind 0＝正離子 1＝負離子
-  const IONS = [[284, 328, 0], [334, 330, 1], [384, 326, 0], [282, 384, 1], [332, 388, 0], [382, 382, 1],
-    [286, 436, 0], [336, 438, 1], [384, 434, 0], [186, 360, 1], [186, 424, 0], [474, 352, 0], [474, 420, 1]];
+  // 鹽橋：倒 U 形，中心線 左腳 x=244、右腳 x=386、轉角圓心 y=222、半徑 24、管口 y=438
+  const BLX = 244, BRX = 386, BCY = 222, BR = 24, BBY = 438, T_OUT = 17, T_IN = 12;
+  function lanePts(o) {
+    const R = BR + o, pts = [{ x: BLX - o, y: BBY }, { x: BLX - o, y: BCY }];
+    for (let j = 1; j <= 8; j++) { const a = Math.PI + j / 8 * Math.PI / 2; pts.push({ x: BLX + BR + R * Math.cos(a), y: BCY + R * Math.sin(a) }); }
+    for (let j = 0; j <= 8; j++) { const a = -Math.PI / 2 + j / 8 * Math.PI / 2; pts.push({ x: BRX - BR + R * Math.cos(a), y: BCY + R * Math.sin(a) }); }
+    pts.push({ x: BRX + o, y: BBY });
+    return pts;
+  }
+  const TUBE = lanePts(0), TUBE_P = mkPath(TUBE);
+  const BRIDGE_IONS = [];                                          // 鹽橋裡的離子：沿管子等距排，只原地擺動
+  for (let k = 0; k * 40 + 22 < TUBE_P.L - 10; k++) BRIDGE_IONS.push([k * 40 + 22, k % 2]);
+  // 杯內離子（避開電極與鹽橋腳）；kind 0＝正離子 1＝負離子；右杯以兩杯中線 x=315 鏡射
+  const ION_L = [[118, 334, 0], [160, 334, 1], [202, 334, 0], [118, 376, 1], [202, 376, 1], [118, 418, 0], [160, 418, 1], [202, 418, 0]];
+  const ION_R = ION_L.map(([x, y, k]) => [630 - x, y + (k ? 4 : -4), 1 - k]);
 
   // ───────── 步驟 ─────────
   const STEPS = [
-    { dur: 8, b: ['換成燒杯', 'Beaker'],
-      cap: ['換成燒杯：一杯電解質、兩片電極、電壓表', 'Swap in a beaker: electrolyte, two electrodes, a meter'],
-      res: ['把蛙腿實驗裡的「金屬＋濕潤的組織」換成燒杯：一杯電解質、兩片電極、外導線和電壓表。右邊的導線還沒接上，迴路斷開，電壓表指針不動。',
-        'Replace the "metals + moist tissue" of the frog-leg experiment with a beaker: a cup of electrolyte, two electrodes, outer wires and a voltmeter. The right wire is not connected yet — the circuit is open and the needle does not move.'] },
+    { dur: 8, b: ['換成兩杯', 'Two cups'],
+      cap: ['換成兩杯電解質：兩片電極、鹽橋、電壓表', 'Two cups of electrolyte: electrodes, salt bridge, meter'],
+      res: ['把蛙腿實驗裡的「金屬＋濕潤的組織」換成兩杯電解質：兩片電極各泡在一杯裡，兩杯用鹽橋連通，再接上外導線和電壓表。右邊的導線還沒接上，迴路斷開，電壓表指針不動。',
+        'Replace the "metals + moist tissue" of the frog-leg experiment with two cups of electrolyte: each electrode sits in its own cup, the cups are joined by a salt bridge, and outer wires lead to a voltmeter. The right wire is not connected yet — the circuit is open and the needle does not move.'] },
     { dur: 8, b: ['兩片鋅', 'Two Zn'],
       cap: ['先試兩片鋅：接成閉合迴路，指針不動', 'Try two zinc plates: circuit closed, needle still'],
-      res: ['兩片鋅接成閉合迴路，電壓表指針還是不動，也沒有持續的電子流。兩片相同金屬沒有足夠差異，無法維持持續電流。',
-        'Two zinc plates in a closed circuit: the needle still does not move, and there is no steady electron flow. Two identical metals lack enough difference to keep a current going.'] },
+      res: ['兩杯都是鋅片泡在硫酸鋅溶液，接成閉合迴路，電壓表指針還是不動，也沒有持續的電子流。兩片相同金屬沒有足夠差異，無法維持持續電流。',
+        'Both cups hold a zinc plate in zinc sulfate solution. In a closed circuit the needle still does not move, and there is no steady electron flow. Two identical metals lack enough difference to keep a current going.'] },
     { dur: 9, b: ['鋅＋銅', 'Zn + Cu'],
       cap: ['換成鋅＋銅：指針偏轉，電子由鋅流向銅', 'Switch to Zn + Cu: the needle swings, e⁻ go Zn → Cu'],
-      res: ['把右邊換成銅片，再接成閉合迴路：鋅較活潑，送出電子；銅較不活潑，接收電子。電子由鋅經外導線流向銅，電壓表指針偏轉。',
-        'Replace the right plate with copper and close the circuit: zinc is more active and gives electrons; copper is less active and receives them. Electrons flow from Zn through the outer wire to Cu, and the needle swings.'] },
+      res: ['把右杯換成銅片泡在硫酸銅溶液，再接成閉合迴路：鋅較活潑，送出電子；銅較不活潑，接收電子。電子由鋅經外導線流向銅，電壓表指針偏轉。',
+        'Change the right cup to a copper plate in copper sulfate solution and close the circuit: zinc is more active and gives electrons; copper is less active and receives them. Electrons flow from Zn through the outer wire to Cu, and the needle swings.'] },
     { dur: 9, b: ['電子與離子', 'e⁻ & ions'],
-      cap: ['看清楚分工：電子走外導線，離子在電解質裡', 'Who goes where: e⁻ in the wire, ions in the electrolyte'],
-      res: ['電子只在金屬和外導線裡走，不進溶液；溶液裡的離子只在電解質裡移動，不進導線。兩片電極浸在同一杯電解質裡，不需要鹽橋。',
-        'Electrons travel only in the metals and the outer wire, never into the solution; the ions move only within the electrolyte, never into the wire. Both electrodes sit in the same cup of electrolyte, so no salt bridge is needed.'] },
+      cap: ['看清楚分工：電子走外導線，離子在溶液和鹽橋', 'Who goes where: e⁻ in the wire, ions in solution and bridge'],
+      res: ['電子只在金屬和外導線裡走，不進溶液；離子只在兩杯溶液和鹽橋裡，不進導線。兩極要隔開（分成兩杯）：電子只能走外導線，才有外電流；如果泡在同一杯、直接接觸，鋅會直接反應，沒有外電流。',
+        'Electrons travel only in the metals and the outer wire, never into the solution; ions stay in the two solutions and the salt bridge, never in the wire. The electrodes must be kept apart (two cups): then electrons can only take the outer wire, giving an outer current. If both sit in the same cup in direct contact, zinc reacts directly and there is no outer current.'] },
     { dur: 8, b: ['電池條件', 'Conditions'],
-      cap: ['電池的條件：兩種不同金屬＋電解質＋閉合迴路', 'Battery needs: 2 different metals + electrolyte + closed loop'],
-      res: ['化學電池的條件：兩種不同的金屬、浸入電解質、接成閉合迴路。兩片鋅沒有足夠差異，所以不行。下一個分頁「氧化與還原」：電子到底從哪來、到哪去？',
-        'A chemical battery needs two different metals, dipped in an electrolyte, joined in a closed circuit. Two zinc plates lack enough difference, so they fail. Next tab, Oxidation & Reduction: where do the electrons come from, and where do they go?'] }
+      cap: ['電池的條件：不同金屬＋電解質＋兩極隔開＋閉合迴路', 'Battery needs: 2 metals + electrolyte + kept apart + closed loop'],
+      res: ['化學電池的條件：兩種不同的金屬、電解質、兩極隔開（用鹽橋連通）、接成閉合迴路。兩片鋅沒有足夠差異，所以不行。下一個分頁「氧化與還原」：電子到底從哪來、到哪去？',
+        'A chemical battery needs two different metals, an electrolyte, electrodes kept apart (joined by a salt bridge), and a closed circuit. Two zinc plates lack enough difference, so they fail. Next tab, Oxidation & Reduction: where do the electrons come from, and where do they go?'] }
   ];
   const STARTS = []; let TOTAL = 0; STEPS.forEach(s => { STARTS.push(TOTAL); TOTAL += s.dur; });
 
   // ───────── 依時間算出狀態（純函式） ─────────
   // els：要畫的電極 [{x, kind, dy, a}]；conn：右導線接上程度 0..1；needle：指針 0..1；eFront：電子前緣距離（null＝沒有電子）
+  // cuSol：右杯溶液由硫酸鋅換成硫酸銅的程度 0..1
   function swing(u) { return u <= 0 ? 0 : 1 - Math.exp(-u * 5) * Math.cos(u * 9); }
   function state(i, tl, t) {
-    const S = { build: 1, els: [], conn: 1, needle: 0, eFront: null, contactAge: -1, open: 0 };
+    const S = { build: 1, els: [], conn: 1, needle: 0, eFront: null, contactAge: -1, open: 0, cuSol: i >= 2 ? 1 : 0 };
     const left = { x: XL, kind: 'zn', dy: 0, a: 1 };
     if (i === 0) {
       S.build = tl;
-      const k = ease((tl - 3.0) / 0.8);
+      const k = ease((tl - 2.8) / 0.8), k2 = ease((tl - 3.1) / 0.8);
       left.dy = -60 * (1 - k); left.a = k;
-      S.els = [left, { x: XR, kind: 'zn', dy: -60 * (1 - ease((tl - 3.3) / 0.8)), a: ease((tl - 3.3) / 0.8) }];
+      S.els = [left, { x: XR, kind: 'zn', dy: -60 * (1 - k2), a: k2 }];
       S.conn = 0; S.open = 1;
     } else if (i === 1) {
       S.els = [left, { x: XR, kind: 'zn', dy: 0, a: 1 }];
@@ -162,6 +186,8 @@
       S.els = [left];
       if (up < 1) S.els.push({ x: XR, kind: 'zn', dy: -36 * up, a: 1 - up });
       if (tl > 1.9) S.els.push({ x: XR, kind: 'cu', dy: -36 * (1 - dn), a: dn });
+      S.cuSol = (tl - 1.9) / 0.9;                       // 右杯溶液跟著銅片一起換（線性，下面再 clamp）
+      S.cuSol = clamp(S.cuSol, 0, 1);
       const open = ease((tl - 0.2) / 0.5), close = ease((tl - 3.0) / 0.6);
       S.conn = tl < 3.0 ? 1 - open : close;
       S.retract = tl < 3.0 ? open : 1 - close;        // 抬得比平常斷開更高，讓電極有空間升起
@@ -176,47 +202,53 @@
     return S;
   }
 
-  // ───────── 圖形：燒杯、電極、液體、離子 ─────────
-  function beakerPath(ctx) {
+  // ───────── 圖形：燒杯、電極、液體、離子、鹽橋 ─────────
+  function beakerPath(ctx, c) {
+    const x0 = c.x0, x1 = c.x1;
     ctx.beginPath();
-    ctx.moveTo(BX0 - 8, BRIM - 6); ctx.quadraticCurveTo(BX0, BRIM - 4, BX0, BRIM + 8);
-    ctx.lineTo(BX0, BBOT - 16); ctx.quadraticCurveTo(BX0, BBOT, BX0 + 16, BBOT);
-    ctx.lineTo(BX1 - 16, BBOT); ctx.quadraticCurveTo(BX1, BBOT, BX1, BBOT - 16);
-    ctx.lineTo(BX1, BRIM + 8); ctx.quadraticCurveTo(BX1, BRIM - 4, BX1 + 8, BRIM - 6);
+    ctx.moveTo(x0 - 8, BRIM - 6); ctx.quadraticCurveTo(x0, BRIM - 4, x0, BRIM + 8);
+    ctx.lineTo(x0, BBOT - 16); ctx.quadraticCurveTo(x0, BBOT, x0 + 16, BBOT);
+    ctx.lineTo(x1 - 16, BBOT); ctx.quadraticCurveTo(x1, BBOT, x1, BBOT - 16);
+    ctx.lineTo(x1, BRIM + 8); ctx.quadraticCurveTo(x1, BRIM - 4, x1 + 8, BRIM - 6);
   }
-  function innerClip(ctx, yTop) {
+  function innerClip(ctx, c, yTop) {
+    const x0 = c.x0, x1 = c.x1;
     ctx.beginPath();
-    ctx.moveTo(BX0 + 2, yTop); ctx.lineTo(BX0 + 2, BBOT - 16); ctx.quadraticCurveTo(BX0 + 2, BBOT - 2, BX0 + 16, BBOT - 2);
-    ctx.lineTo(BX1 - 16, BBOT - 2); ctx.quadraticCurveTo(BX1 - 2, BBOT - 2, BX1 - 2, BBOT - 16); ctx.lineTo(BX1 - 2, yTop); ctx.closePath();
+    ctx.moveTo(x0 + 2, yTop); ctx.lineTo(x0 + 2, BBOT - 16); ctx.quadraticCurveTo(x0 + 2, BBOT - 2, x0 + 16, BBOT - 2);
+    ctx.lineTo(x1 - 16, BBOT - 2); ctx.quadraticCurveTo(x1 - 2, BBOT - 2, x1 - 2, BBOT - 16); ctx.lineTo(x1 - 2, yTop); ctx.closePath();
   }
   function beakerBack(ctx, al) {
     if (al <= 0.01) return;
     ctx.save(); ctx.globalAlpha *= al;
-    innerClip(ctx, BRIM); ctx.fillStyle = 'rgba(200,230,240,0.05)'; ctx.fill();
+    CUPS.forEach(c => { innerClip(ctx, c, BRIM); ctx.fillStyle = 'rgba(200,230,240,0.05)'; ctx.fill(); });
     ctx.restore();
   }
   function beakerFront(ctx, al) {
     if (al <= 0.01) return;
     ctx.save(); ctx.globalAlpha *= al; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    beakerPath(ctx); ctx.strokeStyle = 'rgba(12,30,25,0.7)'; ctx.lineWidth = 6; ctx.stroke();
-    beakerPath(ctx); ctx.strokeStyle = K.glass; ctx.lineWidth = 3; ctx.stroke();
-    ctx.strokeStyle = 'rgba(235,250,255,0.16)'; ctx.lineWidth = 3;                   // 玻璃反光（淡，不要像第三根電極）
-    ctx.beginPath(); ctx.moveTo(BX1 - 10, BRIM + 30); ctx.lineTo(BX1 - 10, BRIM + 90); ctx.stroke();
+    CUPS.forEach(c => {
+      beakerPath(ctx, c); ctx.strokeStyle = 'rgba(12,30,25,0.7)'; ctx.lineWidth = 6; ctx.stroke();
+      beakerPath(ctx, c); ctx.strokeStyle = K.glass; ctx.lineWidth = 3; ctx.stroke();
+    });
     ctx.restore();
   }
-  function liquid(ctx, level, al) {
+  function solColor(k) {
+    const c = SOL_ZN.map((v, j) => lerp(v, SOL_CU[j], clamp(k, 0, 1)));
+    return `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${c[3].toFixed(3)})`;
+  }
+  function liquid(ctx, c, level, color, al) {
     if (al <= 0.01 || level >= BBOT - 2) return;
     ctx.save(); ctx.globalAlpha *= al;
-    innerClip(ctx, level); ctx.fillStyle = 'rgba(110,180,205,0.26)'; ctx.fill();
+    innerClip(ctx, c, level); ctx.fillStyle = color; ctx.fill();
     ctx.restore();
   }
-  function surface(ctx, level, al) {           // 液面亮線（橫過電極，看得出液面上、液面下的分界）
+  function surface(ctx, c, level, al) {        // 液面亮線（橫過電極，看得出液面上、液面下的分界）
     if (al <= 0.01 || level >= BBOT - 4) return;
     ctx.save(); ctx.globalAlpha *= al;
     ctx.strokeStyle = 'rgba(205,240,250,0.9)'; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(BX0 + 2, level); ctx.lineTo(BX1 - 2, level); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(c.x0 + 2, level); ctx.lineTo(c.x1 - 2, level); ctx.stroke();
     ctx.strokeStyle = 'rgba(205,240,250,0.35)'; ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.moveTo(BX0 + 2, level + 4); ctx.lineTo(BX1 - 2, level + 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(c.x0 + 2, level + 4); ctx.lineTo(c.x1 - 2, level + 4); ctx.stroke();
     ctx.restore();
   }
   function electrode(ctx, e, level) {
@@ -243,20 +275,41 @@
     ctx.save(); ctx.globalAlpha *= al; ctx.fillStyle = kind ? K.neg : K.pos;
     ctx.beginPath(); ctx.arc(x, y, 5, 0, TAU); ctx.fill(); ctx.restore();
   }
-  function ionBadge(ctx, x, y, kind, al) {
+  function ionBadge(ctx, x, y, kind, al, r) {
     if (al <= 0.01) return;
     const c = kind ? K.neg : K.pos;
-    ctx.save(); ctx.globalAlpha *= al; ctx.fillStyle = c; ctx.shadowColor = c; ctx.shadowBlur = 8;
-    ctx.beginPath(); ctx.arc(x, y, 15, 0, TAU); ctx.fill(); ctx.restore();
-    text(ctx, kind ? '−' : '+', x, y + 1, K.ink, 24, 'center', al, true);
+    ctx.save(); ctx.globalAlpha *= al; ctx.fillStyle = c; ctx.shadowColor = c; ctx.shadowBlur = 6;
+    ctx.beginPath(); ctx.arc(x, y, r || 13, 0, TAU); ctx.fill(); ctx.restore();
+    text(ctx, kind ? '−' : '+', x, y + 1, K.ink, 22, 'center', al, true);
   }
   function ions(ctx, t, level, al, badgeK) {
     if (al <= 0.01) return;
-    IONS.forEach(([x, y, kind], k) => {
+    [ION_L, ION_R].forEach((list, side) => list.forEach(([x, y, kind], k) => {
       if (y < level + 18) return;
-      const ox = 6 * Math.sin(t * 1.7 + k * 1.31), oy = 5 * Math.sin(t * 2.3 + k * 2.07);
+      const j = k + side * 9;
+      const ox = 5 * Math.sin(t * 1.7 + j * 1.31), oy = 4 * Math.sin(t * 2.3 + j * 2.07);
       ionDot(ctx, x + ox, y + oy, kind, al * (1 - badgeK));
       ionBadge(ctx, x + ox, y + oy, kind, al * badgeK);
+    }));
+  }
+  // 鹽橋：玻璃管＋管內溶液＋只原地擺動的 ± 離子（不畫移動方向；細節留給下一分頁）
+  function bridge(ctx, t, dy, al, badgeK) {
+    if (al <= 0.01) return;
+    ctx.save(); ctx.globalAlpha *= al; ctx.translate(0, dy);
+    ctx.lineJoin = 'round'; ctx.lineCap = 'butt';
+    const st = (w, c) => { ctx.strokeStyle = c; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(TUBE[0].x, TUBE[0].y); TUBE.slice(1).forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke(); };
+    st(T_OUT * 2 + 4, 'rgba(12,30,25,0.7)');
+    st(T_OUT * 2, K.glass);
+    st(T_IN * 2, K.bg);
+    st(T_IN * 2, 'rgba(225,238,242,0.13)');
+    ctx.strokeStyle = 'rgba(235,250,255,0.22)'; ctx.lineWidth = 2;                 // 玻璃反光
+    const hl = lanePts(-T_IN + 3); ctx.beginPath(); ctx.moveTo(hl[0].x, hl[0].y); hl.slice(1).forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
+    ctx.restore();
+    BRIDGE_IONS.forEach(([s0, kind], k) => {
+      const p = at(TUBE_P, s0 + 3 * Math.sin(t * 2.1 + k * 1.7));
+      const a = al * clamp((TUBE_P.L - s0) / 14, 0, 1);
+      ionDot(ctx, p.x, p.y + dy, kind, a * (1 - badgeK));
+      ionBadge(ctx, p.x, p.y + dy, kind, a * badgeK, 10);
     });
   }
 
@@ -343,13 +396,23 @@
     if (al <= 0.01) return;
     ctx.save(); ctx.globalAlpha *= al; ctx.strokeStyle = K.yellow; ctx.lineWidth = 3; ctx.setLineDash([8, 6]);
     ctx.shadowColor = K.yellow; ctx.shadowBlur = 10;
-    innerClip(ctx, LIQ + 4); ctx.stroke(); ctx.restore();
+    CUPS.forEach(c => { innerClip(ctx, c, LIQ + 4); ctx.stroke(); });
+    ctx.restore();
+  }
+  function glowBridge(ctx, al) {                // 沿鹽橋兩側外緣的黃虛線
+    if (al <= 0.01) return;
+    ctx.save(); ctx.globalAlpha *= al; ctx.strokeStyle = K.yellow; ctx.lineWidth = 3; ctx.setLineDash([8, 6]); ctx.lineJoin = 'round';
+    ctx.shadowColor = K.yellow; ctx.shadowBlur = 10;
+    [-(T_OUT + 5), T_OUT + 5].forEach(o => {
+      const p = lanePts(o); ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); p.slice(1).forEach(q => ctx.lineTo(q.x, q.y)); ctx.stroke();
+    });
+    ctx.restore();
   }
   function glowElectrodes(ctx, al) {
     if (al <= 0.01) return;
     ctx.save(); ctx.globalAlpha *= al; ctx.strokeStyle = K.yellow; ctx.lineWidth = 3; ctx.setLineDash([8, 6]);
     ctx.shadowColor = K.yellow; ctx.shadowBlur = 10;
-    [XL, XR].forEach(x => { rrect(ctx, x - EW / 2 - 7, ETOP - 10, EW + 14, EBOT - ETOP + 18, 8); ctx.stroke(); });
+    [XL, XR].forEach(x => { rrect(ctx, x - EW / 2 - 7, ETOP - 10, EW + 14, EBOT - ETOP + 16, 8); ctx.stroke(); });
     ctx.restore();
   }
   function mark(ctx, ok, x, y, alpha) {
@@ -448,21 +511,32 @@
     mark(ctx, ok, RX + 16, y, al);
     return block(ctx, s, RX + 42, y, RW - 42, color, size || 24, 'left', al);
   }
+  // 杯內液面上方的溶液名稱（中文一行；英文太長就拆兩行）
+  function solLabel(ctx, s, cx, maxW, color, al) {
+    if (al <= 0.01) return;
+    const ls = wrap(ctx, s, maxW, 22);
+    if (ls.length === 1) text(ctx, ls[0], cx, 270, color, 22, 'center', al);
+    else ls.slice(0, 2).forEach((l, k) => text(ctx, l, cx, k ? 282 : 256, color, 22, 'center', al));
+  }
 
   // ───────── 共同的裝置畫面 ─────────
   function apparatus(ctx, i, tl, t, S) {
     const b = S.build, A = t0 => (i === 0 ? ease((b - t0) / 0.6) : 1);
-    const level = i === 0 ? lerp(BBOT, LIQ, ease((b - 2.2) / 1.0)) : LIQ;
-    const liqA = A(2.1);
+    const level = i === 0 ? lerp(BBOT, LIQ, ease((b - 2.0) / 1.0)) : LIQ;
+    const liqA = A(1.9);
     beakerBack(ctx, A(1.6));
     S.els.forEach(e => electrode(ctx, e, level));
-    liquid(ctx, level, liqA);
+    liquid(ctx, CUPS[0], level, solColor(0), liqA);
+    liquid(ctx, CUPS[1], level, solColor(S.cuSol), liqA);
     const badgeK = i === 3 ? ease((tl - 2.6) / 0.6) : (i === 4 ? 1 : 0);
     ions(ctx, t, level, i === 0 ? ease((b - 3.0) / 0.6) : 1, badgeK);
-    surface(ctx, level, liqA);
+    CUPS.forEach(c => surface(ctx, c, level, liqA));
+    // 鹽橋：第 1 步從上方輕輕放下
+    const bk = i === 0 ? ease((b - 3.9) / 0.6) : 1;
+    bridge(ctx, t, -30 * (1 - bk), bk, badgeK);
     beakerFront(ctx, A(1.6));
     // 導線：左邊一直接著；右邊末端依 conn 升降（斷開時真的留缺口）
-    const wl = i === 0 ? ease((b - 4.2) / 0.6) : 1, wr = i === 0 ? ease((b - 4.5) / 0.6) : 1;
+    const wl = i === 0 ? ease((b - 4.9) / 0.6) : 1, wr = i === 0 ? ease((b - 5.2) / 0.6) : 1;
     const lPts = [{ x: XL, y: ETOP - 2 }, { x: XL, y: WY }, { x: MX - MW / 2, y: WY }];
     const ry = lerp(S.retract ? lerp(OPEN_Y, WY + 12, S.retract) : OPEN_Y, ETOP - 2, S.conn);
     const rPts = [{ x: MX + MW / 2, y: WY }, { x: XR, y: WY }, { x: XR, y: ry }];
@@ -470,24 +544,29 @@
     wireLine(ctx, partial(rPts, wr), 1);
     if (wr > 0.98) wireEnd(ctx, XR, ry, 1);
     // 斷開標示
-    const openA = i === 0 ? ease((b - 5.0) / 0.5) : (i === 1 ? 1 - ease((tl - 0.8) / 0.4) : 0);
+    const openA = i === 0 ? ease((b - 5.7) / 0.5) : (i === 1 ? 1 - ease((tl - 0.8) / 0.4) : 0);
     gapMark(ctx, XR, (ry + ETOP) / 2 + 2, openA);
-    text(ctx, tr('斷開', 'Open'), XR + 22, 168, K.muted, 22, 'left', openA);
+    text(ctx, tr('斷開', 'Open'), XR - 20, 170, K.muted, 22, 'right', openA);
     if (S.contactAge >= 0) ring(ctx, XR, ETOP - 2, S.contactAge, K.white);
     // 電子（先畫）→ 電壓表（後畫，電子從表後面通過）
     electrons(ctx, t, S.eFront);
-    meter(ctx, S.needle, A(3.8));
+    meter(ctx, S.needle, A(4.6));
     // 部件標註
-    text(ctx, tr('電壓表', 'Voltmeter'), MX, ETOP + 2, K.white, 22, 'center', A(3.9));
-    text(ctx, tr('外導線', 'Outer wire'), XL - 16, 150, K.white, 22, 'right', A(4.6));
-    text(ctx, tr('鋅 Zn', 'Zinc (Zn)'), XL - 30, 212, K.znHi, 24, 'right', A(3.4));
-    const right = S.els.filter(e => e.x === XR);
-    right.forEach(e => {
-      if (e.kind === 'cu') text(ctx, tr('銅 Cu', 'Copper (Cu)'), XR + 32, 212, K.cuHi, 24, 'left', e.a * A(3.6));
-      else text(ctx, tr('鋅 Zn', 'Zinc (Zn)'), XR + 32, 212, K.znHi, 24, 'left', e.a * A(3.6));
+    text(ctx, tr('電壓表', 'Voltmeter'), (MX + MW / 2 + XR) / 2, 104, K.white, 22, 'center', A(4.7));
+    text(ctx, tr('外導線', 'Outer wire'), (XL + MX - MW / 2) / 2, 104, K.white, 22, 'center', A(5.3));
+    text(ctx, tr('鋅 Zn', 'Zinc (Zn)'), XL + EW / 2 + 10, 212, K.znHi, 22, 'left', A(3.4));
+    S.els.filter(e => e.x === XR).forEach(e => {
+      if (e.kind === 'cu') text(ctx, tr('銅 Cu', 'Copper (Cu)'), XR - EW / 2 - 8, 212, K.cuHi, 22, 'right', e.a * A(3.6));
+      else text(ctx, tr('鋅 Zn', 'Zinc (Zn)'), XR - EW / 2 - 8, 212, K.znHi, 22, 'right', e.a * A(3.6));
     });
-    const elA = A(2.6);
-    text(ctx, tr('電解質', 'Electrolyte'), BX0 - 14, 380, K.white, 22, 'right', elA);
+    // 溶液名稱（右杯在第 3 步跟著換：先淡出再淡入，字不交疊）
+    const solA = A(2.6), lcx = (XL + EW / 2 + BLX - T_OUT) / 2, rcx = (BRX + T_OUT + XR - EW / 2) / 2, sw = BLX - T_OUT - (XL + EW / 2) - 16;
+    solLabel(ctx, tr('硫酸鋅溶液', 'ZnSO₄ solution'), lcx, sw, K.muted, solA);
+    const m = i === 2 ? clamp((tl - 1.9) / 0.9, 0, 1) : S.cuSol;
+    solLabel(ctx, tr('硫酸鋅溶液', 'ZnSO₄ solution'), rcx, sw, K.muted, solA * clamp(1 - 2 * m, 0, 1));
+    solLabel(ctx, tr('硫酸銅溶液', 'CuSO₄ solution'), rcx, sw, K.cyan, solA * clamp(2 * m - 1, 0, 1));
+    // 鹽橋名稱：寫在兩杯之間、拱形下方
+    block(ctx, tr('鹽橋', 'Salt bridge'), MX, 322, CUPS[1].x0 - CUPS[0].x1 - 10, K.white, 22, 'center', bk * (i === 0 ? ease((b - 4.3) / 0.6) : 1), 26);
   }
 
   // ───────── 各步右欄 ─────────
@@ -495,12 +574,12 @@
     const a = t0 => ease((tl - t0) / 0.6);
     frogThumb(ctx, a(0.2));
     let y = block(ctx, tr('蛙腿：金屬＋濕潤的組織', 'Frog leg: metals + moist tissue'), FT.x + FT.w / 2, 258, RW, K.white, 24, 'center', a(0.8));
-    arrowLeft(ctx, FT.x - 12, 540, 164, a(1.4));
-    text(ctx, tr('換成', 'Swap'), 600, 138, K.yellow, 22, 'center', a(1.4));
+    arrowLeft(ctx, FT.x - 12, 594, 164, a(1.4));
+    text(ctx, tr('換成', 'Swap'), 624, 138, K.yellow, 22, 'center', a(1.4));
     y = Math.max(y, 300) + 30;
-    y = row(ctx, false, tr('右邊的導線還沒接上', 'The right wire is not connected'), y, K.white, a(5.2));
-    row(ctx, false, tr('迴路斷開：指針不動', 'Circuit open: the needle stays still'), y + 12, K.white, a(5.8));
-    bottomLines(ctx, tr('先不接導線：迴路斷開，電壓表指針不動', 'Wire not connected yet: circuit open, the needle stays still'), K.yellow, a(6.4));
+    y = row(ctx, false, tr('右邊的導線還沒接上', 'The right wire is not connected'), y, K.white, a(5.9));
+    row(ctx, false, tr('迴路斷開：指針不動', 'Circuit open: the needle stays still'), y + 12, K.white, a(6.4));
+    bottomLines(ctx, tr('兩片電極分在兩杯電解質、用鹽橋連通；導線還沒接上，指針不動', 'Electrodes in two cups joined by a salt bridge; wire not connected, needle still'), K.yellow, a(6.9));
   }
   function notes2(ctx, tl, t) {
     const a = t0 => ease((tl - t0) / 0.6);
@@ -531,38 +610,40 @@
   }
   function notes4(ctx, tl) {
     const a = t0 => ease((tl - t0) / 0.6);
-    let y = block(ctx, tr('電子 e⁻', 'Electrons e⁻'), RX, 120, RW, K.electron, 26, 'left', a(0.6), 34);
-    y = block(ctx, tr('只在金屬和外導線裡走', 'travel only in metal and wire'), RX, y, RW, K.white, 24, 'left', a(0.9));
-    const iy = y + 26;
-    const iA = a(2.6);
-    if (iA > 0.01) { ionBadge(ctx, RX + 15, iy, 0, iA); ionBadge(ctx, RX + 51, iy, 1, iA); }
-    text(ctx, tr('離子', 'Ions'), RX + 80, iy, K.white, 26, 'left', iA);
-    y = block(ctx, tr('只在電解質裡移動', 'move only in the electrolyte'), RX, iy + 34, RW, K.white, 24, 'left', a(3.0));
-    y = row(ctx, true, tr('同一杯電解質', 'One shared cup'), y + 26, K.green, a(5.4), 26);
-    block(ctx, tr('不需要鹽橋', 'No salt bridge needed'), RX + 42, y, RW - 42, K.white, 24, 'left', a(5.8));
-    bottomLines(ctx, tr('同一杯電解質：不需要鹽橋', 'Same cup of electrolyte: no salt bridge needed'), K.yellow, a(6.6));
+    let y = block(ctx, tr('電子 e⁻', 'Electrons e⁻'), RX, 112, RW, K.electron, 24, 'left', a(0.6), 30);
+    y = block(ctx, tr('只在金屬和外導線裡走', 'travel only in metal and wire'), RX, y, RW, K.white, 22, 'left', a(0.9), 28);
+    const iy = y + 18, iA = a(2.6);
+    if (iA > 0.01) { ionBadge(ctx, RX + 13, iy, 0, iA); ionBadge(ctx, RX + 45, iy, 1, iA); }
+    text(ctx, tr('離子', 'Ions'), RX + 70, iy, K.white, 24, 'left', iA);
+    y = block(ctx, tr('只在兩杯溶液和鹽橋裡', 'stay in the solutions and bridge'), RX, iy + 30, RW, K.white, 22, 'left', a(3.0), 28);
+    y = row(ctx, true, tr('兩極隔開（分成兩杯）', 'Kept apart (two cups)'), y + 22, K.green, a(5.0), 24);
+    y = block(ctx, tr('電子只能走外導線，才有外電流', 'e⁻ must take the outer wire: outer current'), RX + 42, y, RW - 30, K.white, 22, 'left', a(5.4), 28);
+    // 對照（只用文字＋✗，不另畫燒杯）
+    y = row(ctx, false, tr('泡在同一杯、直接接觸：\n鋅直接反應，沒有外電流', 'Same cup, direct contact: Zn reacts directly, no outer current'), y + 14, K.muted, a(6.2), 22);
+    bottomLines(ctx, tr('兩極隔開：電子走外導線、離子留在溶液和鹽橋', 'Kept apart: e⁻ take the outer wire, ions stay in solution and bridge'), K.yellow, a(7.0));
   }
   function notes5(ctx, tl) {
     const a = t0 => ease((tl - t0) / 0.6);
-    let y = block(ctx, tr('電池的條件', 'What a battery needs'), RX, 116, RW, K.yellow, 26, 'left', a(0.2), 34);
-    y = row(ctx, true, tr('兩種不同的金屬', 'Two different metals'), y + 10, K.white, a(0.9));
-    y = row(ctx, true, tr('電解質', 'An electrolyte'), y + 8, K.white, a(2.1));
-    y = row(ctx, true, tr('閉合迴路', 'A closed circuit'), y + 8, K.white, a(3.3));
+    let y = block(ctx, tr('電池的條件', 'What a battery needs'), RX, 112, RW, K.yellow, 26, 'left', a(0.2), 32);
+    y = row(ctx, true, tr('兩種不同的金屬', 'Two different metals'), y + 8, K.white, a(0.8));
+    y = row(ctx, true, tr('電解質', 'An electrolyte'), y + 6, K.white, a(1.8));
+    y = row(ctx, true, tr('兩極隔開（鹽橋連通）', 'Kept apart (salt bridge)'), y + 6, K.white, a(2.8));
+    y = row(ctx, true, tr('閉合迴路', 'A closed circuit'), y + 6, K.white, a(3.8));
     // 對照：兩片鋅
-    const cA = a(4.4), cy = y + 40;
+    const cA = a(4.9), cy = y + 36;
     miniPlate(ctx, RX + 16, cy, 'zn', cA);
     text(ctx, '＝', RX + 48, cy, K.white, 26, 'center', cA);
     miniPlate(ctx, RX + 80, cy, 'zn', cA);
     mark(ctx, false, RX + 124, cy, cA);
-    const ty = block(ctx, tr('兩片鋅：沒有足夠差異', 'Two Zn: not different enough'), RX, cy + 44, RW, K.muted, 22, 'left', a(4.7));
-    block(ctx, tr('無法維持持續電流', 'no steady current'), RX, ty, RW, K.muted, 22, 'left', a(4.7));
-    bottomLines(ctx, tr('下一個分頁「氧化與還原」：電子到底從哪來、到哪去？', 'Next: Oxidation & Reduction — where do electrons come from and go?'), K.cyan, a(5.6));
+    const ty = block(ctx, tr('兩片鋅：沒有足夠差異', 'Two Zn: not different enough'), RX, cy + 42, RW, K.muted, 22, 'left', a(5.2), 28);
+    block(ctx, tr('無法維持持續電流', 'no steady current'), RX, ty, RW, K.muted, 22, 'left', a(5.2), 28);
+    bottomLines(ctx, tr('下一個分頁「氧化與還原」：電子到底從哪來、到哪去？', 'Next: Oxidation & Reduction — where do electrons come from and go?'), K.cyan, a(5.8));
   }
 
   // ───────── 圖例、說明句、進度條 ─────────
   function drawLegend(ctx, i, tl) {
     const items = [];
-    items.push([tr('橘＝正離子、紫＝負離子（只在電解質裡）', 'Orange = positive ion, purple = negative ion (electrolyte only)'), 'i']);
+    items.push([tr('橘＝正離子、紫＝負離子（只在溶液與鹽橋裡）', 'Orange = positive ion, purple = negative ion (solution & bridge only)'), 'i']);
     if (i >= 2) items.push([tr('藍球 e⁻＝電子（只在金屬與導線裡）', 'Blue ball e⁻ = electron (metal and wire only)'), 'b']);
     const al = i === 0 ? ease((tl - 3.2) / 0.6) : 1;
     const z = 22, gapIcon = 40, gapItem = 34, maxW = W - 40;
@@ -596,15 +677,17 @@
   }
   function drawScene(ctx, i, tl, t) {
     const S = state(i, tl, t);
-    // 第 4、5 步：對應部位發亮（畫在裝置之前，當底光）
+    const win = (t0, t1, f) => ease((tl - t0) / f) * (1 - ease((tl - t1) / f));
+    // 第 4、5 步：對應部位發亮（導線光畫在裝置之前，當底光）
     const wirePts = [{ x: XL, y: ETOP }, { x: XL, y: WY }, { x: XR, y: WY }, { x: XR, y: ETOP }];
-    if (i === 3) glowPath(ctx, wirePts, ease((tl - 0.6) / 0.5) * (1 - ease((tl - 2.4) / 0.5)), K.electron);
-    if (i === 4) glowPath(ctx, wirePts, ease((tl - 3.3) / 0.4) * (1 - ease((tl - 4.5) / 0.4)), K.yellow);
+    if (i === 3) glowPath(ctx, wirePts, win(0.6, 2.4, 0.5), K.electron);
+    if (i === 4) glowPath(ctx, wirePts, win(3.8, 4.8, 0.4), K.yellow);
     apparatus(ctx, i, tl, t, S);
-    if (i === 3) glowLiquid(ctx, ease((tl - 2.6) / 0.5) * (1 - ease((tl - 4.8) / 0.5)));
+    if (i === 3) { const g = win(2.6, 4.8, 0.5); glowLiquid(ctx, g); glowBridge(ctx, g); }
     if (i === 4) {
-      glowElectrodes(ctx, ease((tl - 0.9) / 0.4) * (1 - ease((tl - 2.1) / 0.4)));
-      glowLiquid(ctx, ease((tl - 2.1) / 0.4) * (1 - ease((tl - 3.3) / 0.4)));
+      glowElectrodes(ctx, win(0.8, 1.8, 0.4));
+      glowLiquid(ctx, win(1.8, 2.8, 0.4));
+      glowBridge(ctx, win(2.8, 3.8, 0.4));
     }
     [notes1, notes2, notes3, notes4, notes5][i](ctx, tl, t);
     drawLegend(ctx, i, tl);
@@ -705,7 +788,7 @@
     _info() { return { origin: { total: TOTAL, starts: STARTS.slice() } }; },
     _state() {
       const i = stepAt(S.t), st = state(i, S.t - STARTS[i], S.t);
-      return { scene: S.on ? 'origin' : null, t: S.t, step: S.step, running: !!S.raf, right: st.els.length ? st.els[st.els.length - 1].kind : null, closed: st.conn > 0.99, needle: +st.needle.toFixed(3) };
+      return { scene: S.on ? 'origin' : null, t: S.t, step: S.step, running: !!S.raf, right: st.els.length ? st.els[st.els.length - 1].kind : null, closed: st.conn > 0.99, needle: +st.needle.toFixed(3), cuSol: +st.cuSol.toFixed(3) };
     }
   };
 })();
