@@ -635,18 +635,35 @@
 
   // 第 5 步：磁尾
   const XT_X = 720;
-  const LOBE = [[64, 52], [69, 74], [74, 96], [79, 118]];       // [北側足點磁緯, 磁尾中離中心面的高度]
-  function lobePts(E, RE, lam, h, xEnd, dip, xt) {
+  // [北側足點磁緯, 磁尾中離中心面的高度, 近地端先隆起多少(px), 離開地面先上升多少(地球半徑)]
+  // 越靠近極點的線越在外面：近地端要先升得比內側的閉合線更高再往後平放，才不會和閉合線交叉（磁力線不會交叉，除了剪斷重連的 X 點）
+  const LOBE = [[64, 52, 44, 1.6], [69, 80, 44, 1.8], [74, 106, 40, 2.0], [79, 132, 36, 2.2]];
+  function lobePts(E, RE, lam, h, xEnd, dip, xt, bump, up) {
     const f = [E.x + RE * Math.cos(lam * DEG), E.y - RE * Math.sin(lam * DEG)];
-    const pts = bez(f, [f[0] + RE * 0.5, f[1] - RE * 1.2], [E.x + RE * 3.2, E.y - h], [xEnd, E.y - h], 50);
+    const pts = bez(f, [f[0] + RE * 0.5, f[1] - RE * up], [E.x + RE * 3.2, E.y - h - bump], [xEnd, E.y - h], 50);
     if (dip > 0) for (const p of pts) p[1] += dip * h * Math.exp(-Math.pow((p[0] - xt) / 70, 2));
     return pts;
+  }
+  // 夜側磁力線被拉長：從標準偶極線 r = L·cos²λ 出發，再套一個「只看 x 位置」的變形
+  //   U(u) = u + s·KX·(u−1.2)^1.5（u 越大拉得越長，嚴格遞增）；V = v·(1 − s·KY·B(u))（只在垂直方向縮放）。
+  // 這種變形不會讓兩條不同的線互相穿過，所以拉長之後磁力線仍然「由內而外一層包一層」，不會交叉（交叉只會發生在剪斷重連的 X 點）。
+  // 單位是地球半徑。L_NEW＝腳點磁緯 64°（LOBE[0]）的偶極線：重連後新接出來的那一條閉合線，包在所有舊閉合線的外面。
+  const KX = 0.74, KY = 0.6, L_NEW = 1 / Math.pow(Math.cos(64 * DEG), 2);
+  function nightPts(E, RE, L, st, n = 56) {
+    const lf = footLat(L), out = [];
+    for (let k = 0; k <= n; k++) {
+      const lam = lerp(-lf, lf, k / n) * DEG, c = Math.cos(lam);
+      const u0 = L * c * c * c, v0 = L * c * c * Math.sin(lam);
+      const g = Math.max(0, u0 - 1.2), w = clamp((u0 - 1.2) / 2.8, 0, 1);
+      out.push([E.x + RE * (u0 + st * KX * g * Math.sqrt(g)), E.y - RE * v0 * (1 - st * KY * w * w * (3 - 2 * w))]);
+    }
+    return out;
   }
   function step5(ctx, tl, T) {
     const pan = easeIO(seg(tl, 0, 1.6));
     const E = { x: lerp(E4.x, 230, pan), y: lerp(E4.y, 300, pan) }, RE = lerp(RE4, 44, pan);
     const stretch = 0.15 + 0.85 * easeIO(seg(tl, 1.2, 6.5));
-    const relax = 0.45 * easeOut(seg(tl, 7.4, 10.4));
+    const relax = 0.85 * easeOut(seg(tl, 7.4, 10.4));
     const s = stretch - relax;
     const energy = stretch - 0.75 * easeOut(seg(tl, 7.4, 9.6));
     drawSun(ctx, 0.55 * (1 - pan) + 0.35);
@@ -654,19 +671,15 @@
     // 日側閉合線
     for (const L of [1.6, 2.2, 2.9]) { const lf = footLat(L); fieldLine(ctx, dipPts(E, RE, L, -1, -lf, lf), LINE_RGB, 0.7, 3, [[0.5, 1]]); }
     // 夜側閉合線：被拉長
-    const AS = { 1.6: [0.02, 0], 2.2: [0.15, 0.05], 2.9: [0.45, 0.15], 3.6: [0.95, 0.3], 4.4: [1.3, 0.45] };
-    for (const L of [1.6, 2.2, 2.9, 3.6, 4.4]) {
-      const lf = footLat(L), [a, b] = AS[L];
-      fieldLine(ctx, dipPts(E, RE, L, 1, -lf, lf, 56, { a: a * s, b: b * s }), LINE_RGB, 0.7, 3, [[0.5, 1]]);
-    }
+    for (const L of [1.6, 2.2, 2.9, 3.6, 4.4]) fieldLine(ctx, nightPts(E, RE, L, s), LINE_RGB, 0.7, 3, [[0.5, 1]]);
     // 磁尾的開放磁力線（北瓣指向地球 ←，南瓣背離地球 →）
     const xEnd = lerp(E.x + RE * 5, 990, easeIO(seg(tl, 0.6, 5.5)));
     const lobeA = seg(tl, 0.4, 1.4);
     const pinch = easeIO(seg(tl, 6.4, 7.3));
     const done = tl >= 7.3;
-    LOBE.forEach(([lam, h], j) => {
+    LOBE.forEach(([lam, h, bump, up], j) => {
       if (j === 0 && done) return;
-      const pts = lobePts(E, RE, lam, h, xEnd, j === 0 ? pinch : 0, XT_X);
+      const pts = lobePts(E, RE, lam, h, xEnd, j === 0 ? pinch : 0, XT_X, bump, up);
       fieldLine(ctx, pts, LINE_RGB, 0.8 * lobeA, 3, [[0.75, -1]]);
       fieldLine(ctx, mirrorY(pts, E.y), LINE_RGB, 0.8 * lobeA, 3, [[0.75, 1]]);
     });
@@ -684,13 +697,11 @@
     if (!done) {
       if (pinch > 0.6) glowRing(ctx, XT_X, E.y, 16 + 5 * Math.sin(T * 9), PINK, (pinch - 0.6) / 0.4);
     } else {
-      const q = easeOut(seg(tl, 7.4, 10.0));
       const lam = LOBE[0][0];
       const f = [E.x + RE * Math.cos(lam * DEG), E.y - RE * Math.sin(lam * DEG)];
-      const xt = lerp(XT_X, E.x + RE * 4.9, q);
-      const nb = bez(f, [f[0] + RE * lerp(0.5, 1.6, q), f[1] - RE * lerp(1.2, 1.0, q)], [xt - lerp(150, 0, q), E.y - lerp(58, 52, q)], [xt, E.y], 50);
-      const full = nb.concat(mirrorY(nb, E.y).reverse());
-      fieldLine(ctx, full, LINE_RGB, 1, 4.5, [[0.5, -1]]);
+      const full = nightPts(E, RE, L_NEW, s), nb = full.slice(28), nbS = full.slice(0, 29).reverse();   // nb：赤道→北腳；nbS：赤道→南腳
+      const xt = full[28][0];
+      fieldLine(ctx, full, LINE_RGB, 1, 4.5, [[0.5, 1]]);
       // 被甩出去的那一段（往磁尾外飛走）
       const px = XT_X + 10 + 300 * Math.pow(seg(tl, 7.3, 8.6), 1.6), pa = 1 - seg(tl, 8.2, 8.6);
       if (pa > 0) {
@@ -703,8 +714,8 @@
       // 粒子被加速，沿磁力線射向夜側極區
       const fN = f, fS = [f[0], 2 * E.y - f[1]];
       if (tl > 7.6) {
-        for (const pts of [nb, mirrorY(nb, E.y)]) {
-          const p = mkPoly(pts.slice().reverse());
+        for (const pts of [nb, nbS]) {
+          const p = mkPoly(pts);
           for (let j = 0; j < 5; j++) {
             const ph = ((tl - 7.6) * 0.9 + j / 5) % 1;
             const [x, y] = polyAt(p, p.len * easeIO(ph));

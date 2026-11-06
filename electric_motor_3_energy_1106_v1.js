@@ -282,7 +282,7 @@
     txt(ctx, '≈', 470, 225, CHALK, seg(tl, 2.0, 2.5), 48, 'center');
     // 右：磁尾
     txt(ctx, tr('被拖長的磁力線', 'Stretched field lines'), 760, 112, CHALK, 1, 24, 'center');
-    const xEnd = lerp(680, 975, st);
+    const xEnd = lerp(790, 975, st);
     tailLines(ctx, E2, E2.r, xEnd, 1);
     earthDot(ctx, E2, E2.r);
     const wa = seg(tl, 0.8, 1.3);
@@ -309,8 +309,9 @@
     for (let x = XL; x <= XR; x += 6) pts.push([x, YC + sign * h * (1 - dip * Math.exp(-Math.pow((x - XC) / 80, 2)))]);
     return pts;
   }
+  // 重連後新接出來的 U 形線要在最內側的外圈線（高度 44～54）的「裡面」：起點高度 hr 一定要小於它，否則會和外圈線交叉（磁力線不會交叉，除了 X 點）
   function hairpin(k, side) {                    // side=-1 左、+1 右；回傳 [上半, 下半]（都由外緣往折角）
-    const xk = XC + side * lerp(0, 190, k), hr = lerp(16, 64, k), x0 = side < 0 ? XL : XR;
+    const xk = XC + side * lerp(0, 190, k), hr = lerp(14, 34, k), x0 = side < 0 ? XL : XR;
     const top = bez([x0, YC - hr], [lerp(xk, x0, 0.25) , YC - hr], [xk, YC - hr * lerp(0.05, 0.75, k)], [xk, YC], 30);
     return [top, top.map(p => [p[0], 2 * YC - p[1]])];
   }
