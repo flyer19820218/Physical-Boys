@@ -12,7 +12,7 @@
   'use strict';
   window.MotorAnim = window.MotorAnim || {};
   const ctl = MotorAnim.ctl = MotorAnim.ctl || { paused: false, onEnd: null };
-  const MOD = { 'tab-palm': 'palm', 'tab-force-examples': 'force', 'tab-motor-struct': 'struct', 'tab-motor-anim': 'anim', 'tab-motor-power': 'power' };
+  const MOD = { 'tab-palm': 'palm', 'tab-force-examples': 'force', 'tab-gifted': 'gifted', 'tab-motor-struct': 'struct', 'tab-motor-anim': 'anim', 'tab-motor-power': 'power' };
   const $ = id => document.getElementById(id);
   const T = { on: false, due: 0, ended: false };
   const tabEl = () => document.querySelector('.tab-content.active');

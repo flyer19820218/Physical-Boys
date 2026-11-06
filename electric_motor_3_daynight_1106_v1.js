@@ -1,11 +1,11 @@
-/* electric_motor_3_daynight_1106_v1.js — 「開掌定則實例」分頁的第四個場景：補充——白天的極光去哪了？（共用 #forceExamplesCanvas，邏輯 1000×600）
+/* electric_motor_3_daynight_1106_v1.js — 「資優補充」分頁的第 2 個場景：白天的極光去哪了？（共用 #giftedCanvas，邏輯 1000×600）
  *
  * 接在「補充：美麗的極光」（electric_motor_3_aurora_1105_v1.js）後面。對象：高一資優生。
  * 重點：極光整天都在、固定朝著太陽；白天看不到是因為天空太亮；夜側特別亮是因為磁尾重連。
  * 重連用「有張力的橡皮筋」講：兩條方向相反的磁力線在交界處剪斷、交叉重接，新接的磁力線變短、彈開。
  *
  * 契約：window.MotorAnim.daynight = { activate('example-daynight'), deactivate(), relang(), _info(), _state(), _frameAt() }
- * 由 electric_motor_3_force_1104_v1.js 在收到場景 id 'example-daynight' 時轉交；步驟鈕寫進 #steps-force，說明寫進 #forceExampleResult。
+ * 由 electric_motor_3_gifted_1106_v1.js 在收到場景 id 'example-daynight' 時轉交；步驟鈕寫進 #steps-gifted，說明寫進 #giftedResult。
  * 播放（AGENTS 10.6／10.7）：
  *   學生模式（MotorAnim.ctl.onEnd 不是函式）：進場播第 1 步，播到該步結尾停在最後一格（下一步開始前 1e-3 s）；按步驟鈕＝從該步開頭播、播完停住。
  *   老師模式（onEnd 是函式）：從頭連續播到總結尾，停住並通知 onEnd 一次。MotorAnim.ctl.paused 為 true 時時間凍結（兩種模式都一樣）。
@@ -806,7 +806,7 @@
   // ═════════ 播放器（單一 RAF） ═════════
   // halted：學生模式播完一步、或老師模式播完全部後停住（不再跑迴圈；換語言只重畫）
   const S = { scene: null, t: 0, raf: 0, last: 0, step: -1, timer: 0, endFired: false, halted: false };
-  function canvasCtx() { const c = document.getElementById('forceExamplesCanvas'); return c ? c.getContext('2d') : null; }
+  function canvasCtx() { const c = document.getElementById('giftedCanvas'); return c ? c.getContext('2d') : null; }
   function stepAt(sc, t) { let i = 0; while (i + 1 < sc.starts.length && t >= sc.starts[i + 1]) i++; return i; }
   function render() {
     const ctx = canvasCtx(); if (!ctx || !S.scene) return;
@@ -821,9 +821,9 @@
   }
   function updateUI() {
     const sc = SCENES[S.scene]; if (!sc) return;
-    const res = document.getElementById('forceExampleResult');
+    const res = document.getElementById('giftedResult');
     if (res && S.step >= 0) { const c = sc.steps[S.step].cap; res.innerHTML = tr(c[0], c[1]); }
-    const row = document.getElementById('steps-force');
+    const row = document.getElementById('steps-gifted');
     if (row) row.querySelectorAll('.step-btn').forEach((b, k) => b.classList.toggle('active', k === S.step));
   }
   function jumpTo(k) {
@@ -833,7 +833,7 @@
     render(); start();
   }
   function buildButtons() {
-    const row = document.getElementById('steps-force'); if (!row) return;
+    const row = document.getElementById('steps-gifted'); if (!row) return;
     row.innerHTML = '';
     const sc = SCENES[S.scene]; if (!sc) return;
     sc.steps.forEach((st, k) => {
@@ -844,7 +844,7 @@
       row.appendChild(b);
     });
   }
-  function visible() { const c = document.getElementById('forceExamplesCanvas'); return !!(c && c.getClientRects().length && c.getBoundingClientRect().width > 0); }
+  function visible() { const c = document.getElementById('giftedCanvas'); return !!(c && c.getClientRects().length && c.getBoundingClientRect().width > 0); }
   // 這一次播放的終點：老師模式＝總結尾；學生模式＝目前這一步的結尾（都停在終點前 1e-3 s）
   function endOf(sc) {
     if (teacher()) return sc.total - 1e-3;
@@ -887,7 +887,7 @@
       stop();
       if (!S.scene) return;
       S.scene = null; S.step = -1; S.halted = false;
-      const row = document.getElementById('steps-force'); if (row) row.innerHTML = '';
+      const row = document.getElementById('steps-gifted'); if (row) row.innerHTML = '';
     },
     relang() {
       if (!S.scene) return;

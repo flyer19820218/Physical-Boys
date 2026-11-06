@@ -1,4 +1,4 @@
-/* electric_motor_3_energy_1106_v1.js — 「開掌定則實例」分頁的第五個場景：補充——粒子的能量從哪來？（共用 #forceExamplesCanvas，邏輯 1000×600）
+/* electric_motor_3_energy_1106_v1.js — 「資優補充」分頁的第 3 個場景：粒子的能量從哪來？（共用 #giftedCanvas，邏輯 1000×600）
  *
  * 接在「補充：白天的極光去哪了？」（electric_motor_3_daynight_1106_v1.js）後面。對象：高一資優生。
  * 要解的疑問：磁力不做功，極光粒子的能量從哪來？
@@ -565,7 +565,7 @@
 
   // ═════════ 播放器（單一 RAF；同 daynight 檔） ═════════
   const S = { scene: null, t: 0, raf: 0, last: 0, step: -1, timer: 0, endFired: false, halted: false };
-  function canvasCtx() { const c = document.getElementById('forceExamplesCanvas'); return c ? c.getContext('2d') : null; }
+  function canvasCtx() { const c = document.getElementById('giftedCanvas'); return c ? c.getContext('2d') : null; }
   function stepAt(sc, t) { let i = 0; while (i + 1 < sc.starts.length && t >= sc.starts[i + 1]) i++; return i; }
   function render() {
     const ctx = canvasCtx(); if (!ctx || !S.scene) return;
@@ -580,9 +580,9 @@
   }
   function updateUI() {
     const sc = SCENES[S.scene]; if (!sc) return;
-    const res = document.getElementById('forceExampleResult');
+    const res = document.getElementById('giftedResult');
     if (res && S.step >= 0) { const c = sc.steps[S.step].cap; res.innerHTML = tr(c[0], c[1]); }
-    const row = document.getElementById('steps-force');
+    const row = document.getElementById('steps-gifted');
     if (row) row.querySelectorAll('.step-btn').forEach((b, k) => b.classList.toggle('active', k === S.step));
   }
   function jumpTo(k) {
@@ -592,7 +592,7 @@
     render(); start();
   }
   function buildButtons() {
-    const row = document.getElementById('steps-force'); if (!row) return;
+    const row = document.getElementById('steps-gifted'); if (!row) return;
     row.innerHTML = '';
     const sc = SCENES[S.scene]; if (!sc) return;
     sc.steps.forEach((st, k) => {
@@ -603,7 +603,7 @@
       row.appendChild(b);
     });
   }
-  function visible() { const c = document.getElementById('forceExamplesCanvas'); return !!(c && c.getClientRects().length && c.getBoundingClientRect().width > 0); }
+  function visible() { const c = document.getElementById('giftedCanvas'); return !!(c && c.getClientRects().length && c.getBoundingClientRect().width > 0); }
   // 這一次播放的終點：老師模式＝總結尾；學生模式＝目前這一步的結尾（都停在終點前 1e-3 s）
   function endOf(sc) {
     if (teacher()) return sc.total - 1e-3;
@@ -646,7 +646,7 @@
       stop();
       if (!S.scene) return;
       S.scene = null; S.step = -1; S.halted = false;
-      const row = document.getElementById('steps-force'); if (row) row.innerHTML = '';
+      const row = document.getElementById('steps-gifted'); if (row) row.innerHTML = '';
     },
     relang() {
       if (!S.scene) return;

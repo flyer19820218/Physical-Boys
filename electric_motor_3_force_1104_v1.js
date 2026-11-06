@@ -331,7 +331,7 @@
   Object.values(SCENES).forEach(sc => { let a = 0; sc.starts = sc.steps.map(s => { const v = a; a += s.d; return v; }); sc.total = a; });
 
   // ═════════ 播放器（單一 RAF） ═════════
-  const S = { scene: null, t: 0, raf: 0, last: 0, step: -1, timer: 0, endFired: false, delegate: false };
+  const S = { scene: null, t: 0, raf: 0, last: 0, step: -1, timer: 0, endFired: false };
 
   function canvasCtx() { const c = document.getElementById('forceExamplesCanvas'); return c ? c.getContext('2d') : null; }
   function stepAt(sc, t) { let i = 0; while (i + 1 < sc.starts.length && t >= sc.starts[i + 1]) i++; return i; }
@@ -409,19 +409,11 @@
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else if (S.scene) start(); });
 
-  // 這幾個子分頁由獨立模組播放，共用同一張畫布與步驟列（S.delegate 存目前接手的模組名）：
-  //   'example-aurora'   → electric_motor_3_aurora_1105_v1.js   （MA.aurora）
-  //   'example-daynight' → electric_motor_3_daynight_1106_v1.js （MA.daynight）
-  //   'example-energy'   → electric_motor_3_energy_1106_v1.js   （MA.energy）
-  const DELEG = { 'example-aurora': 'aurora', 'example-daynight': 'daynight', 'example-energy': 'energy' };
+  // 極光、白天的極光、粒子能量三個「補充」已在 2026-11-06 搬到獨立的「資優補充」分頁（MA.gifted，electric_motor_3_gifted_1106_v1.js），
+  // 這個模組現在只管 example-wires、example-electron。
 
   MA.force = {
     activate(sceneId) {
-      if (S.delegate && MA[S.delegate]) { MA[S.delegate].deactivate(); S.delegate = false; }
-      const dk = DELEG[sceneId];
-      if (dk && MA[dk]) {
-        stop(); S.scene = null; S.step = -1; S.delegate = dk; MA[dk].activate(sceneId); return;
-      }
       if (!SCENES[sceneId]) sceneId = 'example-wires';
       stop();
       S.scene = sceneId; S.t = 0; S.step = -1; S.last = 0; S.endFired = false;
@@ -429,19 +421,17 @@
       buildButtons(); render(); start();
     },
     deactivate() {
-      if (S.delegate && MA[S.delegate]) { MA[S.delegate].deactivate(); S.delegate = false; return; }
       stop();
       if (!S.scene) return;
       S.scene = null; S.step = -1;
       const row = document.getElementById('steps-force'); if (row) row.innerHTML = '';
     },
     relang() {
-      if (S.delegate && MA[S.delegate]) { MA[S.delegate].relang(); return; }
       if (!S.scene) return;
       buildButtons(); S.step = -1; render(); start();
     },
     _frameAt(sceneId, t) { if (!SCENES[sceneId]) return null; S.scene = sceneId; S.t = t; render(); return SCENES[sceneId].total; },
-    _info() { const o = {}; for (const k in SCENES) o[k] = { total: SCENES[k].total, starts: SCENES[k].starts.slice() }; for (const dk of Object.values(DELEG)) if (MA[dk]) Object.assign(o, MA[dk]._info()); return o; },
-    _state() { return S.delegate && MA[S.delegate] ? MA[S.delegate]._state() : { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }
+    _info() { const o = {}; for (const k in SCENES) o[k] = { total: SCENES[k].total, starts: SCENES[k].starts.slice() }; return o; },
+    _state() { return { scene: S.scene, t: S.t, step: S.step, running: !!S.raf }; }
   };
 })();

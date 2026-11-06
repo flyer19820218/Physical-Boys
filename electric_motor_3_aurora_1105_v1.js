@@ -1,10 +1,10 @@
-/* electric_motor_3_aurora_1105_v1.js — 「開掌定則實例」分頁的第三個場景：補充——美麗的極光（共用 #forceExamplesCanvas，邏輯 1000×600）
+/* electric_motor_3_aurora_1105_v1.js — 「資優補充」分頁的第 1 個場景：美麗的極光（共用 #giftedCanvas，邏輯 1000×600）
  *
  * 由磁學單元（magnetism_1）的「地球大磁鐵」分頁搬來（老師 2026-11-05 指示：電子進入磁場會 U 形迴轉的概念在本單元教過，
  * 極光放在這後面比較順）。內容、畫面與動畫不變，只改掛載方式。
  *
  * 契約：window.MotorAnim.aurora = { activate('example-aurora'), deactivate(), relang(), _info(), _state(), _frameAt() }
- * 由 electric_motor_3_force_1104_v1.js 在收到場景 id 'example-aurora' 時轉交；步驟鈕寫進 #steps-force，說明寫進 #forceExampleResult。
+ * 由 electric_motor_3_gifted_1106_v1.js 在收到場景 id 'example-aurora' 時轉交；步驟鈕寫進 #steps-gifted，說明寫進 #giftedResult。
  * 老師講解模式：MotorAnim.ctl.onEnd 是函式時，播到結尾就停住並通知一次；MotorAnim.ctl.paused 為 true 時時間凍結。
  * 依賴頁面現成的：tr、C、TAU、clear、label、currentLang。本檔自帶 line、drawEarthMagneticField（與磁學頁同一份算式）。
  * 地球影像：NASA Blue Marble Next Generation（2004-07，去雲衛星合成），assets/magnetism_1/earth_blue_marble_2048_v1.jpg，
@@ -770,7 +770,7 @@
 
   // ═════════ 播放器（單一 RAF） ═════════
   const S = { scene: null, t: 0, raf: 0, last: 0, step: -1, timer: 0, endFired: false };
-  function canvasCtx() { const c = document.getElementById('forceExamplesCanvas'); return c ? c.getContext('2d') : null; }
+  function canvasCtx() { const c = document.getElementById('giftedCanvas'); return c ? c.getContext('2d') : null; }
   function stepAt(sc, t) { let i = 0; while (i + 1 < sc.starts.length && t >= sc.starts[i + 1]) i++; return i; }
   function drawProgress(ctx, sc, t) {
     ctx.save(); ctx.fillStyle = 'rgba(242,236,217,0.14)'; ctx.fillRect(0, 0, W, 6);
@@ -789,13 +789,13 @@
   }
   function updateUI() {
     const sc = SCENES[S.scene]; if (!sc) return;
-    const res = document.getElementById('forceExampleResult');
+    const res = document.getElementById('giftedResult');
     if (res && S.step >= 0) { const c = sc.steps[S.step].cap; res.innerHTML = tr(c[0], c[1]); }
-    const row = document.getElementById('steps-force');
+    const row = document.getElementById('steps-gifted');
     if (row) row.querySelectorAll('.step-btn').forEach((b, k) => b.classList.toggle('active', k === S.step));
   }
   function buildButtons() {
-    const row = document.getElementById('steps-force'); if (!row) return;
+    const row = document.getElementById('steps-gifted'); if (!row) return;
     row.innerHTML = '';
     const sc = SCENES[S.scene]; if (!sc) return;
     sc.steps.forEach((st, k) => {
@@ -806,7 +806,7 @@
       row.appendChild(b);
     });
   }
-  function visible() { const c = document.getElementById('forceExamplesCanvas'); return !!(c && c.getClientRects().length && c.getBoundingClientRect().width > 0); }
+  function visible() { const c = document.getElementById('giftedCanvas'); return !!(c && c.getClientRects().length && c.getBoundingClientRect().width > 0); }
   function frame(ts) {
     S.raf = 0;
     if (!S.scene || document.hidden) return;
@@ -844,7 +844,7 @@
       stop();
       if (!S.scene) return;
       S.scene = null; S.step = -1;
-      const row = document.getElementById('steps-force'); if (row) row.innerHTML = '';
+      const row = document.getElementById('steps-gifted'); if (row) row.innerHTML = '';
     },
     relang() {
       if (!S.scene) return;
