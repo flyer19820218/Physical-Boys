@@ -518,6 +518,9 @@
     if (ls.length === 1) text(ctx, ls[0], W / 2, (BY1 + BY2) / 2, color, 24, 'center', alpha);
     else ls.slice(0, 2).forEach((l, k) => text(ctx, l, W / 2, k ? BY2 : BY1, color, 24, 'center', alpha));
   }
+  function simulNote(ctx, y, al) {                  // 第 3、4 步：兩極其實同時進行
+    return block(ctx, tr('※ 兩極同時進行，這裡分開看', '※ Both rods react at once'), RX, y, RW, K.cyan, 22, 'left', al);
+  }
   function notes(ctx, i, tl, T) {
     const a = t0 => ease((tl - t0) / 0.5);
     let y;
@@ -544,12 +547,14 @@
       y = row(ctx, 'e', tr('得到電子', 'gains electrons'), y + 12, K.electron, a(1.8));
       y = row(ctx, 'cu', tr('變成紅色的銅 Cu', 'becomes red copper, Cu'), y + 10, K.cuText, a(2.8));
       y = row(ctx, 'ok', tr('附著在碳棒上：先一點點，再一層', 'It sticks to the rod: a few spots, then a layer'), y + 16, K.white, a(4.6));
+      simulNote(ctx, y + 14, a(5.4));
     } else if (i === 3) {
       y = block(ctx, tr('正極端（C）', '(+) side (C)'), RX, 110, RW, K.pos, 30, 'left', a(0.3), 38);
       y = row(ctx, 'box', tr('碳棒不反應（外觀不變）', 'The carbon rod does not react (looks the same)'), y + 14, K.white, a(0.9));
       y = row(ctx, 'h2o', tr('水發生反應', 'Water reacts instead'), y + 12, K.white, a(1.6));
       y = row(ctx, 'o2', tr('產生氧氣 O₂，冒泡', 'Oxygen gas O₂ forms and bubbles'), y + 10, K.o2, a(2.2));
-      pillRow(ctx, 'H⁺', 0, tr('溶液中出現 H⁺', 'H⁺ appears in the solution'), y + 18, a(2.6));
+      y = pillRow(ctx, 'H⁺', 0, tr('溶液中出現 H⁺', 'H⁺ appears in the solution'), y + 18, a(2.6));
+      simulNote(ctx, y + 14, a(3.4));
     } else {
       const aT = a(0.2);
       ffwd(ctx, RX + 4, 112, aT, tl);
