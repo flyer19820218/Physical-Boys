@@ -1391,6 +1391,7 @@
           <button class="action-btn zd-at" type="button" data-h="6" onclick="zdAt(6)" data-zh="🌅 黎明 06:00" data-en="🌅 Dawn 06:00">🌅 黎明 06:00</button>
           <button class="action-btn btn-orange zd-at" type="button" data-h="12" onclick="zdAt(12)" data-zh="☀️ 正午 12:00" data-en="☀️ Noon 12:00">☀️ 正午 12:00</button>
           <button class="action-btn" type="button" onclick="zdToday()" data-zh="📅 回到今天" data-en="📅 Back to today">📅 回到今天</button>
+          <button class="action-btn btn-green" type="button" onclick="zdNow()" data-zh="📍 現在（台灣時間）" data-en="📍 Right now (Taiwan time)">📍 現在（台灣時間）</button>
         </div>
         <div class="wb-status" id="zdResult" data-zh="太陽所在：" data-en="The Sun is in:">太陽所在：</div>
       </div>
@@ -3128,7 +3129,12 @@
     const ep = []; for (let i = 0; i <= 180; i++) ep.push(sky(zdV(i * 2)));
     c.beginPath(); ep.forEach((q, i) => i ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y)); c.strokeStyle = ZD.ECL; c.lineWidth = 2.6; c.stroke();
     for (let k = 0; k < 12; k++) { const a = sky(zdV(30 + 30 * k, -5)), b = sky(zdV(30 + 30 * k, 5)); e_ln(c, a.x, a.y, b.x, b.y, ZD.ECL, 1.6); }
-    ZD_STARS.forEach(s => { const q = sky(zdV(s.lam, s.bet)); c.fillStyle = 'rgba(255,250,235,0.9)'; c.beginPath(); c.arc(q.x, q.y, s.s, 0, EM.TAU); c.fill(); });
+    /* 真實星座連線：十二宮（淡黃白）＋出遊最好找的幾個（淡藍）；赤經赤緯直接投到盤面 */
+    const drawCon = (cn, col, dot) => { const pts = cn.s.map(q => at(lst - q.a, q.dec));
+      if (cn.l) { c.beginPath(); cn.l.forEach(([i, j]) => { c.moveTo(pts[i].x, pts[i].y); c.lineTo(pts[j].x, pts[j].y); }); c.strokeStyle = col; c.lineWidth = 1.3; c.stroke(); }
+      pts.forEach((q, i) => { c.fillStyle = dot; c.beginPath(); c.arc(q.x, q.y, (cn.big && cn.big.includes(i)) ? 3.2 : 2, 0, EM.TAU); c.fill(); }); return pts; };
+    ZT_CONP.forEach(cn => drawCon(cn, 'rgba(255,250,235,0.42)', 'rgba(255,250,235,0.92)'));
+    const landPts = ZD_LAND.map(cn => drawCon(cn, 'rgba(150,210,255,0.6)', 'rgba(190,230,255,0.95)'));
     auStar(c, CX, CY, 3.2, '255,224,102', true);
     const sp = sky(zdV(lam));
     { const rr = K * (90 - zdEq(zdV(lam)).dec / EM.DEG); c.save(); c.setLineDash([7, 6]); c.beginPath(); c.arc(CX, CY, rr, 0, EM.TAU); c.strokeStyle = 'rgba(255,224,102,0.85)'; c.lineWidth = 2; c.stroke(); c.restore(); }
@@ -3156,6 +3162,9 @@
     e_label(c, tr('【星象盤】台灣 23.5°N', '[Planisphere] Taiwan 23.5°N'), 26, 42, EM.GR, 17, 'left', false, 236);
     e_label(c, '📅 ' + zdDate(zd.d), 26, 70, EM.W, 17, 'left', false, 236);
     e_label(c, '🕒 ' + formatTime(zd.t), 26, 96, EM.W, 17, 'left', false, 236);
+    e_label(c, tr('👆 拖曳內盤＝轉星盤（選日期）', '👆 Drag the disc = turn it (pick the date)'), 480, 30, EM.Y, 15, 'center', false, 400);
+    e_label(c, tr('拖曳外圈＝選時間', 'Drag the outer ring = pick the time'), 480, 52, EM.Y, 15, 'center', false, 400);
+    L.block(280, 12, 400, 48);
     emBox(c, 686, 12, 262, 104); L.block(686, 12, 262, 104);
     e_label(c, tr('● 夜晚看得到', '● Visible at night'), 700, 40, EM.CY, 15, 'left', false, 236);
     e_label(c, tr('● 太陽附近：白天才在天上', '● Near the Sun: up by day'), 700, 68, EM.Y, 15, 'left', false, 236);
@@ -3186,6 +3195,9 @@
       const cands = []; [22, -22, 40, -40, 58, -58].forEach(r => [0, 34, -34].forEach(tg => cands.push([q.x + ox * r - oy * tg, q.y + oy * r + ox * tg + 6, 'center'])));
       L.any(zdName(k), cands, col, k === mk ? 18 : 15, true);
     });
+    ZD_LAND.forEach((cn, i) => { const q = cn.s[cn.lab], pt = landPts[i][cn.lab], Hh = lst - q.a;
+      if (Math.sin(ZD.LAT) * Math.sin(q.dec) + Math.cos(ZD.LAT) * Math.cos(q.dec) * Math.cos(Hh) < 0.03) return;   /* 在地平線下就不標 */
+      L.any(tr(cn.n[0], cn.n[1]), [[pt.x + 10, pt.y + 5, 'left'], [pt.x - 10, pt.y + 5, 'right'], [pt.x, pt.y - 12, 'center'], [pt.x, pt.y + 20, 'center']], '#a9dcff', 14, true); });
     L.any(sunL.U > 0 ? tr('太陽', 'Sun') : tr('太陽（地平線下）', 'Sun (below horizon)'), [[sp.x, sp.y + 30, 'center'], [sp.x, sp.y - 20, 'center'], [sp.x + 18, sp.y + 6, 'left'], [sp.x - 18, sp.y + 6, 'right'], [sp.x + 18, sp.y + 28, 'left'], [sp.x - 18, sp.y + 28, 'right'], [sp.x + 18, sp.y - 16, 'left'], [sp.x - 18, sp.y - 16, 'right'], [sp.x, sp.y + 50, 'center'], [sp.x, sp.y - 40, 'center']], EM.Y, 14, true);
     L.any(tr('上中天', 'Highest'), [0.5, 0.35, 0.65, 0.2, 0.8].flatMap(f => [[pS.x + 10, zt.y + (pS.y - zt.y) * f + 6, 'left'], [pS.x - 10, zt.y + (pS.y - zt.y) * f + 6, 'right']]), EM.MU, 14, true);
   }
@@ -3241,6 +3253,17 @@
       l: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0], [2, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10]] }                                       // 雙魚：γ θ ι λ κ ω δ ε α ο η
   ];
   const ZT_CONP = ZT_CON.map(c => ({ k: c.k, l: c.l, s: c.s.map(([h, m, d, mm]) => { const sg = (d < 0 || Object.is(d, -0)) ? -1 : 1; return { a: (h + m / 60) * 15 * EM.DEG, dec: sg * (Math.abs(d) + mm / 60) * EM.DEG }; }) }));
+  /* 出遊最好認的星空地標（J2000，赤經 h m、赤緯 ° ′；示意用，誤差約 1°）：n＝名稱，lab＝標名字的那顆，big＝亮星加大 */
+  const ZD_LAND = [
+    { n: ['北斗七星', 'Big Dipper'], s: [[11, 3.7, 61, 45], [11, 1.8, 56, 23], [11, 53.8, 53, 41], [12, 15.4, 57, 2], [12, 54.0, 55, 58], [13, 23.9, 54, 56], [13, 47.5, 49, 19]], l: [[0, 1], [1, 2], [2, 3], [3, 0], [3, 4], [4, 5], [5, 6]], lab: 3, big: [0] },
+    { n: ['仙后座', 'Cassiopeia'], s: [[0, 9.2, 59, 9], [0, 40.5, 56, 32], [0, 56.7, 60, 43], [1, 25.8, 60, 14], [1, 54.4, 63, 40]], l: [[0, 1], [1, 2], [2, 3], [3, 4]], lab: 2, big: [] },
+    { n: ['獵戶座', 'Orion'], s: [[5, 55.2, 7, 24], [5, 14.5, -8, 12], [5, 25.1, 6, 21], [5, 47.8, -9, 40], [5, 40.8, -1, 57], [5, 36.2, -1, 12], [5, 32.0, -0, 18], [5, 35.1, 9, 56]], l: [[7, 0], [7, 2], [0, 4], [2, 6], [4, 5], [5, 6], [4, 3], [6, 1]], lab: 5, big: [0, 1] },
+    { n: ['夏季大三角', 'Summer Triangle'], s: [[18, 36.9, 38, 47], [19, 50.8, 8, 52], [20, 41.4, 45, 17]], l: [[0, 1], [1, 2], [2, 0]], lab: 0, big: [0, 1, 2] },
+    { n: ['天狼星', 'Sirius'], s: [[6, 45.1, -16, 43]], lab: 0, big: [0] },
+    { n: ['南河三', 'Procyon'], s: [[7, 39.3, 5, 14]], lab: 0, big: [0] },
+    { n: ['五車二', 'Capella'], s: [[5, 16.7, 46, 0]], lab: 0, big: [0] },
+    { n: ['大角星', 'Arcturus'], s: [[14, 15.7, 19, 11]], lab: 0, big: [0] }
+  ].map(cn => ({ ...cn, s: cn.s.map(([h, m, d, mm]) => { const sg = (d < 0 || Object.is(d, -0)) ? -1 : 1; return { a: (h + m / 60) * 15 * EM.DEG, dec: sg * (Math.abs(d) + mm / 60) * EM.DEG }; }) }));
   const ZT_PATH = '#d7a6ff';   /* 星座一天的軌跡（紫）——和黃道（橘）分開 */
   let ZT_HITS = [];
   function ztPathInfo(k) {   /* 第 k 宮（取宮的中點）在台灣一天的軌跡：日出方位、正午高度 */
@@ -3377,6 +3400,21 @@
       const { x, y } = pos(e), inR = r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
       const chip = zsChipRects().find(inR); if (chip) { if (zd.pathOn) zd.pks = [chip.k]; else zd.d = zdSignDay(chip.k); zdUI(); return; }
       const lab = ZT_HITS.find(inR); if (lab) { zd.pathOn = true; zd.pks = [lab.k]; zdUI(); } }); })();
+  /* 星象盤：真的可以轉。拖曳內盤＝轉星盤（時間不動、日期跟著變）；拖曳外圈的時間環＝改時間（日期不動）。老師講解時不攔截 */
+  (() => { const cv = document.getElementById('zodiacCanvas'); if (!cv) return;
+    const G = { on: false, mode: '', a0: 0 };
+    const geo = e => { const b = cv.getBoundingClientRect(), x = (e.clientX - b.left) / b.width * ZD.W - ZP.CX, y = (e.clientY - b.top) / b.height * ZD.H - ZP.CY; return { r: Math.hypot(x, y), a: Math.atan2(x, y) }; };
+    const dA = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
+    cv.addEventListener('pointerdown', e => { if (zd.view !== 'disc' || document.body.classList.contains('mode-teacher')) return; const g = geo(e); if (g.r > ZP.RT2 + 30 || g.r < 6) return;
+      G.on = true; G.mode = g.r > ZP.RD2 ? 'time' : 'disc'; G.a0 = g.a; zd.playing = false; zd.anim = null; zd.last = 0; try { cv.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault(); });
+    cv.addEventListener('pointermove', e => { if (!G.on) return; const g = geo(e), da = dA(g.a, G.a0); G.a0 = g.a;
+      if (G.mode === 'disc') {   /* 盤面轉 da ＝ 恆星時多 da；時間不動，用日期去補（轉一整圈約一年） */
+        const target = zdLST() + da; for (let i = 0; i < 4; i++) zd.d = zdWrap(zd.d + dA(target, zdLST()) / (2 * Math.PI) * 365.2422, 365);
+      } else {   /* 時間指針轉 da ＝ 時間多 da／15°，過了午夜日期跟著進位 */
+        zd.t += da / (15 * EM.DEG); if (zd.t >= 24) { zd.t -= 24; zd.d = zdWrap(zd.d + 1, 365); } else if (zd.t < 0) { zd.t += 24; zd.d = zdWrap(zd.d - 1, 365); } }
+      zdUI(); });
+    const end = e => { G.on = false; try { cv.releasePointerCapture(e.pointerId); } catch (_) {} };
+    cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end); })();
   /* ── 🧭 地球在哪裡？（資優頁預設主視角）：從北極上空俯視的日心圖
        中央太陽、小圓＝地球公轉軌道、外圈＝十二宮（遠方的黃道星座，等分 30°，白羊從 λ＝30° 起）
        幾何：太陽黃經 λ☉ 時，地球在日心黃經 λ☉＋180°；從地球穿過太陽的直線經過圓心，所以落在外圈 λ☉ 那一宮
@@ -3445,6 +3483,7 @@
   }
   function zdDraw(c, t) {
     c.drawImage(auSky(ZD.W, ZD.H, 151, 0.5, 0.4), 0, 0); auTwinkle(c, ZD.W, ZD.H, 151, 9, t);
+    { const cvz = document.getElementById('zodiacCanvas'); if (cvz) { const ta = (zd.view === 'disc' && !document.body.classList.contains('mode-teacher')) ? 'none' : ''; if (cvz.style.touchAction !== ta) cvz.style.touchAction = ta; } }
     if (zd.view === 'disc') { zdDisc(c, t); return; }
     if (zd.view === 'helio') { zdHelio(c, t); return; }
     zdTw(c, t);
@@ -3472,6 +3511,9 @@
   function zdPlay() { zd.playing = !zd.playing; zd.last = 0; zdUI(); }
   function zdAt(h) { zd.t = h; zdUI(); }
   function zdToday() { zd.d = ZD_TODAY; zdUI(); }
+  /* 出遊用：抓裝置現在的時間，換成台灣時間（UTC+8）放進星象盤 */
+  function zdNow() { const n = new Date(new Date().getTime() + new Date().getTimezoneOffset() * 60000 + 8 * 3600000); let d = n.getDate() - 1; for (let m = 0; m < n.getMonth(); m++) d += ZD_MD[m];
+    zd.d = Math.min(364, d); zd.t = n.getHours() + n.getMinutes() / 60; zd.playing = false; zd.last = 0; zdUI(); }
   function zdSpeed(v) { zd.spd = v; zdUI(); }
   function zdReplay() { zd.t = 0; zd.last = 0; zdUI(); }
   function zdView(v) { zd.view = v; zdUI(); }
