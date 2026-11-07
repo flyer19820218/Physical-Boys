@@ -12,10 +12,13 @@
  *   〔充電〕：一次電池＝按鈕灰掉（aria-disabled）＋旁邊寫原因「一次電池不可充電」；點它會閃出大紅叉與「禁止嘗試充電」。
  *          二次電池＝小燈換成外部電源（正接正、負接負），電子方向反過來，淺綠條回升；Li⁺ 游回負極、鉛蓄反應式反向。
  *   〔看反應式〕：碳鋅（補充）與鉛蓄的反應式面板（JetBrains Mono，塞不下就換行）。其他三種舊頁沒有反應式，按鈕停用。
- *   〔換一顆新的〕：剩餘反應物回到滿格（一次電池用完時，也可以點發亮的電池）。
+ *   〔換一顆新的〕：剩餘反應物回到滿格（一次電池用完時，也可以點發亮的電池）；硬充造成的鼓脹／氣泡／發熱也復原。
+ *   〔硬充會怎樣？（補充）〕（只有碳鋅出現）：正接正、負接負硬接外部電源，電子被迫反向；淺綠條不回升（反應倒不回去）、
+ *          電解液裡冒小氣泡、電池慢慢鼓脹＋邊緣紅色光暈、「危險：不可替一次電池充電」；說明框寫老師指定的補充（資優）文字。
+ *   碳鋅畫面下方預設就有反應式：主線＝負極式；下面「補充（資優）」小區塊＝正極式、總反應（暗一階）。
  *
  * ── 舊頁「多種電池」內容（逐項保留）──────────────────────────────
- *   名稱、電壓（鎳氫依指示不寫）、一次／二次、兩條特點寫在右側卡片；材料標示畫在電池剖面上下；
+ *   名稱、電壓、一次／二次、兩條特點寫在右側卡片；材料標示畫在電池剖面上下；
  *   碳鋅的電解液與兩條反應式、鉛蓄的放電／充電反應式在〔看反應式〕面板；鉛蓄目前方向的反應式另寫在下方；
  *   充電規則（正接正、負接負、電能 → 化學能）、放電（化學能 → 電能）、不可充電提示、回收、安全提醒寫在畫面與說明框。
  *
@@ -55,7 +58,8 @@
   const LI_ROWS = [280, 315, 350], LI_POS = [335, 400], LI_NEG = [200, 265];
   const CARD = { x0: 600, x1: 975, y0: 88, y1: 476 };
   const CCX = (CARD.x0 + CARD.x1) / 2;
-  const GX0 = 220, GX1 = 520, GY = 437, GH = 24;                 // 剩餘反應物條
+  const GX0 = 220, GX1 = 520, GY = 441, GH = 20;
+  const DY = -34;                                                // 左半舞台整體上移 34px（各列之間留 ≥8px）                 // 剩餘反應物條
   const SP = 58, V_E = 120;                                      // 電子間距、速度
   const T_DIS = 14, T_CHG = 9;                                   // 滿格放完／充滿的秒數
 
@@ -76,7 +80,7 @@
     lithium: { b: ['鋰離子', 'Li-ion'], name: ['鋰離子電池', 'Lithium-ion battery'], v: ['3.6～3.7 V', '3.6–3.7 V'], re: true, shape: 'pack',
       facts: [['能量密度高，手機與電腦常用', 'High energy density — used in phones and computers'], ['避免高溫、擠壓與破壞', 'Avoid heat, crushing and damage']],
       ends: [['負極材料', 'Negative material'], ['正極材料', 'Positive material']], mat: null, eq: false },
-    nimh: { b: ['鎳氫', 'Ni-MH'], name: ['鎳氫電池', 'Ni-MH battery'], v: '1.2 V', re: true, shape: 'pack',
+    nimh: { b: ['鎳氫', 'Ni-MH'], name: ['鎳氫電池', 'Ni-MH battery'], v: ['1.2 V', '1.2 V'], re: true, shape: 'pack',
       facts: [['家用 AA／AAA 充電電池', 'Household AA / AAA rechargeable batteries'], ['記憶效應較不明顯', 'Memory effect is less noticeable']],
       ends: [['合金', 'Alloy'], ['氫氧化物', 'Hydroxide']],
       mat: [[['合金與氫氧化物', 0]], [['Alloy and hydroxide', 0]]], eq: false }
@@ -86,6 +90,7 @@
   const EQ = {
     cNeg: 'Zn ⟶ Zn²⁺ ＋ 2e⁻',
     cPos: '2MnO₂ ＋ 2NH₄⁺ ＋ 2e⁻ ⟶ Mn₂O₃ ＋ 2NH₃ ＋ H₂O',
+    cAll: 'Zn ＋ 2MnO₂ ＋ 2NH₄⁺ ⟶ Zn²⁺ ＋ Mn₂O₃ ＋ 2NH₃ ＋ H₂O',
     pbDis: 'Pb ＋ PbO₂ ＋ 2H₂SO₄ ⟶ 2PbSO₄ ＋ 2H₂O',
     pbChg: '2PbSO₄ ＋ 2H₂O ⟶ Pb ＋ PbO₂ ＋ 2H₂SO₄'
   };
@@ -175,7 +180,7 @@
   // ───────── 狀態 ─────────
   const S = {};
   function freshBattery(key) {
-    Object.assign(S, { bat: key, mode: 'idle', level: 1, flow: 0, conn: 0, top: 0, phase: 0, swapT: S.t || 0, done: false });
+    Object.assign(S, { bat: key, mode: 'idle', level: 1, flow: 0, conn: 0, top: 0, phase: 0, swapT: S.t || 0, done: false, swell: 0 });
   }
   function resetState() {
     S.t = 0; S.actions = 0; S.panel = false; S.flash = -99; S.flashN = 0;
@@ -183,10 +188,11 @@
   }
   resetState();
   const R0 = { raf: 0, timer: 0, last: 0, on: false };
-  let cv = null, ctrl = null, res = null, lastRes = '', ctrlSig = '', targetsNow = [], lastE = [];
+  let cv = null, ctrl = null, res = null, lastRes = '', ctrlSig = '', targetsNow = [], lastE = [], lastB = 0;
   const B = () => BAT[S.bat];
   const flashing = () => S.t - S.flash < 3.2;
-  const wantTop = () => (S.mode === 'chg' ? 1 : 0);
+  const wantTop = () => (S.mode === 'chg' || S.mode === 'force' ? 1 : 0);
+  const forcing = () => S.mode === 'force' && S.conn > 0.98;
 
   // ───────── 圖形（與 types 教學動畫同一畫法） ─────────
   function wireLine(pts, al) {
@@ -301,6 +307,21 @@
     }
     ctx.restore();
   }
+  // 硬充時電解液（糊狀物）裡冒的小氣泡：只畫在電池外殼裡（clip），不進導線
+  function bubbles(al) {
+    const on = forcing() ? 1 : 0;
+    lastB = 0;
+    if (!on) return;
+    ctx.save(); clipShell('cyl'); ctx.beginPath(); ctx.rect(BX0 + 20, BT0 + 16, BX1 - BX0 - 76, BT1 - BT0 - 32); ctx.clip();
+    for (let k = 0; k < 12; k++) {
+      const per = 1.4 + (k % 4) * 0.25, u = ((S.t / per) + k * 0.37) % 1, x = 104 + (k * 67) % 340 + 5 * Math.sin(S.t * 3 + k);
+      const y = lerp(BT1 - 22, BT0 + 22, u), r = 3.5 + (k % 3) * 1.5, a = al * ease(S.swell * 6) * clamp(Math.min(u, 1 - u) * 6, 0, 1);
+      if (a <= 0.01) continue;
+      ctx.globalAlpha = a; ctx.strokeStyle = 'rgba(235,250,255,0.9)'; ctx.lineWidth = 1.8; ctx.fillStyle = 'rgba(235,250,255,0.18)';
+      ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.stroke(); lastB++;
+    }
+    ctx.restore();
+  }
   function liPill(x, y, al) {
     if (al <= 0.01) return;
     const hw = textW('Li⁺', 22, true) / 2 + 7;
@@ -343,7 +364,8 @@
 
   // ───────── 左半：迴路＋電池 ─────────
   function tipX() { return TIP + GAP * (1 - ease(S.conn)); }
-  function drawCircuit() {
+  function drawCircuit() { ctx.save(); ctx.translate(0, DY); drawCircuit0(); ctx.restore(); }
+  function drawCircuit0() {
     const b = B(), sw = ease((S.t - S.swapT) / 0.45), dy = 26 * (1 - sw), hot = flashing() ? (0.75 + 0.25 * Math.sin(S.t * 6)) * clamp(3.2 - (S.t - S.flash), 0, 1) : 0;
     // 導線（右下那一小段可以拔開：留真正的缺口）
     const tx = tipX();
@@ -363,16 +385,19 @@
     }
     // 小燈 ↔ 外部電源
     const tp = ease(S.top);
-    lamp(CHX, CHY - 40 * tp, S.mode === 'dis' ? S.flow : 0, 1 - tp);
-    charger(CHY - 40 * (1 - tp), tp, S.mode === 'chg' ? S.flow : 0);
+    lamp(CHX, CHY, S.mode === 'dis' ? S.flow : 0, 1 - tp);                 // 小燈 ↔ 電源原地淡入淡出（不往上滑，免得碰到上方提示）
+    charger(CHY, tp, S.mode === 'chg' || S.mode === 'force' ? S.flow : 0);
     if (tp > 0.5) {
       text(T('負接負', '− to −'), CHX - CHW / 2 - 32, CHY - 26, K.electron, 22, 'right', ease(2 * tp - 1));
       text(T('正接正', '+ to +'), CHX + CHW / 2 + 32, CHY - 26, K.pos, 22, 'left', ease(2 * tp - 1));
-    } else if (!flashing() && tp < 0.01) text(T('小燈', 'Lamp'), CHX, 112, K.muted, 22, 'center');
+    } else if (!flashing() && tp < 0.01 && S.swell < 0.05 && S.mode !== 'force') text(T('小燈', 'Lamp'), CHX + 34, CHY - 26, K.muted, 22, 'left');
     // 電池
     ctx.save(); ctx.translate(0, dy);
+    const sy = 1 + 0.05 * ease(S.swell);                         // 硬充：電池上下慢慢鼓脹（兩端接點不動）
+    if (sy > 1.0001) { ctx.translate(0, BCY); ctx.scale(1, sy); ctx.translate(0, -BCY); }
     shell(b.shape, sw);
     interior(S.bat, sw);
+    if (S.bat === 'carbon' && S.swell > 0.001) bubbles(sw);
     if (S.bat === 'lithium') {
       const m = 1 - S.level, moving = S.flow > 0.05;
       LI_ROWS.forEach((y, r) => [0, 1].forEach(c => {
@@ -380,27 +405,28 @@
         liPill(lerp(LI_NEG[c], LI_POS[c], ease(clamp(m * 1.15 - r * 0.075, 0, 1))) + jx, y + 1.5 * Math.sin(S.t * 2.3 + r + c), sw);
       }));
     }
-    shellEdge(b.shape, sw, hot);
+    const heat = S.swell > 0.001 ? ease(S.swell) * (forcing() ? 0.8 + 0.2 * Math.sin(S.t * 4) : 0.55) : 0;
+    shellEdge(b.shape, sw, Math.max(hot, heat));
     ctx.restore();
     text('−', BX0 - 14, BCY + 28, K.electron, 28, 'center', 1, true);
     text('＋', BX1 + 26, BCY + 28, K.pos, 26, 'center', 1, true);
     // 兩端材料名（電池上方）
     const e0 = L2(b.ends[0]), e1 = L2(b.ends[1]);
-    text(e0, BX0, 225, K.electron, fitSize(e0, 210, 22), 'left', sw);
-    text(e1, BX1, 225, K.pos, fitSize(e1, 210, 22), 'right', sw);
+    text(e0, BX0, 214, K.electron, fitSize(e0, 210, 22), 'left', sw);
+    text(e1, BX1, 214, K.pos, fitSize(e1, 210, 22), 'right', sw);
     // 材料標示（電池下方）
-    if (b.mat) mixDraw(b.mat[T(0, 1)].map(([s, m]) => [s, m, K.white]), 300, 405, 520, 22, 'center', sw);
+    if (b.mat) mixDraw(b.mat[T(0, 1)].map(([s, m]) => [s, m, K.white]), 300, 408, 520, 22, 'center', sw);
     else {
       const chg = S.mode === 'chg' && S.flow > 0.05;
       mixDraw(chg ? [[T('充電時：', 'Charging: '), 0, K.pos], ['Li⁺', 1, K.pos], [T(' 游回負極', ' moves back to −'), 0, K.pos]]
-        : [[T('放電時：', 'Discharge: '), 0, K.white], ['Li⁺', 1, K.pos], [T(' 從負極游向正極', ' moves − → +'), 0, K.white]], 300, 405, 520, 22, 'center', sw);
+        : [[T('放電時：', 'Discharge: '), 0, K.white], ['Li⁺', 1, K.pos], [T(' 從負極游向正極', ' moves − → +'), 0, K.white]], 300, 408, 520, 22, 'center', sw);
     }
     // 剩餘反應物（淺綠條）
     const gl = T('剩餘反應物', 'Reactants left');
     text(gl, GX0 - 12, GY, K.stuff, fitSize(gl, GX0 - 12 - 30, 22), 'right');
     ctx.save(); ctx.fillStyle = 'rgba(12,30,25,0.75)'; rrect(GX0, GY - GH / 2, GX1 - GX0, GH, 6); ctx.fill();
     if (S.level > 0.005) {
-      if (S.flow > 0.05) { ctx.shadowColor = K.stuff; ctx.shadowBlur = 6 + 6 * Math.sin(S.t * 5); }
+      if (S.flow > 0.05 && S.mode !== 'force') { ctx.shadowColor = K.stuff; ctx.shadowBlur = 6 + 6 * Math.sin(S.t * 5); }
       ctx.fillStyle = K.stuff; rrect(GX0, GY - GH / 2, Math.max(8, (GX1 - GX0) * S.level), GH, 6); ctx.fill(); ctx.shadowBlur = 0;
     }
     ctx.strokeStyle = 'rgba(185,211,200,0.5)'; ctx.lineWidth = 1.5; rrect(GX0, GY - GH / 2, GX1 - GX0, GH, 6); ctx.stroke(); ctx.restore();
@@ -408,22 +434,18 @@
     let es = '', ec = K.white;
     if (S.mode === 'dis') { es = S.level > 0.001 ? T('放電：化學能 → 電能', 'Discharge: chemical → electrical energy') : T('反應物用完了', 'Reactants used up'); ec = S.level > 0.001 ? K.white : K.red; }
     else if (S.mode === 'chg') { es = S.level < 0.999 ? T('充電：電能 → 化學能', 'Charging: electrical → chemical energy') : T('充飽了', 'Fully charged'); ec = S.level < 0.999 ? K.electron : K.green; }
-    if (es) text(es, 300, 474, ec, fitSize(es, 560, 24));
+    if (S.mode === 'force' || S.swell > 0.001) { es = T('反應倒不回去', 'The reaction won’t go back'); ec = K.red; }
+    if (es) text(es, 300, 473, ec, fitSize(es, 560, 24));
     // 一次電池硬要充電：大紅叉＋禁止
     if (flashing()) {
       const k = ease((S.t - S.flash) / 0.6), al = clamp(3.2 - (S.t - S.flash), 0, 1);
       bigX(300, BCY, 112, k, al);
-      const s = T('禁止嘗試充電', 'Never try to charge it'), z = fitSize(s, 400, 26), w = textW(s, z) + 60;
-      ctx.save(); ctx.globalAlpha = al; ctx.fillStyle = 'rgba(40,14,12,0.92)'; ctx.strokeStyle = K.red; ctx.lineWidth = 3;
-      rrect(300 - w / 2, 92, w, 40, 20); ctx.fill(); ctx.stroke(); ctx.restore();
-      warnIcon(300 - w / 2 + 24, 112, 13, K.red, al);
-      text(s, 300 + 12, 112, K.red, z, 'center', al);
     }
   }
 
   // ───────── 右半：電池卡片 ─────────
   function drawCard() {
-    const b = B(), sw = ease((S.t - S.swapT) / 0.45), warn = flashing();
+    const b = B(), sw = ease((S.t - S.swapT) / 0.45), warn = flashing() || S.mode === 'force';
     ctx.save(); ctx.fillStyle = 'rgba(18,51,41,0.85)'; ctx.strokeStyle = warn ? K.red : 'rgba(159,179,170,0.6)'; ctx.lineWidth = 3;
     rrect(CARD.x0, CARD.y0, CARD.x1 - CARD.x0, CARD.y1 - CARD.y0, 18); ctx.fill(); ctx.stroke(); ctx.restore();
     const iw = CARD.x1 - CARD.x0 - 44, xl = CARD.x0 + 22;
@@ -453,6 +475,18 @@
     });
     // 底部：規則
     const by = CARD.y1 - 46;
+    // 大紅警示（硬充／鼓脹、或點了灰掉的〔充電〕）：寫在卡片底部的框裡，不和左邊迴路的字擠在一起
+    const danger = S.mode === 'force' || S.swell > 0.05, deny = flashing();
+    if (danger || deny) {
+      const pulse = S.mode === 'force' || deny ? 12 + 8 * Math.sin(S.t * 5) : 8;
+      ctx.save(); ctx.fillStyle = 'rgba(60,16,12,0.94)'; ctx.strokeStyle = K.red; ctx.lineWidth = 4; ctx.shadowColor = K.red; ctx.shadowBlur = pulse;
+      rrect(CARD.x0 + 12, by - 30, CARD.x1 - CARD.x0 - 24, 60, 12); ctx.fill(); ctx.stroke(); ctx.restore();
+      warnIcon(CARD.x0 + 40, by, 14, K.red, 1);
+      const ws = deny ? T('禁止嘗試充電', 'Never try to charge it') : T('危險：不可替一次電池充電', 'Danger: never charge\na primary battery');
+      const wz = fitSize(ws.replace('\n', ''), iw - 46, 24), wl = wrap(ws, iw - 46, wz);
+      wl.slice(0, 2).forEach((l, k) => text(l, CCX + 18, by + (k - (Math.min(2, wl.length) - 1) / 2) * 26, K.red, wl.length > 1 ? 22 : wz, 'center'));
+      return;
+    }
     ctx.save(); ctx.fillStyle = b.re ? 'rgba(74,222,128,0.10)' : 'rgba(255,107,90,0.12)'; ctx.strokeStyle = b.re ? K.green : K.red; ctx.lineWidth = 2;
     rrect(CARD.x0 + 12, by - 30, CARD.x1 - CARD.x0 - 24, 60, 12); ctx.fill(); ctx.stroke(); ctx.restore();
     const rule = b.re ? T('充電：正極接正極、\n負極接負極', 'Charge: + to +, − to −') : T('用完交給廢電池回收', 'When used up: recycle it');
@@ -468,7 +502,17 @@
       const chg = S.mode === 'chg';
       segs = [[chg ? T('充電：', 'Charge: ') : T('放電：', 'Discharge: '), 0, chg ? K.electron : K.white], [chg ? EQ.pbChg : EQ.pbDis, 1, K.white]];
     } else if (S.bat === 'carbon') {
-      segs = [[T('負極 (−)：', 'Negative (−): '), 0, K.electron], [EQ.cNeg, 1, K.white], [T('（正極看〔看反應式〕）', '  (positive: “Reactions”)'), 0, K.muted]];
+      // 主線＝負極式；下面「補充（資優）」小區塊（暗一階、有標籤、和主線分開）
+      mixDraw([[T('負極（−）：', 'Negative (−): '), 0, K.electron], [EQ.cNeg, 1, K.white]], 300, 476, 560, 24, 'center', 1, 28);   // 置中在左半舞台下，不碰右側卡片
+      const tag = T('補充（資優）', 'Advanced'), tw = textW(tag, 22) + 24, bx0 = 16, by0 = 500, bh = 65;
+      ctx.save(); ctx.fillStyle = 'rgba(18,51,41,0.6)'; ctx.strokeStyle = 'rgba(159,179,170,0.45)'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+      rrect(bx0, by0, W - 2 * bx0, bh, 10); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(244,114,182,0.16)'; ctx.strokeStyle = '#f472b6'; rrect(bx0 + 8, by0 + bh / 2 - 17, tw, 34, 17); ctx.fill(); ctx.stroke(); ctx.restore();
+      text(tag, bx0 + 8 + tw / 2, by0 + bh / 2 + 1, '#f472b6', 22);
+      const ex = bx0 + 8 + tw + 14, ew = W - bx0 - 8 - ex, dimC = '#c9cfc6';
+      mixDraw([[T('正極（＋）：', 'Positive: '), 0, K.pos], [EQ.cPos, 1, dimC]], ex, by0 + 18, ew, 22, 'left', 0.85, 32);
+      mixDraw([[T('總反應：', 'Overall: '), 0, K.muted], [EQ.cAll, 1, dimC]], ex, by0 + 49, ew, 22, 'left', 0.85, 32);
+      return;
     } else segs = [[T('廢電池含有害物質，請依規定妥善回收', 'Used batteries contain harmful substances — recycle them properly'), 0, K.muted]];
     mixDraw(segs, W / 2, 514, 950, 24, 'center', 1, 28);
     void b;
@@ -481,7 +525,7 @@
     const rows = []; let cur = [], cw = 0;
     items.forEach((_, k) => { const add = wid[k] + (cur.length ? gap : 0); if (cw + add > W - 40 && cur.length) { rows.push(cur); cur = []; cw = 0; } cur.push(k); cw += wid[k] + (cur.length > 1 ? gap : 0); });
     rows.push(cur);
-    const ys = rows.length === 1 ? [568] : [552, 580];
+    const ys = rows.length === 1 ? [S.bat === 'carbon' ? 585 : 568] : [548, 581];
     rows.forEach((rw, r) => {
       const tw = rw.reduce((a, k) => a + wid[k], 0) + gap * (rw.length - 1);
       let x = W / 2 - tw / 2;
@@ -511,15 +555,20 @@
     rrect(PX0, PY0, PX1 - PX0, PY1 - PY0, 18); ctx.fill(); ctx.stroke(); ctx.restore();
     const xl = PX0 + 34, iw = PX1 - PX0 - 68;
     if (S.bat === 'carbon') {
-      const h = T('補充：碳鋅電池的反應', 'Extra: reactions in a carbon-zinc battery');
-      text(h, W / 2, PY0 + 40, K.yellow, fitSize(h, iw, 28));
-      mixDraw([[T('電解液：', 'Electrolyte: '), 0, K.cyan], [T('NH₄Cl＋ZnCl₂', 'NH₄Cl + ZnCl₂'), 1, K.cyan], [T(' 糊狀物', ' paste'), 0, K.cyan]], W / 2, PY0 + 96, iw, 24, 'center');
-      text(T('負極 (−)', 'Negative (−)'), xl, PY0 + 158, K.electron, 24, 'left');
-      mixDraw([['(−): ', 1, K.electron], [EQ.cNeg, 1, K.white]], W / 2, PY0 + 202, iw, 26, 'center');
-      text(T('正極 (+)', 'Positive (+)'), xl, PY0 + 262, K.pos, 24, 'left');
-      mixDraw([['(+): ', 1, K.pos], [EQ.cPos, 1, K.white]], W / 2, PY0 + 312, iw, 26, 'center', 1, 32);
+      const h = T('碳鋅電池的反應', 'Reactions in a carbon-zinc battery');
+      text(h, W / 2, PY0 + 36, K.yellow, fitSize(h, iw, 28));
+      mixDraw([[T('電解液：', 'Electrolyte: '), 0, K.cyan], [T('NH₄Cl＋ZnCl₂', 'NH₄Cl + ZnCl₂'), 1, K.cyan], [T(' 糊狀物', ' paste'), 0, K.cyan]], W / 2, PY0 + 82, iw, 24, 'center');
+      text(T('基本', 'Basic'), xl, PY0 + 130, K.white, 24, 'left');
+      mixDraw([[T('負極（−）：', 'Negative (−): '), 0, K.electron], [EQ.cNeg, 1, K.white]], W / 2, PY0 + 170, iw, 26, 'center');
+      const sy0 = PY0 + 204, sh = 146, tag = T('補充（資優）', 'Advanced'), tw = textW(tag, 22) + 24;
+      ctx.save(); ctx.fillStyle = 'rgba(18,51,41,0.7)'; ctx.strokeStyle = 'rgba(244,114,182,0.6)'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+      rrect(PX0 + 16, sy0, PX1 - PX0 - 32, sh, 12); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(244,114,182,0.16)'; ctx.strokeStyle = '#f472b6'; rrect(xl, sy0 + 12, tw, 34, 17); ctx.fill(); ctx.stroke(); ctx.restore();
+      text(tag, xl + tw / 2, sy0 + 30, '#f472b6', 22);
+      mixDraw([[T('正極（＋）：', 'Positive (+): '), 0, K.pos], [EQ.cPos, 1, '#d6dcd2']], W / 2, sy0 + 72, iw - 20, 24, 'center', 1, 30);
+      mixDraw([[T('總反應：', 'Overall: '), 0, K.muted], [EQ.cAll, 1, '#d6dcd2']], W / 2, sy0 + 116, iw - 20, 24, 'center', 1, 30);
       const n = T('一次電池：反應只往一個方向，不可嘗試充電', 'Primary battery: the reaction only goes one way — never try to charge it');
-      text(n, W / 2, PY1 - 36, K.red, fitSize(n, iw, 24));
+      text(n, W / 2, PY1 - 30, K.red, fitSize(n, iw, 24));
     } else if (S.bat === 'lead') {
       const h = T('鉛蓄電池的反應：放電與充電方向相反', 'Lead-acid: charging runs the reaction in reverse');
       text(h, W / 2, PY0 + 40, K.yellow, fitSize(h, iw, 28));
@@ -539,6 +588,8 @@
   // ───────── 訊息（畫布提示＋說明框，同一個狀態） ─────────
   function msgKey() {
     if (flashing()) return 'deny';
+    if (S.mode === 'force') return 'force';
+    if (S.swell > 0.001 && S.mode === 'idle') return 'swollen';
     if (S.mode === 'dis') return S.level <= 0.001 ? (B().re ? 'emptyRe' : 'emptyPri') : 'dis';
     if (S.mode === 'chg') return S.level >= 0.999 ? 'full' : 'chg';
     return S.level <= 0.001 ? (B().re ? 'emptyRe' : 'emptyPri') : S.level < 0.999 ? 'paused' : 'idle';
@@ -547,41 +598,50 @@
   function msg(cap) {
     const b = B(), nm = L2(b.name), v = b.v ? L2(b.v) : '', k = msgKey();
     const kind = b.re ? T('二次電池，可以充電', 'a secondary battery — rechargeable') : T('一次電池，不可充電', 'a primary battery — not rechargeable');
-    const extraDis = S.bat === 'lithium' ? T('Li⁺ 在電池裡從負極游向正極。', ' Inside, Li⁺ moves from the negative side to the positive side.')
-      : S.bat === 'lead' ? T(`放電反應：${EQ.pbDis}。`, ` Discharge reaction: ${EQ.pbDis}.`) : '';
-    const extraChg = S.bat === 'lithium' ? T('Li⁺ 從正極游回負極。', ' Li⁺ moves back from the positive side to the negative side.')
-      : S.bat === 'lead' ? T(`充電反應：${EQ.pbChg}，和放電方向相反。`, ` Charging reaction: ${EQ.pbChg} — the reverse of discharging.`) : '';
-    const safety = T('實際電池不可拆解、短路、加熱或嘗試替不可充電電池充電。', 'Never open, short-circuit or heat a real battery, or try to charge a non-rechargeable one.');
+    // 說明框每個狀態在 800px 寬、22px 下不超過 3 行（反應式另寫在畫布下方，這裡不重複）
+    const extraDis = S.bat === 'lithium' ? T('Li⁺ 在電池裡從負極游向正極。', ' Inside, Li⁺ moves − → +.')
+      : S.bat === 'lead' ? T('鉛蓄的放電反應式見畫布下方。', ' Lead-acid reaction: see below the picture.') : '';
+    const extraChg = S.bat === 'lithium' ? T('Li⁺ 從正極游回負極。', ' Li⁺ moves back to −.')
+      : S.bat === 'lead' ? T('鉛蓄：充電反應和放電方向相反（見下方）。', ' Lead-acid: the reaction runs in reverse (see below).') : '';
     switch (k) {
       case 'idle': return cap ? T('選一種電池，按〔放電〕或點發亮的接頭，接上小燈', 'Pick a battery, then press “Discharge” or tap the glowing plug')
-        : T(`${Y(nm)}${v ? `（${v}）` : ''}：${kind}。按〔放電〕把小燈接上，看電子怎麼走、淺綠條（剩餘反應物）怎麼變。`,
-          `${Y(nm)}${v ? ` (${v})` : ''}: ${kind}. Press “Discharge” to connect the lamp, and watch where the electrons go and how the light-green bar (reactants left) changes.`);
+        : T(`${Y(nm)}${v ? `（${v}）` : ''}：${kind}。按〔放電〕接上小燈，看電子怎麼走、淺綠條（剩餘反應物）怎麼變。`,
+          `${Y(nm)}${v ? ` (${v})` : ''}: ${kind}. Press “Discharge” to connect the lamp; watch the electrons and the light-green bar (reactants left).`);
       case 'paused': return cap ? T('導線拔開了：按〔放電〕繼續，或換一種電池', 'Unplugged: press “Discharge” to continue, or pick another battery')
-        : T(`導線拔開，電子不再流動、小燈熄滅；剩餘反應物停在原處。按〔放電〕接回去繼續。`, 'The wire is unplugged: electrons stop and the lamp goes out; the reactants left stay where they are. Press “Discharge” to plug it back in.');
+        : T('導線拔開，電子不再流動、小燈熄滅；剩餘反應物停在原處。按〔放電〕接回去繼續。', 'Unplugged: electrons stop, the lamp goes out and the reactants left stay put. Press “Discharge” to plug it back in.');
       case 'dis': return cap ? T('放電：電子從負極出發，經小燈走到正極', 'Discharging: electrons leave the negative end, pass the lamp, reach the positive end')
-        : T(`${Y('放電：化學能 → 電能。')}電子從負極出發，經外電路（小燈）回到正極，小燈亮起；淺綠條（剩餘反應物）越用越少。`, `${Y('Discharge: chemical energy → electrical energy.')} Electrons leave the negative end, travel through the outer circuit (the lamp) and reach the positive end; the light-green bar (reactants left) keeps shrinking. `) + extraDis;
+        : T(`${Y('放電：化學能 → 電能。')}電子從負極經外電路（小燈）回到正極；淺綠條（剩餘反應物）越用越少。`, `${Y('Discharge: chemical → electrical energy.')} Electrons go from − through the lamp to +; the light-green bar (reactants left) shrinks.`) + extraDis;
       case 'emptyPri': return cap ? T('反應物用完了：小燈熄滅。一次電池不可充電', 'Reactants used up: the lamp is out. A primary battery cannot be recharged')
-        : T(`${nm}的反應物用完了，電子不再流動、小燈熄滅。${Y('一次電池的反應只往一個方向，不能倒回去，不可嘗試充電。')}廢電池含有害物質，請依規定妥善回收；按〔換一顆新的〕再做一次。`,
-          `The ${nm}'s reactants are used up: electrons stop and the lamp goes out. ${Y('A primary battery’s reaction only goes one way and cannot go back — never try to charge it.')} Used batteries contain harmful substances, so recycle them properly. Press “New battery” to try again.`);
+        : T(`${nm}的反應物用完了，小燈熄滅。${Y('一次電池的反應只往一個方向，不可嘗試充電。')}廢電池含有害物質，請依規定妥善回收；按〔換一顆新的〕再做一次。`,
+          `Reactants used up. ${Y('A primary battery’s reaction only goes one way — never try to charge it.')} Used batteries contain harmful substances: recycle them properly. Press “New battery” to retry.`);
       case 'emptyRe': return cap ? T('反應物用完了：二次電池可以按〔充電〕充回來', 'Reactants used up: a secondary battery can be recharged — press “Charge”')
-        : T(`${nm}的反應物用完了，小燈熄滅。它是${Y('二次電池，可以充電')}：按〔充電〕接上外部電源。`, `The ${nm}'s reactants are used up and the lamp goes out. It is ${Y('a secondary battery, so it can be recharged')}: press “Charge” to connect a power supply.`);
+        : T(`${nm}的反應物用完了，小燈熄滅。它是${Y('二次電池，可以充電')}：按〔充電〕接上外部電源。`, `Reactants used up and the lamp is out. It is ${Y('a secondary battery, so it can be recharged')}: press “Charge” to connect a power supply.`);
       case 'chg': return cap ? T('充電：正極接正極、負極接負極，電子方向反過來', 'Charging: + to +, − to −; the electrons flow the other way')
-        : T(`充電時必須${Y('「正極接正極、負極接負極」')}，用外部電源強制推動反向的化學反應：${Y('電能 → 化學能')}。電子方向反過來，淺綠條回升。`, `To charge, connect ${Y('+ to + and − to −')}. The power supply forces the chemical reaction to run backward: ${Y('electrical → chemical energy')}. The electrons flow the other way and the light-green bar rises. `) + extraChg;
+        : T(`充電必須${Y('正極接正極、負極接負極')}，外部電源強制推動反向的化學反應（${Y('電能 → 化學能')}），淺綠條回升。`, `To charge, connect ${Y('+ to +, − to −')}: the power supply forces the reaction backward (${Y('electrical → chemical energy')}) and the bar rises.`) + extraChg;
       case 'full': return cap ? T('充飽了：剩餘反應物回到滿格，可以再放電', 'Fully charged: the reactants are back — discharge it again')
-        : T(`${Y('充飽了')}：電能已經轉換成化學能存起來，剩餘反應物回到滿格。二次電池可以這樣重複放電、充電。按〔放電〕再用一次。`, `${Y('Fully charged')}: the electrical energy is stored as chemical energy and the reactants are back to full. A secondary battery can be discharged and charged again and again. Press “Discharge” to use it again.`);
+        : T(`${Y('充飽了')}：電能轉換成化學能存起來，剩餘反應物回到滿格。二次電池可以重複放電、充電。`, `${Y('Fully charged')}: the electrical energy is stored as chemical energy and the reactants are back. A secondary battery can be used again and again.`);
+      case 'force': case 'swollen': {
+        if (k === 'force') return cap ? T('硬充碳鋅電池：淺綠條不回升，反應倒不回去', 'Force-charging: the light-green bar does not rise — the reaction won’t go back')
+          : T(`${Y('危險：不可替一次電池充電！')}補充（資優）：碳鋅電池的反應無法有效倒回原狀；硬充時多出的電能改去分解電解液裡的水，產生氣體並發熱，電池會鼓脹、漏液，甚至破裂，非常危險。`,
+            `${Y('Danger: never charge a primary battery!')} Advanced: the reaction can’t be effectively reversed; forced charging splits the water in the electrolyte, making gas and heat — the cell can swell, leak or burst.`);
+        return cap ? T('電池已經鼓脹、發熱：按〔換一顆新的〕', 'The cell has swollen and heated up: press “New battery”')
+          : T(`${Y('危險：不可替一次電池充電！')}硬充時電能改去分解電解液裡的水，產生氣體並發熱，電池鼓脹，可能漏液甚至破裂。按〔換一顆新的〕重來。`,
+            `${Y('Danger: never charge a primary battery!')} Forced charging split the water in the electrolyte, making gas and heat — the cell swells and may leak or burst. Press “New battery”.`);
+      }
       case 'deny': return cap ? T(`${nm}是一次電池，不可充電！`, `The ${nm} is a primary battery — it cannot be charged!`)
-        : T(`${Y('禁止嘗試充電！')}${nm}是一次電池，反應不能倒回去：就算硬接上電源也推不回去，只會有危險。${safety}`, `${Y('Never try to charge it!')} The ${nm} is a primary battery; its reaction cannot go back — even forcing a power supply onto it only creates danger. ${safety}`);
+        : T(`${Y('禁止嘗試充電！')}${nm}是一次電池，反應不能倒回去，硬接電源只會有危險。實際電池不可拆解、短路、加熱或嘗試替不可充電電池充電。`,
+          `${Y('Never charge it!')} A primary battery’s reaction can’t go back; forcing it is only dangerous. Never open, short-circuit, heat or charge a non-rechargeable battery.`);
     }
     return '';
   }
-  function captionColor() { const k = msgKey(); return k === 'deny' || k === 'emptyPri' ? K.red : k === 'full' || k === 'emptyRe' ? K.yellow : K.cyan; }
+  function captionColor() { const k = msgKey(); return k === 'deny' || k === 'emptyPri' || k === 'force' || k === 'swollen' ? K.red : k === 'full' || k === 'emptyRe' ? K.yellow : K.cyan; }
   function writeResult() { if (!res) return; const h = msg(false); if (h !== lastRes) { lastRes = h; res.innerHTML = h; } }
 
   // ───────── 可以點的目標 ─────────
   function computeTargets() {
     const out = [];
-    if (S.mode === 'idle' && S.level > 0.001 && S.conn < 0.02 && !S.panel) out.push({ key: 'dis', r: [TIP + 4, BCY - 24, TIP + GAP + 12, BCY + 12], shape: 'plug' });
-    if (!B().re && S.level <= 0.001 && !S.panel && !flashing()) out.push({ key: 'fresh', r: [BX0 - 6, BT0 - 6, BX1 + 18, BT1 + 6], shape: 'bat' });
+    if (S.mode === 'idle' && S.level > 0.001 && S.conn < 0.02 && !S.panel) out.push({ key: 'dis', r: [TIP + 4, BCY - 24 + DY, TIP + GAP + 12, BCY + 12 + DY], shape: 'plug' });
+    if (!B().re && S.level <= 0.001 && !S.panel && !flashing()) out.push({ key: 'fresh', r: [BX0 - 6, BT0 - 6 + DY, BX1 + 18, BT1 + 6 + DY], shape: 'bat' });
     return out;
   }
   function drawGlow(tg) {
@@ -598,7 +658,7 @@
     ctx.fillStyle = K.bg; ctx.fillRect(0, 0, W, H);
     const pan = S.panel && B().eq;                               // 面板打開時它整個蓋住舞台：底下不畫（字不疊字）
     if (!pan) { drawCircuit(); drawCard(); } else lastE = [];
-    drawStrip();
+    if (!pan) drawStrip();                                       // 面板裡已經有完整反應式：底下不重複
     drawLegend();
     targetsNow = computeTargets();
     targetsNow.forEach(drawGlow);
@@ -615,10 +675,11 @@
       S.conn = approach(S.conn, 0, 1 / 0.3, dt);
       if (S.conn < 0.01) S.top = approach(S.top, wt, 1 / 0.6, dt);
     } else { S.top = wt; S.conn = approach(S.conn, S.mode === 'idle' ? 0 : 1, 1 / 0.35, dt); }
-    const live = S.conn > 0.98 && ((S.mode === 'dis' && S.level > 0) || (S.mode === 'chg' && S.level < 1));
+    const live = S.conn > 0.98 && ((S.mode === 'dis' && S.level > 0) || (S.mode === 'chg' && S.level < 1) || S.mode === 'force');
     S.flow = approach(S.flow, live ? 1 : 0, 1 / 0.4, dt);
     if (S.mode === 'dis') { S.level = Math.max(0, S.level - S.flow * dt / T_DIS); S.phase += V_E * S.flow * dt; }
     else if (S.mode === 'chg') { S.level = Math.min(1, S.level + S.flow * dt / T_CHG); S.phase -= V_E * S.flow * dt; }
+    else if (S.mode === 'force') { S.phase -= V_E * S.flow * dt; if (forcing()) S.swell = Math.min(1, S.swell + dt / 6); }   // 電子被迫反向，但剩餘反應物不回升
     S.phase = ((S.phase % SP) + SP) % SP;
   }
   const busy = () => S.flow > 0.01 || Math.abs(S.top - wantTop()) > 1e-3 || Math.abs(S.conn - (S.mode === 'idle' ? 0 : 1)) > 1e-3 || flashing() || S.t - S.swapT < 0.45;
@@ -630,7 +691,8 @@
     if (key === 'dis') return true;
     if (key === 'chg') return b.re;
     if (key === 'panel') return b.eq;
-    if (key === 'fresh') return S.level < 0.999 && S.mode !== 'chg';
+    if (key === 'fresh') return (S.level < 0.999 || S.swell > 0.001) && S.mode !== 'chg';
+    if (key === 'force') return S.bat === 'carbon';
     return false;
   }
   function act(key) {
@@ -640,6 +702,7 @@
     if (BAT[key]) { if (key !== S.bat) { freshBattery(key); S.swapT = S.t; S.flash = -99; if (!BAT[key].eq) S.panel = false; } }
     else if (key === 'dis') S.mode = S.mode === 'dis' ? 'idle' : 'dis';
     else if (key === 'chg') S.mode = S.mode === 'chg' ? 'idle' : 'chg';
+    else if (key === 'force') { S.mode = S.mode === 'force' ? 'idle' : 'force'; S.flash = -99; S.panel = false; }
     else if (key === 'panel') S.panel = !S.panel;
     else if (key === 'fresh') { const m = S.mode; freshBattery(S.bat); S.swapT = S.t; S.mode = m === 'dis' ? 'dis' : 'idle'; S.conn = m === 'dis' ? 1 : 0; S.flash = -99; }
     refreshUI();
@@ -656,7 +719,8 @@
   function ctrlSpec() {
     return [
       [T('選電池', 'Battery'), ORDER.map(k => [k, L2(BAT[k].b)])],
-      [T('操作', 'Do'), [['dis', T('放電', 'Discharge')], ['chg', T('充電', 'Charge')], ['panel', T('看反應式', 'Reactions')], ['fresh', T('換一顆新的', 'New battery')]]]
+      [T('操作', 'Do'), [['dis', T('放電', 'Discharge')], ['chg', T('充電', 'Charge')], ['panel', T('看反應式', 'Reactions')], ['fresh', T('換一顆新的', 'New battery')]]
+        .concat(S.bat === 'carbon' ? [['force', T('硬充會怎樣？（補充）', 'Force charge? (extra)')]] : [])]
     ];
   }
   function buildControls() {
@@ -700,6 +764,7 @@
         else if (k === 'dis') on = S.mode === 'dis';
         else if (k === 'chg') on = S.mode === 'chg';
         else if (k === 'panel') on = S.panel && b.eq;
+        else if (k === 'force') on = S.mode === 'force';
         if (k === 'chg') {                                           // 一次電池：灰掉但還能點（點了閃出提示）
           el.disabled = false; el.setAttribute('aria-disabled', ok ? 'false' : 'true');
           el.style.opacity = ok ? '1' : '0.42'; el.style.cursor = ok ? 'pointer' : 'not-allowed';
@@ -714,7 +779,7 @@
     if (cv) cv.setAttribute('aria-label', T('放電與充電實驗台：選電池、放電、充電，看電子方向與剩餘反應物；目前：', 'Discharge and charge bench: pick a battery, discharge or charge it, and watch the electrons and the reactants left. Now: ') + msg(true));
     uiSig = sigNow();
   }
-  const sigNow = () => [S.bat, S.mode, S.panel, msgKey(), S.level < 0.999, S.level > 0.001].join();
+  const sigNow = () => [S.bat, S.mode, S.panel, msgKey(), S.level < 0.999, S.level > 0.001, S.swell > 0.001].join();
 
   // ───────── 點畫面（只認目前發亮的目標） ─────────
   function hitAt(e) {
@@ -786,9 +851,9 @@
     return {
       battery: S.bat, mode: S.mode, rechargeable: B().re, level: +S.level.toFixed(3), flow: +S.flow.toFixed(3),
       connected: +S.conn.toFixed(3), top: S.top > 0.5 ? 'charger' : 'lamp', lamp: S.mode === 'dis' ? +S.flow.toFixed(3) : 0,
-      dir: S.flow > 0.01 ? (S.mode === 'chg' ? 'charge' : 'discharge') : 'none', gap: Math.round(tipX() - TIP),
+      dir: S.flow > 0.01 ? (S.mode === 'chg' ? 'charge' : S.mode === 'force' ? 'forced' : 'discharge') : 'none', gap: Math.round(tipX() - TIP),
       panel: S.panel && B().eq, deny: flashing(), denyCount: S.flashN, busy: busy(), sub: msgKey(),
-      liAtNeg: S.bat === 'lithium' ? +S.level.toFixed(3) : null,
+      liAtNeg: S.bat === 'lithium' ? +S.level.toFixed(3) : null, swell: +S.swell.toFixed(3), bubbles: lastB,
       electrons: lastE.slice(0, 40).map(p => ({ x: Math.round(p.x), y: Math.round(p.y), where: where(p) })),
       targets: targetsNow.map(t => ({ key: t.key, r: t.r.map(v => Math.round(v)) })),
       caption: msg(true), running: !!R0.raf, on: R0.on, actions: S.actions, t: +S.t.toFixed(2)
