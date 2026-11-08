@@ -2,7 +2,7 @@
 
 > 這份是 `AGENTS.md` 第十四律（旁白配音）的**姊妹篇**，只管第三階段「雙人對話網課」：彥君老師 × 曉臻助教，像上課一樣一來一往。
 > 一個人念的旁白（伽利略星球開場等）、BreezyVoice 備案、GitHub Actions 自動錄音，仍照 `AGENTS.md` 第十四律。
-> 做這件事之前先讀本檔；**不要讀整份課程 html**（見第 7 節）。
+> 做這件事之前先讀本檔；**不要讀整份課程 html**，改讀 `lessons_md/<課名>.md`（見第 7 節）。
 
 ---
 
@@ -88,7 +88,10 @@
 
 ## 7. 省 token（每課都照做）
 
-- **不讀整份課程 html**（例如 `magnetism_1.html` 約 88KB）。只拿該課的**講解文字、分頁標題、子頁名稱**；需要確認細節才 `grep` 特定段落。
+- **一課只讀一個檔：`lessons_md/<課名>.md`**（從 `lessons_md/INDEX.md` 的 140 課總表找課名）。它是用 `tools/voice/lesson_md/convert_lessons.py` 把課程 html 轉成的 markdown，只留中文講解文字：網頁上的字＋腳本裡畫出來的動畫／任務說明＋既有「老師講解」腳本的字。**不要讀整份課程 html**（最大的約 50 萬字元）。
+- 題庫另放 `lessons_md/<課名>.quiz.md`，寫稿時不用讀。
+- **課程網頁改了，就在 repo 根目錄重跑一次**：`python3 tools/voice/lesson_md/convert_lessons.py`（約 7 秒、不耗 token），把更新的 `lessons_md/` 一起 commit。檔案是自動產生的，不要手改。
+- 檔案裡的 `[tab-pole]`、`[pole-break]` 是分頁／子頁編號，可直接用在 `stage.json`。有些課的網頁用按鈕切頁、轉不出編號，那種課只會看到 `［按鈕］…` 的標題；要做 `stage.json` 時再用 `grep` 查該課 html 的 `data-tab`／`data-sub`／`onclick`，不要整份讀。
 - **一課一個新對話**，不在長對話裡接著寫。
 - 回覆只給：①稿子（一個程式碼區塊）②`stage.json` 草稿。不重述過程。
 - 錄音、字幕、播放全是本機程式，**不耗 token**；耗 token 的只有「寫稿」和「對應分頁」。
