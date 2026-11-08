@@ -37,14 +37,70 @@ CUTS = {
     "指針為何轉向？": ("tab-compass", "compass-tangent"),
     "地球是大磁鐵？": ("tab-earth", "earth-surface"),
 }
-# 播到第 N 句（說話行編號）時切子頁
+# 該子頁動畫有幾個步驟按鈕（用來檢查 at 的步驟編號沒有超出）
+STEPS = {
+    "pole-suspend": 4, "pole-interact": 5, "pole-break": 5,
+    "mag-process": 5, "mag-store": 5,
+    "line-bar": 5, "line-u": 4,
+    "compass-tangent": 4, "compass-space": 4,
+    "earth-surface": 4, "earth-core": 4,
+}
+# 播到第 N 句（說話行編號）時：切到哪個子頁、播到動畫的第幾步。
+# 原則：講到什麼，畫面就要自動切到有那個動畫的頁面，學生才不用自己找。
 AT = {
-    15: ("tab-pole", "pole-interact"),
-    21: ("tab-pole", "pole-break"),
-    55: ("tab-mag", "mag-store"),
-    71: ("tab-line", "line-u"),
-    84: ("tab-compass", "compass-space"),
-    99: ("tab-earth", "earth-core"),
+    # ── 磁鐵與磁極 ──
+    9:   ("tab-pole", "pole-suspend", 1),     # 用細線吊起來、自由旋轉
+    13:  ("tab-pole", "pole-suspend", 2),     # 撥轉幾次都擺回南北
+    14:  ("tab-pole", "pole-suspend", 4),     # 指南針的原理（地球磁場）
+    15:  ("tab-pole", "pole-interact", 1),    # 磁極如何互動（異名相吸）
+    16:  ("tab-pole", "pole-interact", 2),    # 同名排斥
+    18:  ("tab-pole", "pole-interact", 1),    # 誰吸誰：恩極與艾斯極互相吸
+    19:  ("tab-pole", "pole-interact", 2),    # 同名極：恩極碰恩極
+    20:  ("tab-pole", "pole-interact", 5),    # 結論：成對出現
+    21:  ("tab-pole", "pole-break", 1),       # 折斷磁鐵
+    22:  ("tab-pole", "pole-break", 2),       # 斷口出現新磁極
+    24:  ("tab-pole", "pole-break", 5),       # 單極磁鐵不存在
+    26:  ("tab-mag", "mag-process", 1),       # 「到下一頁看磁疇」：同時切過去
+    # ── 磁化與保存 ──
+    29:  ("tab-mag", "mag-process", 1),       # 磁疇＝小磁鐵
+    31:  ("tab-mag", "mag-process", 2),       # 磁疇排成同一方向
+    36:  ("tab-mag", "mag-process", 1),       # 普通鐵釘吸不起迴紋針
+    38:  ("tab-mag", "mag-process", 2),       # 外加磁場讓磁疇轉向
+    42:  ("tab-mag", "mag-process", 3),       # 鐵鎚敲
+    44:  ("tab-mag", "mag-process", 4),       # 加熱
+    46:  ("tab-mag", "mag-process", 5),       # 磁性物質：鐵、鈷、鎳
+    47:  ("tab-mag", "mag-store", 1),         # 軟鐵與鋼誰比較快磁化
+    52:  ("tab-mag", "mag-store", 2),         # 鋼的磁性能長久保存
+    53:  ("tab-mag", "mag-store", 3),         # 軟鐵做鐵心、鋼做永久磁鐵
+    56:  ("tab-mag", "mag-store", 4),         # 長條形磁鐵的保存
+    58:  ("tab-mag", "mag-store", 5),         # U 形磁鐵的保存
+    # ── 磁力線 ──
+    60:  ("tab-line", "line-bar", 1),         # 撒鐵粉
+    62:  ("tab-line", "line-bar", 2),         # 輕敲，鐵粉排成曲線
+    64:  ("tab-line", "line-bar", 3),         # 畫出磁力線
+    68:  ("tab-line", "line-bar", 4),         # 異名極相對
+    70:  ("tab-line", "line-bar", 5),         # 同名極相對
+    71:  ("tab-line", "line-u", 1),           # 馬蹄形磁鐵
+    72:  ("tab-line", "line-u", 3),           # 兩極之間磁力線平行
+    74:  ("tab-line", "line-u", 4),           # 均勻的強磁場
+    # ── 磁場方向與指南針 ──
+    76:  ("tab-compass", "compass-tangent", 1),  # 指南針放進磁場
+    78:  ("tab-compass", "compass-tangent", 2),  # 沿著磁力線移動
+    80:  ("tab-compass", "compass-tangent", 3),  # 什麼是切線
+    82:  ("tab-compass", "compass-space", 1),    # 磁針被誰吸引（異名相吸）
+    84:  ("tab-compass", "compass-space", 2),    # 磁鐵四周擺很多磁針
+    85:  ("tab-compass", "compass-space", 3),    # 順著箭頭的切線方向
+    86:  ("tab-compass", "compass-space", 4),    # 考試技巧
+    88:  ("tab-compass", "compass-tangent", 4),  # 最重要：N 極所指＝磁場方向
+    # ── 地球大磁鐵 ──
+    91:  ("tab-earth", "earth-surface", 1),   # 指南針為什麼指北
+    93:  ("tab-earth", "earth-surface", 3),   # 地球是一塊大磁鐵
+    95:  ("tab-earth", "earth-surface", 2),   # 地球周圍的磁場線
+    96:  ("tab-earth", "earth-surface", 4),   # 地磁場像盾牌
+    99:  ("tab-earth", "earth-core", 1),      # 北方是誰在吸引 N 極
+    100: ("tab-earth", "earth-core", 3),      # 異名相吸的推理
+    101: ("tab-earth", "earth-core", 2),      # 透視地球內部
+    102: ("tab-earth", "earth-core", 4),      # 地磁南北極與夾角十一度
 }
 # 字幕：念的字 → 畫面字（其餘字不變）
 SUB_MAP = [("恩極", "N 極"), ("艾斯極", "S 極")]
@@ -110,12 +166,15 @@ def validate(items, errors):
     for n in AT:
         if not 1 <= n <= len(lines):
             errors.append("at 的句號 %d 不是說話行（共 %d 句）" % (n, len(lines)))
+    for n, (_t, sb, st) in AT.items():
+        if st is not None and not 1 <= st <= STEPS.get(sb, 0):
+            errors.append("at 第 %d 句：%s 沒有第 %s 步（共 %s 步）" % (n, sb, st, STEPS.get(sb)))
     # 5. tab/sub 必須存在於 html
     html = REPO / PAGE
     if not html.exists():
         errors.append("找不到 %s" % html)
     else:
-        pairs = list(CUTS.values()) + list(AT.values())
+        pairs = list(CUTS.values()) + [(t, sb) for t, sb, _ in AT.values()]
         for tab in sorted({t for t, _ in pairs}):
             if not grep_has(html, "data-tab", tab):
                 errors.append('%s 找不到 data-tab="%s"' % (PAGE, tab))
@@ -163,7 +222,7 @@ def build_stage(items):
     return {
         "page": PAGE,
         "cuts": {t: {"tab": a, "sub": b} for t, (a, b) in CUTS.items()},
-        "at": {"%02d" % n: {"tab": a, "sub": b} for n, (a, b) in AT.items()},
+        "at": {"%02d" % n: ({"tab": a, "sub": b, "step": c} if c else {"tab": a, "sub": b}) for n, (a, b, c) in sorted(AT.items())},
         "subs": subs,
     }
 
