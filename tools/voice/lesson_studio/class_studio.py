@@ -30,6 +30,7 @@ try:
 except ImportError:
     sys.exit("找不到 edge-tts，請先執行：pip3 install -U edge-tts")
 
+FILE_NAME = {"彥君": "yanjun", "曉臻": "xiaozhen", "合聲": "hesheng"}  # 輸出音檔用英文檔名
 VOICE = {"彥君": "zh-TW-YunJheNeural", "曉臻": "zh-TW-HsiaoChenNeural"}
 LABEL = {"彥君": "彥君老師・男聲", "曉臻": "曉臻助教・女聲", "合聲": "合聲・兩人一起"}
 ALIAS = {
@@ -200,20 +201,32 @@ def run_job(rows, lesson, S, force, only, final=True):
             voices = ["彥君", "曉臻"] if chorus else [spk]
             key = hashlib.sha1(json.dumps([row["tts"], [(v, S[v]) for v in voices]], ensure_ascii=False)
                                .encode()).hexdigest()[:12]
-            tracks = {v: ("_單軌/%s_%s.mp3" % (rid, v)) if chorus else "%s_%s.mp3" % (rid, v) for v in voices}
-            final = "%s_合聲.mp3" % rid if chorus else tracks[spk]
+            fid = rid.zfill(3)  # 檔名一律三位數句號，例如 001、027
+            tracks = {v: ("_單軌/%s_%s.mp3" % (fid, FILE_NAME[v])) if chorus else "%s_%s.mp3" % (fid, FILE_NAME[v])
+                      for v in voices}
+            final = "%s_%s.mp3" % (fid, FILE_NAME["合聲"]) if chorus else tracks[spk]
+            # 舊版中文檔名（NN_彥君.mp3 等）：找不到英文檔名時沿用，不強迫重錄
+            legacy = {}
+            for new in list(tracks.values()) + [final]:
+                sub, _, base = new.rpartition("/")
+                m = re.match(r"^\d+_(\w+)\.mp3$", base)
+                zh = next((k for k, v in FILE_NAME.items() if m and v == m.group(1)), None)
+                legacy[new] = (sub + "/" if sub else "") + "%s_%s.mp3" % (rid, zh) if zh else new
 
             def ok(p):
                 f = outdir / p
                 return f.exists() and f.stat().st_size > 1000
 
-            have = ok(final) if (not chorus or ff) else all(ok(p) for p in tracks.values())
+            def use(p):  # 英文檔名存在就用英文，否則若舊中文檔名存在就沿用它
+                return p if ok(p) or not ok(legacy.get(p, p)) else legacy[p]
+
+            have = ok(use(final)) if (not chorus or ff) else all(ok(use(p)) for p in tracks.values())
             cached = old.get(rid, {}).get("key") == key and have
             target = only is None or rid in only
             entry = {"kind": "line", "id": rid, "speaker": spk, "text": row["text"], "tts": row["tts"], "key": key,
-                     "file": final if ok(final) else None, "tracks": tracks if chorus else None, "params": {}}
+                     "file": use(final) if ok(use(final)) else None, "tracks": tracks if chorus else None, "params": {}}
             if cached and not (force and target):
-                _set(rid, state="skip", msg="已有，沿用", file=final if ok(final) else None)
+                _set(rid, state="skip", msg="已有，沿用", file=use(final) if ok(use(final)) else None)
             elif not target:
                 _set(rid, state="wait", msg="這次沒錄")
             else:
