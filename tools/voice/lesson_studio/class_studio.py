@@ -176,7 +176,7 @@ def _set(rid, **kw):
 
 def run_job(rows, lesson, S, force, only, final=True):
     outdir = ROOT / lesson
-    (outdir / "_單軌").mkdir(parents=True, exist_ok=True)
+    (outdir / "_tracks").mkdir(parents=True, exist_ok=True)
     old = {}
     try:
         for e in json.loads((outdir / "manifest.json").read_text("utf-8")).get("items", []):
@@ -202,7 +202,7 @@ def run_job(rows, lesson, S, force, only, final=True):
             key = hashlib.sha1(json.dumps([row["tts"], [(v, S[v]) for v in voices]], ensure_ascii=False)
                                .encode()).hexdigest()[:12]
             fid = rid.zfill(3)  # 檔名一律三位數句號，例如 001、027
-            tracks = {v: ("_單軌/%s_%s.mp3" % (fid, FILE_NAME[v])) if chorus else "%s_%s.mp3" % (fid, FILE_NAME[v])
+            tracks = {v: ("_tracks/%s_%s.mp3" % (fid, FILE_NAME[v])) if chorus else "%s_%s.mp3" % (fid, FILE_NAME[v])
                       for v in voices}
             final = "%s_%s.mp3" % (fid, FILE_NAME["合聲"]) if chorus else tracks[spk]
             # 舊版中文檔名（NN_彥君.mp3 等）：找不到英文檔名時沿用，不強迫重錄
@@ -243,7 +243,7 @@ def run_job(rows, lesson, S, force, only, final=True):
                             mix(outdir / tracks["彥君"], outdir / tracks["曉臻"], outdir / final, ff)
                             entry["file"] = final
                         else:
-                            notes.append("電腦沒有 ffmpeg，兩人的聲音先分開存（_單軌 資料夾）")
+                            notes.append("電腦沒有 ffmpeg，兩人的聲音先分開存（_tracks 資料夾）")
                     else:
                         entry["file"] = final
                     _set(rid, state="ok", msg="；".join(notes), file=entry["file"] or tracks["彥君"])
