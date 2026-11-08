@@ -7,7 +7,11 @@
   'use strict';
   var MANIFEST_URL = 'audio/magnetism_1/manifest.json';
   var STAGE_URL = 'audio/magnetism_1/stage.json';
-  var AUDIO_BASE = 'https://github.com/flyer19820218/Physical-Boys/releases/download/audio-magnetism_1-v1/';
+  // 音檔與網頁同一個網域（audio/magnetism_1/mp3/）：iPad Safari 對 GitHub Release 的下載網址（octet-stream＋attachment）常常無法播放。
+  // Release 保留為備援。
+  var AUDIO_BASE = 'audio/magnetism_1/mp3/';
+  var AUDIO_FALLBACK = 'https://github.com/flyer19820218/Physical-Boys/releases/download/audio-magnetism_1-v1/';
+  var player = null; // 全程只用同一個 Audio 元素：iOS 只在「使用者點擊」那一刻解鎖，新建的 Audio 之後自動播放會被擋
   var SEC_PER_CHAR = 0.3; // 音檔載入失敗時，依字數估一個等待秒數，讓講解不中斷
 
   var items = [], stage = { cuts: {}, at: {}, subs: {} }, total = 0;
@@ -227,17 +231,20 @@
   }
 
   function getAudio(it) {
-    if (cache[it.id]) return cache[it.id];
-    var a = new Audio();
-    a.preload = 'auto';
+    if (!player) { player = new Audio(); player.preload = 'auto'; }
+    var a = player;
+    a.onended = a.onerror = null;
+    a.dataset.tried = '';
     a.src = AUDIO_BASE + encodeURIComponent(it.file);
-    cache[it.id] = a;
     return a;
   }
 
-  function preloadNext() {
+  function preloadNext() { // 先把下一句抓進瀏覽器快取
     for (var i = idx + 1; i < items.length; i++) {
-      if (items[i].kind === 'line') { if (!cache[items[i].id]) getAudio(items[i]); return; }
+      if (items[i].kind === 'line') {
+        try { fetch(AUDIO_BASE + encodeURIComponent(items[i].file), { cache: 'force-cache' }).catch(function () {}); } catch (e) {}
+        return;
+      }
     }
   }
 
@@ -255,13 +262,18 @@
       a.onended = a.onerror = null;
       for (var k = 0; k < chars.length; k++) chars[k].className = 'on';
       if (audio === a) audio = null;
-      delete cache[it.id];
       idx++;
       progress(n);
       step();
     }
-    function fallback() { // 音檔讀不到：照字數等一下再繼續
+    function fallback() { // 音檔讀不到：先改試 Release 備援，還是不行就照字數等一下再繼續
       if (advanced || my !== token) return;
+      if (!a.dataset.tried) {
+        a.dataset.tried = '1';
+        a.src = AUDIO_FALLBACK + encodeURIComponent(it.file);
+        var q = a.play(); if (q && q.catch) q.catch(function () {});
+        return;
+      }
       ui.sub.appendChild(document.createTextNode('（音檔載入失敗）'));
       audio = null;
       wait(Math.max(1.5, it.text.length * SEC_PER_CHAR), next);
@@ -329,7 +341,7 @@
     cancelAnimationFrame(raf);
     token++; clearWait(); waitDone = null;
     if (audio) { audio.onended = audio.onerror = null; try { audio.pause(); } catch (e) {} }
-    audio = null; cache = {};
+    audio = null;
   }
 
   function stop() {
