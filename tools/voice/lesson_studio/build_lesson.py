@@ -151,7 +151,8 @@ def build_manifest(items):
 def to_subtitle(text):
     for src, dst in SUB_MAP:
         text = text.replace(src, dst)
-    return text
+    # N／S 前面若緊接中文字，補一個空格（例：被S 極 → 被 S 極）
+    return re.sub(r"(?<=[\u4e00-\u9fff])(?=[NS] 極)", " ", text)
 
 
 def build_stage(items):
