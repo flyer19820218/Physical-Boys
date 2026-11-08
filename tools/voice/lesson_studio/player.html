@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>課程試聽播放器</title>
+<style>
+  :root {
+    --bg:#0e1620; --panel:#17222f; --ink:#e8eef5; --muted:#92a3b4; --line:#26384a;
+    --accent:#ffe066; --accent-ink:#1a1500; --m:#6db3ff; --f:#ff8fbf;
+    --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#eef2f6; --panel:#ffffff; --ink:#14212e; --muted:#5b6b7b; --line:#d5dde6; --accent:#0f6fb5; --accent-ink:#fff; --m:#1d5fa8; --f:#b0356b; }
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 var(--body); display:flex; flex-direction:column; }
+  .top { display:flex; gap:12px; align-items:center; padding:8px 14px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .top b { font-size:16px; }
+  .top .sub { color:var(--muted); font-size:13px; }
+  select { font:14px var(--body); color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:7px; padding:5px 8px; }
+  .main { flex:1; min-height:0; display:flex; }
+  .stage { position:relative; flex:1; min-width:0; background:#000; overflow:hidden; }
+  iframe { position:absolute; inset:0; width:100%; height:100%; border:0; background:#fff; }
+
+  /* 浮動字幕 */
+  .cap { position:absolute; left:50%; bottom:22px; transform:translateX(-50%); width:min(920px, calc(100% - 32px));
+         display:flex; align-items:flex-end; gap:12px; pointer-events:none; transition:opacity .25s, transform .25s; }
+  .cap[hidden] { display:none; }
+  .cap.swap { opacity:0; transform:translateX(-50%) translateY(8px); }
+  .av { height:176px; width:auto; flex:none; filter:drop-shadow(0 4px 10px rgba(0,0,0,.55)); }
+  .bub { position:relative; flex:1; min-width:0; background:rgba(10,16,24,.88); color:#fff; border:2px solid var(--c, #fff);
+         border-radius:16px; padding:10px 18px 14px; box-shadow:0 8px 28px rgba(0,0,0,.5); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  .who { position:absolute; top:-14px; left:16px; font-size:13px; font-weight:700; padding:1px 12px; border-radius:99px; background:var(--c); color:#0b1118; }
+  .txt { margin:6px 0 0; font-size:clamp(20px, 2.6vw, 30px); line-height:1.55; font-weight:700; letter-spacing:.02em; }
+  .txt span { color:rgba(255,255,255,.55); transition:color .12s; }
+  .txt span.on { color:#fff; }
+  .pin { position:absolute; top:16px; right:16px; max-width:min(360px, 40%); background:rgba(255,224,102,.96); color:#2a2100;
+         border-radius:12px; padding:10px 16px; box-shadow:0 6px 22px rgba(0,0,0,.45); animation:pop .35s ease-out; }
+  .pin[hidden] { display:none; }
+  .pin small { display:block; font-weight:700; letter-spacing:.14em; opacity:.7; font-size:12px; }
+  .pin b { font-size:clamp(18px, 2.2vw, 26px); line-height:1.35; }
+  @keyframes pop { from { transform:translateY(-12px) scale(.92); opacity:0; } to { transform:none; opacity:1; } }
+  .toast { position:absolute; top:16px; left:16px; background:rgba(10,16,24,.85); color:#fff; padding:6px 14px; border-radius:99px; font-size:14px;
+           opacity:0; transition:opacity .3s; pointer-events:none; }
+  .toast.show { opacity:1; }
+  .startbig { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font:700 22px var(--body); background:var(--accent); color:var(--accent-ink);
+              border:0; border-radius:14px; padding:18px 34px; cursor:pointer; box-shadow:0 10px 34px rgba(0,0,0,.5); }
+  .startbig[hidden] { display:none; }
+
+  /* 逐句列表 */
+  .list { width:300px; flex:none; background:var(--panel); border-left:1px solid var(--line); overflow:auto; padding:8px; }
+  @media (max-width:900px) { .list { display:none; } }
+  .it { display:flex; gap:8px; padding:7px 8px; border-radius:8px; cursor:pointer; font-size:13.5px; }
+  .it:hover { background:rgba(127,127,127,.14); }
+  .it.cur { background:rgba(255,224,102,.22); outline:1px solid var(--accent); }
+  .it .n { color:var(--muted); width:24px; flex:none; font-variant-numeric:tabular-nums; }
+  .it .w { flex:none; font-size:11.5px; padding:0 7px; border-radius:99px; border:1px solid currentColor; height:20px; line-height:18px; margin-top:1px; }
+  .it .w.m { color:var(--m); } .it .w.f { color:var(--f); }
+  .it.mk { color:var(--muted); font-size:12.5px; cursor:default; }
+  .it.nofile .t { text-decoration:line-through; opacity:.6; }
+
+  /* 控制列 */
+  .ctl { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--panel); border-top:1px solid var(--line); flex-wrap:wrap; }
+  .btn { font:600 15px var(--body); color:var(--ink); background:transparent; border:1px solid var(--line); border-radius:9px; padding:9px 14px; cursor:pointer; }
+  .btn:hover { border-color:var(--accent); }
+  .btn.main { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); min-width:132px; }
+  .bar { flex:1; min-width:120px; height:8px; background:var(--line); border-radius:99px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; background:var(--accent); transition:width .2s; }
+  .pos { color:var(--muted); font-size:13px; min-width:74px; text-align:right; }
+  label.chk { display:flex; gap:6px; align-items:center; color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <b id="title">課程試聽播放器</b><span class="sub">老師講解模式・試聽版（只在這台電腦上，不會上傳）</span>
+  <span style="flex:1"></span>
+  <label class="chk">課程 <select id="lessonSel"></select></label>
+</div>
+<div class="main">
+  <section class="stage" id="stage">
+    <iframe id="frame" title="課程頁面"></iframe>
+    <div class="toast" id="toast"></div>
+    <div class="pin" id="pin" hidden><small>重點</small><b id="pinText"></b></div>
+    <div class="cap" id="cap" hidden><img class="av" id="av" alt=""><div class="bub" id="bub"><span class="who" id="who"></span><p class="txt" id="txt"></p></div></div>
+    <button class="startbig" id="startBig">▶ 開始上課（自動播放）</button>
+  </section>
+  <aside class="list" id="list"></aside>
+</div>
+<div class="ctl">
+  <button class="btn" id="prev" title="上一句（←）">⏮ 上一句</button>
+  <button class="btn main" id="play">▶ 自動播放</button>
+  <button class="btn" id="next" title="下一句（→）">下一句 ⏭</button>
+  <div class="bar"><i id="barFill"></i></div>
+  <span class="pos" id="pos">0 / 0</span>
+  <label class="chk">語速
+    <select id="speed"><option>0.8</option><option>0.9</option><option selected>1.0</option><option>1.1</option><option>1.2</option><option>1.3</option><option>1.5</option></select>
+  </label>
+  <label class="chk">字幕節奏
+    <select id="pace"><option value="1">標準</option><option value="1.15" selected>稍快</option><option value="1.3">更快</option><option value="1.5">最快</option></select>
+  </label>
+  <label class="chk"><input type="checkbox" id="capOn" checked> 字幕</label>
+</div>
+<audio id="aud" preload="auto"></audio>
+<script>
+(function () {
+  var $ = function (i) { return document.getElementById(i); };
+  var AV = {"彥君": "/_p/av/yanjun.png", "曉臻": "/assets/characters/xiaozhen/normal.png"};
+  var COLOR = {"彥君": "#6db3ff", "曉臻": "#ff8fbf"};
+  var WHO = {"彥君": "彥君老師", "曉臻": "曉臻助教"};
+  var lesson = "", items = [], cfg = {}, idx = -1, auto = false, state = "idle", frameReady = false, queued = [], tmr = null, raf = 0, lineCount = 0;
+  var aud = $("aud");
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  function recUrl(f) { return "/_p/rec/" + encodeURIComponent(lesson) + "/" + f.split("/").map(encodeURIComponent).join("/"); }
+  function toast(t) { var e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(e._t); e._t = setTimeout(function () { e.classList.remove("show"); }, 2200); }
+  function lineNo(i) { var n = 0; for (var k = 0; k <= i; k++) if (items[k].kind === "line") n++; return n; }
+  function setBtn() { $("play").textContent = state === "playing" ? "⏸ 暫停" : "▶ 自動播放"; }
+
+  /* ── 課程頁面（同網域，所以能點它的分頁按鈕） ── */
+  $("frame").addEventListener("load", function () { frameReady = true; var q = queued; queued = []; q.forEach(applyStage); });
+  function applyStage(c) {
+    if (!c) return;
+    if (!frameReady) { queued.push(c); return; }
+    var d; try { d = $("frame").contentDocument; } catch (e) { return; }
+    if (!d) return;
+    if (c.tab) { var b = d.querySelector('.tab-button[data-tab="' + c.tab + '"]'); if (b) b.click(); }
+    if (c.sub) { var s = d.querySelector('.sub-tab-btn[data-sub="' + c.sub + '"]'); if (s) s.click(); }
+  }
+
+  /* ── 載入課程 ── */
+  function load(name) {
+    stopAll(); lesson = name; idx = -1; auto = false; state = "idle"; setBtn();
+    $("cap").hidden = true; $("pin").hidden = true; $("startBig").hidden = false;
+    Promise.all([
+      fetch(recUrl("manifest.json")).then(function (r) { return r.json(); }),
+      fetch(recUrl("stage.json")).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; })
+    ]).then(function (a) {
+      items = a[0].items || []; cfg = a[1] || {}; lineCount = items.filter(function (i) { return i.kind === "line"; }).length;
+      $("title").textContent = name + "｜老師講解（試聽）";
+      frameReady = false; queued = [];
+      $("frame").src = "/" + (cfg.page || "magnetism_1.html");
+      buildList(); progress();
+    });
+  }
+  function subText(it) { return (cfg.subs && cfg.subs[it.id]) || it.text; }
+  function buildList() {
+    $("list").innerHTML = items.map(function (it, i) {
+      if (it.kind === "marker") return '<div class="it mk">' + esc(it.text) + "</div>";
+      return '<div class="it' + (it.file ? "" : " nofile") + '" data-i="' + i + '"><span class="n">' + it.id + '</span><span class="w ' +
+        (it.speaker === "彥君" ? "m" : "f") + '">' + esc(it.speaker) + '</span><span class="t">' + esc(subText(it)) + "</span></div>";
+    }).join("");
+  }
+  function progress() {
+    var n = idx < 0 ? 0 : lineNo(idx);
+    $("pos").textContent = n + " / " + lineCount;
+    $("barFill").style.width = (lineCount ? n / lineCount * 100 : 0) + "%";
+    Array.prototype.forEach.call($("list").querySelectorAll(".it[data-i]"), function (e) { e.classList.toggle("cur", +e.getAttribute("data-i") === idx); });
+    var cur = $("list").querySelector(".it.cur"); if (cur) cur.scrollIntoView({block: "nearest"});
+  }
+
+  /* ── 播放引擎 ── */
+  function stopAll() { clearTimeout(tmr); cancelAnimationFrame(raf); aud.pause(); aud.removeAttribute("src"); }
+  function finish() { state = "idle"; auto = false; setBtn(); toast("本課播完了"); $("startBig").hidden = false; }
+  function next() { if (!auto) { state = "idle"; setBtn(); return; } tmr = setTimeout(function () { go(idx + 1); }, 280); }
+
+  function go(i) {
+    clearTimeout(tmr); cancelAnimationFrame(raf);
+    if (i < 0) i = 0;
+    if (i >= items.length) return finish();
+    idx = i; var it = items[i]; progress();
+    if (it.kind === "marker") return marker(it);
+    playLine(it);
+  }
+  function marker(it) {
+    var m = it.text.replace(/^[＊*]\s*/, "").match(/^(切頁|停|釘選)\s*[：:]\s*(.*)$/);
+    if (!m) return go(idx + 1);
+    var k = m[1], v = m[2].trim();
+    if (k === "切頁") { toast("切頁：" + v); applyStage(cfg.cuts && cfg.cuts[v]); return go(idx + 1); }
+    if (k === "釘選") { $("pinText").textContent = v; $("pin").hidden = false; var p = $("pin"); p.style.animation = "none"; void p.offsetWidth; p.style.animation = ""; return go(idx + 1); }
+    if (k === "停") { var s = parseFloat(v) || 1; if (!auto) return go(idx + 1); toast("停頓 " + s + " 秒"); tmr = setTimeout(function () { go(idx + 1); }, s * 1000); return; }
+    go(idx + 1);
+  }
+  function showCap(it) {
+    var cap = $("cap"), c = COLOR[it.speaker] || "#fff";
+    cap.hidden = !$("capOn").checked; cap.style.setProperty("--c", c);
+    cap.classList.add("swap");
+    setTimeout(function () {
+      $("av").src = AV[it.speaker] || ""; $("who").textContent = WHO[it.speaker] || it.speaker;
+      $("txt").innerHTML = Array.from(subText(it)).map(function (ch) { return "<span>" + esc(ch) + "</span>"; }).join("");
+      cap.classList.remove("swap");
+    }, 120);
+  }
+  function highlight(dur) {
+    (function tick() {
+      var spans = $("txt").children, n = spans.length;  // 每一格都重新讀，換句淡出時字數會變
+      var d = aud.duration || dur || 1, r = Math.min(1, (aud.currentTime || 0) / d * parseFloat($("pace").value)), on = Math.ceil(r * n);
+      for (var k = 0; k < n; k++) spans[k].classList.toggle("on", k < on);
+      if (!aud.ended && state === "playing") raf = requestAnimationFrame(tick); else if (aud.ended) for (var j = 0; j < n; j++) spans[j].classList.add("on");
+    })();
+  }
+  function playLine(it) {
+    if (items[idx].id && cfg.at && cfg.at[it.id]) applyStage(cfg.at[it.id]);
+    showCap(it); $("startBig").hidden = true; state = "playing"; setBtn();
+    if (!it.file) {  // 這句沒有錄音：字幕停一下就往下
+      toast("第 " + it.id + " 句沒有錄音");
+      tmr = setTimeout(function () { Array.prototype.forEach.call($("txt").children, function (s) { s.classList.add("on"); }); next(); }, Math.max(1800, subText(it).length * 220));
+      return;
+    }
+    aud.src = recUrl(it.file); aud.playbackRate = parseFloat($("speed").value);
+    aud.onended = function () { next(); };
+    aud.onerror = function () { toast("播不出第 " + it.id + " 句"); next(); };
+    var pr = aud.play(); if (pr && pr.catch) pr.catch(function () { state = "paused"; setBtn(); toast("瀏覽器擋住自動播放，請按「自動播放」"); });
+    highlight(0);
+  }
+
+  /* ── 按鈕 ── */
+  function nextLine(from, dir) { for (var k = from + dir; k >= 0 && k < items.length; k += dir) if (items[k].kind === "line") return k; return -1; }
+  $("play").onclick = $("startBig").onclick = function () {
+    if (state === "playing") { aud.pause(); clearTimeout(tmr); state = "paused"; setBtn(); return; }
+    auto = true;
+    if (state === "paused" && aud.src && !aud.ended) { state = "playing"; setBtn(); aud.play(); highlight(0); return; }
+    go(idx < 0 || state === "idle" && idx >= items.length - 1 ? 0 : (state === "paused" ? idx : (idx < 0 ? 0 : idx + 1)));
+  };
+  $("next").onclick = function () { var k = nextLine(idx, 1); if (k >= 0) { stopAll(); go(k); } };
+  $("prev").onclick = function () { var k = nextLine(idx, -1); if (k >= 0) { stopAll(); go(k); } };
+  $("list").addEventListener("click", function (e) { var r = e.target.closest(".it[data-i]"); if (r) { stopAll(); go(+r.getAttribute("data-i")); } });
+  $("speed").onchange = function () { aud.playbackRate = parseFloat(this.value); try { localStorage.setItem("player_speed", this.value); } catch (e) {} };
+  $("capOn").onchange = function () { if (idx >= 0 && items[idx].kind === "line") $("cap").hidden = !this.checked; };
+  document.addEventListener("keydown", function (e) {
+    if (e.target.tagName === "SELECT") return;
+    if (e.code === "Space") { e.preventDefault(); $("play").click(); }
+    else if (e.code === "ArrowRight") $("next").click(); else if (e.code === "ArrowLeft") $("prev").click();
+  });
+  $("pace").onchange = function () { try { localStorage.setItem("player_pace", this.value); } catch (e) {} };
+  try { var sp = localStorage.getItem("player_speed"); if (sp) $("speed").value = sp; var pc = localStorage.getItem("player_pace"); if (pc) $("pace").value = pc; } catch (e) {}
+
+  /* ── 啟動：列出有錄音的課 ── */
+  fetch("/_p/lessons").then(function (r) { return r.json(); }).then(function (ls) {
+    if (!ls.length) { $("title").textContent = "找不到錄音（桌面／課程錄音／…／manifest.json）"; return; }
+    $("lessonSel").innerHTML = ls.map(function (l) { return '<option value="' + esc(l.name) + '">' + esc(l.name) + "（" + l.lines + " 句）</option>"; }).join("");
+    var pick = new URLSearchParams(location.search).get("lesson"); if (pick) $("lessonSel").value = pick;
+    $("lessonSel").onchange = function () { load(this.value); };
+    load($("lessonSel").value);
+  });
+})();
+</script>
+</body>
+</html>
