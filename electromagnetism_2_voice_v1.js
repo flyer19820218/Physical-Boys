@@ -35,7 +35,7 @@
       '.vx-cap{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:6px}',
       '.vx-av{flex:0 0 auto;height:130px;width:auto;transition:opacity .25s,filter .25s;opacity:.35;filter:grayscale(.6);pointer-events:none}',
       '.vx-av.on{opacity:1;filter:none}',
-      '.vx-bub{pointer-events:auto;flex:1 1 auto;min-width:0;margin-bottom:14px;padding:10px 14px 12px;border-radius:14px;background:rgba(17,38,31,.94);border:2px solid #55e9ff;color:#f2ecd9;box-shadow:0 6px 18px rgba(0,0,0,.55);font-family:inherit;position:relative}',
+      '.vx-bub{pointer-events:auto;flex:1 1 auto;min-width:0;margin-bottom:14px;padding:10px 14px 20px;border-radius:14px;background:rgba(17,38,31,.94);border:2px solid #55e9ff;color:#f2ecd9;box-shadow:0 6px 18px rgba(0,0,0,.55);font-family:inherit;position:relative}',
       '.vx-who{display:inline-block;margin-bottom:4px;padding:0 10px;border-radius:999px;font-size:14px;font-weight:700;color:#11261f;background:#6db3ff}',
       '.vx-txt{font-size:21px;line-height:1.55;min-height:2.4em;padding-top:2px}',
       '.vx-txt span{color:rgba(242,236,217,.55);transition:color .12s}',
@@ -43,9 +43,10 @@
       '.vx-ctl{position:absolute;top:2px;right:4px;display:flex;gap:0}',
       '.vx-ic{width:32px;height:32px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:50%;border:0;background:transparent;color:#9af06f;font-size:18px;line-height:1;cursor:pointer;touch-action:manipulation;font-family:inherit}',
       '.vx-ic:hover:not(:disabled){background:rgba(154,240,111,.2)}.vx-ic:disabled{opacity:.3;cursor:default}',
-      '.vx-line{position:absolute;left:10px;right:10px;bottom:3px;height:3px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}',
+      '.vx-line{position:absolute;left:10px;right:10px;bottom:0;height:18px;cursor:pointer;touch-action:none;user-select:none}',
+      '.vx-track{position:absolute;left:0;right:0;bottom:7px;height:4px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}',
       '.vx-fill{height:100%;width:0;background:#fde047}',
-      '.vx-pin{position:fixed;top:64px;right:12px;z-index:9001;max-width:min(300px,calc(100vw - 24px));box-sizing:border-box;padding:8px 14px;border-radius:12px;background:#fde047;color:#11261f;font-size:19px;font-weight:700;line-height:1.4;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.5);display:none}',
+      '.vx-pin{pointer-events:none;position:relative;margin:0 auto 10px;max-width:min(560px,100%);box-sizing:border-box;padding:8px 14px;border-radius:12px;background:#fde047;color:#11261f;font-size:19px;font-weight:700;line-height:1.4;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.5);display:none}',
       '.vx-pin.show{display:block}',
       '@media (max-width:620px){.vx-av{height:78px}.vx-txt{font-size:17px}.vx-bub{padding:8px 10px 12px}}'
     ].join('\n');
@@ -68,8 +69,8 @@
     ui.open.setAttribute('aria-pressed', 'false');
     if (host) host.appendChild(ui.open); else document.body.appendChild(ui.open);
 
-    ui.pin = el('div', 'vx-pin', '', document.body);
     ui.panel = el('div', 'vx-panel', null, document.body);
+    ui.pin = el('div', 'vx-pin', '', ui.panel);
     ui.panel.setAttribute('role', 'region');
     ui.panel.setAttribute('aria-label', '有聲講解');
     var cap = el('div', 'vx-cap', null, ui.panel);
@@ -93,7 +94,10 @@
     ui.fwd = mk('fwd', '快轉 5 秒');
     ui.stop = mk('stop', '停止');
     var tr = el('div', 'vx-line', null, bub);
-    ui.fill = el('div', 'vx-fill', null, tr);
+    tr.setAttribute('role', 'slider'); tr.setAttribute('aria-label', '拖曳或點選，跳到某一句');
+    var track = el('div', 'vx-track', null, tr);
+    ui.fill = el('div', 'vx-fill', null, track);
+    bindBar(tr);
     ui.count = { textContent: '' };
     ui.avR = el('img', 'vx-av', null, cap); ui.avR.src = AV['曉臻']; ui.avR.alt = '曉臻助教';
     ui.who.style.display = 'none';
@@ -111,6 +115,46 @@
     ui.back.addEventListener('click', function () { seek(-5); });
     ui.fwd.addEventListener('click', function () { seek(5); });
     refresh();
+  }
+
+  // 進度條：點一下或拖曳，就從該句開始播（畫面會依前面的切頁、動畫、釘選還原）
+  function bindBar(bar) {
+    var dragging = false;
+    function valueAt(ev) {
+      var r = bar.getBoundingClientRect();
+      var f = Math.max(0, Math.min(1, (ev.clientX - r.left) / (r.width || 1)));
+      return { n: Math.min(total - 1, Math.floor(f * total)), f: f };
+    }
+    bar.addEventListener('pointerdown', function (ev) {
+      if (!total) return;
+      dragging = true;
+      try { bar.setPointerCapture(ev.pointerId); } catch (e) {}
+      var v = valueAt(ev); ui.fill.style.width = (v.f * 100) + '%';
+      ev.preventDefault();
+    });
+    bar.addEventListener('pointermove', function (ev) {
+      if (!dragging) return;
+      var v = valueAt(ev); ui.fill.style.width = (v.f * 100) + '%';
+    });
+    bar.addEventListener('pointerup', function (ev) {
+      if (!dragging) return;
+      dragging = false;
+      jumpToLine(valueAt(ev).n);
+    });
+    bar.addEventListener('pointercancel', function () { dragging = false; progress(lineNo()); });
+  }
+
+  // 從第 n 句（0 起算）開始播：先停掉目前的音檔，再把前面的設定還原，然後接著播
+  function jumpToLine(n) {
+    var k = -1, cnt = 0;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind === 'line') { if (cnt === n) { k = i; break; } cnt++; }
+    }
+    if (k < 0) return;
+    halt();
+    state = 'playing'; idx = k; progress(n); refresh();
+    syncTo(k);
+    step();
   }
 
   function refresh() {
