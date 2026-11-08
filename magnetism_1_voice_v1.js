@@ -15,25 +15,35 @@
   var audio = null, timer = null, waitLeft = 0, waitStart = 0, waitDone = null, cache = {};
   var ui = {};
 
+  var AV = { '彥君': 'assets/characters/yanjun/pointer_board.png', '曉臻': 'assets/characters/xiaozhen/normal.png' };
+  var WHO = { '彥君': '彥君老師', '曉臻': '曉臻助教', '合聲': '兩人' };
+  var COLOR = { '彥君': '#6db3ff', '曉臻': '#ff8fbf', '合聲': '#c9a8ff' };
+  var PACE = 1.15; // 逐字變色的節奏（與試聽播放器相同）
+  var raf = 0;
+
   function css() {
     var s = document.createElement('style');
     s.textContent = [
       '.vx-open{min-height:52px;padding:8px 26px;border-radius:999px;cursor:pointer;font-size:21px;font-weight:700;font-family:inherit;line-height:1.3;background:transparent;color:#55e9ff;border:2px solid #55e9ff;touch-action:manipulation;transition:all .2s}',
       '.vx-open:hover,.vx-open.on{background:#55e9ff;color:#11261f}',
-      '.vx-panel{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:9000;width:min(860px,calc(100vw - 24px));box-sizing:border-box;padding:12px 14px;border-radius:14px;background:rgba(17,38,31,.95);border:2px solid #55e9ff;color:#f2ecd9;box-shadow:0 8px 24px rgba(0,0,0,.6);font-family:inherit;display:none}',
+      '.vx-panel{position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:9000;width:min(900px,100vw);box-sizing:border-box;padding:0 8px;pointer-events:none;display:none}',
       '.vx-panel.show{display:block}',
-      '.vx-sub{min-height:3em;font-size:22px;line-height:1.5;text-align:center;margin:0 0 10px}',
-      '.vx-who{display:inline-block;margin-right:8px;padding:0 10px;border-radius:999px;font-size:16px;font-weight:700;color:#11261f;background:#fde047;vertical-align:2px}',
-      '.vx-who.f{background:#ff78b7}.vx-who.c{background:#dd8cff}',
-      '.vx-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px}',
-      '.vx-btn{min-height:44px;padding:6px 18px;border-radius:8px;cursor:pointer;font-size:18px;font-weight:700;font-family:inherit;background:transparent;color:#9af06f;border:2px solid #9af06f;touch-action:manipulation}',
-      '.vx-btn:hover:not(:disabled){background:#9af06f;color:#11261f}.vx-btn:disabled{opacity:.35;cursor:default}',
-      '.vx-track{flex:1 1 160px;min-width:120px;height:10px;border-radius:6px;background:rgba(255,255,255,.14);overflow:hidden}',
-      '.vx-fill{height:100%;width:0;background:#fde047;border-radius:6px}',
-      '.vx-count{font-size:16px;color:#b8c9c1;min-width:5.5em;text-align:center}',
-      '.vx-pin{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9001;max-width:min(720px,calc(100vw - 120px));box-sizing:border-box;padding:8px 18px;border-radius:12px;background:#fde047;color:#11261f;font-size:22px;font-weight:700;line-height:1.4;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.5);display:none}',
+      '.vx-cap{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:6px}',
+      '.vx-av{flex:0 0 auto;height:130px;width:auto;transition:opacity .25s,filter .25s;opacity:.35;filter:grayscale(.6);pointer-events:none}',
+      '.vx-av.on{opacity:1;filter:none}',
+      '.vx-bub{pointer-events:auto;flex:1 1 auto;min-width:0;margin-bottom:14px;padding:10px 14px 12px;border-radius:14px;background:rgba(17,38,31,.94);border:2px solid #55e9ff;color:#f2ecd9;box-shadow:0 6px 18px rgba(0,0,0,.55);font-family:inherit;position:relative}',
+      '.vx-who{display:inline-block;margin-bottom:4px;padding:0 10px;border-radius:999px;font-size:14px;font-weight:700;color:#11261f;background:#6db3ff}',
+      '.vx-txt{font-size:21px;line-height:1.55;min-height:2.4em;padding-right:4px}',
+      '.vx-txt span{color:rgba(242,236,217,.55);transition:color .12s}',
+      '.vx-txt span.on{color:#fff}',
+      '.vx-ctl{position:absolute;top:4px;right:6px;display:flex;gap:2px}',
+      '.vx-ic{letter-spacing:-2px;width:34px;height:34px;border-radius:50%;border:0;background:transparent;color:#9af06f;font-size:18px;line-height:1;cursor:pointer;touch-action:manipulation;font-family:inherit}',
+      '.vx-ic:hover:not(:disabled){background:rgba(154,240,111,.2)}.vx-ic:disabled{opacity:.3;cursor:default}',
+      '.vx-line{position:absolute;left:10px;right:10px;bottom:3px;height:3px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}',
+      '.vx-fill{height:100%;width:0;background:#fde047}',
+      '.vx-pin{position:fixed;top:64px;right:12px;z-index:9001;max-width:min(300px,calc(100vw - 24px));box-sizing:border-box;padding:8px 14px;border-radius:12px;background:#fde047;color:#11261f;font-size:19px;font-weight:700;line-height:1.4;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.5);display:none}',
       '.vx-pin.show{display:block}',
-      '@media (max-width:520px){.vx-sub{font-size:18px}.vx-pin{font-size:18px;top:60px;max-width:calc(100vw - 24px)}}'
+      '@media (max-width:620px){.vx-av{height:78px}.vx-txt{font-size:17px}.vx-bub{padding:8px 10px 12px}}'
     ].join('\n');
     document.head.appendChild(s);
   }
@@ -58,16 +68,22 @@
     ui.panel = el('div', 'vx-panel', null, document.body);
     ui.panel.setAttribute('role', 'region');
     ui.panel.setAttribute('aria-label', '有聲講解');
-    ui.sub = el('p', 'vx-sub', '按「開始」聽彥君老師與曉臻助教講解。', ui.panel);
+    var cap = el('div', 'vx-cap', null, ui.panel);
+    ui.avL = el('img', 'vx-av', null, cap); ui.avL.src = AV['彥君']; ui.avL.alt = '彥君老師';
+    var bub = el('div', 'vx-bub', null, cap);
+    ui.who = el('span', 'vx-who', '', bub);
+    ui.sub = el('div', 'vx-txt', '按 ▶ 聽彥君老師與曉臻助教講解。', bub);
     ui.sub.setAttribute('aria-live', 'polite');
-    var row = el('div', 'vx-row', null, ui.panel);
-    ui.start = el('button', 'vx-btn', '▶ 開始', row);
-    ui.pause = el('button', 'vx-btn', '⏸ 暫停', row);
-    ui.stop = el('button', 'vx-btn', '■ 停止', row);
-    var tr = el('div', 'vx-track', null, row);
+    var ctl = el('div', 'vx-ctl', null, bub);
+    ui.start = el('button', 'vx-ic', '▶', ctl); ui.start.title = '開始／繼續';
+    ui.pause = el('button', 'vx-ic', '❚❚', ctl); ui.pause.title = '暫停';
+    ui.stop = el('button', 'vx-ic', '■', ctl); ui.stop.title = '停止';
+    var tr = el('div', 'vx-line', null, bub);
     ui.fill = el('div', 'vx-fill', null, tr);
-    ui.count = el('span', 'vx-count', '0 / ' + total, row);
+    ui.count = { textContent: '' };
+    ui.avR = el('img', 'vx-av', null, cap); ui.avR.src = AV['曉臻']; ui.avR.alt = '曉臻助教';
     [ui.start, ui.pause, ui.stop].forEach(function (b) { b.type = 'button'; });
+    ui.who.style.display = 'none';
 
     ui.open.addEventListener('click', function () {
       var show = !ui.panel.classList.contains('show');
@@ -83,7 +99,6 @@
   }
 
   function refresh() {
-    ui.start.textContent = state === 'paused' ? '▶ 繼續' : '▶ 開始';
     ui.start.disabled = state === 'playing';
     ui.pause.disabled = state !== 'playing';
     ui.stop.disabled = state === 'idle';
@@ -97,23 +112,63 @@
 
   function progress(doneLines) {
     ui.fill.style.width = (total ? (doneLines / total) * 100 : 0) + '%';
-    ui.count.textContent = doneLines + ' / ' + total;
   }
 
-  // ─── 切頁：只用 .click() 點既有按鈕 ───
-  function goto(tab, sub) {
+  // ─── 切頁：只用 .click() 點既有按鈕；切到對應子頁與第 N 步，並把動畫帶進畫面「一次」 ───
+  // 之後不再鎖定捲動，學生可以自己上下滑。
+  function goto(tab, sub, stepNo) {
     var t = tab && document.querySelector('.tab-button[data-tab="' + tab + '"]');
-    if (t && !t.classList.contains('active')) t.click();
     var s = sub && document.querySelector('.sub-tab-btn[data-sub="' + sub + '"]');
-    if (s) setTimeout(function () { s.click(); }, t ? 80 : 0);
+    var changed = (t && !t.classList.contains('active')) || (s && !s.classList.contains('active'));
+    if (t && !t.classList.contains('active')) t.click();
+    setTimeout(function () {
+      if (s && !s.classList.contains('active')) s.click();
+      setTimeout(function () {
+        var row = document.querySelector('.tab-content.active .step-row');
+        var btns = row ? row.querySelectorAll('.step-btn') : [];
+        var b = stepNo && btns[stepNo - 1];
+        if (b) { b.click(); changed = true; }
+        if (changed) bringIntoView(row);
+      }, 60);
+    }, t ? 80 : 0);
   }
 
+  function bringIntoView(row) {
+    var target = row || document.querySelector('.tab-content.active');
+    if (!target || !target.getBoundingClientRect) return;
+    var r = target.getBoundingClientRect(), h = window.innerHeight;
+    var panelTop = ui.panel ? ui.panel.querySelector('.vx-bub').getBoundingClientRect().top : h;
+    if (r.top < 60 || r.bottom > panelTop - 10) { // 不在可視範圍才捲一次
+      try { window.scrollTo({ top: window.pageYOffset + r.top - Math.max(80, (panelTop - 60) / 2), behavior: 'smooth' }); } catch (e) { target.scrollIntoView(); }
+    }
+  }
+
+  // 字幕：逐字包 span，播放時依音檔進度逐字變色
+  var chars = [];
   function showSub(item) {
     var text = stage.subs[item.id] || item.text;
     ui.sub.textContent = '';
-    var cls = item.speaker === '曉臻' ? 'f' : item.speaker === '合聲' ? 'c' : '';
-    el('span', 'vx-who ' + cls, item.speaker, ui.sub);
-    ui.sub.appendChild(document.createTextNode(text));
+    chars = [];
+    for (var i = 0; i < text.length; i++) chars.push(el('span', '', text[i], ui.sub));
+    var who = item.speaker;
+    ui.who.style.display = '';
+    ui.who.textContent = WHO[who] || who;
+    ui.who.style.background = COLOR[who] || '#6db3ff';
+    ui.avL.classList.toggle('on', who === '彥君' || who === '合聲');
+    ui.avR.classList.toggle('on', who === '曉臻' || who === '合聲');
+  }
+
+  function trackChars(a) {
+    cancelAnimationFrame(raf);
+    var t0 = Date.now();
+    (function tick() {
+      var d = a.duration, p;
+      if (d && isFinite(d)) p = a.currentTime / (d / PACE > 0 ? d / PACE : d);
+      else p = (Date.now() - t0) / 1000 / Math.max(1, chars.length * 0.25);
+      var n = Math.min(chars.length, Math.floor(p * chars.length) + 1);
+      for (var i = 0; i < chars.length; i++) chars[i].className = i < n ? 'on' : '';
+      raf = requestAnimationFrame(tick);
+    })();
   }
 
   function setPin(text) {
@@ -139,7 +194,7 @@
       if (m && m[1] === '切頁') {
         var c = stage.cuts[m[2].trim()];
         setPin('');
-        if (c) goto(c.tab, c.sub);
+        if (c) goto(c.tab, c.sub, c.step);
       } else if (m && m[1] === '釘選') {
         setPin(m[2].trim());
       } else if (m && m[1] === '停') {
@@ -169,7 +224,7 @@
 
   function playLine(it, my) {
     var at = stage.at[it.id];
-    if (at) goto(at.tab, at.sub);
+    if (at) goto(at.tab, at.sub, at.step);
     showSub(it);
     var n = lineNo() + 1;
     progress(n - 1);
@@ -179,6 +234,7 @@
       if (advanced || my !== token) return;
       advanced = true;
       a.onended = a.onerror = null;
+      for (var k = 0; k < chars.length; k++) chars[k].className = 'on';
       if (audio === a) audio = null;
       delete cache[it.id];
       idx++;
@@ -195,9 +251,10 @@
     a.onerror = fallback;
     try { a.currentTime = 0; } catch (e) { /* 尚未載入，忽略 */ }
     var p = a.play();
+    trackChars(a);
     if (p && p.catch) p.catch(function (err) {
       if (my !== token) return;
-      if (err && err.name === 'NotAllowedError') { pause(); ui.sub.textContent = '瀏覽器擋住自動播放，請再按「繼續」。'; }
+      if (err && err.name === 'NotAllowedError') { pause(); ui.sub.textContent = '瀏覽器擋住自動播放，請再按 ▶。'; }
       else fallback();
     });
     preloadNext();
@@ -232,6 +289,7 @@
   }
 
   function halt() {
+    cancelAnimationFrame(raf);
     token++; clearWait(); waitDone = null;
     if (audio) { audio.onended = audio.onerror = null; try { audio.pause(); } catch (e) {} }
     audio = null; cache = {};
@@ -240,14 +298,14 @@
   function stop() {
     halt(); state = 'idle'; idx = 0;
     setPin(''); progress(0);
-    if (ui.sub) ui.sub.textContent = '按「開始」聽彥君老師與曉臻助教講解。';
+    if (ui.sub) ui.sub.textContent = '按 ▶ 聽彥君老師與曉臻助教講解。';
     refresh();
   }
 
   function finish() {
     halt(); state = 'idle'; idx = 0; setPin('');
     progress(total);
-    ui.sub.textContent = '講解結束，可以按「開始」重聽。';
+    ui.sub.textContent = '講解結束，可以按 ▶ 重聽。';
     refresh();
   }
 
