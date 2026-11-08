@@ -33,11 +33,11 @@
       '.vx-av.on{opacity:1;filter:none}',
       '.vx-bub{pointer-events:auto;flex:1 1 auto;min-width:0;margin-bottom:14px;padding:10px 14px 12px;border-radius:14px;background:rgba(17,38,31,.94);border:2px solid #55e9ff;color:#f2ecd9;box-shadow:0 6px 18px rgba(0,0,0,.55);font-family:inherit;position:relative}',
       '.vx-who{display:inline-block;margin-bottom:4px;padding:0 10px;border-radius:999px;font-size:14px;font-weight:700;color:#11261f;background:#6db3ff}',
-      '.vx-txt{font-size:21px;line-height:1.55;min-height:2.4em;padding-right:4px}',
+      '.vx-txt{font-size:21px;line-height:1.55;min-height:2.4em;padding-top:2px}',
       '.vx-txt span{color:rgba(242,236,217,.55);transition:color .12s}',
       '.vx-txt span.on{color:#fff}',
-      '.vx-ctl{position:absolute;top:4px;right:6px;display:flex;gap:2px}',
-      '.vx-ic{letter-spacing:-2px;width:34px;height:34px;border-radius:50%;border:0;background:transparent;color:#9af06f;font-size:18px;line-height:1;cursor:pointer;touch-action:manipulation;font-family:inherit}',
+      '.vx-ctl{position:absolute;top:2px;right:4px;display:flex;gap:0}',
+      '.vx-ic{width:32px;height:32px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:50%;border:0;background:transparent;color:#9af06f;font-size:18px;line-height:1;cursor:pointer;touch-action:manipulation;font-family:inherit}',
       '.vx-ic:hover:not(:disabled){background:rgba(154,240,111,.2)}.vx-ic:disabled{opacity:.3;cursor:default}',
       '.vx-line{position:absolute;left:10px;right:10px;bottom:3px;height:3px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}',
       '.vx-fill{height:100%;width:0;background:#fde047}',
@@ -75,14 +75,23 @@
     ui.sub = el('div', 'vx-txt', '按 ▶ 聽彥君老師與曉臻助教講解。', bub);
     ui.sub.setAttribute('aria-live', 'polite');
     var ctl = el('div', 'vx-ctl', null, bub);
-    ui.start = el('button', 'vx-ic', '▶', ctl); ui.start.title = '開始／繼續';
-    ui.pause = el('button', 'vx-ic', '❚❚', ctl); ui.pause.title = '暫停';
-    ui.stop = el('button', 'vx-ic', '■', ctl); ui.stop.title = '停止';
+    var IC = {
+      back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/><text x="12" y="16.5" font-size="7.5" font-weight="700" text-anchor="middle" font-family="sans-serif">5</text></svg>',
+      fwd: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 5V2l5 4-5 4V7a5 5 0 1 0 5 5h2a7 7 0 1 1-7-7z"/><text x="12" y="16.5" font-size="7.5" font-weight="700" text-anchor="middle" font-family="sans-serif">5</text></svg>',
+      play: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>',
+      pause: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>',
+      stop: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>'
+    };
+    function mk(ic, title) { var b = el('button', 'vx-ic', null, ctl); b.innerHTML = IC[ic]; b.title = title; b.setAttribute('aria-label', title); b.type = 'button'; return b; }
+    ui.back = mk('back', '倒退 5 秒');
+    ui.start = mk('play', '開始／繼續');
+    ui.pause = mk('pause', '暫停');
+    ui.fwd = mk('fwd', '快轉 5 秒');
+    ui.stop = mk('stop', '停止');
     var tr = el('div', 'vx-line', null, bub);
     ui.fill = el('div', 'vx-fill', null, tr);
     ui.count = { textContent: '' };
     ui.avR = el('img', 'vx-av', null, cap); ui.avR.src = AV['曉臻']; ui.avR.alt = '曉臻助教';
-    [ui.start, ui.pause, ui.stop].forEach(function (b) { b.type = 'button'; });
     ui.who.style.display = 'none';
 
     ui.open.addEventListener('click', function () {
@@ -95,6 +104,8 @@
     ui.start.addEventListener('click', start);
     ui.pause.addEventListener('click', pause);
     ui.stop.addEventListener('click', stop);
+    ui.back.addEventListener('click', function () { seek(-5); });
+    ui.fwd.addEventListener('click', function () { seek(5); });
     refresh();
   }
 
@@ -102,6 +113,7 @@
     ui.start.disabled = state === 'playing';
     ui.pause.disabled = state !== 'playing';
     ui.stop.disabled = state === 'idle';
+    ui.back.disabled = ui.fwd.disabled = state === 'idle';
   }
 
   function lineNo() { // 目前播到第幾句說話行
@@ -134,13 +146,20 @@
   }
 
   function bringIntoView(row) {
-    var target = row || document.querySelector('.tab-content.active');
-    if (!target || !target.getBoundingClientRect) return;
-    var r = target.getBoundingClientRect(), h = window.innerHeight;
-    var panelTop = ui.panel ? ui.panel.querySelector('.vx-bub').getBoundingClientRect().top : h;
-    if (r.top < 60 || r.bottom > panelTop - 10) { // 不在可視範圍才捲一次
-      try { window.scrollTo({ top: window.pageYOffset + r.top - Math.max(80, (panelTop - 60) / 2), behavior: 'smooth' }); } catch (e) { target.scrollIntoView(); }
+    var act = document.querySelector('.tab-content.active');
+    var target = null;
+    if (act) {
+      var cs = act.querySelectorAll('canvas, svg.anim, .anim-stage');
+      for (var i = 0; i < cs.length; i++) { var q = cs[i].getBoundingClientRect(); if (q.height > 80) { target = cs[i]; break; } }
     }
+    target = target || row || act;
+    if (!target || !target.getBoundingClientRect) return;
+    var r = target.getBoundingClientRect();
+    var panelTop = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
+    if (r.top >= 56 && r.bottom <= panelTop - 8) return; // 已完整在畫面內，不動
+    var room = panelTop - 56 - r.height; // 動畫上下剩餘空間，讓動畫置中於字幕框上方
+    var y = window.pageYOffset + r.top - 56 - Math.max(0, room / 2);
+    try { window.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, y); }
   }
 
   // 字幕：逐字包 span，播放時依音檔進度逐字變色
@@ -278,6 +297,24 @@
     }
     idx = 0; token++; state = 'playing'; setPin(''); progress(0); refresh();
     step();
+  }
+
+  // 快轉／倒退：同一句內移動；超出範圍就跳到下一句／上一句開頭
+  function seek(sec) {
+    if (state === 'idle') return;
+    var a = audio;
+    if (!a) { return; } // ＊停 計時中不處理
+    var ct = a.currentTime || 0, d = a.duration;
+    if (sec > 0) {
+      if (d && isFinite(d) && ct + sec < d - 0.2) { a.currentTime = ct + sec; return; }
+      var was = state; halt(); idx++; progress(lineNo()); state = 'playing'; refresh(); step();
+    } else {
+      if (ct + sec > 0) { a.currentTime = ct + sec; return; }
+      var j = idx - 1;
+      while (j >= 0 && items[j].kind !== 'line') j--;
+      if (ct > 1.5 || j < 0) { a.currentTime = 0; return; }
+      halt(); idx = j; state = 'playing'; refresh(); step();
+    }
   }
 
   function pause() {
