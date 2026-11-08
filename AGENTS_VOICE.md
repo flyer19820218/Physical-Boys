@@ -111,3 +111,12 @@
 - 彥君、曉臻的表情／姿勢切換（目前各一個固定頭像）。
 - 正式整合進各課「老師講解」模式的做法。
 - 音檔長期放哪裡（GitHub Releases、雲端硬碟都可能；**不放進 repo 的 git**，`.git` 已經約 1GB）。
+
+## 附：有聲講解標準流程（magnetism_1 實測成功，2026-11-08）
+1. 稿子（只讀 lessons_md/<課>.md）→ `tools/voice/lesson_studio/build_lesson.py --script <稿子>` 一鍵產生 manifest.json／stage.json 並驗證。
+2. `build_lesson.py` 的 `CUTS`／`AT`／`STEPS` 設定「句號 → 分頁、子頁、第幾步」，講到什麼畫面就自動跳到那個動畫（只捲一次，不鎖定）。
+3. 錄音檔名一律英文三位數 `NNN_yanjun/xiaozhen/hesheng.mp3`（要用新版 class_studio.py）。
+4. 音檔放 repo `audio/<課>/mp3/`（同網域）。**不要只放 GitHub Release**：iPad Safari 播不出來。
+5. 播放器全程共用同一個 Audio 元素（iOS 自動播放限制）；範例見 `magnetism_1_voice_v1.js`。
+6. 預覽用 Artifact（音檔內嵌）；推 main 前要使用者說 OK；上線後 iPad 與電腦各測一次。
+完整說明在專案文件「網課有聲講解_標準流程」。
