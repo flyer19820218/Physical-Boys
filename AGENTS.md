@@ -1020,6 +1020,9 @@ svg {
 - 不得在 HTML inline handler 依賴隱含 `event` 物件。
 - Canvas 初始化前確認尺寸有效。
 - iOS 若有黑畫面、垂直線、邊線問題，優先修 CSS / compositing，不可直接刪掉封面或動畫。
+- **手機整頁直線防護（2026-11-08）**：整頁 `body` 的點點背景（radial-gradient）在 iOS 會拉出貫穿整頁的 1px 直線。新課程頁不要在 `body` 放點點背景；若沿用舊版型，`<style>` 結尾必須有這一段（桌面不受影響）：
+  `@media (hover: none) and (pointer: coarse) { html, body { background-image: none !important; } .home-fab, .back-fab, a.home-fab, a.back-fab, .floating-lang-container, .language-switcher, #pt-fab, #pt-bar, #pt-menu { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; } }`
+  不要用 `body::before` 固定層（更糟），也不要只靠 `@supports (-webkit-touch-callout: none)`（老師手機實測沒生效）。
 
 ---
 
