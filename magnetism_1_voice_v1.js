@@ -311,6 +311,23 @@
     step();
   }
 
+  // 跳句子（快轉／倒退）後，把畫面還原成「這一句之前最後一次的設定」：切頁、動畫步驟、釘選
+  function syncTo(upto) {
+    var cur = null, pin = '';
+    for (var i = 0; i < upto && i < items.length; i++) {
+      var it = items[i];
+      if (it.kind === 'marker') {
+        var m = /^[＊*]\s*(切頁|停|釘選)\s*[：:]\s*(.+)$/.exec(it.text || '');
+        if (m && m[1] === '切頁') { var c = stage.cuts[m[2].trim()]; if (c) cur = { tab: c.tab, sub: c.sub, step: c.step }; pin = ''; }
+        else if (m && m[1] === '釘選') pin = m[2].trim();
+      } else if (it.kind === 'line' && stage.at[it.id]) {
+        var a = stage.at[it.id]; cur = { tab: a.tab, sub: a.sub, step: a.step };
+      }
+    }
+    setPin(pin);
+    if (cur) goto(cur.tab, cur.sub, cur.step);
+  }
+
   // 快轉／倒退：同一句內移動；超出範圍就跳到下一句／上一句開頭
   function seek(sec) {
     if (state === 'idle') return;
@@ -319,13 +336,13 @@
     var ct = a.currentTime || 0, d = a.duration;
     if (sec > 0) {
       if (d && isFinite(d) && ct + sec < d - 0.2) { a.currentTime = ct + sec; return; }
-      var was = state; halt(); idx++; progress(lineNo()); state = 'playing'; refresh(); step();
+      var was = state; halt(); idx++; progress(lineNo()); state = 'playing'; refresh(); syncTo(idx); step();
     } else {
       if (ct + sec > 0) { a.currentTime = ct + sec; return; }
       var j = idx - 1;
       while (j >= 0 && items[j].kind !== 'line') j--;
       if (ct > 1.5 || j < 0) { a.currentTime = 0; return; }
-      halt(); idx = j; state = 'playing'; refresh(); step();
+      halt(); idx = j; progress(lineNo()); state = 'playing'; refresh(); syncTo(idx); step();
     }
   }
 
