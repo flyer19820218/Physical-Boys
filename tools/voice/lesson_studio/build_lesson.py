@@ -26,7 +26,7 @@ EXPECT_LINES = 106
 EXPECT_CHORUS = [27, 75, 90]
 
 FILE_NAME = {"彥君": "yanjun", "曉臻": "xiaozhen", "合聲": "hesheng"}
-SETTINGS = {"彥君": ["+10%", "+0Hz"], "曉臻": ["+10%", "+5Hz"]}  # 同 class_studio.py 的 DEFAULTS
+SETTINGS = {"彥君": ["-10%", "+0Hz"], "曉臻": ["+10%", "+5Hz"]}  # 同 class_studio.py 的 DEFAULTS
 LINE_RE = re.compile(r"^([^：:]{1,16}?)\s*[：:]\s*(.+)$")
 
 # 切頁：＊切頁 標題 → 要切到的分頁／子頁
