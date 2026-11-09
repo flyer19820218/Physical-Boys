@@ -213,7 +213,7 @@
   // 字幕：逐字包 span，播放時依音檔進度逐字變色
   var chars = [];
   function showSub(item) {
-    var text = stage.subs[item.id] || item.text;
+    var text = displayText(stage.subs[item.id] || item.text);
     ui.sub.textContent = '';
     chars = [];
     for (var i = 0; i < text.length; i++) chars.push(el('span', '', text[i], ui.sub));
@@ -227,18 +227,22 @@
 
   function trackChars(a) {
     cancelAnimationFrame(raf);
-    var t0 = Date.now();
-    (function tick() {
-      var d = a.duration, p;
-      if (d && isFinite(d)) p = a.currentTime / (d / PACE > 0 ? d / PACE : d);
-      else p = (Date.now() - t0) / 1000 / Math.max(1, chars.length * 0.25);
-      var n = Math.min(chars.length, Math.floor(p * chars.length) + 1);
+    (function tick() { // 只依音檔的實際播放位置變色；長度未知或還沒開始播時不動，避免先跑快再回彈
+      var d = a.duration, p = 0;
+      if (d && isFinite(d) && a.currentTime > 0) p = Math.min(1, a.currentTime * PACE / d);
+      var n = p > 0 ? Math.min(chars.length, Math.floor(p * chars.length) + 1) : 0;
       for (var i = 0; i < chars.length; i++) chars[i].className = i < n ? 'on' : '';
       raf = requestAnimationFrame(tick);
     })();
   }
 
+  // 讀音稿的「恩極／艾斯極」螢幕上顯示成 N極／S極（念的字不變）
+  function displayText(t) {
+    return String(t || '').replace(/恩極/g, 'N極').replace(/艾斯極/g, 'S極');
+  }
+
   function setPin(text) {
+    text = displayText(text);
     ui.pin.textContent = text || '';
     ui.pin.classList.toggle('show', !!text);
   }
