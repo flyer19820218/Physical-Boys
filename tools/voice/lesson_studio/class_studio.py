@@ -13,6 +13,7 @@
 import asyncio
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -30,6 +31,8 @@ try:
 except ImportError:
     sys.exit("找不到 edge-tts，請先執行：pip3 install -U edge-tts")
 
+APP_VERSION = "2026-11-09 英文檔名・合聲語速"
+MIN_BYTES = 1000  # 小於等於這個大小的音檔視為沒錄到
 FILE_NAME = {"彥君": "yanjun", "曉臻": "xiaozhen", "合聲": "hesheng"}  # 輸出音檔用英文檔名
 VOICE = {"彥君": "zh-TW-YunJheNeural", "曉臻": "zh-TW-HsiaoChenNeural"}
 LABEL = {"彥君": "彥君老師・男聲", "曉臻": "曉臻助教・女聲", "合聲": "合聲・兩人一起"}
@@ -159,7 +162,7 @@ def synth(text, voice, rate, pitch, path):
 def mix(a, b, out, ff):
     cmd = [ff, "-y", "-loglevel", "error", "-i", str(a), "-i", str(b), "-filter_complex",
            "amix=inputs=2:duration=longest:dropout_transition=0,volume=2,alimiter=limit=0.95",
-           "-ac", "1", "-ar", "24000", "-b:a", "64k", str(out)]
+           "-ac", "1", "-ar", "24000", "-b:a", "64k", "-f", "mp3", str(out)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0 or not Path(out).exists() or Path(out).stat().st_size < 1000:
         raise RuntimeError("合聲混音失敗：" + (r.stderr or "").strip()[-200:])
@@ -174,7 +177,36 @@ def _set(rid, **kw):
         STATE["rows"].setdefault(rid, {}).update(kw)
 
 
+def _atomic_synth(text, voice, rate, pitch, path):
+    """先錄到 .tmp，確認大於 1000 bytes 才換成正式檔名；失敗不會在正式檔名留下半成品。"""
+    path = Path(path)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.unlink(missing_ok=True)
+    try:
+        info = synth(text, voice, rate, pitch, tmp)
+        if not tmp.exists() or tmp.stat().st_size <= MIN_BYTES:
+            raise RuntimeError("沒有產生檔案，或檔案太小")
+        os.replace(tmp, path)
+        return info
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def _atomic_mix(a, b, out, ff):
+    out = Path(out)
+    tmp = out.with_name(out.name + ".tmp")
+    tmp.unlink(missing_ok=True)
+    try:
+        mix(a, b, tmp, ff)
+        if not tmp.exists() or tmp.stat().st_size <= MIN_BYTES:
+            raise RuntimeError("合聲混音沒有產生檔案")
+        os.replace(tmp, out)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
 def run_job(rows, lesson, S, force, only, final=True):
+    """回傳 {"ok": [新錄的句號], "skip": [沿用的句號], "fail": {句號: 原因}}。"""
     S = dict(S)
     S.setdefault("合聲", DEFAULTS["合聲"])
     outdir = ROOT / lesson
@@ -191,6 +223,7 @@ def run_job(rows, lesson, S, force, only, final=True):
         STATE.update(running=True, finished=False, folder=str(outdir), lesson=lesson, ffmpeg=bool(ff), message="",
                      rows={r["id"]: {"state": "wait", "msg": ""} for r in rows if r["kind"] == "line"})
     items = []
+    result = {"ok": [], "skip": [], "fail": {}}
     try:
         for row in rows:
             if row["kind"] == "marker":
@@ -209,55 +242,65 @@ def run_job(rows, lesson, S, force, only, final=True):
             fid = rid.zfill(3)  # 檔名一律三位數句號，例如 001、027
             tracks = {v: ("_tracks/%s_%s.mp3" % (fid, FILE_NAME[v])) if chorus else "%s_%s.mp3" % (fid, FILE_NAME[v])
                       for v in voices}
-            final = "%s_%s.mp3" % (fid, FILE_NAME["合聲"]) if chorus else tracks[spk]
-            # 舊版中文檔名（NN_彥君.mp3 等）：找不到英文檔名時沿用，不強迫重錄
-            legacy = {}
-            for new in list(tracks.values()) + [final]:
-                sub, _, base = new.rpartition("/")
-                m = re.match(r"^\d+_(\w+)\.mp3$", base)
-                zh = next((k for k, v in FILE_NAME.items() if m and v == m.group(1)), None)
-                legacy[new] = (sub + "/" if sub else "") + "%s_%s.mp3" % (rid, zh) if zh else new
+            outname = "%s_%s.mp3" % (fid, FILE_NAME["合聲"]) if chorus else tracks[spk]
 
-            def ok(p):
+            def ok(p):  # 只認英文檔名；舊中文檔名一律當作沒有
                 f = outdir / p
-                return f.exists() and f.stat().st_size > 1000
+                return f.exists() and f.stat().st_size > MIN_BYTES
 
-            def use(p):  # 英文檔名存在就用英文，否則若舊中文檔名存在就沿用它
-                return p if ok(p) or not ok(legacy.get(p, p)) else legacy[p]
-
-            have = ok(use(final)) if (not chorus or ff) else all(ok(use(p)) for p in tracks.values())
-            cached = old.get(rid, {}).get("key") == key and have
+            have = ok(outname) if (not chorus or ff) else all(ok(p) for p in tracks.values())
+            prev = old.get(rid, {})
+            cached = prev.get("key") == key and have
             target = only is None or rid in only
             entry = {"kind": "line", "id": rid, "speaker": spk, "text": row["text"], "tts": row["tts"], "key": key,
-                     "file": use(final) if ok(use(final)) else None, "tracks": tracks if chorus else None, "params": {}}
+                     "file": outname if ok(outname) else None, "tracks": tracks if chorus else None, "params": {},
+                     "state": "ok", "error": None}
             if cached and not (force and target):
-                _set(rid, state="skip", msg="已有，沿用", file=use(final) if ok(use(final)) else None)
+                entry["state"] = "cached"
+                entry["params"] = prev.get("params") or {}
+                _set(rid, state="skip", msg="已有，沿用", file=entry["file"])
+                result["skip"].append(rid)
             elif not target:
-                _set(rid, state="wait", msg="這次沒錄")
+                # 這次沒錄：檔案若是舊內容，key 不能寫成新的，免得下次被誤當成「沒變」
+                entry["key"] = prev.get("key") if have else None
+                if have:
+                    entry["state"] = "not_run"
+                    _set(rid, state="wait", msg="這次沒錄", file=entry["file"])
+                else:
+                    entry.update(state="error", error="沒有錄音檔", file=None)
+                    _set(rid, state="missing", msg="沒有錄音檔，請按該句重錄", file=None)
+                    result["fail"][rid] = "沒有錄音檔"
             else:
                 _set(rid, state="doing", msg="錄音中…")
                 try:
                     notes = []
                     for v in voices:
-                        info = synth(row["tts"], VOICE[v], eff(v)[0], eff(v)[1], outdir / tracks[v])
+                        info = _atomic_synth(row["tts"], VOICE[v], eff(v)[0], eff(v)[1], outdir / tracks[v])
                         entry["params"][v] = info
                         if info["fellback"]:
                             notes.append("%s 改用較保守的參數" % v)
                     if chorus:
                         if ff:
-                            mix(outdir / tracks["彥君"], outdir / tracks["曉臻"], outdir / final, ff)
-                            entry["file"] = final
+                            _atomic_mix(outdir / tracks["彥君"], outdir / tracks["曉臻"], outdir / outname, ff)
+                            entry["file"] = outname
                         else:
+                            entry["file"] = None
                             notes.append("電腦沒有 ffmpeg，兩人的聲音先分開存（_tracks 資料夾）")
                     else:
-                        entry["file"] = final
+                        entry["file"] = outname
                     _set(rid, state="ok", msg="；".join(notes), file=entry["file"] or tracks["彥君"])
+                    result["ok"].append(rid)
                 except Exception as e:  # noqa: BLE001
-                    entry["file"] = None
-                    _set(rid, state="err", msg=str(e))
+                    entry.update(file=None, state="error", error=str(e) or "沒有產生檔案")
+                    entry["key"] = None  # 失敗的句子下次一定重錄
+                    _set(rid, state="err", msg=entry["error"], file=None)
+                    result["fail"][rid] = entry["error"]
             items.append(entry)
-        (outdir / "manifest.json").write_text(
-            json.dumps({"lesson": lesson, "settings": S, "items": items}, ensure_ascii=False, indent=2), "utf-8")
+        mf = outdir / "manifest.json"
+        tmp = mf.with_name(mf.name + ".tmp")
+        tmp.write_text(json.dumps({"app_version": APP_VERSION, "lesson": lesson, "settings": S, "items": items},
+                                  ensure_ascii=False, indent=2), "utf-8")
+        os.replace(tmp, mf)
     except Exception as e:  # noqa: BLE001
         with LOCK:
             STATE["message"] = "中途出錯：%s" % e
@@ -265,11 +308,17 @@ def run_job(rows, lesson, S, force, only, final=True):
         if final:
             with LOCK:
                 STATE.update(running=False, finished=True)
+    return result
+
+
+def _ids_text(ids):
+    return "、".join(str(int(i)) if i.isdigit() else i for i in ids)
 
 
 def run_auto(rows, lesson, S, force, only):
-    """整份錄完後，自動把失敗的句子再錄最多兩輪。"""
-    run_job(rows, lesson, S, force, only, final=False)
+    """整份錄完後，自動把失敗的句子再錄最多兩輪，最後寫出成功／沿用／失敗摘要。"""
+    res = run_job(rows, lesson, S, force, only, final=False)
+    recorded, skipped = set(res["ok"]), set(res["skip"])
     for rnd in range(1, 3):
         with LOCK:
             bad = {k for k, v in STATE["rows"].items() if v.get("state") == "err"}
@@ -277,11 +326,20 @@ def run_auto(rows, lesson, S, force, only):
                 break
             STATE["message"] = "第 %d 次自動重錄 %d 句…" % (rnd, len(bad))
         time.sleep(8 * rnd)
-        run_job(rows, lesson, S, True, bad, final=False)
+        res = run_job(rows, lesson, S, True, bad, final=False)
+        recorded |= set(res["ok"])
     with LOCK:
-        bad = sorted(k for k, v in STATE["rows"].items() if v.get("state") == "err")
-        if bad and not STATE["message"].startswith("中途"):
-            STATE["message"] = "仍有 %d 句失敗（%s），可以按該句的「重錄」再試。" % (len(bad), "、".join(bad))
+        if not STATE["message"].startswith("中途"):
+            for k in recorded:  # 重錄輪裡前面錄好的句子會顯示成「沿用」，改回「完成」
+                if STATE["rows"].get(k, {}).get("state") == "skip":
+                    STATE["rows"][k]["state"] = "ok"
+                    STATE["rows"][k]["msg"] = ""
+            fail = sorted(res["fail"])
+            skip_n = len(skipped - recorded - set(fail))
+            msg = "成功 %d 句、沿用 %d 句、失敗 %d 句" % (len(recorded - set(fail)), skip_n, len(fail))
+            if fail:
+                msg += "。第 %s 句沒有錄到，請按該句重錄" % _ids_text(fail)
+            STATE["message"] = msg + "。"
         STATE.update(running=False, finished=True)
 
 
@@ -315,7 +373,7 @@ PAGE = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>彥君和曉臻錄音工作室</title>
+<title>彥君和曉臻錄音工作室 __APP_VERSION__</title>
 <style>
   :root {
     --bg:#eef2f6; --panel:#fff; --ink:#14212e; --muted:#5b6b7b; --line:#d5dde6;
@@ -382,6 +440,7 @@ PAGE = r"""<!doctype html>
   <header>
     <h1>彥君和曉臻錄音工作室</h1>
     <p>把對話稿整份貼進來，程式會自己分男聲、女聲、合聲，一句一句錄好。</p>
+    <p class="hint" id="ver">程式版本：__APP_VERSION__</p>
   </header>
   <div class="grid">
     <section class="panel">
@@ -447,7 +506,7 @@ PAGE = r"""<!doctype html>
       n++; c[r.speaker]++;
       var j = job.rows[r.id] || {}, st = "", cls = "";
       if (j.state === "ok") { st = "✅ 完成"; cls = "s-ok"; } else if (j.state === "skip") { st = "✅ 已有"; cls = "s-ok"; }
-      else if (j.state === "doing") { st = "⏳ 錄音中…"; cls = "s-doing"; } else if (j.state === "err") { st = "❌ 失敗"; cls = "s-err"; }
+      else if (j.state === "doing") { st = "⏳ 錄音中…"; cls = "s-doing"; } else if (j.state === "err") { st = "❌ 失敗"; cls = "s-err"; } else if (j.state === "missing") { st = "⚠ 沒有錄音檔"; cls = "s-err"; }
       if (j.msg && j.state !== "doing") st += "<br>" + esc(j.msg);
       var act = "";
       if (j.file) act += '<button class="ghost" data-a="play" data-i="' + r.id + '">▶ 播放</button> ';
@@ -472,12 +531,12 @@ PAGE = r"""<!doctype html>
       job = s; lessonDir = s.lesson || lessonDir; $("openf").hidden = !s.folder;
       var done = 0, tot = 0, bad = 0;
       Object.keys(s.rows).forEach(function (k) { tot++; var t = s.rows[k].state;
-        if (t === "ok" || t === "skip") done++; if (t === "err") bad++; });
+        if (t === "ok" || t === "skip") done++; if (t === "err" || t === "missing") bad++; });
       if (s.running) { note("錄音中… " + done + " / " + tot); timer = setTimeout(poll, 700); }
       else if (s.finished) {
-        var m = "錄完了：" + done + " / " + tot + " 句成功" + (bad ? "，" + bad + " 句失敗（可按該句的「重錄」）" : "") + "。";
+        var m = "錄完了：" + (s.message && s.message.indexOf("成功") === 0 ? s.message : done + " / " + tot + " 句成功" + (bad ? "，" + bad + " 句失敗（可按該句的「重錄」）" : "") + "。");
         if (!s.ffmpeg) m += " 這台電腦沒有 ffmpeg，合聲句先存成兩軌；在終端機執行 brew install ffmpeg 後再按一次開始錄音就會合成。";
-        if (s.message) m += " " + s.message;
+        if (s.message && s.message.indexOf("成功") !== 0) m += " " + s.message;
         note(m, bad || !s.ffmpeg ? "warn" : "");
       }
       render();
@@ -544,7 +603,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         u = urlparse(self.path)
         if u.path in ("/", "/index.html"):
-            self._send(200, PAGE.encode("utf-8"), "text/html; charset=utf-8")
+            self._send(200, PAGE.replace("__APP_VERSION__", APP_VERSION).encode("utf-8"), "text/html; charset=utf-8")
         elif u.path == "/status":
             with LOCK:
                 self._json(json.loads(json.dumps(STATE)))
