@@ -167,8 +167,9 @@ def validate(items, errors, warnings):
         if not 1 <= n <= len(lines):
             errors.append("at 的句號 %d 不是說話行（共 %d 句）" % (n, len(lines)))
     for n, (_t, sb, st) in AT.items():
-        if st is not None and not 1 <= st <= STEPS.get(sb, 0):
-            errors.append("at 第 %d 句：%s 沒有第 %s 步（共 %s 步）" % (n, sb, st, STEPS.get(sb)))
+        key = sb or _t  # 沒有子頁的分頁，步驟數登記在分頁名稱下
+        if st is not None and not 1 <= st <= STEPS.get(key, 0):
+            errors.append("at 第 %d 句：%s 沒有第 %s 步（共 %s 步）" % (n, key, st, STEPS.get(key)))
     # 5. tab/sub 必須存在於 html
     html = REPO / PAGE
     if not html.exists():
@@ -178,7 +179,7 @@ def validate(items, errors, warnings):
         for tab in sorted({t for t, _ in pairs}):
             if not grep_has(html, "data-tab", tab):
                 errors.append('%s 找不到 data-tab="%s"' % (PAGE, tab))
-        for sub in sorted({s for _, s in pairs}):
+        for sub in sorted({s for _, s in pairs if s}):
             if not grep_has(html, "data-sub", sub):
                 errors.append('%s 找不到 data-sub="%s"' % (PAGE, sub))
     return errors
@@ -255,11 +256,34 @@ def build_spec(stage):
                       "cuts_tbl": cuts_tbl, "at_tbl": at_tbl}
 
 
+def load_lesson(name):
+    """讀 lessons/<name>.json，覆寫本模組的課程常數（CUTS、AT、STEPS…）。"""
+    global LESSON, PAGE, DEFAULT_SCRIPT, DEFAULT_OUT, EXPECT_LINES, EXPECT_CHORUS, CUTS, STEPS, AT
+    import json as _json
+    cfg = _json.loads((REPO / "tools/voice/lesson_studio/lessons" / (name + ".json")).read_text("utf-8"))
+    LESSON = cfg["lesson"]
+    PAGE = cfg["page"]
+    DEFAULT_SCRIPT = REPO / cfg["script"]
+    DEFAULT_OUT = REPO / "audio" / LESSON
+    EXPECT_LINES = cfg["expect_lines"]
+    EXPECT_CHORUS = cfg["expect_chorus"]
+    CUTS = {t: (v[0], v[1]) for t, v in cfg["cuts"].items()}
+    STEPS = dict(cfg["steps"])
+    AT = {int(k): (v[0], v[1], v[2]) for k, v in cfg["at"].items()}
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--script", default=str(DEFAULT_SCRIPT))
-    ap.add_argument("--out", default=str(DEFAULT_OUT))
+    ap.add_argument("--lesson", default=None, help="課名，讀 lessons/<課名>.json（不給就用 magnetism_1 的內建設定）")
+    ap.add_argument("--script", default=None)
+    ap.add_argument("--out", default=None)
     a = ap.parse_args()
+    if a.lesson:
+        load_lesson(a.lesson)
+    if a.script is None:
+        a.script = str(DEFAULT_SCRIPT)
+    if a.out is None:
+        a.out = str(DEFAULT_OUT)
     items, errors = parse(Path(a.script).read_text("utf-8"))
     warnings = []
     errors = validate(items, errors, warnings)
