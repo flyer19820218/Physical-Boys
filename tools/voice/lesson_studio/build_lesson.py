@@ -136,9 +136,9 @@ def grep_has(html, attr, value):
     return r.returncode == 0
 
 
-def validate(items, errors):
+def validate(items, errors, warnings):
     lines = [i for i in items if i["kind"] == "line"]
-    # 1. 讀音稿：說話行、切頁、釘選都不得有英文字母；說話行與切頁、釘選不得有阿拉伯數字
+    # 1. 讀音稿：儘量不用英文字母（化學等單元必要時允許，只提醒）；說話行與切頁、釘選不得有阿拉伯數字
     for i in items:
         if i["kind"] == "line":
             body, label = i["text"], "說話行"
@@ -149,7 +149,7 @@ def validate(items, errors):
                 errors.append("第 %d 行：＊停 後面要是秒數：「%s」" % (i["src"], i["text"]))
             continue
         if re.search(r"[A-Za-zＡ-Ｚａ-ｚ]", body):
-            errors.append("第 %d 行（%s）含英文字母：%s" % (i["src"], label, body))
+            warnings.append("第 %d 行（%s）含英文字母（允許，請確認讀音）：%s" % (i["src"], label, body))
         if re.search(r"[0-9０-９]", body):
             errors.append("第 %d 行（%s）含阿拉伯數字：%s" % (i["src"], label, body))
     # 2. 說話行數、合聲位置
@@ -261,7 +261,10 @@ def main():
     ap.add_argument("--out", default=str(DEFAULT_OUT))
     a = ap.parse_args()
     items, errors = parse(Path(a.script).read_text("utf-8"))
-    errors = validate(items, errors)
+    warnings = []
+    errors = validate(items, errors, warnings)
+    for w in warnings:
+        print("  ! 提醒：" + w)
     if errors:
         print("驗證失敗，沒有寫任何檔案：")
         for e in errors:
