@@ -42,7 +42,7 @@ RATE_RE = re.compile(r"^[+-]\d{1,3}%$")
 PITCH_RE = re.compile(r"^[+-]\d{1,3}Hz$")
 LINE_RE = re.compile(r"^(?:\d+[\s.、．)]*)?([^：:]{1,16}?)\s*[：:]\s*(.+)$")
 ROOT = Path.home() / "Desktop" / "課程錄音"
-DEFAULTS = {"彥君": ("-10%", "+0Hz"), "曉臻": ("+10%", "+5Hz")}  # 曉臻是 AGENTS 14.3 驗證過的組合
+DEFAULTS = {"彥君": ("-10%", "+0Hz"), "曉臻": ("+10%", "+5Hz"), "合聲": ("+0%", "+0Hz")}  # 曉臻是 AGENTS 14.3 驗證過的組合；合聲＝兩人一起念的語速
 
 
 # ───────────────────────── 解析稿子 ─────────────────────────
@@ -175,6 +175,8 @@ def _set(rid, **kw):
 
 
 def run_job(rows, lesson, S, force, only, final=True):
+    S = dict(S)
+    S.setdefault("合聲", DEFAULTS["合聲"])
     outdir = ROOT / lesson
     (outdir / "_tracks").mkdir(parents=True, exist_ok=True)
     old = {}
@@ -199,7 +201,10 @@ def run_job(rows, lesson, S, force, only, final=True):
             rid, spk = row["id"], row["speaker"]
             chorus = spk == "合聲"
             voices = ["彥君", "曉臻"] if chorus else [spk]
-            key = hashlib.sha1(json.dumps([row["tts"], [(v, S[v]) for v in voices]], ensure_ascii=False)
+
+            def eff(v):  # 合聲句：兩人都用「合聲語速」，音調仍用各人自己的
+                return (S["合聲"][0], S[v][1]) if chorus else S[v]
+            key = hashlib.sha1(json.dumps([row["tts"], [(v, eff(v)) for v in voices]], ensure_ascii=False)
                                .encode()).hexdigest()[:12]
             fid = rid.zfill(3)  # 檔名一律三位數句號，例如 001、027
             tracks = {v: ("_tracks/%s_%s.mp3" % (fid, FILE_NAME[v])) if chorus else "%s_%s.mp3" % (fid, FILE_NAME[v])
@@ -234,7 +239,7 @@ def run_job(rows, lesson, S, force, only, final=True):
                 try:
                     notes = []
                     for v in voices:
-                        info = synth(row["tts"], VOICE[v], S[v][0], S[v][1], outdir / tracks[v])
+                        info = synth(row["tts"], VOICE[v], eff(v)[0], eff(v)[1], outdir / tracks[v])
                         entry["params"][v] = info
                         if info["fellback"]:
                             notes.append("%s 改用較保守的參數" % v)
@@ -300,6 +305,7 @@ def get_settings(d):
     return {
         "彥君": (pick(d.get("rate_y"), RATE_RE, DEFAULTS["彥君"][0]), pick(d.get("pitch_y"), PITCH_RE, DEFAULTS["彥君"][1])),
         "曉臻": (pick(d.get("rate_x"), RATE_RE, DEFAULTS["曉臻"][0]), pick(d.get("pitch_x"), PITCH_RE, DEFAULTS["曉臻"][1])),
+        "合聲": (pick(d.get("rate_c"), RATE_RE, DEFAULTS["合聲"][0]), DEFAULTS["合聲"][1]),
     }
 
 
@@ -392,13 +398,16 @@ PAGE = r"""<!doctype html>
       <label>課程名稱（錄好的檔案會放在 桌面／課程錄音／這個名字）
         <input type="text" id="lesson" placeholder="例如：磁力與磁場">
       </label>
-      <div class="vbox"><b>彥君老師・男聲（雲哲）</b>
-        <label>語速 <span id="ryv"></span><input type="range" id="ry" min="-30" max="40" value="10"></label>
+      <div class="vbox"><b>個人男聲・彥君老師（雲哲）</b>
+        <label>語速 <span id="ryv"></span><input type="range" id="ry" min="-30" max="40" value="-10"></label>
         <label>音調 <span id="pyv"></span><input type="range" id="py" min="-30" max="30" value="0"></label>
       </div>
-      <div class="vbox"><b>曉臻助教・女聲</b>
+      <div class="vbox"><b>個人女聲・曉臻助教</b>
         <label>語速 <span id="rxv"></span><input type="range" id="rx" min="-30" max="40" value="10"></label>
         <label>音調 <span id="pxv"></span><input type="range" id="px" min="-30" max="30" value="5"></label>
+      </div>
+      <div class="vbox"><b>合聲・兩人一起念</b>
+        <label>語速 <span id="rcv"></span><input type="range" id="rc" min="-30" max="40" value="0"></label>
       </div>
       <label class="check"><input type="checkbox" id="force"> 全部重錄（不勾的話，沒改過的句子會直接沿用）</label>
       <button class="go" id="go" disabled>開始錄音</button>
@@ -420,9 +429,10 @@ PAGE = r"""<!doctype html>
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
   function sg(v, u) { v = parseInt(v, 10); return (v >= 0 ? "+" : "") + v + u; }
   function labels() { $("ryv").textContent = sg($("ry").value, "%"); $("pyv").textContent = sg($("py").value, "Hz");
-    $("rxv").textContent = sg($("rx").value, "%"); $("pxv").textContent = sg($("px").value, "Hz"); }
+    $("rxv").textContent = sg($("rx").value, "%"); $("pxv").textContent = sg($("px").value, "Hz");
+    $("rcv").textContent = sg($("rc").value, "%"); }
   function settings() { return {rate_y: sg($("ry").value, "%"), pitch_y: sg($("py").value, "Hz"),
-    rate_x: sg($("rx").value, "%"), pitch_x: sg($("px").value, "Hz")}; }
+    rate_x: sg($("rx").value, "%"), pitch_x: sg($("px").value, "Hz"), rate_c: sg($("rc").value, "%")}; }
   function save() { try { localStorage.setItem("cs_script", $("script").value); localStorage.setItem("cs_lesson", $("lesson").value); } catch (e) {} }
   function note(t, c) { $("msg").innerHTML = t ? '<div class="note ' + (c || "") + '">' + esc(t) + "</div>" : ""; }
   function tag(s) { return '<span class="tag ' + (s === "彥君" ? "m" : s === "曉臻" ? "f" : "c") + '">' + esc(s) + "</span>"; }
@@ -495,7 +505,7 @@ PAGE = r"""<!doctype html>
   $("openf").onclick = function () { fetch("/open", {method: "POST"}); };
   $("script").addEventListener("input", function () { save(); clearTimeout(parseT); parseT = setTimeout(parse, 250); });
   $("lesson").addEventListener("input", save);
-  ["ry", "py", "rx", "px"].forEach(function (i) { $(i).addEventListener("input", labels); });
+  ["ry", "py", "rx", "px", "rc"].forEach(function (i) { $(i).addEventListener("input", labels); });
   try { $("script").value = localStorage.getItem("cs_script") || ""; $("lesson").value = localStorage.getItem("cs_lesson") || ""; } catch (e) {}
   labels(); parse(); poll();
 })();
