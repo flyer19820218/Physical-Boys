@@ -1,16 +1,18 @@
-/* electromagnetism_2 有聲講解（外層加法）
- * 只做三件事：載入 manifest.json / stage.json、依序播放 92 句音檔、用 .click() 切換既有分頁。
+/* 有聲講解通用播放器（每課共用一支）
+ * 用法：在課程頁加 <script defer src="lesson_voice.js?v=…" data-lesson="<課名>"></script>
+ * 只做三件事：載入 audio/<課名>/manifest.json 與 stage.json、依序播放音檔、用 .click() 切換既有分頁。
  * 不碰 Canvas/SVG、動畫、題庫；不改任何既有 js。載入失敗時整個功能隱藏，原頁面完全不受影響。
- * 音檔放在 repo audio/electromagnetism_2/mp3/（同網域）。
+ * 音檔放在 repo audio/<課名>/mp3/（與網頁同網域；iPad Safari 不能播 GitHub Release 的下載網址，所以不用 Release）。
  */
 (function () {
   'use strict';
-  var MANIFEST_URL = 'audio/electromagnetism_2/manifest.json';
-  var STAGE_URL = 'audio/electromagnetism_2/stage.json';
-  // 音檔與網頁同一個網域（audio/electromagnetism_2/mp3/）：iPad Safari 對 GitHub Release 的下載網址（octet-stream＋attachment）常常無法播放。
-  // Release 保留為備援。
-  var AUDIO_BASE = 'audio/electromagnetism_2/mp3/';
-  var AUDIO_FALLBACK = 'audio/electromagnetism_2/mp3/';
+  var tag = document.querySelector('script[data-lesson]');
+  var LESSON = tag ? tag.getAttribute('data-lesson') : '';
+  if (!LESSON) return;
+  var MANIFEST_URL = 'audio/' + LESSON + '/manifest.json';
+  var STAGE_URL = 'audio/' + LESSON + '/stage.json';
+  var AUDIO_BASE = 'audio/' + LESSON + '/mp3/';
+  var AUDIO_FALLBACK = AUDIO_BASE; // 同網域，沒有另外的備援來源
   var player = null; // 全程只用同一個 Audio 元素：iOS 只在「使用者點擊」那一刻解鎖，新建的 Audio 之後自動播放會被擋
   var SEC_PER_CHAR = 0.3; // 音檔載入失敗時，依字數估一個等待秒數，讓講解不中斷
 

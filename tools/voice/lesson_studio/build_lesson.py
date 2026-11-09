@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""從稿子一鍵產生 manifest.json、stage.json、stage_spec.md（magnetism_1）。
+"""從稿子一鍵產生 manifest.json、stage.json、stage_spec.md（每課一份設定）。
 
 用法（在 repo 根目錄）：
-    python3 tools/voice/lesson_studio/build_lesson.py
-    python3 tools/voice/lesson_studio/build_lesson.py --script 稿子.txt --out audio/magnetism_1
+    python3 tools/voice/lesson_studio/build_lesson.py --lesson magnetism_1
+    python3 tools/voice/lesson_studio/build_lesson.py --lesson electromagnetism_2 --script 稿子.txt
+
+每課的設定放在 tools/voice/lesson_studio/lessons/<課名>.json：
+    lesson、page、script、expect_lines、expect_chorus、cuts、steps、at
+（做法見 專案文件「網課有聲講解_量產作業手冊」）
 
 驗證全部通過才會寫檔；任何一項失敗就列出原因、不寫任何檔案。
 稿子規則見 AGENTS_VOICE.md 第 4、5 節。
@@ -17,93 +21,27 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
-LESSON = "magnetism_1"
-PAGE = "magnetism_1.html"
-DEFAULT_SCRIPT = REPO / "tools/voice/lesson_studio/scripts/magnetism_1_script.txt"
-DEFAULT_OUT = REPO / "audio" / LESSON
-
-EXPECT_LINES = 106
-EXPECT_CHORUS = [27, 75, 90]
+LESSON_DIR = Path(__file__).resolve().parent / "lessons"
 
 FILE_NAME = {"彥君": "yanjun", "曉臻": "xiaozhen", "合聲": "hesheng"}
 SETTINGS = {"彥君": ["+10%", "+0Hz"], "曉臻": ["+10%", "+5Hz"]}  # 同 class_studio.py 的 DEFAULTS
 LINE_RE = re.compile(r"^([^：:]{1,16}?)\s*[：:]\s*(.+)$")
 
-# 切頁：＊切頁 標題 → 要切到的分頁／子頁
-CUTS = {
-    "斷成兩半會怎樣？": ("tab-pole", "pole-suspend"),
-    "鐵釘怎麼變磁鐵？": ("tab-mag", "mag-process"),
-    "看不見的線？": ("tab-line", "line-bar"),
-    "指針為何轉向？": ("tab-compass", "compass-tangent"),
-    "地球是大磁鐵？": ("tab-earth", "earth-surface"),
-}
-# 該子頁動畫有幾個步驟按鈕（用來檢查 at 的步驟編號沒有超出）
-STEPS = {
-    "pole-suspend": 4, "pole-interact": 5, "pole-break": 5,
-    "mag-process": 5, "mag-store": 5,
-    "line-bar": 5, "line-u": 4,
-    "compass-tangent": 4, "compass-space": 4,
-    "earth-surface": 4, "earth-core": 4,
-}
-# 播到第 N 句（說話行編號）時：切到哪個子頁、播到動畫的第幾步。
-# 原則：講到什麼，畫面就要自動切到有那個動畫的頁面，學生才不用自己找。
-AT = {
-    # ── 磁鐵與磁極 ──
-    9:   ("tab-pole", "pole-suspend", 1),     # 用細線吊起來、自由旋轉
-    13:  ("tab-pole", "pole-suspend", 2),     # 撥轉幾次都擺回南北
-    14:  ("tab-pole", "pole-suspend", 4),     # 指南針的原理（地球磁場）
-    15:  ("tab-pole", "pole-interact", 1),    # 磁極如何互動（異名相吸）
-    16:  ("tab-pole", "pole-interact", 2),    # 同名排斥
-    18:  ("tab-pole", "pole-interact", 1),    # 誰吸誰：恩極與艾斯極互相吸
-    19:  ("tab-pole", "pole-interact", 2),    # 同名極：恩極碰恩極
-    20:  ("tab-pole", "pole-interact", 5),    # 結論：成對出現
-    21:  ("tab-pole", "pole-break", 1),       # 折斷磁鐵
-    22:  ("tab-pole", "pole-break", 2),       # 斷口出現新磁極
-    24:  ("tab-pole", "pole-break", 5),       # 單極磁鐵不存在
-    26:  ("tab-mag", "mag-process", 1),       # 「到下一頁看磁疇」：同時切過去
-    # ── 磁化與保存 ──
-    29:  ("tab-mag", "mag-process", 1),       # 磁疇＝小磁鐵
-    31:  ("tab-mag", "mag-process", 2),       # 磁疇排成同一方向
-    36:  ("tab-mag", "mag-process", 1),       # 普通鐵釘吸不起迴紋針
-    38:  ("tab-mag", "mag-process", 2),       # 外加磁場讓磁疇轉向
-    42:  ("tab-mag", "mag-process", 3),       # 鐵鎚敲
-    44:  ("tab-mag", "mag-process", 4),       # 加熱
-    46:  ("tab-mag", "mag-process", 5),       # 磁性物質：鐵、鈷、鎳
-    47:  ("tab-mag", "mag-store", 1),         # 軟鐵與鋼誰比較快磁化
-    52:  ("tab-mag", "mag-store", 2),         # 鋼的磁性能長久保存
-    53:  ("tab-mag", "mag-store", 3),         # 軟鐵做鐵心、鋼做永久磁鐵
-    56:  ("tab-mag", "mag-store", 4),         # 長條形磁鐵的保存
-    58:  ("tab-mag", "mag-store", 5),         # U 形磁鐵的保存
-    # ── 磁力線 ──
-    60:  ("tab-line", "line-bar", 1),         # 撒鐵粉
-    62:  ("tab-line", "line-bar", 2),         # 輕敲，鐵粉排成曲線
-    64:  ("tab-line", "line-bar", 3),         # 畫出磁力線
-    68:  ("tab-line", "line-bar", 4),         # 異名極相對
-    70:  ("tab-line", "line-bar", 5),         # 同名極相對
-    71:  ("tab-line", "line-u", 1),           # 馬蹄形磁鐵
-    72:  ("tab-line", "line-u", 3),           # 兩極之間磁力線平行
-    74:  ("tab-line", "line-u", 4),           # 均勻的強磁場
-    # ── 磁場方向與指南針 ──
-    76:  ("tab-compass", "compass-tangent", 1),  # 指南針放進磁場
-    78:  ("tab-compass", "compass-tangent", 2),  # 沿著磁力線移動
-    80:  ("tab-compass", "compass-tangent", 3),  # 什麼是切線
-    82:  ("tab-compass", "compass-space", 1),    # 磁針被誰吸引（異名相吸）
-    84:  ("tab-compass", "compass-space", 2),    # 磁鐵四周擺很多磁針
-    85:  ("tab-compass", "compass-space", 3),    # 順著箭頭的切線方向
-    86:  ("tab-compass", "compass-space", 4),    # 考試技巧
-    88:  ("tab-compass", "compass-tangent", 4),  # 最重要：N 極所指＝磁場方向
-    # ── 地球大磁鐵 ──
-    91:  ("tab-earth", "earth-surface", 1),   # 指南針為什麼指北
-    93:  ("tab-earth", "earth-surface", 3),   # 地球是一塊大磁鐵
-    95:  ("tab-earth", "earth-surface", 2),   # 地球周圍的磁場線
-    96:  ("tab-earth", "earth-surface", 4),   # 地磁場像盾牌
-    99:  ("tab-earth", "earth-core", 1),      # 北方是誰在吸引 N 極
-    100: ("tab-earth", "earth-core", 3),      # 異名相吸的推理
-    101: ("tab-earth", "earth-core", 2),      # 透視地球內部
-    102: ("tab-earth", "earth-core", 4),      # 地磁南北極與夾角十一度
-}
 # 字幕：念的字 → 畫面字（其餘字不變）
 SUB_MAP = [("恩極", "N 極"), ("艾斯極", "S 極")]
+
+
+def load_config(name):
+    """讀 lessons/<課名>.json。sub 可以是 null（例如手機分頁沒有子頁）。"""
+    path = LESSON_DIR / (name + ".json")
+    if not path.exists():
+        have = sorted(p.stem for p in LESSON_DIR.glob("*.json"))
+        raise SystemExit("找不到課程設定 %s；現有的課：%s" % (path, have))
+    cfg = json.loads(path.read_text("utf-8"))
+    cfg["at"] = {int(k): v for k, v in cfg["at"].items()}
+    cfg.setdefault("expect_chorus", [])
+    cfg.setdefault("steps", {})
+    return cfg
 
 
 def parse(text):
@@ -136,8 +74,9 @@ def grep_has(html, attr, value):
     return r.returncode == 0
 
 
-def validate(items, errors):
+def validate(items, errors, cfg):
     lines = [i for i in items if i["kind"] == "line"]
+    cuts, steps, at = cfg["cuts"], cfg["steps"], cfg["at"]
     # 1. 讀音稿：說話行、切頁、釘選都不得有英文字母；說話行與切頁、釘選不得有阿拉伯數字
     for i in items:
         if i["kind"] == "line":
@@ -153,38 +92,43 @@ def validate(items, errors):
         if re.search(r"[0-9０-９]", body):
             errors.append("第 %d 行（%s）含阿拉伯數字：%s" % (i["src"], label, body))
     # 2. 說話行數、合聲位置
-    if len(lines) != EXPECT_LINES:
-        errors.append("說話行數是 %d，應為 %d" % (len(lines), EXPECT_LINES))
+    if len(lines) != cfg["expect_lines"]:
+        errors.append("說話行數是 %d，設定檔要求 %d" % (len(lines), cfg["expect_lines"]))
     chorus = [i["n"] for i in lines if i["speaker"] == "合聲"]
-    if chorus != EXPECT_CHORUS:
-        errors.append("合聲在第 %s 句，應為 %s" % (chorus, EXPECT_CHORUS))
+    if chorus != cfg["expect_chorus"]:
+        errors.append("合聲在第 %s 句，設定檔要求 %s" % (chorus, cfg["expect_chorus"]))
     # 3. cuts 標題必須與 ＊切頁 完全一致（順序也要一樣）
     titles = [i["arg"] for i in items if i["kind"] == "marker" and i["mtype"] == "切頁"]
-    if titles != list(CUTS):
-        errors.append("cuts 標題與稿子的＊切頁不一致：稿子=%s；cuts=%s" % (titles, list(CUTS)))
-    # 4. at 的句號必須是說話行
-    for n in AT:
+    if titles != list(cuts):
+        errors.append("cuts 標題與稿子的＊切頁不一致：稿子=%s；設定檔=%s" % (titles, list(cuts)))
+    # 4. at 的句號必須是說話行；步驟編號要在該子頁的步驟數之內
+    for n, v in at.items():
         if not 1 <= n <= len(lines):
             errors.append("at 的句號 %d 不是說話行（共 %d 句）" % (n, len(lines)))
-    for n, (_t, sb, st) in AT.items():
-        if st is not None and not 1 <= st <= STEPS.get(sb, 0):
-            errors.append("at 第 %d 句：%s 沒有第 %s 步（共 %s 步）" % (n, sb, st, STEPS.get(sb)))
-    # 5. tab/sub 必須存在於 html
-    html = REPO / PAGE
+        step = v.get("step")
+        if step is None:
+            continue
+        key = v.get("sub") or v["tab"]  # 沒有子頁的分頁（例如手機），步驟數登記在分頁名稱下
+        if key not in steps:
+            errors.append("at 第 %d 句：%s 沒有在 steps 登記步驟數" % (n, key))
+        elif not 1 <= step <= steps[key]:
+            errors.append("at 第 %d 句：%s 沒有第 %s 步（共 %s 步）" % (n, key, step, steps[key]))
+    # 5. tab/sub 必須存在於 html（sub 為 null 的不檢查）
+    html = REPO / cfg["page"]
     if not html.exists():
         errors.append("找不到 %s" % html)
     else:
-        pairs = list(CUTS.values()) + [(t, sb) for t, sb, _ in AT.values()]
+        pairs = [(v["tab"], v.get("sub")) for v in cuts.values()] + [(v["tab"], v.get("sub")) for v in at.values()]
         for tab in sorted({t for t, _ in pairs}):
             if not grep_has(html, "data-tab", tab):
-                errors.append('%s 找不到 data-tab="%s"' % (PAGE, tab))
-        for sub in sorted({s for _, s in pairs}):
+                errors.append('%s 找不到 data-tab="%s"' % (cfg["page"], tab))
+        for sub in sorted({s for _, s in pairs if s}):
             if not grep_has(html, "data-sub", sub):
-                errors.append('%s 找不到 data-sub="%s"' % (PAGE, sub))
+                errors.append('%s 找不到 data-sub="%s"' % (cfg["page"], sub))
     return errors
 
 
-def build_manifest(items):
+def build_manifest(items, cfg):
     out = []
     for i in items:
         if i["kind"] == "marker":
@@ -204,39 +148,45 @@ def build_manifest(items):
             "tracks": {v: "_tracks/%s_%s.mp3" % (fid, FILE_NAME[v]) for v in voices} if chorus else None,
             "params": {},
         })
-    return {"lesson": LESSON, "settings": SETTINGS, "items": out}
+    return {"lesson": cfg["lesson"], "settings": SETTINGS, "items": out}
 
 
 def to_subtitle(text):
     for src, dst in SUB_MAP:
         text = text.replace(src, dst)
     # N／S 前面若緊接中文字，補一個空格（例：被S 極 → 被 S 極）
-    return re.sub(r"(?<=[\u4e00-\u9fff])(?=[NS] 極)", " ", text)
+    return re.sub(r"(?<=[一-鿿])(?=[NS] 極)", " ", text)
 
 
-def build_stage(items):
+def build_stage(items, cfg):
     subs = {}
     for i in items:
         if i["kind"] == "line" and any(src in i["text"] for src, _ in SUB_MAP):
             subs["%02d" % i["n"]] = to_subtitle(i["text"])
+    at = {}
+    for n, v in sorted(cfg["at"].items()):
+        e = {"tab": v["tab"], "sub": v.get("sub")}
+        if v.get("step") is not None:
+            e["step"] = v["step"]
+        at["%02d" % n] = e
     return {
-        "page": PAGE,
-        "cuts": {t: {"tab": a, "sub": b} for t, (a, b) in CUTS.items()},
-        "at": {"%02d" % n: ({"tab": a, "sub": b, "step": c} if c else {"tab": a, "sub": b}) for n, (a, b, c) in sorted(AT.items())},
+        "page": cfg["page"],
+        "cuts": {t: {"tab": v["tab"], "sub": v.get("sub")} for t, v in cfg["cuts"].items()},
+        "at": at,
         "subs": subs,
     }
 
 
-SPEC_MD = """# magnetism_1 stage 規格
+SPEC_MD = """# %(lesson)s stage 規格
 
-由 `tools/voice/lesson_studio/build_lesson.py` 從稿子自動產生，請改稿子或腳本，不要手改 `stage.json`。
+由 `tools/voice/lesson_studio/build_lesson.py` 從稿子自動產生，請改稿子或設定檔，不要手改 `stage.json`。
 
-- `page`：課程頁 `magnetism_1.html`。
-- `cuts`：播到 `＊切頁：<標題>` 時，點 `.tab-button[data-tab=tab]`，再點 `.sub-tab-btn[data-sub=sub]`。標題必須與稿子完全一致（共 %(cuts)d 個）。
-- `at`：播到第 N 句（說話行編號，兩位數，與 manifest 的 `id` 相同）時，切到指定 tab／sub（共 %(at)d 個）。
-- `subs`：該句的字幕顯示字。只放含「N 極／S 極」的句子，把念的字換成畫面字（恩極→N 極、艾斯極→S 極），其餘字不變（共 %(subs)d 句）。沒列在 `subs` 的句子，字幕直接顯示 `text`。
+- `page`：課程頁 `%(page)s`。
+- `cuts`：播到 `＊切頁：<標題>` 時，點 `.tab-button[data-tab=tab]`，再點 `.sub-tab-btn[data-sub=sub]`（sub 為 null 就只切分頁）。標題必須與稿子完全一致（共 %(cuts)d 個）。
+- `at`：播到第 N 句（說話行編號，兩位數，與 manifest 的 `id` 相同）時，切到指定 tab／sub（共 %(at)d 個）。有 `step` 的，會再點該子頁的第 step 個步驟按鈕。
+- `subs`：該句的字幕顯示字。只放含「恩極／艾斯極」的句子，把念的字換成畫面字（恩極→N 極、艾斯極→S 極），其餘字不變（共 %(subs)d 句）。沒列在 `subs` 的句子，字幕直接顯示 `text`。
 
-句號有兩種寫法，不要混用：`id`／`stage.json` 的 key 是兩位數（01–106）；音檔檔名是三位數（`001_yanjun.mp3`–`106_...`），說話者對應 彥君=yanjun、曉臻=xiaozhen、合聲=hesheng。
+句號有兩種寫法，不要混用：`id`／`stage.json` 的 key 是兩位數（01–%(n2)s）；音檔檔名是三位數（`001_yanjun.mp3`…），說話者對應 彥君=yanjun、曉臻=xiaozhen、合聲=hesheng。
 
 ## cuts
 
@@ -248,35 +198,41 @@ SPEC_MD = """# magnetism_1 stage 規格
 """
 
 
-def build_spec(stage):
-    cuts_tbl = "\n".join("- %s → `%s` / `%s`" % (t, v["tab"], v["sub"]) for t, v in stage["cuts"].items())
-    at_tbl = "\n".join("- 第 %s 句 → `%s` / `%s`" % (k, v["tab"], v["sub"]) for k, v in stage["at"].items())
-    return SPEC_MD % {"cuts": len(stage["cuts"]), "at": len(stage["at"]), "subs": len(stage["subs"]),
+def build_spec(stage, cfg):
+    cuts_tbl = "\n".join("- %s → `%s` / `%s`" % (t, v["tab"], v["sub"] or "null") for t, v in stage["cuts"].items())
+    at_tbl = "\n".join("- 第 %s 句 → `%s` / `%s`%s" % (
+        k, v["tab"], v["sub"] or "null", (" / 第 %d 步" % v["step"]) if "step" in v else "")
+        for k, v in stage["at"].items())
+    return SPEC_MD % {"lesson": cfg["lesson"], "page": cfg["page"], "n2": "%02d" % cfg["expect_lines"],
+                      "cuts": len(stage["cuts"]), "at": len(stage["at"]), "subs": len(stage["subs"]),
                       "cuts_tbl": cuts_tbl, "at_tbl": at_tbl}
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--script", default=str(DEFAULT_SCRIPT))
-    ap.add_argument("--out", default=str(DEFAULT_OUT))
+    ap.add_argument("--lesson", required=True, help="課名，對應 lessons/<課名>.json，例如 magnetism_1")
+    ap.add_argument("--script", help="稿子路徑（預設用設定檔裡的 script）")
+    ap.add_argument("--out", help="輸出資料夾（預設 audio/<課名>）")
     a = ap.parse_args()
-    items, errors = parse(Path(a.script).read_text("utf-8"))
-    errors = validate(items, errors)
+    cfg = load_config(a.lesson)
+    script = Path(a.script) if a.script else REPO / cfg["script"]
+    out = Path(a.out) if a.out else REPO / "audio" / cfg["lesson"]
+    items, errors = parse(script.read_text("utf-8"))
+    errors = validate(items, errors, cfg)
     if errors:
         print("驗證失敗，沒有寫任何檔案：")
         for e in errors:
             print("  - " + e)
         sys.exit(1)
-    manifest, stage = build_manifest(items), build_stage(items)
-    out = Path(a.out)
+    manifest, stage = build_manifest(items, cfg), build_stage(items, cfg)
     out.mkdir(parents=True, exist_ok=True)
     dump = lambda o: json.dumps(o, ensure_ascii=False, indent=2) + "\n"  # noqa: E731
     (out / "manifest.json").write_text(dump(manifest), "utf-8")
     (out / "stage.json").write_text(dump(stage), "utf-8")
-    (out / "stage_spec.md").write_text(build_spec(stage), "utf-8")
+    (out / "stage_spec.md").write_text(build_spec(stage, cfg), "utf-8")
     n_line = sum(1 for i in manifest["items"] if i["kind"] == "line")
     print("OK：說話行 %d、合聲 %s、cuts %d、at %d、subs %d → %s" % (
-        n_line, EXPECT_CHORUS, len(stage["cuts"]), len(stage["at"]), len(stage["subs"]), out))
+        n_line, cfg["expect_chorus"], len(stage["cuts"]), len(stage["at"]), len(stage["subs"]), out))
 
 
 if __name__ == "__main__":

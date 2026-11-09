@@ -117,6 +117,6 @@
 2. `build_lesson.py` 的 `CUTS`／`AT`／`STEPS` 設定「句號 → 分頁、子頁、第幾步」，講到什麼畫面就自動跳到那個動畫（只捲一次，不鎖定）。
 3. 錄音檔名一律英文三位數 `NNN_yanjun/xiaozhen/hesheng.mp3`（要用新版 class_studio.py）。
 4. 音檔放 repo `audio/<課>/mp3/`（同網域）。**不要只放 GitHub Release**：iPad Safari 播不出來。
-5. 播放器全程共用同一個 Audio 元素（iOS 自動播放限制）；範例見 `magnetism_1_voice_v1.js`。
+5. 播放器全程共用同一個 Audio 元素（iOS 自動播放限制）；播放器是通用的 `lesson_voice.js`，課名由課程頁的 `data-lesson` 指定。
 6. 預覽用 Artifact（音檔內嵌）；推 main 前要使用者說 OK；上線後 iPad 與電腦各測一次。
 完整說明在專案文件「網課有聲講解_標準流程」。
