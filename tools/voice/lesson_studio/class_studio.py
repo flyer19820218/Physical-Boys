@@ -31,7 +31,7 @@ try:
 except ImportError:
     sys.exit("找不到 edge-tts，請先執行：pip3 install -U edge-tts")
 
-APP_VERSION = "2026-11-09 英文檔名・合聲語速"
+APP_VERSION = "2026-11-09 v4 合聲必合成・自動裝 ffmpeg"
 MIN_BYTES = 1000  # 小於等於這個大小的音檔視為沒錄到
 FILE_NAME = {"彥君": "yanjun", "曉臻": "xiaozhen", "合聲": "hesheng"}  # 輸出音檔用英文檔名
 VOICE = {"彥君": "zh-TW-YunJheNeural", "曉臻": "zh-TW-HsiaoChenNeural"}
@@ -118,13 +118,43 @@ def parse_script(text):
 
 # ───────────────────────── 錄音 ─────────────────────────
 def find_ffmpeg():
+    """先找電腦上的 ffmpeg；找不到就用 imageio-ffmpeg 附的執行檔（不需要 brew）。"""
     p = shutil.which("ffmpeg")
     if p:
         return p
     for c in ("/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg"):
         if Path(c).exists():
             return c
-    return None
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def ensure_ffmpeg():
+    """啟動時確認有 ffmpeg；沒有就自動 pip 安裝 imageio-ffmpeg（約 30MB，只要一次）。"""
+    if find_ffmpeg():
+        return True
+    print("第一次使用：正在安裝合聲需要的 ffmpeg 元件（約 30MB，只要一次，請稍等）…")
+    site_dir = None
+    try:
+        import site
+        site_dir = site.getusersitepackages()
+    except Exception:  # noqa: BLE001
+        pass
+    for extra in (["--user"], ["--user", "--break-system-packages"], []):
+        r = subprocess.run([sys.executable, "-m", "pip", "install", "-q", *extra, "imageio-ffmpeg"],
+                           capture_output=True, text=True)
+        if r.returncode == 0:
+            break
+    if site_dir and site_dir not in sys.path:
+        sys.path.insert(0, site_dir)
+    import importlib
+    importlib.invalidate_caches()
+    ok = find_ffmpeg() is not None
+    print("ffmpeg 已就緒。" if ok else "自動安裝 ffmpeg 失敗：合聲句會先分開存成兩軌（_tracks）。請把這個視窗的文字傳給老師。")
+    return ok
 
 
 async def _save(text, voice, rate, pitch, path):
@@ -535,7 +565,7 @@ PAGE = r"""<!doctype html>
       if (s.running) { note("錄音中… " + done + " / " + tot); timer = setTimeout(poll, 700); }
       else if (s.finished) {
         var m = "錄完了：" + (s.message && s.message.indexOf("成功") === 0 ? s.message : done + " / " + tot + " 句成功" + (bad ? "，" + bad + " 句失敗（可按該句的「重錄」）" : "") + "。");
-        if (!s.ffmpeg) m += " 這台電腦沒有 ffmpeg，合聲句先存成兩軌；在終端機執行 brew install ffmpeg 後再按一次開始錄音就會合成。";
+        if (!s.ffmpeg) m += " 找不到合聲用的 ffmpeg，合聲句先存成兩軌；請關掉程式重新開啟（會自動安裝），再按一次開始錄音就會合成。";
         if (s.message && s.message.indexOf("成功") !== 0) m += " " + s.message;
         note(m, bad || !s.ffmpeg ? "warn" : "");
       }
@@ -664,6 +694,7 @@ def main():
             continue
     if server is None:
         sys.exit("8765–8775 的連接埠都被佔用了，請先關掉其他程式再試。")
+    ensure_ffmpeg()
     url = "http://127.0.0.1:%d/" % server.server_address[1]
     print("彥君和曉臻錄音工作室已啟動：%s\n關閉請在這個視窗按 Ctrl+C" % url)
     threading.Timer(0.6, lambda: webbrowser.open(url)).start()
