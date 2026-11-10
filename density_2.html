@@ -402,7 +402,7 @@
         <section id="tab3" class="tab-content">
             <h2 data-zh="🎯 虛擬黑板實驗室：等臂天平秤重實戰" data-en="🎯 Virtual Lab: Equal-Arm Balance Practice">🎯 虛擬黑板實驗室：等臂天平秤重實戰</h2>
             <div class="concept-box">
-                💡 <strong class="hl-yellow" data-zh="實戰挑戰：" data-en="Challenge:">實戰挑戰：</strong> <span data-zh="左盤放有一個神秘的「金黃色礦石」，請點擊按鈕將右邊的砝碼一一加入秤盤，遵循<span class='hl-green'>「由大到小」</span>的原則，直到指針垂直指向中央零刻度！" data-en="Left pan has a mysterious 'Golden Ore'. Click weights to add them to the right pan, following the <span class='hl-green'>'Large to Small'</span> rule until the pointer points straight down to zero!">左盤放有一個神秘的「金黃色礦石」，請點擊按鈕將右邊的砝碼一一加入秤盤，遵循<span class="hl-green">「由大到小」</span>的原則，直到指針垂直指向中央零刻度！</span>
+                💡 <strong class="hl-yellow" data-zh="實戰挑戰：" data-en="Challenge:">實戰挑戰：</strong> <span data-zh="左盤放有一個神秘的「金黃色礦石」，請點擊按鈕將右邊的砝碼一一加入秤盤，遵循<span class='hl-green'>「由大到小」</span>的原則，直到指針垂直指向中央零刻度！" data-en="Left pan has a mysterious 'Golden Ore'. Click weights to add them to the right pan, following the <span class='hl-green'>'Large to Small'</span> rule until the pointer points straight at the center zero mark!">左盤放有一個神秘的「金黃色礦石」，請點擊按鈕將右邊的砝碼一一加入秤盤，遵循<span class="hl-green">「由大到小」</span>的原則，直到指針垂直指向中央零刻度！</span>
             </div>
 
             <div class="interactive-area">
@@ -420,7 +420,7 @@
                     </div>
                 </div>
 
-                <canvas id="balanceCanvas" width="900" height="480" style="aspect-ratio: 900 / 480;"></canvas>
+                <canvas id="balanceCanvas" width="900" height="580" style="aspect-ratio: 900 / 580;"></canvas>
                 <p class="weight-hint" data-zh="💡 砝碼由大到小試：太重就夾出來，換小一號的砝碼。" data-en="💡 Try weights from large to small: if it is too heavy, take it out and use the next smaller one.">💡 砝碼由大到小試：太重就夾出來，換小一號的砝碼。</p>
 
                 <div style="display: flex; justify-content: space-around; flex-wrap: wrap; max-width: 600px; margin: 15px auto 0 auto; background: var(--bg-card); padding: 10px; border-radius: 8px; border: 2px solid var(--chalk-green);">
@@ -700,8 +700,8 @@
         }
 
         // --- 2. 虛擬天平（2026-11 重構：懸吊式等臂天平＋阻尼彈簧動畫） ---
-        // 幾何常數（畫布內部座標 900×480）
-        const BAL = { cx: 450, py: 92, arm: 240, hang: 185, link: 48, panRx: 135, panRy: 28, ptr: 196, maxTilt: 0.25, stop: 0.30 };
+        // 幾何常數（畫布內部座標 900×580）
+        const BAL = { cx: 450, py: 196, baseY: 500, arm: 240, hang: 185, link: 48, panRx: 135, panRy: 28, ptr: 128, maxTilt: 0.25, stop: 0.30 };
         // 砝碼外觀與固定擺位：後排（大）50/20/10/5，前排（小）2/1/0.5/0.2；dx 為相對秤盤中心
         const BAL_WEIGHTS = {
             50:  { w: 66, h: 70, dx: -90, row: 0 },
@@ -725,7 +725,8 @@
         function balTargetFor(sum) {
             const diff = targetMass - sum;
             if (Math.abs(diff) < 0.1) return 0;
-            return Math.max(-BAL.maxTilt, Math.min(BAL.maxTilt, diff * 0.012)); // 正代表左重
+            // 只要不平衡就至少傾斜 0.06 rad（小差距也看得出來），再隨差距加大到上限
+            return (diff > 0 ? 1 : -1) * Math.min(BAL.maxTilt, 0.06 + Math.abs(diff) * 0.012); // 正代表左重
         }
         // 已經落在秤盤上的砝碼才算重量（還在半空中的不算）
         function balLandedSum() {
@@ -1030,44 +1031,48 @@
             ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
             // 1. 底座＋兩顆水平調整腳
+            const by = BAL.baseY;
             [-84, 84].forEach(dx => {
                 ctx.fillStyle = 'rgba(241,245,249,0.85)';
-                ctx.fillRect(cx + dx - 3, 424, 6, 14);
-                balRR(ctx, cx + dx - 17, 436, 34, 10, 4);
+                ctx.fillRect(cx + dx - 3, by + 24, 6, 14);
+                balRR(ctx, cx + dx - 17, by + 36, 34, 10, 4);
                 ctx.fillStyle = balBrass(ctx, cx + dx - 17, cx + dx + 17); ctx.fill();
                 ctx.strokeStyle = '#fb923c'; ctx.lineWidth = 1.5; ctx.stroke();
                 ctx.strokeStyle = 'rgba(15,35,24,0.45)'; ctx.lineWidth = 1;
-                for (let k = -10; k <= 10; k += 5) { ctx.beginPath(); ctx.moveTo(cx + dx + k, 438); ctx.lineTo(cx + dx + k, 444); ctx.stroke(); }
+                for (let k = -10; k <= 10; k += 5) { ctx.beginPath(); ctx.moveTo(cx + dx + k, by + 38); ctx.lineTo(cx + dx + k, by + 44); ctx.stroke(); }
             });
-            balRR(ctx, cx - 112, 400, 224, 26, 8);
+            balRR(ctx, cx - 112, by, 224, 26, 8);
             ctx.fillStyle = '#1c3b2b'; ctx.fill();
             ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 3; ctx.stroke();
             ctx.strokeStyle = 'rgba(74,222,128,0.35)'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.moveTo(cx - 98, 408); ctx.lineTo(cx + 98, 408); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx - 98, by + 8); ctx.lineTo(cx + 98, by + 8); ctx.stroke();
 
             // 2. 中央立柱
             const cg = ctx.createLinearGradient(cx - 9, 0, cx + 9, 0);
             cg.addColorStop(0, 'rgba(241,245,249,0.45)'); cg.addColorStop(0.4, '#f1f5f9'); cg.addColorStop(1, 'rgba(241,245,249,0.4)');
-            ctx.fillStyle = '#132a1e'; ctx.fillRect(cx - 9, py + 16, 18, 400 - py - 16);
-            ctx.fillStyle = cg; ctx.fillRect(cx - 9, py + 16, 18, 400 - py - 16);
-            balRR(ctx, cx - 20, 388, 40, 12, 4); ctx.fillStyle = '#f1f5f9'; ctx.fill();
+            ctx.fillStyle = '#132a1e'; ctx.fillRect(cx - 9, py + 16, 18, by - py - 16);
+            ctx.fillStyle = cg; ctx.fillRect(cx - 9, py + 16, 18, by - py - 16);
+            balRR(ctx, cx - 20, by - 12, 40, 12, 4); ctx.fillStyle = '#f1f5f9'; ctx.fill();
 
-            // 3. 刻度板
-            const plateTop = py + 176, plateH = 82;
-            balRR(ctx, cx - 78, plateTop, 156, plateH, 10);
+            // 3. 刻度板（上皿天平：裝在立柱頂端、橫樑上方；指針朝上，偏向較重的一側）
+            const pr = BAL.ptr;
+            const plateTop = py - pr - 56, plateBot = py - pr + 4;
+            ctx.strokeStyle = 'rgba(241,245,249,0.6)'; ctx.lineWidth = 3;
+            [-1, 1].forEach(sd => { ctx.beginPath(); ctx.moveTo(cx + sd * 50, plateBot); ctx.lineTo(cx + sd * 13, py + 18); ctx.stroke(); });
+            balRR(ctx, cx - 62, plateTop, 124, plateBot - plateTop, 10);
             ctx.fillStyle = '#0f2318'; ctx.fill();
             ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2.5; ctx.stroke();
             for (let i = -5; i <= 5; i++) {
                 const t = i * 0.05, s = Math.sin(t), c = Math.cos(t);
-                const r0 = 203, r1 = i === 0 ? 224 : (Math.abs(i) === 5 ? 216 : 211);
+                const r0 = pr + 6, r1 = pr + (i === 0 ? 24 : (Math.abs(i) === 5 ? 18 : 14));
                 ctx.strokeStyle = i === 0 ? (balanced ? '#4ade80' : '#fde047') : '#f1f5f9';
                 ctx.lineWidth = i === 0 ? 4 : 2;
-                ctx.beginPath(); ctx.moveTo(cx + r0 * s, py + r0 * c); ctx.lineTo(cx + r1 * s, py + r1 * c); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx + r0 * s, py - r0 * c); ctx.lineTo(cx + r1 * s, py - r1 * c); ctx.stroke();
             }
             ctx.fillStyle = balanced ? '#4ade80' : '#fde047';
             ctx.font = `bold 18px ${BAL_FONT}`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(tr('零刻度', 'Zero'), cx, plateTop + plateH - 15);
+            ctx.fillText(tr('零刻度', 'Zero'), cx, py - pr - 41);
 
             // 4. 吊架與秤盤（掛點由橫樑角度算出，秤盤保持水平）
             const ca = Math.cos(a), sa = Math.sin(a);
@@ -1104,7 +1109,7 @@
             ctx.translate(cx, py);
             ctx.rotate(-a);
             // 指針
-            ctx.beginPath(); ctx.moveTo(-5, 0); ctx.lineTo(0, BAL.ptr); ctx.lineTo(5, 0); ctx.closePath();
+            ctx.beginPath(); ctx.moveTo(-5, 0); ctx.lineTo(0, -BAL.ptr); ctx.lineTo(5, 0); ctx.closePath();
             ctx.fillStyle = stateColor; ctx.fill();
             ctx.strokeStyle = 'rgba(15,35,24,0.6)'; ctx.lineWidth = 1; ctx.stroke();
             // 橫樑
@@ -1139,7 +1144,7 @@
             ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 3; ctx.stroke();
 
             // 指針尖端圓點
-            const tx = cx + BAL.ptr * sa, ty = py + BAL.ptr * ca;
+            const tx = cx - BAL.ptr * sa, ty = py - BAL.ptr * ca;   // 左重 → 針尖偏左
             ctx.beginPath(); ctx.arc(tx, ty, 5, 0, Math.PI * 2);
             ctx.fillStyle = stateColor; ctx.fill();
 
@@ -1148,20 +1153,19 @@
                 ctx.save();
                 ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 16;
                 ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 3.5;
-                ctx.beginPath(); ctx.arc(cx, py + BAL.ptr, 14, 0, Math.PI * 2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(cx, py - BAL.ptr, 14, 0, Math.PI * 2); ctx.stroke();
                 ctx.restore();
                 const msg = tr('平衡！', 'Balanced!');
                 ctx.font = `bold 22px ${BAL_FONT}`;
-                const mw = ctx.measureText(msg).width;
-                const gx = cx - (mw + 44) / 2 + 16;
-                ctx.beginPath(); ctx.arc(gx, 42, 16, 0, Math.PI * 2);
+                const gx = cx + 96;   // 刻度板右側，避開刻度板與橫樑
+                ctx.beginPath(); ctx.arc(gx, 46, 16, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(74,222,128,0.2)'; ctx.fill();
                 ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 3; ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(gx - 8, 42); ctx.lineTo(gx - 2, 49); ctx.lineTo(gx + 9, 35);
+                ctx.beginPath(); ctx.moveTo(gx - 8, 46); ctx.lineTo(gx - 2, 53); ctx.lineTo(gx + 9, 39);
                 ctx.lineWidth = 4; ctx.stroke();
                 ctx.fillStyle = '#4ade80';
                 ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-                ctx.fillText(msg, gx + 26, 43);
+                ctx.fillText(msg, gx + 26, 47);
             }
 
             // 9. 盤名標籤（較重的一側變色並加上向下箭頭）
@@ -1176,11 +1180,11 @@
                 let x0 = d[1] - total / 2;
                 ctx.fillStyle = col;
                 if (isHeavy) {
-                    ctx.beginPath(); ctx.moveTo(x0, 450); ctx.lineTo(x0 + 18, 450); ctx.lineTo(x0 + 9, 466); ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(x0, by + 50); ctx.lineTo(x0 + 18, by + 50); ctx.lineTo(x0 + 9, by + 66); ctx.closePath(); ctx.fill();
                     x0 += 26;
                 }
                 ctx.textAlign = 'left';
-                ctx.fillText(text, x0, 458);
+                ctx.fillText(text, x0, by + 58);
             });
 
             ctx.restore();
