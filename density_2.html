@@ -248,9 +248,17 @@
         .tab-btn.active .tab-sub { opacity: 0.78; }
         @media (max-width: 900px) { .tabs { grid-template-columns: repeat(3, 1fr); } .tab-btn { min-height: 118px; } }
         @media (max-width: 480px) { .tabs { grid-template-columns: repeat(2, 1fr); } .tab-btn { min-height: 96px; } .tab-main { font-size: 19px; } .tab-sub { font-size: 15px; } }
-        /* 模式切換只改顯示：學生操作＝保留互動、收合講解；老師講解＝收合互動、展開講解 */
-        body.mode-teacher .interactive-area { display: none; }
+        /* 學生操作＝自己動手（講解收合）；老師講解＝系統自動操作並連續播放動畫（操作按鈕收起，講解展開） */
         body.mode-student .teacher-box { display: none; }
+        body.mode-teacher .stu-only { display: none !important; }
+        .teach-bar { display: none; width: 100%; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px 0; scroll-margin-top: 84px; }
+        body.mode-teacher .teach-bar { display: flex; }
+        .teach-btn { min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3; background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green); touch-action: manipulation; }
+        .teach-btn:hover { background: var(--chalk-green); color: #0f2318; }
+        .teach-btn.hot { background: var(--chalk-yellow); color: #0f2318; border-color: var(--chalk-yellow); }
+        .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+        .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; }
+        .teach-note { flex: 1 1 100%; text-align: center; font-size: 19px; line-height: 1.55; color: var(--chalk-yellow); min-height: 1.55em; }
   </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -282,9 +290,9 @@
 
     <div class="mode-switch" role="group" aria-label="學生操作或老師講解">
         <button class="mode-btn active" id="modeStudent" type="button" onclick="setLessonMode('student')" data-zh="✋ 學生操作" data-en="✋ Student Lab">✋ 學生操作</button>
-        <button class="mode-btn" id="modeTeacher" type="button" onclick="setLessonMode('teacher')" data-zh="👩🏻‍🏫 老師講解" data-en="👩🏻‍🏫 Teacher Notes">👩🏻‍🏫 老師講解</button>
+        <button class="mode-btn" id="modeTeacher" type="button" onclick="setLessonMode('teacher')" data-zh="👩🏻‍🏫 老師講解" data-en="👩🏻‍🏫 Teacher Guide">👩🏻‍🏫 老師講解</button>
     </div>
-    <p class="mode-hint" data-zh="學生操作：保留所有互動，講解收合。老師講解：收合操作區，只看講解重點。" data-en="Student Lab: keep every interaction, notes folded. Teacher Notes: hide the lab, show the key points.">學生操作：保留所有互動，講解收合。老師講解：收合操作區，只看講解重點。</p>
+    <p class="mode-hint" data-zh="學生操作：自己動手玩每個動畫。老師講解：按下去就自動示範，這個分頁的動畫與操作一步接一步播放，可暫停、重播；切換分頁會從頭播。" data-en="Student Lab: try every animation yourself. Teacher Notes: press it and the tab plays by itself, step after step; you can pause or replay, and switching tabs restarts from the beginning.">學生操作：自己動手玩每個動畫。老師講解：按下去就自動示範，這個分頁的動畫與操作一步接一步播放，可暫停、重播；切換分頁會從頭播。</p>
 
     <nav class="tabs">
         <button class="tab-btn active" type="button" onclick="switchTab('tab1')">
@@ -310,6 +318,13 @@
     </nav>
 
     <div class="container">
+        <!-- 老師講解：自動播放導覽列（由 JS 搬到目前分頁動畫的正上方） -->
+        <div class="teach-bar" id="teachBar">
+            <button class="teach-btn" id="teachPause" type="button"></button>
+            <button class="teach-btn" id="teachReplay" type="button"></button>
+            <div class="teach-track"><div class="teach-fill" id="teachFill"></div></div>
+            <div class="teach-note" id="teachNote" aria-live="polite"></div>
+        </div>
         <!-- 🌟 V5 曉臻老師專屬 Hook 區塊 -->
         <div class="hook-box" id="hookBox">
             <!-- JS 動態生成 -->
@@ -357,7 +372,7 @@
             <div class="interactive-area">
                 <h3 style="margin-top:0;" data-zh="🚀 宇宙旅行體重計：點擊星球，觀察質量與重量的變化！" data-en="🚀 Space Travel Scale: Click a planet to observe Mass vs Weight!">🚀 宇宙旅行體重計：點擊星球，觀察質量與重量的變化！</h3>
                 <p data-zh="假設有一位在地球上質量為 <strong class='hl-yellow'>60 kg</strong> 的太空人，請帶他到不同星球測試：" data-en="Assume an astronaut has a mass of <strong class='hl-yellow'>60 kg</strong> on Earth. Let's test on different planets:">假設有一位在地球上質量為 <strong class="hl-yellow">60 kg</strong> 的太空人，請帶他到不同星球測試：</p>
-                <div style="margin: 15px 0;">
+                <div class="stu-only" style="margin: 15px 0;">
                     <button class="btn btn-green" onclick="spaceTravel('earth')" data-zh="🌍 地球表面 (1G 引力)" data-en="🌍 Earth Surface (1G)">🌍 地球表面 (1G 引力)</button>
                     <button class="btn btn-blue" onclick="spaceTravel('moon')" data-zh="🌕 月球表面 (1/6 引力)" data-en="🌕 Moon Surface (1/6G)">🌕 月球表面 (1/6 引力)</button>
                     <button class="btn btn-pink" onclick="spaceTravel('space')" data-zh="🛰️ 外太空 (0G 無重力)" data-en="🛰️ Outer Space (0G)">🛰️ 外太空 (0G 無重力真空)</button>
@@ -410,7 +425,7 @@
             </div>
 
             <div class="interactive-area">
-                <div style="margin-bottom: 15px;">
+                <div class="stu-only" style="margin-bottom: 15px;">
                     <strong class="hl-yellow" style="font-size:1.3rem;" data-zh="👉 可用砝碼盒 (點擊放入/移除右秤盤)：" data-en="👉 Available Weights (Click to Add/Remove):">👉 可用砝碼盒 (點擊放入/移除右秤盤)：</strong><br>
                     <div class="weight-tray">
                         <span class="weight-chip mono" role="button" aria-pressed="false" data-w="50" onclick="toggleWeight(50)">50 g</span>
@@ -425,7 +440,7 @@
                 </div>
 
                 <canvas id="balanceCanvas" width="900" height="580" style="aspect-ratio: 900 / 580;"></canvas>
-                <p class="weight-hint" data-zh="💡 砝碼由大到小試：太重就夾出來，換小一號的砝碼。" data-en="💡 Try weights from large to small: if it is too heavy, take it out and use the next smaller one.">💡 砝碼由大到小試：太重就夾出來，換小一號的砝碼。</p>
+                <p class="weight-hint stu-only" data-zh="💡 砝碼由大到小試：太重就夾出來，換小一號的砝碼。" data-en="💡 Try weights from large to small: if it is too heavy, take it out and use the next smaller one.">💡 砝碼由大到小試：太重就夾出來，換小一號的砝碼。</p>
 
                 <div style="display: flex; justify-content: space-around; flex-wrap: wrap; max-width: 600px; margin: 15px auto 0 auto; background: var(--bg-card); padding: 10px; border-radius: 8px; border: 2px solid var(--chalk-green);">
                     <div><span data-zh="左盤待測物：" data-en="Left Pan Object:">左盤待測物：</span><strong class="hl-yellow" data-zh="神秘礦石" data-en="Mysterious Ore">神秘礦石</strong></div>
@@ -435,7 +450,7 @@
                 <p id="balanceStatusText" class="hl-orange" style="margin-top: 15px; font-size: 1.3rem; font-weight: bold;">
                     <!-- JS Rendered -->
                 </p>
-                <button class="btn btn-blue" onclick="resetBalance()" style="margin-top: 10px;" data-zh="🔄 重置秤重實驗" data-en="🔄 Reset Experiment">🔄 重置秤重實驗</button>
+                <button class="btn btn-blue stu-only" onclick="resetBalance()" style="margin-top: 10px;" data-zh="🔄 重置秤重實驗" data-en="🔄 Reset Experiment">🔄 重置秤重實驗</button>
             </div>
         </section>
 
@@ -483,7 +498,7 @@
             </table>
 
             <div class="teacher-box">
-                👩‍🏫 <strong class="hl-yellow" data-zh="老師講解：石頭長得不規則，怎麼量它的體積？" data-en="Teacher's explanation: How do we measure the volume of an irregular stone?">老師講解：石頭長得不規則，怎麼量它的體積？</strong><br>
+                <strong class="hl-yellow" data-zh="老師講解：石頭長得不規則，怎麼量它的體積？" data-en="Teacher's explanation: How do we measure the volume of an irregular stone?">老師講解：石頭長得不規則，怎麼量它的體積？</strong><br>
                 <span data-zh="沒有公式能套，所以改用<span class='hl-green'>「水位變化」</span>來量：" data-en="No formula fits, so we use the <span class='hl-green'>change in water level</span> instead:">沒有公式能套，所以改用<span class="hl-green">「水位變化」</span>來量：</span>
                 <ul class="vl-points">
                     <li data-zh="石頭放進水裡，會把同體積的水擠上來，所以 <strong class='hl-green'>水位上升的體積 ＝ 石頭的體積</strong>。" data-en="The stone pushes out an equal volume of water, so <strong class='hl-green'>rise in water level = stone's volume</strong>.">石頭放進水裡，會把同體積的水擠上來，所以 <strong class="hl-green">水位上升的體積 ＝ 石頭的體積</strong>。</li>
@@ -495,27 +510,27 @@
             </div>
 
             <div class="interactive-area" id="volumeLab">
-                <h3 style="margin-top:0;" data-zh="🧪 學生操作：排水法實驗室" data-en="🧪 Student Lab: Water Displacement">🧪 學生操作：排水法實驗室</h3>
-                <p data-zh="量筒裡原本有 <strong class='hl-blue mono'>50 mL</strong> 的水。請依序操作，<strong class='hl-yellow'>先讀原水位</strong>，放入石頭後再讀新水位。" data-en="The cylinder starts with <strong class='hl-blue mono'>50 mL</strong> of water. Work in order: <strong class='hl-yellow'>read the starting level first</strong>, then read the level after the stone goes in.">量筒裡原本有 <strong class="hl-blue mono">50 mL</strong> 的水。請依序操作，<strong class="hl-yellow">先讀原水位</strong>，放入石頭後再讀新水位。</p>
-                <ol class="vl-steps">
+                <h3 class="stu-only" style="margin-top:0;" data-zh="🧪 學生操作：排水法實驗室" data-en="🧪 Student Lab: Water Displacement">🧪 學生操作：排水法實驗室</h3>
+                <p class="stu-only" data-zh="量筒裡原本有 <strong class='hl-blue mono'>50 mL</strong> 的水。請依序操作，<strong class='hl-yellow'>先讀原水位</strong>，放入石頭後再讀新水位。" data-en="The cylinder starts with <strong class='hl-blue mono'>50 mL</strong> of water. Work in order: <strong class='hl-yellow'>read the starting level first</strong>, then read the level after the stone goes in.">量筒裡原本有 <strong class="hl-blue mono">50 mL</strong> 的水。請依序操作，<strong class="hl-yellow">先讀原水位</strong>，放入石頭後再讀新水位。</p>
+                <ol class="vl-steps stu-only">
                     <li data-zh="① 讀原水位：平視，對準液面最低處。" data-en="① Read the starting level: eye-level, at the lowest point of the meniscus.">① 讀原水位：平視，對準液面最低處。</li>
                     <li data-zh="② 點選一顆石頭放入量筒，等它沉到底。" data-en="② Pick a stone and drop it in. Wait until it sinks to the bottom.">② 點選一顆石頭放入量筒，等它沉到底。</li>
                     <li data-zh="③ 讀新水位，用「新水位 − 原水位」算出體積。" data-en="③ Read the new level. Compute: new level − starting level.">③ 讀新水位，用「新水位 − 原水位」算出體積。</li>
                     <li data-zh="④ 把答案填進下方輸入框，按「檢查」。" data-en="④ Enter your answer below and press Check.">④ 把答案填進下方輸入框，按「檢查」。</li>
                 </ol>
                 <canvas id="volumeLabCanvas" width="700" height="420" style="aspect-ratio: 700 / 420;"></canvas>
-                <div class="vl-controls">
+                <div class="vl-controls stu-only">
                     <button class="btn btn-blue" onclick="vlDrop('small')" data-zh="🪨 放入小石頭" data-en="🪨 Drop Small Stone">🪨 放入小石頭</button>
                     <button class="btn btn-pink" onclick="vlDrop('large')" data-zh="🪨 放入大石頭" data-en="🪨 Drop Large Stone">🪨 放入大石頭</button>
                     <button class="btn btn-green" onclick="vlReset()" data-zh="🔄 重新放水" data-en="🔄 Refill Water">🔄 重新放水</button>
                 </div>
-                <div class="vl-answer">
+                <div class="vl-answer stu-only">
                     <label for="vlInput" data-zh="石頭的體積 ＝" data-en="Stone volume =">石頭的體積 ＝</label>
                     <input id="vlInput" type="number" inputmode="numeric" min="0" max="60" step="1" placeholder="?">
                     <span class="mono">cm³</span>
                     <button class="btn btn-blue" onclick="vlCheck()" data-zh="✅ 檢查" data-en="✅ Check">✅ 檢查</button>
                 </div>
-                <div id="vlFeedback" class="vl-feedback" aria-live="polite"></div>
+                <div id="vlFeedback" class="vl-feedback stu-only" aria-live="polite"></div>
             </div>
 
         </section>
@@ -533,7 +548,7 @@
                 <h3 style="margin-top:0;" data-zh="📐 視差光路模擬器：點擊觀察眼睛位置如何扭曲數值！" data-en="📐 Parallax Light-Path Simulator: See how eye position distorts values!">📐 視差光路模擬器：點擊觀察眼睛位置如何扭曲數值！</h3>
                 <p data-zh="量筒內真正的水體積是 <strong class='hl-green mono'>50.0 mL</strong>。請點擊不同視線，觀察看進去的數值會發生什麼誤差：" data-en="Actual water volume is <strong class='hl-green mono'>50.0 mL</strong>. Click different views to see the error in reading:">量筒內真正的水體積是 <strong class="hl-green mono">50.0 mL</strong>。請點擊不同視線，觀察看進去的數值會發生什麼誤差：</p>
                 
-                <div style="margin: 15px 0;">
+                <div class="stu-only" style="margin: 15px 0;">
                     <button class="btn btn-pink" onclick="checkParallax('top')" data-zh="👀 俯視 (由上往下看)" data-en="👀 Look Down">👀 俯視 (由上往下看)</button>
                     <button class="btn btn-green" onclick="checkParallax('mid')" data-zh="🎯 平視 (切齊液面中央最低處)" data-en="🎯 Eye-level">🎯 平視 (切齊液面中央最低處)</button>
                     <button class="btn btn-blue" onclick="checkParallax('bot')" data-zh="👀 仰視 (由下往上看)" data-en="👀 Look Up">👀 仰視 (由下往上看)</button>
@@ -552,6 +567,7 @@
     <script>
         // --- 確保切換分頁時的安全機制 (SOP V5) ---
         function killAllSims() {
+            if (typeof tourHalt === 'function') tourHalt();   // 老師講解的導覽時鐘
             // 排水法實驗室是本單元唯一的 requestAnimationFrame 動畫：切換分頁時取消並解除防重複旗標
             if (vlRafId !== null) { cancelAnimationFrame(vlRafId); vlRafId = null; }
             vlAnimating = false;   // 回到分頁時 drawVolumeLab() 會直接畫出最後的靜止畫面
@@ -608,7 +624,7 @@
             const tabId = activeTab.id;
             const hookBox = document.getElementById('hookBox');
             if(hookBox && hooks[tabId]) {
-                const titleText = currentLang === 'en' ? "👩🏻‍🏫 Teacher Xiaozhen says:" : "👩🏻‍🏫 曉臻老師說：";
+                const titleText = currentLang === 'en' ? "Ms. Xiaozhen says:" : "曉臻老師說：";
                 const contentText = currentLang === 'en' ? hooks[tabId].en : hooks[tabId].zh;
                 hookBox.innerHTML = `
                     <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
@@ -672,6 +688,7 @@
             if(tabId === 'tab1') drawSpaceScene();
             if(tabId === 'tab5') checkParallax(currentParallaxMode, false);
             if(tabId === 'tab4') drawVolumeLab();
+            if (document.body.classList.contains('mode-teacher')) tourStart();   // 老師講解：新分頁從頭自動播
         }
 
         // --- 1. 宇宙旅行體重計 ---
@@ -2142,6 +2159,7 @@
 
         function drawVolumeLab() {
             vlRenderFeedback();                       // 語言切換時回饋文字一併更新
+            if (typeof tourRenderBar === 'function' && tour.tab) tourRenderBar();   // 老師講解導覽列換語言
             if (vlAnimating) {
                 if (vlRafId === null) vlRafId = requestAnimationFrame(vlTick);   // 動畫中由迴圈自己重畫
                 return;
@@ -2149,13 +2167,132 @@
             vlRenderScene(VL_T_TOTAL);                // 靜止畫面：保留目前水位與石頭
         }
 
-        // --- 學生操作／老師講解 模式切換（只改顯示，不動互動邏輯） ---
+        // --- 學生操作／老師講解 模式切換 ---
+        // 老師講解＝自動示範：用本頁既有的動畫函式（spaceTravel／toggleWeight／vlDrop／checkParallax）一步接一步播放。
+        // 導覽時鐘只用 setInterval 推進時間（不是 requestAnimationFrame，各動畫自己的迴圈照舊會在靜止後停止）。
+        const TOUR = {
+            tab1: { steps: [
+                { t: 0,     fn: () => spaceTravel('earth'),   zh: '先在地球：質量 60 kg，重量 60 kgw，指針指到 60。', en: 'On Earth first: mass 60 kg, weight 60 kgw, the needle reads 60.' },
+                { t: 3500,  fn: () => spaceJump(),            zh: '跳一下，離開秤時讀數變 0；地球引力大，很快就落回來。', en: 'Jump: the reading drops to 0 in the air. Earth gravity pulls him back fast.' },
+                { t: 6500,  fn: () => spaceTravel('moon'),    zh: '到月球：質量還是 60 kg，重量只剩 10 kgw（1/6）。', en: 'On the Moon: still 60 kg, but weight is only 10 kgw (1/6).' },
+                { t: 10000, fn: () => spaceJump(),            zh: '月球引力小，同樣的力氣跳得又高又久。', en: 'Weaker gravity: the same push sends him higher and keeps him up longer.' },
+                { t: 15000, fn: () => spaceTravel('jupiter'), zh: '到木星：質量還是 60 kg，重量暴增成 150 kgw。', en: 'On Jupiter: still 60 kg, but weight jumps to 150 kgw.' },
+                { t: 18500, fn: () => spaceJump(),            zh: '引力太大，跳起來幾乎立刻落地。', en: 'Gravity is huge: he lands almost immediately.' },
+                { t: 21500, fn: () => spaceTravel('space'),   zh: '到外太空：重量 0 kgw，但質量依然是 60 kg！', en: 'In outer space: weight 0 kgw, yet the mass is still 60 kg!' },
+                { t: 25000, fn: () => spaceJump(),            zh: '沒有地面也沒有重量，一蹬就一直飄；質量（慣性）還在。', en: 'No floor, no weight: one push and he drifts on. His mass (inertia) is still there.' }
+            ], total: 30000 },
+            tab2: { steps: [], total: 0, textOnly: true },
+            tab3: { steps: [
+                { t: 0,     fn: () => tourWeight(null),  zh: '左盤是神秘礦石，右盤空著，礦石比較重（左盤下沉）。', en: 'The ore is in the left pan and the right pan is empty, so the left side sinks.' },
+                { t: 3000,  fn: () => tourWeight(50, 1),  zh: '先放最大的 50 g：還是比礦石輕，左盤仍然較重。', en: 'Start with the biggest weight, 50 g: still lighter than the ore.' },
+                { t: 6500,  fn: () => tourWeight(20, 1),  zh: '再放 20 g：變成 70 g，太重了，右盤下沉。', en: 'Add 20 g: now 70 g, too heavy, the right side sinks.' },
+                { t: 10000, fn: () => tourWeight(20, 0),  zh: '太重就夾出來，換小一號的。', en: 'Too heavy, so take it out and try a smaller one.' },
+                { t: 12500, fn: () => tourWeight(10, 1),  zh: '放 10 g：總共 60 g，還不夠。', en: 'Add 10 g: 60 g in total, not enough yet.' },
+                { t: 15500, fn: () => tourWeight(5, 1),   zh: '放 5 g：65 g，還差一點。', en: 'Add 5 g: 65 g, a little short.' },
+                { t: 18500, fn: () => tourWeight(2, 1),   zh: '放 2 g：67 g，快到了。', en: 'Add 2 g: 67 g, almost there.' },
+                { t: 21500, fn: () => tourWeight(1, 1),   zh: '放 1 g：68 g，只差 0.5 g。', en: 'Add 1 g: 68 g, only 0.5 g to go.' },
+                { t: 24500, fn: () => tourWeight(0.5, 1), zh: '放 0.5 g：指針回到零刻度，平衡！礦石質量 ＝ 砝碼總和 ＝ 68.5 g。', en: 'Add 0.5 g: the pointer returns to zero. Balanced! Ore mass = total weights = 68.5 g.' }
+            ], total: 29000 },
+            tab4: { steps: [
+                { t: 0,     fn: () => vlReset(),          zh: '量筒原本有 50 mL 的水，平視液面最低處讀原水位。', en: 'The cylinder holds 50 mL. Read the starting level at eye height, at the lowest point.' },
+                { t: 3500,  fn: () => vlDrop('small'),    zh: '放入小石頭：它沉到底，把水擠高。', en: 'Drop in the small stone: it sinks and pushes the water up.' },
+                { t: 7500,  fn: () => vlTourNote(),        zh: '水位升到 70 mL，體積 ＝ 70 − 50 ＝ 20 cm³。', en: 'The level rises to 70 mL. Volume = 70 − 50 = 20 cm³.' },
+                { t: 12500, fn: () => vlReset(),          zh: '重新放水，換大石頭。', en: 'Refill the water and try the large stone.' },
+                { t: 15000, fn: () => vlDrop('large'),    zh: '放入大石頭：擠出的水更多，水位升得更高。', en: 'Drop in the large stone: it displaces more water.' },
+                { t: 19000, fn: () => vlTourNote(),        zh: '水位升到 85 mL，體積 ＝ 85 − 50 ＝ 35 cm³。水位上升的體積就是石頭的體積。', en: 'The level rises to 85 mL. Volume = 85 − 50 = 35 cm³. The rise in level is the stone volume.' }
+            ], total: 24000 },
+            tab5: { steps: [
+                { t: 0,     fn: () => checkParallax('mid'), zh: '平視：視線切齊液面最低處，讀到 50.0 mL，正確。', en: 'Eye level: the line of sight meets the lowest point, reading 50.0 mL. Correct.' },
+                { t: 4500,  fn: () => checkParallax('top'), zh: '俯視（由上往下看）：視線落在較高的刻度，讀數偏大。', en: 'Looking down: the line of sight hits a higher mark, so the reading is too high.' },
+                { t: 9000,  fn: () => checkParallax('bot'), zh: '仰視（由下往上看）：視線落在較低的刻度，讀數偏小。', en: 'Looking up: the line of sight hits a lower mark, so the reading is too low.' },
+                { t: 13500, fn: () => checkParallax('mid'), zh: '回到平視：只有眼睛跟液面齊平，讀數才準。', en: 'Back to eye level: only then is the reading accurate.' }
+            ], total: 18000 }
+        };
+        const tour = { id: null, tab: null, elapsed: 0, last: 0, next: 0, paused: false, ended: false };
+
+        function tourWeight(w, on) {
+            if (w === null) { resetBalance(); return; }
+            if (currentWeights.includes(w) !== !!on) toggleWeight(w);   // 只設定成指定狀態，不會因為手動點擊而弄反
+        }
+        function vlTourNote() { /* 只更新說明文字；石頭動畫已播完停在最後一格 */ }
+        function tourCurrentTab() { const a = document.querySelector('.tab-content.active'); return a ? a.id : null; }
+        function tourPlaceBar() {
+            const bar = document.getElementById('teachBar'), a = document.querySelector('.tab-content.active');
+            if (!bar || !a) return;
+            const anchor = a.querySelector('.interactive-area') || a.querySelector('.grid-2');
+            if (!anchor) return;
+            if (anchor.classList.contains('interactive-area')) anchor.insertBefore(bar, anchor.firstChild);
+            else anchor.parentNode.insertBefore(bar, anchor);
+        }
+        function tourHalt() { if (tour.id !== null) { clearInterval(tour.id); tour.id = null; } }
+        function tourRenderBar() {
+            const cfg = TOUR[tour.tab]; if (!cfg) return;
+            const pb = document.getElementById('teachPause'), rb = document.getElementById('teachReplay');
+            pb.textContent = tour.paused ? tr('▶ 繼續', '▶ Resume') : tr('⏸ 暫停', '⏸ Pause');
+            pb.classList.toggle('hot', tour.paused);
+            pb.style.display = rb.style.display = document.getElementById('teachFill').parentNode.style.display = cfg.textOnly ? 'none' : '';
+            rb.textContent = tr('↺ 從頭重播', '↺ Replay');
+            let note;
+            if (cfg.textOnly) note = tr('這一頁只有文字，請依序讀「標準操作 4 步曲」與「致命禁忌」；實際操作到「天平實戰」分頁看示範。', 'This tab is text only. Read the 4-step routine and the taboos; see the demonstration in the Balance Lab tab.');
+            else if (tour.ended) note = tr('播完了：按「從頭重播」再看一次，或點上方換一個分頁。', 'Done: press Replay to watch again, or pick another tab above.');
+            else {
+                let cur = cfg.steps[0];
+                cfg.steps.forEach(st => { if (tour.elapsed >= st.t) cur = st; });
+                note = tr(cur.zh, cur.en);
+            }
+            document.getElementById('teachNote').textContent = note;
+            document.getElementById('teachFill').style.width = (cfg.total ? Math.min(100, tour.elapsed / cfg.total * 100) : 0).toFixed(1) + '%';
+        }
+        function tourTick() {
+            const now = performance.now(), dt = Math.min(500, now - tour.last); tour.last = now;
+            if (tour.paused || tour.ended) { return; }
+            const cfg = TOUR[tour.tab];
+            tour.elapsed += dt;
+            while (tour.next < cfg.steps.length && tour.elapsed >= cfg.steps[tour.next].t) {
+                try { cfg.steps[tour.next].fn(); } catch (err) { console.error(err); }
+                tour.next++;
+            }
+            if (tour.elapsed >= cfg.total) { tour.ended = true; tour.elapsed = cfg.total; tourHalt(); }
+            tourRenderBar();
+        }
+        function tourStart() {
+            tourHalt();
+            tour.tab = tourCurrentTab();
+            tour.elapsed = 0; tour.next = 0; tour.paused = false; tour.ended = false; tour.last = performance.now();
+            const cfg = TOUR[tour.tab];
+            tourPlaceBar();
+            if (!cfg) return;
+            tourRenderBar();
+            if (cfg.textOnly) return;
+            // 每個分頁先回到乾淨的起點，再自動播放（動畫迴圈各自在靜止後停止）
+            if (tour.tab === 'tab3') resetBalance();
+            if (tour.tab === 'tab4') vlReset();
+            tour.id = setInterval(tourTick, 100);
+            tourTick();
+            const bar = document.getElementById('teachBar');
+            if (bar && bar.scrollIntoView) bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        function tourTogglePause() { tour.paused = !tour.paused; tour.last = performance.now(); tourRenderBar(); }
+        document.getElementById('teachPause').addEventListener('click', tourTogglePause);
+        document.getElementById('teachReplay').addEventListener('click', () => { killTourAnimations(); tourStart(); });
+        function killTourAnimations() { // 重播前先停掉目前動畫迴圈
+            const keep = tour.tab; killAllSims(); tour.tab = keep;
+        }
+
         function setLessonMode(mode) {
             const isTeacher = mode === 'teacher';
             document.body.classList.toggle('mode-teacher', isTeacher);
             document.body.classList.toggle('mode-student', !isTeacher);
             document.getElementById('modeStudent').classList.toggle('active', !isTeacher);
             document.getElementById('modeTeacher').classList.toggle('active', isTeacher);
+            if (isTeacher) { killAllSims(); tourStart(); return; }
+            // 回到學生操作：停掉導覽，並讓目前分頁回到乾淨的起點給學生玩
+            killAllSims();
+            const t = tourCurrentTab();
+            if (t === 'tab1') spaceTravel('earth', false);
+            if (t === 'tab3') resetBalance();
+            if (t === 'tab4') vlReset();
+            if (t === 'tab5') checkParallax('mid', false);
         }
 
         // 初始載入
