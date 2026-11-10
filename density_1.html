@@ -1359,6 +1359,22 @@
         function setSel(ids, onId) { ids.forEach(i => { const b = document.getElementById(i); if (b) { b.classList.toggle('sel', i === onId); b.setAttribute('aria-pressed', String(i === onId)); } }); }
         const clampV = (v, a, b) => Math.max(a, Math.min(b, v));
 
+        // 角色圖（March、April）：載入一次、載入完成後補畫實驗台 1；高度固定、寬度依原圖比例
+        const LAB_CHARS = {};
+        function labChar(ctx, who, pose, cx, bottomY, h) {
+            const key = who + '/' + pose;
+            let im = LAB_CHARS[key];
+            if (!im) {
+                im = new Image();
+                im.onload = () => { try { drawLab1(2.6); } catch (e) {} };
+                im.src = 'assets/characters/' + key + '.png';
+                LAB_CHARS[key] = im;
+            }
+            if (!im.complete || !im.naturalWidth) return;
+            const w = h * im.naturalWidth / im.naturalHeight;
+            ctx.drawImage(im, cx - w / 2, bottomY - h, w, h);
+        }
+
         // ================= 實驗台 1：試管加熱演練 =================
         const L1 = { angle: 45, mouth: 'wall', t0: 0, raf: 0 };
         function lab1Angle(a) { L1.angle = a; lab1Kick(); syncLabUI(); }
@@ -1391,14 +1407,20 @@
             ctx.strokeStyle = 'rgba(242,236,217,0.25)'; ctx.lineWidth = 2;
             for (let y = 40; y < 440; y += 60) { ctx.beginPath(); ctx.moveTo(880, y); ctx.lineTo(1000, y); ctx.stroke(); }
             const hitP = !v.ok && L1.angle !== 0 && L1.mouth === 'person';
-            ctx.fillStyle = hitP ? LC.pink : '#9fb8ad';
-            ctx.beginPath(); ctx.arc(130, 300, 28, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(78, 440); ctx.quadraticCurveTo(80, 346, 130, 336); ctx.quadraticCurveTo(180, 346, 182, 440); ctx.closePath(); ctx.fill();
+            // March 與 April 站在實驗桌後方當「同學」；管口對人時兩人都露出驚訝表情
+            if (hitP) {
+                const g = ctx.createRadialGradient(180, 360, 10, 180, 360, 200);
+                g.addColorStop(0, 'rgba(244,114,182,0.35)'); g.addColorStop(1, 'rgba(244,114,182,0)');
+                ctx.fillStyle = g; ctx.fillRect(0, 150, 380, 300);
+            }
+            labChar(ctx, 'march', hitP ? 'shocked' : 'normal', 105, 452, 200);
+            labChar(ctx, 'april', hitP ? 'shocked' : 'normal', 255, 452, 190);
             // 桌面
             ctx.fillStyle = '#3b6354'; ctx.fillRect(0, 440, W, 100);
             ctx.fillStyle = '#4c7a69'; ctx.fillRect(0, 440, W, 8);
             lt(ctx, tr('牆壁', 'Wall'), 940, 490, 24, LC.white, 'center');
-            lt(ctx, tr('同學', 'Classmate'), 130, 490, 24, LC.white, 'center');
+            lt(ctx, 'March', 105, 490, 24, LC.white, 'center');
+            lt(ctx, 'April', 255, 490, 24, LC.white, 'center');
             // 酒精燈（沿用原本的 drawLampBase）
             drawLampBase(ctx, 480, 400, t * 60 + 5);
             // 試管
