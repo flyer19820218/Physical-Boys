@@ -720,7 +720,8 @@
         let balRunning = false;   // 動畫防重複啟動旗標
         let balLastT = null;
         let balDrops = {};        // 正在放入的砝碼：{ 砝碼值: 進度 0~1 }
-        let balLeaving = [];      // 正在夾出的砝碼：[{ w, p, from }]
+        let balLeaving = [];      // 正在夾出的砝碼：[{ w, p, from, x, y }]
+        let balPos = {};          // 砝碼目前位置 { 值: {x, y} }（相對秤盤中心；會平順移向「置中」的目標位置）
 
         function balTargetFor(sum) {
             const diff = targetMass - sum;
@@ -733,6 +734,48 @@
             return currentWeights.reduce((a, w) => a + ((balDrops[w] !== undefined && balDrops[w] < 1) ? 0 : w), 0);
         }
         function balDropOffset(p) { return -40 * (1 - p * p); }
+
+        // 砝碼一律排在秤盤正中央：每一排以秤盤中心左右置中，最大的放中間、其餘往兩側交替排。
+        function balSlotsFor(list) {
+            const rows = [[], []];
+            list.forEach(w => rows[BAL_WEIGHTS[w].row].push(w));
+            const hasBack = rows[0].length > 0;
+            const slots = {}, GAP = 6;
+            rows.forEach((arr, r) => {
+                if (!arr.length) return;
+                arr.sort((a, b) => b - a);
+                const order = [];
+                arr.forEach((w, i) => { if (i % 2 === 0 && i > 0) order.unshift(w); else order.push(w); });
+                const total = order.reduce((a, w) => a + BAL_WEIGHTS[w].w, 0) + GAP * (order.length - 1);
+                let x = -total / 2;
+                const y = r === 0 ? -11 : (hasBack ? 13 : -1);   // 只有小砝碼時，放在盤面正中央
+                order.forEach(w => {
+                    const bw = BAL_WEIGHTS[w].w;
+                    slots[w] = { x: x + bw / 2, y: y };
+                    x += bw + GAP;
+                });
+            });
+            return slots;
+        }
+        // snap=true：直接放到目標位置；否則只補上還沒有位置的砝碼
+        function balPlace(snap) {
+            const slots = balSlotsFor(currentWeights);
+            currentWeights.forEach(w => { if (snap || !balPos[w]) balPos[w] = { x: slots[w].x, y: slots[w].y }; });
+        }
+        // 每一格把砝碼平順移向置中的目標位置；回傳是否還在移動
+        function balEasePos(dt) {
+            const slots = balSlotsFor(currentWeights);
+            const k = 1 - Math.exp(-dt * 14);
+            let moving = false;
+            currentWeights.forEach(w => {
+                const t = slots[w], p = balPos[w];
+                if (!p) { balPos[w] = { x: t.x, y: t.y }; return; }
+                const dx = t.x - p.x, dy = t.y - p.y;
+                if (Math.abs(dx) > 0.3 || Math.abs(dy) > 0.3) { p.x += dx * k; p.y += dy * k; moving = true; }
+                else { p.x = t.x; p.y = t.y; }
+            });
+            return moving;
+        }
 
         function balSyncChips() {
             document.querySelectorAll('#tab3 .weight-chip[data-w]').forEach(chip => {
@@ -765,6 +808,7 @@
             balLeaving.forEach(o => { o.p += dt / 0.3; });
             balLeaving = balLeaving.filter(o => o.p < 1);
             if (balLeaving.length) busy = true;
+            if (balEasePos(dt)) busy = true;
 
             // 阻尼彈簧：小幅過衝後停下
             const target = balTargetFor(balLandedSum());
@@ -792,7 +836,9 @@
                 currentWeights.splice(idx, 1);
                 const from = balDrops[w] !== undefined ? balDropOffset(balDrops[w]) : 0;
                 delete balDrops[w];
-                balLeaving.push({ w: w, p: 0, from: from });
+                const lp = balPos[w] || { x: 0, y: -11 };
+                balLeaving.push({ w: w, p: 0, from: from, x: lp.x, y: lp.y });
+                delete balPos[w];
             } else {
                 currentWeights.push(w);
                 balLeaving = balLeaving.filter(o => o.w !== w);
@@ -809,8 +855,10 @@
         function resetBalance() {
             currentWeights.forEach(w => {
                 const from = balDrops[w] !== undefined ? balDropOffset(balDrops[w]) : 0;
-                balLeaving.push({ w: w, p: 0, from: from });
+                const lp = balPos[w] || { x: 0, y: -11 };
+                balLeaving.push({ w: w, p: 0, from: from, x: lp.x, y: lp.y });
             });
+            balPos = {};
             balDrops = {};
             currentWeights = [];
             currentSum = 0;
@@ -1089,19 +1137,19 @@
             ctx.fillText(tr('神秘礦石', 'Mystery ore'), lx, lcy - 84);
 
             // 6. 右盤：砝碼（後排先畫、前排後畫）
+            balPlace(!balRunning);   // 靜止時直接放在置中的位置；動畫中則由 balEasePos 平順移動
             const items = [];
             currentWeights.forEach(w => {
-                const p = balDrops[w];
-                items.push({ w: w, off: p !== undefined ? balDropOffset(p) : 0, alpha: p !== undefined ? Math.min(1, p * 4 + 0.15) : 1, tw: p !== undefined ? 1 - p : 0 });
+                const p = balDrops[w], pos = balPos[w];
+                items.push({ w: w, x: pos.x, y: pos.y, off: p !== undefined ? balDropOffset(p) : 0, alpha: p !== undefined ? Math.min(1, p * 4 + 0.15) : 1, tw: p !== undefined ? 1 - p : 0 });
             });
             balLeaving.forEach(o => {
                 const e = 1 - (1 - o.p) * (1 - o.p);
-                items.push({ w: o.w, off: o.from - 40 * e, alpha: 1 - o.p, tw: 1 });
+                items.push({ w: o.w, x: o.x, y: o.y, off: o.from - 40 * e, alpha: 1 - o.p, tw: 1 });
             });
-            items.sort((p, q) => (BAL_WEIGHTS[p.w].row - BAL_WEIGHTS[q.w].row) || (BAL_WEIGHTS[p.w].dx - BAL_WEIGHTS[q.w].dx));
+            items.sort((p, q) => (BAL_WEIGHTS[p.w].row - BAL_WEIGHTS[q.w].row) || (p.x - q.x));
             items.forEach(it => {
-                const s = BAL_WEIGHTS[it.w];
-                balDrawWeight(ctx, it.w, rxp + s.dx, rcy + (s.row === 0 ? -11 : 13) + it.off, it.alpha, it.tw);
+                balDrawWeight(ctx, it.w, rxp + it.x, rcy + it.y + it.off, it.alpha, it.tw);
             });
 
             // 7. 橫樑＋固定在橫樑上的指針（一起轉動）
