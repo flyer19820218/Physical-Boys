@@ -195,6 +195,8 @@
         .vl-steps { margin: 0 0 14px 0; padding: 0; list-style: none; display: grid; gap: 8px; }
         .vl-steps li { background: var(--bg-card); border-left: 4px solid var(--chalk-green); padding: 8px 12px; border-radius: 6px; }
         #volumeLabCanvas { width: 100%; max-width: 700px; }
+        #spaceCanvas, #cylinderCanvas { width: 100%; max-width: 900px; height: auto; }
+        #cylinderCanvas { touch-action: none; cursor: ns-resize; }
         .vl-controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 12px 0; }
         .vl-controls .btn { min-height: 48px; }
         .vl-answer { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; margin: 10px 0; }
@@ -360,7 +362,9 @@
                     <button class="btn btn-blue" onclick="spaceTravel('moon')" data-zh="🌕 月球表面 (1/6 引力)" data-en="🌕 Moon Surface (1/6G)">🌕 月球表面 (1/6 引力)</button>
                     <button class="btn btn-pink" onclick="spaceTravel('space')" data-zh="🛰️ 外太空 (0G 無重力)" data-en="🛰️ Outer Space (0G)">🛰️ 外太空 (0G 無重力真空)</button>
                     <button class="btn" onclick="spaceTravel('jupiter')" data-zh="🪐 木星表面 (2.5G 超強引力)" data-en="🪐 Jupiter Surface (~2.5G)">🪐 木星表面 (2.5G 超強引力)</button>
+                    <button class="btn" onclick="spaceJump()" style="background-color: var(--chalk-yellow);" data-zh="🦘 跳一下" data-en="🦘 Jump">🦘 跳一下</button>
                 </div>
+                <canvas id="spaceCanvas" width="900" height="420" style="aspect-ratio: 900 / 420;"></canvas>
                 <div id="spaceDisplay" style="background: var(--bg-card); padding: 1.5rem; border-radius: 0.8rem; border: 2px solid var(--chalk-yellow); max-width: 700px; margin: 0 auto; font-size: 1.3rem;">
                     <!-- JS Rendered -->
                 </div>
@@ -535,7 +539,7 @@
                     <button class="btn btn-blue" onclick="checkParallax('bot')" data-zh="👀 仰視 (由下往上看)" data-en="👀 Look Up">👀 仰視 (由下往上看)</button>
                 </div>
 
-                <canvas id="cylinderCanvas" width="700" height="260" style="aspect-ratio: 700 / 260;"></canvas>
+                <canvas id="cylinderCanvas" width="900" height="420" style="aspect-ratio: 900 / 420;"></canvas>
 
                 <div id="parallaxTextBox" style="background: var(--bg-card); padding: 1.2rem; border-radius: 0.8rem; border: 2px dashed var(--chalk-white); text-align: left; max-width: 650px; margin: 10px auto 0 auto;">
                     <!-- JS Rendered -->
@@ -554,6 +558,11 @@
             // 虛擬天平的阻尼動畫：同樣取消並解除旗標，回到分頁時 drawBalance() 直接畫出靜止畫面
             if (balRafId !== null) { cancelAnimationFrame(balRafId); balRafId = null; }
             balRunning = false;
+            // 宇宙體重計：取消迴圈、解除旗標，並直接跳到靜止的最後畫面
+            if (sp.rafId !== null) { cancelAnimationFrame(sp.rafId); sp.rafId = null; }
+            sp.running = false; spSettle();
+            // 量筒視差：取消眼睛滑動的迴圈，眼睛直接到定位
+            pxStop(true); px.dragging = false;
         }
 
         // --- V5 開場動畫控制 ---
@@ -632,9 +641,9 @@
             updateHookBox(); // 更新 Hook
             
             // 重新渲染動態組件
-            spaceTravel(currentPlanet);
+            spaceTravel(currentPlanet, false);   // false：只重畫，不重播抵達動畫
             drawBalance();
-            checkParallax(currentParallaxMode);
+            checkParallax(currentParallaxMode, false);
             drawVolumeLab();
         }
 
@@ -660,12 +669,13 @@
             updateHookBox();
 
             if(tabId === 'tab3') drawBalance();
-            if(tabId === 'tab5') checkParallax(currentParallaxMode);
+            if(tabId === 'tab1') drawSpaceScene();
+            if(tabId === 'tab5') checkParallax(currentParallaxMode, false);
             if(tabId === 'tab4') drawVolumeLab();
         }
 
         // --- 1. 宇宙旅行體重計 ---
-        function spaceTravel(planet) {
+        function spaceTravel(planet, replay) {
             currentPlanet = planet;
             const box = document.getElementById('spaceDisplay');
             if(planet === 'earth') {
@@ -697,6 +707,357 @@
                     <small style="color:#cbd5e1;">${tr('說明：超巨大引力讓你連抬手都很困難，但你身上的物質總量(質量)依然是 60 kg！', 'Note: Massive gravity makes moving hard, but your total matter (mass) is still 60 kg!')}</small>
                 `;
             }
+            if (replay === false) drawSpaceScene();   // 語言切換：只用新語言重畫目前畫面
+            else spArrive();                          // 點星球：播放抵達動畫
+        }
+
+        // --- 1b. 宇宙體重計 Canvas 動畫（彈簧秤指針 + 等臂天平 + 跳躍） ---
+        const FX_FONT = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif';
+        const SP_GROUND = 345;                              // 地面 Y
+        const SP_PLACES = {                                 // g：以地球為 1；w：60 kg 太空人的重量 (kgw)
+            earth:   { g: 1,     w: 60,  color: '#4ade80' },
+            moon:    { g: 1 / 6, w: 10,  color: '#38bdf8' },
+            space:   { g: 0,     w: 0,   color: '#f472b6' },
+            jupiter: { g: 2.5,   w: 150, color: '#fb923c' }
+        };
+        const SP_DIAL_MAX = 200;                            // 刻度盤上限 (kgw)
+        const SP_JUMP_T = 600, SP_JUMP_H = 30;              // 地球上的滯空時間 (ms) 與跳躍高度 (px)；起跳速度各地相同 → 兩者都 ∝ 1/g
+        const SP_DRIFT_MS = 3000;                           // 外太空漂移 3 秒後自動停止
+        const sp = {
+            rafId: null, running: false, last: 0,
+            needle: 60, vel: 0,                             // 指針讀數與速度（阻尼彈簧）
+            jumpT: -1, jumpY: 0, inAir: false,              // 跳躍進度
+            drift: 1,                                       // 外太空漂移進度 0..1
+            lift: 0, liftFrom: 0, liftTo: 0, liftP: 1       // 外太空「跳」之後往上飄的距離
+        };
+
+        function fxRoundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+        // 帶深色底板的文字標籤（避免文字壓在圖形上看不清）
+        function fxLabel(ctx, text, x, y, color, size, align) {
+            ctx.save();
+            ctx.font = `bold ${size}px ${FX_FONT}`;
+            ctx.textBaseline = 'middle';
+            const w = ctx.measureText(text).width, padX = 10, h = size + 12;
+            let left = x - w / 2;
+            if (align === 'left') left = x; else if (align === 'right') left = x - w;
+            fxRoundRect(ctx, left - padX, y - h / 2, w + padX * 2, h, 8);
+            ctx.fillStyle = 'rgba(15, 35, 24, 0.82)'; ctx.fill();
+            ctx.strokeStyle = color; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.5; ctx.stroke(); ctx.globalAlpha = 1;
+            ctx.fillStyle = color; ctx.textAlign = 'left';
+            ctx.fillText(text, left, y + 1);
+            ctx.restore();
+        }
+        function spStars(ctx, n, yMax) {
+            let seed = 20261110;
+            const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+            for (let i = 0; i < n; i++) {
+                const x = rnd() * 900, y = rnd() * yMax, r = 0.8 + rnd() * 1.6;
+                ctx.globalAlpha = 0.35 + rnd() * 0.6;
+                ctx.fillStyle = i % 7 === 0 ? '#fde047' : '#f1f5f9';
+                ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+        function spBackground(ctx, place) {
+            ctx.fillStyle = '#0f2318'; ctx.fillRect(0, 0, 900, 420);
+            if (place === 'earth') {
+                const sky = ctx.createLinearGradient(0, 0, 0, SP_GROUND);
+                sky.addColorStop(0, 'rgba(56, 189, 248, 0.10)'); sky.addColorStop(1, 'rgba(56, 189, 248, 0.34)');
+                ctx.fillStyle = sky; ctx.fillRect(0, 0, 900, SP_GROUND);
+                ctx.strokeStyle = 'rgba(241, 245, 249, 0.55)'; ctx.lineWidth = 2.5; ctx.fillStyle = 'rgba(241, 245, 249, 0.10)';
+                [[105, 150, 1], [850, 38, 0.7]].forEach(c => {            // 粉筆雲
+                    ctx.beginPath();
+                    ctx.arc(c[0] - 26 * c[2], c[1] + 6 * c[2], 16 * c[2], Math.PI * 0.5, Math.PI * 1.5);
+                    ctx.arc(c[0] - 6 * c[2], c[1] - 10 * c[2], 20 * c[2], Math.PI, Math.PI * 1.9);
+                    ctx.arc(c[0] + 22 * c[2], c[1] + 2 * c[2], 20 * c[2], Math.PI * 1.4, Math.PI * 0.5);
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                });
+                ctx.fillStyle = '#1c3b2b'; ctx.fillRect(0, SP_GROUND, 900, 75);
+                ctx.fillStyle = 'rgba(74, 222, 128, 0.16)'; ctx.fillRect(0, SP_GROUND, 900, 75);
+                ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(0, SP_GROUND); ctx.lineTo(900, SP_GROUND); ctx.stroke();
+                ctx.lineWidth = 2; ctx.globalAlpha = 0.7;
+                for (let x = 14; x < 900; x += 46) {                       // 小草
+                    ctx.beginPath(); ctx.moveTo(x, SP_GROUND + 14); ctx.lineTo(x + 4, SP_GROUND + 5);
+                    ctx.moveTo(x + 8, SP_GROUND + 14); ctx.lineTo(x + 7, SP_GROUND + 4);
+                    ctx.moveTo(x + 14, SP_GROUND + 14); ctx.lineTo(x + 11, SP_GROUND + 6); ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+            } else if (place === 'moon') {
+                spStars(ctx, 70, SP_GROUND - 10);
+                // 遠方的地球
+                ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(560, 44, 20, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#4ade80';
+                ctx.beginPath(); ctx.ellipse(553, 38, 8, 6, 0.4, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(567, 52, 6, 4, -0.3, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = 'rgba(241, 245, 249, 0.7)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(560, 44, 20, 0, Math.PI * 2); ctx.stroke();
+                ctx.fillStyle = '#1c3b2b'; ctx.fillRect(0, SP_GROUND, 900, 75);
+                ctx.fillStyle = 'rgba(241, 245, 249, 0.30)'; ctx.fillRect(0, SP_GROUND, 900, 75);
+                ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(0, SP_GROUND); ctx.lineTo(900, SP_GROUND); ctx.stroke();
+                ctx.strokeStyle = 'rgba(15, 35, 24, 0.55)'; ctx.fillStyle = 'rgba(15, 35, 24, 0.28)'; ctx.lineWidth = 2;
+                [[70, 361, 26, 6], [175, 358, 14, 4], [545, 360, 22, 5], [640, 357, 12, 3.5], [860, 361, 24, 6]].forEach(c => {   // 隕石坑
+                    ctx.beginPath(); ctx.ellipse(c[0], c[1], c[2], c[3], 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                });
+            } else if (place === 'space') {
+                spStars(ctx, 150, 420);
+            } else {
+                // 木星：橘色雲帶
+                const bands = [
+                    [0, 46, 'rgba(251, 146, 60, 0.30)'], [46, 34, 'rgba(253, 224, 71, 0.13)'], [80, 52, 'rgba(251, 146, 60, 0.42)'],
+                    [132, 40, 'rgba(241, 245, 249, 0.12)'], [172, 58, 'rgba(251, 146, 60, 0.34)'], [230, 36, 'rgba(253, 224, 71, 0.15)'],
+                    [266, 79, 'rgba(251, 146, 60, 0.46)']
+                ];
+                bands.forEach((b, i) => {
+                    ctx.fillStyle = b[2]; ctx.beginPath(); ctx.moveTo(0, b[0]);
+                    for (let x = 0; x <= 900; x += 30) ctx.lineTo(x, b[0] + Math.sin(x / 70 + i * 1.7) * 5);
+                    ctx.lineTo(900, b[0] + b[1] + 6); ctx.lineTo(0, b[0] + b[1] + 6); ctx.closePath(); ctx.fill();
+                });
+                ctx.fillStyle = 'rgba(244, 114, 182, 0.38)'; ctx.strokeStyle = 'rgba(251, 146, 60, 0.9)'; ctx.lineWidth = 2.5;   // 大紅斑
+                ctx.beginPath(); ctx.ellipse(120, 200, 50, 24, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(120, 200, 26, 11, 0, 0, Math.PI * 2); ctx.stroke();
+                ctx.fillStyle = '#1c3b2b'; ctx.fillRect(0, SP_GROUND, 900, 75);
+                ctx.fillStyle = 'rgba(251, 146, 60, 0.22)'; ctx.fillRect(0, SP_GROUND, 900, 75);
+                ctx.strokeStyle = '#fb923c'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(0, SP_GROUND); ctx.lineTo(900, SP_GROUND); ctx.stroke();
+            }
+        }
+        // 太空人：原點在兩腳中間的地面，往上為負 Y
+        function spAstronaut(ctx, armUp) {
+            const ink = '#0f2318', suit = '#f1f5f9';
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            fxRoundRect(ctx, -23, -84, 46, 42, 7);                         // 背包
+            ctx.fillStyle = '#1c3b2b'; ctx.fill(); ctx.strokeStyle = suit; ctx.lineWidth = 2.5; ctx.stroke();
+            [-1, 1].forEach(s => {                                         // 手臂
+                const hx = s * (27 + 6 * armUp), hy = -47 - 56 * armUp;
+                ctx.strokeStyle = ink; ctx.lineWidth = 15;
+                ctx.beginPath(); ctx.moveTo(s * 17, -73); ctx.lineTo(hx, hy); ctx.stroke();
+                ctx.strokeStyle = suit; ctx.lineWidth = 11;
+                ctx.beginPath(); ctx.moveTo(s * 17, -73); ctx.lineTo(hx, hy); ctx.stroke();
+                ctx.fillStyle = '#fb923c'; ctx.strokeStyle = ink; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(hx, hy, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            });
+            ctx.strokeStyle = ink; ctx.lineWidth = 2;
+            [-16, 2].forEach(x => {                                        // 腿與靴子
+                fxRoundRect(ctx, x, -46, 14, 40, 5); ctx.fillStyle = suit; ctx.fill(); ctx.stroke();
+                fxRoundRect(ctx, x - 2, -11, 18, 11, 4); ctx.fillStyle = '#fb923c'; ctx.fill(); ctx.stroke();
+            });
+            fxRoundRect(ctx, -18, -84, 36, 44, 9); ctx.fillStyle = suit; ctx.fill(); ctx.stroke();   // 軀幹
+            fxRoundRect(ctx, -10, -72, 20, 14, 3); ctx.fillStyle = '#1c3b2b'; ctx.fill();            // 胸前面板
+            ['#fde047', '#f472b6', '#4ade80'].forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(-5 + i * 5, -65, 2, 0, Math.PI * 2); ctx.fill(); });
+            ctx.fillStyle = suit; ctx.beginPath(); ctx.arc(0, -97, 18, 0, Math.PI * 2); ctx.fill(); ctx.stroke();   // 頭盔
+            fxRoundRect(ctx, -13, -106, 26, 18, 8); ctx.fillStyle = '#38bdf8'; ctx.fill(); ctx.stroke();           // 面罩
+            ctx.strokeStyle = 'rgba(241, 245, 249, 0.9)'; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.moveTo(-7, -101); ctx.lineTo(-2, -102); ctx.stroke();
+        }
+        // 立式彈簧秤：踏板（隨讀數下沉）＋立柱＋刻度盤
+        function spScale(ctx, reading, press) {
+            const chalk = '#f1f5f9', DX = 440, DY = 200, R = 85;
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            fxRoundRect(ctx, 432, DY + R - 4, 16, SP_GROUND - (DY + R) + 4, 3);       // 立柱
+            ctx.fillStyle = '#1c3b2b'; ctx.fill(); ctx.strokeStyle = chalk; ctx.lineWidth = 2.5; ctx.stroke();
+            fxRoundRect(ctx, 210, SP_GROUND - 8, 250, 8, 3);                          // 底座
+            ctx.fillStyle = '#1c3b2b'; ctx.fill(); ctx.stroke();
+            ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2;                           // 彈簧
+            [240, 340].forEach(x0 => {
+                ctx.beginPath(); ctx.moveTo(x0 - 7, SP_GROUND - 8);
+                const top = SP_GROUND - 24 + press;
+                for (let i = 1; i <= 4; i++) ctx.lineTo(x0 + (i % 2 ? 7 : -7), SP_GROUND - 8 + (top - (SP_GROUND - 8)) * i / 4);
+                ctx.stroke();
+            });
+            fxRoundRect(ctx, 222, SP_GROUND - 34 + press, 136, 10, 4);                // 踏板
+            ctx.fillStyle = '#132a1e'; ctx.fill(); ctx.strokeStyle = chalk; ctx.lineWidth = 2.5; ctx.stroke();
+            // 刻度盤
+            ctx.beginPath(); ctx.arc(DX, DY, R, 0, Math.PI * 2);
+            ctx.fillStyle = '#132a1e'; ctx.fill(); ctx.strokeStyle = '#fde047'; ctx.lineWidth = 4; ctx.stroke();
+            const ang = v => Math.PI * 0.75 + (v / SP_DIAL_MAX) * Math.PI * 1.5;
+            for (let v = 0; v <= SP_DIAL_MAX; v += 10) {
+                const a = ang(v), major = v % 50 === 0;
+                ctx.strokeStyle = chalk; ctx.lineWidth = major ? 3 : 1.5; ctx.globalAlpha = major ? 1 : 0.75;
+                ctx.beginPath();
+                ctx.moveTo(DX + Math.cos(a) * (major ? 68 : 73), DY + Math.sin(a) * (major ? 68 : 73));
+                ctx.lineTo(DX + Math.cos(a) * 79, DY + Math.sin(a) * 79); ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+            const a = ang(Math.max(0, Math.min(SP_DIAL_MAX, reading)));               // 指針
+            ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(DX - Math.cos(a) * 12, DY - Math.sin(a) * 12); ctx.lineTo(DX + Math.cos(a) * 64, DY + Math.sin(a) * 64); ctx.stroke();
+            ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(DX, DY, 7, 0, Math.PI * 2); ctx.fill();
+            // 數字畫在指針上面並加深色描邊：指針指到數字時仍看得清楚
+            ctx.fillStyle = chalk; ctx.font = `bold 18px ${FX_FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.strokeStyle = '#132a1e'; ctx.lineWidth = 5;
+            for (let v = 0; v <= SP_DIAL_MAX; v += 50) {
+                const a2 = ang(v), tx = DX + Math.cos(a2) * 48, ty = DY + Math.sin(a2) * 48 + 1;
+                ctx.strokeText(String(v), tx, ty); ctx.fillText(String(v), tx, ty);
+            }
+        }
+        // 天平的一個秤盤（原點在掛鉤），含三條吊線
+        function spPan(ctx) {
+            ctx.strokeStyle = 'rgba(241, 245, 249, 0.8)'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-40, 84); ctx.moveTo(0, 0); ctx.lineTo(40, 84); ctx.stroke();
+            ctx.fillStyle = '#1c3b2b'; ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.moveTo(-46, 84); ctx.lineTo(46, 84); ctx.quadraticCurveTo(40, 96, 0, 97); ctx.quadraticCurveTo(-40, 96, -46, 84); ctx.closePath();
+            ctx.fill(); ctx.stroke();
+        }
+        function spWeightBlock(ctx) {                                     // 原點在底邊中央
+            ctx.fillStyle = '#fde047'; ctx.strokeStyle = '#0f2318'; ctx.lineWidth = 2;
+            fxRoundRect(ctx, -9, -50, 18, 10, 3); ctx.fill(); ctx.stroke();
+            fxRoundRect(ctx, -36, -42, 72, 42, 6); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#0f2318'; ctx.font = `bold 19px ${FX_FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('60 kg', 0, -20);
+        }
+        function spBalance(ctx, e) {                                      // e：外太空漂散程度 0..1（有引力時為 0）
+            const BX = 710, PIV = 160, chalk = '#f1f5f9';
+            const part = (dx, dy, rot, ox, oy, fn) => {
+                ctx.save(); ctx.translate(ox + dx * e, oy + dy * e); ctx.rotate(rot * e); fn(); ctx.restore();
+            };
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            part(8, 8, 0.10, BX, SP_GROUND, () => {                       // 底座＋支柱
+                ctx.fillStyle = '#1c3b2b'; ctx.strokeStyle = chalk; ctx.lineWidth = 2.5;
+                fxRoundRect(ctx, -5, PIV - SP_GROUND, 10, SP_GROUND - PIV - 10, 3); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(-60, 0); ctx.lineTo(-44, -14); ctx.lineTo(44, -14); ctx.lineTo(60, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+            });
+            part(0, -14, -0.30, BX, PIV, () => {                           // 橫梁
+                ctx.strokeStyle = chalk; ctx.lineWidth = 6;
+                ctx.beginPath(); ctx.moveTo(-95, 0); ctx.lineTo(95, 0); ctx.stroke();
+                ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(9, 4); ctx.lineTo(-9, 4); ctx.closePath(); ctx.fill();
+            });
+            part(6, 18, 0.12, BX - 95, PIV, () => spPan(ctx));          // 左盤
+            part(10, 60, -0.25, BX + 95, PIV, () => spPan(ctx));          // 右盤
+            part(16, 4, -0.50, BX - 95, PIV + 84, () => {              // 左盤上的太空人（縮小版）
+                ctx.scale(0.5, 0.5); spAstronaut(ctx, 0.25 * e);
+            });
+            part(40, -50, 0.45, BX + 95, PIV + 84, () => spWeightBlock(ctx));   // 右盤上的 60 kg 標準質量
+        }
+        function spEaseOut(p) { return 1 - Math.pow(1 - p, 3); }
+
+        // 畫出目前狀態（靜止時呼叫就是最後畫面）
+        function drawSpaceScene() {
+            const canvas = document.getElementById('spaceCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const place = SP_PLACES[currentPlanet] ? currentPlanet : 'earth';
+            const P = SP_PLACES[place];
+            const isSpace = place === 'space';
+            const e = isSpace ? spEaseOut(sp.drift) : 0;
+            ctx.save();
+            ctx.clearRect(0, 0, 900, 420);
+            spBackground(ctx, place);
+
+            const press = Math.max(0, Math.min(SP_DIAL_MAX, sp.needle)) / SP_DIAL_MAX * 10;
+            // 彈簧秤（外太空：整台慢慢飄走、轉動）
+            ctx.save();
+            if (isSpace) { ctx.translate(380 - 8 * e, 280 + 14 * e); ctx.rotate(0.10 * e); ctx.translate(-380, -280); }
+            spScale(ctx, sp.needle, press);
+            ctx.restore();
+
+            // 太空人
+            ctx.save();
+            if (isSpace) {
+                ctx.translate(290 - 26 * e, SP_GROUND - 34 - 30 * e - sp.lift);
+                ctx.translate(0, -55); ctx.rotate(-0.30 * e - 0.004 * sp.lift); ctx.translate(0, 55);
+                spAstronaut(ctx, 0.45 * e);
+            } else {
+                const k = Math.max(-0.5, Math.min(1, (sp.needle - 60) / 90));     // 引力越大，身體被壓得越矮
+                ctx.translate(290, SP_GROUND - 34 + press - sp.jumpY);
+                ctx.scale(1 + 0.03 * k, 1 - 0.07 * k);
+                spAstronaut(ctx, sp.inAir ? Math.min(1, sp.jumpY / 12) * 0.8 : 0);
+            }
+            ctx.restore();
+
+            spBalance(ctx, e);
+
+            // 文字標籤
+            const shown = Math.max(0, Math.round(sp.needle));
+            fxLabel(ctx, tr(`重量 ${shown} kgw`, `Weight ${shown} kgw`), 440, 88, P.color, 20, 'center');
+            fxLabel(ctx, tr('質量 60 kg（不變）', 'Mass 60 kg (unchanged)'), 710, 88, '#fde047', 20, 'center');
+            const titles = {
+                earth: tr('地球表面　引力 1 G', 'Earth surface · 1 G'),
+                moon: tr('月球表面　引力 1/6 G', 'Moon surface · 1/6 G'),
+                space: tr('外太空　0 G 無重力', 'Outer space · 0 G'),
+                jupiter: tr('木星表面　引力約 2.5 G', 'Jupiter surface · ~2.5 G')
+            };
+            fxLabel(ctx, titles[place], 24, 393, P.color, 20, 'left');
+            if (sp.inAir || (isSpace && sp.liftTo > 0)) {
+                fxLabel(ctx, tr('離開秤時讀數為 0', 'Off the scale it reads 0'), 470, 393, '#f1f5f9', 18, 'center');
+            }
+            if (isSpace) fxLabel(ctx, tr('天平失效', 'Balance fails'), 740, 393, '#f472b6', 20, 'center');
+            ctx.restore();
+        }
+
+        function spSettle() {                                              // 直接跳到靜止的最後狀態
+            const P = SP_PLACES[currentPlanet] || SP_PLACES.earth;
+            sp.needle = P.w; sp.vel = 0;
+            sp.jumpT = -1; sp.jumpY = 0; sp.inAir = false;
+            sp.drift = 1; sp.liftP = 1; sp.lift = sp.liftTo;
+        }
+        function spStartLoop() {
+            if (sp.running) return;                                        // 防重複：永遠只有一個迴圈
+            sp.running = true; sp.last = 0;
+            sp.rafId = requestAnimationFrame(spTick);
+        }
+        function spTick(ts) {
+            if (!sp.running) return;
+            const dt = sp.last ? Math.min(50, ts - sp.last) : 16;
+            sp.last = ts;
+            const P = SP_PLACES[currentPlanet] || SP_PLACES.earth;
+            if (currentPlanet === 'space') {
+                if (sp.drift < 1) sp.drift = Math.min(1, sp.drift + dt / SP_DRIFT_MS);
+                if (sp.liftP < 1) {
+                    sp.liftP = Math.min(1, sp.liftP + dt / SP_DRIFT_MS);
+                    sp.lift = sp.liftFrom + (sp.liftTo - sp.liftFrom) * spEaseOut(sp.liftP);
+                }
+            } else if (sp.jumpT >= 0) {
+                sp.jumpT += dt;
+                const T = SP_JUMP_T / P.g, u = sp.jumpT / T;                // 滯空時間與高度都 ∝ 1/g
+                if (u >= 1) { sp.jumpT = -1; sp.jumpY = 0; sp.inAir = false; }
+                else { sp.jumpY = 4 * (SP_JUMP_H / P.g) * u * (1 - u); sp.inAir = true; }
+            }
+            // 指針：阻尼彈簧，離開秤面時目標為 0
+            const target = sp.inAir ? 0 : P.w;
+            let left = dt;
+            while (left > 0) {
+                const h = Math.min(4, left) / 1000; left -= 4;
+                const acc = -196 * (sp.needle - target) - 9.8 * sp.vel;     // ω=14 rad/s、阻尼比 0.35 → 約 1.2 秒停下
+                sp.vel += acc * h; sp.needle += sp.vel * h;
+                if (sp.needle < 0) { sp.needle = 0; sp.vel = 0; }               // 指針有擋片，不會低於 0
+            }
+            const needleDone = Math.abs(sp.needle - target) < 0.15 && Math.abs(sp.vel) < 1.5;
+            const moving = sp.jumpT >= 0 || (currentPlanet === 'space' && (sp.drift < 1 || sp.liftP < 1));
+            if (needleDone && !moving) {
+                spSettle();
+                sp.running = false; sp.rafId = null;
+                drawSpaceScene();
+                return;
+            }
+            drawSpaceScene();
+            sp.rafId = requestAnimationFrame(spTick);
+        }
+        function spArrive() {                                              // 抵達動畫：指針由 0 擺到新讀數
+            sp.needle = 0; sp.vel = 0;
+            sp.jumpT = -1; sp.jumpY = 0; sp.inAir = false;
+            sp.lift = 0; sp.liftFrom = 0; sp.liftTo = 0; sp.liftP = 1;
+            sp.drift = currentPlanet === 'space' ? 0 : 1;
+            drawSpaceScene();
+            spStartLoop();
+        }
+        function spaceJump() {
+            if (currentPlanet === 'space') {                               // 沒有地面：一蹬就一直往上飄（3 秒後停）
+                sp.liftFrom = sp.lift; sp.liftTo = Math.min(90, sp.lift + 45); sp.liftP = 0;
+            } else {
+                if (sp.jumpT >= 0) return;                                 // 還在空中，不能再跳
+                sp.jumpT = 0; sp.inAir = true; sp.jumpY = 0;
+            }
+            spStartLoop();
         }
 
         // --- 2. 虛擬天平（2026-11 重構：懸吊式等臂天平＋阻尼彈簧動畫） ---
@@ -1254,51 +1615,24 @@
             }
         }
 
-        // --- 3. 量筒視差檢定 ---
-        function checkParallax(mode) {
-            currentParallaxMode = mode;
-            const canvas = document.getElementById('cylinderCanvas');
-            if(!canvas) return;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // --- 3. 量筒視差檢定（可拖曳眼睛的 Canvas 互動） ---
+        const PX = { xL: 300, xR: 420, cx: 360, wall: 8, y0: 370, p: 4.6, top: 24, eyeX: 780 };   // p：每 1 mL 的像素
+        PX.y50 = PX.y0 - 50 * PX.p;                                         // 真正液面最低點（50.0 mL）
+        PX.k = (PX.eyeX - PX.cx) / (PX.xR - PX.cx) * PX.p;                  // 眼睛每移動 k 像素，讀數改變 1 mL（視線幾何）
+        const PX_EYE = { top: PX.y50 - 2 * PX.k, mid: PX.y50, bot: PX.y50 + 2 * PX.k };
+        const PX_EYE_MIN = PX.y50 - 3 * PX.k, PX_EYE_MAX = PX.y50 + 3 * PX.k;   // 讀數範圍 47～53 mL
+        const PX_GLIDE_MS = 600;
+        const px = { rafId: null, running: false, eyeY: PX.y50, from: PX.y50, to: PX.y50, t0: 0, dragging: false, textKey: '' };
 
-            // 1. 畫量筒
-            ctx.strokeStyle = '#f1f5f9';
-            ctx.lineWidth = 5;
-            ctx.beginPath();
-            ctx.moveTo(300, 40); ctx.lineTo(300, 220); ctx.lineTo(400, 220); ctx.lineTo(400, 40);
-            ctx.stroke();
+        function pxReading() { return Math.max(47, Math.min(53, 50 + (PX.y50 - px.eyeY) / PX.k)); }
 
-            // 2. 畫水體與下凹液面 (真正的 50 mL 在 Y=130)
-            ctx.fillStyle = 'rgba(56, 189, 248, 0.3)';
-            ctx.fillRect(303, 130, 94, 87);
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(303, 125);
-            ctx.quadraticCurveTo(350, 138, 397, 125); // 下凹最低點在 (350, 132)
-            ctx.stroke();
-
-            // 3. 畫刻度線
-            ctx.fillStyle = '#f1f5f9'; ctx.font = 'bold 16px sans-serif';
-            for(let i=0; i<=4; i++) {
-                let y = 60 + i * 35; // 60 是 70mL, 95 是 60mL, 130 是 50mL
-                let ml = 70 - i * 10;
-                ctx.beginPath(); ctx.moveTo(300, y); ctx.lineTo(315, y); ctx.stroke();
-                ctx.fillText(`${ml}`, 265, y + 5);
-            }
-
-            // 4. 根據眼睛位置畫視線與光路
-            ctx.lineWidth = 3;
-            ctx.setLineDash([8, 6]);
+        function pxRenderText(mode) {
+            const key = mode + '|' + currentLang;
+            if (px.textKey === key) return;
             const box = document.getElementById('parallaxTextBox');
-
+            if (!box) return;
+            px.textKey = key;
             if(mode === 'top') {
-                // 俯視
-                ctx.strokeStyle = '#f472b6';
-                ctx.beginPath(); ctx.moveTo(520, 70); ctx.lineTo(300, 145); ctx.stroke();
-                ctx.fillStyle = '#f472b6'; ctx.font = 'bold 24px PingFang TC, sans-serif'; ctx.fillText(tr("👀 俯視", "👀 Look Down"), 530, 75);
-                
                 box.innerHTML = `
                     <div style="font-size: 1.4rem; color: var(--chalk-pink); font-weight: bold; margin-bottom: 8px;">
                         ${tr('👀 俯視 (由上往下斜看) ➡️ 讀數偏大！', '👀 Looking Down ➡️ Reading too high!')}
@@ -1307,11 +1641,6 @@
                     👉 ${tr('真正體積是 <strong class="hl-green mono">50.0 mL</strong>，但俯視會看錯讀成 <strong class="hl-pink mono">52.0 mL</strong> (高估)！', 'Actual volume is <strong class="hl-green mono">50.0 mL</strong>, but looking down reads <strong class="hl-pink mono">52.0 mL</strong> (Overestimated)!')}
                 `;
             } else if(mode === 'mid') {
-                // 平視
-                ctx.strokeStyle = '#4ade80';
-                ctx.beginPath(); ctx.moveTo(520, 132); ctx.lineTo(300, 132); ctx.stroke();
-                ctx.fillStyle = '#4ade80'; ctx.font = 'bold 24px PingFang TC, sans-serif'; ctx.fillText(tr("🎯 平視", "🎯 Eye-level"), 530, 138);
-
                 box.innerHTML = `
                     <div style="font-size: 1.4rem; color: var(--chalk-green); font-weight: bold; margin-bottom: 8px;">
                         ${tr('🎯 平視 (視線切齊中央最低處) ➡️ 正確讀數！', '🎯 Eye-level (Aligned with lowest point) ➡️ Correct reading!')}
@@ -1320,11 +1649,6 @@
                     👉 ${tr('讀出精確且正確的絕對體積：<strong class="hl-yellow mono" style="font-size:1.5rem;">50.0 mL</strong>！', 'Reads precise and correct absolute volume: <strong class="hl-yellow mono" style="font-size:1.5rem;">50.0 mL</strong>!')}
                 `;
             } else if(mode === 'bot') {
-                // 仰視
-                ctx.strokeStyle = '#38bdf8';
-                ctx.beginPath(); ctx.moveTo(520, 190); ctx.lineTo(300, 120); ctx.stroke();
-                ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 24px PingFang TC, sans-serif'; ctx.fillText(tr("👀 仰視", "👀 Look Up"), 530, 195);
-
                 box.innerHTML = `
                     <div style="font-size: 1.4rem; color: var(--chalk-blue); font-weight: bold; margin-bottom: 8px;">
                         ${tr('👀 仰視 (由下往上斜看) ➡️ 讀數偏小！', '👀 Looking Up ➡️ Reading too low!')}
@@ -1333,8 +1657,172 @@
                     👉 ${tr('真正體積是 <strong class="hl-green mono">50.0 mL</strong>，但仰視會看錯讀成 <strong class="hl-blue mono">48.0 mL</strong> (低估)！', 'Actual volume is <strong class="hl-green mono">50.0 mL</strong>, but looking up reads <strong class="hl-blue mono">48.0 mL</strong> (Underestimated)!')}
                 `;
             }
-            ctx.setLineDash([]);
         }
+
+        function drawParallax() {
+            const canvas = document.getElementById('cylinderCanvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const chalk = '#f1f5f9', G = PX;
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+
+            // 1. 水體與下凹液面（最低點在真正的 50 mL）
+            const yEdge = G.y50 - 10;
+            ctx.beginPath();
+            ctx.moveTo(G.xL, yEdge); ctx.quadraticCurveTo(G.cx, G.y50 + 10, G.xR, yEdge);
+            ctx.lineTo(G.xR, G.y0); ctx.lineTo(G.xL, G.y0); ctx.closePath();
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.30)'; ctx.fill();
+            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3.5;
+            ctx.beginPath(); ctx.moveTo(G.xL, yEdge); ctx.quadraticCurveTo(G.cx, G.y50 + 10, G.xR, yEdge); ctx.stroke();
+            ctx.strokeStyle = 'rgba(241, 245, 249, 0.75)'; ctx.lineWidth = 1.5;   // 液面的亮邊
+            ctx.beginPath(); ctx.moveTo(G.xL + 3, yEdge - 3); ctx.quadraticCurveTo(G.cx, G.y50 + 6, G.xR - 3, yEdge - 3); ctx.stroke();
+
+            // 2. 玻璃量筒：有厚度的筒壁、底、底座、反光
+            ctx.fillStyle = 'rgba(241, 245, 249, 0.16)'; ctx.strokeStyle = chalk; ctx.lineWidth = 2;
+            ctx.beginPath();                                               // 左壁（上緣有倒水的小嘴）
+            ctx.moveTo(G.xL - G.wall - 12, G.top - 4); ctx.lineTo(G.xL, G.top + 8); ctx.lineTo(G.xL, G.y0);
+            ctx.lineTo(G.xL - G.wall, G.y0 + G.wall); ctx.lineTo(G.xL - G.wall, G.top + 14); ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.beginPath();                                               // 右壁
+            ctx.moveTo(G.xR, G.top); ctx.lineTo(G.xR + G.wall, G.top); ctx.lineTo(G.xR + G.wall, G.y0 + G.wall); ctx.lineTo(G.xR, G.y0); ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.beginPath();                                               // 筒底
+            ctx.moveTo(G.xL, G.y0); ctx.lineTo(G.xR, G.y0); ctx.lineTo(G.xR + G.wall, G.y0 + G.wall); ctx.lineTo(G.xL - G.wall, G.y0 + G.wall); ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.beginPath();                                               // 底座
+            ctx.moveTo(G.xL - 36, G.y0 + G.wall); ctx.lineTo(G.xR + 36, G.y0 + G.wall); ctx.lineTo(G.xR + 52, G.y0 + 30); ctx.lineTo(G.xL - 52, G.y0 + 30); ctx.closePath();
+            ctx.fillStyle = '#1c3b2b'; ctx.fill(); ctx.stroke();
+            const shine = ctx.createLinearGradient(G.xL + 8, 0, G.xL + 26, 0);
+            shine.addColorStop(0, 'rgba(241, 245, 249, 0)'); shine.addColorStop(0.5, 'rgba(241, 245, 249, 0.22)'); shine.addColorStop(1, 'rgba(241, 245, 249, 0)');
+            ctx.fillStyle = shine; ctx.fillRect(G.xL + 8, G.top + 16, 18, G.y0 - G.top - 28);
+
+            // 3. 刻度：每 1 mL 一格，每 10 mL 標數字（刻度在靠眼睛這一側的筒壁）
+            ctx.strokeStyle = chalk; ctx.fillStyle = chalk;
+            ctx.font = `bold 18px ${FX_FONT}`; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+            for (let ml = 1; ml <= 73; ml++) {
+                const y = G.y0 - ml * G.p;
+                const len = ml % 10 === 0 ? 34 : (ml % 5 === 0 ? 22 : 12);
+                ctx.lineWidth = ml % 10 === 0 ? 2.5 : (ml % 5 === 0 ? 2 : 1.2);
+                ctx.globalAlpha = ml % 5 === 0 ? 1 : 0.75;
+                ctx.beginPath(); ctx.moveTo(G.xR - len, y); ctx.lineTo(G.xR, y); ctx.stroke();
+                if (ml % 10 === 0) { ctx.globalAlpha = 1; ctx.fillText(String(ml), G.xR - 40, y - 5); }
+            }
+            ctx.globalAlpha = 1;
+
+            // 4. 真正液面最低點：綠色虛線
+            ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2.5; ctx.setLineDash([9, 7]);
+            ctx.beginPath(); ctx.moveTo(24, G.y50); ctx.lineTo(G.xR + G.wall + 4, G.y50); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#4ade80'; ctx.textAlign = 'left'; ctx.font = `bold 20px ${FX_FONT}`;
+            ctx.fillText(tr('真正液面最低點', 'True meniscus bottom'), 24, G.y50 - 38);
+            ctx.fillText('50.0 mL', 24, G.y50 - 12);
+
+            // 5. 眼睛的軌道與三個按鈕位置
+            ctx.strokeStyle = 'rgba(241, 245, 249, 0.35)'; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(G.eyeX, PX_EYE_MIN - 4); ctx.lineTo(G.eyeX, PX_EYE_MAX + 4); ctx.stroke();
+            [['top', '#f472b6'], ['mid', '#4ade80'], ['bot', '#38bdf8']].forEach(m => {
+                ctx.fillStyle = m[1]; ctx.beginPath(); ctx.arc(G.eyeX, PX_EYE[m[0]], 6, 0, Math.PI * 2); ctx.fill();
+            });
+
+            // 6. 視線、落在刻度上的位置、即時讀數
+            const reading = pxReading();
+            const yc = G.y0 - reading * G.p;                               // 視線穿過刻度筒壁的位置
+            const col = reading > 50.04 ? '#f472b6' : (reading < 49.96 ? '#38bdf8' : '#4ade80');
+            ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.setLineDash([10, 7]);
+            ctx.beginPath(); ctx.moveTo(G.eyeX - 30, px.eyeY + (yc - px.eyeY) * 30 / (G.eyeX - G.xR)); ctx.lineTo(G.xR, yc); ctx.stroke();
+            ctx.globalAlpha = 0.6; ctx.lineWidth = 2; ctx.setLineDash([4, 6]);   // 延伸到液面最低點
+            ctx.beginPath(); ctx.moveTo(G.xR, yc); ctx.lineTo(G.cx, G.y50); ctx.stroke();
+            ctx.setLineDash([]); ctx.globalAlpha = 1;
+            ctx.fillStyle = col; ctx.beginPath(); ctx.arc(G.cx, G.y50, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(G.xR, yc, 7, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#0f2318'; ctx.lineWidth = 2; ctx.stroke();
+            const txt = tr(`讀到 ${reading.toFixed(1)} mL`, `You read ${reading.toFixed(1)} mL`);
+            fxLabel(ctx, txt, G.xR + 24, px.eyeY > G.y50 + 0.5 ? yc - 30 : yc + 30, col, 22, 'left');
+
+            // 7. 眼睛（看向量筒）
+            ctx.save();
+            ctx.translate(G.eyeX, px.eyeY);
+            ctx.rotate(Math.atan2(yc - px.eyeY, G.xR - G.eyeX) - Math.PI);
+            ctx.fillStyle = chalk; ctx.strokeStyle = col; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(-30, 0); ctx.quadraticCurveTo(0, -24, 30, 0); ctx.quadraticCurveTo(0, 24, -30, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(-8, 0, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#0f2318'; ctx.beginPath(); ctx.arc(-10, 0, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = chalk; ctx.beginPath(); ctx.arc(-12, -3, 1.8, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+            ctx.fillStyle = '#fde047';                                     // 上下箭頭：提示可以拖曳
+            if (px.eyeY > PX_EYE_MIN + 14) { ctx.beginPath(); ctx.moveTo(G.eyeX + 44, px.eyeY - 22); ctx.lineTo(G.eyeX + 53, px.eyeY - 8); ctx.lineTo(G.eyeX + 35, px.eyeY - 8); ctx.closePath(); ctx.fill(); }
+            if (px.eyeY < PX_EYE_MAX - 14) { ctx.beginPath(); ctx.moveTo(G.eyeX + 44, px.eyeY + 22); ctx.lineTo(G.eyeX + 53, px.eyeY + 8); ctx.lineTo(G.eyeX + 35, px.eyeY + 8); ctx.closePath(); ctx.fill(); }
+
+            // 8. 目前視線名稱與操作提示
+            const names = { top: tr('俯視', 'Look Down'), mid: tr('平視', 'Eye-level'), bot: tr('仰視', 'Look Up') };
+            const nameCol = { top: '#f472b6', mid: '#4ade80', bot: '#38bdf8' };
+            ctx.font = `bold 24px ${FX_FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = nameCol[currentParallaxMode] || chalk;
+            ctx.fillText(names[currentParallaxMode] || '', G.eyeX, 290);
+            ctx.font = `bold ${tr(20, 18)}px ${FX_FONT}`; ctx.fillStyle = '#fde047'; ctx.textAlign = 'right';
+            ctx.fillText(tr('拖曳眼睛，看讀數怎麼變', 'Drag the eye and watch the reading change'), 876, 388);
+            ctx.restore();
+        }
+
+        function pxStop(snap) {
+            if (px.rafId !== null) { cancelAnimationFrame(px.rafId); px.rafId = null; }
+            if (snap && px.running) px.eyeY = px.to;
+            px.running = false;
+        }
+        function pxTick(ts) {
+            if (!px.running) return;
+            if (!px.t0) px.t0 = ts;
+            const u = Math.min(1, (ts - px.t0) / PX_GLIDE_MS);
+            const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+            px.eyeY = u >= 1 ? px.to : px.from + (px.to - px.from) * e;
+            drawParallax();
+            if (u >= 1) { px.running = false; px.rafId = null; return; }
+            px.rafId = requestAnimationFrame(pxTick);
+        }
+        // mode：'top' | 'mid' | 'bot'；glide === false 時只重畫目前畫面（語言切換、回到分頁）
+        function checkParallax(mode, glide) {
+            currentParallaxMode = mode;
+            pxRenderText(mode);
+            if (glide === false) { drawParallax(); return; }
+            const target = PX_EYE[mode];
+            if (target === undefined) { drawParallax(); return; }
+            px.dragging = false;
+            if (Math.abs(px.eyeY - target) < 0.5) { pxStop(false); px.eyeY = target; drawParallax(); return; }
+            px.from = px.eyeY; px.to = target; px.t0 = 0;
+            if (!px.running) { px.running = true; px.rafId = requestAnimationFrame(pxTick); }   // 防重複：只有一個迴圈
+        }
+        // 拖曳眼睛（Pointer Events：滑鼠與觸控共用）
+        (function pxInitPointer() {
+            const canvas = document.getElementById('cylinderCanvas');
+            if (!canvas) return;
+            const pos = ev => {
+                const r = canvas.getBoundingClientRect();
+                return { x: (ev.clientX - r.left) * canvas.width / r.width, y: (ev.clientY - r.top) * canvas.height / r.height };
+            };
+            const moveEye = y => {
+                px.eyeY = Math.max(PX_EYE_MIN, Math.min(PX_EYE_MAX, y));
+                const rd = pxReading();
+                currentParallaxMode = rd >= 51 ? 'top' : (rd <= 49 ? 'bot' : 'mid');   // 最接近的視線
+                pxRenderText(currentParallaxMode);
+                drawParallax();                                            // 拖曳時直接重畫，不開迴圈
+            };
+            canvas.addEventListener('pointerdown', ev => {
+                const p = pos(ev);
+                if (p.x < 650) return;                                     // 只有右側的眼睛軌道區可以拖曳
+                ev.preventDefault();
+                pxStop(false);
+                px.dragging = true;
+                try { canvas.setPointerCapture(ev.pointerId); } catch (err) { /* 忽略 */ }
+                moveEye(p.y);
+            });
+            canvas.addEventListener('pointermove', ev => {
+                if (!px.dragging) return;
+                ev.preventDefault();
+                moveEye(pos(ev).y);
+            });
+            const end = () => { px.dragging = false; };
+            canvas.addEventListener('pointerup', end);
+            canvas.addEventListener('pointercancel', end);
+        })();
 
         // ===== 排水法實驗室（Canvas 動畫：石頭落下 → 水花 → 沉底 → 水位上升） =====
         const VL_BASE = 50;                              // 原水位 (mL)
