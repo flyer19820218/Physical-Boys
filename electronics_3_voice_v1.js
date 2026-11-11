@@ -182,7 +182,7 @@
 
   // ─── 切頁與畫面場景（本課專用）───
   // 每個子頁（data-sub）對應一組「直接呼叫頁面原本的函式」：setSubTab、setT1Rate、setT2Break、setT3Branch、
-  // setT4Meter、setT4Why、setT4WhyDesign、loadT5Quiz、checkT5Answer、setT6Go。不改頁面任何既有程式。
+  // setT4Meter、setT4Why、setT4WhyDesign、loadT5Quiz、checkT5Answer、setT6Go、parVoltGo（btn-pv-N）。不改頁面任何既有程式。
   var cur = { tab: null, sub: null, step: 0 };
   var SCENE_CVS = { micro: 'cvs-t1', series: 'cvs-t2', parallel: 'cvs-t3', par: 'cvs-t3v', wiring: 'cvs-t4',
     design: 'cvs-t4-why', quiz: 'cvs-t5', speed: 'cvs-t6' };
@@ -206,15 +206,16 @@
     }, 40);
   }
   var BRANCH = [[6, 2], [2, 6], [6, 12]]; // 分頁三：I₁ 調小、調中、調大
+  var T5_GUESS = [0, 1, 0]; // 分頁五：曉臻猜的選項（甲二歐姆乙三歐姆＝A、還是一安培＝B、甲＝A），揭曉時點這一個
 
   // 每個子頁的「步驟」（對照 electronics_3.html 老師講解 STAGE 表）：
   //   micro（分頁一）：1 電流小　2 電流中　3 電流大
   //   series（分頁二）：1 接好的串聯　2 把中間剪斷
   //   parallel（分頁三）：1 I₁ 調小　2 I₁ 調中　3 I₁ 調大
-  //   par（分頁三，為什麼電壓相等）：1 自動的五步動畫（頁面自己跑）
+  //   par（分頁三，為什麼電壓相等）：1 電子的能量　2 串聯分攤　3 只能選一條　4 花光能量　5 電壓相等（按頁面的 btn-pv-N）
   //   wiring（分頁四，測量接線示範）：1 安培計接法　2 伏特計接法
   //   design（分頁四，內阻設計探究）：1 安培計・正確　2 安培計・錯誤　3 伏特計・正確　4 伏特計・錯誤
-  //   quiz（分頁五）：1 題型一題目　2 題型一揭曉　3 題型二題目　4 題型二揭曉　5 題型三題目　6 題型三揭曉
+  //   quiz（分頁五）：1 題型一題目　2 題型一揭曉　3 題型二題目　4 題型二揭曉　5 題型三題目　6 題型三揭曉（揭曉＝點曉臻猜的選項）
   //   speed（分頁六）：1 開關還開著　2 合上開關　3 電子只爬一點（約 5.2 秒）
   var SCENES = {
     micro: function (step) {
@@ -230,8 +231,11 @@
       var b = BRANCH[rng(step, 3) - 1];
       rampBranch(b[0], b[1], anim);
     },
-    par: function () {
+    par: function (step) {
       pressIfOff('btn-t3-par', function () { setSubTab(3, 'par'); });
+      // 頁面這張動畫是五步自動循環（各步 6.5～10 秒），只靠進子頁會依自己的時鐘跑、對不上旁白；
+      // 所以每句再「按」一次頁面原本的步驟鈕 btn-pv-N（parVoltGo），讓畫面停在旁白講的那一步的開頭。
+      press('btn-pv-' + rng(step, 5), function () { if (typeof parVoltGo === 'function') parVoltGo(rng(step, 5)); });
     },
     wiring: function (step) {
       pressIfOff('btn-t4-model', function () { setSubTab(4, 'model'); });
@@ -246,16 +250,22 @@
     quiz: function (step) {
       var s = rng(step, 6), i = Math.floor((s - 1) / 2);
       loadT5Quiz(i);                              // 換題（會先蓋住上一題的解答）
-      if (s % 2 === 0) { try { checkT5Answer(t5_tasks[i].ans); } catch (e) {} } // 偶數步：公布正解
+      // 偶數步：公布。稿子裡曉臻每題都先猜錯（第五十四、五十九、六十三句），所以「點」她猜的那個選項：
+      // 頁面原本的回饋會把她的選項標錯、正解標對、顯示解析，和彥君說「方向反了／不對／不是」一致。
+      if (s % 2 === 0) { try { checkT5Answer(T5_GUESS[i] != null ? T5_GUESS[i] : t5_tasks[i].ans); } catch (e) {} }
     },
-    speed: function (step) {
+    speed: function (step, anim) {
       var s = rng(step, 3);
       if (s === 1) {                              // 開關還開著
         t6_running = false; t6_t = 0;
         var b = $('btn-t6-go'); if (b) b.classList.remove('active');
       } else {
-        setT6Go();                                // 合上開關：電子開始動
-        if (s === 3) t6_t = (6000 - 800) / 1000;  // 電子只爬一點：與頁面老師講解相同的時間點
+        if (s === 2) { setT6Go(); return; }       // 合上開關：電子開始動（黃色訊號從頭掃一次）
+        // 電子只爬一點：與頁面老師講解相同的時間點（5.2 秒）。開關已經合上、正常播過來時不倒帶，
+        // 否則電子會往回跳；跳句（anim=false）或開關還開著時才設到這個時間點。
+        var T3 = (6000 - 800) / 1000;
+        if (!anim || !t6_running) { setT6Go(); t6_t = T3; }
+        else if (t6_t < T3) t6_t = T3;
       }
     }
   };
