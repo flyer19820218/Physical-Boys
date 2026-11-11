@@ -4,7 +4,7 @@
 
 - `page`：課程頁 `magnetism_1.html`。
 - `cuts`：播到 `＊切頁：<標題>` 時，點 `.tab-button[data-tab=tab]`，再點 `.sub-tab-btn[data-sub=sub]`。標題必須與稿子完全一致（共 6 個）。
-- `at`：播到第 N 句（說話行編號，兩位數，與 manifest 的 `id` 相同）時，切到指定 tab／sub（共 13 個）。
+- `at`：播到第 N 句（說話行編號，兩位數，與 manifest 的 `id` 相同）時，切到指定 tab／sub（共 19 個）。
 - `subs`：該句的字幕顯示字。只放含「N 極／S 極」的句子，把念的字換成畫面字（恩極→N 極、艾斯極→S 極），其餘字不變（共 0 句）。沒列在 `subs` 的句子，字幕直接顯示 `text`。
 
 句號有兩種寫法，不要混用：`id`／`stage.json` 的 key 是兩位數（01–106）；音檔檔名是三位數（`001_yanjun.mp3`–`106_...`），說話者對應 彥君=yanjun、曉臻=xiaozhen、合聲=hesheng。
@@ -20,6 +20,8 @@
 
 ## at
 
+- 第 01 句 → `tab1` / `sym`
+- 第 33 句 → `tab2` / `water`
 - 第 35 句 → `tab2` / `par`
 - 第 36 句 → `tab2` / `def`
 - 第 40 句 → `tab2` / `water`
@@ -27,9 +29,13 @@
 - 第 48 句 → `tab3` / `closed`
 - 第 50 句 → `tab3` / `open`
 - 第 52 句 → `tab3` / `short`
-- 第 59 句 → `tab4` / `bulb`
-- 第 63 句 → `tab4` / `quiz`
-- 第 76 句 → `tab5` / `ammeter_error`
-- 第 78 句 → `tab5` / `voltmeter`
-- 第 80 句 → `tab5` / `normal`
-- 第 91 句 → `tab6` / `ladder`
+- 第 58 句 → `tab4` / `battery`
+- 第 59 句 → `tab4` / `battery`
+- 第 60 句 → `tab4` / `bulb`
+- 第 62 句 → `tab4` / `bulb`
+- 第 64 句 → `tab4` / `quiz`
+- 第 77 句 → `tab5` / `ammeter_error`
+- 第 79 句 → `tab5` / `voltmeter`
+- 第 81 句 → `tab5` / `normal`
+- 第 87 句 → `tab5` / `wire`
+- 第 100 句 → `tab6` / `ladder`

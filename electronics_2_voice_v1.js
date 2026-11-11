@@ -47,7 +47,8 @@
       '.vx-fill{height:100%;width:0;background:#fde047}',
       '.vx-pin{pointer-events:none;position:relative;margin:0 auto 10px;max-width:min(560px,100%);box-sizing:border-box;padding:8px 14px;border-radius:12px;background:#fde047;color:#11261f;font-size:19px;font-weight:700;line-height:1.4;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.5);display:none}',
       '.vx-pin.show{display:block}',
-      '@media (max-width:620px){.vx-av{height:78px}.vx-txt{font-size:17px}.vx-bub{padding:8px 10px 12px}}'
+      'body.vx-show{padding-bottom:280px}',
+      '@media (max-width:620px){.vx-av{height:78px}.vx-txt{font-size:17px}.vx-bub{padding:8px 10px 12px}body.vx-show{padding-bottom:240px}}'
     ].join('\n');
     document.head.appendChild(s);
   }
@@ -105,6 +106,7 @@
       var show = !ui.panel.classList.contains('show');
       if (!show) stop();
       ui.panel.classList.toggle('show', show);
+      document.body.classList.toggle('vx-show', show); // 面板打開時頁尾留白，讓底部的按鈕（例如接線練習）捲得上來
       ui.open.classList.toggle('on', show);
       ui.open.setAttribute('aria-pressed', String(show));
     });
@@ -179,25 +181,33 @@
   var cur = { tab: null, sub: null, step: 0 };
   var SCENE_CVS = { sym: 'cvs-tab1', sp: 'cvs-tab1', water: 'cvs-tab2', par: 'cvs-tab2', def: 'cvs-tab2', pot: 'cvs-tab2',
     closed: 'cvs-tab3', open: 'cvs-tab3', short: 'cvs-tab3', battery: 'cvs-tab4', bulb: 'cvs-tab4', quiz: 'cvs-tab4',
-    normal: 'cvs-tab5', ammeter_error: 'cvs-tab5', voltmeter: 'cvs-tab5', ladder: 'cvs-t6', ref: 'cvs-t6' };
+    normal: 'cvs-tab5', ammeter_error: 'cvs-tab5', voltmeter: 'cvs-tab5', wire: 'cvs-wire', ladder: 'cvs-t6', ref: 'cvs-t6' };
   function $(id) { return document.getElementById(id); }
   function clearTimers() { /* 本課沒有計時器需要清除 */ }
+  // 每個場景都接收「步驟」：同一個子分頁裡的按鈕（電池 1 單一／2 串聯／3 並聯，燈泡 1 純串聯／2 純並聯／3 組合，
+  // 水壓 1 一顆／2 兩顆串聯，接線練習 1 基本題／2 串並聯題／3 會考題）。沒有步驟的場景就忽略它。
+  var BULB_MODE = ['series', 'parallel', 'complex'];
   var SCENES = {
     sym: function () { setT1Sub('sym'); },
     sp: function () { setT1Sub('sp'); },
-    water: function () { setT2Sub('water'); },
+    water: function (step) { setT2Sub('water'); setT2Cells(step >= 2 ? 2 : 1); },
     par: function () { setT2Sub('par'); },
     def: function () { setT2Sub('def'); },
     pot: function () { setT2Sub('pot'); },
     closed: function () { setT3State('closed'); },
     open: function () { setT3State('open'); },
     short: function () { setT3State('short'); },
-    battery: function () { setT4Sub('battery'); },
-    bulb: function () { setT4Sub('bulb'); },
+    battery: function (step) { setT4Sub('battery'); setT4Battery(step === 2 || step === 3 ? step : 1); },
+    bulb: function (step) { setT4Sub('bulb'); setT4Bulb(BULB_MODE[(step >= 1 && step <= 3 ? step : 1) - 1]); },
     quiz: function () { setT4Sub('quiz'); },
     normal: function () { setT5Mode('normal'); },
     ammeter_error: function () { setT5Mode('ammeter_error'); },
     voltmeter: function () { setT5Mode('voltmeter'); },
+    wire: function (step) { // 接線練習：切到分頁五，點對應的題目等級（#wl-lv 的第 step 顆）
+      setT5Mode('normal');
+      var lv = document.querySelectorAll('#wl-lv .wl-btn')[(step >= 1 && step <= 3 ? step : 1) - 1];
+      if (lv) lv.click();
+    },
     ladder: function () { setT6View('ladder'); },
     ref: function () { setT6View('ref'); }
   };
