@@ -1005,15 +1005,30 @@
                 // 同質量比體積
                 let my = 220;
                 ctx.beginPath(); ctx.moveTo(originX, my); ctx.lineTo(620, my); ctx.stroke();
-                ctx.fillStyle = '#4ade80'; ctx.fillText(tr("★ 相同質量 M", "★ Same Mass M"), 80, my - 12);
+                ctx.fillStyle = '#4ade80'; ctx.fillText(tr("★ 相同質量 M", "★ Same Mass M"), 80, my - 32);
 
-                ctx.fillStyle = '#f472b6'; ctx.beginPath(); ctx.arc(181, my, 8, 0, Math.PI*2); ctx.fill();  
-                ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(310, my, 8, 0, Math.PI*2); ctx.fill();  
-                ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(500, my, 8, 0, Math.PI*2); ctx.fill();  
+                ctx.setLineDash([]);
+                // 三塊同質量（各 100 g）的不同物質：邊長依體積的立方根畫（金 5.2、鐵 12.8、鋁 37.0 cm³ → 邊長比 ≈ 1 : 1.35 : 1.92）
+                const sameMass = [
+                    { x: 181, side: 24, label: tr('甲：金', 'A: gold'), mat: MV_MATERIAL.gold, color: '#f472b6' },
+                    { x: 310, side: 32, label: tr('乙：鐵', 'B: iron'), mat: MV_MATERIAL.iron, color: '#fde047' },
+                    { x: 500, side: 46, label: tr('丙：鋁', 'C: aluminum'), mat: MV_MATERIAL.al, color: '#38bdf8' }
+                ];
+                sameMass.forEach(b => {
+                    drawBlock(ctx, b.x, my, b.side, b.mat);
+                    ctx.font = 'bold 20px Noto Sans TC, sans-serif';
+                    const w = ctx.measureText(b.label).width;
+                    const ty = my + (b.side * 1.25) / 2 + 26;
+                    ctx.fillStyle = 'rgba(15, 23, 20, 0.85)';
+                    ctx.fillRect(b.x - w / 2 - 4, ty - 19, w + 8, 26);
+                    ctx.fillStyle = b.color;
+                    ctx.fillText(b.label, b.x - w / 2, ty);
+                });
 
                 textEl.innerHTML = `
                     🔥 <strong class="hl-green">${tr('鐵則二：同質量下，體積 V 與 密度 D 成反比！', 'Rule 2: Same M, V ∝ 1/D!')}</strong><br>
                     ${tr('請看圖中綠色水平虛線（代表大家的質量 M 通通拿一樣重）：', 'See green horizontal dashed line (Everyone\'s Mass M same):')}<br>
+                    👉 ${tr('圖中三塊都是 100 g，但材質不同：金只要約 5.2 cm³、鐵約 12.8 cm³、鋁要約 37 cm³，所以金最小塊、鋁最大塊。', 'All three blocks are 100 g but made of different materials: gold takes about 5.2 cm³, iron about 12.8 cm³, aluminum about 37 cm³, so gold is the smallest and aluminum the biggest.')}<br>
                     👉 ${tr('交點愈往右（體積 V 愈大/越膨鬆），代表這物質愈稀疏，它的 <strong class="hl-blue">密度 D 必然愈小！</strong>', 'Intersection further right (larger Vol V/fluffier) means less dense, so <strong class="hl-blue">Density D must be smaller!</strong>')}<br>
                     👉 ${tr('結論：體積 甲 ＜ 乙 ＜ 丙，所以密度卻反過來是 <strong class="hl-yellow">甲 ＞ 乙 ＞ 丙</strong>！', 'Conclusion: Volume A < B < C, so density is reversed <strong class="hl-yellow">A > B > C</strong>!')}
                 `;
