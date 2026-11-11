@@ -178,8 +178,9 @@ def validate(items, errors, warnings):
         for f, _t, sb, st in lst:
             if not 0 <= f <= 1:
                 errors.append("acts 第 %d 句：位置 %s 不在 0～1" % (n, f))
-            if not 1 <= st <= STEPS.get(sb, 0):
-                errors.append("acts 第 %d 句：%s 沒有第 %s 步（共 %s 步）" % (n, sb, st, STEPS.get(sb)))
+            key = sb or _t  # 與 at 相同：沒有子頁的分頁，步驟數登記在分頁名稱下
+            if not 1 <= st <= STEPS.get(key, 0):
+                errors.append("acts 第 %d 句：%s 沒有第 %s 步（共 %s 步）" % (n, key, st, STEPS.get(key)))
     # 5. tab/sub 必須存在於 html
     html = REPO / PAGE
     if not html.exists():

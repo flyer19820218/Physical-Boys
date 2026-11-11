@@ -186,19 +186,33 @@
   // 本課（electronics_4）頁面用 switchTab、setSubTab 與頁面既有的全域函式控制畫面（不改任何既有程式）。
   // 沒有子頁的分頁（tab1～tab4）以分頁名稱當 key；第 5 分頁的子頁是 measure（歐姆定律測量）、quiz（考題）。
   // 步驟對照（與 lessons/electronics_4.json 的 _note 相同）：
-  //   tab1：1～3＝材質 銀／銅／鐵，4＝長度，5＝截面積，6＝溫度（其餘變數回到預設：截面積 2、長度 2、溫度 20）
+  //   tab1：每一步都是整組設定 [材質, 截面積, 長度, 溫度]，一次只改一個變數（其餘維持預設：銀、截面積 2、長度 2、溫度 20）
+  //         1＝預設（銀），2＝銅，3＝鐵，4＝短導線（長度 1），5＝長導線（長度 3），6＝細導線（截面積 1），7＝粗導線（截面積 3），
+  //         8＝溫度 60，9＝溫度 100，10＝細細長長（截面積 1、長度 3；開場「細細長長的電線」）
   //   tab2：1＝基準（電壓 6、電阻 3），2＝電壓拉大（9），3＝電阻拉大（6）
-  //   tab3：1＝串聯推導框，2＝並聯推導框（畫面捲到該畫布）
-  //   tab4：1＝電壓掃描（換分頁時從頭開始）
+  //   tab3：1＝串聯框（畫布在上、推導盡量一起露出），2＝並聯框（同上），3＝串聯推導（推導完整露出），4＝並聯推導（同上）
+  //   tab4：1＝上方電路圖，2＝下方 V-I 圖，3＝V-I 圖＋電壓掃描從頭開始（再按一次第 4 分頁按鈕，等同頁面自己的 restore）
   //   measure：1、3＝讀出新的一組數據，2、4＝揭曉解答
-  //   quiz：1～5＝載入第 1～5 題，6～10＝揭曉第 1～5 題（只標出正解，不標錯誤選項）
+  //   quiz：1～5＝載入第 1～5 題，6～10＝揭曉第 1～5 題（只標出正解，不標錯誤選項），11～15＝打開第 1～5 題的「破題引導」
   var cur = { tab: null, sub: null, step: 0 };
-  var SCENE_CVS = { tab1: 'cvs-tab1', tab2: 'cvs-tab2', tab4: 'cvs-tab4-circuit', measure: 'cvs-tab5-measure', quiz: 'cvs-t5-quiz' };
-  function cvsOf(key, step) {
-    if (key === 'tab3') return step === 2 ? 'cvs-tab3-parallel' : 'cvs-tab3-series';
-    return key ? SCENE_CVS[key] : null;
-  }
   function $(id) { return document.getElementById(id); }
+  function derivOf(cid) { var c = $(cid), b = c && c.closest('.content-box'); return b ? b.lastElementChild : null; } // 串並聯推導文字（頁面原有的那一塊）
+  // 每個畫面要讓學生看到哪一段：{ k: 比對用的名稱, top/bot: 範圍的頭尾元素, anchor: 放不下時對齊上緣（top）或下緣（bottom） }
+  function viewOf(key, step) {
+    if (!key) return null;
+    if (key === 'tab3') {
+      var cid = (step === 2 || step === 4) ? 'cvs-tab3-parallel' : 'cvs-tab3-series';
+      return { k: cid + (step >= 3 ? ':deriv' : ''), top: cid, botEl: derivOf(cid), anchor: step >= 3 ? 'bottom' : 'top' };
+    }
+    if (key === 'tab4') return step >= 2 ? { k: 'cvs-tab4-graph', top: 'cvs-tab4-graph' } : { k: 'cvs-tab4-circuit', top: 'cvs-tab4-circuit' };
+    if (key === 'quiz') {
+      if (step >= 11) return { k: 'quiz:hint', top: 'q-desc', bot: 'q-hint-block', anchor: 'bottom' };
+      if (step >= 6) return { k: 'quiz:ans', top: 'q-desc', bot: 'q-explain-block', anchor: 'bottom' };
+      return { k: 'quiz:load', top: 'cvs-t5-quiz', bot: 'q-options', anchor: 'top' };
+    }
+    var one = { tab1: 'cvs-tab1', tab2: 'cvs-tab2', measure: 'cvs-tab5-measure' }[key];
+    return one ? { k: one, top: one } : null;
+  }
   // 「按」頁面上的按鈕（觸發它原本的 onclick），學生看到的就是那顆按鈕亮起來；找不到按鈕才直接呼叫函式
   function press(id, fn) { var b = $(id); if (b && b.click) b.click(); else if (fn) fn(); }
   function clearTimers() {}   // 本課沒有計時器需要清（保留給共用流程呼叫）
@@ -206,7 +220,8 @@
   var MATC = { ag: 1, cu: 1.5, fe: 4 };                       // 與頁面按鈕 onclick 的係數相同
   var MATB = { ag: 'btn-mat-ag', cu: 'btn-mat-cu', fe: 'btn-mat-fe' };
   // [材質, 截面積, 長度, 溫度]：每一步都把整組設定放到位，跳句（快轉、倒退）時也能直接還原
-  var T1 = [null, ['ag', 2, 2, 20], ['cu', 2, 2, 20], ['fe', 2, 2, 20], ['ag', 2, 3, 20], ['ag', 3, 2, 20], ['ag', 2, 2, 100]];
+  var T1 = [null, ['ag', 2, 2, 20], ['cu', 2, 2, 20], ['fe', 2, 2, 20], ['ag', 2, 1, 20], ['ag', 2, 3, 20],
+            ['ag', 1, 2, 20], ['ag', 3, 2, 20], ['ag', 2, 2, 60], ['ag', 2, 2, 100], ['ag', 1, 3, 20]];
   var T2 = [null, [6, 3], [9, 3], [6, 6]];                    // [電壓, 電阻]
   function setSl(id, v) { var e = $(id); if (e) { e.value = String(v); e.dispatchEvent(new Event('input')); } }
   function onSub(id) { var b = $(id); return !!b && b.classList.contains('active'); }
@@ -217,8 +232,12 @@
       setSl('t1-area', s[1]); setSl('t1-length', s[2]); setSl('t1-temp', s[3]);
     },
     tab2: function (step) { var s = T2[step] || T2[1]; setSl('t2-v', s[0]); setSl('t2-r', s[1]); },
-    tab3: function () {},                                      // 只換畫布（見 cvsOf）
-    tab4: function () {},                                      // 掃描動畫：切到分頁時已從頭開始
+    tab3: function () {},                                      // 只換要露出的框（見 viewOf）
+    // 掃描動畫是頁面自己在迴圈裡重複的（一圈 6.5 秒：約 1.7 秒過 1.8 V 開始導通、約 3.5～5.5 秒電流暴增），
+    // 只能「從頭開始」不能定格（定格只在頁面的老師模式裡有）。第 3 步＝再按一次第 4 分頁按鈕，讓掃描從頭跑；剛切進分頁時本來就從頭，不重複按。
+    tab4: function (step, anim, changedTab) {
+      if (step === 3 && !changedTab) press('tab-btn-tab4', function () { switchTab('tab4'); });
+    },
     measure: function (step) {
       if (!onSub('btn-t5-measure')) press('btn-t5-measure', function () { setSubTab(5, 'measure'); });
       if (step === 1 || step === 3) generateT5Problem();      // 讀出新的一組數據
@@ -227,8 +246,9 @@
     quiz: function (step) {
       if (!onSub('btn-t5-quiz')) press('btn-t5-quiz', function () { setSubTab(5, 'quiz'); });
       if (step <= 5) { press('btn-q' + step, function () { loadT5Quiz(step - 1); }); return; }
-      var n = step - 5;                                        // 6～10＝揭曉第 n 題
+      var n = step > 10 ? step - 10 : step - 5;                // 6～10＝揭曉第 n 題；11～15＝第 n 題的破題引導
       if (!onSub('btn-q' + n)) press('btn-q' + n, function () { loadT5Quiz(n - 1); });
+      if (step > 10) { if (!t5_quiz_answered) press('btn-q-hint', showT5Hint); return; }
       checkT5QuizAnswer(-1);                                   // -1：只標出正解，不標錯誤選項
     }
   };
@@ -241,23 +261,29 @@
     var changedTab = false;
     if (btn && !btn.classList.contains('active')) { btn.click(); changedTab = true; }
     try {
-      if (SCENES[key]) SCENES[key](stepNo, anim);
+      if (SCENES[key]) SCENES[key](stepNo, anim, changedTab);
     } catch (e) { if (window.console) console.warn('[有聲講解] 場景失敗', key, e); }
-    var prev = cur;                                            // 先記下「原本的畫面」，再比較：換了分頁、子頁或畫布，就捲到該畫布
+    var prev = cur;                                            // 先記下「原本的畫面」，再比較：換了分頁、子頁或要露出的框，就捲過去
     var prevKey = prev.sub || prev.tab;
     cur = { tab: tab, sub: sub, step: stepNo };
-    var nid = cvsOf(key, stepNo);
-    if (changedTab || cvsOf(prevKey, prev.step) !== nid) bringIntoView($(nid));
+    var nv = viewOf(key, stepNo), pv = viewOf(prevKey, prev.step);
+    if (nv && (changedTab || !pv || pv.k !== nv.k)) bringIntoView(nv);
   }
   var goto = sceneOf;
 
-  function bringIntoView(target) {
-    if (!target || !target.getBoundingClientRect) return;
-    var r = target.getBoundingClientRect();
+  // 把一段範圍（頭 top～尾 bot）捲到字幕框上方：放得下就置中；放不下就依 anchor 對齊上緣或下緣
+  function bringIntoView(v) {
+    var a = v && $(v.top), b = v && (v.botEl || (v.bot ? $(v.bot) : a));
+    if (!a || !b || !a.getBoundingClientRect) return;
+    var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+    var top = ra.top, bot = Math.max(ra.bottom, rb.bottom);
     var panelTop = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
-    if (r.top >= 56 && r.bottom <= panelTop - 8) return; // 已完整在畫面內，不動
-    var room = panelTop - 56 - r.height; // 動畫上下剩餘空間，讓動畫置中於字幕框上方
-    var y = window.pageYOffset + r.top - 56 - Math.max(0, room / 2);
+    if (top >= 56 && bot <= panelTop - 8) return; // 已完整在畫面內，不動
+    var room = panelTop - 8 - 56 - (bot - top);
+    var y;
+    if (room >= 0) y = window.pageYOffset + top - 56 - room / 2;          // 放得下：置中於字幕框上方
+    else if (v.anchor === 'bottom') y = window.pageYOffset + bot - (panelTop - 8); // 放不下：尾端貼齊字幕框
+    else y = window.pageYOffset + top - 56;                                 // 放不下：頭端貼齊上緣
     try { window.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, y); }
   }
 
