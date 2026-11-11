@@ -218,11 +218,49 @@
     try { if (t5_idx !== i) { t5_idx = i; t5_renderTask(); } } catch (e) {}
     press(id, function () { setT5Mode(mode); });
   }
+
+  // ─── 接線練習：用頁面原本給老師模式用的 window.WIRING（setWires／demo.act／target）一條一條接給學生看 ───
+  // 步驟：1 基本題（空）　2～7 基本題三條線（選起點→接上）　8 檢查接線（燈亮）
+  //       9 會考題（空）　10～21 會考題六條線（選起點→接上）　22 通電　23 檢查接線
+  function wireLevel(i) {
+    var b = document.querySelectorAll('#wl-lv .wl-btn')[i];
+    if (b) b.click();
+  }
+  function wireKey(w) { return w.a + '|' + w.b; }
+  // lv：題目等級（0 基本題、2 會考題）；m：第幾個小步（0 起算）；n：總共幾條線；nx：線接完後的額外動作數（基本題 1：檢查；會考題 2：通電、檢查）
+  function wireDemo(lv, m, n, nx) {
+    var W = window.WIRING, st = W.state;
+    if (st.lv !== lv || st.qi !== 0) W.load(lv, 0);
+    var tgt = W.target(), placed, sel = null, ex = 0;
+    if (m < 2 * n) { var k = m >> 1; placed = k + (m & 1); sel = (m & 1) ? null : tgt[k].a; }
+    else { placed = n; ex = m - 2 * n + 1; }
+    var wantPassed = ex >= nx, wantOn = nx === 2 ? ex >= 1 : wantPassed;
+    var want = tgt.slice(0, placed), wk = want.map(wireKey), ck = st.wires.map(wireKey);
+    var prefix = ck.length <= wk.length && ck.every(function (x, i) { return x === wk[i]; });
+    var reload = !prefix || (st.on && !wantOn) || (st.passed && !wantPassed);
+    if (reload) { W.load(lv, 0); ck = []; }
+    if (reload || ck.length !== wk.length) W.setWires(want);
+    st.sel = sel; st.sig = '';
+    if (wantOn && !st.on && !wantPassed) W.demo.act('on');
+    if (wantPassed && !st.passed) W.demo.act('check');
+  }
+  // 接線畫布：縮到「字幕框上方」放得下，電路圖和器材才能同時看到（不縮的話下半部的器材會被字幕框蓋住）
+  function fitWire() {
+    var cv = $('cvs-wire'), b = ui.panel && ui.panel.querySelector('.vx-bub');
+    if (!cv) return;
+    var top = b ? b.getBoundingClientRect().top : window.innerHeight;
+    cv.style.width = 'auto'; cv.style.maxWidth = '100%'; cv.style.display = 'block'; cv.style.margin = '0 auto';
+    cv.style.maxHeight = Math.max(280, top - 56 - 24) + 'px';
+  }
+  function unfitWire() {
+    var cv = $('cvs-wire');
+    if (cv) { cv.style.width = cv.style.maxWidth = cv.style.maxHeight = cv.style.display = cv.style.margin = ''; }
+  }
   // 每個場景的「步驟」＝頁面老師講解 STAGE 表的狀態（electronics_2.html 約 4355 行）：
   //   water：1 一顆·電流　2 一顆·電子　3 兩顆串聯·電流　4 兩顆串聯·電子（STAGE.t2 第 1～4 步）
   //   par：1 電池並聯·電流　2 電池並聯·電子（STAGE.t2 第 5、6 步）；def、pot＝第 7、8 步
   //   battery：1 單一　2 串聯　3 並聯；bulb：1 純串聯　2 純並聯　3 串並聯組合　4 串聯剪線　5 並聯剪線；quiz：1 題目　2 揭曉解答
-  //   meter_a／meter_v：1 歸零　2 串聯／並聯　3 三個量程　4 由大到小；wire：1 基本題　2 串並聯題　3 會考題
+  //   meter_a／meter_v：1 歸零　2 串聯／並聯　3 三個量程　4 由大到小；wire：1～23（見 wireDemo 上方說明）
   //   ladder：1 外電阻 2.0 Ω　2 外電阻慢慢變小　3 外電阻慢慢變大
   var BULB = [null, 'series', 'parallel', 'complex', 'series', 'parallel'];
   var BULB_ID = { series: 'btn-t4-bulb-s', parallel: 'btn-t4-bulb-p', complex: 'btn-t4-bulb-c' };
@@ -261,9 +299,14 @@
     voltmeter: function () { t5task(2, 'voltmeter', 'btn-t5-voltmeter'); },
     meter_a: function (step) { chip('mh-steps-a', rng(step, 4)); },
     meter_v: function (step) { chip('mh-steps-v', rng(step, 4)); },
-    wire: function (step) { // 接線練習：點對應的題目等級（#wl-lv 的第 step 顆）
-      var lv = document.querySelectorAll('#wl-lv .wl-btn')[rng(step, 3) - 1];
-      if (lv) lv.click();
+    wire: function (step) { // 接線練習（步驟對照見上面註解與 wireDemo）
+      fitWire();
+      var W = window.WIRING;
+      if (step <= 1) { wireLevel(0); return; }                // 基本題：全新、什麼線都還沒接
+      if (step === 9) { wireLevel(2); return; }               // 會考題：全新
+      if (!W || !W.demo) return;
+      if (step <= 8) wireDemo(0, step - 2, 3, 1);             // 基本題：接三條線→檢查接線
+      else wireDemo(2, step - 10, 6, 2);                      // 會考題：接六條線→通電→檢查接線
     },
     ladder: function (step, anim) {
       press('btn-t6-ladder', function () { setT6View('ladder'); });
@@ -278,6 +321,7 @@
     stepNo = stepNo || 1;
     if (anim === undefined) anim = true;
     clearTimers();
+    if (sub !== 'wire') unfitWire();
     var btn = document.querySelector('.tab-btn[data-tab="' + tab + '"]');
     var changedTab = false;
     if (btn && !btn.classList.contains('active')) { btn.click(); changedTab = true; }
@@ -531,14 +575,14 @@
   }
 
   function stop() {
-    halt(); state = 'idle'; idx = 0;
+    halt(); state = 'idle'; idx = 0; unfitWire();
     setPin(''); progress(0);
     if (ui.sub) ui.sub.textContent = '按 ▶ 聽彥君老師與曉臻助教講解。';
     refresh();
   }
 
   function finish() {
-    halt(); state = 'idle'; idx = 0; setPin('');
+    halt(); state = 'idle'; idx = 0; setPin(''); unfitWire();
     progress(total);
     ui.sub.textContent = '講解結束，可以按 ▶ 重聽。';
     refresh();
