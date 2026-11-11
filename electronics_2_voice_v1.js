@@ -110,6 +110,13 @@
       ui.open.classList.toggle('on', show);
       ui.open.setAttribute('aria-pressed', String(show));
     });
+    // 老師講解模式的自動導覽會自己換分頁，和語音同時跑就會對不上：語音播放中一律留在學生操作。
+    // 播放中若有人按了「老師講解」，就切回學生操作，並把目前這一句的畫面重新套上。
+    new MutationObserver(function () {
+      if (state === 'idle' || !document.body.classList.contains('mode-teacher')) return;
+      var sb = document.getElementById('mode-student'); if (sb) sb.click();
+      if (cur.tab) goto(cur.tab, cur.sub, cur.step, false);
+    }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     ui.start.addEventListener('click', start);
     ui.pause.addEventListener('click', pause);
     ui.stop.addEventListener('click', stop);
@@ -222,8 +229,9 @@
     try {
       if (sub && SCENES[sub]) SCENES[sub](stepNo, anim);
     } catch (e) { if (window.console) console.warn('[有聲講解] 場景失敗', sub, e); }
+    var prev = cur; // 先記下「原本的畫面」，再比較：換了分頁或子頁，就捲到該子頁的畫布（電路圖、動畫）
     cur = { tab: tab, sub: sub, step: stepNo };
-    if (changedTab || cur.sub !== sub) bringIntoView($(SCENE_CVS[sub]));
+    if (changedTab || prev.tab !== tab || prev.sub !== sub) bringIntoView($(SCENE_CVS[sub]));
   }
   var goto = sceneOf;
 
@@ -409,6 +417,7 @@
       var sb = document.getElementById('mode-student'); if (sb) sb.click();
     }
     idx = 0; token++; state = 'playing'; setPin(''); progress(0); refresh();
+    cur = { tab: null, sub: null, step: 0 }; // 從頭播：第一個畫面一定要捲到電路圖，不管上次停在哪
     step();
   }
 
