@@ -896,16 +896,22 @@
         }
 
         // --- 分頁四：M-V 關係圖（原檔繪圖邏輯，僅換字體） ---
-        // 立體鐵塊（斜投影）：中心 (cx, cy)，邊長 side（px）；正面、上面、右側三個面
-        function drawIronBlock(ctx, cx, cy, side) {
+        // 材質配色（正面 / 上面 / 右側）：金、鐵、鋁
+        const MV_MATERIAL = {
+            gold: { front: '#d4a017', top: '#f7dc6f', side: '#8a6a0a' },
+            iron: { front: '#64748b', top: '#94a3b8', side: '#334155' },
+            al:   { front: '#cbd5e1', top: '#f1f5f9', side: '#94a3b8' }
+        };
+        // 立體方塊（斜投影）：中心 (cx, cy)，邊長 side（px）；正面、上面、右側三個面
+        function drawBlock(ctx, cx, cy, side, mat) {
             const d = side * 0.25;
             const x0 = cx - (side + d) / 2, y0 = cy - (side + d) / 2;
             ctx.lineWidth = 2; ctx.strokeStyle = '#f1f5f9';
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = mat.front;
             ctx.beginPath(); ctx.rect(x0, y0 + d, side, side); ctx.fill(); ctx.stroke();
-            ctx.fillStyle = '#e2e8f0';
+            ctx.fillStyle = mat.top;
             ctx.beginPath(); ctx.moveTo(x0, y0 + d); ctx.lineTo(x0 + d, y0); ctx.lineTo(x0 + side + d, y0); ctx.lineTo(x0 + side, y0 + d); ctx.closePath(); ctx.fill(); ctx.stroke();
-            ctx.fillStyle = '#475569';
+            ctx.fillStyle = mat.side;
             ctx.beginPath(); ctx.moveTo(x0 + side, y0 + d); ctx.lineTo(x0 + side + d, y0); ctx.lineTo(x0 + side + d, y0 + side); ctx.lineTo(x0 + side, y0 + side + d); ctx.closePath(); ctx.fill(); ctx.stroke();
         }
 
@@ -972,14 +978,14 @@
                 ctx.fillStyle = '#4ade80'; ctx.fillText(tr("★ 相同體積 V", "★ Same Vol V"), vx - 50, originY + 30);
                 
                 ctx.setLineDash([]);
-                // 三塊一樣大的鐵（同體積）：甲最重、乙次之、丙最輕
+                // 三塊一樣大（同體積）的不同物質：甲＝金、乙＝鐵、丙＝鋁
                 const sameBlocks = [
-                    { y: 115, label: tr('甲', 'A'), color: '#f472b6' },
-                    { y: 300, label: tr('乙', 'B'), color: '#fde047' },
-                    { y: 370, label: tr('丙', 'C'), color: '#38bdf8' }
+                    { y: 115, label: tr('甲：金', 'A: gold'), mat: MV_MATERIAL.gold, color: '#f472b6' },
+                    { y: 300, label: tr('乙：鐵', 'B: iron'), mat: MV_MATERIAL.iron, color: '#fde047' },
+                    { y: 370, label: tr('丙：鋁', 'C: aluminum'), mat: MV_MATERIAL.al, color: '#38bdf8' }
                 ];
                 sameBlocks.forEach(b => {
-                    drawIronBlock(ctx, vx, b.y, 36);
+                    drawBlock(ctx, vx, b.y, 36, b.mat);
                     ctx.font = 'bold 22px Noto Sans TC, sans-serif';
                     const w = ctx.measureText(b.label).width;
                     ctx.fillStyle = 'rgba(15, 23, 20, 0.85)';
@@ -991,7 +997,7 @@
                 textEl.innerHTML = `
                     🔥 <strong class="hl-yellow">${tr('鐵則一：同體積下，質量 M 與 密度 D 成正比！', 'Rule 1: Same V, M ∝ D!')}</strong><br>
                     ${tr('請看圖中綠色垂直虛線（代表大家的體積 V 通通一樣大）：', 'See green vertical dashed line (Everyone\'s Vol V same):')}<br>
-                    👉 ${tr('圖中三塊鐵一樣大（體積 V 相同），甲最重、乙次之、丙最輕。', 'The three iron blocks are the same size (same V): A is heaviest, then B, then C.')}<br>
+                    👉 ${tr('圖中三塊一樣大（體積 V 相同），但材質不同：甲是金、乙是鐵、丙是鋁。各取 10 cm³，質量分別是 193 g、78 g、27 g。', 'The three blocks are the same size (same V) but different materials: A is gold, B is iron, C is aluminum. Taking 10 cm³ of each, the masses are 193 g, 78 g and 27 g.')}<br>
                     👉 ${tr('交點愈高（質量 M 愈大），代表線條愈陡，它的 <strong class="hl-pink">密度 D 必然愈大！</strong>', 'Higher intersection (larger Mass M) means steeper line, so <strong class="hl-pink">Density D must be larger!</strong>')}<br>
                     👉 ${tr('結論：質量 甲 ＞ 乙 ＞ 丙，所以密度也是 <strong class="hl-yellow">甲 ＞ 乙 ＞ 丙</strong>！', 'Conclusion: Mass A > B > C, so density is <strong class="hl-yellow">A > B > C</strong>!')}
                 `;
@@ -1015,12 +1021,12 @@
                 // 同材質的秘密：在乙線上擺三塊鐵（小 / 中 / 大），大小依體積 V 畫
                 ctx.setLineDash([]);
                 const blocks = [
-                    { x: 230, y: 300, side: 30, zh: '小塊的鐵 (20g, 10cm³)', en: 'Small iron (20g, 10cm³)', lx: 262, ly: 305 },
-                    { x: 320, y: 210, side: 40, zh: '中塊的鐵 (30g, 15cm³)', en: 'Medium iron (30g, 15cm³)', lx: 352, ly: 215 },
-                    { x: 410, y: 120, side: 50, zh: '大塊的鐵 (40g, 20cm³)', en: 'Large iron (40g, 20cm³)', lx: 452, ly: 125 }
+                    { x: 230, y: 300, side: 30, zh: '小塊的鐵 (78g, 10cm³)', en: 'Small iron (78g, 10cm³)', lx: 262, ly: 305 },
+                    { x: 320, y: 210, side: 40, zh: '中塊的鐵 (117g, 15cm³)', en: 'Medium iron (117g, 15cm³)', lx: 352, ly: 215 },
+                    { x: 410, y: 120, side: 50, zh: '大塊的鐵 (156g, 20cm³)', en: 'Large iron (156g, 20cm³)', lx: 452, ly: 125 }
                 ];
                 blocks.forEach(b => {
-                    drawIronBlock(ctx, b.x, b.y, b.side);
+                    drawBlock(ctx, b.x, b.y, b.side, MV_MATERIAL.iron);
                     const label = tr(b.zh, b.en);
                     ctx.font = 'bold 20px Noto Sans TC, sans-serif';
                     const w = ctx.measureText(label).width;
@@ -1033,8 +1039,8 @@
                 textEl.innerHTML = `
                     🔥 <strong class="hl-blue">${tr('鐵則三：同材質純物質，質量 M 與 體積 V 成正比 (D不變)！', 'Rule 3: Same material, M ∝ V (D unchanged)!')}</strong><br>
                     ${tr('請看「乙線條」上的三塊鐵（綠色標籤）：', 'See the three iron blocks on "Line B" (green labels):')}<br>
-                    👉 ${tr('鐵塊愈大塊，體積從 10 → 15 → 20 cm³，質量也同步變大：20g → 30g → 40g！', 'The bigger the iron block, the more Vol (10 → 15 → 20 cm³) and the more Mass (20g → 30g → 40g)!')}<br>
-                    👉 ${tr('兩者相除：20 ÷ 10 ＝ 30 ÷ 15 ＝ 40 ÷ 20 ＝ 2，<strong class="hl-yellow">固定斜率（密度永遠不變）！</strong>', 'Ratio: 20 ÷ 10 = 30 ÷ 15 = 40 ÷ 20 = 2, <strong class="hl-yellow">constant slope (density never changes)!</strong>')}
+                    👉 ${tr('鐵塊愈大塊，體積從 10 → 15 → 20 cm³，質量也同步變大：78g → 117g → 156g！', 'The bigger the iron block, the more Vol (10 → 15 → 20 cm³) and the more Mass (78g → 117g → 156g)!')}<br>
+                    👉 ${tr('三者相除：78 ÷ 10 ＝ 117 ÷ 15 ＝ 156 ÷ 20 ＝ 7.8，<strong class="hl-yellow">固定斜率（鐵的密度永遠是 7.8 g/cm³）！</strong>', 'Ratio: 78 ÷ 10 = 117 ÷ 15 = 156 ÷ 20 = 7.8, <strong class="hl-yellow">constant slope (iron\'s density is always 7.8 g/cm³)!</strong>')}
                 `;
             }
             ctx.setLineDash([]);
