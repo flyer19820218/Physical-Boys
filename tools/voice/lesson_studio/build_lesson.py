@@ -47,6 +47,7 @@ STEPS = {
 }
 # 播到第 N 句（說話行編號）時：切到哪個子頁、播到動畫的第幾步。
 # 原則：講到什麼，畫面就要自動切到有那個動畫的頁面，學生才不用自己找。
+ACTS = {}   # 句中換畫面（預設沒有；由 lessons/<課>.json 的 acts 提供）
 AT = {
     # ── 磁鐵與磁極 ──
     9:   ("tab-pole", "pole-suspend", 1),     # 用細線吊起來、自由旋轉
@@ -170,12 +171,21 @@ def validate(items, errors, warnings):
         key = sb or _t  # 沒有子頁的分頁，步驟數登記在分頁名稱下
         if st is not None and not 1 <= st <= STEPS.get(key, 0):
             errors.append("at 第 %d 句：%s 沒有第 %s 步（共 %s 步）" % (n, key, st, STEPS.get(key)))
+    # 4b. acts（句中換畫面）：句號要是說話行、位置 0～1、步驟不超過上限
+    for n, lst in ACTS.items():
+        if not 1 <= n <= len(lines):
+            errors.append("acts 的句號 %d 不是說話行（共 %d 句）" % (n, len(lines)))
+        for f, _t, sb, st in lst:
+            if not 0 <= f <= 1:
+                errors.append("acts 第 %d 句：位置 %s 不在 0～1" % (n, f))
+            if not 1 <= st <= STEPS.get(sb, 0):
+                errors.append("acts 第 %d 句：%s 沒有第 %s 步（共 %s 步）" % (n, sb, st, STEPS.get(sb)))
     # 5. tab/sub 必須存在於 html
     html = REPO / PAGE
     if not html.exists():
         errors.append("找不到 %s" % html)
     else:
-        pairs = list(CUTS.values()) + [(t, sb) for t, sb, _ in AT.values()]
+        pairs = list(CUTS.values()) + [(t, sb) for t, sb, _ in AT.values()] + [(x[1], x[2]) for v in ACTS.values() for x in v]
         for tab in sorted({t for t, _ in pairs}):
             if not grep_has(html, "data-tab", tab):
                 errors.append('%s 找不到 data-tab="%s"' % (PAGE, tab))
@@ -225,6 +235,7 @@ def build_stage(items):
         "cuts": {t: {"tab": a, "sub": b} for t, (a, b) in CUTS.items()},
         "at": {"%02d" % n: ({"tab": a, "sub": b, "step": c} if c else {"tab": a, "sub": b}) for n, (a, b, c) in sorted(AT.items())},
         "subs": subs,
+        **({"acts": {"%02d" % n: [list(x) for x in v] for n, v in sorted(ACTS.items())}} if ACTS else {}),
     }
 
 
@@ -258,7 +269,7 @@ def build_spec(stage):
 
 def load_lesson(name):
     """讀 lessons/<name>.json，覆寫本模組的課程常數（CUTS、AT、STEPS…）。"""
-    global LESSON, PAGE, DEFAULT_SCRIPT, DEFAULT_OUT, EXPECT_LINES, EXPECT_CHORUS, CUTS, STEPS, AT
+    global LESSON, PAGE, DEFAULT_SCRIPT, DEFAULT_OUT, EXPECT_LINES, EXPECT_CHORUS, CUTS, STEPS, AT, ACTS
     import json as _json
     cfg = _json.loads((REPO / "tools/voice/lesson_studio/lessons" / (name + ".json")).read_text("utf-8"))
     LESSON = cfg["lesson"]
@@ -270,6 +281,8 @@ def load_lesson(name):
     CUTS = {t: (v[0], v[1]) for t, v in cfg["cuts"].items()}
     STEPS = dict(cfg["steps"])
     AT = {int(k): (v[0], v[1], v[2]) for k, v in cfg["at"].items()}
+    # 句中換畫面（選用）：{句號: [[句中位置 0～1, 分頁, 子頁, 第幾步], ...]}；沒有這個欄位的課照舊
+    ACTS = {int(k): [tuple(x) for x in v] for k, v in cfg.get("acts", {}).items()}
 
 
 def main():

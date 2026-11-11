@@ -99,7 +99,9 @@
 
 ## 8. 踩過的坑
 
-- 雲端沙箱連不到微軟語音（憑證錯誤），**只能在老師的 Mac 上錄**；測程式用假語音。
+- ~~雲端沙箱連不到微軟語音，只能在老師的 Mac 上錄~~（**已過時，2026-11-11 實測**）：雲端可以錄。憑證錯誤的解法是在 `import edge_tts` 之前加 `import certifi; certifi.where = lambda: "/root/.ccr/ca-bundle.crt"`，再用 `class_studio.run_auto` 照常錄（electronics_1：100 句、約 3 分鐘、全數成功）。
+- 老師 Mac 的網路對彥君（雲哲）的語音常回 `No audio was received`，不穩；量產時優先用雲端錄。
+- 頁面不是 `.tab-button/.sub-tab-btn` 結構的課（例：electronics_1），播放器改用該課專用的場景驅動（`<課名>_voice_v1.js` 的 `SCENES`），`lessons/<課>.json` 可加 `acts`＝句中換畫面（`{句號: [[句中位置0～1, 分頁, 子頁, 第幾步]]}`），build_lesson 會寫進 stage.json。
 - 偶爾報 `No audio was received`：錄音工作室會自動重錄失敗的句子（最多兩輪，並退到較保守的參數）；仍失敗就按該句的「重錄」。長期都失敗時先 `pip3 install -U edge-tts`。
 - 重錄**一定存回同一個課程資料夾**；桌面出現的 `未命名_…` 是早期測試殘留，可刪。
 - 合聲要 ffmpeg（`brew install ffmpeg`）；沒有的話兩人聲音分開存在 `_tracks/`，裝好再按一次開始就會合成。
