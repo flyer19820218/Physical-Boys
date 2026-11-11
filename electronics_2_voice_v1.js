@@ -260,6 +260,8 @@
     ui.who.style.display = '';
     ui.who.textContent = WHO[who] || who;
     ui.who.style.background = COLOR[who] || '#6db3ff';
+    var avs = stage.avatars && stage.avatars[item.id];  // 頭像圖庫：每句各顯示哪一張（AGENTS_VOICE 2-1）
+    if (avs) { if (avs['彥君']) ui.avL.src = avs['彥君']; if (avs['曉臻']) ui.avR.src = avs['曉臻']; }
     ui.avL.classList.toggle('on', who === '彥君' || who === '合聲');
     ui.avR.classList.toggle('on', who === '曉臻' || who === '合聲');
   }

@@ -225,6 +225,75 @@ def to_subtitle(text):
     return re.sub(r"(?<=[\u4e00-\u9fff])(?=[NS] 極)", " ", text)
 
 
+# 頭像圖庫（AGENTS_VOICE 2-1）：依說話內容選姿勢（不隨機）；同一位老師連續說話不重複；另一位保留上一張
+AVATAR_DIR = {"彥君": "assets/characters/yanjun", "曉臻": "assets/characters/xiaozhen"}
+AVATAR_OVERRIDE = {}  # lessons/<課>.json 的 avatars：{句號: {"彥君": 檔名, "曉臻": 檔名}}，老師手動指定時用
+# 彥君：依內容的規則（先命中先用），後面接預設輪流，避免一直同一張
+YANJUN_RULES = [
+    (r"同學們好|下課|再見|歡迎|今天我們來|收尾|今天的重點|三句話", ["open_hands"]),
+    (r"實驗|燒瓶|試試|電表|接線|按|量", ["flask_pointer"]),
+    (r"記住|重點|原則|絕對|一定|千萬", ["laser_pen", "long_pointer"]),
+    (r"很好|答對|正確|沒錯|好問題|完全正確", ["book_thumbs"]),
+    (r"課本|定義|稱為|叫做|意思|是指", ["book_thumbs"]),
+    (r"計算|伏特|安培|等於|倍|乘", ["clipboard_write"]),
+    (r"水|渦輪|幫浦|地球|模型|想像|比喻|就像", ["globe_pointer"]),
+]
+YANJUN_DEFAULT = ["pointer_board", "long_pointer", "globe_pointer", "open_hands"]
+# 曉臻：依內容的規則；預設輪流
+XIAOZHEN_RULES = [
+    (r"[？?]", ["thinking"]),
+    (r"危險|小心|燒|短路|安全|絕對不行|不能|燙|冒煙", ["safety"]),
+    (r"很好|答對|正確|好問題|懂了|原來|厲害|沒錯", ["praising"]),
+    (r"發現|居然|竟然|怎麼會|不一樣|奇怪|嚇", ["surprised"]),
+    (r"試試看|我來|按|接|實驗|拿|量", ["experimenting"]),
+    (r"考考|練習|你來|算算|來算|挑戰", ["encouraging"]),
+    (r"收穫|學到", ["celebrating"]),
+    (r"課本|定義|意思|稱為", ["reading"]),
+    (r"算|伏特|數字|點五|倍", ["recording"]),
+]
+XIAOZHEN_DEFAULT = ["normal", "pointing", "teaching", "reading", "recording"]
+
+
+def pick_avatar(who, text, recent):
+    """依內容挑一張；避開該老師最近用過的三張（recent＝最近幾張，新的在後），讓姿勢分散、不疲勞。"""
+    rules = YANJUN_RULES if who == "彥君" else XIAOZHEN_RULES
+    default = YANJUN_DEFAULT if who == "彥君" else XIAOZHEN_DEFAULT
+    cands = []
+    for pat, names in rules:
+        if re.search(pat, text):
+            cands = names
+            break
+    last = recent[-1] if recent else None
+    avoid = set(recent[-3:])
+    for name in cands + default:          # 先找沒最近用過的
+        if name not in avoid:
+            return name
+    for name in cands + default:          # 找不到就至少不跟上一張一樣
+        if name != last:
+            return name
+    return default[0]
+
+
+def build_avatars(items):
+    """回傳 {句號: {彥君: 路徑, 曉臻: 路徑}}：該句兩位老師各顯示哪一張（依內容，避開最近用過的）。"""
+    hist, state, out = {"彥君": [], "曉臻": []}, {}, {}
+    for i in items:
+        if i["kind"] != "line":
+            continue
+        key = "%02d" % i["n"]
+        speakers = {"彥君", "曉臻"} if i["speaker"] == "合聲" else {i["speaker"]}
+        for who in ("彥君", "曉臻"):
+            if who in speakers or who not in state:
+                state[who] = pick_avatar(who, i["text"], hist[who])
+                hist[who].append(state[who])
+        ov = AVATAR_OVERRIDE.get(key, {})
+        for who in ("彥君", "曉臻"):
+            if who in ov:
+                state[who] = ov[who]
+        out[key] = {who: "%s/%s.png" % (AVATAR_DIR[who], state[who]) for who in ("彥君", "曉臻")}
+    return out
+
+
 def build_stage(items):
     subs = {}
     for i in items:
@@ -235,6 +304,7 @@ def build_stage(items):
         "cuts": {t: {"tab": a, "sub": b} for t, (a, b) in CUTS.items()},
         "at": {"%02d" % n: ({"tab": a, "sub": b, "step": c} if c else {"tab": a, "sub": b}) for n, (a, b, c) in sorted(AT.items())},
         "subs": subs,
+        "avatars": build_avatars(items),
         **({"acts": {"%02d" % n: [list(x) for x in v] for n, v in sorted(ACTS.items())}} if ACTS else {}),
     }
 
@@ -269,7 +339,7 @@ def build_spec(stage):
 
 def load_lesson(name):
     """讀 lessons/<name>.json，覆寫本模組的課程常數（CUTS、AT、STEPS…）。"""
-    global LESSON, PAGE, DEFAULT_SCRIPT, DEFAULT_OUT, EXPECT_LINES, EXPECT_CHORUS, CUTS, STEPS, AT, ACTS
+    global LESSON, PAGE, DEFAULT_SCRIPT, DEFAULT_OUT, EXPECT_LINES, EXPECT_CHORUS, CUTS, STEPS, AT, ACTS, AVATAR_OVERRIDE
     import json as _json
     cfg = _json.loads((REPO / "tools/voice/lesson_studio/lessons" / (name + ".json")).read_text("utf-8"))
     LESSON = cfg["lesson"]
@@ -283,6 +353,7 @@ def load_lesson(name):
     AT = {int(k): (v[0], v[1], v[2]) for k, v in cfg["at"].items()}
     # 句中換畫面（選用）：{句號: [[句中位置 0～1, 分頁, 子頁, 第幾步], ...]}；沒有這個欄位的課照舊
     ACTS = {int(k): [tuple(x) for x in v] for k, v in cfg.get("acts", {}).items()}
+    AVATAR_OVERRIDE = cfg.get("avatars", {})
 
 
 def main():

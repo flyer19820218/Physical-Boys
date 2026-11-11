@@ -24,18 +24,18 @@
 - **合聲**＝兩人同時念同一句（疊在一起），需要 ffmpeg 混音。
 - 「8 字臻言」收尾：**尚未決定**（內容、誰念），不要自己補。
 
-### 2-1 頭像圖庫：隨機換（老師 2026-11-11 指示）
+### 2-1 頭像：依內容切換（老師 2026-11-11 指示：不要隨機，不要永遠同一張）
 
-- 彥君、曉臻各有一組姿勢圖：`assets/characters/yanjun/`、`assets/characters/xiaozhen/`。字幕頭像**不再固定一張**，改從該角色的圖庫隨機挑。
-- **圖庫範圍**（只列這些檔名，不要自己多加或刪）：
-  - 彥君（8 張）：`book_thumbs`、`clipboard_write`、`flask_pointer`、`globe_pointer`、`laser_pen`、`long_pointer`、`open_hands`、`pointer_board`。**排除** `yanjun_8pose_reference.png`（總覽參考圖，不是頭像）。
-  - 曉臻（12 張）：`celebrating`、`encouraging`、`experimenting`、`normal`、`pointing`、`praising`、`reading`、`recording`、`safety`、`surprised`、`teaching`、`thinking`。
-- **換圖時機**：每一句說話行開始時換一次；＊標記行不換。
-- **不連續重複**：同一角色連續兩句不得用同一張。
-- **可重現**：建置時用固定種子（課名＋句號）決定每句的圖，結果寫進 `stage.json` 的 `avatars`（`{"句號": "檔名.png"}`）。播放器只讀這個欄位、不自己亂選；同一課每次建置結果相同。要換某一句，改 `avatars` 那一筆即可。
-- **合聲句**：兩位的頭像都亮，各自從自己的圖庫換一張（不與上一句重複）。
-- **適用範圍**：只適用雙人對話的字幕頭像。Hook 頭像仍依 AGENTS.md 第五律固定用 `teaching.png`。
-- **實作狀態**：規則已寫入；`build_lesson.py` 與播放器尚未實作，要做時另外指示。
+- 字幕頭像要**依說話內容**換姿勢，不隨機；整課不可永遠同一張，學生會學習疲勞。
+- 與 AGENTS.md 第五律 5.1「語音與字幕段落應依語意切換合適姿勢」一致。
+- **實作**：`build_lesson.py` 依每句內容的關鍵字規則挑姿勢，結果寫進 `stage.json` 的 `avatars`（`{"句號": {"彥君": "路徑", "曉臻": "路徑"}}`）；播放器每句讀這一筆更新頭像。規則固定，同一稿子每次建置結果相同。
+- **說話者換姿勢，另一位保留上一張**；合聲句兩位都依各自內容換。
+- **不連續重複**：同一位老師連續說話不得與上一張相同；且盡量避開最近三張，讓姿勢分散。
+- **可手動指定**：`lessons/<課>.json` 的 `avatars` 欄位，`{"句號": {"彥君": "檔名.png", "曉臻": "檔名.png"}}`，優先於自動規則（檔名不含路徑）。
+- **彥君姿勢對應**（`assets/characters/yanjun/`，依 `yanjun_8pose_reference.png`）：`open_hands` 歡迎、收尾；`flask_pointer` 實驗、操作；`laser_pen` 重點、原則；`book_thumbs` 肯定、定義、課本；`clipboard_write` 計算、數據；`globe_pointer` 模型、比喻、水流；`long_pointer`、`pointer_board` 一般講解（白板指向）。
+- **曉臻姿勢對應**（`assets/characters/xiaozhen/`）：`thinking` 提問；`safety` 危險、安全提醒；`praising` 答對、稱讚；`surprised` 發現、異常；`experimenting` 實驗操作；`encouraging` 練習、任務；`celebrating` 收穫；`reading` 課本、定義；`recording` 算數字；`normal`、`pointing`、`teaching` 一般對話與講解。
+- **Hook 頭像不受此規則影響**：仍依 AGENTS.md 第五律固定用 `teaching.png`。
+- **交付前必查**：① 每位老師用到的不同姿勢至少 6 種，不能整課只有一兩張；② 同一角色連續說話不重複；③ 沒說話的那位維持上一張；④ 播放器有讀 `avatars`（頁面上頭像實際隨說話者換）。
 
 ## 3. 流程
 
@@ -124,7 +124,7 @@
 ## 9. 還沒決定
 
 - 8 字臻言收尾的內容與由誰念。
-- 彥君、曉臻的表情／姿勢切換：**已決定**，見第 2-1 節「頭像圖庫：隨機換」（實作尚未做）。
+- 彥君、曉臻的表情／姿勢切換：**已決定**，見第 2-1 節「頭像：依內容切換」（已實作於 electronics_2）。
 - 正式整合進各課「老師講解」模式的做法。
 - 音檔長期放哪裡（GitHub Releases、雲端硬碟都可能；**不放進 repo 的 git**，`.git` 已經約 1GB）。
 
