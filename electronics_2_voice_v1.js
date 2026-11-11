@@ -1,5 +1,5 @@
 /* electronics_2 有聲講解（外層加法）
- * 只做三件事：載入 manifest.json / stage.json、依序播放 100 句音檔、依每句內容呼叫頁面原本的函式切換畫面。
+ * 只做三件事：載入 manifest.json / stage.json、依序播放 manifest 裡的每一句音檔、依每句內容呼叫頁面原本的函式切換畫面。
  * 不碰 Canvas/SVG、動畫、題庫；不改任何既有 js。載入失敗時整個功能隱藏，原頁面完全不受影響。
  * 音檔與網頁同一個網域（audio/electronics_2/mp3/）。
  */
@@ -188,35 +188,90 @@
   var cur = { tab: null, sub: null, step: 0 };
   var SCENE_CVS = { sym: 'cvs-tab1', sp: 'cvs-tab1', water: 'cvs-tab2', par: 'cvs-tab2', def: 'cvs-tab2', pot: 'cvs-tab2',
     closed: 'cvs-tab3', open: 'cvs-tab3', short: 'cvs-tab3', battery: 'cvs-tab4', bulb: 'cvs-tab4', quiz: 'cvs-tab4',
-    normal: 'cvs-tab5', ammeter_error: 'cvs-tab5', voltmeter: 'cvs-tab5', wire: 'cvs-wire', ladder: 'cvs-t6', ref: 'cvs-t6' };
+    normal: 'cvs-tab5', ammeter_error: 'cvs-tab5', voltmeter: 'cvs-tab5', meter_a: 'cvs-mh-a', meter_v: 'cvs-mh-v',
+    wire: 'cvs-wire', ladder: 'cvs-t6', ref: 'cvs-t6' };
   function $(id) { return document.getElementById(id); }
-  function clearTimers() { /* 本課沒有計時器需要清除 */ }
-  // 每個場景都接收「步驟」：同一個子分頁裡的按鈕（電池 1 單一／2 串聯／3 並聯，燈泡 1 純串聯／2 純並聯／3 組合，
-  // 水壓 1 一顆／2 兩顆串聯，接線練習 1 基本題／2 串並聯題／3 會考題）。沒有步驟的場景就忽略它。
-  var BULB_MODE = ['series', 'parallel', 'complex'];
+  // 「按」頁面上的按鈕（觸發它原本的 onclick），學生看到的就是那顆按鈕亮起來；找不到按鈕才直接呼叫函式
+  function press(id, fn) { var b = $(id); if (b && b.click) b.click(); else if (fn) fn(); }
+  var ramp = 0, mhTimer = 0;
+  function clearTimers() { if (ramp) { clearInterval(ramp); ramp = 0; } if (mhTimer) { clearTimeout(mhTimer); mhTimer = 0; } }
+  // 分頁六外電阻滑桿：慢慢拉到目標值（同頁面老師講解的 t6ramp）；跳句時（anim=false）直接設定
+  function rampR(to, ms, anim) {
+    var from = typeof t6_R === 'number' ? t6_R : 20;
+    if (!anim || from === to) { setT6R(to); return; }
+    var t0 = Date.now();
+    ramp = setInterval(function () {
+      var p = Math.min(1, (Date.now() - t0) / ms), v = Math.round(from + (to - from) * p);
+      if (t6_R !== v) setT6R(v);
+      if (p >= 1) { clearInterval(ramp); ramp = 0; }
+    }, 40);
+  }
+  // 分頁五「電表怎麼用」：按第 i 個步驟鈕（1 歸零／2 串聯或並聯／3 三個量程／4 由大到小）。
+  // 剛切進分頁五時，頁面會在稍後把兩個動畫重設回第 1 步，所以 80 毫秒後再按一次
+  function chip(list, i) {
+    var c = document.querySelectorAll('#' + list + ' .mh-chip')[i - 1];
+    if (!c) return;
+    c.click();
+    mhTimer = setTimeout(function () { mhTimer = 0; if (!c.classList.contains('on')) c.click(); }, 80);
+  }
+  function t5task(i, mode, id) { // 同頁面老師講解 t5s(i, mode)：題目卡換到第 i 題，再按該題的接法鈕
+    try { if (t5_idx !== i) { t5_idx = i; t5_renderTask(); } } catch (e) {}
+    press(id, function () { setT5Mode(mode); });
+  }
+  // 每個場景的「步驟」＝頁面老師講解 STAGE 表的狀態（electronics_2.html 約 4355 行）：
+  //   water：1 一顆·電流　2 一顆·電子　3 兩顆串聯·電流　4 兩顆串聯·電子（STAGE.t2 第 1～4 步）
+  //   par：1 電池並聯·電流　2 電池並聯·電子（STAGE.t2 第 5、6 步）；def、pot＝第 7、8 步
+  //   battery：1 單一　2 串聯　3 並聯；bulb：1 純串聯　2 純並聯　3 串並聯組合　4 串聯剪線　5 並聯剪線；quiz：1 題目　2 揭曉解答
+  //   meter_a／meter_v：1 歸零　2 串聯／並聯　3 三個量程　4 由大到小；wire：1 基本題　2 串並聯題　3 會考題
+  //   ladder：1 外電阻 2.0 Ω　2 外電阻慢慢變小　3 外電阻慢慢變大
+  var BULB = [null, 'series', 'parallel', 'complex', 'series', 'parallel'];
+  var BULB_ID = { series: 'btn-t4-bulb-s', parallel: 'btn-t4-bulb-p', complex: 'btn-t4-bulb-c' };
+  function t2(sub, cells, view) {
+    press('tab2-sub-' + sub, function () { setT2Sub(sub); });
+    if (sub === 'water') press('btn-t2-c' + cells, function () { setT2Cells(cells); }); else setT2Cells(cells);
+    if (sub === 'water' || sub === 'par') press('btn-t2-view-' + view, function () { setT2View(view); }); else setT2View(view);
+  }
+  function t4(sub) { press({ battery: 'tab4-sub-bat', bulb: 'tab4-sub-bulb', quiz: 'tab4-sub-quiz' }[sub], function () { setT4Sub(sub); }); }
+  function rng(step, max) { return step >= 1 && step <= max ? step : 1; }
   var SCENES = {
-    sym: function () { setT1Sub('sym'); },
-    sp: function () { setT1Sub('sp'); },
-    water: function (step) { setT2Sub('water'); setT2Cells(step >= 2 ? 2 : 1); },
-    par: function () { setT2Sub('par'); },
-    def: function () { setT2Sub('def'); },
-    pot: function () { setT2Sub('pot'); },
-    closed: function () { setT3State('closed'); },
-    open: function () { setT3State('open'); },
-    short: function () { setT3State('short'); },
-    battery: function (step) { setT4Sub('battery'); setT4Battery(step === 2 || step === 3 ? step : 1); },
-    bulb: function (step) { setT4Sub('bulb'); setT4Bulb(BULB_MODE[(step >= 1 && step <= 3 ? step : 1) - 1]); },
-    quiz: function () { setT4Sub('quiz'); },
-    normal: function () { setT5Mode('normal'); },
-    ammeter_error: function () { setT5Mode('ammeter_error'); },
-    voltmeter: function () { setT5Mode('voltmeter'); },
-    wire: function (step) { // 接線練習：切到分頁五，點對應的題目等級（#wl-lv 的第 step 顆）
-      setT5Mode('normal');
-      var lv = document.querySelectorAll('#wl-lv .wl-btn')[(step >= 1 && step <= 3 ? step : 1) - 1];
+    sym: function () { press('tab1-sub-sym', function () { setT1Sub('sym'); }); },
+    sp: function () { press('tab1-sub-sp', function () { setT1Sub('sp'); }); },
+    water: function (step) { step = rng(step, 4); t2('water', step <= 2 ? 1 : 2, step % 2 ? 'macro' : 'micro'); },
+    par: function (step) { t2('par', 1, rng(step, 2) === 1 ? 'macro' : 'micro'); },
+    def: function () { t2('def', 1, 'macro'); },
+    pot: function () { t2('pot', 1, 'macro'); },
+    closed: function () { press('btn-t3-close', function () { setT3State('closed'); }); },
+    open: function () { press('btn-t3-open', function () { setT3State('open'); }); },
+    short: function () { press('btn-t3-short', function () { setT3State('short'); }); },
+    battery: function (step) {
+      step = rng(step, 3); t4('battery'); setT4Bulb('series');
+      press(['btn-t4-bat-1', 'btn-t4-bat-s', 'btn-t4-bat-p'][step - 1], function () { setT4Battery(step); });
+    },
+    bulb: function (step) {
+      step = rng(step, 5); t4('bulb'); setT4Battery(1);
+      press(BULB_ID[BULB[step]], function () { setT4Bulb(BULB[step]); }); // 換接法時頁面會把剪線還原
+      if (step >= 4) press('btn-t4-cut', toggleT4Cut);                      // 再按「模擬剪斷導線」
+    },
+    quiz: function (step) {
+      t4('quiz'); setT4Battery(1); setT4Bulb('series');                     // 換到這個子頁時頁面會先蓋住解答
+      if (step === 2) { var b = document.querySelector('#t4-ctrl-quiz .action-btn'); if (b) b.click(); else t4_showQuizAns(); }
+    },
+    normal: function () { t5task(0, 'normal', 'btn-t5-normal'); },
+    ammeter_error: function () { t5task(1, 'ammeter_error', 'btn-t5-ammeter'); },
+    voltmeter: function () { t5task(2, 'voltmeter', 'btn-t5-voltmeter'); },
+    meter_a: function (step) { chip('mh-steps-a', rng(step, 4)); },
+    meter_v: function (step) { chip('mh-steps-v', rng(step, 4)); },
+    wire: function (step) { // 接線練習：點對應的題目等級（#wl-lv 的第 step 顆）
+      var lv = document.querySelectorAll('#wl-lv .wl-btn')[rng(step, 3) - 1];
       if (lv) lv.click();
     },
-    ladder: function () { setT6View('ladder'); },
-    ref: function () { setT6View('ref'); }
+    ladder: function (step, anim) {
+      press('btn-t6-ladder', function () { setT6View('ladder'); });
+      step = rng(step, 3);
+      if (step === 1) rampR(20, 0, false);
+      else rampR(step === 2 ? 1 : 100, step === 2 ? 2500 : 3000, anim);
+    },
+    ref: function () { press('btn-t6-ref', function () { setT6View('ref'); }); }
   };
 
   function sceneOf(tab, sub, stepNo, anim) {
