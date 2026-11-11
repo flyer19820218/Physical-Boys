@@ -24,6 +24,19 @@
 - **合聲**＝兩人同時念同一句（疊在一起），需要 ffmpeg 混音。
 - 「8 字臻言」收尾：**尚未決定**（內容、誰念），不要自己補。
 
+### 2-1 頭像圖庫：隨機換（老師 2026-11-11 指示）
+
+- 彥君、曉臻各有一組姿勢圖：`assets/characters/yanjun/`、`assets/characters/xiaozhen/`。字幕頭像**不再固定一張**，改從該角色的圖庫隨機挑。
+- **圖庫範圍**（只列這些檔名，不要自己多加或刪）：
+  - 彥君（8 張）：`book_thumbs`、`clipboard_write`、`flask_pointer`、`globe_pointer`、`laser_pen`、`long_pointer`、`open_hands`、`pointer_board`。**排除** `yanjun_8pose_reference.png`（總覽參考圖，不是頭像）。
+  - 曉臻（12 張）：`celebrating`、`encouraging`、`experimenting`、`normal`、`pointing`、`praising`、`reading`、`recording`、`safety`、`surprised`、`teaching`、`thinking`。
+- **換圖時機**：每一句說話行開始時換一次；＊標記行不換。
+- **不連續重複**：同一角色連續兩句不得用同一張。
+- **可重現**：建置時用固定種子（課名＋句號）決定每句的圖，結果寫進 `stage.json` 的 `avatars`（`{"句號": "檔名.png"}`）。播放器只讀這個欄位、不自己亂選；同一課每次建置結果相同。要換某一句，改 `avatars` 那一筆即可。
+- **合聲句**：兩位的頭像都亮，各自從自己的圖庫換一張（不與上一句重複）。
+- **適用範圍**：只適用雙人對話的字幕頭像。Hook 頭像仍依 AGENTS.md 第五律固定用 `teaching.png`。
+- **實作狀態**：規則已寫入；`build_lesson.py` 與播放器尚未實作，要做時另外指示。
+
 ## 3. 流程
 
 1. **寫稿**（AI）：只依該課講解文字，輸出稿子＋ `stage.json` 草稿。
@@ -111,7 +124,7 @@
 ## 9. 還沒決定
 
 - 8 字臻言收尾的內容與由誰念。
-- 彥君、曉臻的表情／姿勢切換（目前各一個固定頭像）。
+- 彥君、曉臻的表情／姿勢切換：**已決定**，見第 2-1 節「頭像圖庫：隨機換」（實作尚未做）。
 - 正式整合進各課「老師講解」模式的做法。
 - 音檔長期放哪裡（GitHub Releases、雲端硬碟都可能；**不放進 repo 的 git**，`.git` 已經約 1GB）。
 
