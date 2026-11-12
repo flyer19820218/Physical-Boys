@@ -331,6 +331,96 @@
     try { window.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, y); }
   }
 
+  // ─── 自動螢光筆：唸到公式那一句，依語音進度在公式上一筆筆畫出黃色螢光線（只是外加的一層，pointer-events:none，不碰頁面原有內容）───
+  function monoIn(root, re) {
+    var l = root ? root.querySelectorAll('.mono') : [];
+    for (var i = 0; i < l.length; i++) if (re.test(l[i].textContent)) return l[i];
+    return null;
+  }
+  function unionRect(els) {
+    var L = 1e9, T = 1e9, R = -1e9, B = -1e9, n = 0;
+    els.forEach(function (e) {
+      if (!e || !e.getBoundingClientRect) return;
+      var r = e.getBoundingClientRect(); if (!r.width && !r.height) return;
+      L = Math.min(L, r.left); T = Math.min(T, r.top); R = Math.max(R, r.right); B = Math.max(B, r.bottom); n++;
+    });
+    return n ? { left: L, top: T, width: R - L, height: B - T } : null;
+  }
+  function boxLine(box, n) { // 板書框裡第 n 行（以 <br> 分行）的所有元素
+    if (!box) return [];
+    var lines = [[]];
+    Array.prototype.forEach.call(box.children, function (c) {
+      if (c.tagName === 'BR') { if (lines[lines.length - 1].length) lines.push([]); } else lines[lines.length - 1].push(c);
+    });
+    return lines[n] || [];
+  }
+  function demoBox(k) { var p = panel(3); return p ? p.querySelectorAll('div[style*="font-size: 22px"]')[k] : null; }
+  function kBox() { var s = monoIn(panel(0), /^K =/); return s && s.parentElement; }
+  function uBox() { return monoIn(panel(1), /U = m/); }
+  function fbSpan(n, re) { return monoIn($('fb' + n), re); }
+  function R_(f) { return function () { return unionRect(f()); }; }
+  var HL = {
+    11: [{ a: 0.10, b: 0.72, r: R_(function () { var b = kBox(); return b ? boxLine(b, 0) : []; }) }],
+    41: [{ a: 0.12, b: 0.88, r: R_(function () { return [uBox()]; }) }],
+    84: [{ a: 0.30, b: 0.78, r: R_(function () { var p = panel(2); return [monoIn(p && p.querySelector('.note-box'), /½mv/)]; }) }],
+    96: [{ a: 0.10, b: 0.40, r: R_(function () { return boxLine(demoBox(0), 0); }) },
+         { a: 0.40, b: 0.96, r: R_(function () { return boxLine(demoBox(0), 1); }) }],
+    97: [{ a: 0.28, b: 0.72, r: R_(function () { return [boxLine(demoBox(0), 2)[0]]; }) },
+         { a: 0.74, b: 0.98, r: R_(function () { return [boxLine(demoBox(0), 2)[1]]; }) }],
+    101: [{ a: 0.10, b: 0.32, r: R_(function () { return boxLine(demoBox(1), 0); }) },
+          { a: 0.32, b: 0.78, r: R_(function () { return boxLine(demoBox(1), 1); }) },
+          { a: 0.78, b: 0.98, r: R_(function () { return boxLine(demoBox(1), 2); }) }],
+    110: [{ a: 0.20, b: 0.95, r: R_(function () { return [fbSpan(2, /500 g/)]; }) }],
+    111: [{ a: 0.05, b: 0.55, r: R_(function () { return [fbSpan(2, /K = ½/)]; }) }],
+    114: [{ a: 0.12, b: 0.70, r: R_(function () { return [fbSpan(3, /ΔU/)]; }) }],
+    116: [{ a: 0.18, b: 0.40, r: R_(function () { return [fbSpan(4, /mgh/)]; }) },
+          { a: 0.50, b: 0.86, r: R_(function () { return [fbSpan(4, /v² = 2gh/)]; }) }],
+    120: [{ a: 0.40, b: 0.80, r: R_(function () { return [fbSpan(5, /\(2v\)/)]; }) }]
+  };
+  var hlTimer = 0, hlSegs = [], hlLayer = null;
+  function hlClear() {
+    if (hlTimer) { clearInterval(hlTimer); hlTimer = 0; }
+    hlSegs.forEach(function (g) { if (g.el.parentNode) g.el.parentNode.removeChild(g.el); });
+    hlSegs = [];
+  }
+  function hlStart(it, a, my) {
+    hlClear();
+    var spec = HL[it.id]; if (!spec) return;
+    if (!hlLayer) {
+      hlLayer = document.createElement('div'); hlLayer.id = 'vx-hl-layer';
+      hlLayer.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:60';
+      document.body.appendChild(hlLayer);
+    }
+    hlSegs = spec.map(function (sg) {
+      var e = document.createElement('div'); e.className = 'vx-hl';
+      e.style.cssText = 'position:absolute;display:none;border-radius:9px;background:rgba(255,224,102,.45);box-shadow:0 0 8px rgba(255,224,102,.35);transform:rotate(-.6deg);transform-origin:left center';
+      hlLayer.appendChild(e); return { el: e, sg: sg };
+    });
+    hlTimer = setInterval(function () {
+      if (my !== token) { hlClear(); return; }
+      var d = a.duration, ct = a.currentTime || 0;
+      var f = (d && isFinite(d) && d > 0) ? ct / d : ct / Math.max(1.5, it.text.length * SEC_PER_CHAR);
+      hlSegs.forEach(function (g) {
+        var r = null; try { r = g.sg.r(); } catch (e) {}
+        var p = Math.max(0, Math.min(1, (f - g.sg.a) / (g.sg.b - g.sg.a)));
+        if (!r || p <= 0) { g.el.style.display = 'none'; return; }
+        g.el.style.display = 'block';
+        if (!g.seen) { // 公式若被字幕框擋住或在畫面外，先把它捲到字幕框上方
+          g.seen = 1;
+          var pt = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
+          if (r.top + r.height > pt - 12 || r.top < 56) {
+            var y = window.pageYOffset + r.top - Math.max(70, (pt - r.height) / 2 - 20);
+            try { window.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, y); }
+          }
+        }
+        g.el.style.left = (r.left + window.pageXOffset - 8) + 'px';
+        g.el.style.top = (r.top + window.pageYOffset + r.height * 0.06) + 'px';
+        g.el.style.width = ((r.width + 16) * p) + 'px';
+        g.el.style.height = (r.height * 0.88) + 'px';
+      });
+    }, 40);
+  }
+
   // 句中換畫面：依音檔播放比例（0～1）觸發，例如「電量越大…距離越遠…」說到哪就換到哪
   var actTimer = 0;
   function stopActs() { if (actTimer) { clearInterval(actTimer); actTimer = 0; } }
@@ -443,7 +533,7 @@
 
   function playLine(it, my) {
     var at = stage.at[it.id];
-    stopActs();
+    stopActs(); hlClear();
     if (at) goto(at.tab, at.sub, at.step, true);
     showSub(it);
     var n = lineNo() + 1;
@@ -475,6 +565,7 @@
     a.onended = next;
     a.onerror = fallback;
     runActs(it, a, my);
+    hlStart(it, a, my);
     try { a.currentTime = 0; } catch (e) { /* 尚未載入，忽略 */ }
     var p = a.play();
     trackChars(a);
@@ -556,7 +647,7 @@
 
   function halt() {
     cancelAnimationFrame(raf);
-    token++; clearWait(); waitDone = null; stopActs(); clearTimers();
+    token++; clearWait(); waitDone = null; stopActs(); hlClear(); clearTimers();
     if (audio) { audio.onended = audio.onerror = null; try { audio.pause(); } catch (e) {} }
     audio = null;
   }

@@ -111,6 +111,8 @@ for (const it of manifest.items) {
         setTimeout(() => {
           if (self._src !== src) return;
           clearInterval(self._poll);
+          rec.hl = Array.from(document.querySelectorAll('.vx-hl')).map(e => { const r = e.getBoundingClientRect(); return { disp: e.style.display, w: r.width, h: r.height, top: r.top, bottom: r.bottom, left: r.left, right: r.right }; });
+          rec.panelTop = (document.querySelector('.vx-bub') || { getBoundingClientRect: () => ({ top: innerHeight }) }).getBoundingClientRect().top;
           rec.end = window.__snap(); rec.view = {};
           ['kineticCanvas', 'gravityCanvas', 'springCanvas', 'note', 'hook', 'grid', 'pr1', 'pr2', 'pr3', 'q1', 'q2', 'q3', 'q4', 'q5', 'fb1', 'fb2', 'fb3', 'fb4', 'fb5'].forEach(id => rec.view[id] = window.__inView(id));
           self.paused = true; if (self.onended) self.onended();
@@ -127,7 +129,7 @@ for (const it of manifest.items) {
   await page.waitForTimeout(500);
   await page.click('.vx-open');
   await page.click('button[aria-label="開始／繼續"]');
-  const shots = {};
+  const shots = { '11': 1.3, '41': 1.3, '84': 1.3, '96': 1.6, '101': 1.8, '111': 1.2, '116': 1.8 };
   const t0 = Date.now();
   const shotDone = {};
   while (true) {
@@ -166,6 +168,10 @@ for (const it of manifest.items) {
     const vis = last.cvs ? r.view && r.view[last.cvs] : null;
     if (last.cvs && !(vis >= 50)) probs.push(`畫布 ${last.cvs} 只露出 ${vis}%`);
     for (const id of last.see || []) { const v = r.view && r.view[id]; if (!(v >= 90)) probs.push(`${id} 只露出 ${v}%`); }
+    const HLN = { 11: 1, 41: 1, 84: 1, 96: 2, 97: 2, 101: 3, 110: 1, 111: 1, 114: 1, 116: 2, 120: 1 };
+    const hn = HLN[e.id] || 0;
+    if ((r.hl || []).length !== hn) probs.push('螢光筆段數 ' + (r.hl || []).length + '≠' + hn);
+    (r.hl || []).forEach((g, gi) => { if (g.disp !== 'block' || g.w < 10) probs.push('螢光筆第' + (gi + 1) + '段沒畫出 ' + g.disp + ' w=' + Math.round(g.w)); else if (g.top < 40 || g.bottom > r.panelTop + 2) probs.push('螢光筆第' + (gi + 1) + '段不在可視範圍 top=' + Math.round(g.top) + ' bottom=' + Math.round(g.bottom) + ' panelTop=' + Math.round(r.panelTop)); });
     rows.push({ id: e.id, who: e.speaker, text: e.text.slice(0, 14), expect: e.seq.map(fmt).join(' → '), view: vis, ok: !probs.length, probs });
     if (probs.length) { bad++; console.log(`✗ #${e.id} ${e.text.slice(0, 16)} [${e.seq.map(fmt).join('→')}] → ${probs.join('; ')}`); }
   }
