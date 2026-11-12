@@ -97,7 +97,13 @@ def to_arabic(text):
     # 5b. 加／減：兩側都是數字才轉（避免「加一點」）
     def addsub(m):
         return (val(m.group("a")) or m.group("a")) + m.group("o") + (val(m.group("b")) or m.group("b"))
-    out = re.sub("(?P<a>%s)(?P<o>加|減)(?P<b>%s)(?![次開起下樣直定旦般些邊半])" % (NUMD, NUMD), addsub, out)
+    out = re.sub("(?P<a>%s)(?P<o>加上|加|減)(?P<b>%s)(?![次開起下樣直定旦般些邊半])" % (NUMD, NUMD), addsub, out)
+    # 5b2. 「加／加上」的左邊數字（右邊已被前面的規則轉成阿拉伯數字，例：三百三十一，加上 0.6 乘以）：左邊也要轉
+    out = re.sub("(?P<n>%s)(?=，?(?:加上|加)\\d)" % NUMD, _cv, out)
+    out = re.sub("(?<=加上)(?P<n>%s)(?![次開起下樣直定旦般些邊半個])" % NUMD, lambda m: m.group("n") if m.group("n") == "一" else _cv(m), out)   # 再加上三百三十一
+    # 5b3. 符號算式（釘選黃條常寫「聲速 = 三百三十一 + 零點六 × 溫度」）：緊鄰 + × ÷ − 的數字
+    out = re.sub("(?P<n>%s)(?=\\s*[+×÷−])" % NUMD, _cv, out)
+    out = re.sub("(?<=[+×÷−])(?P<s>\\s*)(?P<n>%s)" % NUMD, lambda m: m.group("s") + (val(m.group("n")) or m.group("n")), out)
     # 5c. 算式結果：「是／為 + 數字」在句尾（單獨的「一」不轉）；次方底數；開根號
     def res(m):
         n = m.group("n")
