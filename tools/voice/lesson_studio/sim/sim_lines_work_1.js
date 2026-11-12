@@ -68,7 +68,7 @@ for (const it of manifest.items) {
         tab: tb ? tb.dataset.tab : null,
         jmA: g(() => +document.getElementById('jm-a').value), jmRan: g(() => JM.running || JM.p > 0),
         wkType: g(() => currentWorkType), wkRan: g(() => WK.running || WK.off > 0),
-        bagType: g(() => currentBagType), bgMode: g(() => BG.mode), bgRan: g(() => !!BG.running),
+        bagType: g(() => currentBagType), bgMode: g(() => BG.mode), bgRan: g(() => !!(BG.running || BG.scroll > 0 || BG.push > 0)),
         rpRoute: g(() => RP.route), rpRan: g(() => RP.running || RP.p > 0),
         prCur: cards.findIndex(c => c.classList.contains('tl-cur')) + 1,
         pwT1: g(() => +document.getElementById('pw-t1').value), pwRan: g(() => PW.running || PW.tSim > 0),

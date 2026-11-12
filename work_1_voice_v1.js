@@ -303,6 +303,8 @@
     if (key !== 'tab5') markPR(0);
     var nv = viewOf(key, stepNo), pv = viewOf(prevKey, prev.step);
     if (nv && (changedTab || !pv || pv.k !== nv.k)) bringIntoView(nv);
+    // 公布答案的解析框有展開動畫，剛公布時量到的高度偏小：展開後再對齊一次（同一畫面才補）
+    if (nv && key === 'tab7' && stepNo > 5) setTimeout(function () { if (cur.step === stepNo && cur.tab === tab) bringIntoView(viewOf(key, stepNo)); }, 600);
   }
   var goto = sceneOf;
 
