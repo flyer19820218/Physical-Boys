@@ -196,6 +196,57 @@
       .home-fab { top: 8px; left: 8px; width: 42px; height: 42px; }
       .home-fab svg { width: 20px; height: 20px; }
     }
+
+  /* ==================================================================
+     老師講解／學生操作 雙模式（外層加法：學生操作＝原本的樣子，沒有改任何一個原有規則）
+     ================================================================== */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 22px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: #c0d0c8; border: 2px dashed rgba(242, 236, 217, 0.35);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .mode-pill:hover:not(.active) { background: rgba(255, 255, 255, 0.06); color: #fff; }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--board-dark); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: #c0d0c8; text-align: center; line-height: 1.5; max-width: 900px; }
+  .teach-bar {
+    display: none; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(13, 32, 26, 0.72); border: 1px solid rgba(242, 236, 217, 0.12); border-top: none;
+    border-radius: 0 0 8px 8px; padding: 16px 20px 18px; margin-top: -2px;
+  }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--board-dark); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--board-dark); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-chips { flex: 1 1 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+  .teach-chip {
+    min-height: 44px; padding: 4px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: #c0d0c8; border: 2px dashed rgba(242, 236, 217, 0.35);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-chip .teach-n { display: inline-block; min-width: 1.2em; text-align: center; margin-right: 2px; }
+  .teach-chip:hover:not(.on) { background: rgba(255, 255, 255, 0.06); color: #fff; border-color: #fff; }
+  .teach-chip.past { color: var(--chalk-green); border-color: rgba(74, 222, 128, 0.55); }
+  .teach-chip.on { background: var(--chalk-yellow); color: var(--board-dark); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 12px rgba(255, 224, 102, 0.4); }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 20px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生用的控制列（滑桿、快速設定、孔洞按鈕）收起來 */
+  body.mode-teacher .controls, body.mode-teacher .presets { display: none !important; }
+  .visual-card, .hook-box { scroll-margin-top: 88px; }
+  @media (max-width: 520px) {
+    .mode-pill { padding: 8px 18px; font-size: 19px; }
+    .teach-bar { padding: 14px 12px 16px; }
+  }
   </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -227,6 +278,14 @@
       <p data-zh="透過光學滑軌模擬器，觀察光源、障礙物與屏幕的相對位置，視覺化探索光的直線前進、影子生成與成像規律。" data-en="Use the optical rail simulator to observe relative positions, exploring rectilinear propagation, shadows, and imaging laws.">透過光學滑軌模擬器，觀察光源、障礙物與屏幕的相對位置，視覺化探索光的直線前進、影子生成與成像規律。</p>
     </header>
 
+    <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+      <div class="mode-row">
+        <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+        <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+      </div>
+      <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays through on its own; pause, replay, or tap a step number to jump. Student: the original hands-on activities.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+    </div>
+
     <!-- 🌟 V5 曉臻老師專屬 Hook 區塊 -->
     <div class="hook-box" id="hookBox">
         <!-- JS 動態生成 -->
@@ -252,6 +311,14 @@
           </defs>
           <g id="drawLayer"></g>
         </svg>
+      </div>
+
+      <div class="teach-bar" id="teachBar">
+        <button class="teach-btn" id="teach-pause" type="button"></button>
+        <button class="teach-btn" id="teach-replay" type="button"></button>
+        <div class="teach-track"><div class="teach-fill" id="teach-fill"></div></div>
+        <div class="teach-chips" id="teach-chips"></div>
+        <div class="teach-note" id="teach-note" aria-live="polite"></div>
       </div>
       
       <div class="stats-grid" id="statsGrid"></div>
@@ -695,11 +762,170 @@
         });
       });
 
+      // 老師講解／學生操作：外層腳本要用的入口（只提供讀取與重畫，不改任何既有邏輯）
+      window.__optics1 = { params: params, mode: function () { return currentMode; }, lang: function () { return currentLang; }, init: initUI };
+
       window.onload = function() {
         setLang('zh'); 
       };
     })();
   </script>
+<script>
+/* ==================================================================
+   老師講解／學生操作 雙模式（外層加法；上面的原有程式只多了一行入口 window.__optics1）
+   ・學生操作＝原本的互動（滑桿、快速設定、孔洞按鈕、考題實戰）。
+   ・老師講解＝按下去就自動從頭連續播：目前的互動單元依序走完它的步驟（直接改頁面原本的 params，再呼叫原本的 initUI 重畫），
+     可暫停、從頭重播、點步驟編號跳到那一步。切回學生操作時，畫面還原成「剛按下老師講解」那一刻的樣子。
+   ・只借用原本的參數與重畫函式，不碰任何繪圖座標與物理。
+   ================================================================== */
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const O = window.__optics1;
+  const L = (zh, en) => ({ zh: zh, en: en });
+  const isEn = () => O.lang() === 'en';
+  const say = o => (isEn() ? o.en : o.zh);
+  const tt = (zh, en) => (isEn() ? en : zh);
+
+  // 設定參數並用頁面原本的函式重畫（滑桿也會跟著回到對應的值）
+  const SH = (light, h) => { Object.assign(O.params.shadow, { lightSize: light, objHeight: h }); O.init(); };
+  const PH = (objX, holeX, screenX, holes) => { Object.assign(O.params.pinhole, { objX: objX, holeX: holeX, screenX: screenX, holes: holes }); O.init(); };
+  const QZ = x => { O.params.quiz.holeX = x; O.init(); };
+
+  const STEPS = {
+    shadow: [
+      { ms: 9000, label: L('點光源', 'Point light'),
+        note: L('光源縮到最小，像一個點：光沿直線前進，被障礙物擋出一塊全黑的本影，邊緣很清楚。', 'The source shrinks to a point: light travels straight, so the obstacle casts one sharp, fully dark umbra.'),
+        go() { SH(2, 60); } },
+      { ms: 9000, label: L('擴展光源', 'Extended light'),
+        note: L('光源變大：本影的上下兩側出現灰色的半影區，那裡只有一部分光被擋住。', 'A bigger source: gray penumbra bands appear above and below the umbra, where only part of the light is blocked.'),
+        go() { SH(14, 60); } },
+      { ms: 9000, label: L('光源更大', 'Even larger'),
+        note: L('光源再變大：半影範圍明顯增加，本影反而縮小，影子邊緣越來越模糊。', 'A larger source: the penumbra grows, the umbra shrinks, and the shadow edge gets blurrier.'),
+        go() { SH(30, 60); } },
+      { ms: 8000, label: L('障礙物變大', 'Bigger obstacle'),
+        note: L('光源回到原本大小，障礙物加高到 90：擋住的光線變多，屏幕上的影子也跟著變大。', 'Back to the original source, with the obstacle raised to 90: more light is blocked and the shadow grows.'),
+        go() { SH(14, 90); } }
+    ],
+    pinhole: [
+      { ms: 9000, label: L('等大成像', '1:1 image'),
+        note: L('物體和屏幕各離針孔 100 公分：成倒立實像，像高等於物高 40 公分。', 'Object and screen are both 100 cm from the pinhole: an inverted real image, as tall as the object (40 cm).'),
+        go() { PH(-100, 0, 100, '1'); } },
+      { ms: 9000, label: L('針孔近物', 'Pinhole near object'),
+        note: L('針孔往物體靠近：p = 50、q = 150，像高 ÷ 物高 = q ÷ p = 3，像放大成 3 倍。', 'Pinhole moves toward the object: p = 50, q = 150, so image ÷ object = q ÷ p = 3. The image is 3 times larger.'),
+        go() { PH(-100, -50, 100, '1'); } },
+      { ms: 9000, label: L('針孔遠物', 'Pinhole far from object'),
+        note: L('針孔往屏幕靠近：p = 150、q = 50，q ÷ p 約 0.33，像縮小成三分之一。', 'Pinhole moves toward the screen: p = 150, q = 50, so q ÷ p is about 0.33. The image shrinks to one third.'),
+        go() { PH(-100, 50, 100, '1'); } },
+      { ms: 8000, label: L('兩個孔', 'Two holes'),
+        note: L('紙板戳兩個洞：兩個孔各自成像，屏幕上出現兩個互不干擾的倒立實像。', 'Two holes: each makes its own image, giving two independent inverted real images on the screen.'),
+        go() { PH(-100, 0, 100, '2'); } },
+      { ms: 8000, label: L('三個孔', 'Three holes'),
+        note: L('三個洞就有三個倒立實像，排列的形狀和孔洞的方向上下顛倒。', 'Three holes give three inverted images, arranged upside down compared with the holes.'),
+        go() { PH(-100, 0, 100, '3'); } },
+      { ms: 9000, label: L('大洞', 'Large hole'),
+        note: L('洞開得很大，等於無數個小孔：無數個倒立實像疊在一起，邊緣變模糊，整體卻更亮。', 'A large hole is countless tiny holes: countless inverted images overlap, the edges blur, but the image gets brighter.'),
+        go() { PH(-100, 0, 100, 'large'); } }
+    ],
+    quiz: [
+      { ms: 9000, label: L('題一：算像距', 'Q1: image distance'),
+        note: L('針孔在 p = 10 公分處、物高 8 公分、像高 24 公分：24 ÷ 8 = q ÷ 10，q = 30 公分。', 'Pinhole at p = 10 cm, object 8 cm, image 24 cm: 24 ÷ 8 = q ÷ 10, so q = 30 cm.'),
+        go() { QZ(-50); } },
+      { ms: 8000, label: L('等大的位置', 'Same-size position'),
+        note: L('物體和屏幕固定相距 40 公分：針孔在正中間時 p = q = 20，像高等於物高 8 公分。', 'Object and screen stay 40 cm apart: with the pinhole in the middle, p = q = 20 and the image is 8 cm, same as the object.'),
+        go() { QZ(0); } },
+      { ms: 10000, label: L('題二：像放大 4 倍', 'Q2: 4x image'),
+        note: L('像高要變 4 倍，就是 q = 4p；p + q = 40，所以 p = 8 公分，針孔要往物體移動 2 公分。', 'A 4x image means q = 4p; with p + q = 40, p = 8 cm, so the pinhole moves 2 cm toward the object.'),
+        go() { QZ(-60); } }
+    ]
+  };
+  const totalMs = m => STEPS[m].reduce((s, x) => s + x.ms, 0);
+
+  const T = { on: false, mode: null, si: 0, elapsed: 0, paused: false, done: false, timer: 0, last: 0 };
+  let snap = null;
+
+  function fillBar() {
+    const f = $('teach-fill'); if (!f || !T.mode) return;
+    const st = STEPS[T.mode]; let before = 0;
+    for (let i = 0; i < T.si; i++) before += st[i].ms;
+    const cur = T.done ? st[T.si].ms : Math.min(T.elapsed, st[T.si].ms);
+    f.style.width = (100 * (before + cur) / totalMs(T.mode)) + '%';
+  }
+  function paintBtns() {
+    const p = $('teach-pause'), r = $('teach-replay'); if (!p || !r) return;
+    p.textContent = T.paused ? tt('▶ 繼續', '▶ Resume') : tt('⏸ 暫停', '⏸ Pause');
+    p.disabled = T.done;
+    r.textContent = tt('↺ 從頭重播', '↺ Replay');
+    r.classList.toggle('hot', T.done);
+  }
+  function paintChips() {
+    const box = $('teach-chips'); if (!box || !T.mode) return;
+    box.innerHTML = '';
+    STEPS[T.mode].forEach((s, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'teach-chip' + (i === T.si ? ' on' : (i < T.si ? ' past' : ''));
+      b.innerHTML = '<span class="teach-n">' + (i + 1) + '</span>' + say(s.label).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      b.addEventListener('click', () => { if (T.done) T.paused = false; goStep(i); });
+      box.appendChild(b);
+    });
+    const n = $('teach-note'); if (n) n.textContent = say(STEPS[T.mode][T.si].note);
+  }
+  function goStep(i) {
+    T.si = i; T.elapsed = 0; T.done = false;
+    STEPS[T.mode][i].go();
+    paintChips(); paintBtns(); fillBar();
+  }
+  function finish() { T.done = true; fillBar(); paintBtns(); }
+  function enterMode(m) {
+    if (!STEPS[m]) return;
+    T.mode = m; T.paused = false; T.done = false;
+    goStep(0);
+    const s = document.querySelector('.visual-card');
+    if (s && s.scrollIntoView) { try { s.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { s.scrollIntoView(); } }
+  }
+  function tick() {
+    const now = performance.now(), dt = now - T.last; T.last = now;
+    if (!T.on || T.paused || T.done || !T.mode) return;
+    const arr = STEPS[T.mode]; T.elapsed += dt;
+    if (T.elapsed >= arr[T.si].ms) { if (T.si + 1 < arr.length) goStep(T.si + 1); else finish(); }
+    fillBar();
+  }
+
+  $('teach-pause').addEventListener('click', () => { if (!T.done) { T.paused = !T.paused; paintBtns(); } });
+  $('teach-replay').addEventListener('click', () => { T.paused = false; goStep(0); });
+
+  // 切互動單元：原本的按鈕處理（先登記、先執行）已經更新 currentMode；老師模式下從該單元第 1 步重新開始
+  document.querySelectorAll('.mode-switch button').forEach(btn => {
+    btn.addEventListener('click', () => { if (T.on) enterMode(O.mode()); });
+  });
+  // 切語言：原本的 setLang 會重畫整個畫面；老師模式再補畫自己的按鈕與提示
+  const _setLang = window.setLang;
+  window.setLang = function () {
+    _setLang.apply(this, arguments);
+    if (T.on && T.mode) { paintChips(); paintBtns(); }
+  };
+
+  window.setMode = function (m) {
+    const teacher = m === 'teacher';
+    if (teacher === T.on) return;
+    $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
+    $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
+    document.body.classList.toggle('mode-teacher', teacher);
+    if (teacher) {
+      snap = { shadow: Object.assign({}, O.params.shadow), pinhole: Object.assign({}, O.params.pinhole), quiz: Object.assign({}, O.params.quiz) };
+      T.on = true; T.last = performance.now();
+      T.timer = setInterval(tick, 100);
+      enterMode(O.mode());
+    } else {
+      T.on = false; clearInterval(T.timer); T.timer = 0; T.mode = null;
+      if (snap) {                                    // 還原成「剛按下老師講解」那一刻
+        Object.assign(O.params.shadow, snap.shadow); Object.assign(O.params.pinhole, snap.pinhole); Object.assign(O.params.quiz, snap.quiz);
+        snap = null; O.init();
+      }
+    }
+  };
+})();
+</script>
 <script src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt" defer></script>
 <script src="assets/quiz/quiz_optics_1_1028_v1.js?v=20261028-q1" defer></script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
