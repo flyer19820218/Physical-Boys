@@ -168,6 +168,63 @@
       .home-fab { top: 8px; left: 8px; width: 42px; height: 42px; }
       .home-fab svg { width: 20px; height: 20px; }
     }
+
+  /* ==================================================================
+     老師講解／學生操作 雙模式（外層加法：學生操作＝原本的樣子，沒有改任何一個原有規則）
+     ================================================================== */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 22px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: #c0d0c8; border: 2px dashed var(--rule-color);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .mode-pill:hover:not(.active) { background: var(--bg-panel-hover); color: #fff; }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: #c0d0c8; text-align: center; line-height: 1.5; max-width: 900px; }
+
+  /* 老師講解的控制列（只在老師模式出現） */
+  .teach-bar {
+    display: none; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(13, 32, 26, 0.72); border: 2px solid var(--rule-color);
+    border-radius: 12px; padding: 16px 20px 18px; margin: 0 0 20px;
+  }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--bg-base); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--bg-base); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-chips { flex: 1 1 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+  .teach-chip {
+    min-height: 44px; padding: 4px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: #c0d0c8; border: 2px dashed var(--rule-color);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-chip .teach-n { display: inline-block; min-width: 1.2em; text-align: center; margin-right: 2px; }
+  .teach-chip:hover:not(.on) { background: var(--bg-panel-hover); color: #fff; border-color: #fff; }
+  .teach-chip.past { color: var(--chalk-green); border-color: rgba(51, 204, 153, 0.55); }
+  .teach-chip.on { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 12px rgba(255, 224, 102, 0.4); }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生用的控制列（播放聲波動畫、顯示解答）收起來 */
+  body.mode-teacher #problem-tab2 .controls { display: none !important; }
+  /* 講到哪一張卡，就把那一張亮起來、其他變暗（只加 class，不改卡片內容） */
+  .tl-g { transition: opacity .3s ease, box-shadow .25s ease; }
+  .tl-dim { opacity: .28; }
+  .tl-cur { box-shadow: 0 0 0 4px rgba(255, 224, 102, 0.35); }
+  #stage-container, #problem-tab2, #solution-tab2, #note-text, #app-section, #echo-prevent-section { scroll-margin-top: 88px; }   /* 讓出右上角懸浮的語言切換鈕 */
+  @media (max-width: 520px) {
+    .mode-pill { padding: 8px 18px; font-size: 19px; }
+    .teach-bar { padding: 14px 12px 16px; }
+  }
   </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -198,17 +255,25 @@
     <p data-zh="回聲原理、兩山經典計算與超聲波應用" data-en="Echo Principles, Two-Mountain Math & Ultrasound">回聲原理、兩山經典計算與超聲波應用</p>
   </header>
 
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays through on its own; pause, replay, or tap a step number to jump. Student: the original hands-on activities.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+  </div>
+
   <div class="tabs">
-    <div class="tab-btn active" onclick="switchTab('tab1')">
+    <div class="tab-btn active" data-tab="tab1" onclick="switchTab('tab1')">
         <span data-zh="一、回聲與原聲" data-en="I. Echo vs Original Sound">一、回聲與原聲</span>
     </div>
-    <div class="tab-btn" onclick="switchTab('tab2')">
+    <div class="tab-btn" data-tab="tab2" onclick="switchTab('tab2')">
         <span data-zh="二、經典練習：兩山" data-en="II. Practice: Two Mountains">二、經典練習：兩山</span>
     </div>
-    <div class="tab-btn" onclick="switchTab('tab3')">
+    <div class="tab-btn" data-tab="tab3" onclick="switchTab('tab3')">
         <span data-zh="三、超聲波應用" data-en="III. Ultrasound App">三、超聲波應用</span>
     </div>
-    <div class="tab-btn" onclick="switchTab('tab4')">
+    <div class="tab-btn" data-tab="tab4" onclick="switchTab('tab4')">
         <span data-zh="四、如何避免回聲" data-en="IV. Preventing Echoes">四、如何避免回聲</span>
     </div>
   </div>
@@ -241,6 +306,14 @@
     <!-- 動畫畫布 -->
     <div id="stage-container">
       <canvas id="stage"></canvas>
+    </div>
+
+    <div class="teach-bar" id="teachBar">
+      <button class="teach-btn" id="teach-pause" type="button"></button>
+      <button class="teach-btn" id="teach-replay" type="button"></button>
+      <div class="teach-track"><div class="teach-fill" id="teach-fill"></div></div>
+      <div class="teach-chips" id="teach-chips"></div>
+      <div class="teach-note" id="teach-note" aria-live="polite"></div>
     </div>
 
     <!-- 解答顯示區 Tab 2 -->
@@ -841,6 +914,190 @@
   };
   window.addEventListener('resize', initCanvas);
 
+</script>
+<script>
+/* ==================================================================
+   老師講解／學生操作 雙模式（外層加法；上面的原有程式一行都沒改）
+   ・學生操作＝原本的互動（播放聲波動畫、顯示解答、各分頁動畫）。
+   ・老師講解＝按下去就自動從頭連續播：每個分頁依序走完它的步驟（直接呼叫頁面原本的 shout／toggleSolution），
+     可暫停、從頭重播、點步驟編號跳到那一步。切回學生操作時，畫面還原成重新進入該分頁的樣子。
+   ・只借用原本的全域變數與函式（currentTab、showSol、isShouting、shoutStartTime、aniFrame、animateTab1/2/4…），不碰任何繪圖座標與物理。
+   ================================================================== */
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const L = (zh, en) => ({ zh: zh, en: en });
+  const say = o => (currentLang === 'en' ? o.en : o.zh);
+  const view = el => { if (el && el.scrollIntoView) { try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { el.scrollIntoView(); } } };
+  const mark = (gridId, n) => {            // n＝第幾張卡亮起（0＝都不標）；只加 class，不改卡片內容
+    const g = $(gridId); if (!g) return;
+    Array.prototype.forEach.call(g.children, (c, i) => {
+      c.classList.toggle('tl-g', n > 0); c.classList.toggle('tl-cur', n === i + 1); c.classList.toggle('tl-dim', n > 0 && n !== i + 1);
+    });
+  };
+  const clearMarks = () => { mark('app-section', 0); mark('echo-prevent-section', 0); };
+  const resetT2 = () => { if (showSol) toggleSolution(); isShouting = false; t1_return = false; t2_return = false; updateEchoStats(); };
+  const ensureShout = () => { if (!isShouting) shout(); };
+
+  const STEPS = {
+    tab1: [
+      { ms: 9000, label: L('看動畫', 'Watch'),
+        note: L('聲波從左邊的人出發，碰到右邊的牆就反射回來，這就是回聲。', 'The sound leaves the speaker on the left, hits the wall on the right and bounces back. That is an echo.'),
+        go() { view($('stage-container')); } },
+      { ms: 8000, label: L('原聲與回聲', 'Original vs echo'),
+        note: L('黃色是原聲，藍色是回聲：反射後能量散失，所以只有大小聲（振幅）改變。', 'Yellow is the original and blue is the echo: energy is lost on reflection, so only the loudness (amplitude) changes.'),
+        go() { view($('stage-container')); } },
+      { ms: 9000, label: L('17 公尺', '17 m'),
+        note: L('人耳需要 0.1 秒才分辨得出兩個聲音：340 × 0.1 ÷ 2 = 17，距離障礙物至少 17 公尺才聽得見回聲。', 'The ear needs 0.1 s to tell two sounds apart: 340 × 0.1 ÷ 2 = 17, so you must be at least 17 m from the obstacle to hear an echo.'),
+        go() { view($('note-text')); } },
+      { ms: 8000, label: L('不變的量', 'Unchanged'),
+        note: L('頻率、週期、波長、波速都和原聲相同，完全不變！', 'Frequency, period, wavelength and speed are all the same as the original: unchanged!'),
+        go() { view($('stage-container')); } }
+    ],
+    tab2: [
+      { ms: 7000, label: L('看題目', 'The problem'),
+        note: L('題目：兩山之間大喊，1 秒後聽見第一次回聲，再經過 1 秒聽見第二次回聲，聲速 340 m/s，兩山相距多少公尺？', 'Problem: shouting between two mountains, you hear the 1st echo after 1 s and the 2nd echo 1 s later. Speed 340 m/s. How far apart are the mountains?'),
+        go() { resetT2(); view($('problem-tab2')); } },
+      { ms: 9000, label: L('播放聲波', 'Play the wave'),
+        note: L('看動畫：藍色聲波跑去左山再回來，橘色聲波跑去右山再回來，碼表記錄時間。', 'Watch: the blue wave goes to the left mountain and back, the orange wave goes to the right mountain and back, and the timer records the time.'),
+        go() { resetT2(); shout(); view($('stage-container')); } },
+      { ms: 8000, label: L('時間陷阱', 'Time trap'),
+        note: L('陷阱：「再經過 1 秒」代表第二次回聲的總時間是 1 + 1 = 2 秒；算距離時，時間要除以 2。', 'Trap: "1 s later" means the 2nd echo takes 1 + 1 = 2 s in total; divide the time by 2 when finding a distance.'),
+        go() { if (showSol) toggleSolution(); ensureShout(); view($('note-text')); } },
+      { ms: 10000, label: L('解答', 'Solution'),
+        note: L('左山 340 × 1 ÷ 2 = 170 m，右山 340 × 2 ÷ 2 = 340 m，兩山相距 170 + 340 = 510 m。', 'Left mountain 340 × 1 ÷ 2 = 170 m, right mountain 340 × 2 ÷ 2 = 340 m, so the mountains are 170 + 340 = 510 m apart.'),
+        go() { ensureShout(); if (!showSol) toggleSolution(); view($('solution-tab2')); } }
+    ],
+    tab3: [
+      { ms: 9000, label: L('超聲波', 'Ultrasound'),
+        note: L('人耳只聽得見 20 ~ 20000 Hz；頻率超過 20000 Hz 的叫超聲波，頻率高、不易散失，適合探測距離和震動清洗。', 'Human ears only hear 20 to 20000 Hz; above 20000 Hz is ultrasound. High frequency and little spreading make it good for measuring distance and cleaning by vibration.'),
+        go() { mark('app-section', 0); view($('app-section')); } },
+      { ms: 6000, label: L('漁船聲納', 'Sonar'),
+        note: L('漁船聲納：用超聲波探測魚群位置或海底深度。', 'Sonar: ultrasound finds fish or the depth of the sea floor.'),
+        go() { mark('app-section', 1); view($('app-section')); } },
+      { ms: 7000, label: L('蝙蝠', 'Bat'),
+        note: L('蝙蝠發出超聲波，聽回聲判斷與障礙物的距離，所以在黑暗中不會撞牆。', 'Bats send out ultrasound and listen for the echo to judge the distance to obstacles, so they do not hit walls in the dark.'),
+        go() { mark('app-section', 2); view($('app-section')); } },
+      { ms: 6000, label: L('清洗機', 'Cleaner'),
+        note: L('超音波清洗機：利用高頻率振動，清洗浸在溶劑中的機具，例如眼鏡。', 'Ultrasonic cleaner: high-frequency vibration cleans items such as glasses in solvent.'),
+        go() { mark('app-section', 3); view($('app-section')); } },
+      { ms: 6000, label: L('超音波掃描', 'Scan'),
+        note: L('超音波掃描：檢查病患體內情況，或孕婦體內的胎兒影像。', 'Ultrasound scan: checks the inside of a patient, or the fetus of a pregnant woman.'),
+        go() { mark('app-section', 4); view($('app-section')); } }
+    ],
+    tab4: [
+      { ms: 10000, label: L('漫射動畫', 'Diffusion'),
+        note: L('平行的原聲打到凹凸不平的牆，每一處反射的方向都不一樣，聲音向四面八方散開，形成不了清晰的回聲。', 'Parallel sound hits a bumpy wall and reflects in a different direction at every spot, so it scatters and no clear echo forms.'),
+        go() { mark('echo-prevent-section', 0); view($('stage-container')); } },
+      { ms: 7000, label: L('吸收聲波', 'Absorb'),
+        note: L('吸音板、布幔、地毯、布面椅套，吸收聲波能量，回聲就變小。', 'Sound-absorbing panels, curtains, carpets and cloth seat covers soak up sound energy, so the echo gets weaker.'),
+        go() { mark('echo-prevent-section', 1); view($('echo-prevent-section')); } },
+      { ms: 6000, label: L('建築設計', 'Design'),
+        note: L('傾斜的天花板、不對稱的牆面，破壞原本平整的反射面。', 'Slanted ceilings and asymmetric walls break up flat reflecting surfaces.'),
+        go() { mark('echo-prevent-section', 2); view($('echo-prevent-section')); } },
+      { ms: 9000, label: L('表面漫射', 'Surface diffusion'),
+        note: L('漫射依然遵守反射定律！聲音沒有亂跑，是表面不平整，每一處反射的方向才各自不同。', 'Diffusion still obeys the law of reflection! The sound does not run wild; the surface is uneven, so each spot reflects in a different direction.'),
+        go() { mark('echo-prevent-section', 3); view($('echo-prevent-section')); } }
+    ]
+  };
+  const totalMs = tab => STEPS[tab].reduce((s, x) => s + x.ms, 0);
+
+  const T = { on: false, tab: null, si: 0, elapsed: 0, paused: false, done: false, timer: 0, last: 0, pauseAt: 0 };
+
+  function fillBar() {
+    const f = $('teach-fill'); if (!f || !T.tab) return;
+    const st = STEPS[T.tab]; let before = 0;
+    for (let i = 0; i < T.si; i++) before += st[i].ms;
+    const cur = T.done ? st[T.si].ms : Math.min(T.elapsed, st[T.si].ms);
+    f.style.width = (100 * (before + cur) / totalMs(T.tab)) + '%';
+  }
+  function paintBtns() {
+    const p = $('teach-pause'), r = $('teach-replay'); if (!p || !r) return;
+    p.textContent = T.paused ? tr('▶ 繼續', '▶ Resume') : tr('⏸ 暫停', '⏸ Pause');
+    p.disabled = T.done;
+    r.textContent = tr('↺ 從頭重播', '↺ Replay');
+    r.classList.toggle('hot', T.done);
+  }
+  function paintChips() {
+    const box = $('teach-chips'); if (!box || !T.tab) return;
+    box.innerHTML = '';
+    STEPS[T.tab].forEach((s, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'teach-chip' + (i === T.si ? ' on' : (i < T.si ? ' past' : ''));
+      b.innerHTML = '<span class="teach-n">' + (i + 1) + '</span>' + say(s.label).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      b.addEventListener('click', () => { if (T.paused) setPaused(false); T.done = false; goStep(i); });
+      box.appendChild(b);
+    });
+    const n = $('teach-note'); if (n) n.textContent = say(STEPS[T.tab][T.si].note);
+  }
+  // 暫停：把正在跑的動畫停住；繼續時重新啟動，兩山動畫的計時起點往後推，所以數值接得上
+  function setPaused(v) {
+    v = !!v; if (v === T.paused) return;
+    T.paused = v;
+    if (v) { T.pauseAt = performance.now(); cancelAnimationFrame(aniFrame); }
+    else {
+      if (currentTab === 'tab2' && isShouting) shoutStartTime += performance.now() - T.pauseAt;
+      resumeAnim();
+    }
+    paintBtns();
+  }
+  function resumeAnim() {
+    cancelAnimationFrame(aniFrame);
+    if (currentTab === 'tab1') animateTab1();
+    else if (currentTab === 'tab2') animateTab2();
+    else if (currentTab === 'tab4') animateTab4();
+  }
+  function goStep(i) {
+    T.si = i; T.elapsed = 0; T.done = false;
+    STEPS[T.tab][i].go();
+    paintChips(); paintBtns(); fillBar();
+  }
+  function finish() { T.done = true; fillBar(); paintBtns(); }
+  function enterTab(tab) {
+    if (!STEPS[tab]) return;
+    T.tab = tab; T.paused = false; T.done = false;
+    clearMarks();
+    goStep(0);
+  }
+  function tick() {
+    const now = performance.now(), dt = now - T.last; T.last = now;
+    if (!T.on || T.paused || T.done || !T.tab) return;
+    const arr = STEPS[T.tab]; T.elapsed += dt;
+    if (T.elapsed >= arr[T.si].ms) { if (T.si + 1 < arr.length) goStep(T.si + 1); else finish(); }
+    fillBar();
+  }
+
+  $('teach-pause').addEventListener('click', () => { if (!T.done) setPaused(!T.paused); });
+  $('teach-replay').addEventListener('click', () => { if (T.paused) setPaused(false); enterTab(T.tab); });
+
+  // 切分頁：老師模式下從該分頁的第 1 步重新開始；學生模式完全照原本
+  const _switchTab = window.switchTab;
+  window.switchTab = function (tab) { _switchTab.apply(this, arguments); if (T.on) enterTab(tab); };
+  // 切語言：原本的 setLang 會把畫布與說明重畫；老師模式再補畫自己的按鈕與提示（暫停中就繼續維持停住）
+  const _setLang = window.setLang;
+  window.setLang = function () {
+    _setLang.apply(this, arguments);
+    if (T.on && T.tab) { if (T.paused) cancelAnimationFrame(aniFrame); paintChips(); paintBtns(); }
+  };
+
+  window.setMode = function (m) {
+    const teacher = m === 'teacher';
+    if (teacher === T.on) return;
+    $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
+    $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
+    document.body.classList.toggle('mode-teacher', teacher);
+    if (teacher) {
+      T.on = true; T.last = performance.now();
+      T.timer = setInterval(tick, 100);
+      _switchTab.call(window, currentTab);            // 先把目前分頁重置成剛進來的樣子，再從第 1 步開始
+      enterTab(currentTab);
+    } else {
+      T.on = false; clearInterval(T.timer); T.timer = 0; T.tab = null; T.paused = false;
+      clearMarks();
+      _switchTab.call(window, currentTab);            // 還原成學生操作（重新進入目前分頁）
+    }
+  };
+})();
 </script>
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
 <script defer src="assets/quiz/mcq_tabs_1028_v1.js?v=20261028-q1"></script>
