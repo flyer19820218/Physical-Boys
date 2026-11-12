@@ -189,7 +189,7 @@
   // 步驟對照（與 lessons/waves_4.json 的 _note 相同）：
   //   tab1：1＝振幅50、2＝振幅95、3＝振幅15、4＝振幅50＋捲到黑板重點
   //   tab2：1＝頻率2、2＝頻率5、3＝頻率1、4＝頻率2＋捲到黑板重點（含性質表）
-  //   tab3：1＝音叉、2＝鋼琴、3＝小提琴、4＝小提琴＋捲到必考大結論
+  //   tab3：1＝音叉、2＝鋼琴、3＝小提琴、4＝小提琴＋捲到黑板重點、5＝小提琴＋捲到必考大結論
   //   tab4：1＝兩個杯子、2＝敲打杯身、3＝吹氣、4＝吹氣＋捲到黑板重點
   //   tab5：1＝兩個音叉靜止、2＝敲擊左側音叉、3＝共振中＋捲到黑板重點
   var cur = { tab: null, sub: null, step: 0 };
@@ -208,7 +208,7 @@
   var SCENES = {
     tab1: function (step) { amp([50, 95, 15, 50][step - 1]); },
     tab2: function (step) { freq([2, 5, 1, 2][step - 1]); },
-    tab3: function (step) { timbre(['sine', 'piano', 'violin', 'violin'][step - 1]); },
+    tab3: function (step) { timbre(['sine', 'piano', 'violin', 'violin', 'violin'][step - 1]); },
     tab4: function (step) { water(['none', 'knock', 'blow', 'blow'][step - 1]); },
     tab5: function (step) {
       if (step === 1) { forkVibrating = false; forkTime = 0; }
@@ -220,6 +220,7 @@
   function noteView(key) { return { k: 'note:' + key, topEl: $('stage-container'), botEl: $('note-text'), anchor: 'bottom' }; }
   function viewOf(key, step) {
     if (!key) return null;
+    if (key === 'tab3' && step === 5) return { k: 'concl:tab3', topEl: $('conclusion-section'), botEl: $('conclusion-section') };
     var noteStep = key === 'tab5' ? 3 : 4;
     return step >= noteStep ? noteView(key) : stageView(key);
   }
@@ -302,26 +303,39 @@
   function elR(sel) { return function () { var e = document.querySelector(sel); if (!e) return null; var r = e.getBoundingClientRect(); return r.width ? { left: r.left, top: r.top, width: r.width, height: r.height } : null; }; }
   // 句號（說話行編號）→ 螢光筆項目：a～b＝該句音檔播放比例，線在這段時間從左畫到右；畫好的線會停留一小段時間再淡出（光筆的「維持一段時間」）
   var HL = {
-    '7': [{ a: 0.28, b: 0.52, r: cv(12, 128, 150, 34) }, { a: 0.62, b: 0.92, r: cv(495, 98, 80, 66) }],
+    '07': [{ a: 0.28, b: 0.52, r: cv(12, 128, 150, 34) }, { a: 0.62, b: 0.92, r: cv(510, 104, 80, 62) }],
+    '08': [{ a: 0.10, b: 0.90, r: cv(510, 104, 80, 62) }],
     '14': [{ a: 0.05, b: 0.28, r: noteSeg(2) }, { a: 0.40, b: 0.95, r: noteSeg(3) }],
     '16': [{ a: 0.30, b: 0.95, r: noteSeg(3) }],
+    '19': [{ a: 0.05, b: 0.50, r: noteSeg(1) }, { a: 0.55, b: 0.95, r: noteSeg(2) }],
     '23': [{ a: 0.40, b: 0.95, r: noteSeg(2) }],
-    '24': [{ a: 0.30, b: 0.90, r: cv(10, 8, 440, 30) }],
+    '24': [{ a: 0.30, b: 0.62, r: cv(10, 10, 235, 28) }],
     '30': [{ a: 0.08, b: 0.92, r: propRow(1) }],
+    '31': [{ a: 0.10, b: 0.85, r: propRow(2) }],
     '32': [{ a: 0.08, b: 0.92, r: propRow(2) }],
-    '40': [{ a: 0.50, b: 0.97, r: noteSeg(1) }],
+    '37': [{ a: 0.05, b: 0.50, r: noteSeg(1) }, { a: 0.55, b: 0.95, r: noteSeg(2) }],
+    '38': [{ a: 0.05, b: 0.45, r: propRow(1) }, { a: 0.52, b: 0.95, r: propRow(2) }],
+    '40': [{ a: 0.50, b: 0.95, r: elR('#panel-badge') }],
+    '47': [{ a: 0.05, b: 0.95, r: noteSeg(2) }],
+    '48': [{ a: 0.10, b: 0.75, r: noteSeg(3) }],
+    '49': [{ a: 0.05, b: 0.95, r: noteSeg(1) }],
     '51': [{ a: 0.05, b: 0.95, r: elR('#conclusion-section h3') }],
     '53': [{ a: 0.05, b: 0.95, r: elR('#conclusion-section p b') }],
+    '54': [{ a: 0.20, b: 0.90, r: elR('#conclusion-section p:nth-of-type(2)') }],
     '55': [{ a: 0.05, b: 0.95, r: elR('#conclusion-section p:nth-of-type(2)') }],
-    '62': [{ a: 0.25, b: 0.95, r: many([cv(190, 36, 270, 30), cv(640, 36, 270, 30)]) }],
-    '63': [{ a: 0.45, b: 0.97, r: cv(695, 118, 90, 122) }],
-    '66': [{ a: 0.40, b: 0.95, r: many([cv(185, 10, 275, 30), cv(635, 10, 275, 30)]) }],
+    '56': [{ a: 0.05, b: 0.95, r: elR('#conclusion-section h3') }],
+    '61': [{ a: 0.30, b: 0.50, r: cv(215, 245, 150, 28) }, { a: 0.52, b: 0.72, r: cv(665, 245, 150, 28) }],
+    '62': [{ a: 0.42, b: 0.75, r: cv(190, 36, 270, 30) }, { a: 0.75, b: 0.97, r: cv(640, 36, 270, 30) }],
+    '63': [{ a: 0.10, b: 0.55, r: cv(695, 118, 90, 122) }],
+    '66': [{ a: 0.40, b: 0.70, r: cv(185, 10, 275, 30) }, { a: 0.70, b: 0.95, r: cv(635, 10, 275, 30) }],
     '67': [{ a: 0.45, b: 0.95, r: cv(702, 78, 76, 44) }],
+    '70': [{ a: 0.05, b: 0.45, r: noteSeg(1) }, { a: 0.50, b: 0.95, r: noteSeg(2) }],
     '71': [{ a: 0.10, b: 0.95, r: noteSeg(3) }],
-    '80': [{ a: 0.10, b: 0.95, r: cv(210, 16, 640, 40) }],
+    '75': [{ a: 0.30, b: 0.62, r: cv(320, 18, 410, 36) }, { a: 0.68, b: 0.82, r: cv(170, 272, 160, 26) }, { a: 0.82, b: 0.95, r: cv(670, 272, 160, 26) }],
+    '80': [{ a: 0.30, b: 0.95, r: cv(320, 18, 410, 36) }],
     '81': [{ a: 0.10, b: 0.95, r: noteSeg(1) }],
     '83': [{ a: 0.20, b: 0.95, r: noteSeg(3) }],
-    '86': [{ a: 0.30, b: 0.95, r: noteSeg(2) }]
+    '86': [{ a: 0.05, b: 0.95, r: noteSeg(2) }]
   };
   var hlTimer = 0, hlSegs = [], hlLayer = null;
   var HL_KEEP = 2600; // 畫好的螢光線在下一句開始後還留著多久（毫秒），像光筆一樣維持一段時間再淡出
@@ -487,7 +501,7 @@
 
   function playLine(it, my) {
     var at = stage.at[it.id];
-    stopActs(); hlClear();
+    stopActs(); hlClear(true);
     if (at) goto(at.tab, at.sub, at.step, true);
     showSub(it);
     var n = lineNo() + 1;

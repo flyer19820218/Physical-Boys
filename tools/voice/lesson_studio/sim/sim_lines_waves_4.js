@@ -12,7 +12,7 @@ const stage = JSON.parse(fs.readFileSync(AUDIO + 'stage.json', 'utf8'));
 const OUT = process.argv[2] || path.join(process.env.TMPDIR || '/tmp', 'sim_w4_result.json');
 
 // ── 期望狀態：只比對該場景相關欄位（與 waves_4_voice_v1.js 的 SCENES 對照）──
-const AMP = [50, 95, 15, 50], FRQ = [2, 5, 1, 2], TYP = ['sine', 'piano', 'violin', 'violin'], WAT = ['none', 'knock', 'blow', 'blow'];
+const AMP = [50, 95, 15, 50], FRQ = [2, 5, 1, 2], TYP = ['sine', 'piano', 'violin', 'violin', 'violin'], WAT = ['none', 'knock', 'blow', 'blow'];
 function want(tab, sub, step) {
   step = step || 1;
   const w = { tab };
@@ -21,7 +21,7 @@ function want(tab, sub, step) {
   else if (tab === 'tab3') w.type = TYP[step - 1];
   else if (tab === 'tab4') w.water = WAT[step - 1];
   else if (tab === 'tab5') w.fork = step >= 2;
-  w.cvs = step >= (tab === 'tab5' ? 3 : 4) ? 'note' : 'stage';
+  w.cvs = (tab === 'tab3' && step === 5) ? 'concl' : step >= (tab === 'tab5' ? 3 : 4) ? 'note' : 'stage';
   return w;
 }
 const fmt = s => s.tab + (s.sub ? '/' + s.sub : '') + '#' + (s.step || 1);
@@ -61,7 +61,7 @@ for (const it of manifest.items) {
       };
     };
     // 畫面露出比例（扣掉底部字幕框）
-    const elOf = id => document.getElementById(id === 'stage' ? 'stage-container' : 'note-text');
+    const elOf = id => document.getElementById(id === 'stage' ? 'stage-container' : id === 'concl' ? 'conclusion-section' : 'note-text');
     window.__inView = id => { const c = elOf(id);
       if (!c) return null; const r = c.getBoundingClientRect();
       const bub = document.querySelector('.vx-bub'); const top = bub ? bub.getBoundingClientRect().top : innerHeight;
@@ -85,7 +85,7 @@ for (const it of manifest.items) {
           rec.hl = Array.from(document.querySelectorAll('.vx-hl:not(.vx-hl-old)')).map(e => { const r = e.getBoundingClientRect(); return { disp: e.style.display, w: r.width, h: r.height, top: r.top, bottom: r.bottom, left: r.left, right: r.right }; });
           rec.panelTop = (document.querySelector('.vx-bub') || { getBoundingClientRect: () => ({ top: innerHeight }) }).getBoundingClientRect().top;
           rec.end = window.__snap(); rec.view = {};
-          ['stage', 'note'].forEach(id => rec.view[id] = window.__inView(id));
+          ['stage', 'note', 'concl'].forEach(id => rec.view[id] = window.__inView(id));
           self.paused = true; if (self.onended) self.onended();
         }, this.duration * 1000);
         return Promise.resolve();
@@ -140,7 +140,7 @@ for (const it of manifest.items) {
     const vis = last.cvs ? r.view && r.view[last.cvs] : null;
     if (last.cvs && !(vis >= 50)) probs.push(`畫布 ${last.cvs} 只露出 ${vis}%`);
     for (const id of last.see || []) { const v = r.view && r.view[id]; if (!(v >= 90)) probs.push(`${id} 只露出 ${v}%`); }
-    const HLN = { 7: 2, 14: 2, 16: 1, 23: 1, 24: 1, 30: 1, 32: 1, 40: 1, 51: 1, 53: 1, 55: 1, 62: 1, 63: 1, 66: 1, 67: 1, 71: 1, 80: 1, 81: 1, 83: 1, 86: 1 };
+    const HLN = {7: 2, 8: 1, 14: 2, 16: 1, 19: 2, 23: 1, 24: 1, 30: 1, 31: 1, 32: 1, 37: 2, 38: 2, 40: 1, 47: 1, 48: 1, 49: 1, 51: 1, 53: 1, 54: 1, 55: 1, 56: 1, 61: 2, 62: 2, 63: 1, 66: 2, 67: 1, 70: 2, 71: 1, 75: 3, 80: 1, 81: 1, 83: 1, 86: 1};
     const hn = HLN[+e.id] || 0;
     if ((r.hl || []).length !== hn) probs.push('螢光筆段數 ' + (r.hl || []).length + '≠' + hn);
     (r.hl || []).forEach((g, gi) => { if (g.disp !== 'block' || g.w < 10) probs.push('螢光筆第' + (gi + 1) + '段沒畫出 ' + g.disp + ' w=' + Math.round(g.w)); else if (g.top < 40 || g.bottom > r.panelTop + 2) probs.push('螢光筆第' + (gi + 1) + '段不在可視範圍 top=' + Math.round(g.top) + ' bottom=' + Math.round(g.bottom) + ' panelTop=' + Math.round(r.panelTop)); });
