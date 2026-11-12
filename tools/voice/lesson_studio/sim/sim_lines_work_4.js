@@ -13,12 +13,12 @@ const OUT = process.argv[2] || path.join(process.env.TMPDIR || '/tmp', 'sim_w4_r
 
 // ── 期望狀態：只比對該場景相關欄位（與 work_4_voice_v1.js 的 SCENES 對照）──
 const ITEM = ['pencil', 'pencil', 'pencil', 'faucet', 'doorknob', 'screwdriver', 'wheel', 'copter'];
-const T1 = [null, [50, 4], [100, 2], [20, 10], [50, 4]];
+const T1 = [null, [50, 4], [100, 2], [20, 10], [50, 4], [50, 4]];
 const T2 = [null, [30, 5], [45, 5], [15, 5], [30, 3], [30, 5]];
 function want(tab, sub, step) {
   step = step || 1;
   const w = { tab };
-  if (tab === 'tab1') { Object.assign(w, { t1f: T1[step][0], t1s: T1[step][1] }); w.cvs = step === 4 ? 'note-text' : 'stage'; }
+  if (tab === 'tab1') { Object.assign(w, { t1f: T1[step][0], t1s: T1[step][1] }); w.cvs = (step === 4 || step === 5) ? 'note-text' : 'stage'; }
   else if (tab === 'tab2') { Object.assign(w, { eff: T2[step][0], res: T2[step][1] }); w.cvs = step === 5 ? 'note-text' : 'stage'; }
   else if (tab === 'tab3') {
     if (step === 9) Object.assign(w, { t3mode: 'pulley' });
@@ -121,7 +121,8 @@ for (const it of manifest.items) {
   await page.waitForTimeout(500);
   await page.click('.vx-open');
   await page.click('button[aria-label="開始／繼續"]');
-  const shots = {};
+  const shots = {};   // 截圖：環境變數 SHOTS='15:1.2,47:1' ＝第 15 句播放 1.2 秒時截圖
+  for (const kv of (process.env.SHOTS || '').split(',').filter(Boolean)) { const [k, t] = kv.split(':'); shots[String(+k).padStart(2, '0')] = +(t || 1); }
   const t0 = Date.now();
   const shotDone = {};
   while (true) {

@@ -186,9 +186,9 @@
   // ─── 切頁與畫面場景（本課專用）───
   // 本課（work_4）用 switchTab(tab, btn)＋data-tab 控制分頁，沒有子頁；畫面全靠「設滑桿＋點原本按鈕」，不改任何既有程式。
   // 步驟對照（與 lessons/work_4.json 的 _note 相同）：
-  //   tab1：1＝五十牛頓四公尺，2＝一百牛頓兩公尺，3＝二十牛頓十公尺，4＝黑板重點（捲到 note-text）
+  //   tab1：1＝五十牛頓四公尺，2＝一百牛頓兩公尺，3＝二十牛頓十公尺，4＝黑板重點「功的原理」（note-text 放不下時對齊下緣），5＝黑板重點「使用目的三大核心」（note-text 對齊上緣）
   //   tab2：1＝預設，2＝施力臂四十五，3＝施力臂十五，4＝抗力臂三，5＝三類槓桿表（捲到 note-text）
-  //   tab3：1＝輪上施力，2＝軸上施力，3～8＝削鉛筆機／水龍頭／門把／螺絲起子／方向盤／擀麵棍竹蜻蜓，9＝滑輪
+  //   tab3：1＝輪上施力，2＝軸上施力，3～8＝削鉛筆機／水龍頭／門把／螺絲起子／方向盤／擀麵棍竹蜻蜓（8 同時切到施力在軸上），9＝滑輪
   //   tab4：1＝斜面靜態，2＝沿斜面推，3＝直接抬，4＝緩斜面推，5＝螺旋靜態，6＝螺旋捲動，7＝樓梯與盤山公路
   //   tab5：1～5＝第 n 題先猜（前面已公布），6～10＝公布第 n 題
   var cur = { tab: null, sub: null, step: 0 };
@@ -212,7 +212,11 @@
   function viewOf(key, step) {
     if (!key) return null;
     var stage = document.querySelector('.stage-container');
-    if (key === 'tab1') return step === 4 ? { k: 'note', topEl: $('note-text') } : { k: 'stage', topEl: stage };
+    if (key === 'tab1') {
+      if (step === 4) return { k: 'note:rule', topEl: $('note-text'), anchor: 'bottom' };   // 功的原理在黑板最後一點
+      if (step === 5) return { k: 'note:purpose', topEl: $('note-text'), anchor: 'top' };  // 使用目的三大核心在前面
+      return { k: 'stage', topEl: stage };
+    }
     if (key === 'tab2') return step === 5 ? { k: 'note', topEl: $('note-text') } : { k: 'stage', topEl: stage };
     if (key === 'tab3' || key === 'tab4') return { k: 'stage', topEl: stage };
     if (key === 'tab5') {
@@ -222,7 +226,7 @@
     return null;
   }
   var SCENES = {
-    tab1: function (step) { var fs = [[50, 4], [50, 4], [100, 2], [20, 10], [50, 4]][step] || [50, 4]; sl('rng-t1-f', fs[0]); sl('rng-t1-s', fs[1]); try { animTime = 0; } catch (e) {} },
+    tab1: function (step) { var fs = [[50, 4], [50, 4], [100, 2], [20, 10], [50, 4], [50, 4]][step] || [50, 4]; sl('rng-t1-f', fs[0]); sl('rng-t1-s', fs[1]); try { animTime = 0; } catch (e) {} },
     tab2: function (step) { var p = [[30, 5], [30, 5], [45, 5], [15, 5], [30, 3], [30, 5]][step] || [30, 5]; lever(p[0], p[1], 600); },
     tab3: function (step) {
       if (step === 9) { pb("setTab3Mode('pulley'"); try { animTime = 0; } catch (e) {} return; }
