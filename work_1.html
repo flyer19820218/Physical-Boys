@@ -828,6 +828,63 @@
   .home-fab, .back-fab, a.home-fab, a.back-fab, .floating-lang-container, .language-switcher,
   #pt-fab, #pt-bar, #pt-menu { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
+
+  /* ==================================================================
+     老師講解／學生操作 雙模式（外層加法：學生操作＝原本的樣子，沒有改任何一個原有規則）
+     ================================================================== */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 22px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-dim); border: 2px dashed var(--chalk-line);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .mode-pill:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-blackboard); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: var(--chalk-dim); text-align: center; line-height: 1.5; max-width: 900px; }
+
+  /* 老師講解的控制列（只在老師模式出現；學生模式整條不顯示）：放在畫布正下方，取代被收起來的學生控制列 */
+  .teach-bar {
+    display: none; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(13, 32, 26, 0.72); border: 2px solid var(--chalk-line);
+    border-radius: 12px; padding: 16px 20px 18px; margin: 0 0 16px;
+  }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--bg-blackboard); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--bg-blackboard); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-chips { flex: 1 1 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+  .teach-chip {
+    min-height: 44px; padding: 4px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-dim); border: 2px dashed var(--chalk-line);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-chip .teach-n { display: inline-block; min-width: 1.2em; text-align: center; margin-right: 2px; }
+  .teach-chip:hover:not(.on) { background: var(--bg-panel-hover); color: var(--chalk-white); border-color: var(--chalk-white); }
+  .teach-chip.past { color: var(--chalk-green); border-color: rgba(51, 204, 153, 0.55); }
+  .teach-chip.on { background: var(--chalk-yellow); color: var(--bg-blackboard); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 12px rgba(255, 224, 102, 0.4); }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生用的控制列（滑桿、預設鈕、開始／重來、情境鈕、對答案）收起來 */
+  body.mode-teacher .std-only { display: none !important; }
+  .stage-container, .quiz-item, .wide-solve > .card { scroll-margin-top: 88px; }   /* 讓出右上角懸浮的語言切換鈕 */
+  /* 分頁五：兩題解析，播到哪一題就亮起來（只加 class，不動原文字）：還沒播到的調暗、正在講的鋪淡黃 */
+  body.mode-teacher .tl-g { transition: opacity .3s ease, background .25s ease, box-shadow .25s ease; }
+  body.mode-teacher .tl-dim { opacity: 0.28; }
+  body.mode-teacher .tl-cur { box-shadow: 0 0 0 4px rgba(255, 224, 102, 0.35); }
+  @media (max-width: 520px) {
+    .mode-pill { padding: 8px 18px; font-size: 19px; }
+    .teach-bar { padding: 14px 12px 16px; }
+  }
 </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -854,33 +911,41 @@
     <div class="subtitle" data-zh="國中物理核心概念 ｜ 能量轉換與效率的關鍵前導" data-en="Middle School Physics Core | Energy Transformation & Efficiency">國中物理核心概念 ｜ 能量轉換與效率的關鍵前導</div>
   </header>
 
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays through on its own; pause, replay, or tap a step number to jump. Student: the original hands-on activities.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+  </div>
+
   <!-- 導覽列：7 個主題分頁，牛頓力學同款雙行標題（問句 + 主題／公式）-->
   <nav class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab(0)">
+    <button class="tab-btn active" onclick="switchTab(0)" data-tab="tab1">
       <span class="tab-hook" data-zh="搬了一整天，卻可能沒作功？" data-en="A whole day of lifting - and no work done?">搬了一整天，卻可能沒作功？</span>
       <span class="tab-sub" data-zh="W = F × s" data-en="W = F × s">W = F × s</span>
     </button>
-    <button class="tab-btn" onclick="switchTab(1)">
+    <button class="tab-btn" onclick="switchTab(1)" data-tab="tab2">
       <span class="tab-hook" data-zh="同樣是力，為什麼有的算負的？" data-en="Same force - why is one negative?">同樣是力，為什麼有的算負的？</span>
       <span class="tab-sub" data-zh="正功與負功" data-en="Positive vs Negative">正功與負功</span>
     </button>
-    <button class="tab-btn" onclick="switchTab(2)">
+    <button class="tab-btn" onclick="switchTab(2)" data-tab="tab3">
       <span class="tab-hook" data-zh="走一百公尺，手作了多少功？" data-en="Walk 100 m - how much work did your hand do?">走一百公尺，手作了多少功？</span>
       <span class="tab-sub" data-zh="W = 0 的時候" data-en="When W = 0">W = 0 的時候</span>
     </button>
-    <button class="tab-btn" onclick="switchTab(3)">
+    <button class="tab-btn" onclick="switchTab(3)" data-tab="tab4">
       <span class="tab-hook" data-zh="斜坡省了力，功也省到了嗎？" data-en="A ramp saves force - does it save work?">斜坡省了力，功也省到了嗎？</span>
       <span class="tab-sub" data-zh="省力不省功" data-en="Less Force, Same Work">省力不省功</span>
     </button>
-    <button class="tab-btn" onclick="switchTab(4)">
+    <button class="tab-btn" onclick="switchTab(4)" data-tab="tab5">
       <span class="tab-hook" data-zh="這一題，你會漏掉單位嗎？" data-en="Will you drop the unit on this one?">這一題，你會漏掉單位嗎？</span>
       <span class="tab-sub" data-zh="板書推導" data-en="Chalkboard Steps">板書推導</span>
     </button>
-    <button class="tab-btn" onclick="switchTab(5)">
+    <button class="tab-btn" onclick="switchTab(5)" data-tab="tab6">
       <span class="tab-hook" data-zh="同樣爬五樓，誰比較厲害？" data-en="Same five floors - who is more powerful?">同樣爬五樓，誰比較厲害？</span>
       <span class="tab-sub" data-zh="P = W ÷ t" data-en="P = W ÷ t">P = W ÷ t</span>
     </button>
-    <button class="tab-btn" onclick="switchTab(6)">
+    <button class="tab-btn" onclick="switchTab(6)" data-tab="tab7">
       <span class="tab-hook" data-zh="這五題，你真的算得出來嗎？" data-en="Can you actually solve these five?">這五題，你真的算得出來嗎？</span>
       <span class="tab-sub" data-zh="先看圖再算" data-en="Figure First">先看圖再算</span>
     </button>
@@ -1612,6 +1677,7 @@
     if(idx === 1) drawWorkScene(currentWorkType, null, WK.off);
     if(idx === 2) drawBagScene(currentBagType, null);
     onTabShown(idx);
+    if (typeof teachOnTab === 'function') teachOnTab(idx);   /* 老師講解模式：切到新分頁就從頭自動播 */
   }
 
   // 共用繪圖工具：箭頭函數 (嚴格零黑色)
@@ -2991,6 +3057,379 @@
 
   bootUp();
 </script>
+<script>
+/* ==================================================================
+   老師講解／學生操作（外層加法：這支獨立 <script> 以外，原有程式與文字一行未動；只有 switchTab 末尾多一行掛勾）
+     ・學生操作＝原本的互動。老師講解：按下去就自動連續播放
+         每個分頁各一個舞台：把原本要學生按的預設鈕、滑桿、「▶ 開始」依序自動做一遍；
+         可以暫停、從頭重播，也可以點控制列上的步驟編號跳到那一步
+     ・怎麼接：直接呼叫原本的處理函式（jmSync／jmRun、drawWorkScene／wkRun、drawBagScene／bgSet／bagRun、
+         rpSet／rpRun、pwSync／pwRun），滑桿則是把原本那根 <input> 的值設好；不改任何動畫的畫法與計時
+     ・每一步一開始都把「該步驟的完整狀態」設好，所以跳到任一步，狀態和真的播到那一步完全一樣
+     ・暫停：把原本迴圈的 requestAnimationFrame 暫時扣住，並讓 performance.now() 的「虛擬時鐘」一起停住，
+         放行後動畫從停住的地方接著走，不會一口氣跳到結尾
+     ・分頁五（實戰演練）沒有動畫：兩題解析依序亮起（只加 class，文字一個字都沒改）
+     ・分頁七（段考挑戰）：「先猜猜看」停 12 秒、倒數，時間到才公布那一題的答案與圖上的關鍵線（不替學生選答案）
+     ・切回學生模式時，把畫面還原成「剛按下老師講解」那一刻的樣子
+   ================================================================== */
+(function () {
+  'use strict';
+
+  /* 每個分頁要播哪個舞台（分頁編號 0～6） */
+  const TAB_STAGES = { 0: 't1', 1: 't2', 2: 't3', 3: 't4', 4: 't5', 5: 't6', 6: 't7' };
+
+  const GUESS_MS = 12000;     // 「先猜猜看」停多久再公布（毫秒）
+  const FEEDBACK_MS = 8000;   // 公布之後，留多久讓大家讀解析
+
+  const $ = id => document.getElementById(id);
+  const T = { on: false, tab: null, stage: null, si: 0, local: 0, S: { f: [] }, box: null,
+              paused: false, done: false, last: 0, raf: 0 };
+
+  /* ── 暫停：扣住原本迴圈的 requestAnimationFrame，並讓虛擬時鐘一起停住 ──
+     原版動畫用 performance.now() 記起點、用 rAF 給的時間算進度；虛擬時鐘讓兩者都扣掉「暫停的那段」。
+     學生模式下虛擬時鐘就是真的時鐘（offset 為 0），行為與原本完全相同 */
+  const nativeRAF = window.requestAnimationFrame.bind(window);
+  const nativeCAF = window.cancelAnimationFrame.bind(window);
+  const nativeNow = performance.now.bind(performance);
+  let vOff = 0, vFrozen = null;
+  const vnow = () => (vFrozen != null ? vFrozen : nativeNow()) - vOff;
+  try { performance.now = vnow; } catch (e) { /* 取不到就算了：暫停後動畫會直接跳到該到的位置 */ }
+  const held = new Map(), alias = new Map(); let fakeId = 1e9;
+  window.requestAnimationFrame = function (cb) {
+    const w = () => cb(vnow());
+    if (T.on && T.paused) { const id = ++fakeId; held.set(id, w); return id; }
+    return nativeRAF(w);
+  };
+  window.cancelAnimationFrame = function (id) {
+    if (held.has(id)) { held.delete(id); return; }
+    if (alias.has(id)) { nativeCAF(alias.get(id)); alias.delete(id); return; }
+    nativeCAF(id);
+  };
+  function flushHeld() {
+    held.forEach((w, id) => { alias.set(id, nativeRAF(w)); });
+    held.clear();
+    setTimeout(() => alias.clear(), 250);
+  }
+  function setPaused(v) {
+    v = !!v; if (v === T.paused) return;
+    T.paused = v;
+    if (v) vFrozen = nativeNow();
+    else { vOff += nativeNow() - vFrozen; vFrozen = null; flushHeld(); }
+  }
+
+  /* ── 小工具：設滑桿、找原本的按鈕 ── */
+  const sl = (id, v) => { const e = $(id); if (e) e.value = String(v); };
+  const btnOf = call => document.querySelector('button[onclick^="' + call + '"]');
+  const groupOf = el => el && (el.closest('.btn-group') || el.parentElement);
+
+  /* ── 分頁七：逐題公布（只用頁面原有的 QFB／QREV／drawAllQ，把 checkQuiz 裡「一題」的部分拆開做） ── */
+  function revealQ(n) {
+    const fb = $('fb' + n); if (!fb) return;
+    QREV[n] = true;
+    const zh = QFB[n].zh, en = QFB[n].en;
+    fb.setAttribute('data-zh', zh); fb.setAttribute('data-en', en);
+    fb.innerHTML = tr(zh, en);
+    fb.className = 'quiz-fb show ok';
+    drawAllQ();
+  }
+  function hideQ(n) {
+    const fb = $('fb' + n); if (!fb) return;
+    QREV[n] = false;
+    fb.className = 'quiz-fb'; fb.innerHTML = ''; fb.removeAttribute('data-zh'); fb.removeAttribute('data-en');
+    drawAllQ();
+  }
+
+  /* ── 舞台與步驟表 ──
+     step = { zh, en, d（這一步總共停多久，毫秒）, enter（一開始做的事：把這一步的完整狀態設好）,
+              acts（[毫秒, 動作] 依時間做的事）, note（控制列上的提示文字）, el（這一步要捲到哪個元素）} */
+  const STAGE = {};
+  const N = (zh, en) => () => tr(zh, en);
+
+  /* 分頁一：焦耳計——同向、斜拉、垂直，各拉一次 */
+  const JM_ANG = [0, 45, 90];
+  const JM_NAME = [['同向 0°', 'Same 0°'], ['斜拉 45°', 'Slanted 45°'], ['垂直 90°', 'Perpendicular 90°']];
+  const JM_NOTE = [
+    ['同向：整個拉力都沿著位移方向在作功', 'Same direction: the whole pull works along the displacement'],
+    ['斜拉：只有貼著地面那一段箭頭在作功', 'Slanted: only the part along the ground does work'],
+    ['垂直：沿位移方向的分量是 0，焦耳計停在 0', 'Perpendicular: no component along the displacement, so the meter stays at 0']
+  ];
+  STAGE.t1 = { steps: JM_ANG.map((a, i) => ({
+    zh: JM_NAME[i][0], en: JM_NAME[i][1], d: 6800, el: () => $('jmCanvas'),
+    enter: () => { sl('jm-f', 30); sl('jm-a', a); jmSync(); jmReset(); },
+    acts: [[1400, () => jmRun()]],
+    note: N(JM_NOTE[i][0], JM_NOTE[i][1])
+  })) };
+
+  /* 分頁二：正功（推車）→ 負功（摩擦力煞車） */
+  const WK_KEYS = [['pos', '推車（正功）', 'Push (positive)', '正功：推力與位移同向，能量灌進木箱', 'Positive work: force and displacement agree, so energy goes in'],
+                   ['neg', '煞車（負功）', 'Brake (negative)', '負功：摩擦力與位移反向，把動能抽出來變成熱', 'Negative work: friction opposes the motion and drains kinetic energy into heat']];
+  STAGE.t2 = { steps: WK_KEYS.map(k => ({
+    zh: k[1], en: k[2], d: 6600, el: () => $('workCanvas'),
+    enter: () => { wkReset(); drawWorkScene(k[0], btnOf("drawWorkScene('" + k[0] + "'"), 0); wkHud(); },
+    acts: [[1200, () => wkRun()]],
+    note: N(k[3], k[4])
+  })) };
+
+  /* 分頁三：書包兩張示意圖（平路、爬樓梯），再走四種情境（走廊、爬樓梯、冰面、推牆） */
+  const BG_MODES = [['flat', '水平走廊', 'Corridor', 9500, '水平走廊：位移向前、提力向上，焦耳計一直是 0', 'Corridor: displacement forward, lift upward, the meter stays 0'],
+                    ['stair', '爬樓梯', 'Stairs', 8600, '爬樓梯：書包真的沿著提力方向升高，焦耳計才開始跳', 'Stairs: the bag really rises along the lifting force, so the meter finally moves'],
+                    ['ice', '光滑冰面', 'Ice', 9500, '冰面：有位移但沒有力，沒有力就沒有功', 'Ice: displacement but no force, so no work'],
+                    ['wall', '推牆', 'Wall', 8500, '推牆：有力但沒有位移，作功還是 0', 'Wall: force but no displacement, so the work is still 0']];
+  const BAG_SCENES = [['flat', '平路示意', 'Flat road', '平路：提力向上、位移向前，互相垂直', 'Flat road: lift up, displacement forward, perpendicular'],
+                      ['up', '上樓示意', 'Upstairs', '上樓：多了一段沿著提力方向的位移', 'Upstairs: now there is displacement along the lifting force']];
+  STAGE.t3 = { steps: BAG_SCENES.map(s => ({
+    zh: s[1], en: s[2], d: 5200, el: () => $('bagCanvas'),
+    enter: () => { drawBagScene(s[0], btnOf("drawBagScene('" + s[0] + "'")); },
+    note: N(s[3], s[4])
+  })).concat(BG_MODES.map(m => ({
+    zh: m[1], en: m[2], d: m[3], el: () => $('bagLabCanvas'),
+    enter: () => { bgSet(m[0]); },
+    acts: [[900, () => bagRun()]],
+    note: N(m[4], m[5])
+  }))) };
+
+  /* 分頁四：直接舉起 → 陡斜面 → 緩斜面；前面跑過的路線，表格裡要先填好 */
+  const RPR = [['lift', '直接舉起', 'Straight up'], ['steep', '陡斜面', 'Steep ramp'], ['gentle', '緩斜面', 'Gentle ramp']];
+  function rpMarkDone(r) { RP.route = r; RP.p = 1; rpRecord(); }
+  STAGE.t4 = { steps: RPR.map((r, i) => ({
+    zh: r[1], en: r[2], d: 7000, el: () => $('rpCanvas'),
+    enter: () => { rpReset(); for (let j = 0; j < i; j++) rpMarkDone(RPR[j][0]); rpSet(r[0]); },
+    acts: [[1000, () => rpRun()]],
+    note: N(i < 2 ? '施力計的數字會變，注意看焦耳計' : '三條都跑完了：施力不同，作的功全部一樣',
+            i < 2 ? 'The force reading changes - watch the Joule meter' : 'All three done: different forces, the same work')
+  })) };
+
+  /* 分頁五：實戰演練沒有動畫，兩題的板書解析依序亮起 */
+  const PR_CARDS = () => Array.from(document.querySelectorAll('.panel')[4].querySelectorAll('.wide-solve > .card'));
+  STAGE.t5 = { steps: [['演練一', 'Practice 1', '先圈力的方向、再圈位移的方向，最後比對兩個箭頭', 'Circle the force, circle the displacement, then compare the arrows'],
+                       ['演練二', 'Practice 2', '抗重力作功只看垂直高度 h，和斜面多長無關', 'Work against gravity depends only on the vertical height h']].map((s, i) => ({
+    zh: s[0], en: s[1], d: 9000, el: () => PR_CARDS()[i], scrollEach: true, enter: () => {},
+    note: N(s[2], s[3])
+  })) };
+
+  /* 分頁六：March 衝、April 走（功一樣、功率不同）→ 兩人一樣慢（功率也一樣） */
+  const PW_SET = [[10, 30, 'March 衝、April 走', 'March sprints, April walks', '大格子的功不變，變的只有功率', 'The work never changes - only the power does'],
+                  [30, 30, '兩人一樣慢', 'Both equally slow', '時間一樣，功和功率都一樣', 'Same time, so the same work and the same power']];
+  STAGE.t6 = { steps: PW_SET.map(p => ({
+    zh: p[2], en: p[3], d: 10500, el: () => $('pwCanvas'),
+    enter: () => { sl('pw-m', 60); sl('pw-h', 5); sl('pw-t1', p[0]); sl('pw-t2', p[1]); pwSync(); pwReset(); },
+    acts: [[1000, () => pwRun()]],
+    note: N(p[4], p[5])
+  })) };
+
+  /* 分頁七：五題，每題先猜 12 秒（倒數），時間到公布答案與圖上的關鍵線；老師若自己按了「對答案」，照原本流程 */
+  STAGE.t7 = { steps: [1, 2, 3, 4, 5].map(n => ({
+    zh: '第 ' + n + ' 題', en: 'Q' + n, d: GUESS_MS + FEEDBACK_MS, el: () => $('qc' + n).closest('.quiz-item'),
+    enter: () => { for (let k = 1; k <= 5; k++) { if (k < n) revealQ(k); else hideQ(k); } },
+    acts: [[GUESS_MS, () => { if (!QREV[n]) revealQ(n); }]],
+    note: () => QREV[n]
+      ? tr('✔ 答案與解析已公布，請同學對照圖上補出來的那條線', '✔ Answer revealed - check the key line now drawn on the figure')
+      : tr('💬 請同學先看圖、先猜一猜（' + Math.max(0, Math.ceil((GUESS_MS - T.local) / 1000)) + ' 秒後公布）',
+           '💬 Ask the class to read the figure and guess (' + Math.max(0, Math.ceil((GUESS_MS - T.local) / 1000)) + 's to the reveal)')
+  })) };
+
+  /* 控制列放在哪裡：host＝插在哪個元素的正後方；from／to＝這條控制列負責第幾步到第幾步 */
+  const stageBox = id => () => $(id).closest('.stage-container');
+  const quizOpts = n => () => $('qc' + n).closest('.quiz-item').querySelector('.opts');
+  const STAGE_BARS = {
+    t1: [{ host: stageBox('jmCanvas') }],
+    t2: [{ host: stageBox('workCanvas') }],
+    t3: [{ host: stageBox('bagCanvas'), from: 0, to: 2 }, { host: stageBox('bagLabCanvas'), from: 2, to: 6 }],
+    t4: [{ host: stageBox('rpCanvas') }],
+    t5: [{ host: () => document.querySelectorAll('.panel')[4].querySelector('.wide-solve') }],
+    t6: [{ host: stageBox('pwCanvas') }],
+    t7: [1, 2, 3, 4, 5].map((n, i) => ({ host: quizOpts(n), from: i, to: i + 1 }))
+  };
+
+  Object.keys(STAGE).forEach(id => {
+    const st = STAGE[id]; st.id = id; st.starts = []; st.total = 0;
+    st.steps.forEach(s => { s.acts = s.acts || []; st.starts.push(st.total); st.total += s.d; });
+  });
+
+  /* ── 進入老師模式時記下原本的樣子，離開時用原本的函式還原 ── */
+  let SNAP = null;
+  function snapshot() {
+    SNAP = { jf: $('jm-f').value, ja: $('jm-a').value, wt: currentWorkType, bt: currentBagType, bm: BG.mode,
+             rr: RP.route, rd: Object.assign({}, RP.done),
+             pm: $('pw-m').value, ph: $('pw-h').value, p1: $('pw-t1').value, p2: $('pw-t2').value,
+             qs: QUIZ.map(q => { const c = document.querySelector('input[name="q' + q.id + '"]:checked'); return c ? c.value : null; }),
+             qr: !!QREV[1] };
+  }
+  function restore() {
+    const s = SNAP; if (!s) return;
+    killAllSims();                                            // 原頁面的函式：停掉所有還在跑的動畫
+    JM.running = false; WK.running = false; BG.running = false; RP.running = false; PW.running = false;
+    sl('jm-f', s.jf); sl('jm-a', s.ja); jmSync(); jmReset();
+    wkReset(); drawWorkScene(s.wt, btnOf("drawWorkScene('" + s.wt + "'"), 0); wkHud();
+    drawBagScene(s.bt, btnOf("drawBagScene('" + s.bt + "'")); bgSet(s.bm);
+    rpReset(); RPR.forEach(r => { if (s.rd[r[0]]) rpMarkDone(r[0]); }); rpSet(s.rr);
+    sl('pw-m', s.pm); sl('pw-h', s.ph); sl('pw-t1', s.p1); sl('pw-t2', s.p2); pwSync(); pwReset();
+    resetQuiz();
+    QUIZ.forEach((q, i) => { if (s.qs[i]) { const r = document.querySelector('input[name="q' + q.id + '"][value="' + s.qs[i] + '"]'); if (r) r.checked = true; } });
+    if (s.qr) checkQuiz();
+  }
+
+  /* ── 分頁五：兩題解析的亮起／調暗（只加 class） ── */
+  function paintTL() {
+    const act = T.on && T.stage && T.stage.id === 't5';
+    const cur = !act ? null : T.done ? 99 : T.si;
+    const cards = PR_CARDS();
+    cards.forEach((el, k) => {
+      el.classList.toggle('tl-g', act);
+      el.classList.toggle('tl-dim', act && k > cur);
+      el.classList.toggle('tl-cur', act && k === cur);
+    });
+  }
+
+  /* ── 舞台前進 ── */
+  function scrollToStep(s) {
+    const el = s.el && s.el();
+    if (el && el.offsetParent !== null && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function startStep(i) {
+    const st = T.stage; if (!st) return;
+    T.si = i; T.local = 0; T.S = { f: [] }; T.done = false;
+    const s = st.steps[i];
+    if (s.enter) s.enter();
+    const bar = STAGE_BARS[st.id].find(b => i >= (b.from || 0) && i < (b.to == null ? st.steps.length : b.to));
+    const key = bar && bar.host;
+    if (key !== T.box || s.scrollEach) { T.box = key; scrollToStep(s); }       // 換到另一個框（書包示意→走路實測）才捲過去
+    paint();
+  }
+  function jump(i) { setPaused(false); startStep(i); }   // 每一步開頭都是完整狀態，跳過去就和真的播到那裡一樣
+  function enterTab(idx) {
+    T.tab = idx; T.box = null; setPaused(false);
+    const id = TAB_STAGES[idx];
+    T.stage = id ? STAGE[id] : null;
+    if (T.stage) startStep(0);
+    paint();
+  }
+
+  /* ── 主迴圈：只有這一條（用原生的 requestAnimationFrame，不受暫停影響） ── */
+  function tick() {
+    if (!T.on) return;
+    T.raf = nativeRAF(tick);
+    const now = nativeNow();
+    const real = Math.max(0, now - (T.last || now)); T.last = now;
+    let dt = T.paused ? 0 : Math.min(real, 100);
+    if ($('introScreen')) dt = 0;                   // 封面還在：先不推進，進教室才開始播
+    const st = T.stage;
+    if (st && !T.done && dt > 0) {
+      const s = st.steps[T.si];
+      T.local += dt;
+      s.acts.forEach((a, k) => { if (!T.S.f[k] && T.local >= a[0]) { T.S.f[k] = 1; a[1](); } });
+      if (T.local >= s.d) {
+        if (T.si + 1 < st.steps.length) startStep(T.si + 1);
+        else { T.done = true; T.local = s.d; }
+      }
+    }
+    paint();
+  }
+
+  /* ── 控制列的文字、步驟編號與進度條 ── */
+  function paint() {
+    paintTL();
+    document.querySelectorAll('.teach-bar').forEach(bar => {
+      const st = STAGE[bar.dataset.stage], live = !!T.stage && T.stage === st;
+      const a = +bar.dataset.from, b = +bar.dataset.to, mine = live && T.si >= a && T.si < b;
+      let note = '';
+      if (live && T.paused && (mine || (T.done && b === st.steps.length))) note = tr('⏸ 已暫停', '⏸ Paused');
+      else if (live && T.done && b === st.steps.length) note = tr('✔ 講解完畢；可按「從頭重播」，或點上方的編號回到任一步', '✔ Done. Press Replay, or tap a number to revisit a step');
+      else if (mine && st.steps[T.si].note) note = st.steps[T.si].note(T.local, T.S);
+      let tot = 0, got = 0;
+      for (let i = a; i < b; i++) {
+        const d = st.steps[i].d; tot += d;
+        if (live && (T.done || T.si > i)) got += d; else if (live && T.si === i) got += Math.min(T.local, d);
+      }
+      const p = live ? Math.min(100, Math.round(got / tot * 100)) : 0;
+      const pauseTxt = T.paused ? tr('▶ 繼續', '▶ Resume') : tr('⏸ 暫停', '⏸ Pause');
+      const sig = [note, p, pauseTxt, live, live ? T.si : -1, live && T.done, LANG].join('|');
+      if (bar._sig === sig) return;
+      bar._sig = sig;
+      const pb = bar.querySelector('[data-act="pause"]'), rb = bar.querySelector('[data-act="replay"]');
+      pb.textContent = pauseTxt; pb.disabled = !live || T.done;
+      rb.textContent = tr('↺ 從頭重播', '↺ Replay'); rb.classList.toggle('hot', live && T.done);
+      bar.querySelector('.teach-fill').style.width = p + '%';
+      bar.querySelector('.teach-note').textContent = note;
+      bar.querySelectorAll('.teach-chip').forEach(c => {
+        const i = +c.dataset.i;
+        c.classList.toggle('on', live && i === T.si && !T.done);
+        c.classList.toggle('past', live && (i < T.si || (T.done && i === T.si)));
+      });
+    });
+  }
+
+  /* ── 按鈕：暫停／重播／跳到第幾步 ── */
+  function onBar(e) {
+    if (!T.on) return;
+    const bar = e.target.closest('.teach-bar'); if (!bar || STAGE[bar.dataset.stage] !== T.stage) return;
+    const chip = e.target.closest('.teach-chip');
+    if (chip) { jump(+chip.dataset.i); paint(); return; }
+    const b = e.target.closest('.teach-btn'); if (!b) return;
+    if (b.dataset.act === 'pause') { if (!T.done) setPaused(!T.paused); }
+    else { T.box = null; setPaused(false); startStep(0); }
+    paint();
+  }
+
+  /* ── 切換模式 ── */
+  window.setMode = function (m) {
+    const teacher = m === 'teacher';
+    if (teacher === T.on) return;
+    $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
+    $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
+    document.body.classList.toggle('mode-teacher', teacher);
+    if (teacher) {
+      snapshot();
+      T.on = true; T.last = 0; enterTab(activeTabIdx);
+      nativeCAF(T.raf); T.raf = nativeRAF(tick);
+    } else {
+      nativeCAF(T.raf); T.on = false;
+      if (T.paused) setPaused(false);
+      held.clear(); vOff = 0; vFrozen = null;
+      T.stage = null;
+      paintTL(); paint();
+      restore();                                   // 回到學生操作：一切還原成剛按下老師講解那一刻的樣子
+    }
+  };
+  window.teachOnTab = function (idx) { if (T.on) enterTab(idx); };
+
+  /* ── 一次性的準備：每個舞台加控制列，學生專用的控制列在老師模式收起來 ── */
+  function buildBar(id, def) {
+    const st = STAGE[id], host = def.host(); if (!host) return;
+    const from = def.from || 0, to = def.to == null ? st.steps.length : def.to;
+    const bar = document.createElement('div');
+    bar.className = 'teach-bar'; bar.dataset.stage = id; bar.dataset.from = from; bar.dataset.to = to;
+    let chips = '';
+    for (let i = from; i < to; i++) {
+      const s = st.steps[i];
+      chips += '<button type="button" class="teach-chip" data-i="' + i + '"><b class="teach-n">' + (i - from + 1) + '</b> <span data-zh="' + s.zh + '" data-en="' + s.en + '">' + s.zh + '</span></button>';
+    }
+    bar.innerHTML = '<button type="button" class="teach-btn" data-act="pause"></button><button type="button" class="teach-btn" data-act="replay"></button>' +
+                    '<div class="teach-track"><div class="teach-fill"></div></div><div class="teach-chips">' + chips + '</div><div class="teach-note" aria-live="polite"></div>';
+    bar.addEventListener('click', onBar);
+    host.insertAdjacentElement('afterend', bar);
+    def.host = () => host;                                       // 之後比對「換了哪個框」用
+  }
+  Object.keys(STAGE).forEach(id => STAGE_BARS[id].forEach(def => buildBar(id, def)));
+
+  const hide = el => { if (el) el.classList.add('std-only'); };
+  hide($('jm-f').closest('.lab-controls'));                      // 分頁一：拉力、角度滑桿
+  hide($('jm-p0').closest('.btn-group'));                        // 分頁一：同向／斜拉／垂直
+  hide(groupOf(btnOf('jmRun')));                                 // 分頁一：拉動、歸零
+  hide(groupOf(btnOf("drawWorkScene('pos'")));                   // 分頁二：推車／煞車
+  hide(groupOf($('wk-run')));                                    // 分頁二：讓木箱動起來、回到起點
+  hide(groupOf(btnOf("drawBagScene('flat'")));                   // 分頁三：書包示意（平路／上樓）
+  hide($('bg-flat').closest('.btn-group'));                      // 分頁三：四種情境
+  hide(groupOf(btnOf('bagRun')));                                // 分頁三：開始、回到起點
+  hide($('rp-lift').closest('.btn-group'));                      // 分頁四：三條路線
+  hide(groupOf(btnOf('rpRun')));                                 // 分頁四：搬上去、全部重來
+  hide($('pw-m').closest('.lab-controls'));                      // 分頁六：體重、樓高
+  hide($('pw-t1').closest('.lab-controls'));                     // 分頁六：兩人花的時間
+  hide(groupOf(btnOf('pwRun')));                                 // 分頁六：開始比賽、重新開始
+  hide(groupOf(btnOf('checkQuiz')));                             // 分頁七：對答案、再考一次（老師模式由程式逐題公布）
+})();
+</script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
+<script defer src="work_1_voice_v1.js?v=20261112-v2"></script>
 </body>
 </html>
