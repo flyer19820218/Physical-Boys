@@ -186,11 +186,13 @@
   // ─── 切頁與畫面場景（本課專用）───
   // 本課（work_2）頁面用 switchTab(idx)＋data-tab 控制分頁，沒有子頁；畫面全靠頁面原有的全域函式（不改任何既有程式）。
   // 步驟對照（與 lessons/work_2.json 的 _note 相同）：
-  //   tab1：1＝質量(腳踏車vs小客車)，2＝質量(大卡車)，3＝速率二倍靜態，4＝速率二倍煞車，5＝速率四倍靜態，6＝速率四倍煞車
-  //   tab2：1＝兩公斤兩公尺靜態，2＝抬升，3＝放手落下，4＝四公斤抬升，5＝四公尺抬升
-  //   tab3：1＝預設靜態，2＝壓縮二靜態，3＝壓縮二放手，4＝壓縮四靜態，5＝壓縮四放手，6＝重點框
+  //   tab1：1＝質量(腳踏車vs小客車)，2＝質量(大卡車)，3＝速率二倍靜態，4＝速率二倍煞車，5＝速率四倍靜態，6＝速率四倍煞車，
+  //         7＝開場框＋定義框（畫面同 1），8＝動能公式兩張卡（畫面同 1）
+  //   tab2：1＝兩公斤兩公尺靜態，2＝抬升，3＝放手落下，4＝四公斤抬升，5＝四公尺抬升，
+  //         6＝開場框＋定義框，7＝重力位能公式兩張卡，8＝四公斤在地面（靜態），9＝兩公斤四公尺在地面（靜態）
+  //   tab3：1＝預設靜態，2＝壓縮二靜態，3＝壓縮二放手，4＝壓縮四靜態，5＝壓縮四放手，6＝重點框，7＝開場框＋定義框，8＝壓縮／釋放兩張卡
   //   tab4：1＝防錯提醒，2＝演練一，3＝演練二
-  //   tab5：1～5＝第 n 題先猜（前面已公布），6～10＝公布第 n 題
+  //   tab5：1～5＝第 n 題先猜（前面已公布），6～10＝公布第 n 題，11＝頁首開場框＋取 g＝10 說明（五題都未公布）
   var cur = { tab: null, sub: null, step: 0 };
   function $(id) { return document.getElementById(id); }
   function btnOf(call) { return document.querySelector('button[onclick^="' + call + '"]'); }
@@ -225,13 +227,19 @@
     drawAllQ();
   }
   function quizItem(n) { var c = $('qc' + n); return c && c.closest('.quiz-item'); }
+  // 分頁開頭的講解區：開場框＋定義框（intro）、公式／說明兩張卡（cards）
+  var INTRO = { tab1: 7, tab2: 6, tab3: 7, tab5: 11 }, CARDS = { tab1: 8, tab2: 7, tab3: 8 }, TABN = { tab1: 0, tab2: 1, tab3: 2, tab4: 3, tab5: 4 };
+  function introView(key) { var p = panel(TABN[key]); return { k: key + ':intro', topEl: p && p.querySelector('.hook-box'), botEl: p && p.querySelector('.concept-box') }; }
+  function cardsView(key) { var p = panel(TABN[key]); return { k: key + ':cards', topEl: p && p.querySelector('.grid-2') }; }
   // 每個畫面要讓學生看到哪一段：{ k: 比對用的名稱, top/topEl: 範圍的頭, anchor: 放不下時對齊上緣（top）或下緣（bottom） }
   function viewOf(key, step) {
     if (!key) return null;
+    if (INTRO[key] === step) return introView(key);
+    if (CARDS[key] === step) return cardsView(key);
     if (key === 'tab1') return { k: 'kin', topEl: stageOf('kineticCanvas') };
     if (key === 'tab2') return { k: 'grav', topEl: stageOf('gravityCanvas') };
     if (key === 'tab3') {
-      if (step >= 6) { var p = panel(2); return { k: 'note', topEl: p && p.querySelector('.note-box') }; }
+      if (step === 6) { var p = panel(2); return { k: 'note', topEl: p && p.querySelector('.note-box') }; }
       return { k: 'spr', topEl: stageOf('springCanvas') };
     }
     if (key === 'tab4') return { k: 'pr' + step, topEl: prCards()[step - 1] };
@@ -255,19 +263,22 @@
   function kSet(mode, idx) { kSetMode(mode, null); setSl('kRange', idx); kSync(); }
   var SCENES = {
     tab1: function (step) {
+      if (step >= 7) { kSet('mass', 1); return; }       // 講解區：對決台先備好「只比質量・小客車」
       if (step <= 2) { kSet('mass', step); return; }
       kSet('speed', step <= 4 ? 1 : 3);
       if (step === 4 || step === 6) kBrake();
     },
     tab2: function (step) {
-      if (step === 1) gSet(2, 2, false);
+      if (step === 1 || step === 6 || step === 7) gSet(2, 2, false);
+      else if (step === 8) gSet(4, 2, false);
+      else if (step === 9) gSet(2, 4, false);
       else if (step === 2) { gSet(2, 2, false); gRun('lift'); }
       else if (step === 3) { gSet(2, 2, true); gRun('drop'); }
       else if (step === 4) { gSet(4, 2, false); gRun('lift'); }
       else { gSet(2, 4, false); gRun('lift'); }
     },
     tab3: function (step) {
-      if (step === 1) { sSet(3); return; }
+      if (step === 1 || step >= 7) { sSet(3); return; }
       if (step === 2) sSet(2);
       else if (step === 3) { sSet(2); sGo(); }
       else if (step === 4) sSet(4);
@@ -275,6 +286,7 @@
     },
     tab4: function (step) { markPR(step); },
     tab5: function (step) {
+      if (step === 11) { for (var j = 1; j <= 5; j++) { if (QREV['q' + j]) hideQ(j); } return; }
       var n = step > 5 ? step - 5 : step;
       for (var k = 1; k <= 5; k++) { if (k < n || (k === n && step > 5)) { if (!QREV['q' + k]) revealQ(k); } else if (QREV['q' + k]) hideQ(k); }
     }
@@ -295,11 +307,11 @@
     var prevKey = prev.sub || prev.tab;
     cur = { tab: tab, sub: sub, step: stepNo };
     if (key !== 'tab4') markPR(0);
-    markNote(key === 'tab3' && stepNo >= 6);
+    markNote(key === 'tab3' && stepNo === 6);
     var nv = viewOf(key, stepNo), pv = viewOf(prevKey, prev.step);
     if (nv && (changedTab || !pv || pv.k !== nv.k)) bringIntoView(nv);
     // 公布答案的解析框有展開動畫，剛公布時量到的高度偏小：展開後再對齊一次（同一畫面才補）
-    if (nv && key === 'tab5' && stepNo > 5) setTimeout(function () { if (cur.step === stepNo && cur.tab === tab) bringIntoView(viewOf(key, stepNo)); }, 600);
+    if (nv && key === 'tab5' && stepNo > 5 && stepNo <= 10) setTimeout(function () { if (cur.step === stepNo && cur.tab === tab) bringIntoView(viewOf(key, stepNo)); }, 600);
   }
   var goto = sceneOf;
 

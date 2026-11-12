@@ -15,20 +15,28 @@ const OUT = process.argv[2] || path.join(process.env.TMPDIR || '/tmp', 'sim_w2_r
 function want(tab, sub, step) {
   step = step || 1;
   const w = { tab };
-  if (tab === 'tab1') { Object.assign(w, { kMode: step <= 2 ? 'mass' : 'speed', kIdx: step <= 2 ? step : (step <= 4 ? 1 : 3), kBr: step === 4 || step === 6 }); w.cvs = 'kineticCanvas'; }
+  // 分頁開頭講解區：intro＝開場框＋定義框、cards＝公式／說明兩張卡（與 work_2_voice_v1.js 的 INTRO／CARDS 相同）
+  const INTRO = { tab1: 7, tab2: 6, tab3: 7, tab5: 11 }, CARDS = { tab1: 8, tab2: 7, tab3: 8 };
+  const viewId = INTRO[tab] === step ? 'hook' : (CARDS[tab] === step ? 'grid' : null);
+  if (tab === 'tab1') {
+    if (step >= 7) Object.assign(w, { kMode: 'mass', kIdx: 1, kBr: false });
+    else Object.assign(w, { kMode: step <= 2 ? 'mass' : 'speed', kIdx: step <= 2 ? step : (step <= 4 ? 1 : 3), kBr: step === 4 || step === 6 });
+    w.cvs = viewId || 'kineticCanvas';
+  }
   else if (tab === 'tab2') {
-    Object.assign(w, { gm: [2, 2, 2, 4, 2][step - 1], gh: [2, 2, 2, 2, 4][step - 1] });
-    if (step >= 2) w.gType = step === 3 ? 'drop' : 'lift';
-    w.cvs = 'gravityCanvas';
+    Object.assign(w, { gm: [2, 2, 2, 4, 2, 2, 2, 4, 2][step - 1], gh: [2, 2, 2, 2, 4, 2, 2, 2, 4][step - 1] });
+    if ([2, 3, 4, 5].includes(step)) w.gType = step === 3 ? 'drop' : 'lift';
+    else w.gType = 'reset';
+    w.cvs = viewId || 'gravityCanvas';
   }
   else if (tab === 'tab3') {
-    Object.assign(w, { cx: [3, 2, 2, 4, 4, 4][step - 1] });
-    if (step <= 5) { w.sState = [1, 2, 4].includes(step) ? 'compress' : 'launch'; w.cvs = 'springCanvas'; }
+    Object.assign(w, { cx: [3, 2, 2, 4, 4, 4, 3, 3][step - 1] });
+    if (step !== 6) { w.sState = [1, 2, 4, 7, 8].includes(step) ? 'compress' : 'launch'; w.cvs = viewId || 'springCanvas'; w.noteOn = false; }
     else { w.noteOn = true; w.cvs = 'note'; }
-    if (step <= 5) w.noteOn = false;
   }
   else if (tab === 'tab4') { w.prCur = step; w.cvs = 'pr' + step; }
   else if (tab === 'tab5') {
+    if (step === 11) { w.rev = '00000'; w.cvs = 'hook'; return w; }
     const n = step > 5 ? step - 5 : step, cnt = step > 5 ? n : n - 1;
     w.rev = '1'.repeat(cnt) + '0'.repeat(5 - cnt);
     w.cvs = 'q' + n; if (step > 5) w.see = ['fb' + n];
@@ -78,6 +86,7 @@ for (const it of manifest.items) {
     // 畫面露出比例（扣掉底部字幕框）
     const elOf = id => {
       if (id === 'note') return document.querySelectorAll('.panel')[2].querySelector('.note-box');
+      if (id === 'hook' || id === 'grid') { const pa = document.querySelector('.panel.active'); return pa && pa.querySelector(id === 'hook' ? '.hook-box' : '.grid-2'); }
       let m = /^pr(\d)$/.exec(id); if (m) return Array.from(document.querySelectorAll('.panel')[3].querySelectorAll('.concept-box, .grid-2 > .card'))[+m[1] - 1];
       m = /^q(\d)$/.exec(id); if (m) return document.getElementById('qc' + m[1]).closest('.quiz-item');
       return document.getElementById(id);
@@ -103,7 +112,7 @@ for (const it of manifest.items) {
           if (self._src !== src) return;
           clearInterval(self._poll);
           rec.end = window.__snap(); rec.view = {};
-          ['kineticCanvas', 'gravityCanvas', 'springCanvas', 'note', 'pr1', 'pr2', 'pr3', 'q1', 'q2', 'q3', 'q4', 'q5', 'fb1', 'fb2', 'fb3', 'fb4', 'fb5'].forEach(id => rec.view[id] = window.__inView(id));
+          ['kineticCanvas', 'gravityCanvas', 'springCanvas', 'note', 'hook', 'grid', 'pr1', 'pr2', 'pr3', 'q1', 'q2', 'q3', 'q4', 'q5', 'fb1', 'fb2', 'fb3', 'fb4', 'fb5'].forEach(id => rec.view[id] = window.__inView(id));
           self.paused = true; if (self.onended) self.onended();
         }, this.duration * 1000);
         return Promise.resolve();
