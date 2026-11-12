@@ -23,7 +23,7 @@ function want(tab, sub, step) {
   if (tab === 'intro') {
     Object.assign(w, { sp: step === 5 ? '0.4' : '1.0', card: step === 2 ? 1 : (step === 3 ? 2 : 0), play: true });
     w.cvs = step <= 3 ? 'cards' : 'stage';
-  } else if (tab === 'propagation') { w.ph = step - 1; w.cvs = 'stage'; }
+  } else if (tab === 'propagation') { w.ph = Math.min(step, 9) - 1; w.cvs = step === 10 ? 'note' : 'stage'; }
   else {
     w.hs = HS[tab][step - 1];
     w.cvs = (tab === 'transverse' && step >= 5) || (tab === 'example' && step === 4) ? 'note' : (tab === 'example' && step === 5 ? 'mcq' : 'stage');
@@ -151,7 +151,7 @@ for (const it of manifest.items) {
     const vis = last.cvs ? r.view && r.view[last.cvs] : null;
     if (last.cvs && !(vis >= 50)) probs.push(`畫布 ${last.cvs} 只露出 ${vis}%`);
     for (const id of last.see || []) { const v = r.view && r.view[id]; if (!(v >= 90)) probs.push(`${id} 只露出 ${v}%`); }
-    const HLN = { 12: 1, 14: 1, 17: 1, 19: 1, 28: 1, 29: 2, 31: 2, 33: 1, 35: 1, 36: 2, 37: 1, 43: 2, 44: 2, 45: 2, 46: 2, 47: 2, 53: 1, 59: 1, 62: 1, 63: 1, 70: 1, 72: 1, 73: 1, 74: 1, 75: 1, 76: 3, 78: 3 };
+    const HLN = { 12: 1, 21: 4, 23: 2, 51: 1, 52: 1, 64: 2, 67: 6, 69: 1, 14: 1, 17: 1, 19: 1, 28: 1, 29: 2, 31: 2, 33: 1, 35: 1, 36: 2, 37: 1, 43: 2, 44: 2, 45: 2, 46: 2, 47: 2, 53: 1, 59: 1, 62: 1, 63: 1, 70: 1, 72: 2, 73: 5, 74: 1, 75: 1, 76: 3, 78: 3 };
     const hn = HLN[+e.id] || 0;
     if ((r.hl || []).length !== hn) probs.push('螢光筆段數 ' + (r.hl || []).length + '≠' + hn);
     (r.hl || []).forEach((g, gi) => { if (g.disp !== 'block' || g.w < 10) probs.push('螢光筆第' + (gi + 1) + '段沒畫出 ' + g.disp + ' w=' + Math.round(g.w)); else if (g.top < 40 || g.bottom > r.panelTop + 2) probs.push('螢光筆第' + (gi + 1) + '段不在可視範圍 top=' + Math.round(g.top) + ' bottom=' + Math.round(g.bottom) + ' panelTop=' + Math.round(r.panelTop)); });

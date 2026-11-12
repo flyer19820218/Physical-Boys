@@ -190,7 +190,7 @@
   //   intro：1＝開場框＋兩張分類卡、2＝左卡亮起、3＝右卡亮起、4＝動畫畫布（波速 1.0）、5＝動畫畫布放慢（波速 0.4）
   //   transverse：1＝原圖、2＝波峰／波谷、3＝振幅、4＝波長、5＝振幅狀態＋捲到名詞解釋、6＝波長狀態＋捲到名詞解釋
   //   longitudinal：1＝原圖、2＝密部、3＝疏部、4＝波長
-  //   propagation：1～9＝時間滑桿 0、¼T、½T、¾T、1T、1¼T、1½T、1¾T、2T
+  //   propagation：1～9＝時間滑桿 0、¼T、½T、¾T、1T、1¼T、1½T、1¾T、2T；10＝2T 狀態＋捲到名詞解釋
   //   example：1＝原圖、2＝下一瞬間虛線波、3＝垂直箭頭、4＝箭頭狀態＋捲到解題必殺技、5＝箭頭狀態＋捲到隨堂選擇題
   var cur = { tab: null, sub: null, step: 0 };
   var saved = null;   // 開始播放前的波速／播放狀態，停止時還原
@@ -220,7 +220,7 @@
     transverse: function (step) { hlBtn(HS.transverse[step - 1]); },
     longitudinal: function (step) { hlBtn(HS.longitudinal[step - 1]); },
     propagation: function (step) {
-      var sl = $('timeSlider'); if (sl) sl.value = String(step - 1);
+      var ph = Math.min(step, 9) - 1, sl = $('timeSlider'); if (sl) sl.value = String(ph);
       updateManualPhase(); drawFrame();
     },
     example: function (step) { hlBtn(HS.example[step - 1]); }
@@ -232,6 +232,7 @@
     if (!key) return null;
     if (key === 'intro') return step <= 3 ? { k: 'cards', topEl: $('hookBox'), botEl: document.querySelector('.card-grid') } : stageView('intro');
     if (key === 'transverse') return step >= 5 ? noteView() : stageView(key);
+    if (key === 'propagation') return step === 10 ? noteView() : stageView(key);
     if (key === 'example') return step === 5 ? { k: 'mcq', topEl: $('mcq-example') } : (step === 4 ? noteView() : stageView(key));
     return stageView(key);
   }
@@ -255,12 +256,17 @@
   var goto = sceneOf;
 
   // 把一段範圍（頭 top～尾 bot）捲到字幕框上方：放得下就置中；放不下就依 anchor 對齊上緣或下緣
+  function visBottom() { // 字幕框（有釘選黃條時用黃條）的上緣
+    var t = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
+    if (ui.pin.classList.contains('show')) t = Math.min(t, ui.pin.getBoundingClientRect().top);
+    return t;
+  }
   function bringIntoView(v) {
     var a = v && (v.topEl || $(v.top)), b = v && (v.botEl || (v.bot ? $(v.bot) : a));
     if (!a || !b || !a.getBoundingClientRect) return;
     var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
     var top = ra.top, bot = Math.max(ra.bottom, rb.bottom);
-    var panelTop = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
+    var panelTop = visBottom();
     if (top >= 56 && bot <= panelTop - 8) return; // 已完整在畫面內，不動
     var room = panelTop - 8 - 56 - (bot - top);
     var y;
@@ -299,15 +305,23 @@
     var y0 = 225 - 110 * Math.sin(k * x), y1 = 225 - 110 * Math.sin(k * (x - 40));
     return cv(x - 40, Math.min(y0, y1) - 16, 64, Math.abs(y1 - y0) + 32);
   }
+  function ptDot(i) { var x = [100, 180, 300, 380, 500][i], y = 225 - 110 * Math.sin(2 * Math.PI / 400 * x); return cv(x - 34, y - 34, 56, 56); }
   function many(fs) { return function () { return unionRect(fs.map(function (f) { return { getBoundingClientRect: function () { var r = f(); return r ? { left: r.left, top: r.top, right: r.left + r.width, bottom: r.top + r.height, width: r.width, height: r.height } : { width: 0, height: 0 }; } }; })); }; }
   var HL = {
     '12': [{ a: 0.30, b: 0.75, r: cardTerm(0, 0) }],
     '14': [{ a: 0.25, b: 0.70, r: cardTerm(0, 1) }],
     '17': [{ a: 0.10, b: 0.45, r: cardTerm(1, 0) }],
     '19': [{ a: 0.10, b: 0.45, r: cardTerm(1, 1) }],
-    '28': [{ a: 0.35, b: 0.75, r: cv(12, 192, 112, 32) }],
+    '21': [{ a: 0.28, b: 0.39, r: cv(30, 26, 240, 34) }, { a: 0.42, b: 0.52, r: cv(30, 226, 240, 34) }, { a: 0.66, b: 0.76, r: cv(480, 60, 40, 120) }, { a: 0.76, b: 0.87, r: cv(465, 270, 70, 100) }],
+    '23': [{ a: 0.23, b: 0.39, r: cv(480, 60, 40, 120) }, { a: 0.44, b: 0.59, r: cv(465, 270, 70, 100) }],
+    '51': [{ a: 0.48, b: 0.90, r: noteLi(0) }],
+    '52': [{ a: 0.05, b: 0.80, r: cv(0, 188, 62, 52) }],
+    '64': [{ a: 0.03, b: 0.16, r: noteB() }, { a: 0.26, b: 0.58, r: noteLi(1) }],
+    '67': [{ a: 0.53, b: 0.64, r: cv(745, 40, 215, 50) }, { a: 0.68, b: 0.72, r: ptDot(0) }, { a: 0.72, b: 0.77, r: ptDot(1) }, { a: 0.77, b: 0.81, r: ptDot(2) }, { a: 0.81, b: 0.86, r: ptDot(3) }, { a: 0.86, b: 0.90, r: ptDot(4) }],
+    '69': [{ a: 0.24, b: 0.78, r: cv(745, 40, 215, 50) }],
+    '28': [{ a: 0.08, b: 0.75, r: cv(12, 192, 112, 32) }],
     '29': [{ a: 0.30, b: 0.52, r: cv(38, 86, 78, 36) }, { a: 0.62, b: 0.92, r: cv(188, 336, 78, 36) }],
-    '31': [{ a: 0.45, b: 0.72, r: cv(20, 118, 150, 110) }, { a: 0.72, b: 0.98, r: cv(170, 222, 150, 112) }],
+    '31': [{ a: 0.05, b: 0.28, r: cv(20, 118, 150, 110) }, { a: 0.34, b: 0.60, r: cv(170, 222, 150, 112) }],
     '33': [{ a: 0.20, b: 0.78, r: noteLi(1) }],
     '35': [{ a: 0.10, b: 0.90, r: cv(60, 36, 330, 70) }],
     '36': [{ a: 0.08, b: 0.42, r: cv(210, 345, 330, 66) }, { a: 0.50, b: 0.96, r: cv(140, 180, 320, 56) }],
@@ -318,16 +332,16 @@
     '46': [{ a: 0.10, b: 0.50, r: cv(250, 98, 100, 220) }, { a: 0.50, b: 0.92, r: cv(550, 98, 100, 220) }],
     '47': [{ a: 0.08, b: 0.52, r: cv(140, 56, 330, 56) }, { a: 0.52, b: 0.98, r: cv(290, 340, 330, 58) }],
     '53': [{ a: 0.62, b: 0.98, r: R_(function () { return [$('timeReadout')]; }) }],
-    '59': [{ a: 0.55, b: 1.00, r: cv(0, 36, 420, 70) }],
+    '59': [{ a: 0.66, b: 0.90, r: cv(0, 36, 420, 70) }],
     '62': [{ a: 0.50, b: 0.96, r: cv(728, 228, 175, 34) }],
     '63': [{ a: 0.45, b: 0.96, r: cv(0, 36, 420, 70) }],
     '70': [{ a: 0.45, b: 1.00, r: cv(745, 92, 245, 36) }],
-    '72': [{ a: 0.30, b: 0.92, r: cv(745, 92, 245, 36) }],
-    '73': [{ a: 0.40, b: 0.96, r: many([ptBox(0), ptBox(1), ptBox(2), ptBox(3), ptBox(4)]) }],
+    '72': [{ a: 0.04, b: 0.26, r: cv(745, 40, 215, 50) }, { a: 0.30, b: 0.92, r: cv(745, 92, 245, 36) }],
+    '73': [{ a: 0.41, b: 0.50, r: ptBox(0) }, { a: 0.50, b: 0.59, r: ptBox(1) }, { a: 0.60, b: 0.68, r: ptBox(2) }, { a: 0.68, b: 0.76, r: ptBox(3) }, { a: 0.76, b: 0.86, r: ptBox(4) }],
     '74': [{ a: 0.05, b: 0.95, r: ptBox(0) }],
     '75': [{ a: 0.05, b: 0.95, r: ptBox(1) }],
     '76': [{ a: 0.02, b: 0.32, r: ptBox(2) }, { a: 0.36, b: 0.58, r: ptBox(3) }, { a: 0.62, b: 0.98, r: ptBox(4) }],
-    '78': [{ a: 0.08, b: 0.30, r: noteB() }, { a: 0.30, b: 0.60, r: noteLi(1) }, { a: 0.60, b: 0.98, r: noteLi(2) }]
+    '78': [{ a: 0.08, b: 0.30, r: noteB() }, { a: 0.46, b: 0.70, r: noteLi(1) }, { a: 0.72, b: 0.92, r: noteLi(2) }]
   };
   var hlTimer = 0, hlSegs = [], hlLayer = null;
   function hlClear() {
@@ -359,7 +373,7 @@
         g.el.style.display = 'block';
         if (!g.seen) { // 標記處若被字幕框擋住或在畫面外，先把它捲到字幕框上方
           g.seen = 1;
-          var pt = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
+          var pt = visBottom();
           if (r.top + r.height > pt - 12 || r.top < 56) {
             var y = window.pageYOffset + r.top - Math.max(70, (pt - r.height) / 2 - 20);
             try { window.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, y); }
@@ -432,6 +446,7 @@
     text = (stage.pins && stage.pins[text]) || displayText(text);   // 釘選黃條的數字也轉阿拉伯數字（stage.pins）
     ui.pin.textContent = text || '';
     ui.pin.classList.toggle('show', !!text);
+    if (text && cur.tab) { var pv = viewOf(cur.sub || cur.tab, cur.step); if (pv) bringIntoView(pv); } // 黃條出現後，把目前畫面重新對齊到黃條上方
   }
 
   // ─── 計時（＊停）可暫停 ───
