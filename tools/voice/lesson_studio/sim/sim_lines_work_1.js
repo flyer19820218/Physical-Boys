@@ -30,7 +30,7 @@ function want(tab, sub, step) {
   }
   else if (tab === 'tab7') {
     const n = step > 5 ? step - 5 : step, cnt = step > 5 ? n : n - 1;
-    w.rev = '1'.repeat(cnt) + '0'.repeat(5 - cnt);
+    w.rev = [1, 2, 3, 4, 5].map(k => (k !== 4 && k <= cnt) ? '1' : '0').join('');   // 第四題含斜面，講解跳過不公布
     w.cvs = 'q' + n; if (step > 5) w.see = ['fb' + n];
   }
   return w;
