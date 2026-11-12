@@ -43,6 +43,8 @@ def _num(s):
 
 def to_arabic(text):
     out = text
+    # 0. 百分之 M → M%
+    out = re.sub("百分之(%s)" % NUM, lambda m: (_num(m.group(1)) + "%") if _num(m.group(1)) else m.group(0), out)
     # 1. N 分之 M → M/N
     def frac(m):
         a, b = _num(m.group(1)), _num(m.group(2))
