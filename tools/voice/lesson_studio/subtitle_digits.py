@@ -7,6 +7,7 @@
   ・百分之 N → N%；N 分之 M → M/N
   ・乘、除、等於 兩側緊鄰的數字（算式）；單獨的「一」只在句尾或後接單位才轉（避免「等於一開始」「除以一次匝數」被誤轉）
   ・「十的負十八次方」這類次方的指數
+  ・帶分數「一又四分之一」→ 1 又 1/4；慣用語「下一秒、上一秒」不轉（PROTECT）
 """
 import re
 
@@ -62,8 +63,13 @@ def _cv(m, g="n"):
     return val(m.group(g)) or m.group(g)
 
 
+PROTECT = ("下一秒", "上一秒")                     # 慣用語（「預測下一秒」不是數量）：先換成佔位字、轉完再還原
+
+
 def to_arabic(text):
     out = text
+    for i, w in enumerate(PROTECT):
+        out = out.replace(w, "\ue000%d\ue001" % i)
     # 0. 百分之 N → N%
     out = re.sub("百分之(?P<n>%s)" % NUMD, lambda m: (val(m.group("n")) + "%") if val(m.group("n")) else m.group(0), out)
     # 1. N 分之 M → M/N（整數）
@@ -71,6 +77,7 @@ def to_arabic(text):
         a, b = to_int(m.group(1)), to_int(m.group(2))
         return "%d/%d" % (b, a) if a and b is not None else m.group(0)
     out = re.sub("(%s)分之(%s)" % (NUM, NUM), frac, out)
+    out = re.sub("(?P<n>%s)又(?=\\d+/\\d+)" % NUM, lambda m: (val(m.group("n")) or m.group("n")) + "又", out)   # 帶分數：一又 1/4 → 1 又 1/4
     # 2. 數字 + 單位
     out = re.sub("(?P<n>%s)(?=(?:%s))" % (NUMD, UNITS), _cv, out)
     # 3. 數字 + 題／個／隻／股／種（「一」不轉）
@@ -106,4 +113,6 @@ def to_arabic(text):
     # 7. 阿拉伯數字與中文字之間補空格（比照「N 極」）
     out = re.sub(r"(?<=[一-鿿])(?=\d)", " ", out)
     out = re.sub(r"(?<=\d)(?=[一-鿿])", " ", out)
+    for i, w in enumerate(PROTECT):
+        out = out.replace("\ue000%d\ue001" % i, w)
     return out
