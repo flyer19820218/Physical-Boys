@@ -364,7 +364,7 @@
   }
 
   function setPin(text) {
-    text = displayText(text);
+    text = (stage.pins && stage.pins[text]) || displayText(text);   // 釘選黃條的數字也轉阿拉伯數字（stage.pins）
     ui.pin.textContent = text || '';
     ui.pin.classList.toggle('show', !!text);
   }
