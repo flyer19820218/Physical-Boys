@@ -825,6 +825,59 @@
   .home-fab, .back-fab, a.home-fab, a.back-fab, .floating-lang-container, .language-switcher,
   #pt-fab, #pt-bar, #pt-menu { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
+
+  /* ── 學生操作／老師講解（外層加法）：模式列與老師講解控制列；學生操作＝原本的樣子，這些在學生模式都不顯示 ── */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 22px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-dim); border: 2px dashed var(--chalk-line);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .mode-pill:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-blackboard); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: var(--chalk-dim); text-align: center; line-height: 1.5; max-width: 900px; }
+  .teach-bar {
+    display: none; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(13, 32, 26, 0.72); border: 2px solid var(--chalk-line);
+    border-radius: 12px; padding: 16px 20px 18px; margin: 0 0 16px;
+  }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--bg-blackboard); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--bg-blackboard); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-chips { flex: 1 1 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+  .teach-chip {
+    min-height: 44px; padding: 4px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-dim); border: 2px dashed var(--chalk-line);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-chip .teach-n { display: inline-block; min-width: 1.2em; text-align: center; margin-right: 2px; }
+  .teach-chip:hover:not(.on) { background: var(--bg-panel-hover); color: var(--chalk-white); border-color: var(--chalk-white); }
+  .teach-chip.past { color: var(--chalk-green); border-color: rgba(51, 204, 153, 0.55); }
+  .teach-chip.on { background: var(--chalk-yellow); color: var(--bg-blackboard); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 12px rgba(255, 224, 102, 0.4); }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生用的控制列（模式鈕、滑桿、動作鈕、對答案）收起來，由程式依序示範 */
+  body.mode-teacher .std-only { display: none !important; }
+  .stage-container, .quiz-item, .grid-2 > .card, .concept-box { scroll-margin-top: 88px; }   /* 讓出右上角懸浮的語言切換鈕 */
+  /* 分頁四：板書解析依序亮起（只加 class，不動原文字）：還沒播到的調暗、正在講的鋪淡黃 */
+  body.mode-teacher .tl-g, .tl-g { transition: opacity .3s ease, background .25s ease, box-shadow .25s ease; }
+  body.mode-teacher .tl-dim { opacity: 0.28; }
+  body.mode-teacher .tl-cur { box-shadow: 0 0 0 4px rgba(255, 224, 102, 0.35); }
+  @media (max-width: 520px) {
+    .mode-pill { padding: 8px 18px; font-size: 19px; }
+    .teach-bar { padding: 14px 12px 16px; }
+  }
 </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -853,24 +906,32 @@
     <div class="subtitle" data-zh="國中物理核心概念 ｜ 運動狀態與位置的能量儲存" data-en="Middle School Physics Core | Energy of Motion and Position">國中物理核心概念 ｜ 運動狀態與位置的能量儲存</div>
   </header>
 
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays through on its own; pause, replay, or tap a step number to jump. Student: the original hands-on activities.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+  </div>
+
   <nav class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab(0)">
+    <button class="tab-btn active" onclick="switchTab(0)" data-tab="tab1">
       <span class="tab-hook" data-zh="時速加倍，為什麼就是煞不住？" data-en="Double the speed - why can't it stop?">時速加倍，為什麼就是煞不住？</span>
       <span class="tab-sub" data-zh="動能｜K = ½mv²" data-en="Kinetic Energy｜K = ½mv²">動能｜K = ½mv²</span>
     </button>
-    <button class="tab-btn" onclick="switchTab(1)">
+    <button class="tab-btn" onclick="switchTab(1)" data-tab="tab2">
       <span class="tab-hook" data-zh="爬上去的力氣，跑到哪裡去了？" data-en="Where does the lifting effort go?">爬上去的力氣，跑到哪裡去了？</span>
       <span class="tab-sub" data-zh="重力位能｜U = mgh" data-en="Gravitational PE｜U = mgh">重力位能｜U = mgh</span>
     </button>
-    <button class="tab-btn" onclick="switchTab(2)">
+    <button class="tab-btn" onclick="switchTab(2)" data-tab="tab3">
       <span class="tab-hook" data-zh="壓得越深，為什麼衝得越快？" data-en="Deeper compression - faster launch?">壓得越深，為什麼衝得越快？</span>
       <span class="tab-sub" data-zh="彈力位能｜形變儲能" data-en="Elastic PE｜Stored by Deformation">彈力位能｜形變儲能</span>
     </button>
-    <button class="tab-btn" onclick="switchTab(3)">
+    <button class="tab-btn" onclick="switchTab(3)" data-tab="tab4">
       <span class="tab-hook" data-zh="換單位這一步，你敢跳過嗎？" data-en="Dare you skip the unit conversion?">換單位這一步，你敢跳過嗎？</span>
       <span class="tab-sub" data-zh="計算實戰｜板書推導" data-en="Calculation｜Chalkboard Steps">計算實戰｜板書推導</span>
     </button>
-    <button class="tab-btn" onclick="switchTab(4)">
+    <button class="tab-btn" onclick="switchTab(4)" data-tab="tab5">
       <span class="tab-hook" data-zh="這五題，你真的算得出來嗎？" data-en="Can you actually solve these five?">這五題，你真的算得出來嗎？</span>
       <span class="tab-sub" data-zh="考題實戰｜先看圖再算" data-en="Practice｜Figure First, Then Numbers">考題實戰｜先看圖再算</span>
     </button>
@@ -1354,6 +1415,7 @@
     if(idx === 1) resetGravityScene(null);
     if(idx === 2) setLauncherState(launcherState, null);
     onTabShown(idx);
+    if (typeof teachOnTab === 'function') teachOnTab(idx);   /* 老師講解模式：切到新分頁就從頭自動播 */
   }
 
   function drawArrow(ctx, fromX, fromY, toX, toY, color, width, text, textOffsetX=0, textOffsetY=0, align="center") {
@@ -2544,6 +2606,355 @@
   }
 
   bootUp();
+</script>
+<script>
+/* ==================================================================
+   老師講解 ／ 學生操作 雙模式（外層加法；AGENTS.md 10.7）
+   ・學生操作＝頁面原本的樣子（一行沒動）。
+   ・老師講解＝按一下就從目前分頁的頭連續播到底，每一步依序呼叫頁面「原本的函式」：
+       分頁一：動能對決台——只比質量（小客車、大卡車）→ 只比速率（兩倍、四倍，並按煞車）
+       分頁二：重力位能——抬高 → 自由落下 → 質量加倍 → 高度加倍
+       分頁三：彈簧——壓縮兩單位放手 → 壓縮四單位放手 → 「把兩頁串起來」那段推導
+       分頁四：沒有動畫：防錯提醒、兩題板書依序亮起（只加 class，文字一個字沒改）
+       分頁五：「先猜猜看」停 12 秒、倒數，時間到才公布那一題（不替學生選答案）
+   ・暫停＝虛擬時鐘凍結；切回學生模式時，把畫面還原成「剛按下老師講解」那一刻的樣子。
+   ================================================================== */
+(function () {
+  'use strict';
+
+  /* 每個分頁要播哪個舞台（分頁編號 0～4） */
+  const TAB_STAGES = { 0: 't1', 1: 't2', 2: 't3', 3: 't4', 4: 't5' };
+
+  const GUESS_MS = 12000;     // 「先猜猜看」停多久再公布（毫秒）
+  const FEEDBACK_MS = 8000;   // 公布之後，留多久讓大家讀解析
+
+  const $ = id => document.getElementById(id);
+  const T = { on: false, tab: null, stage: null, si: 0, local: 0, S: { f: [] }, box: null,
+              paused: false, done: false, last: 0, raf: 0 };
+
+  /* ── 暫停：扣住原本迴圈的 requestAnimationFrame，並讓虛擬時鐘一起停住 ──
+     原版動畫用 performance.now() 記起點；虛擬時鐘讓它扣掉「暫停的那段」。
+     學生模式下虛擬時鐘就是真的時鐘（offset 為 0），行為與原本完全相同 */
+  const nativeRAF = window.requestAnimationFrame.bind(window);
+  const nativeCAF = window.cancelAnimationFrame.bind(window);
+  const nativeNow = performance.now.bind(performance);
+  let vOff = 0, vFrozen = null;
+  const vnow = () => (vFrozen != null ? vFrozen : nativeNow()) - vOff;
+  try { performance.now = vnow; } catch (e) { /* 取不到就算了：暫停後動畫會直接跳到該到的位置 */ }
+  const held = new Map(), alias = new Map(); let fakeId = 1e9;
+  window.requestAnimationFrame = function (cb) {
+    const w = () => cb(vnow());
+    if (T.on && T.paused) { const id = ++fakeId; held.set(id, w); return id; }
+    return nativeRAF(w);
+  };
+  window.cancelAnimationFrame = function (id) {
+    if (held.has(id)) { held.delete(id); return; }
+    if (alias.has(id)) { nativeCAF(alias.get(id)); alias.delete(id); return; }
+    nativeCAF(id);
+  };
+  function flushHeld() {
+    held.forEach((w, id) => { alias.set(id, nativeRAF(w)); });
+    held.clear();
+    setTimeout(() => alias.clear(), 250);
+  }
+  function setPaused(v) {
+    v = !!v; if (v === T.paused) return;
+    T.paused = v;
+    if (v) vFrozen = nativeNow();
+    else { vOff += nativeNow() - vFrozen; vFrozen = null; flushHeld(); }
+  }
+
+  /* ── 小工具：設滑桿、找原本的按鈕、找分頁 ── */
+  const sl = (id, v) => { const e = $(id); if (e) e.value = String(v); };
+  const btnOf = call => document.querySelector('button[onclick^="' + call + '"]');
+  const groupOf = el => el && (el.closest('.btn-group') || el.parentElement);
+  const panel = n => document.querySelectorAll('.panel')[n];
+
+  /* ── 分頁五：逐題公布（只用頁面原有的 QFB／QREV／drawAllQ／setBil，把 checkQuiz 裡「一題」的部分拆開做） ── */
+  function revealQ(n) {
+    const fb = $('fb' + n), key = 'q' + n; if (!fb) return;
+    QREV[key] = true;
+    fb.classList.add('show', 'ok'); fb.classList.remove('ng');
+    setBil(fb, QFB[key].zh, QFB[key].en);
+    drawAllQ();
+  }
+  function hideQ(n) {
+    const fb = $('fb' + n), key = 'q' + n; if (!fb) return;
+    QREV[key] = false;
+    fb.classList.remove('show', 'ok', 'ng');
+    setBil(fb, '', '');
+    drawAllQ();
+  }
+
+  /* ── 舞台與步驟表 ──
+     step = { zh, en, d（這一步總共停多久，毫秒）, enter（一開始做的事：把這一步的完整狀態設好）,
+              acts（[毫秒, 動作] 依時間做的事）, note（控制列上的提示文字）, el（這一步要捲到哪個元素）} */
+  const STAGE = {};
+  const N = (zh, en) => () => tr(zh, en);
+
+  /* 分頁一：動能對決台。只比質量：A 腳踏車 80 kg，B 小客車／大卡車；只比速率：兩台小客車，B 快兩倍／四倍，各按一次煞車 */
+  const kLab = () => $('kineticCanvas').closest('.stage-container');
+  const kSet = (mode, idx) => { kSetMode(mode, null); sl('kRange', idx); kSync(); };
+  STAGE.t1 = { steps: [
+    { zh: '比質量：小客車', en: 'Mass: car', d: 7000, el: kLab, enter: () => kSet('mass', 1),
+      note: N('質量是 12.5 倍，動能也剛好是 12.5 倍：成正比', 'Mass ×12.5 and energy ×12.5 - exactly proportional') },
+    { zh: '比質量：大卡車', en: 'Mass: truck', d: 6500, el: kLab, enter: () => kSet('mass', 2),
+      note: N('質量 50 倍，動能 50 倍：質量放大幾倍，動能就放大幾倍', 'Mass ×50, energy ×50 - same multiplier') },
+    { zh: '比速率：快 2 倍', en: 'Speed: ×2', d: 7500, el: kLab, enter: () => kSet('speed', 1),
+      acts: [[1500, () => kBrake()]],
+      note: N('速率只快 2 倍，動能卻是 4 倍，煞車距離也是 4 倍', 'Speed ×2 but energy ×4 and braking distance ×4') },
+    { zh: '比速率：快 4 倍', en: 'Speed: ×4', d: 9000, el: kLab, enter: () => kSet('speed', 3),
+      acts: [[1500, () => kBrake()]],
+      note: N('速率 4 倍，動能 16 倍：危險是用平方在漲的', 'Speed ×4 gives energy ×16 - danger grows by the square') }
+  ] };
+
+  /* 分頁二：重力位能。基準 2 kg、2 m；質量加倍、高度加倍，位能都剛好加倍 */
+  const gLab = () => $('gravityCanvas').closest('.stage-container');
+  const gSet = (m, h, atTop) => {
+    sl('rangeMass', m); sl('rangeHeight', h);
+    resetGravityScene(btnOf('resetGravityScene')); updateVars();
+    if (atTop) { currentGravityType = 'lift'; updateVars(); }       // 用頁面原本的 updateVars，把書包放在最高點
+  };
+  const gLift = () => startGravityAnim('lift', btnOf("startGravityAnim('lift'"));
+  const gDrop = () => startGravityAnim('drop', btnOf("startGravityAnim('drop'"));
+  STAGE.t2 = { steps: [
+    { zh: '抬高書包', en: 'Lift the bag', d: 6500, el: gLab, enter: () => gSet(2, 2, false), acts: [[1200, gLift]],
+      note: N('克服重力往上抬，作的功存成位能 U；動能一直是 0', 'Lifting against gravity stores the work as U; K stays 0') },
+    { zh: '放手落下', en: 'Let it fall', d: 7500, el: gLab, enter: () => gSet(2, 2, true), acts: [[1500, gDrop]],
+      note: N('落下時位能一路變成動能，總和不變；落地瞬間 K 等於原本的 U', 'U turns into K on the way down; the total stays the same') },
+    { zh: '質量加倍', en: 'Double the mass', d: 6500, el: gLab, enter: () => gSet(4, 2, false), acts: [[1200, gLift]],
+      note: N('質量變 2 倍，位能也變 2 倍：U 和 m 成正比', 'Double the mass, double U: U is proportional to m') },
+    { zh: '高度加倍', en: 'Double the height', d: 6500, el: gLab, enter: () => gSet(2, 4, false), acts: [[1200, gLift]],
+      note: N('高度變 2 倍，位能也變 2 倍：U 和 h 成正比', 'Double the height, double U: U is proportional to h') }
+  ] };
+
+  /* 分頁三：彈簧。壓縮兩單位放手，再壓縮四單位放手（速率變 2 倍）；最後捲到「把兩頁串起來」那一段 */
+  const sLab = () => $('springCanvas').closest('.stage-container');
+  const sSet = x => {
+    sl('rangeCompression', x); updateCompressionVal();
+    setLauncherState('compress', btnOf("setLauncherState('compress'"));
+  };
+  const sGo = () => setLauncherState('launch', btnOf("setLauncherState('launch'"));
+  STAGE.t3 = { steps: [
+    { zh: '壓縮 2 單位', en: 'Compress 2', d: 7600, el: sLab, enter: () => sSet(2), acts: [[2600, sGo]],
+      note: N('壓縮 2 單位，放手後木塊以速率 v 衝出去', 'Compress 2 units: the block leaves at speed v') },
+    { zh: '壓縮 4 單位', en: 'Compress 4', d: 7600, el: sLab, enter: () => sSet(4), acts: [[2600, sGo]],
+      note: N('壓縮 4 單位，速率變成 2v：壓得愈深衝得愈快', 'Compress 4 units: the speed doubles to 2v') },
+    { zh: '把兩頁串起來', en: 'Link the tabs', d: 11000, scrollEach: true, enter: () => sSet(4),
+      el: () => panel(2).querySelector('.note-box'),
+      note: N('速率 2 倍 → 動能 4 倍 → 彈簧存的彈力位能也是 4 倍', 'Speed ×2 → K ×4 → the stored elastic energy is ×4 too') }
+  ] };
+
+  /* 分頁四：沒有動畫，防錯提醒與兩題板書解析依序亮起 */
+  const PR_CARDS = () => { const p = panel(3); return [p.querySelector('.concept-box')].concat(Array.from(p.querySelectorAll('.grid-2 > .card'))); };
+  STAGE.t4 = { steps: [['防錯提醒', 'Checklist', 8000, '三件事：公克換公斤、公分換公尺、動能別忘了除以 2 再平方', 'Grams to kg, cm to m, and K needs the half and the square'],
+                       ['演練一', 'Practice 1', 11000, '先換單位 100 g = 0.1 kg，再代入 K = ½ m v²，速率要平方', 'Convert 100 g to 0.1 kg first, then K = ½mv² with v squared'],
+                       ['演練二', 'Practice 2', 11000, '200 g = 0.2 kg、250 cm = 2.5 m，再代入 U = m g h', '200 g = 0.2 kg and 250 cm = 2.5 m, then U = mgh']].map((s, i) => ({
+    zh: s[0], en: s[1], d: s[2], el: () => PR_CARDS()[i], scrollEach: true, enter: () => {},
+    note: N(s[3], s[4])
+  })) };
+
+  /* 分頁五：五題，每題先猜 12 秒（倒數），時間到公布答案與圖上的關鍵線；老師若自己按了「對答案」，照原本流程 */
+  STAGE.t5 = { steps: [1, 2, 3, 4, 5].map(n => ({
+    zh: '第 ' + n + ' 題', en: 'Q' + n, d: GUESS_MS + FEEDBACK_MS, el: () => $('qc' + n).closest('.quiz-item'),
+    enter: () => { for (let k = 1; k <= 5; k++) { if (k < n) revealQ(k); else hideQ(k); } },
+    acts: [[GUESS_MS, () => { if (!QREV['q' + n]) revealQ(n); }]],
+    note: () => QREV['q' + n]
+      ? tr('✔ 答案與解析已公布，請同學對照圖上補出來的那條線', '✔ Answer revealed - check the key line now drawn on the figure')
+      : tr('💬 請同學先看圖、先猜一猜（' + Math.max(0, Math.ceil((GUESS_MS - T.local) / 1000)) + ' 秒後公布）',
+           '💬 Ask the class to read the figure and guess (' + Math.max(0, Math.ceil((GUESS_MS - T.local) / 1000)) + 's to the reveal)')
+  })) };
+
+  /* 控制列放在哪裡：host＝插在哪個元素的正後方；from／to＝這條控制列負責第幾步到第幾步 */
+  const stageBox = id => () => $(id).closest('.stage-container');
+  const quizOpts = n => () => $('qc' + n).closest('.quiz-item').querySelector('.opts');
+  const STAGE_BARS = {
+    t1: [{ host: stageBox('kineticCanvas') }],
+    t2: [{ host: stageBox('gravityCanvas') }],
+    t3: [{ host: stageBox('springCanvas') }],
+    t4: [{ host: () => panel(3).querySelector('.grid-2') }],
+    t5: [1, 2, 3, 4, 5].map((n, i) => ({ host: quizOpts(n), from: i, to: i + 1 }))
+  };
+
+  Object.keys(STAGE).forEach(id => {
+    const st = STAGE[id]; st.id = id; st.starts = []; st.total = 0;
+    st.steps.forEach(s => { s.acts = s.acts || []; st.starts.push(st.total); st.total += s.d; });
+  });
+
+  /* ── 進入老師模式時記下原本的樣子，離開時用原本的函式還原 ── */
+  let SNAP = null;
+  function snapshot() {
+    SNAP = { km: K1.mode, ki: $('kRange').value,
+             gm: $('rangeMass').value, gh: $('rangeHeight').value,
+             cx: $('rangeCompression').value,
+             qs: [1, 2, 3, 4, 5].map(n => { const c = document.querySelector('input[name="q' + n + '"]:checked'); return c ? c.value : null; }),
+             qr: !!QREV.q1 };
+  }
+  function restore() {
+    const s = SNAP; if (!s) return;
+    killAllSims();                                            // 原頁面的函式：停掉所有還在跑的動畫
+    kSetMode(s.km, null); sl('kRange', s.ki); kSync();
+    sl('rangeMass', s.gm); sl('rangeHeight', s.gh); resetGravityScene(null); updateVars();
+    sl('rangeCompression', s.cx); updateCompressionVal(); setLauncherState('compress', null);
+    resetQuiz();
+    s.qs.forEach((v, i) => { if (v) { const r = document.querySelector('input[name="q' + (i + 1) + '"][value="' + v + '"]'); if (r) r.checked = true; } });
+    if (s.qr) checkQuiz();
+  }
+
+  /* ── 分頁四：三塊板書的亮起／調暗；分頁三最後一步：「把兩頁串起來」那一段加亮框（只加 class） ── */
+  function paintTL() {
+    const act4 = T.on && T.stage && T.stage.id === 't4';
+    const cur = !act4 ? null : T.done ? 99 : T.si;
+    PR_CARDS().forEach((el, k) => {
+      el.classList.toggle('tl-g', act4);
+      el.classList.toggle('tl-dim', act4 && k > cur);
+      el.classList.toggle('tl-cur', act4 && k === cur);
+    });
+    const nb = panel(2).querySelector('.note-box');
+    if (nb) { const on3 = T.on && T.stage && T.stage.id === 't3' && T.si === 2; nb.classList.toggle('tl-g', on3); nb.classList.toggle('tl-cur', on3); }
+  }
+
+  /* ── 舞台前進 ── */
+  function scrollToStep(s) {
+    const el = s.el && s.el();
+    if (el && el.offsetParent !== null && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function startStep(i) {
+    const st = T.stage; if (!st) return;
+    T.si = i; T.local = 0; T.S = { f: [] }; T.done = false;
+    const s = st.steps[i];
+    if (s.enter) s.enter();
+    const bar = STAGE_BARS[st.id].find(b => i >= (b.from || 0) && i < (b.to == null ? st.steps.length : b.to));
+    const key = bar && bar.host;
+    if (key !== T.box || s.scrollEach) { T.box = key; scrollToStep(s); }
+    paint();
+  }
+  function jump(i) { setPaused(false); startStep(i); }   // 每一步開頭都是完整狀態，跳過去就和真的播到那裡一樣
+  function enterTab(idx) {
+    T.tab = idx; T.box = null; setPaused(false);
+    const id = TAB_STAGES[idx];
+    T.stage = id ? STAGE[id] : null;
+    if (T.stage) startStep(0);
+    paint();
+  }
+
+  /* ── 主迴圈：只有這一條（用原生的 requestAnimationFrame，不受暫停影響） ── */
+  function tick() {
+    if (!T.on) return;
+    T.raf = nativeRAF(tick);
+    const now = nativeNow();
+    const real = Math.max(0, now - (T.last || now)); T.last = now;
+    let dt = T.paused ? 0 : Math.min(real, 100);
+    if ($('introScreen')) dt = 0;                   // 封面還在：先不推進，進教室才開始播
+    const st = T.stage;
+    if (st && !T.done && dt > 0) {
+      const s = st.steps[T.si];
+      T.local += dt;
+      s.acts.forEach((a, k) => { if (!T.S.f[k] && T.local >= a[0]) { T.S.f[k] = 1; a[1](); } });
+      if (T.local >= s.d) {
+        if (T.si + 1 < st.steps.length) startStep(T.si + 1);
+        else { T.done = true; T.local = s.d; }
+      }
+    }
+    paint();
+  }
+
+  /* ── 控制列的文字、步驟編號與進度條 ── */
+  function paint() {
+    paintTL();
+    document.querySelectorAll('.teach-bar').forEach(bar => {
+      const st = STAGE[bar.dataset.stage], live = !!T.stage && T.stage === st;
+      const a = +bar.dataset.from, b = +bar.dataset.to, mine = live && T.si >= a && T.si < b;
+      let note = '';
+      if (live && T.paused && (mine || (T.done && b === st.steps.length))) note = tr('⏸ 已暫停', '⏸ Paused');
+      else if (live && T.done && b === st.steps.length) note = tr('✔ 講解完畢；可按「從頭重播」，或點上方的編號回到任一步', '✔ Done. Press Replay, or tap a number to revisit a step');
+      else if (mine && st.steps[T.si].note) note = st.steps[T.si].note(T.local, T.S);
+      let tot = 0, got = 0;
+      for (let i = a; i < b; i++) {
+        const d = st.steps[i].d; tot += d;
+        if (live && (T.done || T.si > i)) got += d; else if (live && T.si === i) got += Math.min(T.local, d);
+      }
+      const p = live ? Math.min(100, Math.round(got / tot * 100)) : 0;
+      const pauseTxt = T.paused ? tr('▶ 繼續', '▶ Resume') : tr('⏸ 暫停', '⏸ Pause');
+      const sig = [note, p, pauseTxt, live, live ? T.si : -1, live && T.done, LANG].join('|');
+      if (bar._sig === sig) return;
+      bar._sig = sig;
+      const pb = bar.querySelector('[data-act="pause"]'), rb = bar.querySelector('[data-act="replay"]');
+      pb.textContent = pauseTxt; pb.disabled = !live || T.done;
+      rb.textContent = tr('↺ 從頭重播', '↺ Replay'); rb.classList.toggle('hot', live && T.done);
+      bar.querySelector('.teach-fill').style.width = p + '%';
+      bar.querySelector('.teach-note').textContent = note;
+      bar.querySelectorAll('.teach-chip').forEach(c => {
+        const i = +c.dataset.i;
+        c.classList.toggle('on', live && i === T.si && !T.done);
+        c.classList.toggle('past', live && (i < T.si || (T.done && i === T.si)));
+      });
+    });
+  }
+
+  /* ── 按鈕：暫停／重播／跳到第幾步 ── */
+  function onBar(e) {
+    if (!T.on) return;
+    const bar = e.target.closest('.teach-bar'); if (!bar || STAGE[bar.dataset.stage] !== T.stage) return;
+    const chip = e.target.closest('.teach-chip');
+    if (chip) { jump(+chip.dataset.i); paint(); return; }
+    const b = e.target.closest('.teach-btn'); if (!b) return;
+    if (b.dataset.act === 'pause') { if (!T.done) setPaused(!T.paused); }
+    else { T.box = null; setPaused(false); startStep(0); }
+    paint();
+  }
+
+  /* ── 切換模式 ── */
+  window.setMode = function (m) {
+    const teacher = m === 'teacher';
+    if (teacher === T.on) return;
+    $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
+    $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
+    document.body.classList.toggle('mode-teacher', teacher);
+    if (teacher) {
+      snapshot();
+      T.on = true; T.last = 0; enterTab(activeTabIdx);
+      nativeCAF(T.raf); T.raf = nativeRAF(tick);
+    } else {
+      nativeCAF(T.raf); T.on = false;
+      if (T.paused) setPaused(false);
+      held.clear(); vOff = 0; vFrozen = null;
+      T.stage = null;
+      paintTL(); paint();
+      restore();                                   // 回到學生操作：一切還原成剛按下老師講解那一刻的樣子
+    }
+  };
+  window.teachOnTab = function (idx) { if (T.on) enterTab(idx); };
+
+  /* ── 一次性的準備：每個舞台加控制列，學生專用的控制列在老師模式收起來 ── */
+  function buildBar(id, def) {
+    const st = STAGE[id], host = def.host(); if (!host) return;
+    const from = def.from || 0, to = def.to == null ? st.steps.length : def.to;
+    const bar = document.createElement('div');
+    bar.className = 'teach-bar'; bar.dataset.stage = id; bar.dataset.from = from; bar.dataset.to = to;
+    let chips = '';
+    for (let i = from; i < to; i++) {
+      const s = st.steps[i];
+      chips += '<button type="button" class="teach-chip" data-i="' + i + '"><b class="teach-n">' + (i - from + 1) + '</b> <span data-zh="' + s.zh + '" data-en="' + s.en + '">' + s.zh + '</span></button>';
+    }
+    bar.innerHTML = '<button type="button" class="teach-btn" data-act="pause"></button><button type="button" class="teach-btn" data-act="replay"></button>' +
+                    '<div class="teach-track"><div class="teach-fill"></div></div><div class="teach-chips">' + chips + '</div><div class="teach-note" aria-live="polite"></div>';
+    bar.addEventListener('click', onBar);
+    host.insertAdjacentElement('afterend', bar);
+    def.host = () => host;                                       // 之後比對「換了哪個框」用
+  }
+  Object.keys(STAGE).forEach(id => STAGE_BARS[id].forEach(def => buildBar(id, def)));
+
+  const hide = el => { if (el) el.classList.add('std-only'); };
+  hide(groupOf($('kModeMass')));                                 // 分頁一：只比質量／只比速率
+  hide($('kRange').closest('.lab-controls'));                    // 分頁一：B 車變數滑桿
+  hide(groupOf($('kBrakeBtn')));                                 // 分頁一：煞車、重置
+  hide($('rangeMass').closest('.control-row'));                  // 分頁二：質量、高度滑桿
+  hide(groupOf(btnOf("startGravityAnim('lift'")));               // 分頁二：抬升、下落、重置
+  hide($('rangeCompression').closest('.control-group'));         // 分頁三：壓縮長度滑桿
+  hide(groupOf(btnOf("setLauncherState('compress'")));           // 分頁三：壓縮、放手
+  hide(groupOf(btnOf('checkQuiz')));                             // 分頁五：對答案、再考一次（老師模式由程式逐題公布）
+})();
 </script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
 </body>
