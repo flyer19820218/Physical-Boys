@@ -154,7 +154,7 @@ for (const it of manifest.items) {
     const vis = last.cvs ? r.view && r.view[last.cvs] : null;
     if (last.cvs && !(vis >= 50)) probs.push(`畫布 ${last.cvs} 只露出 ${vis}%`);
     for (const id of last.see || []) { const v = r.view && r.view[id]; if (!(v >= 90)) probs.push(`${id} 只露出 ${v}%`); }
-    const HLN = {"9": 1, "11": 2, "12": 2, "14": 2, "15": 3, "18": 3, "20": 2, "22": 1, "31": 1, "35": 1, "36": 1, "39": 2, "45": 1, "47": 1, "54": 3, "57": 1, "60": 1, "62": 1, "63": 1, "65": 1, "67": 1, "70": 1, "74": 1, "76": 1, "77": 1, "79": 1, "81": 1};
+    const HLN = {"9": 1, "11": 2, "12": 2, "13": 3, "14": 2, "15": 3, "16": 1, "18": 4, "20": 3, "22": 3, "31": 1, "35": 1, "36": 1, "38": 2, "39": 2, "45": 2, "47": 1, "50": 3, "52": 1, "53": 3, "54": 3, "57": 1, "58": 1, "60": 1, "62": 1, "63": 1, "65": 1, "67": 1, "70": 1, "74": 1, "76": 1, "77": 1, "79": 1, "81": 1, "82": 1, "83": 1};
     const hn = HLN[+e.id] || 0;
     if ((r.hl || []).length !== hn) probs.push('螢光筆段數 ' + (r.hl || []).length + '≠' + hn);
     (r.hl || []).forEach((g, gi) => { if (g.disp !== 'block' || g.w < 10) probs.push('螢光筆第' + (gi + 1) + '段沒畫出 ' + g.disp + ' w=' + Math.round(g.w)); else if (g.top < 40 || g.bottom > r.panelTop + 2) probs.push('螢光筆第' + (gi + 1) + '段不在可視範圍 top=' + Math.round(g.top) + ' bottom=' + Math.round(g.bottom) + ' panelTop=' + Math.round(r.panelTop)); });

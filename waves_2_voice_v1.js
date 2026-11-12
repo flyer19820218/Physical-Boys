@@ -270,19 +270,28 @@
     if (ui.pin.classList.contains('show')) t = Math.min(t, ui.pin.getBoundingClientRect().top);
     return t;
   }
+  // 平滑捲動還在半路時（例如拖進度條跨分頁：先捲到開場框、馬上又要捲到畫面），要用「捲動的目的地」來判斷，
+  // 不能用半路上的瞬間位置，否則會誤判「已在畫面內」而停在上一個目的地（畫面被字幕框擋住）。
+  var goalY = null, goalT = 0;
+  function scrollGoal(y) {
+    goalY = Math.max(0, y); goalT = Date.now();
+    try { window.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, y); }
+  }
   function bringIntoView(v) {
     var a = v && (v.topEl || $(v.top)), b = v && (v.botEl || (v.bot ? $(v.bot) : a));
     if (!a || !b || !a.getBoundingClientRect) return;
     var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-    var top = ra.top, bot = Math.max(ra.bottom, rb.bottom);
+    var base = (goalY != null && Date.now() - goalT < 900) ? goalY : window.pageYOffset;
+    var dy = base - window.pageYOffset; // 捲動完成後，元素會再往上移 dy
+    var top = ra.top - dy, bot = Math.max(ra.bottom, rb.bottom) - dy;
     var panelTop = visBottom();
-    if (top >= 56 && bot <= panelTop - 8) return; // 已完整在畫面內，不動
+    if (top >= 56 && bot <= panelTop - 8) return; // 已完整在畫面內（以捲動目的地計），不動
     var room = panelTop - 8 - 56 - (bot - top);
     var y;
-    if (room >= 0) y = window.pageYOffset + top - 56 - room / 2;
-    else if (v.anchor === 'bottom') y = window.pageYOffset + bot - (panelTop - 8);
-    else y = window.pageYOffset + top - 56;
-    try { window.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, y); }
+    if (room >= 0) y = base + top - 56 - room / 2;
+    else if (v.anchor === 'bottom') y = base + bot - (panelTop - 8);
+    else y = base + top - 56;
+    scrollGoal(y);
   }
 
   // ─── 自動螢光筆：唸到哪裡，就依語音進度在畫面上一筆筆畫出黃色螢光線（外加一層，pointer-events:none，不碰頁面原有內容與畫布）───
@@ -335,23 +344,34 @@
   var fork = cv(820, 150, 45, 60), orange = cv(893, 153, 48, 48);
   function trk(y) { return cv(15, y - 17, 140, 46); }
   var tForm = cv(0, 212, 1000, 60), thermo = cv(318, 98, 356, 62);
+  var longLbl = cv(738, 22, 224, 32); // 畫布右上「縱波模擬 (分子推擠)」
+  var fireBtn = R_(function () { return [document.querySelector('#controls-tab2 .action-btn')]; }); // 「點擊發射聲波測試」按鈕
+  var hotNote = noteTxt(/溫度愈高，聲速愈快。/);
+  var loudNote = noteTxt(/注意：聲音的大小\(響度\)和高低\(音調\)\s*不會\s*影響聲音的傳播速度喔！/);
   var HL = {
     '09': [{ a: 0.17, b: 0.94, r: topLbl }],
     '11': [{ a: 0.16, b: 0.51, r: freqLbl }, { a: 0.66, b: 0.98, r: stat(1) }],
     '12': [{ a: 0.00, b: 0.56, r: waveLbl }, { a: 0.61, b: 0.95, r: stat(2) }],
+    '13': [{ a: 0.04, b: 0.18, r: stat(1) }, { a: 0.22, b: 0.41, r: stat(2) }, { a: 0.46, b: 0.84, r: vLbl }],
     '14': [{ a: 0.31, b: 0.54, r: vLbl }, { a: 0.79, b: 0.98, r: stat(3) }],
-    '15': [{ a: 0.37, b: 0.60, r: vLbl }, { a: 0.60, b: 0.75, r: stat(1) }, { a: 0.75, b: 0.93, r: stat(2) }],
-    '18': [{ a: 0.00, b: 0.21, r: stat(1) }, { a: 0.46, b: 0.69, r: vLbl }, { a: 0.71, b: 0.97, r: stat(3) }],
-    '20': [{ a: 0.46, b: 0.71, r: stat(2) }, { a: 0.73, b: 0.97, r: vLbl }],
-    '22': [{ a: 0.50, b: 0.95, r: vLbl }],
+    '15': [{ a: 0.37, b: 0.50, r: vLbl }, { a: 0.52, b: 0.66, r: stat(1) }, { a: 0.70, b: 0.86, r: stat(2) }],
+    '16': [{ a: 0.06, b: 0.65, r: vLbl }],
+    '18': [{ a: 0.00, b: 0.21, r: stat(1) }, { a: 0.24, b: 0.41, r: stat(2) }, { a: 0.46, b: 0.69, r: vLbl }, { a: 0.71, b: 0.97, r: stat(3) }],
+    '20': [{ a: 0.49, b: 0.57, r: stat(1) }, { a: 0.59, b: 0.70, r: stat(2) }, { a: 0.72, b: 0.92, r: vLbl }],
+    '22': [{ a: 0.13, b: 0.28, r: stat(1) }, { a: 0.32, b: 0.46, r: stat(2) }, { a: 0.50, b: 0.86, r: vLbl }],
     '31': [{ a: 0.12, b: 0.54, r: fb(0, /v = f × λ = 12 × 12 = 144 cm\/s/) }],
-    '35': [{ a: 0.82, b: 0.98, r: fb(1, /f = 1 ÷ \(1\/4\) = 4 Hz/) }],
-    '36': [{ a: 0.55, b: 0.96, r: fb(1, /λ = v ÷ f = 120 ÷ 4 = 30 cm/) }],
-    '39': [{ a: 0.40, b: 0.68, r: noteB }, { a: 0.70, b: 0.96, r: noteTxt(/波速只和「介質」有關/) }],
-    '45': [{ a: 0.51, b: 0.64, r: fork }],
+    '35': [{ a: 0.64, b: 0.92, r: fb(1, /f = 1 ÷ \(1\/4\) = 4 Hz/) }],
+    '36': [{ a: 0.26, b: 0.88, r: fb(1, /λ = v ÷ f = 120 ÷ 4 = 30 cm/) }],
+    '38': [{ a: 0.04, b: 0.33, r: fb(1, /f = 1 ÷ \(1\/4\) = 4 Hz/) }, { a: 0.38, b: 0.77, r: fb(1, /λ = v ÷ f = 120 ÷ 4 = 30 cm/) }],
+    '39': [{ a: 0.40, b: 0.68, r: noteB }, { a: 0.66, b: 0.88, r: noteTxt(/波速只和「介質」有關/) }],
+    '45': [{ a: 0.32, b: 0.46, r: longLbl }, { a: 0.55, b: 0.66, r: fork }],
     '47': [{ a: 0.09, b: 0.95, r: orange }],
+    '50': [{ a: 0.36, b: 0.46, r: trk(100) }, { a: 0.49, b: 0.58, r: trk(200) }, { a: 0.61, b: 0.70, r: trk(300) }],
+    '52': [{ a: 0.40, b: 0.57, r: fireBtn }],
+    '53': [{ a: 0.14, b: 0.37, r: trk(300) }, { a: 0.42, b: 0.55, r: trk(200) }, { a: 0.60, b: 0.83, r: trk(100) }],
     '54': [{ a: 0.00, b: 0.39, r: trk(100) }, { a: 0.41, b: 0.70, r: trk(200) }, { a: 0.72, b: 0.97, r: trk(300) }],
-    '57': [{ a: 0.68, b: 0.96, r: noteTeal }],
+    '57': [{ a: 0.53, b: 0.87, r: noteTeal }],
+    '58': [{ a: 0.10, b: 0.78, r: noteTeal }],
     '60': [{ a: 0.53, b: 0.97, r: tForm }],
     '62': [{ a: 0.12, b: 0.41, r: thermo }],
     '63': [{ a: 0.22, b: 0.97, r: tForm }],
@@ -360,9 +380,11 @@
     '70': [{ a: 0.43, b: 0.96, r: tForm }],
     '74': [{ a: 0.37, b: 0.90, r: fb(0, /v = 331 \+ 0\.6 × 15 = 331 \+ 9 = 340 m\/s/) }],
     '76': [{ a: 0.00, b: 0.92, r: noteB }],
-    '77': [{ a: 0.61, b: 0.95, r: noteTxt(/濕度：濕度愈大波速愈快。/) }],
+    '77': [{ a: 0.41, b: 0.87, r: noteTxt(/濕度：濕度愈大波速愈快。/) }],
     '79': [{ a: 0.00, b: 0.84, r: noteTxt(/風向：順風會加速聲音傳遞。/) }],
-    '81': [{ a: 0.11, b: 0.96, r: noteTxt(/注意：聲音的大小\(響度\)和高低\(音調\)\s*不會\s*影響聲音的傳播速度喔！/) }]
+    '81': [{ a: 0.22, b: 0.90, r: loudNote }],
+    '82': [{ a: 0.05, b: 0.71, r: loudNote }],
+    '83': [{ a: 0.75, b: 0.92, r: hotNote }]
   };
   var hlTimer = 0, hlSegs = [], hlLayer = null;
   function hlClear() {
@@ -396,8 +418,7 @@
           g.seen = 1;
           var pt = visBottom();
           if (r.top + r.height > pt - 12 || r.top < 56) {
-            var y = window.pageYOffset + r.top - Math.max(70, (pt - r.height) / 2 - 20);
-            try { window.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, y); }
+            scrollGoal(window.pageYOffset + r.top - Math.max(70, (pt - r.height) / 2 - 20));
           }
         }
         g.el.style.left = (r.left + window.pageXOffset - 8) + 'px';
