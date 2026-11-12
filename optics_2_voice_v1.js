@@ -217,12 +217,12 @@
     if (!a || !b || !a.getBoundingClientRect) return;
     var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
     var top = ra.top, bot = Math.max(ra.bottom, rb.bottom);
-    var panelTop = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
+    var panelTop = ui.panel.getBoundingClientRect().top;
     if (top >= 8 && bot <= panelTop - 8) return; // 已完整在畫面內，不動
     var room = panelTop - 8 - 8 - (bot - top);
     var y;
     if (room >= 0) y = window.pageYOffset + top - 8 - room / 2;          // 放得下：置中於字幕框上方
-    else if (v.anchor === 'bottom') y = window.pageYOffset + bot - (panelTop - 40); // 放不下：尾端離字幕框留 40px（字幕換行變高時數據列也不會被蓋住），頭端略切
+    else if (v.anchor === 'bottom') y = window.pageYOffset + bot - (panelTop - 12); // 放不下：尾端離字幕框留 12px（字幕換行變高時由 150ms 後的再確認補正），頭端略切
     else y = window.pageYOffset + top - 8;                                 // 放不下：頭端貼齊上緣
     try { window.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, y); }
   }
@@ -299,7 +299,7 @@
         g.el.style.display = 'block';
         if (!g.seen) { // 若被字幕框擋住或在畫面外，先把它捲到字幕框上方
           g.seen = 1;
-          var pt = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
+          var pt = ui.panel.getBoundingClientRect().top;
           if (r.top + r.height > pt - 2 || r.top < 8) { // 只有真的被字幕框擋住或在畫面外才捲（畫布與數據列剛好貼齊字幕框時不動）
             var y = window.pageYOffset + r.top - Math.max(70, (pt - r.height) / 2 - 20);
             try { window.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, y); }
@@ -348,6 +348,8 @@
     ui.who.style.background = COLOR[who] || '#6db3ff';
     var avs = stage.avatars && stage.avatars[item.id];  // 頭像圖庫：每句各顯示哪一張（AGENTS_VOICE 2-1）
     if (avs) { if (avs['彥君']) ui.avL.src = avs['彥君']; if (avs['曉臻']) ui.avR.src = avs['曉臻']; }
+    // 每一句開始（字幕換行數、釘選黃條可能讓面板變高）：等排版完成後確認畫布與數據列沒被擋到
+    setTimeout(function () { if (state === 'playing' && cur.sub) bringIntoView(viewOf(cur.sub)); }, 150);
     ui.avL.classList.toggle('on', who === '彥君' || who === '合聲');
     ui.avR.classList.toggle('on', who === '曉臻' || who === '合聲');
   }

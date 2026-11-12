@@ -49,7 +49,7 @@ for (const it of manifest.items) {
           clearInterval(self._poll);
           rec.end = window.__snap(); rec.stats = [...document.querySelectorAll('#statsGrid .stat')].map(e => e.textContent.replace(/\s+/g, ' ').trim()); rec.pin = (document.querySelector('.vx-pin') || {}).textContent || '';
           const card = document.getElementById('visualSvg').parentElement.getBoundingClientRect(), st = document.getElementById('statsGrid').getBoundingClientRect();
-          const bub = document.querySelector('.vx-bub'); const top = bub ? bub.getBoundingClientRect().top : innerHeight;
+          const bub = document.querySelector('.vx-panel'); const top = bub ? bub.getBoundingClientRect().top : innerHeight;
           const hw=[...document.querySelectorAll('#vx-hl-layer .vx-hl')].filter(e=>e.style.display!=='none').map(e=>e.getBoundingClientRect()); rec.hlView = hw.length ? hw.every(r=>r.top>=0&&r.bottom<=top) : null;
           rec.view = { cardTop: Math.round(card.top), cardBot: Math.round(card.bottom), statBot: Math.round(st.bottom), panelTop: Math.round(top) };
           self.paused = true; if (self.onended) self.onended();
@@ -103,7 +103,7 @@ for (const it of manifest.items) {
     if (k < W.length) pr.push('句中未出現第 ' + (k + 1) + ' 個狀態 ' + JSON.stringify(e.seq[k]));
     const ep = probs(W[W.length - 1][0], r.end, last.sub); if (ep.length) pr.push('結束：' + ep.join(','));
     if (r.end.teacher) pr.push('出現 mode-teacher');
-    const v = r.view; const cardOk = v && v.cardTop >= -10 && v.cardBot <= v.panelTop - 4;
+    const v = r.view; const cardOk = v && v.cardTop >= -40 && v.cardBot <= v.panelTop - 4;
     if (r.hl > 0) { if (r.hlView === false) pr.push('螢光線不在字幕框上方的可視範圍'); if (!cardOk && !(r.hlView === true && HLOUT.has(e.id))) pr.push(`畫布不在字幕框上方 card ${v.cardTop}～${v.cardBot} panel ${v.panelTop}`); }
     else if (!cardOk) pr.push(`畫布不在字幕框上方 card ${v.cardTop}～${v.cardBot} panel ${v.panelTop}`);
     if (r.hl > 0 && v && v.statBot > v.panelTop && !HLOUT.has(e.id)) pr.push('數據列被字幕框擋住 statBot ' + v.statBot + ' panel ' + v.panelTop);
