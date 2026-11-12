@@ -307,6 +307,60 @@
   .home-fab, .back-fab, a.home-fab, a.back-fab, .floating-lang-container, .language-switcher,
   #pt-fab, #pt-bar, #pt-menu { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
+
+  /* ==================================================================
+     老師講解／學生操作 雙模式（外層加法：學生操作＝原本的樣子，沒有改任何一個原有規則）
+     ================================================================== */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 22px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-muted); border: 2px dashed var(--rule-color);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .mode-pill:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: var(--chalk-muted); text-align: center; line-height: 1.5; max-width: 900px; }
+
+  /* 老師講解的控制列（只在老師模式出現；學生模式整條不顯示） */
+  .teach-bar {
+    display: none; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(13, 32, 26, 0.72); border: 2px solid var(--rule-color);
+    border-radius: 12px; padding: 16px 20px 18px; margin: 0 0 16px;
+  }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-bar.tq { position: sticky; bottom: 10px; z-index: 50; margin: 14px 0 0; background: rgba(13, 32, 26, 0.96); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55); }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--bg-base); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--bg-base); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-chips { flex: 1 1 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+  .teach-chip {
+    min-height: 44px; padding: 4px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-muted); border: 2px dashed var(--rule-color);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-chip .teach-n { display: inline-block; min-width: 1.2em; text-align: center; margin-right: 2px; }
+  .teach-chip:hover:not(.on) { background: var(--bg-panel-hover); color: var(--chalk-white); border-color: var(--chalk-white); }
+  .teach-chip.past { color: var(--chalk-green); border-color: rgba(51, 204, 153, 0.55); }
+  .teach-chip.on { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 12px rgba(255, 224, 102, 0.4); }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生用的控制列（滑桿、情境鈕、開始／重置）收起來，數字與黑板重點留著 */
+  body.mode-teacher #dynamic-controls { display: none !important; }
+  .stage-container, .quiz-item, #note-text { scroll-margin-top: 88px; }   /* 讓出右上角懸浮的語言切換鈕 */
+  @media (max-width: 520px) {
+    .mode-pill { padding: 8px 18px; font-size: 19px; }
+    .teach-bar { padding: 14px 12px 16px; }
+  }
 </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -336,24 +390,32 @@
     <div class="subtitle" data-zh="功的黃金鐵律、銳角拔釘演練、輪軸實例解剖與斜面螺旋" data-en="Golden Rule of Work, Levers, Wheel & Axle, and Inclined Planes">功的黃金鐵律、銳角拔釘演練、輪軸實例解剖與斜面螺旋</div>
   </header>
 
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays automatically from the start; pause, replay, or tap a step number to jump. Student: the original hands-on lab.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+  </div>
+
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('tab1', this)" type="button">
+    <button class="tab-btn active" onclick="switchTab('tab1', this)" data-tab="tab1" type="button">
       <span class="tab-hook" data-zh="機械不省功" data-en="No free lunch">機械不省功</span>
       <span class="tab-sub" data-zh="功的黃金鐵律" data-en="The golden rule">功的黃金鐵律</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('tab2', this)" type="button">
+    <button class="tab-btn" onclick="switchTab('tab2', this)" data-tab="tab2" type="button">
       <span class="tab-hook" data-zh="握遠一點就贏" data-en="Grip farther">握遠一點就贏</span>
       <span class="tab-sub" data-zh="槓桿與拔釘" data-en="Levers &amp; the pry bar">槓桿與拔釘</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('tab3', this)" type="button">
+    <button class="tab-btn" onclick="switchTab('tab3', this)" data-tab="tab3" type="button">
       <span class="tab-hook" data-zh="轉的都是同一招" data-en="All the same trick">轉的都是同一招</span>
       <span class="tab-sub" data-zh="輪軸與滑輪" data-en="Wheel, axle &amp; pulleys">輪軸與滑輪</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('tab4', this)" type="button">
+    <button class="tab-btn" onclick="switchTab('tab4', this)" data-tab="tab4" type="button">
       <span class="tab-hook" data-zh="把高度換成路" data-en="Height into length">把高度換成路</span>
       <span class="tab-sub" data-zh="斜面與螺旋" data-en="Inclines &amp; screws">斜面與螺旋</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('tab5', this)" type="button">
+    <button class="tab-btn" onclick="switchTab('tab5', this)" data-tab="tab5" type="button">
       <span class="tab-hook" data-zh="段考會考這樣" data-en="Exam drill">段考會考這樣</span>
       <span class="tab-sub" data-zh="五題挑戰" data-en="Five questions">五題挑戰</span>
     </button>
@@ -461,6 +523,7 @@
       btn.classList.add('active');
     }
     renderCurrentTabUI();
+    if (window.teachOnTab) teachOnTab(tab);
   }
 
   function renderCurrentTabUI() {
@@ -2854,6 +2917,319 @@
   applyTab5(currentTab);
   requestAnimationFrame(mainLoop);
 </script>
+<script>
+/* ==================================================================
+   老師講解／學生操作（外層加法：這支獨立 <script> 以外，原有程式與文字一行未動；
+   只有 switchTab 末尾多一行 teachOnTab 掛勾，以及五個分頁鈕多了 data-tab 屬性）
+     ・學生操作＝原本的互動（滑桿、按鈕、段考挑戰）。老師講解：按下去就自動連續播放
+     ・怎麼接：滑桿＝把原本那根 <input> 的值設好並送出 input 事件；按鈕＝直接點原本的按鈕
+         （setTab3Mode／setForcePoint／setWheelItem／setTab4Mode／startInclineAction／startScrewWinding）；
+         不改任何動畫的畫法與計時
+     ・每一步一開始都把「該步驟的完整狀態」設好，所以跳到任一步，狀態和真的播到那一步完全一樣
+     ・暫停：把頁面主迴圈的 requestAnimationFrame 暫時扣住（動畫是逐幀推進的，扣住就凍結），放行後接著走
+     ・段考挑戰：每題「先猜猜看」停 12 秒、倒數，時間到公布答案與解析（不替學生選答案、不計分）
+     ・切回學生模式時，把畫面還原成「剛按下老師講解」那一刻的樣子
+   ================================================================== */
+(function () {
+  'use strict';
+
+  const GUESS_MS = 12000;     // 「先猜猜看」停多久再公布（毫秒）
+  const $ = id => document.getElementById(id);
+  const T = { on: false, stage: null, si: 0, local: 0, S: { f: [] }, paused: false, done: false, last: 0, raf: 0, self: false, lastEl: null };
+
+  /* ── 暫停：扣住頁面主迴圈的 requestAnimationFrame（頁面動畫逐幀推進，沒有用到時鐘） ── */
+  const nativeRAF = window.requestAnimationFrame.bind(window);
+  const nativeCAF = window.cancelAnimationFrame.bind(window);
+  const held = new Map(), alias = new Map(); let fakeId = 1e9;
+  window.requestAnimationFrame = function (cb) {
+    if (T.on && T.paused) { const id = ++fakeId; held.set(id, cb); return id; }
+    return nativeRAF(cb);
+  };
+  window.cancelAnimationFrame = function (id) {
+    if (held.has(id)) { held.delete(id); return; }
+    if (alias.has(id)) { nativeCAF(alias.get(id)); alias.delete(id); return; }
+    nativeCAF(id);
+  };
+  function flushHeld() {
+    held.forEach((cb, id) => { alias.set(id, nativeRAF(cb)); });
+    held.clear();
+    setTimeout(() => alias.clear(), 250);
+  }
+  function setPaused(v) {
+    v = !!v; if (v === T.paused) return;
+    T.paused = v;
+    if (!v) flushHeld();
+  }
+
+  /* ── 小工具：設滑桿（送出原本的 input 事件）、點原本的按鈕 ── */
+  const slide = (id, v) => { const e = $(id); if (!e) return; e.value = String(v); e.dispatchEvent(new Event('input', { bubbles: true })); };
+  const press = prefix => { const b = document.querySelector('button[onclick^="' + prefix + '"]'); if (b) b.click(); };
+  const tabBtn = tab => document.querySelector('.tab-btn[data-tab="' + tab + '"]');
+  function goTab(tab) {
+    T.self = true;
+    try { switchTab(tab, tabBtn(tab)); } finally { T.self = false; }
+  }
+  const N = (zh, en) => () => tr(zh, en);
+  const stageEl = () => document.querySelector('.stage-container');
+
+  /* ── 分頁二：三根滑桿一次設好 ── */
+  const lever = (eff, res, f) => { slide('rng-eff', eff); slide('rng-res', res); slide('rng-res-f', f); animTime = 0; };
+  /* ── 分頁三：輪軸（模式、施力點、實例） ── */
+  const wheel = (fp, item) => { press("setTab3Mode('wheel'"); press("setForcePoint('" + fp + "'"); press("setWheelItem('" + item + "'"); animTime = 0; };
+  /* ── 分頁四：斜面長與高 ── */
+  const incline = (L, h) => { press("setTab4Mode('inclined'"); slide('rng-inc-l', L); slide('rng-inc-h', h); press("startInclineAction('reset')"); };
+
+  /* ── 段考挑戰：逐題公布（只顯示答案與解析，不選答案、不計分） ── */
+  function revealQ4(n) {
+    const q = QUIZ4[n - 1], fb = $(q.id + 'fb'); if (!fb) return;
+    fb.className = 'quiz-fb show ok';
+    fb.innerHTML = tr('✔ 正確答案是 <b>' + 'ABCD'[q.ans] + '</b>', '✔ The answer is <b>' + 'ABCD'[q.ans] + '</b>') + '<br>' + tr(q.fzh, q.fen);
+  }
+  function hideQ4(n) {
+    const fb = $(QUIZ4[n - 1].id + 'fb'); if (!fb) return;
+    fb.className = 'quiz-fb'; fb.innerHTML = '';
+  }
+  function quizWant() {                     // 目前該亮的題數：目前題以前（已公布時含目前這題）
+    if (!T.stage || T.stage.id !== 'tab5') return -1;
+    return T.done ? 5 : T.si + (T.S.revealed ? 1 : 0);
+  }
+  function syncQuiz() {                     // 切語言會把題目重畫一次，公布的狀態要補回來
+    const n = quizWant(); if (n < 0) return;
+    for (let k = 1; k <= 5; k++) {
+      const q = QUIZ4[k - 1], fb = $(q.id + 'fb'); if (!fb) continue;
+      const shown = fb.classList.contains('show');
+      if (k <= n && !shown) revealQ4(k);
+      else if (k > n && shown && picked4[q.id] === undefined) hideQ4(k);
+    }
+  }
+
+  /* ── 舞台與步驟表 ──
+     step = { zh, en, d（這一步總共停多久，毫秒）, enter（一開始做的事：把這一步的完整狀態設好）,
+              acts（[毫秒, 動作] 依時間做的事）, note（控制列上的提示文字）, el（這一步要捲到哪個元素）} */
+  const STAGE = {};
+
+  /* 分頁一：同樣是 200 焦耳——力大路短、力中路中、力小路長 */
+  STAGE.tab1 = { steps: [
+    [100, 2, '力大路短', 'Big force, short path', 'F = 100 N、S = 2 m：力最大、路最短，功是 200 J', 'F = 100 N, S = 2 m: biggest force, shortest path, work = 200 J'],
+    [50, 4, '力中路中', 'Medium force & path', 'F = 50 N、S = 4 m：力少一半、路多一倍，功還是 200 J', 'F = 50 N, S = 4 m: half the force, twice the path, work is still 200 J'],
+    [20, 10, '力小路長', 'Small force, long path', 'F = 20 N、S = 10 m：力再小、路更長，功還是 200 J，右邊那塊面積一樣大', 'F = 20 N, S = 10 m: even less force, a longer path, work is still 200 J - the same area']
+  ].map(a => ({ zh: a[2], en: a[3], d: 8000, el: stageEl,
+    enter: () => { slide('rng-t1-f', a[0]); slide('rng-t1-s', a[1]); animTime = 0; },
+    note: N(a[4], a[5]) })) };
+
+  /* 分頁二：鐵撬拔釘——握遠、握近、釘靠近支點，最後看三類槓桿表 */
+  STAGE.tab2 = { steps: [
+    [30, 5, 600, '預設', 'Default', '握柄 30 cm、釘到支點 5 cm：F = 600 × 5 ÷ 30 = 100 N', 'Effort arm 30 cm, load arm 5 cm: F = 600 × 5 ÷ 30 = 100 N', 7000],
+    [45, 5, 600, '握遠一點', 'Grip farther', '握柄拉長到 45 cm：F ≈ 66.7 N，握得愈遠愈省力', 'Effort arm 45 cm: F is about 66.7 N - the farther you grip, the easier', 7000],
+    [15, 5, 600, '握近一點', 'Grip nearer', '握柄縮到 15 cm：F = 200 N，握近了就費力', 'Effort arm 15 cm: F = 200 N - grip nearer and it gets harder', 7000],
+    [30, 3, 600, '釘靠近支點', 'Nail near fulcrum', '釘子靠近支點（3 cm）：F = 60 N，抗力臂愈短愈輕鬆', 'Nail only 3 cm from the fulcrum: F = 60 N - a shorter load arm is easier', 7000],
+    [30, 5, 600, '三類槓桿', 'Three classes', '看「中間是誰」：支點在中間、抗力在中間、施力在中間', 'Look at who sits in the middle: fulcrum, load, or effort', 10000]
+  ].map((a, i) => ({ zh: a[3], en: a[4], d: a[7], el: i === 4 ? () => $('note-text') : stageEl,
+    enter: () => lever(a[0], a[1], a[2]), note: N(a[5], a[6]) })) };
+
+  /* 分頁三：輪軸（施力在輪上→施力在軸上→六個實例）→ 定滑輪與動滑輪 */
+  const ITEMS = [['pencil', '削鉛筆機', 'Sharpener', '削鉛筆機：手搖長柄是輪、切削滾口是軸，手握大輪最省力', 'Pencil sharpener: the long crank is the wheel, the cutter is the axle'],
+                 ['faucet', '水龍頭', 'Faucet', '水龍頭：十字柄是輪、閥桿是軸，手握大輪就能轉得動', 'Faucet: the cross handle is the wheel, the stem is the axle'],
+                 ['doorknob', '喇叭門把', 'Doorknob', '喇叭門把：大圓球握把是輪、穿過門的金屬軸是軸', 'Doorknob: the round knob is the wheel, the metal shaft through the door is the axle'],
+                 ['screwdriver', '螺絲起子', 'Screwdriver', '螺絲起子：粗手柄是輪、細金屬桿是軸，握粗柄才轉得動螺絲', 'Screwdriver: the fat handle is the wheel, the thin shaft is the axle'],
+                 ['wheel', '方向盤', 'Steering wheel', '方向盤：外圍握圈是輪、中心轉向柱是軸，小力就能轉動笨重的車輪', 'Steering wheel: the rim is the wheel, the column is the axle'],
+                 ['copter', '擀麵棍／竹蜻蜓', 'Rolling pin', '擀麵棍、竹蜻蜓：手搓的是細軸，施力在軸上，費力但很省時', 'Rolling pin / bamboo-copter: the hand turns the thin axle - more force, less time']];
+  STAGE.tab3 = { steps: [
+    { zh: '施力在輪上', en: 'Effort on wheel', d: 8000, el: stageEl, enter: () => wheel('wheel', 'pencil'),
+      note: N('施力在輪上：力只要三分之一，手要走三倍遠', 'Effort on the wheel: one third of the force, three times the path') },
+    { zh: '施力在軸上', en: 'Effort on axle', d: 8000, el: stageEl, enter: () => wheel('axle', 'pencil'),
+      note: N('施力在軸上：力是三倍，手只走三分之一', 'Effort on the axle: three times the force, one third of the path') }
+  ].concat(ITEMS.map(it => ({ zh: it[1], en: it[2], d: 6000, el: stageEl, enter: () => wheel(it[0] === 'copter' ? 'axle' : 'wheel', it[0]), note: N(it[3], it[4]) })))
+   .concat([{ zh: '定滑輪與動滑輪', en: 'Pulleys', d: 10000, el: stageEl,
+     enter: () => { press("setTab3Mode('pulley'"); animTime = 0; },
+     note: N('定滑輪只轉方向；動滑輪力減半，但繩子要多拉一倍', 'Fixed pulley only turns the force; movable pulley halves it but needs twice the rope') }]) };
+
+  /* 分頁四：斜面推上去→直接抬→斜面放緩→螺旋→樓梯與盤山公路 */
+  STAGE.tab4 = { steps: [
+    { zh: '沿斜面推', en: 'Push up the ramp', d: 7000, el: stageEl,
+      enter: () => incline(6, 2), acts: [[900, () => press("startInclineAction('push')")]],
+      note: N('斜面長 6 m、高 2 m：推力 = 120 × 2 ÷ 6 = 40 N，比直接抬 120 N 輕鬆', 'Ramp 6 m long, 2 m high: push = 120 × 2 ÷ 6 = 40 N, far less than lifting 120 N') },
+    { zh: '直接抬', en: 'Lift straight up', d: 7000, el: stageEl,
+      enter: () => incline(6, 2), acts: [[900, () => press("startInclineAction('lift')")]],
+      note: N('直接抬要 120 N，只走 2 m；斜面要走 6 m。兩邊作的功都是 240 J', 'Lifting takes 120 N over 2 m; the ramp takes 40 N over 6 m. Both do 240 J') },
+    { zh: '斜面放緩', en: 'Gentler ramp', d: 7500, el: stageEl,
+      enter: () => incline(10, 2), acts: [[900, () => press("startInclineAction('push')")]],
+      note: N('斜面拉長到 10 m：推力 = 120 × 2 ÷ 10 = 24 N，更省力、路更長', 'Ramp stretched to 10 m: push = 24 N - even easier, but a longer path') },
+    { zh: '螺旋', en: 'Screw', d: 9500, el: stageEl,
+      enter: () => { press("setTab4Mode('screw'"); }, acts: [[900, () => press('startScrewWinding()')]],
+      note: N('螺旋就是捲起來的斜面：斜面愈緩、螺紋愈密、愈省力', 'A screw is a rolled-up ramp: the gentler the ramp, the finer the thread, the easier') },
+    { zh: '樓梯與盤山公路', en: 'Stairs & road', d: 10000, el: stageEl,
+      enter: () => { press("setTab4Mode('apps'"); animTime = 0; },
+      note: N('樓梯是切成一階一階的斜面；盤山公路是攤在山上的螺旋', 'Stairs are a ramp cut into steps; a mountain road is a screw spread over the hill') }
+  ] };
+
+  /* 分頁五：五題，每題先猜 12 秒（倒數），時間到公布答案與解析；老師若自己點了選項，照原本流程 */
+  STAGE.tab5 = { steps: [1, 2, 3, 4, 5].map(n => ({
+    zh: '第 ' + n + ' 題', en: 'Q' + n, d: GUESS_MS + 8000, el: () => document.querySelectorAll('.quiz-item')[n - 1],
+    enter: () => { for (let k = 1; k <= 5; k++) { if (k < n) revealQ4(k); else if (picked4[QUIZ4[k - 1].id] === undefined) hideQ4(k); } },
+    acts: [[GUESS_MS, () => { T.S.revealed = true; revealQ4(n); }]],
+    note: () => T.S.revealed
+      ? tr('✔ 答案與解析已公布，請同學對照圖解', '✔ Answer and explanation revealed - check the figure')
+      : tr('💬 請同學先看圖、先猜一猜（' + Math.max(0, Math.ceil((GUESS_MS - T.local) / 1000)) + ' 秒後公布）',
+           '💬 Ask the class to read the figure and guess (' + Math.max(0, Math.ceil((GUESS_MS - T.local) / 1000)) + 's to the reveal)')
+  })) };
+
+  Object.keys(STAGE).forEach(id => {
+    const st = STAGE[id]; st.id = id; st.total = 0;
+    st.steps.forEach(s => { s.acts = s.acts || []; st.total += s.d; });
+  });
+
+  /* ── 進入老師模式時記下原本的樣子，離開時還原 ── */
+  let SNAP = null;
+  function snapshot() {
+    SNAP = { tab: currentTab, f: t1_f, s: t1_s, eff: t2_arm_eff, res: t2_arm_res, rf: t2_res_force,
+             m3: t3_mode, fp: t3_force, it: t3_wheel_item, m4: t4_mode, len: t4_len, h: t4_h,
+             is: t4_incline_state, ip: t4_incline_prog, ss: t4_screw_state, st: t4_screw_time, picked: Object.assign({}, picked4) };
+  }
+  function restore() {
+    const s = SNAP; if (!s) return;
+    t1_f = s.f; t1_s = s.s; t2_arm_eff = s.eff; t2_arm_res = s.res; t2_res_force = s.rf;
+    t3_mode = s.m3; t3_force = s.fp; t3_wheel_item = s.it; t4_mode = s.m4; t4_len = s.len; t4_h = s.h;
+    Object.keys(picked4).forEach(k => { delete picked4[k]; });
+    Object.assign(picked4, s.picked);
+    switchTab(s.tab, tabBtn(s.tab));          // 用原本的函式重畫控制列、黑板重點與題目
+    t4_incline_state = s.is; t4_incline_prog = s.ip; t4_screw_state = s.ss; t4_screw_time = s.st;
+  }
+
+  /* ── 舞台前進 ── */
+  function scrollToEl(el) {
+    if (el && el.offsetParent !== null && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function startStep(i) {
+    const st = T.stage; if (!st) return;
+    T.si = i; T.local = 0; T.S = { f: [] }; T.done = false;
+    const s = st.steps[i];
+    if (s.enter) s.enter();
+    const el = s.el && s.el();
+    if (el && el !== T.lastEl) { T.lastEl = el; scrollToEl(el); }      // 換到另一個框才捲過去
+    paint();
+  }
+  function jump(i) { setPaused(false); startStep(i); }     // 每一步開頭都是完整狀態，跳過去就和真的播到那裡一樣
+  function enterTab(tab) {
+    T.lastEl = null; setPaused(false);
+    T.stage = STAGE[tab] || null;
+    if (currentTab !== tab) goTab(tab);
+    if (T.stage) startStep(0);
+    paint();
+  }
+
+  /* ── 主迴圈：只有這一條（用原生的 requestAnimationFrame，不受暫停影響） ── */
+  function tick() {
+    if (!T.on) return;
+    T.raf = nativeRAF(tick);
+    const now = performance.now();
+    const real = Math.max(0, now - (T.last || now)); T.last = now;
+    let dt = T.paused ? 0 : Math.min(real, 100);
+    if ($('introScreen')) dt = 0;                   // 封面還在：先不推進，進教室才開始播
+    const st = T.stage;
+    if (st && !T.done && dt > 0) {
+      const s = st.steps[T.si];
+      T.local += dt;
+      s.acts.forEach((a, k) => { if (!T.S.f[k] && T.local >= a[0]) { T.S.f[k] = 1; a[1](); } });
+      if (T.local >= s.d) {
+        if (T.si + 1 < st.steps.length) startStep(T.si + 1);
+        else { T.done = true; T.local = s.d; }
+      }
+    }
+    syncQuiz();
+    paint();
+  }
+
+  /* ── 控制列：兩條，分頁一～四共用一條（放在畫布正下方），分頁五一條（釘在畫面下緣） ── */
+  function makeBar(cls) {
+    const bar = document.createElement('div');
+    bar.className = 'teach-bar ' + cls;
+    bar.innerHTML = '<button type="button" class="teach-btn" data-act="pause"></button><button type="button" class="teach-btn" data-act="replay"></button>' +
+                    '<div class="teach-track"><div class="teach-fill"></div></div><div class="teach-chips"></div><div class="teach-note" aria-live="polite"></div>';
+    bar.addEventListener('click', onBar);
+    return bar;
+  }
+  const barMain = makeBar('tm'), barQuiz = makeBar('tq');
+  stageEl().insertAdjacentElement('afterend', barMain);
+  $('quiz-panel').appendChild(barQuiz);
+
+  function fillChips(bar, st) {
+    bar.dataset.stage = st.id; bar._sig = '';
+    let chips = '';
+    st.steps.forEach((s, i) => {
+      chips += '<button type="button" class="teach-chip" data-i="' + i + '"><b class="teach-n">' + (i + 1) + '</b> <span data-zh="' + s.zh + '" data-en="' + s.en + '">' + (LANG === 'en' ? s.en : s.zh) + '</span></button>';
+    });
+    bar.querySelector('.teach-chips').innerHTML = chips;
+  }
+  function paintBar(bar, st) {
+    if (bar.dataset.stage !== st.id) fillChips(bar, st);
+    const live = T.on && T.stage === st;
+    let note = '';
+    if (live && T.paused) note = tr('⏸ 已暫停', '⏸ Paused');
+    else if (live && T.done) note = tr('✔ 講解完畢；可按「從頭重播」，或點上方的編號回到任一步', '✔ Done. Press Replay, or tap a number to revisit a step');
+    else if (live) note = st.steps[T.si].note();
+    let got = 0;
+    if (live) { for (let i = 0; i < st.steps.length; i++) { const d = st.steps[i].d; if (T.done || T.si > i) got += d; else if (T.si === i) got += Math.min(T.local, d); } }
+    const p = live ? Math.min(100, Math.round(got / st.total * 100)) : 0;
+    const pauseTxt = T.paused ? tr('▶ 繼續', '▶ Resume') : tr('⏸ 暫停', '⏸ Pause');
+    const sig = [note, p, pauseTxt, live, live ? T.si : -1, live && T.done, LANG].join('|');
+    if (bar._sig === sig) return;
+    bar._sig = sig;
+    const pb = bar.querySelector('[data-act="pause"]'), rb = bar.querySelector('[data-act="replay"]');
+    pb.textContent = pauseTxt; pb.disabled = !live || T.done;
+    rb.textContent = tr('↺ 從頭重播', '↺ Replay'); rb.classList.toggle('hot', live && T.done);
+    bar.querySelector('.teach-fill').style.width = p + '%';
+    bar.querySelector('.teach-note').textContent = note;
+    bar.querySelectorAll('.teach-chip').forEach(c => {
+      const i = +c.dataset.i;
+      c.classList.toggle('on', live && i === T.si && !T.done);
+      c.classList.toggle('past', live && (i < T.si || (T.done && i === T.si)));
+    });
+  }
+  function paint() {
+    paintBar(barQuiz, STAGE.tab5);
+    paintBar(barMain, T.stage && T.stage.id !== 'tab5' ? T.stage : STAGE[currentTab] && currentTab !== 'tab5' ? STAGE[currentTab] : STAGE.tab1);
+  }
+
+  /* ── 按鈕：暫停／重播／跳到第幾步 ── */
+  function onBar(e) {
+    if (!T.on) return;
+    const bar = e.currentTarget; if (STAGE[bar.dataset.stage] !== T.stage) return;
+    const chip = e.target.closest('.teach-chip');
+    if (chip) { jump(+chip.dataset.i); paint(); return; }
+    const b = e.target.closest('.teach-btn'); if (!b) return;
+    if (b.dataset.act === 'pause') { if (!T.done) setPaused(!T.paused); }
+    else { T.lastEl = null; setPaused(false); startStep(0); }
+    paint();
+  }
+
+  /* ── 切換模式 ── */
+  window.setMode = function (m) {
+    const teacher = m === 'teacher';
+    if (teacher === T.on) return;
+    $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
+    $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
+    document.body.classList.toggle('mode-teacher', teacher);
+    if (teacher) {
+      snapshot();
+      Object.keys(picked4).forEach(k => { delete picked4[k]; });     // 老師模式從沒作答的乾淨題目開始
+      if (currentTab === 'tab5') renderQuiz4();
+      T.on = true; T.last = 0;
+      enterTab(currentTab);
+      nativeCAF(T.raf); T.raf = nativeRAF(tick);
+    } else {
+      nativeCAF(T.raf); T.on = false;
+      if (T.paused) setPaused(false);
+      held.clear();
+      T.stage = null;
+      restore();                                   // 回到學生操作：一切還原成剛按下老師講解那一刻的樣子
+      paint();
+    }
+  };
+  window.teachOnTab = function (tab) { if (T.on && !T.self) enterTab(tab); };
+})();
+</script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
+<script defer src="work_4_voice_v1.js?v=20261112-v1"></script>
 </body>
 </html>
