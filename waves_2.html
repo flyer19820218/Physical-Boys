@@ -211,6 +211,59 @@
       .home-fab { top: 8px; left: 8px; width: 42px; height: 42px; }
       .home-fab svg { width: 20px; height: 20px; }
     }
+
+  /* ==================================================================
+     老師講解／學生操作 雙模式（外層加法：學生操作＝原本的樣子，沒有改任何一個原有規則）
+     ================================================================== */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 22px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: #c0d0c8; border: 2px dashed var(--rule-color);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .mode-pill:hover:not(.active) { background: var(--bg-panel-hover); color: #fff; }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: #c0d0c8; text-align: center; line-height: 1.5; max-width: 900px; }
+
+  /* 老師講解的控制列（只在老師模式出現）：放在畫布正下方 */
+  .teach-bar {
+    display: none; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(13, 32, 26, 0.72); border: 2px solid var(--rule-color); border-top: none;
+    border-radius: 0 0 12px 12px; padding: 16px 20px 18px; margin-top: -2px;
+  }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--bg-base); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--bg-base); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-chips { flex: 1 1 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+  .teach-chip {
+    min-height: 44px; padding: 4px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: #c0d0c8; border: 2px dashed var(--rule-color);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+  }
+  .teach-chip .teach-n { display: inline-block; min-width: 1.2em; text-align: center; margin-right: 2px; }
+  .teach-chip:hover:not(.on) { background: var(--bg-panel-hover); color: #fff; border-color: #fff; }
+  .teach-chip.past { color: var(--chalk-green); border-color: rgba(51, 204, 153, 0.55); }
+  .teach-chip.on { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 12px rgba(255, 224, 102, 0.4); }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生用的控制列（滑桿、發射／重置鈕）收起來 */
+  body.mode-teacher .controls { display: none !important; }
+  #stage-container { scroll-margin-top: 88px; }   /* 讓出右上角懸浮的語言切換鈕 */
+  @media (max-width: 520px) {
+    .mode-pill { padding: 8px 18px; font-size: 19px; }
+    .teach-bar { padding: 14px 12px 16px; }
+  }
   </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -241,14 +294,22 @@
     <p data-zh="波速定義、介質傳播差異與影響因素" data-en="Wave Speed, Medium Propagation & Influencing Factors">波速定義、介質傳播差異與影響因素</p>
   </header>
 
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays through on its own; pause, replay, or tap a step number to jump. Student: the original hands-on activities.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+  </div>
+
   <div class="tabs">
-    <div class="tab-btn active" onclick="switchTab('tab1')">
+    <div class="tab-btn active" data-tab="tab1" onclick="switchTab('tab1')">
         <span data-zh="一、波速的定義與實戰" data-en="I. Wave Speed & Practice">一、波速的定義與實戰</span>
     </div>
-    <div class="tab-btn" onclick="switchTab('tab2')">
+    <div class="tab-btn" data-tab="tab2" onclick="switchTab('tab2')">
         <span data-zh="二、聲波的傳播與介質" data-en="II. Sound Waves & Medium">二、聲波的傳播與介質</span>
     </div>
-    <div class="tab-btn" onclick="switchTab('tab3')">
+    <div class="tab-btn" data-tab="tab3" onclick="switchTab('tab3')">
         <span data-zh="三、影響聲速的因素" data-en="III. Factors Affecting Sound">三、影響聲速的因素</span>
     </div>
   </div>
@@ -297,6 +358,14 @@
 
     <div id="stage-container">
       <canvas id="stage"></canvas>
+    </div>
+
+    <div class="teach-bar" id="teachBar">
+      <button class="teach-btn" id="teach-pause" type="button"></button>
+      <button class="teach-btn" id="teach-replay" type="button"></button>
+      <div class="teach-track"><div class="teach-fill" id="teach-fill"></div></div>
+      <div class="teach-chips" id="teach-chips"></div>
+      <div class="teach-note" id="teach-note" aria-live="polite"></div>
     </div>
 
     <!-- 數據顯示區 -->
@@ -846,6 +915,159 @@
       setLang('zh'); // Initialize Language and UI, renderUIForTab kills ghost loops.
   };
   window.addEventListener('resize', initCanvas);
+</script>
+<script>
+/* ==================================================================
+   老師講解／學生操作 雙模式（外層加法；上面的原有程式一行都沒改）
+   ・學生操作＝原本的互動（頻率、波長、溫度滑桿，發射／重置鈕）。
+   ・老師講解＝按下去就自動從頭連續播：每個分頁依序走完它的步驟（直接呼叫頁面原本的滑桿、startRace／resetRace、updateTab1Stats／updateTab3Stats），
+     可暫停、從頭重播、點步驟編號跳到那一步。切回學生操作時，畫面還原成「剛按下老師講解」那一刻的樣子。
+   ・只借用原本的全域變數與函式，不碰任何繪圖座標與物理。
+   ================================================================== */
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const L = (zh, en) => ({ zh: zh, en: en });
+  const say = o => (currentLang === 'en' ? o.en : o.zh);
+
+  // 設定滑桿並呼叫頁面原本的更新函式（與學生拖動滑桿時做的事完全相同）
+  const setT1 = (f, lam) => { rngFreq.value = String(f); rngWave.value = String(lam); updateTab1Stats(); };
+  const setT3 = t => { rngTemp.value = String(t); updateTab3Stats(); };
+  const race = () => { resetRace(); startRace(); };
+  const raceEnd = () => { isRacing = true; raceProgress = { air: 500, water: 500, steel: 500 }; };
+
+  const STEPS = {
+    tab1: [
+      { ms: 9000, label: L('每秒 3 個波', '3 waves/sec'),
+        note: L('頻率 3 赫茲、波長 4 公分：1 秒內走了 3 × 4 = 12 公分，波速 12 cm/s。', 'Frequency 3 Hz, wavelength 4 cm: in 1 s the wave covers 3 × 4 = 12 cm, so v = 12 cm/s.'),
+        go() { setT1(3, 4); } },
+      { ms: 8000, label: L('頻率加快', 'Higher f'),
+        note: L('頻率調到 5 赫茲：1 秒內擠進 5 個波，總長度變成 5 × 4 = 20 公分。', 'Frequency 5 Hz: 5 waves in 1 s, total length 5 × 4 = 20 cm.'),
+        go() { setT1(5, 4); } },
+      { ms: 8000, label: L('波長變長', 'Longer λ'),
+        note: L('波長調到 8 公分：3 個波，每個 8 公分，1 秒走 3 × 8 = 24 公分。', 'Wavelength 8 cm: 3 waves of 8 cm each, 3 × 8 = 24 cm in 1 s.'),
+        go() { setT1(3, 8); } },
+      { ms: 8000, label: L('兩個都變', 'Both change'),
+        note: L('頻率 5、波長 8：v = 5 × 8 = 40 cm/s。公式 v = f × λ 把三件事綁在一起。', 'f = 5, λ = 8: v = 5 × 8 = 40 cm/s. The formula v = f × λ ties the three together.'),
+        go() { setT1(5, 8); } }
+    ],
+    tab2: [
+      { ms: 8000, label: L('分子振動', 'Particles'),
+        note: L('右邊是縱波模擬：波往外傳，但橘色分子只在原地來回振動。', 'Right side: a longitudinal wave. The wave spreads out, but the orange particle only vibrates in place.'),
+        go() { resetRace(); } },
+      { ms: 10000, label: L('發射聲波', 'Fire!'),
+        note: L('三個聲波同時出發：鋼最先到，水第二，空氣最慢。', 'Three sound waves start together: steel arrives first, water second, air last.'),
+        go() { race(); } },
+      { ms: 8000, label: L('比較結果', 'Result'),
+        note: L('固體 > 液體 > 氣體：鋼 5200、水 1490、空氣 343 公尺／秒。', 'Solid > liquid > gas: steel 5200, water 1490, air 343 m/s.'),
+        go() { raceEnd(); } }
+    ],
+    tab3: [
+      { ms: 9000, label: L('15°C', '15°C'),
+        note: L('氣溫 15°C：v = 331 + 0.6 × 15 = 340 公尺／秒。', 'At 15°C: v = 331 + 0.6 × 15 = 340 m/s.'),
+        go() { setT3(15); } },
+      { ms: 7000, label: L('0°C', '0°C'),
+        note: L('氣溫降到 0°C：v = 331 公尺／秒，聲音變慢了。', 'Down to 0°C: v = 331 m/s. Sound is slower.'),
+        go() { setT3(0); } },
+      { ms: 7000, label: L('40°C', '40°C'),
+        note: L('氣溫升到 40°C：v = 331 + 0.6 × 40 = 355 公尺／秒，聲音變快了。', 'Up to 40°C: v = 331 + 0.6 × 40 = 355 m/s. Sound is faster.'),
+        go() { setT3(40); } },
+      { ms: 8000, label: L('25°C', '25°C'),
+        note: L('每升高 1°C，聲速增加 0.6 公尺／秒；25°C 時是 346 公尺／秒。', 'Every +1°C adds 0.6 m/s; at 25°C it is 346 m/s.'),
+        go() { setT3(25); } }
+    ]
+  };
+  const totalMs = tab => STEPS[tab].reduce((s, x) => s + x.ms, 0);
+
+  const T = { on: false, tab: null, si: 0, elapsed: 0, paused: false, done: false, timer: 0, last: 0 };
+  let snap = null;
+
+  function fillBar() {
+    const f = $('teach-fill'); if (!f || !T.tab) return;
+    const st = STEPS[T.tab]; let before = 0;
+    for (let i = 0; i < T.si; i++) before += st[i].ms;
+    const cur = T.done ? st[T.si].ms : Math.min(T.elapsed, st[T.si].ms);
+    f.style.width = (100 * (before + cur) / totalMs(T.tab)) + '%';
+  }
+  function paintBtns() {
+    const p = $('teach-pause'), r = $('teach-replay'); if (!p || !r) return;
+    p.textContent = T.paused ? tr('▶ 繼續', '▶ Resume') : tr('⏸ 暫停', '⏸ Pause');
+    p.disabled = T.done;
+    r.textContent = tr('↺ 從頭重播', '↺ Replay');
+    r.classList.toggle('hot', T.done);
+  }
+  function paintChips() {
+    const box = $('teach-chips'); if (!box || !T.tab) return;
+    box.innerHTML = '';
+    STEPS[T.tab].forEach((s, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'teach-chip' + (i === T.si ? ' on' : (i < T.si ? ' past' : ''));
+      b.innerHTML = '<span class="teach-n">' + (i + 1) + '</span>' + say(s.label).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      b.addEventListener('click', () => { if (T.done) T.paused = false; goStep(i); });
+      box.appendChild(b);
+    });
+    const n = $('teach-note'); if (n) n.textContent = say(STEPS[T.tab][T.si].note);
+  }
+  function setPaused(v) {
+    T.paused = !!v;
+    paintBtns();
+  }
+  function goStep(i) {
+    T.si = i; T.elapsed = 0; T.done = false;
+    STEPS[T.tab][i].go();
+    paintChips(); paintBtns(); fillBar();
+  }
+  function finish() { T.done = true; fillBar(); paintBtns(); }
+  function enterTab(tab) {
+    if (!STEPS[tab]) return;
+    T.tab = tab; T.paused = false; T.done = false;
+    goStep(0);
+    const s = $('stage-container');
+    if (s && s.scrollIntoView) { try { s.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { s.scrollIntoView(); } }
+  }
+  function tick() {
+    const now = performance.now(), dt = now - T.last; T.last = now;
+    if (!T.on || T.paused || T.done || !T.tab) return;
+    const arr = STEPS[T.tab]; T.elapsed += dt;
+    if (T.elapsed >= arr[T.si].ms) { if (T.si + 1 < arr.length) goStep(T.si + 1); else finish(); }
+    fillBar();
+  }
+
+  $('teach-pause').addEventListener('click', () => { if (!T.done) setPaused(!T.paused); });
+  $('teach-replay').addEventListener('click', () => { T.paused = false; goStep(0); });
+
+  // 切分頁：老師模式下從該分頁的第 1 步重新開始；學生模式完全照原本
+  const _switchTab = window.switchTab;
+  window.switchTab = function (tab) { _switchTab.apply(this, arguments); if (T.on) enterTab(tab); };
+  // 切語言：原本的 setLang 會把畫布重畫；老師模式再補畫自己的按鈕與提示
+  const _setLang = window.setLang;
+  window.setLang = function () {
+    _setLang.apply(this, arguments);
+    if (T.on && T.tab) { paintChips(); paintBtns(); }
+  };
+
+  window.setMode = function (m) {
+    const teacher = m === 'teacher';
+    if (teacher === T.on) return;
+    $('mode-student').classList.toggle('active', !teacher); $('mode-student').setAttribute('aria-pressed', String(!teacher));
+    $('mode-teacher').classList.toggle('active', teacher); $('mode-teacher').setAttribute('aria-pressed', String(teacher));
+    document.body.classList.toggle('mode-teacher', teacher);
+    if (teacher) {
+      snap = { tab: currentTab, f: rngFreq.value, lam: rngWave.value, temp: rngTemp.value };
+      T.on = true; T.last = performance.now();
+      T.timer = setInterval(tick, 100);
+      enterTab(currentTab);
+    } else {
+      T.on = false; clearInterval(T.timer); T.timer = 0; T.tab = null;
+      if (snap) {                                    // 還原成「剛按下老師講解」那一刻
+        rngFreq.value = snap.f; rngWave.value = snap.lam; rngTemp.value = snap.temp;
+        if (currentTab !== snap.tab) window.switchTab(snap.tab);
+        else renderUIForTab();                       // 同一分頁：重畫（賽跑會歸零、滑桿讀數回到原值）
+        snap = null;
+      }
+    }
+  };
+})();
 </script>
 <script src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt" defer></script>
 <script src="assets/quiz/quiz_waves_2_1028_v1.js?v=20261028-q1" defer></script>
