@@ -465,7 +465,7 @@
       if (it.kind === 'marker') {
         var m = /^[＊*]\s*(切頁|停|釘選)\s*[：:]\s*(.+)$/.exec(it.text || '');
         if (m && m[1] === '切頁') { var c = stage.cuts[m[2].trim()]; if (c) want = { tab: c.tab, sub: c.sub, step: 1 }; pin = ''; }
-        else if (m && m[1] === '釘選') pin = m[2].trim();
+        else if (m && m[1] === '釘選') pin = (stage.pins && stage.pins[m[2].trim()]) || m[2].trim();
       } else if (it.kind === 'line') {
         var a = stage.at[it.id];
         if (a) want = { tab: a.tab, sub: a.sub, step: a.step };
