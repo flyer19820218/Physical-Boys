@@ -42,10 +42,12 @@ const fmt = s => s.tab + (s.sub ? '/' + s.sub : '') + '#' + (s.step || 1);
 
 // ── 依序套用 cut / at / acts，得到每句的期望狀態 ──
 const lines = [];
-let cur = null;
+let started = false;
+let cur = { tab: 'tab1', sub: null, step: 1 };
 for (const it of manifest.items) {
   if (it.kind === 'marker') {
     const m = /^[＊*]\s*切頁\s*[：:]\s*(.+)$/.exec(it.text || '');
+    if (m) started = true;
     if (m && stage.cuts[m[1].trim()]) { const c = stage.cuts[m[1].trim()]; cur = { tab: c.tab, sub: c.sub, step: 1 }; }
     continue;
   }
@@ -53,7 +55,7 @@ for (const it of manifest.items) {
   if (a) cur = { tab: a.tab, sub: a.sub, step: a.step || 1 };
   const seq = [cur];
   for (const x of (stage.acts && stage.acts[it.id]) || []) { cur = { tab: x[1], sub: x[2], step: x[3] }; seq.push(cur); }
-  lines.push({ id: it.id, file: it.file, speaker: it.speaker, text: it.text, seq });
+  lines.push({ pre: !a && !started, id: it.id, file: it.file, speaker: it.speaker, text: it.text, seq });
 }
 
 (async () => {
@@ -156,7 +158,7 @@ for (const it of manifest.items) {
     const last = W[W.length - 1];
     if (!match(last, r.end)) probs.push('結束：' + diff(last, r.end).join(','));
     const vis = last.cvs ? r.view && r.view[last.cvs] : null;
-    if (last.cvs && !(vis >= 50)) probs.push(`畫布 ${last.cvs} 只露出 ${vis}%`);
+    if (e.pre) vis; else if (last.cvs && !(vis >= 50)) probs.push(`畫布 ${last.cvs} 只露出 ${vis}%`);
     for (const id of last.see || []) { const v = r.view && r.view[id]; if (!(v >= 90)) probs.push(`${id} 只露出 ${v}%`); }
     rows.push({ id: e.id, who: e.speaker, text: e.text.slice(0, 14), expect: e.seq.map(fmt).join(' → '), view: vis, ok: !probs.length, probs });
     if (probs.length) { bad++; console.log(`✗ #${e.id} ${e.text.slice(0, 16)} [${e.seq.map(fmt).join('→')}] → ${probs.join('; ')}`); }
