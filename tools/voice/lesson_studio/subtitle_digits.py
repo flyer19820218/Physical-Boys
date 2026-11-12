@@ -97,7 +97,7 @@ def to_arabic(text):
     # 5b. 加／減：兩側都是數字才轉（避免「加一點」）
     def addsub(m):
         return (val(m.group("a")) or m.group("a")) + m.group("o") + (val(m.group("b")) or m.group("b"))
-    out = re.sub("(?P<a>%s)(?P<o>加|減)(?P<b>%s)(?![次開起下樣直定旦般些邊半])" % (NUMD, NUMD), addsub, out)
+    out = re.sub("(?P<a>%s|\\d+(?:\\.\\d+)?)(?P<o>加|減)(?P<b>%s)(?![次開起下樣直定旦般些邊半])" % (NUMD, NUMD), addsub, out)   # 前一個數字可能已被「等於」規則轉成阿拉伯數字
     # 5c. 算式結果：「是／為 + 數字」在句尾（單獨的「一」不轉）；次方底數；開根號
     def res(m):
         n = m.group("n")
