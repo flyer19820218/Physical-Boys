@@ -326,7 +326,14 @@
         if (started && b <= nd.s + len) { rg.setEnd(nd.n, Math.max(0, b - nd.s)); break; }
       }
       var rs = rg.getClientRects(); if (!rs.length) return null;
-      return unionRect(Array.prototype.slice.call(rs).map(function (q) { return { getBoundingClientRect: function () { return q; } }; }));
+      var lines = [];   // 同一行的小框併成一個，跨行文字就是每行各一個框
+      Array.prototype.slice.call(rs).forEach(function (q) {
+        if (q.width < 1) return;
+        var L = lines[lines.length - 1];
+        if (L && Math.abs(q.top - L.top) < q.height * 0.5) { L.left = Math.min(L.left, q.left); L.right = Math.max(L.right, q.right); L.bottom = Math.max(L.bottom, q.bottom); L.top = Math.min(L.top, q.top); }
+        else lines.push({ left: q.left, right: q.right, top: q.top, bottom: q.bottom });
+      });
+      return lines.map(function (L) { return { left: L.left, top: L.top, width: L.right - L.left, height: L.bottom - L.top }; });
     };
   }
 
@@ -343,14 +350,14 @@
     q1ans: ex(/q = 30 cm/), p4p: ex(/p \+ 4p = 40/), p8: ex(/p = 8 cm/), move: ex(/針孔需向物體方向移動 2 cm/)
   };
   // 每句要畫的標記：{ 句號: [{ a: 起點比例, b: 終點比例, k: RECT 的名稱 }] }（由 lessons/optics_1.json 的句號對照產生）
-  var HLSPEC = {"26": [{"a": 0.35, "b": 0.97, "k": "umbraSent"}], "27": [{"a": 0.0, "b": 0.5, "k": "penumSent"}, {"a": 0.52, "b": 0.98, "k": "penumGrow"}], "37": [{"a": 0.4, "b": 0.66, "k": "stat1"}, {"a": 0.72, "b": 0.98, "k": "stat2"}], "38": [{"a": 0.05, "b": 0.22, "k": "stat1"}, {"a": 0.28, "b": 0.46, "k": "stat2"}, {"a": 0.5, "b": 0.76, "k": "stat34"}, {"a": 0.8, "b": 0.97, "k": "stat5"}], "41": [{"a": 0.08, "b": 0.95, "k": "formula"}], "46": [{"a": 0.15, "b": 0.45, "k": "stat1"}, {"a": 0.5, "b": 0.96, "k": "stat2"}], "47": [{"a": 0.05, "b": 0.45, "k": "stat5"}, {"a": 0.6, "b": 0.97, "k": "stat4"}], "50": [{"a": 0.0, "b": 0.3, "k": "stat1"}, {"a": 0.32, "b": 0.62, "k": "stat2"}, {"a": 0.68, "b": 0.97, "k": "stat5"}], "74": [{"a": 0.55, "b": 0.98, "k": "q1formula"}], "75": [{"a": 0.3, "b": 0.95, "k": "q1ans"}], "79": [{"a": 0.55, "b": 0.75, "k": "stat1"}, {"a": 0.77, "b": 0.97, "k": "stat2"}], "83": [{"a": 0.05, "b": 0.25, "k": "stat1"}, {"a": 0.28, "b": 0.5, "k": "stat2"}, {"a": 0.52, "b": 0.72, "k": "stat4"}], "84": [{"a": 0.2, "b": 0.62, "k": "p4p"}, {"a": 0.68, "b": 0.98, "k": "p8"}], "85": [{"a": 0.35, "b": 0.98, "k": "move"}]};
+  var HLSPEC = {"26": [{"a": 0.45, "b": 0.87, "k": "umbraSent"}], "27": [{"a": 0.03, "b": 0.46, "k": "penumSent"}, {"a": 0.61, "b": 0.88, "k": "penumGrow"}], "37": [{"a": 0.31, "b": 0.58, "k": "stat1"}, {"a": 0.63, "b": 0.88, "k": "stat2"}], "38": [{"a": 0.03, "b": 0.21, "k": "stat1"}, {"a": 0.24, "b": 0.4, "k": "stat2"}, {"a": 0.44, "b": 0.72, "k": "stat34"}, {"a": 0.76, "b": 0.86, "k": "stat5"}], "41": [{"a": 0.07, "b": 0.74, "k": "formula"}], "46": [{"a": 0.06, "b": 0.41, "k": "stat1"}, {"a": 0.47, "b": 0.8, "k": "stat2"}], "47": [{"a": 0.04, "b": 0.56, "k": "stat5"}, {"a": 0.62, "b": 0.86, "k": "stat4"}], "50": [{"a": 0.04, "b": 0.28, "k": "stat1"}, {"a": 0.32, "b": 0.53, "k": "stat2"}, {"a": 0.57, "b": 0.84, "k": "stat5"}], "74": [{"a": 0.64, "b": 0.89, "k": "q1formula"}], "75": [{"a": 0.0, "b": 0.01, "k": "q1formula"}, {"a": 0.37, "b": 0.74, "k": "q1ans"}], "79": [{"a": 0.7, "b": 0.79, "k": "stat1"}, {"a": 0.78, "b": 0.9, "k": "stat2"}], "83": [{"a": 0.05, "b": 0.25, "k": "stat1"}, {"a": 0.28, "b": 0.5, "k": "stat2"}, {"a": 0.52, "b": 0.72, "k": "stat4"}, {"a": 0.67, "b": 0.85, "k": "stat5"}], "84": [{"a": 0.18, "b": 0.45, "k": "p4p"}, {"a": 0.74, "b": 0.89, "k": "p8"}], "85": [{"a": 0.51, "b": 0.87, "k": "move"}], "88": [{"a": 0.42, "b": 0.88, "k": "formula"}]};
   var HL = {};
   Object.keys(HLSPEC).forEach(function (id) { HL[id] = HLSPEC[id].map(function (g) { return { a: g.a, b: g.b, r: RECT[g.k] }; }); });
 
   var hlTimer = 0, hlSegs = [], hlLayer = null;
   function hlClear() {
     if (hlTimer) { clearInterval(hlTimer); hlTimer = 0; }
-    hlSegs.forEach(function (g) { if (g.el.parentNode) g.el.parentNode.removeChild(g.el); });
+    hlSegs.forEach(function (g) { g.els.forEach(function (e) { if (e.parentNode) e.parentNode.removeChild(e); }); });
     hlSegs = [];
   }
   var hlExpire = 0;   // 標記線留在畫面上的期限（毫秒時間）；唸完之後再留約十四秒
@@ -362,11 +369,12 @@
       hlLayer.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:60';
       document.body.appendChild(hlLayer);
     }
-    hlSegs = spec.map(function (sg) {
-      var e = document.createElement('div'); e.className = 'vx-hl';
+    hlSegs = spec.map(function (sg) { return { els: [], sg: sg }; });
+    function mkEl(g) {
+      var e = document.createElement('div'); e.className = 'vx-hl'; e.dataset.seg = hlSegs.indexOf(g);
       e.style.cssText = 'position:absolute;display:none;border-radius:9px;background:rgba(255,224,102,.45);box-shadow:0 0 8px rgba(255,224,102,.35);transform:rotate(-.6deg);transform-origin:left center';
-      hlLayer.appendChild(e); return { el: e, sg: sg };
-    });
+      hlLayer.appendChild(e); g.els.push(e); return e;
+    }
     hlTimer = setInterval(function () {
       var live = (my === token);
       if (!live && !hlExpire) hlExpire = Date.now() + 14000;
@@ -375,19 +383,27 @@
       var f = !live ? 1 : ((d && isFinite(d) && d > 0) ? ct / d : ct / Math.max(1.5, it.text.length * SEC_PER_CHAR));
       hlSegs.forEach(function (g) {
         var r = null; try { r = g.sg.r(); } catch (e) {}
+        var rs = !r ? [] : (Array.isArray(r) ? r : [r]);
         var p = Math.max(0, Math.min(1, (f - g.sg.a) / (g.sg.b - g.sg.a)));
-        if (!r || p <= 0) { g.el.style.display = 'none'; return; }
-        g.el.style.display = 'block';
+        if (!rs.length || p <= 0) { g.els.forEach(function (e) { e.style.display = 'none'; }); return; }
         if (!g.seen) { // 標記處若被字幕框擋住或在畫面外，先把它捲到字幕框上方
           g.seen = 1;
-          var pt = visBottom();
-          if (r.top + r.height > pt - 12) scrollGoal(window.pageYOffset + (r.top + r.height) - (pt - 12));   // 只捲到剛好露出（不置中），避免把整張畫布推出畫面
-          else if (r.top < 56) scrollGoal(window.pageYOffset + r.top - 70);
+          var pt = visBottom(), r0 = rs[0], rl = rs[rs.length - 1];
+          if (rl.top + rl.height > pt - 12) scrollGoal(window.pageYOffset + (rl.top + rl.height) - (pt - 12));   // 只捲到剛好露出（不置中）
+          else if (r0.top < 56) scrollGoal(window.pageYOffset + r0.top - 70);
         }
-        g.el.style.left = (r.left + window.pageXOffset - 8) + 'px';
-        g.el.style.top = (r.top + window.pageYOffset + r.height * 0.06) + 'px';
-        g.el.style.width = ((r.width + 16) * p) + 'px';
-        g.el.style.height = (r.height * 0.88) + 'px';
+        var tot = 0; rs.forEach(function (q) { tot += q.width + 16; });
+        var done = tot * p;   // 依各行長度一行接一行畫
+        rs.forEach(function (q, k) {
+          var e = g.els[k] || mkEl(g), w = Math.min(q.width + 16, Math.max(0, done));
+          done -= q.width + 16;
+          if (w <= 0) { e.style.display = 'none'; return; }
+          e.style.display = 'block';
+          e.style.left = (q.left + window.pageXOffset - 8) + 'px';
+          e.style.top = (q.top + window.pageYOffset + q.height * 0.06) + 'px';
+          e.style.width = w + 'px';
+          e.style.height = (q.height * 0.88) + 'px';
+        });
       });
     }, 40);
   }
@@ -407,7 +423,7 @@
       var left = 0;
       for (var i = 0; i < acts.length; i++) {
         if (fired[i]) continue;
-        if (f >= acts[i][0]) { fired[i] = 1; goto(acts[i][1], acts[i][2], acts[i][3], true); }
+        if (f >= acts[i][0]) { fired[i] = 1; goto(acts[i][1], acts[i][2], acts[i][3], true); if (HL[it.id]) hlStart(it, a, my); }
         else left++;
       }
       if (!left) stopActs();

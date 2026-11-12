@@ -89,7 +89,7 @@ for (const it of manifest.items) {
         setTimeout(() => {
           if (self._src !== src) return;
           clearInterval(self._poll);
-          rec.hl = Array.from(document.querySelectorAll('.vx-hl')).map(e => { const r = e.getBoundingClientRect(); return { disp: e.style.display, w: r.width, h: r.height, top: r.top, bottom: r.bottom }; });
+          rec.hl = Array.from(document.querySelectorAll('.vx-hl')).map(e => { const r = e.getBoundingClientRect(); return { seg: e.dataset.seg, disp: e.style.display, w: r.width, h: r.height, top: r.top, bottom: r.bottom }; });
           rec.panelTop = (document.querySelector('.vx-bub') || { getBoundingClientRect: () => ({ top: innerHeight }) }).getBoundingClientRect().top;
           rec.end = window.__snap(); rec.view = {};
           ['hook', 'card', 'explain', 'q0', 'q1'].forEach(id => rec.view[id] = window.__inView(id));
@@ -151,6 +151,7 @@ for (const it of manifest.items) {
     if (HLN[e.id]) { hn = HLN[e.id]; carry = hn; carryScene = sceneKey; }
     else hn = (carry && carryScene === startKey && sceneKey === startKey) ? carry : 0;
     if (!HLN[e.id] && sceneKey !== carryScene) { carry = 0; carryScene = null; }
+    { const m = {}; (r.hl || []).forEach(x => { const q = m[x.seg] || (m[x.seg] = { seg: x.seg, disp: 'none', w: 0, h: 0, top: 1e9, bottom: -1e9 }); if (x.disp === 'block') { q.disp = 'block'; q.w = Math.max(q.w, x.w); q.top = Math.min(q.top, x.top); q.bottom = Math.max(q.bottom, x.bottom); q.h += x.h; } }); r.hl = Object.keys(m).map(k => m[k]); }
     if ((r.hl || []).length !== hn) probs.push('螢光筆段數 ' + (r.hl || []).length + '≠' + hn);
     (r.hl || []).forEach((g, gi) => { if (g.disp !== 'block' || g.w < 10) probs.push('螢光筆第' + (gi + 1) + '段沒畫出 ' + g.disp + ' w=' + Math.round(g.w)); else if (g.top < 40 || g.bottom > r.panelTop + 2) probs.push('螢光筆第' + (gi + 1) + '段不在可視範圍 top=' + Math.round(g.top) + ' bottom=' + Math.round(g.bottom) + ' panelTop=' + Math.round(r.panelTop)); });
     rows.push({ id: e.id, who: e.speaker, text: e.text.slice(0, 14), expect: e.seq.map(fmt).join(' → '), view: vis, hl: (r.hl || []).length, ok: !probs.length, probs });
