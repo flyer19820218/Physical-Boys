@@ -116,6 +116,9 @@ def to_arabic(text):
     out = re.sub("(?P<o>變成)(?P<n>%s)(?=[%s]|$)" % (NUMD, END), res, out)
     # 6. 次方的指數：十的負十八次方 → 10 的負 18 次方
     out = re.sub("(?<=的)(?P<m>負?)(?P<n>%s)(?=次方)" % NUM, lambda m: m.group("m") + (val(m.group("n")) or m.group("n")), out)
+    # 6b. 鐘點：「四點」「十二點」（二～十二；單獨的「一點」不轉）；像一／像二／像三（標籤是「像 1」）
+    out = re.sub("(?P<n>十[一二]?|[二三四五六七八九])點(?=[鐘，。！？、加]|$)", lambda m: (val(m.group("n")) or m.group("n")) + "點", out)
+    out = re.sub("(?<=像)(?P<n>[一二三])(?=[，。、就也])", lambda m: val(m.group("n")) or m.group("n"), out)
     # 7. 阿拉伯數字與中文字之間補空格（比照「N 極」）
     out = re.sub(r"(?<=[一-鿿])(?=\d)", " ", out)
     out = re.sub(r"(?<=\d)(?=[一-鿿])", " ", out)
