@@ -252,9 +252,9 @@
     26: [{ a: 0.30, b: 0.50, r: R_(function () { return stats(0,0); }) }, { a: 0.72, b: 0.97, r: R_(function () { return stats(1,1); }) }],
     28: [{ a: 0.10, b: 0.95, r: R_(function () { return stats(0,1); }) }],
     37: [{ a: 0.30, b: 0.97, r: R_(function () { return stats(2,2); }) }],
-    44: [{ a: 0.25, b: 0.62, r: R_(function () { return stats(0,1); }) }],
-    86: [{ a: 0.12, b: 0.55, r: R_(function () { return stats(2,2); }) }],
-    93: [{ a: 0.45, b: 0.97, r: R_(function () { return stats(1,3); }) }]
+    51: [{ a: 0.25, b: 0.62, r: R_(function () { return stats(0,1); }) }],
+    93: [{ a: 0.12, b: 0.55, r: R_(function () { return stats(2,2); }) }],
+    100: [{ a: 0.45, b: 0.97, r: R_(function () { return stats(1,3); }) }]
   };
   var hlTimer = 0, hlSegs = [], hlLayer = null, hlFade = [];
   function hlClear() { // 立刻清掉（停止、快轉、倒退用）
