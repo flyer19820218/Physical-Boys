@@ -8,7 +8,7 @@ const manifest = JSON.parse(fs.readFileSync(REPO + 'manifest.json', 'utf8'));
 const stage = JSON.parse(fs.readFileSync(REPO + 'stage.json', 'utf8'));
 const HLN = process.env.HLN ? JSON.parse(process.env.HLN) : null; // 有螢光筆的句號（沒給就從播放器自己偵測）
 
-const HLOUT = new Set((process.env.HLOUT || '18,19,20').split(','));  // 螢光線的目標在說明框（離開畫布）的句號
+const HLOUT = new Set((process.env.HLOUT || '18,19,20,23').split(','));  // 螢光線的目標在說明框（離開畫布）的句號
 const lines = []; let cur = null;
 for (const it of manifest.items) {
   if (it.kind === 'marker') {
