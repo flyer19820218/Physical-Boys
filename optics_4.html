@@ -857,6 +857,17 @@
         if(style) t.style.cssText = style;
         t.textContent = txt;
         parent.appendChild(t);
+        // 文字超出畫布時，水平平移回畫布內（只在超出時才動，不影響原本位置）
+        try {
+          const svg = t.ownerSVGElement;
+          if (svg && svg.id === 'visualSvg') {
+            const bb = t.getBBox(), W = svg.viewBox.baseVal.width, M = 12;
+            let dx = 0;
+            if (bb.x < M) dx = M - bb.x;
+            else if (bb.x + bb.width > W - M) dx = (W - M) - (bb.x + bb.width);
+            if (dx) t.setAttribute('x', (parseFloat(t.getAttribute('x')) || 0) + dx);
+          }
+        } catch (e) {}
       }
 
       function drawRay(parent, x1, y1, x2, y2, color, strokeWidth, isDashed = false, drawArrowHead = true) {
@@ -1795,7 +1806,7 @@
           drawLayer.appendChild(createSvgEl('circle', { cx: focusX, cy: CY, r: 8, fill: focusColor }));
           
           if (power > 0.95) {
-            addText(drawLayer, RETINA_X - 60, CY + 175, tr("🎯 焦點精準落在視網膜上！(視力清晰)", "🎯 Focused perfectly on retina! (Clear vision)"), 'center', focusColor, 22, 'bold');
+            addText(drawLayer, RETINA_X - 60, CY + 175, tr("🎯 焦點精準落在視網膜上！(視力清晰)", "🎯 Focused perfectly on retina! (Clear vision)"), 'middle', focusColor, 22, 'bold');
           } else if (m === 'myopia') {
             addText(drawLayer, focusX, CY + 50, tr("⚠️ 焦點在視網膜「前方」(遠處模糊)", "⚠️ Focused IN FRONT of retina (Blurry far)"), 'middle', focusColor, 20, 'bold');
           } else {
