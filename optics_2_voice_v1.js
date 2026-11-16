@@ -247,6 +247,8 @@
   var HL = {
     12: [{ a: 0.55, b: 0.97, r: R_(function () { return stats(0,1); }) }],
     18: [{ a: 0.25, b: 0.97, r: R_(function () { return [document.querySelector('#explainBox .formula-highlight')]; }) }],
+    20: [{ a: 0.35, b: 0.97, r: R_(function () { return stats(3,3); }) }],
+    22: [{ a: 0.35, b: 0.97, r: R_(function () { return stats(3,3); }) }],
     26: [{ a: 0.30, b: 0.50, r: R_(function () { return stats(0,0); }) }, { a: 0.72, b: 0.97, r: R_(function () { return stats(1,1); }) }],
     28: [{ a: 0.10, b: 0.95, r: R_(function () { return stats(0,1); }) }],
     37: [{ a: 0.30, b: 0.97, r: R_(function () { return stats(2,2); }) }],

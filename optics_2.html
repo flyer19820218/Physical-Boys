@@ -458,8 +458,10 @@
 
           if (activeMode === 'playground') {
               const p = params.playground;
-              if (newX > 360) newX = 360; if (newX < 50) newX = 50;
-              if (newY < 50) newY = 50; if (newY > 350) newY = 350;
+              const lo = p.mirror === 'concave' ? 335 : 50;   // 凹面鏡：太遠放大率會爆，限制在近處
+              const yLo = p.mirror === 'concave' ? 110 : 50, yHi = p.mirror === 'concave' ? 290 : 350;
+              if (newX > 360) newX = 360; if (newX < lo) newX = lo;
+              if (newY < yLo) newY = yLo; if (newY > yHi) newY = yHi;
               p.objX = newX; p.objY = newY;
           } else if (activeMode === 'plane_mirror') {
               const p = params.plane_mirror;
@@ -628,20 +630,27 @@
           
           drawLayer.appendChild(createSvgEl('line', { x1: 50, y1: 300, x2: 950, y2: 300, stroke: 'var(--chalk-dim)', 'stroke-width': 1, 'stroke-dasharray': '5 5' }));
           
+          // 曲面鏡放大率 m = F ÷ (F ∓ p)：每個點離鏡子的距離 p 不同，倍率也不同
+          const FOC = 500;
+          const magAt = (pp) => p.mirror === 'concave' ? FOC / (FOC - Math.min(pp, FOC - 40)) : (p.mirror === 'convex' ? FOC / (FOC + pp) : 1);
           let curveStr = ""; let mag = 1; let mirrorLabel = tr('平面鏡 (等大)', 'Plane Mirror (1:1)');
           
           if(p.mirror === 'concave') {
             curveStr = "Q 450,200 500,320"; mirrorLabel = tr('凹面鏡 (放大)', 'Concave (Magnify)');
-            mag = 400 / (400 - dist); if(mag < 0) mag = Math.abs(mag); 
           } else if(p.mirror === 'convex') {
             curveStr = "Q 550,200 500,320"; mirrorLabel = tr('凸面鏡 (縮小)', 'Convex (Shrink)');
-            mag = 400 / (400 + dist);
           } else {
-            curveStr = "L 500,320"; mag = 1;
+            curveStr = "L 500,320";
           }
+          mag = magAt(dist);
           
           const imgX = mirrorX + dist * mag;
           const imgY = 200 + (objY - 200) * mag; 
+          const charMode = (p.mirror !== 'plane' && p.prop === 'text');
+          const CFS = 36, CADV = 21;
+          const chars = [...(p.text || '?')];
+          const offs = chars.map((_, i) => (i - (chars.length - 1) / 2) * CADV);
+          const charMags = offs.map(o => magAt(dist - o));
 
           drawLayer.appendChild(createSvgEl('path', { d: `M 500,80 ${curveStr}`, fill: 'none', stroke: '#8f8a80', 'stroke-width': 8, 'stroke-linecap': 'round' }));
           addText(drawLayer, 500, 50, mirrorLabel, 'middle', '#8f8a80', 18, 'bold');
@@ -671,7 +680,14 @@
             return g;
           };
 
-          const objGroup = drawProp(objX, objY);
+          let objGroup;
+          if (charMode) {
+            objGroup = createSvgEl('g', { transform: `translate(${objX}, ${objY})` });
+            chars.forEach((ch, i) => {
+              const t = createSvgEl('text', { x: offs[i], y: 12, 'text-anchor': 'middle', fill: '#ef6a5a', 'font-size': CFS + 'px', 'font-family': "'JetBrains Mono', monospace", 'font-weight': 'bold' });
+              t.textContent = ch; objGroup.appendChild(t);
+            });
+          } else objGroup = drawProp(objX, objY);
           objGroup.classList.add('draggable-prop');
           objGroup.style.cursor = 'grab';
           
@@ -686,6 +702,14 @@
           drawLayer.appendChild(objGroup);
           addText(drawLayer, objX, objY + 160, tr('真實物體', 'Real Object'), 'middle', '#ef6a5a', 18, 'bold');
 
+          if (charMode) {
+            chars.forEach((ch, i) => {
+              const m = charMags[i], pp = dist - offs[i];
+              const g = createSvgEl('g', { transform: `translate(${mirrorX + pp * m}, ${200 + (objY - 200) * m}) scale(${-m * m}, ${m})`, opacity: '0.7' });
+              const t = createSvgEl('text', { x: 0, y: 12, 'text-anchor': 'middle', fill: '#5fb0ff', 'font-size': CFS + 'px', 'font-family': "'JetBrains Mono', monospace", 'font-weight': 'bold' });
+              t.textContent = ch; g.appendChild(t); drawLayer.appendChild(g);
+            });
+          } else {
           const imgGroup = drawProp(0, 0); 
           imgGroup.setAttribute('transform', `translate(${imgX}, ${imgY}) scale(${-mag}, ${mag})`);
           imgGroup.style.opacity = '0.7';
@@ -695,21 +719,26 @@
             if(el.getAttribute('fill') === '#ef6a5a') el.setAttribute('fill', '#5fb0ff');
           });
           drawLayer.appendChild(imgGroup);
-          addText(drawLayer, imgX, imgY + 160*mag, tr('鏡中虛像', 'Virtual Image'), 'middle', '#5fb0ff', 18, 'bold');
+          }
+          addText(drawLayer, charMode ? offs.reduce((a, o, i) => a + mirrorX + (dist - o) * charMags[i], 0) / offs.length : imgX, Math.min(imgY + 160*mag, 385), tr('鏡中虛像', 'Virtual Image'), 'middle', '#5fb0ff', 18, 'bold');
 
           addStat('物距 (p)', 'Obj Dist (p)', `${dist.toFixed(2)} cm`);
           addStat('像距 (q)', 'Img Dist (q)', `${(dist * mag).toFixed(2)} cm`);
           addStat('鏡面類型', 'Mirror Type', p.mirror === 'plane' ? tr('平面', 'Plane') : (p.mirror === 'concave' ? tr('凹面', 'Concave') : tr('凸面', 'Convex')));
-          addStat('成像大小', 'Image Size', p.mirror === 'plane' ? tr('相等', 'Equal') : (p.mirror === 'concave' ? tr('放大', 'Magnified') : tr('縮小', 'Diminished')));
+          const mLo = Math.min(...(charMode ? charMags : [mag])), mHi = Math.max(...(charMode ? charMags : [mag]));
+          const mTxt = (mHi - mLo > 0.05) ? `${mLo.toFixed(1)}～${mHi.toFixed(1)} ${tr('倍', '×')}` : `${mag.toFixed(1)} ${tr('倍', '×')}`;
+          addStat('成像大小', 'Image Size', p.mirror === 'plane' ? tr('相等', 'Equal') : (p.mirror === 'concave' ? tr('放大 ', 'Magnified ') : tr('縮小 ', 'Diminished ')) + mTxt);
 
           explainBox.innerHTML = tr(`
             <h3>💡 老師精闢解析：為什麼救護車的字要印反的？</h3>
             <p>1. <b>左右相反</b>：因為照鏡子時，光線是直接反射回來的，所以我們在鏡子裡看到的字都會呈現「左右對稱顛倒」！救護車車頭的字故意印反，就是為了讓前方的駕駛透過「照後鏡」看時，剛好能看到正確的「AMBULANCE」。<br>
-            2. <b>時鐘陷阱題</b>：考試最愛考「從鏡子裡看到的時鐘是幾點」。最快的破解法就是：<span class="formula-highlight">真實時間 ＋ 鏡中時間 ＝ 12:00</span>！不信你拿手邊的時鐘試試看！</p>
+            2. <b>時鐘陷阱題</b>：考試最愛考「從鏡子裡看到的時鐘是幾點」。最快的破解法就是：<span class="formula-highlight">真實時間 ＋ 鏡中時間 ＝ 12:00</span>！不信你拿手邊的時鐘試試看！<br>
+            3. <b>曲面鏡的放大率</b>：<span class="formula-highlight">凹面鏡 m ＝ f ÷ (f − p)，凸面鏡 m ＝ f ÷ (f ＋ p)</span>。物距 p 越大（離鏡子越遠），倍率越不同，所以字的左右兩端倍率不一樣！</p>
           `, `
             <h3>💡 Teacher's Analysis: Why is AMBULANCE backwards?</h3>
             <p>1. <b>Left-Right Reversed</b>: In a mirror, light reflects directly back, causing a lateral inversion! Ambulances print it backward so drivers ahead see it correctly in their rearview mirrors.<br>
-            2. <b>Clock Trap Trick</b>: Exams love asking "What time is it in the mirror?". The ultimate hack: <span class="formula-highlight">Real Time + Mirror Time = 12:00</span>! Try it yourself!</p>
+            2. <b>Clock Trap Trick</b>: Exams love asking "What time is it in the mirror?". The ultimate hack: <span class="formula-highlight">Real Time + Mirror Time = 12:00</span>! Try it yourself!<br>
+            3. <b>Magnification</b>: <span class="formula-highlight">Concave m = f ÷ (f − p), Convex m = f ÷ (f + p)</span>. Each point has its own object distance p, so the two ends of the text are scaled differently!</p>
           `);
 
         } else if (activeMode === 'reflection') {
@@ -1082,8 +1111,8 @@
           { set: { mirror: 'plane', prop: 'text', text: 'AMBULANCE', time: '12:05', objX: 170, objY: 200 }, zh: '物體退後，像也等距退後', en: 'Move back: image moves back equally' },
           { set: { mirror: 'plane', prop: 'text', text: 'AMBULANCE', time: '12:05', objX: 170, objY: 110 }, zh: '物體上移，像同高度上移', en: 'Move up: image moves up too' },
           { set: { mirror: 'plane', prop: 'analog', text: 'AMBULANCE', time: '04:00', objX: 250, objY: 200 }, zh: '鏡中時鐘：真實加鏡中＝12:00', en: 'Mirror clock: real + mirror = 12:00' },
-          { set: { mirror: 'concave', prop: 'text', text: 'AMBULANCE', time: '12:05', objX: 360, objY: 200 }, zh: '凹面鏡：放大', en: 'Concave: magnified' },
-          { set: { mirror: 'convex', prop: 'text', text: 'AMBULANCE', time: '12:05', objX: 360, objY: 200 }, zh: '凸面鏡：縮小', en: 'Convex: shrunk' } ] },
+          { set: { mirror: 'concave', prop: 'text', text: 'AMBULANCE', time: '12:05', objX: 350, objY: 200 }, zh: '凹面鏡：放大', en: 'Concave: magnified' },
+          { set: { mirror: 'convex', prop: 'text', text: 'AMBULANCE', time: '12:05', objX: 350, objY: 200 }, zh: '凸面鏡：縮小', en: 'Convex: shrunk' } ] },
         reflection: { steps: [
           { set: { laserX: 250, laserY: 50 }, zh: '入射角等於反射角', en: 'Incident angle = reflected angle' },
           { set: { laserX: 400, laserY: 50 }, zh: '角度變小，反射角跟著變小', en: 'Smaller angle, smaller reflection' },
@@ -1134,7 +1163,7 @@
         });
         if (strChanged) renderControls();
         const tok = ++opt2Tween;
-        if (!ms) { Object.keys(to).forEach(k => p[k] = to[k]); updateSimulation(); return; }
+        if (!ms || strChanged) { Object.keys(to).forEach(k => p[k] = to[k]); updateSimulation(); return; }
         const t0 = performance.now();
         (function tick(now) {
           if (tok !== opt2Tween) return;
@@ -1193,7 +1222,7 @@
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
 <script defer src="assets/quiz/mcq_tabs_1028_v1.js?v=20261028-q1"></script>
 <script defer src="assets/quiz/quiz_optics_2_1028_v1.js?v=20261028-q1"></script>
-<script defer src="optics_2_voice_v1.js?v=20261113-v3"></script>
+<script defer src="optics_2_voice_v1.js?v=20261116-v5"></script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
 </body>
 </html>
