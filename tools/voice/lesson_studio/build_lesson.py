@@ -110,6 +110,9 @@ AT = {
 SUB_MAP = [("恩極", "N 極"), ("艾斯極", "S 極")]
 
 
+KNOWN_TABS = None
+
+
 def parse(text):
     """回傳 (items, errors)。items 的 line 帶 n（1 起算的說話行編號）與 src（原始行號）。"""
     items, errors, n = [], [], 0
@@ -191,6 +194,10 @@ def validate(items, errors, warnings):
     else:
         pairs = list(CUTS.values()) + [(t, sb) for t, sb, _ in AT.values()] + [(x[1], x[2]) for v in ACTS.values() for x in v]
         for tab in sorted({t for t, _ in pairs}):
+            if KNOWN_TABS is not None:  # 分頁由 JS 產生的課（例：biology_enzymes）：對照 lessons/<課>.json 的 known_tabs
+                if tab not in KNOWN_TABS:
+                    errors.append('分頁 "%s" 不在 known_tabs %s' % (tab, KNOWN_TABS))
+                continue
             if not grep_has(html, "data-tab", tab):
                 errors.append('%s 找不到 data-tab="%s"' % (PAGE, tab))
         for sub in sorted({s for _, s in pairs if s}):
@@ -349,7 +356,7 @@ def build_spec(stage):
 
 def load_lesson(name):
     """讀 lessons/<name>.json，覆寫本模組的課程常數（CUTS、AT、STEPS…）。"""
-    global LESSON, PAGE, DEFAULT_SCRIPT, DEFAULT_OUT, EXPECT_LINES, EXPECT_CHORUS, CUTS, STEPS, AT, ACTS, AVATAR_OVERRIDE
+    global LESSON, PAGE, DEFAULT_SCRIPT, DEFAULT_OUT, EXPECT_LINES, EXPECT_CHORUS, CUTS, STEPS, AT, ACTS, AVATAR_OVERRIDE, KNOWN_TABS
     import json as _json
     cfg = _json.loads((REPO / "tools/voice/lesson_studio/lessons" / (name + ".json")).read_text("utf-8"))
     LESSON = cfg["lesson"]
@@ -364,6 +371,7 @@ def load_lesson(name):
     # 句中換畫面（選用）：{句號: [[句中位置 0～1, 分頁, 子頁, 第幾步], ...]}；沒有這個欄位的課照舊
     ACTS = {int(k): [tuple(x) for x in v] for k, v in cfg.get("acts", {}).items()}
     AVATAR_OVERRIDE = cfg.get("avatars", {})
+    KNOWN_TABS = cfg.get("known_tabs")
 
 
 def main():

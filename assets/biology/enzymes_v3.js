@@ -23,6 +23,8 @@
   [[['prepare'],'等量唾液各 2 mL','Equal saliva: 2 mL each',2.2],[['boil'],'只煮甲組 10 分鐘','Boil A only: 10 min',8],[['cool'],'冷卻甲組','Cool A',2.2],[['starchA','starchB'],'甲、乙：澱粉液各 2 mL','A and B: starch 2 mL each',4.4],[['digest'],'35–40 °C 作用','React at 35–40 °C',8],[['benA','benB'],'甲、乙：本氏液各 2 mL','A and B: Benedict\'s 2 mL each',4.4],[['detect'],'兩組一起加熱檢驗','Heat both to test',8],[[],'觀察、想一想','Observe and think',-HOLD+7-LEAD]].map(([acts,z,e,d])=>({acts,z,e,dur:LEAD+d+HOLD}))
  ];
  const P={step:0,t:0,hold:0,from:0,queue:[]};
+ // 2026-11-17 學生操作／老師講解／有聲講解的共用開關（外層用）：student＝每組播完停住；teacher＝整段連播、最後一步停住；voice＝每個小步驟播完都停住（由語音切換）。paused＝凍結時間。
+ const CTL={mode:'student',paused:false,held:false,done:false,onEnd:null,onBuild:null,onTab:null};
  // Teacher 2026-10-27: at most 5 buttons per animation. Sequences unchanged; buttons = groups of sub-steps [first sub-step, zh, en].
  const GROUPS=[
   [[0,'分解作用','Breakdown'],[4,'合成作用','Synthesis']],
@@ -41,7 +43,7 @@
  function build(){
  $('lessonTabs').innerHTML=names.map(([z,e,a,b],i)=>`<button type="button" class="tab-btn${u.tab===i?' active':''}" data-tab="${i}" aria-selected="${u.tab===i}">${bi(z,e,'span','tab-main')}${bi(a,b,'span','tab-sub')}</button>`).join('');
  const stepRow=tab=>`<div class="lab-actions step-row">${GROUPS[tab].map(([i,z,e],k)=>`<button type="button" class="action-btn step-btn" data-step="${tab}:${i}">${k+1}　${esc(tr(z,e))}</button>`).join('')}</div>`;
- const autoNote=`<p class="small-note">${tr('動畫會自動播放並重複；點步驟編號，可以跳到那一步。','The animation plays and repeats automatically. Tap a step number to jump to that step.')}</p>`;
+ const autoNote=`<p class="small-note">${tr('動畫一次播一步，播完會停住；點步驟編號，看下一步或再看一次。','The animation plays one step and then stops. Tap a step number to see the next step or replay one.')}</p>`;
  const modelControls=`<h3>${tr('代謝有兩個方向','Two directions of metabolism')}</h3><p>${tr('同一套輪廓：受質剛好嵌入活性區。分解只斷開連接，合成則接起兩個部分，形狀與大小不突然改變。','The substrate and active site share a matching contour. Splitting breaks a link; joining connects two parts without replacing or resizing them.')}</p><h3>${tr('反應步驟','Reaction steps')}</h3>${stepRow(0)}<div id="cycle-count" class="metric"></div>${autoNote}`;
  const specificity=`<h3>${tr('酵素＋受質：誰能對上？','Enzyme + substrate: which fits?')}</h3>${stepRow(1)}${autoNote}`;
  const temperature=`<h3>${tr('人體酵素示例','Human enzyme example')}</h3><div class="metric">${tr('環境溫度','Temperature')} <output id="temp-value"></output>　${tr('相對活性','Relative activity')} <span id="temp-readout"></span></div><h3>${tr('溫度變化','Temperature changes')}</h3>${stepRow(2)}<p class="small-note">${tr('過高溫可能改變活性區形狀 → 受質不易結合 → 活性下降。低溫主要使反應變慢，不代表構造被破壞。曲線是新酵素在各溫度的示意；藍點顯示目前這份酵素。高溫處理後，不用冷卻自動還原它。','Excessive heat may change the active-site shape → poorer substrate binding → lower activity. Cold mainly slows reactions, not necessarily damaging the structure. The curve illustrates fresh enzyme at different temperatures. The blue point tracks this sample; cooling does not automatically restore a heat-denatured enzyme.')}</p>${autoNote}`;
@@ -58,7 +60,7 @@
  <div class="table-scroll"><table class="record-table"><thead><tr><th>${tr('甲組','Group A')}</th><th>${tr('乙組','Group B')}</th></tr></thead><tbody id="records"></tbody></table></div>
  <div class="split-explain">${explain('第一次加熱：改變酵素','First heating: change the enzyme','甲組唾液先在沸水浴加熱約 10 分鐘；乙組不做這個處理。甲組冷卻後，兩管才加入相同量澱粉，在 35–40 °C 溫水中作用約 15–20 分鐘。','Pretreat A\'s saliva in boiling water for about 10 minutes; do not pretreat B. After cooling A, add equal starch and allow both to react at 35–40 °C for about 15–20 minutes.')}${explain('第二次加熱：檢驗糖','Second heating: test for sugar','等兩組酵素作用後，再加入等量本氏液，兩組一起沸水浴檢驗。這次加熱是為了檢驗還原糖，不是讓酵素在沸水中分解澱粉。','After enzyme action, add equal Benedict\'s reagent and heat both in boiling water to test for reducing sugars. This heating is for detection, not for starch digestion in boiling water.')}</div>
  <div class="safety">${tr('課堂安全：唾液不共用、不入口；可用商用澱粉酶替代。戴護目鏡，夾具固定試管，以酒精燈隔水加熱；冷卻與溫水作用時熄火。酒精燈用燈帽熄滅，不用嘴吹；火焰、熱水與試劑由老師監督，非居家操作。','Classroom safety: do not share or ingest saliva; commercial amylase may substitute. Wear eye protection, clamp tubes and heat indirectly in water. Extinguish the lamp for cooling and warm-water enzyme action. Use a snuffer cap, never blow out the flame. Flame, hot water and reagents require teacher supervision, not home use.')}</div>`];
- $('lessons').innerHTML=contents.map((html,i)=>`<section class="lesson" id="lesson-${i}"${u.tab===i?'':' hidden'}>${hook(i)}<h2>${tr(names[i][2],names[i][3])}</h2>${html}<div class="concept">${tr('把現象說成理由：','Explain the observation: ')}${tr(['酵素讓反應更快，反應後仍可再用。','合適的受質與酵素配合，才能催化。','低溫變慢和高溫失活不是同一件事。','不同酵素有不同的適合酸鹼環境。','先處理酵素，再讓它作用，最後才檢驗產物。'][i],['Enzymes speed reactions and can be reused.','Catalysis needs a suitable enzyme–substrate pairing.','Cold slowing differs from heat denaturation.','Different enzymes suit different pH environments.','Pretreat the enzyme, allow reaction, then test the products.'][i])}</div></section>`).join('');bind();paint();
+ $('lessons').innerHTML=contents.map((html,i)=>`<section class="lesson" id="lesson-${i}"${u.tab===i?'':' hidden'}>${hook(i)}<h2>${tr(names[i][2],names[i][3])}</h2>${html}<div class="concept">${tr('把現象說成理由：','Explain the observation: ')}${tr(['酵素讓反應更快，反應後仍可再用。','合適的受質與酵素配合，才能催化。','低溫變慢和高溫失活不是同一件事。','不同酵素有不同的適合酸鹼環境。','先處理酵素，再讓它作用，最後才檢驗產物。'][i],['Enzymes speed reactions and can be reused.','Catalysis needs a suitable enzyme–substrate pairing.','Cold slowing differs from heat denaturation.','Different enzymes suit different pH environments.','Pretreat the enzyme, allow reaction, then test the products.'][i])}</div></section>`).join('');bind();paint();if(CTL.onBuild)CTL.onBuild();
  }
  const canvasIds=['model','specificity','temperature','ph','experiment'];
  const curStep=()=>u.tab===0?(u.mode==='join'?4:0)+G.scene(u).stage:P.step;
@@ -83,32 +85,36 @@
   P.queue=[...STEPS[4][i].acts];
   if(i===STEPS[4].length-1&&M.can(s,'record')){M.act(s,'record');const last=s.records[s.records.length-1];s.records=s.records.filter(r=>r===last||r.prediction!==last.prediction);}}
  // Sweeps always start from the previous step's value, so a jump replays that step's own change.
- function enter(i){const n=STEPS[u.tab].length;i=((i%n)+n)%n;P.step=i;P.t=0;P.hold=0;
+ // 自動往下一步時經過這裡：依模式決定要不要停住（不改原本的播放順序與秒數）
+ function auto(i){const n=STEPS[u.tab].length,j=((i%n)+n)%n,wrap=j<=P.step,group=GROUPS[u.tab].some(g=>g[0]===j);
+  if(CTL.mode==='teacher'?wrap:(CTL.mode==='voice'||wrap||group)){CTL.held=true;if(wrap&&!CTL.done){CTL.done=true;if(CTL.onEnd)CTL.onEnd(u.tab);}return;}
+  enter(j);}
+ function enter(i){const n=STEPS[u.tab].length;i=((i%n)+n)%n;CTL.held=false;CTL.done=false;P.step=i;P.t=0;P.hold=0;
   if(u.tab===0){u.mode=i<4?'break':'join';u.phase=STAGE[i%4];u.running=true;u.dragPoint=null;}
   else if(u.tab===1){[u.enzyme,u.substrate]=STEPS[1][i].pair;u.phase=0;u.running=true;u.dragPoint=null;}
   else if(u.tab===2){P.from=STEPS[2][(i+n-1)%n].to;u.temp=P.from;u.damaged=!!STEPS[2][i].dmg;}
   else if(u.tab===3){P.from=STEPS[3][(i+n-1)%n].to;u.ph=P.from;u.phEnzyme=STEPS[3][i].enz;}
   else labGo(i);}
- function advance(dt){P.t+=dt;
-  if(u.tab<2){if(u.running){M.tick(u,dt);return;}P.hold+=dt;const wait=u.tab===1?1.8:u.mode==='join'?3:1.5;if(P.hold>=wait)enter(u.tab===1?P.step+1:u.mode==='join'?0:4);return;}
+ function advance(dt){if(CTL.held)return;P.t+=dt;
+  if(u.tab<2){if(u.running){M.tick(u,dt);return;}P.hold+=dt;const wait=u.tab===1?1.8:u.mode==='join'?3:1.5;if(P.hold>=wait)auto(u.tab===1?P.step+1:u.mode==='join'?0:4);return;}
   if(u.tab<4){const st=STEPS[u.tab][P.step],q=M.smooth(P.t/SWEEP),v=P.from+(st.to-P.from)*q;
    if(u.tab===2){u.temp=Math.round(v);if(st.heat&&q>=1)u.damaged=true;}else u.ph=Math.round(v*10)/10;
-   if(P.t>=st.dur)enter(P.step+1);return;}
+   if(P.t>=st.dur)auto(P.step+1);return;}
   const s=u.lab;M.advance(s,dt);if(s.motion)return;
   if(P.queue.length){if(P.t>=LEAD)startAct(P.queue.shift());return;}
-  P.hold+=dt;if(P.hold>=(P.step===STEPS[4].length-1?7:HOLD))enter(P.step+1);}
+  P.hold+=dt;if(P.hold>=(P.step===STEPS[4].length-1?7:HOLD))auto(P.step+1);}
  function stop(){if(raf)cancelAnimationFrame(raf);raf=0;last=0;}
  // One RAF for the whole page; every path cancels the previous frame first (no duplicates).
  function schedule(){stop();paint();if(document.hidden)return;raf=requestAnimationFrame(tick);}
- function tick(t){raf=0;if(document.hidden)return;const dt=last?Math.min(.1,(t-last)/1000):0;last=t;advance(dt);paint();raf=requestAnimationFrame(tick);}
+ function tick(t){raf=0;if(document.hidden)return;const dt=last&&!CTL.paused?Math.min(.1,(t-last)/1000):0;last=t;advance(dt);paint();raf=requestAnimationFrame(tick);}
  function jump(tab,i){if(tab!==u.tab)return;enter(i);schedule();}
  function close(){if(u.expanded){$('lab-'+u.expanded).classList.remove('expanded');u.expanded=null;document.body.classList.remove('has-expanded');}document.querySelectorAll('[data-expand]').forEach(b=>{b.textContent=tr('⛶ 全螢幕操作','⛶ Full-screen operation');b.classList.add('full-btn');b.setAttribute('aria-expanded','false');});}
  function expand(id){if(u.expanded===id){close();return;}close();u.expanded=id;$('lab-'+id).classList.add('expanded');document.body.classList.add('has-expanded');const b=document.querySelector(`[data-expand="${id}"]`);b.textContent=tr('× 返回教材','× Return to lesson');b.setAttribute('aria-expanded','true');b.focus();}
- function switchTab(i){close();stop();u.tab=i;document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',+b.dataset.tab===i);b.setAttribute('aria-selected',+b.dataset.tab===i);});names.forEach((_,j)=>$('lesson-'+j).hidden=i!==j);enter(0);schedule();}
+ function switchTab(i){close();stop();u.tab=i;document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',+b.dataset.tab===i);b.setAttribute('aria-selected',+b.dataset.tab===i);});names.forEach((_,j)=>$('lesson-'+j).hidden=i!==j);enter(0);schedule();if(CTL.onTab)CTL.onTab(i);}
  function setLang(next){if(next===lang)return;const open=u.expanded;stop();close();lang=next;document.documentElement.lang=lang==='zh'?'zh-Hant':'en';document.title=tr('酵素與生命的反應｜Physical-Boys','Enzymes and life\'s reactions | Physical-Boys');document.querySelectorAll('[data-zh][data-en]').forEach(e=>e.textContent=e.dataset[lang]);labKey='';build();if(open)expand(open);document.querySelectorAll('[data-language]').forEach(b=>b.classList.toggle('active',b.dataset.language===lang));schedule();}
  function bind(){document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>switchTab(+b.dataset.tab)));document.querySelectorAll('[data-expand]').forEach(b=>b.addEventListener('click',()=>expand(b.dataset.expand)));document.querySelectorAll('.local-language [data-language]').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.language)));
  document.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>{const [tb,i]=b.dataset.step.split(':').map(Number);jump(tb,i);}));
  }
  function hideIntro(){if($('introScreen').hidden)return;$('introScreen').hidden=true;enter(0);schedule();}
- $('introScreen').addEventListener('click',hideIntro);document.querySelectorAll('.floating-lang-container [data-language]').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.language)));document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('introScreen').hidden)hideIntro();else close();}});document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else schedule();});build();enter(0);schedule();window.EnzymesLesson={state:u,play:P,STEPS,jump,setLang,switchTab,expand,close,draw,getState:()=>({lang,tab:u.tab,step:curStep(),raf})};
+ $('introScreen').addEventListener('click',hideIntro);document.querySelectorAll('.floating-lang-container [data-language]').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.language)));document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('introScreen').hidden)hideIntro();else close();}});document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else schedule();});build();enter(0);schedule();window.EnzymesLesson={state:u,play:P,STEPS,jump,setLang,switchTab,expand,close,draw,getState:()=>({lang,tab:u.tab,step:curStep(),raf}),ctl:CTL,GROUPS,group:groupOf,progress:()=>{const f=fills();return f.reduce((a,b)=>a+b,0)/f.length;},lang:()=>lang};
 })();

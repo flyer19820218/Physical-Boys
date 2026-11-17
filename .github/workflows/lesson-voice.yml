@@ -1,0 +1,76 @@
+# 有聲講解自動錄音（彥君 × 曉臻）：雲端 AI 的沙箱連不到微軟語音時，改由 GitHub 的伺服器錄。
+#   做法：在 <課>-audio 分支更新 audio/<課>/manifest.json（build_lesson.py 產生）並推上去
+#   → 這裡跑 tools/voice/lesson_studio/cloud_tts.py <課>（只補缺的 mp3，失敗自動重跑最多 5 次）
+#   → 把 audio/<課>/mp3/ 與 _tracks/ commit 回同一個分支。也可以到 Actions 頁手動 Run workflow，lesson 填課名。
+name: 有聲講解自動錄音
+
+on:
+  workflow_dispatch:
+    inputs:
+      lesson:
+        description: '課名（例：biology_enzymes）'
+        required: true
+  push:
+    branches: ['*-audio']
+    paths:
+      - 'audio/*/manifest.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lesson-voice-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安裝 edge-tts
+        run: pip install -U edge-tts certifi
+
+      - name: 安裝 ffmpeg
+        run: |
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; fi
+          ffmpeg -version | head -1
+
+      - name: 找出要錄的課
+        id: which
+        run: |
+          if [ -n "${{ github.event.inputs.lesson }}" ]; then
+            L="${{ github.event.inputs.lesson }}"
+          else
+            L=$(git diff --name-only HEAD~1 HEAD -- 'audio/*/manifest.json' | cut -d/ -f2 | sort -u | tr '\n' ' ')
+          fi
+          echo "lessons=$L" >> "$GITHUB_OUTPUT"
+          echo "要錄：$L"
+
+      - name: 錄音（失敗就重跑，只補缺的檔）
+        run: |
+          for L in ${{ steps.which.outputs.lessons }}; do
+            ok=0
+            for i in 1 2 3 4 5; do
+              echo "=== $L 第 $i 輪"
+              if python3 tools/voice/lesson_studio/cloud_tts.py "$L"; then ok=1; break; fi
+              sleep 20
+            done
+            [ "$ok" = 1 ] || { echo "$L 仍有句子沒錄好"; exit 1; }
+          done
+
+      - name: Commit 回分支
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          for L in ${{ steps.which.outputs.lessons }}; do git add "audio/$L/mp3" "audio/$L/_tracks" 2>/dev/null || true; done
+          if git diff --cached --quiet; then echo "沒有新音檔"; exit 0; fi
+          git commit -m "有聲講解自動錄音：${{ steps.which.outputs.lessons }}"
+          git push

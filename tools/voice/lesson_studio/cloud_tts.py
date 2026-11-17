@@ -12,10 +12,14 @@ from pathlib import Path
 
 LESSON = sys.argv[1] if len(sys.argv) > 1 else "electronics_2"
 
+import os
+
 import certifi
 
 # Point edge-tts at the sandbox proxy CA bundle (TLS verification stays ON).
-certifi.where = lambda: "/root/.ccr/ca-bundle.crt"
+# 在 GitHub Actions（lesson-voice.yml）上沒有這個檔，就用系統預設的憑證。
+if os.path.exists("/root/.ccr/ca-bundle.crt"):
+    certifi.where = lambda: "/root/.ccr/ca-bundle.crt"
 
 REPO = Path(__file__).resolve().parents[3]  # repo 根目錄
 sys.path.insert(0, str(REPO / "tools/voice/lesson_studio"))
@@ -77,3 +81,4 @@ for it in lines:
 print("FINISHED ok=%d failed=%d time=%.0fs" % (done, len(failed), time.time() - t0), flush=True)
 for f in failed:
     print("  fail:", f, flush=True)
+sys.exit(1 if failed else 0)
