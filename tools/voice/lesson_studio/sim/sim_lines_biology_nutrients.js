@@ -113,6 +113,11 @@ for (const it of manifest.items) {
   await page.click('.vx-open');
   await page.click('button[aria-label="開始／繼續"]');
   const shots = { '01': 1.0, '10': 1.6, '21': 1.4, '31': 1.4, '37': 1.4, '42': 2.2, '47': 2.2, '53': 2.0, '59': 1.4, '62': 2.4, '66': 2.4, '75': 2.0, '78': 1.4, '83': 1.8, '87': 1.6, '92': 1.6, '94': 2.0, '98': 1.6, '100': 2.0 }; const _old = { '12': 1.2, '19': 1.2, '26': 1.2, '27': 1.6, '33': 1.2, '38': 1.5, '40': 1.4, '41': 1.4, '45': 1.4, '49': 1.2, '66': 1.0, '70': 1.2, '73': 1.2, '74': 1.6, '75': 1.4, '77': 1.0, '79': 1.2, '83': 1.4, '84': 1.6, '85': 1.4 };
+  if (process.env.SHOTS) { Object.keys(shots).forEach(k => delete shots[k]); process.env.SHOTS.split(',').forEach(k => shots[k] = 2.6); }
+  if (process.env.SHOTS_ALL) { // 每一句都拍（給逐句審稿用）；有句中換畫面的句子多拍一張
+    for (let i = 1; i <= 104; i++) shots[String(i).padStart(2, '0')] = 1.6;
+    ['32', '53', '62', '64', '66', '82'].forEach(k => shots[k] = [1.0, 3.4]);
+  }
   const t0 = Date.now();
   const shotDone = {};
   while (true) {
@@ -123,8 +128,11 @@ for (const it of manifest.items) {
     const k = m ? String(+m[1]).padStart(2, '0') : null;
     if (k && shots[k] !== undefined && !shotDone[k]) {
       shotDone[k] = 1;
-      await page.waitForTimeout(Math.round(shots[k] * 1000));
-      await page.screenshot({ path: path.join(path.dirname(OUT), 'shot_' + k + '.png') });
+      const ts = [].concat(shots[k]); let prevT = 0;
+      for (let n = 0; n < ts.length; n++) {
+        await page.waitForTimeout(Math.round((ts[n] - prevT) * 1000)); prevT = ts[n];
+        await page.screenshot({ path: path.join(path.dirname(OUT), 'shot_' + k + (ts.length > 1 ? String.fromCharCode(97 + n) : '') + '.png') });
+      }
     }
     await page.waitForTimeout(100);
   }
