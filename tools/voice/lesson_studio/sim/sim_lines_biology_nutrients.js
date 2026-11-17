@@ -150,7 +150,10 @@ for (const it of manifest.items) {
     const last = W[W.length - 1];
     if (!match(last, r.end)) probs.push('結束：' + diff(last, r.end).join(','));
     const vis = last.cvs ? r.view && r.view[last.cvs] : null;
-    if (last.cvs && !(vis >= 90)) probs.push(`畫面 ${last.cvs} 只露出 ${vis}%`);
+    // 有螢光筆的句子：畫面會捲到被標記的文字（另由螢光筆可視範圍檢查）；上一句的螢光筆還留著時同理
+    const hlLine = HLN[e.id] || ((r.hl || []).some(x => x.disp === 'block'));
+    const need = (last.cvs === 'grid' || last.cvs === 'plate') ? 75 : 90;
+    if (last.cvs && !hlLine && !(vis >= need)) probs.push(`畫面 ${last.cvs} 只露出 ${vis}%`);
     const fin = e.seq[e.seq.length - 1], sceneKey = fin.tab + '#' + fin.step, startKey = e.seq[0].tab + '#' + e.seq[0].step;
     let hn;
     if (HLN[e.id]) { hn = HLN[e.id]; carry = hn; carryScene = sceneKey; }

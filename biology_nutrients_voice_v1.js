@@ -275,7 +275,8 @@
     cur = { tab: tab, sub: sub, step: stepNo };
     if (prev.tab !== tab || prev.step !== stepNo) hlClear(); // 換畫面：上一個畫面的標記線收掉
     var nv = viewOf(key, stepNo), pv = viewOf(prevKey, prev.step);
-    if (nv && nv.topEl && (changedTab || !pv || pv.k !== nv.k)) bringIntoView(nv);
+    // 換了畫面（含同一實驗換步驟）就確認它在字幕框上方；已經看得到時 bringIntoView 不會動（螢光筆把畫面捲到下面的說明後，下一步要捲回來）
+    if (nv && nv.topEl && (changedTab || !pv || pv.k !== nv.k || prev.step !== stepNo)) bringIntoView(nv);
   }
   var goto = sceneOf;
   function snapshotLive() {

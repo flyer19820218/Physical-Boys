@@ -1,6 +1,6 @@
 # 有聲講解自動錄音（彥君 × 曉臻）：推到 *-audio 分支時，GitHub 的伺服器用 edge-tts 把缺的句子錄好，再存回同一個分支。
 #   ・只錄 audio/<課>/manifest.json 裡「還沒有 mp3」的句子（已經錄好的不重錄）
-#   ・No audio was received（微軟暫時限流）就自動重跑，最多 4 輪
+#   ・No audio was received（微軟暫時限流）就自動重跑，最多 6 輪
 #   ・用 GITHUB_TOKEN 推回去，不會再觸發自己（不會無限循環）
 # 雲端 Claude 的網路若已允許 speech.platform.bing.com，可以直接在對話裡跑 cloud_tts.py，不必靠這支。
 name: 有聲講解自動錄音
@@ -52,11 +52,11 @@ jobs:
           EOF
           cat "$GITHUB_OUTPUT"
 
-      - name: 錄音（缺的才錄，最多 4 輪）
+      - name: 錄音（缺的才錄，最多 6 輪）
         if: steps.what.outputs.lessons != ''
         run: |
           for L in ${{ steps.what.outputs.lessons }}; do
-            for i in 1 2 3 4; do
+            for i in 1 2 3 4 5 6; do
               echo "=== $L 第 $i 輪"
               python3 tools/voice/lesson_studio/cloud_tts.py "$L" | tail -20
               python3 - "$L" <<'EOF' && break
@@ -67,7 +67,7 @@ jobs:
           print('還缺', len(miss), miss[:10])
           sys.exit(1 if miss else 0)
           EOF
-              sleep 20
+              sleep 60
             done
           done
 
