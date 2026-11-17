@@ -372,28 +372,33 @@
   function elR(sel) { return R_(function () { return [document.querySelector(sel)]; }); }
   function txt(root, re) { return function () { var r = typeof root === 'function' ? root() : document.querySelector(root); return textRect(r, re)(); }; }
   function eline(n) { return R_(function () { var e = $('energy-readout'); return [e && e.querySelectorAll('.energy-line')[n]]; }); }
+  // 螢光筆只框「字」本身：用文字範圍量（每行一個框、貼著字），不要用整個區塊元素的外框——
+  // 區塊元素（<p>、<div>）會撐滿整欄寬，「9 大卡／g」後面拖一條長長的空白框（老師 2026-11-17：「只畫重點」）。
+  function ink(sel) { return function () { var r = document.querySelector(sel); return r ? textRect(r, /\S[\s\S]*\S|\S/)() : null; }; }
   var RECT = {
-    focusMetric: elR('#focus-nutrient-text .metric'),
+    focusMetric: ink('#focus-nutrient-text .metric'),
     waterZero: txt('#focus-nutrient-text', /零熱量不代表不重要/),
     vitA: txt('#focus-nutrient-text', /缺乏維生素 ?A ?可能影響暗處視力/),
     vitC: txt('#focus-nutrient-text', /缺乏 ?C ?可能造成壞血病/),
-    eggTags: elR('#food-insight'),
-    e1: eline(0), e2: eline(1), e3: eline(2), eTot: elR('#energy-readout .metric'),
+    eggTags: R_(function () { return Array.prototype.slice.call(document.querySelectorAll('#food-insight .nutrient-tag')); }),
+    e1: ink('#energy-readout .energy-line:nth-child(1)'), e2: ink('#energy-readout .energy-line:nth-child(2)'),
+    e3: ink('#energy-readout .energy-line:nth-child(3)'), eTot: ink('#energy-readout .metric'),
     unit: txt('#lesson-1', /1 大卡＝1 kcal＝1000 cal/),
-    waterCalc: elR('#water-energy'),
-    burnSafe: elR('#lesson-1 .safety'),
-    ioResult: elR('#result-iodine'),
-    ioSafe: elR('#lesson-2 .safety'),
-    bathLead: txt('#lesson-3', /水浴的水位高於管內液面；兩組都加熱，才公平比較。/),
-    beSafe: elR('#lesson-3 .safety'),
+    waterCalc: ink('#water-energy'),
     heatLoss: txt('#lesson-1', /因此水吸收的熱量不等於食物全部的熱量。/),
-    beResult: elR('#result-benedict strong'),
+    burnSafe: ink('#lesson-1 .safety'),
+    ioResult: ink('#result-iodine strong'),
+    ioSafe: ink('#lesson-2 .safety'),
+    bathLead: txt('#lesson-3', /水浴的水位高於管內液面；兩組都加熱，才公平比較。/),
+    beSafe: ink('#lesson-3 .safety'),
+    beResult: ink('#result-benedict strong'),
     sucrose: txt('#lesson-3', /蔗糖直接檢驗通常為陰性/),
-    labelKcal: R_(function () { var f = $('label-facts'); return [f && f.lastElementChild]; }),
-    labelConc: elR('#label-conclusion'),
-    mealMiss: R_(function () { var f = $('meal-feedback'); return [f && f.querySelector('p')]; }),
+    labelKcal: R_(function () { var f = $('label-facts'); return [f && f.lastElementChild && f.lastElementChild.querySelector('b')]; }),
+    labelConc: ink('#label-conclusion'),
+    mealMiss: ink('#meal-feedback p'),
     mealMore: txt('#meal-feedback', /份量、乳品或其他鈣來源等仍需另外評估/)
   };
+
   // 每句要畫的標記：{ 句號: [{ s: 從句子裡的哪幾個字開始, e: 到哪幾個字結束, k: RECT 的名稱 }] }；
   // 播放時用 s、e 在這句台詞裡的位置換算成音檔播放比例（0～1），唸到那裡才畫。
   var HLSPEC = {
@@ -459,8 +464,11 @@
       e.style.cssText = 'position:absolute;display:none;border-radius:9px;background:rgba(255,224,102,.45);box-shadow:0 0 8px rgba(255,224,102,.35);transform:rotate(-.6deg);transform-origin:left center';
       hlLayer.appendChild(e); g.els.push(e); return e;
     }
+    var mySrc = a.src;   // 這一句的音檔；播放器只有一個 Audio，下一句會換 src
     hlTimer = setInterval(function () {
-      var live = (my === token);
+      // 「這一句還在唸」＝同一次播放（token）而且 Audio 還是這一句的音檔、還沒播完。
+      // 只看 token 是錯的：下一句沿用同一個 Audio，舊的線會跟著下一句的進度從頭再畫一次（2026-11-17 老師抓到：維生素 A 畫兩次、C 只畫一點點）。
+      var live = (my === token) && a.src === mySrc && !a.ended;
       if (!live && !hlExpire) hlExpire = Date.now() + 14000;
       if (hlExpire && Date.now() > hlExpire) { hlClear(); return; }
       var d = a.duration, ct = a.currentTime || 0;

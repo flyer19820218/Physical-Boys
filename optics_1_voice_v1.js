@@ -375,8 +375,11 @@
       e.style.cssText = 'position:absolute;display:none;border-radius:9px;background:rgba(255,224,102,.45);box-shadow:0 0 8px rgba(255,224,102,.35);transform:rotate(-.6deg);transform-origin:left center';
       hlLayer.appendChild(e); g.els.push(e); return e;
     }
+    var mySrc = a.src;   // 這一句的音檔；播放器只有一個 Audio，下一句會換 src
     hlTimer = setInterval(function () {
-      var live = (my === token);
+      // 「這一句還在唸」＝同一次播放（token）而且 Audio 還是這一句的音檔、還沒播完。
+      // 只看 token 是錯的：下一句沿用同一個 Audio，舊的線會跟著下一句的進度從頭再畫一次（2026-11-17 在 biology_nutrients 抓到）。
+      var live = (my === token) && a.src === mySrc && !a.ended;
       if (!live && !hlExpire) hlExpire = Date.now() + 14000;
       if (hlExpire && Date.now() > hlExpire) { hlClear(); return; }
       var d = a.duration, ct = a.currentTime || 0;
