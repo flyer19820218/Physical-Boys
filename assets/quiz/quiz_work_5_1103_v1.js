@@ -3,6 +3,34 @@ const LQ=window.LessonQuiz;
 if(!LQ||!LQ.addStatic)return;
 const {P,Q}=LQ;
 LQ.addStatic('work_5',{
+'#sv-classify':[
+Q(P('下列哪一組全部都是「再生能源」？','Which group is entirely renewable energy?'),
+[P('煤、石油、天然氣','Coal, oil, natural gas'),P('風、水、太陽','Wind, water, sunlight'),P('石油、風、鈾','Oil, wind, uranium'),P('太陽、核燃料、潮汐','Sun, nuclear fuel, tides')],1,
+P('風、水、太陽都能循環利用，是再生能源；其餘組別混入了煤、石油、鈾或核燃料。','Wind, water and sunlight can be reused. The other groups include coal, oil, uranium or nuclear fuel.'),
+P('再生能源可以循環使用、較無枯竭問題。','Renewable sources can be reused and do not run out easily.')),
+Q(P('「能量」在物理上被定義為什麼？','How is energy defined in physics?'),
+[P('物體運動的快慢程度','How fast an object moves'),P('物體能作功的能力','Capacity to perform work'),P('物體含有物質多寡','How much matter it holds'),P('電流通過的難易度','How easily current flows')],1,
+P('能量是作功的能力，能提供能量的資源就叫能源。','Energy is the ability to do work; a resource that supplies it is an energy source.'),
+P('回想「能量」這個字原本的意思：活動的力量。','Recall the original meaning of the word: the force behind activity.')),
+Q(P('地球上人類能用的能源，絕大部分最終來自哪裡？','Where does most of the energy humans use ultimately come from?'),
+[P('太陽的輻射','Solar radiation'),P('地球內部的鈾','Uranium inside Earth'),P('月球的引力','The Moon\'s pull'),P('海洋的潮汐','The ocean tides')],0,
+P('化石燃料、風力、水力、生質能都來自太陽；核能、地熱與潮汐只占一小部分。','Fossil fuels, wind, water and biomass all come from the Sun; nuclear, geothermal and tides are only a small part.'),
+P('想想化石燃料的祖先、風和水循環是被什麼推動的。','Think about what powered ancient life, wind and the water cycle.'))
+],
+'#sv-thermal':[
+Q(P('火力發電的能量轉換順序，下列哪一個正確？','Which is the correct order of energy conversion in thermal power?'),
+[P('熱能→化學能→動能→電能','Heat → chemical → kinetic → electrical'),P('動能→熱能→化學能→電能','Kinetic → heat → chemical → electrical'),P('化學能→熱能→動能→電能','Chemical → heat → kinetic → electrical'),P('化學能→動能→熱能→電能','Chemical → kinetic → heat → electrical')],2,
+P('燃料的化學能經燃燒變成熱，熱把水煮成蒸氣推動渦輪，渦輪再帶動發電機。','Fuel\'s chemical energy becomes heat, the steam spins the turbine, and the turbine drives the generator.'),
+P('順著燃料到插座的路線，一步一步想。','Follow the path from the fuel to the socket, one step at a time.')),
+Q(P('煤、石油和天然氣為什麼被稱為「化石燃料」？','Why are coal, oil and natural gas called fossil fuels?'),
+[P('遠古生物經地底高溫高壓轉變而成','Ancient life changed by heat and pressure'),P('由岩石裡的礦物經過開採提煉而成','Minerals mined from rock and refined'),P('只存在於恐龍化石出土的那些地方','Found only where dinosaur fossils appear'),P('燃燒後會留下像化石一樣的灰燼','Leave behind ash that looks like a fossil')],0,
+P('化石燃料是古代生物死後埋在地底，經高溫、高壓逐漸轉化而成。','Fossil fuels formed from ancient organisms buried underground and slowly changed by heat and pressure.'),
+P('「化石」代表很久以前的生物遺留。','"Fossil" points to remains of ancient life.')),
+Q(P('比較燃氣發電和燃煤發電，下列哪一項正確？','Comparing gas-fired and coal-fired power, which is correct?'),
+[P('燃氣發電完全不會排放任何二氧化碳','Gas plants emit no carbon dioxide at all'),P('燃氣發電二氧化碳排放約為燃煤六成','Gas emits about 60% as much CO₂ as coal'),P('燃氣發電所用的燃料比燃煤更便宜','Gas fuel costs less than coal fuel does'),P('燃氣的運輸與儲存比燃煤更加安全','Gas is safer to move and store than coal')],1,
+P('天然氣燃燒仍會排放二氧化碳，約是燃煤的 60%；燃料成本較高，運輸儲存也較危險。','Gas still emits carbon dioxide, about 60% of coal; its fuel costs more and it is riskier to move and store.'),
+P('看看表格裡「二氧化碳排放」那一列。','Check the carbon dioxide row of the table.'))
+],
 '#sv-fission':[
 Q(P('鈾-235 吸收一顆中子後，分裂成鋇-141、氪-92 和幾顆中子？','Uranium-235 absorbs a neutron and splits into barium-141, krypton-92 and how many neutrons?'),
 [P('1 顆','1 neutron'),P('3 顆','3 neutrons'),P('0 顆','0 neutrons'),P('6 顆','6 neutrons')],1,
