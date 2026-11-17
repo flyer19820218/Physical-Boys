@@ -28,7 +28,7 @@ function want(tab, sub, step) {
   step = step || 1;
   const n = +tab.slice(7), w = { tab: n };
   if (n === 0) { if (step <= 6) { w.nutrient = NUT[step - 1]; w.cvs = 'focus'; } else if (step <= 12) { w.food = FOOD[step - 7]; w.cvs = 'food'; } else w.cvs = 'grid'; }
-  else if (n === 1) { if (step === 1) w.macro = '50,30,5'; else if (step === 2) w.macro = '10,10,10'; else { w.open = true; w.water = '10'; } w.cvs = step <= 2 ? 'energy' : 'water'; }
+  else if (n === 1) { if (step <= 5) w.macro = ['0,0,0', '50,0,0', '50,30,0', '50,30,5', '10,10,10'][step - 1]; else { w.open = true; w.water = step === 6 ? '0' : '10'; } w.cvs = step <= 5 ? 'energy' : 'water'; }
   else if (n === 2 || n === 3) { if (step < 10) step = (n === 2 ? 1 : 2) * 10 + step; w.sample = SAMPLE[Math.floor(step / 10) - 1]; w.lstep = (step % 10) - 1; w.cvs = 'lab'; }
   else { if (step <= 2) { w.serving = step === 1 ? 50 : 100; w.cvs = 'label'; } else { w.meal = MEAL[step]; w.cvs = step === 3 ? 'plate' : 'meal'; } }
   return w;
@@ -79,14 +79,14 @@ for (const it of manifest.items) {
       const bub = document.querySelector('.vx-bub'); const top = bub ? bub.getBoundingClientRect().top : innerHeight;
       return Math.round(Math.max(0, Math.min(r.bottom, top) - Math.max(r.top, 0)) / Math.max(1, Math.min(r.height, top - Math.max(0, 40))) * 100); };
     class FakeAudio {
-      constructor() { this._t0 = 0; this.duration = NaN; this.paused = true; this.onended = null; this.onerror = null; this.dataset = {}; this.preload = 'auto'; this._src = ''; this._poll = 0; }
+      constructor() { this._t0 = 0; this.duration = NaN; this.paused = true; this.onended = null; this.onerror = null; this.dataset = {}; this.preload = 'auto'; this._src = ''; this._poll = 0; this.ended = false; }
       set src(v) { this._src = v; } get src() { return this._src; }
       get currentTime() { return this.paused || !this._t0 ? 0 : (performance.now() - this._t0) / 1000; }
       set currentTime(v) {}
       play() {
         const self = this, src = this._src, txt = (document.querySelector('.vx-txt') || {}).textContent || '';
         this.duration = Math.min(3, Math.max(1.5, txt.length * 0.07));
-        this.paused = false; this._t0 = performance.now();
+        this.paused = false; this.ended = false; this._t0 = performance.now();
         const rec = { src, start: window.__snap(), polls: [] };
         window.__log.push(rec);
         clearInterval(this._poll);
@@ -98,13 +98,25 @@ for (const it of manifest.items) {
           rec.panelTop = (document.querySelector('.vx-bub') || { getBoundingClientRect: () => ({ top: innerHeight }) }).getBoundingClientRect().top;
           rec.end = window.__snap(); rec.view = {};
           ['focus', 'food', 'grid', 'energy', 'water', 'lab', 'label', 'plate', 'meal'].forEach(id => rec.view[id] = window.__inView(id));
-          self.paused = true; if (self.onended) self.onended();
+          self.paused = true; self.ended = true; if (self.onended) self.onended();
         }, this.duration * 1000);
         return Promise.resolve();
       }
       pause() { this.paused = true; }
     }
     window.Audio = FakeAudio;
+    // 螢光筆時間軸：每 40 ms 記下每一條線的寬度與當下是第幾句（抓「下一句時舊線重畫」這種錯）
+    window.__hl = {}; let hlN = 0;
+    setInterval(() => {
+      const line = window.__log.length, src = (window.__log[line - 1] || {}).src || '';
+      document.querySelectorAll('.vx-hl').forEach(e => {
+        if (!e.dataset.hid) e.dataset.hid = String(++hlN);
+        const w = e.style.display === 'none' ? 0 : Math.round(parseFloat(e.style.width) || 0);
+        const rec = window.__hl[e.dataset.hid] || (window.__hl[e.dataset.hid] = { src, ws: [] });
+        const last = rec.ws[rec.ws.length - 1];
+        if (!last || last[1] !== w) rec.ws.push([line, w, (window.__log[line - 1] || {}).src || '']);
+      });
+    }, 40);
   });
   await page.goto('http://127.0.0.1:8803/biology_nutrients.html?v=sim' + Date.now(), { waitUntil: 'load' });
   await page.waitForSelector('.vx-open', { timeout: 15000 });
@@ -117,6 +129,7 @@ for (const it of manifest.items) {
   if (process.env.SHOTS_ALL) { // 每一句都拍（給逐句審稿用）；有句中換畫面的句子多拍一張
     for (let i = 1; i <= 104; i++) shots[String(i).padStart(2, '0')] = 1.6;
     ['32', '53', '62', '64', '66', '82'].forEach(k => shots[k] = [1.0, 3.4]);
+    Object.keys(HLN).forEach(k => shots[String(+k).padStart(2, '0')] = [1.0, 2.6]);   // 螢光筆句：開頭一張、畫完一張
   }
   const t0 = Date.now();
   const shotDone = {};
@@ -138,6 +151,7 @@ for (const it of manifest.items) {
   }
   const log = await page.evaluate(() => window.__log);
   const teacherSeen = await page.evaluate(() => window.__teacherSeen);
+  const hlTrack = await page.evaluate(() => window.__hl);
   await browser.close();
 
   const NOSTATE = ['cvs', 'lstep'];
@@ -176,5 +190,22 @@ for (const it of manifest.items) {
   fs.writeFileSync(OUT, JSON.stringify({ rows, teacherSeen, errors }, null, 1));
   console.log('mode-teacher 出現次數：', teacherSeen);
   console.log('mismatches:', bad);
+  // 螢光筆時間軸檢查：每條線只能在「自己那一句」裡從 0 畫到滿；之後寬度不可以再縮小又變大（＝被下一句重畫）
+  let hlBad = 0;
+  const idOf = src => { const m = (src || '').match(/(\d{3})_/); return m ? String(+m[1]).padStart(2, '0') : '?'; };
+  Object.keys(hlTrack).forEach(k => {
+    const ws = hlTrack[k].ws.filter(x => x[1] > 0);
+    if (!ws.length) return;
+    const own = ws[0][2], max = Math.max(...ws.map(x => x[1]));
+    const fullAt = ws.find(x => x[1] >= max - 1);
+    let regrow = false, prev = 0, peaked = false;
+    hlTrack[k].ws.forEach(x => { if (peaked && x[1] > prev + 1 && prev < max - 1) regrow = true; if (x[1] >= max - 1) peaked = true; prev = x[1]; });
+    // 畫到句尾的線，最後一格可能剛好落在下一句開頭（句子一結束就補滿）：只有下一句還在「慢慢畫」才算太晚
+    const after = ws.filter(x => x[2] !== own);
+    const late = after.length > 1;
+    if (regrow || late) { hlBad++; console.log(`✗ 螢光筆 #${k}（第 ${idOf(own)} 句開始畫）` + (late ? ` 到第 ${idOf(fullAt[2])} 句才畫滿` : '') + (regrow ? ' 畫滿後又被重畫' : '')); }
+  });
+  if (process.env.HLDUMP) console.log(JSON.stringify(Object.values(hlTrack).slice(0, 4).map(r => r.ws.map(x => [x[0], x[1], (x[2].match(/(\d{3})_/) || [])[1]]))));
+  console.log('螢光筆條數：', Object.keys(hlTrack).length, '有問題：', hlBad);
   console.log('js errors:', errors.length ? errors : 'none');
 })().catch(e => { console.error('FAIL', e); process.exit(1); });
