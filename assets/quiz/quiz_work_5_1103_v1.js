@@ -3,6 +3,106 @@ const LQ=window.LessonQuiz;
 if(!LQ||!LQ.addStatic)return;
 const {P,Q}=LQ;
 LQ.addStatic('work_5',{
+/*NEW45*/
+'#sv-hydrowind':[
+Q(P('水力發電的能量轉換順序，下列哪一個正確？','Which is the correct order of energy conversion in hydropower?'),
+[P('動能→重力位能→電能','Kinetic → gravitational PE → electrical'),P('化學能→動能→電能','Chemical → gravitational PE → electrical'),P('重力位能→動能→電能','Gravitational PE → kinetic → electrical'),P('熱能→動能→電能','Heat → gravitational PE → electrical')],2,
+P('高處的水有重力位能，往下衝時變成動能，推動水輪機與發電機而得到電能。','Water held high has gravitational potential energy; rushing down it becomes kinetic energy, which turns the turbine and generator into electrical energy.'),
+P('先想水原本站在高處還是低處，再想水流推動什麼。','First think about whether the water starts high or low, then what the flow pushes.')),
+Q(P('風是怎麼形成的？','How does wind form?'),
+[P('月球的引力把空氣拉向海邊，造成空氣流動','The Moon pulls air toward the coast, so the air starts moving'),P('地球自轉把空氣由低氣壓處甩向高氣壓處，形成風','Earth\'s spin flings air from low pressure toward high pressure'),P('陽光照射不均使氣壓不同，空氣由高壓往低壓流','Uneven sunlight changes pressure, so air moves from high to low'),P('海水蒸發使空氣由低氣壓處流向高氣壓處','Evaporating seawater drives air from low to high pressure zones')],2,
+P('各地受熱不均，產生氣壓差，空氣從高氣壓流向低氣壓就是風；風速越快，動能越大。','Uneven heating creates pressure differences, and air moving from high to low pressure is wind. The faster the wind, the more kinetic energy.'),
+P('看第 3 步：風的源頭是陽光，空氣往哪個方向流？','See step 3: the source is sunlight. Which way does the air flow?')),
+Q(P('台灣的水力發電發展有限，主要原因是什麼？','Why is hydropower limited in Taiwan?'),
+[P('河川太長又太平緩，水流動得太慢','Rivers are long and gentle, so water moves slowly'),P('水力發電過程會排放大量二氧化碳','Hydropower releases a lot of carbon dioxide gas'),P('台灣降雨量太少，河水幾乎都乾涸了','Rainfall is so scarce that rivers are nearly dry'),P('河川又短又急，較難蓄積大量的水','Rivers are short and steep and store little water')],3,
+P('台灣河川又短又急，雨水很快流進海裡，能蓄起來的水有限，所以水力較難擴大。','Taiwan\'s rivers are short and steep, so rain reaches the sea quickly and little can be stored, which limits hydropower.'),
+P('看第 2 步，想想台灣河川的長相。','See step 2 and picture what Taiwan\'s rivers look like.'))
+],
+'#sv-solar':[
+Q(P('下列哪一種裝置，是把太陽能轉成「電能」？','Which device turns solar energy into electrical energy?'),
+[P('太陽能熱水器','Solar water heater'),P('太陽爐','Solar cooker oven'),P('太陽能板','Solar panel array'),P('曬衣服的陽台','Sunny drying balcony')],2,
+P('太陽能板把光能直接轉成電能；熱水器與太陽爐是把太陽能變成熱能。','A solar panel turns light directly into electricity; water heaters and cookers turn solar energy into heat.'),
+P('看第 1、2 步：哪一個得到的是電，哪一個得到的是熱？','See steps 1 and 2: which gives electricity and which gives heat?')),
+Q(P('為什麼有些太陽能板會架在水面上（例如魚塭）？','Why are some solar panels placed over water, such as fish ponds?'),
+[P('節省土地，水的蒸發還能幫板子降溫','It saves land, and evaporation cools the panels'),P('水面的高溫可以讓太陽能板發電更快','The hot water surface makes panels generate faster'),P('水面能把夜晚的月光反射給太陽能板','The water reflects moonlight onto the panels'),P('水會把板子發出的電先儲存起來備用','The water stores the electricity panels make')],0,
+P('太陽能板溫度越高效率越低；水面既不占陸地，蒸發又能降溫，效率就比較好。','The hotter a panel, the lower its efficiency; water saves land and evaporation cools the panel, so efficiency stays higher.'),
+P('看第 3 步：溫度和發電效率是什麼關係？','See step 3: how are temperature and efficiency related?')),
+Q(P('下列哪一項「不是」太陽能發電的方法？','Which is NOT a way to generate power from sunlight?'),
+[P('用太陽能電池把光直接轉成電流','Using solar cells to turn light straight into current'),P('用集熱板產生蒸氣來推動渦輪發電機','Using collectors to make steam that spins a turbine'),P('用陽光分解水再以氫氣當作發電燃料','Splitting water with sunlight and using hydrogen as fuel'),P('抽取地底深處的熱水蒸氣推動渦輪','Pumping hot steam from underground to spin a turbine')],3,
+P('抽地熱水蒸氣是地熱發電，能量來自地底；其餘三種都以陽光為能量來源。','Pumping geothermal steam is geothermal power, with energy from underground; the other three all use sunlight.'),
+P('看第 4 步列出的三種方法，找出能量來源不是太陽的。','See the three methods in step 4 and find the one whose energy does not come from the Sun.'))
+],
+'#sv-biomass':[
+Q(P('植物行光合作用時，主要的能量轉換是什麼？','What is the main energy conversion in photosynthesis?'),
+[P('化學能→光能','Chemical → light energy'),P('熱能→化學能','Heat → chemical energy'),P('光能→化學能','Light → chemical energy'),P('化學能→熱能','Chemical → heat energy')],2,
+P('植物吸收陽光製造葡萄糖，把光能儲存成化學能；之後燃燒才是化學能→熱能。','Plants absorb sunlight and make glucose, storing light as chemical energy; burning later is chemical → heat.'),
+P('看第 1 步：能量從哪裡來、存到哪裡去？','See step 1: where does the energy come from and where is it stored?')),
+Q(P('下列哪一項屬於「生質能」？','Which of these is biomass energy?'),
+[P('畜牧排泄物發酵產生的沼氣','Biogas from fermented livestock waste'),P('地底深處抽出的熱水與蒸氣','Hot water and steam pumped from underground'),P('海邊漲潮與退潮的水位落差','The water-level gap between the tides'),P('黑潮流過時帶動扇葉的海水','Kuroshio seawater turning underwater blades')],0,
+P('生質能是利用生物產生的有機物質轉成的能源，例如沼氣、木屑與生質酒精。','Biomass energy comes from organic matter made by living things, such as biogas, wood chips and bio-alcohol.'),
+P('看第 2 步：哪一個和生物的排泄物或殘留物有關？','See step 2: which one comes from the waste or remains of living things?')),
+Q(P('把畜牧排泄物拿來發電，有什麼好處？','What is a benefit of generating power from livestock waste?'),
+[P('讓廢棄物變成可再利用的能源','Waste turns into a reusable energy source'),P('發電時完全不會排放任何氣體','No gas at all is released as it generates'),P('可以一次取代所有的化石燃料','It can replace every fossil fuel at once'),P('不需要發酵就能直接產生電力','It makes power directly with no fermenting')],0,
+P('排泄物發酵產生沼氣，再把化學能轉成熱能或電能，廢棄物就有了第二次用途。','Waste ferments into biogas, whose chemical energy becomes heat or electricity, giving waste a second use.'),
+P('看第 2 步：排泄物經過發酵後會變成什麼？','See step 2: what does the waste turn into after fermenting?'))
+],
+'#sv-geo':[
+Q(P('地熱發電是怎麼做的？','How does geothermal power work?'),
+[P('在地表鋪太陽能板，收集地底散出的熱','Lay solar panels on the ground to catch heat from below'),P('引海水沖擊地底岩層，利用衝擊產生動能','Send seawater against underground rock for kinetic energy'),P('抽取地底熱水蒸氣推動渦輪，用完再回注','Pump up hot steam to spin a turbine, then re-inject it'),P('把地底的天然氣抽上來，燃燒後推動渦輪','Pump up underground gas and burn it to spin a turbine')],2,
+P('地熱發電直接利用地底深處的熱水與蒸氣推動渦輪，水再回注，所以能穩定發電。','Geothermal plants use hot water and steam from deep underground to spin a turbine, then re-inject the water, so output is steady.'),
+P('看第 1 步：蒸氣推動的是哪個部件，用完的水去哪裡？','See step 1: which part does the steam push, and where does the used water go?')),
+Q(P('洋流發電與潮汐發電，分別利用什麼形式的能量？','Which forms of energy do ocean-current power and tidal power use?'),
+[P('洋流的重力位能；潮汐的動能','Current gravitational PE; tidal kinetic energy'),P('洋流的動能；潮差的重力位能','Current kinetic energy; tidal gravitational PE'),P('洋流的熱能；潮汐的化學能','Current heat energy; tidal chemical energy'),P('洋流的光能；潮汐的熱能','Current light energy; tidal heat energy')],1,
+P('洋流發電和風力、水力很像，靠海水流動的動能；潮汐發電靠漲退潮的水位差，也就是重力位能。','Current power resembles wind and hydro, using the kinetic energy of flowing seawater; tidal power uses the water-level difference, a gravitational potential energy.'),
+P('看第 2、3 步：一個是「流動」，一個是「高低差」。','See steps 2 and 3: one is about flowing, the other about height difference.')),
+Q(P('在地熱、洋流、潮汐三種發電中，台灣目前已進入商業運轉的是哪一種？','Among geothermal, ocean-current and tidal power, which is already in commercial operation in Taiwan?'),
+[P('洋流發電','Ocean-current power'),P('潮汐發電','Tidal-range power'),P('全部都是','All three of them'),P('地熱發電','Geothermal energy')],3,
+P('目前只有地熱發電進入商業運轉；洋流與潮汐仍在研發、實驗階段。','Only geothermal power is in commercial operation; current and tidal power are still being researched and tested.'),
+P('看第 4 步：哪一種已經商業運轉？','See step 4: which one is already in commercial operation?'))
+],
+'#sv-mix':[
+Q(P('2005 年台灣的發電結構中，占比最大的是哪一種發電？','In the 2005 power mix, which kind of plant has the largest share?'),
+[P('燃氣發電','Gas-fired plants'),P('燃煤發電','Coal-fired plants'),P('核能發電','Nuclear power plants'),P('燃油發電','Oil-fired plants')],1,
+P('2005 年煤占 45%，天然氣占 31%，核能占 14%。','In 2005 coal had 45%, natural gas 31% and nuclear 14%.'),
+P('看第 1 步的圓餅圖，哪一塊最大？','See step 1 and find the largest slice.')),
+Q(P('2025 年不可循環使用的能源（煤、石油、天然氣、核能）合計占多少？','In 2025, what share do non-reusable sources (coal, oil, gas, nuclear) make up together?'),
+[P('96%','96%'),P('12%','12%'),P('88%','88%'),P('99%','99%')],2,
+P('1＋36＋3＋48＝88%；也可以用 100%－12%（再生能源）算。96% 是 2005 年的數字。','1 + 36 + 3 + 48 = 88%, or 100% − 12% (renewables). 96% is the 2005 figure.'),
+P('看第 3 步：把 2025 年那四種能源的占比加起來。','See step 3: add the four 2025 shares.')),
+Q(P('2005 年平均每度電的碳排放約多少？（燃煤 900 g、燃油 750 g、燃氣 400 g）','What was the average carbon per kWh in 2005? (coal 900 g, oil 750 g, gas 400 g)'),
+[P('約 683 g','About 683 g'),P('約 574 g','About 574 g'),P('約 538.5 g','About 538.5 g'),P('約 463 g','About 463 g')],1,
+P('0.45×900＋0.06×750＋0.31×400＝574 g。683 g 是把三個碳排放數字直接平均，忘了占比；538.5 g 是 2025 年。','0.45×900 + 0.06×750 + 0.31×400 = 574 g. 683 g averages the three figures without shares; 538.5 g is the 2025 value.'),
+P('看第 4 步：用「占比 × 每度電碳排放」再相加。','See step 4: multiply share by carbon per kWh, then add.'))
+],
+'#sv-newtech':[
+Q(P('離岸風電與陸域風電相比，離岸風電有什麼特點？','What is a feature of offshore wind compared with onshore wind?'),
+[P('海上風速較快較穩，可發電時數較長','Faster, steadier wind at sea means more running hours'),P('開發成本比陸域風電低很多，建設更省','Development costs far less than onshore wind farms do'),P('完全不會影響任何海洋生物，連噪音都沒有','No effect on any marine life, not even noise at all'),P('一年四季發電量都不受天候影響','Output is never affected by weather in any season')],0,
+P('海上風速較快、較穩定，可發電時數較長，但開發成本較高，也可能影響海洋生物。','Winds at sea are faster and steadier, giving more running hours, but development costs more and marine life may be affected.'),
+P('看第 1 步：海上和陸地的風有什麼不同？','See step 1: how do wind at sea and on land differ?')),
+Q(P('氫燃料電池車的能量轉換與產物，下列哪一項正確？','Which statement about a hydrogen fuel-cell car is correct?'),
+[P('氫氣燃燒推動活塞，熱能轉成動能，產物是汽油','Hydrogen burns to push pistons, giving heat and gasoline'),P('氫氣被太陽照射後，光能轉成電能，產物是氧氣','Sunlit hydrogen turns light into electricity and oxygen'),P('氫與氧反應產生電和水，化學能轉成電能的過程','Hydrogen and oxygen react to give electricity and water'),P('氫分解成氦，核能轉成電能，產物是放射性廢料','Hydrogen turns into helium, leaving radioactive waste')],2,
+P('燃料電池把氫與氧通入電池設備，化學能→電能，產物幾乎只有水；目前製造氫的成本仍高。','A fuel cell feeds hydrogen and oxygen in, chemical to electrical energy, with almost only water produced; making hydrogen is still costly.'),
+P('看第 3 步：氫＋氧→？','See step 3: hydrogen + oxygen → ?')),
+Q(P('關於純電動車，下列哪一項正確？','Which statement about battery-electric cars is correct?'),
+[P('有引擎、電池與馬達，引擎燒汽油提供動力','Engine, battery and motor, and the engine burns petrol for power'),P('電池加馬達、沒有引擎，製造與發電仍排碳','Battery and motor, no engine, yet making it still emits carbon'),P('從製造到行駛完全沒有任何碳足跡','No carbon footprint at all from manufacture to driving'),P('靠氫與氧反應，直接產生行駛用的電','Hydrogen reacting with oxygen to make driving power')],1,
+P('純電動車沒有引擎、行駛時不排廢氣，但製造車輛與電池、發電的過程仍排放二氧化碳，所以仍有碳足跡。','Battery-electric cars have no engine and no exhaust, but making the car and battery and generating the electricity still emit carbon dioxide, so they have a carbon footprint.'),
+P('看第 4 步：比較油電混合車和純電動車各有哪些零件。','See step 4: compare the parts of hybrid and battery-electric cars.'))
+],
+'#sv-tradeoff':[
+Q(P('下列哪一組能源「碳排放量幾乎為零」，但供電不穩定？','Which group has near-zero carbon emissions but an unsteady supply?'),
+[P('煤與天然氣','Coal and natural gas'),P('石油與煤','Oil and coal power'),P('風力與太陽能','Wind and solar power'),P('核燃料與天然氣','Nuclear and gas power')],2,
+P('風力、太陽能碳排放近零，但看天吃飯，供電不穩定；化石燃料穩定但排放二氧化碳。','Wind and solar emit almost no carbon but depend on the weather; fossil fuels are steady but emit carbon dioxide.'),
+P('看表格：哪一列同時有「碳排放幾乎為零」和「供電不穩定」？','Check the table: which row lists both near-zero carbon and unsteady supply?')),
+Q(P('離岸風機打樁施工時，對海洋生物最主要的影響是什麼？','What is the main effect of pile driving for offshore turbines on marine life?'),
+[P('噪音干擾鯨豚的回聲定位','Noise disturbs the echolocation of whales and dolphins'),P('熱廢水使珊瑚大量白化','Warm waste water bleaches corals in large numbers'),P('水壩擋住洄游魚類的產卵路徑','A dam blocks migratory fish from their spawning routes'),P('煤灰落入海中造成水質汙染','Coal ash falls into the sea and pollutes the water')],0,
+P('打樁的噪音會干擾鯨豚用回聲判斷方位，可能迫使牠們離開棲地。','Pile-driving noise disturbs whales and dolphins that navigate by echolocation and may force them to leave.'),
+P('看「再生能源也有代價」清單中的離岸風機那一條。','See the offshore turbine item in the list of renewable costs.')),
+Q(P('下列哪一項屬於「節流」？','Which of these is cutting demand?'),
+[P('在海上興建離岸風場','Building an offshore wind farm at sea'),P('在魚塭上方裝設太陽能板','Installing solar panels over a fish pond'),P('研發新型的氫燃料電池車','Developing a new hydrogen fuel-cell car'),P('離開教室時隨手關燈','Switching off lights on leaving a room')],3,
+P('節流是減少能源的使用，隨手關燈就是；其餘三項是開發新能源，屬於開源。','Cutting demand means using less energy, like switching off lights; the other three develop new sources.'),
+P('看最後一段：節流是「少用」還是「多開發」？','See the last section: does cutting demand mean using less or developing more?'))
+],
+/*END45*/
 '#sv-classify':[
 Q(P('下列哪一組全部都是「再生能源」？','Which group is entirely renewable energy?'),
 [P('煤、石油、天然氣','Coal, oil, natural gas'),P('風、水、太陽','Wind, water, sunlight'),P('石油、風、鈾','Oil, wind, uranium'),P('太陽、核燃料、潮汐','Sun, nuclear fuel, tides')],1,
