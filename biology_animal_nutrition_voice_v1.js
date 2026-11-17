@@ -228,7 +228,7 @@
   // 要讓學生看到的範圍：步驟列（看得出第幾組）到說明框；畫布在字幕框打開時會縮小（見 css），三者一起放得進字幕框上方
   function viewOf() {
     var top = document.querySelector('#story-lab .an-controls') || $('storyScene');
-    return { k: 'stage', topEl: top, botEl: $('storyCaption') || $('storyScene'), anchor: 'top' };
+    return { k: 'stage', topEl: top, botEl: $('storyCaption') || $('storyScene'), anchor: (cur.tab === 'page-0' && cur.step === 21) ? 'top' : 'bottom' };
   }
   function snapshotLive() { var S = AS() && AS().state; saved = S ? { page: S.page, k: S.k } : null; }
   function restoreLive() { // 把畫面還原成按下 ▶ 之前的樣子
