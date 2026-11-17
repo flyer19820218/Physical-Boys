@@ -50,6 +50,7 @@ STEPS = {
 }
 # 播到第 N 句（說話行編號）時：切到哪個子頁、播到動畫的第幾步。
 # 原則：講到什麼，畫面就要自動切到有那個動畫的頁面，學生才不用自己找。
+TAB_CHECK = None  # 分頁不在 html 裡的課：(檔案, 屬性)，由 lessons/<課>.json 的 tab_check 提供
 ACTS = {}   # 句中換畫面（預設沒有；由 lessons/<課>.json 的 acts 提供）
 AT = {
     # ── 磁鐵與磁極 ──
@@ -191,7 +192,11 @@ def validate(items, errors, warnings):
     else:
         pairs = list(CUTS.values()) + [(t, sb) for t, sb, _ in AT.values()] + [(x[1], x[2]) for v in ACTS.values() for x in v]
         for tab in sorted({t for t, _ in pairs}):
-            if not grep_has(html, "data-tab", tab):
+            if TAB_CHECK:  # 分頁由 js 產生的課：到指定檔案找 attr="tab"（lessons/<課>.json 的 tab_check）
+                f, attr = REPO / TAB_CHECK[0], TAB_CHECK[1]
+                if not grep_has(f, attr, tab):
+                    errors.append('%s 找不到 %s="%s"' % (TAB_CHECK[0], attr, tab))
+            elif not grep_has(html, "data-tab", tab):
                 errors.append('%s 找不到 data-tab="%s"' % (PAGE, tab))
         for sub in sorted({s for _, s in pairs if s}):
             if not grep_has(html, "data-sub", sub):
@@ -349,7 +354,7 @@ def build_spec(stage):
 
 def load_lesson(name):
     """讀 lessons/<name>.json，覆寫本模組的課程常數（CUTS、AT、STEPS…）。"""
-    global LESSON, PAGE, DEFAULT_SCRIPT, DEFAULT_OUT, EXPECT_LINES, EXPECT_CHORUS, CUTS, STEPS, AT, ACTS, AVATAR_OVERRIDE
+    global LESSON, PAGE, DEFAULT_SCRIPT, DEFAULT_OUT, EXPECT_LINES, EXPECT_CHORUS, CUTS, STEPS, AT, ACTS, AVATAR_OVERRIDE, TAB_CHECK
     import json as _json
     cfg = _json.loads((REPO / "tools/voice/lesson_studio/lessons" / (name + ".json")).read_text("utf-8"))
     LESSON = cfg["lesson"]
@@ -364,6 +369,7 @@ def load_lesson(name):
     # 句中換畫面（選用）：{句號: [[句中位置 0～1, 分頁, 子頁, 第幾步], ...]}；沒有這個欄位的課照舊
     ACTS = {int(k): [tuple(x) for x in v] for k, v in cfg.get("acts", {}).items()}
     AVATAR_OVERRIDE = cfg.get("avatars", {})
+    TAB_CHECK = tuple(cfg["tab_check"]) if cfg.get("tab_check") else None
 
 
 def main():

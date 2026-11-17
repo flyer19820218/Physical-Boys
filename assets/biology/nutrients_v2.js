@@ -14,6 +14,8 @@
   benedict:[{z:'準備樣本',e:'Prepare samples',dur:4.2,ph:[{id:'look',hold:2.4},{id:'prepare',hold:1.8}]},{z:'加本氏液',e:'Add reagent',dur:6,ph:[{id:'a',hold:.6},{id:'b',hold:.6}]},{z:'混合、移入水浴',e:'Mix, into the bath',dur:5.6,ph:[{id:'mix',hold:.6},{id:'bath',hold:.6}]},{z:'隔水加熱',e:'Heat in bath',dur:10.6,ph:[{id:'heat',hold:.6}]},{z:'觀察、想一想',e:'Observe and think',dur:6,ph:[{id:'compare',hold:6}]}]
  };
  const play={iodine:{step:0,phase:0,t:0,wait:0},benedict:{step:0,phase:0,t:0,wait:0}};
+ /* Playback mode (AGENTS 10.6/10.7): 'step' = student, play one step then hold on its last frame; 'sample' = teacher tour, play one sample through all steps then hold; 'loop' = old continuous loop. paused freezes time. */
+ const ctl={mode:'step',paused:false,held:{iodine:false,benedict:false}};
  // Samples shown in turn (all model samples except plain water, which is already the control B).
  const CYCLE=M.samples.filter(x=>x.id!=='water').map(x=>x.id);
  const tr=(a,b)=>lang==='zh'?a:b;
@@ -37,11 +39,11 @@
  <h3>${tr('甲組的待測樣本','Sample in group A')}</h3>
  <div class="lab-sample-now metric" id="sample-${kind}" aria-live="polite"></div>
  <p class="small-note">${tr('陽性＝檢出本次要找的成分。乙組固定為清水，兩組操作量相同。','Positive means detecting the substance tested. Group B is always water; quantities and treatment match.')}</p>
- ${ben?'':`<p class="small-note">${tr('玻片預覽的是處理後的樣本液，不是整塊食物。動畫會輪流換樣本：先看樣本，再加入碘液，最後觀察、想一想。','The slides preview processed sample liquid, not whole food. The animation takes the samples in turn: look first, then add iodine, then observe and think.')}</p>`}
+ ${ben?'':`<p class="small-note">${tr('玻片預覽的是處理後的樣本液，不是整塊食物。每一步：先看樣本，再加入碘液，最後觀察、想一想。','The slides preview processed sample liquid, not whole food. Step by step: look first, then add iodine, then observe and think.')}</p>`}
  </div><div class="control-block">
  <h3>${tr('實驗步驟','Experiment steps')}</h3>
  <div class="lab-actions lab-steps" id="steps-${kind}">${STEPS[kind].map((s,i)=>`<button type="button" class="action-btn step-btn" data-step="${kind}:${i}">${i+1}　${tr(s.z,s.e)}</button>`).join('')}</div>
- <p class="small-note">${tr('動畫會自動播放，並輪流換樣本；點步驟編號，可以從那一步重播。','The animation plays automatically and takes the samples in turn. Tap a step number to replay from that step.')}</p>
+ <p class="small-note">${tr('動畫一次播一步，播完就停；按下一個編號看下一步，按同一個編號重播。想換樣本，用下面的「動手做」。','Each step plays once and stops. Tap the next number for the next step, or the same number to replay. Use “Try it” below to change the sample.')}</p>
  </div></div><div class="lab-view"><canvas id="canvas-${kind}" width="960" height="620" aria-label="${tr(ben?'本氏液檢驗實驗動畫':'碘液檢驗實驗動畫',ben?'Benedict\'s test animation':'Iodine test animation')}"></canvas><div class="lab-status" id="status-${kind}" role="status" aria-live="polite"></div>
  <p class="lab-mode-note">${tr('原創 2.5D 教學模型 · 時間壓縮 · 非真實濃度測量','Original 2.5D teaching model · compressed time · not a concentration measurement')}</p></div></div>
  <div id="result-${kind}" class="concept" hidden></div>
@@ -89,6 +91,7 @@
  </section>`;
  bind();paintNutrient();paintFood();paintEnergy();paintWater();paintLabel(50);paintMeal();updateLab('iodine');updateLab('benedict');drawLab('iodine');drawLab('benedict');
  $('photoCredits').innerHTML=Object.keys(M.photos).map(p=>credit(p)).join('');
+ document.dispatchEvent(new CustomEvent('nutrients:built'));
  }
  function paintNutrient(){const n=M.nutrients.find(n=>n.id===nutrient);$('focus-nutrient-photo').src=photo(n.photo);$('focus-nutrient-photo').alt=named(n);$('focus-nutrient-credit').innerHTML=credit(n.photo);$('focus-nutrient-text').innerHTML=`<h3 style="color:${n.color}">${named(n)}</h3><p>${esc(n.role[lang==='zh'?0:1])}</p><p>${esc(n.example[lang==='zh'?0:1])}</p><p class="metric">${n.energy?tr(n.energy+' 大卡／g',n.energy+' kcal/g'):tr('0 大卡／g','0 kcal/g')}</p>`;document.querySelectorAll('[data-nutrient]').forEach(b=>{b.classList.toggle('active',b.dataset.nutrient===nutrient);b.setAttribute('aria-pressed',b.dataset.nutrient===nutrient);});}
  function paintFood(){const f=M.foods.find(f=>f.id===food);$('food-insight').innerHTML=`<strong>${named(f)}</strong><br>${f.nutrients.map(id=>{const n=M.nutrients.find(n=>n.id===id);return `<span class="nutrient-tag">${named(n)}</span>`;}).join('')}<p>${tr('顯示常見的養分種類，不代表每種含量相同，也不是完整成分分析。','These are commonly present nutrient types, not equal quantities or a full composition analysis.')}</p>`;document.querySelectorAll('[data-food]').forEach(b=>b.classList.toggle('active',b.dataset.food===food));}
@@ -109,7 +112,7 @@
   return tr('準備完成，接著隔水加熱。','Ready for water-bath heating.');}
  function updateLab(kind){const s=labs[kind],step=play[kind].step,signature=JSON.stringify([lang,s.sample,s.prepared,s.reagents,s.mixed,s.inBath,s.complete,s.motion?.type,s.records.length,step,play[kind].phase]);if(uiCache[kind]===signature)return;uiCache[kind]=signature;const si=CYCLE.indexOf(s.sample);$('sample-'+kind).textContent=named(M.sampleOf(s))+(si>=0?tr(`（第 ${si+1}／${CYCLE.length} 種）`,` (${si+1} of ${CYCLE.length})`):'');document.querySelectorAll(`[data-step^="${kind}:"]`).forEach(b=>{const on=Number(b.dataset.step.split(':')[1])===step;b.classList.toggle('primary',on);if(on)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});$('status-'+kind).textContent=status(kind);
  $('result-'+kind).hidden=!s.complete;if(s.complete){const pos=M.positive(s);const observed=kind==='iodine'?(pos?tr('甲：藍黑色；乙：保持碘液的黃褐色。','A: blue-black; B: iodine stays yellow-brown.'):tr('甲、乙：都未出現藍黑色。','Neither A nor B turned blue-black.')):(pos?tr('甲：產生黃橙至磚紅色沉澱；乙：維持藍色，沒有同樣沉澱。','A: yellow-orange to brick-red precipitate; B: stays blue without that precipitate.'):tr('甲、乙：加熱後仍為藍色，沒有本氏液陽性沉澱。','After heating, A and B remain blue without a positive Benedict\'s precipitate.'));$('result-'+kind).innerHTML=`<strong>${observed}</strong><p>${pos?tr('在這個樣本中檢出','Detected in this example sample: ')+tr(kind==='iodine'?'澱粉。':'還原糖。',kind==='iodine'?'starch.':'reducing sugar.'):tr('這次未檢出要找的成分，不代表「完全沒有養分」。','The target substance was not detected. This does not mean the sample has no nutrients.')}</p><p class="small-note">${tr('食物結果是選定樣本的教學示例；真實檢驗受成熟度、濃度及本身顏色影響。','Food outcomes represent selected teaching samples. Ripeness, concentration and natural color affect actual tests.')}</p>`;}
- $('records-'+kind).innerHTML=s.records.length?s.records.map(r=>`<tr><td>${named(M.samples.find(x=>x.id===r.sample))}</td><td>${r.positive?tr('陽性','Positive'):tr('陰性','Negative')}</td><td>${tr('陰性','Negative')}</td></tr>`).join(''):`<tr><td colspan="3">${tr('播到「觀察、想一想」時，這裡會列出結果；動畫會輪流換樣本，比較看看。','Results appear here at “Observe and think”. The samples change in turn, so compare them.')}</td></tr>`;}
+ $('records-'+kind).innerHTML=s.records.length?s.records.map(r=>`<tr><td>${named(M.samples.find(x=>x.id===r.sample))}</td><td>${r.positive?tr('陽性','Positive'):tr('陰性','Negative')}</td><td>${tr('陰性','Negative')}</td></tr>`).join(''):`<tr><td colspan="3">${tr('播到「觀察、想一想」時，這裡會列出結果；換不同樣本再做一次，比較看看。','Results appear here at “Observe and think”. Test other samples and compare them.')}</td></tr>`;}
  function drawLab(kind){const c=$('canvas-'+kind).getContext('2d'),st=STEPS[kind],p=play[kind],n=st.length,w=960/n;D.draw(c,labs[kind],lang);
   // Playback bar on the top edge (step segments), drawn after the apparatus so nothing covers it.
   c.save();for(let i=0;i<n;i++){const f=i<p.step?1:i>p.step?0:Math.min(1,p.t/st[i].dur);c.fillStyle='rgba(242,236,217,.22)';c.fillRect(i*w+3,0,w-6,8);if(f>0){c.fillStyle='#fde047';c.fillRect(i*w+3,0,(w-6)*f,8);}}c.restore();}
@@ -118,22 +121,22 @@
   else if(['a','b','mix','bath','heat'].includes(id))M.act(s,id);
   else if(id==='compare'&&s.complete&&!s.recorded){M.act(s,'record');const last=s.records[s.records.length-1];s.records=s.records.filter(r=>r===last||r.sample!==last.sample);}}
  // Put the lab in the state where step i begins (earlier phases fast-forwarded), then play on from there.
- function goTo(kind,i){const s=labs[kind];M.reset(s);
+ function goTo(kind,i){const s=labs[kind];ctl.held[kind]=false;M.reset(s);
   for(let k=0;k<i;k++)STEPS[kind][k].ph.forEach((_,j)=>{enterPhase(kind,k,j);let guard=0;while(s.motion&&guard++<400)M.advance(s,.1);});
   enterPhase(kind,i,0);}
  function stepClock(kind,dt){const s=labs[kind],p=play[kind],st=STEPS[kind];p.t+=dt;if(s.motion)return;p.wait+=dt;if(p.wait<st[p.step].ph[p.phase].hold)return;
   if(p.phase+1<st[p.step].ph.length)enterPhase(kind,p.step,p.phase+1);
-  else if(p.step+1<st.length)enterPhase(kind,p.step+1,0);
-  else{s.sample=CYCLE[(CYCLE.indexOf(s.sample)+1)%CYCLE.length];goTo(kind,0);}}
+  else if(p.step+1<st.length){if(ctl.mode==='step'){ctl.held[kind]=true;return;}enterPhase(kind,p.step+1,0);}
+  else{if(ctl.mode!=='loop'){ctl.held[kind]=true;return;}s.sample=CYCLE[(CYCLE.indexOf(s.sample)+1)%CYCLE.length];goTo(kind,0);}}
  // Which lab (if any) lives in the visible lesson — read from the DOM, not a hard-coded tab number (AGENTS 10.1).
  const activeKind=()=>{const c=$('lesson-'+tab)?.querySelector('canvas[id^="canvas-"]');return c?c.id.slice(7):null;};
  function stop(){if(raf)cancelAnimationFrame(raf);raf=0;lastTime=0;}
  function animate(){stop();const kind=activeKind();if(!kind)return;drawLab(kind);updateLab(kind);if(document.hidden)return;raf=requestAnimationFrame(tick);}
- function tick(time){raf=0;const kind=activeKind();if(!kind||document.hidden)return;const s=labs[kind];const dt=lastTime?Math.min(.1,(time-lastTime)/1000):0;lastTime=time;M.advance(s,dt);stepClock(kind,dt);drawLab(kind);updateLab(kind);raf=requestAnimationFrame(tick);}
+ function tick(time){raf=0;const kind=activeKind();if(!kind||document.hidden)return;const s=labs[kind];const dt=lastTime?Math.min(.1,(time-lastTime)/1000):0;lastTime=time;if(!ctl.paused&&!ctl.held[kind]){M.advance(s,dt);stepClock(kind,dt);}drawLab(kind);updateLab(kind);raf=requestAnimationFrame(tick);}
  function jump(kind,i){goTo(kind,M.clamp(i|0,0,STEPS[kind].length-1));uiCache[kind]=null;updateLab(kind);drawLab(kind);if(activeKind()===kind)animate();}
  function closeExpanded(){if(!expanded)return;const id=expanded;$(id).classList.remove('expanded');document.body.classList.remove('has-expanded');expanded=null;document.querySelectorAll('[data-expand]').forEach(b=>{b.textContent=tr(b.dataset.expand==='nutrient-focus'?'⛶ 放大講解':'⛶ 全螢幕操作',b.dataset.expand==='nutrient-focus'?'⛶ Full-screen explanation':'⛶ Full-screen lab');b.setAttribute('aria-expanded','false');});document.querySelector(`[data-expand="${id}"]`)?.focus({preventScroll:true});}
  function expand(id){if(expanded===id){closeExpanded();return;}closeExpanded();expanded=id;$(id).classList.add('expanded');document.body.classList.add('has-expanded');const b=document.querySelector(`[data-expand="${id}"]`);b.textContent=tr('× 返回教材','× Return to lesson');b.setAttribute('aria-expanded','true');b.focus({preventScroll:true});}
- function switchTab(i){closeExpanded();stop();tab=i;specs.forEach((_,j)=>{$('lesson-'+j).hidden=j!==i;const b=document.querySelector(`[data-tab="${j}"]`);b.classList.toggle('active',j===i);b.setAttribute('aria-selected',j===i);});const kind=activeKind();if(kind)goTo(kind,0);animate();}
+ function switchTab(i){closeExpanded();stop();tab=i;specs.forEach((_,j)=>{$('lesson-'+j).hidden=j!==i;const b=document.querySelector(`[data-tab="${j}"]`);b.classList.toggle('active',j===i);b.setAttribute('aria-selected',j===i);});const kind=activeKind();if(kind)goTo(kind,0);animate();document.dispatchEvent(new CustomEvent('nutrients:tab',{detail:i}));}
  function setLang(next){if(next===lang)return;const state={c:$('macro-carb').value,p:$('macro-protein').value,f:$('macro-fat').value,r:$('water-rise').value,serving,expand:expanded};closeExpanded();stop();lang=next;document.documentElement.lang=lang==='zh'?'zh-Hant':'en';document.title=tr('食物中的養分｜Physical-Boys','Nutrients in food | Physical-Boys');document.querySelectorAll('[data-zh][data-en]').forEach(el=>el.textContent=el.dataset[lang]);build();$('macro-carb').value=state.c;$('macro-protein').value=state.p;$('macro-fat').value=state.f;$('water-rise').value=state.r;paintEnergy();paintWater();paintLabel(state.serving);document.querySelectorAll('[data-language]').forEach(b=>{b.classList.toggle('active',b.dataset.language===lang);b.setAttribute('aria-pressed',b.dataset.language===lang);});if(state.expand)expand(state.expand);animate();}
  function bind(){
  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>switchTab(Number(b.dataset.tab))));
@@ -152,5 +155,8 @@
  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('introScreen').hidden)$('introScreen').hidden=true;else closeExpanded();}});
  document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else animate();});
  build();
- window.NutrientsLesson={labs,play,STEPS,jump,switchTab,setLang,expand,closeExpanded,getState:()=>({lang,tab,nutrient,food,serving,expanded,raf}),drawLab};
+ function setSample(kind,id){labs[kind].sample=id;jump(kind,0);}
+ function setNutrient(id){nutrient=id;paintNutrient();}
+ function setFood(id){food=id;paintFood();}
+ window.NutrientsLesson={labs,play,STEPS,CYCLE,ctl,meals,jump,setSample,setNutrient,setFood,paintEnergy,paintWater,paintLabel,paintMeal,switchTab,setLang,expand,closeExpanded,getState:()=>({lang,tab,nutrient,food,serving,expanded,raf}),drawLab};
 })();
