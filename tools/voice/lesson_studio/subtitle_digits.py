@@ -70,7 +70,7 @@ PROTECT = ("下一秒", "上一秒")                     # 慣用語（「預測
 
 
 def to_arabic(text):
-    out = text
+    out = text.replace("鈾二三五", "鈾-235").replace("鈽二三九", "鈽-239")  # 老師指示（2026-11-18）：同位素編號字幕用阿拉伯數字
     for i, w in enumerate(PROTECT):
         out = out.replace(w, "\ue000%d\ue001" % i)
     # 0. 百分之 N → N%
