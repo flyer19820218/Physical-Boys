@@ -69,7 +69,7 @@
     document.querySelector('.floating-lang-container').setAttribute('aria-label',say('語言切換','Language'));
   }
   function setLang(lang){if(!['zh','en'].includes(lang))return;state.lang=lang;applyLang();update();}
-  function switchTab(i){if(!pages[i])return;stopLoop();state.labs[keys[state.tab]].playing=false;exitExpanded();state.tab=i;state.last=0;document.querySelectorAll('[data-page]').forEach(e=>e.hidden=+e.dataset.page!==i);document.querySelectorAll('[data-tab]').forEach(e=>{e.classList.toggle('active',+e.dataset.tab===i);e.setAttribute('aria-pressed',String(+e.dataset.tab===i));});update();autoStart();}
+  function switchTab(i){if(!pages[i])return;stopLoop();state.labs[keys[state.tab]].playing=false;exitExpanded();state.tab=i;state.last=0;document.querySelectorAll('[data-page]').forEach(e=>e.hidden=+e.dataset.page!==i);document.querySelectorAll('[data-tab]').forEach(e=>{e.classList.toggle('active',+e.dataset.tab===i);e.setAttribute('aria-pressed',String(+e.dataset.tab===i));});update();autoStart();document.dispatchEvent(new CustomEvent('ps:tab',{detail:i}));}
   let returnFocus=null;
   function exitExpanded(){if(state.expanded){document.getElementById('lab-'+state.expanded).classList.remove('is-expanded');state.expanded=null;document.body.classList.remove('ps-fullscreen-open');if(returnFocus)returnFocus.focus();returnFocus=null;update();}}
   function expand(key,button){if(state.expanded===key){exitExpanded();return;}exitExpanded();state.expanded=key;returnFocus=button;document.getElementById('lab-'+key).classList.add('is-expanded');document.body.classList.add('ps-fullscreen-open');update();}
@@ -181,6 +181,6 @@
     canvas.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const s=state.labs[key];s.zoom=Math.max(1,Math.min(4,s.zoom*(e.deltaY<0?1.1:.9)));if(s.zoom<=1.01){s.zoom=1;s.dx=0;s.dy=0;}else{s.dx=Math.max(-480*s.zoom,Math.min(480*s.zoom,s.dx));s.dy=Math.max(-320*s.zoom,Math.min(320*s.zoom,s.dy));}drawCurrent();},{passive:false});
   }
   async function load(){await Promise.all(Object.entries(M.sources).map(([key,value])=>new Promise(resolve=>{const im=new Image();im.onload=()=>{state.images[key]=im;resolve();};im.onerror=()=>{state.errors.push(value[0]);resolve();};im.src=PATH+value[0];})));state.loaded=!state.errors.length;update();autoStart();if(document.fonts){await document.fonts.ready;drawCurrent();}}
-  globalThis.PlantStructure={state,setLang,switchTab,act,tap,drawCurrent,stopLoop,exitExpanded};
+  globalThis.PlantStructure={state,setLang,switchTab,act,tap,drawCurrent,stopLoop,exitExpanded,update,keys,ensureLoop};
   mount();load();
 })();
