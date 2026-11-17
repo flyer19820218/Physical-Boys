@@ -261,7 +261,7 @@
     if (hlTimer) { clearInterval(hlTimer); hlTimer = 0; }
     hlSegs.forEach(function (g) { if (g.el.parentNode) g.el.parentNode.removeChild(g.el); });
     hlSegs = [];
-    hlFade.forEach(function (t) { clearTimeout(t.id); if (t.els) t.els.forEach(function (e) { if (e.parentNode) e.parentNode.removeChild(e); }); });
+    hlFade.forEach(function (t) { clearTimeout(t.id); clearInterval(t.watch); if (t.els) t.els.forEach(function (e) { if (e.parentNode) e.parentNode.removeChild(e); }); });
     hlFade = [];
   }
   function hlRetire() { // 下一句開始：舊的線再留約 2 秒，淡出後移除
@@ -270,9 +270,18 @@
     hlSegs = [];
     if (!els.length) return;
     var rec = { els: els };
+    // 舊線留著的這兩秒內，只要畫面一捲動、舊線跑出字幕框上方的可視範圍，就立刻收掉（不要在畫面外或字幕框後面殘留）
+    rec.watch = setInterval(function () {
+      var pt = ui.panel.getBoundingClientRect().top;
+      els.forEach(function (e) {
+        if (!e.parentNode || e.style.display === 'none') return;
+        var r = e.getBoundingClientRect();
+        if (r.top < 0 || r.bottom > pt) e.style.display = 'none';
+      });
+    }, 60);
     rec.id = setTimeout(function () {
       els.forEach(function (e) { e.style.transition = 'opacity .5s'; e.style.opacity = '0'; });
-      rec.id = setTimeout(function () { els.forEach(function (e) { if (e.parentNode) e.parentNode.removeChild(e); }); }, 600);
+      rec.id = setTimeout(function () { clearInterval(rec.watch); els.forEach(function (e) { if (e.parentNode) e.parentNode.removeChild(e); }); }, 600);
     }, 2000);
     hlFade.push(rec);
   }

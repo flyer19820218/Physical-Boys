@@ -1,6 +1,7 @@
 // 伽利略星球入口：載入資料、建立畫面層、（可用時）建立 3D 場景、處理網址路由。
 // 改版時請同步更新 index.html（首頁）、本檔與下面兩個 import 的 ?v= 版本字串。
-import { createUI } from './ui.js?v=20261030a';
+import { createUI } from './ui.js?v=20261117e';
+import { createSchedule } from './schedule.js?v=20261117e';
 import { startLaunch, WARP_MS } from './launch.js?v=20261030a';
 import { createSfx } from './sfx.js?v=20261030a';
 import { loadNarration } from './narration.js?v=20261030a';
@@ -156,7 +157,7 @@ async function main() {
     handlers: {
       onPickHall: id => go(id),
       onBack: () => go('planet'),
-      onLang: l => { saveLang(l); ui.setLang(l); },
+      onLang: l => { saveLang(l); ui.setLang(l); schedule.setLang(l); },
       onUnitChange: (unitId, via) => {
         if (route.mode !== 'hall') return;
         route.unit = unitId;
@@ -166,6 +167,12 @@ async function main() {
       },
       onSheetFraction: (f, axis) => { if (scene) scene.setSheetFraction(f, axis); },
     },
+  });
+
+  const schedule = createSchedule({
+    data,
+    lang: loadLang(),
+    onFlyToUnit: (hallId, unitId) => go(hallId + '/' + unitId),
   });
 
   function apply(r, instant) {
@@ -182,6 +189,7 @@ async function main() {
         scene.focusUnit(unit, true);
       }
     }
+    if (location.hash === '#schedule') schedule.open();
     document.body.classList.remove('booting');
   }
 
