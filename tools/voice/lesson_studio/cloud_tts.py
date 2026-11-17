@@ -56,7 +56,11 @@ print("lines:", len(lines), flush=True)
 
 done, failed = 0, []
 t0 = time.time()
-for it in lines:
+import os
+_SH = os.environ.get("SHARD")  # 例：SHARD=1/4 只錄第 1 份（可多個程序同時跑）
+for _n, it in enumerate(lines):
+    if _SH and _n % int(_SH.split("/")[1]) != int(_SH.split("/")[0]) - 1:
+        continue
     spk = it["speaker"]
     text = cs.tts_text(it["text"])  # 讀音字典（與錄音工作室相同）
     fid = it["file"].split("_")[0]  # NNN
