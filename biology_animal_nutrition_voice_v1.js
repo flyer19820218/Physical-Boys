@@ -30,7 +30,7 @@
     s.textContent = [
       '.vx-open{min-height:52px;padding:8px 26px;border-radius:999px;cursor:pointer;font-size:21px;font-weight:700;font-family:inherit;line-height:1.3;background:transparent;color:#55e9ff;border:2px solid #55e9ff;touch-action:manipulation;transition:all .2s}',
       '.vx-open:hover,.vx-open.on{background:#55e9ff;color:#11261f}',
-      '.vx-panel{position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:9000;width:min(900px,100vw);box-sizing:border-box;padding:0 8px;pointer-events:none;display:none}',
+      '.vx-panel{position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:10010;width:min(900px,100vw);box-sizing:border-box;padding:0 8px;pointer-events:none;display:none}',
       '.vx-panel.show{display:block}',
       '.vx-cap{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:6px}',
       '.vx-av{flex:0 0 auto;height:130px;width:auto;transition:opacity .25s,filter .25s;opacity:.35;filter:grayscale(.6);pointer-events:none}',
@@ -50,7 +50,10 @@
       '.vx-pin.show{display:block}',
       'body.vx-show{padding-bottom:280px}',
       // 字幕框打開時，畫布縮到「步驟列＋畫布＋說明框」剛好放得進字幕框上方（畫布本身的比例、內部座標都不變）
-      'body.vx-show:not(.an-expanded) .an-stage{width:min(100%,max(420px,calc((100dvh - 520px)*1.4545)));margin-left:auto;margin-right:auto}',
+      'body.vx-show:not(.an-expanded) .an-stage{width:min(100%,max(630px,calc((100dvh - 520px)*2.18)));margin-left:auto;margin-right:auto}',
+      // 全螢幕時字幕框照常顯示在最上層；全螢幕區縮短，讓畫面與步驟列放在字幕框上方
+      'body.vx-show.an-expanded .an-lab.expanded{box-sizing:border-box;padding-bottom:270px}',
+      'body.vx-show.an-expanded .food-story .an-lab.expanded .an-stage{width:min(100%,calc((100dvh - 270px - 190px)*var(--ar)))}',
       '#story-lab{scroll-margin-top:60px}',
       '@media (max-width:620px){.vx-av{height:78px}.vx-txt{font-size:17px}.vx-bub{padding:8px 10px 12px}body.vx-show{padding-bottom:240px}}'
     ].join('\n');
