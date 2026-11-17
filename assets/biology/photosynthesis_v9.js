@@ -27,7 +27,7 @@
  const hook=i=>`<div class="hook-box"><div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="${tr('曉臻老師','Teacher Xiaozhen')}"></div><div class="hook-content">${bi('曉臻老師說：','Teacher Xiaozhen says:','div','hook-title')}${bi(...hooks[i],'div','hook-text')}</div></div>`;
  const originalCredit=()=>`<strong>${tr('保衛細胞與氣孔｜AI 構造示意','Guard cells and stomata | AI teaching illustration')}</strong><br>${tr('依老師要求新製；非實拍。本圖每個保衛細胞以一個連續大液胞表示，開閉時改變體積；外圍是表皮細胞。液胞形態為國中教學簡化，不代表所有植物、所有生理狀態。網路參考圖未轉載，未去除他人浮水印；真實顯微照片保留原來源與授權。','Newly created at the teacher\'s request, not a photograph. Each guard cell is represented by one continuous large vacuole, with a volume difference between states; epidermal cells surround the pair. Vacuole morphology is simplified for teaching, not universal across plants or physiological states. The web reference is not republished or stripped of its watermark; real micrographs retain their source and license.')} · <a href="assets/biology/photosynthesis_teacher_revision_1011_v1.md" target="_blank" rel="noopener">${tr('製作與核對紀錄','Creation and verification record')}</a>`;
  function content(){
- const autoNote=()=>bi('動畫會自動播放並重複；點步驟編號，可以跳到那一步。','The animation plays and repeats automatically. Tap a step number to jump to that step.');
+ const autoNote=()=>bi('學生操作：每次播一個步驟就停住，點下一個編號接著看，看不懂就再點一次。老師講解：從頭連續播到最後。','Student mode: each step plays once and stops—tap the next number to continue, or tap again to rewatch. Teacher mode: plays straight through.');
  const stepsGroup=(tab,z,e)=>group(z,e,`<div class="ps-buttons ps-steps">${GROUPS[tab].map((g,k)=>`<button type="button" data-step="${tab}:${g.a}:${g.b}">${k+1}　${esc(tr(g.z,g.e))}</button>`).join('')}</div>${autoNote()}`);
  const inputNote=bi('後面幾步會依序拿掉一個條件；示意只說明必要條件，不表示速率與條件成正比。','Later steps remove one input at a time. This model explains requirements, not a proportional rate law.');
  const photoControls=stepsGroup(1,'先看構造，再看真圖','Structures first, then real images');
@@ -52,7 +52,13 @@
  /* Auto-play (teacher-authorized 2026-10-27): every tab plays by itself and loops; numbered step buttons only jump.
     Drawing modules, the model, lab durations and all science text are unchanged. The controller only sets the same
     state the removed buttons used to set (inputs, route, part/photo, zoom/pan, guard focus, lab 'next', evidence set). */
- const P={step:0,t:0,hold:0,queue:false,cam:null,camFrom:null,phase:-1,snap:null};
+ const P={step:0,t:0,hold:0,queue:false,cam:null,camFrom:null,phase:-1,snap:null,stop:'group',held:false,paused:false,done:false};
+ /* 2026-11-17 學生操作／老師講解／有聲講解（AGENTS 10.6／10.7；最小 hook，與 enzymes_v3.js 同一套）：stop＝group 學生：播完一個步驟鈕的那一組就停住；
+    none 老師：連續播到最後一步停住、不循環；step 有聲講解：每個子步驟播完就停，等下一句語音再跳。只決定「播完之後要不要接下一步」，模型、繪圖、秒數都不變。 */
+ function stepEnd(next){const t=u.tab,n=STEPS[t].length;
+  if(P.stop==='step'){P.held=true;return;}
+  if(P.stop==='none'){if(P.step>=n-1){P.held=true;P.done=true;return;}enter(next);return;}
+  if(next>=n||GROUPS[t].some(g=>g.a===next)){P.held=true;return;}enter(next);}
  const smooth=x=>{x=M.clamp(x,0,1);return x*x*(3-2*x);};
  const LEAD=.4,HOLD=1.1,LAST=7,TRAVEL=2,GUARD_TRAVEL=1.6,REVEAL=3;
  const labDur=i=>LEAD+(i===1?6:4)+(i===STEPS[4].length-1?LAST:HOLD);
@@ -73,17 +79,17 @@
  const canvasFor=()=>u.tab===3&&!u.guardPhoto?$('guard-original-image'):$('canvas-'+ids[u.tab]);
  function enter(i){const n=STEPS[u.tab].length;i=((i%n)+n)%n;const st=STEPS[u.tab][i];
   if(u.tab===5){const c=canvasFor();if(c){P.snap=P.snap||document.createElement('canvas');P.snap.width=960;P.snap.height=620;P.snap.getContext('2d').drawImage(c,0,0);}}
-  P.step=i;P.t=0;P.hold=0;P.phase=-1;
+  P.step=i;P.t=0;P.hold=0;P.phase=-1;P.held=false;P.done=false;
   if(u.tab===0||u.tab===2){[u.light,u.water,u.co2]=st.in.map(Boolean);if(st.route)u.route=st.route;}
   else if(u.tab===1){P.camFrom=u.photo==='diagram'&&st.photo==='diagram'&&P.cam?P.cam:null;u.photo=st.photo;u.part=st.part;photoCam();}
   else if(u.tab===3){P.camFrom=!u.guardPhoto&&!st.photo?{z:u.guardOriginalZoom,x:u.guardOriginalPan.x}:null;u.guardPhoto=!!st.photo;guardCam();}
   else if(u.tab===4){const s=u.lab;s.step=i;s.motion=null;P.queue=true;}
   else{u.evidence=st.key;u.answer=null;}
   paint();}
- function advance(dt){P.t+=dt;const t=u.tab;if(t===1)photoCam();else if(t===3)guardCam();
+ function advance(dt){if(P.held||P.paused)return;P.t+=dt;const t=u.tab;if(t===1)photoCam();else if(t===3)guardCam();
   if(t===4){const s=u.lab;if(s.motion)return;if(P.queue){if(P.t>=LEAD){P.queue=false;const pr=s.prediction;if(pr===null)s.prediction='auto';M.act(s,'next');s.prediction=pr;}return;}
-   P.hold+=dt;if(P.hold>=(P.step===STEPS[4].length-1?LAST:HOLD))enter(P.step+1);return;}
-  if(P.t>=STEPS[t][P.step].dur)enter(P.step+1);}
+   P.hold+=dt;if(P.hold>=(P.step===STEPS[4].length-1?(P.stop==='none'?2:LAST):HOLD))stepEnd(P.step+1);return;}
+  if(P.t>=STEPS[t][P.step].dur)stepEnd(P.step+1);}
  const evPhase=()=>u.tab===5&&P.t>=REVEAL?1:0;
  function paint(){refreshCaptions();document.querySelectorAll('[data-step]').forEach(b=>{const [tb,a,z]=b.dataset.step.split(':').map(Number),on=tb===u.tab&&P.step>=a&&P.step<=z;if(b.classList.contains('active')!==on){b.classList.toggle('active',on);if(on)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');}});
   const routeNotes={water:['看右側藍色通道：水與礦物質沿木質部由根運往葉。','Follow the cyan lumen: xylem carries water and minerals from roots to leaves.'],co2:['看葉片剖面：CO₂ 經氣孔進入、擴散到葉肉，不走莖的輸送管道。','Look at the leaf cutaway: CO₂ enters stomata and diffuses to mesophyll, not through stem transport tubes.'],sugar:['看右側黃色通道：本例的蔗糖由成熟葉經韌皮部運往根。','Follow the yellow lumen: in this example sucrose moves from a mature leaf to a root sink via phloem.'],oxygen:['看葉片剖面：照光時，光合作用產生的 O₂ 可經氣孔逸出。','Look at the leaf cutaway: oxygen from photosynthesis can exit through stomata in light.']};
@@ -104,13 +110,17 @@
  // One RAF for the whole page; every start cancels the previous frame first (no duplicates). Stops while hidden or behind the cover.
  function stop(){if(raf)cancelAnimationFrame(raf);raf=0;last=0;}
  function schedule(){stop();if(document.hidden||!$('introScreen').hidden)return;raf=requestAnimationFrame(frame);}
- function frame(now){raf=0;if(document.hidden){last=0;return;}const dt=last?Math.min((now-last)/1000,.05):0;last=now;const was=u.lab.step;M.tick(u,dt);advance(dt);const ph=evPhase();if(was!==u.lab.step||ph!==P.phase){P.phase=ph;paint();}else draw();raf=requestAnimationFrame(frame);}
+ function frame(now){raf=0;if(document.hidden){last=0;return;}const dt=last?Math.min((now-last)/1000,.05):0;last=now;const was=u.lab.step;if(!P.paused)M.tick(u,dt);advance(dt);const ph=evPhase();if(was!==u.lab.step||ph!==P.phase){P.phase=ph;paint();}else draw();raf=requestAnimationFrame(frame);}
  function jump(tab,i){if(tab!==u.tab)return;enter(i);schedule();}
  function close(){if(u.expanded){$('lab-'+u.expanded).classList.remove('expanded');u.expanded=null;document.body.classList.remove('ps-expanded');}document.querySelectorAll('[data-expand]').forEach(b=>{b.textContent=tr('⛶ 全螢幕講解／操作','⛶ Full-screen teaching');b.setAttribute('aria-expanded','false');});}
  function expand(id){if(u.expanded===id){close();return;}close();u.expanded=id;$('lab-'+id).classList.add('expanded');document.body.classList.add('ps-expanded');const b=document.querySelector(`[data-expand="${id}"]`);b.textContent=tr('× 返回教材','× Return to lesson');b.setAttribute('aria-expanded','true');b.focus();}
- function switchTab(i){close();stop();u.tab=i;P.snap=null;document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',+b.dataset.tab===i);b.setAttribute('aria-selected',+b.dataset.tab===i);});names.forEach((_,j)=>$('lesson-'+j).hidden=i!==j);enter(0);schedule();}
+ function switchTab(i){close();stop();u.tab=i;P.snap=null;P.paused=false;document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',+b.dataset.tab===i);b.setAttribute('aria-selected',+b.dataset.tab===i);});names.forEach((_,j)=>$('lesson-'+j).hidden=i!==j);enter(0);schedule();}
  function setLang(next){if(next===lang)return;const open=u.expanded;stop();close();lang=next;document.documentElement.lang=lang==='zh'?'zh-Hant':'en';document.title=tr('植物的營養方式｜Physical-Boys','Plant nutrition and photosynthesis | Physical-Boys');document.querySelectorAll('[data-zh][data-en]').forEach(e=>e.textContent=e.dataset[lang]);build();if(open)expand(open);document.querySelectorAll('[data-language]').forEach(b=>{b.classList.toggle('active',b.dataset.language===lang);b.setAttribute('aria-pressed',String(b.dataset.language===lang));});schedule();}
  function bind(){document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>switchTab(+b.dataset.tab)));document.querySelectorAll('[data-expand]').forEach(b=>b.addEventListener('click',()=>expand(b.dataset.expand)));document.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>{const [tb,i]=b.dataset.step.split(':').map(Number);jump(tb,i);}));}
  function hideIntro(){if($('introScreen').hidden)return;$('introScreen').hidden=true;enter(0);schedule();}
- $('introScreen').addEventListener('click',hideIntro);document.querySelectorAll('.floating-lang-container [data-language]').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.language)));document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('introScreen').hidden)hideIntro();else close();}});document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else schedule();});build();enter(0);const assets={sunlitGarden:'assets/biology/photosynthesis_sunlit_garden_ai_1012_v1.png',pottedPlant:'assets/biology/photosynthesis_potted_bean_ai_1011_v1.png',guardCartoon:'assets/biology/photosynthesis_guard_single_vacuole_ai_1011_v1.png',plant:'assets/biology/photosynthesis_plant_cutaway_ai_v3.png',chloroplast:'assets/biology/photosynthesis_chloroplast_ai_v2.png',diagram:'assets/biology/photosynthesis_leaf_diagram_v1.svg',section:'assets/biology/photos/leaf_cross_optical_photo_v1.jpg',guard:'assets/biology/photos/guard_optical_v3.jpg',elodea:'assets/biology/photos/elodea_clear_v2.jpg'};for(const [key,src] of Object.entries(assets)){const im=new Image();im.onload=()=>{images[key]=im;draw();};im.onerror=()=>{if(u.photo===key)$('status-photo').textContent=tr('圖片載入失敗，請檢查本機素材；不可用示意圖冒充照片。','Image failed to load. Check the local asset; a diagram must not masquerade as a photo.');};im.src=src;}schedule();window.PhotosynthesisLesson={state:u,play:P,STEPS,jump,setLang,switchTab,expand,close,draw,paint,getState:()=>({lang,tab:u.tab,step:P.step,raf})};
+ $('introScreen').addEventListener('click',hideIntro);document.querySelectorAll('.floating-lang-container [data-language]').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.language)));document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('introScreen').hidden)hideIntro();else close();}});document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else schedule();});build();enter(0);const assets={sunlitGarden:'assets/biology/photosynthesis_sunlit_garden_ai_1012_v1.png',pottedPlant:'assets/biology/photosynthesis_potted_bean_ai_1011_v1.png',guardCartoon:'assets/biology/photosynthesis_guard_single_vacuole_ai_1011_v1.png',plant:'assets/biology/photosynthesis_plant_cutaway_ai_v3.png',chloroplast:'assets/biology/photosynthesis_chloroplast_ai_v2.png',diagram:'assets/biology/photosynthesis_leaf_diagram_v1.svg',section:'assets/biology/photos/leaf_cross_optical_photo_v1.jpg',guard:'assets/biology/photos/guard_optical_v3.jpg',elodea:'assets/biology/photos/elodea_clear_v2.jpg'};for(const [key,src] of Object.entries(assets)){const im=new Image();im.onload=()=>{images[key]=im;draw();};im.onerror=()=>{if(u.photo===key)$('status-photo').textContent=tr('圖片載入失敗，請檢查本機素材；不可用示意圖冒充照片。','Image failed to load. Check the local asset; a diagram must not masquerade as a photo.');};im.src=src;}schedule();window.PhotosynthesisLesson={state:u,play:P,STEPS,GROUPS,jump,setLang,switchTab,expand,close,draw,paint,getState:()=>({lang,tab:u.tab,step:P.step,raf,held:P.held,done:P.done,paused:P.paused,stop:P.stop}),
+  setStop(m){P.stop=m;},pause(v){P.paused=!!v;},
+  progress(){const t=u.tab,d=i=>t===4?labDur(i):STEPS[t][i].dur;let all=0,done=0;for(let i=0;i<STEPS[t].length;i++){all+=d(i);if(i<P.step)done+=d(i);}const cur=t===4?(u.lab.step>P.step?d(P.step):P.t):Math.min(P.t,d(P.step));return P.done?1:M.clamp((done+cur)/all,0,1);},
+  restart(){enter(0);schedule();},resume(){P.held=false;P.done=false;},freeze(){P.held=true;}};
+ window.dispatchEvent(new Event('photosynthesis-ready'));
 })();
