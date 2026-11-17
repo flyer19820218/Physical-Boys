@@ -15,7 +15,16 @@ LESSON = sys.argv[1] if len(sys.argv) > 1 else "electronics_2"
 import certifi
 
 # Point edge-tts at the sandbox proxy CA bundle (TLS verification stays ON).
-certifi.where = lambda: "/root/.ccr/ca-bundle.crt"
+_CCR_CA = "/root/.ccr/ca-bundle.crt"
+def _readable(p):
+    try:
+        return Path(p).is_file()
+    except OSError:  # GitHub Actions 上 /root 不可讀，exists() 會直接丟 PermissionError
+        return False
+
+
+if _readable(_CCR_CA):  # 只有雲端工作階段才有代理憑證；GitHub Actions 上照常用 certifi（2026-11-17）
+    certifi.where = lambda: _CCR_CA
 
 REPO = Path(__file__).resolve().parents[3]  # repo 根目錄
 sys.path.insert(0, str(REPO / "tools/voice/lesson_studio"))

@@ -61,5 +61,5 @@
  if(boiling||type==='detect'){if(t>=96)for(let i=0;i<12;i++){const xx=521+i*27,yy=400-((m.t*38+i*21)%124);if(positions.some((x,j)=>(j===0?inA:inB)&&Math.abs(xx-x)<40))continue;ellipse(c,xx,yy,3,4,null,'rgba(226,246,246,.48)');}label(c,tr(l,boiling?'甲沸水浴 10 分鐘（壓縮）':'兩管共同沸水浴檢驗',boiling?'A: boiling bath, 10 min (compressed)':'Both tubes: boiling bath to test'),480,587,840);}
  if(s.step===7)label(c,tr(l,'甲：維持藍色　｜　乙：沉澱','A: stays blue | B: precipitate'),480,587,780,'#4ade80');
  }
- const api={molecular,chart,lab,label,W,H};root.EnzymesDraw=api;if(typeof module!=='undefined')module.exports=api;
+ const api={molecular,chart,lab,label,W,H,bg,table,tube,bath,bottle,pipette,ellipse,rr};/* 2026-11-17：多匯出幾個既有繪圖函式給「動手做」實驗台共用；函式本身一行未改 */root.EnzymesDraw=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
