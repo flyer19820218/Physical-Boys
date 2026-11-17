@@ -294,35 +294,65 @@ export function createUI({ data, config, lang, handlers }) {
   function runSearch() {
     const q = norm(searchInput.value).trim();
     searchResults.textContent = '';
-    if (!q || !state.hall) return;
+    if (!q) return;
     const terms = q.split(/\s+/);
     let n = 0;
-    state.cards.forEach((c, i) => {
-      if (n >= 40) return;
-      const u = state.hall.units.find(x => x.id === c.unitId);
-      const hay = haystack(u, c.lesson);
-      if (!terms.every(t => hay.includes(t))) return;
+    const appendHit = (titleText, unitText, hallColor, onClick) => {
       n++;
       const li = document.createElement('li');
       const b = document.createElement('button');
       b.type = 'button';
+      if (hallColor) b.style.setProperty('--hall-color', hallColor);
       const t = document.createElement('span');
       t.className = 'r-title';
-      t.textContent = pick(c.lesson).title;
+      t.textContent = titleText;
       const un = document.createElement('span');
       un.className = 'r-unit';
-      un.textContent = u.emoji + ' ' + pick(u);
+      un.textContent = unitText;
       b.append(t, un);
-      b.addEventListener('click', () => {
-        closeSearch();
-        scrollToIndex(i, true);
-        handlers.onUnitChange(c.unitId, 'search');
-        sheet.classList.remove('collapsed');
-        handle.setAttribute('aria-expanded', 'true');
-      });
+      b.addEventListener('click', onClick);
       li.appendChild(b);
       searchResults.appendChild(li);
-    });
+    };
+    if (!state.hall) {
+      data.halls.forEach(h => {
+        h.units.forEach(u => {
+          u.lessons.forEach(l => {
+            if (n >= 40) return;
+            const hay = norm([l.zh.title, l.zh.blurb, l.en.title, l.en.blurb, u.zh, u.en, h.zh, h.en].join(' '));
+            if (!terms.every(t => hay.includes(t))) return;
+            appendHit(
+              pick(l).title,
+              `${T().hall(pick(h))} · ${u.emoji} ${pick(u)}`,
+              h.color,
+              () => {
+                closeSearch();
+                handlers.onPickHall(h.id + '/' + u.id);
+              }
+            );
+          });
+        });
+      });
+    } else {
+      state.cards.forEach((c, i) => {
+        if (n >= 40) return;
+        const u = state.hall.units.find(x => x.id === c.unitId);
+        const hay = haystack(u, c.lesson);
+        if (!terms.every(t => hay.includes(t))) return;
+        appendHit(
+          pick(c.lesson).title,
+          u.emoji + ' ' + pick(u),
+          null,
+          () => {
+            closeSearch();
+            scrollToIndex(i, true);
+            handlers.onUnitChange(c.unitId, 'search');
+            sheet.classList.remove('collapsed');
+            handle.setAttribute('aria-expanded', 'true');
+          }
+        );
+      });
+    }
     if (!n) {
       const li = document.createElement('li');
       li.className = 'none';
@@ -435,7 +465,7 @@ export function createUI({ data, config, lang, handlers }) {
     sheet.hidden = true;
     focusLabel.hidden = true;
     btnBack.hidden = true;
-    btnSearch.hidden = true;
+    btnSearch.hidden = false;
     closeSearch();
     handlers.onSheetFraction && handlers.onSheetFraction(0);
   }
