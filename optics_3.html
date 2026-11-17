@@ -542,6 +542,7 @@
         while (drawLayer.firstChild) drawLayer.removeChild(drawLayer.firstChild);
         statsGrid.replaceChildren();
         const m = currentMode;
+        document.getElementById('visualSvg').setAttribute('viewBox', '-300 -180 600 360');
         
         const addStat = (kZh, kEn, v) => {
           const d = document.createElement('div'); d.className = 'stat';
@@ -998,7 +999,7 @@
         } else if (m === 'fish_human') {
           const observer = params.fish_human.observer;
           
-          drawLayer.appendChild(createSvgEl('rect', { x: -300, y: -180, width: 600, height: 180, fill: 'rgba(95,176,255,0.2)' }));
+          drawLayer.appendChild(createSvgEl('rect', { x: -300, y: -300, width: 600, height: 300, fill: 'rgba(95,176,255,0.2)' }));
           drawLayer.appendChild(createSvgEl('line', { x1: -300, y1: 0, x2: 300, y2: 0, stroke: '#5fb0ff', 'stroke-width': 2 }));
           addText(drawLayer, -280, -10, tr('空氣 (快)', 'Air (Fast)'), 'start', 'var(--chalk)', 18, 'bold');
           addText(drawLayer, -280, 26, tr('水 (慢)', 'Water (Slow)'), 'start', '#5fb0ff', 18, 'bold');
@@ -1026,6 +1027,8 @@
               else left = hitX;
           }
 
+          // 畫布依內容調整：人看魚只需 -150~160；魚看人的虛像很高，往上加高以免被切掉
+          document.getElementById('visualSvg').setAttribute('viewBox', observer === 'human' ? '-300 -150 600 310' : '-300 -290 600 450');
           if (observer === 'human') {
               drawHuman(drawLayer, headX, headY, 1, 1, tr('人 (觀察者)', 'Human (Observer)'));
               drawFish(fishX, fishY, 1, tr('真實魚', 'Real Fish'));
@@ -1058,7 +1061,8 @@
               `);
           } else {
               drawFish(fishX, fishY, 1, tr('魚 (觀察者)', 'Fish (Observer)'));
-              drawHuman(drawLayer, headX, headY, 1, 1, tr('真實人', 'Real Human'));
+              drawHuman(drawLayer, headX, headY, 1, 1, '');
+              addText(drawLayer, headX - 24, headY + 36, tr('真實人', 'Real Human'), 'end', '#ef6a5a', 15, 'bold');
 
               drawLayer.appendChild(createSvgEl('line', { x1: headX, y1: headY, x2: hitX, y2: 0, stroke: '#ef6a5a', 'stroke-width': 2 }));
               drawArrow(drawLayer, headX, headY, hitX, 0, '#ef6a5a'); 
@@ -1072,10 +1076,7 @@
               
               drawLayer.appendChild(createSvgEl('line', { x1: hitX, y1: 0, x2: virtualHeadX, y2: virtualHeadY, stroke: '#f2d675', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
               
-              // 虛像頭頂常高過畫布上緣：人像下移到畫面內，並註明示意
-              const vhDraw = Math.max(virtualHeadY, -128);
-              drawHuman(drawLayer, virtualHeadX, vhDraw, 1.25, 0.5, tr('人虛像 (變高大)', 'Virtual Human (Taller)'));
-              if (vhDraw !== virtualHeadY) addText(drawLayer, virtualHeadX + 40, vhDraw - 4, tr('↑ 實際更高，已超出畫面', '↑ Even taller, off-screen'), 'start', '#f2d675', 14, 'bold');
+              drawHuman(drawLayer, virtualHeadX, virtualHeadY, 1.25, 0.5, tr('人虛像 (變高大)', 'Virtual Human (Taller)'));
 
               addStat('觀察者', 'Observer', tr('水底的魚', 'Fish Underwater'));
               addStat('光線路徑', 'Ray Path', tr('空氣 ➔ 水', 'Air ➔ Water'));
