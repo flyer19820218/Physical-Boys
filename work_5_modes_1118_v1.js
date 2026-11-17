@@ -99,6 +99,20 @@
   if (document.readyState !== 'loading') { /* 腳本在 body 尾端載入時 DOMContentLoaded 可能已過 */
     $('mode-student') && ($('mode-student').onclick = () => setMode('student'), $('mode-teacher').onclick = () => setMode('teacher'), $('teach-pause').onclick = togglePause, $('teach-replay').onclick = replay);
   }
+
+  /* ── 動手做實驗台：進到該分頁才 activate，離開就 deactivate（各實驗台檔自己把面板加到分頁最後）── */
+  const LAB_OF = { tab1: 'chain', tab2: 'rods', tab3: 'fusion', tab4: 'renew', tab5: 'blend' };
+  function syncLabs() {
+    const L = window.W5Lab || {};
+    Object.keys(LAB_OF).forEach(t => {
+      const lab = L[LAB_OF[t]]; if (!lab) return;
+      try { if (t === currentTab) lab.activate && lab.activate(); else lab.deactivate && lab.deactivate(); } catch (e) { if (window.console) console.warn('[lab]', LAB_OF[t], e); }
+    });
+  }
+  const prevStart = window.startCurrent;
+  window.startCurrent = function () { prevStart(); syncLabs(); };
+  document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => setTimeout(() => { const L = window.W5Lab || {}; Object.keys(L).forEach(k => { try { L[k].relang && L[k].relang(); } catch (e) {} }); }, 0)));
+  window.addEventListener('load', () => setTimeout(syncLabs, 300));
   W5.mode = 'step';                                  /* 預設＝學生操作 */
   document.addEventListener('langchange', () => updatePauseBtn());
 })();
