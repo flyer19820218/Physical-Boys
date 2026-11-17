@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   var AS = null, S = null;
-  var C = { mode: 'student', pick: null, snap: null };
+  var C = { mode: 'student', pick: null, snap: null, holdSec: null };
   var $ = function (id) { return document.getElementById(id); };
   var tr = function (zh, en) { return S && S.lang === 'en' ? en : zh; };
 
@@ -45,7 +45,9 @@
       set: function (v) {
         if (v > 0) {
           var it = AS.SEQ[S.page][S.k];
-          if (it && v >= it.sec && S.k === limitK()) { el = Math.max(0, it.sec - 0.04); S.playing = false; return; }
+          // 有聲講解：停在指定秒數（playing 維持 true，這樣「真的血球在流動」那段實拍影片停點內仍會播）
+          if (C.holdSec != null && S.k === C.pick) { if (v >= C.holdSec) { el = C.holdSec; return; } }
+          else if (it && v >= it.sec && S.k === limitK()) { el = Math.max(0, it.sec - 0.04); S.playing = false; return; }
         }
         el = v;
       }
@@ -56,10 +58,17 @@
     return !S.playing && it && S.elapsed >= it.sec - 0.05 && S.k === limitK();
   }
 
-  function playItem(page, k, pick) {     // 播第 k 項（從頭）；pick＝只播這一項、播完停住
+  function playItem(page, k, pick, frac, holdFrac) {     // 播第 k 項（從 frac 處開始，預設從頭）；pick＝只播這一項、播完停住
     if (S.page !== page) AS.switchPage(page);
     C.pick = pick ? k : null;
-    AS.apply(k); AS.render(); AS.schedule();
+    C.holdSec = null;
+    AS.apply(k);
+    if (pick && (frac > 0 || holdFrac != null)) {   // 有聲講解：從一項的中途開始，並停在指定位置（用在「吸收→運送→利用」三段）
+      var sec = AS.SEQ[page][k].sec;
+      C.holdSec = Math.max(0, (holdFrac == null ? 1 : holdFrac) * sec - 0.04);
+      S.elapsed = Math.min(C.holdSec, (frac || 0) * sec);
+    }
+    AS.render(); AS.schedule();
   }
 
   /* ── 畫面補件：每次引擎重畫（#lessons 整個重建）後，把控制列與動手做放回去 ── */
@@ -185,12 +194,14 @@
     css(); hookElapsed();
     // 換步驟編號／換分頁：不再是「只播這一項」
     document.addEventListener('click', function (e) {
-      if (e.target.closest('[data-action="jump"],[data-action="page"]')) C.pick = null;
+      if (e.target.closest('[data-action="jump"],[data-action="page"]')) { C.pick = null; C.holdSec = null; }
     }, true);
     new MutationObserver(install).observe($('lessons'), { childList: true });
     install();
     requestAnimationFrame(loop);
   }
-  window.AnimalModes = { C: C, show: function (page, k) { if (S) playItem(page, k, true); }, atEnd: function () { return S ? atEnd() : false; } };
+  window.AnimalModes = { C: C,
+    show: function (page, k, frac, holdFrac) { if (S) playItem(page, k, true, frac, holdFrac); },
+    release: function () { C.pick = null; C.holdSec = null; }, atEnd: function () { return S ? atEnd() : false; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
