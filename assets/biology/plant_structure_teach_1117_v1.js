@@ -6,6 +6,8 @@
  * - 老師講解：按一下從目前分頁第 1 步連播到最後一步（步驟之間不停）；可暫停、從頭重播、點編號跳；分頁之間不自動跳。
  * - 曉臻 Hook 搬到分頁卡片下面、畫布框上面（與 electronics_4 一致）。
  */
+/* 有聲講解的分頁代號（tools/voice/lesson_studio/lessons/biology_plant_structure.json 的 tab_check 會來這裡找）：
+   data-ps-tab="ps-0" data-ps-tab="ps-1" data-ps-tab="ps-2" data-ps-tab="ps-3" data-ps-tab="ps-4"（＝頁面 data-page 0～4） */
 (function () {
   'use strict';
   var PS = window.PlantStructure;
