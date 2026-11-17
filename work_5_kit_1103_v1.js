@@ -147,7 +147,19 @@
     if (!C || !C.running) return;
     if (document.hidden) { C.raf = 0; return; }
     const dt = C.last ? Math.min(0.1, (ts - C.last) / 1000) : 0;
-    C.last = ts; C.T = (C.T + dt) % C.total;
+    C.last = ts;
+    if (C.paused) { render(C); C.raf = requestAnimationFrame(frame); return; }
+    const nt = C.T + dt;
+    if (api.mode === 'step' && nt >= C.stepEnd) {          /* 學生模式：播完這一步就停（10.6） */
+      C.T = C.stepEnd - 0.001; C.paused = true; render(C); C.raf = requestAnimationFrame(frame); return;
+    }
+    if (api.mode === 'tour' && nt >= C.total) {            /* 老師講解：播到底、不循環 */
+      C.T = C.total - 0.001; C.paused = true; render(C);
+      if (api.onEnd) api.onEnd(C.name);
+      C.raf = requestAnimationFrame(frame); return;
+    }
+    C.T = nt % C.total;
+    if (api.mode === 'step') C.stepEnd = C.bounds[stepOf(C, C.T)];
     render(C);
     C.raf = requestAnimationFrame(frame);
   }
@@ -158,7 +170,7 @@
   }
 
   const api = {
-    W, H, TR, TAU, COL, debug: false, boxes: [],
+    W, H, TR, TAU, COL, debug: false, boxes: [], mode: 'loop', onEnd: null,
     clamp01, ease, lerp, seg, hash, rgba, mix,
     rr, font, tw, label, pill, ball, glow, arrow,
 
@@ -172,7 +184,7 @@
     },
     start(name) {
       const C = REG[name]; if (!C || !C.ctx) return;
-      stopAll(); activeName = name; C.T = 0; C.last = 0; C.shownStep = 0; C.running = true;
+      stopAll(); activeName = name; C.T = 0; C.last = 0; C.shownStep = 0; C.running = true; C.paused = false; C.stepEnd = C.bounds[1];
       render(C); C.raf = requestAnimationFrame(frame);
     },
     stop(name) {
@@ -183,7 +195,7 @@
     stopAll,
     go(name, n) {
       const C = REG[name]; if (!C || !C.ctx) return;
-      n = Math.max(1, Math.min(C.N, n | 0)); C.T = C.bounds[n - 1] + 0.001; C.last = 0; C.shownStep = 0;
+      n = Math.max(1, Math.min(C.N, n | 0)); C.T = C.bounds[n - 1] + 0.001; C.last = 0; C.shownStep = 0; C.paused = false; C.stepEnd = C.bounds[n];
       if (!C.running) { stopAll(); activeName = name; C.running = true; }
       render(C); if (!C.raf) C.raf = requestAnimationFrame(frame);
     },
@@ -192,6 +204,10 @@
       C.T = ((sec % C.total) + C.total) % C.total; C.shownStep = 0; return render(C);
     },
     info(name) { const C = REG[name]; return C ? { N: C.N, bounds: C.bounds.slice(), total: C.total, running: C.running } : null; },
+    pause(name) { const C = REG[name || activeName]; if (C) C.paused = true; },
+    resume(name) { const C = REG[name || activeName]; if (C) { C.paused = false; C.last = 0; if (api.mode === 'step') C.stepEnd = C.bounds[stepOf(C, C.T)]; if (!C.raf && C.running) C.raf = requestAnimationFrame(frame); } },
+    isPaused(name) { const C = REG[name || activeName]; return !!(C && C.paused); },
+    progress(name) { const C = REG[name || activeName]; return C ? C.T / C.total : 0; },
     names() { return Object.keys(REG); }
   };
 

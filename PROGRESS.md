@@ -98,6 +98,17 @@ biology_nutrients 上線後老師試聽抓到兩個錯，都是程式寫錯，�
 - 新檔：`work_5.html`（5 分頁：核分裂／核電廠／太陽核融合／分裂融合比較（束縛能曲線、靜態示意圖）／補充：未來的新星）、`work_5_kit_1103_v1.js`（共用動畫骨架 W5）、`work_5_fission|plant|sun_1103_v1.js`（Opus 動畫）、`assets/quiz/quiz_work_5_1103_v1.js`（15 題）、封面 `assets/covers/work_5_cover_1103_v1.jpg`（程式繪製的暫用圖，可用同檔名 AI 插圖覆蓋；`work_5_cover_1103_gen.html` 是產生器）。
 - 已加 ★ 卡片到 `index_classic.html`（功與能 4→5 個）、README、`lessons.json`。補充分頁的日期資料（NIF、EAST、ITER）附來源於頁面折疊區，之後有新進度需更新。
 
+## 功與能 work_5 擴充為「能源與發電」（老師 2026-11-17 指示；分支 `work_5-energy`，**尚未合併 main，等老師 OK**）
+
+- 老師要求：把被刪掉、現放在跨科的「能源」課（PDF）整合進 work_5；核能發電原 5 頁合併成 2 個分頁，再新增 3 個分頁教完整課；動畫 Opus、一般內容 Sonnet；加學生操作、老師講解、有聲講解。不談停運與政治。
+- 結構：5 分頁、14 個子頁（①能源分類／火力發電 ②核分裂／核電廠 ③核融合／分裂融合比較／人造太陽（補充）④水風／太陽能／生質能／地熱洋流潮汐 ⑤發電結構／台灣與新興能源／優缺點比較）。
+- 新動畫（Opus，各 3～5 步）：`work_5_classify|thermal|hydrowind|solar|biomass|geo|mix|newtech_1117_v1.js`。題庫 `assets/quiz/quiz_work_5_1103_v1.js` 擴充為 42 題（mcq_check 0 違規）。
+- 雙模式：`work_5_modes_1118_v1.js`＋kit 新增 `W5.mode`（loop／step／tour）、pause/resume/progress；學生操作＝每步播完停住，老師講解＝連播並跨子頁接力、暫停／重播。
+- 動手做實驗台（Opus，每分頁一個）：`work_5_lab_chain|rods|fusion|renew|blend_1118_v1.js`（自己把面板加到分頁最後；`W5Lab.<key>.activate/deactivate/relang`，由 modes 檔在切分頁時呼叫）。
+- 有聲講解：稿 `tools/voice/lesson_studio/scripts/work_5_script.txt`（139 句、合聲 6 處、14 個切頁）、設定檔 `lessons/work_5.json`（at 44、acts 5）、播放器 `work_5_voice_v1.js`、模擬 `sim/sim_lines_work_5.js`（139/139、mode-teacher 0、js errors none）。
+- 待老師決定：①頁首仍是原本的鉤子分頁卡，未改成 magnetism_1 的 `.mode-switch`＋分頁外 Hook 版型；②第 29、40、45、56 句句中換步驟；③第 64～80 句停在靜態子頁；④能量色在實驗台沿用 kit 的黃（AGENTS 2.2.1 為電子藍）；⑤每次分裂放出中子數頁面寫 2～3 顆、PDF 寫三個以上。
+- 螢光筆：本課講述的公式（質能、加權平均）都畫在 canvas／圖表裡，未做 HL 表。
+
 ## 電學 electronics_3「為什麼並聯電壓相等」動畫（老師 2026-11-03 指示，已完成）
 
 - 老師要求：不想讓學生死背；用動畫解釋並聯各支路電壓為何相等（每顆電子能量在哪裡花光？）。放在並聯分頁新增子分頁「為什麼電壓相等」（`view-t3-par`，畫布 `#cvs-t3v` 960×480，步驟鈕 `btn-pv-1..5` → `window.parVoltGo(n)`，進入點 `initParVolt()`，RAF 存 `animFrames['tab3v']`）。

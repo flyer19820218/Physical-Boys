@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title data-zh="核能發電：核分裂與核融合｜互動黑板教學" data-en="Nuclear Power: Fission and Fusion | Interactive Blackboard">核能發電：核分裂與核融合｜互動黑板教學</title>
+<title data-zh="能源與發電｜互動黑板教學" data-en="Energy and Power Generation | Interactive Blackboard">能源與發電｜互動黑板教學</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@500;700&display=swap" rel="stylesheet">
@@ -85,6 +85,12 @@
   .tab-btn.danger-tab.active { background: var(--chalk-coral); border-color: var(--chalk-coral); box-shadow: 0 0 20px rgba(255, 128, 64, 0.5); }
 
   .panel { background: var(--bg-panel); border: 2px solid var(--rule-color); border-radius: 16px; padding: 26px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); }
+  .sub-tabs { display: flex; flex-wrap: wrap; border-bottom: 2px solid var(--rule-color); margin-bottom: 18px; }
+  .sub-tab-btn { font: inherit; font-size: 20px; font-weight: 700; min-height: 54px; padding: 10px 20px; background: none; border: 0; border-bottom: 4px solid transparent; color: var(--chalk-muted); cursor: pointer; }
+  .sub-tab-btn:hover { color: var(--chalk-white); background: rgba(255,255,255,0.05); }
+  .sub-tab-btn.active { color: var(--chalk-yellow); border-bottom-color: var(--chalk-yellow); }
+  .sub-view { display: none; }
+  .sub-view.active { display: block; }
   .tab-view { display: none; }
   .tab-view.active { display: block; }
   .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px dashed var(--rule-color); padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
@@ -208,6 +214,20 @@
   .home-fab, .back-fab, a.home-fab, a.back-fab, .floating-lang-container, .language-switcher,
   #pt-fab, #pt-bar, #pt-menu { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
+  /* 老師講解／學生操作 雙模式（外層加法；學生操作＝每步播完停住） */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 20px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill { min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer; font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3; background: transparent; color: var(--chalk-muted); border: 2px dashed #3b6e52; touch-action: manipulation; transition: all .2s; }
+  .mode-pill:hover:not(.active) { background: rgba(255,255,255,.08); color: var(--chalk-white); }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255,224,102,.35); }
+  .mode-hint { font-size: 17px; color: var(--chalk-muted); text-align: center; line-height: 1.5; max-width: 900px; }
+  .teach-bar { display: none; width: 100%; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn { min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3; background: transparent; color: #33cc99; border: 2px solid #33cc99; touch-action: manipulation; transition: all .2s; }
+  .teach-btn:hover { background: #33cc99; color: var(--bg-base); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255,255,255,.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
 </style>
 <link rel="stylesheet" href="assets/home_nav_1011_v1.css">
 <link rel="stylesheet" href="assets/back_nav_1025_v1.css">
@@ -230,35 +250,149 @@
   </div>
 
   <header>
-    <h1 data-zh="核能發電：核分裂與核融合" data-en="Nuclear Power: Fission and Fusion">核能發電：核分裂與核融合</h1>
-    <div class="subtitle" data-zh="從一顆中子，到一顆恆星" data-en="From one neutron to a star">從一顆中子，到一顆恆星</div>
+    <h1 data-zh="能源與發電" data-en="Energy and Power Generation">能源與發電</h1>
+    <div class="subtitle" data-zh="從化石燃料到人造太陽，每種能源都有絕招與代價" data-en="From fossil fuels to an artificial Sun: every source has strengths and costs">從化石燃料到人造太陽，每種能源都有絕招與代價</div>
   </header>
+
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="teach-bar" id="teachBar">
+      <button class="teach-btn" id="teach-pause" type="button" data-zh="⏸ 暫停" data-en="⏸ Pause">⏸ 暫停</button>
+      <button class="teach-btn" id="teach-replay" type="button" data-zh="↺ 從頭重播" data-en="↺ Replay">↺ 從頭重播</button>
+      <div class="teach-track"><div class="teach-fill" id="teach-fill"></div></div>
+      <div class="teach-note" id="teach-note"></div>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就從這個分頁的第一段開始，自動一段接一段連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：每個步驟播完就停住，想看下一步請按步驟編號。" data-en="Teacher: starts from the first scene of this tab and plays on by itself; pause, replay, or press a step number to jump. Student: each step plays once and stops; press a step number to see the next.">老師講解：按下去就從這個分頁的第一段開始，自動一段接一段連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：每個步驟播完就停住，想看下一步請按步驟編號。</div>
+  </div>
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="tab1" type="button">
-      <span class="tab-hook" data-zh="一顆中子的骨牌" data-en="One neutron, one domino">一顆中子的骨牌</span>
-      <span class="tab-sub" data-zh="核分裂與連鎖反應" data-en="Fission &amp; chain reaction">核分裂與連鎖反應</span>
+      <span class="tab-hook" data-zh="電動機車的電從哪來？" data-en="Where does an e-scooter get its power?">電動機車的電從哪來？</span>
+      <span class="tab-sub" data-zh="認識能源與火力發電" data-en="Energy sources &amp; thermal power">認識能源與火力發電</span>
     </button>
     <button class="tab-btn" data-tab="tab2" type="button">
-      <span class="tab-hook" data-zh="核電廠在燒開水" data-en="A nuclear plant boils water">核電廠在燒開水</span>
-      <span class="tab-sub" data-zh="從熱到電" data-en="From heat to electricity">從熱到電</span>
+      <span class="tab-hook" data-zh="一顆中子的骨牌" data-en="One neutron, one domino">一顆中子的骨牌</span>
+      <span class="tab-sub" data-zh="核能一：核分裂與核電廠" data-en="Nuclear I: fission &amp; the plant">核能一：核分裂與核電廠</span>
     </button>
     <button class="tab-btn" data-tab="tab3" type="button">
       <span class="tab-hook" data-zh="太陽沒有在燃燒" data-en="The Sun isn't burning">太陽沒有在燃燒</span>
-      <span class="tab-sub" data-zh="核融合：太陽的反應" data-en="Fusion: the Sun's reaction">核融合：太陽的反應</span>
+      <span class="tab-sub" data-zh="核能二：核融合與人造太陽" data-en="Nuclear II: fusion &amp; artificial Sun">核能二：核融合與人造太陽</span>
     </button>
     <button class="tab-btn" data-tab="tab4" type="button">
-      <span class="tab-hook" data-zh="拆開合起來都放能" data-en="Split or join: both release energy">拆開合起來都放能</span>
-      <span class="tab-sub" data-zh="分裂與融合比一比" data-en="Fission vs fusion">分裂與融合比一比</span>
+      <span class="tab-hook" data-zh="水風光生質地熱各有絕招" data-en="Every renewable has a trick">水風光生質地熱各有絕招</span>
+      <span class="tab-sub" data-zh="再生能源" data-en="Renewable energy">再生能源</span>
     </button>
-    <button class="tab-btn danger-tab" data-tab="tab5" type="button">
-      <span class="tab-hook" data-zh="未來的新星" data-en="A future star">未來的新星</span>
-      <span class="tab-sub" data-zh="人造太陽（補充）" data-en="Artificial Sun (extra)">人造太陽（補充）</span>
+    <button class="tab-btn" data-tab="tab5" type="button">
+      <span class="tab-hook" data-zh="沒有十全十美的能源" data-en="No perfect energy source">沒有十全十美的能源</span>
+      <span class="tab-sub" data-zh="能源的發展與應用" data-en="Energy: development &amp; use">能源的發展與應用</span>
     </button>
   </div>
 
-  <!-- ═════════ 分頁一：核分裂 ═════════ -->
+  <!-- ═════════ 分頁一：認識能源與火力發電 ═════════ -->
   <div class="panel tab-view active" id="tab1">
+    <div class="sub-tabs" role="tablist">
+      <button class="sub-tab-btn active" type="button" data-sub="classify" onclick="setSub('tab1','classify')" data-zh="能源怎麼分" data-en="Classifying energy">能源怎麼分</button>
+      <button class="sub-tab-btn" type="button" data-sub="thermal" onclick="setSub('tab1','thermal')" data-zh="火力發電" data-en="Thermal power">火力發電</button>
+    </div>
+  <div class="sub-view active" id="sv-classify">
+    <div class="panel-header">
+      <h2 data-zh="能源怎麼分？" data-en="How do we classify energy sources?">能源怎麼分？</h2>
+      <span class="sub-tag" data-zh="能源分類" data-en="Classification">能源分類</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="電動機車安安靜靜、不排廢氣，動力來自<b>電</b>。可是電不會從天上掉下來——它從哪裡來？先把生活裡用到的能源分分類，答案就藏在裡面。" data-en="An electric scooter runs quietly with no exhaust: its power is <b>electricity</b>. But electricity does not fall from the sky. Sort the energy sources we use first, and the answer appears.">電動機車安安靜靜、不排廢氣，動力來自<b>電</b>。可是電不會從天上掉下來——它從哪裡來？先把生活裡用到的能源分分類，答案就藏在裡面。</div>
+      </div>
+    </div>
+    <div class="stage-container"><canvas id="cvs-classify" width="960" height="540"></canvas></div>
+    <div class="step-row">
+      <button class="step-btn active" id="btn-classify-1" type="button" onclick="W5.go('classify',1)" data-zh="1 生活處處要能源" data-en="1 Energy everywhere">1 生活處處要能源</button>
+      <button class="step-btn" id="btn-classify-2" type="button" onclick="W5.go('classify',2)" data-zh="2 用得完 vs 用不完" data-en="2 Runs out or renewable">2 用得完 vs 用不完</button>
+      <button class="step-btn" id="btn-classify-3" type="button" onclick="W5.go('classify',3)" data-zh="3 天然的與加工的" data-en="3 Natural or processed">3 天然的與加工的</button>
+      <button class="step-btn" id="btn-classify-4" type="button" onclick="W5.go('classify',4)" data-zh="4 能源的源頭" data-en="4 Where it all starts">4 能源的源頭</button>
+    </div>
+    <div class="note">
+      <h3 data-zh="看動畫時，想一想" data-en="While you watch, think about">看動畫時，想一想</h3>
+      <ul>
+        <li data-zh="能提供能量的資源，叫做<b>能源</b>，例如石油、瓦斯、電力。energy 這個字源自希臘文，意思是「活動的力量」，物理上定義為「<b>作功的能力</b>」。" data-en="A resource that can supply energy is an <b>energy source</b>, such as oil, gas and electricity. Physics defines energy as the <b>ability to do work</b>.">能提供能量的資源，叫做<b>能源</b>，例如石油、瓦斯、電力。energy 這個字源自希臘文，意思是「活動的力量」，物理上定義為「<b>作功的能力</b>」。</li>
+        <li data-zh="依「能不能循環使用」分類：煤、石油、天然氣、核燃料蘊藏量有限，用完很難再生，是<b>非再生能源</b>；太陽、風、水、潮汐、洋流、地熱、生質燃料可以循環利用，是<b>再生能源</b>。" data-en="Sorted by whether they can be reused: coal, oil, natural gas and nuclear fuel are limited and are <b>non-renewable</b>; sunlight, wind, water, tides, ocean currents, geothermal and biofuel are <b>renewable</b>.">依「能不能循環使用」分類：煤、石油、天然氣、核燃料蘊藏量有限，用完很難再生，是<b>非再生能源</b>；太陽、風、水、潮汐、洋流、地熱、生質燃料可以循環利用，是<b>再生能源</b>。</li>
+        <li data-zh="依「有沒有加工」分類（補充）：天然形成、可直接取得的是<b>初級能源</b>，如原煤、原油、天然氣、鈾、陽光；經過加工轉換才得到的是<b>次級能源</b>，如電力、汽油、柴油、液化石油氣。" data-en="Sorted by processing (extra): sources taken straight from nature, like raw coal, crude oil, natural gas, uranium and sunlight, are <b>primary</b>; those made by converting them, like electricity, gasoline and diesel, are <b>secondary</b>.">依「有沒有加工」分類（補充）：天然形成、可直接取得的是<b>初級能源</b>，如原煤、原油、天然氣、鈾、陽光；經過加工轉換才得到的是<b>次級能源</b>，如電力、汽油、柴油、液化石油氣。</li>
+        <li data-zh="人類能用的能源，絕大部分來自<b>太陽</b>：化石燃料、風力、水力、生質能；一小部分來自核能，以及地熱與潮汐。" data-en="Most of the energy humans use comes from the <b>Sun</b>: fossil fuels, wind, water and biomass. A small part comes from nuclear energy, geothermal heat and tides.">人類能用的能源，絕大部分來自<b>太陽</b>：化石燃料、風力、水力、生質能；一小部分來自核能，以及地熱與潮汐。</li>
+        <li data-zh="工業革命前，人類靠人力、獸力、風力、水力和柴火；瓦特改良蒸汽機之後，煤成為主角；有了引擎和發電機，石油、煤、天然氣就成為發電的主要燃料。" data-en="Before the Industrial Revolution people relied on muscle, animals, wind, water and firewood. After Watt improved the steam engine, coal took the lead; with engines and generators, oil, coal and gas became the main fuels for power.">工業革命前，人類靠人力、獸力、風力、水力和柴火；瓦特改良蒸汽機之後，煤成為主角；有了引擎和發電機，石油、煤、天然氣就成為發電的主要燃料。</li>
+      </ul>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="能源＝能提供能量的資源；能量＝作功的能力" data-en="Energy source = a resource that supplies energy; energy = the ability to do work">能源＝能提供能量的資源；能量＝作功的能力</li>
+        <li data-zh="能不能循環使用：非再生（煤、油、氣、核燃料）／再生（太陽、風、水、潮汐、洋流、地熱、生質）" data-en="Reusable or not: non-renewable (coal, oil, gas, nuclear fuel) / renewable (Sun, wind, water, tides, currents, geothermal, biomass)">能不能循環使用：非再生（煤、油、氣、核燃料）／再生（太陽、風、水、潮汐、洋流、地熱、生質）</li>
+        <li data-zh="地球上的能源絕大部分來自太陽" data-en="Most energy on Earth comes from the Sun">地球上的能源絕大部分來自太陽</li>
+      </ul>
+    </div>
+  </div>
+  <div class="sub-view" id="sv-thermal">
+    <div class="panel-header">
+      <h2 data-zh="火力發電：燒的是什麼？怎麼變成電？" data-en="Thermal power: what burns, and how does it become electricity?">火力發電：燒的是什麼？怎麼變成電？</h2>
+      <span class="sub-tag" data-zh="化石燃料" data-en="Fossil fuels">化石燃料</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="台灣目前最主要的發電方式是火力發電，燃料是煤和天然氣。一塊煤要變成插座裡的電，中間經過了<b>幾次能量轉換</b>？" data-en="Thermal power is Taiwan's main way to make electricity, burning coal and natural gas. How many <b>energy conversions</b> turn a lump of coal into the electricity in a wall socket?">台灣目前最主要的發電方式是火力發電，燃料是煤和天然氣。一塊煤要變成插座裡的電，中間經過了<b>幾次能量轉換</b>？</div>
+      </div>
+    </div>
+    <div class="stage-container"><canvas id="cvs-thermal" width="960" height="540"></canvas></div>
+    <div class="step-row">
+      <button class="step-btn active" id="btn-thermal-1" type="button" onclick="W5.go('thermal',1)" data-zh="1 化石燃料哪裡來" data-en="1 Where fossil fuels come from">1 化石燃料哪裡來</button>
+      <button class="step-btn" id="btn-thermal-2" type="button" onclick="W5.go('thermal',2)" data-zh="2 鍋爐燒開水" data-en="2 The boiler boils water">2 鍋爐燒開水</button>
+      <button class="step-btn" id="btn-thermal-3" type="button" onclick="W5.go('thermal',3)" data-zh="3 渦輪帶動發電機" data-en="3 Turbine and generator">3 渦輪帶動發電機</button>
+      <button class="step-btn" id="btn-thermal-4" type="button" onclick="W5.go('thermal',4)" data-zh="4 燃煤與燃氣比一比" data-en="4 Coal vs gas">4 燃煤與燃氣比一比</button>
+    </div>
+    <div class="note">
+      <h3 data-zh="看動畫時，想一想" data-en="While you watch, think about">看動畫時，想一想</h3>
+      <ul>
+        <li data-zh="煤、石油、天然氣是遠古生物死後埋在地底，經過高溫、高壓慢慢轉變而成，所以叫<b>化石燃料</b>。台灣自己的蘊藏量並不豐富。" data-en="Coal, oil and natural gas formed from ancient organisms buried underground and slowly changed by heat and pressure, so they are called <b>fossil fuels</b>. Taiwan's own reserves are small.">煤、石油、天然氣是遠古生物死後埋在地底，經過高溫、高壓慢慢轉變而成，所以叫<b>化石燃料</b>。台灣自己的蘊藏量並不豐富。</li>
+        <li data-zh="石油可以提煉出石油氣、汽油、柴油：汽油與柴油在引擎裡是<b>化學能→動能</b>；天然氣與液化石油氣在瓦斯爐裡是<b>化學能→熱能</b>。" data-en="Oil is refined into petroleum gas, gasoline and diesel. In an engine gasoline and diesel turn <b>chemical energy into kinetic energy</b>; natural gas on a stove turns <b>chemical energy into heat</b>.">石油可以提煉出石油氣、汽油、柴油：汽油與柴油在引擎裡是<b>化學能→動能</b>；天然氣與液化石油氣在瓦斯爐裡是<b>化學能→熱能</b>。</li>
+        <li data-zh="火力發電的能量轉換：燃料燃燒把鍋爐的水煮成高溫高壓的水蒸氣（<b>化學能→熱能</b>）；蒸氣推動渦輪（<b>熱能→動能</b>）；渦輪帶動發電機（<b>動能→電能</b>）。" data-en="Energy conversions in a thermal plant: burning fuel boils boiler water into high-pressure steam (<b>chemical → heat</b>); steam spins the turbine (<b>heat → kinetic</b>); the turbine drives the generator (<b>kinetic → electrical</b>).">火力發電的能量轉換：燃料燃燒把鍋爐的水煮成高溫高壓的水蒸氣（<b>化學能→熱能</b>）；蒸氣推動渦輪（<b>熱能→動能</b>）；渦輪帶動發電機（<b>動能→電能</b>）。</li>
+        <li data-zh="燃燒化石燃料會排放二氧化碳，加劇全球暖化，還會排放硫氧化物、氮氧化物造成酸雨；燃煤還會產生煤灰，影響空氣品質。" data-en="Burning fossil fuels releases carbon dioxide, which worsens global warming, plus sulfur and nitrogen oxides that cause acid rain; burning coal also makes ash that harms air quality.">燃燒化石燃料會排放二氧化碳，加劇全球暖化，還會排放硫氧化物、氮氧化物造成酸雨；燃煤還會產生煤灰，影響空氣品質。</li>
+        <li data-zh="燃氣發電的懸浮微粒比燃煤少，二氧化碳排放量大約是燃煤的 60%，但仍然會排放二氧化碳。" data-en="Gas-fired plants emit fewer particles than coal, and about 60% of coal's carbon dioxide, but they still emit carbon dioxide.">燃氣發電的懸浮微粒比燃煤少，二氧化碳排放量大約是燃煤的 60%，但仍然會排放二氧化碳。</li>
+      </ul>
+    </div>
+    <div class="table-wrap">
+      <table class="prop-table">
+        <thead><tr><th data-zh="比較" data-en="Compare">比較</th><th data-zh="燃煤發電" data-en="Coal">燃煤發電</th><th data-zh="燃氣發電" data-en="Natural gas">燃氣發電</th></tr></thead>
+        <tbody>
+          <tr><td data-zh="燃料成本" data-en="Fuel cost">燃料成本</td><td data-zh="較低" data-en="Lower">較低</td><td data-zh="較高" data-en="Higher">較高</td></tr>
+          <tr><td data-zh="運輸與儲存" data-en="Transport and storage">運輸與儲存</td><td data-zh="較容易、較安全" data-en="Easier and safer">較容易、較安全</td><td data-zh="較困難、較危險" data-en="Harder and riskier">較困難、較危險</td></tr>
+          <tr><td data-zh="空氣汙染物" data-en="Air pollutants">空氣汙染物</td><td data-zh="較多（硫氧化物、懸浮微粒）" data-en="More (sulfur oxides, particles)">較多（硫氧化物、懸浮微粒）</td><td data-zh="較少（以氮氧化物為主）" data-en="Fewer (mainly nitrogen oxides)">較少（以氮氧化物為主）</td></tr>
+          <tr><td data-zh="二氧化碳排放" data-en="CO₂ emissions">二氧化碳排放</td><td data-zh="非常高" data-en="Very high">非常高</td><td data-zh="約燃煤的 60%" data-en="About 60% of coal">約燃煤的 60%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="火力發電＝化學能→熱能→動能→電能" data-en="Thermal power = chemical → heat → kinetic → electrical energy">火力發電＝化學能→熱能→動能→電能</li>
+        <li data-zh="煤、石油、天然氣是遠古生物變成的化石燃料，用完很難再生" data-en="Coal, oil and gas are fossil fuels from ancient life and are hard to replace">煤、石油、天然氣是遠古生物變成的化石燃料，用完很難再生</li>
+        <li data-zh="燃氣比燃煤乾淨一些，但兩者都排放二氧化碳" data-en="Gas is cleaner than coal, but both emit carbon dioxide">燃氣比燃煤乾淨一些，但兩者都排放二氧化碳</li>
+      </ul>
+    </div>
+  </div>
+  </div>
+
+  <!-- ═════════ 分頁二：核能一（原分頁 1＋2 合併） ═════════ -->
+  <div class="panel tab-view" id="tab2">
+    <div class="sub-tabs" role="tablist">
+      <button class="sub-tab-btn active" type="button" data-sub="fission" onclick="setSub('tab2','fission')" data-zh="核分裂與連鎖反應" data-en="Fission &amp; chain reaction">核分裂與連鎖反應</button>
+      <button class="sub-tab-btn" type="button" data-sub="plant" onclick="setSub('tab2','plant')" data-zh="核電廠：從熱到電" data-en="From heat to electricity">核電廠：從熱到電</button>
+    </div>
+  <div class="sub-view active" id="sv-fission">
     <div class="panel-header">
       <h2 data-zh="核分裂：一顆中子，推倒第一張骨牌" data-en="Fission: one neutron tips the first domino">核分裂：一顆中子，推倒第一張骨牌</h2>
       <span class="sub-tag" data-zh="鈾-235" data-en="Uranium-235">鈾-235</span>
@@ -297,9 +431,7 @@
       </ul>
     </div>
   </div>
-
-  <!-- ═════════ 分頁二：核電廠 ═════════ -->
-  <div class="panel tab-view" id="tab2">
+  <div class="sub-view" id="sv-plant">
     <div class="panel-header">
       <h2 data-zh="核電廠：從原子核到插座" data-en="A nuclear plant: from nucleus to wall socket">核電廠：從原子核到插座</h2>
       <span class="sub-tag" data-zh="能量轉換" data-en="Energy conversion">能量轉換</span>
@@ -338,9 +470,16 @@
       </ul>
     </div>
   </div>
+  </div>
 
-  <!-- ═════════ 分頁三：核融合（太陽） ═════════ -->
+  <!-- ═════════ 分頁三：核能二（原分頁 3＋4＋5 合併） ═════════ -->
   <div class="panel tab-view" id="tab3">
+    <div class="sub-tabs" role="tablist">
+      <button class="sub-tab-btn active" type="button" data-sub="sun" onclick="setSub('tab3','sun')" data-zh="核融合：太陽的反應" data-en="Fusion: the Sun">核融合：太陽的反應</button>
+      <button class="sub-tab-btn" type="button" data-sub="compare" onclick="setSub('tab3','compare')" data-zh="分裂與融合比一比" data-en="Fission vs fusion">分裂與融合比一比</button>
+      <button class="sub-tab-btn" type="button" data-sub="future" onclick="setSub('tab3','future')" data-zh="人造太陽（補充）" data-en="Artificial Sun (extra)">人造太陽（補充）</button>
+    </div>
+  <div class="sub-view active" id="sv-sun">
     <div class="panel-header">
       <h2 data-zh="核融合：太陽的反應" data-en="Fusion: the Sun's reaction">核融合：太陽的反應</h2>
       <span class="sub-tag" data-zh="氫 → 氦" data-en="Hydrogen → helium">氫 → 氦</span>
@@ -379,9 +518,7 @@
       </ul>
     </div>
   </div>
-
-  <!-- ═════════ 分頁四：比一比 ═════════ -->
-  <div class="panel tab-view" id="tab4">
+  <div class="sub-view" id="sv-compare">
     <div class="panel-header">
       <h2 data-zh="分裂與融合比一比" data-en="Fission vs fusion">分裂與融合比一比</h2>
       <span class="sub-tag mono">E = mc²</span>
@@ -507,9 +644,7 @@
       </ul>
     </div>
   </div>
-
-  <!-- ═════════ 分頁五：補充｜未來的新星－人造太陽 ═════════ -->
-  <div class="panel tab-view" id="tab5">
+  <div class="sub-view" id="sv-future">
     <div class="panel-header">
       <h2 data-zh="未來的新星－人造太陽" data-en="A future star: the artificial Sun">未來的新星－人造太陽</h2>
       <span class="sub-tag coral" data-zh="補充" data-en="Extra">補充</span>
@@ -565,6 +700,309 @@
       </ul>
     </div>
   </div>
+  </div>
+
+  <!-- ═════════ 分頁四：再生能源 ═════════ -->
+  <div class="panel tab-view" id="tab4">
+    <div class="sub-tabs" role="tablist">
+      <button class="sub-tab-btn active" type="button" data-sub="hydrowind" onclick="setSub('tab4','hydrowind')" data-zh="水力與風力" data-en="Hydro and wind">水力與風力</button>
+      <button class="sub-tab-btn" type="button" data-sub="solar" onclick="setSub('tab4','solar')" data-zh="太陽能" data-en="Solar">太陽能</button>
+      <button class="sub-tab-btn" type="button" data-sub="biomass" onclick="setSub('tab4','biomass')" data-zh="生質能" data-en="Biomass">生質能</button>
+      <button class="sub-tab-btn" type="button" data-sub="geo" onclick="setSub('tab4','geo')" data-zh="地熱、洋流與潮汐" data-en="Geothermal, currents, tides">地熱、洋流與潮汐</button>
+    </div>
+  <div class="sub-view active" id="sv-hydrowind">
+    <div class="panel-header">
+      <h2 data-zh="水和風，怎麼推動發電機？" data-en="How do water and wind turn a generator?">水和風，怎麼推動發電機？</h2>
+      <span class="sub-tag" data-zh="水力與風力" data-en="Hydro and wind">水力與風力</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="河水往下衝、風呼呼吹過海邊，這些看起來和插座毫無關係的東西，卻都能變成電。它們到底是被<b>誰</b>推動的？" data-en="Rivers rush downhill and wind sweeps along the coast. They seem unrelated to a wall socket, yet both can become electricity. <b>What</b> pushes them in the first place?">河水往下衝、風呼呼吹過海邊，這些看起來和插座毫無關係的東西，卻都能變成電。它們到底是被<b>誰</b>推動的？</div>
+      </div>
+    </div>
+    <div class="stage-container"><canvas id="cvs-hydrowind" width="960" height="540"></canvas></div>
+    <div class="step-row">
+      <button class="step-btn active" id="btn-hydrowind-1" type="button" onclick="W5.go('hydrowind',1)" data-zh="1 水循環是太陽推動" data-en="1 The Sun drives the water cycle">1 水循環是太陽推動</button>
+      <button class="step-btn" id="btn-hydrowind-2" type="button" onclick="W5.go('hydrowind',2)" data-zh="2 水力發電" data-en="2 Hydropower">2 水力發電</button>
+      <button class="step-btn" id="btn-hydrowind-3" type="button" onclick="W5.go('hydrowind',3)" data-zh="3 風從哪裡來" data-en="3 Where wind comes from">3 風從哪裡來</button>
+      <button class="step-btn" id="btn-hydrowind-4" type="button" onclick="W5.go('hydrowind',4)" data-zh="4 風力發電" data-en="4 Wind power">4 風力發電</button>
+    </div>
+    <div class="note">
+      <h3 data-zh="看動畫時，想一想" data-en="While you watch, think about">看動畫時，想一想</h3>
+      <ul>
+        <li data-zh="海水被太陽曬熱後蒸發，水氣上升成雲，再變成雨雪落回高處、流回大海。這整個<b>水循環</b>是太陽的能量在推動，所以水力算是再生能源。" data-en="Sunlight warms seawater, which evaporates, rises as clouds and falls again as rain or snow on high ground before flowing back to the sea. The Sun powers this whole <b>water cycle</b>, so hydropower is renewable.">海水被太陽曬熱後蒸發，水氣上升成雲，再變成雨雪落回高處、流回大海。這整個<b>水循環</b>是太陽的能量在推動，所以水力算是再生能源。</li>
+        <li data-zh="水力發電的能量轉換：高處的水具有<b>重力位能</b>，往低處衝下時變成<b>動能</b>，水流推動水輪機，再帶動發電機變成<b>電能</b>。" data-en="Energy conversions in hydropower: water held high has <b>gravitational potential energy</b>, which becomes <b>kinetic energy</b> as it rushes down; the flow turns a turbine, which drives a generator to make <b>electrical energy</b>.">水力發電的能量轉換：高處的水具有<b>重力位能</b>，往低處衝下時變成<b>動能</b>，水流推動水輪機，再帶動發電機變成<b>電能</b>。</li>
+        <li data-zh="台灣的河川又短又急，下雨時水很快就流進海裡，能蓄起來的水有限，所以水力發展受到限制。" data-en="Taiwan's rivers are short and steep, so rain runs into the sea quickly and little water can be stored. That limits how much hydropower can be built.">台灣的河川又短又急，下雨時水很快就流進海裡，能蓄起來的水有限，所以水力發展受到限制。</li>
+        <li data-zh="風是空氣的流動：陽光照射的角度不同，地表各處受熱不均，氣壓就不同，空氣從<b>高氣壓流向低氣壓</b>，形成風。風速越快，動能越大。" data-en="Wind is moving air. Sunlight reaches different places at different angles, so the ground is heated unevenly and air pressure differs; air flows from <b>high pressure to low pressure</b>. The faster the wind, the more kinetic energy it carries.">風是空氣的流動：陽光照射的角度不同，地表各處受熱不均，氣壓就不同，空氣從<b>高氣壓流向低氣壓</b>，形成風。風速越快，動能越大。</li>
+        <li data-zh="風力發電的能量轉換：風的<b>動能</b>推動扇葉，帶動發電機變成<b>電能</b>。風速要夠大、夠穩才能發好電，所以會受天候影響，也會有噪音與景觀的疑慮。" data-en="Energy conversion in wind power: the wind's <b>kinetic energy</b> turns the blades and drives a generator to make <b>electrical energy</b>. It needs strong, steady wind, so it depends on the weather and can raise noise and scenery concerns.">風力發電的能量轉換：風的<b>動能</b>推動扇葉，帶動發電機變成<b>電能</b>。風速要夠大、夠穩才能發好電，所以會受天候影響，也會有噪音與景觀的疑慮。</li>
+      </ul>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="水力：重力位能→動能→電能；水循環與風都是太陽推動的" data-en="Hydropower: gravitational potential → kinetic → electrical; the Sun drives both the water cycle and wind">水力：重力位能→動能→電能；水循環與風都是太陽推動的</li>
+        <li data-zh="風來自陽光照射不均造成的氣壓差，空氣由高壓流向低壓" data-en="Wind comes from pressure differences caused by uneven sunlight, flowing from high to low pressure">風來自陽光照射不均造成的氣壓差，空氣由高壓流向低壓</li>
+        <li data-zh="風力：動能→電能，會受天候、噪音與景觀影響" data-en="Wind power: kinetic → electrical, affected by weather, noise and scenery">風力：動能→電能，會受天候、噪音與景觀影響</li>
+      </ul>
+    </div>
+  </div>
+  <div class="sub-view" id="sv-solar">
+    <div class="panel-header">
+      <h2 data-zh="陽光，可以變成熱也能變成電" data-en="Sunlight can become heat or electricity">陽光，可以變成熱也能變成電</h2>
+      <span class="sub-tag" data-zh="太陽能" data-en="Solar energy">太陽能</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="屋頂上的太陽能熱水器和路邊的太陽能板，看起來都在「曬太陽」，可是一個得到<b>熱水</b>、一個得到<b>電</b>。同樣是陽光，差別在哪裡？" data-en="A rooftop solar water heater and a solar panel by the road both sit in the sunshine, yet one gives <b>hot water</b> and the other gives <b>electricity</b>. Same sunlight: what is the difference?">屋頂上的太陽能熱水器和路邊的太陽能板，看起來都在「曬太陽」，可是一個得到<b>熱水</b>、一個得到<b>電</b>。同樣是陽光，差別在哪裡？</div>
+      </div>
+    </div>
+    <div class="stage-container"><canvas id="cvs-solar" width="960" height="540"></canvas></div>
+    <div class="step-row">
+      <button class="step-btn active" id="btn-solar-1" type="button" onclick="W5.go('solar',1)" data-zh="1 太陽能變熱" data-en="1 Sunlight into heat">1 太陽能變熱</button>
+      <button class="step-btn" id="btn-solar-2" type="button" onclick="W5.go('solar',2)" data-zh="2 太陽能板直接發電" data-en="2 Panels make electricity">2 太陽能板直接發電</button>
+      <button class="step-btn" id="btn-solar-3" type="button" onclick="W5.go('solar',3)" data-zh="3 斜放朝天、水面降溫" data-en="3 Tilt, and cooling on water">3 斜放朝天、水面降溫</button>
+      <button class="step-btn" id="btn-solar-4" type="button" onclick="W5.go('solar',4)" data-zh="4 發電的三種方法" data-en="4 Three ways to generate">4 發電的三種方法</button>
+    </div>
+    <div class="note">
+      <h3 data-zh="看動畫時，想一想" data-en="While you watch, think about">看動畫時，想一想</h3>
+      <ul>
+        <li data-zh="太陽能就是地球接收到的太陽輻射能。它可以轉成<b>熱能</b>，例如太陽能熱水器與太陽爐，把陽光聚在一起加熱水或食物。" data-en="Solar energy is the radiation Earth receives from the Sun. It can become <b>heat</b>, as in solar water heaters and solar cookers, which gather sunlight to heat water or food.">太陽能就是地球接收到的太陽輻射能。它可以轉成<b>熱能</b>，例如太陽能熱水器與太陽爐，把陽光聚在一起加熱水或食物。</li>
+        <li data-zh="太陽能板（太陽能電池）把<b>光能直接轉成電能</b>。台灣主要用這種光電方式發電，發電時不排放汙染，但夜間沒有陽光、無法發電，所以不能全天穩定供電。" data-en="Solar panels (solar cells) turn <b>light directly into electricity</b>. Taiwan mainly uses this photovoltaic way; it makes no pollution while running, but it cannot generate at night, so it cannot supply power around the clock.">太陽能板（太陽能電池）把<b>光能直接轉成電能</b>。台灣主要用這種光電方式發電，發電時不排放汙染，但夜間沒有陽光、無法發電，所以不能全天穩定供電。</li>
+        <li data-zh="太陽能板常斜放、朝向天空，是為了讓陽光盡量照得直、照得多。陽光照射的角度和太陽仰角有關，這個概念之後的單元會再學，這裡先記住「板子要對準陽光」。" data-en="Panels are tilted and face the sky so that sunlight hits them as directly as possible. The angle relates to the Sun's altitude, which a later unit covers; for now just remember that panels should face the sunlight.">太陽能板常斜放、朝向天空，是為了讓陽光盡量照得直、照得多。陽光照射的角度和太陽仰角有關，這個概念之後的單元會再學，這裡先記住「板子要對準陽光」。</li>
+        <li data-zh="太陽能板溫度越高，發電效率反而越低。把板子架在水面上（例如魚塭、滯洪池），既節省土地，水的蒸發又能幫板子降溫，提升發電效率。" data-en="The hotter a panel gets, the lower its efficiency. Mounting panels over water, such as fish ponds or flood-detention ponds, saves land, and evaporation helps cool them so they generate more.">太陽能板溫度越高，發電效率反而越低。把板子架在水面上（例如魚塭、滯洪池），既節省土地，水的蒸發又能幫板子降溫，提升發電效率。</li>
+        <li data-zh="太陽能發電有三種方法：①太陽能電池直接把光變成電；②集熱板加熱水產生蒸氣，推動渦輪與發電機；③利用陽光把水分解成氫與氧，再用氫當發電的燃料。" data-en="Three ways to generate from sunlight: (1) solar cells turn light straight into electricity; (2) collectors heat water into steam that drives a turbine and generator; (3) sunlight splits water into hydrogen and oxygen, and the hydrogen fuels power generation.">太陽能發電有三種方法：①太陽能電池直接把光變成電；②集熱板加熱水產生蒸氣，推動渦輪與發電機；③利用陽光把水分解成氫與氧，再用氫當發電的燃料。</li>
+      </ul>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="太陽能可變成熱能（熱水器、太陽爐），也可變成電能（太陽能板：光能→電能）" data-en="Solar energy can become heat (water heaters, cookers) or electricity (panels: light → electrical)">太陽能可變成熱能（熱水器、太陽爐），也可變成電能（太陽能板：光能→電能）</li>
+        <li data-zh="太陽能板溫度越高效率越低；夜間無法發電，不能全天穩定供電" data-en="Hotter panels are less efficient, and there is no output at night, so supply is not steady all day">太陽能板溫度越高效率越低；夜間無法發電，不能全天穩定供電</li>
+        <li data-zh="發電三法：太陽能電池、集熱蒸氣推渦輪、分解水取氫" data-en="Three methods: solar cells, collector steam driving a turbine, splitting water for hydrogen">發電三法：太陽能電池、集熱蒸氣推渦輪、分解水取氫</li>
+      </ul>
+    </div>
+  </div>
+  <div class="sub-view" id="sv-biomass">
+    <div class="panel-header">
+      <h2 data-zh="植物裡儲存的能量，可以拿來發電" data-en="Energy stored in plants can make power">植物裡儲存的能量，可以拿來發電</h2>
+      <span class="sub-tag" data-zh="生質能" data-en="Biomass">生質能</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="一堆回收的木屑、牧場裡的牛糞，聽起來都是「垃圾」，卻能拿來發電、甚至加進汽油裡。<b>能量</b>是怎麼跑進這些東西裡的？" data-en="A pile of recycled wood chips or manure from a farm sounds like waste, yet it can generate power or even be blended into gasoline. How did <b>energy</b> get into these things?">一堆回收的木屑、牧場裡的牛糞，聽起來都是「垃圾」，卻能拿來發電、甚至加進汽油裡。<b>能量</b>是怎麼跑進這些東西裡的？</div>
+      </div>
+    </div>
+    <div class="stage-container"><canvas id="cvs-biomass" width="960" height="540"></canvas></div>
+    <div class="step-row">
+      <button class="step-btn active" id="btn-biomass-1" type="button" onclick="W5.go('biomass',1)" data-zh="1 光合作用存能量" data-en="1 Photosynthesis stores energy">1 光合作用存能量</button>
+      <button class="step-btn" id="btn-biomass-2" type="button" onclick="W5.go('biomass',2)" data-zh="2 燃燒與沼氣" data-en="2 Burning and biogas">2 燃燒與沼氣</button>
+      <button class="step-btn" id="btn-biomass-3" type="button" onclick="W5.go('biomass',3)" data-zh="3 生質燃料" data-en="3 Biofuel">3 生質燃料</button>
+    </div>
+    <div class="note">
+      <h3 data-zh="看動畫時，想一想" data-en="While you watch, think about">看動畫時，想一想</h3>
+      <ul>
+        <li data-zh="利用生物產生的有機物質轉成的能源，叫做<b>生質能</b>，例如把植物當燃料、畜牧排泄物發酵產生的沼氣，以及用農作物做成的生質酒精。" data-en="Energy made from organic matter produced by living things is called <b>biomass energy</b>: plants used as fuel, biogas from fermenting livestock waste, and bio-alcohol made from crops.">利用生物產生的有機物質轉成的能源，叫做<b>生質能</b>，例如把植物當燃料、畜牧排泄物發酵產生的沼氣，以及用農作物做成的生質酒精。</li>
+        <li data-zh="植物行光合作用，吸收陽光、水和二氧化碳，製造葡萄糖並放出氧氣，把能量存在植物體內。這一步的能量轉換是<b>光能→化學能</b>。" data-en="In photosynthesis, plants take in sunlight, water and carbon dioxide, make glucose and release oxygen, storing energy in their bodies. This step converts <b>light energy into chemical energy</b>.">植物行光合作用，吸收陽光、水和二氧化碳，製造葡萄糖並放出氧氣，把能量存在植物體內。這一步的能量轉換是<b>光能→化學能</b>。</li>
+        <li data-zh="把植物（如木屑、稻稈）拿去燃燒，鍋爐的溫度升高，<b>化學能→熱能</b>，再用熱來推動發電機發電。畜牧排泄物發酵產生的沼氣，也是把化學能轉成熱能或電能，讓廢棄物變成可再利用的能源。" data-en="Burning plants such as wood chips or rice straw heats a boiler: <b>chemical energy → heat</b>, and the heat can drive a generator. Biogas from livestock waste likewise turns chemical energy into heat or electricity, giving waste a second use.">把植物（如木屑、稻稈）拿去燃燒，鍋爐的溫度升高，<b>化學能→熱能</b>，再用熱來推動發電機發電。畜牧排泄物發酵產生的沼氣，也是把化學能轉成熱能或電能，讓廢棄物變成可再利用的能源。</li>
+        <li data-zh="大麥、玉米、甘蔗等生長快速的作物，可以製成<b>生質燃料</b>（如酒精），是替代化石燃料的選擇之一。" data-en="Fast-growing crops such as barley, corn and sugarcane can be made into <b>biofuel</b> (for example alcohol), one option for replacing fossil fuels.">大麥、玉米、甘蔗等生長快速的作物，可以製成<b>生質燃料</b>（如酒精），是替代化石燃料的選擇之一。</li>
+      </ul>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="光合作用：光能→化學能；燃燒：化學能→熱能（再發電）" data-en="Photosynthesis: light → chemical energy; burning: chemical → heat (then electricity)">光合作用：光能→化學能；燃燒：化學能→熱能（再發電）</li>
+        <li data-zh="植物、畜牧排泄物沼氣、生質酒精都是生質能" data-en="Plants, biogas from livestock waste and bio-alcohol are all biomass energy">植物、畜牧排泄物沼氣、生質酒精都是生質能</li>
+        <li data-zh="生質燃料可以替代一部分化石燃料" data-en="Biofuel can replace part of the fossil fuels">生質燃料可以替代一部分化石燃料</li>
+      </ul>
+    </div>
+  </div>
+  <div class="sub-view" id="sv-geo">
+    <div class="panel-header">
+      <h2 data-zh="地底、海流與潮汐，也藏著電" data-en="Heat underground, currents and tides hold power too">地底、海流與潮汐，也藏著電</h2>
+      <span class="sub-tag" data-zh="地熱、洋流與潮汐" data-en="Geothermal, currents, tides">地熱、洋流與潮汐</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="台灣位在板塊交界、四面環海，地底下有熱、海裡有黑潮、岸邊有漲退潮。這些看不見摸不著的能量，要怎麼<b>抓出來</b>變成電？" data-en="Taiwan sits on a plate boundary and is surrounded by sea: there is heat underground, the Kuroshio offshore and tides at the shore. How can we <b>catch</b> that hidden energy as electricity?">台灣位在板塊交界、四面環海，地底下有熱、海裡有黑潮、岸邊有漲退潮。這些看不見摸不著的能量，要怎麼<b>抓出來</b>變成電？</div>
+      </div>
+    </div>
+    <div class="stage-container"><canvas id="cvs-geo" width="960" height="540"></canvas></div>
+    <div class="step-row">
+      <button class="step-btn active" id="btn-geo-1" type="button" onclick="W5.go('geo',1)" data-zh="1 地熱發電" data-en="1 Geothermal power">1 地熱發電</button>
+      <button class="step-btn" id="btn-geo-2" type="button" onclick="W5.go('geo',2)" data-zh="2 洋流發電" data-en="2 Ocean-current power">2 洋流發電</button>
+      <button class="step-btn" id="btn-geo-3" type="button" onclick="W5.go('geo',3)" data-zh="3 潮汐發電" data-en="3 Tidal power">3 潮汐發電</button>
+      <button class="step-btn" id="btn-geo-4" type="button" onclick="W5.go('geo',4)" data-zh="4 台灣目前現況" data-en="4 Where Taiwan stands">4 台灣目前現況</button>
+    </div>
+    <div class="note">
+      <h3 data-zh="看動畫時，想一想" data-en="While you watch, think about">看動畫時，想一想</h3>
+      <ul>
+        <li data-zh="<b>地熱發電</b>：把地底深處的熱水與水蒸氣抽上來推動渦輪發電，用完的水再注回地下，可以穩定發電。台灣位在板塊交界，地熱資源豐富。" data-en="<b>Geothermal power</b>: hot water and steam are pumped up from deep underground to spin a turbine, and the used water is injected back down, so it generates steadily. Taiwan lies on a plate boundary and has plenty of geothermal heat."><b>地熱發電</b>：把地底深處的熱水與水蒸氣抽上來推動渦輪發電，用完的水再注回地下，可以穩定發電。台灣位在板塊交界，地熱資源豐富。</li>
+        <li data-zh="地熱水通常酸性很強，會腐蝕管線與設備，是技術上要克服的挑戰。" data-en="Geothermal water is often strongly acidic and corrodes pipes and equipment, a technical challenge to overcome.">地熱水通常酸性很強，會腐蝕管線與設備，是技術上要克服的挑戰。</li>
+        <li data-zh="<b>洋流發電</b>：台灣東部有黑潮流過，平均流速可達每秒 1 公尺以上。海流推動水下的扇葉帶動發電機，<b>動能→電能</b>，概念和水力、風力發電很像。" data-en="<b>Ocean-current power</b>: the Kuroshio flows past eastern Taiwan at an average of 1 m/s or more. The current turns underwater blades that drive a generator, <b>kinetic → electrical</b>, an idea much like hydro and wind power."><b>洋流發電</b>：台灣東部有黑潮流過，平均流速可達每秒 1 公尺以上。海流推動水下的扇葉帶動發電機，<b>動能→電能</b>，概念和水力、風力發電很像。</li>
+        <li data-zh="<b>潮汐發電</b>：漲潮與退潮之間有水位高低差（潮差），蓄在高處的水具有重力位能，流動時推動發電機，<b>重力位能→電能</b>。" data-en="<b>Tidal power</b>: between high and low tide the water level differs (the tidal range). Water held high has gravitational potential energy and drives a generator as it flows: <b>gravitational potential → electrical</b>."><b>潮汐發電</b>：漲潮與退潮之間有水位高低差（潮差），蓄在高處的水具有重力位能，流動時推動發電機，<b>重力位能→電能</b>。</li>
+        <li data-zh="目前台灣只有地熱發電進入商業運轉；洋流與潮汐發電仍在研究與實驗階段。" data-en="At present only geothermal power is in commercial operation in Taiwan; ocean-current and tidal power are still being researched and tested.">目前台灣只有地熱發電進入商業運轉；洋流與潮汐發電仍在研究與實驗階段。</li>
+      </ul>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="地熱：抽取地底熱水與蒸氣推渦輪，再回注；能穩定發電" data-en="Geothermal: pump up hot water and steam to spin a turbine, then re-inject; steady output">地熱：抽取地底熱水與蒸氣推渦輪，再回注；能穩定發電</li>
+        <li data-zh="洋流：動能→電能；潮汐：潮差的重力位能→電能" data-en="Currents: kinetic → electrical; tides: gravitational potential of the tidal range → electrical">洋流：動能→電能；潮汐：潮差的重力位能→電能</li>
+        <li data-zh="台灣目前只有地熱進入商業運轉，洋流與潮汐仍在研發" data-en="In Taiwan only geothermal is in commercial operation; currents and tides are still in development">台灣目前只有地熱進入商業運轉，洋流與潮汐仍在研發</li>
+      </ul>
+    </div>
+  </div>
+  </div>
+
+  <!-- ═════════ 分頁五：能源的發展與應用 ═════════ -->
+  <div class="panel tab-view" id="tab5">
+    <div class="sub-tabs" role="tablist">
+      <button class="sub-tab-btn active" type="button" data-sub="mix" onclick="setSub('tab5','mix')" data-zh="發電結構比一比" data-en="Comparing power mixes">發電結構比一比</button>
+      <button class="sub-tab-btn" type="button" data-sub="newtech" onclick="setSub('tab5','newtech')" data-zh="台灣與新興能源" data-en="Taiwan and emerging energy">台灣與新興能源</button>
+      <button class="sub-tab-btn" type="button" data-sub="tradeoff" onclick="setSub('tab5','tradeoff')" data-zh="沒有十全十美" data-en="No perfect source">沒有十全十美</button>
+    </div>
+  <div class="sub-view active" id="sv-mix">
+    <div class="panel-header">
+      <h2 data-zh="二十年後，電是怎麼來的？" data-en="How is our electricity made, twenty years on?">二十年後，電是怎麼來的？</h2>
+      <span class="sub-tag" data-zh="發電結構" data-en="Power mix">發電結構</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="同樣是發電，2005 年和 2025 年用的燃料比例差很多。不同的燃料，每發一度電排出的<b>二氧化碳</b>也不一樣。把比例換成數字，就能算出平均值。" data-en="Electricity is electricity, yet the fuel shares in 2005 and 2025 are quite different, and each fuel emits a different amount of <b>carbon dioxide</b> per kWh. Turn the shares into numbers and you can work out the average.">同樣是發電，2005 年和 2025 年用的燃料比例差很多。不同的燃料，每發一度電排出的<b>二氧化碳</b>也不一樣。把比例換成數字，就能算出平均值。</div>
+      </div>
+    </div>
+    <div class="stage-container"><canvas id="cvs-mix" width="960" height="540"></canvas></div>
+    <div class="step-row">
+      <button class="step-btn active" id="btn-mix-1" type="button" onclick="W5.go('mix',1)" data-zh="1 2005 年發電結構" data-en="1 Power mix in 2005">1 2005 年發電結構</button>
+      <button class="step-btn" id="btn-mix-2" type="button" onclick="W5.go('mix',2)" data-zh="2 2025 年發電結構" data-en="2 Power mix in 2025">2 2025 年發電結構</button>
+      <button class="step-btn" id="btn-mix-3" type="button" onclick="W5.go('mix',3)" data-zh="3 不可循環使用的占比" data-en="3 Non-reusable share">3 不可循環使用的占比</button>
+      <button class="step-btn" id="btn-mix-4" type="button" onclick="W5.go('mix',4)" data-zh="4 平均每度電碳排放" data-en="4 Average carbon per kWh">4 平均每度電碳排放</button>
+    </div>
+    <div class="note">
+      <h3 data-zh="看動畫時，想一想" data-en="While you watch, think about">看動畫時，想一想</h3>
+      <ul>
+        <li data-zh="2005 年的發電結構：煤 45%、天然氣 31%、核能 14%、石油 6%、再生能源 4%。2025 年：天然氣 48%、煤 36%、再生能源 12%、石油 3%、核能 1%。（教學用統計數據）" data-en="Power mix in 2005: coal 45%, natural gas 31%, nuclear 14%, oil 6%, renewables 4%. In 2025: natural gas 48%, coal 36%, renewables 12%, oil 3%, nuclear 1%. (Statistics for teaching)">2005 年的發電結構：煤 45%、天然氣 31%、核能 14%、石油 6%、再生能源 4%。2025 年：天然氣 48%、煤 36%、再生能源 12%、石油 3%、核能 1%。（教學用統計數據）</li>
+        <li data-zh="<b>不可循環使用的能源</b>＝煤、石油、天然氣、核能。2005 年：14＋45＋6＋31＝<b>96%</b>；2025 年：1＋36＋3＋48＝<b>88%</b>。" data-en="<b>Non-reusable sources</b> = coal, oil, natural gas and nuclear. 2005: 14 + 45 + 6 + 31 = <b>96%</b>; 2025: 1 + 36 + 3 + 48 = <b>88%</b>."><b>不可循環使用的能源</b>＝煤、石油、天然氣、核能。2005 年：14＋45＋6＋31＝<b>96%</b>；2025 年：1＋36＋3＋48＝<b>88%</b>。</li>
+        <li data-zh="各機組每發一度電的碳排放：燃煤 900 g、燃油 750 g、燃氣 400 g；核能與再生能源接近 0。" data-en="Carbon emitted per kWh by each kind of plant: coal 900 g, oil 750 g, gas 400 g; nuclear and renewables are close to 0.">各機組每發一度電的碳排放：燃煤 900 g、燃油 750 g、燃氣 400 g；核能與再生能源接近 0。</li>
+        <li data-zh="平均碳排放是<b>依各能源占比算出的加權平均</b>：每種能源「占比 × 每度電碳排放」，再全部加起來。2005 年：0.45×900＋0.06×750＋0.31×400＝約 <b>574 g</b>；2025 年：0.36×900＋0.03×750＋0.48×400＝約 <b>538.5 g</b>。兩者差約 35.5 g。" data-en="The average carbon figure is a <b>weighted average by share</b>: for each source, multiply share by carbon per kWh, then add them all. 2005: 0.45×900 + 0.06×750 + 0.31×400 ≈ <b>574 g</b>; 2025: 0.36×900 + 0.03×750 + 0.48×400 ≈ <b>538.5 g</b>. The difference is about 35.5 g.">平均碳排放是<b>依各能源占比算出的加權平均</b>：每種能源「占比 × 每度電碳排放」，再全部加起來。2005 年：0.45×900＋0.06×750＋0.31×400＝約 <b>574 g</b>；2025 年：0.36×900＋0.03×750＋0.48×400＝約 <b>538.5 g</b>。兩者差約 35.5 g。</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h3 data-zh="想一想：用數據算算看" data-en="Think: work it out with the data">想一想：用數據算算看</h3>
+      <ul>
+        <li data-zh="不可循環使用的能源占比，2005 年和 2025 年哪一年比較大？（答：2005 年，96% ＞ 88%）" data-en="Which year has the larger share of non-reusable sources, 2005 or 2025? (Answer: 2005, 96% > 88%)">不可循環使用的能源占比，2005 年和 2025 年哪一年比較大？（答：2005 年，96% ＞ 88%）</li>
+        <li data-zh="會影響碳排放的能源是煤、石油、天然氣，它們的占比合計哪一年比較大？（答：2005 年 45＋6＋31＝82%；2025 年 36＋3＋48＝87%，所以 2025 年較大）" data-en="Coal, oil and natural gas are the sources that affect carbon emissions. In which year is their combined share larger? (Answer: 2005 gives 45 + 6 + 31 = 82%; 2025 gives 36 + 3 + 48 = 87%, so 2025 is larger)">會影響碳排放的能源是煤、石油、天然氣，它們的占比合計哪一年比較大？（答：2005 年 45＋6＋31＝82%；2025 年 36＋3＋48＝87%，所以 2025 年較大）</li>
+        <li data-zh="平均生產每度電的碳排放量，哪一年比較大？（答：2005 年，約 574 g ＞ 538.5 g。占比合計變大不代表平均變大，還要看各自的碳排放量與占比怎麼分配）" data-en="Which year has the larger average carbon emission per kWh? (Answer: 2005, about 574 g > 538.5 g. A bigger combined share does not guarantee a bigger average; it also depends how the share is split between coal, oil and gas)">平均生產每度電的碳排放量，哪一年比較大？（答：2005 年，約 574 g ＞ 538.5 g。占比合計變大不代表平均變大，還要看各自的碳排放量與占比怎麼分配）</li>
+      </ul>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="發電結構是各種能源占總發電量的比例" data-en="The power mix is each source's share of total generation">發電結構是各種能源占總發電量的比例</li>
+        <li data-zh="平均每度電碳排放＝Σ（占比 × 該能源每度電碳排放），是加權平均" data-en="Average carbon per kWh = sum of (share × that source's carbon per kWh), a weighted average">平均每度電碳排放＝Σ（占比 × 該能源每度電碳排放），是加權平均</li>
+        <li data-zh="燃煤 900 g、燃油 750 g、燃氣 400 g，核能與再生能源接近 0" data-en="Coal 900 g, oil 750 g, gas 400 g; nuclear and renewables close to 0">燃煤 900 g、燃油 750 g、燃氣 400 g，核能與再生能源接近 0</li>
+      </ul>
+    </div>
+  </div>
+  <div class="sub-view" id="sv-newtech">
+    <div class="panel-header">
+      <h2 data-zh="台灣與世界正在試的新能源" data-en="New energy options being tried in Taiwan and abroad">台灣與世界正在試的新能源</h2>
+      <span class="sub-tag" data-zh="台灣與新興能源" data-en="Taiwan and emerging energy">台灣與新興能源</span>
+    </div>
+    <div class="hook-box">
+      <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
+      <div class="hook-content">
+        <div class="hook-title" data-zh="曉臻老師開場" data-en="Ms. Xiaozhen">曉臻老師開場</div>
+        <div class="hook-text" data-zh="海上有一排排巨大的風車、車子可以不加汽油只加氫、飛機的翅膀鋪滿太陽能板。這些新點子各自解決了什麼問題，又碰到什麼<b>新難題</b>？" data-en="Giant turbines stand in rows at sea, cars run on hydrogen instead of petrol, and an aircraft wears solar panels on its wings. What problem does each new idea solve, and what <b>new difficulty</b> does it meet?">海上有一排排巨大的風車、車子可以不加汽油只加氫、飛機的翅膀鋪滿太陽能板。這些新點子各自解決了什麼問題，又碰到什麼<b>新難題</b>？</div>
+      </div>
+    </div>
+    <div class="stage-container"><canvas id="cvs-newtech" width="960" height="540"></canvas></div>
+    <div class="step-row">
+      <button class="step-btn active" id="btn-newtech-1" type="button" onclick="W5.go('newtech',1)" data-zh="1 離岸風電" data-en="1 Offshore wind">1 離岸風電</button>
+      <button class="step-btn" id="btn-newtech-2" type="button" onclick="W5.go('newtech',2)" data-zh="2 太陽能與洋流" data-en="2 Solar and currents">2 太陽能與洋流</button>
+      <button class="step-btn" id="btn-newtech-3" type="button" onclick="W5.go('newtech',3)" data-zh="3 氫燃料電池車" data-en="3 Hydrogen fuel-cell car">3 氫燃料電池車</button>
+      <button class="step-btn" id="btn-newtech-4" type="button" onclick="W5.go('newtech',4)" data-zh="4 油電混合車與純電動車" data-en="4 Hybrid and electric cars">4 油電混合車與純電動車</button>
+      <button class="step-btn" id="btn-newtech-5" type="button" onclick="W5.go('newtech',5)" data-zh="5 太陽能飛機" data-en="5 Solar aircraft">5 太陽能飛機</button>
+    </div>
+    <div class="note">
+      <h3 data-zh="看動畫時，想一想" data-en="While you watch, think about">看動畫時，想一想</h3>
+      <ul>
+        <li data-zh="<b>離岸風電</b>：台灣陸地小、人口密，適合蓋風機的土地有限，扇葉轉動還會產生低頻噪音，所以陸域風電不容易擴大。海上的風速比較快也比較穩定，一年可發電的時數較長，但開發成本較高。" data-en="<b>Offshore wind</b>: Taiwan is small and crowded, so land for turbines is limited and spinning blades make low-frequency noise, which holds back onshore wind. Winds at sea are faster and steadier, so turbines can run more hours a year, but development costs more."><b>離岸風電</b>：台灣陸地小、人口密，適合蓋風機的土地有限，扇葉轉動還會產生低頻噪音，所以陸域風電不容易擴大。海上的風速比較快也比較穩定，一年可發電的時數較長，但開發成本較高。</li>
+        <li data-zh="<b>太陽能與洋流</b>：台灣陽光充足，屋頂、魚塭與水庫水面都可以裝太陽能板；東部的黑潮則是可以利用的洋流資源，洋流發電仍在研發階段。" data-en="<b>Solar and currents</b>: Taiwan is sunny, so panels can go on roofs, fish ponds and reservoir surfaces; the Kuroshio off the east coast is a current resource, and current power is still in development."><b>太陽能與洋流</b>：台灣陽光充足，屋頂、魚塭與水庫水面都可以裝太陽能板；東部的黑潮則是可以利用的洋流資源，洋流發電仍在研發階段。</li>
+        <li data-zh="<b>氫燃料電池車</b>：把氫和氧通進電池設備，發生化學變化產生電和水，<b>化學能→電能</b>，產物幾乎只有水。目前製造氫燃料的成本仍高，還沒有普及。" data-en="<b>Hydrogen fuel-cell cars</b>: hydrogen and oxygen react in the cell to give electricity and water, <b>chemical → electrical energy</b>, with water as almost the only product. Making hydrogen fuel is still costly, so these cars are not yet common."><b>氫燃料電池車</b>：把氫和氧通進電池設備，發生化學變化產生電和水，<b>化學能→電能</b>，產物幾乎只有水。目前製造氫燃料的成本仍高，還沒有普及。</li>
+        <li data-zh="<b>油電混合車</b>有引擎、電池和馬達；<b>純電動車</b>只有電池和馬達，沒有引擎，行駛時不排廢氣。但製造車輛、電池和發電的過程仍會排放二氧化碳，所以仍有「碳足跡」。" data-en="<b>Hybrid cars</b> have an engine, a battery and a motor; <b>battery-electric cars</b> have only a battery and a motor, with no engine and no exhaust on the road. Making the car and battery, and generating the electricity, still emit carbon dioxide, so they still have a <b>carbon footprint</b>."><b>油電混合車</b>有引擎、電池和馬達；<b>純電動車</b>只有電池和馬達，沒有引擎，行駛時不排廢氣。但製造車輛、電池和發電的過程仍會排放二氧化碳，所以仍有「碳足跡」。</li>
+        <li data-zh="<b>太陽能飛機</b>：機翼鋪滿太陽能板，用電驅動螺旋槳。但太陽能板把光轉成電的效率還不夠高，夜晚又很難充電，目前仍在實驗階段。" data-en="<b>Solar aircraft</b>: wings covered in solar panels power an electric propeller. But panels still convert light to electricity with limited efficiency and cannot charge at night, so these aircraft remain experimental."><b>太陽能飛機</b>：機翼鋪滿太陽能板，用電驅動螺旋槳。但太陽能板把光轉成電的效率還不夠高，夜晚又很難充電，目前仍在實驗階段。</li>
+      </ul>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="離岸風電：風速快、較穩定、可發電時數長，但成本較高" data-en="Offshore wind: faster, steadier wind and more running hours, but higher cost">離岸風電：風速快、較穩定、可發電時數長，但成本較高</li>
+        <li data-zh="氫燃料電池：氫＋氧→電＋水，化學能→電能" data-en="Fuel cell: hydrogen + oxygen → electricity + water, chemical → electrical">氫燃料電池：氫＋氧→電＋水，化學能→電能</li>
+        <li data-zh="新技術各有限制：成本、效率、夜間無法發電、仍有碳足跡" data-en="Each new technology has limits: cost, efficiency, no power at night, a remaining carbon footprint">新技術各有限制：成本、效率、夜間無法發電、仍有碳足跡</li>
+      </ul>
+    </div>
+  </div>
+  <div class="sub-view" id="sv-tradeoff">
+    <div class="panel-header">
+      <h2 data-zh="每種能源都有得，也有失" data-en="Every energy source has gains and costs">每種能源都有得，也有失</h2>
+      <span class="sub-tag" data-zh="優缺點比一比" data-en="Pros and cons">優缺點比一比</span>
+    </div>
+    <div class="note">
+      <h3 data-zh="怎麼比較各種能源？" data-en="How do we compare energy sources?">怎麼比較各種能源？</h3>
+      <ul>
+        <li data-zh="比較能源時，常看四件事：供電穩不穩定、蘊藏量夠不夠、碳排放多不多，以及設置與使用時對環境和生態的影響。" data-en="When comparing energy sources we usually ask four things: is the supply steady, are the reserves large enough, how much carbon is emitted, and what are the effects on the environment and ecosystems.">比較能源時，常看四件事：供電穩不穩定、蘊藏量夠不夠、碳排放多不多，以及設置與使用時對環境和生態的影響。</li>
+        <li data-zh="下表把非再生能源與再生能源的優缺點放在一起。" data-en="The table puts the pros and cons of non-renewable and renewable sources side by side.">下表把非再生能源與再生能源的優缺點放在一起。</li>
+      </ul>
+    </div>
+    <div class="table-wrap">
+      <table class="prop-table">
+        <thead><tr><th data-zh="能源" data-en="Source">能源</th><th data-zh="優點" data-en="Pros">優點</th><th data-zh="缺點" data-en="Cons">缺點</th></tr></thead>
+        <tbody>
+          <tr><th data-zh="化石燃料（非再生）" data-en="Fossil fuels (non-renewable)">化石燃料（非再生）</th><td data-zh="供電穩定" data-en="Steady supply">供電穩定</td><td data-zh="蘊藏量有限<br>排放二氧化碳 → 全球暖化<br>排放硫氧化物、氮氧化物 → 酸雨<br>排放煤灰 → 空氣汙染" data-en="Limited reserves<br>Emits carbon dioxide → global warming<br>Emits sulfur and nitrogen oxides → acid rain<br>Coal ash → air pollution">蘊藏量有限<br>排放二氧化碳 → 全球暖化<br>排放硫氧化物、氮氧化物 → 酸雨<br>排放煤灰 → 空氣汙染</td></tr>
+          <tr><th data-zh="核燃料（非再生）" data-en="Nuclear fuel (non-renewable)">核燃料（非再生）</th><td data-zh="供電穩定<br>碳排放量幾乎為零" data-en="Steady supply<br>Carbon emissions close to zero">供電穩定<br>碳排放量幾乎為零</td><td data-zh="蘊藏量有限<br>排放熱廢水 → 影響水域生態<br>輻射外洩 → 威脅生命安全" data-en="Limited reserves<br>Hot waste water → affects aquatic life<br>Radiation leaks → danger to life">蘊藏量有限<br>排放熱廢水 → 影響水域生態<br>輻射外洩 → 威脅生命安全</td></tr>
+          <tr><th data-zh="水力、風力、太陽能、生質能等（再生）" data-en="Hydro, wind, solar, biomass, etc. (renewable)">水力、風力、太陽能、生質能等（再生）</th><td data-zh="可循環使用<br>碳排放量幾乎為零" data-en="Reusable<br>Carbon emissions close to zero">可循環使用<br>碳排放量幾乎為零</td><td data-zh="供電不穩定<br>設置發電或儲電設備 → 影響生態與環境" data-en="Unsteady supply<br>Building generating or storage equipment → affects ecosystems and the environment">供電不穩定<br>設置發電或儲電設備 → 影響生態與環境</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <h3 data-zh="再生能源也有代價" data-en="Renewables have costs too">再生能源也有代價</h3>
+      <ul>
+        <li data-zh="<b>離岸風機</b>：打樁施工的噪音會干擾鯨豚用回聲判斷方位，可能迫使牠們離開棲地。" data-en="<b>Offshore turbines</b>: the noise of pile driving disturbs whales and dolphins that navigate by echolocation and may drive them from their habitat."><b>離岸風機</b>：打樁施工的噪音會干擾鯨豚用回聲判斷方位，可能迫使牠們離開棲地。</li>
+        <li data-zh="<b>風力發電的葉片</b>：快速旋轉的葉片可能造成鳥類碰撞傷亡，也可能干擾候鳥遷徙。" data-en="<b>Wind turbine blades</b>: fast-spinning blades can kill birds in collisions and may disturb migrating birds."><b>風力發電的葉片</b>：快速旋轉的葉片可能造成鳥類碰撞傷亡，也可能干擾候鳥遷徙。</li>
+        <li data-zh="<b>水壩</b>：截斷河流，擋住洄游魚類的產卵路徑；還會攔住泥沙，使下游河床被掏空、三角洲萎縮。" data-en="<b>Dams</b>: they cut rivers in two and block the spawning routes of migratory fish; they also trap sediment, so the downstream riverbed is scoured and deltas shrink."><b>水壩</b>：截斷河流，擋住洄游魚類的產卵路徑；還會攔住泥沙，使下游河床被掏空、三角洲萎縮。</li>
+        <li data-zh="<b>儲電設備</b>：風力與太陽能無法全天發電，需要搭配儲電設備。目前常用的是鋰離子電池，未來大量汰換時，會帶來新的環保挑戰。" data-en="<b>Energy storage</b>: wind and solar cannot run all day, so they need storage. Lithium-ion batteries are widely used, and replacing large numbers of them in the future creates a new environmental challenge."><b>儲電設備</b>：風力與太陽能無法全天發電，需要搭配儲電設備。目前常用的是鋰離子電池，未來大量汰換時，會帶來新的環保挑戰。</li>
+        <li data-zh="<b>熱廢水與珊瑚白化</b>（補充）：發電廠排出的熱水會讓附近水域升溫。珊瑚遇到高溫等刺激，體內的共生藻會大量減少，組織變透明、露出白色骨骼，就是珊瑚白化；不一定死亡，但會變得脆弱，環境改善後仍可能恢復。" data-en="<b>Warm waste water and coral bleaching</b> (extra): hot water from power plants warms nearby waters. When corals are stressed by heat and the like, most of their symbiotic algae are lost, the tissue turns clear and the white skeleton shows: that is coral bleaching. Corals do not always die, but they become fragile, and may recover if conditions improve."><b>熱廢水與珊瑚白化</b>（補充）：發電廠排出的熱水會讓附近水域升溫。珊瑚遇到高溫等刺激，體內的共生藻會大量減少，組織變透明、露出白色骨骼，就是珊瑚白化；不一定死亡，但會變得脆弱，環境改善後仍可能恢復。</li>
+      </ul>
+    </div>
+    <div class="closure">
+      <h3 data-zh="概念收束" data-en="Wrap-up">概念收束</h3>
+      <ul>
+        <li data-zh="沒有十全十美的能源，發展任何能源都要審慎評估" data-en="No energy source is perfect; any energy source must be weighed carefully before it is developed">沒有十全十美的能源，發展任何能源都要審慎評估</li>
+        <li data-zh="非再生能源：供電穩定但蘊藏有限，且有汙染或安全問題" data-en="Non-renewable: steady but limited, with pollution or safety issues">非再生能源：供電穩定但蘊藏有限，且有汙染或安全問題</li>
+        <li data-zh="再生能源：可循環、碳排放近零，但供電不穩定，設備會影響生態" data-en="Renewable: reusable and near-zero carbon, but unsteady, and equipment affects ecosystems">再生能源：可循環、碳排放近零，但供電不穩定，設備會影響生態</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h3 data-zh="節約能源：開源，也要節流" data-en="Saving energy: more supply, and less demand">節約能源：開源，也要節流</h3>
+      <ul>
+        <li data-zh="開發新能源是「<b>開源</b>」；減少用掉的能量是「<b>節流</b>」，後者是快速又直接的做法。" data-en="Developing new sources is increasing supply; using less is cutting demand, which is a quick and direct way to help.">開發新能源是「<b>開源</b>」；減少用掉的能量是「<b>節流</b>」，後者是快速又直接的做法。</li>
+        <li data-zh="生活中的小動作就有效：隨手關燈、離開教室關掉電扇和冷氣、選用標示節能的電器、電器不用時拔掉插頭。" data-en="Small habits work: switch off lights, turn off fans and air conditioners when leaving a room, choose appliances with an energy-saving label, and unplug appliances not in use.">生活中的小動作就有效：隨手關燈、離開教室關掉電扇和冷氣、選用標示節能的電器、電器不用時拔掉插頭。</li>
+        <li data-zh="節約的想法是「夠用就好」，從隨手做環保開始。" data-en="The idea is to use just enough, starting with small everyday actions.">節約的想法是「夠用就好」，從隨手做環保開始。</li>
+      </ul>
+    </div>
+  </div>
+  </div>
 </div>
 
 <script>
@@ -586,13 +1024,14 @@
   }
   document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => setLanguage(b.dataset.lang)));
 
-  /* 每個分頁對應的動畫（tab4、tab5 是圖表與文字，沒有動畫） */
-  const TAB_ANIM = { tab1: 'fission', tab2: 'plant', tab3: 'sun', tab4: null, tab5: null };
+  /* 動畫掛在子頁（sv-*）上；沒有動畫的子頁／分頁是圖表與文字 */
+  const SUB_ANIM = { classify: 'classify', thermal: 'thermal', fission: 'fission', plant: 'plant', sun: 'sun', compare: null, future: null, hydrowind: 'hydrowind', solar: 'solar', biomass: 'biomass', geo: 'geo', mix: 'mix', newtech: 'newtech', tradeoff: null };
+  const CUR_SUB = { tab1: 'classify', tab2: 'fission', tab3: 'sun', tab4: 'hydrowind', tab5: 'mix' };
   let currentTab = 'tab1';
 
   function startCurrent() {
     if (!window.W5) return;
-    const a = TAB_ANIM[currentTab];
+    const a = CUR_SUB[currentTab] ? SUB_ANIM[CUR_SUB[currentTab]] : null;
     if (a) W5.start(a); else W5.stopAll();
   }
   function switchTab(tab) {
@@ -600,6 +1039,14 @@
     document.querySelectorAll('.tab-view').forEach(v => v.classList.toggle('active', v.id === tab));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     if (!document.getElementById('introScreen')) startCurrent();   /* 封面還在的時候，動畫等進場後再開始 */
+    if (window.teachOnTab) teachOnTab(tab);
+  }
+  function setSub(tab, sub) {
+    CUR_SUB[tab] = sub;
+    const p = document.getElementById(tab);
+    p.querySelectorAll('.sub-view').forEach(v => v.classList.toggle('active', v.id === 'sv-' + sub));
+    p.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.sub === sub));
+    if (currentTab === tab && !document.getElementById('introScreen')) startCurrent();
   }
   document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
@@ -614,10 +1061,26 @@
   document.getElementById('introScreen').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dismissIntro(); } });
   applyTranslations();
 </script>
-<script src="work_5_kit_1103_v1.js?v=20261103-a"></script>
+<script src="work_5_kit_1103_v1.js?v=20261118-a"></script>
 <script src="work_5_fission_1103_v1.js?v=20261103-a"></script>
 <script src="work_5_plant_1103_v1.js?v=20261103-a"></script>
 <script src="work_5_sun_1103_v1.js?v=20261103-a"></script>
+<script src="work_5_classify_1117_v1.js?v=20261117-a"></script>
+<script src="work_5_thermal_1117_v1.js?v=20261117-a"></script>
+<script src="work_5_hydrowind_1117_v1.js?v=20261117-a"></script>
+<script src="work_5_solar_1117_v1.js?v=20261117-a"></script>
+<script src="work_5_biomass_1117_v1.js?v=20261117-a"></script>
+<script src="work_5_geo_1117_v1.js?v=20261117-a"></script>
+<script src="work_5_mix_1117_v1.js?v=20261117-a"></script>
+<script src="work_5_newtech_1117_v1.js?v=20261117-a"></script>
+<script src="work_5_modes_1118_v1.js?v=20261118-a"></script>
+<script defer src="work_5_voice_v1.js?v=20261118-v1"></script>
+<script src="work_5_lab_rods_1118_v1.js?v=20261118-a"></script>
+<script src="work_5_lab_fusion_1118_v1.js?v=20261118-a"></script>
+<script src="work_5_lab_renew_1118_v1.js?v=20261118-a"></script>
+<script src="work_5_lab_blend_1118_v1.js?v=20261118-a"></script>
+<script src="work_5_lab_chain_1118_v1.js?v=20261118-a"></script>
+<!--SCENES-NEW-->
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
 <script defer src="assets/quiz/quiz_work_5_1103_v1.js?v=20261103-q1"></script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
