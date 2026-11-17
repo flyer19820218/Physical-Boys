@@ -700,8 +700,8 @@
                   <span data-zh="輸入名字，按「旋轉 LED 看板」拖動，確認文字和所有燈珠永遠一起轉。" data-en="Type your name, choose Rotate LED Board, and verify that the message and every LED always rotate together.">輸入名字，按「旋轉 LED 看板」拖動，確認文字和所有燈珠永遠一起轉。</span>
                 </div>
                 <div class="lab-mission-item">
-                  <strong data-zh="任務 2｜找出等大實像" data-en="Mission 2 | Find a Same-Size Image">任務 2｜找出等大實像</strong>
-                  <span data-zh="先按「重置實驗」，再按「前進／後退」把物距調到 30.0 cm（2f），觀察另一側是否形成倒立等大實像。" data-en="First choose Reset Lab, then choose Move Forward / Back and set u to 30.0 cm (2f). Check whether an inverted same-size real image forms.">先按「重置實驗」，再按「前進／後退」把物距調到 30.0 cm（2f），觀察另一側是否形成倒立等大實像。</span>
+                  <strong data-zh="任務 2｜找出相等實像" data-en="Mission 2 | Find a Same-Size Image">任務 2｜找出相等實像</strong>
+                  <span data-zh="先按「重置實驗」，再按「前進／後退」把物距調到 30.0 cm（2f），觀察另一側是否形成倒立相等實像。" data-en="First choose Reset Lab, then choose Move Forward / Back and set u to 30.0 cm (2f). Check whether an inverted same-size real image forms.">先按「重置實驗」，再按「前進／後退」把物距調到 30.0 cm（2f），觀察另一側是否形成倒立相等實像。</span>
                 </div>
                 <div class="lab-mission-item">
                   <strong data-zh="任務 3｜讓實像變大" data-en="Mission 3 | Magnify the Real Image">任務 3｜讓實像變大</strong>
@@ -755,7 +755,7 @@
             <div class="lab-stat"><div class="k" data-zh="物距 u" data-en="Object u">物距 u</div><div class="v" id="labStatU">2.00 f</div></div>
             <div class="lab-stat"><div class="k" data-zh="像距 v" data-en="Image v">像距 v</div><div class="v" id="labStatV">2.00 f</div></div>
             <div class="lab-stat"><div class="k" data-zh="放大率 m" data-en="Magnification m">放大率 m</div><div class="v" id="labStatM">−1.00</div></div>
-            <div class="lab-stat"><div class="k" data-zh="成像性質" data-en="Image type">成像性質</div><div class="v" id="labStatType">倒立等大實像</div></div>
+            <div class="lab-stat"><div class="k" data-zh="成像性質" data-en="Image type">成像性質</div><div class="v" id="labStatType">倒立相等實像</div></div>
           </div>
         </div>
       </section>
@@ -835,7 +835,7 @@
           en: 'Myopia is not a failure to see—the rays simply focus too early. How does a concave lens spread them first and move the focus back onto the retina?'
         },
         lab3d: {
-          zh: '今天你是 3D 光學實驗員！先點亮自己的名字，再讓 LED 看板前進、後退與旋轉，找出「倒立等大」和「倒立放大」實像。',
+          zh: '今天你是 3D 光學實驗員！先點亮自己的名字，再讓 LED 看板前進、後退與旋轉，找出「倒立相等」和「倒立放大」實像。',
           en: 'Today you are a 3D optics scientist! Light up your name, then move and rotate the LED board to find same-size and magnified inverted real images.'
         }
       };
@@ -968,6 +968,7 @@
       // 3D 光學透鏡互動實驗室（新增模型，不改動既有 2D SVG）
       // ─────────────────────────────────────────────────────────────
       const LAB_F = 150;
+      const LAB_PERSPECTIVE = 0.2; // 透視強度：1＝真透視、0＝正交（完全平行）；0.2 保留一點近大遠小，看板與像的上下邊才會接近平行
       const labState = {
         text: '光',
         u: 300,
@@ -1045,9 +1046,12 @@
         const depth = labDot(relative, forward);
         if (depth <= 20) return null;
         const focal = Math.min(labView.width, labView.height) * 1.34;
+        // 弱透視：以瞄準點的深度為基準，只保留 LAB_PERSPECTIVE 比例的近大遠小
+        const refDepth = labDot(labSub(target, camera), forward);
+        const viewDepth = refDepth + LAB_PERSPECTIVE * (depth - refDepth);
         return {
-          x: labView.width / 2 + (labDot(relative, right) * focal) / depth,
-          y: labView.height / 2 - (labDot(relative, up) * focal) / depth,
+          x: labView.width / 2 + (labDot(relative, right) * focal) / viewDepth,
+          y: labView.height / 2 - (labDot(relative, up) * focal) / viewDepth,
           depth
         };
       }
@@ -1304,7 +1308,7 @@
         const { v, m } = labOptics();
         const ratioU = labState.u / LAB_F;
         const ratioV = v / LAB_F;
-        let imageTypeZh = '倒立等大實像';
+        let imageTypeZh = '倒立相等實像';
         let imageTypeEn = 'Inverted same-size real';
         if (ratioU > 2.04) {
           imageTypeZh = '倒立縮小實像';
@@ -1740,7 +1744,7 @@
                 addText(drawLayer, img_x, img_top_y + 25, tr('實像', 'Real'), 'middle', '#4dd2ff', 18, 'bold');
               }
 
-              let imgTypeZh = "倒立等大實像"; let imgTypeEn = "Inverted Same-size Real";
+              let imgTypeZh = "倒立相等實像"; let imgTypeEn = "Inverted Same-size Real";
               if (m_mag > 1.05) { imgTypeZh = "倒立放大實像"; imgTypeEn = "Inverted Magnified Real"; }
               else if (m_mag < 0.95) { imgTypeZh = "倒立縮小實像"; imgTypeEn = "Inverted Reduced Real"; }
 
@@ -1897,12 +1901,12 @@
           { set: {}, hold: 7000, zh: '中間厚的是凸透鏡，會聚光線；中間薄的是凹透鏡，發散光線', en: 'Thick middle: convex, converges. Thin middle: concave, diverges' } ] },
         convex: { steps: [
           { set: { uRatio: 3.0 }, zh: '物體在三倍焦距：倒立縮小實像', en: 'Object at 3f: inverted reduced real image' },
-          { set: { uRatio: 2.0 }, zh: '兩倍焦距：倒立等大實像', en: 'At 2f: inverted same-size real image' },
+          { set: { uRatio: 2.0 }, zh: '兩倍焦距：倒立相等實像', en: 'At 2f: inverted same-size real image' },
           { set: { uRatio: 1.5 }, zh: '一點五倍焦距：倒立放大實像', en: 'At 1.5f: inverted magnified real image' },
           { set: { uRatio: 1.0 }, zh: '剛好在焦點：折射光平行，不成像', en: 'At f: parallel rays, no image' },
           { set: { uRatio: 0.5 }, zh: '焦點內：正立放大虛像（放大鏡）', en: 'Inside f: upright magnified virtual image' } ] },
         lab3d: { steps: [
-          { set: { u: 300, roll: 0, tilt: 0, yaw: OPT4_YAW0, pitch: 0.24, text: '光', tool: 'orbit' }, zh: '物距兩倍焦距：倒立等大實像', en: 'Object at 2f: inverted same-size image' },
+          { set: { u: 300, roll: 0, tilt: 0, yaw: OPT4_YAW0, pitch: 0.24, text: '光', tool: 'orbit' }, zh: '物距兩倍焦距：倒立相等實像', en: 'Object at 2f: inverted same-size image' },
           { set: { u: 300, roll: 0, tilt: 0, yaw: OPT4_YAW0 + 0.9, pitch: 0.32, text: '光', tool: 'orbit' }, zh: '環視到斜前方：看清楚像是倒的', en: 'Orbit to the front: the image is inverted' },
           { set: { u: 300, roll: 1.05, tilt: 0.3, yaw: OPT4_YAW0, pitch: 0.24, text: '光', tool: 'rotate' }, zh: '旋轉看板：文字和燈珠一起轉', en: 'Rotate the board: text and LEDs turn together' },
           { set: { u: 450, roll: 0, tilt: 0, yaw: OPT4_YAW0, pitch: 0.24, text: '光', tool: 'move' }, zh: '往後拉到三倍焦距：像縮小、靠近焦點', en: 'Pull back to 3f: image shrinks, nears focus' },
@@ -2009,7 +2013,7 @@
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
 <script defer src="assets/quiz/mcq_tabs_1028_v1.js?v=20261028-q1"></script>
 <script defer src="assets/quiz/quiz_optics_4_1028_v1.js?v=20261028-q1"></script>
-<script defer src="optics_4_voice_v1.js?v=20261115-v1"></script>
+<script defer src="optics_4_voice_v1.js?v=20261117-v2"></script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
 </body>
 </html>

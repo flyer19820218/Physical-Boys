@@ -62,7 +62,7 @@ LQ.addStatic('optics_4',{
    P(`凹透鏡永遠成鏡前、正立、縮小的虛像。`,`A concave lens always forms an upright, reduced, virtual image on the object side.`),
    P(`不用背 3F、2F，凹透鏡只有一種像。`,`No 3F or 2F needed; a concave lens gives only one kind of image.`)),
   Q(P(`物體從遠處移近凹透鏡時，像的性質會怎樣？`,`As an object moves closer to a concave lens, how does the image nature change?`),
-   [P(`變成放大虛像`,`Becomes a larger virtual`),P(`變成倒立實像`,`Becomes an inverted real`),P(`變成等大實像`,`Becomes an equal real one`),P(`始終縮小虛像`,`Always small and virtual`)],3,
+   [P(`變成放大虛像`,`Becomes a larger virtual`),P(`變成倒立實像`,`Becomes an inverted real`),P(`變成相等實像`,`Becomes an equal real one`),P(`始終縮小虛像`,`Always small and virtual`)],3,
    P(`凹透鏡不管物體在什麼位置，成像永遠是正立縮小的虛像，只是大小與位置稍有變化。`,`Wherever the object is, a concave lens gives an upright reduced virtual image; only its size and position shift a little.`),
    P(`凹透鏡有沒有可能成實像？`,`Can a concave lens ever form a real image?`)),
   Q(P(`凹透鏡的虛像是在哪裡被看見的？`,`Where is the virtual image of a concave lens seen?`),

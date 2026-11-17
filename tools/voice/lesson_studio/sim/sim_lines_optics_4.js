@@ -65,7 +65,7 @@ for (const it of manifest.items) {
           const bub = document.querySelector('.vx-panel'); const top = bub ? bub.getBoundingClientRect().top : innerHeight;
           const R = e => { if (!e || !e.offsetParent) return null; const r = e.getBoundingClientRect(); return { t: Math.round(r.top), b: Math.round(r.bottom) }; };
           const lab = !document.getElementById('lab3dStage').hidden;
-          rec.view = { panelTop: Math.round(top), lab,
+          rec.view = { panelTop: Math.round(top), lab, pre: lab ? null : R(document.getElementById('presetsBox')),
             card: lab ? R(document.querySelector('.lab-canvas-wrap')) : R(document.getElementById('visualSvg').parentElement),
             stats: lab ? R(document.querySelector('.lab-stats')) : R(document.getElementById('statsGrid')) };
           rec.stat = lab ? [...document.querySelectorAll('.lab-stat .v')].map(e => e.textContent.trim()) : [...document.querySelectorAll('#statsGrid .stat .v')].map(e => e.textContent.replace(/\s+/g, ' ').trim());
@@ -132,6 +132,7 @@ for (const it of manifest.items) {
     const needStats = sub !== 'intro';
     const bot = needStats ? Math.max(v.card.b, v.stats.b) : v.card.b;
     const HLOUT = new Set((process.env.HLOUT || '18,43').split(','));   // 螢光線目標在說明框（離開畫布）的句號
+    if (!HLOUT.has(String(+e.id)) && v.pre && v.pre.t < 0) pr.push(`快速跳轉列被切到上方 ${v.pre.t}`);
     if (!HLOUT.has(String(+e.id)) && (!v.card || v.card.t < -40 || bot > v.panelTop - 4)) pr.push(`畫面不在字幕框上方 card ${v.card && v.card.t}～${bot} panel ${v.panelTop}`);
     if (HLN.has(String(+e.id))) {
       if (!(r.hl > 20)) pr.push('應有螢光線但沒畫出（最大寬度 ' + Math.round(r.hl) + '）');

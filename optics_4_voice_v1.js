@@ -195,10 +195,26 @@
       return { k: sub, topEl: wrap, botEl: st || wrap, anchor: 'bottom' };
     }
     var card = $('visualSvg') && $('visualSvg').parentElement;
-    return { k: sub, topEl: card, botEl: (sub === 'intro' ? card : ($('statsGrid') || card)), anchor: 'bottom' };
+    var pre = $('presetsBox');   // 「成像區間快速跳轉」那一排（A 三倍焦距…）也要看得到
+    var top = (sub !== 'intro' && pre && pre.children.length) ? pre : card;
+    return { k: sub, topEl: top, botEl: (sub === 'intro' ? card : ($('statsGrid') || card)), anchor: 'bottom' };
+  }
+  // 畫面太高、放不下「快速跳轉列＋成像圖＋數據列」時，播放中暫時把成像圖縮小一點（只動外觀高度，不改頁面繪圖）
+  function fitCanvas(v) {
+    var svg = $('visualSvg'); if (!svg) return;
+    svg.style.maxHeight = '';
+    if (!v || v.k === 'lab3d' || v.k === 'intro' || state === 'idle') return;
+    var a = v.topEl, b = v.botEl; if (!a || !b) return;
+    var panelTop = ui.panel.getBoundingClientRect().top;
+    var span = b.getBoundingClientRect().bottom - a.getBoundingClientRect().top;
+    var avail = panelTop - 28;
+    if (span > avail) {
+      var h = svg.getBoundingClientRect().height;
+      svg.style.maxHeight = Math.max(180, Math.floor(h - (span - avail))) + 'px';
+    }
   }
   function clearTimers() {}   // 本課沒有計時器需要清（保留給共用流程呼叫）
-  function unfitWire() {}     // 本課沒有接線畫布需要縮放還原
+  function unfitWire() { var sv = $('visualSvg'); if (sv) sv.style.maxHeight = ''; }   // 還原播放中縮小的成像圖
   // 頁面（optics_4.html）提供 window.OPT4：go(場景, 第幾步, 平滑毫秒)。每一步都是完整狀態，跳句也能直接還原。
   function sceneOf(tab, sub, stepNo, anim) {
     stepNo = stepNo || 1;
@@ -216,6 +232,7 @@
 
   // 把一段範圍（頭 topEl～尾 botEl）捲到字幕框上方：放得下就置中；放不下就依 anchor 對齊上緣或下緣
   function bringIntoView(v) {
+    fitCanvas(v);
     var a = v && v.topEl, b = v && (v.botEl || a);
     if (!a || !b || !a.getBoundingClientRect) return;
     var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
