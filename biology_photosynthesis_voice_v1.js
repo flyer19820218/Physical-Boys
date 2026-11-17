@@ -238,13 +238,19 @@
     if (cur.tab) bringIntoView(viewOf(cur.tab, cur.sub));
   }
 
+  // 字幕框（含上方的釘選黃條）最上緣：捲動時要讓重點停在它上面，不被黃條蓋住
+  function capTop() {
+    var t = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
+    if (ui.pin.classList.contains('show')) t = Math.min(t, ui.pin.getBoundingClientRect().top);
+    return t;
+  }
   // 把一段範圍（頭 top～尾 bot）捲到字幕框上方：放得下就置中；放不下就依 anchor 對齊上緣或下緣
   function bringIntoView(v) {
     var a = v && (v.topEl || $(v.top)), b = v && (v.botEl || (v.bot ? $(v.bot) : a));
     if (!a || !b || !a.getBoundingClientRect) return;
     var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
     var top = ra.top, bot = Math.max(ra.bottom, rb.bottom);
-    var panelTop = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
+    var panelTop = capTop();
     if (top >= 56 && bot <= panelTop - 8) return; // 已完整在畫面內，不動
     var room = panelTop - 8 - 56 - (bot - top);
     var y;
@@ -300,6 +306,7 @@
   }
   function CV(id, x, y, w, h) {        // 畫布標籤：邏輯座標 (中心 x, 中心 y, 寬 w, 高 h)；畫布 960×620
     var f = function () {
+      if (document.documentElement.lang !== 'zh-Hant') return null;   // 標籤位置量的是中文版；英文版標籤寬度不同，不畫
       var c = $(id); if (!c || c.offsetParent === null || c.hidden) return null;
       var r = c.getBoundingClientRect(), k = r.width / 960;
       return [{ left: r.left + (x - w / 2) * k, top: r.top + (y - h / 2) * k, width: w * k, height: h * k }];
@@ -332,7 +339,8 @@
     '64': [{ a: 0.10, b: 0.95, r: T(function () { return $('status-guard'); }, /左圖：保衛細胞吸水膨脹，氣孔張開/) }],
     '66': [{ a: 0.10, b: 0.95, r: T(function () { return $('status-guard'); }, /右圖：失水、膨壓下降，氣孔關閉/) }],
     '68': [{ a: 0.05, b: 0.95, r: T(function () { return noteBy(3, '缺水時'); }, /關小氣孔有助減少蒸散，卻也限制 CO₂ 進入/) }],
-    '83': [{ a: 0.05, b: 0.40, r: CV('canvas-experiment', 480, 599, 210, 36) }],
+    '83': [{ a: 0.12, b: 0.45, r: CV('canvas-experiment', 480, 599, 690, 36) }],
+    '84': [{ a: 0.10, b: 0.90, r: CV('canvas-experiment', 480, 599, 390, 36) }],
     '86': [{ a: 0.20, b: 0.95, r: T(function () { return noteBy(4, '酒精不可直接加熱'); }, /用熱水隔水加熱，不把酒精杯放在火焰上/) }],
     '90': [{ a: 0.10, b: 0.50, r: CV('canvas-experiment', 590, 127, 270, 36) }, { a: 0.55, b: 0.95, r: CV('canvas-experiment', 800, 233, 196, 36) }],
     '92': [{ a: 0.10, b: 0.95, r: CV('canvas-experiment', 480, 599, 350, 36) }],
@@ -370,10 +378,10 @@
         if (!rs || !rs.length || p <= 0) { g.els.forEach(function (e) { e.style.display = 'none'; }); return; }
         if (!g.seen) { // 重點若被字幕框擋住或在畫面外，先捲到字幕框上方
           g.seen = 1;
-          var pt = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
+          var pt = capTop();
           var top = rs[0].top, bot = rs[rs.length - 1].top + rs[rs.length - 1].height;
-          if (bot > pt - 12 || top < 56) {
-            var y = window.pageYOffset + top - Math.max(70, (pt - (bot - top)) / 2 - 20);
+          if (bot > pt - 12 || top < 56) {   // 只捲到剛好看得到，讓上方的動畫盡量留在畫面裡
+            var y = bot > pt - 12 ? window.pageYOffset + bot - (pt - 20) : window.pageYOffset + top - 70;
             try { window.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, y); }
           }
         }
