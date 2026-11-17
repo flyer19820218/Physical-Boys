@@ -250,6 +250,20 @@
     });
     return n ? { left: L, top: T, width: R - L, height: B - T } : null;
   }
+  // 文字範圍：方塊（整行寬）內只有一段字時，光筆只畫在字的範圍，不拉滿整個方塊寬
+  function textRect(els) {
+    var L = 1e9, T = 1e9, R = -1e9, B = -1e9, n = 0;
+    els.forEach(function (e) {
+      if (!e || !e.getBoundingClientRect) return;
+      var g = document.createRange(); g.selectNodeContents(e);
+      var rs = g.getClientRects();
+      for (var i = 0; i < rs.length; i++) {
+        var r = rs[i]; if (!r.width || !r.height) continue;
+        L = Math.min(L, r.left); T = Math.min(T, r.top); R = Math.max(R, r.right); B = Math.max(B, r.bottom); n++;
+      }
+    });
+    return n ? { left: L, top: T, width: R - L, height: B - T } : null;
+  }
   function nodes(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
   function range(list, a, b) { return list.filter(function (e, i) { return i >= a && i <= b; }); }
   function svgText(re) { return nodes('#drawLayer text').filter(function (t) { return re.test(t.textContent); }); }
@@ -260,17 +274,17 @@
       var rg = /^(\d+)-(\d+)$/.exec(a);
       switch (k) {
         case 'stat': return unionRect(range(nodes('#statsGrid .stat'), +rg[1], +rg[2]));
-        case 'core': return unionRect(nodes('#principleBox .principle-core'));
-        case 'fh': return unionRect(range(nodes('#explainBox .formula-highlight'), +rg[1], +rg[2]));
-        case 'exh3': return unionRect(nodes('#explainBox h3'));
+        case 'core': return textRect(nodes('#principleBox .principle-core'));
+        case 'fh': return textRect(range(nodes('#explainBox .formula-highlight'), +rg[1], +rg[2]));
+        case 'exh3': return textRect(nodes('#explainBox h3'));
         case 'exbt': return unionRect(nodes('#explainBox b').filter(function (b) { return new RegExp(a).test(b.textContent); }));
         case 'svg': return unionRect(nodes('#visualContainer svg text').filter(function (t) { return new RegExp(a).test(t.textContent); }));
         case 'svg1': case 'svgz':
           var ms = nodes('#visualContainer svg text').filter(function (t) { return new RegExp(a).test(t.textContent); });
           return unionRect(ms.length ? [ms[k === 'svg1' ? 0 : ms.length - 1]] : []);
         case 'css': return unionRect(nodes(a));
-        case 'ptitle': return unionRect(range(nodes('#visualContainer .rainbow-panel-title'), +a, +a));
-        case 'pnote': return unionRect(range(nodes('#visualContainer .rainbow-panel-note'), +a, +a));
+        case 'ptitle': return textRect(range(nodes('#visualContainer .rainbow-panel-title'), +a, +a));
+        case 'pnote': return textRect(range(nodes('#visualContainer .rainbow-panel-note'), +a, +a));
         case 'loupe': return unionRect(nodes('#visualContainer .pixel-loupe'));
       }
       return null;
