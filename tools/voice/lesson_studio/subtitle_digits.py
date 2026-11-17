@@ -16,7 +16,7 @@ DIGCH = "零〇一二三四五六七八九"
 NUMCH = "零〇一二兩三四五六七八九十百千萬"
 NUM = "[" + NUMCH + "]+"
 NUMD = "(?:%s)(?:點[%s]+)?" % (NUM, DIGCH)          # 整數或小數
-UNITS = "公尺|公分|公里|公斤|公克|牛頓|焦耳|毫米|分鐘|秒|倍|瓦|伏|度|安|歐|匝|庫|赫|升|卡|單位"
+UNITS = "公尺|公分|公里|公斤|公克|牛頓|焦耳|毫米|毫升|分鐘|秒|倍|瓦|伏|度|安|歐|匝|庫|赫|升|卡|單位"
 UNITS_MULTI = "題|個|隻|股|種|件|句|組|步|條|顆|台|根|張|層"
 OPS_L = "乘以|乘|除以|除|等於"                      # 數字「前面」的運算詞
 OPS_R = "乘以|乘|除以|除|等於"                      # 數字「後面」的運算詞
@@ -83,6 +83,8 @@ def to_arabic(text):
     out = re.sub("(?P<n>%s)又(?=\\d+/\\d+)" % NUM, lambda m: (val(m.group("n")) or m.group("n")) + "又", out)   # 帶分數：一又 1/4 → 1 又 1/4
     # 2. 數字 + 單位
     out = re.sub("(?P<n>%s)(?=(?:%s))" % (NUMD, UNITS), _cv, out)
+    # 2b. 範圍「三十五到 40 度」：後半已轉成數字時，前半也轉（2026-11-17 biology_enzymes）
+    out = re.sub("(?P<n>%s)(?=到\\d)" % NUMD, _cv, out)
     # 3. 數字 + 題／個／隻／股／種（「一」不轉）
     out = re.sub("(?P<n>%s)(?=(?:%s))" % (NUMD, UNITS_MULTI), lambda m: m.group("n") if m.group("n") == "一" else _cv(m), out)
     # 4. 第 + 數字
