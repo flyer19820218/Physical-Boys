@@ -15,7 +15,9 @@ LESSON = sys.argv[1] if len(sys.argv) > 1 else "electronics_2"
 import certifi
 
 # Point edge-tts at the sandbox proxy CA bundle (TLS verification stays ON).
-certifi.where = lambda: "/root/.ccr/ca-bundle.crt"
+_CCR = "/root/.ccr/ca-bundle.crt"
+if Path(_CCR).exists():  # 只有 Claude 雲端沙箱才有；GitHub Actions 用系統預設憑證
+    certifi.where = lambda: _CCR
 
 REPO = Path(__file__).resolve().parents[3]  # repo 根目錄
 sys.path.insert(0, str(REPO / "tools/voice/lesson_studio"))

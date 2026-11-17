@@ -1,0 +1,85 @@
+# 有聲講解自動錄音（彥君 × 曉臻）：推到 *-audio 分支時，GitHub 的伺服器用 edge-tts 把缺的句子錄好，再存回同一個分支。
+#   ・只錄 audio/<課>/manifest.json 裡「還沒有 mp3」的句子（已經錄好的不重錄）
+#   ・No audio was received（微軟暫時限流）就自動重跑，最多 4 輪
+#   ・用 GITHUB_TOKEN 推回去，不會再觸發自己（不會無限循環）
+# 雲端 Claude 的網路若已允許 speech.platform.bing.com，可以直接在對話裡跑 cloud_tts.py，不必靠這支。
+name: 有聲講解自動錄音
+
+on:
+  push:
+    branches: ['*-audio']
+    paths:
+      - 'audio/*/manifest.json'
+      - '.github/workflows/lesson-voice.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lesson-voice-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安裝 edge-tts、ffmpeg
+        run: |
+          pip install -U edge-tts certifi
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; fi
+
+      - name: 找出還沒錄完的課
+        id: what
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import json, pathlib
+          todo = []
+          for m in sorted(pathlib.Path('audio').glob('*/manifest.json')):
+              d = m.parent
+              items = json.loads(m.read_text('utf-8'))['items']
+              miss = [i for i in items if i['kind'] == 'line' and not ((d / 'mp3' / i['file']).exists() and (d / 'mp3' / i['file']).stat().st_size > 1000)]
+              if miss:
+                  todo.append(d.name)
+          print('lessons=' + ' '.join(todo))
+          EOF
+          cat "$GITHUB_OUTPUT"
+
+      - name: 錄音（缺的才錄，最多 4 輪）
+        if: steps.what.outputs.lessons != ''
+        run: |
+          for L in ${{ steps.what.outputs.lessons }}; do
+            for i in 1 2 3 4; do
+              echo "=== $L 第 $i 輪"
+              python3 tools/voice/lesson_studio/cloud_tts.py "$L" | tail -20
+              python3 - "$L" <<'EOF' && break
+          import json, pathlib, sys
+          d = pathlib.Path('audio') / sys.argv[1]
+          items = json.loads((d / 'manifest.json').read_text('utf-8'))['items']
+          miss = [i['file'] for i in items if i['kind'] == 'line' and not ((d / 'mp3' / i['file']).exists() and (d / 'mp3' / i['file']).stat().st_size > 1000)]
+          print('還缺', len(miss), miss[:10])
+          sys.exit(1 if miss else 0)
+          EOF
+              sleep 20
+            done
+          done
+
+      - name: 存回分支
+        if: steps.what.outputs.lessons != ''
+        run: |
+          git config user.name "有聲講解自動錄音"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A audio
+          if git diff --cached --quiet; then echo "沒有變更"; exit 0; fi
+          git commit -m "有聲講解自動錄音：${{ steps.what.outputs.lessons }}"
+          for i in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep 5
+          done
+          exit 1
