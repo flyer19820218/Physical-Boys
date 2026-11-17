@@ -438,6 +438,25 @@
         });
         t.textContent = txt;
         parent.appendChild(t);
+        // 文字超出畫布時，水平平移回畫布內（只在超出時才動；位於有 transform 的群組內則不處理）
+        try {
+          const svg = t.ownerSVGElement;
+          if (svg && svg.id === 'visualSvg') {
+            let skip = false;
+            for (let n = t.parentNode; n && n !== svg; n = n.parentNode) { if (n.getAttribute && n.getAttribute('transform')) { skip = true; break; } }
+            if (!skip) {
+              const bb = t.getBBox(), vb = svg.viewBox.baseVal, M = 8;
+              let dx = 0;
+              if (bb.x < vb.x + M) dx = vb.x + M - bb.x;
+              else if (bb.x + bb.width > vb.x + vb.width - M) dx = (vb.x + vb.width - M) - (bb.x + bb.width);
+              if (dx) t.setAttribute('x', (parseFloat(t.getAttribute('x')) || 0) + dx);
+              let dy = 0;
+              if (bb.y < vb.y + M) dy = vb.y + M - bb.y;
+              else if (bb.y + bb.height > vb.y + vb.height - M) dy = (vb.y + vb.height - M) - (bb.y + bb.height);
+              if (dy) t.setAttribute('y', (parseFloat(t.getAttribute('y')) || 0) + dy);
+            }
+          }
+        } catch (e) {}
       }
 
       function initUI() {
