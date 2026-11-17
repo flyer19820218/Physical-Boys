@@ -16,7 +16,11 @@ import certifi
 
 # Point edge-tts at the sandbox proxy CA bundle (TLS verification stays ON).
 _CCR = "/root/.ccr/ca-bundle.crt"
-if Path(_CCR).exists():  # 只有 Claude 雲端沙箱才有；GitHub Actions 用系統預設憑證
+try:  # 只有 Claude 雲端沙箱才有這個憑證；GitHub Actions 讀不到就用系統預設
+    _has_ccr = Path(_CCR).is_file()
+except OSError:
+    _has_ccr = False
+if _has_ccr:
     certifi.where = lambda: _CCR
 
 REPO = Path(__file__).resolve().parents[3]  # repo 根目錄
