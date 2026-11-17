@@ -38,23 +38,24 @@ const STATIC = new Set(['compare', 'future', 'tradeoff']);
   await page.waitForTimeout(800);
   await page.evaluate(() => dismissIntro()); await page.waitForTimeout(1200); await page.click('.vx-open'); await page.waitForTimeout(300);
   const startSel = await page.evaluate(() => { const b = Array.from(document.querySelectorAll('.vx-ic')); return b.length; });
-  await page.evaluate(() => { const b = Array.from(document.querySelectorAll('.vx-ic, .vx-panel button')); const s = b.find(x => /▶|播放|play/i.test(x.textContent + x.title + x.getAttribute('aria-label'))); s && s.click(); });
-  const bad = []; let seen = 0, teacherSeen = 0;
+  await page.click('button.vx-ic[title="開始／繼續"]');
+  const bad = []; let seen = 0, teacherSeen = 0, prevText = '';
   for (let i = 0; i < lines.length; i++) {
     // 等到該句字幕出現，再等到它快結束（1.3 秒後）取樣
     const L = lines[i];
-    await page.waitForFunction(n => { const t = document.querySelector('.vx-txt'); return t && t.textContent.replace(/\s/g, '') === n; }, L.text.replace(/\s/g, '').replace(/恩極/g, 'N極').replace(/[，。！？、：「」]/g, m => m) , { timeout: 15000 }).catch(() => {});
+    await page.waitForFunction(prev => { const t = document.querySelector('.vx-txt'); return t && t.textContent !== prev && t.textContent.length > 0; }, prevText, { timeout: 8000 }).catch(() => {});
+    prevText = await page.evaluate(() => document.querySelector('.vx-txt').textContent);
     await page.waitForTimeout(1350);
     const st = await page.evaluate(() => {
       const tab = (document.querySelector('.tab-btn.active') || {}).dataset?.tab;
-      const sub = window.CUR_SUB ? CUR_SUB[tab] : null;
+      const sub = (typeof CUR_SUB !== 'undefined') ? CUR_SUB[tab] : null;
       let step = null; const row = document.querySelector('#sv-' + sub + ' .step-row'); if (row) { const b = row.querySelector('.step-btn.active'); step = b ? Array.from(row.querySelectorAll('.step-btn')).indexOf(b) + 1 : null; }
       return { tab, sub, step, teacher: document.body.classList.contains('mode-teacher'), mode: window.W5 && W5.mode };
     });
     if (st.teacher) teacherSeen++;
     const w = L.want, ok = st.tab === w.tab && st.sub === w.sub && (STATIC.has(w.sub) || st.step === w.step);
     if (!ok) bad.push({ id: L.id, want: w.tab + '/' + w.sub + '#' + w.step, got: st.tab + '/' + st.sub + '#' + st.step });
-    seen++;
+    seen++; if (process.env.V) console.log(L.id, w.tab+'/'+w.sub+'#'+w.step, '->', st.tab+'/'+st.sub+'#'+st.step, ok?'':'XX');
   }
   console.log('lines checked:', seen, '/', lines.length);
   console.log('mode-teacher 出現次數：', teacherSeen);

@@ -211,7 +211,7 @@
     if (btn && !btn.classList.contains('active')) { btn.click(); changedTab = true; }
     try {
       var subChanged = false;
-      if (sub && window.CUR_SUB && (CUR_SUB[tab] !== sub)) { window.setSub(tab, sub); subChanged = true; }
+      if (sub && typeof CUR_SUB !== 'undefined' && (CUR_SUB[tab] !== sub)) { window.setSub(tab, sub); subChanged = true; }
       else if (sub && changedTab) { window.setSub(tab, sub); subChanged = true; }
       if (sub && ANIM[sub] && window.W5 && (stepNo > 1 || (!subChanged && !changedTab))) W5.go(sub, stepNo);
     } catch (e) { if (window.console) console.warn('[有聲講解] 場景失敗', key, e); }
