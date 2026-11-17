@@ -191,7 +191,7 @@
   // 播放中一律是「學生操作」：碘液／本氏液動畫一次播一步、播完停住（nutrients_v2.js 的 ctl.mode='step'），講到哪一步才按哪一步。
   // 步驟對照（與 lessons/biology_nutrients.json 的 _note 相同）：
   //   lesson-0：1～6＝養分卡（醣類、蛋白質、脂質、水、礦物質、維生素），7～12＝食物（飯、蛋、蔬菜、香蕉、食用油、飲水），13＝六張養分卡總覽
-  //   lesson-1：1＝課本例 50／30／5 g，2＝三種各 10 g，3＝打開「燒洋芋片」延伸、水溫升高 10 °C
+  //   lesson-1：1＝三種都 0 g，2＝醣類 50 g，3＝再加蛋白質 30 g，4＝再加脂質 5 g（課本例），5＝三種各 10 g，6＝打開「燒洋芋片」延伸、水溫 0，7＝水溫升高 10 °C
   //   lesson-2（碘液）、lesson-3（本氏液）：十位數＝樣本（1 澱粉液、2 葡萄糖液、3 蔗糖液、4 熟米飯、5 成熟香蕉），個位數＝實驗步驟 1～5；
   //            個位數以下（1～5）＝預設樣本（碘液：澱粉液；本氏液：葡萄糖液）
   //   lesson-4：1＝吃一份 50 g，2＝吃整包 100 g，3＝空餐盤，4＝只選飯和食用油，5＝飯、蛋、蔬菜、香蕉、飲水
@@ -225,9 +225,10 @@
       else if (step <= 12) NL.setFood(FOOD[step - 7]);
     },
     'lesson-1': function (step) {
-      if (step === 1) setMacro([50, 30, 5]);
-      else if (step === 2) setMacro([10, 10, 10]);
-      else { var d = waterDet(); if (d) d.open = true; var r = $('water-rise'); if (r) { r.value = '10'; NL.paintWater(); } }
+      // 一句一句算：先全部歸零，再依序填醣類、蛋白質、脂質（不提早公布答案）
+      if (step <= 4) setMacro([[0, 0, 0], [50, 0, 0], [50, 30, 0], [50, 30, 5]][step - 1]);
+      else if (step === 5) setMacro([10, 10, 10]);
+      else { var d = waterDet(); if (d) d.open = true; var r = $('water-rise'); if (r) { r.value = step === 6 ? '0' : '10'; NL.paintWater(); } }
     },
     'lesson-2': labScene('lesson-2'),
     'lesson-3': labScene('lesson-3'),
@@ -249,7 +250,7 @@
       return { k: 'grid', topEl: q('#lesson-0 .hook-box'), botEl: q('#lesson-0 .nutrient-grid'), anchor: 'top' };
     }
     if (key === 'lesson-1') {
-      if (step <= 2) return { k: 'energy', topEl: q('#lesson-1 .macro-controls'), botEl: q('#lesson-1 .energy-view'), anchor: 'bottom' };
+      if (step <= 5) return { k: 'energy', topEl: q('#lesson-1 .macro-controls'), botEl: q('#lesson-1 .energy-view'), anchor: 'bottom' };
       return { k: 'water', topEl: waterDet() && waterDet().querySelector('summary'), botEl: q('#lesson-1 .safety'), anchor: 'bottom' };
     }
     if (LABK[key]) { var kind = LABK[key][0]; return { k: 'lab:' + kind, topEl: $('canvas-' + kind), botEl: $('canvas-' + kind), anchor: 'top' }; }
@@ -277,6 +278,10 @@
     var nv = viewOf(key, stepNo), pv = viewOf(prevKey, prev.step);
     // 換了畫面（含同一實驗換步驟）就確認它在字幕框上方；已經看得到時 bringIntoView 不會動（螢光筆把畫面捲到下面的說明後，下一步要捲回來）
     if (nv && nv.topEl && (changedTab || !pv || pv.k !== nv.k || prev.step !== stepNo)) bringIntoView(nv);
+    if (changedTab) { // 換分頁後版面會再重排一次（chapter3_compact），稍後再對一次位置
+      var me = cur;
+      [350, 900].forEach(function (ms) { setTimeout(function () { if (cur === me) { var v2 = viewOf(key, stepNo); if (v2 && v2.topEl) bringIntoView(v2); } }, ms); });
+    }
   }
   var goto = sceneOf;
   function snapshotLive() {
@@ -381,21 +386,26 @@
     vitA: txt('#focus-nutrient-text', /缺乏維生素 ?A ?可能影響暗處視力/),
     vitC: txt('#focus-nutrient-text', /缺乏 ?C ?可能造成壞血病/),
     eggTags: R_(function () { return Array.prototype.slice.call(document.querySelectorAll('#food-insight .nutrient-tag')); }),
+    n1: R_(function () { return [document.querySelector('#energy-readout .energy-line:nth-child(1) b')]; }),
+    n2: R_(function () { return [document.querySelector('#energy-readout .energy-line:nth-child(2) b')]; }),
+    n3: R_(function () { return [document.querySelector('#energy-readout .energy-line:nth-child(3) b')]; }),
     e1: ink('#energy-readout .energy-line:nth-child(1)'), e2: ink('#energy-readout .energy-line:nth-child(2)'),
     e3: ink('#energy-readout .energy-line:nth-child(3)'), eTot: ink('#energy-readout .metric'),
     unit: txt('#lesson-1', /1 大卡＝1 kcal＝1000 cal/),
     waterCalc: ink('#water-energy'),
     heatLoss: txt('#lesson-1', /因此水吸收的熱量不等於食物全部的熱量。/),
-    burnSafe: ink('#lesson-1 .safety'),
-    ioResult: ink('#result-iodine strong'),
+    burnTeacher: txt('#lesson-1', /燃燒實驗必須由老師指導/),
+    burnHome: txt('#lesson-1', /不可在家自行燃燒食物/),
+    ioConc: ink('#result-iodine p'),
     ioSafe: ink('#lesson-2 .safety'),
     bathLead: txt('#lesson-3', /水浴的水位高於管內液面；兩組都加熱，才公平比較。/),
-    beSafe: ink('#lesson-3 .safety'),
+    beTongs: txt('#lesson-3', /熱試管用夾具拿取，檢驗液及反應後的食物不可食用/),
     beResult: ink('#result-benedict strong'),
+    beConc: ink('#result-benedict p'),
     sucrose: txt('#lesson-3', /蔗糖直接檢驗通常為陰性/),
     labelKcal: R_(function () { var f = $('label-facts'); return [f && f.lastElementChild && f.lastElementChild.querySelector('b')]; }),
     labelConc: ink('#label-conclusion'),
-    mealMiss: ink('#meal-feedback p'),
+    mealMiss: txt('#meal-feedback', /豆魚蛋肉[^。]*?飲水/),
     mealMore: txt('#meal-feedback', /份量、乳品或其他鈣來源等仍需另外評估/)
   };
 
@@ -413,17 +423,17 @@
     "38": [{ s: "蛋白質三十克", e: "一百二十大卡", k: "e2" }],
     "39": [{ s: "乘以九", e: "四十五大卡", k: "e3" }],
     "40": [{ s: "三個加起來", e: "三百六十五大卡", k: "eTot" }],
-    "42": [{ s: "醣類和蛋白質", e: "各四十大卡", k: "e1" }, { s: "各四十大卡", e: "各四十大卡", k: "e2" }, { s: "脂質卻有", e: "九十大卡", k: "e3" }],
+    "42": [{ s: "各四十大卡", e: "各四十大卡", k: "n1" }, { s: "各四十大卡", e: "各四十大卡", k: "n2" }, { s: "脂質卻有", e: "九十大卡", k: "n3" }],
     "44": [{ s: "一大卡就是", e: "一千卡", k: "unit" }],
     "47": [{ s: "六十乘以十", e: "零點六大卡", k: "waterCalc" }],
     "49": [{ s: "所以水吸收", e: "熱量少", k: "heatLoss" }],
-    "50": [{ s: "一定要老師", e: "燒食物", k: "burnSafe" }],
-    "59": [{ s: "甲變成", e: "黃褐色", k: "ioResult" }],
+    "50": [{ s: "一定要老師", e: "指導", k: "burnTeacher" }, { s: "不可以在家", e: "燒食物", k: "burnHome" }],
+    "60": [{ s: "所以澱粉液", e: "有澱粉", k: "ioConc" }],
     "69": [{ s: "檢驗液不能入口", e: "衣服", k: "ioSafe" }],
     "75": [{ s: "水浴的水位", e: "才公平", k: "bathLead" }],
-    "74": [{ s: "隔水加熱", e: "火上烤", k: "beSafe" }],
-    "78": [{ s: "這表示", e: "還原糖", k: "beResult" }],
-    "89": [{ s: "試管夾", e: "不可以吃", k: "beSafe" }],
+    "77": [{ s: "甲出現", e: "藍色", k: "beResult" }],
+    "78": [{ s: "這表示", e: "還原糖", k: "beConc" }],
+    "89": [{ s: "試管夾", e: "不可以吃", k: "beTongs" }],
     "83": [{ s: "蔗糖直接檢驗", e: "陰性", k: "sucrose" }],
     "92": [{ s: "熱量是", e: "一百三十七大卡", k: "labelKcal" }],
     "94": [{ s: "一百三十七乘以二", e: "兩百七十四大卡", k: "labelConc" }],

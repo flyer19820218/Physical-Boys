@@ -28,7 +28,7 @@ function want(tab, sub, step) {
   step = step || 1;
   const n = +tab.slice(7), w = { tab: n };
   if (n === 0) { if (step <= 6) { w.nutrient = NUT[step - 1]; w.cvs = 'focus'; } else if (step <= 12) { w.food = FOOD[step - 7]; w.cvs = 'food'; } else w.cvs = 'grid'; }
-  else if (n === 1) { if (step === 1) w.macro = '50,30,5'; else if (step === 2) w.macro = '10,10,10'; else { w.open = true; w.water = '10'; } w.cvs = step <= 2 ? 'energy' : 'water'; }
+  else if (n === 1) { if (step <= 5) w.macro = ['0,0,0', '50,0,0', '50,30,0', '50,30,5', '10,10,10'][step - 1]; else { w.open = true; w.water = step === 6 ? '0' : '10'; } w.cvs = step <= 5 ? 'energy' : 'water'; }
   else if (n === 2 || n === 3) { if (step < 10) step = (n === 2 ? 1 : 2) * 10 + step; w.sample = SAMPLE[Math.floor(step / 10) - 1]; w.lstep = (step % 10) - 1; w.cvs = 'lab'; }
   else { if (step <= 2) { w.serving = step === 1 ? 50 : 100; w.cvs = 'label'; } else { w.meal = MEAL[step]; w.cvs = step === 3 ? 'plate' : 'meal'; } }
   return w;
