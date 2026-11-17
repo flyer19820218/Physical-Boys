@@ -902,6 +902,7 @@
 
         } else if (m === 'coin_water') {
           const wLevel = params.coin_water.waterLevel; 
+          let coinSeen = false;
           const cupWidth = 200, cupHeight = 100, cupY = 120;
           const eyeX = 240, eyeY = -30; 
           
@@ -932,6 +933,7 @@
              else { addText(drawLayer, 0, -40, tr('直線看見硬幣！', 'Direct line of sight to coin!'), 'middle', 'var(--chalk-yellow)', 20, 'bold'); }
           } else {
              const surfaceY = cupY - wLevel;
+             coinSeen = true;
              let left = coinX, right = eyeX, hitX = coinX;
              const nWater = 1.33, nAir = 1.0;
              for(let i=0; i<15; i++) {
@@ -950,6 +952,7 @@
                  drawArrow(drawLayer, coinX, coinY, hitX, surfaceY, '#ef6a5a'); // 🌟 加箭頭
                  drawLayer.appendChild(createSvgEl('line', { x1: hitX, y1: surfaceY, x2: eyeX, y2: eyeY, stroke: '#ef6a5a', 'stroke-width': 2, 'stroke-dasharray': '4 4' }));
                  drawArrow(drawLayer, hitX, surfaceY, eyeX, eyeY, '#ef6a5a'); // 🌟 加箭頭
+                 coinSeen = false;
                  addText(drawLayer, 0, -40, tr('光線折射，但仍被碗壁擋住', 'Refracted light still blocked by rim'), 'middle', 'var(--v-color)', 20, 'bold');
              } else {
                  drawLayer.appendChild(createSvgEl('line', { x1: coinX, y1: coinY, x2: hitX, y2: surfaceY, stroke: '#ef6a5a', 'stroke-width': 2 }));
@@ -974,7 +977,7 @@
 
           addStat('水位高度', 'Water Level', `${wLevel.toFixed(1)} cm`);
           addStat('光線路徑', 'Ray Path', wLevel > 0 ? tr('水 ➔ 空氣', 'Water ➔ Air') : tr('空氣', 'Air'));
-          addStat('視覺效果', 'Visual Effect', wLevel > 0 ? tr('變淺浮起', 'Shallower / Floated') : tr('真實深度', 'True Depth'));
+          addStat('視覺效果', 'Visual Effect', coinSeen ? tr('變淺浮起', 'Shallower / Floated') : (wLevel > 0 ? tr('光線仍被擋住', 'Still blocked') : tr('真實深度', 'True Depth')));
 
           explainBox.innerHTML = tr(`
             <h3>💡 生活實例：若隱若現的銅板</h3>
@@ -1065,7 +1068,10 @@
               
               drawLayer.appendChild(createSvgEl('line', { x1: hitX, y1: 0, x2: virtualHeadX, y2: virtualHeadY, stroke: '#f2d675', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }));
               
-              drawHuman(drawLayer, virtualHeadX, virtualHeadY, 1.25, 0.5, tr('人虛像 (變高大)', 'Virtual Human (Taller)'));
+              // 虛像頭頂常高過畫布上緣：人像下移到畫面內，並註明示意
+              const vhDraw = Math.max(virtualHeadY, -128);
+              drawHuman(drawLayer, virtualHeadX, vhDraw, 1.25, 0.5, tr('人虛像 (變高大)', 'Virtual Human (Taller)'));
+              if (vhDraw !== virtualHeadY) addText(drawLayer, virtualHeadX + 40, vhDraw - 4, tr('↑ 實際更高，已超出畫面', '↑ Even taller, off-screen'), 'start', '#f2d675', 14, 'bold');
 
               addStat('觀察者', 'Observer', tr('水底的魚', 'Fish Underwater'));
               addStat('光線路徑', 'Ray Path', tr('空氣 ➔ 水', 'Air ➔ Water'));
