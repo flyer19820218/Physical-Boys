@@ -17,19 +17,29 @@ const SHOTDIR = path.dirname(OUT);
 
 // ── 期望狀態（與 astronomy_sunpath_3_voice_v1.js 的步驟表相同）──
 const SEAS = [null, 'summer', 'equinox', 'winter'];
-const T3 = [null, [23.5, 'summer', 1], [0, 'summer', 1], [90, 'summer', 1], [23.5, 'equinox', 1], [23.5, 'winter', 1],
-            [23.5, 'summer', 0], [23.5, 'winter', 0], [90, 'winter', 1]];
+// 第三分頁：[緯度, 季節, 時間, 框, start, end, rate, 句尾太陽已落下]（與播放器 T3 相同）
+const T3 = [null,
+  [23.5, 'summer', 'run', null], [23.5, 'summer', 'slow', 'h', 7, 12.5, 0.5], [23.5, 'summer', 'slow', 't', 6, 17.5, 0.8],
+  [23.5, 'summer', 'slow', 't', 17.5, 20.5, 0.6, true], [23.5, 'summer', 'run', 'o', 9], [23.5, 'summer', 'run', null],
+  [23.5, 'summer', 'run', 'o'], [0, 'summer', 'run', 't'], [0, 'summer', 'run', 'o'], [90, 'summer', 'run', 't'],
+  [90, 'summer', 'run', 'o'], [90, 'winter', 'run', 'o'], [90, 'winter', 'run', 't'], [-34, 'summer', 'noon', 'o'],
+  [23.5, 'summer', 'slow', 'o', 4.5, 19, 2.0], [23.5, 'summer', 'noon', 'o'], [23.5, 'equinox', 'slow', 'o', 5.5, 18.5, 2.3], [23.5, 'winter', 'slow', 'o', 6, 12, 1.4],
+  [23.5, 'winter', 'noon', 'o'], [23.5, 'winter', 'slow', 'o', 15.5, 19, 0.5, true]];
+const DELTA = { summer: 23.5, equinox: 0, winter: -23.5 };
+const sunsetHour = (lat, season) => { const r = Math.PI / 180, c = -Math.tan(lat * r) * Math.tan(DELTA[season] * r); return c <= -1 ? 99 : c >= 1 ? -1 : 12 + Math.acos(c) / r / 15; };
 function want(tab, sub, step) {
   step = step || 1;
-  const w = { tab, late: {} };
+  const w = { tab, late: {}, hl: null };
   const key = sub || tab;
   if (key === 'tab1') Object.assign(w, { season1: SEAS[step], dlRun: true, cvs: 'dayLenCanvas', run: 'dlT' });
   else if (key === 'sub1') { Object.assign(w, { csSub: 'sub1', csUI: 'sub1', cvs: 'skyCanvas' }); w.late.cam = step === 2 ? 'top' : 'side'; }
   else if (key === 'sub2') Object.assign(w, { csSub: 'sub2', csUI: 'sub2', cam: 'side', cvs: 'skyCanvas' });
   else if (key === 'tab3') {
     const s = T3[step];
-    Object.assign(w, { lat: s[0], latUI: s[0], latBtn: s[0], season3: s[1], seaUI: s[1], syRun: !!s[2], cvs: 'syncCanvas' });
-    if (s[2]) w.run = 'syT'; else { w.frozen = 'syT'; w.syT = 12; }
+    Object.assign(w, { lat: s[0], latUI: s[0], latBtn: s[0], season3: s[1], seaUI: s[1], syRun: s[2] === 'run', hl: s[3] || null, cvs: 'syncCanvas', syFit: true });
+    if (s[2] === 'run') w.run = 'syT';
+    else if (s[2] === 'noon') { w.frozen = 'syT'; w.syT = 12; }
+    else { w.slow = [s[4], s[5]]; if (s[7]) w.setAfter = sunsetHour(s[0], s[1]); }
   }
   else if (key === 'tab4') { if (step <= 3) Object.assign(w, { coS: SEAS[step], coUI: SEAS[step], cvs: 'consoleCanvas' }); else w.see = ['co-table']; }
   else if (key === 'helio') {
@@ -97,6 +107,9 @@ for (const it of manifest.items) {
         pks: g(() => zd.pathOn ? zd.pks.join(',') : ''), sign: g(() => zdSign(zdLam(zd.d))),
         dayOff: g(() => Math.round(zdWrap(zd.d - ZD_TODAY, 365))), zdD: g(() => r1(zd.d)), zdT: g(() => r1(zd.t)), zdRun: g(() => zd.playing), anim: g(() => !!zd.anim),
         pcRun: g(() => pc.playing), pcY: g(() => Math.round(pc.y)),
+        hl: (() => { const f = q('.vx-frame'), cv = q('#syncCanvas'); if (!f || f.style.opacity !== '1' || !cv) return null;
+          const a = f.getBoundingClientRect(), r = cv.getBoundingClientRect(), k = 960 / r.width, x = (a.left + a.width / 2 - r.left) * k, y = (a.top + a.height / 2 - r.top) * k;
+          return y < 400 ? (x < 480 ? 'h' : 't') : 'o'; })(),
         teacher: document.body.classList.contains('mode-teacher')
       };
     };
@@ -128,6 +141,9 @@ for (const it of manifest.items) {
           rec.end = window.__snap(); rec.view = {};
           ['dayLenCanvas', 'skyCanvas', 'syncCanvas', 'consoleCanvas', 'zodiacCanvas', 'precCanvas', 'co-table'].forEach(id => rec.view[id] = window.__inView(id));
           rec.top = { 'zd-notes': window.__topIn('zd-notes') };
+          rec.syFit = (() => { const c = document.getElementById('syncCanvas'), r = c.getBoundingClientRect(), bub = document.querySelector('.vx-bub'), pin = document.querySelector('.vx-pin.show');
+            let top = bub ? bub.getBoundingClientRect().top : innerHeight; if (pin) top = Math.min(top, pin.getBoundingClientRect().top);
+            return r.top >= 0 && r.top <= 130 && r.top + r.height * 0.9 <= top + 2; })();
           self.paused = true; if (self.onended) self.onended();
         }, (this.duration - this._acc) * 1000);
         return Promise.resolve();
@@ -143,7 +159,7 @@ for (const it of manifest.items) {
   const flags0 = await page.evaluate(() => ({ dl: dl.playing, sy: sy.playing, zd: zd.playing, pc: pc.playing }));
   await page.click('.vx-open');
   await page.click('button[aria-label="開始／繼續"]');
-  const shots = { '07': 1.0, '27': 1.4, '29': 1.4, '34': 1.0, '53': 1.2, '58': 1.2, '62': 1.0, '64': 1.0, '68': 2.6, '82': 1.2, '89': 1.0, '97': 2.0, '98': 2.0, '101': 1.2, '103': 2.6, '106': 1.0, '107': 2.0, '108': 2.0, '112': 1.2, '115': 2.0, '96': 2.0 };
+  const shots = { '07': 1.0, '27': 1.4, '51': 1.2, '54': 2.0, '57': 1.2, '62': 2.0, '64': 1.2, '68': 1.2, '70': 1.2, '73': 1.2, '75': 2.4, '79': 1.2, '83': 1.2, '85': 2.4, '90': 1.2, '91': 1.2, '115': 2.0, '120': 1.2, '122': 2.6, '127': 2.0 };
   const t0 = Date.now();
   const shotDone = {};
   while (true) {
@@ -163,30 +179,43 @@ for (const it of manifest.items) {
   const teacherSeen = await page.evaluate(() => window.__teacherSeen);
   const flags1 = await page.evaluate(() => ({ dl: dl.playing, sy: sy.playing, zd: zd.playing, pc: pc.playing }));
 
-  // ── 額外：進度條跳到第 101 句 → 暫停（時間凍住）→ 繼續（時間再走）→ 停止（播放狀態還原）──
+  // ── 額外：進度條跳到第 120 句 → 暫停（時間凍住）→ 繼續（時間再走）→ 停止（播放狀態還原）──
   const extra = [];
   await page.click('button[aria-label="開始／繼續"]');
   await page.waitForTimeout(400);
   const bar = await page.$('.vx-line'); const bb = await bar.boundingBox();
-  await page.mouse.click(bb.x + bb.width * (100.5 / lines.length), bb.y + bb.height / 2);
+  await page.mouse.click(bb.x + bb.width * (119.5 / lines.length), bb.y + bb.height / 2);
   await page.waitForTimeout(800);
   const j1 = await page.evaluate(() => window.__snap());
-  if (!(j1.tab === 'tab5' && j1.view === 'tw' && j1.sun === true)) extra.push('跳到第 101 句後畫面不對：' + JSON.stringify({ tab: j1.tab, view: j1.view, sun: j1.sun }));
+  if (!(j1.tab === 'tab5' && j1.view === 'tw' && j1.sun === true)) extra.push('跳到第 120 句後畫面不對：' + JSON.stringify({ tab: j1.tab, view: j1.view, sun: j1.sun }));
   await page.click('button[aria-label="暫停"]');
   const p1 = await page.evaluate(() => window.__snap()); await page.waitForTimeout(600); const p2 = await page.evaluate(() => window.__snap());
   if (p1.zdT !== p2.zdT) extra.push(`暫停時天球時間仍在走 ${p1.zdT}→${p2.zdT}`);
   await page.click('button[aria-label="開始／繼續"]');
   await page.waitForTimeout(500); const p3 = await page.evaluate(() => window.__snap());
   if (p3.zdT === p2.zdT) extra.push('繼續後天球時間沒有再走');
-  await page.click('button[aria-label="停止"]'); await page.waitForTimeout(200);
+  // 再跳到第 54 句（太空視角、時間慢慢走）：黃框在左上；暫停凍住、繼續再走；停止後黃框消失、畫布大小還原
+  const bb2 = await (await page.$('.vx-line')).boundingBox();   // 字幕框寬度會隨頭像改變，點之前重新量
+  await page.mouse.click(bb2.x + bb2.width * (53.5 / lines.length), bb2.y + bb2.height / 2);
+  await page.waitForTimeout(900);
+  const k1 = await page.evaluate(() => window.__snap());
+  if (!(k1.tab === 'tab3' && k1.hl === 'h' && k1.syRun === false && k1.syT >= 7 && k1.syT <= 12.5)) extra.push('跳到第 54 句後畫面不對：' + JSON.stringify({ tab: k1.tab, hl: k1.hl, syRun: k1.syRun, syT: k1.syT }));
+  await page.click('button[aria-label="暫停"]');
+  const k2 = await page.evaluate(() => window.__snap()); await page.waitForTimeout(600); const k3 = await page.evaluate(() => window.__snap());
+  if (k2.syT !== k3.syT) extra.push(`暫停時三視角時間仍在走 ${k2.syT}→${k3.syT}`);
+  await page.click('button[aria-label="開始／繼續"]'); await page.waitForTimeout(700); const k4 = await page.evaluate(() => window.__snap());
+  if (!(k4.syT > k3.syT)) extra.push('繼續後三視角時間沒有再走');
+  await page.click('button[aria-label="停止"]'); await page.waitForTimeout(500);
+  const k5 = await page.evaluate(() => ({ hl: window.__snap().hl, w: document.getElementById('syncCanvas').style.width }));
+  if (k5.hl !== null || k5.w !== '') extra.push('停止後黃框或畫布大小沒有還原：' + JSON.stringify(k5));
   const flags2 = await page.evaluate(() => ({ dl: dl.playing, sy: sy.playing, zd: zd.playing, pc: pc.playing }));
   await page.screenshot({ path: path.join(SHOTDIR, 'as3_shot_stop.png') });
   await browser.close();
 
-  const skip = (w, k, withLate) => ['cvs', 'see', 'seeTop', 'run', 'frozen', 'late'].includes(k) || (!withLate && k in w.late);
+  const skip = (w, k, withLate) => ['cvs', 'see', 'seeTop', 'run', 'frozen', 'late', 'syFit', 'slow', 'setAfter'].includes(k) || (!withLate && k in w.late);
   const flat = w => Object.assign({}, w, w.late);
-  const match = (w, s, withLate) => { const f = withLate ? flat(w) : w; return !!s && Object.keys(f).filter(k => !['cvs', 'see', 'seeTop', 'run', 'frozen', 'late'].includes(k)).every(k => s[k] === f[k]); };
-  const diff = (w, s) => { const f = flat(w); return Object.keys(f).filter(k => !['cvs', 'see', 'seeTop', 'run', 'frozen', 'late'].includes(k) && (!s || s[k] !== f[k])).map(k => `${k}=${s ? JSON.stringify(s[k]) : '∅'}≠${JSON.stringify(f[k])}`); };
+  const match = (w, s, withLate) => { const f = withLate ? flat(w) : w; return !!s && Object.keys(f).filter(k => !['cvs', 'see', 'seeTop', 'run', 'frozen', 'late', 'syFit', 'slow', 'setAfter'].includes(k)).every(k => s[k] === f[k]); };
+  const diff = (w, s) => { const f = flat(w); return Object.keys(f).filter(k => !['cvs', 'see', 'seeTop', 'run', 'frozen', 'late', 'syFit', 'slow', 'setAfter'].includes(k) && (!s || s[k] !== f[k])).map(k => `${k}=${s ? JSON.stringify(s[k]) : '∅'}≠${JSON.stringify(f[k])}`); };
   let bad = 0; const rows = [];
   console.log('played:', log.length, 'expected:', lines.length, ' 真實時間：', Math.round((Date.now() - t0) / 1000) + 's');
   for (let i = 0; i < lines.length; i++) {
@@ -205,6 +234,14 @@ for (const it of manifest.items) {
     const tail = all.slice(Math.min(all.length - 1, from + 10));
     if (last.run) { const vals = new Set(tail.map(s => s && s[last.run])); if (vals.size < 2) probs.push(`${last.run} 沒有在動`); }
     if (last.frozen) { const vals = new Set(tail.map(s => s && s[last.frozen])); if (vals.size > 1) probs.push(`${last.frozen} 應定格卻在變`); }
+    if (last.slow) {   // 播放器慢慢推時間：只能往前走、不能超出範圍；太陽落下那一步，最後一句結束時太陽已在地平面下
+      const ts = all.filter(s => s && s.tab === 'tab3' && s.syRun === false && s.lat === last.lat && s.season3 === last.season3).map(s => s.syT);
+      for (let j = 1; j < ts.length; j++) if (ts[j] < ts[j - 1] - 0.05) { probs.push(`時間倒退 ${ts[j - 1]}→${ts[j]}`); break; }
+      if (ts.some(t => t < last.slow[0] - 0.05 || t > last.slow[1] + 0.05)) probs.push(`時間超出 ${last.slow}`);
+      const nx = lines[i + 1] && lines[i + 1].seq[0];
+      if (last.setAfter && !(nx && nx.tab === 'tab3' && nx.step === e.seq[e.seq.length - 1].step) && !(r.end.syT > last.setAfter)) probs.push(`句尾太陽還沒落下（${r.end.syT}≤${last.setAfter.toFixed(2)}）`);
+    }
+    if (last.syFit && !r.syFit) probs.push('第三分頁三張圖沒有一起露出');
     const vis = last.cvs ? r.view && r.view[last.cvs] : null;
     if (last.cvs && !(vis >= 50)) probs.push(`畫布 ${last.cvs} 只露出 ${vis}%`);
     if (last.seeTop && !(r.top && r.top[last.seeTop])) probs.push(`${last.seeTop} 開頭沒有露出`);
