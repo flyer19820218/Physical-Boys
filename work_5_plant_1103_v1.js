@@ -351,33 +351,33 @@
     c.restore();
   }
 
-  /* 磁鐵在線圈中：cx,cy 中心、R 定子半徑；letters＝寫 N/S */
+  /* 左右磁鐵、中間線圈旋轉：cx,cy 中心、R 外殼半徑；letters＝寫 N/S */
   function magnetCoil(c, cx, cy, R, th, glowA, letters) {
     c.save();
-    c.strokeStyle = '#5d6f69'; c.lineWidth = R * 0.14;
+    c.strokeStyle = '#5d6f69'; c.lineWidth = R * 0.12;
     c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.stroke();
-    /* 上下兩個線圈 */
-    const cw = R * 0.9, ch = R * 0.36;
-    [-1, 1].forEach(sd => {
-      const y0 = cy + sd * (R - ch * 0.5) - ch / 2;
-      if (glowA > 0.02) W5.glow(c, cx, y0 + ch / 2, R * 0.75, ENE, 0.7 * glowA);
-      c.fillStyle = '#7a4a22'; W5.rr(c, cx - cw / 2, y0, cw, ch, 3); c.fill();
-      c.strokeStyle = COPPER; c.lineWidth = Math.max(1.5, R * 0.05);
-      for (let k = 0; k < 6; k++) { const xx = cx - cw / 2 + cw * (k + 0.5) / 6; c.beginPath(); c.moveTo(xx - 2, y0 + 1); c.lineTo(xx + 2, y0 + ch - 1); c.stroke(); }
-    });
-    /* 轉子磁鐵 */
-    c.translate(cx, cy); c.rotate(th);
-    const hl = R * 0.56, hw = R * 0.22;
-    c.fillStyle = NPOLE; W5.rr(c, 0, -hw, hl, hw * 2, 3); c.fill();
-    c.fillStyle = SPOLE; W5.rr(c, -hl, -hw, hl, hw * 2, 3); c.fill();
-    c.strokeStyle = 'rgba(11,26,21,0.7)'; c.lineWidth = 1.5; W5.rr(c, -hl, -hw, hl * 2, hw * 2, 3); c.stroke();
-    c.fillStyle = '#cfe0da'; c.beginPath(); c.arc(0, 0, R * 0.08, 0, TAU); c.fill();
-    c.restore();
+    /* 左右兩塊磁鐵：左 N、右 S（固定不動） */
+    const mx = R * 0.64, mw = R * 0.3, mh = R * 0.84;
+    c.fillStyle = NPOLE; W5.rr(c, cx - mx - mw / 2, cy - mh / 2, mw, mh, 3); c.fill();
+    c.fillStyle = SPOLE; W5.rr(c, cx + mx - mw / 2, cy - mh / 2, mw, mh, 3); c.fill();
+    c.strokeStyle = 'rgba(11,26,21,0.7)'; c.lineWidth = 1.5;
+    W5.rr(c, cx - mx - mw / 2, cy - mh / 2, mw, mh, 3); c.stroke();
+    W5.rr(c, cx + mx - mw / 2, cy - mh / 2, mw, mh, 3); c.stroke();
     if (letters) {
-      const d = hl * 0.55;
-      W5.label(c, 'N', cx + Math.cos(th) * d, cy + Math.sin(th) * d + 1, '#ffffff', 20, 'center', true);
-      W5.label(c, 'S', cx - Math.cos(th) * d, cy - Math.sin(th) * d + 1, '#ffffff', 20, 'center', true);
+      W5.label(c, 'N', cx - mx, cy + 1, '#ffffff', 20, 'center', true);
+      W5.label(c, 'S', cx + mx, cy + 1, '#ffffff', 20, 'center', true);
     }
+    /* 中間：旋轉的線圈 */
+    const hl = R * 0.42, hw = R * 0.15;
+    if (glowA > 0.02) W5.glow(c, cx, cy, R * 0.8, ENE, 0.7 * glowA);
+    c.translate(cx, cy); c.rotate(th);
+    c.fillStyle = '#7a4a22'; W5.rr(c, -hl, -hw, hl * 2, hw * 2, 3); c.fill();
+    c.strokeStyle = COPPER; c.lineWidth = Math.max(1.5, R * 0.05);
+    for (let k = 0; k < 7; k++) { const xx = -hl + hl * 2 * (k + 0.5) / 7; c.beginPath(); c.moveTo(xx - 2, -hw + 1); c.lineTo(xx + 2, hw - 1); c.stroke(); }
+    c.strokeStyle = COPPER; c.lineWidth = 2; W5.rr(c, -hl, -hw, hl * 2, hw * 2, 3); c.stroke();
+    c.fillStyle = '#cfe0da'; c.beginPath(); c.arc(0, 0, R * 0.07, 0, TAU); c.fill();
+    c.restore();
+    return hl;
   }
 
   function drawGenerator(c, S, al) {
@@ -602,7 +602,7 @@
     }
     c.stroke();
     c.restore();
-    T(c, a, L('線圈', 'coils'), 760, 234, COPPER, 20);
+    T(c, a, L('線圈', 'coil'), 760, 234, COPPER, 20);
     T(c, a, L('交流電', 'AC'), 880, 234, ENE, 20);
   }
   function panel5(c, a, S, u) {
@@ -637,8 +637,8 @@
     { title: ['渦輪機：蒸氣推動葉片旋轉', 'Turbine: steam spins the blades'],
       sub: ['高壓蒸氣衝向渦輪葉片，推動渦輪越轉越快', 'High-pressure steam rushes onto the turbine blades and spins the turbine faster and faster.'],
       con: ['結論：熱能 → 動能（蒸氣讓渦輪轉起來）', 'Conclusion: heat → kinetic energy (the steam makes the turbine spin).'] },
-    { title: ['發電機：磁鐵在線圈中旋轉（電磁感應）', 'Generator: a magnet spins inside coils (electromagnetic induction)'],
-      sub: ['渦輪軸帶動磁鐵在線圈中旋轉，線圈產生方向來回改變的交流電', 'The turbine shaft spins a magnet inside the coils, which produce alternating current (AC).'],
+    { title: ['發電機：線圈在兩塊磁鐵之間旋轉（電磁感應）', 'Generator: a coil spins between two magnets (electromagnetic induction)'],
+      sub: ['渦輪軸帶動線圈在兩塊磁鐵之間旋轉，線圈產生方向來回改變的交流電', 'The turbine shaft spins a coil between two magnets, and the coil produces alternating current (AC).'],
       con: ['結論：動能 → 電能（電磁感應）', 'Conclusion: kinetic energy → electrical energy (electromagnetic induction).'] },
     { title: ['冷凝器把蒸氣變回水；電經變壓器送出', 'Steam turns back into water; power goes out to the grid'],
       sub: ['冷卻水把蒸氣冷成水，送回蒸氣產生器再用；電經變壓器升壓後送上輸電線', 'Cooling water turns the steam back into water for reuse; a transformer steps up the voltage for the power lines.'],

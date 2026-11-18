@@ -388,10 +388,14 @@
     c.strokeStyle = METAL; c.lineWidth = 2.5; c.stroke();
     const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) * 0.32;
     if (lit > 0.02) W5.glow(c, cx, cy, r * 2.2, ENE, 0.5 * lit);
-    c.strokeStyle = '#d08a4a'; c.lineWidth = 3;
-    c.beginPath(); c.arc(cx, cy, r, 0, TAU); c.stroke();
-    c.strokeStyle = mixHex('#cfe0da', ENE, lit); c.lineWidth = 3;
-    c.beginPath(); c.moveTo(cx + Math.cos(th) * r, cy + Math.sin(th) * r); c.lineTo(cx - Math.cos(th) * r, cy - Math.sin(th) * r); c.stroke();
+    /* 左 N、右 S 兩塊磁鐵，中間線圈旋轉 */
+    const mw = r * 0.5, mh = r * 1.5;
+    c.fillStyle = '#ff6f76'; W5.rr(c, cx - r * 1.45, cy - mh / 2, mw, mh, 3); c.fill();
+    c.fillStyle = '#72b9ff'; W5.rr(c, cx + r * 1.45 - mw, cy - mh / 2, mw, mh, 3); c.fill();
+    c.save(); c.translate(cx, cy); c.rotate(th);
+    c.fillStyle = '#7a4a22'; W5.rr(c, -r * 0.85, -r * 0.3, r * 1.7, r * 0.6, 3); c.fill();
+    c.strokeStyle = mixHex('#d08a4a', ENE, lit); c.lineWidth = 2.5; W5.rr(c, -r * 0.85, -r * 0.3, r * 1.7, r * 0.6, 3); c.stroke();
+    c.restore();
   }
   function step2(c, s) {
     const u = s.u, k = s.k;

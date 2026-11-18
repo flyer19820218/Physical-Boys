@@ -155,8 +155,16 @@
   function generator(c, gx, gy, sz, glowA, th) {
     if (glowA > 0.02) W5.glow(c, gx, gy, sz * 1.9, ENE, 0.55 * glowA * (0.8 + 0.2 * Math.sin(th * 2)));
     c.fillStyle = '#33423e'; W5.rr(c, gx - sz / 2, gy - sz / 2, sz, sz, 7); c.fill();
-    c.strokeStyle = '#d08a4a'; c.lineWidth = 2.5;
-    for (let i = 0; i < 4; i++) { const xx = gx - sz * 0.33 + i * sz * 0.22; c.beginPath(); c.moveTo(xx, gy - sz * 0.36); c.lineTo(xx + 2, gy + sz * 0.36); c.stroke(); }
+    /* 左 N、右 S 兩塊磁鐵，中間線圈旋轉 */
+    const mw = sz * 0.17, mh = sz * 0.6;
+    c.fillStyle = '#ff6f76'; W5.rr(c, gx - sz * 0.44, gy - mh / 2, mw, mh, 3); c.fill();
+    c.fillStyle = '#72b9ff'; W5.rr(c, gx + sz * 0.44 - mw, gy - mh / 2, mw, mh, 3); c.fill();
+    const hl = sz * 0.24, hw = sz * 0.08;
+    c.save(); c.translate(gx, gy); c.rotate(th);
+    c.fillStyle = '#7a4a22'; W5.rr(c, -hl, -hw, hl * 2, hw * 2, 2); c.fill();
+    c.strokeStyle = '#d08a4a'; c.lineWidth = 2;
+    for (let i = 0; i < 5; i++) { const xx = -hl + hl * 2 * (i + 0.5) / 5; c.beginPath(); c.moveTo(xx - 1.5, -hw + 1); c.lineTo(xx + 1.5, hw - 1); c.stroke(); }
+    c.restore();
   }
   function powerLine(c, a, b, on, u) {
     c.strokeStyle = '#7d8f89'; c.lineWidth = 2; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke();

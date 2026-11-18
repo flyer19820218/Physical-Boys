@@ -183,7 +183,7 @@
   }
 
   /* ═════════════════ 第 1 步：水循環是太陽推動 ═════════════════ */
-  const MT1 = [[480, 445], [480, 414], [530, 394], [600, 334], [680, 266], [770, 212], [845, 244], [920, 292], [920, 445]];
+  const MT1 = [[480, 445], [480, 372], [530, 360], [600, 318], [680, 258], [770, 212], [845, 244], [920, 292], [920, 445]];
   function mtY1(x) {
     for (let i = 2; i < MT1.length - 1; i++) {
       const a = MT1[i - 1], b = MT1[i];
@@ -191,7 +191,7 @@
     }
     return 445;
   }
-  const RIVER1 = mkPath([[752, 232], [722, 262], [690, 290], [660, 302], [625, 336], [590, 352], [560, 374], [520, 404], [484, 414]]);
+  const RIVER1 = mkPath([[752, 232], [722, 254], [690, 274], [655, 290], [620, 312], [585, 330], [550, 348], [515, 368], [484, 378]]);
   const SEA1 = { x0: 40, x1: 480, top: 392, bot: 445 };
   const SUN1 = { x: 96, y: 118, R: 34 };
   const CL0 = { x: 385, y: 170 }, CL1 = { x: 725, y: 130 };
@@ -232,7 +232,7 @@
       if (front > 0.01) { subPath(c, RIVER1, 0, RIVER1.len * front); c.strokeStyle = W5.rgba(WATER, 0.9); c.lineWidth = 8; c.stroke(); }
       c.restore();
       flow(c, RIVER1, 'rgba(230,246,255,0.85)', u * 70, 34, 12, 3, front > 0.02 ? 1 : 0, RIVER1.len * front);
-      if (front > 0.98) W5.arrow(c, 486, 414, 452, 414, WATER, 4, 14);
+      if (front > 0.98) W5.arrow(c, 478, 404, 448, 404, WATER, 4, 14);
     });
 
     /* 陽光加熱海面 */
@@ -354,8 +354,13 @@
       const gx = 516, gy = 388;
       if (elec > 0.02) W5.glow(c, gx, gy, 34, ENE, 0.55 * elec * (0.8 + 0.2 * Math.sin(th * 2)));
       c.fillStyle = '#33423e'; W5.rr(c, gx - 18, gy - 18, 36, 36, 8); c.fill();
-      c.strokeStyle = '#d08a4a'; c.lineWidth = 2.5;
-      for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(gx - 12 + i * 8, gy - 13); c.lineTo(gx - 10 + i * 8, gy + 13); c.stroke(); }
+      /* 左 N、右 S 兩塊磁鐵，中間線圈旋轉 */
+      c.fillStyle = '#ff6f76'; W5.rr(c, gx - 16, gy - 11, 6, 22, 2); c.fill();
+      c.fillStyle = '#72b9ff'; W5.rr(c, gx + 10, gy - 11, 6, 22, 2); c.fill();
+      c.save(); c.translate(gx, gy); c.rotate(th * 2);
+      c.fillStyle = '#7a4a22'; W5.rr(c, -8, -3, 16, 6, 1.5); c.fill();
+      c.strokeStyle = '#d08a4a'; c.lineWidth = 1.5; W5.rr(c, -8, -3, 16, 6, 1.5); c.stroke();
+      c.restore();
       /* 輸電塔 */
       c.strokeStyle = '#b7c7c1'; c.lineWidth = 2.5;
       c.beginPath(); c.moveTo(TOW.x - 14, TOW.base); c.lineTo(TOW.x, TOW.top); c.lineTo(TOW.x + 14, TOW.base);
