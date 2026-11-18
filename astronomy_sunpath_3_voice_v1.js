@@ -10,6 +10,7 @@
   var STAGE_URL = 'audio/astronomy_sunpath_3/stage.json';
   // 音檔與網頁同一個網域（audio/astronomy_sunpath_3/mp3/）：iPad Safari 對 GitHub Release 的下載網址（octet-stream＋attachment）常常無法播放。
   var AUDIO_BASE = 'audio/astronomy_sunpath_3/mp3/';
+  var AUDIO_VER = '?v=20261118-e'; // 重錄音檔時改這個版本號，避免瀏覽器播到舊的快取音檔
   var AUDIO_FALLBACK = AUDIO_BASE; // 本課沒有 GitHub Release 備援：載入失敗就直接改用字數估時，講解不中斷
   var player = null; // 全程只用同一個 Audio 元素：iOS 只在「使用者點擊」那一刻解鎖，新建的 Audio 之後自動播放會被擋
   var SEC_PER_CHAR = 0.3; // 音檔載入失敗時，依字數估一個等待秒數，讓講解不中斷
@@ -191,7 +192,9 @@
   //   tab1：1＝夏至、2＝春秋分、3＝冬至（觀察者隨自轉一直運轉）
   //   sub1（天球分頁・真實宇宙）：1＝側視（地軸指北極星，phi −π/6）、2＝從北極上空往下看（phi −1.35）；換步時鏡頭 0.9 秒轉過去
   //   sub2（天球模型）：1
-  //   tab3：[緯度, 季節, 運轉] 見 T3；6、7＝正午定格（12:00 停住）
+  //   tab3：每步＝[緯度, 季節, 時間, 框哪一張] 見 T3（2026-11-18 老師要求重排：先介紹三張圖的意義，再換緯度、換季節）
+  //         時間：'run'＝頁面自己運轉（start 有值就從那個時刻開始）；'noon'＝正午定格；'slow'＝播放器自己把時間從 start 慢慢推到 end（每秒 rate 小時）後停住
+  //         框：'h'＝左上太空視角、't'＝右上剖面視角、'o'＝下方地表視角、null＝不框（外加的黃框層，不碰畫布）
   //   tab4：1～3＝夏至／春秋分／冬至，4＝捲到下方「一張表」
   //   helio：1＝先想一想（今天、定格）2＝公轉（頁面動畫運轉）3＝夜晚那一半（今天、定格）4＝點水瓶座 5＝點天蠍座
   //          6＝總結（今天、定格，平滑捲到下方「重點筆記」#zd-notes；同頁面老師模式最後一站）
@@ -201,8 +204,29 @@
   var cur = { tab: null, sub: null, step: 0 };
   function $(id) { return document.getElementById(id); }
   var SEAS = [null, 'summer', 'equinox', 'winter'];
-  var T3 = [null, [23.5, 'summer', 1], [0, 'summer', 1], [90, 'summer', 1], [23.5, 'equinox', 1], [23.5, 'winter', 1],
-            [23.5, 'summer', 0], [23.5, 'winter', 0], [90, 'winter', 1]];
+  //        [緯度,  季節,      時間,   框,  start, end, rate]
+  var T3 = [null,
+    [23.5, 'summer',  'run',  null],                 // 1 三張圖（不框）
+    [23.5, 'summer',  'slow', 'h', 7, 12.5, 0.5],    // 2 太空視角：粉紅小人在早上到中午都面向鏡頭
+    [23.5, 'summer',  'slow', 't', 6, 17.5, 0.8],    // 3 剖面視角：太陽由東往西，慢慢走到傍晚，接下一步的日落
+    [23.5, 'summer',  'slow', 't', 17.5, 20.5, 0.6], // 4 太陽慢慢落到地平面下面
+    [23.5, 'summer',  'run',  'o', 9],               // 5 地表視角
+    [23.5, 'summer',  'run',  null],                 // 6 三張一起看
+    [23.5, 'summer',  'run',  'o'],                  // 7 台灣：天北極白點
+    [0,    'summer',  'run',  't'],                  // 8 赤道：地平面立起來
+    [0,    'summer',  'run',  'o'],                  // 9 赤道：太陽路徑和地平線垂直
+    [90,   'summer',  'run',  't'],                  // 10 北極點：地平面躺平
+    [90,   'summer',  'run',  'o'],                  // 11 北極點：太陽繞地平線轉圈（永晝）
+    [90,   'winter',  'run',  'o'],                  // 12 北極點冬至（永夜）
+    [90,   'winter',  'run',  't'],                  // 13 緯度不同，地平面方向不同
+    [-34,  'summer',  'noon', 'o'],                  // 14 雪梨（六月）正午：太陽在北方天空
+    [23.5, 'summer',  'slow', 'o', 4.5, 19, 2.0],    // 15 台灣夏至：東偏北升、西偏北落（一句內走完日出到日落）
+    [23.5, 'summer',  'noon', 'o'],                  // 16 台灣夏至正午
+    [23.5, 'equinox', 'slow', 'o', 5.5, 18.5, 2.3],  // 17 台灣春秋分：正東升、正西落（一句內走完）
+    [23.5, 'winter',  'slow', 'o', 6, 12, 1.4],      // 18 台灣冬至：東偏南升起，慢慢爬到正午停住（不會過頭再跳回）
+    [23.5, 'winter',  'noon', 'o'],                  // 19 台灣冬至正午
+    [23.5, 'winter',  'slow', 'o', 15.5, 19, 0.5]    // 20 傍晚：太陽落下，夜晚的星星接力
+  ];
   var drive = null;                       // 播放器自己推動的動畫（天球台灣視角的時間）；暫停時不推
   var camTw = 0;                          // 天球分頁鏡頭轉動的 rAF
   function panelEl(i) { return document.querySelectorAll('.panel')[i] || null; }
@@ -216,10 +240,57 @@
       id = 'consoleCanvas';
     }
     var e = id && $(id);
-    return e ? { k: id, a: e, b: e, anchor: key === 'tab3' || key === 'helio' || key === 'tw' || key === 'disc' ? 'bottom' : 'top' } : null;
+    if (key === 'tab3') return e ? { k: id, a: e, b: e, anchor: 'top', fit: fitSy } : null;
+    if (key === 'helio' || key === 'tw' || key === 'disc') return e ? { k: id, a: e, b: e, anchor: 'top', fit: fitZd } : null;
+    return e ? { k: id, a: e, b: e, anchor: key === 'helio' || key === 'tw' || key === 'disc' ? 'bottom' : 'top' } : null;
   }
   function clearTimers() { drive = null; cancelAnimationFrame(camTw); camTw = 0; }
-  function unfitWire() {}     // 本課沒有接線畫布需要縮放還原
+  // ─── 第三分頁（三視角）：外加的黃框，框住正在講的那一張圖（不碰畫布） ───
+  // 畫布 960×800：左上太空視角 (0,0,480,400)、右上剖面視角 (480,0,480,400)、下方地表視角 (0,400,960,400)
+  var HL_BOX = { h: [0, 0, 480, 400], t: [480, 0, 480, 400], o: [0, 400, 960, 400] };
+  var hl = { key: null, el: null };
+  function hlBox(key) {
+    hl.key = key;
+    if (!hl.el) {
+      hl.el = document.createElement('div');
+      hl.el.className = 'vx-frame';
+      hl.el.style.cssText = 'position:fixed;pointer-events:none;z-index:8000;box-sizing:border-box;border:4px solid #fde047;border-radius:14px;' +
+        'box-shadow:0 0 18px rgba(253,224,71,0.55),inset 0 0 14px rgba(253,224,71,0.25);opacity:0;transition:opacity .35s;';
+      document.body.appendChild(hl.el);
+    }
+    if (!key) { hl.el.style.opacity = '0'; return; }
+    hlPlace(); hl.el.style.opacity = '1';
+  }
+  function hlPlace() {
+    var cv = $('syncCanvas'), b = HL_BOX[hl.key];
+    if (!cv || !b || !hl.el) return;
+    var r = cv.getBoundingClientRect(), k = r.width / 960, pad = 3;
+    hl.el.style.left = (r.left + b[0] * k + pad) + 'px'; hl.el.style.top = (r.top + b[1] * k + pad) + 'px';
+    hl.el.style.width = (b[2] * k - pad * 2) + 'px'; hl.el.style.height = (b[3] * k - pad * 2) + 'px';
+  }
+  // 播放第三分頁時：畫布頂端對齊畫面上緣；螢幕不夠高就等比縮小，至少露出到地表視角的地平面與東西南北（畫布 y＝720／800）
+  var SY_SHOW = 0.9, PIN_ROOM = 54;
+  function fitSy() { fitCv('syncCanvas', SY_SHOW); }
+  function fitZd() { fitCv('zodiacCanvas', 1); }   // 十二星座三張動畫：整張畫布完整露出（底下的日期晶片被字幕擋住沒關係）
+  function fitCv(cid, show) {
+    var cv = $(cid), bub = ui.panel && ui.panel.querySelector('.vx-bub');
+    if (!cv) return;
+    cv.style.width = ''; cv.style.margin = '';
+    // 字幕框的上緣：一律以「兩行字幕＋釘選黃條」計算，換句、出現釘選時畫布才不會一下大一下小
+    var bubTop = window.innerHeight;
+    if (bub) {
+      var rb = bub.getBoundingClientRect(), tx = bub.querySelector('.vx-txt'), rt = tx ? tx.getBoundingClientRect() : null;
+      var lh = tx ? parseFloat(getComputedStyle(tx).lineHeight) || 32 : 32;
+      bubTop = rt ? rb.bottom - (rb.height - rt.height + 2 * lh) : rb.top;
+    }
+    var bottom = bubTop - PIN_ROOM - 8;
+    var maxH = (bottom - 56) / show, w = cv.getBoundingClientRect().width;
+    if (w * 800 / 960 > maxH) { cv.style.width = Math.max(320, Math.floor(maxH * 960 / 800)) + 'px'; cv.style.margin = '0 auto'; }
+  }
+  function unfitWire() {     // 停止／結束／離開第三分頁：還原畫布大小、拿掉黃框
+    ['syncCanvas', 'zodiacCanvas'].forEach(function (i) { var c = $(i); if (c) { c.style.width = ''; c.style.margin = ''; } });
+    hlBox(null);
+  }
   // 天球分頁（真實宇宙）：鏡頭轉到 phi（＝拖曳轉一轉）；anim 為 false 時直接到位
   function camTo(ph, anim) {
     cancelAnimationFrame(camTw); camTw = 0;
@@ -258,12 +329,21 @@
       if (cs.sub !== 'sub2') switchT3('sub2');
       cs.theta = 0; cs.phi = -Math.PI / 6; cs.dragging = false;
     },
-    tab3: function (step, anim, changedTab) {
+    tab3: function (step, anim, changedTab, same) {
       var s = T3[step] || T3[1];
-      sy.lat = s[0]; sy.season = s[1]; sy.dragging = false;
-      if (!s[2]) { sy.time = 12; sy.playing = false; }          // 正午定格
-      else { if (changedTab) sy.time = 12; sy.playing = true; }
+      sy.lat = s[0]; sy.season = s[1]; sy.dragging = false; sy.yaw = 0; sy.pitch = 0;
+      if (s[2] === 'noon') { sy.time = 12; sy.playing = false; }                 // 正午定格
+      else if (s[2] === 'slow') {                                                 // 播放器自己慢慢推時間，到 end 停住
+        if (!same) sy.time = s[4];
+        sy.playing = false;
+        var end = s[5], rate = s[6];
+        drive = function (dt) { if (sy.playing || sy.time >= end) return; sy.time = Math.min(end, sy.time + dt * rate); syTimeUI(); };
+      } else {
+        if (s[4] != null && !same) sy.time = s[4]; else if (changedTab) sy.time = 12;
+        sy.playing = true;
+      }
       sy.last = 0; syUI();
+      hlBox(s[3] || null);
     },
     tab4: function (step) { if (step <= 3) coSeason(SEAS[step]); },
     helio: function (step, anim, changedTab, same) {
@@ -278,7 +358,7 @@
       zd.sun = step >= 2; zd.pathOn = step >= 3; zd.pks = [2, 5, 8].slice(0, Math.max(0, step - 2));   // 2＝雙子、5＝處女、8＝射手
       if (!same && step <= 2) zd.t = step === 1 ? 0 : 12;                 // 無太陽從午夜、加上太陽從正午開始轉
       zdUI();
-      drive = function (dt) { if (zd.view !== 'tw' || zd.playing) return; zd.t = zdWrap(zd.t + dt * 2, 24); zdUI(); };   // 一圈＝12 秒（與頁面「標準」速度相同），不換日
+      drive = function (dt) { var p5 = panelEl(4); if (!p5 || !p5.classList.contains('active') || zd.view !== 'tw' || zd.playing) return; zd.t = zdWrap(zd.t + dt * 2, 24); zdUI(); };   // 一圈＝12 秒（與頁面「標準」速度相同），不換日
     },
     disc: function (step, anim) {
       zdBase('disc'); zd.sun = true; zd.pathOn = false; zd.pks = []; zd.t = 0;
@@ -306,6 +386,7 @@
     try {
       if (SCENES[key]) SCENES[key](stepNo, anim, changedTab, same);
     } catch (e) { if (window.console) console.warn('[有聲講解] 場景失敗', key, e); }
+    if (key !== 'tab3' && key !== 'helio' && key !== 'tw' && key !== 'disc') unfitWire();
     cur = { tab: tab, sub: sub, step: stepNo };
     var nv = viewOf(key, stepNo), pv = viewOf(prevKey, prev.step);
     if (nv && (changedTab || !pv || pv.k !== nv.k)) bringIntoView(nv);
@@ -316,7 +397,8 @@
   var lastMs = 0;
   function loop(ms) {
     var dt = lastMs ? Math.min(0.05, (ms - lastMs) / 1000) : 0; lastMs = ms;
-    if (state === 'playing' && drive) { var p = panelEl(4); if (p && p.classList.contains('active')) { try { drive(dt); } catch (e) {} } }
+    if (state === 'playing' && drive) { try { drive(dt); } catch (e) {} }
+    if (hl.key) hlPlace();
     requestAnimationFrame(loop);
   }
 
@@ -345,6 +427,7 @@
   function bringIntoView(v) {
     var a = v && v.a, b = v && (v.b || a);
     if (!a || !b || !a.getBoundingClientRect) return;
+    if (v.fit) v.fit();
     var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
     var top = ra.top, bot = Math.max(ra.bottom, rb.bottom);
     var panelTop = ui.panel.querySelector('.vx-bub').getBoundingClientRect().top;
@@ -456,14 +539,14 @@
     var a = player;
     a.onended = a.onerror = null;
     a.dataset.tried = '';
-    a.src = AUDIO_BASE + encodeURIComponent(it.file);
+    a.src = AUDIO_BASE + encodeURIComponent(it.file) + AUDIO_VER;
     return a;
   }
 
   function preloadNext() { // 先把下一句抓進瀏覽器快取
     for (var i = idx + 1; i < items.length; i++) {
       if (items[i].kind === 'line') {
-        try { fetch(AUDIO_BASE + encodeURIComponent(items[i].file), { cache: 'force-cache' }).catch(function () {}); } catch (e) {}
+        try { fetch(AUDIO_BASE + encodeURIComponent(items[i].file) + AUDIO_VER, { cache: 'force-cache' }).catch(function () {}); } catch (e) {}
         return;
       }
     }
@@ -492,7 +575,7 @@
       if (advanced || my !== token) return;
       if (!a.dataset.tried) {
         a.dataset.tried = '1';
-        a.src = AUDIO_FALLBACK + encodeURIComponent(it.file);
+        a.src = AUDIO_FALLBACK + encodeURIComponent(it.file) + AUDIO_VER;
         var q = a.play(); if (q && q.catch) q.catch(function () {});
         return;
       }

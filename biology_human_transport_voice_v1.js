@@ -1,0 +1,362 @@
+/* biology_human_transport 有聲講解（外層加法；範本：biology_plant_transport_voice_v1.js）
+ * 只做：載入 manifest.json／stage.json，依序播放每句 mp3；依 cuts／at／acts 呼叫 window.HTLesson.show(分頁, 步驟, 段) 切畫面；
+ * 字幕、頭像、釘選黃條、螢光筆（只畫字，不框整塊）。不碰畫布、動畫與題庫。載入失敗整個功能隱藏，原頁面照常。
+ * 音檔與網頁同一網域（audio/biology_human_transport/mp3/）；iPad Safari 只能在使用者點擊時解鎖，所以只用同一個 Audio 元素。
+ * acts＝句中換畫面：{句號: [[播放比例0～1, 分頁, 子頁(null), 第幾步]]}（切到該步第 0 段）。
+ * 上一句／下一句跳句時，先把畫面還原成「播到那一句時應有的分頁／步驟／段」，再播。
+ * 有聲講解用到的分頁代號（lessons/biology_human_transport.json 的 tab_check 會來這裡找；與 window.HTLesson.tabs 相同）：
+ *   data-tab="heart" data-tab="vessels" data-tab="blood" data-tab="circulation" data-tab="lymph" data-tab="experiment"
+ */
+(function () {
+  'use strict';
+  var BASE = 'audio/biology_human_transport/';
+  var SPF = 0.3;                       // 音檔失敗時依字數估時，講解不中斷
+  var AV = { '彥君': 'assets/characters/yanjun/pointer_board.png', '曉臻': 'assets/characters/xiaozhen/normal.png' };
+  var WHO = { '彥君': '彥君老師', '曉臻': '曉臻助教', '合聲': '兩人' };
+  // 螢光筆：這一句唸到 when 的時候，畫面上 phrase 那幾個字（只在 sel 範圍內尋找，找不到就不畫，不報錯）
+  // 本課旁白沒有公式／算式（AGENTS_VOICE 8-1），表格留空；要加時照上面格式填
+  var HL = [];
+
+  var manifest = null, stage = null, seq = [], lineIdx = [];
+  var audio = null, token = 0, pos = 0, paused = true, started = false;
+  var waitTimer = null, waitLeftSec = 0, waitStartAt = 0, waitCb = null;
+  var ui = null, hlEls = [], hlTimer = 0;
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
+  function ptl() { return window.HTLesson || null; }
+  // 播放期間一律學生模式：老師講解模式的自動連播會和語音搶著切分頁（AGENTS_VOICE 新課手冊「踩過的雷」）
+  function forceStudent() {
+    if (document.body.classList.contains('mode-teacher') && window.setMode) window.setMode('student');
+  }
+  var modeObs = null;
+  function watchMode(on) {
+    if (on && !modeObs && window.MutationObserver) {
+      modeObs = new MutationObserver(function () { if (started) forceStudent(); });
+      modeObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+    if (!on && modeObs) { modeObs.disconnect(); modeObs = null; }
+  }
+
+  /* ── 建立播放列（manifest → seq）── */
+  function build(man, stg) {
+    var out = [], lines = [];
+    man.items.forEach(function (it) {
+      if (it.kind === 'marker') {
+        if (it.text.indexOf('＊切頁：') === 0) out.push({ type: 'cut', title: it.text.slice(4) });
+        else if (it.text.indexOf('＊釘選：') === 0) out.push({ type: 'pin', text: it.text.slice(4) });
+        else if (it.text.indexOf('＊停：') === 0) out.push({ type: 'wait', sec: parseFloat(it.text.slice(3)) || 0 });
+      } else if (it.kind === 'line') {
+        var o = { type: 'line', id: it.id, speaker: it.speaker, file: it.file, text: it.text, sub: (stg.subs && stg.subs[it.id]) || it.text };
+        out.push(o); lines.push(o);
+      }
+    });
+    return { seq: out, lines: lines };
+  }
+
+  /* ── 切換畫面：分頁＋步驟（段 0）；動畫循環播放 ── */
+  // 淋巴分頁：頁面實際畫的是「淋巴旅程」四段（引擎的 lymphStep：0 全圖、1 放大微血管、2 進入淋巴管、3 回到大靜脈），
+  // 步驟表的 compartment／movement 不會改變畫面，旅程會自己每 12 秒輪播。語音播放時把旅程固定在該步對應的那一段，
+  // 離開淋巴分頁或講解結束時還原成自動輪播（只呼叫引擎公開的 LivingBook.action，等同學生按該分頁的旅程按鈕）。
+  var FIX = { lymph: { key: 'lymphStep', by: { 1: 0, 2: 1, 3: 2, 4: 3, 5: 3 }, off: 'auto' } };
+  function lb() { return window.LivingBook || null; }
+  function curTabId() { var L = lb(); try { return L && L.getTab ? L.getTab().id : null; } catch (e) { return null; } }
+  function releaseFix(nextTab) {
+    var L = lb(), cur = curTabId();
+    if (L && cur && FIX[cur] && cur !== nextTab) L.action(FIX[cur].key, FIX[cur].off);
+  }
+  function showScene(tab, step, seg) {
+    var p = ptl(); if (!p || !tab) return;
+    releaseFix(tab);
+    p.takeover(true);
+    p.show(tab, step || 1, seg || 0);
+    // 再套一次：步驟表的 ops 有先後依賴（例：血液第 2 步先 view=focus 再 component=rbc，
+    // 若前一個畫面是血漿，引擎會把 focus 退回 smear）。同一組 ops 再套一次結果固定，不改教學檔。
+    p.show(tab, step || 1, seg || 0);
+    var f = FIX[tab], L = lb();
+    if (f && L && f.by[step || 1] !== undefined) L.action(f.key, f.by[step || 1]);
+  }
+  function doCut(title) {
+    var c = stage.cuts && stage.cuts[title];
+    if (c) showScene(c.tab, 1);   // 切分頁不捲頁（字幕框固定在畫面下方）
+  }
+  function doAt(id) {
+    var a = stage.at && stage.at[id];
+    if (a) showScene(a.tab, a.step || 1, a.seg || 0);
+  }
+  // 句中換畫面：依音檔播放比例觸發（音檔失敗時依字數估時）
+  var actTimer = 0;
+  function stopActs() { if (actTimer) { clearInterval(actTimer); actTimer = 0; } }
+  function runActs(it, my) {
+    stopActs();
+    var acts = stage.acts && stage.acts[it.id];
+    if (!acts || !acts.length) return;
+    var fired = [], t0 = Date.now(), est = Math.max(1.5, it.text.length * SPF);
+    actTimer = setInterval(function () {
+      if (my !== token) { stopActs(); return; }
+      if (paused) { t0 += 50; return; }
+      var d = audio && audio.duration, f;
+      if (d && isFinite(d) && d > 0 && audio.currentTime > 0) f = audio.currentTime / d;
+      else f = (Date.now() - t0) / 1000 / est;
+      var left = 0;
+      for (var i = 0; i < acts.length; i++) {
+        if (fired[i]) continue;
+        if (f >= acts[i][0]) { fired[i] = 1; showScene(acts[i][1], acts[i][3] || 1, 0); }
+        else left++;
+      }
+      if (!left) stopActs();
+    }, 50);
+  }
+  // 跳句（上一句／下一句）：算出播到第 i 項之前畫面應該在哪（cuts → at → 該句之前的 acts 都已換過）
+  function restoreBefore(i) {
+    var want = null;
+    for (var j = 0; j < i && j < seq.length; j++) {
+      var it = seq[j];
+      if (it.type === 'cut') { var c = stage.cuts && stage.cuts[it.title]; if (c) want = [c.tab, 1, 0]; }
+      else if (it.type === 'line') {
+        var a = stage.at && stage.at[it.id];
+        if (a) want = [a.tab, a.step || 1, a.seg || 0];
+        var ac = stage.acts && stage.acts[it.id];
+        if (ac && ac.length) { var z = ac[ac.length - 1]; want = [z[1], z[3] || 1, 0]; }
+      }
+    }
+    if (want) showScene(want[0], want[1], want[2]);
+  }
+
+  /* ── 字幕與頭像 ── */
+  function setAvatars(id) {
+    var av = (stage.avatars && stage.avatars[id]) || {};
+    ['彥君', '曉臻'].forEach(function (who, i) {
+      var img = ui.av[i];
+      img.src = av[who] || AV[who];
+      img.dataset.who = who;
+    });
+  }
+  function speakerLight(sp) {
+    ui.av.forEach(function (img) {
+      var on = (sp === '合聲') || (img.dataset.who === sp);
+      img.classList.toggle('on', on);
+    });
+    ui.who.textContent = WHO[sp] || sp;
+  }
+  function showLine(it) {
+    ui.sub.textContent = it.sub;
+    speakerLight(it.speaker);
+    if (stage.avatars && stage.avatars[it.id]) setAvatars(it.id);
+  }
+  function showPin(text) { ui.pin.textContent = text; ui.pin.classList.add('show'); }
+
+  /* ── 螢光筆：只畫字；畫在 document 上（position:absolute），不改頁面原有內容 ── */
+  function textRects(sel, phrase) {
+    var roots = document.querySelectorAll(sel), res = [];
+    for (var r = 0; r < roots.length; r++) {
+      var w = document.createTreeWalker(roots[r], NodeFilter.SHOW_TEXT, null), n;
+      while ((n = w.nextNode())) {
+        var k = n.nodeValue.indexOf(phrase);
+        if (k < 0) continue;
+        var rg = document.createRange(); rg.setStart(n, k); rg.setEnd(n, k + phrase.length);
+        var rects = rg.getClientRects();
+        for (var i = 0; i < rects.length; i++) if (rects[i].width > 0) res.push(rects[i]);
+        if (res.length) return res;
+      }
+    }
+    return res;
+  }
+  function hlClear() {
+    hlEls.forEach(function (e) { e.remove(); });
+    hlEls = [];
+  }
+  function hlDraw(rects) {
+    hlClear();
+    var sy = window.pageYOffset || 0, sx = window.pageXOffset || 0;
+    rects.forEach(function (r) {
+      var d = el('div', 'vx-hl');
+      d.style.left = (r.left + sx) + 'px'; d.style.top = (r.top + sy) + 'px';
+      d.style.width = r.width + 'px'; d.style.height = r.height + 'px';
+      document.body.appendChild(d); hlEls.push(d);
+    });
+  }
+  function hlFor(it) {
+    for (var i = 0; i < HL.length; i++) {
+      if (it.text.indexOf(HL[i].when) >= 0) return HL[i];
+    }
+    return null;
+  }
+
+  /* ── 逐句播放 ── */
+  function playLine(it, my) {
+    showLine(it);
+    var hl = hlFor(it), hlSet = false;
+    var rects = hl ? textRects(hl.sel, hl.phrase) : [];
+    function finish() { if (my === token) { hlClear(); stopActs(); next(my); } }
+    function tickHl() {
+      if (!hl || my !== token) return;
+      if (!hlSet && rects.length) { hlDraw(rects); hlSet = true; }
+      if (audio && audio.duration) {
+        var f = audio.currentTime / audio.duration;
+        var frac = Math.max(0, Math.min(1, (f - 0.1) / 0.8));
+        hlEls.forEach(function (e) { e.style.clipPath = 'inset(0 ' + ((1 - frac) * 100).toFixed(1) + '% 0 0)'; });
+      }
+      if (!paused) hlTimer = requestAnimationFrame(tickHl);
+    }
+    if (!manifest) return finish();
+    audio.onended = finish;
+    audio.onerror = function () { fallbackWait(it.text, my); };
+    audio.src = BASE + 'mp3/' + it.file;
+    var p = audio.play();
+    if (p && p.catch) p.catch(function () { fallbackWait(it.text, my); });
+    if (hl) { cancelAnimationFrame(hlTimer); hlTimer = requestAnimationFrame(tickHl); }
+    runActs(it, my);
+  }
+  function fallbackWait(text, my) {
+    setTimeout(function () { if (my === token) { hlClear(); stopActs(); next(my); } }, text.length * SPF * 1000);
+  }
+
+  function waitFor(sec, my) {
+    waitLeftSec = sec; waitStartAt = Date.now();
+    waitCb = function () { if (my === token) next(my); };
+    waitTimer = setTimeout(function () { waitTimer = null; waitCb = null; if (my === token) next(my); }, sec * 1000);
+  }
+
+  function play(i, my) {
+    if (my !== token) return;
+    pos = i;
+    var it = seq[i];
+    if (!it) { finish(); return; }
+    updateCount();
+    if (it.type === 'cut') { doCut(it.title); return play(i + 1, my); }
+    if (it.type === 'pin') { showPin(it.text); return play(i + 1, my); }
+    if (it.type === 'wait') return waitFor(it.sec, my);
+    if (it.type === 'line') {
+      var a = stage.at && stage.at[it.id];
+      if (a) doAt(it.id);
+      return playLine(it, my);
+    }
+  }
+  function next(my) { if (my !== token) return; play(pos + 1, my); }
+
+  function go(i, jump) {
+    token++;
+    if (audio) { audio.pause(); }
+    if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
+    hlClear(); cancelAnimationFrame(hlTimer); stopActs();
+    paused = false; started = true; forceStudent(); watchMode(true);
+    ui.toggle.textContent = '⏸';
+    if (jump) restoreBefore(i);
+    play(i, token);
+  }
+  function finish() {
+    token++; paused = true; started = false; stopActs();
+    ui.toggle.textContent = '▶';
+    hlClear();
+    releaseFix(null);
+    if (ptl()) { ptl().takeover(false); }
+    watchMode(false);
+  }
+  function lineIndexFrom(i, dir) {
+    var j = i;
+    while (j >= 0 && j < seq.length) {
+      j += dir;
+      if (j >= 0 && j < seq.length && seq[j].type === 'line') return j;
+    }
+    return -1;
+  }
+  function updateCount() {
+    var n = 0, total = lineIdx.length;
+    for (var i = 0; i <= pos && i < seq.length; i++) if (seq[i].type === 'line') n++;
+    ui.count.textContent = (n ? n : 0) + ' / ' + total;
+  }
+
+  function toggle() {
+    if (!started) { go(0); return; }
+    if (!paused) {                       // 暫停
+      paused = true;
+      if (audio) audio.pause();
+      if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
+      if (ptl()) ptl().pause();
+      ui.toggle.textContent = '▶';
+    } else {                             // 繼續
+      paused = false;
+      if (ptl()) ptl().resume();
+      ui.toggle.textContent = '⏸';
+      if (audio && audio.src && audio.currentTime > 0 && !audio.ended) audio.play();
+      else go(pos, true);
+    }
+  }
+
+  /* ── 介面 ── */
+  function css() {
+    var s = el('style');
+    s.textContent = [
+      '#vxOpen{min-height:52px;padding:8px 26px;border-radius:999px;cursor:pointer;font:700 21px/1.3 "Noto Sans TC",sans-serif;background:transparent;color:#55e9ff;border:2px solid #55e9ff;touch-action:manipulation;transition:all .2s}',
+      '#vxOpen:hover,#vxOpen.on{background:#55e9ff;color:#11261f}',
+      '#vxPanel{position:fixed;left:0;right:0;bottom:0;z-index:9001;display:none;padding:10px 14px 14px;background:rgba(11,26,21,.96);border-top:2px solid rgba(85,233,255,.45);box-shadow:0 -8px 24px rgba(0,0,0,.45);font-family:"Noto Sans TC",sans-serif;color:#f2ecd9}',
+      '#vxPanel.show{display:block}',
+      '#vxPanel .vx-row{max-width:1080px;margin:0 auto;display:flex;gap:12px;align-items:center}',
+      '#vxPanel .vx-av{display:flex;gap:6px;flex:0 0 auto}',
+      '#vxPanel .vx-av img{width:64px;height:64px;object-fit:contain;border-radius:50%;background:transparent;opacity:.45;border:2px solid transparent}',
+      '#vxPanel .vx-av img.on{opacity:1;border-color:#55e9ff}',
+      '#vxPanel .vx-body{flex:1;min-width:0}',
+      '#vxPanel .vx-who{font-size:17px;font-weight:700;color:#55e9ff}',
+      '#vxPanel .vx-sub{font-size:22px;line-height:1.6;min-height:2.2em}',
+      '#vxPanel .vx-ctl{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:0 0 auto}',
+      '#vxPanel .vx-ctl button{min-height:40px;min-width:76px;border-radius:10px;border:2px solid #55e9ff;background:transparent;color:#f2ecd9;font:700 18px/1 "Noto Sans TC",sans-serif;cursor:pointer;padding:6px 10px}',
+      '#vxPanel .vx-count{font-size:15px;color:#b8c9c1;font-family:"JetBrains Mono",monospace}',
+      '#vxPin{max-width:1080px;margin:0 auto 8px;display:none;padding:6px 12px;border-radius:8px;background:#fde047;color:#11261f;font:700 20px/1.4 "Noto Sans TC",sans-serif}',
+      '#vxPin.show{display:block}',
+      '.vx-hl{position:absolute;pointer-events:none;background:rgba(253,224,71,.55);border-radius:3px;z-index:8000;mix-blend-mode:normal}',
+      'body.vx-on{padding-bottom:190px}',
+      '@media (max-width:620px){#vxPanel .vx-av img{width:48px;height:48px}#vxPanel .vx-sub{font-size:20px}}'
+    ].join('');
+    document.head.appendChild(s);
+  }
+  function buildUI() {
+    css();
+    var open = el('button', null, '🔊 有聲講解'); open.id = 'vxOpen'; open.type = 'button';
+    var panel = el('div'); panel.id = 'vxPanel';
+    var pin = el('div'); pin.id = 'vxPin';
+    var row = el('div', 'vx-row');
+    var av = el('div', 'vx-av');
+    var a1 = el('img'), a2 = el('img'); a1.alt = ''; a2.alt = '';
+    av.append(a1, a2);
+    var body = el('div', 'vx-body');
+    var who = el('div', 'vx-who'), sub = el('div', 'vx-sub');
+    body.append(who, sub);
+    var ctl = el('div', 'vx-ctl');
+    var toggleBtn = el('button', null, '▶'); toggleBtn.type = 'button';
+    var nextBtn = el('button', null, '下一句'); nextBtn.type = 'button';
+    var prevBtn = el('button', null, '上一句'); prevBtn.type = 'button';
+    var count = el('div', 'vx-count', '0 / 0');
+    ctl.append(toggleBtn, nextBtn, prevBtn, count);
+    row.append(av, body, ctl);
+    panel.append(pin, row);
+    var host = document.querySelector('#modeBar .mode-row') || document.querySelector('#modeBar');
+    (host || document.body).appendChild(open);
+    document.body.appendChild(panel);
+    ui = { open: open, panel: panel, pin: pin, av: [a1, a2], who: who, sub: sub, toggle: toggleBtn, count: count };
+    open.addEventListener('click', function () {
+      panel.classList.add('show'); document.body.classList.add('vx-on'); open.style.display = 'none';
+      toggle();
+    });
+    toggleBtn.addEventListener('click', toggle);
+    nextBtn.addEventListener('click', function () { var j = lineIndexFrom(pos, 1); if (j >= 0) go(j, true); });
+    prevBtn.addEventListener('click', function () { var j = lineIndexFrom(pos, -1); if (j >= 0) go(j, true); });
+  }
+
+  function load() {
+    Promise.all([
+      fetch(BASE + 'manifest.json').then(function (r) { if (!r.ok) throw 0; return r.json(); }),
+      fetch(BASE + 'stage.json').then(function (r) { if (!r.ok) throw 0; return r.json(); })
+    ]).then(function (v) {
+      manifest = v[0]; stage = v[1];
+      var b = build(manifest, stage);
+      seq = b.seq; lineIdx = b.lines;
+      audio = new Audio();
+      audio.preload = 'auto';
+      buildUI();
+      ui.count.textContent = '0 / ' + lineIdx.length;
+    }).catch(function () { /* 沒有音檔：整個功能隱藏，原頁面照常 */ });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load); else load();
+})();

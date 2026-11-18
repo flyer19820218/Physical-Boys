@@ -206,11 +206,11 @@
       c.save(); W5.rr(c, x0, top, x1 - x0, bot - top, 14); c.clip();
       /* 天空／水 */
       c.fillStyle = '#152c25'; c.fillRect(x0, top, x1 - x0, g - top);
-      c.fillStyle = 'rgba(70,110,80,0.55)'; c.fillRect(x0, g - 22, mid - x0, 22);                 /* 沼澤淺水 */
-      const sea = c.createLinearGradient(0, top, 0, g); sea.addColorStop(0, 'rgba(90,184,232,0.35)'); sea.addColorStop(1, 'rgba(90,184,232,0.6)');
-      c.fillStyle = sea; c.fillRect(mid, top + 14, x1 - mid, g - top - 14);
+      c.fillStyle = 'rgba(70,110,80,0.55)'; c.fillRect(x0, top + 44, mid - x0, g - top - 44);          /* 沼澤淺水：水面與海面同高 */
+      const sea = c.createLinearGradient(0, top + 44, 0, g); sea.addColorStop(0, 'rgba(90,184,232,0.35)'); sea.addColorStop(1, 'rgba(90,184,232,0.6)');
+      c.fillStyle = sea; c.fillRect(mid, top + 44, x1 - mid, g - top - 44);
       c.strokeStyle = 'rgba(216,240,255,0.55)'; c.lineWidth = 2; c.beginPath();
-      for (let x = mid; x <= x1; x += 6) { const y = top + 14 + 2.5 * Math.sin(x / 18 + t * 1.8); if (x === mid) c.moveTo(x, y); else c.lineTo(x, y); }
+      for (let x = mid; x <= x1; x += 6) { const y = top + 44 + 2.5 * Math.sin(x / 18 + t * 1.8); if (x === mid) c.moveTo(x, y); else c.lineTo(x, y); }
       c.stroke();
       /* 老岩層（隨著上面堆積整片往下沉） */
       for (let j = -1; j < 12; j++) {
@@ -280,7 +280,7 @@
     withA(c, k, () => {
       for (let i = 0; i < 18; i++) {
         const di = ease(seg(u, 1.4 + hash(i + 820) * 0.6, 2.4 + hash(i + 820) * 0.6));
-        const bx = 510 + hash(i + 830) * 300, by = 152 + hash(i + 840) * 32;
+        const bx = 510 + hash(i + 830) * 300, by = 180 + hash(i + 840) * 14;
         const x = bx + (1 - di) * 6 * Math.sin(t * 1.5 + i), y = lerp(by, g - 4, di);
         const a = 1 - seg(u, 2.6, 3.0);
         if (a <= 0.02) continue;
