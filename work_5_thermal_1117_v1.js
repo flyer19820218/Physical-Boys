@@ -502,24 +502,30 @@
   }
   const amp = t => ease((t - R0) / RD);
   const emf = t => amp(t) * Math.sin(theta(t));
-  function magnetCoil(c, cx, cy, R, th, glowA) {
+  function magnetCoil(c, cx, cy, R, th, glowA, letters) {
     c.save();
-    c.strokeStyle = '#5d6f69'; c.lineWidth = R * 0.14;
+    c.strokeStyle = '#5d6f69'; c.lineWidth = R * 0.12;
     c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.stroke();
-    const cw = R * 0.9, ch = R * 0.36;
-    [-1, 1].forEach(sd => {
-      const y0 = cy + sd * (R - ch * 0.5) - ch / 2;
-      if (glowA > 0.02) W5.glow(c, cx, y0 + ch / 2, R * 0.75, ENE, 0.7 * glowA);
-      c.fillStyle = '#7a4a22'; W5.rr(c, cx - cw / 2, y0, cw, ch, 3); c.fill();
-      c.strokeStyle = COPPER; c.lineWidth = Math.max(1.5, R * 0.05);
-      for (let k = 0; k < 6; k++) { const xx = cx - cw / 2 + cw * (k + 0.5) / 6; c.beginPath(); c.moveTo(xx - 2, y0 + 1); c.lineTo(xx + 2, y0 + ch - 1); c.stroke(); }
-    });
+    /* 左右兩塊磁鐵：左 N、右 S（固定不動） */
+    const mx = R * 0.64, mw = R * 0.3, mh = R * 0.84;
+    c.fillStyle = NPOLE; W5.rr(c, cx - mx - mw / 2, cy - mh / 2, mw, mh, 3); c.fill();
+    c.fillStyle = SPOLE; W5.rr(c, cx + mx - mw / 2, cy - mh / 2, mw, mh, 3); c.fill();
+    c.strokeStyle = 'rgba(11,26,21,0.7)'; c.lineWidth = 1.5;
+    W5.rr(c, cx - mx - mw / 2, cy - mh / 2, mw, mh, 3); c.stroke();
+    W5.rr(c, cx + mx - mw / 2, cy - mh / 2, mw, mh, 3); c.stroke();
+    if (letters) {
+      W5.label(c, 'N', cx - mx, cy + 1, '#ffffff', 20, 'center', true);
+      W5.label(c, 'S', cx + mx, cy + 1, '#ffffff', 20, 'center', true);
+    }
+    /* 中間：旋轉的線圈 */
+    const hl = R * 0.42, hw = R * 0.15;
+    if (glowA > 0.02) W5.glow(c, cx, cy, R * 0.8, ENE, 0.7 * glowA);
     c.translate(cx, cy); c.rotate(th);
-    const hl = R * 0.56, hw = R * 0.22;
-    c.fillStyle = NPOLE; W5.rr(c, 0, -hw, hl, hw * 2, 3); c.fill();
-    c.fillStyle = SPOLE; W5.rr(c, -hl, -hw, hl, hw * 2, 3); c.fill();
-    c.strokeStyle = 'rgba(11,26,21,0.7)'; c.lineWidth = 1.5; W5.rr(c, -hl, -hw, hl * 2, hw * 2, 3); c.stroke();
-    c.fillStyle = '#cfe0da'; c.beginPath(); c.arc(0, 0, R * 0.08, 0, TAU); c.fill();
+    c.fillStyle = '#7a4a22'; W5.rr(c, -hl, -hw, hl * 2, hw * 2, 3); c.fill();
+    c.strokeStyle = COPPER; c.lineWidth = Math.max(1.5, R * 0.05);
+    for (let k = 0; k < 7; k++) { const xx = -hl + hl * 2 * (k + 0.5) / 7; c.beginPath(); c.moveTo(xx - 2, -hw + 1); c.lineTo(xx + 2, hw - 1); c.stroke(); }
+    c.strokeStyle = COPPER; c.lineWidth = 2; W5.rr(c, -hl, -hw, hl * 2, hw * 2, 3); c.stroke();
+    c.fillStyle = '#cfe0da'; c.beginPath(); c.arc(0, 0, R * 0.07, 0, TAU); c.fill();
     c.restore();
     return hl;
   }
@@ -610,22 +616,25 @@
       c.strokeStyle = METAL; c.lineWidth = 3; c.stroke();
       const gl = elec * Math.abs(emf(t));
       if (gl > 0.02) W5.glow(c, GN.cx, GN.cy, 46, ENE, 0.45 * gl);
-      c.strokeStyle = COPPER; c.lineWidth = 3;
-      for (let i = 0; i < 7; i++) { const x = GN.x + 16 + i * 12; c.beginPath(); c.moveTo(x, GN.y + 14); c.lineTo(x + 4, GN.y + GN.h - 14); c.stroke(); }
+      /* 左 N、右 S 兩塊磁鐵，中間線圈（側視）隨渦輪軸旋轉 */
+      c.fillStyle = NPOLE; W5.rr(c, GN.x + 10, GN.y + 18, 18, GN.h - 36, 3); c.fill();
+      c.fillStyle = SPOLE; W5.rr(c, GN.x + GN.w - 28, GN.y + 18, 18, GN.h - 36, 3); c.fill();
+      c.save(); c.translate(GN.cx, GN.cy); c.rotate(th + Math.PI / 2);
+      c.fillStyle = '#7a4a22'; W5.rr(c, -26, -9, 52, 18, 3); c.fill();
+      c.strokeStyle = COPPER; c.lineWidth = 2; W5.rr(c, -26, -9, 52, 18, 3); c.stroke();
+      for (let i = 0; i < 6; i++) { const x = -22 + i * 8.8; c.beginPath(); c.moveTo(x, -8); c.lineTo(x + 3, 8); c.stroke(); }
+      c.restore();
       /* 放大線：發電機 → 說明板 */
       c.save(); c.globalAlpha *= 0.8; c.strokeStyle = ENE; c.lineWidth = 1.5; c.setLineDash([5, 5]);
       c.beginPath(); c.moveTo(GN.x + GN.w, GN.y + 6); c.lineTo(PN3.x, PN3.y + 10); c.moveTo(GN.x + GN.w, GN.y + GN.h - 6); c.lineTo(PN3.x, PN3.y + PN3.h - 10); c.stroke();
       c.restore();
-      /* 說明板：磁鐵在線圈中轉動、燈泡、交流波形 */
+      /* 說明板：線圈在兩塊磁鐵之間轉動、燈泡、交流波形 */
       c.fillStyle = 'rgba(11,26,21,0.92)'; W5.rr(c, PN3.x, PN3.y, PN3.w, PN3.h, 16); c.fill();
       c.lineWidth = 2; c.strokeStyle = W5.rgba(ENE, 0.55); c.stroke();
     });
     const MX = 712, MY = 240, MR = 52;
     let hl = 0;
-    withA(c, k, () => { hl = magnetCoil(c, MX, MY, MR, th + Math.PI / 2, elec * Math.abs(emf(t))); });
-    const d = hl * 0.55, ma = th + Math.PI / 2;
-    T(c, k, 'N', MX + Math.cos(ma) * d, MY + Math.sin(ma) * d + 1, '#ffffff', 20, 'center', true);
-    T(c, k, 'S', MX - Math.cos(ma) * d, MY - Math.sin(ma) * d + 1, '#ffffff', 20, 'center', true);
+    withA(c, k, () => { hl = magnetCoil(c, MX, MY, MR, th + Math.PI / 2, elec * Math.abs(emf(t)), true); });
     const lit = elec * A;
     withA(c, k, () => {
       bulb(c, 868, 198, lit);
@@ -639,7 +648,7 @@
       }
       c.stroke();
     });
-    T(c, k, L('線圈', 'Coils'), MX, 326, COPPER, 20);
+    T(c, k, L('線圈', 'Coil'), MX, 326, COPPER, 20);
     T(c, k, L('交流電', 'AC'), 865, 338, ENE, 20);
 
     /* 元件名稱 */
@@ -758,7 +767,7 @@
       sub: ['燃燒煤或天然氣，把鍋爐裡的水煮成高溫高壓的水蒸氣', 'Burning coal or natural gas boils the water into high-temperature, high-pressure steam.'],
       con: ['結論：燃料的化學能 → 熱能；煙囪排出二氧化碳', 'Conclusion: the fuel\'s chemical energy → heat; the chimney releases CO₂.'] },
     { title: ['渦輪帶動發電機', 'Steam turns the turbine and generator'],
-      sub: ['蒸氣推動渦輪旋轉，渦輪軸帶動發電機裡的磁鐵轉動，燈泡亮了', 'Steam spins the turbine; its shaft turns the magnet in the generator, and the bulb lights up.'],
+      sub: ['蒸氣推動渦輪旋轉，渦輪軸帶動發電機裡的線圈在磁鐵間轉動，燈泡亮了', 'Steam spins the turbine; its shaft turns the coil between the magnets in the generator, and the bulb lights up.'],
       con: ['結論：化學能 → 熱能 → 動能 → 電能；用過的蒸氣被冷卻水凝結回水', 'Conclusion: chemical → heat → kinetic → electrical. Cooling water turns used steam back into water.'] },
     { title: ['燃煤與燃氣比一比', 'Coal vs. natural gas'],
       sub: ['燃煤的汙染物較多；燃氣比較乾淨，CO₂ 約只有燃煤的六成', 'Coal gives off more pollutants; gas is cleaner, with about 60% of coal\'s CO₂.'],

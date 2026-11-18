@@ -427,3 +427,8 @@ biology_nutrients 上線後老師試聽抓到兩個錯，都是程式寫錯，�
 - 2026-11-11　**`astronomy_sunpath_3` 雙指縮放修正（老師回報 iPad 畫面不能放大）**：天空模型（sub1）、黃道十二宮（天球 disc 視圖）、三視角的畫布原本設 `touch-action: none` 或 `pan-y`，手指落在畫布上時瀏覽器不縮放；改成允許 `pinch-zoom`，單指拖曳仍由 JS 處理。待 iPad 實測。
 - 2026-11-11　**`astronomy_sunpath_3` 畫布改成「畫布內只縮放、畫布外照常捲頁」（老師指示）**：課程頁畫布統一 `touch-action: pinch-zoom`，單指留給畫布拖曳，不再捲動頁面。
 - 2026-11-17　**biology_plant_structure（植物的運輸構造）有聲講解完成（待老師試聽，尚未推 main）**：學生操作／老師講解雙模式（`plant_structure_teach_1117_v1.js`）＋彥君×曉臻 110 句對話（音檔在 `audio/biology_plant_structure/mp3/`）＋播放器 `biology_plant_structure_voice_v1.js`（切頁用 `PSLesson`，螢光筆標重點句）。同步模擬 mismatches 0、螢光筆問題 0、無 JS 錯誤；Opus 檢查動畫切位置，修了 6 句的 at/acts（32、62、65、78、79、89）。第 97 句雲端語音固定失敗，改了措辭「先在畫面下面選好預測，再往下看」。`cloud_tts.py` 新增 `SHARD=i/n` 平行錄音。請老師試聽「韌皮部」「剝皮」等讀音。分支 `biology_plant_structure-audio`。
+
+### work_5 動畫修正（2026-11-18）
+- 發電機改為國中課本畫法：左 N、右 S 兩塊磁鐵固定，中間線圈旋轉（plant／thermal／geo／biomass／hydrowind 全部統一）。
+- 水力發電第一幕：海岸陸地抬高到海面之上，河口位置與箭頭跟著調整。
+- 配音第 47 句改為「線圈在兩塊磁鐵之間旋轉」，已重錄；模擬 139/139 通過。
