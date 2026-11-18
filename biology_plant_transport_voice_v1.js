@@ -230,7 +230,8 @@
   function css() {
     var s = el('style');
     s.textContent = [
-      '#vxOpen{position:fixed;right:16px;bottom:18px;z-index:9000;min-height:52px;padding:8px 22px;border-radius:999px;cursor:pointer;font:700 21px/1.3 "Noto Sans TC",sans-serif;background:#0b1a15;color:#55e9ff;border:2px solid #55e9ff;box-shadow:0 6px 18px rgba(0,0,0,.4)}',
+      '#vxOpen{min-height:52px;padding:8px 26px;border-radius:999px;cursor:pointer;font:700 21px/1.3 "Noto Sans TC",sans-serif;background:transparent;color:#55e9ff;border:2px solid #55e9ff;touch-action:manipulation;transition:all .2s}',
+      '#vxOpen:hover,#vxOpen.on{background:#55e9ff;color:#11261f}',
       '#vxPanel{position:fixed;left:0;right:0;bottom:0;z-index:9001;display:none;padding:10px 14px 14px;background:rgba(11,26,21,.96);border-top:2px solid rgba(85,233,255,.45);box-shadow:0 -8px 24px rgba(0,0,0,.45);font-family:"Noto Sans TC",sans-serif;color:#f2ecd9}',
       '#vxPanel.show{display:block}',
       '#vxPanel .vx-row{max-width:1080px;margin:0 auto;display:flex;gap:12px;align-items:center}',
@@ -271,7 +272,9 @@
     ctl.append(toggleBtn, nextBtn, prevBtn, count);
     row.append(av, body, ctl);
     panel.append(pin, row);
-    document.body.append(open, panel);
+    var host = document.querySelector('#modeBar .mode-row') || document.querySelector('#modeBar');
+    (host || document.body).appendChild(open);
+    document.body.appendChild(panel);
     ui = { open: open, panel: panel, pin: pin, av: [a1, a2], who: who, sub: sub, toggle: toggleBtn, count: count };
     open.addEventListener('click', function () {
       panel.classList.add('show'); document.body.classList.add('vx-on'); open.style.display = 'none';
