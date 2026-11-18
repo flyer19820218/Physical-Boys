@@ -432,3 +432,4 @@ biology_nutrients 上線後老師試聽抓到兩個錯，都是程式寫錯，�
 - 發電機改為國中課本畫法：左 N、右 S 兩塊磁鐵固定，中間線圈旋轉（plant／thermal／geo／biomass／hydrowind 全部統一）。
 - 水力發電第一幕：海岸陸地抬高到海面之上，河口位置與箭頭跟著調整。
 - 配音第 47 句改為「線圈在兩塊磁鐵之間旋轉」，已重錄；模擬 139/139 通過。
+- 2026-11-18　**`astronomy_sunpath_3` 有聲講解（118 句、約 11 分鐘）合併 main**：稿子、設定檔 `lessons/astronomy_sunpath_3.json`（at 41、acts 7）、播放器 `astronomy_sunpath_3_voice_v1.js`、雲端錄音；頁面只加 `data-tab`／`data-sub` 與一行 script。天球改用老師的說法（月亮與太陽距離分不出，故想像成球）。逐句模擬 118/118、mismatches 0。「學生操作／老師講解」沿用 10/31 版本。待老師聽完回報句號。
