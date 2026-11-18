@@ -139,12 +139,33 @@
     });
     ui.who.textContent = WHO[sp] || sp;
   }
+  // 字幕：逐字包 span，播放時依音檔進度逐字變色（與 electronics_4／astronomy_sunpath_3 相同）
+  var PACE = 1.15, chars = [], charRaf = 0;
+  function displayText(t) { return String(t || '').replace(/恩極/g, 'N極').replace(/艾斯極/g, 'S極'); }
+  function setSubChars(text) {
+    cancelAnimationFrame(charRaf); charRaf = 0;
+    ui.sub.textContent = ''; chars = [];
+    var s = displayText(text);
+    for (var i = 0; i < s.length; i++) { var sp = el('span', '', s[i]); ui.sub.appendChild(sp); chars.push(sp); }
+  }
+  function allCharsOn() { for (var k = 0; k < chars.length; k++) chars[k].className = 'on'; }
+  function trackChars(a) {
+    cancelAnimationFrame(charRaf);
+    (function tick() { // 只依音檔實際播放位置變色；暫停時停住，再播放時 trackChars 會重新啟動
+      if (!a || a.paused || a.ended) return;
+      var d = a.duration, p = 0;
+      if (d && isFinite(d) && a.currentTime > 0) p = Math.min(1, a.currentTime * PACE / d);
+      var n = p > 0 ? Math.min(chars.length, Math.floor(p * chars.length) + 1) : 0;
+      for (var i = 0; i < chars.length; i++) chars[i].className = i < n ? 'on' : '';
+      charRaf = requestAnimationFrame(tick);
+    })();
+  }
   function showLine(it) {
-    ui.sub.textContent = it.sub;
+    setSubChars(it.sub);
     speakerLight(it.speaker);
     if (stage.avatars && stage.avatars[it.id]) setAvatars(it.id);
   }
-  function showPin(text) { ui.pin.textContent = text; ui.pin.classList.add('show'); }
+  function showPin(text) { ui.pin.textContent = displayText(text); ui.pin.classList.add('show'); }
 
   /* ── 螢光筆：只畫字；畫在 document 上（position:absolute），不改頁面原有內容 ── */
   function textRects(sel, phrase) {
@@ -205,6 +226,7 @@
     audio.src = BASE + 'mp3/' + it.file;
     var p = audio.play();
     if (p && p.catch) p.catch(function () { fallbackWait(it.text, my); });
+    trackChars(audio);
     if (hl) { cancelAnimationFrame(hlTimer); hlTimer = requestAnimationFrame(tickHl); }
     runActs(it, my);
   }
@@ -233,7 +255,7 @@
       return playLine(it, my);
     }
   }
-  function next(my) { if (my !== token) return; play(pos + 1, my); }
+  function next(my) { if (my !== token) return; allCharsOn(); play(pos + 1, my); }
 
   function go(i, jump) {
     token++;
@@ -246,7 +268,7 @@
     play(i, token);
   }
   function finish() {
-    token++; paused = true; started = false; stopActs();
+    token++; paused = true; started = false; stopActs(); cancelAnimationFrame(charRaf); charRaf = 0;
     ui.toggle.textContent = '▶';
     hlClear();
     releaseFix(null);
@@ -279,7 +301,7 @@
       paused = false;
       if (ptl()) ptl().resume();
       ui.toggle.textContent = '⏸';
-      if (audio && audio.src && audio.currentTime > 0 && !audio.ended) audio.play();
+      if (audio && audio.src && audio.currentTime > 0 && !audio.ended) { audio.play(); trackChars(audio); }
       else go(pos, true);
     }
   }
@@ -299,6 +321,8 @@
       '#vxPanel .vx-body{flex:1;min-width:0}',
       '#vxPanel .vx-who{font-size:17px;font-weight:700;color:#55e9ff}',
       '#vxPanel .vx-sub{font-size:22px;line-height:1.6;min-height:2.2em}',
+      '#vxPanel .vx-sub span{color:rgba(242,236,217,.55);transition:color .12s}',
+      '#vxPanel .vx-sub span.on{color:#fff}',
       '#vxPanel .vx-ctl{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:0 0 auto}',
       '#vxPanel .vx-ctl button{min-height:40px;min-width:76px;border-radius:10px;border:2px solid #55e9ff;background:transparent;color:#f2ecd9;font:700 18px/1 "Noto Sans TC",sans-serif;cursor:pointer;padding:6px 10px}',
       '#vxPanel .vx-count{font-size:15px;color:#b8c9c1;font-family:"JetBrains Mono",monospace}',
