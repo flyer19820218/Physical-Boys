@@ -10,7 +10,7 @@
   var STAGE_URL = 'audio/astronomy_sunpath_3/stage.json';
   // 音檔與網頁同一個網域（audio/astronomy_sunpath_3/mp3/）：iPad Safari 對 GitHub Release 的下載網址（octet-stream＋attachment）常常無法播放。
   var AUDIO_BASE = 'audio/astronomy_sunpath_3/mp3/';
-  var AUDIO_VER = '?v=20261118-d'; // 重錄音檔時改這個版本號，避免瀏覽器播到舊的快取音檔
+  var AUDIO_VER = '?v=20261118-e'; // 重錄音檔時改這個版本號，避免瀏覽器播到舊的快取音檔
   var AUDIO_FALLBACK = AUDIO_BASE; // 本課沒有 GitHub Release 備援：載入失敗就直接改用字數估時，講解不中斷
   var player = null; // 全程只用同一個 Audio 元素：iOS 只在「使用者點擊」那一刻解鎖，新建的 Audio 之後自動播放會被擋
   var SEC_PER_CHAR = 0.3; // 音檔載入失敗時，依字數估一個等待秒數，讓講解不中斷
@@ -241,6 +241,7 @@
     }
     var e = id && $(id);
     if (key === 'tab3') return e ? { k: id, a: e, b: e, anchor: 'top', fit: fitSy } : null;
+    if (key === 'helio' || key === 'tw' || key === 'disc') return e ? { k: id, a: e, b: e, anchor: 'top', fit: fitZd } : null;
     return e ? { k: id, a: e, b: e, anchor: key === 'helio' || key === 'tw' || key === 'disc' ? 'bottom' : 'top' } : null;
   }
   function clearTimers() { drive = null; cancelAnimationFrame(camTw); camTw = 0; }
@@ -269,8 +270,10 @@
   }
   // 播放第三分頁時：畫布頂端對齊畫面上緣；螢幕不夠高就等比縮小，至少露出到地表視角的地平面與東西南北（畫布 y＝720／800）
   var SY_SHOW = 0.9, PIN_ROOM = 54;
-  function fitSy() {
-    var cv = $('syncCanvas'), bub = ui.panel && ui.panel.querySelector('.vx-bub');
+  function fitSy() { fitCv('syncCanvas', SY_SHOW); }
+  function fitZd() { fitCv('zodiacCanvas', 1); }   // 十二星座三張動畫：整張畫布完整露出（底下的日期晶片被字幕擋住沒關係）
+  function fitCv(cid, show) {
+    var cv = $(cid), bub = ui.panel && ui.panel.querySelector('.vx-bub');
     if (!cv) return;
     cv.style.width = ''; cv.style.margin = '';
     // 字幕框的上緣：一律以「兩行字幕＋釘選黃條」計算，換句、出現釘選時畫布才不會一下大一下小
@@ -281,11 +284,11 @@
       bubTop = rt ? rb.bottom - (rb.height - rt.height + 2 * lh) : rb.top;
     }
     var bottom = bubTop - PIN_ROOM - 8;
-    var maxH = (bottom - 56) / SY_SHOW, w = cv.getBoundingClientRect().width;
+    var maxH = (bottom - 56) / show, w = cv.getBoundingClientRect().width;
     if (w * 800 / 960 > maxH) { cv.style.width = Math.max(320, Math.floor(maxH * 960 / 800)) + 'px'; cv.style.margin = '0 auto'; }
   }
   function unfitWire() {     // 停止／結束／離開第三分頁：還原畫布大小、拿掉黃框
-    var cv = $('syncCanvas'); if (cv) { cv.style.width = ''; cv.style.margin = ''; }
+    ['syncCanvas', 'zodiacCanvas'].forEach(function (i) { var c = $(i); if (c) { c.style.width = ''; c.style.margin = ''; } });
     hlBox(null);
   }
   // 天球分頁（真實宇宙）：鏡頭轉到 phi（＝拖曳轉一轉）；anim 為 false 時直接到位
@@ -383,7 +386,7 @@
     try {
       if (SCENES[key]) SCENES[key](stepNo, anim, changedTab, same);
     } catch (e) { if (window.console) console.warn('[有聲講解] 場景失敗', key, e); }
-    if (key !== 'tab3') unfitWire();
+    if (key !== 'tab3' && key !== 'helio' && key !== 'tw' && key !== 'disc') unfitWire();
     cur = { tab: tab, sub: sub, step: stepNo };
     var nv = viewOf(key, stepNo), pv = viewOf(prevKey, prev.step);
     if (nv && (changedTab || !pv || pv.k !== nv.k)) bringIntoView(nv);
