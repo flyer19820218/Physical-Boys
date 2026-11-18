@@ -171,7 +171,7 @@ def validate(items, errors, warnings):
     for n in AT:
         if not 1 <= n <= len(lines):
             errors.append("at 的句號 %d 不是說話行（共 %d 句）" % (n, len(lines)))
-    for n, (_t, sb, st) in AT.items():
+    for n, (_t, sb, st, *_seg) in AT.items():
         key = sb or _t  # 沒有子頁的分頁，步驟數登記在分頁名稱下
         if st is not None and not 1 <= st <= STEPS.get(key, 0):
             errors.append("at 第 %d 句：%s 沒有第 %s 步（共 %s 步）" % (n, key, st, STEPS.get(key)))
@@ -190,7 +190,7 @@ def validate(items, errors, warnings):
     if not html.exists():
         errors.append("找不到 %s" % html)
     else:
-        pairs = list(CUTS.values()) + [(t, sb) for t, sb, _ in AT.values()] + [(x[1], x[2]) for v in ACTS.values() for x in v]
+        pairs = list(CUTS.values()) + [(v[0], v[1]) for v in AT.values()] + [(x[1], x[2]) for v in ACTS.values() for x in v]
         for tab in sorted({t for t, _ in pairs}):
             if TAB_CHECK:  # 分頁由 js 產生的課：到指定檔案找 attr="tab"（lessons/<課>.json 的 tab_check）
                 f, attr = REPO / TAB_CHECK[0], TAB_CHECK[1]
@@ -304,6 +304,15 @@ def build_avatars(items):
     return out
 
 
+def _at_entry(v):
+    """at 的一筆：(分頁, 子頁, 步驟[, 段])；段是同一步內的第幾段（0 起算），沒有就不寫。"""
+    a, b, c = v[0], v[1], v[2]
+    e = {"tab": a, "sub": b, "step": c} if c else {"tab": a, "sub": b}
+    if len(v) > 3 and v[3] is not None:
+        e["seg"] = v[3]
+    return e
+
+
 def build_stage(items):
     subs = {}
     for i in items:
@@ -316,7 +325,7 @@ def build_stage(items):
     return {
         "page": PAGE,
         "cuts": {t: {"tab": a, "sub": b} for t, (a, b) in CUTS.items()},
-        "at": {"%02d" % n: ({"tab": a, "sub": b, "step": c} if c else {"tab": a, "sub": b}) for n, (a, b, c) in sorted(AT.items())},
+        "at": {"%02d" % n: _at_entry(v) for n, v in sorted(AT.items())},
         "subs": subs,
         **({"pins": pins} if pins else {}),
         "avatars": build_avatars(items),
@@ -365,7 +374,7 @@ def load_lesson(name):
     EXPECT_CHORUS = cfg["expect_chorus"]
     CUTS = {t: (v[0], v[1]) for t, v in cfg["cuts"].items()}
     STEPS = dict(cfg["steps"])
-    AT = {int(k): (v[0], v[1], v[2]) for k, v in cfg["at"].items()}
+    AT = {int(k): tuple(v) for k, v in cfg["at"].items()}   # 第 4 欄 seg 可省略
     # 句中換畫面（選用）：{句號: [[句中位置 0～1, 分頁, 子頁, 第幾步], ...]}；沒有這個欄位的課照舊
     ACTS = {int(k): [tuple(x) for x in v] for k, v in cfg.get("acts", {}).items()}
     AVATAR_OVERRIDE = cfg.get("avatars", {})
