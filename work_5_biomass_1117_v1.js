@@ -519,9 +519,13 @@
       c.restore();
       const cx = GR.x + 52, cy = GR.y + 28, r = 11;
       if (litR > 0.02) W5.glow(c, cx, cy, 26, ENE, 0.5 * litR);
-      c.strokeStyle = '#d08a4a'; c.lineWidth = 3; c.beginPath(); c.arc(cx, cy, r, 0, TAU); c.stroke();
-      c.strokeStyle = mixHex('#cfe0da', ENE, litR);
-      c.beginPath(); c.moveTo(cx + Math.cos(thR) * r, cy + Math.sin(thR) * r); c.lineTo(cx - Math.cos(thR) * r, cy - Math.sin(thR) * r); c.stroke();
+      /* 左 N、右 S 兩塊磁鐵，中間線圈旋轉 */
+      c.fillStyle = '#ff6f76'; W5.rr(c, cx - 15, cy - 13, 6, 26, 2); c.fill();
+      c.fillStyle = '#72b9ff'; W5.rr(c, cx + 9, cy - 13, 6, 26, 2); c.fill();
+      c.save(); c.translate(cx, cy); c.rotate(thR);
+      c.fillStyle = '#7a4a22'; W5.rr(c, -7, -3.5, 14, 7, 1.5); c.fill();
+      c.strokeStyle = mixHex('#d08a4a', ENE, litR); c.lineWidth = 1.5; W5.rr(c, -7, -3.5, 14, 7, 1.5); c.stroke();
+      c.restore();
       wire(c, [[BUL_R.x, GR.y], [BUL_R.x, BUL_R.y + 24]], litR);
       bulb(c, BUL_R.x, BUL_R.y, litR);
     });
