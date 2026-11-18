@@ -24,6 +24,18 @@
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
   function ptl() { return window.PTLesson || null; }
+  // 播放期間一律學生模式：老師講解模式的自動連播會和語音搶著切分頁（AGENTS_VOICE 新課手冊「踩過的雷」）
+  function forceStudent() {
+    if (document.body.classList.contains('mode-teacher') && window.setMode) window.setMode('student');
+  }
+  var modeObs = null;
+  function watchMode(on) {
+    if (on && !modeObs && window.MutationObserver) {
+      modeObs = new MutationObserver(function () { if (started) forceStudent(); });
+      modeObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+    if (!on && modeObs) { modeObs.disconnect(); modeObs = null; }
+  }
 
   /* ── 建立播放列（manifest → seq）── */
   function build(man, stg) {
@@ -172,7 +184,7 @@
     if (audio) { audio.pause(); }
     if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
     hlClear(); cancelAnimationFrame(hlTimer);
-    paused = false; started = true;
+    paused = false; started = true; forceStudent(); watchMode(true);
     ui.toggle.textContent = '⏸';
     play(i, token);
   }
@@ -181,6 +193,7 @@
     ui.toggle.textContent = '▶';
     hlClear();
     if (ptl()) { ptl().takeover(false); }
+    watchMode(false);
   }
   function lineIndexFrom(i, dir) {
     var j = i;

@@ -31,8 +31,9 @@ function expect(n) {
   await page.waitForTimeout(500);
   await page.click('#introScreen', { force: true }).catch(() => {});
   await page.waitForTimeout(2500);
-  await page.click('#mode-teacher');
   await page.click('#vxOpen');
+  await page.waitForTimeout(3000);
+  await page.click('#mode-teacher').catch(()=>{}); // 播放中硬點老師講解，應被防護切回學生模式
 
   const seen = {};          // 句號 → 第一次出現時的狀態
   const started = Date.now();
