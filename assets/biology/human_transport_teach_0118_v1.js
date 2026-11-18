@@ -33,16 +33,17 @@
       ] }
     ],
     vessels: [
-      { zh: '三種血管構造', en: 'Three vessel anatomies', segs: [{ ops: [['view', 'atlas'], ['vessel', 'artery']], dur: SEG }] },
-      { zh: '動脈：離開心臟', en: 'Artery: away from the heart', segs: [{ ops: [['vessel', 'artery'], ['circuit', 'body']], dur: SEG }] },
-      { zh: '微血管：單列慢行', en: 'Capillary: single file, slow', segs: [{ ops: [['view', 'capillary'], ['vessel', 'capillary']], dur: SEG }] },
+      { zh: '三種血管構造', en: 'Three vessel anatomies', segs: [
+        { ops: [['view', 'atlas'], ['vessel', 'artery']], dur: SEG },
+        { ops: [['vessel', 'artery'], ['circuit', 'body']], dur: SEG }
+      ] },
+      { zh: '肺循環：肺動脈與肺靜脈', en: 'Pulmonary circuit', segs: [{ ops: [['view', 'atlas'], ['circuit', 'lung']], dur: SEG }] },
+      { zh: '動靜脈管壁切片', en: 'Vessel wall sections', segs: [{ ops: [['view', 'micrograph']], dur: SEG }] },
       { zh: '靜脈：瓣膜與肌肉', en: 'Vein: valves and muscles', segs: [
         { ops: [['view', 'atlas'], ['vessel', 'vein'], ['squeeze', false]], dur: SEG },
         { ops: [['squeeze', true]], dur: SEG }
       ] },
-      { zh: '動靜脈切片與肺循環', en: 'Vessel sections and pulmonary circuit', segs: [
-        { ops: [['view', 'micrograph'], ['circuit', 'lung']], dur: SEG }
-      ] }
+      { zh: '微血管：單列慢行', en: 'Capillary: single file, slow', segs: [{ ops: [['view', 'capillary'], ['vessel', 'capillary']], dur: SEG }] }
     ],
     blood: [
       { zh: '原圖血抹片', en: 'Original blood smear', segs: [{ ops: [['view', 'smear'], ['component', 'rbc']], dur: SEG }] },
