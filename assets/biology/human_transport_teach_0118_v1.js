@@ -17,7 +17,10 @@
   /* 步驟表：每個分頁最多 5 步；每步由一或多段組成（段的 ops 依序呼叫引擎的 action(key, value)） */
   var TABS = {
     heart: [
-      { zh: '心臟與四個腔室', en: 'Heart and four chambers', segs: [{ ops: [['view', 'heart'], ['part', 'lv']], dur: SEG }] },
+      { zh: '四個腔室與中隔', en: 'Chambers and septum', segs: [
+        { ops: [['view', 'heart'], ['part', 'lv']], dur: SEG },
+        { ops: [['part', 'septum']], dur: SEG }          // 2026-11-19：第 31、32 句講心臟中隔
+      ] },
       { zh: '瓣膜醫學動畫', en: 'Two-valve medical animation', segs: [{ ops: [['view', 'medical']], dur: SEG }] },
       { zh: '充血與心房收縮', en: 'Filling and atrial contraction', segs: [
         { ops: [['view', 'heart'], ['phase', 0]], dur: SEG },
@@ -37,7 +40,10 @@
         { ops: [['view', 'atlas'], ['vessel', 'artery']], dur: SEG },
         { ops: [['vessel', 'artery'], ['circuit', 'body']], dur: SEG }
       ] },
-      { zh: '肺循環：肺動脈與肺靜脈', en: 'Pulmonary circuit', segs: [{ ops: [['view', 'atlas'], ['circuit', 'lung']], dur: SEG }] },
+      { zh: '肺循環：肺動脈與肺靜脈', en: 'Pulmonary circuit', segs: [   // 2026-11-19：先肺動脈（第 36 句）再肺靜脈（第 37、38 句）
+        { ops: [['view', 'atlas'], ['circuit', 'lung'], ['pulm', 'artery']], dur: SEG },
+        { ops: [['pulm', 'vein']], dur: SEG }
+      ] },
       { zh: '動靜脈管壁切片', en: 'Vessel wall sections', segs: [{ ops: [['view', 'micrograph']], dur: SEG }] },
       { zh: '靜脈：瓣膜與肌肉', en: 'Vein: valves and muscles', segs: [
         { ops: [['view', 'atlas'], ['vessel', 'vein'], ['squeeze', false]], dur: SEG },
@@ -74,7 +80,7 @@
       { zh: '放大微血管', en: 'Enlarged capillary', segs: [{ ops: [['lymphStep', 1], ['compartment', 'tissue']], dur: SEG }] },
       { zh: '進入淋巴管', en: 'Into lymphatic vessels', segs: [{ ops: [['lymphStep', 2], ['compartment', 'lymph']], dur: SEG }] },
       { zh: '淋巴結與回流', en: 'Lymph nodes and return', segs: [
-        { ops: [['lymphStep', 3], ['compartment', 'node']], dur: SEG },
+        { ops: [['lymphStep', 3], ['compartment', 'node'], ['movement', 'rest']], dur: SEG },
         { ops: [['compartment', 'return']], dur: SEG }
       ] },
       { zh: '肌肉活動協助回流', en: 'Muscle movement helps return', segs: [{ ops: [['lymphStep', 3], ['movement', 'active']], dur: SEG }] }
