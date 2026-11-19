@@ -46,12 +46,12 @@
       { zh: '微血管：單列慢行', en: 'Capillary: single file, slow', segs: [{ ops: [['view', 'capillary'], ['vessel', 'capillary']], dur: SEG }] }
     ],
     blood: [
-      { zh: '原圖血抹片', en: 'Original blood smear', segs: [{ ops: [['view', 'smear'], ['component', 'rbc']], dur: SEG }] },
+      { zh: '原圖血抹片', en: 'Original blood smear', segs: [{ ops: [['task', 'flow'], ['view', 'smear'], ['component', 'rbc']], dur: SEG }] },
       { zh: '紅血球與白血球', en: 'Red and white cells', segs: [
-        { ops: [['view', 'focus'], ['component', 'rbc']], dur: SEG },
+        { ops: [['task', 'flow'], ['view', 'focus'], ['component', 'rbc']], dur: SEG },
         { ops: [['component', 'wbc']], dur: SEG }
       ] },
-      { zh: '血小板：止血的碎片', en: 'Platelets: clotting fragments', segs: [{ ops: [['component', 'platelet']], dur: SEG }] },
+      { zh: '血小板：止血的碎片', en: 'Platelets: clotting fragments', segs: [{ ops: [['task', 'flow'], ['component', 'platelet']], dur: SEG }] },
       { zh: '離心分層', en: 'Centrifugation', segs: [{ ops: [['component', 'plasma'], ['action', 'separate']], dur: SEG }] },
       { zh: '局部止血', en: 'Local clotting', segs: [{ ops: [['action', 'repair']], dur: SEG }] }
     ],

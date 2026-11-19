@@ -40,7 +40,7 @@ for (const it of manifest.items) {
   const a = stage.at[it.id];
   if (a) cur = { tab: a.tab, step: a.step || 1, seg: a.seg || 0 };
   const seq = [cur];
-  for (const x of (stage.acts && stage.acts[it.id]) || []) { cur = { tab: x[1], step: x[3], seg: 0 }; seq.push(cur); }
+  for (const x of (stage.acts && stage.acts[it.id]) || []) { cur = { tab: x[1], step: x[3], seg: x[4] || 0 }; seq.push(cur); }
   lines.push({ id: it.id, file: it.file, speaker: it.speaker, text: it.text, seq, afterCut });
   afterCut = false;
 }

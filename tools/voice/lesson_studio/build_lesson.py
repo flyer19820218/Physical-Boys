@@ -179,7 +179,7 @@ def validate(items, errors, warnings):
     for n, lst in ACTS.items():
         if not 1 <= n <= len(lines):
             errors.append("acts 的句號 %d 不是說話行（共 %d 句）" % (n, len(lines)))
-        for f, _t, sb, st in lst:
+        for f, _t, sb, st, *_seg in lst:
             if not 0 <= f <= 1:
                 errors.append("acts 第 %d 句：位置 %s 不在 0～1" % (n, f))
             key = sb or _t  # 與 at 相同：沒有子頁的分頁，步驟數登記在分頁名稱下

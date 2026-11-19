@@ -65,6 +65,39 @@
     var L = lb(), cur = curTabId();
     if (L && cur && FIX[cur] && cur !== nextTab) L.action(FIX[cur].key, FIX[cur].off);
   }
+  /* ── 捲動：換分頁就把畫布（#bench）捲到字幕框上方；已完整在畫面內就不動（與 biology_immune_defense 相同）── */
+  var lastTab = null, goalY = null, goalT = 0;
+  function visBottom() {               // 字幕框（有釘選黃條時用黃條）的上緣
+    var b = ui && ui.panel && ui.panel.querySelector('.vx-bub');
+    if (!b || !ui.panel.classList.contains('show')) return window.innerHeight;
+    var t = b.getBoundingClientRect().top;
+    if (ui.pin.classList.contains('show')) t = Math.min(t, ui.pin.getBoundingClientRect().top);
+    return t;
+  }
+  // 平滑捲動還在半路時，要用「捲動的目的地」判斷，不能用半路上的瞬間位置
+  function scrollGoal(y) {
+    goalY = Math.max(0, y); goalT = Date.now();
+    try { window.scrollTo({ top: goalY, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, goalY); }
+  }
+  function stageEl() {                 // 要看清楚的畫面＝#bench 裡最大的畫布／SVG；找不到就用整個 #bench
+    var best = null, area = 0, list = document.querySelectorAll('#bench canvas, #bench svg');
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i].getBoundingClientRect(), a = r.width * r.height;
+      if (r.width > 200 && a > area) { area = a; best = list[i]; }
+    }
+    return best || $('bench');
+  }
+  function bringIntoView() {
+    var a = stageEl(); if (!a || !a.getBoundingClientRect) return;
+    var r = a.getBoundingClientRect();
+    var base = (goalY != null && Date.now() - goalT < 900) ? goalY : window.pageYOffset;
+    var dy = base - window.pageYOffset;
+    var top = r.top - dy, bot = r.bottom - dy, panelTop = visBottom();
+    if (top >= 56 && bot <= panelTop - 8) return;               // 已完整在畫面內：不動
+    var room = panelTop - 8 - 56 - (bot - top);
+    var y = room >= 0 ? base + top - 56 - room / 2 : base + top - 56;   // 放得下就置中，放不下就對齊上緣
+    scrollGoal(y);
+  }
   function showScene(tab, step, seg) {
     var p = ptl(); if (!p || !tab) return;
     releaseFix(tab);
@@ -75,6 +108,7 @@
     p.show(tab, step || 1, seg || 0);
     var f = FIX[tab], L = lb();
     if (f && L && f.by[step || 1] !== undefined) L.action(f.key, f.by[step || 1]);
+    if (tab !== lastTab) { lastTab = tab; bringIntoView(); }   // 換分頁才捲（只捲一次，不鎖定）
   }
   function doCut(title) {
     hidePin();   // 換分頁：上一頁的釘選黃條收掉
@@ -102,7 +136,7 @@
       var left = 0;
       for (var i = 0; i < acts.length; i++) {
         if (fired[i]) continue;
-        if (f >= acts[i][0]) { fired[i] = 1; showScene(acts[i][1], acts[i][3] || 1, 0); }
+        if (f >= acts[i][0]) { fired[i] = 1; showScene(acts[i][1], acts[i][3] || 1, acts[i][4] || 0); }
         else left++;
       }
       if (!left) stopActs();
@@ -119,7 +153,7 @@
         var a = stage.at && stage.at[it.id];
         if (a) want = [a.tab, a.step || 1, a.seg || 0];
         var ac = stage.acts && stage.acts[it.id];
-        if (ac && ac.length) { var z = ac[ac.length - 1]; want = [z[1], z[3] || 1, 0]; }
+        if (ac && ac.length) { var z = ac[ac.length - 1]; want = [z[1], z[3] || 1, z[4] || 0]; }
       }
     }
     if (pin) showPin(pin); else hidePin();
@@ -168,7 +202,7 @@
     speakerLight(it.speaker);
     if (stage.avatars && stage.avatars[it.id]) setAvatars(it.id);
   }
-  function showPin(text) { ui.pin.textContent = displayText(text); ui.pin.classList.add('show'); }
+  function showPin(text) { ui.pin.textContent = displayText(text); ui.pin.classList.add('show'); if (started) bringIntoView(); }   // 黃條出現後，畫面重新對齊到黃條上方
   function hidePin() { ui.pin.textContent = ''; ui.pin.classList.remove('show'); }
 
   /* ── 螢光筆：只畫字；畫在 document 上（position:absolute），不改頁面原有內容 ── */
@@ -265,7 +299,7 @@
     token++;
     if (audio) { audio.pause(); }
     if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
-    hlClear(); cancelAnimationFrame(hlTimer); stopActs();
+    hlClear(); cancelAnimationFrame(hlTimer); stopActs(); lastTab = null;
     paused = false; started = true; forceStudent(); watchMode(true);
     refresh();
     if (jump) restoreBefore(i);
