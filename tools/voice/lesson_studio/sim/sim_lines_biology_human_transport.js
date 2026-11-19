@@ -136,6 +136,7 @@ function sigKeys(tab, step, seg) {
   if (MODE === 'teacher') { await page.click('#mode-teacher'); await page.waitForTimeout(1200); }
   const teacherBefore = await page.evaluate(() => document.body.classList.contains('mode-teacher'));
   await page.click('#vxOpen');
+  await page.click('#vxPanel .vx-ic[title="開始／繼續"]');
   const t0 = Date.now();
   let pokedTeacher = false;
   while (true) {

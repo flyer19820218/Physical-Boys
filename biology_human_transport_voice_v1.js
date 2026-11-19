@@ -77,6 +77,7 @@
     if (f && L && f.by[step || 1] !== undefined) L.action(f.key, f.by[step || 1]);
   }
   function doCut(title) {
+    hidePin();   // 換分頁：上一頁的釘選黃條收掉
     var c = stage.cuts && stage.cuts[title];
     if (c) showScene(c.tab, 1);   // 切分頁不捲頁（字幕框固定在畫面下方）
   }
@@ -109,10 +110,11 @@
   }
   // 跳句（上一句／下一句）：算出播到第 i 項之前畫面應該在哪（cuts → at → 該句之前的 acts 都已換過）
   function restoreBefore(i) {
-    var want = null;
+    var want = null, pin = '';
     for (var j = 0; j < i && j < seq.length; j++) {
       var it = seq[j];
-      if (it.type === 'cut') { var c = stage.cuts && stage.cuts[it.title]; if (c) want = [c.tab, 1, 0]; }
+      if (it.type === 'pin') pin = it.text;
+      if (it.type === 'cut') { pin = ''; var c = stage.cuts && stage.cuts[it.title]; if (c) want = [c.tab, 1, 0]; }
       else if (it.type === 'line') {
         var a = stage.at && stage.at[it.id];
         if (a) want = [a.tab, a.step || 1, a.seg || 0];
@@ -120,6 +122,7 @@
         if (ac && ac.length) { var z = ac[ac.length - 1]; want = [z[1], z[3] || 1, 0]; }
       }
     }
+    if (pin) showPin(pin); else hidePin();
     if (want) showScene(want[0], want[1], want[2]);
   }
 
@@ -166,6 +169,7 @@
     if (stage.avatars && stage.avatars[it.id]) setAvatars(it.id);
   }
   function showPin(text) { ui.pin.textContent = displayText(text); ui.pin.classList.add('show'); }
+  function hidePin() { ui.pin.textContent = ''; ui.pin.classList.remove('show'); }
 
   /* ── 螢光筆：只畫字；畫在 document 上（position:absolute），不改頁面原有內容 ── */
   function textRects(sel, phrase) {
@@ -263,14 +267,16 @@
     if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
     hlClear(); cancelAnimationFrame(hlTimer); stopActs();
     paused = false; started = true; forceStudent(); watchMode(true);
-    ui.toggle.textContent = '⏸';
+    refresh();
     if (jump) restoreBefore(i);
     play(i, token);
   }
   function finish() {
     token++; paused = true; started = false; stopActs(); cancelAnimationFrame(charRaf); charRaf = 0;
-    ui.toggle.textContent = '▶';
-    hlClear();
+    if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
+    hlClear(); hidePin(); progress(lineIdx.length);
+    ui.sub.textContent = '講解結束，可以按 ▶ 重聽。'; chars = [];
+    refresh();
     releaseFix(null);
     if (ptl()) { ptl().takeover(false); }
     watchMode(false);
@@ -283,88 +289,170 @@
     }
     return -1;
   }
+  function progress(doneLines) {
+    ui.fill.style.width = (lineIdx.length ? (doneLines / lineIdx.length) * 100 : 0) + '%';
+  }
+  function lineNo(i) { // 播到第 i 項時，前面有幾句說話行
+    var n = 0;
+    for (var k = 0; k < i && k < seq.length; k++) if (seq[k].type === 'line') n++;
+    return n;
+  }
   function updateCount() {
-    var n = 0, total = lineIdx.length;
-    for (var i = 0; i <= pos && i < seq.length; i++) if (seq[i].type === 'line') n++;
-    ui.count.textContent = (n ? n : 0) + ' / ' + total;
+    var n = lineNo(pos) + (seq[pos] && seq[pos].type === 'line' ? 1 : 0);
+    ui.count.textContent = n + ' / ' + lineIdx.length;
+    progress(n ? n - 1 : 0);
+  }
+  function refresh() {
+    var playing = started && !paused;
+    ui.start.disabled = playing;
+    ui.pause.disabled = !playing;
+    ui.stop.disabled = !started;
+    ui.back.disabled = ui.fwd.disabled = !started;
   }
 
-  function toggle() {
+  function start() {
+    if (started && !paused) return;
     if (!started) { go(0); return; }
-    if (!paused) {                       // 暫停
-      paused = true;
-      if (audio) audio.pause();
-      if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
-      if (ptl()) ptl().pause();
-      ui.toggle.textContent = '▶';
-    } else {                             // 繼續
-      paused = false;
-      if (ptl()) ptl().resume();
-      ui.toggle.textContent = '⏸';
-      if (audio && audio.src && audio.currentTime > 0 && !audio.ended) { audio.play(); trackChars(audio); }
-      else go(pos, true);
+    paused = false;                      // 繼續
+    if (ptl()) ptl().resume();
+    refresh();
+    if (audio && audio.src && audio.currentTime > 0 && !audio.ended) { audio.play(); trackChars(audio); }
+    else go(pos, true);
+  }
+  function pause() {
+    if (!started || paused) return;
+    paused = true;
+    if (audio) audio.pause();
+    if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
+    if (ptl()) ptl().pause();
+    refresh();
+  }
+  function stop() {
+    if (!started) { hidePin(); progress(0); refresh(); return; }
+    finish();
+    ui.sub.textContent = '按 ▶ 聽彥君老師與曉臻助教講解。';
+    progress(0);
+  }
+  // 快轉／倒退：同一句內移動；超出範圍就跳到下一句／上一句
+  function seek(sec) {
+    if (!started || !seq[pos] || seq[pos].type !== 'line' || !audio) return;
+    var ct = audio.currentTime || 0, d = audio.duration;
+    if (sec > 0) {
+      if (d && isFinite(d) && ct + sec < d - 0.2) { audio.currentTime = ct + sec; return; }
+      var j = lineIndexFrom(pos, 1); if (j >= 0) go(j, true); else finish();
+    } else {
+      if (ct + sec > 0) { audio.currentTime = ct + sec; return; }
+      var k = lineIndexFrom(pos, -1);
+      if (ct > 1.5 || k < 0) { audio.currentTime = 0; return; }
+      go(k, true);
+    }
+  }
+  function jumpToLine(n) {               // 從第 n 句（0 起算）開始播，畫面依前面的切頁／釘選還原
+    var cnt = 0;
+    for (var i = 0; i < seq.length; i++) {
+      if (seq[i].type !== 'line') continue;
+      if (cnt === n) { go(i, true); return; }
+      cnt++;
     }
   }
 
-  /* ── 介面 ── */
+  /* ── 介面：懸浮字幕面板（與 biology_immune_defense 相同：左右頭像＋氣泡字幕＋圖示按鈕＋可拖曳進度條）── */
   function css() {
     var s = el('style');
     s.textContent = [
-      '#vxOpen{min-height:52px;padding:8px 26px;border-radius:999px;cursor:pointer;font:700 21px/1.3 "Noto Sans TC",sans-serif;background:transparent;color:#55e9ff;border:2px solid #55e9ff;touch-action:manipulation;transition:all .2s}',
-      '#vxOpen:hover,#vxOpen.on{background:#55e9ff;color:#11261f}',
-      '#vxPanel{position:fixed;left:0;right:0;bottom:0;z-index:9001;display:none;padding:10px 14px 14px;background:rgba(11,26,21,.96);border-top:2px solid rgba(85,233,255,.45);box-shadow:0 -8px 24px rgba(0,0,0,.45);font-family:"Noto Sans TC",sans-serif;color:#f2ecd9}',
+      '.vx-open{min-height:52px;padding:8px 26px;border-radius:999px;cursor:pointer;font-size:21px;font-weight:700;font-family:inherit;line-height:1.3;background:transparent;color:#55e9ff;border:2px solid #55e9ff;touch-action:manipulation;transition:all .2s}',
+      '.vx-open:hover,.vx-open.on{background:#55e9ff;color:#11261f}',
+      '#vxPanel{position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:9000;width:min(900px,100vw);box-sizing:border-box;padding:0 8px;pointer-events:none;display:none}',
       '#vxPanel.show{display:block}',
-      '#vxPanel .vx-row{max-width:1080px;margin:0 auto;display:flex;gap:12px;align-items:center}',
-      '#vxPanel .vx-av{display:flex;gap:6px;flex:0 0 auto}',
-      '#vxPanel .vx-av img{width:64px;height:64px;object-fit:contain;border-radius:50%;background:transparent;opacity:.45;border:2px solid transparent}',
-      '#vxPanel .vx-av img.on{opacity:1;border-color:#55e9ff}',
-      '#vxPanel .vx-body{flex:1;min-width:0}',
-      '#vxPanel .vx-who{font-size:17px;font-weight:700;color:#55e9ff}',
-      '#vxPanel .vx-sub{font-size:22px;line-height:1.6;min-height:2.2em}',
+      '#vxPanel .vx-cap{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:6px}',
+      '#vxPanel .vx-av{flex:0 0 auto;height:130px;width:auto;transition:opacity .25s,filter .25s;opacity:.35;filter:grayscale(.6);pointer-events:none}',
+      '#vxPanel .vx-av.on{opacity:1;filter:none}',
+      '#vxPanel .vx-bub{pointer-events:auto;flex:1 1 auto;min-width:0;margin-bottom:14px;padding:10px 14px 20px;border-radius:14px;background:rgba(17,38,31,.94);border:2px solid #55e9ff;color:#f2ecd9;box-shadow:0 6px 18px rgba(0,0,0,.55);font-family:inherit;position:relative}',
+      '#vxPanel .vx-sub{font-size:21px;line-height:1.55;min-height:2.4em;padding-top:2px}',
       '#vxPanel .vx-sub span{color:rgba(242,236,217,.55);transition:color .12s}',
       '#vxPanel .vx-sub span.on{color:#fff}',
-      '#vxPanel .vx-ctl{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:0 0 auto}',
-      '#vxPanel .vx-ctl button{min-height:40px;min-width:76px;border-radius:10px;border:2px solid #55e9ff;background:transparent;color:#f2ecd9;font:700 18px/1 "Noto Sans TC",sans-serif;cursor:pointer;padding:6px 10px}',
-      '#vxPanel .vx-count{font-size:15px;color:#b8c9c1;font-family:"JetBrains Mono",monospace}',
-      '#vxPin{max-width:1080px;margin:0 auto 8px;display:none;padding:6px 12px;border-radius:8px;background:#fde047;color:#11261f;font:700 20px/1.4 "Noto Sans TC",sans-serif}',
+      '#vxPanel .vx-ctl{position:absolute;top:2px;right:4px;display:flex;gap:0}',
+      '#vxPanel .vx-ic{width:32px;height:32px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:50%;border:0;background:transparent;color:#9af06f;font-size:18px;line-height:1;cursor:pointer;touch-action:manipulation;font-family:inherit}',
+      '#vxPanel .vx-ic:hover:not(:disabled){background:rgba(154,240,111,.2)}#vxPanel .vx-ic:disabled{opacity:.3;cursor:default}',
+      '#vxPanel .vx-line{position:absolute;left:10px;right:10px;bottom:0;height:18px;cursor:pointer;touch-action:none;user-select:none}',
+      '#vxPanel .vx-track{position:absolute;left:0;right:0;bottom:7px;height:4px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}',
+      '#vxPanel .vx-fill{height:100%;width:0;background:#fde047}',
+      '#vxPin{pointer-events:none;position:relative;margin:0 auto 10px;max-width:min(560px,100%);box-sizing:border-box;padding:8px 14px;border-radius:12px;background:#fde047;color:#11261f;font-size:19px;font-weight:700;line-height:1.4;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.5);display:none}',
       '#vxPin.show{display:block}',
-      '.vx-hl{position:absolute;pointer-events:none;background:rgba(253,224,71,.55);border-radius:3px;z-index:8000;mix-blend-mode:normal}',
-      'body.vx-on{padding-bottom:190px}',
-      '@media (max-width:620px){#vxPanel .vx-av img{width:48px;height:48px}#vxPanel .vx-sub{font-size:20px}}'
-    ].join('');
+      '.vx-hl{position:absolute;pointer-events:none;background:rgba(253,224,71,.55);border-radius:3px;z-index:8000}',
+      'body.vx-on{padding-bottom:280px}',
+      '@media (max-width:620px){#vxPanel .vx-av{height:78px}#vxPanel .vx-sub{font-size:17px}#vxPanel .vx-bub{padding:8px 10px 12px}body.vx-on{padding-bottom:240px}}'
+    ].join('\n');
     document.head.appendChild(s);
+  }
+  var IC = {
+    back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/><text x="12" y="16.5" font-size="7.5" font-weight="700" text-anchor="middle" font-family="sans-serif">5</text></svg>',
+    fwd: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 5V2l5 4-5 4V7a5 5 0 1 0 5 5h2a7 7 0 1 1-7-7z"/><text x="12" y="16.5" font-size="7.5" font-weight="700" text-anchor="middle" font-family="sans-serif">5</text></svg>',
+    play: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>',
+    stop: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>'
+  };
+  // 進度條：點一下或拖曳，就從該句開始播
+  function bindBar(bar) {
+    var dragging = false;
+    function valueAt(ev) {
+      var r = bar.getBoundingClientRect(), f = Math.max(0, Math.min(1, (ev.clientX - r.left) / (r.width || 1)));
+      return { n: Math.min(lineIdx.length - 1, Math.floor(f * lineIdx.length)), f: f };
+    }
+    bar.addEventListener('pointerdown', function (ev) {
+      if (!lineIdx.length) return;
+      dragging = true;
+      try { bar.setPointerCapture(ev.pointerId); } catch (e) {}
+      ui.fill.style.width = (valueAt(ev).f * 100) + '%';
+    });
+    bar.addEventListener('pointermove', function (ev) { if (dragging) ui.fill.style.width = (valueAt(ev).f * 100) + '%'; });
+    bar.addEventListener('pointerup', function (ev) { if (!dragging) return; dragging = false; jumpToLine(valueAt(ev).n); });
+    bar.addEventListener('pointercancel', function () { dragging = false; progress(started ? lineNo(pos) : 0); });
   }
   function buildUI() {
     css();
-    var open = el('button', null, '🔊 有聲講解'); open.id = 'vxOpen'; open.type = 'button';
+    var open = el('button', 'vx-open', '🔊 有聲講解'); open.id = 'vxOpen'; open.type = 'button';
+    open.setAttribute('aria-pressed', 'false');
     var panel = el('div'); panel.id = 'vxPanel';
+    panel.setAttribute('role', 'region'); panel.setAttribute('aria-label', '有聲講解');
     var pin = el('div'); pin.id = 'vxPin';
-    var row = el('div', 'vx-row');
-    var av = el('div', 'vx-av');
-    var a1 = el('img'), a2 = el('img'); a1.alt = ''; a2.alt = '';
-    av.append(a1, a2);
-    var body = el('div', 'vx-body');
-    var who = el('div', 'vx-who'), sub = el('div', 'vx-sub');
-    body.append(who, sub);
+    var cap = el('div', 'vx-cap');
+    var a1 = el('img', 'vx-av'); a1.src = AV['彥君']; a1.alt = '彥君老師'; a1.dataset.who = '彥君';
+    var bub = el('div', 'vx-bub');
+    var sub = el('div', 'vx-sub', '按 ▶ 聽彥君老師與曉臻助教講解。'); sub.setAttribute('aria-live', 'polite');
+    var who = el('span'); who.style.display = 'none';
+    var count = el('span', 'vx-count'); count.style.display = 'none';
     var ctl = el('div', 'vx-ctl');
-    var toggleBtn = el('button', null, '▶'); toggleBtn.type = 'button';
-    var nextBtn = el('button', null, '下一句'); nextBtn.type = 'button';
-    var prevBtn = el('button', null, '上一句'); prevBtn.type = 'button';
-    var count = el('div', 'vx-count', '0 / 0');
-    ctl.append(toggleBtn, nextBtn, prevBtn, count);
-    row.append(av, body, ctl);
-    panel.append(pin, row);
+    function mk(ic, title) { var b = el('button', 'vx-ic'); b.innerHTML = IC[ic]; b.title = title; b.setAttribute('aria-label', title); b.type = 'button'; ctl.appendChild(b); return b; }
+    var back = mk('back', '倒退 5 秒'), startB = mk('play', '開始／繼續'), pauseB = mk('pause', '暫停'), fwd = mk('fwd', '快轉 5 秒'), stopB = mk('stop', '停止');
+    var line = el('div', 'vx-line');
+    line.setAttribute('role', 'slider'); line.setAttribute('aria-label', '拖曳或點選，跳到某一句');
+    var track = el('div', 'vx-track'), fill = el('div', 'vx-fill');
+    track.appendChild(fill); line.appendChild(track);
+    bub.append(sub, who, count, ctl, line);
+    var a2 = el('img', 'vx-av'); a2.src = AV['曉臻']; a2.alt = '曉臻助教'; a2.dataset.who = '曉臻';
+    cap.append(a1, bub, a2);
+    panel.append(pin, cap);
     var host = document.querySelector('#modeBar .mode-row') || document.querySelector('#modeBar');
     (host || document.body).appendChild(open);
     document.body.appendChild(panel);
-    ui = { open: open, panel: panel, pin: pin, av: [a1, a2], who: who, sub: sub, toggle: toggleBtn, count: count };
-    open.addEventListener('click', function () {
-      panel.classList.add('show'); document.body.classList.add('vx-on'); open.style.display = 'none';
-      toggle();
+    ui = { open: open, panel: panel, pin: pin, av: [a1, a2], who: who, sub: sub, count: count, fill: fill,
+           start: startB, pause: pauseB, stop: stopB, back: back, fwd: fwd };
+    bindBar(line);
+    open.addEventListener('click', function () {   // 開／關面板；關閉時停止播放
+      var show = !panel.classList.contains('show');
+      if (!show) stop();
+      panel.classList.toggle('show', show);
+      document.body.classList.toggle('vx-on', show);
+      open.classList.toggle('on', show);
+      open.setAttribute('aria-pressed', String(show));
     });
-    toggleBtn.addEventListener('click', toggle);
-    nextBtn.addEventListener('click', function () { var j = lineIndexFrom(pos, 1); if (j >= 0) go(j, true); });
-    prevBtn.addEventListener('click', function () { var j = lineIndexFrom(pos, -1); if (j >= 0) go(j, true); });
+    startB.addEventListener('click', start);
+    pauseB.addEventListener('click', pause);
+    stopB.addEventListener('click', stop);
+    back.addEventListener('click', function () { seek(-5); });
+    fwd.addEventListener('click', function () { seek(5); });
+    refresh();
   }
 
   function load() {
@@ -378,7 +466,6 @@
       audio = new Audio();
       audio.preload = 'auto';
       buildUI();
-      ui.count.textContent = '0 / ' + lineIdx.length;
     }).catch(function () { /* 沒有音檔：整個功能隱藏，原頁面照常 */ });
   }
 
