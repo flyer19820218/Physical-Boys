@@ -413,11 +413,13 @@
   // 螢光筆只框「字」本身：用文字範圍量（每行一個框、貼著字），不用整個區塊元素的外框（老師 2026-11-17：「只畫重點」）
   function ink(sel) { return function () { var r = typeof sel === 'function' ? sel() : document.querySelector(sel); return r ? textRect(r, /\S[\s\S]*\S|\S/)() : null; }; }
   function txt(root, re) { return function () { var r = typeof root === 'function' ? root() : document.querySelector(root); return textRect(r, re)(); }; }
+  // 一列表格：每一格各框自己的字（不跨過格子之間的空白）
+  function cells(rowFn) { return function () { var r = rowFn(), out = []; if (!r) return null; r.querySelectorAll('th,td').forEach(function (c) { var q = textRect(c, /\S[\s\S]*\S|\S/)(); if (q) out = out.concat(q); }); return out.length ? out : null; }; }
   function pn(i) { return function () { return panelEl(i); }; }
   function pq(i, sel, n) { return function () { var p = panelEl(i); return p ? (n == null ? p.querySelector(sel) : p.querySelectorAll(sel)[n]) : null; }; }
   var RECT = {
     // 分頁 1
-    lv0: ink(pq(0, '.levels .lv', 0)), lv1: ink(pq(0, '.levels .lv', 1)), lv2: ink(pq(0, '.levels .lv', 2)),
+    lv0: ink(pq(0, '.levels .lv', 0)), lv1: function () { var a = ink(pq(0, '.levels .ex', 1))(), b = ink(pq(0, '.levels .lv', 1))(); return [].concat(a || [], b || []); }, lv2: ink(pq(0, '.levels .lv', 2)),
     lv3: ink(pq(0, '.levels .lv', 3)), lv4: ink(pq(0, '.levels .lv', 4)),
     t1Star: txt(pq(0, '.grid-2c .card', 1), /可以自行發光、發熱/),
     t1Moon: txt(pq(0, '.grid-2c .card', 3), /月球本身不會發光，月光是反射的太陽光/),
@@ -446,8 +448,8 @@
     t4Born: txt(pn(3), /大約是在 ?46 ?億年前，由一團不斷旋轉的扁平狀雲氣所形成/),
     mbNotReal: txt('#mb-stage', /大小、距離都不是真實比例/),
     t4Form: txt(pn(3), /密度較大的物質在內圈形成類地行星，密度較小的物質則在外圍形成類木行星/),
-    tbT: ink(function () { var t = qs(panelEl(3), ':scope > .table-wrap'); return t.length ? t[t.length - 1].querySelectorAll('tr')[1] : null; }),
-    tbG: ink(function () { var t = qs(panelEl(3), ':scope > .table-wrap'); return t.length ? t[t.length - 1].querySelectorAll('tr')[2] : null; }),
+    tbT: cells(function () { var t = qs(panelEl(3), ':scope > .table-wrap'); return t.length ? t[t.length - 1].querySelectorAll('tr')[1] : null; }),
+    tbG: cells(function () { var t = qs(panelEl(3), ':scope > .table-wrap'); return t.length ? t[t.length - 1].querySelectorAll('tr')[2] : null; }),
     t4Eight: txt(pq(3, '.v5-notes'), /行星：僅有 ?8 ?顆/), t4Saturn: txt(pq(3, '.v5-notes'), /土星的密度只有水的 ?70%/),
     // 分頁 5
     t5NotReal: txt(pn(4), /一般太陽系圖片的行星大小與彼此距離並未依實際比例/),
