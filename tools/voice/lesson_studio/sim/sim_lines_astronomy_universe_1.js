@@ -70,7 +70,7 @@ for (const it of manifest.items) {
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'warning' && /有聲講解/.test(m.text())) errors.push('warn: ' + m.text()); });
   await page.addInitScript(() => {
-    window.__log = []; window.__teacherSeen = 0;
+    window.__log = []; window.__teacherSeen = 0; window.__FAST = !!(window.__FASTENV);
     window.__snap = () => {
       const q = s => document.querySelector(s);
       const g = f => { try { return f(); } catch (e) { return null; } };
@@ -90,14 +90,18 @@ for (const it of manifest.items) {
       if (tab === 'tab1') return step <= 5 ? $('zm-stage') : step === 6 ? P(0).querySelector('.levels') : step === 7 ? P(0).querySelector('.grid-2c') : N(0);
       if (tab === 'tab2') return step === 1 ? H2(1)[0] : step <= 6 ? $('ly-stage') : step === 7 ? P(1).querySelector('.grid-2c') : N(1);
       if (tab === 'tab3') return step === 1 ? H2(2)[0] : step <= 4 ? $('gx-stage') : step === 5 ? $('gt-stage') : N(2);
-      if (tab === 'tab4') return step === 1 ? H2(3)[0] : step <= 5 ? $('so-stage') : step === 6 ? TW(3)[0] : step <= 11 ? $('mb-stage') : step === 12 ? TW(3)[TW(3).length - 1] : N(3);
+      if (tab === 'tab4') return step <= 5 ? $('so-stage') : step === 6 ? TW(3)[0] : step <= 11 ? $('mb-stage') : step === 12 ? TW(3)[TW(3).length - 1] : N(3);
       if (tab === 'tab5') return step === 1 ? H2(4)[0] : step <= 3 ? $('rs-stage') : step === 4 ? (P(4).querySelector(':scope > .grid-2c') || TW(4)[0]) : step <= 8 ? $('habit-status') : N(4);
       return null;
     };
     window.__inView = (tab, step) => {
-      const c = window.__viewEl(tab, step); if (!c) return null; const r = c.getBoundingClientRect(); if (!r.height) return 0;
+      let c = window.__viewEl(tab, step); if (!c) return null; if (/-stage$/.test(c.id)) c = c.querySelector('.v5-cv') || c; const r = c.getBoundingClientRect(); if (!r.height) return 0;
       const bub = document.querySelector('.vx-bub'); const top = bub ? bub.getBoundingClientRect().top : innerHeight;
       return Math.round(Math.max(0, Math.min(r.bottom, top) - Math.max(r.top, 0)) / Math.max(1, Math.min(r.height, top - 56)) * 100); };
+    window.__cvFull = (tab, step) => { const e = window.__viewEl(tab, step); if (!e || !/-stage$/.test(e.id)) return null; const c = e.querySelector('canvas'); if (!c) return null;
+      const r = c.getBoundingClientRect(), bub = document.querySelector('.vx-bub'), pin = document.querySelector('.vx-pin.show');
+      let top = bub ? bub.getBoundingClientRect().top : innerHeight; if (pin) top = Math.min(top, pin.getBoundingClientRect().top);
+      return Math.round(Math.max(0, Math.min(r.bottom, top) - Math.max(r.top, 0)) / r.height * 100); };
     window.__hl = () => { const bub = document.querySelector('.vx-bub'), pin = document.querySelector('.vx-pin.show');
       let top = bub ? bub.getBoundingClientRect().top : innerHeight; if (pin) top = Math.min(top, pin.getBoundingClientRect().top);
       const els = Array.from(document.querySelectorAll('.vx-hl')).filter(e => e.style.display === 'block');
@@ -109,7 +113,7 @@ for (const it of manifest.items) {
       set currentTime(v) {}
       play() {
         const self = this, src = this._src, txt = (document.querySelector('.vx-txt') || {}).textContent || '';
-        if (!this._acc) this.duration = Math.min(3.5, Math.max(2.4, txt.length * 0.08));
+        if (!this._acc) this.duration = (window.__FAST ? 1.3 : Math.min(3.5, Math.max(2.4, txt.length * 0.08)));
         this.paused = false; this._t0 = performance.now();
         let rec = window.__log.length && window.__log[window.__log.length - 1].src === src && !window.__log[window.__log.length - 1].end ? window.__log[window.__log.length - 1] : null;
         if (!rec) { rec = { src, start: window.__snap(), polls: [] }; window.__log.push(rec); }
@@ -118,9 +122,9 @@ for (const it of manifest.items) {
         this._end = setTimeout(() => {
           if (self._src !== src || self.paused) return;
           clearInterval(self._poll);
-          rec.end = window.__snap(); rec.hl = window.__hl();
+          rec.end = window.__snap(); rec.hl = window.__hl(); rec.away = document.body.dataset.vxAway === '1'; rec.stageView = (() => { const tb0 = document.querySelector('.tab-btn.active'); return false; })();
           rec.vis = {}; const tb = document.querySelector('.tab-btn.active'); const tab = tb && tb.dataset.tab;
-          for (let st = 1; st <= 13; st++) rec.vis[st] = window.__inView(tab, st);
+          rec.cv = {}; for (let st = 1; st <= 13; st++) { rec.vis[st] = window.__inView(tab, st); rec.cv[st] = window.__cvFull(tab, st); }
           self.paused = true; if (self.onended) self.onended();
         }, (this.duration - this._acc) * 1000);
         return Promise.resolve();
@@ -209,9 +213,11 @@ for (const it of manifest.items) {
     const tail = all.slice(Math.min(all.length - 1, from + 10));
     if (last.run) { const vals = new Set(tail.map(s => s && s[last.run])); if (vals.size < 2) probs.push(`${last.run} 沒有在動`); }
     const vis = r.vis ? r.vis[lastS.step || 1] : null;
-    if (!(vis >= 50)) probs.push(`主畫面（${fmt(lastS)}）只露出 ${vis}%`);
+    if (!(vis >= 50) && !r.away) probs.push(`主畫面（${fmt(lastS)}）只露出 ${vis}%`);
+    const cvf = r.cv ? r.cv[lastS.step || 1] : null;
+    if (cvf !== null && cvf < 98 && !r.away) probs.push(`動畫畫布沒有整個在主屏內（只露出 ${cvf}%）`);
     const need = HLSEG[e.id];
-    if (need) { if (!r.hl || r.hl.shown < need) probs.push(`螢光筆只畫了 ${r.hl && r.hl.shown} 條，應至少 ${need}`); else if (r.hl.inView < r.hl.shown) probs.push(`螢光筆有 ${r.hl.shown - r.hl.inView} 條不在字幕框上方的畫面內`); }
+    if (need) { if (!r.hl || r.hl.shown < need) probs.push(`螢光筆只畫了 ${r.hl && r.hl.shown} 條，應至少 ${need}`); else if (!r.away && cvf === null && r.hl.inView < r.hl.shown) probs.push(`螢光筆有 ${r.hl.shown - r.hl.inView} 條不在字幕框上方的畫面內`); }
     rows.push({ id: e.id, who: e.speaker, text: e.text.slice(0, 16), expect: e.seq.map(fmt).join(' → '), start: r.start, end: r.end, vis, hl: r.hl, ok: !probs.length, probs });
     if (probs.length) { bad++; console.log(`✗ #${e.id} ${e.text.slice(0, 16)} [${e.seq.map(fmt).join('→')}] → ${probs.join('; ')}`); }
   }

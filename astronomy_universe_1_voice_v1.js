@@ -213,10 +213,14 @@
   function viewOf(key, step) {
     if (!key) return null;
     var p = PT(key), H2 = qs(p, ':scope > h2'), NB = qs(p, ':scope > .note-box'), TW = qs(p, ':scope > .table-wrap'), notes = q1(p, '.v5-notes');
-    function stg(id) { var e = $(id); return e ? { k: id, a: e, b: e, anchor: 'top' } : null; }
+    function stg(id) {   // 重點是動畫：露出的範圍從畫布上緣開始（放不下時畫布一定整個在主屏內，狀態文字才被捨棄）
+      var e = $(id); if (!e) return null;
+      var cv = q1(e, '.v5-cv') || e, st = $(id.replace('-stage', '-status'));
+      return { k: id, a: cv, b: st || cv, anchor: 'top' };
+    }
     function rng(k, a, b) { return a ? { k: k, a: a, b: b || a, anchor: 'top' } : null; }
     if (key === 'tab1') {
-      if (step <= 5) { var zc = q1(p, '#zm-stage .v5-cv'); return zc ? { k: 'zm-stage', a: zc, b: $('zm-status'), anchor: 'bottom' } : stg('zm-stage'); }   // 畫布到狀態文字；釘選黃條出現放不下時，對齊下緣，狀態文字（螢光筆）不被擋
+      if (step <= 5) return stg('zm-stage');
       if (step === 6) return rng('t1-levels', H2[0], q1(p, '.levels'));
       if (step === 7) return rng('t1-cards', q1(p, '.grid-2c'));
       return rng('t1-notes', notes);
@@ -230,12 +234,11 @@
     if (key === 'tab3') {
       if (step === 1) return rng('t3-text', H2[0], NB[0]);
       if (step <= 4) return stg('gx-stage');
-      if (step === 5) { var gp = H2[1] && H2[1].nextElementSibling, gc = q1($('gt-stage'), '.v5-cv'); return (gp && gc) ? { k: 't3-types', a: gp, b: gc, anchor: 'bottom' } : rng('t3-types', H2[1], $('gt-stage')); }   // 分類句＋三種星系的圖與名稱；釘選黃條在時對齊下緣，圖下的星系名稱不被擋
+      if (step === 5) return stg('gt-stage');
       return rng('t3-notes', notes);
     }
     if (key === 'tab4') {
-      if (step === 1) return rng('t4-text', H2[0], NB[0]);
-      if (step <= 5) return stg('so-stage');
+      if (step <= 5) return stg('so-stage');   // 第 1 步也直接露出太陽系動畫（老師 2026-11-19：重點是動畫，不是文字）
       if (step === 6) return rng('t4-members', H2[1], TW[0]);
       if (step <= 11) return stg('mb-stage');
       if (step === 12) return rng('t4-table', q1(p, ':scope > h3'), TW[TW.length - 1]);
@@ -339,7 +342,7 @@
   }
   function thawRun() { if (!pauseSaved) return; var s = pauseSaved; pauseSaved = null; putRun(s); }
   function restoreRun() {
-    pauseSaved = null; drive = null;
+    pauseSaved = null; drive = null; document.body.dataset.vxAway = '';
     if (runSaved) {
       runSaved = null;
       try { zmReset(); lyPick(2); soSt('all'); MB.sel = null; mbUI(); rsMode('distance'); habitPick(2); } catch (e) {}
@@ -590,9 +593,20 @@
         if (!g.seen) { // 標記處若被字幕框擋住或在畫面外，先把它捲到字幕框上方
           g.seen = 1;
           var pt = visBottom(), r0 = rs[0], rl = rs[rs.length - 1];
-          if (rl.top + rl.height > pt - 12) scrollGoal(window.pageYOffset + (rl.top + rl.height) - (pt - 12));
-          else if (r0.top < 56) scrollGoal(window.pageYOffset + r0.top - 70);
+          if (rl.top + rl.height > pt - 12) { g.away = 1; scrollGoal(window.pageYOffset + (rl.top + rl.height) - (pt - 12)); }
+          else if (r0.top < 56) { g.away = 1; scrollGoal(window.pageYOffset + r0.top - 70); }
+          if (g.away) document.body.dataset.vxAway = '1';
         }
+        // 切去畫完線，馬上拉回主畫面（老師 2026-11-19）：這一條畫完後 0.5 秒，若沒有別條正在畫，就把目前的主畫面（動畫）整個捲回來
+        if (g.away && !g.back && p >= 0.98) {
+          g.back = 1;
+          setTimeout(function () {
+            if (hlSegs.some(function (o) { return o.seen && o.p > 0 && o.p < 0.98; })) return;
+            document.body.dataset.vxAway = '';
+            var v = cur.tab ? viewOf(cur.tab, cur.step) : null; if (v) bringIntoView(v);
+          }, 500);
+        }
+        g.p = p;
         var tot = 0; rs.forEach(function (q) { tot += q.width + 16; });
         var done = tot * p;
         rs.forEach(function (q, k) {
