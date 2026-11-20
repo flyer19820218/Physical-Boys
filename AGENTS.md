@@ -103,7 +103,7 @@
 - **切入即自動播放；最多 5 個步驟鈕**（超過就合併成一組）；**學生模式＝一次播一個步驟、播完停住**，按編號才播下一步；不放播放／暫停／重來、滑桿、下拉選單。
 - 進度條畫在畫布頂端，由 `assets/anim_progress_bar_1105_v1.js` 提供，不要自己畫。
 - 只能有一條 `requestAnimationFrame`；離開分頁或 `document.hidden` 就停；**不要在動畫尾巴寫死分頁編號**（插入分頁會讓動畫畫一格就不動）。
-- 動畫用 Opus 寫，**同一時間只開一個 Opus 代理、一次只做一個動畫檔**；文字、頁面骨架、檢查、git 用 Sonnet。給代理的簡報只放那個動畫需要的：每步文字、圖片檔名尺寸、範本檔路徑。
+- **分工**：動畫與有聲講解切畫面用 Opus，**同一時間只開一個 Opus 代理、一次只做一個動畫檔**；其他一律 Sonnet（文字、頁面骨架、檢查、git、錄音、建置、模擬）。給代理的簡報只放那個動畫需要的：每步文字、圖片檔名尺寸、範本檔路徑。
 - 電路動畫一律用「電子流」；電路、生物小構造、考題附圖的專門規則見下方「專題規則」。
 
 ### 3.3 學生操作／老師講解（只有老師指定的課才做）
@@ -136,6 +136,11 @@
 老師只說：「做 <課> 的有聲講解」。完整步驟在 `tools/voice/lesson_studio/新課作業手冊.md`，規則在 `AGENTS_VOICE.md`。重點：
 1. 寫稿（skill `lesson-dialogue-script`，一課一個新對話）→ `tools/voice/lesson_studio/scripts/<課>_script.txt`；稿裡不放英文字母與阿拉伯數字，N 極寫「恩極」、S 極寫「艾斯極」。
 2. 設定檔 `tools/voice/lesson_studio/lessons/<課>.json`（cuts／steps／at／acts）；**切畫面派 Opus 逐句對照**，講到什麼畫面就真的點到對應按鈕。
+   **派 Opus 切畫面的做法**（一課只開一個 Opus 代理，其餘工作用 Sonnet）：
+   - 給 Opus 的簡報只放：①稿子與句號 ②頁面可呼叫的函式清單與每個步驟對應的畫面狀態（讀該課頁面的老師講解 STAGE 表與 mission-step／step-btn）③設定檔草稿 ④本節第 6 點的畫面原則。不要附整份 html。
+   - Opus 要用**真實音檔長度**（建置、錄音後）跑 2～3 輪，逐句截圖檢查：鏡頭飛行有沒有晚到、句中換畫面的比例對不對、畫布有沒有整張在字幕框上方、字被字幕框擋住沒有。
+   - Opus 只改 `at`／`acts` 與播放器的畫面對應（`viewOf`、螢光筆範圍），不改頁面本體；改完交回修改清單與句號，由 Sonnet 重新建置、跑逐句模擬。
+   - 老師回報「切不準」時，先看是哪一句、哪個畫面，再交給 Opus 修，不要憑感覺整批調。
 3. 建置 `python3 tools/voice/lesson_studio/build_lesson.py --lesson <課>` → `audio/<課>/manifest.json`、`stage.json`、`stage_spec.md`。
 4. **雲端錄音** `python3 tools/voice/lesson_studio/cloud_tts.py <課>`（edge-tts；`No audio was received` 就重跑，只補缺的檔；音檔放 `audio/<課>/mp3/`，不放 GitHub Release）。**雲端錄音念的是稿上的字**：讀音不對就在稿裡寫同音字（例：參宿四寫「身秀四」），字幕靠 `build_lesson.py` 的 `SUB_MAP` 換回原字，刪該句 mp3 後重錄。
 5. 播放器 `<課>_voice_v1.js`（複製最接近的課當範本，如 `astronomy_universe_1_voice_v1.js`、`work_5_voice_v1.js`）＋ html 加 `<script defer src="<課>_voice_v1.js?v=日期-版本">`；改了就換版本號。播放器強制學生模式、鎖定頁面本身的老師導覽。
