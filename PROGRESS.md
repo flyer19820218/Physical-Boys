@@ -1,4 +1,5 @@
 最後更新：2026-11-20（earth_strata_3 岩層密碼與地球歷史：有聲講解 113 句（彥君×曉臻，雲端錄音 6 份並行全數成功）、5 個分頁的實驗台切畫面（褶皺 5 步、斷層 5 步、時光機 6 步、古環境 4 站、化石 5 步＋跨地區對比 4 站）、13 個釘選黃條；播放器 `earth_strata_3_voice_v1.js` 直接呼叫頁面原本的 labGo／peGo／crPick；Hook 標題統一成「曉臻老師說」、古環境滑桿觸控高度 32→44px；沒做螢光筆（沒有可畫的 DOM 公式）；在分支 `earth_strata_3-audio`，等老師試聽說 OK 才合併 main；待老師聽：褶皺、背斜向斜、礫岩、頁岩、岩脈、白堊紀、二疊紀的讀音）
+最後更新：2026-11-20（earth_plates_2 板塊交界與地表變動：外層優化——五個 Hook 標題統一成「曉臻老師說」、分頁鈕加 `data-tab`、隱沒帶步驟鈕改 44px／18px、新增模式列（只有 ✋ 學生操作＋🔊 有聲講解，老師講解模式未做）；有聲講解 128 句（彥君×曉臻，雲端錄音全數成功）、9 個釘選黃條，播放器 `earth_plates_2_voice_v1.js` 呼叫頁面原本的 glMode／dvMode／sbMode／clSet／evMode 切畫面，隱沒帶播放期間壓住自動換步驟；逐句模擬 mismatches 0、js errors none、mode-teacher 0；沒做螢光筆（公式都在 canvas 內）；在分支 `earth_plates_2-audio`，等老師試聽說 OK 才合併 main；待老師聽：中洋脊、隱沒、納茲卡、褶皺、背斜向斜的讀音）
 最後更新：2026-11-20（astronomy_moon_phases_4 月相、日月食與潮汐：有聲講解 93 句（彥君×曉臻，雲端錄音 6 份並行全數成功）、15 個釘選黃條與 6 條自動螢光筆（朔望月 29.53 天、西／東半邊亮、5° 傾角、12 小時 25 分、潮差）；播放器 `astronomy_moon_phases_4_voice_v1.js` 照頁面老師講解的做法按原本的按鈕切畫面、暫停會把動畫一起凍住；滑桿觸控高度 32→44px；`subtitle_digits.py` 補「小時、天、圈、句尾的分」；在分支 `astronomy_moon_phases_4-audio`，等老師試聽說 OK 才合併 main；待老師聽：朔、弦、擱淺、差不多、潮差的讀音）
 # 工作進度（PROGRESS）
 
