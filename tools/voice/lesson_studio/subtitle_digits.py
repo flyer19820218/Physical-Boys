@@ -126,6 +126,13 @@ def to_arabic(text):
     out = re.sub("(?<=像)(?P<n>[一二三])(?=[，。、就也])", lambda m: val(m.group("n")) or m.group("n"), out)
     # 6c. 折射率「一點三三」「大約是一」：折射率後面的數字轉阿拉伯數字
     out = re.sub("(?<=折射率)(?P<m>大約是|約是|是|為)?(?P<n>%s)(?![次開起下樣直定旦般些邊半])" % NUMD, lambda m: (m.group("m") or "") + (val(m.group("n")) or m.group("n")), out)
+    # 6d. 年份與日期（2026-11-20 earth_taiwan_quake_4）：「二零二四年」→ 2024 年、「四月三日」→ 4 月 3 日、「二十四年」→ 24 年、「六百萬年前」→ 600萬年前（單獨的「一年」不轉）
+    out = re.sub("(?P<n>[零〇一二三四五六七八九]{3,4})(?=年)", lambda m: "".join(str(D[c]) for c in m.group("n")), out)
+    out = re.sub("(?P<n>十[一二]?|[一二三四五六七八九])(?=月)", lambda m: val(m.group("n")) or m.group("n"), out)
+    out = re.sub("(?<=月)(?P<n>[一二三]?十[一二三四五六七八九]?|[一二三四五六七八九])(?=[日號])", lambda m: val(m.group("n")) or m.group("n"), out)
+    out = re.sub("(?P<n>[一二三四五六七八九]?[十百千萬][零〇一二三四五六七八九十百千萬]*)(?=年)", lambda m: val(m.group("n")) or m.group("n"), out)
+    # 6e. 小數「N 點 M」一律轉（規模六點七、五點七的；必須有數字接在「點」後面，「一點點」「一點」不受影響）
+    out = re.sub("(?P<n>%s點[%s]+)" % (NUM, DIGCH), lambda m: val(m.group("n")) or m.group("n"), out)
     # 7. 阿拉伯數字與中文字之間補空格（比照「N 極」）
     out = re.sub(r"(?<=[一-鿿])(?=\d)", " ", out)
     out = re.sub(r"(?<=\d)(?=[一-鿿])", " ", out)
