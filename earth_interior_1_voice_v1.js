@@ -68,6 +68,7 @@
     var host = document.querySelector('#modeBar .mode-row') || document.querySelector('#modeBar');
     ui.open = el('button', 'vx-open', '🔊 有聲講解');
     ui.open.type = 'button';
+    ui.open.setAttribute('data-zh', '🔊 有聲講解'); ui.open.setAttribute('data-en', '🔊 Narrated lesson (Chinese audio)');
     ui.open.setAttribute('aria-pressed', 'false');
     if (host) host.appendChild(ui.open); else document.body.appendChild(ui.open);
 
@@ -95,8 +96,21 @@
     ui.pause = mk('pause', '暫停');
     ui.fwd = mk('fwd', '快轉 5 秒');
     ui.stop = mk('stop', '停止');
+    // 英文版：按鈕提示跟著語言切換（旁白與字幕是中文，所以只換介面文字）
+    var UI_TX = [[ui.back, '倒退 5 秒', 'Back 5 s'], [ui.start, '開始／繼續', 'Play / resume'], [ui.pause, '暫停', 'Pause'], [ui.fwd, '快轉 5 秒', 'Forward 5 s'], [ui.stop, '停止', 'Stop']];
+    function uiLang() {
+      var en = (typeof currentLang !== 'undefined' && currentLang === 'en');
+      UI_TX.forEach(function (x) { var t = en ? x[2] : x[1]; x[0].title = t; x[0].setAttribute('aria-label', t); });
+      ui.panel.setAttribute('aria-label', en ? 'Narrated lesson' : '有聲講解');
+      if (ui.seek) ui.seek.setAttribute('aria-label', en ? 'Drag or tap to jump to a line' : '拖曳或點選，跳到某一句');
+    }
+    if (typeof window.setLang === 'function' && !window.__eiVoiceLang) {
+      window.__eiVoiceLang = 1; var _sl = window.setLang;
+      window.setLang = function () { var r = _sl.apply(this, arguments); try { uiLang(); } catch (e) {} return r; };
+    }
+    ui.uiLang = uiLang;
     var tr = el('div', 'vx-line', null, bub);
-    tr.setAttribute('role', 'slider'); tr.setAttribute('aria-label', '拖曳或點選，跳到某一句');
+    tr.setAttribute('role', 'slider'); tr.setAttribute('aria-label', '拖曳或點選，跳到某一句'); ui.seek = tr; try { ui.uiLang(); } catch (e) {}
     var track = el('div', 'vx-track', null, tr);
     ui.fill = el('div', 'vx-fill', null, track);
     bindBar(tr);
