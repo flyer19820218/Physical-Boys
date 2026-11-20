@@ -201,7 +201,8 @@
   function tabIdx(tab) { return +String(tab).replace('btn-tab-', ''); }
 
   // ─── 場景：5 個分頁各一個實驗台（LABS 引擎）；步驟編號 n＝該分頁動作表的第 n 個動作 ───
-  // fresh＝剛開始（尚未按）；go i＝按下第 i 步（動畫現場播放）；show i＝停在「先猜猜看」題目；pick i k＝選答案 k；sc q k＝情境判斷選 k
+  // fresh＝剛開始（尚未按）；go i＝按下第 i 步（動畫現場播放）；show i＝停在「先猜猜看」題目；pick i k＝選答案 k；
+  // scv q＝情境判斷 q 的題目（尚未選）；sc q k＝情境判斷選 k；end＝情境都答完、畫面拉回實驗台畫布
   var LABIDS = ['tw', 'qm', 'fc', 'mg', 'wn'];
   var GUESSKEY = { tw: 'up', qm: 'e', fc: 'a', mg: 'same', wn: 'after' };
   var ACTS = {
@@ -209,7 +210,7 @@
     qm: [['fresh'], ['go', 0], ['show', 1], ['pick', 1], ['go', 2], ['go', 3], ['go', 4]],
     fc: [['fresh'], ['go', 0], ['go', 1], ['show', 2], ['pick', 2], ['go', 3], ['go', 4]],
     mg: [['fresh'], ['go', 0], ['show', 1], ['pick', 1], ['go', 2], ['go', 3], ['go', 4]],
-    wn: [['fresh'], ['go', 0], ['show', 1], ['pick', 1], ['go', 2], ['go', 3], ['go', 4], ['sc', 'a', 'desk'], ['sc', 'b', 'low']]
+    wn: [['fresh'], ['go', 0], ['show', 1], ['pick', 1], ['go', 2], ['go', 3], ['go', 4], ['scv', 'a'], ['sc', 'a', 'desk'], ['scv', 'b'], ['sc', 'b', 'low'], ['end']]
   };
   function labOf(ti) { try { return LABS[LABIDS[ti]]; } catch (e) { return null; } }
   function hardReset(L) { L.cur = null; L.q = []; L.done = null; labReset(L.id); }
@@ -253,6 +254,14 @@
     else if (a[0] === 'go') { if (anim) whenReady(L, a[1], function () { labGo(L.id); }); else jumpTo(L, a[1] + 1); }
     else if (a[0] === 'show') { if (L.i !== a[1] || L.cur) jumpTo(L, a[1]); }
     else if (a[0] === 'pick') { whenReady(L, a[1], function () { labGuess(L.id, GUESSKEY[L.id]); }); }
+    else if (a[0] === 'scv' || a[0] === 'end') {
+      if (!(L.i >= L.cfg.flow.length && !L.cur)) jumpTo(L, L.cfg.flow.length);
+      try {
+        if (a[0] === 'end' || a[1] === 'b') { if (!SC.a) scPick('a', 'desk'); } else SC.a = null;
+        if (a[0] === 'end') { if (!SC.b) scPick('b', 'low'); } else SC.b = null;
+        scUI();
+      } catch (e) {}
+    }
     else if (a[0] === 'sc') {
       if (!(L.i >= L.cfg.flow.length && !L.cur)) jumpTo(L, L.cfg.flow.length);
       if (a[1] === 'b') { try { if (!SC.a) scPick('a', 'desk'); } catch (e) {} }
@@ -263,8 +272,12 @@
   function viewOf(tab, sub, step) {
     if (tab == null) return null;
     var ti = tabIdx(tab);
-    if (ti === 4 && step >= 8) { var sb = $(step === 8 ? 'sc-a' : 'sc-b'); if (sb) return { k: tab + ':sc' + step, topEl: sb, botEl: sb, anchor: 'top' }; }
+    var a = (ACTS[LABIDS[ti]] || [])[(step || 1) - 1] || [];
+    if (a[0] === 'scv' || a[0] === 'sc') { var sb = $(a[1] === 'a' ? 'sc-a' : 'sc-b'); if (sb) return { k: tab + ':sc' + a[1], topEl: sb, botEl: sb, anchor: 'top' }; }
     var c = $(LABIDS[ti] + 'Canvas');
+    // 「先猜猜看」：畫布＋下方的題目與選項一起放到字幕框上方；放不下時對齊下緣（選項優先，畫布上緣的空白可以被切掉）
+    var g = a[0] === 'show' && $(LABIDS[ti] + '-guess');
+    if (c && g && g.offsetHeight) return { k: tab + ':guess', topEl: c, botEl: g, anchor: 'bottom' };
     return c ? { k: tab, topEl: c, botEl: c, anchor: 'top' } : null;
   }
   function sceneOf(tab, sub, stepNo, anim, seg) {
@@ -332,6 +345,7 @@
     var room = panelTop - 8 - 56 - (bot - top);
     var y;
     if (room >= 0) y = base + top - 56 - room / 2;
+    else if (bot - top <= panelTop - 8) y = base + bot - (panelTop - 8); // 上方留白不夠 56 但整段放得下：貼齊字幕框上緣（上方按鈕列可以蓋在畫布頂端的空白）
     else if (v.anchor === 'bottom') y = base + bot - (panelTop - 8);
     else y = base + top - 56;
     scrollGoal(y);
@@ -514,7 +528,7 @@
     text = (stage.pins && stage.pins[text]) || displayText(text);   // 釘選黃條的數字也轉阿拉伯數字（stage.pins）
     ui.pin.textContent = text || '';
     ui.pin.classList.toggle('show', !!text);
-    if (text && cur.tab) { var pv = viewOf(cur.sub || cur.tab, cur.step); if (pv) bringIntoView(pv); } // 黃條出現後，把目前畫面重新對齊到黃條上方
+    if (text && cur.tab) { var pv = viewOf(cur.tab, cur.sub, cur.step); if (pv) bringIntoView(pv); } // 黃條出現後，把目前畫面重新對齊到黃條上方
   }
 
   // ─── 計時（＊停）可暫停 ───
@@ -571,6 +585,7 @@
     stopActs();
     if (at) goto(at.tab, at.sub, at.step, true, at.seg);
     showSub(it);
+    if (cur.tab != null) { var lv = viewOf(cur.tab, cur.sub, cur.step); if (lv) bringIntoView(lv); } // 字幕變成兩行時字幕框會長高：重新確認畫面仍在字幕框上方
     var n = lineNo() + 1;
     progress(n - 1);
     var a = audio = getAudio(it);

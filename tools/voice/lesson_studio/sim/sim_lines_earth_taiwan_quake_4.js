@@ -19,7 +19,7 @@ const ACTS = {
   qm: [['fresh'], ['go', 0], ['show', 1], ['pick', 1], ['go', 2], ['go', 3], ['go', 4]],
   fc: [['fresh'], ['go', 0], ['go', 1], ['show', 2], ['pick', 2], ['go', 3], ['go', 4]],
   mg: [['fresh'], ['go', 0], ['show', 1], ['pick', 1], ['go', 2], ['go', 3], ['go', 4]],
-  wn: [['fresh'], ['go', 0], ['show', 1], ['pick', 1], ['go', 2], ['go', 3], ['go', 4], ['sc', 'a', 'desk'], ['sc', 'b', 'low']]
+  wn: [['fresh'], ['go', 0], ['show', 1], ['pick', 1], ['go', 2], ['go', 3], ['go', 4], ['scv', 'a'], ['sc', 'a', 'desk'], ['scv', 'b'], ['sc', 'b', 'low'], ['end']]
 };
 function stateOk(e, st) {
   const id = ['tw', 'qm', 'fc', 'mg', 'wn'][Number(e.tab.replace('btn-tab-', ''))];
@@ -29,6 +29,8 @@ function stateOk(e, st) {
   if (a[0] === 'go') return st.i === a[1] || st.i === a[1] + 1;
   if (a[0] === 'show') return st.i === a[1] && !st.busy;
   if (a[0] === 'pick') return st.i === a[1] + 1;
+  if (a[0] === 'scv') return st.i >= 5 && !st.busy && (a[1] === 'a' ? !st.sca && !st.scb : st.sca === 'desk' && !st.scb);
+  if (a[0] === 'end') return st.i >= 5 && st.sca === 'desk' && st.scb === 'low';
   if (a[0] === 'sc') return st.i >= 5 && (a[1] === 'a' ? st.sca === 'desk' && !st.scb : st.scb === 'low');
   return false;
 }
@@ -39,11 +41,18 @@ const norm = s => String(s || '').replace(/[\s，。、；：？！「」（）,
 const stage = JSON.parse(fs.readFileSync(path.join(REPO, 'audio/earth_taiwan_quake_4/stage.json'), 'utf8'));
 const lineNorm = lines.map(l => norm((stage.subs && stage.subs[l.id]) || l.text));
 const at = Object.keys(cfg.at).map(Number).sort((a, b) => a - b);
+// 句中換畫面（acts）：這一句結束時的畫面＝最後一個 act；之前句子的 act 都已經換過
+const acts = cfg.acts || {};
 function expect(n) {
   let cur = null;
-  for (const k of at) { if (k <= n) cur = cfg.at[String(k)]; }
+  for (let k = 1; k <= n; k++) {
+    if (cfg.at[String(k)]) cur = cfg.at[String(k)];
+    const ac = acts[String(k)];
+    if (ac && ac.length && k < n) { const z = ac[ac.length - 1]; cur = [z[1], z[2], z[3]]; }
+  }
   return cur ? { tab: cur[0], step: cur[2] } : null;
 }
+function expectEnd(n) { const ac = acts[String(n)]; if (!ac || !ac.length) return null; const z = ac[ac.length - 1]; return { tab: z[1], step: z[3] }; }
 
 (async () => {
   const browser = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'] });
@@ -102,7 +111,8 @@ function expect(n) {
   for (let n = 1; n <= lines.length; n++) {
     const e = expect(n), s = seen[n];
     if (!s) { if (!SMOKE) { report.push({ n, problem: '沒有觀察到這一句' }); mismatches++; } continue; }
-    const ok = e && s.tab === e.tab && stateOk(e, s.last || s.st0);
+    const e2 = expectEnd(n), sl = s.last || s.st0;
+    const ok = (e && s.tab === e.tab && stateOk(e, sl)) || (e2 && s.tab === e2.tab && stateOk(e2, sl));
     if (!ok) { mismatches++; report.push({ n, expect: e, got: { tab: s.tab, i: (s.last || s.st0).i, busy: (s.last || s.st0).busy, sca: (s.last || s.st0).sca, scb: (s.last || s.st0).scb } }); }
   }
   const hlLines = Object.keys(seen).filter(k => k !== 'probe' && seen[k].hl > 0).map(Number);
