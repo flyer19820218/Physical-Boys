@@ -1,7 +1,7 @@
 # 🎙️ AGENTS_VOICE｜雙人對話網課（老師講解）錄音規則
 
-> 這份是 `AGENTS.md` 第十四律（旁白配音）的**姊妹篇**，只管第三階段「雙人對話網課」：彥君老師 × 曉臻助教，像上課一樣一來一往。
-> 一個人念的旁白（伽利略星球開場等）、BreezyVoice 備案、GitHub Actions 自動錄音，仍照 `AGENTS.md` 第十四律。
+> 這份是 舊版全文（`docs/archive/AGENTS_V5_全文備份_20261120.md`）第十四律（旁白配音）的**姊妹篇**，只管第三階段「雙人對話網課」：彥君老師 × 曉臻助教，像上課一樣一來一往。
+> 一個人念的旁白（伽利略星球開場等）、BreezyVoice 備案、GitHub Actions 自動錄音，仍照 舊版全文（`docs/archive/AGENTS_V5_全文備份_20261120.md`）第十四律。
 > ⭐ **做新一課的「有聲講解」：老師只說「做 <課名> 的有聲講解」。先讀本檔，再讀 `tools/voice/lesson_studio/新課作業手冊.md`（完整步驟、雲端錄音、Opus 切畫面、驗證）。**
 > 做這件事之前先讀本檔；**不要讀整份課程 html**，改讀 `lessons_md/<課名>.md`（見第 7 節）。
 
@@ -28,14 +28,14 @@
 ### 2-1 頭像：依內容切換（老師 2026-11-11 指示：不要隨機，不要永遠同一張）
 
 - 字幕頭像要**依說話內容**換姿勢，不隨機；整課不可永遠同一張，學生會學習疲勞。
-- 與 AGENTS.md 第五律 5.1「語音與字幕段落應依語意切換合適姿勢」一致。
+- 與 舊版全文第五律 5.1「語音與字幕段落應依語意切換合適姿勢」一致。
 - **實作**：`build_lesson.py` 依每句內容的關鍵字規則挑姿勢，結果寫進 `stage.json` 的 `avatars`（`{"句號": {"彥君": "路徑", "曉臻": "路徑"}}`）；播放器每句讀這一筆更新頭像。規則固定，同一稿子每次建置結果相同。
 - **說話者換姿勢，另一位保留上一張**；合聲句兩位都依各自內容換。
 - **不連續重複**：同一位老師連續說話不得與上一張相同；且盡量避開最近三張，讓姿勢分散。
 - **可手動指定**：`lessons/<課>.json` 的 `avatars` 欄位，`{"句號": {"彥君": "檔名.png", "曉臻": "檔名.png"}}`，優先於自動規則（檔名不含路徑）。
 - **彥君姿勢對應**（`assets/characters/yanjun/`，依 `yanjun_8pose_reference.png`）：`open_hands` 歡迎、收尾；`flask_pointer` 實驗、操作；`laser_pen` 重點、原則；`book_thumbs` 肯定、定義、課本；`clipboard_write` 計算、數據；`globe_pointer` 模型、比喻、水流；`long_pointer`、`pointer_board` 一般講解（白板指向）。
 - **曉臻姿勢對應**（`assets/characters/xiaozhen/`）：`thinking` 提問；`safety` 危險、安全提醒；`praising` 答對、稱讚；`surprised` 發現、異常；`experimenting` 實驗操作；`encouraging` 練習、任務；`celebrating` 收穫；`reading` 課本、定義；`recording` 算數字；`normal`、`pointing`、`teaching` 一般對話與講解。
-- **Hook 頭像不受此規則影響**：仍依 AGENTS.md 第五律固定用 `teaching.png`。
+- **Hook 頭像不受此規則影響**：仍依 舊版全文第五律固定用 `teaching.png`。
 - **交付前必查**：① 每位老師用到的不同姿勢至少 6 種，不能整課只有一兩張；② 同一角色連續說話不重複；③ 沒說話的那位維持上一張；④ 播放器有讀 `avatars`（頁面上頭像實際隨說話者換）。
 
 ## 3. 流程

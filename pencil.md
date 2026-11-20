@@ -83,7 +83,7 @@
 ```
 
 **新做的課程頁一定要加這一行。** 不掛在 `index.html`（伽利略星球）、`index_classic.html`、`index_museum.html`、`*_preview*.html`、`*_backup*.html`、`local-backups/` 與子資料夾裡的頁面。
-改了程式檔要升 `?v=`（或檔名日期），所有掛到的頁面一起改；同步改 `AGENTS.md` 的範例行。
+改了程式檔要升 `?v=`（或檔名日期），所有掛到的頁面一起改；同步改舊版全文備份裡的範例行（若有）。
 
 ### 外層加法，不碰教材
 - 所有東西疊在最上面：一個 `position:fixed` 的 `#pt-layer`（z-index 19000，低於封面 20000），裡面 4 張畫布：
