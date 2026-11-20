@@ -853,6 +853,42 @@
   #sg-stage { --ar: 1.7778; }
   #gl-stage { --ar: 1.7778; }
 
+  /* ==================================================================
+     老師講解／學生操作 雙模式（外層加法：學生操作＝原本的樣子，沒有改任何一個原有規則）
+     ================================================================== */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 20px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-muted); border: 2px dashed var(--rule-color);
+    touch-action: manipulation; transition: all 0.2s;
+  }
+  .mode-pill:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: var(--chalk-dim); text-align: center; line-height: 1.5; max-width: 900px; }
+
+  /* 老師講解的控制列（只在老師模式出現；學生模式整條不顯示） */
+  .teach-bar { display: none; width: 100%; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--bg-base); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--bg-base); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生專用的按鈕與滑桿那幾列收起來；上方的步驟編號可以點（跳到那一步） */
+  body.mode-teacher .std-only { display: none !important; }
+  /* 老師模式：步驟編號可以點（跳到那一步） */
+  body.mode-teacher .lab-steps li { cursor: pointer; }
+  body.mode-teacher .lab-steps li:hover { outline: 2px solid var(--chalk-yellow); outline-offset: 2px; }
+
 /* 手機整頁直線防護（iOS）：觸控裝置（手機、平板）拿掉整頁點點背景，並關掉 fixed 浮動鈕的毛玻璃；桌面不受影響。 */
 @media (hover: none) and (pointer: coarse) {
   html, body { background-image: none !important; }
@@ -884,20 +920,28 @@
     <div class="subtitle" data-zh="山、谷、海岸是怎麼來的？外營力怎麼風化、侵蝕、搬運、沉積，又怎麼跟內營力拉鋸？" data-en="Where do mountains, valleys and coasts come from? How do external processes weather, erode, transport and deposit — and how do they compete with internal forces?">山、谷、海岸是怎麼來的？外營力怎麼風化、侵蝕、搬運、沉積，又怎麼跟內營力拉鋸？</div>
   </header>
 
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays through on its own; pause, replay, or tap a step number to jump. Student: the original hands-on activities.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+  </div>
+
   <div class="tabs">
-    <button class="tab-btn active" id="btn-tab-0" type="button" onclick="switchTab(0)">
+    <button class="tab-btn active" id="btn-tab-0" data-tab="tab1" type="button" onclick="switchTab(0)">
       <span class="tab-main" data-zh="山為什麼不會一直長高？" data-en="Why don&#39;t mountains keep growing?">山為什麼不會一直長高？</span>
       <span class="tab-sub" data-zh="內營力與外營力" data-en="Internal & External Forces">內營力與外營力</span>
     </button>
-    <button class="tab-btn" id="btn-tab-1" type="button" onclick="switchTab(1)">
+    <button class="tab-btn" id="btn-tab-1" data-tab="tab2" type="button" onclick="switchTab(1)">
       <span class="tab-main" data-zh="石頭會自己碎掉嗎？" data-en="Can rock fall apart by itself?">石頭會自己碎掉嗎？</span>
       <span class="tab-sub" data-zh="風化作用" data-en="Weathering">風化作用</span>
     </button>
-    <button class="tab-btn" id="btn-tab-2" type="button" onclick="switchTab(2)">
+    <button class="tab-btn" id="btn-tab-2" data-tab="tab3" type="button" onclick="switchTab(2)">
       <span class="tab-main" data-zh="山上的石頭怎麼變成海邊的沙？" data-en="How do mountain rocks become sand?">山上的石頭怎麼變成海邊的沙？</span>
       <span class="tab-sub" data-zh="河流的作用" data-en="Rivers at Work">河流的作用</span>
     </button>
-    <button class="tab-btn" id="btn-tab-3" type="button" onclick="switchTab(3)">
+    <button class="tab-btn" id="btn-tab-3" data-tab="tab4" type="button" onclick="switchTab(3)">
       <span class="tab-main" data-zh="U 形谷、沙丘、海蝕洞是誰刻的？" data-en="Who carved U-valleys, dunes and sea caves?">U 形谷、沙丘、海蝕洞是誰刻的？</span>
       <span class="tab-sub" data-zh="冰川、風與海浪" data-en="Glaciers, Wind & Waves">冰川、風與海浪</span>
     </button>
@@ -908,7 +952,7 @@
     <div class="hook-box">
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
-        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="臺灣的山一直被板塊擠壓、抬升——" data-en="Taiwan&#39;s mountains are constantly being squeezed and lifted by the plates — ">臺灣的山一直被板塊擠壓、抬升——</span><b data-zh="為什麼山沒有一直長高？" data-en="so why don&#39;t they keep getting taller?">為什麼山沒有一直長高？</b><span data-zh="地表同時被兩股力量拉扯：一股把地面抬高，一股把高處削低。先看看它們怎麼拉鋸。" data-en=" The surface is pulled by two forces at once: one lifts the land, the other wears the high ground down. First, watch their tug-of-war.">地表同時被兩股力量拉扯：一股把地面抬高，一股把高處削低。先看看它們怎麼拉鋸。</span></div>
       </div>
     </div>
@@ -985,7 +1029,7 @@
     <div class="hook-box">
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
-        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="把一塊大石頭放在野外一萬年，都不去碰它——" data-en="Leave a big rock outdoors for 10,000 years and never touch it — ">把一塊大石頭放在野外一萬年，都不去碰它——</span><b data-zh="它會自己慢慢碎掉嗎？" data-en="will it slowly fall apart by itself?">它會自己慢慢碎掉嗎？</b><span data-zh="用三塊一樣的石膏塊和兩罐鋼絲絨做一個星期的實驗，看看水、生物和空氣怎麼讓「石頭」碎掉、變質。" data-en=" Run a one-week experiment with three identical plaster blocks and two jars of steel wool, and see how water, living things and air break &quot;rock&quot; apart or change it.">用三塊一樣的石膏塊和兩罐鋼絲絨做一個星期的實驗，看看水、生物和空氣怎麼讓「石頭」碎掉、變質。</span></div>
       </div>
     </div>
@@ -1071,7 +1115,7 @@
     <div class="hook-box">
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
-        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="山上的河床都是有稜有角的大石頭，平原的河床卻是圓圓的鵝卵石和細沙——" data-en="Mountain riverbeds are full of big, sharp-edged boulders, but riverbeds on the plains hold round pebbles and fine sand — ">山上的河床都是有稜有角的大石頭，平原的河床卻是圓圓的鵝卵石和細沙——</span><b data-zh="石頭在路上發生了什麼事？" data-en="what happened to the rocks on the way?">石頭在路上發生了什麼事？</b><span data-zh="先在流水槽裡放水，看水怎麼搬運沙土；再搖一搖方糖，看石頭怎麼被磨圓。" data-en=" First run water through a stream tray to see how it moves sediment, then shake some sugar cubes to see how rocks get rounded.">先在流水槽裡放水，看水怎麼搬運沙土；再搖一搖方糖，看石頭怎麼被磨圓。</span></div>
       </div>
     </div>
@@ -1178,7 +1222,7 @@
     <div class="hook-box">
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
-        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="冰川、風和海浪就像看不見的雕刻家——" data-en="Glaciers, wind and waves are like invisible sculptors — ">冰川、風和海浪就像看不見的雕刻家——</span><b data-zh="看到一個地形，怎麼知道是誰刻的？" data-en="looking at a landform, how can we tell who carved it?">看到一個地形，怎麼知道是誰刻的？</b><span data-zh="先用冰塊在黏土上刮一刮，找出冰川留下的線索；再比一比風和海浪的作品。" data-en=" Scrape some ice across clay to find the clues a glacier leaves, then compare the work of wind and waves.">先用冰塊在黏土上刮一刮，找出冰川留下的線索；再比一比風和海浪的作品。</span></div>
       </div>
     </div>
@@ -2854,5 +2898,6 @@
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
 <script defer src="assets/quiz/quiz_earth_landforms_2_1028_v1.js?v=20261028-q1"></script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
+<script src="earth_landforms_2_teach_1121_v1.js?v=20261121-a" defer></script>
 </body>
 </html>
