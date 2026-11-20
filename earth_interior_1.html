@@ -886,6 +886,42 @@
   #cv-stage { --ar: 1.7778; }
   #pg-stage { --ar: 1.7778; }
 
+  /* ==================================================================
+     老師講解／學生操作 雙模式（外層加法：學生操作＝原本的樣子，沒有改任何一個原有規則）
+     ================================================================== */
+  .mode-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 20px; }
+  .mode-bar .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .mode-pill {
+    min-height: 52px; padding: 8px 26px; border-radius: 999px; cursor: pointer;
+    font-size: 21px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-muted); border: 2px dashed var(--rule-color);
+    touch-action: manipulation; transition: all 0.2s;
+  }
+  .mode-pill:hover:not(.active) { background: var(--bg-panel-hover); color: var(--chalk-white); }
+  .mode-pill.active { background: var(--chalk-yellow); color: var(--bg-base); border: 2px solid var(--chalk-yellow); box-shadow: 0 0 14px rgba(255, 224, 102, 0.35); }
+  .mode-hint { font-size: 17px; color: var(--chalk-dim); text-align: center; line-height: 1.5; max-width: 900px; }
+
+  /* 老師講解的控制列（只在老師模式出現；學生模式整條不顯示） */
+  .teach-bar { display: none; width: 100%; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  body.mode-teacher .teach-bar { display: flex; }
+  .teach-btn {
+    min-height: 44px; padding: 6px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 18px; font-weight: 700; font-family: inherit; line-height: 1.3;
+    background: transparent; color: var(--chalk-green); border: 2px solid var(--chalk-green);
+    touch-action: manipulation; transition: all 0.2s;
+  }
+  .teach-btn:hover:not(:disabled) { background: var(--chalk-green); color: var(--bg-base); }
+  .teach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .teach-btn.hot { background: var(--chalk-yellow); color: var(--bg-base); border-color: var(--chalk-yellow); }
+  .teach-track { flex: 1 1 180px; min-width: 120px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .teach-fill { height: 100%; width: 0; background: var(--chalk-yellow); border-radius: 6px; transition: width 0.35s linear; }
+  .teach-note { flex: 1 1 100%; text-align: center; font-size: 18px; line-height: 1.5; color: var(--chalk-yellow); min-height: 1.5em; }
+  /* 老師模式：學生專用的按鈕與滑桿那幾列收起來；上方的步驟編號可以點（跳到那一步） */
+  body.mode-teacher .std-only { display: none !important; }
+  /* 老師模式：步驟編號可以點（跳到那一步） */
+  body.mode-teacher .lab-steps li { cursor: pointer; }
+  body.mode-teacher .lab-steps li:hover { outline: 2px solid var(--chalk-yellow); outline-offset: 2px; }
+
 /* 手機整頁直線防護（iOS）：觸控裝置（手機、平板）拿掉整頁點點背景，並關掉 fixed 浮動鈕的毛玻璃；桌面不受影響。 */
 @media (hover: none) and (pointer: coarse) {
   html, body { background-image: none !important; }
@@ -917,24 +953,32 @@
     <div class="subtitle" data-zh="從地震波的線索看見地球內部的分層，再找出推動板塊的力量。" data-en="Use clues from seismic waves to see the layers inside the Earth, then find the force that moves the plates.">從地震波的線索看見地球內部的分層，再找出推動板塊的力量。</div>
   </header>
 
+  <div class="mode-bar" id="modeBar" role="group" aria-label="使用模式">
+    <div class="mode-row">
+      <button class="mode-pill active" id="mode-student" type="button" aria-pressed="true" onclick="setMode('student')" data-zh="✋ 學生操作" data-en="✋ Student: hands-on">✋ 學生操作</button>
+      <button class="mode-pill" id="mode-teacher" type="button" aria-pressed="false" onclick="setMode('teacher')" data-zh="👩‍🏫 老師講解" data-en="👩‍🏫 Teacher: guided tour">👩‍🏫 老師講解</button>
+    </div>
+    <div class="mode-hint" data-zh="老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。" data-en="Teacher: press it and everything plays through on its own; pause, replay, or tap a step number to jump. Student: the original hands-on activities.">老師講解：按下去就自動從頭連續播放，可暫停、重播，也可以點步驟編號跳到那一步。學生操作：維持原本的互動。</div>
+  </div>
+
   <div class="tabs">
-    <button class="tab-btn active" id="btn-tab-0" type="button" onclick="switchTab(0)">
+    <button class="tab-btn active" id="btn-tab-0" data-tab="tab1" type="button" onclick="switchTab(0)">
       <span class="tab-main" data-zh="挖不到地心，怎麼知道？" data-en="How can we see inside?">挖不到地心，怎麼知道？</span>
       <span class="tab-sub" data-zh="地震波透視" data-en="Seismic Waves">地震波透視</span>
     </button>
-    <button class="tab-btn" id="btn-tab-1" type="button" onclick="switchTab(1)">
+    <button class="tab-btn" id="btn-tab-1" data-tab="tab2" type="button" onclick="switchTab(1)">
       <span class="tab-main" data-zh="重的東西去哪裡？" data-en="Where do heavy things go?">重的東西去哪裡？</span>
       <span class="tab-sub" data-zh="地殼、地函、地核" data-en="Crust, Mantle, Core">地殼、地函、地核</span>
     </button>
-    <button class="tab-btn" id="btn-tab-2" type="button" onclick="switchTab(2)">
+    <button class="tab-btn" id="btn-tab-2" data-tab="tab3" type="button" onclick="switchTab(2)">
       <span class="tab-main" data-zh="比較厚就比較重？" data-en="Thicker means heavier?">比較厚就比較重？</span>
       <span class="tab-sub" data-zh="大陸與海洋地殼" data-en="Two Kinds of Crust">大陸與海洋地殼</span>
     </button>
-    <button class="tab-btn" id="btn-tab-3" type="button" onclick="switchTab(3)">
+    <button class="tab-btn" id="btn-tab-3" data-tab="tab4" type="button" onclick="switchTab(3)">
       <span class="tab-main" data-zh="固體也會流動？" data-en="Can a solid flow?">固體也會流動？</span>
       <span class="tab-sub" data-zh="岩石圈與軟流圈" data-en="Lithosphere & Asthenosphere">岩石圈與軟流圈</span>
     </button>
-    <button class="tab-btn" id="btn-tab-4" type="button" onclick="switchTab(4)">
+    <button class="tab-btn" id="btn-tab-4" data-tab="tab5" type="button" onclick="switchTab(4)">
       <span class="tab-main" data-zh="板塊為什麼會動？" data-en="Why do plates move?">板塊為什麼會動？</span>
       <span class="tab-sub" data-zh="熱對流與板塊運動" data-en="Convection & Plates">熱對流與板塊運動</span>
     </button>
@@ -945,7 +989,7 @@
     <div class="hook-box">
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
-        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="人類鑽過最深的洞大約 12 公里，地球的半徑卻約 6370 公里——" data-en="The deepest hole ever drilled is about 12 km, yet the Earth's radius is about 6370 km — ">人類鑽過最深的洞大約 12 公里，地球的半徑卻約 6370 公里——</span><b data-zh="連 0.2% 都挖不到，科學家怎麼知道地球裡面分成好幾層？" data-en="not even 0.2% of the way. So how do scientists know the Earth has layers inside?">連 0.2% 都挖不到，科學家怎麼知道地球裡面分成好幾層？</b><span data-zh="答案藏在地震波速度突然改變的地方。" data-en=" The answer lies where seismic waves suddenly change speed.">答案藏在地震波速度突然改變的地方。</span></div>
       </div>
     </div>
@@ -1034,7 +1078,7 @@
     <div class="hook-box">
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
-        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="把地球縮成一顆蘋果，地殼比蘋果皮還薄——" data-en="Shrink the Earth to the size of an apple and the crust is thinner than the peel — ">把地球縮成一顆蘋果，地殼比蘋果皮還薄——</span><b data-zh="那地球裡面最重的東西，都跑到哪裡去了？" data-en="so where has all the heaviest stuff inside the Earth gone?">那地球裡面最重的東西，都跑到哪裡去了？</b><span data-zh="用一支量筒做「密度柱」，看看密度大的東西會待在哪裡。" data-en=" Build a density column in a measuring cylinder and see where the densest things end up.">用一支量筒做「密度柱」，看看密度大的東西會待在哪裡。</span></div>
       </div>
     </div>
@@ -1123,7 +1167,7 @@
     <div class="hook-box">
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
-        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="大陸地殼比較厚、海洋地殼比較薄——" data-en="The continental crust is thicker and the oceanic crust is thinner — ">大陸地殼比較厚、海洋地殼比較薄——</span><b data-zh="比較厚的，不是應該比較重嗎？" data-en="shouldn't the thicker one be heavier?">比較厚的，不是應該比較重嗎？</b><span data-zh="拿一大塊花岡岩、一小塊玄武岩，用天平和排水法算算它們的密度。" data-en=" Take a big piece of granite and a small piece of basalt and work out their densities with a balance and water displacement.">拿一大塊花岡岩、一小塊玄武岩，用天平和排水法算算它們的密度。</span></div>
       </div>
     </div>
@@ -1211,7 +1255,7 @@
     <div class="hook-box">
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
-        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="軟流圈的名字裡有個「流」，卻不是液態的岩漿——" data-en="The asthenosphere is said to flow, yet it is not liquid magma — ">軟流圈的名字裡有個「流」，卻不是液態的岩漿——</span><b data-zh="固體也會流動嗎？" data-en="can a solid really flow?">固體也會流動嗎？</b><span data-zh="有一個實驗從 1930 年看到現在，才滴下 9 滴。" data-en=" One experiment has been watched since 1930 and has produced just 9 drops.">有一個實驗從 1930 年看到現在，才滴下 9 滴。</span></div>
       </div>
     </div>
@@ -1313,7 +1357,7 @@
     <div class="hook-box">
       <div class="xiaozhen-logo"><img src="assets/characters/xiaozhen/teaching.png" alt="曉臻老師"></div>
       <div class="hook-content">
-        <div class="hook-title" data-zh="曉臻老師的疑問" data-en="Ms. Xiaozhen wonders">曉臻老師的疑問</div>
+        <div class="hook-title" data-zh="曉臻老師說" data-en="Ms. Xiaozhen says">曉臻老師說</div>
         <div class="hook-text"><span data-zh="板塊每年只移動幾公分，卻能把海洋撕開、把山脈推高——" data-en="Plates move only a few centimetres a year, yet they tear oceans open and push mountains up — ">板塊每年只移動幾公分，卻能把海洋撕開、把山脈推高——</span><b data-zh="是什麼在推它們？" data-en="what is pushing them?">是什麼在推它們？</b><span data-zh="看看地球內部的熱，怎麼讓軟流圈慢慢對流、帶著板塊走。" data-en=" See how the Earth's inner heat makes the asthenosphere churn slowly and carry the plates along.">看看地球內部的熱，怎麼讓軟流圈慢慢對流、帶著板塊走。</span></div>
       </div>
     </div>
@@ -3351,5 +3395,7 @@
 <script defer src="assets/biology/lesson_quiz_static_1026_v1.js?v=20261029-opt"></script>
 <script defer src="assets/quiz/quiz_earth_interior_1_1028_v1.js?v=20261028-q1"></script>
 <script src="assets/pen_tool_1031_v1.js?v=20261102-p4" defer></script>
+<script src="earth_interior_1_teach_1120_v1.js?v=20261120-b" defer></script>
+<script src="earth_interior_1_voice_v1.js?v=20261120-a" defer></script>
 </body>
 </html>
