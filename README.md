@@ -315,7 +315,7 @@
 
 ## 設計與開發原則
 
-完整且最新的規範以 [`AGENTS.md`](AGENTS.md)（V5 大憲章）為準；目前做到哪、還有什麼沒做，看 [`PROGRESS.md`](PROGRESS.md)。以下是最核心的原則。
+完整且最新的規範以 [`AGENTS.md`](AGENTS.md)（V6 精簡版；舊版全文在 docs/archive/）為準；目前做到哪、還有什麼沒做，看 [`PROGRESS.md`](PROGRESS.md)。以下是最核心的原則。
 
 **先保護，再優化。** 既有的 Canvas、動畫、計算、座標、實驗裝置與題庫若科學上正確，不為了雙語化或排版而改寫（Zero Touch）；優化一律採「外層加法」：加 UI、加雙語、加 Hook、加排版保護。發現疑似科學錯誤時，先提出討論，不偷偷修正。
 
@@ -359,7 +359,7 @@ tools/voice/               曉臻旁白錄音工具
 tools/promo/、promo/       宣傳短片的製作腳本與成品
 .github/workflows/         曉臻自動錄音（GitHub Actions）
 local-backups/             原始圖片備份（依日期）
-AGENTS.md                  協作規範（V5 大憲章）
+AGENTS.md                  協作規範（V6 精簡版；舊版全文在 docs/archive/）
 PROGRESS.md                工作進度
 ```
 
@@ -372,7 +372,7 @@ PROGRESS.md                工作進度
 3. 用 `tools/qa/` 的工具跑檢查（說明見 [`tools/qa/README.md`](tools/qa/README.md)）。
 4. 更新 [`PROGRESS.md`](PROGRESS.md)。
 
-旁白錄音：把台詞推到 GitHub，由 Actions 用微軟「曉臻」語音自動錄製並接檔；流程見 `AGENTS.md` 第十四律。
+旁白錄音：把台詞推到 GitHub，由 Actions 用微軟「曉臻」語音自動錄製並接檔；流程見 `docs/archive/AGENTS_V5_全文備份_20261120.md` 第十四律。
 
 ## 圖像來源與授權
 
