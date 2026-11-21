@@ -480,6 +480,7 @@
       document.body.classList.toggle('vx-on', show);
       open.classList.toggle('on', show);
       open.setAttribute('aria-pressed', String(show));
+      if (show && !started) start();   // 打開面板就自動開始播（這一下點擊就是瀏覽器要的「使用者操作」）
     });
     startB.addEventListener('click', start);
     pauseB.addEventListener('click', pause);

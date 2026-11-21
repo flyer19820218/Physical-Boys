@@ -110,6 +110,7 @@
       document.body.classList.toggle('vx-show', show); // 面板打開時頁尾留白，讓底部的按鈕（例如接線練習）捲得上來
       ui.open.classList.toggle('on', show);
       ui.open.setAttribute('aria-pressed', String(show));
+      if (show && state === 'idle') start();   // 打開面板就自動開始播（這一下點擊就是瀏覽器要的「使用者操作」，不必再按 ▶）
     });
     // 老師講解模式的自動導覽會自己換分頁，和語音同時跑就會對不上：語音播放中一律留在學生操作。
     // 播放中若有人按了「老師講解」，就切回學生操作，並把目前這一句的畫面重新套上。

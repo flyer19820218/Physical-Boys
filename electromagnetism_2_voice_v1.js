@@ -108,6 +108,7 @@
       ui.panel.classList.toggle('show', show);
       ui.open.classList.toggle('on', show);
       ui.open.setAttribute('aria-pressed', String(show));
+      if (show && state === 'idle') start();   // 打開面板就自動開始播（這一下點擊就是瀏覽器要的「使用者操作」，不必再按 ▶）
     });
     ui.start.addEventListener('click', start);
     ui.pause.addEventListener('click', pause);
