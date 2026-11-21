@@ -188,7 +188,8 @@
   // ─── 切頁與畫面場景（本課專用）───
   // 本課（earth_plates_2）頁面的分頁用 switchTab(idx)（按鈕 .tab-btn[data-tab=tab1…tab5]）。各畫面的狀態都呼叫頁面原本的全域函式與狀態
   // （glMode／glTaiwan、dvMode／DVS、sbMode／SBS、clSet／CLS、evMode），不改任何畫法與節奏。步驟對照（與 lessons/earth_plates_2.json 的 _note 相同）：
-  //   tab1：1＝海陸、2＝板塊交界、3＝地震火山、4＝找臺灣
+  //   tab1：步驟＝「圖層＋地球儀角度」（GL1 表）：1＝海陸・開場角度、2＝海陸・夏威夷、3＝海陸・大西洋、4＝板塊交界・大西洋（中洋脊）、
+  //         5＝板塊交界・喜馬拉雅、6＝地震火山・喜馬拉雅、7＝地震火山・太平洋（環太平洋＋夏威夷）、8＝找臺灣（頁面 glTaiwan）
   //   tab2：1＝分離程度 0、2＝50、3＝100（皆海底擴張）、4＝冰島案例
   //   tab3：1～5＝隱沒帶 比密度、熱對流與靠近、看地震、看火山、實例安地斯（頁面會自己依時間換下一步，播放期間由播放器壓住，停在該步結尾）
   //   tab4：1＝擠壓 0、2＝35、3＝100、4＝100＋原始地表虛線
@@ -200,6 +201,24 @@
   var sbVoice = false, sbFrozen = -1;     // 隱沒帶：播放期間壓住「自動換下一步」
   var SBN = ['dens', 'move', 'quake', 'volc', 'andes'];
 
+  // 地球儀的鏡頭表（GLS.lon／lat＝畫面正中央的經緯度；d＝飛行秒數）。座標只選角度，不改頁面的畫法
+  var HOME = [60, 12], HAWAII = [-157, 18], ATLANTIC = [-28, 10], HIMALAYA = [82, 28], PACIFIC = [-160, 10];
+  var GL1 = [
+    { mode: 'coast', to: HOME, d: 2.4 },        // 1 開場
+    { mode: 'coast', to: HAWAII, d: 2.6 },      // 2 夏威夷（封面）
+    { mode: 'coast', to: ATLANTIC, d: 2.4 },    // 3 真實的海陸：大西洋兩岸
+    { mode: 'plates', to: ATLANTIC, d: 2.2 },   // 4 板塊交界：大西洋中洋脊在正中間
+    { mode: 'plates', to: HIMALAYA, d: 2.2 },   // 5 喜馬拉雅那一條
+    { mode: 'act', to: HIMALAYA, d: 2.2 },      // 6 打開地震與火山
+    { mode: 'act', to: PACIFIC, d: 2.4 },       // 7 環太平洋一整圈＋夏威夷在正中間
+    { mode: 'act', tw: true }                   // 8 找臺灣
+  ];
+  var glTo = HOME, glHold = null;               // glTo：目前要對準的角度；glHold：暫停時先收起的飛行
+  function glAt(to) { var f = GLS.fly; if (f) return Math.abs(glNormLon(f.l0 + f.dl - to[0])) < 0.5 && Math.abs(f.p0 + f.dp - to[1]) < 0.5; return Math.abs(glNormLon(GLS.lon - to[0])) < 0.5 && Math.abs(GLS.lat - to[1]) < 0.5; }
+  function glAim(to, d) { glTo = to; if (!glAt(to)) glFly(to, d); }   // 已經在那裡（或正飛往那裡）就不重飛
+  function glFreeze() { if (GLS.fly) { glHold = { to: glTo, left: Math.max(0.5, (1 - GLS.fly.p) * GLS.fly.d) }; GLS.fly = null; } }
+  function glThaw() { var h = glHold; glHold = null; if (h && !GLS.drag && cur.tab === 'tab1') glFly(h.to, h.left); }
+
   function chase(get, set, target, up, down) {   // 讓數值每秒以 up／down 的速度走向目標
     return function (dt) {
       var v = get();
@@ -208,13 +227,18 @@
   }
 
   var SCENES = {
-    tab1: function (step) {
-      glTouch(); GLS.tw = false; GLS.fly = null;
-      if (step < 4 && (cur.tab !== 'tab1' || cur.step === 4)) { GLS.lon = 60; GLS.lat = 12; GLS.vl = GLS.vp = 0; }   // 從臺灣視角倒回來：地球儀轉回原本的角度
-      if (step === 1) glMode('coast');
-      else if (step === 2) glMode('plates');
-      else if (step === 3) glMode('act');
-      else glTaiwan();
+    tab1: function (step, anim) {
+      var V = GL1[step - 1] || GL1[0];
+      glTouch(); GLS.vl = GLS.vp = 0;
+      if (V.tw) {                                                   // 找臺灣：照頁面的按鈕（glTaiwan 自己會飛 2.2 秒）
+        if (!GLS.tw || !glAt(GL.TW)) { GLS.mode = V.mode; glTaiwan(); }
+        glSetMode(V.mode); glUI();
+        glTo = GL.TW;
+      } else {
+        GLS.tw = false; glMode(V.mode);
+        glAim(V.to, V.d);
+      }
+      if (!anim) { GLS.fly = null; GLS.lon = glTo[0]; GLS.lat = glTo[1]; }   // 跳句／快轉：直接停在那句該有的角度，不從頭飛
     },
     tab2: function (step) {
       dvTouch();
@@ -286,9 +310,9 @@
     var ps = document.querySelectorAll('.panel');                          // 目前分頁照剛打開的樣子重新示範
     for (var i = 0; i < ps.length; i++) if (ps[i].classList.contains('active')) { var f = window[V5_PFX[i] + 'Enter']; if (typeof f === 'function') f(); }
   }
-  function freezeRun() { pauseSaved = { on: 1 }; }
-  function thawRun() { pauseSaved = null; }
-  function restoreRun() { pauseSaved = null; drive = null; runSaved = null; resetAll(); }
+  function freezeRun() { pauseSaved = { on: 1 }; glFreeze(); }              // 暫停：地球儀的飛行也停在半路
+  function thawRun() { pauseSaved = null; glThaw(); }
+  function restoreRun() { pauseSaved = null; drive = null; runSaved = null; glHold = null; glTo = HOME; resetAll(); }
 
   // 把一段範圍（頭 top～尾 bot）捲到字幕框上方：放得下就置中；放不下就依 anchor 對齊上緣或下緣
   function bringIntoView(v) {
@@ -388,7 +412,7 @@
       if (m && m[1] === '切頁') {
         var c = stage.cuts[m[2].trim()];
         setPin('');
-        if (c) goto(c.tab, c.sub, c.step);
+        if (c && c.tab !== cur.tab) goto(c.tab, c.sub, c.step);   // 已經在同一個分頁（本課第 1 句起就在 tab1）：不把畫面拉回第 1 步
       } else if (m && m[1] === '釘選') {
         setPin(m[2].trim());
       } else if (m && m[1] === '停') {
@@ -424,6 +448,7 @@
     stopActs();
     if (at) goto(at.tab, at.sub, at.step, true);
     showSub(it);
+    if (cur.tab && ui.pin.classList.contains('show')) bringIntoView(viewOf(cur.tab, cur.step));   // 字幕變兩行時字幕框會長高、黃條跟著往上：畫布被蓋到就再捲一次
     var n = lineNo() + 1;
     progress(n - 1);
     var a = audio = getAudio(it);
@@ -495,7 +520,7 @@
       var it = items[i];
       if (it.kind === 'marker') {
         var m = /^[＊*]\s*(切頁|停|釘選)\s*[：:]\s*(.+)$/.exec(it.text || '');
-        if (m && m[1] === '切頁') { var c = stage.cuts[m[2].trim()]; if (c) want = { tab: c.tab, sub: c.sub, step: 1 }; pin = ''; }
+        if (m && m[1] === '切頁') { var c = stage.cuts[m[2].trim()]; if (c && !(want && want.tab === c.tab)) want = { tab: c.tab, sub: c.sub, step: 1 }; pin = ''; }
         else if (m && m[1] === '釘選') pin = m[2].trim();
       } else if (it.kind === 'line') {
         var a = stage.at[it.id];
@@ -538,7 +563,7 @@
 
   function halt() {
     cancelAnimationFrame(raf);
-    token++; clearWait(); waitDone = null; stopActs(); clearTimers(); pauseSaved = null;
+    token++; clearWait(); waitDone = null; stopActs(); clearTimers(); pauseSaved = null; glHold = null;
     if (audio) { audio.onended = audio.onerror = null; try { audio.pause(); } catch (e) {} }
     audio = null;
   }
