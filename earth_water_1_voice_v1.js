@@ -5,7 +5,7 @@
  */
 (function () {
   'use strict';
-  var FILE_V = '?v=20261121-5';   // 重錄過音檔就換版本號，舊快取才不會唸到舊的
+  var FILE_V = '?v=20261121-6';   // 重錄過音檔就換版本號，舊快取才不會唸到舊的
   var MANIFEST_URL = 'audio/earth_water_1/manifest.json';
   var STAGE_URL = 'audio/earth_water_1/stage.json';
   // 音檔與網頁同一個網域（audio/earth_water_1/mp3/）：iPad Safari 對 GitHub Release 的下載網址（octet-stream＋attachment）常常無法播放。
