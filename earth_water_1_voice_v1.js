@@ -5,6 +5,7 @@
  */
 (function () {
   'use strict';
+  var AV = '?v=20261121-2';   // 重錄過音檔就換版本號，舊快取才不會唸到舊的
   var MANIFEST_URL = 'audio/earth_water_1/manifest.json';
   var STAGE_URL = 'audio/earth_water_1/stage.json';
   // 音檔與網頁同一個網域（audio/earth_water_1/mp3/）：iPad Safari 對 GitHub Release 的下載網址（octet-stream＋attachment）常常無法播放。
@@ -592,14 +593,14 @@
     var a = player;
     a.onended = a.onerror = null;
     a.dataset.tried = '';
-    a.src = AUDIO_BASE + encodeURIComponent(it.file);
+    a.src = AUDIO_BASE + encodeURIComponent(it.file) + AV;
     return a;
   }
 
   function preloadNext() { // 先把下一句抓進瀏覽器快取
     for (var i = idx + 1; i < items.length; i++) {
       if (items[i].kind === 'line') {
-        try { fetch(AUDIO_BASE + encodeURIComponent(items[i].file), { cache: 'force-cache' }).catch(function () {}); } catch (e) {}
+        try { fetch(AUDIO_BASE + encodeURIComponent(items[i].file) + AV, { cache: 'force-cache' }).catch(function () {}); } catch (e) {}
         return;
       }
     }
@@ -629,7 +630,7 @@
       if (advanced || my !== token) return;
       if (!a.dataset.tried) {
         a.dataset.tried = '1';
-        a.src = AUDIO_FALLBACK + encodeURIComponent(it.file);
+        a.src = AUDIO_FALLBACK + encodeURIComponent(it.file) + AV;
         var q = a.play(); if (q && q.catch) q.catch(function () {});
         return;
       }
