@@ -2571,17 +2571,18 @@
   /* ==================================================================
      子分頁「表面積」（960 × 500），兩種模式
        race：同質量的灰石（大塊／小碎塊／粉末）各加入等量稀鹽酸，試管口的氣球收集 CO₂，看誰先脹大
-             相對表面積 1 : 3 : 9 → 反應速率也差不多 1 : 3 : 9
+             相對表面積 1 : 3 : 9 → 反應速率也差不多 1 : 3 : 9；但質量相同、酸足量，最後 CO2 總量一樣（80 mL）
        cut ：把一個大方塊每邊切成 n 等分 → n³ 塊，總表面積變成 n 倍（729 塊 ＝ 9³ → 9 倍）
      ================================================================== */
-  const SF = { W: 960, H: 500, B: 440, T: 60, SPD: 4 };
+  const SF = { W: 960, H: 500, B: 440, T: 180, SPD: 7.2, TAU: 30, VMAX: 80 }; /* 灰石質量相同、鹽酸足量 → 最後的 CO2 總量都是 80 mL；表面積 k 只改變「多快到」 */
   const SF_K = [
     { n: ['一大塊', 'One lump'], k: 1, col: '#e9e1cf' },
     { n: ['小碎塊', 'Small chips'], k: 3, col: '#efe6d2' },
     { n: ['粉末', 'Powder'], k: 9, col: '#f6f1e6' }
   ];
   const SFS = { mode: 'race', run: false, t: 0, last: 0, n: 3, g: 0, bub: [[], [], []] };
-  const sfV = (k, t) => 80 * (1 - Math.exp(-k * t / 90));
+  const sfV = (k, t) => SF.VMAX * (1 - Math.exp(-k * t / SF.TAU));
+  const sfRate = (k, t) => SF.VMAX * k / SF.TAU * Math.exp(-k * t / SF.TAU); /* mL/s */
   function sfMode(m) { SFS.mode = m; SF_UI_KEY = ''; sfUI(); }
   function sfGo() { if (SFS.t >= SF.T) sfReset(); SFS.run = !SFS.run; SF_UI_KEY = ''; sfUI(); }
   function sfReset() { SFS.run = false; SFS.t = 0; SFS.bub = [[], [], []]; SF_UI_KEY = ''; sfUI(); }
@@ -2597,12 +2598,13 @@
       c.fillStyle = `rgba(${170 + cloudy * 200},${215 + cloudy * 100},250,${0.28 + cloudy})`; c.fillRect(L, top + 70, w, bot - top);
       /* 固體 */
       const r = kRand(i + 5); c.fillStyle = K.col;
-      if (i === 0) { const s = 34 * Math.sqrt(Math.max(0.05, left)); e_rr(c, x - s / 2, bot - 8 - s * 0.8, s, s * 0.8, 4); c.fill(); }
+      if (left < 0.012) { /* 灰石已經反應完 */ }
+      else if (i === 0) { const s = 34 * Math.sqrt(Math.max(0.05, left)); e_rr(c, x - s / 2, bot - 8 - s * 0.8, s, s * 0.8, 4); c.fill(); }
       else if (i === 1) { const s = 14 * Math.sqrt(Math.max(0.05, left)); for (let k = 0; k < 7; k++) { c.save(); c.translate(L + 12 + r() * (w - 24), bot - 10 - r() * 18); c.rotate(r() * 3); c.fillRect(-s / 2, -s / 2, s, s * 0.8); c.restore(); } }
       else { const n = Math.round(60 * left); for (let k = 0; k < n; k++) { c.beginPath(); c.arc(L + 8 + r() * (w - 16), bot - 6 - r() * 10, 2, 0, Math.PI * 2); c.fill(); } }
       /* 氣泡：跟反應速率成正比 */
-      const rate = K.k * Math.exp(-K.k * SFS.t / 90);
-      if (SFS.run && Math.random() < rate * 0.35) SFS.bub[i].push({ x: L + 10 + Math.random() * (w - 20), y: bot - 16, r: 1.8 + Math.random() * 2 });
+      const rate = K.k * Math.exp(-K.k * SFS.t / SF.TAU) * 3;
+      if (SFS.run && Math.random() < rate * 0.12) SFS.bub[i].push({ x: L + 10 + Math.random() * (w - 20), y: bot - 16, r: 1.8 + Math.random() * 2 });
       SFS.bub[i].forEach(b => b.y -= (50 + b.r * 10) * dt); SFS.bub[i] = SFS.bub[i].filter(b => b.y > top + 72);
       c.strokeStyle = 'rgba(240,250,255,0.8)'; c.lineWidth = 1.3; SFS.bub[i].forEach(b => { c.beginPath(); c.arc(b.x, b.y, b.r, 0, Math.PI * 2); c.stroke(); });
       c.restore();
@@ -2615,6 +2617,7 @@
       e_txt(c, tr(...K.n), x, SF.B + 28, '#f6f3ea', 18, 'center', 200);
       kPlateRich(c, 'CO_2 ' + V.toFixed(0) + ' mL', x + 60, top + 40, 17, '#8fe9ff', 'left');
       kPlateRich(c, tr('表面積 ×', 'Area ×') + K.k, x + 60, top + 80, 16, '#ffe066', 'left');
+      kPlateRich(c, tr('速率 ', 'Rate ') + sfRate(K.k, SFS.t).toFixed(1) + ' mL/s', x + 60, top + 120, 16, '#ffb070', 'left');
     });
     kPlateRich(c, SFS.t.toFixed(1) + ' s', SF.W - 70, 40, 22, '#ffe066', 'center');
     e_label(c, tr('同質量的灰石 ＋ 等量稀鹽酸，氣球收集 CO₂', 'Same mass of limestone + equal dilute HCl; balloons collect CO₂'), SF.W / 2 - 40, 40, '#f6f3ea', 19, 'center', true, 760);
@@ -2666,7 +2669,8 @@
     st.innerHTML = SFS.mode === 'cut'
       ? (SFS.n === 9 ? tr('切成 <b>729 塊</b>：729 ＝ 9 × 9 × 9，每邊切成 9 等分，所以表面積變成原來的 <b>9 倍</b>。', 'Cut into <b>729 pieces</b>: 729 = 9 × 9 × 9, so each edge is cut into 9 and the area becomes <b>9 times</b> as large.')
         : tr(`每邊切成 ${SFS.n} 等分，共 ${SFS.n ** 3} 塊；每塊面積變成 1/${SFS.n * SFS.n}，塊數變成 ${SFS.n ** 3} 倍，合起來表面積是 <b>${SFS.n} 倍</b>。拉到 9 看看課本那一題。`, `Cut each edge into ${SFS.n}: ${SFS.n ** 3} pieces; each face shrinks to 1/${SFS.n * SFS.n} but there are ${SFS.n ** 3} times as many pieces, so the total area is <b>${SFS.n} times</b>. Slide to 9 for the textbook problem.`))
-      : SFS.t >= SF.T || SFS.t > 20 ? tr('<b>粉末最快、一大塊最慢</b>：質量一樣，但切得越細，跟鹽酸接觸的表面積越大，H<sup>+</sup> 撞上固體的機會越多。', '<b>Powder is fastest, the lump slowest</b>: same mass, but the finer it is, the more surface touches the acid and the more often H<sup>+</sup> hits the solid.')
+      : SFS.t >= SF.T ? tr('<b>最後三支一樣多（都是 80 mL）</b>：灰石質量一樣、鹽酸足夠，能生成的 CO<sub>2</sub> 總量就一樣。表面積只決定「多快」，不決定「多少」。', '<b>All three end up with the same 80 mL</b>: same mass of limestone and enough acid means the same total CO<sub>2</sub>. Surface area decides how fast, not how much.')
+      : SFS.t > 6 ? tr('<b>粉末最快、一大塊最慢</b>：切得越細，跟鹽酸接觸的表面積越大，H<sup>+</sup> 撞上固體的機會越多。先別下結論，等到最後看三支各收集了多少。', '<b>Powder is fastest, the lump slowest</b>: the finer it is, the more surface touches the acid and the more often H<sup>+</sup> hits the solid. Hold on: wait until the end to compare how much each collected.')
       : tr('三支試管裝同質量的灰石（碳酸鈣），只有顆粒大小不同。按下開始，看哪一顆氣球先脹大。', 'Three tubes hold the same mass of limestone (calcium carbonate); only the particle size differs. Start and see which balloon inflates first.');
   }
   function sfRefresh() { SF_UI_KEY = ''; sfUI(); }
