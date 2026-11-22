@@ -1361,20 +1361,30 @@
       ctx.fillStyle = '#FFFFFF';
       ctx.font = '20px "JetBrains Mono", sans-serif';
       ctx.textAlign = 'left'; ctx.fillText(tr('時間倒數 (1/s)', 'Rate (1/s)'), 10, padY - 16);
-      ctx.textAlign = 'right'; ctx.fillText(tr('溫度 (°C)', 'Temp (°C)'), w - padX, h - padY + 32); ctx.textAlign = 'left';
+      ctx.textAlign = 'right'; ctx.fillText(tr('溫度 (°C)', 'Temp (°C)'), w - padX, h - padY + 46); ctx.textAlign = 'left';
 
+      /* 每升高 10°C，速率約變成 2 倍：rate = 2^(T/10)，T 取 0～50°C，縱軸 0～32 倍 */
+      const TMAX = 50, RMAX = 32, pw = w - padX * 2, ph = h - padY * 2;
+      const gx = T => padX + T / TMAX * pw, gy = r => (h - padY) - r / RMAX * ph;
+      ctx.font = '18px "JetBrains Mono", sans-serif';
+      for (let T = 0; T <= TMAX; T += 10) {
+          const r = Math.pow(2, T / 10);
+          ctx.setLineDash([5, 5]); ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(padX, gy(r)); ctx.lineTo(gx(T), gy(r)); ctx.lineTo(gx(T), h - padY); ctx.stroke(); ctx.setLineDash([]);
+          ctx.fillStyle = '#a3b8b0'; ctx.textAlign = 'center'; ctx.fillText(String(T), gx(T), h - padY + 20);
+          if (T > 0) { ctx.textAlign = 'right'; ctx.fillText('×' + r, padX - 8, gy(r) + 6); } /* 原點就是 ×1，不再標，避免和 ×2 擠在一起 */
+      }
+      ctx.textAlign = 'left';
       ctx.beginPath();
       ctx.strokeStyle = '#33cc99';
       ctx.lineWidth = 4;
-      let startX = padX;
-      ctx.moveTo(startX, h - padY);
-      for(let x = startX; x <= w - padX; x += 2) {
-          let normX = (x - startX) / (w - padX * 2); 
-          let normY = Math.pow(normX, 2.5); 
-          let py = (h - padY) - normY * (h - padY * 2);
-          ctx.lineTo(x, py);
+      for (let T = 0; T <= TMAX; T += 0.5) {
+          const px = gx(T), py = gy(Math.pow(2, T / 10));
+          T ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
       }
       ctx.stroke();
+      ctx.fillStyle = '#33cc99';
+      for (let T = 0; T <= TMAX; T += 10) { ctx.beginPath(); ctx.arc(gx(T), gy(Math.pow(2, T / 10)), 5, 0, Math.PI * 2); ctx.fill(); }
   }
 
   // --- 常態分布亂數產生器 ---
