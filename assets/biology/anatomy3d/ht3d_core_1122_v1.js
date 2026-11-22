@@ -273,6 +273,9 @@ export async function createViewer(o) {
   const budgetMax = o.budget || (lite ? 1000 : 2400);
   const rbcGeo = rbcGeometry(lite ? 8 : 12);
   const rbcMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.45, clearcoat: 0.2, sheen: 0.25, sheenColor: new THREE.Color('#ff7a68'), envMapIntensity: 0.45 });
+  /* 血球亮度倍率：場景可設 SCENE.flowBright（預設 1＝不變；2＝亮度加倍）。乘在材質顏色上，再補一點自發光，暗處也看得到 */
+  const FB = Math.min(4, Math.max(0.2, Number(SC.flowBright) || 1));
+  rbcMat.color.setScalar(FB); if (FB > 1) rbcMat.emissive.set('#ff5a48').multiplyScalar(0.1 * (FB - 1));
   const cells = new THREE.InstancedMesh(rbcGeo, rbcMat, budgetMax);
   cells.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   cells.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(budgetMax * 3), 3); cells.instanceColor.setUsage(THREE.DynamicDrawUsage);
@@ -343,7 +346,7 @@ export async function createViewer(o) {
     const [pos, target, near] = camAt(st, t);
     const prev = styleCache[k > 0 ? k - 1 : 0], cur = styleCache[k], b = k > 0 ? smooth(t / 1.0) : 1, style = {};
     for (const key of new Set([...Object.keys(prev), ...Object.keys(cur)])) {
-      const z = /^(deep|glow)\./.test(key) ? 0 : undefined;   // 加深／發亮沒寫＝0，才會從 0 平滑過渡
+      const z = /^(deep|glow|lit)\./.test(key) ? 0 : undefined;   // 加深／發亮沒寫＝0，才會從 0 平滑過渡
       const a = prev[key] ?? SC.baseStyle[key] ?? z ?? cur[key], c = cur[key] ?? SC.baseStyle[key] ?? z ?? a; style[key] = a + (c - a) * b;
     }
     const prevFlows = new Set(k > 0 ? SC.steps[k - 1].flows : []);
@@ -369,7 +372,7 @@ export async function createViewer(o) {
   /* 加深（deep.<群組或id>：0～1）＝目標器官的顏色變深、變飽和；發亮（glow.<群組或id>：0～1）＝正在講解的血管加自發光與較強邊緣光。
    * 兩者都放在每一步的 style 裡，跟透明度一樣隨步驟平滑過渡；不改血管透明度，血球才不會被遮住。 */
   const hsl = { h: 0, s: 0, l: 0 }, VEIN_GLOW = new THREE.Color('#d23a66'), ART_GLOW = new THREE.Color('#ff3b2c');
-  function tint(s, deep, glow) {
+  function tint(s, deep, glow, lit) {
     const m = s.mat; if (!m.userData.base) m.userData.base = { color: m.color.clone(), rim: m.userData.rim.value.clone() };
     const b = m.userData.base;
     if (s.kind === 'artery' || s.kind === 'vein' || s.kind === 'generated') {
@@ -378,6 +381,9 @@ export async function createViewer(o) {
       if (!m.vertexColors) m.color.copy(b.color).lerp(tmpWhite, 0.14 * glow);
     } else if (s.group !== 'torso') {
       b.color.getHSL(hsl); m.color.setHSL(hsl.h, Math.min(1, hsl.s + 0.28 * deep), hsl.l * (1 - 0.34 * deep));
+      /* 亮（lit.<群組或id>：0～1）＝目標器官亮度最多加倍：顏色 ×(1+lit)，再補自發光，透明的器官也不會灰暗；沒寫＝0＝不變 */
+      if (lit > 0) { m.color.multiplyScalar(1 + lit); m.emissive.copy(b.color).multiplyScalar(0.5 * lit); m.emissiveIntensity = 1; }
+      else m.emissive.setScalar(0);
     }
   }
   const tmpWhite = new THREE.Color(1, 1, 1);
@@ -387,7 +393,8 @@ export async function createViewer(o) {
       if (op === undefined) op = s.group === 'otherOrgans' ? 0.2 : 0.3;
       op = Math.round(op * 100) / 100;
       const deep = Math.round((style['deep.' + s.id] ?? style['deep.' + s.group] ?? 0) * 50) / 50, glow = Math.round((style['glow.' + s.id] ?? style['glow.' + s.group] ?? 0) * 50) / 50;
-      if (deep !== s.deep || glow !== s.glow) { s.deep = deep; s.glow = glow; tint(s, deep, glow); }
+      const lit = Math.round((style['lit.' + s.id] ?? style['lit.' + s.group] ?? 0) * 50) / 50;
+      if (deep !== s.deep || glow !== s.glow || lit !== s.lit) { s.deep = deep; s.glow = glow; s.lit = lit; tint(s, deep, glow, lit); }
       if (op === s.op) continue;
       s.op = op;
       const vis = op > 0.01, transparent = op < 0.985, depth = s.group === 'torso' ? false : op >= 0.6;
@@ -461,7 +468,7 @@ export async function createViewer(o) {
     const size = Math.min(0.0042, Math.max(0.00055, p.rMean * 0.75)) * 1.5;
     basisM.makeBasis(tt, tnn, tb); tracer.quaternion.setFromRotationMatrix(basisM); tracer.position.copy(tq); tracer.scale.setScalar(size);
     const o2 = p.meta.o2 === 'rich' ? 1 : p.meta.o2 === 'poor' ? 0 : 1 - smooth(u * 1.1);
-    tracerMat.color.copy(POOR).lerp(RICH, o2);
+    tracerMat.color.copy(POOR).lerp(RICH, o2).multiplyScalar(FB);
     ringMesh.position.copy(tq); ringMesh.quaternion.copy(camera.quaternion); ringMesh.scale.setScalar(size * 1.5);
     tracer.visible = ringMesh.visible = true;
   }

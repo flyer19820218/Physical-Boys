@@ -194,7 +194,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: HINT }
     ],
     camera: [K(0, 'front'), K(2.2, 'heart'), K(5.0, 'archL'), K(7.6, 'aortaDown'), K(10, 'renalOrigin')],
-    style: { ...BG, 'deep.heart': 0.6, 'glow.aorta': 1, heart: 0.55, 'cardiovascular.left_ventricle': 0.62, renalArt: 0.45, renalVein: 0.3, ivc: 0.3,
+    style: { ...BG, 'lit.heart': 1, 'glow.aorta': 1, heart: 0.55, 'cardiovascular.left_ventricle': 0.62, renalArt: 0.45, renalVein: 0.3, ivc: 0.3,
       genArt: 0, genGlom: 0, genCap: 0, genVen: 0, genBridge: 0.35 },
     flows: ['lv_out', 'aorta', 'aorta_lower'],
     labels: [{ id: 'lv', at: [0.6, 5.2] }, { id: 'aorta', at: [3.0, 6.8] }, { id: 'aortaAbd', at: [7.4, 10] }],
@@ -209,7 +209,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: P('進了腎臟，血管愈分愈細，變成許多小動脈（示意）。', 'Inside the kidney the vessels branch into ever-finer arterioles (schematic).') }
     ],
     camera: [K(0, 'renalOrigin'), K(3.0, 'renalBoth'), K(6.6, 'renalBoth'), K(9.2, 'kidneyL'), K(11, 'kidneyL')],
-    style: { ...BG, 'deep.kidneyL': 1, 'deep.kidneyR': 0.6, 'glow.renalArt': 1, 'glow.genArt': 0.9, 'glow.aorta': 0.5, heart: 0.2, aorta: 0.45,
+    style: { ...BG, 'lit.kidneyL': 1, 'lit.kidneyR': 0.6, 'glow.renalArt': 1, 'glow.genArt': 0.9, 'glow.aorta': 0.5, heart: 0.2, aorta: 0.45,
       kidneyL: 0.3, kidneyR: 0.28, renalArt: 0.58, renalVein: 0.25, ivc: 0.25, genArt: 0.55, genGlom: 0.5, genCap: 0.3, genVen: 0.25, genBridge: 0.3 },
     flows: ['aorta', 'aorta_lower', 'renal_a_L', 'renal_a_R', 'renal_ant_L', 'renal_ant_R', 'renal_post_L', 'renal_post_R', ...KART],
     labels: [{ id: 'aortaAbd', at: [0, 3.0] }, { id: 'renalA_L', at: [1.6, 11] }, { id: 'renalA_R', at: [2.4, 6.8] }, { id: 'kidneyR', at: [3.2, 6.8] },
@@ -225,7 +225,7 @@ export const STEPS = Object.freeze([
       { src: 'ADAPTED', p: P('葡萄糖也會被濾出，但正常會再吸收回血液；每天濾出約 180 公升，最後的尿只有約 1.5 公升。', 'Glucose is filtered too, but is normally reabsorbed into the blood; about 180 litres are filtered each day, yet only about 1.5 litres leave as urine.') }
     ],
     camera: [K(0, 'kidneyL'), K(2.8, 'glomNear'), K(4.8, 'glomClose'), K(12, 'glomClose')],
-    style: { ...BG, 'deep.kidneyL': 0.8, 'glow.genGlom': 1, 'glow.genArt': 0.5, heart: 0.1, aorta: 0.3, kidneyL: 0.16, kidneyR: 0.2,
+    style: { ...BG, 'lit.kidneyL': 1, 'glow.genGlom': 1, 'glow.genArt': 0.5, heart: 0.1, aorta: 0.3, kidneyL: 0.16, kidneyR: 0.2,
       renalArt: 0.45, renalVein: 0.25, ivc: 0.2, genArt: 0.55, genGlom: 0.55, genCap: 0.5, genVen: 0.35, genBridge: 0.2 },
     flows: [...KART, ...KGLOM],
     labels: [{ id: 'kidneyL', at: [0, 2.6] }, { id: 'kart', at: [0, 2.4] }, { id: 'glom', at: [2.6, 5.4] }],
@@ -242,7 +242,7 @@ export const STEPS = Object.freeze([
       { src: 'EXISTING', p: zoneSent('kidney', 1, 0) }
     ],
     camera: [K(0, 'glomClose'), K(2.6, 'capView'), K(12, 'capView')],
-    style: { ...BG, 'deep.kidneyL': 0.8, 'glow.genCap': 1, 'glow.genGlom': 0.4, 'glow.genVen': 0.5, heart: 0.1, aorta: 0.3, kidneyL: 0.16, kidneyR: 0.2,
+    style: { ...BG, 'lit.kidneyL': 1, 'glow.genCap': 1, 'glow.genGlom': 0.4, 'glow.genVen': 0.5, heart: 0.1, aorta: 0.3, kidneyL: 0.16, kidneyR: 0.2,
       renalArt: 0.35, renalVein: 0.3, ivc: 0.2, genArt: 0.5, genGlom: 0.55, genCap: 0.55, genVen: 0.55, genBridge: 0.2 },
     flows: [...KGLOM, ...KCAP, ...KVEN],
     labels: [{ id: 'glom', at: [0, 1.8] }, { id: 'caps', at: [1.0, 4.6] }, { id: 'kven', at: [2.6, 4.6] }],
@@ -259,7 +259,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: P('腎臟的靜脈血不經過肝臟，直接進入下腔靜脈。', 'Blood from the kidneys does not pass through the liver; it goes straight into the inferior vena cava.') }
     ],
     camera: [K(0, 'capView'), K(2.6, 'hilum'), K(6.0, 'hilum'), K(8.6, 'ivcUp'), K(11, 'raEnd')],
-    style: { ...BG, 'deep.cardiovascular.right_atrium': 0.8, 'glow.renalVein': 1, 'glow.ivc': 1, 'glow.genVen': 0.7, heart: 0.4, 'cardiovascular.right_atrium': 0.62,
+    style: { ...BG, 'lit.cardiovascular.right_atrium': 1, 'glow.renalVein': 1, 'glow.ivc': 1, 'glow.genVen': 0.7, heart: 0.4, 'cardiovascular.right_atrium': 0.62,
       aorta: 0.3, kidneyL: 0.28, kidneyR: 0.24, renalArt: 0.3, renalVein: 0.58, ivc: 0.55, genArt: 0.2, genGlom: 0.3, genCap: 0.4, genVen: 0.55, genBridge: 0.5 },
     flows: [...KVEN, 'renal_v_L', 'renal_v_R', 'ivc_low', 'ivc_upper'],
     labels: [{ id: 'kven', at: [0.8, 3.6] }, { id: 'renalV', at: [1.8, 7.0] }, { id: 'ivc', at: [6.2, 11] }, { id: 'ra', at: [8.8, 11] }],
@@ -273,6 +273,7 @@ export const SCENE = Object.freeze({
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
   parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/kidney_centerlines_v1.json',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
+  flowBright: 2,   // 血球亮度加倍（核心：SCENE.flowBright，預設 1）；目標器官亮度加倍＝各步驟 style 的 lit.<群組>: 1
   bridge: BRIDGE, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD,
   routeVessels: [...AORTA, ...RENAL_ART, ...RENAL_VEIN, ...IVC],
   status: P('黃圈追蹤一顆紅血球。', 'The yellow ring follows one red cell.'),
