@@ -21,6 +21,8 @@ const TAU = Math.PI * 2;
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const smooth = (x) => { x = clamp01(x); return x * x * (3 - 2 * x); };
 const frac = (x) => x - Math.floor(x);
+/* 血管含氧量（0＝靜脈血色、1＝動脈血色）：'rich'／'poor'／數字／[起,終]（沿血管由起到終漸變）／未寫＝微血管（鮮紅→暗紅）。 */
+const o2Of = (m, u) => { const v = m.o2; if (v === 'rich') return 1; if (v === 'poor') return 0; if (typeof v === 'number') return v; if (Array.isArray(v)) return v[0] + (v[1] - v[0]) * smooth(u * 1.1); return 1 - smooth(u * 1.1); };
 const RICH = new THREE.Color('#e3312c'), POOR = new THREE.Color('#7c2238');   // 鮮紅／暗紅偏紫（全站共識，不用藍色）
 export const GAP = 1.5;   // 老師講解：步驟之間停頓秒數（與 human_transport_teach_0118_v1.js 相同）
 
@@ -253,6 +255,9 @@ export async function createViewer(o) {
   /* 中心線 → Path */
   const paths = new Map();
   for (const [id, sg] of Object.entries(CL.segments)) paths.set(id, Object.assign(new Path(id, sg.points, sg.radius), { meta: sg }));
+  /* 區段清單可用「前綴*」一次指定一整批（例：'pt*' ＝ 所有 id 以 pt 開頭的區段），給有大量程式生成分支的場景用 */
+  const expandIds = (list) => list.flatMap((id) => (id.endsWith('*') ? [...paths.keys()].filter((k) => k.startsWith(id.slice(0, -1))) : [id]));
+  const stepFlows = SC.steps.map((st) => expandIds(st.flows));
 
   /* 程式生成的示意管（依群組合併，節省 draw call） */
   const tubeBuckets = {};
@@ -273,7 +278,7 @@ export async function createViewer(o) {
     const n = geo.attributes.position.count, cols = new Float32Array(n * 3), rs = (lite ? 6 : 8) + 1;
     for (let i = 0; i < n; i++) {
       const u = Math.floor(i / rs) / Math.max(1, Math.floor(n / rs) - 1);
-      const o2 = sg.o2 === 'rich' ? 1 : sg.o2 === 'poor' ? 0 : 1 - smooth(u * 1.1);
+      const o2 = o2Of(sg, u);
       tmpC.copy(POOR).lerp(RICH, o2).multiplyScalar(0.72); cols.set([tmpC.r, tmpC.g, tmpC.b], i * 3);
     }
     geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
@@ -299,17 +304,18 @@ export async function createViewer(o) {
   /* 靜脈單層管：依中心線與其半徑（口徑依文獻，見 tools/anatomy/set_vein_calibers.py、sources.md）畫成一根管；
    * 資料集的網格外殼已在上面丟掉，所以畫面上的粗細＝血球流動的範圍，不會再有「外面套一層膜」。 */
   for (const [g, segIds] of Object.entries(SC.replaceMesh || {})) {
-    const geos = [];
-    for (const sid of segIds) {
+    const geos = [], rs = (SC.replaceStyle && SC.replaceStyle[g]) || {}, kind = rs.kind || 'vein';   // replaceStyle[g]＝{kind:'artery'|'vein', mat:材質鍵, radial:[完整,lite], step:環距(m)}；沒寫＝靜脈
+    for (const sid of expandIds(segIds)) {
       const p = paths.get(sid); if (!p) continue;
       const rg = p.meta.tubeRange || [0, 1];
       // smoothTubes：兩端圓頭、半徑照中心線漸變（腎動脈→分支→小動脈；小靜脈→腎靜脈），接點不再有平口斷面
-      geos.push(SC.smoothTubes ? varTubeCapped(p, lite ? 10 : 14, 0.0012, () => tmpC.set('#ffffff'), rg[0], rg[1]) : varTube(p, rg[0], rg[1], lite ? 10 : 14, 0.0012));
+      const rad = lite ? (rs.radial ? rs.radial[1] : 10) : (rs.radial ? rs.radial[0] : 14), stp = rs.step || 0.0012;
+      geos.push(SC.smoothTubes ? varTubeCapped(p, rad, stp, () => tmpC.set('#ffffff'), rg[0], rg[1]) : varTube(p, rg[0], rg[1], rad, stp));
     }
     if (!geos.length) continue;
     const geo = mergeGeometries(geos, false); geos.forEach((x) => x.dispose());
-    const rk = (SC.replaceKind && SC.replaceKind[g]) || 'vein';   // 預設靜脈；腎動脈等動脈組在場景裡寫 replaceKind: { 組名: 'artery' }
-    const mat = rimMaterial({ ...SC.material[rk], clearcoat: 0.6, env: 0.6, rimStrength: 0.35 });
+    const rk = (SC.replaceKind && SC.replaceKind[g]) || kind;   // 預設靜脈；動脈組可在場景寫 replaceKind: { 組名: 'artery' }，或 replaceStyle[組名].kind
+    const mat = rimMaterial({ ...SC.material[rs.mat || rk], clearcoat: 0.6, env: 0.6, rimStrength: 0.35 });
     const mesh = new THREE.Mesh(geo, mat); mesh.name = '@' + g; scene.add(mesh);
     structures.set('@' + g, { id: '@' + g, meshes: [mesh], mat, kind: rk, group: g, op: -1, route: true });
   }
@@ -394,8 +400,8 @@ export async function createViewer(o) {
       const z = /^(deep|glow|lit)\./.test(key) ? 0 : undefined;   // 加深／發亮沒寫＝0，才會從 0 平滑過渡
       const a = prev[key] ?? SC.baseStyle[key] ?? z ?? cur[key], c = cur[key] ?? SC.baseStyle[key] ?? z ?? a; style[key] = a + (c - a) * b;
     }
-    const prevFlows = new Set(k > 0 ? SC.steps[k - 1].flows : []);
-    const flows = st.flows.map((id) => ({ id, alpha: prevFlows.has(id) ? 1 : smooth(t / 0.8) }));
+    const prevFlows = new Set(k > 0 ? stepFlows[k - 1] : []);
+    const flows = stepFlows[k].map((id) => ({ id, alpha: prevFlows.has(id) ? 1 : smooth(t / 0.8) }));
     const lab = (st.labels || []).map((L) => {
       const a = smooth((t - L.at[0]) / 0.4) * (L.at[1] >= st.dur ? 1 : 1 - smooth((t - (L.at[1] - 0.4)) / 0.4)); return { id: L.id, alpha: a };
     });
@@ -462,8 +468,8 @@ export async function createViewer(o) {
     flowList.forEach((id, j) => {
       const p = paths.get(id), F = SC.flow[SC.flowKey(id)] || { type: 'steady', v: 0.02, density: 300 };
       const size = Math.min(0.0042, Math.max(0.00055, p.rMean * 0.75));
-      const o2 = p.meta.o2 === 'rich' ? 1 : p.meta.o2 === 'poor' ? 0 : -1;
-      flowInfo.push({ path: p, F, size, o2, alpha: 1 });
+      const m2 = p.meta.o2, o2 = typeof m2 === 'number' ? m2 : m2 === 'rich' ? 1 : m2 === 'poor' ? 0 : -1;   // -1＝沿管漸變（陣列 [起,終] 或微血管預設）
+      flowInfo.push({ path: p, F, size, o2, grad: Array.isArray(m2) ? m2 : null, alpha: 1 });
       const cnt = Math.max(F.singleFile ? 2 : 3, Math.floor(want[j] * scale)), rnd = mulberry32(hashStr(id));
       for (let i = 0; i < cnt && n < budget; i++, n++) {
         pSeg[n] = j; pU0[n] = F.singleFile ? i / cnt : (i + rnd() * 0.8) / cnt;
@@ -497,7 +503,7 @@ export async function createViewer(o) {
       M[o + 4] = yx * s; M[o + 5] = yy * s; M[o + 6] = yz * s; M[o + 7] = 0;
       M[o + 8] = zx * s; M[o + 9] = zy * s; M[o + 10] = zz * s; M[o + 11] = 0;
       M[o + 12] = px; M[o + 13] = py; M[o + 14] = pz; M[o + 15] = 1;
-      if (fi.o2 < 0) { const g = 1 - smooth(u * 1.1), o3 = i * 3; C[o3] = POOR.r + (RICH.r - POOR.r) * g; C[o3 + 1] = POOR.g + (RICH.g - POOR.g) * g; C[o3 + 2] = POOR.b + (RICH.b - POOR.b) * g; }
+      if (fi.o2 < 0) { const g = fi.grad ? fi.grad[0] + (fi.grad[1] - fi.grad[0]) * smooth(u * 1.1) : 1 - smooth(u * 1.1), o3 = i * 3; C[o3] = POOR.r + (RICH.r - POOR.r) * g; C[o3 + 1] = POOR.g + (RICH.g - POOR.g) * g; C[o3 + 2] = POOR.b + (RICH.b - POOR.b) * g; }
     }
     cells.instanceMatrix.needsUpdate = true; cells.instanceColor.needsUpdate = true;
   }
@@ -512,7 +518,7 @@ export async function createViewer(o) {
     p.point(u, tq); tt.fromArray(p.T, idx); tnn.fromArray(p.N, idx); tb.crossVectors(tt, tnn);
     const size = Math.min(0.0042, Math.max(0.00055, p.rMean * 0.75)) * 1.5 * (SMT ? Math.min(1.2, p.R[idx / 3] / p.rMean) : 1);
     basisM.makeBasis(tt, tnn, tb); tracer.quaternion.setFromRotationMatrix(basisM); tracer.position.copy(tq); tracer.scale.setScalar(size);
-    const o2 = p.meta.o2 === 'rich' ? 1 : p.meta.o2 === 'poor' ? 0 : 1 - smooth(u * 1.1);
+    const o2 = o2Of(p.meta, u);
     tracerMat.color.copy(POOR).lerp(RICH, o2).multiplyScalar(FB);
     ringMesh.position.copy(tq); ringMesh.quaternion.copy(camera.quaternion); ringMesh.scale.setScalar(size * 1.5);
     tracer.visible = ringMesh.visible = true;

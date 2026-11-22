@@ -17,7 +17,7 @@
 - **不要改**：`si_scene_v1.glb`、`si_parts_v1.json`（只讀）、小腸場景檔、`ht3d_core_1122_v1.js`、頁面接線檔。核心引擎需要改時，只做最小修改，並在 commit 訊息與回報裡寫清楚改了什麼（小腸／肝那邊的帳號也可能在改）。
 - 共用且會碰到同一處的只有兩個：**場景登錄檔** `ht3d_scenes_1122_v1.js`（加一行）與 `PROGRESS.md` 最上面那一行。
 - **每次 push 前先 `git fetch` ＋ `git pull --rebase origin main`**；衝突只會出在上面兩處，兩邊都保留。
-- 分工現況：**腎＝另一個帳號**；肝獨立場景、核心引擎＝這邊。肺、心肌、組織、總覽之後再分。
+- 分工現況：**腎＝另一個帳號**；肝獨立場景（已完成）、核心引擎＝這邊。肺、心肌、組織、總覽之後再分。
 
 ## 2. Repo 與 Git
 - Repo：`flyer19820218/Physical-Boys`（小寫 physical-boys 會轉址）。GitHub Pages 只部署 `main`。
@@ -32,6 +32,8 @@
 | `ht3d_core_1122_v1.js` | 引擎：場景、材質（邊緣光）、鏡頭關鍵格、沿中心線流動的紅血球（InstancedMesh）、CSS2D 標籤、放大窗（呼叫 2D 的 `HumanTransportExchanges.draw`）。通用，新場景不用改。 |
 | `ht3d_scenes_1122_v1.js` | **場景登錄檔**：`export const SCENES = { <id>: { file, label:[中,英] } }`。加一行就多一個場景；兩個以上場景時，3D 舞台上方會出現場景切換鈕。 |
 | `ht3d_scene_small_intestine_1122_v1.js` | 場景資料範本：`NAMES`／`LABEL_ALLOW`／`GROUPS`／`MATERIAL`／`BASE_STYLE`／`FLOW`／`LABELS`／`STEPS`／`SCENE`。**新場景照這個檔的格式複製。** |
+| `ht3d_scene_liver_1122_v1.js` | **肝臟路線**（4 步：兩個入口→並行分支→肝小葉→肝靜脈回心臟）。肝內全是程式生成的示意；`replaceMesh` 用 `'pt*'` 這種前綴一次指定一整批區段。 |
+| `liver_centerlines_v1.json`（272 KB，476 段） | 肝臟場景的中心線。`tools/anatomy/build_liver_centerlines.py` 產生（固定亂數種子、約 15 秒；用法在腳本開頭，需要 `/tmp/si_world.json`：`node tools/anatomy/dump_glb_world.mjs assets/biology/anatomy3d/si_scene_v1.glb /tmp/si_world.json --modules /tmp/gl/node_modules`）。檔內 `named`（門靜脈鏈、肝靜脈鏈）與 `lobule`（肝小葉位置與方向）給場景檔用；**重跑腳本後段 id 可能變，要重讀這兩欄再改場景檔的追蹤路徑與鏡頭。** |
 | `ht3d_page_human_transport_1122_v1.js` | 頁面接線：切換鈕、場景鈕、步驟鈕、2D/3D 互斥、`window.HT3D`。場景可有自己的版權文字（`SCENE.schematic`＝[中,英]，沒寫就用預設）。 |
 | `ht3d_1122_v1.css` | 樣式。 |
 | `si_scene_v1.glb`（0.65MB）／`_lite.glb` | 97 個結構的解剖網格，**已含**冠狀動脈、左右腎動脈與分支、腎靜脈、腎臟（腎囊）、肺動脈幹、左右肺動脈、四條肺靜脈、各肺葉、心臟、肝、主動脈、下腔靜脈。心肌、腎、肺**不用再找素材**。 |
@@ -53,6 +55,7 @@
 4. 名稱：每個新名稱查大學教科書用法，查不到官方出處的記入 `zh_review`，畫面不顯示。
 5. 登錄：在 `ht3d_scenes_1122_v1.js` 加一行，例：`kidney: { file: './ht3d_scene_kidney_1122_v1.js', label: ['腎臟路線', 'Kidney'] }`。
 6. 驗證（第 6 節）→ `git pull --rebase` → push main → 更新 `PROGRESS.md` 最上面一行。
+7. 肝臟場景新增的引擎功能（有大量程式生成分支時用得到，詳見 `sources.md`「肝臟場景」）：`flows`、`replaceMesh` 的清單可寫「前綴*」；中心線的 `o2` 可以是 `'rich'`／`'poor'`／數字／`[起,終]`；`replaceStyle: { <群組>: { kind, mat, radial:[完整,lite], step } }` 指定單層管的材質與精細度；`LUMEN_MESH` 可以用 `Proxy` 依前綴回答（分支 id 很多時）。每個流動區段至少 3 顆（單列血管 2 顆）血球，**區段數愈多、粒子預算愈緊**（完整 2400、lite 1000；每顆血球約 400 個三角形）。
 
 ## 5. 血管粗細與科學正確性（老師 2026-11-22 抓到的錯，必讀）
 **發生什麼事：** 小腸／肝場景的靜脈看起來「變粗又變細、外面套一層膜、像水管」。原因：**畫面上的血管粗細來自 glb 網格外殼，但血球沿中心線流，中心線半徑是另外手填的數字，兩者對不上**；上游靜脈（肝門靜脈、腸繫膜上靜脈、脾靜脈）的數字又比文獻細很多。
@@ -62,7 +65,7 @@
 - 半徑寫在中心線 json，由 `tools/anatomy/set_vein_calibers.py` 設定（可重複執行）；`tubeRange: [u0,u1]` 可限定管畫到哪裡（例：下腔靜脈畫到右心房開口、肝靜脈畫到下腔靜脈管壁）。數字與出處在 `sources.md`「血管口徑」。
 - **新場景的靜脈請照這個做**，並且口徑要有出處；動脈若網格口徑與血流一致可繼續用網格。
 - 血管透明度仍要 < 0.6，血球才看得見（≥0.985 會變不透明，把管裡的血球蓋住）。
-- 還沒做：密集的肝竇網（門靜脈分支與肝動脈分支逐級分叉再逐級匯成肝靜脈）、肝靜脈往肝內延伸的分支形狀，留給肝臟獨立場景。
+- 肝竇網、肝內分支、肝靜脈往肝內延伸：**已在肝臟場景用程式生成的示意版做出**（見 `sources.md`「肝臟場景」；不是真實解剖）。
 
 **所以新場景一定要：**
 1. 中心線半徑與畫出來的血管一致（用上面的單層管做法，或半徑直接取自網格）；程式生成的示意管，口徑要有文獻出處，記在 `sources.md`。
@@ -89,7 +92,7 @@
 ## 6. 驗證方法（不要重新摸索）
 - 啟動伺服器：`tools/qa/serve.sh`（Port 8765；ES 模組不能用 `file://`）。
 - 2D 回歸：`node tools/qa/qa_page.cjs biology_human_transport.html`，結果要與改動前逐項相同（只差動畫像素數）；另跑 `node tools/qa/smoke.cjs biology_human_transport.html`。
-- 3D 截圖：Playwright chromium 要加旗標 `--use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist --use-gl=angle`。沙盒是軟體算圖，**動畫時間幾乎不走**，所以一律用 `HT3D.go('<場景>', 步驟, 毫秒, {after:'stop'})` 跳到指定時間，再等約 5 秒讓畫面更新；`getState()`／DOM 讀到的值可能落後一次切換。
+- 3D 截圖：Playwright chromium 要加旗標 `--use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist --use-gl=angle`。沙盒是軟體算圖，**動畫時間幾乎不走**，所以一律用 `HT3D.go('<場景>', 步驟, 毫秒, {after:'stop'})` 跳到指定時間。**要「精準停在那一刻」就 `await HT3D.go(...)` 之後立刻 `HT3D.pause()`**（引擎每格最多前進 0.1 秒，軟體算圖很慢，不暫停的話等幾秒後實際時間不準）；暫停後等約 2.5 秒讓畫面更新；`getState()`／DOM 讀到的值可能落後一次切換。要看完整（非 lite）模式，Playwright 的 context 不要開 `hasTouch`（`pointer:coarse` 會自動走 lite），並用 `.click()` 取代 `.tap()`。
 - 手機尺寸截圖：視窗約 430 寬、`hasTouch:true`、`deviceScaleFactor:3`，**不要開 `isMobile:true`**（它會讓 `getBoundingClientRect` 和截圖的位置差一大段）。`HT3D.go` 後 `scrollIntoView({block:'center',behavior:'instant'})`（頁面是平滑捲動，不加 instant 量到的位置會是捲動中途的），等約 1.5 秒再量舞台 canvas 的矩形；用 `page.screenshot()` 截整個視窗後自己裁切（`clip` 參數會偏）。
 - 近距離看血管：`const V=HT3D._debug.viewer(); V.camera.position.set(x,y,z); V.controls.target.set(x,y,z); V.controls.update(); V.controls.dispatchEvent({type:'start'}); V.requestRender()`（dispatch `start` 讓引擎知道是使用者鏡頭，不會被步驟鏡頭拉回去）。粒子是否在管腔內：`HT3D._debug.lumen(300)`（沿管軸方向的射線打不到管壁，所以兩支血管交會處會有少數誤判，不用在意）。
 - 多場景切換測試：暫時在登錄檔加一個指向同一場景檔的第二筆，跑完**一定要還原**，不能把測試項目 commit。
@@ -100,7 +103,7 @@
 ## 7. 待辦（依序）
 1. ~~小腸／肝：修口徑、去掉外層膜~~（2026-11-22 已完成，見第 5 節）。
 2. 腎臟：腎動脈 → 腎臟（過濾；尿素、水、無機鹽）→ 腎靜脈 → 下腔靜脈（**另一個帳號負責**）。
-3. 肝臟獨立場景（含密集肝竇網、肝靜脈往肝內的分支；這邊負責）。
+3. ~~肝臟獨立場景~~（2026-11-22 已完成：`liver` 場景，含肝內分支、肝小葉放大、肝靜脈樹；肝內全是示意）。
 4. 肺：肺動脈 → 肺泡微血管（O₂ 進、CO₂ 出）→ 肺靜脈 → 左心房。
 5. 心肌：左心室 → 主動脈根部 → 左右冠狀動脈 → 心肌微血管 → 冠狀靜脈竇 → 右心房。
 6. 組織（全身組織微血管）。
@@ -110,7 +113,7 @@
 10. 全部完成且老師確認後，退役舊 2D 版。
 
 ## 8. 老師尚未回覆的決定（先沿用目前做法，不要自己決定）
-放大窗字約 19px（< 22px）；3D 寫「下腔靜脈（國中課本：下大靜脈）」而 2D 舊版寫「上／下大靜脈」；新文案（含「名稱不用背，看流向」提示與依據說明）待老師看過；標「示意」的程式生成部分是否接受；19 筆 `zh_review` 名稱；是否改成預設 3D（`DEFAULT_3D`，目前 false）；是否加乳糜管、胺基酸、肝竇內容。
+放大窗字約 19px（< 22px）；3D 寫「下腔靜脈（國中課本：下大靜脈）」而 2D 舊版寫「上／下大靜脈」；新文案（含「名稱不用背，看流向」提示與依據說明）待老師看過；標「示意」的程式生成部分是否接受；19 筆 `zh_review` 名稱；是否改成預設 3D（`DEFAULT_3D`，目前 false）；是否加乳糜管、胺基酸、肝竇內容。**肝臟場景新增：**「肝竇」或「肝血竇」哪個是台灣大學教科書用語（畫面暫用「肝竇（示意）」）；是否要畫膽管（目前沒畫，文字有說明「膽管也並行，這張圖沒有畫」）；肝臟場景全部新句子（都標 NEW，待老師審）；放大的肝小葉與肝竇（為了看得見而放大）是否接受。
 
 ## 9. 給接手者的提醒
 - 老師說「一次做完」，但額度有限：每完成一個器官就推 main、更新 `PROGRESS.md`，不要累積。
