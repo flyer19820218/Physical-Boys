@@ -1,0 +1,92 @@
+/* ht3d_1122_v1.css — 3D 醫學版血液循環（外層加法；全部掛在新 class 底下，不改既有樣式）
+ * 色票：黑板 #11261f／#17332a；粉筆 白 #f6f3ea、淡灰 #a3b8b0、黃 #fde047、青 #55e9ff。不用純黑。
+ * 字級：控制項與畫面標籤 22px；步驟鈕 18px、高 44px（AGENTS 2.2）。 */
+
+/* 切換鈕（只在循環分頁出現） */
+.ht3d-toggle { display: none; gap: 0; border: 2px solid #55e9ff; border-radius: 12px; overflow: hidden; }
+body.ht3d-circ .ht3d-toggle { display: inline-flex; }
+.head-actions .ht3d-toggle .ht3d-tbtn {
+  font: 700 22px/1.2 'Noto Sans TC', sans-serif; min-height: 48px; padding: 8px 14px; margin: 0;
+  background: transparent; color: #f6f3ea; border: 0; border-radius: 0; cursor: pointer; white-space: nowrap;
+}
+.head-actions .ht3d-toggle .ht3d-tbtn + .ht3d-tbtn { border-left: 2px solid rgba(85, 233, 255, 0.5); }
+.head-actions .ht3d-toggle .ht3d-tbtn.active { background: #55e9ff; color: #11261f; }
+@media (max-width: 760px) { .head-actions .ht3d-toggle .ht3d-tbtn { padding: 8px 10px; } }
+
+/* 3D 時：2D 畫布與 2D 控制列隱藏（2D 的時鐘已用引擎的 running=false 暫停） */
+body.ht3d-on #lessonCanvas { display: none !important; }
+body.ht3d-on #controls { display: none !important; }
+body.ht3d-on #ptSteps { display: none !important; }
+body.ht3d-on .ht3d-steps { display: flex; }
+.ht3d-steps[hidden] { display: none !important; }
+body.pt-v5 .ht3d-steps .pt-step { font-size: 18px; min-height: 44px; padding: 6px 14px; }
+body:not(.ht3d-circ) .ht3d-credits { display: none; }
+.ht3d-credits p { font-size: 18px; line-height: 1.7; overflow-wrap: anywhere; margin: 8px 0; }
+.ht3d-credits a { color: #55e9ff; }
+
+/* 3D 舞台：與 2D 畫布同比例（960:600），全螢幕時跟著 --media-h */
+.ht3d-stage {
+  position: relative; width: 100%; aspect-ratio: 960 / 600; max-width: 100%;
+  width: min(100%, calc(var(--media-h, 99999px) * 1.6)); max-height: 100%;
+  border-radius: 12px; overflow: hidden; touch-action: none;
+  background: radial-gradient(ellipse at 50% 42%, #1d4436 0%, #17332a 46%, #11261f 100%);
+}
+.ht3d-stage[hidden] { display: none; }
+.ht3d-layers, .ht3d-gl, .ht3d-labels, .ht3d-ui { position: absolute; inset: 0; }
+.ht3d-gl { width: 100% !important; height: 100% !important; display: block; outline: none; }
+.ht3d-labels { pointer-events: none; overflow: hidden; }
+.ht3d-ui { pointer-events: none; overflow: hidden; }
+
+/* 標籤：點＋引線＋字（22px），不蓋住血管：字放在錨點旁邊 */
+.ht3d-label { display: flex; align-items: center; pointer-events: none; transition: opacity .2s; }
+.ht3d-label .dot { width: 9px; height: 9px; border-radius: 50%; background: #fde047; box-shadow: 0 0 0 2px rgba(17, 38, 31, 0.8); flex: 0 0 auto; }
+.ht3d-label .lead { background: rgba(253, 224, 71, 0.75); flex: 0 0 auto; }
+.ht3d-label.side-r .lead, .ht3d-label.side-l .lead { width: 34px; height: 2px; }
+.ht3d-label.side-u .lead, .ht3d-label.side-d .lead { width: 2px; height: 30px; }
+.ht3d-label.side-l { flex-direction: row-reverse; }
+.ht3d-label.side-u { flex-direction: column-reverse; }
+.ht3d-label.side-d { flex-direction: column; }
+.ht3d-label .txt {
+  font: 700 22px/1.25 'Noto Sans TC', sans-serif; color: #f6f3ea; white-space: nowrap;
+  background: rgba(17, 38, 31, 0.78); border: 1px solid rgba(253, 224, 71, 0.55); border-radius: 8px; padding: 3px 10px;
+}
+.ht3d-label .txt small { display: block; font-size: 18px; font-weight: 700; color: #a3b8b0; }
+.ht3d-label .txt small:empty { display: none; }
+
+/* 觀眾左＝人體右 */
+.ht3d-chip {
+  position: absolute; top: 10px; font: 700 22px/1.2 'Noto Sans TC', sans-serif; color: #a3b8b0;
+  background: rgba(17, 38, 31, 0.7); border-radius: 8px; padding: 4px 10px;
+}
+.ht3d-chip-l { left: 10px; }
+.ht3d-chip-r { right: 10px; }
+.ht3d-note {
+  position: absolute; left: 10px; bottom: 8px; right: 10px; font: 700 22px/1.25 'Noto Sans TC', sans-serif; color: #a3b8b0;
+  text-shadow: 0 1px 3px rgba(17, 38, 31, 0.9); transition: opacity .25s;
+}
+
+/* 放大窗：現成的 2D 交換動畫（HumanTransportExchanges.draw） */
+.ht3d-inset { position: absolute; display: none; }
+.ht3d-inset-box {
+  position: absolute; inset: 0; border: 3px solid #fde047; border-radius: 12px; overflow: hidden;
+  background: #11261f; box-shadow: 0 8px 28px rgba(8, 20, 16, 0.75);
+}
+.ht3d-inset canvas { display: block; width: 100%; height: 100%; }
+.ht3d-inset-tag {
+  position: absolute; left: 0; bottom: 100%; margin-bottom: 4px; font: 700 22px/1.2 'Noto Sans TC', sans-serif; color: #11261f;
+  background: #fde047; border-radius: 8px; padding: 3px 10px; white-space: nowrap;
+}
+.ht3d-link { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+.ht3d-link line { stroke: #fde047; stroke-width: 2.5; stroke-dasharray: 7 5; }
+.ht3d-link circle { fill: none; stroke: #fde047; stroke-width: 3; }
+
+/* 載入中／錯誤提示 */
+.ht3d-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 3; }
+.ht3d-loading[hidden] { display: none; }
+.ht3d-load-txt { font: 700 22px/1.3 'Noto Sans TC', sans-serif; color: #f6f3ea; }
+.ht3d-bar { width: min(60%, 420px); height: 10px; border-radius: 6px; background: #17332a; border: 1px solid #55e9ff; overflow: hidden; }
+.ht3d-bar i { display: block; height: 100%; width: 0; background: #55e9ff; transition: width .2s; }
+.ht3d-toast {
+  font: 700 22px/1.5 'Noto Sans TC', sans-serif; color: #11261f; background: #fde047; border-radius: 10px; padding: 10px 16px; margin: 0;
+}
+.ht3d-toast[hidden] { display: none; }
