@@ -204,7 +204,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: HINT }
     ],
     camera: [K(0, 'front'), K(2.2, 'heart'), K(5.0, 'archL'), K(7.8, 'aortaDown'), K(10, 'aortaDown')],
-    style: { heart: 0.55, 'cardiovascular.left_ventricle': 0.62, lungs: 0.06, gut: 0.6, liver: 0.18, portal: 0.35, ivc: 0.35, hepVeins: 0.35, sma: 0.6, genArt: 0, genCap: 0, genVen: 0, genBridge: 0.35 },
+    style: { 'deep.heart': 0.6, 'glow.aorta': 1, heart: 0.55, 'cardiovascular.left_ventricle': 0.62, lungs: 0.06, gut: 0.6, liver: 0.18, portal: 0.35, ivc: 0.35, hepVeins: 0.35, sma: 0.6, genArt: 0, genCap: 0, genVen: 0, genBridge: 0.35 },
     flows: ['lv_out', 'aorta', 'aorta_lower'],
     labels: [{ id: 'lv', at: [0.6, 5.2] }, { id: 'aorta', at: [3.0, 6.6] }, { id: 'aortaTho', at: [6.8, 10] }],
     tracer: { path: ['lv_out', 'aorta'], from: 0.4, to: 9.6 }
@@ -218,7 +218,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: P('愈分愈細的小動脈（示意）把血送進腸壁。', 'Ever-finer arterioles (schematic) carry blood into the gut wall.') }
     ],
     camera: [K(0, 'aortaDown'), K(2.0, 'smaOrigin'), K(5.0, 'gutMid'), K(8.2, 'gutWide'), K(10, 'gutWide')],
-    style: { heart: 0.2, gut: 0.36, otherVeins: 0.12, portal: 0.25, liver: 0.2, portal: 0.3, ivc: 0.3, hepVeins: 0.25, genVen: 0.25, genCap: 0.7 },
+    style: { 'deep.gut': 1, 'glow.sma': 1, 'glow.genArt': 0.9, 'glow.aorta': 0.5, heart: 0.2, gut: 0.5, otherVeins: 0.12, portal: 0.25, liver: 0.2, portal: 0.3, ivc: 0.3, hepVeins: 0.25, genVen: 0.25, genCap: 0.7 },
     flows: ['aorta', 'aorta_lower', 'sma', 'sma_branch', ...ARTS],
     labels: [{ id: 'aortaAbd', at: [0.5, 4.5] }, { id: 'sma', at: [1.6, 10] }, { id: 'arterioles', at: [5.2, 10] }, { id: 'gut', at: [4.6, 10] }],
     tracer: { path: ['aorta', 'sma', 'art_4'], from: 0.0, to: 9.4, startU: 0.93 }
@@ -231,7 +231,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: P('3D 畫面是腸壁；放大窗把腸壁裡的絨毛放大來看（示意）。', 'The 3D view shows the gut wall; the window enlarges a villus inside it (schematic).') }
     ],
     camera: [K(0, 'gutWide'), K(2.6, 'wallNear'), K(4.6, 'wallClose'), K(12, 'wallClose')],
-    style: { heart: 0.1, gut: 0.92, liver: 0.15, colon: 0.1, portal: 0.4, genArt: 0.9, genCap: 1, genVen: 0.9, torso: 0.02 },
+    style: { 'deep.gut': 1, 'glow.genCap': 1, 'glow.genArt': 0.4, 'glow.genVen': 0.4, heart: 0.1, gut: 0.92, liver: 0.15, colon: 0.1, portal: 0.4, genArt: 0.9, genCap: 1, genVen: 0.9, torso: 0.02 },
     flows: ['sma', ...ARTS, ...CAPS, ...VENS],
     labels: [{ id: 'caps', at: [1.2, 4.2] }, { id: 'gutNear', at: [1.2, 4.2] }],
     tracer: { path: ['art_4', 'cap_4', 'ven_4'], from: 0.2, to: 11.5 },
@@ -246,7 +246,7 @@ export const STEPS = Object.freeze([
       { src: 'COORD', p: P('小靜脈匯流成腸繫膜上靜脈，再和脾靜脈匯合成肝門靜脈。', 'Venules converge into the superior mesenteric vein, which joins the splenic vein to form the hepatic portal vein.') }
     ],
     camera: [K(0, 'wallClose'), K(1.6, 'gutMid'), K(4.2, 'veinsBack'), K(7.2, 'portalUp'), K(10, 'liverIn')],
-    style: { heart: 0.12, gut: 0.5, liver: 0.36, aorta: 0.3, sma: 0.25, otherArteries: 0.1, hepArt: 0.2, genArt: 0.15, genCap: 0.6, genVen: 0.9, genLiver: 0.9, portal: 0.8, colon: 0.12, stomach: 0.14, pancreas: 0.18 },
+    style: { 'deep.liver': 1, 'deep.gut': 0.6, 'glow.portal': 1, 'glow.genVen': 0.9, heart: 0.12, gut: 0.5, liver: 0.5, aorta: 0.3, sma: 0.25, otherArteries: 0.1, hepArt: 0.2, genArt: 0.15, genCap: 0.6, genVen: 0.9, genLiver: 0.9, portal: 0.8, colon: 0.12, stomach: 0.14, pancreas: 0.18 },
     flows: [...CAPS, ...VENS, 'smv', 'splenic', 'portal', ...LIVER_CAPS],
     labels: [{ id: 'venules', at: [1.6, 5.6] }, { id: 'smv', at: [3.6, 7.6] }, { id: 'portal', at: [6.0, 10] }, { id: 'liver', at: [7.6, 10] }],
     tracer: { path: ['ven_4', 'smv', 'portal', 'liver_cap_b'], from: 0.4, to: 9.8 },
@@ -260,7 +260,7 @@ export const STEPS = Object.freeze([
       { src: 'COORD', p: P('肝臟另外有肝動脈送來含氧血；肝靜脈把肝臟的血送進下腔靜脈（國中課本：下大靜脈），回到右心房。', 'The liver also receives oxygen-rich blood from the hepatic artery; hepatic veins carry blood from the liver into the inferior vena cava and back to the right atrium.') }
     ],
     camera: [K(0, 'liverIn'), K(2.0, 'liverClose'), K(7.4, 'liverClose'), K(9.6, 'hvIvc'), K(12, 'raEnd')],
-    style: { heart: 0.4, 'cardiovascular.right_atrium': 0.62, liver: 0.34, gut: 0.4, aorta: 0.35, sma: 0.3, genArt: 0, genCap: 0.2, genVen: 0.3, genLiver: 0.95, hepArt: 0.95, portal: 1, stomach: 0.12, lungs: 0.06 },
+    style: { 'deep.liver': 1, 'deep.cardiovascular.right_atrium': 0.8, 'glow.hepVeins': 1, 'glow.ivc': 1, 'glow.hepArt': 0.7, 'glow.genLiver': 0.6, heart: 0.4, 'cardiovascular.right_atrium': 0.62, liver: 0.5, gut: 0.4, aorta: 0.35, sma: 0.3, genArt: 0, genCap: 0.2, genVen: 0.3, genLiver: 0.95, hepArt: 0.95, portal: 1, stomach: 0.12, lungs: 0.06 },
     flows: ['portal', ...LIVER_CAPS, 'liver_cap_art', 'hep_artery', 'hv1', 'hv2', 'ivc_lower', 'ivc_upper'],
     labels: [{ id: 'liver', at: [0.4, 7.6] }, { id: 'hv', at: [7.6, 12] }, { id: 'ivc', at: [8.2, 12] }, { id: 'ra', at: [9.8, 12] }],
     tracer: { path: ['liver_cap_b', 'hv1', 'ivc_upper'], from: 7.2, to: 11.6 },

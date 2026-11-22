@@ -300,7 +300,8 @@ export async function createViewer(o) {
     const [pos, target, near] = camAt(st, t);
     const prev = styleCache[k > 0 ? k - 1 : 0], cur = styleCache[k], b = k > 0 ? smooth(t / 1.0) : 1, style = {};
     for (const key of new Set([...Object.keys(prev), ...Object.keys(cur)])) {
-      const a = prev[key] ?? SC.baseStyle[key] ?? cur[key], c = cur[key] ?? SC.baseStyle[key] ?? a; style[key] = a + (c - a) * b;
+      const z = /^(deep|glow)\./.test(key) ? 0 : undefined;   // 加深／發亮沒寫＝0，才會從 0 平滑過渡
+      const a = prev[key] ?? SC.baseStyle[key] ?? z ?? cur[key], c = cur[key] ?? SC.baseStyle[key] ?? z ?? a; style[key] = a + (c - a) * b;
     }
     const prevFlows = new Set(k > 0 ? SC.steps[k - 1].flows : []);
     const flows = st.flows.map((id) => ({ id, alpha: prevFlows.has(id) ? 1 : smooth(t / 0.8) }));
@@ -322,11 +323,28 @@ export async function createViewer(o) {
   /* --- 套用狀態 --- */
   let camFrom = null, userCam = false, lastStep = -1, chipSig = '';
   const camPos = new THREE.Vector3(), camTgt = new THREE.Vector3();
+  /* 加深（deep.<群組或id>：0～1）＝目標器官的顏色變深、變飽和；發亮（glow.<群組或id>：0～1）＝正在講解的血管加自發光與較強邊緣光。
+   * 兩者都放在每一步的 style 裡，跟透明度一樣隨步驟平滑過渡；不改血管透明度，血球才不會被遮住。 */
+  const hsl = { h: 0, s: 0, l: 0 }, VEIN_GLOW = new THREE.Color('#d23a66'), ART_GLOW = new THREE.Color('#ff3b2c');
+  function tint(s, deep, glow) {
+    const m = s.mat; if (!m.userData.base) m.userData.base = { color: m.color.clone(), rim: m.userData.rim.value.clone() };
+    const b = m.userData.base;
+    if (s.kind === 'artery' || s.kind === 'vein' || s.kind === 'generated') {
+      m.emissive.copy(s.kind === 'vein' || /Ven|Bridge/.test(s.group) ? VEIN_GLOW : ART_GLOW); m.emissiveIntensity = 0.6 * glow;
+      m.userData.rim.value.copy(b.rim).multiplyScalar(1 + 2.6 * glow);
+      if (!m.vertexColors) m.color.copy(b.color).lerp(tmpWhite, 0.14 * glow);
+    } else if (s.group !== 'torso') {
+      b.color.getHSL(hsl); m.color.setHSL(hsl.h, Math.min(1, hsl.s + 0.28 * deep), hsl.l * (1 - 0.34 * deep));
+    }
+  }
+  const tmpWhite = new THREE.Color(1, 1, 1);
   function applyStyles(style) {
     for (const s of structures.values()) {
       let op = style[s.id] ?? style[s.group];
       if (op === undefined) op = s.group === 'otherOrgans' ? 0.2 : 0.3;
       op = Math.round(op * 100) / 100;
+      const deep = Math.round((style['deep.' + s.id] ?? style['deep.' + s.group] ?? 0) * 50) / 50, glow = Math.round((style['glow.' + s.id] ?? style['glow.' + s.group] ?? 0) * 50) / 50;
+      if (deep !== s.deep || glow !== s.glow) { s.deep = deep; s.glow = glow; tint(s, deep, glow); }
       if (op === s.op) continue;
       s.op = op;
       const vis = op > 0.01, transparent = op < 0.985, depth = s.group === 'torso' ? false : op >= 0.6;
