@@ -283,11 +283,26 @@ put('ivc_low',ivc_all[:kj+1],ivc_r[:kj+1],'vein','poor','mesh: inferior_vena_cav
 iu=ivc_all[kj:];ra_or=np.array([-0.0127,1.2832,0.0839]);ra_in=np.array([-0.018,1.300,0.078])
 up=cat(iu,bez(iu[-1],iu[-1]+(iu[-1]-iu[-4])/np.linalg.norm(iu[-1]-iu[-4])*0.008,ra_or-np.array([0,0.006,0]),ra_or,10),line(ra_or,ra_in))
 put('ivc_upper',up,np.r_[ivc_r[kj:],np.full(len(up),0.011)][:len(up)],'vein','poor','mesh: inferior_vena_cava (above the renal-vein junction) + generated entry into right_atrium')
+# ---------------- 繪製用半徑（腎動脈／分支／腎靜脈改畫成單層管，不再畫資料集的外殼） ----------------
+# 資料集網格估出的半徑在接點處忽粗忽細（右腎動脈起點 6.3 mm、右腎靜脈近下腔靜脈 6.2 mm 是網格在大血管壁上變寬的假象）。
+# 畫出來的半徑＝網格估計值「平滑＋單調化＋上限」：動脈由粗變細、靜脈由細變粗，不超過網格值，原值留在 radius_mesh。
+def _ma(r,w=5):
+  r=np.asarray(r,float);h=w//2;q=np.r_[np.full(h,r[0]),r,np.full(h,r[-1])];return np.convolve(q,np.ones(w)/w,mode='valid')
+AR_MAX=0.0049; VN_MAX=0.0044
+def srad(sid):
+  r=_ma(segs[sid]['radius'])
+  if sid.startswith('renal_a_'):
+    r=np.minimum(np.minimum.accumulate(r),AR_MAX)
+  elif sid.startswith('renal_ant_') or sid.startswith('renal_post_'):
+    tr=srad('renal_a_'+sid[-1]);r=np.minimum(np.minimum.accumulate(r),tr[-1])
+  elif sid.startswith('renal_v_'):
+    r=np.minimum(np.maximum.accumulate(r),VN_MAX)
+  return r
 # ---------------- intrarenal schematic (generated) ----------------
 # 規格（教學示意；腎內血管口徑資料集沒有，這裡的半徑是示意用的放大值）
 # 半徑沿路漸變（由粗變細，靜脈側由細變粗）：接點兩端半徑相同，核心用圓頭管畫，接點圓滑、不會有平口斷面。
-# 起點 0.0006 ≈ 腎動脈前／後支網格末端半徑（0.0004～0.0005）略大一點，蓋住資料集網格的開口斷面。
-R_ART=(0.00060,0.00042); R_GLOM=(0.00042,0.00036); R_CAP=(0.00034,0.00029); R_VEN=(0.00050,0.0013)
+# 小動脈起點半徑＝上游腎動脈前／後支末端半徑，所以整條路徑是連續地由粗變細。
+R_ART_END=0.00040; R_GLOM=(0.00040,0.00035); R_CAP=(0.00032,0.00027); R_VEN=(0.00048,0.0013)   # 小動脈起點半徑＝上游腎動脈分支（平滑後）末端半徑
 def taper(n,a,b,pw=1.0):
   t=np.linspace(0,1,n)**pw;e=t*t*(3-2*t);return a+(b-a)*e
 def taper_cap(n,a,b):   # 微血管：兩端略粗（接點）、中段最細
@@ -332,10 +347,11 @@ for s,r in RA.items():
       pts=np.vstack([ka[far],br['kglom']]+br['kcap']+[br['kven'][:-22][::1][4:]])
       if in_hull(HULL[s],pts).all(): break
     else: print('WARNING branch not fully inside hull',s,k)
-    put(f'kart_{s}{k}',br['kart'],taper(len(br['kart']),*R_ART),'arteriole','rich','generated: schematic interlobar->arcuate->interlobular->afferent arteriole (kidney interior; diameters enlarged)',True)
-    put(f'kglom_{s}{k}',br['kglom'],taper(len(br['kglom']),*R_GLOM),'capillary','rich>poor','generated: schematic glomerular tuft (enlarged ~7x; real ~0.2 mm)',True)
+    ka0=float(srad(('renal_ant_' if tip=='ant' else 'renal_post_')+s)[-1]);ka1=min(ka0,R_ART_END);kg1=min(ka1,R_GLOM[1]);kc0=min(R_CAP[0],ka1*0.85)   # 每一處接點兩端半徑相同，且只會變細
+    put(f'kart_{s}{k}',br['kart'],taper(len(br['kart']),ka0,ka1),'arteriole','rich','generated: schematic interlobar->arcuate->interlobular->afferent arteriole (kidney interior; diameters enlarged)',True)
+    put(f'kglom_{s}{k}',br['kglom'],taper(len(br['kglom']),ka1,kg1),'capillary','rich>poor','generated: schematic glomerular tuft (enlarged ~7x; real ~0.2 mm)',True)
     for j,c in enumerate(br['kcap']):
-      put(f'kcap_{s}{k}_{j}',c,taper_cap(len(c),*R_CAP),'capillary','rich>poor','generated: schematic efferent arteriole + peritubular capillary net (enlarged)',True)
+      put(f'kcap_{s}{k}_{j}',c,taper_cap(len(c),kc0,min(R_CAP[1],kc0)),'capillary','rich>poor','generated: schematic efferent arteriole + peritubular capillary net (enlarged)',True)
     put(f'kven_{s}{k}',br['kven'],taper(len(br['kven']),*R_VEN,0.9),'vein','poor','generated: schematic interlobular->arcuate->interlobar vein, joining the renal vein at the hilum (enlarged)',True)
     kinfo[(s,k)]=dict(H=H,f=f)
     print('branch',s,k,tip,'H(mm)',round(H*1000,1),'f',f,'G',np.round(G,4))
@@ -360,9 +376,18 @@ for sid in list(segs):
     ok=in_hull(HULL[s],p)
     report[sid]=dict(n=int(len(ok)),inside=int(ok.sum()),bad_index=[int(x) for x in np.where(~ok)[0]],test='inside convex hull of the renal capsule mesh, 0.5 mm margin (excluded: the first 8 mm of kart, which start in the hilum, and the first 4 and last 22 points of kven, which end at the hilum)')
     if ok.mean()<1: print('KIDNEY-INSIDE',sid,ok.mean().round(3),np.where(~ok)[0][:12])
+# 繪製半徑＋管的範圍：腎動脈從主動脈壁外開始畫、腎靜脈畫到下腔靜脈壁外（管口圓頭貼著大血管壁，血球仍沿完整中心線流）
+def _cum(p):
+  p=np.asarray(p,float);return np.r_[0,np.cumsum(np.linalg.norm(np.diff(p,axis=0),axis=1))]
+for sid in list(segs):
+  if sid.startswith(('renal_a_','renal_ant_','renal_post_','renal_v_')):
+    segs[sid]['radius_mesh']=segs[sid]['radius'].copy();segs[sid]['radius']=srad(sid)
+    c=_cum(segs[sid]['points']);Lm=c[-1]
+    if sid.startswith('renal_a_'): segs[sid]['tubeRange']=[round(float(min(0.5,(0.0088+0.0030)/Lm)),4),1.0]    # 主動脈半徑 8.8 mm＋3 mm
+    if sid.startswith('renal_v_'): segs[sid]['tubeRange']=[0.0,round(float(max(0.5,1-(0.0083+0.0022)/Lm)),4)]   # 下腔靜脈半徑 8.3 mm＋2.2 mm
 out=dict(version='kidney_centerlines_v1',units='m',axes='+X body left, +Y up, +Z anterior (same as si_scene_v1.glb)',
  generator='tools/anatomy/build_kidney_centerlines.py',note='mesh: centerline and radius estimated from the glb mesh (level-set rings between open boundary loops, refined by plane slices); generated: schematic, not anatomical data (intrarenal vessels, glomerulus, capillary net, link into the right atrium).',
  validation=dict(method='mesh segments: 8 rays perpendicular to the path from a point offset 0.5 r from the centerline must hit the vessel mesh (union of listed nodes) within 4 r; kidney-interior routes: point inside the convex hull of the renal capsule mesh with 0.5 mm margin (the capsule is a thin shell open at the hilum, so ray tests are unreliable)',results=report),
- segments={k:dict(kind=v['kind'],o2=v['o2'],source=v['source'],schematic=v['schematic'],points=np.round(v['points'],5).tolist(),radius=np.round(v['radius'],5).tolist()) for k,v in segs.items()})
+ segments={k:dict(kind=v['kind'],o2=v['o2'],source=v['source'],schematic=v['schematic'],points=np.round(v['points'],5).tolist(),radius=np.round(v['radius'],5).tolist(),**({'radius_mesh':np.round(v['radius_mesh'],5).tolist()} if 'radius_mesh' in v else {}),**({'tubeRange':v['tubeRange']} if 'tubeRange' in v else {})) for k,v in segs.items()})
 json.dump(out,open(sys.argv[2],'w'),separators=(',',':'))
 print('wrote',sys.argv[2],len(segs))

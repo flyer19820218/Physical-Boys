@@ -108,14 +108,15 @@ function varTube(p, u0, u1, radial, stepM) {
 /* ---------- 變半徑圓頭管：同 varTube，但兩端封成半球（圓頭），半徑沿中心線漸變（由粗變細） ----------
  * 程式生成的小血管用：每一段是「兩頭圓」的管，接點處的圓頭包在對方管裡面（半徑比對方小），
  * 看起來是順順地接起來，不會再有「平口水管插進套管」的斷面。 colorAt(u) 回傳頂點色。 */
-function varTubeCapped(p, radial, stepM, colorAt) {
+function varTubeCapped(p, radial, stepM, colorAt, u0 = 0, u1 = 1) {
+  const i0 = p.index(u0), i1 = Math.max(i0 + 1, p.index(u1));   // u0／u1：只畫這一段（例如從大血管壁外才開始畫）
   const stride = Math.max(1, Math.round(stepM / (p.len / (p.n - 1))));
-  const idx = []; for (let i = 0; i < p.n - 1; i += stride) idx.push(i); idx.push(p.n - 1);
+  const idx = []; for (let i = i0; i < i1; i += stride) idx.push(i); idx.push(i1);
   const CAP = [20, 45, 68, 86].map((d) => d * Math.PI / 180);   // 半球的緯度環
   const rings = [];   // {i（中心線點）, off（沿切線位移＝R·sinθ）, k（半徑縮放＝cosθ）, th, u, end（-1 起端／+1 末端／0）}
-  for (let q = CAP.length - 1; q >= 0; q--) rings.push({ i: 0, off: -Math.sin(CAP[q]), k: Math.cos(CAP[q]), th: CAP[q], u: 0, end: -1 });
+  for (let q = CAP.length - 1; q >= 0; q--) rings.push({ i: i0, off: -Math.sin(CAP[q]), k: Math.cos(CAP[q]), th: CAP[q], u: i0 / (p.n - 1), end: -1 });
   for (const i of idx) rings.push({ i, off: 0, k: 1, th: 0, u: i / (p.n - 1), end: 0 });
-  for (let q = 0; q < CAP.length; q++) rings.push({ i: p.n - 1, off: Math.sin(CAP[q]), k: Math.cos(CAP[q]), th: CAP[q], u: 1, end: 1 });
+  for (let q = 0; q < CAP.length; q++) rings.push({ i: i1, off: Math.sin(CAP[q]), k: Math.cos(CAP[q]), th: CAP[q], u: i1 / (p.n - 1), end: 1 });
   const nR = rings.length, pos = new Float32Array(nR * radial * 3), nor = new Float32Array(nR * radial * 3), col = new Float32Array(nR * radial * 3), ind = [];
   for (let r = 0; r < nR; r++) {
     const g = rings[r], k = g.i * 3, R = p.R[g.i], c3 = colorAt(g.u);
@@ -302,13 +303,15 @@ export async function createViewer(o) {
     for (const sid of segIds) {
       const p = paths.get(sid); if (!p) continue;
       const rg = p.meta.tubeRange || [0, 1];
-      geos.push(varTube(p, rg[0], rg[1], lite ? 10 : 14, 0.0012));
+      // smoothTubes：兩端圓頭、半徑照中心線漸變（腎動脈→分支→小動脈；小靜脈→腎靜脈），接點不再有平口斷面
+      geos.push(SC.smoothTubes ? varTubeCapped(p, lite ? 10 : 14, 0.0012, () => tmpC.set('#ffffff'), rg[0], rg[1]) : varTube(p, rg[0], rg[1], lite ? 10 : 14, 0.0012));
     }
     if (!geos.length) continue;
     const geo = mergeGeometries(geos, false); geos.forEach((x) => x.dispose());
-    const mat = rimMaterial({ ...SC.material.vein, clearcoat: 0.6, env: 0.6, rimStrength: 0.35 });
+    const rk = (SC.replaceKind && SC.replaceKind[g]) || 'vein';   // 預設靜脈；腎動脈等動脈組在場景裡寫 replaceKind: { 組名: 'artery' }
+    const mat = rimMaterial({ ...SC.material[rk], clearcoat: 0.6, env: 0.6, rimStrength: 0.35 });
     const mesh = new THREE.Mesh(geo, mat); mesh.name = '@' + g; scene.add(mesh);
-    structures.set('@' + g, { id: '@' + g, meshes: [mesh], mat, kind: 'vein', group: g, op: -1, route: true });
+    structures.set('@' + g, { id: '@' + g, meshes: [mesh], mat, kind: rk, group: g, op: -1, route: true });
   }
 
   /* 血流粒子（InstancedMesh：一個 draw call） */

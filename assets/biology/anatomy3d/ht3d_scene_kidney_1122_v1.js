@@ -271,8 +271,11 @@ export const STEPS = Object.freeze([
 export const SCENE = Object.freeze({
   id: 'kidney', name: P('腎臟路線', 'Kidney route'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
-  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/kidney_centerlines_v1.json',
+  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/kidney_centerlines_v1.json?v=20261122-9',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
+  // 腎動脈（主幹＋前後分支）與腎靜脈不畫資料集的網格外殼，改畫成單層、圓頭、半徑漸變的管（半徑＝網格估計值平滑後，見 sources.md「腎臟場景」）
+  replaceMesh: { renalArt: ['renal_a_L', 'renal_a_R', 'renal_ant_L', 'renal_post_L', 'renal_ant_R', 'renal_post_R'], renalVein: ['renal_v_L', 'renal_v_R'] },
+  replaceKind: { renalArt: 'artery', renalVein: 'vein' },
   smoothTubes: true,   // 生成的小血管用「變半徑（由粗變細）＋圓頭封口」的管（核心選用開關），接點圓滑相連
   flowBright: 2,   // 血球亮度加倍（核心：SCENE.flowBright，預設 1）；目標器官亮度加倍＝各步驟 style 的 lit.<群組>: 1
   bridge: BRIDGE, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD,
