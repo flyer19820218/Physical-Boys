@@ -211,7 +211,7 @@ export const STEPS = Object.freeze([
     ],
     camera: [K(0, 'leftLung'), K(2.6, 'focusFar'), K(4.4, 'focusNear'), K(6.4, 'focusClose'), K(13, 'focusClose')],
     style: { ...BG, 'lit.lungs': 0.6, 'lit.alvFocus': 1, 'glow.genCapF': 1, 'glow.pulmArt': 0.3, 'glow.pulmVein': 0.3, heart: 0.1, lungs: 0.06, aorta: 0.1, pulmArt: 0.5, pulmVein: 0.5,
-      genCap: 0.35, genCapF: 0.58, alv: 0.2, alvFocus: 0.42 },
+      genCap: 0.35, genCapF: 0.58, alv: 0.26, alvFocus: 0.52 },
     flows: ['s_' + FOCUS, FCAPS, 'v_' + FOCUS],
     labels: [{ id: 'alv', at: [4.2, 8.4] }, { id: 'caps', at: [4.8, 8.4] }, { id: 'intraArt', at: [0, 2.4] }],   // 放大窗打開前收起標籤（不壓在放大窗上）
     tracer: { path: ['s_' + FOCUS, FU, 'v_' + FOCUS], from: 0, to: 24, startU: 0.85 },   // 約 4–7 秒走過 U 形微血管（看得到暗紅變鮮紅）；to > dur：步末停在小靜脈上，接第 4 步
@@ -253,7 +253,7 @@ export const STEPS = Object.freeze([
 export const SCENE = Object.freeze({
   id: 'lung', name: P('肺循環（小循環）', 'Pulmonary circulation'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
-  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/lung_centerlines_v1.json?v=20261122-13',
+  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/lung_centerlines_v1.json?v=20261123-a2',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
   // 肺動脈幹、左右肺動脈、四條肺靜脈不畫資料集的網格外殼，改畫成單層、半徑漸變的管（半徑：見 sources.md「肺場景」；網格估計值留在 JSON 的 radius_mesh）；
   // 肺內的動脈分支（a_、s_）與小靜脈（v_）併入同一組，和主幹同材質、同一個 mesh

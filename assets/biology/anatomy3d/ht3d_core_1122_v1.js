@@ -446,6 +446,8 @@ export async function createViewer(o) {
       /* 亮（lit.<群組或id>：0～1）＝目標器官亮度最多加倍：顏色 ×(1+lit)，再補自發光，透明的器官也不會灰暗；沒寫＝0＝不變 */
       if (lit > 0) { m.color.multiplyScalar(1 + lit); m.emissive.copy(b.color).multiplyScalar(0.5 * lit); m.emissiveIntensity = 1; }
       else m.emissive.setScalar(0);
+      /* 目標器官的外框（邊緣光）一起加亮：lit=1 時約 ×6.5，輪廓一眼就看得到（2026-11-23 老師要求） */
+      m.userData.rim.value.copy(b.rim).multiplyScalar(1 + 5.5 * lit);
     }
   }
   const tmpWhite = new THREE.Color(1, 1, 1);

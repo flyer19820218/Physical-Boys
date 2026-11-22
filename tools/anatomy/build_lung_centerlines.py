@@ -389,22 +389,31 @@ def make_bed(name,lobe,O,e1,Ra,nalv,m,rc,ell,nref=None):
   else:
     ref=np.array([0,1.0,0]) if abs(e1[1])<0.9 else np.array([1.0,0,0]);n=unit(np.cross(e1,ref))
   b=unit(np.cross(e1,n))
-  sp=2.1*Ra;xs=np.array([(i-(nalv-1)/2)*sp for i in range(nalv)]);C=[O+e1*x for x in xs]
-  N=nalv*m+1;r0=rc*N**(1/3);hs=Ra+r0+0.35*Ra;h=Ra+rc*1.5
-  x0=xs[0]-Ra-2.8*Ra;x1=xs[-1]+0.9*Ra
+  # 肺泡不排成整齊一列：大小不一（0.82～1.22 Ra）、沿軸間距不等、左右（±b）交錯再各自偏一點、上下（n）略偏，擠成一串像葡萄的肺泡囊（照教科書的畫法；示意）。亂數種子由床名決定，可重現。
+  rg=np.random.RandomState(sum(ord(ch)*(i+7) for i,ch in enumerate(name))%100003)
+  Ras=Ra*rg.uniform(0.82,1.22,nalv)
+  gaps=np.array([(Ras[i]+Ras[i+1])*rg.uniform(0.70,0.86) for i in range(nalv-1)])
+  xs=np.r_[0,np.cumsum(gaps)];xs=xs-xs.mean()
+  bo=np.array([(1 if i%2==0 else -1)*Ra*rg.uniform(0.55,1.0) for i in range(nalv)]);no=Ra*rg.uniform(-0.22,0.22,nalv)
+  C=[O+e1*x+n*ni+b*bi for x,ni,bi in zip(xs,no,bo)]
+  hh=Ras+rc*1.5   # 每個肺泡自己的微血管環半徑
+  N=nalv*m+1;r0=rc*N**(1/3);hs=Ra*1.22+r0+0.35*Ra+0.25*Ra+ (np.abs(bo).max()*0.0);h=Ra+rc*1.5
+  x0=xs[0]-Ras[0]-2.8*Ra;x1=xs[-1]+0.9*Ra
   def Ap(x): return O+n*hs+e1*x
   def Vp(x): return O-n*hs+e1*x
   caps=[]
   for i,(xi,Ci) in enumerate(zip(xs,C)):
+    h=float(hh[i]);Oi=O+n*no[i]+b*bo[i]
     for k in range(m):
       side=1 if k%2==0 else -1;q=k//2;mq=(m+1)//2 if side>0 else m//2
       # 每條微血管 ＝ 離開段（Bezier：從小動脈脊沿 +e1 離開，轉進環繞肺泡的方向）＋ 環繞段（貼著肺泡表面、從小動脈側經 ±b 側繞到小靜脈側，略為傾斜）
       #            ＋ 匯入段（Bezier：沿 −e1 併入小靜脈脊）。相鄰兩條傾斜方向相反 → 互相交叉；再加上下面的兩圈環形微血管 → 交織成網（示意）
       fr=(q+0.5)/max(mq,1)-0.5;xc=xi+Ra*1.1*fr+Ra*0.12*(side<0);tilt=Ra*0.75*(1 if (k+i)%2==0 else -1)
       ph1,ph2=np.radians(30),np.radians(150);Dx=max(1.45e-3,0.55*Ra)
+      wg=0.17*h*rg.uniform(0.7,1.25)*(1 if rg.rand()<0.5 else -1);wf=2*np.pi*rg.uniform(0.9,1.35)/(ph2-ph1);wp=rg.uniform(0,2*np.pi);tilt=tilt*rg.uniform(0.7,1.5)   # 微血管不走整齊的弧：略為蜿蜒、傾斜度不一，才像教科書那樣交織成不規則的網（曲率半徑仍 ≥ 管徑 ~1.5 倍）
       def hp(ph):
-        x=xc+tilt*(ph-np.pi/2)/(ph2-ph1);dxe=0.8*h*np.tanh((x-xi)/(0.8*h));rho=np.sqrt(h*h-dxe**2)
-        return O+e1*x+(np.cos(ph)*n+np.sin(ph)*side*b)*rho
+        x=xc+tilt*(ph-np.pi/2)/(ph2-ph1)+wg*np.sin(wf*(ph-ph1)+wp);dxe=0.8*h*np.tanh((x-xi)/(0.8*h));rho=np.sqrt(h*h-dxe**2)
+        return Oi+e1*x+(np.cos(ph)*n+np.sin(ph)*side*b)*rho
       phs=np.linspace(ph1,ph2,int((ph2-ph1)*h/0.0003)+2);hoop=np.array([hp(p) for p in phs])
       T1=unit(hoop[1]-hoop[0]);T2=unit(hoop[-1]-hoop[-2])
       xa=float((hoop[0]-O)@e1)-Dx;xb=float((hoop[-1]-O)@e1)-Dx
@@ -419,11 +428,12 @@ def make_bed(name,lobe,O,e1,Ra,nalv,m,rc,ell,nref=None):
   # 環是閉合的、不接脊，只畫管、不放血球（真實的肺泡微血管網裡血流方向各段不同，這裡不畫成繞圈流動）；環的 e1 方向半徑小於肺泡間距的一半，不會插進隔壁肺泡的環
   rings=[]
   for i,Ci in enumerate(C):
+    h=float(hh[i])
     for th,o2v in ((np.radians(42),0.3),(np.radians(138),0.75)):
       al=np.linspace(0,2*np.pi,int(2*np.pi*h*np.sin(th)/0.0003)+1)
       rp=Ci[None,:]+h*(np.cos(th)*n[None,:]+np.sin(th)*(np.cos(al)[:,None]*b[None,:]+np.sin(al)[:,None]*e1[None,:]))
       rings.append(dict(p=rp,o2=o2v,alv=i))
-  return dict(name=name,lobe=lobe,O=O,e1=e1,n=n,b=b,Ra=Ra,rc=rc,r0=r0,hs=hs,x0=x0,x1=x1,xs=xs,C=C,caps=caps,rings=rings,Ap=Ap,Vp=Vp,N=N,ell=ell)
+  return dict(name=name,lobe=lobe,O=O,e1=e1,n=n,b=b,Ra=Ra,Ras=Ras,rc=rc,r0=r0,hs=hs,x0=x0,x1=x1,xs=xs,C=C,caps=caps,rings=rings,Ap=Ap,Vp=Vp,N=N,ell=ell)
 
 def spine_radius(xs_sorted_events,xq,rc,N,ramp):
   """沿脊的 x 座標，依『還剩幾條微血管沒分出去』用 Murray 算半徑（每個分出點用 smoothstep 過渡 ramp 公尺）"""
@@ -689,7 +699,7 @@ print('trunk/PA curvature',[(s_,report[s_]['min_curv_over_r']) for s_ in ('pa_tr
 # ======================== 輸出 ========================
 sacs={'alvFocus':[],'alv':[]}
 for nm,bd in beds.items():
-  for C in bd['C']: sacs['alvFocus' if nm==FOCUS else 'alv'].append([round(float(v),5) for v in C]+[round(float(bd['Ra']),5)])
+  for C,Rq in zip(bd['C'],bd['Ras']): sacs['alvFocus' if nm==FOCUS else 'alv'].append([round(float(v),5) for v in C]+[round(float(Rq),5)])
 fb=beds[FOCUS]
 named=dict(focus=FOCUS,focus_center=np.round(fb['O'],5).tolist(),focus_axes=dict(e1=np.round(fb['e1'],4).tolist(),n=np.round(fb['n'],4).tolist(),b=np.round(fb['b'],4).tolist()),
   focus_caps=[f'c_{FOCUS}_{q}' for q in range(len(fb['caps']))],beds=list(beds),bed_centers={k:np.round(v['O'],5).tolist() for k,v in beds.items()},
