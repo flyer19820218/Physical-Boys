@@ -126,11 +126,11 @@ export const REPLACE_MESH = Object.freeze({
   portalTree: ['pt*'], arteryTree: ['at*'], sinus: ['sn_*'], lobSin: ['lb_sin_*'], lobVein: ['lb_venule*', 'lb_feed_v*', 'lb_central'], lobArt: ['lb_arteriole*', 'lb_feed_a*']
 });
 export const REPLACE_STYLE = Object.freeze({
-  hepVeins: { kind: 'vein', step: 0.0025, radial: [14, 10] },
-  portalTree: { kind: 'vein', step: 0.0025, radial: [14, 10] },
-  arteryTree: { kind: 'artery', step: 0.0025, radial: [12, 8] },
+  hepVeins: { kind: 'vein', step: 0.002, radial: [14, 10] },
+  portalTree: { kind: 'vein', step: 0.002, radial: [14, 10] },
+  arteryTree: { kind: 'artery', step: 0.002, radial: [12, 8] },
   hepArt: { kind: 'artery' },
-  sinus: { kind: 'vein', mat: 'sinusoid', step: 0.003, radial: [8, 6] },
+  sinus: { kind: 'vein', mat: 'sinusoid', step: 0.0025, radial: [8, 6] },
   lobSin: { kind: 'vein', mat: 'sinusoid', step: 0.0012, radial: [10, 8] },
   lobVein: { kind: 'vein' },
   lobArt: { kind: 'artery' }
@@ -266,10 +266,11 @@ export const STEPS = Object.freeze([
 export const SCENE = Object.freeze({
   id: 'liver', name: P('肝臟路線', 'Liver route'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
-  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/liver_centerlines_v1.json?v=20261122-10',
+  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/liver_centerlines_v1.json?v=20261123-1',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
   replaceMesh: REPLACE_MESH, replaceStyle: REPLACE_STYLE, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD,
   routeVessels: [...AORTA, ...PORTAL, ...HEP_ART, 'cardiovascular.hepatic_veins', ...IVC],
+  smoothTubes: true,   // 單層管改用「變半徑（由粗漸細）＋游離端圓頭」：中心線 JSON 的半徑陣列、capStart／capEnd 才會生效（接點畫法見接力指南 5b／5c）
   flowBright: 2,   // 血球亮度加倍（核心：SCENE.flowBright，預設 1）；目標器官亮度加倍＝各步驟 style 的 lit.<群組>: 1
   status: P('黃圈追蹤一顆紅血球。', 'The yellow ring follows one red cell.'),
   note: P('肝內分支為示意｜肝竇與肝小葉放大｜血球放大', 'Branches inside the liver are schematic | sinusoids and lobule enlarged | cells enlarged'),
