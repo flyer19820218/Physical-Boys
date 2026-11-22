@@ -738,7 +738,7 @@
     </div>
                 <div class="v5-panel orange v5-full fs-stage" id="hl-stage">
                     <h2 data-zh="⛰️ 實驗台：20 顆分子翻山" data-en="⛰️ Lab Bench: 20 Molecules Over the Hill">⛰️ 實驗台：20 顆分子翻山</h2>
-                    <p data-zh="山頂的高度就是<b class='hl-yellow'>活化能</b>。選溫度、決定要不要加催化劑，按「出發」看有幾顆分子翻得過去。" data-en="The height of the hill is the <b class='hl-yellow'>activation energy</b>. Choose the temperature and whether to add a catalyst, then press Go and count how many molecules make it over.">山頂的高度就是<b class='hl-yellow'>活化能</b>。選溫度、決定要不要加催化劑，按「出發」看有幾顆分子翻得過去。</p>
+                    <p data-zh="山頂的高度就是<b class='hl-yellow'>活化能</b>。選溫度、決定要不要加催化劑，按「出發」看有幾顆分子翻得過去；再比比看放熱、吸熱反應的山哪一座比較高。" data-en="The height of the hill is the <b class='hl-yellow'>activation energy</b>. Choose the temperature and whether to add a catalyst, then press Go and count how many molecules make it over. Then compare: is the exothermic or the endothermic hill higher?">山頂的高度就是<b class='hl-yellow'>活化能</b>。選溫度、決定要不要加催化劑，按「出發」看有幾顆分子翻得過去；再比比看放熱、吸熱反應的山哪一座比較高。</p>
                     <div class="fs-row"><button class="action-btn fs-btn" type="button" onclick="v5Full('hl-stage')" data-zh="⛶ 全螢幕操作" data-en="⛶ Full screen">⛶ 全螢幕操作</button></div>
                     <div class="v5-cv"><canvas id="hillCanvas" width="960" height="500"></canvas></div>
                     <div class="controls">
@@ -2021,20 +2021,22 @@
      分頁一：翻山實驗台（960 × 500）——活化能＝山頂的高度
        20 顆反應物分子，動能依溫度隨機分布，一起往山上衝：能量 ≥ 山高才翻得過去（變成生成物），不夠就滾回來
        「加入催化劑」會打開一條比較低的山路（活化能變低），翻過去的分子變多；但起點、終點的高度（反應熱）不變
-       可切換放熱／吸熱反應
+       可切換放熱／吸熱反應：放熱山較矮（Ea 小、容易發生），逆反應山較高（Ea' = Ea + |ΔH|）；
+       吸熱山較高（Ea 大、Ea ≥ ΔH、不容易發生），逆反應山較矮（Ea' = Ea − ΔH）
+       縱軸：hlPx(e) = HL.Y0 − e × HL.SC，固定同一把尺，放熱、吸熱的山高可以直接比
      ================================================================== */
-  const HL = { W: 960, H: 500, X0: 60, X1: 640, BASE: 420, N: 20 };
+  const HL = { W: 960, H: 500, X0: 60, X1: 640, BASE: 420, N: 20, Y0: 330, SC: 68 };
   const HLS = { T: 'low', cat: false, kind: 'exo', run: false, t0: 0, ps: [], last: 0 };
-  const HL_E = () => ({ R: 0, P: HLS.kind === 'exo' ? -1.2 : 1.0, Ea: 3.0, EaC: 1.6 });
+  const HL_E = () => HLS.kind === 'exo' ? { R: 0, P: -1.2, Ea: 2.0, EaC: 1.1 } : { R: 0, P: 1.2, Ea: 3.6, EaC: 2.0 };   /* 能量單位：相對值 */
   function hlY(x, low) {       /* 位能曲線（單位：能量）：起點→終點的 S 形，再疊一座山 */
     const E = HL_E(), top = low ? E.EaC : E.Ea, u = kClamp((x - HL.X0) / (HL.X1 - HL.X0), 0, 1);
     const s = 1 / (1 + Math.exp(-(u - 0.5) * 14)), base = E.R + (E.P - E.R) * s;
     return base + (top - (E.R + E.P) / 2) * Math.exp(-Math.pow((u - 0.5) / 0.14, 2));
   }
-  const hlPx = e => HL.BASE - 90 - e * 80;
+  const hlPx = e => HL.Y0 - e * HL.SC;   /* e = 3.6 → y ≈ 85；e = −1.2 → y ≈ 412 */
   function hlGo() {
     HLS.run = true; HLS.t0 = kNow(); const r = Math.random;
-    const kT = HLS.T === 'high' ? 1.5 : 0.7;      /* 分子動能：Maxwell–Boltzmann 分布（Gamma(3/2)）× kT */
+    const kT = HLS.T === 'high' ? 1.6 : 0.85;      /* 分子動能：Maxwell–Boltzmann 分布（Gamma(3/2)）× kT */
     const z = () => Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r());
     HLS.ps = Array.from({ length: HL.N }, (_, i) => { const x = (z() ** 2 + z() ** 2 + z() ** 2) / 2; return { e: Math.min(8, x * kT), d: i * 0.06 + r() * 0.2, u: 0, done: false, over: false }; });
     HL_UI_KEY = ''; hlUI();
@@ -2051,17 +2053,23 @@
     path(false); c.lineTo(HL.X1, HL.BASE + 30); c.lineTo(HL.X0, HL.BASE + 30); c.closePath();
     const gg = c.createLinearGradient(0, hlPx(E.Ea), 0, HL.BASE); gg.addColorStop(0, '#6b4a2f'); gg.addColorStop(1, '#3a2a1c'); c.fillStyle = gg; c.fill();
     c.strokeStyle = '#ffb070'; c.lineWidth = 4; path(false); c.stroke();
-    if (HLS.cat) { c.save(); c.strokeStyle = '#4ade80'; c.lineWidth = 5; c.setLineDash([12, 8]); path(true); c.stroke(); c.restore(); e_label(c, tr('催化劑開的低山路', 'Catalyst\'s lower path'), (HL.X0 + HL.X1) / 2, hlPx(E.EaC) + 36, '#4ade80', 16, 'center', true, 220); }
-    /* 活化能標示 */
-    const xm = (HL.X0 + HL.X1) / 2, xr = HL.X0 + 24;
-    e_dash(c, HL.X0, hlPx(E.R), xm, hlPx(E.R), 'rgba(246,243,234,0.35)', 1.5, [5, 5]);
-    e_arrow(c, xm - 90, hlPx(E.R), xm - 90, hlPx(E.Ea) + 4, '#ffe066', 2.5, 10);
-    e_label(c, tr('活化能 Ea', 'Ea'), xm - 100, (hlPx(E.R) + hlPx(E.Ea)) / 2, '#ffe066', 17, 'right', true, 140);
-    if (HLS.cat) { e_arrow(c, xm + 60, hlPx(E.R), xm + 60, hlPx(E.EaC) + 4, '#4ade80', 2.5, 10); }
-    e_dash(c, HL.X1 - 120, hlPx(E.P), HL.X1 + 10, hlPx(E.P), 'rgba(246,243,234,0.35)', 1.5, [5, 5]);
-    e_label(c, tr('反應物', 'Reactants'), HL.X0 + 50, hlPx(E.R) + 44, '#8fe9ff', 17, 'center', true, 120);
-    e_label(c, tr('生成物', 'Products'), HL.X1 - 50, hlPx(E.P) + 44, '#ffb070', 17, 'center', true, 120);
-    e_label(c, HLS.kind === 'exo' ? tr('放熱：生成物能量較低', 'Exothermic: products lower') : tr('吸熱：生成物能量較高', 'Endothermic: products higher'), (HL.X0 + HL.X1) / 2, 30, HLS.kind === 'exo' ? '#ffb070' : '#8fe9ff', 18, 'center', true, 420);
+    if (HLS.cat) { c.save(); c.strokeStyle = '#4ade80'; c.lineWidth = 5; c.setLineDash([12, 8]); path(true); c.stroke(); c.restore(); e_label(c, tr('催化劑開的低山路', 'Catalyst\'s lower path'), (HL.X0 + HL.X1) / 2 + 10, hlPx(E.EaC) + 40, '#4ade80', 20, 'center', true, 170); }
+    /* 能量標示：正反應 Ea（黃）、催化劑 Ea（綠）、逆反應 Ea'（淡白）、反應熱 ΔH（粉紅） */
+    const xm = (HL.X0 + HL.X1) / 2, top = HLS.cat ? E.EaC : E.Ea, xh = HL.X1 + 20;
+    const yR = hlPx(E.R), yP = hlPx(E.P), yA = hlPx(E.Ea), yC = hlPx(E.EaC), yT = hlPx(top);
+    e_dash(c, HL.X0, yR, xh + 10, yR, 'rgba(246,243,234,0.35)', 1.5, [5, 5]);
+    e_dash(c, xm - 150, yA, xm + 150, yA, 'rgba(255,224,102,0.45)', 1.5, [5, 5]);
+    e_dash(c, xm + 40, yP, xh + 10, yP, 'rgba(246,243,234,0.35)', 1.5, [5, 5]);
+    e_arrow(c, xm - 130, yR, xm - 130, yA + 4, '#ffe066', 3, 12);
+    e_label(c, tr('活化能 Ea', 'Ea'), xm - 142, (yR + yA) / 2 + 8, '#ffe066', 22, 'right', true, 150);
+    if (HLS.cat) { e_dash(c, xm - 150, yC, xm + 150, yC, 'rgba(74,222,128,0.5)', 1.5, [5, 5]); e_arrow(c, xm - 90, yR, xm - 90, yC + 4, '#4ade80', 3, 12); }
+    e_arrow(c, xm + 110, yP, xm + 110, yT + 4, 'rgba(246,243,234,0.6)', 2.5, 11);
+    e_label(c, tr('逆反應 Ea\'', 'Reverse Ea\''), xm + 122, Math.min((yP + yT) / 2 + 8, yP - 56, yR - 10),   /* 不壓到生成物平台上的分子與 ΔH 標籤 */ 'rgba(246,243,234,0.8)', 22, 'left', true, 170);
+    e_arrow(c, xh, yR, xh, yP + (E.P < E.R ? -3 : 3), '#ff9ed2', 3.5, 12);
+    e_label(c, HLS.kind === 'exo' ? tr('放熱 ΔH<0', 'Exo ΔH<0') : tr('吸熱 ΔH>0', 'Endo ΔH>0'), xh - 12, yR + 30, '#ff9ed2', 22, 'right', true, 150);
+    e_label(c, tr('反應物', 'Reactants'), HL.X0 + 50, yR + 44, '#8fe9ff', 22, 'center', true, 130);
+    e_label(c, tr('生成物', 'Products'), HL.X1 - 50, yP + 44, '#ffb070', 22, 'center', true, 130);
+    e_label(c, HLS.kind === 'exo' ? tr('放熱：生成物能量較低，山比較矮', 'Exothermic: products lower, lower hill') : tr('吸熱：生成物能量較高，山比較高', 'Endothermic: products higher, higher hill'), (HL.X0 + HL.X1) / 2, 34, HLS.kind === 'exo' ? '#ffb070' : '#8fe9ff', 22, 'center', true, 560);
     /* 分子 */
     let over = 0, back = 0;
     const need = HLS.cat ? E.EaC : E.Ea;
@@ -2079,14 +2087,17 @@
     /* 右邊 */
     const px = 680, pw = 260;
     c.fillStyle = 'rgba(13,32,26,0.9)'; e_rr(c, px, 60, pw, 380, 12); c.fill();
-    const row = (lab, val, y, col, sz) => { e_txt(c, lab, px + 20, y, '#a3b8b0', 18, 'left', 150); kRich(c, val, px + pw - 20, y, sz || 24, col, 'right'); };
-    row(tr('溫度', 'Temp'), HLS.T === 'high' ? tr('高', 'High') : tr('低', 'Low'), 106, HLS.T === 'high' ? '#ff9ed2' : '#8fe9ff');
-    row(tr('催化劑', 'Catalyst'), HLS.cat ? tr('有', 'Yes') : tr('沒有', 'No'), 152, HLS.cat ? '#4ade80' : '#a3b8b0');
-    row(tr('活化能', 'Ea'), (HLS.cat ? E.EaC : E.Ea).toFixed(1), 198, '#ffe066');
-    c.strokeStyle = 'rgba(246,243,234,0.25)'; c.beginPath(); c.moveTo(px + 20, 224); c.lineTo(px + pw - 20, 224); c.stroke();
-    e_txt(c, tr('翻過山的分子', 'Made it over'), px + pw / 2, 264, '#cfdad5', 18, 'center', pw - 20);
-    kRich(c, `${over} / ${HL.N}`, px + pw / 2, 324, 44, '#ffb070', 'center');
-    e_txt(c, tr('滾回來的', 'Rolled back'), px + 20, 390, '#a3b8b0', 17, 'left', 150); kRich(c, String(back), px + pw - 20, 390, 22, '#8fe9ff', 'right');
+    const row = (lab, val, y, col, sz) => { e_txt(c, lab, px + 18, y, '#a3b8b0', 22, 'left', 150); kRich(c, val, px + pw - 18, y, sz || 24, col, 'right'); };
+    const f1 = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
+    row(tr('溫度', 'Temp'), HLS.T === 'high' ? tr('高', 'High') : tr('低', 'Low'), 98, HLS.T === 'high' ? '#ff9ed2' : '#8fe9ff');
+    row(tr('催化劑', 'Catalyst'), HLS.cat ? tr('有', 'Yes') : tr('沒有', 'No'), 136, HLS.cat ? '#4ade80' : '#a3b8b0');
+    row(tr('活化能', 'Ea'), top.toFixed(1), 174, HLS.cat ? '#4ade80' : '#ffe066');
+    row(tr('逆反應 Ea\'', 'Reverse Ea\''), (top - E.P).toFixed(1), 212, '#d8ddd9');
+    row(tr('反應熱 ΔH', 'ΔH'), f1(E.P - E.R), 250, '#ff9ed2');
+    c.strokeStyle = 'rgba(246,243,234,0.25)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(px + 20, 272); c.lineTo(px + pw - 20, 272); c.stroke();
+    e_txt(c, tr('翻過山的分子', 'Made it over'), px + pw / 2, 306, '#cfdad5', 22, 'center', pw - 20);
+    kRich(c, `${over} / ${HL.N}`, px + pw / 2, 362, 44, '#ffb070', 'center');
+    e_txt(c, tr('滾回來的', 'Rolled back'), px + 18, 414, '#a3b8b0', 22, 'left', 150); kRich(c, String(back), px + pw - 18, 414, 24, '#8fe9ff', 'right');
     HLS.over = over; HLS.back = back;
   }
   let HL_UI_KEY = '';
@@ -2098,10 +2109,13 @@
     ['exo', 'endo'].forEach(k => document.getElementById('hl-k-' + k).classList.toggle('active', HLS.kind === k));
     document.getElementById('hl-cat').classList.toggle('active', HLS.cat);
     document.getElementById('hl-cat').textContent = HLS.cat ? tr('🧪 拿走催化劑', '🧪 Remove the catalyst') : tr('🧪 加入催化劑', '🧪 Add a catalyst');
-    st.innerHTML = !HLS.run ? tr('每顆分子帶著不同的動能往山上衝。<b>能量 ≥ 活化能</b>才翻得過去；不夠的會滾回來。選好溫度、要不要催化劑，再按「出發」。', 'Each molecule charges up the hill with a different kinetic energy. Only those with <b>energy ≥ activation energy</b> get over; the rest roll back. Choose the temperature and whether to use a catalyst, then press Go.')
+    st.innerHTML = (!HLS.run ? tr('每顆分子帶著不同的動能往山上衝。<b>能量 ≥ 活化能</b>才翻得過去；不夠的會滾回來。選好溫度、要不要催化劑，再按「出發」。', 'Each molecule charges up the hill with a different kinetic energy. Only those with <b>energy ≥ activation energy</b> get over; the rest roll back. Choose the temperature and whether to use a catalyst, then press Go.')
       : HLS.cat ? tr('催化劑提供<b>活化能較低的新路徑</b>，同樣的溫度，翻過去的分子變多了；但<b>起點和終點的高度都沒變</b>——反應熱不會因為催化劑改變。', 'The catalyst offers a <b>new path with a lower activation energy</b>: at the same temperature, more molecules get over. But the <b>start and end heights do not change</b> — a catalyst does not change the heat of reaction.')
       : HLS.T === 'high' ? tr('升高溫度，分子平均動能變大，<b>能翻過同一座山的分子變多</b>。', 'At a higher temperature the molecules carry more energy, so <b>more of them clear the same hill</b>.')
-      : tr('低溫時大部分分子能量不夠，只有少數翻過山。', 'At low temperature most molecules lack the energy; only a few get over.');
+      : tr('低溫時大部分分子能量不夠，只有少數翻過山。', 'At low temperature most molecules lack the energy; only a few get over.'))
+      + (HLS.kind === 'exo'
+        ? tr('<br>放熱反應的<b>山比較矮（活化能小）</b>，所以比較容易發生；但逆反應要翻回去的山更高，很難倒回去。', '<br>The exothermic hill is <b>lower (small activation energy)</b>, so the reaction happens more easily; going back means climbing a higher hill, so the reverse is hard.')
+        : tr('<br>吸熱反應的<b>山比較高（活化能大）</b>，所以不容易發生，要更高溫或加催化劑；逆反應的山反而比較矮。', '<br>The endothermic hill is <b>higher (large activation energy)</b>, so the reaction does not happen easily — it needs a higher temperature or a catalyst; the reverse hill is lower.'));
   }
   function hlRefresh() { HL_UI_KEY = ''; hlUI(); }
 
