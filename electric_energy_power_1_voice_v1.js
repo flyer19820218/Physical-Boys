@@ -9,7 +9,7 @@
   var STAGE_URL = 'audio/electric_energy_power_1/stage.json';
   // 音檔與網頁同一個網域（audio/electric_energy_power_1/mp3/）：iPad Safari 對 GitHub Release 的下載網址（octet-stream＋attachment）常常無法播放。
   var AUDIO_BASE = 'audio/electric_energy_power_1/mp3/';
-  var AUDIO_VER = '?v=20261122-a2'; // 重錄音檔時改這個版本號，避免瀏覽器播到舊的快取音檔
+  var AUDIO_VER = '?v=20261122-a3'; // 重錄音檔時改這個版本號，避免瀏覽器播到舊的快取音檔
   var AUDIO_FALLBACK = AUDIO_BASE; // 本課沒有 GitHub Release 備援：載入失敗就直接改用字數估時，講解不中斷
   var player = null; // 全程只用同一個 Audio 元素：iOS 只在「使用者點擊」那一刻解鎖，新建的 Audio 之後自動播放會被擋
   var SEC_PER_CHAR = 0.3; // 音檔載入失敗時，依字數估一個等待秒數，讓講解不中斷

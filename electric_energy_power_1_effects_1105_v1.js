@@ -49,7 +49,7 @@
   const PITCH = (BX[1] - BX[0]) / 3;          // 同一支路電子間距；支路間距的 1/3 → 三條支路的電子在共用幹線上均勻交錯
   const SQ = 13, OFF = 15;                    // 能量方塊邊長、離導線距離
   const DEV = [
-    { key: 'dryer', name: ['吹風機', 'Hair dryer'], color: K.heat, tray: ['內能', 'Internal'] },
+    { key: 'dryer', name: ['吹風機', 'Hair dryer'], color: K.heat, tray: ['熱能', 'Heat'] },
     { key: 'cell', name: ['充電電池', 'Rechargeable battery'], color: K.chem, tray: ['化學變化', 'Chem. change'] },
     { key: 'magnet', name: ['電磁鐵', 'Electromagnet'], color: K.mag, tray: ['磁場', 'Magnetic field'] }
   ];
@@ -113,8 +113,8 @@
       res: ['電池把能量送進電路。藍色小方塊是「能量」的教學符號，不代表實體粒子。',
         'The battery sends energy into the circuit. Blue squares symbolize "energy packets", not actual particles.'] },
     { dur: 8, b: ['熱效應', 'Heat'], hi: 0,
-      cap: ['吹風機：電能變成內能，吹出熱風', 'Hair dryer: electrical energy becomes heat'],
-      res: ['吹風機的電熱絲把電能轉換成內能，產生熱風。', 'The hair dryer converts electrical energy into internal energy (heat).'] },
+      cap: ['吹風機：電能變成熱能，吹出熱風', 'Hair dryer: electrical energy becomes heat'],
+      res: ['吹風機的電熱絲把電能轉換成熱能，產生熱風。', 'The hair dryer converts electrical energy into heat energy.'] },
     { dur: 8, b: ['化學效應', 'Chemical'], hi: 1,
       cap: ['充電電池：電能推動化學變化', 'Charging: energy drives a chemical change'],
       res: ['充電時，電能推動化學反應，把能量儲存在電池內。', 'Electrical energy drives a chemical reaction to store energy in the battery.'] },
