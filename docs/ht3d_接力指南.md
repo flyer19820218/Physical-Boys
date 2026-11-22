@@ -1,6 +1,6 @@
 # 3D 血液循環｜接力指南（給接手的 Claude）
 
-最後更新：2026-11-22 晚。老師（Soulrunning，臺灣國中理化老師，用繁體中文溝通）同時請**兩個 Claude 帳號**接力：一個做**腎**，另一個繼續修小腸／肝與共用程式。請從這份開始，**不要重新探索整個 repo**。
+最後更新：2026-11-23 早（肝臟血管改成由粗到細，見 5c 節）。老師（Soulrunning，臺灣國中理化老師，用繁體中文溝通）同時請**兩個 Claude 帳號**接力：一個做**腎**，另一個繼續修小腸／肝與共用程式。請從這份開始，**不要重新探索整個 repo**。
 
 ## 0. 老師的指令（接手時直接照做，不用再問）
 - 目標：把 `biology_human_transport.html`「全身怎麼送到？」分頁做成真實、醫學等級、非卡通的 3D 課：從主動脈 → 小動脈 → 目標器官 → 靜脈回心，標血管名稱、擴散物質、器官功能，血液一邊流一邊介紹。
@@ -33,13 +33,14 @@
 | `ht3d_scenes_1122_v1.js` | **場景登錄檔**：`export const SCENES = { <id>: { file, label:[中,英] } }`。加一行就多一個場景；兩個以上場景時，3D 舞台上方會出現場景切換鈕。 |
 | `ht3d_scene_small_intestine_1122_v1.js` | 場景資料範本：`NAMES`／`LABEL_ALLOW`／`GROUPS`／`MATERIAL`／`BASE_STYLE`／`FLOW`／`LABELS`／`STEPS`／`SCENE`。**新場景照這個檔的格式複製。** |
 | `ht3d_scene_liver_1122_v1.js` | **肝臟路線**（4 步：兩個入口→並行分支→肝小葉→肝靜脈回心臟）。肝內全是程式生成的示意；`replaceMesh` 用 `'pt*'` 這種前綴一次指定一整批區段。 |
-| `liver_centerlines_v1.json`（272 KB，476 段） | 肝臟場景的中心線。`tools/anatomy/build_liver_centerlines.py` 產生（固定亂數種子、約 15 秒；用法在腳本開頭，需要 `/tmp/si_world.json`：`node tools/anatomy/dump_glb_world.mjs assets/biology/anatomy3d/si_scene_v1.glb /tmp/si_world.json --modules /tmp/gl/node_modules`）。檔內 `named`（門靜脈鏈、肝靜脈鏈）與 `lobule`（肝小葉位置與方向）給場景檔用；**重跑腳本後段 id 可能變，要重讀這兩欄再改場景檔的追蹤路徑與鏡頭。** |
+| `liver_centerlines_v1.json`（314 KB，476 段） | 肝臟場景的中心線。`tools/anatomy/build_liver_centerlines.py` 產生（固定亂數種子、約 15 秒；用法在腳本開頭，需要 `/tmp/si_world.json`：`node tools/anatomy/dump_glb_world.mjs assets/biology/anatomy3d/si_scene_v1.glb /tmp/si_world.json --modules /tmp/gl/node_modules`）。檔內 `named`（門靜脈鏈、肝靜脈鏈）與 `lobule`（肝小葉位置與方向）給場景檔用；**重跑腳本後段 id 可能變，要重讀這兩欄再改場景檔的追蹤路徑與鏡頭。** |
 | `ht3d_page_human_transport_1122_v1.js` | 頁面接線：切換鈕、場景鈕、步驟鈕、2D/3D 互斥、`window.HT3D`。場景可有自己的版權文字（`SCENE.schematic`＝[中,英]，沒寫就用預設）。 |
 | `ht3d_1122_v1.css` | 樣式。 |
 | `si_scene_v1.glb`（0.65MB）／`_lite.glb` | 97 個結構的解剖網格，**已含**冠狀動脈、左右腎動脈與分支、腎靜脈、腎臟（腎囊）、肺動脈幹、左右肺動脈、四條肺靜脈、各肺葉、心臟、肝、主動脈、下腔靜脈。心肌、腎、肺**不用再找素材**。 |
 | `si_parts_v1.json` | 每個結構的類別、中心點、`bbox`、`zh_review` 標記（19 筆待確認名稱）。 |
 | `si_centerlines_v1.json` | 48 段血流路徑（`kind／o2／source／schematic／points／radius`）。**每個新場景自己做一份。** |
 | `sources.md` | 授權與改作說明（CC BY-SA 4.0；腎囊外形 CC BY 4.0）。新增結構與數字要補。 |
+| `docs/ref/vessel_whole_body_ref_20261123.png` | 老師提供的全身血管分布與粗細參考圖（只當內部參考；規則寫在第 5c 節）。 |
 | `tools/anatomy/` | `extract_si_scene.mjs`、`build_si_centerlines.py`（中心線範本）、`dump_glb_world.mjs`。原始資料集在 GitHub `authorOd/3d-anatomy-atlas` 的 `packages/data/releases/1.2.0`（沙盒裡不一定還在，要的話重抓）。 |
 
 **座標：** 公尺；+Y 向上、+Z 向前、+X 為人體左側；每個 glb node 是一個合併網格，頂點有量化，中心請讀 `si_parts_v1.json` 的 `centroid`／`bbox`。
@@ -99,6 +100,17 @@
 6. **改了中心線 JSON 一定要升版號**：場景檔、頁面 JS、HTML 的 `?v=` 一起升（舊版沒帶 `?v=` 時，瀏覽器重新整理仍吃舊檔，老師會以為沒修）。
 7. **驗證**：分色診斷（`HT3D._debug.viewer()` 改各群組顏色）＋近景截圖看接點；加 `V.controls.dispatchEvent({type:'start'})` 才不會被步驟鏡頭拉回去。
 8. **亮度**：目標器官用 `lit.<群組>: 1`（本體色與自發光一起提亮，約 2 倍），血流亮度用 `SCENE.flowBright: 2`；不要把血管透明度調到 ≥0.6。3D 舞台高度別被舊的 `--media-h` 卡住（只有 `.expanded` 才吃）。
+
+## 5c. 全身血管分布與粗細參考圖（老師 2026-11-23 提供；每個器官場景的血管都照這張的「感覺」做）
+**圖檔：`docs/ref/vessel_whole_body_ref_20261123.png`**（全身動脈紅、靜脈藍的示意圖；來源與授權老師沒說明，**只當內部參考，不放進任何頁面、不要拿去當素材**）。老師的要求：血管要「由粗到細」，不要像「套管子」（一段一段等粗的管子互相插接）。從圖裡看得到的規則：
+1. **動脈與靜脈成對並行**：主幹（主動脈、上下腔靜脈）最粗，往四肢與各器官逐級分出旁支；伴行的靜脈多半比動脈略粗。
+2. **連續漸細**：離心臟愈遠愈細，沒有「突然變細」的台階，也沒有一大段等粗的水管；主幹分出旁支之後，主幹本身也略為變細。
+3. **分支像從主幹慢慢分出去**：旁支從主幹側面以銳角、順著主幹方向斜出（切線相接），分出時就明顯比主幹細，不是垂直插進去。
+4. **大分叉是平滑的 Y 形**：骨盆處主動脈、下腔靜脈各分成左右髂血管，是圓滑的弧線，分叉後兩條都連續往下走進腿。
+5. **末梢愈分愈細**：手、腳末端分成許多細枝；進入器官（腎門、肺門）像扇形／樹枝狀逐級分叉，細枝愈分愈多。
+6. **顏色只借幾何**：這張圖用動脈紅、靜脈藍；本專案 3D 不畫藍色（與 2D「兩者都是紅色」一致），只借用它的分布與粗細。
+
+**肝臟場景怎麼落實（2026-11-23，腳本 `tools/anatomy/build_liver_centerlines.py`）**：①分叉口徑改用 Murray 定律（指數 3，先前是 2.7），每段由「本段終端數」算出起點半徑、沿路**漸細到最大子管的半徑**，同軸接續；較小的子管從母管壁分出，起點往分支那一側偏 (r大−r小)×0.85；②子管離開母管時兩端切線都對齊——用 `bez_t`（Bezier，控制點長度在 0.25–1.2 倍兩端距離間搜尋，取「最小曲率半徑最大」的）與 `join_from`，離開方向和原走向差很大（約 90°，例如肝門 T 形分叉）也不會先衝出去再折回（S 形）；③肝門的 T 形：門靜脈末 25 mm 順勢彎向最大的子支，較小的子支從末端前約 2 倍管徑處的管壁側面分出；④肝竇連接管：終端分支末段先收到連接管的起點半徑（Murray：n 條 → 終端半徑 × n^(−1/3)），連接管中段最細（肝竇）、併入肝靜脈處略粗，且順著肝靜脈血流方向併入；⑤小葉的 3 條進口、3 條小動脈、中央靜脈同樣由粗漸細；⑥封口：同軸接點不封，**終端分支的末端一律封圓頭**（肝竇連接管在步驟①②是隱藏的，不封的話樹梢會像被切斷）；⑦場景開 `smoothTubes: true`。檢查腳本：生成後跑「相對半徑變化／曲率半徑÷管半徑／管與管穿插」自訂檢查（見 PROGRESS 該行的數字）。
 
 ## 6. 驗證方法（不要重新摸索）
 - 啟動伺服器：`tools/qa/serve.sh`（Port 8765；ES 模組不能用 `file://`）。
