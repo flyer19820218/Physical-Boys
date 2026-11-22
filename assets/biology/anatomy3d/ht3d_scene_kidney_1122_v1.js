@@ -273,6 +273,7 @@ export const SCENE = Object.freeze({
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
   parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/kidney_centerlines_v1.json',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
+  smoothTubes: true,   // 生成的小血管用「變半徑（由粗變細）＋圓頭封口」的管（核心選用開關），接點圓滑相連
   flowBright: 2,   // 血球亮度加倍（核心：SCENE.flowBright，預設 1）；目標器官亮度加倍＝各步驟 style 的 lit.<群組>: 1
   bridge: BRIDGE, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD,
   routeVessels: [...AORTA, ...RENAL_ART, ...RENAL_VEIN, ...IVC],

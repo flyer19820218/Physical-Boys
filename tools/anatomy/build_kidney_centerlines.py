@@ -285,7 +285,13 @@ up=cat(iu,bez(iu[-1],iu[-1]+(iu[-1]-iu[-4])/np.linalg.norm(iu[-1]-iu[-4])*0.008,
 put('ivc_upper',up,np.r_[ivc_r[kj:],np.full(len(up),0.011)][:len(up)],'vein','poor','mesh: inferior_vena_cava (above the renal-vein junction) + generated entry into right_atrium')
 # ---------------- intrarenal schematic (generated) ----------------
 # 規格（教學示意；腎內血管口徑資料集沒有，這裡的半徑是示意用的放大值）
-R_ART=0.00055; R_GLOM=0.0004; R_CAP=0.00030; R_VEN=0.0009
+# 半徑沿路漸變（由粗變細，靜脈側由細變粗）：接點兩端半徑相同，核心用圓頭管畫，接點圓滑、不會有平口斷面。
+# 起點 0.0006 ≈ 腎動脈前／後支網格末端半徑（0.0004～0.0005）略大一點，蓋住資料集網格的開口斷面。
+R_ART=(0.00060,0.00042); R_GLOM=(0.00042,0.00036); R_CAP=(0.00034,0.00029); R_VEN=(0.00050,0.0013)
+def taper(n,a,b,pw=1.0):
+  t=np.linspace(0,1,n)**pw;e=t*t*(3-2*t);return a+(b-a)*e
+def taper_cap(n,a,b):   # 微血管：兩端略粗（接點）、中段最細
+  t=np.linspace(0,1,n);return b+(a-b)*(1-np.sin(np.pi*t))
 SPEC={'L':[('ant',1.0,0.5,3),('ant',0.0,0.35,3),('ant',-1.0,0.5,3),('post',0.8,-0.7,3),('post',-0.8,-0.7,3)],
       'R':[('post',0.8,-0.7,2),('post',-0.8,-0.7,2),('post',0.0,0.3,2)]}
 from scipy.spatial import ConvexHull
@@ -326,11 +332,11 @@ for s,r in RA.items():
       pts=np.vstack([ka[far],br['kglom']]+br['kcap']+[br['kven'][:-22][::1][4:]])
       if in_hull(HULL[s],pts).all(): break
     else: print('WARNING branch not fully inside hull',s,k)
-    put(f'kart_{s}{k}',br['kart'],R_ART,'arteriole','rich','generated: schematic interlobar->arcuate->interlobular->afferent arteriole (kidney interior; diameters enlarged)',True)
-    put(f'kglom_{s}{k}',br['kglom'],R_GLOM,'capillary','rich>poor','generated: schematic glomerular tuft (enlarged ~7x; real ~0.2 mm)',True)
+    put(f'kart_{s}{k}',br['kart'],taper(len(br['kart']),*R_ART),'arteriole','rich','generated: schematic interlobar->arcuate->interlobular->afferent arteriole (kidney interior; diameters enlarged)',True)
+    put(f'kglom_{s}{k}',br['kglom'],taper(len(br['kglom']),*R_GLOM),'capillary','rich>poor','generated: schematic glomerular tuft (enlarged ~7x; real ~0.2 mm)',True)
     for j,c in enumerate(br['kcap']):
-      put(f'kcap_{s}{k}_{j}',c,R_CAP,'capillary','rich>poor','generated: schematic efferent arteriole + peritubular capillary net (enlarged)',True)
-    put(f'kven_{s}{k}',br['kven'],R_VEN,'vein','poor','generated: schematic interlobular->arcuate->interlobar vein, joining the renal vein at the hilum (enlarged)',True)
+      put(f'kcap_{s}{k}_{j}',c,taper_cap(len(c),*R_CAP),'capillary','rich>poor','generated: schematic efferent arteriole + peritubular capillary net (enlarged)',True)
+    put(f'kven_{s}{k}',br['kven'],taper(len(br['kven']),*R_VEN,0.9),'vein','poor','generated: schematic interlobular->arcuate->interlobar vein, joining the renal vein at the hilum (enlarged)',True)
     kinfo[(s,k)]=dict(H=H,f=f)
     print('branch',s,k,tip,'H(mm)',round(H*1000,1),'f',f,'G',np.round(G,4))
 # ---------------- validation ----------------

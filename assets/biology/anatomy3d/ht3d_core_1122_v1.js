@@ -105,6 +105,40 @@ function varTube(p, u0, u1, radial, stepM) {
   g.setIndex(ind); return g;
 }
 
+/* ---------- 變半徑圓頭管：同 varTube，但兩端封成半球（圓頭），半徑沿中心線漸變（由粗變細） ----------
+ * 程式生成的小血管用：每一段是「兩頭圓」的管，接點處的圓頭包在對方管裡面（半徑比對方小），
+ * 看起來是順順地接起來，不會再有「平口水管插進套管」的斷面。 colorAt(u) 回傳頂點色。 */
+function varTubeCapped(p, radial, stepM, colorAt) {
+  const stride = Math.max(1, Math.round(stepM / (p.len / (p.n - 1))));
+  const idx = []; for (let i = 0; i < p.n - 1; i += stride) idx.push(i); idx.push(p.n - 1);
+  const CAP = [20, 45, 68, 86].map((d) => d * Math.PI / 180);   // 半球的緯度環
+  const rings = [];   // {i（中心線點）, off（沿切線位移＝R·sinθ）, k（半徑縮放＝cosθ）, th, u, end（-1 起端／+1 末端／0）}
+  for (let q = CAP.length - 1; q >= 0; q--) rings.push({ i: 0, off: -Math.sin(CAP[q]), k: Math.cos(CAP[q]), th: CAP[q], u: 0, end: -1 });
+  for (const i of idx) rings.push({ i, off: 0, k: 1, th: 0, u: i / (p.n - 1), end: 0 });
+  for (let q = 0; q < CAP.length; q++) rings.push({ i: p.n - 1, off: Math.sin(CAP[q]), k: Math.cos(CAP[q]), th: CAP[q], u: 1, end: 1 });
+  const nR = rings.length, pos = new Float32Array(nR * radial * 3), nor = new Float32Array(nR * radial * 3), col = new Float32Array(nR * radial * 3), ind = [];
+  for (let r = 0; r < nR; r++) {
+    const g = rings[r], k = g.i * 3, R = p.R[g.i], c3 = colorAt(g.u);
+    const cx = p.P[k] + p.T[k] * g.off * R, cy = p.P[k + 1] + p.T[k + 1] * g.off * R, cz = p.P[k + 2] + p.T[k + 2] * g.off * R;
+    const ts = g.end === 0 ? 0 : Math.sin(g.th) * g.end;   // 圓頭的法線朝切線方向傾斜
+    for (let a = 0; a < radial; a++) {
+      const ang = (a / radial) * TAU, c = Math.cos(ang), sn = Math.sin(ang), o = (r * radial + a) * 3;
+      const dx = p.N[k] * c + p.B[k] * sn, dy = p.N[k + 1] * c + p.B[k + 1] * sn, dz = p.N[k + 2] * c + p.B[k + 2] * sn, rr = R * g.k;
+      pos[o] = cx + dx * rr; pos[o + 1] = cy + dy * rr; pos[o + 2] = cz + dz * rr;
+      const ck = g.end === 0 ? 1 : Math.cos(g.th);
+      nor[o] = dx * ck + p.T[k] * ts; nor[o + 1] = dy * ck + p.T[k + 1] * ts; nor[o + 2] = dz * ck + p.T[k + 2] * ts;
+      col[o] = c3.r; col[o + 1] = c3.g; col[o + 2] = c3.b;
+    }
+  }
+  for (let r = 0; r < nR - 1; r++) for (let a = 0; a < radial; a++) {
+    const a1 = (a + 1) % radial, A = r * radial + a, B = (r + 1) * radial + a, C = (r + 1) * radial + a1, D = r * radial + a1;
+    ind.push(A, D, B, B, D, C);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setIndex(ind); return g;
+}
+
 /* ---------- 材質：MeshPhysical＋邊緣微光（fresnel）＝醫學圖譜的次表面感 ---------- */
 function rimMaterial(opts) {
   const m = new THREE.MeshPhysicalMaterial({
@@ -224,6 +258,14 @@ export async function createViewer(o) {
   const tmpC = new THREE.Color();
   for (const [id, sg] of Object.entries(CL.segments)) {
     const g = SC.tubeGroup(id); if (!g) continue;
+    if (SC.smoothTubes) {   // 選用：變半徑（由粗變細）＋圓頭封口的管；沒開的場景走下面原本的等半徑管
+      const cp = paths.get(id);
+      (tubeBuckets[g] = tubeBuckets[g] || []).push(varTubeCapped(cp, lite ? 6 : 10, 0.0007, (u) => {
+        const o2 = sg.o2 === 'rich' ? 1 : sg.o2 === 'poor' ? 0 : 1 - smooth(u * 1.1);
+        return tmpC.copy(POOR).lerp(RICH, o2).multiplyScalar(0.72);
+      }));
+      continue;
+    }
     const curve = new THREE.CatmullRomCurve3(sg.points.map((p) => new THREE.Vector3(p[0], p[1], p[2])), false, 'centripetal');
     const len = paths.get(id).len, r = paths.get(id).rMean;
     const geo = new THREE.TubeGeometry(curve, Math.max(8, Math.round(len / 0.0008)), r, lite ? 6 : 8, false);
@@ -274,7 +316,7 @@ export async function createViewer(o) {
   const rbcGeo = rbcGeometry(lite ? 8 : 12);
   const rbcMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.45, clearcoat: 0.2, sheen: 0.25, sheenColor: new THREE.Color('#ff7a68'), envMapIntensity: 0.45 });
   /* 血球亮度倍率：場景可設 SCENE.flowBright（預設 1＝不變；2＝亮度加倍）。乘在材質顏色上，再補一點自發光，暗處也看得到 */
-  const FB = Math.min(4, Math.max(0.2, Number(SC.flowBright) || 1));
+  const FB = Math.min(4, Math.max(0.2, Number(SC.flowBright) || 1)), SMT = !!SC.smoothTubes;
   rbcMat.color.setScalar(FB); if (FB > 1) rbcMat.emissive.set('#ff5a48').multiplyScalar(0.1 * (FB - 1));
   const cells = new THREE.InstancedMesh(rbcGeo, rbcMat, budgetMax);
   cells.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -443,7 +485,7 @@ export async function createViewer(o) {
       let fade = fi.alpha;
       if (F.fadeEnd) fade *= smooth((1 - u) / 0.1);
       if (F.fadeStart) fade *= smooth(u / 0.1);
-      const s = fi.size * pScale[i] * fade;
+      const s = fi.size * pScale[i] * fade * (SMT ? Math.min(1.2, p.R[k] / p.rMean) : 1);   // 管徑漸變時血球跟著變小，不會擠出細管
       let yx, yy, yz, xx, xy, xz;
       if (F.singleFile) { yx = tx; yy = ty; yz = tz; xx = nx; xy = ny; xz = nz; }        // 微血管：一顆接一顆，盤面朝前
       else { const a = pTum[i] + pRate[i] * ft, c = Math.cos(a), sn = Math.sin(a); yx = nx * c + bx * sn; yy = ny * c + by * sn; yz = nz * c + bz * sn; xx = tx; xy = ty; xz = tz; }
@@ -465,7 +507,7 @@ export async function createViewer(o) {
     let i = 0; while (i < TP.list.length - 1 && d > TP.cum[i + 1]) i++;
     const p = TP.list[i], u = TP.u0[i] + (d - TP.cum[i]) / p.len, idx = p.index(u) * 3;
     p.point(u, tq); tt.fromArray(p.T, idx); tnn.fromArray(p.N, idx); tb.crossVectors(tt, tnn);
-    const size = Math.min(0.0042, Math.max(0.00055, p.rMean * 0.75)) * 1.5;
+    const size = Math.min(0.0042, Math.max(0.00055, p.rMean * 0.75)) * 1.5 * (SMT ? Math.min(1.2, p.R[idx / 3] / p.rMean) : 1);
     basisM.makeBasis(tt, tnn, tb); tracer.quaternion.setFromRotationMatrix(basisM); tracer.position.copy(tq); tracer.scale.setScalar(size);
     const o2 = p.meta.o2 === 'rich' ? 1 : p.meta.o2 === 'poor' ? 0 : 1 - smooth(u * 1.1);
     tracerMat.color.copy(POOR).lerp(RICH, o2).multiplyScalar(FB);
