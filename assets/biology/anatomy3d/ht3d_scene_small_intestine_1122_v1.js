@@ -63,7 +63,7 @@ export const GROUPS = Object.freeze({
   aorta: AORTA, sma: ['cardiovascular.superior_mesenteric_artery'], portal: PORTAL, hepArt: HEP_ART,
   hepVeins: ['cardiovascular.hepatic_veins'], ivc: IVC,
   // 程式生成的示意管（核心依 FLOW 的 kind 建管）
-  genArt: ['@art'], genCap: ['@cap'], genVen: ['@ven'], genLiver: ['@liver'], genBridge: ['@bridge']
+  genArt: ['@art'], genCap: ['@cap'], genVen: ['@ven'], genLiver: ['@liver']
 });
 /* 材質類別：artery／vein 用血管材質；organ 依 id 取顏色；context 只當外形 */
 export const MATERIAL = Object.freeze({
@@ -88,8 +88,8 @@ export const MATERIAL = Object.freeze({
 export const BASE_STYLE = Object.freeze({
   torso: 0.05, heart: 0.3, leaflets: 0, lungs: 0.1, gut: 0.95, colon: 0.16, liver: 0.32, stomach: 0.2, pancreas: 0.24,
   spleen: 0.28, kidneys: 0.16, diaphragm: 0, otherArteries: 0.3, otherVeins: 0.3,
-  aorta: 0.5, sma: 0.6, portal: 0.58, hepArt: 0.45, hepVeins: 0.6, ivc: 0.5,
-  genArt: 0.7, genCap: 0.75, genVen: 0.7, genLiver: 0, genBridge: 0.5
+  aorta: 0.5, sma: 0.6, portal: 0.55, hepArt: 0.45, hepVeins: 0.55, ivc: 0.5,
+  genArt: 0.7, genCap: 0.75, genVen: 0.7, genLiver: 0
 });
 
 /* ---------- 血流（每條區段的速度型態；公尺／秒，教學速度，不是真實速度） ----------
@@ -130,14 +130,16 @@ export function tubeGroup(seg) {
   if (/^liver_cap/.test(seg)) return 'genLiver';
   return null;
 }
-/* 下腔靜脈上端到右心房開口之間，資料集網格有約 2 cm 空隙：用示意管接起來（y 高於 IVC 網格上緣的那段） */
-export const BRIDGE = Object.freeze({ seg: 'ivc_upper', fromY: 1.262, radius: 0.0092 });
+/* 單層靜脈管：這些群組不畫資料集的網格外殼（外殼與血球走的路徑口徑對不上，看起來像「外面套一層膜」），
+ * 改由核心依中心線與其半徑畫成單層管。口徑依文獻，見 tools/anatomy/set_vein_calibers.py 與 sources.md「血管口徑」。
+ * 下腔靜脈一路畫到右心房開口，資料集網格上端的空隙因此不再需要「示意橋」。 */
+export const REPLACE_MESH = Object.freeze({ portal: ['smv', 'splenic', 'portal'], hepVeins: ['hv1', 'hv2'], ivc: ['ivc_lower', 'ivc_upper'] });
 /* 流動區段 → 驗證用的網格（粒子在管腔內的抽樣檢查） */
 export const LUMEN_MESH = Object.freeze({
   aorta: AORTA, aorta_lower: ['cardiovascular.abdominal_aorta'], sma: ['cardiovascular.superior_mesenteric_artery', 'cardiovascular.abdominal_aorta'],
-  sma_branch: ['cardiovascular.superior_mesenteric_artery'], smv: ['cardiovascular.superior_mesenteric_vein'],
-  portal: ['cardiovascular.hepatic_portal_vein_2'], ivc_lower: IVC, hep_artery: [...HEP_ART, 'cardiovascular.abdominal_aorta'],
-  hv1: ['cardiovascular.hepatic_veins', ...IVC], hv2: ['cardiovascular.hepatic_veins', ...IVC], splenic: ['cardiovascular.splenic_vein']
+  sma_branch: ['cardiovascular.superior_mesenteric_artery'], smv: ['@portal'],
+  portal: ['@portal'], ivc_lower: ['@ivc'], hep_artery: [...HEP_ART, 'cardiovascular.abdominal_aorta'],
+  hv1: ['@hepVeins', '@ivc'], hv2: ['@hepVeins', '@ivc'], splenic: ['@portal']
 });
 
 /* ---------- 步驟 ---------- */
@@ -204,7 +206,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: HINT }
     ],
     camera: [K(0, 'front'), K(2.2, 'heart'), K(5.0, 'archL'), K(7.8, 'aortaDown'), K(10, 'aortaDown')],
-    style: { 'deep.heart': 0.6, 'glow.aorta': 1, heart: 0.55, 'cardiovascular.left_ventricle': 0.62, lungs: 0.06, gut: 0.6, liver: 0.18, portal: 0.35, ivc: 0.35, hepVeins: 0.35, sma: 0.6, genArt: 0, genCap: 0, genVen: 0, genBridge: 0.35 },
+    style: { 'deep.heart': 0.6, 'glow.aorta': 1, heart: 0.55, 'cardiovascular.left_ventricle': 0.62, lungs: 0.06, gut: 0.6, liver: 0.18, portal: 0.35, ivc: 0.35, hepVeins: 0.35, sma: 0.6, genArt: 0, genCap: 0, genVen: 0 },
     flows: ['lv_out', 'aorta', 'aorta_lower'],
     labels: [{ id: 'lv', at: [0.6, 5.2] }, { id: 'aorta', at: [3.0, 6.6] }, { id: 'aortaTho', at: [6.8, 10] }],
     tracer: { path: ['lv_out', 'aorta'], from: 0.4, to: 9.6 }
@@ -246,7 +248,7 @@ export const STEPS = Object.freeze([
       { src: 'COORD', p: P('小靜脈匯流成腸繫膜上靜脈，再和脾靜脈匯合成肝門靜脈。', 'Venules converge into the superior mesenteric vein, which joins the splenic vein to form the hepatic portal vein.') }
     ],
     camera: [K(0, 'wallClose'), K(1.6, 'gutMid'), K(4.2, 'veinsBack'), K(7.2, 'portalUp'), K(10, 'liverIn')],
-    style: { 'deep.liver': 1, 'deep.gut': 0.6, 'glow.portal': 1, 'glow.genVen': 0.9, heart: 0.12, gut: 0.5, liver: 0.5, aorta: 0.3, sma: 0.25, otherArteries: 0.1, hepArt: 0.2, genArt: 0.15, genCap: 0.6, genVen: 0.9, genLiver: 0.9, portal: 0.8, colon: 0.12, stomach: 0.14, pancreas: 0.18 },
+    style: { 'deep.liver': 1, 'deep.gut': 0.6, 'glow.portal': 1, 'glow.genVen': 0.9, heart: 0.12, gut: 0.5, liver: 0.5, aorta: 0.3, sma: 0.25, otherArteries: 0.1, hepArt: 0.2, genArt: 0.15, genCap: 0.6, genVen: 0.9, genLiver: 0.9, portal: 0.58, colon: 0.12, stomach: 0.14, pancreas: 0.18 },
     flows: [...CAPS, ...VENS, 'smv', 'splenic', 'portal', ...LIVER_CAPS],
     labels: [{ id: 'venules', at: [1.6, 5.6] }, { id: 'smv', at: [3.6, 7.6] }, { id: 'portal', at: [6.0, 10] }, { id: 'liver', at: [7.6, 10] }],
     tracer: { path: ['ven_4', 'smv', 'portal', 'liver_cap_b'], from: 0.4, to: 9.8 },
@@ -260,7 +262,7 @@ export const STEPS = Object.freeze([
       { src: 'COORD', p: P('肝臟另外有肝動脈送來含氧血；肝靜脈把肝臟的血送進下腔靜脈（國中課本：下大靜脈），回到右心房。', 'The liver also receives oxygen-rich blood from the hepatic artery; hepatic veins carry blood from the liver into the inferior vena cava and back to the right atrium.') }
     ],
     camera: [K(0, 'liverIn'), K(2.0, 'liverClose'), K(7.4, 'liverClose'), K(9.6, 'hvIvc'), K(12, 'raEnd')],
-    style: { 'deep.liver': 1, 'deep.cardiovascular.right_atrium': 0.8, 'glow.hepVeins': 1, 'glow.ivc': 1, 'glow.hepArt': 0.7, 'glow.genLiver': 0.6, heart: 0.4, 'cardiovascular.right_atrium': 0.62, liver: 0.5, gut: 0.4, aorta: 0.35, sma: 0.3, genArt: 0, genCap: 0.2, genVen: 0.3, genLiver: 0.95, hepArt: 0.95, portal: 1, stomach: 0.12, lungs: 0.06 },
+    style: { 'deep.liver': 1, 'deep.cardiovascular.right_atrium': 0.8, 'glow.hepVeins': 1, 'glow.ivc': 1, 'glow.hepArt': 0.7, 'glow.genLiver': 0.6, heart: 0.4, 'cardiovascular.right_atrium': 0.62, liver: 0.5, gut: 0.4, aorta: 0.35, sma: 0.3, genArt: 0, genCap: 0.2, genVen: 0.3, genLiver: 0.95, hepArt: 0.95, portal: 0.58, stomach: 0.12, lungs: 0.06 },
     flows: ['portal', ...LIVER_CAPS, 'liver_cap_art', 'hep_artery', 'hv1', 'hv2', 'ivc_lower', 'ivc_upper'],
     labels: [{ id: 'liver', at: [0.4, 7.6] }, { id: 'hv', at: [7.6, 12] }, { id: 'ivc', at: [8.2, 12] }, { id: 'ra', at: [9.8, 12] }],
     tracer: { path: ['liver_cap_b', 'hv1', 'ivc_upper'], from: 7.2, to: 11.6 },
@@ -271,9 +273,9 @@ export const STEPS = Object.freeze([
 export const SCENE = Object.freeze({
   id: 'small_intestine', name: P('小腸路線', 'Small-intestine route'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
-  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/si_centerlines_v1.json',
+  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/si_centerlines_v1.json?v=20261122-4',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
-  bridge: BRIDGE, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD, focusCap: FOCUS_CAP,
+  replaceMesh: REPLACE_MESH, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD, focusCap: FOCUS_CAP,
   routeVessels: [...AORTA, 'cardiovascular.superior_mesenteric_artery', ...PORTAL, ...HEP_ART, 'cardiovascular.hepatic_veins', ...IVC],
   status: P('黃圈追蹤一顆紅血球。', 'The yellow ring follows one red cell.'),
   note: P('小分支為示意｜血球放大', 'Small branches are schematic | cells enlarged'),

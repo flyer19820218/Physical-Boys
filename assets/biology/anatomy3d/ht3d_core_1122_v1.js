@@ -80,6 +80,31 @@ function rbcGeometry(seg) {
   const g = new THREE.LatheGeometry(pts, seg); g.computeVertexNormals(); return g;
 }
 
+/* ---------- 變半徑單層管：沿 Path 的標架與半徑（p.R）畫一根管（管壁＝血流範圍，不另外套外殼） ---------- */
+function varTube(p, u0, u1, radial, stepM) {
+  const i0 = p.index(u0), i1 = Math.max(i0 + 1, p.index(u1));
+  const stride = Math.max(1, Math.round(stepM / (p.len / (p.n - 1))));
+  const idx = []; for (let i = i0; i < i1; i += stride) idx.push(i); idx.push(i1);
+  const rings = idx.length, pos = new Float32Array(rings * radial * 3), nor = new Float32Array(rings * radial * 3), uv = new Float32Array(rings * radial * 2), ind = [];
+  for (let r = 0; r < rings; r++) {
+    const i = idx[r], k = i * 3, R = p.R[i];
+    for (let a = 0; a < radial; a++) {
+      const ang = (a / radial) * TAU, c = Math.cos(ang), s = Math.sin(ang), o = (r * radial + a) * 3;
+      const dx = p.N[k] * c + p.B[k] * s, dy = p.N[k + 1] * c + p.B[k + 1] * s, dz = p.N[k + 2] * c + p.B[k + 2] * s;
+      pos[o] = p.P[k] + dx * R; pos[o + 1] = p.P[k + 1] + dy * R; pos[o + 2] = p.P[k + 2] + dz * R;
+      nor[o] = dx; nor[o + 1] = dy; nor[o + 2] = dz;
+      uv[(r * radial + a) * 2] = a / radial; uv[(r * radial + a) * 2 + 1] = r / (rings - 1);
+    }
+  }
+  for (let r = 0; r < rings - 1; r++) for (let a = 0; a < radial; a++) {
+    const a1 = (a + 1) % radial, A = r * radial + a, B = (r + 1) * radial + a, C = (r + 1) * radial + a1, D = r * radial + a1;
+    ind.push(A, D, B, B, D, C);   // (N,B,T) 為右手系：這個順序讓正面朝外
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  g.setIndex(ind); return g;
+}
+
 /* ---------- 材質：MeshPhysical＋邊緣微光（fresnel）＝醫學圖譜的次表面感 ---------- */
 function rimMaterial(opts) {
   const m = new THREE.MeshPhysicalMaterial({
@@ -168,10 +193,12 @@ export async function createViewer(o) {
   /* 結構 */
   const structures = new Map();   // id → {id, meshes, mat, kind, group, op}
   const root = gltf.scene; scene.add(root);
+  const REPL = new Set(Object.keys(SC.replaceMesh || {})), dropMeshes = [];   // replaceMesh：這些群組不畫資料集的網格外殼，改畫單層管（見下）
   root.traverse((ob) => {
     if (!ob.isMesh) return;
     // GLTFLoader 會把 node 名稱的「.」去掉（PropertyBinding.sanitizeNodeName），用對照表找回 si_parts 的 id
     const id = SAN.get(ob.name) || (ob.parent && SAN.get(ob.parent.name)) || ob.name;
+    if (REPL.has(GROUP_OF.get(id))) { dropMeshes.push(ob); return; }
     let s = structures.get(id);
     if (!s) {
       const p = PARTS.get(id) || {}; const kind = p.kind || 'organ';
@@ -187,6 +214,7 @@ export async function createViewer(o) {
     if (ob.material && ob.material.dispose) ob.material.dispose();
     ob.material = s.mat; s.meshes.push(ob);
   });
+  for (const ob of dropMeshes) { ob.removeFromParent(); ob.geometry.dispose(); if (ob.material && ob.material.dispose) ob.material.dispose(); }
   /* 中心線 → Path */
   const paths = new Map();
   for (const [id, sg] of Object.entries(CL.segments)) paths.set(id, Object.assign(new Path(id, sg.points, sg.radius), { meta: sg }));
@@ -208,7 +236,7 @@ export async function createViewer(o) {
     geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
     (tubeBuckets[g] = tubeBuckets[g] || []).push(geo);
   }
-  const bridgePath = paths.get(SC.bridge.seg);
+  const bridgePath = SC.bridge && paths.get(SC.bridge.seg);
   if (bridgePath) {
     const pts = CL.segments[SC.bridge.seg].points.filter((p) => p[1] >= SC.bridge.fromY);
     if (pts.length > 2) {
@@ -224,6 +252,21 @@ export async function createViewer(o) {
     const mesh = new THREE.Mesh(geo, mat); mesh.name = '@' + g; scene.add(mesh);
     const sid = SC.groups[g][0];
     structures.set(sid, { id: sid, meshes: [mesh], mat, kind: 'generated', group: g, op: -1, route: true });
+  }
+  /* 靜脈單層管：依中心線與其半徑（口徑依文獻，見 tools/anatomy/set_vein_calibers.py、sources.md）畫成一根管；
+   * 資料集的網格外殼已在上面丟掉，所以畫面上的粗細＝血球流動的範圍，不會再有「外面套一層膜」。 */
+  for (const [g, segIds] of Object.entries(SC.replaceMesh || {})) {
+    const geos = [];
+    for (const sid of segIds) {
+      const p = paths.get(sid); if (!p) continue;
+      const rg = p.meta.tubeRange || [0, 1];
+      geos.push(varTube(p, rg[0], rg[1], lite ? 10 : 14, 0.0012));
+    }
+    if (!geos.length) continue;
+    const geo = mergeGeometries(geos, false); geos.forEach((x) => x.dispose());
+    const mat = rimMaterial({ ...SC.material.vein, clearcoat: 0.6, env: 0.6, rimStrength: 0.35 });
+    const mesh = new THREE.Mesh(geo, mat); mesh.name = '@' + g; scene.add(mesh);
+    structures.set('@' + g, { id: '@' + g, meshes: [mesh], mat, kind: 'vein', group: g, op: -1, route: true });
   }
 
   /* 血流粒子（InstancedMesh：一個 draw call） */
