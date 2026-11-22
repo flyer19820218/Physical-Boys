@@ -1389,48 +1389,63 @@
         ctx.font = 'bold 24px "Noto Sans TC", sans-serif';
         ctx.fillText(tr('水溶液中：極少量 H⁺ 會發生斷裂', 'In Water: Trace H⁺ dissociates into ions'), 60, 530);
 
-        let aX = 400, aY = 620;
-        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 6;
+        // 乙酸 CH3–C(=O)–O–H（下半部專用：拉長鍵長、縮小原子半徑，讓每條鍵都看得到）
+        const rC = 36, rO = 32, rH = 20;
+        const mC = { x: 300, y: 660 };          // 甲基 C
+        const cC = { x: 430, y: 660 };          // 羧基 C
+        const oD = { x: 510, y: 590 };          // 雙鍵 O（右上）
+        const oH = { x: 530, y: 720 };          // 接 H 的 O（右下）
+        const hO = { x: 630, y: 720 };          // O 上的 H
+        const mH = [{ x: 240, y: 595 }, { x: 210, y: 680 }, { x: 270, y: 745 }];
+
+        ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 6; ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(aX, aY); ctx.lineTo(aX - 60, aY - 60); 
-        ctx.moveTo(aX, aY); ctx.lineTo(aX - 80, aY + 30); 
-        ctx.moveTo(aX, aY); ctx.lineTo(aX - 30, aY + 90); 
-        ctx.moveTo(aX, aY); ctx.lineTo(aX + 100, aY);      
-        ctx.moveTo(aX + 100, aY); ctx.lineTo(aX + 130, aY - 70); 
-        ctx.moveTo(aX + 100, aY); ctx.lineTo(aX + 170, aY + 40); 
+        mH.forEach(h => { ctx.moveTo(mC.x, mC.y); ctx.lineTo(h.x, h.y); });
+        ctx.moveTo(mC.x, mC.y); ctx.lineTo(cC.x, cC.y);
+        ctx.moveTo(cC.x, cC.y); ctx.lineTo(oH.x, oH.y);
         ctx.stroke();
 
-        drawAtom(ctx, aX - 60, aY - 60, 24, '#00FFFF', 'H');
-        drawAtom(ctx, aX - 80, aY + 30, 24, '#00FFFF', 'H');
-        drawAtom(ctx, aX - 30, aY + 90, 24, '#00FFFF', 'H');
-        drawAtom(ctx, aX, aY, 48, '#9fb0a8', 'C');
-        drawAtom(ctx, aX + 100, aY, 48, '#9fb0a8', 'C');
-        drawAtom(ctx, aX + 130, aY - 70, 42, '#FF69B4', 'O');
-        drawAtom(ctx, aX + 170, aY + 40, 42, '#FF69B4', 'O');
+        // C=O 雙鍵（兩條平行線）
+        let dx = oD.x - cC.x, dy = oD.y - cC.y, len = Math.hypot(dx, dy);
+        let px = -dy / len * 8, py = dx / len * 8;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(cC.x + px, cC.y + py); ctx.lineTo(oD.x + px, oD.y + py);
+        ctx.moveTo(cC.x - px, cC.y - py); ctx.lineTo(oD.x - px, oD.y - py);
+        ctx.stroke();
+        ctx.lineWidth = 6;
 
+        mH.forEach(h => drawAtom(ctx, h.x, h.y, rH, '#00FFFF', 'H'));
+        drawAtom(ctx, mC.x, mC.y, rC, '#9fb0a8', 'C');
+        drawAtom(ctx, cC.x, cC.y, rC, '#9fb0a8', 'C');
+        drawAtom(ctx, oD.x, oD.y, rO, '#FF69B4', 'O');
         let isDetached = (acidFrame % 180) > 90; 
-        let floatH_X = aX + 230;
-        let floatH_Y = aY + 40;
+        let floatH_X = hO.x;
+        let floatH_Y = hO.y;
 
         if (isDetached) {
             floatH_X += Math.sin(acidFrame * 0.05) * 35 + 35;
             floatH_Y += Math.cos(acidFrame * 0.05) * 35 - 35;
-            
+
+            drawAtom(ctx, oH.x, oH.y, rO, '#FF69B4', 'O⁻');
+
             ctx.shadowColor = '#FF0000';
             ctx.shadowBlur = 30;
-            drawAtom(ctx, floatH_X, floatH_Y, 24, '#FFFF00', 'H⁺');
+            drawAtom(ctx, floatH_X, floatH_Y, rH + 4, '#FFFF00', 'H⁺');
             ctx.shadowBlur = 0;
 
             ctx.fillStyle = '#FF69B4';
             ctx.font = 'bold 24px "Noto Sans TC", sans-serif';
-            ctx.fillText(tr('解離出 H⁺', 'Dissociated H⁺'), floatH_X + 30, floatH_Y);
+            ctx.fillText(tr('解離出 H⁺', 'Dissociated H⁺'), floatH_X + 34, floatH_Y + 8);
         } else {
             ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 6;
             ctx.beginPath();
-            ctx.moveTo(aX + 170, aY + 40); ctx.lineTo(floatH_X, floatH_Y);
+            ctx.moveTo(oH.x, oH.y); ctx.lineTo(floatH_X, floatH_Y);
             ctx.stroke();
-            drawAtom(ctx, floatH_X, floatH_Y, 24, '#00FFFF', 'H');
+            drawAtom(ctx, oH.x, oH.y, rO, '#FF69B4', 'O');
+            drawAtom(ctx, floatH_X, floatH_Y, rH, '#00FFFF', 'H');
         }
+        ctx.lineCap = 'butt';
 
         acidAnimId = requestAnimationFrame(drawAcidScene);
     }

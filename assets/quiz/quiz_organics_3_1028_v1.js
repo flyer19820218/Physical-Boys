@@ -26,7 +26,7 @@ LQ.addStatic('organics_3',{
    P(`人工製造的材料。`,`A man-made material.`)),
   Q(P(`白膠加硼砂水攪拌後變成史萊姆，是因為什麼？`,`Why does white glue turn into slime with borax solution?`),
    [P(`長鏈分子被剪斷成小塊`,`Chains are all cut into pieces`),P(`長鏈分子被完全溶解掉`,`Chains are dissolved away`),P(`長鏈分子被連結成網狀`,`Chains are linked into a net`),P(`長鏈分子被燃燒成為碳`,`Chains are burned to carbon`)],2,
-   P(`硼砂把聚乙烯醇長鏈彼此連結，變成可拉長的網狀結構。`,`Borax links the polyvinyl alcohol chains to each other, forming a stretchy network.`),
+   P(`硼砂把膠水裡的長鏈分子彼此連結，變成可拉長的網狀結構。`,`Borax links the long chain molecules in the glue to each other, forming a stretchy network.`),
    P(`小分子「牽起手」。`,`Molecules "hold hands".`)),
   Q(P(`下列哪一組都是天然聚合物？`,`Which group is entirely natural polymers?`),
    [P(`澱粉、保鮮膜、輪胎`,`Starch, cling film, tires`),P(`蛋白質、塑膠袋、纖維素`,`Protein, plastic, cellulose`),P(`澱粉、蛋白質、纖維素`,`Starch, protein, cellulose`),P(`肝糖、耐綸、聚酯`,`Glycogen, nylon, polyester`)],2,
