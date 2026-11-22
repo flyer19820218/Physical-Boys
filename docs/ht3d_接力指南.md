@@ -1,6 +1,6 @@
 # 3D 血液循環｜接力指南（給接手的 Claude）
 
-最後更新：2026-11-23 早（肝臟血管改成由粗到細，見 5c 節）。老師（Soulrunning，臺灣國中理化老師，用繁體中文溝通）同時請**兩個 Claude 帳號**接力：一個做**腎**，另一個繼續修小腸／肝與共用程式。請從這份開始，**不要重新探索整個 repo**。
+最後更新：2026-11-23 上午（肝臟血管改成由粗到細，見 5c、5c-2 節）。老師（Soulrunning，臺灣國中理化老師，用繁體中文溝通）同時請**兩個 Claude 帳號**接力：一個做**腎**，另一個繼續修小腸／肝與共用程式。請從這份開始，**不要重新探索整個 repo**。
 
 ## 0. 老師的指令（接手時直接照做，不用再問）
 - 目標：把 `biology_human_transport.html`「全身怎麼送到？」分頁做成真實、醫學等級、非卡通的 3D 課：從主動脈 → 小動脈 → 目標器官 → 靜脈回心，標血管名稱、擴散物質、器官功能，血液一邊流一邊介紹。
@@ -33,7 +33,7 @@
 | `ht3d_scenes_1122_v1.js` | **場景登錄檔**：`export const SCENES = { <id>: { file, label:[中,英] } }`。加一行就多一個場景；兩個以上場景時，3D 舞台上方會出現場景切換鈕。 |
 | `ht3d_scene_small_intestine_1122_v1.js` | 場景資料範本：`NAMES`／`LABEL_ALLOW`／`GROUPS`／`MATERIAL`／`BASE_STYLE`／`FLOW`／`LABELS`／`STEPS`／`SCENE`。**新場景照這個檔的格式複製。** |
 | `ht3d_scene_liver_1122_v1.js` | **肝臟路線**（4 步：兩個入口→並行分支→肝小葉→肝靜脈回心臟）。肝內全是程式生成的示意；`replaceMesh` 用 `'pt*'` 這種前綴一次指定一整批區段。 |
-| `liver_centerlines_v1.json`（314 KB，476 段） | 肝臟場景的中心線。`tools/anatomy/build_liver_centerlines.py` 產生（固定亂數種子、約 15 秒；用法在腳本開頭，需要 `/tmp/si_world.json`：`node tools/anatomy/dump_glb_world.mjs assets/biology/anatomy3d/si_scene_v1.glb /tmp/si_world.json --modules /tmp/gl/node_modules`）。檔內 `named`（門靜脈鏈、肝靜脈鏈）與 `lobule`（肝小葉位置與方向）給場景檔用；**重跑腳本後段 id 可能變，要重讀這兩欄再改場景檔的追蹤路徑與鏡頭。** |
+| `liver_centerlines_v1.json`（328 KB，482 段） | 肝臟場景的中心線。`tools/anatomy/build_liver_centerlines.py` 產生（固定亂數種子、約 15 秒；用法在腳本開頭，需要 `/tmp/si_world.json`：`node tools/anatomy/dump_glb_world.mjs assets/biology/anatomy3d/si_scene_v1.glb /tmp/si_world.json --modules /tmp/gl/node_modules`）。檔內 `named`（門靜脈鏈、肝靜脈鏈）與 `lobule`（肝小葉位置與方向）給場景檔用；**重跑腳本後段 id 可能變，要重讀這兩欄再改場景檔的追蹤路徑與鏡頭。** |
 | `ht3d_page_human_transport_1122_v1.js` | 頁面接線：切換鈕、場景鈕、步驟鈕、2D/3D 互斥、`window.HT3D`。場景可有自己的版權文字（`SCENE.schematic`＝[中,英]，沒寫就用預設）。 |
 | `ht3d_1122_v1.css` | 樣式。 |
 | `si_scene_v1.glb`（0.65MB）／`_lite.glb` | 97 個結構的解剖網格，**已含**冠狀動脈、左右腎動脈與分支、腎靜脈、腎臟（腎囊）、肺動脈幹、左右肺動脈、四條肺靜脈、各肺葉、心臟、肝、主動脈、下腔靜脈。心肌、腎、肺**不用再找素材**。 |
