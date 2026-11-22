@@ -169,6 +169,8 @@ print('segments', len(segs), '| terminals portal', nP, 'RHV', nR, 'MHV+LHV', nM)
 #  ② 接點切線相接（depart／arrive）：子管先沿母管末端的切線走一小段，再轉回自己的走向，分支像從幹線慢慢分出去；
 #  ③ 最大的子管與母管同軸、同半徑接續（母管整段漸細到那個半徑）；其餘子管貼著母管壁分出（起點往分支那一側偏 (r大−r小)×0.85）；
 #  ④ 同軸接點兩端都不封口（capStart／capEnd = false），圓頭只留在游離末端。
+#  ⑤ 微循環分級（2026-11-23 第二次，老師：由粗到細慢慢分支、再由細到粗慢慢匯集）：終端分支整段漸細（leaf_profile／TIP_FRAC），
+#     肝竇連接管由 0.4–0.5 mm 緩降到 0.22 mm 再緩升、只併入肝靜脈樹梢細端（R_ZONE），每一級落差 ≤ 約 2 倍；見接力指南 5c-2。
 R_PORTAL_HILUM = 4.6e-3    # 門靜脈進肝門處（直徑約 9.2 mm；文獻正常 7–13 mm，平均約 9.6–10.3 mm）
 R_RHV = 4.4e-3             # 右肝靜脈（直徑 8.8 mm；一項超音波研究平均 8.6 mm）
 R_HA_HILUM = 1.6e-3        # 固有肝動脈（直徑約 3.2 mm，示意）
@@ -228,6 +230,11 @@ def tan_end(P, k=3): P = np.asarray(P, float); return unit(P[-1] - P[-1 - min(k,
 def mid_profile(n, a, mid, c):
     """微血管型半徑：兩端 a／c（接點略粗）、中段 mid（最細）"""
     t = np.linspace(0, 1, n); return mid + (a - mid) * (1 - smoothstep(t / 0.45)) + (c - mid) * smoothstep((t - 0.55) / 0.45)
+def leaf_profile(P, a, b):
+    """終端分支整段由 a 漸細到 b（接近等斜率的長錐形，端點略為緩和）：樹梢不再是「一根粗管直接接細線」"""
+    s_ = arclen(P); s_ = s_ / s_[-1]; t = 0.25 * smoothstep(s_) + 0.75 * s_; return a + (b - a) * t
+# 終端分支末端半徑占 Murray 半徑的比例（微循環分級：樹梢粗→連接管細→肝靜脈樹梢→再變粗，每一級落差不超過約 2 倍）
+TIP_FRAC = {'pt': 0.48, 'ht': 0.42, 'at': 0.85}
 def kids_sorted(i): return sorted(segs[i]['kids'], key=lambda k: (-segs[k]['n'], k))
 def fan(Pend, T, ks, raw, leafr, r_big, parent=None):
     """母管末端（位置 Pend、末端切線 T）分出 ks：最大的同軸續行；其餘貼壁分出。回傳 {子段: 最終路徑}
@@ -246,12 +253,12 @@ def fan(Pend, T, ks, raw, leafr, r_big, parent=None):
             P0[0] = Ok + perp * 0.85 * max(0.0, rp_b - r_k)
         out[k] = sp_res(join_from(P0, Tk, min(0.45 * arclen(P0)[-1], max(0.012, 7.0 * r_k))), 0.003)   # 粗管用較長的接合距離，轉彎才圓
     return out
-def grow(i, Pi, leafr, raw, FP, FR):
+def grow(i, Pi, leafr, raw, FP, FR, tipk):
     """已知第 i 段的最終路徑 Pi：定它的半徑（由 r_i 漸細到最大子管的半徑），再展開它的子段"""
     s = segs[i]; r_i = leafr * s['n'] ** M3; ks = kids_sorted(i); FP[i] = Pi
-    if not ks: FR[i] = np.full(len(Pi), r_i); return
+    if not ks: FR[i] = leaf_profile(Pi, r_i, r_i * tipk); return
     r_big = leafr * segs[ks[0]]['n'] ** M3; FR[i] = gtaper(Pi, r_i, r_big)
-    for k, Pk in fan(Pi[-1], tan_end(Pi), ks, raw, leafr, r_big).items(): grow(k, Pk, leafr, raw, FP, FR)
+    for k, Pk in fan(Pi[-1], tan_end(Pi), ks, raw, leafr, r_big).items(): grow(k, Pk, leafr, raw, FP, FR, tipk)
 
 # ---- 真實網格中心線（沿用）：主動脈（到腹腔動脈幹起點）、腸繫膜上靜脈、脾靜脈、門靜脈、下腔靜脈
 ap = np.array(S0['aorta']['points']); ar = np.array(S0['aorta']['radius']); c0 = np.array(S0['hep_artery']['points'][0])
@@ -286,7 +293,7 @@ ks0 = sorted(top[0], key=lambda k: (-segs[k]['n'], k)); rbig_p = leaf[0] * segs[
 pr = tail_taper(pr, pp, rbig_p, 0.014)
 d_big = unit(polys[ks0[0]][min(4, len(polys[ks0[0]]) - 1)] - polys[ks0[0]][0])
 pp = arrive(pp, unit(0.2 * tan_end(pp) + 0.8 * d_big), 0.025)        # 門靜脈末 25 mm 順勢彎向最大的子支（右支），像一條連續的血管，不是直直撞上去
-for k, Pk in fan(pp[-1], tan_end(pp), ks0, polys, leaf[0], rbig_p, parent=(pp, pr)).items(): grow(k, Pk, leaf[0], polys, FPp, FRp)
+for k, Pk in fan(pp[-1], tan_end(pp), ks0, polys, leaf[0], rbig_p, parent=(pp, pr)).items(): grow(k, Pk, leaf[0], polys, FPp, FRp, TIP_FRAC['pt'])
 put('portal', pp, pr, 'vein', 'poor', 'mesh: hepatic_portal_vein_2 (centerline) | caliber: literature, see sources.md', False, tube=True, capStart=False, capEnd=False)
 # 動脈樹：伴著門靜脈分支（口徑較細，位置沿用門靜脈段偏一個固定方向，起點接上一段動脈的終點）
 rawA, art_end = {}, {}
@@ -303,11 +310,11 @@ ks0a = sorted(top[0], key=lambda k: (-segs[k]['n'], k)); rbig_a = leaf_a * segs[
 ha_trunk_R = tail_taper(ha_trunk_R, ha_trunk_P, rbig_a, 0.008)
 d_bigA = unit(rawA[ks0a[0]][min(4, len(rawA[ks0a[0]]) - 1)] - rawA[ks0a[0]][0])
 ha_trunk_P = arrive(ha_trunk_P, unit(0.3 * tan_end(ha_trunk_P) + 0.7 * d_bigA), 0.015)
-for k, Pk in fan(ha_trunk_P[-1], tan_end(ha_trunk_P), ks0a, rawA, leaf_a, rbig_a, parent=(ha_trunk_P, ha_trunk_R)).items(): grow(k, Pk, leaf_a, rawA, FPa, FRa)
+for k, Pk in fan(ha_trunk_P[-1], tan_end(ha_trunk_P), ks0a, rawA, leaf_a, rbig_a, parent=(ha_trunk_P, ha_trunk_R)).items(): grow(k, Pk, leaf_a, rawA, FPa, FRa, TIP_FRAC['at'])
 put('trunk_ha', ha_trunk_P, ha_trunk_R, 'artery', 'rich', 'mesh: coeliac_trunk+common_hepatic_artery (to its end) + generated proper hepatic artery to the hilum', True, tube=True, capStart=False, capEnd=False)
 # 肝靜脈樹（樹的幾何與門靜脈樹相同；匯流方向相反，輸出時整段反轉）
 FPh, FRh = {}, {}
-for r_ in top[1] + top[2]: grow(r_, sp_res(polys[r_], 0.003), leaf[segs[r_]['tree']], polys, FPh, FRh)
+for r_ in top[1] + top[2]: grow(r_, sp_res(polys[r_], 0.003), leaf[segs[r_]['tree']], polys, FPh, FRh, TIP_FRAC['ht'])
 
 def put_pt(i, R=None, capEnd=None):
     s = segs[i]; put(seg_id[i], FPp[i], FRp[i] if R is None else R, 'vein', 'poor', 'generated: schematic portal-vein branch (space colonisation inside liver mesh)', True, tube=True, level=s['depth'], terminals=s['n'], capStart=False, capEnd=(not s['kids']) if capEnd is None else capEnd)
@@ -360,7 +367,7 @@ Cc = (PS + QS) / 2; RHO, HH = 0.0062, 0.0072
 AS = art_end[ip]                                        # 該終端旁的動脈終點
 lobule = dict(center=Cc.round(5).tolist(), axis=ax.round(5).tolist(), e1=e1.round(5).tolist(), e2=e2.round(5).tolist(), rho=RHO, half_height=HH, portal_tip=PS.round(5).tolist(), vein_tip=QS.round(5).tolist(), portal_seg=seg_id[ip], hv_seg=seg_id[jq])
 # 小葉的血管口徑：門靜脈終端分成 3 條（Murray：每條 = 終端半徑 × 3^(-1/3)），動脈同理；之後沿路逐漸變細（血被肝竇分走）
-r_fv = float(FRp[ip][-1]) * 3 ** (-M3); r_fa = float(FRa[ip][-1]) * 3 ** (-M3)
+r_fv = float(FRp[ip][-1]) * 3 ** (-M3); r_fa = max(float(FRa[ip][-1]) * 3 ** (-M3), 0.00034)      # 小動脈不細過肝竇（0.28 mm）：肝竇有四分之一從它分出，開口要埋在管裡
 T_pt, T_at = tan_end(FPp[ip]), tan_end(FPa[ip])
 FPj_q = FPh[jq]; kq_f = int(np.argmin(np.linalg.norm(FPj_q - QS, axis=1))); QSf = FPj_q[kq_f]       # 中央靜脈接上的點：取最終路徑上最近的一點
 Tflow_q = unit(FPj_q[max(kq_f - 3, 0)] - FPj_q[min(kq_f + 3, len(FPj_q) - 1)])
@@ -372,8 +379,8 @@ for k in range(3):
     zs = np.linspace(-HH, HH, 9); wob = 0.0006 * np.sin(zs / HH * 3.0 + k)[:, None] * tang
     venule = Cc + rad + zs[:, None] * ax + wob; art = Cc + rad * 1.0 + zs[:, None] * ax + tang * 0.0021 + wob
     tract.append((venule, art, th))
-    put('lb_venule%d' % k, venule, gtaper(venule, r_fv, 0.72 * r_fv), 'vein', [0.0, 0.0], 'generated: schematic portal venule of a magnified lobule', True, tube=True, capStart=False, capEnd=True)
-    put('lb_arteriole%d' % k, art, gtaper(art, r_fa, 0.78 * r_fa), 'artery', 'rich', 'generated: schematic hepatic arteriole of a magnified lobule', True, tube=True, capStart=False, capEnd=True)
+    put('lb_venule%d' % k, venule, gtaper(venule, r_fv, 0.86 * r_fv), 'vein', [0.0, 0.0], 'generated: schematic portal venule of a magnified lobule', True, tube=True, capStart=False, capEnd=True)
+    put('lb_arteriole%d' % k, art, gtaper(art, r_fa, 0.90 * r_fa), 'artery', 'rich', 'generated: schematic hepatic arteriole of a magnified lobule', True, tube=True, capStart=False, capEnd=True)
     dfb = float(np.linalg.norm(venule[0] - PS))                                    # 離開方向＝終端分支末端切線、抵達方向＝小葉軸（回頭彎：控制點拉長到兩端距離的 0.55 倍）
     fb = sp_res(bez_t(PS, T_pt, venule[0], ax), 0.0012)
     put('lb_feed_v%d' % k, fb, np.full(len(fb), r_fv), 'vein', 'poor', 'generated: feeder from the terminal portal branch to the lobule', True, tube=True, capStart=False, capEnd=False)
@@ -382,7 +389,8 @@ for k in range(3):
     put('lb_feed_a%d' % k, fa, np.full(len(fa), r_fa), 'artery', 'rich', 'generated: feeder from the terminal hepatic-artery branch to the lobule', True, tube=True, capStart=False, capEnd=False)
 cv = np.vstack([Cc - ax * (HH + 0.0015), Cc, Cc + ax * HH, bez(Cc + ax * HH, Cc + ax * (HH + 0.004), QSf - ax * 0.004, QSf, 8)[1:]])
 cvP = sp_res(cv, 0.0015); cvP = sp_res(arrive(cvP, Tflow_q, 0.008), 0.0015)         # 順著肝靜脈的血流方向併入
-put('lb_central', cvP, gtaper(cvP, 0.00062, 0.00115), 'vein', 'poor', 'generated: schematic central vein of a magnified lobule', True, tube=True, capStart=True, capEnd=True)
+r_cw = float(FRh[jq][kq_f]); r_c1 = min(0.00115, 0.72 * r_cw); r_c0 = min(0.00062, 0.8 * r_c1); print('central vein: wall radius at junction %.2f mm -> end %.2f mm' % (r_cw * 1e3, r_c1 * 1e3))
+put('lb_central', cvP, gtaper(cvP, r_c0, r_c1), 'vein', 'poor', 'generated: schematic central vein of a magnified lobule', True, tube=True, capStart=True, capEnd=True)
 SIN_MID, SIN_END = 0.00022, 0.00028; nsin = 0
 for k, (venule, art, th) in enumerate(tract):
     for m in range(17):
@@ -400,27 +408,31 @@ put_at(ip, tail_taper(FRa[ip], FPa[ip], r_fa, max(0.006, 1.6 * float(FRa[ip][-1]
 
 # ---------------------------------------------------------------- 肝竇連接（巨觀示意）：每個門靜脈終端與動脈終端接到附近的肝靜脈分支
 # 終端分支末段先收到連接管的起點半徑（Murray：n 條 → 終端半徑 × n^(-1/3)），連接管同軸同半徑出發，中段最細（肝竇），再略粗併入肝靜脈分支側壁
-SN_MID, SN_END = 0.00022, 0.00032; nsn = 0
+SN_MID = 0.00022; nsn = 0
+# 肝靜脈樹梢的細端：只有「當地半徑 ≤ R_ZONE」的點可以接肝竇連接管（連接管由最細處緩緩變粗，併入的是樹梢細端，不是細線撞上粗管）
+R_ZONE = 1.0e-3
+_zp, _zj, _zk = [], [], []
+for j_ in hv_ids:
+    for k_ in np.where(FRh[j_] <= R_ZONE)[0]: _zp.append(FPh[j_][k_]); _zj.append(j_); _zk.append(int(k_))
+ZTREE = cKDTree(np.array(_zp)); print('hepatic-vein fine-end points', len(_zp))
 for i in leaf_nodes:
     if i == ip: continue
     for kd, tip, o2s, count, Pf, Rf in (('p', FPp[i][-1], 0.0, 2, FPp[i], FRp[i]), ('a', art_end[i], 1.0, 1, FPa[i], FRa[i])):
-        ds = []
-        for j, Pj in hv_pts:
-            k = int(np.argmin(np.linalg.norm(Pj - tip, axis=1))); ds.append((np.linalg.norm(Pj[k] - tip), j, k))
-        ds.sort(); used = set(); acc = []
-        for dist, j, k in ds:
-            if len(used) >= count or dist > 0.045 or dist < 0.007 or j in used: continue
+        dd_, ii_ = ZTREE.query(tip, k=min(80, len(_zp))); used = set(); acc = []
+        for dist, ix in zip(dd_, ii_):
+            j, k = _zj[ix], _zk[ix]
+            if len(used) >= count or dist > 0.06 or dist < 0.007 or j in used: continue
             if j == jq and np.linalg.norm(tip - PS) < 0.02: continue
-            used.add(j); end = hv_pts[[x for x, _ in hv_pts].index(j)][1][k]
+            used.add(j); end = FPh[j][k]
             side = unit(np.cross(unit(end - tip), [0.3, 0.8, 0.5])) * dist * rng.uniform(-0.25, 0.25)
-            acc.append((j, end, side))
+            acc.append((j, k, end, side))
         n_acc = len(acc); r_leaf_ = float(Rf[-1]); r_s = r_leaf_ * max(n_acc, 1) ** (-M3); Tt = tan_end(Pf)
-        for j, end, side in acc:
-            FPj = FPh[j]; kf = int(np.argmin(np.linalg.norm(FPj - end, axis=1))); Ef = FPj[kf]
+        for j, kf, end, side in acc:
+            FPj = FPh[j]; Ef = FPj[kf]; r_e = float(np.clip(0.62 * FRh[j][kf], 0.30e-3, 0.58e-3))      # 併入處的半徑＝樹梢當地管半徑的 0.62 倍（Murray：兩條併一條）
             Tflow = unit(FPj[max(kf - 3, 0)] - FPj[min(kf + 3, len(FPj) - 1)])
             D = float(np.linalg.norm(Ef - tip))                                    # 兩端切線都對齊（離開＝終端分支切線、抵達＝肝靜脈血流方向），側偏量沿用原本的亂數
             P = sp_res(bez_t(tip, Tt, Ef, Tflow, side * 0.5), 0.002)
-            nsn += 1; put('sn_%d' % nsn, P, mid_profile(len(P), r_s, SN_MID, SN_END), 'sinusoid', [o2s, 0.45], 'generated: schematic sinusoid link (terminal branch to hepatic-vein branch)', True, tube=True, capStart=False, capEnd=False)
+            nsn += 1; put('sn_%d' % nsn, P, mid_profile(len(P), r_s, max(SN_MID, max(r_s, r_e) / math.exp(0.036 * float(arclen(P)[-1]) * 1e3)), r_e), 'sinusoid', [o2s, 0.45], 'generated: schematic sinusoid link (terminal branch to hepatic-vein branch)', True, tube=True, capStart=False, capEnd=False)
         # 終端分支：末段收到連接管起點的半徑；末端一律封圓頭（肝竇連接管在步驟①②是隱藏的，不封的話樹梢會像被切斷；步驟④連接管同軸接在圓頭裡，看不出接縫）
         Rn = tail_taper(Rf, Pf, r_s, max(0.008, 1.6 * r_leaf_)) if n_acc >= 2 else Rf
         (put_pt if kd == 'p' else put_at)(i, Rn, True)
