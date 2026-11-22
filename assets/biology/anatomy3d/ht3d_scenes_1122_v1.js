@@ -7,5 +7,6 @@
 export const SCENES = {
   small_intestine: { file: './ht3d_scene_small_intestine_1122_v1.js', label: ['小腸路線', 'Small intestine'] },
   kidney: { file: './ht3d_scene_kidney_1122_v1.js', label: ['腎臟路線', 'Kidney'] },
-  liver: { file: './ht3d_scene_liver_1122_v1.js', label: ['肝臟路線', 'Liver'] }
+  liver: { file: './ht3d_scene_liver_1122_v1.js', label: ['肝臟路線', 'Liver'] },
+  lung: { file: './ht3d_scene_lung_1122_v1.js', label: ['肺循環（小循環）', 'Pulmonary circulation'] }
 };

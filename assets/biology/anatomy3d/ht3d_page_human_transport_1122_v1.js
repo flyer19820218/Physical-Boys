@@ -9,7 +9,7 @@
  * 預設仍是「經典 2D 版」；老師看過再決定換預設（DEFAULT_3D）。
  * 對外介面 window.HT3D（有聲講解之後會用）：scenes, go(scene, step, ms, {after}), pause, resume, isPlaying, getState, setLang, dispose。
  */
-const VER = '20261122-12';
+const VER = '20261122-13';
 const DEFAULT_3D = false;
 const CORE = './ht3d_core_1122_v1.js?v=' + VER;
 const REGISTRY = './ht3d_scenes_1122_v1.js?v=' + VER;

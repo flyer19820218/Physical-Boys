@@ -21,8 +21,8 @@ const TAU = Math.PI * 2;
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const smooth = (x) => { x = clamp01(x); return x * x * (3 - 2 * x); };
 const frac = (x) => x - Math.floor(x);
-/* 血管含氧量（0＝靜脈血色、1＝動脈血色）：'rich'／'poor'／數字／[起,終]（沿血管由起到終漸變）／未寫＝微血管（鮮紅→暗紅）。 */
-const o2Of = (m, u) => { const v = m.o2; if (v === 'rich') return 1; if (v === 'poor') return 0; if (typeof v === 'number') return v; if (Array.isArray(v)) return v[0] + (v[1] - v[0]) * smooth(u * 1.1); return 1 - smooth(u * 1.1); };
+/* 血管含氧量（0＝靜脈血色、1＝動脈血色）：'rich'／'poor'／數字／[起,終]（沿血管由起到終漸變）／'poor>rich'（肺泡微血管：暗紅→鮮紅）／未寫或 'rich>poor'＝微血管（鮮紅→暗紅）。 */
+const o2Of = (m, u) => { const v = m.o2; if (v === 'rich') return 1; if (v === 'poor') return 0; if (v === 'poor>rich') return smooth(u * 1.1); if (typeof v === 'number') return v; if (Array.isArray(v)) return v[0] + (v[1] - v[0]) * smooth(u * 1.1); return 1 - smooth(u * 1.1); };
 const RICH = new THREE.Color('#e3312c'), POOR = new THREE.Color('#7c2238');   // 鮮紅／暗紅偏紫（全站共識，不用藍色）
 export const GAP = 1.5;   // 老師講解：步驟之間停頓秒數（與 human_transport_teach_0118_v1.js 相同）
 
@@ -268,7 +268,7 @@ export async function createViewer(o) {
     if (SC.smoothTubes) {   // 選用：變半徑（由粗變細）＋圓頭封口的管；沒開的場景走下面原本的等半徑管
       const cp = paths.get(id);
       (tubeBuckets[g] = tubeBuckets[g] || []).push(varTubeCapped(cp, lite ? 6 : 10, 0.0007, (u) => {
-        const o2 = sg.o2 === 'rich' ? 1 : sg.o2 === 'poor' ? 0 : 1 - smooth(u * 1.1);
+        const o2 = sg.o2 === 'rich' ? 1 : sg.o2 === 'poor' ? 0 : sg.o2 === 'poor>rich' ? smooth(u * 1.1) : 1 - smooth(u * 1.1);
         return tmpC.copy(POOR).lerp(RICH, o2).multiplyScalar(0.72);
       }, 0, 1, sg.capStart !== false, sg.capEnd !== false));
       continue;
@@ -301,6 +301,16 @@ export async function createViewer(o) {
     const mesh = new THREE.Mesh(geo, mat); mesh.name = '@' + g; scene.add(mesh);
     const sid = SC.groups[g][0];
     structures.set(sid, { id: sid, meshes: [mesh], mat, kind: 'generated', group: g, op: -1, route: true });
+  }
+  /* 囊（sacs）：中心線 json 可帶 sacs: { <群組>: [[x,y,z,半徑], …] }，畫成合併的半透明球（例：肺泡，示意）；群組要寫在場景的 groups，材質讀 SCENE.material[群組]。沒有 sacs 的場景不受影響。 */
+  for (const [g, list] of Object.entries(CL.sacs || {})) {
+    if (!SC.groups[g] || !list.length) continue;
+    const geos = list.map(([x, y, z, r]) => { const sg = new THREE.SphereGeometry(r, lite ? 12 : 20, lite ? 8 : 14); sg.deleteAttribute('uv'); sg.translate(x, y, z); return sg; });
+    const geo = mergeGeometries(geos, false); geos.forEach((x) => x.dispose());
+    const mat = rimMaterial({ ...(SC.material[g] || { color: '#e9b8b0' }), rimStrength: 0.4 });
+    const mesh = new THREE.Mesh(geo, mat); mesh.name = '@' + g; scene.add(mesh);
+    const sid = SC.groups[g][0];
+    structures.set(sid, { id: sid, meshes: [mesh], mat, kind: 'organ', group: g, op: -1, route: false });
   }
   /* 靜脈單層管：依中心線與其半徑（口徑依文獻，見 tools/anatomy/set_vein_calibers.py、sources.md）畫成一根管；
    * 資料集的網格外殼已在上面丟掉，所以畫面上的粗細＝血球流動的範圍，不會再有「外面套一層膜」。 */
@@ -470,7 +480,7 @@ export async function createViewer(o) {
       const p = paths.get(id), F = SC.flow[SC.flowKey(id)] || { type: 'steady', v: 0.02, density: 300 };
       const size = Math.min(0.0042, Math.max(0.00055, p.rMean * 0.75));
       const m2 = p.meta.o2, o2 = typeof m2 === 'number' ? m2 : m2 === 'rich' ? 1 : m2 === 'poor' ? 0 : -1;   // -1＝沿管漸變（陣列 [起,終] 或微血管預設）
-      flowInfo.push({ path: p, F, size, o2, grad: Array.isArray(m2) ? m2 : null, alpha: 1 });
+      flowInfo.push({ path: p, F, size, o2, grad: Array.isArray(m2) ? m2 : m2 === 'poor>rich' ? [0, 1] : null, alpha: 1 });
       const cnt = Math.max(F.singleFile ? 2 : 3, Math.floor(want[j] * scale)), rnd = mulberry32(hashStr(id));
       for (let i = 0; i < cnt && n < budget; i++, n++) {
         pSeg[n] = j; pU0[n] = F.singleFile ? i / cnt : (i + rnd() * 0.8) / cnt;
