@@ -835,8 +835,9 @@
         <div class="panel" style="border-color: var(--chalk-green);">
           <h3 style="color: var(--chalk-green); margin-top: 0; text-align: center;" data-zh="【動畫解析】密閉容器的水蒸發" data-en="Animation: Water Evaporation in Closed Vessel">【動畫解析】密閉容器的水蒸發</h3>
           <div style="text-align: center;">
-            <button class="action-btn btn-pink" onclick="setBottleState('open')" data-zh="🔓 打開瓶蓋 (不可逆散失)" data-en="🔓 Open Cap (Irreversible)">🔓 打開瓶蓋 (不可逆散失)</button>
-            <button class="action-btn" onclick="setBottleState('closed')" data-zh="🔒 關閉瓶蓋 (可逆平衡)" data-en="🔒 Close Cap (Reversible Eq.)">🔒 關閉瓶蓋 (可逆平衡)</button>
+            <button class="action-btn mode-btn active" id="bt-open" type="button" aria-pressed="true" onclick="setBottleState('open')" data-zh="🔓 打開瓶蓋（不可逆散失）" data-en="🔓 Open the cap (irreversible loss)">🔓 打開瓶蓋（不可逆散失）</button>
+            <button class="action-btn mode-btn" id="bt-closed" type="button" aria-pressed="false" onclick="setBottleState('closed')" data-zh="🔒 關閉瓶蓋（可逆平衡）" data-en="🔒 Close the cap (reversible equilibrium)">🔒 關閉瓶蓋（可逆平衡）</button>
+            <button class="action-btn" id="bt-restart" type="button" onclick="restartBottle()" data-zh="🔄 重新開始" data-en="🔄 Start over">🔄 重新開始</button>
           </div>
           <div class="canvas-container" style="border-color: var(--chalk-green);">
             <canvas id="bottleCanvas" class="rect-canvas" width="600" height="360"></canvas>
@@ -1271,81 +1272,366 @@
   // 🌟 動畫核心邏輯 (Rule 1 絕對領域：100% 物理與幾何鎖死)
   // ==============================================
 
-  // --- Canvas 1：密閉廣口玻璃罐的水蒸發 ---
-  let bottleAnimId;
-  let bottleState = 'open'; 
-  let waterLevel = 130;
-  let b_particles = [];
+  // --- Canvas 1：密閉廣口玻璃罐的水蒸發（水分子守恆模型） ---
+  // 全系統 N 個水分子：液態 L ＋ 瓶內水氣 V ＋ 開蓋逸出 E ＝ N。水位高度 ∝ L。
+  // 蒸發：液面每秒約 KE 個分子離開（液面面積固定，KE 固定）。
+  // 凝結：水氣分子在瓶內亂飄，碰到液面就回到液體 → 凝結速率 ∝ V。
+  // 物理座標用「瓶內座標」：瓶寬 BW、瓶高 BH（y 向下，瓶口 y=0），畫面只換比例，不影響模擬。
+  // 粒子狀態機：'gas'（瓶內水氣）→ 碰到液面：回到液體（移除）／開蓋飄出瓶口：'esc'
+  //             'esc'（已逸出，淡出中）→ life 倒數到 0 就移除。每個狀態都有出口，速率恆為 BV，不會停住。
+  const B_N = 200, B_KE = 4, B_BW = 300, B_BH = 320, B_HMAX = 170, B_R = 6;
+  const B_V = 85;                 // 水氣分子在瓶內的移動速率（瓶內座標/秒）
+  const B_SIG = 1.6;              // 方向隨機擺動強度（rad/√s），模擬分子亂飄
+  const B_ESC_LIFE = 1.2;         // 逸出後淡出時間（秒）
+  const B_MAXP = 260;             // 粒子陣列上限（含淡出中的逸出粒子）
+  const B_WIN = 4;                // 速率統計的滑動視窗（秒）
+  let bottleAnimId = 0;
+  let bottleState = 'open';
+  let b_particles = [], b_ripples = [];
+  let b_L = B_N, b_E = 0, b_lvl = 1, b_t = 0, b_nextEvap = 0.1, b_last = null;
+  let b_evT = [], b_cdT = [], b_emaE = 0, b_emaC = 0;
+  let b_closedT = 0, b_eq = false, b_Lhist = [], b_histT = 0, b_cap = 0;
+  let b_W = 0, b_H = 0, b_dpr = 1, b_layoutKey = '', b_lay = null, b_inited = false;
 
-  function initBottle() {
-    const cvs = document.getElementById('bottleCanvas');
-    if (!cvs) return;
-    cvs.width = cvs.parentElement.clientWidth;
-    cvs.height = 360;
-    waterLevel = 130;
-    b_particles = [];
-    bottleState = 'open';
-    cancelAnimationFrame(bottleAnimId);
-    animateBottle();
+  function bottleVapor() { let v = 0; for (const p of b_particles) if (p.s === 'gas') v++; return v; }
+
+  function resetBottle() {
+    b_L = B_N; b_E = 0; b_lvl = 1; b_particles = []; b_ripples = [];
+    b_evT = []; b_cdT = []; b_emaE = 0; b_emaC = 0; b_nextEvap = 0.1;
+    b_closedT = 0; b_eq = false; b_Lhist = []; b_histT = 0;
   }
 
-  function setBottleState(state) { bottleState = state; }
+  function fitBottleCanvas() {
+    const cvs = document.getElementById('bottleCanvas');
+    if (!cvs || !cvs.parentElement) return false;
+    const W = cvs.parentElement.clientWidth;
+    if (W <= 0) return false;
+    b_W = W;
+    const H = bottleLayout(cvs.getContext('2d')).H;   // 高度依內容排版決定，文字與瓶子都不會被切掉
+    const dpr = window.devicePixelRatio || 1;
+    cvs.style.aspectRatio = 'auto';
+    cvs.style.height = H + 'px';
+    if (cvs.width !== Math.round(W * dpr) || cvs.height !== Math.round(H * dpr)) {
+      cvs.width = Math.round(W * dpr); cvs.height = Math.round(H * dpr);
+    }
+    b_H = H; b_dpr = dpr;
+    return true;
+  }
+
+  function bottleVisible() {
+    const cvs = document.getElementById('bottleCanvas');
+    return !!cvs && !document.hidden && cvs.offsetParent !== null && cvs.clientWidth > 0;
+  }
+
+  function bottleStartLoop() {
+    cancelAnimationFrame(bottleAnimId);
+    bottleAnimId = 0; b_last = null;
+    if (bottleVisible()) bottleAnimId = requestAnimationFrame(animateBottle);
+  }
+
+  function initBottle() {
+    if (!b_inited) { resetBottle(); b_inited = true; b_cap = bottleState === 'closed' ? 1 : 0; }
+    bottleUpdateButtons();
+    if (!fitBottleCanvas()) return;
+    drawBottleScene();
+    bottleStartLoop();
+  }
+
+  function setBottleState(state) {
+    if (state !== 'open' && state !== 'closed') return;
+    if (state !== bottleState) { bottleState = state; b_closedT = 0; b_eq = false; b_Lhist = []; b_histT = 0; }
+    bottleUpdateButtons();
+    if (bottleVisible() && !bottleAnimId) initBottle();
+  }
+
+  function restartBottle() {
+    resetBottle(); b_inited = true;
+    bottleUpdateButtons();
+    if (fitBottleCanvas()) drawBottleScene();
+    if (!bottleAnimId) bottleStartLoop();
+  }
+
+  function bottleUpdateButtons() {
+    const o = document.getElementById('bt-open'), c = document.getElementById('bt-closed');
+    if (o) { o.classList.toggle('active', bottleState === 'open'); o.setAttribute('aria-pressed', bottleState === 'open'); }
+    if (c) { c.classList.toggle('active', bottleState === 'closed'); c.setAttribute('aria-pressed', bottleState === 'closed'); }
+  }
+
+  function bottleGauss() { return (Math.random() + Math.random() + Math.random() - 1.5) * 2; }
+  function bottleSurfY() { return B_BH - B_HMAX * b_lvl; }
+
+  function stepBottle(dt) {
+    b_t += dt;
+    const open = bottleState === 'open';
+    if (!open) b_closedT += dt;
+    b_cap += ((open ? 0 : 1) - b_cap) * Math.min(1, dt * 10);
+    b_lvl += (b_L / B_N - b_lvl) * Math.min(1, dt * 6);
+    let surf = bottleSurfY();
+    let nEv = 0, nCd = 0;
+
+    // 蒸發：大致等間隔（加一點亂數），每次 1 個分子離開液面
+    b_nextEvap -= dt;
+    if (b_L <= 0) b_nextEvap = Math.max(b_nextEvap, 0.05);
+    while (b_nextEvap <= 0 && b_L > 0 && b_particles.length < B_MAXP) {
+      b_L--; nEv++;
+      const th = -Math.PI / 2 + (Math.random() - 0.5) * 2.2;
+      b_particles.push({ s: 'gas', x: B_R + Math.random() * (B_BW - 2 * B_R), y: surf - B_R - 1, th, age: 0, life: 0 });
+      b_nextEvap += (1 / B_KE) * (0.6 + 0.8 * Math.random());
+    }
+    if (b_nextEvap <= 0) b_nextEvap = 0.05;   // 粒子達上限時不累積欠帳
+
+    for (let i = b_particles.length - 1; i >= 0; i--) {
+      const p = b_particles[i];
+      p.age += dt;
+      if (p.s === 'esc') {
+        p.y -= B_V * dt; p.x += Math.cos(p.th) * B_V * 0.4 * dt;
+        p.life -= dt;
+        if (p.life <= 0) b_particles.splice(i, 1);
+        continue;
+      }
+      // 'gas'：方向隨機擺動；開蓋時被瓶外空氣帶走，方向逐漸轉向瓶口
+      p.th += bottleGauss() * B_SIG * Math.sqrt(dt);
+      if (open) {
+        let d = -Math.PI / 2 - p.th;
+        d = Math.atan2(Math.sin(d), Math.cos(d));
+        p.th += d * Math.min(1, dt * 3);
+      }
+      p.x += Math.cos(p.th) * B_V * dt;
+      p.y += Math.sin(p.th) * B_V * dt;
+      if (p.x < B_R) { p.x = 2 * B_R - p.x; p.th = Math.PI - p.th; }
+      if (p.x > B_BW - B_R) { p.x = 2 * (B_BW - B_R) - p.x; p.th = Math.PI - p.th; }
+      if (p.x < B_R || p.x > B_BW - B_R) p.x = Math.min(B_BW - B_R, Math.max(B_R, p.x));
+      if (open) {
+        if (p.y < -B_R) { p.s = 'esc'; p.life = B_ESC_LIFE; b_E++; continue; }
+      } else if (p.y < B_R) {           // 碰到瓶蓋反彈
+        p.y = Math.min(2 * B_R - p.y, B_R + 1); p.th = -p.th;
+      }
+      if (p.y + B_R >= surf) {          // 碰到液面：凝結回液體
+        b_L++; nCd++;
+        if (b_ripples.length < 40) b_ripples.push({ x: p.x, age: 0 });
+        b_particles.splice(i, 1);
+      }
+    }
+    for (let i = b_ripples.length - 1; i >= 0; i--) { b_ripples[i].age += dt; if (b_ripples[i].age > 0.6) b_ripples.splice(i, 1); }
+
+    // 速率統計：滑動視窗計數（顯示用）＋指數平均（判斷趨勢用）
+    for (let k = 0; k < nEv; k++) b_evT.push(b_t);
+    for (let k = 0; k < nCd; k++) b_cdT.push(b_t);
+    while (b_evT.length && b_evT[0] < b_t - B_WIN) b_evT.shift();
+    while (b_cdT.length && b_cdT[0] < b_t - B_WIN) b_cdT.shift();
+    const tau = 6, f = Math.exp(-dt / tau);
+    b_emaE = b_emaE * f + nEv / tau;
+    b_emaC = b_emaC * f + nCd / tau;
+
+    // 平衡判斷：關蓋後，最近 8 秒液態水分子數幾乎不變
+    b_histT += dt;
+    if (b_histT >= 0.5) { b_histT -= 0.5; b_Lhist.push(b_L); if (b_Lhist.length > 17) b_Lhist.shift(); }
+    if (open || b_L <= 0) b_eq = false;
+    else if (b_Lhist.length >= 17 && b_closedT > 8) {
+      let mn = Infinity, mx = -Infinity;
+      for (const v of b_Lhist) { mn = Math.min(mn, v); mx = Math.max(mx, v); }
+      const drift = Math.abs(b_Lhist[b_Lhist.length - 1] - b_Lhist[0]);
+      if (!b_eq && drift <= 3 && mx - mn <= 8) b_eq = true;
+      else if (b_eq && drift > 9) b_eq = false;
+    }
+  }
+
+  function bottleRate(arr) { return arr.length / Math.min(B_WIN, Math.max(b_t, 0.5)); }
+
+  function bottleTexts() {
+    const open = bottleState === 'open', V = bottleVapor();
+    if (open && b_L > 0) return { a: tr('瓶蓋打開：水氣飄出瓶外', 'Cap open: vapor drifts out of the jar'), b: tr('沒有凝結回來，水位一直下降（不可逆）', 'None condenses back — the level keeps falling'), c: '#ff8040' };
+    if (open) return { a: tr('水全部蒸發光了', 'All the water has evaporated'), b: tr('水氣都散到空氣中，回不來了', 'The vapor has escaped into the air for good'), c: '#ff8040' };
+    if (b_L <= 0 && V === 0) return { a: tr('瓶裡已經沒有水了', 'No water left in the jar'), b: tr('按「重新開始」把水加滿', 'Press "Start over" to refill'), c: '#ff66cc' };
+    if (b_eq) return { a: tr('蒸發 ＝ 凝結：動態平衡', 'Evaporation = condensation: dynamic equilibrium'), b: tr('水位不再下降，但分子仍不停進出', 'The level holds, yet molecules keep moving in and out'), c: '#ffe066' };
+    const rising = b_emaC > b_emaE + 0.3;
+    return { a: tr('蓋上瓶蓋：水氣被關在瓶裡', 'Cap closed: the vapor is trapped inside'),
+             b: rising ? tr('凝結比蒸發快，水位回升', 'Condensation > evaporation — the level rises') : tr('蒸發比凝結快，水位還在下降', 'Evaporation > condensation — the level still falls'), c: '#ff66cc' };
+  }
+
+  function bottleWrap(ctx, text, maxW) {
+    if (ctx.measureText(text).width <= maxW) return [text];
+    const cjk = /[\u3000-\u9fff\uff00-\uffef]/.test(text);
+    // 中文先在標點處分段（標點跟著前一段，「（」開新段），一段太長才逐字斷；英文以空白斷
+    let parts;
+    if (cjk) {
+      parts = [];
+      for (const seg of text.replace(/([，：；。、])/g, '$1\n').replace(/（/g, '\n（').split('\n')) {
+        if (!seg) continue;
+        if (ctx.measureText(seg).width <= maxW) parts.push(seg); else parts.push(...Array.from(seg));
+      }
+    } else parts = text.split(' ');
+    const sep = cjk ? '' : ' ';
+    const lines = []; let cur = '';
+    for (const w of parts) {
+      const t = cur ? cur + sep + w : w;
+      if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t;
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+
+  const B_FA = 'bold 24px "Noto Sans TC", sans-serif', B_FB = '22px "Noto Sans TC", sans-serif';
+  const B_FL = 'bold 22px "Noto Sans TC", sans-serif', B_FM = 'bold 22px "JetBrains Mono", monospace';
+
+  function bottleLayout(ctx) {
+    const key = b_W + '|' + currentLang;
+    if (key === b_layoutKey && b_lay) return b_lay;
+    const pad = 14, maxW = b_W - 2 * pad;
+    // 預留所有狀態中最多的行數，畫面不會因狀態切換而跳動
+    const saveS = bottleState, saveL = b_L, saveEq = b_eq;
+    const samples = [];
+    const states = [['open', 10, false], ['open', 0, false], ['closed', 0, false], ['closed', 10, true], ['closed', 10, false]];
+    for (const [s, L, eq] of states) { bottleState = s; b_L = L; b_eq = eq; samples.push(bottleTexts()); }
+    bottleState = saveS; b_L = saveL; b_eq = saveEq;
+    let la = 1, lb = 1;
+    ctx.font = B_FA; for (const t of samples) la = Math.max(la, bottleWrap(ctx, t.a, maxW).length);
+    ctx.font = B_FB; for (const t of samples) lb = Math.max(lb, bottleWrap(ctx, t.b, maxW).length);
+    const titleH = la * 32 + lb * 30 + 6;
+    ctx.font = B_FL;
+    const labE = tr('蒸發 ↑', 'Evaporation ↑'), labC = tr('凝結 ↓', 'Condensation ↓');
+    const labW = Math.max(ctx.measureText(labE).width, ctx.measureText(labC).width);
+    const unit = tr(' 個/秒', ' /s');
+    ctx.font = B_FM; const numW = ctx.measureText('10.0').width;
+    ctx.font = B_FL; const valW = numW + ctx.measureText(unit).width;
+    // 寬度不夠時，長條改放在標籤下一行（窄螢幕／英文）
+    const compact = maxW - labW - valW - 24 < 140;
+    const r1 = pad + titleH + 6, rowH = compact ? 60 : 36;
+    const rates = compact
+      ? { compact, y1: r1, y2: r1 + rowH, labE, labC, labW, valW, unit, barX: pad, barW: maxW }
+      : { compact, y1: r1, y2: r1 + rowH, labE, labC, labW, valW, unit, barX: pad + labW + 12, barW: maxW - labW - valW - 24 };
+    // 底部統計列
+    ctx.font = B_FB;
+    const statLines = bottleStatLines(ctx, bottleStatItems(200, 200, 200), maxW).length;
+    const botH = statLines * 30 + 12;
+    const capSpace = 34;
+    const top = r1 + 2 * rowH + capSpace;
+    const sc = Math.max(0.4, Math.min((b_W - 60) / B_BW, 340 / B_BH));
+    const bw = B_BW * sc, bh = B_BH * sc;
+    const ox = (b_W - bw) / 2, oy = top;
+    const H = Math.round(top + bh + 10 + botH);
+    b_lay = { H, pad, maxW, rates, sc, ox, oy, bw, bh, clipY: r1 + 2 * rowH - 4, botY: top + bh + 10 + 24 };
+    b_layoutKey = key;
+    return b_lay;
+  }
+
+  function bottleStatItems(L, V, E) {
+    return [tr('液態水 ', 'Liquid ') + L, tr('水氣 ', 'Vapor ') + V, tr('散失 ', 'Escaped ') + E];
+  }
+  function bottleStatLines(ctx, items, maxW) {
+    const sep = '　';
+    const lines = []; let cur = '';
+    for (const it of items) {
+      const t = cur ? cur + sep + it : it;
+      if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = it; } else cur = t;
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
 
   function drawBottleScene() {
     const cvs = document.getElementById('bottleCanvas');
-    if (!cvs) return;
-    let ctx = cvs.getContext('2d'), w = cvs.width, h = cvs.height, cx = w / 2;
-    ctx.fillStyle = '#0b1813'; ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 5; ctx.beginPath();
-    ctx.moveTo(cx - 120, 60); ctx.lineTo(cx - 120, 320); ctx.lineTo(cx + 120, 320); ctx.lineTo(cx + 120, 60); ctx.stroke();
-    
-    if (bottleState === 'closed') {
-      ctx.fillStyle = '#ff66cc'; ctx.fillRect(cx - 130, 40, 260, 20);
-      ctx.fillStyle = '#ff66cc'; ctx.font = 'bold 20px "Noto Sans TC", sans-serif'; 
-      ctx.fillText(tr('密閉系統 (可逆平衡)', 'Closed System (Equilibrium)'), cx + 135, 55);
-    } else {
-      ctx.fillStyle = '#4dd2ff'; ctx.font = 'bold 20px "Noto Sans TC", sans-serif'; 
-      ctx.fillText(tr('開放空間 (不可逆散失)', 'Open Space (Irreversible)'), cx + 135, 55);
-    }
-    
-    let waterY = 320 - waterLevel;
-    ctx.fillStyle = 'rgba(77, 210, 255, 0.4)'; ctx.fillRect(cx - 117, waterY, 234, waterLevel);
-    ctx.strokeStyle = '#4dd2ff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx - 117, waterY); ctx.lineTo(cx + 117, waterY); ctx.stroke();
-    
-    ctx.fillStyle = '#4dd2ff';
-    for (let p of b_particles) {
-      ctx.globalAlpha = p.alpha; ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.globalAlpha = 1.0;
-  }
+    if (!cvs || !fitBottleCanvas()) return;
+    const ctx = cvs.getContext('2d');
+    ctx.setTransform(b_dpr, 0, 0, b_dpr, 0, 0);
+    const W = b_W, H = b_H;
+    ctx.fillStyle = '#0b1813'; ctx.fillRect(0, 0, W, H);
+    const lay = bottleLayout(ctx);
+    const { sc, ox, oy, bw, bh } = lay;
+    const X = x => ox + x * sc, Y = y => oy + y * sc;
+    ctx.textBaseline = 'alphabetic';
 
-  function animateBottle() {
-    const cvs = document.getElementById('bottleCanvas');
-    if (!cvs) return;
-    let cx = cvs.width / 2;
-    if (Math.random() < 0.25 && waterLevel > 20) {
-      b_particles.push({x: cx - 100 + Math.random() * 200, y: 320 - waterLevel, vy: -1.5 - Math.random() * 2.0, alpha: 1.0, state: 'up'});
-      if (bottleState === 'open') waterLevel -= 0.15; 
+    // 1. 狀態文字（瓶子上方置中）
+    const tx = bottleTexts();
+    ctx.textAlign = 'center';
+    let y = lay.pad + 24;
+    ctx.font = B_FA; ctx.fillStyle = tx.c;
+    for (const s of bottleWrap(ctx, tx.a, lay.maxW)) { ctx.fillText(s, W / 2, y); y += 32; }
+    ctx.font = B_FB; ctx.fillStyle = '#a3b8b0';
+    for (const s of bottleWrap(ctx, tx.b, lay.maxW)) { ctx.fillText(s, W / 2, y - 2); y += 30; }
+
+    // 2. 蒸發／凝結速率長條（最近 B_WIN 秒的平均）
+    const R = lay.rates, rmax = 6;
+    const rows = [[R.labE, bottleRate(b_evT), '#ff8040', R.y1], [R.labC, bottleRate(b_cdT), '#4dd2ff', R.y2]];
+    for (const [lab, val, col, ry] of rows) {
+      const cyr = ry + 18, by = R.compact ? cyr + 26 : cyr;
+      ctx.textAlign = 'left'; ctx.font = B_FL; ctx.fillStyle = col;
+      ctx.fillText(lab, lay.pad, cyr + 8);
+      ctx.fillStyle = 'rgba(246,243,234,0.12)';
+      ctx.fillRect(R.barX, by - 8, R.barW, R.compact ? 12 : 16);
+      ctx.fillStyle = col;
+      ctx.fillRect(R.barX, by - 8, R.barW * Math.min(1, val / rmax), R.compact ? 12 : 16);
+      ctx.textAlign = 'right';
+      ctx.font = B_FL; ctx.fillStyle = '#f6f3ea';
+      ctx.fillText(R.unit, W - lay.pad, cyr + 8);
+      const uw = ctx.measureText(R.unit).width;
+      ctx.font = B_FM; ctx.fillText(val.toFixed(1), W - lay.pad - uw, cyr + 8);
     }
-    for (let i = b_particles.length - 1; i >= 0; i--) {
-      let p = b_particles[i]; p.y += p.vy;
-      if (p.state === 'up') {
-        if (bottleState === 'open') {
-          if (p.y < 50) p.alpha -= 0.04; 
-          if (p.alpha <= 0) b_particles.splice(i, 1);
-        } else {
-          if (p.y < 65) { 
-            p.vy = 0;
-            if (Math.random() < 0.08) { p.state = 'down'; p.vy = 2.5 + Math.random() * 1.5; }
-          }
-        }
-      } else if (p.state === 'down') {
-        if (p.y >= 320 - waterLevel) b_particles.splice(i, 1);
+
+    // 3. 瓶子、水、蓋子、粒子
+    const surf = bottleSurfY();
+    ctx.fillStyle = 'rgba(77, 210, 255, 0.32)';
+    ctx.fillRect(X(0), Y(surf), bw, Y(B_BH) - Y(surf));
+    if (b_lvl > 0.002) {
+      ctx.strokeStyle = '#4dd2ff'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(X(0), Y(surf)); ctx.lineTo(X(B_BW), Y(surf)); ctx.stroke();
+    }
+    // 原本（滿水）水位的虛線，方便比較降了多少
+    ctx.save(); ctx.setLineDash([8, 8]); ctx.strokeStyle = 'rgba(246,243,234,0.35)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(0), Y(B_BH - B_HMAX)); ctx.lineTo(X(B_BW), Y(B_BH - B_HMAX)); ctx.stroke(); ctx.restore();
+    // 凝結漣漪
+    for (const r of b_ripples) {
+      const k = r.age / 0.6;
+      ctx.strokeStyle = 'rgba(77,210,255,' + (0.9 * (1 - k)).toFixed(3) + ')'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(X(r.x), Y(surf), (4 + 14 * k) * sc, (2 + 4 * k) * sc, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    // 瓶身
+    ctx.strokeStyle = '#f6f3ea'; ctx.lineWidth = 5; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(X(0) - 3, Y(0)); ctx.lineTo(X(0) - 3, Y(B_BH) + 3); ctx.lineTo(X(B_BW) + 3, Y(B_BH) + 3); ctx.lineTo(X(B_BW) + 3, Y(0)); ctx.stroke();
+    // 粒子（逸出的粒子可飄到瓶口上方，但不蓋到上方文字區）
+    ctx.save(); ctx.beginPath(); ctx.rect(0, lay.clipY, W, H - lay.clipY); ctx.clip();
+    const pr = B_R * sc;
+    for (const p of b_particles) {
+      const a = p.s === 'esc' ? Math.max(0, p.life / B_ESC_LIFE) : 1;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = '#9fe6ff';
+      ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), pr, 0, Math.PI * 2); ctx.fill();
+      if (p.s === 'gas' && p.age < 0.5) {   // 剛蒸發的分子：珊瑚色外圈
+        ctx.strokeStyle = '#ff8040'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), pr + 3, 0, Math.PI * 2); ctx.stroke();
       }
     }
+    ctx.globalAlpha = 1; ctx.restore();
+    // 瓶蓋（關蓋時從上方蓋下來）
+    if (b_cap > 0.01) {
+      const cy = Y(0) - 16 - (1 - b_cap) * 26;
+      ctx.globalAlpha = Math.min(1, b_cap * 1.5);
+      ctx.fillStyle = '#ff66cc';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(X(0) - 12, cy, bw + 24, 16, 5); else ctx.rect(X(0) - 12, cy, bw + 24, 16);
+      ctx.fill(); ctx.globalAlpha = 1;
+    }
+
+    // 4. 底部：分子數（L ＋ V ＋ E ＝ N）
+    ctx.font = B_FB; ctx.fillStyle = '#f6f3ea'; ctx.textAlign = 'center';
+    let by = lay.botY;
+    for (const s of bottleStatLines(ctx, bottleStatItems(b_L, bottleVapor(), b_E), lay.maxW)) { ctx.fillText(s, W / 2, by); by += 30; }
+    ctx.textAlign = 'left';
+  }
+
+  function animateBottle(ts) {
+    bottleAnimId = 0;
+    if (!bottleVisible()) { b_last = null; return; }   // 畫布看不到（換分頁／子分頁／背景）就停
+    if (b_last === null) b_last = ts;
+    const dt = Math.min(0.05, Math.max(0, (ts - b_last) / 1000));
+    b_last = ts;
+    stepBottle(dt);
     drawBottleScene();
     bottleAnimId = requestAnimationFrame(animateBottle);
   }
+
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && b_inited && bottleVisible()) bottleStartLoop(); });
+  window.addEventListener('resize', () => { if (b_inited && bottleVisible()) { fitBottleCanvas(); drawBottleScene(); } });
 
   // --- Canvas 2：動態化學平衡 (NO2/N2O4) ---
   let realEqAnimId;
