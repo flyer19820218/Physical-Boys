@@ -358,7 +358,7 @@ export async function createViewer(o) {
       const W = st.window; let a = 1;
       if (W.open) a *= smooth((t - W.open[0]) / (W.open[1] - W.open[0]));
       if (W.close) a *= 1 - smooth((t - W.close[0]) / (W.close[1] - W.close[0]));
-      win = { kind: W.kind, amount: a, t: Math.max(0, tau - (W.open ? W.open[0] : -8)), focus: W.focus };
+      win = { kind: W.kind, amount: a, t: Math.max(0, tau - (W.open ? W.open[0] : -8)), focus: W.focus, tag: W.tag };
     }
     return { scene: SC.id, step: k + 1, ms: Math.round(tau * 1000), t, camera: { pos, target, near }, style, flows, labels: lab, tracer: st.tracer ? { path: st.tracer.path, u: tracerU } : null, window: win, flowTime: tau + k * 41.3 };
   }
@@ -501,7 +501,7 @@ export async function createViewer(o) {
     inset.style.transform = 'scale(' + (0.15 + 0.85 * a).toFixed(3) + ')'; inset.style.opacity = String(Math.min(1, a * 1.4));
     link.setAttribute('x1', fx); link.setAttribute('y1', fy); link.setAttribute('x2', bx); link.setAttribute('y2', by + bh * 0.5);
     ring.setAttribute('cx', fx); ring.setAttribute('cy', fy); svg.style.opacity = String(a);
-    insetTag.textContent = win.kind === 'liver' ? (V.lang === 'en' ? 'Enlarged: liver cells (schematic)' : '放大：肝細胞（示意）') : (V.lang === 'en' ? 'Enlarged: villus in the gut wall (schematic)' : '放大：腸壁裡的絨毛（示意）');
+    insetTag.textContent = win.tag ? (V.lang === 'en' ? win.tag[1] : win.tag[0]) : win.kind === 'liver' ? (V.lang === 'en' ? 'Enlarged: liver cells (schematic)' : '放大：肝細胞（示意）') : (V.lang === 'en' ? 'Enlarged: villus in the gut wall (schematic)' : '放大：腸壁裡的絨毛（示意）');
     if (o.drawInset) { insetCtx.setTransform(1, 0, 0, 1, 0, 0); o.drawInset(insetCtx, win.kind, win.t, V.lang); }
   }
 

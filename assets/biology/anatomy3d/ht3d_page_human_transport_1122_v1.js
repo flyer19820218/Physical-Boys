@@ -9,7 +9,7 @@
  * 預設仍是「經典 2D 版」；老師看過再決定換預設（DEFAULT_3D）。
  * 對外介面 window.HT3D（有聲講解之後會用）：scenes, go(scene, step, ms, {after}), pause, resume, isPlaying, getState, setLang, dispose。
  */
-const VER = '20261122-4';
+const VER = '20261122-5';
 const DEFAULT_3D = false;
 const CORE = './ht3d_core_1122_v1.js?v=' + VER;
 const REGISTRY = './ht3d_scenes_1122_v1.js?v=' + VER;
@@ -142,7 +142,7 @@ async function loadScene(id, token) {
     viewer = await core.createViewer({
       host: stage, scene: mod.SCENE, lite: isLite(), lang: lang(), onProgress: setLoad,
       ariaLabel: lang() === 'en' ? '3D blood circulation: ' + mod.SCENE.name[1] : '3D 血液循環：' + mod.SCENE.name[0],
-      drawInset: (ctx, kind, t) => { if (!X) return; winState.exchange = kind; X.draw(ctx, winState, t, D); }
+      drawInset: (ctx, kind, t) => { if (!X) return; const kf = kind === 'kidney_filter'; winState.exchange = kf ? 'kidney' : kind; winState.kidneyView = kf ? 'extension' : 'cells'; X.draw(ctx, winState, t, D); }
     });
   } catch (e) { return fail(token, e); }
   if (token !== S.token) { viewer.dispose(); return false; }

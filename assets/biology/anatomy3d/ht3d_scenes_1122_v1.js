@@ -5,5 +5,6 @@
  * 多人同時開發時：每個場景用自己的檔案（場景檔、中心線 json；要新增模型就另外用自己的 glb，不要改別人的檔），
  * 只有這個清單與 PROGRESS.md 最上面那一行會碰到同一個地方，push 前先 git pull --rebase。 */
 export const SCENES = {
-  small_intestine: { file: './ht3d_scene_small_intestine_1122_v1.js', label: ['小腸路線', 'Small intestine'] }
+  small_intestine: { file: './ht3d_scene_small_intestine_1122_v1.js', label: ['小腸路線', 'Small intestine'] },
+  kidney: { file: './ht3d_scene_kidney_1122_v1.js', label: ['腎臟路線', 'Kidney'] }
 };
