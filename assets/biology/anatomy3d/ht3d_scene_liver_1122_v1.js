@@ -266,7 +266,7 @@ export const STEPS = Object.freeze([
 export const SCENE = Object.freeze({
   id: 'liver', name: P('肝臟路線', 'Liver route'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
-  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/liver_centerlines_v1.json?v=20261123-1',
+  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/liver_centerlines_v1.json?v=20261123-3',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
   replaceMesh: REPLACE_MESH, replaceStyle: REPLACE_STYLE, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD,
   routeVessels: [...AORTA, ...PORTAL, ...HEP_ART, 'cardiovascular.hepatic_veins', ...IVC],
