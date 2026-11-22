@@ -213,7 +213,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: P('進入肝臟的血，約四分之三來自肝門靜脈，約四分之一來自肝動脈。', 'About three quarters of the blood entering the liver comes from the portal vein and about one quarter from the hepatic artery.') }
     ],
     camera: [K(0, 'wide'), K(2.8, 'celiacL'), K(6.6, 'celiacL'), K(9.2, 'hilumR'), K(12, 'hilumNear')],
-    style: { 'glow.aorta': 0.3, 'glow.hepArt': 0.5, 'glow.portal': 0.5, 'deep.liver': 0.3, ivc: 0.1, liver: 0.16, portalTree: 0.22, arteryTree: 0.22, hepVeins: 0.08, sinus: 0, lobSin: 0, lobVein: 0, lobArt: 0, gut: 0.12, spleen: 0.14, pancreas: 0.12, stomach: 0.08, heart: 0.1, lungs: 0.05, kidneys: 0.05, colon: 0.05 },
+    style: { 'glow.aorta': 0.3, 'glow.hepArt': 0.5, 'glow.portal': 0.5, 'lit.liver': 1, ivc: 0.1, liver: 0.16, portalTree: 0.22, arteryTree: 0.22, hepVeins: 0.08, sinus: 0, lobSin: 0, lobVein: 0, lobArt: 0, gut: 0.12, spleen: 0.14, pancreas: 0.12, stomach: 0.08, heart: 0.1, lungs: 0.05, kidneys: 0.05, colon: 0.05 },
     flows: ['aorta', 'trunk_ha', 'smv', 'splenic', 'portal'],
     labels: [{ id: 'aortaAbd', at: [1.0, 6.0] }, { id: 'coeliac', at: [2.8, 7.0] }, { id: 'hepArt', at: [9.0, 12] }, { id: 'portal', at: [9.2, 12] }, { id: 'liver', at: [10.2, 12] }],
     tracer: { path: ['aorta', 'trunk_ha'], from: 0.4, to: 9.2 }
@@ -227,7 +227,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: P('分支愈細，血流愈慢。', 'The finer the branches, the slower the flow.') }
     ],
     camera: [K(0, 'hilumNear'), K(2.5, 'liverAll'), K(8.0, 'liverTilt'), K(12, 'liverTilt')],
-    style: { 'glow.portalTree': 0.05, 'glow.arteryTree': 0.5, 'deep.liver': 0.5, ivc: 0.1, liver: 0.14, portalTree: 0.56, arteryTree: 0.56, portal: 0.55, hepArt: 0.55, aorta: 0.15, hepVeins: 0.1, sinus: 0, lobSin: 0, lobVein: 0, lobArt: 0, gut: 0.08, spleen: 0.08, pancreas: 0.08, stomach: 0.06, heart: 0.08, lungs: 0.04, kidneys: 0.04, colon: 0.04 },
+    style: { 'glow.portalTree': 0.05, 'glow.arteryTree': 0.5, 'lit.liver': 1, ivc: 0.1, liver: 0.14, portalTree: 0.56, arteryTree: 0.56, portal: 0.55, hepArt: 0.55, aorta: 0.15, hepVeins: 0.1, sinus: 0, lobSin: 0, lobVein: 0, lobArt: 0, gut: 0.08, spleen: 0.08, pancreas: 0.08, stomach: 0.06, heart: 0.08, lungs: 0.04, kidneys: 0.04, colon: 0.04 },
     flows: ['trunk_ha', 'portal', 'pt*', 'at*'],
     labels: [{ id: 'portal', at: [0.4, 4.6] }, { id: 'hepArt', at: [0.4, 4.6] }, { id: 'ptBranch', at: [3.4, 12] }, { id: 'atBranch', at: [4.2, 12] }],
     tracer: { path: ['portal', ...PORTAL_CHAIN], from: 1.0, to: 11.0 }
@@ -241,7 +241,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: P('這裡的肝小葉與肝竇都放大了，才看得清楚。', 'The lobule and sinusoids are enlarged here so they can be seen.') }
     ],
     camera: [K(0, 'liverTilt'), K(3.0, 'lobWide'), K(6.0, 'lobNear'), K(9.0, 'lobSide'), K(15, 'lobSide')],
-    style: { 'glow.lobSin': 0.2, 'glow.lobVein': 0.2, 'glow.lobArt': 0.2, 'deep.liver': 0.6, liver: 0.06, portalTree: 0.14, arteryTree: 0.14, hepVeins: 0.1, sinus: 0.08, lobSin: 0.56, lobVein: 0.56, lobArt: 0.56, portal: 0.08, hepArt: 0.08, aorta: 0.04, ivc: 0.08, gut: 0.03, spleen: 0.03, pancreas: 0.03, stomach: 0.03, heart: 0.03, torso: 0.03 },
+    style: { 'glow.lobSin': 0.2, 'glow.lobVein': 0.2, 'glow.lobArt': 0.2, 'lit.liver': 1, liver: 0.06, portalTree: 0.14, arteryTree: 0.14, hepVeins: 0.1, sinus: 0.08, lobSin: 0.56, lobVein: 0.56, lobArt: 0.56, portal: 0.08, hepArt: 0.08, aorta: 0.04, ivc: 0.08, gut: 0.03, spleen: 0.03, pancreas: 0.03, stomach: 0.03, heart: 0.03, torso: 0.03 },
     flows: ['pt6_15', 'at6_15', 'lb_*'],
     labels: [{ id: 'lobule', at: [2.8, 9.2] }, { id: 'sinusoid', at: [5.0, 7.0] }, { id: 'central', at: [6.8, 9.2] }],
     tracer: { path: ['pt6_15', 'lb_feed_v0', 'lb_sin_13', 'lb_central'], from: 3.0, to: 9.0 },
@@ -255,7 +255,7 @@ export const STEPS = Object.freeze([
       { src: 'COORD', p: P('肝靜脈把肝臟的血送進下腔靜脈（國中課本：下大靜脈），回到右心房。', 'Hepatic veins carry blood from the liver into the inferior vena cava and back to the right atrium.') }
     ],
     camera: [K(0, 'lobSide'), K(3.0, 'liverTilt'), K(7.0, 'hvView'), K(10.0, 'hvIvc'), K(13, 'raEnd')],
-    style: { 'glow.hepVeins': 0.4, 'glow.ivc': 0.6, 'deep.cardiovascular.right_atrium': 0.8, 'cardiovascular.right_atrium': 0.62, 'deep.liver': 0.6, liver: 0.1, hepVeins: 0.56, sinus: 0.5, lobVein: 0.55, portalTree: 0.15, arteryTree: 0.1, lobArt: 0.3, portal: 0.15, hepArt: 0.1, aorta: 0.08, ivc: 0.55, heart: 0.4, gut: 0.05, spleen: 0.05, pancreas: 0.05, stomach: 0.05 },
+    style: { 'glow.hepVeins': 0.4, 'glow.ivc': 0.6, 'lit.cardiovascular.right_atrium': 1, 'cardiovascular.right_atrium': 0.62, 'lit.liver': 1, liver: 0.1, hepVeins: 0.56, sinus: 0.5, lobVein: 0.55, portalTree: 0.15, arteryTree: 0.1, lobArt: 0.3, portal: 0.15, hepArt: 0.1, aorta: 0.08, ivc: 0.55, heart: 0.4, gut: 0.05, spleen: 0.05, pancreas: 0.05, stomach: 0.05 },
     flows: ['sn_*', 'lb_sin_*', 'lb_central', 'ht*', 'ivc_lower', 'ivc_upper'],
     labels: [{ id: 'central', at: [0.4, 3.4] }, { id: 'hvBranch', at: [4.2, 7.2] }, { id: 'hv', at: [6.8, 9.6] }, { id: 'ivc', at: [9.4, 11.6] }, { id: 'ra', at: [11.4, 13] }],
     tracer: { path: ['lb_central', ...HV_CHAIN, 'ivc_upper'], from: 1.5, to: 12.2 },
@@ -266,10 +266,11 @@ export const STEPS = Object.freeze([
 export const SCENE = Object.freeze({
   id: 'liver', name: P('肝臟路線', 'Liver route'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
-  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/liver_centerlines_v1.json?v=20261122-6',
+  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/liver_centerlines_v1.json?v=20261122-10',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
   replaceMesh: REPLACE_MESH, replaceStyle: REPLACE_STYLE, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD,
   routeVessels: [...AORTA, ...PORTAL, ...HEP_ART, 'cardiovascular.hepatic_veins', ...IVC],
+  flowBright: 2,   // 血球亮度加倍（核心：SCENE.flowBright，預設 1）；目標器官亮度加倍＝各步驟 style 的 lit.<群組>: 1
   status: P('黃圈追蹤一顆紅血球。', 'The yellow ring follows one red cell.'),
   note: P('肝內分支為示意｜肝竇與肝小葉放大｜血球放大', 'Branches inside the liver are schematic | sinusoids and lobule enlarged | cells enlarged'),
   credit: P('3D 模型：Z-Anatomy／BodyParts3D，CC BY-SA 4.0', '3D model: Z-Anatomy / BodyParts3D, CC BY-SA 4.0')
