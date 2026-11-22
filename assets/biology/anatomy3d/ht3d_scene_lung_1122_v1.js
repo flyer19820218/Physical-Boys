@@ -98,9 +98,9 @@ export const FLOW = Object.freeze({
 export function flowKey(seg) {
   if (/^pa_[LR]$/.test(seg)) return 'pa';
   if (/^a_/.test(seg)) return 'lobar';
-  if (/^s_/.test(seg)) return 'seg';
+  if (/^(s|sb)_/.test(seg)) return 'seg';
   if (/^c_/.test(seg)) return 'cap';
-  if (/^v_/.test(seg)) return 'ven';
+  if (/^(v|vb)_/.test(seg)) return 'ven';
   if (/^pv_/.test(seg)) return 'pv';
   return seg;
 }
@@ -116,7 +116,7 @@ export const LUMEN_MESH = Object.freeze({ aorta: [CV + 'ascending_aorta', CV + '
 
 /* ---------- 步驟 ---------- */
 const BEDS = ['LU0', 'LU1', 'LL0', 'LL1', 'RU0', 'RU1', 'RM0', 'RM1', 'RL0', 'RL1'];
-const FCAPS = 'c_' + FOCUS + '_*', FU = 'c_' + FOCUS + '_30';   // FU：放大肺泡床最後一條（U 形）微血管，追蹤的紅血球走這條
+const FCAPS = 'c_' + FOCUS + '_*', FU = 'c_' + FOCUS + '_21';   // FU：追蹤的紅血球走的那條微血管（最後一個肺泡的中間一條經線，json named.tracer.cap）；路徑：小動脈脊→分支（虛擬段 tt_，不畫）→微血管→小靜脈分支→小靜脈
 const O = [0.1064, 1.2474, 0.0790], AB = [0.6666, 0.7454, 0.0082], AE = [0.4787, -0.4365, 0.7618];   // 放大肺泡床中心與兩個軸（lung_centerlines_v1.json named.focus_*）
 const at = (d, e = 0, y = 0) => [O[0] + AB[0] * d + AE[0] * e, O[1] + AB[1] * d + AE[1] * e + y, O[2] + AB[2] * d + AE[2] * e];
 
@@ -212,9 +212,9 @@ export const STEPS = Object.freeze([
     camera: [K(0, 'leftLung'), K(2.6, 'focusFar'), K(4.4, 'focusNear'), K(6.4, 'focusClose'), K(13, 'focusClose')],
     style: { ...BG, 'lit.lungs': 0.6, 'lit.alvFocus': 0, 'glow.genCapF': 1, 'glow.pulmArt': 0.3, 'glow.pulmVein': 0.3, heart: 0.1, lungs: 0.06, aorta: 0.1, pulmArt: 0.5, pulmVein: 0.5,
       genCap: 0.35, genCapF: 0.58, alv: 0.5, alvFocus: 0.97 },
-    flows: ['s_' + FOCUS, FCAPS, 'v_' + FOCUS],
+    flows: ['s_' + FOCUS, 'sb_' + FOCUS + '_*', FCAPS, 'vb_' + FOCUS + '_*', 'v_' + FOCUS],
     labels: [{ id: 'alv', at: [4.2, 8.4] }, { id: 'caps', at: [4.8, 8.4] }, { id: 'intraArt', at: [0, 2.4] }],   // 放大窗打開前收起標籤（不壓在放大窗上）
-    tracer: { path: ['s_' + FOCUS, FU, 'v_' + FOCUS], from: 0, to: 24, startU: 0.85 },   // 約 4–7 秒走過 U 形微血管（看得到暗紅變鮮紅）；to > dur：步末停在小靜脈上，接第 4 步
+    tracer: { path: ['tt_' + FOCUS, FU, 'vb_' + FOCUS + '_7', 'v_' + FOCUS], from: 0, to: 24, startU: 0.8438 },   // 約 4–7 秒走過 U 形微血管（看得到暗紅變鮮紅）；to > dur：步末停在小靜脈上，接第 4 步
     window: { kind: 'lung', open: [8.2, 9.2], focus: { pos: O }, tag: P('放大：肺泡與微血管的氣體交換（示意）', 'Enlarged: gas exchange in an alveolus (schematic)') }
   },
   {
@@ -253,11 +253,11 @@ export const STEPS = Object.freeze([
 export const SCENE = Object.freeze({
   id: 'lung', name: P('肺循環（小循環）', 'Pulmonary circulation'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
-  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/lung_centerlines_v1.json?v=20261123-b4',
+  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/lung_centerlines_v1.json?v=20261123-c3',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
   // 肺動脈幹、左右肺動脈、四條肺靜脈不畫資料集的網格外殼，改畫成單層、半徑漸變的管（半徑：見 sources.md「肺場景」；網格估計值留在 JSON 的 radius_mesh）；
   // 肺內的動脈分支（a_、s_）與小靜脈（v_）併入同一組，和主幹同材質、同一個 mesh
-  replaceMesh: { pulmArt: ['pa_trunk', 'pa_L', 'pa_R', 'a_*', 's_*'], pulmVein: ['v_*', 'pv_*'] },
+  replaceMesh: { pulmArt: ['pa_trunk', 'pa_L', 'pa_R', 'a_*', 's_*', 'sb_*'], pulmVein: ['v_*', 'vb_*', 'pv_*'] },
   replaceStyle: { pulmArt: { kind: 'vein', mat: 'pulmArt', radial: [20, 12] }, pulmVein: { kind: 'artery', mat: 'pulmVein', radial: [16, 10] } },
   smoothTubes: true,   // 生成的小血管用變半徑管；接點兩端不封口的段在 JSON 寫 capStart／capEnd: false
   flowBright: 2,   // 血球亮度加倍；目標器官亮度加倍＝各步驟 style 的 lit.<群組>: 1

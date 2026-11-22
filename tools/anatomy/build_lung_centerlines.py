@@ -395,7 +395,7 @@ def make_bed(name,lobe,O,e1,Ra,nalv,m,rc,ell,nref=None):
   Ras=Ra*rg.uniform(0.8,1.25,nalv)
   gaps=np.array([(Ras[i]+Ras[i+1])*rg.uniform(0.42,0.62) for i in range(nalv-1)])
   xs=np.r_[0,np.cumsum(gaps)];xs=xs-xs.mean()
-  lay=np.array([1 if i%2==0 else -1 for i in range(nalv)])
+  lay=np.array([1 if (nalv-1-i)%2==0 else -1 for i in range(nalv)])   # 最後一個肺泡（追蹤的紅血球走的那個）朝 +b（鏡頭看得到的那一面）
   bo=lay*Ra*rg.uniform(0.80,1.05,nalv);no=Ra*rg.uniform(-0.45,0.45,nalv)
   C=[O+e1*x+n*ni+b*bi for x,ni,bi in zip(xs,no,bo)]
   hh=Ras+rc*1.5
@@ -403,24 +403,26 @@ def make_bed(name,lobe,O,e1,Ra,nalv,m,rc,ell,nref=None):
   x0=xs[0]-Ras[0]-2.8*Ra;x1=xs[-1]+Ras[-1]+0.9*Ra
   def Ap(x): return O+n*hs+e1*x
   def Vp(x): return O-n*hs+e1*x
-  caps=[]
+  caps=[];feeds=[];drains=[];rb=rc*m**(1/3)   # 每個肺泡一支小動脈分支（餵）與一支小靜脈分支（收）；rb＝Murray：m 條微血管半徑 rc 併成一條
   for i,(xi,Ci) in enumerate(zip(xs,C)):
     h=float(hh[i]);Oi=O+n*no[i]+b*bo[i];side=int(lay[i]);Rai=float(Ras[i])
+    ph1=np.radians(rg.uniform(20,28));ph2=np.pi-ph1;Dx=max(1.45e-3,0.55*Ra);hoops=[]
     for k in range(m):
-      # 每條微血管 ＝ 離開段（Bezier：從小動脈脊沿 +e1 離開）＋ 環繞段（貼著這個肺泡的外側面，由上（小動脈側）繞到下（小靜脈側），傾斜、蜿蜒不一）＋ 匯入段（Bezier：沿 −e1 併入小靜脈脊）
-      fr=(k+0.5)/m-0.5;xc=xi+Rai*1.25*fr;tilt=Rai*0.9*rg.uniform(-1,1)
-      ph1,ph2=np.radians(rg.uniform(24,38)),np.radians(rg.uniform(142,156));Dx=max(1.45e-3,0.55*Ra)
+      # 微血管＝肺泡朝外那一面的「經線」：從上極（小動脈分支的末端）出發，往赤道散開、蜿蜒、傾斜，再在下極收攏（小靜脈分支的起點）。兩極共點 → 一條分支分成 m 條、再併回一條，像教科書那樣的網袋
+      fr=(k+0.5)/m-0.5;dxc=Rai*1.35*fr;tilt=Rai*0.9*rg.uniform(-1,1)
       wg=0.17*h*rg.uniform(0.7,1.25)*(1 if rg.rand()<0.5 else -1);wf=2*np.pi*rg.uniform(0.9,1.35)/(ph2-ph1);wp=rg.uniform(0,2*np.pi)
       def hp(ph):
-        x=xc+tilt*(ph-np.pi/2)/(ph2-ph1)+wg*np.sin(wf*(ph-ph1)+wp);dxe=0.8*h*np.tanh((x-xi)/(0.8*h));rho=np.sqrt(h*h-dxe**2)
+        sn=np.sin(np.pi*(ph-ph1)/(ph2-ph1));x=xi+(dxc+tilt*(ph-np.pi/2)/(ph2-ph1)+wg*np.sin(wf*(ph-ph1)+wp))*sn
+        dxe=0.8*h*np.tanh((x-xi)/(0.8*h));rho=np.sqrt(h*h-dxe**2)
         return Oi+e1*x+(np.cos(ph)*n+np.sin(ph)*side*b)*rho
-      phs=np.linspace(ph1,ph2,int((ph2-ph1)*h/0.0003)+2);hoop=np.array([hp(p) for p in phs])
-      T1=unit(hoop[1]-hoop[0]);T2=unit(hoop[-1]-hoop[-2])
-      xa=float((hoop[0]-O)@e1)-Dx;xb=float((hoop[-1]-O)@e1)-Dx
-      A_=Ap(xa);V_=Vp(xb);d1=np.linalg.norm(hoop[0]-A_);d2=np.linalg.norm(V_-hoop[-1])
-      dep=bez(A_,A_+e1*0.55*d1,hoop[0]-T1*0.45*d1,hoop[0],30);arr=bez(hoop[-1],hoop[-1]+T2*0.45*d2,V_+e1*0.55*d2,V_,30)
-      cp=resamp(cat(dep,hoop,arr),0.0004)
-      caps.append(dict(p=cp,xa=xa,xb=xb,alv=i))
+      phs=np.linspace(ph1,ph2,int((ph2-ph1)*h/0.0003)+2);hoops.append(np.array([hp(p) for p in phs]))
+    Tt=hoops[0][0];Tb=hoops[0][-1]
+    T1=unit(sum(unit(hh_[1]-hh_[0]) for hh_ in hoops));T2=unit(sum(unit(hh_[-1]-hh_[-2]) for hh_ in hoops))
+    xa=float((Tt-O)@e1)-Dx;xb=float((Tb-O)@e1)-Dx
+    A_=Ap(xa);V_=Vp(xb);d1=np.linalg.norm(Tt-A_);d2=np.linalg.norm(V_-Tb)
+    fd=resamp(bez(A_,A_+e1*0.55*d1,Tt-T1*0.45*d1,Tt,30),0.0004);dr=resamp(bez(Tb,Tb+T2*0.45*d2,V_+e1*0.55*d2,V_,30),0.0004)
+    feeds.append(dict(p=fd,xa=xa));drains.append(dict(p=dr,xb=xb))
+    for hp_ in hoops: caps.append(dict(p=resamp(hp_,0.0004),xa=xa,xb=xb,alv=i))
   Ae=Ap(x1);Ve=Vp(x1);kk=0.55*np.linalg.norm(Ae-Ve);up=bez(Ae,Ae+e1*kk,Ve+e1*kk,Ve,40);up=resamp(up,0.0004)
   caps.append(dict(p=up,xa=x1,xb=x1,alv=-1,U=True))
   # 網：每個肺泡外側面再加三道「緯線」（極角約 40°／90°／140°，各自略微傾斜、蜿蜒），是開放的弧（只在朝外那半圈），與上面的「經線」交叉成多邊形網格（示意）；只畫管、不放血球
@@ -432,7 +434,120 @@ def make_bed(name,lobe,O,e1,Ra,nalv,m,rc,ell,nref=None):
       tl=np.radians(rg.uniform(6,14))*np.sin(al*rg.uniform(1.0,1.6)+rg.uniform(0,6.28));th=np.clip(th0+tl,np.radians(28),np.radians(152))
       rp=Ci[None,:]+h*(np.cos(th)[:,None]*n[None,:]+np.sin(th)[:,None]*(np.cos(al)[:,None]*side*b[None,:]+np.sin(al)[:,None]*e1[None,:]))
       rings.append(dict(p=rp,o2=o2v,alv=i))
-  return dict(name=name,lobe=lobe,O=O,e1=e1,n=n,b=b,Ra=Ra,Ras=Ras,rc=rc,r0=r0,hs=hs,x0=x0,x1=x1,xs=xs,C=C,caps=caps,rings=rings,Ap=Ap,Vp=Vp,N=N,ell=ell)
+  return dict(feeds=feeds,drains=drains,rb=rb,name=name,lobe=lobe,O=O,e1=e1,n=n,b=b,Ra=Ra,Ras=Ras,rc=rc,r0=r0,hs=hs,x0=x0,x1=x1,xs=xs,C=C,caps=caps,rings=rings,Ap=Ap,Vp=Vp,N=N,ell=ell)
+
+from scipy.spatial import SphericalVoronoi
+def make_bed_net(name,lobe,O,e1,Ra,nalv,m,rc,ell,nref=None):
+  """放大的肺泡床（FOCUS）專用：一團大小不一的肺泡，每個肺泡朝外那一面是『球面 Voronoi 多邊形網』的微血管網（教科書／醫學插圖那種不規則 5～6 邊形網袋）。
+  網的接點（Voronoi 頂點）在球面上，邊是弧；上、下兩極各接一條小動脈分支（feeds）與小靜脈分支（drains）；
+  每個肺泡挑 m 條『最短路徑』當有血流的微血管（c_，沿網的邊走、平滑），其餘的邊只畫管（n_，漸變血色）。亂數種子＝床名，可重現。"""
+  e1=unit(e1)
+  if nref is not None and np.linalg.norm(nref-(nref@e1)*e1)>1e-6: n=unit(nref-(nref@e1)*e1)
+  else:
+    ref=np.array([0,1.0,0]) if abs(e1[1])<0.9 else np.array([1.0,0,0]);n=unit(np.cross(e1,ref))
+  b=unit(np.cross(e1,n))
+  rg=np.random.RandomState(sum(ord(ch)*(i+7) for i,ch in enumerate(name))%100003)
+  Ras=Ra*rg.uniform(0.8,1.25,nalv)
+  gaps=np.array([(Ras[i]+Ras[i+1])*rg.uniform(0.42,0.62) for i in range(nalv-1)])
+  xs=np.r_[0,np.cumsum(gaps)];xs=xs-xs.mean()
+  lay=np.array([1 if (nalv-1-i)%2==0 else -1 for i in range(nalv)])
+  bo=lay*Ra*rg.uniform(0.80,1.05,nalv);no=Ra*rg.uniform(-0.45,0.45,nalv)
+  C=[O+e1*x+n*ni+b*bi for x,ni,bi in zip(xs,no,bo)]
+  hh=Ras+rc*1.1
+  N=nalv*m+1;r0=rc*N**(1/3);hs=float(np.max(np.abs(no)+Ras))+r0+0.30*Ra;rb=rc*m**(1/3)
+  x0=xs[0]-Ras[0]-2.8*Ra;x1=xs[-1]+Ras[-1]+0.9*Ra;Dx=max(1.45e-3,0.55*Ra)
+  def Ap(x): return O+n*hs+e1*x
+  def Vp(x): return O-n*hs+e1*x
+  caps=[];rings=[];feeds=[];drains=[]
+  def slerp_pts(c,h,u,v,step=0.0004):
+    ang=float(np.arccos(np.clip(u@v,-1,1)));k=max(2,int(ang*h/step)+1);t=np.linspace(0,1,k)
+    so=np.sin(ang)+1e-12;return np.array([c+h*(np.sin((1-a)*ang)/so*u+np.sin(a*ang)/so*v) for a in t])
+  for i,(xi,Ci) in enumerate(zip(xs,C)):
+    h=float(hh[i]);side=int(lay[i]);Rai=float(Ras[i]);sb=side*b
+    # 球面上的亂點（Fibonacci 螺旋＋抖動）→ 球面 Voronoi → 多邊形網
+    cell=0.40*Rai;P=int(4*np.pi*Rai**2/(0.87*cell**2));gi=np.arange(P)+0.5
+    zz=1-2*gi/P;phi=np.pi*(1+5**0.5)*gi;rr_=np.sqrt(1-zz**2);U=np.stack([rr_*np.cos(phi),rr_*np.sin(phi),zz],1)
+    U=U+rg.normal(0,0.22*cell/Rai,U.shape);U/=np.linalg.norm(U,axis=1)[:,None]
+    sv=SphericalVoronoi(U,1.0,np.zeros(3));sv.sort_vertices_of_regions();V=sv.vertices
+    # 局部座標：n（上，小動脈側）、sb（朝外）、e1
+    VW=V[:,0:1]*n[None,:]+V[:,1:2]*sb[None,:]+V[:,2:3]*e1[None,:]   # 任意旋轉都可以：把單位球的 xyz 對到 n/sb/e1
+    other=[(j,C[j],float(Ras[j])) for j in range(nalv) if j!=i]
+    def ok(pt):
+      if (pt-Ci)@sb<-0.10*h:return False
+      for j,Cj,Rj in other:
+        if np.linalg.norm(pt-Cj)<Rj+0.5*rc:return False
+      return True
+    okv=np.array([ok(Ci+h*w) for w in VW])
+    E=set()
+    for reg in sv.regions:
+      for a_,b_ in zip(reg,reg[1:]+reg[:1]):
+        if okv[a_] and okv[b_]:E.add((min(a_,b_),max(a_,b_)))
+    E=sorted(E)
+    # 最大連通塊
+    import collections
+    adj=collections.defaultdict(list)
+    for a_,b_ in E:adj[a_].append(b_);adj[b_].append(a_)
+    seen={};comps=[]
+    for v0 in adj:
+      if v0 in seen:continue
+      st=[v0];seen[v0]=len(comps);cmp=[v0]
+      while st:
+        x_=st.pop()
+        for y_ in adj[x_]:
+          if y_ not in seen:seen[y_]=len(comps);st.append(y_);cmp.append(y_)
+      comps.append(cmp)
+    big_=max(comps,key=len);bigs=set(big_);E=[e for e in E if e[0] in bigs]
+    # 兩極：上極（+n）／下極（−n）略偏向朝外
+    ph1=np.radians(rg.uniform(22,30))
+    Tt=Ci+h*(np.cos(ph1)*n+np.sin(ph1)*sb);Tb=Ci+h*(-np.cos(ph1)*n+np.sin(ph1)*sb)
+    P3=Ci[None,:]+h*VW
+    vt=min(big_,key=lambda v:np.linalg.norm(P3[v]-Tt));vb=min(big_,key=lambda v:np.linalg.norm(P3[v]-Tb))
+    # 最短路徑（Dijkstra）取 m 條，逐條把已用過的邊加重
+    wgt={e:float(np.linalg.norm(P3[e[0]]-P3[e[1]])) for e in E};used=set();paths=[]
+    import heapq
+    for t_ in range(m):
+      dist={vt:0.0};prev={};pq=[(0.0,vt)]
+      while pq:
+        d_,x_=heapq.heappop(pq)
+        if d_>dist.get(x_,1e9):continue
+        if x_==vb:break
+        for y_ in adj[x_]:
+          e=(min(x_,y_),max(x_,y_))
+          if e not in wgt:continue
+          nd=d_+wgt[e]*(1+3.0*(e in used))*rg.uniform(0.9,1.15)
+          if nd<dist.get(y_,1e9):dist[y_]=nd;prev[y_]=x_;heapq.heappush(pq,(nd,y_))
+      if vb not in dist:break
+      pth=[vb]
+      while pth[-1]!=vt:pth.append(prev[pth[-1]])
+      pth=pth[::-1]
+      if pth in paths:continue
+      paths.append(pth);used|={(min(a_,b_),max(a_,b_)) for a_,b_ in zip(pth,pth[1:])}
+    # c_：沿路徑、平滑、再投回球面
+    for pth in paths:
+      pts=np.vstack([Tt[None,:]]+[P3[v][None,:] for v in pth]+[Tb[None,:]])
+      sp_=spline(pts,0.0004);sp_[0]=Tt;sp_[-1]=Tb
+      d_=sp_-Ci;sp_=Ci+d_/np.linalg.norm(d_,axis=1)[:,None]*h
+      sp_[0]=Tt;sp_[-1]=Tb
+      caps.append(dict(p=sp_,alv=i))
+    # n_：其餘的邊，漸變血色（上極 0.15 缺氧 → 下極 0.85 充氧），兩端各延長一點讓接點相連
+    ox=lambda w:float(np.clip(0.5-0.5*(w@n)/1.0,0.0,1.0))
+    for (a_,b_) in E:
+      if (a_,b_) in used:continue
+      u=VW[a_];v=VW[b_];arc=slerp_pts(Ci,h,u,v);tA=unit(arc[0]-arc[1]);tB=unit(arc[-1]-arc[-2])
+      arc=np.vstack([arc[0]+tA*1.0*rc,arc,arc[-1]+tB*1.0*rc]);arc=resamp(arc,0.0004)
+      rings.append(dict(p=arc,o2=[round(0.15+0.7*ox(u),3),round(0.15+0.7*ox(v),3)],alv=i))
+    # 分支：小動脈脊 → 上極；下極 → 小靜脈脊
+    T1=unit(P3[vt]-Tt)*0+unit(Tt-(Ci+h*n)+1e-9*e1)*0;
+    dirt=-unit(np.cross(np.cross(Tt-Ci,n),Tt-Ci)) if abs(unit(Tt-Ci)@n)<0.999 else e1   # 沿球面朝赤道的方向（切線）
+    dirb=-unit(np.cross(np.cross(Tb-Ci,n),Tb-Ci)) if abs(unit(Tb-Ci)@n)<0.999 else e1
+    xa=float((Tt-O)@e1)-Dx;xb=float((Tb-O)@e1)-Dx;A_=Ap(xa);V_=Vp(xb);d1=np.linalg.norm(Tt-A_);d2=np.linalg.norm(V_-Tb)
+    fd=resamp(bez(A_,A_+e1*0.55*d1,Tt-dirt*0.45*d1,Tt,30),0.0004);dr=resamp(bez(Tb,Tb+dirb*0.45*d2,V_+e1*0.55*d2,V_,30),0.0004)
+    feeds.append(dict(p=fd,xa=xa));drains.append(dict(p=dr,xb=xb))
+    for cp in caps:
+      if cp['alv']==i:cp['xa']=xa;cp['xb']=xb
+  Ae=Ap(x1);Ve=Vp(x1);kk=0.55*np.linalg.norm(Ae-Ve);up=bez(Ae,Ae+e1*kk,Ve+e1*kk,Ve,40);up=resamp(up,0.0004)
+  caps.append(dict(p=up,xa=x1,xb=x1,alv=-1,U=True))
+  return dict(feeds=feeds,drains=drains,rb=rb,name=name,lobe=lobe,O=O,e1=e1,n=n,b=b,Ra=Ra,Ras=Ras,rc=rc,r0=r0,hs=hs,x0=x0,x1=x1,xs=xs,C=C,caps=caps,rings=rings,Ap=Ap,Vp=Vp,N=N,ell=ell)
 
 def spine_radius(xs_sorted_events,xq,rc,N,ramp):
   """沿脊的 x 座標，依『還剩幾條微血管沒分出去』用 Murray 算半徑（每個分出點用 smoothstep 過渡 ramp 公尺）"""
@@ -457,7 +572,7 @@ def y_children(P,R,targets_list,ell=0.010):
 
 SPEC={'LU':dict(n=2),'LL':dict(n=2),'RU':dict(n=2),'RM':dict(n=2),'RL':dict(n=2)}
 FOCUS='LL0'   # 放大的肺泡床：左下葉（左肺動脈末端同軸延續 → 葉動脈 → 小動脈，追蹤血球可以一段接一段走到這裡）
-FOCUS_SPEC=(3.3e-3,6,6,0.32e-3,0.0030)   # 放大的肺泡床：肺泡半徑、個數、每個肺泡的微血管條數、微血管半徑、depart 長度
+FOCUS_SPEC=(2.9e-3,8,3,0.23e-3,0.0030)   # 放大的肺泡床：肺泡半徑、個數、每個肺泡的微血管條數、微血管半徑、depart 長度
 BKG_SPEC=(1.4e-3,4,4,0.28e-3,0.0022)
 # ---------- 肺靜脈：資料集網格只有心房端 1～1.5 cm 的短管，肺內段為示意 ----------
 PVSTUB={'LS':dict(atr=[0.0403,1.3171,0.0424],lat=[0.0512,1.3175,0.0462],lobes=['LU']),
@@ -579,7 +694,7 @@ for k,P in lob.items():
   for j,O in enumerate(sites[k]):
     nm=f'{k}{j}';foc=nm==FOCUS
     Jp=pv_join[nm][0];e1=unit(O-(0.5*S+0.5*Jp))
-    bd=make_bed(nm,k,np.asarray(O,float),e1,*(FOCUS_SPEC if foc else BKG_SPEC),nref=S-Jp)
+    bd=(make_bed_net if foc else make_bed)(nm,k,np.asarray(O,float),e1,*(FOCUS_SPEC if foc else BKG_SPEC),nref=S-Jp)
     A0=bd['Ap'](bd['x0']);dS=np.linalg.norm(A0-S)
     side=unit(np.cross(TS,e1)) if np.linalg.norm(np.cross(TS,e1))>1e-6 else bd['b']
     route=hermite_path([S,A0],TS,e1)
@@ -594,6 +709,10 @@ for k,P in lob.items():
       cid=f'c_{nm}_{q}'
       rc=bd['rc'];cpp=cp['p'];cc=_cum(cpp);rcap=rc*(1-0.08*np.sin(np.pi*cc/cc[-1]))   # 中段略細（示意）
       put(cid,cpp,rcap,'capillary','poor>rich','generated: schematic alveolar capillary over the alveolus surface (enlarged; real ~8 µm)',True,capStart=False,capEnd=False)
+    for q,fd in enumerate(bd['feeds']):
+      put(f'sb_{nm}_{q}',fd['p'],bd['rb'],'arteriole','poor','generated: schematic arteriole branch from the arteriole to the top of one alveolus (splits into its capillaries; diameters enlarged)',True,capStart=False,capEnd=False)
+    for q,dr in enumerate(bd['drains']):
+      put(f'vb_{nm}_{q}',dr['p'],bd['rb'],'vein','rich','generated: schematic venule branch collecting the capillaries of one alveolus -> venule (diameters enlarged)',True,capStart=False,capEnd=False)
     for q,rg in enumerate(bd['rings']):
       put(f'n_{nm}_{q}',rg['p'],bd['rc']*0.92,'capillary',rg['o2'],'generated: schematic alveolar capillary net (open latitude arc on the outer face of the alveolus, forms the polygon net with c_*; drawn only, no flow)',True,capStart=True,capEnd=True)
     # 小靜脈：沿肺泡另一側的脊（x1→x0）收集微血管，再走回肺門匯入肺靜脈
@@ -616,6 +735,13 @@ for k,P in lob.items():
     cnt=1+sum(ss((xb-xv+0.0008)/0.0016) for xb in evj);rv=bd['rc']*cnt**(1/3)
     rvr=gtaper(vr,bd['r0'],R_VEN_END if jj==0 else R_VEN_SIDE)
     put('v_'+nm,vp,np.r_[rv,rvr[1:]][:len(vp)],'vein','rich','generated: schematic venule collecting the alveolar capillaries -> intrapulmonary vein (diameters enlarged)',True,capStart=False,capEnd=False)
+    if foc:   # 追蹤的紅血球：小動脈脊（到分支處）＋ 小動脈分支（虛擬段，不畫）→ 一條微血管 → 小靜脈分支 → 小靜脈（看得到分支、微血管網、再匯回）
+      TK=len(bd['feeds'])-1
+      mm=FOCUS_SPEC[2];fdp=bd['feeds'][TK]['p'];ii=int(np.argmin(np.linalg.norm(sp-fdp[0],axis=1)))
+      ttp=np.vstack([sp[:ii+1],fdp[1:]]);ttr=np.r_[rr[:ii+1],np.full(len(fdp)-1,bd['rb'])]
+      put('tt_'+nm,ttp,ttr,'chamber','poor','generated: tracer route only (arteriole up to the branch + branch), not drawn',True,capStart=False,capEnd=False)
+      TRACER_INFO=dict(feed=TK,cap=sum(1 for cp_ in bd['caps'] if 0<=cp_['alv']<TK),startU=round(float(0.85*_cum(sp)[-1]/_cum(ttp)[-1]),4))
+      print('TRACER',TRACER_INFO)
     beds[nm]=bd
 # ---------- 小靜脈推離動脈（不相連的管不可互相穿過）----------
 ART=[q for q in segs if q.startswith(('pa_','a_','s_'))]
@@ -650,12 +776,12 @@ for pk in pvP:
 # ======================== 驗證 ========================
 report={}
 def lobe_of(sid):
-  m=re.match(r'^(?:a|s|v|c|n)_([LR][ULM])',sid)
+  m=re.match(r'^(?:a|s|v|c|n|sb|vb)_([LR][ULM])',sid)
   return m.group(1) if m else None
 import re
 for sid,sg in segs.items():
   p=np.asarray(sg['points'],float);c=_cum(p)
-  if sid.startswith(('a_','s_','v_','c_','n_')):
+  if sid.startswith(('a_','s_','v_','c_','n_','sb_','vb_')):
     k=lobe_of(sid);mask=np.ones(len(p),bool)
     if sid.startswith('a_'): mask=c>0.012   # 葉動脈起點在肺門（肺葉凸包外）
     if sid.startswith('v_'): mask=(c[-1]-c)>0.012   # 小靜脈最後 12 mm 在肺門匯入肺靜脈
@@ -700,7 +826,7 @@ sacs={'alvFocus':[],'alv':[]}
 for nm,bd in beds.items():
   for C,Rq in zip(bd['C'],bd['Ras']): sacs['alvFocus' if nm==FOCUS else 'alv'].append([round(float(v),5) for v in C]+[round(float(Rq),5)])
 fb=beds[FOCUS]
-named=dict(focus=FOCUS,focus_center=np.round(fb['O'],5).tolist(),focus_axes=dict(e1=np.round(fb['e1'],4).tolist(),n=np.round(fb['n'],4).tolist(),b=np.round(fb['b'],4).tolist()),
+named=dict(tracer=TRACER_INFO,focus=FOCUS,focus_center=np.round(fb['O'],5).tolist(),focus_axes=dict(e1=np.round(fb['e1'],4).tolist(),n=np.round(fb['n'],4).tolist(),b=np.round(fb['b'],4).tolist()),
   focus_caps=[f'c_{FOCUS}_{q}' for q in range(len(fb['caps']))],beds=list(beds),bed_centers={k:np.round(v['O'],5).tolist() for k,v in beds.items()},
   pv_order=BED_ORDER,lobar=named['lobar'],bifurcation=np.round(B,5).tolist(),la_center=np.round(LA_C,5).tolist())
 def seg_out(v):
