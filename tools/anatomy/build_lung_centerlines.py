@@ -389,28 +389,28 @@ def make_bed(name,lobe,O,e1,Ra,nalv,m,rc,ell,nref=None):
   else:
     ref=np.array([0,1.0,0]) if abs(e1[1])<0.9 else np.array([1.0,0,0]);n=unit(np.cross(e1,ref))
   b=unit(np.cross(e1,n))
-  # 肺泡不排成整齊一列：大小不一（0.82～1.22 Ra）、沿軸間距不等、左右（±b）交錯再各自偏一點、上下（n）略偏，擠成一串像葡萄的肺泡囊（照教科書的畫法；示意）。亂數種子由床名決定，可重現。
+  # 肺泡囊（照教科書／醫學插圖：一團擠在一起、大小不一的粉紅球，不是排成一列）：球心沿 e1 方向不等距、左右（±b）兩層交錯、上下（n）再各偏一點、半徑 0.8～1.25 Ra；
+  # 小動脈脊在 +n 側、小靜脈脊在 −n 側，微血管從小動脈脊出發，沿「外側面」（各肺泡朝 ±b 的那一面）經緯交織成不規則的網，再匯入小靜脈脊。亂數種子＝床名，可重現。
   rg=np.random.RandomState(sum(ord(ch)*(i+7) for i,ch in enumerate(name))%100003)
-  Ras=Ra*rg.uniform(0.82,1.22,nalv)
-  gaps=np.array([(Ras[i]+Ras[i+1])*rg.uniform(0.70,0.86) for i in range(nalv-1)])
+  Ras=Ra*rg.uniform(0.8,1.25,nalv)
+  gaps=np.array([(Ras[i]+Ras[i+1])*rg.uniform(0.42,0.62) for i in range(nalv-1)])
   xs=np.r_[0,np.cumsum(gaps)];xs=xs-xs.mean()
-  bo=np.array([(1 if i%2==0 else -1)*Ra*rg.uniform(0.55,1.0) for i in range(nalv)]);no=Ra*rg.uniform(-0.22,0.22,nalv)
+  lay=np.array([1 if i%2==0 else -1 for i in range(nalv)])
+  bo=lay*Ra*rg.uniform(0.80,1.05,nalv);no=Ra*rg.uniform(-0.45,0.45,nalv)
   C=[O+e1*x+n*ni+b*bi for x,ni,bi in zip(xs,no,bo)]
-  hh=Ras+rc*1.5   # 每個肺泡自己的微血管環半徑
-  N=nalv*m+1;r0=rc*N**(1/3);hs=Ra*1.22+r0+0.35*Ra+0.25*Ra+ (np.abs(bo).max()*0.0);h=Ra+rc*1.5
-  x0=xs[0]-Ras[0]-2.8*Ra;x1=xs[-1]+0.9*Ra
+  hh=Ras+rc*1.5
+  N=nalv*m+1;r0=rc*N**(1/3);hs=float(np.max(np.abs(no)+Ras))+r0+0.30*Ra;h=Ra+rc*1.5
+  x0=xs[0]-Ras[0]-2.8*Ra;x1=xs[-1]+Ras[-1]+0.9*Ra
   def Ap(x): return O+n*hs+e1*x
   def Vp(x): return O-n*hs+e1*x
   caps=[]
   for i,(xi,Ci) in enumerate(zip(xs,C)):
-    h=float(hh[i]);Oi=O+n*no[i]+b*bo[i]
+    h=float(hh[i]);Oi=O+n*no[i]+b*bo[i];side=int(lay[i]);Rai=float(Ras[i])
     for k in range(m):
-      side=1 if k%2==0 else -1;q=k//2;mq=(m+1)//2 if side>0 else m//2
-      # 每條微血管 ＝ 離開段（Bezier：從小動脈脊沿 +e1 離開，轉進環繞肺泡的方向）＋ 環繞段（貼著肺泡表面、從小動脈側經 ±b 側繞到小靜脈側，略為傾斜）
-      #            ＋ 匯入段（Bezier：沿 −e1 併入小靜脈脊）。相鄰兩條傾斜方向相反 → 互相交叉；再加上下面的兩圈環形微血管 → 交織成網（示意）
-      fr=(q+0.5)/max(mq,1)-0.5;xc=xi+Ra*1.1*fr+Ra*0.12*(side<0);tilt=Ra*0.75*(1 if (k+i)%2==0 else -1)
-      ph1,ph2=np.radians(30),np.radians(150);Dx=max(1.45e-3,0.55*Ra)
-      wg=0.17*h*rg.uniform(0.7,1.25)*(1 if rg.rand()<0.5 else -1);wf=2*np.pi*rg.uniform(0.9,1.35)/(ph2-ph1);wp=rg.uniform(0,2*np.pi);tilt=tilt*rg.uniform(0.7,1.5)   # 微血管不走整齊的弧：略為蜿蜒、傾斜度不一，才像教科書那樣交織成不規則的網（曲率半徑仍 ≥ 管徑 ~1.5 倍）
+      # 每條微血管 ＝ 離開段（Bezier：從小動脈脊沿 +e1 離開）＋ 環繞段（貼著這個肺泡的外側面，由上（小動脈側）繞到下（小靜脈側），傾斜、蜿蜒不一）＋ 匯入段（Bezier：沿 −e1 併入小靜脈脊）
+      fr=(k+0.5)/m-0.5;xc=xi+Rai*1.25*fr;tilt=Rai*0.9*rg.uniform(-1,1)
+      ph1,ph2=np.radians(rg.uniform(24,38)),np.radians(rg.uniform(142,156));Dx=max(1.45e-3,0.55*Ra)
+      wg=0.17*h*rg.uniform(0.7,1.25)*(1 if rg.rand()<0.5 else -1);wf=2*np.pi*rg.uniform(0.9,1.35)/(ph2-ph1);wp=rg.uniform(0,2*np.pi)
       def hp(ph):
         x=xc+tilt*(ph-np.pi/2)/(ph2-ph1)+wg*np.sin(wf*(ph-ph1)+wp);dxe=0.8*h*np.tanh((x-xi)/(0.8*h));rho=np.sqrt(h*h-dxe**2)
         return Oi+e1*x+(np.cos(ph)*n+np.sin(ph)*side*b)*rho
@@ -421,17 +421,16 @@ def make_bed(name,lobe,O,e1,Ra,nalv,m,rc,ell,nref=None):
       dep=bez(A_,A_+e1*0.55*d1,hoop[0]-T1*0.45*d1,hoop[0],30);arr=bez(hoop[-1],hoop[-1]+T2*0.45*d2,V_+e1*0.55*d2,V_,30)
       cp=resamp(cat(dep,hoop,arr),0.0004)
       caps.append(dict(p=cp,xa=xa,xb=xb,alv=i))
-  # U 形微血管：小動脈脊末端繞過最後一個肺泡外側，回到小靜脈脊起點（髮夾彎：控制點沿兩端切線拉長 0.55 倍）
   Ae=Ap(x1);Ve=Vp(x1);kk=0.55*np.linalg.norm(Ae-Ve);up=bez(Ae,Ae+e1*kk,Ve+e1*kk,Ve,40);up=resamp(up,0.0004)
   caps.append(dict(p=up,xa=x1,xb=x1,alv=-1,U=True))
-  # 網：每個肺泡再加兩圈環形微血管（靠小動脈側、靠小靜脈側各一圈，極角 42°／138°），與上面由小動脈脊到小靜脈脊的微血管交叉成網。
-  # 環是閉合的、不接脊，只畫管、不放血球（真實的肺泡微血管網裡血流方向各段不同，這裡不畫成繞圈流動）；環的 e1 方向半徑小於肺泡間距的一半，不會插進隔壁肺泡的環
+  # 網：每個肺泡外側面再加三道「緯線」（極角約 40°／90°／140°，各自略微傾斜、蜿蜒），是開放的弧（只在朝外那半圈），與上面的「經線」交叉成多邊形網格（示意）；只畫管、不放血球
   rings=[]
   for i,Ci in enumerate(C):
-    h=float(hh[i])
-    for th,o2v in ((np.radians(42),0.3),(np.radians(138),0.75)):
-      al=np.linspace(0,2*np.pi,int(2*np.pi*h*np.sin(th)/0.0003)+1)
-      rp=Ci[None,:]+h*(np.cos(th)*n[None,:]+np.sin(th)*(np.cos(al)[:,None]*b[None,:]+np.sin(al)[:,None]*e1[None,:]))
+    h=float(hh[i]);side=int(lay[i])
+    for th0,o2v in ((np.radians(40),0.3),(np.radians(90),0.5),(np.radians(140),0.75)):
+      span=np.radians(rg.uniform(78,100));al=np.linspace(-span,span,int(2*span*h*np.sin(th0)/0.0003)+2)
+      tl=np.radians(rg.uniform(6,14))*np.sin(al*rg.uniform(1.0,1.6)+rg.uniform(0,6.28));th=np.clip(th0+tl,np.radians(28),np.radians(152))
+      rp=Ci[None,:]+h*(np.cos(th)[:,None]*n[None,:]+np.sin(th)[:,None]*(np.cos(al)[:,None]*side*b[None,:]+np.sin(al)[:,None]*e1[None,:]))
       rings.append(dict(p=rp,o2=o2v,alv=i))
   return dict(name=name,lobe=lobe,O=O,e1=e1,n=n,b=b,Ra=Ra,Ras=Ras,rc=rc,r0=r0,hs=hs,x0=x0,x1=x1,xs=xs,C=C,caps=caps,rings=rings,Ap=Ap,Vp=Vp,N=N,ell=ell)
 
@@ -458,7 +457,7 @@ def y_children(P,R,targets_list,ell=0.010):
 
 SPEC={'LU':dict(n=2),'LL':dict(n=2),'RU':dict(n=2),'RM':dict(n=2),'RL':dict(n=2)}
 FOCUS='LL0'   # 放大的肺泡床：左下葉（左肺動脈末端同軸延續 → 葉動脈 → 小動脈，追蹤血球可以一段接一段走到這裡）
-FOCUS_SPEC=(2.6e-3,5,6,0.30e-3,0.0030)   # 放大的肺泡床：肺泡半徑、個數、每個肺泡的微血管條數、微血管半徑、depart 長度
+FOCUS_SPEC=(3.3e-3,6,6,0.32e-3,0.0030)   # 放大的肺泡床：肺泡半徑、個數、每個肺泡的微血管條數、微血管半徑、depart 長度
 BKG_SPEC=(1.4e-3,4,4,0.28e-3,0.0022)
 # ---------- 肺靜脈：資料集網格只有心房端 1～1.5 cm 的短管，肺內段為示意 ----------
 PVSTUB={'LS':dict(atr=[0.0403,1.3171,0.0424],lat=[0.0512,1.3175,0.0462],lobes=['LU']),
@@ -596,7 +595,7 @@ for k,P in lob.items():
       rc=bd['rc'];cpp=cp['p'];cc=_cum(cpp);rcap=rc*(1-0.08*np.sin(np.pi*cc/cc[-1]))   # 中段略細（示意）
       put(cid,cpp,rcap,'capillary','poor>rich','generated: schematic alveolar capillary over the alveolus surface (enlarged; real ~8 µm)',True,capStart=False,capEnd=False)
     for q,rg in enumerate(bd['rings']):
-      put(f'n_{nm}_{q}',rg['p'],bd['rc']*0.92,'capillary',rg['o2'],'generated: schematic ring-shaped alveolar capillary (closed loop on the alveolus surface, forms the net with c_*; drawn only, no flow)',True,capStart=False,capEnd=False)
+      put(f'n_{nm}_{q}',rg['p'],bd['rc']*0.92,'capillary',rg['o2'],'generated: schematic alveolar capillary net (open latitude arc on the outer face of the alveolus, forms the polygon net with c_*; drawn only, no flow)',True,capStart=True,capEnd=True)
     # 小靜脈：沿肺泡另一側的脊（x1→x0）收集微血管，再走回肺門匯入肺靜脈
     xv=xs[::-1];vsp=np.array([bd['Vp'](x) for x in xv])
     J,TJ,pk,jj=pv_join[nm];V0=bd['Vp'](bd['x0'])

@@ -65,8 +65,8 @@ export const MATERIAL = Object.freeze({
   leaflets: { color: '#e7c9b0', sheen: '#fff0e0', rough: 0.6 },
   diaphragm: { color: '#a8564c', sheen: '#dca095', rough: 0.7 },
   torso: { color: '#e9c8ad', sheen: '#fff1e4', rough: 0.8 },
-  alv: { color: '#f2cdc4', sheen: '#fff3ee', rough: 0.55 },
-  alvFocus: { color: '#f2cdc4', sheen: '#fff3ee', rough: 0.55 },
+  alv: { color: '#d4808c', rim: '#f2a3ad', rough: 0.5 },
+  alvFocus: { color: '#d4808c', rim: '#f2a3ad', rough: 0.5 },
   artery: { color: '#b3141d', rim: '#ff5a48', rough: 0.3 },
   vein: { color: '#55162c', rim: '#c0607e', rough: 0.36 },
   // 肺循環的顏色語意和大循環相反：肺動脈是缺氧血（暗紅偏紫）、肺靜脈是充氧血（鮮紅）
@@ -156,9 +156,9 @@ const CAM = {
   bif: { pos: [0.06, 1.52, 0.30], target: [0.025, 1.338, 0.068] },
   lungsWide: { pos: [0.0, 1.42, 0.66], target: [0.0, 1.29, 0.045] },
   leftLung: { pos: [0.37, 1.31, 0.27], target: [0.095, 1.265, 0.05] },
-  focusFar: { pos: at(0.16, 0.0, 0.03), target: O },
-  focusNear: { pos: at(0.075, 0.0, 0.006), target: O },
-  focusClose: { pos: at(0.052, 0.0, 0.004), target: O },
+  focusFar: { pos: at(0.17, 0.0, 0.03), target: O },
+  focusNear: { pos: at(0.072, 0.0, 0.006), target: O },
+  focusClose: { pos: at(0.050, 0.0, 0.004), target: O },
   hilumL: { pos: [0.24, 1.33, 0.34], target: [0.06, 1.285, 0.05] },
   laBack: { pos: [0.04, 1.45, -0.30], target: [0.02, 1.302, 0.045] },
   heartLeft: { pos: [0.26, 1.36, 0.36], target: [0.03, 1.30, 0.065] },
@@ -210,8 +210,8 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: P('微血管的血一路由暗紅（缺氧）變成鮮紅（充氧）。成人約有 3～8 億個肺泡，每個直徑約 0.2 毫米；畫面是放大的示意。', 'Along the capillaries the blood turns from dark red (oxygen-poor) to bright red (oxygen-rich). An adult has roughly 300–800 million alveoli, each about 0.2 mm across; this view is an enlarged schematic.') }
     ],
     camera: [K(0, 'leftLung'), K(2.6, 'focusFar'), K(4.4, 'focusNear'), K(6.4, 'focusClose'), K(13, 'focusClose')],
-    style: { ...BG, 'lit.lungs': 0.6, 'lit.alvFocus': 1, 'glow.genCapF': 1, 'glow.pulmArt': 0.3, 'glow.pulmVein': 0.3, heart: 0.1, lungs: 0.06, aorta: 0.1, pulmArt: 0.5, pulmVein: 0.5,
-      genCap: 0.35, genCapF: 0.58, alv: 0.26, alvFocus: 0.52 },
+    style: { ...BG, 'lit.lungs': 0.6, 'lit.alvFocus': 0, 'glow.genCapF': 1, 'glow.pulmArt': 0.3, 'glow.pulmVein': 0.3, heart: 0.1, lungs: 0.06, aorta: 0.1, pulmArt: 0.5, pulmVein: 0.5,
+      genCap: 0.35, genCapF: 0.58, alv: 0.5, alvFocus: 0.97 },
     flows: ['s_' + FOCUS, FCAPS, 'v_' + FOCUS],
     labels: [{ id: 'alv', at: [4.2, 8.4] }, { id: 'caps', at: [4.8, 8.4] }, { id: 'intraArt', at: [0, 2.4] }],   // 放大窗打開前收起標籤（不壓在放大窗上）
     tracer: { path: ['s_' + FOCUS, FU, 'v_' + FOCUS], from: 0, to: 24, startU: 0.85 },   // 約 4–7 秒走過 U 形微血管（看得到暗紅變鮮紅）；to > dur：步末停在小靜脈上，接第 4 步
@@ -253,7 +253,7 @@ export const STEPS = Object.freeze([
 export const SCENE = Object.freeze({
   id: 'lung', name: P('肺循環（小循環）', 'Pulmonary circulation'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
-  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/lung_centerlines_v1.json?v=20261123-a2',
+  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/lung_centerlines_v1.json?v=20261123-b4',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
   // 肺動脈幹、左右肺動脈、四條肺靜脈不畫資料集的網格外殼，改畫成單層、半徑漸變的管（半徑：見 sources.md「肺場景」；網格估計值留在 JSON 的 radius_mesh）；
   // 肺內的動脈分支（a_、s_）與小靜脈（v_）併入同一組，和主幹同材質、同一個 mesh
