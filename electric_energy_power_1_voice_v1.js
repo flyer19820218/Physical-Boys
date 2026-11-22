@@ -9,7 +9,7 @@
   var STAGE_URL = 'audio/electric_energy_power_1/stage.json';
   // 音檔與網頁同一個網域（audio/electric_energy_power_1/mp3/）：iPad Safari 對 GitHub Release 的下載網址（octet-stream＋attachment）常常無法播放。
   var AUDIO_BASE = 'audio/electric_energy_power_1/mp3/';
-  var AUDIO_VER = '?v=20261122-a3'; // 重錄音檔時改這個版本號，避免瀏覽器播到舊的快取音檔
+  var AUDIO_VER = '?v=20261122-a5'; // 重錄音檔時改這個版本號，避免瀏覽器播到舊的快取音檔
   var AUDIO_FALLBACK = AUDIO_BASE; // 本課沒有 GitHub Release 備援：載入失敗就直接改用字數估時，講解不中斷
   var player = null; // 全程只用同一個 Audio 元素：iOS 只在「使用者點擊」那一刻解鎖，新建的 Audio 之後自動播放會被擋
   var SEC_PER_CHAR = 0.3; // 音檔載入失敗時，依字數估一個等待秒數，讓講解不中斷
@@ -248,12 +248,12 @@
     if (tab == null) return null;
     var s = sec(tab); if (!s) return null;
     step = step || 0;
-    if (step === 0) { var h = s.querySelector('.hook-box'); return h ? { k: tab + ':0', topEl: h, botEl: s.querySelector('.panel') || h, anchor: 'top' } : null; }
+    if (step === 0) { var c0 = s.querySelector('.canvas-wrap'), r0 = s.querySelector('.step-row'); return c0 ? { k: tab + ':anim', topEl: c0, botEl: r0 || c0, anchor: 'top' } : null; }   // 剛切進分頁也直接看動畫（不是看曉臻老師說的文字）
     if (step <= 5) {
       var c = s.querySelector('.canvas-wrap'), r = s.querySelector('.step-row');
       return c ? { k: tab + ':anim', topEl: c, botEl: r || c, anchor: 'top' } : null;
     }
-    if (tab === 'tab-energy' && step >= 9) { var p = $('energyPractice'), pc = p && p.querySelector('.practice-copy'); return p ? { k: tab + ':practice', topEl: p.querySelector('.question-picker') || p, botEl: pc || p, anchor: 'bottom' } : null; }   // 題目、提示、解答的文字在畫布下面：優先讓它們露在字幕框上方
+    if (tab === 'tab-energy' && step >= 9) { var p = $('energyPractice'), pc = p && p.querySelector('.practice-copy'), pw = p && p.querySelector('.canvas-wrap'); return p ? { k: tab + ':practice', topEl: pw || p, botEl: pc || p, anchor: 'top' } : null; }   // 練習題：電路圖畫布整張露在字幕框上方（重點是畫面），題目／解答文字盡量接在下面；放不下時先保住畫布
     var lab = s.querySelector('.lab-panel');
     return lab ? { k: tab + ':lab', topEl: lab, botEl: lab, anchor: 'top' } : null;
   }
@@ -267,6 +267,8 @@
       runAct(tab, stepNo, anim);
     } catch (e) { if (window.console) console.warn('[有聲講解] 場景失敗', tab, stepNo, e); }
     cur = { tab: tab, sub: sub, step: stepNo, seg: 0 };
+    // 剛切進新分頁時，頁面約 60 毫秒後才啟動動畫模組並從第 1 步自動播放，會蓋掉剛按的步驟（拖進度條跨分頁時會錯）：稍後再按一次
+    if (changedTab && stepNo >= 1) setTimeout(function () { if (cur.tab === tab && cur.step === stepNo) { try { runAct(tab, stepNo, anim); } catch (e) {} } }, 220);
     if (prev.tab !== tab || prev.step !== stepNo) hlClear(); // 換畫面：上一個畫面的標記線收掉
     var nv = viewOf(tab, sub, stepNo), pv = viewOf(prev.tab, prev.sub, prev.step);
     if (nv && (changedTab || !pv || pv.k !== nv.k || prev.step !== stepNo)) bringIntoView(nv);
@@ -360,14 +362,8 @@
     pform: R_(function () { return [q1('tab-power', '.formula-box')]; })
   };
   // 每句要畫的標記：{ 句號: [{ s, e, k }] }；s、e 是這句台詞裡的位置，唸到那裡才畫
-  var HLSPEC = {
-    '36': [{ s: '一伏特', e: '一庫侖', k: 'vform' }],
-    '66': [{ s: '電量，等於電流乘以時間', e: '電流乘以時間', k: 'qit' }],
-    '70': [{ s: '電能等於電流乘以電壓乘以時間', e: '乘以時間', k: 'eivt' }],
-    '74': [{ s: '電流平方乘以電阻乘以時間', e: '乘以時間', k: 'eser' }],
-    '77': [{ s: '電壓平方除以電阻再乘以時間', e: '乘以時間', k: 'epar' }],
-    '103': [{ s: '功率等於電能除以時間，也等於電流乘以電壓', e: '電流乘以電壓', k: 'pform' }]
-  };  var HL = {};
+  var HLSPEC = {};   // 老師指示：文字不需要特別重點（兩位老師會解釋），畫面以動畫為主：這課不畫螢光筆
+  var HL = {};
   var LINE_TEXT = {};   // 句號 → 台詞（init 時填入），用來換算 s、e 的位置
   function hlOf(id) {
     if (HL[id] !== undefined) return HL[id];
