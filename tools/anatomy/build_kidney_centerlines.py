@@ -302,57 +302,94 @@ def srad(sid):
 # 規格（教學示意；腎內血管口徑資料集沒有，這裡的半徑是示意用的放大值）
 # 半徑沿路漸變（由粗變細，靜脈側由細變粗）：接點兩端半徑相同，核心用圓頭管畫，接點圓滑、不會有平口斷面。
 # 小動脈起點半徑＝上游腎動脈前／後支末端半徑，所以整條路徑是連續地由粗變細。
-R_ART_END=0.00040; R_GLOM=(0.00040,0.00035); R_CAP=(0.00032,0.00027); R_VEN=(0.00048,0.0013)   # 小動脈起點半徑＝上游腎動脈分支（平滑後）末端半徑
+R_ART=(0.00052,0.00040); R_GLOM=(0.00040,0.00032); R_CAP=(0.00032,0.00027); R_VEN=(0.00048,0.0013)
+# ── 分支怎麼接（參考血管鑄型 SEM 圖與教科書插圖：分支從主幹「順著方向慢慢分出去」，粗細連續）──
+#  ① 每個接點兩條管的切線相同（depart／arrive：先沿上游切線走一小段，再平滑過渡到自己的走向），不再有轉角與圓球；
+#  ② 半徑連續，且分叉處遵守 Murray 定律（母血管半徑³＝子血管半徑³ 之和；Nordsletten 2006 在大鼠腎血管量到相符）；
+#  ③ 匯入是逐一匯入主幹（像河流匯流），不是全部擠在同一點。
+def ss(x):
+  x=np.clip(x,0,1);return x*x*(3-2*x)
+def _cum(p):
+  p=np.asarray(p,float);return np.r_[0,np.cumsum(np.linalg.norm(np.diff(p,axis=0),axis=1))]
+def depart(P,T,ell):
+  """路徑起點改成沿切線 T 離開，到弧長 ell 處才完全回到原本的走向（smoothstep 混合）"""
+  P=np.asarray(P,float);c=_cum(P);T=unit(T);w=ss(c/ell)[:,None]
+  Q=(1-w)*(P[0]+T[None,:]*c[:,None])+w*P;Q[0]=P[0]
+  return spline(Q,float(np.mean(np.diff(c))))
+def arrive(P,T,ell):
+  """路徑終點改成沿切線 T 進入（depart 的鏡像）"""
+  return depart(np.asarray(P,float)[::-1],-np.asarray(T,float),ell)[::-1]
+def smooth_path(P,passes=4,ramp=0.004):
+  """拉普拉斯平滑（兩端 ramp 公尺內逐漸不動，保住端點與切線）：把微血管的小轉折磨圓"""
+  P=np.asarray(P,float).copy();c=_cum(P);w=(ss(c/ramp)*ss((c[-1]-c)/ramp))[:,None]
+  for _ in range(passes):
+    Q=P.copy();Q[1:-1]=P[1:-1]+0.5*w[1:-1]*(0.5*(P[:-2]+P[2:])-P[1:-1]);P=Q
+  return P
+def path_at(P,c,sv):
+  i=int(np.clip(np.searchsorted(c,sv)-1,0,len(P)-2));f=(sv-c[i])/max(c[i+1]-c[i],1e-9);return P[i]*(1-f)+P[i+1]*f
 def taper(n,a,b,pw=1.0):
   t=np.linspace(0,1,n)**pw;e=t*t*(3-2*t);return a+(b-a)*e
 def taper_cap(n,a,b):   # 微血管：兩端略粗（接點）、中段最細
   t=np.linspace(0,1,n);return b+(a-b)*(1-np.sin(np.pi*t))
+JOIN={'L':[0,0.0035,0.007,0.0105,0.014],'R':[0,0.004,0.008]}   # 各條小靜脈匯入腎靜脈的位置（離腎門的弧長，公尺）
 SPEC={'L':[('ant',1.0,0.5,3),('ant',0.0,0.35,3),('ant',-1.0,0.5,3),('post',0.8,-0.7,3),('post',-0.8,-0.7,3)],
       'R':[('post',0.8,-0.7,2),('post',-0.8,-0.7,2),('post',0.0,0.3,2)]}
 from scipy.spatial import ConvexHull
 HULL={s:ConvexHull(raw('visceral.fibrous_capsule_of_kidney_'+s.lower())[0]) for s in RA}
 def in_hull(h,pts,margin=0.0005):
   return np.all(np.asarray(pts,float)@h.equations[:,:3].T+h.equations[:,3]<=-margin,axis=1)
-def make_branch(s,k,O,d,H,nc,f,M,tv,rng):
+def make_branch(s,k,O,d,H,nc,f,TO,Ju,tu,rng):
   """f：腎小球位置占『腎門到皮質表面』的比例（越小越靠近腎門，用來保證整條路徑落在腎臟輪廓內）"""
   sc=f/0.92;ls=min(1.0,H/0.035)   # 短分支（靠近前後表面）把橫向偏移與腎絲球縮小
   ref=np.array([0,0,1.0]) if abs(d[2])<0.9 else np.array([1.0,0,0])
   t=unit(np.cross(d,ref))*(1 if k%2==0 else -1);b=unit(np.cross(d,t))
   P1=O+d*0.40*sc*H;P2=O+d*0.62*sc*H+t*0.006*ls;P3=O+d*0.86*sc*H+t*0.0065*ls;G=O+d*f*H+t*0.007*ls
   out={}
-  out['kart']=spline([O,P1,P2,P3,G])
+  out['kart']=depart(spline([O,P1,P2,P3,G]),TO,0.012)   # 從上游分支末端順著切線分出
   n=60;ph=np.linspace(0,2*np.pi*2.2,n);rg=0.0014*ls;u=unit(np.cross(d,b));hel=[]
   for i,p_ in enumerate(ph):
-    hel.append(G+d*(0.0010*p_/(2*np.pi))+rg*np.sin(np.pi*i/(n-1))*(np.cos(p_)*u+np.sin(p_)*b))
-  out['kglom']=np.array(hel);E=out['kglom'][-1]
-  V=O+d*0.76*sc*H-t*0.003;caps=[]
-  for j in range(nc):
-    a1=E+(-d*0.003+t*rng.uniform(-0.003,0.003)+b*rng.uniform(-0.004,0.004));a2=V+(d*0.003+t*rng.uniform(-0.003,0.003)+b*rng.uniform(-0.004,0.004))
-    base=bez(E,a1,a2,V,30);off=0.0006*np.sin(np.linspace(0,np.pi*3,30)+j*2.1)[:,None]*(b[None,:] if j%2==0 else t[None,:])
-    cap=base+off;cap[0]=E;cap[-1]=V;caps.append(spline(cap,0.001))
-  out['kcap']=caps
+    hel.append(G+d*(0.0010*p_/(2*np.pi))+rg*np.sin(np.pi*i/(n-1))**2*(np.cos(p_)*u+np.sin(p_)*b))   # sin² 包絡：兩端半徑的斜率為 0，起止切線＝軸向，才接得上小動脈與微血管
+  Tg=unit(out['kart'][-1]-out['kart'][-4])
+  out['kglom']=depart(np.array(hel),Tg,0.004);E=out['kglom'][-1];Te=unit(out['kglom'][-1]-out['kglom'][-4])   # 入球小動脈→腎絲球：切線相接
+  V=G+d*0.002-t*0.006*ls; caps=[]   # 小靜脈起點：在腎絲球外側 2 mm、橫向相隔，微血管繞成寬鬆的髮夾彎（不是小半徑急轉）
   W2=O+d*0.58*sc*H-t*0.0025;W3=O+d*0.32*sc*H-t*0.0015
-  out['kven']=cat(spline([V,W2,W3]),bez(W3,W3+(M-W3)*0.4,M-tv*0.008,M,22))
+  kven=arrive(spline([V,W2,W3,Ju-tu*0.012,Ju],0.0012),tu,0.012);cv=_cum(kven)
+  SJ=[0.0,0.0045,0.0090][:nc]   # 微血管逐一匯入小靜脈：第 j 條在離小靜脈起點 SJ[j] 處併入（像支流匯入河道，不是三條擠進同一個套管）
+  dEV=float(np.linalg.norm(V-E));kk=float(np.clip(0.55*dEV,0.005,0.009))
+  for j in range(nc):
+    Vj=path_at(kven,cv,SJ[j]);Tj=unit(path_at(kven,cv,SJ[j]+0.002)-path_at(kven,cv,max(SJ[j]-0.002,0)))   # 匯入點與該處小靜脈切線
+    k1=kk*(0.9+0.12*j);k2=kk*(1.1-0.1*j)
+    a1=E+Te*k1;a2=Vj-Tj*k2   # 控制點沿著兩端切線：離開腎絲球與併入小靜脈都切線相接，彎的曲率半徑≥數 mm（管半徑 0.3 mm）
+    n=90;base=bez(E,a1,a2,Vj,n);sv=np.linspace(0,1,n)
+    off=((j-(nc-1)/2)*0.0011*np.sin(np.pi*sv)**2+0.0004*np.sin(np.pi*sv*2+j*2.1)*np.sin(np.pi*sv)**2)[:,None]*b[None,:]   # 各走各的、中段散開，兩端不位移
+    cap=base+off;cap[0]=E;cap[-1]=Vj;Lc=_cum(cap);cap=np.stack([np.interp(np.linspace(0,Lc[-1],int(Lc[-1]/0.0007)+1),Lc,cap[:,q]) for q in range(3)],1)
+    caps.append(smooth_path(arrive(depart(cap,Te,0.003),Tj,0.003),passes=2,ramp=0.003))
+  out['sj']=SJ
+  out['kcap']=caps
+  out['kven']=kven
   return out,G
 kinfo={}
 for s,r in RA.items():
   KP,KT=raw('visceral.fibrous_capsule_of_kidney_'+s.lower())
-  vp=r['veinT'][0];M=vp[0];tv=unit(vp[3]-vp[0])    # renal-vein start (hilum) and its flow direction
+  VP=np.asarray(segs['renal_v_'+s]['points'],float);VC=_cum(VP)   # 腎靜脈中心線：小靜脈沿它逐一匯入
   for k,(tip,dy,dz,nc) in enumerate(SPEC[s]):
-    O=(r['antT'][0] if tip=='ant' else r['postT'][0])[-1]
+    arr=(r['antT'][0] if tip=='ant' else r['postT'][0]);O=arr[-1];TO=unit(arr[-1]-arr[-4])
+    sj=JOIN[s][k];Ju=path_at(VP,VC,sj);tu=unit(path_at(VP,VC,sj+0.003)-path_at(VP,VC,max(sj-0.003,0)))
     d=unit([r['sx']*1.0,dy*0.9,dz*0.7]);S=exit_pt(KP,O,d);d=unit(S-O) if S is not None else d;H=float(np.linalg.norm(S-O)) if S is not None else 0.03
     for f in (0.90,0.82,0.74,0.66,0.58,0.50,0.42):
-      br,G=make_branch(s,k,O,d,H,nc,f,M,tv,np.random.default_rng(1000+31*k+(7 if s=='R' else 0)))
+      br,G=make_branch(s,k,O,d,H,nc,f,TO,Ju,tu,np.random.default_rng(1000+31*k+(7 if s=='R' else 0)))
       ka=br['kart'];far=np.r_[0,np.cumsum(np.linalg.norm(np.diff(ka,axis=0),axis=1))]>0.008   # 起點在腎門（腎囊凸包外），前 8 mm 不檢查
-      pts=np.vstack([ka[far],br['kglom']]+br['kcap']+[br['kven'][:-22][::1][4:]])
+      kv_=br['kven'];kfar=(_cum(kv_)[-1]-_cum(kv_))>0.050   # 距腎靜脈匯入點 50 mm 內在腎門（腎門開口）（腎囊凸包外），不檢查
+      pts=np.vstack([ka[far],br['kglom']]+br['kcap']+[kv_[kfar][4:]])
       if in_hull(HULL[s],pts).all(): break
     else: print('WARNING branch not fully inside hull',s,k)
-    ka0=float(srad(('renal_ant_' if tip=='ant' else 'renal_post_')+s)[-1]);ka1=min(ka0,R_ART_END);kg1=min(ka1,R_GLOM[1]);kc0=min(R_CAP[0],ka1*0.85)   # 每一處接點兩端半徑相同，且只會變細
-    put(f'kart_{s}{k}',br['kart'],taper(len(br['kart']),ka0,ka1),'arteriole','rich','generated: schematic interlobar->arcuate->interlobular->afferent arteriole (kidney interior; diameters enlarged)',True)
-    put(f'kglom_{s}{k}',br['kglom'],taper(len(br['kglom']),ka1,kg1),'capillary','rich>poor','generated: schematic glomerular tuft (enlarged ~7x; real ~0.2 mm)',True)
+    put(f'kart_{s}{k}',br['kart'],taper(len(br['kart']),*R_ART),'arteriole','rich','generated: schematic interlobar->arcuate->interlobular->afferent arteriole (kidney interior; diameters enlarged)',True);segs[f'kart_{s}{k}']['capEnd']=False   # 末端與腎絲球同半徑、同軸相接：不封圓頭，接點才不會鼓成球
+    put(f'kglom_{s}{k}',br['kglom'],taper(len(br['kglom']),*R_GLOM),'capillary','rich>poor','generated: schematic glomerular tuft (enlarged ~7x; real ~0.2 mm)',True);segs[f'kglom_{s}{k}'].update(capStart=False,capEnd=False)
     for j,c in enumerate(br['kcap']):
-      put(f'kcap_{s}{k}_{j}',c,taper_cap(len(c),kc0,min(R_CAP[1],kc0)),'capillary','rich>poor','generated: schematic efferent arteriole + peritubular capillary net (enlarged)',True)
-    put(f'kven_{s}{k}',br['kven'],taper(len(br['kven']),*R_VEN,0.9),'vein','poor','generated: schematic interlobular->arcuate->interlobar vein, joining the renal vein at the hilum (enlarged)',True)
+      put(f'kcap_{s}{k}_{j}',c,taper_cap(len(c),*R_CAP),'capillary','rich>poor','generated: schematic efferent arteriole + peritubular capillary net (enlarged)',True);segs[f'kcap_{s}{k}_{j}'].update(capStart=False,capEnd=False)   # 起點接腎絲球、終點併入小靜脈管內：兩端都不封口
+    kv=br['kven'];cv=_cum(kv);SJ=br['sj'];cnt=1+sum(ss((cv-sj+0.002)/0.004) for sj in SJ[1:]);rm=R_CAP[0]*cnt**(1/3)   # Murray：每併入一條微血管，小靜脈半徑依 r³ 相加變粗
+    rv=rm+(R_VEN[1]-rm)*ss((cv-SJ[-1])/max(cv[-1]-SJ[-1],1e-9))   # 匯完之後（示意省略的其他支流）平滑長到 1.3 mm 接腎靜脈
+    put(f'kven_{s}{k}',kv,rv,'vein','poor','generated: schematic interlobular->arcuate->interlobar vein, joining the renal vein at the hilum (enlarged)',True)
     kinfo[(s,k)]=dict(H=H,f=f)
     print('branch',s,k,tip,'H(mm)',round(H*1000,1),'f',f,'G',np.round(G,4))
 # ---------------- validation ----------------
@@ -371,23 +408,34 @@ for sid in list(segs):
   if sid[:4] in ('kart','kgl','kcap','kven'):
     s=sid.split('_')[1][0];p=segs[sid]['points']
     p=np.asarray(p,float)
-    if sid.startswith('kven'): p=p[4:-22]   # 最後 22 點（匯入腎門的 Y 形接點）在腎外
+    if sid.startswith('kven'): p=p[4:][(_cum(p)[-1]-_cum(p))[4:]>0.050]   # 距匯入點 50 mm 內（腎門）在腎囊凸包外
     if sid.startswith('kart'): p=p[np.r_[0,np.cumsum(np.linalg.norm(np.diff(p,axis=0),axis=1))]>0.008]   # 起點在腎門，前 8 mm 在腎囊凸包外
     ok=in_hull(HULL[s],p)
-    report[sid]=dict(n=int(len(ok)),inside=int(ok.sum()),bad_index=[int(x) for x in np.where(~ok)[0]],test='inside convex hull of the renal capsule mesh, 0.5 mm margin (excluded: the first 8 mm of kart, which start in the hilum, and the first 4 and last 22 points of kven, which end at the hilum)')
+    report[sid]=dict(n=int(len(ok)),inside=int(ok.sum()),bad_index=[int(x) for x in np.where(~ok)[0]],test='inside convex hull of the renal capsule mesh, 0.5 mm margin (excluded: the first 8 mm of kart, which start in the hilum, and the first 4 points and the last 50 mm of kven, which pass through the open hilum)')
     if ok.mean()<1: print('KIDNEY-INSIDE',sid,ok.mean().round(3),np.where(~ok)[0][:12])
-# 繪製半徑＋管的範圍：腎動脈從主動脈壁外開始畫、腎靜脈畫到下腔靜脈壁外（管口圓頭貼著大血管壁，血球仍沿完整中心線流）
-def _cum(p):
-  p=np.asarray(p,float);return np.r_[0,np.cumsum(np.linalg.norm(np.diff(p,axis=0),axis=1))]
-for sid in list(segs):
-  if sid.startswith(('renal_a_','renal_ant_','renal_post_','renal_v_')):
-    segs[sid]['radius_mesh']=segs[sid]['radius'].copy();segs[sid]['radius']=srad(sid)
-    c=_cum(segs[sid]['points']);Lm=c[-1]
-    if sid.startswith('renal_a_'): segs[sid]['tubeRange']=[round(float(min(0.5,(0.0088+0.0030)/Lm)),4),1.0]    # 主動脈半徑 8.8 mm＋3 mm
-    if sid.startswith('renal_v_'): segs[sid]['tubeRange']=[0.0,round(float(max(0.5,1-(0.0083+0.0022)/Lm)),4)]   # 下腔靜脈半徑 8.3 mm＋2.2 mm
+# 繪製半徑＋管的範圍＋分叉處的平滑：
+#  腎動脈 → 前／後支：分支沿主幹末端切線分出（depart），起點半徑＝主幹末端半徑，10 mm 內收到 Murray 值（主幹³＝2×子支³）再沿網格估計值變細，
+#  末端留在「小動脈起點半徑×（小動脈條數）^(1/3)」以上，讓下一級（小動脈）也遵守 Murray；
+#  腎靜脈：起點半徑＝第一條小靜脈末端半徑 1.3 mm，之後每匯入一條小靜脈就依 Murray 變粗，匯完再平滑接上網格估計值（上限 4.4 mm）。
+#  腎動脈從主動脈壁外 3 mm、腎靜脈到下腔靜脈壁外 2.2 mm 才畫出管（tubeRange），那一端不封圓頭（capStart／capEnd=false），管口埋在大血管壁裡。
+for sd in RA:
+  tr=segs['renal_a_'+sd];tr['radius_mesh']=tr['radius'].copy();tr['radius']=srad('renal_a_'+sd);rt=float(tr['radius'][-1]);Tt=unit(tr['points'][-1]-tr['points'][-4])
+  for tp in ('ant','post'):
+    sid=f'renal_{tp}_{sd}';sg=segs[sid];sg['radius_mesh']=sg['radius'].copy()
+    n=sum(1 for x in SPEC[sd] if x[0]==tp);end_t=R_ART[0]*n**(1/3)
+    sg['points']=depart(sg['points'],Tt,0.010);c=_cum(sg['points']);base=srad(sid)
+    # srad 在 depart 之前以原點數算；點數改變後用弧長重取樣
+    c0=_cum(segs[sid]['points']) if False else c;base=np.interp(c/c[-1],np.linspace(0,1,len(base)),base)
+    w=ss(c/0.010);r=(1-w)*rt+w*np.minimum(base,rt*2**(-1/3));r=np.minimum.accumulate(np.maximum(r,end_t))
+    sg['radius']=r
+  vs=segs['renal_v_'+sd];vs['radius_mesh']=vs['radius'].copy();c=_cum(vs['points']);bs=np.interp(c/c[-1],np.linspace(0,1,len(vs['radius'])),srad('renal_v_'+sd))
+  cnt=1+sum(ss((c-sj+0.002)/0.004) for sj in JOIN[sd][1:]);rm=R_VEN[1]*cnt**(1/3);wv=ss((c-JOIN[sd][-1])/0.020)
+  vs['radius']=np.minimum((1-wv)*rm+wv*np.maximum(rm,bs),VN_MAX)
+  La=_cum(tr['points'])[-1];tr['tubeRange']=[round(float(min(0.5,(0.0088+0.0030)/La)),4),1.0];tr['capStart']=False
+  Lv=c[-1];vs['tubeRange']=[0.0,round(float(max(0.5,1-(0.0083+0.0022)/Lv)),4)];vs['capEnd']=False
 out=dict(version='kidney_centerlines_v1',units='m',axes='+X body left, +Y up, +Z anterior (same as si_scene_v1.glb)',
  generator='tools/anatomy/build_kidney_centerlines.py',note='mesh: centerline and radius estimated from the glb mesh (level-set rings between open boundary loops, refined by plane slices); generated: schematic, not anatomical data (intrarenal vessels, glomerulus, capillary net, link into the right atrium).',
  validation=dict(method='mesh segments: 8 rays perpendicular to the path from a point offset 0.5 r from the centerline must hit the vessel mesh (union of listed nodes) within 4 r; kidney-interior routes: point inside the convex hull of the renal capsule mesh with 0.5 mm margin (the capsule is a thin shell open at the hilum, so ray tests are unreliable)',results=report),
- segments={k:dict(kind=v['kind'],o2=v['o2'],source=v['source'],schematic=v['schematic'],points=np.round(v['points'],5).tolist(),radius=np.round(v['radius'],5).tolist(),**({'radius_mesh':np.round(v['radius_mesh'],5).tolist()} if 'radius_mesh' in v else {}),**({'tubeRange':v['tubeRange']} if 'tubeRange' in v else {})) for k,v in segs.items()})
+ segments={k:dict(kind=v['kind'],o2=v['o2'],source=v['source'],schematic=v['schematic'],points=np.round(v['points'],5).tolist(),radius=np.round(v['radius'],5).tolist(),**({'radius_mesh':np.round(v['radius_mesh'],5).tolist()} if 'radius_mesh' in v else {}),**({'tubeRange':v['tubeRange']} if 'tubeRange' in v else {}),**({'capStart':False} if v.get('capStart') is False else {}),**({'capEnd':False} if v.get('capEnd') is False else {})) for k,v in segs.items()})
 json.dump(out,open(sys.argv[2],'w'),separators=(',',':'))
 print('wrote',sys.argv[2],len(segs))
