@@ -17,6 +17,8 @@
  * 血色：核心全站共識不畫藍色血液（缺氧血＝暗紅、充氧血＝鮮紅），與 2D 頁面「兩者都是紅色血液」一致。
  */
 
+import { BEST_SCENE, BEST_GROUPS, BEST_BASE, bestFloor } from './ht3d_preset_1122_v1.js?v=20261123-f2';
+
 const P = (zh, en) => [zh, en];
 
 /* ---------- 名稱覆寫表（只放有出處的；zh_review 的不放） ---------- */
@@ -252,16 +254,18 @@ export const STEPS = Object.freeze([
 ]);
 
 export const SCENE = Object.freeze({
+  ...BEST_SCENE,   // 全部循環共用的最佳模板（ht3d_preset_1122_v1.js）：全身血管底圖、血管底線、亮度對比、血球同色發光
+
   id: 'lung', name: P('肺循環（小循環）', 'Pulmonary circulation'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
   parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/lung_centerlines_v1.json?v=20261123-d6',
-  names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
+  names: NAMES, labelAllow: LABEL_ALLOW, groups: { ...GROUPS, ...BEST_GROUPS }, material: MATERIAL, baseStyle: { ...BASE_STYLE, ...BEST_BASE }, flow: FLOW, flowKey, tubeGroup,
   // 肺動脈幹、左右肺動脈、四條肺靜脈不畫資料集的網格外殼，改畫成單層、半徑漸變的管（半徑：見 sources.md「肺場景」；網格估計值留在 JSON 的 radius_mesh）；
   // 肺內的動脈分支（a_、s_）與小靜脈（v_）併入同一組，和主幹同材質、同一個 mesh
   replaceMesh: { pulmArt: ['pa_trunk', 'pa_L', 'pa_R', 'a_*', 's_*', 'sb_*'], pulmVein: ['v_*', 'vb_*', 'pv_*'] },
   replaceStyle: { pulmArt: { kind: 'vein', mat: 'pulmArt', radial: [20, 12] }, pulmVein: { kind: 'artery', mat: 'pulmVein', radial: [16, 10] } },
+  vesselFloor: bestFloor({ genCap: 0, genCapF: 0 }),   // 放大的微血管床只在自己那一步出現，其餘血管（含全身血管底圖）一直畫在畫面上
   smoothTubes: true,   // 生成的小血管用變半徑管；接點兩端不封口的段在 JSON 寫 capStart／capEnd: false
-  flowBright: 2,   // 血球亮度加倍；目標器官亮度加倍＝各步驟 style 的 lit.<群組>: 1
   lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD,
   routeVessels: [...AORTA],
   status: P('黃圈追蹤一顆紅血球。', 'The yellow ring follows one red cell.'),

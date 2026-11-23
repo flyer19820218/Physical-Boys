@@ -303,3 +303,20 @@ node tools/anatomy/extract_si_scene.mjs \
   --modules /tmp/gl/node_modules
 # 只重驗證已輸出的 glb：加 --verify-only（--list 會列出每個 node 的三角形數）
 ```
+
+## 全身血管底圖 body_vessels_v1（2026-11-23）
+
+老師要求「全部的血管都畫上去」。**資料來源就是上面同一份資料集**（`authorOd/3d-anatomy-atlas` release 1.2.0，Z-Anatomy／BodyParts3D 衍生）：它的 cardiovascular 系統有 **676 個有網格的結構**（動脈約 421、靜脈約 231，含股動脈、脛動脈、足底弓、腋動脈、肱動脈、橈動脈、掌弓、指動脈、顏面／顳淺／枕動脈、大腦前／中／後動脈、顱內靜脈竇…），之前 si_scene 只挑了其中 69 條主幹。座標系與 si_scene 完全相同（公尺、+Y 向上、原點在兩腳跟之間），不用對位。
+
+| 檔案 | 說明 |
+|---|---|
+| `body_vessels_v1.glb` | 完整版：8 個 node，約 22.8 萬三角形，約 1.1 MB（誤差上限 0.2 mm） |
+| `body_vessels_v1_lite.glb` | 輕量版（iPad 備援）：同樣 8 個 node，約 7.6 萬三角形，約 0.47 MB（誤差上限 0.6 mm） |
+| `body_vessels_parts_v1.json` | 每個 node 的 id、種類、區域、成員結構（英文 id，共 587 條） |
+| `../../../tools/anatomy/extract_body_vessels.mjs` | 抽取腳本（可重跑，用法見檔頭） |
+
+- 選取：cardiovascular 結構 676 條，扣掉 si_scene 已有的（76，含心腔／瓣膜／乳頭肌，這些由各場景自己畫）與沒有名稱的 `x_l`／`x_r`／`unnamed`，剩 587 條。依名稱分「動脈／靜脈」，再依「頭頸／手臂／腿／軀幹」合併成 8 個 node（`body.arteries.head`、`body.veins.leg`…）；名稱規則分不到的用網格中心位置分。
+- 改作：挑選、依區域合併、weld、simplify（meshoptimizer，鎖住開口邊界）、quantize、meshopt 壓縮；座標不改。授權同上：**CC BY-SA 4.0**，署名與改作說明已寫進 glb 的 `asset.copyright`。
+- 用法：場景檔 `...BEST_SCENE`（`ht3d_preset_1122_v1.js`）會帶 `extras`，核心載入後疊進同一個場景；背景血管群組 `bodyArtHead／Arm／Leg／Trunk`、`bodyVeinHead／…`。載入失敗就略過，不影響場景。
+- 這些只是「背景的血管分布」，沒有逐條核對血管走向與名稱，畫面上**不標名稱**；腦場景自己畫頭頸血管，所以腦場景把頭頸那兩組設成不畫（避免兩層重疊）。
+- 另外查過 HuBMAP **Human Reference Atlas**「Blood Vasculature」3D 參考物件（CC BY 4.0，`hubmapconsortium/ccf-releases` 的 `v1.2/models/VH_M_Blood_Vasculature.glb`）：104 條，只有軀幹加眼部血管，**沒有四肢**，比這份少，所以沒有採用。

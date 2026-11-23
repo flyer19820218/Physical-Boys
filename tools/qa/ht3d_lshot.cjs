@@ -1,3 +1,4 @@
+// 環境變數 SCENE 指定場景（預設 liver），例：SCENE=kidney node ht3d_lshot.cjs "1:6000" k 1180 820 1
 // usage（先 mkdir -p /tmp/ht3d_verify；先 bash tools/qa/serve.sh 開 8765 埠）: node ht3d_lshot.cjs "<step>:<ms>,<step>:<ms>" prefix [w h dpr]
 const pw=(()=>{for(const m of ['playwright','/opt/node22/lib/node_modules/playwright']){try{return require(m)}catch(e){}}})();
 const fs=require('fs');const BASE='http://127.0.0.1:8765/';
@@ -12,7 +13,7 @@ const [,, spec, prefix, W='430', H='900', DPR='2']=process.argv;
  await p.locator('.tab-btn').nth(3).tap();await p.waitForTimeout(600);
  await p.locator('.ht3d-tbtn[data-v="3d"]').tap();await p.waitForTimeout(9000);
  for(const it of spec.split(',')){const [st,ms]=it.split(':').map(Number);
-  await p.evaluate(async ([a,c])=>{await window.HT3D.go('liver',a,c,{after:'stop'});window.HT3D.pause();},[st,ms]);await p.waitForTimeout(2500);
+  await p.evaluate(async ([a,c,SCN])=>{await window.HT3D.go(SCN,a,c,{after:'stop'});window.HT3D.pause();},[st,ms,process.env.SCENE||'liver']);await p.waitForTimeout(2500);
   const bb={};await p.evaluate(()=>{const e=document.querySelector('.ht3d-stage canvas')||document.querySelector('.ht3d-stage');e.scrollIntoView({block:'center',behavior:'instant'});return 1});await p.waitForTimeout(1500);const bb2=await p.evaluate(()=>{const e=document.querySelector('.ht3d-stage canvas')||document.querySelector('.ht3d-stage');const r=e.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}});Object.assign(bb,bb2);
   const f=`/tmp/ht3d_verify/${prefix}_s${st}_${ms}.png`;await p.screenshot({path:f});require('fs').writeFileSync(f+'.json',JSON.stringify({bb,dpr:+DPR}));const stt=await p.evaluate(()=>{const g=window.HT3D.getState();return {particles:g.particles,step:g.step,lite:g.lite}});console.log(f,JSON.stringify(bb),JSON.stringify(stt));
  }

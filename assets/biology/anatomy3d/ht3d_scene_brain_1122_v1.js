@@ -27,6 +27,8 @@
  * 血色：全站共識不畫藍色血液（充氧血＝鮮紅、缺氧血＝暗紅）；微血管 o2:'rich>poor'（沿路由鮮紅變暗紅）。
  */
 
+import { BEST_SCENE, BEST_GROUPS, BEST_BASE, bestFloor } from './ht3d_preset_1122_v1.js?v=20261123-f2';
+
 const P = (zh, en) => [zh, en];
 
 /* ---------- 名稱覆寫表（只放有把握的；不確定的用泛稱，原名記在 brain_parts_v1.json 的 zh_review，畫面不顯示） ---------- */
@@ -288,10 +290,12 @@ export const STEPS = Object.freeze([
 ]);
 
 export const SCENE = Object.freeze({
+  ...BEST_SCENE,   // 全部循環共用的最佳模板（ht3d_preset_1122_v1.js）：全身血管底圖、血管底線、亮度對比、血球同色發光
+
   id: 'brain', name: P('腦部：組織細胞', 'Brain: tissue cells'),
   glb: 'assets/biology/anatomy3d/brain_scene_v1.glb?v=20261123-d6', glbLite: 'assets/biology/anatomy3d/brain_scene_v1_lite.glb?v=20261123-d6',
   parts: 'assets/biology/anatomy3d/brain_parts_v1.json?v=20261123-d6', centerlines: 'assets/biology/anatomy3d/brain_centerlines_v1.json?v=20261123-d6',
-  names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
+  names: NAMES, labelAllow: LABEL_ALLOW, groups: { ...GROUPS, ...BEST_GROUPS }, material: MATERIAL, baseStyle: { ...BASE_STYLE, ...BEST_BASE, bodyArtHead: 0, bodyVeinHead: 0 }, flow: FLOW, flowKey, tubeGroup,   // 腦場景自己畫頭頸血管（JSON 中心線），全身底圖的頭頸那組不畫（baseStyle 設 0），免得兩層重疊
   // 資料集的血管網格一律不畫，改畫單層、半徑漸變的管（半徑取自網格並平滑、單調化；網格估計值見 sources.md「腦場景」）；腦表面的血管、小動脈、小靜脈（示意）併入同材質的組
   replaceMesh: {
     aorta: ['aorta'], arteries: ['lcar', 'rcar', 'rvb', 'lva', 'lsa', 'rsa', 'laca', 'raca', 'lpcab', 'lmca2', 'rmca2', 'lpcom', 'rpcom', 'acom', ...bgBeds('a*')],
@@ -302,10 +306,10 @@ export const SCENE = Object.freeze({
     aorta: { kind: 'artery', radial: [24, 14] }, arteries: { kind: 'artery', radial: [12, 8], step: 0.0009 }, focusArt: { kind: 'artery', radial: [12, 8], step: 0.0003 },
     veins: { kind: 'vein', radial: [16, 10], step: 0.0011 }, focusVein: { kind: 'vein', radial: [12, 8], step: 0.0003 }
   },
+  vesselFloor: bestFloor({ genCap: 0, genCapF: 0, focusArt: 0, focusVein: 0, bodyArtHead: 0, bodyVeinHead: 0 }),   // 放大的微血管床只在自己那一步出現，其餘血管（含全身血管底圖）一直畫在畫面上
   smoothTubes: true,     // 小血管用變半徑管；接點兩端不封口的段在 JSON 寫 capStart／capEnd: false
   genTubeRange: true,    // 微血管從小動脈中心線分出、併入小靜脈中心線：照 JSON 的 tubeRange 只畫母管壁外的部分（核心新增的選用開關）
   cellMin: 0.00018,      // 腦的微血管很細（放大後半徑 0.12 mm）：血球最小直徑降到 0.18 mm，才不會擠出管外（核心新增的選用開關）
-  flowBright: 2,         // 血球亮度加倍；目標器官亮度加倍＝各步驟 style 的 lit.<群組>: 1
   lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD,
   routeVessels: [],
   status: P('黃圈追蹤一顆紅血球。', 'The yellow ring follows one red cell.'),

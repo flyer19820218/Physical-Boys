@@ -13,6 +13,8 @@
  *           新增句子都標 NEW（列在回報的「待老師審」）。
  */
 
+import { BEST_SCENE, BEST_GROUPS, BEST_BASE, bestFloor } from './ht3d_preset_1122_v1.js?v=20261123-f2';
+
 const P = (zh, en) => [zh, en];
 
 /* ---------- 名稱覆寫表 ----------
@@ -271,12 +273,15 @@ export const STEPS = Object.freeze([
 ]);
 
 export const SCENE = Object.freeze({
+  ...BEST_SCENE,   // 全部循環共用的最佳模板（ht3d_preset_1122_v1.js）：全身血管底圖、血管底線、亮度對比、血球同色發光
+
   id: 'small_intestine', name: P('小腸路線', 'Small-intestine route'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
   parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/si_centerlines_v1.json?v=20261122-4',
-  names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
+  names: NAMES, labelAllow: LABEL_ALLOW, groups: { ...GROUPS, ...BEST_GROUPS }, material: MATERIAL, baseStyle: { ...BASE_STYLE, ...BEST_BASE }, flow: FLOW, flowKey, tubeGroup,
   replaceMesh: REPLACE_MESH, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD, focusCap: FOCUS_CAP,
   routeVessels: [...AORTA, 'cardiovascular.superior_mesenteric_artery', ...PORTAL, ...HEP_ART, 'cardiovascular.hepatic_veins', ...IVC],
+  vesselFloor: bestFloor({ genArt: 0, genCap: 0, genVen: 0, genLiver: 0 }),   // 放大的微血管床只在自己那一步出現，其餘血管（含全身血管底圖）一直畫在畫面上
   status: P('黃圈追蹤一顆紅血球。', 'The yellow ring follows one red cell.'),
   note: P('小分支為示意｜血球放大', 'Small branches are schematic | cells enlarged'),
   credit: P('3D 模型：Z-Anatomy／BodyParts3D，CC BY-SA 4.0', '3D model: Z-Anatomy / BodyParts3D, CC BY-SA 4.0')

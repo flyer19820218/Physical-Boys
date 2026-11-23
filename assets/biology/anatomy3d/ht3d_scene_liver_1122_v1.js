@@ -14,6 +14,8 @@
  * 肝內所有分支都是示意：分叉依「空間殖民＋分支定律」生成，不是真實解剖；肝竇與肝小葉為了看得見而放大。
  */
 
+import { BEST_SCENE, BEST_GROUPS, BEST_BASE, bestFloor } from './ht3d_preset_1122_v1.js?v=20261123-f2';
+
 const P = (zh, en) => [zh, en];
 
 /* ---------- 名稱覆寫表（只放有出處的；zh_review 的不放） ---------- */
@@ -263,15 +265,15 @@ export const STEPS = Object.freeze([
 ]);
 
 export const SCENE = Object.freeze({
+  ...BEST_SCENE,   // 全部循環共用的最佳模板（ht3d_preset_1122_v1.js）：全身血管底圖、血管底線、亮度對比、血球同色發光
   id: 'liver', name: P('肝臟路線', 'Liver route'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
   parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/liver_centerlines_v1.json?v=20261123-3',
-  names: NAMES, labelAllow: LABEL_ALLOW, groups: GROUPS, material: MATERIAL, baseStyle: BASE_STYLE, flow: FLOW, flowKey, tubeGroup,
+  names: NAMES, labelAllow: LABEL_ALLOW, groups: { ...GROUPS, ...BEST_GROUPS }, material: MATERIAL, baseStyle: { ...BASE_STYLE, ...BEST_BASE }, flow: FLOW, flowKey, tubeGroup,
   replaceMesh: REPLACE_MESH, replaceStyle: REPLACE_STYLE, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD,
   routeVessels: [...AORTA, ...PORTAL, ...HEP_ART, 'cardiovascular.hepatic_veins', ...IVC],
   smoothTubes: true,   // 單層管改用「變半徑（由粗漸細）＋游離端圓頭」：中心線 JSON 的半徑陣列、capStart／capEnd 才會生效（接點畫法見接力指南 5b／5c）
-  vesselGlow: 'hue',   // 目標血管（style 的 glow.<群組>）只加亮度、不變色：充氧血管＝artery 色、缺氧血管＝vein 色，只有這兩種（核心：SCENE.vesselGlow，預設舊做法）
-  flowBright: 2,   // 血球亮度加倍（核心：SCENE.flowBright，預設 1）；目標器官亮度加倍＝各步驟 style 的 lit.<群組>: 1
+  vesselFloor: bestFloor({ sinus: 0, lobSin: 0, lobVein: 0, lobArt: 0 }),   // 放大的肝竇、肝小葉只在自己那一步出現，其餘血管一直畫在畫面上
   status: P('黃圈追蹤一顆紅血球。', 'The yellow ring follows one red cell.'),
   note: P('肝內分支為示意｜肝竇與肝小葉放大｜血球放大', 'Branches inside the liver are schematic | sinusoids and lobule enlarged | cells enlarged'),
   credit: P('3D 模型：Z-Anatomy／BodyParts3D，CC BY-SA 4.0', '3D model: Z-Anatomy / BodyParts3D, CC BY-SA 4.0')

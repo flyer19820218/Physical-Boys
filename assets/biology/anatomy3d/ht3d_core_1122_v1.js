@@ -152,10 +152,11 @@ function rimMaterial(opts) {
   });
   const rim = new THREE.Color(opts.rim || opts.sheen || '#ffd8c8');
   m.userData.rim = { value: rim.multiplyScalar(opts.rimStrength ?? 0.32) };
+  m.userData.vcGlow = { value: 0 };   // 頂點色血管的「同色自發光」強度（SCENE.vesselGlow:'bright' 才會用到；0＝不加）：發光顏色＝頂點色本身，不會往白、粉紅偏
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.rimColor = m.userData.rim;
-    sh.fragmentShader = 'uniform vec3 rimColor;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>',
-      '#include <emissivemap_fragment>\n  { float rimF = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.6); totalEmissiveRadiance += rimColor * rimF; }');
+    sh.uniforms.rimColor = m.userData.rim; sh.uniforms.vcGlow = m.userData.vcGlow;
+    sh.fragmentShader = 'uniform vec3 rimColor;\nuniform float vcGlow;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>',
+      '#include <emissivemap_fragment>\n  { float rimF = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.6); totalEmissiveRadiance += rimColor * rimF; }\n#ifdef USE_COLOR\n  totalEmissiveRadiance += vColor.rgb * vcGlow;\n#endif');
   };
   m.customProgramCacheKey = () => 'ht3d-rim-v1';
   return m;
@@ -224,6 +225,16 @@ export async function createViewer(o) {
   progress(1);
   const PARTS = new Map(parts.map((p) => [p.id, p]));
   const SAN = new Map(parts.map((p) => [THREE.PropertyBinding.sanitizeNodeName(p.id), p.id]));
+  /* 額外模型（選用 SCENE.extras＝[{ glb, glbLite, parts }]）：和主模型同一座標系，疊進同一個場景。
+   * 用途：「全身血管底圖」body_vessels_v1.glb（四肢、頭頸等約 590 條血管合併成 8 個 node，tools/anatomy/extract_body_vessels.mjs）。
+   * 載入失敗就略過（背景血管而已，不影響場景本身）。 */
+  for (const x of (SC.extras || [])) {
+    try {
+      const [xp, xg] = await Promise.all([get(x.parts), new Promise((res, rej) => loader.load(lite ? x.glbLite : x.glb, res, undefined, rej))]);
+      for (const q of xp) { PARTS.set(q.id, q); SAN.set(THREE.PropertyBinding.sanitizeNodeName(q.id), q.id); }
+      gltf.scene.add(xg.scene);
+    } catch (e) { console.warn('ht3d extras skipped:', e && e.message); }
+  }
   const GROUP_OF = new Map();
   for (const [g, ids] of Object.entries(SC.groups)) for (const id of ids) if (!GROUP_OF.has(id)) GROUP_OF.set(id, g);
   const ROUTE = new Set(SC.routeVessels);
@@ -339,7 +350,15 @@ export async function createViewer(o) {
   /* 血球亮度倍率：場景可設 SCENE.flowBright（預設 1＝不變；2＝亮度加倍）。乘在材質顏色上，再補一點自發光，暗處也看得到 */
   const FB = Math.min(4, Math.max(0.2, Number(SC.flowBright) || 1)), SMT = !!SC.smoothTubes;
   const CELL_MIN = Number(SC.cellMin) > 0 ? Number(SC.cellMin) : 0.00055;   // 選用（SCENE.cellMin）：血球最小直徑（公尺）；沒寫＝0.55 mm 不變。腦的微血管很細，血球要能更小才不會擠出管外
-  rbcMat.color.setScalar(FB); if (FB > 1) rbcMat.emissive.set('#ff5a48').multiplyScalar(0.1 * (FB - 1));
+  /* 血球「同色發光」（SCENE.flowGlow，預設 0＝舊做法 flowBright）：不再用乘法把顏色拉到爆表（鮮紅 R 已到頂，乘上去只會 G／B 一起變高＝偏粉白），
+   * 改成底色不變、再加上「血球自己那個紅」的自發光，所以更亮但仍是同一個紅（充氧鮮紅、缺氧暗紅各自維持色相）。 */
+  const CG = Math.min(2, Math.max(0, Number(SC.flowGlow) || 0));
+  if (CG > 0) {
+    const cgU = { value: CG };
+    rbcMat.color.setScalar(1);
+    rbcMat.onBeforeCompile = (sh) => { sh.uniforms.cellGlow = cgU; sh.fragmentShader = 'uniform float cellGlow;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += vColor.rgb * cellGlow;'); };
+    rbcMat.customProgramCacheKey = () => 'ht3d-rbc-glow-v1';
+  } else { rbcMat.color.setScalar(FB); if (FB > 1) rbcMat.emissive.set('#ff5a48').multiplyScalar(0.1 * (FB - 1)); }
   const cells = new THREE.InstancedMesh(rbcGeo, rbcMat, budgetMax);
   cells.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   cells.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(budgetMax * 3), 3); cells.instanceColor.setUsage(THREE.DynamicDrawUsage);
@@ -435,11 +454,21 @@ export async function createViewer(o) {
   const camPos = new THREE.Vector3(), camTgt = new THREE.Vector3();
   /* 加深（deep.<群組或id>：0～1）＝目標器官的顏色變深、變飽和；發亮（glow.<群組或id>：0～1）＝正在講解的血管加自發光與較強邊緣光。
    * 兩者都放在每一步的 style 裡，跟透明度一樣隨步驟平滑過渡；不改血管透明度，血球才不會被遮住。 */
+  const DIM = Math.min(0.8, Math.max(0, SC.vesselDim == null ? 0.5 : Number(SC.vesselDim))), GLOWE = Math.min(1.5, Math.max(0, SC.vesselGlowE == null ? 0.55 : Number(SC.vesselGlowE)));   // 'bright' 模式：非目標變暗幅度、目標自發光強度
+  const VF = SC.vesselFloor == null ? null : (typeof SC.vesselFloor === 'number' ? { all: SC.vesselFloor } : { all: 0, ...SC.vesselFloor });
   const hsl = { h: 0, s: 0, l: 0 }, VEIN_GLOW = new THREE.Color('#d23a66'), ART_GLOW = new THREE.Color('#ff3b2c');
   function tint(s, deep, glow, lit) {
     const m = s.mat; if (!m.userData.base) m.userData.base = { color: m.color.clone(), rim: m.userData.rim.value.clone() };
     const b = m.userData.base;
-    if (SC.vesselGlow === 'hue' && (s.kind === 'artery' || s.kind === 'vein' || s.kind === 'generated')) {
+    if (SC.vesselGlow === 'bright' && (s.kind === 'artery' || s.kind === 'vein' || s.kind === 'generated')) {
+      /* 亮度對比（場景寫 vesselGlow:'bright'；2026-11-23 老師：目標血管亮度加倍、沒講到的血管仍留在畫面上）：
+       * 鮮紅的 R 通道已接近上限，用乘法加亮只會把 G／B 一起拉高變粉白，所以改成「沒講到的血管變暗（vesselDim）、講到的血管同色自發光」：
+       * 目標／非目標的亮度比 ≥ 2 倍，色相不變，兩種血管色（鮮紅＝充氧、暗紅＝缺氧）永遠只有這兩種。 */
+      const dim = DIM * (1 - glow), e = GLOWE * glow * (s.kind === 'vein' ? 1.15 : 1);
+      m.color.copy(b.color).multiplyScalar(1 - dim);
+      if (m.vertexColors) { m.emissive.setScalar(0); m.userData.vcGlow.value = e; } else { m.emissive.copy(b.color).multiplyScalar(e); m.emissiveIntensity = 1; }
+      m.userData.rim.value.copy(b.rim).multiplyScalar((1 - 0.6 * dim) * (1 + 0.8 * glow));
+    } else if (SC.vesselGlow === 'hue' && (s.kind === 'artery' || s.kind === 'vein' || s.kind === 'generated')) {
       /* 同色加亮（場景寫 vesselGlow:'hue' 才啟用；肝臟場景，2026-11-23 老師：充氧／缺氧各一種血管色，目標血管只加亮度）：
        * 不往白色／粉紅偏，只把材質原本那個紅變亮（本體色、自發光、邊緣光都用同一個色相），所以動脈、靜脈、肝竇看起來永遠是兩種顏色 */
       const kv = s.kind === 'vein' ? 0.7 : 1;   // 缺氧血管本來就暗，加亮幅度小一點，才不會亮到和充氧血管（鮮紅）分不清
@@ -464,6 +493,10 @@ export async function createViewer(o) {
     for (const s of structures.values()) {
       let op = style[s.id] ?? style[s.group];
       if (op === undefined) op = s.group === 'otherOrgans' ? 0.2 : 0.3;
+      /* 血管底線（場景寫 vesselFloor 才啟用；2026-11-23 老師：沒用到的血管不要消失或被截掉，學生會問「怎麼不見了」）：
+       * 任何一步裡，所有血管的透明度都不低於底線，沒講到的血管淡淡地留在畫面上，講到的那一組再由 style 拉高。
+       * 寫法：vesselFloor: 0.3（全部），或 { all: 0.3, 群組名: 0 }（某群組例外，例如放大的微血管床維持原本只在自己那一步才出現）。底線一律 < 0.6，血球才不會被遮住。 */
+      if (VF && (s.kind === 'artery' || s.kind === 'vein' || s.kind === 'generated')) { const f = VF[s.group] ?? VF.all; if (f > op) op = f; }
       op = Math.round(op * 100) / 100;
       const deep = Math.round((style['deep.' + s.id] ?? style['deep.' + s.group] ?? 0) * 50) / 50, glow = Math.round((style['glow.' + s.id] ?? style['glow.' + s.group] ?? 0) * 50) / 50;
       const lit = Math.round((style['lit.' + s.id] ?? style['lit.' + s.group] ?? 0) * 50) / 50;
