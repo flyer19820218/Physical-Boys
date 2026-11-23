@@ -59,6 +59,42 @@
   }
   var map = function (f, u, v) { return [f.x + u * f.w, f.y + v * f.h]; };
 
+  /* ── 0. 進入心臟分頁時：原圖心臟先跳一下，再把血擠進主動脈／肺動脈（只做一次；離開 1 秒以上再回來會重來）── */
+  var BI = { t0: null, last: -9 };
+  // 路徑量自 heart.png（比例座標）：左心室→主動脈弓（鮮紅）；右心室→肺動脈（暗紅，不用藍色）
+  var BI_AORTA = [[.68, .60], [.58, .47], [.50, .38], [.46, .28], [.50, .16], [.55, .07]];
+  var BI_PULM = [[.28, .62], [.38, .50], [.46, .40], [.52, .31], [.64, .27], [.84, .27]];
+  function biAt(path, u) {
+    var n = path.length - 1, x = Math.max(0, Math.min(.9999, u)) * n, i = Math.floor(x), f = x - i;
+    return [path[i][0] + (path[i + 1][0] - path[i][0]) * f, path[i][1] + (path[i + 1][1] - path[i][1]) * f];
+  }
+  function beatIntro(ctx, s, t) {
+    if (BI.t0 === null || t - BI.last > 1) BI.t0 = t;
+    BI.last = t;
+    var e = t - BI.t0; if (e > 4.2) return;
+    var f = heartFit(24, 62, 430, 490);
+    // 1) 心室收縮：原圖以心室為中心縮一下（自己畫面放大再貼回，限制在原圖框內）
+    var b = (e - .35) / .7, pulse = b > 0 && b < 1 ? Math.sin(b * Math.PI) : 0;
+    if (pulse > .01) {
+      var m = ctx.getTransform(), cx = m.a * (f.x + .55 * f.w) + m.e, cy = m.d * (f.y + .62 * f.h) + m.f, k = 1 + .045 * pulse;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(f.x, f.y, f.w, f.h); ctx.clip();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-cx, -cy);
+      ctx.drawImage(ctx.canvas, 0, 0);
+      ctx.restore();
+    }
+    // 2) 血被擠出去：每條動脈 6 顆血滴依序走完路徑
+    [[BI_AORTA, '#ff3b3b', 1.1], [BI_PULM, '#a3203a', 1.1]].forEach(function (r) {
+      for (var i = 0; i < 6; i++) {
+        var u = (e - r[2] - i * .22) / 1.9; if (u <= 0 || u >= 1) continue;
+        var p = biAt(r[0], u), x = f.x + p[0] * f.w, y = f.y + p[1] * f.h, a = Math.min(1, u * 6, (1 - u) * 6);
+        ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = r[1]; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
+      }
+    });
+  }
+
   /* ── 1. 心臟中隔 ─────────────────────────────────────────── */
   // 原圖上心室中隔的肌肉帶（量 heart.png：上端在房室瓣下方，往下右斜到心尖）
   var SEPTUM_IMG = [[.505, .49], [.53, .60], [.56, .70], [.585, .80], [.60, .86], [.65, .86], [.665, .78], [.635, .70], [.60, .60], [.555, .49]];
@@ -69,6 +105,7 @@
     var heartDraw = heart.draw;
     heart.draw = function (ctx, s, t, D) {
       var q = heartDraw(ctx, s, t, D);
+      if (s.view === 'heart') beatIntro(ctx, s, t);
       if (s.part === 'septum' && s.view !== 'medical' && s.view !== 'body') septumOverlay(ctx, s, t, D);
       return q;
     };
