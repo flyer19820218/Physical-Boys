@@ -13,6 +13,7 @@
 (function () {
   'use strict';
   var BASE = 'audio/biology_human_transport/';
+  var AV_VER = '20261123-r2';           // 重錄後換音檔／字幕就改這個，避開瀏覽器與 Pages 的舊快取
   var SPF = 0.3;                       // 音檔失敗時依字數估時，講解不中斷
   var AV = { '彥君': 'assets/characters/yanjun/pointer_board.png', '曉臻': 'assets/characters/xiaozhen/normal.png' };
   var WHO = { '彥君': '彥君老師', '曉臻': '曉臻助教', '合聲': '兩人' };
@@ -372,7 +373,7 @@
     if (!manifest) return finish();
     audio.onended = finish;
     audio.onerror = function () { fallbackWait(it.text, my); };
-    audio.src = BASE + 'mp3/' + it.file;
+    audio.src = BASE + 'mp3/' + it.file + '?v=' + AV_VER;
     var p = audio.play();
     // 剛開始播就按暫停：play() 會以 AbortError 失敗，這不是音檔壞掉，不可改用估時往下播（否則暫停中照樣換句）
     if (p && p.catch) p.catch(function (e) { if (e && e.name === 'AbortError') return; fallbackWait(it.text, my); });
@@ -608,8 +609,8 @@
 
   function load() {
     Promise.all([
-      fetch(BASE + 'manifest.json').then(function (r) { if (!r.ok) throw 0; return r.json(); }),
-      fetch(BASE + 'stage.json').then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      fetch(BASE + 'manifest.json?v=' + AV_VER, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }),
+      fetch(BASE + 'stage.json?v=' + AV_VER, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); })
     ]).then(function (v) {
       manifest = v[0]; stage = v[1];
       var b = build(manifest, stage);
