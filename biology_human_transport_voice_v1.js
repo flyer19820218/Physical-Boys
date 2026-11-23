@@ -6,6 +6,8 @@
  * 上一句／下一句跳句時，先把畫面還原成「播到那一句時應有的分頁／步驟／段」，再播。
  * 有聲講解用到的分頁代號（lessons/biology_human_transport.json 的 tab_check 會來這裡找；與 window.HTLesson.tabs 相同）：
  *   data-tab="heart" data-tab="vessels" data-tab="blood" data-tab="circulation" data-tab="lymph" data-tab="experiment"
+ * 三維分頁（代號 3d_<場景>，由 window.HT3D.go(場景, 步驟, 0) 播放；離開時 HT3D.dispose() 回 2D）：
+ *   data-tab="3d_small_intestine" data-tab="3d_liver" data-tab="3d_kidney" data-tab="3d_brain" data-tab="3d_lung" data-tab="3d_heart" data-tab="3d_circuit"
  */
 (function () {
   'use strict';
@@ -98,8 +100,17 @@
     var y = room >= 0 ? base + top - 56 - room / 2 : base + top - 56;   // 放得下就置中，放不下就對齊上緣
     scrollGoal(y);
   }
+  var in3d = false;
   function showScene(tab, step, seg) {
     var p = ptl(); if (!p || !tab) return;
+    if (tab.indexOf('3d_') === 0) {            // 三維場景：交給 HT3D（自己會切到循環分頁、載入模型）
+      var H = window.HT3D; if (!H) return;
+      releaseFix(tab); p.takeover(true); in3d = true;
+      try { var r = H.go(tab.slice(3), step || 1, 0, { after: 'loop' }); if (r && r.then) r.then(function () { bringIntoView(); }, function () {}); } catch (e) {}
+      if (tab !== lastTab) { lastTab = tab; bringIntoView(); }
+      return;
+    }
+    if (in3d && window.HT3D) { in3d = false; try { window.HT3D.dispose(); } catch (e) {} }   // 回 2D：釋放 WebGL，2D 照原樣重新開始
     releaseFix(tab);
     p.takeover(true);
     p.show(tab, step || 1, seg || 0);
