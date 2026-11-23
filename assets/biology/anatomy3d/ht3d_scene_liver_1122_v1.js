@@ -271,7 +271,9 @@ export const SCENE = Object.freeze({
   routeVessels: [...AORTA, ...PORTAL, ...HEP_ART, 'cardiovascular.hepatic_veins', ...IVC],
   smoothTubes: true,   // 單層管改用「變半徑（由粗漸細）＋游離端圓頭」：中心線 JSON 的半徑陣列、capStart／capEnd 才會生效（接點畫法見接力指南 5b／5c）
   vesselGlow: 'hue',   // 目標血管（style 的 glow.<群組>）只加亮度、不變色：充氧血管＝artery 色、缺氧血管＝vein 色，只有這兩種（核心：SCENE.vesselGlow，預設舊做法）
-  flowBright: 2,   // 血球亮度加倍（核心：SCENE.flowBright，預設 1）；目標器官亮度加倍＝各步驟 style 的 lit.<群組>: 1
+  vesselFloor: { all: 0.34, otherArteries: 0.26, otherVeins: 0.26 },   // 沒講到的血管也一直畫在畫面上（不消失、不被截掉）：任何一步都不低於這個透明度；講到的那一組由各步驟 style 拉高（核心：SCENE.vesselFloor）
+  glowGain: 2,   // 目標血管的加亮倍率（預設 1；2＝血管裡的血再亮一倍，仍是同色相）
+  flowBright: 4,   // 血球亮度（核心：SCENE.flowBright，預設 1；舊值 2，2026-11-23 老師要求目標血管裡的血球亮度再加倍＝4）；目標器官亮度加倍＝各步驟 style 的 lit.<群組>: 1
   status: P('黃圈追蹤一顆紅血球。', 'The yellow ring follows one red cell.'),
   note: P('肝內分支為示意｜肝竇與肝小葉放大｜血球放大', 'Branches inside the liver are schematic | sinusoids and lobule enlarged | cells enlarged'),
   credit: P('3D 模型：Z-Anatomy／BodyParts3D，CC BY-SA 4.0', '3D model: Z-Anatomy / BodyParts3D, CC BY-SA 4.0')

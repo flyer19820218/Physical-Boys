@@ -435,6 +435,7 @@ export async function createViewer(o) {
   const camPos = new THREE.Vector3(), camTgt = new THREE.Vector3();
   /* 加深（deep.<群組或id>：0～1）＝目標器官的顏色變深、變飽和；發亮（glow.<群組或id>：0～1）＝正在講解的血管加自發光與較強邊緣光。
    * 兩者都放在每一步的 style 裡，跟透明度一樣隨步驟平滑過渡；不改血管透明度，血球才不會被遮住。 */
+  const GG = Math.min(3, Math.max(0.3, Number(SC.glowGain) || 1));   // 選用（SCENE.glowGain）：vesselGlow:'hue' 的加亮倍率；沒寫＝1 不變
   const hsl = { h: 0, s: 0, l: 0 }, VEIN_GLOW = new THREE.Color('#d23a66'), ART_GLOW = new THREE.Color('#ff3b2c');
   function tint(s, deep, glow, lit) {
     const m = s.mat; if (!m.userData.base) m.userData.base = { color: m.color.clone(), rim: m.userData.rim.value.clone() };
@@ -442,7 +443,7 @@ export async function createViewer(o) {
     if (SC.vesselGlow === 'hue' && (s.kind === 'artery' || s.kind === 'vein' || s.kind === 'generated')) {
       /* 同色加亮（場景寫 vesselGlow:'hue' 才啟用；肝臟場景，2026-11-23 老師：充氧／缺氧各一種血管色，目標血管只加亮度）：
        * 不往白色／粉紅偏，只把材質原本那個紅變亮（本體色、自發光、邊緣光都用同一個色相），所以動脈、靜脈、肝竇看起來永遠是兩種顏色 */
-      const kv = s.kind === 'vein' ? 0.7 : 1;   // 缺氧血管本來就暗，加亮幅度小一點，才不會亮到和充氧血管（鮮紅）分不清
+      const kv = (s.kind === 'vein' ? 0.7 : 1) * GG;   // 缺氧血管本來就暗，加亮幅度小一點，才不會亮到和充氧血管（鮮紅）分不清；GG＝場景的 glowGain（預設 1）
       m.color.copy(b.color).multiplyScalar(1 + 1.0 * kv * glow);
       m.emissive.copy(b.color).multiplyScalar(0.9 * kv * kv * glow); m.emissiveIntensity = 1;
       m.userData.rim.value.copy(b.rim).multiplyScalar(1 + 0.8 * kv * glow);
@@ -460,10 +461,15 @@ export async function createViewer(o) {
     }
   }
   const tmpWhite = new THREE.Color(1, 1, 1);
+  const VF = SC.vesselFloor == null ? null : (typeof SC.vesselFloor === 'number' ? { all: SC.vesselFloor } : { all: 0, ...SC.vesselFloor });
   function applyStyles(style) {
     for (const s of structures.values()) {
       let op = style[s.id] ?? style[s.group];
       if (op === undefined) op = s.group === 'otherOrgans' ? 0.2 : 0.3;
+      /* 血管底線（場景寫 vesselFloor 才啟用；肝臟場景，2026-11-23 老師：沒用到的血管不要消失或被截掉，學生會問）：
+       * 任何一步裡，所有血管的透明度都不會低於底線，沒講到的血管淡淡地留在畫面上，講到的那一組再用 style 拉高。
+       * 寫法：vesselFloor: 0.34（全部血管），或 { all: 0.34, otherArteries: 0.26 }（依群組名另訂）。底線一律要 < 0.6，血球才不會被遮住。 */
+      if (VF && (s.kind === 'artery' || s.kind === 'vein' || s.kind === 'generated')) { const f = VF[s.group] ?? VF.all; if (f > op) op = f; }
       op = Math.round(op * 100) / 100;
       const deep = Math.round((style['deep.' + s.id] ?? style['deep.' + s.group] ?? 0) * 50) / 50, glow = Math.round((style['glow.' + s.id] ?? style['glow.' + s.group] ?? 0) * 50) / 50;
       const lit = Math.round((style['lit.' + s.id] ?? style['lit.' + s.group] ?? 0) * 50) / 50;
