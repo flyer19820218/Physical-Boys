@@ -1140,3 +1140,9 @@ out=dict(version='brain_centerlines_v1',units='m',axes='+X body left, +Y up, +Z 
 json.dump(out,open(sys.argv[2],'w'),separators=(',',':'),default=lambda x:x.item() if hasattr(x,'item') else str(x))
 if os.environ.get('BRAIN_DEBUG'): pickle.dump(dict(segs=segs,beds={k:{kk:vv for kk,vv in v.items() if kk not in ('patch','Wz')} for k,v in BEDS.items()}),open(os.environ['BRAIN_DEBUG'],'wb'))
 log('wrote',sys.argv[2],'segments',len(segs))
+
+# 血管接點整理（老師 2026-11-23：不要錐形殘端、半徑要連續漸變；規則見 tools/anatomy/polish_vessels.py 檔頭）
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+import polish_vessels as _pv
+_pv.polish_path(sys.argv[2])

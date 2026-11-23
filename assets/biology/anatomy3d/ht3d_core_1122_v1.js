@@ -111,11 +111,11 @@ function varTube(p, u0, u1, radial, stepM) {
  * 程式生成的小血管用：每一段是「兩頭圓」的管，接點處的圓頭包在對方管裡面（半徑比對方小），
  * 看起來是順順地接起來，不會再有「平口水管插進套管」的斷面。 colorAt(u) 回傳頂點色。
  * capS／capE=false：該端不封圓頭（管口埋在大血管壁裡，例如腎動脈起於主動脈、腎靜脈止於下腔靜脈）。 */
-function varTubeCapped(p, radial, stepM, colorAt, u0 = 0, u1 = 1, capS = true, capE = true) {
+const CAP_FULL = [20, 45, 68, 86].map((d) => d * Math.PI / 180), CAP_LITE = [50, 82].map((d) => d * Math.PI / 180);   // 半球的緯度環；lite（手機／iPad）只用 2 環，接點封口多了也不增加太多三角形
+function varTubeCapped(p, radial, stepM, colorAt, u0 = 0, u1 = 1, capS = true, capE = true, CAP = CAP_FULL) {
   const i0 = p.index(u0), i1 = Math.max(i0 + 1, p.index(u1));   // u0／u1：只畫這一段（例如從大血管壁外才開始畫）
   const stride = Math.max(1, Math.round(stepM / (p.len / (p.n - 1))));
   const idx = []; for (let i = i0; i < i1; i += stride) idx.push(i); idx.push(i1);
-  const CAP = [20, 45, 68, 86].map((d) => d * Math.PI / 180);   // 半球的緯度環
   const rings = [];   // {i（中心線點）, off（沿切線位移＝R·sinθ）, k（半徑縮放＝cosθ）, th, u, end（-1 起端／+1 末端／0）}
   if (capS) for (let q = CAP.length - 1; q >= 0; q--) rings.push({ i: i0, off: -Math.sin(CAP[q]), k: Math.cos(CAP[q]), th: CAP[q], u: i0 / (p.n - 1), end: -1 });
   for (const i of idx) rings.push({ i, off: 0, k: 1, th: 0, u: i / (p.n - 1), end: 0 });
@@ -282,7 +282,7 @@ export async function createViewer(o) {
       (tubeBuckets[g] = tubeBuckets[g] || []).push(varTubeCapped(cp, lite ? 6 : 10, 0.0007, (u) => {
         const o2 = sg.o2 === 'rich' ? 1 : sg.o2 === 'poor' ? 0 : sg.o2 === 'poor>rich' ? smooth(u * 1.1) : 1 - smooth(u * 1.1);
         return tmpC.copy(POOR).lerp(RICH, o2).multiplyScalar(0.72);
-      }, gr[0], gr[1], sg.capStart !== false, sg.capEnd !== false));
+      }, gr[0], gr[1], sg.capStart !== false, sg.capEnd !== false, lite ? CAP_LITE : CAP_FULL));
       continue;
     }
     const curve = new THREE.CatmullRomCurve3(sg.points.map((p) => new THREE.Vector3(p[0], p[1], p[2])), false, 'centripetal');
@@ -333,7 +333,7 @@ export async function createViewer(o) {
       const rg = p.meta.tubeRange || [0, 1];
       // smoothTubes：兩端圓頭、半徑照中心線漸變（腎動脈→分支→小動脈；小靜脈→腎靜脈），接點不再有平口斷面
       const rad = lite ? (rs.radial ? rs.radial[1] : 10) : (rs.radial ? rs.radial[0] : 14), stp = rs.step || 0.0012;
-      geos.push(SC.smoothTubes ? varTubeCapped(p, rad, stp, () => tmpC.set('#ffffff'), rg[0], rg[1], p.meta.capStart !== false, p.meta.capEnd !== false) : varTube(p, rg[0], rg[1], rad, stp));
+      geos.push(SC.smoothTubes ? varTubeCapped(p, rad, stp, () => tmpC.set('#ffffff'), rg[0], rg[1], p.meta.capStart !== false, p.meta.capEnd !== false, lite ? CAP_LITE : CAP_FULL) : varTube(p, rg[0], rg[1], rad, stp));
     }
     if (!geos.length) continue;
     const geo = mergeGeometries(geos, false); geos.forEach((x) => x.dispose());

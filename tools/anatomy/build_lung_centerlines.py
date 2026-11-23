@@ -1060,3 +1060,9 @@ out=dict(version='lung_centerlines_v1',units='m',axes='+X body left, +Y up, +Z a
  named=named,sacs=sacs,segments={k:seg_out(v) for k,v in segs.items()})
 json.dump(out,open(sys.argv[2],'w'),separators=(',',':'))
 print('wrote',sys.argv[2],len(segs),'segments',sum(len(v) for v in sacs.values()),'alveoli')
+
+# 血管接點整理（老師 2026-11-23：不要錐形殘端、半徑要連續漸變；規則見 tools/anatomy/polish_vessels.py 檔頭）
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+import polish_vessels as _pv
+_pv.polish_path(sys.argv[2])

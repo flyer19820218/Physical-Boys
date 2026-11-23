@@ -78,6 +78,9 @@ def ivc_lower(y):
     return r
 
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+
 def main():
     cl = json.load(open(PATH, encoding='utf-8'))
     S = cl['segments']
@@ -129,6 +132,8 @@ def main():
         cl['note'] += marker
     with open(PATH, 'w', encoding='utf-8') as fh:
         json.dump(cl, fh, ensure_ascii=False, separators=(',', ':'))
+    import polish_vessels   # 設完口徑後重新整理接點（半徑連續、封口、斜率限制；老師 2026-11-23）
+    polish_vessels.polish_path(PATH)
     print('%-14s %-26s %-26s' % ('segment', 'before r (mm) first/mid/last', 'after r (mm) first/mid/last'))
     for sid, b, a in report:
         print('%-14s %-26s %-26s' % (sid, '%.1f/%.1f/%.1f' % tuple(x / MM for x in b), '%.2f/%.2f/%.2f' % tuple(x / MM for x in a)))

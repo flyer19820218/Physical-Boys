@@ -58,28 +58,117 @@ for b in LBEDS:
 OUT['ra_rv']['points'].append(list(OUT['rv_out']['points'][0])); OUT['ra_rv']['radius'].append(OUT['ra_rv']['radius'][-1])
 
 # ---- 示意微血管（把一條小動脈的終點接到一條小靜脈的起點）：幾條帶側向偏移與一點深度的弧，像一小團微血管床
-def bridge(a, b, n_lines, amp, depth_dir, o2, kind, r_mm, name, tag, seed=0):
-    A, B = OUT[a]['points'][-1], OUT[b]['points'][0]
-    d = [B[i] - A[i] for i in range(3)]; L = math.sqrt(sum(x * x for x in d)) or 1e-6
-    t = [x / L for x in d]
-    up = [0, 1, 0] if abs(t[1]) < 0.9 else [1, 0, 0]
-    s = [t[1] * up[2] - t[2] * up[1], t[2] * up[0] - t[0] * up[2], t[0] * up[1] - t[1] * up[0]]
-    sl = math.sqrt(sum(x * x for x in s)) or 1; s = [x / sl for x in s]
-    for k in range(n_lines):
-        off = (k - (n_lines - 1) / 2) * amp
-        pts = []
-        for i in range(13):
-            u = i / 12; w = math.sin(math.pi * u)
-            pts.append([round(A[c] + d[c] * u + s[c] * off * w + depth_dir[c] * amp * 0.9 * w * (1 if k % 2 == 0 else 0.5), 5) for c in range(3)])
-        OUT['%s_%d' % (name, k)] = {'kind': kind, 'o2': o2, 'source': 'generated: schematic capillary bed between %s and %s (enlarged)' % (a, b),
-                                    'schematic': True, 'points': pts, 'radius': [round(enlarge(r_mm / 1000.0), 6)] * len(pts), 'capStart': False, 'capEnd': False, 'from': tag}
+def _unit(v):
+    n = math.sqrt(sum(x * x for x in v)) or 1e-9
+    return [x / n for x in v]
 
+def _tan_at(pts, r, end):
+    """端點處的行進方向（朝血流前進）：取離端點約 2 倍半徑以外的點，至少隔一個點"""
+    P = pts if end == 'end' else pts[::-1]
+    last = P[-1]; acc = 0.0; j = len(P) - 2
+    while j > 0 and acc < max(2.0 * r, 0.002):
+        acc = math.dist(P[j], last); j -= 1
+    v = [last[c] - P[j][c] for c in range(3)]
+    v = _unit(v)
+    return v if end == 'end' else [-x for x in v]
+
+def _bez(P0, P1, P2, P3, n):
+    out = []
+    for i in range(n):
+        u = i / (n - 1); a = (1 - u) ** 3; b = 3 * u * (1 - u) ** 2; c = 3 * u * u * (1 - u); d = u ** 3
+        out.append([a * P0[k] + b * P1[k] + c * P2[k] + d * P3[k] for k in range(3)])
+    return out
+
+def _minratio(P, r):
+    """最小曲率半徑 ÷ 管半徑（取離 0.7 r 的前後點算外接圓，和審查腳本同一算法）"""
+    s = [0.0]
+    for i in range(1, len(P)): s.append(s[-1] + math.dist(P[i], P[i - 1]))
+    m = 1e9
+    for i in range(1, len(P) - 1):
+        a = i; b = i
+        while a > 0 and s[i] - s[a] < 0.7 * r: a -= 1
+        while b < len(P) - 1 and s[b] - s[i] < 0.7 * r: b += 1
+        if a == i or b == i: continue
+        A_, B_, C_ = P[a], P[i], P[b]
+        ab, bc, ca = math.dist(A_, B_), math.dist(B_, C_), math.dist(C_, A_)
+        u_ = [B_[k] - A_[k] for k in range(3)]; v_ = [C_[k] - A_[k] for k in range(3)]
+        cr = math.sqrt(sum(x * x for x in [u_[1] * v_[2] - u_[2] * v_[1], u_[2] * v_[0] - u_[0] * v_[2], u_[0] * v_[1] - u_[1] * v_[0]]))
+        if cr > 1e-14: m = min(m, ab * bc * ca / (2 * cr) / r)
+    return m
+
+def trim(name, end, length):
+    """把一條管子從 end（'end'＝末端、'start'＝起端）端縮短 length（公尺，沿弧長），內插出新的端點。
+    用途：微血管床的『小動脈末端↔小靜脈起端』弦太短（3～7 mm），兩端又是迎面的，連起來只能轉成急彎的小 U；各縮短幾 mm 讓弦拉長、床才畫得開。"""
+    s = OUT[name]; P, R = s['points'], s['radius']
+    if end == 'start': P, R = P[::-1], R[::-1]
+    acc = 0.0; i = len(P) - 1
+    while i > 1 and acc + math.dist(P[i], P[i - 1]) < length:
+        acc += math.dist(P[i], P[i - 1]); i -= 1
+    seglen = math.dist(P[i], P[i - 1]) or 1e-9; f = (length - acc) / seglen; f = min(max(f, 0.0), 1.0)
+    newp = [round(P[i][c] + (P[i - 1][c] - P[i][c]) * f, 5) for c in range(3)]; newr = round(R[i] + (R[i - 1] - R[i]) * f, 6)
+    P2, R2 = P[:i] + [newp], R[:i] + [newr]
+    if end == 'start': P2, R2 = P2[::-1], R2[::-1]
+    s['points'], s['radius'] = P2, R2
+
+def bridge(a, b, n_lines, amp, depth_dir, o2, kind, r_mm, name, tag, seed=0):
+    """把一條小動脈的終點接到一條小靜脈的起點：n 條三次 Bezier，起點／終點切線＝兩端血管的行進方向（切線相接，不是斜插進去），
+    控制點沿切線拉長到曲率半徑 ≥ 3 倍管半徑（自動搜尋）；各條由控制點的側向位移散開，兩端重合、中段散成梭形；
+    半徑：兩端＝微血管半徑，中段縮到 0.6 倍（梭形，不是一根粗圓柱）。接點的半徑連續與封口交給 polish_vessels。"""
+    A, B = OUT[a]['points'][-1], OUT[b]['points'][0]
+    # 微血管的半徑不是「跟小動脈一樣粗」：n 條子管的總截面積≈母管（Murray 定律 r_子 = r_母·n^(-1/3)），中段再縮窄成梭形。
+    # 以前 n 條都用母管的粗細，疊在一起就成了一根粗香腸、和細管接起來還有落差。
+    rA_, rB_ = OUT[a]['radius'][-1], OUT[b]['radius'][0]
+    rl = math.sqrt(rA_ * rB_) * n_lines ** (-1.0 / 3.0)
+    tA = _tan_at(OUT[a]['points'], OUT[a]['radius'][-1], 'end'); tB = _tan_at(OUT[b]['points'], OUT[b]['radius'][0], 'start')
+    d = [B[i] - A[i] for i in range(3)]; L = math.sqrt(sum(x * x for x in d)) or 1e-6; tc = [x / L for x in d]
+    up = [0, 1, 0] if abs(tc[1]) < 0.9 else [1, 0, 0]
+    s = _unit([tc[1] * up[2] - tc[2] * up[1], tc[2] * up[0] - tc[0] * up[2], tc[0] * up[1] - tc[1] * up[0]])
+    q = _unit([tc[1] * s[2] - tc[2] * s[1], tc[2] * s[0] - tc[0] * s[2], tc[0] * s[1] - tc[1] * s[0]])
+    # 兩端血管的行進方向若背向對方（餘弦 ≤0），硬要沿切線出去會繞一個大 S 彎：這種情況改用弦方向（接點由圓頭封口包起來），
+    # 餘弦為正時依比例混合，離對方越近越照血管自己的方向
+    cA = sum(tA[i] * tc[i] for i in range(3)); cB = sum(tB[i] * tc[i] for i in range(3))
+    wA, wB = max(0.0, cA) ** 0.5, max(0.0, cB) ** 0.5
+    tA = _unit([wA * tA[i] + (1 - wA) * tc[i] for i in range(3)]); tB = _unit([wB * tB[i] + (1 - wB) * tc[i] for i in range(3)])
+    gap = 2.2 * 0.6 * rl                    # 中段相鄰兩條的管心距 ≥ 1.1 倍管徑（中段半徑 0.7 rl）；amp 參數保留但不再決定寬度
+    best = None
+    for kf in (0.35, 0.5, 0.7, 1.0, 1.4, 1.9, 2.6, 3.4):
+        k = max(kf * L, 2.5 * rl / n_lines ** (-1.0 / 3.0) * 0.8)
+        worst = 1e9; lines = []
+        for j in range(n_lines):
+            o = (j - (n_lines - 1) / 2) * gap
+            oq = (0.0 if j % 2 == 0 else 0.5) * gap * 0.8
+            P1 = [A[c] + tA[c] * k + s[c] * o * 1.15 + q[c] * oq for c in range(3)]
+            P2 = [B[c] - tB[c] * k + s[c] * o * 1.15 + q[c] * oq for c in range(3)]
+            curve = _bez(A, P1, P2, B, 120)
+            # 依弧長重新取點（約每 0.8 mm 一點）
+            cum = [0.0]
+            for i in range(1, len(curve)): cum.append(cum[-1] + math.dist(curve[i], curve[i - 1]))
+            m = max(13, int(cum[-1] / 0.0008) + 1); pts = []
+            for i in range(m):
+                target = cum[-1] * i / (m - 1); lo = 0
+                while lo < len(cum) - 2 and cum[lo + 1] < target: lo += 1
+                f = (target - cum[lo]) / max(cum[lo + 1] - cum[lo], 1e-12)
+                pts.append([curve[lo][c] * (1 - f) + curve[lo + 1][c] * f for c in range(3)])
+            lines.append(pts); worst = min(worst, _minratio(pts, 0.6 * rl))
+        if best is None or worst > best[0] + 0.1:
+            best = (worst, kf, lines)
+        if worst >= 3.0: break
+    worst, kf, lines = best
+    print('  bridge %-7s chord %.1f mm  k %.2f×  min curvature radius/r %.2f' % (name, L * 1000, kf, worst))
+    for j, pts in enumerate(lines):
+        m = len(pts); rad = [round(rl * (1 - 0.4 * math.sin(math.pi * i / (m - 1))), 6) for i in range(m)]
+        OUT['%s_%d' % (name, j)] = {'kind': kind, 'o2': o2, 'source': 'generated: schematic capillary bed between %s and %s (enlarged)' % (a, b),
+                                    'schematic': True, 'points': [[round(x, 5) for x in p] for p in pts], 'radius': rad, 'capStart': False, 'capEnd': False, 'from': tag}
+
+TRIM_K, TRIM_L = 0.005, 0.004   # 腎、肺的微血管床：小動脈末端／小靜脈起端各縮短的長度（公尺）
 # 床的寬度（線數×間距）放大到總覽鏡頭看得出是一小團（腦、腎在第 2 步約 1.7 m 遠、肺在第 5 步約 0.45 m 遠）
 bridge('lcar', 'Fpv', 5, 0.005, [0, -1, 0], 'rich>poor', 'capillary', 0.45, 'bc_F', 'brain')
 bridge('rcar', 'B1pv', 5, 0.005, [0, -1, 0], 'rich>poor', 'capillary', 0.45, 'bc_B1', 'brain')
 for b in KBEDS:
+    trim('kart_' + b, 'end', TRIM_K); trim('kven_' + b, 'start', TRIM_K)
     bridge('kart_' + b, 'kven_' + b, 3, 0.0035, [0, 0, 0], 'rich>poor', 'capillary', 0.35, 'kc_' + b, 'kidney')
 for b in LBEDS:
+    trim('s_' + b, 'end', TRIM_L); trim('v_' + b, 'start', TRIM_L)
     bridge('s_' + b, 'v_' + b, 5, 0.004, [0, 0, 0], 'poor>rich', 'capillary', 0.3, 'lc_' + b, 'lung')
 
 # ---- 檢查：各鏈的接點間距（公尺）。一條鏈 = 前一段的終點應接近後一段的起點（追蹤用的路徑）
@@ -110,3 +199,9 @@ doc = {
 p = os.path.join(D, 'circuit_centerlines_v1.json')
 json.dump(doc, open(p, 'w'), separators=(',', ':'))
 print('segments', len(OUT), 'points', sum(len(s['points']) for s in OUT.values()), 'bytes', os.path.getsize(p))
+
+# 血管接點整理（老師 2026-11-23：不要錐形殘端、半徑要連續漸變；規則見 tools/anatomy/polish_vessels.py 檔頭）
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+import polish_vessels as _pv
+_pv.polish_path(p)

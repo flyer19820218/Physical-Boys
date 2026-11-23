@@ -346,9 +346,19 @@ def make_branch(s,k,O,d,H,nc,f,TO,Ju,tu,rng):
   P1=O+d*0.40*sc*H;P2=O+d*0.62*sc*H+t*0.006*ls;P3=O+d*0.86*sc*H+t*0.0065*ls;G=O+d*f*H+t*0.007*ls
   out={}
   out['kart']=depart(spline([O,P1,P2,P3,G]),TO,0.012)   # 從上游分支末端順著切線分出
-  n=60;ph=np.linspace(0,2*np.pi*2.2,n);rg=0.0014*ls;u=unit(np.cross(d,b));hel=[]
-  for i,p_ in enumerate(ph):
-    hel.append(G+d*(0.0010*p_/(2*np.pi))+rg*np.sin(np.pi*i/(n-1))**2*(np.cos(p_)*u+np.sin(p_)*b))   # sin² 包絡：兩端半徑的斜率為 0，起止切線＝軸向，才接得上小動脈與微血管
+  # 腎絲球（示意放大）：一圈曲率半徑固定 1.4 mm 的環（曲率半徑÷管半徑 ≥3，見接力指南 §5b-5），前後各有一段直線與緩和曲線，
+  # 起止切線＝軸向（接得上入球小動脈與微血管），環的底部交叉處用 b 方向抬高分開（交叉處管心距 ≥1.5 倍管徑）。
+  # 舊版是半徑隨 sin² 變化的螺旋，兩端的螺旋半徑趨近 0、曲率半徑遠小於管半徑，畫出來是一堆歪斜的短截面（老師 2026-11-23 抓到的「錐形殘端」）。
+  u=unit(np.cross(d,b));sg_=1.0
+  def _ssx(x):
+    x=np.clip(x,0,1);return x*x*(3-2*x)
+  rho,ramp,lead,hlift=0.0014,0.0013,0.0012,0.0017
+  tot=2*np.pi;plateau=tot*rho-ramp;Ltot=2*lead+plateau+2*ramp
+  sgrid=np.linspace(0,Ltot,6000);dsg=sgrid[1]-sgrid[0]
+  kk_=np.where(sgrid<lead,0.0,np.where(sgrid<lead+ramp,_ssx((sgrid-lead)/ramp),np.where(sgrid<lead+ramp+plateau,1.0,np.where(sgrid<lead+2*ramp+plateau,_ssx((lead+2*ramp+plateau-sgrid)/ramp),0.0))))/rho
+  th_=np.cumsum(kk_)*dsg;xs=np.cumsum(np.cos(th_))*dsg;ys=np.cumsum(np.sin(th_))*dsg;zs=hlift*_ssx(sgrid/Ltot)
+  ii=np.linspace(0,len(sgrid)-1,100).astype(int)
+  hel=[G+d*xs[i]+u*(sg_*ys[i])+b*zs[i] for i in ii]
   Tg=unit(out['kart'][-1]-out['kart'][-4])
   out['kglom']=depart(np.array(hel),Tg,0.004);E=out['kglom'][-1];Te=unit(out['kglom'][-1]-out['kglom'][-4])   # 入球小動脈→腎絲球：切線相接
   V=G+d*0.002-t*0.006*ls; caps=[]   # 小靜脈起點：在腎絲球外側 2 mm、橫向相隔，微血管繞成寬鬆的髮夾彎（不是小半徑急轉）
@@ -439,3 +449,9 @@ out=dict(version='kidney_centerlines_v1',units='m',axes='+X body left, +Y up, +Z
  segments={k:dict(kind=v['kind'],o2=v['o2'],source=v['source'],schematic=v['schematic'],points=np.round(v['points'],5).tolist(),radius=np.round(v['radius'],5).tolist(),**({'radius_mesh':np.round(v['radius_mesh'],5).tolist()} if 'radius_mesh' in v else {}),**({'tubeRange':v['tubeRange']} if 'tubeRange' in v else {}),**({'capStart':False} if v.get('capStart') is False else {}),**({'capEnd':False} if v.get('capEnd') is False else {})) for k,v in segs.items()})
 json.dump(out,open(sys.argv[2],'w'),separators=(',',':'))
 print('wrote',sys.argv[2],len(segs))
+
+# 血管接點整理（老師 2026-11-23：不要錐形殘端、半徑要連續漸變；規則見 tools/anatomy/polish_vessels.py 檔頭）
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+import polish_vessels as _pv
+_pv.polish_path(sys.argv[2])

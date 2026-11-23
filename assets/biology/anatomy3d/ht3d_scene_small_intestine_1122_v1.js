@@ -277,7 +277,7 @@ export const SCENE = Object.freeze({
 
   id: 'small_intestine', name: P('小腸路線', 'Small-intestine route'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
-  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/si_centerlines_v1.json?v=20261122-4',
+  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/si_centerlines_v1.json?v=20261123-h2',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: { ...GROUPS, ...BEST_GROUPS }, material: MATERIAL, baseStyle: { ...BASE_STYLE, ...BEST_BASE }, flow: FLOW, flowKey, tubeGroup,
   replaceMesh: REPLACE_MESH, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD, focusCap: FOCUS_CAP,
   routeVessels: [...AORTA, 'cardiovascular.superior_mesenteric_artery', ...PORTAL, ...HEP_ART, 'cardiovascular.hepatic_veins', ...IVC],

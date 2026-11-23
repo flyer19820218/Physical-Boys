@@ -456,6 +456,12 @@ doc = dict(version=1, units='m', axes='+Y up, +Z anterior, +X body-left', genera
 json.dump(doc, open(OUT, 'w'), separators=(',', ':'), ensure_ascii=False)
 import os; print('wrote', OUT, os.path.getsize(OUT) // 1024, 'KB |', len(OUTSEG), 'segments | total length %.2f m' % tot_len)
 
+# 血管接點整理（老師 2026-11-23：不要錐形殘端、半徑要連續漸變；規則見 tools/anatomy/polish_vessels.py 檔頭）
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+import polish_vessels as _pv
+_pv.polish_path(OUT)
+
 if PLOT:
     import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
     col = lambda sid: ('#1f4fd8' if sid.startswith('pt') else '#d11' if sid.startswith('at') or sid.startswith('lb_arter') or sid == 'trunk_ha' else '#0aa' if sid.startswith('ht') else '#b84' if sid.startswith('sn') or sid.startswith('lb_sin') else '#5a2' if sid.startswith('lb') else '#888')

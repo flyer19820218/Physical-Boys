@@ -268,7 +268,7 @@ export const SCENE = Object.freeze({
   ...BEST_SCENE,   // 全部循環共用的最佳模板（ht3d_preset_1122_v1.js）：全身血管底圖、血管底線、亮度對比、血球同色發光
   id: 'liver', name: P('肝臟路線', 'Liver route'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
-  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/liver_centerlines_v1.json?v=20261123-3',
+  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/liver_centerlines_v1.json?v=20261123-h2',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: { ...GROUPS, ...BEST_GROUPS }, material: MATERIAL, baseStyle: { ...BASE_STYLE, ...BEST_BASE }, flow: FLOW, flowKey, tubeGroup,
   replaceMesh: REPLACE_MESH, replaceStyle: REPLACE_STYLE, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD,
   routeVessels: [...AORTA, ...PORTAL, ...HEP_ART, 'cardiovascular.hepatic_veins', ...IVC],
