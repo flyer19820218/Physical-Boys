@@ -241,6 +241,47 @@ BodyParts3D 原本是 CC BY 4.0（Z-Anatomy 改作時為 CC BY-SA 2.1 Japan）�
 
 **效能（只在軟體 WebGL 測過，真實 GPU／iPad 未測）：** 粒子（血球）每步 25／197／353／211／154 顆（完整與 lite 相同，都在預算 2400／1000 內；肺泡微血管只在第③步、而且只有放大的那一床放血球）。三角形數完整模式每步約 21／33／41／31／28 萬，lite 約 11／19／24／18／16 萬（肺泡微血管 266 段＋41 個球；lite 的管與球環數較少）。
 
+## 腦場景（腦部：組織細胞，`ht3d_scene_brain_1122_v1.js`，2026-11-23）
+
+**新模型** `brain_scene_v1.glb`（完整版 0.66 MB、125,886 三角形，其中腦 91,744）／`brain_scene_v1_lite.glb`（0.40 MB、67,041 三角形）／`brain_parts_v1.json`（49 個 node），由 `tools/anatomy/extract_brain_scene.mjs` 從同一資料集（3D Anatomy Atlas data release 1.2.0，repo commit `4704dc61f7f9929e119ec19a57d4c497e093ddb4`）抽出；讀 chunk、依 `_ID` 拆結構、weld／simplify／quantize／meshopt 的程式沿用 `extract_si_scene.mjs`。**沒有修改 `si_scene_v1.glb`、`si_parts_v1.json`。**
+用法：`node tools/anatomy/extract_brain_scene.mjs --data <3d-anatomy-atlas>/packages/data/releases/1.2.0 --modules /tmp/gl/node_modules`（約 6 秒；加 `--list` 列每個結構簡化前後的三角形數）。
+
+- **挑選**：心臟四腔；升主動脈、主動脈弓、胸主動脈；頭臂動脈幹、左右頸總動脈、左右鎖骨下動脈、左右頸內動脈、左右椎動脈、基底動脈、前／後交通動脈、左右大腦前動脈、大腦中動脈 M1 段與島葉支（M2）、左右大腦後動脈；上矢狀竇、左右橫竇、左右乙狀竇；左右內頸靜脈、左右鎖骨下靜脈、左右頭臂靜脈、上腔靜脈。
+- **不收**：小腦的動脈（小腦上／前下／後下動脈）、頸外動脈、下矢狀竇／直竇／枕竇（資料集這三個竇的位置在腦幹前上方，與教科書位置〔大腦鐮下緣、竇匯〕不符，未採用）。
+- **合併**：大腦皮質依資料集的「葉」群組合併成 5 塊（`brain.frontal_lobe`／`parietal_lobe`／`temporal_lobe`／`occipital_lobe`／`other_cortex`〔島葉、邊緣葉含海馬迴、葉間腦溝〕）；小腦全部小葉合併成 `brain.cerebellum`；腦幹（中腦、橋腦、延腦外形）合併成 `brain.brainstem`（內部神經核、第四腦室、中腦導水管不收）；頭頸部體表分區（頭皮、臉、耳廓、頸部）合併成 `regions.head_neck_surface`、胸部體表分區合併成 `regions.thorax_surface`，只作定位背景。完整清單在 `brain_parts_v1.json` 的 `merged_from`。
+- **簡化誤差上限**：完整版 血管 0.03 mm、心臟 0.2 mm、腦 0.4 mm、體表 1.5 mm（保留 ≥35%）；輕量版 血管 0.2 mm、心臟 1.2 mm、腦 0.9 mm（保留 ≥30%）、體表 3 mm。
+- **授權與署名**：大腦皮質來自 **Brain for Blender**（Anderson M. Winkler, brainder.org；CC BY-SA 3.0，經 Z-Anatomy 改作後以 CC BY-SA 4.0 提供），其餘為 Z-Anatomy／BodyParts3D（CC BY-SA 4.0）。署名照資料集 ATTRIBUTION.md 原文（已寫進 glb 的 `asset.copyright`）：
+  > “Brain for Blender” by Anderson M. Winkler (https://brainder.org/research/brain-for-blender/), CC BY-SA 3.0, as adapted in “Z-Anatomy — The libre 3D atlas of anatomy”, CC BY-SA 4.0; cortical parcellation of Destrieux et al. (2010), computed with FreeSurfer. Adapted for Svitylo 3D Anatomy Atlas.
+
+  衍生成品（兩個 glb、`brain_parts_v1.json`、`brain_centerlines_v1.json`）整體以 **CC BY-SA 4.0** 提供。
+
+**中心線** `brain_centerlines_v1.json`（205 段）由 `tools/anatomy/build_brain_centerlines.py` 產生（用法在腳本開頭；約 4 分鐘，亂數種子固定）。方法照接力指南 5b：每段半徑陣列、`smoothTubes`、所有資料集血管用 `replaceMesh` 改畫單層漸變管、切線相接、Murray、同軸接點不封口、圓頭只在游離末端（鎖骨下動脈／靜脈外側端、胸主動脈下端、大腦前動脈末端、上矢狀竇前端）。
+- **同軸一路延續的血管合成一段**（兩段同軸接起來時兩根管的環對不齊，半透明時看得到一圈接縫）：`lcar`＝左頸總動脈→頸內動脈→大腦中動脈 M1→島葉支→腦表面小動脈（示意）→床 F 軟腦膜小動脈；`rcar`＝頭臂動脈幹→右頸總→頸內→大腦中→床 B1；`rvb`＝右椎動脈→基底動脈→右大腦後動脈→床 B3；`rdrain`＝上矢狀竇→右橫竇→右乙狀竇→右內頸靜脈→右頭臂靜脈→上腔靜脈；`ldrain`＝左橫竇→左乙狀竇→左內頸靜脈→左頭臂靜脈。各部分在段內的弧長範圍寫在 JSON `named.parts`。Y 形分叉／匯流的另一支（左鎖骨下動脈、右鎖骨下動脈、左椎動脈、大腦前動脈、左大腦後動脈、第二條島葉支、左橫竇、鎖骨下靜脈、左頭臂靜脈）從母管中心線分出（或併入），用 `tubeRange` 只畫母管壁外的部分。
+- **半徑**（取自網格：垂直切面面積換算，再平滑、單調化；網格本身比文獻細，畫面不寫數字）：主動脈 14→12 mm、頸總動脈 3.9、頸內動脈 3.9→1.45、椎動脈 1.27→1.1、基底動脈 1.39（Murray：兩條椎動脈匯合）、大腦前／中動脈起點 1.16（Murray：頸內動脈末端 Y 形分叉）、島葉支 0.92、大腦後動脈 1.1→0.6、前／後交通動脈 0.6／0.7（只畫管、不放血球）；上矢狀竇 0.6→2.0（每匯入一條腦靜脈依 Murray 變粗）、橫竇 1.3→1.75、乙狀竇 1.75→1.9、內頸靜脈 1.9→4.2（**上限 4.2 mm 為示意**：資料集下端膨大到 4.9 mm，會和頸總動脈起端重疊）、頭臂靜脈 →7、上腔靜脈 8.8→10.5 mm。
+- **修正資料集的幾何（示意）**：①乙狀竇下端與內頸靜脈上端之間有數 mm 空隙，且內頸靜脈上端比乙狀竇末端還高，補段從內頸靜脈低於乙狀竇末端 5 mm 處接上；②內頸靜脈在頸部與頸動脈網格互相穿插，往外推開到不相交；③上矢狀竇、橫竇往腦外推（≤ 3.4 mm）；④資料集的大腦中動脈 M1 段與大腦前動脈夾在很窄的腦裂中，各有 6／9 個中心線點落在腦網格內（最深約 1 mm），推出去會折出鋸齒，所以**沒有推，記為已知限制**；大腦後動脈推出腦幹網格（0 點在內）。
+- **示意（程式生成）**：①腦表面的小動脈與腦靜脈：1 mm 格點標出腦網格內外，A* 在腦外找路（偏好離腦表面 1～3 mm），再做「限制下的平滑」（拉普拉斯平滑＋推出腦外，反覆）；②六個皮質微血管床：F（放大的床，左頂葉外側面，大腦中動脈供血；7 條穿入灰質的小動脈、6 條上行小靜脈、31 條微血管分 4 層＋42 條交叉連通支）、B1（右頂葉）、B4／B5（左右額葉）、B2／B3（左右枕葉，大腦後動脈供血、引流到橫竇）。床的位置由腳本掃描皮質表面選出最平、灰質最厚的一塊（灰質最薄處 2.9～3.5 mm），沿法線打射線量軟腦膜面高度與灰質厚度，在（沿面、沿面、深度）參數空間建床再對應回去，所以床會跟著皮質表面彎曲。微血管半徑 0.12 mm（真實微血管直徑約 5～8 µm，**放大約 30 倍**；未逐字核對）。
+- **驗證**（JSON `validation.results`）：六個床灰質裡的點 1,730／1,730 在腦網格內（x／y／z 三軸奇偶射線多數決）；軟腦膜上的小血管 357／357 在腦外且離表面 ≤ 1.5 mm（最大 0.71 mm）；腦表面路徑 0 點穿進腦；畫出來的管兩兩不相穿（相連接點附近除外）＝ 0 處；最小曲率半徑÷管半徑：小血管 ≥ 1.5、主幹接點最低 0.67（升主動脈根部）、0.66（右頭臂靜脈併入上腔靜脈）、0.78（頸內動脈末端 T 形分出大腦中動脈）、0.87（第二條島葉支起點）——粗管在短距離內轉大角度，> 0.5 不會折疊，但不到 1。
+- **核心引擎新增（皆為選用、向下相容；小腸／腎臟／肝臟／肺場景每步粒子數與三角形數改前改後完全相同）**：`SCENE.genTubeRange`（生成的微血管也照 `tubeRange` 只畫一段）、`SCENE.cellMin`（血球最小直徑，腦設 0.18 mm）、中心線段的 `step`（細而急彎的生成管用較密取樣）。
+- **效能**（只在軟體 WebGL 測過，真實 GPU／iPad 未測）：粒子每步約 218～375 顆；三角形完整模式每步約 24～39 萬、lite 約 15～25 萬。
+
+**這個場景用到的科學敘述與數字（2026-11-23 查證；搜尋工具只回傳標題與網址、沒有內文摘要，所以下列數字是「找到出處，數值依常見引用值，未逐字核對」）：**
+
+| 敘述／數字 | 用在哪 | 出處（標題／機構） | 狀態 |
+|---|---|---|---|
+| 腦約占體重 2%，卻用掉全身約 20% 的氧氣 | 第①步 | Harvard BioNumbers ID 103264〈Fraction of brain oxygen consumption out of body oxygen consumption〉；Univ. of Arizona Davis Lab〈Blood Supply to the Brain〉；LibreTexts〈Blood Supply to the Brain〉（Essentials of Physiology for Nurse Anesthetists） | 數值未逐字核對 |
+| 腦血流約為心輸出量的 15%（約 750 mL/min） | 第①步（只寫 15%） | Wikipedia〈Cerebral circulation〉；LibreTexts〈18.7D Blood Flow in the Brain〉；LITFL〈Cerebral Blood Flow〉；WFSA〈Basic Sciences〉 | 數值未逐字核對 |
+| 葡萄糖是腦細胞主要的能量來源；腦幾乎不能儲存能量 | 第③步 | Mergenthaler et al.〈Sugar for the brain〉（PMC3900881）；Pflügers Arch s00424-020-02441-x（PMC7462931）；UTHealth Neuroscience Online 第 11 章 | 未逐字核對 |
+| 缺氧幾分鐘腦細胞就會受損（常見說法約 4～6 分鐘；畫面只寫「幾分鐘」） | 第③步 | Cleveland Clinic〈Cerebral Hypoxia〉；Headway〈Hypoxic and anoxic brain injury〉；Live Science〈How long can the brain survive without oxygen?〉 | 未逐字核對 |
+| 腦微血管壁細胞緊密相接（血腦屏障），只讓需要的物質通過 | 第③步 | PMC7462931；UTHealth Neuroscience Online 第 11 章 | 一般教科書內容，未逐字核對 |
+| 兩條椎動脈合成基底動脈；大腦動脈環（交通動脈）分出大腦前／中／後動脈 | 第②步 | 一般解剖教科書；資料集結構階層（cerebral_arterial_circle） | 常見解剖 |
+| 上矢狀竇→（竇匯）→橫竇→乙狀竇→內頸靜脈；頸內靜脈＋鎖骨下靜脈＝頭臂靜脈；左右頭臂靜脈＝上腔靜脈 | 第④⑤步 | 一般解剖教科書；資料集結構階層 | 常見解剖 |
+| 頸內動脈、椎動脈、基底動脈直徑 | 沒用（畫面口徑取網格） | AJNR 7(1):55；PMC11811384〈Basilar Artery Diameter〉；Folia Morphologica FM.a2019.0071 | **未查證**（沒取得數字） |
+| 頸總動脈、內頸靜脈直徑 | 沒用 | Cardiovasc Ultrasound s12947-016-0084-1；PMC7539051 | **未查證** |
+
+**名稱**：畫面只顯示左心室、主動脈弓、頸動脈（泛稱）、椎動脈、基底動脈、大腦動脈環、大腦前／中／後動脈、大腦、小腦、上矢狀竇、橫竇、乙狀竇、頸靜脈（泛稱）、上腔靜脈、右心房、右心室，以及帶「（示意）」的腦表面的小動脈、微血管、小靜脈、腦靜脈。「頸總動脈／總頸動脈」「內頸動脈／頸內動脈」「內頸靜脈／頸內靜脈」「頭臂動脈幹（無名動脈）」「頭臂靜脈（無名靜脈）」「島葉支」的臺灣大學教科書用語未逐一核對，記在 `brain_parts_v1.json` 的 `zh_review`（10 筆），畫面用泛稱或不標。
+
+**放大窗**：沿用 2D「組織」交換動畫（`HumanTransportExchanges` 的 `tissue` 區，畫的是一般組織細胞，不是神經元／星狀膠細胞），標題寫「放大：微血管與腦細胞的交換（示意）」。
+
 ## 已知限制與缺漏
 
 - **沒有**獨立的空腸動脈、迴腸動脈（資料集只有腸系膜上動脈本體含幾條短分支，以及迴結腸動脈的迴腸支）；沒有獨立的盲腸、直腸；沒有獨立的主動脈根（竇）網格（`root_of_aorta` 群組只含三片主動脈瓣）；沒有胃網膜動脈、胃右動脈、短胃動脈。

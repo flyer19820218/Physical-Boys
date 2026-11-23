@@ -255,7 +255,7 @@ export async function createViewer(o) {
   for (const ob of dropMeshes) { ob.removeFromParent(); ob.geometry.dispose(); if (ob.material && ob.material.dispose) ob.material.dispose(); }
   /* 中心線 → Path */
   const paths = new Map();
-  for (const [id, sg] of Object.entries(CL.segments)) paths.set(id, Object.assign(new Path(id, sg.points, sg.radius), { meta: sg }));
+  for (const [id, sg] of Object.entries(CL.segments)) paths.set(id, Object.assign(new Path(id, sg.points, sg.radius, sg.step || 0.0006), { meta: sg }));   // sg.step（選用）：很細、轉彎很急的生成管（例：腦的微血管）用較密的取樣，沒寫＝0.6 mm 不變
   /* 區段清單可用「前綴*」一次指定一整批（例：'pt*' ＝ 所有 id 以 pt 開頭的區段），給有大量程式生成分支的場景用 */
   const expandIds = (list) => list.flatMap((id) => (id.endsWith('*') ? [...paths.keys()].filter((k) => k.startsWith(id.slice(0, -1))) : [id]));
   const stepFlows = SC.steps.map((st) => expandIds(st.flows));
@@ -267,10 +267,11 @@ export async function createViewer(o) {
     const g = SC.tubeGroup(id); if (!g) continue;
     if (SC.smoothTubes) {   // 選用：變半徑（由粗變細）＋圓頭封口的管；沒開的場景走下面原本的等半徑管
       const cp = paths.get(id);
+      const gr = (SC.genTubeRange && sg.tubeRange) || [0, 1];   // 選用（SCENE.genTubeRange）：生成管也照 tubeRange 只畫一段（側支從母管中心線分出時，從母管壁才開始畫）；沒開的場景不變
       (tubeBuckets[g] = tubeBuckets[g] || []).push(varTubeCapped(cp, lite ? 6 : 10, 0.0007, (u) => {
         const o2 = sg.o2 === 'rich' ? 1 : sg.o2 === 'poor' ? 0 : sg.o2 === 'poor>rich' ? smooth(u * 1.1) : 1 - smooth(u * 1.1);
         return tmpC.copy(POOR).lerp(RICH, o2).multiplyScalar(0.72);
-      }, 0, 1, sg.capStart !== false, sg.capEnd !== false));
+      }, gr[0], gr[1], sg.capStart !== false, sg.capEnd !== false));
       continue;
     }
     const curve = new THREE.CatmullRomCurve3(sg.points.map((p) => new THREE.Vector3(p[0], p[1], p[2])), false, 'centripetal');
@@ -337,6 +338,7 @@ export async function createViewer(o) {
   const rbcMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.45, clearcoat: 0.2, sheen: 0.25, sheenColor: new THREE.Color('#ff7a68'), envMapIntensity: 0.45 });
   /* 血球亮度倍率：場景可設 SCENE.flowBright（預設 1＝不變；2＝亮度加倍）。乘在材質顏色上，再補一點自發光，暗處也看得到 */
   const FB = Math.min(4, Math.max(0.2, Number(SC.flowBright) || 1)), SMT = !!SC.smoothTubes;
+  const CELL_MIN = Number(SC.cellMin) > 0 ? Number(SC.cellMin) : 0.00055;   // 選用（SCENE.cellMin）：血球最小直徑（公尺）；沒寫＝0.55 mm 不變。腦的微血管很細，血球要能更小才不會擠出管外
   rbcMat.color.setScalar(FB); if (FB > 1) rbcMat.emissive.set('#ff5a48').multiplyScalar(0.1 * (FB - 1));
   const cells = new THREE.InstancedMesh(rbcGeo, rbcMat, budgetMax);
   cells.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -480,7 +482,7 @@ export async function createViewer(o) {
     let n = 0;
     flowList.forEach((id, j) => {
       const p = paths.get(id), F = SC.flow[SC.flowKey(id)] || { type: 'steady', v: 0.02, density: 300 };
-      const size = Math.min(0.0042, Math.max(0.00055, p.rMean * 0.75));
+      const size = Math.min(0.0042, Math.max(CELL_MIN, p.rMean * 0.75));
       const m2 = p.meta.o2, o2 = typeof m2 === 'number' ? m2 : m2 === 'rich' ? 1 : m2 === 'poor' ? 0 : -1;   // -1＝沿管漸變（陣列 [起,終] 或微血管預設）
       flowInfo.push({ path: p, F, size, o2, grad: Array.isArray(m2) ? m2 : m2 === 'poor>rich' ? [0, 1] : null, alpha: 1 });
       const cnt = Math.max(F.singleFile ? 2 : 3, Math.floor(want[j] * scale)), rnd = mulberry32(hashStr(id));
@@ -529,7 +531,7 @@ export async function createViewer(o) {
     let i = 0; while (i < TP.list.length - 1 && d > TP.cum[i + 1]) i++;
     const p = TP.list[i], u = TP.u0[i] + (d - TP.cum[i]) / p.len, idx = p.index(u) * 3;
     p.point(u, tq); tt.fromArray(p.T, idx); tnn.fromArray(p.N, idx); tb.crossVectors(tt, tnn);
-    const size = Math.min(0.0042, Math.max(0.00055, p.rMean * 0.75)) * 1.5 * (SMT ? Math.min(1.2, p.R[idx / 3] / p.rMean) : 1);
+    const size = Math.min(0.0042, Math.max(CELL_MIN, p.rMean * 0.75)) * 1.5 * (SMT ? Math.min(1.2, p.R[idx / 3] / p.rMean) : 1);
     basisM.makeBasis(tt, tnn, tb); tracer.quaternion.setFromRotationMatrix(basisM); tracer.position.copy(tq); tracer.scale.setScalar(size);
     const o2 = o2Of(p.meta, u);
     tracerMat.color.copy(POOR).lerp(RICH, o2).multiplyScalar(FB);
