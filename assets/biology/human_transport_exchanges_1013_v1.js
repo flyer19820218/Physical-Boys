@@ -22,8 +22,8 @@
       text:P('肝細胞處理胺基酸時會產生氨；血液也可把含氮物質帶到肝臟。肝臟把多數氨轉成毒性較低的尿素，尿素進入血漿，接著經血液送到腎臟排出。\n\n飯後小腸吸收的葡萄糖先經肝門靜脈到肝臟，部分可儲存為肝糖；需要時肝臟又可釋出葡萄糖。肝細胞本身也需氧，並產生二氧化碳。氨→尿素是功能示意，不是單一反應式或一比一分子配對。','Amino-acid processing in liver cells produces ammonia; blood also brings nitrogen-containing substances to the liver. Most ammonia is converted to less-toxic urea. Urea enters plasma and is carried to the kidneys for excretion.\n\nAfter a meal, absorbed glucose reaches the liver through the portal vein; some can be stored as glycogen. The liver can release glucose when needed. Liver cells also consume oxygen and produce CO₂. The NH₃→urea depiction is a functional summary, not a single reaction or a 1:1 molecular equation.')},
     {id:'kidney',tile:3,name:P('腎臟','Kidney'),title:P('腎細胞也要養分：進氧氣、葡萄糖，出二氧化碳','Kidney cells: oxygen and glucose in, CO₂ out'),
       text:P('腎臟由活細胞組成，自己的細胞也需要氧氣與養分。周圍微血管把氧氣、葡萄糖經組織液送進腎細胞，供細胞呼吸作用利用、釋出可利用的能量。\n\n腎細胞產生的二氧化碳再進入血液，由血液送往肺排出。腎細胞也能使用其他燃料，動畫以葡萄糖為例。\n\n主畫面只教細胞與血液的交換；過濾、腎小管與再吸收放在「延伸閱讀／不考」，有興趣再點開。','Kidney cells need oxygen and nutrients. Nearby capillaries supply oxygen and glucose through tissue fluid for cellular respiration and usable energy.\n\nCO₂ from the cells enters blood and is transported to the lungs. Glucose is one fuel example, not the only fuel.\n\nThe main view teaches cell–blood exchange only. Filtration, renal tubules and reabsorption are in optional, non-exam further reading.')},
-    {id:'lung',tile:1,name:P('肺','Lungs'),title:P('肺泡接力：氧氣進血，二氧化碳出血','Alveoli: oxygen enters blood; CO₂ leaves it'),
-      text:P('右心室送出的血經肺動脈到肺微血管。吸入的氧氣從肺泡內空氣穿過薄薄的肺泡壁與微血管壁，進入血液，大部分由紅血球攜帶。\n\n同時，二氧化碳由血液進入肺泡，再隨呼氣排出。補氧後的血經肺靜脈回左心房。肺動脈血較少氧、肺靜脈血較多氧；兩者都是紅色血液。肺自己的細胞也需要葡萄糖！切到「肺細胞也要葡萄糖」，看血液供應養分給肺組織的另一個窗口。葡萄糖來自血漿，不是吸入的空氣，也不會被呼出去。','Blood from the right ventricle reaches lung capillaries through pulmonary arteries. Inhaled oxygen crosses the thin alveolar and capillary walls into blood and is carried mainly by red cells.\n\nAt the same time, CO₂ passes from blood into alveolar air and is exhaled. Oxygenated blood returns through pulmonary veins to the left atrium. Pulmonary arterial blood has less oxygen; pulmonary venous blood has more. Both are red. Lung cells also need glucose! Choose “Lung cells need glucose” for nutrient delivery to lung tissue. Glucose arrives in plasma, not inhaled air, and is not exhaled.')},
+    {id:'lung',tile:1,name:P('肺','Lungs'),title:P('肺的交換不只兩種氣體：葡萄糖、氨也在動','Lungs trade more than gases: glucose and NH₃ too'),
+      text:P('右心室送出的血經肺動脈到肺微血管。吸入的氧氣從肺泡內空氣穿過薄薄的肺泡壁與微血管壁，進入血液，大部分由紅血球攜帶。\n\n同時，二氧化碳由血液進入肺泡，再隨呼氣排出。補氧後的血經肺靜脈回左心房。肺動脈血較少氧、肺靜脈血較多氧；兩者都是紅色血液。血漿裡溶著的物質也在交換：葡萄糖會從微血管經組織液進入肺泡壁細胞，供細胞自己使用，不是紅血球攜帶，也不會被呼出去。氨是含氮廢物，大部分由肝臟轉成尿素、經腎臟排出；只有極少量會穿過肺泡壁，隨呼氣排出。切到「肺細胞也要葡萄糖」，可看血液供應養分給肺組織的另一個窗口。','Blood from the right ventricle reaches lung capillaries through pulmonary arteries. Inhaled oxygen crosses the thin alveolar and capillary walls into blood and is carried mainly by red cells.\n\nAt the same time, CO₂ passes from blood into alveolar air and is exhaled. Oxygenated blood returns through pulmonary veins to the left atrium. Pulmonary arterial blood has less oxygen; pulmonary venous blood has more. Both are red. Substances dissolved in plasma exchange too: glucose passes from the capillary through tissue fluid into alveolar-wall cells for their own use; it is not carried on red cells and is not exhaled. Ammonia is a nitrogen waste: most is converted to urea by the liver and excreted by the kidneys; only a trace crosses the alveolar wall and leaves in the breath. Choose “Lung cells need glucose” for another view of nutrient delivery to lung tissue.')},
     {id:'tissue',tile:5,name:P('組織','Body tissues'),title:P('送到細胞才算完成：養分進去，廢物出來','Delivery to cells: nutrients in, CO₂ out'),
       text:P('小腸吸收的葡萄糖由血液運送；肺補進的氧氣也隨血液到全身微血管。氧氣與葡萄糖經組織液進入細胞，參與細胞呼吸作用，釋出可利用的能量，並產生二氧化碳與水。\n\n二氧化碳再經組織液進入血液，送到肺排出。因此「吸收 → 運送 → 細胞利用 → 廢物帶走」是一整條故事，不是四件互不相干的事。葡萄糖溶在血漿中，不是紅血球的乘客；圖中的分子顏色與尺寸是辨識符號。','Absorbed glucose is transported by blood. Oxygen added in the lungs reaches body capillaries too. Both cross tissue fluid into cells, supporting cellular respiration, usable energy release and production of CO₂ and water.\n\nCO₂ crosses tissue fluid into blood and travels to the lungs. Thus absorption → transport → cellular use → waste removal is one connected story. Glucose is dissolved in plasma, not carried on red cells. Molecular colours and sizes are identification symbols.')},
     {id:'intestine',tile:4,name:P('小腸','Small intestine'),title:P('小腸絨毛：葡萄糖穿過上皮，進入血液','Intestinal villi: glucose crosses epithelium into blood'),
@@ -54,7 +54,9 @@
   function flows(zone,lungView='gas',kidneyView='cells'){
     if(zone==='lung'&&lungView!=='cells')return[
       flow('oxygen','alveolar air','blood',[LUNG_XY(70,112),LUNG_XY(LCC,112)],P('氧氣進血','O₂ into blood'),[405,486],8),
-      flow('carbon','blood','alveolar air',[LUNG_XY(LCC,158),LUNG_XY(70,158)],P('二氧化碳出血','CO₂ into air'),[335,350],8,.5)];
+      flow('carbon','blood','alveolar air',[LUNG_XY(LCC,158),LUNG_XY(70,158)],P('二氧化碳出血','CO₂ into air'),[335,350],8,.5),
+      flow('glucose','capillary plasma','alveolar-wall cells',[LUNG_XY(LCC-16,128),LUNG_XY(ALV.r,128)],P('葡萄糖進肺泡壁細胞','Glucose into wall cells'),[335,392],12),
+      flow('ammonia','capillary plasma','alveolar air (trace)',[LUNG_XY(LCC-16,80),LUNG_XY(ALV.r*.55,80)],P('氨：極少量隨呼氣排出','NH₃: a trace is exhaled'),[935,250],20)];
     if(zone==='lung')return[
       flow('oxygen','bronchial tissue blood','lung tissue cells',[[231,237],[397,237],[519,243],[586,279]],P('氧氣給肺細胞','O₂ to lung tissue cells'),[267,211],8),
       flow('glucose','bronchial tissue plasma','lung tissue cells',[[230,329],[398,329],[520,329],[588,330]],P('葡萄糖給肺細胞','Glucose to lung tissue cells'),[269,305],10,.35),
@@ -102,26 +104,57 @@
     for(let i=0;i<LUNG_CELLS_N;i++){const d=mod((t*LUNG_SPEED+i*pitch)/L)*L,p=C.geometry.at(LUNG_ROUTE,d,0),f=(d-LUNG_D0)/LUNG_ARC;
       out.push({x:p.x,y:p.y,angle:p.angle,d,f,o:.12+.88*smooth01((f-.1)/.8),i});}
     return out;}
+  const NK=[[622,248],[867,75]];   // 氣道：肺泡端、外端（lung() 畫氣道、氨的呼氣路線共用）
+  /* 肺泡壁是一圈細胞（扁平、紫色細胞核）：沿同一個正圓畫弧，不改肺泡的圓 */
+  function wallCells(ctx,R){ctx.save();ctx.lineCap='round';
+    for(let i=0;i<12;i++){const a=(i*30+7)*Math.PI/180,x=ALV.x+R*Math.cos(a),y=ALV.y+R*Math.sin(a);
+      ctx.beginPath();ctx.arc(ALV.x,ALV.y,R,a-.17,a+.17);ctx.strokeStyle='#7d4f50';ctx.lineWidth=15;ctx.stroke();ctx.strokeStyle='#e0a094';ctx.lineWidth=11;ctx.stroke();
+      ctx.save();ctx.translate(x,y);ctx.rotate(a+Math.PI/2);ellipse(ctx,0,0,8,4.5,'#d7b6ed','#786098',1);ctx.restore();}
+    ctx.restore();}
+  /* 溶在血漿裡的物質：跟著血漿走（不是紅血球的乘客）。
+   * 葡萄糖：走到某處 → 穿過微血管壁進肺泡壁細胞（供細胞自己用，不進空氣、不被呼出）。
+   * 氨：多數留在血中（交給肝臟變尿素）；只有極少量穿過肺泡壁，混進肺泡空氣，隨呼氣出去。 */
+  /* 教學引擎每按一次只播 10 秒就停（慢速只看到前 5 秒），而且每次都從 0 秒重來 → 事件要排在最前面：te＝開始穿過的時間（秒） */
+  const SOL_UP=1.5,A_UP=1.3,A_DR=1.5,A_EX=2.4,SOL_LANE=15.5,SOL_RIDE=f=>(LUNG_D0+LUNG_ARC*f)/LUNG_SPEED;
+  const SOLUTES=[
+    {k:'glucose',fe:.904,te:.6},{k:'glucose',fe:.664,te:2.2},{k:'glucose',fe:.424,te:3.8},{k:'glucose',fe:.184,te:5.4},   // fe：對準 4 顆肺泡壁細胞的中心（67°、97°、127°、157°）
+    {k:'ammonia',fe:.84,te:.4,cross:1},{k:'ammonia',stay:1,ph:4.3},{k:'ammonia',stay:1,ph:10}].map(p=>{
+    p.T=p.stay?LUNG_ROUTE.length/LUNG_SPEED+1:p.cross?SOL_RIDE(p.fe)+A_UP+A_DR+A_EX+2:SOL_RIDE(.904)+SOL_UP+1.2;
+    if(!p.stay)p.ph=SOL_RIDE(p.fe)-p.te;return p;});
+  function solute(p,t){const u=mod((t+p.ph)/p.T)*p.T,L=LUNG_ROUTE.length;
+    if(p.stay){const d=u*LUNG_SPEED;if(d>L)return null;const q=C.geometry.at(LUNG_ROUTE,d,SOL_LANE);return{x:q.x,y:q.y,a:Math.min(1,d/50,(L-d)/50)};}
+    const ride=SOL_RIDE(p.fe),deg=180-125*p.fe,lane=p.cross?SOL_LANE:-SOL_LANE;   // 氨從外側走、一路穿過血管；葡萄糖走靠肺泡的內側
+    if(u<ride){const d=u*LUNG_SPEED,q=C.geometry.at(LUNG_ROUTE,d,lane);return{x:q.x,y:q.y,a:Math.min(1,d/50)};}
+    const q0=C.geometry.at(LUNG_ROUTE,ride*LUNG_SPEED,lane),lerp=(a,b,e)=>[a[0]+(b[0]-a[0])*e,a[1]+(b[1]-a[1])*e],P0=[q0.x,q0.y];
+    if(!p.cross){const v=(u-ride)/SOL_UP;if(v>1)return null;const e=smooth01(v),pt=lerp(P0,LUNG_XY(ALV.r-2,deg),e);return{x:pt[0],y:pt[1],a:1-smooth01((v-.55)/.45),trail:[P0,pt],glow:[deg,Math.sin(Math.PI*v)]};}
+    const v=(u-ride)/A_UP,IN=LUNG_XY(ALV.r*.55,deg);
+    if(v<=1){const pt=lerp(P0,IN,smooth01(v));return{x:pt[0],y:pt[1],a:1,trail:[P0,pt]};}
+    const w=(u-ride-A_UP)/A_DR;
+    if(w<=1){const pt=lerp(IN,NK[0],smooth01(w));return{x:pt[0],y:pt[1],a:1};}
+    const z=(u-ride-A_UP-A_DR)/A_EX;if(z>1)return null;
+    const ux=NK[1][0]-NK[0][0],uy=NK[1][1]-NK[0][1],ul=Math.hypot(ux,uy);
+    return{x:NK[0][0]+ux*z+uy/ul*10,y:NK[0][1]+uy*z-ux/ul*10,a:Math.min(1,(1-z)*8)};}
   function lung(ctx,s,t,D){
     const breath=1+Math.sin(t*.8)*.025,R=ALV.r*breath;
     // 氣道（細支氣管末端）接在肺泡右上方
     line(ctx,[[622,248],[1014,-29]],'#e9aa9f',60);line(ctx,[[622,248],[1014,-29]],'#2b5249',48);
     ellipse(ctx,ALV.x,ALV.y,R,R,gradient(ctx,ALV.x,ALV.y-10,R*1.12,'#4d8b88','#264c46'),'#e9aa9f',7);   // 肺泡：正圓
     ctx.beginPath();ctx.arc(ALV.x,ALV.y,R-12,0,TAU);ctx.strokeStyle='#c7827c';ctx.lineWidth=2;ctx.stroke();
+    wallCells(ctx,R);
     // 微血管（血漿淡黃）＋單列紅血球
     C.render.tubes(ctx,[LUNG_ROUTE],[LCR],0,2);
     const cells=lungCells(t);
     ctx.save();C.render.clipTubes(ctx,[LUNG_ROUTE],[LCR]);cells.forEach(c=>lungRbc(ctx,c.x,c.y,LUNG_CELL_R,c.o,c.angle));ctx.restore();
     // 氣道裡的空氣：吸氣（青）進肺泡、呼氣（灰）出去，兩條分開的通道
-    const nk=[[622,248],[867,75]],ux=nk[1][0]-nk[0][0],uy=nk[1][1]-nk[0][1],ul=Math.hypot(ux,uy),nx=-uy/ul,ny=ux/ul;
+    const nk=NK,ux=nk[1][0]-nk[0][0],uy=nk[1][1]-nk[0][1],ul=Math.hypot(ux,uy),nx=-uy/ul,ny=ux/ul;
     for(let n=0;n<3;n++){const u=mod(t/3.4+n/3);ctx.save();ctx.globalAlpha=Math.min(1,u*8,(1-u)*8)*.9;
       ellipse(ctx,nk[1][0]-ux*u+nx*10,nk[1][1]-uy*u+ny*10,5,5,'#55e9ff');ctx.globalAlpha=Math.min(1,u*8,(1-u)*8)*.9;
       ellipse(ctx,nk[0][0]+ux*u-nx*10,nk[0][1]+uy*u-ny*10,5,5,'#9fc1bc');ctx.restore();}
     text(ctx,D,P('肺泡內空氣','Alveolar air'),ALV.x,ALV.y-6,24,'#55e9ff','center');
-    text(ctx,D,P('肺泡壁','Alveolar wall'),ALV.x+R+18,ALV.y+30,22,'#e9aa9f');
-    text(ctx,D,P('肺動脈來：較少氧','From pulmonary artery: less O₂'),30,232,22,'#df8794');
+    text(ctx,D,P('肺泡壁細胞','Alveolar-wall cells'),ALV.x+R+18,ALV.y+30,22,'#e9aa9f');
+    text(ctx,D,P('肺動脈來：較少氧','From artery: less O₂'),30,232,22,'#df8794');
     text(ctx,D,P('肺微血管','Lung capillary'),30,266,22);
-    text(ctx,D,P('回肺靜脈：較多氧','To pulmonary veins: more O₂'),935,436,22,'#ff9c83','right');
+    text(ctx,D,P('回肺靜脈：較多氧','More O₂ → vein'),935,436,22,'#ff9c83','right');
     text(ctx,D,P('紅血球單列，一次一顆','Red cells in single file'),935,478,22,'#f1e3ae','right');
     text(ctx,D,P('吸氣','Inhale'),672,112,22,'#55e9ff');text(ctx,D,P('呼氣','Exhale'),836,162,22,'#9fc1bc');
   }
@@ -134,7 +167,12 @@
       for(const [kind,a,b] of EV){if(c.f<a||c.f>b)continue;const q=(c.f-a)/(b-a),e=smooth01(q),reach=ALV.r*.62;
         const x0=kind==='oxygen'?c.x+ix*reach:c.x,x1=kind==='oxygen'?c.x:c.x+ix*reach,y0=kind==='oxygen'?c.y+iy*reach:c.y,y1=kind==='oxygen'?c.y:c.y+iy*reach;
         ctx.save();ctx.globalAlpha=(on(kind)?1:.14)*Math.min(1,q*6,(1-q)*6);molecule(ctx,kind,{x:x0+(x1-x0)*e,y:y0+(y1-y0)*e},10);ctx.restore();}}
+    for(const p of SOLUTES){const q=solute(p,t);if(!q)continue;const a=on(p.k)?1:.14;
+      if(q.glow){ctx.save();ctx.beginPath();ctx.arc(ALV.x,ALV.y,ALV.r,(q.glow[0]-9)*Math.PI/180,(q.glow[0]+9)*Math.PI/180);ctx.lineCap='round';ctx.lineWidth=13;ctx.strokeStyle='#fde047';ctx.globalAlpha=.55*q.glow[1]*a;ctx.stroke();ctx.restore();}
+      if(q.trail){ctx.save();ctx.setLineDash([4,5]);ctx.globalAlpha=.7*a;line(ctx,q.trail,SPECIES[p.k].color,2);ctx.restore();}
+      ctx.save();ctx.globalAlpha=a*q.a;molecule(ctx,p.k,{x:q.x,y:q.y},p.k==='glucose'?6.5:8);ctx.restore();}
     for(const f of list){ctx.save();ctx.globalAlpha=on(f.kind)?1:.14;text(ctx,D,f.label,f.at[0],f.at[1],22,SPECIES[f.kind].color,'right');ctx.restore();}
+    ctx.save();ctx.globalAlpha=on('ammonia')?1:.14;text(ctx,D,P('多數氨留在血中 → 肝臟變尿素','Most NH₃ stays in blood → liver makes urea'),935,520,22,SPECIES.ammonia.color,'right');ctx.restore();
     return list;
   }
   function kidney(ctx,s,t,D){ellipse(ctx,252,247,97,101,'#27453e','#e3c3a4',4);paintBlood(ctx,[...TUFT,RENAL_RETURN],t,10,u=>1-u*.65);const tubule=[[335,289],[393,289],[398,404],[677,404],[788,404],[831,484]];line(ctx,tubule,'#cfb79d',30);line(ctx,tubule,'#eee1b8',22);ellipse(ctx,740,222,110,44,'#37594a','#a2c8aa');text(ctx,D,P('腎絲球','Glomerulus'),145,126,24,'#fde047');text(ctx,D,P('過濾膜','Filter'),331,227,22);text(ctx,D,P('先過濾','Filtered first'),356,466,22,'#ede1ba');text(ctx,D,P('腎小管','Renal tubule'),435,519,22,'#ede1ba');text(ctx,D,P('血球留在血管內','Blood cells stay in blood'),37,366,22,'#f4b3aa');text(ctx,D,P('腎細胞','Kidney cells'),739,238,22,INK,'center');text(ctx,D,P('腎靜脈回流','To renal vein'),768,299,22,'#df8794');}
