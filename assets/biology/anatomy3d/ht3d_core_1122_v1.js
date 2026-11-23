@@ -7,7 +7,7 @@
  *    有聲講解可以 go(step, ms) 直接跳到某步某秒。
  *  - 只有一條 requestAnimationFrame；暫停或播完就停（OrbitControls 轉動時才補畫一張）；document.hidden 時停。
  *  - 每幀不配置記憶體：粒子矩陣、顏色都直接寫進預先配置好的 typed array。
- *  - 顏色：動脈鮮紅、靜脈暗紅偏紫；不畫藍色血液。背景用黑板色 #11261f（不用純黑）。
+ *  - 顏色：動脈鮮紅、靜脈暗紅；不畫藍色血液。背景用黑板色 #11261f（不用純黑）。
  */
 import * as THREE from 'three';
 import { GLTFLoader } from '../../vendor/three/examples/jsm/loaders/GLTFLoader.js';
@@ -23,7 +23,7 @@ const smooth = (x) => { x = clamp01(x); return x * x * (3 - 2 * x); };
 const frac = (x) => x - Math.floor(x);
 /* 血管含氧量（0＝靜脈血色、1＝動脈血色）：'rich'／'poor'／數字／[起,終]（沿血管由起到終漸變）／'poor>rich'（肺泡微血管：暗紅→鮮紅）／未寫或 'rich>poor'＝微血管（鮮紅→暗紅）。 */
 const o2Of = (m, u) => { const v = m.o2; if (v === 'rich') return 1; if (v === 'poor') return 0; if (v === 'poor>rich') return smooth(u * 1.1); if (typeof v === 'number') return v; if (Array.isArray(v)) return v[0] + (v[1] - v[0]) * smooth(u * 1.1); return 1 - smooth(u * 1.1); };
-const RICH = new THREE.Color('#e3312c'), POOR = new THREE.Color('#7c2238');   // 鮮紅／暗紅偏紫（全站共識，不用藍色）
+const RICH = new THREE.Color('#e3312c'), POOR = new THREE.Color('#8a1a24');   // 鮮紅／暗紅（缺氧血是暗紅色，不偏紫、不用藍色；老師 2026-11-23 指定全站統一）
 export const GAP = 1.5;   // 老師講解：步驟之間停頓秒數（與 human_transport_teach_0118_v1.js 相同）
 
 /* 心動週期脈動：f(τ)=max(0,sin(2πτ/T))²，F(t)=∫f 的解析式（同一時刻永遠算出同一個位置，可重現） */

@@ -24,7 +24,7 @@
  * 座標：公尺；+Y 向上、+Z 向前（臉）、+X 為人體左側。鏡頭在 +Z 往 -Z 看時，畫面左邊＝人體右側。
  *
  * 科學敘述（查證出處見 sources.md「腦場景」）。src：EXISTING＝現有頁面原句；NEW＝新增（待老師審）。
- * 血色：全站共識不畫藍色血液（充氧血＝鮮紅、缺氧血＝暗紅偏紫）；微血管 o2:'rich>poor'（沿路由鮮紅變暗紅）。
+ * 血色：全站共識不畫藍色血液（充氧血＝鮮紅、缺氧血＝暗紅）；微血管 o2:'rich>poor'（沿路由鮮紅變暗紅）。
  */
 
 const P = (zh, en) => [zh, en];
@@ -85,17 +85,17 @@ export const GROUPS = Object.freeze({
 export const MATERIAL = Object.freeze({
   heart: { color: '#a5333b', sheen: '#e08b8b', rough: 0.5 },
   // 腦的外框色調暗一點：lit:1 時核心會把外框加亮約 6.5 倍（半透明的腦回層層疊起來，太亮會變成一團白霧）
-  cerebrum: { color: '#e2b9ab', sheen: '#f6e2da', rough: 0.7, rim: '#6e4c44' },
-  cerebellum: { color: '#d8a898', sheen: '#f3dcd2', rough: 0.7, rim: '#6e4c44' },
-  brainstem: { color: '#d5ad98', sheen: '#f0dccf', rough: 0.7, rim: '#6e4c44' },
+  cerebrum: { color: '#c79a8e', rough: 0.8, rim: '#6e4c44', rimStrength: 0.08, clearcoat: 0 },
+  cerebellum: { color: '#c08f82', rough: 0.8, rim: '#6e4c44', rimStrength: 0.08, clearcoat: 0 },
+  brainstem: { color: '#bf9684', rough: 0.8, rim: '#6e4c44', rimStrength: 0.08, clearcoat: 0 },
   head: { color: '#e9c8ad', sheen: '#fff1e4', rough: 0.8 },
   torso: { color: '#e9c8ad', sheen: '#fff1e4', rough: 0.8 },
   artery: { color: '#b3141d', rim: '#ff5a48', rough: 0.3 },
-  vein: { color: '#55162c', rim: '#c0607e', rough: 0.36 }
+  vein: { color: '#5e1219', rim: '#c4545a', rough: 0.36 }
 });
 /* 預設透明度。血管透明度一律 < 0.6（≥ 0.6 會開啟寫深度，把裡面的血球擋住）。 */
 export const BASE_STYLE = Object.freeze({
-  torso: 0.03, head: 0.05, heart: 0.3, cerebrum: 0.1, cerebellum: 0.1, brainstem: 0.12, otherArteries: 0.1, otherVeins: 0.1, otherOrgans: 0.05,
+  torso: 0.03, head: 0.05, heart: 0.3, cerebrum: 0.05, cerebellum: 0.05, brainstem: 0.06, otherArteries: 0.1, otherVeins: 0.1, otherOrgans: 0.05,
   aorta: 0.35, arteries: 0.5, focusArt: 0.5, veins: 0.45, focusVein: 0.5,
   genCap: 0.4, genCapF: 0.5
 });
@@ -212,12 +212,12 @@ export const STEPS = Object.freeze([
     title: P('① 離開左心室：主動脈弓分出往頭頸的動脈', '① Leaving the left ventricle: arteries rise from the aortic arch'),
     text: [
       { src: 'NEW', p: P('左心室收縮，把充氧血送進主動脈；主動脈弓向上分出幾條動脈，往腦的血主要走左右頸動脈，另有一小部分走椎動脈。', 'The left ventricle pumps oxygen-rich blood into the aorta. Several arteries rise from the aortic arch; blood for the brain travels mainly in the two carotid arteries, and some in the vertebral arteries.') },
-      { src: 'NEW', p: P('腦只占體重約 2%，卻用掉全身約 20% 的氧氣，所以送到腦的血很多（約占心臟輸出血量的 15%）。', 'The brain is only about 2% of body weight but uses about 20% of the body\'s oxygen, so it receives a large blood flow (about 15% of the cardiac output).') },
+      { src: 'NEW', p: P('腦的細胞非常需要氧氣和養分，所以心臟送出的血有相當大一部分流向腦。', 'Brain cells need a great deal of oxygen and nutrients, so a large share of the blood the heart pumps goes to the brain.') },
       { src: 'NEW', p: HINT }
     ],
     camera: [K(0, 'chest'), K(2.6, 'heart'), K(6.0, 'heart'), K(9.2, 'neck'), K(10, 'neck')],
     style: { ...BG, 'lit.cardiovascular.left_ventricle': 1, 'glow.aorta': 0.6, 'glow.arteries': 0.3, heart: 0.42, 'cardiovascular.left_ventricle': 0.58, aorta: 0.45,
-      cerebrum: 0.07, cerebellum: 0.07, brainstem: 0.08, arteries: 0.5, focusArt: 0.12, veins: 0.16, focusVein: 0.1, genCap: 0.12, genCapF: 0.14 },
+      cerebrum: 0.035, cerebellum: 0.035, brainstem: 0.04, arteries: 0.5, focusArt: 0.12, veins: 0.16, focusVein: 0.1, genCap: 0.12, genCapF: 0.14 },
     flows: ['lv_out', 'aorta', 'lcar', 'rcar', 'lsa', 'rsa'],
     labels: [{ id: 'lv', at: [0.8, 6.4] }, { id: 'arch', at: [2.8, 10] }, { id: 'carotid', at: [6.4, 10] }],
     tracer: { path: ['ao_tr', 'lcar'], from: 0.4, to: 22.7 }   // to > dur：步末停在頸總動脈（lcar 的 20% 處），接第 2 步
@@ -231,8 +231,8 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: P('頸部與腦底部的大血管取自解剖模型；腦表面的分支是示意。', 'The large vessels of the neck and the brain base come from the anatomical model; the branches on the brain surface are schematic.') }
     ],
     camera: [K(0, 'neck'), K(3.0, 'headWide'), K(5.2, 'base'), K(8.6, 'base'), K(11.6, 'lateralL'), K(13, 'lateralL')],
-    style: { ...BG, 'lit.cerebrum': 1, 'lit.cerebellum': 1, 'lit.brainstem': 1, 'glow.arteries': 0.4, heart: 0.12, aorta: 0.18,
-      cerebrum: 0.08, cerebellum: 0.09, brainstem: 0.1, arteries: 0.55, focusArt: 0.45, veins: 0.14, focusVein: 0.14, genCap: 0.28, genCapF: 0.3 },
+    style: { ...BG, 'lit.cerebrum': 0.15, 'lit.cerebellum': 0.15, 'lit.brainstem': 0.15, 'glow.arteries': 0.4, heart: 0.12, aorta: 0.18,
+      cerebrum: 0.04, cerebellum: 0.045, brainstem: 0.05, arteries: 0.55, focusArt: 0.45, veins: 0.14, focusVein: 0.14, genCap: 0.28, genCapF: 0.3 },
     flows: ['lcar', 'rcar', 'rvb', 'lva', 'lpcab', 'lmca2', 'rmca2', 'laca', 'raca'],
     labels: [{ id: 'carotidHi', at: [0.4, 5.0] }, { id: 'vert', at: [1.6, 5.0] }, { id: 'basilar', at: [4.6, 8.8] }, { id: 'circle', at: [5.0, 9.4] },
       { id: 'aca', at: [5.6, 9.4] }, { id: 'mca', at: [6.0, 13] }, { id: 'pca', at: [6.4, 9.4] }, { id: 'cerebrum', at: [10.2, 13] }, { id: 'cerebellum', at: [10.6, 13] }],
@@ -244,11 +244,11 @@ export const STEPS = Object.freeze([
     text: [
       { src: 'EXISTING', p: zoneSent(0, 1, 2) },
       { src: 'NEW', p: P('腦的微血管壁細胞接得特別緊（血腦屏障），只讓氧氣、葡萄糖等需要的物質通過；微血管裡的血一路由鮮紅（充氧）變成暗紅（缺氧）。', 'The cells of brain capillary walls are joined especially tightly (the blood–brain barrier) and let through needed substances such as oxygen and glucose; along the capillary the blood turns from bright red (oxygen-rich) to dark red (oxygen-poor).') },
-      { src: 'NEW', p: P('葡萄糖是腦細胞主要的能量來源，而腦幾乎不能儲存能量：血流一中斷，缺氧幾分鐘腦細胞就會受損。微血管放大很多，是示意。', 'Glucose is the main energy source of brain cells, and the brain can store almost no energy: if blood flow stops, brain cells are damaged within minutes. Capillaries are greatly enlarged (schematic).') }
+      { src: 'NEW', p: P('葡萄糖是腦細胞主要的能量來源，而腦幾乎不能儲存能量：血流一中斷，缺氧的腦細胞很快就會受損。微血管放大很多，是示意。', 'Glucose is the main energy source of brain cells, and the brain can store almost no energy: if blood flow stops, oxygen-starved brain cells are soon damaged. Capillaries are greatly enlarged (schematic).') }
     ],
     camera: [K(0, 'lateralL'), K(2.8, 'focusFar'), K(5.0, 'focusNear'), K(7.4, 'focusClose'), K(14, 'focusClose')],
-    style: { ...BG, 'lit.cerebrum': 1, 'glow.genCapF': 1, 'glow.focusArt': 0.5, 'glow.focusVein': 0.5, heart: 0.05, aorta: 0.08,
-      cerebrum: 0.06, cerebellum: 0.06, brainstem: 0.06, arteries: 0.5, focusArt: 0.55, veins: 0.22, focusVein: 0.55, genCap: 0.3, genCapF: 0.58 },
+    style: { ...BG, 'lit.cerebrum': 0.15, 'glow.genCapF': 1, 'glow.focusArt': 0.5, 'glow.focusVein': 0.5, heart: 0.05, aorta: 0.08,
+      cerebrum: 0.03, cerebellum: 0.03, brainstem: 0.03, arteries: 0.5, focusArt: 0.55, veins: 0.22, focusVein: 0.55, genCap: 0.3, genCapF: 0.58 },
     flows: ['lcar', 'Fa*', 'Fc*', 'Fu*', 'Fv*', 'Fpv'],
     labels: [{ id: 'pial', at: [3.0, 8.4] }, { id: 'caps', at: [5.2, 8.4] }, { id: 'venules', at: [5.8, 8.4] }],   // 放大窗打開前收起標籤（不壓在放大窗上）
     tracer: { path: ['Fa6', 'Fu6', 'Fv5', 'Fpv'], from: 0.4, to: 106.51 },   // 約 4.3–8.5 秒走過底部的 U 形微血管（看得到鮮紅變暗紅）；to > dur：步末停在小靜脈併入軟腦膜小靜脈之後 1.5 mm，接第 4 步
@@ -263,8 +263,8 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: HINT }
     ],
     camera: [K(0, 'focusClose'), K(2.6, 'focusFar'), K(4.6, 'top'), K(7.0, 'back'), K(10.0, 'back'), K(12.4, 'neckR'), K(13, 'neckR')],
-    style: { ...BG, 'lit.cerebrum': 1, 'lit.cerebellum': 1, 'glow.veins': 1, 'glow.focusVein': 0.6, heart: 0.08, aorta: 0.1,
-      cerebrum: 0.08, cerebellum: 0.08, brainstem: 0.08, arteries: 0.2, focusArt: 0.25, veins: 0.58, focusVein: 0.55, genCap: 0.25, genCapF: 0.32 },
+    style: { ...BG, 'lit.cerebrum': 0.15, 'lit.cerebellum': 0.15, 'glow.veins': 1, 'glow.focusVein': 0.6, heart: 0.08, aorta: 0.1,
+      cerebrum: 0.04, cerebellum: 0.04, brainstem: 0.04, arteries: 0.2, focusArt: 0.25, veins: 0.58, focusVein: 0.55, genCap: 0.25, genCapF: 0.32 },
     flows: ['Fpv', ...bgBeds('pv'), 'rdrain', 'ldrain'],
     labels: [{ id: 'cvein', at: [0.8, 4.6] }, { id: 'sss', at: [3.6, 9.8] }, { id: 'ts', at: [6.4, 11.6] }, { id: 'sig', at: [7.2, 11.6] }, { id: 'jugular', at: [10.8, 13] }],
     tracer: { path: ['Fpv', 'rdrain'], from: 0.2, to: 18.05, startU: 0.1047 },   // 上矢狀竇約 3–8 秒、匯合處／橫竇 8–10 秒、乙狀竇與頸靜脈 10 秒後；to > dur：步末停在 rdrain 75%（頸靜脈），接第 5 步
@@ -280,7 +280,7 @@ export const STEPS = Object.freeze([
     ],
     camera: [K(0, 'neckR'), K(3.2, 'chestR'), K(6.6, 'chestR'), K(9.4, 'heartR'), K(11, 'heartR')],
     style: { ...BG, 'lit.heart': 1, 'glow.veins': 1, heart: 0.45, 'cardiovascular.right_atrium': 0.58, 'cardiovascular.right_ventricle': 0.5, aorta: 0.2,
-      cerebrum: 0.07, cerebellum: 0.07, brainstem: 0.08, arteries: 0.2, focusArt: 0.12, veins: 0.55, focusVein: 0.15, genCap: 0.12, genCapF: 0.14 },
+      cerebrum: 0.035, cerebellum: 0.035, brainstem: 0.04, arteries: 0.2, focusArt: 0.12, veins: 0.55, focusVein: 0.15, genCap: 0.12, genCapF: 0.14 },
     flows: ['rdrain', 'ldrain', 'lscv', 'rscv', 'ra_in', 'ra_rv'],
     labels: [{ id: 'jugular', at: [0, 3.0] }, { id: 'svc', at: [3.0, 9.0] }, { id: 'ra', at: [6.6, 11] }, { id: 'rv', at: [8.4, 11] }],
     tracer: { path: ['rdrain', 'ra_in', 'ra_rv'], from: 0, to: 10.6, startU: 0.75 }

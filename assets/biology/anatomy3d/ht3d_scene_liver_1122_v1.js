@@ -72,7 +72,7 @@ export const MATERIAL = Object.freeze({
   diaphragm: { color: '#a8564c', sheen: '#dca095', rough: 0.7 },
   torso: { color: '#e9c8ad', sheen: '#fff1e4', rough: 0.8 },
   artery: { color: '#b3141d', rim: '#ff5a48', rough: 0.3 },
-  vein: { color: '#55162c', rim: '#c0607e', rough: 0.36 }   // 血管只有兩種顏色：充氧血（artery）與缺氧血（vein）；肝竇、肝內分支、肝靜脈全用 vein（2026-11-23 老師）
+  vein: { color: '#5e1219', rim: '#c4545a', rough: 0.36 }   // 血管只有兩種顏色：充氧血（artery）與缺氧血（vein）；肝竇、肝內分支、肝靜脈全用 vein（2026-11-23 老師）
 });
 /* 預設透明度（1＝不透明主角）。畫面上的血管透明度一律 < 0.6，才不會把管內的血球遮住（≥0.6 會開深度寫入）。 */
 export const BASE_STYLE = Object.freeze({

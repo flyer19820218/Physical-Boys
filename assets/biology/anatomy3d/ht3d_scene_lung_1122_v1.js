@@ -14,7 +14,7 @@
  * 座標：公尺；+Y 向上、+Z 向前（胸前）、+X 為人體左側。鏡頭在 +Z 往 -Z 看時，畫面左邊＝人體右側。
  *
  * 科學敘述（查證出處見 sources.md「肺場景」）。src：EXISTING＝現有頁面原句；ADAPTED＝小改；NEW＝新增（待老師審）。
- * 血色：核心全站共識不畫藍色血液（缺氧血＝暗紅偏紫、充氧血＝鮮紅），與 2D 頁面「兩者都是紅色血液」一致。
+ * 血色：核心全站共識不畫藍色血液（缺氧血＝暗紅、充氧血＝鮮紅），與 2D 頁面「兩者都是紅色血液」一致。
  */
 
 const P = (zh, en) => [zh, en];
@@ -68,9 +68,9 @@ export const MATERIAL = Object.freeze({
   alv: { color: '#d4808c', rim: '#f2a3ad', rough: 0.5 },
   alvFocus: { color: '#d4808c', rim: '#f2a3ad', rough: 0.5 },
   artery: { color: '#b3141d', rim: '#ff5a48', rough: 0.3 },
-  vein: { color: '#55162c', rim: '#c0607e', rough: 0.36 },
-  // 肺循環的顏色語意和大循環相反：肺動脈是缺氧血（暗紅偏紫）、肺靜脈是充氧血（鮮紅）
-  pulmArt: { color: '#5e1a33', rim: '#c0607e', rough: 0.36 },
+  vein: { color: '#5e1219', rim: '#c4545a', rough: 0.36 },
+  // 肺循環的顏色語意和大循環相反：肺動脈是缺氧血（暗紅）、肺靜脈是充氧血（鮮紅）
+  pulmArt: { color: '#5e1219', rim: '#c4545a', rough: 0.36 },
   pulmVein: { color: '#b3141d', rim: '#ff5a48', rough: 0.3 }
 });
 /* 預設透明度。血管透明度一律 < 0.6（≥ 0.6 會開啟寫深度，把裡面的血球擋住）。 */
@@ -191,7 +191,7 @@ export const STEPS = Object.freeze([
     title: P('② 左、右肺動脈：把血送進左肺、右肺', '② Left and right pulmonary arteries: into the lungs'),
     text: [
       { src: 'NEW', p: P('肺動脈幹分成左、右肺動脈，分別進入左肺與右肺，在肺裡愈分愈細（肺內分支為示意）。', 'The pulmonary trunk divides into the left and right pulmonary arteries, which enter the lungs and branch ever finer (branches inside the lungs are schematic).') },
-      { src: 'NEW', p: P('肺循環的血壓比大循環低很多：靜止時肺動脈平均約 14 毫米汞柱。', 'Pressure in the pulmonary circulation is much lower than in the systemic circulation: at rest the mean pulmonary arterial pressure is about 14 mmHg.') },
+      { src: 'NEW', p: P('肺循環的血壓比大循環低很多。', 'Pressure in the pulmonary circulation is much lower than in the systemic circulation.') },
       { src: 'EXISTING', p: zoneSent(1, 2, [2, 3]) }
     ],
     camera: [K(0, 'bif'), K(3.0, 'lungsWide'), K(7.0, 'lungsWide'), K(10.4, 'leftLung'), K(12, 'leftLung')],
@@ -208,7 +208,7 @@ export const STEPS = Object.freeze([
     text: [
       { src: 'EXISTING', p: zoneSent(0, 1, 1) },
       { src: 'EXISTING', p: zoneSent(1, 0, 0) },
-      { src: 'NEW', p: P('微血管的血一路由暗紅（缺氧）變成鮮紅（充氧）。成人約有 3～8 億個肺泡，每個直徑約 0.2 毫米；畫面是放大的示意。', 'Along the capillaries the blood turns from dark red (oxygen-poor) to bright red (oxygen-rich). An adult has roughly 300–800 million alveoli, each about 0.2 mm across; this view is an enlarged schematic.') }
+      { src: 'NEW', p: P('微血管的血一路由暗紅（缺氧）變成鮮紅（充氧）。肺泡數量非常多、壁很薄；畫面是放大的示意。', 'Along the capillaries the blood turns from dark red (oxygen-poor) to bright red (oxygen-rich). There are a great many alveoli and their walls are very thin; this view is an enlarged schematic.') }
     ],
     camera: [K(0, 'leftLung'), K(2.6, 'focusFar'), K(4.4, 'focusNear'), K(6.4, 'focusClose'), K(13, 'focusClose')],
     style: { ...BG, 'lit.lungs': 0.6, 'lit.alvFocus': 0, 'glow.genCapF': 1, 'glow.pulmArt': 0.3, 'glow.pulmVein': 0.3, heart: 0.1, lungs: 0.06, aorta: 0.1, pulmArt: 0.58, pulmVein: 0.58,

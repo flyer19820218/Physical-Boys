@@ -69,7 +69,7 @@ export const MATERIAL = Object.freeze({
   diaphragm: { color: '#a8564c', sheen: '#dca095', rough: 0.7 },
   torso: { color: '#e9c8ad', sheen: '#fff1e4', rough: 0.8 },
   artery: { color: '#b3141d', rim: '#ff5a48', rough: 0.3 },
-  vein: { color: '#55162c', rim: '#c0607e', rough: 0.36 }
+  vein: { color: '#5e1219', rim: '#c4545a', rough: 0.36 }
 });
 /* 預設透明度（1 = 不透明主角）。血管透明度不要 ≥ 0.6（會開啟寫深度，把裡面的血球擋住）。 */
 export const BASE_STYLE = Object.freeze({
