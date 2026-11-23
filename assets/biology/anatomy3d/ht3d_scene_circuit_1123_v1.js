@@ -267,7 +267,7 @@ export const STEPS = Object.freeze([
     ],
     camera: [K(0, 'wide'), K(8.8, 'wide2'), K(12, 'gutMid')],
     style: { ...BG, 'glow.sma': 0.8, 'glow.neckArt': 0.8, 'glow.renalArt': 0.8, 'glow.hepArt': 0.8, 'glow.aorta': 0.5, 'glow.gutMicro': 0.6, 'glow.kidneyMicro': 0.6, 'glow.brainMicro': 0.6, 'glow.liverMicro': 0.3,
-      'lit.gut': 0.5, 'lit.kidneys': 0.5, 'lit.cerebrum': 0.3, 'lit.liver': 0.3 },
+      'lit.gut': 0.5, 'lit.kidneys': 0.5, 'lit.cerebrum': 0.3, liver: 0.34, 'lit.liver': 0.9 },   // 肝：底透明度 0.16 太淡、混在軀幹和肺的灰影裡看不清（老師 2026-11-23），目標器官提高不透明度與亮度
     flows: ['aorta', 'aorta_lower', 'lcar', 'rcar', 'sma', 'sma_branch', 'hep_artery', ...KIDNEY_ART, ...ARTS, 'kart_*'],
     labels: [{ id: 'brain', at: [0.6, 9.0] }, { id: 'kidney', at: [1.0, 9.0] }, { id: 'sma', at: [1.4, 9.0] }, { id: 'liver', at: [1.8, 9.0] }],
     tracer: { path: ['sma', 'art_4'], from: 0.5, to: 11.5, startU: 1 }   // 從第 1 步停下的地方（腸繫膜上動脈末端）走進小動脈，步末停在小動脈末端＝微血管入口
@@ -280,7 +280,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: P('小腸的微血管還會把吃進來的養分吸收進血液；同一時間，腦、腎等其他器官的微血管也在交換。', 'In the small intestine the capillaries also take digested nutrients into the blood; at the same moment, capillaries in the brain, kidneys and other organs are exchanging too.') }
     ],
     camera: [K(0, 'gutMid'), K(3.5, 'gutClose'), K(12, 'gutClose2')],
-    style: { ...BG, 'glow.gutMicro': 1, 'glow.kidneyMicro': 0.7, 'glow.brainMicro': 0.7, 'glow.liverMicro': 0.3, 'lit.gut': 0.5, 'lit.kidneys': 0.4, 'lit.cerebrum': 0.3 },
+    style: { ...BG, 'glow.gutMicro': 1, 'glow.kidneyMicro': 0.7, 'glow.brainMicro': 0.7, 'glow.liverMicro': 0.3, 'lit.gut': 0.5, 'lit.kidneys': 0.4, 'lit.cerebrum': 0.3, liver: 0.3, 'lit.liver': 0.5 },
     flows: [...ARTS, ...CAPS, ...VENS, 'kart_*', 'kc_*', 'kven_*', 'bc_*', 'lcar', 'rcar', 'Fpv', 'B1pv'],
     labels: [{ id: 'caps', at: [2.6, 12] }, { id: 'gut', at: [3.0, 12] }],
     tracer: { path: ['art_4', 'cap_4', 'ven_4'], from: 0.3, to: 11.5, startU: 1 }
@@ -293,7 +293,7 @@ export const STEPS = Object.freeze([
       { src: 'NEW', p: P('腎的血由腎靜脈併入下腔靜脈；頭部的血經頸靜脈、上腔靜脈。兩條腔靜脈都通到右心房，再進右心室。', 'Blood from the kidneys joins the inferior vena cava via the renal veins; blood from the head returns through the jugular vein and superior vena cava. Both venae cavae open into the right atrium, then the right ventricle.') }
     ],
     camera: [K(0, 'gutClose2'), K(3.0, 'portalView'), K(6.0, 'portalView'), K(9.0, 'liverView'), K(10.0, 'liverView'), K(12.5, 'raView'), K(14.0, 'raView'), K(16, 'rvView')],
-    style: { ...BG, 'glow.portal': 1, 'glow.hepVein': 1, 'glow.ivc': 1, 'glow.renalVein': 0.7, 'glow.headVein': 0.7, 'glow.liverMicro': 1, 'lit.liver': 0.6, 'lit.heart': 0.5 },
+    style: { ...BG, 'glow.portal': 1, 'glow.hepVein': 1, 'glow.ivc': 1, 'glow.renalVein': 0.7, 'glow.headVein': 0.7, 'glow.liverMicro': 1, liver: 0.42, 'lit.liver': 1, 'lit.heart': 0.5 },   // 肝是這一步的目標器官：不透明度 0.42（< 0.6，裡面的肝竇血流才不會被擋住）＋最亮
     flows: [...VENS, 'smv', 'splenic', 'portal', ...LIVER_CAPS, 'hep_artery', 'hv1', 'hv2', 'ivc_lower', 'ivc_upper', 'renal_v_L', 'renal_v_R', 'kven_*', 'Fpv', 'B1pv', 'rdrain', 'ra_in', 'ra_rv'],
     labels: [{ id: 'smv', at: [3.0, 7.0] }, { id: 'portal', at: [5.0, 10.0] }, { id: 'liver', at: [6.6, 11.0] }, { id: 'ivc', at: [9.4, 12.2] }, { id: 'svc', at: [11.8, 16] }, { id: 'ra', at: [12.0, 16] }, { id: 'rv', at: [13.8, 16] }],
     tracer: { path: ['ven_4', 'smv', 'portal', 'liver_cap_b', 'hv1', 'ivc_upper', 'ra_rv'], from: 0.4, to: 15.6, startU: 1 }
