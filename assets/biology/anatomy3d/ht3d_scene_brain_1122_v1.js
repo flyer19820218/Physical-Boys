@@ -222,7 +222,7 @@ export const STEPS = Object.freeze([
       cerebrum: 0.035, cerebellum: 0.035, brainstem: 0.04, arteries: 0.5, focusArt: 0.12, veins: 0.16, focusVein: 0.1, genCap: 0.12, genCapF: 0.14 },
     flows: ['lv_out', 'aorta', 'lcar', 'rcar', 'lsa', 'rsa'],
     labels: [{ id: 'lv', at: [0.8, 6.4] }, { id: 'arch', at: [2.8, 10] }, { id: 'carotid', at: [6.4, 10] }],
-    tracer: { path: ['ao_tr', 'lcar'], from: 0.4, to: 22.7 }   // to > dur：步末停在頸總動脈（lcar 的 20% 處），接第 2 步
+    tracer: { path: ['ao_tr', 'lcar'], from: 0.4, to: 22.9 }   // to > dur：步末停在頸總動脈（lcar 的 20% 處），接第 2 步
   },
   {
     id: 'to_brain', dur: 13, btn: P('頸動脈、椎動脈進入腦', 'Carotid & vertebral arteries'),
@@ -269,7 +269,7 @@ export const STEPS = Object.freeze([
       cerebrum: 0.04, cerebellum: 0.04, brainstem: 0.04, arteries: 0.2, focusArt: 0.25, veins: 0.58, focusVein: 0.55, genCap: 0.25, genCapF: 0.32 },
     flows: ['Fpv', ...bgBeds('pv'), 'rdrain', 'ldrain'],
     labels: [{ id: 'cvein', at: [0.8, 4.6] }, { id: 'sss', at: [3.6, 9.8] }, { id: 'ts', at: [6.4, 11.6] }, { id: 'sig', at: [7.2, 11.6] }, { id: 'jugular', at: [10.8, 13] }],
-    tracer: { path: ['Fpv', 'rdrain'], from: 0.2, to: 18.05, startU: 0.1047 },   // 上矢狀竇約 3–8 秒、匯合處／橫竇 8–10 秒、乙狀竇與頸靜脈 10 秒後；to > dur：步末停在 rdrain 75%（頸靜脈），接第 5 步
+    tracer: { path: ['Fpv', 'rdrain'], from: 0.2, to: 18.06, startU: 0.1047 },   // 上矢狀竇約 3–8 秒、匯合處／橫竇 8–10 秒、乙狀竇與頸靜脈 10 秒後；to > dur：步末停在 rdrain 75%（頸靜脈），接第 5 步
     window: { kind: 'tissue', close: [0, 0.9], focus: { pos: FC }, tag: P('放大：微血管與腦細胞的交換（示意）', 'Enlarged: capillary and brain cells (schematic)') }
   },
   {
@@ -293,8 +293,8 @@ export const SCENE = Object.freeze({
   ...BEST_SCENE,   // 全部循環共用的最佳模板（ht3d_preset_1122_v1.js）：全身血管底圖、血管底線、亮度對比、血球同色發光
 
   id: 'brain', name: P('腦部：組織細胞', 'Brain: tissue cells'),
-  glb: 'assets/biology/anatomy3d/brain_scene_v1.glb?v=20261123-d6', glbLite: 'assets/biology/anatomy3d/brain_scene_v1_lite.glb?v=20261123-d6',
-  parts: 'assets/biology/anatomy3d/brain_parts_v1.json?v=20261123-d6', centerlines: 'assets/biology/anatomy3d/brain_centerlines_v1.json?v=20261123-d6',
+  glb: 'assets/biology/anatomy3d/brain_scene_v1.glb?v=20261123-f3', glbLite: 'assets/biology/anatomy3d/brain_scene_v1_lite.glb?v=20261123-f3',
+  parts: 'assets/biology/anatomy3d/brain_parts_v1.json?v=20261123-f3', centerlines: 'assets/biology/anatomy3d/brain_centerlines_v1.json?v=20261123-f3',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: { ...GROUPS, ...BEST_GROUPS }, material: MATERIAL, baseStyle: { ...BASE_STYLE, ...BEST_BASE, bodyArtHead: 0, bodyVeinHead: 0 }, flow: FLOW, flowKey, tubeGroup,   // 腦場景自己畫頭頸血管（JSON 中心線），全身底圖的頭頸那組不畫（baseStyle 設 0），免得兩層重疊
   // 資料集的血管網格一律不畫，改畫單層、半徑漸變的管（半徑取自網格並平滑、單調化；網格估計值見 sources.md「腦場景」）；腦表面的血管、小動脈、小靜脈（示意）併入同材質的組
   replaceMesh: {

@@ -612,7 +612,7 @@ def join_smooth(A,B,ramp=0.004):
 CURV={}
 # ---------------- 3. 動脈：主動脈、弓上分支、頸部 ----------------
 asc,arch,desc=MCL['asc'][0],MCL['arch'][0],MCL['desc'][0]
-ao=resamp(denoise(cat(asc,arch,desc),0.009,keep=0.0),0.0015)
+ao=resamp(denoise(cat(asc,arch,desc),0.015,keep=0.0),0.0015)   # 主動脈半徑 12–14 mm：中心線要很平順，曲率半徑才會大於管半徑
 aor=mono_dec(np.minimum(_ma(interp_r(ao,np.vstack([asc,arch,desc]),np.r_[MCL['asc'][1],MCL['arch'][1],MCL['desc'][1]]),15),14.0e-3),9)
 cao=_cum(ao);s_of=lambda pt:float(cao[int(np.argmin(np.linalg.norm(ao-np.asarray(pt),axis=1)))])
 S_BCT=s_of(MCL['bct'][0][0]);S_LCCA=s_of(MCL['lcca'][0][0]);S_LSA=s_of(MCL['lsa'][0][0])
@@ -667,7 +667,13 @@ for side,sg in (('r',-1),('l',1)):
   out={}
   for nm,P,R in (('aca',aca,aca_r),('m1',m1,m1_r),('m2a',m2a,np.full(len(m2a),r2)),('m2b',m2b,np.full(len(m2b),r2)),('pca',pca,pca_r)):
     P1=resamp(denoise(P,0.0015 if nm.startswith('m2') else 0.0025 if nm=='pca' else 0.0012,keep=0.003 if not nm.startswith('m2') else 0.0012),0.0006);R1=interp_r(P1,P,R)   # 島葉支（M2）網格中心線末端有一小段急彎：平滑到接近末端
-    P2=hug(P1,R1,iters=300,clear=0.0002,fix=0.004,fix1=0.0006) if nm=='pca' else P1;P2=resamp(P2,0.0008)   # 大腦中動脈 M1 段、大腦前動脈在資料集裡夾在很窄的腦裂中，推不出去（推會折出鋸齒）：不推，穿進的深度記在 validation   # 資料集的顱內動脈網格有幾處淺淺穿進腦網格：用「限制下的平滑」推到腦外
+    P2=hug(P1,R1,iters=300,clear=0.0002,fix=0.004,fix1=0.0006) if nm=='pca' else P1;P2=resamp(P2,0.0008)   # 資料集的大腦後動脈有幾處淺淺穿進腦幹網格：用「限制下的平滑」推到腦外
+    if nm=='m1':   # 資料集的大腦中動脈 M1 段夾在額葉與顳葉網格互相貼住的地方（沒有縫），推不出去：改用 A* 在腦外找一條起訖、切線都不變的路徑（示意，偏離網格中心線最多約 7 mm）
+      P2,_r,_m=pial_route(P1[0],unit(P1[3]-P1[0]),P1[-1],unit(P1[-1]-P1[-4]),float(R1[0]),float(R1[-1]));P2=resamp(P2,0.0008)
+      out[nm]=(P2,gtaper(P2,float(R1[0]),float(R1[-1])),_m);continue
+    if nm=='aca':   # 大腦前動脈在資料集裡往兩半球之間的縫走，但腦網格在那裡互相貼住（沒有縫）：畫到還在腦外、離腦表面 ≥ 0.15 mm 的最後一點為止，末端收細（之後的分支沒有畫）
+      dd_=STREE.query(P2)[0];Rr=interp_r(P2,P,R);ins_=np.array([in_brain(q) for q in P2]);cl_=np.where(ins_,-dd_,dd_)-Rr;bad=np.where(cl_<0.00015)[0];k_=int(bad[0]) if len(bad) else len(P2)
+      P2=P2[:max(k_,8)];Rr=ramp_to(Rr[:len(P2)],P2,0.7*float(Rr[len(P2)-1]),0.004);out[nm]=(P2,Rr,0.0);continue
     out[nm]=(P2,interp_r(P2,P,R),float(np.max(cKDTree(P2).query(P1)[0])))
   intra[side]=out
 log('arteries done')
@@ -1020,6 +1026,51 @@ chain('rmca2',['rm2b','B5pa','B5pa_in'],'artery','rich','right middle cerebral i
 for B in BEDS: chain(B+'pv',[B+'pv_in',B+'pv'],'vein','poor','pial venule of bed '+B+' -> schematic cerebral vein -> dural sinus')
 chain('rdrain',['sss','rts','rsig','rijv','rbcv','svc'],'vein','poor','superior sagittal sinus -> right transverse -> right sigmoid sinus -> (link) -> right internal jugular -> right brachiocephalic -> superior vena cava')
 chain('ldrain',['lts','lsig','lijv','lbcv'],'vein','poor','left transverse (side branch at the confluence) -> left sigmoid sinus -> (link) -> left internal jugular -> left brachiocephalic')
+def smooth_joint(name,s0,sigma,half,step=0.0006):
+  """合併段在接點附近的小折角：接點前後 half 公尺內做高斯平滑（中間最強、兩邊漸弱），半徑跟著弧長重取樣"""
+  sg=segs[name];P=np.asarray(sg['points'],float);R=np.asarray(sg['radius'],float);c=_cum(P);L=c[-1]
+  P2=resamp(P,step);c2=_cum(P2);R2=np.interp(c2/c2[-1],c/L,R)
+  G=gaussian_filter1d(P2,sigma/step,axis=0,mode='nearest');w=(1-ss(np.abs(c2-s0*c2[-1]/L)/half))[:,None];P3=P2+w*(G-P2);c3=_cum(P3);P4=resamp(P3,step);sg['points']=P4;sg['radius']=np.interp(_cum(P4)/_cum(P4)[-1],c3/c3[-1],R2)
+for nm_,cp_ in (('rdrain','rbcv'),('rdrain','svc')): smooth_joint(nm_,PARTS[nm_][cp_][0]*_cum(segs[nm_]['points'])[-1],0.006,0.022)   # 內頸靜脈→頭臂靜脈→上腔靜脈
+for nm_,cp_ in (('lcar','lm1'),('rcar','rm1')): smooth_joint(nm_,PARTS[nm_][cp_][0]*_cum(segs[nm_]['points'])[-1],0.003,0.010)   # 頸內動脈末端分出大腦中動脈（T 形）
+smooth_joint('rdrain',0.5*(PARTS['rdrain']['svc'][0]+1.0)*_cum(segs['rdrain']['points'])[-1],0.008,0.03)   # 上腔靜脈整段
+smooth_joint('rdrain',PARTS['rdrain']['rts'][0]*_cum(segs['rdrain']['points'])[-1],0.003,0.010)   # 上矢狀竇→右橫竇（竇匯）
+for nm_,cp_ in (('lcar','Fpa'),('rcar','B1pa'),('lmca2','B4pa'),('rmca2','B5pa'),('lpcab','B2pa'),('rvb','B3pa')): smooth_joint(nm_,PARTS[nm_][cp_][0]*_cum(segs[nm_]['points'])[-1],0.0015,0.005)   # 腦底動脈→腦表面小動脈的接點
+def hug_window(P,R,s0,s1,ramp=0.008,iters=400,lam=0.3,clear=0.0002):
+  """只在弧長 s0～s1（公尺）之間做「限制下的平滑」，兩邊 ramp 內漸弱：把貼著腦幹的椎動脈末段、基底動脈推到腦外"""
+  P=np.asarray(P,float).copy();R=np.asarray(R,float)
+  for it in range(iters):
+    c=_cum(P);w=ss((c-s0)/ramp)*ss((s1-c)/ramp)
+    Q=P.copy();Q[1:-1]=P[1:-1]+lam*w[1:-1,None]*(0.5*(P[:-2]+P[2:])-P[1:-1]);P=Q
+    m=w>0.02;d,j=STREE.query(P[m]);q=SURF[j];need=R[m]+clear;ins=np.array([in_brain(x) for x in P[m]])
+    dirn=(P[m]-q)/np.maximum(d,1e-9)[:,None];dirn[ins]*=-1;amt=np.where(ins,d+need,np.maximum(0,need-d))*w[m]
+    P[m]=P[m]+dirn*amt[:,None]
+    if it%50==49:
+      c0=_cum(P);P2=resamp(P,float(np.mean(np.diff(c0))));R=np.interp(_cum(P2)/_cum(P2)[-1],c0/c0[-1],R);P=P2
+  return P,R
+def move_end(sid,new,which,L=0.010):
+  """側支末端（或起端）跟著母管移動：位移在 L 公尺內漸弱"""
+  sg=segs[sid];P=np.asarray(sg['points'],float);c=_cum(P)
+  if which=='end': d=new-P[-1];w=ss((c-(c[-1]-L))/L)
+  else: d=new-P[0];w=1-ss(c/L)
+  sg['points']=P+w[:,None]*d[None,:]
+_sg=segs['rvb'];_c=_cum(_sg['points']);_L=_c[-1];_old_s=_sg['points'][int(np.argmin(np.abs(_c-PARTS['rvb']['ba'][0]*_L)))].copy();_old_e=_sg['points'][int(np.argmin(np.abs(_c-PARTS['rvb']['ba'][1]*_L)))].copy()
+_P,_R=hug_window(_sg['points'],_sg['radius'],(PARTS['rvb']['rva'][1]*_L)-0.03,PARTS['rvb']['rpca'][0]*_L+0.004)   # 椎動脈最後 30 mm＋基底動脈：資料集貼著（部分穿進）腦幹網格
+_sg['points'],_sg['radius']=_P,_R;_tr=cKDTree(_P)
+move_end('lva',_P[_tr.query(segs['lva']['points'][-1])[1]],'end');move_end('lpcab',_P[_tr.query(segs['lpcab']['points'][0])[1]],'start')
+# 大腦後動脈中段、第二條島葉支接腦表面小動脈處：管壁還略為碰到腦（中心線在腦外）：同樣在局部推開
+for _sid,_cp,_a,_b in (('rvb','rpca',0.012,0.034),('lpcab','lpca',0.012,0.036),('lmca2','B4pa',-0.004,0.006),('rmca2','B5pa',-0.004,0.006)):
+  _sg=segs[_sid];_c=_cum(_sg['points']);_s=PARTS[_sid][_cp][0]*_c[-1];_sg['points'],_sg['radius']=hug_window(_sg['points'],_sg['radius'],_s+_a,_s+_b,ramp=0.005,clear=0.00025)
+def shrink_tight(sid,u0,look=0.008,minr=0.00015,gap=0.00008):
+  """很窄的縫（大腦後動脈繞過中腦旁、夾在腦幹與顳葉之間）推不開：從弧長比例 u0 起，管半徑縮到不碰腦（離腦表面 ≥ gap），
+  半徑只會變細（單調）、提早 look 公尺開始漸細，標示意"""
+  sg=segs[sid];P=np.asarray(sg['points'],float);R=np.asarray(sg['radius'],float).copy();c=_cum(P);m=c>=u0*c[-1]
+  d=STREE.query(P)[0];tg=R.copy();tg[m]=np.minimum(R[m],np.maximum(minr,d[m]-gap))
+  k=max(1,int(look/np.mean(np.diff(c))));la=np.array([tg[i:i+k+1].min() for i in range(len(tg))])
+  i0=int(np.argmax(m));R2=R.copy();R2[i0:]=np.minimum.accumulate(np.minimum(R[i0:],la[i0:]))
+  R2=np.minimum(R2,_ma(R2,max(3,k|1)));R2[i0:]=np.minimum.accumulate(R2[i0:]);sg['radius']=R2
+  return float(R2[i0:].min())
+# （試過 shrink_tight 讓大腦後動脈縮到不碰腦：要縮到 0.14 mm，下游也只能更細，接不上床的小動脈，所以不用；大腦後動脈管壁仍碰到腦約 0.5–0.7 mm，中心線在腦外）
 # 側支：從母管中心線分出，從母管壁才開始畫；併入母管中心線的，畫到母管壁為止
 side_from('rsa','rcar');side_from('laca','lcar');side_from('raca','rcar');side_from('lmca2','lcar');side_from('rmca2','rcar');side_from('lpcab','rvb')
 side_from('ldrain','rdrain');side_to('ldrain','rdrain');side_to('lva','rvb');side_to('lscv','ldrain');side_to('rscv','rdrain')
@@ -1030,16 +1081,24 @@ for k_,sg in segs.items():
 for B in BEDS:   # 床內小動脈與小靜脈的母管改名後，側支的 tubeRange 照舊（母管的點沒有變）
   pass
 log('chained; segments',len(segs))
+# (2b) 合併、平滑之後再查一次：顱內動脈（畫出來的範圍）不可穿進腦
+for sid in ('lcar','rcar','rvb','lpcab','lmca2','rmca2','laca','raca','lpcom','rpcom','acom'):
+  sg=segs[sid];P=np.asarray(sg['points']);R=np.asarray(sg['radius']);u=sg.get('tubeRange',[0,1]);cf=_cum(P)/_cum(P)[-1];m=(cf>=u[0])&(cf<=u[1])&(P[:,1]>1.53)
+  d=STREE.query(P[m])[0];ins=np.array([in_brain(q) for q in P[m]]);cl=np.where(ins,-d,d)-R[m]
+  report.setdefault(sid,{}).update(post_inside_brain_points=int(ins.sum()),post_min_wall_clearance_mm=round(float(cl.min())*1000,2) if len(cl) else None)
+log('post-chain intracranial',{k:(report[k]['post_inside_brain_points'],report[k]['post_min_wall_clearance_mm']) for k in ('lcar','rcar','rvb','lpcab','lmca2','rmca2','laca','raca','lpcom','rpcom','acom')})
+def drawn(sid):
+  sg=segs[sid];p=np.asarray(sg['points']);r=np.asarray(sg['radius']);u=sg.get('tubeRange',[0,1]);c=_cum(p);f=c/c[-1];m=(f>=u[0]-1e-9)&(f<=u[1]+1e-9);return p[m],r[m]
 # (3) 曲率（曲率半徑÷管半徑）
 for sid,sg in segs.items():
   if sg['kind']=='chamber': continue
-  q,i=min_curv_ratio(sg['points'],sg['radius']);report.setdefault(sid,{})['min_curv_over_r']=round(q,2)
+  P_,R_=drawn(sid)
+  if len(P_)<4: continue
+  q,i=min_curv_ratio(P_,R_);report.setdefault(sid,{})['min_curv_over_r']=round(q,2)   # 只算畫出來的範圍（tubeRange 外、藏在母管裡的轉彎不算）
 mc=sorted((v['min_curv_over_r'],k) for k,v in report.items() if 'min_curv_over_r' in v)
 log('min curvature/r lowest 16',mc[:16])
 report['_junction_curvature']={k:round(v,2) for k,v in CURV.items()}
 # (4) 畫出來的管不可互相穿過（相連的兩段在接點附近不算）
-def drawn(sid):
-  sg=segs[sid];p=np.asarray(sg['points']);r=np.asarray(sg['radius']);u=sg.get('tubeRange',[0,1]);c=_cum(p);f=c/c[-1];m=(f>=u[0]-1e-9)&(f<=u[1]+1e-9);return p[m],r[m]
 drw=[k for k in segs if segs[k]['kind']!='chamber']
 D_={k:drawn(k) for k in drw};TR_={k:cKDTree(D_[k][0]) for k in drw};BB={k:(D_[k][0].min(0)-D_[k][1].max()-1e-3,D_[k][0].max(0)+D_[k][1].max()+1e-3) for k in drw}
 FULLP={k:cKDTree(np.asarray(segs[k]['points'])) for k in drw}
