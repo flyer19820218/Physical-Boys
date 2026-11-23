@@ -294,7 +294,7 @@ export const SCENE = Object.freeze({
 
   id: 'brain', name: P('腦部：組織細胞', 'Brain: tissue cells'),
   glb: 'assets/biology/anatomy3d/brain_scene_v1.glb?v=20261123-f3', glbLite: 'assets/biology/anatomy3d/brain_scene_v1_lite.glb?v=20261123-f3',
-  parts: 'assets/biology/anatomy3d/brain_parts_v1.json?v=20261123-f3', centerlines: 'assets/biology/anatomy3d/brain_centerlines_v1.json?v=20261123-h4f3',
+  parts: 'assets/biology/anatomy3d/brain_parts_v1.json?v=20261123-f3', centerlines: 'assets/biology/anatomy3d/brain_centerlines_v1.json?v=20261123-h5f3',
   names: NAMES, labelAllow: LABEL_ALLOW, groups: { ...GROUPS, ...BEST_GROUPS }, material: MATERIAL, baseStyle: { ...BASE_STYLE, ...BEST_BASE, bodyArtHead: 0, bodyVeinHead: 0 }, flow: FLOW, flowKey, tubeGroup,   // 腦場景自己畫頭頸血管（JSON 中心線），全身底圖的頭頸那組不畫（baseStyle 設 0），免得兩層重疊
   // 資料集的血管網格一律不畫，改畫單層、半徑漸變的管（半徑取自網格並平滑、單調化；網格估計值見 sources.md「腦場景」）；腦表面的血管、小動脈、小靜脈（示意）併入同材質的組
   replaceMesh: {

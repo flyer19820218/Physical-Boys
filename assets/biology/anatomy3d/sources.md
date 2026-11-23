@@ -285,6 +285,31 @@ BodyParts3D 原本是 CC BY 4.0（Z-Anatomy 改作時為 CC BY-SA 2.1 Japan）�
 
 **放大窗**：沿用 2D「組織」交換動畫（`HumanTransportExchanges` 的 `tissue` 區，畫的是一般組織細胞，不是神經元／星狀膠細胞），標題寫「放大：微血管與腦細胞的交換（示意）」。
 
+## 心臟／冠狀動脈場景（心臟：冠狀循環，`ht3d_scene_heart_1123_v1.js`，2026-11-23）
+
+**沒有新增解剖資料來源**：沿用 `si_scene_v1.glb`（Z-Anatomy／BodyParts3D，CC BY-SA 4.0）。資料集有的：左冠狀動脈、前室間動脈、迴旋支、右冠狀動脈（各分支每條一段管子）、升主動脈、四個心腔、三片主動脈瓣。**資料集沒有的**（全部程式生成、畫面標「示意」）：心靜脈（大心靜脈、後室靜脈、小心靜脈、前心靜脈）、冠狀竇、末端小動脈、心肌微血管、小靜脈。
+
+| 檔案 | 說明 |
+|---|---|
+| `heart_centerlines_v1.json`（約 200 KB，190 段） | `tools/anatomy/build_heart_centerlines.py` 產生（用法在腳本開頭；需要 `/tmp/si_world.json`；不用亂數）。結尾呼叫 `polish_vessels.polish_path`；`polish_vessels.py` 的名稱表已加 `heart`（`--audit heart` 可稽核）。 |
+| `ht3d_scene_heart_1123_v1.js` | 場景資料：5 步（①主動脈根部 ②左右冠狀動脈 ③心肌微血管 ④心靜脈匯進冠狀竇 ⑤回到右心房），格式照肺場景；說明文字的「EXISTING」句子從 2D 頁面 `human_transport_exchanges_1013_v1.js` 的 `heart` 區原文取出。 |
+
+**路線**：左心室 → 主動脈根部 → 左／右冠狀動脈 → 愈分愈細的分支（26 條末端）→ 心肌微血管（示意）→ 小靜脈 → 沿動脈旁的心靜脈 → 冠狀竇 → 右心房。追蹤的紅血球：`lv_out → root_L → lca → tr_lad → lad_2 → sa_lad_2 → cp_lad_2_1 → sv_lad_2 → v_lad_2 → tr_gcv → cs → ra_in`（`tr_*` 只是路徑片段，不畫）。
+
+**數字與生成方式**（網格量到的、或有出處的；其餘是示意）
+- 動脈中心線與半徑由網格估出（`radius_mesh` 留在 JSON）；樹的父子關係依最近距離判定，子管接到母管壁上、切線相接，半徑由根部往下依 Murray 定律遞減（左冠狀動脈主幹 1.95→1.85 mm；前室間動脈 1.5 mm 起、迴旋支 1.4 mm、右冠狀動脈 2.0 mm 起；樹梢不低於約 0.4 mm）。左冠狀動脈主幹約 16 mm、前室間動脈約 113 mm，落在文獻的範圍內（左主幹約 1～2 cm；前降支約 10～13 cm）。
+- **心靜脈（示意）**：每條動脈分支旁一條伴行靜脈，半徑＝動脈的 1.3 倍（靜脈比伴行動脈粗，畫示意用的係數，不是量到的），旁開距離＝兩管半徑和＋0.8 mm；由樹梢往根部匯集，匯入母管的伴行靜脈。大心靜脈沿前室間動脈旁上行，繞過左緣接迴旋支旁的靜脈；小心靜脈在右冠狀動脈旁；前心靜脈（`v_rca_4／9／12`）直接開口在右心房壁。
+- **冠狀竇（示意）**：沿心臟後面的房室溝走，半徑由 1.95 mm 依 Murray 增到 2.33 mm（只依匯入的各支算，口徑為示意，不是量到的），終點埋在右心房壁（`mouthEnd`，不縮口）。
+- **微血管床**：每條動脈分支末端一組：小動脈 `sa_` → 3 條微血管 `cp_`（半徑 0.222 mm，已放大；巢狀 U 形環伸入心肌 0.6～2 mm）→ 小靜脈 `sv_`（半徑 3^(1/3)×0.222 mm，Murray）。放大示意的那一床（`lad_2`，第 3 步特寫）的環更深更長（×2.2／×1.4）；其餘床用實際比例。血色沿微血管由鮮紅漸變暗紅（`o2: 'rich>poor'`）。
+- 心腔內、只給血球走的路徑：`lv_out`（左心室→主動脈）、`root_L`／`root_R`（主動脈竇內到兩個冠狀動脈開口）、`ra_in`（冠狀竇口→右心房內）。
+
+**科學敘述的出處**（2026-11-23 查證；畫面上的句子只有下列概念）
+- 左、右冠狀動脈起自主動脈竇（主動脈瓣上方）：StatPearls〈Anatomy, Thorax, Heart Coronary Arteries〉（https://www.statpearls.com/point-of-care/24148）；左冠狀動脈主幹約 1～2 cm 後分成前降支與迴旋支：University of Minnesota Visible Heart Lab〈Coronary Arterial Anatomy〉（https://www.vhlab.umn.edu/atlas/coronary-system-tutorial/coronary-arterial-anatomy.shtml）；前降支長約 10～13 cm：StatPearls〈Anomalous LAD〉（https://www.statpearls.com/point-of-care/17618）。
+- 冠狀靜脈沿著主要動脈走、匯入冠狀竇，冠狀竇開口於右心房後下方：Radiopaedia〈Great cardiac vein〉（https://radiopaedia.org/articles/34284）；StatPearls〈Anatomy, Thorax, Coronary Sinus〉（https://www.statpearls.com/kb/viewarticle/36082）；University of Minnesota〈Coronary Venous Anatomy〉（https://www.vhlab.umn.edu/atlas/coronary-system-tutorial/coronary-venous-anatomy.shtml）。前心靜脈直接注入右心房：同一篇 StatPearls。
+- 其餘（心肌微血管交換氧氣、養分與二氧化碳；缺氧血暗紅）沿用 2D 頁面原句與全站血色規則。**畫面文字有 `src:'NEW'` 的句子待老師審。**
+
+**已知限制**：沒有中心心靜脈（沿後室間溝）、左心房斜靜脈、冠狀竇瓣（Thebesian 瓣）、靜脈瓣；冠狀動脈分支依網格，分支數與位置不代表標準「第幾對角支」，所以畫面標籤不用前室間動脈、迴旋支這類名稱（zh_review），文字只說「兩大支」；右心房、左心室網格是厚殼，冠狀竇口埋在殼內；背景的全身血管底圖在心臟前面會有血管交錯（所有場景共用的設計）。
+
 ## 已知限制與缺漏
 
 - **沒有**獨立的空腸動脈、迴腸動脈（資料集只有腸系膜上動脈本體含幾條短分支，以及迴結腸動脈的迴腸支）；沒有獨立的盲腸、直腸；沒有獨立的主動脈根（竇）網格（`root_of_aorta` 群組只含三片主動脈瓣）；沒有胃網膜動脈、胃右動脈、短胃動脈。

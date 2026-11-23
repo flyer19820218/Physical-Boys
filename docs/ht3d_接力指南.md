@@ -39,6 +39,8 @@
 | `ht3d_core_1122_v1.js` | 引擎：場景、材質（邊緣光）、鏡頭關鍵格、沿中心線流動的紅血球（InstancedMesh）、CSS2D 標籤、放大窗（呼叫 2D 的 `HumanTransportExchanges.draw`）。通用，新場景不用改。 |
 | `ht3d_scenes_1122_v1.js` | **場景登錄檔**：`export const SCENES = { <id>: { file, label:[中,英] } }`。加一行就多一個場景；兩個以上場景時，3D 舞台上方會出現場景切換鈕。 |
 | `ht3d_scene_small_intestine_1122_v1.js` | 場景資料範本：`NAMES`／`LABEL_ALLOW`／`GROUPS`／`MATERIAL`／`BASE_STYLE`／`FLOW`／`LABELS`／`STEPS`／`SCENE`。**新場景照這個檔的格式複製。** |
+| `ht3d_scene_heart_1123_v1.js` | **心臟／冠狀循環**（5 步：主動脈根部→左右冠狀動脈→心肌微血管→心靜脈匯進冠狀竇→回右心房）。動脈樹依資料集網格，心靜脈、冠狀竇、微血管全是程式生成的示意；`replaceMesh` 的 `coronV` 群組沒有資料集網格，核心直接生成。 |
+| `heart_centerlines_v1.json`（約 200 KB，190 段） | 心臟場景的中心線。`tools/anatomy/build_heart_centerlines.py` 產生（用法在腳本開頭；需要 `/tmp/si_world.json`）。 |
 | `ht3d_scene_liver_1122_v1.js` | **肝臟路線**（4 步：兩個入口→並行分支→肝小葉→肝靜脈回心臟）。肝內全是程式生成的示意；`replaceMesh` 用 `'pt*'` 這種前綴一次指定一整批區段。 |
 | `liver_centerlines_v1.json`（328 KB，482 段） | 肝臟場景的中心線。`tools/anatomy/build_liver_centerlines.py` 產生（固定亂數種子、約 15 秒；用法在腳本開頭，需要 `/tmp/si_world.json`：`node tools/anatomy/dump_glb_world.mjs assets/biology/anatomy3d/si_scene_v1.glb /tmp/si_world.json --modules /tmp/gl/node_modules`）。檔內 `named`（門靜脈鏈、肝靜脈鏈）與 `lobule`（肝小葉位置與方向）給場景檔用；**重跑腳本後段 id 可能變，要重讀這兩欄再改場景檔的追蹤路徑與鏡頭。** |
 | `ht3d_page_human_transport_1122_v1.js` | 頁面接線：切換鈕、場景鈕、步驟鈕、2D/3D 互斥、`window.HT3D`。場景可有自己的版權文字（`SCENE.schematic`＝[中,英]，沒寫就用預設）。 |
@@ -141,7 +143,7 @@
 2. 腎臟：腎動脈 → 腎臟（過濾；尿素、水、無機鹽）→ 腎靜脈 → 下腔靜脈（**另一個帳號負責**）。
 3. ~~肝臟獨立場景~~（2026-11-22 已完成：`liver` 場景，含肝內分支、肝小葉放大、肝靜脈樹；肝內全是示意）。
 4. 肺：肺動脈 → 肺泡微血管（O₂ 進、CO₂ 出）→ 肺靜脈 → 左心房。
-5. 心肌：左心室 → 主動脈根部 → 左右冠狀動脈 → 心肌微血管 → 冠狀靜脈竇 → 右心房。
+5. ~~心肌~~（2026-11-23 已完成：`heart` 場景「心臟：冠狀循環」，`ht3d_scene_heart_1123_v1.js`＋`heart_centerlines_v1.json`＋`tools/anatomy/build_heart_centerlines.py`，左心室 → 主動脈根部 → 左右冠狀動脈 → 心肌微血管 → 心靜脈 → 冠狀竇 → 右心房，見 `sources.md`「心臟／冠狀動脈場景」；尚未接進 `circuit` 總覽）。
 6. ~~組織（全身組織微血管）~~——**腦部已完成**（2026-11-23：`brain` 場景「腦部：組織細胞」，`ht3d_scene_brain_1122_v1.js`＋`brain_scene_v1.glb`＋`brain_centerlines_v1.json`，見 `sources.md`「腦場景」；肌肉等其他組織未做）。
 7. 「完整封閉路線」3D 總覽。
 8. iPad 實測與 lite 模式門檻。

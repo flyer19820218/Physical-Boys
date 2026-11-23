@@ -9,6 +9,7 @@ export const SCENES = {
   kidney: { file: './ht3d_scene_kidney_1122_v1.js', label: ['腎臟路線', 'Kidney'] },
   liver: { file: './ht3d_scene_liver_1122_v1.js', label: ['肝臟路線', 'Liver'] },
   lung: { file: './ht3d_scene_lung_1122_v1.js', label: ['肺循環（小循環）', 'Pulmonary circulation'] },
+  heart: { file: './ht3d_scene_heart_1123_v1.js', label: ['心臟：冠狀循環', 'Heart: coronary circulation'] },
   brain: { file: './ht3d_scene_brain_1122_v1.js', label: ['腦部：組織細胞', 'Brain: tissue cells'] },
   circuit: { file: './ht3d_scene_circuit_1123_v1.js', label: ['完整封閉路線', 'The complete loop'] }
 };

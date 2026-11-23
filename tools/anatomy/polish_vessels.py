@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """polish_vessels.py — 血管接點整理（老師 2026-11-23：「不要錐形殘端／台階，血管要慢慢變細或慢慢變粗」）
 
-對象：assets/biology/anatomy3d/*_centerlines_v1.json（小腸 si、腎 kidney、肝 liver、肺 lung、腦 brain、總覽 circuit）。
+對象：assets/biology/anatomy3d/*_centerlines_v1.json（小腸 si、腎 kidney、肝 liver、肺 lung、腦 brain、總覽 circuit、心臟 heart）。
 可重複執行（冪等）：跑第二次幾乎不再改動。各器官的 build_*.py 產生 JSON 後，最後一步呼叫 polish_file()。
 
 做三件事（規則出處：docs/ht3d_接力指南.md §5b、§5c、§5c-2）
@@ -13,9 +13,10 @@
  2. 封口：只有「同軸（≤12°）、半徑一致」的兩段才兩邊都不封；管口埋進別的血管內部（含管口圓面）才不封；
     其餘接點（彎折、多叉節點）一律封圓頭（半球），不留平口斷面。游離端點（沒有任何鄰居）不動。
  4. 游離端（沒接到任何血管、半徑 ≤4 mm 的動脈／靜脈）：最後 max(7×半徑, 4 mm)（至多佔該段 45%）漸細到 0.4 倍，再封圓頭。
+    例外：JSON 段寫了 mouthStart／mouthEnd: true 的端點（管口接進心房壁、主動脈竇壁）不漸細。
  3. 全段斜率限制：任何一段，每 mm 長度的半徑變化 ≤ 0.22（半角約 12°），超過就用上下包絡平均壓平，不會出現短錐形。
 
-用法：python3 tools/anatomy/polish_vessels.py [--audit] [--dry] [名稱…]（名稱：si kidney liver lung brain circuit；省略＝全部）
+用法：python3 tools/anatomy/polish_vessels.py [--audit] [--dry] [名稱…]（名稱：si kidney liver lung brain circuit heart；省略＝全部）
 """
 import json, math, os, sys
 import numpy as np
@@ -292,6 +293,7 @@ def polish(d, verbose=True):
     # A2. 游離端（沒有接到任何血管的盡頭）漸細成細尖，再封圓頭：不留「一根粗管直接切斷」的殘端
     for a, (i, e) in enumerate(net.ends):
         if a in net.end_cluster or S[net.ids[i]]['kind'] not in ('artery', 'vein', 'arteriole', 'venule'): continue
+        if S[net.ids[i]].get('mouthStart' if e == 's' else 'mouthEnd'): continue   # 開口接進心房壁／主動脈竇壁的管口（口徑要維持，不能漸細）
         r = float(net.endr[a])
         if not (0.0003 <= r <= TIP_MAXR) or net.touches_body(a): continue
         s, R = net.s[i], net.R[i] + deltas[i]; L = float(s[-1])
@@ -385,7 +387,7 @@ def polish_file(name, dry=False, quiet=False):
 
 if __name__ == '__main__':
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
-    names = args or ['si', 'kidney', 'liver', 'lung', 'brain', 'circuit']
+    names = args or ['si', 'kidney', 'liver', 'lung', 'brain', 'circuit', 'heart']
     if '--audit' in sys.argv and '--dry' in sys.argv:
         for n in names:
             d, st = polish_file(n, dry=True)

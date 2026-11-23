@@ -277,7 +277,7 @@ export const SCENE = Object.freeze({
 
   id: 'small_intestine', name: P('小腸路線', 'Small-intestine route'),
   glb: 'assets/biology/anatomy3d/si_scene_v1.glb', glbLite: 'assets/biology/anatomy3d/si_scene_v1_lite.glb',
-  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/si_centerlines_v1.json?v=20261123-h4',
+  parts: 'assets/biology/anatomy3d/si_parts_v1.json', centerlines: 'assets/biology/anatomy3d/si_centerlines_v1.json?v=20261123-h5',
   smoothTubes: true,   // 小動脈／微血管／小靜脈／肝內示意管／單層靜脈（門靜脈、肝靜脈、下腔靜脈）都用「變半徑＋圓頭封口」的管（核心選用開關，和腎、肝、肺、腦、總覽相同）；沒開時這些管是等粗圓柱、兩端是平口（老師 2026-11-23：小腸路線終點的錐形／平口殘端就是這個原因）
   names: NAMES, labelAllow: LABEL_ALLOW, groups: { ...GROUPS, ...BEST_GROUPS }, material: MATERIAL, baseStyle: { ...BASE_STYLE, ...BEST_BASE }, flow: FLOW, flowKey, tubeGroup,
   replaceMesh: REPLACE_MESH, lumenMesh: LUMEN_MESH, labels: LABELS, steps: STEPS, heartPeriod: HEART_PERIOD, focusCap: FOCUS_CAP,
