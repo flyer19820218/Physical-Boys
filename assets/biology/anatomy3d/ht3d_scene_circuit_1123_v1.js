@@ -19,7 +19,7 @@
 import { BEST_SCENE, BEST_GROUPS, BEST_BASE, bestFloor } from './ht3d_preset_1122_v1.js?v=20261123-f2';
 
 const P = (zh, en) => [zh, en];
-const V = '?v=20261123-h2';
+const V = '?v=20261123-h4';
 
 /* ---------- 名稱（沿用各器官場景已定案的名稱；有把握的才放） ---------- */
 export const NAMES = Object.freeze({

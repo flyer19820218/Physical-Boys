@@ -47,13 +47,15 @@ SPEC = {
     'portal': lambda u, y: lerp(5.0, 3.2, smoothstep((u - 0.55) / 0.45)),
     # 肝內示意路徑（肝竇為微血管網，這裡只畫成幾條示意管）：入口依面積守恆分成 4 條，
     # 中段最細，出口再匯成肝靜脈（2 條合成 1 條，面積守恆）
-    'liver_cap_a': lambda u, y: liver_loop(u),
-    'liver_cap_b': lambda u, y: liver_loop(u),
-    'liver_cap_c': lambda u, y: liver_loop(u),
-    'liver_cap_d': lambda u, y: liver_loop(u),
+    'liver_cap_a': lambda u, y: liver_loop(u, 2.2, 2.0),
+    'liver_cap_b': lambda u, y: liver_loop(u, 2.5, 2.2),
+    'liver_cap_c': lambda u, y: liver_loop(u, 2.2, 2.2),
+    'liver_cap_d': lambda u, y: liver_loop(u, 2.2, 2.0),
     # 肝靜脈：直徑 5.6 → 8.4 mm（遠端約 4.7 mm、近下腔靜脈端約 8.4–8.6 mm）
-    'hv1': lambda u, y: lerp(2.8, 4.2, smoothstep(u / HV_END['hv1'])),
-    'hv2': lambda u, y: lerp(2.8, 4.2, smoothstep(u / HV_END['hv2'])),
+    # （2026-11-23 老師：肝靜脈不要像喇叭／錐形殘端）只畫到下腔靜脈管壁的那一小段（10～15 mm）若從 2.8 脹到 4.2，斜率 0.2 以上就是錐形；
+    # 改成 2.2（＝肝內示意管的出口，接點同粗）→ 3.6，而且用「線性與 smoothstep 各半」的緩坡（最大斜率約 0.12），肝內示意管（liver_loop）的出口端也提早開始變粗
+    'hv1': lambda u, y: lerp(2.2, 3.6, hv_ease(u / HV_END['hv1'])),
+    'hv2': lambda u, y: lerp(2.2, 3.6, hv_ease(u / HV_END['hv2'])),
     # 下腔靜脈：腎靜脈以下直徑 14 mm → 腎靜脈匯入後約 16 mm → 肝靜脈匯入處約 19 mm（示意性逐段變粗）
     'ivc_lower': lambda u, y: ivc_lower(y),
     'ivc_upper': lambda u, y: lerp(9.5, 10.0, smoothstep(u)),
@@ -63,12 +65,19 @@ Y_HV = 1.245      # 肝靜脈匯入下腔靜脈的高度（hv1／hv2 的終點�
 HV_END = {'hv1': 1.0, 'hv2': 1.0}   # 肝靜脈管畫到下腔靜脈管壁的弧長比例（main() 先算好再填）
 
 
-def liver_loop(u):
+def liver_loop(u, r0=2.5, r1=2.2):
+    # r0＝入口端（接門靜脈）、r1＝出口端（接肝靜脈）。4 條裡只有 1 條和母管同粗（同軸接續、不封口），其餘 0.88～0.9 倍：
+    # 較細的子管從母管裡長出來、不和母管壁共面（共面會閃爍成鋸齒）；入口同理，出口 2 條匯成 1 條也是 1 條同粗、1 條細
     if u < 0.35:
-        return lerp(2.5, 0.8, smoothstep(u / 0.35))
-    if u < 0.6:
+        return lerp(r0, 0.8, smoothstep(u / 0.35))
+    if u < 0.5:
         return 0.8
-    return lerp(0.8, 2.0, smoothstep((u - 0.6) / 0.4))
+    return lerp(0.8, r1, smoothstep((u - 0.5) / 0.5))   # 出口端 2.2＝肝靜脈起端同粗（接點不留台階），從一半處就慢慢變粗
+
+
+def hv_ease(w):
+    w = min(max(w, 0.0), 1.0)
+    return 0.5 * w + 0.5 * smoothstep(w)
 
 
 def ivc_lower(y):
@@ -107,12 +116,28 @@ def main():
     for hv in ('hv1', 'hv2'):
         pts = S[hv]['points']
         uu = arc_fractions(pts)
-        end = 0
-        for i, pt in enumerate(pts):
-            j = min(range(len(ivc_pts)), key=lambda q: math.dist(ivc_pts[q], pt))
-            if math.dist(ivc_pts[j], pt) >= 0.9 * ivc_rad[j]:
-                end = i
-        HV_END[hv] = max(0.3, uu[min(len(pts) - 1, end + 1)])
+        # 管口要整個埋進下腔靜脈腔內（管口圓面上每一點都在下腔靜脈管壁內 0.94 倍半徑以內），否則管口的平切面會露在管壁外，
+        # 看起來像一截被切平的殘管（老師 2026-11-23：小腸路線終點仍有平口）。從起端往下腔靜脈找第一個「整個圓面都埋進去」的點。
+        R_END = 3.6 * MM
+        def disc_inside(i):
+            a_, b_ = pts[max(i - 1, 0)], pts[min(i + 1, len(pts) - 1)]
+            tg = [b_[c] - a_[c] for c in range(3)]; n_ = math.sqrt(sum(x * x for x in tg)) or 1.0; tg = [x / n_ for x in tg]
+            ref = [0, 1, 0] if abs(tg[1]) < 0.9 else [1, 0, 0]
+            e1 = [tg[1] * ref[2] - tg[2] * ref[1], tg[2] * ref[0] - tg[0] * ref[2], tg[0] * ref[1] - tg[1] * ref[0]]
+            m_ = math.sqrt(sum(x * x for x in e1)) or 1.0; e1 = [x / m_ for x in e1]
+            e2 = [tg[1] * e1[2] - tg[2] * e1[1], tg[2] * e1[0] - tg[0] * e1[2], tg[0] * e1[1] - tg[1] * e1[0]]
+            for k in range(12):
+                th = 2 * math.pi * k / 12
+                q = [pts[i][c] + R_END * (math.cos(th) * e1[c] + math.sin(th) * e2[c]) for c in range(3)]
+                j = min(range(len(ivc_pts)), key=lambda z: math.dist(ivc_pts[z], q))
+                if math.dist(ivc_pts[j], q) > 0.94 * ivc_rad[j]:
+                    return False
+            return True
+        end = len(pts) - 1
+        for i in range(len(pts)):
+            if disc_inside(i):
+                end = i; break
+        HV_END[hv] = max(0.3, uu[min(len(pts) - 1, end)])
         S[hv]['tubeRange'] = [0, round(HV_END[hv], 4)]
     for sid in SPEC:
         if sid not in ('ivc_lower', 'ivc_upper'):

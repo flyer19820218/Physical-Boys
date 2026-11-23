@@ -88,7 +88,7 @@ BodyParts3D 原本是 CC BY 4.0（Z-Anatomy 改作時為 CC BY-SA 2.1 Japan）�
 | 脾靜脈 | 6.5 → 8 | 超音波正常上限約 10 mm（Haffar〈Doppler of the portal system〉）；上限以下的示意值，**沒有找到「典型值」出處** |
 | 肝門靜脈 | 10（接近肝門處收窄到約 6.4） | 正常約 7–13 mm（Radiopaedia〈Portal vein〉）；平均 9.60 ± 1.41 mm（PMC5398464）、10.27 ± 1.78 mm（PMC6988463）；CT 平均 15.5 mm（Abdom Radiol, s00261-016-0785-9）。收窄是為了接肝內分支，示意 |
 | 肝內示意路徑 | 入口 5.0 → 中段 1.6 → 出口 4.0 | **沒有文獻值**。肝竇是微血管網，這裡只畫成 4 條示意管；入口 4 條合計截面積＝肝門靜脈末端、出口每 2 條合計截面積＝1 條肝靜脈起點（面積守恆，只為了接得順） |
-| 肝靜脈 | 5.6 → 8.4 | 一篇超音波研究平均約 8.6 mm、近下腔靜脈端約 8.4 mm、遠端約 4.7 mm（repository.sustech.edu〈Measurements of Normal Hepatic Veins in Sudanese using Ultrasonography〉）；中肝靜脈約 6.0 mm（PMC4282232） |
+| 肝靜脈 | 4.4 → 7.2（2026-11-23 改：原 5.6 → 8.4 在只畫 10～15 mm 的短管上變成喇叭／錐形殘端，老師指出；現在起端和肝內示意管出口同粗、漸變到 7.2，仍在文獻「遠端 4.7～近下腔靜脈端 8.4」的範圍內，只是少畫最後一小段） | 一篇超音波研究平均約 8.6 mm、近下腔靜脈端約 8.4 mm、遠端約 4.7 mm（repository.sustech.edu〈Measurements of Normal Hepatic Veins in Sudanese using Ultrasonography〉）；中肝靜脈約 6.0 mm（PMC4282232） |
 | 下腔靜脈 | 腎靜脈以下 14 → 腎靜脈匯入後約 16 → 肝靜脈匯入處約 19 → 近右心房約 20 | 腎靜脈以下量到平均 13.8 mm（PMC3463481）；肝內段約 19.4 mm（PMC4282232）。**腎靜脈處的階梯與逐段數值是依匯入血流量的示意，沒有逐段文獻值** |
 
 **匯入位置（結構順序依據）：** 下腔靜脈由下往上依序接 L1–L5 腰靜脈、L2 右生殖腺靜脈、L1 腎靜脈與右腎上腺靜脈、T8 肝靜脈與膈下靜脈（Radiopaedia〈IVC〉、StatPearls〈Inferior Vena Cava〉）。

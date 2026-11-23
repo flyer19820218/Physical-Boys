@@ -245,11 +245,25 @@ def slope_worst(R, s):
     return worst
 
 
+def local_tangent(net, a):
+    """端點 a 處、朝向這一段內部的『最末一小段』方向（不像 tangent_in 取 1.5 倍半徑外的弦）"""
+    i, e = net.ends[a]; P = net.P[i]
+    return unit(P[1] - P[0]) if e == 's' else unit(P[-2] - P[-1])
+
+
 def is_coax(m_in, m_out, net):
+    """兩段是否同軸接續（兩邊都不封口）：①1.5 倍半徑處的弦方向轉角 ≤12°；或 ②接點處最末一小段的方向轉角 ≤8°（切線連續、只是之後彎出去：
+    例如肝內示意管以 Bezier 切線相接肝靜脈起端），這時兩個管口是同一個平面，不封口反而沒有接縫。半徑差都要 ≤3%。"""
     cosang = float(np.dot(m_in['t'], m_out['t']))
     ang = math.degrees(math.acos(max(-1.0, min(1.0, -cosang))))
     ra, rb = net.endr[m_in['a']], net.endr[m_out['a']]
-    return ang <= COAX_DEG and abs(ra - rb) / max(ra, rb) <= 0.03
+    if abs(ra - rb) / max(ra, rb) > 0.03:
+        return False
+    if ang <= COAX_DEG:
+        return True
+    c2 = float(np.dot(local_tangent(net, m_in['a']), local_tangent(net, m_out['a'])))
+    ang2 = math.degrees(math.acos(max(-1.0, min(1.0, -c2))))
+    return ang2 <= 8.0 and ang <= 30.0
 
 
 def polish(d, verbose=True):
