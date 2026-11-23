@@ -682,13 +682,16 @@ def make_bed_clump(name,lobe,O,e1,Ra,nalv,m,rc,ell,nref=None):
         chain=[x,y]
         while len(kids.get(y,[]))==1 and y not in leafset:
           y=kids[y][0];chain.append(y)
-        cid=len(out);out.append(dict(nodes=chain,r=1.7*rc*W(chain[-1])**(1/3)));idof[(chain[0],chain[-1])]=cid
+        cid=len(out);out.append(dict(nodes=chain,r=1.35*rc*W(chain[-1])**(1/3)));idof[(chain[0],chain[-1])]=cid
         walk(chain[-1])
     walk(root);return out,idof,paths_
   ach,aid,apaths=tree_chains(rootA,pA,aleaf,False)
   vch,vid,vpaths=tree_chains(rootV,pV,vleaf,True)
   def chain_pts(nodes_):
-    return chaikin_keep(PT[nodes_],3)
+    Q=np.array(PT[nodes_],float)
+    for _ in range(4):   # 拉普拉斯平滑（兩端固定），把樹的急彎放緩
+      if len(Q)>2:Q[1:-1]=0.5*Q[1:-1]+0.25*(Q[:-2]+Q[2:])
+    return chaikin_keep(Q,3)
   arts=[dict(p=resamp(chain_pts(c['nodes']),0.0004),r=c['r'],nodes=c['nodes']) for c in ach]
   vens=[dict(p=resamp(chain_pts(c['nodes'][::-1]),0.0004),r=c['r'],nodes=c['nodes']) for c in vch]   # 小靜脈：血往根流，所以反向
   # 5. 微血管：每個肺泡 m 條最短路徑（避開兩棵樹）
