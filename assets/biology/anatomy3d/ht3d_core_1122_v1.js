@@ -439,7 +439,14 @@ export async function createViewer(o) {
   function tint(s, deep, glow, lit) {
     const m = s.mat; if (!m.userData.base) m.userData.base = { color: m.color.clone(), rim: m.userData.rim.value.clone() };
     const b = m.userData.base;
-    if (s.kind === 'artery' || s.kind === 'vein' || s.kind === 'generated') {
+    if (SC.vesselGlow === 'hue' && (s.kind === 'artery' || s.kind === 'vein' || s.kind === 'generated')) {
+      /* 同色加亮（場景寫 vesselGlow:'hue' 才啟用；肝臟場景，2026-11-23 老師：充氧／缺氧各一種血管色，目標血管只加亮度）：
+       * 不往白色／粉紅偏，只把材質原本那個紅變亮（本體色、自發光、邊緣光都用同一個色相），所以動脈、靜脈、肝竇看起來永遠是兩種顏色 */
+      const kv = s.kind === 'vein' ? 0.7 : 1;   // 缺氧血管本來就暗，加亮幅度小一點，才不會亮到和充氧血管（鮮紅）分不清
+      m.color.copy(b.color).multiplyScalar(1 + 1.0 * kv * glow);
+      m.emissive.copy(b.color).multiplyScalar(0.9 * kv * kv * glow); m.emissiveIntensity = 1;
+      m.userData.rim.value.copy(b.rim).multiplyScalar(1 + 0.8 * kv * glow);
+    } else if (s.kind === 'artery' || s.kind === 'vein' || s.kind === 'generated') {
       m.emissive.copy(s.kind === 'vein' || /Ven|Bridge/.test(s.group) ? VEIN_GLOW : ART_GLOW); m.emissiveIntensity = 0.6 * glow;
       m.userData.rim.value.copy(b.rim).multiplyScalar(1 + 2.6 * glow);
       if (!m.vertexColors) m.color.copy(b.color).lerp(tmpWhite, 0.14 * glow);
