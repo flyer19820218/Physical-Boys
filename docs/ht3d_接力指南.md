@@ -2,11 +2,11 @@
 
 最後更新：2026-11-23 11:16（老師額度用完，換人接力，**先讀下面「★ 下一位先做這件事」**；肝臟血管改成由粗到細，見 5c、5c-2；血管只有兩種顏色，見 5c-3）。老師（Soulrunning，臺灣國中理化老師，用繁體中文溝通）同時請**兩個 Claude 帳號**接力：一個做**腎**，另一個繼續修小腸／肝與共用程式。請從這份開始，**不要重新探索整個 repo**。
 
-## ★ 現況與下一步（2026-11-23 12:00）
-**已完成並推 main**：①全身血管底圖（資料集 676 條血管，之前只用 69 條；`body_vessels_v1.glb`，見 `sources.md`「全身血管底圖」）；②血管不消失（核心 `vesselFloor`）；③目標血管亮度對比（`vesselGlow:'bright'`）與血球同色發光（`flowGlow`）；④共用最佳模板 `ht3d_preset_1122_v1.js`＋說明 `docs/ht3d_場景模板.md`，已套到小腸、肝、腎、肺、腦五個場景。**新場景一律照模板做。**
+## ★ 現況與下一步（2026-11-23 12:30）
+**已完成並推 main**：①全身血管底圖（資料集 676 條血管，之前只用 69 條；`body_vessels_v1.glb`，見 `sources.md`「全身血管底圖」）；②血管不消失（核心 `vesselFloor`）；③目標血管亮度對比（`vesselGlow:'bright'`）與血球同色發光（`flowGlow`）；④共用最佳模板 `ht3d_preset_1122_v1.js`＋說明 `docs/ht3d_場景模板.md`，已套到小腸、肝、腎、肺、腦五個場景。**新場景一律照模板做。**⑤**「完整封閉路線」總覽場景 `circuit`**（`ht3d_scene_circuit_1123_v1.js`，5 步一圈，黃圈追蹤同一顆紅血球，第 5 步結束＝第 1 步起點）：中心線 `circuit_centerlines_v1.json` 由 `tools/anatomy/build_circuit_centerlines.py` 把小腸／腎／腦／肺場景的中心線合成（改了就重跑；腳本會印各鏈接點間距）；腦的外形用 `brain_organ_v1.glb`（`tools/anatomy/subset_glb.mjs` 從 brain_scene 抽出）；核心新增選用開關 `maxDistance`（拉遠上限）、`ringMinPx`（黃圈最小畫面半徑）。做法與要注意的事見 `docs/ht3d_場景模板.md`「總覽場景」。
 **測試工具**：`tools/qa/ht3d_lshot.cjs`（`SCENE=<場景> node ... "<步驟>:<毫秒>,…" <前綴> 1180 820 1`；先 `bash tools/qa/serve.sh`；輸出 `/tmp/ht3d_verify/`，目錄先建；`NODE_PATH=$(npm root -g):/opt/node22/lib/node_modules`）。`qa_page.cjs` 在沙箱會當掉。
-**下一步**：「完整封閉路線」總覽場景（把各循環接成一圈：左心室→主動脈→腸／肝／腎／腦→回右心房→右心室→肺→左心房→左心室）。
-**還沒驗證**：iPad 真機效能（全身底圖 lite 約增加 7.6 萬三角形）；亮度「加倍」只用目視判斷；四肢血管沒有皮膚、拉遠會看到手腳血管飄著。
+**下一步**：①心肌、組織兩個交換區場景（照模板做）；②看老師對總覽的意見再細修；③有聲講解要等 3D 畫面全做完才重做（先推分支，老師說 OK 才進 main）。
+**還沒驗證**：iPad 真機效能（全身底圖 lite 約增加 7.6 萬三角形；總覽 lite 軟體算圖量到 57 萬三角形、full 112 萬，其他場景 lite 16–32 萬、full 37–65 萬，若 iPad 卡頓先減微血管床線數 `bridge()` 與頭頸靜脈取樣）；亮度「加倍」只用目視判斷；四肢血管沒有皮膚、拉遠會看到手腳血管飄著；手機直式第 2 步標籤擁擠；總覽的腦、腎微血管床在全景鏡頭下只有 1～2 px；總覽的文字都是 src:NEW 待老師審。
 **固定規矩**：推 main 前 `git fetch && git pull --rebase origin main`（PROGRESS.md 兩邊都留、自己的放最上面；`?v=`／`VER` 衝突就換新字串）；改 js／css／JSON 要換 `?v=`；commit 結尾要有 `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` 與 `Claude-Session:` 兩行；給老師的回報用繁體中文、簡短。
 
 ## 0. 老師的指令（接手時直接照做，不用再問）

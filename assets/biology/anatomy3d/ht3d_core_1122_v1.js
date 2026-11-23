@@ -210,7 +210,7 @@ export async function createViewer(o) {
   const fill = new THREE.DirectionalLight(0xd8e8ff, 0.7); fill.position.set(0.9, 0.3, 0.6); scene.add(fill);  // 補光
   const back = new THREE.DirectionalLight(0xffe2d0, 1.0); back.position.set(0.1, 0.6, -1.2); scene.add(back); // 輪廓光
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = false; controls.rotateSpeed = 0.7; controls.zoomSpeed = 0.8; controls.minDistance = 0.025; controls.maxDistance = 1.8;
+  controls.enableDamping = false; controls.rotateSpeed = 0.7; controls.zoomSpeed = 0.8; controls.minDistance = 0.025; controls.maxDistance = Math.max(1.8, Number(SC.maxDistance) || 0);   // SC.maxDistance（選用）：全身總覽要拉遠到 3 公尺以上
   controls.enablePan = true; controls.screenSpacePanning = true;
 
   /* --- 載入 --- */
@@ -575,7 +575,11 @@ export async function createViewer(o) {
     basisM.makeBasis(tt, tnn, tb); tracer.quaternion.setFromRotationMatrix(basisM); tracer.position.copy(tq); tracer.scale.setScalar(size);
     const o2 = o2Of(p.meta, u);
     tracerMat.color.copy(POOR).lerp(RICH, o2).multiplyScalar(FB);
-    ringMesh.position.copy(tq); ringMesh.quaternion.copy(camera.quaternion); ringMesh.scale.setScalar(size * 1.5);
+    // SC.ringMinPx（選用）：黃圈在畫面上的最小半徑（CSS px）。總覽場景鏡頭離人體 1～2 公尺、血球在細管裡很小，黃圈會小到看不見；
+    // 沒設＝原本的大小（其他場景畫面不變）
+    let ringR = size * 1.5;
+    if (SC.ringMinPx) { const ch = renderer.domElement.clientHeight || 600; ringR = Math.max(ringR, SC.ringMinPx * 2 * camera.position.distanceTo(tq) * Math.tan(camera.fov * Math.PI / 360) / ch); }
+    ringMesh.position.copy(tq); ringMesh.quaternion.copy(camera.quaternion); ringMesh.scale.setScalar(ringR);
     tracer.visible = ringMesh.visible = true;
   }
   function updateLabels(lab) {

@@ -320,3 +320,16 @@ node tools/anatomy/extract_si_scene.mjs \
 - 用法：場景檔 `...BEST_SCENE`（`ht3d_preset_1122_v1.js`）會帶 `extras`，核心載入後疊進同一個場景；背景血管群組 `bodyArtHead／Arm／Leg／Trunk`、`bodyVeinHead／…`。載入失敗就略過，不影響場景。
 - 這些只是「背景的血管分布」，沒有逐條核對血管走向與名稱，畫面上**不標名稱**；腦場景自己畫頭頸血管，所以腦場景把頭頸那兩組設成不畫（避免兩層重疊）。
 - 另外查過 HuBMAP **Human Reference Atlas**「Blood Vasculature」3D 參考物件（CC BY 4.0，`hubmapconsortium/ccf-releases` 的 `v1.2/models/VH_M_Blood_Vasculature.glb`）：104 條，只有軀幹加眼部血管，**沒有四肢**，比這份少，所以沒有採用。
+
+## 完整封閉路線 circuit（2026-11-23）
+
+把小腸、肝、腎、腦、肺的路線接成一個圈的總覽場景。**沒有新增任何解剖資料來源**，全部沿用上面各場景的資料：
+
+| 檔案 | 說明 |
+|---|---|
+| `circuit_centerlines_v1.json` | 中心線。`tools/anatomy/build_circuit_centerlines.py` 由 `si_／kidney_／brain_／lung_centerlines_v1.json` 原樣合併：左心室出口、主動脈、腸繫膜上動脈、肝動脈、門靜脈系統、肝靜脈、下腔靜脈（取自小腸場景）、腎動脈與腎靜脈（腎場景）、頸動脈與上矢狀竇→頸靜脈→上腔靜脈、右心房（腦場景）、肺動脈、葉動脈、肺靜脈、左心房→左心室（肺場景）。主幹的半徑取自資料集網格（見各場景說明）。 |
+| `brain_organ_v1.glb`／`brain_organ_v1_lite.glb`／`brain_organ_parts_v1.json` | 腦葉（5 塊）、小腦、腦幹、頭頸外形，只是從 `brain_scene_v1.glb`／`_lite.glb` 把這 8 個 node 單獨留下（`tools/anatomy/subset_glb.mjs`），**不重新簡化、座標不改**；full 約 9.8 萬三角形 0.55 MB，lite 約 4 萬 0.32 MB。授權同腦場景：Z-Anatomy／BodyParts3D／Brain for Blender，CC BY-SA。 |
+
+- **示意的部分（程式生成，不是解剖資料）**：小腸、肝、腎、腦、肺裡的小動脈、微血管、小靜脈。腎絲球、肺泡微血管網、腦皮質微血管床的線圈太小，總覽不照抄，改成在小動脈終點與小靜脈起點之間畫幾條弧（`bridge()`）。所有小口徑放大：r' = r + 0.6·max(0, 1.6 mm − r)（口徑只為了在 1～2 公尺的鏡頭下看得見，**不是真實口徑**；真實微血管直徑只有幾微米）。速度為教學示意。
+- 畫面文字沒有引用新的數字；說明文字標 src:'NEW'，待老師審。
+
