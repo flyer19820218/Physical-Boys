@@ -8,6 +8,7 @@
  *   data-tab="heart" data-tab="vessels" data-tab="blood" data-tab="circulation" data-tab="lymph" data-tab="experiment"
  * 三維分頁（代號 3d_<場景>，由 window.HT3D.go(場景, 步驟, 0) 播放；離開時 HT3D.dispose() 回 2D）：
  *   data-tab="3d_small_intestine" data-tab="3d_liver" data-tab="3d_kidney" data-tab="3d_brain" data-tab="3d_lung" data-tab="3d_heart" data-tab="3d_circuit"
+ *   3D 的 at 第 4 欄／acts 第 5 欄＝從該步第幾毫秒開始（2D 是第幾段）；下一個 3D 場景在 6 句前先預載檔案；播放時 3D 舞台縮到字幕框上方。
  */
 (function () {
   'use strict';
@@ -82,6 +83,7 @@
     try { window.scrollTo({ top: goalY, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, goalY); }
   }
   function stageEl() {                 // 要看清楚的畫面＝#bench 裡最大的畫布／SVG；找不到就用整個 #bench
+    if (in3d) { var st3 = document.querySelector('.ht3d-stage'); if (st3 && !st3.hidden) return st3; }   // 3D：整個舞台（載入中也有框）
     var best = null, area = 0, list = document.querySelectorAll('#bench canvas, #bench svg');
     for (var i = 0; i < list.length; i++) {
       var r = list[i].getBoundingClientRect(), a = r.width * r.height;
@@ -94,23 +96,121 @@
     var r = a.getBoundingClientRect();
     var base = (goalY != null && Date.now() - goalT < 900) ? goalY : window.pageYOffset;
     var dy = base - window.pageYOffset;
-    var top = r.top - dy, bot = r.bottom - dy, panelTop = visBottom();
+    var top = r.top - dy, bot = r.bottom - dy, panelTop = in3d ? panelTop3d() : visBottom();
     if (top >= 56 && bot <= panelTop - 8) return;               // 已完整在畫面內：不動
     var room = panelTop - 8 - 56 - (bot - top);
     var y = room >= 0 ? base + top - 56 - room / 2 : base + top - 56;   // 放得下就置中，放不下就對齊上緣
     scrollGoal(y);
   }
-  var in3d = false;
+  /* ── 三維場景（HT3D）──
+   * 設定檔的 3d_<場景> 分頁：步驟＝HT3D 的第幾步（1 起算），第 4 欄（at）／第 5 欄（acts）＝從該步第幾毫秒開始（省略＝0）。
+   * ・HT3D.go 是 async（換場景要載入模型）：只記「目前要的畫面」want3d，go 回來後若期間又換了目標就再 go 一次，
+   *   載入中收到的後續步驟不會被吃掉。
+   * ・3D 已啟用時不可再呼叫 HTLesson.takeover(true)：頁面把它包了一層，會先退出 3D（整個模型重新載入）。
+   * ・同一個畫面（場景／步驟／毫秒都相同）不重播，跳句還原後再遇到同一句的 at 不會從頭飛一次。
+   * ・播放時把 3D 舞台縮到「字幕框上方的可視高度」（寬＝高×1.6，置中；舞台本身有 ResizeObserver），停止或回 2D 時還原。 */
+  var in3d = false, want3d = null;
+  function h3State() { try { return window.HT3D ? window.HT3D.getState() : {}; } catch (e) { return {}; } }
+  function h3Matches(w) {
+    var s = h3State();
+    return !!(w && s.active && s.ready && s.scene === w.scene && s.position && s.position.step === w.k - 1);
+  }
+  function go3d() {
+    var w = want3d, H = window.HT3D; if (!w || !H) return;
+    var r; try { r = H.go(w.scene, w.k, w.ms, { after: 'loop' }); } catch (e) { return; }
+    if (r && r.then) r.then(function () {
+      if (!in3d || !want3d) return;
+      if (want3d !== w || !h3Matches(w)) { if (want3d !== w) go3d(); else setTimeout(function () { if (want3d === w && in3d && !h3Matches(w)) go3d(); }, 120); return; }
+      fit3d(); bringIntoView();
+    }, function () {});
+  }
+  function panelTop3d() {              // 字幕預留兩行：句子換行時字幕框會長高，3D 舞台不能因此被蓋到
+    var t = visBottom(), sub = ui && ui.sub;
+    if (!sub || !ui.panel.classList.contains('show')) return t;
+    var lh = parseFloat(getComputedStyle(sub).lineHeight) || 32, h = sub.getBoundingClientRect().height;
+    return t - Math.max(0, Math.ceil(2 * lh - h));
+  }
+  function fit3d() {                   // 3D 舞台：整張放進「字幕框上方」（上方留 56px 給回首頁鈕）
+    var st3 = document.querySelector('.ht3d-stage'); if (!st3) return;
+    if (!in3d || !started) { st3.style.width = ''; st3.style.marginLeft = st3.style.marginRight = ''; return; }
+    var room = panelTop3d() - 8 - 56;
+    var full = (st3.parentNode && st3.parentNode.getBoundingClientRect().width) || st3.getBoundingClientRect().width;
+    var w = Math.max(320, Math.min(full, Math.floor(room * 1.6)));
+    var cw = parseFloat(st3.style.width);
+    if (cw && Math.abs(cw - w) < 10 && w < full) return;   // 差幾 px 就不動，免得每換一句畫布抖一下
+    st3.style.width = w >= full ? '' : w + 'px';
+    st3.style.marginLeft = st3.style.marginRight = w >= full ? '' : 'auto';
+  }
+  window.addEventListener('resize', function () { if (in3d && started) { fit3d(); bringIntoView(); } });
+  // 預載：下一個三維場景的程式與模型檔先抓進瀏覽器快取（不建 WebGL、不碰畫面）；切過去時只剩建場景的時間
+  var preloaded = {}, h3Base = null;
+  function h3Url(rel) {
+    if (!h3Base) {
+      var sc = document.querySelector('script[src*="ht3d_page_human_transport"]');
+      if (!sc) return null;
+      h3Base = sc.src;                   // 與頁面模組同一個網址（含 ?v=），模組只會載入一次
+    }
+    return new URL(rel, h3Base).href;
+  }
+  function h3Ver() { var m = /[?&]v=([^&]+)/.exec(h3Base || ''); return m ? m[1] : ''; }
+  function h3Lite() {
+    try { return /[?&]ht3d=lite\b/.test(location.search) || (window.matchMedia && matchMedia('(pointer:coarse)').matches) || sessionStorage.getItem('ht3d-lite') === '1'; } catch (e) { return false; }
+  }
+  function preload3d(scene) {
+    if (!scene || preloaded[scene]) return;
+    if (!h3Url('.')) return;
+    var reg = h3Url('./ht3d_scenes_1122_v1.js?v=' + h3Ver());
+    preloaded[scene] = 1;
+    var lite = h3Lite(), get = function (u) { if (u) fetch(u, { cache: 'force-cache' }).catch(function () {}); };
+    try {
+      import(h3Url('./ht3d_core_1122_v1.js?v=' + h3Ver())).catch(function () {});
+      import(reg).then(function (R) {
+        var d = R.SCENES && R.SCENES[scene]; if (!d) return null;
+        return import(h3Url(d.file + '?v=' + h3Ver()));
+      }).then(function (M) {
+        var S = M && M.SCENE; if (!S) return;
+        get(lite ? S.glbLite : S.glb); get(S.parts); get(S.centerlines);
+        (S.extras || []).forEach(function (x) { get(lite ? x.glbLite : x.glb); get(x.parts); });
+      }).catch(function () { preloaded[scene] = 0; });
+    } catch (e) { preloaded[scene] = 0; }
+  }
+  // 從第 i 項往後找最近的 3D 切頁（＊切頁 或 at／acts 的 3d_），在 limit 句之內就預載
+  function preloadAhead(i, limit) {
+    var n = 0;
+    for (var j = i; j < seq.length && n <= limit; j++) {
+      var it = seq[j], tabs = [];
+      if (it.type === 'cut') { var c = stage.cuts && stage.cuts[it.title]; if (c) tabs.push(c.tab); }
+      if (it.type === 'line') {
+        n++;
+        var a = stage.at && stage.at[it.id]; if (a) tabs.push(a.tab);
+        ((stage.acts && stage.acts[it.id]) || []).forEach(function (x) { tabs.push(x[1]); });
+      }
+      for (var k = 0; k < tabs.length; k++) {
+        var t = tabs[k];
+        if (t && t.indexOf('3d_') === 0 && (!want3d || want3d.scene !== t.slice(3))) { preload3d(t.slice(3)); return; }
+      }
+    }
+  }
+  function leave3d() {
+    want3d = null;
+    if (!in3d) return;
+    in3d = false; fit3d();
+    if (window.HT3D) { try { window.HT3D.dispose(); } catch (e) {} }   // 回 2D：釋放 WebGL，2D 照原樣重新開始
+  }
   function showScene(tab, step, seg) {
     var p = ptl(); if (!p || !tab) return;
     if (tab.indexOf('3d_') === 0) {            // 三維場景：交給 HT3D（自己會切到循環分頁、載入模型）
       var H = window.HT3D; if (!H) return;
-      releaseFix(tab); p.takeover(true); in3d = true;
-      try { var r = H.go(tab.slice(3), step || 1, 0, { after: 'loop' }); if (r && r.then) r.then(function () { bringIntoView(); }, function () {}); } catch (e) {}
+      var w = { scene: tab.slice(3), k: step || 1, ms: seg || 0 };
+      releaseFix(tab);
+      if (!h3State().active) p.takeover(true);
+      in3d = true;
+      if (want3d && want3d.scene === w.scene && want3d.k === w.k && want3d.ms === w.ms && h3State().scene === w.scene) return;   // 同一個畫面：不重播
+      want3d = w; fit3d(); go3d();
       if (tab !== lastTab) { lastTab = tab; bringIntoView(); }
       return;
     }
-    if (in3d && window.HT3D) { in3d = false; try { window.HT3D.dispose(); } catch (e) {} }   // 回 2D：釋放 WebGL，2D 照原樣重新開始
+    leave3d();
     releaseFix(tab);
     p.takeover(true);
     p.show(tab, step || 1, seg || 0);
@@ -213,7 +313,7 @@
     speakerLight(it.speaker);
     if (stage.avatars && stage.avatars[it.id]) setAvatars(it.id);
   }
-  function showPin(text) { ui.pin.textContent = displayText(text); ui.pin.classList.add('show'); if (started) bringIntoView(); }   // 黃條出現後，畫面重新對齊到黃條上方
+  function showPin(text) { ui.pin.textContent = displayText(text); ui.pin.classList.add('show'); if (started) { if (in3d) fit3d(); bringIntoView(); } }   // 黃條出現後，畫面重新對齊到黃條上方
   function hidePin() { ui.pin.textContent = ''; ui.pin.classList.remove('show'); }
 
   /* ── 螢光筆：只畫字；畫在 document 上（position:absolute），不改頁面原有內容 ── */
@@ -274,7 +374,8 @@
     audio.onerror = function () { fallbackWait(it.text, my); };
     audio.src = BASE + 'mp3/' + it.file;
     var p = audio.play();
-    if (p && p.catch) p.catch(function () { fallbackWait(it.text, my); });
+    // 剛開始播就按暫停：play() 會以 AbortError 失敗，這不是音檔壞掉，不可改用估時往下播（否則暫停中照樣換句）
+    if (p && p.catch) p.catch(function (e) { if (e && e.name === 'AbortError') return; fallbackWait(it.text, my); });
     trackChars(audio);
     if (hl) { cancelAnimationFrame(hlTimer); hlTimer = requestAnimationFrame(tickHl); }
     runActs(it, my);
@@ -301,6 +402,7 @@
     if (it.type === 'line') {
       var a = stage.at && stage.at[it.id];
       if (a) doAt(it.id);
+      preloadAhead(i + 1, 6);            // 6 句內會用到的下一個 3D 場景，先抓檔
       return playLine(it, my);
     }
   }
@@ -323,6 +425,7 @@
     ui.sub.textContent = '講解結束，可以按 ▶ 重聽。'; chars = [];
     refresh();
     releaseFix(null);
+    leave3d();                           // 停止：3D 收起來，回到頁面預設的 2D
     if (ptl()) { ptl().takeover(false); }
     watchMode(false);
   }
@@ -359,7 +462,8 @@
     if (started && !paused) return;
     if (!started) { go(0); return; }
     paused = false;                      // 繼續
-    if (ptl()) ptl().resume();
+    if (in3d) { if (window.HT3D) window.HT3D.resume(); }   // 3D 時 2D 保持凍住
+    else if (ptl()) ptl().resume();
     refresh();
     if (audio && audio.src && audio.currentTime > 0 && !audio.ended) { audio.play(); trackChars(audio); }
     else go(pos, true);
@@ -370,6 +474,7 @@
     if (audio) audio.pause();
     if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
     if (ptl()) ptl().pause();
+    if (in3d && window.HT3D) window.HT3D.pause();
     refresh();
   }
   function stop() {
