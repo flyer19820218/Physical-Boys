@@ -27,7 +27,7 @@
     {id:'tissue',tile:5,name:P('組織','Body tissues'),title:P('送到細胞才算完成：養分進去，廢物出來','Delivery to cells: nutrients in, CO₂ out'),
       text:P('小腸吸收的葡萄糖由血液運送；肺補進的氧氣也隨血液到全身微血管。氧氣與葡萄糖經組織液進入細胞，參與細胞呼吸作用，釋出可利用的能量，並產生二氧化碳與水。\n\n二氧化碳再經組織液進入血液，送到肺排出。因此「吸收 → 運送 → 細胞利用 → 廢物帶走」是一整條故事，不是四件互不相干的事。葡萄糖溶在血漿中，不是紅血球的乘客；圖中的分子顏色與尺寸是辨識符號。','Absorbed glucose is transported by blood. Oxygen added in the lungs reaches body capillaries too. Both cross tissue fluid into cells, supporting cellular respiration, usable energy release and production of CO₂ and water.\n\nCO₂ crosses tissue fluid into blood and travels to the lungs. Thus absorption → transport → cellular use → waste removal is one connected story. Glucose is dissolved in plasma, not carried on red cells. Molecular colours and sizes are identification symbols.')},
     {id:'intestine',tile:4,name:P('小腸','Small intestine'),title:P('小腸絨毛：葡萄糖穿過上皮，進入血液','Intestinal villi: glucose crosses epithelium into blood'),
-      text:P('澱粉必須先消化成可吸收的小分子。葡萄糖從腸腔穿過絨毛上皮細胞，經組織液進入微血管，再沿肝門靜脈到肝臟，接著才分配到全身。不是完整澱粉直接鑽入血管。\n\n小腸細胞本身也要氧氣，並將二氧化碳交回血液。這裡專追蹤葡萄糖；脂質吸收後另有重要的淋巴運送路徑，不應把所有養分畫成同一路。','Starch must first be digested into absorbable small molecules. Glucose crosses villus epithelial cells, passes through tissue fluid into capillaries, then reaches the liver through the hepatic portal vein before wider distribution. Intact starch does not enter blood directly.\n\nIntestinal cells themselves require oxygen and return CO₂ to blood. This window follows glucose; absorbed lipids have an important lymphatic route and should not all be depicted as following this route.')}
+      text:P('澱粉必須先消化成可吸收的小分子。葡萄糖從腸腔穿過絨毛上皮細胞，經組織液進入微血管，再沿肝門靜脈到肝臟，接著才分配到全身。不是完整澱粉直接鑽入血管。\n\n圖左是一根絨毛：外面一圈單層上皮細胞，裡面有微血管和乳糜管（淋巴管的起點）。右邊圓圈是放大的上皮細胞，朝腸腔的一面有微絨毛，讓吸收面積變大。\n\n小腸細胞本身也要氧氣，並將二氧化碳交回血液。這裡專追蹤葡萄糖；脂質吸收後另有重要的淋巴運送路徑，不應把所有養分畫成同一路。','Starch must first be digested into absorbable small molecules. Glucose crosses villus epithelial cells, passes through tissue fluid into capillaries, then reaches the liver through the hepatic portal vein before wider distribution. Intact starch does not enter blood directly.\n\nLeft: one villus—a single layer of epithelial cells around capillaries and a lacteal (the start of a lymph vessel). Right: an enlarged epithelial cell; microvilli face the lumen and enlarge the absorbing surface.\n\nIntestinal cells themselves require oxygen and return CO₂ to blood. This window follows glucose; absorbed lipids have an important lymphatic route and should not all be depicted as following this route.')}
   ]);
   const images=new Map();
   function image(ctx,file,x,y,w,h){let im=images.get(file);if(!im&&typeof Image!=='undefined'){im=new Image();im.src=file;images.set(file,im);}if(im?.complete&&im.naturalWidth){const k=Math.min(w/im.width,h/im.height),ww=im.width*k,hh=im.height*k;ctx.drawImage(im,x+(w-ww)/2,y+(h-hh)/2,ww,hh);}return im;}
@@ -65,6 +65,10 @@
       flow('oxygen','blood','kidney cells',[[231,237],[397,237],[519,243],[586,279]],P('氧氣給腎細胞','O₂ to kidney cells'),[267,211],8),
       flow('glucose','plasma','kidney cells',[[230,329],[398,329],[520,329],[588,330]],P('葡萄糖給腎細胞','Glucose to kidney cells'),[269,305],10,.35),
       flow('carbon','kidney cells','blood',[[610,411],[511,417],[385,421],[230,421]],P('二氧化碳交回血液','CO₂ returned to blood'),[270,458],8,.6)];
+    if(zone==='intestine')return[
+      flow('glucose','intestinal lumen','capillary blood',[[805,326],[ZX+ZLANE,326]],P('葡萄糖：腸腔 → 血液','Glucose: gut → blood'),[935,104],12),
+      flow('oxygen','capillary blood','epithelial cells',[[ZX+ZLANE,302],[632,302]],P('氧氣進上皮細胞','O₂ into cells'),[935,462],8,.3),
+      flow('carbon','epithelial cells','capillary blood',[[632,291],[ZX+ZLANE,291]],P('二氧化碳回血液','CO₂ back to blood'),[935,498],8,.65)];
     return[
       flow('oxygen','blood','cell',[[231,237],[397,237],[519,243],[586,279]],P('氧氣送進細胞','O₂ delivered to cells'),[267,211],8),
       flow('glucose','blood','cell',[[230,329],[398,329],[520,329],[588,330]],P('葡萄糖送進細胞','Glucose delivered to cells'),[269,305],10,.35),
@@ -176,8 +180,111 @@
     return list;
   }
   function kidney(ctx,s,t,D){ellipse(ctx,252,247,97,101,'#27453e','#e3c3a4',4);paintBlood(ctx,[...TUFT,RENAL_RETURN],t,10,u=>1-u*.65);const tubule=[[335,289],[393,289],[398,404],[677,404],[788,404],[831,484]];line(ctx,tubule,'#cfb79d',30);line(ctx,tubule,'#eee1b8',22);ellipse(ctx,740,222,110,44,'#37594a','#a2c8aa');text(ctx,D,P('腎絲球','Glomerulus'),145,126,24,'#fde047');text(ctx,D,P('過濾膜','Filter'),331,227,22);text(ctx,D,P('先過濾','Filtered first'),356,466,22,'#ede1ba');text(ctx,D,P('腎小管','Renal tubule'),435,519,22,'#ede1ba');text(ctx,D,P('血球留在血管內','Blood cells stay in blood'),37,366,22,'#f4b3aa');text(ctx,D,P('腎細胞','Kidney cells'),739,238,22,INK,'center');text(ctx,D,P('腎靜脈回流','To renal vein'),768,299,22,'#df8794');}
-  function intestine(ctx,s,t,D){ctx.beginPath();ctx.moveTo(481,489);ctx.lineTo(481,270);ctx.bezierCurveTo(481,160,770,155,770,270);ctx.lineTo(770,489);ctx.closePath();ctx.fillStyle='#2c5246';ctx.fill();ctx.strokeStyle='#bce0b6';ctx.lineWidth=18;ctx.stroke();const wall=[...Array.from({length:9},(_,i)=>[481,282+i*23]),...Array.from({length:16},(_,i)=>{const a=Math.PI+i*Math.PI/15;return[626+145*Math.cos(a),270+80*Math.sin(a)];}),...Array.from({length:9},(_,i)=>[770,282+i*23])];for(const [x,y]of wall){ellipse(ctx,x,y,9,12,'#d4daa8','#658864',1);ellipse(ctx,x,y,2.5,3,'#888466');}paintBlood(ctx,[VILLUS],t,12,u=>1-u*.7);text(ctx,D,P('腸腔','Intestinal lumen'),97,276,26,'#55e9ff');text(ctx,D,P('絨毛上皮','Villus epithelium'),411,146,22,'#d4daa8');text(ctx,D,P('微血管','Capillaries'),787,340,22);text(ctx,D,P('肝門靜脈 → 肝臟','Portal vein → liver'),639,520,22,'#fde047');}
-  function draw(ctx,s,t,D){ctx.save();const zone=ZONES.find(z=>z.id===s.exchange)||ZONES[4];ctx.fillStyle=BG;ctx.fillRect(0,0,960,600);icon(ctx,zone.tile,26,30,100);wrap(ctx,D,zone.id==='lung'&&s.lungView==='cells'?LUNG_CELLS.title:zone.id==='kidney'&&s.kidneyView==='extension'?KIDNEY_EXTRA.title:zone.title,143,49,790,27,'#fde047');const time=t*(s.exchangeSpeed||1);if(zone.id==='lung'&&s.lungView!=='cells')lung(ctx,s,time,D);else if(zone.id==='kidney'&&s.kidneyView==='extension')kidney(ctx,s,time,D);else if(zone.id==='intestine')intestine(ctx,s,time,D);else basic(ctx,s,time,D,zone.id);if(zone.id==='liver')convertAmmonia(ctx,s,time);const list=zone.id==='lung'&&s.lungView!=='cells'?lungFlows(ctx,s,time,D):animateFlows(ctx,s,time,D,zone.id);legend(ctx,s,D,zone.id);s.exchangeTrace={zone:zone.id,kidneyView:zone.id==='kidney'?(s.kidneyView||'cells'):null,lungView:zone.id==='lung'?(s.lungView||'gas'):null,flows:list.map(f=>({kind:f.kind,from:f.from,to:f.to,u:mod(time/f.period+f.offset)}))};D.status(P(`${zone.name[0]}：沿箭頭看物質從哪裡來、到哪裡去。`,`${zone.name[1]}: follow each substance from its source to its destination.`));ctx.restore();return s.exchangeTrace;}
+  /* ---- 小腸：絨毛（老師 2026-11-23：「這根本就不像絨毛」，以課本的絨毛圖為版型重畫；只借構圖，自己畫）----
+   * 左：一根手指狀的絨毛——外面一圈單層上皮細胞，裡面是微血管環（左上行、右下行）＋中央的乳糜管（淋巴管的起點，脂質走這）。
+   * 右：圓圈放大＝上皮細胞（微絨毛朝向腸腔、細胞核、粒線體）和旁邊的微血管。
+   * 動畫：葡萄糖從腸腔穿過微絨毛、細胞、組織液，進微血管，順血流往下（肝門靜脈→肝臟）；氧氣由血液進細胞、二氧化碳回血液。 */
+  const TIP={x:215,y:240},V_OUT=100,V_EPI=18,V_CAP=58,V_BASE=485,V_END=522,IV=38;
+  const ZC={x:640,y:308,r:190},ZX=555,ZROW=[220,308,396],ZC0=600,ZC1=720,ZMV=22,ZLANE=12;
+  const circPiece=(cx,cy,r,a0,a1)=>{const t0=a0*Math.PI/180,t1=a1*Math.PI/180,k=4/3*Math.tan((t1-t0)/4)*r,p0=[cx+r*Math.cos(t0),cy+r*Math.sin(t0)],p3=[cx+r*Math.cos(t1),cy+r*Math.sin(t1)];
+    return[p0,[p0[0]-k*Math.sin(t0),p0[1]+k*Math.cos(t0)],[p3[0]+k*Math.sin(t1),p3[1]-k*Math.cos(t1)],p3];};
+  const VIL_PIECES=[[[TIP.x-V_CAP,V_END],[TIP.x-V_CAP,435],[TIP.x-V_CAP,335],[TIP.x-V_CAP,TIP.y]],circPiece(TIP.x,TIP.y,V_CAP,180,270),circPiece(TIP.x,TIP.y,V_CAP,270,360),[[TIP.x+V_CAP,TIP.y],[TIP.x+V_CAP,335],[TIP.x+V_CAP,435],[TIP.x+V_CAP,V_END]]];
+  const VIL_ROUTE=chain(VIL_PIECES),VIL_L=VIL_ROUTE.length,VIL_D1=C.geometry.curve(VIL_PIECES[0]).length,VIL_ARC=Math.PI*V_CAP;
+  const ZCAP=C.geometry.curve([[ZX,60],[ZX,230],[ZX,400],[ZX,560]]);
+  const LAC=[[TIP.x,V_END-12],[TIP.x,TIP.y-9]];
+  // 上皮細胞排成單層一圈：沿「左側向上 → 頂端半圓 → 右側向下」排，記下每顆的位置與朝外方向
+  const VCELLS=(()=>{const rc=V_OUT-V_EPI/2,H=V_BASE-TIP.y,S=2*H+Math.PI*rc,N=Math.round(S/19),list=[];
+    for(let n=0;n<N;n++){const q=(n+.5)*S/N;let x,y,phi;
+      if(q<H){x=TIP.x-rc;y=V_BASE-q;phi=Math.PI;}
+      else if(q<H+Math.PI*rc){const a=Math.PI+(q-H)/rc;x=TIP.x+rc*Math.cos(a);y=TIP.y+rc*Math.sin(a);phi=a;}
+      else{x=TIP.x+rc;y=TIP.y+(q-H-Math.PI*rc);phi=0;}
+      list.push({x,y,phi});}
+    return{list,w:S/N-2};})();
+  const villusPath=(ctx,cx,r,y1)=>{ctx.beginPath();ctx.moveTo(cx-r,y1);ctx.lineTo(cx-r,TIP.y);ctx.arc(cx,TIP.y,r,Math.PI,TAU);ctx.lineTo(cx+r,y1);};
+  /* 血管：血漿淡黃管＋單列紅血球（流速 IV，與溶在血漿的物質同速） */
+  function bloodLoop(ctx,route,radius,t,spacing,rbcR,oxy){
+    C.render.tubes(ctx,[route],[radius],0,2);ctx.save();C.render.clipTubes(ctx,[route],[radius]);
+    C.geometry.cells(route,t,[0],spacing,IV,rbcR).forEach(q=>C.render.rbc(ctx,q.x,q.y,q.r,oxy(q.d/route.length),q.angle+q.tilt));ctx.restore();}
+  function villus(ctx,t,s){
+    const fat=s.substance&&s.substance!=='all';
+    // 左邊露出一點鄰居絨毛（暗）：絨毛不只一根
+    ctx.save();ctx.globalAlpha=.3;villusPath(ctx,-12,V_OUT-4,V_BASE+4);ctx.fillStyle='#22453b';ctx.fill();ctx.strokeStyle='#bce0b655';ctx.lineWidth=12;ctx.stroke();ctx.restore();
+    ctx.beginPath();ctx.roundRect(60,V_BASE-4,330,20,8);ctx.fillStyle='#bce0b6';ctx.fill();   // 腸壁（絨毛的底）
+    villusPath(ctx,TIP.x,V_OUT-V_EPI,V_BASE);ctx.closePath();ctx.fillStyle='#2c5246';ctx.fill();   // 核心（疏鬆結締組織）
+    // 乳糜管：中央、盲端、往下通到淋巴；脂質的小滴走這條，不進微血管
+    line(ctx,LAC,'#9fc1bc',24);line(ctx,LAC,'#e7f1e6',17);
+    ctx.save();ctx.globalAlpha=fat?.2:1;for(let n=0;n<5;n++){const y=TIP.y+4+mod((t*22+n*60)/300)*300;if(y>V_END-8)continue;ellipse(ctx,TIP.x+(n%2?3:-3),y,3.6,3.6,'#fff1b8','#e0c470',1);}ctx.restore();
+    bloodLoop(ctx,VIL_ROUTE,10,t,38,6.4,u=>1-.7*u);   // 微血管環：左側上行（鮮紅）→ 頂端 → 右側下行（較暗）
+    // 上皮細胞（單層、柱狀；細胞核紫色；朝腸腔那一面是微絨毛）
+    ctx.save();ctx.lineCap='round';
+    for(const c of VCELLS.list){ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.phi);
+      ctx.beginPath();ctx.roundRect(-V_EPI/2,-VCELLS.w/2,V_EPI,VCELLS.w,4);ctx.fillStyle='#d4daa8';ctx.fill();ctx.strokeStyle='#658864';ctx.lineWidth=1.4;ctx.stroke();
+      ellipse(ctx,-3,0,5.5,3.6,'#a98bd8');
+      ctx.beginPath();for(let k=0;k<4;k++){const y=-VCELLS.w/2+2.5+k*(VCELLS.w-5)/3;ctx.moveTo(V_EPI/2,y);ctx.lineTo(V_EPI/2+6,y);}ctx.strokeStyle='#e8dca0';ctx.lineWidth=1.8;ctx.stroke();
+      ctx.restore();}
+    ctx.restore();
+    // 放大鏡：絨毛右側牆上一個圈，連到右邊的大圓
+    const sp={x:TIP.x+V_OUT-V_EPI/2,y:345};
+    ctx.save();ctx.setLineDash([6,6]);line(ctx,[[sp.x+14,sp.y-16],[ZC.x-ZC.r*.97,ZC.y-ZC.r*.26]],'#bce0b6aa',2);line(ctx,[[sp.x+14,sp.y+16],[ZC.x-ZC.r*.97,ZC.y+ZC.r*.26]],'#bce0b6aa',2);ctx.restore();
+    ctx.beginPath();ctx.arc(sp.x,sp.y,21,0,TAU);ctx.strokeStyle='#eaf4e6';ctx.lineWidth=3;ctx.stroke();
+    // 血管末端淡出（避免切口），再放標籤
+    const g=ctx.createLinearGradient(0,V_BASE+14,0,V_END+3);g.addColorStop(0,BG+'00');g.addColorStop(1,BG);ctx.fillStyle=g;ctx.fillRect(40,V_BASE+14,360,V_END-V_BASE-8);
+  }
+  function zoom(ctx,t){
+    ctx.save();ctx.beginPath();ctx.arc(ZC.x,ZC.y,ZC.r,0,TAU);ctx.clip();
+    ctx.fillStyle='#1d3d34';ctx.fillRect(ZC.x-ZC.r,ZC.y-ZC.r,2*ZC.r,2*ZC.r);
+    ctx.fillStyle='#25474d';ctx.fillRect(ZC1+ZMV,ZC.y-ZC.r,ZC.x+ZC.r-ZC1-ZMV,2*ZC.r);   // 腸腔
+    bloodLoop(ctx,ZCAP,20,t,34,8.4,()=>.6);
+    for(const yc of ZROW){
+      ctx.beginPath();ctx.roundRect(ZC0,yc-40,ZC1-ZC0,80,16);ctx.fillStyle='#cdd8a0';ctx.fill();ctx.strokeStyle='#658864';ctx.lineWidth=2.5;ctx.stroke();
+      mitochondrion(ctx,632,yc-12,38,22);
+      ellipse(ctx,676,yc-10,15,19,gradient(ctx,676,yc-10,22,'#d7b6ed','#786098'),'#d4b1e2',2);
+      ctx.save();ctx.lineCap='round';ctx.strokeStyle='#e8dca0';ctx.lineWidth=4.5;ctx.beginPath();for(let k=0;k<9;k++){const y=yc-34+k*8.5;ctx.moveTo(ZC1,y);ctx.lineTo(ZC1+ZMV,y);}ctx.stroke();ctx.restore();}
+    ctx.restore();
+    ctx.beginPath();ctx.arc(ZC.x,ZC.y,ZC.r,0,TAU);ctx.strokeStyle='#bce0b6';ctx.lineWidth=4;ctx.stroke();
+  }
+  function intestine(ctx,s,t,D){
+    villus(ctx,t,s);zoom(ctx,t);
+    text(ctx,D,P('絨毛','Villus'),TIP.x,122,24,'#d4daa8','center');
+    text(ctx,D,P('乳糜管','Lacteal'),104,300,22,'#cfe6df','right');text(ctx,D,P('脂質走這','Fat'),104,330,22,'#fff1b8','right');
+    line(ctx,[[110,294],[TIP.x-12,294]],'#cfe6df88',1.5);
+    ctx.save();ctx.globalAlpha=!s.substance||s.substance==='all'||s.substance==='glucose'?1:.14;text(ctx,D,P('肝門靜脈 → 肝臟','Portal vein → liver'),292,508,22,'#fde047');ctx.restore();
+    text(ctx,D,P('微血管','Vessel'),ZC.x-ZC.r+8,ZC.y+8,22,'#f1e3ae');
+    text(ctx,D,P('腸腔','Lumen'),ZC1+ZMV+8,ZC.y-18,22,'#55e9ff');
+    text(ctx,D,P('微絨毛','Microvilli'),836,ZROW[0]+8,22,'#e8dca0');line(ctx,[[830,ZROW[0]],[ZC1+ZMV+4,ZROW[0]]],'#e8dca088',1.5);
+    text(ctx,D,P('上皮細胞','Epithelium'),836,396,22,'#d4daa8');line(ctx,[[830,388],[712,372]],'#d4daa888',1.5);
+  }
+  /* 分子動畫（葡萄糖／氧氣／二氧化碳）：全部排在最前面幾秒（教學引擎一次只播 10 秒、從 0 秒開始） */
+  const halo=(ctx,x,y,r)=>{ctx.save();ctx.fillStyle=BG;ctx.globalAlpha*=.55;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.restore();};
+  const cyc=(t,ts,T)=>mod((t-ts)/T)*T;
+  const VIL_GLU=[{a:300,ts:.2},{a:345,ts:1.5},{a:0,ts:2.8}].map(g=>{
+    g.d=g.a?VIL_D1+(g.a-180)*VIL_ARC/180:VIL_D1+VIL_ARC+100;g.n=g.a?[Math.cos(g.a*Math.PI/180),Math.sin(g.a*Math.PI/180)]:[1,0];
+    g.T=1.8+(VIL_L-g.d)/IV+1.6;return g;});
+  const ZBOT=ZC.y+ZC.r;
+  function intestineFlows(ctx,s,t,D){
+    const list=flows('intestine'),on=k=>!s.substance||s.substance==='all'||s.substance===k;
+    const mol=(k,x,y,a,size)=>{ctx.save();ctx.globalAlpha=(on(k)?1:.14)*a;halo(ctx,x,y,size*1.7);molecule(ctx,k,{x,y},size);ctx.restore();};
+    // 絨毛上的葡萄糖：腸腔 → 上皮細胞 → 微血管（1.8 秒），再順血流往下
+    for(const g of VIL_GLU){const u=cyc(t,g.ts,g.T),pc=C.geometry.at(VIL_ROUTE,g.d,0);
+      if(u<1.8){const e=smooth01(u/1.8),dist=(V_OUT+52-V_CAP)*(1-e);mol('glucose',pc.x+g.n[0]*dist,pc.y+g.n[1]*dist,Math.min(1,u*5),7);}
+      else{const d=g.d+(u-1.8)*IV;if(d>VIL_L)continue;const q=C.geometry.at(VIL_ROUTE,d,4);mol('glucose',q.x,q.y,Math.min(1,(VIL_L-d)/50),6.5);}}
+    // 放大圓裡：每列細胞各一顆葡萄糖（穿過微絨毛 → 細胞 → 組織液 → 微血管）、一顆氧氣（血液 → 粒線體）、一顆二氧化碳（粒線體 → 血液）
+    ctx.save();ctx.beginPath();ctx.arc(ZC.x,ZC.y,ZC.r-2,0,TAU);ctx.clip();
+    ZROW.forEach((yc,i)=>{
+      const yg=yc+18,Tg=2.7+(ZBOT-yg)/IV+1.5,ug=cyc(t,[.3,1.9,3.5][i],Tg);
+      if(ug<2.7)mol('glucose',805-(805-ZX-ZLANE)*smooth01(ug/2.7),yg,Math.min(1,ug*4),8);
+      else{const y=yg+(ug-2.7)*IV;if(y<ZBOT+12)mol('glucose',ZX+ZLANE,y,Math.min(1,(ZBOT+12-y)/40),8);}
+      const yo=yc-6,uo=cyc(t,[1.0,2.8,4.6][i]-2.1,5.6);   // 氧氣：先順血流下來 2.1 秒，再進細胞 1.4 秒
+      if(uo<2.1)mol('oxygen',ZX+ZLANE,yo-(2.1-uo)*IV,Math.min(1,uo*4),9);
+      else if(uo<3.5){const v=(uo-2.1)/1.4;mol('oxygen',ZX+ZLANE+(632-ZX-ZLANE)*smooth01(v),yo,Math.min(1,(1-v)*5),9);}
+      const yk=yc-17,uk=cyc(t,[.2,2.0,3.8][i],1.4+(ZBOT-yk)/IV+1.5);   // 二氧化碳：粒線體 → 血液，再順血流離開
+      if(uk<1.4)mol('carbon',632-(632-ZX-ZLANE)*smooth01(uk/1.4),yk,Math.min(1,uk*4),8);
+      else{const y=yk+(uk-1.4)*IV;if(y<ZBOT+12)mol('carbon',ZX+ZLANE,y,Math.min(1,(ZBOT+12-y)/40),8);}});
+    ctx.restore();
+    for(const f of list){ctx.save();ctx.globalAlpha=on(f.kind)?1:.14;text(ctx,D,f.label,f.at[0],f.at[1],22,SPECIES[f.kind].color,'right');ctx.restore();}
+    return list;
+  }
+  function draw(ctx,s,t,D){ctx.save();const zone=ZONES.find(z=>z.id===s.exchange)||ZONES[4];ctx.fillStyle=BG;ctx.fillRect(0,0,960,600);icon(ctx,zone.tile,26,30,100);wrap(ctx,D,zone.id==='lung'&&s.lungView==='cells'?LUNG_CELLS.title:zone.id==='kidney'&&s.kidneyView==='extension'?KIDNEY_EXTRA.title:zone.title,143,49,790,27,'#fde047');const time=t*(s.exchangeSpeed||1);if(zone.id==='lung'&&s.lungView!=='cells')lung(ctx,s,time,D);else if(zone.id==='kidney'&&s.kidneyView==='extension')kidney(ctx,s,time,D);else if(zone.id==='intestine')intestine(ctx,s,time,D);else basic(ctx,s,time,D,zone.id);if(zone.id==='liver')convertAmmonia(ctx,s,time);const list=zone.id==='lung'&&s.lungView!=='cells'?lungFlows(ctx,s,time,D):zone.id==='intestine'?intestineFlows(ctx,s,time,D):animateFlows(ctx,s,time,D,zone.id);legend(ctx,s,D,zone.id);s.exchangeTrace={zone:zone.id,kidneyView:zone.id==='kidney'?(s.kidneyView||'cells'):null,lungView:zone.id==='lung'?(s.lungView||'gas'):null,flows:list.map(f=>({kind:f.kind,from:f.from,to:f.to,u:mod(time/f.period+f.offset)}))};D.status(P(`${zone.name[0]}：沿箭頭看物質從哪裡來、到哪裡去。`,`${zone.name[1]}: follow each substance from its source to its destination.`));ctx.restore();return s.exchangeTrace;}
   function explain(s){const z=ZONES.find(z=>z.id===s.exchange)||ZONES[4];return z.id==='lung'&&s.lungView==='cells'?{title:LUNG_CELLS.title,text:LUNG_CELLS.text}:z.id==='kidney'&&s.kidneyView==='extension'?{title:KIDNEY_EXTRA.title,text:KIDNEY_EXTRA.text}:{title:z.title,text:z.text};}
   const LYMPH_MEDIA='assets/biology/human_transport_media_1012_v1/';
   const LYMPH_CAPS=[
