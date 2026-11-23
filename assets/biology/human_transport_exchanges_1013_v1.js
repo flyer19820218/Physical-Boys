@@ -53,24 +53,8 @@
       'Lung cells use glucose and oxygen for cellular respiration and return CO₂ to blood. Glucose travels dissolved in plasma and crosses tissue fluid into cells, not on red cells.\n\nExtra: alongside pulmonary circulation, bronchial circulation supplies oxygen and nutrients to airways and supporting tissue. This example does not place every lung cell on the same supply route.\n\nAlveolar gas exchange oxygenates blood for the body; nutrient use is lung tissue\'s own metabolism. Glucose is neither inhaled nor exhaled.')};
   function flows(zone,lungView='gas',kidneyView='cells'){
     if(zone==='lung'&&lungView!=='cells')return[
-      flow('oxygen','alveolar air','blood',[[546,224],[548,292],[548,401]],P('氧氣進血','O₂ into blood'),[380,335],8),
-      flow('carbon','blood','alveolar air',[[722,412],[721,291],[724,221]],P('二氧化碳出血','CO₂ into air'),[727,340],8,.5)];
-    if(zone==='kidney'&&kidneyView==='extension')return[
-      flow('urea','glomerular blood','urine',[[RENAL_FILTER.x,RENAL_FILTER.y],[298,251],[387,289],[397,404],[782,404],[830,482]],P('尿素 → 尿液','Urea → urine'),[650,468],13),
-      flow('glucose','glomerular blood','reabsorbed blood',[[RENAL_FILTER.x,RENAL_FILTER.y],[301,260],[381,289],[397,403],[551,403],[557,364],[RENAL_REABSORB.x,RENAL_REABSORB.y]],P('葡萄糖再吸收','Glucose reabsorbed'),[530,273],14,.2),
-      flow('glucose','renal blood','kidney cells',[[nearX(RENAL_RETURN,744).x,nearX(RENAL_RETURN,744).y],[738,280],[744,204]],P('葡萄糖給腎細胞','Glucose to kidney cells'),[610,132],10,.35),
-      flow('oxygen','blood','kidney cells',[[688,326],[686,286],[695,236]],P('細胞也要氧','Cells need O₂'),[608,167],8,.1),
-      flow('carbon','kidney cells','blood',[[833,235],[837,276],[833,324]],P('CO₂ 交回血液','CO₂ to blood'),[718,366],8,.6)];
-    if(zone==='intestine')return[
-      flow('glucose','intestinal lumen','portal blood',[[231,318],[414,318],[481,318],[592,318],...VILLUS.samples.filter(p=>p.y<318||p.x>650).filter((_,i)=>i%4===0).map(p=>[p.x,p.y]),[710,477]],P('穿過上皮 → 進血','Across epithelium → blood'),[120,386],12),
-      flow('oxygen','blood','intestinal cells',[[591,264],[550,249],[489,239]],P('氧氣給小腸細胞','O₂ to intestinal cells'),[310,208],8,.2),
-      flow('carbon','intestinal cells','blood',[[518,413],[577,413],[592,400]],P('CO₂ 回血液','CO₂ into blood'),[275,461],8,.6)];
-    if(zone==='liver')return[
-      flow('ammonia','blood','liver cell',[[223,225],[387,225],[505,226],[643,239]],P('氨進肝細胞','NH₃ to liver cells'),[263,199],9),
-      flow('urea','liver cell','blood to kidney',[[695,302],[551,317],[384,317],[226,317]],P('尿素交給血液','Urea into blood'),[269,296],9,.55),
-      flow('glucose','portal blood','liver storage',[[224,456],[395,456],[533,443],[742,422]],P('飯後：葡萄糖儲存','After a meal: store glucose'),[254,498],10,.3),
-      flow('oxygen','blood','liver cell',[[223,368],[421,368],[539,367]],P('氧氣進去','O₂ in'),[266,348],8,.2),
-      flow('carbon','liver cell','blood',[[539,409],[424,411],[226,411]],P('CO₂ 出來','CO₂ out'),[264,436],8,.6)];
+      flow('oxygen','alveolar air','blood',[LUNG_XY(70,112),LUNG_XY(LCC,112)],P('氧氣進血','O₂ into blood'),[405,486],8),
+      flow('carbon','blood','alveolar air',[LUNG_XY(LCC,158),LUNG_XY(70,158)],P('二氧化碳出血','CO₂ into air'),[335,350],8,.5)];
     if(zone==='lung')return[
       flow('oxygen','bronchial tissue blood','lung tissue cells',[[231,237],[397,237],[519,243],[586,279]],P('氧氣給肺細胞','O₂ to lung tissue cells'),[267,211],8),
       flow('glucose','bronchial tissue plasma','lung tissue cells',[[230,329],[398,329],[520,329],[588,330]],P('葡萄糖給肺細胞','Glucose to lung tissue cells'),[269,305],10,.35),
@@ -92,10 +76,70 @@
   function legend(ctx,s,D,zone){const present=new Set(flows(zone,s.lungView,s.kidneyView).map(f=>f.kind));Object.keys(SPECIES).forEach((k,i)=>{const x=34+i*184;ctx.save();ctx.globalAlpha=present.has(k)?1:.28;molecule(ctx,k,{x:x+10,y:539},8);wrap(ctx,D,SPECIES[k].name,x+32,546,140,20,SPECIES[k].color);ctx.restore();if(present.has(k))D.hit(x,536,180,38,'substance',k);});text(ctx,D,P('淡黃＝血漿；分子符號放大，非比例、非分子反應計量。','Pale yellow = plasma; enlarged symbols, not scale or reaction stoichiometry.'),24,599,18,'#b9cbbd');}
   function convertAmmonia(ctx,s,t){if(s.substance&&s.substance!=='all'&&!['ammonia','urea'].includes(s.substance))return;const route=[[643,239],[676,249],[684,283],[695,302]];arrow(ctx,route,'#fb923c');const u=mod(t/9+.42),p=G.point(route,u);ctx.save();ctx.globalAlpha=Math.min(1,u*10,(1-u)*10);molecule(ctx,u<.5?'ammonia':'urea',p,10);ctx.restore();}
   function basic(ctx,s,t,D,zone){blood(ctx,[[210,168],[199,270],[239,396],[217,498]],t,25,u=>1-.65*u);cell(ctx,zone,t);text(ctx,D,zone==='lung'?P('供肺組織的微血管','Lung-tissue supply capillary'):P('微血管（血漿）','Capillary (plasma)'),40,144,22,'#f1e3ae');text(ctx,D,zone==='heart'?P('心肌細胞','Heart-muscle cell'):zone==='liver'?P('肝細胞','Liver cell'):zone==='lung'?P('肺組織細胞','Lung-tissue cell'):zone==='kidney'?P('腎細胞','Kidney cell'):P('組織細胞','Tissue cell'),642,163,24,'#86c4a7');if(zone==='liver'){text(ctx,D,P('氨 → 尿素','NH₃ → urea'),614,265,23,'#fb923c');text(ctx,D,P('肝糖','Glycogen'),766,474,22,'#fde047');}else{text(ctx,D,P('細胞呼吸作用','Cellular respiration'),565,374,22,'#fde047');text(ctx,D,P('供細胞利用的能量','Usable energy'),618,483,22,'#fde047');}text(ctx,D,P('組織液','Tissue fluid'),287,525,22,'#b9cbbd');}
-  function lung(ctx,s,t,D){const breath=1+Math.sin(t*.8)*.025;ellipse(ctx,626,241,244*breath,112*breath,gradient(ctx,625,240,240,'#5b7770','#283f38'),'#e9aa9f',7);ellipse(ctx,626,241,232*breath,100*breath,'#294e45','#c7827c',2);blood(ctx,[[64,396],[389,441],[667,372],[902,425]],t,25,u=>.2+.8*u);text(ctx,D,P('肺泡內空氣','Alveolar air'),583,221,24,'#55e9ff');text(ctx,D,P('肺泡壁','Alveolar wall'),777,94,22,'#e9aa9f');text(ctx,D,P('肺微血管','Lung capillary'),62,346,22);text(ctx,D,P('肺動脈來：較少氧','From pulmonary artery: less O₂'),26,500,22,'#df8794');text(ctx,D,P('回肺靜脈：較多氧','To pulmonary veins: more O₂'),930,500,22,'#ff9c83','right');arrow(ctx,[[436,125],[456,184]],'#55e9ff');arrow(ctx,[[785,185],[830,112]],'#9fc1bc');text(ctx,D,P('吸氣','Inhale'),363,122,22,'#55e9ff');text(ctx,D,P('呼氣','Exhale'),845,122,22,'#9fc1bc');}
+  /* ---- 肺：圓形肺泡＋繞著肺泡彎過去的微血管（老師 2026-11-23：肺泡要是圓的；紅血球單列、一次一顆通過）----
+   * 畫面 960×600。肺泡是正圓（ALV）；微血管中心線與肺泡同圓心（半徑 LCC），從左邊進來、轉彎、繞過肺泡下緣、往右出去。
+   * 紅血球沿中心線走：血色依「走過肺泡的程度」由暗紅漸變鮮紅；走到肺泡旁，氧氣由肺泡空氣穿過壁進到這顆細胞、二氧化碳從這顆細胞出到肺泡。 */
+  const ALV={x:545,y:312,r:128},LCR=22,LCC=ALV.r+9+LCR;
+  const LUNG_XY=(r,deg)=>[ALV.x+r*Math.cos(deg*Math.PI/180),ALV.y+r*Math.sin(deg*Math.PI/180)];
+  const lungArc=(a0,a1)=>{const t0=a0*Math.PI/180,t1=a1*Math.PI/180,k=4/3*Math.tan((t1-t0)/4)*LCC,p0=LUNG_XY(LCC,a0),p3=LUNG_XY(LCC,a1);
+    return[p0,[p0[0]-k*Math.sin(t0),p0[1]+k*Math.cos(t0)],[p3[0]+k*Math.sin(t1),p3[1]-k*Math.cos(t1)],p3];};
+  const LUNG_PIECES=(()=>{const e=LUNG_XY(LCC,55),tx=Math.sin(55*Math.PI/180),ty=-Math.cos(55*Math.PI/180);
+    return[[[-20,170],[250,170],[ALV.x-LCC,150],[ALV.x-LCC,ALV.y]],lungArc(180,90),lungArc(90,55),[e,[e[0]+110*tx,e[1]+110*ty],[820,378],[985,378]]];})();
+  const LUNG_ROUTE=chain(LUNG_PIECES);
+  const LUNG_LEN=LUNG_PIECES.map(q=>C.geometry.curve(q).length),LUNG_D0=LUNG_LEN[0],LUNG_ARC=LUNG_LEN[1]+LUNG_LEN[2];
+  const LUNG_CELLS_N=3,LUNG_SPEED=70,LUNG_CELL_R=19;   // 3 顆、間距 > 繞肺泡那一段的長度：同一時間肺泡旁只有一顆
+  const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+  const mixHex=(a,b,u)=>{const x=hex(a),y=hex(b);return'#'+x.map((v,i)=>Math.round(v+(y[i]-v)*u).toString(16).padStart(2,'0')).join('');};
+  const smooth01=u=>{u=clamp(u);return u*u*(3-2*u);};
+  /* 紅血球：o＝含氧程度 0（暗紅）～1（鮮紅），顏色連續漸變（同全站血色：不畫藍色） */
+  function lungRbc(ctx,x,y,r,o,angle){ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+    const g=ctx.createRadialGradient(-r*.12,-r*.16,0,0,0,r);
+    g.addColorStop(0,mixHex('#c17a78','#f3a794',o));g.addColorStop(.32,mixHex('#a25459','#e38273',o));g.addColorStop(.64,mixHex('#852b39','#dd3f43',o));g.addColorStop(.83,mixHex('#ab5158','#ff7770',o));g.addColorStop(1,'#68232d');
+    ellipse(ctx,0,0,r,r*.69,g,mixHex('#b66e6e','#f39180',o),.8);
+    ctx.beginPath();ctx.ellipse(-r*.05,-r*.05,r*.40,r*.25,0,.2,2.7);ctx.strokeStyle='#ffd5ba80';ctx.lineWidth=.8;ctx.stroke();ctx.restore();}
+  /* 目前在畫面上的每顆紅血球：位置、角度、含氧程度、走過肺泡的程度 f（0＝剛進肺泡旁，1＝繞完） */
+  function lungCells(t){const L=LUNG_ROUTE.length,pitch=L/LUNG_CELLS_N,out=[];
+    for(let i=0;i<LUNG_CELLS_N;i++){const d=mod((t*LUNG_SPEED+i*pitch)/L)*L,p=C.geometry.at(LUNG_ROUTE,d,0),f=(d-LUNG_D0)/LUNG_ARC;
+      out.push({x:p.x,y:p.y,angle:p.angle,d,f,o:.12+.88*smooth01((f-.1)/.8),i});}
+    return out;}
+  function lung(ctx,s,t,D){
+    const breath=1+Math.sin(t*.8)*.025,R=ALV.r*breath;
+    // 氣道（細支氣管末端）接在肺泡右上方
+    line(ctx,[[622,248],[1014,-29]],'#e9aa9f',60);line(ctx,[[622,248],[1014,-29]],'#2b5249',48);
+    ellipse(ctx,ALV.x,ALV.y,R,R,gradient(ctx,ALV.x,ALV.y-10,R*1.12,'#4d8b88','#264c46'),'#e9aa9f',7);   // 肺泡：正圓
+    ctx.beginPath();ctx.arc(ALV.x,ALV.y,R-12,0,TAU);ctx.strokeStyle='#c7827c';ctx.lineWidth=2;ctx.stroke();
+    // 微血管（血漿淡黃）＋單列紅血球
+    C.render.tubes(ctx,[LUNG_ROUTE],[LCR],0,2);
+    const cells=lungCells(t);
+    ctx.save();C.render.clipTubes(ctx,[LUNG_ROUTE],[LCR]);cells.forEach(c=>lungRbc(ctx,c.x,c.y,LUNG_CELL_R,c.o,c.angle));ctx.restore();
+    // 氣道裡的空氣：吸氣（青）進肺泡、呼氣（灰）出去，兩條分開的通道
+    const nk=[[622,248],[867,75]],ux=nk[1][0]-nk[0][0],uy=nk[1][1]-nk[0][1],ul=Math.hypot(ux,uy),nx=-uy/ul,ny=ux/ul;
+    for(let n=0;n<3;n++){const u=mod(t/3.4+n/3);ctx.save();ctx.globalAlpha=Math.min(1,u*8,(1-u)*8)*.9;
+      ellipse(ctx,nk[1][0]-ux*u+nx*10,nk[1][1]-uy*u+ny*10,5,5,'#55e9ff');ctx.globalAlpha=Math.min(1,u*8,(1-u)*8)*.9;
+      ellipse(ctx,nk[0][0]+ux*u-nx*10,nk[0][1]+uy*u-ny*10,5,5,'#9fc1bc');ctx.restore();}
+    text(ctx,D,P('肺泡內空氣','Alveolar air'),ALV.x,ALV.y-6,24,'#55e9ff','center');
+    text(ctx,D,P('肺泡壁','Alveolar wall'),ALV.x+R+18,ALV.y+30,22,'#e9aa9f');
+    text(ctx,D,P('肺動脈來：較少氧','From pulmonary artery: less O₂'),30,232,22,'#df8794');
+    text(ctx,D,P('肺微血管','Lung capillary'),30,266,22);
+    text(ctx,D,P('回肺靜脈：較多氧','To pulmonary veins: more O₂'),935,436,22,'#ff9c83','right');
+    text(ctx,D,P('紅血球單列，一次一顆','Red cells in single file'),935,478,22,'#f1e3ae','right');
+    text(ctx,D,P('吸氣','Inhale'),672,112,22,'#55e9ff');text(ctx,D,P('呼氣','Exhale'),836,162,22,'#9fc1bc');
+  }
+  /* 氣體交換動畫：每顆紅血球繞過肺泡時，先放出二氧化碳（進肺泡）、再收進氧氣（從肺泡來）。依「追蹤哪種物質」調淡另一種。 */
+  function lungFlows(ctx,s,t,D){
+    const list=flows('lung',s.lungView,s.kidneyView),on=k=>!s.substance||s.substance==='all'||s.substance===k;
+    const cells=lungCells(t),EV=[['carbon',.02,.22],['carbon',.17,.37],['carbon',.32,.52],['oxygen',.12,.32],['oxygen',.27,.47],['oxygen',.42,.62],['oxygen',.57,.77],['oxygen',.72,.92]];
+    for(const c of cells){if(c.f<0||c.f>1)continue;
+      let ix=ALV.x-c.x,iy=ALV.y-c.y;const il=Math.hypot(ix,iy)||1;ix/=il;iy/=il;
+      for(const [kind,a,b] of EV){if(c.f<a||c.f>b)continue;const q=(c.f-a)/(b-a),e=smooth01(q),reach=ALV.r*.62;
+        const x0=kind==='oxygen'?c.x+ix*reach:c.x,x1=kind==='oxygen'?c.x:c.x+ix*reach,y0=kind==='oxygen'?c.y+iy*reach:c.y,y1=kind==='oxygen'?c.y:c.y+iy*reach;
+        ctx.save();ctx.globalAlpha=(on(kind)?1:.14)*Math.min(1,q*6,(1-q)*6);molecule(ctx,kind,{x:x0+(x1-x0)*e,y:y0+(y1-y0)*e},10);ctx.restore();}}
+    for(const f of list){ctx.save();ctx.globalAlpha=on(f.kind)?1:.14;text(ctx,D,f.label,f.at[0],f.at[1],22,SPECIES[f.kind].color,'right');ctx.restore();}
+    return list;
+  }
   function kidney(ctx,s,t,D){ellipse(ctx,252,247,97,101,'#27453e','#e3c3a4',4);paintBlood(ctx,[...TUFT,RENAL_RETURN],t,10,u=>1-u*.65);const tubule=[[335,289],[393,289],[398,404],[677,404],[788,404],[831,484]];line(ctx,tubule,'#cfb79d',30);line(ctx,tubule,'#eee1b8',22);ellipse(ctx,740,222,110,44,'#37594a','#a2c8aa');text(ctx,D,P('腎絲球','Glomerulus'),145,126,24,'#fde047');text(ctx,D,P('過濾膜','Filter'),331,227,22);text(ctx,D,P('先過濾','Filtered first'),356,466,22,'#ede1ba');text(ctx,D,P('腎小管','Renal tubule'),435,519,22,'#ede1ba');text(ctx,D,P('血球留在血管內','Blood cells stay in blood'),37,366,22,'#f4b3aa');text(ctx,D,P('腎細胞','Kidney cells'),739,238,22,INK,'center');text(ctx,D,P('腎靜脈回流','To renal vein'),768,299,22,'#df8794');}
   function intestine(ctx,s,t,D){ctx.beginPath();ctx.moveTo(481,489);ctx.lineTo(481,270);ctx.bezierCurveTo(481,160,770,155,770,270);ctx.lineTo(770,489);ctx.closePath();ctx.fillStyle='#2c5246';ctx.fill();ctx.strokeStyle='#bce0b6';ctx.lineWidth=18;ctx.stroke();const wall=[...Array.from({length:9},(_,i)=>[481,282+i*23]),...Array.from({length:16},(_,i)=>{const a=Math.PI+i*Math.PI/15;return[626+145*Math.cos(a),270+80*Math.sin(a)];}),...Array.from({length:9},(_,i)=>[770,282+i*23])];for(const [x,y]of wall){ellipse(ctx,x,y,9,12,'#d4daa8','#658864',1);ellipse(ctx,x,y,2.5,3,'#888466');}paintBlood(ctx,[VILLUS],t,12,u=>1-u*.7);text(ctx,D,P('腸腔','Intestinal lumen'),97,276,26,'#55e9ff');text(ctx,D,P('絨毛上皮','Villus epithelium'),411,146,22,'#d4daa8');text(ctx,D,P('微血管','Capillaries'),787,340,22);text(ctx,D,P('肝門靜脈 → 肝臟','Portal vein → liver'),639,520,22,'#fde047');}
-  function draw(ctx,s,t,D){ctx.save();const zone=ZONES.find(z=>z.id===s.exchange)||ZONES[4];ctx.fillStyle=BG;ctx.fillRect(0,0,960,600);icon(ctx,zone.tile,26,30,100);wrap(ctx,D,zone.id==='lung'&&s.lungView==='cells'?LUNG_CELLS.title:zone.id==='kidney'&&s.kidneyView==='extension'?KIDNEY_EXTRA.title:zone.title,143,49,790,27,'#fde047');const time=t*(s.exchangeSpeed||1);if(zone.id==='lung'&&s.lungView!=='cells')lung(ctx,s,time,D);else if(zone.id==='kidney'&&s.kidneyView==='extension')kidney(ctx,s,time,D);else if(zone.id==='intestine')intestine(ctx,s,time,D);else basic(ctx,s,time,D,zone.id);if(zone.id==='liver')convertAmmonia(ctx,s,time);const list=animateFlows(ctx,s,time,D,zone.id);legend(ctx,s,D,zone.id);s.exchangeTrace={zone:zone.id,kidneyView:zone.id==='kidney'?(s.kidneyView||'cells'):null,lungView:zone.id==='lung'?(s.lungView||'gas'):null,flows:list.map(f=>({kind:f.kind,from:f.from,to:f.to,u:mod(time/f.period+f.offset)}))};D.status(P(`${zone.name[0]}：沿箭頭看物質從哪裡來、到哪裡去。`,`${zone.name[1]}: follow each substance from its source to its destination.`));ctx.restore();return s.exchangeTrace;}
+  function draw(ctx,s,t,D){ctx.save();const zone=ZONES.find(z=>z.id===s.exchange)||ZONES[4];ctx.fillStyle=BG;ctx.fillRect(0,0,960,600);icon(ctx,zone.tile,26,30,100);wrap(ctx,D,zone.id==='lung'&&s.lungView==='cells'?LUNG_CELLS.title:zone.id==='kidney'&&s.kidneyView==='extension'?KIDNEY_EXTRA.title:zone.title,143,49,790,27,'#fde047');const time=t*(s.exchangeSpeed||1);if(zone.id==='lung'&&s.lungView!=='cells')lung(ctx,s,time,D);else if(zone.id==='kidney'&&s.kidneyView==='extension')kidney(ctx,s,time,D);else if(zone.id==='intestine')intestine(ctx,s,time,D);else basic(ctx,s,time,D,zone.id);if(zone.id==='liver')convertAmmonia(ctx,s,time);const list=zone.id==='lung'&&s.lungView!=='cells'?lungFlows(ctx,s,time,D):animateFlows(ctx,s,time,D,zone.id);legend(ctx,s,D,zone.id);s.exchangeTrace={zone:zone.id,kidneyView:zone.id==='kidney'?(s.kidneyView||'cells'):null,lungView:zone.id==='lung'?(s.lungView||'gas'):null,flows:list.map(f=>({kind:f.kind,from:f.from,to:f.to,u:mod(time/f.period+f.offset)}))};D.status(P(`${zone.name[0]}：沿箭頭看物質從哪裡來、到哪裡去。`,`${zone.name[1]}: follow each substance from its source to its destination.`));ctx.restore();return s.exchangeTrace;}
   function explain(s){const z=ZONES.find(z=>z.id===s.exchange)||ZONES[4];return z.id==='lung'&&s.lungView==='cells'?{title:LUNG_CELLS.title,text:LUNG_CELLS.text}:z.id==='kidney'&&s.kidneyView==='extension'?{title:KIDNEY_EXTRA.title,text:KIDNEY_EXTRA.text}:{title:z.title,text:z.text};}
   const LYMPH_MEDIA='assets/biology/human_transport_media_1012_v1/';
   const LYMPH_CAPS=[
