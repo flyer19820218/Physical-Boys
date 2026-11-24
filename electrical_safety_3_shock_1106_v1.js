@@ -128,7 +128,7 @@
   const PX = 560, BX = 616;                         // 第 2～3 步：人、破損處
   const SH = 270, HIP = 338, HEAD = 240;            // 肩、臀、頭心的 y
   const HAND_T = { x: 614, y: 204 }, HAND_R = { x: 590, y: 326 };
-  const P4 = 680, CASE = { x0: 750, x1: 930, y0: 96, y1: 340 }, FLT = 790, GWX = 860, ELX = 850, HAND4 = { x: 750, y: 288 };
+  const P4 = 692, CASE = { x0: 750, x1: 930, y0: 96, y1: 340 }, FLT = 790, GWX = 860, ELX = 850, HAND4 = { x: 750, y: 288 };
   const GX = 300, GFW = 100, GF_Y0 = 108, GF_Y1 = 222;   // 漏電斷路器盒
 
   function mkPath(pts, side) {
@@ -302,7 +302,7 @@
     if (alpha <= 0.01) return;
     ctx.save(); ctx.globalAlpha *= alpha;
     ctx.setLineDash([8, 6]); ctx.strokeStyle = 'rgba(77,210,255,0.55)'; ctx.lineWidth = 2.5; ctx.fillStyle = 'rgba(77,210,255,0.06)';
-    rrect(ctx, 510, 214, 140, 202, 16); ctx.fill(); ctx.stroke();
+    rrect(ctx, 482, 188, 150, 226, 16); ctx.fill(); ctx.stroke();
     ctx.restore();
   }
   // 金屬外殼電器（第 4 步）
