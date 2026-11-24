@@ -401,7 +401,7 @@ export async function createViewer(o) {
     const obj = new CSS2DObject(el);
     obj.center.set(L.side === 'r' ? 0 : L.side === 'l' ? 1 : 0.5, L.side === 'u' ? 1 : L.side === 'd' ? 0 : 0.5);
     obj.position.copy(anchorOf(L.at)); obj.visible = false; scene.add(obj);
-    labels.set(lid, { obj, el, key: L.key, alpha: -1 });
+    labels.set(lid, { obj, el, key: L.key, alpha: -1, side0: L.side });
   }
   function labelText() {
     for (const L of labels.values()) {
@@ -590,6 +590,31 @@ export async function createViewer(o) {
       L.obj.visible = a > 0.02; L.el.style.opacity = String(a);
     }
   }
+  // 窄舞台（手機直式）：左右標籤若會被舞台邊緣切掉，先翻到放得下的那一邊；兩邊都放不下就選空間大的一邊、讓文字換行
+  function fitLabels(w, h) {
+    let pending = false;
+    for (const L of labels.values()) {
+      if (!L.obj.visible || (L.side0 !== 'r' && L.side0 !== 'l')) continue;
+      const txt = L.el.querySelector('.txt');
+      if (L.nat == null || L.natLang !== V.lang) {   // 自然寬度（不換行）只量一次；語言切換才重量
+        L.el.classList.remove('wrap'); L.nat = L.el.offsetWidth || null; L.natLang = V.lang;
+      }
+      const bw = L.nat; if (!bw) { pending = true; continue; }
+      const x = toScreen(L.obj.position, w, h)[0];
+      const roomR = w - 4 - x, roomL = x - 4;
+      const fits = (side) => (side === 'r' ? roomR : roomL) >= bw;
+      let side = L.side0; if (!fits(side) && fits(side === 'r' ? 'l' : 'r')) side = side === 'r' ? 'l' : 'r';
+      const wrap = !fits(side);
+      if (wrap) { const r = roomR >= roomL ? 'r' : 'l'; side = r; txt.style.maxWidth = Math.max(120, (r === 'r' ? roomR : roomL) - 46) + 'px'; }
+      else txt.style.maxWidth = '';
+      L.el.classList.toggle('wrap', wrap);
+      if (!L.el.classList.contains('side-' + side)) {
+        L.el.classList.remove('side-r', 'side-l'); L.el.classList.add('side-' + side);
+        L.obj.center.x = side === 'r' ? 0 : 1;
+      }
+    }
+    return pending;
+  }
   const proj = new THREE.Vector3(), X5 = new THREE.Vector3(0.05, 0, 0);
   function toScreen(v, w, h) { proj.copy(v).project(camera); return [(proj.x * 0.5 + 0.5) * w, (-proj.y * 0.5 + 0.5) * h, proj.z]; }
   function updateChips(w, h) {
@@ -641,7 +666,8 @@ export async function createViewer(o) {
   let W = 0, H = 0;
   function render() {
     if (V.disposed) return;
-    renderer.render(scene, camera); css2d.render(scene, camera);
+    renderer.render(scene, camera); fitLabels(W, H); css2d.render(scene, camera);
+    if (fitLabels(W, H)) css2d.render(scene, camera);   // 標籤剛顯示、還沒量到寬度時，量完再排一次
     updateChips(W, H); if (current) updateInset(current.window, W, H);
     V.stats.drawCalls = renderer.info.render.calls; V.stats.triangles = renderer.info.render.triangles;
   }
