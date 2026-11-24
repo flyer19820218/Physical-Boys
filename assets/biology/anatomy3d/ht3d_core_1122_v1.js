@@ -409,7 +409,10 @@ export async function createViewer(o) {
       L.el.querySelector('b').textContent = V.lang === 'en' ? n.en : n.zh;
       L.el.querySelector('small').textContent = V.lang === 'en' ? '' : n.note || '';
     }
-    note.textContent = tr(SC.note) + '　' + tr(SC.credit);
+    // 手機窄螢幕只留一行（完整授權與出處在頁面下方的來源區塊，全寬版仍顯示完整說明）
+    note.innerHTML = '<span class="n-full"></span><span class="n-short"></span>';
+    note.firstChild.textContent = tr(SC.note) + '　' + tr(SC.credit);
+    note.lastChild.textContent = V.lang === 'en' ? 'Schematic · credits below' : '示意圖｜授權與出處見下方';
     chipSig = '';
   }
 
