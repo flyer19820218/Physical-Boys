@@ -650,6 +650,35 @@ export async function createViewer(o) {
     if (o.drawInset) { insetCtx.setTransform(1, 0, 0, 1, 0, 0); o.drawInset(insetCtx, win.kind, win.t, V.lang); }
   }
 
+  /* 心臟跳動：心臟四個腔（group 'heart'）隨心動週期收縮。收縮期＝每個週期的前半（與動脈血流脈動 pulseIntegral 同一個相位，所以血被擠出去的同時心臟縮一下）。
+     場景可寫 SCENE.heartBeat = { amp: 0.06 }（線性縮小比例，教學用略放大）或 false 關掉；預設開。以心臟中心為軸縮放，不動頂點資料。 */
+  const beatMeshes = [], beatPivot = new THREE.Vector3(), beatM = new THREE.Matrix4(), beatA = new THREE.Matrix4(), beatB = new THREE.Matrix4();
+  let beatInit = false, beatAmp = SC.heartBeat === false ? 0 : (SC.heartBeat && SC.heartBeat.amp) || 0.06, beatLast = 1;
+  function beatSetup() {
+    beatInit = true;
+    const box = new THREE.Box3(), b = new THREE.Box3();
+    for (const s of structures.values()) if (s.group === 'heart' && s.kind === 'organ') for (const m of s.meshes) {
+      m.updateWorldMatrix(true, false); b.setFromObject(m); box.union(b);
+      beatMeshes.push({ m, base: m.matrix.clone(), auto: m.matrixAutoUpdate });
+    }
+    box.getCenter(beatPivot);
+  }
+  function updateBeat(ft) {
+    if (!beatAmp || !SC.heartPeriod) return;
+    if (!beatInit) beatSetup();
+    if (!beatMeshes.length) return;
+    const T = SC.heartPeriod, tau = ((ft % T) + T) % T, sn = tau < T / 2 ? Math.sin((2 * Math.PI * tau) / T) : 0;
+    const k = 1 - beatAmp * sn * sn;
+    if (Math.abs(k - beatLast) < 1e-5) return; beatLast = k;
+    for (const e of beatMeshes) {
+      const par = e.m.parent, pl = par ? par.worldToLocal(beatPivot.clone()) : beatPivot.clone();
+      beatA.makeTranslation(pl.x, pl.y, pl.z); beatB.makeTranslation(-pl.x, -pl.y, -pl.z);
+      beatM.makeScale(k, k, k);
+      e.m.matrixAutoUpdate = false;
+      e.m.matrix.copy(beatA).multiply(beatM).multiply(beatB).multiply(e.base);
+      e.m.matrixWorldNeedsUpdate = true;
+    }
+  }
   let current = null;
   function apply(k, tau) {
     const S = stateAt(k, tau); current = S;
@@ -663,7 +692,7 @@ export async function createViewer(o) {
       const nr = camFrom && S.t < 1.2 ? NEAR : S.camera.near;
       if (Math.abs(camera.near - nr) > 1e-5) { camera.near = nr; camera.updateProjectionMatrix(); }
     } else if (camera.near !== NEAR) { camera.near = NEAR; camera.updateProjectionMatrix(); }
-    applyStyles(S.style); allocate(S.flows); updateCells(S.flows, S.flowTime); updateTracer(k, S.tracer); updateLabels(S.labels);
+    applyStyles(S.style); allocate(S.flows); updateCells(S.flows, S.flowTime); updateBeat(S.flowTime); updateTracer(k, S.tracer); updateLabels(S.labels);
     return S;
   }
   let W = 0, H = 0;
