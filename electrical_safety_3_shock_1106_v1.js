@@ -273,17 +273,28 @@
     ctx.fillStyle = K.bg; ctx.beginPath(); ctx.arc(x + 20, y - 38, 2.2, 0, TAU); ctx.fill();
     ctx.restore();
   }
-  function person(ctx, x, hand, alpha) {           // 簡單火柴人
+  // 人物改用專案角色 March（不再用火柴人）。素材只有上半身 → 腰以下用同色牛仔褲＋球鞋接到地面線（GY），腳底踩在地上
+  const MARCH = {};
+  ['normal', 'shocked'].forEach(p => { const im = new Image(); im.src = 'assets/characters/march/' + p + '.png'; MARCH[p] = im; });
+  function person(ctx, x, hand, alpha) {
     if (alpha <= 0.01) return;
+    const touching = Math.abs(hand.x - HAND_T.x) < 6 && Math.abs(hand.y - HAND_T.y) < 6;
+    const im = MARCH[touching ? 'shocked' : 'normal'];
+    if (!im || !im.complete || !im.naturalWidth) return;
+    const legH = GY - HIP + 6, bh = HIP + 4 - (HEAD - 52), bw = bh * im.naturalWidth / im.naturalHeight;
     ctx.save(); ctx.globalAlpha *= alpha;
-    ctx.strokeStyle = K.white; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(x, HEAD + 17); ctx.lineTo(x, HIP);                                   // 身體
-    ctx.moveTo(x, SH); ctx.lineTo(hand.x, hand.y);                                  // 伸出的手
-    ctx.moveTo(x, SH); ctx.lineTo(x - 30, 322);                                     // 另一隻手
-    ctx.moveTo(x, HIP); ctx.lineTo(x - 18, GY); ctx.moveTo(x, HIP); ctx.lineTo(x + 18, GY);   // 兩腳踩地
-    ctx.stroke();
-    ctx.fillStyle = K.bg; ctx.beginPath(); ctx.arc(x, HEAD, 17, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#395671'; ctx.strokeStyle = '#14222c'; ctx.lineWidth = 2;
+    [-1, 1].forEach(k => {
+      const lx = x + k * 11 - 9;
+      ctx.beginPath(); ctx.moveTo(lx, GY - legH); ctx.lineTo(lx + 18, GY - legH); ctx.lineTo(lx + 17, GY - 8); ctx.lineTo(lx + 1, GY - 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#202a33'; ctx.beginPath(); ctx.ellipse(x + k * 11 + (k > 0 ? 4 : -4), GY - 4, 13, 5, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#395671';
+    });
+    ctx.drawImage(im, x - bw / 2, HEAD - 52, bw, bh);
+    if (!touching) {   // 伸出去的手臂（藍襯衫袖＋手），讓手看得出往帶電處伸
+      ctx.strokeStyle = '#2f4a7d'; ctx.lineWidth = 11; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x + 14, SH + 4); ctx.lineTo(hand.x, hand.y); ctx.stroke();
+      ctx.fillStyle = '#f1c9a5'; ctx.beginPath(); ctx.arc(hand.x, hand.y, 7, 0, TAU); ctx.fill();
+    }
     ctx.restore();
   }
   function drops(ctx, tl, alpha) {                 // 濕手：水滴（淺色空心水滴，形狀和電子圓球不同）

@@ -267,8 +267,10 @@
     var tail = panel.querySelector('.metric-grid') || ctrl || cv;
     if (!ctrl) return { k: tab + ':' + key + ':hand', topEl: cv, botEl: cv, anchor: 'top' };
     var above = ctrl.getBoundingClientRect().top < cv.getBoundingClientRect().top;
+    // 2026-11-24：動手做版面改成「畫布在上、結果框貼畫布、操作鈕在最下」（AGENTS 3.5）→ 以畫布＋結果框為準，操作鈕被字幕框蓋住沒關係
+    var rb = panel.querySelector('.result-box');
     return above ? { k: tab + ':' + key + ':hand', topEl: panel.querySelector('h2') || ctrl, botEl: cv, anchor: 'top' }
-                 : { k: tab + ':' + key + ':hand', topEl: cv, botEl: tail, anchor: 'bottom' };
+                 : { k: tab + ':' + key + ':hand', topEl: cv, botEl: (rb && rb.getBoundingClientRect().top >= cv.getBoundingClientRect().top) ? rb : tail, anchor: 'bottom' };
   }
   function sceneOf(tab, sub, stepNo, anim, seg) {
     stepNo = stepNo || 1;

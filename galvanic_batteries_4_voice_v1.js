@@ -305,8 +305,8 @@
       var c = scope.querySelector('.canvas-wrap'), r = scope.querySelector('.step-row');
       return c ? { k: tab + ':anim' + (tab === 'tab-history' ? (step <= 5 ? 'g' : 'v') : ''), topEl: c, botEl: r || c, anchor: 'top' } : null;
     }
-    var lab = s.querySelector('.lab-panel[id]'), lc = lab && lab.querySelector('.canvas-wrap');
-    return lab ? { k: tab + ':lab', topEl: lc || lab, botEl: lc || lab, anchor: 'top' } : null;
+    var lab = s.querySelector('.lab-panel[id]'), lc = lab && lab.querySelector('.canvas-wrap'), rb = lab && lab.querySelector('.result-box');   // 2026-11-24：畫布＋操作列＋結果框一起置中在字幕框上方
+    return lab ? { k: tab + ':lab', topEl: lc || lab, botEl: rb || lc || lab, anchor: 'top' } : null;
   }
   function sceneOf(tab, sub, stepNo, anim, seg) {
     stepNo = stepNo || 0;

@@ -311,7 +311,7 @@
       return c ? { k: tab + ':anim', topEl: c, botEl: r || c, anchor: 'top' } : null;
     }
     var lp = $('lab-' + LABKEY[tab]);
-    var lc = lp && lp.querySelector('.canvas-wrap'), lt = lp && lp.querySelector('.lab-controls');
+    var lc = lp && lp.querySelector('.canvas-wrap'), lt = lp && lp.querySelector('.result-box');   // 2026-11-24：結果框貼畫布、操作鈕在最下（AGENTS 3.5），以畫布＋結果框為準
     return lc ? { k: tab + ':lab', topEl: lc, botEl: lt || lc, anchor: 'top' } : null;
   }
   function sceneOf(tab, sub, stepNo, anim, seg) {
