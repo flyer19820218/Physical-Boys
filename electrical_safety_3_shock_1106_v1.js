@@ -273,28 +273,17 @@
     ctx.fillStyle = K.bg; ctx.beginPath(); ctx.arc(x + 20, y - 38, 2.2, 0, TAU); ctx.fill();
     ctx.restore();
   }
-  // 人物改用專案角色 March（不再用火柴人）。素材只有上半身 → 腰以下用同色牛仔褲＋球鞋接到地面線（GY），腳底踩在地上
+  // 人物改用專案角色 March（Gemini 重畫的全身姿勢，腳踩地面線 GY）：沒碰到＝touch_ready（手伸出）、碰到帶電處＝touch_shock（觸電）
   const MARCH = {};
-  ['normal', 'shocked'].forEach(p => { const im = new Image(); im.src = 'assets/characters/march/' + p + '.png'; MARCH[p] = im; });
+  ['touch_ready', 'touch_shock'].forEach(p => { const im = new Image(); im.src = 'assets/characters/march/' + p + '.png'; MARCH[p] = im; });
   function person(ctx, x, hand, alpha) {
     if (alpha <= 0.01) return;
     const touching = Math.abs(hand.x - HAND_T.x) < 6 && Math.abs(hand.y - HAND_T.y) < 6;
-    const im = MARCH[touching ? 'shocked' : 'normal'];
+    const im = MARCH[touching ? 'touch_shock' : 'touch_ready'];
     if (!im || !im.complete || !im.naturalWidth) return;
-    const legH = GY - HIP + 6, bh = HIP + 4 - (HEAD - 52), bw = bh * im.naturalWidth / im.naturalHeight;
+    const h = 320, w = h * im.naturalWidth / im.naturalHeight;
     ctx.save(); ctx.globalAlpha *= alpha;
-    ctx.fillStyle = '#395671'; ctx.strokeStyle = '#14222c'; ctx.lineWidth = 2;
-    [-1, 1].forEach(k => {
-      const lx = x + k * 11 - 9;
-      ctx.beginPath(); ctx.moveTo(lx, GY - legH); ctx.lineTo(lx + 18, GY - legH); ctx.lineTo(lx + 17, GY - 8); ctx.lineTo(lx + 1, GY - 8); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#202a33'; ctx.beginPath(); ctx.ellipse(x + k * 11 + (k > 0 ? 4 : -4), GY - 4, 13, 5, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#395671';
-    });
-    ctx.drawImage(im, x - bw / 2, HEAD - 52, bw, bh);
-    if (!touching) {   // 伸出去的手臂（藍襯衫袖＋手），讓手看得出往帶電處伸
-      ctx.strokeStyle = '#2f4a7d'; ctx.lineWidth = 11; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(x + 14, SH + 4); ctx.lineTo(hand.x, hand.y); ctx.stroke();
-      ctx.fillStyle = '#f1c9a5'; ctx.beginPath(); ctx.arc(hand.x, hand.y, 7, 0, TAU); ctx.fill();
-    }
+    ctx.drawImage(im, x - w / 2, GY - h, w, h);
     ctx.restore();
   }
   function drops(ctx, tl, alpha) {                 // 濕手：水滴（淺色空心水滴，形狀和電子圓球不同）
@@ -395,10 +384,10 @@
     if (i === 1) {
       const a = ease((tl - 0.3) / 0.6), r = ease((tl - 1.0) / (TOUCH - 1.0));
       bodyFrame(ctx, ease((tl - 2.4) / 0.6));
-      person(ctx, PX, { x: lerp(HAND_R.x, HAND_T.x, r), y: lerp(HAND_R.y, HAND_T.y, r) }, a);
+      person(ctx, PX - 15, { x: lerp(HAND_R.x, HAND_T.x, r), y: lerp(HAND_R.y, HAND_T.y, r) }, a);
     } else if (i === 2) {
       bodyFrame(ctx, 1);
-      person(ctx, PX, HAND_T, 1);
+      person(ctx, PX - 15, HAND_T, 1);
     } else if (s4) {
       person(ctx, P4, HAND4, ease((tl - 0.3) / 0.6));
     }
