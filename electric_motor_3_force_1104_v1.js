@@ -392,6 +392,12 @@
     if (S.last && !(MA.ctl && MA.ctl.paused)) S.t += Math.min(0.1, (ts - S.last) / 1000);
     S.last = ts;
     const sc = SCENES[S.scene];
+    // 學生模式（AGENTS 3.2／10.6）：點步驟編號只播該步、播完停在該步最後一幀，再點編號重播；老師講解才連播到底。
+    if (!teacher()) {
+      const kk = S.step >= 0 ? S.step : stepAt(sc, S.t);
+      const end = kk + 1 < sc.starts.length ? sc.starts[kk + 1] : sc.total;
+      if (S.t >= end) { S.t = end - 1e-3; render(); return; }
+    }
     if (S.t >= sc.total) {
       if (teacher()) { S.t = sc.total - 1e-3; if (!S.endFired) { S.endFired = true; MA.ctl.onEnd(); } }
       else { S.t = 0; }

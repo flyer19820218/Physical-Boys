@@ -566,6 +566,12 @@
     if (S.last && !(MagAnim.ctl && MagAnim.ctl.paused)) S.t += Math.min(0.1, (ts - S.last) / 1000);
     S.last = ts;
     const sc = SCENES[S.scene];
+    // 學生模式（AGENTS 3.2／10.6）：點步驟編號只播該步、播完停在該步最後一幀，再點編號重播；老師講解才連播到底。
+    if (!(MagAnim.ctl && MagAnim.ctl.onEnd)) {
+      const kk = S.step >= 0 ? S.step : stepAt(sc, S.t);
+      const end = kk + 1 < sc.starts.length ? sc.starts[kk + 1] : sc.total;
+      if (S.t >= end) { S.t = end - 1e-3; render(); return; }
+    }
     if (S.t >= sc.total) {
       // 老師講解模式（MagAnim.ctl.onEnd 有設定）：停在最後一格並通知一次；學生模式照舊循環
       if (MagAnim.ctl && MagAnim.ctl.onEnd) { S.t = sc.total - 1e-3; if (!S.endFired) { S.endFired = true; MagAnim.ctl.onEnd(); } } else S.t = 0;
