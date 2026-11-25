@@ -9,7 +9,7 @@
  *   木塊示意：加速度 ∝ 合力、無摩擦（K px/s² 每 gw）；撞到軌道左右端點就停住並顯示「到頭了」。
  *   合力 ＝ 0 時木塊「停在原位不動」（教學示意：快速緩停，不讓它帶著速度漂走），並顯示「靜力平衡」。
  * 箭頭長度 ∝ gw：PX_PER_GW ＝ 2.8 px（地面方格每格 10 gw ＝ 28 px）。
- * 人物：拔河圖兩半（assets/characters/tug/）＋麻繩切片；表情徽章依勝負換（victory／struggling／normal）。
+ * 人物：拔河圖兩半（assets/characters/tug/，新圖無繩）＋麻繩切片（繩先畫、人後畫：從木塊穿過前拳、止於後拳）；表情徽章依勝負換（victory／struggling／normal）。
  * 動畫只在木塊還在動（或預備起跑）時跑 RAF，靜止就停。
  */
 (function () {
@@ -29,10 +29,13 @@
   const PX_PER_GW = 2.8, GRID = 10 * PX_PER_GW;       /* 28 px ＝ 10 gw */
   const FMAX = 100, FSTEP = 10, DEF_M = 30, DEF_A = 80;
   const GY = 455;                                      /* 地面線 */
-  const SC = 0.42;                                     /* 拔河圖縮放（原圖約 352×572） */
+  const SC = 0.42;                                     /* 拔河圖縮放（原圖 325×572／333×572，無繩） */
   const IMG_ROPE_Y = 285, IMG_FOOT = 565;
+  const M_FRONT_X = 273, M_BACK_X = 122, A_FRONT_X = 54, A_BACK_X = 185;   /* 前拳／後拳拳心 x（原圖座標） */
   const ROPE_Y = GY - (IMG_FOOT - IMG_ROPE_Y) * SC;    /* ≈ 337，繩子與木塊作用點的高度 */
-  const GL = 250, GR = 710;                            /* 兩人握點 x */
+  const GL = 236, GR = 727;                            /* 兩人前拳 x（＝舊圖拳頭位置） */
+  const GL_BACK = GL - (M_FRONT_X - M_BACK_X) * SC;    /* March 後拳 x ≈ 173 */
+  const GR_BACK = GR + (A_BACK_X - A_FRONT_X) * SC;    /* April 後拳 x ≈ 782 */
   const BW = 136, BH = 136, HALF = BW / 2;             /* 木塊 */
   const X0 = 480, XMIN = 360, XMAX = 600;              /* 木塊中心起點與軌道範圍 */
   const K = 1.66;                                      /* 加速度（px/s²）每 gw */
@@ -65,7 +68,7 @@
   [['L', 'tug/tug_march_left'], ['R', 'tug/tug_april_right'], ['S', 'tug/tug_rope_strip'],
     ['mv', 'march/victory'], ['ms', 'march/struggling'], ['mn', 'march/normal'],
     ['av', 'april/victory'], ['as', 'april/struggling'], ['an', 'april/normal']
-  ].forEach(([k, p]) => loadImg(k, 'assets/characters/' + p + '.png'));
+  ].forEach(([k, p]) => loadImg(k, 'assets/characters/' + p + '.png?v=20261126'));
   const ok = im => im && im.complete && im.naturalWidth;
 
   /* ═════════ 狀態與物理 ═════════ */
@@ -152,17 +155,21 @@
   function drawPeople(c) {
     const L = IMG.L, R = IMG.R; if (!ok(L) || !ok(R)) return;
     const hl = L.naturalHeight * SC, top = GY - IMG_FOOT * SC;
+    const lx = GL - M_FRONT_X * SC, rx = GR - A_FRONT_X * SC;   /* 兩張圖的左緣（前拳對準 GL／GR） */
     /* 腳下影子 */
     c.save(); c.globalAlpha = 0.4; c.fillStyle = COL.deep;
-    c.beginPath(); c.ellipse(GL - 74, GY + 3, 64, 7, 0, 0, TAU); c.fill();
-    c.beginPath(); c.ellipse(GR + 74, GY + 3, 64, 7, 0, 0, TAU); c.fill(); c.restore();
+    c.beginPath(); c.ellipse(lx + L.naturalWidth * SC * 0.53, GY + 3, 64, 7, 0, 0, TAU); c.fill();
+    c.beginPath(); c.ellipse(rx + R.naturalWidth * SC * 0.5, GY + 3, 64, 7, 0, 0, TAU); c.fill(); c.restore();
     /* 兩段繩（拉力太小時鬆垮下垂） */
     const bl = S.x - HALF, br = S.x + HALF;
     const sagL = Math.min(22, (bl - GL) * 0.1) * clamp(1 - S.fm / 15, 0, 1), sagR = Math.min(22, (GR - br) * 0.1) * clamp(1 - S.fa / 15, 0, 1);
-    ropeStrip(c, GL - 2, bl + 6, ROPE_Y, SC, sagL);
-    ropeStrip(c, br - 6, GR + 2, ROPE_Y, SC, sagR);
-    c.drawImage(L, GL - L.naturalWidth * SC, top, L.naturalWidth * SC, hl);
-    c.drawImage(R, GR, top, R.naturalWidth * SC, R.naturalHeight * SC);
+    ropeStrip(c, GL, bl + 6, ROPE_Y, SC, sagL);
+    ropeStrip(c, br - 6, GR, ROPE_Y, SC, sagR);
+    /* 前拳 → 後拳：兩拳之間露出一段，尾端被後拳蓋住 */
+    ropeStrip(c, GL_BACK, GL + 1, ROPE_Y, SC, 0);
+    ropeStrip(c, GR - 1, GR_BACK, ROPE_Y, SC, 0);
+    c.drawImage(L, lx, top, L.naturalWidth * SC, hl);
+    c.drawImage(R, rx, top, R.naturalWidth * SC, R.naturalHeight * SC);
   }
 
   /* ═════════ 表情徽章（贏／輸／平手） ═════════ */

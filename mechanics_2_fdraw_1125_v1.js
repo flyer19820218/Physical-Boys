@@ -7,7 +7,7 @@
          30 gw＝120 px＝3 格；60 gw＝240 px＝6 格。畫面上的 gw 數一律由箭頭向量長度算出來。
    語意色：March 的拉力 F＝青 COL.teal（本動畫只有這一個力）。
    場景：地面線 GY；左邊木箱（canvas 自畫），右邊 March（拔河圖 tug_march_left.png 左右翻轉，
-         原圖手裡伸出的繩頭裁掉，改由本檔從拳頭畫繩子到木箱右側的鐵環＝作用點）。
+         新圖無繩，由本檔從木箱右側的鐵環＝作用點畫繩，穿過前拳、止於後拳；繩先畫、人後畫）。
          March 拳頭離腳底 HAND_H，繩子平拉時鐵環就在同一高度。
          第 2 步：March 走上 90 px 高的台階，繩子變成斜向上（dx 120、dy 90 → 3-4-5，約 37°）。
    畫布頂端 0～31px 留給 kit 的進度條，本檔內容一律畫在 y ≥ 32。
@@ -44,15 +44,16 @@
   const PX_PER_GW = 4;               /* 1 gw ＝ 4 px（整支動畫不變） */
   const CELL = 10 * PX_PER_GW;       /* 比例尺 1 格 ＝ 10 gw ＝ 40 px */
   const GY = 460;                    /* 地面線 */
-  const SC = 0.44;                   /* March 拔河圖縮放（原圖 352×572） */
-  const IMG_W = 352, IMG_FOOT = 565, IMG_HAND_X = 318, IMG_HAND_Y = 285, IMG_CLIP = 322;
+  const SC = 0.44;                   /* March 拔河圖縮放（原圖 325×572，無繩） */
+  const IMG_W = 325, IMG_FOOT = 565, IMG_HAND_X = 273, IMG_HAND_Y = 285, IMG_CLIP = 325;
+  const IMG_BACK_X = 122, IMG_BACK_Y = 292;      /* 後手拳心（原圖座標）；IMG_HAND_X＝前手拳心 */
   const HAND_H = (IMG_FOOT - IMG_HAND_Y) * SC;   /* 拳頭離腳底 ≈ 123 px */
   const BOX_W = 130, BOX_H = 150;    /* 木箱 */
   const STEP_H = 90;                 /* 第 2 步台階高 */
   const ROPE1 = 315, ROPE3 = 290;    /* 平拉時繩長（第 1、2 步／第 3、4 步） */
 
   /* ═══════════ March（拔河圖，左右翻轉） ═══════════ */
-  const IMG = new Image(); IMG.src = 'assets/characters/tug/tug_march_left.png';
+  const IMG = new Image(); IMG.src = 'assets/characters/tug/tug_march_left.png?v=20261126';
   const ok = im => im && im.complete && im.naturalWidth;
 
   /* fx, fy：拳頭（繩子進手）位置；footY：腳底 */
@@ -61,7 +62,7 @@
     const left = fx - (IMG_W - IMG_HAND_X) * SC, top = footY - IMG_FOOT * SC;
     withA(c, a, () => {
       c.save(); c.globalAlpha *= 0.4; c.fillStyle = INK;
-      c.beginPath(); c.ellipse(left + 82, footY + 3, 76, 8, 0, 0, TAU); c.fill(); c.restore();
+      c.beginPath(); c.ellipse(left + IMG_W * SC * 0.53, footY + 3, 76, 8, 0, 0, TAU); c.fill(); c.restore();
       c.save(); c.translate(left + IMG_W * SC, top); c.scale(-1, 1);
       c.drawImage(IMG, 0, 0, IMG_CLIP, 572, 0, 0, IMG_CLIP * SC, 572 * SC);
       c.restore();
@@ -340,6 +341,8 @@
       crate(c, xr, 1);
       withA(c, 1, () => dust(c, xr - BOX_W, GY, S.v, s.t));
       rope(c, xr + 9, AY, S.fx, S.fy, 9);
+      /* 前拳 → 後拳：繩子在兩拳之間露出、尾端被後拳蓋住（翻轉後後拳在前拳右邊） */
+      rope(c, S.fx, S.fy, S.fx + (IMG_HAND_X - IMG_BACK_X) * SC, S.fy + (IMG_BACK_Y - IMG_HAND_Y) * SC, 9);
       eyeBolt(c, xr, 1);
       march(c, S.fx, S.foot, 1);
     });
