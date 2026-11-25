@@ -315,11 +315,11 @@
         c.fillStyle = '#2c3a35'; W5.rr(c, tx - 4, gy - 34, 8, 34, 3); c.fill();
         c.fillStyle = '#3d4c46'; c.beginPath(); c.ellipse(tx, gy - 2, 18, 5, 0, 0, TAU); c.fill();
         /* 揮棒 */
-        const sw = ease(seg(u, 5.4, 6.0)), ang = lerp(-1.75, 0.75, sw), pvx = 748, pvy = ballY;
-        const HT = 5.4 + 0.6 * 0.62;
+        const sw = ease(seg(u, 5.4, 6.0)), ang = lerp(1.75, -0.45, sw), pvx = 748, pvy = ballY;
+        const HT = 5.4 + 0.6 * 0.71;
         if (sw > 0.05 && sw < 0.98) {
           c.save(); c.globalAlpha *= 0.3 * Math.sin(Math.PI * sw); c.strokeStyle = WHITE; c.lineWidth = 16;
-          c.beginPath(); c.arc(pvx, pvy, 58, Math.max(-1.75, ang - 0.9), ang); c.stroke(); c.restore();
+          c.beginPath(); c.arc(pvx, pvy, 58, ang, Math.min(1.75, ang + 0.9)); c.stroke(); c.restore();
         }
         bat(c, pvx, pvy, ang, 74, 1);
         /* 棒球飛出 */
