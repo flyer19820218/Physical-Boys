@@ -537,6 +537,9 @@
       const b = mk('button', 'lab-btn lab-sw', text); b.type = 'button'; b.dataset.sub = k;
       b.addEventListener('click', () => setSub(k)); sw.appendChild(b);
     });
+    const a = mk('a', 'lab-btn lab-link3d', T('③ 3D 力桌（另開新頁）', '3 3D force table (new page)'));
+    a.href = 'mechanics_2_3d_force_table.html'; a.target = '_blank'; a.rel = 'noopener';
+    sw.appendChild(a);
     updateSwitch();
   }
   function updateSwitch() {
@@ -774,6 +777,7 @@
 #lab-table .lab-btn:disabled{opacity:.4;cursor:default}
 #lab-table .lab-btn.active{background:#ffe066;color:#11261f;border-color:#ffe066}
 #lab-table .lab-sw{flex:1 1 220px}
+#lab-table .lab-link3d{flex:1 1 220px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box;min-height:44px;font-size:18px}
 #lab-table .tb-cards{display:flex;flex-wrap:wrap;gap:8px}
 #lab-table .tb-card{flex:1 1 300px;min-width:0;border:2px solid;border-radius:10px;padding:6px 12px 8px;background:rgba(11,26,21,.45);box-sizing:border-box}
 #lab-table .tb-ch{font-size:22px;display:flex;align-items:baseline;gap:8px;min-height:30px}
