@@ -8,7 +8,7 @@
    語意色：March 的拉力＝青 COL.teal；April 的拉力＝粉 COL.pink；合力 R＝黃 COL.yellow。
    場景：地面線 GY；木塊（canvas 自畫）在中間，左右兩側各一個鐵環＝作用點（高度 AY＝人物拳頭高）。
          人物用拔河圖 assets/characters/tug/：March＝tug_march_left（第 1 步左右翻轉，站到右邊往右拉），
-         April＝tug_april_right；新圖無繩，繩子由本檔從鐵環畫起、穿過前拳、止於後拳（先畫繩、再畫人）。
+         April＝tug_april_right；原圖手裡的繩頭裁掉，繩子由本檔從鐵環畫到拳頭。
          力的箭頭畫在繩上、從鐵環（作用點）出發；上方一條獨立基線：
            RY0／RY1＝把兩支箭頭「搬上來」首尾相接的列，RY2＝黃色合力 R，RU＝比例尺。
    運動：合力不為 0 → 木塊連同兩人往合力方向加速（位移∝合力，最後緩停）；合力為 0 → 不動。
@@ -46,12 +46,10 @@
   const PX_PER_GW = 3;               /* 1 gw ＝ 3 px（整支動畫不變） */
   const CELL = 10 * PX_PER_GW;       /* 比例尺 1 格 ＝ 10 gw ＝ 30 px */
   const GY = 460;                    /* 地面線 */
-  const SC = 0.40;                   /* 拔河圖縮放（原圖 325×572／333×572，無繩） */
+  const SC = 0.40;                   /* 拔河圖縮放（原圖 352×572／346×572） */
   const IMG_FOOT = 565, IMG_HAND_Y = 285;
-  const M_W = 325, M_HAND_X = 273, M_BACK_X = 122, M_CLIP = 325;   /* March：前拳 x、後拳 x、不裁 */
-  const A_W = 333, A_HAND_X = 54, A_BACK_X = 185, A_CLIP = 0;      /* April：前拳 x、後拳 x、不裁 */
-  const M_GRIP = (M_HAND_X - M_BACK_X) * SC;          /* March 前拳到後拳 ≈ 60 px */
-  const A_GRIP = (A_BACK_X - A_HAND_X) * SC;          /* April 前拳到後拳 ≈ 52 px */
+  const M_W = 352, M_HAND_X = 318, M_CLIP = 322;      /* March：拳頭 x、繩頭裁切 */
+  const A_W = 346, A_HAND_X = 40, A_CLIP = 36;        /* April：拳頭 x、繩頭裁切（左側） */
   const HAND_H = (IMG_FOOT - IMG_HAND_Y) * SC;        /* 拳頭離腳底 112 px */
   const AY = GY - HAND_H;                             /* 繩／作用點高度 348 */
   const BOX_W = 120, BOX_H = 130;                     /* 木塊（頂 330） */
@@ -71,7 +69,7 @@
 
   /* ═══════════ 角色圖 ═══════════ */
   const IMG = {};
-  [['M', 'tug_march_left'], ['A', 'tug_april_right']].forEach(([k, n]) => { const im = new Image(); im.src = 'assets/characters/tug/' + n + '.png?v=20261126'; IMG[k] = im; });
+  [['M', 'tug_march_left'], ['A', 'tug_april_right']].forEach(([k, n]) => { const im = new Image(); im.src = 'assets/characters/tug/' + n + '.png?v=20261126c'; IMG[k] = im; });
   const ok = im => im && im.complete && im.naturalWidth;
 
   function shadow(c, x, w) {
@@ -82,14 +80,14 @@
   function marchL(c, fx) {
     if (!ok(IMG.M)) return;
     const left = fx - M_HAND_X * SC, top = GY - IMG_FOOT * SC;
-    shadow(c, left + M_W * 0.53 * SC, 62);
+    shadow(c, left + 190 * SC, 62);
     c.drawImage(IMG.M, 0, 0, M_CLIP, 572, left, top, M_CLIP * SC, 572 * SC);
   }
   /* March 左右翻轉：面向左、往右拉（拳頭 fx 在左側） */
   function marchR(c, fx) {
     if (!ok(IMG.M)) return;
     const left = fx - (M_W - M_HAND_X) * SC, top = GY - IMG_FOOT * SC;
-    shadow(c, left + M_W * 0.47 * SC, 62);
+    shadow(c, left + (M_W - 190) * SC, 62);
     c.save(); c.translate(left + M_W * SC, top); c.scale(-1, 1);
     c.drawImage(IMG.M, 0, 0, M_CLIP, 572, 0, 0, M_CLIP * SC, 572 * SC);
     c.restore();
@@ -98,7 +96,7 @@
   function aprilR(c, fx) {
     if (!ok(IMG.A)) return;
     const left = fx - (A_HAND_X - A_CLIP) * SC, top = GY - IMG_FOOT * SC;
-    shadow(c, left + A_W * 0.5 * SC, 62);
+    shadow(c, left + 150 * SC, 62);
     c.drawImage(IMG.A, A_CLIP, 0, A_W - A_CLIP, 572, left, top, (A_W - A_CLIP) * SC, 572 * SC);
   }
 
@@ -172,20 +170,26 @@
     }
   }
 
-  /* ═══════════ 繩子（同 fdraw，水平） ═══════════ */
-  function rope(c, x0, x1, wd) {
+  /* ═══════════ 繩子（細麻繩，水平；同 fdraw） ═══════════ */
+  /* 用拔河圖手上那段繩子的切片 tug_rope_strip.png（繩身含黑邊原尺寸 12 px，與圖上手握的繩子同粗細、同色、同紋路），
+     依人物縮放 SC 貼圖（12 × 0.40 ≈ 4.8 px），從拳頭接出去沒有粗細斷層。
+     flip＝true：上下翻轉，給左右翻轉的 March 用，斜紋方向才會跟他手上那段一致。 */
+  const ROPE = new Image(); ROPE.src = 'assets/characters/tug/tug_rope_strip.png?v=20261126c';
+  function rope(c, x0, x1, flip) {
     if (x1 < x0) { const t = x0; x0 = x1; x1 = t; }
-    const len = x1 - x0; if (len < 2) return;
-    wd = wd || 8;
-    c.save(); c.translate(x0, AY); c.lineCap = 'round';
-    c.shadowColor = 'rgba(11,26,21,0.6)'; c.shadowBlur = 6; c.shadowOffsetY = 3;
-    c.beginPath(); c.moveTo(0, 0); c.lineTo(len, 0); c.strokeStyle = '#4a361e'; c.lineWidth = wd + 4; c.stroke();
-    c.shadowColor = 'transparent';
-    c.beginPath(); c.moveTo(0, 0); c.lineTo(len, 0); c.strokeStyle = '#c9a46a'; c.lineWidth = wd; c.stroke();
-    c.beginPath(); c.moveTo(0, -wd * 0.22); c.lineTo(len, -wd * 0.22); c.strokeStyle = 'rgba(244,224,178,0.75)'; c.lineWidth = wd * 0.28; c.stroke();
-    c.strokeStyle = 'rgba(90,64,32,0.75)'; c.lineWidth = Math.max(1.5, wd * 0.16);
-    const hw = wd * 0.42;
-    for (let x = wd; x < len - 2; x += wd * 0.95) { c.beginPath(); c.moveTo(x - wd * 0.25, -hw); c.lineTo(x + wd * 0.25, hw); c.stroke(); }
+    const len = x1 - x0; if (len < 1) return;
+    c.save(); c.translate(x0, AY); if (flip) c.scale(1, -1);
+    if (ok(ROPE)) {
+      const sw = ROPE.naturalWidth, sh = ROPE.naturalHeight, tile = sw * SC, dh = sh * SC;
+      for (let x = 0; x < len; x += tile) {
+        const w = Math.min(tile, len - x);
+        c.drawImage(ROPE, 0, 0, w / SC, sh, x, -dh / 2, Math.min(w + 0.5, len - x), dh);
+      }
+    } else {
+      c.lineCap = 'butt';
+      c.beginPath(); c.moveTo(0, 0); c.lineTo(len, 0); c.strokeStyle = '#1a120a'; c.lineWidth = 12 * SC; c.stroke();
+      c.strokeStyle = '#c4a27a'; c.lineWidth = 7 * SC; c.stroke();
+    }
     c.restore();
   }
 
@@ -272,13 +276,14 @@
     withA(c, sa, () => {
       if (S.v > 0.03) dust(c, S.dir > 0 ? xl : xr, S.dir, S.v, s.t);
       if (P.same) {
-        rope(c, xr + 9, xr + P.aOff + A_GRIP, 8);            /* 穿過 March 兩拳，止於 April 後拳 */
+        rope(c, xr + 9, xr + P.mOff, true);            /* 木塊 → March 前手（March 左右翻轉） */
+        rope(c, xr + P.mOff, xr + P.aOff + 4, false);  /* March → April 拳頭 */
         crate(c, cx); eyeBolt(c, xr, 1);
         aprilR(c, xr + P.aOff);
         marchR(c, xr + P.mOff);
       } else {
-        rope(c, xl - P.mOff - M_GRIP, xl - 9, 8);           /* 止於 March 後拳 */
-        rope(c, xr + 9, xr + P.aOff + A_GRIP, 8);           /* 止於 April 後拳 */
+        rope(c, xl - P.mOff, xl - 9, false);
+        rope(c, xr + 9, xr + P.aOff + 4, false);
         crate(c, cx); eyeBolt(c, xl, -1); eyeBolt(c, xr, 1);
         marchL(c, xl - P.mOff);
         aprilR(c, xr + P.aOff);

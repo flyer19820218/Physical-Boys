@@ -9,13 +9,13 @@
    力（gw，向量由程式算）：F＝100 gw，與水平夾 θ（珊瑚）；水平分力 Fx＝F·cosθ（青）；垂直分力 Fy＝F·sinθ（粉）。
          畫面上的數字一律 Math.round；箭頭長＝gw × PX_PER_GW。
          20° → 94／34；60° → 50／87；45° → 71／71；0° → 100／0；90° → 0／100。
-   第 1、2 步（側視，同 rect）：地面線 GY＝450；March（tug_march_left 左右翻轉，新圖無繩、整張畫）前拳 H 固定在 (520, 310)，腳踩 GY。
+   第 1、2 步（側視，同 rect）：地面線 GY＝450；March（tug_march_left 左右翻轉、裁掉繩頭）拳頭 H 固定在 (520, 310)，腳踩 GY。
          行李箱同 rect 的畫法；拉桿起點在箱子前上角（比拳頭低 48 px）。
          拳頭高度固定，所以角度變陡＝箱子靠近、拉桿縮短（伸縮拉桿）：箱子左緣 x0＝H.x − 48/tanθ − 146。
    第 3 步：抽象圖。左：方格板＋F 繞作用點 O 轉；中：兩根長條（青、粉）；右：Fx(θ)、Fy(θ) 曲線（θ 0～90°）。
          三者底線同一條 BASE＝430，長條與曲線的縱軸也用 2.5 px/gw，學生可以直接比較長度。
    第 4 步：上下兩條賽道。人物 0.3 倍、行李箱 0.6 倍（與 rect 的 0.5：1 同比例）。
-         上：March 拉桿 20°；下：April（tug_april_right，新圖無繩）拉桿 60°。兩人都用 100 gw。
+         上：March 拉桿 20°；下：April（tug_april_right，裁掉繩頭）拉桿 60°。兩人都用 100 gw。
          只畫水平分力箭頭（從拳頭出發，2.5 px/gw）；位移 ∝ 水平分力（同一條時間曲線 × Fx），所以上面永遠走得比較遠。
    畫布頂端 0～31px 留給 kit 的進度條，本檔內容一律畫在 y ≥ 32。
    ================================================================== */
@@ -62,16 +62,11 @@
 
   /* ═══════════ 版面（第 1、2 步，同 rect） ═══════════ */
   const GY = 450, KEY_Y = 62, BOT_Y = 500;
-  const SC = 0.5;                    /* March 拔河圖縮放（原圖 325×572，無繩） */
+  const SC = 0.5;                    /* March 拔河圖縮放（原圖 352×572） */
   const IMG_FOOT = 565, IMG_HAND_Y = 285;
-  const M_W = 325, M_HAND_X = 273, M_CLIP = 325;      /* March：前拳 x、不裁（翻轉後前拳在左） */
-  const A_W = 333, A_HAND_X = 54, A_CLIP = 0;         /* April：前拳 x、不裁 */
-  const M_BACK = { x: 122, y: 292 }, A_BACK = { x: 185, y: 290 };   /* 後拳拳心（原圖座標） */
-  /* 後拳在畫面上的位置（前拳 hand、人物縮放 sc）：March 翻轉後、April 原圖，後拳都在前拳右邊 */
-  const backOf = (who, hand, sc) => who === 'M'
-    ? { x: hand.x + (M_HAND_X - M_BACK.x) * sc, y: hand.y + (M_BACK.y - IMG_HAND_Y) * sc }
-    : { x: hand.x + (A_BACK.x - A_HAND_X) * sc, y: hand.y + (A_BACK.y - IMG_HAND_Y) * sc };
-  const H = { x: 520, y: GY - (IMG_FOOT - IMG_HAND_Y) * SC };   /* 作用點：前拳 (520, 310) */
+  const M_W = 352, M_HAND_X = 318, M_CLIP = 322;      /* March：拳頭 x、繩頭裁切（右側，翻轉後在左） */
+  const A_W = 346, A_HAND_X = 40, A_CLIP = 36;        /* April：拳頭 x、繩頭裁切（左側） */
+  const H = { x: 520, y: GY - (IMG_FOOT - IMG_HAND_Y) * SC };   /* 作用點：拳頭 (520, 310) */
   /* 行李箱（本機座標：左緣 x＝0、地面 y＝0；同 rect 的尺寸） */
   const BOX = { w: 150, h: 70 }, WHEEL_R = 14, WHEEL_INSET = 26, BOX_LIFT = WHEEL_R + 8;
   const ROD0 = { x: BOX.w - 4, y: -(BOX_LIFT + BOX.h) };        /* 拉桿起點（箱子前上角） */
@@ -81,7 +76,7 @@
 
   /* ═══════════ 角色圖 ═══════════ */
   const IMG = {};
-  [['M', 'tug_march_left'], ['A', 'tug_april_right']].forEach(([k, n]) => { const im = new Image(); im.src = 'assets/characters/tug/' + n + '.png?v=20261126'; IMG[k] = im; });
+  [['M', 'tug_march_left'], ['A', 'tug_april_right']].forEach(([k, n]) => { const im = new Image(); im.src = 'assets/characters/tug/' + n + '.png?v=20261126c'; IMG[k] = im; });
   const ok = im => im && im.complete && im.naturalWidth;
   function shadow(c, x, gy, w) {
     c.save(); c.globalAlpha *= 0.4; c.fillStyle = INK;
@@ -92,18 +87,18 @@
     if (a <= 0.02 || !ok(IMG.M)) return;
     const left = hand.x - (M_W - M_HAND_X) * sc, top = gy - IMG_FOOT * sc;
     withA(c, a, () => {
-      shadow(c, left + M_W * 0.5 * sc, gy, 160 * sc);
+      shadow(c, left + (M_W - 170) * sc, gy, 160 * sc);
       c.save(); c.translate(left + M_W * sc, top); c.scale(-1, 1);
       c.drawImage(IMG.M, 0, 0, M_CLIP, 572, 0, 0, M_CLIP * sc, 572 * sc);
       c.restore();
     });
   }
-  /* April：原圖就是面向左、往右拉（前拳在左側），整張畫 */
+  /* April：原圖就是面向左、往右拉（拳頭在左側），裁掉左邊繩頭 */
   function april(c, a, hand, gy, sc) {
     if (a <= 0.02 || !ok(IMG.A)) return;
     const left = hand.x - A_HAND_X * sc, top = gy - IMG_FOOT * sc;
     withA(c, a, () => {
-      shadow(c, left + A_W * 0.5 * sc, gy, 160 * sc);
+      shadow(c, left + 170 * sc, gy, 160 * sc);
       c.drawImage(IMG.A, A_CLIP, 0, A_W - A_CLIP, 572, left + A_CLIP * sc, top, (A_W - A_CLIP) * sc, 572 * sc);
     });
   }
@@ -197,8 +192,7 @@
     return { x: x0 + ROD0.x * sc, y: gy + ROD0.y * sc };
   }
   /* 拉桿：從 A 到拳頭 hand（雙管＋伸縮接頭＋握把） */
-  /* 拉桿：接點 A → 前拳 hand（雙管）；握把 前拳 → 後拳 back（兩拳之間露出，畫在人物下面） */
-  function rod(c, a, A, hand, sc, back) {
+  function rod(c, a, A, hand, sc) {
     withA(c, a, () => {
       const ang = Math.atan2(hand.y - A.y, hand.x - A.x), len = Math.hypot(hand.x - A.x, hand.y - A.y);
       c.save(); c.translate(A.x, A.y); c.rotate(ang); c.lineCap = 'round';
@@ -206,11 +200,7 @@
       c.strokeStyle = '#b8c4c0'; c.lineWidth = 6 * sc; c.beginPath(); c.moveTo(0, 0); c.lineTo(len, 0); c.stroke();
       c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 1.5 * sc; c.beginPath(); c.moveTo(2, -1.5 * sc); c.lineTo(len - 4, -1.5 * sc); c.stroke();
       c.fillStyle = '#6d7a76'; c.fillRect(len * 0.45 - 4 * sc, -5 * sc, 8 * sc, 10 * sc);
-      c.restore();
-      c.save(); c.lineCap = 'round';
-      c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 12 * sc; c.beginPath(); c.moveTo(hand.x, hand.y); c.lineTo(back.x, back.y); c.stroke();
-      c.strokeStyle = '#2b3330'; c.lineWidth = 9 * sc; c.beginPath(); c.moveTo(hand.x, hand.y); c.lineTo(back.x, back.y); c.stroke();
-      c.strokeStyle = 'rgba(255,255,255,0.18)'; c.lineWidth = 1.5 * sc; c.beginPath(); c.moveTo(hand.x, hand.y - 2.5 * sc); c.lineTo(back.x, back.y - 2.5 * sc); c.stroke();
+      c.strokeStyle = '#2b3330'; c.lineWidth = 9 * sc; c.beginPath(); c.moveTo(len, -11 * sc); c.lineTo(len, 11 * sc); c.stroke();
       c.restore();
     });
   }
@@ -295,7 +285,7 @@
     const k = s.n === 1 ? s.k : 1;
     const x0 = boxX0(H, GY, 1, th);
     const A = suitcase(c, k, x0, GY, 1, dist + (x0 - boxX0(H, GY, 1, TH1)), speedOf(s));
-    rod(c, k, A, H, 1, backOf('M', H, SC));
+    rod(c, k, A, H, 1);
     march(c, marchA(s), H, GY, SC);
     return th;
   }
@@ -500,7 +490,7 @@
     const hand = handOf(lane, x0);
     const sp = s.n === 4 ? (() => { const t = seg(s.u, RACE[0], RACE[1]); return t > 0 && t < 1 ? 4 * t * (1 - t) : 0; })() * mag(fxOf(lane.th)) / 100 : 0;
     const A = suitcase(c, a, x0, lane.gy, SB, tr4, sp);
-    rod(c, a, A, hand, SB, backOf(lane.who, hand, SR));
+    rod(c, a, A, hand, SB);
     if (lane.who === 'M') march(c, a, hand, lane.gy, SR); else april(c, a, hand, lane.gy, SR);
     /* 只畫水平分力（從拳頭出發） */
     const fx = fxOf(lane.th), ga = ease(seg(s.u, 0.9, 1.5));

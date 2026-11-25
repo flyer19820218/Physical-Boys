@@ -9,7 +9,10 @@
  *   木塊示意：加速度 ∝ 合力、無摩擦（K px/s² 每 gw）；撞到軌道左右端點就停住並顯示「到頭了」。
  *   合力 ＝ 0 時木塊「停在原位不動」（教學示意：快速緩停，不讓它帶著速度漂走），並顯示「靜力平衡」。
  * 箭頭長度 ∝ gw：PX_PER_GW ＝ 2.8 px（地面方格每格 10 gw ＝ 28 px）。
- * 人物：拔河圖兩半（assets/characters/tug/，新圖無繩）＋麻繩切片（繩先畫、人後畫：從木塊穿過前拳、止於後拳）；表情徽章依勝負換（victory／struggling／normal）。
+ * 人物：拔河圖兩半（assets/characters/tug/）＋麻繩切片；表情徽章依勝負換（victory／struggling／normal）。
+ * 人跟著木塊走：兩位選手（連同手上那段繩、影子）和木塊一起平移，兩段繩長不變（人被拉著走）。
+ *   畫面上：木塊與兩人只在畫面上移動 VIEW_K × 位移（最多 ±14 px，人物才不會壓到兩側頭像徽章），
+ *   其餘位移由「鏡頭跟著走」表現：地面刻度、起點記號、紅白擋柱往反方向捲動（cam ＝ 世界座標 − 畫面座標）。
  * 動畫只在木塊還在動（或預備起跑）時跑 RAF，靜止就停。
  */
 (function () {
@@ -29,19 +32,17 @@
   const PX_PER_GW = 2.8, GRID = 10 * PX_PER_GW;       /* 28 px ＝ 10 gw */
   const FMAX = 100, FSTEP = 10, DEF_M = 30, DEF_A = 80;
   const GY = 455;                                      /* 地面線 */
-  const SC = 0.42;                                     /* 拔河圖縮放（原圖 325×572／333×572，無繩） */
+  const SC = 0.42;                                     /* 拔河圖縮放（原圖約 352×572） */
   const IMG_ROPE_Y = 285, IMG_FOOT = 565;
-  const M_FRONT_X = 273, M_BACK_X = 122, A_FRONT_X = 54, A_BACK_X = 185;   /* 前拳／後拳拳心 x（原圖座標） */
   const ROPE_Y = GY - (IMG_FOOT - IMG_ROPE_Y) * SC;    /* ≈ 337，繩子與木塊作用點的高度 */
-  const GL = 236, GR = 727;                            /* 兩人前拳 x（＝舊圖拳頭位置） */
-  const GL_BACK = GL - (M_FRONT_X - M_BACK_X) * SC;    /* March 後拳 x ≈ 173 */
-  const GR_BACK = GR + (A_BACK_X - A_FRONT_X) * SC;    /* April 後拳 x ≈ 782 */
+  const GL = 250, GR = 710;                            /* 兩人握點 x */
   const BW = 136, BH = 136, HALF = BW / 2;             /* 木塊 */
   const X0 = 480, XMIN = 360, XMAX = 600;              /* 木塊中心起點與軌道範圍 */
   const K = 1.66;                                      /* 加速度（px/s²）每 gw */
   const Y_FL = 84, Y_FL_LBL = 40;                      /* 兩條拉力箭頭基線與其標籤 */
   const Y_R = 180, Y_R_LBL = 138;                      /* 合力箭頭基線與標籤 */
   const Y_PILL = 252;                                  /* 「靜力平衡／到頭了」小標籤 */
+  const VIEW_K = 14 / (XMAX - X0);                     /* 木塊＋兩人在畫面上的位移比例（位移 120 → 畫面 14 px） */
 
   /* ═════════ 小工具 ═════════ */
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -68,7 +69,7 @@
   [['L', 'tug/tug_march_left'], ['R', 'tug/tug_april_right'], ['S', 'tug/tug_rope_strip'],
     ['mv', 'march/victory'], ['ms', 'march/struggling'], ['mn', 'march/normal'],
     ['av', 'april/victory'], ['as', 'april/struggling'], ['an', 'april/normal']
-  ].forEach(([k, p]) => loadImg(k, 'assets/characters/' + p + '.png?v=20261126'));
+  ].forEach(([k, p]) => loadImg(k, 'assets/characters/' + p + '.png?v=20261126c'));
   const ok = im => im && im.complete && im.naturalWidth;
 
   /* ═════════ 狀態與物理 ═════════ */
@@ -114,7 +115,7 @@
   }
 
   /* ═════════ 地面、方格、擋塊 ═════════ */
-  function drawFloor(c) {
+  function drawFloor(c, cam) {
     const gl = c.createRadialGradient(480, 300, 30, 480, 300, 480);
     gl.addColorStop(0, 'rgba(255,224,102,0.06)'); gl.addColorStop(1, 'rgba(255,224,102,0)');
     c.fillStyle = gl; c.fillRect(0, 0, W, GY);
@@ -123,13 +124,15 @@
     c.fillStyle = g; c.fillRect(0, GY, W, H - GY);
     /* 方格比例尺：1 格 ＝ 10 gw ＝ GRID px */
     c.strokeStyle = 'rgba(246,243,234,0.2)'; c.lineWidth = 1.5;
-    for (let x = 0; x <= W; x += GRID) { c.beginPath(); c.moveTo(x, GY); c.lineTo(x, H); c.stroke(); }
+    /* 直格線是地面刻度：跟著鏡頭反向捲動（世界座標 k·GRID → 畫面 k·GRID − cam） */
+    for (let x = ((-cam) % GRID + GRID) % GRID; x <= W; x += GRID) { c.beginPath(); c.moveTo(x, GY); c.lineTo(x, H); c.stroke(); }
     for (let y = GY; y <= H; y += GRID) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); }
     c.strokeStyle = 'rgba(246,243,234,0.55)'; c.lineWidth = 3;
     c.beginPath(); c.moveTo(0, GY); c.lineTo(W, GY); c.stroke();
     /* 起點記號 */
     c.fillStyle = 'rgba(255,224,102,0.8)';
-    c.beginPath(); c.moveTo(X0, GY + 3); c.lineTo(X0 - 7, GY + 15); c.lineTo(X0 + 7, GY + 15); c.closePath(); c.fill();
+    const sx = X0 - cam;
+    c.beginPath(); c.moveTo(sx, GY + 3); c.lineTo(sx - 7, GY + 15); c.lineTo(sx + 7, GY + 15); c.closePath(); c.fill();
   }
   function bumper(c, x, side) {
     const w = 14, h = 58, y = GY - h;
@@ -142,34 +145,39 @@
   }
 
   /* ═════════ 人物＋麻繩 ═════════ */
+  /* 細麻繩：tug_rope_strip.png 是拔河圖手上那段繩子的切片（原尺寸高 15 px、繩身含黑邊 12 px），
+     與人物同一個縮放 SC 貼上去（12 × 0.42 ≈ 5 px），所以從拳頭接出去粗細、顏色、斜紋方向都連續。
+     下垂時每一小片沿曲線的切線轉一下角度，邊緣才不會變成階梯狀。 */
   function ropeStrip(c, x0, x1, y, sc, sag) {
     const im = IMG.S; if (!ok(im) || x1 <= x0) return;
     const sh = im.naturalHeight, sw = im.naturalWidth, dh = sh * sc, step = 3;
-    const len = x1 - x0, wid = sw * sc;
+    const len = x1 - x0, wid = sw * sc; sag = sag || 0;
     for (let x = 0; x < len; x += step) {
       const w = Math.min(step, len - x), t = (x + w / 2) / len;
       const u = ((x % wid) / sc), uw = Math.min(w / sc, sw - u);
-      c.drawImage(im, u, 0, Math.max(0.5, uw), sh, x0 + x, y - dh / 2 + 4 * (sag || 0) * t * (1 - t), w + 0.6, dh);
+      if (!sag) { c.drawImage(im, u, 0, Math.max(0.5, uw), sh, x0 + x, y - dh / 2, w + 0.6, dh); continue; }
+      const yy = y + 4 * sag * t * (1 - t), ang = Math.atan(4 * sag * (1 - 2 * t) / len);
+      c.save(); c.translate(x0 + x + w / 2, yy); c.rotate(ang);
+      c.drawImage(im, u, 0, Math.max(0.5, uw), sh, -w / 2 - 0.3, -dh / 2, w + 0.6, dh);
+      c.restore();
     }
   }
-  function drawPeople(c) {
+  /* vx：木塊中心在畫面上的 x；兩人握點＝vx 加上固定的繩長，所以人跟著木塊走、繩長不變 */
+  function drawPeople(c, vx) {
     const L = IMG.L, R = IMG.R; if (!ok(L) || !ok(R)) return;
     const hl = L.naturalHeight * SC, top = GY - IMG_FOOT * SC;
-    const lx = GL - M_FRONT_X * SC, rx = GR - A_FRONT_X * SC;   /* 兩張圖的左緣（前拳對準 GL／GR） */
+    const gl = GL + (vx - X0), gr = GR + (vx - X0);
     /* 腳下影子 */
     c.save(); c.globalAlpha = 0.4; c.fillStyle = COL.deep;
-    c.beginPath(); c.ellipse(lx + L.naturalWidth * SC * 0.53, GY + 3, 64, 7, 0, 0, TAU); c.fill();
-    c.beginPath(); c.ellipse(rx + R.naturalWidth * SC * 0.5, GY + 3, 64, 7, 0, 0, TAU); c.fill(); c.restore();
+    c.beginPath(); c.ellipse(gl - 74, GY + 3, 64, 7, 0, 0, TAU); c.fill();
+    c.beginPath(); c.ellipse(gr + 74, GY + 3, 64, 7, 0, 0, TAU); c.fill(); c.restore();
     /* 兩段繩（拉力太小時鬆垮下垂） */
-    const bl = S.x - HALF, br = S.x + HALF;
-    const sagL = Math.min(22, (bl - GL) * 0.1) * clamp(1 - S.fm / 15, 0, 1), sagR = Math.min(22, (GR - br) * 0.1) * clamp(1 - S.fa / 15, 0, 1);
-    ropeStrip(c, GL, bl + 6, ROPE_Y, SC, sagL);
-    ropeStrip(c, br - 6, GR, ROPE_Y, SC, sagR);
-    /* 前拳 → 後拳：兩拳之間露出一段，尾端被後拳蓋住 */
-    ropeStrip(c, GL_BACK, GL + 1, ROPE_Y, SC, 0);
-    ropeStrip(c, GR - 1, GR_BACK, ROPE_Y, SC, 0);
-    c.drawImage(L, lx, top, L.naturalWidth * SC, hl);
-    c.drawImage(R, rx, top, R.naturalWidth * SC, R.naturalHeight * SC);
+    const bl = vx - HALF, br = vx + HALF;
+    const sagL = Math.min(22, (bl - gl) * 0.1) * clamp(1 - S.fm / 15, 0, 1), sagR = Math.min(22, (gr - br) * 0.1) * clamp(1 - S.fa / 15, 0, 1);
+    ropeStrip(c, gl - 2, bl + 6, ROPE_Y, SC, sagL);
+    ropeStrip(c, br - 6, gr + 2, ROPE_Y, SC, sagR);
+    c.drawImage(L, gl - L.naturalWidth * SC, top, L.naturalWidth * SC, hl);
+    c.drawImage(R, gr, top, R.naturalWidth * SC, R.naturalHeight * SC);
   }
 
   /* ═════════ 表情徽章（贏／輸／平手） ═════════ */
@@ -280,8 +288,8 @@
     c.beginPath(); c.moveTo(x, y0); c.lineTo(x, y1); c.stroke(); c.restore();
   }
 
-  function drawForces(c) {
-    const r = net(), bl = S.x - HALF, br = S.x + HALF, bc = S.x;
+  function drawForces(c, vx) {
+    const r = net(), bl = vx - HALF, br = vx + HALF, bc = vx;
     /* 作用點的引線（淡虛線，從木塊上的作用點拉到各自的箭頭基線） */
     leader(c, bl, ROPE_Y, Y_FL, COL.teal);
     leader(c, br, ROPE_Y, Y_FL, COL.pink);
@@ -302,10 +310,10 @@
     label(c, txt, cx, Y_R_LBL, COL.yellow, 22, 'center');
   }
 
-  function drawStatus(c) {
+  function drawStatus(c, vx) {
     const r = net();
-    if (r.mag === 0) pill(c, T('靜力平衡', 'Equilibrium'), S.x, Y_PILL, COL.green, 22, 'center');
-    else if (stuck()) pill(c, T('到頭了！', 'At the end!'), S.x, Y_PILL, COL.coral, 22, 'center');
+    if (r.mag === 0) pill(c, T('靜力平衡', 'Equilibrium'), vx, Y_PILL, COL.green, 22, 'center');
+    else if (stuck()) pill(c, T('到頭了！', 'At the end!'), vx, Y_PILL, COL.coral, 22, 'center');
   }
 
   function drawLegend(c) {
@@ -321,18 +329,20 @@
     S.boxes = [];
     c.setTransform(DPR, 0, 0, DPR, 0, 0);
     c.fillStyle = COL.bg; c.fillRect(0, 0, W, H);
-    drawFloor(c);
-    bumper(c, XMIN - HALF - 18, -1);
-    bumper(c, XMAX + HALF + 4, 1);
-    drawPeople(c);
-    drawCrate(c, S.x);
-    drawForces(c);
+    /* 鏡頭：木塊（世界座標 S.x）畫在畫面 vx；地面刻度、起點、擋柱都減掉 cam */
+    const vx = X0 + (S.x - X0) * VIEW_K, cam = S.x - vx;
+    drawFloor(c, cam);
+    bumper(c, XMIN - HALF - 18 - cam, -1);
+    bumper(c, XMAX + HALF + 4 - cam, 1);
+    drawPeople(c, vx);
+    drawCrate(c, vx);
+    drawForces(c, vx);
     const r = net();
     const sm = r.dir > 0 ? 'lose' : r.dir < 0 ? 'win' : 'tie';
     const sa = r.dir > 0 ? 'win' : r.dir < 0 ? 'lose' : 'tie';
     badge(c, 52, 300, 'm', sm, COL.teal);
     badge(c, 908, 300, 'a', sa, COL.pink);
-    drawStatus(c);
+    drawStatus(c, vx);
     drawLegend(c);
   }
 

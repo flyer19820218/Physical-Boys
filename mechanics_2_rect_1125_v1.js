@@ -9,8 +9,8 @@
          水平分力 Fx＝F·cos30°（≈87 gw，青）；垂直分力 Fy＝F·sin30°（＝50 gw，粉）。
          畫面上的數字一律 Math.round(Math.hypot(x, y))；箭頭長＝gw × PX_PER_GW。
    場景（側視）：地面線 GY；左邊行李箱（本檔自畫：箱體、拉桿、兩個輪子），
-         右邊 March（拔河全身圖 tug_march_left.png 左右翻轉，腳踩 GY；新圖無繩、整張畫）。
-         拉桿從箱子前上角斜 30° 伸到 March 的前拳；前拳＝作用點 H；握把再從前拳接到後拳（拉桿先畫、人後畫）。
+         右邊 March（拔河全身圖 tug_march_left.png 左右翻轉，腳踩 GY；原圖手裡的繩頭裁掉）。
+         拉桿從箱子前上角斜 30° 伸到 March 的拳頭；拳頭＝作用點 H。
          前進用「輪子轉動＋地面刻度後退」表現（鏡頭跟著箱子），March 與箱子在畫面上位置不變。
          第 2 步起 March 淡成 0.4，讓長方形、分力箭頭看得清楚（人仍在、腳仍踩地）。
    第 4 步：箱子以後輪著地點為軸，前端抬起 3°（示意被往上提）。
@@ -61,12 +61,10 @@
 
   /* ═══════════ 版面 ═══════════ */
   const GY = 450, KEY_Y = 62, BOT_Y = 500;
-  const SC = 0.5;                    /* March 拔河圖縮放（原圖 325×572，無繩） */
-  const IMG_W = 325, IMG_H = 572, IMG_FOOT = 565, IMG_HAND_X = 273, IMG_HAND_Y = 285, IMG_CLIP = 325;
-  const IMG_BACK_X = 122, IMG_BACK_Y = 292;       /* 後拳拳心（原圖座標）；IMG_HAND_X＝前拳 */
+  const SC = 0.5;                    /* March 拔河圖縮放（原圖 352×572） */
+  const IMG_W = 352, IMG_H = 572, IMG_FOOT = 565, IMG_HAND_X = 318, IMG_HAND_Y = 285, IMG_CLIP = 322;
   const HAND_H = (IMG_FOOT - IMG_HAND_Y) * SC;    /* 拳頭離腳底 140 px */
-  const H = { x: 520, y: GY - HAND_H };           /* 作用點：March 的前拳＝拉桿頂端 */
-  const GRIP = { x: H.x + (IMG_HAND_X - IMG_BACK_X) * SC, y: H.y + (IMG_BACK_Y - IMG_HAND_Y) * SC };   /* 後拳（翻轉後在前拳右邊） */
+  const H = { x: 520, y: GY - HAND_H };           /* 作用點：March 的拳頭＝拉桿頂端 */
   const ROD = 96;                                 /* 拉桿長（沿 30°） */
   const A0 = { x: H.x - ROD * Math.cos(F_DEG * DEG), y: H.y + ROD * Math.sin(F_DEG * DEG) };  /* 拉桿接在箱子前上角 */
   const BOX = { w: 150, h: 70 };                  /* 箱體（右上角＝A0） */
@@ -80,14 +78,14 @@
   const TIP = px(H, F), TX = px(H, FX), TY = px(H, FY);
 
   /* ═══════════ March（拔河圖，左右翻轉） ═══════════ */
-  const IMG = new Image(); IMG.src = 'assets/characters/tug/tug_march_left.png?v=20261126';
+  const IMG = new Image(); IMG.src = 'assets/characters/tug/tug_march_left.png?v=20261126c';
   const ok = im => im && im.complete && im.naturalWidth;
   function march(c, a) {
     if (a <= 0.02 || !ok(IMG)) return;
     const left = H.x - (IMG_W - IMG_HAND_X) * SC, top = GY - IMG_FOOT * SC;
     withA(c, a, () => {
       c.save(); c.globalAlpha *= 0.4; c.fillStyle = INK;
-      c.beginPath(); c.ellipse(left + IMG_W * SC * 0.53, GY + 3, 80, 8, 0, 0, TAU); c.fill(); c.restore();
+      c.beginPath(); c.ellipse(left + 92, GY + 3, 80, 8, 0, 0, TAU); c.fill(); c.restore();
       c.save(); c.translate(left + IMG_W * SC, top); c.scale(-1, 1);
       c.drawImage(IMG, 0, 0, IMG_CLIP, IMG_H, 0, 0, IMG_CLIP * SC, IMG_H * SC);
       c.restore();
@@ -206,7 +204,7 @@
     });
     return toW(A0.x - 4, A0.y);
   }
-  /* 拉桿：從接點 A 到前拳 H（雙管）；握把從前拳接到後拳（兩拳之間露出一段，畫在人物下面） */
+  /* 拉桿：從接點 A 到拳頭 H（雙管＋握把） */
   function rod(c, a, A) {
     withA(c, a, () => {
       const ang = Math.atan2(H.y - A.y, H.x - A.x), len = Math.hypot(H.x - A.x, H.y - A.y);
@@ -216,12 +214,8 @@
       c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(2, -1.5); c.lineTo(len - 4, -1.5); c.stroke();
       /* 伸縮接頭 */
       c.fillStyle = '#6d7a76'; c.fillRect(len * 0.45 - 4, -5, 8, 10);
-      c.restore();
-      /* 握把：前拳 H → 後拳 GRIP（深色橡膠握把） */
-      c.save(); c.lineCap = 'round';
-      c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 12; c.beginPath(); c.moveTo(H.x, H.y); c.lineTo(GRIP.x, GRIP.y); c.stroke();
-      c.strokeStyle = '#2b3330'; c.lineWidth = 9; c.beginPath(); c.moveTo(H.x, H.y); c.lineTo(GRIP.x, GRIP.y); c.stroke();
-      c.strokeStyle = 'rgba(255,255,255,0.18)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(H.x, H.y - 2.5); c.lineTo(GRIP.x, GRIP.y - 2.5); c.stroke();
+      /* 握把（垂直於拉桿的短橫桿） */
+      c.strokeStyle = '#2b3330'; c.lineWidth = 9; c.beginPath(); c.moveTo(len, -11); c.lineTo(len, 11); c.stroke();
       c.restore();
     });
   }
