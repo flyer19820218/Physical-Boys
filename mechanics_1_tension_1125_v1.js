@@ -5,10 +5,9 @@
 
    數字（任務指定，不可改）：每端拉力 F＝30 gw。
    語意色（全站）：外力 F＝珊瑚 COL.coral；張力＝黃 COL.yellow。
-   版面：地面線 GY；兩位 March（struggling）站在兩端、雙手握住同一條繩（繩高 ROPE_Y）；
+   版面：地面線 GY；March（左）與 April（右）同一張拔河圖（assets/characters/tug/，老師用 Gemini 生成）
+         切成左右兩半，中間的繩用 tug_rope_strip.png 平鋪拉長（可隨 gl、gr 變長，也能下垂）；
          兩端珊瑚箭頭畫在頭頂上方；中段上方留給放大圓圈與說明字。
-   人物方向：struggling 原圖雙手朝左。為了讓兩人都「面向繩子、手握繩子」，
-            左邊那位水平翻轉（手朝右），右邊那位用原圖（手朝左）。
    畫布頂端 0～31px 留給 kit 的進度條，本檔內容一律畫在 y ≥ 32。
    ================================================================== */
 (function () {
@@ -42,33 +41,46 @@
 
   /* ═══════════ 幾何 ═══════════ */
   const GY = 460;                    /* 地面線 */
-  const MH = 240;                    /* March 高 */
-  const GRIP_FX = 60 / 287;          /* 原圖握點 x 比例（原圖手在左） */
-  const GRIP_FY = 180 / 305;         /* 原圖握點 y 比例 */
-  const ROPE_Y = Math.round(GY - MH * (1 - GRIP_FY));   /* ≈ 362 */
+  const SC = 0.56;                   /* 拔河圖縮放（原圖 1024×572） */
+  const IMG_ROPE_Y = 285, IMG_FOOT = 565, CUT_L = 352, CUT_R = 678;   /* 原圖：繩高、腳底、左右切線 */
+  const ROPE_Y = Math.round(GY - (IMG_FOOT - IMG_ROPE_Y) * SC);     /* ≈ 303 */
   const GL = 200, GR = 760;          /* 兩端握點 x（站定後） */
   const PTS = [330, 480, 630];       /* 張力標示點（第 1 步小箭頭、第 4 步 A B C） */
   const SCL = [322, 480, 638];       /* 三支彈簧秤中心 x */
-  const ARR_Y = 196;                 /* 珊瑚外力箭頭高度（頭頂上方） */
+  const ARR_Y = 122;                 /* 珊瑚外力箭頭高度（頭頂上方） */
   const CIR = [{ cut: 395, cx: 348 }, { cut: 565, cx: 612 }];   /* 第 2 步兩個放大圓 */
-  const CY = 186, CR = 94;
+  const CY = 170, CR = 90;
 
-  /* ═══════════ March ═══════════ */
-  const MARCH = {};
-  ['struggling'].forEach(p => { const im = new Image(); im.src = 'assets/characters/march/' + p + '.png'; MARCH[p] = im; });
+  /* ═══════════ 拔河圖（March 左、April 右） ═══════════ */
+  const IMG = {};
+  [['L', 'tug_march_left'], ['R', 'tug_april_right'], ['S', 'tug_rope_strip']].forEach(([k, n]) => { const im = new Image(); im.src = 'assets/characters/tug/' + n + '.png'; IMG[k] = im; });
+  const ok = im => im && im.complete && im.naturalWidth;
 
-  /* grip：握點 x；flip=true 表示手朝右（左邊那位） */
-  function march(c, grip, flip, a) {
-    const im = MARCH.struggling;
-    if (a <= 0.02 || !im || !im.complete || !im.naturalWidth) return;
-    const h = MH, w = im.naturalWidth * h / im.naturalHeight;
-    const x0 = flip ? grip - w * (1 - GRIP_FX) : grip - w * GRIP_FX;
+  /* 麻繩：用原圖的繩子切片平鋪；x0..x1、y（繩中心）、sc 縮放、sag 中央下垂 */
+  function ropeStrip(c, x0, x1, y, sc, sag) {
+    const im = IMG.S; if (!ok(im)) return;
+    const sh = im.naturalHeight, sw = im.naturalWidth, dh = sh * sc, step = 3;
+    const len = x1 - x0, tw = sw * sc;
+    for (let x = 0; x < len; x += step) {
+      const w = Math.min(step, len - x), t = (x + w / 2) / len;
+      const u = ((x % tw) / sc), uw = Math.min(w / sc, sw - u);
+      c.drawImage(im, u, 0, Math.max(0.5, uw), sh, x0 + x, y - dh / 2 + 4 * (sag || 0) * t * (1 - t), w + 0.6, dh);
+    }
+  }
+
+  /* 兩人＋中間的繩：gl、gr＝兩人握點（原圖切線處）的 x；sag＝繩下垂量 */
+  function pair(c, gl, gr, sag, a) {
+    const L = IMG.L, R = IMG.R;
+    if (a <= 0.02 || !ok(L) || !ok(R) || !ok(IMG.S)) return;
+    const hh = L.naturalHeight * SC, top = GY - IMG_FOOT * SC;
     c.save(); c.globalAlpha *= a;
     /* 腳下影子 */
     c.save(); c.globalAlpha *= 0.4; c.fillStyle = INK;
-    c.beginPath(); c.ellipse(x0 + w * 0.55, GY + 3, w * 0.4, 8, 0, 0, TAU); c.fill(); c.restore();
-    if (flip) { c.translate(x0 + w, 0); c.scale(-1, 1); c.drawImage(im, 0, GY - h, w, h); }
-    else c.drawImage(im, x0, GY - h, w, h);
+    c.beginPath(); c.ellipse(gl - CUT_L * SC + 205 * SC, GY + 3, 120 * SC, 8, 0, 0, TAU); c.fill();
+    c.beginPath(); c.ellipse(gr + (835 - CUT_R) * SC, GY + 3, 130 * SC, 8, 0, 0, TAU); c.fill(); c.restore();
+    ropeStrip(c, gl - 2, gr + 2, ROPE_Y, SC, sag);
+    c.drawImage(L, gl - L.naturalWidth * SC, top, L.naturalWidth * SC, hh);
+    c.drawImage(R, gr, top, R.naturalWidth * SC, hh);
     c.restore();
   }
 
@@ -256,8 +268,8 @@
       bg.addColorStop(0, '#1f4136'); bg.addColorStop(1, '#0f231c');
       c.fillStyle = bg; c.fillRect(cx - r, cy - r, 2 * r, 2 * r);
       const ry = cy + 26, ay = cy - 14;
-      rope(c, cx - r - 20, cx - gap / 2, ry, 0, 30);
-      rope(c, cx + gap / 2, cx + r + 20, ry, 0, 30);
+      ropeStrip(c, cx - r - 20, cx - gap / 2, ry, 2.3, 0);
+      ropeStrip(c, cx + gap / 2, cx + r + 20, ry, 2.3, 0);
       /* 切口光 */
       if (cutA > 0.02) {
         c.save(); c.globalAlpha *= cutA; c.strokeStyle = WHITE; c.lineWidth = 3; c.setLineDash([6, 5]);
@@ -298,8 +310,7 @@
 
     const gl = GL + S.off, gr = GR - S.off;
 
-    /* 繩 */
-    withA(c, a1, () => rope(c, gl - 12, gr + 12, ROPE_Y, S.sag, 13));
+        pair(c, gl, gr, S.sag, a1);
 
     /* 第 3 步：彈簧秤（掉進繩上）；第 4 步開頭拿走 */
     const scA = s.n === 3 ? ease(seg(s.u, 0.5, 1.3)) : (s.n === 4 ? fout(s, 4, 0, 0.6) : 0);
@@ -312,9 +323,6 @@
       c.restore();
     });
 
-    /* 兩位 March（繩頭被手蓋住） */
-    march(c, gl, true, a1);
-    march(c, gr, false, a1);
 
     /* 外力箭頭（頭頂上方） */
     const fLen = 170 * S.fg, fA = a1;
@@ -331,7 +339,7 @@
         const g = s.n === 1 ? ease(seg(s.u, t, t + 0.6)) : 1;
         tPair(c, PTS[i], ROPE_Y, 46, s1A * Math.min(1, g * 3), g);
       });
-      P(c, s1A * (s.n === 1 ? fin(s, 1, 4.0, 0.6) : 1), L('張力：向外側拉開的力', 'Tension: a force that pulls outward'), 480, 270, T_COL, 24, 'center');
+      P(c, s1A * (s.n === 1 ? fin(s, 1, 4.0, 0.6) : 1), L('張力：向外側拉開的力', 'Tension: a force that pulls outward'), 480, 236, T_COL, 24, 'center');
     }
 
     /* ── 第 2 步：切開看每一段 ── */
@@ -349,7 +357,7 @@
         const a = (s.n === 3 ? fin(s, 3, 3.3 + i * 0.25, 0.4) : 1) * fa;
         P(c, a, '30 gw', x, ROPE_Y - 60 + scDy, T_COL, 22, 'center', true);
       });
-      T(c, (s.n === 3 ? fin(s, 3, 4.6, 0.6) : 1) * fa, L('三支彈簧秤，讀數都一樣', 'All three scales read the same'), 480, 250, WHITE, 24, 'center');
+      T(c, (s.n === 3 ? fin(s, 3, 4.6, 0.6) : 1) * fa, L('三支彈簧秤，讀數都一樣', 'All three scales read the same'), 480, 172, WHITE, 24, 'center');
     }
 
     /* ── 第 4 步：A、B、C 處處相同 ── */
