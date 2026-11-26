@@ -207,6 +207,7 @@
     }
   }
   function drawMarch(c, g) {
+    return;   /* 老師決定：分力分解實驗不畫人物，只留箱子、拉桿與向量 */
     if (!(IMG.complete && IMG.naturalWidth)) return;
     const bob = S.v > 1 ? -2.2 * Math.abs(Math.sin(Math.PI * S.dist / 70)) * Math.min(1, S.v / 150) : 0;
     c.save();
@@ -552,8 +553,8 @@
     }
     const d = document.createElement('div'); d.className = 'lab-desk'; d.id = 'lab-' + KEY;
     const tz = '🔧 動手做｜分力掃描儀', te = '🔧 Try it | Component scanner';
-    const kz = 'March 拉著行李箱。調整施力的角度，看水平分力與垂直分力怎麼此消彼長；角度壓低，行李箱真的跑得比較快嗎？';
-    const ke = 'March is pulling a suitcase. Change the pulling angle and watch the horizontal and vertical components trade off. Does the suitcase really go faster when the angle is lower?';
+    const kz = '用拉桿拉著行李箱。調整施力的角度，看水平分力與垂直分力怎麼此消彼長；角度壓低，行李箱真的跑得比較快嗎？';
+    const ke = 'A suitcase is being pulled by its handle. Change the pulling angle and watch the horizontal and vertical components trade off. Does the suitcase really go faster when the angle is lower?';
     d.innerHTML =
       `<div class="lab-title" data-zh="${tz}" data-en="${te}">${T(tz, te)}</div>` +
       `<div class="lab-task" data-zh="${kz}" data-en="${ke}">${T(kz, ke)}</div>` +
