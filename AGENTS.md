@@ -153,7 +153,7 @@
 3. 建置 `python3 tools/voice/lesson_studio/build_lesson.py --lesson <課>` → `audio/<課>/manifest.json`、`stage.json`、`stage_spec.md`。
 4. **雲端錄音** `python3 tools/voice/lesson_studio/cloud_tts.py <課>`（edge-tts；`No audio was received` 就重跑，只補缺的檔；音檔放 `audio/<課>/mp3/`，不放 GitHub Release）。**雲端錄音念的是稿上的字**：讀音不對就在稿裡寫同音字（例：參宿四寫「身秀四」），字幕靠 `build_lesson.py` 的 `SUB_MAP` 換回原字，刪該句 mp3 後重錄。
 5. 播放器 `<課>_voice_v1.js`（複製最接近的課當範本，如 `astronomy_universe_1_voice_v1.js`、`work_5_voice_v1.js`）＋ html 加 `<script defer src="<課>_voice_v1.js?v=日期-版本">`；改了就換版本號。播放器強制學生模式、鎖定頁面本身的老師導覽。
-6. **畫面原則：重點是動畫不是文字。** 動畫步驟以 `.v5-cv` 畫布為準，整張畫布必須在字幕框上方的主屏內；螢光筆要畫到畫面外時，畫完馬上拉回動畫。
+6. **畫面原則（老師 2026-11-26 又強調，細節見 `AGENTS_VOICE.md` 0-1）：重點是動畫不是文字；畫布要整張 100% 在字幕框上方，放不下就縮小畫布；結果框、按鈕被蓋住沒關係；一定用 iPad 尺寸（1180×820、1180×740）驗證。** 動畫步驟以 `.v5-cv` 畫布為準，整張畫布必須在字幕框上方的主屏內；螢光筆要畫到畫面外時，畫完馬上拉回動畫。
 7. **自動螢光筆**：唸到哪畫到哪，只框字本身（規範見 Project「網課有聲講解_自動螢光筆規範」與 `AGENTS_VOICE.md` 8-1）。
 8. 驗證：`python3 -m http.server 8803` 後 `NODE_PATH=$(npm root -g) node tools/voice/lesson_studio/sim/sim_lines_<課>.js`（約 5 分鐘，背景跑、短間隔輪詢）：`mismatches 0`、`js errors none`、`mode-teacher 0`。
 9. 推分支 `<課>-audio` → 老師聽看 → **老師說 OK 才推 main**。完成後把新學到的雷補進 `新課作業手冊.md`。

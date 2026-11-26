@@ -331,11 +331,11 @@
     if (!tab) return null;
     if (isLabStep(tab, step || 1)) {
       var key = LABS[tab].key, lab = labRoot(key);
-      if (lab) { var cw = lab.querySelector('.canvas-wrap') || lab.querySelector('.friction-canvas-shell') || lab; return { k: 'lab-' + key, topEl: cw, botEl: lab.querySelector('.result-box') || null, core: cw, pad: 88, anchor: 'top' }; }
+      if (lab) { var cw = lab.querySelector('.canvas-wrap') || lab.querySelector('.friction-canvas-shell') || lab; return { k: 'lab-' + key, topEl: cw, botEl: null, fit: cw, pad: 88, anchor: 'top' }; }   // 老師 2026-11-26：重點是畫布，結果框、按鈕、說明被字幕框蓋掉沒關係；畫布放不下就整張縮小
     }
     if (!sub) return null;
     var cv = $('cvs-' + sub);
-    if (cv) { var p = cv.parentElement; return { k: sub, topEl: p && /stage-container/.test(p.className) ? p : cv, anchor: 'top' }; }
+    if (cv) { var p = cv.parentElement, ce = p && /stage-container/.test(p.className) ? p : cv; return { k: sub, topEl: ce, fit: ce, anchor: 'top' }; }
     return null;
   }
   var sceneTimer = 0;
@@ -387,7 +387,25 @@
   //    上緣要讓開右上角固定的「Language」切換鈕（底在 85 px）→ 上緣至少 88（pad）。畫布＋結果框放得下就置中；
   //    放不下就只保住畫布（core）：畫布上緣對齊 88，結果框露出多少算多少；連畫布都放不下（iPad）就畫布下緣貼齊黃條。
   var TOP_PAD = 56, BOT_PAD = 6;
+  // 畫布整張必須在字幕框上方的主畫面裡（老師 2026-11-26 第 N 次強調）：放不下就用 CSS 把畫布外框縮小（置中），播完／停止還原。
+  var fitted = [];
+  function unfitAll(except) {
+    fitted = fitted.filter(function (e) {
+      if (e === except) return true;
+      e.style.maxWidth = ''; e.style.marginLeft = ''; e.style.marginRight = ''; return false;
+    });
+  }
+  function fitView(v) {
+    var e = v && v.fit; unfitAll(e);
+    if (!e || !e.getBoundingClientRect) return;
+    e.style.maxWidth = ''; e.style.marginLeft = ''; e.style.marginRight = '';   // 先量自然大小（同一個執行回合內還原再縮，不會閃）
+    var avail = visBottom() - BOT_PAD - (v.pad || TOP_PAD), r = e.getBoundingClientRect();
+    if (avail < 200 || r.height <= avail) return;
+    e.style.maxWidth = Math.floor(r.width * avail / r.height) + 'px'; e.style.marginLeft = 'auto'; e.style.marginRight = 'auto';
+    if (fitted.indexOf(e) < 0) fitted.push(e);
+  }
   function bringIntoView(v) {
+    fitView(v);
     var a = v && v.topEl, b = v && (v.botEl || a);
     if (!a || !b || !a.getBoundingClientRect) return;
     var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
@@ -676,6 +694,7 @@
   function stop() {
     halt(); state = 'idle'; idx = 0;
     labResetAll();   // 停止：動手做還原成預設
+    unfitAll();      // 畫布縮小的還原
     setPin(''); progress(0);
     if (ui.sub) ui.sub.textContent = '按 ▶ 聽彥君老師與曉臻助教講解。';
     refresh();
@@ -684,6 +703,7 @@
   function finish() {
     halt(); state = 'idle'; idx = 0; setPin('');
     labResetAll();
+    unfitAll();
     progress(total);
     ui.sub.textContent = '講解結束，可以按 ▶ 重聽。';
     refresh();

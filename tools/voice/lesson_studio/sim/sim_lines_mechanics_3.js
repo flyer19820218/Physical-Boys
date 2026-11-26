@@ -155,11 +155,11 @@ function okState(w, g) {
     }
     // 畫面在字幕框上方露出多少（動手做看畫布頂～結果框底，其餘看動畫畫布）：少於 50% 算不合格；沒完整露出的另列參考
     if (w && okState(w, g)) {
-      const t0 = isLab(w) ? g.labTop : g.animTop, t1 = isLab(w) ? Math.max(g.labBot, g.resBot || 0) : g.animBot;
+      const t0 = isLab(w) ? g.labTop : g.animTop, t1 = isLab(w) ? g.labBot : g.animBot;   // 老師 2026-11-26：只看畫布，結果框、按鈕不算
       if (t0 != null && t1 > t0) {
         const shown = Math.max(0, Math.min(t1, g.bubTop) - Math.max(t0, 0)) / (t1 - t0);
         const rec = { n, what: isLab(w) ? 'lab' : w.sub, top: Math.round(t0), bot: Math.round(t1), bubTop: Math.round(g.bubTop), shown: +shown.toFixed(2) };
-        if (shown < 0.5) viewBad.push(rec); else if (shown < 0.995) viewPart.push(rec);
+        if (shown < 0.99) viewBad.push(rec); else if (rec.top < 8) viewPart.push(rec);   // 畫布必須 100% 在字幕框上方（<0.99 就算不合格）
       }
     }
   }
@@ -185,7 +185,7 @@ function okState(w, g) {
   report.slice(0, 60).forEach(r => console.log('  ', JSON.stringify(r)));
   console.log('js errors:', errors.length ? errors : 'none');
   console.log('mode-teacher 出現次數：', teacherSeen, '（硬點老師講解後立刻切回學生：', probeReverted, '）');
-  console.log('畫面在字幕框上方露出不到 50% 的句子數：', viewBad.length, viewBad.map(v => v.n).join(','));
+  console.log('畫面在字幕框上方畫布沒有 100% 露出的句子數：', viewBad.length, viewBad.map(v => v.n).join(','));
   viewBad.slice(0, 40).forEach(v => console.log('   ', JSON.stringify(v)));
   console.log('（參考）露出 50% 以上但沒有完整露出的句子數：', viewPart.length, viewPart.map(v => v.n + '(' + v.shown + ')').join(','));
   console.log('動畫被截斷（換畫面時最後一段字還沒出現或剛出現）：', cutEarly.length, cutEarly.map(c => c.n + ' ' + c.scene + ' ' + c.played + '/' + c.need).join('；'));
