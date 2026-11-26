@@ -61,21 +61,40 @@
     return { x0, x1: x0 + W, yb, topY: yb - Hh - oy };
   }
 
-  /* ── 軟墊：剖面＋表面凹陷（凹陷寬度 ≈ 磚寬） ── */
-  function pad(c, dent, wpx) {
-    const { x0, x1, top, th } = PAD, a = CX - wpx / 2, b = CX + wpx / 2, sh = 22;
-    c.save();
+  /* ── 軟墊（立體）：正面剖面（凹陷輪廓在最前面一層，與磚塊正面貼齊）＋上表面＋右側面；
+   *    表面凹陷＝磚塊底面的投影（同一個斜視角度），凹陷深度 dent；回傳磚塊底面前緣的 y。 ── */
+  const SD = 110;                        /* 軟墊深度 px（斜視往後延伸） */
+  function pad(c, dent, cxf, W, D) {
+    const { x0, x1, top, th } = PAD, a = cxf - W / 2, b = cxf + W / 2, sh = 22, dd = dent * 0.9;
+    const ox = D * 0.5, oy = D * 0.34, sx = SD * 0.5, sy = SD * 0.34;
+    c.save(); c.lineJoin = 'round';
+    /* 右側面 */
+    c.fillStyle = '#a07c22'; c.beginPath(); c.moveTo(x1, top); c.lineTo(x1 + sx, top - sy); c.lineTo(x1 + sx, top - sy + th); c.lineTo(x1, top + th); c.closePath(); c.fill();
+    /* 上表面 */
+    const gt = c.createLinearGradient(0, top - sy, 0, top); gt.addColorStop(0, '#f6dd8c'); gt.addColorStop(1, '#ecca66');
+    c.fillStyle = gt; c.beginPath(); c.moveTo(x0, top); c.lineTo(x1, top); c.lineTo(x1 + sx, top - sy); c.lineTo(x0 + sx, top - sy); c.closePath(); c.fill();
+    /* 表面凹陷：左壁（朝右）、後壁（朝前）、底面（被磚塊蓋住）；凹陷開口＝磚塊底面的投影 */
+    if (dd > 0.5) {
+      c.fillStyle = '#bf9733'; c.beginPath(); c.moveTo(a, top); c.lineTo(a + ox, top - oy); c.lineTo(a + ox, top - oy + dd); c.lineTo(a, top + dd); c.closePath(); c.fill();
+      c.fillStyle = '#a98428'; c.beginPath(); c.moveTo(a + ox, top - oy); c.lineTo(b + ox, top - oy); c.lineTo(b + ox, top - oy + dd); c.lineTo(a + ox, top - oy + dd); c.closePath(); c.fill();
+      c.fillStyle = '#d4ab3d'; c.beginPath(); c.moveTo(a, top + dd); c.lineTo(b, top + dd); c.lineTo(b + ox, top - oy + dd); c.lineTo(a + ox, top - oy + dd); c.closePath(); c.fill();
+    }
+    /* 上表面外框 */
+    c.strokeStyle = '#f6e19a'; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(x0, top); c.lineTo(x0 + sx, top - sy); c.lineTo(x1 + sx, top - sy); c.lineTo(x1 + sx, top - sy + th); c.lineTo(x1, top + th); c.stroke();
+    c.beginPath(); c.moveTo(x1, top); c.lineTo(x1 + sx, top - sy); c.stroke();
+    /* 正面剖面：上緣是凹陷輪廓 */
     const g = c.createLinearGradient(0, top, 0, top + th); g.addColorStop(0, '#e8c25a'); g.addColorStop(1, '#b8902a');
     c.fillStyle = g; c.beginPath(); c.moveTo(x0, top + th);
     c.lineTo(x0, top); c.lineTo(Math.max(x0, a - sh), top);
-    c.quadraticCurveTo(a - 2, top, a + 4, top + dent * 0.9); c.lineTo(b - 4, top + dent * 0.9);
+    c.quadraticCurveTo(a - 2, top, a + 4, top + dd); c.lineTo(b - 4, top + dd);
     c.quadraticCurveTo(b + 2, top, Math.min(x1, b + sh), top); c.lineTo(x1, top); c.lineTo(x1, top + th); c.closePath(); c.fill();
     c.strokeStyle = '#f6e19a'; c.lineWidth = 3; c.stroke();
-    /* 海綿氣孔 */
+    /* 海綿氣孔（正面） */
     c.fillStyle = 'rgba(120,80,10,0.28)';
     for (let i = 0; i < 46; i++) { const px = x0 + 14 + (i * 97.3) % (x1 - x0 - 28), py = top + 28 + ((i * 53.7) % (th - 38)); c.beginPath(); c.arc(px, py, 2 + (i % 3), 0, 6.283); c.fill(); }
     c.restore();
-    return top + dent * 0.9;
+    return top + dd;
   }
 
   function draw(c) {
@@ -83,8 +102,21 @@
     /* 地板與標題 */
     U.pill(c, T('軟墊壓痕為相對示意', 'Dent depth is relative'), 300, 72, COL.dim, 22);
     const lift = Math.sin(Math.PI * Math.min(1, S.t)) * 95 * (S.t < 1 ? 1 : 0);
-    const seat = pad(c, S.dent, wpx + cur.d * SC * 0.5 + 30);
+    const Dpx = cur.d * SC, oxb = Dpx * 0.5, oyb = Dpx * 0.34, cxf = CX - oxb / 2;
+    const seat = pad(c, S.dent, cxf, wpx, Dpx);
+    /* 磚塊：左邊先畫軟墊再畫磚（磚蓋住軟墊）；右邊先畫磚再畫軟墊（磚沉進凹陷的部分被右側軟墊表面蓋住）→ 用剪裁：右側面在軟墊表面以下的部分不畫 */
+    const topY = PAD.top, bR = cxf + wpx / 2;
+    c.save();
+    c.beginPath(); c.rect(0, 0, 960, 540);
+    c.moveTo(bR, topY); c.lineTo(bR + oxb, topY - oyb); c.lineTo(bR + oxb + 6, topY - oyb); c.lineTo(bR + oxb + 6, 540); c.lineTo(bR, 540); c.closePath();
+    c.clip('evenodd');
     const bb = brick(c, CX, seat - lift, cur.w, cur.d, cur.h);
+    c.restore();
+    /* 右側凹陷邊緣：軟墊表面蓋在磚塊右側面上的亮邊（沉進去才畫） */
+    if (S.dent > 1) {
+      c.save(); c.strokeStyle = '#f6e19a'; c.lineWidth = 3; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(bR, topY); c.lineTo(bR + oxb, topY - oyb); c.stroke(); c.restore();
+    }
     /* 重量箭頭（粉）：在磚塊上方 */
     const fx = CX, ftop = Math.max(98, bb.topY - 96), fbot = bb.topY - 8;
     if (S.t >= 1) {
