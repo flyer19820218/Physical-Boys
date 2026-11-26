@@ -9,7 +9,7 @@ LQ.addStatic('mechanics_2',{
    P(`力的三要素是作用點（起點）、方向（箭頭）、大小（線段長度）。`,`The three elements are the point of application (start), direction (arrowhead) and size (length).`),
    P(`箭頭的起點、指向、長度各代表什麼？`,`What do the start, the pointing and the length each stand for?`))],
  '#sv-online':[
-  Q(P(`左邊 30 gw、右邊 80 gw 拉同一個木塊，合力是多少？`,`A block is pulled 30 gw to the left and 80 gw to the right. What is the resultant force?`),
+  Q(P(`左邊 30 gw、右邊 80 gw 拉同一個木箱，合力是多少？`,`A crate is pulled 30 gw to the left and 80 gw to the right. What is the resultant force?`),
    [P(`50 gw 向右`,`50 gw to the right`),P(`110 gw 向右`,`110 gw to the right`),P(`50 gw 向左`,`50 gw to the left`),P(`110 gw 向左`,`110 gw to the left`)],0,
    P(`同一直線上反向兩力相減：80 − 30 = 50 gw，方向朝向較大的力（向右）。`,`Opposite forces on one line subtract: 80 − 30 = 50 gw, toward the larger force (right).`),
    P(`反向要相減，方向看大力。`,`Opposite forces subtract; the larger one decides the direction.`)),

@@ -6,14 +6,14 @@
  *
  * 物理（一直線上兩個反向力）：向右為正，F左 ＝ March 的拉力（向左）、F右 ＝ April 的拉力（向右）。
  *   合力向量 R ＝ (F右 − F左, 0)，大小用 Math.hypot 算；方向朝向較大的力；相等時 R ＝ 0。
- *   木塊示意：加速度 ∝ 合力、無摩擦（K px/s² 每 gw）；撞到軌道左右端點就停住並顯示「到頭了」。
- *   合力 ＝ 0 時木塊「停在原位不動」（教學示意：快速緩停，不讓它帶著速度漂走），並顯示「靜力平衡」。
+ *   木箱示意：加速度 ∝ 合力、無摩擦（K px/s² 每 gw）；撞到軌道左右端點就停住並顯示「到頭了」。
+ *   合力 ＝ 0 時木箱「停在原位不動」（教學示意：快速緩停，不讓它帶著速度漂走），並顯示「靜力平衡」。
  * 箭頭長度 ∝ gw：PX_PER_GW ＝ 2.8 px（地面方格每格 10 gw ＝ 28 px）。
  * 人物：拔河圖兩半（assets/characters/tug/）＋麻繩切片；表情徽章依勝負換（victory／struggling／normal）。
- * 人跟著木塊走：兩位選手（連同手上那段繩、影子）和木塊一起平移，兩段繩長不變（人被拉著走）。
- *   畫面上：木塊與兩人只在畫面上移動 VIEW_K × 位移（最多 ±14 px，人物才不會壓到兩側頭像徽章），
+ * 人跟著木箱走：兩位選手（連同手上那段繩、影子）和木箱一起平移，兩段繩長不變（人被拉著走）。
+ *   畫面上：木箱與兩人只在畫面上移動 VIEW_K × 位移（最多 ±14 px，人物才不會壓到兩側頭像徽章），
  *   其餘位移由「鏡頭跟著走」表現：地面刻度、起點記號、紅白擋柱往反方向捲動（cam ＝ 世界座標 − 畫面座標）。
- * 動畫只在木塊還在動（或預備起跑）時跑 RAF，靜止就停。
+ * 動畫只在木箱還在動（或預備起跑）時跑 RAF，靜止就停。
  */
 (function () {
   'use strict';
@@ -34,15 +34,15 @@
   const GY = 455;                                      /* 地面線 */
   const SC = 0.42;                                     /* 拔河圖縮放（原圖約 352×572） */
   const IMG_ROPE_Y = 285, IMG_FOOT = 565;
-  const ROPE_Y = GY - (IMG_FOOT - IMG_ROPE_Y) * SC;    /* ≈ 337，繩子與木塊作用點的高度 */
+  const ROPE_Y = GY - (IMG_FOOT - IMG_ROPE_Y) * SC;    /* ≈ 337，繩子與木箱作用點的高度 */
   const GL = 250, GR = 710;                            /* 兩人握點 x */
-  const BW = 136, BH = 136, HALF = BW / 2;             /* 木塊 */
-  const X0 = 480, XMIN = 360, XMAX = 600;              /* 木塊中心起點與軌道範圍 */
+  const BW = 136, BH = 136, HALF = BW / 2;             /* 木箱 */
+  const X0 = 480, XMIN = 360, XMAX = 600;              /* 木箱中心起點與軌道範圍 */
   const K = 1.66;                                      /* 加速度（px/s²）每 gw */
   const Y_FL = 84, Y_FL_LBL = 40;                      /* 兩條拉力箭頭基線與其標籤 */
   const Y_R = 180, Y_R_LBL = 138;                      /* 合力箭頭基線與標籤 */
   const Y_PILL = 252;                                  /* 「靜力平衡／到頭了」小標籤 */
-  const VIEW_K = 14 / (XMAX - X0);                     /* 木塊＋兩人在畫面上的位移比例（位移 120 → 畫面 14 px） */
+  const VIEW_K = 14 / (XMAX - X0);                     /* 木箱＋兩人在畫面上的位移比例（位移 120 → 畫面 14 px） */
 
   /* ═════════ 小工具 ═════════ */
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -76,7 +76,7 @@
   const S = {
     on: false, raf: 0, last: 0, t: 0, visible: true,
     fm: DEF_M, fa: DEF_A,          /* March（左）、April（右）的拉力 gw */
-    x: X0, v: 0, hold: 0,          /* 木塊中心 x、速度 px/s、起跑前的預備秒數 */
+    x: X0, v: 0, hold: 0,          /* 木箱中心 x、速度 px/s、起跑前的預備秒數 */
     idle: true, debug: false, boxes: [], actions: 0, note: 'start'
   };
   let cv = null, ctx = null, ctrl = null, res = null, io = null;
@@ -162,7 +162,7 @@
       c.restore();
     }
   }
-  /* vx：木塊中心在畫面上的 x；兩人握點＝vx 加上固定的繩長，所以人跟著木塊走、繩長不變 */
+  /* vx：木箱中心在畫面上的 x；兩人握點＝vx 加上固定的繩長，所以人跟著木箱走、繩長不變 */
   function drawPeople(c, vx) {
     const L = IMG.L, R = IMG.R; if (!ok(L) || !ok(R)) return;
     const hl = L.naturalHeight * SC, top = GY - IMG_FOOT * SC;
@@ -204,7 +204,7 @@
     /* 影子 */
     c.save(); c.globalAlpha = 0.45; c.fillStyle = COL.deep;
     c.beginPath(); c.ellipse(cx, GY + 3, HALF + 6, 8, 0, 0, TAU); c.fill(); c.restore();
-    /* 速度線（動得快才畫，畫在木塊後方） */
+    /* 速度線（動得快才畫，畫在木箱後方） */
     if (Math.abs(S.v) > 25) {
       const d = S.v > 0 ? -1 : 1, bx = d < 0 ? x : x + BW;
       c.save(); c.strokeStyle = 'rgba(246,243,234,0.5)'; c.lineWidth = 3; c.lineCap = 'round';
@@ -290,7 +290,7 @@
 
   function drawForces(c, vx) {
     const r = net(), bl = vx - HALF, br = vx + HALF, bc = vx;
-    /* 作用點的引線（淡虛線，從木塊上的作用點拉到各自的箭頭基線） */
+    /* 作用點的引線（淡虛線，從木箱上的作用點拉到各自的箭頭基線） */
     leader(c, bl, ROPE_Y, Y_FL, COL.teal);
     leader(c, br, ROPE_Y, Y_FL, COL.pink);
     if (r.mag > 0) leader(c, bc, GY - BH, Y_R, COL.yellow);
@@ -329,7 +329,7 @@
     S.boxes = [];
     c.setTransform(DPR, 0, 0, DPR, 0, 0);
     c.fillStyle = COL.bg; c.fillRect(0, 0, W, H);
-    /* 鏡頭：木塊（世界座標 S.x）畫在畫面 vx；地面刻度、起點、擋柱都減掉 cam */
+    /* 鏡頭：木箱（世界座標 S.x）畫在畫面 vx；地面刻度、起點、擋柱都減掉 cam */
     const vx = X0 + (S.x - X0) * VIEW_K, cam = S.x - vx;
     drawFloor(c, cam);
     bumper(c, XMIN - HALF - 18 - cam, -1);
@@ -346,7 +346,7 @@
     drawLegend(c);
   }
 
-  /* ═════════ 迴圈（木塊還在動才跑） ═════════ */
+  /* ═════════ 迴圈（木箱還在動才跑） ═════════ */
   function frame(now) {
     S.raf = 0;
     if (!S.on || document.hidden || !S.visible) return;
@@ -412,7 +412,7 @@
       row.append(nm, inp, val); ctrl.appendChild(row);
     });
     const br = document.createElement('div'); br.className = 'lab-row lab-brow';
-    [['equal', T('雙方一樣大', 'Make them equal')], ['swap', T('對調', 'Swap')], ['home', T('木塊歸位', 'Block back to start')], ['reset', T('重設', 'Reset')]].forEach(([k, text]) => {
+    [['equal', T('雙方一樣大', 'Make them equal')], ['swap', T('對調', 'Swap')], ['home', T('木箱歸位', 'Crate back to start')], ['reset', T('重設', 'Reset')]].forEach(([k, text]) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'lab-btn'; b.dataset.act = k; b.textContent = text;
       b.addEventListener('click', () => act(k)); br.appendChild(b);
     });
@@ -426,8 +426,8 @@
     });
   }
   function updateUI() {
-    if (cv) cv.setAttribute('aria-label', T('向量拔河賽實驗台：用滑桿調整 March 與 April 的拉力，觀察黃色合力與木塊的移動',
-      'Vector tug-of-war bench: use the sliders to set March and April pulls and watch the yellow net force and the block'));
+    if (cv) cv.setAttribute('aria-label', T('向量拔河賽實驗台：用滑桿調整 March 與 April 的拉力，觀察黃色合力與木箱的移動',
+      'Vector tug-of-war bench: use the sliders to set March and April pulls and watch the yellow net force and the crate'));
     updateResult();
   }
   function updateResult() {
@@ -437,7 +437,7 @@
     const head = T(`<b class="lt-m">左 ${m} gw（向左）</b>、<b class="lt-a">右 ${a} gw（向右）</b> → `,
       `<b class="lt-m">Left ${m} gw (←)</b>, <b class="lt-a">right ${a} gw (→)</b> → `);
     let tail;
-    if (r.dir === 0) tail = T('<b class="lt-r">合力 ＝ 0 gw，木塊不動</b>', '<b class="lt-r">net force = 0 gw, the block stays put</b>');
+    if (r.dir === 0) tail = T('<b class="lt-r">合力 ＝ 0 gw，木箱不動</b>', '<b class="lt-r">net force = 0 gw, the crate stays put</b>');
     else tail = T(`<b class="lt-r">合力 ＝ ${big} − ${small} ＝ ${mag} gw，向${r.dir > 0 ? '右' : '左'}</b>`,
       `<b class="lt-r">net force = ${big} − ${small} = ${mag} gw, ${r.dir > 0 ? 'rightward' : 'leftward'}</b>`);
     const l2 = T('反向相減，方向朝向較大的力', 'Opposite directions subtract; the net force points toward the larger force');
@@ -517,8 +517,8 @@
     }
     const d = document.createElement('div'); d.className = 'lab-desk'; d.id = 'lab-' + KEY;
     const tz = '🔧 動手做｜向量拔河賽', te = '🔧 Try it | Vector tug of war';
-    const kz = '調整兩側選手的拉力，觀察黃色的合力。先猜猜木塊會往哪邊跑，再用滑桿驗證！';
-    const ke = "Adjust each player's pull and watch the yellow net force. First guess which way the block will go, then check it with the sliders!";
+    const kz = '調整兩側選手的拉力，觀察黃色的合力。先猜猜木箱會往哪邊跑，再用滑桿驗證！';
+    const ke = "Adjust each player's pull and watch the yellow net force. First guess which way the crate will go, then check it with the sliders!";
     d.innerHTML =
       `<div class="lab-title" data-zh="${tz}" data-en="${te}">${T(tz, te)}</div>` +
       `<div class="lab-task" data-zh="${kz}" data-en="${ke}">${T(kz, ke)}</div>` +

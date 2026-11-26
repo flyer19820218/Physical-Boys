@@ -1,4 +1,4 @@
-/* mechanics_2_lab_incline_1125_v1.js — 「動手做｜斜面滑塊解析」實驗台（#inclineLabCanvas，邏輯 960×540，2x 高解析）
+/* mechanics_2_lab_incline_1125_v1.js — 「動手做｜斜面車子解析」實驗台（#inclineLabCanvas，邏輯 960×540，2x 高解析）
  *
  * 契約：window.W5Lab.incline = { activate(), deactivate(), relang(), _state() }
  * 本檔載入時自己把實驗台 DOM 附加到 #tab5 最後，並注入 <style id="lab-incline-css">；自給自足。
@@ -362,8 +362,8 @@
         }
       });
     }
-    if (cv) cv.setAttribute('aria-label', T('斜面滑塊解析實驗台：用滑桿調整斜面坡度與重力，看重力被拆成下滑力與壓迫力',
-      'Incline block bench: use the sliders to change the slope and weight and watch gravity split into a down-slope force and a pressing force'));
+    if (cv) cv.setAttribute('aria-label', T('斜面車子解析實驗台：用滑桿調整斜面坡度與重力，看重力被拆成下滑力與壓迫力',
+      'Incline car bench: use the sliders to change the slope and weight and watch gravity split into a down-slope force and a pressing force'));
     updateResult();
   }
   function updateResult() {
@@ -448,7 +448,7 @@
       const st = document.createElement('style'); st.id = 'lab-' + KEY + '-css'; st.textContent = CSS; document.head.appendChild(st);
     }
     const d = document.createElement('div'); d.className = 'lab-desk'; d.id = 'lab-' + KEY;
-    const tz = '🔧 動手做｜斜面滑塊解析', te = '🔧 Try it | Incline block';
+    const tz = '🔧 動手做｜斜面車子解析', te = '🔧 Try it | Incline car';
     const kz = '調整斜面的坡度，看重力 W 被拆成下滑力與壓迫力；坡度越陡，哪個力變大、哪個力變小？';
     const ke = 'Change the slope and watch the weight W split into a down-slope force and a pressing force. As the slope gets steeper, which force grows and which one shrinks?';
     d.innerHTML =

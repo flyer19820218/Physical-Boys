@@ -6,12 +6,12 @@
    比例：PX_PER_GW＝3（1 gw＝3 px，整支動畫不變）；比例尺 1 格＝10 gw＝30 px。
          30 gw＝90 px、50 gw＝150 px、80 gw＝240 px。畫面上的 gw 數一律由箭頭向量長度算出來。
    語意色：March 的拉力＝青 COL.teal；April 的拉力＝粉 COL.pink；合力 R＝黃 COL.yellow。
-   場景：地面線 GY；木塊（canvas 自畫）在中間，左右兩側各一個鐵環＝作用點（高度 AY＝人物拳頭高）。
+   場景：地面線 GY；木箱（canvas 自畫）在中間，左右兩側各一個鐵環＝作用點（高度 AY＝人物拳頭高）。
          人物用拔河圖 assets/characters/tug/：March＝tug_march_left（第 1 步左右翻轉，站到右邊往右拉），
          April＝tug_april_right；原圖手裡的繩頭裁掉，繩子由本檔從鐵環畫到拳頭。
          力的箭頭畫在繩上、從鐵環（作用點）出發；上方一條獨立基線：
            RY0／RY1＝把兩支箭頭「搬上來」首尾相接的列，RY2＝黃色合力 R，RU＝比例尺。
-   運動：合力不為 0 → 木塊連同兩人往合力方向加速（位移∝合力，最後緩停）；合力為 0 → 不動。
+   運動：合力不為 0 → 木箱連同兩人往合力方向加速（位移∝合力，最後緩停）；合力為 0 → 不動。
    畫布頂端 0～31px 留給 kit 的進度條，本檔內容一律畫在 y ≥ 32。
    ================================================================== */
 (function () {
@@ -52,12 +52,12 @@
   const A_W = 346, A_HAND_X = 40, A_CLIP = 36;        /* April：拳頭 x、繩頭裁切（左側） */
   const HAND_H = (IMG_FOOT - IMG_HAND_Y) * SC;        /* 拳頭離腳底 112 px */
   const AY = GY - HAND_H;                             /* 繩／作用點高度 348 */
-  const BOX_W = 120, BOX_H = 130;                     /* 木塊（頂 330） */
+  const BOX_W = 120, BOX_H = 130;                     /* 木箱（頂 330） */
   const RY0 = 140, RY1 = 164, RY2 = 198, RU = 222;    /* 上方基線：小箭頭列、大箭頭列、合力列、比例尺 */
   const EQ_Y = 108, KEY_Y = 62, BOT_Y = 505;
-  const T_MOVE = [5.4, 7.4];                          /* 木塊加速的時間窗 */
+  const T_MOVE = [5.4, 7.4];                          /* 木箱加速的時間窗 */
 
-  /* 每一步的場景：cx0＝木塊中心起點；gwL／gwR＝向左／向右的力；mOff／aOff＝拳頭離作用點多遠 */
+  /* 每一步的場景：cx0＝木箱中心起點；gwL／gwR＝向左／向右的力；mOff／aOff＝拳頭離作用點多遠 */
   const ST = [null,
     { same: true, cx0: 280, gwL: 0, gwR: 0, m: 30, a: 50, mOff: 175, aOff: 315 },   /* 第 1 步：兩人都在右邊往右拉 */
     { cx0: 430, gwL: 30, gwR: 80, mOff: 120, aOff: 265 },
@@ -114,7 +114,7 @@
     c.beginPath(); c.moveTo(0, GY); c.lineTo(960, GY); c.stroke();
   }
 
-  /* ═══════════ 木塊（同 fdraw 的木箱畫法，尺寸較小） ═══════════ */
+  /* ═══════════ 木箱（同 fdraw 的木箱畫法，尺寸較小） ═══════════ */
   function crate(c, cx) {
     const x = cx - BOX_W / 2, y = GY - BOX_H, w = BOX_W, h = BOX_H, fr = 12;
     c.save(); c.globalAlpha *= 0.45; c.fillStyle = INK;
@@ -152,14 +152,14 @@
     c.strokeStyle = '#3a2412'; c.lineWidth = 2; W5.rr(c, x, y, w, h, 6); c.stroke();
   }
 
-  /* 鐵環：xe＝木塊側面 x，dir＝+1 右側、−1 左側 */
+  /* 鐵環：xe＝木箱側面 x，dir＝+1 右側、−1 左側 */
   function eyeBolt(c, xe, dir) {
     c.fillStyle = '#5b6662'; c.fillRect(dir > 0 ? xe - 3 : xe - 2, AY - 7, 5, 14);
     c.strokeStyle = '#c7d2ce'; c.lineWidth = 3.5;
     c.beginPath(); c.arc(xe + dir * 7, AY, 7, 0, TAU); c.stroke();
   }
 
-  /* 滑動時的塵土（確定性）：x 木塊後下角、dir 運動方向、v 0..1 */
+  /* 滑動時的塵土（確定性）：x 木箱後下角、dir 運動方向、v 0..1 */
   function dust(c, x, dir, v, t) {
     if (v <= 0.03) return;
     for (let i = 0; i < 4; i++) {
@@ -249,7 +249,7 @@
     T(c, a, L('1 格 ＝ 10 gw', '1 box = 10 gw'), ox + lo * CELL - 14, RU, WHITE, 22, 'right');
   }
 
-  /* 原點到木塊的虛線（合力作用在這個木塊上） */
+  /* 原點到木箱的虛線（合力作用在這個木箱上） */
   function linkLine(c, x, y1, a) {
     withA(c, a, () => {
       c.save(); c.setLineDash([5, 5]); c.strokeStyle = 'rgba(255,224,102,0.55)'; c.lineWidth = 2;
@@ -261,7 +261,7 @@
   function sceneOf(s) {
     const P = ST[s.n], net = netOf(P);
     const m = accel(s.u, T_MOVE[0], T_MOVE[1]);
-    const D = net * 1.0;                       /* 位移 ∝ 合力（同樣時間、同一木塊）；合力 0 → 不動 */
+    const D = net * 1.0;                       /* 位移 ∝ 合力（同樣時間、同一木箱）；合力 0 → 不動 */
     const cx = P.cx0 + D * m.f;
     return { P, net, cx, xl: cx - BOX_W / 2, xr: cx + BOX_W / 2, v: net === 0 ? 0 : m.v, dir: Math.sign(net), moved: m.f };
   }
@@ -272,11 +272,11 @@
     const S = sceneOf(s), P = S.P, sa = s.k;      /* 每一步開頭 0.8 秒整個場景淡入 */
     const { xl, xr, cx } = S;
 
-    /* ── 場景：木塊 → 繩 → 人物 ── */
+    /* ── 場景：木箱 → 繩 → 人物 ── */
     withA(c, sa, () => {
       if (S.v > 0.03) dust(c, S.dir > 0 ? xl : xr, S.dir, S.v, s.t);
       if (P.same) {
-        rope(c, xr + 9, xr + P.mOff, true);            /* 木塊 → March 前手（March 左右翻轉） */
+        rope(c, xr + 9, xr + P.mOff, true);            /* 木箱 → March 前手（March 左右翻轉） */
         rope(c, xr + P.mOff, xr + P.aOff + 4, false);  /* March → April 拳頭 */
         crate(c, cx); eyeBolt(c, xr, 1);
         aprilR(c, xr + P.aOff);
@@ -356,7 +356,7 @@
   /* ── 第 2～4 步：反向（兩人分站兩邊） ── */
   function stepOpp(c, s, S) {
     const P = S.P, n = s.n, xl = S.xl, xr = S.xr, sa = s.k;
-    const ox = P.cx0;                                    /* 原點＝木塊起始中心 */
+    const ox = P.cx0;                                    /* 原點＝木箱起始中心 */
     const keys = [null, null,
       L('反方向：大的減小的', 'Opposite: big minus small'),
       L('換左邊比較大', 'Now the left is bigger'),
@@ -433,7 +433,7 @@
     }
     if (n === 4) {
       const za = fin(s, n, 5.6, 0.5);
-      T(c, za, L('木塊不動', 'Block stays still'), S.cx, 300, WHITE, 22);
+      T(c, za, L('木箱不動', 'Crate stays still'), S.cx, 300, WHITE, 22);
       glowBottom(c, fin(s, n, 6.4, 0.6), L('合力為 0：靜力平衡', 'Net force 0: static equilibrium'));
     }
   }
