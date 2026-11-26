@@ -32,7 +32,7 @@
   const SURF = 118, K = 7.8;                               /* 水面 y、px／m */
   const yOf = d => SURF + d * K;
   const BX = 235;                                          /* 球心 x */
-  const R0 = 40;
+  const R0 = 34;
   const RUL_X = 76, LAB_X = 62;
   const ATM_P = 1033, PK = 0.025;
   const ATM_X = [130, 340];
@@ -97,12 +97,13 @@
 
   /* ── 空氣球＋四周向內壓的箭頭 ── */
   function ball(c, s, d) {
-    const y = yOf(d), r = rad(d);
+    const r = rad(d), y = Math.max(yOf(d), SURF + R0 + 6);   /* 球不能浮出水面：0 m 時整顆球剛好沉在水面下（球心至少在水面下 R0＋6 px） */
     /* 原本大小的虛線圓：第 3 步球回到水面後出現，之後一直跟著球 */
     const ga = s.n === 3 ? fin(s, 3, 2.8, 0.5) : s.n === 4 ? 1 : 0;
     M4.airBall(c, BX, y, r, { t: s.t, ghost: ga > 0.02 ? R0 : null, ghostA: ga });
     const la = (s.n === 3 ? fin(s, 3, 4.2, 0.5) : s.n === 4 ? 1 : 0);
-    T(c, la, L('原本大小', 'Original size'), BX, y - R0 - 16, WHITE, 22);
+    const lblAbove = y - R0 - 16 > SURF + 16;
+    T(c, la, L('原本大小', 'Original size'), BX, lblAbove ? y - R0 - 16 : y + R0 + 26, WHITE, 22);
     /* 壓力箭頭（第 1、2 步；第 3 步開頭淡出） */
     const aa = s.n <= 2 ? 1 : fout(s, 3, 0, 0.5);
     const gp = grow(s, 1, 2.6, 4.0), ga2 = grow(s, 2, 3.2, 4.6);
