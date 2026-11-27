@@ -87,7 +87,13 @@
     /* 地面、立柱與橫臂 */
     c.fillStyle = 'rgba(246,243,234,0.10)'; c.fillRect(0, GY, 960, 40);
     c.strokeStyle = 'rgba(246,243,234,0.3)'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, GY); c.lineTo(960, GY); c.stroke();
-    c.fillStyle = '#6b7882'; c.fillRect(34, 14, 12, GY - 14); c.fillRect(34, 14, SX + 6, 14); c.fillStyle = '#8a95a0'; c.fillRect(14, GY - 10, 52, 10);
+    c.fillStyle = '#6b7882'; c.fillRect(34, 14, 12, GY - 14); c.fillStyle = '#8a95a0'; c.fillRect(14, GY - 10, 52, 10);
+
+    /* 降下彈簧秤：繩長固定，橫臂、彈簧秤、吊環一起沿立柱往下移，物體才會跟著放進液體 */
+    const dy = Math.max(0, top - (BRIM - side)), ringY = 260 + dy;
+    c.save(); c.translate(0, dy);
+    c.fillStyle = '#6b7882'; c.fillRect(34, 14, SX + 6, 14);
+    c.fillStyle = '#4a565e'; c.fillRect(28, 10, 24, 22); c.strokeStyle = '#2a3a42'; c.lineWidth = 2; c.strokeRect(28, 10, 24, 22);
 
     /* 彈簧秤 */
     U.rr(c, 220, 28, 60, 214, 10); c.fillStyle = '#cfd6dc'; c.fill(); c.strokeStyle = '#6b7882'; c.lineWidth = 3; c.stroke();
@@ -101,12 +107,13 @@
     c.fillStyle = COL.coral; c.fillRect(238, py - 2.5, 24, 5);
     c.beginPath(); c.moveTo(266, py); c.lineTo(282, py - 8); c.lineTo(282, py + 8); c.closePath(); c.fill();
     c.strokeStyle = '#c0c8d0'; c.lineWidth = 4; c.beginPath(); c.arc(SX, 252, 8, 0, 6.2832); c.stroke();
+    c.restore();
 
     /* 溢水杯（液體、物體、玻璃） */
     liquidFill(c, L, CX0 + 3, lvlY, CX1 - 3, GY - 2, 1.6 + S.wob, S.time * 3);
     /* 繩子 */
-    c.strokeStyle = '#e8d9b0'; c.lineWidth = 3; c.beginPath(); c.moveTo(SX, 260);
-    if (m.floating) c.bezierCurveTo(SX + 40, 260 + (top - 260) * 0.35, SX - 40, 260 + (top - 260) * 0.7, SX, top); else c.lineTo(SX, top);
+    c.strokeStyle = '#e8d9b0'; c.lineWidth = 3; c.beginPath(); c.moveTo(SX, ringY);
+    if (m.floating) c.bezierCurveTo(SX + 40, ringY + (top - ringY) * 0.35, SX - 40, ringY + (top - ringY) * 0.7, SX, top); else c.lineTo(SX, top);
     c.stroke();
     /* 物體 */
     const bx = SX - side / 2;
