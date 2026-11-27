@@ -96,14 +96,25 @@
     /* 液柱 */
     const cg = c.createLinearGradient(-w / 2, 0, w / 2, 0);
     if (water) { cg.addColorStop(0, 'rgba(60,150,225,0.80)'); cg.addColorStop(1, 'rgba(30,100,175,0.85)'); } else { cg.addColorStop(0, '#e4eaee'); cg.addColorStop(0.5, '#aab6bf'); cg.addColorStop(1, '#808d97'); }
-    c.fillStyle = cg; c.fillRect(-w / 2 + 2, -Lcp, w - 4, Lcp + DEP);
-    c.strokeStyle = water ? COL.waterEdge : '#f6f3ea'; c.lineWidth = 3; c.beginPath(); c.moveTo(-w / 2 + 2, -Lcp); c.lineTo(w / 2 - 2, -Lcp); c.stroke();
+    /* 液柱：液面一律水平（傾斜時不是垂直管軸）→ 先用世界座標的「y ≥ 液面」半平面裁切，再畫在管內 */
+    const yLv = Y0 - hd * s, tn = Math.abs(Math.tan(th)), Ltop = Math.min(Ltp, Lcp + (w / 2) * tn + 3);
+    c.save(); c.rotate(-th); c.translate(-PX, -Y0);
+    c.beginPath(); c.rect(-200, yLv, 1600, 1200); c.clip();
+    c.translate(PX, Y0); c.rotate(th);
+    c.fillStyle = cg; c.fillRect(-w / 2 + 2, -Ltop, w - 4, Ltop + DEP);
+    c.restore();
+    c.save(); c.rotate(-th); c.translate(-PX, -Y0);
+    const hx = PX + hd * s * Math.tan(th), hh = (w / 2 - 2) / cs;
+    c.strokeStyle = water ? COL.waterEdge : '#f6f3ea'; c.lineWidth = 3; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(hx - hh, yLv); c.lineTo(hx + hh, yLv); c.stroke();
+    c.restore();
     /* 管頂空氣分子 */
     if (S.a > 0 && Lair * s > 14) {
       c.fillStyle = 'rgba(246,243,234,0.9)';
       for (let k = 0; k < 5 * S.a; k++) {
         const u = ((k * 0.6180339 + 0.13) % 1), v = ((k * 0.7548777 + 0.31) % 1);
         const px = (v - 0.5) * (w - 10) + Math.sin(S.time * 4 + k) * 2, py = -Lcp - 6 - u * Math.max(0, Lair * s - 12) + Math.cos(S.time * 3 + k * 1.3) * 2;
+        if (Y0 + px * sn + py * cs > yLv - 6) continue;          /* 液面是水平的：落到液面下的分子不畫 */
         c.beginPath(); c.arc(px, py, 3, 0, 6.2832); c.fill();
       }
     }
