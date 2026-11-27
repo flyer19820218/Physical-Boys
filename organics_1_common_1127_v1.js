@@ -26,6 +26,11 @@
      O1.fxHi(c,str,x,y,col,size,align,o)  化學式＋指定元素（預設 C）換黃色、可加光暈 → { w, hits }
      O1.card(c,x,y,w,h,o)       化學式卡片底板
      O1.rock(c,x,y,o)           石灰岩塊（示意）  O1.powder(c,x,y,o) 錶玻璃上的白粉堆  O1.bottle(c,x,y,o) 棕色試劑小瓶
+   char 新增（2026-11-27）：
+     O1.dspoon(c,o)             燃燒匙（杯＋長柄；內容物可由粉末變液體、變色、冒泡、被火燒）→ { rx, surf }
+     O1.match(c,x,y,ang,o)      火柴（木棒＋火柴頭，可點燃）
+     O1.goggles(c,x,y,o)        護目鏡（簡單向量）
+     O1.lampCap(c,x,y,s,o)      酒精燈燈帽（玻璃罩）
    ================================================================== */
 (function (root) {
   'use strict';
@@ -562,6 +567,124 @@
     [-48, -38, -28].forEach((yy, i) => { c.beginPath(); c.moveTo(-18, yy); c.lineTo(i === 2 ? 6 : 18, yy); c.stroke(); });
     /* 反光 */
     c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 3; c.beginPath(); c.moveTo(-26, -66); c.lineTo(-26, -8); c.stroke();
+    c.restore();
+  };
+  /* ══════════════════ 以下由 char（三種白色粉末加熱）新增，2026-11-27 ══════════════════ */
+
+  /* 燃燒匙（側視；沒有手）：小杯在下、長柄垂直往上（柄在杯右側 off px，末端彎進杯緣）。
+     o：{ x 杯中心 x, y 杯口（杯緣橢圓中心）y, top 柄頂 y, off 柄相對杯中心的水平位移(30×s), s 縮放(1)（原寸杯寬 52、杯深約 16）, a,
+          load 0..1 內容物量（0＝空杯）, col 內容物顏色（CSS 色字串）, edge 內容物描邊色, melt 0..1（0＝粉末堆成小丘、1＝熔成平的液面）,
+          clear 0..1 液體透亮程度（會變半透明＋反光）, grain 0..1 粉粒紋理（預設 1−melt）, heat 0..1 杯底被火燒的橘光, bubble 0..1 液面冒泡, t 秒, seed }
+     回傳 { rx 柄的 x, surf 內容物頂端 y }（給煙、跳動顆粒定位用） */
+  O1.dspoon = function (c, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, S = o.s || 1;
+    const X = o.x, Y = o.y, off = o.off == null ? 30 * S : o.off, top0 = o.top == null ? Y - 160 * S : o.top;
+    const load = clamp01(o.load == null ? 1 : o.load), melt = clamp01(o.melt || 0), hM = 13 * load * (1 - melt);
+    const g = { rx: X + off, surf: Y - (hM + 3) * S };
+    if (a <= 0.02) return g;
+    /* 以杯口中心為原點、縮放 S 後畫（下面的 x、y、rx、top 都是區域座標） */
+    const x = 0, y = 0, rx = off / S, top = (top0 - Y) / S;
+    const R = 26, RY = 7, seed = o.seed || 1, t = o.t || 0;
+    c.save(); c.globalAlpha *= a; c.translate(X, Y); c.scale(S, S); c.lineCap = 'round'; c.lineJoin = 'round';
+    /* 柄：垂直往下，末端彎進杯緣 */
+    const rod = (w, col) => { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(rx, top); c.lineTo(rx, y - 8); c.quadraticCurveTo(rx, y - 1, x + R - 4, y - 1); c.stroke(); };
+    rod(8, 'rgba(11,26,21,0.85)'); rod(4.5, '#c3cdd2');
+    c.fillStyle = '#8f9ca3'; c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 1.5; c.beginPath(); c.arc(rx, top, 5, 0, TAU); c.fill(); c.stroke();
+    /* 杯內（後半） */
+    c.fillStyle = '#4d5a61'; c.beginPath(); c.ellipse(x, y, R, RY, 0, 0, TAU); c.fill();
+    /* 內容物 */
+    if (load > 0.02) {
+      const cl = clamp01(o.clear || 0);
+      c.save(); c.globalAlpha *= 1 - 0.35 * cl;
+      c.fillStyle = o.col || '#f4f2ec'; c.strokeStyle = o.edge || 'rgba(111,135,144,0.9)'; c.lineWidth = 1.4;
+      c.beginPath(); c.ellipse(x, y + 1, R - 4, RY - 1.5 + hM, 0, Math.PI, TAU); c.ellipse(x, y + 1, R - 4, RY - 1.5, 0, 0, Math.PI); c.closePath(); c.fill(); c.stroke();
+      c.restore();
+      /* 粉粒紋理 */
+      const gr = clamp01(o.grain == null ? 1 - melt : o.grain);
+      if (gr > 0.02) {
+        c.save(); c.globalAlpha *= gr * 0.55; c.fillStyle = o.edge || 'rgba(111,135,144,0.9)';
+        for (let i = 0; i < 16; i++) {
+          const px = x + (hash(seed * 11 + i) - 0.5) * (R - 8) * 2, rel = 1 - Math.pow((px - x) / (R - 4), 2);
+          const py = y + 1 - (RY - 2 + hM) * Math.sqrt(Math.max(0, rel)) * hash(seed * 5 + i * 3) * 0.9;
+          c.fillRect(px - 1, py - 1, 2, 2);
+        }
+        c.restore();
+      }
+      /* 液面反光 */
+      if (melt > 0.02) {
+        c.save(); c.globalAlpha *= melt * (0.35 + 0.5 * cl); c.strokeStyle = '#ffffff'; c.lineWidth = 2;
+        c.beginPath(); c.ellipse(x - 4, y, R - 12, RY - 3.5, 0, Math.PI * 1.1, Math.PI * 1.55); c.stroke(); c.restore();
+      }
+      /* 冒泡 */
+      const bb = clamp01(o.bubble || 0);
+      if (bb > 0.02) {
+        c.save(); c.strokeStyle = 'rgba(246,243,234,0.75)'; c.lineWidth = 1.3;
+        for (let i = 0; i < 6; i++) {
+          const ph = (t * (0.9 + 0.5 * hash(seed + i * 7)) + hash(seed * 3 + i)) % 1, rr = (1.5 + 2.5 * hash(i + 9)) * Math.sin(ph * Math.PI) * bb;
+          if (rr < 0.4) continue;
+          c.beginPath(); c.arc(x + (hash(seed * 2 + i * 5) - 0.5) * (R - 10) * 2, y - hM * 0.5 - 1, rr, 0, TAU); c.stroke();
+        }
+        c.restore();
+      }
+    }
+    /* 杯身（前半，金屬） */
+    const body = () => { c.beginPath(); c.moveTo(x - R, y); c.bezierCurveTo(x - R + 1, y + 22, x + R - 1, y + 22, x + R, y); c.ellipse(x, y, R, RY, 0, 0, Math.PI, false); c.closePath(); };
+    const mg = c.createLinearGradient(x - R, 0, x + R, 0); mg.addColorStop(0, '#7f8c93'); mg.addColorStop(0.4, '#dfe6ea'); mg.addColorStop(1, '#6d7a82');
+    c.fillStyle = mg; c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 2; body(); c.fill(); c.stroke();
+    /* 被火燒：杯底橘光 */
+    const ht = clamp01(o.heat || 0);
+    if (ht > 0.02) { c.save(); body(); c.clip(); W5.glow(c, x, y + 18, 30, '#ff8040', 0.7 * ht); c.restore(); }
+    /* 杯緣 */
+    c.strokeStyle = '#e8eef0'; c.lineWidth = 2; c.beginPath(); c.ellipse(x, y, R, RY, 0, 0, TAU); c.stroke();
+    c.restore();
+    return g;
+  };
+
+  /* 火柴（沒有手）：火柴頭在 (x,y)，木棒往 ang 方向伸出（rad，0＝往右）。
+     o：{ a, len 木棒長(70), lit 0..1 頭上火焰大小, burnt 0..1 頭燒黑程度, t 秒 } */
+  O1.match = function (c, x, y, ang, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    const len = o.len || 70, lit = clamp01(o.lit || 0), bt = clamp01(o.burnt || 0);
+    c.save(); c.globalAlpha *= a; c.lineCap = 'round';
+    c.save(); c.translate(x, y); c.rotate(ang);
+    c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 8; c.beginPath(); c.moveTo(4, 0); c.lineTo(len, 0); c.stroke();
+    c.strokeStyle = '#dcb87a'; c.lineWidth = 4.5; c.beginPath(); c.moveTo(4, 0); c.lineTo(len, 0); c.stroke();
+    c.fillStyle = W5.mix('#c0392b', '#2a2320', bt); c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 1.5;
+    c.beginPath(); c.ellipse(2, 0, 8, 6, 0, 0, TAU); c.fill(); c.stroke();
+    c.restore();
+    if (lit > 0.02) O1.flame(c, x, y + 4, 30 * lit, o.t || 0, { w: 9 * lit });
+    c.restore();
+  };
+
+  /* 護目鏡（簡單向量）：中心 (x,y)。o：{ a, s 縮放(1)（原寸約 100×36）, col 鏡框色(綠) } */
+  O1.goggles = function (c, x, y, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, s = o.s || 1; if (a <= 0.02 || s <= 0.01) return;
+    c.save(); c.globalAlpha *= a; c.translate(x, y); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round';
+    /* 鬆緊帶 */
+    c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 9; c.beginPath(); c.moveTo(-52, -3); c.lineTo(-46, 0); c.moveTo(52, -3); c.lineTo(46, 0); c.stroke();
+    c.strokeStyle = '#3f8f7a'; c.lineWidth = 5; c.beginPath(); c.moveTo(-52, -3); c.lineTo(-46, 0); c.moveTo(52, -3); c.lineTo(46, 0); c.stroke();
+    /* 鏡框＋鏡片 */
+    const col = o.col || COL.green;
+    [-1, 1].forEach(sg => {
+      const x0 = sg > 0 ? 4 : -46;
+      c.fillStyle = 'rgba(11,26,21,0.9)'; W5.rr(c, x0, -18, 42, 36, 12); c.fill();
+      c.strokeStyle = col; c.lineWidth = 3; W5.rr(c, x0, -18, 42, 36, 12); c.stroke();
+      c.fillStyle = 'rgba(77,210,255,0.35)'; W5.rr(c, x0 + 5, -13, 32, 26, 9); c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.7)'; c.lineWidth = 2; c.beginPath(); c.moveTo(x0 + 10, -6); c.lineTo(x0 + 18, -10); c.stroke();
+    });
+    /* 鼻樑 */
+    c.strokeStyle = col; c.lineWidth = 3; c.beginPath(); c.moveTo(-4, -4); c.quadraticCurveTo(0, -9, 4, -4); c.stroke();
+    c.restore();
+  };
+
+  /* 酒精燈的燈帽（玻璃罩，蓋上就熄火）：(x,y)＝帽口中心（蓋在燈上時約在 O1.lamp 的桌面 y − 44×s），s＝跟 O1.lamp 同一個縮放。o：{ a } */
+  O1.lampCap = function (c, x, y, s, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    c.save(); c.globalAlpha *= a; c.translate(x, y); c.scale(s, s); c.lineJoin = 'round';
+    const g = c.createLinearGradient(-15, 0, 15, 0); g.addColorStop(0, 'rgba(160,215,230,0.45)'); g.addColorStop(0.5, 'rgba(225,245,255,0.22)'); g.addColorStop(1, 'rgba(120,190,210,0.45)');
+    c.fillStyle = g; c.strokeStyle = 'rgba(200,236,246,0.92)'; c.lineWidth = 2.2;
+    c.beginPath(); c.moveTo(-15, 0); c.lineTo(-14, -22); c.quadraticCurveTo(-13, -34, 0, -35); c.quadraticCurveTo(13, -34, 14, -22); c.lineTo(15, 0); c.closePath(); c.fill(); c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = 2; c.beginPath(); c.moveTo(-9, -6); c.lineTo(-9, -24); c.stroke();
     c.restore();
   };
 })(window);
