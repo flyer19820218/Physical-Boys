@@ -43,6 +43,11 @@
      O1.litmus(c,x,y,w,h,o)     石蕊試紙（從一點擴散變色）
      O1.rod(c,x0,y0,x1,y1,o)    玻璃棒（尖端可掛液滴）
      O1.cBlob(c,cx,cy,o)        碳原子聚集的不規則塊（木炭微觀示意）
+   testc 新增（2026-11-27）：
+     O1.CANDLE                  蠟燭燃燒檢驗台設計常數（桌面、蠟燭、燒杯尺寸、倒扣位置…）
+     O1.candlePts(o)            蠟燭＋倒扣燒杯的錨點（純數學，不畫；焰尖、杯口、內壁、夾子、水珠點…）
+     O1.candle(c,o)             蠟燭燃燒檢驗台（蠟燭＋燭火＋倒扣燒杯（石灰水／乾燥冷燒杯）＋夾子＋上升分子＋氯化亞鈷試紙）→ candlePts
+     O1.cocl(c,x,y,ang,o)       氯化亞鈷試紙（可旋轉的長條，從尖端由藍變粉紅）
    ================================================================== */
 (function (root) {
   'use strict';
@@ -1161,6 +1166,314 @@
     }
     c.restore();
     return P;
+  };
+
+  /* ══════════════════ 以下由 testc（檢驗碳：石灰水）新增，2026-11-27 ══════════════════
+     O1.CANDLE               蠟燭燃燒檢驗台的設計常數
+     O1.candlePts(o)         錨點（純數學，不畫）
+     O1.candle(c,o)          蠟燭＋燭火＋倒扣燒杯（石灰水／乾燥冷燒杯）＋夾子＋上升分子＋氯化亞鈷試紙
+     O1.cocl(c,x,y,ang,o)    氯化亞鈷試紙（長條，從尖端由藍變粉紅）
+     下一支 testh（檢驗氫）與「蠟燭燃燒檢驗台」動手做都用這組；只增不改。 */
+
+  /* ─────────── 蠟燭燃燒檢驗台 ───────────
+     設計座標（s = 1、x = y = 0 時就是 960×540 畫布座標；testc 動畫用原寸）：
+       桌面 GY 452（本函式不畫桌子）。燭臺小碟：中心 (CX 300, 452)、半寬 46。
+       蠟燭：中線 CX 300、半寬 CR 22、高 CH 110（底在碟面 y 444）→ 頂面 y 334；burn = 1 時變短 BURN 16 px（頂面 350）。
+       燭芯：頂面往上 WICK 12 px（燭芯頂 322）；燭火底 ＝ 頂面 − 3，高 FH 62 × lit → 焰尖 ≈ y 269（burn 0、lit 1；火焰閃動最多再高約 10%）。
+       燒杯（倒扣，flip = 1）：中線 BX 300、外半寬 BW 70、高 BH 150、玻璃壁 WALL 4、杯口外翻 5 px；
+         放好時（lower 1、lift 0）杯口 y RIM 256（在焰尖上方約 13 px，不蓋住火焰）、杯底（朝上）y 106、杯中心 y 181。
+         lower 0 時整個燒杯再往上 RAISE 120 px；lift 另外往上加 px。
+       石灰水塗層：內壁一圈厚 COAT 7 px（兩側＋杯底內側，較濃）＋整個杯內一層淡色（前後杯壁）；混濁度 turb 由杯底（倒扣時在上方）往杯口推進，兩側變乳白、杯內變半透明乳白。
+       夾子：夾在燒杯外壁、杯中心高度；往 tongSide（-1 左／1 右）伸出 tongLen 190 px（左邊時夾子末端 ≈ x 40）。
+     整組變換：畫布點 ＝ (o.x + s·設計x, o.y + s·設計y)；所有錨點都已換成畫布座標。
+     o（全部可省略）：
+       x, y 平移(0,0)；s 縮放(1)；a 整體透明度(1)；t 秒（火焰閃動、分子上升）；
+       ── 蠟燭 ──
+       candle 0..1 蠟燭＋燭臺透明度(1)；cx 蠟燭中線（設計 x，300）；burn 0..1 燭身變短(0)；
+       lit 0..1 燭火大小（0＝沒點燃）(1)；fh 燭火高(62)；fw 燭火半寬(14)；
+       ── 燒杯 ──
+       beaker 0..1 燒杯透明度（0＝不畫燒杯、夾子、塗層）(1)；kind 'lime'（內壁塗澄清石灰水）| 'cold'（乾燥的冷燒杯）('lime')；
+       bx 燒杯中線（設計 x，預設＝cx）；lower 0..1（1＝放到火焰上方、0＝再高 RAISE px）(1)；lift 額外往上 px(0)；
+       flip 0..1（1＝倒扣（杯口朝下）、0＝杯口朝上；中間值＝繞夾子軸翻轉，畫成垂直壓扁，最扁 8%，不會消失）(1)；
+       coat 0..1 石灰水塗層透明度（kind 'lime'；預設 1）；turb 0..1 石灰水混濁度（透明淡青 → 乳白，由杯底往杯口推進）(0)；
+       fog 0..1 內壁起霧（kind 'cold'）(0)；drops 0..1 內壁小水珠（依序出現、變大）(0)；dropSlide 0..1 水珠往杯口滑(0)；
+       tong 0..1 夾子透明度（預設＝1）；tongSide -1 | 1（夾子往左／右伸出，-1）；tongLen(190)；
+       ── 上升的分子／箭頭 ──
+       gas 0..1 從焰尖上升、飄進杯內的分子（0＝不畫；值＝出現的比例）；gasMol 'CO2' | 'H2O' | ['CO2','H2O',…] 輪流('CO2')；
+       gasN 分子數(5)；gasSpeed 每秒走幾趟(0.15)；gasUnit 分子每單位 px(11)；gasAtom 原子縮放(0.36)；
+         分子不寫元素符號（太小），請另外放圖例 pill；
+       arrow 0..1 焰尖往上長進杯內的黃色箭頭；
+       ── 氯化亞鈷試紙 ──
+       paper null | { x, y 試紙尖端（設計座標）, ang 長條往哪個方向伸（rad，0＝往右）, len(90), w(16), k 0..1 由藍變粉紅, wet 0..1, a }；
+         要碰水珠時，尖端放在 O1.candlePts(o).dropSpot 的設計座標（＝ _d.dropSpot）。
+       ── 標籤 ──
+       labels true／false／{ candle, flame, coat, tong: 透明度 }（true＝candle＋coat）；22px、畫在畫布座標，不跟著 s 縮小；
+         candleText 蠟燭標籤文字（預設「蠟燭」）、coatText 燒杯標籤文字（預設 lime「澄清石灰水」／cold「乾燥的冷燒杯」）。
+         位置：candle 左對齊於 (cx+66, 392)；flame 左對齊於 (cx+60, 焰中段)；coat 左對齊於 (燒杯右緣+40, 杯中心−BH/4)；tong 置中於（夾子末端往燒杯方向 60 px）上方 36 px。
+     回傳 O1.candlePts(o)。 */
+  const CAN = { GY: 452, CX: 300, CR: 22, CH: 110, DISH: 8, BURN: 16, WICK: 12, FH: 62, FW: 14,
+    BW: 70, BH: 150, WALL: 4, COAT: 7, RIM: 256, RAISE: 120, TONG: 190 };
+  O1.CANDLE = CAN;
+
+  /* 錨點（畫布座標）。o 同 O1.candle（只看 x、y、s、cx、burn、lit、fh、bx、lower、lift、flip、tongSide、tongLen）。
+     回傳 {
+       s, map(dx,dy) 設計→畫布, sy 燒杯目前的垂直翻轉比例（1＝倒扣、−1＝杯口朝上）,
+       base 燭臺中心（桌面）  candleTop 蠟燭頂面中心  wick 燭芯頂  flameBase 燭火底  flameTip 焰尖（依 lit、fh）  flameMid 燭火中段
+       beaker { cx, cy 中心, rim 杯口中心（倒扣時在下）, top 杯底外側中心（倒扣時在上）, x0, x1 外壁, ix0, ix1 內壁, inTop 內側杯底, w, h }
+       coatL, coatR 左右內壁塗層中段點    coatTop 內側杯底塗層中心（混濁最先出現處）
+       dropSpot 右內壁靠杯口的水珠聚集點（試紙要碰的地方）
+       grip 夾子夾住燒杯處   tongEnd 夾子末端
+       gasFrom 分子出發點（焰尖上方）   gasTo 分子在杯內聚集的中心
+       _d 設計座標版本（給呼叫端再算、或給 paper 用）
+     } */
+  O1.candlePts = function (o) {
+    o = o || {}; const S = o.s || 1, ox = o.x || 0, oy = o.y || 0;
+    const map = (dx, dy) => ({ x: ox + S * dx, y: oy + S * dy });
+    const cx = o.cx == null ? CAN.CX : o.cx, burn = clamp01(o.burn || 0), lit = clamp01(o.lit == null ? 1 : o.lit), fh = o.fh || CAN.FH;
+    const top = CAN.GY - CAN.DISH - CAN.CH + CAN.BURN * burn, wick = top - CAN.WICK, fBase = top - 3, tip = fBase - fh * lit;
+    const bx = o.bx == null ? cx : o.bx, lower = clamp01(o.lower == null ? 1 : o.lower), lift = o.lift || 0;
+    const flip = clamp01(o.flip == null ? 1 : o.flip), sy = -Math.cos(Math.PI * flip);
+    const cy = CAN.RIM - CAN.BH / 2 - lift - (1 - lower) * CAN.RAISE;
+    const P = (lx, ly) => ({ x: bx + lx, y: cy + ly * sy });           /* 燒杯區域座標（倒扣方向）→ 設計座標 */
+    const ix = CAN.BW - CAN.WALL, inB = -CAN.BH / 2 + CAN.WALL, cm = ix - CAN.COAT / 2;
+    const side = o.tongSide == null ? -1 : (o.tongSide < 0 ? -1 : 1), tl = o.tongLen || CAN.TONG;
+    const grip = { x: bx + side * (CAN.BW + 1), y: cy }, tEnd = { x: bx + side * (CAN.BW + 1 + tl), y: cy };
+    const d = {
+      cx, top, wick, fBase, tip, bx, cy, sy, flip, side, tl,
+      rim: P(0, CAN.BH / 2), btop: P(0, -CAN.BH / 2), inTop: P(0, inB),
+      coatL: P(-cm, 0), coatR: P(cm, 0), coatTop: P(0, inB + CAN.COAT / 2),
+      dropSpot: P(ix - 4, CAN.BH / 2 - 22), grip, tongEnd: tEnd,
+      gasFrom: { x: cx, y: tip - 6 }, gasTo: P(0, -CAN.BH * 0.12)
+    };
+    const M = p => map(p.x, p.y);
+    return {
+      s: S, map, sy,
+      base: map(cx, CAN.GY), candleTop: map(cx, top), wick: map(cx, wick), flameBase: map(cx, fBase), flameTip: map(cx, tip), flameMid: map(cx, (fBase + tip) / 2),
+      beaker: { cx: ox + S * bx, cy: oy + S * cy, rim: M(d.rim), top: M(d.btop), x0: ox + S * (bx - CAN.BW), x1: ox + S * (bx + CAN.BW),
+        ix0: ox + S * (bx - ix), ix1: ox + S * (bx + ix), inTop: M(d.inTop), w: 2 * CAN.BW * S, h: CAN.BH * S },
+      coatL: M(d.coatL), coatR: M(d.coatR), coatTop: M(d.coatTop), dropSpot: M(d.dropSpot),
+      grip: M(grip), tongEnd: M(tEnd), gasFrom: M(d.gasFrom), gasTo: M(d.gasTo),
+      _d: d
+    };
+  };
+
+  /* 氯化亞鈷試紙（沒有手）：尖端在 (x,y)，長條往 ang 方向伸出（rad，0＝往右）。
+     o：{ a, len(90), w(16), k 0..1 由尖端開始由藍變粉紅（1＝整條粉紅）, wet 0..1 尖端濕痕, base 原色('#3f6fdc'), to 變成的顏色('#f28cb1') } */
+  O1.cocl = function (c, x, y, ang, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    const len = o.len || 90, w = o.w || 16, k = clamp01(o.k || 0), base = o.base || '#3f6fdc', to = o.to || '#f28cb1';
+    c.save(); c.globalAlpha *= a; c.translate(x, y); c.rotate(ang || 0);
+    c.fillStyle = 'rgba(0,0,0,0.25)'; W5.rr(c, 3, -w / 2 + 4, len, w, 3); c.fill();
+    c.fillStyle = base; W5.rr(c, 0, -w / 2, len, w, 3); c.fill();
+    c.save(); W5.rr(c, 0, -w / 2, len, w, 3); c.clip();
+    c.strokeStyle = 'rgba(255,255,255,0.12)'; c.lineWidth = 1;
+    for (let i = 0; i < 6; i++) { const yy = -w / 2 + 2 + (w - 4) * hash(i + 41); c.beginPath(); c.moveTo(0, yy); c.lineTo(len, yy + (hash(i + 9) - 0.5) * 3); c.stroke(); }
+    if (k > 0.01) {
+      const e = len * 1.15 * k;
+      const g = c.createLinearGradient(0, 0, Math.max(1, e), 0);
+      g.addColorStop(0, to); g.addColorStop(0.85, to); g.addColorStop(1, W5.rgba(to, 0));
+      c.fillStyle = g; c.fillRect(0, -w / 2, Math.max(1, e), w);
+    }
+    const wet = clamp01(o.wet || 0);
+    if (wet > 0.02) { c.fillStyle = 'rgba(255,255,255,' + (0.28 * wet).toFixed(3) + ')'; c.beginPath(); c.ellipse(6, 0, 8 * wet, w * 0.35 * wet, 0, 0, TAU); c.fill(); }
+    c.restore();
+    c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 1.5; W5.rr(c, 0, -w / 2, len, w, 3); c.stroke();
+    c.restore();
+  };
+
+  O1.candle = function (c, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, t = o.t || 0, S = o.s || 1;
+    const R = O1.candlePts(o), D = R._d;
+    if (a <= 0.02) return R;
+    const ca = clamp01(o.candle == null ? 1 : o.candle), ba = clamp01(o.beaker == null ? 1 : o.beaker);
+    const lit = clamp01(o.lit == null ? 1 : o.lit), kind = o.kind || 'lime';
+    const cx = D.cx, GY = CAN.GY;
+    /* 圓角矩形子路徑（不 beginPath） */
+    const rrp = (x, y, w, h, r) => { r = Math.min(r, w / 2, h / 2); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
+
+    c.save(); c.globalAlpha *= a; c.translate(o.x || 0, o.y || 0); c.scale(S, S); c.lineJoin = 'round'; c.lineCap = 'round';
+
+    /* ① 燭臺＋蠟燭 */
+    if (ca > 0.02) {
+      c.save(); c.globalAlpha *= ca;
+      c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(cx, GY + 2, 52, 8, 0, 0, TAU); c.fill();
+      const dg = c.createLinearGradient(cx - 46, 0, cx + 46, 0); dg.addColorStop(0, '#6d7a82'); dg.addColorStop(0.45, '#cfd8dc'); dg.addColorStop(1, '#5d6a72');
+      c.fillStyle = dg; c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(cx - 46, GY - CAN.DISH); c.lineTo(cx - 38, GY); c.lineTo(cx + 38, GY); c.lineTo(cx + 46, GY - CAN.DISH); c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(cx, GY - CAN.DISH, 46, 6, 0, 0, TAU); c.fillStyle = '#9aa7ad'; c.fill(); c.stroke();
+      /* 燭身 */
+      const top = D.top, bot = GY - CAN.DISH, r = CAN.CR;
+      const wg = c.createLinearGradient(cx - r, 0, cx + r, 0); wg.addColorStop(0, '#d8ccb0'); wg.addColorStop(0.35, '#fbf5e6'); wg.addColorStop(1, '#c9bc9c');
+      c.fillStyle = wg; c.strokeStyle = 'rgba(90,76,50,0.9)'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(cx - r, top); c.lineTo(cx - r, bot); c.ellipse(cx, bot, r, 4, 0, Math.PI, 0, true); c.lineTo(cx + r, top); c.ellipse(cx, top, r, 5, 0, 0, Math.PI, false); c.closePath(); c.fill(); c.stroke();
+      /* 頂面（點燃時中間一小池熔蠟） */
+      c.fillStyle = '#efe6d0'; c.beginPath(); c.ellipse(cx, top, r, 5, 0, 0, TAU); c.fill(); c.stroke();
+      if (lit > 0.02) { c.fillStyle = 'rgba(255,236,190,' + (0.7 * lit).toFixed(3) + ')'; c.beginPath(); c.ellipse(cx, top + 0.5, r * 0.6, 2.8, 0, 0, TAU); c.fill(); }
+      /* 蠟淚（隨 burn 變長） */
+      const drip = 8 + 18 * clamp01(o.burn || 0);
+      c.fillStyle = '#f6eedb'; c.strokeStyle = 'rgba(90,76,50,0.6)'; c.lineWidth = 1.2;
+      c.beginPath(); c.moveTo(cx + r - 8, top + 3); c.quadraticCurveTo(cx + r + 1, top + 4, cx + r + 1, top + 10); c.lineTo(cx + r + 1, top + drip); c.arc(cx + r - 1.5, top + drip, 2.5, 0, Math.PI); c.lineTo(cx + r - 4, top + 6); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = 2; c.beginPath(); c.moveTo(cx - r + 7, top + 10); c.lineTo(cx - r + 7, bot - 8); c.stroke();
+      /* 燭芯 */
+      c.strokeStyle = '#2f2a26'; c.lineWidth = 3; c.beginPath(); c.moveTo(cx, top); c.quadraticCurveTo(cx + 1, top - 7, cx + 3, D.wick); c.stroke();
+      if (lit > 0.02) { c.fillStyle = 'rgba(255,128,64,' + (0.9 * lit).toFixed(3) + ')'; c.beginPath(); c.arc(cx + 3, D.wick, 2.2, 0, TAU); c.fill(); }
+      c.restore();
+    }
+    /* ② 燭火 */
+    if (lit > 0.02 && ca > 0.02) O1.flame(c, cx, D.fBase, (o.fh || CAN.FH) * lit, t, { a: ca, w: (o.fw || CAN.FW) * Math.max(0.45, lit) });
+
+    /* ③ 燒杯（區域座標：原點＝杯中心、倒扣方向；用 scale(1, sy) 翻轉） */
+    const BW = CAN.BW, BH = CAN.BH, WL = CAN.WALL, ix = BW - WL, h2 = BH / 2, inB = -h2 + WL;
+    const sy = (D.sy < 0 ? -1 : 1) * Math.max(0.08, Math.abs(D.sy)), beakerOn = ba > 0.02;   /* 翻到一半時壓扁成細條，不消失 */
+    const inside = () => { c.beginPath(); rrp(-ix, inB, 2 * ix, BH - WL + 1, 7); };
+    const outline = () => {
+      c.beginPath(); c.moveTo(-BW - 5, h2); c.lineTo(-BW, h2 - 6); c.lineTo(-BW, -h2 + 10); c.arcTo(-BW, -h2, -BW + 10, -h2, 10);
+      c.lineTo(BW - 10, -h2); c.arcTo(BW, -h2, BW, -h2 + 10, 10); c.lineTo(BW, h2 - 6); c.lineTo(BW + 5, h2);
+    };
+    if (beakerOn) {
+      c.save(); c.globalAlpha *= ba; c.translate(D.bx, D.cy); c.scale(1, sy);
+      /* 玻璃（後面） */
+      const gg = c.createLinearGradient(-BW, 0, BW, 0); gg.addColorStop(0, 'rgba(160,215,230,0.22)'); gg.addColorStop(0.5, 'rgba(220,245,255,0.07)'); gg.addColorStop(1, 'rgba(120,190,210,0.22)');
+      c.fillStyle = gg; outline(); c.closePath(); c.fill();
+      if (kind === 'lime') {
+        const co = clamp01(o.coat == null ? 1 : o.coat), tb = clamp01(o.turb || 0);
+        if (co > 0.02) {
+          const band = () => { c.beginPath(); rrp(-ix, inB, 2 * ix, BH - WL - 1, 7); rrp(-ix + CAN.COAT, inB + CAN.COAT, 2 * (ix - CAN.COAT), BH - WL - CAN.COAT + 4, 4); };
+          c.save(); c.globalAlpha *= co;
+          /* 前、後杯壁也塗了石灰水：整個杯內淡淡一層，兩側（側看較厚）較濃 */
+          c.fillStyle = 'rgba(120,228,236,0.12)'; inside(); c.fill();
+          c.fillStyle = 'rgba(120,228,236,0.62)'; band(); c.fill('evenodd');
+          if (tb > 0.01) {
+            const f = Math.min(1.2, tb * 1.2), mk = A => {
+              const g = c.createLinearGradient(0, inB, 0, h2);
+              g.addColorStop(0, 'rgba(246,248,244,' + A + ')'); g.addColorStop(clamp01(f - 0.18), 'rgba(246,248,244,' + A + ')'); g.addColorStop(clamp01(f), 'rgba(246,248,244,0)'); g.addColorStop(1, 'rgba(246,248,244,0)');
+              return g;
+            };
+            c.fillStyle = mk(0.72); inside(); c.fill();                 /* 前後杯壁變乳白 */
+            c.fillStyle = mk(0.95); band(); c.fill('evenodd');        /* 兩側杯壁 */
+            /* 乳白小顆粒（碳酸鈣，示意）：依混濁前緣依序出現 */
+            c.fillStyle = 'rgba(255,255,255,0.95)';
+            for (let i = 0; i < 46; i++) {
+              const p = hash(i * 3 + 11), on = i % 3;     /* 0 左壁、1 右壁、2 杯底內側 */
+              let px, py;
+              if (on === 2) { px = (hash(i + 5) - 0.5) * 2 * (ix - 4); py = inB + 1.5 + hash(i + 17) * (CAN.COAT - 3); }
+              else { px = (on ? 1 : -1) * (ix - 1.5 - hash(i + 23) * (CAN.COAT - 3)); py = inB + 6 + p * (BH - WL - 10); }
+              const pp = (py - inB) / (BH - WL); if (pp > f - 0.05) continue;
+              c.beginPath(); c.arc(px, py, 1.3 + hash(i + 2), 0, TAU); c.fill();
+            }
+          }
+          /* 塗層內緣的亮線（看得出是一層液膜） */
+          c.strokeStyle = W5.mix('#9ff0f4', '#ffffff', tb); c.globalAlpha *= 0.8; c.lineWidth = 1.6;
+          c.beginPath(); rrp(-ix + CAN.COAT, inB + CAN.COAT, 2 * (ix - CAN.COAT), BH - WL - CAN.COAT + 4, 4); c.stroke();
+          c.restore();
+        }
+      } else {
+        const fg = clamp01(o.fog || 0), dr = clamp01(o.drops || 0), sl = clamp01(o.dropSlide || 0);
+        if (fg > 0.02) {
+          c.save(); inside(); c.clip();
+          const g = c.createLinearGradient(0, inB, 0, h2); g.addColorStop(0, 'rgba(236,244,247,' + (0.55 * fg).toFixed(3) + ')'); g.addColorStop(1, 'rgba(236,244,247,' + (0.22 * fg).toFixed(3) + ')');
+          c.fillStyle = g; c.beginPath(); rrp(-ix, inB, 2 * ix, BH - WL + 1, 7); rrp(-ix + 9, inB + 9, 2 * (ix - 9), BH - WL, 4); c.fill('evenodd');
+          c.restore();
+        }
+        if (dr > 0.02) {
+          const N = 22;
+          for (let i = 0; i < N; i++) {
+            const q = clamp01(dr * N * 1.15 - i * 1.15 / (1 + 0.15)); if (q <= 0.02) continue;
+            const on = i % 3; let px, py;
+            if (on === 2) { px = (hash(i + 7) - 0.5) * 2 * (ix - 12); py = inB + 4; }
+            else { px = (on ? 1 : -1) * (ix - 3.5); py = inB + 14 + hash(i * 5 + 3) * (BH - 46); py += sl * (h2 - 10 - py) * (0.35 + 0.65 * hash(i + 61)); }
+            const rr = (2.2 + 2.6 * hash(i + 13)) * (0.4 + 0.6 * q) * (1 + 0.35 * sl);
+            c.fillStyle = 'rgba(190,232,255,0.85)'; c.strokeStyle = 'rgba(77,210,255,0.9)'; c.lineWidth = 1;
+            c.beginPath(); c.ellipse(px, py, rr * 0.85, rr, 0, 0, TAU); c.fill(); c.stroke();
+            c.fillStyle = 'rgba(255,255,255,0.9)'; c.beginPath(); c.arc(px - rr * 0.3, py - rr * 0.35 * Math.sign(sy), rr * 0.3, 0, TAU); c.fill();
+          }
+        }
+      }
+      c.restore();
+    }
+
+    /* ④ 上升的分子（設計座標，不翻轉） */
+    const gas = clamp01(o.gas || 0);
+    if (gas > 0.02 && lit > 0.02) {
+      const kinds = Array.isArray(o.gasMol) ? o.gasMol : [o.gasMol || 'CO2'], n = o.gasN || 5, sp = o.gasSpeed || 0.15, U = o.gasUnit || 11, k = o.gasAtom || 0.36;
+      const inBeaker = beakerOn && D.flip > 0.9 && D.cy + h2 < D.tip + 60;
+      for (let i = 0; i < n; i++) {
+        const va = clamp01(gas * n - i); if (va <= 0.02) continue;
+        const ph = (t * sp + i / n + 0.08 * hash(i * 13 + 7)) % 1;     /* 相位平均錯開，同時只有一兩顆在往上走 */
+        const x0 = cx + (hash(i + 3) - 0.5) * 10, y0 = D.tip - 4;
+        const slot = (i * 5) % 6, col2 = slot % 2 ? 1 : -1, row = Math.floor(slot / 2);   /* 杯內 2 欄 × 3 列落點，分子不互相重疊 */
+        const x1 = inBeaker ? D.bx + col2 * (ix - 30) + (hash(i * 7 + 2) - 0.5) * 6 : cx + col2 * 40;
+        const y1 = inBeaker ? D.cy - h2 + WL + 24 + row * 40 + hash(i * 5 + 1) * 6 : D.tip - 150 - row * 30;
+        const e = ease(clamp01((ph - 0.08) / 0.4));   /* 先直直往上、再散開；約一半時間到達落點後停留、淡出 */
+        const mx = lerp(x0, x1, e) + Math.sin(ph * 7 + i) * 6, my = lerp(y0, y1, 1 - Math.pow(1 - clamp01(ph / 0.5), 2));
+        const al = va * clamp01(ph / 0.12) * clamp01((1 - ph) / 0.22);
+        if (al <= 0.02) continue;
+        O1.mol(c, O1.MOL[kinds[i % kinds.length]] || O1.MOL.CO2, mx, my, { scale: U, atomScale: k, a: al, label: false });
+      }
+    }
+    const ar = clamp01(o.arrow || 0);
+    if (ar > 0.02 && lit > 0.02) {
+      const y0 = D.tip - 10, y1 = y0 - 100 * ar;
+      W5.arrow(c, cx + 46, y0, cx + 46, y1, 'rgba(11,26,21,0.85)', 9, 20); W5.arrow(c, cx + 46, y0, cx + 46, y1, COL.yellow, 5, 16);
+    }
+
+    /* ⑤ 燒杯玻璃（前面）＋夾子 */
+    if (beakerOn) {
+      c.save(); c.globalAlpha *= ba; c.translate(D.bx, D.cy); c.scale(1, sy);
+      c.strokeStyle = 'rgba(200,236,246,0.92)'; c.lineWidth = 2.5; outline(); c.stroke();
+      c.strokeStyle = 'rgba(200,236,246,0.55)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-ix, h2 - 5); c.lineTo(-ix, inB + 7); c.arcTo(-ix, inB, -ix + 7, inB, 7); c.lineTo(ix - 7, inB); c.arcTo(ix, inB, ix, inB + 7, 7); c.lineTo(ix, h2 - 5); c.stroke();
+      /* 杯口（橢圓）與尖嘴 */
+      c.strokeStyle = 'rgba(220,245,255,0.95)'; c.lineWidth = 2; c.beginPath(); c.ellipse(0, h2, BW + 5, 4.5, 0, 0, TAU); c.stroke();
+      c.beginPath(); c.moveTo(-BW - 5, h2); c.quadraticCurveTo(-BW - 11, h2 + 2, -BW - 12, h2 + 6); c.stroke();
+      /* 刻度短線（不寫數字）＋反光 */
+      c.strokeStyle = 'rgba(220,245,255,0.5)'; c.lineWidth = 1.5;
+      for (let i = 0; i < 4; i++) { const yy = h2 - 30 - i * 26; c.beginPath(); c.moveTo(BW - 4, yy); c.lineTo(BW - (i % 2 ? 14 : 22), yy); c.stroke(); }
+      c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = 3; c.beginPath(); c.moveTo(-BW + 10, -h2 + 18); c.lineTo(-BW + 10, h2 - 18); c.stroke();
+      c.restore();
+    }
+    const tga = ba * clamp01(o.tong == null ? 1 : o.tong);
+    if (tga > 0.02) {
+      const sd = D.side, gx = D.grip.x, gy = D.grip.y, ex = D.tongEnd.x, pv = gx + sd * 62;
+      c.save(); c.globalAlpha *= tga;
+      const arm = (w, col) => {
+        c.strokeStyle = col; c.lineWidth = w;
+        c.beginPath(); c.moveTo(gx + sd * 4, gy - 13); c.quadraticCurveTo(gx + sd * 14, gy - 2, pv, gy); c.lineTo(ex - sd * 10, gy - 10); c.stroke();
+        c.beginPath(); c.moveTo(gx + sd * 4, gy + 13); c.quadraticCurveTo(gx + sd * 14, gy + 2, pv, gy); c.lineTo(ex - sd * 10, gy + 10); c.stroke();
+      };
+      arm(8, 'rgba(11,26,21,0.85)'); arm(4.5, '#c3cdd2');
+      /* 夾口（貼著杯壁的弧形墊片） */
+      c.fillStyle = '#8f9ca3'; c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 1.5;
+      c.beginPath(); c.ellipse(gx + sd * 3, gy, 4, 15, 0, 0, TAU); c.fill(); c.stroke();
+      /* 支點、末端握環 */
+      c.beginPath(); c.arc(pv, gy, 5, 0, TAU); c.fill(); c.stroke();
+      [-1, 1].forEach(k => { c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 7; c.beginPath(); c.ellipse(ex - sd * 2, gy + k * 11, 9, 6, 0, 0, TAU); c.stroke(); c.strokeStyle = '#c3cdd2'; c.lineWidth = 3.5; c.stroke(); });
+      c.restore();
+    }
+    /* ⑥ 氯化亞鈷試紙 */
+    if (o.paper) { const p = o.paper; O1.cocl(c, p.x, p.y, p.ang || 0, { a: p.a, len: p.len, w: p.w, k: p.k, wet: p.wet }); }
+    c.restore();
+
+    /* ⑦ 標籤（畫布座標、22px，不跟著縮放） */
+    if (o.labels) {
+      const lab = typeof o.labels === 'object' ? o.labels : { candle: 1, coat: 1 };
+      const Lz = (zh, en) => (typeof tr === 'function' ? tr(zh, en) : zh);
+      const M = R.map, L = k => clamp01(lab[k] || 0);
+      const lead = (al, p0, p1) => {
+        if (al <= 0.02) return; c.save(); c.globalAlpha *= al * a; c.lineCap = 'round';
+        c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 5; c.beginPath(); c.moveTo(p0.x, p0.y); c.lineTo(p1.x, p1.y); c.stroke();
+        c.strokeStyle = 'rgba(246,243,234,0.85)'; c.lineWidth = 2; c.beginPath(); c.moveTo(p0.x, p0.y); c.lineTo(p1.x, p1.y); c.stroke();
+        c.fillStyle = 'rgba(246,243,234,0.95)'; c.beginPath(); c.arc(p1.x, p1.y, 3.5, 0, TAU); c.fill(); c.restore();
+      };
+      const pill = (al, str, p, align, col) => { if (al <= 0.02) return; c.save(); c.globalAlpha *= al * a; W5.pill(c, str, p.x, p.y, col || COL.white, 22, align); c.restore(); };
+      if (L('candle') && ca > 0.02) { lead(L('candle') * ca, M(cx + 66, 392), M(cx + CAN.CR, 392)); pill(L('candle') * ca, o.candleText || Lz('蠟燭', 'Candle'), M(cx + 66, 392), 'left'); }
+      if (L('flame') && lit > 0.02) { const fy = (D.fBase + D.tip) / 2; lead(L('flame'), M(cx + 60, fy), M(cx + 10, fy)); pill(L('flame'), Lz('火焰', 'Flame'), M(cx + 60, fy), 'left'); }
+      if (L('coat') && beakerOn) {
+        const ly = D.cy - BH / 4; lead(L('coat') * ba, M(D.bx + BW + 40, ly), M(D.bx + ix - CAN.COAT / 2, ly));
+        pill(L('coat') * ba, o.coatText || (kind === 'lime' ? Lz('澄清石灰水', 'Clear limewater') : Lz('乾燥的冷燒杯', 'Dry, cold beaker')), M(D.bx + BW + 40, ly), 'left', kind === 'lime' ? COL.teal : COL.white);
+      }
+      if (L('tong') && tga > 0.02) pill(L('tong') * tga, Lz('夾子', 'Tongs'), M(D.tongEnd.x - D.side * 60, D.grip.y - 36));
+    }
+    return R;
   };
 
 })(window);
