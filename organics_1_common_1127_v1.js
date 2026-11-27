@@ -31,6 +31,12 @@
      O1.match(c,x,y,ang,o)      火柴（木棒＋火柴頭，可點燃）
      O1.goggles(c,x,y,o)        護目鏡（簡單向量）
      O1.lampCap(c,x,y,s,o)      酒精燈燈帽（玻璃罩）
+   distill 新增（2026-11-27）：
+     O1.htube(c,o)              硬質試管（橫放可傾斜：竹筷碎片、變黑、管內白煙、受熱光、管壁水珠、塞子）→ { P(d,off), ri, mouth, stopperEnd }
+     O1.RIG                     乾餾裝置設計常數（桌面、夾子點、收集管、燒杯…）
+     O1.rigPts(o)               乾餾裝置錨點（導管口、收集管液面、試管底、竹筷中心…；畫布座標）
+     O1.rig(c,o)                整組乾餾裝置（products、smoke、竹筷乾餾動手做共用；選項與座標見函式註解）→ rigPts
+     O1.spot(c,holes,o)         聚光：其他部分變暗、只留圓洞
    ================================================================== */
 (function (root) {
   'use strict';
@@ -686,5 +692,379 @@
     c.beginPath(); c.moveTo(-15, 0); c.lineTo(-14, -22); c.quadraticCurveTo(-13, -34, 0, -35); c.quadraticCurveTo(13, -34, 14, -22); c.lineTo(15, 0); c.closePath(); c.fill(); c.stroke();
     c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = 2; c.beginPath(); c.moveTo(-9, -6); c.lineTo(-9, -24); c.stroke();
     c.restore();
+  };
+
+  /* ══════════════════ 以下由 distill（乾餾裝置）新增，2026-11-27 ══════════════════
+     O1.htube(c,o)    硬質試管（橫放、可傾斜；內裝竹筷碎片、白煙、受熱光、管壁水珠、管口塞子）
+     O1.rigPts(o)     乾餾裝置的關鍵錨點（不畫，只算座標；給標籤、圓圈、放大鏡定位）
+     O1.rig(c,o)      整組乾餾裝置（鐵架＋硬質試管＋竹筷＋塞子＋導管＋收集管＋冷水燒杯＋出氣導管＋酒精燈）
+     O1.spot(c,holes,o)  聚光：整張畫布變暗，只留幾個圓洞（「其他部分變暗」） */
+
+  /* 硬質試管（側視，閉口端在左、管口在右；沒有手）。
+     座標：(x,y)＝閉口端外側尖端（管軸上），ang＝管軸方向（rad，0＝水平往右，正值＝管口往下傾斜），len 管長(300)，r 外半徑(22)，管壁 3.5 px。
+       管軸上距閉口端 d 的點＝(x + d·cos ang, y + d·sin ang)；管口在 d = len。
+     o：{ x, y, ang(0.08), len(300), r(22), a, t 秒,
+          chips 0..1 竹筷碎片量（依序出現，0＝空管）, dark 0..1 竹筷變黑（黃褐→褐→黑）, chip0(10)/chip1(125) 碎片所在的管軸範圍, seed,
+          smoke 0..1 管內白煙（從碎片往管口飄，限制在管內）, heat 0..1 管底受熱橘光, heatD 受熱處的管軸距離（預設碎片中間）,
+          dew 0..1 管口附近管壁小水珠, dewSlide 0..1 水珠沿下管壁往管口滑（0＝原位、1＝滑到塞子邊聚成一小灘）,
+          stopper 'none' | 'plug'（實心塞，不通氣）| 'hole'（單孔塞，導管由 rig 畫）（預設 'none'） }
+     回傳 { P(d, off) 管軸距離 d、垂直管軸偏移 off（正＝往下）的畫布點, ri 內半徑, mouth, stopperEnd 塞子外端中心 } */
+  O1.htube = function (c, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a;
+    const X = o.x, Y = o.y, ang = o.ang == null ? 0.08 : o.ang, len = o.len || 300, r = o.r || 22, ri = r - 3.5, t = o.t || 0, seed = o.seed || 4;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    const P = (d, off) => ({ x: X + d * ca - (off || 0) * sa, y: Y + d * sa + (off || 0) * ca });
+    const g = { P, ri, r, len, mouth: P(len, 0), stopperEnd: P(len + 20, 0) };
+    if (a <= 0.02) return g;
+    const chips = clamp01(o.chips || 0), dark = clamp01(o.dark || 0), c0 = o.chip0 == null ? 10 : o.chip0, c1 = o.chip1 == null ? 125 : o.chip1;
+    c.save(); c.globalAlpha *= a; c.translate(X, Y); c.rotate(ang); c.lineJoin = 'round'; c.lineCap = 'round';
+    /* 管外形（區域座標：x 沿管軸 0..len，y 垂直管軸） */
+    const outer = () => { c.beginPath(); c.moveTo(len, -r); c.lineTo(r, -r); c.arc(r, 0, r, -Math.PI / 2, Math.PI / 2, true); c.lineTo(len, r); };
+    const inner = () => { c.beginPath(); c.moveTo(len, -ri); c.lineTo(r, -ri); c.arc(r, 0, ri, -Math.PI / 2, Math.PI / 2, true); c.lineTo(len, ri); c.closePath(); };
+    /* 玻璃底色 */
+    outer(); c.closePath();
+    const gg = c.createLinearGradient(0, -r, 0, r);
+    gg.addColorStop(0, 'rgba(160,215,230,0.24)'); gg.addColorStop(0.45, 'rgba(225,245,255,0.07)'); gg.addColorStop(1, 'rgba(120,190,210,0.22)');
+    c.fillStyle = gg; c.fill();
+    /* 管內：受熱光、竹筷、白煙、水珠（clip 在內壁） */
+    c.save(); inner(); c.clip();
+    const ht = clamp01(o.heat || 0), hd = o.heatD == null ? (c0 + c1) / 2 : o.heatD;
+    if (ht > 0.02) W5.glow(c, hd, ri, 70, '#ff8040', 0.45 * ht);
+    if (chips > 0.02) {
+      const hx = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+      const mixc = (p, q, k) => { const A = hx(p), B = hx(q); return 'rgb(' + A.map((v, i) => Math.round(v + (B[i] - v) * clamp01(k))).join(',') + ')'; };
+      const base = dark < 0.5 ? mixc('#c9a063', '#7a4a24', dark * 2) : mixc('#7a4a24', '#2a221d', dark * 2 - 1);
+      const edge = dark < 0.6 ? 'rgba(60,36,16,0.9)' : 'rgba(150,140,128,0.9)';   /* 變黑後改淺色描邊，黑炭在深底上也看得見 */
+      const N = 22;
+      for (let i = 0; i < N; i++) {
+        const k = clamp01(chips * N - i); if (k <= 0) break;
+        const h1 = hash(seed * 17 + i * 3.3), h2 = hash(seed * 5 + i * 7.1), h3 = hash(seed * 11 + i * 2.9);
+        const L2 = 16 + 16 * h1, w = 4.5 + 2 * h2;
+        const layer = i < 12 ? 0 : 1;
+        const cx = c0 + 10 + (c1 - c0 - 20) * ((i * 0.618 + h3 * 0.3) % 1);
+        const cy = ri - 4 - layer * 8 - h2 * 3;
+        /* 剛放進去：從管口那側滑進來 */
+        const slide = (1 - ease(k)) * 60;
+        c.save(); c.translate(cx + slide, cy); c.rotate((h3 - 0.5) * 0.7);
+        c.fillStyle = base; c.strokeStyle = edge; c.lineWidth = 1.3;
+        c.beginPath(); W5.rr(c, -L2 / 2, -w / 2, L2, w, 1.5); c.fill(); c.stroke();
+        c.strokeStyle = dark < 0.6 ? 'rgba(255,240,200,0.35)' : 'rgba(255,255,255,0.12)'; c.lineWidth = 1;
+        c.beginPath(); c.moveTo(-L2 / 2 + 3, -w * 0.15); c.lineTo(L2 / 2 - 3, -w * 0.15); c.stroke();
+        c.restore();
+      }
+    }
+    const sm = clamp01(o.smoke || 0);
+    if (sm > 0.02) {
+      for (let i = 0; i < 26; i++) {
+        const ph = (t * (0.28 + 0.12 * hash(i + 41)) + hash(i * 3 + 7)) % 1;
+        const px = lerp(c0 + 20, len - 10, ph), py = (hash(i * 5 + 2) - 0.5) * ri * 1.4 - 4 + Math.sin(ph * 7 + i) * 3, rr = 8 + 7 * ph;
+        const al = sm * Math.min(1, ph * 5) * (1 - 0.5 * ph) * 0.85;
+        const rg = c.createRadialGradient(px, py, 0, px, py, rr); rg.addColorStop(0, 'rgba(240,244,242,' + al.toFixed(3) + ')'); rg.addColorStop(1, 'rgba(240,244,242,0)');
+        c.fillStyle = rg; c.beginPath(); c.arc(px, py, rr, 0, TAU); c.fill();
+      }
+    }
+    const dw = clamp01(o.dew || 0), ds = clamp01(o.dewSlide || 0);
+    if (dw > 0.02) {
+      const stopX = o.stopper && o.stopper !== 'none' ? len - 14 : len - 2;
+      c.fillStyle = 'rgba(180,232,255,0.9)'; c.strokeStyle = 'rgba(255,255,255,0.85)'; c.lineWidth = 1.2;
+      for (let i = 0; i < 6; i++) {
+        const x0 = 170 + i * 18 + hash(i + 61) * 8, k = ease(clamp01(ds * 1.25 - i * 0.05));
+        const px = lerp(x0, stopX - 6 - (i % 3) * 5, k), py = ri - 3 - (i % 2) * 2 * (1 - k), rr = (2.6 + 1.2 * hash(i + 3)) * dw;
+        c.beginPath(); c.ellipse(px, py, rr * (1 + 0.5 * k), rr, 0, 0, TAU); c.fill(); c.stroke();
+      }
+      /* 管上壁凝結的小水珠（不動） */
+      for (let i = 0; i < 5; i++) {
+        const px = 185 + i * 22 + hash(i + 81) * 8, rr = (2 + hash(i + 13)) * dw;
+        c.beginPath(); c.arc(px, -ri + 3, rr, 0, TAU); c.fill(); c.stroke();
+      }
+      /* 管口聚成一小灘 */
+      if (ds > 0.5) { c.fillStyle = 'rgba(150,220,255,0.55)'; c.beginPath(); c.ellipse(stopX - 10, ri - 1, 16 * ease((ds - 0.5) * 2), 3.5, 0, 0, TAU); c.fill(); }
+    }
+    c.restore();
+    /* 塞子 */
+    if (o.stopper && o.stopper !== 'none') {
+      const sg = c.createLinearGradient(0, -r, 0, r); sg.addColorStop(0, '#7b6f66'); sg.addColorStop(0.5, '#5a504a'); sg.addColorStop(1, '#3e3733');
+      c.fillStyle = sg; c.strokeStyle = 'rgba(11,26,21,0.9)'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(len - 14, -ri + 1); c.lineTo(len + 20, -ri - 4); c.lineTo(len + 20, ri + 4); c.lineTo(len - 14, ri - 1); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,0.18)'; c.lineWidth = 2; c.beginPath(); c.moveTo(len - 10, -ri + 5); c.lineTo(len + 16, -ri + 1); c.stroke();
+    }
+    /* 玻璃壁 */
+    outer(); c.strokeStyle = 'rgba(11,26,21,0.75)'; c.lineWidth = 7; c.stroke();
+    outer(); c.strokeStyle = 'rgba(200,236,246,0.92)'; c.lineWidth = 3.5; c.stroke();
+    c.strokeStyle = 'rgba(220,245,255,0.95)'; c.lineWidth = 4; c.beginPath(); c.moveTo(len, -r - 3); c.lineTo(len, -r + 2); c.moveTo(len, r - 2); c.lineTo(len, r + 3); c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = 3; c.beginPath(); c.moveTo(r + 6, -r + 7); c.lineTo(len - 24, -r + 7); c.stroke();
+    c.restore();
+    return g;
+  };
+
+  /* ─────────── 乾餾裝置 ───────────
+     設計座標（s = 1、x = y = 0 時就是 960×540 畫布座標；distill 動畫用原寸）：
+       桌面 GY = 452（裝置自己不畫桌子，除非 o.bench）。
+       鐵架：直桿在 x 370（y 196～440，畫在試管後面），底座 300～440；夾子夾在試管上、管軸通過 C (370, 276)。
+       硬質試管：以夾子點 C 為支點傾斜 tubeTilt（預設 0.08 rad ≈ 4.6°，管口略向下）；閉口端在 C 往左 245 px、管口在 C 往右 55 px（管長 300、外半徑 22）。
+         tubeTilt = 0.08 時：閉口端尖 ≈ (126, 256)、管口 ≈ (425, 280)、塞子外端 ≈ (445, 282)。
+         竹筷碎片：管軸距離 10～125（中心 ≈ (193, 262)），躺在下管壁。
+       導管（玻璃）：塞子外端 → 沿管軸再 24 px → 水平往右到 x 653 → 轉彎往下穿過收集管塞子 → 管端 y 370（在收集管裡、液面上方）。
+       收集管：直立試管，中線 x 660，管口 y 310（雙孔塞 300～324），外底 y 440（內底 ≈ 436），外半徑 17。
+         液體：內底往上最多 50 px（liquidAmt = 1 時液面 y 386）；焦油：最底層，最多 16 px 厚。
+       出氣導管：從收集管塞子右孔（x 667）往上到 y 252，彎向右上，管口（＝「導管口」，氣體出口）≈ (704, 238)。
+       燒杯（冷水）：x 605～715，杯口 y 340，杯底＝桌面 452；水面 y 360。
+       酒精燈：O1.lamp 縮放 1.3，底在桌面；lampX 預設＝竹筷中心 x（≈ 193）；火焰從 y 374 往上 lampFlameH（預設 115）→ 焰尖 ≈ y 259，外焰包住管底。
+       預熱時酒精燈來回移動的合理範圍：lampX 150～330（再右會撞到鐵架底座）。
+     整組變換：畫布點 ＝ (o.x + s·設計x, o.y + s·設計y)。縮小放到別處時給 x、y、s；所有錨點都已換成畫布座標。
+     o（全部可省略）：
+       x, y 平移(0,0)；s 縮放(1)；a 整體透明度；t 秒（火焰閃動、煙、滴落）；
+       tubeTilt 試管傾角 rad(0.08，正＝管口往下)；
+       lampX 酒精燈 x（設計座標）；lampOn 是否點燃；lampFlameH 火焰高（設計 px，115）；lampLift 酒精燈往下沉多少 px（出場動畫用，0）；
+       heat 0..1 管底受熱橘光（位置跟著 lampX）；
+       chips 0..1 竹筷碎片量（依序滑進管底）(1)；chipsDarkness 0..1 竹筷變黑；
+       smokeAmt 0..1 試管內白煙＋收集管上方白霧；gasAmt 0..1 導管口冒出的白色氣體；gasCol 氣體顏色('#eef2f0')；
+       liquidAmt 0..1 收集管的黃褐色液體；tarAmt 0..1 底部黑褐色焦油；drip 0..1 導管端滴下液滴；
+       dew 0..1 管口附近管壁水珠；dewSlide 0..1 水珠沿下管壁滑向管口；
+       parts { stand, tube, chips, stopper, delivery, collector, outlet, beaker, lamp } 各零件透明度 0..1（預設全 1；依序出現用）；
+       grow { delivery, outlet } 0..1 導管「長出來」的比例（預設 1）；
+       bench true 時自己畫桌面（M3.slab，設計 x 20～760）；
+       labels true／false／{ tube, chips, stopper, delivery, collector, water, lamp, stand, outlet: 透明度 }（標籤永遠用 22px、畫在畫布座標，不跟著 s 縮小；
+         true＝tube、chips、delivery、collector、water、lamp 六個；縮小使用時請自己放標籤）。
+     回傳 O1.rigPts(o)（見下）。 */
+  const RIG = { GY: 452, CX: 370, CY: 276, BACK: 245, LEN: 300, TR: 22, COLX: 660, COL_TOP: 310, COL_BOT: 440, COL_R: 17,
+    BK_X0: 605, BK_X1: 715, BK_TOP: 340, WATER: 360, LAMP_S: 1.3, IN_END: 370, LIQ_MAX: 50, TAR_MAX: 16 };
+  O1.RIG = RIG;
+
+  /* 乾餾裝置錨點（畫布座標）。o 同 O1.rig（只看 x、y、s、tubeTilt、lampX、lampFlameH、liquidAmt、tarAmt）。
+     回傳 {
+       s, map(dx,dy) 設計座標→畫布座標,
+       bottom  試管閉口端外側尖端（管軸上）     bottomIn 試管底內側（＝「試管底」，黑色固體所在）
+       chips   竹筷碎片堆中心                  chipsR 碎片堆大約半徑（畫布 px，圓圈用）
+       clamp   夾子點（管軸）                  mouth 試管口中心      stopper 塞子外端中心
+       bend    導管水平段轉彎處                inletEnd 導管在收集管內的管端
+       colTop  收集管管口中心                  colBottom 收集管內底   liquidTop 目前液面中心（liquidAmt）   liquidMax 液面最高時中心
+       liquidMid 目前液體中段中心（圓圈用）      tar 焦油層中心
+       outlet  出氣導管口（＝導管口，氣體出口）  gasTop 氣體往上飄約 120 px 處
+       beaker { x0, x1, top, bottom, water }   lamp 酒精燈底座中心（桌面）  wick 燈芯頂  flameTip 焰尖
+     } */
+  O1.rigPts = function (o) {
+    o = o || {}; const S = o.s || 1, ox = o.x || 0, oy = o.y || 0, th = o.tubeTilt == null ? 0.08 : o.tubeTilt;
+    const map = (dx, dy) => ({ x: ox + S * dx, y: oy + S * dy });
+    const ca = Math.cos(th), sa = Math.sin(th);
+    const bx = RIG.CX - RIG.BACK * ca, by = RIG.CY - RIG.BACK * sa;
+    const ax = d => ({ x: bx + d * ca, y: by + d * sa });
+    const st = ax(RIG.LEN + 20), p1 = { x: st.x + 24 * ca, y: st.y + 24 * sa };
+    const lx = o.lampX == null ? ax(67.5).x : o.lampX, fh = o.lampFlameH == null ? 115 : o.lampFlameH;
+    const inB = RIG.COL_BOT - 4, liq = clamp01(o.liquidAmt || 0), tar = clamp01(o.tarAmt || 0);
+    const lt = inB - RIG.LIQ_MAX * liq, th2 = RIG.TAR_MAX * tar;
+    const flameBase = RIG.GY - 60 * RIG.LAMP_S;
+    return {
+      s: S, map, tilt: th,
+      bottom: map(bx, by), bottomIn: map(ax(RIG.TR).x, ax(RIG.TR).y), chips: map(ax(67.5).x, ax(67.5).y + 6), chipsR: 75 * S,
+      clamp: map(RIG.CX, RIG.CY), mouth: map(ax(RIG.LEN).x, ax(RIG.LEN).y), stopper: map(st.x, st.y),
+      bend: map(RIG.COLX - 7, p1.y), inletEnd: map(RIG.COLX - 7, RIG.IN_END),
+      colTop: map(RIG.COLX, RIG.COL_TOP), colBottom: map(RIG.COLX, inB),
+      liquidTop: map(RIG.COLX, lt), liquidMax: map(RIG.COLX, inB - RIG.LIQ_MAX), liquidMid: map(RIG.COLX, (Math.min(lt, inB - 20) + inB) / 2),
+      tar: map(RIG.COLX, inB - Math.max(th2, 4) / 2),
+      outlet: map(RIG.COLX + 44, 238), gasTop: map(RIG.COLX + 74, 118),
+      beaker: { x0: ox + S * RIG.BK_X0, x1: ox + S * RIG.BK_X1, top: oy + S * RIG.BK_TOP, bottom: oy + S * RIG.GY, water: oy + S * RIG.WATER },
+      lamp: map(lx, RIG.GY), wick: map(lx, RIG.GY - 62 * RIG.LAMP_S), flameTip: map(lx, flameBase - fh),
+      _d: { bx, by, ca, sa, st, p1, lx, fh, inB, lt, th2, flameBase }
+    };
+  };
+
+  O1.rig = function (c, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, t = o.t || 0, S = o.s || 1;
+    const R = O1.rigPts(o), D = R._d;
+    if (a <= 0.02) return R;
+    const pa = k => { const p = o.parts && o.parts[k]; return p == null ? 1 : clamp01(p); };
+    const gr = k => { const p = o.grow && o.grow[k]; return p == null ? 1 : clamp01(p); };
+    c.save(); c.globalAlpha *= a; c.translate(o.x || 0, o.y || 0); c.scale(S, S); c.lineCap = 'round'; c.lineJoin = 'round';
+    const GY = RIG.GY, CX = RIG.CX, COLX = RIG.COLX;
+    /* 桌面（選用） */
+    if (o.bench && typeof M3 !== 'undefined') { M3.slab(c, 20, GY, 760, GY + 14, 'wood', { seed: 6 }); }
+    /* 玻璃管（導管）：沿折線畫，k＝長出來的比例 */
+    const glassPath = (pts, k, rad) => {
+      /* 依總長截斷 */
+      let tot = 0; const segs = [];
+      for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); segs.push(l); tot += l; }
+      let rem = tot * k; const out = [pts[0]];
+      for (let i = 1; i < pts.length && rem > 0; i++) {
+        const l = segs[i - 1], f = Math.min(1, rem / l);
+        out.push({ x: lerp(pts[i - 1].x, pts[i].x, f), y: lerp(pts[i - 1].y, pts[i].y, f) }); rem -= l;
+      }
+      if (out.length < 2) return;
+      const path = () => { c.beginPath(); c.moveTo(out[0].x, out[0].y); for (let i = 1; i < out.length - 1; i++) c.arcTo(out[i].x, out[i].y, out[i + 1].x, out[i + 1].y, rad || 10); c.lineTo(out[out.length - 1].x, out[out.length - 1].y); };
+      path(); c.strokeStyle = 'rgba(11,26,21,0.8)'; c.lineWidth = 11; c.stroke();
+      path(); c.strokeStyle = 'rgba(200,236,246,0.9)'; c.lineWidth = 7; c.stroke();
+      path(); c.strokeStyle = 'rgba(40,70,70,0.9)'; c.lineWidth = 2.5; c.stroke();
+    };
+
+    /* ① 鐵架（在試管後面） */
+    const aSt = pa('stand');
+    if (aSt > 0.02) {
+      c.save(); c.globalAlpha *= aSt;
+      const bg = c.createLinearGradient(0, GY - 12, 0, GY); bg.addColorStop(0, '#6d7a82'); bg.addColorStop(1, '#3d474d');
+      c.fillStyle = bg; W5.rr(c, CX - 70, GY - 12, 140, 12, 3); c.fill(); c.strokeStyle = 'rgba(11,26,21,0.8)'; c.lineWidth = 1.5; c.stroke();
+      const rg = c.createLinearGradient(CX - 4, 0, CX + 4, 0); rg.addColorStop(0, '#dfe6ea'); rg.addColorStop(1, '#7d8a92');
+      c.fillStyle = rg; c.fillRect(CX - 4, 196, 8, GY - 12 - 196); c.strokeRect(CX - 4, 196, 8, GY - 12 - 196);
+      c.fillStyle = '#4a555c'; c.fillRect(CX - 9, RIG.CY - 50, 18, 18); c.strokeRect(CX - 9, RIG.CY - 50, 18, 18);
+      /* 夾臂：十字夾往下伸到試管上方 */
+      c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 9; c.beginPath(); c.moveTo(CX + 9, RIG.CY - 41); c.lineTo(CX + 14, RIG.CY - 41); c.lineTo(CX + 14, RIG.CY - 30); c.stroke();
+      c.strokeStyle = '#a9b6bd'; c.lineWidth = 5; c.beginPath(); c.moveTo(CX + 9, RIG.CY - 41); c.lineTo(CX + 14, RIG.CY - 41); c.lineTo(CX + 14, RIG.CY - 30); c.stroke();
+      c.restore();
+    }
+
+    /* ② 燒杯（後半）＋冷水 */
+    const aBk = pa('beaker');
+    const bk = () => { c.beginPath(); c.moveTo(RIG.BK_X0 - 4, RIG.BK_TOP); c.lineTo(RIG.BK_X0, GY - 6); c.quadraticCurveTo(RIG.BK_X0, GY, RIG.BK_X0 + 6, GY); c.lineTo(RIG.BK_X1 - 6, GY); c.quadraticCurveTo(RIG.BK_X1, GY, RIG.BK_X1, GY - 6); c.lineTo(RIG.BK_X1 + 4, RIG.BK_TOP); };
+    if (aBk > 0.02) {
+      c.save(); c.globalAlpha *= aBk;
+      bk(); c.closePath(); c.fillStyle = 'rgba(160,215,230,0.10)'; c.fill();
+      const wg = c.createLinearGradient(0, RIG.WATER, 0, GY); wg.addColorStop(0, 'rgba(77,210,255,0.34)'); wg.addColorStop(1, 'rgba(77,210,255,0.20)');
+      c.fillStyle = wg; c.fillRect(RIG.BK_X0 + 2, RIG.WATER, RIG.BK_X1 - RIG.BK_X0 - 4, GY - RIG.WATER - 2);
+      c.strokeStyle = 'rgba(160,235,255,0.85)'; c.lineWidth = 2; c.beginPath(); c.moveTo(RIG.BK_X0 + 2, RIG.WATER); c.lineTo(RIG.BK_X1 - 2, RIG.WATER); c.stroke();
+      c.restore();
+    }
+
+    /* ③ 酒精燈＋火焰（在試管後面，外焰包住管底） */
+    const aLp = pa('lamp');
+    if (aLp > 0.02) {
+      O1.lamp(c, D.lx, GY + (o.lampLift || 0), { s: RIG.LAMP_S, on: false, a: aLp });
+      if (o.lampOn) O1.flame(c, D.lx, D.flameBase + (o.lampLift || 0), D.fh * (o.lampOn === true ? 1 : clamp01(o.lampOn)), t, { a: aLp, w: 22 });
+    }
+
+    /* ④ 硬質試管＋竹筷＋塞子 */
+    const aTb = pa('tube'), aCh = pa('chips'), aSp = pa('stopper');
+    const tubeO = { x: D.bx, y: D.by, ang: R.tilt, len: RIG.LEN, r: RIG.TR, t, seed: 4,
+      chips: (o.chips == null ? 1 : o.chips) * (aCh > 0.02 ? 1 : 0), dark: o.chipsDarkness || 0,
+      smoke: o.smokeAmt || 0, heat: (o.heat || 0), heatD: (D.lx - D.bx) / D.ca, dew: o.dew || 0, dewSlide: o.dewSlide || 0,
+      stopper: aSp > 0.5 ? 'hole' : 'none' };
+    if (aTb > 0.02) {
+      /* 塞子淡入：先畫沒塞子的管，再疊一次有塞子的 */
+      if (aSp > 0.02 && aSp < 0.98) { O1.htube(c, Object.assign({}, tubeO, { a: aTb, stopper: 'none' })); O1.htube(c, Object.assign({}, tubeO, { a: aTb * aSp, stopper: 'hole' })); }
+      else O1.htube(c, Object.assign({}, tubeO, { a: aTb }));
+    }
+    /* 夾子（夾在試管上，畫在試管前面） */
+    if (aSt > 0.02) {
+      c.save(); c.globalAlpha *= aSt; c.translate(CX, RIG.CY); c.rotate(R.tilt);
+      c.fillStyle = '#c49a6c'; c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 1.5;
+      [-1, 1].forEach(sg => { W5.rr(c, -12, sg < 0 ? -RIG.TR - 8 : RIG.TR + 1, 24, 7, 2); c.fill(); c.stroke(); });
+      c.strokeStyle = '#a9b6bd'; c.lineWidth = 3.5;
+      c.beginPath(); c.moveTo(-14, -RIG.TR - 10); c.lineTo(14, -RIG.TR - 10); c.moveTo(-14, RIG.TR + 10); c.lineTo(14, RIG.TR + 10); c.moveTo(14, -RIG.TR - 10); c.lineTo(17, 0); c.lineTo(14, RIG.TR + 10); c.stroke();
+      c.restore();
+    }
+
+    /* ⑤ 收集管（直立）＋液體＋焦油＋雙孔塞 */
+    const aCo = pa('collector'), cr = RIG.COL_R, cri = cr - 3;
+    const colOuter = () => { c.beginPath(); c.moveTo(COLX - cr, RIG.COL_TOP); c.lineTo(COLX - cr, RIG.COL_BOT - cr); c.arc(COLX, RIG.COL_BOT - cr, cr, Math.PI, 0, true); c.lineTo(COLX + cr, RIG.COL_TOP); };
+    const colInner = () => { c.beginPath(); c.moveTo(COLX - cri, RIG.COL_TOP); c.lineTo(COLX - cri, RIG.COL_BOT - cr); c.arc(COLX, RIG.COL_BOT - cr, cri, Math.PI, 0, true); c.lineTo(COLX + cri, RIG.COL_TOP); c.closePath(); };
+    if (aCo > 0.02) {
+      c.save(); c.globalAlpha *= aCo;
+      colOuter(); c.closePath(); c.fillStyle = 'rgba(200,236,246,0.12)'; c.fill();
+      c.save(); colInner(); c.clip();
+      const liq = clamp01(o.liquidAmt || 0), tar = clamp01(o.tarAmt || 0);
+      if (liq > 0.01) {
+        const lg = c.createLinearGradient(COLX - cri, 0, COLX + cri, 0); lg.addColorStop(0, 'rgba(176,122,48,0.92)'); lg.addColorStop(0.5, 'rgba(214,160,74,0.85)'); lg.addColorStop(1, 'rgba(160,108,40,0.92)');
+        c.fillStyle = lg; c.fillRect(COLX - cri, D.lt, cri * 2, D.inB - D.lt + 2);
+        c.strokeStyle = 'rgba(255,225,160,0.9)'; c.lineWidth = 2; c.beginPath(); c.moveTo(COLX - cri, D.lt); c.lineTo(COLX + cri, D.lt); c.stroke();
+      }
+      if (tar > 0.01) {
+        const tg = c.createLinearGradient(0, D.inB - D.th2, 0, D.inB); tg.addColorStop(0, '#4a2e18'); tg.addColorStop(1, '#24160c');
+        c.fillStyle = tg; c.beginPath(); c.moveTo(COLX - cri, D.inB - D.th2 + 2);
+        c.quadraticCurveTo(COLX, D.inB - D.th2 - 3, COLX + cri, D.inB - D.th2 + 2); c.lineTo(COLX + cri, D.inB + 4); c.lineTo(COLX - cri, D.inB + 4); c.closePath(); c.fill();
+      }
+      /* 收集管上方白霧 */
+      const sm = clamp01(o.smokeAmt || 0);
+      if (sm > 0.02) {
+        for (let i = 0; i < 7; i++) {
+          const ph = (t * 0.3 + hash(i * 9 + 1)) % 1, px = COLX + (hash(i + 21) - 0.5) * cri * 1.6, py = RIG.COL_TOP + 20 + ph * Math.max(10, D.lt - RIG.COL_TOP - 30), rr = 9;
+          const rg = c.createRadialGradient(px, py, 0, px, py, rr); rg.addColorStop(0, 'rgba(240,244,242,' + (0.35 * sm * Math.sin(ph * Math.PI)).toFixed(3) + ')'); rg.addColorStop(1, 'rgba(240,244,242,0)');
+          c.fillStyle = rg; c.beginPath(); c.arc(px, py, rr, 0, TAU); c.fill();
+        }
+      }
+      c.restore();
+      colOuter(); c.strokeStyle = 'rgba(11,26,21,0.75)'; c.lineWidth = 6; c.stroke();
+      colOuter(); c.strokeStyle = 'rgba(200,236,246,0.92)'; c.lineWidth = 3; c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,0.45)'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(COLX - cr + 6, RIG.COL_TOP + 22); c.lineTo(COLX - cr + 6, RIG.COL_BOT - cr - 4); c.stroke();
+      /* 雙孔塞 */
+      const sg = c.createLinearGradient(COLX - 20, 0, COLX + 20, 0); sg.addColorStop(0, '#7b6f66'); sg.addColorStop(0.5, '#5a504a'); sg.addColorStop(1, '#3e3733');
+      c.fillStyle = sg; c.strokeStyle = 'rgba(11,26,21,0.9)'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(COLX - 20, RIG.COL_TOP - 10); c.lineTo(COLX + 20, RIG.COL_TOP - 10); c.lineTo(COLX + cri + 1, RIG.COL_TOP + 14); c.lineTo(COLX - cri - 1, RIG.COL_TOP + 14); c.closePath(); c.fill(); c.stroke();
+      c.restore();
+    }
+    /* 液滴：從導管端滴進收集管 */
+    const dr = clamp01(o.drip || 0);
+    if (dr > 0.02 && aCo > 0.02) {
+      for (let i = 0; i < 2; i++) {
+        const ph = (t * 1.2 + i * 0.5) % 1, y0 = RIG.IN_END + 4, y1 = D.lt - 2;
+        const py = ph < 0.35 ? y0 + 2 * (ph / 0.35) : lerp(y0 + 2, y1, Math.pow((ph - 0.35) / 0.65, 2));
+        if (py > y1) continue;
+        c.save(); c.globalAlpha *= dr * aCo; c.fillStyle = 'rgba(214,160,74,0.95)'; c.strokeStyle = 'rgba(60,36,16,0.8)'; c.lineWidth = 1;
+        c.beginPath(); c.ellipse(COLX - 7, py, 3, 4, 0, 0, TAU); c.fill(); c.stroke(); c.restore();
+      }
+    }
+
+    /* ⑥ 導管：塞子外端 → 沿管軸 → 水平 → 往下進收集管 */
+    const aDl = pa('delivery');
+    if (aDl > 0.02) {
+      c.save(); c.globalAlpha *= aDl;
+      glassPath([{ x: D.st.x - 6 * D.ca, y: D.st.y - 6 * D.sa }, D.p1, { x: COLX - 7, y: D.p1.y }, { x: COLX - 7, y: RIG.IN_END }], gr('delivery'), 12);
+      c.restore();
+    }
+    /* ⑦ 出氣導管（收集管右孔往上，彎向右上） */
+    const aOt = pa('outlet');
+    if (aOt > 0.02) {
+      c.save(); c.globalAlpha *= aOt;
+      glassPath([{ x: COLX + 7, y: RIG.COL_TOP + 8 }, { x: COLX + 7, y: 252 }, { x: COLX + 44, y: 238 }], gr('outlet'), 14);
+      c.restore();
+    }
+    /* ⑧ 燒杯前壁（玻璃） */
+    if (aBk > 0.02) {
+      c.save(); c.globalAlpha *= aBk;
+      bk(); c.strokeStyle = 'rgba(11,26,21,0.75)'; c.lineWidth = 6; c.stroke();
+      bk(); c.strokeStyle = 'rgba(200,236,246,0.9)'; c.lineWidth = 3; c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,0.4)'; c.lineWidth = 3; c.beginPath(); c.moveTo(RIG.BK_X0 + 10, RIG.BK_TOP + 14); c.lineTo(RIG.BK_X0 + 12, GY - 14); c.stroke();
+      c.restore();
+    }
+    /* ⑨ 導管口冒出的氣體 */
+    const gs = clamp01(o.gasAmt || 0);
+    if (gs > 0.02 && aOt > 0.5) O1.smoke(c, COLX + 48, 236, t, { n: 16, h: 120, a: 1.3 * gs, spread: 18, r: 9, speed: 0.45, col: o.gasCol || '#eef2f0', seed: 9, drift: 0.22 });
+    c.restore();
+
+    /* ⑩ 標籤（畫布座標、22px，不跟著縮放） */
+    if (o.labels) {
+      const lab = typeof o.labels === 'object' ? o.labels : { tube: 1, chips: 1, delivery: 1, collector: 1, water: 1, lamp: 1 };
+      const Lz = (zh, en) => (typeof tr === 'function' ? tr(zh, en) : zh);
+      const M = R.map;
+      const lead = (al, x0, y0, x1, y1) => {
+        if (al <= 0.02) return; c.save(); c.globalAlpha *= al * a; c.lineCap = 'round';
+        c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 5; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+        c.strokeStyle = 'rgba(246,243,234,0.85)'; c.lineWidth = 2; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+        c.fillStyle = 'rgba(246,243,234,0.95)'; c.beginPath(); c.arc(x1, y1, 3.5, 0, TAU); c.fill(); c.restore();
+      };
+      const pill = (al, str, p, align, col) => { if (al <= 0.02) return; c.save(); c.globalAlpha *= al * a; W5.pill(c, str, p.x, p.y, col || COL.white, 22, align); c.restore(); };
+      const ax = d => ({ x: D.bx + d * D.ca, y: D.by + d * D.sa });
+      const L = k => clamp01(lab[k] || 0);
+      /* 位置（設計座標）：硬質試管 (330,150)、竹筷碎片 (150,196)、導管 (550,236)、收集管 左對齊 (735,300)、冷水 左對齊 (735,404)、酒精燈 左對齊 (lampX+70, 420)、
+         鐵架 左對齊 (CX+16, 196)、導管口 左對齊 (outlet+18, 220)、塞子 (ax(LEN+4)) 上方 */
+      if (L('tube')) { const q = ax(220); lead(L('tube'), M(q.x, 168).x, M(q.x, 168).y, M(q.x, q.y - RIG.TR).x, M(q.x, q.y - RIG.TR).y); pill(L('tube'), Lz('硬質試管', 'Hard-glass test tube'), M(q.x, 150)); }
+      if (L('chips')) { const q = ax(55); lead(L('chips'), M(150, 214).x, M(150, 214).y, M(q.x, q.y + 6).x, M(q.x, q.y + 6).y); pill(L('chips'), Lz('竹筷碎片', 'Bamboo chips'), M(150, 196)); }
+      if (L('delivery')) { lead(L('delivery'), M(550, 254).x, M(550, 254).y, M(550, D.p1.y - 4).x, M(550, D.p1.y - 4).y); pill(L('delivery'), Lz('導管', 'Glass tube'), M(550, 236)); }
+      if (L('collector')) { lead(L('collector'), M(735, 300).x, M(735, 300).y, M(COLX + RIG.COL_R - 2, 330).x, M(COLX + RIG.COL_R - 2, 330).y); pill(L('collector'), Lz('收集管', 'Collecting tube'), M(735, 300), 'left'); }
+      if (L('water')) { lead(L('water'), M(735, 404).x, M(735, 404).y, M(RIG.BK_X1 - 12, 404).x, M(RIG.BK_X1 - 12, 404).y); pill(L('water'), Lz('冷水', 'Cold water'), M(735, 404), 'left'); }
+      if (L('lamp')) pill(L('lamp'), Lz('酒精燈', 'Alcohol lamp'), M(D.lx + 66, 420), 'left');
+      if (L('stand')) pill(L('stand'), Lz('鐵架', 'Stand'), M(CX + 16, 196), 'left');
+      if (L('outlet')) pill(L('outlet'), Lz('導管口', 'Gas outlet'), M(COLX + 62, 220), 'left');
+      if (L('stopper')) { const q = ax(RIG.LEN + 4); lead(L('stopper'), M(q.x, 338).x, M(q.x, 338).y, M(q.x, q.y + RIG.TR).x, M(q.x, q.y + RIG.TR).y); pill(L('stopper'), Lz('塞子', 'Stopper'), M(q.x, 356)); }
+    }
+    return R;
+  };
+
+  /* 聚光：整張畫布（y 32 以下）蓋一層暗色，只留 holes 的圓洞；洞邊畫柔和光暈。
+     holes：[{ x, y, r }]（畫布座標）；o：{ a 0..1 暗的程度(1→ 最暗 0.62), col 暗色('#0b1a15'), y0 從哪裡開始蓋(32) } */
+  O1.spot = function (c, holes, o) {
+    o = o || {}; const a = clamp01(o.a == null ? 1 : o.a); if (a <= 0.02) return;
+    const y0 = o.y0 == null ? 32 : o.y0;
+    c.save(); c.globalAlpha *= a * 0.62; c.fillStyle = o.col || '#0b1a15';
+    c.beginPath(); c.rect(0, y0, 960, 540 - y0);
+    (holes || []).forEach(h => { c.moveTo(h.x + h.r, h.y); c.arc(h.x, h.y, h.r, 0, TAU, true); });
+    c.fill('evenodd'); c.restore();
   };
 })(window);
