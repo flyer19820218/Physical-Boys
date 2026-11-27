@@ -57,10 +57,10 @@
     c.fillRect(CXS - 5, ySmall - 70, 10, 72);
     U.rr(c, CXL - wl / 2 + 3, yLarge, wl - 6, 14, 3); c.fillStyle = '#9aa6b0'; c.fill();
     /* 大活塞上的平台與重物 */
-    const pw = Math.min(wl + 40, 300);
+    const pw = wl - 12;   /* 平台不可穿出管壁：比兩側管壁內側各窄 6 px */
     c.fillStyle = '#7b8791'; c.fillRect(CXL - pw / 2, yLarge - 16, pw, 14);
     c.fillStyle = '#9aa6b0'; c.fillRect(CXL - 6, yLarge - 2, 12, 4);
-    const bw = 150, bh = 72;
+    const bw = Math.min(150, pw - 6), bh = 72;
     U.rr(c, CXL - bw / 2, yLarge - 16 - bh, bw, bh, 8); c.fillStyle = 'rgba(244,114,182,0.30)'; c.fill(); c.strokeStyle = COL.pink; c.lineWidth = 4; c.stroke();
     U.label(c, LOAD + ' kgw', CXL, yLarge - 16 - bh / 2, COL.pink, 22, 'center', true);
     /* 力的箭頭（青） */
