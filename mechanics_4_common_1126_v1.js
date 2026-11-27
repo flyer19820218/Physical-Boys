@@ -12,7 +12,7 @@
    壓力   M4.pPill(c,a,str,x,y,size,align)（珊瑚色壓力 pill＋淡光暈）→ 外框
           M4.pArrow(c,x,tipY,len,o)（壓力箭頭：尖端在 (x,tipY)＝被壓的面；o.dir 'down'(預設)|'up'|'left'|'right'；
                     len 由呼叫端依「長度∝壓力」算好；len＜28 自動改成細箭頭）
-   手與板 M4.hand(c,x,palmY,o)（側視的手掌平壓：x＝手臂中線、palmY＝掌心貼的那條線；o：{ dir 'left'|'right' 手指朝向, armTop 手臂從哪裡畫起(淡出), a }）
+   手與板 M4.hand(c,x,palmY,o)（現在畫的是「重物」不是手：x＝中線、palmY＝重物底面；o：{ dir 'left'|'right' 手指朝向, armTop 手臂從哪裡畫起(淡出), a }）
           M4.pressPlate(c,cx,by,w,o)（壓板：底面在 by；o：{ thick(16), a, mat('lightwood'), hand true, gap 手懸在板上方幾 px(0), dir, armTop }）
                     → { x0, x1, top, by, palmY }（palmY＝手掌底面，施力箭頭的尖端放這裡）
    氣球   M4.balloon(c,cx,by,o)（圓潤氣球，底部貼 by；o：{ w(150), h(128), col, a, box 0..1 被上下壓平的程度（頂面、底面切平）, dimple:{x,depth,wid} 底部被釘尖頂出的凹點 }）
@@ -119,44 +119,19 @@
   };
 
   /* ═══════════ 手與壓板 ═══════════ */
+  /* 「手」已全面改成重物（老師 2026-11-27 規範：不畫手，一律用重物取代）。函式名稱 M4.hand 與參數保留，
+   * 讓既有動畫不必改；掌心位置 palmY＝重物底面，施力箭頭的尖端照舊放在這裡。 */
   M4.hand = function (c, x, palmY, o) {
     o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
-    const sg = o.dir === 'left' ? -1 : 1, S = M4.SKIN;
-    const armTop = o.armTop == null ? palmY - 90 : o.armTop;
     M3.withA(c, a, () => {
       c.save(); c.lineJoin = 'round';
-      /* 手臂：由上方伸下來，上段是袖子（淡出） */
-      const wristY = palmY - 22, armW = 30;
-      if (wristY > armTop) {
-        /* 上端 30 px 由透明漸變成實色（看起來是從畫面外伸進來） */
-        const fade = (col, y0) => { const g = c.createLinearGradient(0, y0, 0, y0 + 30); g.addColorStop(0, W5.rgba(col, 0)); g.addColorStop(1, W5.rgba(col, 1)); return g; };
-        c.fillStyle = fade(S.fill, armTop); c.fillRect(x - armW / 2, armTop, armW, wristY - armTop + 4);
-        c.fillStyle = fade(S.shade, armTop); c.fillRect(x + armW / 2 - 8, armTop, 8, wristY - armTop + 4); c.fillRect(x - armW / 2, armTop, 4, wristY - armTop + 4);
-        if (wristY > armTop + 30) {
-          c.strokeStyle = S.line; c.lineWidth = 1.5;
-          c.beginPath(); c.moveTo(x - armW / 2, armTop + 30); c.lineTo(x - armW / 2, wristY); c.moveTo(x + armW / 2, armTop + 30); c.lineTo(x + armW / 2, wristY); c.stroke();
-        }
-        const sleeveBot = Math.min(wristY - 26, armTop + 64);
-        if (sleeveBot > armTop + 34) {
-          c.fillStyle = fade(S.sleeve, armTop); c.fillRect(x - 22, armTop, 44, sleeveBot - armTop);
-          c.fillStyle = fade(S.sleeveDk, armTop); c.fillRect(x + 12, armTop, 10, sleeveBot - armTop);
-          c.fillStyle = S.sleeveDk; W5.rr(c, x - 23, sleeveBot - 8, 46, 9, 4); c.fill();
-        }
-      }
-      /* 手掌（側視，平貼在 palmY 上） */
-      const pg = c.createLinearGradient(0, palmY - 30, 0, palmY);
-      pg.addColorStop(0, S.fill); pg.addColorStop(1, S.shade);
-      c.fillStyle = pg; c.strokeStyle = S.line; c.lineWidth = 1.6;
-      const px0 = sg > 0 ? x - 22 : x - 34, pw = 56;
-      W5.rr(c, px0, palmY - 30, pw, 30, 12); c.fill(); c.stroke();
-      /* 四指：平伸、貼著板子 */
-      const fx0 = sg > 0 ? x + 20 : x - 66, fw = 46;
-      c.fillStyle = pg; W5.rr(c, fx0, palmY - 17, fw, 17, 8.5); c.fill(); c.stroke();
-      c.strokeStyle = 'rgba(96,52,28,0.35)'; c.lineWidth = 1.2;
-      [0.35, 0.68].forEach(f => { const yy = palmY - 17 + 17 * f; c.beginPath(); c.moveTo(fx0 + (sg > 0 ? 6 : fw - 30), yy); c.lineTo(fx0 + (sg > 0 ? 30 : fw - 6), yy); c.stroke(); });
-      /* 拇指（在手掌側面的小橢圓） */
-      c.fillStyle = S.fill; c.strokeStyle = S.line; c.lineWidth = 1.4;
-      c.beginPath(); c.ellipse(x + sg * 14, palmY - 26, 13, 7, sg * 0.35, 0, TAU); c.fill(); c.stroke();
+      const bw = 64, bh = 40, x0 = x - bw / 2, y0 = palmY - bh;
+      /* 吊環 */
+      c.strokeStyle = '#d6dde3'; c.lineWidth = 4; c.beginPath(); c.arc(x, y0 - 6, 8, Math.PI, 0); c.stroke();
+      /* 重物本體：粉色系（重量＝粉） */
+      const g = c.createLinearGradient(0, y0, 0, palmY); g.addColorStop(0, '#8a4a68'); g.addColorStop(1, '#5a2f45');
+      c.fillStyle = g; c.strokeStyle = '#f472b6'; c.lineWidth = 3; W5.rr(c, x0, y0, bw, bh, 7); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.16)'; W5.rr(c, x0 + 6, y0 + 5, bw - 12, 7, 3); c.fill();
       c.restore();
     });
   };

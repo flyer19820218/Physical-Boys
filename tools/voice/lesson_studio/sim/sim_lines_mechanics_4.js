@@ -53,7 +53,7 @@ const LABEXP = {
   tab2: { 5: { h: 40, sealed: false }, 6: { h: 22, sealed: false }, 7: { sealed: true }, 8: { h: 40, sealed: false } },
   tab3: { 5: { lvl: 20 }, 6: { lvl: 23 }, 7: { lvl: 26 } },
   tab4: { 5: { f: 10, lift: 0 }, 6: { f: 3, canLift: false }, 7: { f: 15, canLift: true } },
-  tab5: { 5: { shape: 'cylinder', depth: 0 }, 6: { shape: 'cylinder', depth: 10 }, 7: { shape: 'cylinder', depth: 30 }, 8: { shape: 'wide', depth: 30 } }
+  tab5: { 5: { shape: 'cylinder', depth: 15 }, 6: { shape: 'cylinder', depth: 10 }, 7: { shape: 'cylinder', depth: 30 }, 8: { shape: 'wide', depth: 30 } }
 };
 const STATIC = new Set([]);
 const isLab = w => w && w.step >= 5 && LABEXP[w.tab] && LABEXP[w.tab][w.step];

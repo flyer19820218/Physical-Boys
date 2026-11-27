@@ -293,10 +293,10 @@
         J.set({ as: 20, al: 200, f: st.f });
         if (st.press) { if (live) later(700, function () { J.press(); }); else J.press(); }
       } },
-    // 三維深海壓力艙：5＝預設（圓柱、深度 0）、6＝深度 10、7＝深度 30、8＝換寬容器（深度仍 30）
+    // 三維深海壓力艙：5＝預設（圓柱、深度 15 m，球在水面下）、6＝深度 10、7＝深度 30、8＝換寬容器（深度仍 30）
     tab5: { key: 'chamber', sub: 'utube', states: {
-        5: { shape: 'cylinder', depth: 0 }, 6: { shape: 'cylinder', depth: 10, ramp: 2200 }, 7: { shape: 'cylinder', depth: 30, ramp: 2600 }, 8: { shape: 'wide', depth: 30 } },
-      reset: function () { W5L('chamber').set({ shape: 'cylinder', depth: 0 }); },
+        5: { shape: 'cylinder', depth: 15 }, 6: { shape: 'cylinder', depth: 10, ramp: 2200 }, 7: { shape: 'cylinder', depth: 30, ramp: 2600 }, 8: { shape: 'wide', depth: 30 } },
+      reset: function () { W5L('chamber').set({ shape: 'cylinder', depth: 15 }); },
       apply: function (st, live) {
         var C = W5L('chamber'), cur = C._state().depth;
         C.set({ shape: st.shape });

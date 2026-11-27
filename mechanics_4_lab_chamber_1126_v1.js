@@ -26,12 +26,13 @@
     depthSeen: new Set(), shapeSeen: new Set(), compressionSeen: new Set()
   };
 
+  const DEPTH_MIN = 5;   /* 球不可拖出水面：球半徑約 5 m 高，深度下限 5 m（球頂剛好貼水面） */
   const pNow = () => L.depth * 100;
   const volRatio = () => 1033 / (1033 + pNow());
   const shapeName = s => T(...SHAPES[s || L.shape]);
 
   function setTask(t) { L.task = t; L.depthSeen.clear(); L.shapeSeen.clear(); L.compressionSeen.clear(); if (t === 'shape') L.depth = 20; touch(); }
-  function setDepth(v) { L.depth = Math.max(0, Math.min(40, Math.round(Number(v) * 10) / 10)); touch(); }
+  function setDepth(v) { L.depth = Math.max(DEPTH_MIN, Math.min(40, Math.round(Number(v) * 10) / 10)); touch(); }
   function setShape(s) { L.shape = s; touch(); }
   function resetView() { L.yaw = -0.5; L.pitch = 0.16; L.zoom = 1; }
   function record() {
