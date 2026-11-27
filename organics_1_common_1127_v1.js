@@ -54,6 +54,12 @@
      O1.badge(c,x,y,txt,o)      原子旁的小圓標（數數、鍵數）
      O1.freeDir(pts,bonds,i)    第 i 顆原子最空的方向（放小圓標用）
      O1.arcPt(p0,p1,k,lift)     兩點之間走弧線
+   props 新增（2026-11-27）：
+     O1.miniMol(c,m,x,y,o)      小分子粒子（不寫元素符號、可旋轉、指定鍵換色）
+     O1.dropper(c,x,y,o)        滴管（尖端 (x,y)；管內液體、液滴、橡皮頭擠壓）
+     O1.germ(c,x,y,o)           細菌示意（橢圓＋鞭毛；dead 0..1 停止變灰）
+     O1.naBlock(c,x,y,o)        鈉金屬小方塊（銀灰）
+     O1.bubble(c,x,y,r,o)       液體中的小氣泡
    ================================================================== */
 (function (root) {
   'use strict';
@@ -1539,6 +1545,111 @@
   /* 弧線內插：p0→p1，k 0..1（自己先緩動）；lift 拱高 px（正＝往上） */
   O1.arcPt = function (p0, p1, k, lift) {
     return { x: lerp(p0.x, p1.x, k), y: lerp(p0.y, p1.y, k) - (lift || 0) * Math.sin(Math.PI * k) };
+  };
+
+  /* ══════════════════ 以下由 props（結構不同，性質不同）新增，2026-11-27 ══════════════════
+     O1.miniMol(c,m,x,y,o)        小分子（容器裡的粒子；不寫元素符號、可旋轉、指定鍵換色）
+     O1.dropper(c,x,y,o)          滴管（沒有手，自己移動；管內液體、尖端液滴、橡皮頭擠壓）
+     O1.germ(c,x,y,o)             簡單的細菌（橢圓＋小鞭毛線；可「停止」變灰）
+     O1.naBlock(c,x,y,o)          鈉金屬小方塊（銀灰色）
+     O1.bubble(c,x,y,r,o)         液體中的小氣泡（透明圈＋高光） */
+
+  /* 小分子：m 來自 O1.MOL，中心 (x,y)＝分子原點。o：{ scale 每單位 px(9), k 原子縮放(0.26), rot 旋轉(rad), a,
+     hi 要換色的鍵（MOL 原子編號 [[i,j],…]）, hiCol(黃) }。不寫元素符號（粒子太小，只靠顏色分辨）。 */
+  O1.miniMol = function (c, m, x, y, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    const S = o.scale || 9, k = o.k || 0.26, r = o.rot || 0, cs = Math.cos(r), sn = Math.sin(r), hi = o.hi || [];
+    const P = m.atoms.map(A => ({ x: x + (A.x * cs - A.y * sn) * S, y: y + (A.x * sn + A.y * cs) * S }));
+    const isHi = b => hi.some(h => (h[0] === b[0] && h[1] === b[1]) || (h[0] === b[1] && h[1] === b[0]));
+    c.save(); c.globalAlpha *= a;
+    m.bonds.forEach(b => O1.bond(c, P[b[0]].x, P[b[0]].y, P[b[1]].x, P[b[1]].y, { lw: Math.max(2.5, 6 * k), col: isHi(b) ? (o.hiCol || COL.yellow) : null }));
+    m.atoms.map((A, i) => i).sort((i, j) => O1.EL[m.atoms[j].el].r - O1.EL[m.atoms[i].el].r)
+      .forEach(i => O1.atom(c, P[i].x, P[i].y, m.atoms[i].el, O1.EL[m.atoms[i].el].r * k, { label: false }));
+    c.restore();
+  };
+
+  /* 滴管（直立，沒有手）：尖端在 (x,y)，往上是玻璃管（長 o.len 55）＋橡皮頭（高 26）；全長約 len＋30。
+     o：{ a, len(55), fill 0..1 管內液體多少, col 液體色('#c39bff'), squeeze 0..1 橡皮頭被擠扁, drop 0..1 尖端掛的液滴大小 } */
+  O1.dropper = function (c, x, y, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    const len = o.len || 55, col = o.col || '#c39bff', sq = clamp01(o.squeeze || 0), fill = clamp01(o.fill == null ? 0.6 : o.fill);
+    const top = y - len;
+    c.save(); c.globalAlpha *= a; c.lineJoin = 'round';
+    /* 玻璃管：上段寬 12、下段收成尖口 */
+    const tube = () => { c.beginPath(); c.moveTo(x - 6, top); c.lineTo(x - 6, y - 16); c.lineTo(x - 2, y); c.lineTo(x + 2, y); c.lineTo(x + 6, y - 16); c.lineTo(x + 6, top); c.closePath(); };
+    tube(); c.fillStyle = 'rgba(200,230,245,0.18)'; c.fill();
+    /* 管內液體（由下往上 fill） */
+    if (fill > 0.02) {
+      c.save(); tube(); c.clip();
+      const ly = lerp(y, top + 4, fill);
+      c.fillStyle = W5.rgba(col, 0.75); c.fillRect(x - 7, ly, 14, y - ly + 1); c.restore();
+    }
+    tube(); c.strokeStyle = 'rgba(232,246,255,0.9)'; c.lineWidth = 1.6; c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(x - 3, top + 4); c.lineTo(x - 3, y - 20); c.stroke();
+    /* 橡皮頭（擠壓時變扁變寬） */
+    const bw = 11 * (1 + 0.25 * sq), bh = 26 * (1 - 0.3 * sq);
+    const g = c.createLinearGradient(x - bw, 0, x + bw, 0); g.addColorStop(0, '#ff9d7a'); g.addColorStop(1, '#c4553a');
+    c.fillStyle = g; c.beginPath(); c.moveTo(x - 7, top + 2); c.lineTo(x - bw, top - bh * 0.35);
+    c.quadraticCurveTo(x - bw, top - bh, x, top - bh); c.quadraticCurveTo(x + bw, top - bh, x + bw, top - bh * 0.35); c.lineTo(x + 7, top + 2); c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(70,24,14,0.8)'; c.lineWidth = 1.4; c.stroke();
+    /* 尖端液滴 */
+    const d = clamp01(o.drop || 0);
+    if (d > 0.02) { const r = 5 * d; c.fillStyle = W5.rgba(col, 0.9); c.beginPath(); c.arc(x, y + r * 0.9, r, 0, TAU); c.fill(); }
+    c.restore();
+  };
+
+  /* 細菌（示意）：中心 (x,y)、身體朝 o.ang（rad，0＝頭朝右，鞭毛在尾端）。
+     o：{ a, s 縮放(1)（原寸身長 34、寬 16）, t 秒（鞭毛擺動）, dead 0..1（停止擺動＋變灰）, col 活著的顏色(綠 '#7be0a0'), seed } */
+  O1.germ = function (c, x, y, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    const s = o.s || 1, dead = clamp01(o.dead || 0), t = o.t || 0, seed = o.seed || 0;
+    /* W5.mix 回傳 rgb()，不能再拿去 mix；這裡自己混成 #hex */
+    const hx = (p, q, k) => '#' + [0, 2, 4].map(i => Math.round(lerp(parseInt(p.slice(1 + i, 3 + i), 16), parseInt(q.slice(1 + i, 3 + i), 16), k)).toString(16).padStart(2, '0')).join('');
+    const col = hx(o.col || '#7be0a0', '#8a948f', dead), live = 1 - dead;
+    c.save(); c.globalAlpha *= a; c.translate(x, y); c.rotate(o.ang || 0); c.scale(s, s);
+    /* 鞭毛：尾端 3 條波浪線（活著時擺動；死掉後垂下不動） */
+    c.strokeStyle = W5.mix('#c9f5d8', '#8a948f', dead); c.lineWidth = 1.8; c.lineCap = 'round';
+    for (let q = 0; q < 3; q++) {
+      const y0 = (q - 1) * 5; c.beginPath(); c.moveTo(-16, y0);
+      for (let k = 1; k <= 8; k++) {
+        const xx = -16 - k * 2.2, ph = t * 14 * live + q * 1.3 + seed;
+        c.lineTo(xx, y0 + (q - 1) * k * 0.35 + Math.sin(k * 0.9 + ph) * 2.6 * (0.35 + 0.65 * live) + dead * k * 0.5);
+      }
+      c.stroke();
+    }
+    /* 身體 */
+    const g = c.createRadialGradient(-4, -4, 1, 0, 0, 18); g.addColorStop(0, W5.mix(col, '#ffffff', 0.45)); g.addColorStop(1, W5.mix(col, '#0b1a15', 0.35));
+    c.fillStyle = g; c.beginPath(); c.ellipse(0, 0, 17, 8, 0, 0, TAU); c.fill();
+    c.strokeStyle = W5.mix('#1d5a3a', '#4a524e', dead); c.lineWidth = 1.6; c.stroke();
+    /* 體內兩個小點 */
+    c.fillStyle = W5.rgba(hx('#1d5a3a', '#4a524e', dead), 0.7);
+    c.beginPath(); c.arc(-4, 1, 2, 0, TAU); c.arc(5, -2, 1.6, 0, TAU); c.fill();
+    c.restore();
+  };
+
+  /* 鈉金屬小方塊（示意）：中心 (x,y)。o：{ a, w 寬(30), h 高(22), rot 旋轉(rad) } —— 銀灰色、切面有金屬光澤 */
+  O1.naBlock = function (c, x, y, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    const w = o.w || 30, h = o.h || 22;
+    c.save(); c.globalAlpha *= a; c.translate(x, y); c.rotate(o.rot || 0);
+    /* 上面（斜面，稍亮）＋正面 */
+    c.fillStyle = '#e3e9ec'; c.beginPath(); c.moveTo(-w / 2, -h / 2); c.lineTo(-w / 2 + 6, -h / 2 - 6); c.lineTo(w / 2 + 6, -h / 2 - 6); c.lineTo(w / 2, -h / 2); c.closePath(); c.fill();
+    c.fillStyle = '#9aa6ad'; c.beginPath(); c.moveTo(w / 2, -h / 2); c.lineTo(w / 2 + 6, -h / 2 - 6); c.lineTo(w / 2 + 6, h / 2 - 6); c.lineTo(w / 2, h / 2); c.closePath(); c.fill();
+    const g = c.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2); g.addColorStop(0, '#d5dde1'); g.addColorStop(0.55, '#b3bec4'); g.addColorStop(1, '#8a959b');
+    c.fillStyle = g; c.fillRect(-w / 2, -h / 2, w, h);
+    c.strokeStyle = 'rgba(40,50,56,0.85)'; c.lineWidth = 1.4; c.strokeRect(-w / 2, -h / 2, w, h);
+    c.strokeStyle = 'rgba(255,255,255,0.75)'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(-w / 2 + 4, -h / 2 + 4); c.lineTo(-w / 2 + 4, h / 2 - 5); c.stroke();
+    c.restore();
+  };
+
+  /* 液體中的小氣泡：中心 (x,y)、半徑 r。o：{ a, col 外圈色('#e8f6ff') } */
+  O1.bubble = function (c, x, y, r, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02 || r < 0.5) return;
+    c.save(); c.globalAlpha *= a;
+    c.fillStyle = 'rgba(232,246,255,0.16)'; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill();
+    c.strokeStyle = W5.rgba(o.col || '#e8f6ff', 0.85); c.lineWidth = Math.max(1, r * 0.22); c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.85)'; c.beginPath(); c.arc(x - r * 0.35, y - r * 0.38, Math.max(0.8, r * 0.25), 0, TAU); c.fill();
+    c.restore();
   };
 
 })(window);
