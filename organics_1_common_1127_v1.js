@@ -37,6 +37,12 @@
      O1.rigPts(o)               乾餾裝置錨點（導管口、收集管液面、試管底、竹筷中心…；畫布座標）
      O1.rig(c,o)                整組乾餾裝置（products、smoke、竹筷乾餾動手做共用；選項與座標見函式註解）→ rigPts
      O1.spot(c,holes,o)         聚光：其他部分變暗、只留圓洞
+   products 新增（2026-11-27）：
+     O1.MOL.H2                  氫分子
+     O1.noFire(c,x,y,r,o)       「不可燃」禁止符號（圓圈＋斜線）
+     O1.litmus(c,x,y,w,h,o)     石蕊試紙（從一點擴散變色）
+     O1.rod(c,x0,y0,x1,y1,o)    玻璃棒（尖端可掛液滴）
+     O1.cBlob(c,cx,cy,o)        碳原子聚集的不規則塊（木炭微觀示意）
    ================================================================== */
 (function (root) {
   'use strict';
@@ -1067,4 +1073,94 @@
     (holes || []).forEach(h => { c.moveTo(h.x + h.r, h.y); c.arc(h.x, h.y, h.r, 0, TAU, true); });
     c.fill('evenodd'); c.restore();
   };
+  /* ══════════════════ 以下由 products（乾餾三大產物）新增，2026-11-27 ══════════════════
+     O1.MOL.H2               氫分子（兩顆 H，單鍵）
+     O1.noFire(c,x,y,r,o)    「不可燃」禁止符號（圓圈＋斜線，可依序畫出）
+     O1.litmus(c,x,y,w,h,o)  石蕊試紙（橫放長條；可從某點開始變色擴散）
+     O1.rod(c,x0,y0,x1,y1,o) 玻璃棒（沒有手；尖端可掛一滴液體）
+     O1.cBlob(c,cx,cy,o)     碳原子聚集成的不規則塊（木炭的微觀示意；依序出現） */
+
+  /* 氫分子 H2：兩顆 H（鍵長示意） */
+  if (!O1.MOL.H2) O1.MOL.H2 = { atoms: [{ el: 'H', x: -0.42, y: 0 }, { el: 'H', x: 0.42, y: 0 }], bonds: [[0, 1, 1]] };
+
+  /* 「不可燃」禁止符號：中心 (x,y)、半徑 r。o：{ a, k 0..1 畫出進度（先畫圓、再畫斜線）, col(珊瑚), lw(7) } */
+  O1.noFire = function (c, x, y, r, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, k = clamp01(o.k == null ? 1 : o.k); if (a <= 0.02 || k <= 0.01) return;
+    const col = o.col || COL.coral, lw = o.lw || 7, k1 = clamp01(k / 0.7), k2 = clamp01((k - 0.7) / 0.3);
+    c.save(); c.globalAlpha *= a; c.lineCap = 'round';
+    const ring = () => { c.beginPath(); c.arc(x, y, r, -Math.PI * 0.75, -Math.PI * 0.75 + TAU * k1); };
+    const sl = () => { const d = r * 0.707; c.beginPath(); c.moveTo(x - d, y - d); c.lineTo(x - d + 2 * d * k2, y - d + 2 * d * k2); };
+    c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = lw + 4; ring(); c.stroke(); if (k2 > 0) { sl(); c.stroke(); }
+    c.strokeStyle = col; c.lineWidth = lw; ring(); c.stroke(); if (k2 > 0) { sl(); c.stroke(); }
+    c.restore();
+  };
+
+  /* 石蕊試紙（橫放長條）：左上 (x,y)、寬 w、高 h。
+     o：{ a, base 原色('#4a7fe0' 藍), to 變成的顏色('#e0465a' 紅), k 0..1.3 變色範圍（從 (cx,cy) 往外擴散；≥ 1.25 保證整條變色、邊緣不留藍）, cx, cy 變色起點（預設長條中心）, wet 0..1 沾到液體的濕痕 } */
+  O1.litmus = function (c, x, y, w, h, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    const base = o.base || '#4a7fe0', to = o.to || '#e0465a', k = Math.max(0, Math.min(1.3, o.k || 0));
+    const cx = o.cx == null ? x + w / 2 : o.cx, cy = o.cy == null ? y + h / 2 : o.cy;
+    c.save(); c.globalAlpha *= a;
+    c.fillStyle = 'rgba(0,0,0,0.25)'; W5.rr(c, x + 3, y + 5, w, h, 3); c.fill();
+    c.fillStyle = base; W5.rr(c, x, y, w, h, 3); c.fill();
+    c.save(); W5.rr(c, x, y, w, h, 3); c.clip();
+    /* 纖維紋理 */
+    c.strokeStyle = 'rgba(255,255,255,0.12)'; c.lineWidth = 1;
+    for (let i = 0; i < 10; i++) { const yy = y + 3 + (h - 6) * hash(i + 31); c.beginPath(); c.moveTo(x, yy); c.lineTo(x + w, yy + (hash(i + 7) - 0.5) * 4); c.stroke(); }
+    if (k > 0.01) {
+      const R = k * Math.max(Math.hypot(cx - x, cy - y), Math.hypot(cx - x - w, cy - y), Math.hypot(cx - x, cy - y - h), Math.hypot(cx - x - w, cy - y - h)) * 1.05;
+      const g = c.createRadialGradient(cx, cy, 0, cx, cy, Math.max(1, R));
+      g.addColorStop(0, to); g.addColorStop(0.82, to); g.addColorStop(1, W5.rgba(to, 0));
+      c.fillStyle = g; c.fillRect(x, y, w, h);
+    }
+    const wet = clamp01(o.wet || 0);
+    if (wet > 0.02) { c.fillStyle = 'rgba(255,255,255,' + (0.25 * wet).toFixed(3) + ')'; c.beginPath(); c.ellipse(cx, cy, 9 * wet, 6 * wet, 0, 0, TAU); c.fill(); }
+    c.restore();
+    c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 1.5; W5.rr(c, x, y, w, h, 3); c.stroke();
+    c.restore();
+  };
+
+  /* 玻璃棒（沒有手）：尖端 (x0,y0) → 另一端 (x1,y1)。o：{ a, w 粗(7), drop 0..1 尖端掛的液滴大小, dropCol 液滴色('#e2c27a') } */
+  O1.rod = function (c, x0, y0, x1, y1, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    const w = o.w || 7, L = Math.hypot(x1 - x0, y1 - y0) || 1, nx = -(y1 - y0) / L, ny = (x1 - x0) / L;
+    c.save(); c.globalAlpha *= a; c.lineCap = 'round';
+    c.strokeStyle = 'rgba(11,26,21,0.8)'; c.lineWidth = w + 4; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+    c.strokeStyle = 'rgba(200,236,246,0.92)'; c.lineWidth = w; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,0.75)'; c.lineWidth = 1.6;
+    c.beginPath(); c.moveTo(x0 + nx * w * 0.22 + (x1 - x0) * 0.08, y0 + ny * w * 0.22 + (y1 - y0) * 0.08); c.lineTo(x1 + nx * w * 0.22 - (x1 - x0) * 0.08, y1 + ny * w * 0.22 - (y1 - y0) * 0.08); c.stroke();
+    const dr = clamp01(o.drop || 0);
+    if (dr > 0.02) {
+      c.fillStyle = o.dropCol || '#e2c27a'; c.strokeStyle = 'rgba(60,36,16,0.8)'; c.lineWidth = 1.2;
+      c.beginPath(); c.ellipse(x0, y0 + 3 * dr, 4.5 * dr, 5.5 * dr, 0, 0, TAU); c.fill(); c.stroke();
+    }
+    c.restore();
+  };
+
+  /* 碳原子聚集成的不規則塊（示意）：中心 (cx,cy)。
+     o：{ a, n 顆數(28), r 原子半徑(20), R 塊的大約半徑(95), k 0..1 已出現幾成（由中心往外依序彈出）, seed(5), glow 光暈色(null), label 是否寫 C(true) }
+     原子排成略擠的六角堆積再加確定性擾動、只留在不規則邊界內；回傳實際畫出的點 [{x,y}]。 */
+  O1.cBlob = function (c, cx, cy, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, n = o.n || 28, r = o.r || 20, R = o.R || 95, k = clamp01(o.k == null ? 1 : o.k), seed = o.seed || 5;
+    const pts = [], d = r * 1.78;
+    for (let j = -8; j <= 8; j++) for (let i = -8; i <= 8; i++) {
+      const x = (i + (j & 1) * 0.5) * d + (hash(seed + i * 13 + j * 7) - 0.5) * r * 0.5, y = j * d * 0.866 + (hash(seed * 3 + i * 5 + j * 11) - 0.5) * r * 0.5;
+      const th = Math.atan2(y, x), lim = R * (0.78 + 0.22 * Math.sin(th * 3 + seed) + 0.1 * Math.sin(th * 5 + seed * 2));
+      if (Math.hypot(x, y) <= lim) pts.push({ x: cx + x, y: cy + y, d: Math.hypot(x, y) + hash(seed + i * 3 + j) * r });
+    }
+    pts.sort((p, q) => p.d - q.d); const P = pts.slice(0, n);
+    if (a <= 0.02) return P;
+    c.save(); c.globalAlpha *= a;
+    if (o.glow && k > 0.02) W5.glow(c, cx, cy, R * 1.4, o.glow, 0.18 * k);
+    /* 先畫外圈（後出現）再畫內圈，內圈蓋在上面 → 由裡往外疊 */
+    for (let i = P.length - 1; i >= 0; i--) {
+      const q = clamp01(k * P.length - i); if (q <= 0) continue;
+      const sc = 0.4 + 0.6 * ease(q) + 0.12 * Math.sin(Math.PI * clamp01(q));
+      O1.atom(c, P[i].x, P[i].y, 'C', r * sc, { a: clamp01(q * 2), label: o.label !== false && q > 0.6 });
+    }
+    c.restore();
+    return P;
+  };
+
 })(window);
