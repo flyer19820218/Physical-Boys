@@ -50,6 +50,10 @@
      O1.cocl(c,x,y,ang,o)       氯化亞鈷試紙（可旋轉的長條，從尖端由藍變粉紅）
    testh 新增（2026-11-27）：
      O1.tweezers(c,x,y,ang,o)   鑷子（尖端 (x,y)、鑷身往 ang 伸出；夾試紙用，沒有手）
+   iso 新增（2026-11-27）：
+     O1.badge(c,x,y,txt,o)      原子旁的小圓標（數數、鍵數）
+     O1.freeDir(pts,bonds,i)    第 i 顆原子最空的方向（放小圓標用）
+     O1.arcPt(p0,p1,k,lift)     兩點之間走弧線
    ================================================================== */
 (function (root) {
   'use strict';
@@ -1499,6 +1503,42 @@
       [-1, 1].forEach(k => { c.beginPath(); c.moveTo(px - 2, k * (off - 1.5)); c.lineTo(px + 2, k * (off + 1.5)); c.stroke(); });
     }
     c.restore();
+  };
+
+  /* ══════════════════ 以下由 iso（同分異構物）新增，2026-11-27 ══════════════════
+     O1.badge(c,x,y,txt,o)        原子旁的小圓標（數數、鍵數；字 18px）
+     O1.freeDir(pts,bonds,i)      第 i 顆原子「最空」的方向（離所有鍵最遠的角度，放小圓標用）
+     O1.arcPt(p0,p1,k,lift)       兩點之間走弧線（k 0..1 已緩動；lift＞0 往上拱、＜0 往下拱）→ {x,y} */
+
+  /* 小圓標：中心 (x,y)、txt 短字（數字）。o：{ a, k 0..1 彈出, col 外框與字色(黃), r 半徑(13), size 字級(18) } */
+  O1.badge = function (c, x, y, txt, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, k = o.k == null ? 1 : clamp01(o.k); if (a <= 0.02 || k <= 0.01) return;
+    const col = o.col || COL.yellow, r = (o.r || 13), sc = 0.9 + 0.1 * ease(k) + 0.15 * Math.sin(Math.PI * k);   /* 彈出時最小 0.9 倍，字不會小於 16px */
+    c.save(); c.globalAlpha *= a * ease(k); c.translate(x, y); c.scale(sc, sc);
+    c.fillStyle = 'rgba(11,26,21,0.92)'; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
+    c.strokeStyle = col; c.lineWidth = 2.2; c.stroke();
+    c.font = W5.font(o.size || 18, true); c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillStyle = col; c.fillText(String(txt), 0, 1);
+    c.restore();
+  };
+
+  /* 最空的方向：pts＝[{x,y}]、bonds＝[[i,j],…]；從 16 個方向挑離第 i 顆所有鍵最遠的角度（同分時偏右上）。回傳弧度 */
+  O1.freeDir = function (pts, bonds, i) {
+    const angs = [];
+    bonds.forEach(b => { const j = b[0] === i ? b[1] : b[1] === i ? b[0] : -1; if (j >= 0) angs.push(Math.atan2(pts[j].y - pts[i].y, pts[j].x - pts[i].x)); });
+    if (!angs.length) return -Math.PI / 4;
+    let best = -Math.PI / 4, bv = -1;
+    for (let q = 0; q < 16; q++) {
+      const th = -Math.PI / 4 - q * TAU / 16;
+      let m = 9; angs.forEach(g => { let d = Math.abs(((th - g) % TAU + TAU) % TAU); d = Math.min(d, TAU - d); m = Math.min(m, d); });
+      if (m > bv + 1e-6) { bv = m; best = th; }
+    }
+    return best;
+  };
+
+  /* 弧線內插：p0→p1，k 0..1（自己先緩動）；lift 拱高 px（正＝往上） */
+  O1.arcPt = function (p0, p1, k, lift) {
+    return { x: lerp(p0.x, p1.x, k), y: lerp(p0.y, p1.y, k) - (lift || 0) * Math.sin(Math.PI * k) };
   };
 
 })(window);
