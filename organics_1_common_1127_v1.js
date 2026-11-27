@@ -48,6 +48,8 @@
      O1.candlePts(o)            蠟燭＋倒扣燒杯的錨點（純數學，不畫；焰尖、杯口、內壁、夾子、水珠點…）
      O1.candle(c,o)             蠟燭燃燒檢驗台（蠟燭＋燭火＋倒扣燒杯（石灰水／乾燥冷燒杯）＋夾子＋上升分子＋氯化亞鈷試紙）→ candlePts
      O1.cocl(c,x,y,ang,o)       氯化亞鈷試紙（可旋轉的長條，從尖端由藍變粉紅）
+   testh 新增（2026-11-27）：
+     O1.tweezers(c,x,y,ang,o)   鑷子（尖端 (x,y)、鑷身往 ang 伸出；夾試紙用，沒有手）
    ================================================================== */
 (function (root) {
   'use strict';
@@ -1474,6 +1476,29 @@
       if (L('tong') && tga > 0.02) pill(L('tong') * tga, Lz('夾子', 'Tongs'), M(D.tongEnd.x - D.side * 60, D.grip.y - 36));
     }
     return R;
+  };
+
+  /* ══════════════════ 以下由 testh（檢驗氫：氯化亞鈷試紙）新增，2026-11-27 ══════════════════ */
+  /* 鑷子（沒有手，自己移動）：夾口尖端在 (x,y)，鑷身往 ang 方向伸出（rad，0＝往右）。
+     o：{ a 透明度(1), len 全長(100), w 尾端（相接處）寬(7), bow 兩臂中段最大張開(9), tip 夾口張開(0；夾著東西時 = 試紙厚度一半左右) }
+     兩臂在尾端相接、在夾口處靠攏；中段有防滑紋。要夾試紙時：鑷子尖端放在試紙尾端往回 12～16 px 處、ang 與試紙相同（鑷子畫在試紙後面呼叫）。 */
+  O1.tweezers = function (c, x, y, ang, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    const len = o.len || 100, w = o.w || 7, bow = o.bow == null ? 9 : o.bow, tip = o.tip || 0;
+    c.save(); c.globalAlpha *= a; c.translate(x, y); c.rotate(ang || 0); c.lineCap = 'round'; c.lineJoin = 'round';
+    const arm = k => { c.beginPath(); c.moveTo(len, k * w / 2); c.quadraticCurveTo(len * 0.45, k * (bow + 2), 0, k * tip); };
+    [-1, 1].forEach(k => { c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 7; arm(k); c.stroke(); });
+    [-1, 1].forEach(k => { c.strokeStyle = '#c3cdd2'; c.lineWidth = 3.6; arm(k); c.stroke(); });
+    /* 尾端相接處 */
+    c.fillStyle = '#9aa7ad'; c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 1.5;
+    W5.rr(c, len - 4, -w / 2 - 2, 10, w + 4, 3); c.fill(); c.stroke();
+    /* 防滑紋 */
+    c.strokeStyle = 'rgba(11,26,21,0.7)'; c.lineWidth = 1.2;
+    for (let i = 0; i < 4; i++) {
+      const px = len * (0.5 + i * 0.06), q = 1 - px / len, off = (bow + 2) * 4 * q * (1 - q) * 0.95 + (w / 2) * (px / len) * 0.4;
+      [-1, 1].forEach(k => { c.beginPath(); c.moveTo(px - 2, k * (off - 1.5)); c.lineTo(px + 2, k * (off + 1.5)); c.stroke(); });
+    }
+    c.restore();
   };
 
 })(window);
