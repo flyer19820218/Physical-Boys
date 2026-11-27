@@ -51,6 +51,7 @@
     if (o.glow) W5.glow(c, x, y, r * 2.1, o.glow, 0.5);
     if (o.label !== false) {
       c.font = W5.font(Math.max(16, Math.round(r * 0.9)), true); c.textAlign = 'center'; c.textBaseline = 'middle';
+      if (el !== 'H') { c.lineJoin = 'round'; c.lineWidth = 4; c.strokeStyle = 'rgba(10,20,26,0.85)'; c.strokeText(el, x, y + 1); }
       c.fillStyle = E.txt; c.fillText(el, x, y + 1);
     }
     c.restore();
