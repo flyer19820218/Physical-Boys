@@ -66,6 +66,10 @@
      O1.heap(c,x,y,o)           錶玻璃上的一堆黑色粉末（碳粉／氧化銅／混合，可拌開、可變少）→ 粉堆頂點
      O1.tubeBed(c,g,o)          O1.htube 管底的一層粉末：黑 → 從受熱處擴散成紅色的銅
      O1.grains(c,cx,cy,R,o)     放大鏡內的粉末顆粒：黑色氧化銅依序變紅色銅、碳顆粒變小 → { n, cu }
+   cuso4 新增（2026-11-27）：
+     O1.CUSO4                   顏色：白色無水硫酸銅、遇水變成的藍色
+     O1.cuso4Pile(c,x,y,o)      蒸發皿＋白色粉堆（可從一點由白變藍擴散、濕痕）→ { rimY, base, top, hw, surf(px) }
+     O1.waterDrop(c,x,y,r,o)    一顆水珠（上尖下圓、高光；可拉長表示下落）
    ================================================================== */
 (function (root) {
   'use strict';
@@ -1805,6 +1809,100 @@
     });
     c.restore();
     return out;
+  };
+
+
+  /* ══════════════════ 以下由 cuso4（無水硫酸銅檢驗水，補充）新增，2026-11-27 ══════════════════
+     O1.CUSO4                    顏色：白色無水硫酸銅、遇水變成的藍色
+     O1.cuso4Pile(c,x,y,o)       蒸發皿＋一堆白色粉末（無水硫酸銅）；可從某一點開始由白變藍、往四周擴散；可有濕痕 → 錨點
+     O1.waterDrop(c,x,y,r,o)     一顆水珠（上尖下圓，帶高光；可拉長表示下落）
+     只增不改。 */
+  O1.CUSO4 = { white: '#fbfbf6', whiteDk: '#c9cec8', blue: '#2f8fe8', blueHi: '#8fd0ff', blueDk: '#1a5ea8' };
+
+  /* 蒸發皿＋粉堆（側視略俯視）：皿底中心 (x,y)。
+     o：{ a, s 縮放(1)（原寸：皿口半寬 150、皿高 70、粉堆半寬 112、高 92）, k 0..1 粉堆大小（0＝空皿）,
+          blue 0..1.3 由白變藍的範圍（從 (bx,by) 往外擴散；≥ 1.25 保證整堆變藍）, bx, by 變藍起點（畫布座標；預設粉堆頂）,
+          wet 0..1 起點的濕痕, seed, dish 是否畫蒸發皿(true) }
+     回傳 { rimY 皿口中線 y, base 粉堆底 y, top 粉堆頂 {x,y}, hw 粉堆半寬, surf(px) 粉堆表面在 px 處的 y（畫布座標） }。 */
+  O1.cuso4Pile = function (c, x, y, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, s = o.s || 1, k = clamp01(o.k == null ? 1 : o.k), seed = o.seed || 4, CS = O1.CUSO4;
+    const R = 150 * s, H = 70 * s, ry = 22 * s, rimY = y - H, base = rimY + 8 * s;
+    const hw = 112 * s * (0.3 + 0.7 * ease(k)), h = 92 * s * ease(k);
+    const prof = t => { const q = Math.max(0, 1 - t * t); return q * (0.82 + 0.18 * q) + 0.035 * Math.sin(t * 9 + seed) * q; };
+    const surf = px => base - h * prof((px - x) / hw);
+    const out = { rimY, base, hw, top: { x, y: surf(x) }, surf };
+    if (a <= 0.02) return out;
+    c.save(); c.globalAlpha *= a; c.lineJoin = 'round';
+    if (o.dish !== false) {
+      c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); c.ellipse(x, y + 2, R * 0.62, 9 * s, 0, 0, TAU); c.fill();
+      /* 皿身（外側） */
+      const body = () => { c.beginPath(); c.moveTo(x - R, rimY); c.bezierCurveTo(x - R * 0.95, y - H * 0.25, x - R * 0.6, y, x - R * 0.32, y);
+        c.lineTo(x + R * 0.32, y); c.bezierCurveTo(x + R * 0.6, y, x + R * 0.95, y - H * 0.25, x + R, rimY); c.ellipse(x, rimY, R, ry, 0, 0, Math.PI, false); c.closePath(); };
+      body();
+      const g = c.createLinearGradient(x - R, 0, x + R, 0); g.addColorStop(0, '#9aa5a1'); g.addColorStop(0.3, '#e6ebe8'); g.addColorStop(0.55, '#d3dad7'); g.addColorStop(1, '#7f8a86');
+      c.fillStyle = g; c.fill(); c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 2; c.stroke();
+      /* 皿內（橢圓口） */
+      c.beginPath(); c.ellipse(x, rimY, R, ry, 0, 0, TAU);
+      const gi = c.createLinearGradient(0, rimY - ry, 0, rimY + ry); gi.addColorStop(0, '#8c9793'); gi.addColorStop(1, '#c8d0cc');
+      c.fillStyle = gi; c.fill();
+    }
+    if (h > 1) {
+      c.save();
+      /* 只畫在皿口前緣上方（粉堆底部被皿的前緣擋住） */
+      c.beginPath(); c.rect(x - R - 10, 34, 2 * R + 20, rimY - 34); c.ellipse(x, rimY, R - 2, ry - 1, 0, 0, TAU); c.clip();
+      const shape = () => { c.beginPath(); c.moveTo(x - hw, base); for (let i = 1; i <= 40; i++) { const px = x - hw + 2 * hw * i / 40; c.lineTo(px, surf(px)); } c.lineTo(x + hw, base + 6 * s); c.lineTo(x - hw, base + 6 * s); c.closePath(); };
+      shape(); c.fillStyle = CS.white; c.fill();
+      c.save(); shape(); c.clip();
+      const bx = o.bx == null ? x : o.bx, by = o.by == null ? surf(x) : o.by, bl = Math.max(0, Math.min(1.3, o.blue || 0));
+      const Rmax = Math.max(Math.hypot(bx - x + hw, by - base), Math.hypot(bx - x - hw, by - base), Math.hypot(bx - x, by - surf(x))) * 1.05;
+      const Rk = bl * Rmax;
+      if (Rk > 1) {
+        const gb = c.createRadialGradient(bx, by, 0, bx, by, Rk);
+        gb.addColorStop(0, CS.blue); gb.addColorStop(0.8, CS.blue); gb.addColorStop(1, W5.rgba(CS.blue, 0));
+        c.fillStyle = gb; c.fillRect(x - hw - 4, by - Rk - 4, 2 * hw + 8, base - by + Rk + 20);
+      }
+      /* 立體感：左上亮、右下暗 */
+      const gs = c.createLinearGradient(x - hw * 0.5, surf(x) , x + hw * 0.7, base);
+      gs.addColorStop(0, 'rgba(255,255,255,0.30)'); gs.addColorStop(0.5, 'rgba(255,255,255,0)'); gs.addColorStop(1, 'rgba(40,60,70,0.30)');
+      c.fillStyle = gs; c.fillRect(x - hw - 2, base - h - 4, 2 * hw + 4, h + 14 * s);
+      /* 顆粒：白色區灰點、藍色區深藍點與亮點 */
+      for (let i = 0; i < (h > 10 * s ? 70 : 0); i++) {
+        const px = x + (hash(seed * 7 + i * 3.1) - 0.5) * 2 * hw * 0.94, top = surf(px);
+        const py = top + 3 * s + hash(seed * 5 + i * 7.3) * Math.max(0, base - top - 4 * s);
+        const isBlue = Math.hypot(px - bx, py - by) < Rk * 0.86;
+        c.fillStyle = isBlue ? (i % 3 ? W5.rgba(CS.blueDk, 0.7) : W5.rgba(CS.blueHi, 0.85)) : (i % 3 ? 'rgba(150,160,154,0.6)' : 'rgba(255,255,255,0.95)');
+        c.beginPath(); c.arc(px, py, (i % 3 ? 1.6 : 1.2) * Math.max(0.8, s), 0, TAU); c.fill();
+      }
+      const wet = clamp01(o.wet || 0);
+      if (wet > 0.02) { c.fillStyle = 'rgba(120,150,170,' + (0.35 * wet).toFixed(3) + ')'; c.beginPath(); c.ellipse(bx, by + 4 * s, 22 * s * wet, 9 * s * wet, 0, 0, TAU); c.fill(); }
+      c.restore();
+      if (h > 10 * s) { shape(); c.strokeStyle = Rk > hw * 1.4 ? 'rgba(14,52,96,0.85)' : 'rgba(120,130,124,0.9)'; c.lineWidth = 1.6; c.stroke(); }
+      c.restore();
+    }
+    if (o.dish !== false) {
+      /* 皿口前緣（蓋住粉堆底部）＋後緣 */
+      c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 2; c.beginPath(); c.ellipse(x, rimY, R, ry, 0, Math.PI, TAU); c.stroke();
+      c.strokeStyle = '#f2f5f3'; c.lineWidth = 4 * Math.max(0.7, s); c.beginPath(); c.ellipse(x, rimY, R, ry, 0, 0.05, Math.PI - 0.05); c.stroke();
+      c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(x, rimY + 2 * s, R, ry, 0, 0.05, Math.PI - 0.05); c.stroke();
+    }
+    c.restore();
+    return out;
+  };
+
+  /* 水珠：中心 (x,y)（圓的部分）、半徑 r。o：{ a, col('#4dd2ff'), stretch 0..1 下落時往上拉長 } */
+  O1.waterDrop = function (c, x, y, r, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02 || r < 0.5) return;
+    const col = o.col || '#4dd2ff', st = clamp01(o.stretch || 0), tip = r * (1.5 + 1.2 * st);
+    c.save(); c.globalAlpha *= a;
+    c.beginPath(); c.moveTo(x, y - tip);
+    c.bezierCurveTo(x + r * 0.35, y - tip * 0.6, x + r, y - r * 0.5, x + r, y);
+    c.arc(x, y, r, 0, Math.PI, false);
+    c.bezierCurveTo(x - r, y - r * 0.5, x - r * 0.35, y - tip * 0.6, x, y - tip); c.closePath();
+    const g = c.createRadialGradient(x - r * 0.3, y - r * 0.2, r * 0.1, x, y, r * 1.3);
+    g.addColorStop(0, 'rgba(235,250,255,0.95)'); g.addColorStop(0.45, W5.rgba(col, 0.9)); g.addColorStop(1, W5.rgba(col, 0.75));
+    c.fillStyle = g; c.fill(); c.strokeStyle = 'rgba(11,26,21,0.7)'; c.lineWidth = 1.4; c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.9)'; c.beginPath(); c.ellipse(x - r * 0.38, y - r * 0.15, r * 0.18, r * 0.3, -0.4, 0, TAU); c.fill();
+    c.restore();
   };
 
 
