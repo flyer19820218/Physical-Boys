@@ -21,6 +21,11 @@
      O1.stamp(c,lines,x,y,o)    傾斜印章（可砸下）
      O1.burst(c,x,y,r,o)        驚嘆爆炸框「!」
      O1.plant(c,x,y,o)          植物  O1.critter(c,x,y,o) 小兔子（生命體示意）
+   except 新增（2026-11-27）：
+     O1.fxTokens(str)           化學式拆字（元素符號／下標）
+     O1.fxHi(c,str,x,y,col,size,align,o)  化學式＋指定元素（預設 C）換黃色、可加光暈 → { w, hits }
+     O1.card(c,x,y,w,h,o)       化學式卡片底板
+     O1.rock(c,x,y,o)           石灰岩塊（示意）  O1.powder(c,x,y,o) 錶玻璃上的白粉堆  O1.bottle(c,x,y,o) 棕色試劑小瓶
    ================================================================== */
 (function (root) {
   'use strict';
@@ -435,6 +440,128 @@
     c.fillStyle = '#2b2420'; c.beginPath(); c.arc(36, -54, 3.2, 0, TAU); c.fill();
     c.fillStyle = '#fff'; c.beginPath(); c.arc(37, -55, 1.1, 0, TAU); c.fill();
     c.fillStyle = '#e57b8a'; c.beginPath(); c.arc(49, -47, 2.8, 0, TAU); c.fill();
+    c.restore();
+  };
+  /* ══════════════════ 以下由 except（四大例外）新增，2026-11-27 ══════════════════ */
+
+  /* 化學式拆字：元素符號（大寫＋小寫，例 Ca、Na）算一個 token；元素或 ) 後面的數字是下標。
+     回傳 [{ t 字, sub 是否下標, el 是否元素符號 }] */
+  O1.fxTokens = function (str) {
+    const out = [];
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i], prev = out.length ? out[out.length - 1] : null;
+      if (/[A-Z]/.test(ch)) {
+        let t = ch; while (i + 1 < str.length && /[a-z]/.test(str[i + 1])) t += str[++i];
+        out.push({ t, sub: false, el: true });
+      } else if (/[0-9]/.test(ch) && prev && (prev.el || prev.t === ')' || prev.sub)) out.push({ t: ch, sub: true, el: false });
+      else out.push({ t: ch, sub: false, el: false });
+    }
+    return out;
+  };
+
+  /* 化學式（同 O1.fx 的字型與下標規則），但指定的元素符號換色＋可加光暈。
+     o：{ hi 要標色的元素(['C'])（只比對整個元素符號：Ca、Cl、Cu 不算 C）, hiCol(黃), glow 0..1 光暈強度, a, measure 只量不畫 }
+     回傳 { w 寬, hits:[{x,y}] 每個被標色元素的中心 } */
+  O1.fxHi = function (c, str, x, y, col, size, align, o) {
+    o = o || {}; size = size || 22; align = align || 'center'; col = col || COL.white;
+    const hi = o.hi || ['C'], hiCol = o.hiCol || COL.yellow, a = o.a == null ? 1 : o.a, sub = Math.round(size * 0.68);
+    const parts = O1.fxTokens(str);
+    c.save();
+    let w = 0;
+    parts.forEach(p => { c.font = W5.font(p.sub ? sub : size, true); p.w = c.measureText(p.t).width; w += p.w; });
+    let px = align === 'left' ? x : align === 'right' ? x - w : x - w / 2;
+    const hits = [];
+    parts.forEach(p => { if (p.el && hi.indexOf(p.t) >= 0) hits.push({ x: px + p.w / 2, y }); px += p.w; });
+    if (o.measure || a <= 0.02) { c.restore(); return { w, hits }; }
+    c.globalAlpha *= a;
+    if (o.glow > 0.02) hits.forEach(h => W5.glow(c, h.x, h.y, size * 1.3, hiCol, 0.5 * o.glow));
+    px = align === 'left' ? x : align === 'right' ? x - w : x - w / 2;
+    c.textBaseline = 'middle'; c.textAlign = 'left'; c.lineJoin = 'round';
+    parts.forEach(p => {
+      c.font = W5.font(p.sub ? sub : size, true);
+      const py = y + (p.sub ? size * 0.22 : 0);
+      c.lineWidth = 5; c.strokeStyle = 'rgba(13,32,26,0.92)'; c.strokeText(p.t, px, py);
+      c.fillStyle = p.el && hi.indexOf(p.t) >= 0 ? hiCol : col; c.fillText(p.t, px, py); px += p.w;
+    });
+    c.restore();
+    return { w, hits };
+  };
+
+  /* 化學式卡片（底板）：左上 (x,y)、寬 w、高 h。o：{ a, col 邊框與頂帶色(珊瑚), band 頂帶高(0＝不畫) } */
+  O1.card = function (c, x, y, w, h, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    const col = o.col || COL.coral;
+    c.save(); c.globalAlpha *= a;
+    c.fillStyle = 'rgba(0,0,0,0.22)'; W5.rr(c, x + 5, y + 7, w, h, 16); c.fill();
+    const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, '#1d3d33'); g.addColorStop(1, '#122a22');
+    c.fillStyle = g; W5.rr(c, x, y, w, h, 16); c.fill();
+    if (o.band) { c.save(); W5.rr(c, x, y, w, h, 16); c.clip(); c.fillStyle = W5.rgba(col, 0.16); c.fillRect(x, y, w, o.band); c.restore(); }
+    c.strokeStyle = col; c.lineWidth = 2.5; W5.rr(c, x, y, w, h, 16); c.stroke();
+    c.restore();
+  };
+
+  /* 石灰岩塊（示意）：底部中心 (x,y)、o：{ a, s 縮放(1), seed } —— 灰白色、帶層紋與小斑點 */
+  O1.rock = function (c, x, y, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, s = o.s || 1, seed = o.seed || 3; if (a <= 0.02) return;
+    c.save(); c.globalAlpha *= a; c.translate(x, y); c.scale(s, s); c.lineJoin = 'round';
+    c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(0, 2, 58, 8, 0, 0, TAU); c.fill();
+    const P = [[-56, 0], [-50, -30], [-28, -52], [6, -60], [36, -48], [56, -22], [52, 0]];
+    const shape = () => { c.beginPath(); P.forEach((p, i) => c[i ? 'lineTo' : 'moveTo'](p[0] + (hash(seed + i) - 0.5) * 6, p[1] + (hash(seed * 3 + i) - 0.5) * 6)); c.closePath(); };
+    shape();
+    const g = c.createLinearGradient(-40, -60, 40, 0); g.addColorStop(0, '#f1efe6'); g.addColorStop(0.55, '#cfccbf'); g.addColorStop(1, '#8f8c80');
+    c.fillStyle = g; c.fill(); c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 2.2; c.stroke();
+    c.save(); shape(); c.clip();
+    c.strokeStyle = 'rgba(120,116,100,0.55)'; c.lineWidth = 1.6;
+    [-14, -30, -44].forEach((yy, i) => { c.beginPath(); c.moveTo(-60, yy + 4); c.bezierCurveTo(-20, yy - 4 + i * 2, 20, yy + 6, 60, yy - 2); c.stroke(); });
+    c.fillStyle = 'rgba(110,106,92,0.6)';
+    for (let i = 0; i < 16; i++) { c.beginPath(); c.arc((hash(seed * 5 + i) - 0.5) * 100, -hash(seed * 7 + i) * 52, 1.2 + hash(i + seed) * 1.6, 0, TAU); c.fill(); }
+    c.restore();
+    c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 2; c.beginPath(); c.moveTo(-34, -44); c.lineTo(-6, -54); c.stroke();
+    c.restore();
+  };
+
+  /* 一小堆白色粉末放在錶玻璃上（示意）：底部中心 (x,y)、o：{ a, s 縮放(1), k 0..1 粉堆高度, col 粉末色 } */
+  O1.powder = function (c, x, y, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, s = o.s || 1, k = o.k == null ? 1 : o.k; if (a <= 0.02) return;
+    const col = o.col || '#f8f8f2';
+    c.save(); c.globalAlpha *= a; c.translate(x, y); c.scale(s, s); c.lineJoin = 'round';
+    c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(0, 3, 66, 8, 0, 0, TAU); c.fill();
+    /* 錶玻璃 */
+    c.fillStyle = 'rgba(190,230,240,0.22)'; c.strokeStyle = 'rgba(200,236,246,0.9)'; c.lineWidth = 2.5;
+    c.beginPath(); c.moveTo(-62, -12); c.quadraticCurveTo(0, 12, 62, -12); c.stroke();
+    c.beginPath(); c.ellipse(0, -12, 62, 7, 0, 0, TAU); c.fill(); c.stroke();
+    /* 粉堆 */
+    const h = 46 * ease(k);
+    if (h > 1) {
+      c.beginPath(); c.moveTo(-46, -10); c.bezierCurveTo(-30, -12 - h * 0.6, -14, -12 - h, 0, -12 - h);
+      c.bezierCurveTo(14, -12 - h, 30, -12 - h * 0.6, 46, -10); c.closePath();
+      const g = c.createLinearGradient(-30, -12 - h, 30, -8); g.addColorStop(0, '#ffffff'); g.addColorStop(0.6, col); g.addColorStop(1, '#c9cec6');
+      c.fillStyle = g; c.fill(); c.strokeStyle = 'rgba(120,130,122,0.9)'; c.lineWidth = 1.6; c.stroke();
+      c.fillStyle = 'rgba(150,160,150,0.55)';
+      for (let i = 0; i < 12; i++) { const px = (hash(i * 3 + 1) - 0.5) * 60, py = -12 - hash(i * 5 + 2) * h * 0.7 * (1 - Math.abs(px) / 50); c.beginPath(); c.arc(px, py, 1.3, 0, TAU); c.fill(); }
+    }
+    c.restore();
+  };
+
+  /* 試劑小瓶（棕色玻璃＋瓶蓋＋空白標籤，示意；不畫任何警告圖案）：底部中心 (x,y)、o：{ a, s 縮放(1), cap 瓶蓋色 } */
+  O1.bottle = function (c, x, y, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, s = o.s || 1; if (a <= 0.02) return;
+    c.save(); c.globalAlpha *= a; c.translate(x, y); c.scale(s, s); c.lineJoin = 'round';
+    c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(0, 2, 40, 7, 0, 0, TAU); c.fill();
+    /* 瓶身 */
+    const g = c.createLinearGradient(-34, 0, 34, 0); g.addColorStop(0, '#5a3418'); g.addColorStop(0.4, '#9a6232'); g.addColorStop(1, '#4a2a12');
+    c.fillStyle = g; c.strokeStyle = 'rgba(11,26,21,0.9)'; c.lineWidth = 2.2;
+    c.beginPath(); c.moveTo(-34, 0); c.lineTo(-34, -64); c.quadraticCurveTo(-34, -78, -16, -82); c.lineTo(-16, -92); c.lineTo(16, -92); c.lineTo(16, -82);
+    c.quadraticCurveTo(34, -78, 34, -64); c.lineTo(34, 0); c.closePath(); c.fill(); c.stroke();
+    /* 瓶蓋 */
+    c.fillStyle = o.cap || '#4a555c'; W5.rr(c, -19, -108, 38, 18, 4); c.fill(); c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,0.25)'; c.lineWidth = 1.2; for (let i = -12; i <= 12; i += 6) { c.beginPath(); c.moveTo(i, -106); c.lineTo(i, -92); c.stroke(); }
+    /* 空白標籤 */
+    c.fillStyle = '#efe9d8'; W5.rr(c, -26, -58, 52, 40, 4); c.fill(); c.strokeStyle = 'rgba(11,26,21,0.7)'; c.lineWidth = 1.5; c.stroke();
+    c.strokeStyle = 'rgba(120,110,90,0.7)'; c.lineWidth = 2;
+    [-48, -38, -28].forEach((yy, i) => { c.beginPath(); c.moveTo(-18, yy); c.lineTo(i === 2 ? 6 : 18, yy); c.stroke(); });
+    /* 反光 */
+    c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 3; c.beginPath(); c.moveTo(-26, -66); c.lineTo(-26, -8); c.stroke();
     c.restore();
   };
 })(window);
