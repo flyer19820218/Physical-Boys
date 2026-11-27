@@ -265,6 +265,7 @@
     if (Lb.request) Lb.request();
   }
   var HEAT_ORDER = ['gog', 'light', 'sugar', 'flour', 'salt', 'cmp'];
+  var CANDLE_ORDER = ['light', 'lime', 'away', 'cold', 'strip'];
   var WOOD_ORDER = ['gog', 'light', 'preheat', 'heat', 'ignite', 'litmus', 'solid', 'cap'];
   var LABS = {
     except: { tab: 'tab1', key: 'sort', states: { 5: { ids: [] }, 6: { ids: ['urea', 'co2'] }, 7: { ids: ['urea', 'co2', 'ch4', 'caco3', 'etoh', 'kcn'] } },
@@ -300,7 +301,16 @@
         if (live && S.p >= 1 && labBtn('model', st.m)) { Lb.request(); return; }
         S.mode = st.m; S.from = st.m; S.p = 1; S.cur = null; Lb.request();
       } }
-    // candle（tab3，掛 testh）：做完蠟燭實驗台後再補（見 CANDLE_ORDER）
+    ,
+    // candle（tab3，掛 testh）：5＝點燃蠟燭；6＝石灰水燒杯倒扣（變混濁）；7＝拿開燒杯；8＝冷燒杯倒扣（起霧、水珠）；9＝試紙碰水珠
+    testh: { tab: 'tab3', key: 'candle', states: { 5: { k: 1 }, 6: { k: 2 }, 7: { k: 3 }, 8: { k: 4 }, 9: { k: 5 } },
+      reset: function () { var Lb = W5L('candle'); if (Lb) { Lb.S.seq.run([]); Lb.S.reset(); Lb.request(); } },
+      apply: function (st, live) {
+        var Lb = W5L('candle'); if (!Lb) return;
+        var S = Lb.S, have = S.stripDone ? 5 : S.coldDone ? 4 : S.awayDone ? 3 : S.limeDone ? 2 : S.lit_on ? 1 : 0;
+        if (have > st.k) { S.seq.run([]); S.reset(); have = 0; }
+        doSeq(Lb, CANDLE_ORDER, st.k, have, live);
+      } }
   };
   var labCur = {};   // 掛載子頁 → 目前套用的動手做步驟編號；沒有＝預設狀態
   function isLabStep(tab, sub, stepNo) { var L = LABS[sub]; return !!(L && L.tab === tab && stepNo >= 5 && L.states[stepNo] != null); }
