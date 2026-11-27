@@ -60,6 +60,12 @@
      O1.germ(c,x,y,o)           細菌示意（橢圓＋鞭毛；dead 0..1 停止變灰）
      O1.naBlock(c,x,y,o)        鈉金屬小方塊（銀灰）
      O1.bubble(c,x,y,r,o)       液體中的小氣泡
+   cuo 新增（2026-11-27）：
+     O1.CU                      顏色：黑色氧化銅、紅色的銅、碳粉
+     O1.tstand(c,o)             橫放試管用的鐵架＋夾子（part 'back'／'front' 分兩層畫）
+     O1.heap(c,x,y,o)           錶玻璃上的一堆黑色粉末（碳粉／氧化銅／混合，可拌開、可變少）→ 粉堆頂點
+     O1.tubeBed(c,g,o)          O1.htube 管底的一層粉末：黑 → 從受熱處擴散成紅色的銅
+     O1.grains(c,cx,cy,R,o)     放大鏡內的粉末顆粒：黑色氧化銅依序變紅色銅、碳顆粒變小 → { n, cu }
    ================================================================== */
 (function (root) {
   'use strict';
@@ -1651,5 +1657,155 @@
     c.fillStyle = 'rgba(255,255,255,0.85)'; c.beginPath(); c.arc(x - r * 0.35, y - r * 0.38, Math.max(0.8, r * 0.25), 0, TAU); c.fill();
     c.restore();
   };
+
+  /* ══════════════════ 以下由 cuo（碳還原氧化銅，補充（高中））新增，2026-11-27 ══════════════════
+     O1.CU                      顏色：黑色氧化銅、紅色的銅、碳粉
+     O1.tstand(c,o)             橫放試管用的鐵架＋夾子（可分兩層畫：back 在試管後、front 夾片在試管前）
+     O1.heap(c,x,y,o)           錶玻璃上的一堆黑色粉末（碳粉／氧化銅／兩者混合；可變少）
+     O1.tubeBed(c,g,o)          O1.htube 管底的一層粉末：黑色（碳＋氧化銅）→ 從受熱處往兩邊擴散成紅色的銅（中間有紅色亮點）
+     O1.grains(c,cx,cy,R,o)     放大鏡內的粉末顆粒（示意）：黑色氧化銅顆粒依序變成紅色銅顆粒，碳顆粒變小
+     只增不改；cuso4 之後若要畫粉末可重用 O1.heap、O1.tstand。 */
+
+  /* 兩個 #rrggbb 顏色內插，回傳 #rrggbb（可再丟給 W5.rgba／再內插；W5.mix 回傳 rgb() 不能再內插） */
+  const cuMix = (p, q, t) => { const A = [1, 3, 5].map(i => parseInt(p.slice(i, i + 2), 16)), B = [1, 3, 5].map(i => parseInt(q.slice(i, i + 2), 16));
+    return '#' + A.map((v, i) => ('0' + Math.round(v + (B[i] - v) * clamp01(t)).toString(16)).slice(-2)).join(''); };
+  O1.CU = { cuo: '#202427', cuoHi: '#6c757b', cu: '#c0583a', cuHi: '#f2a074', cuDk: '#7a2e1a', c: '#3a4246', cHi: '#8e989e' };
+
+  /* 橫放試管的鐵架：o：{ x, y 夾子中心（在管軸上）, gy 桌面 y, top 直桿頂 y, ang 試管傾角(0.08), r 試管外半徑(22), a, part 'back'|'front'|（不給＝兩層都畫） }
+     back＝底座、直桿、十字夾、夾臂（畫在試管前先畫）；front＝兩片軟木夾片＋鐵絲（試管畫完再畫）。直桿就在夾子正後方（同 O1.rig 的畫法）。 */
+  O1.tstand = function (c, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a; if (a <= 0.02) return;
+    const x = o.x, y = o.y, gy = o.gy, top = o.top == null ? y - 90 : o.top, ang = o.ang == null ? 0.08 : o.ang, r = o.r || 22, part = o.part;
+    c.save(); c.globalAlpha *= a; c.lineCap = 'round'; c.lineJoin = 'round';
+    if (part !== 'front') {
+      const bg = c.createLinearGradient(0, gy - 12, 0, gy); bg.addColorStop(0, '#6d7a82'); bg.addColorStop(1, '#3d474d');
+      c.fillStyle = bg; W5.rr(c, x - 70, gy - 12, 140, 12, 3); c.fill(); c.strokeStyle = 'rgba(11,26,21,0.8)'; c.lineWidth = 1.5; c.stroke();
+      const rg = c.createLinearGradient(x - 4, 0, x + 4, 0); rg.addColorStop(0, '#dfe6ea'); rg.addColorStop(1, '#7d8a92');
+      c.fillStyle = rg; c.fillRect(x - 4, top, 8, gy - 12 - top); c.strokeRect(x - 4, top, 8, gy - 12 - top);
+      const by = y - r - 28;
+      c.fillStyle = '#4a555c'; c.fillRect(x - 9, by, 18, 18); c.strokeRect(x - 9, by, 18, 18);
+      const arm = () => { c.beginPath(); c.moveTo(x + 9, by + 9); c.lineTo(x + 14, by + 9); c.lineTo(x + 14, y - r - 8); };
+      arm(); c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 9; c.stroke();
+      arm(); c.strokeStyle = '#a9b6bd'; c.lineWidth = 5; c.stroke();
+    }
+    if (part !== 'back') {
+      c.translate(x, y); c.rotate(ang);
+      c.fillStyle = '#c49a6c'; c.strokeStyle = 'rgba(11,26,21,0.85)'; c.lineWidth = 1.5;
+      [-1, 1].forEach(sg => { W5.rr(c, -12, sg < 0 ? -r - 8 : r + 1, 24, 7, 2); c.fill(); c.stroke(); });
+      c.strokeStyle = '#a9b6bd'; c.lineWidth = 3.5;
+      c.beginPath(); c.moveTo(-14, -r - 10); c.lineTo(14, -r - 10); c.moveTo(-14, r + 10); c.lineTo(14, r + 10);
+      c.moveTo(14, -r - 10); c.lineTo(17, 0); c.lineTo(14, r + 10); c.stroke();
+    }
+    c.restore();
+  };
+
+  /* 錶玻璃上的一堆黑色粉末（示意）：底部中心 (x,y)。
+     o：{ a, s 縮放(1), k 0..1.4 粉堆大小（1＝一般；>1 較大堆）, kind 'c' 碳粉（灰黑霧面）| 'cuo' 氧化銅（黑、帶亮點）| 'mix' 兩種混合,
+          mix 0..1（kind 'mix' 時：0＝左半碳粉、右半氧化銅還沒拌開；1＝均勻拌開）, glass 是否畫錶玻璃(true), seed }
+     回傳粉堆頂端 { x, y }（畫布座標）。 */
+  O1.heap = function (c, x, y, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, s = o.s || 1, k = o.k == null ? 1 : Math.max(0, o.k), kind = o.kind || 'cuo', seed = o.seed || 3;
+    const h = 40 * ease(Math.min(1, k)) * (k > 1 ? 1 + 0.35 * (k - 1) : 1), hw = 44 * (k > 1 ? 1 + 0.25 * (k - 1) : Math.max(0.35, Math.min(1, k * 1.4)));
+    const topPt = { x, y: y - (12 + h) * s };
+    if (a <= 0.02) return topPt;
+    const CU = O1.CU;
+    c.save(); c.globalAlpha *= a; c.translate(x, y); c.scale(s, s); c.lineJoin = 'round';
+    if (o.glass !== false) {
+      c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(0, 3, 66, 8, 0, 0, TAU); c.fill();
+      c.fillStyle = 'rgba(190,230,240,0.22)'; c.strokeStyle = 'rgba(200,236,246,0.9)'; c.lineWidth = 2.5;
+      c.beginPath(); c.moveTo(-62, -12); c.quadraticCurveTo(0, 12, 62, -12); c.stroke();
+      c.beginPath(); c.ellipse(0, -12, 62, 7, 0, 0, TAU); c.fill(); c.stroke();
+    }
+    if (h > 1) {
+      const shape = () => { c.beginPath(); c.moveTo(-hw, -10); c.bezierCurveTo(-hw * 0.65, -12 - h * 0.6, -hw * 0.3, -12 - h, 0, -12 - h);
+        c.bezierCurveTo(hw * 0.3, -12 - h, hw * 0.65, -12 - h * 0.6, hw, -10); c.closePath(); };
+      shape();
+      const base = kind === 'c' ? CU.c : CU.cuo;
+      const g = c.createLinearGradient(-hw * 0.6, -12 - h, hw * 0.6, -8); g.addColorStop(0, cuMix(base, '#ffffff', 0.22)); g.addColorStop(0.55, base); g.addColorStop(1, cuMix(base, '#0b1a15', 0.5));
+      c.fillStyle = g; c.fill(); c.strokeStyle = 'rgba(150,160,166,0.75)'; c.lineWidth = 1.6; c.stroke();
+      /* 顆粒：碳＝霧面灰點；氧化銅＝小亮點 */
+      c.save(); shape(); c.clip();
+      const n = 34, mx = kind === 'mix' ? clamp01(o.mix || 0) : 0;
+      for (let i = 0; i < n; i++) {
+        const isC = kind === 'c' ? true : kind === 'cuo' ? false : i % 2 === 0;
+        let px = (hash(seed * 7 + i * 3.3) - 0.5) * 2 * hw * 0.92;
+        if (kind === 'mix') { const half = (isC ? -1 : 1) * (0.1 + 0.85 * hash(seed + i * 5.1)) * hw * 0.92; px = lerp(half, px, ease(mx)); }
+        const lim = 1 - Math.abs(px) / (hw * 1.02), py = -11 - hash(seed * 5 + i * 7.7) * h * Math.max(0, lim) * 0.95;
+        c.fillStyle = isC ? W5.rgba(CU.cHi, 0.75) : 'rgba(225,235,240,0.85)';
+        c.beginPath(); c.arc(px, py, isC ? 2.2 : 1.4, 0, TAU); c.fill();
+      }
+      c.restore();
+    }
+    c.restore();
+    return topPt;
+  };
+
+  /* 試管底的一層粉末：g＝O1.htube 的回傳值（用 g.P、g.ri、g.r 算出管軸與內壁）。
+     o：{ a, d0(22)/d1(150) 粉末在管軸上的範圍, h 最厚處(15), k 0..1 裝了幾成（由管底往上變厚）, red 0..1 變成銅的進度（從 hotD 往兩邊擴散）,
+          hotD 受熱最強處（預設 d0、d1 中間）, seed, t 秒（亮點閃爍） }
+     粉末畫在內壁裡（clip），沿著下管壁平鋪；沒有變紅的地方是黑色（碳＋氧化銅），變紅的前緣有紅色亮點。 */
+  O1.tubeBed = function (c, g, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, k = clamp01(o.k == null ? 1 : o.k); if (a <= 0.02 || k <= 0.01) return;
+    const d0 = o.d0 == null ? 22 : o.d0, d1 = o.d1 == null ? 150 : o.d1, H = (o.h || 15) * ease(k), hot = o.hotD == null ? (d0 + d1) / 2 : o.hotD;
+    const red = clamp01(o.red || 0), seed = o.seed || 7, t = o.t || 0, CU = O1.CU;
+    const p0 = g.P(0, 0), p1 = g.P(1, 0), ang = Math.atan2(p1.y - p0.y, p1.x - p0.x), ri = g.ri, r = g.r;
+    const span = Math.max(hot - d0, d1 - hot) + 26, front = red * span, soft = 26;
+    const fRed = d => clamp01((front - Math.abs(d - hot)) / soft + (red >= 1 ? 1 : 0));
+    const thick = d => H * clamp01((d - d0) / 16) * clamp01((d1 - d) / 26) * (0.92 + 0.08 * Math.sin(d * 0.21 + seed));
+    c.save(); c.globalAlpha *= a; c.translate(p0.x, p0.y); c.rotate(ang);
+    c.beginPath(); c.moveTo(g.len || 300, -ri); c.lineTo(r, -ri); c.arc(r, 0, ri, -Math.PI / 2, Math.PI / 2, true); c.lineTo(g.len || 300, ri); c.closePath(); c.clip();
+    const bed = () => { c.beginPath(); c.moveTo(d0 - 4, ri + 2); for (let d = d0; d <= d1 + 0.1; d += 3) c.lineTo(d, ri - thick(d)); c.lineTo(d1 + 4, ri + 2); c.closePath(); };
+    bed(); const gg = c.createLinearGradient(0, ri - H, 0, ri); gg.addColorStop(0, '#3a4044'); gg.addColorStop(1, CU.cuo); c.fillStyle = gg; c.fill();
+    c.save(); bed(); c.clip();
+    /* 變紅（整片顏色，前緣柔和） */
+    if (red > 0.001) for (let d = d0 - 4; d <= d1 + 4; d += 2) {
+      const f = fRed(d); if (f <= 0.01) continue;
+      c.fillStyle = W5.rgba(CU.cu, 0.95 * f); c.fillRect(d, ri - H - 2, 2.4, H + 4);
+    }
+    /* 顆粒：沒變紅＝灰白小點（碳＋氧化銅），前緣＝紅色亮點，變紅後＝銅色亮點 */
+    for (let i = 0; i < 70; i++) {
+      const d = d0 + 4 + hash(seed + i * 3.7) * (d1 - d0 - 10), th = thick(d); if (th < 2) continue;
+      const y = ri - hash(seed * 3 + i * 5.3) * th * 0.9 - 1, f = fRed(d);
+      if (f <= 0.02) { c.fillStyle = 'rgba(200,210,215,0.55)'; c.beginPath(); c.arc(d, y, 1.2, 0, TAU); c.fill(); }
+      else if (f < 0.98) {
+        const tw = 0.6 + 0.4 * Math.sin(t * 9 + i * 1.7);
+        W5.glow(c, d, y, 7, '#ffb27a', 0.55 * tw * Math.sin(Math.PI * f));
+        c.fillStyle = W5.rgba('#ff9a5a', 0.95); c.beginPath(); c.arc(d, y, 2.2, 0, TAU); c.fill();
+      } else { c.fillStyle = W5.rgba(CU.cuHi, 0.8); c.beginPath(); c.arc(d, y, 1.4, 0, TAU); c.fill(); }
+    }
+    c.restore();
+    bed(); c.strokeStyle = red > 0.5 ? 'rgba(122,46,26,0.8)' : 'rgba(150,160,166,0.6)'; c.lineWidth = 1.2; c.stroke();
+    c.restore();
+  };
+
+  /* 放大鏡裡的粉末顆粒（示意，沒有畫晶格）：在 (cx,cy) 半徑 R 的圓裡排顆粒（請在呼叫端先 clip）。
+     o：{ a, r 顆粒半徑(16), k 0..1 反應進度（每顆氧化銅在自己的時間點由黑變紅、變的時候閃一下；碳顆粒跟著 k 變小）, seed(11), cFrac 碳顆粒比例(0.3), t 秒 }
+     回傳 { n 顆粒數, cu 已變紅的顆數 } */
+  O1.grains = function (c, cx, cy, R, o) {
+    o = o || {}; const a = o.a == null ? 1 : o.a, r = o.r || 16, k = clamp01(o.k || 0), seed = o.seed || 11, cf = o.cFrac == null ? 0.3 : o.cFrac, CU = O1.CU;
+    const out = { n: 0, cu: 0 }; if (a <= 0.02) return out;
+    const d = r * 2.1, pts = [];
+    for (let j = -8; j <= 8; j++) for (let i = -8; i <= 8; i++) {
+      const x = (i + (j & 1) * 0.5) * d + (hash(seed + i * 13 + j * 7) - 0.5) * r * 0.5, y = j * d * 0.87 + (hash(seed * 3 + i * 5 + j * 11) - 0.5) * r * 0.5;
+      if (Math.hypot(x, y) <= R + r * 0.6) pts.push({ x: cx + x, y: cy + y, id: (i + 9) * 31 + (j + 9) });
+    }
+    c.save(); c.globalAlpha *= a; c.lineJoin = 'round';
+    pts.forEach((p, n) => {
+      const isC = hash(seed * 5 + p.id * 1.3) < cf, th = 0.04 + 0.8 * hash(seed * 7 + p.id * 2.9);
+      const q = isC ? 0 : ease(clamp01((k - th) / 0.14)), sc = isC ? 1 - 0.45 * ease(k) : 1;
+      const rr = r * sc * (0.85 + 0.25 * hash(p.id + seed)); out.n++; if (q >= 0.5) out.cu++;
+      if (!isC && q > 0.01 && q < 0.99) W5.glow(c, p.x, p.y, rr * 2.4, '#ffb27a', 0.6 * Math.sin(Math.PI * q));
+      c.beginPath();
+      for (let m = 0; m < 7; m++) { const tt = m / 7 * TAU + hash(p.id + m) * 0.4, rm = rr * (0.78 + 0.3 * hash(seed + p.id * 3 + m)); c[m ? 'lineTo' : 'moveTo'](p.x + Math.cos(tt) * rm, p.y + Math.sin(tt) * rm); }
+      c.closePath();
+      const base = isC ? CU.c : cuMix(CU.cuo, CU.cu, q), hi = isC ? CU.cHi : cuMix(CU.cuoHi, CU.cuHi, q);
+      const gg = c.createLinearGradient(p.x - rr, p.y - rr, p.x + rr, p.y + rr); gg.addColorStop(0, hi); gg.addColorStop(0.45, base); gg.addColorStop(1, cuMix(base, '#0b1a15', 0.45));
+      c.fillStyle = gg; c.fill(); c.strokeStyle = isC ? 'rgba(20,26,30,0.9)' : W5.rgba(cuMix('#0b1a15', CU.cuDk, q), 0.9); c.lineWidth = 1.4; c.stroke();
+      if (!isC) { c.strokeStyle = W5.rgba(cuMix('#e8eef0', '#ffd2b0', q), 0.75); c.lineWidth = 1.6; c.beginPath(); c.arc(p.x - rr * 0.15, p.y - rr * 0.15, rr * 0.5, Math.PI * 1.05, Math.PI * 1.45); c.stroke(); }
+    });
+    c.restore();
+    return out;
+  };
+
 
 })(window);
