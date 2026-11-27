@@ -17,7 +17,7 @@
   function init() {
     const S = { gogOn: false, gog: 0, lampOn: false, match: -1, h: [0, 0, 0], done: [false, false, false], seen: [false, false, false],
                 sp: REST.map(r => ({ x: r.x, y: r.y })), active: -1, cmp: 0, cmpDone: false, guess: null, tt: 0, seq: M4Lab.Seq() };
-    S.run = function (name) { run(S, name); };
+    S.run = function (name, instant) { if (instant) finish(S); run(S, name); if (instant) finish(S); };
     S.reset = function () { const n = init(); Object.keys(n).forEach(k => { if (k !== 'run' && k !== 'reset') S[k] = n[k]; }); };
     return S;
   }
@@ -34,6 +34,7 @@
                  mv(sp, up, 1.0, 50), mv(sp, rest, 0.5), { e: () => { S.active = -1; } }]);
     }
   }
+  function finish(S) { let g = 0; while (S.seq.busy && g++ < 800) S.seq.step(0.1); }
   function step(S, dt) { S.tt += dt; const mvg = S.seq.step(dt); return mvg || S.lampOn || S.match >= 0; }
 
   /* ── 畫法 ── */
