@@ -1,6 +1,6 @@
-/* organics_1_lab_heat_1127_v1.js ｜ 動手做：砂糖、麵粉、食鹽加熱台（tab2）
- * 流程：戴護目鏡 → 點燃酒精燈 →（先猜）→ 加熱砂糖／麵粉／食鹽 → 比一比。
- * 燃燒匙放在外焰上加熱：砂糖熔化→褐→冒煙→黑；麵粉白→黃→褐→冒煙→黑；食鹽劈啪跳動、一直是白色。
+/* organics_1_lab_heat_1128_v1.js ｜ 動手做：奶粉、木屑、細沙加熱台（tab2；樣品與上方動畫的砂糖、麵粉、食鹽不同）
+ * 流程：戴護目鏡 → 點燃酒精燈 →（先猜）→ 加熱奶粉／木屑／細沙 → 比一比。
+ * 燃燒匙放在外焰上加熱：奶粉淡黃→褐→冒煙→黑；木屑淺褐→深褐→冒煙→黑；細沙（二氧化矽）顏色不變。S.run 的名稱仍用 sugar／flour／salt 當代號（依序＝第 1、2、3 支匙），播放器不用改。
  * 契約：window.W5Lab.heat = { activate, deactivate, relang, _state }；S.run(name) 供有聲講解：'gog'／'light'／'sugar'／'flour'／'salt'／'cmp'。
  * 版面（960×540）：桌面 y 478；酒精燈 x 230（放大 1.5 倍，燈芯頂 y≈388）；加熱位置＝燃燒匙碗心 (230,338)；三支匙休息位置 x 470／620／770、碗心 y 392。
  * 比一比：三支匙並排後，上方標「有機物（含碳）」「有機物（含碳）」「不含碳」。
@@ -12,7 +12,7 @@
   const GY = 478, LAMP = { x: 230, s: 1.5 }, HEATPT = { x: 230, y: 338 };
   const REST = [{ x: 470, y: 392 }, { x: 620, y: 392 }, { x: 770, y: 392 }];
   const KIND = ['sugar', 'flour', 'salt'];
-  const NAME = [['砂糖', 'Sugar'], ['麵粉', 'Flour'], ['食鹽', 'Salt']];
+  const NAME = [['奶粉', 'Milk powder'], ['木屑', 'Sawdust'], ['細沙', 'Sand']];
 
   function init() {
     const S = { gogOn: false, gog: 0, lampOn: false, match: -1, h: [0, 0, 0], done: [false, false, false], seen: [false, false, false],
@@ -40,18 +40,16 @@
   /* ── 畫法 ── */
   function sample(c, k, h, x, y, t) {
     const w = 15; let col, dome = 4;
-    if (k === 0) {
-      if (h < 0.25) col = '#f5f3ee';
-      else if (h < 0.45) { col = mix('#f5f3ee', '#efcf73', (h - 0.25) / 0.2); dome = 4 - 2.5 * (h - 0.25) / 0.2; }
-      else if (h < 0.72) { col = mix('#c07a26', '#4a2a10', (h - 0.45) / 0.27); dome = 1.5 + (h - 0.45) * 1.4 * 9; }
-      else { col = mix('#3a2410', '#1b1917', (h - 0.72) / 0.28); dome = 1.5 + (0.4 + (h - 0.72) * 1.6) * 9; }
-    } else if (k === 1) {
-      col = h < 0.3 ? mix('#f3efe4', '#e7d49d', h / 0.3) : h < 0.6 ? mix('#e7d49d', '#8a5a2b', (h - 0.3) / 0.3) : mix('#8a5a2b', '#211c18', (h - 0.6) / 0.4);
+    if (k === 0) {                                                                                  /* 奶粉：奶白→淡黃→褐→黑 */
+      col = h < 0.3 ? mix('#f6efdc', '#e6c987', h / 0.3) : h < 0.6 ? mix('#e6c987', '#7a4a22', (h - 0.3) / 0.3) : mix('#7a4a22', '#1d1814', (h - 0.6) / 0.4);
       dome = 4 + (h > 0.6 ? (h - 0.6) * 3 : 0);
-    } else col = '#f4f3ee';
+    } else if (k === 1) {                                                                           /* 木屑：淺褐→深褐→黑 */
+      col = h < 0.3 ? mix('#d8b585', '#a77540', h / 0.3) : h < 0.6 ? mix('#a77540', '#5a3818', (h - 0.3) / 0.3) : mix('#5a3818', '#1a1512', (h - 0.6) / 0.4);
+      dome = 5 + (h > 0.6 ? (h - 0.6) * 2 : 0);
+    } else col = '#d9ccaa';                                                                         /* 細沙：不變 */
     c.fillStyle = col; c.beginPath(); c.ellipse(x, y, w, dome, 0, Math.PI, 0); c.arc(x, y, w, 0, Math.PI); c.closePath(); c.fill();
-    if (k === 0 && h > 0.25 && h < 0.5) { c.fillStyle = 'rgba(255,255,255,0.5)'; c.beginPath(); c.ellipse(x - 5, y - dome * 0.6, 4, 1.5, 0, 0, Math.PI * 2); c.fill(); }
-    if (k === 2 || (k === 0 && h < 0.25)) { c.fillStyle = 'rgba(255,255,255,0.95)'; for (let i = 0; i < 5; i++) c.fillRect(x - 9 + i * 4.5, y - dome * (0.35 + 0.35 * ((i * 3) % 2)), 2, 2); }
+    if (k === 2) { c.fillStyle = 'rgba(120,100,60,0.6)'; for (let i = 0; i < 6; i++) c.fillRect(x - 11 + i * 4.2, y - dome * (0.25 + 0.4 * ((i * 5) % 3) / 2), 2, 2); }
+    if (k === 1 && h < 0.5) { c.fillStyle = 'rgba(255,235,200,0.45)'; for (let i = 0; i < 4; i++) c.fillRect(x - 9 + i * 5.5, y - dome * (0.3 + 0.3 * (i % 2)), 3, 1.5); }
   }
   function spoon(c, S, k) {
     const sp = S.sp[k], x = sp.x, y = sp.y, hot = S.active === k ? Math.min(1, S.h[k] * 3) : 0;
@@ -64,11 +62,6 @@
     c.strokeStyle = '#4b565b'; c.lineWidth = 2; c.stroke();
     c.restore();
     sample(c, k, S.h[k], x, y + 3, S.tt);
-    if (k === 2 && S.active === 2) {                                                                  /* 食鹽劈啪跳 */
-      c.save(); c.fillStyle = '#fff';
-      for (let i = 0; i < 6; i++) { const ph = (S.tt * 3 + i * 0.37) % 1, up = Math.max(0, Math.sin(ph * Math.PI)) * (14 + (i % 3) * 8); if (ph < 0.8) c.fillRect(x - 12 + i * 5, y - 4 - up, 3, 3); }
-      c.restore();
-    }
   }
   function stand(c, x, y) {                                                                           /* 燃燒匙休息時的小支架 */
     c.save(); c.strokeStyle = '#6f7b80'; c.lineWidth = 6; c.lineCap = 'round';
@@ -121,7 +114,7 @@
     }
     if (S.cmp > 0) {
       const a = U.ease(S.cmp);
-      [['有機物（含碳）', 'Organic (has C)', '#33cc99'], ['有機物（含碳）', 'Organic (has C)', '#33cc99'], ['不含碳', 'No carbon', '#ff8040']].forEach(([zh, en, col], k) => {
+      [['有機物', 'Organic', '#33cc99'], ['有機物', 'Organic', '#33cc99'], ['不含碳', 'No carbon', '#ff8040']].forEach(([zh, en, col], k) => {
         c.save(); c.globalAlpha = a; U.pill(c, T(zh, en), REST[k].x + 6, 250, col, 22, 'center'); c.restore();
       });
     }
@@ -130,40 +123,40 @@
 
   function result(S) {
     const lines = []; const k = S.seq.busy;
-    const obs = [['先熔化成液體，變褐色、冒煙，最後變成<b>黑色</b>', 'Melts, turns brown and smokes, ends up <b>black</b>'], ['由白變黃、變褐、冒煙，最後<b>變黑</b>', 'White → yellow → brown with smoke, finally <b>black</b>'], ['劈啪跳動，但<b>一直是白色</b>，不會變黑', 'Crackles and jumps, but <b>stays white</b>']];
+    const obs = [['由奶白變淡黃、變褐、冒煙，最後<b>變黑</b>', 'Cream → pale yellow → brown with smoke, finally <b>black</b>'], ['顏色越來越深、變褐、冒煙，最後<b>變黑</b>', 'Gets darker and browner, smokes, finally <b>black</b>'], ['顏色<b>幾乎不變</b>，不會變黑', 'The colour <b>hardly changes</b> — it does not blacken']];
     let tip;
     if (!S.gogOn) tip = ['加熱時粉末可能會噴濺，先<b>戴上護目鏡</b>。', 'Powders can spit when heated — <b>put on your goggles</b> first.'];
     else if (!S.lampOn) tip = ['用<b>火柴</b>點燃酒精燈。', 'Light the alcohol lamp with a <b>match</b>.'];
-    else if (!S.done.some(Boolean) && !S.seq.busy) tip = ['三支燃燒匙分別裝了<b>砂糖、麵粉、食鹽</b>。先猜猜看哪些會<b>變黑</b>，再一支一支放到<b>外焰</b>上加熱。', 'The spoons hold <b>sugar, flour and salt</b>. Guess which will <b>turn black</b>, then heat them one by one in the <b>outer flame</b>.'];
-    else if (S.cmpDone) tip = ['會變黑的是<b>含碳的有機物</b>（受熱分解後留下碳）；食鹽（NaCl）不含碳，所以不會變黑。', 'The ones that blacken are <b>carbon-containing organics</b> (heat breaks them down and leaves carbon); salt (NaCl) has no carbon.'];
+    else if (!S.done.some(Boolean) && !S.seq.busy) tip = ['三支燃燒匙分別裝了<b>奶粉、木屑、細沙</b>。先猜猜看哪些會<b>變黑</b>，再一支一支放到<b>外焰</b>上加熱。', 'The spoons hold <b>milk powder, sawdust and sand</b>. Guess which will <b>turn black</b>, then heat them one by one in the <b>outer flame</b>.'];
+    else if (S.cmpDone) tip = ['會變黑的是<b>含碳的有機物</b>（受熱分解後留下碳）；細沙（二氧化矽 SiO₂）不含碳，所以不會變黑。', 'The ones that blacken are <b>carbon-containing organics</b> (heat breaks them down and leaves carbon); sand (silicon dioxide, SiO₂) has no carbon.'];
     else if (S.done.every(Boolean)) tip = ['三支燃燒匙都放回架上了，按「比一比」。', 'All three spoons are back on their stands — press “Compare”.'];
     else tip = null;
     let h = tip ? '<div>' + T(tip[0], tip[1]) + '</div>' : '';
     KIND.forEach((kd, i) => { if (S.seen[i]) h += '<div><span class="lw-y">' + T(NAME[i][0], NAME[i][1]) + '</span>：' + T(obs[i][0], obs[i][1]) + '</div>'; });
-    if (S.guess && S.cmpDone) h += '<div class="' + (S.guess === 'two' ? 'lw-ok' : 'lw-bad') + '">' + T(S.guess === 'two' ? '你猜對了：砂糖和麵粉會變黑！' : '正確答案是砂糖和麵粉會變黑、食鹽不會。', S.guess === 'two' ? 'You guessed right: sugar and flour blacken!' : 'The answer: sugar and flour blacken, salt does not.') + '</div>';
+    if (S.guess && S.cmpDone) h += '<div class="' + (S.guess === 'two' ? 'lw-ok' : 'lw-bad') + '">' + T(S.guess === 'two' ? '你猜對了：奶粉和木屑會變黑！' : '正確答案是奶粉和木屑會變黑、細沙不會。', S.guess === 'two' ? 'You guessed right: milk powder and sawdust blacken!' : 'The answer: milk powder and sawdust blacken, sand does not.') + '</div>';
     return h;
   }
 
   M4Lab.make({
     key: 'heat', tab: 'tab2',
     titleZh: '🔥 實驗台：哪些是有機物？加熱看看', titleEn: '🔥 Lab Bench: Which Are Organic? Heat Them',
-    subZh: '三支燃燒匙分別裝了砂糖、麵粉、食鹽。先猜哪些會變黑，再一支一支放到酒精燈的外焰上加熱。',
-    subEn: 'Three burning spoons hold sugar, flour and salt. Guess which will turn black, then heat them one by one in the outer flame.',
+    subZh: '三支燃燒匙分別裝了奶粉、木屑、細沙。先猜哪些會變黑，再一支一支放到酒精燈的外焰上加熱。',
+    subEn: 'Three burning spoons hold milk powder, sawdust and sand. Guess which will turn black, then heat them one by one in the outer flame.',
     tipZh: '先戴護目鏡、點燃酒精燈，再依序加熱；全部加熱完按「比一比」。', tipEn: 'Put on goggles and light the lamp, heat each spoon in turn, then press “Compare”.',
     init, step, draw, result,
     controls: S => {
       const ready = () => S.gogOn && S.lampOn && !S.seq.busy;
       return [
         { kind: 'buttons', items: [
-          { id: 'g_two', zh: '我猜：砂糖、麵粉變黑', en: 'I guess: sugar, flour', on: () => { S.guess = 'two'; }, active: () => S.guess === 'two', disabled: () => S.done.some(Boolean) },
+          { id: 'g_two', zh: '我猜：奶粉、木屑變黑', en: 'I guess: milk powder, sawdust', on: () => { S.guess = 'two'; }, active: () => S.guess === 'two', disabled: () => S.done.some(Boolean) },
           { id: 'g_all', zh: '我猜：三種都變黑', en: 'I guess: all three', on: () => { S.guess = 'all'; }, active: () => S.guess === 'all', disabled: () => S.done.some(Boolean) },
           { id: 'g_none', zh: '我猜：都不變黑', en: 'I guess: none', on: () => { S.guess = 'none'; }, active: () => S.guess === 'none', disabled: () => S.done.some(Boolean) }] },
         { kind: 'buttons', items: [
           { id: 'gog', zh: '🥽 戴上護目鏡', en: '🥽 Goggles on', on: () => run(S, 'gog'), active: () => S.gogOn, disabled: () => S.gogOn || S.seq.busy },
           { id: 'light', zh: '🔥 點燃酒精燈', en: '🔥 Light the lamp', on: () => run(S, 'light'), active: () => S.lampOn, disabled: () => !S.gogOn || S.lampOn || S.seq.busy },
-          { id: 'sugar', zh: '加熱砂糖', en: 'Heat sugar', on: () => run(S, 'sugar'), disabled: () => !ready() || S.done[0] },
-          { id: 'flour', zh: '加熱麵粉', en: 'Heat flour', on: () => run(S, 'flour'), disabled: () => !ready() || S.done[1] },
-          { id: 'salt', zh: '加熱食鹽', en: 'Heat salt', on: () => run(S, 'salt'), disabled: () => !ready() || S.done[2] },
+          { id: 'sugar', zh: '加熱奶粉', en: 'Heat milk powder', on: () => run(S, 'sugar'), disabled: () => !ready() || S.done[0] },
+          { id: 'flour', zh: '加熱木屑', en: 'Heat sawdust', on: () => run(S, 'flour'), disabled: () => !ready() || S.done[1] },
+          { id: 'salt', zh: '加熱細沙', en: 'Heat sand', on: () => run(S, 'salt'), disabled: () => !ready() || S.done[2] },
           { id: 'cmp', zh: '🔍 比一比', en: '🔍 Compare', on: () => run(S, 'cmp'), disabled: () => !S.done.every(Boolean) || S.cmpDone || S.seq.busy },
           { id: 'reset', zh: '↺ 重來', en: '↺ Again', on: () => { S.seq.run([]); S.reset(); } }] }
       ];
