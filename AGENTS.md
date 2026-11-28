@@ -12,6 +12,7 @@
 | 「把 <課> 優化成 work_5 那樣」「做新一課」 | 本檔第 1～4 節 | `lessons_md/<課>.md`（講解文字）、`lessons_md/<課>.quiz.md`（題庫）、範本 `work_5.html` 的一個分頁 |
 | 「做 <課> 的學生操作／老師講解」 | 本檔第 3.3 節 | 範本 `work_5_modes_1118_v1.js`、`work_5_kit_1103_v1.js` |
 | 「做 <課> 的有聲講解」 | 本檔第 5 節 | `AGENTS_VOICE.md` → `tools/voice/lesson_studio/新課作業手冊.md` →（需要時）Project「網課有聲講解_自動螢光筆規範」「…雲端錄音與 Opus 精準切畫面」 |
+| 動畫或動手做裡要畫手（推、拉、握、拿、托、壓、捏、指） | 本檔 3.2「手的畫法」 | `assets/hands/hands_1128_v1/README.md`、`anchors.json` |
 | 改題庫／選項 | 本檔 3.4 | `assets/quiz/quiz_<課>_*.js`、`tools/qa/README.md` |
 | 做到哪了？接著做什麼？ | `PROGRESS.md` 最上面幾行 | `git log --oneline -20` |
 | 光筆（pen tool）相關 | `pencil.md` | — |
@@ -104,7 +105,7 @@
 - 進度條畫在畫布頂端，由 `assets/anim_progress_bar_1105_v1.js` 提供，不要自己畫。
 - 只能有一條 `requestAnimationFrame`；離開分頁或 `document.hidden` 就停；**不要在動畫尾巴寫死分頁編號**（插入分頁會讓動畫畫一格就不動）。
 - **分工**：動畫與有聲講解切畫面用 Opus，**同一時間只開一個 Opus 代理、一次只做一個動畫檔**；其他一律 Sonnet（文字、頁面骨架、檢查、git、錄音、建置、模擬）。給代理的簡報只放那個動畫需要的：每步文字、圖片檔名尺寸、範本檔路徑。
-- **不畫手**（老師 2026-11-27 規範）：動畫與動手做畫面裡的「手壓、手推、手拉」一律不畫人手、手臂、手指（目前的手畫得不像手）；改用**重物**（粉色、帶吊環的方塊，範本 `M4.hand` in `mechanics_4_common_1126_v1.js`，現已改畫重物）或直接用力的箭頭表示施力。等老師確認畫得出像樣的手（預計明年）才恢復。給 Opus 代理的簡報也要寫這條。
+- **手的畫法：一律貼手部姿勢庫，不要自己用 Canvas／SVG 畫手**（老師 2026-11-28 規範，取代 2026-11-27「不畫手」）：動畫與動手做畫面裡需要「手推、手拉、手握、手拿、手托、手壓、手捏、手指」時，用 `assets/hands/hands_1128_v1/` 的透明底 PNG（10 個姿勢×4 視角：`open／fist／point／grip／pinch／push／push_fingertip／hook／hold_flat／press_down` × `side／top／three／palm`）。**先讀 `assets/hands/hands_1128_v1/README.md`**（接觸點 `anchors.json` 的用法：讓錨點對到物體接觸點、`force_px` 給力的箭頭方向；所有圖同一比例尺、掌心置中；每個姿勢的已知瑕疵與不建議的視角）。**不得改手的造型或顏色**（膚色未定案，之後只改 `tools/hands/build_hand_v2.py` 的 `SKIN_HEX` 重跑一次，所有課同步）；沒有合適姿勢時，改 `tools/hands/poses_v2.py` 新增姿勢並重新渲染（說明見 README），不要臨時手畫。**範圍**：新做與重製的課照此辦理；舊課已改成重物（`M4.hand`）、力箭頭的畫面，不主動回頭改（改舊動畫仍屬紅區，要老師授權）。圖片要放進 `sources.md`／`textbook_image_permissions.md` 已登記（原創 3D 渲染，不必另外登記）。給 Opus 代理的簡報也要寫這條，並附上姿勢庫 README 的路徑。
 - 電路動畫一律用「電子流」；電路、生物小構造、考題附圖的專門規則見下方「專題規則」。
 
 ### 3.3 學生操作／老師講解（只有老師指定的課才做）

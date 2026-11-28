@@ -13,3 +13,7 @@
 血液循環重製用的真實 3D 解剖網格，抽自開源資料集 Svitylo 3D Anatomy Atlas 資料包 1.2.0（上游為 Z-Anatomy，再上游為 BodyParts3D；腎臟為 Human Reference Atlas）。主要授權 CC BY-SA 4.0，腎臟 CC BY 4.0；不是課本圖像，也不是 AI 原創或公共領域，不適用康軒的同意說明。
 
 成品放在 `assets/biology/anatomy3d/`：兩個 glb 與 `si_parts_v1.json` 是衍生資料，須維持 CC BY-SA 4.0、保留署名與改作說明，頁面上放可見的署名與授權連結。資料版本、commit、署名原文、改作（挑選、合併、空腸與迴腸切分、簡化）與 ShareAlike 注意事項見該資料夾的 `sources.md`；資料集本身是 preview 版，授權稽核尚未完成。此檔只記錄素材使用方向與授權依據，不作法律結論。
+
+## 手部姿勢庫（原創 3D 建模渲染）｜2026-11-28 開發登記
+
+`assets/hands/hands_1128_v1/`：10 個姿勢 × 4 視角的透明底卡通手與接觸點標記（anchors.json），由 `tools/hands/` 的腳本用 Blender（bpy）渲染。**本站原創**，不是課本圖像、不是照片，沒有第三方素材；來源與製作說明見該資料夾的 `sources.md`、`README.md`。老師 2026-11-28 指示：以後手部動作一律用這套（`AGENTS.md` 3.2「手的畫法」）；目前還沒有任何一課實際貼上。
