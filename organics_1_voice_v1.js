@@ -259,8 +259,8 @@
   //   「現在做到第幾個」一律由實驗台自己的旗標算（haveFn），不靠播放器記帳，所以跳句、學生自己按過都不會亂。
   // sort（tab1，掛 except）：5＝全部在桌上；6＝尿素放進有機物；7＝再放二氧化碳進無機物；8＝示範拖錯：甲烷拖進無機物 → 彈回並說明
   // heat（tab2，掛 char）：5＝預設；6＝戴護目鏡＋點燃酒精燈；7＝按「我猜：砂糖、麵粉變黑」；8＝加熱砂糖（麵粉、食鹽留給學生）
-  // wood（tab2，掛 products）：5＝預設；6＝戴護目鏡；7＝點燈→來回預熱→集中加熱→點燃導管口（一個接一個現場播，約 15 秒）
-  // candle（tab3，掛 testh）：照旁白「點燃蠟燭，先倒扣冷燒杯…」的順序：5＝預設；6＝點燃蠟燭；7＝倒扣冷燒杯（起霧、水珠）；8＝試紙碰水珠
+  // wood（tab2，掛 products；鋁箔包竹筷乾餾）：5＝預設；6＝戴護目鏡；7＝鋁箔包覆→點燈加熱→點燃氣體→打開看產物（一個接一個現場播，約 24 秒）
+  // candle（tab3，掛 testh；酒精在蒸發皿裡燃燒）：照旁白「點燃酒精，先倒扣冷燒杯…」的順序：5＝預設；6＝點燃酒精；7＝倒扣冷燒杯（起霧、水珠）；8＝試紙碰水珠
   //   （之後「拿開燒杯」「倒扣石灰水燒杯」留給學生：＊停 10 秒放不下，見回報）
   // model（tab4，掛 props）：5＝原子散開；6＝乙醇；7＝甲醚；8＝甲醚＋示範拖曳轉動
   function labBtn(key, id) { return clickIn(key, '#' + key + 'Btn_' + id); }
@@ -287,8 +287,8 @@
   }
   var HEAT_ORDER = ['gog', 'light', 'sugar', 'flour', 'salt', 'cmp'];
   function heatHave(S) { return S.cmpDone ? 6 : S.done[2] ? 5 : S.done[1] ? 4 : S.done[0] ? 3 : S.lampOn ? 2 : S.gogOn ? 1 : 0; }
-  var WOOD_ORDER = ['gog', 'light', 'preheat', 'heat', 'ignite', 'litmus', 'solid', 'cap'];
-  function woodHave(S) { return S.capDone ? 8 : S.solidDone ? 7 : S.litDone ? 6 : S.ignDone ? 5 : S.heatDone ? 4 : S.preDone ? 3 : S.lampOn ? 2 : S.gogOn ? 1 : 0; }
+  var WOOD_ORDER = ['gog', 'wrap', 'heat', 'ignite', 'open'];
+  function woodHave(S) { return S.openDone ? 5 : S.ignDone ? 4 : S.heatDone ? 3 : S.wrapDone ? 2 : S.gogOn ? 1 : 0; }
   var CANDLE_ORDER = ['light', 'cold', 'strip', 'away', 'lime'];
   function candleHave(S) { return S.limeDone ? 5 : S.awayDone ? 4 : S.stripDone ? 3 : S.coldDone ? 2 : S.lit_on ? 1 : 0; }
   window.__vxLabHave = { heat: heatHave, wood: woodHave, candle: candleHave };   // 逐句模擬用（同一套算法）

@@ -1,8 +1,8 @@
 /* ==================================================================
-   organics_1 ｜ 補充：乾餾時看到的煙（cvs-smoke，960×540，紫色資優分頁 tab5）
+   organics_1 ｜ 補充：乾餾時看到的煙（cvs-smoke，960×540，tab5）
    三步：1 白煙 → 2 黑煙 → 3 醋酸與石蕊
    介面依 work_5_kit_1103_v1.js：W5.register + 純函式 draw(c, s)；共用畫法在 M3、M4、O1。
-   用到：M3.backdrop（紫色光暈 #c084fc，同 mechanics_5 資優分頁）／ground／slab／caption／magnifier／dashArrow、
+   用到：M3.backdrop／ground／slab／caption／magnifier／dashArrow、
         M4.L／T／P／withA／fin／fout／grow／zoomLeader、
         O1.rig／rigPts／smoke／miniMol／MOL.H2O／cBlob／spot／litmus／dropper。本檔沒有新增 O1 函式。
 
@@ -60,7 +60,6 @@
   const COL = W5.COL, ease = W5.ease, lerp = W5.lerp, clamp01 = W5.clamp01, hash = W5.hash, TAU = Math.PI * 2;
   const L = M4.L, T = M4.T, P = M4.P, withA = M4.withA, fin = M4.fin, fout = M4.fout, grow = M4.grow;
   const WHITE = COL.white, DIM = COL.dim, YEL = COL.yellow, CORAL = COL.coral, TEAL = COL.teal;
-  const PURPLE = '#c084fc';                               /* 資優分頁的紫色（頁面 .gifted-tab 同色） */
   const DUR = [12, 12, 13];                               /* 總長 37 秒 */
 
   /* ── 版面 ── */
@@ -322,7 +321,7 @@
 
   /* ═══════════ draw ═══════════ */
   function draw(c, s) {
-    M3.backdrop(c, { gy: GY, cell: 40, glow: PURPLE });
+    M3.backdrop(c, { gy: GY, cell: 40 });
     bench(c);
     rig(c, s);
     step3(c, s);

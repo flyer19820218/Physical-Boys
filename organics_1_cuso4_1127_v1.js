@@ -1,8 +1,8 @@
 /* ==================================================================
-   organics_1 ｜ 補充：檢驗水的另一種方法——無水硫酸銅（cvs-cuso4，960×540，紫色資優分頁 tab5）
+   organics_1 ｜ 補充：檢驗水的另一種方法——無水硫酸銅（cvs-cuso4，960×540，tab5）
    四步：1 白色粉末 → 2 遇到水 → 3 變成藍色 → 4 與試紙比一比
    介面依 work_5_kit_1103_v1.js：W5.register + 純函式 draw(c, s)；共用畫法在 M3、M4、O1。
-   用到：M3.backdrop（紫色光暈 #c084fc，同 smoke、cuo；紫色只用在光暈）／ground／slab／caption／dashArrow、
+   用到：M3.backdrop／ground／slab／caption／dashArrow、
         M4.L／P／withA／fin／fout／grow，
         O1.bottle／spatula／dropper／miniMol／mol／MOL.H2O／fx／cocl／tweezers，
         以及本檔新增到 O1 的 O1.CUSO4／cuso4Pile／waterDrop。
@@ -38,10 +38,9 @@
      → u 3.6～5.6 試紙從尖端由藍變粉紅、粉堆從頂端由白變藍（同時）
      → u 5.0「藍 → 紅（粉紅）」（左，粉紅）、「白 → 藍」（右，藍）
      → u 6.2「檢驗水」（黃）→ u 7.2 字卡；u 8.0～12 靜止。
-   每一步右上角都有「補充」小標（珊瑚，20px）。
 
    版面：步驟標題 KEY_Y 62、字卡 BOT_Y 505（＝ M3.KEY_Y／M3.BOT_Y）。畫布頂端 0～31 px 留給 kit 的進度條，本檔內容一律畫在 y ≥ 34
-     （滴管移入時用 clip 把 y < 34 的部分切掉）。桌面 GY 452（M3.slab 20～940、452～466）。「補充」右對齊 (946,62)。
+     （滴管移入時用 clip 把 y < 34 的部分切掉）。桌面 GY 452（M3.slab 20～940、452～466）。
      第 1～3 步：蒸發皿 O1.cuso4Pile 皿底 (400,452)、縮放 1：皿口半寬 150（250～550）、皿口中線 y 382；粉堆半寬 112、頂 ≈ y 300。
        試劑瓶 O1.bottle (150,452)（瓶蓋頂 y 344）；藥匙勺尖 (172,318) → 弧線（最高 y 200）→ (400,236)，柄方向 −0.55 rad、長 130。
        水珠落點 IX 355、IY＝粉堆表面（≈ y 315，粉堆左上坡）。滴管 O1.dropper 放大 1.8 倍、尖端 x 355，停在 y 210（橡皮頭頂 ≈ y 64，在標題 pill 左邊）；
@@ -66,7 +65,6 @@
   const COL = W5.COL, ease = W5.ease, lerp = W5.lerp, clamp01 = W5.clamp01, hash = W5.hash, TAU = Math.PI * 2;
   const L = M4.L, P = M4.P, withA = M4.withA, fin = M4.fin, fout = M4.fout, grow = M4.grow;
   const WHITE = COL.white, YEL = COL.yellow, CORAL = COL.coral, TEAL = COL.teal;
-  const PURPLE = '#c084fc';                               /* 資優分頁的紫色：只用在背景光暈（同 smoke、cuo） */
   const BLUE = O1.CUSO4.blueHi, PINK = '#f28cb1', WATER = '#4dd2ff';
   const DUR = [11, 11, 11, 12];                           /* 總長 45 秒 */
 
@@ -277,7 +275,6 @@
   function texts(c, s) {
     const n = s.n;
     P(c, fin(s, n, 0.2, 0.5), TITLES[n - 1](), 480, M3.KEY_Y, WHITE, 24);
-    P(c, 1, L('補充', 'Extra'), 946, M3.KEY_Y, CORAL, 20, 'right');
     M3.caption(c, fin(s, 1, 7.4, 0.6) * fout(s, 2, 0, 0.4), L('白色的無水硫酸銅粉末', 'White anhydrous copper sulfate powder'), YEL, 480, M3.BOT_Y, 24);
     M3.caption(c, fin(s, 2, 6.8, 0.6) * fout(s, 3, 0, 0.4), L('滴進水……', 'Add a drop of water...'), YEL, 480, M3.BOT_Y, 24);
     M3.caption(c, fin(s, 3, 7.0, 0.6) * fout(s, 4, 0, 0.4), L('無水硫酸銅遇到水，由白色變成藍色', 'Anhydrous copper sulfate meets water: white turns blue'), YEL, 480, M3.BOT_Y, 24);
@@ -286,7 +283,7 @@
 
   /* ═══════════ draw ═══════════ */
   function draw(c, s) {
-    M3.backdrop(c, { gy: GY, cell: 40, glow: PURPLE });
+    M3.backdrop(c, { gy: GY, cell: 40 });
     bench(c);
     step1(c, s);
     bigDish(c, s);

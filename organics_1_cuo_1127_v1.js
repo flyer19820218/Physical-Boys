@@ -1,8 +1,8 @@
 /* ==================================================================
-   organics_1 ｜ 補充（高中）：碳還原氧化銅（cvs-cuo，960×540，紫色資優分頁 tab5）
+   organics_1 ｜ 補充：碳還原氧化銅（cvs-cuo，960×540，tab5）
    四步：1 乾餾留下碳 → 2 混合加熱 → 3 黑變紅 → 4 反應式
    介面依 work_5_kit_1103_v1.js：W5.register + 純函式 draw(c, s)；共用畫法在 M3、M4、O1。
-   用到：M3.backdrop（紫色光暈 #c084fc，同 smoke；紫色只用在光暈）／ground／slab／caption／magnifier／dashArrow、
+   用到：M3.backdrop／ground／slab／caption／magnifier／dashArrow、
         M4.L／P／withA／fin／fout／grow／zoomLeader、
         O1.rig／rigPts／spot／cBlob／htube／lamp／flame／atom／bond／mol／MOL.CO2／fx，
         以及本檔新增到 O1 的 O1.CU／tstand／heap／tubeBed／grains。
@@ -41,10 +41,9 @@
        （O 一離開，原位留下淡淡的「反應前」原子）→ u 5.0 / 5.4 兩條 C＝O 雙鍵依序長出（CO₂ 成形）
      → u 6.0～7.2 CO₂ 與兩個 Cu 一起滑到箭頭右邊 → u 7.2 大「＋」、下排「2Cu ＋ CO₂」；u 7.2～8.0 左邊反應前的原子變回清楚
      → u 8.2「兩邊原子一樣多：C 1 個、Cu 2 個、O 2 個」（綠）→ u 9.0 字卡（反應式）；u 10～12 靜止。
-   每一步右上角都有「補充（高中）」小標（珊瑚，20px）。
 
    版面：步驟標題 KEY_Y 62、字卡 BOT_Y 505（＝ M3.KEY_Y／M3.BOT_Y）。畫布頂端 0～31 px 留給 kit 的進度條，本檔內容一律畫在 y ≥ 34。
-     桌面 GY 452（M3.slab 20～940、452～466；第 4 步淡出）。「補充（高中）」右對齊 (946,62)。
+     桌面 GY 452（M3.slab 20～940、452～466；第 4 步淡出）。
      第 1 步：O1.rig 縮放 0.75、平移 (−40,113)（同 products、smoke）：竹筷中心 ≈ (105,314)。
        「隔絕空氣加熱」(150,190)；「變黑」(105,245)；聚光洞 竹筷 r 70。
        放大鏡中心 (740,228) r 125（柄朝右上 −0.7 rad、長 70），虛線連到竹筷；鏡內 O1.cBlob n 30、r 17、R 100。
@@ -75,7 +74,6 @@
   const COL = W5.COL, ease = W5.ease, lerp = W5.lerp, clamp01 = W5.clamp01, hash = W5.hash, TAU = Math.PI * 2;
   const L = M4.L, P = M4.P, withA = M4.withA, fin = M4.fin, fout = M4.fout, grow = M4.grow;
   const WHITE = COL.white, YEL = COL.yellow, CORAL = COL.coral, GREEN = COL.green;
-  const PURPLE = '#c084fc';                               /* 資優分頁的紫色：只用在背景光暈（同 smoke） */
   const COPPER = O1.CU.cuHi;                              /* 「銅（紅）」標籤色 */
   const DUR = [11, 12, 11, 12];                           /* 總長 46 秒 */
 
@@ -359,7 +357,6 @@
   function texts(c, s) {
     const n = s.n;
     P(c, fin(s, n, 0.2, 0.5), TITLES[n - 1](), 480, M3.KEY_Y, WHITE, 24);
-    P(c, 1, L('補充（高中）', 'Extra (senior high)'), 946, M3.KEY_Y, CORAL, 20, 'right');
     M3.caption(c, fin(s, 1, 8.0, 0.6) * fout(s, 2, 0, 0.4), L('有機物（像木材）隔絕空氣加熱後，會留下黑色的碳', 'Organics such as wood, heated without air, leave black carbon'), YEL, 480, M3.BOT_Y, 24);
     M3.caption(c, fin(s, 2, 8.6, 0.6) * fout(s, 3, 0, 0.4), L('把碳粉和黑色的氧化銅混合，加熱', 'Mix carbon powder with black copper oxide, then heat'), YEL, 480, M3.BOT_Y, 24);
     M3.caption(c, fin(s, 3, 7.4, 0.6) * fout(s, 4, 0, 0.4), L('黑色的氧化銅，被碳還原成紅色的銅', 'Carbon reduces black copper oxide to red copper'), YEL, 480, M3.BOT_Y, 24);
@@ -368,7 +365,7 @@
 
   /* ═══════════ draw ═══════════ */
   function draw(c, s) {
-    M3.backdrop(c, { gy: GY, cell: 40, glow: PURPLE });
+    M3.backdrop(c, { gy: GY, cell: 40 });
     bench(c, s);
     step1(c, s);
     rig23(c, s);
